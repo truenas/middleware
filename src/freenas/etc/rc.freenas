@@ -900,6 +900,12 @@ ro_sqlite()
 	echo ${ret}
 }
 
+check_process()
+{
+	ps -p "$1" > /dev/null 2>&1
+	return $?
+}
+
 kill_process()
 {
 	local pid=$1
@@ -908,7 +914,7 @@ kill_process()
 	kill ${pid} >/dev/null 2>&1
 	ret=$?
 
-	ps -p "${pid}" >/dev/null 2>&1
+	check_process "${pid}"
 	if [ "$?" != "0" ]
 	then
 		kill -9 "${pid}" > /dev/null 2>&1
@@ -935,11 +941,17 @@ do_timeout_wait()
 
 		while [ "${i}" -lt "${timeout}" ]
 		do
+			check_process "${pid_args}"
+			if [ "$?" != "0" ]
+			then
+				break
+			fi
+
 			sleep 1
 			$((i+=1)) >/dev/null 2>&1
 		done
 
-		ps -p "${pid_args}" >/dev/null 2>&1
+		check_process "${pid_args}"
 		if [ "$?" = "0" ]
 		then
 			kill_process ${pid_args}
@@ -958,11 +970,14 @@ do_timeout_wait()
 
 timeout_wait()
 {
+	local ret=0
 	local timeout=$1
 	shift
 	local args="$*"
 
 	local lf="/tmp/$(echo "${args}"|sha256 2>/dev/null)"
+
+	trap "rm -f ${lf}" 2
 
 	lockf -t 0 -k -s "${lf}" /usr/bin/true
 	if [ "$?" != 0 ]
@@ -970,10 +985,9 @@ timeout_wait()
 		return 1
 	fi
 
-	local ret=0
 	do_timeout_wait ${timeout} ${args}
 	ret=$?
 
-	rm -f "${lf}" "${lf}"
+	rm -f "${lf}"
 	return ${ret}
 }
