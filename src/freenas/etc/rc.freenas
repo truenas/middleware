@@ -926,6 +926,7 @@ kill_process()
 
 do_timeout_wait()
 {
+	local res=0
 	local timeout=$1
 	shift
 	local args="$*"
@@ -963,10 +964,19 @@ do_timeout_wait()
 	) &
 	pid_timeout=$!
 
-	wait $(jobs -p)
+	wait ${pid_args}
+	args_wait_ret=$?
+
+	wait ${pid_timeout}
+	timeout_wait_ret=$?
+
+	if [ "${args_wait_ret}" != 0 ] || [ "${timeout_wait_ret}" != "0" ]
+	then
+		res=1
+	fi
 
 	rm -f "${lf}"
-	return $?
+	return ${res}
 }
 
 timeout_wait()
