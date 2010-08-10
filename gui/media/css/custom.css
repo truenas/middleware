@@ -1,0 +1,145 @@
+#raidmenu {
+}
+.raidmenu {
+    background:transparent;
+    padding-top:12px;
+    float:left;
+    font-size:14px;
+    font-weight:bold;
+    height:40px;
+    line-height:40px;
+    text-shadow:0 -1px 1px #000000;
+    font-family:Arial,Helvetica,sans-serif;
+}
+.raidmenu a {
+
+    color:#EDF0F1;
+}
+/*
+ * FORM 
+ */
+
+ .errorlist {
+    color:#ff0000;
+    list-style-type: none;
+    padding-left:0px;
+    font-weight: bold;
+}
+ .errorlist li{
+     list-style-type: none;
+     padding-left:0px;
+     text-decoration:bold;
+}
+table {
+    width:100%;
+}
+
+tr, td{
+    vertical-align:text-top;
+    line-height:26px;
+    border-bottom:1px solid #ddd;
+}
+
+ td {
+    padding:6px;
+    background-color:#f7f7f7;
+    color:#000;
+}
+ span {
+    background-color:#fff;
+    padding:9px;
+}
+ th{
+    color: #000;
+    width:170px;
+    padding:6px;
+    background-color:#d6d6d6;
+}
+
+.cifs_text_class radio{
+    color:#ff0000;
+    background-color:#000;
+
+}
+
+/**/
+
+
+
+
+
+.centeredImage
+    {
+    text-align:center;
+    display:block !important;
+    margin-top:0px;
+    margin-bottom:0px;
+    padding:0px;
+
+    }
+
+
+
+/* Read More button style */
+.read {
+	width:95px;
+	height:22px;
+
+
+	
+	}
+	.read a { color:#336C9A;line-height:22px;text-indent:10px;font-weight:bold;font-size:85%; }
+	
+.readmore {
+	background:#f6f6f6 url('/freenas/media/images/ix/readmore.jpg')
+no-repeat 0 0;
+	width:95px;
+	
+	
+	}
+.readmore:hover {
+	background:#f6f6f6 url('/freenas/media/images/ix/readmore_ro.jpg')
+no-repeat 0 0;
+	width:95px;
+
+	}
+
+
+
+/* Product Specification Table Styling */
+.spectable-header {
+	line-height:32px;
+	font-size:15px;
+	padding-left:8px;
+	font-weight:bold;
+	color:#333;
+	border:1px solid #c5c5c5;
+	background:#f2f2f2;
+	}
+.spectable-header:hover { background:#f8f8f8; }
+
+.spectable-label {
+	line-height:24px;
+	width:135px;
+	padding-left:16px;
+	font-weight:bold;
+	border-right:1px dotted #c5c5c5;
+	border-left:1px solid #c5c5c5;
+	border-bottom:1px solid #c5c5c5;
+	background:#f4f4f4;
+	}
+.spectable-label:hover {  background:#f8f8f8; }
+.spectable-body {
+	line-height:24px;
+	font-weight:none;
+	padding:4px;
+	border-bottom:1px dotted #c5c5c5;
+	border-right:1px solid #c5c5c5;
+	background:#fff;
+	}
+
+
+.spectable-body:hover {
+
+}
+

@@ -1,0 +1,87 @@
+/*
+ * global bug fixes
+ */
+
+/* reset forcing vertical scrollbar */
+body { overflow: visible; }
+
+/* list-numbering bug */
+body ol li { display: list-item; }
+
+/*
+ * layout
+ */
+
+ 
+ 
+.width15 { width: 14.9%; }
+.width18 { width: 17.9%; }
+.width20 { width: 19.9%; }
+.width23 { width: 22.9%; }
+.width25 { width: 24.9%; }
+.width33 { width: 32.9%; }
+.width34 { width: 33.9%; }
+.width35 { width: 34.9%; }
+.width40 { width: 39.9%; }
+.width45 { width: 44.9%; }
+.width50 { width: 49.9%; }
+.width54 { width: 53.9%; }
+.width65 { width: 64.9%; }
+.width75 { width: 74.9%; }
+
+#page-footer { zoom: 1; }
+
+/*
+ * menus
+ */
+
+/* topmenu */
+#toolbar ul.menu,
+#footer ul.menu { white-space: nowrap; }
+
+#toolbar .menu li,
+#footer .menu li,
+#toolbar .menu li a,
+#footer .menu li a{ display: inline; }
+
+/* menu */
+#menu span { cursor: pointer; }
+
+#menu li.level2 {
+	float: left;
+	width: 100%;
+}
+
+#menu .sub { width: 44.9%; }
+
+/* sub menu */
+.mod-menu ul.menu span { cursor: pointer; }
+
+ 
+#left .mod-menu,
+#contentleft .mod-menu,
+#contentright .mod-menu { zoom: 1 }
+
+/* modules */
+div.mod-rounded-templatecolor div.box-1 { overflow: hidden; }
+
+/* joomla */
+div.joomla div.icons { min-width: 55px; }
+
+/* typography */
+ol.disc {
+	padding: 0px 0px 0px 50px;
+}
+
+ol.disc li {
+	padding-left: 5px;
+}
+
+hr.dotted {
+	background: none;
+	border: dotted 1px #c8c8c8;
+}
+
+p.dropcap:first-letter {
+	line-height: 110%;
+}

@@ -1,0 +1,12 @@
+{% extends "new-base.html" %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<h2>Processes Information</h2>
+   <div class="listr">
+     <pre>{{ top }}</pre>
+   </div>
+    {% else %}   
+        <p>Welcome, new user. Please <a href="/freenas/login/">log in</a>.</p>
+        {% endif %} 
+{% endblock %}

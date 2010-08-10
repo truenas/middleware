@@ -1,0 +1,342 @@
+/*
+ * headings
+ */
+
+h1, h2, h3, h4, h5, h6 { font-family: Arial, Helvetica, sans-serif; }
+
+#top h1, .joomla h1,
+#top h2, .joomla h2,
+#top h3, .joomla h3 {
+	text-shadow: 0px 1px 0px #ffffff, 0px -1px 3px #bebebe;
+}
+
+h1 {
+	font-weight: normal;
+	color: #50575F;
+}
+
+#page h1 a {
+	color: #50575F;
+	text-decoration: none;
+}
+
+h2 { color: #5C7990; }
+h3 { color: #50575F; }
+h4 { color: #5C7990; }
+h5 { color: #50575F; }
+h6 { color: #5C7990; }
+
+/*
+ * anchor
+ */
+
+a:link,
+a:visited { color: #396f9d; }
+a:hover { color: #ed5d00; }
+
+#headerbar a:link,
+#headerbar a:visited,
+div.mod-rider-templatecolor a:link,
+div.mod-rider-templatecolor a:visited,
+div.mod-rider-templatecolor2 a:link,
+div.mod-rider-templatecolor2 a:visited,
+div.mod-rounded-templatecolor a:link,
+div.mod-rounded-templatecolor a:visited,
+div.mod-rounded-black a:link,
+div.mod-rounded-black a:visited { color: #ffffff; text-decoration: underline; }
+
+#headerbar a:hover,
+div.mod-rider-templatecolor a:hover,
+div.mod-rider-templatecolor2 a:hover,
+div.mod-rounded-templatecolor a:hover,
+div.mod-rounded-black a:hover { color: #ed5d00; }
+
+a.icon-folder {
+        padding-left: 17px;
+        background: url() 0 40% no-repeat;
+}
+
+a.icon-file {
+        padding-left: 17px;
+        background: url() 0 40% no-repeat;
+}
+
+a.icon-download {
+        padding-left: 17px;
+        background: url() 0 40% no-repeat;
+}
+
+a.icon-external {
+        padding-left: 17px;
+        background: url() 0 40% no-repeat;
+}
+
+a.icon-pdf {
+        padding-left: 17px;
+        background: url() 0 40% no-repeat;
+}
+
+/*
+ * emphasis
+ */
+
+em.box { 
+	padding: 0px 3px 0px 3px;
+	border: 1px dotted #aaaaaa;
+	background: #f5f6f7;
+	font-family: "Courier New", Courier, monospace;
+	font-style: normal;
+}
+
+/*
+ * unsorted lists
+ */
+
+/* icon style */
+
+ul.arrow,
+ul.checkbox,
+ul.check,
+ul.star {
+	margin: 10px 0px 10px 0px;
+	padding-left: 20px;
+	list-style: none;
+}
+
+ul.arrow li,
+ul.checkbox li,
+ul.check li,
+ul.star li {
+	margin: 5px 0px 5px 0px;
+	padding-left: 35px;
+	font-weight: bold;
+	line-height: 26px;  
+}
+
+ul.arrow li { background: url() 0 0 no-repeat; }
+ul.checkbox li { background: url() 0 0 no-repeat; }
+ul.check li { background: url() 0 0 no-repeat; }
+ul.star li { background: url() 0 0 no-repeat; }
+
+
+
+/* small icon style */
+
+ul.arrow-s,
+ul.checkbox-s,
+ul.check-s,
+ul.star-s {
+	margin: 5px 0px 5px 0px;
+	padding-left: 10px;
+	list-style: none;
+}
+
+ul.arrow-s li,
+ul.checkbox-s li,
+ul.check-s li,
+ul.star-s li {
+	margin: 2px 0px 2px 0px;
+	padding-left: 20px;
+	line-height: 20px;  
+}
+
+ul.arrow-s li { background: url() 0 0 no-repeat; }
+ul.checkbox-s li { background: url() 0 0 no-repeat; }
+ul.check-s li { background: url() 0 0 no-repeat; }
+ul.star-s li { background: url() 0 0 no-repeat; }
+
+
+
+
+
+
+/* table style */
+ul.table {
+	margin: 20px 0px 20px 0px;
+	padding-left: 0px;
+	list-style: none;
+}
+
+ul.table li {
+	padding: 5px;
+	border-bottom: 1px solid #c8c8c8;
+}
+
+ul.table li:nth-child(odd) { background: #fafafa; }
+ul.table li:nth-child(even) { background: #ffffff; }
+ul.table li:last-child { border: none; }
+
+/*
+ * ordered lists
+ */
+
+ol.disc {
+	margin: 10px 0px 10px 0px;
+	padding: 0px 0px 0px 45px;
+	background: url() 20px 0px repeat-y;
+}
+
+ol.disc li {
+	margin: 5px 0px 5px 0px;
+	padding-left: 10px;
+	font-weight: bold;
+	line-height: 26px;  
+}
+
+/*
+ * horizontal rule
+ */
+ 
+hr.dotted {
+	margin: 15px 0px 15px 0px;
+	display: block;
+	background: url() 0 0 repeat-x;
+	height: 1px;
+	border: none;
+}
+
+
+/*
+ * highlighted div and span tags
+ */
+
+span.note,
+span.info,
+span.alert,
+span.download,
+span.tip { display: block; }
+
+div.note, span.note {
+	margin: 10px 0px 10px 0px;
+	padding: 5px 10px 5px 10px;
+	background: #ffffff;
+	border-top: 1px dotted #aab4be;
+	border-bottom: 1px dotted #aab4be;
+	text-align:justify;
+}
+
+div.info, span.info,
+div.alert, span.alert,
+div.download, span.download,
+div.tip, span.tip {
+	margin: 10px 0px 10px 0px;
+	padding: 8px 10px 8px 35px;
+}
+
+div.info, span.info {
+	background: #ffffff url() 3px no-repeat;
+	border-top: 1px dotted #aab4be;
+	border-bottom: 1px dotted #aab4be;
+}
+
+div.alert, span.alert {
+	background: #fff5eb url() 3px no-repeat;
+	border-top: 1px dotted #ffb4a0;
+	border-bottom: 1px dotted #ffb4a0;
+}
+
+div.download, span.download {
+	background: #f5faeb url() 3px  no-repeat;
+	border-top: 1px dotted #78be5a;
+	border-bottom: 1px dotted #78be5a;
+}
+
+div.tip, span.tip {
+	background: #fffdeb url() 3px no-repeat;
+	border-top: 1px dotted #ffc864;
+	border-bottom: 1px dotted #ffc864;
+}
+
+/*
+ * p tag with dropcaps
+ */
+ 
+p.dropcap:first-letter {
+	display: block;
+	margin: 7px 4px 0px 0px;
+	float: left;
+	font-size: 280%;
+	font-family: Georgia, "Times New Roman", Times, serif;
+}
+
+/*
+ * tables
+ */
+ 
+table.listing {
+	width: 100%;
+	margin-bottom: 30px;
+	font-size: 11px;
+}
+
+table.listing thead th {
+	height: 30px;
+	padding: 5px;
+	border-bottom: 1px solid #c8c8c8;
+	background: none;
+	vertical-align: top;
+	font-size: 14px;
+	font-weight: normal;
+}
+
+table.listing tbody td {
+	height: 20px;
+	padding: 5px;
+	border-bottom: 1px solid #c8c8c8;
+}
+
+table.listing tr.odd td { background: #fafafa; }
+table.listing tr.even td { background: #ffffff; }
+
+table.listing td.bold {
+	font-weight: bold;
+	font-size: 12px;
+}
+
+/*
+ * blockquotes
+ */
+
+q.blockquote {
+	margin: 10px 0 10px 15px;
+	font-style: italic;
+	font-size: 130%;
+}
+
+q.blockquote:first-letter { font-size: 150%; }
+
+q.blockquote:before,
+q.blockquote:after { content: ""; }
+
+blockquote.quotation {
+	margin: 10px 0px 10px 0px;
+	padding: 10px 35px 10px 35px;
+	border: none;
+	background: url() 0 0 no-repeat;
+	text-align:justify;
+}
+
+blockquote.quotation p {
+	margin: 0px -35px -10px 0px;
+	padding: 0px 35px 10px 0px;
+	background: url() 100% 100% no-repeat;
+}
+
+/*
+ * floating boxes
+ */
+
+body .inset-left {
+	margin: 15px 15px 10px 0px;
+	float: left;
+}
+
+body .inset-right {
+	margin: 15px 0px 10px 15px;
+	float: right;
+}
+
+/*
+ * preformatted text elements
+ */
+pre { background: #ffffff; }

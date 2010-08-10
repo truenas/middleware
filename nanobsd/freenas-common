@@ -1,0 +1,263 @@
+#-
+# Copyright (c) 2010 iXsystems, Inc., All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL Jordan Hubbard OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#
+# This file is heavily derived from both Sam Leffler's Avilia config,
+# as well as the BSDRP project's config file.  Neither of these have
+# an explicit copyright/license statement, but are implicitly BSDL.
+#
+
+#
+# FreeNAS specific bits of the common stuff.
+#
+
+# Tmp hack for transition to lighttpd
+use_lighttpd=1
+
+NANO_IMAGES=1
+FlashDevice Sandisk 512
+
+. ${NANO_CFG_BASE}/common
+
+#+audio/firefly
+add_port security/ca_root_nss
+add_port ftp/curl
+add_port devel/pkg-config
+add_port databases/sqlite3
+add_port lang/perl5.10
+add_port converters/iconv
+add_port converters/libiconv
+add_port devel/gettext
+add_port audio/libogg
+add_port audio/speex
+add_port audio/libvorbis
+add_port audio/libid3tag
+add_port audio/libao
+add_port audio/flac
+#+port audio/vorbis-tools
+add_port graphics/png
+add_port multimedia/libkate
+#-port audio/vorbis-tools
+add_port audio/vorbis-tools
+#-audio/firefly
+add_port audio/firefly		# Pulls in sqlite3?
+#+audio/mt-daapd
+add_port databases/gdbm
+#-audio/mt-daapd
+add_port audio/mt-daapd
+add_port devel/cdialog
+add_port dns/inadyn			# -mt?
+add_port editors/nano
+add_port ftp/proftpd
+#+mail/msmtp
+add_port dns/libidn
+#-mail/msmtp
+add_port mail/msmtp
+add_port net-mgmt/bsnmp-ucd
+add_port net-mgmt/bsnmptools
+add_port net-mgmt/clog
+add_port net-mgmt/sipcalc
+add_port net-p2p/transmission-cli
+add_port net/istgt
+add_port net/mDNSResponder
+#+net/netatalk
+add_port security/libgcrypt
+add_port security/libgpg-error
+add_port databases/db46
+#-net/netatalk
+add_port net/netatalk		-DWITH_PAM
+#+net/nss_ldap
+add_port net/openldap24-client
+#-net/nss_ldap
+add_port net/nss_ldap
+add_port net/rsync 
+#+net/samba
+add_port devel/talloc
+add_port devel/libexecinfo
+add_port devel/popt
+#-net/samba
+add_port net/samba34		-DWITHOUT_CUPS -DWITH_LDAP -DWITH_AD -DWITH_PAM_SMBPASS
+add_port net/unison		-DWITHOUT_X11 -DWITHOUT_GTK2
+add_port security/pam_ldap
+add_port security/pam_mkhomedir
+add_port shells/bash
+add_port shells/scponly
+add_port sysutils/e2fsprogs
+#+sysutils/fusefs-ntfs
+add_port sysutils/fusefs-kmod
+add_port sysutils/fusefs-libs
+add_port devel/libublio
+#-sysutils/fusefs-ntfs
+add_port sysutils/fusefs-ntfs
+add_port sysutils/ntfsprogs
+#+sysutils/nut
+add_port textproc/expat2
+#-sysutils/nut
+# originally, FreeNAS' version of this port added --with-wrap, but that's
+# automatic now, so I don't think we need to worry about it.
+add_port sysutils/nut		-DWITHOUT_SNMP -DWITHOUT_NEON -DWITHOUT_CGI \
+				-DWITHOUT_POWERMAN -DWITHOUT_HAL
+add_port sysutils/smartmontools
+add_port lang/python26
+add_port databases/py-sqlite3
+add_port www/py-django		-DWITHOUT_MYSQL
+if [ $use_lighttpd -eq 0 ]; then
+    #+www/apache22
+    add_port devel/apr1
+    add_port devel/pcre
+    #-www/apache22
+    add_port www/apache22
+    add_port www/mod_wsgi3
+else
+    #+add_port www/lighttpd
+    add_port devel/pcre
+    add_port www/spawn-fcgi
+    #-add_port www/lighttpd
+    add_port www/lighttpd
+    #+add_port www/py-flup
+    add_port devel/py-setuptools
+    #-add_port www/py-flup
+    add_port www/py-flup
+fi
+
+if [ "${NANO_PACKAGE_ONLY}" -eq 1 ]; then
+ 	CONF_INSTALL="${CONF_INSTALL}
+${PKG_ONLY_MAKE_CONF}
+"
+	echo "Automatically building a thin image with packages"
+else
+	echo "Automatically building a fat image so we can build ports"
+fi
+
+hack_nsswitch_conf ( )
+{
+	# Neuter out all references to NIS in the nssiwtch.conf file
+	# Not sure this is still needed, but FreeNAS has it...
+	sed -i.bak -es/nis/files/g ${NANO_WORLDDIR}/etc/nsswitch.conf
+	rm -f ${NANO_WORLDDIR}/etc/nsswitch.conf.bak
+}
+customize_cmd hack_nsswitch_conf
+
+add_gui()
+{
+    local gui dst;
+    gui=${NANO_CFG_BASE}/../gui
+    dst=${NANO_WORLDDIR}/usr/local/www/freenasUI
+    if [ -d ${gui} ]; then
+	pprint 2 "Adding freenas web gui"
+	mkdir ${dst}
+	( cd ${gui}
+	  find . -print | grep -Ev '/(CVS|\.svn)' | cpio -dumpv ${dst} )
+	pprint 2 "Making freenas initial database"
+	mkdir ${NANO_WORLDDIR}/data
+	CR "(cd usr/local/www/freenasUI; python manage.py syncdb)" << __EOF__
+yes
+admin
+root@freenas.local
+freenas
+freenas
+__EOF__
+	CR "chown -R www:www usr/local/www/freenasUI data"
+	CR "(cd usr/local/www/freenasUI; /usr/local/bin/sqlite3 ${NANO_WORLDDIR}/data/freenas-v1.db) || true" << __EOF__
+.read schema
+__EOF__
+    else
+        pprint 2 "GUI OMITTED from image"
+    fi
+}
+customize_cmd add_gui
+
+# Move the $world/data to the /data partion
+move_data()
+{
+	set -x
+	db=${NANO_WORLDDIR}/data
+	rm -rf ${NANO_DATADIR}
+	mkdir -p ${NANO_DATADIR}
+	( cd ${db} ; find . | cpio -dumpv ${NANO_DATADIR} )
+	rm -rf ${db}
+}
+customize_cmd move_data
+
+add_data_to_fstab ( )
+{
+	(
+	cd ${NANO_WORLDDIR}
+	echo "/dev/${NANO_DRIVE}s4 /data ufs rw 2 2" >> etc/fstab
+	mkdir -p data
+	)
+	
+}
+customize_cmd add_data_to_fstab
+
+fix_mt_daapd ( )
+{
+	# Create database directory, for some reason the port/pkg doesn't
+	# do this
+	mkdir -p ${NANO_WORLDDIR}/var/db/mt-daapd
+	# Use the sample config as the actual config
+	# XXX: maybe this should move to common files?
+	cp  ${NANO_WORLDDIR}/usr/local/etc/mt-daapd.conf.sample \
+	    ${NANO_WORLDDIR}/usr/local/etc/mt-daapd.conf
+}
+customize_cmd fix_mt_daapd
+
+select_httpd ( )
+{
+	if [ $use_lighttpd -eq 0 ]; then
+		echo "apache22_enable=YES" >> ${NANO_WORLDDIR}/etc/rc.conf
+	else
+		echo "lighttpd_enable=YES" >> ${NANO_WORLDDIR}/etc/rc.conf
+	fi
+}
+customize_cmd select_httpd
+
+fix_beastie ( )
+{
+	(
+	# We're booting a FreeNAS box, not a FreeBSD box, patch beastie.4th
+	# to reflect that
+	cd ${NANO_WORLDDIR}
+	patch -p0 < ${NANO_CFG_BASE}/Patches/patch.beastie.4th
+	)
+	
+}
+customize_cmd fix_beastie
+
+fix_rc_d_sshd ( )
+{
+	(
+	# Hack /etc/rc.d/sshd to save ssh keys when regenreated
+	cd ${NANO_WORLDDIR}
+	patch -p0 < ${NANO_CFG_BASE}/Patches/patch.sshd-save-keys
+	chmod +x ${NANO_WORLDDIR}/root/save_sshkeys
+	)
+}
+customize_cmd fix_rc_d_sshd
+
+remove_patch_divots ( )
+{
+	find ${NANO_WORLDDIR} -name \*.orig | xargs rm -f
+}
+customize_cmd remove_patch_divots

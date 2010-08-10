@@ -1,0 +1,13 @@
+{% extends "new-base.html" %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<h1>Added Succesfully!</h1>
+<br />
+<h3><a href="/freenas/disk/wizard/">Add More Disks</a></h3>
+<h3><a href="/freenas/disk/volume/wizard/">Add a Volume</a></h3>
+          {% else %}
+                  <p>Welcome, new user. Please <a href="/freenas/login/">log in</a>.</p>
+
+{% endif %}
+                          {% endblock %}

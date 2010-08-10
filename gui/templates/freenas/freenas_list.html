@@ -1,0 +1,29 @@
+{% extends "new-base.html" %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<br />
+<br />
+<h2>System Information</h2>
+<strong>Hostname:</strong> {{ hostname }}
+<br />
+<strong>OS Version:</strong> {{ uname1 }} {{ uname2 }}  
+<br />
+<strong>Platform:</strong> {{ platform }}
+<br />
+<strong>System Time:</strong> {{ date }}
+<br />
+<strong>Uptime:</strong> {{ uptime }} 
+<br />
+<strong>Memory Usage:</strong> {{ mem_usage }}
+<br />
+<strong>Load Average:</strong>{{ loadavg }}
+<br />
+<br />
+<br />
+<strong><a href='/freenas/status/processes'>Proccess Information</a></strong>
+<br />
+{% else %} 
+    <p>Welcome, new user. Please <a href="/freenas/login/">log in</a>.</p>
+{% endif %}   
+{% endblock %}

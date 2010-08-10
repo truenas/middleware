@@ -1,0 +1,118 @@
+#!/bin/sh
+# THIS FILE IS RESERVED FOR THE EXCLUSIVE USE OF FREENAS CONFIG SYSTEM.
+# Please edit /etc/rc.conf instead.
+
+#-
+# Copyright (c) 2010 iXsystems, Inc., All rights reserved.
+#   Written by:	Xin LI
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL Jordan Hubbard OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+
+FREENAS_CONFIG=/data/freenas-v1.db
+FREENAS_SQLITE_CMD=/usr/local/bin/sqlite3
+FREENAS_RC=/tmp/rc.conf.freenas
+
+_interface_config()
+{
+	local IFS=\|
+	local _ifid interface ipv4addr subnetmask gateway
+
+	# XXX For now, the storage layer stores each interface as an individual profle.
+	# Note: ipv4/ipv6 are supposed in ip/masklen format.
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM freenas_networkinterfacemgmt ORDER BY id" | \
+	while read _ifid; do
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT interface, ipv4address, ipv6address, options FROM freenas_networkinterfacemgmt WHERE id=${_ifid} LIMIT 1" | \
+		while read interface ipv4 ipv6 options; do
+			echo -n ifconfig_${interface}=\"
+			if [ -n "${ipv4}" ]; then
+				echo -n "inet ${ipv4} "
+			fi
+			if [ -n "${options}" ]; then
+				echo -n "${options}"
+			fi
+			echo \"
+			if [ -n "${ipv6}" ]; then
+				echo ipv6_ifconfig_${interface}=\"${ipv6}\"
+			fi
+			if [ -n "${gateway}" ]; then
+				echo defaultrouter=\"${gateway}\"
+			fi
+		done
+	done
+}
+
+_host_config()
+{
+	local IFS=\|
+	local hostname domainname
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT hostname, domain FROM freenas_systemgeneralsetup ORDER BY id DESC LIMIT 1" | \
+	while read hostname domainname; do
+		echo hostname=\"${hostname}.${domainname}\"
+	done
+}
+
+# _bool_config /variable/ /table/ /field/
+_bool_config()
+{
+	local IFS=\|
+	local value
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $3 FROM $2 ORDER BY id DESC LIMIT 1" | \
+	while read value; do
+		echo $1=\"${value}\"
+	done
+}
+
+_gen_conf()
+{
+	## First, import network interface configuration.
+	_interface_config
+	_host_config
+
+	## Daemons
+	_bool_config cron_enable freenas_cronjob togglecron
+	_bool_config smartd_enable freenas_disks togglesmart
+	_bool_config ftpd_enable freenas_servicesftp toggleFTP
+	_bool_config nfsserver_enable freenas_servicesnfs toggleNFS
+	_bool_config rsyncd_enable freenas_servicesrsync togglersync
+	_bool_config sshd_enable freenas_servicesssh toggleSSH
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT varname, varvalue FROM freenas_rcconf ORDER BY id ASC" | tr \| =
+}
+
+# If we're running really early, then mount /data read-only
+if [ ! -f ${FREENAS_CONFIG} ]; then
+	mount -o ro /data
+	_doumount=1
+fi
+
+# Regenerate stale caches of rc.conf data.  We run multiple time
+# as part of the boot process, and this helps.  It also provides
+# a useful file to look at for debugging.
+if [ ! -f ${FREENAS_RC} -o ${FREENAS_CONFIG} -nt ${FREENAS_RC} ]; then
+	_gen_conf > ${FREENAS_RC}
+fi
+
+if [ -n "${_doumount}" ]; then
+	umount /data
+fi
+
+. ${FREENAS_RC}

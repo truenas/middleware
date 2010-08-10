@@ -1,0 +1,20 @@
+{% extends "new-base.html" %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<h1>System - Advanced</h1>
+<h2>Add a Command Script</h2>
+    <form action="." method="post">
+<table>
+    <tr><td>
+        {{ form.as_table }}
+        <br />
+</tr></td>
+</table>
+        <input type="submit" value="Save" />
+    </form>
+          {% else %}
+                  <p>Welcome, new user. Please <a href="/freenas/login/">log in</a>.</p>
+
+{% endif %}
+                          {% endblock %}

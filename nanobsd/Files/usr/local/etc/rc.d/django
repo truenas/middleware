@@ -1,0 +1,71 @@
+#!/bin/sh
+#
+#
+# PROVIDE: django
+# REQUIRE: DAEMON
+# BEFORE: lighttpd
+# KEYWORD: shutdown
+#
+
+#-
+# Copyright (c) 2010 iXsystems, Inc., All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL Jordan Hubbard OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+
+. /etc/rc.subr
+
+name="django"
+rcvar=`set_rcvar`
+
+load_rc_config $name
+
+: ${django_enable="YES"}
+: ${django_pidfile="/var/run/${name}.pid"}
+: ${django_sockfile="/tmp/${name}.sock"}
+: ${django_path="/usr/local/www/freenasUI"}
+
+pidfile=${django_pidfile}
+sockfile=${django_sockfile}
+path=${django_path}
+start_precmd="start_command"
+stop_cmd="stop_command"
+
+
+start_command()
+{
+	local logs="/var/log/lighttpd.error.log /var/log/lighttpd.access.log"
+	/usr/local/bin/python ${path}/manage.py runfcgi method=threaded \
+		socket=${sockfile} pidfile=${pidfile}
+	touch ${logs}
+	sleep 1
+	chown www:www ${sockfile} ${logs}
+}
+
+stop_command()
+{
+	kill `cat ${pidfile}`
+	rm -f ${pidfile}
+	rm -f ${sockfile}
+}
+
+run_rc_command "$1"

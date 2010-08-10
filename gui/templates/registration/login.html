@@ -1,0 +1,54 @@
+{% extends "new-base.html" %}
+
+{% block content %}
+
+{% if form.errors %}
+<p>Your username and password didn't match. Please try again.</p>
+{% endif %}
+
+{% if user.is_authenticated %}
+    <p>Welcome, {{ user.username }}. Thanks for logging in.</p>
+<br />
+<br />
+<h2>System Information</h2>
+<strong>Hostname:</strong> {{ hostname }}
+<br />
+<strong>OS Version:</strong> {{ uname1 }} {{ uname2 }}
+<br />
+<strong>Platform:</strong> {{ platform }}
+<br />
+<strong>System Time:</strong> {{ date }}
+<br />
+<strong>Uptime:</strong> {{ uptime }}
+<br />
+<strong>Memory Usage:</strong> {{ mem_usage }}
+<br />
+<strong>Load Average:</strong>{{ loadavg }}
+<br />
+<br />
+<br />
+<strong><a href='/freenas/status/processes'>Proccess Information</a></strong>
+<br />
+
+{% else %} 
+<br />
+<p><span class="info"><p>Welcome, new user. Please log in.</p>
+<form method="post" action=".">{% csrf_token %}
+<table>
+<tr>
+    <td>{{ form.username.label_tag }}</td>
+    <td>{{ form.username }}</td>
+</tr>
+<tr>
+    <td>{{ form.password.label_tag }}</td>
+    <td>{{ form.password }}</td>
+</tr>
+</table>
+
+<input type="submit" value="Log-in" />
+<input type="hidden" name="next" value="{{ next }}" />
+</p></span>
+</form>
+{% endif %}   
+
+{% endblock %}
