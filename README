@@ -1,0 +1,45 @@
+Here's a snapshot of the FreeBSD 8.1-based FreeNAS.  It features a move to
+the /etc/rc.d startup scripting, a move to a Django-based GUI and should
+set the stage for a more modular system in the future.
+
+This snapshot is for developers only.  It is not functionally complete
+yet, and there are likely many rough edges.
+
+The GUI is currently incomplete.  It can configure your network address
+and not much else.  The screens for the other items are in place, and they
+write to the proper database table, but the system doesn't read that info
+in on boot.  The infrasturcture to do on-the-fly changes is also not included
+(but will be in the future), so each change requires a reboot.  Your best bet
+is to configure things by hand.
+
+Configured by hand, most functionality should be available.
+
+To build the system:
+
+You will need your own FreeBSD src tree, your own ports tree.  FreeBSD
+8.1 Release is known to work.  The ports tree as of 2010.06.24.12.00.00 is
+also known to work.
+
+The build tree I have under a common root:
+
+freebsd/8		FreeBSD 8.1 Release sources
+freebsd/ports		FreeBSD /usr/ports tree
+projects/freenas	The experimental/ix part of the FreeNAS svn tree
+
+cd freebsd/8
+sh tools/tools/nanobsd/nanobsd.sh -c /full/path/to/root/projects/freenas/nanobsd/freenas64
+
+If the build fails, and you want to try again, you can add -b to the end of
+the line and it will skip the FreeBSD build.
+
+You'll wind up with a tree in /tmp/$LOGNAME/obj.freenas64.   The final binary
+image will be in /tmp/$LOGNAME/obj.freenas64/_.disk.full and can be dd'd from
+there, or converted to a VM container.  The build takes between 2-4 hours
+depending on the speed of your machine.
+
+I've not built the 32-bit software in a long time, and when I did it didn't
+work.  However, both the ports tree and src tree have changed significantly
+since then and I'm told the 32-bit build will now work.  I'm trying a build
+myself to see if it will.
+
+I've only built on an amd64 machine.
