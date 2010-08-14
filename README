@@ -27,7 +27,10 @@ freebsd/ports		FreeBSD /usr/ports tree
 projects/freenas	The experimental/ix part of the FreeNAS svn tree
 
 cd freebsd/8
-sh tools/tools/nanobsd/nanobsd.sh -c /full/path/to/root/projects/freenas/nanobsd/freenas64
+sh tools/tools/nanobsd/nanobsd.sh -c /full/path/to/root/projects/freenas/nanobsd/freenas64.conf
+
+# or for the i386 builds:
+sh tools/tools/nanobsd/nanobsd.sh -c /full/path/to/root/projects/freenas/nanobsd/freenas32.conf
 
 If the build fails, and you want to try again, you can add -b to the end of
 the line and it will skip the FreeBSD build.
@@ -37,9 +40,5 @@ image will be in /tmp/$LOGNAME/obj.freenas64/_.disk.full and can be dd'd from
 there, or converted to a VM container.  The build takes between 2-4 hours
 depending on the speed of your machine.
 
-I've not built the 32-bit software in a long time, and when I did it didn't
-work.  However, both the ports tree and src tree have changed significantly
-since then and I'm told the 32-bit build will now work.  I'm trying a build
-myself to see if it will.
-
-I've only built on an amd64 machine.
+Native builds on amd64 and i386 work.  Cross building i386 on amd64 currently
+fails.
