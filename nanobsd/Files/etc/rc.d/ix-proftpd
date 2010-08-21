@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-proftpd
+# REQUIRE: FILESYSTEMS
+# BEFORE: proftpd
+
+. /etc/rc.subr
+
+generate_proftp()
+{
+	local IFS=\|
+	local f="toggleFTP clients ipconnections loginattempt timeout rootlogin onlyanonymous onlylocal banner filemask dirmask fxp resume defaultroot ident reversedns masqaddress passiveportsimin passiveportsmax localuserbw localuserdlbw anonuserbw anonuserdlbw ssltls auxparams"
+	local toggleFTP clients ipconnections loginattempt timeout rootlogin onlyanonymous onlylocal banner filemask dirmask fxp resume defaultroot ident reversedns masqaddress passiveportsimin passiveportsmax localuserbw localuserdlbw anonuserbw anonuserdlbw ssltls auxparams
+	local cmd sf
+	sf=$(echo $f | sed -e 's/ /, /g')
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	    "SELECT $sf FROM freenas_servicesftp ORDER BY -id LIMIT 1" | \
+    while read toggleFTP clients ipconnections loginattempt timeout rootlogin onlyanonymous onlylocal banner filemask dirmask fxp resume defaultroot ident reversedns masqaddress passiveportsimin passiveportsmax localuserbw localuserdlbw anonuserbw anonuserdlbw ssltls auxparams; do
+	:
+    done
+}
+
+name="ix-proftpd"
+start_cmd='generate_proftp'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

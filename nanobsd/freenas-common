@@ -97,7 +97,7 @@ add_port devel/talloc
 add_port devel/libexecinfo
 add_port devel/popt
 #-net/samba
-add_port net/samba34		-DWITHOUT_CUPS -DWITH_LDAP -DWITH_AD -DWITH_PAM_SMBPASS
+add_port net/samba34		-DWITHOUT_CUPS -DWITH_LDAP -DWITH_AD -DWITH_PAM_SMBPASS -DWITH_AIO_SUPPORT
 add_port net/unison		-DWITHOUT_X11 -DWITHOUT_GTK2
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
@@ -161,9 +161,10 @@ customize_cmd hack_nsswitch_conf
 
 add_gui()
 {
-    local gui dst;
+    local gui dst dstCR;
     gui=${NANO_CFG_BASE}/../gui
-    dst=${NANO_WORLDDIR}/usr/local/www/freenasUI
+    dstCR=/usr/local/www/freenasUI
+    dst=${NANO_WORLDDIR}${dstCR}
     if [ -d ${gui} ]; then
 	pprint 2 "Adding freenas web gui"
 	mkdir ${dst}
@@ -171,17 +172,18 @@ add_gui()
 	  find . -print | grep -Ev '/(CVS|\.svn)' | cpio -dumpv ${dst} )
 	pprint 2 "Making freenas initial database"
 	mkdir ${NANO_WORLDDIR}/data
-	CR "(cd usr/local/www/freenasUI; python manage.py syncdb)" << __EOF__
+	CR "(cd ${dstCR}; python manage.py syncdb)" << __EOF__
 yes
 admin
 root@freenas.local
 freenas
 freenas
 __EOF__
-	CR "chown -R www:www usr/local/www/freenasUI data"
-	CR "(cd usr/local/www/freenasUI; /usr/local/bin/sqlite3 ${NANO_WORLDDIR}/data/freenas-v1.db) || true" << __EOF__
+	CR "chown -R www:www ${dstCR} data"
+	CR "(cd ${dstCR}; /usr/local/bin/sqlite3 ${NANO_WORLDDIR}/data/freenas-v1.db) || true" << __EOF__
 .read schema
 __EOF__
+	CR "(cd ${dstCR}; ${dstCR}/set_schema_defaults.sh ${dstCR}/schema ${dstCR}/schema.defaults)"
     else
         pprint 2 "GUI OMITTED from image"
     fi
@@ -261,3 +263,10 @@ remove_patch_divots ( )
 	find ${NANO_WORLDDIR} -name \*.orig | xargs rm -f
 }
 customize_cmd remove_patch_divots
+
+configure_mnt_md ( )
+{
+	mkdir -p ${NANO_WORLDDIR}/conf/base/mnt
+	echo 2048 > ${NANO_WORLDDIR}/conf/base/mnt/md_size
+}
+customize_cmd configure_mnt_md

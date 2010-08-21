@@ -74,8 +74,13 @@ _host_config()
 _bool_config()
 {
 	local IFS=\|
-	local value
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $3 FROM $2 ORDER BY id DESC LIMIT 1" | \
+	local value key
+	if [ -n "$4" ]; then
+		key="$4"
+	else
+		key="id"
+	fi
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $3 FROM $2 ORDER BY ${key} DESC LIMIT 1" | \
 	while read value; do
 		echo $1=\"${value}\"
 	done
@@ -89,9 +94,11 @@ _gen_conf()
 
 	## Daemons
 	_bool_config cron_enable freenas_cronjob togglecron
-	_bool_config smartd_enable freenas_disks togglesmart
-	_bool_config ftpd_enable freenas_servicesftp toggleFTP
+	## TODO: Need to make this a || logic.
+	_bool_config smartd_enable freenas_diskadvanced togglesmart disk_ptr_id
+	_bool_config proftpd_enable freenas_servicesftp toggleFTP
 	_bool_config nfsserver_enable freenas_servicesnfs toggleNFS
+	_bool_config smbd_enable freenas_servicescifs togglecifs
 	_bool_config rsyncd_enable freenas_servicesrsync togglersync
 	_bool_config sshd_enable freenas_servicesssh toggleSSH
 

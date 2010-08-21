@@ -1,0 +1,24 @@
+{% extends "new-base.html" %}
+{% block content %}
+{% if user.is_authenticated %}
+
+<h1>System Disks</h1>
+<table>
+    <tr> 
+        {% for disk in object_list %}
+
+        <tr><td>
+                <a href="{{ disk.id }}">{% autoescape off %}{{ disk.name }} ({{ disk.disks }})
+{% endautoescape %}</a> || <a href="/freenas/disks/management/disk/delete/{{ disk.id }}/">Delete?</a>
+
+        </td></tr> 
+
+        {% endfor %}
+
+    </tr>
+</table>
+
+{% else %}
+<p>Welcome. Please <a href="/freenas/login/">log in</a>.</ p>
+{% endif %}
+{% endblock %}

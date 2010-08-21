@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-nfsd
+# REQUIRE: FILESYSTEMS
+# BEFORE: nfsd mountd
+
+. /etc/rc.subr
+
+#
+# TODO: For now we overwrite /etc/exports, it's desirable to teach mountd about another
+# place so user can write their own entry.
+#
+generate_exports()
+{
+	local IFS=\|
+
+	local path allroot network alldirs readonly quiet
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT path, allroot, network, alldirs, readonly, quiet FROM freenas_sharenfs ORDER BY id DESC" | \
+	while read path allroot network alldirs readonly quiet; do
+		echo -n ${path}
+		if [ -n "${alldirs}" ]; then
+			echo -n " -alldirs"
+		fi
+		if [ -n "${readonly}" ]; then
+			echo -n " -ro"
+		fi
+		if [ -n "${quiet}" ]; then
+			echo -n " -quiet"
+		fi
+		# Current schema can only do ON and OFF.
+		# TODO: Support maproot=uid:gid when schema change is ready.
+		if [ "${allroot}" = "ON" ]; then
+			echo -n " -maproot=0"
+		fi
+		if [ -n "${network}" ]; then
+			echo -n " -network ${network}"
+		fi
+		echo
+	done > /etc/exports
+}
+
+name="ix-nfsd"
+start_cmd='generate_exports'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

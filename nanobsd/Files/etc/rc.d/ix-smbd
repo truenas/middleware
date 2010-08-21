@@ -1,0 +1,168 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-smbd
+# REQUIRE: FILESYSTEMS
+# BEFORE: smbd
+
+. /etc/rc.subr
+
+generate_smbconf()
+{
+	local IFS=\|
+
+	local netbiosname workgroup description doscharset unixcharset loglevel localmaster timeserver guest filemask dirmask sendbuffer recbuffer largerw sendfile easupport dosattr nullpw auxsmbconf
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT netbiosname, workgroup, description, doscharset, unixcharset, loglevel, localmaster, timeserver, guest, filemask, dirmask, sendbuffer, recbuffer, largerw, sendfile, easupport, dosattr, nullpw, auxsmbconf FROM freenas_servicescifs ORDER BY id DESC LIMIT 1" | \
+	while read netbiosname workgroup description doscharset unixcharset loglevel localmaster timeserver guest filemask dirmask sendbuffer recbuffer largerw sendfile easupport dosattr nullpw auxsmbconf; do
+		echo '
+[global]
+encrypt passwords = yes
+dns proxy = no
+strict locking = no
+strict locking = no
+read raw = yes
+write raw = yes
+oplocks = yes
+max xmit = 65535
+deadtime = 15
+display charset = LOCALE
+max log size = 10
+syslog only = yes
+syslog = yes
+load printers = no
+printing = bsd
+printcap name = /dev/null
+disable spoolss = yes
+smb passwd file = /var/etc/private/smbpasswd
+private dir = /var/etc/private
+getwd cache = yes'
+		echo "netbios name = ${netbiosname}"
+		echo "workgroup = ${workgroup}"
+		if [ -n "${description}" ]; then
+			echo "server string = ${description}"
+		fi
+		if [ "${sendfile}" = "ON" ]; then
+			echo "use sendfile = yes"
+		fi
+		if [ "${largerw}" = "OFF" ]; then
+			echo "large readwrite = no"
+		fi
+		if [ "${easupport}" = "ON" ]; then
+			echo "ea support = yes"
+		fi
+		if [ "${dosattr}" = "ON" ]; then
+			echo "store dos attributes = yes"
+		fi
+		if [ "${localmaster}" = "ON" ]; then
+			echo "local master = yes"
+		fi
+		if [ "${timeserver}" = "ON" ]; then
+			echo "time server = yes"
+		fi
+		if [ "${nullpw}" = "ON" ]; then
+			echo "null passwords = yes"
+		fi
+		# Default user and group is ftp:ftp
+		if [ -z "${guest}" ]; then
+			guest=ftp
+		fi
+		# For now, we only support "SHARE" model.
+		# TODO: user group; other models;
+		echo "guest account = ${guest}"
+		echo "force user = ${guest}"
+		echo "force group = ${guest}"
+		echo "passdb backend = smbpasswd"
+		if [ -z "${filemask}" ]; then
+			filemask=0666
+		fi
+		echo "create mask = ${filemask}"
+		if [ -z "${dirmask}" ]; then
+			dirmask=0777
+		fi
+		echo "create mask = ${filemask}"
+		echo "directory mask = ${dirmask}"
+
+		if [ -n "${doscharset}" ]; then
+			echo "dos charset = ${doscharset}"
+		fi
+		if [ -n "${unixcharset}" ]; then
+			echo "unix charset = ${unixcharset}"
+		fi
+		if [ -n "${loglevel}" ]; then
+			echo "log level = ${loglevel}"
+		fi
+		if [ -n "${sendbuffer}" ]; then
+			echo "SO_SNDBUF= ${sendbuffer}"
+		fi
+		if [ -n "${recbuffer}" ]; then
+			echo "SO_RCVBUF= ${recbuffer}"
+		fi
+		if [ -n "${auxsmbconf}" ]; then
+			echo ${auxsmbconf}
+		fi
+	done
+	echo
+}
+
+generate_exports()
+{
+	local IFS=\|
+
+	local name comment path ro browseable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny auxsmbconf
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT name, comment, path, ro, browseable, inheritperms, recyclebin, showhiddenfiles, hostsallow, hostsdeny, auxsmbconf FROM freenas_sharecifs ORDER BY id ASC" | \
+	while read name comment path ro browseable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny auxsmbconf; do
+		echo "[${name}]"
+		echo "path = ${path}"
+		echo "printable = no"
+		echo "veto files = /.snap/"
+		if [ -n "${comment}" ]; then
+			echo "comment = ${comment}"
+		fi
+		if [ "${ro}" = "OFF" ]; then
+			echo "writeable = yes"
+		fi
+		if [ "${browseable}" = "OFF" ]; then
+			echo "browseable = no"
+		fi
+		if [ "${inheritperms}" = "ON" ]; then
+			echo "inherit permissions = yes"
+		fi
+		if [ "${recyclebin}" = "ON" ]; then
+			echo "vfs objects = recycle"
+			echo "recycle:repository = .recycle/%U"
+			echo "recycle:keeptree = yes"
+			echo "recycle:versions = yes"
+			echo "recycle:touch = yes"
+			echo "recycle:directory_mode = 0777"
+			echo "recycle:subdir_mode = 0700"
+		fi
+		if [ "${showhiddenfiles}" = "ON" ]; then
+			echo "hide dot files = no"
+		fi
+		if [ -n "${hostsallow}" ]; then
+			echo "hosts allow = ${hostsallow}"
+		fi
+		if [ -n "${hostsdeny}" ]; then
+			echo "hosts deny = ${hostsdeny}"
+		fi
+		if [ -n "${auxsmbconf}" ]; then
+			echo ${auxsmbconf}
+		fi
+	done
+	echo
+}
+
+generate_smb_config()
+{
+	generate_smbconf > /usr/local/etc/smb.conf
+	generate_exports >> /usr/local/etc/smb.conf
+}
+
+name="ix-nfsd"
+start_cmd='generate_smb_config'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

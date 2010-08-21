@@ -31,7 +31,7 @@ ident		FREENAS64
 # env		"GENERIC.env"
 
 #makeoptions	DEBUG=-g		# Build kernel with gdb(1) debug symbols
-makeoptions	MODULES_OVERRIDE=""
+makeoptions	MODULES_OVERRIDE="zfs opensolaris acpi"
 
 options 	SCHED_ULE		# ULE scheduler
 options 	PREEMPTION		# Enable kernel thread preemption
@@ -72,6 +72,10 @@ options 	MAC			# TrustedBSD MAC Framework
 #options 	KDTRACE_FRAME		# Ensure frames are compiled in
 #options 	KDTRACE_HOOKS		# Kernel DTrace hooks
 options 	INCLUDE_CONFIG_FILE     # Include this file in kernel
+options		VFS_AIO
+options		UNIONFS
+options		NULLFS
+options		GEOM_UZIP
 
 # Make an SMP-capable kernel by default
 options 	SMP			# Symmetric MultiProcessor Kernel

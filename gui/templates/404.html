@@ -1,88 +1,11 @@
-{% extends "base.html" %}
+{% extends "new-base.html" %}
 
 {% block content %}
-<table width="750" border="0" cellspacing="0" cellpadding="2">
-    <tr valign="bottom">
-        <td width="150" height="65" align="center" valign="middle"> <strong><a href="/freenas"><img src="/freenas/media/logo.gif" border="0"></a></strong></td>
-        <td height="65" bgcolor="#435370">
-            <table border="0" cellspacing="0" cellpadding="0" width="100%">
-                <tr><td align="left" valign="bottom"><span class="tfrtitle">&nbsp;webGUI Configuration</span></td>
-                <td align="right" valign="bottom">
-                <span class="hostname">freenas.local&nbsp;</span>
-                </td></tr></table>
-        </td>
-    </tr>
- <tr valign="top"> 
-         <td width="150" bgcolor="#9D9D9D">
-                <table width="100%" border="0" cellpadding="6" cellspacing="0">
-                    <tr><td><span class="navlnk"><font color="#FFFFFF"> <strong>System</strong> 
-              <br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/system" class="navlnk">General setup</a><br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/system_routes" class="navlnk">Static routes</a><br>
 
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/system_firmware" class="navlnk">Firmware</a><br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/system_advanced" class="navlnk">Advanced</a><br>
-              <strong>Interfaces</strong>
-			  			  <a href="/interfaces_assign" class="navlnks">(Assign)</a>
-			  			  <br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/interfaces_lan" class="navlnk">LAN</a><br>
-
-                            <strong>Disks</strong><br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/disks_manage" class="navlnk">Management</a><br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/disks_raid_gmirror" class="navlnk">Software RAID</a> <br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/disks_mount" class="navlnk">Mount Point</a><br>
- 
-              <strong>Services</strong><br>
-			  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/services_samba" class="navlnk">CIFS</a><br>
-
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/services_ftp" class="navlnk">FTP</a><br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/services_nfs" class="navlnk">NFS</a><br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/services_rsyncd" class="navlnk">RSYNCD</a><br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/services_sshd" class="navlnk">SSHD</a><br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/services_afp" class="navlnk">AFP</a><br>
-              <strong>Access</strong><br>
-
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/access_users" class="navlnk">Users and Groups</a><br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/access_ad" class="navlnk">Active Directory</a><br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/notavailable" class="navlnk">NIS</a><br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/notavailable" class="navlnk">Radius</a><br>
-              <strong>Status</strong><br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/index" class="navlnk">System</a><br>
-
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/status_process" class="navlnk">Process</a><br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/status_interfaces" class="navlnk">Interfaces</a><br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/status_disks" class="navlnk">Disks</a><br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/status_wireless" class="navlnk">Wireless</a><br>
-			  
-			  			<a href="#" class="navlnk"><strong>Diagnostics</a></strong><br>
-			
-
-			  				  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/diag_logs" class="navlnk">Logs</a><br>
-				  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/diag_infos" class="navlnk">Information</a><br>
-				  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/diag_ping" class="navlnk">Ping/Traceroute</a><br>
-				  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/diag_arp" class="navlnk">ARP table</a><br>
-				  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/exec" class="navlnk">Command</a><br>
-				  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/diag_backup" class="navlnk">Backup/Restore</a><br>
-
-				  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/diag_defaults" class="navlnk">Factory defaults</a><br>
-				  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/reboot" class="navlnk">Reboot system</a>
-				  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/shutdown" class="navlnk">Shutdown system</a>
-			  </span>
-			  </font></span>
-
-</td>
-                          </tr></table></td>
-
-                              <td width="600"><table width="100%" border="0" cellpadding="10" cellspacing="0">
-                                <tr><td>
-                                 <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                                 <tr align="center" valign="top">
-                                 <td height="10" colspan="2">&nbsp;</td>
-                                  </tr>
-                                 <tr align="center" valign="top">
-                                 <td height="170" colspan="2"><img src="/freenas/media/logobig.gif" width="520" height="149"><br />
-<h1>404 - Page Not Found</h1>
-<p>Working on it! :P</p></td>
-                                 </tr>
+<div class="button">
+<div class="icons"><a href="/freenas/disk/wizard/add_disk/"><img src="/freenas/media/images/ui/disk-add.png"></a><br /><strong>Add Disks</strong></div>
+<div class="icons"><a href="/freenas/disk/management/groups/"><img src="/freenas/media/images/ui/disk-group.png"></a><br /><strong>Group Disks</strong></div>
+<div class="icons"><a href="/freenas/disk/wizard/create_volume/"><img src="/freenas/media/images/ui/create.png"></a><br /><strong>Create Volume</strong></div>
+</div>
 
 {% endblock %}

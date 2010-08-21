@@ -1,5 +1,5 @@
 .wrapper800 {
-   width:90%;
+   width:1000px;
    position:relative;
         }
 #cronjob ul {
@@ -45,7 +45,7 @@ dd { padding-left: 40px; }
 td, th { padding: 1px; }
 
 a:link, a:visited { text-decoration: none; }
-a:hover { text-decoration: underline; }
+a:hover { text-decoration: none; }
 
  
 fieldset {
@@ -144,13 +144,13 @@ blockquote > *:first-child:first-letter { font-size: 150% }
  
 pre {
 	margin: 10px 0 10px 0px;
-    background:#000 !important;
+    background:#cfcfcf !important;
 	padding: 5px 0 5px 10px;
-	border: 2px solid #2E8B57;
-	border-left: 20px solid #2E8B57;
+	border: 2px solid #ddd;
+	border-left: 10px solid #ddd;
 	background: #fafafa;
-	font-size: 90%;
-	color: #2E8B57;
+	font-size: 100%;
+	color: #333;
 	font-family: "Courier New", Courier, monospace;
 	white-space: pre-wrap;
     width:600px;

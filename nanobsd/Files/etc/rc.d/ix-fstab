@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-fstab
+# BEFORE: fsck
+
+. /etc/rc.subr
+
+#
+# Generate fstab right before mountlate.
+#
+generate_fstab_real()
+{
+	local IFS=\|
+
+	local volumename mountpoint
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT name, mountpoint FROM freenas_volume WHERE type = 'ufs'" | \
+	while read volumename mountpoint; do
+		mkdir -p /mnt/${mountpoint}
+		echo "/dev/ufs/${volumename}		/mnt/${mountpoint}			ufs		rw,late	2	2"
+	done
+}
+
+generate_fstab()
+{
+	cp /conf/base/etc/fstab /etc/fstab
+	generate_fstab_real >> /etc/fstab
+}
+
+name="ix-fstab"
+start_cmd='generate_fstab'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

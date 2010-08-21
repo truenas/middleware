@@ -36,6 +36,8 @@ from django.utils.text import capfirst
 from django.forms.widgets import RadioFieldRenderer
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
+from django.utils.translation import ugettext_lazy as _
+from datetime import datetime
 
 class RadioFieldRendererEx(RadioFieldRenderer):
     outer = u"<span>%s</span>"
@@ -427,9 +429,9 @@ class networkInterfaceMGMT(models.Model):
             help_text="Pick your NIC")
     name = models.CharField(max_length="120", verbose_name="Interface Name",
             help_text="Name your NIC.")
-    ipv4address = models.CharField(max_length=18, verbose_name="IPv4 Address")
+    ipv4address = models.CharField(max_length=18, verbose_name="IPv4 Address", blank=True)
     ipv6address = models.CharField(max_length=42, verbose_name="IPv6 Address", blank=True)
-    options = models.CharField(max_length=120, verbose_name="Options")
+    options = models.CharField(max_length=120, verbose_name="Options", blank=True)
 
     def __unicode__(self):
         return self.name + " - " + self.interface
@@ -573,32 +575,28 @@ class DiskChoices:
 
 """ Disk and Volume Management """
 
-DiskStatus_Choices = (
-        ('Healthy', 'Healthy'),
-        ('Sick', 'Sick'),
-        ('Dead', 'Dead'),
-        )
-
-
 class Disk(models.Model):
+    name = models.CharField(max_length=120, verbose_name="Name")
     disks = models.CharField(max_length=120, choices=DiskChoices(),verbose_name="Disks")
-    name = models.CharField(max_length=25, verbose_name="Disk Name")
     description = models.CharField(max_length=120, verbose_name="Description", blank=True)
-
-    def __unicode__(self):
-        #return Volume.mountpoint + ' as ' + self.disks + ' (' + self.name + ')'
-        return self.disks + ' (' + self.name + ')'
+    sort_order = models.IntegerField(_('sort order'), default=0, help_text='The order in which disks will be displayed.')
 
     class Meta:
         verbose_name = "Disk"
-    
+        ordering = ['sort_order',]
+
+    def __unicode__(self):
+        return self.disks + ' (' + self.name + ')'
+
+    def save(self, *args, **kwargs):
+        super(Disk, self).save(*args, **kwargs)
 
 class DiskAdvanced(Disk):
     transfermode = models.CharField(max_length=120, choices=TRANSFERMODE_CHOICES, default="Auto", verbose_name="Transfer Mode")
     hddstandby = models.CharField(max_length=120, choices=HDDSTANDBY_CHOICES, default="Always On", verbose_name="HDD Standby")
     advpowermgmt = models.CharField(max_length=120, choices=ADVPOWERMGMT_CHOICES, default="Disabled", verbose_name="Advanced Power Management")
     acousticlevel = models.CharField(max_length=120, choices=ACOUSTICLVL_CHOICES, default="Disabled", verbose_name="Acoustic Level")
-    togglesmart = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="S.M.A.R.T.")
+    togglesmart = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="ON", verbose_name="S.M.A.R.T.")
     smartoptions = models.CharField(max_length=120, verbose_name="S.M.A.R.T. extra options", blank=True)
     def __unicode__(self):
         return Disk.disk
@@ -606,33 +604,58 @@ class DiskAdvanced(Disk):
     class Meta:
         verbose_name = "Disk"
 
+GroupType_Choices = (
+        ('single', 'single disk'),
+        ('raidz', 'raidz'),
+        ('mirror', 'mirror'),
+        )
+class DiskGroup(models.Model):
+    name = models.CharField(max_length=120, verbose_name="Name")
+    type = models.CharField(max_length=120, choices=GroupType_Choices, default="(NONE)", verbose_name="Group Type")
+    members = models.ManyToManyField(Disk)
+    
+    def __unicode__(self):
+        return self.name
+
 """ End Disk Management """
 
 """ Volume Management """
 VolumeType_Choices = (
-        ('single', 'Single Disk'),
-        ('zpool', 'zpool'),
+        ('ufs', 'ufs'),
+        ('zfs', 'zfs'),
         )
 class Volume(models.Model):
     name = models.CharField(max_length=120, verbose_name="Name")
-    type = models.CharField(max_length=120, choices=VolumeType_Choices, default="(NONE)", verbose_name="Volume Type")
+    type = models.CharField(max_length=120, choices=VolumeType_Choices, default="(NONE)", verbose_name="Filesystem")
+    mountpoint = models.CharField(max_length=120, verbose_name="Mount Point")
+    group = models.ManyToManyField(DiskGroup)
+    
+    class Meta:
+        verbose_name = "Volume"
+
+    def __unicode__(self):
+        return self.name + ' (' + self.type + ')'
+
+    def save(self, *args, **kwargs):
+        super(Volume, self).save(*args, **kwargs)
     
 
-class DiskGroup(models.Model):
-    group = models.ManyToManyField(Disk)
-    mountpoint = models.CharField(max_length=120, verbose_name="Mount Point")
 zpool_Choices = (
-        ('standard', 'Standard-alone Disk'),
-        ('raidz', 'RAIDZ'),
-        ('zfs', 'zfs'),
+        ('disk', 'disk'),
+        ('mirror', 'mirror'),
+        ('raidz1', 'raidz1'),
+        ('raidz2', 'raidz2'),
+        ('spare', 'spare'),
+        ('log', 'log'),
+        ('cache', 'cache'),
         )
 SingleDisk_Choices = (
         ('ufs', 'UFS'),
         )
 class zpool(models.Model):
-    zpool = models.CharField(max_length=120, choices=zpool_Choices)
+    zpool = models.CharField(max_length=120, choices=zpool_Choices, verbose_name="zfs")
 class SingleDisk(models.Model):
-    fs = models.CharField(max_length=120, choices=SingleDisk_Choices)
+    fs = models.CharField(max_length=120, choices=SingleDisk_Choices, verbose_name="Filesystem")
 
 
 
@@ -802,13 +825,9 @@ class servicesTFTP(models.Model):
     username = models.CharField(max_length=120, choices=whoChoices(), default="nobody", verbose_name="Username", 
             help_text="Specifies the username which the service will run as.")
     umask = models.CharField(max_length=120, verbose_name="umask",
-            help_text="Set the umask for newly created files to the specified value. The default is zero (anyone can read or write).")
-    timeout = models.CharField(max_length=120, verbose_name="Timeout",
-            help_text="Determine the default timeout, in microseconds, before the first packet is retransmitted. The default is 1000000 (1 second).")
-    maxbs = models.CharField(max_length=120, verbose_name="Max Block size",
-            help_text="Specifies the maximum permitted block size. The permitted range for this parameter is from 512 to 65464.")
+            help_text="Set the umask for newly created files to the specified value. The default is 022 (everyone can read, nobody can write).")
     options = models.CharField(max_length=120, verbose_name="Extra options",
-            help_text="Extra options (usually empty).")
+	    blank=True, help_text="Extra command line options (usually empty).")
 
 class servicesSSH(models.Model):            
     toggleSSH = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="SSH")

@@ -1,0 +1,14 @@
+{% extends "new-base.html" %}
+{% block content %}
+{% if user.is_authenticated %}
+<form method="post" action=".">
+<h1>Confirm Delete</h1>
+
+<br /><br />
+<input type="submit" value="Delete Disk" />
+</form>
+
+{% else %}
+{% endif %}
+{% endblock %}
+

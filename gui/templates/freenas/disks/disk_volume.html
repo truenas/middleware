@@ -2,8 +2,7 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-<h1>Disk Manager</h1>
-<h2>Volume</h2>
+<h1>Create Volume</h1>
     <form action="." method="post">
 <table>
     <tr><td>
@@ -11,10 +10,10 @@
         <br />
 </tr></td>
 </table>
-        <input type="submit" value="Save" />
+        <input type="submit" value="Create Volume" />
     </form>
           {% else %}
-                  <p>Welcome, new user. Please <a href="/freenas/login/">log in</a>.</p>
+                  <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
 
 {% endif %}
                           {% endblock %}

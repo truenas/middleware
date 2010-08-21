@@ -1,0 +1,7 @@
+freenas_servicestftp.toggleTFTP=OFF
+freenas_servicestftp.directory=/tftproot
+freenas_servicestftp.newfiles=OFF
+freenas_servicestftp.port=69
+freenas_servicestftp.username=nobody
+freenas_servicestftp.umask=022
+freenas_servicestftp.options=

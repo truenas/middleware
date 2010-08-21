@@ -1,0 +1,23 @@
+{% extends "new-base.html" %}
+{% block content %}
+{% if user.is_authenticated %}
+
+<h1>System Volumes</h1>
+<table>
+    <tr> 
+        {% for volume in object_list %}
+
+        <tr><td>
+                <a href="{{ volume.id }}">{% autoescape off %}{{ volume.name }} ({{ volume.type }})
+{% endautoescape %}</a>
+        </td></tr> 
+
+        {% endfor %}
+
+    </tr>
+</table>
+
+{% else %}
+<p>Welcome. Please <a href="/freenas/login/">log in</a>.</ p>
+{% endif %}
+{% endblock %}

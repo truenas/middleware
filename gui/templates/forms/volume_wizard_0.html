@@ -2,8 +2,7 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-<h1>Disk Manager</h1>
-<h2>Add a Volume</h2>
+<h1>Create Volume</h1>
 <form action="." method="post">{% csrf_token %}
 <table>
 {{ form }}
@@ -12,12 +11,12 @@
 {{ previous_fields|safe }}
 <br />
 <br />
-<input  type="submit" value="{% ifequal step step_count %}Add Disk{% else %}Next &raquo;{% endifequal %}" class="default" name="_save" />
+<input  type="submit" value="{% ifequal step step_count %}Create Volume{% else %}Next &raquo;{% endifequal %}" class="default" name="_save" />
 </form>
 <br />
 <br />
 {% else %}
-    <p>Welcome, new user. Please <a href="/freenas/login/">log in</a>.</p>
+    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
 {% endif %}
 
 {% endblock %}

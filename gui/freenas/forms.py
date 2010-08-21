@@ -35,6 +35,7 @@ from django.shortcuts import render_to_response
 from freenasUI.freenas.ext_formwizard import FormWizard         
 from freenasUI.freenas.models import *                         
 from freenasUI.freenas.models import TOGGLE_CHOICES
+from freenasUI.middleware.notifier import notifier
 from django.http import HttpResponseRedirect
 from django.forms.widgets import RadioFieldRenderer
 from django.utils.safestring import mark_safe
@@ -50,6 +51,10 @@ class RadioFieldRendererEx(RadioFieldRenderer): # alternate renderer for horiz. 
 class systemGeneralSetupForm(ModelForm):
     class Meta:
         model = systemGeneralSetup
+    def save(self):
+        super(systemGeneralSetupForm, self).save()
+        notifier().reload("general")
+
 class systemGeneralPasswordForm(ModelForm):
     class Meta:
         model = systemGeneralPassword
@@ -137,6 +142,11 @@ class sysctlMIBForm(ModelForm):
 class networkInterfaceMGMTForm(ModelForm):
     class Meta:
         model = networkInterfaceMGMT 
+    def save(self):
+        # TODO: new IP address should be added in a side-by-side manner
+	# or the interface wouldn't appear once IP was changed.
+        super(networkInterfaceMGMTForm, self).save()
+        notifier().start("network")
 
 class networkVLANForm(ModelForm):
     class Meta:
@@ -159,15 +169,10 @@ class StaticRoutesForm(ModelForm):
 class networkStaticRoutesForm(ModelForm):
     class Meta:
         model = networkStaticRoutes
-
+"""
+Django's FormWizard uses multiple Django Forms to create a multi-step wizard
+"""
 class DiskWizard(FormWizard):
-    def process_step(self, request, form, step):
-        # We know that step 0 contains the form with the gender choice field
-        if step==1:
-            if form.cleaned_data['type']=='zpool':
-                self.form_list.remove(SingleDiskForm)
-            else:
-                self.form_list.remove(zpoolForm)
     def prefix_for_step(self, step):
         # Given the step, returns a form prefix to use. 
         # By default, this simply uses the step itself
@@ -181,11 +186,23 @@ class DiskWizard(FormWizard):
       #  return render_to_response('forms/disk_wizard.html', {
       #      'form_data': [form.cleaned_data for form in form_list],
       #      })
-        return HttpResponseRedirect('/freenas/disk/management/added/') # Redirect after POST
+        return HttpResponseRedirect('/freenas/disk/management/disks/') # Redirect after POST
 
 class DiskForm(ModelForm):
     class Meta:
         model = Disk
+
+class DiskAdvancedForm(ModelForm):
+    class Meta:
+        model = DiskAdvanced
+
+class DiskGroupForm(ModelForm):
+    class Meta:
+        model = DiskGroup
+        widgets = {
+                'group': forms.SelectMultiple(),
+                }
+
 class SingleDiskForm(ModelForm):
     class Meta:
         model = SingleDisk
@@ -194,8 +211,15 @@ class zpoolForm(ModelForm):
     class Meta:
         model = zpool 
 
-
 class VolumeWizard(FormWizard):
+    def process_step(self, request, form, step):
+        # Step 0 asks which volume "type" (filesystem)
+        # and drops the user to the correct form
+        if step==0:
+            if form.cleaned_data['type']=='zfs':
+                self.form_list.remove(SingleDiskForm)
+            else:
+                self.form_list.remove(zpoolForm)
     def prefix_for_step(self, step):
         # Given the step, returns a form prefix to use. 
         # By default, this simply uses the step itself
@@ -217,19 +241,13 @@ class VolumeForm(ModelForm):
         widgets = {
                 'disks': forms.SelectMultiple(),
                 }
+    def save(self):
+        super(VolumeForm, self).save()
+        notifier().create("disk")
+
 class VolumeTypeForm(ModelForm):
     class Meta:
         model = Volume
-class DiskGroupForm(ModelForm):
-    class Meta:
-        model = DiskGroup
-        widgets = {
-                'group': forms.SelectMultiple(),
-                }
-
-class DiskAdvancedForm(ModelForm):
-    class Meta:
-        model = DiskAdvanced
 
 
 class servicesCIFSForm(ModelForm):
@@ -254,6 +272,10 @@ class servicesCIFSForm(ModelForm):
                 'dosattr': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 'nullpw': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 }
+    def save(self):
+        super(servicesCIFSForm, self).save()
+        notifier().reload("smbd")
+
 class shareCIFSForm(ModelForm):
     class Meta:
         model = shareCIFS 
@@ -264,11 +286,18 @@ class shareCIFSForm(ModelForm):
                 'recyclebin': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 'showhiddenfiles': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 }
+    def save(self):
+        super(shareCIFSForm, self).save()
+        notifier().reload("smbd")
+
 class servicesCIFSshareForm(ModelForm):
     class Meta:
         model = servicesCIFSshare
 
 class servicesFTPForm(ModelForm):
+    def save(self):
+        super(servicesFTPForm, self).save()
+        notifier().reload("ftp")
     class Meta:
         model = servicesFTP 
         widgets = {
@@ -285,6 +314,9 @@ class servicesFTPForm(ModelForm):
                 }
 
 class servicesTFTPForm(ModelForm):
+    def save(self):
+        super(servicesTFTPForm, self).save()
+        notifier().reload("tftp")
     class Meta:
         model = servicesTFTP 
         widgets = {
@@ -293,6 +325,9 @@ class servicesTFTPForm(ModelForm):
                 }
 
 class servicesSSHForm(ModelForm):
+    def save(self):
+        super(servicesSSHForm, self).save()
+        notifier().reload("ssh")
     class Meta:
         model = servicesSSH 
         widgets = {
@@ -319,6 +354,9 @@ class shareNFSForm(ModelForm):
                 'readonly': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 'quiet': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 }
+    def save(self):
+        super(shareNFSForm, self).save()
+        notifier().reload("nfsd")
 
 class servicesNFSshareForm(ModelForm):
     class Meta:

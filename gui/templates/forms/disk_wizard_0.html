@@ -2,8 +2,7 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-<h1>Disk Manager</h1>
-<h2>Add a disk</h2>
+<h1>Add Disk</h1>
 <form action="." method="post">{% csrf_token %}
 <table>
 {{ form }}
@@ -17,7 +16,7 @@
 <br />
 <br />
 {% else %}
-    <p>Welcome, new user. Please <a href="/freenas/login/">log in</a>.</p>
+    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
 {% endif %}
 
 {% endblock %}

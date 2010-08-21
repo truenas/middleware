@@ -52,6 +52,11 @@ class notifier:
 			f()
 		except:
 			raise "Execution failed"
+	def create(self, what):
+		""" Dedicated command to create "what".
+		
+		The helper will use method self._create_[what]() to create the object"""
+		self._simplecmd("create", what)
 	def start(self, what):
 		""" Start the service specified by "what".
 		
@@ -92,6 +97,77 @@ class notifier:
 		self.__system("/etc/netstart")
 	def _reload_named(self):
 		self.__system("/usr/sbin/service named reload")
+	def _reload_general(self):
+		self.__system("/usr/sbin/service hostname start")
+	def _reload_ssh(self):
+		self.__system("/usr/sbin/service ix-sshd start")
+		self.__system("/usr/sbin/service sshd restart")
+	def _reload_tftp(self):
+		self.__system("/usr/sbin/service ix-inetd start")
+		self.__system("/usr/sbin/service inetd restart")
+	def _reload_ftp(self):
+		self.__system("/usr/sbin/service ix-proftpd start")
+		self.__system("/usr/sbin/service proftpd restart")
+	def _reload_nfsd(self):
+		self.__system("/usr/sbin/service ix-nfsd start")
+		self.__system("/usr/sbin/service mountd restart")
+	def _reload_smbd(self):
+		self.__system("/usr/sbin/service ix-smbd start")
+		self.__system("/usr/sbin/service smbd restart")
+        def _create_disk(self):
+                # TODO: This accesses the database directly which should
+                # be avoided
+		dbname = ""
+		try:
+                	from freenasUI.settings import DATABASE_NAME as dbname
+		except:
+			dbname = '/data/freenas-v1.db'
+                import sqlite3
+                
+                conn = sqlite3.connect(dbname)
+                c = conn.cursor()
+                # Create ZFS pools
+                c.execute("SELECT id, name, mountpoint FROM freenas_volume WHERE type = 'zfs'")
+                zfs_list = c.fetchall()
+		# We have to be able to write /boot/zfs and / to create mount points.
+		self.__system("/sbin/mount -uw /")
+		for row in zfs_list:
+			z_id, z_name, z_mountpoint = row
+			z_vdev = ""
+			t_id = (z_id,)
+			c.execute("SELECT diskgroup_id FROM freenas_volume_group WHERE volume_id = ?", t_id)
+			vgroup_list = c.fetchall()
+			for vgrp in vgroup_list:
+				c.execute("SELECT type FROM freenas_diskgroup WHERE id = ?", vgrp)
+				vgrp_type = c.fetchone()[0]
+				z_vdev += " " + vgrp_type
+				c.execute("SELECT freenas_disk.disks, freenas_disk.name FROM freenas_disk LEFT OUTER JOIN freenas_diskgroup_members ON freenas_disk.id = freenas_diskgroup_members.disk_id WHERE freenas_diskgroup_members.diskgroup_id = ?", vgrp)
+				z_vdsk_list = c.fetchall()
+				for disk in z_vdsk_list:
+					self.__system("[ -e /dev/gpt/%s ] || ( gpart create -s gpt /dev/%s && gpart add -t freebsd-zfs -l %s %s )" % (disk[1], disk[0], disk[1], disk[0]))
+					z_vdev += " /dev/gpt/" + disk[1]
+			self.__system("zpool create %s -m %s %s" % (z_name, z_mountpoint, z_vdev))
+                # Create UFS file system and newfs
+                c.execute("SELECT id, name, mountpoint FROM freenas_volume WHERE type = 'ufs'")
+                ufs_list = c.fetchall()
+		for row in ufs_list:
+			u_id, u_name, u_mountpoint = row
+			t_id = (u_id,)
+			c.execute("SELECT diskgroup_id FROM freenas_volume_group WHERE volume_id = ?", t_id)
+			# TODO: For now we don't support RAID levels.
+			ufs_volume_id = c.fetchone()
+			c.execute("SELECT freenas_disk.disks, freenas_disk.name FROM freenas_disk LEFT OUTER JOIN freenas_diskgroup_members ON freenas_disk.id = freenas_diskgroup_members.disk_id WHERE freenas_diskgroup_members.diskgroup_id = ?", ufs_volume_id)
+			disk = c.fetchone()
+			self.__system("[ -e /dev/gpt/%s ] || (gpart create -s gpt /dev/%s && gpart add -t freebsd-ufs -l %s %s )" % (disk[1], disk[0], disk[1], disk[0]))
+			ufs_device = "/dev/ufs/" + disk[1]
+			# TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar generated automatically
+			self.__system("newfs -U -L %s /dev/%sp1" % (u_name, disk[0]))
+		self.__system("/sbin/mount -ur /")
+		self._reload_disk()
+        def _reload_disk(self):
+		self.__system("/usr/sbin/service ix-fstab start")
+		self.__system("/usr/sbin/service mountlate start")
+		self.__system("/sbin/zpool import -a")
 
 def usage():
 	print ("Usage: %s action command" % argv[0])

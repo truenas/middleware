@@ -1,9 +1,31 @@
+.icons {
+width:130px;
+position:relative;
+float:left;
+text-align:left;
+}
+.label {
+    width:30%;
+    line-height:2em;
+    border-bottom:1px solid #ccc;
+    border-right:1px solid #ccc;
+    position:relative;
+    float:left;
+}
+.descr {
+    width:50%;
+    line-height:2em;
+    border-bottom:1px solid #ccc;
+    padding-left:8px;
+    position:relative;
+    float:left;
+}
 #raidmenu {
 }
 .raidmenu {
     background:transparent;
-    padding-top:12px;
-    float:left;
+    padding-top:14px;
+    padding-bottom:14px;
     font-size:14px;
     font-weight:bold;
     height:40px;
@@ -14,6 +36,7 @@
 .raidmenu a {
 
     color:#EDF0F1;
+    padding-left:18px;
 }
 /*
  * FORM 

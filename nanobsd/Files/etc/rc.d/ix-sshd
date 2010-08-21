@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-sshd
+# REQUIRE: FILESYSTEMS
+# BEFORE: sshd
+
+. /etc/rc.subr
+
+#
+# TODO: this is really just a place holder for the moment....
+#
+generate_sshd()
+{
+}
+
+name="ix-sshd"
+start_cmd='generate_sshd'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

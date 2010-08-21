@@ -28,6 +28,7 @@
 
 from freenasUI.freenas.forms import * 
 from freenasUI.freenas.models import * 
+from freenasUI.freenas.models import Disk, Volume
 from django.forms.models import modelformset_factory
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
@@ -35,6 +36,8 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.contrib.auth import authenticate, login, logout
 from django.template import RequestContext
+from django.http import Http404
+from django.views.generic.list_detail import object_detail, object_list
 
 ## Generic Views for GUI Screens 
 
@@ -326,6 +329,49 @@ def StaticRoutesView(request):
     return render_to_response('freenas/network/staticroutes_add.html', variables)
 
 ## Disk section
+
+
+def disk_detail(request, diskid, template_name='freenas/disks/disk_detail.html'):
+
+    return object_detail(
+        request,
+        template_name = template_name,
+        object_id = diskid,
+        queryset = Disk.objects.all(),
+    ) 
+
+
+def disk_list(request, template_name='freenas/disks/disk_list.html'):
+    query_set = Disk.objects.all()
+    if len(query_set) == 0:
+        raise Http404()
+    return object_list(
+        request,
+        template_name = template_name,
+        queryset = query_set
+    )
+
+def volume_detail(request, volumeid, template_name='freenas/disks/volume_detail.html'):
+
+    return object_detail(
+        request,
+        template_name = template_name,
+        object_id = volumeid,
+        queryset = Volume.objects.all(),
+    ) 
+
+
+def volume_list(request, template_name='freenas/disks/volume_list.html'):
+    query_set = Volume_group.objects.all()
+    if len(query_set) == 0:
+        raise Http404()
+    return object_list(
+        request,
+        template_name = template_name,
+        queryset = query_set
+    )
+
+
 def DiskManagerView(request):
     if request.method == 'POST':
         form = DiskManagerForm(request.POST)
@@ -349,6 +395,18 @@ def DiskView(request):
         'form': form
     })
     return render_to_response('freenas/disks/disk.html', variables)
+
+def DiskGroupView(request):
+    if request.method == 'POST':
+        form = DiskGroupForm(request.POST)
+        if form.is_valid():
+            form.save()
+    else:
+        form = DiskGroupForm()
+    variables = RequestContext(request, {
+        'form': form
+    })
+    return render_to_response('freenas/disks/disk_group.html', variables)
 
 def VolumeView(request):
     if request.method == 'POST':
@@ -430,8 +488,18 @@ def servicesFTPView(request):
         form = servicesFTPForm(request.POST)
         if form.is_valid():
             form.save()
+            if servicesFTP.objects.count() > 3:
+                try:
+                    stale_id = servicesFTP.objects.order_by("-id")[3].id
+                    servicesFTP.objects.filter(id__lte=stale_id).delete()
+                except:
+                    pass
     else:
-        form = servicesFTPForm()
+        try:
+            _entity = servicesFTP.objects.order_by("-id").values()[0]
+        except:
+            _entity = {}
+        form = servicesFTPForm(data = _entity)
     variables = RequestContext(request, {
         'form': form
     })
@@ -442,8 +510,18 @@ def servicesTFTPView(request):
         form = servicesTFTPForm(request.POST)
         if form.is_valid():
             form.save()
+            if servicesTFTP.objects.count() > 3:
+                try:
+                    stale_id = servicesTFTP.objects.order_by("-id")[3].id
+                    servicesTFTP.objects.filter(id__lte=stale_id).delete()
+                except:
+                    pass
     else:
-        form = servicesTFTPForm()
+        try:
+            _entity = servicesTFTP.objects.order_by("-id").values()[0]
+        except:
+            _entity = {}
+        form = servicesTFTPForm(data = _entity)
     variables = RequestContext(request, {
         'form': form
     })
@@ -454,8 +532,18 @@ def servicesSSHView(request):
         form = servicesSSHForm(request.POST)
         if form.is_valid():
             form.save()
+            if servicesSSH.objects.count() > 3:
+                try:
+                    stale_id = servicesSSH.objects.order_by("-id")[3].id
+                    servicesSSH.objects.filter(id__lte=stale_id).delete()
+                except:
+                    pass
     else:
-        form = servicesSSHForm()
+        try:
+            _entity = servicesSSH.objects.order_by("-id").values()[0]
+        except:
+            _entity = {}
+        form = servicesSSHForm(data = _entity)
     variables = RequestContext(request, {
         'form': form
     })

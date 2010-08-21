@@ -28,7 +28,11 @@
 
 # Django settings for FreeNAS project.
 
-DEBUG = True
+
+#DEBUG = True
+DEBUG = False
+# use 'DEBUG= True' to display error logs instead of 404 page
+
 TEMPLATE_DEBUG = DEBUG
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/freenas/login/'
