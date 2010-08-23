@@ -78,6 +78,7 @@ add_port net-mgmt/bsnmp-ucd
 add_port net-mgmt/bsnmptools
 add_port net-mgmt/clog
 add_port net-mgmt/sipcalc
+add_port devel/libevent
 add_port net-p2p/transmission-cli
 add_port net/istgt
 add_port net/mDNSResponder
