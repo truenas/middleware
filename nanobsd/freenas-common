@@ -32,6 +32,10 @@
 # FreeNAS specific bits of the common stuff.
 #
 
+REVISION=`svnversion ${NANO_CFG_BASE}`
+NANO_NAME="FreeNAS-8r${REVISION}-${NANO_ARCH}"
+NANO_IMGNAME="${NANO_NAME}.full"
+
 # Tmp hack for transition to lighttpd
 use_lighttpd=1
 
@@ -162,6 +166,12 @@ hack_nsswitch_conf ( )
 }
 customize_cmd hack_nsswitch_conf
 
+default_root_password ( )
+{
+	CR "echo freenas | pw usermod root -h 0"
+}
+customize_cmd default_root_password
+
 add_gui()
 {
     local gui dst dstCR;
@@ -183,10 +193,11 @@ freenas
 freenas
 __EOF__
 	CR "chown -R www:www ${dstCR} data"
-	CR "(cd ${dstCR}; /usr/local/bin/sqlite3 ${NANO_WORLDDIR}/data/freenas-v1.db) || true" << __EOF__
-.read schema
-__EOF__
+#	CR "(cd ${dstCR}; /usr/local/bin/sqlite3 /data/freenas-v1.db) || true" << __EOF__
+# .read schema
+# __EOF__
 	CR "(cd ${dstCR}; ${dstCR}/set_schema_defaults.sh ${dstCR}/schema ${dstCR}/schema.defaults)"
+	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
     else
         pprint 2 "GUI OMITTED from image"
     fi

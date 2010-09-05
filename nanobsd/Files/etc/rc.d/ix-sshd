@@ -14,6 +14,47 @@
 #
 generate_sshd()
 {
+    local IFS=\|
+    local f="toggleSSH tcpport rootlogin passwordauth tcpfwd compression options"
+    local toggleSSH tcpport rootlogin passwordauth tcpfwd compression options
+    local cmd sf cfg
+    sf=$(echo $f | sed -e 's/ /, /g')
+    cfg=/etc/ssh/sshd_config
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT $sf FROM freenas_servicesssh ORDER BY -id LIMIT 1" | \
+	while read toggleSSH tcpport rootlogin passwordauth tcpfwd compression options; do
+	    cat > $cfg <<EOF
+SyslogFacility LOCAL3
+Protocol 2
+UseDNS no
+Subsystem       sftp    /usr/libexec/sftp-server
+ChallengeResponseAuthentication no
+EOF
+	    if [ $tcpport -gt 0 ]; then
+		echo "Port $tcpport" >> $cfg
+	    fi
+	    if [ $rootlogin = ON ]; then
+		echo "PermitRootLogin yes" >> $cfg
+	    fi
+	    if [ $tcpfwd = ON ]; then
+		echo "AllowTcpForwarding yes" >> $cfg
+	    else
+		echo "AllowTcpForwarding no" >> $cfg
+	    fi
+	    if [ $compression = ON ]; then
+		echo "Compression yes" >> $cfg
+	    fi
+	    if [ $passwordauth = ON ]; then
+		echo "PasswordAuthentication yes" >> $cfg
+	    fi
+	    pubkeyauth=ON		# Missing in schema
+	    if [ $pubkeyauth = ON ]; then
+		echo "PubkeyAuthentication yes" >> $cfg
+	    fi
+	    if [ -n "$options" ]; then
+		echo "$options" >> $cfg
+	    fi
+    done
 }
 
 name="ix-sshd"

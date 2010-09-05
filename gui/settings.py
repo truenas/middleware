@@ -29,8 +29,8 @@
 # Django settings for FreeNAS project.
 
 
-#DEBUG = True
-DEBUG = False
+DEBUG = True
+#DEBUG = False
 # use 'DEBUG= True' to display error logs instead of 404 page
 
 TEMPLATE_DEBUG = DEBUG
@@ -39,7 +39,7 @@ LOGIN_URL = '/freenas/login/'
 LOGOUT_URL = '/freenas/logout/'
 
 ADMINS = (
-    # ('Your Name', 'your_email@domain.com'),
+     ('iXsystems, Inc.', 'freenas@ixsystems.com'),
 )
 
 MANAGERS = ADMINS
@@ -83,13 +83,13 @@ MEDIA_URL = 'https://raidzilla.ixsystems.com/media/'
 ADMIN_MEDIA_PREFIX = 'https://raidzilla.ixsystems.com/admin_media/'
 
 # This should be unique for every FreeNAS installation
+""" this should be addressed soon, any takers?"""
 SECRET_KEY = '7j%4n@h$+eye^)!*^jk*ni=vj!r70!#y9sdsw)x^*!502bcu2_'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
     'django.template.loaders.app_directories.load_template_source',
-#     'django.template.loaders.eggs.load_template_source',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -112,6 +112,6 @@ INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.admin',
+    #'django.contrib.admin',
     'freenas',
 )

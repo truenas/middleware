@@ -1,19 +1,22 @@
-{% extends "new-base.html" %}
+{% extends "base.html" %}
 {% block content %}
 {% if user.is_authenticated %}
 
 <h1>System Volumes</h1>
 <table>
-    <tr> 
-        {% for volume in object_list %}
-
-        <tr><td>
-                <a href="{{ volume.id }}">{% autoescape off %}{{ volume.name }} ({{ volume.type }})
-{% endautoescape %}</a>
-        </td></tr> 
-
-        {% endfor %}
-
+    <tr>
+        <td style="background:#cfcfcf;"><strong>Volume Name</strong></td>
+        <td style="background:#cfcfcf;"><strong>Volume Type</strong></td>
+        <td style="background:#cfcfcf;"></td>
+    </tr>
+{% for volume in object_list %}
+    <tr>
+        <td> <a href="{{ volume.id }}">{{ volume.mountpoint }}</a></td>
+        <td> {{ volume.type }}</td>
+        <td> 
+        <a href="/freenas/disk/management/volumes/delete/{{ volume.id }}/">Delete?</a>
+            </td>
+{% endfor %}
     </tr>
 </table>
 

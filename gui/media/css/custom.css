@@ -5,20 +5,21 @@ float:left;
 text-align:left;
 }
 .label {
-    width:30%;
-    line-height:2em;
-    border-bottom:1px solid #ccc;
-    border-right:1px solid #ccc;
-    position:relative;
-    float:left;
+    background:none repeat scroll 0 0 #F4F4F4;
+    border-bottom:1px solid #C5C5C5;
+    border-left:1px solid #C5C5C5;
+    border-right:1px dotted #C5C5C5;
+    font-weight:bold;
+    line-height:24px;
+    padding-left:16px;
+    width:135px
 }
 .descr {
-    width:50%;
-    line-height:2em;
-    border-bottom:1px solid #ccc;
-    padding-left:8px;
-    position:relative;
-    float:left;
+    background:none repeat scroll 0 0 #FFFFFF;
+    border-bottom:1px dotted #C5C5C5;
+    border-right:1px solid #C5C5C5;
+    line-height:24px;
+    padding:4px
 }
 #raidmenu {
 }
@@ -36,7 +37,7 @@ text-align:left;
 .raidmenu a {
 
     color:#EDF0F1;
-    padding-left:18px;
+    padding-right:18px;
 }
 /*
  * FORM 

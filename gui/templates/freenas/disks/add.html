@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<div class="button">
+<div class="icons"><a href="/freenas/disk/management/disks/add/"><img src="/freenas/media/images/ui/disk-add.png"></a><br /><strong>Add Disks</strong></div>
+<div class="icons"><a href="/freenas/disk/management/groups/add/"><img src="/freenas/media/images/ui/disk-group.png"></a><br /><strong>Group Disks</strong></div>
+<div class="icons"><a href="/freenas/disk/management/volumes/create/"><img src="/freenas/media/images/ui/create.png"></a><br /><strong>Create Volumes</strong></div>
+</div>
+
+          {% else %}
+                  <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
+
+{% endif %}
+                          {% endblock %}

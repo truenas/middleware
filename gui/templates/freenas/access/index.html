@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<h1>Access</h1>
+<h2><a href="/freenas/access/ldap/">LDAP</a></h2>
+<h2><a href="/freenas/access/ldap/">Active Directory</a></h2>
+
+
+          {% else %}
+                  <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
+
+{% endif %}
+                          {% endblock %}

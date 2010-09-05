@@ -1,7 +1,6 @@
-{% extends "new-base.html" %}
+{% extends "base.html" %}
 
 {% block content %}
-{% if user.is_authenticated %}
 <h1>System - General</h1>
 <h2>Setup</h2>
     <form action="." method="post">{% csrf_token %}
@@ -13,8 +12,4 @@
 </table>
         <input type="submit" value="Save" />
     </form>
-          {% else %}
-                  <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
-
-{% endif %}
                           {% endblock %}

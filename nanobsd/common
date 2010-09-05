@@ -119,7 +119,6 @@ WITHOUT_NS_CACHING=true
 WITHOUT_OBJC=true
 WITHOUT_PROFILE=true
 WITHOUT_RCMDS=true
-WITHOUT_RESCUE=true
 WITHOUT_SENDMAIL=true
 WITHOUT_SHAREDOCS=true
 WITHOUT_SSP=true
@@ -139,7 +138,6 @@ NO_INSTALL_MANPAGES=t
 # from the build
 # WITHOUT_INFO=true			makeinfo
 # WITHOUT_RCS=true
-# s/^__// below for size numbers -- hack in progress xxx
 PKG_ONLY_MAKE_CONF="
 WITHOUT_TOOLCHAIN=true
 WITHOUT_INSTALLLIB=true

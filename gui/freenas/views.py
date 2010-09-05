@@ -31,6 +31,7 @@ from freenasUI.freenas.models import *
 from freenasUI.freenas.models import Disk, Volume
 from django.forms.models import modelformset_factory
 from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -38,8 +39,54 @@ from django.contrib.auth import authenticate, login, logout
 from django.template import RequestContext
 from django.http import Http404
 from django.views.generic.list_detail import object_detail, object_list
+from freenasUI.middleware.notifier import notifier
+import os, commands
+
+def helperView(request, theForm, model, url):
+    if request.method == 'POST':
+        form = theForm(request.POST)
+        if form.is_valid():
+            form.save()
+            if model.objects.count() > 3:
+                stale_id = model.objects.order_by("-id")[3].id
+                model.objects.filter(id__lte=stale_id).delete()
+    else:
+        _entity = model.objects.order_by("-id").values()[0]
+        form = theForm(data = _entity)
+    variables = RequestContext(request, {
+        'form': form
+    })
+    return render_to_response(url, variables)
 
 ## Generic Views for GUI Screens 
+@login_required
+def index(request):
+    hostname = commands.getoutput("hostname")
+    uname1 = os.uname()[0]
+    uname2 = os.uname()[2]
+    platform = os.popen("sysctl -n hw.model").read()
+    date = os.popen('date').read()
+    uptime = commands.getoutput("uptime | awk -F', load averages:' '{ print $1 }'")
+    loadavg = commands.getoutput("uptime | awk -F'load averages:' '{ print $2 }'")
+    variables = RequestContext(request, {
+        'hostname': hostname,
+        'uname1': uname1,
+        'uname2': uname2,
+        'platform': platform,
+        'date': date,
+        'uptime': uptime,
+        'loadavg': loadavg,
+    })  
+    return render_to_response('freenas/index.html', variables)
+
+@login_required
+def statusProcessesView(request):
+    top = os.popen('top').read()
+    variables = RequestContext(request, {
+        'top': top,
+    })  
+    return render_to_response('freenas/status/processes.html', variables)
+
 
 def login(request):
     username = request.POST['username']
@@ -56,84 +103,46 @@ def logout(request):
     # Redirect to a success page.
     return HttpResponseRedirect('/freenas/logout/') # Redirect after POST
 
+
 ## System Section
+
+@login_required
+def systemReboot(request):
+    """ reboots the system """
+    notifier().restart("system")
+    return render_to_response('freenas/system/reboot.html')
+
+@login_required
+def systemShutdown(request):
+    """ shuts down the system and powers off the system """
+    notifier().stop("system")
+    return render_to_response('freenas/system/shutdown.html')
+
+@login_required
 def systemGeneralSetupView(request):
-    if request.method == 'POST':
-        form = systemGeneralSetupForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        try:
-            _entity = systemGeneralSetup.objects.filter(pk=True).values()[0]
-        except:
-            _entity = {}
-        form = systemGeneralSetupForm(data = _entity)
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/system/general_setup.html', variables)
+    return helperView(request, systemGeneralSetupForm, systemGeneralSetup, 'freenas/system/general_setup.html')
 
-
+@login_required
 def systemGeneralPasswordView(request):
-    if request.method == 'POST':
-        form = systemGeneralPasswordForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = systemGeneralPasswordForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/system/general_password.html', variables)
+    return helperView(request, systemGeneralPasswordForm, systemGeneralPassword, 'freenas/system/general_password.html')
 
+@login_required
 def systemAdvancedView(request):
-    if request.method == 'POST':
-        form = systemAdvancedForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = systemAdvancedForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/system/advanced.html', variables)
+    return helperView(request, systemAdvancedFormForm, systemAdvancedForm, 'freenas/system/advanced.html')
 
+@login_required
 def systemAdvancedEmailView(request):
-    if request.method == 'POST':
-        form = systemAdvancedEmailForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = systemAdvancedEmailForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/system/advanced_email.html', variables)
+    return helperView(request, systemAdvancedEmailForm, systemAdvancedEmail, 'freenas/system/advanced_email.html')
 
+@login_required
 def systemAdvancedProxyView(request):
-    if request.method == 'POST':
-        form = systemAdvancedProxyForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = systemAdvancedProxyForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/system/advanced_proxy.html', variables)
+    return helperView(request, systemAdvancedProxyForm, systemAdvancedProxy, 'freenas/system/advanced_proxy.html')
 
+@login_required
 def systemAdvancedSwapView(request):
-    if request.method == 'POST':
-        form = systemAdvancedSwapForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = systemAdvancedSwapForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/system/advanced_swap.html', variables)
+    return helperView(request, systemAdvancedSwapForm, systemAdvancedSwap, 'freenas/system/advanced_swap.html')
 
+@login_required
 def CommandScriptsView(request):
     if request.method == 'POST':
         form = CommandScriptsForm(request.POST)
@@ -146,6 +155,7 @@ def CommandScriptsView(request):
     })
     return render_to_response('freenas/system/commandscripts_add.html', variables)
 
+@login_required
 def systemAdvancedCommandScriptsView(request):
     if request.method == 'POST':
         form = systemAdvancedCommandScriptsForm(request.POST)
@@ -158,6 +168,7 @@ def systemAdvancedCommandScriptsView(request):
     })
     return render_to_response('freenas/system/advanced_commandscripts.html', variables)
 
+@login_required
 def systemAdvancedCronView(request):
     if request.method == 'POST':
         form = systemAdvancedCronForm(request.POST)
@@ -170,6 +181,7 @@ def systemAdvancedCronView(request):
     })
     return render_to_response('freenas/system/advanced_cron.html', variables)
 
+@login_required
 def cronjobView(request):
     if request.method == 'POST':
         form = cronjobForm(request.POST)
@@ -182,6 +194,7 @@ def cronjobView(request):
     })
     return render_to_response('freenas/system/cronjob.html', variables)
 
+@login_required
 def rcconfView(request):
     if request.method == 'POST':
         form = rcconfForm(request.POST)
@@ -194,6 +207,7 @@ def rcconfView(request):
     })
     return render_to_response('freenas/system/rcconf.html', variables)
 
+@login_required
 def systemAdvancedRCconfView(request):
     if request.method == 'POST':
         form = systemAdvancedRCconfForm(request.POST)
@@ -206,6 +220,7 @@ def systemAdvancedRCconfView(request):
     })
     return render_to_response('freenas/system/advanced_rcconf.html', variables)
 
+@login_required
 def sysctlMIBView(request):
     if request.method == 'POST':
         form = sysctlMIBForm(request.POST)
@@ -218,6 +233,7 @@ def sysctlMIBView(request):
     })
     return render_to_response('freenas/system/sysctlMIB.html', variables)
 
+@login_required
 def systemAdvancedSYSCTLconfView(request):
     if request.method == 'POST':
         form = systemAdvancedSYSCTLconfForm(request.POST)
@@ -232,6 +248,7 @@ def systemAdvancedSYSCTLconfView(request):
 
 ## Network Section
 
+@login_required
 def networkInterfaceMGMTView(request):
     if request.method == 'POST':
         form = networkInterfaceMGMTForm(request.POST)
@@ -244,6 +261,7 @@ def networkInterfaceMGMTView(request):
     })
     return render_to_response('freenas/network/interfaces.html', variables)
 
+@login_required
 def networkVLANView(request):
     if request.method == 'POST':
         form = networkVLANForm(request.POST)
@@ -256,6 +274,7 @@ def networkVLANView(request):
     })
     return render_to_response('freenas/network/vlan_add.html', variables)
 
+@login_required
 def networkInterfaceMGMTvlanView(request):
     if request.method == 'POST':
         form = networkInterfaceMGMTvlanForm(request.POST)
@@ -268,6 +287,7 @@ def networkInterfaceMGMTvlanView(request):
     })
     return render_to_response('freenas/network/vlan.html', variables)
 
+@login_required
 def networkLAGGView(request):
     if request.method == 'POST':
         form = networkLAGGForm(request.POST)
@@ -280,6 +300,7 @@ def networkLAGGView(request):
     })
     return render_to_response('freenas/network/lagg_add.html', variables)
 
+@login_required
 def networkInterfaceMGMTlaggView(request):
     if request.method == 'POST':
         form = networkInterfaceMGMTlaggForm(request.POST)
@@ -292,6 +313,7 @@ def networkInterfaceMGMTlaggView(request):
     })
     return render_to_response('freenas/network/lagg.html', variables)
 
+@login_required
 def networkHostsView(request):
     if request.method == 'POST':
         form = networkHostsForm(request.POST)
@@ -304,7 +326,8 @@ def networkHostsView(request):
     })
     return render_to_response('freenas/network/hosts.html', variables)
 
-def networkStaticRoutesView(request):
+@login_required
+def networkStaticRoutes(request):
     if request.method == 'POST':
         form = networkStaticRoutesForm(request.POST)
         if form.is_valid():
@@ -316,62 +339,35 @@ def networkStaticRoutesView(request):
     })
     return render_to_response('freenas/network/staticroutes.html', variables)
 
-def StaticRoutesView(request):
-    if request.method == 'POST':
-        form = StaticRoutesForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = StaticRoutesForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/network/staticroutes_add.html', variables)
+@login_required
+def staticroute_list(request, template_name='freenas/network/staticroute_list.html'):
+    query_set = networkStaticRoutes.objects.all()
+    if len(query_set) == 0:
+        raise Http404()
+    return object_list(
+        request,
+        template_name = template_name,
+        queryset = query_set
+    )
 
 ## Disk section
+@login_required
+def disk_add_wrapper(request, *args, **kwargs):
+    wiz = DiskWizard([DiskAdvancedForm])
+    return wiz(request, *args, **kwargs)
+
+@login_required
+def diskgroup_add_wrapper(request, *args, **kwargs):
+    wiz = DiskGroupWizard([DiskGroupForm])
+    return wiz(request, *args, **kwargs)
+
+@login_required
+def volume_create_wrapper(request, *args, **kwargs):
+    wiz = VolumeWizard([VolumeForm])
+    return wiz(request, *args, **kwargs)
 
 
-def disk_detail(request, diskid, template_name='freenas/disks/disk_detail.html'):
-
-    return object_detail(
-        request,
-        template_name = template_name,
-        object_id = diskid,
-        queryset = Disk.objects.all(),
-    ) 
-
-
-def disk_list(request, template_name='freenas/disks/disk_list.html'):
-    query_set = Disk.objects.all()
-    if len(query_set) == 0:
-        raise Http404()
-    return object_list(
-        request,
-        template_name = template_name,
-        queryset = query_set
-    )
-
-def volume_detail(request, volumeid, template_name='freenas/disks/volume_detail.html'):
-
-    return object_detail(
-        request,
-        template_name = template_name,
-        object_id = volumeid,
-        queryset = Volume.objects.all(),
-    ) 
-
-
-def volume_list(request, template_name='freenas/disks/volume_list.html'):
-    query_set = Volume_group.objects.all()
-    if len(query_set) == 0:
-        raise Http404()
-    return object_list(
-        request,
-        template_name = template_name,
-        queryset = query_set
-    )
-
-
+@login_required
 def DiskManagerView(request):
     if request.method == 'POST':
         form = DiskManagerForm(request.POST)
@@ -384,6 +380,7 @@ def DiskManagerView(request):
     })
     return render_to_response('freenas/disks/disk_manager.html', variables)
 
+@login_required
 def DiskView(request):
     if request.method == 'POST':
         form = DiskForm(request.POST)
@@ -396,31 +393,7 @@ def DiskView(request):
     })
     return render_to_response('freenas/disks/disk.html', variables)
 
-def DiskGroupView(request):
-    if request.method == 'POST':
-        form = DiskGroupForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = DiskGroupForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/disks/disk_group.html', variables)
-
-def VolumeView(request):
-    if request.method == 'POST':
-        form = VolumeForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = VolumeForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/disks/disk_volume.html', variables)
-
-
+@login_required
 def DiskAdvancedView(request):
     if request.method == 'POST':
         form = DiskAdvancedForm(request.POST)
@@ -433,32 +406,102 @@ def DiskAdvancedView(request):
     })
     return render_to_response('freenas/disks/disk_advanced.html', variables)
 
-#def diskMGMTView(request):
-#    if request.method == 'POST':
-#        form = diskMGMTForm(request.POST)
-#        if form.is_valid():
-#            form.save()
-#    else:
-#        form = diskMGMTForm()
-#    variables = RequestContext(request, {
-#        'form': form
-#    })
- #   return render_to_response('freenas/disks/disks.html', variables)
+@login_required
+def disk_detail(request, diskid, template_name='freenas/disks/disk_detail.html'):
+    return object_detail(
+        request,
+        template_name = template_name,
+        object_id = diskid,
+        queryset = Disk.objects.all(),
+    ) 
 
-## Services section
+@login_required
+def disk_list(request, template_name='freenas/disks/disk_list.html'):
+    query_set = Disk.objects.all()
+    if len(query_set) == 0:
+        raise Http404()
+    return object_list(
+        request,
+        template_name = template_name,
+        queryset = query_set
+    )
 
-def servicesCIFSView(request):
+
+@login_required
+def DiskGroupView(request):
     if request.method == 'POST':
-        form = servicesCIFSForm(request.POST)
+        form = DiskGroupForm(request.POST)
         if form.is_valid():
             form.save()
     else:
-        form = servicesCIFSForm()
+        form = DiskGroupForm()
     variables = RequestContext(request, {
         'form': form
     })
-    return render_to_response('freenas/services/cifs_settings.html', variables)
+    return render_to_response('freenas/disks/disk_group.html', variables)
 
+@login_required
+def diskgroup_list(request, template_name='freenas/disks/diskgroup_list.html'):
+    query_set = DiskGroup.objects.values().order_by('name')
+    if len(query_set) == 0:
+        raise Http404()
+    return object_list(
+        request,
+        template_name = template_name,
+        queryset = query_set
+    )
+
+@login_required
+def diskgroup_detail(request, diskgroupid, template_name='freenas/disks/diskgroup_detail.html'):
+    return object_detail(
+        request,
+        template_name = template_name,
+        object_id = diskgroupid,
+        queryset = DiskGroup.objects.all(),
+    ) 
+
+
+
+@login_required
+def VolumeView(request):
+    if request.method == 'POST':
+        form = VolumeForm(request.POST)
+        if form.is_valid():
+            form.save()
+    else:
+        form = VolumeForm()
+    variables = RequestContext(request, {
+        'form': form
+    })
+    return render_to_response('freenas/disks/disk_volume.html', variables)
+
+@login_required
+def volume_detail(request, volumeid, template_name='freenas/disks/volume_detail.html'):
+    return object_detail(
+        request,
+        template_name = template_name,
+        object_id = volumeid,
+        queryset = Volume.objects.all(),
+    ) 
+
+@login_required
+def volume_list(request, template_name='freenas/disks/volume_list.html'):
+    query_set = Volume.objects.values().order_by('groups')
+    if len(query_set) == 0:
+        raise Http404()
+    return object_list(
+        request,
+        template_name = template_name,
+        queryset = query_set
+    )
+
+## Services section
+
+@login_required
+def servicesCIFSView(request):
+    return helperView(request, servicesCIFSForm, servicesCIFS, 'freenas/services/cifs_settings.html')
+
+@login_required
 def shareCIFSView(request):
     if request.method == 'POST':
         form = shareCIFSForm(request.POST)
@@ -471,6 +514,7 @@ def shareCIFSView(request):
     })
     return render_to_response('freenas/services/cifs_shares_add.html', variables)
 
+@login_required
 def servicesCIFSshareView(request):
     if request.method == 'POST':
         form = servicesCIFSshareForm(request.POST)
@@ -483,84 +527,23 @@ def servicesCIFSshareView(request):
     })
     return render_to_response('freenas/services/cifs_shares.html', variables)
 
+@login_required
 def servicesFTPView(request):
-    if request.method == 'POST':
-        form = servicesFTPForm(request.POST)
-        if form.is_valid():
-            form.save()
-            if servicesFTP.objects.count() > 3:
-                try:
-                    stale_id = servicesFTP.objects.order_by("-id")[3].id
-                    servicesFTP.objects.filter(id__lte=stale_id).delete()
-                except:
-                    pass
-    else:
-        try:
-            _entity = servicesFTP.objects.order_by("-id").values()[0]
-        except:
-            _entity = {}
-        form = servicesFTPForm(data = _entity)
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/ftp.html', variables)
+    return helperView(request, servicesFTPForm, servicesFTP, 'freenas/services/ftp.html')
 
+@login_required
 def servicesTFTPView(request):
-    if request.method == 'POST':
-        form = servicesTFTPForm(request.POST)
-        if form.is_valid():
-            form.save()
-            if servicesTFTP.objects.count() > 3:
-                try:
-                    stale_id = servicesTFTP.objects.order_by("-id")[3].id
-                    servicesTFTP.objects.filter(id__lte=stale_id).delete()
-                except:
-                    pass
-    else:
-        try:
-            _entity = servicesTFTP.objects.order_by("-id").values()[0]
-        except:
-            _entity = {}
-        form = servicesTFTPForm(data = _entity)
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/tftp.html', variables)
+    return helperView(request, servicesTFTPForm, servicesTFTP, 'freenas/services/tftp.html')
 
+@login_required
 def servicesSSHView(request):
-    if request.method == 'POST':
-        form = servicesSSHForm(request.POST)
-        if form.is_valid():
-            form.save()
-            if servicesSSH.objects.count() > 3:
-                try:
-                    stale_id = servicesSSH.objects.order_by("-id")[3].id
-                    servicesSSH.objects.filter(id__lte=stale_id).delete()
-                except:
-                    pass
-    else:
-        try:
-            _entity = servicesSSH.objects.order_by("-id").values()[0]
-        except:
-            _entity = {}
-        form = servicesSSHForm(data = _entity)
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/ssh.html', variables)
+    return helperView(request, servicesSSHForm, servicesSSH, 'freenas/services/ssh.html')
 
+@login_required
 def servicesNFSView(request):
-    if request.method == 'POST':
-        form = servicesNFSForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = servicesNFSForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/nfs.html', variables)
+    return helperView(request, servicesNFSForm, servicesNFS, 'freenas/services/nfs.html')
 
+@login_required
 def shareNFSView(request):
     if request.method == 'POST':
         form = shareNFSForm(request.POST)
@@ -573,6 +556,7 @@ def shareNFSView(request):
     })
     return render_to_response('freenas/services/nfs_add_share.html', variables)
 
+@login_required
 def servicesNFSshareView(request):
     if request.method == 'POST':
         form = servicesNFSshareForm(request.POST)
@@ -585,18 +569,11 @@ def servicesNFSshareView(request):
     })
     return render_to_response('freenas/services/nfs_shares.html', variables)
 
+@login_required
 def servicesAFPView(request):
-    if request.method == 'POST':
-        form = servicesAFPForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = servicesAFPForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/afp.html', variables)
+    return helperView(request, servicesAFPForm, servicesAFP, 'freenas/services/afp.html')
 
+@login_required
 def shareAFPView(request):
     if request.method == 'POST':
         form = shareAFPForm(request.POST)
@@ -609,6 +586,7 @@ def shareAFPView(request):
     })
     return render_to_response('freenas/services/afp_add_share.html', variables)
 
+@login_required
 def servicesAFPshareView(request):
     if request.method == 'POST':
         form = servicesAFPshareForm(request.POST)
@@ -621,6 +599,7 @@ def servicesAFPshareView(request):
     })
     return render_to_response('freenas/services/afp_shares.html', variables)
 
+@login_required
 def clientrsyncjobView(request):
     if request.method == 'POST':
         form = clientrsyncjobForm(request.POST)
@@ -633,6 +612,7 @@ def clientrsyncjobView(request):
     })
     return render_to_response('freenas/services/rsync_clientjob.html', variables)
 
+@login_required
 def localrsyncjobView(request):
     if request.method == 'POST':
         form = localrsyncjobForm(request.POST)
@@ -645,6 +625,7 @@ def localrsyncjobView(request):
     })
     return render_to_response('freenas/services/rsync_localjob.html', variables)
 
+@login_required
 def servicesRSYNCView(request):
     if request.method == 'POST':
         form = servicesRSYNCForm(request.POST)
@@ -657,86 +638,38 @@ def servicesRSYNCView(request):
     })
     return render_to_response('freenas/services/rsync.html', variables)
 
+@login_required
 def servicesUnisonView(request):
-    if request.method == 'POST':
-        form = servicesUnisonForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = servicesUnisonForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/unison.html', variables)
+    return helperView(request, servicesUnisonForm, servicesUnison, 'freenas/services/unison.html')
 
+@login_required
 def servicesiSCSITargetView(request):
-    if request.method == 'POST':
-        form = servicesiSCSITargetForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = servicesiSCSITargetForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/iscsi_target.html', variables)
+    return helperView(request, servicesiSCSITargetForm, servicesiSCSITarget, 'freenas/services/iscsi_target.html')
 
+@login_required
 def servicesDynamicDNSView(request):
-    if request.method == 'POST':
-        form = servicesDynamicDNSForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = servicesDynamicDNSForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/dyndns.html', variables)
+    return helperView(request, servicesDynamicDNSForm, servicesDynamicDNS, 'freenas/services/dyndns.html')
 
+@login_required
 def servicesSNMPView(request):
-    if request.method == 'POST':
-        form = servicesSNMPForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = servicesSNMPForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/snmp.html', variables)
+    return helperView(request, servicesSNMPForm, servicesSNMP, 'freenas/services/snmp.html')
 
+@login_required
 def servicesUPSView(request):
-    if request.method == 'POST':
-        form = servicesUPSForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = servicesUPSForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/ups.html', variables)
+    return helperView(request, servicesUPSForm, servicesUPS, 'freenas/services/ups.html')
 
+@login_required
 def servicesWebserverView(request):
-    if request.method == 'POST':
-        form = servicesWebserverForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = servicesWebserverForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/webserver.html', variables)
+    return helperView(request, servicesWebserverForm, servicesWebserver, 'freenas/services/webserver.html')
 
+@login_required
 def servicesBitTorrentView(request):
-    if request.method == 'POST':
-        form = servicesBitTorrentForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = servicesBitTorrentForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/bittorrent.html', variables)
+    return helperView(request, servicesBitTorrentForm, servicesBitTorrent, 'freenas/services/bittorrent.html')
+
+@login_required
+def accessActiveDirectoryView(request):
+    return helperView(request, accessActiveDirectoryForm, accessActiveDirectory, 'freenas/access/active_directory.html')
+
+@login_required
+def accessLDAPView(request):
+    return helperView(request, accessLDAPForm, accessLDAP, 'freenas/access/ldap.html')

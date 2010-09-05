@@ -29,9 +29,6 @@
 #from dojango.forms import forms                                
 from django.forms import ModelForm                             
 from django.shortcuts import render_to_response                
-#from django.contrib.formtools.wizard import FormWizard         
-## Using Extended Form Wizard instead: 
-## http://djangosnippets.org/snippets/1454/
 from freenasUI.freenas.ext_formwizard import FormWizard         
 from freenasUI.freenas.models import *                         
 from freenasUI.freenas.models import TOGGLE_CHOICES
@@ -42,7 +39,8 @@ from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode 
 
 
-class RadioFieldRendererEx(RadioFieldRenderer): # alternate renderer for horiz. radios
+class RadioFieldRendererEx(RadioFieldRenderer): 
+    """alternate renderer for horizontal radios"""
     outer = u"<span>%s</span>"
     inner= u"%s"
     def render(self):
@@ -72,7 +70,6 @@ class systemAdvancedForm(ModelForm):
                 'powerdaemon': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 'zeroconfbonjour': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 }
-        
 
 class systemAdvancedEmailForm(ModelForm):
     class Meta:
@@ -80,6 +77,7 @@ class systemAdvancedEmailForm(ModelForm):
         widgets = {
                 'smtp': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 }
+
 class systemAdvancedProxyForm(ModelForm):
     class Meta:
         model = systemAdvancedProxy
@@ -89,18 +87,22 @@ class systemAdvancedProxyForm(ModelForm):
                 'ftpproxy': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 'ftpproxyauth': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 }
+
 class systemAdvancedSwapForm(ModelForm):
     class Meta:
         model = systemAdvancedSwap
         widgets = {
                 'swapmemory': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 }
+
 class systemAdvancedCommandScriptsForm(ModelForm):
     class Meta:
         model = systemAdvancedCommandScripts
+
 class CommandScriptsForm(ModelForm):
     class Meta:
         model = CommandScripts
+
 class cronjobForm(ModelForm):
     class Meta:
         model = cronjob
@@ -123,18 +125,23 @@ class cronjobForm(ModelForm):
                 'ToggleWeekdays': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 'Weekdays': forms.SelectMultiple(),
                 }
+
 class systemAdvancedCronForm(ModelForm):
     class Meta:
         model = systemAdvancedCron
+
 class systemAdvancedRCconfForm(ModelForm):
     class Meta:
         model = systemAdvancedRCconf
+
 class rcconfForm(ModelForm):
     class Meta:
         model = rcconf
+
 class systemAdvancedSYSCTLconfForm(ModelForm):
     class Meta:
         model = systemAdvancedSYSCTLconf
+
 class sysctlMIBForm(ModelForm):
     class Meta:
         model = sysctlMIB
@@ -163,30 +170,27 @@ class networkInterfaceMGMTlaggForm(ModelForm):
 class networkHostsForm(ModelForm):
     class Meta:
         model = networkHosts
-class StaticRoutesForm(ModelForm):
-    class Meta:
-        model = StaticRoutes
 class networkStaticRoutesForm(ModelForm):
     class Meta:
         model = networkStaticRoutes
+
 """
 Django's FormWizard uses multiple Django Forms to create a multi-step wizard
 """
+
 class DiskWizard(FormWizard):
     def prefix_for_step(self, step):
         # Given the step, returns a form prefix to use. 
         # By default, this simply uses the step itself
         return str("step_") + str(step)
+
     def get_template(self, step):
         return 'forms/disk_wizard_%s.html' % step
+
     def done(self, request, form_list): # saves form to db
         for form in form_list: 
             form.save() 
-            #form.save([force_insert=True]) 
-      #  return render_to_response('forms/disk_wizard.html', {
-      #      'form_data': [form.cleaned_data for form in form_list],
-      #      })
-        return HttpResponseRedirect('/freenas/disk/management/disks/') # Redirect after POST
+        return HttpResponseRedirect('/freenas/disk/management/disks/') 
 
 class DiskForm(ModelForm):
     class Meta:
@@ -203,37 +207,27 @@ class DiskGroupForm(ModelForm):
                 'group': forms.SelectMultiple(),
                 }
 
-class SingleDiskForm(ModelForm):
-    class Meta:
-        model = SingleDisk
-
 class zpoolForm(ModelForm):
     class Meta:
         model = zpool 
 
-class VolumeWizard(FormWizard):
+class DiskGroupWizard(FormWizard):
     def process_step(self, request, form, step):
         # Step 0 asks which volume "type" (filesystem)
         # and drops the user to the correct form
         if step==0:
-            if form.cleaned_data['type']=='zfs':
-                self.form_list.remove(SingleDiskForm)
-            else:
+            if form.cleaned_data['type']=='ufs':
                 self.form_list.remove(zpoolForm)
     def prefix_for_step(self, step):
         # Given the step, returns a form prefix to use. 
         # By default, this simply uses the step itself
         return str("step_") + str(step)
     def get_template(self, step):
-        return 'forms/volume_wizard_%s.html' % step
+        return 'forms/diskgroup_wizard_%s.html' % step
     def done(self, request, form_list): # saves form to db
         for form in form_list: 
             form.save() 
-            #form.save([force_insert=True]) 
-      #  return render_to_response('forms/disk_wizard.html', {
-      #      'form_data': [form.cleaned_data for form in form_list],
-      #      })
-        return HttpResponseRedirect('/freenas/disk/management/added/')
+        return HttpResponseRedirect('/freenas/disk/management/groups/')
 
 class VolumeForm(ModelForm):
     class Meta:
@@ -241,14 +235,15 @@ class VolumeForm(ModelForm):
         widgets = {
                 'disks': forms.SelectMultiple(),
                 }
-    def save(self):
-        super(VolumeForm, self).save()
-        notifier().create("disk")
 
-class VolumeTypeForm(ModelForm):
-    class Meta:
-        model = Volume
-
+class VolumeWizard(FormWizard):
+    def get_template(self, step):
+        return 'forms/volume_wizard_%s.html' % step
+    def done(self, request, form_list): # saves form to db
+        for form in form_list: 
+            form.save() 
+	notifier().create("disk")
+        return HttpResponseRedirect('/freenas/disk/management/volumes/')
 
 class servicesCIFSForm(ModelForm):
     def __init__(self, *args, **kwargs):
@@ -344,6 +339,9 @@ class servicesNFSForm(ModelForm):
         widgets = {
                 'toggleNFS': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 }
+    def save(self):
+        super(servicesNFSForm, self).save()
+        notifier().restart("nfsd")
 
 class shareNFSForm(ModelForm):
     class Meta:
@@ -483,6 +481,7 @@ class servicesDynamicDNSForm(ModelForm):
                 'toggleDynamicDNS': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 'wildcard': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 }
+
 class servicesSNMPForm(ModelForm):
     class Meta:
         model = servicesSNMP
@@ -490,6 +489,7 @@ class servicesSNMPForm(ModelForm):
                 'toggleSNMP': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 'traps': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 }
+
 class servicesUPSForm(ModelForm):
     class Meta:
         model = servicesUPS
@@ -507,6 +507,7 @@ class servicesWebserverForm(ModelForm):
                 'auth': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 'dirlisting': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 }
+
 class servicesBitTorrentForm(ModelForm):
     class Meta:
         model = servicesBitTorrent
@@ -515,19 +516,15 @@ class servicesBitTorrentForm(ModelForm):
                 'portfwd': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 'pex': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 'disthash': forms.RadioSelect(renderer=RadioFieldRendererEx),
+                'adminauth': forms.RadioSelect(renderer=RadioFieldRendererEx),
                 }
 
-# The following displays the Setup Wizard  
-class Merlin(FormWizard):
-    def prefix_for_step(self, step):
-        # Given the step, returns a form prefix to use. 
-        # By default, this simply uses the step itself
-        return str("step_") + str(step)
-    def done(self, request, form_list): # saves form to db
-        for form in form_list: 
-            form.save() 
-            #form.save([force_insert=True]) 
-        return render_to_response('forms/wizard.html', {
-            'form_data': [form.cleaned_data for form in form_list],
-            })
 
+
+class accessActiveDirectoryForm(ModelForm):
+    class Meta:
+        model = accessActiveDirectory
+
+class accessLDAPForm(ModelForm):
+    class Meta:
+        model = accessLDAP

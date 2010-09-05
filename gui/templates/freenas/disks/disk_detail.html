@@ -1,12 +1,30 @@
-{% extends "new-base.html" %}
-
+{% extends "base.html" %}
 {% block content %}
-
-<h1>Disk Details</h1>
-<h2>{{ object.disks }}</h2>
-<p>Description: {{ object.description }}
-</p>
-
-
+<h1>System Disks</h1>
+<h2> {{ object.disks }} Details</h2>
+<table>
+    <tr>
+        <td width="25%" style="background:#cfcfcf;"><strong>Name</strong></td>
+        <td width="25%" style="background:#cfcfcf;"><strong>Disk</strong></td>
+        <td style="background:#cfcfcf;"><strong>Description</strong></td>
+        <td style="background:#cfcfcf;"></td>
+    </tr>
+    <tr>
+        <td>
+            {{ object.name }}
+        </td>
+        <td>
+            {{ object.disks }}
+        </td>
+        <td>
+            {{ object.description }}
+        </td>
+        <td>
+             <a href="/freenas/disk/management/disks/delete/{{ object.id }}/">Remove</a>
+        </td>
+    </tr>
+</table>
 
 {% endblock %}
+
+

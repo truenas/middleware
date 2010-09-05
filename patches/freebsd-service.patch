@@ -1,0 +1,14 @@
+diff -u usr.sbin/service/service.sh usr.sbin/service/service.sh
+--- usr.sbin/service/service.sh	2010-05-29 09:14:14.000000000 -0600
++++ usr.sbin/service/service.sh	2010-09-02 14:27:51.000000000 -0600
+@@ -44,6 +44,10 @@
+ 	echo ''
+ }
+ 
++# Reset signal mask/handlers to the defaults.  This script may be called from
++# places where the defaults have been changed and interfere.
++trap - `trap -l`
++
+ while getopts 'ehlrv' COMMAND_LINE_ARGUMENT ; do
+ 	case "${COMMAND_LINE_ARGUMENT}" in
+ 	e)	ENABLED=eopt ;;

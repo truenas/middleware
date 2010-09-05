@@ -1,12 +1,32 @@
-{% extends "new-base.html" %}
+{% extends "base.html" %}
 
 {% block content %}
 
-<h1>Volume Details</h1>
-<h2>{{ object.name }}</h2>
-<p>Description: {{ object.type }}
-</p>
+<h1>System Disks</h1>
+<h2>Volume Information</h2>
+<table>
+    <tr>
+        <td width="150px" style="background:#cfcfcf;"><strong><h3> {{ object }}</h3></strong></td>
+        <td width="50px" style="background:#cfcfcf;"><strong></strong></td>
+        <td width="25px" style="background:#cfcfcf;"></td>
+    </tr>
+    <tr>
 
 
+        <td>
+{% for group in object.groups.all %}
+        <a href="/freenas/disk/management/groups/{{ group.id }}">{{ group.name }}</a>
+{% endfor %}
+        </td>
 
+        <td> {{ object.type }}</td>
+        <td>
+{% for group in object.groups.all %}
+            <a href="/freenas/disk/management/groups/delete/{{ group.id }}/">Delete {{ group.name }}</a>
+{% endfor %}
+            </td>
+    </tr>
+</table>
+<ul>
+</ul>
 {% endblock %}

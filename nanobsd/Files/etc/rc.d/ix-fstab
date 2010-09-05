@@ -25,8 +25,18 @@ generate_fstab_real()
 
 generate_fstab()
 {
+	local _doumount=0
+
+	# If we're running really early, then mount /data read-only
+	if [ ! -f ${FREENAS_CONFIG} ]; then
+		mount -o ro /data
+		_doumount=1
+	fi
 	cp /conf/base/etc/fstab /etc/fstab
 	generate_fstab_real >> /etc/fstab
+	if [ -n "${_doumount}" ]; then
+		umount /data
+	fi
 }
 
 name="ix-fstab"

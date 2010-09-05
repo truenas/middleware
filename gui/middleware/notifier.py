@@ -34,11 +34,30 @@ command line utility, this helper class can also be used to do these
 actions.
 """
 
+import ctypes
+import syslog
+
 class notifier:
-	from os import system as __system
+	from os import system as ___system
+	def __system(self, command):
+		syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
+		syslog.syslog(syslog.LOG_NOTICE, "Executing: " + command)
+		# TODO: python's signal class should be taught about sigprocmask(2)
+		# This is hacky hack to work around this issue.
+		libc = ctypes.cdll.LoadLibrary("libc.so.7")
+		omask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
+		mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
+		pmask = ctypes.pointer(mask)
+		pomask = ctypes.pointer(omask)
+		libc.sigprocmask(3, pmask, pomask)
+		self.___system("(" + command + ") 2>&1 | logger -p daemon.notice -t freenas")
+		libc.sigprocmask(3, pomask, None)
+		syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
 	def _do_nada(self):
 		pass
 	def _simplecmd(self, action, what):
+		syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
+		syslog.syslog(syslog.LOG_DEBUG, "Calling: %s(%s) " % (action, what))
 		try:
 			f = getattr(self, '_' + action + '_' + what)
 		except AttributeError:
@@ -51,7 +70,7 @@ class notifier:
 		try:
 			f()
 		except:
-			raise "Execution failed"
+			raise
 	def create(self, what):
 		""" Dedicated command to create "what".
 		
@@ -110,10 +129,19 @@ class notifier:
 		self.__system("/usr/sbin/service proftpd restart")
 	def _reload_nfsd(self):
 		self.__system("/usr/sbin/service ix-nfsd start")
-		self.__system("/usr/sbin/service mountd restart")
+		self.__system("/usr/sbin/service mountd forcerestart")
+	def _restart_nfsd(self):
+		self.__system("/usr/sbin/service mountd forcestop")
+		self.__system("/usr/sbin/service nfsd forcestop")
+		self.__system("/usr/sbin/service ix-nfsd start")
+		self.__system("/usr/sbin/service nfsd start")
+	def _restart_system(self):
+		self.__system("/sbin/shutdown -r now")
+	def _stop_system(self):
+		self.__system("/sbin/shutdown -p now")
 	def _reload_smbd(self):
-		self.__system("/usr/sbin/service ix-smbd start")
-		self.__system("/usr/sbin/service smbd restart")
+		self.__system("/usr/sbin/service ix-samba start")
+		self.__system("/usr/sbin/service samba restart")
         def _create_disk(self):
                 # TODO: This accesses the database directly which should
                 # be avoided
@@ -129,45 +157,47 @@ class notifier:
                 # Create ZFS pools
                 c.execute("SELECT id, name, mountpoint FROM freenas_volume WHERE type = 'zfs'")
                 zfs_list = c.fetchall()
-		# We have to be able to write /boot/zfs and / to create mount points.
-		self.__system("/sbin/mount -uw /")
-		for row in zfs_list:
-			z_id, z_name, z_mountpoint = row
-			z_vdev = ""
-			t_id = (z_id,)
-			c.execute("SELECT diskgroup_id FROM freenas_volume_group WHERE volume_id = ?", t_id)
-			vgroup_list = c.fetchall()
-			for vgrp in vgroup_list:
-				c.execute("SELECT type FROM freenas_diskgroup WHERE id = ?", vgrp)
-				vgrp_type = c.fetchone()[0]
-				z_vdev += " " + vgrp_type
-				c.execute("SELECT freenas_disk.disks, freenas_disk.name FROM freenas_disk LEFT OUTER JOIN freenas_diskgroup_members ON freenas_disk.id = freenas_diskgroup_members.disk_id WHERE freenas_diskgroup_members.diskgroup_id = ?", vgrp)
-				z_vdsk_list = c.fetchall()
-				for disk in z_vdsk_list:
-					self.__system("[ -e /dev/gpt/%s ] || ( gpart create -s gpt /dev/%s && gpart add -t freebsd-zfs -l %s %s )" % (disk[1], disk[0], disk[1], disk[0]))
-					z_vdev += " /dev/gpt/" + disk[1]
-			self.__system("zpool create %s -m %s %s" % (z_name, z_mountpoint, z_vdev))
+		if len(zfs_list) > 0:
+			# We have to be able to write /boot/zfs and / to create mount points.
+			self.__system("/sbin/mount -uw /")
+			for row in zfs_list:
+				z_id, z_name, z_mountpoint = row
+				z_vdev = ""
+				t_id = (z_id,)
+				c.execute("SELECT diskgroup_id FROM freenas_volume_groups WHERE volume_id = ?", t_id)
+				vgroup_list = c.fetchall()
+				for vgrp in vgroup_list:
+					c.execute("SELECT type FROM freenas_diskgroup WHERE id = ?", vgrp)
+					vgrp_type = c.fetchone()[0]
+					z_vdev += " " + vgrp_type
+					c.execute("SELECT freenas_disk.disks, freenas_disk.name FROM freenas_disk LEFT OUTER JOIN freenas_diskgroup_members ON freenas_disk.id = freenas_diskgroup_members.disk_id WHERE freenas_diskgroup_members.diskgroup_id = ?", vgrp)
+					z_vdsk_list = c.fetchall()
+					for disk in z_vdsk_list:
+						self.__system("[ -e /dev/gpt/%s ] || ( gpart create -s gpt /dev/%s && gpart add -t freebsd-zfs -l %s %s )" % (disk[1], disk[0], disk[1], disk[0]))
+						z_vdev += " /dev/gpt/" + disk[1]
+				self.__system("zpool create -m /mnt/%s %s %s" % (z_mountpoint, z_name, z_vdev))
+			self.__system("/sbin/mount -ur /")
                 # Create UFS file system and newfs
                 c.execute("SELECT id, name, mountpoint FROM freenas_volume WHERE type = 'ufs'")
-                ufs_list = c.fetchall()
-		for row in ufs_list:
-			u_id, u_name, u_mountpoint = row
-			t_id = (u_id,)
-			c.execute("SELECT diskgroup_id FROM freenas_volume_group WHERE volume_id = ?", t_id)
-			# TODO: For now we don't support RAID levels.
-			ufs_volume_id = c.fetchone()
-			c.execute("SELECT freenas_disk.disks, freenas_disk.name FROM freenas_disk LEFT OUTER JOIN freenas_diskgroup_members ON freenas_disk.id = freenas_diskgroup_members.disk_id WHERE freenas_diskgroup_members.diskgroup_id = ?", ufs_volume_id)
-			disk = c.fetchone()
-			self.__system("[ -e /dev/gpt/%s ] || (gpart create -s gpt /dev/%s && gpart add -t freebsd-ufs -l %s %s )" % (disk[1], disk[0], disk[1], disk[0]))
-			ufs_device = "/dev/ufs/" + disk[1]
-			# TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar generated automatically
-			self.__system("newfs -U -L %s /dev/%sp1" % (u_name, disk[0]))
-		self.__system("/sbin/mount -ur /")
+	        ufs_list = c.fetchall()
+		if len(ufs_list) > 0:
+			for row in ufs_list:
+				u_id, u_name, u_mountpoint = row
+				t_id = (u_id,)
+				c.execute("SELECT diskgroup_id FROM freenas_volume_groups WHERE volume_id = ?", t_id)
+				# TODO: For now we don't support RAID levels.
+				ufs_volume_id = c.fetchone()
+				c.execute("SELECT freenas_disk.disks, freenas_disk.name FROM freenas_disk LEFT OUTER JOIN freenas_diskgroup_members ON freenas_disk.id = freenas_diskgroup_members.disk_id WHERE freenas_diskgroup_members.diskgroup_id = ?", ufs_volume_id)
+				disk = c.fetchone()
+				# TODO: Not using GPT label at this moment.
+				self.__system("[ -e /dev/%sp1 ] || ( gpart create -s gpt /dev/%s && gpart add -t freebsd-ufs %s )" % (disk[0], disk[0], disk[0]))
+				ufs_device = "/dev/ufs/" + disk[1]
+				# TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar generated automatically
+				self.__system("newfs -U -L %s /dev/%sp1" % (u_name, disk[0]))
 		self._reload_disk()
         def _reload_disk(self):
 		self.__system("/usr/sbin/service ix-fstab start")
 		self.__system("/usr/sbin/service mountlate start")
-		self.__system("/sbin/zpool import -a")
 
 def usage():
 	print ("Usage: %s action command" % argv[0])

@@ -20,7 +20,7 @@ generate_exports()
 	local path allroot network alldirs readonly quiet
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT path, allroot, network, alldirs, readonly, quiet FROM freenas_sharenfs ORDER BY id DESC" | \
 	while read path allroot network alldirs readonly quiet; do
-		echo -n ${path}
+		echo -n /mnt/${path}
 		if [ -n "${alldirs}" ]; then
 			echo -n " -alldirs"
 		fi

@@ -29,7 +29,7 @@
 
 SCHEMA=$1
 DEFAULTS=$2
-FREENAS_DATABASE_PATH="/data/freenas-v1.db"
+${FREENAS_DATABASE_PATH="/data/freenas-v1.db"}
 
 usage()
 {
@@ -172,21 +172,37 @@ getval()
 
 get_column_value()
 {
+	local _nlines
 	local _column
-	local _defaults
+	local _file
 	local _ret
+	local _i
+	local _n
 
 	_column=$1
-	_defaults=$2
+	_file=$2
+
+	if [ ! -f "${_file}" ]
+	then
+		return 1
+	fi
 
 	_ret=""
-	for _def in $_defaults
+	_nlines=`cat "${_file}" | wc -l`
+
+	_ifs="${IFS}"
+	IFS="."		## XXX IMP WAS ^M
+
+	_i=0; _n=1;
+	while [ "${_i}" -lt "${_nlines}" ]
 	do
+		local _line
 		local _col
 		local _val
 
-		_col=`echo "$_def" | cut -f2 -d. | cut -f1 -d=`
-		_val=`echo "$_def" | cut -f2 -d=`
+		_line=`head -n "${_n}" "${_tmpfile}" | tail -1`
+		_col=`echo "$_line" | cut -f2 -d. | cut -f1 -d=`
+		_val=`echo "$_line" | cut -f2 -d=`
 
 		if [ "$_column" = "$_col" ]
 		then
@@ -194,10 +210,16 @@ get_column_value()
 			_ret="$VAL"
 			break
 		fi
+
+		_i=`expr ${_i} + 1`
+		_n=`expr ${_n} + 1`
 	done
+	IFS="${_ifs}"
 
 	VAL="$_ret"
 	export VAL
+
+	return 0
 }
 
 generate_sql()
@@ -205,10 +227,14 @@ generate_sql()
 	local _table
 	local _columns
 	local _defaults
+	local _tmpfile
+	local _nlines
 	local _colstr
 	local _valstr
 	local _file
 	local _sql
+	local _i
+	local _n
 
 	_table=$1
 	_columns=$2
@@ -222,13 +248,25 @@ generate_sql()
 
 	_colstr=""
 	_valstr=""
+	_tmpfile="${TMPDIR}/${_table}"
 
-	for _def in $_defaults
+	echo "${_defaults}" > "${_tmpfile}"
+	_nlines=`cat "${_tmpfile}" | wc -l`
+
+	_i=0; _n=1;
+	while [ "${_i}" -lt "${_nlines}" ]
 	do
-		_col=`echo "$_def" | cut -f2 -d. | cut -f1 -d=`
+		local _line
+
+		_line=`head -n "${_n}" "${_tmpfile}" | tail -1`
+		_col=`echo "$_line" | cut -f2 -d. | cut -f1 -d=`
 		_colstr="${_colstr}${_col},"
-		get_column_value "$_col" "$_defaults"
+
+		get_column_value "$_col" "$_tmpfile"
 		_valstr="${_valstr}'${VAL}',"
+
+		_i=`expr ${_i} + 1`
+		_n=`expr ${_n} + 1`
 	done
 
 	_colstr=`echo "$_colstr" | sed -E 's|,$||'`
@@ -240,6 +278,7 @@ generate_sql()
 	echo "$VAL" >> "$_file"
 	export VAL
 
+	rm "${_tmpfile}"
 	return 0
 }
 
@@ -289,9 +328,9 @@ main()
 	_defaults=$3
 
 	_res=0
-	_file="/tmp/sortout"
-	_errfile="/tmp/errout"
-	_sqlfile="/tmp/sqlout"
+	_file="${TMPDIR}/sortout"
+	_errfile="${TMPDIR}/errout"
+	_sqlfile="${TMPDIR}/sqlout"
 
 	grep -Ev '^( *|#.*| *#.*)$' < "$_defaults" \
 		| sed -E 's|^ +||' \
@@ -319,10 +358,10 @@ main()
 
 		generate_sql "$_t" "$_columns" \
 			"$_table_defaults" "$_sqlfile"
-
-		import_sql "$_db" "$_sqlfile"
-		_res=$?
 	done
+
+	import_sql "$_db" "$_sqlfile"
+	_res=$?
 
 	rm -f "$_file" "$_sqlfile" "$_errfile"
 	return $_res

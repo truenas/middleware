@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+{% if user.is_authenticated %}
+
+<h1>Network</h1>
+<h2>Static Routes</h2>
+<table>
+    <tr>
+        <td width="150px" style="background:#cfcfcf;"><strong>Label</strong></td>
+        <td width="50px" style="background:#cfcfcf;"><strong>Label</strong></td>
+        <td width="25px" style="background:#cfcfcf;"></td>
+    </tr>
+{% for route in object_list %}
+    <tr>
+        <td>
+<a href="{{ route.id }}">{% autoescape off %}{{ route.destination }}{% endautoescape %}</a>
+
+        <td> {{ route.interface }}</td>
+        <td>
+<a href="/freenas/network/staticroutes/delete/{{ staticroute.id }}/">Delete?</a>
+            </td>
+    </tr>
+{% endfor %}
+</table>
+
+{% else %}
+<p>Welcome. Please <a href="/freenas/login/">log in</a>.</ p>
+{% endif %}
+{% endblock %}

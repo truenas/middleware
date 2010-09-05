@@ -29,7 +29,7 @@
 
 FREENAS_CONFIG=/data/freenas-v1.db
 FREENAS_SQLITE_CMD=/usr/local/bin/sqlite3
-FREENAS_RC=/tmp/rc.conf.freenas
+FREENAS_RC=/var/tmp/rc.conf.freenas
 
 _interface_config()
 {
@@ -97,7 +97,7 @@ _gen_conf()
 	## TODO: Need to make this a || logic.
 	_bool_config smartd_enable freenas_diskadvanced togglesmart disk_ptr_id
 	_bool_config proftpd_enable freenas_servicesftp toggleFTP
-	_bool_config nfsserver_enable freenas_servicesnfs toggleNFS
+	_bool_config nfs_server_enable freenas_servicesnfs toggleNFS
 	_bool_config smbd_enable freenas_servicescifs togglecifs
 	_bool_config rsyncd_enable freenas_servicesrsync togglersync
 	_bool_config sshd_enable freenas_servicesssh toggleSSH

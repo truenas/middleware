@@ -28,152 +28,109 @@
 
 from django.conf.urls.defaults import *
 from django.contrib import admin
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import password_change, password_change_done
 from django.views.generic.simple import direct_to_template
 from django.views.generic import list_detail
 from freenasUI.freenas.models import *
-from freenasUI.freenas.models import Disk 
-from freenasUI.freenas.forms import * 
-from freenasUI.freenas.views import * 
+from freenasUI.freenas.models import Disk
+from freenasUI.freenas.views import *
 import os, commands
-admin.autodiscover()
 
-##  FreeNAS GUI
-##  System Information
-##
-##  The following is used by the template variables defined in freenas_info
-##  Let's optimize this in the future, seems a bit messy and out of place
-##
+#import django_nav
+#django_nav.autodiscover()
+#admin.autodiscover()
 
-def hostname():
-    return commands.getoutput("hostname") # displays hostname
-#def version():
-#    return freenas_version
-def uname1():
-    return os.uname()[0] # displays operating system name, eg; FreeBSD
-def uname2():
-    return os.uname()[2] # diplays release info, eg; 7.1-RELEASE
-def platform():
-    return os.popen("sysctl -n hw.model").read() # displays cpu info
-#    return commands.getoutput("dmesg | grep CPU:") # displays cpu info
-def date():
-    return os.popen('date').read() # displays the date
-def uptime():
-    #return os.popen('uptime').read() # displays current uptime
-    return commands.getoutput("uptime | awk -F', load averages:' '{ print $1 }'") # returns load averages, eg: 0.00, 0.00, 0.00
-def loadavg():
-    return commands.getoutput("uptime | awk -F'load averages:' '{ print $2 }'")
-# returns load averages, eg; 0.00, 0.00, 0.00
-
-
-##  Process Information
-##
-
-def top():
-    return os.popen('top').read() # displays 'top' running processes
-
-
-top_info = {
-        'queryset': Top.objects.all(),
-        'template_object_name': 'top_list.html',
-        'extra_context': {
-            'top': top,
-            }
-        }
-
-
-freenas_info = {
-        'queryset': Freenas.objects.all(),
-        'template_object_name': 'freenas_list.html',
-        'extra_context': {
-            'hostname': hostname,
-#            'freenas_version': freenas_version,
-            'date': date,
-            'uname1': uname1,
-            'uname2': uname2,
-            'platform': platform,
-            'uptime': uptime,
-            'loadavg': loadavg,
-            }
-        }
-def diskwizard_wrapper(request, *args, **kwargs):
-    wiz = DiskWizard([DiskAdvancedForm])
-    return wiz(request, *args, **kwargs)
-def volumewizard_wrapper(request, *args, **kwargs):
-    wiz = VolumeWizard([VolumeTypeForm, SingleDiskForm, zpoolForm])
-    return wiz(request, *args, **kwargs)
-
-"""disk_dict = {
-        'queryset': Disk.objects.(),
-        }
-"""
+# Active FreeNAS URLs
 
 urlpatterns = patterns('',
-    (r'^admin/(.*)$', admin.site.root), 
-    (r'^media/(?P<path>.*)', 'django.views.static.serve', {'document_root': '/usr/local/www/freenasUI/media'}),
-    (r'^freenas/media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': '/usr/local/www/freenasUI/media'}),
-    (r'^/*$', list_detail.object_list, freenas_info),
-    (r'^freenas/login/*$', 'django.contrib.auth.views.login', {'template_name': 'registration/login.html'}),
-    ('^freenas/logout/$','django.contrib.auth.views.logout', {'template_name': 'registration/logout.html'}, 'auth_logout'),
-    ('^freenas/system/general/setup/$', systemGeneralSetupView),
-    ('^freenas/system/general/password/$', systemGeneralPasswordView),
-    ('^freenas/system/advanced/$', systemAdvancedView),
-    ('^freenas/system/advanced/email/$', systemAdvancedEmailView),
-    ('^freenas/system/advanced/proxy/$', systemAdvancedProxyView),
-    ('^freenas/system/advanced/swap/$', systemAdvancedSwapView),
-    ('^freenas/system/advanced/commandscripts/add', CommandScriptsView),
-    ('^freenas/system/advanced/commandscripts/$', systemAdvancedCommandScriptsView),
-    ('^freenas/system/advanced/cronjobs/$', systemAdvancedCronView),
-    ('^freenas/system/advanced/cronjobs/add/$', cronjobView),
-    ('^freenas/system/advanced/rcconf/$', rcconfView),
-    ('^freenas/system/advanced/rcconf/edit/$', systemAdvancedRCconfView),
-    ('^freenas/system/advanced/sysctlconf/$', systemAdvancedSYSCTLconfView),
-    ('^freenas/system/advanced/sysctlconf/add/$', sysctlMIBView),
-    ('^freenas/network/interfaces/$', networkInterfaceMGMTView),
-    ('^freenas/network/vlan/add/$', networkVLANView),
-    ('^freenas/network/vlan/$', networkInterfaceMGMTvlanView),
-    ('^freenas/network/lagg/add/$', networkLAGGView),
-    ('^freenas/network/lagg/$', networkInterfaceMGMTlaggView),
-    ('^freenas/network/hosts/$', networkHostsView),
-    ('^freenas/network/staticroutes/$', networkStaticRoutesView),
-    ('^freenas/network/staticroutes/add/$', StaticRoutesView),
-    (r'^freenas/disk/wizard/$', 
-        'django.views.generic.simple.direct_to_template', 
-        {'template': 'freenas/disks/wizard.html'}),
-    (r'^freenas/disk/wizard/add_disk/$', diskwizard_wrapper),
-    (r'^freenas/disk/wizard/create_volume/$', volumewizard_wrapper),
-    ('^freenas/system/general/setup/$', systemGeneralSetupView),
-    ('^freenas/disk/management/$', DiskManagerView),
-    ('^freenas/disk/management/groups/$', DiskGroupView),
-    (r'^freenas/disk/management/added/$', 
-        'django.views.generic.simple.direct_to_template', 
-        {'template': 'freenas/disks/added.html'}),
-    ('^freenas/disk/management/disks/$', disk_list),
-    (r'^freenas/disks/management/disk/delete/(?P<object_id>\d)/$',
-        'django.views.generic.create_update.delete_object',
-        dict(model = Disk, post_delete_redirect = 'freenas/disk/management/disks/'),),
-    (r'^freenas/disk/management/disks/(?P<diskid>\d)$', disk_detail),
+    (r'^password_change/$', password_change, 
+        {'template_name': 'registration/password_change_form.html'}),
+    (r'^password_change/done/$', password_change_done, 
+        {'template_name': 'registration/password_change_done.html'}),
+    (r'^media/(?P<path>.*)',
+        'django.views.static.serve', 
+        {'document_root': '/usr/local/www/freenasUI/media'}),
+    (r'^freenas/media/(?P<path>.*)$',
+        'django.views.static.serve', 
+        {'document_root': '/usr/local/www/freenasUI/media'}),
+    (r'^/*$', index),
+    (r'^freenas/login/*$', 'django.contrib.auth.views.login',
+        {'template_name': 'registration/login.html'}),
+    (r'^freenas/logout/$', 
+        'django.contrib.auth.views.logout',
+        {'template_name': 'registration/logout.html'}, 'auth_logout'),
+    (r'^freenas/system/reboot/$', systemReboot),
+    (r'^freenas/system/shutdown/$', systemShutdown),
+    (r'^freenas/system/general/setup/$', systemGeneralSetupView),
+    (r'^freenas/system/general/password/$', systemGeneralPasswordView),
+    (r'^freenas/system/advanced/$', systemAdvancedView),
+    (r'^freenas/system/advanced/email/$', systemAdvancedEmailView),
+    (r'^freenas/system/advanced/proxy/$', systemAdvancedProxyView),
+    (r'^freenas/system/advanced/swap/$', systemAdvancedSwapView),
+    (r'^freenas/system/advanced/commandscripts/add', CommandScriptsView),
+    (r'^freenas/system/advanced/commandscripts/$', systemAdvancedCommandScriptsView),
+    (r'^freenas/system/advanced/cronjobs/$', systemAdvancedCronView),
+    (r'^freenas/system/advanced/cronjobs/add/$', cronjobView),
+    (r'^freenas/system/advanced/rcconf/$', rcconfView),
+    (r'^freenas/system/advanced/rcconf/edit/$', systemAdvancedRCconfView),
+    (r'^freenas/system/advanced/sysctlconf/$', systemAdvancedSYSCTLconfView),
+    (r'^freenas/system/advanced/sysctlconf/add/$', sysctlMIBView),
+    (r'^freenas/network/interfaces/$', networkInterfaceMGMTView),
+    (r'^freenas/network/vlan/add/$', networkVLANView),
+    (r'^freenas/network/vlan/$', networkInterfaceMGMTvlanView),
+    (r'^freenas/network/lagg/add/$', networkLAGGView),
+    (r'^freenas/network/lagg/$', networkInterfaceMGMTlaggView),
+    (r'^freenas/network/hosts/$', networkHostsView),
+    (r'^freenas/network/staticroutes/add/$', networkStaticRoutes),
+    (r'^freenas/network/staticroutes/$', staticroute_list),
+    (r'^freenas/network/staticroutes/delete/(?P<object_id>\d)/$',
+        login_required('django.views.generic.create_update.delete_object',), 
+        dict(model = networkStaticRoutes, post_delete_redirect = '/freenas/network/staticroutes/'),), 
+    (r'^freenas/disk/management/disks/add/$', disk_add_wrapper), # add
+    (r'^freenas/disk/management/disks/(?P<diskid>\d)$', disk_detail), # detail
+    ('^freenas/disk/management/disks/$', disk_list), # list
+    (r'^freenas/disk/management/disks/delete/(?P<object_id>\d)/$',
+        login_required('django.views.generic.create_update.delete_object',), # delete
+        dict(model = Disk, post_delete_redirect = '/freenas/disk/management/disks/'),), 
+    (r'^freenas/disk/management/groups/add/$', diskgroup_add_wrapper),
+    (r'^freenas/disk/management/groups/(?P<diskgroupid>\d)$', diskgroup_detail),
+    (r'^freenas/disk/management/groups/*$', diskgroup_list),
+    (r'^freenas/disk/management/groups/delete/(?P<object_id>\d)/$',
+        login_required('django.views.generic.create_update.delete_object',), 
+        dict(model = DiskGroup, post_delete_redirect = '/freenas/disk/management/groups/'),), 
+    (r'^freenas/disk/management/volumes/create/$', volume_create_wrapper), 
     (r'^freenas/disk/management/volumes/(?P<volumeid>\d)$', volume_detail),
-    ('^freenas/services/cifs/$', servicesCIFSView),
-    ('^freenas/services/cifs/shares/add/$', shareCIFSView),
-    ('^freenas/services/cifs/shares/$', servicesCIFSshareView),
-    ('^freenas/services/ftp/$', servicesFTPView),
-    ('^freenas/services/tftp/$', servicesTFTPView),
-    ('^freenas/services/ssh/$', servicesSSHView),
-    ('^freenas/services/nfs/$', servicesNFSView),
-    ('^freenas/services/nfs/shares/add/$', shareNFSView),
-    ('^freenas/services/nfs/shares/$', servicesNFSshareView),
-    ('^freenas/services/afp/$', servicesAFPView),
-    ('^freenas/services/afp/shares/add/$', shareAFPView),
-    ('^freenas/services/afp/shares/$', servicesAFPshareView),
-    ('^freenas/services/rsync/clientjobs/$', clientrsyncjobView),
-    ('^freenas/services/rsync/localjobs/$', localrsyncjobView),
-    ('^freenas/services/rsync/$', servicesRSYNCView),
-    ('^freenas/services/unison/$', servicesUnisonView),
-    ('^freenas/services/iscsi/$', servicesiSCSITargetView),
-    ('^freenas/services/dyndns/$', servicesDynamicDNSView),
-    ('^freenas/services/snmp/$', servicesSNMPView),
-    ('^freenas/services/ups/$', servicesUPSView),
-    ('^freenas/services/webserver/$', servicesWebserverView),
-    ('^freenas/services/bittorrent/$', servicesBitTorrentView),
-    (r'^freenas/status/processes/*$', list_detail.object_list, top_info),
+    (r'^freenas/disk/management/volumes/$', volume_list),
+    (r'^freenas/disk/management/volumes/delete/(?P<object_id>\d)/$',
+        login_required('django.views.generic.create_update.delete_object',), 
+        dict(model = Volume, post_delete_redirect = '/freenas/disk/management/volumes/'),), 
+    (r'^freenas/services/cifs/$', servicesCIFSView),
+    (r'^freenas/services/cifs/shares/add/$', shareCIFSView),
+    (r'^freenas/services/cifs/shares/$', servicesCIFSshareView),
+    (r'^freenas/services/ftp/$', servicesFTPView),
+    (r'^freenas/services/tftp/$', servicesTFTPView),
+    (r'^freenas/services/ssh/$', servicesSSHView),
+    (r'^freenas/services/nfs/$', servicesNFSView),
+    (r'^freenas/services/nfs/shares/add/$', shareNFSView),
+    (r'^freenas/services/nfs/shares/$', servicesNFSshareView),
+    (r'^freenas/services/afp/$', servicesAFPView),
+    (r'^freenas/services/afp/shares/add/$', shareAFPView),
+    (r'^freenas/services/afp/shares/$', servicesAFPshareView),
+    (r'^freenas/services/rsync/clientjobs/$', clientrsyncjobView),
+    (r'^freenas/services/rsync/localjobs/$', localrsyncjobView),
+    (r'^freenas/services/rsync/$', servicesRSYNCView),
+    (r'^freenas/services/unison/$', servicesUnisonView),
+    (r'^freenas/services/iscsi/$', servicesiSCSITargetView),
+    (r'^freenas/services/dyndns/$', servicesDynamicDNSView),
+    (r'^freenas/services/snmp/$', servicesSNMPView),
+    (r'^freenas/services/ups/$', servicesUPSView),
+    (r'^freenas/services/webserver/$', servicesWebserverView),
+    (r'^freenas/services/bittorrent/$', servicesBitTorrentView),
+    (r'^freenas/status/processes/*$', statusProcessesView),
+    (r'^freenas/access/$',
+            login_required(direct_to_template),
+            {'template': 'freenas/access/index.html'}),
+    (r'^freenas/access/active_directory/$', accessActiveDirectoryView),
+    (r'^freenas/access/ldap/$', accessLDAPView),
     )

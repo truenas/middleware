@@ -1,0 +1,310 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-gb" lang="en-gb" dir="ltr" >
+<head>
+    <link rel="stylesheet" type="text/css" href="/freenas/media/css/flexdropdown.css" />
+    <script type="text/javascript" src="/freenas/media/lib/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/freenas/media/lib/js/flexdropdown.js">
+
+        /***********************************************
+        * TEMPORARY - TO BE REPLACED
+        *
+        * Flex Level Drop Down Menu- (c) Dynamic Drive DHTML code library (www.dynamicdrive.com)
+        * This notice MUST stay intact for legal use
+        * Visit Dynamic Drive at http://www.dynamicdrive.com/ for this script and 100s more
+        ***********************************************/
+
+    </script>
+<link href="/freenas/media/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+<link rel="stylesheet" href="/freenas/media/css/template.css" type="text/css" />
+<link rel="stylesheet" href="/freenas/media/css/custom.css" type="text/css" />
+<script language="JavaScript" type="text/javascript">
+    function RebootAlert() {
+        if (confirm("Reboot?")) {
+            return window.location = "freenas/system/reboot/" 
+        } else {
+            return window.location = "."
+        }
+    }
+</script> 
+<script language="JavaScript">
+    var time = null
+    function reboot() {
+        window.location = '/'
+    }
+    //-->
+</script>
+
+</head>
+<body  onload="timer=setTimeout('reboot()',2000)">
+
+	<div id="absolute">
+		
+	</div>
+
+
+	<div id="page-header" align="center">
+		<div class="page-header-1">
+			<div class="page-header-2">
+				<div class="page-header-3">
+					
+
+						<div id="header" class="wrapper800">
+		
+							<div id="toolbar">
+							
+								
+								<div id="date">
+									
+								</div>
+								
+							
+								
+								<div class="left">
+									
+								
+								</div>
+								
+								
+								
+								<div class="right">
+									
+								</div>
+							
+								
+							</div>
+							
+							<div id="headerbar">
+							
+								
+								<div class="left">
+								
+								</div>
+								
+								
+								
+								<div class="right">
+									
+								</div>
+								
+								
+							</div>
+			
+							
+							<div id="logo">
+                                <a href="/" title="FreeNAS"><img src="/freenas/media/images/ui/freenas-logo.png" alt="FreeNAS"></a>
+							</div>
+							
+<div align="center">
+<div class="wrapper800" style="text-align:left !important;">
+							<div id="raidmenu">
+                                                           {% include "nav.html" %}
+                                
+							</div></div></div>
+							
+			
+							
+							<div id="search">
+							</div>
+							
+				
+							
+							<div id="banner">
+							</div>
+							
+			
+						</div>
+						<!-- header end -->
+
+					</div></div>
+			
+		</div>
+	</div>
+
+
+<div align="center">
+	<div id="page-top">
+		<div class="page-top-1">
+		
+
+				<div id="top">
+		                     
+					
+					<div class="topblock width100 float-left">
+					
+					</div>
+				
+	               	                
+                                      
+				</div>
+				<!-- top end -->
+
+			</div>
+		</div>
+	</div>
+	
+<div class="wrapper"><div align="center">
+        <div class="wrapper800" style="text-align:left !important;">
+	<div id="page-middle">
+		<div class="page-middle-1">
+			<div class="page-middle-2">
+				<div class="wrapper">
+
+					<div id="middle">
+										<div id="breadcrumbs">
+	
+									
+	
+										</div>
+										
+						<div id="middle-expand">
+						
+							<div id="main">
+								<div id="main-shift">
+								
+									
+								
+							
+						  <div class="main-wrapper-1">
+								
+										
+								
+										<div id="maintop">
+										
+							
+										</div>
+										<!-- maintop end -->
+									
+
+										<div id="mainmiddle">
+											<div id="mainmiddle-expand">
+											
+												<div id="content">
+													<div id="content-shift">
+													
+										
+		
+														<div id="contenttop" style="min-height:250px;height:auto !important;height:250px;">
+    {% block content %}{% endblock %}
+    {% block footer %}
+    {% endblock %}
+
+				
+										
+			<!-- contenttop end -->
+										
+			
+	
+														<div class="floatbox">
+										
+			
+										
+			</div>
+							
+										
+			
+														<div id="contentbottom">
+										
+				
+														</div>
+														<!-- mainbottom end -->
+										
+			
+													
+													</div>
+												</div>
+												<!-- content end -->
+												
+										
+	
+												<div id="contentleft">
+										
+		
+												</div>
+										
+	
+												
+										
+	
+												<div id="contentright">
+										
+		
+												</div>
+									
+	
+												
+											</div>
+										</div>
+										<!-- mainmiddle end -->
+
+										
+										<div id="mainbottom">
+									
+	
+										</div>
+										<!-- mainbottom end -->
+										
+								
+									</div>
+								
+									<div class="main-wrapper-b1">
+										<div class="main-wrapper-b2">
+											<div class="main-wrapper-b3"></div>
+										</div>
+									</div>
+								
+								</div>
+							</div>
+							
+							
+							<div id="left">
+								
+							</div>
+							
+							
+							
+							<div id="right">
+								
+							</div>
+							
+							
+						</div>
+					</div>
+		
+					
+					<div id="bottom">
+							
+						
+						
+						
+						<div class="bottomblock width100 float-left">
+							
+						</div>
+					
+									
+					</div>
+					<!-- bottom end -->
+					
+
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</div>
+	<div id="page-footer">
+		<div class="wrapper">
+			<div id="footer">
+                <br /><br />
+<p style="padding-top:16px;font-size:16px;">FreeNAS &copy; 2005-2010 <a href="http://www.ixsystems.com" target="_blank" title="iXsystems, Inc.">iXsystems, Inc.</a> All rights reserved.</p>			
+<div align="center">
+<div style="width:1000px;text-align:right;"><a href="http://www.ixsystems.com" target="_blank" title="iXsystems, Inc."><img src="/freenas/media/ix/ix_logo.png" border="0" alt="iXsystems, Inc."></a></div>
+</div>
+			</div>
+			<!-- footer end -->
+
+		</div>
+	</div>
+</div>
+
+</body>
+</html>

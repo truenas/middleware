@@ -309,20 +309,20 @@ class NewCharField(models.CharField):
 
 ## System|Advanced
 class systemAdvanced(models.Model):
-    consolemenu = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="Console Menu")
-    serialconsole = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="Serial Console")
+    consolemenu = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="Console Menu", help_text="Takes place after next reboot.")
+    serialconsole = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="Serial Console", help_text="Takes place after next reboot.  You must have serial ports enabled in the BIOS For tihs to work.")
     consolescreensaver = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="Console screensaver")
-    firmwarevc = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="Firmware Version Check")
-    systembeep = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="System Beep")
-    tuning = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="Kernel Tuning")
-    powerdaemon = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="Power Daemon")
-    zeroconfbonjour = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="Zeroconf/Bonjour")
+    firmwarevc = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="Firmware Version Check", help_text="Disables checking for new verrsions automatically when visiting the System:Firmware page.")
+    systembeep = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="System Beep", help_text="Beep on system startup and shutdown.")
+    tuning = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="Kernel Tuning", help_text="Enable some kernel tuning values.")
+    powerdaemon = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="Power Daemon", help_text="The powerd daemon monitors thesystem and attempts to user power saving features of the CPU to reduce power consumption.")
+    zeroconfbonjour = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="Zeroconf/Bonjour", help_text="Enable Zeroconf/Bounjour advertising the services of the system.")
     motd = models.TextField(verbose_name="MOTD") 
 
 ## System|Advanced|Email
 class systemAdvancedEmail(models.Model):
-    fromemail = models.CharField(max_length=120, verbose_name="From email")
-    outgoingserver = models.CharField(max_length=120, verbose_name="Outgoing mail server")
+    fromemail = models.CharField(max_length=120, verbose_name="From email", blank=True)
+    outgoingserver = models.CharField(max_length=120, verbose_name="Outgoing mail server", blank=True)
     port = models.CharField(max_length=120, verbose_name="Port")
     security = models.CharField(max_length=120, choices=EMAILSECURITY_CHOICES, default="none", verbose_name="Security")
     smtp = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default="OFF", verbose_name="SMTP Authentication")
@@ -495,27 +495,21 @@ class networkInterfaceMGMTlagg(models.Model):
 
 
 
-class StaticRoutes(models.Model):
+class networkStaticRoutes(models.Model):
     interface = models.ForeignKey(networkInterfaceMGMT, verbose_name="Interface")
     destination = models.CharField(max_length=120, verbose_name="Destination network")
     gateway = models.CharField(max_length=120, verbose_name="Gateway")
     description = models.CharField(max_length=120, verbose_name="Description", blank=True)
     
     def __unicode__(self):
-        return self.destination
-
-    class Meta:
-        verbose_name = "Static Routes"
-
-class networkStaticRoutes(models.Model):
-    staticroutes = models.ForeignKey(StaticRoutes, verbose_name="Static Route")
+        return self.destination + " (" + self.interface + ")"
     
-    def __unicode__(self):
-        return self.staticroutes
-
     class Meta:
-        verbose_name = "Static Routes"
-    
+        verbose_name = "Static Route"
+
+    def save(self, *args, **kwargs):
+        super(networkStaticRoutes, self).save(*args, **kwargs)
+
 ## Disks|Management
 TRANSFERMODE_CHOICES = (
         ('Auto', 'Auto'),
@@ -604,44 +598,12 @@ class DiskAdvanced(Disk):
     class Meta:
         verbose_name = "Disk"
 
-GroupType_Choices = (
-        ('single', 'single disk'),
-        ('raidz', 'raidz'),
-        ('mirror', 'mirror'),
-        )
-class DiskGroup(models.Model):
-    name = models.CharField(max_length=120, verbose_name="Name")
-    type = models.CharField(max_length=120, choices=GroupType_Choices, default="(NONE)", verbose_name="Group Type")
-    members = models.ManyToManyField(Disk)
-    
-    def __unicode__(self):
-        return self.name
-
-""" End Disk Management """
-
-""" Volume Management """
 VolumeType_Choices = (
-        ('ufs', 'ufs'),
-        ('zfs', 'zfs'),
+        ('ufs', 'UFS'),
+        ('zfs', 'ZFS'),
         )
-class Volume(models.Model):
-    name = models.CharField(max_length=120, verbose_name="Name")
-    type = models.CharField(max_length=120, choices=VolumeType_Choices, default="(NONE)", verbose_name="Filesystem")
-    mountpoint = models.CharField(max_length=120, verbose_name="Mount Point")
-    group = models.ManyToManyField(DiskGroup)
-    
-    class Meta:
-        verbose_name = "Volume"
-
-    def __unicode__(self):
-        return self.name + ' (' + self.type + ')'
-
-    def save(self, *args, **kwargs):
-        super(Volume, self).save(*args, **kwargs)
-    
-
-zpool_Choices = (
-        ('disk', 'disk'),
+ZFS_Choices = (
+        ('single', 'single'),
         ('mirror', 'mirror'),
         ('raidz1', 'raidz1'),
         ('raidz2', 'raidz2'),
@@ -649,14 +611,35 @@ zpool_Choices = (
         ('log', 'log'),
         ('cache', 'cache'),
         )
-SingleDisk_Choices = (
+UFS_Choices = (
         ('ufs', 'UFS'),
         )
-class zpool(models.Model):
-    zpool = models.CharField(max_length=120, choices=zpool_Choices, verbose_name="zfs")
-class SingleDisk(models.Model):
-    fs = models.CharField(max_length=120, choices=SingleDisk_Choices, verbose_name="Filesystem")
+class DiskGroup(models.Model):
+    name = models.CharField(max_length=120, verbose_name="Name")
+    members = models.ManyToManyField(Disk)
+    type = models.CharField(max_length=120, choices=ZFS_Choices, default=" ", verbose_name="Type", blank="True")
+    
+    def __unicode__(self):
+        return self.name
 
+class zpool(models.Model):
+    zpool = models.CharField(max_length=120, choices=ZFS_Choices, verbose_name="zfs", blank=True)
+
+""" Volume Management """
+class Volume(models.Model):
+    name = models.CharField(max_length=120, verbose_name="Name")
+    type = models.CharField(max_length=120, choices=VolumeType_Choices, default=" ", verbose_name="Volume Type", blank="True")
+    mountpoint = models.CharField(max_length=120, verbose_name="Mount Point")
+    groups = models.ManyToManyField(DiskGroup)
+    
+    class Meta:
+        verbose_name = "Volume"
+
+    def __unicode__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        super(Volume, self).save(*args, **kwargs)
 
 
 ## Services|CIFS/SMB|Settings
@@ -683,10 +666,10 @@ UNIXCHARSET_CHOICES = (
         ('ASCII', 'ASCII'),
         )
 LOGLEVEL_CHOICES = (
-        ('Minimum', 'Minimum'),
-        ('Normal', 'Normal'),
-        ('Full', 'Full'),
-        ('Debug', 'Debug'),
+        ('1', 'Minimum'),
+        ('2', 'Normal'),
+        ('3', 'Full'),
+        ('10', 'Debug'),
         )
 
 class servicesCIFS(models.Model):
@@ -796,19 +779,19 @@ class servicesFTP(models.Model):
             help_text="When a client initially connects to the server the ident protocol is used to attempt to identify the remote username.")
     reversedns = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="Reverse DNS lookup",
             help_text="Enable reverse DNS lookup performed on the remote host's IP address for incoming active mode data connections and outgoing passive mode data connections.")
-    masqaddress = models.CharField(max_length=120, verbose_name="Masquerade address",
+    masqaddress = models.CharField(max_length=120, verbose_name="Masquerade address", blank=True,
             help_text="Causes the server to display the network information for the specified IP address or DNS hostname to the client, on the assumption that that IP address or DNS host is acting as a NAT gateway or port forwarder for the server.")
     passiveportsimin = models.CharField(max_length=120, verbose_name="Passive ports",
             help_text="The minimum port to allocate for PASV style data connections (0 = use any port).")
     passiveportsmax = models.CharField(max_length=120, verbose_name="Passive ports",
             help_text="The maximum port to allocate for PASV style data connections (0 = use any port). Passive ports restricts the range of ports from which the server will select when sent the PASV command from a client. The server will randomly choose a number from within the specified range until an open port is found. The port range selected must be in the non-privileged range (eg. greater than or equal to 1024). It is strongly recommended that the chosen range be large enough to handle many simultaneous passive connections (for example, 49152-65534, the IANA-registered ephemeral port range).")
-    localuserbw = models.CharField(max_length=120, verbose_name="User bandwidth",
+    localuserbw = models.CharField(max_length=120, verbose_name="User bandwidth", blank=True,
             help_text="Local user upload bandwith in KB/s. An empty field means infinity.")
-    localuserdlbw = models.CharField(max_length=120, verbose_name="Download bandwidth",
+    localuserdlbw = models.CharField(max_length=120, verbose_name="Download bandwidth", blank=True,
             help_text="Local user download bandwith in KB/s. An empty field means infinity.")
-    anonuserbw = models.CharField(max_length=120, verbose_name="Download bandwidth",
+    anonuserbw = models.CharField(max_length=120, verbose_name="Download bandwidth", blank=True,
             help_text="Anonymous user upload bandwith in KB/s. An empty field means infinity.")
-    anonuserdlbw = models.CharField(max_length=120, verbose_name="Download bandwidth",
+    anonuserdlbw = models.CharField(max_length=120, verbose_name="Download bandwidth", blank=True,
             help_text="Anonymous user download bandwith in KB/s. An empty field means infinity.")
     ssltls = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="root login",
             help_text="Enable TLS/SSL connections. ")
@@ -841,7 +824,7 @@ class servicesSSH(models.Model):
             help_text="Allow SSH tunnels.")
     compression = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="Compression",
             help_text="Compression is worth using if your connection is slow. The efficiency of the compression depends on the type of the file, and varies widely. Useful for internet transfer only.")
-    privatekey = models.TextField(max_length=120, verbose_name="Private Key",
+    privatekey = models.TextField(max_length=120, verbose_name="Private Key", blank=True,
             help_text="Paste a DSA PRIVATE KEY in PEM format here.")
     opions = models.TextField(max_length=120, verbose_name="Banner", blank=True,
             help_text="Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect entered options prevent SSH service to be started.")
@@ -1046,8 +1029,8 @@ class servicesRSYNC(models.Model):
 
 class servicesUnison(models.Model):            
     toggleUnison = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="Unison")
-    workingdir = models.CharField(max_length=120, verbose_name="Working directory")
-    createworkingdir = models.BooleanField(max_length=120, verbose_name="",
+    workingdir = models.CharField(max_length=120, verbose_name="Working directory", blank=True)
+    createworkingdir = models.CharField(max_length=120, verbose_name="Create Working Directory", choices=TOGGLE_CHOICES, default="ON",
             help_text="Create working directory if one doesn't exist. ")
 
 """
@@ -1125,44 +1108,48 @@ BTENCRYPT_CHOICES = (
 
 class servicesDynamicDNS(models.Model):            
     toggleDynamicDNS = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="Dyanmic DNS")
-    domain = models.CharField(max_length=120, verbose_name="Domain name",
+    provider = models.CharField(max_length=120, choices=DYNDNSPROVIDER_CHOICES, default='dyndns', verbose_name="Provider")
+    domain = models.CharField(max_length=120, verbose_name="Domain name", blank=True,
             help_text="A host name alias. This option can appear multiple times, for each domain that has the same IP. Use a space to separate multiple alias names.")
     username = models.CharField(max_length=120, verbose_name="Username")
     password = models.CharField(max_length=120, verbose_name="Password") # need to make this a 'password' field, but not available in django Models 
-    updateperiod = models.CharField(max_length=120, verbose_name="Update period")
-    fupdateperiod = models.CharField(max_length=120, verbose_name="Forced update period")
+    updateperiod = models.CharField(max_length=120, verbose_name="Update period", blank=True)
+    fupdateperiod = models.CharField(max_length=120, verbose_name="Forced update period", blank=True)
     wildcard = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="Wildcard", 
             help_text="Toggle domain wildcarding.")
-    auxparams = models.TextField(verbose_name="Auxiliary parameters", help_text="These parameters will be added to global settings in inadyn.conf.") 
+    auxparams = models.TextField(verbose_name="Auxiliary parameters", blank=True,
+            help_text="These parameters will be added to global settings in inadyn.conf.") 
 
 class servicesSNMP(models.Model):            
     toggleSNMP = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="SNMP")
-    location = models.CharField(max_length=120, verbose_name="Location",
+    location = models.CharField(max_length=120, verbose_name="Location", blank=True,
             help_text="Location information, e.g. physical location of this system: 'Floor of building, Room xyz'.")
-    contact = models.CharField(max_length=120, verbose_name="Contact",
+    contact = models.CharField(max_length=120, verbose_name="Contact", blank=True,
             help_text="Contact information, e.g. name or email of the person responsible for this system: 'admin@email.address'.")
     community = models.CharField(max_length=120, verbose_name="Community",
             help_text="In most cases, 'public' is used here.")
     traps = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="Traps",
             help_text="Toggle traps")
-    auxparams = models.TextField(verbose_name="Auxiliary parameters", help_text="These parameters will be added to global settings in inadyn.conf.") 
+    auxparams = models.TextField(verbose_name="Auxiliary parameters", blank=True,
+            help_text="These parameters will be added to global settings in inadyn.conf.") 
 
 class servicesUPS(models.Model):            
     toggleUPS = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="UPS")
     identifier = models.CharField(max_length=120, verbose_name="Identifier",
             help_text="This name is used to uniquely identify your UPS on this system.")
-    driver = models.CharField(max_length=120, verbose_name="Driver",
+    driver = models.CharField(max_length=120, verbose_name="Driver", blank=True,
             help_text="The driver used to communicate with your UPS.")
-    port = models.CharField(max_length=120, verbose_name="Port",
+    port = models.CharField(max_length=120, verbose_name="Port", blank=True,
             help_text="The serial or USB port where your UPS is connected.")
-    auxparams = models.TextField(verbose_name="Auxiliary parameters", help_text="These parameters will be added to global settings in inadyn.conf.") 
+    auxparams = models.TextField(verbose_name="Auxiliary parameters", blank=True,
+            help_text="These parameters will be added to global settings in inadyn.conf.") 
     description = models.CharField(max_length=120, verbose_name="Description", blank=True)
     shutdown = models.CharField(max_length=120, choices=UPS_CHOICES, default='batt', verbose_name="Shutdown mode")
     shutdowntimer = models.CharField(max_length=120, verbose_name="Shutdown timer",
             help_text="The time in seconds until shutdown is initiated. If the UPS happens to come back before the time is up the shutdown is canceled.")
     rmonitor = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="Remote Monitoring")
     emailnotify = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="Email notification")
-    toemail = models.CharField(max_length=120, verbose_name="To email",
+    toemail = models.CharField(max_length=120, verbose_name="To email", blank=True,
             help_text="Destination email address. Separate email addresses by semi-colon.")
     subject = models.CharField(max_length=120, verbose_name="To email",
             help_text="The subject of the email. You can use the following parameters for substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>")
@@ -1183,7 +1170,7 @@ class servicesBitTorrent(models.Model):
     toggleBitTorrent = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="Bit Torrent")
     peerport = models.CharField(max_length=120, verbose_name="Peer port",
             help_text="Port to listen for incoming peer connections. Default port is 51413.")
-    downloaddir = models.CharField(max_length=120, verbose_name="Download directory",
+    downloaddir = models.CharField(max_length=120, verbose_name="Download directory", blank=True,
             help_text="Where to save downloaded data.")
     configdir = models.CharField(max_length=120, verbose_name="Configuration directory",
             help_text="Alternative configuration directory (usually empty)", blank=True)
@@ -1206,3 +1193,61 @@ class servicesBitTorrent(models.Model):
     umask = models.CharField(max_length=120, verbose_name="User mask",
             help_text="Use this option to override the default permission modes for newly created files (0002 by default).", blank=True)
     options = models.CharField(max_length=120, verbose_name="Extra Options", blank=True)
+    adminport = models.CharField(max_length=120, verbose_name="Web admin port",
+            help_text="Port to run bittorrent's web administration app on")
+    adminauth = models.CharField(max_length=120, verbose_name="Authorize Web Interface",
+            help_text="When turned on, require authorization before allowing access to the web interface")
+    adminuser = models.CharField(max_length=120, verbose_name="Web admin username",
+            help_text="Username to authenticate to web interface with")
+    adminpass = models.CharField(max_length=120, verbose_name="Web admin password",
+            help_text="Password to authenticate to web interface with")
+
+
+""" Access Section """
+
+PWEncryptionChoices = (
+        ('clear', 'clear'),
+        ('crypt', 'crypt'),
+        ('md5', 'md5'),
+        ('nds', 'nds'),
+        ('racf', 'racf'),
+        ('ad', 'ad'),
+        ('exop', 'exop'),
+        )
+
+class accessActiveDirectory(models.Model):            
+    toggle = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="Active Directory")
+    dcname = models.CharField(max_length=120, verbose_name="Domain Controller Name",
+            help_text="AD or PDC name.")
+    dnsrealmname = models.CharField(max_length=120, verbose_name="Domain Name (DNS/Realm-Name)",
+            help_text="Domain Name, eg example.com")
+    netbiosname = models.CharField(max_length=120, verbose_name="Domain Name (NetBIOS-Name)",
+            help_text="Domain Name in old format, eg EXAMPLE")
+    adminname = models.CharField(max_length=120, verbose_name="Administrator Name",
+            help_text="Username of Domain Administrator Account")
+    adminpw = models.CharField(max_length=120, verbose_name="Administrator Password",
+            help_text="Password of Domain Administrator account.")
+
+class accessLDAP(models.Model):            
+    toggle = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="LDAP")
+    hostname = models.CharField(max_length=120, verbose_name="Hostname", blank=True,
+            help_text="The name or IP address of the LDAP server")
+    basedn = models.CharField(max_length=120, verbose_name="Base DN", blank=True,
+            help_text="The default base Distinguished Name (DN) to use for seraches, eg dc=test,dc=org")
+    anonbind = models.CharField(max_length=120, choices=TOGGLE_CHOICES, default='OFF', verbose_name="Anonymous Bind")
+    rootbasedn = models.CharField(max_length=120, verbose_name="Root bind DN", blank=True,
+            help_text="The distinguished name with which to bind to the directory server, e.g. cn=admin,dc=test,dc=org")
+    rootbindpw = models.CharField(max_length=120, verbose_name="Root bind password", blank=True,
+            help_text="The credentials with which to bind.")
+    pwencyption = models.CharField(max_length=120, choices=PWEncryptionChoices, verbose_name="Password Encryption",
+            help_text="The password change protocol to use.")
+    usersuffix = models.CharField(max_length=120, verbose_name="User Suffix", blank=True,
+            help_text="This parameter specifies the suffix that is used for users when these are added to the LDAP directory, e.g. ou=Users")
+    groupsuffix = models.CharField(max_length=120, verbose_name="Group Suffix", blank=True,
+            help_text="This parameter specifies the suffix that is used for groups when these are added to the LDAP directory, e.g. ou=Groups")
+    paswordsuffix = models.CharField(max_length=120, verbose_name="Password Suffix", blank=True,
+            help_text="This parameter specifies the suffix that is used for passwords when these are added to the LDAP directory, e.g. ou=Passwords")
+    machinesuffix = models.CharField(max_length=120, verbose_name="Machine Suffix", blank=True,
+            help_text="This parameter specifies the suffix that is used for machines when these are added to the LDAP directory, e.g. ou=Computers")
+    auxparams = models.TextField(max_length=120, verbose_name="Auxillary Parameters", blank=True,
+            help_text="These parameters are added to ldap.conf.")
