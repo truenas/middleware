@@ -190,9 +190,6 @@ get_column_value()
 	_ret=""
 	_nlines=`cat "${_file}" | wc -l`
 
-	_ifs="${IFS}"
-	IFS="."		## XXX IMP WAS ^M
-
 	_i=0; _n=1;
 	while [ "${_i}" -lt "${_nlines}" ]
 	do
@@ -214,7 +211,6 @@ get_column_value()
 		_i=`expr ${_i} + 1`
 		_n=`expr ${_n} + 1`
 	done
-	IFS="${_ifs}"
 
 	VAL="$_ret"
 	export VAL
