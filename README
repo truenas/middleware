@@ -41,9 +41,15 @@ You will need your own FreeBSD src tree, your own ports tree.  FreeBSD
 
 The build tree I have under a common root:
 
-freebsd/src		FreeBSD 8.1 Release sources
+freebsd/src		FreeBSD 8.1 Release sources [*]
 freebsd/ports		FreeBSD /usr/ports tree
 freenas			The experimental/ix part of the FreeNAS svn tree
+
+[*] currently, you must apply the patches in experimental/ix/patches to the
+FreeBSD 8.1-RELEASE tree (once) before you start the build process.  Otherwise,
+the initial database won't be in /data and there will be a boatload of
+complaints from the boot scripts (there's one complaint that's expected, but
+without the patch you'll have like 20).
 
 cd freebsd/src
 sh tools/tools/nanobsd/nanobsd.sh -c ../../freenas/nanobsd/freenas64.conf
