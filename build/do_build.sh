@@ -48,7 +48,7 @@ done
 
 # OK, now we can build
 cd FreeBSD/src
-args="-c ../../nanobsd/freenas64.conf"
+args="-c ../../nanobsd/freenas-common"
 if [ `whoami` != "root" ]; then
     echo "You must be root to run this"
     exit 1
