@@ -32,9 +32,29 @@
 # FreeNAS specific bits of the common stuff.
 #
 
-REVISION=`svnversion ${NANO_CFG_BASE}`
-NANO_NAME="FreeNAS-8r${REVISION}-${NANO_ARCH}"
-NANO_IMGNAME="${NANO_NAME}.full"
+# Find our files, since we're out of tree
+case $2 in
+/*/*)
+    NANO_CFG_BASE=$(dirname $2)
+    NANO_SRC=`pwd | sed 's/.tools.tools.nanobsd.*//'`
+    ;;
+*/*)
+    NANO_CFG_BASE=$(dirname `pwd`/$2)
+    NANO_SRC=`pwd | sed 's/.tools.tools.nanobsd.*//'`
+    ;;
+*)  NANO_CFG_BASE=`pwd`
+    NANO_SRC=`realpath $0 | sed 's/.tools.tools.nanobsd.*//'`
+    ;;
+esac
+
+${REVISION=`svnversion ${NANO_CFG_BASE}`}
+${NANO_NAME="FreeNAS-8r${REVISION}-${NANO_ARCH}"}
+${NANO_IMGNAME="${NANO_NAME}.full"}
+${NANO_KERNEL=${NANO_CFG_BASE}/FREENAS.${NANO_ARCH}}
+${NANO_OBJ=/tmp/${LOGNAME}/obj.freenas.${NANO_ARCH}}
+if [ -n "${FREENAS_ARCH}" ]; then
+    NANO_ARCH=${FREENAS_ARCH}
+fi
 
 # Tmp hack for transition to lighttpd
 use_lighttpd=1
@@ -110,7 +130,7 @@ add_port security/pam_ldap
 add_port security/pam_mkhomedir
 add_port shells/bash
 add_port shells/scponly
-add_port sysutils/e2fsprogs
+	 add_port sysutils/e2fsprogs
 #+sysutils/fusefs-ntfs
 add_port sysutils/fusefs-kmod
 add_port sysutils/fusefs-libs
