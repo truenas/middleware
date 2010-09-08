@@ -3,13 +3,13 @@
 # $FreeBSD$
 #
 
-# PROVIDE: ix-proftpd
+# PROVIDE: ix-msmtp
 # REQUIRE: FILESYSTEMS
-# BEFORE: proftpd
+# BEFORE: mountlate
 
 . /etc/rc.subr
 
-msmtp_config=${msmtp_config:-"/var/etc/msmtp.conf"}
+msmtp_config=${msmtp_config:-"/usr/local/etc/msmtp.conf"}
 
 generate_msmtp_cfg()
 {
