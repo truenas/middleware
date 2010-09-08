@@ -269,18 +269,6 @@ select_httpd ( )
 }
 customize_cmd select_httpd
 
-fix_beastie ( )
-{
-	(
-	# We're booting a FreeNAS box, not a FreeBSD box, patch beastie.4th
-	# to reflect that
-	cd ${NANO_WORLDDIR}
-	patch -p0 < ${NANO_CFG_BASE}/Patches/patch.beastie.4th
-	)
-	
-}
-customize_cmd fix_beastie
-
 fix_rc_d_sshd ( )
 {
 	(
