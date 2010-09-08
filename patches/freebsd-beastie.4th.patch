@@ -1,4 +1,4 @@
-Index: boot/beastie.4th
+Index: sys/boot/forth/beastie.4th
 ===================================================================
 --- sys/boot/forth/beastie.4th	(revision 208655)
 +++ sys/boot/forth/beastie.4th	(working copy)
