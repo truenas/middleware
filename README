@@ -16,11 +16,7 @@ preview only.
 The GUI is currently incomplete.  You can configure your network
 address, some misc system configuration, ssh, ftp, tftp, cifs/samba
 and nfs.  All the GUI screens should work at least to the point of
-saving the data to the database.  You may encounter a GUI hang if you
-turn a service on and then off due to a signal mask problem that we've
-not yet corrected.  If you encounter this, reboot the system and the
-GUI will return, and the configured functionality, including the
-last-saved transaction, should work.
+saving the data to the database.
 
 The GUI should behave basically the same as 0.7's GUI, but there are
 some differences.  The biggest differences are in configuring disks.
