@@ -165,7 +165,7 @@ get_media_description()
 	if [ -n "${_media}" ]
 	then
 		_description=`pc-sysinstall disk-list -c -m|grep "^${_media}"\
-			|cut -f2 -d:|sed -E 's|.*<(.*)>.*$|\1|'`
+			|awk -F':' '{print $2}'|sed -E 's|.*<(.*)>.*$|\1|'`
 		VAL="${_description}"
 	fi
 
@@ -416,7 +416,7 @@ menu_reboot()
 	dialog --yesno "Do you really want to reboot the system?" 5 46 no
 	if [ "$?" = "0" ]
 	then
-		shutdown -r now >/dev/null
+		reboot >/dev/null
 	fi
 }
 
@@ -425,7 +425,7 @@ menu_shutdown()
 	dialog --yesno "Do you really want to shutdown the system?" 5 46 no
 	if [ "$?" = "0" ]
 	then
-		shutdown -p now >/dev/null
+		halt -p >/dev/null
 	fi
 }
 
