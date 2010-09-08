@@ -1,0 +1,13 @@
+Index: etc/rc.d/nsswitch
+===================================================================
+--- nsswitch	(revision 211943)
++++ nsswitch	(working copy)
+@@ -80,7 +80,7 @@
+ 	cache | *=*)
+ 		;;
+ 	*)
+-		printf "Warning: unrecognized source [%s]\n" $_s >&2
++		echo "Warning: unrecognized source [$_s]" >&2
+ 		;;
+ 	esac
+     done
