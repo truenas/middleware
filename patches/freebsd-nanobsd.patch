@@ -1,3 +1,5 @@
+Index: tools/tools/nanobsd/nanobsd.sh
+===================================================================
 --- tools/tools/nanobsd/nanobsd.sh	2010-06-13 20:09:06.000000000 -0600
 +++ freebsd/8/tools/tools/nanobsd/nanobsd.sh	2010-07-15 15:39:12.000000000 -0600
 @@ -354,6 +355,30 @@
