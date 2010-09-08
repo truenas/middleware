@@ -7,6 +7,9 @@
 #
 
 root=$(pwd)
+: ${FREENAS_ARCH=$(uname -p)}
+export FREENAS_ARCH
+export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
 
 # Make sure we have FreeBSD dirs
 if [ ! -d FreeBSD ]; then
