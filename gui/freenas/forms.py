@@ -170,10 +170,17 @@ class networkInterfaceMGMTlaggForm(ModelForm):
 class networkHostsForm(ModelForm):
     class Meta:
         model = networkHosts
-class networkStaticRoutesForm(ModelForm):
+class networkStaticRouteForm(ModelForm):
     class Meta:
-        model = networkStaticRoutes
+        model = networkStaticRoute
 
+class StaticRouteWizard(FormWizard):
+    def get_template(self, step):
+        return 'freenas/network/staticroutes_list.html' 
+    def done(self, request, form_list): # saves form to db
+        for form in form_list: 
+            form.save() 
+        return HttpResponseRedirect('/freenas/network/staticroutes/')
 """
 Django's FormWizard uses multiple Django Forms to create a multi-step wizard
 """

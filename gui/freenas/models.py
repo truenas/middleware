@@ -487,7 +487,7 @@ class networkInterfaceMGMTlagg(models.Model):
     lagglist = models.ForeignKey(networkLAGG, verbose_name="LAGG")
     
     def __unicode__(self):
-        return self.laglist
+        return self.lagglist
 
     class Meta:
         verbose_name = "LAGG"
@@ -495,21 +495,21 @@ class networkInterfaceMGMTlagg(models.Model):
 
 
 
-class networkStaticRoutes(models.Model):
+class networkStaticRoute(models.Model):
     interface = models.ForeignKey(networkInterfaceMGMT, verbose_name="Interface")
     destination = models.CharField(max_length=120, verbose_name="Destination network")
     gateway = models.CharField(max_length=120, verbose_name="Gateway")
     description = models.CharField(max_length=120, verbose_name="Description", blank=True)
-    
-    def __unicode__(self):
-        return self.destination + " (" + self.interface + ")"
-    
+
     class Meta:
         verbose_name = "Static Route"
 
+    def __unicode__(self):
+        return self.destination
+    
     def save(self, *args, **kwargs):
-        super(networkStaticRoutes, self).save(*args, **kwargs)
-
+        super(networkStaticRoute, self).save(*args, **kwargs)
+    
 ## Disks|Management
 TRANSFERMODE_CHOICES = (
         ('Auto', 'Auto'),

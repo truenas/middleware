@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Static Route</h1>
+<h2> {{ object.destination }} Details</h2>
+<table>
+    <tr>
+        <td width="25%" style="background:#cfcfcf;"><strong>Interface</strong></td>
+        <td width="25%" style="background:#cfcfcf;"><strong>Destination</strong></td>
+        <td style="background:#cfcfcf;"><strong>Description</strong></td>
+        <td style="background:#cfcfcf;"></td>
+    </tr>
+    <tr>
+        <td>
+            {{ object.interface }}
+        </td>
+        <td>
+            {{ object.destination }}
+        </td>
+        <td>
+            {{ object.description }}
+        </td>
+        <td>
+             <a href="/freenas/network/staticroutes/delete/{{ object.id }}/">Remove</a>
+        </td>
+    </tr>
+</table>
+
+{% endblock %}
+
+

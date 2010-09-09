@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+{% if user.is_authenticated %}
+<form method="post" action=".">
+<h1>Confirm Delete</h1>
+<span class="alert" style="width:50%;">
+<h2>WARNING!</h2>
+<p>You are about to delete Static Route: <strong>{{ object.destination }}</strong></p>
+
+<p align="right"><strong>Are you sure?</strong><br />
+<input type="submit" value="Delete Static Route" >
+</p>
+</span>
+</form>
+
+{% else %}
+{% endif %}
+{% endblock %}
+

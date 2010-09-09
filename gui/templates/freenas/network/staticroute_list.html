@@ -4,10 +4,13 @@
 
 <h1>Network</h1>
 <h2>Static Routes</h2>
+<a href="/freenas/network/staticroutes/add/" alt="Add Static Route">Add Route</a>
+<br />
+<br />
 <table>
     <tr>
-        <td width="150px" style="background:#cfcfcf;"><strong>Label</strong></td>
-        <td width="50px" style="background:#cfcfcf;"><strong>Label</strong></td>
+        <td width="150px" style="background:#cfcfcf;"><strong>Interface</strong></td>
+        <td width="50px" style="background:#cfcfcf;"><strong>Destination</strong></td>
         <td width="25px" style="background:#cfcfcf;"></td>
     </tr>
 {% for route in object_list %}
@@ -17,7 +20,7 @@
 
         <td> {{ route.interface }}</td>
         <td>
-<a href="/freenas/network/staticroutes/delete/{{ staticroute.id }}/">Delete?</a>
+<a href="/freenas/network/staticroutes/delete/{{ route.id }}/">Delete?</a>
             </td>
     </tr>
 {% endfor %}

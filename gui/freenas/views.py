@@ -28,7 +28,7 @@
 
 from freenasUI.freenas.forms import * 
 from freenasUI.freenas.models import * 
-from freenasUI.freenas.models import Disk, Volume
+from freenasUI.freenas.models import Disk, Volume, networkStaticRoute
 from django.forms.models import modelformset_factory
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.decorators import login_required
@@ -327,28 +327,28 @@ def networkHostsView(request):
     return render_to_response('freenas/network/hosts.html', variables)
 
 @login_required
-def networkStaticRoutes(request):
-    if request.method == 'POST':
-        form = networkStaticRoutesForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = networkStaticRoutesForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/network/staticroutes.html', variables)
+def staticroutes_add_wrapper(request, *args, **kwargs):
+    wiz = StaticRouteWizard([networkStaticRouteForm])
+    return wiz(request, *args, **kwargs)
 
 @login_required
-def staticroute_list(request, template_name='freenas/network/staticroute_list.html'):
-    query_set = networkStaticRoutes.objects.all()
-    if len(query_set) == 0:
-        raise Http404()
+def staticroutes_list(request, template_name='freenas/network/staticroute_list.html'):
+    query_set = networkStaticRoute.objects.all()
     return object_list(
         request,
         template_name = template_name,
         queryset = query_set
     )
+
+@login_required
+def staticroute_detail(request, staticrouteid, template_name='freenas/network/staticroute_detail.html'):
+    return object_detail(
+        request,
+        template_name = template_name,
+        object_id = staticrouteid,
+        queryset = networkStaticRoute.objects.all(),
+    ) 
+
 
 ## Disk section
 @login_required
@@ -357,54 +357,13 @@ def disk_add_wrapper(request, *args, **kwargs):
     return wiz(request, *args, **kwargs)
 
 @login_required
-def diskgroup_add_wrapper(request, *args, **kwargs):
-    wiz = DiskGroupWizard([DiskGroupForm])
-    return wiz(request, *args, **kwargs)
-
-@login_required
-def volume_create_wrapper(request, *args, **kwargs):
-    wiz = VolumeWizard([VolumeForm])
-    return wiz(request, *args, **kwargs)
-
-
-@login_required
-def DiskManagerView(request):
-    if request.method == 'POST':
-        form = DiskManagerForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = DiskManagerForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/disks/disk_manager.html', variables)
-
-@login_required
-def DiskView(request):
-    if request.method == 'POST':
-        form = DiskForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = DiskForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/disks/disk.html', variables)
-
-@login_required
-def DiskAdvancedView(request):
-    if request.method == 'POST':
-        form = DiskAdvancedForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = DiskAdvancedForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/disks/disk_advanced.html', variables)
+def disk_list(request, template_name='freenas/disks/disk_list.html'):
+    query_set = Disk.objects.all()
+    return object_list(
+        request,
+        template_name = template_name,
+        queryset = query_set
+    )
 
 @login_required
 def disk_detail(request, diskid, template_name='freenas/disks/disk_detail.html'):
@@ -415,36 +374,16 @@ def disk_detail(request, diskid, template_name='freenas/disks/disk_detail.html')
         queryset = Disk.objects.all(),
     ) 
 
-@login_required
-def disk_list(request, template_name='freenas/disks/disk_list.html'):
-    query_set = Disk.objects.all()
-    if len(query_set) == 0:
-        raise Http404()
-    return object_list(
-        request,
-        template_name = template_name,
-        queryset = query_set
-    )
 
 
 @login_required
-def DiskGroupView(request):
-    if request.method == 'POST':
-        form = DiskGroupForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = DiskGroupForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/disks/disk_group.html', variables)
+def diskgroup_add_wrapper(request, *args, **kwargs):
+    wiz = DiskGroupWizard([DiskGroupForm])
+    return wiz(request, *args, **kwargs)
 
 @login_required
 def diskgroup_list(request, template_name='freenas/disks/diskgroup_list.html'):
     query_set = DiskGroup.objects.values().order_by('name')
-    if len(query_set) == 0:
-        raise Http404()
     return object_list(
         request,
         template_name = template_name,
@@ -463,17 +402,20 @@ def diskgroup_detail(request, diskgroupid, template_name='freenas/disks/diskgrou
 
 
 @login_required
-def VolumeView(request):
-    if request.method == 'POST':
-        form = VolumeForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = VolumeForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/disks/disk_volume.html', variables)
+def volume_create_wrapper(request, *args, **kwargs):
+    wiz = VolumeWizard([VolumeForm])
+    return wiz(request, *args, **kwargs)
+
+@login_required
+def volume_list(request, template_name='freenas/disks/volume_list.html'):
+    query_set = Volume.objects.values().order_by('groups')
+    #if len(query_set) == 0:
+    #    raise Http404()
+    return object_list(
+        request,
+        template_name = template_name,
+        queryset = query_set
+    )
 
 @login_required
 def volume_detail(request, volumeid, template_name='freenas/disks/volume_detail.html'):
@@ -484,16 +426,6 @@ def volume_detail(request, volumeid, template_name='freenas/disks/volume_detail.
         queryset = Volume.objects.all(),
     ) 
 
-@login_required
-def volume_list(request, template_name='freenas/disks/volume_list.html'):
-    query_set = Volume.objects.values().order_by('groups')
-    if len(query_set) == 0:
-        raise Http404()
-    return object_list(
-        request,
-        template_name = template_name,
-        queryset = query_set
-    )
 
 ## Services section
 
