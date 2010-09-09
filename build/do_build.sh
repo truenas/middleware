@@ -42,7 +42,7 @@ fi
 # Make sure that all the patches are applied
 touch ${root}/FreeBSD/src-patches
 for i in $(cd ${root}/patches && echo freebsd-*); do
-    if ! grep $i  ${root}/FreeBSD/src-patches; then
+    if ! grep $i ${root}/FreeBSD/src-patches > /dev/null 2>&1; then
 	echo "Applying patch $i..."
 	(cd FreeBSD/src && patch -p0 < ${root}/patches/$i)
 	echo $i >> ${root}/FreeBSD/src-patches
