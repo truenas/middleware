@@ -2,4 +2,10 @@
 SUBDIR=backend backend-partmanager backend-query conf doc
 SUBDIR+=pc-sysinstall
 
+beforeinstall:
+.for i in backend backend-partmanager backend-query conf conf/license doc
+	mkdir -p ${DESTDIR}/usr/share/pc-sysinstall/$i
+.endfor
+	mkdir -p ${DESTDIR}/usr/sbin
+
 .include <bsd.subdir.mk>
