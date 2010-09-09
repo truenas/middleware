@@ -34,7 +34,7 @@ generate_fstab()
 	fi
 	cp /conf/base/etc/fstab /etc/fstab
 	generate_fstab_real >> /etc/fstab
-	if [ -n "${_doumount}" ]; then
+	if [ "${_doumount}" -eq 1 ]; then
 		umount /data
 	fi
 }
