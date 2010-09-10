@@ -54,10 +54,11 @@ main()
     sed -i "" -e 's/^\(light.*\)".*"/\1"NO"/' /mnt/etc/rc.conf
     echo 'cron_enable="NO"' >> /mnt/etc/rc.conf
     echo 'syslogd_enable="NO"' >> /mnt/etc/rc.conf
+    echo 'inetd_enable="NO"' >> /mnt/etc/rc.conf
     rm /mnt/etc/rc.conf.local
     rm /mnt/etc/rc.d/ix-*
     rm /mnt/etc/rc.initdiskless
-    rm -rf /mnt/usr/bin /mnt/usr/sbin
+    rm -rf /mnt/usr/bin /mnt/usr/sbin /mnt/usr/local/lib*
     ln -s /rescue /mnt/usr/bin
     ln -s /rescue /mnt/usr/sbin
     unmount
@@ -173,7 +174,7 @@ make_pristine()
 
 unmount()
 {
-    mount /mnt > /dev/null 2&>1
+    mount /mnt > /dev/null 2>&1
     if [ "$?" = "0" ]; then
         umount /mnt
         mdconfig -d -u `echo ${md} | sed s/^md//`
