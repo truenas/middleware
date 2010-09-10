@@ -1,13 +1,21 @@
 #!/bin/sh
 
 # This script creates a bootable LiveCD iso from a nanobsd image
+# TODO: Copy the actual image to the ISO and run the installer
 
 trap make_pristine 1 2 3 6
 
 main()
 {
-    IMGFILE="/home/jpaetzel/FreeNAS-8r561-amd64.full" # Our starting point
-    IMGFILE_MD=`md5 ${IMGFILE} | awk '{print $4}'`
+    # This script must be run as root
+    if ! [ $(whoami) = "root" ]; then
+        echo "This script must be run by root"
+        exit
+    fi
+
+    IMGFILE="/home/jpaetzel/FreeNAS-8r561-amd64.full" # The FreeNAS image
+    BOOTFILE="/home/jpaetzel/josh.img" # The image used to make the CD
+    BOOTFILE_MD=`md5 ${BOOTFILE} | awk '{print $4}'`
     STAGEDIR="/tmp/stage" # Scratch location for making filesystem image
     ISODIR="/tmp/iso" # Directory ISO is rolled from
     OUTPUT="fn2.iso" # Output file of mkisofs
@@ -28,10 +36,10 @@ main()
     # image.  If this copy isn't completed bad things can happen.  Moral
     # of the story: keep a pristine image around.
 
-    cp ${IMGFILE} ${IMGFILE}.orig
+    cp ${BOOTFILE} ${BOOTFILE}.orig
 
     # move /boot from the image to the iso
-    md=`mdconfig -a -t vnode -f ${IMGFILE}`
+    md=`mdconfig -a -t vnode -f ${BOOTFILE}`
 
     # s1a is hard coded here and dependant on the image.
     mount /dev/${md}s1a /mnt
@@ -39,9 +47,23 @@ main()
     mkdir ${STAGEDIR}/rescue
     (cd /mnt/rescue && tar cf - . ) | (cd ${STAGEDIR}/rescue && tar xf - )
     cp -R /mnt/boot ${ISODIR}/
+    cp ${IMGFILE} ${ISODIR}/
+    echo "#/dev/md0 / ufs ro 0 0" > /mnt/etc/fstab
+    echo 'root_rw_mount="NO"' >> /mnt/etc/rc.conf
+    sed -i "" -e 's/^\(sshd.*\)".*"/\1"NO"/' /mnt/etc/rc.conf
+    sed -i "" -e 's/^\(light.*\)".*"/\1"NO"/' /mnt/etc/rc.conf
+    echo 'cron_enable="NO"' >> /mnt/etc/rc.conf
+    echo 'syslogd_enable="NO"' >> /mnt/etc/rc.conf
+    rm /mnt/etc/rc.conf.local
+    rm /mnt/etc/rc.d/ix-*
+    rm /mnt/etc/rc.initdiskless
+    rm -rf /mnt/usr/bin /mnt/usr/sbin
+    ln -s /rescue /mnt/usr/bin
+    ln -s /rescue /mnt/usr/sbin
+    unmount
 
     # Compress what's left of the image after mangling it
-    mkuzip -o ${ISODIR}/data/base.ufs.uzip ${IMGFILE}
+    mkuzip -o ${ISODIR}/data/base.ufs.uzip ${BOOTFILE}
 
     # Magic scripts for the LiveCD
     cat > ${STAGEDIR}/baseroot.rc << 'EOF'
@@ -130,24 +152,38 @@ make_pristine()
 {
     # Put everything back the way it was before this script was run
     cleanup
-    umount /mnt
-    mdconfig -d -u `echo ${md} | sed s/^md//`
+    unmount
 
-    CURR_IMGFILE_MD=`md5 ${IMGFILE} | awk '{print $4}'`
-    if [ "${CURR_IMGFILE_MD}" = "${IMGFILE_MD}" ]; then
-        if [ -f ${IMGFILE}.orig ]; then
-            rm ${IMGFILE}.orig
+    CURR_BOOTFILE_MD=`md5 ${BOOTFILE} | awk '{print $4}'`
+    if [ "${CURR_BOOTFILE_MD}" = "${BOOTFILE_MD}" ]; then
+        if [ -f ${BOOTFILE}.orig ]; then
+            rm ${BOOTFILE}.orig
         fi
         exit
     fi
 
 
-    if [ -f ${IMGFILE}.orig ]; then
-        MD=`md5 ${IMGFILE}.orig | awk '{print $4}'`
-        if [ ${MD} = ${IMGFILE_MD} ]; then
-            mv ${IMGFILE}.orig ${IMGFILE}
+    if [ -f ${BOOTFILE}.orig ]; then
+        MD=`md5 ${BOOTFILE}.orig | awk '{print $4}'`
+        if [ ${MD} = ${BOOTFILE_MD} ]; then
+            mv ${BOOTFILE}.orig ${BOOTFILE}
         fi
     fi
+}
+
+unmount()
+{
+    mount /mnt > /dev/null 2&>1
+    if [ "$?" = "0" ]; then
+        umount /mnt
+        mdconfig -d -u `echo ${md} | sed s/^md//`
+    fi
+    md_val=`echo ${md} | sed s/^md//`
+    mdconfig -l -u ${md_val}
+    if [ "$?" = "0" ]; then
+        mdconfig -d -u ${md_val}
+    fi
+
 }
 
 main
