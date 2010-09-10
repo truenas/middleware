@@ -68,6 +68,7 @@ def index(request):
     date = os.popen('date').read()
     uptime = commands.getoutput("uptime | awk -F', load averages:' '{ print $1 }'")
     loadavg = commands.getoutput("uptime | awk -F'load averages:' '{ print $2 }'")
+    top = os.popen('top').read()
     variables = RequestContext(request, {
         'hostname': hostname,
         'uname1': uname1,
@@ -76,6 +77,7 @@ def index(request):
         'date': date,
         'uptime': uptime,
         'loadavg': loadavg,
+        'top': top,
     })  
     return render_to_response('freenas/index.html', variables)
 
@@ -128,7 +130,7 @@ def systemGeneralPasswordView(request):
 
 @login_required
 def systemAdvancedView(request):
-    return helperView(request, systemAdvancedFormForm, systemAdvancedForm, 'freenas/system/advanced.html')
+    return helperView(request, systemAdvancedForm, systemAdvanced, 'freenas/system/advanced.html')
 
 @login_required
 def systemAdvancedEmailView(request):
