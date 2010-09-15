@@ -86,11 +86,26 @@ _bool_config()
 	done
 }
 
+# Grab static route configuration
+_staticroute_config()
+{
+	local IFS=\|
+	local id destination gateway interface
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT freenas_networkstaticroute.id, destination, gateway, interface FROM freenas_networkstaticroute INNER JOIN freenas_networkinterfacemgmt ON freenas_networkstaticroute.interface_id = freenas_networkinterfacemgmt.id;" | \
+	while read id destination gateway interface; do
+		echo route_freenas${id}=\"-iface ${interface} ${destination} ${gateway}\"
+		freenas_routes="${freenas_routes} freenas${id}"
+	done
+	echo static_routes=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM freenas_networkstaticroute" | sed -e s/^/freenas/g | xargs echo `\"
+}
+
 _gen_conf()
 {
 	## First, import network interface configuration.
 	_interface_config
 	_host_config
+	_staticroute_config
 
 	## Daemons
 	_bool_config cron_enable freenas_cronjob togglecron
