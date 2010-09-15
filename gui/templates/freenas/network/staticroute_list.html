@@ -2,9 +2,8 @@
 {% block content %}
 {% if user.is_authenticated %}
 
-<h1>Network</h1>
-<h2>Static Routes</h2>
-<a href="/freenas/network/staticroutes/add/" alt="Add Static Route">Add Route</a>
+<div dojoType="dijit.layout.TabContainer" style="width:100%;height:400px;">
+        <div dojoType="dijit.layout.ContentPane" title="Active Static Routes">
 <br />
 <br />
 <table>
@@ -25,6 +24,11 @@
     </tr>
 {% endfor %}
 </table>
+</div>
+        <div dojoType="dijit.layout.ContentPane" title="Add Static Route">
+<a href="/freenas/network/staticroutes/add/" alt="Add Static Route">Add Route</a>
+</div>
+</div>
 
 {% else %}
 <p>Welcome. Please <a href="/freenas/login/">log in</a>.</ p>

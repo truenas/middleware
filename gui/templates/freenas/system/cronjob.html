@@ -2,8 +2,9 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-<h1>System - Advanced</h1>
-<h2>Add a Cron Job</h2>
+    <div dojoType="dijit.layout.TabContainer" style="width:100%;height:400px;">
+                <div dojoType="dijit.layout.ContentPane" title="Cron Job Settings">
+
     <form action="." method="post" id="cronjob">
 <table>
     <tr>
@@ -40,6 +41,10 @@
         </td>
     </tr>
 </table>
+
+        </div>
+                <div dojoType="dijit.layout.ContentPane" title="Frequency">
+
 <table>
     <tr>
         <td>
@@ -91,7 +96,11 @@
         </td>
     </tr>
 </table>
-        <input type="submit" value="Save" />
+        </div>
+    </div>
+</div>
+
+        <button dojoType="dijit.form.Button" type="submit">Add</button>
     </form>
           {% else %}
                   <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>

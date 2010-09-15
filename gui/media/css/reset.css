@@ -28,8 +28,8 @@ body { overflow-y: scroll; }
  */
 
 p {
-	margin-top: 10px;
-	margin-bottom: 15px;
+	padding-top: 10px;
+	padding-bottom: 15px;
 }
 
  
@@ -142,7 +142,7 @@ blockquote {
 blockquote > *:first-child:first-letter { font-size: 150% }
 
  
-pre {
+pre.ix {
 	margin: 10px 0 10px 0px;
     background:#cfcfcf !important;
 	padding: 5px 0 5px 10px;

@@ -2,7 +2,9 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-<h1>Network - Add VLAN</h1>
+<div dojoType="dijit.layout.TabContainer" style="width:100%;height:400px;">
+    <div dojoType="dijit.layout.ContentPane" title="Add VLAN">
+
     <form action="." method="post">
 <table>
     <tr><td>
@@ -12,6 +14,7 @@
 </table>
         <input type="submit" value="Save" />
     </form>
+</div></div>
           {% else %}
                   <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
 

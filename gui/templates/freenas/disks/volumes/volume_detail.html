@@ -2,8 +2,8 @@
 
 {% block content %}
 
-<h1>System Disks</h1>
-<h2>Volume Information</h2>
+<div dojoType="dijit.layout.TabContainer" style="width:100%;height:400px;">
+    <div dojoType="dijit.layout.ContentPane" title="{{ object }}">
 <table>
     <tr>
         <td width="150px" style="background:#cfcfcf;"><strong><h3> {{ object }}</h3></strong></td>
@@ -27,6 +27,5 @@
             </td>
     </tr>
 </table>
-<ul>
-</ul>
+</div></div>
 {% endblock %}

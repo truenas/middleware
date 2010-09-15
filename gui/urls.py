@@ -134,4 +134,5 @@ urlpatterns = patterns('',
             {'template': 'freenas/access/index.html'}),
     (r'^freenas/access/active_directory/$', accessActiveDirectoryView),
     (r'^freenas/access/ldap/$', accessLDAPView),
+    (r'^dojango/', include('dojango.urls')),
     )

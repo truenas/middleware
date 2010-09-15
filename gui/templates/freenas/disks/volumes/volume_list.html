@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 {% if user.is_authenticated %}
-
-<h1>System Volumes</h1>
+<div dojoType="dijit.layout.TabContainer" style="width:100%;height:400px;">
+        <div dojoType="dijit.layout.ContentPane" title="Active Volumes">
 <table>
     <tr>
         <td style="background:#cfcfcf;"><strong>Volume Name</strong></td>
@@ -19,7 +19,19 @@
 {% endfor %}
     </tr>
 </table>
+</div>
+    <div dojoType="dijit.layout.ContentPane" title="Create Volume">
+        <a href="/freenas/disk/management/volumes/create/" alt="Create Volume">Create Volume</a>
 
+</div>
+    <div dojoType="dijit.layout.ContentPane" title="Add Disk">
+            <a href="/freenas/disk/management/disks/add/" alt="Add Disk">Add Disk</a>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="Group Disks">
+            <a href="/freenas/disk/management/groups/add/" alt="Group Disk">Group      Disks</a>
+        </div>
+
+</div>
 {% else %}
 <p>Welcome. Please <a href="/freenas/login/">log in</a>.</ p>
 {% endif %}

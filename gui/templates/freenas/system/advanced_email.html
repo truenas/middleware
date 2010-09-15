@@ -2,8 +2,9 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-<h1>System - Advanced</h1>
-<h2>E-Mail</h2>
+<div dojoType="dijit.layout.TabContainer" style="width:100%;height:400px;">
+        <div dojoType="dijit.layout.ContentPane" title="E-Mail">
+
     <form action="." method="post">
 <table>
     <tr><td>

@@ -149,7 +149,6 @@ add_port sysutils/smartmontools
 add_port lang/python26
 add_port databases/py-sqlite3
 add_port www/py-django		-DWITHOUT_MYSQL
-add_port www/py-dojango
 if [ $use_lighttpd -eq 0 ]; then
     #+www/apache22
     add_port devel/apr1

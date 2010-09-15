@@ -96,6 +96,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'dojango.middleware.DojoCollector',
 )
 
 ROOT_URLCONF = 'freenasUI.urls'
@@ -106,6 +107,7 @@ TEMPLATE_DIRS = (
 TEMPLATE_CONTEXT_PROCESSORS = (
         'django.core.context_processors.request',
         'django.contrib.auth.context_processors.auth',
+        'dojango.context_processors.config',
         )
 
 INSTALLED_APPS = (
@@ -114,4 +116,5 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     #'django.contrib.admin',
     'freenas',
+    'dojango',
 )

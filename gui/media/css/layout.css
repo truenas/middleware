@@ -38,8 +38,8 @@ body {
 #footer {
 	position: relative;
 	margin: 0px 0px 0px 0px;
-	padding-bottom: 80px;
-	padding-top: 25px;
+	padding-bottom: 10px;
+	padding-top: 10px;
 	clear: both;
 	text-align: center;
 	color: #ffffff;
@@ -177,10 +177,13 @@ div#mainbottom {
 
  
 
+ body, html { width:100%; height:100%; margin:0; padding:0; overflow:hidden; }
+   #borderContainer { width:100%; height:100%; }
+
 body.iXpage { background:#eceff0;
  }
 
-#page-header { height:166px;background: #464C53 url("/freenas/media/images/header_background.jpg") repeat-x;}
+#page-header { height:80px;background: #464C53 url("/freenas/media/images/headerbg.png") repeat-x;}
 #page-header h1{color:#fcfcfc;}
 #page-header .page-header-1 { background: url() 0 100% repeat-x; }
 #page-header .page-header-2 { background: url() 50% 0 no-repeat; }
@@ -299,14 +302,18 @@ margin-bottom:6px;
 
  
 #logo {
-	position: absolute;
-	top: 15px;
-	left:5px;
+	position: relative;
+    float:left;
+	top: 22px;
+    left:16px;
 }
 
 #menu {	
-        position:relative;
-margin-left:190px;
+    position:relative;
+    width:100%;
+    border:0 !important;
+    margin:0 0 0 0;
+    padding:0;
 
 }
 

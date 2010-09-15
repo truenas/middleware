@@ -36,6 +36,9 @@ actions.
 
 import ctypes
 import syslog
+from pwd import getpwnam as ___getpwnam
+from shlex import split as shlex_split
+from subprocess import Popen, PIPE as ___PIPE
 
 class notifier:
 	from os import system as ___system
@@ -53,6 +56,11 @@ class notifier:
 		self.___system("(" + command + ") 2>&1 | logger -p daemon.notice -t freenas")
 		libc.sigprocmask(3, pomask, None)
 		syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
+	def __pipeopen(self, command):
+		syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
+		syslog.syslog(syslog.LOG_NOTICE, "Popen()ing: " + command)
+		args = shlex_split(command)
+		return Popen(args, stdin = ___PIPE, stdout = ___PIPE, stderr = ___PIPE, close_fds = True)
 	def _do_nada(self):
 		pass
 	def _simplecmd(self, action, what):
@@ -169,7 +177,10 @@ class notifier:
 				for vgrp in vgroup_list:
 					c.execute("SELECT type FROM freenas_diskgroup WHERE id = ?", vgrp)
 					vgrp_type = c.fetchone()[0]
-					z_vdev += " " + vgrp_type
+					# TODO: Currently the volume manager does not give the expected blank
+					# in database.
+					if vgrp_type != "single":
+						z_vdev += " " + vgrp_type
 					c.execute("SELECT freenas_disk.disks, freenas_disk.name FROM freenas_disk LEFT OUTER JOIN freenas_diskgroup_members ON freenas_disk.id = freenas_diskgroup_members.disk_id WHERE freenas_diskgroup_members.diskgroup_id = ?", vgrp)
 					z_vdsk_list = c.fetchall()
 					for disk in z_vdsk_list:
@@ -198,6 +209,42 @@ class notifier:
         def _reload_disk(self):
 		self.__system("/usr/sbin/service ix-fstab start")
 		self.__system("/usr/sbin/service mountlate start")
+	# Create a user in system then samba
+	def __pw_with_password(self, command, password):
+		pw = self.__pipeopen(command)
+		msg = pw.communicate("%s\n" % password)[1]
+		if msg != "":
+			syslog.syslog(syslog.LOG_NOTICE, "Command reports " + msg)
+	def __smbpasswd(self, username, password):
+		command = "/usr/local/bin/smbpasswd -s -a \"%s\"" % (username)
+		smbpasswd = self.__pipeopen(command)
+		smbpasswd.communicate("%s\n%s\n" % (password, password))
+	def __issue_pwdchange(self, username, command, password):
+		self.__pw_with_password(command, password)
+		self.__smbpasswd(username, password)
+	def user_create(self, username, fullname, password, uid = -1, gid = -1, shell = "/sbin/nologin", homedir = "/mnt"):
+		"""Creates a user with the given parameters.
+		uid and gid can be omitted or specified as -1 which means the system should
+		choose automatically.
+
+		The default shell is /sbin/nologin.
+
+		Returns user uid and gid"""
+		command = "/usr/sbin/pw useradd \"%s\" -h 0 -c \"%s\"" % (username, fullname)
+		if uid >= 0:
+			command = command + " -u %d" % (uid)
+		if gid >= 0:
+			command = command + " -g %d" % (gid)
+		if homedir[0:4] != "/mnt":
+			homedir = "/mnt/" + homedir
+		command = command + " -s \"%s\" -d \"%s\"" % (shell, homedir)
+		self.__issue_pwdchange(username, command, password)
+		user = ___getpwnam(username)
+		return (user.pw_uid, user.pw_gid)
+	def user_changepassword(self, username, password):
+		"""Changes user password"""
+		command = "/usr/sbin/pw usermod \"%s\" -h 0" % (username)
+		self.__issue_pwdchange(username, command, password)
 
 def usage():
 	print ("Usage: %s action command" % argv[0])

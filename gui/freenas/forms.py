@@ -37,6 +37,8 @@ from django.http import HttpResponseRedirect
 from django.forms.widgets import RadioFieldRenderer
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode 
+from dojango.forms.models import ModelForm as ModelForm
+from dojango.forms import fields, widgets 
 
 
 class RadioFieldRendererEx(RadioFieldRenderer): 
@@ -176,10 +178,11 @@ class networkStaticRouteForm(ModelForm):
 
 class StaticRouteWizard(FormWizard):
     def get_template(self, step):
-        return 'freenas/network/staticroutes_list.html' 
+        return 'freenas/network/staticroute_add.html' 
     def done(self, request, form_list): # saves form to db
         for form in form_list: 
             form.save() 
+        notifier().restart("routing")
         return HttpResponseRedirect('/freenas/network/staticroutes/')
 """
 Django's FormWizard uses multiple Django Forms to create a multi-step wizard
@@ -192,7 +195,7 @@ class DiskWizard(FormWizard):
         return str("step_") + str(step)
 
     def get_template(self, step):
-        return 'forms/disk_wizard_%s.html' % step
+        return 'freenas/disks/disk_wizard_%s.html' % step
 
     def done(self, request, form_list): # saves form to db
         for form in form_list: 
@@ -230,7 +233,7 @@ class DiskGroupWizard(FormWizard):
         # By default, this simply uses the step itself
         return str("step_") + str(step)
     def get_template(self, step):
-        return 'forms/diskgroup_wizard_%s.html' % step
+        return 'freenas/disks/groups/diskgroup_wizard_%s.html' % step
     def done(self, request, form_list): # saves form to db
         for form in form_list: 
             form.save() 
@@ -245,7 +248,7 @@ class VolumeForm(ModelForm):
 
 class VolumeWizard(FormWizard):
     def get_template(self, step):
-        return 'forms/volume_wizard_%s.html' % step
+        return 'freenas/disks/volumes/volume_wizard_%s.html' % step
     def done(self, request, form_list): # saves form to db
         for form in form_list: 
             form.save() 

@@ -384,7 +384,7 @@ def diskgroup_add_wrapper(request, *args, **kwargs):
     return wiz(request, *args, **kwargs)
 
 @login_required
-def diskgroup_list(request, template_name='freenas/disks/diskgroup_list.html'):
+def diskgroup_list(request, template_name='freenas/disks/groups/diskgroup_list.html'):
     query_set = DiskGroup.objects.values().order_by('name')
     return object_list(
         request,
@@ -393,7 +393,7 @@ def diskgroup_list(request, template_name='freenas/disks/diskgroup_list.html'):
     )
 
 @login_required
-def diskgroup_detail(request, diskgroupid, template_name='freenas/disks/diskgroup_detail.html'):
+def diskgroup_detail(request, diskgroupid, template_name='freenas/disks/groups/diskgroup_detail.html'):
     return object_detail(
         request,
         template_name = template_name,
@@ -409,7 +409,7 @@ def volume_create_wrapper(request, *args, **kwargs):
     return wiz(request, *args, **kwargs)
 
 @login_required
-def volume_list(request, template_name='freenas/disks/volume_list.html'):
+def volume_list(request, template_name='freenas/disks/volumes/volume_list.html'):
     query_set = Volume.objects.values().order_by('groups')
     #if len(query_set) == 0:
     #    raise Http404()
@@ -420,7 +420,7 @@ def volume_list(request, template_name='freenas/disks/volume_list.html'):
     )
 
 @login_required
-def volume_detail(request, volumeid, template_name='freenas/disks/volume_detail.html'):
+def volume_detail(request, volumeid, template_name='freenas/disks/volumes/volume_detail.html'):
     return object_detail(
         request,
         template_name = template_name,
