@@ -1,0 +1,239 @@
+Index: www/py-dojango/Makefile
+===================================================================
+RCS file: www/py-dojango/Makefile
+diff -N www/py-dojango/Makefile
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ www/py-dojango/Makefile	13 Sep 2010 22:42:14 -0000	1.1
+@@ -0,0 +1,33 @@
++# Ports collection makefile for:	py-dojango
++# Date created:			Sept 13, 2010
++# Whom:				jpaetzel
++#
++# $FreeBSD: ports/www/py-dojango/Makefile,v 1.1 2010/09/13 22:42:14 jpaetzel Exp $
++#
++
++PORTNAME=	dojango
++PORTVERSION=	0.4.7
++CATEGORIES=	www python java
++MASTER_SITES=	${MASTER_SITE_GOOGLE_CODE}
++MASTER_SITE_SUBDIR=	""
++PKGNAMEPREFIX=  ${PYTHON_PKGNAMEPREFIX}
++
++MAINTAINER=	jpaetzel@FreeBSD.org
++COMMENT=	A django application for building dojo
++
++USE_PYTHON=	yes
++USE_PYDISTUTILS=	yes
++PYDISTUTILS_PKGNAME=	${PORTNAME}
++
++RUN_DEPENDS+=	${PYTHON_SITELIBDIR}/django/bin/django-admin.py:${PORTSDIR}/www/py-django
++
++OPTIONS=	JAVA	"Java support needed to build dojo libraries"	off
++
++.include <bsd.port.pre.mk>
++
++.if defined(WITH_JAVA)
++USE_JAVA=	yes
++JAVA_VERSION=	1.6+
++.endif
++
++.include <bsd.port.post.mk>
+Index: www/py-dojango/distinfo
+===================================================================
+RCS file: www/py-dojango/distinfo
+diff -N www/py-dojango/distinfo
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ www/py-dojango/distinfo	13 Sep 2010 22:42:14 -0000	1.1
+@@ -0,0 +1,3 @@
++MD5 (dojango-0.4.7.tar.gz) = 33d018b882a59d4a002124e90aabba50
++SHA256 (dojango-0.4.7.tar.gz) = 30a4d309f947442631e80f6b43f95f11b030c9f75a1afdb5192bf066d303a940
++SIZE (dojango-0.4.7.tar.gz) = 180319
+Index: www/py-dojango/pkg-descr
+===================================================================
+RCS file: www/py-dojango/pkg-descr
+diff -N www/py-dojango/pkg-descr
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ www/py-dojango/pkg-descr	13 Sep 2010 22:42:14 -0000	1.1
+@@ -0,0 +1,9 @@
++Dojango is a reusable django application that helps you to
++use the client-side framework dojo within your django project.
++It provides capabilites to easily switch between several dojo
++versions and sources (e.g. aol, google, local)
++Delivers helping utilities, that makes the development of rich
++internet applications in combination with dojo more comfortable.
++It makes the building of your own packed dojo release easier.
++
++WWW:	http://code.google.com/p/dojango/
+Index: www/py-dojango/pkg-plist
+===================================================================
+RCS file: www/py-dojango/pkg-plist
+diff -N www/py-dojango/pkg-plist
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ www/py-dojango/pkg-plist	13 Sep 2010 22:42:14 -0000	1.1
+@@ -0,0 +1,166 @@
++%%PYTHON_SITELIBDIR%%/dojango/__init__.py
++%%PYTHON_SITELIBDIR%%/dojango/__init__.pyc
++%%PYTHON_SITELIBDIR%%/dojango/__init__.pyo
++%%PYTHON_SITELIBDIR%%/dojango/appengine/__init__.py
++%%PYTHON_SITELIBDIR%%/dojango/appengine/__init__.pyc
++%%PYTHON_SITELIBDIR%%/dojango/appengine/__init__.pyo
++%%PYTHON_SITELIBDIR%%/dojango/appengine/dojo_serve.py
++%%PYTHON_SITELIBDIR%%/dojango/appengine/dojo_serve.pyc
++%%PYTHON_SITELIBDIR%%/dojango/appengine/dojo_serve.pyo
++%%PYTHON_SITELIBDIR%%/dojango/appengine/memcache_zipserve.py
++%%PYTHON_SITELIBDIR%%/dojango/appengine/memcache_zipserve.pyc
++%%PYTHON_SITELIBDIR%%/dojango/appengine/memcache_zipserve.pyo
++%%PYTHON_SITELIBDIR%%/dojango/bin/dojobuild.py
++%%PYTHON_SITELIBDIR%%/dojango/conf/__init__.py
++%%PYTHON_SITELIBDIR%%/dojango/conf/__init__.pyc
++%%PYTHON_SITELIBDIR%%/dojango/conf/__init__.pyo
++%%PYTHON_SITELIBDIR%%/dojango/conf/settings.py
++%%PYTHON_SITELIBDIR%%/dojango/conf/settings.pyc
++%%PYTHON_SITELIBDIR%%/dojango/conf/settings.pyo
++%%PYTHON_SITELIBDIR%%/dojango/context_processors.py
++%%PYTHON_SITELIBDIR%%/dojango/context_processors.pyc
++%%PYTHON_SITELIBDIR%%/dojango/context_processors.pyo
++%%PYTHON_SITELIBDIR%%/dojango/data/__init__.py
++%%PYTHON_SITELIBDIR%%/dojango/data/__init__.pyc
++%%PYTHON_SITELIBDIR%%/dojango/data/__init__.pyo
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/__init__.py
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/__init__.pyc
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/__init__.pyo
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/exceptions.py
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/exceptions.pyc
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/exceptions.pyo
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/fields.py
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/fields.pyc
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/fields.pyo
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/methods.py
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/methods.pyc
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/methods.pyo
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/services.py
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/services.pyc
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/services.pyo
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/stores.py
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/stores.pyc
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/stores.pyo
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/treestore.py
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/treestore.pyc
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/treestore.pyo
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/utils.py
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/utils.pyc
++%%PYTHON_SITELIBDIR%%/dojango/data/modelstore/utils.pyo
++%%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango.profile.js
++%%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango_optimized.profile.js
++%%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/_base.js
++%%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/dojango.js
++%%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/form/Form.js
++%%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/resources/arrowSmall.gif
++%%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/resources/blank.html
++%%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/resources/dojango_logo.jpg
++%%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/resources/note.gif
++%%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/resources/tube.gif
++%%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/resources/tubeTall.gif
++%%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/widget/ThumbnailPicker.js
++%%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/widget/plugins/InsertImage.js
++%%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/widget/resources/ThumbnailPicker.css
++%%PYTHON_SITELIBDIR%%/dojango/dojo-media/src/README
++%%PYTHON_SITELIBDIR%%/dojango/decorators.py
++%%PYTHON_SITELIBDIR%%/dojango/decorators.pyc
++%%PYTHON_SITELIBDIR%%/dojango/decorators.pyo
++%%PYTHON_SITELIBDIR%%/dojango/forms/__init__.py
++%%PYTHON_SITELIBDIR%%/dojango/forms/__init__.pyc
++%%PYTHON_SITELIBDIR%%/dojango/forms/__init__.pyo
++%%PYTHON_SITELIBDIR%%/dojango/forms/fields.py
++%%PYTHON_SITELIBDIR%%/dojango/forms/fields.pyc
++%%PYTHON_SITELIBDIR%%/dojango/forms/fields.pyo
++%%PYTHON_SITELIBDIR%%/dojango/forms/formsets.py
++%%PYTHON_SITELIBDIR%%/dojango/forms/formsets.pyc
++%%PYTHON_SITELIBDIR%%/dojango/forms/formsets.pyo
++%%PYTHON_SITELIBDIR%%/dojango/forms/models.py
++%%PYTHON_SITELIBDIR%%/dojango/forms/models.pyc
++%%PYTHON_SITELIBDIR%%/dojango/forms/models.pyo
++%%PYTHON_SITELIBDIR%%/dojango/forms/widgets.py
++%%PYTHON_SITELIBDIR%%/dojango/forms/widgets.pyc
++%%PYTHON_SITELIBDIR%%/dojango/forms/widgets.pyo
++%%PYTHON_SITELIBDIR%%/dojango/management/__init__.py
++%%PYTHON_SITELIBDIR%%/dojango/management/__init__.pyc
++%%PYTHON_SITELIBDIR%%/dojango/management/__init__.pyo
++%%PYTHON_SITELIBDIR%%/dojango/management/commands/__init__.py
++%%PYTHON_SITELIBDIR%%/dojango/management/commands/__init__.pyc
++%%PYTHON_SITELIBDIR%%/dojango/management/commands/__init__.pyo
++%%PYTHON_SITELIBDIR%%/dojango/management/commands/dojobuild.py
++%%PYTHON_SITELIBDIR%%/dojango/management/commands/dojobuild.pyc
++%%PYTHON_SITELIBDIR%%/dojango/management/commands/dojobuild.pyo
++%%PYTHON_SITELIBDIR%%/dojango/management/commands/dojoload.py
++%%PYTHON_SITELIBDIR%%/dojango/management/commands/dojoload.pyc
++%%PYTHON_SITELIBDIR%%/dojango/management/commands/dojoload.pyo
++%%PYTHON_SITELIBDIR%%/dojango/middleware.py
++%%PYTHON_SITELIBDIR%%/dojango/middleware.pyc
++%%PYTHON_SITELIBDIR%%/dojango/middleware.pyo
++%%PYTHON_SITELIBDIR%%/dojango/models.py
++%%PYTHON_SITELIBDIR%%/dojango/models.pyc
++%%PYTHON_SITELIBDIR%%/dojango/models.pyo
++%%PYTHON_SITELIBDIR%%/dojango/templates/dojango/base.html
++%%PYTHON_SITELIBDIR%%/dojango/templates/dojango/base_i18n.html
++%%PYTHON_SITELIBDIR%%/dojango/templates/dojango/include.html
++%%PYTHON_SITELIBDIR%%/dojango/templates/dojango/include_i18n.html
++%%PYTHON_SITELIBDIR%%/dojango/templates/dojango/json_iframe.html
++%%PYTHON_SITELIBDIR%%/dojango/templates/dojango/test.html
++%%PYTHON_SITELIBDIR%%/dojango/templates/dojango/templatetag/datagrid_disp.html
++%%PYTHON_SITELIBDIR%%/dojango/templatetags/__init__.py
++%%PYTHON_SITELIBDIR%%/dojango/templatetags/__init__.pyc
++%%PYTHON_SITELIBDIR%%/dojango/templatetags/__init__.pyo
++%%PYTHON_SITELIBDIR%%/dojango/templatetags/dojango_base.py
++%%PYTHON_SITELIBDIR%%/dojango/templatetags/dojango_base.pyc
++%%PYTHON_SITELIBDIR%%/dojango/templatetags/dojango_base.pyo
++%%PYTHON_SITELIBDIR%%/dojango/templatetags/dojango_filters.py
++%%PYTHON_SITELIBDIR%%/dojango/templatetags/dojango_filters.pyc
++%%PYTHON_SITELIBDIR%%/dojango/templatetags/dojango_filters.pyo
++%%PYTHON_SITELIBDIR%%/dojango/templatetags/dojango_grid.py
++%%PYTHON_SITELIBDIR%%/dojango/templatetags/dojango_grid.pyc
++%%PYTHON_SITELIBDIR%%/dojango/templatetags/dojango_grid.pyo
++%%PYTHON_SITELIBDIR%%/dojango/urls.py
++%%PYTHON_SITELIBDIR%%/dojango/urls.pyc
++%%PYTHON_SITELIBDIR%%/dojango/urls.pyo
++%%PYTHON_SITELIBDIR%%/dojango/util/__init__.py
++%%PYTHON_SITELIBDIR%%/dojango/util/__init__.pyc
++%%PYTHON_SITELIBDIR%%/dojango/util/__init__.pyo
++%%PYTHON_SITELIBDIR%%/dojango/util/config.py
++%%PYTHON_SITELIBDIR%%/dojango/util/config.pyc
++%%PYTHON_SITELIBDIR%%/dojango/util/config.pyo
++%%PYTHON_SITELIBDIR%%/dojango/util/dojo_collector.py
++%%PYTHON_SITELIBDIR%%/dojango/util/dojo_collector.pyc
++%%PYTHON_SITELIBDIR%%/dojango/util/dojo_collector.pyo
++%%PYTHON_SITELIBDIR%%/dojango/util/form.py
++%%PYTHON_SITELIBDIR%%/dojango/util/form.pyc
++%%PYTHON_SITELIBDIR%%/dojango/util/form.pyo
++%%PYTHON_SITELIBDIR%%/dojango/util/media.py
++%%PYTHON_SITELIBDIR%%/dojango/util/media.pyc
++%%PYTHON_SITELIBDIR%%/dojango/util/media.pyo
++%%PYTHON_SITELIBDIR%%/dojango/util/perms.py
++%%PYTHON_SITELIBDIR%%/dojango/util/perms.pyc
++%%PYTHON_SITELIBDIR%%/dojango/util/perms.pyo
++%%PYTHON_SITELIBDIR%%/dojango/views.py
++%%PYTHON_SITELIBDIR%%/dojango/views.pyc
++%%PYTHON_SITELIBDIR%%/dojango/views.pyo
++
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/util
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/templates/dojango/templatetag
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/templates/dojango
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/templates
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/templatetags
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/management/commands
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/management
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/forms
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/dojo-media/src
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/widget/resources
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/widget/plugins
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/widget
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/resources
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango/form
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/dojo-media/dojango
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/dojo-media
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/data/modelstore
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/data
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/conf
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/bin
++@dirrm %%PYTHON_SITELIBDIR%%/dojango/appengine
++@dirrm %%PYTHON_SITELIBDIR%%/dojango
