@@ -2,16 +2,15 @@ Index: rescue/rescue/Makefile
 ===================================================================
 --- FreeBSD/src/rescue/rescue/Makefile	2010-06-13 20:09:06.000000000 -0600
 +++ FreeBSD/src/rescue/rescue/Makefile	2010-09-08 11:37:20.000000000 -0600
-@@ -199,7 +199,7 @@
- #
+@@ -200,6 +200,7 @@
  CRUNCH_SRCDIRS+= usr.bin
  
--CRUNCH_PROGS_usr.bin= head mt sed tail tee
-+CRUNCH_PROGS_usr.bin= awk dialog grep head mt sed tail tee
+ CRUNCH_PROGS_usr.bin= head mt sed tail tee
++CRUNCH_PROGS_usr.bin+= awk cmp dialog find grep mktemp uname
  
  CRUNCH_PROGS_usr.bin+= gzip
  CRUNCH_ALIAS_gzip= gunzip gzcat zcat
-@@ -224,6 +224,11 @@
+@@ -224,12 +225,18 @@
  CRUNCH_PROGS_usr.bin+= id
  CRUNCH_ALIAS_id= groups whoami
  
@@ -23,3 +22,10 @@ Index: rescue/rescue/Makefile
  ##################################################################
  # Programs from stock /usr/sbin
  #
+ CRUNCH_SRCDIRS+= usr.sbin
+ 
+ CRUNCH_PROGS_usr.sbin= chroot
++CRUNCH_PROGS_usr.sbin+= vidcontrol
+ 
+ CRUNCH_PROGS_usr.sbin+= chown
+ CRUNCH_ALIAS_chown= chgrp
