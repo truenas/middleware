@@ -38,7 +38,7 @@ from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
 from datetime import datetime
-from freenas.choices import *
+from freenasUI.freenas.choices import *
 
 class RadioFieldRendererEx(RadioFieldRenderer):
     outer = u"<span>%s</span>"
