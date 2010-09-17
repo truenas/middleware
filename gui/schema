@@ -59,7 +59,7 @@ CREATE TABLE "django_session" (
 );
 CREATE TABLE "freenas_accessactivedirectory" (
     "id" integer NOT NULL PRIMARY KEY,
-    "toggle" varchar(120) NOT NULL,
+    "toggle" bool NOT NULL,
     "dcname" varchar(120) NOT NULL,
     "dnsrealmname" varchar(120) NOT NULL,
     "netbiosname" varchar(120) NOT NULL,
@@ -68,10 +68,10 @@ CREATE TABLE "freenas_accessactivedirectory" (
 );
 CREATE TABLE "freenas_accessldap" (
     "id" integer NOT NULL PRIMARY KEY,
-    "toggle" varchar(120) NOT NULL,
+    "toggle" bool NOT NULL,
     "hostname" varchar(120) NOT NULL,
     "basedn" varchar(120) NOT NULL,
-    "anonbind" varchar(120) NOT NULL,
+    "anonbind" bool NOT NULL,
     "rootbasedn" varchar(120) NOT NULL,
     "rootbindpw" varchar(120) NOT NULL,
     "pwencyption" varchar(120) NOT NULL,
@@ -80,6 +80,37 @@ CREATE TABLE "freenas_accessldap" (
     "paswordsuffix" varchar(120) NOT NULL,
     "machinesuffix" varchar(120) NOT NULL,
     "auxparams" text NOT NULL
+);
+CREATE TABLE "freenas_appleshare" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "name" varchar(120) NOT NULL,
+    "comment" varchar(120) NOT NULL,
+    "globalro" bool NOT NULL,
+    "sharepw" varchar(120) NOT NULL,
+    "sharecharset" varchar(120) NOT NULL,
+    "allow" varchar(120) NOT NULL,
+    "deny" varchar(120) NOT NULL,
+    "afpro" varchar(120) NOT NULL,
+    "afprw" varchar(120) NOT NULL,
+    "diskdiscovery" bool NOT NULL,
+    "discoverymode" varchar(120) NOT NULL,
+    "dbpath" varchar(120) NOT NULL,
+    "cachecnid" bool NOT NULL,
+    "crlf" bool NOT NULL,
+    "mswindows" bool NOT NULL,
+    "noadouble" bool NOT NULL,
+    "nodev" bool NOT NULL,
+    "nofileid" bool NOT NULL,
+    "nohex" bool NOT NULL,
+    "prodos" bool NOT NULL,
+    "nostat" bool NOT NULL,
+    "upriv" bool NOT NULL
+);
+CREATE TABLE "freenas_appleshare_path" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "appleshare_id" integer NOT NULL,
+    "mountpoint_id" integer NOT NULL REFERENCES "freenas_mountpoint" ("id"),
+    UNIQUE ("appleshare_id", "mountpoint_id")
 );
 CREATE TABLE "freenas_clientrsyncjob" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -103,14 +134,14 @@ CREATE TABLE "freenas_clientrsyncjob" (
     "Months" varchar(120) NOT NULL,
     "ToggleWeekdays" varchar(120) NOT NULL,
     "Weekdays" varchar(120) NOT NULL,
-    "recursive" varchar(120) NOT NULL,
-    "times" varchar(120) NOT NULL,
-    "compress" varchar(120) NOT NULL,
-    "archive" varchar(120) NOT NULL,
-    "delete" varchar(120) NOT NULL,
-    "quiet" varchar(120) NOT NULL,
-    "preserveperms" varchar(120) NOT NULL,
-    "extattr" varchar(120) NOT NULL,
+    "recursive" bool NOT NULL,
+    "times" bool NOT NULL,
+    "compress" bool NOT NULL,
+    "archive" bool NOT NULL,
+    "delete" bool NOT NULL,
+    "quiet" bool NOT NULL,
+    "preserveperms" bool NOT NULL,
+    "extattr" bool NOT NULL,
     "options" varchar(120) NOT NULL
 );
 CREATE TABLE "freenas_commandscripts" (
@@ -120,7 +151,7 @@ CREATE TABLE "freenas_commandscripts" (
 );
 CREATE TABLE "freenas_cronjob" (
     "id" integer NOT NULL PRIMARY KEY,
-    "togglecron" varchar(120) NOT NULL,
+    "togglecron" bool NOT NULL,
     "croncommand" varchar(120) NOT NULL,
     "cronwho" varchar(120) NOT NULL,
     "description" varchar(120) NOT NULL,
@@ -146,15 +177,12 @@ CREATE TABLE "freenas_disk" (
     "name" varchar(120) NOT NULL,
     "disks" varchar(120) NOT NULL,
     "description" varchar(120) NOT NULL,
-    "sort_order" integer NOT NULL
-);
-CREATE TABLE "freenas_diskadvanced" (
-    "disk_ptr_id" integer NOT NULL PRIMARY KEY REFERENCES "freenas_disk" ("id"),
+    "sort_order" integer NOT NULL,
     "transfermode" varchar(120) NOT NULL,
     "hddstandby" varchar(120) NOT NULL,
     "advpowermgmt" varchar(120) NOT NULL,
     "acousticlevel" varchar(120) NOT NULL,
-    "togglesmart" varchar(120) NOT NULL,
+    "togglesmart" bool NOT NULL,
     "smartoptions" varchar(120) NOT NULL
 );
 CREATE TABLE "freenas_diskgroup" (
@@ -167,10 +195,6 @@ CREATE TABLE "freenas_diskgroup_members" (
     "diskgroup_id" integer NOT NULL,
     "disk_id" integer NOT NULL REFERENCES "freenas_disk" ("id"),
     UNIQUE ("diskgroup_id", "disk_id")
-);
-CREATE TABLE "freenas_freenas" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "name" varchar(60) NOT NULL
 );
 CREATE TABLE "freenas_localrsyncjob" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -194,15 +218,25 @@ CREATE TABLE "freenas_localrsyncjob" (
     "Months" varchar(120) NOT NULL,
     "ToggleWeekdays" varchar(120) NOT NULL,
     "Weekdays" varchar(120) NOT NULL,
-    "recursive" varchar(120) NOT NULL,
-    "times" varchar(120) NOT NULL,
-    "compress" varchar(120) NOT NULL,
-    "archive" varchar(120) NOT NULL,
-    "delete" varchar(120) NOT NULL,
-    "quiet" varchar(120) NOT NULL,
-    "preserveperms" varchar(120) NOT NULL,
-    "extattr" varchar(120) NOT NULL,
+    "recursive" bool NOT NULL,
+    "times" bool NOT NULL,
+    "compress" bool NOT NULL,
+    "archive" bool NOT NULL,
+    "delete" bool NOT NULL,
+    "quiet" bool NOT NULL,
+    "preserveperms" bool NOT NULL,
+    "extattr" bool NOT NULL,
     "options" varchar(120) NOT NULL
+);
+CREATE TABLE "freenas_mountpoint" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "volumeid_id" integer NOT NULL REFERENCES "freenas_volume" ("id"),
+    "mountpoint" varchar(120) NOT NULL,
+    "mountoptions" varchar(120) NOT NULL,
+    "sharero" bool NOT NULL,
+    "cifs" bool NOT NULL,
+    "afp" bool NOT NULL,
+    "nfs" bool NOT NULL
 );
 CREATE TABLE "freenas_networkhosts" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -230,7 +264,7 @@ CREATE TABLE "freenas_networklagg" (
     "ports" varchar(120) NOT NULL,
     "description" varchar(120) NOT NULL
 );
-CREATE TABLE "freenas_networkstaticroutes" (
+CREATE TABLE "freenas_networkstaticroute" (
     "id" integer NOT NULL PRIMARY KEY,
     "interface_id" integer NOT NULL REFERENCES "freenas_networkinterfacemgmt" ("id"),
     "destination" varchar(120) NOT NULL,
@@ -250,27 +284,38 @@ CREATE TABLE "freenas_rcconf" (
     "varvalue" varchar(120) NOT NULL,
     "varcomment" varchar(120) NOT NULL
 );
+CREATE TABLE "freenas_services" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "toggleCIFS" bool NOT NULL,
+    "toggleNFS" bool NOT NULL,
+    "toggleAFP" bool NOT NULL,
+    "toggleRSYNC" bool NOT NULL,
+    "toggleUnison" bool NOT NULL,
+    "toggleiSCSITarget" bool NOT NULL,
+    "toggleDynamicDNS" bool NOT NULL,
+    "toggleSNMP" bool NOT NULL,
+    "toggleUPS" bool NOT NULL,
+    "toggleWebserver" bool NOT NULL,
+    "toggleBitTorrent" bool NOT NULL,
+    "toggleTFTP" bool NOT NULL,
+    "toggleFTP" bool NOT NULL,
+    "toggleSSH" bool NOT NULL
+);
 CREATE TABLE "freenas_servicesafp" (
     "id" integer NOT NULL PRIMARY KEY,
-    "toggleAFP" varchar(120) NOT NULL,
     "name" varchar(120) NOT NULL,
-    "guest" varchar(120) NOT NULL,
-    "local" varchar(120) NOT NULL,
-    "ddp" varchar(120) NOT NULL
-);
-CREATE TABLE "freenas_servicesafpshare" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "share_id" integer NOT NULL REFERENCES "freenas_shareafp" ("id")
+    "guest" bool NOT NULL,
+    "local" bool NOT NULL,
+    "ddp" bool NOT NULL
 );
 CREATE TABLE "freenas_servicesbittorrent" (
     "id" integer NOT NULL PRIMARY KEY,
-    "toggleBitTorrent" varchar(120) NOT NULL,
     "peerport" varchar(120) NOT NULL,
     "downloaddir" varchar(120) NOT NULL,
     "configdir" varchar(120) NOT NULL,
-    "portfwd" varchar(120) NOT NULL,
-    "pex" varchar(120) NOT NULL,
-    "disthash" varchar(120) NOT NULL,
+    "portfwd" bool NOT NULL,
+    "pex" bool NOT NULL,
+    "disthash" bool NOT NULL,
     "encrypt" varchar(120) NOT NULL,
     "uploadbw" varchar(120) NOT NULL,
     "downloadbw" varchar(120) NOT NULL,
@@ -285,61 +330,54 @@ CREATE TABLE "freenas_servicesbittorrent" (
 );
 CREATE TABLE "freenas_servicescifs" (
     "id" integer NOT NULL PRIMARY KEY,
-    "togglecifs" varchar(120) NOT NULL,
     "netbiosname" varchar(120) NOT NULL,
     "workgroup" varchar(120) NOT NULL,
     "description" varchar(120) NOT NULL,
     "doscharset" varchar(120) NOT NULL,
     "unixcharset" varchar(120) NOT NULL,
     "loglevel" varchar(120) NOT NULL,
-    "localmaster" varchar(120) NOT NULL,
-    "timeserver" varchar(120) NOT NULL,
+    "localmaster" bool NOT NULL,
+    "timeserver" bool NOT NULL,
     "guest" varchar(120) NOT NULL,
     "filemask" varchar(120) NOT NULL,
     "dirmask" varchar(120) NOT NULL,
     "sendbuffer" varchar(120) NOT NULL,
     "recbuffer" varchar(120) NOT NULL,
-    "largerw" varchar(120) NOT NULL,
-    "sendfile" varchar(120) NOT NULL,
-    "easupport" varchar(120) NOT NULL,
-    "dosattr" varchar(120) NOT NULL,
-    "nullpw" varchar(120) NOT NULL,
+    "largerw" bool NOT NULL,
+    "sendfile" bool NOT NULL,
+    "easupport" bool NOT NULL,
+    "dosattr" bool NOT NULL,
+    "nullpw" bool NOT NULL,
     "auxsmbconf" text NOT NULL
-);
-CREATE TABLE "freenas_servicescifsshare" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "share_id" integer NOT NULL REFERENCES "freenas_sharecifs" ("id")
 );
 CREATE TABLE "freenas_servicesdynamicdns" (
     "id" integer NOT NULL PRIMARY KEY,
-    "toggleDynamicDNS" varchar(120) NOT NULL,
-    "provider"  varchar(120) NOT NULL,
+    "provider" varchar(120) NOT NULL,
     "domain" varchar(120) NOT NULL,
     "username" varchar(120) NOT NULL,
     "password" varchar(120) NOT NULL,
     "updateperiod" varchar(120) NOT NULL,
     "fupdateperiod" varchar(120) NOT NULL,
-    "wildcard" varchar(120) NOT NULL,
+    "wildcard" bool NOT NULL,
     "auxparams" text NOT NULL
 );
 CREATE TABLE "freenas_servicesftp" (
     "id" integer NOT NULL PRIMARY KEY,
-    "toggleFTP" varchar(120) NOT NULL,
     "clients" varchar(120) NOT NULL,
     "ipconnections" varchar(120) NOT NULL,
     "loginattempt" varchar(120) NOT NULL,
     "timeout" varchar(120) NOT NULL,
-    "rootlogin" varchar(120) NOT NULL,
-    "onlyanonymous" varchar(120) NOT NULL,
-    "onlylocal" varchar(120) NOT NULL,
+    "rootlogin" bool NOT NULL,
+    "onlyanonymous" bool NOT NULL,
+    "onlylocal" bool NOT NULL,
     "banner" text NOT NULL,
     "filemask" varchar(120) NOT NULL,
     "dirmask" varchar(120) NOT NULL,
-    "fxp" varchar(120) NOT NULL,
-    "resume" varchar(120) NOT NULL,
-    "defaultroot" varchar(120) NOT NULL,
-    "ident" varchar(120) NOT NULL,
-    "reversedns" varchar(120) NOT NULL,
+    "fxp" bool NOT NULL,
+    "resume" bool NOT NULL,
+    "defaultroot" bool NOT NULL,
+    "ident" bool NOT NULL,
+    "reversedns" bool NOT NULL,
     "masqaddress" varchar(120) NOT NULL,
     "passiveportsimin" varchar(120) NOT NULL,
     "passiveportsmax" varchar(120) NOT NULL,
@@ -347,12 +385,11 @@ CREATE TABLE "freenas_servicesftp" (
     "localuserdlbw" varchar(120) NOT NULL,
     "anonuserbw" varchar(120) NOT NULL,
     "anonuserdlbw" varchar(120) NOT NULL,
-    "ssltls" varchar(120) NOT NULL,
+    "ssltls" bool NOT NULL,
     "auxparams" text NOT NULL
 );
 CREATE TABLE "freenas_servicesiscsitarget" (
     "id" integer NOT NULL PRIMARY KEY,
-    "toggleiSCSITarget" varchar(120) NOT NULL,
     "basename" varchar(120) NOT NULL,
     "discoveryauthmethod" varchar(120) NOT NULL,
     "discoveryauthgroup" varchar(120) NOT NULL,
@@ -363,58 +400,39 @@ CREATE TABLE "freenas_servicesiscsitarget" (
     "firstburst" varchar(120) NOT NULL,
     "maxburst" varchar(120) NOT NULL,
     "maxrecdata" varchar(120) NOT NULL,
-    "toggleluc" varchar(120) NOT NULL
-);
-CREATE TABLE "freenas_servicesitunes" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "toggleiTunes" varchar(120) NOT NULL,
-    "port" varchar(120) NOT NULL,
-    "databasedir" varchar(120) NOT NULL,
-    "rescaninterval" varchar(120) NOT NULL,
-    "alwaysscan" varchar(120) NOT NULL,
-    "scantype" varchar(120) NOT NULL,
-    "password" varchar(120) NOT NULL
+    "toggleluc" bool NOT NULL
 );
 CREATE TABLE "freenas_servicesnfs" (
     "id" integer NOT NULL PRIMARY KEY,
-    "toggleNFS" varchar(120) NOT NULL,
     "servers" varchar(120) NOT NULL
-);
-CREATE TABLE "freenas_servicesnfsshare" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "share_id" integer NOT NULL REFERENCES "freenas_sharenfs" ("id")
 );
 CREATE TABLE "freenas_servicesrsync" (
     "id" integer NOT NULL PRIMARY KEY,
-    "togglersync" varchar(120) NOT NULL,
     "clientrsync_id" integer NOT NULL REFERENCES "freenas_clientrsyncjob" ("id"),
     "localrsync_id" integer NOT NULL REFERENCES "freenas_localrsyncjob" ("id")
 );
 CREATE TABLE "freenas_servicessnmp" (
     "id" integer NOT NULL PRIMARY KEY,
-    "toggleSNMP" varchar(120) NOT NULL,
     "location" varchar(120) NOT NULL,
     "contact" varchar(120) NOT NULL,
     "community" varchar(120) NOT NULL,
-    "traps" varchar(120) NOT NULL,
+    "traps" bool NOT NULL,
     "auxparams" text NOT NULL
 );
 CREATE TABLE "freenas_servicesssh" (
     "id" integer NOT NULL PRIMARY KEY,
-    "toggleSSH" varchar(120) NOT NULL,
     "tcpport" varchar(120) NOT NULL,
-    "rootlogin" varchar(120) NOT NULL,
-    "passwordauth" varchar(120) NOT NULL,
-    "tcpfwd" varchar(120) NOT NULL,
-    "compression" varchar(120) NOT NULL,
+    "rootlogin" bool NOT NULL,
+    "passwordauth" bool NOT NULL,
+    "tcpfwd" bool NOT NULL,
+    "compression" bool NOT NULL,
     "privatekey" text NOT NULL,
     "opions" text NOT NULL
 );
 CREATE TABLE "freenas_servicestftp" (
     "id" integer NOT NULL PRIMARY KEY,
-    "toggleTFTP" varchar(120) NOT NULL,
     "directory" varchar(120) NOT NULL,
-    "newfiles" varchar(120) NOT NULL,
+    "newfiles" bool NOT NULL,
     "port" varchar(120) NOT NULL,
     "username" varchar(120) NOT NULL,
     "umask" varchar(120) NOT NULL,
@@ -422,24 +440,11 @@ CREATE TABLE "freenas_servicestftp" (
 );
 CREATE TABLE "freenas_servicesunison" (
     "id" integer NOT NULL PRIMARY KEY,
-    "toggleUnison" varchar(120) NOT NULL,
     "workingdir" varchar(120) NOT NULL,
     "createworkingdir" bool NOT NULL
 );
-CREATE TABLE "freenas_servicesupnp" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "toggleUPnP" varchar(120) NOT NULL,
-    "name" varchar(120) NOT NULL,
-    "interface" varchar(120) NOT NULL,
-    "port" varchar(120) NOT NULL,
-    "databasedir" varchar(120) NOT NULL,
-    "profile" varchar(120) NOT NULL,
-    "transcoding" varchar(120) NOT NULL,
-    "webgui" varchar(120) NOT NULL
-);
 CREATE TABLE "freenas_servicesups" (
     "id" integer NOT NULL PRIMARY KEY,
-    "toggleUPS" varchar(120) NOT NULL,
     "identifier" varchar(120) NOT NULL,
     "driver" varchar(120) NOT NULL,
     "port" varchar(120) NOT NULL,
@@ -447,68 +452,18 @@ CREATE TABLE "freenas_servicesups" (
     "description" varchar(120) NOT NULL,
     "shutdown" varchar(120) NOT NULL,
     "shutdowntimer" varchar(120) NOT NULL,
-    "rmonitor" varchar(120) NOT NULL,
-    "emailnotify" varchar(120) NOT NULL,
+    "rmonitor" bool NOT NULL,
+    "emailnotify" bool NOT NULL,
     "toemail" varchar(120) NOT NULL,
     "subject" varchar(120) NOT NULL
 );
 CREATE TABLE "freenas_serviceswebserver" (
     "id" integer NOT NULL PRIMARY KEY,
-    "toggleWebserver" varchar(120) NOT NULL,
     "protocol" varchar(120) NOT NULL,
     "port" varchar(120) NOT NULL,
     "docroot" varchar(120) NOT NULL,
-    "auth" varchar(120) NOT NULL,
-    "dirlisting" varchar(120) NOT NULL
-);
-CREATE TABLE "freenas_shareafp" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "name" varchar(120) NOT NULL,
-    "path" varchar(120) NOT NULL,
-    "comment" varchar(120) NOT NULL,
-    "sharepw" varchar(120) NOT NULL,
-    "sharecharset" varchar(120) NOT NULL,
-    "allow" varchar(120) NOT NULL,
-    "deny" varchar(120) NOT NULL,
-    "roaccess" varchar(120) NOT NULL,
-    "rwaccess" varchar(120) NOT NULL,
-    "diskdiscovery" varchar(120) NOT NULL,
-    "discoverymode" varchar(120) NOT NULL,
-    "dbpath" varchar(120) NOT NULL,
-    "cachecnid" varchar(120) NOT NULL,
-    "crlf" varchar(120) NOT NULL,
-    "mswindows" varchar(120) NOT NULL,
-    "noadouble" varchar(120) NOT NULL,
-    "nodev" varchar(120) NOT NULL,
-    "nofileid" varchar(120) NOT NULL,
-    "nohex" varchar(120) NOT NULL,
-    "prodos" varchar(120) NOT NULL,
-    "nostat" varchar(120) NOT NULL,
-    "upriv" varchar(120) NOT NULL
-);
-CREATE TABLE "freenas_sharecifs" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "name" varchar(120) NOT NULL,
-    "comment" varchar(120) NOT NULL,
-    "path" varchar(120) NOT NULL,
-    "ro" varchar(120) NOT NULL,
-    "browseable" varchar(120) NOT NULL,
-    "inheritperms" varchar(120) NOT NULL,
-    "recyclebin" varchar(120) NOT NULL,
-    "showhiddenfiles" varchar(120) NOT NULL,
-    "hostsallow" varchar(120) NOT NULL,
-    "hostsdeny" varchar(120) NOT NULL,
-    "auxsmbconf" text NOT NULL
-);
-CREATE TABLE "freenas_sharenfs" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "path" varchar(120) NOT NULL,
-    "allroot" varchar(120) NOT NULL,
-    "network" varchar(120) NOT NULL,
-    "comment" varchar(120) NOT NULL,
-    "alldirs" varchar(120) NOT NULL,
-    "readonly" varchar(120) NOT NULL,
-    "quiet" varchar(120) NOT NULL
+    "auth" bool NOT NULL,
+    "dirlisting" bool NOT NULL
 );
 CREATE TABLE "freenas_sysctlmib" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -518,14 +473,14 @@ CREATE TABLE "freenas_sysctlmib" (
 );
 CREATE TABLE "freenas_systemadvanced" (
     "id" integer NOT NULL PRIMARY KEY,
-    "consolemenu" varchar(120) NOT NULL,
-    "serialconsole" varchar(120) NOT NULL,
-    "consolescreensaver" varchar(120) NOT NULL,
-    "firmwarevc" varchar(120) NOT NULL,
-    "systembeep" varchar(120) NOT NULL,
-    "tuning" varchar(120) NOT NULL,
-    "powerdaemon" varchar(120) NOT NULL,
-    "zeroconfbonjour" varchar(120) NOT NULL,
+    "consolemenu" bool NOT NULL,
+    "serialconsole" bool NOT NULL,
+    "consolescreensaver" bool NOT NULL,
+    "firmwarevc" bool NOT NULL,
+    "systembeep" bool NOT NULL,
+    "tuning" bool NOT NULL,
+    "powerdaemon" bool NOT NULL,
+    "zeroconfbonjour" bool NOT NULL,
     "motd" text NOT NULL
 );
 CREATE TABLE "freenas_systemadvancedcommandscripts" (
@@ -542,18 +497,18 @@ CREATE TABLE "freenas_systemadvancedemail" (
     "outgoingserver" varchar(120) NOT NULL,
     "port" varchar(120) NOT NULL,
     "security" varchar(120) NOT NULL,
-    "smtp" varchar(120) NOT NULL
+    "smtp" bool NOT NULL
 );
 CREATE TABLE "freenas_systemadvancedproxy" (
     "id" integer NOT NULL PRIMARY KEY,
-    "httpproxy" varchar(120) NOT NULL,
+    "httpproxy" bool NOT NULL,
     "httpproxyaddress" varchar(120) NOT NULL,
     "httpproxyport" varchar(120) NOT NULL,
-    "httpproxyauth" varchar(120) NOT NULL,
-    "ftpproxy" varchar(120) NOT NULL,
+    "httpproxyauth" bool NOT NULL,
+    "ftpproxy" bool NOT NULL,
     "ftpproxyaddress" varchar(120) NOT NULL,
     "ftpproxyport" varchar(120) NOT NULL,
-    "ftpproxyauth" varchar(120) NOT NULL
+    "ftpproxyauth" bool NOT NULL
 );
 CREATE TABLE "freenas_systemadvancedrcconf" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -561,7 +516,7 @@ CREATE TABLE "freenas_systemadvancedrcconf" (
 );
 CREATE TABLE "freenas_systemadvancedswap" (
     "id" integer NOT NULL PRIMARY KEY,
-    "swapmemory" varchar(120) NOT NULL,
+    "swapmemory" bool NOT NULL,
     "swaptype" varchar(120) NOT NULL,
     "mountpoint" varchar(120) NOT NULL,
     "swapsize" varchar(120) NOT NULL
@@ -585,21 +540,53 @@ CREATE TABLE "freenas_systemgeneralsetup" (
     "language" varchar(120) NOT NULL,
     "timezone" varchar(120) NOT NULL
 );
-CREATE TABLE "freenas_top" (
+CREATE TABLE "freenas_unixshare" (
     "id" integer NOT NULL PRIMARY KEY,
-    "name" varchar(60) NOT NULL
+    "name" varchar(120) NOT NULL,
+    "comment" varchar(120) NOT NULL,
+    "globalro" bool NOT NULL,
+    "allroot" bool NOT NULL,
+    "network" varchar(120) NOT NULL,
+    "alldirs" bool NOT NULL,
+    "nfsro" bool NOT NULL,
+    "quiet" bool NOT NULL
+);
+CREATE TABLE "freenas_unixshare_path" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "unixshare_id" integer NOT NULL,
+    "mountpoint_id" integer NOT NULL REFERENCES "freenas_mountpoint" ("id"),
+    UNIQUE ("unixshare_id", "mountpoint_id")
 );
 CREATE TABLE "freenas_volume" (
     "id" integer NOT NULL PRIMARY KEY,
     "name" varchar(120) NOT NULL,
-    "type" varchar(120) NOT NULL,
-    "mountpoint" varchar(120) NOT NULL
+    "type" varchar(120) NOT NULL
 );
 CREATE TABLE "freenas_volume_groups" (
     "id" integer NOT NULL PRIMARY KEY,
     "volume_id" integer NOT NULL,
     "diskgroup_id" integer NOT NULL REFERENCES "freenas_diskgroup" ("id"),
     UNIQUE ("volume_id", "diskgroup_id")
+);
+CREATE TABLE "freenas_windowsshare" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "name" varchar(120) NOT NULL,
+    "comment" varchar(120) NOT NULL,
+    "globalro" bool NOT NULL,
+    "cifsro" bool NOT NULL,
+    "browsable" bool NOT NULL,
+    "inheritperms" bool NOT NULL,
+    "recyclebin" bool NOT NULL,
+    "showhiddenfiles" bool NOT NULL,
+    "hostsallow" varchar(120) NOT NULL,
+    "hostsdeny" varchar(120) NOT NULL,
+    "auxsmbconf" text NOT NULL
+);
+CREATE TABLE "freenas_windowsshare_path" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "windowsshare_id" integer NOT NULL,
+    "mountpoint_id" integer NOT NULL REFERENCES "freenas_mountpoint" ("id"),
+    UNIQUE ("windowsshare_id", "mountpoint_id")
 );
 CREATE TABLE "freenas_zpool" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -613,20 +600,24 @@ CREATE INDEX "auth_user_groups_bda51c3c" ON "auth_user_groups" ("group_id");
 CREATE INDEX "auth_user_groups_fbfc09f1" ON "auth_user_groups" ("user_id");
 CREATE INDEX "auth_user_user_permissions_1e014c8f" ON "auth_user_user_permissions" ("permission_id");
 CREATE INDEX "auth_user_user_permissions_fbfc09f1" ON "auth_user_user_permissions" ("user_id");
+CREATE INDEX "freenas_appleshare_path_33abc0f5" ON "freenas_appleshare_path" ("appleshare_id");
+CREATE INDEX "freenas_appleshare_path_6305f17b" ON "freenas_appleshare_path" ("mountpoint_id");
 CREATE INDEX "freenas_diskgroup_members_6da0174d" ON "freenas_diskgroup_members" ("diskgroup_id");
 CREATE INDEX "freenas_diskgroup_members_9f8f1583" ON "freenas_diskgroup_members" ("disk_id");
+CREATE INDEX "freenas_mountpoint_588b6fd1" ON "freenas_mountpoint" ("volumeid_id");
 CREATE INDEX "freenas_networkhosts_de383a40" ON "freenas_networkhosts" ("interface_id");
 CREATE INDEX "freenas_networkinterfacemgmtlagg_23baae83" ON "freenas_networkinterfacemgmtlagg" ("lagglist_id");
 CREATE INDEX "freenas_networkinterfacemgmtvlan_b23a78b3" ON "freenas_networkinterfacemgmtvlan" ("vlanlist_id");
-CREATE INDEX "freenas_networkstaticroutes_de383a40" ON "freenas_networkstaticroutes" ("interface_id");
-CREATE INDEX "freenas_servicesafpshare_e9185454" ON "freenas_servicesafpshare" ("share_id");
-CREATE INDEX "freenas_servicescifsshare_e9185454" ON "freenas_servicescifsshare" ("share_id");
-CREATE INDEX "freenas_servicesnfsshare_e9185454" ON "freenas_servicesnfsshare" ("share_id");
+CREATE INDEX "freenas_networkstaticroute_de383a40" ON "freenas_networkstaticroute" ("interface_id");
 CREATE INDEX "freenas_servicesrsync_2a0d3b8e" ON "freenas_servicesrsync" ("localrsync_id");
 CREATE INDEX "freenas_servicesrsync_b2a10dbb" ON "freenas_servicesrsync" ("clientrsync_id");
 CREATE INDEX "freenas_systemadvancedcommandscripts_1f1e360d" ON "freenas_systemadvancedcommandscripts" ("commandscripts_id");
 CREATE INDEX "freenas_systemadvancedcron_b3b30a72" ON "freenas_systemadvancedcron" ("cronjob_id");
 CREATE INDEX "freenas_systemadvancedrcconf_eaed6f8d" ON "freenas_systemadvancedrcconf" ("rcvariable_id");
 CREATE INDEX "freenas_systemadvancedsysctlconf_bf2644cb" ON "freenas_systemadvancedsysctlconf" ("sysctlMIB_id");
+CREATE INDEX "freenas_unixshare_path_6305f17b" ON "freenas_unixshare_path" ("mountpoint_id");
+CREATE INDEX "freenas_unixshare_path_f5230a72" ON "freenas_unixshare_path" ("unixshare_id");
 CREATE INDEX "freenas_volume_groups_6da0174d" ON "freenas_volume_groups" ("diskgroup_id");
 CREATE INDEX "freenas_volume_groups_d06109c8" ON "freenas_volume_groups" ("volume_id");
+CREATE INDEX "freenas_windowsshare_path_4d8b60e8" ON "freenas_windowsshare_path" ("windowsshare_id");
+CREATE INDEX "freenas_windowsshare_path_6305f17b" ON "freenas_windowsshare_path" ("mountpoint_id");
