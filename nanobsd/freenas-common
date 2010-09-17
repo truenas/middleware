@@ -292,3 +292,9 @@ configure_mnt_md ( )
 	echo 2048 > ${NANO_WORLDDIR}/conf/base/mnt/md_size
 }
 customize_cmd configure_mnt_md
+
+save_build ( )
+{
+	echo ${NANO_NAME} > ${NANO_WORLDDIR}/etc/version.freenas
+}
+customize_cmd save_build

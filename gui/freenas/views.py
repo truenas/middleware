@@ -69,6 +69,7 @@ def index(request):
     uptime = commands.getoutput("uptime | awk -F', load averages:' '{ print $1 }'")
     loadavg = commands.getoutput("uptime | awk -F'load averages:' '{ print $2 }'")
     top = os.popen('top').read()
+    freenas_build = commands.getoutput("cat /etc/version.freenas")
     variables = RequestContext(request, {
         'hostname': hostname,
         'uname1': uname1,
@@ -78,6 +79,7 @@ def index(request):
         'uptime': uptime,
         'loadavg': loadavg,
         'top': top,
+        'freenas_build': freenas_build,
     })  
     return render_to_response('freenas/index.html', variables)
 
