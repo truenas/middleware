@@ -29,8 +29,8 @@
 
 # this is a hack
 import sys
-sys.path.append('/usr/local/www')
-sys.path.append('/usr/local/www/freenasUI')
+sys.path.insert(0, '/usr/local/www')
+sys.path.insert(0, '/usr/local/www/freenasUI')
 
 from django.core.management import execute_manager
 try:
