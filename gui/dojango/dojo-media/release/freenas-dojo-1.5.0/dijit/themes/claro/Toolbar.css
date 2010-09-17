@@ -1,0 +1,133 @@
+
+.claro .dijitToolbar {
+	border-bottom: 1px solid #b5bcc7;
+	background-color: #f1f1f1;
+	background-image: url("images/commonHighlight.png");
+	background-position:0px 0px;
+	background-repeat:repeat-x;
+	padding: 2px 0px 2px 4px;
+	zoom: 1;
+}
+.claro .dijitToolbar label {
+	padding: 0px 3px 0 6px;
+}
+.claro .dijitToolbar .dijitButtonNode {
+	border:none;
+	padding: 2px;
+	background-image: url("images/commonHighlight.png");
+	background-position:0 -30px;
+	background-repeat:repeat-x;
+	background-color:rgba(171,214,255,0);
+	border-radius: 2px;	
+	-moz-border-radius: 2px;	
+	-webkit-border-radius: 2px;	
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+	-webkit-transition-property:background-color;
+	-webkit-transition-duration:.3s, .35s;
+}
+.claro .dijitToolbar .dijitComboButton .dijitButtonNode{
+	padding: 3px 2px 3px 2px;	
+}
+.dj_ie .claro .dijitToolbar .dijitButtonNode {
+	background-color: transparent;   
+}
+.dj_ie6 .claro .dijitToolbar .dijitButtonNode {
+	background: none;	
+}
+.claro .dijitToolbar .dijitComboBox .dijitButtonNode {
+	padding: 0px;
+}
+.claro .dijitToolbar .dijitComboButton {
+	padding: 1px;
+}
+.claro .dijitToolbar .dijitButtonHover .dijitButtonNode,
+.claro .dijitToolbar .dijitDropDownButtonHover .dijitButtonNode,
+.claro .dijitToolbar .dijitToggleButtonHover .dijitButtonNode {
+	background-position:0 0;
+	border:solid 1px #769dc0;
+	background-color: #abd6ff;
+	padding: 1px;
+}
+.claro .dijitToolbar .dijitComboButtonHover {
+	background-color: #abd6ff;
+	border: solid 1px #769dc0;
+	padding: 0px;
+}
+.claro .dijitToolbar .dijitComboButtonHover .dijitButtonNode,
+.claro .dijitToolbar .dijitComboButtonHover .dijitDownArrowButton {
+	background-position:0 0;
+	padding: 2px;
+}
+.claro .dijitToolbar .dijitComboButtonHover .dijitDownArrowButton {
+	background-color: #7dd6fa;
+}
+.claro .dijitToolbar .dijitButtonActive .dijitButtonNode,
+.claro .dijitToolbar .dijitDropDownButtonActive .dijitButtonNode,
+.claro .dijitToolbar .dijitToggleButtonActive .dijitButtonNode {
+	border:solid 1px #769dc0;
+	background-color:#7dbefa;
+	background-position:0px -177px;
+	padding: 1px;
+}
+.claro .dijitToolbar .dijitComboButtonActive {
+	-webkit-transition-duration:.2s;
+	border: solid 1px #769dc0;
+	padding: 0px;
+}
+.claro .dijitToolbar .dijitComboButtonActive .dijitButtonNode {
+	background-color: #7dbefa;
+	background-position:0px -177px;
+	padding: 2px;
+}
+.claro .dijitToolbar .dijitComboButton .dijitDownArrowButtonActive {
+	background-color: #7dbefa;
+}
+.claro .dijitToolbar .dijitToggleButtonChecked .dijitButtonNode {
+	border-color: #769dc0;
+	background-color:#fff;
+	padding: 1px;
+}
+.dj_ie6 .claro .dijitToolbar .dijitButtonContents, 
+.dj_ie7 .claro .dijitToolbar .dijitButtonContents {
+	margin: -2px 0;
+	padding: 0;
+}
+.dj_ie6 .claro .dijitToolbar {
+	background-image: none;
+}
+.dj_ie6 .claro .dijitToolbar .dijitButtonNode {
+	margin: 1px; 
+	border: none;
+}
+.dj_ie6 .claro .dijitToolbar .dijitButtonHover .dijitButtonNode,
+.dj_ie6 .claro .dijitToolbar .dijitDropDownButtonHover .dijitButtonNode,
+.dj_ie6 .claro .dijitToolbar .dijitComboButton .dijitButtonNodeHover,
+.dj_ie6 .claro .dijitToolbar .dijitComboButton .dijitDownArrowButtonHover,
+.dj_ie6 .claro .dijitToolbar .dijitToggleButtonHover .dijitButtonNode,
+.dj_ie6 .claro .dijitToolbar .dijitButtonActive .dijitButtonNode,
+.dj_ie6 .claro .dijitToolbar .dijitDropDownButtonActive .dijitButtonNode,
+.dj_ie6 .claro .dijitToolbar .dijitComboButton .dijitButtonNodeActive,
+.dj_ie6 .claro .dijitToolbar .dijitComboButton .dijitDownArrowButtonActive,
+.dj_ie6 .claro .dijitToolbar .dijitToggleButtonActive .dijitButtonNode,
+.claro .dijitToolbar .dijitToggleButtonChecked .dijitButtonNode {
+	margin: 0;	
+	border-width: 1px;
+	border-style: solid;
+	background-image: none;
+}
+.dj_ie6 .claro .dijitToolbar .dijitComboButton .dijitButtonNodeHover,
+.dj_ie6 .claro .dijitToolbar .dijitComboButton .dijitDownArrowButtonHover,
+.dj_ie6 .claro .dijitToolbar .dijitComboButton .dijitButtonNodeActive,
+.dj_ie6 .claro .dijitToolbar .dijitComboButton .dijitDownArrowButtonActive {
+	padding: 1px;	
+}
+.claro .dijitToolbarSeparator {
+	
+	background: url('../../icons/images/editorIconsEnabled.png');
+}
+.claro .dijitDisabled .dijitToolbar {
+	background:none;
+	background-color:#f5f5f5;
+	border-bottom: 1px solid #d3d3d3;
+}

@@ -1,0 +1,1 @@
+({"descending":"Aflopend","ascending":"Oplopend","nestedSort":"Geneste sorteerbewerking","unsorted":"Deze kolom niet sorteren","singleSort":"Enkele sorteerbewerking","sortingState":"${0} - ${1}"})

@@ -1,0 +1,1 @@
+({"descending":"Laskeva","ascending":"Nouseva","nestedSort":"Sisäkkäinen lajittelu","unsorted":"Älä lajittele tätä saraketta","singleSort":"Yksinkertainen lajittelu","sortingState":"${0} - ${1}"})

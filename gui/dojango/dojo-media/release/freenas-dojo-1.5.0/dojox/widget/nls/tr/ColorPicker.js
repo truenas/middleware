@@ -1,0 +1,1 @@
+({"redLabel":"k","valueLabel":"d","hexLabel":"onaltılı","hueLabel":"t","saturationLabel":"d","greenLabel":"y","blueLabel":"m","saturationPickerTitle":"Saturation Selector","huePickerTitle":"Hue Selector","degLabel":"°"})

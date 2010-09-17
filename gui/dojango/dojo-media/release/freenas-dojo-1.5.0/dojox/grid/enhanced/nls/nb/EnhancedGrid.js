@@ -1,0 +1,1 @@
+({"descending":"Synkende","ascending":"Stigende","nestedSort":"Nestet sortering","unsorted":"Ikke sorter denne kolonnen","singleSort":"Enkel sortering","sortingState":"${0} - ${1}"})

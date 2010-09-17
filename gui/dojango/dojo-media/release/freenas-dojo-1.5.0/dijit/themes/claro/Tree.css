@@ -1,0 +1,88 @@
+
+.claro .dijitTreeNode {
+    zoom: 1;	
+}
+.claro .dijitTreeIsRoot {
+    background-image: none;
+}
+.claro .dijitTreeRow {
+	
+	padding: 4px 1px 2px 0px;
+	margin-left: 1px;
+	background-image: url("images/commonHighlight.png");
+	background-position:0px 0px;
+	background-repeat:repeat-x;
+	border-color: rgba(118,157,192,0);
+	background-color: rgba(171,214,255,0);
+	-webkit-transition-property:background-color, border-color;
+	-webkit-transition-duration:.25s ;
+	-webkit-transition-timing-function: ease-out;
+}
+.dj_ie6 .claro .dijitTreeRow {
+	background-image: none;
+}
+.claro .dijitTreeRowSelected {
+	background-repeat:repeat-x;
+	background-color:#d8edff;
+	padding: 3px 0px 1px;
+	margin-left: 0px;
+	border:solid 1px #c3e2fd;
+	color:#000;
+}
+.claro .dijitTreeRowHover {
+	background-color:#abd6ff;
+	padding: 3px 0px 1px;
+	margin-left: 0px;
+	border:solid 1px #769dc0;
+	color:#000;
+	-webkit-transition-duration:.25s ; 
+}
+.claro .dijitTreeRowActive {
+	background-color:#7dbefa;
+	background-position:0px -177px;
+	padding: 3px 0px 1px;
+	margin-left: 0px;
+	border:solid 1px #769dc0;
+	color:#000;
+}
+.dj_ie6 .claro .dijitTreeRowActive {
+	background-image: none;
+}
+.claro .dijitTreeRowFocused {
+	background-repeat: repeat;
+}
+.claro .dijitTreeExpando {
+	background-image: url('images/treeExpandImages.png');
+    width: 16px;
+    height: 16px;
+	background-position: -35px 0px		
+}
+.dj_ie6 .claro .dijitTreeExpando {
+	background-image: url('images/treeExpandImages8bit.png');
+}
+.claro .dijitTreeRowHover .dijitTreeExpandoOpened {
+	background-position: -53px 0px;
+}
+.claro .dijitTreeExpandoClosed {
+	background-position: 1px 0px;
+}
+.claro .dijitTreeRowHover .dijitTreeExpandoClosed {
+	background-position: -17px 0px;
+}
+.claro .dijitTreeExpandoLeaf{
+	background-image:none;
+}
+.claro .dijitTreeExpandoLoading {
+	background-image: url('images/loadingAnimation.gif');
+}
+.claro .dijitTreeNode .dojoDndItemBefore,
+.claro .dijitTreeNode .dojoDndItemAfter {
+	border-bottom: none;
+	border-top: none;
+}
+.claro .dijitTreeNode .dojoDndItemBefore .dijitTreeContent {
+	border-top: 2px solid #369;
+}
+.claro .dijitTreeNode .dojoDndItemAfter .dijitTreeContent {
+	border-bottom: 2px solid #369;
+}

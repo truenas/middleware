@@ -1,0 +1,1 @@
+({"descending":"Azalan","ascending":"Artan","nestedSort":"İç İçe Sıralama","unsorted":"Bu sütunu sıralama","singleSort":"Tek Sıralama","sortingState":"${0} - ${1}"})

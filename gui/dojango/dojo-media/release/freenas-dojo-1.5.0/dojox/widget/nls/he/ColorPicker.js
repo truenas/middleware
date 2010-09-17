@@ -1,0 +1,1 @@
+({"redLabel":"א","valueLabel":"ע","hexLabel":"הקס","hueLabel":"ג","saturationLabel":"ר","greenLabel":"י","blueLabel":"כ","saturationPickerTitle":"Saturation Selector","huePickerTitle":"Hue Selector","degLabel":"°"})

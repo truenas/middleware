@@ -1,0 +1,1 @@
+({"text":"Descriere:","insertImageTitle":"Proprietăţi imagine","set":"Setare","newWindow":"Fereastră nouă","topWindow":"Fereastra cea mai de sus","target":"Ţintă:","createLinkTitle":"Proprietăţi legătură","parentWindow":"Fereastra părinte","currentWindow":"Fereastra curentă","url":"URL:"})

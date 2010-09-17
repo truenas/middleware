@@ -1,0 +1,1 @@
+({"descending":"تنازلي","ascending":"تصاعدي","nestedSort":"فرز متداخل","unsorted":"عدم فرز هذا العمود","singleSort":"فرز منفرد","sortingState":"${0} - ${1}"})

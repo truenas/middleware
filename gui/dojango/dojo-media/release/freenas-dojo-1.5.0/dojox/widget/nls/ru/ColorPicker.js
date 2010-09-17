@@ -1,0 +1,1 @@
+({"redLabel":"к","valueLabel":"з","hexLabel":"шест","hueLabel":"о","saturationLabel":"н","greenLabel":"з","blueLabel":"с","saturationPickerTitle":"Saturation Selector","huePickerTitle":"Hue Selector","degLabel":"°"})

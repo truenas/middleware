@@ -1,0 +1,1 @@
+({"descending":"Descrescător","sortingState":"${0} - ${1}","ascending":"Crescător","nestedSort":"Sortare imbricată","unsorted":"Nu sortaţi această coloană ","singleSort":"Sortare singulară "})

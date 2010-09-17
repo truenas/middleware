@@ -1,0 +1,11 @@
+
+.claro .dijitInlineEditBoxDisplayMode {
+	border: 1px solid transparent;
+}
+.claro .dijitInlineEditBoxDisplayModeHover {
+	background-color: #e2f1ff;
+	border: solid 1px #769dc0;
+}
+.dj_ie6 .claro .dijitInlineEditBoxDisplayMode {
+	border: none;
+}

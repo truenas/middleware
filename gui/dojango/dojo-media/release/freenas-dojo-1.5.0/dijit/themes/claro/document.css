@@ -1,0 +1,81 @@
+
+.claro {
+	font-family:Verdana,Arial,Helvetica,sans-serif;
+	font-size: .688em;
+	color: #131313;
+}
+h1 {
+	font-size: 1.545em; 
+	font-weight: normal;
+	line-height: 1em; 
+	margin-top: 1em;
+	margin-bottom:0.727em;
+}
+.claro .dijitDialog h1 { 
+	margin-top:0em; 
+}
+h2 { 
+	font-size: 1.364em; 
+	line-height: 1.455em; 
+	margin-top:1em; 
+	margin-bottom:0.60em;
+	font-weight: normal;
+}
+h3, h4, h5, h6 {
+	font-size:1.091em; 
+	font-weight: normal; 
+	line-height: 1.5em; 
+	margin-top: 1.5em; 
+	margin-bottom: 0;
+}
+p { 
+	font-size: 1em; 
+	line-height: 1.3em;
+}
+blockquote { 
+	font-size: 0.916em; 
+	margin-top: 3.272em; 
+	margin-bottom: 3.272em; 
+	line-height: 1.636em; 
+	padding: 1.636em; 
+	border-top: 1px solid #ccc; 
+	border-bottom: 1px solid #ccc;
+}
+ol li, ul li { 
+	font-size: 1em; 
+	line-height: 1.5em; 
+	margin: 0;
+}
+pre, code { 
+	font-size:115%;
+	*font-size:100%;
+	font-family:inherit; 
+	background-color: #efefef; 
+	border: 1px solid #ccc;
+}
+pre { 
+	border-width: 1px 0; 
+	padding: 1.5em;
+}
+table {  font-size:100%; }
+table.dojoTabular { 
+	border-collapse: collapse; 
+	border-spacing: 0; 
+	border: 1px solid #ccc; 
+	margin: 0 1.5em;
+}
+.dojoTabular th { 
+	text-align: center; 
+	font-weight: bold;
+}
+table.dojoTabular thead, table.dojoTabular tfoot { 
+	background-color: #efefef; 
+	border: 1px solid #ccc; 
+	border-width: 1px 0; 
+}
+table.dojoTabular thead tr th,
+table.dojoTabular thead tr td,
+table.dojoTabular tbody tr td,
+table.dojoTabular tfoot tr td { 
+	padding: 0.25em 0.5em;
+}
