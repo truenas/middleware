@@ -1,7 +1,6 @@
 #!/bin/sh
 
 # This script creates a bootable LiveCD iso from a nanobsd image
-# TODO: Copy the actual image to the ISO and run the installer
 
 trap make_pristine 1 2 3 6
 
@@ -20,6 +19,8 @@ main()
     ISODIR="/tmp/iso" # Directory ISO is rolled from
     OUTPUT="fn2.iso" # Output file of mkisofs
     MNTPOINT="/mnt" # Scratch mountpoint where the image will be dissected
+    INSTALL_SH="/home/jpaetzel/ix2/build/install.sh"
+    RC_FILE="/home/jpaetzel/rc"
 
     MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
                  -allow-multidot -hide boot.catalog -o ${OUTPUT} -no-emul-boot \
@@ -42,25 +43,35 @@ main()
     md=`mdconfig -a -t vnode -f ${BOOTFILE}`
 
     # s1a is hard coded here and dependant on the image.
-    mount /dev/${md}s1a /mnt
+    mount /dev/${md}s1a ${MNTPOINT}
 
     mkdir ${STAGEDIR}/rescue
     (cd /mnt/rescue && tar cf - . ) | (cd ${STAGEDIR}/rescue && tar xf - )
-    cp -R /mnt/boot ${ISODIR}/
+    cp -R ${MNTPOINT}/boot ${ISODIR}/
     cp ${IMGFILE} ${ISODIR}/
-    echo "#/dev/md0 / ufs ro 0 0" > /mnt/etc/fstab
-    echo 'root_rw_mount="NO"' >> /mnt/etc/rc.conf
-    sed -i "" -e 's/^\(sshd.*\)".*"/\1"NO"/' /mnt/etc/rc.conf
-    sed -i "" -e 's/^\(light.*\)".*"/\1"NO"/' /mnt/etc/rc.conf
-    echo 'cron_enable="NO"' >> /mnt/etc/rc.conf
-    echo 'syslogd_enable="NO"' >> /mnt/etc/rc.conf
-    echo 'inetd_enable="NO"' >> /mnt/etc/rc.conf
-    rm /mnt/etc/rc.conf.local
-    rm /mnt/etc/rc.d/ix-*
-    rm /mnt/etc/rc.initdiskless
-    rm -rf /mnt/usr/bin /mnt/usr/sbin /mnt/usr/local/lib*
-    ln -s /rescue /mnt/usr/bin
-    ln -s /rescue /mnt/usr/sbin
+    echo "#/dev/md0 / ufs ro 0 0" > ${MNTPOINT}/etc/fstab
+    echo 'root_rw_mount="NO"' >> ${MNTPOINT}/etc/rc.conf
+    sed -i "" -e 's/^\(sshd.*\)".*"/\1"NO"/' ${MNTPOINT}/etc/rc.conf
+    sed -i "" -e 's/^\(light.*\)".*"/\1"NO"/' ${MNTPOINT}/etc/rc.conf
+    echo 'cron_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
+    echo 'syslogd_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
+    echo 'inetd_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
+    echo 'newsyslog_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
+    rm ${MNTPOINT}/etc/rc.conf.local
+    rm ${MNTPOINT}/etc/rc.d/ix-*
+    rm ${MNTPOINT}/etc/rc.d/motd
+    rm ${MNTPOINT}/etc/rc.d/ip6addrctl
+    rm ${MNTPOINT}/etc/rc.initdiskless
+    rm -rf ${MNTPOINT}/usr/bin ${MNTPOINT}/usr/sbin ${MNTPOINT}/usr/local/lib*
+    rm -rf ${MNTPOINT}/usr/local/bin ${MNTPOINT}/usr/local/etc
+    ln -s /rescue ${MNTPOINT}/usr/bin
+    ln -s /rescue ${MNTPOINT}/usr/sbin
+    cp ${RC_FILE} ${MNTPOINT}/etc/
+    cp ${INSTALL_SH} ${MNTPOINT}/etc/
+    chmod 755 /mnt/etc/install.sh
+    chown root:wheel ${MNTPOINT}/etc/install.sh
+    # Had to hack pc-sysinstall to install to /rescue, troubleshoot why
+    (cd /home/jpaetzel/pc-sysinstall && make install DESTDIR=${MNTPOINT})
     unmount
 
     # Compress what's left of the image after mangling it
@@ -174,12 +185,19 @@ make_pristine()
 
 unmount()
 {
-    mount /mnt > /dev/null 2>&1
-    if [ "$?" = "0" ]; then
-        umount /mnt
-        mdconfig -d -u `echo ${md} | sed s/^md//`
-    fi
     md_val=`echo ${md} | sed s/^md//`
+    df ${MNTPOINT} | grep ${MNTPOINT} > /dev/null
+    if [ "$?" = "0" ]; then
+        while [ 1 ]
+        do
+            umount ${MNTPOINT}
+            if  [ "$?" = "0" ]; then
+                break
+            fi
+            echo "umount of ${MNTPOINT} failed! Trying again"
+            sleep 3
+        done
+    fi
     mdconfig -l -u ${md_val}
     if [ "$?" = "0" ]; then
         mdconfig -d -u ${md_val}

@@ -1,5 +1,6 @@
 #!/bin/sh
 
+. /.profile
 __FREENAS_DEBUG__=1
 
 
@@ -54,19 +55,16 @@ get_image_name()
 
 build_config()
 {
-        # build_config ${_install_type} ${_cdrom} ${_disk} ${_image}
+        # build_config ${_install_type} ${_disk} ${_image}
         # ${_config_file}
         # Couple of issues here.
-        # The mount point in the setting of image should match that
-        # of the mount point used by install_mount_cd
         # There is magic used to determine what to do if
         # _install_type is set to 1
 
         local _install_type=$1
-        local _cdrom=$2
-        local _disk=$3
-        local _image=$4
-        local _config_file=$5
+        local _disk=$2
+        local _image=$3
+        local _config_file=$4
 
         if [ "$_install_type" = "1" ]; then
             cat << EOF > "${_config_file}"
@@ -79,7 +77,7 @@ packageType=tar
 
 disk0=${_disk}
 partition=image
-image=/mnt/cdrom${_image}
+image=/cdrom/${_image}
 rootimage=1
 bootManager=bsd
 commitDiskPart
@@ -99,26 +97,6 @@ wait_keypress()
 
 	_msg="Press ENTER to continue."
 	read -p "${_msg}" _tmp
-}
-
-get_cdrom_list()
-{
-	local _disks
-	local _list
-	local _d
-
-	_list=""
-	_disks=`sysctl -n kern.disks`
-	for _d in ${_disks}
-	do
-		if echo "${_d}" | grep -E '^cd' >/dev/null >/dev/null 2>&1
-		then
-			_list="${_list}${_d} "
-		fi
-	done
-
-	VAL="${_list}"
-	export VAL
 }
 
 get_memory_disks_list()
@@ -187,57 +165,6 @@ disk_is_mounted()
 	return ${_res}
 }
 
-install_mount_cd()
-{
-	local _cdrom
-	local _mntpath
-
-	echo "Mount CDROM."
-
-	_cdrom=$1
-	_mntpath="/mnt/cdrom"
-	if [ ! -d "${_mntpath}" ]
-	then
-		mkdir -p "${_mntpath}"
-		if [ "$?" != "0" ]
-		then
-			echo "Error: Failed to create directory '${_mntpath}'"
-			return 1
-		fi
-	fi
-
-	if [ -z "${__FREENAS_DEBUG__}" ]
-	then
-		mount_cd9660 "/dev/${_cdrom}" "${_mntpath}"
-	else
-		mount_nullfs "/home/jpaetzel/images/" "${_mntpath}"
-	fi 
-
-	if [ "$?" != "0" ]
-	then
-		echo "Error: Failed to mount device '${_cdrom}'!"
-		rmdir "${_mntpath}"
-		return 1
-	fi
-
-	return 0
-}
-
-install_unmount_cd()
-{
-	local _mntpath
-	local _res
-
-	echo "Unmount CDROM."
-
-	_mntpath="/mnt/cdrom"
-	umount "${_mntpath}"
-	_res=$?
-
-	rmdir "${_mntpath}"
-	return ${_res}
-}
-
 do_install_1()
 {
 	local _disklist
@@ -280,35 +207,6 @@ EOD
 	then
 		exit 1
 	fi
-
-	get_cdrom_list
-	_cdlist="${VAL}"
-	if [ -z "${_cdlist}" ]
-	then
-		wait_keypress "Failed to detect any CDROM."
-		exit 1
-	fi
-
-	_list=""
-	for _cd in ${_cdlist}
-	do
-		get_media_description "${_cd}"
-		_desc="${VAL}"
-		_list="${_list} ${_cd} '${_desc}'"
-	done
-
-	_tmpfile="/tmp/answer"
-	eval "dialog --title 'Choose installation media' \
-		--menu 'Select CD/DVD drive for installation.' \
-		10 60 6 ${_list}" 2>"${_tmpfile}"
-	if [ "$?" != "0" ]
-	then
-		exit 1
-	fi
-
-	### XXXX
-	_cdrom=`cat "${_tmpfile}"`
-	rm -f "${_tmpfile}"
 
 	get_physical_disks_list
 	_disklist="${VAL}"
@@ -358,13 +256,11 @@ EOD
 
         # _install_type, _cdrom, _disk, _image, _config_file
         # we can now build a config file for pc-sysinstall
-        build_config ${_install_type} ${_cdrom} ${_disk} \
+        build_config ${_install_type} ${_disk} \
                      ${_image} ${_config_file}
 
-        install_mount_cd ${_cdrom}
         # Run pc-sysinstall against the config generated
-        ../pc-sysinstall/pc-sysinstall -c ${_config_file}
-        install_unmount_cd
+        pc-sysinstall -c ${_config_file}
 
 	cat << EOD > "${_tmpfile}"
 
@@ -385,25 +281,6 @@ menu_null()
 
 menu_reset()
 {
-}
-
-menu_ping()
-{
-	local _tmpfile
-	local _host
-	local _res
-
-	_tmpfile="/tmp/answer"
-	trap "rm -f ${_tmpfile}" 0 1 2 5 15
-
-	dialog --inputbox "Enter a host name or IP address." 8 50 2>"${_tmpfile}"
-	_res=$?
-
-	_host=`cat "${_tmpfile}"`
-	if [ -n "${_host}" ] && [ "${_res}" = "0" ]
-	then
-		:
-	fi
 }
 
 menu_shell()
@@ -473,29 +350,19 @@ menu()
 		echo " "
 		echo "Console setup"
 		echo "-------------"
-		echo "1) Assign interfaces"
-		echo "2) Set LAN IP address"
-		echo "3) Reset WebGUI password"
-		echo "4) Reset to factory defaults"
-		echo "5) Ping host"
-		echo "6) Shell"
-		echo "7) Reboot system"
-		echo "8) Shutdown System"
-		echo "9) Install/Upgrade to hard drive/flash device, etc."
+		echo "1) Install/Upgrade to hard drive/flash device, etc."
+		echo "2) Shell"
+		echo "3) Reboot system"
+		echo "4) Shutdown System"
 		echo " "
 
 		read -p "Enter a number: " _number
 
 		case "${_number}" in
-			1) menu_null ;;
-			2) menu_null ;;
-			3) menu_null ;;
-			4) menu_null ;;
-			5) menu_ping ;;
-			6) menu_shell ;;
-			7) menu_reboot ;;
-			8) menu_shutdown ;;
-			9) menu_install ;;
+			1) menu_install ;;
+			2) menu_shell ;;
+			3) menu_reboot ;;
+			4) menu_shutdown ;;
 		esac
 
 	done
