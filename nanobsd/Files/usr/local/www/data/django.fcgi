@@ -26,8 +26,7 @@
 #
 
 import sys,os
-sys.path.insert(0, '/usr/local/www')
-sys.path.insert(0, '/usr/local/www/freenasUI')
+sys.path.append('/usr/local/www')
 os.environ['DJANGO_SETTINGS_MODULE'] = "freenasUI.settings"
 from django.core.servers.fastcgi import runfastcgi
 runfastcgi(method="threaded", daemonize="false")
