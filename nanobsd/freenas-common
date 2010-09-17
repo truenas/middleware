@@ -214,11 +214,10 @@ freenas
 freenas
 __EOF__
 	CR "chown -R www:www ${dstCR} data"
-#	CR "(cd ${dstCR}; /usr/local/bin/sqlite3 /data/freenas-v1.db) || true" << __EOF__
-# .read schema
-# __EOF__
 	CR "(cd ${dstCR}; ${dstCR}/set_schema_defaults.sh ${dstCR}/schema ${dstCR}/schema.defaults)"
 	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
+# KLUDGE: copy over dojango settings
+	CR "cp /usr/local/www/freenasUI/dojango/conf/settings.py /usr/local/lib/python2.6/site-packages/dojango/conf"
     else
         pprint 2 "GUI OMITTED from image"
     fi
