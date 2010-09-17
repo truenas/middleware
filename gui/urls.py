@@ -134,5 +134,9 @@ urlpatterns = patterns('',
             {'template': 'freenas/access/index.html'}),
     (r'^freenas/access/active_directory/$', accessActiveDirectoryView),
     (r'^freenas/access/ldap/$', accessLDAPView),
+# Not sure why I need the this entry, but the last one works for James..
+    (r'^dojango/(?P<path>.*)$',
+        'django.views.static.serve',
+        {'document_root': '/usr/local/www/freenasUI/dojango'}),
     (r'^dojango/', include('dojango.urls')),
     )
