@@ -33,10 +33,12 @@ if [ ! -f FreeBSD/supfile -o -n "$force_update" ]; then
 *default delete use-rel-suffix
 
 src-all tag=RELENG_8_1_0_RELEASE
-ports-all date=2010.06.24.12.00.00
-
+ports-all tag=RELEASE_8_1_0
 EOF
     csup -L 0 ${root}/FreeBSD/supfile
+# cvsup fixes any changes we make, it seems.  Repatch
+    rm -f ${root}/FreeBSD/src-patches
+    rm -f ${root}/FreeBSD/ports-patches
 fi
 
 # Make sure that all the patches are applied
