@@ -104,61 +104,14 @@ class NewCharField(models.CharField):
 
 ## System|Advanced
 class systemAdvanced(models.Model):
-    consolemenu = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default="OFF", 
-            verbose_name="Console Menu", 
-            help_text="Takes place after next reboot."
-            )
-    serialconsole = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default="OFF", 
-            verbose_name="Serial Console", 
-            help_text="Takes place after next reboot.  You must have serial ports enabled in the BIOS For tihs to work."
-            )
-    consolescreensaver = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default="OFF", 
-            verbose_name="Console screensaver"
-            )
-    firmwarevc = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default="OFF", 
-            verbose_name="Firmware Version Check", 
-            help_text="Disables checking for new verrsions automatically when visiting the System:Firmware page."
-            )
-    systembeep = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default="OFF", 
-            verbose_name="System Beep", 
-            help_text="Beep on system startup and shutdown."
-            )
-    tuning = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default="OFF", 
-            verbose_name="Kernel Tuning", 
-            help_text="Enable some kernel tuning values."
-            )
-    powerdaemon = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default="OFF", 
-            verbose_name="Power Daemon", 
-            help_text="The powerd daemon monitors thesystem and attempts to user power saving features of the CPU to reduce power consumption."
-            )
-    zeroconfbonjour = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default="OFF", 
-            verbose_name="Zeroconf/Bonjour", 
-            help_text="Enable Zeroconf/Bounjour advertising the services of the system."
-            )
+    consolemenu = models.BooleanField()
+    serialconsole = models.BooleanField()
+    consolescreensaver = models.BooleanField()
+    firmwarevc = models.BooleanField()
+    systembeep = models.BooleanField()
+    tuning = models.BooleanField()
+    powerdaemon = models.BooleanField()
+    zeroconfbonjour = models.BooleanField()
     motd = models.TextField(verbose_name="MOTD") 
 
 ## System|Advanced|Email
@@ -183,12 +136,7 @@ class systemAdvancedEmail(models.Model):
             default="none", 
             verbose_name="Security"
             )
-    smtp = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default="OFF", 
-            verbose_name="SMTP Authentication"
-            )
+    smtp = models.BooleanField()
 
 ## System|Advanced|Proxy
 
@@ -196,12 +144,7 @@ class systemAdvancedEmail(models.Model):
 #### to give local services access to the internet via proxy. 
 
 class systemAdvancedProxy(models.Model):
-    httpproxy = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default="OFF", 
-            verbose_name="HTTP Proxy"
-            )
+    httpproxy = models.BooleanField()
     httpproxyaddress = models.CharField(
             max_length=120, 
             verbose_name="Address"
@@ -210,18 +153,8 @@ class systemAdvancedProxy(models.Model):
             max_length=120, 
             verbose_name="Port"
             )
-    httpproxyauth = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default="OFF", 
-            verbose_name="HTTP Authentication"
-            )
-    ftpproxy = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default="OFF", 
-            verbose_name="FTP Proxy"
-            )
+    httpproxyauth = models.BooleanField()
+    ftpproxy = models.BooleanField()
     ftpproxyaddress = models.CharField(
             max_length=120, 
             verbose_name="Address"
@@ -230,21 +163,11 @@ class systemAdvancedProxy(models.Model):
             max_length=120, 
             verbose_name="Port"
             )
-    ftpproxyauth = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default="OFF", 
-            verbose_name="FTP Authentication"
-            )
+    ftpproxyauth = models.BooleanField()
 
 ## System|Advanced|Swap
 class systemAdvancedSwap(models.Model):
-    swapmemory = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default="OFF", 
-            verbose_name="Swap Memory"
-            )
+    swapmemory = models.BooleanField()
     swaptype = models.CharField(
             max_length=120, 
             choices=SWAPTYPE_CHOICES, 
@@ -280,12 +203,7 @@ class systemAdvancedCommandScripts(models.Model):
 
 ## System|Advanced|Cron
 class cronjob(models.Model):
-    togglecron = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Cron"
-            )
+    togglecron = models.BooleanField()
     croncommand = models.CharField(
             max_length=120, 
             verbose_name="Command"
@@ -549,9 +467,6 @@ class networkInterfaceMGMTlagg(models.Model):
     class Meta:
         verbose_name = "LAGG"
 
-
-
-
 class networkStaticRoute(models.Model):
     interface = models.ForeignKey(
             networkInterfaceMGMT, 
@@ -580,6 +495,9 @@ class networkStaticRoute(models.Model):
     def save(self, *args, **kwargs):
         super(networkStaticRoute, self).save(*args, **kwargs)
     
+
+
+
 """ Disk and Volume Management """
 
 class Disk(models.Model):
@@ -601,15 +519,6 @@ class Disk(models.Model):
             _('sort order'), 
             default=0, 
             help_text='The order in which disks will be displayed.')
-    class Meta:
-        verbose_name = "Disk"
-        ordering = ['sort_order',]
-    def __unicode__(self):
-        return self.disks + ' (' + self.name + ')'
-    def save(self, *args, **kwargs):
-        super(Disk, self).save(*args, **kwargs)
-
-class DiskAdvanced(Disk):
     transfermode = models.CharField(
             max_length=120, 
             choices=TRANSFERMODE_CHOICES, 
@@ -634,21 +543,19 @@ class DiskAdvanced(Disk):
             default="Disabled", 
             verbose_name="Acoustic Level"
             )
-    togglesmart = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default="ON", 
-            verbose_name="S.M.A.R.T."
-            )
+    togglesmart = models.BooleanField()
     smartoptions = models.CharField(
             max_length=120, 
             verbose_name="S.M.A.R.T. extra options", 
             blank=True
             )
-    def __unicode__(self):
-        return Disk.disk
     class Meta:
         verbose_name = "Disk"
+        ordering = ['sort_order',]
+    def __unicode__(self):
+        return self.disks + ' (' + self.name + ')'
+    def save(self, *args, **kwargs):
+        super(Disk, self).save(*args, **kwargs)
 
 class DiskGroup(models.Model):
     name = models.CharField(
@@ -675,6 +582,9 @@ class zpool(models.Model):
             blank=True
             )
 
+
+
+
 """ Volume Management """
 class Volume(models.Model):
     name = models.CharField(
@@ -688,10 +598,6 @@ class Volume(models.Model):
             verbose_name="Volume Type", 
             blank="True"
             )
-    mountpoint = models.CharField(
-            max_length=120, 
-            verbose_name="Mount Point"
-            )
     groups = models.ManyToManyField(DiskGroup)
     class Meta:
         verbose_name = "Volume"
@@ -701,134 +607,25 @@ class Volume(models.Model):
         super(Volume, self).save(*args, **kwargs)
 
 
-class servicesCIFS(models.Model):
-    togglecifs = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="CIFS"
+class MountPoint(models.Model):
+    volumeid = models.ForeignKey(Volume)
+    mountpoint = models.CharField(
+            max_length=120,
+            verbose_name="Mount Point",
+            help_text="Path to mount point",
             )
-    netbiosname = models.CharField(
-            max_length=120, 
-            verbose_name="NetBIOS name"
+    mountoptions = models.CharField(
+            max_length=120,
+            verbose_name="Mount options",
+            help_text="Enter Mount Point options here",
             )
-    workgroup = models.CharField(
-            max_length=120, 
-            verbose_name="Workgroup",
-            help_text="Workgroup the server will appear to be in when queried by clients (maximum 15 characters)."
-            )
-    description = models.CharField(
-            max_length=120, 
-            verbose_name="Description", 
-            blank=True,
-            help_text="Server description. This can usually be left blank."
-            )
-    doscharset = models.CharField(
-            max_length=120, 
-            choices=DOSCHARSET_CHOICES, 
-            default="CP437", 
-            verbose_name="DOS charset"
-            )
-    unixcharset = models.CharField(
-            max_length=120, 
-            choices=UNIXCHARSET_CHOICES, 
-            default="UTF-8", 
-            verbose_name="UNIX charset"
-            )
-    loglevel = models.CharField(
-            max_length=120, 
-            choices=LOGLEVEL_CHOICES, 
-            default="Minimum", 
-            verbose_name="Log level"
-            )
-    localmaster = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='ON', 
-            verbose_name="Local Master Browser",
-            help_text="Allows FreeNAS to try and become a local master browser."
-            )
-    timeserver = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='ON', 
-            verbose_name="Time Server",
-            help_text="FreeNAS advertises itself as a time server to Windows clients."
-            )
-    guest = models.CharField(
-            max_length=120, 
-            choices=whoChoices(), 
-            default="www", 
-            verbose_name="Guest account", 
-            help_text="Use this option to override the username ('ftp' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login."
-            )
-    filemask = models.CharField(
-            max_length=120, 
-            verbose_name="File mask", 
-            blank=True,
-            help_text="Use this option to override the file creation mask (0666 by default)."
-            )
-    dirmask = models.CharField(
-            max_length=120, 
-            verbose_name="Directory mask", 
-            blank=True,
-            help_text="Use this option to override the directory creation mask (0777 by default)."
-            )
-    sendbuffer = models.CharField(
-            max_length=120, 
-            verbose_name="Send Buffer Size", 
-            blank=True,
-            help_text="Size of send buffer (64240 by default)."
-            )
-    recbuffer = models.CharField(
-            max_length=120, 
-            verbose_name="Receive Buffer Size", 
-            blank=True,
-            help_text="Size of receive buffer (64240 by default)."
-            )
-    largerw = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="large read/write",
-            help_text="Use the new 64k streaming read and write varient SMB requests introduced with Windows 2000."
-            )
-    sendfile = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='ON', 
-            verbose_name="sendfile",
-            help_text="This may make more efficient use of the system CPU's and cause Samba to be faster. Samba automatically turns this off for clients that use protocol levels lower than NT LM 0.12 and when it detects a client is Windows 9x."
-            )
-    easupport = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="EA support",
-            help_text="Allow clients to attempt to store OS/2 style extended attributes on a share."
-            )
-    dosattr = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='ON', 
-            verbose_name="Store DOS attributes",
-            help_text="If this parameter is set, Samba attempts to first read DOS attributes (SYSTEM, HIDDEN, ARCHIVE or READ-ONLY) from a filesystem extended attribute, before mapping DOS attributes to UNIX permission bits. When set, DOS attributes will be stored onto an extended attribute in the UNIX filesystem, associated with the file or directory."
-            )
-    nullpw = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="null password",
-            help_text="Allow client access to accounts that have null passwords."
-            )
-    auxsmbconf = models.TextField(
-            max_length=120, 
-            verbose_name="Auxiliary paramters", 
-            blank=True,
-            help_text="These parameters are added to [Global] section of smb.conf"
-            )
+    sharero = models.BooleanField()
+    cifs = models.BooleanField()
+    afp = models.BooleanField()
+    nfs = models.BooleanField()
 
-class shareCIFS(models.Model):
+
+class WindowsShare(models.Model):
     name = models.CharField(
             max_length=120, 
             verbose_name="Name"
@@ -837,45 +634,13 @@ class shareCIFS(models.Model):
             max_length=120, 
             verbose_name="Comment"
             )
-    path = models.CharField(
-            max_length=120, verbose_name="Path",
-            help_text="Path to be shared"
-            )
-    ro = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Read Only",
-            help_text="If enabled, users may not create or modify files in the share."
-            )
-    browseable = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='ON', 
-            verbose_name="Browsable",
-            help_text="This controls whether this share is seen in the list of available shares in a net view and in the browse list."
-            )
-    inheritperms = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='ON', 
-            verbose_name="Inherit permissions",
-            help_text="The permissions on new files and directories are normally governed by create mask and directory mask but the inherit permissions parameter overrides this. This can be particularly useful on systems with many users to allow a single share to be used flexibly by each user."
-            )
-    recyclebin = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Recycling bin",
-            help_text="This will create a recycle bin on the share."
-            )
-    showhiddenfiles = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='ON', 
-            verbose_name="Show Hidden Files",
-            help_text="Controls whether files starting with a dot are shown to the user."
-            )
+    path = models.ManyToManyField(MountPoint)
+    globalro = models.BooleanField()
+    cifsro = models.BooleanField()
+    browsable = models.BooleanField()
+    inheritperms = models.BooleanField()
+    recyclebin = models.BooleanField()
+    showhiddenfiles = models.BooleanField()
     hostsallow = models.CharField(
             max_length=120, 
             blank=True, 
@@ -897,385 +662,21 @@ class shareCIFS(models.Model):
     
     def __unicode__(self):
         return self.name
-
     class Meta:
-        verbose_name = "Share"
+        verbose_name = "Windows Share"
 
-class servicesCIFSshare(models.Model):
-    share = models.ForeignKey(shareCIFS, verbose_name="Share")
-    
-    def __unicode__(self):
-        return self.share
-
-    class Meta:
-        verbose_name = "Share"
-
-
-class servicesFTP(models.Model):            
-    toggleFTP = models.CharField(
+       
+class AppleShare(models.Model):
+    name = models.CharField(
             max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="FTP"
-            )
-    clients = models.CharField(
-            max_length=120, 
-            verbose_name="Clients",
-            help_text="Maximum number of simultaneous clients."
-            )
-    ipconnections = models.CharField(
-            max_length=120, 
-            verbose_name="Connections",
-            help_text="Maximum number of connections per IP address (0 = unlimited)."
-            )
-    loginattempt = models.CharField(
-            max_length=120, 
-            verbose_name="Login Attempts",
-            help_text="Maximum number of allowed password attempts before disconnection."
-            )
-    timeout = models.CharField(
-            max_length=120, 
-            verbose_name="Timeout",
-            help_text="Maximum idle time in seconds."
-            )
-    rootlogin = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="root login",
-            help_text="Specifies whether it is allowed to login as superuser (root) directly. "
-            )
-    onlyanonymous = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Anonymous users only",
-            help_text="Only allow anonymous users. Use this on a public FTP site with no remote FTP access to real accounts. "
-            )
-    onlylocal = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', verbose_name="Local users only",
-            help_text="Only allow authenticated users. Anonymous logins are prohibited. "
-            )
-    banner = models.TextField(
-            max_length=120, 
-            verbose_name="Banner", 
-            blank=True,
-            help_text="Greeting banner displayed by FTP when a connection first comes in."
-            )
-    filemask = models.CharField(
-            max_length=120, 
-            verbose_name="File mask",
-            help_text="Use this option to override the file creation mask (077 by default)."
-            )
-    dirmask = models.CharField(
-            max_length=120, 
-            verbose_name="Directory mask",
-            help_text="Use this option to override the file creation mask (077 by default)."
-            )
-    fxp = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="FXP",
-            help_text="FXP allows transfers between two remote servers without any file data going to the client asking for the transfer (insecure!)."
-            )
-    resume = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Resume",
-            help_text="Allow clients to resume interrupted uploads and downloads. "
-            )
-    defaultroot = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Default root",
-            help_text="If default root is enabled, a chroot operation is performed immediately after a client authenticates. This can be used to effectively isolate the client from a portion of the host system filespace."
-            )
-    ident = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Ident protocol",
-            help_text="When a client initially connects to the server the ident protocol is used to attempt to identify the remote username."
-            )
-    reversedns = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Reverse DNS lookup",
-            help_text="Enable reverse DNS lookup performed on the remote host's IP address for incoming active mode data connections and outgoing passive mode data connections."
-            )
-    masqaddress = models.CharField(
-            max_length=120, 
-            verbose_name="Masquerade address", 
-            blank=True,
-            help_text="Causes the server to display the network information for the specified IP address or DNS hostname to the client, on the assumption that that IP address or DNS host is acting as a NAT gateway or port forwarder for the server."
-            )
-    passiveportsimin = models.CharField(
-            max_length=120, 
-            verbose_name="Passive ports",
-            help_text="The minimum port to allocate for PASV style data connections (0 = use any port)."
-            )
-    passiveportsmax = models.CharField(
-            max_length=120, 
-            verbose_name="Passive ports",
-            help_text="The maximum port to allocate for PASV style data connections (0 = use any port). Passive ports restricts the range of ports from which the server will select when sent the PASV command from a client. The server will randomly choose a number from within the specified range until an open port is found. The port range selected must be in the non-privileged range (eg. greater than or equal to 1024). It is strongly recommended that the chosen range be large enough to handle many simultaneous passive connections (for example, 49152-65534, the IANA-registered ephemeral port range)."
-            )
-    localuserbw = models.CharField(
-            max_length=120, 
-            verbose_name="User bandwidth", 
-            blank=True,
-            help_text="Local user upload bandwith in KB/s. An empty field means infinity."
-            )
-    localuserdlbw = models.CharField(
-            max_length=120, 
-            verbose_name="Download bandwidth", 
-            blank=True,
-            help_text="Local user download bandwith in KB/s. An empty field means infinity."
-            )
-    anonuserbw = models.CharField(
-            max_length=120, 
-            verbose_name="Download bandwidth", 
-            blank=True,
-            help_text="Anonymous user upload bandwith in KB/s. An empty field means infinity."
-            )
-    anonuserdlbw = models.CharField(
-            max_length=120, 
-            verbose_name="Download bandwidth", 
-            blank=True,
-            help_text="Anonymous user download bandwith in KB/s. An empty field means infinity."
-            )
-    ssltls = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="root login",
-            help_text="Enable TLS/SSL connections. "
-            )
-    auxparams = models.TextField(
-            max_length=120, 
-            verbose_name="Banner", 
-            blank=True,
-            help_text="These parameters are added to proftpd.conf."
-            )
-    
-class servicesTFTP(models.Model):            
-    toggleTFTP = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="TFTP"
-            )
-    directory = models.CharField(
-            max_length=120, 
-            verbose_name="Directory",
-            help_text="The directory containing the files you want to publish. The remote host does not need to pass along the directory as part of the transfer."
-            )
-    newfiles = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="New Files"
-            )
-    port = models.CharField(
-            max_length=120, 
-            verbose_name="Port",
-            help_text="The port to listen to. The default is to listen to the tftp port specified in /etc/services."
-            )
-    username = models.CharField(
-            max_length=120, 
-            choices=whoChoices(), 
-            default="nobody", 
-            verbose_name="Username", 
-            help_text="Specifies the username which the service will run as."
-            )
-    umask = models.CharField(
-            max_length=120, 
-            verbose_name="umask",
-            help_text="Set the umask for newly created files to the specified value. The default is 022 (everyone can read, nobody can write)."
-            )
-    options = models.CharField(
-            max_length=120, 
-            verbose_name="Extra options",
-            blank=True, 
-            help_text="Extra command line options (usually empty)."
-            )
-
-class servicesSSH(models.Model):            
-    toggleSSH = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="SSH"
-            )
-    tcpport = models.CharField(
-            max_length=120, 
-            verbose_name="TCP Port",
-            help_text="Alternate TCP port. Default is 22"
-            )
-    rootlogin = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="root login",
-            help_text="Specifies whether it is allowed to login as superuser (root) directly."
-            )
-    passwordauth = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Password authentication",
-            help_text="Enable keyboard-interactive authentication."
-            )
-    tcpfwd = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="TCP Forwarding",
-            help_text="Allow SSH tunnels."
-            )
-    compression = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Compression",
-            help_text="Compression is worth using if your connection is slow. The efficiency of the compression depends on the type of the file, and varies widely. Useful for internet transfer only."
-            )
-    privatekey = models.TextField(
-            max_length=120, 
-            verbose_name="Private Key", 
-            blank=True,
-            help_text="Paste a DSA PRIVATE KEY in PEM format here."
-            )
-    opions = models.TextField(
-            max_length=120, 
-            verbose_name="Banner", 
-            blank=True,
-            help_text="Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect entered options prevent SSH service to be started."
-            )
-    
-class servicesNFS(models.Model):            
-    toggleNFS = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="NFS"
-            )
-    servers = models.CharField(
-            max_length=120, 
-            verbose_name="Number of servers",
-            help_text="Specifies how many servers to create. There should be enough to handle the maximum level of concurrency from its clients, typically four to six."
-            )
-class shareNFS(models.Model):
-    path = models.CharField(
-            max_length=120, 
-            verbose_name="Path",
-            help_text="Path to be shared. Please note that blanks in path names are not allowed."
-            )
-    allroot = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Map users to root",
-            help_text="All users will have the root privilege."
-            )
-    network = models.CharField(
-            max_length=120, 
-            verbose_name="Authorized network",
-            help_text="Network that is authorised to access the NFS share."
+            verbose_name="Name"
             )
     comment = models.CharField(
             max_length=120, 
             verbose_name="Comment"
             )
-    alldirs = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="All directories",
-            help_text="Share all sub directories."
-            )
-    readonly = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Read only",
-            help_text="Specifies that the file system should be exported read-only."
-            )
-    quiet = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Quiet",
-            help_text="Inhibit some of the syslog diagnostics for bad lines in /etc/exports."
-            )
-    
-    def __unicode__(self):
-        return self.path
-
-    class Meta:
-        verbose_name = "Share"
-
-class servicesNFSshare(models.Model):
-    share = models.ForeignKey(shareNFS, verbose_name="Share")
-    
-    def __unicode__(self):
-        return self.share
-
-    class Meta:
-        verbose_name = "Share"
-class servicesAFP(models.Model):            
-    toggleAFP = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="AFP"
-            )
-    name = models.CharField(
-            max_length=120, 
-            verbose_name="Server Name",
-            help_text="Name of the server. If this field is left empty the default server is specified."
-            )
-    guest = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Guest access",
-            help_text="Enable guest access."
-        )
-    local = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Local access",
-            help_text="Enable local user authentication. "
-        )
-    ddp = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="DDP",
-            help_text="DDP connections, enabled by default"
-            )
-
-class shareAFP(models.Model):
-    name = models.CharField(
-            max_length=120, 
-            verbose_name="Name"
-            )
-    path = models.CharField(
-            max_length=120, 
-            verbose_name="Path",
-            help_text="Path to be shared."
-            )
-    comment = models.CharField(
-            max_length=120, 
-            verbose_name="Name"
-            )
+    path = models.ManyToManyField(MountPoint)
+    globalro = models.BooleanField()
     sharepw = models.CharField(
             max_length=120, 
             verbose_name="Share password",
@@ -1296,22 +697,17 @@ class shareAFP(models.Model):
             verbose_name="Allow",
             help_text="The deny option specifies users and groups who are not allowed access to the share. It follows the same format as the allow option."
             )
-    roaccess = models.CharField(
+    afpro = models.CharField(
             max_length=120, 
             verbose_name="Read-only access",
             help_text="Allows certain users and groups to have read-only access to a share. This follows the allow option format."
         )
-    rwaccess = models.CharField(
+    afprw = models.CharField(
             max_length=120, 
             verbose_name="Read-only access",
             help_text="Allows certain users and groups to have read/write access to a share. This follows the allow option format. "
             )
-    diskdiscovery = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Automatic Disk Discovery"
-            )
+    diskdiscovery = models.BooleanField()
     discoverymode = models.CharField(
             max_length=120, 
             choices=DISKDISCOVERY_CHOICES, 
@@ -1324,81 +720,54 @@ class shareAFP(models.Model):
             verbose_name="Path",
             help_text="Path to be shared."
             )
-    cachecnid = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF',
-            help_text="If set afpd uses the ID information stored in AppleDouble V2 header files to reduce database load. Don't set this option if the volume is modified by non AFP clients (NFS/SMB/local)."
-            )
-    crlf = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            help_text="crlf translation for TEXT files, automatically converting macintosh line breaks into Unix ones. Use of this option might be dangerous since some older programs store binary data files as type 'TEXT' when saving and switch the filetype in a second step. Afpd will potentially destroy such files when 'erroneously' changing bytes in order to do line break translation."
-            )
-    mswindows = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            help_text="This forces filenames to be restricted to the character set used by Windows. This is not recommended for shares used principally by Mac computers."
-            )
-    noadouble = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            help_text="This controls whether the .AppleDouble directory gets created unless absolutely needed. This option should not be used if files are access mostly by Mac computers."
-            )
-    nodev = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF',
-            help_text="use 0 for device number, helps when the device number is not constant across a reboot, cluster, ..."
-            )
-    nofileid = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF',
-            help_text="advertise createfileid, resolveid, deleteid calls."
-            )
-    nohex = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            help_text="hex translations for anything except dot files. Disabling this option makes the '/' character illegal."
-            )
-    prodos = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF',
-            help_text="Provides compatibility with Apple II clients."
-            )
-    nostat = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF',
-            help_text="stat volume path when enumerating volumes list, useful for automounting or volumes created by a preexec script."
-            )
-    upriv = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            help_text="Use AFP3 unix privileges."
-            )
+    cachecnid = models.BooleanField()
+    crlf = models.BooleanField()
+    mswindows = models.BooleanField()
+    noadouble = models.BooleanField()
+    nodev = models.BooleanField()
+    nofileid = models.BooleanField()
+    nohex = models.BooleanField()
+    prodos = models.BooleanField()
+    nostat = models.BooleanField()
+    upriv = models.BooleanField()
     
     def __unicode__(self):
         return self.path
 
     class Meta:
         verbose_name = "Share"
-
-class servicesAFPshare(models.Model):
-    share = models.ForeignKey(shareAFP, verbose_name="Share")
+    
+class UnixShare(models.Model):
+    name = models.CharField(
+            max_length=120, 
+            verbose_name="Name"
+            )
+    comment = models.CharField(
+            max_length=120, 
+            verbose_name="Comment"
+            )
+    path = models.ManyToManyField(MountPoint)
+    globalro = models.BooleanField()
+    allroot = models.BooleanField()
+    network = models.CharField(
+            max_length=120, 
+            verbose_name="Authorized network",
+            help_text="Network that is authorised to access the NFS share."
+            )
+    alldirs = models.BooleanField()
+    nfsro = models.BooleanField()
+    quiet = models.BooleanField()
     
     def __unicode__(self):
-        return self.share
+        return self.path
 
     class Meta:
-        verbose_name = "Share"
+        verbose_name = "UNIX Share"     
+
+
+   
+
+
 class clientrsyncjob(models.Model):
     localshare = models.CharField(
             max_length=120, verbose_name="Local Share",
@@ -1516,62 +885,14 @@ class clientrsyncjob(models.Model):
             default="(NONE)", 
             verbose_name="Weekdays"
             )
-    recursive = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='ON', 
-            verbose_name="Recursive",
-            help_text="Recurse into directories."
-            )
-    times = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='ON', 
-            verbose_name="Times",
-            help_text="Preserve modification times. "
-            )
-    compress = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='ON', 
-            verbose_name="Compress",
-            help_text="Compress file data during the transfer."
-            )
-    archive = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Archive",
-            help_text="Archive mode."
-            )
-    delete = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Delete",
-            help_text="Delete files on the receiving side that don't exist on sender."
-            )
-    quiet = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Quiet",
-            help_text="Suppress non-error messages."
-            )
-    preserveperms = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Preserve Permissions",
-            help_text="This option causes the receiving rsync to set the destination permissions to be the same as the source permissions."
-            )
-    extattr = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Extended attributes",
-            help_text="This option causes rsync to update the remote extended attributes to be the same as the local ones."
-            )
+    recursive = models.BooleanField()
+    times = models.BooleanField()
+    compress = models.BooleanField()
+    archive = models.BooleanField()
+    delete = models.BooleanField()
+    quiet = models.BooleanField()
+    preserveperms = models.BooleanField()
+    extattr = models.BooleanField()
     options = models.CharField(
             max_length=120, 
             verbose_name="Extra options",
@@ -1694,73 +1015,119 @@ class localrsyncjob(models.Model):
             default="(NONE)", 
             verbose_name="Weekdays"
             )
-    recursive = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='ON', 
-            verbose_name="Recursive",
-            help_text="Recurse into directories."
-            )
-    times = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='ON', 
-            verbose_name="RSYNC",
-            help_text="Preserve modification times. "
-            )
-    compress = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='ON', 
-            verbose_name="RSYNC",
-            help_text="Compress file data during the transfer."
-            )
-    archive = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="RSYNC",
-            help_text="Archive mode."
-            )
-    delete = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="RSYNC",
-            help_text="Delete files on the receiving side that don't exist on sender."
-            )
-    quiet = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="RSYNC",
-            help_text="Suppress non-error messages."
-            )
-    preserveperms = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="RSYNC",
-            help_text="This option causes the receiving rsync to set the destination permissions to be the same as the source permissions."
-            )
-    extattr = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="RSYNC",
-            help_text="This option causes rsync to update the remote extended attributes to be the same as the local ones."
-            )
+    recursive = models.BooleanField()
+    times = models.BooleanField()
+    compress = models.BooleanField()
+    archive = models.BooleanField()
+    delete = models.BooleanField()
+    quiet = models.BooleanField()
+    preserveperms = models.BooleanField()
+    extattr = models.BooleanField()
     options = models.CharField(
             max_length=120, verbose_name="Extra options",
             help_text="Extra options to rsync (usually empty)."
             )
-class servicesRSYNC(models.Model):            
-    togglersync = models.CharField(
+
+class servicesCIFS(models.Model):
+    toggleCIFS = models.BooleanField()
+    netbiosname = models.CharField(
             max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="RSYNC"
+            verbose_name="NetBIOS name"
             )
+    workgroup = models.CharField(
+            max_length=120, 
+            verbose_name="Workgroup",
+            help_text="Workgroup the server will appear to be in when queried by clients (maximum 15 characters)."
+            )
+    cifs_description = models.CharField(
+            max_length=120, 
+            verbose_name="Description", 
+            blank=True,
+            help_text="Server description. This can usually be left blank."
+            )
+    doscharset = models.CharField(
+            max_length=120, 
+            choices=DOSCHARSET_CHOICES, 
+            default="CP437", 
+            verbose_name="DOS charset"
+            )
+    unixcharset = models.CharField(
+            max_length=120, 
+            choices=UNIXCHARSET_CHOICES, 
+            default="UTF-8", 
+            verbose_name="UNIX charset"
+            )
+    loglevel = models.CharField(
+            max_length=120, 
+            choices=LOGLEVEL_CHOICES, 
+            default="Minimum", 
+            verbose_name="Log level"
+            )
+    localmaster = models.BooleanField()
+    timeserver = models.BooleanField()
+    guest = models.CharField(
+            max_length=120, 
+            choices=whoChoices(), 
+            default="www", 
+            verbose_name="Guest account", 
+            help_text="Use this option to override the username ('ftp' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login."
+            )
+    cifs_filemask = models.CharField(
+            max_length=120, 
+            verbose_name="File mask", 
+            blank=True,
+            help_text="Use this option to override the file creation mask (0666 by default)."
+            )
+    cifs_dirmask = models.CharField(
+            max_length=120, 
+            verbose_name="Directory mask", 
+            blank=True,
+            help_text="Use this option to override the directory creation mask (0777 by default)."
+            )
+    sendbuffer = models.CharField(
+            max_length=120, 
+            verbose_name="Send Buffer Size", 
+            blank=True,
+            help_text="Size of send buffer (64240 by default)."
+            )
+    recbuffer = models.CharField(
+            max_length=120, 
+            verbose_name="Receive Buffer Size", 
+            blank=True,
+            help_text="Size of receive buffer (64240 by default)."
+            )
+    largerw = models.BooleanField()
+    sendfile = models.BooleanField()
+    easupport = models.BooleanField()
+    dosattr = models.BooleanField()
+    nullpw = models.BooleanField()
+    smb_options = models.TextField(
+            max_length=120, 
+            verbose_name="Auxiliary paramters", 
+            blank=True,
+            help_text="These parameters are added to [Global] section of smb.conf"
+            )
+
+class servicesAFP(models.Model):            
+    toggleAFP = models.BooleanField()
+    name = models.CharField(
+            max_length=120, 
+            verbose_name="Server Name",
+            help_text="Name of the server. If this field is left empty the default server is specified."
+            )
+    guest = models.BooleanField()
+    local = models.BooleanField()
+    ddp = models.BooleanField()
+class servicesNFS(models.Model):            
+    toggleNFS = models.BooleanField()
+    servers = models.CharField(
+            max_length=120, 
+            verbose_name="Number of servers",
+            help_text="Specifies how many servers to create. There should be enough to handle the maximum level of concurrency from its clients, typically four to six."
+            )
+
+class servicesRSYNC(models.Model):
+    toggleRSYNC = models.BooleanField()
     clientrsync = models.ForeignKey(
             clientrsyncjob, 
             verbose_name="Client RSYNC jobs"
@@ -1769,37 +1136,22 @@ class servicesRSYNC(models.Model):
             localrsyncjob, 
             verbose_name="Local RSYNC jobs"
             ) 
+    class Meta:
+        verbose_name = "RSYNC"
 
 class servicesUnison(models.Model):            
-    toggleUnison = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Unison"
-            )
+    toggleUnison = models.BooleanField()
     workingdir = models.CharField(
             max_length=120, 
             verbose_name="Working directory", 
             blank=True
             )
-    createworkingdir = models.CharField(
-            max_length=120, 
-            verbose_name="Create Working Directory", 
-            choices=TOGGLE_CHOICES,
-            default="ON",
-            help_text="Create working directory if one doesn't exist. "
-            )
+    createworkingdir = models.BooleanField()
+    class Meta:
+        verbose_name = "Unison"
 
-"""
-iSCSI Target
-"""
 class servicesiSCSITarget(models.Model):            
-    toggleiSCSITarget = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="iSCSI Target"
-            )
+    toggleiSCSITarget = models.BooleanField()
     basename = models.CharField(
             max_length=120, 
             verbose_name="Base Name",
@@ -1852,20 +1204,10 @@ class servicesiSCSITarget(models.Model):
             verbose_name="Max receive data segment length",
             help_text="iSCSI initial parameter (262144 by default)."
             )
-    toggleluc = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Logical Unit Controller"
-            )
+    toggleluc = models.BooleanField()
 
 class servicesDynamicDNS(models.Model):            
-    toggleDynamicDNS = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Dyanmic DNS"
-            )
+    toggleDynamicDNS = models.BooleanField()
     provider = models.CharField(
             max_length=120, 
             choices=DYNDNSPROVIDER_CHOICES, 
@@ -1878,7 +1220,7 @@ class servicesDynamicDNS(models.Model):
             blank=True,
             help_text="A host name alias. This option can appear multiple times, for each domain that has the same IP. Use a space to separate multiple alias names."
             )
-    username = models.CharField(
+    dyndns_username = models.CharField(
             max_length=120, 
             verbose_name="Username"
             )
@@ -1896,26 +1238,15 @@ class servicesDynamicDNS(models.Model):
             verbose_name="Forced update period", 
             blank=True
             )
-    wildcard = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Wildcard", 
-            help_text="Toggle domain wildcarding."
-            )
-    auxparams = models.TextField(
+    wildcard = models.BooleanField()
+    dyndns_options = models.TextField(
             verbose_name="Auxiliary parameters", 
             blank=True,
             help_text="These parameters will be added to global settings in inadyn.conf."
             ) 
 
-class servicesSNMP(models.Model):            
-    toggleSNMP = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="SNMP"
-            )
+class servicesSNMP(models.Model):
+    toggleSNMP = models.BooleanField()
     location = models.CharField(
             max_length=120, 
             verbose_name="Location", 
@@ -1933,26 +1264,15 @@ class servicesSNMP(models.Model):
             verbose_name="Community",
             help_text="In most cases, 'public' is used here."
             )
-    traps = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Traps",
-            help_text="Toggle traps"
-            )
-    auxparams = models.TextField(
+    traps = models.BooleanField()
+    snmp_options = models.TextField(
             verbose_name="Auxiliary parameters", 
             blank=True,
             help_text="These parameters will be added to global settings in inadyn.conf."
             ) 
 
 class servicesUPS(models.Model):            
-    toggleUPS = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="UPS"
-            )
+    toggleUPS = models.BooleanField()
     identifier = models.CharField(
             max_length=120, 
             verbose_name="Identifier",
@@ -1964,18 +1284,18 @@ class servicesUPS(models.Model):
             blank=True,
             help_text="The driver used to communicate with your UPS."
             )
-    port = models.CharField(
+    ups_port = models.CharField(
             max_length=120, 
             verbose_name="Port", 
             blank=True,
             help_text="The serial or USB port where your UPS is connected."
             )
-    auxparams = models.TextField(
+    ups_options = models.TextField(
             verbose_name="Auxiliary parameters", 
             blank=True,
             help_text="These parameters will be added to global settings in inadyn.conf."
             ) 
-    description = models.CharField(
+    ups_description = models.CharField(
             max_length=120, 
             verbose_name="Description", 
             blank=True
@@ -1991,18 +1311,8 @@ class servicesUPS(models.Model):
             verbose_name="Shutdown timer",
             help_text="The time in seconds until shutdown is initiated. If the UPS happens to come back before the time is up the shutdown is canceled."
             )
-    rmonitor = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Remote Monitoring"
-            )
-    emailnotify = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Email notification"
-            )
+    rmonitor = models.BooleanField()
+    emailnotify = models.BooleanField()
     toemail = models.CharField(
             max_length=120, 
             verbose_name="To email", 
@@ -2016,19 +1326,14 @@ class servicesUPS(models.Model):
             )
 
 class servicesWebserver(models.Model):            
-    toggleWebserver = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Webserver"
-            )
+    toggleWebserver = models.BooleanField()
     protocol = models.CharField(
             max_length=120, 
             choices=PROTOCOL_CHOICES, 
             default='OFF', 
             verbose_name="Protocol"
             )
-    port = models.CharField(
+    webserver_port = models.CharField(
             max_length=120, 
             verbose_name="Port",
             help_text="TCP port to bind the server to."
@@ -2038,28 +1343,11 @@ class servicesWebserver(models.Model):
             verbose_name="Document root",
             help_text="Document root of the webserver. Home of the web page files."
             )
-    auth = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES,
-            default='OFF', 
-            verbose_name="Authentication",
-            help_text="only local users access to the web page."
-            )
-    dirlisting = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES,
-            default='OFF',
-            verbose_name="Directory listing",
-            help_text="directory listing is generated if a directory is requested and no index-file (index.php, index.html, index.htm or default.htm) was found in that directory."
-            )
+    auth = models.BooleanField()
+    dirlisting = models.BooleanField()
 
 class servicesBitTorrent(models.Model):            
-    toggleBitTorrent = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Bit Torrent"
-            )
+    toggleBitTorrent = models.BooleanField()
     peerport = models.CharField(
             max_length=120, 
             verbose_name="Peer port",
@@ -2077,27 +1365,9 @@ class servicesBitTorrent(models.Model):
             help_text="Alternative configuration directory (usually empty)", 
             blank=True
             )
-    portfwd = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Port Forwarding",
-            help_text="port forwarding via NAT-PMP or UPnP."
-            )
-    pex = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF',
-            verbose_name="Peer Exchange",
-            help_text="peer exchange (PEX)."
-            )
-    disthash = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Distributed hash table",
-            help_text="distributed hash table."
-            )
+    portfwd = models.BooleanField()
+    pex = models.BooleanField()
+    disthash = models.BooleanField()
     encrypt = models.CharField(
             max_length=120, 
             choices=BTENCRYPT_CHOICES, 
@@ -2130,13 +1400,13 @@ class servicesBitTorrent(models.Model):
             help_text="Directory to incomplete files. An empty field means disable.", 
             blank=True
             )
-    umask = models.CharField(
+    bt_umask = models.CharField(
             max_length=120,
             verbose_name="User mask",
             help_text="Use this option to override the default permission modes for newly created files (0002 by default).", 
             blank=True
             )
-    options = models.CharField(
+    bt_options = models.CharField(
             max_length=120, 
             verbose_name="Extra Options", 
             blank=True
@@ -2162,16 +1432,162 @@ class servicesBitTorrent(models.Model):
             help_text="Password to authenticate to web interface with"
             )
 
+class servicesFTP(models.Model):            
+    toggleFTP = models.BooleanField()
+    clients = models.CharField(
+            max_length=120, 
+            verbose_name="Clients",
+            help_text="Maximum number of simultaneous clients."
+            )
+    ipconnections = models.CharField(
+            max_length=120, 
+            verbose_name="Connections",
+            help_text="Maximum number of connections per IP address (0 = unlimited)."
+            )
+    loginattempt = models.CharField(
+            max_length=120, 
+            verbose_name="Login Attempts",
+            help_text="Maximum number of allowed password attempts before disconnection."
+            )
+    timeout = models.CharField(
+            max_length=120, 
+            verbose_name="Timeout",
+            help_text="Maximum idle time in seconds."
+            )
+    ftp_rootlogin = models.BooleanField()
+    onlyanonymous = models.BooleanField()
+    onlylocal = models.BooleanField()
+    banner = models.TextField(
+            max_length=120, 
+            verbose_name="Banner", 
+            blank=True,
+            help_text="Greeting banner displayed by FTP when a connection first comes in."
+            )
+    ftp_filemask = models.CharField(
+            max_length=120, 
+            verbose_name="File mask",
+            help_text="Use this option to override the file creation mask (077 by default)."
+            )
+    ftp_dirmask = models.CharField(
+            max_length=120, 
+            verbose_name="Directory mask",
+            help_text="Use this option to override the file creation mask (077 by default)."
+            )
+    fxp = models.BooleanField()
+    resume = models.BooleanField()
+    defaultroot = models.BooleanField()
+    ident = models.BooleanField()
+    reversedns = models.BooleanField()
+    masqaddress = models.CharField(
+            max_length=120, 
+            verbose_name="Masquerade address", 
+            blank=True,
+            help_text="Causes the server to display the network information for the specified IP address or DNS hostname to the client, on the assumption that that IP address or DNS host is acting as a NAT gateway or port forwarder for the server."
+            )
+    passiveportsmin = models.CharField(
+            max_length=120, 
+            verbose_name="Passive ports",
+            help_text="The minimum port to allocate for PASV style data connections (0 = use any port)."
+            )
+    passiveportsmax = models.CharField(
+            max_length=120, 
+            verbose_name="Passive ports",
+            help_text="The maximum port to allocate for PASV style data connections (0 = use any port). Passive ports restricts the range of ports from which the server will select when sent the PASV command from a client. The server will randomly choose a number from within the specified range until an open port is found. The port range selected must be in the non-privileged range (eg. greater than or equal to 1024). It is strongly recommended that the chosen range be large enough to handle many simultaneous passive connections (for example, 49152-65534, the IANA-registered ephemeral port range)."
+            )
+    localuserbw = models.CharField(
+            max_length=120, 
+            verbose_name="User bandwidth", 
+            blank=True,
+            help_text="Local user upload bandwith in KB/s. An empty field means infinity."
+            )
+    localuserdlbw = models.CharField(
+            max_length=120, 
+            verbose_name="Download bandwidth", 
+            blank=True,
+            help_text="Local user download bandwith in KB/s. An empty field means infinity."
+            )
+    anonuserbw = models.CharField(
+            max_length=120, 
+            verbose_name="Download bandwidth", 
+            blank=True,
+            help_text="Anonymous user upload bandwith in KB/s. An empty field means infinity."
+            )
+    anonuserdlbw = models.CharField(
+            max_length=120, 
+            verbose_name="Download bandwidth", 
+            blank=True,
+            help_text="Anonymous user download bandwith in KB/s. An empty field means infinity."
+            )
+    ssltls = models.BooleanField()
+    ftp_options = models.TextField(
+            max_length=120, 
+            verbose_name="Banner", 
+            blank=True,
+            help_text="These parameters are added to proftpd.conf."
+            )
 
+
+
+class servicesTFTP(models.Model):            
+    toggleTFTP = models.BooleanField()
+    directory = models.CharField(
+            max_length=120, 
+            verbose_name="Directory",
+            help_text="The directory containing the files you want to publish. The remote host does not need to pass along the directory as part of the transfer."
+            )
+    newfiles = models.BooleanField()
+    tftp_port = models.CharField(
+            max_length=120, 
+            verbose_name="Port",
+            help_text="The port to listen to. The default is to listen to the tftp port specified in /etc/services."
+            )
+    tftp_username = models.CharField(
+            max_length=120, 
+            choices=whoChoices(), 
+            default="nobody", 
+            verbose_name="Username", 
+            help_text="Specifies the username which the service will run as."
+            )
+    tftp_umask = models.CharField(
+            max_length=120, 
+            verbose_name="umask",
+            help_text="Set the umask for newly created files to the specified value. The default is 022 (everyone can read, nobody can write)."
+            )
+    tftp_options = models.CharField(
+            max_length=120, 
+            verbose_name="Extra options",
+            blank=True, 
+            help_text="Extra command line options (usually empty)."
+            )
+
+class servicesSSH(models.Model):            
+    toggleSSH = models.BooleanField()
+    tcpport = models.CharField(
+            max_length=120, 
+            verbose_name="TCP Port",
+            help_text="Alternate TCP port. Default is 22"
+            )
+    ssh_rootlogin = models.BooleanField()
+    passwordauth = models.BooleanField()
+    tcpfwd = models.BooleanField()
+    compression = models.BooleanField()
+    privatekey = models.TextField(
+            max_length=120, 
+            verbose_name="Private Key", 
+            blank=True,
+            help_text="Paste a DSA PRIVATE KEY in PEM format here."
+            )
+    ssh_options = models.TextField(
+            max_length=120, 
+            verbose_name="Banner", 
+            blank=True,
+            help_text="Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect entered options prevent SSH service to be started."
+            )
+   
 """ Access Section """
 
 class accessActiveDirectory(models.Model):            
-    toggle = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES,
-            default='OFF',
-            verbose_name="Active Directory"
-            )
+    toggle = models.BooleanField()
     dcname = models.CharField(
             max_length=120, 
             verbose_name="Domain Controller Name",
@@ -2199,12 +1615,7 @@ class accessActiveDirectory(models.Model):
             )
 
 class accessLDAP(models.Model):            
-    toggle = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="LDAP"
-            )
+    toggle = models.BooleanField()
     hostname = models.CharField(
             max_length=120, 
             verbose_name="Hostname", 
@@ -2217,12 +1628,7 @@ class accessLDAP(models.Model):
             blank=True,
             help_text="The default base Distinguished Name (DN) to use for seraches, eg dc=test,dc=org"
             )
-    anonbind = models.CharField(
-            max_length=120, 
-            choices=TOGGLE_CHOICES, 
-            default='OFF', 
-            verbose_name="Anonymous Bind"
-            )
+    anonbind = models.BooleanField()
     rootbasedn = models.CharField(
             max_length=120, 
             verbose_name="Root bind DN", 

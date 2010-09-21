@@ -98,11 +98,17 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'dojango.middleware.DojoCollector',
 )
+DOJANGO_DATAGRID_ACCESS = (
+        'freenas.servicesCIFS',
+        'freenas.shareCIFS',
+        'freenas.Disk',
+            )
 
 ROOT_URLCONF = 'freenasUI.urls'
 
 TEMPLATE_DIRS = (
     '/usr/local/www/freenasUI/templates',
+    '/usr/local/lib/python2.6/site-packages/dojango/templates',
 )
 TEMPLATE_CONTEXT_PROCESSORS = (
         'django.core.context_processors.request',

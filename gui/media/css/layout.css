@@ -37,14 +37,13 @@ body {
 
 #footer {
 	position: relative;
-	margin: 0px 0px 0px 0px;
+    margin-top:56px;
 	padding-bottom: 10px;
 	padding-top: 10px;
 	clear: both;
 	text-align: center;
-	color: #ffffff;
 	width:100%;
-    background:#1d1d1d;
+    color:#1d1d1d;
 }
 
  
@@ -334,8 +333,8 @@ margin-bottom:6px;
 
  
 
-#footer a:link, #footer a:visited { color: #ffffff; }
-#footer a:hover { color: #ffffff; }
+#footer a:link, #footer a:visited { color: #3f3f3f; }
+#footer a:hover { color: #2d2d2d; }
 
 #footer a.anchor {
 	position: absolute;

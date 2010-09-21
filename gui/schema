@@ -284,25 +284,9 @@ CREATE TABLE "freenas_rcconf" (
     "varvalue" varchar(120) NOT NULL,
     "varcomment" varchar(120) NOT NULL
 );
-CREATE TABLE "freenas_services" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "toggleCIFS" bool NOT NULL,
-    "toggleNFS" bool NOT NULL,
-    "toggleAFP" bool NOT NULL,
-    "toggleRSYNC" bool NOT NULL,
-    "toggleUnison" bool NOT NULL,
-    "toggleiSCSITarget" bool NOT NULL,
-    "toggleDynamicDNS" bool NOT NULL,
-    "toggleSNMP" bool NOT NULL,
-    "toggleUPS" bool NOT NULL,
-    "toggleWebserver" bool NOT NULL,
-    "toggleBitTorrent" bool NOT NULL,
-    "toggleTFTP" bool NOT NULL,
-    "toggleFTP" bool NOT NULL,
-    "toggleSSH" bool NOT NULL
-);
 CREATE TABLE "freenas_servicesafp" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleAFP" bool NOT NULL,
     "name" varchar(120) NOT NULL,
     "guest" bool NOT NULL,
     "local" bool NOT NULL,
@@ -310,6 +294,7 @@ CREATE TABLE "freenas_servicesafp" (
 );
 CREATE TABLE "freenas_servicesbittorrent" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleBitTorrent" bool NOT NULL,
     "peerport" varchar(120) NOT NULL,
     "downloaddir" varchar(120) NOT NULL,
     "configdir" varchar(120) NOT NULL,
@@ -321,8 +306,8 @@ CREATE TABLE "freenas_servicesbittorrent" (
     "downloadbw" varchar(120) NOT NULL,
     "watchdir" varchar(120) NOT NULL,
     "incompletedir" varchar(120) NOT NULL,
-    "umask" varchar(120) NOT NULL,
-    "options" varchar(120) NOT NULL,
+    "bt_umask" varchar(120) NOT NULL,
+    "bt_options" varchar(120) NOT NULL,
     "adminport" varchar(120) NOT NULL,
     "adminauth" varchar(120) NOT NULL,
     "adminuser" varchar(120) NOT NULL,
@@ -330,17 +315,18 @@ CREATE TABLE "freenas_servicesbittorrent" (
 );
 CREATE TABLE "freenas_servicescifs" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleCIFS" bool NOT NULL,
     "netbiosname" varchar(120) NOT NULL,
     "workgroup" varchar(120) NOT NULL,
-    "description" varchar(120) NOT NULL,
+    "cifs_description" varchar(120) NOT NULL,
     "doscharset" varchar(120) NOT NULL,
     "unixcharset" varchar(120) NOT NULL,
     "loglevel" varchar(120) NOT NULL,
     "localmaster" bool NOT NULL,
     "timeserver" bool NOT NULL,
     "guest" varchar(120) NOT NULL,
-    "filemask" varchar(120) NOT NULL,
-    "dirmask" varchar(120) NOT NULL,
+    "cifs_filemask" varchar(120) NOT NULL,
+    "cifs_dirmask" varchar(120) NOT NULL,
     "sendbuffer" varchar(120) NOT NULL,
     "recbuffer" varchar(120) NOT NULL,
     "largerw" bool NOT NULL,
@@ -348,48 +334,51 @@ CREATE TABLE "freenas_servicescifs" (
     "easupport" bool NOT NULL,
     "dosattr" bool NOT NULL,
     "nullpw" bool NOT NULL,
-    "auxsmbconf" text NOT NULL
+    "smb_options" text NOT NULL
 );
 CREATE TABLE "freenas_servicesdynamicdns" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleDynamicDNS" bool NOT NULL,
     "provider" varchar(120) NOT NULL,
     "domain" varchar(120) NOT NULL,
-    "username" varchar(120) NOT NULL,
+    "dyndns_username" varchar(120) NOT NULL,
     "password" varchar(120) NOT NULL,
     "updateperiod" varchar(120) NOT NULL,
     "fupdateperiod" varchar(120) NOT NULL,
     "wildcard" bool NOT NULL,
-    "auxparams" text NOT NULL
+    "dyndns_options" text NOT NULL
 );
 CREATE TABLE "freenas_servicesftp" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleFTP" bool NOT NULL,
     "clients" varchar(120) NOT NULL,
     "ipconnections" varchar(120) NOT NULL,
     "loginattempt" varchar(120) NOT NULL,
     "timeout" varchar(120) NOT NULL,
-    "rootlogin" bool NOT NULL,
+    "ftp_rootlogin" bool NOT NULL,
     "onlyanonymous" bool NOT NULL,
     "onlylocal" bool NOT NULL,
     "banner" text NOT NULL,
-    "filemask" varchar(120) NOT NULL,
-    "dirmask" varchar(120) NOT NULL,
+    "ftp_filemask" varchar(120) NOT NULL,
+    "ftp_dirmask" varchar(120) NOT NULL,
     "fxp" bool NOT NULL,
     "resume" bool NOT NULL,
     "defaultroot" bool NOT NULL,
     "ident" bool NOT NULL,
     "reversedns" bool NOT NULL,
     "masqaddress" varchar(120) NOT NULL,
-    "passiveportsimin" varchar(120) NOT NULL,
+    "passiveportsmin" varchar(120) NOT NULL,
     "passiveportsmax" varchar(120) NOT NULL,
     "localuserbw" varchar(120) NOT NULL,
     "localuserdlbw" varchar(120) NOT NULL,
     "anonuserbw" varchar(120) NOT NULL,
     "anonuserdlbw" varchar(120) NOT NULL,
     "ssltls" bool NOT NULL,
-    "auxparams" text NOT NULL
+    "ftp_options" text NOT NULL
 );
 CREATE TABLE "freenas_servicesiscsitarget" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleiSCSITarget" bool NOT NULL,
     "basename" varchar(120) NOT NULL,
     "discoveryauthmethod" varchar(120) NOT NULL,
     "discoveryauthgroup" varchar(120) NOT NULL,
@@ -404,52 +393,59 @@ CREATE TABLE "freenas_servicesiscsitarget" (
 );
 CREATE TABLE "freenas_servicesnfs" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleNFS" bool NOT NULL,
     "servers" varchar(120) NOT NULL
 );
 CREATE TABLE "freenas_servicesrsync" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleRSYNC" bool NOT NULL,
     "clientrsync_id" integer NOT NULL REFERENCES "freenas_clientrsyncjob" ("id"),
     "localrsync_id" integer NOT NULL REFERENCES "freenas_localrsyncjob" ("id")
 );
 CREATE TABLE "freenas_servicessnmp" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleSNMP" bool NOT NULL,
     "location" varchar(120) NOT NULL,
     "contact" varchar(120) NOT NULL,
     "community" varchar(120) NOT NULL,
     "traps" bool NOT NULL,
-    "auxparams" text NOT NULL
+    "snmp_options" text NOT NULL
 );
 CREATE TABLE "freenas_servicesssh" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleSSH" bool NOT NULL,
     "tcpport" varchar(120) NOT NULL,
-    "rootlogin" bool NOT NULL,
+    "ssh_rootlogin" bool NOT NULL,
     "passwordauth" bool NOT NULL,
     "tcpfwd" bool NOT NULL,
     "compression" bool NOT NULL,
     "privatekey" text NOT NULL,
-    "opions" text NOT NULL
+    "ssh_options" text NOT NULL
 );
 CREATE TABLE "freenas_servicestftp" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleTFTP" bool NOT NULL,
     "directory" varchar(120) NOT NULL,
     "newfiles" bool NOT NULL,
-    "port" varchar(120) NOT NULL,
-    "username" varchar(120) NOT NULL,
-    "umask" varchar(120) NOT NULL,
-    "options" varchar(120) NOT NULL
+    "tftp_port" varchar(120) NOT NULL,
+    "tftp_username" varchar(120) NOT NULL,
+    "tftp_umask" varchar(120) NOT NULL,
+    "tftp_options" varchar(120) NOT NULL
 );
 CREATE TABLE "freenas_servicesunison" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleUnison" bool NOT NULL,
     "workingdir" varchar(120) NOT NULL,
     "createworkingdir" bool NOT NULL
 );
 CREATE TABLE "freenas_servicesups" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleUPS" bool NOT NULL,
     "identifier" varchar(120) NOT NULL,
     "driver" varchar(120) NOT NULL,
-    "port" varchar(120) NOT NULL,
-    "auxparams" text NOT NULL,
-    "description" varchar(120) NOT NULL,
+    "ups_port" varchar(120) NOT NULL,
+    "ups_options" text NOT NULL,
+    "ups_description" varchar(120) NOT NULL,
     "shutdown" varchar(120) NOT NULL,
     "shutdowntimer" varchar(120) NOT NULL,
     "rmonitor" bool NOT NULL,
@@ -459,8 +455,9 @@ CREATE TABLE "freenas_servicesups" (
 );
 CREATE TABLE "freenas_serviceswebserver" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleWebserver" bool NOT NULL,
     "protocol" varchar(120) NOT NULL,
-    "port" varchar(120) NOT NULL,
+    "webserver_port" varchar(120) NOT NULL,
     "docroot" varchar(120) NOT NULL,
     "auth" bool NOT NULL,
     "dirlisting" bool NOT NULL

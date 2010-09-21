@@ -57,12 +57,6 @@ ZPOOL_CHOICES = (
         ('RAID-Z', 'RAID-Z'),
         ('RAID-Z2', 'RAID-Z2'),
         )
-# enable/disable system options
-TOGGLE_CHOICES = (
-        ('ON', 'ON'),
-        ('OFF', 'OFF'),
-        )
-
 EMAILSECURITY_CHOICES = (
         ('None', 'None'),
         ('SSL', 'SSL'),

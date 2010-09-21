@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<form action="." method="post">{% csrf_token %}
+<div dojoType="dijit.layout.TabContainer" style="width:100%;height:380px;">
+        <div dojoType="dijit.layout.ContentPane" title="Active Shares">
+    <table>
+        <tr>
+            <td>
+                <strong>Windows:</strong>
+            </td>
+            <td>
+                {{ cifs_form.toggleCIFS }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Apple:</strong>
+            </td>
+            <td>
+                {{ afp_form.toggleAFP }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>UNIX:</strong>
+            </td>
+            <td>
+                {{ nfs_form.toggleNFS }}
+            </td>
+        </tr>
+    </table>
+
+
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="Windows">
+            <div dojoType="dijit.layout.TabContainer" style="height:300px;" nested="true">
+                <div dojoType="dijit.layout.ContentPane" title="Settings">
+                    <table>
+                        <tr>
+                            <td style="padding-right:25px;">
+                                <strong>Netbios Name:</strong>
+                            </td>
+                        <td>
+                            {{ cifs_form.netbiosname }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-right:25px;">
+                            <strong>Workgroup:</strong>
+                        </td>
+                        <td>
+                            {{ cifs_form.workgroup }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-right:25px;">
+                            <strong>Description:</strong>
+                        </td>
+                        <td>
+                            {{ cifs_form.cifs_description }}
+                        </td>
+                    </tr>
+                </table>
+                </div>
+               
+                <div dojoType="dijit.layout.ContentPane" title="Advanced">
+                <table>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>DOS Charset:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.doscharset }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>UNIX Charset:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.unixcharset }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Log Level:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.loglevel }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Local Master:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.localmaster }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Time Server:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.timeserver }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Guest:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.guest }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>File Mask:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.cifs_filemask }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Directory Mask:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.cifs_dirmask }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Send Buffer:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.sendbuffer }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Receive Buffer:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.recbuffer }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Large Read/Write:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.largerw }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Send File:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.sendfile }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>EA Support:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.easupport }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>DOS Attributes:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.dosattr }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>NULL Password:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.nullpw }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Global Samba Parameters:</strong>
+                    </td>
+                    <td>
+                        {{ cifs_form.smb_options }}
+                    </td>
+                </tr>
+            </table>
+            </div>
+        </div>
+    </div>
+        
+        <div dojoType="dijit.layout.ContentPane" title="Apple">
+            <div dojoType="dijit.layout.TabContainer" style="height:300px;" nested="true">
+                <div dojoType="dijit.layout.ContentPane" title="Settings">
+            <table>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Name:</strong>
+                    </td>
+                    <td>
+                        {{ afp_form.name }}
+                    </td>
+                </tr>
+            </table>
+
+                </div>
+                <div dojoType="dijit.layout.ContentPane" title="Advanced">
+                </div>
+            </div>
+        </div>
+        
+        <div dojoType="dijit.layout.ContentPane" title="UNIX">
+            <div dojoType="dijit.layout.TabContainer" style="height:300px;" nested="true">
+                <div dojoType="dijit.layout.ContentPane" title="Settings">
+     <table>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Servers:</strong>
+                    </td>
+                    <td>
+                        {{ nfs_form.servers }}
+                    </td>
+                </tr>
+            </table>
+
+                </div>
+            </div>
+        </div>
+
+<br />
+</div>
+<button dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+</form>
+{% else %}
+    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
+{% endif %}
+
+{% endblock %}
+

@@ -358,6 +358,20 @@ def staticroute_detail(request, staticrouteid, template_name='freenas/network/st
 
 ## Disk section
 @login_required
+def disk_add(request):
+    if request.method == 'POST':
+        form = DiskForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/freenas/disk/management/disks/')
+    else:
+        form = DiskForm()
+    variables = RequestContext(request, {
+        'form': form
+    })
+    return render_to_response('freenas/disks/disk_add.html', variables)
+
+@login_required
 def disk_add_wrapper(request, *args, **kwargs):
     wiz = DiskWizard([DiskAdvancedForm])
     return wiz(request, *args, **kwargs)
@@ -433,109 +447,100 @@ def volume_detail(request, volumeid, template_name='freenas/disks/volumes/volume
     ) 
 
 
+""" Shares """
+@login_required
+def SharesView(request):
+    mountpoint_form = MountPointForm(request.POST)
+    cifs_form = servicesCIFSForm(request.POST)
+    afp_form = servicesAFPForm(request.POST)
+    nfs_form = servicesNFSForm(request.POST)
+    windowsshare_form = WindowsShareForm(request.POST)
+    appleshare_form = AppleShareForm(request.POST)
+    unixshare_form = UnixShareForm(request.POST)
+    if request.method == 'POST':
+        if mountpoint_form.is_valid() and cifs_form.is_valid() and afp_form.is_valid() and nfs_form.is_valid() and windowsshare_form.is_valid() and appleshare_form.is_valid() and unixshare_form.is_valid():
+            mountpoint_form.save()
+            cifs_form.save()
+            afp_form.save()
+            nfs_form.save()
+            windowsshare_form.save()
+            appleshare_form.save()
+            unixshare_form.save()
+            return HttpResponseRedirect('/freenas/shares/')
+    else:
+        mountpoint_form = MountPointForm()
+        cifs_form = servicesCIFSForm()
+        afp_form = servicesAFPForm()
+        nfs_form = servicesNFSForm()
+        windowsshare_form = WindowsShareForm()
+        appleshare_form = AppleShareForm()
+        unixshare_form = UnixShareForm()
+    variables = RequestContext(request, {
+        'mountpoint_form': mountpoint_form,
+        'cifs_form': cifs_form,
+        'afp_form': afp_form,
+        'nfs_form': nfs_form,
+        'windowsshare_form': nfs_form,
+        'appleshare_form': nfs_form,
+        'unix_form': nfs_form,
+    })
+    return render_to_response('freenas/shares/index.html', variables)
+
 ## Services section
 
 @login_required
-def servicesCIFSView(request):
-    return helperView(request, servicesCIFSForm, servicesCIFS, 'freenas/services/cifs_settings.html')
-
-@login_required
-def shareCIFSView(request):
+def ServicesView(request):
     if request.method == 'POST':
-        form = shareCIFSForm(request.POST)
-        if form.is_valid():
-            form.save()
+        rsync_form = servicesRSYNCForm(request.POST)
+        unison_form = servicesUnisonForm(request.POST)
+        iscsi_form = servicesiSCSITargetForm(request.POST)
+        dynamicdns_form = servicesDynamicDNSForm(request.POST)
+        snmp_form = servicesSNMPForm(request.POST)
+        ups_form = servicesUPSForm(request.POST)
+        webserver_form = servicesWebserverForm(request.POST)
+        bittorrent_form = servicesBitTorrentForm(request.POST)
+        ftp_form = servicesFTPForm(request.POST)
+        tftp_form = servicesTFTPForm(request.POST)
+        ssh_form = servicesSSHForm(request.POST)
+        if rsync_form.is_valid() and unison_form.is_valid() and iscsi_form.is_valid() and dynamicdns_form.is_valid() and snmp_form.is_valid() and ups_form.is_valid() and webserver_form.is_valid() and bittorrent_form.is_valid() and ftp_form.is_valid() and tftp_form.is_valid() and ssh_form.is_valid():
+            rsync_form.save()
+            unison_form.save()
+            iscsi_form.save()
+            dynamicdns_form.save()
+            snmp_form.save()
+            ups_form.save()
+            webserver_form.save()
+            bittorrent_form.save()
+            ftp_form.save()
+            tftp_form.save()
+            ssh_form.save()
+            return HttpResponseRedirect('/freenas/services/')
     else:
-        form = shareCIFSForm()
+        rsync_form = servicesRSYNCForm()
+        unison_form = servicesUnisonForm()
+        iscsi_form = servicesiSCSITargetForm()
+        dynamicdns_form = servicesDynamicDNSForm()
+        snmp_form = servicesSNMPForm()
+        ups_form = servicesUPSForm()
+        webserver_form = servicesWebserverForm()
+        bittorrent_form = servicesBitTorrentForm()
+        ftp_form = servicesFTPForm()
+        tftp_form = servicesTFTPForm()
+        ssh_form = servicesSSHForm()
     variables = RequestContext(request, {
-        'form': form
+        'rsync_form': rsync_form,
+        'unison_form': unison_form,
+        'iscsi_form': iscsi_form,
+        'dynamicdns_form': dynamicdns_form,
+        'snmp_form': snmp_form,
+        'ups_form': ups_form,
+        'webserver_form': webserver_form,
+        'bittorrent_form': bittorrent_form,
+        'ftp_form': ftp_form,
+        'tftp_form': tftp_form,
+        'ssh_form': ssh_form,
     })
-    return render_to_response('freenas/services/cifs_shares_add.html', variables)
-
-@login_required
-def servicesCIFSshareView(request):
-    if request.method == 'POST':
-        form = servicesCIFSshareForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = servicesCIFSshareForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/cifs_shares.html', variables)
-
-@login_required
-def servicesFTPView(request):
-    return helperView(request, servicesFTPForm, servicesFTP, 'freenas/services/ftp.html')
-
-@login_required
-def servicesTFTPView(request):
-    return helperView(request, servicesTFTPForm, servicesTFTP, 'freenas/services/tftp.html')
-
-@login_required
-def servicesSSHView(request):
-    return helperView(request, servicesSSHForm, servicesSSH, 'freenas/services/ssh.html')
-
-@login_required
-def servicesNFSView(request):
-    return helperView(request, servicesNFSForm, servicesNFS, 'freenas/services/nfs.html')
-
-@login_required
-def shareNFSView(request):
-    if request.method == 'POST':
-        form = shareNFSForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = shareNFSForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/nfs_add_share.html', variables)
-
-@login_required
-def servicesNFSshareView(request):
-    if request.method == 'POST':
-        form = servicesNFSshareForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = servicesNFSshareForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/nfs_shares.html', variables)
-
-@login_required
-def servicesAFPView(request):
-    return helperView(request, servicesAFPForm, servicesAFP, 'freenas/services/afp.html')
-
-@login_required
-def shareAFPView(request):
-    if request.method == 'POST':
-        form = shareAFPForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = shareAFPForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/afp_add_share.html', variables)
-
-@login_required
-def servicesAFPshareView(request):
-    if request.method == 'POST':
-        form = servicesAFPshareForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = servicesAFPshareForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/afp_shares.html', variables)
+    return render_to_response('freenas/services/index.html', variables)
 
 @login_required
 def clientrsyncjobView(request):
@@ -562,47 +567,6 @@ def localrsyncjobView(request):
         'form': form
     })
     return render_to_response('freenas/services/rsync_localjob.html', variables)
-
-@login_required
-def servicesRSYNCView(request):
-    if request.method == 'POST':
-        form = servicesRSYNCForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = servicesRSYNCForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/services/rsync.html', variables)
-
-@login_required
-def servicesUnisonView(request):
-    return helperView(request, servicesUnisonForm, servicesUnison, 'freenas/services/unison.html')
-
-@login_required
-def servicesiSCSITargetView(request):
-    return helperView(request, servicesiSCSITargetForm, servicesiSCSITarget, 'freenas/services/iscsi_target.html')
-
-@login_required
-def servicesDynamicDNSView(request):
-    return helperView(request, servicesDynamicDNSForm, servicesDynamicDNS, 'freenas/services/dyndns.html')
-
-@login_required
-def servicesSNMPView(request):
-    return helperView(request, servicesSNMPForm, servicesSNMP, 'freenas/services/snmp.html')
-
-@login_required
-def servicesUPSView(request):
-    return helperView(request, servicesUPSForm, servicesUPS, 'freenas/services/ups.html')
-
-@login_required
-def servicesWebserverView(request):
-    return helperView(request, servicesWebserverForm, servicesWebserver, 'freenas/services/webserver.html')
-
-@login_required
-def servicesBitTorrentView(request):
-    return helperView(request, servicesBitTorrentForm, servicesBitTorrent, 'freenas/services/bittorrent.html')
 
 @login_required
 def accessActiveDirectoryView(request):
