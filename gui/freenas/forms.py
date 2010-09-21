@@ -118,9 +118,11 @@ class networkLAGGForm(ModelForm):
 class networkInterfaceMGMTlaggForm(ModelForm):
     class Meta:
         model = networkInterfaceMGMTlagg
+        """
 class networkHostsForm(ModelForm):
     class Meta:
         model = networkHosts
+        """
 class networkStaticRouteForm(ModelForm):
     class Meta:
         model = networkStaticRoute

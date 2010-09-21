@@ -490,31 +490,61 @@ def SharesView(request):
 
 @login_required
 def ServicesView(request):
+    rsync_form = servicesRSYNCForm(request.POST)
+    unison_form = servicesUnisonForm(request.POST)
+    iscsi_form = servicesiSCSITargetForm(request.POST)
+    dynamicdns_form = servicesDynamicDNSForm(request.POST)
+    snmp_form = servicesSNMPForm(request.POST)
+    ups_form = servicesUPSForm(request.POST)
+    webserver_form = servicesWebserverForm(request.POST)
+    bittorrent_form = servicesBitTorrentForm(request.POST)
+    ftp_form = servicesFTPForm(request.POST)
+    tftp_form = servicesTFTPForm(request.POST)
+    ssh_form = servicesSSHForm(request.POST)
     if request.method == 'POST':
-        rsync_form = servicesRSYNCForm(request.POST)
-        unison_form = servicesUnisonForm(request.POST)
-        iscsi_form = servicesiSCSITargetForm(request.POST)
-        dynamicdns_form = servicesDynamicDNSForm(request.POST)
-        snmp_form = servicesSNMPForm(request.POST)
-        ups_form = servicesUPSForm(request.POST)
-        webserver_form = servicesWebserverForm(request.POST)
-        bittorrent_form = servicesBitTorrentForm(request.POST)
-        ftp_form = servicesFTPForm(request.POST)
-        tftp_form = servicesTFTPForm(request.POST)
-        ssh_form = servicesSSHForm(request.POST)
-        if rsync_form.is_valid() and unison_form.is_valid() and iscsi_form.is_valid() and dynamicdns_form.is_valid() and snmp_form.is_valid() and ups_form.is_valid() and webserver_form.is_valid() and bittorrent_form.is_valid() and ftp_form.is_valid() and tftp_form.is_valid() and ssh_form.is_valid():
+        if rsync_form.is_valid():
             rsync_form.save()
+        return HttpResponseRedirect('/freenas/services/')
+    if request.method == 'POST':
+        if unison_form.is_valid():
             unison_form.save()
+        return HttpResponseRedirect('/freenas/services/')
+    if request.method == 'POST':
+        if iscsi_form.is_valid():
             iscsi_form.save()
+        return HttpResponseRedirect('/freenas/services/')
+    if request.method == 'POST':
+        if dynamicdns_form.is_valid(): 
             dynamicdns_form.save()
+        return HttpResponseRedirect('/freenas/services/')
+    if request.method == 'POST':
+        if snmp_form.is_valid():
             snmp_form.save()
+        return HttpResponseRedirect('/freenas/services/')
+    if request.method == 'POST':
+        if ups_form.is_valid():
             ups_form.save()
+        return HttpResponseRedirect('/freenas/services/')
+    if request.method == 'POST':
+        if webserver_form.is_valid(): 
             webserver_form.save()
+        return HttpResponseRedirect('/freenas/services/')
+    if request.method == 'POST':
+        if bittorrent_form.is_valid(): 
             bittorrent_form.save()
+        return HttpResponseRedirect('/freenas/services/')
+    if request.method == 'POST':
+        if ftp_form.is_valid():
             ftp_form.save()
+        return HttpResponseRedirect('/freenas/services/')
+    if request.method == 'POST':
+        if tftp_form.is_valid():
             tftp_form.save()
+        return HttpResponseRedirect('/freenas/services/')
+    if request.method == 'POST':
+        if ssh_form.is_valid():
             ssh_form.save()
-            return HttpResponseRedirect('/freenas/services/')
+        return HttpResponseRedirect('/freenas/services/')
     else:
         rsync_form = servicesRSYNCForm()
         unison_form = servicesUnisonForm()
