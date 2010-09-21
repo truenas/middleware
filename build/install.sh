@@ -28,7 +28,7 @@ get_product_path()
 {
 	local _path
 
-	_path="/home/jpaetzel/images"
+	_path=""
 	VAL="${_path}"
 
 	export VAL
@@ -72,13 +72,10 @@ build_config()
 installMode=fresh
 installInteractive=no
 installType=FreeBSD
-installMedium=dvd
+installMedium=image
 packageType=tar
 
 disk0=${_disk}
-partition=image
-image=/cdrom/${_image}
-rootimage=1
 bootManager=bsd
 commitDiskPart
 EOF
@@ -260,7 +257,8 @@ EOD
                      ${_image} ${_config_file}
 
         # Run pc-sysinstall against the config generated
-        pc-sysinstall -c ${_config_file}
+        ls /cdrom > /dev/null
+        /rescue/pc-sysinstall -c ${_config_file}
 
 	cat << EOD > "${_tmpfile}"
 

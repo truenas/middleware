@@ -12,7 +12,7 @@ main()
         exit
     fi
 
-    IMGFILE="/home/jpaetzel/FreeNAS-8r561-amd64.full" # The FreeNAS image
+    IMGFILE="/home/jpaetzel/FreeNAS-8r561-amd64.full.gz" # The FreeNAS image
     BOOTFILE="/home/jpaetzel/josh.img" # The image used to make the CD
     BOOTFILE_MD=`md5 ${BOOTFILE} | awk '{print $4}'`
     STAGEDIR="/tmp/stage" # Scratch location for making filesystem image
@@ -31,7 +31,7 @@ main()
     mkdir -p ${STAGEDIR}/dev
     mkdir -p ${ISODIR}/data
 
-    # Do this early because we are going to be molesting the image.
+    # Do this early because we are going to be mangling the image.
     # Please beware that interrupting this command with ctrl-c will
     # cause cleanup() to run, which attempts to restore the original
     # image.  If this copy isn't completed bad things can happen.  Moral
@@ -41,37 +41,45 @@ main()
 
     # move /boot from the image to the iso
     md=`mdconfig -a -t vnode -f ${BOOTFILE}`
+    mount /dev/${md} ${MNTPOINT}
 
-    # s1a is hard coded here and dependant on the image.
-    mount /dev/${md}s1a ${MNTPOINT}
-
+    # This is very byzantine, as we are moving the rescue we want into
+    # the boot image, only to copy it to the CD.
+    # TODO The image doesn't need /boot
     mkdir ${STAGEDIR}/rescue
     (cd /mnt/rescue && tar cf - . ) | (cd ${STAGEDIR}/rescue && tar xf - )
     cp -R ${MNTPOINT}/boot ${ISODIR}/
-    cp ${IMGFILE} ${ISODIR}/
-    echo "#/dev/md0 / ufs ro 0 0" > ${MNTPOINT}/etc/fstab
-    echo 'root_rw_mount="NO"' >> ${MNTPOINT}/etc/rc.conf
-    sed -i "" -e 's/^\(sshd.*\)".*"/\1"NO"/' ${MNTPOINT}/etc/rc.conf
-    sed -i "" -e 's/^\(light.*\)".*"/\1"NO"/' ${MNTPOINT}/etc/rc.conf
-    echo 'cron_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
-    echo 'syslogd_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
-    echo 'inetd_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
-    echo 'newsyslog_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
-    rm ${MNTPOINT}/etc/rc.conf.local
-    rm ${MNTPOINT}/etc/rc.d/ix-*
-    rm ${MNTPOINT}/etc/rc.d/motd
-    rm ${MNTPOINT}/etc/rc.d/ip6addrctl
-    rm ${MNTPOINT}/etc/rc.initdiskless
-    rm -rf ${MNTPOINT}/usr/bin ${MNTPOINT}/usr/sbin ${MNTPOINT}/usr/local/lib*
-    rm -rf ${MNTPOINT}/usr/local/bin ${MNTPOINT}/usr/local/etc
-    ln -s /rescue ${MNTPOINT}/usr/bin
-    ln -s /rescue ${MNTPOINT}/usr/sbin
-    cp ${RC_FILE} ${MNTPOINT}/etc/
-    cp ${INSTALL_SH} ${MNTPOINT}/etc/
-    chmod 755 /mnt/etc/install.sh
-    chown root:wheel ${MNTPOINT}/etc/install.sh
+    cp ${IMGFILE} ${ISODIR}/FreeNAS-amd64-embedded.gz
+
+    # In order for any of this to make any difference to the image file
+    # it needs to be dump/restored
+    #echo "#/dev/md0 / ufs ro 0 0" > ${MNTPOINT}/etc/fstab
+    #echo 'root_rw_mount="NO"' >> ${MNTPOINT}/etc/rc.conf
+    #sed -i "" -e 's/^\(sshd.*\)".*"/\1"NO"/' ${MNTPOINT}/etc/rc.conf
+    #sed -i "" -e 's/^\(light.*\)".*"/\1"NO"/' ${MNTPOINT}/etc/rc.conf
+    #echo 'cron_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
+    #echo 'syslogd_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
+    #echo 'inetd_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
+    #echo 'devd_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
+    #echo 'newsyslog_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
     # Had to hack pc-sysinstall to install to /rescue, troubleshoot why
-    (cd /home/jpaetzel/pc-sysinstall && make install DESTDIR=${MNTPOINT})
+    #(cd /home/jpaetzel/pc-sysinstall && make install DESTDIR=${MNTPOINT})
+    #rm ${MNTPOINT}/etc/rc.conf.local
+    #rm ${MNTPOINT}/etc/rc.d/ix-*
+    #rm ${MNTPOINT}/etc/rc.d/motd
+    #rm ${MNTPOINT}/etc/rc.d/ip6addrctl
+    #rm ${MNTPOINT}/etc/rc.initdiskless
+    #rm -rf ${MNTPOINT}/bin ${MNTPOINT}/sbin ${MNTPOINT}/usr/local/lib*
+    #rm -rf ${MNTPOINT}/usr/bin ${MNTPOINT}/usr/sbin ${MNTPOINT}/usr/local/lib*
+    #rm -rf ${MNTPOINT}/usr/local/bin ${MNTPOINT}/usr/local/etc
+    #ln -s /rescue ${MNTPOINT}/usr/bin
+    #ln -s /rescue ${MNTPOINT}/usr/sbin
+    #ln -s /rescue ${MNTPOINT}/bin
+    #ln -s /rescue ${MNTPOINT}/sbin
+    #cp ${RC_FILE} ${MNTPOINT}/etc/
+    #cp ${INSTALL_SH} ${MNTPOINT}/etc/
+    #chmod 755 /mnt/etc/install.sh
+    #chown root:wheel ${MNTPOINT}/etc/install.sh
     unmount
 
     # Compress what's left of the image after mangling it
@@ -100,7 +108,7 @@ mount -t cd9660 /dev/acd0 ${CDROM_MP}
 
 # Mount future live root
 mdconfig -a -t vnode -f ${CDROM_MP}${BASEROOT_IMG} -u 9
-mount -r /dev/md9.uzips1a ${BASEROOT_MP}
+mount -r /dev/md9.uzip ${BASEROOT_MP}
 
 # Create in-memory filesystem
 mdconfig -a -t swap -s 64m -u 10
