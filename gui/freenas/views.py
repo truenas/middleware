@@ -69,9 +69,12 @@ def index(request):
     uptime = commands.getoutput("uptime | awk -F', load averages:' '{ print $1 }'")
     loadavg = commands.getoutput("uptime | awk -F'load averages:' '{ print $2 }'")
     top = os.popen('top').read()
-    d = open('/etc/version.freenas', 'r')
-    freenas_build = d.read()
-    d.close()
+    try:
+        d = open('/etc/version.freenas', 'r')
+        freenas_build = d.read()
+        d.close()
+    except:
+        freenas_build = "Unrecognized build (/etc/version.freenas missing?)"
     variables = RequestContext(request, {
         'hostname': hostname,
         'uname1': uname1,
