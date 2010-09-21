@@ -3,7 +3,7 @@
 {% block content %}
 {% if user.is_authenticated %}
 <form action="." method="post">{% csrf_token %}
-<div dojoType="dijit.layout.TabContainer" style="width:100%;height:380px;">
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="False">
         <div dojoType="dijit.layout.ContentPane" title="Active Shares">
     <table>
         <tr>
@@ -31,12 +31,8 @@
             </td>
         </tr>
     </table>
-
-
         </div>
         <div dojoType="dijit.layout.ContentPane" title="Windows">
-            <div dojoType="dijit.layout.TabContainer" style="height:300px;" nested="true">
-                <div dojoType="dijit.layout.ContentPane" title="Settings">
                     <table>
                         <tr>
                             <td style="padding-right:25px;">
@@ -62,11 +58,6 @@
                             {{ cifs_form.cifs_description }}
                         </td>
                     </tr>
-                </table>
-                </div>
-               
-                <div dojoType="dijit.layout.ContentPane" title="Advanced">
-                <table>
                 <tr>
                     <td style="padding-right:25px;">
                         <strong>DOS Charset:</strong>
@@ -196,13 +187,9 @@
                     </td>
                 </tr>
             </table>
-            </div>
-        </div>
     </div>
         
         <div dojoType="dijit.layout.ContentPane" title="Apple">
-            <div dojoType="dijit.layout.TabContainer" style="height:300px;" nested="true">
-                <div dojoType="dijit.layout.ContentPane" title="Settings">
             <table>
                 <tr>
                     <td style="padding-right:25px;">
@@ -213,16 +200,9 @@
                     </td>
                 </tr>
             </table>
-
-                </div>
-                <div dojoType="dijit.layout.ContentPane" title="Advanced">
-                </div>
-            </div>
         </div>
         
         <div dojoType="dijit.layout.ContentPane" title="UNIX">
-            <div dojoType="dijit.layout.TabContainer" style="height:300px;" nested="true">
-                <div dojoType="dijit.layout.ContentPane" title="Settings">
      <table>
                 <tr>
                     <td style="padding-right:25px;">
@@ -233,9 +213,6 @@
                     </td>
                 </tr>
             </table>
-
-                </div>
-            </div>
         </div>
 
 <br />
