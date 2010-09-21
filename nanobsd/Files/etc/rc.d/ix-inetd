@@ -12,13 +12,13 @@
 generate_tftp()
 {
 	local IFS=\|
-	local f="toggleTFTP directory newfiles tftp_port username umask options"
-	local toggleTFTP directory newfiles tftp_port username umask options
+	local f="toggleTFTP directory newfiles tftp_port tftp_username tftp_umask tftp_options"
+	local toggleTFTP directory newfiles tftp_port tftp_username tftp_umask tftp_options
 	local cmd sf
 	sf=$(echo $f | sed -e 's/ /, /g')
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	    "SELECT $sf FROM freenas_servicestftp ORDER BY -id LIMIT 1" | \
-    while read toggleTFTP directory newfiles tftp_port username umask options; do
+    while read toggleTFTP directory newfiles tftp_port tftp_username tftp_umask tftp_options; do
 	if [ $toggleTFTP = 1 ]; then
 	    if [ $tftp_port = "69" ]; then
 		service="tftp"
@@ -26,7 +26,7 @@ generate_tftp()
 		service="freenas-tftp"
 		echo "freenas-tftp $tftp_port/udp" >> /tmp/services.extra
 	    fi
-	    cmd="tftpd -l -s $directory -u $username -U $umask $options"
+	    cmd="tftpd -l -s $directory -u $tftp_username -U $tftp_umask $tftp_options"
 	    if [ $newfiles = 1 ]; then
 		cmd="$cmd -w"
 	    fi

@@ -13,9 +13,9 @@ generate_smbconf()
 {
 	local IFS=\|
 
-	local netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest filemask dirmask sendbuffer recbuffer largerw sendfile easupport dosattr nullpw auxsmbconf
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT netbiosname, workgroup, cifs_description, doscharset, unixcharset, loglevel, localmaster, timeserver, guest, filemask, dirmask, sendbuffer, recbuffer, largerw, sendfile, easupport, dosattr, nullpw, auxsmbconf FROM freenas_servicescifs ORDER BY id DESC LIMIT 1" | \
-	while read netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest filemask dirmask sendbuffer recbuffer largerw sendfile easupport dosattr nullpw auxsmbconf; do
+	local netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest cifs_filemask cifs_dirmask sendbuffer recbuffer largerw sendfile easupport dosattr nullpw smb_options
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT netbiosname, workgroup, cifs_description, doscharset, unixcharset, loglevel, localmaster, timeserver, guest, cifs_filemask, cifs_dirmask, sendbuffer, recbuffer, largerw, sendfile, easupport, dosattr, nullpw, smb_options FROM freenas_servicescifs ORDER BY id DESC LIMIT 1" | \
+	while read netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest cifs_filemask cifs_dirmask sendbuffer recbuffer largerw sendfile easupport dosattr nullpw smb_options; do
 		echo '
 [global]
 encrypt passwords = yes
@@ -74,15 +74,15 @@ getwd cache = yes'
 		echo "force user = ${guest}"
 		echo "force group = ${guest}"
 		echo "passdb backend = smbpasswd"
-		if [ -z "${filemask}" ]; then
-			filemask=0666
+		if [ -z "${cifs_filemask}" ]; then
+			cifs_filemask=0666
 		fi
-		echo "create mask = ${filemask}"
-		if [ -z "${dirmask}" ]; then
-			dirmask=0777
+		echo "create mask = ${cifs_filemask}"
+		if [ -z "${cifs_dirmask}" ]; then
+			cifs_dirmask=0777
 		fi
-		echo "create mask = ${filemask}"
-		echo "directory mask = ${dirmask}"
+		echo "create mask = ${cifs_filemask}"
+		echo "directory mask = ${cifs_dirmask}"
 
 		if [ -n "${doscharset}" ]; then
 			echo "dos charset = ${doscharset}"
@@ -103,8 +103,8 @@ getwd cache = yes'
 			fi
 			echo
 		fi
-		if [ -n "${auxsmbconf}" ]; then
-			echo ${auxsmbconf}
+		if [ -n "${smb_options}" ]; then
+			echo ${smb_options}
 		fi
 	done
 	echo
@@ -114,9 +114,9 @@ generate_exports()
 {
 	local IFS=\|
 
-	local name comment path ro browseable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny auxsmbconf
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT name, comment, path, ro, browseable, inheritperms, recyclebin, showhiddenfiles, hostsallow, hostsdeny, auxsmbconf FROM freenas_windowsshare ORDER BY id ASC" | \
-	while read name comment path ro browseable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny auxsmbconf; do
+	local name comment path ro browseable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny smb_options
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT name, comment, path, ro, browseable, inheritperms, recyclebin, showhiddenfiles, hostsallow, hostsdeny, smb_options FROM freenas_windowsshare ORDER BY id ASC" | \
+	while read name comment path ro browseable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny smb_options; do
 		echo "[${name}]"
 		echo "path = /mnt/${path}"
 		echo "printable = no"
