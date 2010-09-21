@@ -16,7 +16,7 @@ generate_fstab_real()
 	local IFS=\|
 
 	local volumename mountpoint
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT name, mountpoint FROM freenas_volume WHERE type = 'ufs'" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT v.name, mp.mountpoint FROM freenas_volume AS v LEFT OUTER JOIN freenas_mountpoint AS mp ON v.id = mp.volumeid_id WHERE v.type = 'ufs'" | \
 	while read volumename mountpoint; do
 		mkdir -p /mnt/${mountpoint}
 		echo "/dev/ufs/${volumename}		/mnt/${mountpoint}			ufs		rw,late	2	2"

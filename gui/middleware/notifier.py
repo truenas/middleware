@@ -163,7 +163,7 @@ class notifier:
                 conn = sqlite3.connect(dbname)
                 c = conn.cursor()
                 # Create ZFS pools
-                c.execute("SELECT id, name, mountpoint FROM freenas_volume WHERE type = 'zfs'")
+                c.execute("SELECT v.id, v.name, mp.mountpoint FROM freenas_volume as v LEFT OUTER JOIN freenas_mountpoint AS mp ON v.id = mp.volumeid_id WHERE v.type = 'zfs'")
                 zfs_list = c.fetchall()
 		if len(zfs_list) > 0:
 			# We have to be able to write /boot/zfs and / to create mount points.
@@ -189,7 +189,7 @@ class notifier:
 				self.__system("zpool create -m /mnt/%s %s %s" % (z_mountpoint, z_name, z_vdev))
 			self.__system("/sbin/mount -ur /")
                 # Create UFS file system and newfs
-                c.execute("SELECT id, name, mountpoint FROM freenas_volume WHERE type = 'ufs'")
+                c.execute("SELECT v.id, v.name, mp.mountpoint FROM freenas_volume as v LEFT OUTER JOIN freenas_mountpoint AS mp ON v.id = mp.volumeid_id WHERE v.type = 'ufs'")
 	        ufs_list = c.fetchall()
 		if len(ufs_list) > 0:
 			for row in ufs_list:
