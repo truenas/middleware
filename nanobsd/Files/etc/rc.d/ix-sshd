@@ -33,22 +33,22 @@ EOF
 	    if [ $tcpport -gt 0 ]; then
 		echo "Port $tcpport" >> $cfg
 	    fi
-	    if [ $rootlogin = ON ]; then
+	    if [ $rootlogin = 1 ]; then
 		echo "PermitRootLogin yes" >> $cfg
 	    fi
-	    if [ $tcpfwd = ON ]; then
+	    if [ $tcpfwd = 1 ]; then
 		echo "AllowTcpForwarding yes" >> $cfg
 	    else
 		echo "AllowTcpForwarding no" >> $cfg
 	    fi
-	    if [ $compression = ON ]; then
+	    if [ $compression = 1 ]; then
 		echo "Compression yes" >> $cfg
 	    fi
-	    if [ $passwordauth = ON ]; then
+	    if [ $passwordauth = 1 ]; then
 		echo "PasswordAuthentication yes" >> $cfg
 	    fi
-	    pubkeyauth=ON		# Missing in schema
-	    if [ $pubkeyauth = ON ]; then
+	    pubkeyauth=1		# Missing in schema
+	    if [ $pubkeyauth = 1 ]; then
 		echo "PubkeyAuthentication yes" >> $cfg
 	    fi
 	    if [ -n "$options" ]; then

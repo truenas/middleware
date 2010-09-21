@@ -18,7 +18,7 @@ generate_exports()
 	local IFS=\|
 
 	local path allroot network alldirs readonly quiet
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT path, allroot, network, alldirs, readonly, quiet FROM freenas_sharenfs ORDER BY id DESC" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT path, allroot, network, alldirs, readonly, quiet FROM freenas_unixshare ORDER BY id DESC" | \
 	while read path allroot network alldirs readonly quiet; do
 		echo -n /mnt/${path}
 		if [ -n "${alldirs}" ]; then
@@ -32,7 +32,7 @@ generate_exports()
 		fi
 		# Current schema can only do ON and OFF.
 		# TODO: Support maproot=uid:gid when schema change is ready.
-		if [ "${allroot}" = "ON" ]; then
+		if [ "${allroot}" = "1" ]; then
 			echo -n " -maproot=0"
 		fi
 		if [ -n "${network}" ]; then

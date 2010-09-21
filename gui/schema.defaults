@@ -1,18 +1,18 @@
 # AFP share
-freenas_servicesafp.toggleAFP=OFF
+freenas_servicesafp.toggleAFP=0
 #really hostname
 freenas_servicesafp.name=freenas
-freenas_servicesafp.guest=OFF
-freenas_servicesafp.local=ON
-freenas_servicesafp.ddp=OFF
+freenas_servicesafp.guest=0
+freenas_servicesafp.local=1
+freenas_servicesafp.ddp=0
 # Bittorrent
-freenas_servicesbittorrent.toggleBitTorrent=OFF
+freenas_servicesbittorrent.toggleBitTorrent=0
 freenas_servicesbittorrent.peerport=51413
 freenas_servicesbittorrent.downloaddir=
 freenas_servicesbittorrent.configdir=
-freenas_servicesbittorrent.portfwd=ON
-freenas_servicesbittorrent.pex=ON
-freenas_servicesbittorrent.disthash=ON
+freenas_servicesbittorrent.portfwd=1
+freenas_servicesbittorrent.pex=1
+freenas_servicesbittorrent.disthash=1
 freenas_servicesbittorrent.encrypt=preferred
 freenas_servicesbittorrent.uploadbw=
 freenas_servicesbittorrent.downloadbw=
@@ -21,11 +21,11 @@ freenas_servicesbittorrent.incompletedir=
 freenas_servicesbittorrent.bt_umask=0002
 freenas_servicesbittorrent.bt_options=
 freenas_servicesbittorrent.adminport=9091
-freenas_servicesbittorrent.adminauth=ON
+freenas_servicesbittorrent.adminauth=1
 freenas_servicesbittorrent.adminuser=admin
 freenas_servicesbittorrent.adminpass=freenas
 # CIFS Share
-freenas_servicescifs.togglecifs=OFF
+freenas_servicescifs.togglecifs=0
 # really hostname
 freenas_servicescifs.netbiosname=freenas
 freenas_servicescifs.workgroup=FREENAS
@@ -33,46 +33,46 @@ freenas_servicescifs.cifs_description=FreeNAS Server
 freenas_servicescifs.doscharset=CP437
 freenas_servicescifs.unixcharset=UTF-8
 freenas_servicescifs.loglevel=1
-freenas_servicescifs.localmaster=ON
-freenas_servicescifs.timeserver=ON
+freenas_servicescifs.localmaster=1
+freenas_servicescifs.timeserver=1
 freenas_servicescifs.guest=www
 freenas_servicescifs.cifs_filemask=
 freenas_servicescifs.cifs_dirmask=
 freenas_servicescifs.sendbuffer=64240
 freenas_servicescifs.recbuffer=64240
-freenas_servicescifs.largerw=OFF
-freenas_servicescifs.sendfile=ON
-freenas_servicescifs.easupport=OFF
-freenas_servicescifs.dosattr=ON
-freenas_servicescifs.nullpw=OFF
+freenas_servicescifs.largerw=0
+freenas_servicescifs.sendfile=1
+freenas_servicescifs.easupport=0
+freenas_servicescifs.dosattr=1
+freenas_servicescifs.nullpw=0
 freenas_servicescifs.smb_options=
 # Dynamic DNS
-freenas_servicesdynamicdns.toggleDynamicDNS=OFF
+freenas_servicesdynamicdns.toggleDynamicDNS=0
 freenas_servicesdynamicdns.provider=dyndns
 freenas_servicesdynamicdns.domain=
 freenas_servicesdynamicdns.dyndns_username=admin
 freenas_servicesdynamicdns.password=freenas
 freenas_servicesdynamicdns.updateperiod=
 freenas_servicesdynamicdns.fupdateperiod=
-freenas_servicesdynamicdns.wildcard=OFF
+freenas_servicesdynamicdns.wildcard=0
 freenas_servicesdynamicdns.dyndns_options=
 # FTP defaults
-freenas_servicesftp.toggleFTP=OFF
+freenas_servicesftp.toggleFTP=0
 freenas_servicesftp.clients=5
 freenas_servicesftp.ipconnections=2
 freenas_servicesftp.loginattempt=1
 freenas_servicesftp.timeout=600
-freenas_servicesftp.ftp_rootlogin=OFF
-freenas_servicesftp.onlyanonymous=OFF
-freenas_servicesftp.onlylocal=OFF
+freenas_servicesftp.ftp_rootlogin=0
+freenas_servicesftp.onlyanonymous=0
+freenas_servicesftp.onlylocal=0
 freenas_servicesftp.banner=
 freenas_servicesftp.ftp_filemask=077
 freenas_servicesftp.ftp_dirmask=022
-freenas_servicesftp.fxp=OFF
-freenas_servicesftp.resume=OFF
-freenas_servicesftp.defaultroot=ON
-freenas_servicesftp.ident=OFF
-freenas_servicesftp.reversedns=OFF
+freenas_servicesftp.fxp=0
+freenas_servicesftp.resume=0
+freenas_servicesftp.defaultroot=1
+freenas_servicesftp.ident=0
+freenas_servicesftp.reversedns=0
 freenas_servicesftp.masqaddress=
 freenas_servicesftp.passiveportsmin=0
 freenas_servicesftp.passiveportsmax=0
@@ -80,10 +80,10 @@ freenas_servicesftp.localuserbw=
 freenas_servicesftp.localuserdlbw=
 freenas_servicesftp.anonuserbw=
 freenas_servicesftp.anonuserdlbw=
-freenas_servicesftp.ssltls=OFF
+freenas_servicesftp.ssltls=0
 freenas_servicesftp.ftp_options=
 # iSCSI target defaults
-freenas_servicesiscsitarget.toggleiSCSITarget=OFF
+freenas_servicesiscsitarget.toggleiSCSITarget=0
 freenas_servicesiscsitarget.basename=iqn.2007-09.jp.ne.peach.istgt
 freenas_servicesiscsitarget.discoveryauthmethod=auto
 freenas_servicesiscsitarget.discoveryauthgroup=none
@@ -94,53 +94,53 @@ freenas_servicesiscsitarget.maxconnect=8
 freenas_servicesiscsitarget.firstburst=65536
 freenas_servicesiscsitarget.maxburst=262144
 freenas_servicesiscsitarget.maxrecdata=262144
-freenas_servicesiscsitarget.toggleluc=OFF
+freenas_servicesiscsitarget.toggleluc=0
 # iTunes
-freenas_servicesitunes.toggleiTunes=OFF
+freenas_servicesitunes.toggleiTunes=0
 freenas_servicesitunes.port=3689
 freenas_servicesitunes.databasedir=
 freenas_servicesitunes.rescaninterval=3600
-freenas_servicesitunes.alwaysscan=OFF
+freenas_servicesitunes.alwaysscan=0
 freenas_servicesitunes.scantype=Normal
 freenas_servicesitunes.password=freenas
 # NFS defaults
-freenas_servicesnfs.toggleNFS=OFF
+freenas_servicesnfs.toggleNFS=0
 freenas_servicesnfs.servers=4
 # Rsync -- not sure what to do here
 # SNMP
-freenas_servicessnmp.toggleSNMP=OFF
+freenas_servicessnmp.toggleSNMP=0
 freenas_servicessnmp.location=
 freenas_servicessnmp.contact=
 freenas_servicessnmp.community=public
-freenas_servicessnmp.traps=OFF
+freenas_servicessnmp.traps=0
 freenas_servicessnmp.snmp_options=
-#freenas_servicessnmp.modmibii=ON
-#freenas_servicessnmp.modnetgraph=OFF
-#freenas_servicessnmp.modhostres=OFF
-#freenas_servicessnmp.moducd=OFF
+#freenas_servicessnmp.modmibii=1
+#freenas_servicessnmp.modnetgraph=0
+#freenas_servicessnmp.modhostres=0
+#freenas_servicessnmp.moducd=0
 # SSH defaults
-freenas_servicesssh.toggleSSH=ON
+freenas_servicesssh.toggleSSH=1
 freenas_servicesssh.tcpport=22
-freenas_servicesssh.ssh_rootlogin=OFF
-freenas_servicesssh.passwordauth=ON
-freenas_servicesssh.tcpfwd=OFF
-freenas_servicesssh.compression=OFF
+freenas_servicesssh.ssh_rootlogin=0
+freenas_servicesssh.passwordauth=1
+freenas_servicesssh.tcpfwd=0
+freenas_servicesssh.compression=0
 freenas_servicesssh.privatekey=
 freenas_servicesssh.ssh_options=
 # TFTP defaults
-freenas_servicestftp.toggleTFTP=OFF
+freenas_servicestftp.toggleTFTP=0
 freenas_servicestftp.directory=/tftproot
-freenas_servicestftp.newfiles=OFF
+freenas_servicestftp.newfiles=0
 freenas_servicestftp.tftp_port=69
 freenas_servicestftp.tftp_username=nobody
 freenas_servicestftp.tftp_umask=022
 freenas_servicestftp.tftp_options=
 # Unison
-freenas_servicesunison.toggleUnison=OFF
+freenas_servicesunison.toggleUnison=0
 freenas_servicesunison.workingdir=
-freenas_servicesunison.createworkingdir=ON
+freenas_servicesunison.createworkingdir=1
 # UPnP
-freenas_servicesupnp.toggleUPnP=OFF
+freenas_servicesupnp.toggleUPnP=0
 #Really hostname
 freenas_servicesupnp.name=freenas
 # select interface?
@@ -148,10 +148,10 @@ freenas_servicesupnp.interface=em0
 freenas_servicesupnp.port=49152
 freenas_servicesupnp.databasedir=
 freenas_servicesupnp.profile=Default
-freenas_servicesupnp.transcoding=OFF
-freenas_servicesupnp.webgui=OFF
+freenas_servicesupnp.transcoding=0
+freenas_servicesupnp.webgui=0
 # UPS
-freenas_servicesups.toggleUPS=OFF
+freenas_servicesups.toggleUPS=0
 freenas_servicesups.identifier=ups
 freenas_servicesups.driver=
 freenas_servicesups.ups_port=
@@ -159,17 +159,17 @@ freenas_servicesups.ups_options=
 freenas_servicesups.ups_description=
 freenas_servicesups.shutdown=batt
 freenas_servicesups.shutdowntimer=30
-freenas_servicesups.rmonitor=OFF
-freenas_servicesups.emailnotify=OFF
+freenas_servicesups.rmonitor=0
+freenas_servicesups.emailnotify=0
 freenas_servicesups.toemail=
 freenas_servicesups.subject="UPS report generated by %h"
 # Web server
-freenas_serviceswebserver.toggleWebserver=OFF
+freenas_serviceswebserver.toggleWebserver=0
 freenas_serviceswebserver.protocol=http
 freenas_serviceswebserver.webserver_port=80
 freenas_serviceswebserver.docroot=/usr/local/www
-freenas_serviceswebserver.auth=OFF
-freenas_serviceswebserver.dirlisting=OFF
+freenas_serviceswebserver.auth=0
+freenas_serviceswebserver.dirlisting=0
 # System General
 freenas_systemgeneralsetup.hostname=freenas
 freenas_systemgeneralsetup.domain=local
@@ -179,7 +179,7 @@ freenas_systemgeneralsetup.language=english
 freenas_systemgeneralsetup.timezone=america-los_angeles
 # Active Directory
 #XXX need real values
-freenas_accessactivedirectory.toggle=OFF
+freenas_accessactivedirectory.toggle=0
 freenas_accessactivedirectory.dcname=
 freenas_accessactivedirectory.dnsrealmname=
 freenas_accessactivedirectory.netbiosname=
@@ -187,10 +187,10 @@ freenas_accessactivedirectory.adminname=
 freenas_accessactivedirectory.adminpw=
 # LDAP
 #XXX need real values
-freenas_accessldap.toggle=OFF
+freenas_accessldap.toggle=0
 freenas_accessldap.hostname=
 freenas_accessldap.basedn=
-freenas_accessldap.anonbind=OFF
+freenas_accessldap.anonbind=0
 freenas_accessldap.rootbasedn=
 freenas_accessldap.rootbindpw=
 freenas_accessldap.pwencyption=clear
@@ -200,32 +200,32 @@ freenas_accessldap.paswordsuffix=
 freenas_accessldap.machinesuffix=
 freenas_accessldap.auxparams="ldap_version 3\ntimelimit 30\nbind_timelimit 30\nbind_policy soft\npam_ldap_attribute uid"
 # Advanced
-freenas_systemadvanced.consolemenu=ON
-freenas_systemadvanced.serialconsole=OFF
-freenas_systemadvanced.consolescreensaver=OFF
-freenas_systemadvanced.firmwarevc=ON
-freenas_systemadvanced.systembeep=ON
-freenas_systemadvanced.tuning=OFF
-freenas_systemadvanced.powerdaemon=OFF
-freenas_systemadvanced.zeroconfbonjour=ON
+freenas_systemadvanced.consolemenu=1
+freenas_systemadvanced.serialconsole=0
+freenas_systemadvanced.consolescreensaver=0
+freenas_systemadvanced.firmwarevc=1
+freenas_systemadvanced.systembeep=1
+freenas_systemadvanced.tuning=0
+freenas_systemadvanced.powerdaemon=0
+freenas_systemadvanced.zeroconfbonjour=1
 freenas_systemadvanced.motd="Welcome to FreeNAS"
 # Advanced email
 freenas_systemadvancedemail.fromemail=root@freenas.local
 freenas_systemadvancedemail.outgoingserver=
 freenas_systemadvancedemail.port=25
 freenas_systemadvancedemail.security=None
-freenas_systemadvancedemail.smtp=OFF
+freenas_systemadvancedemail.smtp=0
 # Advanced Proxy
-freenas_systemadvancedproxy.httpproxy=OFF
+freenas_systemadvancedproxy.httpproxy=0
 freenas_systemadvancedproxy.httpproxyaddress=proxy
 freenas_systemadvancedproxy.httpproxyport=8080
-freenas_systemadvancedproxy.httpproxyauth=OFF
-freenas_systemadvancedproxy.ftpproxy=OFF
+freenas_systemadvancedproxy.httpproxyauth=0
+freenas_systemadvancedproxy.ftpproxy=0
 freenas_systemadvancedproxy.ftpproxyaddress=proxy
 freenas_systemadvancedproxy.ftpproxyport=8080
-freenas_systemadvancedproxy.ftpproxyauth=OFF
+freenas_systemadvancedproxy.ftpproxyauth=0
 # Advanced Swap
-freenas_systemadvancedswap.swapmemory=OFF
+freenas_systemadvancedswap.swapmemory=0
 freenas_systemadvancedswap.swaptype=file
 freenas_systemadvancedswap.mountpoint=
 freenas_systemadvancedswap.swapsize=

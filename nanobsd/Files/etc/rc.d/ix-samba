@@ -13,9 +13,9 @@ generate_smbconf()
 {
 	local IFS=\|
 
-	local netbiosname workgroup description doscharset unixcharset loglevel localmaster timeserver guest filemask dirmask sendbuffer recbuffer largerw sendfile easupport dosattr nullpw auxsmbconf
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT netbiosname, workgroup, description, doscharset, unixcharset, loglevel, localmaster, timeserver, guest, filemask, dirmask, sendbuffer, recbuffer, largerw, sendfile, easupport, dosattr, nullpw, auxsmbconf FROM freenas_servicescifs ORDER BY id DESC LIMIT 1" | \
-	while read netbiosname workgroup description doscharset unixcharset loglevel localmaster timeserver guest filemask dirmask sendbuffer recbuffer largerw sendfile easupport dosattr nullpw auxsmbconf; do
+	local netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest filemask dirmask sendbuffer recbuffer largerw sendfile easupport dosattr nullpw auxsmbconf
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT netbiosname, workgroup, cifs_description, doscharset, unixcharset, loglevel, localmaster, timeserver, guest, filemask, dirmask, sendbuffer, recbuffer, largerw, sendfile, easupport, dosattr, nullpw, auxsmbconf FROM freenas_servicescifs ORDER BY id DESC LIMIT 1" | \
+	while read netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest filemask dirmask sendbuffer recbuffer largerw sendfile easupport dosattr nullpw auxsmbconf; do
 		echo '
 [global]
 encrypt passwords = yes
@@ -39,28 +39,28 @@ private dir = /var/etc/private
 getwd cache = yes'
 		echo "netbios name = ${netbiosname}"
 		echo "workgroup = ${workgroup}"
-		if [ -n "${description}" ]; then
-			echo "server string = ${description}"
+		if [ -n "${cifs_description}" ]; then
+			echo "server string = ${cifs_description}"
 		fi
-		if [ "${sendfile}" = "ON" ]; then
+		if [ "${sendfile}" = "1" ]; then
 			echo "use sendfile = yes"
 		fi
-		if [ "${largerw}" = "OFF" ]; then
+		if [ "${largerw}" = "0" ]; then
 			echo "large readwrite = no"
 		fi
-		if [ "${easupport}" = "ON" ]; then
+		if [ "${easupport}" = "1" ]; then
 			echo "ea support = yes"
 		fi
-		if [ "${dosattr}" = "ON" ]; then
+		if [ "${dosattr}" = "1" ]; then
 			echo "store dos attributes = yes"
 		fi
-		if [ "${localmaster}" = "ON" ]; then
+		if [ "${localmaster}" = "1" ]; then
 			echo "local master = yes"
 		fi
-		if [ "${timeserver}" = "ON" ]; then
+		if [ "${timeserver}" = "1" ]; then
 			echo "time server = yes"
 		fi
-		if [ "${nullpw}" = "ON" ]; then
+		if [ "${nullpw}" = "1" ]; then
 			echo "null passwords = yes"
 		fi
 		# Default user and group is ftp:ftp
@@ -115,7 +115,7 @@ generate_exports()
 	local IFS=\|
 
 	local name comment path ro browseable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny auxsmbconf
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT name, comment, path, ro, browseable, inheritperms, recyclebin, showhiddenfiles, hostsallow, hostsdeny, auxsmbconf FROM freenas_sharecifs ORDER BY id ASC" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT name, comment, path, ro, browseable, inheritperms, recyclebin, showhiddenfiles, hostsallow, hostsdeny, auxsmbconf FROM freenas_windowsshare ORDER BY id ASC" | \
 	while read name comment path ro browseable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny auxsmbconf; do
 		echo "[${name}]"
 		echo "path = /mnt/${path}"
@@ -124,16 +124,16 @@ generate_exports()
 		if [ -n "${comment}" ]; then
 			echo "comment = ${comment}"
 		fi
-		if [ "${ro}" = "OFF" ]; then
+		if [ "${ro}" = "0" ]; then
 			echo "writeable = yes"
 		fi
-		if [ "${browseable}" = "OFF" ]; then
+		if [ "${browseable}" = "0" ]; then
 			echo "browseable = no"
 		fi
-		if [ "${inheritperms}" = "ON" ]; then
+		if [ "${inheritperms}" = "1" ]; then
 			echo "inherit permissions = yes"
 		fi
-		if [ "${recyclebin}" = "ON" ]; then
+		if [ "${recyclebin}" = "1" ]; then
 			echo "vfs objects = recycle"
 			echo "recycle:repository = .recycle/%U"
 			echo "recycle:keeptree = yes"
@@ -142,7 +142,7 @@ generate_exports()
 			echo "recycle:directory_mode = 0777"
 			echo "recycle:subdir_mode = 0700"
 		fi
-		if [ "${showhiddenfiles}" = "ON" ]; then
+		if [ "${showhiddenfiles}" = "1" ]; then
 			echo "hide dot files = no"
 		fi
 		if [ -n "${hostsallow}" ]; then
