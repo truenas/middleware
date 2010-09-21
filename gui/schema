@@ -238,10 +238,6 @@ CREATE TABLE "freenas_mountpoint" (
     "afp" bool NOT NULL,
     "nfs" bool NOT NULL
 );
-CREATE TABLE "freenas_networkhosts" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "interface_id" integer NOT NULL REFERENCES "freenas_networkinterfacemgmt" ("id")
-);
 CREATE TABLE "freenas_networkinterfacemgmt" (
     "id" integer NOT NULL PRIMARY KEY,
     "interface" varchar(300) NOT NULL,
@@ -602,7 +598,6 @@ CREATE INDEX "freenas_appleshare_path_6305f17b" ON "freenas_appleshare_path" ("m
 CREATE INDEX "freenas_diskgroup_members_6da0174d" ON "freenas_diskgroup_members" ("diskgroup_id");
 CREATE INDEX "freenas_diskgroup_members_9f8f1583" ON "freenas_diskgroup_members" ("disk_id");
 CREATE INDEX "freenas_mountpoint_588b6fd1" ON "freenas_mountpoint" ("volumeid_id");
-CREATE INDEX "freenas_networkhosts_de383a40" ON "freenas_networkhosts" ("interface_id");
 CREATE INDEX "freenas_networkinterfacemgmtlagg_23baae83" ON "freenas_networkinterfacemgmtlagg" ("lagglist_id");
 CREATE INDEX "freenas_networkinterfacemgmtvlan_b23a78b3" ON "freenas_networkinterfacemgmtvlan" ("vlanlist_id");
 CREATE INDEX "freenas_networkstaticroute_de383a40" ON "freenas_networkstaticroute" ("interface_id");

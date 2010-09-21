@@ -36,27 +36,26 @@ _interface_config()
 	local IFS=\|
 	local _ifid interface ipv4addr subnetmask gateway
 
-	# XXX For now, the storage layer stores each interface as an individual profle.
 	# Note: ipv4/ipv6 are supposed in ip/masklen format.
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM freenas_networkinterfacemgmt ORDER BY id" | \
-	while read _ifid; do
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT interface, ipv4address, ipv6address, options FROM freenas_networkinterfacemgmt WHERE id=${_ifid} LIMIT 1" | \
-		while read interface ipv4 ipv6 options; do
-			echo -n ifconfig_${interface}=\"
-			if [ -n "${ipv4}" ]; then
-				echo -n "inet ${ipv4} "
-			fi
-			if [ -n "${options}" ]; then
-				echo -n "${options}"
-			fi
-			echo \"
-			if [ -n "${ipv6}" ]; then
-				echo ipv6_ifconfig_${interface}=\"${ipv6}\"
-			fi
-			if [ -n "${gateway}" ]; then
-				echo defaultrouter=\"${gateway}\"
-			fi
-		done
+
+	# Traverse the network interface table and generate rc.conf style
+	# configuration.
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT interface, ipv4address, ipv6address, options FROM freenas_networkinterfacemgmt ORDER BY id" | \
+	while read interface ipv4 ipv6 options; do
+		echo -n ifconfig_${interface}=\"
+		if [ -n "${ipv4}" ]; then
+			echo -n "inet ${ipv4} "
+		fi
+		if [ -n "${options}" ]; then
+			echo -n "${options}"
+		fi
+		echo \"
+		if [ -n "${ipv6}" ]; then
+			echo ipv6_ifconfig_${interface}=\"${ipv6}\"
+		fi
+		if [ -n "${gateway}" ]; then
+			echo defaultrouter=\"${gateway}\"
+		fi
 	done
 }
 
@@ -74,14 +73,19 @@ _host_config()
 _bool_config()
 {
 	local IFS=\|
-	local value key
+	local boolvalue value key
 	if [ -n "$4" ]; then
 		key="$4"
 	else
 		key="id"
 	fi
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $3 FROM $2 ORDER BY ${key} DESC LIMIT 1" | \
-	while read value; do
+	while read boolvalue; do
+		if [ "${boolvalue}" = "1" ]; then
+			value="YES"
+		else
+			value="NO"
+		fi
 		echo $1=\"${value}\"
 	done
 }

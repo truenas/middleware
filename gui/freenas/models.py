@@ -389,6 +389,9 @@ class networkInterfaceMGMT(models.Model):
         verbose_name = "Interfaces"
 
 ## Network|Hosts
+"""
+# active interfaces - unused
+
 class networkHosts(models.Model):
     interface = models.ForeignKey(networkInterfaceMGMT, verbose_name="Interface")
     #hostac = models.TextField(max_length=120, verbose_name="Host access control")
@@ -396,6 +399,7 @@ class networkHosts(models.Model):
         return self.interface
     class Meta:
         verbose_name = "Host"
+"""
 
 ## Network|Interface Management|VLAN
 class networkVLAN(models.Model):
