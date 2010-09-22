@@ -258,82 +258,37 @@ def systemAdvancedSYSCTLconfView(request):
 ## Network Section
 
 @login_required
-def networkInterfaceMGMTView(request):
+def NetworkView(request):
+    interfaceMGMT = networkInterfaceMGMTForm(request.POST)
+    vlan = networkVLANForm(request.POST)
+    lagg = networkLAGGForm(request.POST)
+    staticroute = networkStaticRouteForm(request.POST)
     if request.method == 'POST':
-        form = networkInterfaceMGMTForm(request.POST)
-        if form.is_valid():
-            form.save()
+        if interfaceMGMT.is_valid():
+            interfaceMGMT.save()
+        return HttpResponseRedirect('/freenas/network/')
+        if vlan.is_valid():
+            vlan.save()
+        return HttpResponseRedirect('/freenas/network/')
+        if lagg.is_valid():
+            lagg.save()
+        return HttpResponseRedirect('/freenas/network/')
+        if staticroute.is_valid():
+            staticroute.save()
+        return HttpResponseRedirect('/freenas/network/')
     else:
-        form = networkInterfaceMGMTForm()
+        interfaceMGMT = networkInterfaceMGMTForm()
+        vlan = networkVLANForm()
+        lagg = networkLAGGForm()
+        staticroute = networkStaticRouteForm()
     variables = RequestContext(request, {
-        'form': form
+        'interfaceMGMT': interfaceMGMT,
+        'vlan': vlan,
+        'lagg': lagg,
+        'staticroute': staticroute,
     })
-    return render_to_response('freenas/network/interfaces.html', variables)
+    return render_to_response('freenas/network/index.html', variables)
 
-@login_required
-def networkVLANView(request):
-    if request.method == 'POST':
-        form = networkVLANForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = networkVLANForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/network/vlan_add.html', variables)
-
-@login_required
-def networkInterfaceMGMTvlanView(request):
-    if request.method == 'POST':
-        form = networkInterfaceMGMTvlanForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = networkInterfaceMGMTvlanForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/network/vlan.html', variables)
-
-@login_required
-def networkLAGGView(request):
-    if request.method == 'POST':
-        form = networkLAGGForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = networkLAGGForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/network/lagg_add.html', variables)
-
-@login_required
-def networkInterfaceMGMTlaggView(request):
-    if request.method == 'POST':
-        form = networkInterfaceMGMTlaggForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = networkInterfaceMGMTlaggForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/network/lagg.html', variables)
-
-@login_required
-def networkHostsView(request):
-    if request.method == 'POST':
-        form = networkHostsForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = networkHostsForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/network/hosts.html', variables)
 
 @login_required
 def staticroutes_add_wrapper(request, *args, **kwargs):
@@ -360,6 +315,34 @@ def staticroute_detail(request, staticrouteid, template_name='freenas/network/st
 
 
 ## Disk section
+
+@login_required
+def DiskView(request):
+    disk = DiskForm(request.POST)
+    diskgroup = DiskGroupForm(request.POST)
+    volume = VolumeForm(request.POST)
+    if request.method == 'POST':
+        if disk.is_valid():
+            disk.save()
+        return HttpResponseRedirect('/freenas/disk/management/')
+    if request.method == 'POST':
+        if diskgroup.is_valid():
+            diskgroup.save()
+        return HttpResponseRedirect('/freenas/disk/management/')
+        if volume.is_valid():
+            volume.save()
+        return HttpResponseRedirect('/freenas/disk/management/')
+    else:
+        disk = DiskForm()
+        diskgroup = DiskGroupForm()
+        volume = VolumeForm()
+    variables = RequestContext(request, {
+        'disk': disk,
+        'diskgroup': diskgroup,
+        'volume': volume,
+    })
+    return render_to_response('freenas/disks/index.html', variables)
+
 @login_required
 def disk_add(request):
     if request.method == 'POST':
@@ -453,39 +436,39 @@ def volume_detail(request, volumeid, template_name='freenas/disks/volumes/volume
 """ Shares """
 @login_required
 def SharesView(request):
-    mountpoint_form = MountPointForm(request.POST)
-    cifs_form = servicesCIFSForm(request.POST)
-    afp_form = servicesAFPForm(request.POST)
-    nfs_form = servicesNFSForm(request.POST)
-    windowsshare_form = WindowsShareForm(request.POST)
-    appleshare_form = AppleShareForm(request.POST)
-    unixshare_form = UnixShareForm(request.POST)
+    mountpoint = MountPointForm(request.POST)
+    cifs = servicesCIFSForm(request.POST)
+    afp = servicesAFPForm(request.POST)
+    nfs = servicesNFSForm(request.POST)
+    windowsshare = WindowsShareForm(request.POST)
+    appleshare = AppleShareForm(request.POST)
+    unixshare = UnixShareForm(request.POST)
     if request.method == 'POST':
-        if mountpoint_form.is_valid() and cifs_form.is_valid() and afp_form.is_valid() and nfs_form.is_valid() and windowsshare_form.is_valid() and appleshare_form.is_valid() and unixshare_form.is_valid():
-            mountpoint_form.save()
-            cifs_form.save()
-            afp_form.save()
-            nfs_form.save()
-            windowsshare_form.save()
-            appleshare_form.save()
-            unixshare_form.save()
+        if mountpoint.is_valid() and cifs.is_valid() and afp.is_valid() and nfs.is_valid() and windowsshare.is_valid() and appleshare.is_valid() and unixshare.is_valid():
+            mountpoint.save()
+            cifs.save()
+            afp.save()
+            nfs.save()
+            windowsshare.save()
+            appleshare.save()
+            unixshare.save()
             return HttpResponseRedirect('/freenas/shares/')
     else:
-        mountpoint_form = MountPointForm()
-        cifs_form = servicesCIFSForm()
-        afp_form = servicesAFPForm()
-        nfs_form = servicesNFSForm()
-        windowsshare_form = WindowsShareForm()
-        appleshare_form = AppleShareForm()
-        unixshare_form = UnixShareForm()
+        mountpoint = MountPointForm()
+        cifs = servicesCIFSForm()
+        afp = servicesAFPForm()
+        nfs = servicesNFSForm()
+        windowsshare = WindowsShareForm()
+        appleshare = AppleShareForm()
+        unixshare = UnixShareForm()
     variables = RequestContext(request, {
-        'mountpoint_form': mountpoint_form,
-        'cifs_form': cifs_form,
-        'afp_form': afp_form,
-        'nfs_form': nfs_form,
-        'windowsshare_form': nfs_form,
-        'appleshare_form': nfs_form,
-        'unix_form': nfs_form,
+        'mountpoint': mountpoint,
+        'cifs': cifs,
+        'afp': afp,
+        'nfs': nfs,
+        'windowsshare': windowsshare,
+        'appleshare': appleshare,
+        'unixshare': unixshare,
     })
     return render_to_response('freenas/shares/index.html', variables)
 
@@ -601,10 +584,25 @@ def localrsyncjobView(request):
     })
     return render_to_response('freenas/services/rsync_localjob.html', variables)
 
-@login_required
-def accessActiveDirectoryView(request):
-    return helperView(request, accessActiveDirectoryForm, accessActiveDirectory, 'freenas/access/active_directory.html')
+
 
 @login_required
-def accessLDAPView(request):
-    return helperView(request, accessLDAPForm, accessLDAP, 'freenas/access/ldap.html')
+def AccessView(request):
+    ldap = accessLDAPForm(request.POST)
+    activedirectory = accessActiveDirectoryForm(request.POST)
+    if request.method == 'POST':
+        if ldap.is_valid():
+            ldap.save()
+        return HttpResponseRedirect('/freenas/access/')
+    if request.method == 'POST':
+        if activedirectory.is_valid():
+            activedirectory.save()
+        return HttpResponseRedirect('/freenas/access/')
+    else:
+        ldap = accessLDAPForm()
+        activedirectory = accessActiveDirectoryForm()
+    variables = RequestContext(request, {
+        'ldap': ldap,
+        'activedirectory': activedirectory,
+    })
+    return render_to_response('freenas/access/index.html', variables)

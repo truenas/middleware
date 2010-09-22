@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="False">
+
+<div dojoType="dijit.layout.ContentPane" title="Interfaces">
+<form action="." method="post">{% csrf_token %}
+ <table>
+        <tr>
+            <td>
+                <h4>Settings</h4>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Interface:</strong>
+            </td>
+            <td>
+                {{ interfaceMGMT.network_interface }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Name:</strong>
+            </td>
+            <td>
+                {{ interfaceMGMT.name }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>IPv4 Address:</strong>
+            </td>
+            <td>
+                {{ interfaceMGMT.ipv4address }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>IPv6 Address:</strong>
+            </td>
+            <td>
+                {{ interfaceMGMT.ipv6address }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Options:</strong>
+            </td>
+            <td>
+                {{ interfaceMGMT.interface_options }}
+            </td>
+        </tr>
+    </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+</form>
+</div>
+
+<div dojoType="dijit.layout.ContentPane" title="VLAN">
+<form action="." method="post">{% csrf_token %}
+    <table>
+        <tr>
+            <td>
+                <h4>Settings</h4>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Virtual Interface</strong>
+            </td>
+            <td>
+                {{ vlan.vlan_vint }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Physical Interface</strong>
+            </td>
+            <td>
+                {{ vlan.pint }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Tag</strong>
+            </td>
+            <td>
+                {{ vlan.tag }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Description</strong>
+            </td>
+            <td>
+                {{ vlan.vlan_description }}
+            </td>
+        </tr>
+    </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Add!</button>
+</form>
+</div>
+
+<div dojoType="dijit.layout.ContentPane" title="LAGG">
+<form action="." method="post">{% csrf_token %}
+    <table>
+        <tr>
+            <td>
+                <h4>Settings</h4>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Virtual Interface:</strong>
+            </td>
+            <td>
+                {{ lagg.lagg_vint }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Ports:</strong>
+            </td>
+            <td>
+                {{ lagg.lagg_ports }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Description:</strong>
+            </td>
+            <td>
+                {{ lagg.lagg_description }}
+            </td>
+        </tr>
+         </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Add!</button>
+</form>
+</div>
+
+<div dojoType="dijit.layout.ContentPane" title="Static Routes">
+<form action="." method="post">{% csrf_token %}
+    <table>
+        <tr>
+            <td>
+                <h4>Settings</h4>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Interface</strong>
+            </td>
+            <td>
+                {{ staticroute.sr_interface }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Destination</strong>
+            </td>
+            <td>
+                {{ staticroute.sr_destination }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Gateway</strong>
+            </td>
+            <td>
+                {{ staticroute.sr_gateway }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Description</strong>
+            </td>
+            <td>
+                {{ staticroute.sr_description }}
+            </td>
+        </tr>
+    </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Add!</button>
+</form>
+</div>
+            
+<br />
+</div>
+{% else %}
+    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
+{% endif %}
+
+{% endblock %}
+

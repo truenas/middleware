@@ -356,7 +356,7 @@ class systemAdvancedSYSCTLconf(models.Model):
 
 ## Network|Interface Management
 class networkInterfaceMGMT(models.Model):
-    interface = models.CharField(
+    network_interface = models.CharField(
             max_length=300, 
             choices=NICChoices(), 
             blank=False, 
@@ -378,32 +378,20 @@ class networkInterfaceMGMT(models.Model):
             verbose_name="IPv6 Address", 
             blank=True
             )
-    options = models.CharField(
+    interface_options = models.CharField(
             max_length=120, 
             verbose_name="Options", 
             blank=True
             )
     def __unicode__(self):
-        return self.name + " - " + self.interface
+        return self.name + " - " + self.network_interface
     class Meta:
         verbose_name = "Interfaces"
 
-## Network|Hosts
-"""
-# active interfaces - unused
-
-class networkHosts(models.Model):
-    interface = models.ForeignKey(networkInterfaceMGMT, verbose_name="Interface")
-    #hostac = models.TextField(max_length=120, verbose_name="Host access control")
-    def __unicode__(self):
-        return self.interface
-    class Meta:
-        verbose_name = "Host"
-"""
 
 ## Network|Interface Management|VLAN
 class networkVLAN(models.Model):
-    vint = models.CharField(
+    vlan_vint = models.CharField(
             max_length=120, 
             verbose_name="Virtual Interface"
             )
@@ -417,74 +405,54 @@ class networkVLAN(models.Model):
             max_length=120, 
             verbose_name="VLAN Tag"
             )
-    description = models.CharField(
+    vlan_description = models.CharField(
             max_length=120, 
             verbose_name="Description", 
             blank=True
             )
     
     def __unicode__(self):
-        return self.vint
+        return self.vlan_vint
 
     class Meta:
         verbose_name = "VLAN"
 
-class networkInterfaceMGMTvlan(models.Model):
-    vlanlist = models.ForeignKey(
-            networkVLAN, 
-            verbose_name="VLAN"
-            )
-    
-    def __unicode__(self):
-        return self.vlanlist
-
-    class Meta:
-        verbose_name = "VLAN"
 
 class networkLAGG(models.Model):
-    vint = models.CharField(
+    lagg_vint = models.CharField(
             max_length=120, 
             verbose_name="Virtual Interface"
             )
-    ports = models.CharField(
+    lagg_ports = models.CharField(
             max_length=120, 
             verbose_name="Ports"
             )
-    description = models.CharField(
+    lagg_description = models.CharField(
             max_length=120, 
             verbose_name="Description", 
             blank=True
             )
     
     def __unicode__(self):
-        return self.vint
-
-    class Meta:
-        verbose_name = "LAGG"
-
-class networkInterfaceMGMTlagg(models.Model):
-    lagglist = models.ForeignKey(networkLAGG, verbose_name="LAGG")
-    
-    def __unicode__(self):
-        return self.lagglist
+        return self.lagg_vint
 
     class Meta:
         verbose_name = "LAGG"
 
 class networkStaticRoute(models.Model):
-    interface = models.ForeignKey(
+    sr_interface = models.ForeignKey(
             networkInterfaceMGMT, 
             verbose_name="Interface"
             )
-    destination = models.CharField(
+    sr_destination = models.CharField(
             max_length=120, 
             verbose_name="Destination network"
             )
-    gateway = models.CharField(
+    sr_gateway = models.CharField(
             max_length=120, 
             verbose_name="Gateway"
             )
-    description = models.CharField(
+    sr_description = models.CharField(
             max_length=120, 
             verbose_name="Description", 
             blank=True
@@ -494,7 +462,7 @@ class networkStaticRoute(models.Model):
         verbose_name = "Static Route"
 
     def __unicode__(self):
-        return self.destination
+        return self.sr_destination
     
     def save(self, *args, **kwargs):
         super(networkStaticRoute, self).save(*args, **kwargs)
@@ -505,7 +473,7 @@ class networkStaticRoute(models.Model):
 """ Disk and Volume Management """
 
 class Disk(models.Model):
-    name = models.CharField(
+    disk_name = models.CharField(
             max_length=120, 
             verbose_name="Name"
             )
@@ -562,12 +530,12 @@ class Disk(models.Model):
         super(Disk, self).save(*args, **kwargs)
 
 class DiskGroup(models.Model):
-    name = models.CharField(
+    group_name = models.CharField(
             max_length=120, 
             verbose_name="Name"
             )
     members = models.ManyToManyField(Disk)
-    type = models.CharField(
+    group_type = models.CharField(
             max_length=120, 
             choices=ZFS_Choices, 
             default=" ", 
@@ -576,7 +544,7 @@ class DiskGroup(models.Model):
             )
     
     def __unicode__(self):
-        return self.name
+        return self.group_name
 
 class zpool(models.Model):
     zpool = models.CharField(
@@ -591,11 +559,11 @@ class zpool(models.Model):
 
 """ Volume Management """
 class Volume(models.Model):
-    name = models.CharField(
+    vol_name = models.CharField(
             max_length=120, 
             verbose_name="Name"
             )
-    type = models.CharField(
+    vol_type = models.CharField(
             max_length=120, 
             choices=VolumeType_Choices, 
             default=" ", 
@@ -606,7 +574,7 @@ class Volume(models.Model):
     class Meta:
         verbose_name = "Volume"
     def __unicode__(self):
-        return self.name
+        return self.vol_name
     def save(self, *args, **kwargs):
         super(Volume, self).save(*args, **kwargs)
 
@@ -624,9 +592,6 @@ class MountPoint(models.Model):
             help_text="Enter Mount Point options here",
             )
     sharero = models.BooleanField()
-    cifs = models.BooleanField()
-    afp = models.BooleanField()
-    nfs = models.BooleanField()
 
 
 class WindowsShare(models.Model):
@@ -1591,13 +1556,13 @@ class servicesSSH(models.Model):
 """ Access Section """
 
 class accessActiveDirectory(models.Model):            
-    toggle = models.BooleanField()
+    toggleActiveDirectory = models.BooleanField()
     dcname = models.CharField(
             max_length=120, 
             verbose_name="Domain Controller Name",
             help_text="AD or PDC name."
             )
-    dnsrealmname = models.CharField(
+    domainname = models.CharField(
             max_length=120, 
             verbose_name="Domain Name (DNS/Realm-Name)",
             help_text="Domain Name, eg example.com"
@@ -1619,7 +1584,7 @@ class accessActiveDirectory(models.Model):
             )
 
 class accessLDAP(models.Model):            
-    toggle = models.BooleanField()
+    toggleLDAP = models.BooleanField()
     hostname = models.CharField(
             max_length=120, 
             verbose_name="Hostname", 
@@ -1645,7 +1610,7 @@ class accessLDAP(models.Model):
             blank=True,
             help_text="The credentials with which to bind."
             )
-    pwencyption = models.CharField(
+    pwencryption = models.CharField(
             max_length=120, 
             choices=PWEncryptionChoices, 
             verbose_name="Password Encryption",
@@ -1663,7 +1628,7 @@ class accessLDAP(models.Model):
             blank=True,
             help_text="This parameter specifies the suffix that is used for groups when these are added to the LDAP directory, e.g. ou=Groups"
             )
-    paswordsuffix = models.CharField(
+    passwordsuffix = models.CharField(
             max_length=120, 
             verbose_name="Password Suffix", 
             blank=True,
@@ -1675,7 +1640,7 @@ class accessLDAP(models.Model):
             blank=True,
             help_text="This parameter specifies the suffix that is used for machines when these are added to the LDAP directory, e.g. ou=Computers"
             )
-    auxparams = models.TextField(
+    ldap_options = models.TextField(
             max_length=120,
             verbose_name="Auxillary Parameters",
             blank=True,

@@ -2,16 +2,24 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-<form action="." method="post">{% csrf_token %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="False">
         <div dojoType="dijit.layout.ContentPane" title="Active Shares">
+<form action="." method="post">{% csrf_token %}
     <table>
+        <tr>
+            <td>
+                <h4>Share Types</h4>
+            </td>
+        </tr>
         <tr>
             <td>
                 <strong>Windows:</strong>
             </td>
             <td>
+<form action="." method="post">{% csrf_token %}
                 {{ cifs_form.toggleCIFS }}
+<button dojoType="dijit.form.Button" type="submit">Toggle</button>
+</form>
             </td>
         </tr>
         <tr>
@@ -19,7 +27,10 @@
                 <strong>Apple:</strong>
             </td>
             <td>
+<form action="." method="post">{% csrf_token %}
                 {{ afp_form.toggleAFP }}
+<button dojoType="dijit.form.Button" type="submit">Toggle</button>
+</form>
             </td>
         </tr>
         <tr>
@@ -27,12 +38,46 @@
                 <strong>UNIX:</strong>
             </td>
             <td>
+<form action="." method="post">{% csrf_token %}
                 {{ nfs_form.toggleNFS }}
+<button dojoType="dijit.form.Button" type="submit">Toggle</button>
+</form>
             </td>
         </tr>
     </table>
+    <h4>Mount Points</h4>
+    <table>
+<form action="." method="post">{% csrf_token %}
+        <tr>
+            <td>
+                <strong>Volume</strong>
+            </td>
+            <td>
+                {{ mountpoint.volumeid }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Options</strong>
+            </td>
+            <td>
+                {{ mountpoint.mountoptions }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Read-Only</strong>
+            </td>
+            <td>
+                {{ mountpoint.sharero }}
+            </td>
+        </tr>
+    </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Mount Point</button>
+</form>
         </div>
         <div dojoType="dijit.layout.ContentPane" title="Windows">
+<form action="." method="post">{% csrf_token %}
                     <table>
                         <tr>
                             <td style="padding-right:25px;">
@@ -187,9 +232,12 @@
                     </td>
                 </tr>
             </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+</form>
     </div>
         
         <div dojoType="dijit.layout.ContentPane" title="Apple">
+<form action="." method="post">{% csrf_token %}
             <table>
                 <tr>
                     <td style="padding-right:25px;">
@@ -200,9 +248,12 @@
                     </td>
                 </tr>
             </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+</form>
         </div>
         
         <div dojoType="dijit.layout.ContentPane" title="UNIX">
+<form action="." method="post">{% csrf_token %}
      <table>
                 <tr>
                     <td style="padding-right:25px;">
@@ -213,12 +264,12 @@
                     </td>
                 </tr>
             </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+</form>
         </div>
 
 <br />
 </div>
-<button dojoType="dijit.form.Button" type="submit">Save Configuration</button>
-</form>
 {% else %}
     <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
 {% endif %}

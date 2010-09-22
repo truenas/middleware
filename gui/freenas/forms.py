@@ -109,20 +109,9 @@ class networkInterfaceMGMTForm(ModelForm):
 class networkVLANForm(ModelForm):
     class Meta:
         model = networkVLAN 
-class networkInterfaceMGMTvlanForm(ModelForm):
-    class Meta:
-        model = networkInterfaceMGMTvlan
 class networkLAGGForm(ModelForm):
     class Meta:
         model = networkLAGG
-class networkInterfaceMGMTlaggForm(ModelForm):
-    class Meta:
-        model = networkInterfaceMGMTlagg
-        """
-class networkHostsForm(ModelForm):
-    class Meta:
-        model = networkHosts
-        """
 class networkStaticRouteForm(ModelForm):
     class Meta:
         model = networkStaticRoute

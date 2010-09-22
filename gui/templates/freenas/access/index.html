@@ -2,15 +2,185 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-<div dojoType="dijit.layout.TabContainer" style="width:100%;height:400px;">
-        <div dojoType="dijit.layout.ContentPane" title="Access">
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="False">
+<div dojoType="dijit.layout.ContentPane" title="LDAP">
+    <form action="." method="post">{% csrf_token %}
+        <table>
+            <tr>
+                <td>
+                    <h4>Settings</h4>
+                </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Toggle:</strong>
+                    </td>
+                    <td>
+                        {{ ldap.toggleLDAP }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Hostname:</strong>
+                    </td>
+                    <td>
+                        {{ ldap.hostname }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Base DN:</strong>
+                    </td>
+                    <td>
+                        {{ ldap.basedn }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Anonymous Bind:</strong>
+                    </td>
+                    <td>
+                        {{ ldap.anonbind }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Root Base DN:</strong>
+                    </td>
+                    <td>
+                        {{ ldap.rootbasedn }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Root Bind Password:</strong>
+                    </td>
+                    <td>
+                        {{ ldap.rootbindpw }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Password Encryption:</strong>
+                    </td>
+                    <td>
+                        {{ ldap.pwencryption }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>User Suffix:</strong>
+                    </td>
+                    <td>
+                        {{ ldap.usersuffix }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Group Suffix:</strong>
+                    </td>
+                    <td>
+                        {{ ldap.groupsuffix }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Password Suffix:</strong>
+                    </td>
+                    <td>
+                        {{ ldap.passwordsuffix }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Machine Suffix:</strong>
+                    </td>
+                    <td>
+                        {{ ldap.machinesuffix }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Extra Options:</strong>
+                    </td>
+                    <td>
+                        {{ ldap.ldap_options }}
+                    </td>
+                </tr>
+        </table>
+        <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+    </form>
+</div>
+        
 
-<h2><a href="/freenas/access/ldap/">LDAP</a></h2>
-<h2><a href="/freenas/access/ldap/">Active Directory</a></h2>
-</div></div>
 
-          {% else %}
-                  <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
+<div dojoType="dijit.layout.ContentPane" title="Active Directory">
+    <form action="." method="post">{% csrf_token %}
+        <table>
+            <tr>
+                <td>
+                    <h4>Settings</h4>
+                </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Toggle</strong>
+                    </td>
+                    <td>
+                        {{ activedirectory.toggleActiveDirectory }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Domain Controller Name</strong>
+                    </td>
+                    <td>
+                        {{ activedirectory.dcname }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Domain Name:</strong>
+                    </td>
+                    <td>
+                        {{ activedirectory.domainname }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>NetBIOS Name:</strong>
+                    </td>
+                    <td>
+                        {{ activedirectory.netbiosname }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Admin Name:</strong>
+                    </td>
+                    <td>
+                        {{ activedirectory.adminname }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Admin Password:</strong>
+                    </td>
+                    <td>
+                        {{ activedirectory.adminpw }}
+                    </td>
+                </tr>
+        </table>
+        <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+    </form>
+</div>
+        
 
+<br />
+</div>
+{% else %}
+    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
 {% endif %}
-                          {% endblock %}
+
+{% endblock %}
+

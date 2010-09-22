@@ -61,10 +61,9 @@
                 {% include "toolbar.html" %}
         
     </div>
-    <div dojoType="dijit.layout.AccordionContainer" region="leading" style="width:12%;padding:8px;">
-        <div dojoType="dijit.layout.AccordionPane" title="FreeNAS">
-        </div>
-    </div>
+    <!-- sidebar non-functioning until json serialization of django models is added -->
+    <!-- {% include "sidebar.html" %} -->
+
     <div dojoType="dijit.layout.ContentPane" region="center">
             <div dojoType="dijit.layout.BorderContainer" gutters="false" style="height:50p;">
                 <div dojoType="dijit.layout.ContentPane">

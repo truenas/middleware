@@ -29,55 +29,22 @@
         </div>
     </div>
 
-    <div dojoType="dijit.PopupMenuBarItem">
-        <div>
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/freenas/network/'">
+        <span>
             Network 
-        </div>
-        <div dojoType="dijit.Menu" id="networkMenu">
-            <div dojoType="dijit.MenuItem" onClick="window.location='/freenas/network/interfaces/'">
-                Interfaces 
-            </div>
-            <div dojoType="dijit.MenuItem" onClick="window.location='/freenas/network/vlan/add/'">
-                VLAN 
-            </div>
-            <div dojoType="dijit.MenuItem" onClick="window.location='/freenas/network/lagg/add/'">
-                LAGG 
-            </div>
-            <div dojoType="dijit.MenuItem" onClick="window.location='/freenas/network/staticroutes/'">
-                Static Routes 
-            </div>
-        </div>
+        </span>
     </div>
 
-    <div dojoType="dijit.PopupMenuBarItem">
-        <div>
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/freenas/disk/management/'">
+        <span>
             Storage 
-        </div>
-        <div dojoType="dijit.Menu" id="storageMenu">
-            <div dojoType="dijit.MenuItem" onClick="window.location='/freenas/disk/management/disks/'">
-                Disks 
-            </div>
-            <div dojoType="dijit.MenuItem" onClick="window.location='/freenas/disk/management/groups/'">
-                Disk Groups 
-            </div>
-            <div dojoType="dijit.MenuItem" onClick="window.location='/freenas/disk/management/volumes/'">
-                Volumes 
-            </div>
-        </div>
+        </span>
     </div>
 
-    <div dojoType="dijit.PopupMenuBarItem">
-        <div>
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/freenas/access/'">
+        <span>
             Access 
-        </div>
-        <div dojoType="dijit.Menu" id="accessMenu">
-            <div dojoType="dijit.MenuItem" onClick="window.location='/freenas/access/ldap/'">
-                LDAP 
-            </div>
-            <div dojoType="dijit.MenuItem" onClick="window.location='/freenas/access/active_directory/'">
-                Active Directory
-            </div>
-        </div>
+        </span>
     </div>
 
     <div dojoType="dijit.MenuBarItem" onClick="window.location='/freenas/shares/'">
