@@ -179,26 +179,26 @@ freenas_systemgeneralsetup.language=english
 freenas_systemgeneralsetup.timezone=america-los_angeles
 # Active Directory
 #XXX need real values
-freenas_accessactivedirectory.toggle=0
-freenas_accessactivedirectory.dcname=
-freenas_accessactivedirectory.dnsrealmname=
-freenas_accessactivedirectory.netbiosname=
-freenas_accessactivedirectory.adminname=
-freenas_accessactivedirectory.adminpw=
+#freenas_accessactivedirectory.toggle=0
+#freenas_accessactivedirectory.dcname=
+##freenas_accessactivedirectory.dnsrealmname=
+#freenas_accessactivedirectory.netbiosname=
+#freenas_accessactivedirectory.adminname=
+#freenas_accessactivedirectory.adminpw=
 # LDAP
 #XXX need real values
-freenas_accessldap.toggle=0
-freenas_accessldap.hostname=
-freenas_accessldap.basedn=
-freenas_accessldap.anonbind=0
-freenas_accessldap.rootbasedn=
-freenas_accessldap.rootbindpw=
-freenas_accessldap.pwencyption=clear
-freenas_accessldap.usersuffix=
-freenas_accessldap.groupsuffix=
-freenas_accessldap.paswordsuffix=
-freenas_accessldap.machinesuffix=
-freenas_accessldap.auxparams="ldap_version 3\ntimelimit 30\nbind_timelimit 30\nbind_policy soft\npam_ldap_attribute uid"
+#freenas_accessldap.toggle=0
+#freenas_accessldap.hostname=
+#freenas_accessldap.basedn=
+#freenas_accessldap.anonbind=0
+#freenas_accessldap.rootbasedn=
+#freenas_accessldap.rootbindpw=
+#freenas_accessldap.pwencyption=clear
+#freenas_accessldap.usersuffix=
+#freenas_accessldap.groupsuffix=
+#freenas_accessldap.paswordsuffix=
+#freenas_accessldap.machinesuffix=
+#freenas_accessldap.auxparams="ldap_version 3\ntimelimit 30\nbind_timelimit 30\nbind_policy soft\npam_ldap_attribute uid"
 # Advanced
 freenas_systemadvanced.consolemenu=1
 freenas_systemadvanced.serialconsole=0
