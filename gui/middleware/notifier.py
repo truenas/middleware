@@ -163,13 +163,13 @@ class notifier:
                 conn = sqlite3.connect(dbname)
                 c = conn.cursor()
                 # Create ZFS pools
-                c.execute("SELECT v.id, v.name, mp.mountpoint FROM freenas_volume as v LEFT OUTER JOIN freenas_mountpoint AS mp ON v.id = mp.volumeid_id WHERE v.type = 'zfs'")
+                c.execute("SELECT id, name FROM freenas_volume WHERE v.type = 'zfs'")
                 zfs_list = c.fetchall()
 		if len(zfs_list) > 0:
 			# We have to be able to write /boot/zfs and / to create mount points.
 			self.__system("/sbin/mount -uw /")
 			for row in zfs_list:
-				z_id, z_name, z_mountpoint = row
+				z_id, z_name = row
 				z_vdev = ""
 				t_id = (z_id,)
 				c.execute("SELECT diskgroup_id FROM freenas_volume_groups WHERE volume_id = ?", t_id)
@@ -186,14 +186,14 @@ class notifier:
 					for disk in z_vdsk_list:
 						self.__system("[ -e /dev/gpt/%s ] || ( gpart create -s gpt /dev/%s && gpart add -t freebsd-zfs -l %s %s )" % (disk[1], disk[0], disk[1], disk[0]))
 						z_vdev += " /dev/gpt/" + disk[1]
-				self.__system("zpool create -m /mnt/%s %s %s" % (z_mountpoint, z_name, z_vdev))
+				self.__system("zpool create -m /mnt/%s %s %s" % (z_name, z_name, z_vdev))
 			self.__system("/sbin/mount -ur /")
                 # Create UFS file system and newfs
-                c.execute("SELECT v.id, v.name, mp.mountpoint FROM freenas_volume as v LEFT OUTER JOIN freenas_mountpoint AS mp ON v.id = mp.volumeid_id WHERE v.type = 'ufs'")
+                c.execute("SELECT id, name FROM freenas_volume WHERE v.type = 'zfs'")
 	        ufs_list = c.fetchall()
 		if len(ufs_list) > 0:
 			for row in ufs_list:
-				u_id, u_name, u_mountpoint = row
+				u_id, u_name = row
 				t_id = (u_id,)
 				c.execute("SELECT diskgroup_id FROM freenas_volume_groups WHERE volume_id = ?", t_id)
 				# TODO: For now we don't support RAID levels.
