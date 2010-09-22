@@ -114,11 +114,11 @@ generate_exports()
 {
 	local IFS=\|
 
-	local name comment path ro browseable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny smb_options
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT name, comment, path, ro, browseable, inheritperms, recyclebin, showhiddenfiles, hostsallow, hostsdeny, smb_options FROM freenas_windowsshare ORDER BY id ASC" | \
-	while read name comment path ro browseable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny smb_options; do
+	local name comment name ro browseable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny smb_options
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT name, comment, name, ro, browseable, inheritperms, recyclebin, showhiddenfiles, hostsallow, hostsdeny, smb_options FROM freenas_windowsshare ORDER BY id ASC" | \
+	while read name comment name ro browseable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny smb_options; do
 		echo "[${name}]"
-		echo "path = /mnt/${path}"
+		echo "path = /mnt/${name}"
 		echo "printable = no"
 		echo "veto files = /.snap/"
 		if [ -n "${comment}" ]; then
