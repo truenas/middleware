@@ -17,14 +17,14 @@ generate_exports()
 {
 	local IFS=\|
 
-	local name allroot network alldirs readonly quiet
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT name, allroot, network, alldirs, readonly, quiet FROM freenas_unixshare ORDER BY id DESC" | \
-	while read name allroot network alldirs readonly quiet; do
+	local name allroot network alldirs nfsro quiet
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT name, allroot, network, alldirs, nfsro, quiet FROM freenas_unixshare ORDER BY id DESC" | \
+	while read name allroot network alldirs nfsro quiet; do
 		echo -n /mnt/${name}
 		if [ -n "${alldirs}" ]; then
 			echo -n " -alldirs"
 		fi
-		if [ -n "${readonly}" ]; then
+		if [ -n "${nfsro}" ]; then
 			echo -n " -ro"
 		fi
 		if [ -n "${quiet}" ]; then

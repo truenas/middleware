@@ -114,9 +114,9 @@ generate_exports()
 {
 	local IFS=\|
 
-	local name comment name ro browseable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny smb_options
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT name, comment, name, ro, browseable, inheritperms, recyclebin, showhiddenfiles, hostsallow, hostsdeny, smb_options FROM freenas_windowsshare ORDER BY id ASC" | \
-	while read name comment name ro browseable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny smb_options; do
+	local name comment name cifsro browsable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny smb_options
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT name, comment, name, cifsro, browsable, inheritperms, recyclebin, showhiddenfiles, hostsallow, hostsdeny, smb_options FROM freenas_windowsshare ORDER BY id ASC" | \
+	while read name comment name cifsro browsable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny smb_options; do
 		echo "[${name}]"
 		echo "path = /mnt/${name}"
 		echo "printable = no"
@@ -124,10 +124,10 @@ generate_exports()
 		if [ -n "${comment}" ]; then
 			echo "comment = ${comment}"
 		fi
-		if [ "${ro}" = "0" ]; then
+		if [ "${cifsro}" = "0" ]; then
 			echo "writeable = yes"
 		fi
-		if [ "${browseable}" = "0" ]; then
+		if [ "${browsable}" = "0" ]; then
 			echo "browseable = no"
 		fi
 		if [ "${inheritperms}" = "1" ]; then

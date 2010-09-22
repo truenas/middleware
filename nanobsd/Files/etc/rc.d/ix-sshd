@@ -15,14 +15,14 @@
 generate_sshd()
 {
     local IFS=\|
-    local f="toggleSSH tcpport ssh_rootlogin passwordauth tcpfwd compression options"
-    local toggleSSH tcpport ssh_rootlogin passwordauth tcpfwd compression options
+    local f="toggleSSH tcpport ssh_rootlogin passwordauth tcpfwd compression ssh_options"
+    local toggleSSH tcpport ssh_rootlogin passwordauth tcpfwd compression ssh_options
     local cmd sf cfg
     sf=$(echo $f | sed -e 's/ /, /g')
     cfg=/etc/ssh/sshd_config
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM freenas_servicesssh ORDER BY -id LIMIT 1" | \
-	while read toggleSSH tcpport ssh_rootlogin passwordauth tcpfwd compression options; do
+	while read toggleSSH tcpport ssh_rootlogin passwordauth tcpfwd compression ssh_options; do
 	    cat > $cfg <<EOF
 SyslogFacility LOCAL3
 Protocol 2
@@ -51,8 +51,8 @@ EOF
 	    if [ $pubkeyauth = 1 ]; then
 		echo "PubkeyAuthentication yes" >> $cfg
 	    fi
-	    if [ -n "$options" ]; then
-		echo "$options" >> $cfg
+	    if [ -n "$ssh_options" ]; then
+		echo "$ssh_options" >> $cfg
 	    fi
     done
 }
