@@ -11,7 +11,7 @@
     </tr>
 {% for volume in object_list %}
     <tr>
-        <td> <a href="{{ volume.id }}">{{ volume.mountpoint }}</a></td>
+        <td> <a href="{{ volume.id }}">{{ volume.name }}</a></td>
         <td> {{ volume.type }}</td>
         <td> 
         <a href="/freenas/disk/management/volumes/delete/{{ volume.id }}/">Delete?</a>
