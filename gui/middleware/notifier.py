@@ -163,7 +163,7 @@ class notifier:
                 conn = sqlite3.connect(dbname)
                 c = conn.cursor()
                 # Create ZFS pools
-                c.execute("SELECT id, name FROM freenas_volume WHERE type = 'zfs'")
+                c.execute("SELECT id, vol_name FROM freenas_volume WHERE vol_type = 'zfs'")
                 zfs_list = c.fetchall()
 		if len(zfs_list) > 0:
 			# We have to be able to write /boot/zfs and / to create mount points.
@@ -175,13 +175,13 @@ class notifier:
 				c.execute("SELECT diskgroup_id FROM freenas_volume_groups WHERE volume_id = ?", t_id)
 				vgroup_list = c.fetchall()
 				for vgrp in vgroup_list:
-					c.execute("SELECT type FROM freenas_diskgroup WHERE id = ?", vgrp)
+					c.execute("SELECT group_type FROM freenas_diskgroup WHERE id = ?", vgrp)
 					vgrp_type = c.fetchone()[0]
 					# TODO: Currently the volume manager does not give the expected blank
 					# in database.
 					if vgrp_type != "single":
 						z_vdev += " " + vgrp_type
-					c.execute("SELECT freenas_disk.disks, freenas_disk.name FROM freenas_disk LEFT OUTER JOIN freenas_diskgroup_members ON freenas_disk.id = freenas_diskgroup_members.disk_id WHERE freenas_diskgroup_members.diskgroup_id = ?", vgrp)
+					c.execute("SELECT freenas_disk.disks, freenas_disk.disk_name FROM freenas_disk LEFT OUTER JOIN freenas_diskgroup_members ON freenas_disk.id = freenas_diskgroup_members.disk_id WHERE freenas_diskgroup_members.diskgroup_id = ?", vgrp)
 					z_vdsk_list = c.fetchall()
 					for disk in z_vdsk_list:
 						self.__system("[ -e /dev/gpt/%s ] || ( gpart create -s gpt /dev/%s && gpart add -t freebsd-zfs -l %s %s )" % (disk[1], disk[0], disk[1], disk[0]))
@@ -189,7 +189,7 @@ class notifier:
 				self.__system("zpool create -m /mnt/%s %s %s" % (z_name, z_name, z_vdev))
 			self.__system("/sbin/mount -ur /")
                 # Create UFS file system and newfs
-                c.execute("SELECT id, name FROM freenas_volume WHERE type = 'ufs'")
+                c.execute("SELECT id, vol_name FROM freenas_volume WHERE vol_type = 'ufs'")
 	        ufs_list = c.fetchall()
 		if len(ufs_list) > 0:
 			for row in ufs_list:
@@ -198,7 +198,7 @@ class notifier:
 				c.execute("SELECT diskgroup_id FROM freenas_volume_groups WHERE volume_id = ?", t_id)
 				# TODO: For now we don't support RAID levels.
 				ufs_volume_id = c.fetchone()
-				c.execute("SELECT freenas_disk.disks, freenas_disk.name FROM freenas_disk LEFT OUTER JOIN freenas_diskgroup_members ON freenas_disk.id = freenas_diskgroup_members.disk_id WHERE freenas_diskgroup_members.diskgroup_id = ?", ufs_volume_id)
+				c.execute("SELECT freenas_disk.disks, freenas_disk.disk_name FROM freenas_disk LEFT OUTER JOIN freenas_diskgroup_members ON freenas_disk.id = freenas_diskgroup_members.disk_id WHERE freenas_diskgroup_members.diskgroup_id = ?", ufs_volume_id)
 				disk = c.fetchone()
 				# TODO: Not using GPT label at this moment.
 				self.__system("[ -e /dev/%sp1 ] || ( gpart create -s gpt /dev/%s && gpart add -t freebsd-ufs %s )" % (disk[0], disk[0], disk[0]))

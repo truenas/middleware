@@ -525,7 +525,7 @@ class Disk(models.Model):
         verbose_name = "Disk"
         ordering = ['sort_order',]
     def __unicode__(self):
-        return self.disks + ' (' + self.name + ')'
+        return self.disks + ' (' + self.disk_name + ')'
     def save(self, *args, **kwargs):
         super(Disk, self).save(*args, **kwargs)
 

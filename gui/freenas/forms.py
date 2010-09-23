@@ -116,29 +116,6 @@ class networkStaticRouteForm(ModelForm):
     class Meta:
         model = networkStaticRoute
 
-class StaticRouteWizard(FormWizard):
-    def get_template(self, step):
-        return 'freenas/network/staticroute_add.html' 
-    def done(self, request, form_list): # saves form to db
-        for form in form_list: 
-            form.save() 
-        notifier().restart("routing")
-        return HttpResponseRedirect('/freenas/network/staticroutes/')
-
-class DiskWizard(FormWizard):
-    def prefix_for_step(self, step):
-        # Given the step, returns a form prefix to use. 
-        # By default, this simply uses the step itself
-        return str("step_") + str(step)
-
-    def get_template(self, step):
-        return 'freenas/disks/disk_wizard_%s.html' % step
-
-    def done(self, request, form_list): # saves form to db
-        for form in form_list: 
-            form.save() 
-        return HttpResponseRedirect('/freenas/disk/management/disks/') 
-
 class DiskForm(ModelForm):
     class Meta:
         model = Disk
@@ -151,37 +128,9 @@ class zpoolForm(ModelForm):
     class Meta:
         model = zpool 
 
-class DiskGroupWizard(FormWizard):
-    def process_step(self, request, form, step):
-        # Step 0 asks which volume "type" (filesystem)
-        # and drops the user to the correct form
-        if step==0:
-            if form.cleaned_data['type']=='ufs':
-                self.form_list.remove(zpoolForm)
-    def prefix_for_step(self, step):
-        # Given the step, returns a form prefix to use. 
-        # By default, this simply uses the step itself
-        return str("step_") + str(step)
-    def get_template(self, step):
-        return 'freenas/disks/groups/diskgroup_wizard_%s.html' % step
-    def done(self, request, form_list): # saves form to db
-        for form in form_list: 
-            form.save() 
-        return HttpResponseRedirect('/freenas/disk/management/groups/')
-
 class VolumeForm(ModelForm):
     class Meta:
         model = Volume
-
-class VolumeWizard(FormWizard):
-    def get_template(self, step):
-        return 'freenas/disks/volumes/volume_wizard_%s.html' % step
-    def done(self, request, form_list): # saves form to db
-        for form in form_list: 
-            form.save() 
-	notifier().create("disk")
-        return HttpResponseRedirect('/freenas/disk/management/volumes/')
-
 
 """ Shares """
 class MountPointForm(ModelForm):

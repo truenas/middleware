@@ -266,16 +266,15 @@ def NetworkView(request):
     if request.method == 'POST':
         if interfaceMGMT.is_valid():
             interfaceMGMT.save()
-        return HttpResponseRedirect('/freenas/network/')
+    if request.method == 'POST':
         if vlan.is_valid():
             vlan.save()
-        return HttpResponseRedirect('/freenas/network/')
+    if request.method == 'POST':
         if lagg.is_valid():
             lagg.save()
-        return HttpResponseRedirect('/freenas/network/')
+    if request.method == 'POST':
         if staticroute.is_valid():
             staticroute.save()
-        return HttpResponseRedirect('/freenas/network/')
     else:
         interfaceMGMT = networkInterfaceMGMTForm()
         vlan = networkVLANForm()
@@ -324,14 +323,12 @@ def DiskView(request):
     if request.method == 'POST':
         if disk.is_valid():
             disk.save()
-        return HttpResponseRedirect('/freenas/disk/management/')
     if request.method == 'POST':
         if diskgroup.is_valid():
             diskgroup.save()
-        return HttpResponseRedirect('/freenas/disk/management/')
+    if request.method == 'POST':
         if volume.is_valid():
             volume.save()
-        return HttpResponseRedirect('/freenas/disk/management/')
     else:
         disk = DiskForm()
         diskgroup = DiskGroupForm()
@@ -342,25 +339,6 @@ def DiskView(request):
         'volume': volume,
     })
     return render_to_response('freenas/disks/index.html', variables)
-
-@login_required
-def disk_add(request):
-    if request.method == 'POST':
-        form = DiskForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return HttpResponseRedirect('/freenas/disk/management/disks/')
-    else:
-        form = DiskForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/disks/disk_add.html', variables)
-
-@login_required
-def disk_add_wrapper(request, *args, **kwargs):
-    wiz = DiskWizard([DiskAdvancedForm])
-    return wiz(request, *args, **kwargs)
 
 @login_required
 def disk_list(request, template_name='freenas/disks/disk_list.html'):

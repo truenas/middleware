@@ -52,6 +52,14 @@
     </tr>
     <tr>
         <td style="padding-right:25px;">
+            <strong>Sort Order</strong>
+        </td>
+        <td>
+            {{ disk.sort_order }}
+        </td>
+    </tr>
+    <tr>
+        <td style="padding-right:25px;">
             <strong>Transfer Mode</strong>
         </td>
         <td>
@@ -92,7 +100,7 @@
     </tr>
     <tr>
         <td style="padding-right:25px;">
-            <strong>S.M.A.R.T.</strong>
+            <strong>S.M.A.R.T. Options</strong>
         </td>
         <td>
             {{ disk.smartoptions }}
@@ -137,7 +145,7 @@
 </div>
 
 
-    <div dojoType="dijit.layout.ContentPane" title="Create Shares">
+    <div dojoType="dijit.layout.ContentPane" title="Create Volumes">
 <form action="." method="post">{% csrf_token %}
 <table>
     <tr>
