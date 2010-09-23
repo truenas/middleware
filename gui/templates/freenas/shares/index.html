@@ -17,7 +17,7 @@
             </td>
             <td>
 <form action="." method="post">{% csrf_token %}
-                {{ cifs_form.toggleCIFS }}
+                {{ cifs.toggleCIFS }}
 <button dojoType="dijit.form.Button" type="submit">Toggle</button>
 </form>
             </td>
@@ -28,7 +28,7 @@
             </td>
             <td>
 <form action="." method="post">{% csrf_token %}
-                {{ afp_form.toggleAFP }}
+                {{ afp.toggleAFP }}
 <button dojoType="dijit.form.Button" type="submit">Toggle</button>
 </form>
             </td>
@@ -39,7 +39,7 @@
             </td>
             <td>
 <form action="." method="post">{% csrf_token %}
-                {{ nfs_form.toggleNFS }}
+                {{ nfs.toggleNFS }}
 <button dojoType="dijit.form.Button" type="submit">Toggle</button>
 </form>
             </td>
@@ -84,7 +84,7 @@
                                 <strong>Netbios Name:</strong>
                             </td>
                         <td>
-                            {{ cifs_form.netbiosname }}
+                            {{ cifs.netbiosname }}
                         </td>
                     </tr>
                     <tr>
@@ -92,7 +92,7 @@
                             <strong>Workgroup:</strong>
                         </td>
                         <td>
-                            {{ cifs_form.workgroup }}
+                            {{ cifs.workgroup }}
                         </td>
                     </tr>
                     <tr>
@@ -100,7 +100,7 @@
                             <strong>Description:</strong>
                         </td>
                         <td>
-                            {{ cifs_form.cifs_description }}
+                            {{ cifs.cifs_description }}
                         </td>
                     </tr>
                 <tr>
@@ -108,7 +108,7 @@
                         <strong>DOS Charset:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.doscharset }}
+                        {{ cifs.doscharset }}
                     </td>
                 </tr>
                 <tr>
@@ -116,7 +116,7 @@
                         <strong>UNIX Charset:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.unixcharset }}
+                        {{ cifs.unixcharset }}
                     </td>
                 </tr>
                 <tr>
@@ -124,7 +124,7 @@
                         <strong>Log Level:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.loglevel }}
+                        {{ cifs.loglevel }}
                     </td>
                 </tr>
                 <tr>
@@ -132,7 +132,7 @@
                         <strong>Local Master:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.localmaster }}
+                        {{ cifs.localmaster }}
                     </td>
                 </tr>
                 <tr>
@@ -140,7 +140,7 @@
                         <strong>Time Server:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.timeserver }}
+                        {{ cifs.timeserver }}
                     </td>
                 </tr>
                 <tr>
@@ -148,7 +148,7 @@
                         <strong>Guest:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.guest }}
+                        {{ cifs.guest }}
                     </td>
                 </tr>
                 <tr>
@@ -156,7 +156,7 @@
                         <strong>File Mask:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.cifs_filemask }}
+                        {{ cifs.cifs_filemask }}
                     </td>
                 </tr>
                 <tr>
@@ -164,7 +164,7 @@
                         <strong>Directory Mask:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.cifs_dirmask }}
+                        {{ cifs.cifs_dirmask }}
                     </td>
                 </tr>
                 <tr>
@@ -172,7 +172,7 @@
                         <strong>Send Buffer:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.sendbuffer }}
+                        {{ cifs.sendbuffer }}
                     </td>
                 </tr>
                 <tr>
@@ -180,7 +180,7 @@
                         <strong>Receive Buffer:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.recbuffer }}
+                        {{ cifs.recbuffer }}
                     </td>
                 </tr>
                 <tr>
@@ -188,7 +188,7 @@
                         <strong>Large Read/Write:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.largerw }}
+                        {{ cifs.largerw }}
                     </td>
                 </tr>
                 <tr>
@@ -196,7 +196,7 @@
                         <strong>Send File:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.sendfile }}
+                        {{ cifs.sendfile }}
                     </td>
                 </tr>
                 <tr>
@@ -204,7 +204,7 @@
                         <strong>EA Support:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.easupport }}
+                        {{ cifs.easupport }}
                     </td>
                 </tr>
                 <tr>
@@ -212,7 +212,7 @@
                         <strong>DOS Attributes:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.dosattr }}
+                        {{ cifs.dosattr }}
                     </td>
                 </tr>
                 <tr>
@@ -220,7 +220,7 @@
                         <strong>NULL Password:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.nullpw }}
+                        {{ cifs.nullpw }}
                     </td>
                 </tr>
                 <tr>
@@ -228,7 +228,7 @@
                         <strong>Global Samba Parameters:</strong>
                     </td>
                     <td>
-                        {{ cifs_form.smb_options }}
+                        {{ cifs.smb_options }}
                     </td>
                 </tr>
             </table>
@@ -244,7 +244,7 @@
                         <strong>Name:</strong>
                     </td>
                     <td>
-                        {{ afp_form.name }}
+                        {{ afp.name }}
                     </td>
                 </tr>
             </table>
@@ -260,7 +260,7 @@
                         <strong>Servers:</strong>
                     </td>
                     <td>
-                        {{ nfs_form.servers }}
+                        {{ nfs.servers }}
                     </td>
                 </tr>
             </table>
