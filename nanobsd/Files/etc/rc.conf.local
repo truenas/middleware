@@ -96,9 +96,9 @@ _staticroute_config()
 	local IFS=\|
 	local id destination gateway interface
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT freenas_networkstaticroute.id, sr_destination, sr_gateway, network_interface FROM freenas_networkstaticroute INNER JOIN freenas_networkinterfacemgmt ON freenas_networkstaticroute.sr_interface_id = freenas_networkinterfacemgmt.id;" | \
-	while read id destination gateway interface; do
-		echo route_freenas${id}=\"-iface ${interface} ${destination} ${gateway}\"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT freenas_networkstaticroute.id, sr_destination, sr_gateway FROM freenas_networkstaticroute INNER JOIN freenas_networkinterfacemgmt ON freenas_networkstaticroute.sr_interface_id = freenas_networkinterfacemgmt.id;" | \
+	while read id destination gateway; do
+		echo route_freenas${id}=\"-net ${destination} ${gateway}\"
 		freenas_routes="${freenas_routes} freenas${id}"
 	done
 	echo static_routes=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM freenas_networkstaticroute" | sed -e s/^/freenas/g | xargs echo `\"

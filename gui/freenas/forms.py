@@ -115,6 +115,9 @@ class networkLAGGForm(ModelForm):
 class networkStaticRouteForm(ModelForm):
     class Meta:
         model = networkStaticRoute
+    def save(self):
+        super(networkStaticRouteForm, self).save()
+        notifier().start("routing")
 
 class DiskForm(ModelForm):
     class Meta:
@@ -131,6 +134,9 @@ class zpoolForm(ModelForm):
 class VolumeForm(ModelForm):
     class Meta:
         model = Volume
+    def save(self):
+        super(VolumeForm, self).save()
+        notifier().create("disk")
 
 """ Shares """
 class MountPointForm(ModelForm):
