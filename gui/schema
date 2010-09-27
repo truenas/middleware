@@ -265,6 +265,7 @@ CREATE TABLE "freenas_rcconf" (
 );
 CREATE TABLE "freenas_servicesafp" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleAFP" bool NOT NULL,
     "name" varchar(120) NOT NULL,
     "guest" bool NOT NULL,
     "local" bool NOT NULL,
@@ -293,6 +294,7 @@ CREATE TABLE "freenas_servicesbittorrent" (
 );
 CREATE TABLE "freenas_servicescifs" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleCIFS" bool NOT NULL,
     "netbiosname" varchar(120) NOT NULL,
     "workgroup" varchar(120) NOT NULL,
     "cifs_description" varchar(120) NOT NULL,
@@ -370,6 +372,7 @@ CREATE TABLE "freenas_servicesiscsitarget" (
 );
 CREATE TABLE "freenas_servicesnfs" (
     "id" integer NOT NULL PRIMARY KEY,
+    "toggleNFS" bool NOT NULL,
     "servers" varchar(120) NOT NULL
 );
 CREATE TABLE "freenas_servicesrsync" (

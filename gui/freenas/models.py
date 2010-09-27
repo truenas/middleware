@@ -998,7 +998,7 @@ class localrsyncjob(models.Model):
             )
 
 class servicesCIFS(models.Model):
-    #toggleCIFS = models.BooleanField()
+    toggleCIFS = models.BooleanField()
     netbiosname = models.CharField(
             max_length=120, 
             verbose_name="NetBIOS name"
