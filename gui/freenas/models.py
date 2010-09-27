@@ -590,8 +590,8 @@ class MountPoint(models.Model):
             max_length=120,
             verbose_name="Mount options",
             help_text="Enter Mount Point options here",
+            null=True,
             )
-    sharero = models.BooleanField()
 
 
 class WindowsShare(models.Model):
@@ -603,7 +603,7 @@ class WindowsShare(models.Model):
             max_length=120, 
             verbose_name="Comment"
             )
-    path = models.ManyToManyField(MountPoint)
+    path = models.ForeignKey(MountPoint)
     globalro = models.BooleanField()
     cifsro = models.BooleanField()
     browsable = models.BooleanField()
@@ -644,7 +644,7 @@ class AppleShare(models.Model):
             max_length=120, 
             verbose_name="Comment"
             )
-    path = models.ManyToManyField(MountPoint)
+    path = models.ForeignKey(MountPoint)
     globalro = models.BooleanField()
     sharepw = models.CharField(
             max_length=120, 
@@ -715,7 +715,7 @@ class UnixShare(models.Model):
             max_length=120, 
             verbose_name="Comment"
             )
-    path = models.ManyToManyField(MountPoint)
+    path = models.ForeignKey(MountPoint)
     globalro = models.BooleanField()
     allroot = models.BooleanField()
     network = models.CharField(
@@ -998,7 +998,7 @@ class localrsyncjob(models.Model):
             )
 
 class servicesCIFS(models.Model):
-    toggleCIFS = models.BooleanField()
+    #toggleCIFS = models.BooleanField()
     netbiosname = models.CharField(
             max_length=120, 
             verbose_name="NetBIOS name"

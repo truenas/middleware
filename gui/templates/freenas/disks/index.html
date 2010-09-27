@@ -178,6 +178,40 @@
 </div>
              
 
+    <div dojoType="dijit.layout.ContentPane" title="Add Mount Point">
+
+<form action="." method="post">{% csrf_token %}
+    <table>
+        <tr>
+            <td>
+                <strong>Volume</strong>
+            </td>
+            <td>
+                {{ mountpoint.volumeid.errors }}
+                {{ mountpoint.volumeid }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Mount Point</strong>
+            </td>
+            <td>
+                {{ mountpoint.mountpoint.errors }}
+                {{ mountpoint.mountpoint }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Options</strong>
+            </td>
+            <td>
+                {{ mountpoint.mountoptions.errors }}
+                {{ mountpoint.mountoptions }}
+            </td>
+        </tr>
+    </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Mount Point</button>
+</form>
 
 
 <br />

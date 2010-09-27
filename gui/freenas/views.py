@@ -266,15 +266,19 @@ def NetworkView(request):
     if request.method == 'POST':
         if interfaceMGMT.is_valid():
             interfaceMGMT.save()
+        return HttpResponseRedirect('/freenas/network/')
     if request.method == 'POST':
         if vlan.is_valid():
             vlan.save()
+        return HttpResponseRedirect('/freenas/network/')
     if request.method == 'POST':
         if lagg.is_valid():
             lagg.save()
+        return HttpResponseRedirect('/freenas/network/')
     if request.method == 'POST':
         if staticroute.is_valid():
             staticroute.save()
+        return HttpResponseRedirect('/freenas/network/')
     else:
         interfaceMGMT = networkInterfaceMGMTForm()
         vlan = networkVLANForm()
@@ -320,23 +324,33 @@ def DiskView(request):
     disk = DiskForm(request.POST)
     diskgroup = DiskGroupForm(request.POST)
     volume = VolumeForm(request.POST)
+    mountpoint = MountPointForm(request.POST)
     if request.method == 'POST':
         if disk.is_valid():
             disk.save()
+        return HttpResponseRedirect('/freenas/disk/management/')
     if request.method == 'POST':
         if diskgroup.is_valid():
             diskgroup.save()
+        return HttpResponseRedirect('/freenas/disk/management/')
     if request.method == 'POST':
         if volume.is_valid():
             volume.save()
+        return HttpResponseRedirect('/freenas/disk/management/')
+    if request.method == 'POST':
+        if mountpoint.is_valid():
+            mountpoint.save()
+        return HttpResponseRedirect('/freenas/disk/management/')
     else:
         disk = DiskForm()
         diskgroup = DiskGroupForm()
         volume = VolumeForm()
+        mountpoint = MountPointForm()
     variables = RequestContext(request, {
         'disk': disk,
         'diskgroup': diskgroup,
         'volume': volume,
+        'mountpoint': mountpoint,
     })
     return render_to_response('freenas/disks/index.html', variables)
 
@@ -411,49 +425,41 @@ def volume_detail(request, volumeid, template_name='freenas/disks/volumes/volume
     ) 
 
 
-""" Shares """
 @login_required
 def SharesView(request):
-    mountpoint = MountPointForm(request.POST)
-    cifs = servicesCIFSForm(request.POST)
-    afp = servicesAFPForm(request.POST)
-    nfs = servicesNFSForm(request.POST)
     windowsshare = WindowsShareForm(request.POST)
     appleshare = AppleShareForm(request.POST)
     unixshare = UnixShareForm(request.POST)
     if request.method == 'POST':
-        if mountpoint.is_valid() and cifs.is_valid() and afp.is_valid() and nfs.is_valid() and windowsshare.is_valid() and appleshare.is_valid() and unixshare.is_valid():
-            mountpoint.save()
-            cifs.save()
-            afp.save()
-            nfs.save()
+        if windowsshare.is_valid():
             windowsshare.save()
+        return HttpResponseRedirect('/freenas/shares/')
+    if request.method == 'POST':
+        if appleshare.is_valid():
             appleshare.save()
+        return HttpResponseRedirect('/freenas/shares/')
+    if request.method == 'POST':
+        if unixshare.is_valid():
             unixshare.save()
-            return HttpResponseRedirect('/freenas/shares/')
+        return HttpResponseRedirect('/freenas/shares/')
     else:
-        mountpoint = MountPointForm()
-        cifs = servicesCIFSForm()
-        afp = servicesAFPForm()
-        nfs = servicesNFSForm()
         windowsshare = WindowsShareForm()
         appleshare = AppleShareForm()
         unixshare = UnixShareForm()
     variables = RequestContext(request, {
-        'mountpoint': mountpoint,
-        'cifs': cifs,
-        'afp': afp,
-        'nfs': nfs,
         'windowsshare': windowsshare,
         'appleshare': appleshare,
         'unixshare': unixshare,
-    })
+        })
     return render_to_response('freenas/shares/index.html', variables)
 
 ## Services section
 
 @login_required
 def ServicesView(request):
+    cifs = servicesCIFSForm(request.POST)
+    afp = servicesAFPForm(request.POST)
+    nfs = servicesNFSForm(request.POST)
     rsync_form = servicesRSYNCForm(request.POST)
     unison_form = servicesUnisonForm(request.POST)
     iscsi_form = servicesiSCSITargetForm(request.POST)
@@ -465,6 +471,18 @@ def ServicesView(request):
     ftp_form = servicesFTPForm(request.POST)
     tftp_form = servicesTFTPForm(request.POST)
     ssh_form = servicesSSHForm(request.POST)
+    if request.method == 'POST':
+        if cifs.is_valid():
+            cifs.save()
+        return HttpResponseRedirect('/freenas/services/')
+    if request.method == 'POST':
+        if afp.is_valid():
+            afp.save()
+        return HttpResponseRedirect('/freenas/services/')
+    if request.method == 'POST':
+        if nfs.is_valid():
+            nfs.save()
+        return HttpResponseRedirect('/freenas/services/')
     if request.method == 'POST':
         if rsync_form.is_valid():
             rsync_form.save()
@@ -510,6 +528,9 @@ def ServicesView(request):
             ssh_form.save()
         return HttpResponseRedirect('/freenas/services/')
     else:
+        cifs = servicesCIFSForm()
+        afp = servicesAFPForm()
+        nfs = servicesNFSForm()
         rsync_form = servicesRSYNCForm()
         unison_form = servicesUnisonForm()
         iscsi_form = servicesiSCSITargetForm()
@@ -522,6 +543,9 @@ def ServicesView(request):
         tftp_form = servicesTFTPForm()
         ssh_form = servicesSSHForm()
     variables = RequestContext(request, {
+        'cifs': cifs,
+        'afp': afp,
+        'nfs': nfs,
         'rsync_form': rsync_form,
         'unison_form': unison_form,
         'iscsi_form': iscsi_form,

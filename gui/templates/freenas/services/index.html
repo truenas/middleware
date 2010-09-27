@@ -87,10 +87,224 @@
             {{ ssh_form.toggleSSH }}
         </td>
     </tr>
-</table>
+    </table>
+   
 <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 </form>
 </div>
+<div dojoType="dijit.layout.ContentPane" title="Windows" closable="true">
+<form action="." method="post">{% csrf_token %}
+                    <table>
+                        <tr>
+                            <td style="padding-right:25px;">
+                                <strong>Netbios Name:</strong>
+                            </td>
+                        <td>
+                            {{ cifs.netbiosname.errors }}
+                            {{ cifs.netbiosname }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-right:25px;">
+                            <strong>Workgroup:</strong>
+                        </td>
+                        <td>
+                            {{ cifs.workgroup.errors }}
+                            {{ cifs.workgroup }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-right:25px;">
+                            <strong>Description:</strong>
+                        </td>
+                        <td>
+                            {{ cifs.cifs_description.errors }}
+                            {{ cifs.cifs_description }}
+                        </td>
+                    </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>DOS Charset:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.doscharset.errors }}
+                        {{ cifs.doscharset }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>UNIX Charset:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.unixcharset.errors }}
+                        {{ cifs.unixcharset }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Log Level:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.loglevel.errors }}
+                        {{ cifs.loglevel }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Local Master:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.localmaster.errors }}
+                        {{ cifs.localmaster }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Time Server:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.timeserver.errors }}
+                        {{ cifs.timeserver }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Guest:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.guest.errors }}
+                        {{ cifs.guest }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>File Mask:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.cifs_filemask.errors }}
+                        {{ cifs.cifs_filemask }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Directory Mask:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.cifs_dirmask.errors }}
+                        {{ cifs.cifs_dirmask }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Send Buffer:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.sendbuffer.errors }}
+                        {{ cifs.sendbuffer }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Receive Buffer:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.recbuffer.errors }}
+                        {{ cifs.recbuffer }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Large Read/Write:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.largerw.errors }}
+                        {{ cifs.largerw }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Send File:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.sendfile.errors }}
+                        {{ cifs.sendfile }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>EA Support:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.easupport.errors }}
+                        {{ cifs.easupport }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>DOS Attributes:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.dosattr.errors }}
+                        {{ cifs.dosattr }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>NULL Password:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.nullpw.errors }}
+                        {{ cifs.nullpw }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Global Samba Parameters:</strong>
+                    </td>
+                    <td>
+                        {{ cifs.smb_options.errors }}
+                        {{ cifs.smb_options }}
+                    </td>
+                </tr>
+            </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+</form>
+    </div>
+  <div dojoType="dijit.layout.ContentPane" title="Apple" closable="true">
+<form action="." method="post">{% csrf_token %}
+            <table>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Name:</strong>
+                    </td>
+                    <td>
+                        {{ afp.name.errors }}
+                        {{ afp.name }}
+                    </td>
+                </tr>
+            </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+</form>
+        </div>
+          
+        <div dojoType="dijit.layout.ContentPane" title="UNIX" closable="true">
+<form action="." method="post">{% csrf_token %}
+     <table>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Servers:</strong>
+                    </td>
+                    <td>
+                        {{ nfs.servers.errors }}
+                        {{ nfs.servers }}
+                    </td>
+                </tr>
+            </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+</form>
+        </div>
+
+
 <div dojoType="dijit.layout.ContentPane" title="Unison" closable="true">
 <form action="." method="post">{% csrf_token %}
             <table>
