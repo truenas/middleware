@@ -12,21 +12,25 @@ main()
         exit
     fi
 
-    IMGFILE="/home/jpaetzel/FreeNAS-8r561-amd64.full.gz" # The FreeNAS image
+    IMGFILE="/home/jpaetzel/FreeNAS-8r5375-amd64.full.gz" # The FreeNAS image
     BOOTFILE="/home/jpaetzel/josh.img" # The image used to make the CD
     BOOTFILE_MD=`md5 ${BOOTFILE} | awk '{print $4}'`
     STAGEDIR="/tmp/stage" # Scratch location for making filesystem image
     ISODIR="/tmp/iso" # Directory ISO is rolled from
     OUTPUT="fn2.iso" # Output file of mkisofs
-    MNTPOINT="/mnt" # Scratch mountpoint where the image will be dissected
+    SRC_MNTPOINT="/mnt" # Scratch mountpoint where the image will be dissected
+    DEST_MNTPOINT="/mnt2" # Destination mountpoint for image
+    TEMP_IMGFILE="/usr/newfile" # Scratch file for image
     INSTALL_SH="/home/jpaetzel/ix2/build/install.sh"
     RC_FILE="/home/jpaetzel/rc"
+    RESCUE_TAR="/home/jpaetzel/rescue.tar"
 
     MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
                  -allow-multidot -hide boot.catalog -o ${OUTPUT} -no-emul-boot \
                  -b boot/cdboot ${ISODIR}"
 
     cleanup
+    prep_imgfile_dest
 
     mkdir -p ${STAGEDIR}/dev
     mkdir -p ${ISODIR}/data
@@ -41,49 +45,52 @@ main()
 
     # move /boot from the image to the iso
     md=`mdconfig -a -t vnode -f ${BOOTFILE}`
-    mount /dev/${md} ${MNTPOINT}
+    mount /dev/${md}s1a ${SRC_MNTPOINT}
 
     # This is very byzantine, as we are moving the rescue we want into
     # the boot image, only to copy it to the CD.
     # TODO The image doesn't need /boot
+    rm -rf ${SRC_MNTPOINT}/rescue
+    mkdir ${SRC_MNTPOINT}/rescue
     mkdir ${STAGEDIR}/rescue
-    (cd /mnt/rescue && tar cf - . ) | (cd ${STAGEDIR}/rescue && tar xf - )
-    cp -R ${MNTPOINT}/boot ${ISODIR}/
+    tar -xvf ${RESCUE_TAR} -C ${SRC_MNTPOINT}/rescue
+    tar -xvf ${RESCUE_TAR} -C ${STAGEDIR}/rescue
+    mv ${SRC_MNTPOINT}/boot ${ISODIR}/
     cp ${IMGFILE} ${ISODIR}/FreeNAS-amd64-embedded.gz
 
-    # In order for any of this to make any difference to the image file
-    # it needs to be dump/restored
-    #echo "#/dev/md0 / ufs ro 0 0" > ${MNTPOINT}/etc/fstab
-    #echo 'root_rw_mount="NO"' >> ${MNTPOINT}/etc/rc.conf
-    #sed -i "" -e 's/^\(sshd.*\)".*"/\1"NO"/' ${MNTPOINT}/etc/rc.conf
-    #sed -i "" -e 's/^\(light.*\)".*"/\1"NO"/' ${MNTPOINT}/etc/rc.conf
-    #echo 'cron_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
-    #echo 'syslogd_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
-    #echo 'inetd_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
-    #echo 'devd_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
-    #echo 'newsyslog_enable="NO"' >> ${MNTPOINT}/etc/rc.conf
+    echo "#/dev/md0 / ufs ro 0 0" > ${SRC_MNTPOINT}/etc/fstab
+    echo 'root_rw_mount="NO"' >> ${SRC_MNTPOINT}/etc/rc.conf
+    sed -i "" -e 's/^\(sshd.*\)".*"/\1"NO"/' ${SRC_MNTPOINT}/etc/rc.conf
+    sed -i "" -e 's/^\(light.*\)".*"/\1"NO"/' ${SRC_MNTPOINT}/etc/rc.conf
+    echo 'cron_enable="NO"' >> ${SRC_MNTPOINT}/etc/rc.conf
+    echo 'syslogd_enable="NO"' >> ${SRC_MNTPOINT}/etc/rc.conf
+    echo 'inetd_enable="NO"' >> ${SRC_MNTPOINT}/etc/rc.conf
+    echo 'devd_enable="NO"' >> ${SRC_MNTPOINT}/etc/rc.conf
+    echo 'newsyslog_enable="NO"' >> ${SRC_MNTPOINT}/etc/rc.conf
     # Had to hack pc-sysinstall to install to /rescue, troubleshoot why
-    #(cd /home/jpaetzel/pc-sysinstall && make install DESTDIR=${MNTPOINT})
-    #rm ${MNTPOINT}/etc/rc.conf.local
-    #rm ${MNTPOINT}/etc/rc.d/ix-*
-    #rm ${MNTPOINT}/etc/rc.d/motd
-    #rm ${MNTPOINT}/etc/rc.d/ip6addrctl
-    #rm ${MNTPOINT}/etc/rc.initdiskless
-    #rm -rf ${MNTPOINT}/bin ${MNTPOINT}/sbin ${MNTPOINT}/usr/local/lib*
-    #rm -rf ${MNTPOINT}/usr/bin ${MNTPOINT}/usr/sbin ${MNTPOINT}/usr/local/lib*
-    #rm -rf ${MNTPOINT}/usr/local/bin ${MNTPOINT}/usr/local/etc
-    #ln -s /rescue ${MNTPOINT}/usr/bin
-    #ln -s /rescue ${MNTPOINT}/usr/sbin
-    #ln -s /rescue ${MNTPOINT}/bin
-    #ln -s /rescue ${MNTPOINT}/sbin
-    #cp ${RC_FILE} ${MNTPOINT}/etc/
-    #cp ${INSTALL_SH} ${MNTPOINT}/etc/
-    #chmod 755 /mnt/etc/install.sh
-    #chown root:wheel ${MNTPOINT}/etc/install.sh
-    unmount
+    (cd /home/jpaetzel/pc-sysinstall && make install DESTDIR=${SRC_MNTPOINT})
+    rm ${SRC_MNTPOINT}/etc/rc.conf.local
+    rm ${SRC_MNTPOINT}/etc/rc.d/ix-*
+    rm ${SRC_MNTPOINT}/etc/rc.d/motd
+    rm ${SRC_MNTPOINT}/etc/rc.d/ip6addrctl
+    rm ${SRC_MNTPOINT}/etc/rc.initdiskless
+    rm -rf ${SRC_MNTPOINT}/bin ${SRC_MNTPOINT}/sbin ${SRC_MNTPOINT}/usr/local
+    rm -rf ${SRC_MNTPOINT}/usr/bin ${SRC_MNTPOINT}/usr/sbin
+    ln -s ../../rescue ${SRC_MNTPOINT}/usr/bin
+    ln -s ../../rescue ${SRC_MNTPOINT}/usr/sbin
+    ln -s ../rescue ${SRC_MNTPOINT}/bin
+    ln -s ../rescue ${SRC_MNTPOINT}/sbin
+    cp ${RC_FILE} ${SRC_MNTPOINT}/etc/
+    cp ${INSTALL_SH} ${SRC_MNTPOINT}/etc/
+    chmod 755 ${SRC_MNTPOINT}/etc/install.sh
+    chown root:wheel ${SRC_MNTPOINT}/etc/install.sh
 
+    dump -0Laf - /dev/${md}s1a | ( cd ${DEST_MNTPOINT} && restore -rf -)
+    unmount ${SRC_MNTPOINT} ${md}
+    rm ${DEST_MNTPOINT}/restore*
+    unmount ${DEST_MNTPOINT} ${md_tmp}
     # Compress what's left of the image after mangling it
-    mkuzip -o ${ISODIR}/data/base.ufs.uzip ${BOOTFILE}
+    mkuzip -o ${ISODIR}/data/base.ufs.uzip ${TEMP_IMGFILE}
 
     # Magic scripts for the LiveCD
     cat > ${STAGEDIR}/baseroot.rc << 'EOF'
@@ -172,7 +179,8 @@ make_pristine()
 {
     # Put everything back the way it was before this script was run
     cleanup
-    unmount
+    unmount ${SRC_MNTPOINT} ${md}
+    unmount ${DEST_MNTPOINT} ${md_tmp}
 
     CURR_BOOTFILE_MD=`md5 ${BOOTFILE} | awk '{print $4}'`
     if [ "${CURR_BOOTFILE_MD}" = "${BOOTFILE_MD}" ]; then
@@ -193,7 +201,10 @@ make_pristine()
 
 unmount()
 {
-    md_val=`echo ${md} | sed s/^md//`
+    local MNTPOINT=$1
+    local MD=$2
+
+    md_val=`echo ${MD} | sed s/^md//`
     df ${MNTPOINT} | grep ${MNTPOINT} > /dev/null
     if [ "$?" = "0" ]; then
         while [ 1 ]
@@ -211,6 +222,17 @@ unmount()
         mdconfig -d -u ${md_val}
     fi
 
+}
+
+prep_imgfile_dest()
+{
+    if [ -f ${TEMP_IMGFILE} ]; then
+        rm ${TEMP_IMGFILE}
+    fi
+    dd if=/dev/zero of=${TEMP_IMGFILE} bs=1m count=1 seek=45
+    md_tmp=`mdconfig -a -t vnode -f ${TEMP_IMGFILE}`
+    newfs /dev/${md_tmp}
+    mount /dev/${md_tmp} ${DEST_MNTPOINT}
 }
 
 main
