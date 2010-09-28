@@ -345,7 +345,7 @@ def staticroute_detail(request, staticrouteid, template_name='freenas/network/st
 ## Disk section
 
 @login_required
-def DiskView(request):
+def DiskView(request, template_name = 'freenas/disks/index.html'):
     disk = DiskForm(request.POST)
     diskgroup = DiskGroupForm(request.POST)
     volume = VolumeForm(request.POST)
@@ -361,11 +361,14 @@ def DiskView(request):
             mountpoint.save()
         return HttpResponseRedirect('/freenas/disk/management/')
     else:
+        disk_list = Disk.objects.all()
+        group_list = DiskGroup.objects.all()
         disk = DiskForm()
         diskgroup = DiskGroupForm()
         volume = VolumeForm()
         mountpoint = MountPointForm()
     variables = RequestContext(request, {
+        'disk_list': disk_list,
         'disk': disk,
         'diskgroup': diskgroup,
         'volume': volume,
@@ -373,14 +376,6 @@ def DiskView(request):
     })
     return render_to_response('freenas/disks/index.html', variables)
 
-@login_required
-def disk_list(request, template_name='freenas/disks/disk_list.html'):
-    query_set = Disk.objects.all()
-    return object_list(
-        request,
-        template_name = template_name,
-        queryset = query_set
-    )
 
 @login_required
 def disk_detail(request, diskid, template_name='freenas/disks/disk_detail.html'):

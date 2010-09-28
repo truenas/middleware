@@ -4,22 +4,47 @@
 {% if user.is_authenticated %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
     <div dojoType="dijit.layout.ContentPane" title="Active">
+
 <table>
+    <tr><td><h3>Disks</h3></td></tr>
     <tr>
-        <td style="padding-right:25px;">
-            <strong>Disks</strong>
-        </td>
-        <td>
-        </td>
+        <td width="150px" style="background:#cfcfcf;"><strong>Disk Name</strong></td>
+        <td width="50px" style="background:#cfcfcf;"><strong>Disk</strong></td>
+        <td width="25px" style="background:#cfcfcf;"></td>
     </tr>
+{% for disk in disk_list %}
     <tr>
-        <td style="padding-right:25px;">
-            <strong>Volumes</strong>
-        </td>
         <td>
-        </td>
+{{ disk.disk_name }}
+
+        <td> {{ disk.disks }}</td>
+        <td>
+<a href="/freenas/disk/management/disks/delete/{{ disk.id }}/">Delete?</a>
+            </td>
     </tr>
+{% endfor %}
 </table>
+
+<table>
+    <tr><td><h3>Groups</h3></td></tr>
+    <tr>
+        <td width="150px" style="background:#cfcfcf;"><strong>Group Name</strong></td>
+        <td width="50px" style="background:#cfcfcf;"><strong>Type</strong></td>
+        <td width="50px" style="background:#cfcfcf;"><strong>Members</strong></td>
+        <td width="25px" style="background:#cfcfcf;"></td>
+    </tr>
+{% for diskgroup in group_list %}
+    <tr>
+        <td>
+{{ diskgroup.group_name }}
+
+        <td> {{ diskgroup.group_type }}</td>
+        <td> {{ diskgroup.members }}</td>
+        <td>
+<a href="/freenas/disk/management/disks/delete/{{ diskgroup.id }}/">Delete?</a>
+            </td>
+    </tr>
+{% endfor %}
 </table>
     </div>
 

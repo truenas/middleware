@@ -20,7 +20,7 @@
             <strong>Unison:</strong>
         </td>
         <td>
-            {{ unison_form.toggleUnison }}
+            <!--    {{ unison_form.toggleUnison }} -->
         </td>
     </tr>
     <tr>
@@ -28,7 +28,7 @@
             <strong>iSCSI Target:</strong>
         </td>
         <td>
-            {{ iscsi_form.toggleiSCSITarget }}
+            <!--  {{ iscsi_form.toggleiSCSITarget }} -->
         </td>
     </tr>
     <tr>
@@ -36,7 +36,7 @@
             <strong>Dynamic DNS:</strong>
         </td>
         <td>
-            {{ dynamicdns_form.toggleDynamicDNS }}
+            <!--  {{ dynamicdns_form.toggleDynamicDNS }} -->
         </td>
     </tr>
     <tr>
@@ -44,7 +44,7 @@
             <strong>SNMP:</strong>
         </td>
         <td>
-            {{ snmp_form.toggleSNMP }}
+            <!-- {{ snmp_form.toggleSNMP }} -->
         </td>
     </tr>
     <tr>
@@ -52,7 +52,7 @@
             <strong>UPS:</strong>
         </td>
         <td>
-            {{ ups_form.toggleUPS }}
+            <!-- {{ ups_form.toggleUPS }} -->
         </td>
     </tr>
     <tr>
@@ -60,7 +60,7 @@
             <strong>Web Server:</strong>
         </td>
         <td>
-            {{ webserver_form.toggleWebserver }}
+            <!--  {{ webserver_form.toggleWebserver }} -->
         </td>
     </tr>
     <tr>
@@ -68,7 +68,7 @@
             <strong>FTP:</strong>
         </td>
         <td>
-            {{ ftp_form.toggleFTP }}
+            <!-- {{ ftp_form.toggleFTP }} -->
         </td>
     </tr>
     <tr>
@@ -76,7 +76,7 @@
             <strong>TFTP:</strong>
         </td>
         <td>
-            {{ tftp_form.toggleTFTP }}
+            <!--     {{ tftp_form.toggleTFTP }} -->
         </td>
     </tr>
     <tr>
@@ -84,7 +84,7 @@
             <strong>SSH:</strong>
         </td>
         <td>
-            {{ ssh_form.toggleSSH }}
+            <!--   {{ ssh_form.toggleSSH }} -->
         </td>
     </tr>
     </table>
@@ -95,6 +95,15 @@
 <div dojoType="dijit.layout.ContentPane" title="Windows" closable="true">
 <form action="." method="post">{% csrf_token %}
                     <table>
+
+                        <tr>
+                            <td style="padding-right:25px;">
+                                <strong>Toggle</strong>
+                            </td>
+                            <td>
+                                {{ cifs.toggleCIFS }}
+                            </td>
+                        </tr>
                         <tr>
                             <td style="padding-right:25px;">
                                 <strong>Netbios Name:</strong>
@@ -273,6 +282,14 @@
   <div dojoType="dijit.layout.ContentPane" title="Apple" closable="true">
 <form action="." method="post">{% csrf_token %}
             <table>
+    <tr>
+                            <td style="padding-right:25px;">
+                                <strong>Toggle</strong>
+                            </td>
+                            <td>
+                                {{ afp.toggleAFP }}
+                            </td>
+                        </tr>
                 <tr>
                     <td style="padding-right:25px;">
                         <strong>Name:</strong>
@@ -290,6 +307,14 @@
         <div dojoType="dijit.layout.ContentPane" title="UNIX" closable="true">
 <form action="." method="post">{% csrf_token %}
      <table>
+              <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Toggle</strong>
+                    </td>
+                    <td>
+                        {{ nfs.toggleNFS }}
+                    </td>
+                </tr>
                 <tr>
                     <td style="padding-right:25px;">
                         <strong>Servers:</strong>
@@ -308,6 +333,14 @@
 <div dojoType="dijit.layout.ContentPane" title="Unison" closable="true">
 <form action="." method="post">{% csrf_token %}
             <table>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Toggle</strong>
+                    </td>
+                    <td>
+                        {{ unison_form.toggleUnison }}
+                    </td>
+                </tr>
                 <tr>
                     <td style="padding-right:25px;">
                         <strong>Working Directory:</strong>
@@ -331,6 +364,14 @@
 <div dojoType="dijit.layout.ContentPane" title="iSCSI Target" closable="true">
 <form action="." method="post">{% csrf_token %}
             <table>
+                <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Toggle</strong>
+                    </td>
+                    <td>
+                        {{ iscsi_form.toggleiSCSITarget }}
+                    </td>
+                </tr>
                 <tr>
                     <td style="padding-right:25px;">
                         <strong>Base Name:</strong>
@@ -426,6 +467,14 @@
 <div dojoType="dijit.layout.ContentPane" title="Dynamic DNS" closable="true">
 <form action="." method="post">{% csrf_token %}
             <table>
+      <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Toggle</strong>
+                    </td>
+                    <td>
+                        {{ dynamicdns_form.toggleDynamicDNS }}
+                    </td>
+                </tr>
                 <tr>
                     <td style="padding-right:25px;">
                         <strong>Provider:</strong>
@@ -498,6 +547,14 @@
 <div dojoType="dijit.layout.ContentPane" title="SNMP" closable="true">
 <form action="." method="post">{% csrf_token %}
             <table>
+         <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Toggle</strong>
+                    </td>
+                    <td>
+                        {{ snmp_form.toggleSNMP }}
+                    </td>
+                </tr>
                 <tr>
                     <td style="padding-right:25px;">
                         <strong>Location:</strong>
@@ -546,6 +603,14 @@
 <div dojoType="dijit.layout.ContentPane" title="UPS" closable="true">
 <form action="." method="post">{% csrf_token %}
    <table>
+   <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Toggle</strong>
+                    </td>
+                    <td>
+                        {{ ups_form.toggleUPS }}
+                    </td>
+                </tr>
                 <tr>
                     <td style="padding-right:25px;">
                         <strong>Identifier:</strong>
@@ -642,6 +707,14 @@
 <div dojoType="dijit.layout.ContentPane" title="Bit Torrent" closable="true">
 <form action="." method="post">{% csrf_token %}
   <table>
+   <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Toggle:</strong>
+                    </td>
+                    <td>
+                        {{ bittorrent_form.toggleBitTorrent }}
+                    </td>
+                </tr>
                 <tr>
                     <td style="padding-right:25px;">
                         <strong>Peer port:</strong>
@@ -786,6 +859,14 @@
 <div dojoType="dijit.layout.ContentPane" title="Web Server" closable="true">
 <form action="." method="post">{% csrf_token %}
           <table>
+        <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Toggle</strong>
+                    </td>
+                    <td>
+                        {{ webserver_form.toggleWebserver }}
+                    </td>
+                </tr>
                 <tr>
                     <td style="padding-right:25px;">
                         <strong>Protocol:</strong>
@@ -835,6 +916,14 @@
 <div dojoType="dijit.layout.ContentPane" title="FTP" closable="true">
 <form action="." method="post">{% csrf_token %}
             <table>
+        <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Toggle</strong>
+                    </td>
+                    <td>
+                        {{ ftp_form.toggleFTP }}
+                    </td>
+                </tr>
                 <tr>
                     <td style="padding-right:25px;">
                         <strong>Clients:</strong>
@@ -1034,6 +1123,14 @@
 <div dojoType="dijit.layout.ContentPane" title="TFTP" closable="true">
 <form action="." method="post">{% csrf_token %}
             <table>
+        <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Toggle</strong>
+                    </td>
+                    <td>
+                        {{ tftp_form.toggleTFTP }}
+                    </td>
+                </tr>
                 <tr>
                     <td style="padding-right:25px;">
                         <strong>Directory:</strong>
@@ -1090,6 +1187,14 @@
 <div dojoType="dijit.layout.ContentPane" title="SSH" closable="true">
 <form action="." method="post">{% csrf_token %}
             <table>
+        <tr>
+                    <td style="padding-right:25px;">
+                        <strong>Toggle</strong>
+                    </td>
+                    <td>
+                        {{ ssh_form.toggleSSH }}
+                    </td>
+                </tr>
                 <tr>
                     <td style="padding-right:25px;">
                         <strong>TCP Port:</strong>
