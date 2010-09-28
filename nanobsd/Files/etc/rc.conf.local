@@ -115,6 +115,7 @@ _gen_conf()
 	_bool_config cron_enable freenas_cronjob togglecron
 	## TODO: Need to make this a || logic.
 	_bool_config smartd_enable freenas_disk togglesmart
+	_bool_config afpd_enable freenas_servicesafp toggleAFP
 	_bool_config proftpd_enable freenas_servicesftp toggleFTP
 	_bool_config nfs_server_enable freenas_servicesnfs toggleNFS
 	_bool_config smbd_enable freenas_servicescifs togglecifs
