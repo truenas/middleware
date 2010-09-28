@@ -1,0 +1,133 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-afpd
+# REQUIRE: FILESYSTEMS
+# BEFORE: afpd
+
+. /etc/rc.subr
+
+# Defaults
+afpd_enable=${afpd_enable:-"NO"}
+afpd_config=${afpd_config:-"/etc/${name}.conf"}
+afpd_avdefault=${afpd_avdefault:-"/etc/AppleVolumes.default"}
+afpd_avsystem=${afpd_avsystem:-"/etc/AppleVolumes.system"}
+command="/usr/local/sbin/${name}"
+command_args="-F ${afpd_config}"
+
+# If $1 == 1, return $2, otherwise return nothing
+bool_on()
+{
+    if [ $1 -gt 0 ]; then
+	echo -n $2
+    fi
+}
+
+# If $1 == 1, return $2, otherwise return nothing
+bool_off()
+{
+    if [ $1 -eq 0 ]; then
+	echo -n $2
+    fi
+}
+
+# Return "on" for '1' and "off" for '0'
+on_off()
+{
+    case $1 in
+	0) echo "off";;
+	1) echo "on";;
+    esac
+}
+
+generate_afpd_config()
+{
+    local IFS=\|
+    local f="toggleAFP name guest local ddp"
+    local toggleAFP name guest local ddp
+    local cmd sf
+    cp /dev/null ${afpd_config}
+    sf=$(echo $f | sed -e 's/ /, /g')
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+        "SELECT $sf FROM freenas_servicesafp ORDER BY -id LIMIT 1" | \
+    while read toggleAFP name guest local ddp; do
+	: ${name:=-}
+	cat <<EOF >> ${afpd_config}
+"${name}" $(bool_off ${ddp} "-noddp") \
+-nosavepassword -defaultvol ${afpd_avdefault} -systemvol ${afpd_avsystem} \
+-uservol -uampath /etc/uams -guestname "ftp" \
+EOF
+	if [ ${guest} -eq 1 -a ${local} -eq 0 ]; then
+	    echo "-uamlist uams_guest.so" >> ${afpd_config}
+	elif [ ${local} -eq 1 ]; then
+	    echo "-uamlist uams_guest.so,uams_clrtxt.so,uams_dhx.so,uams_randnum.so" >> ${afpd_config}
+	else
+	    echo >> ${afpd_config}
+	fi
+    done
+}
+
+generate_av_system()
+{
+    local IFS=\|
+    local vol_name
+    cp /dev/null ${afpd_avsystem}
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+        "SELECT vol_name FROM freenas_volume" | \
+    while read vol_name; do
+	cat <<EOF >> ${afpd_avsystem}
+"/mnt/${vol_name}" "${vol_name}" options:usedots allow:@admin
+EOF
+    done
+}
+
+generate_av_default()
+{
+    local IFS=\|
+    local name comment path_id globalro sharepw sharecharsets allow deny afpro afprw diskdiscovery dbpath cachecnid crls mswindows noadouble nodev nofileid nohex prodos nostat upriv
+    local f="name comment path_id globalro sharepw sharecharsets allow deny afpro afprw diskdiscovery dbpath cachecnid crls mswindows noadouble nodev nofileid nohex prodos nostat upriv"
+    local sf
+    sf=$(echo $f | sed -e 's/ /, /g')
+    cp /dev/null ${afpd_avdefault}
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+        "SELECT $sf FROM freenas_appleshare ORDER BY -id LIMIT 1" | \
+    while read name comment path_id globalro sharepw sharecharsets allow deny afpro afprw diskdiscovery dbpath cachecnid crls mswindows noadouble nodev nofileid nohex prodos nostat upriv; do
+	echo -n "\"/mnt/${name}\" \"${name}\"" >> ${afpd_avdefault}
+	echo -n "${sharepw:- password:${sharepw}}" >> ${afpd_avdefault}
+#	echo -n "${casefold:- casefold:${casefold}}" >> ${afpd_avdefault}
+	echo -n "${sharecharsets:- sharecharsets:${sharecharsets}" >> ${afpd_avdefault}
+	echo -n " options:usedots"
+#		-m "options/*" \
+#			-v "concat(',',local-name())" \
+#		-b \
+#		-i "adisk/enable" \
+#			-i "string-length(adisk/advf) > 0" \
+#				-v "concat(',','tm')" \
+#			-b \
+#		-b \
+	echo -n "${allow:- allow:${allow}}" >> ${afpd_avdefault}
+	echo -n "${deny:- deny:${deny}}" >> ${afpd_avdefault}
+	echo -n "${rolist:- rolist:${rolist}}" >> ${afpd_avdefault}
+	echo -n "${rwlist:- rwlist:${rwlist}}" >> ${afpd_avdefault}
+	echo -n "${rwlist:- rwlist:${rwlist}}" >> ${afpd_avdefault}
+	echo -n "${dbpath:- dbpath:\"${dbpath}\"}" >> ${afpd_avdefault}
+#		-i "string-length(cnidscheme) > 0" -v "concat('cnidscheme:',cnidscheme,' ')" -b \
+	echo "" >> ${afpd_avdefault}
+    done
+}
+
+generate_afpd()
+{
+    generate_afpd_config
+    generate_av_system
+    generate_av_default
+}
+
+name="ix-afpd"
+start_cmd='generate_afpd'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
