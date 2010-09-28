@@ -50,8 +50,18 @@ def helperView(request, theForm, model, url):
             if model.objects.count() > 3:
                 stale_id = model.objects.order_by("-id")[3].id
                 model.objects.filter(id__lte=stale_id).delete()
+        else:
+            # This is a debugging aid to raise exception when validation
+            # is not passed.
+            form.save()
     else:
-        _entity = model.objects.order_by("-id").values()[0]
+        try:
+            _entity = model.objects.order_by("-id").values()[0]
+        except:
+            # TODO: We throw an exception (which makes this try/except
+            # meaningless) for now.  A future version will have the
+            # ability to set up default values.
+            raise
         form = theForm(data = _entity)
     variables = RequestContext(request, {
         'form': form
