@@ -5,7 +5,7 @@
 
 # PROVIDE: ix-afpd
 # REQUIRE: FILESYSTEMS
-# BEFORE: afpd
+# BEFORE: netatalk
 
 . /etc/rc.subr
 
@@ -14,8 +14,6 @@ afpd_enable=${afpd_enable:-"NO"}
 afpd_config=${afpd_config:-"/etc/afpd.conf"}
 afpd_avdefault=${afpd_avdefault:-"/etc/AppleVolumes.default"}
 afpd_avsystem=${afpd_avsystem:-"/etc/AppleVolumes.system"}
-command="/usr/local/sbin/afpd"
-command_args="-F ${afpd_config}"
 
 # If $1 == 1, return $2, otherwise return nothing
 bool_on()
@@ -55,9 +53,9 @@ generate_afpd_config()
     while read toggleAFP name guest local ddp; do
 	: ${name:=-}
 	cat <<EOF >> ${afpd_config}
-"${name}" $(bool_off ${ddp} "-noddp") \
--nosavepassword -defaultvol ${afpd_avdefault} -systemvol ${afpd_avsystem} \
--uservol -uampath /etc/uams -guestname "ftp" \
+"${name}" $(bool_off ${ddp} "-noddp") -nosavepassword \\
+-defaultvol ${afpd_avdefault} -systemvol ${afpd_avsystem} \\
+-uservol -uampath /etc/uams -guestname "ftp" \\
 EOF
 	if [ ${guest} -eq 1 -a ${local} -eq 0 ]; then
 	    echo "-uamlist uams_guest.so" >> ${afpd_config}
