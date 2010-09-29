@@ -592,19 +592,21 @@ class MountPoint(models.Model):
             help_text="Enter Mount Point options here",
             null=True,
             )
+    def __unicode__(self):
+        return self.mountpoint
 
 
 class WindowsShare(models.Model):
-    name = models.CharField(
+    windowsshare_name = models.CharField(
             max_length=120, 
             verbose_name="Name"
             )
-    comment = models.CharField(
+    windowsshare_comment = models.CharField(
             max_length=120, 
             verbose_name="Comment"
             )
-    path = models.ForeignKey(MountPoint)
-    globalro = models.BooleanField()
+    windowsshare_path = models.ForeignKey(MountPoint)
+    windowsshare_globalro = models.BooleanField()
     cifsro = models.BooleanField()
     browsable = models.BooleanField()
     inheritperms = models.BooleanField()
@@ -630,22 +632,22 @@ class WindowsShare(models.Model):
             )
     
     def __unicode__(self):
-        return self.name
+        return self.windowsshare_name
     class Meta:
         verbose_name = "Windows Share"
 
        
 class AppleShare(models.Model):
-    name = models.CharField(
+    appleshare_name = models.CharField(
             max_length=120, 
             verbose_name="Name"
             )
-    comment = models.CharField(
+    appleshare_comment = models.CharField(
             max_length=120, 
             verbose_name="Comment"
             )
-    path = models.ForeignKey(MountPoint)
-    globalro = models.BooleanField()
+    appleshare_path = models.ForeignKey(MountPoint)
+    appleshare_globalro = models.BooleanField()
     sharepw = models.CharField(
             max_length=120, 
             verbose_name="Share password",
@@ -701,22 +703,18 @@ class AppleShare(models.Model):
     upriv = models.BooleanField()
     
     def __unicode__(self):
-        return self.path
+        return self.appleshare_path
 
     class Meta:
         verbose_name = "Share"
     
 class UnixShare(models.Model):
-    name = models.CharField(
-            max_length=120, 
-            verbose_name="Name"
-            )
-    comment = models.CharField(
+    unixshare_comment = models.CharField(
             max_length=120, 
             verbose_name="Comment"
             )
-    path = models.ForeignKey(MountPoint)
-    globalro = models.BooleanField()
+    unixshare_path = models.ForeignKey(MountPoint)
+    unixshare_globalro = models.BooleanField()
     allroot = models.BooleanField()
     network = models.CharField(
             max_length=120, 
@@ -728,7 +726,7 @@ class UnixShare(models.Model):
     quiet = models.BooleanField()
     
     def __unicode__(self):
-        return self.path
+        return self.unixshare_path
 
     class Meta:
         verbose_name = "UNIX Share"     

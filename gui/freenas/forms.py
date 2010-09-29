@@ -135,7 +135,10 @@ class VolumeForm(ModelForm):
     class Meta:
         model = Volume
     def save(self):
-        super(VolumeForm, self).save()
+        vinstance = super(VolumeForm, self).save()
+        # Create the inherited mountpoint
+        mp = MountPoint(volumeid=vinstance, mountpoint='/mnt/' + self.cleaned_data['vol_name'], mountoptions='rw')
+        mp.save()
         notifier().create("disk")
 
 """ Shares """

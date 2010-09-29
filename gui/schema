@@ -83,10 +83,10 @@ CREATE TABLE "freenas_accessldap" (
 );
 CREATE TABLE "freenas_appleshare" (
     "id" integer NOT NULL PRIMARY KEY,
-    "name" varchar(120) NOT NULL,
-    "comment" varchar(120) NOT NULL,
-    "path_id" integer NOT NULL REFERENCES "freenas_mountpoint" ("id"),
-    "globalro" bool NOT NULL,
+    "appleshare_name" varchar(120) NOT NULL,
+    "appleshare_comment" varchar(120) NOT NULL,
+    "appleshare_path_id" integer NOT NULL REFERENCES "freenas_mountpoint" ("id"),
+    "appleshare_globalro" bool NOT NULL,
     "sharepw" varchar(120) NOT NULL,
     "sharecharset" varchar(120) NOT NULL,
     "allow" varchar(120) NOT NULL,
@@ -518,10 +518,9 @@ CREATE TABLE "freenas_systemgeneralsetup" (
 );
 CREATE TABLE "freenas_unixshare" (
     "id" integer NOT NULL PRIMARY KEY,
-    "name" varchar(120) NOT NULL,
-    "comment" varchar(120) NOT NULL,
-    "path_id" integer NOT NULL REFERENCES "freenas_mountpoint" ("id"),
-    "globalro" bool NOT NULL,
+    "unixshare_comment" varchar(120) NOT NULL,
+    "unixshare_path_id" integer NOT NULL REFERENCES "freenas_mountpoint" ("id"),
+    "unixshare_globalro" bool NOT NULL,
     "allroot" bool NOT NULL,
     "network" varchar(120) NOT NULL,
     "alldirs" bool NOT NULL,
@@ -541,10 +540,10 @@ CREATE TABLE "freenas_volume_groups" (
 );
 CREATE TABLE "freenas_windowsshare" (
     "id" integer NOT NULL PRIMARY KEY,
-    "name" varchar(120) NOT NULL,
-    "comment" varchar(120) NOT NULL,
-    "path_id" integer NOT NULL REFERENCES "freenas_mountpoint" ("id"),
-    "globalro" bool NOT NULL,
+    "windowsshare_name" varchar(120) NOT NULL,
+    "windowsshare_comment" varchar(120) NOT NULL,
+    "windowsshare_path_id" integer NOT NULL REFERENCES "freenas_mountpoint" ("id"),
+    "windowsshare_globalro" bool NOT NULL,
     "cifsro" bool NOT NULL,
     "browsable" bool NOT NULL,
     "inheritperms" bool NOT NULL,
@@ -566,7 +565,7 @@ CREATE INDEX "auth_user_groups_bda51c3c" ON "auth_user_groups" ("group_id");
 CREATE INDEX "auth_user_groups_fbfc09f1" ON "auth_user_groups" ("user_id");
 CREATE INDEX "auth_user_user_permissions_1e014c8f" ON "auth_user_user_permissions" ("permission_id");
 CREATE INDEX "auth_user_user_permissions_fbfc09f1" ON "auth_user_user_permissions" ("user_id");
-CREATE INDEX "freenas_appleshare_ecde2813" ON "freenas_appleshare" ("path_id");
+CREATE INDEX "freenas_appleshare_62eb6fde" ON "freenas_appleshare" ("appleshare_path_id");
 CREATE INDEX "freenas_diskgroup_members_6da0174d" ON "freenas_diskgroup_members" ("diskgroup_id");
 CREATE INDEX "freenas_diskgroup_members_9f8f1583" ON "freenas_diskgroup_members" ("disk_id");
 CREATE INDEX "freenas_mountpoint_588b6fd1" ON "freenas_mountpoint" ("volumeid_id");
@@ -577,7 +576,7 @@ CREATE INDEX "freenas_systemadvancedcommandscripts_1f1e360d" ON "freenas_systema
 CREATE INDEX "freenas_systemadvancedcron_b3b30a72" ON "freenas_systemadvancedcron" ("cronjob_id");
 CREATE INDEX "freenas_systemadvancedrcconf_eaed6f8d" ON "freenas_systemadvancedrcconf" ("rcvariable_id");
 CREATE INDEX "freenas_systemadvancedsysctlconf_bf2644cb" ON "freenas_systemadvancedsysctlconf" ("sysctlMIB_id");
-CREATE INDEX "freenas_unixshare_ecde2813" ON "freenas_unixshare" ("path_id");
+CREATE INDEX "freenas_unixshare_b0a12c59" ON "freenas_unixshare" ("unixshare_path_id");
 CREATE INDEX "freenas_volume_groups_6da0174d" ON "freenas_volume_groups" ("diskgroup_id");
 CREATE INDEX "freenas_volume_groups_d06109c8" ON "freenas_volume_groups" ("volume_id");
-CREATE INDEX "freenas_windowsshare_ecde2813" ON "freenas_windowsshare" ("path_id");
+CREATE INDEX "freenas_windowsshare_8892ced" ON "freenas_windowsshare" ("windowsshare_path_id");

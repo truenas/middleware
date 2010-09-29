@@ -456,10 +456,12 @@ def SharesView(request):
             unixshare.save()
         return HttpResponseRedirect('/freenas/shares/')
     else:
+        mountpoint_list = MountPoint.objects.all()
         windowsshare = WindowsShareForm()
         appleshare = AppleShareForm()
         unixshare = UnixShareForm()
     variables = RequestContext(request, {
+        'mountpoint_list': mountpoint_list,
         'windowsshare': windowsshare,
         'appleshare': appleshare,
         'unixshare': unixshare,
