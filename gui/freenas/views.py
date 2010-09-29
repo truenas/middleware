@@ -363,12 +363,15 @@ def DiskView(request, template_name = 'freenas/disks/index.html'):
     else:
         disk_list = Disk.objects.all()
         group_list = DiskGroup.objects.all()
+        volume_list = Volume.objects.all()
         disk = DiskForm()
         diskgroup = DiskGroupForm()
         volume = VolumeForm()
         mountpoint = MountPointForm()
     variables = RequestContext(request, {
         'disk_list': disk_list,
+        'group_list': group_list,
+        'volume_list': volume_list,
         'disk': disk,
         'diskgroup': diskgroup,
         'volume': volume,

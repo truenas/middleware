@@ -8,7 +8,7 @@
 <table>
     <tr><td><h3>Disks</h3></td></tr>
     <tr>
-        <td width="150px" style="background:#cfcfcf;"><strong>Disk Name</strong></td>
+        <td width="150px" style="background:#cfcfcf;"><strong>Name</strong></td>
         <td width="50px" style="background:#cfcfcf;"><strong>Disk</strong></td>
         <td width="25px" style="background:#cfcfcf;"></td>
     </tr>
@@ -28,20 +28,37 @@
 <table>
     <tr><td><h3>Groups</h3></td></tr>
     <tr>
-        <td width="150px" style="background:#cfcfcf;"><strong>Group Name</strong></td>
+        <td width="150px" style="background:#cfcfcf;"><strong>Name</strong></td>
         <td width="50px" style="background:#cfcfcf;"><strong>Type</strong></td>
-        <td width="50px" style="background:#cfcfcf;"><strong>Members</strong></td>
         <td width="25px" style="background:#cfcfcf;"></td>
     </tr>
-{% for diskgroup in group_list %}
+{% for group in group_list %}
     <tr>
         <td>
-{{ diskgroup.group_name }}
+{{ group.group_name }}
 
-        <td> {{ diskgroup.group_type }}</td>
-        <td> {{ diskgroup.members }}</td>
+        <td> {{ group.group_type }}</td>
         <td>
-<a href="/freenas/disk/management/disks/delete/{{ diskgroup.id }}/">Delete?</a>
+<a href="/freenas/disk/management/groups/delete/{{ group.id }}/">Delete?</a>
+            </td>
+    </tr>
+{% endfor %}
+</table>
+<table>
+    <tr><td><h3>Volumes</h3></td></tr>
+    <tr>
+        <td width="150px" style="background:#cfcfcf;"><strong>Name</strong></td>
+        <td width="50px" style="background:#cfcfcf;"><strong>Type</strong></td>
+        <td width="25px" style="background:#cfcfcf;"></td>
+    </tr>
+{% for volume in volume_list %}
+    <tr>
+        <td>
+{{ volume.vol_name }}
+
+        <td> {{ volume.vol_type }}</td>
+        <td>
+<a href="/freenas/disk/management/volumes/delete/{{ volume.id }}/">Delete?</a>
             </td>
     </tr>
 {% endfor %}
