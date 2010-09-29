@@ -1,0 +1,35 @@
+Index: net/netatalk/files/netatalk.in
+--- net/netatalk/files/netatalk.in.orig	2010-09-28 21:31:50.000000000 -0600
++++ net/netatalk/files/netatalk.in	2010-09-28 21:32:49.000000000 -0600
+@@ -11,16 +11,6 @@
+ # other processes.
+ #
+ 
+-# Set defaults. Please overide these in %%PREFIX%%/etc/netatalk.conf
+-ATALK_ZONE=
+-ATALK_NAME="`/bin/hostname -s`"
+-AFPD_UAMLIST=
+-AFPD_MAX_CLIENTS=50
+-AFPD_GUEST=nobody
+-
+-# Load user config
+-if [ -f %%PREFIX%%/etc/netatalk.conf ]; then . %%PREFIX%%/etc/netatalk.conf; fi
+-
+ netatalk_enable=${netatalk_enable-"NO"}
+ atalkd_enable=${atalkd_enable-"NO"}
+ papd_enable=${papd_enable-"NO"}
+@@ -46,13 +36,7 @@
+     checkyesno papd_enable && %%PREFIX%%/sbin/papd
+     checkyesno cnid_metad_enable && %%PREFIX%%/sbin/cnid_metad
+     checkyesno timelord_enable && %%PREFIX%%/sbin/timelord
+-    checkyesno afpd_enable && \
+-    	%%PREFIX%%/sbin/afpd -n "${ATALK_NAME}${ATALK_ZONE}" \
+-		-s %%PREFIX%%/etc/AppleVolumes.system \
+-		-f %%PREFIX%%/etc/AppleVolumes.default \
+-		-g ${AFPD_GUEST} \
+-		-c ${AFPD_MAX_CLIENTS} \
+-		${AFPD_UAMLIST}
++    checkyesno afpd_enable && %%PREFIX%%/sbin/afpd -F /etc/afpd.conf
+ }
+ 
+ netatalk_stop() {
