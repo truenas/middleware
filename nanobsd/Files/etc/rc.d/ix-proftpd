@@ -12,11 +12,11 @@
 # Defaults
 proftpd_enable=${proftpd_enable:-"NO"}
 proftpd_flags=${proftpd_flags:-""}
-proftpd_config=${proftpd_config:-"/etc/${name}.conf"}
-proftpd_delaytable=${proftpd_delaytable:-"/var/run/${name}/${name}.delay"}
-proftpd_displaylogin=${proftpd_displaylogin:-"/var/run/${name}/${name}.motd"}
-proftpd_tlsrsacertfile=${proftpd_tlsrsacertfile:-"/etc/ssl/private/${name}.cert"}
-proftpd_tlsrsakeyfile=${proftpd_tlsrsakeyfile:-"/etc/ssl/private/${name}.key"}
+proftpd_config=${proftpd_config:-"/etc/proftpd.conf"}
+proftpd_delaytable=${proftpd_delaytable:-"/var/run/proftpd/proftpd.delay"}
+proftpd_displaylogin=${proftpd_displaylogin:-"/var/run/proftpd/proftpd.motd"}
+proftpd_tlsrsacertfile=${proftpd_tlsrsacertfile:-"/etc/ssl/private/proftpd.cert"}
+proftpd_tlsrsakeyfile=${proftpd_tlsrsakeyfile:-"/etc/ssl/private/proftpd.key"}
 proftpd_tcpaccessfilesallow=${proftpd_tcpaccessfilesallow:-"/etc/hosts.allow"}
 proftpd_tcpaccessfilesdeny=${proftpd_tcpaccessfilesdeny:-"/etc/hosts.allow"}
 proftpd_umaskfile=${proftpd_umaskfile:-"077"}
@@ -46,17 +46,25 @@ proftpd_modctrls_controlsengine=${proftpd_modctrls_controlsengine:-"off"}
 proftpd_modctrls_controlsacls=${proftpd_modctrls_controlsacls:-"all allow group wheel"}
 proftpd_modctrls_controlsauthfreshness=${proftpd_modctrls_controlsauthfreshness:-"10"}
 proftpd_modctrls_controlsmaxclients=${proftpd_modctrls_controlsmaxclients:-"5"}
-proftpd_modctrls_controlslog=${proftpd_modctrls_controlslog:-"/var/log/${name}/controls.log"}
+proftpd_modctrls_controlslog=${proftpd_modctrls_controlslog:-"/var/log/proftpd/controls.log"}
 proftpd_modctrls_controlsinterval=${proftpd_modctrls_controlsinterval:-"10"}
 proftpd_modban_bancontrolsacls=${proftpd_modban_bancontrolsacls:-"all allow group wheel"}
-proftpd_modban_banlog=${proftpd_modban_banlog:-"/var/log/${name}/ban.log"}
+proftpd_modban_banlog=${proftpd_modban_banlog:-"/var/log/proftpd/ban.log"}
 proftpd_modban_banmessage=${proftpd_modban_banmessage:-"Host %a has been banned"}
-proftpd_modban_bantable=${proftpd_modban_bantable:-"/var/run/${name}/ban.tab"}
+proftpd_modban_bantable=${proftpd_modban_bantable:-"/var/run/proftpd/ban.tab"}
+
+# If $1 is set, then return $2
+ifset()
+{
+    if [ -n "$1" ]; then
+	echo -n $2
+    fi
+}
 
 # If $1 == 1, return $2, otherwise return nothing
 bool_on()
 {
-    if [ $1 -gt 0 ]; then
+    if [ "$1" -gt 0 ]; then
 	echo -n $2
     else
 	echo -n "# $2"
@@ -87,8 +95,8 @@ generate_proftp()
     while read toggleFTP clients ipconnections loginattempt timeout ftp_rootlogin onlyanonymous onlylocal banner ftp_filemask ftp_dirmask fxp resume defaultroot ident reversedns masqaddress passiveportsmin passiveportsmax localuserbw localuserdlbw anonuserbw anonuserdlbw ssltls ftp_options; do
 
 	# Check if required directories exists.
-	[ ! -d "/var/run/${name}" ] && mkdir "/var/run/${name}"
-	[ ! -d "/var/log/${name}" ] && mkdir "/var/log/${name}"
+	[ ! -d "/var/run/proftpd" ] && mkdir "/var/run/proftpd"
+	[ ! -d "/var/log/proftpd" ] && mkdir "/var/log/proftpd"
 
 	# Check if required files exists.
 	[ ! -e "${proftpd_delaytable}" ] && cat /dev/null > "${proftpd_delaytable}"
@@ -111,7 +119,7 @@ generate_proftp()
 #		_privatekey=`configxml_get "//ftpd/privatekey"`
 #		# Create certificate and key files
 #		if [ -n "${_certificate}" -a -n "${_privatekey}" ]; then
-#			_tmpfile=/tmp/${name}$$.tmp
+#			_tmpfile=/tmp/proftpd$$.tmp
 #			echo "${_certificate}" > ${_tmpfile}
 #			/usr/bin/uudecode -m -p -r ${_tmpfile} > ${proftpd_tlsrsacertfile}
 #			/bin/chmod 0600 ${proftpd_tlsrsacertfile}
@@ -121,6 +129,8 @@ generate_proftp()
 #			/bin/rm -f ${_tmpfile}
 #		fi
 #	fi
+echo "Creating ${proftpd_config}"
+	cp /dev/null ${proftpd_config}
 	cat <<EOF >> ${proftpd_config}
 ServerName "$(hostname) FTP Server"
 ServerType standalone
@@ -161,7 +171,7 @@ EOF
   TransferRate STOR ${anonuserbw}
   TransferRate RETR ${anonuserdlbw}
 EOF
-	    if [ ${onlyanonymous} -eq 1 ]
+	    if [ ${onlyanonymous} -eq 1 ]; then
 		cat <<EOF >> ${proftpd_config}
   <Limit LOGIN>
     AllowAll
@@ -197,7 +207,7 @@ $(bool_on ${resume} "  AllowStoreRestart on")
   TimesGMT ${proftpd_timesgmt}>
 </Global>
 EOF
-	if [ ${anonymousonly} -gt 0 ]; then
+	if [ ${onlyanonymous} -gt 0 ]; then
 	    cat <<EOF >> ${proftpd_config}
 <Limit LOGIN>
 $(bool_on ${ftp_rootlogin} "  AllowGroup wheel")
@@ -205,7 +215,7 @@ $(bool_on ${ftp_rootlogin} "  AllowGroup wheel")
 </Limit>
 EOF
 	fi
-	if [ ${tls} -gt 0 ]; then
+	if [ ${ssltls} -gt 0 ]; then
 	    cat <<EOF >> ${proftpd_config}
 <IfModule mod_tls.c>
   TLSEngine on
