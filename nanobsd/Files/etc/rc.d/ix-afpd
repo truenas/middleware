@@ -11,10 +11,10 @@
 
 # Defaults
 afpd_enable=${afpd_enable:-"NO"}
-afpd_config=${afpd_config:-"/etc/${name}.conf"}
+afpd_config=${afpd_config:-"/etc/afpd.conf"}
 afpd_avdefault=${afpd_avdefault:-"/etc/AppleVolumes.default"}
 afpd_avsystem=${afpd_avsystem:-"/etc/AppleVolumes.system"}
-command="/usr/local/sbin/${name}"
+command="/usr/local/sbin/afpd"
 command_args="-F ${afpd_config}"
 
 # If $1 == 1, return $2, otherwise return nothing
