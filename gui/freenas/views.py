@@ -448,12 +448,14 @@ def SharesView(request):
     appleshare = AppleShareForm(request.POST)
     unixshare = UnixShareForm(request.POST)
     if request.method == 'POST':
-        if windowsshare.is_valid():
+        if request.path_info == '/freenas/shares/windows/':
             windowsshare.save()
-        if appleshare.is_valid():
+        elif request.path_info == '/freenas/shares/apple/':
             appleshare.save()
-        if unixshare.is_valid():
+        elif request.path_info == '/freenas/shares/unix/':
             unixshare.save()
+        else:
+            raise "Wrong request" # TODO: Should be something better
         return HttpResponseRedirect('/freenas/shares/')
     else:
         mountpoint_list = MountPoint.objects.all()

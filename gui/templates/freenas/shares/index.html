@@ -27,10 +27,59 @@
 {% endfor %}
 </table>
               
+<table>
+    <tr><td><h3>Shares</h3></td></tr>
+    <tr>
+        <td width="150px" style="background:#cfcfcf;"><strong>Share</strong></td>
+        <td width="50px" style="background:#cfcfcf;"><strong>Type</strong></td>
+        <td width="25px" style="background:#cfcfcf;"></td>
+    </tr>
+{% for share in windowsshare_list %}
+    <tr>
+        <td>
+{{ share.windowshare_name }}
+
+</td>
+
+        <td>Windows</td>
+        <td>
+<a href="/freenas/shares/delete/{{ share.id }}/">Delete?</a>
+            </td>
+    </tr>
+{% endfor %}
+{% for share in appleshare_list %}
+    <tr>
+        <td>
+{{ share.appleshare_name }}
+
+</td>
+
+        <td>Apple</td>
+        <td>
+<a href="/freenas/shares/delete/{{ share.id }}/">Delete?</a>
+            </td>
+    </tr>
+{% endfor %}
+
+{% for share in unixshare_list %}
+    <tr>
+        <td>
+{{ share.unixshare_name }}
+
+</td>
+
+        <td>Windows</td>
+        <td>
+<a href="/freenas/shares/delete/{{ share.id }}/">Delete?</a>
+            </td>
+    </tr>
+{% endfor %}
+</table>
+
 </div>
     <div dojoType="dijit.layout.ContentPane" title="Windows Share">
 
-<form action="." method="post">{% csrf_token %}
+<form action="/freenas/shares/windows/" method="post">{% csrf_token %}
         <table>
             {{ windowsshare }}
         </table>
@@ -40,7 +89,7 @@
         </div>
         <div dojoType="dijit.layout.ContentPane" title="Apple Share">
 
-<form action="." method="post">{% csrf_token %}
+<form action="/freenas/shares/apple/" method="post">{% csrf_token %}
         <table>
             {{ appleshare }}
         </table>
@@ -50,7 +99,7 @@
         </div>
         <div dojoType="dijit.layout.ContentPane" title="Unix Share">
 
-<form action="." method="post">{% csrf_token %}
+<form action="/freenas/shares/unix/" method="post">{% csrf_token %}
         <table>
             {{ unixshare }}
         </table>

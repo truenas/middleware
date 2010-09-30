@@ -711,7 +711,8 @@ class AppleShare(models.Model):
 class UnixShare(models.Model):
     unixshare_comment = models.CharField(
             max_length=120, 
-            verbose_name="Comment"
+            verbose_name="Comment",
+            blank=True,
             )
     unixshare_path = models.ForeignKey(MountPoint)
     unixshare_globalro = models.BooleanField()
@@ -719,9 +720,12 @@ class UnixShare(models.Model):
     network = models.CharField(
             max_length=120, 
             verbose_name="Authorized network",
-            help_text="Network that is authorised to access the NFS share."
+            help_text="Network that is authorized to access the NFS share.",
+            blank=True,
             )
-    alldirs = models.BooleanField()
+    alldirs = models.BooleanField(
+            help_text="",
+            )
     nfsro = models.BooleanField()
     quiet = models.BooleanField()
     
