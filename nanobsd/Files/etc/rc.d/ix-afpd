@@ -84,35 +84,33 @@ EOF
 generate_av_default()
 {
     local IFS=\|
-    local name comment mountpoint sharepw sharecharsets allow deny afpro afprw diskdiscovery dbpath cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv
-    local f="appleshare_name appleshare_comment mountpoint sharepw sharecharset allow deny afpro afprw diskdiscovery dbpath cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv"
+    local name comment mountpoint sharepw sharecharsets allow deny afpro afprw diskdiscovery discoverymode dbpath cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv
+    local f="appleshare_name appleshare_comment mountpoint sharepw sharecharset allow deny afpro afprw diskdiscovery discoverymode dbpath cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv"
     local sf
     sf=$(echo $f | sed -e 's/ /, /g')
-    cp /dev/null ${afpd_avdefault}
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
         "SELECT $sf FROM freenas_appleshare AS aps LEFT OUTER JOIN freenas_mountpoint AS mp ON aps.appleshare_path_id = mp.volumeid_id ORDER BY -aps.id LIMIT 1" | \
-    while read name comment mountpoint sharepw sharecharsets allow deny afpro afprw diskdiscovery dbpath cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv; do
-	echo -n "\"${mountpoint}\" \"${name}\"" >> ${afpd_avdefault}
-	echo -n "${sharepw:- password:${sharepw}}" >> ${afpd_avdefault}
-#	echo -n "${casefold:- casefold:${casefold}}" >> ${afpd_avdefault}
-	echo -n "${sharecharsets:- sharecharsets:${sharecharsets}}" >> ${afpd_avdefault}
+    while read name comment mountpoint sharepw sharecharsets allow deny afpro afprw diskdiscovery discoverymode dbpath cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv; do
+	echo "# ${comment}"
+	echo -n "\"${mountpoint}\" \"${name}\""
+	echo -n "${sharepw:- password:${sharepw}}"
+#	echo -n "${casefold:- casefold:${casefold}}"
+	echo -n "${sharecharsets:- sharecharsets:${sharecharsets}}"
 	echo -n " options:usedots"
-#		-m "options/*" \
-#			-v "concat(',',local-name())" \
-#		-b \
-#		-i "adisk/enable" \
-#			-i "string-length(adisk/advf) > 0" \
-#				-v "concat(',','tm')" \
-#			-b \
-#		-b \
-	echo -n "${allow:- allow:${allow}}" >> ${afpd_avdefault}
-	echo -n "${deny:- deny:${deny}}" >> ${afpd_avdefault}
-	echo -n "${rolist:- rolist:${rolist}}" >> ${afpd_avdefault}
-	echo -n "${rwlist:- rwlist:${rwlist}}" >> ${afpd_avdefault}
-	echo -n "${rwlist:- rwlist:${rwlist}}" >> ${afpd_avdefault}
-	echo -n "${dbpath:- dbpath:\"${dbpath}\"}" >> ${afpd_avdefault}
+	for _i in cachecnid crlf mswindows noadouble novdev nofileid nohex prodos nostat upriv; do
+	    ifon $(eval echo \$${_i}) ",${_i}"
+        done
+	if [ ${diskdiscovery} -eq 1 -a ${discoverymode} -eq "time-machine" ]; then
+	    echo -n ",tm"
+	fi
+	echo -n "${allow:- allow:${allow}}"
+	echo -n "${deny:- deny:${deny}}"
+	echo -n "${rolist:- rolist:${rolist}}"
+	echo -n "${rwlist:- rwlist:${rwlist}}"
+	echo -n "${rwlist:- rwlist:${rwlist}}"
+	echo -n "${dbpath:- dbpath:\"${dbpath}\"}"
 #		-i "string-length(cnidscheme) > 0" -v "concat('cnidscheme:',cnidscheme,' ')" -b \
-	echo "" >> ${afpd_avdefault}
+	echo ""
     done
 }
 
@@ -120,7 +118,7 @@ generate_afpd()
 {
     generate_afpd_config
     generate_av_system
-    generate_av_default
+    generate_av_default > ${afpd_avdefault}
 }
 
 name="ix-afpd"
