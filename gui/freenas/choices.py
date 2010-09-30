@@ -339,7 +339,7 @@ LOGLEVEL_CHOICES = (
 
 DISKDISCOVERY_CHOICES = (
         ('default', 'Default'),
-        ('time machine', 'Time Machine'),
+        ('time-machine', 'Time Machine'),
         )
 CASEFOLDING_CHOICES = (
         ('none', 'No case folding'),

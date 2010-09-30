@@ -603,7 +603,8 @@ class WindowsShare(models.Model):
             )
     windowsshare_comment = models.CharField(
             max_length=120, 
-            verbose_name="Comment"
+            verbose_name="Comment",
+            blank=True,
             )
     windowsshare_path = models.ForeignKey(MountPoint)
     windowsshare_globalro = models.BooleanField()
@@ -641,66 +642,109 @@ class AppleShare(models.Model):
     appleshare_name = models.CharField(
             max_length=120, 
             verbose_name="Name"
+            help_text="The volume name is the name that appears in the Chooser ot the "connect to server" dialog on Macintoshes to represent the appropriate share. If volumename is unspecified, the last component of pathname is used. No two volumes may have the same name. The volume name cannot contain the ':'  character. The volume name is mangled if it is very long. Mac codepage volume name is limited to 27 characters. UTF8-MAC volume name is limited to 'Volume Name Length' parameter in Services:Apple Share"
             )
     appleshare_comment = models.CharField(
             max_length=120, 
-            verbose_name="Comment"
+            verbose_name="Share Comment",
+            blank=True
             )
-    appleshare_path = models.ForeignKey(MountPoint)
-    appleshare_globalro = models.BooleanField()
+    appleshare_path = models.ForeignKey(MountPoint, verbose_name="Volume Path")
+    appleshare_globalro = models.BooleanField(
+            verbose_name="Export Read-Only")
     sharepw = models.CharField(
             max_length=120, 
             verbose_name="Share password",
-            help_text="This controls the access to this share with an access password."
+            blank=True,
+            help_text="This option allows you to set a volume password, which can be a maximum of 8 characters long (using ASCII strongly recommended at the time of this writing)."
         )
     sharecharset = models.CharField(
             max_length=120, 
             verbose_name="Share character set", 
+            blank=True,
             help_text="Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, etc."
             )
     allow = models.CharField(
             max_length=120, 
-            verbose_name="Allow",
+            verbose_name="Allow List",
+            blank=True,
             help_text="This option allows the users and groups that access a share to be specified. Users and groups are specified, delimited by commas. Groups are designated by a @ prefix."
             )
     deny = models.CharField(
             max_length=120, 
-            verbose_name="Allow",
+            verbose_name="Deny List",
+            blank=True,
             help_text="The deny option specifies users and groups who are not allowed access to the share. It follows the same format as the allow option."
             )
     afpro = models.CharField(
             max_length=120, 
             verbose_name="Read-only access",
+            blank=True,
             help_text="Allows certain users and groups to have read-only access to a share. This follows the allow option format."
         )
     afprw = models.CharField(
             max_length=120, 
-            verbose_name="Read-only access",
+            verbose_name="Read-write access",
+            blank=True,
             help_text="Allows certain users and groups to have read/write access to a share. This follows the allow option format. "
             )
-    diskdiscovery = models.BooleanField()
+    diskdiscovery = models.BooleanField(
+            verbose_name="Disk Discovery",
+            help_text="Allow other systems to discover this share as a disk for data, as a Time Machine backup volume or not at all."
+            )
     discoverymode = models.CharField(
             max_length=120, 
             choices=DISKDISCOVERY_CHOICES, 
             default='Default', 
             verbose_name="Disk discovery mode",
-            help_text="Note! Selecting 'Time Machine' on multiple shares will may cause unpredictable behavior in MacOS."
+            help_text="Note! Selecting 'Time Machine' on multiple shares will may cause unpredictable behavior in MacOS.  Default mode exports the volume as a data volume for users."
             )
     dbpath = models.CharField(
             max_length=120, 
-            verbose_name="Path",
-            help_text="Path to be shared."
+            verbose_name="Database Path",
+            blank=True,
+            help_text="Sets the database information to be stored in path. You have to specifiy a writable location, even if the volume is read only."
             )
-    cachecnid = models.BooleanField()
-    crlf = models.BooleanField()
-    mswindows = models.BooleanField()
-    noadouble = models.BooleanField()
-    nodev = models.BooleanField()
-    nofileid = models.BooleanField()
-    nohex = models.BooleanField()
-    prodos = models.BooleanField()
-    nostat = models.BooleanField()
-    upriv = models.BooleanField()
+    cachecnid = models.BooleanField(
+            verbose_name="Cache CNID",
+            help_text="If set afpd uses the ID information stored in AppleDouble V2 header files to reduce database load. Don't set this option if the volume is modified by non AFP clients (NFS/SMB/local)."
+            )
+    crlf = models.BooleanField(
+            verbose_name="Translate CR/LF",
+            help_text="Enables crlf translation for TEXT files, automatically converting macintosh line breaks into Unix ones. Use of this option might be dangerous since some older programs store binary data files as type 'TEXT' when saving and switch the filetype in a second step. Afpd will potentially destroy such files when 'erroneously' changing bytes in order to do line break translation."
+            )
+    mswindows = models.BooleanField(
+            verbose_name="Windows File Names",
+            help_text="This forces filenames to be restricted to the character set used by Windows. This is not recommended for shares used principally by Mac computers."
+            )
+    noadouble = models.BooleanField(
+            verbose_name="No .AppleDouble"
+            help_text="This controls whether the .AppleDouble directory gets created unless absolutely needed. This option should not be used if files are access mostly by Mac computers.  Clicking this option disables their creation."
+            )
+    nodev = models.BooleanField(
+            verbose_name="Zero Device Numbers"
+            help_text="Always use 0 for device number, helps when the device number is not constant across a reboot, cluster, ..."
+            )
+    nofileid = models.BooleanField(
+            verbose_name="Disable File ID"
+            help_text="Don't advertise createfileid, resolveid, deleteid calls."
+            )
+    nohex = models.BooleanField(
+            verbose_name="Disable :hex Names"
+            help_text="Disable :hex translations for anything except dot files. This option makes the '/' character illegal."
+            )
+    prodos = models.BooleanField(
+            verbose_name="ProDOS"
+            help_text="Provide compatibility with Apple II clients."
+            )
+    nostat = models.BooleanField(
+            verbose_name="No Stat"
+            help_text="Don't stat volume path when enumerating volumes list, useful for automounting or volumes created by a preexec script."
+            )
+    upriv = models.BooleanField(
+            verbose_name="AFP3 Unix Privs"
+            help_text="Use AFP3 unix privileges."
+            )
     
     def __unicode__(self):
         return self.appleshare_path
@@ -714,27 +758,38 @@ class UnixShare(models.Model):
             verbose_name="Comment",
             blank=True,
             )
-    unixshare_path = models.ForeignKey(MountPoint)
-    unixshare_globalro = models.BooleanField()
-    allroot = models.BooleanField()
+    unixshare_path = models.ForeignKey(MountPoint, verbose_name="Volume Path")
+    unixshare_globalro = models.BooleanField(
+            verbose_name="Export Read-Only")
+            )
+    allroot = models.BooleanField(
+            verbose_name="Map Root",
+            help_text="When enabled, map all remote root access to local root.  When disabled, map all remote root access to user -2:-2"
+            )
     network = models.CharField(
             max_length=120, 
             verbose_name="Authorized network",
-            help_text="Network that is authorized to access the NFS share.",
+            help_text="Network that is authorized to access the NFS share.  Specify network numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask.",
             blank=True,
             )
     alldirs = models.BooleanField(
-            help_text="",
+            verbose_name="All dirs"
+            help_text="Allow mounting of any subdirectory under this mount point if selected.  Otherwise, only the top level directory can be mounted.",
             )
-    nfsro = models.BooleanField()
-    quiet = models.BooleanField()
+    nfsro = models.BooleanField(
+            verbose_name="Read Only"
+            help_text="Export the share read only.  Writes are not permitted."
+            )
+    quiet = models.BooleanField(
+            verbose_name="Quiet"
+            help_text="Inibit syslog warnings if there are problems with exporting this share."
+            )
     
     def __unicode__(self):
         return self.unixshare_path
 
     class Meta:
         verbose_name = "UNIX Share"     
-
 
    
 
