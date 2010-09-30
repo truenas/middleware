@@ -37,13 +37,13 @@
 {% for share in windowsshare_list %}
     <tr>
         <td>
-{{ share.windowshare_name }}
+{{ share.windowsshare_name }}
 
 </td>
 
         <td>Windows</td>
         <td>
-<a href="/freenas/shares/delete/{{ share.id }}/">Delete?</a>
+<a href="/freenas/shares/windows/delete/{{ share.id }}/">Delete?</a>
             </td>
     </tr>
 {% endfor %}
@@ -56,7 +56,7 @@
 
         <td>Apple</td>
         <td>
-<a href="/freenas/shares/delete/{{ share.id }}/">Delete?</a>
+<a href="/freenas/shares/apple/delete/{{ share.id }}/">Delete?</a>
             </td>
     </tr>
 {% endfor %}
@@ -64,13 +64,13 @@
 {% for share in unixshare_list %}
     <tr>
         <td>
-{{ share.unixshare_name }}
+{{ share.unixshare_path }}
 
 </td>
 
-        <td>Windows</td>
+        <td>Unix</td>
         <td>
-<a href="/freenas/shares/delete/{{ share.id }}/">Delete?</a>
+<a href="/freenas/shares/unix/delete/{{ share.id }}/">Delete?</a>
             </td>
     </tr>
 {% endfor %}
