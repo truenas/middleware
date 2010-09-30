@@ -143,7 +143,7 @@ get_media_description()
 
 	if [ -n "${_media}" ]
 	then
-		_description=`pc-sysinstall disk-list -c -m|grep "^${_media}"\
+		_description=`pc-sysinstall disk-list -c |grep "^${_media}"\
 			|awk -F':' '{print $2}'|sed -E 's|.*<(.*)>.*$|\1|'`
 		VAL="${_description}"
 	fi

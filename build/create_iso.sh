@@ -12,22 +12,29 @@ main()
         exit
     fi
 
+    # Paths that may need altering on the build system
     IMGFILE="/home/jpaetzel/FreeNAS-8r5375-amd64.full.gz" # The FreeNAS image
     BOOTFILE="/home/jpaetzel/ix2/build/files/cd.img" # The image used to make the CD
-    BOOTFILE_MD=`md5 ${BOOTFILE} | awk '{print $4}'`
-    STAGEDIR="/tmp/stage" # Scratch location for making filesystem image
-    ISODIR="/tmp/iso" # Directory ISO is rolled from
-    OUTPUT="fn2.iso" # Output file of mkisofs
-    SRC_MNTPOINT="/mnt" # Scratch mountpoint where the image will be dissected
-    DEST_MNTPOINT="/mnt2" # Destination mountpoint for image
     TEMP_IMGFILE="/usr/newfile" # Scratch file for image
     INSTALL_SH="/home/jpaetzel/ix2/build/files/install.sh"
     RC_FILE="/home/jpaetzel/ix2/build/files/rc"
     RESCUE_TAR="/home/jpaetzel/ix2/build/files/rescue.tar"
 
+    # Various mount points needed to build the CD, adjust to taste
+    STAGEDIR="/tmp/stage" # Scratch location for making filesystem image
+    ISODIR="/tmp/iso" # Directory ISO is rolled from
+    SRC_MNTPOINT="/mnt" # Scratch mountpoint where the image will be dissected
+    DEST_MNTPOINT="/mnt2" # Destination mountpoint for image
+
+    OUTPUT="fn2.iso" # Output file of mkisofs
+
+    # A command forged by the gods themselves, change at your own risk
     MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
                  -allow-multidot -hide boot.catalog -o ${OUTPUT} -no-emul-boot \
                  -b boot/cdboot ${ISODIR}"
+
+    # END OF CONFIGURATION SECTION
+    BOOTFILE_MD=`md5 ${BOOTFILE} | awk '{print $4}'`
 
     cleanup
     prep_imgfile_dest
@@ -47,9 +54,6 @@ main()
     md=`mdconfig -a -t vnode -f ${BOOTFILE}`
     mount /dev/${md}s1a ${SRC_MNTPOINT}
 
-    # This is very byzantine, as we are moving the rescue we want into
-    # the boot image, only to copy it to the CD.
-    # TODO The image doesn't need /boot
     rm -rf ${SRC_MNTPOINT}/rescue
     mkdir ${SRC_MNTPOINT}/rescue
     mkdir ${STAGEDIR}/rescue
