@@ -82,6 +82,7 @@ urlpatterns = patterns('',
         'django.views.generic.create_update.delete_object', 
         dict(model = networkStaticRoute, post_delete_redirect = '/freenas/network/staticroutes/'),), 
     (r'^freenas/disk/management/$', DiskView), 
+    (r'^freenas/disk/management/save/(?P<saveobj>\w+)/$', DiskView), 
     (r'^freenas/disk/management/disks/(?P<diskid>\d)$', disk_detail), # detail
     (r'^freenas/disk/management/disks/delete/(?P<object_id>\d)/$',
         'django.views.generic.create_update.delete_object', # delete

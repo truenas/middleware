@@ -345,20 +345,22 @@ def staticroute_detail(request, staticrouteid, template_name='freenas/network/st
 ## Disk section
 
 @login_required
-def DiskView(request, template_name = 'freenas/disks/index.html'):
+def DiskView(request, saveobj = None, template_name = 'freenas/disks/index.html'):
     disk = DiskForm(request.POST)
     diskgroup = DiskGroupForm(request.POST)
     volume = VolumeForm(request.POST)
     mountpoint = MountPointForm(request.POST)
     if request.method == 'POST':
-        if disk.is_valid():
+        if saveobj == 'disk':
             disk.save()
-        if diskgroup.is_valid():
+        elif saveobj == 'diskgroup':
             diskgroup.save()
-        if volume.is_valid():
+        elif saveobj == 'volume':
             volume.save()
-        if mountpoint.is_valid():
+        elif saveobj == 'mountpoint':
             mountpoint.save()
+        else:
+            raise "Invalid Request" # TODO: Find out the sane way to throw exception
         return HttpResponseRedirect('/freenas/disk/management/')
     else:
         disk_list = Disk.objects.all()
