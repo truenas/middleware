@@ -56,26 +56,30 @@ get_image_name()
 build_config()
 {
         # build_config ${_install_type} ${_disk} ${_image}
-        # ${_config_file}
-        # Couple of issues here.
-        # There is magic used to determine what to do if
-        # _install_type is set to 1
+        # ${_config_file} ${_os_size} ${_swap_size}
+        # Couple of issues here:
+        # There is magic used to determine what to do based on what
+        # _install_type is set to.
 
         local _install_type=$1
         local _disk=$2
         local _image=$3
         local _config_file=$4
+        local _os_size=$5
+        local _swap_size=$6
 
-        if [ "$_install_type" = "1" ]; then
+        if [ "$_install_type" = "3" ]; then
             cat << EOF > "${_config_file}"
 # Added to stop pc-sysinstall from complaining
 installMode=fresh
 installInteractive=no
 installType=FreeBSD
-installMedium=image
+installMedium=dvd
 packageType=tar
 
 disk0=${_disk}
+partition=image
+image=/cdrom/FreeNAS-amd64-embedded.gz
 bootManager=bsd
 commitDiskPart
 EOF
@@ -162,7 +166,7 @@ disk_is_mounted()
 	return ${_res}
 }
 
-do_install_1()
+do_install()
 {
 	local _disklist
 	local _tmpfile
@@ -172,16 +176,19 @@ do_install_1()
 	local _cdrom
 	local _disk
         local _image
-        local _install_type
+        local _install_type=$1
+        local _os_size
+        local _swap_size
         local _config_file
 	local _desc
 	local _list
 	local _msg
 	local _i
 
-	_tmpfile="/tmp/msg"
+        if [ "$_install_type" = "1" ]; then
+	    _tmpfile="/tmp/msg"
 
-	cat << EOD > "${_tmpfile}"
+	    cat << EOD > "${_tmpfile}"
 FreeNAS 'embedded' installer for Flash device or HDD.
 
 - Create 1 partition for OS image
@@ -196,8 +203,29 @@ It saves you an IDE or SCSI channel for more hard drives.
 
 EOD
 
-	_msg=`cat "${_tmpfile}"`
-	rm -f "${_tmpfile}"
+	    _msg=`cat "${_tmpfile}"`
+	    rm -f "${_tmpfile}"
+        fi
+
+        if [ "$_install_type" = "3" ]; then
+	    _tmpfile="/tmp/msg"
+
+	    cat << EOD > "${_tmpfile}"
+FreeNAS 'full' installer for HDD.
+
+- Create MBR partition 1, using UFS, customizable size for OS
+- Create MBR partition 2, using UFS, for DATA
+- Create MBR partition 3, as SWAP
+- Easy to customize (e.g. install additional FreeBSD packages)
+
+WARNING: There will be some limitations:
+1. This will erase ALL partitions and data on the destination disk
+
+EOD
+
+	    _msg=`cat "${_tmpfile}"`
+	    rm -f "${_tmpfile}"
+        fi
 
 	dialog --title "FreeNAS installation" --yesno "${_msg}" 17 74
 	if [ "$?" != "0" ]
@@ -230,9 +258,39 @@ EOD
 		exit 1
 	fi
 
-	### XXXX
 	_disk=`cat "${_tmpfile}"`
 	rm -f "${_tmpfile}"
+
+        if [ "${_install_type}" = "3" ]; then
+            _tmpfile="/tmp/answer"
+            eval 'dialog --title \
+                 "Enter the size for OS partition in MB (min 380MB):" \
+                 --inputbox "" 10 60 380' 2>"${_tmpfile}"
+	    if [ "$?" != "0" ]
+	    then
+	        exit 1
+	    fi
+            _os_size=`cat "${_tmpfile}"`
+	    rm -f "${_tmpfile}"
+
+        dialog --yesno "Do you want a swap partition?" 5 50
+        ret="$?"
+        if [ "$ret" = "0" ]; then
+            eval 'dialog --title \
+                 "Enter the size of the swap partition in MB:" \
+                 --inputbox "" 10 60' 2>"${_tmpfile}"
+	    if [ "$?" != "0" ]
+	    then
+	        exit 1
+	    fi
+            _swap_size=`cat "${_tmpfile}"`
+	    rm -f "${_tmpfile}"
+        fi
+
+
+
+
+        fi
 
 	if disk_is_mounted "${_disk}"
 	then
@@ -248,13 +306,13 @@ EOD
         # swap, data.  For the moment 1 is defined as use the 
         # whole device for a single slice that contains the image
 
-        _install_type="1"
         _config_file="/tmp/pc-sysinstall.cfg"
 
         # _install_type, _cdrom, _disk, _image, _config_file
         # we can now build a config file for pc-sysinstall
         build_config ${_install_type} ${_disk} \
-                     ${_image} ${_config_file}
+                     ${_image} ${_config_file} \
+                     ${_os_size} ${_swap_size}
 
         # Run pc-sysinstall against the config generated
         ls /cdrom > /dev/null
@@ -326,7 +384,37 @@ menu_install()
 
 	_number=`cat "${_tmpfile}"`
 	case "${_number}" in
-		1) do_install_1 ;;
+		1) do_install "1";;
+		2) ;;
+                3) do_install "3";;
+                4) ;;
+		5) ;;
+		6) ;;
+	esac
+
+	return 0
+}
+
+menu_upgrade()
+{
+        # What we are really interested in doing here is preserving the
+        # existing XML config file.
+	local _number
+	local _tmpfile
+
+	_tmpfile="/tmp/answer"
+
+	dialog --clear --title "Upgrade" --menu "" 12 73 6 \
+	"1" "Upgrade and convert 'full' OS to 'embedded'" 2> "${_tmpfile}"
+
+	if [ "$?" != "0" ]
+	then
+		return 1
+	fi
+
+	_number=`cat "${_tmpfile}"`
+	case "${_number}" in
+		1) do_upgrade_1 ;;
 		2) ;;
 		3) ;;
 		4) ;;
@@ -349,18 +437,20 @@ menu()
 		echo "Console setup"
 		echo "-------------"
 		echo "1) Install/Upgrade to hard drive/flash device, etc."
-		echo "2) Shell"
-		echo "3) Reboot system"
-		echo "4) Shutdown System"
+		echo "2) Upgrade existing installation."
+		echo "3) Shell"
+		echo "4) Reboot system"
+		echo "5) Shutdown System"
 		echo " "
 
 		read -p "Enter a number: " _number
 
 		case "${_number}" in
 			1) menu_install ;;
-			2) menu_shell ;;
-			3) menu_reboot ;;
-			4) menu_shutdown ;;
+                        2) menu_upgrade ;;
+			3) menu_shell ;;
+			4) menu_reboot ;;
+			5) menu_shutdown ;;
 		esac
 
 	done

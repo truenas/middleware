@@ -13,7 +13,7 @@ main()
     fi
 
     IMGFILE="/home/jpaetzel/FreeNAS-8r5375-amd64.full.gz" # The FreeNAS image
-    BOOTFILE="/home/jpaetzel/josh.img" # The image used to make the CD
+    BOOTFILE="/home/jpaetzel/ix2/build/files/cd.img" # The image used to make the CD
     BOOTFILE_MD=`md5 ${BOOTFILE} | awk '{print $4}'`
     STAGEDIR="/tmp/stage" # Scratch location for making filesystem image
     ISODIR="/tmp/iso" # Directory ISO is rolled from
@@ -21,9 +21,9 @@ main()
     SRC_MNTPOINT="/mnt" # Scratch mountpoint where the image will be dissected
     DEST_MNTPOINT="/mnt2" # Destination mountpoint for image
     TEMP_IMGFILE="/usr/newfile" # Scratch file for image
-    INSTALL_SH="/home/jpaetzel/ix2/build/install.sh"
-    RC_FILE="/home/jpaetzel/rc"
-    RESCUE_TAR="/home/jpaetzel/rescue.tar"
+    INSTALL_SH="/home/jpaetzel/ix2/build/files/install.sh"
+    RC_FILE="/home/jpaetzel/ix2/build/files/rc"
+    RESCUE_TAR="/home/jpaetzel/ix2/build/files/rescue.tar"
 
     MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
                  -allow-multidot -hide boot.catalog -o ${OUTPUT} -no-emul-boot \
