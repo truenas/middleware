@@ -116,7 +116,6 @@ _gen_conf()
 	## TODO: Need to make this a || logic.
 	_bool_config smartd_enable freenas_disk togglesmart
 	_bool_config netatalk_enable freenas_servicesafp toggleAFP
-	_bool_config atalkd_enable freenas_servicesafp toggleAFP
 	_bool_config afpd_enable freenas_servicesafp toggleAFP
 	_bool_config cnid_metad_enable freenas_servicesafp toggleAFP
 	_bool_config proftpd_enable freenas_servicesftp toggleFTP
