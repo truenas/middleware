@@ -607,7 +607,6 @@ class WindowsShare(models.Model):
             blank=True,
             )
     windowsshare_path = models.ForeignKey(MountPoint)
-    windowsshare_globalro = models.BooleanField()
     cifsro = models.BooleanField()
     browsable = models.BooleanField()
     inheritperms = models.BooleanField()
@@ -650,8 +649,6 @@ class AppleShare(models.Model):
             blank=True
             )
     appleshare_path = models.ForeignKey(MountPoint, verbose_name="Volume Path")
-    appleshare_globalro = models.BooleanField(
-            verbose_name="Export Read-Only")
     sharepw = models.CharField(
             max_length=120, 
             verbose_name="Share password",
@@ -759,9 +756,6 @@ class UnixShare(models.Model):
             blank=True,
             )
     unixshare_path = models.ForeignKey(MountPoint, verbose_name="Volume Path")
-    unixshare_globalro = models.BooleanField(
-            verbose_name="Export Read-Only")
-            )
     allroot = models.BooleanField(
             verbose_name="Map Root",
             help_text="When enabled, map all remote root access to local root.  When disabled, map all remote root access to user -2:-2"
