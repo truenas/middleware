@@ -640,8 +640,8 @@ class WindowsShare(models.Model):
 class AppleShare(models.Model):
     appleshare_name = models.CharField(
             max_length=120, 
-            verbose_name="Name"
-            help_text="The volume name is the name that appears in the Chooser ot the "connect to server" dialog on Macintoshes to represent the appropriate share. If volumename is unspecified, the last component of pathname is used. No two volumes may have the same name. The volume name cannot contain the ':'  character. The volume name is mangled if it is very long. Mac codepage volume name is limited to 27 characters. UTF8-MAC volume name is limited to 'Volume Name Length' parameter in Services:Apple Share"
+            verbose_name="Name",
+            help_text="The volume name is the name that appears in the Chooser ot the 'connect to server' dialog on Macintoshes to represent the appropriate share. If volumename is unspecified, the last component of pathname is used. No two volumes may have the same name. The volume name cannot contain the ':'  character. The volume name is mangled if it is very long. Mac codepage volume name is limited to 27 characters. UTF8-MAC volume name is limited to 'Volume Name Length' parameter in Services:Apple Share"
             )
     appleshare_comment = models.CharField(
             max_length=120, 
@@ -715,31 +715,31 @@ class AppleShare(models.Model):
             help_text="This forces filenames to be restricted to the character set used by Windows. This is not recommended for shares used principally by Mac computers."
             )
     noadouble = models.BooleanField(
-            verbose_name="No .AppleDouble"
+            verbose_name="No .AppleDouble",
             help_text="This controls whether the .AppleDouble directory gets created unless absolutely needed. This option should not be used if files are access mostly by Mac computers.  Clicking this option disables their creation."
             )
     nodev = models.BooleanField(
-            verbose_name="Zero Device Numbers"
+            verbose_name="Zero Device Numbers",
             help_text="Always use 0 for device number, helps when the device number is not constant across a reboot, cluster, ..."
             )
     nofileid = models.BooleanField(
-            verbose_name="Disable File ID"
+            verbose_name="Disable File ID",
             help_text="Don't advertise createfileid, resolveid, deleteid calls."
             )
     nohex = models.BooleanField(
-            verbose_name="Disable :hex Names"
+            verbose_name="Disable :hex Names",
             help_text="Disable :hex translations for anything except dot files. This option makes the '/' character illegal."
             )
     prodos = models.BooleanField(
-            verbose_name="ProDOS"
+            verbose_name="ProDOS",
             help_text="Provide compatibility with Apple II clients."
             )
     nostat = models.BooleanField(
-            verbose_name="No Stat"
+            verbose_name="No Stat",
             help_text="Don't stat volume path when enumerating volumes list, useful for automounting or volumes created by a preexec script."
             )
     upriv = models.BooleanField(
-            verbose_name="AFP3 Unix Privs"
+            verbose_name="AFP3 Unix Privs",
             help_text="Use AFP3 unix privileges."
             )
     
@@ -767,15 +767,15 @@ class UnixShare(models.Model):
             blank=True,
             )
     alldirs = models.BooleanField(
-            verbose_name="All dirs"
+            verbose_name="All dirs",
             help_text="Allow mounting of any subdirectory under this mount point if selected.  Otherwise, only the top level directory can be mounted.",
             )
     nfsro = models.BooleanField(
-            verbose_name="Read Only"
+            verbose_name="Read Only",
             help_text="Export the share read only.  Writes are not permitted."
             )
     quiet = models.BooleanField(
-            verbose_name="Quiet"
+            verbose_name="Quiet",
             help_text="Inibit syslog warnings if there are problems with exporting this share."
             )
     
