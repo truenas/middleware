@@ -100,7 +100,7 @@ generate_av_default()
 	for _i in cachecnid crlf mswindows noadouble novdev nofileid nohex prodos nostat upriv; do
 	    ifon $(eval echo \$${_i}) ",${_i}"
         done
-	if [ ${diskdiscovery} -eq 1 -a ${discoverymode} -eq "time-machine" ]; then
+	if [ ${diskdiscovery} -eq 1 -a ${discoverymode} = "time-machine" ]; then
 	    echo -n ",tm"
 	fi
 	echo -n "${allow:- allow:${allow}}"
