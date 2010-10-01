@@ -135,6 +135,12 @@ class notifier:
 	def _reload_ftp(self):
 		self.__system("/usr/sbin/service ix-proftpd start")
 		self.__system("/usr/sbin/service proftpd restart")
+        def _load_afp(self):
+                self.__system("/usr/sbin/service ix-afpd start")
+                self.__system("/usr/sbin/service netatalk start")
+        def _restart_afp(self):
+                self.__system("/usr/sbin/service ix-afpd start")
+                self.__system("/usr/sbin/service netatalk restart")
 	def _reload_nfsd(self):
 		self.__system("/usr/sbin/service ix-nfsd start")
 		self.__system("/usr/sbin/service mountd forcerestart")
