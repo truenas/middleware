@@ -156,6 +156,9 @@ class WindowsShareForm(ModelForm):
 class AppleShareForm(ModelForm):
     class Meta:
         model = AppleShare 
+    def save(self):
+        super(AppleShareForm, self).save()
+        notifier().reload("afp")
 
 class UnixShareForm(ModelForm):
     class Meta:
@@ -176,6 +179,9 @@ class servicesCIFSForm(ModelForm):
 class servicesAFPForm(ModelForm):
     class Meta:
         model = servicesAFP
+    def save(self):
+        super(servicesAFPForm, self).save()
+        notifier().restart("afp")
 
 class servicesNFSForm(ModelForm):
     class Meta:
