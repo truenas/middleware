@@ -44,25 +44,24 @@ generate_afpd_config()
 {
     local IFS=\|
     local f="toggleAFP name guest local ddp"
-    local toggleAFP name guest local ddp
-    local cmd sf
-    cp /dev/null ${afpd_config}
-    sf=$(echo $f | sed -e 's/ /, /g')
+    eval local $f
+    local sf=$(echo $f | sed -e 's/ /, /g')
+
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
         "SELECT $sf FROM freenas_servicesafp ORDER BY -id LIMIT 1" | \
-    while read toggleAFP name guest local ddp; do
+    while eval read $f; do
 	: ${name:=-}
-	cat <<EOF >> ${afpd_config}
+	cat <<EOF
 "${name}" $(bool_off ${ddp} "-noddp") -nosavepassword \\
 -defaultvol ${afpd_avdefault} -systemvol ${afpd_avsystem} \\
 -uservol -uampath /etc/uams -guestname "ftp" \\
 EOF
 	if [ ${guest} -eq 1 -a ${local} -eq 0 ]; then
-	    echo "-uamlist uams_guest.so" >> ${afpd_config}
+	    echo "-uamlist uams_guest.so"
 	elif [ ${local} -eq 1 ]; then
-	    echo "-uamlist uams_guest.so,uams_clrtxt.so,uams_dhx.so,uams_randnum.so" >> ${afpd_config}
+	    echo "-uamlist uams_guest.so,uams_clrtxt.so,uams_dhx.so,uams_randnum.so"
 	else
-	    echo >> ${afpd_config}
+	    echo
 	fi
     done
 }
@@ -71,11 +70,11 @@ generate_av_system()
 {
     local IFS=\|
     local vol_name
-    cp /dev/null ${afpd_avsystem}
+
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
         "SELECT vol_name FROM freenas_volume" | \
     while read vol_name; do
-	cat <<EOF >> ${afpd_avsystem}
+	cat <<EOF
 "/mnt/${vol_name}" "${vol_name}" options:usedots allow:@admin
 EOF
     done
@@ -84,15 +83,14 @@ EOF
 generate_av_default()
 {
     local IFS=\|
-    local name comment mountpoint sharepw sharecharsets allow deny as_ro as_rw diskdiscovery discoverymode dbpath cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv
     local f="as_name as_comment mountpoint sharepw sharecharset allow deny as_ro as_rw diskdiscovery discoverymode dbpath cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv"
-    local sf
-    sf=$(echo $f | sed -e 's/ /, /g')
+    eval local $f
+    local sf=$(echo $f | sed -e 's/ /, /g')
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
         "SELECT $sf FROM freenas_appleshare AS aps LEFT OUTER JOIN freenas_mountpoint AS mp ON aps.as_path_id = mp.volumeid_id ORDER BY -aps.id LIMIT 1" | \
-    while read name comment mountpoint sharepw sharecharsets allow deny as_ro as_rw diskdiscovery discoverymode dbpath cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv; do
-	echo "# ${comment}"
-	echo -n "\"${mountpoint}\" \"${name}\""
+    while eval read $f; do
+	echo "# ${as_comment}"
+	echo -n "\"${mountpoint}\" \"${as_name}\""
 	echo -n "${sharepw:- password:${sharepw}}"
 #	echo -n "${casefold:- casefold:${casefold}}"
 	echo -n "${sharecharsets:- sharecharsets:${sharecharsets}}"
@@ -115,8 +113,8 @@ generate_av_default()
 
 generate_afpd()
 {
-    generate_afpd_config
-    generate_av_system
+    generate_afpd_config > ${afpd_config}
+    generate_av_system > ${afpd_avsystem}
     generate_av_default > ${afpd_avdefault}
 }
 
