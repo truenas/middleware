@@ -638,17 +638,17 @@ class WindowsShare(models.Model):
 
        
 class AppleShare(models.Model):
-    appleshare_name = models.CharField(
+    as_name = models.CharField(
             max_length=120, 
             verbose_name="Name",
             help_text="The volume name is the name that appears in the Chooser ot the 'connect to server' dialog on Macintoshes to represent the appropriate share. If volumename is unspecified, the last component of pathname is used. No two volumes may have the same name. The volume name cannot contain the ':'  character. The volume name is mangled if it is very long. Mac codepage volume name is limited to 27 characters. UTF8-MAC volume name is limited to 'Volume Name Length' parameter in Services:Apple Share"
             )
-    appleshare_comment = models.CharField(
+    as_comment = models.CharField(
             max_length=120, 
             verbose_name="Share Comment",
             blank=True
             )
-    appleshare_path = models.ForeignKey(MountPoint, verbose_name="Volume Path")
+    as_path = models.ForeignKey(MountPoint, verbose_name="Volume Path")
     sharepw = models.CharField(
             max_length=120, 
             verbose_name="Share password",
@@ -673,13 +673,13 @@ class AppleShare(models.Model):
             blank=True,
             help_text="The deny option specifies users and groups who are not allowed access to the share. It follows the same format as the allow option."
             )
-    afpro = models.CharField(
+    as_ro = models.CharField(
             max_length=120, 
             verbose_name="Read-only access",
             blank=True,
             help_text="Allows certain users and groups to have read-only access to a share. This follows the allow option format."
         )
-    afprw = models.CharField(
+    as_rw = models.CharField(
             max_length=120, 
             verbose_name="Read-write access",
             blank=True,
@@ -744,7 +744,7 @@ class AppleShare(models.Model):
             )
     
     def __unicode__(self):
-        return self.appleshare_path
+        return self.as_path
 
     class Meta:
         verbose_name = "Share"

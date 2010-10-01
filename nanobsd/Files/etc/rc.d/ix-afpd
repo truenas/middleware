@@ -84,13 +84,13 @@ EOF
 generate_av_default()
 {
     local IFS=\|
-    local name comment mountpoint sharepw sharecharsets allow deny afpro afprw diskdiscovery discoverymode dbpath cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv
-    local f="appleshare_name appleshare_comment mountpoint sharepw sharecharset allow deny afpro afprw diskdiscovery discoverymode dbpath cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv"
+    local name comment mountpoint sharepw sharecharsets allow deny as_ro as_rw diskdiscovery discoverymode dbpath cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv
+    local f="as_name as_comment mountpoint sharepw sharecharset allow deny as_ro as_rw diskdiscovery discoverymode dbpath cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv"
     local sf
     sf=$(echo $f | sed -e 's/ /, /g')
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-        "SELECT $sf FROM freenas_appleshare AS aps LEFT OUTER JOIN freenas_mountpoint AS mp ON aps.appleshare_path_id = mp.volumeid_id ORDER BY -aps.id LIMIT 1" | \
-    while read name comment mountpoint sharepw sharecharsets allow deny afpro afprw diskdiscovery discoverymode dbpath cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv; do
+        "SELECT $sf FROM freenas_appleshare AS aps LEFT OUTER JOIN freenas_mountpoint AS mp ON aps.as_path_id = mp.volumeid_id ORDER BY -aps.id LIMIT 1" | \
+    while read name comment mountpoint sharepw sharecharsets allow deny as_ro as_rw diskdiscovery discoverymode dbpath cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv; do
 	echo "# ${comment}"
 	echo -n "\"${mountpoint}\" \"${name}\""
 	echo -n "${sharepw:- password:${sharepw}}"
@@ -98,16 +98,15 @@ generate_av_default()
 	echo -n "${sharecharsets:- sharecharsets:${sharecharsets}}"
 	echo -n " options:usedots"
 	for _i in cachecnid crlf mswindows noadouble novdev nofileid nohex prodos nostat upriv; do
-	    bool_on $(eval echo \$${_i}) ",${_i}"
+	    ifon $(eval echo \$${_i}) ",${_i}"
         done
-	if [ ${diskdiscovery} -eq 1 -a ${discoverymode} = "time-machine" ]; then
+	if [ ${diskdiscovery} -eq 1 -a ${discoverymode} -eq "time-machine" ]; then
 	    echo -n ",tm"
 	fi
 	echo -n "${allow:- allow:${allow}}"
 	echo -n "${deny:- deny:${deny}}"
-	echo -n "${rolist:- rolist:${rolist}}"
-	echo -n "${rwlist:- rwlist:${rwlist}}"
-	echo -n "${rwlist:- rwlist:${rwlist}}"
+	echo -n "${as_ro:- rolist:${as_ro}}"
+	echo -n "${as_rw:- rwlist:${as_rw}}"
 	echo -n "${dbpath:- dbpath:\"${dbpath}\"}"
 #		-i "string-length(cnidscheme) > 0" -v "concat('cnidscheme:',cnidscheme,' ')" -b \
 	echo ""

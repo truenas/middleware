@@ -345,19 +345,19 @@ def staticroute_detail(request, staticrouteid, template_name='freenas/network/st
 ## Disk section
 
 @login_required
-def DiskView(request, saveobj = None, template_name = 'freenas/disks/index.html'):
+def DiskView(request, objtype = None, template_name = 'freenas/disks/index.html'):
     disk = DiskForm(request.POST)
     diskgroup = DiskGroupForm(request.POST)
     volume = VolumeForm(request.POST)
     mountpoint = MountPointForm(request.POST)
     if request.method == 'POST':
-        if saveobj == 'disk':
+        if objtype == 'disk':
             disk.save()
-        elif saveobj == 'diskgroup':
+        elif objtype == 'diskgroup':
             diskgroup.save()
-        elif saveobj == 'volume':
+        elif objtype == 'volume':
             volume.save()
-        elif saveobj == 'mountpoint':
+        elif objtype == 'mountpoint':
             mountpoint.save()
         else:
             raise "Invalid Request" # TODO: Find out the sane way to throw exception
@@ -445,16 +445,16 @@ def volume_detail(request, volumeid, template_name='freenas/disks/volumes/volume
 
 
 @login_required
-def SharesView(request):
+def SharesView(request, sharetype = None):
     windowsshare = WindowsShareForm(request.POST)
     appleshare = AppleShareForm(request.POST)
     unixshare = UnixShareForm(request.POST)
     if request.method == 'POST':
-        if request.path_info == '/freenas/shares/windows/':
+        if sharetype == 'windows':
             windowsshare.save()
-        elif request.path_info == '/freenas/shares/apple/':
+        elif sharetype == 'apple':
             appleshare.save()
-        elif request.path_info == '/freenas/shares/unix/':
+        elif sharetype == 'unix':
             unixshare.save()
         else:
             raise "Wrong request" # TODO: Should be something better

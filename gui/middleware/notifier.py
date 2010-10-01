@@ -186,7 +186,7 @@ class notifier:
 					for disk in z_vdsk_list:
 						self.__system("[ -e /dev/gpt/%s ] || ( gpart create -s gpt /dev/%s && gpart add -t freebsd-zfs -l %s %s )" % (disk[1], disk[0], disk[1], disk[0]))
 						z_vdev += " /dev/gpt/" + disk[1]
-				self.__system("zpool create -m /mnt/%s %s %s" % (z_name, z_name, z_vdev))
+				self.__system("zpool create -fm /mnt/%s %s %s" % (z_name, z_name, z_vdev))
 			self.__system("/sbin/mount -ur /")
                 # Create UFS file system and newfs
                 c.execute("SELECT id, vol_name FROM freenas_volume WHERE vol_type = 'ufs'")
