@@ -91,9 +91,9 @@ generate_av_default()
     while eval read $f; do
 	echo "# ${as_comment}"
 	echo -n "\"${mountpoint}\" \"${as_name}\""
-	echo -n "${sharepw:- password:${sharepw}}"
-#	echo -n "${casefold:- casefold:${casefold}}"
-	echo -n "${sharecharsets:- sharecharsets:${sharecharsets}}"
+	echo -n "${sharepw:+ password:${sharepw}}"
+#	echo -n "${casefold:+ casefold:${casefold}}"
+	echo -n "${sharecharsets:+ sharecharsets:${sharecharsets}}"
 	echo -n " options:usedots"
 	for _i in cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv; do
 	    bool_on $(eval echo \$${_i}) ",${_i}"
@@ -101,11 +101,11 @@ generate_av_default()
 	if [ ${diskdiscovery} -eq 1 -a ${discoverymode} = "time-machine" ]; then
 	    echo -n ",tm"
 	fi
-	echo -n "${allow:- allow:${allow}}"
-	echo -n "${deny:- deny:${deny}}"
-	echo -n "${as_ro:- rolist:${as_ro}}"
-	echo -n "${as_rw:- rwlist:${as_rw}}"
-	echo -n "${dbpath:- dbpath:\"${dbpath}\"}"
+	echo -n "${allow:+ allow:${allow}}"
+	echo -n "${deny:+ deny:${deny}}"
+	echo -n "${as_ro:+ rolist:${as_ro}}"
+	echo -n "${as_rw:+ rwlist:${as_rw}}"
+	echo -n "${dbpath:+ dbpath:\"${dbpath}\"}"
 #		-i "string-length(cnidscheme) > 0" -v "concat('cnidscheme:',cnidscheme,' ')" -b \
 	echo ""
     done
