@@ -98,7 +98,7 @@ generate_av_default()
 	echo -n "${sharecharsets:- sharecharsets:${sharecharsets}}"
 	echo -n " options:usedots"
 	for _i in cachecnid crlf mswindows noadouble novdev nofileid nohex prodos nostat upriv; do
-	    ifon $(eval echo \$${_i}) ",${_i}"
+	    bool_on $(eval echo \$${_i}) ",${_i}"
         done
 	if [ ${diskdiscovery} -eq 1 -a ${discoverymode} -eq "time-machine" ]; then
 	    echo -n ",tm"
