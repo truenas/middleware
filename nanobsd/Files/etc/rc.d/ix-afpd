@@ -95,10 +95,10 @@ generate_av_default()
 #	echo -n "${casefold:- casefold:${casefold}}"
 	echo -n "${sharecharsets:- sharecharsets:${sharecharsets}}"
 	echo -n " options:usedots"
-	for _i in cachecnid crlf mswindows noadouble novdev nofileid nohex prodos nostat upriv; do
+	for _i in cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv; do
 	    bool_on $(eval echo \$${_i}) ",${_i}"
         done
-	if [ ${diskdiscovery} -eq 1 -a ${discoverymode} -eq "time-machine" ]; then
+	if [ ${diskdiscovery} -eq 1 -a ${discoverymode} = "time-machine" ]; then
 	    echo -n ",tm"
 	fi
 	echo -n "${allow:- allow:${allow}}"
