@@ -56,6 +56,7 @@ if [ -n "${FREENAS_ARCH}" ]; then
     NANO_ARCH=${FREENAS_ARCH}
 fi
 NANO_LABEL=FreeNAS
+NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 
 # Tmp hack for transition to lighttpd
 use_lighttpd=1
