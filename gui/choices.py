@@ -27,7 +27,12 @@
 #####################################################################
 
 from os import popen
+import re
 
+RSYNCJob_Choices = (
+        ('local', 'local'),
+        ('client', 'client'),
+        )
 YESNO_CHOICES = (
         ('DO NOTHING', 'DO NOTHING'),
         ('YES', 'YES'),
@@ -89,11 +94,16 @@ TRANSFERMODE_CHOICES = (
         ('PIO2', 'PIO2'),
         ('PIO3', 'PIO3'),
         ('PIO4', 'PIO4'),
+        ('WDMA0', 'WDMA0'),
+        ('WDMA1', 'WDMA1'),
         ('WDMA2', 'WDMA2'),
-        ('UDMA-33', 'UDMA-33'),
-        ('UDMA-66', 'UDMA-66'),
-        ('UDMA-100', 'UDMA-133'),
-        ('UDMA-100', 'UDMA-133'),
+        ('UDMA16', 'UDMA-16'),
+        ('UDMA33', 'UDMA-33'),
+        ('UDMA66', 'UDMA-66'),
+        ('UDMA100', 'UDMA-100'),
+        ('UDMA133', 'UDMA-133'),
+        ('SATA150', 'SATA 1.5Gbit/s'),
+        ('SATA300', 'SATA 3.0Gbit/s'),
         )
 HDDSTANDBY_CHOICES = (
         ('Always On', 'Always On'),
@@ -266,6 +276,15 @@ DAYS3_CHOICES = (
         ('31', '31'),
         )
 
+# Code for generating DAYS_CHOICES
+# Generate a list of numbers, this example will generate 1 - 31 in increments of 1
+temp = [x for x in xrange(1, 32, 1)]
+
+# ok, now we zip up our list into a list of tuples then convert the list to 
+# a tuple
+DAYS_CHOICES = tuple(zip(temp, temp))
+
+
 MONTHS_CHOICES = (
         ('January', 'January'),
         ('February', 'February'),
@@ -409,7 +428,10 @@ class DiskChoices:
     """Populate a list of disk choices"""
     def __init__(self):
         pipe = popen("/sbin/sysctl -n kern.disks")
+        rootdev = popen("""df / | awk '$1 ~ "/" {print $1}'""").read().strip()
+        rootdev_base = re.search('(?<=/dev/)[a-z/]*[0-9]*', rootdev)
         self._disklist = pipe.read().strip().split(' ')
+        self._disklist = [ x for x in self._disklist if x != rootdev_base.group(0) ]
         self.max_choices = len(self._disklist)
 
     def __iter__(self):

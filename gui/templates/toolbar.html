@@ -2,78 +2,49 @@
 
             <div dojoType="dijit.MenuBarItem" onClick="window.location='/'">
                 <div>
-                    Status 
+                    System 
                 </div>
             </div>
 
-    <div dojoType="dijit.PopupMenuBarItem">
-        <span>
-            System 
-        </span>
-        <div dojoType="dijit.Menu" id="systemMenu">
-            <div dojoType="dijit.MenuItem" onClick="window.location='/freenas/system/general/setup/'">
-                Settings 
-            </div>
-            <div dojoType="dijit.MenuItem" onClick="window.location='/freenas/system/advanced/'">
-                Advanced 
-            </div>
-            <div dojoType="dijit.MenuItem" onClick="window.location='/'">
-                Information 
-            </div>
-            <div dojoType="dijit.MenuItem" onClick="RebootAlert()">
-                Reboot FreeNAS
-            </div>
-            <div dojoType="dijit.MenuItem" onClick="ShutdownAlert()">
-                Shutdown FreeNAS
-            </div>
-        </div>
-    </div>
-
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/freenas/network/'">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'">
         <span>
             Network 
         </span>
     </div>
 
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/freenas/disk/management/'">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'">
         <span>
             Storage 
         </span>
     </div>
 
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/freenas/access/'">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'">
         <span>
-            Access 
+            Sharing
         </span>
     </div>
 
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/freenas/shares/'">
-        <span>
-            Shares
-        </span>
-    </div>
-
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/freenas/services/'">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/services/'">
         <span>
             Services
         </span>
     </div>
 
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/password_change/'">
-        <span>
-            Account 
-        </span>
-    </div>
 
     {% if user.is_authenticated %}
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/freenas/logout/'" style="position:relative;float:right;font-weight:bold;">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" style="position:relative;float:right;font-weight:bold;">
         <span>
             Log Out 
         </span>
     </div>
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/password_change/'">
+        <span>
+            Account 
+        </span>
+    </div>
     {% else %}
 
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/freenas/login/'" style="position:relative;float:right;font-weight:bold;">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" style="position:relative;float:right;font-weight:bold;">
         <span>
             Log In
         </span>

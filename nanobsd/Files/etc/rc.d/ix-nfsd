@@ -18,7 +18,7 @@ generate_exports()
 	local IFS=\|
 
 	local mountpoint allroot network alldirs nfsro quiet
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT mountpoint, allroot, network, alldirs, nfsro, quiet FROM freenas_unixshare AS us LEFT OUTER JOIN freenas_mountpoint AS mp ON us.unixshare_path_id = mp.volumeid_id ORDER BY us.id DESC" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT mp_path, nfs_allroot, nfs_network, nfs_alldirs, nfs_ro, nfs_quiet FROM sharing_nfs_share AS us LEFT OUTER JOIN storage_mountpoint AS mp ON us.nfs_path_id = mp.id ORDER BY us.id DESC" | \
 	while read mountpoint allroot network alldirs nfsro quiet; do
 		echo -n ${mountpoint}
 		if [ -n "${alldirs}" ]; then
@@ -31,9 +31,8 @@ generate_exports()
 			echo -n " -quiet"
 		fi
 		# Current schema can only do ON and OFF.
-		# TODO: Support maproot=uid:gid when schema change is ready.
 		if [ "${allroot}" = "1" ]; then
-			echo -n " -maproot=0"
+			echo -n " -mapall=root"
 		fi
 		if [ -n "${network}" ]; then
 			echo -n " -network ${network}"

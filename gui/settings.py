@@ -35,8 +35,8 @@ DEBUG = True
 
 TEMPLATE_DEBUG = DEBUG
 LOGIN_REDIRECT_URL = '/'
-LOGIN_URL = '/freenas/login/'
-LOGOUT_URL = '/freenas/logout/'
+LOGIN_URL = '/account/login/'
+LOGOUT_URL = '/account/logout/'
 
 ADMINS = (
      ('iXsystems, Inc.', 'freenas@ixsystems.com'),
@@ -121,6 +121,12 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     #'django.contrib.admin',
-    'freenas',
+    #'freenas',
     'dojango',
+    'account',
+    'system',
+    'network',
+    'storage',
+    'sharing',
+    'services',
 )

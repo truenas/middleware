@@ -23,14 +23,14 @@
 <script language="JavaScript" type="text/javascript">
     function RebootAlert() {
         if (confirm("Reboot?")) {
-            return window.location = "/freenas/system/reboot/" 
+            return window.location = "/system/reboot/" 
         } else {
             return window.location = "."
         }
     }
     function ShutdownAlert() {
         if (confirm("Shutdown?")) {
-            return window.location = "/freenas/system/shutdown/" 
+            return window.location = "/system/shutdown/" 
         } else {
             return window.location = "."
         }
@@ -48,6 +48,7 @@
     dojo.require("dijit.layout.TabContainer");
     dojo.require("dijit.form.Button");
     dojo.require("dijit.layout.ContentPane");
+    dojo.require("dijit.Dialog");
 </script>
 
 <body id="page" class="{{ DOJANGO.THEME }}" style="background:none repeat scroll 0 0 #ECEFF0;">

@@ -28,97 +28,27 @@
 
 from django.conf.urls.defaults import *
 from django.contrib import admin
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import password_change, password_change_done
-from django.views.generic.simple import direct_to_template
-from django.views.generic import list_detail
-from freenasUI.freenas.models import *
-from freenasUI.freenas.models import Disk
-from freenasUI.freenas.views import *
-import os, commands
-
+from freenasUI.system.views import index 
 #import django_nav
 #django_nav.autodiscover()
 #admin.autodiscover()
 
-# Active FreeNAS URLs
-
 urlpatterns = patterns('',
-    (r'^password_change/$', password_change, 
-        {'template_name': 'registration/password_change_form.html'}),
-    (r'^password_change/done/$', password_change_done, 
-        {'template_name': 'registration/password_change_done.html'}),
+    ('^$', index),
     (r'^media/(?P<path>.*)',
-        'django.views.static.serve', 
+        'django.views.static.serve',
         {'document_root': '/usr/local/www/freenasUI/media'}),
     (r'^freenas/media/(?P<path>.*)$',
-        'django.views.static.serve', 
+        'django.views.static.serve',
         {'document_root': '/usr/local/www/freenasUI/media'}),
-    (r'^/*$', index),
-    (r'^freenas/login/*$', 'django.contrib.auth.views.login',
-        {'template_name': 'registration/login.html'}),
-    (r'^freenas/logout/$', 
-        'django.contrib.auth.views.logout',
-        {'template_name': 'registration/logout.html'}, 'auth_logout'),
-    (r'^freenas/system/reboot/$', systemReboot),
-    (r'^freenas/system/shutdown/$', systemShutdown),
-    (r'^freenas/system/general/setup/$', systemGeneralSetupView),
-    (r'^freenas/system/general/password/$', systemGeneralPasswordView),
-    (r'^freenas/system/advanced/$', systemAdvancedView),
-    (r'^freenas/system/advanced/email/$', systemAdvancedEmailView),
-    (r'^freenas/system/advanced/proxy/$', systemAdvancedProxyView),
-    (r'^freenas/system/advanced/swap/$', systemAdvancedSwapView),
-    (r'^freenas/system/advanced/commandscripts/add', CommandScriptsView),
-    (r'^freenas/system/advanced/commandscripts/$', systemAdvancedCommandScriptsView),
-    (r'^freenas/system/advanced/cronjobs/$', systemAdvancedCronView),
-    (r'^freenas/system/advanced/cronjobs/add/$', cronjobView),
-    (r'^freenas/system/advanced/rcconf/$', rcconfView),
-    (r'^freenas/system/advanced/rcconf/edit/$', systemAdvancedRCconfView),
-    (r'^freenas/system/advanced/sysctlconf/$', systemAdvancedSYSCTLconfView),
-    (r'^freenas/system/advanced/sysctlconf/add/$', sysctlMIBView),
-    (r'^freenas/network/$', NetworkView),
-    (r'^freenas/network/staticroutes/(?P<staticrouteid>\d+)$', staticroute_detail), # detail
-    (r'^freenas/network/staticroutes/delete/(?P<object_id>\d+)/$',
-        'django.views.generic.create_update.delete_object', 
-        dict(model = networkStaticRoute, post_delete_redirect = '/freenas/network/staticroutes/'),), 
-    (r'^freenas/disk/management/$', DiskView), 
-    (r'^freenas/disk/management/(?P<objtype>\w+)/add/$', DiskView), 
-    (r'^freenas/disk/management/disks/(?P<diskid>\d+)$', disk_detail), # detail
-    (r'^freenas/disk/management/disks/delete/(?P<object_id>\d+)/$',
-        'django.views.generic.create_update.delete_object', # delete
-        dict(model = Disk, post_delete_redirect = '/freenas/disk/management/'),), 
-    (r'^freenas/disk/management/groups/add/$', diskgroup_add_wrapper),
-    (r'^freenas/disk/management/groups/(?P<diskgroupid>\d+)$', diskgroup_detail),
-    (r'^freenas/disk/management/groups/*$', diskgroup_list),
-    (r'^freenas/disk/management/groups/delete/(?P<object_id>\d+)/$',
-        'django.views.generic.create_update.delete_object', 
-        dict(model = DiskGroup, post_delete_redirect = '/freenas/disk/management/'),), 
-    (r'^freenas/disk/management/volumes/create/$', volume_create_wrapper), 
-    (r'^freenas/disk/management/volumes/(?P<volumeid>\d+)$', volume_detail),
-    (r'^freenas/disk/management/volumes/$', volume_list),
-    (r'^freenas/shares/mountpoint/delete/(?P<object_id>\d+)/$',
-        'django.views.generic.create_update.delete_object', 
-        dict(model = MountPoint, post_delete_redirect = '/freenas/shares/'),), 
-    (r'^freenas/disk/management/volumes/delete/(?P<object_id>\d+)/$',
-        'django.views.generic.create_update.delete_object', 
-        dict(model = Volume, post_delete_redirect = '/freenas/disk/management/'),), 
-    (r'^freenas/shares/apple/delete/(?P<object_id>\d+)/$',
-        'django.views.generic.create_update.delete_object', 
-        dict(model = AppleShare, post_delete_redirect = '/freenas/shares/'),), 
-    (r'^freenas/shares/unix/delete/(?P<object_id>\d+)/$',
-        'django.views.generic.create_update.delete_object', 
-        dict(model = UnixShare, post_delete_redirect = '/freenas/shares/'),), 
-    (r'^freenas/shares/windows/delete/(?P<object_id>\d+)/$',
-        'django.views.generic.create_update.delete_object', 
-        dict(model = WindowsShare, post_delete_redirect = '/freenas/shares/'),), 
-    (r'^freenas/shares/$', SharesView), 
-    (r'^freenas/shares/(?P<sharetype>\w+)/$', SharesView), 
-    (r'^freenas/services/*', ServicesView),
-    (r'^freenas/status/processes/*$', statusProcessesView),
-    (r'^freenas/access/$', AccessView), 
 # Not sure why I need the this entry, but the last one works for James..
     (r'^dojango/(?P<path>.*)$',
         'django.views.static.serve',
         {'document_root': '/usr/local/www/freenasUI/dojango'}),
-    (r'^dojango/', include('dojango.urls')),
+    (r'^account/', include('account.urls')),
+    (r'^system/', include('system.urls')),
+    (r'^network/', include('network.urls')),
+    (r'^storage/', include('storage.urls')),
+    (r'^sharing/', include('sharing.urls')),
+    (r'^services/', include('services.urls')),
     )

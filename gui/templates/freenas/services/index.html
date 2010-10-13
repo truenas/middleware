@@ -7,1260 +7,174 @@
     <div dojoType="dijit.layout.ContentPane" title="Services">
 <form action="." method="post">{% csrf_token %}
 <table>
-    <tr>
-        <td>
-            <h3>Service</h3>
-        </td>
-        <td>
-            <h3>Enabled / Disabled</h3>
-        </td>
-    </tr>
-    <tr>
-        <td style="padding-right:25px;">
-            <strong>Unison:</strong>
-        </td>
-        <td>
-            <!--    {{ unison_form.toggleUnison }} -->
-        </td>
-    </tr>
-    <tr>
-        <td style="padding-right:25px;">
-            <strong>iSCSI Target:</strong>
-        </td>
-        <td>
-            <!--  {{ iscsi_form.toggleiSCSITarget }} -->
-        </td>
-    </tr>
-    <tr>
-        <td style="padding-right:25px;">
-            <strong>Dynamic DNS:</strong>
-        </td>
-        <td>
-            <!--  {{ dynamicdns_form.toggleDynamicDNS }} -->
-        </td>
-    </tr>
-    <tr>
-        <td style="padding-right:25px;">
-            <strong>SNMP:</strong>
-        </td>
-        <td>
-            <!-- {{ snmp_form.toggleSNMP }} -->
-        </td>
-    </tr>
-    <tr>
-        <td style="padding-right:25px;">
-            <strong>UPS:</strong>
-        </td>
-        <td>
-            <!-- {{ ups_form.toggleUPS }} -->
-        </td>
-    </tr>
-    <tr>
-        <td style="padding-right:25px;">
-            <strong>Web Server:</strong>
-        </td>
-        <td>
-            <!--  {{ webserver_form.toggleWebserver }} -->
-        </td>
-    </tr>
-    <tr>
-        <td style="padding-right:25px;">
-            <strong>FTP:</strong>
-        </td>
-        <td>
-            <!-- {{ ftp_form.toggleFTP }} -->
-        </td>
-    </tr>
-    <tr>
-        <td style="padding-right:25px;">
-            <strong>TFTP:</strong>
-        </td>
-        <td>
-            <!--     {{ tftp_form.toggleTFTP }} -->
-        </td>
-    </tr>
-    <tr>
-        <td style="padding-right:25px;">
-            <strong>SSH:</strong>
-        </td>
-        <td>
-            <!--   {{ ssh_form.toggleSSH }} -->
-        </td>
-    </tr>
-    </table>
+    {{ srv_enable }}
+</table>
    
 <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 </form>
 </div>
 <div dojoType="dijit.layout.ContentPane" title="Windows" closable="true">
-<form action="/freenas/services/cifs/" method="post">{% csrf_token %}
+<form action="/services/" method="post">{% csrf_token %}
                     <table>
-
-                        <tr>
-                            <td style="padding-right:25px;">
-                                <strong>Enable Windows Sharing:</strong>
-                            </td>
-                            <td>
-                                {{ cifs.toggleCIFS }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding-right:25px;">
-                                <strong>Netbios Name:</strong>
-                            </td>
-                        <td>
-                            {{ cifs.netbiosname.errors }}
-                            {{ cifs.netbiosname }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding-right:25px;">
-                            <strong>Workgroup:</strong>
-                        </td>
-                        <td>
-                            {{ cifs.workgroup.errors }}
-                            {{ cifs.workgroup }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding-right:25px;">
-                            <strong>Description:</strong>
-                        </td>
-                        <td>
-                            {{ cifs.cifs_description.errors }}
-                            {{ cifs.cifs_description }}
-                        </td>
-                    </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>DOS Charset:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.doscharset.errors }}
-                        {{ cifs.doscharset }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>UNIX Charset:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.unixcharset.errors }}
-                        {{ cifs.unixcharset }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Log Level:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.loglevel.errors }}
-                        {{ cifs.loglevel }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Local Master:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.localmaster.errors }}
-                        {{ cifs.localmaster }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Time Server:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.timeserver.errors }}
-                        {{ cifs.timeserver }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Guest:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.guest.errors }}
-                        {{ cifs.guest }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>File Mask:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.cifs_filemask.errors }}
-                        {{ cifs.cifs_filemask }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Directory Mask:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.cifs_dirmask.errors }}
-                        {{ cifs.cifs_dirmask }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Send Buffer:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.sendbuffer.errors }}
-                        {{ cifs.sendbuffer }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Receive Buffer:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.recbuffer.errors }}
-                        {{ cifs.recbuffer }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Large Read/Write:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.largerw.errors }}
-                        {{ cifs.largerw }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Send File:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.sendfile.errors }}
-                        {{ cifs.sendfile }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>EA Support:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.easupport.errors }}
-                        {{ cifs.easupport }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>DOS Attributes:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.dosattr.errors }}
-                        {{ cifs.dosattr }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>NULL Password:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.nullpw.errors }}
-                        {{ cifs.nullpw }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Global Samba Parameters:</strong>
-                    </td>
-                    <td>
-                        {{ cifs.smb_options.errors }}
-                        {{ cifs.smb_options }}
-                    </td>
-                </tr>
-            </table>
+                        {{ cifs.errors }}
+                        {{ cifs }}
+                                   </table>
 <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 </form>
     </div>
   <div dojoType="dijit.layout.ContentPane" title="Apple" closable="true">
-<form action="/freenas/services/afp/" method="post">{% csrf_token %}
+<form action="/services/" method="post">{% csrf_token %}
             <table>
-    <tr>
-                            <td style="padding-right:25px;">
-                                <strong>Enable Apple Sharing:</strong>
-                            </td>
-                            <td>
-                                {{ afp.toggleAFP }}
-                            </td>
-                        </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Name:</strong>
-                    </td>
-                    <td>
-                        {{ afp.name.errors }}
-                        {{ afp.name }}
-                    </td>
-                </tr>
+                {{ afp.errors }}
+                {{ afp }}
             </table>
 <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 </form>
         </div>
           
         <div dojoType="dijit.layout.ContentPane" title="UNIX" closable="true">
-<form action="/freenas/services/nfs/" method="post">{% csrf_token %}
+<form action="/services/" method="post">{% csrf_token %}
      <table>
-              <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Enable Unix Sharing:</strong>
-                    </td>
-                    <td>
-                        {{ nfs.toggleNFS }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Servers:</strong>
-                    </td>
-                    <td>
-                        {{ nfs.servers.errors }}
-                        {{ nfs.servers }}
-                    </td>
-                </tr>
-            </table>
+         {{ nfs.errors }}
+         {{ nfs }}
+                     </table>
 <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 </form>
         </div>
 
 
 <div dojoType="dijit.layout.ContentPane" title="Unison" closable="true">
-<form action="/freenas/services/unison/" method="post">{% csrf_token %}
+<form action="/services/" method="post">{% csrf_token %}
             <table>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Enable Unison:</strong>
-                    </td>
-                    <td>
-                        {{ unison_form.toggleUnison }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Working Directory:</strong>
-                    </td>
-                    <td>
-                        {{ unison_form.workingdir }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Create Working Directory:</strong>
-                    </td>
-                    <td>
-                        {{ unison_form.createworkingdir }}
-                    </td>
-                </tr>
-            </table>
+                {{ unison.errors }}
+                {{ unison }}
+
+                        </table>
 <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 </form>
 </div>
 <div dojoType="dijit.layout.ContentPane" title="iSCSI Target" closable="true">
-<form action="/freenas/services/iscsitarget/" method="post">{% csrf_token %}
+<form action="/services/" method="post">{% csrf_token %}
             <table>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Enable iSCSI Target:</strong>
-                    </td>
-                    <td>
-                        {{ iscsi_form.toggleiSCSITarget }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Base Name:</strong>
-                    </td>
-                    <td>
-                        {{ iscsi_form.basename }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Discovery Authentication:</strong>
-                    </td>
-                    <td>
-                        {{ iscsi_form.discoveryauthmethod }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Discovery Authentication Group:</strong>
-                    </td>
-                    <td>
-                        {{ iscsi_form.discoveryauthgroup }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>I/O Timeout:</strong>
-                    </td>
-                    <td>
-                        {{ iscsi_form.io }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>NOPIN Interval:</strong>
- </td>
-                    <td>
-                        {{ iscsi_form.nopinint }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Session Limit:</strong>
-                    </td>
-                    <td>
-                        {{ iscsi_form.maxsesh }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Connection Limit:</strong>
-                    </td>
-                    <td>
-                        {{ iscsi_form.maxconnect }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>First Burst length:</strong>
-                    </td>
-                    <td>
-                        {{ iscsi_form.firstburst }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Burst Limit:</strong>
-                    </td>
-                    <td>
-                        {{ iscsi_form.maxburst }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Receive Limit:</strong>
-                    </td>
-                    <td>
-                        {{ iscsi_form.maxrecdata }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>LUC:</strong>
-                    </td>
-                    <td>
-                        {{ iscsi_form.toggleluc }}
-                    </td>
-                </tr>
-            </table>
+                {{ iscsi.errors }}
+                {{ iscsi }}
+        
+                         </table>
 <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 </form>
 </div>
 <div dojoType="dijit.layout.ContentPane" title="Dynamic DNS" closable="true">
-<form action="/freenas/services/dynamicdns/" method="post">{% csrf_token %}
+<form action="/services/" method="post">{% csrf_token %}
             <table>
-      <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Enable Dynamic DNS:</strong>
-                    </td>
-                    <td>
-                        {{ dynamicdns_form.toggleDynamicDNS }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Provider:</strong>
-                    </td>
-                    <td>
-                        {{ dynamicdns_form.provider }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Domain:</strong>
-                    </td>
-                    <td>
-                        {{ dynamicdns_form.domain }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Username:</strong>
-                    </td>
-                    <td>
-                        {{ dynamicdns_form.dyndns_username }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Password:</strong>
-                    </td>
-                    <td>
-                        {{ dynamicdns_form.password }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Update Period:</strong>
-                    </td>
-                    <td>
-                        {{ dynamicdns_form.updateperiod }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Forced Update Period:</strong>
-                    </td>
-                    <td>
-                        {{ dynamicdns_form.fupdateperiod }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Wild Card:</strong>
-                    </td>
-                    <td>
-                        {{ dynamicdns_form.wildcard }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Extra Options:</strong>
-                    </td>
-                    <td>
-                        {{ dynamicdns_form.dyndns_options }}
-                    </td>
-                </tr>
-            </table>
+                {{ dynamicdns.errors }}
+                {{ dynamicdns }}
+
+                         </table>
 <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 </form>
 </div>
 
 <div dojoType="dijit.layout.ContentPane" title="SNMP" closable="true">
-<form action="/freenas/services/snmp/" method="post">{% csrf_token %}
+<form action="/services/" method="post">{% csrf_token %}
             <table>
-         <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Enable SNMP:</strong>
-                    </td>
-                    <td>
-                        {{ snmp_form.toggleSNMP }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Location:</strong>
-                    </td>
-                    <td>
-                        {{ snmp_form.location }}
-                    </td>
-                </tr>
-              <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Contact:</strong>
-                    </td>
-                    <td>
-                        {{ snmp_form.contact }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Community:</strong>
-                    </td>
-                    <td>
-                        {{ snmp_form.community }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Traps:</strong>
-                    </td>
-                    <td>
-                        {{ snmp_form.traps }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Extra Options:</strong>
-                    </td>
-                    <td>
-                        {{ snmp_form.snmp_options }}
-                    </td>
-                </tr>
-            </table>
+                {{ snmp.errors }}
+                {{ snmp }}
+
+                         </table>
 <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 </form>
 </div>
 
 <div dojoType="dijit.layout.ContentPane" title="UPS" closable="true">
-<form action="/freenas/services/ups/" method="post">{% csrf_token %}
+<form action="/services/" method="post">{% csrf_token %}
    <table>
-   <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Enable UPS:</strong>
-                    </td>
-                    <td>
-                        {{ ups_form.toggleUPS }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Identifier:</strong>
-                    </td>
-                    <td>
-                        {{ ups_form.identifier }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Driver:</strong>
-                    </td>
-                    <td>
-                        {{ ups_form.driver }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Port:</strong>
-                    </td>
-                    <td>
-                        {{ ups_form.ups_port }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Extra Options:</strong>
-                    </td>
-                    <td>
-                        {{ ups_form.ups_options }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Description:</strong>
-                    </td>
-                    <td>
-                        {{ ups_form.ups_description }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Shutdown Mode:</strong>
-                    </td>
-                    <td>
-                        {{ ups_form.shutdown }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Shutdown Timer:</strong>
-                    </td>
-                    <td>
-                        {{ ups_form.shutdowntimer }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>rmonitor:</strong>
-                    </td>
-                    <td>
-                        {{ ups_form.rmonitor }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>E-Mail Notify:</strong>
-                    </td>
-                    <td>
-                        {{ ups_form.emailnotify }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>E-Mail Recipient:</strong>
-                    </td>
-                    <td>
-                        {{ ups_form.toemail }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>E-Mail Subject:</strong>
-                    </td>
-                    <td>
-                        {{ ups_form.subject }}
-                    </td>
-                </tr>
-            </table>
+       {{ ups.errors }}
+       {{ ups }}
+
+                         </table>
 <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 </form>
 </div>
 
 <div dojoType="dijit.layout.ContentPane" title="Bit Torrent" closable="true">
-<form action="/freenas/services/bittorrent/" method="post">{% csrf_token %}
+<form action="/services/" method="post">{% csrf_token %}
   <table>
-   <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Enable BitTorrent:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.toggleBitTorrent }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Peer port:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.peerport }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Download Directory:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.downloaddir }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Configuration Directory:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.configdir }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Port Forward:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.portfwd }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Peer Exchange:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.pex }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Dist Hash:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.disthash }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Encryption Method:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.encrypt }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Upload Bandwidth:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.uploadbw }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Download Bandwidth:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.downloadbw }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Watch Directory:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.watchdir }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Incomplete Directory:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.incompletedir }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>User Mask:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.bt_umask }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Options:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.bt_options }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Admin Port:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.adminport }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Admin Authentication:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.adminauth }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Admin User:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.adminuser }}
-                    </td>
-               </tr>
- 		        <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Admin Password:</strong>
-                    </td>
-                    <td>
-                        {{ bittorrent_form.adminpass }}
-                    </td>
-                </tr>
-            </table>
+      {{ bittorrent.errors }}
+      {{ bittorrent }}
+
+                        </table>
 <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 </form>
 </div>
 
 <div dojoType="dijit.layout.ContentPane" title="Web Server" closable="true">
-<form action="/freenas/services/webserver/" method="post">{% csrf_token %}
+<form action="/services/" method="post">{% csrf_token %}
           <table>
-        <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Enable Web Server:</strong>
-                    </td>
-                    <td>
-                        {{ webserver_form.toggleWebserver }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Protocol:</strong>
-                    </td>
-                    <td>
-                        {{ webserver_form.protocol }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Port:</strong>
-                    </td>
-                    <td>
-                        {{ webserver_form.webserver_port }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Document Root:</strong>
-                    </td>
-                    <td>
-                        {{ webserver_form.docroot }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Authentication:</strong>
-                    </td>
-                    <td>
-                        {{ webserver_form.auth }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Directory Listing:</strong>
-                    </td>
-                    <td>
-                        {{ webserver_form.dirlisting }}
-                    </td>
-                </tr>
-            </table>
+              {{ webserver.errors }}
+              {{ webserver }}
+    
+                        </table>
 <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 </form>
 </div>
 
 
 <div dojoType="dijit.layout.ContentPane" title="FTP" closable="true">
-<form action="/freenas/services/ftp/" method="post">{% csrf_token %}
+<form action="/services/" method="post">{% csrf_token %}
             <table>
-        <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Enable FTP:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.toggleFTP }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Clients:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.clients }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Connections:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.ipconnections }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Log-In Attempts:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.loginattempt }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Timeout:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.timeout }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Root Login:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.ftp_rootlogin }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Anonymous:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.onlyanonymous }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Local:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.onlylocal }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Banner:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.banner }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>File Mask:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.ftp_filemask }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Directory Mask:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.ftp_dirmask }}
-                    </td>
-                    <tr>
-                    <td style="padding-right:25px;">
-                        <strong>FXP:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.fxp }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Resume:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.resume }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Default Root:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.defaultroot }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Ident:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.ident }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Reverse DNS:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.reversedns }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Masquerade Address:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.masqaddress }}
-                    </td>
-               </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Passive Port (minimum):</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.passiveportsmin }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Passive Port (maximum):</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.passiveportsmax }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Local User Upload Bandwidth:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.localuserbw }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Local User Download Bandwidth:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.localuserdlbw }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Anonymous User Bandwidth:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.anonuserbw }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Anonymous User Download Bandwidth:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.anonuserdlbw }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>SSL / TLS:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.ssltls }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Extra Options:</strong>
-                    </td>
-                    <td>
-                        {{ ftp_form.ftp_options }}
-                    </td>
-                </tr>
+                {{ ftp.errors }}
+                {{ ftp }}
             </table>
 <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 </form>
 </div>
 
 <div dojoType="dijit.layout.ContentPane" title="TFTP" closable="true">
-<form action="/freenas/services/tftp/" method="post">{% csrf_token %}
+<form action="/services/" method="post">{% csrf_token %}
             <table>
-        <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Enable TFTP:</strong>
-                    </td>
-                    <td>
-                        {{ tftp_form.toggleTFTP }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Directory:</strong>
-                    </td>
-                    <td>
-                        {{ tftp_form.directory }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>New Files:</strong>
-                    </td>
-                    <td>
-                        {{ tftp_form.newfiles }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Port:</strong>
-                    </td>
-                    <td>
-                        {{ tftp_form.tftp_port }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Username:</strong>
-                    </td>
-                    <td>
-                        {{ tftp_form.tftp_username }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>User Mask:</strong>
-                    </td>
-                    <td>
-                        {{ tftp_form.tftp_umask }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Extra Options:</strong>
-                    </td>
-                    <td>
-                        {{ tftp_form.tftp_options }}
-                    </td>
-                </tr>
-            </table>
+                {{ tftp.errors }}
+                {{ tftp }}
+              </table>
 <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 </form>
 </div>
 
 <div dojoType="dijit.layout.ContentPane" title="SSH" closable="true">
-<form action="/freenas/services/ssh/" method="post">{% csrf_token %}
+<form action="/services/" method="post">{% csrf_token %}
             <table>
-        <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Enable SSH:</strong>
-                    </td>
-                    <td>
-                        {{ ssh_form.toggleSSH }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>TCP Port:</strong>
-                    </td>
-                    <td>
-                        {{ ssh_form.tcpport }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Root Login:</strong>
-                    </td>
-                    <td>
-                        {{ ssh_form.ssh_rootlogin }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Password Authentication:</strong>
-                    </td>
-                    <td>
-                        {{ ssh_form.passwordauth }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>TCP Forward:</strong>
-                    </td>
-                    <td>
-                        {{ ssh_form.tcpfwd }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Compression:</strong>
-                    </td>
-                    <td>
-                        {{ ssh_form.compression }}
-                    </td>
-                </tr>
-             <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Private Key:</strong>
-                    </td>
-                    <td>
-                        {{ ssh_form.privatekey }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right:25px;">
-                        <strong>Extra Options:</strong>
-                    </td>
-                    <td>
-                        {{ ssh_form.ssh_options }}
-                    </td>
-                </tr>
-            </table>
+                {{ ssh.errors }}
+                {{ ssh }}
+  
+                          </table>
 <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 </form>
 </div>
 
+<div dojoType="dijit.layout.ContentPane" title="Active Directory" closable="true">
+<form action="/services/" method="post">{% csrf_token %}
+            <table>
+                {{ activedirectory.errors }}
+                {{ activedirectory }}
+  
+                          </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+</form>
+</div>
 
+<div dojoType="dijit.layout.ContentPane" title="LDAP" closable="true">
+<form action="/services/" method="post">{% csrf_token %}
+            <table>
+                {{ ldap.errors }}
+                {{ ldap }}
+  
+                          </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+</form>
+</div>
 <br />
 </div>
 {% else %}
-    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
+    <p>Welcome. Please <a href="/login/">log in</a>.</p>
 {% endif %}
 
 {% endblock %}

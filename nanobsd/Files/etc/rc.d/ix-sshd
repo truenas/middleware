@@ -15,14 +15,14 @@
 generate_sshd()
 {
     local IFS=\|
-    local f="toggleSSH tcpport ssh_rootlogin passwordauth tcpfwd compression ssh_options"
-    local toggleSSH tcpport ssh_rootlogin passwordauth tcpfwd compression ssh_options
+    local f="ssh_tcpport ssh_rootlogin ssh_passwordauth ssh_tcpfwd ssh_compression ssh_options"
+    local tcpport ssh_rootlogin passwordauth tcpfwd compression ssh_options
     local cmd sf cfg
     sf=$(echo $f | sed -e 's/ /, /g')
     cfg=/etc/ssh/sshd_config
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-	"SELECT $sf FROM freenas_servicesssh ORDER BY -id LIMIT 1" | \
-	while read toggleSSH tcpport ssh_rootlogin passwordauth tcpfwd compression ssh_options; do
+	"SELECT $sf FROM services_ssh ORDER BY -id LIMIT 1" | \
+	while read tcpport ssh_rootlogin passwordauth tcpfwd compression ssh_options; do
 	    cat > $cfg <<EOF
 SyslogFacility LOCAL3
 Protocol 2

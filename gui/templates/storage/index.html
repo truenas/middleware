@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
+    <div dojoType="dijit.layout.ContentPane" title="Active">
+
+<table>
+    <tr><td><h3>Disks</h3></td></tr>
+    <tr>
+        <td width="150px" style="background:#cfcfcf;"><strong>Name</strong></td>
+        <td width="50px" style="background:#cfcfcf;"><strong>Disk</strong></td>
+        <td width="25px" style="background:#cfcfcf;"></td>
+    </tr>
+{% for disk in disk_list %}
+    <tr>
+        <td>
+{{ disk.disk_name }}
+
+        <td> {{ disk.disk_disks }}</td>
+        <td>
+<a href="/storage/disks/delete/{{ disk.id }}/">Delete?</a>
+            </td>
+    </tr>
+{% endfor %}
+</table>
+
+<table>
+    <tr><td><h3>Groups</h3></td></tr>
+    <tr>
+        <td width="150px" style="background:#cfcfcf;"><strong>Name</strong></td>
+        <td width="50px" style="background:#cfcfcf;"><strong>Type</strong></td>
+        <td width="25px" style="background:#cfcfcf;"></td>
+    </tr>
+{% for group in group_list %}
+    <tr>
+        <td>
+{{ group.group_name }}
+
+        <td> {{ group.group_type }}</td>
+        <td>
+<a href="/storage/groups/delete/{{ group.id }}/">Delete?</a>
+            </td>
+    </tr>
+{% endfor %}
+</table>
+<table>
+    <tr><td><h3>Volumes</h3></td></tr>
+    <tr>
+        <td width="150px" style="background:#cfcfcf;"><strong>Name</strong></td>
+        <td width="50px" style="background:#cfcfcf;"><strong>Type</strong></td>
+        <td width="25px" style="background:#cfcfcf;"></td>
+    </tr>
+{% for volume in volume_list %}
+    <tr>
+        <td>
+{{ volume.vol_name }}
+
+        <td> {{ volume.vol_type }}</td>
+        <td>
+<a href="/storage/volumes/delete/{{ volume.id }}/">Delete?</a>
+            </td>
+    </tr>
+{% endfor %}
+</table>
+    </div>
+
+    <div dojoType="dijit.layout.ContentPane" title="Add Disks">
+        <form action="/storage/save/disk/" method="post">{% csrf_token %}
+<table>
+    {{ disk.errors }}
+    {{ disk }}
+    </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Add!</button>
+</form>
+</div>
+
+
+    <div dojoType="dijit.layout.ContentPane" title="Group Disks">
+<form action="/storage/save/diskgroup/" method="post">{% csrf_token %}
+<table>
+    {{ diskgroup.errors }}
+    {{ diskgroup }}
+  </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Group!</button>
+</form>
+</div>
+
+
+    <div dojoType="dijit.layout.ContentPane" title="Create Volumes">
+<form action="/storage/save/volume/" method="post">{% csrf_token %}
+<table>
+    {{ volume.errors }}
+    {{ volume }}
+   </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Create!</button>
+</form>
+</div>
+             
+
+    <div dojoType="dijit.layout.ContentPane" title="Add Mount Point">
+
+<form action="/storage/save/mountpoint/" method="post">{% csrf_token %}
+    <table>
+        {{ mountpoint.errors }}
+        {{ mountpoint }}
+           </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Mount Point</button>
+</form>
+
+
+<br />
+</div>
+</div>
+{% else %}
+    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
+{% endif %}
+
+{% endblock %}
+

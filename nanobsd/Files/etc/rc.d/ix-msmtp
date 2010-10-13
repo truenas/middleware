@@ -14,12 +14,12 @@ msmtp_config=${msmtp_config:-"/usr/local/etc/msmtp.conf"}
 generate_msmtp_cfg()
 {
 	local IFS=\|
-	local f="fromemail outgoingserver port security smtp"
+	local f="em_fromemail em_outgoingserver em_port em_security em_smtp"
 	local fromemail outgoingserver port security smtp
 	local cmd sf
 	sf=$(echo $f | sed -e 's/ /, /g')
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-	    "SELECT $sf FROM freenas_systemadvancedemail ORDER BY -id LIMIT 1" | \
+	    "SELECT $sf FROM system_email ORDER BY -id LIMIT 1" | \
 	    while read fromemail outgoingserver port security smtp
 	        cat <<__EOF__
 account default

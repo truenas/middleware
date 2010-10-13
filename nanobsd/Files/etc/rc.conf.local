@@ -34,27 +34,32 @@ FREENAS_RC=/var/tmp/rc.conf.freenas
 _interface_config()
 {
 	local IFS=\|
-	local _ifid interface ipv4addr subnetmask gateway
+	local _ifid interface dodhcp ipv4addr subnetmask gateway
 
 	# Note: ipv4/ipv6 are supposed in ip/masklen format.
 
 	# Traverse the network interface table and generate rc.conf style
 	# configuration.
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT network_interface, ipv4address, ipv6address, interface_options FROM freenas_networkinterfacemgmt ORDER BY id" | \
-	while read interface ipv4 ipv6 options; do
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_interface, int_dhcp, int_ipv4address, int_ipv6address, int_options FROM network_interfaces ORDER BY id" | \
+	while read interface dodhcp ipv4 ipv6 options; do
 		echo -n ifconfig_${interface}=\"
-		if [ -n "${ipv4}" ]; then
-			echo -n "inet ${ipv4} "
+		if [ "${dodhcp}" = "1" ]; then
+			echo "DHCP"\"
+		else
+			if [ -n "${ipv4}" ]; then
+				echo -n "inet ${ipv4} "
+			fi
+			if [ -n "${options}" ]; then
+				echo -n "${options}"
+			fi
+			echo \"
+			if [ -n "${gateway}" ]; then
+				echo defaultrouter=\"${gateway}\"
+			fi
 		fi
-		if [ -n "${options}" ]; then
-			echo -n "${options}"
-		fi
-		echo \"
+		# TODO: Current schema lacks of ipv6 defaultroute, rtsol stuff.
 		if [ -n "${ipv6}" ]; then
 			echo ipv6_ifconfig_${interface}=\"${ipv6}\"
-		fi
-		if [ -n "${gateway}" ]; then
-			echo defaultrouter=\"${gateway}\"
 		fi
 	done
 }
@@ -63,7 +68,7 @@ _host_config()
 {
 	local IFS=\|
 	local hostname domainname
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT hostname, domain FROM freenas_systemgeneralsetup ORDER BY id DESC LIMIT 1" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_hostname, stg_domain FROM system_settings ORDER BY id DESC LIMIT 1" | \
 	while read hostname domainname; do
 		echo hostname=\"${hostname}.${domainname}\"
 	done
@@ -90,18 +95,33 @@ _bool_config()
 	done
 }
 
+# _bool_svcconfig /variable/ /service_name/
+_bool_svcconfig()
+{
+	local IFS=\|
+	local boolvalue value
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service=$2 ORDER BY id DESC LIMIT 1" | \
+	while read boolvalue; do
+		if [ "${boolvalue}" = "1" ]; then
+			value="YES"
+		else
+			value="NO"
+		fi
+		echo $1=\"${value}\"
+	done
+}
+
 # Grab static route configuration
 _staticroute_config()
 {
 	local IFS=\|
 	local id destination gateway interface
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT freenas_networkstaticroute.id, sr_destination, sr_gateway FROM freenas_networkstaticroute INNER JOIN freenas_networkinterfacemgmt ON freenas_networkstaticroute.sr_interface_id = freenas_networkinterfacemgmt.id;" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, sr_destination, sr_gateway FROM network_staticroute;" | \
 	while read id destination gateway; do
 		echo route_freenas${id}=\"-net ${destination} ${gateway}\"
-		freenas_routes="${freenas_routes} freenas${id}"
 	done
-	echo static_routes=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM freenas_networkstaticroute" | sed -e s/^/freenas/g | xargs echo `\"
+	echo static_routes=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM network_staticroute" | sed -e s/^/freenas/g | xargs echo `\"
 }
 
 _gen_conf()
@@ -112,19 +132,19 @@ _gen_conf()
 	_staticroute_config
 
 	## Daemons
-	_bool_config cron_enable freenas_cronjob togglecron
+	_bool_config cron_enable system_cronjob cron_enable
 	## TODO: Need to make this a || logic.
-	_bool_config smartd_enable freenas_disk togglesmart
-	_bool_config netatalk_enable freenas_servicesafp toggleAFP
-	_bool_config afpd_enable freenas_servicesafp toggleAFP
-	_bool_config cnid_metad_enable freenas_servicesafp toggleAFP
-	_bool_config proftpd_enable freenas_servicesftp toggleFTP
-	_bool_config nfs_server_enable freenas_servicesnfs toggleNFS
-	_bool_config smbd_enable freenas_servicescifs togglecifs
-	_bool_config rsyncd_enable freenas_servicesrsync togglersync
-	_bool_config sshd_enable freenas_servicesssh toggleSSH
+	_bool_config smartd_enable storage_disk disk_togglesmart
+	_bool_svcconfig netatalk_enable afp
+	_bool_svcconfig afpd_enable afp
+	_bool_svcconfig cnid_metad_enable afp
+	_bool_svcconfig proftpd_enable ftp
+	_bool_svcconfig nfs_server_enable nfs
+	_bool_svcconfig samba_enable cifs
+	_bool_svcconfig rsyncd_enable rsync
+	_bool_svcconfig sshd_enable ssh
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT varname, varvalue FROM freenas_rcconf ORDER BY id ASC" | tr \| =
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT rcc_varname, rcc_varvalue FROM system_rcconf ORDER BY id ASC" | tr \| =
 }
 
 # If we're running really early, then mount /data read-only

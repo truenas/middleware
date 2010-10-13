@@ -86,13 +86,13 @@ generate_proftp()
 #XXX missing: ftp_port chrooteveryone tlsrequired mod_ban
     local ftp_port=0 chrooteveryone=0 tlsrequired=0 mod_ban=0
 #XXX unused: defaultroot ssltls
-    local f="toggleFTP clients ipconnections loginattempt timeout ftp_rootlogin onlyanonymous onlylocal banner ftp_filemask ftp_dirmask fxp resume defaultroot ident reversedns masqaddress passiveportsmin passiveportsmax localuserbw localuserdlbw anonuserbw anonuserdlbw ssltls ftp_options"
-    local toggleFTP clients ipconnections loginattempt timeout ftp_rootlogin onlyanonymous onlylocal banner ftp_filemask ftp_dirmask fxp resume defaultroot ident reversedns masqaddress passiveportsmin passiveportsmax localuserbw localuserdlbw anonuserbw anonuserdlbw ssltls ftp_options
+    local f="clients ipconnections loginattempt timeout ftp_rootlogin onlyanonymous onlylocal banner ftp_filemask ftp_dirmask fxp resume defaultroot ident reversedns masqaddress passiveportsmin passiveportsmax localuserbw localuserdlbw anonuserbw anonuserdlbw ssltls ftp_options"
+    local clients ipconnections loginattempt timeout ftp_rootlogin onlyanonymous onlylocal banner ftp_filemask ftp_dirmask fxp resume defaultroot ident reversedns masqaddress passiveportsmin passiveportsmax localuserbw localuserdlbw anonuserbw anonuserdlbw ssltls ftp_options
     local sf
     sf=$(echo $f | sed -e 's/ /, /g')
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
         "SELECT $sf FROM freenas_servicesftp ORDER BY -id LIMIT 1" | \
-    while read toggleFTP clients ipconnections loginattempt timeout ftp_rootlogin onlyanonymous onlylocal banner ftp_filemask ftp_dirmask fxp resume defaultroot ident reversedns masqaddress passiveportsmin passiveportsmax localuserbw localuserdlbw anonuserbw anonuserdlbw ssltls ftp_options; do
+    while read clients ipconnections loginattempt timeout ftp_rootlogin onlyanonymous onlylocal banner ftp_filemask ftp_dirmask fxp resume defaultroot ident reversedns masqaddress passiveportsmin passiveportsmax localuserbw localuserdlbw anonuserbw anonuserdlbw ssltls ftp_options; do
 
 	# Check if required directories exists.
 	[ ! -d "/var/run/proftpd" ] && mkdir "/var/run/proftpd"

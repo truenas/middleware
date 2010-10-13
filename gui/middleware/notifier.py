@@ -156,9 +156,8 @@ class notifier:
 	def _reload_smbd(self):
 		self.__system("/usr/sbin/service ix-samba start")
 		self.__system("/usr/sbin/service samba restart")
-        def _create_disk(self):
-                # TODO: This accesses the database directly which should
-                # be avoided
+        def __open_db(self):
+                """Open and return a cursor object for database access."""
 		dbname = ""
 		try:
                 	from freenasUI.settings import DATABASE_NAME as dbname
@@ -168,6 +167,47 @@ class notifier:
                 
                 conn = sqlite3.connect(dbname)
                 c = conn.cursor()
+                return c
+	def __gpt_labeldisk(self, type, devname, label = ""):
+                """Label the whole disk with GPT under the desired label and type"""
+                # TODO: Support for 4k sectors (requires 8.1-STABLE after 213467).
+		if label != "":
+			self.__system("gpart create -s gpt /dev/%s && gpart add -t %s -l %s %s" % (devname, type, label, devname))
+		else:
+			self.__system("gpart create -s gpt /dev/%s && gpart add -t %s %s" % (devname, type, devname))
+        def __create_zfs_volume(self, c, z_id, z_name):
+                """Internal procedure te create a ZFS volume identified by volume id"""
+                z_vdev = ""
+                # Grab all disk groups' id matching the volume ID
+                c.execute("SELECT diskgroup_id FROM storage_volume_vol_groups WHERE volume_id = ?", (z_id,))
+		vgroup_list = c.fetchall()
+		for vgrp in vgroup_list:
+			c.execute("SELECT group_type FROM storage_diskgroup WHERE id = ?", vgrp)
+			vgrp_type = c.fetchone()[0]
+			# TODO: Currently the volume manager does not give the expected blank
+			# in database.  Workaround this by handling it another way.
+			if vgrp_type != "single":
+				z_vdev += " " + vgrp_type
+			# Grab all member disks from the current vdev group
+			c.execute("SELECT disk.disk_disks, disk.disk_name FROM storage_disk AS disk LEFT OUTER JOIN storage_diskgroup_group_members AS diskgroup ON disk.id = diskgroup.disk_id WHERE diskgroup.diskgroup_id = ?", vgrp)
+			vdev_member_list = c.fetchall()
+			for disk in vdev_member_list:
+				self.__gpt_labeldisk(type = "freebsd-zfs", devname = disk[0], label = disk[1])
+				z_vdev += " /dev/gpt/" + disk[1]
+		# Finally, create the zpool.
+		self.__system("zpool create -fm /mnt/%s %s %s" % (z_name, z_name, z_vdev))
+        def __create_ufs_volume(self, c, u_id, u_name):
+		c.execute("SELECT diskgroup_id FROM storage_diskgroup_group_members WHERE volume_id = ?", (u_id,))
+		# TODO: For now we don't support RAID levels.
+		ufs_volume_id = c.fetchone()
+		c.execute("SELECT disk.disk_disks, disk.disk_name FROM storage_disk AS disk LEFT OUTER JOIN storage_diskgroup_group_members AS diskgroup ON disk.id = diskgroup.disk_id WHERE diskgroup.diskgroup_id = ?", ufs_volume_id)
+		disk = c.fetchone()
+		self.__gpt_labeldisk(type = "freebsd-ufs", devname = disk[0])
+		# TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar generated automatically
+		ufs_device = "/dev/ufs/" + disk[1]
+		self.__system("newfs -U -L %s /dev/%sp1" % (u_name, disk[0]))
+        def _create_disk(self):
+                c = self.__open_db()
                 # Create ZFS pools
                 c.execute("SELECT id, vol_name FROM freenas_volume WHERE vol_type = 'zfs'")
                 zfs_list = c.fetchall()
@@ -176,23 +216,7 @@ class notifier:
 			self.__system("/sbin/mount -uw /")
 			for row in zfs_list:
 				z_id, z_name = row
-				z_vdev = ""
-				t_id = (z_id,)
-				c.execute("SELECT diskgroup_id FROM freenas_volume_groups WHERE volume_id = ?", t_id)
-				vgroup_list = c.fetchall()
-				for vgrp in vgroup_list:
-					c.execute("SELECT group_type FROM freenas_diskgroup WHERE id = ?", vgrp)
-					vgrp_type = c.fetchone()[0]
-					# TODO: Currently the volume manager does not give the expected blank
-					# in database.
-					if vgrp_type != "single":
-						z_vdev += " " + vgrp_type
-					c.execute("SELECT freenas_disk.disks, freenas_disk.disk_name FROM freenas_disk LEFT OUTER JOIN freenas_diskgroup_members ON freenas_disk.id = freenas_diskgroup_members.disk_id WHERE freenas_diskgroup_members.diskgroup_id = ?", vgrp)
-					z_vdsk_list = c.fetchall()
-					for disk in z_vdsk_list:
-						self.__system("[ -e /dev/gpt/%s ] || ( gpart create -s gpt /dev/%s && gpart add -t freebsd-zfs -l %s %s )" % (disk[1], disk[0], disk[1], disk[0]))
-						z_vdev += " /dev/gpt/" + disk[1]
-				self.__system("zpool create -fm /mnt/%s %s %s" % (z_name, z_name, z_vdev))
+				self.__create_zfs_volume(c = c, z_id = z_id, z_name = z_name)
 			self.__system("/sbin/mount -ur /")
                 # Create UFS file system and newfs
                 c.execute("SELECT id, vol_name FROM freenas_volume WHERE vol_type = 'ufs'")
@@ -200,17 +224,7 @@ class notifier:
 		if len(ufs_list) > 0:
 			for row in ufs_list:
 				u_id, u_name = row
-				t_id = (u_id,)
-				c.execute("SELECT diskgroup_id FROM freenas_volume_groups WHERE volume_id = ?", t_id)
-				# TODO: For now we don't support RAID levels.
-				ufs_volume_id = c.fetchone()
-				c.execute("SELECT freenas_disk.disks, freenas_disk.disk_name FROM freenas_disk LEFT OUTER JOIN freenas_diskgroup_members ON freenas_disk.id = freenas_diskgroup_members.disk_id WHERE freenas_diskgroup_members.diskgroup_id = ?", ufs_volume_id)
-				disk = c.fetchone()
-				# TODO: Not using GPT label at this moment.
-				self.__system("[ -e /dev/%sp1 ] || ( gpart create -s gpt /dev/%s && gpart add -t freebsd-ufs %s )" % (disk[0], disk[0], disk[0]))
-				ufs_device = "/dev/ufs/" + disk[1]
-				# TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar generated automatically
-				self.__system("newfs -U -L %s /dev/%sp1" % (u_name, disk[0]))
+				self.__create_ufs_volume(c = c, u_id = u_id, u_name = u_name)
 		self._reload_disk()
         def _reload_disk(self):
 		self.__system("/usr/sbin/service ix-fstab start")

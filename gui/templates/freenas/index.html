@@ -4,6 +4,7 @@
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
     <div dojoType="dijit.layout.ContentPane" title="System Information" selected="true">
         <table>
+
             <tr>
                 <td class="label"><strong>Hostname:</strong></td>
                 <td class="descr">{{ hostname }}</td>
@@ -32,10 +33,74 @@
                 <td class="label"><strong>FreeNAS Build:</strong></td>
                 <td class="descr">{{ freenas_build }}</td>
             </tr>
+            <tr>
+                <td class="label"></td>
+                <td class="descr">
+                    <div id="top_dialog" dojoType="dijit.Dialog" title="Running Processes">
+                    <pre class="ix">{{ top }}</pre>
+                    </div>
+                    <button id="topbtn" dojoType="dijit.form.Button" type="button">
+                        Display Running Processes
+                        <script type="dojo/method" event="onClick" args="evt">
+                            dijit.byId("top_dialog").show();
+                        </script>
+                    </button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <br />
+                    <br />
+
+<div id="id_dialog" dojoType="dijit.Dialog" title="fidget">
+	<div style="width:300px; height:150px">
+		<div id="id_dialog_text"></div>
+	</div>
+
+	<div class="dijitDialogPaneActionBar">
+		<button
+			dojoType="dijit.form.Button"
+			type="submit"
+			id="id_dialog_button_1"
+		>Yes</button>
+		<button
+			dojoType="dijit.form.Button"
+			type="button"
+			onClick="dijit.byId('id_dialog').onCancel();"
+			id="id_dialog_button_2"
+		>Cancel</button>
+	</div>
+</div>
+                    <button id="shutdownbtn" dojoType="dijit.form.Button" type="button" onClick="ShutdownAlert()">            
+                        Shutdown System
+                    </button>
+                </td>
+                <td>
+                    <br />
+                    <br />
+                    <button id="rebootbtn" dojoType="dijit.form.Button" type="button" onClick="RebootAlert()">
+                        Reboot System
+                    </button>
+                </td>
+            </tr>
         </table>
     </div>
-    <div dojoType="dijit.layout.ContentPane" title="Processes">
-        <pre class="ix">{{ top }}</pre>
+    <div dojoType="dijit.layout.ContentPane" title="Settings">
+<form action="system/settings/" method="post">{% csrf_token %}
+    <table>
+        {{ settings }}
+    </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Settings</button>
+</form>
+    </div>
+
+    <div dojoType="dijit.layout.ContentPane" title="Advanced">
+<form action="system/advanced/" method="post">{% csrf_token %}
+    <table>
+        {{ advanced }}
+    </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Settings</button>
+</form>
     </div>
 </div>
 {% endblock %}

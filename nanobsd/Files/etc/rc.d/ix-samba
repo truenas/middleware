@@ -13,9 +13,9 @@ generate_smbconf()
 {
 	local IFS=\|
 
-	local netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest cifs_filemask cifs_dirmask sendbuffer recbuffer largerw sendfile easupport dosattr nullpw smb_options
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT netbiosname, workgroup, cifs_description, doscharset, unixcharset, loglevel, localmaster, timeserver, guest, cifs_filemask, cifs_dirmask, sendbuffer, recbuffer, largerw, sendfile, easupport, dosattr, nullpw, smb_options FROM freenas_servicescifs ORDER BY id DESC LIMIT 1" | \
-	while read netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest cifs_filemask cifs_dirmask sendbuffer recbuffer largerw sendfile easupport dosattr nullpw smb_options; do
+	local netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest cifs_filemask cifs_dirmask sendbuffer recvbuffer largerw sendfile easupport dosattr nullpw smb_options
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_srv_netbiosname, cifs_srv_workgroup, cifs_srv_description, cifs_srv_doscharset, cifs_srv_unixcharset, cifs_srv_loglevel, cifs_srv_localmaster, cifs_srv_timeserver, cifs_srv_guest, cifs_srv_filemask, cifs_srv_dirmask, cifs_srv_sendbuffer, cifs_srv_recvbuffer, cifs_srv_largerw, cifs_srv_sendfile, cifs_srv_easupport, cifs_srv_dosattr, cifs_srv_nullpw, cifs_srv_smb_options FROM services_cifs ORDER BY id DESC LIMIT 1" | \
+	while read netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest cifs_filemask cifs_dirmask sendbuffer recvbuffer largerw sendfile easupport dosattr nullpw smb_options; do
 		echo '
 [global]
 encrypt passwords = yes
@@ -93,13 +93,13 @@ getwd cache = yes'
 		if [ -n "${loglevel}" ]; then
 			echo "log level = ${loglevel}"
 		fi
-		if [ -n "${sendbuffer}" -o -n "${recbuffer}" ]; then
+		if [ -n "${sendbuffer}" -o -n "${recvbuffer}" ]; then
 			echo -n "socket options ="
 			if [ -n "${sendbuffer}" ]; then
 				echo " SO_SNDBUF= ${sendbuffer}"
 			fi
-			if [ -n "${recbuffer}" ]; then
-				echo " SO_RCVBUF= ${recbuffer}"
+			if [ -n "${recvbuffer}" ]; then
+				echo " SO_RCVBUF= ${recvbuffer}"
 			fi
 			echo
 		fi
@@ -115,7 +115,7 @@ generate_exports()
 	local IFS=\|
 
 	local name comment mountpoint cifsro browsable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny auxsmbconf
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT windowsshare_name, windowsshare_comment, mountpoint cifsro, browsable, inheritperms, recyclebin, showhiddenfiles, hostsallow, hostsdeny, auxsmbconf FROM freenas_windowsshare AS ws LEFT OUTER JOIN freenas_mountpoint AS mp ON ws.windowsshare_path_id = mp.volumeid_id ORDER BY ws.id ASC" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_name, cifs_comment, mp_path, cifs_ro, cifs_browsable, cifs_inheritperms, cifs_recyclebin, cifs_showhiddenfiles, cifs_hostsallow, cifs_hostsdeny, cifs_auxsmbconf FROM sharing_cifs_share AS cs LEFT OUTER JOIN storage_mountpoint AS mp ON cs.cifs_path_id = mp.id ORDER BY cs.id ASC" | \
 	while read name comment mountpoint cifsro browsable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny auxsmbconf; do
 		echo "[${name}]"
 		echo "path = ${mountpoint}"
