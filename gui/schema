@@ -153,10 +153,10 @@ CREATE TABLE "services_dynamicdns" (
     "ddns_domain" varchar(120) NOT NULL,
     "ddns_username" varchar(120) NOT NULL,
     "ddns_password" varchar(120) NOT NULL,
-    "updateperiod" varchar(120) NOT NULL,
+    "ddns_updateperiod" varchar(120) NOT NULL,
     "ddns_fupdateperiod" varchar(120) NOT NULL,
     "ddns_wildcard" bool NOT NULL,
-    "ddns__options" text NOT NULL
+    "ddns_options" text NOT NULL
 );
 CREATE TABLE "services_ftp" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -180,7 +180,7 @@ CREATE TABLE "services_ftp" (
     "ftp_passiveportsmax" varchar(120) NOT NULL,
     "ftp_localuserbw" varchar(120) NOT NULL,
     "ftp_localuserdlbw" varchar(120) NOT NULL,
-    "anonuserbw" varchar(120) NOT NULL,
+    "ftp_anonuserbw" varchar(120) NOT NULL,
     "ftp_anonuserdlbw" varchar(120) NOT NULL,
     "ftp_ssltls" bool NOT NULL,
     "ftp_options" text NOT NULL
@@ -482,9 +482,10 @@ CREATE TABLE "system_settings" (
 );
 CREATE TABLE "system_swap" (
     "id" integer NOT NULL PRIMARY KEY,
-    "swp_memory" bool NOT NULL,
-    "swp_mountpoint" varchar(120) NOT NULL,
-    "swp_size" varchar(120) NOT NULL
+    "swap_memory" bool NOT NULL,
+    "swap_type" varchar(120) NOT NULL,
+    "swap_mountpoint" varchar(120) NOT NULL,
+    "swap_size" varchar(120) NOT NULL
 );
 CREATE TABLE "system_sysctl" (
     "id" integer NOT NULL PRIMARY KEY,

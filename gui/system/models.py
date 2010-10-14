@@ -156,14 +156,18 @@ class Proxy(models.Model):
 
 ## System|Advanced|Swap
 class Swap(models.Model):
-    swp_memory = models.BooleanField()
+    swap_memory = models.BooleanField()
     # mountpoint info goes here
-    swp_mountpoint = models.CharField(
+    swap_type = models.CharField(
+            max_length=120, 
+            verbose_name="Swap type"
+            )
+    swap_mountpoint = models.CharField(
             max_length=120, 
             choices=MOUNTPOINT_CHOICES, 
             verbose_name="Mount point"
             )
-    swp_size = models.CharField(
+    swap_size = models.CharField(
             max_length=120, 
             verbose_name="Size"
             )
