@@ -272,9 +272,18 @@ class AFP(models.Model):
             verbose_name="Server Name",
             help_text="Name of the server. If this field is left empty the default server is specified."
             )
-    afp_srv_guest = models.BooleanField()
-    afp_srv_local = models.BooleanField()
-    afp_srv_ddp = models.BooleanField()
+    afp_srv_guest = models.BooleanField(
+            verbose_name="Guess Access"
+            help_text="Allows guest access to all apple shares on this box."
+            )
+    afp_srv_local = models.BooleanField(
+            verbose_name="Local Access"
+            help_text="Allow users with local accounts to access apple shares on this box."
+            )
+    afp_srv_ddp = models.BooleanField(
+            verbose_name="Enable DDP"
+            help_text="Enables DDP support for low-level appletalk access."
+            )
 class NFS(models.Model):            
     nfs_srv_servers = models.CharField(
             max_length=120, 
