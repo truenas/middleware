@@ -61,7 +61,7 @@ BEGIN {
 	sub("^[ \t]*", "");	# Strip leading white space
 	split($0, a, "=");
 	cols[num] = a[1];
-	gsub("\\\\n", tick " + char(10) + " tick, a[2]);
+#	gsub("\\\\n", tick " + chr(10) + " tick, a[2]);
 	vals[num] = tick a[2] tick;
 	num++;
 }
