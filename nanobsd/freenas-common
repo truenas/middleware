@@ -215,7 +215,7 @@ root@freenas.local
 freenas
 freenas
 __EOF__
-	CR "(cd ${dstCR}; ${dstCR}/set_schema_defaults.sh ${dstCR}/schema ${dstCR}/schema.defaults)"
+	CR "(cd ${dstCR}; ${dstCR}/set_schema_defaults.sh ${dstCR}/schema.init /data/freenas-v1.db)"
 	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
 	CR "chown -R www:www ${dstCR} data"
 # KLUDGE: copy over dojango settings
