@@ -33,10 +33,10 @@ TABLE services_cifs {
 	cifs_srv_localmaster=1
 	cifs_srv_timeserver=1
 	cifs_srv_guest=www
-	cifs_srv_cifs_filemask=
-	cifs_srv_cifs_dirmask=
+	cifs_srv_filemask=
+	cifs_srv_dirmask=
 	cifs_srv_sendbuffer=64240
-	cifs_srv_recbuffer=64240
+	cifs_srv_recvbuffer=64240
 	cifs_srv_largerw=0
 	cifs_srv_sendfile=1
 	cifs_srv_easupport=0
@@ -59,12 +59,12 @@ TABLE services_ftp {
 	ftp_ipconnections=2
 	ftp_loginattempt=1
 	ftp_timeout=600
-	ftp_ftp_rootlogin=0
+	ftp_rootlogin=0
 	ftp_onlyanonymous=0
 	ftp_onlylocal=0
 	ftp_banner=
-	ftp_ftp_filemask=077
-	ftp_ftp_dirmask=022
+	ftp_filemask=077
+	ftp_dirmask=022
 	ftp_fxp=0
 	ftp_resume=0
 	ftp_defaultroot=1
@@ -94,7 +94,7 @@ TABLE services_iscsitarget {
 	iscsi_toggleluc=0
 }
 TABLE services_nfs {
-	nfs_servers=4
+	nfs_srv_servers=4
 }
 TABLE services_snmp {
 	snmp_location=
@@ -114,7 +114,7 @@ TABLE services_ssh {
 }
 TABLE services_tftp {
 	tftp_directory=/tftproot
-	fftp_newfiles=0
+	tftp_newfiles=0
 	tftp_port=69
 	tftp_username=nobody
 	tftp_umask=022
@@ -155,24 +155,24 @@ TABLE system_settings {
 TABLE services_activedirectory {
 	ad_enable=0
 	ad_dcname=
-	ad_dnsrealmname=
+	ad_domainname=
 	ad_netbiosname=
 	ad_adminname=
 	ad_adminpw=
 }
 TABLE services_ldap {
-	ldap_toggle=0
+	ldap_enable=0
 	ldap_hostname=
 	ldap_basedn=
 	ldap_anonbind=0
 	ldap_rootbasedn=
 	ldap_rootbindpw=
-	ldap_pwencyption=clear
+	ldap_pwencryption=clear
 	ldap_usersuffix=
 	ldap_groupsuffix=
-	ldap_paswordsuffix=
+	ldap_passwordsuffix=
 	ldap_machinesuffix=
-	ldap_auxparams=ldap_version 3\ntimelimit 30\nbind_timelimit 30\nbind_policy soft\npam_ldap_attribute uid
+	ldap_options=ldap_version 3\ntimelimit 30\nbind_timelimit 30\nbind_policy soft\npam_ldap_attribute uid
 }
 TABLE system_advanced {
 	adv_consolemenu=1
