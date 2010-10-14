@@ -48,45 +48,32 @@ sed -e 's/#.*$//' < $in | \
 awk '
 BEGIN {
 	# tick is here because it is hard to quote right...  We have to do
-	# this dance because a simple \ escape does not work and we are inside
+	# this dance because a simple \ escape does not work as we are inside
 	# a shell tick environment now...
 	tick="'"'"'";
-	num=0;
 }
 
-# Function to dump out the tables that we have parsed so far.
-function dump_tables(tbl, cols, vals, num) {
-	if (num == 0) {
-		return 0;
-	}
-	_c="";
-	_v="";
-	_sep=",";
-	for (i = 0; i < num; i++) {
-		if (i == num - 1) {
-			_sep="";
-		}
-		_c=_c cols[i] _sep;
-		_v=_v tick vals[i] tick _sep;
-	}
-	print "INSERT INTO " tbl "(" _c ") VALUES(" _v ");";
-}
 /TABLE/ {
 	tbl = $2;
 	num = 0;
 }
 /=/ {
 	sub("^[ \t]*", "");	# Strip leading white space
-	a = index($0, "=");
-	col = substr($0, 1, a-1);
-	val = substr($0, a + 1, length($0));
-	sub("^\"", "", val);
-	sub("\"$", "", val);
-	vals[num] = val;
-	cols[num] = col;
+	split($0, a, "=");
+	cols[num] = a[1];
+	gsub("\\\\n", tick " + char(10) + " tick, a[2]);
+	vals[num] = tick a[2] tick;
 	num++;
 }
 /^}/ {
-	dump_tables(tbl, cols, vals, num);
+	if (num != 0) {
+		_c=cols[0];
+		_v=vals[0];
+		for (i = 1; i < num; i++) {
+			_c=_c "," cols[i];
+			_v=_v "," vals[i];
+		}
+		print "INSERT INTO " tbl "(" _c ") VALUES(" _v ");";
+	}
 }
 ' | sqlite3 -batch -echo -bail $db
