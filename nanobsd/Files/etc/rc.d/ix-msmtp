@@ -15,18 +15,18 @@ generate_msmtp_cfg()
 {
 	local IFS=\|
 	local f="em_fromemail em_outgoingserver em_port em_security em_smtp"
-	local fromemail outgoingserver port security smtp
+	eval local $f
 	local cmd sf
 	sf=$(echo $f | sed -e 's/ /, /g')
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	    "SELECT $sf FROM system_email ORDER BY -id LIMIT 1" | \
-	    while read fromemail outgoingserver port security smtp
+	    while eval read $f; do
 	        cat <<__EOF__
 account default
-host ${outgoingserver}
-port ${port}
+host ${em_outgoingserver}
+port ${em_port}
 protocol smtp
-from ${fromemail}
+from ${em_fromemail}
 syslog LOG_MAIL
 auth none
 __EOF__
@@ -36,10 +36,10 @@ __EOF__
   		# -v "concat('auth ',//system/email/authmethod)" -n
 		# -v "concat('user ',//system/email/username)" -n
 		# -v "concat('password ',//system/email/password)" -n
-		if [ ${security} != "None" ]; then
+		if [ ${em_security} != "None" ]; then
 		    echo tls on
 		    echo tls_certcheck off
-		    if [ ${port} -eq 25 ]; then
+		    if [ ${em_port} -eq 25 ]; then
 		        echo tls_starttls off
 		    else
 		        echo tls_starttls on

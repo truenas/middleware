@@ -83,16 +83,16 @@ on_off()
 generate_proftp()
 {
     local IFS=\|
-#XXX missing: ftp_port chrooteveryone tlsrequired mod_ban
-    local ftp_port=0 chrooteveryone=0 tlsrequired=0 mod_ban=0
-#XXX unused: defaultroot ssltls
-    local f="clients ipconnections loginattempt timeout ftp_rootlogin onlyanonymous onlylocal banner ftp_filemask ftp_dirmask fxp resume defaultroot ident reversedns masqaddress passiveportsmin passiveportsmax localuserbw localuserdlbw anonuserbw anonuserdlbw ssltls ftp_options"
-    local clients ipconnections loginattempt timeout ftp_rootlogin onlyanonymous onlylocal banner ftp_filemask ftp_dirmask fxp resume defaultroot ident reversedns masqaddress passiveportsmin passiveportsmax localuserbw localuserdlbw anonuserbw anonuserdlbw ssltls ftp_options
+#XXX missing: ftp_port ftp_chrooteveryone ftp_tlsrequired ftp_mod_ban
+    local ftp_port=0 ftp_chrooteveryone=0 ftp_mod_ban=0
+#XXX unused: ftp_defaultroot ftp_ssltls
+    local f="ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_banner ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_ssltls ftp_options"
+    eval local $f
     local sf
     sf=$(echo $f | sed -e 's/ /, /g')
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
         "SELECT $sf FROM freenas_servicesftp ORDER BY -id LIMIT 1" | \
-    while read clients ipconnections loginattempt timeout ftp_rootlogin onlyanonymous onlylocal banner ftp_filemask ftp_dirmask fxp resume defaultroot ident reversedns masqaddress passiveportsmin passiveportsmax localuserbw localuserdlbw anonuserbw anonuserdlbw ssltls ftp_options; do
+    while eval read $f; do
 
 	# Check if required directories exists.
 	[ ! -d "/var/run/proftpd" ] && mkdir "/var/run/proftpd"
@@ -105,11 +105,11 @@ generate_proftp()
 	[ ! -e "/var/log/wtmp" ] && touch /var/log/wtmp && chmod 644 /var/log/wtmp
 
 	# Create welcome message file
-	if [ -z "${banner}" ]; then
+	if [ -z "${ftp_banner}" ]; then
 		_productname="FreeNAS"
 		echo "Welcome to ${_productname} FTP Server" > ${proftpd_displaylogin}
 	else
-		echo ${banner} > ${proftpd_displaylogin}
+		echo ${ftp_banner} > ${proftpd_displaylogin}
 	fi
 	
 	#XXX missing: tls needs to be supported
@@ -145,33 +145,33 @@ SyslogFacility ftp
 MultilineRFC2228 ${proftpd_multilinerfc2228}
 DisplayLogin ${proftpd_displaylogin}
 DeferWelcome ${proftpd_deferwelcome}
-TimeoutIdle ${timeout}
+TimeoutIdle ${ftp_timeout}
 TimeoutLogin ${proftpd_timeoutlogin}
 TimeoutNoTransfer ${proftpd_timeoutnotransfer}
 TimeoutStalled ${proftpd_timeoutstalled}
 MaxInstances ${proftpd_maxinstances}
-MaxClients ${clients}
-MaxConnectionsPerHost ${ipconnections}
-MaxLoginAttempts ${loginattempt}
+MaxClients ${ftp_clients}
+MaxConnectionsPerHost ${ftp_ipconnections}
+MaxLoginAttempts ${ftp_loginattempt}
 DefaultTransferMode ${proftpd_defaulttransfermode}
-AllowForeignAddress $(on_off ${fxp})
-$(ifset ${masqaddress} "MasqueradeAddress ${masqaddress}")
-PassivePorts ${passiveportsmin} ${passiveportsmax}
-IdentLookups $(on_off ${ident})
-UseReverseDNS $(on_off ${reversedns})
+AllowForeignAddress $(on_off ${ftp_fxp})
+$(ifset ${ftp_masqaddress} "MasqueradeAddress ${ftp_masqaddress}")
+PassivePorts ${ftp_passiveportsmin} ${ftp_passiveportsmax}
+IdentLookups $(on_off ${ftp_ident})
+UseReverseDNS $(on_off ${ftp_reversedns})
 
 EOF
 
-	if [ ${onlylocal} -eq 0 ]; then
+	if [ ${ftp_onlylocal} -eq 0 ]; then
 	    cat <<EOF >> ${proftpd_config}
 <Anonymous ${proftpd_anonymousrootdir}>
   User ftp
   Group ftp
   UserAlias anonymous ftp
-  TransferRate STOR ${anonuserbw}
-  TransferRate RETR ${anonuserdlbw}
+  TransferRate STOR ${ftp_anonuserbw}
+  TransferRate RETR ${ftp_anonuserdlbw}
 EOF
-	    if [ ${onlyanonymous} -eq 1 ]; then
+	    if [ ${ftp_onlyanonymous} -eq 1 ]; then
 		cat <<EOF >> ${proftpd_config}
   <Limit LOGIN>
     AllowAll
@@ -196,18 +196,18 @@ EOF
 	cat <<EOF >> ${proftpd_config}
 <Global>
   RequireValidShell ${proftpd_requirevalidshell}
-$(bool_on ${chrooteveryone} "  DefaultRoot ${proftpd_defaultrootdir} ${proftpd_defaultrootgroupexpr}")
+$(bool_on ${ftp_chrooteveryone} "  DefaultRoot ${proftpd_defaultrootdir} ${proftpd_defaultrootgroupexpr}")
 $(bool_on ${ftp_rootlogin} "  RootLogin on")
   AllowOverwrite on
-$(bool_on ${resume} "  AllowRetrieveRestart on")
-$(bool_on ${resume} "  AllowStoreRestart on")
+$(bool_on ${ftp_resume} "  AllowRetrieveRestart on")
+$(bool_on ${ftp_resume} "  AllowStoreRestart on")
   DeleteAbortedStores ${proftpd_deleteabortedstores}
-  TransferRate STOR ${localuserbw}
-  TransferRate RETR ${localuserdlbw}
+  TransferRate STOR ${ftp_localuserbw}
+  TransferRate RETR ${ftp_localuserdlbw}
   TimesGMT ${proftpd_timesgmt}>
 </Global>
 EOF
-	if [ ${onlyanonymous} -gt 0 ]; then
+	if [ ${ftp_onlyanonymous} -gt 0 ]; then
 	    cat <<EOF >> ${proftpd_config}
 <Limit LOGIN>
 $(bool_on ${ftp_rootlogin} "  AllowGroup wheel")
@@ -215,7 +215,7 @@ $(bool_on ${ftp_rootlogin} "  AllowGroup wheel")
 </Limit>
 EOF
 	fi
-	if [ ${ssltls} -gt 0 ]; then
+	if [ ${ftp_ssltls} -gt 0 ]; then
 	    cat <<EOF >> ${proftpd_config}
 <IfModule mod_tls.c>
   TLSEngine on
@@ -224,13 +224,13 @@ EOF
   TLSRSACertificateFile ${proftpd_tlsrsacertfile}
   TLSRSACertificateKeyFile ${proftpd_tlsrsakeyfile}
   TLSVerifyClient ${proftpd_tlsverifyclient}
-$(bool_on ${tlsrequired} "  TLSRequired ${proftpd_tlsrequired}")
+$(bool_on ${proftpd_tlsrequired} "  TLSRequired ${proftpd_tlsrequired}")
 </IfModule>
 EOF
 	fi
 	cat <<EOF >> ${proftpd_config}
 <IfModule mod_ban.c>
-  BanEngine $(on_off ${mod_ban})
+  BanEngine $(on_off ${ftp_mod_ban})
   BanControlsACLs ${proftpd_modban_bancontrolsacls}
   BanLog ${proftpd_modban_banlog}
   BanMessage ${proftpd_modban_banmessage}
