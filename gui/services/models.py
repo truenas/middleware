@@ -368,7 +368,7 @@ class DynamicDNS(models.Model):
             max_length=120, 
             verbose_name="Password"
             ) # need to make this a 'password' field, but not available in django Models 
-    updateperiod = models.CharField(
+    ddns_updateperiod = models.CharField(
             max_length=120, 
             verbose_name="Update period", 
             blank=True
@@ -379,7 +379,7 @@ class DynamicDNS(models.Model):
             blank=True
             )
     ddns_wildcard = models.BooleanField()
-    ddns__options = models.TextField(
+    ddns_options = models.TextField(
             verbose_name="Auxiliary parameters", 
             blank=True,
             help_text="These parameters will be added to global settings in inadyn.conf."
@@ -390,7 +390,7 @@ class SNMP(models.Model):
             max_length=120, 
             verbose_name="Location", 
             blank=True,
-            help_text="Location information, e.g. physical location of this system: 'Floor of building, Room xyz'."
+            help_text="Location information, e.g. physical location of this system: 'Floor of building, Room xyzzy'."
             )
     snmp_contact = models.CharField(
             max_length=120, 
@@ -641,7 +641,7 @@ class FTP(models.Model):
             blank=True,
             help_text="Local user download bandwith in KB/s. An empty field means infinity."
             )
-    anonuserbw = models.CharField(
+    ftp_anonuserbw = models.CharField(
             max_length=120, 
             verbose_name="Download bandwidth", 
             blank=True,
@@ -660,8 +660,6 @@ class FTP(models.Model):
             blank=True,
             help_text="These parameters are added to proftpd.conf."
             )
-
-
 
 class TFTP(models.Model):            
     tftp_directory = models.CharField(
