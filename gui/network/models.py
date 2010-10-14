@@ -56,6 +56,7 @@ class Interfaces(models.Model):
             )
     int_dhcp = models.BooleanField(
             verbose_name="DHCP", 
+            help_text="When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
             )
     int_ipv4address = models.CharField(
             max_length=18, 
