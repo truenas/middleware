@@ -91,7 +91,7 @@ generate_proftp()
     local sf
     sf=$(echo $f | sed -e 's/ /, /g')
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-        "SELECT $sf FROM freenas_servicesftp ORDER BY -id LIMIT 1" | \
+        "SELECT $sf FROM services_ftp ORDER BY -id LIMIT 1" | \
     while eval read $f; do
 
 	# Check if required directories exists.
