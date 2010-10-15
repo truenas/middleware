@@ -63,6 +63,10 @@ class Interfaces(models.Model):
             verbose_name="IPv4 Address", 
             blank=True
             )
+    int_ipv6auto = models.BooleanField(
+            verbose_name="Auto configure IPv6", 
+            help_text="When enabled, automatically configurate IPv6 address via rtsol(8)."
+            )
     int_ipv6address = models.CharField(
             max_length=42, 
             verbose_name="IPv6 Address", 

@@ -70,7 +70,7 @@ class notifier:
 			f = getattr(self, '_' + action + '_' + what)
 		except AttributeError:
 			""" Provide generic start/stop/restart verbs for rc.d scripts """
-			if action in ("start", "stop", "restart"):
+			if action in ("start", "stop", "restart", "reload"):
 				self.__system("/usr/sbin/service " + what + " " + action)
 				f = self._do_nada
 			else:
@@ -79,11 +79,18 @@ class notifier:
 			f()
 		except:
 			raise
-	def create(self, what):
-		""" Dedicated command to create "what".
+	def init(self, what, objectid = None):
+		""" Dedicated command to create "what" designated by an optional objectid.
 		
-		The helper will use method self._create_[what]() to create the object"""
-		self._simplecmd("create", what)
+		The helper will use method self._init_[what]() to create the object"""
+		if objectid == None:
+			self._simplecmd("init", what)
+		else:
+			try:
+				f = getattr(self, '_init_' + what)
+				f(objectid)
+			except:
+				raise
 	def start(self, what):
 		""" Start the service specified by "what".
 		
@@ -175,8 +182,11 @@ class notifier:
 			self.__system("gpart create -s gpt /dev/%s && gpart add -t %s -l %s %s" % (devname, type, label, devname))
 		else:
 			self.__system("gpart create -s gpt /dev/%s && gpart add -t %s %s" % (devname, type, devname))
+	def __gpt_unlabeldisk(self, devname):
+		"""Unlabel the disk"""
+		self.__system("gpart delete -i 1 /dev/%s && gpart destroy /dev/%s" % (devname, devname))
         def __create_zfs_volume(self, c, z_id, z_name):
-                """Internal procedure te create a ZFS volume identified by volume id"""
+                """Internal procedure to create a ZFS volume identified by volume id"""
                 z_vdev = ""
                 # Grab all disk groups' id matching the volume ID
                 c.execute("SELECT diskgroup_id FROM storage_volume_vol_groups WHERE volume_id = ?", (z_id,))
@@ -196,6 +206,19 @@ class notifier:
 				z_vdev += " /dev/gpt/" + disk[1]
 		# Finally, create the zpool.
 		self.__system("zpool create -fm /mnt/%s %s %s" % (z_name, z_name, z_vdev))
+        def __destroy_zfs_volume(self, c, z_id, z_name):
+		"""Internal procedure to destroy a ZFS volume identified by volume id"""
+		# First, destroy the zpool.
+		self.__system("zpool destroy -f %s" % (z_name))
+
+		# Clear out disks associated with the volume
+                c.execute("SELECT diskgroup_id FROM storage_volume_vol_groups WHERE volume_id = ?", (z_id,))
+		vgroup_list = c.fetchall()
+		for vgrp in vgroup_list:
+			c.execute("SELECT disk.disk_disks, disk.disk_name FROM storage_disk AS disk LEFT OUTER JOIN storage_diskgroup_group_members AS diskgroup ON disk.id = diskgroup.disk_id WHERE diskgroup.diskgroup_id = ?", vgrp)
+			vdev_member_list = c.fetchall()
+			for disk in vdev_member_list:
+				self.__gpt_unlabeldisk(devname = disk[0])
         def __create_ufs_volume(self, c, u_id, u_name):
 		c.execute("SELECT diskgroup_id FROM storage_diskgroup_group_members WHERE volume_id = ?", (u_id,))
 		# TODO: For now we don't support RAID levels.
@@ -206,7 +229,28 @@ class notifier:
 		# TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar generated automatically
 		ufs_device = "/dev/ufs/" + disk[1]
 		self.__system("newfs -U -L %s /dev/%sp1" % (u_name, disk[0]))
-        def _create_disk(self):
+	def __destroy_ufs_volume(self, c, u_id, u_name):
+		"""Internal procedure to destroy a UFS volume identified by volume id"""
+		c.execute("SELECT diskgroup_id FROM storage_diskgroup_group_members WHERE volume_id = ?", (u_id,))
+		ufs_volume_id = c.fetchone()
+		c.execute("SELECT disk.disk_disks, disk.disk_name FROM storage_disk AS disk LEFT OUTER JOIN storage_diskgroup_group_members AS diskgroup ON disk.id = diskgroup.disk_id WHERE diskgroup.diskgroup_id = ?", ufs_volume_id)
+		disk = c.fetchone()
+		self.__system("umount -f /dev/ufs/" + disk[1])
+		self.__gpt_unlabeldisk(devname = disk[0])
+        def _init_volume(self, volume_id):
+		"""Initialize a volume designated by volume_id"""
+                c = self.__open_db()
+		c.execute("SELECT vol_type, vol_name FROM freenas_volume WHERE id = ?", (volume_id,))
+		volume = c.fetchone()
+
+		if volume[0] == 'zfs':
+			self.__system("/sbin/mount -uw /")
+			self.__create_zfs_volume(c, volume_id, volume[1])
+			self.__system("/sbin/mount -ur /")
+		else:
+			self.__create_ufs_volume(c, volume_id, volume[1])
+		self._reload_disk()
+        def _init_allvolumes(self):
                 c = self.__open_db()
                 # Create ZFS pools
                 c.execute("SELECT id, vol_name FROM freenas_volume WHERE vol_type = 'zfs'")

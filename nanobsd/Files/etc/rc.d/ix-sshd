@@ -35,6 +35,8 @@ EOF
 	    fi
 	    if [ $ssh_rootlogin = 1 ]; then
 		echo "PermitRootLogin yes" >> $cfg
+	    else
+		echo "PermitRootLogin without-password" >> $cfg
 	    fi
 	    if [ $ssh_tcpfwd = 1 ]; then
 		echo "AllowTcpForwarding yes" >> $cfg
@@ -42,7 +44,9 @@ EOF
 		echo "AllowTcpForwarding no" >> $cfg
 	    fi
 	    if [ $ssh_compression = 1 ]; then
-		echo "Compression yes" >> $cfg
+		echo "Compression delayed" >> $cfg
+	    else
+		echo "Compression no" >> $cfg
 	    fi
 	    if [ $ssh_passwordauth = 1 ]; then
 		echo "PasswordAuthentication yes" >> $cfg

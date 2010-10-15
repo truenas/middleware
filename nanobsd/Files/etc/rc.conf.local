@@ -34,14 +34,16 @@ FREENAS_RC=/var/tmp/rc.conf.freenas
 _interface_config()
 {
 	local IFS=\|
-	local _ifid interface dodhcp ipv4addr subnetmask gateway
+	local _ifid interface dodhcp ipv4addr subnetmask gateway interfaces
+
+	interfaces=""
 
 	# Note: ipv4/ipv6 are supposed in ip/masklen format.
 
 	# Traverse the network interface table and generate rc.conf style
 	# configuration.
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_interface, int_dhcp, int_ipv4address, int_ipv6address, int_options FROM network_interfaces ORDER BY id" | \
-	while read interface dodhcp ipv4 ipv6 options; do
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_interface, int_dhcp, int_ipv4address, int_ipv6auto, int_ipv6address, int_options FROM network_interfaces ORDER BY id" | \
+	while read interface dodhcp ipv4 doipv6auto ipv6 options; do
 		echo -n ifconfig_${interface}=\"
 		if [ "${dodhcp}" = "1" ]; then
 			echo "DHCP"\"
@@ -57,11 +59,14 @@ _interface_config()
 				echo defaultrouter=\"${gateway}\"
 			fi
 		fi
-		# TODO: Current schema lacks of ipv6 defaultroute, rtsol stuff.
-		if [ -n "${ipv6}" ]; then
-			echo ipv6_ifconfig_${interface}=\"${ipv6}\"
+		if [ "${doipv6auto}" = "0" ]; then
+			if [ -n "${ipv6}" ]; then
+				echo ipv6_ifconfig_${interface}=\"${ipv6}\"
+			fi
 		fi
+		interfaces="${interfaces} ${interface}"
 	done
+	echo "ipv6_activate_all_interfaces=\"YES\""
 }
 
 _host_config()

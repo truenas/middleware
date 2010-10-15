@@ -709,16 +709,17 @@ class SSH(models.Model):
             help_text="Alternate TCP port. Default is 22"
             )
     ssh_rootlogin = models.BooleanField(
-            verbose_name="Login as Root",
+            verbose_name="Login as Root with password",
+            help_text="Disabled: Root can only login via public key authentication; Enabled: Root login permitted with password"
             )
     ssh_passwordauth = models.BooleanField()
     ssh_tcpfwd = models.BooleanField()
     ssh_compression = models.BooleanField()
     ssh_privatekey = models.TextField(
-            max_length=120, 
-            verbose_name="Private Key", 
+            max_length=1024,
+            verbose_name="Host Private Key", 
             blank=True,
-            help_text="Paste a DSA PRIVATE KEY in PEM format here."
+            help_text="Paste a RSA PRIVATE KEY in PEM format here."
             )
     ssh_options = models.TextField(
             max_length=120, 

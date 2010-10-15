@@ -55,7 +55,7 @@ class VolumeForm(ModelForm):
         # Create the inherited mountpoint
         mp = MountPoint(mp_volumeid=vinstance, mp_path='/mnt/' + self.cleaned_data['vol_name'], mp_options='rw')
         mp.save()
-        notifier().create("disk")
+        notifier().init("allvolumes")
 
 class MountPointForm(ModelForm):
     class Meta:

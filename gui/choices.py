@@ -431,7 +431,8 @@ class DiskChoices:
         rootdev = popen("""df / | awk '$1 ~ "/" {print $1}'""").read().strip()
         rootdev_base = re.search('(?<=/dev/)[a-z/]*[0-9]*', rootdev)
         self._disklist = pipe.read().strip().split(' ')
-        self._disklist = [ x for x in self._disklist if x != rootdev_base.group(0) ]
+        if rootdev_base != None:
+        	self._disklist = [ x for x in self._disklist if x != rootdev_base.group(0) ]
         self.max_choices = len(self._disklist)
 
     def __iter__(self):
