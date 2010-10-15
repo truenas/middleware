@@ -220,7 +220,7 @@ class notifier:
 			for disk in vdev_member_list:
 				self.__gpt_unlabeldisk(devname = disk[0])
         def __create_ufs_volume(self, c, u_id, u_name):
-		c.execute("SELECT diskgroup_id FROM storage_diskgroup_group_members WHERE volume_id = ?", (u_id,))
+		c.execute("SELECT diskgroup_id FROM storage_volume_vol_groups WHERE volume_id = ?", (u_id,))
 		# TODO: For now we don't support RAID levels.
 		ufs_volume_id = c.fetchone()
 		c.execute("SELECT disk.disk_disks, disk.disk_name FROM storage_disk AS disk LEFT OUTER JOIN storage_diskgroup_group_members AS diskgroup ON disk.id = diskgroup.disk_id WHERE diskgroup.diskgroup_id = ?", ufs_volume_id)
