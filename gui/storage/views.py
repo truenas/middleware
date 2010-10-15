@@ -38,6 +38,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.template import RequestContext
 from django.http import Http404
 from django.views.generic.list_detail import object_detail, object_list
+from django.views.generic.create_update import delete_object
 from freenasUI.middleware.notifier import notifier
 import os, commands
 
@@ -178,3 +179,17 @@ def generic_detail(object_id, model_url):
                 object_id,
                 queryset = Disk.objects.all(),
                 )
+
+@login_required
+def generic_delete(request, object_id, model_name):
+	storage_name_model_map = {
+		'disks':	Disk,
+		'groups':	DiskGroup,
+		'volumes':	Volume,
+	}
+	return delete_object(
+		request = request,
+		model = storage_name_model_map[model_name],
+		post_delete_redirect = '/storage/',
+		object_id = object_id, )
+

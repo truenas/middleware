@@ -26,36 +26,16 @@
 # $FreeBSD$
 #####################################################################
 
-from django.conf.urls.defaults import *
-from django.contrib import admin
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import password_change, password_change_done
-from django.views.generic.simple import direct_to_template
-from django.views.generic import list_detail
-from freenasUI.storage.models import *
+from django.conf.urls.defaults import patterns
 from freenasUI.storage.views import *
-import os, commands
-
-#import django_nav
-#django_nav.autodiscover()
-#admin.autodiscover()
 
 # Active FreeNAS URLs
 
 urlpatterns = patterns('',
     (r'^$', storage), 
     (r'save/(?P<objtype>\w+)/$', storage),
-    (r'^disks/delete/(?P<object_id>\d+)/$',
-        'django.views.generic.create_update.delete_object', 
-        dict(model = Disk, post_delete_redirect = '/storage/'),), 
-    (r'^(?P<model>\w+)/delete/(?P<object_id>\d+)/$',
-        'django.views.generic.create_update.delete_object', 
-        dict(post_delete_redirect = '/storage/'),), 
+    (r'^(?P<model_name>\w+)/delete/(?P<object_id>\d+)/$',
+	generic_delete),
     (r'^(?P<model_url>\d+)/(?P<object_id>\d+)$', generic_detail), # detail based on URL
     )
 
-# Once the names are normalized disks/Disk diskgroup/DiskGroup volume/Volume
-
-# (r'(?<model>\w+)/delete/(?<object_idd>\d+)/$,
-#  'django.views.generic.create_update.delete_object', 
-#  dict(post_delete_redirect = '/storage/'),), 
