@@ -208,70 +208,70 @@ TABLE system_swap {
 	swap_mountpoint=
 	swap_size=
 }
-# grep TABLE schema | grep services_ | awk '{gsub("\"", "", $3); gsub("services_", "", $3); printf "TABLE services_services {\n\tsrv_service=%s\n\tsrv_enabled=0\n}\n", $3;}' >> schema.init
+# grep TABLE schema | grep services_ | awk '{gsub("\"", "", $3); gsub("services_", "", $3); printf "TABLE services_services {\n\tsrv_service=%s\n\tsrv_enable=0\n}\n", $3;}' >> schema.init
 
 
 TABLE services_services {
 	srv_service=activedirectory
-	srv_enabled=0
+	srv_enable=0
 }
 TABLE services_services {
 	srv_service=afp
-	srv_enabled=0
+	srv_enable=0
 }
 TABLE services_services {
 	srv_service=bittorrent
-	srv_enabled=0
+	srv_enable=0
 }
 TABLE services_services {
 	srv_service=cifs
-	srv_enabled=0
+	srv_enable=0
 }
 TABLE services_services {
 	srv_service=dynamicdns
-	srv_enabled=0
+	srv_enable=0
 }
 TABLE services_services {
 	srv_service=ftp
-	srv_enabled=0
+	srv_enable=0
 }
 TABLE services_services {
 	srv_service=iscsitarget
-	srv_enabled=0
+	srv_enable=0
 }
 TABLE services_services {
 	srv_service=ldap
-	srv_enabled=0
+	srv_enable=0
 }
 TABLE services_services {
 	srv_service=nfs
-	srv_enabled=0
+	srv_enable=0
 }
 TABLE services_services {
 	srv_service=rsyncjob
-	srv_enabled=0
+	srv_enable=0
 }
 TABLE services_services {
 	srv_service=snmp
-	srv_enabled=0
+	srv_enable=0
 }
 TABLE services_services {
 	srv_service=ssh
-	srv_enabled=0
+	srv_enable=0
 }
 TABLE services_services {
 	srv_service=tftp
-	srv_enabled=0
+	srv_enable=0
 }
 TABLE services_services {
 	srv_service=unison
-	srv_enabled=0
+	srv_enable=0
 }
 TABLE services_services {
 	srv_service=ups
-	srv_enabled=0
+	srv_enable=0
 }
 TABLE services_services {
 	srv_service=webserver
-	srv_enabled=0
+	srv_enable=0
 }
