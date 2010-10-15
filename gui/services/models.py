@@ -723,7 +723,7 @@ class SSH(models.Model):
             )
     ssh_options = models.TextField(
             max_length=120, 
-            verbose_name="Banner", 
+            verbose_name="Extra options", 
             blank=True,
             help_text="Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect entered options prevent SSH service to be started."
             )
