@@ -240,7 +240,7 @@ class notifier:
         def _init_volume(self, volume_id):
 		"""Initialize a volume designated by volume_id"""
                 c = self.__open_db()
-		c.execute("SELECT vol_type, vol_name FROM freenas_volume WHERE id = ?", (volume_id,))
+		c.execute("SELECT vol_type, vol_name FROM storage_volume WHERE id = ?", (volume_id,))
 		volume = c.fetchone()
 
 		if volume[0] == 'zfs':
@@ -253,7 +253,7 @@ class notifier:
         def _init_allvolumes(self):
                 c = self.__open_db()
                 # Create ZFS pools
-                c.execute("SELECT id, vol_name FROM freenas_volume WHERE vol_type = 'zfs'")
+                c.execute("SELECT id, vol_name FROM storage_volume WHERE vol_type = 'zfs'")
                 zfs_list = c.fetchall()
 		if len(zfs_list) > 0:
 			# We have to be able to write /boot/zfs and / to create mount points.
@@ -263,7 +263,7 @@ class notifier:
 				self.__create_zfs_volume(c = c, z_id = z_id, z_name = z_name)
 			self.__system("/sbin/mount -ur /")
                 # Create UFS file system and newfs
-                c.execute("SELECT id, vol_name FROM freenas_volume WHERE vol_type = 'ufs'")
+                c.execute("SELECT id, vol_name FROM storage_volume WHERE vol_type = 'ufs'")
 	        ufs_list = c.fetchall()
 		if len(ufs_list) > 0:
 			for row in ufs_list:
