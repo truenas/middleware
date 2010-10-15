@@ -105,7 +105,7 @@ _bool_svcconfig()
 {
 	local IFS=\|
 	local boolvalue value
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service=$2 ORDER BY id DESC LIMIT 1" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service='$2' ORDER BY id DESC LIMIT 1" | \
 	while read boolvalue; do
 		if [ "${boolvalue}" = "1" ]; then
 			value="YES"

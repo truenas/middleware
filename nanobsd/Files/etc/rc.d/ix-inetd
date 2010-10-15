@@ -14,7 +14,7 @@ _svc_enabled()
 {
     local IFS=\|
     local boolvalue
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service=$1 ORDER BY id DESC LIMIT 1" | \
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable FROM services_services WHERE srv_service='$1' ORDER BY id DESC LIMIT 1" | \
 	while read boolvalue; do
 	    echo ${boolvalue}
 	done
@@ -28,7 +28,7 @@ generate_tftp()
     local cmd sf
     local enabled
     sf=$(echo $f | sed -e 's/ /, /g')
-    enabled=$(_svn_enabled tftp)
+    enabled=$(_svc_enabled tftp)
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_tftp ORDER BY -id LIMIT 1" | \
     while eval read $f; do
