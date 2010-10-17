@@ -41,9 +41,13 @@
 # same table many times...
 #
 
+# For debugging, you can s/^#D#//g on this file to have it create the database
+# from scratch (assuming schema and the python code is in sync).
+
 in=${1-schema.init}
 db=${2-/tmp/database-v1.db}
 
+#D#rm -f $db
 sed -e 's/#.*$//' < $in | \
 awk '
 BEGIN {
@@ -51,6 +55,7 @@ BEGIN {
 	# this dance because a simple \ escape does not work as we are inside
 	# a shell tick environment now...
 	tick="'"'"'";
+#D#	print ".read schema";
 }
 
 /TABLE/ {
