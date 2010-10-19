@@ -101,7 +101,10 @@ class Advanced(models.Model):
     adv_tuning = models.BooleanField()
     adv_powerdaemon = models.BooleanField()
     adv_zeroconfbonjour = models.BooleanField()
-    adv_motd = models.TextField(verbose_name="MOTD") 
+    adv_motd = models.TextField(
+            max_length=1024,
+            verbose_name="MOTD",
+            ) 
 
 ## System|Advanced|Email
 class Email(models.Model):

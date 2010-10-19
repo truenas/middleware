@@ -63,6 +63,7 @@ CREATE TABLE "network_interfaces" (
     "int_name" varchar(120) NOT NULL,
     "int_dhcp" bool NOT NULL,
     "int_ipv4address" varchar(18) NOT NULL,
+    "int_ipv6auto" bool NOT NULL,
     "int_ipv6address" varchar(42) NOT NULL,
     "int_options" varchar(120) NOT NULL,
     "int_defaultrouter" varchar(120) NOT NULL,
@@ -91,7 +92,6 @@ CREATE TABLE "network_vlan" (
 );
 CREATE TABLE "services_activedirectory" (
     "id" integer NOT NULL PRIMARY KEY,
-    "ad_enable" bool NOT NULL,
     "ad_dcname" varchar(120) NOT NULL,
     "ad_domainname" varchar(120) NOT NULL,
     "ad_netbiosname" varchar(120) NOT NULL,
@@ -201,7 +201,6 @@ CREATE TABLE "services_iscsitarget" (
 );
 CREATE TABLE "services_ldap" (
     "id" integer NOT NULL PRIMARY KEY,
-    "ldap_enable" bool NOT NULL,
     "ldap_hostname" varchar(120) NOT NULL,
     "ldap_basedn" varchar(120) NOT NULL,
     "ldap_anonbind" bool NOT NULL,

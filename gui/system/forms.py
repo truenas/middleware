@@ -79,4 +79,3 @@ class rcconfForm(ModelForm):
 class sysctlForm(ModelForm):
     class Meta:
         model = sysctl
-

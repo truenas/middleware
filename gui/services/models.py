@@ -186,6 +186,12 @@ class services(models.Model):
             help_text="Name of Service, should be auto-generated at build time"
             )
     srv_enable = models.BooleanField()
+    class Meta:
+        verbose_name = "Services"
+    def __unicode__(self):
+        return self.srv_service
+    def save(self, *args, **kwargs):
+        super(services, self).save(*args, **kwargs)
 
 class CIFS(models.Model):
     cifs_srv_netbiosname = models.CharField(
@@ -729,7 +735,6 @@ class SSH(models.Model):
             )
   
 class ActiveDirectory(models.Model):            
-    ad_enable = models.BooleanField()
     ad_dcname = models.CharField(
             max_length=120, 
             verbose_name="Domain Controller Name",
@@ -757,7 +762,6 @@ class ActiveDirectory(models.Model):
             )
 
 class LDAP(models.Model):            
-    ldap_enable = models.BooleanField()
     ldap_hostname = models.CharField(
             max_length=120, 
             verbose_name="Hostname", 

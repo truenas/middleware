@@ -27,6 +27,7 @@
 #####################################################################
 
 from freenasUI.services.forms import * 
+from freenasUI.services.models import services as Services 
 from django.forms.models import modelformset_factory
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.decorators import login_required
@@ -141,12 +142,15 @@ def services(request):
     forms_saved = forms_saved + saved
     
     if request.method == 'POST':
+        srv = Services.objects.all()
         if forms_saved > 0:
             return HttpResponseRedirect('/services/')
         else:
             pass # Need to raise a validation exception
     else:
+        srv = Services.objects.all()
         variables = RequestContext(request, {
+            'srv': srv,
             'cifs': cifs,
             'afp': afp,
             'nfs': nfs,
@@ -163,6 +167,6 @@ def services(request):
             'ssh': ssh,
             'activedirectory': activedirectory,
             'ldap': ldap,
-        })
+            })
         return render_to_response('freenas/services/index.html', variables)
 

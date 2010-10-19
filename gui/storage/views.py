@@ -112,6 +112,7 @@ def storage(request, objtype = None, template_name = 'storage/index.html'):
             raise "Invalid Request" # TODO: Find out the sane way to throw exception
         return HttpResponseRedirect('/storage/')
     else:
+
         disk_list = Disk.objects.all()
         group_list = DiskGroup.objects.all()
         volume_list = Volume.objects.all()
@@ -119,16 +120,16 @@ def storage(request, objtype = None, template_name = 'storage/index.html'):
         diskgroup = DiskGroupForm()
         volume = VolumeForm()
         mountpoint = MountPointForm()
-    variables = RequestContext(request, {
-        'disk_list': disk_list,
-        'group_list': group_list,
-        'volume_list': volume_list,
-        'disk': disk,
-        'diskgroup': diskgroup,
-        'volume': volume,
-        'mountpoint': mountpoint,
-    })
-    return render_to_response('storage/index.html', variables)
+        variables = RequestContext(request, {
+            'disk_list': disk_list,
+            'group_list': group_list,
+            'volume_list': volume_list,
+            'disk': disk,
+            'diskgroup': diskgroup,
+            'volume': volume,
+            'mountpoint': mountpoint,
+            })
+        return render_to_response('storage/index.html', variables)
 
 
 @login_required

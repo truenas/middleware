@@ -1,0 +1,46 @@
+
+<div id="sub-menu">
+        <div id="top_dialog" dojoType="dijit.Dialog" title="Running Processes">
+                    <pre class="ix">{{ top }}</pre>
+                    </div>
+                    <button id="topbtn" dojoType="dijit.form.Button" type="button">
+                        Display Processes
+                        <script type="dojo/method" event="onClick" args="evt">
+                            dijit.byId("top_dialog").show();
+                        </script>
+                    </button>
+
+<div dojoType="dijit.Dialog" id="rebootDialog" title="Reboot the System" >
+    <h3>Warning!</h3>
+    <p>You are about to <strong>REBOOT</strong> the system, what would you like to do?</p>
+                <button dojoType="dijit.form.Button" type="submit" onClick="window.location='/system/reboot/'">
+                    Reboot
+                </button>
+                <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('rebootDialog').hide();">
+                    Cancel
+                </button>
+            </td>
+        </tr>
+    </table>
+</div>
+<button id="reboot_button" dojoType="dijit.form.Button" type="button">
+    Reboot
+</button>
+
+<div dojoType="dijit.Dialog" id="shutdownDialog" title="Shutdown the System" >
+    <h3>Warning!</h3>
+    <p>You are about to <strong>SHUTDOWN</strong> the system, what would you like to do?</p>
+                <button dojoType="dijit.form.Button" type="submit" onClick="window.location='/system/shutdown/'">
+                    Shutdown
+                </button>
+                <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('shutdownDialog').hide();">
+                    Cancel
+                </button>
+            </td>
+        </tr>
+    </table>
+</div>
+<button id="shutdown_button" dojoType="dijit.form.Button" type="button">
+    Shutdown
+</button>
+</div>

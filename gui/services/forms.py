@@ -39,6 +39,10 @@ from dojango.forms.fields import BooleanField
 
 """ Services """
 
+class servicesForm(ModelForm):
+    class Meta:
+        model = services
+
 class CIFSForm(ModelForm):
     class Meta:
         model = CIFS

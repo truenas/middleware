@@ -27,7 +27,7 @@
 #####################################################################
 
 from os import popen
-import re
+import re, sqlite3
 
 RSYNCJob_Choices = (
         ('local', 'local'),
@@ -136,154 +136,35 @@ ACOUSTICLVL_CHOICES = (
         ('Maximum', 'Maximum'),
         )
 
-MINUTES1_CHOICES = (
-        ('0', '0'),
-        ('1', '1'),
-        ('2', '2'),
-        ('3', '3'),
-        ('4', '4'),
-        ('5', '5'),
-        ('6', '6'),
-        ('7', '7'),
-        ('8', '8'),
-        ('9', '9'),
-        ('10', '10'),
-        ('11', '11'),
-        )
-MINUTES2_CHOICES = (
-        ('12', '12'),
-        ('13', '13'),
-        ('14', '14'),
-        ('15', '15'),
-        ('16', '16'),
-        ('17', '17'),
-        ('18', '18'),
-        ('19', '19'),
-        ('20', '20'),
-        ('21', '21'),
-        ('22', '22'),
-        ('23', '23'),
-        )
+temp = [x for x in xrange(0, 12)]
+MINUTES1_CHOICES = tuple(zip(temp, temp))
 
-MINUTES3_CHOICES = (
-        ('24', '24'),
-        ('25', '25'),
-        ('26', '26'),
-        ('27', '27'),
-        ('28', '28'),
-        ('29', '29'),
-        ('30', '30'),
-        ('31', '31'),
-        ('32', '32'),
-        ('33', '33'),
-        ('34', '34'),
-        ('35', '35'),
-        )
-MINUTES4_CHOICES = (
-        ('36', '36'),
-        ('37', '37'),
-        ('38', '38'),
-        ('39', '39'),
-        ('40', '40'),
-        ('41', '41'),
-        ('42', '42'),
-        ('43', '43'),
-        ('44', '44'),
-        ('45', '45'),
-        ('46', '46'),
-        ('47', '47'),
-        )
+temp = [x for x in xrange(12, 24)]
+MINUTES2_CHOICES = tuple(zip(temp, temp))
 
-MINUTES5_CHOICES = (
-        ('48', '48'),
-        ('49', '49'),
-        ('50', '50'),
-        ('51', '51'),
-        ('52', '52'),
-        ('53', '53'),
-        ('54', '54'),
-        ('55', '55'),
-        ('56', '56'),
-        ('57', '57'),
-        ('58', '58'),
-        ('59', '59'),
-        )
-HOURS1_CHOICES = (
-        ('0', '0'),
-        ('1', '1'),
-        ('2', '2'),
-        ('3', '3'),
-        ('4', '4'),
-        ('5', '5'),
-        ('6', '6'),
-        ('7', '7'),
-        ('8', '8'),
-        ('9', '9'),
-        ('10', '10'),
-        ('11', '11'),
-        )
+temp = [x for x in xrange(24, 36)]
+MINUTES3_CHOICES = tuple(zip(temp, temp))
 
-HOURS2_CHOICES = (
-        ('12', '12'),
-        ('13', '13'),
-        ('14', '14'),
-        ('15', '15'),
-        ('16', '16'),
-        ('17', '17'),
-        ('18', '18'),
-        ('19', '19'),
-        ('20', '20'),
-        ('21', '21'),
-        ('22', '22'),
-        ('23', '23'),
-        )
-DAYS1_CHOICES = (
-        ('1', '1'),
-        ('2', '2'),
-        ('3', '3'),
-        ('4', '4'),
-        ('5', '5'),
-        ('6', '6'),
-        ('7', '7'),
-        ('8', '8'),
-        ('9', '9'),
-        ('10', '10'),
-        ('11', '11'),
-        ('12', '12'),
-        )
+temp = [x for x in xrange(36, 48)]
+MINUTES4_CHOICES = tuple(zip(temp, temp))
 
-DAYS2_CHOICES = (
-        ('13', '13'),
-        ('14', '14'),
-        ('15', '15'),
-        ('16', '16'),
-        ('17', '17'),
-        ('18', '18'),
-        ('19', '19'),
-        ('20', '20'),
-        ('21', '21'),
-        ('22', '22'),
-        ('23', '23'),
-        ('24', '24'),
-        )
-DAYS3_CHOICES = (
-        ('25', '25'),
-        ('26', '26'),
-        ('27', '27'),
-        ('28', '28'),
-        ('29', '29'),
-        ('30', '30'),
-        ('31', '31'),
-        )
+temp = [x for x in xrange(48, 60)]
+MINUTES5_CHOICES = tuple(zip(temp, temp))
 
-# Code for generating DAYS_CHOICES
-# Generate a list of numbers, this example will generate 1 - 31 in increments of 1
-temp = [x for x in xrange(1, 32, 1)]
+temp = [x for x in xrange(0, 12)]
+HOURS1_CHOICES = tuple(zip(temp, temp))
 
-# ok, now we zip up our list into a list of tuples then convert the list to 
-# a tuple
-DAYS_CHOICES = tuple(zip(temp, temp))
+temp = [x for x in xrange(12, 24)]
+HOURS2_CHOICES = tuple(zip(temp, temp))
 
+temp = [x for x in xrange(1, 13)]
+DAYS1_CHOICES = tuple(zip(temp, temp))
+
+temp = [x for x in xrange(13, 25)]
+DAYS2_CHOICES = tuple(zip(temp, temp))
+
+temp = [x for x in xrange(25, 32)]
+DAYS3_CHOICES = tuple(zip(temp, temp))
 
 MONTHS_CHOICES = (
         ('January', 'January'),
@@ -433,6 +314,12 @@ class DiskChoices:
         self._disklist = pipe.read().strip().split(' ')
         if rootdev_base != None:
         	self._disklist = [ x for x in self._disklist if x != rootdev_base.group(0) ]
+        # Get the disks we arleady have configured from the database
+        conn = sqlite3.connect('/data/freenas-v1.db')
+        c = conn.cursor()
+        #c.execute("""select disk_disks from storage_disk""")
+        for item in c:
+            self._disklist.remove(item[0])
         self.max_choices = len(self._disklist)
 
     def __iter__(self):

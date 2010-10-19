@@ -208,7 +208,14 @@ add_gui()
 	  find . -print | grep -Ev '/(CVS|\.svn)' | cpio -dumpv ${dst} )
 	pprint 2 "Making freenas initial database"
 	mkdir ${NANO_WORLDDIR}/data
-	CR "(cd ${dstCR}; ${dstCR}/mkdb.sh /data/freenas-v1.db)"
+	CR "(cd ${dstCR}; python manage.py syncdb)" << __EOF__
+yes
+admin
+root@freenas.local
+freenas
+freenas
+__EOF__
+	CR "(cd ${dstCR}; ${dstCR}/set_schema_defaults.sh ${dstCR}/schema.init /data/freenas-v1.db)"
 	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
 	CR "chown -R www:www ${dstCR} data"
 # KLUDGE: copy over dojango settings

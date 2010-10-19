@@ -1,3 +1,67 @@
+#rebootDialog_underlay { background-color:#000; }
+#shutdownDialog_underlay { background-color:#FD0000; }
+#top_dialog_underlay { background-color:#000; }
+
+#breadcrumbs {
+    float:left;
+    vertical-align:bottom;
+    margin:8px;
+    padding:4px;
+    border-bottom:1px dashed #C5C5C5;
+}
+
+.breadcrumbs_item {
+    float:left;
+    margin-right:2px;
+}
+.breadcrumbs_item a{
+    font-weight:bold;
+    margin-right:2px;
+}
+
+#srv div.services {
+    width: 145px;
+    height: 145px;
+    border-right: 1px solid #c5c5c5;
+    border-bottom: 1px solid #c2c2c2;
+    text-align:left;
+    float: left;
+    margin:8px;
+    background: #f5f5f5;
+    overflow:auto;
+}
+#srv div.p {
+    padding:2px;
+}
+#cp div {
+    width: 125px;
+    height: 125px;
+    border: 1px solid #000;
+    text-align:center;
+    float: left;
+    margin:8px;
+    overflow:auto;
+}
+#sub-menu {
+    float:right;
+    margin:8px;
+    padding:4px;
+    border:1px solid #C5C5C5;
+    background:#fff;
+}
+.sub-menu_item {
+    float:left;
+}
+.sub-menu_item a{
+    font-weight:bold;
+    margin-right:6px;
+}
+
+
+#sidepanel {
+    margin:8px;
+}
+
 .icons {
 width:130px;
 position:relative;

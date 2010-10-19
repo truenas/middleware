@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div style="float:left;">
+    <h1>Sharing</h1>
+</div>
+{% endblock %}
+{% block dojango_content %}
+
 {% if user.is_authenticated %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="False">
         <div dojoType="dijit.layout.ContentPane" title="Active">

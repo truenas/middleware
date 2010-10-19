@@ -40,6 +40,8 @@ from dojango.forms.fields import BooleanField
 class DiskForm(ModelForm):
     class Meta:
         model = Disk
+        # This doesn't do the trick
+        # widgets = {'disk_disks' : DiskChoices() }
 
 class DiskGroupForm(ModelForm):
     class Meta:

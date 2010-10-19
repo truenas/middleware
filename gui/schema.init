@@ -153,7 +153,6 @@ TABLE system_settings {
 	stg_timezone=america-los_angeles
 }
 TABLE services_activedirectory {
-	ad_enable=0
 	ad_dcname=
 	ad_domainname=
 	ad_netbiosname=
@@ -161,7 +160,6 @@ TABLE services_activedirectory {
 	ad_adminpw=
 }
 TABLE services_ldap {
-	ldap_enable=0
 	ldap_hostname=
 	ldap_basedn=
 	ldap_anonbind=0

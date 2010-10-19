@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div style="float:left;">
+    <h1>Storage</h1>
+</div>
+{% include "storage/submenu.html" %}
+{% endblock %}
+{% block dojango_content %}
 {% if user.is_authenticated %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
     <div dojoType="dijit.layout.ContentPane" title="Active">
@@ -16,7 +22,7 @@
     <tr>
         <td>
 {{ disk.disk_name }}
-
+</td>
         <td> {{ disk.disk_disks }}</td>
         <td>
 <a href="/storage/disks/delete/{{ disk.id }}/">Delete?</a>
