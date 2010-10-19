@@ -27,7 +27,7 @@
 #####################################################################
 
 from os import popen
-import re, sqlite3
+import re
 
 RSYNCJob_Choices = (
         ('local', 'local'),
@@ -309,17 +309,19 @@ class DiskChoices:
     """Populate a list of disk choices"""
     def __init__(self):
         pipe = popen("/sbin/sysctl -n kern.disks")
-        rootdev = popen("""df / | awk '$1 ~ "/" {print $1}'""").read().strip()
-        rootdev_base = re.search('(?<=/dev/)[a-z/]*[0-9]*', rootdev)
+        rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""".read().strip()
+        rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
         self._disklist = pipe.read().strip().split(' ')
         if rootdev_base != None:
         	self._disklist = [ x for x in self._disklist if x != rootdev_base.group(0) ]
         # Get the disks we arleady have configured from the database
-        conn = sqlite3.connect('/data/freenas-v1.db')
+        # TODO: This is not the correct place for this
+        """conn = sqlite3.connect('/data/freenas-v1.db')
         c = conn.cursor()
-        #c.execute("""select disk_disks from storage_disk""")
+        c.execute("""select disk_disks from storage_disk""")
         for item in c:
-            self._disklist.remove(item[0])
+            self._disklist.remove(item[0])"""
+
         self.max_choices = len(self._disklist)
 
     def __iter__(self):

@@ -34,9 +34,9 @@ FREENAS_RC=/var/tmp/rc.conf.freenas
 _interface_config()
 {
 	local IFS=\|
-	local _ifid interface dodhcp ipv4addr subnetmask gateway interfaces
+	local _ifid interface dodhcp ipv4addr subnetmask gateway interfaces ipv6_interfaces
 
-	interfaces=""
+	ipv6_interfaces=""
 
 	# Note: ipv4/ipv6 are supposed in ip/masklen format.
 
@@ -62,11 +62,18 @@ _interface_config()
 		if [ "${doipv6auto}" = "0" ]; then
 			if [ -n "${ipv6}" ]; then
 				echo ipv6_ifconfig_${interface}=\"${ipv6}\"
+				ipv6_interfaces="${ipv6_interfaces} ${interface}"
 			fi
+		else
+			ipv6_interfaces="${ipv6_interfaces} ${interface}"
 		fi
-		interfaces="${interfaces} ${interface}"
+		# TODO: Since the variable exists only in the subshell, we 
+		# have to make a workaround.
+		if [ -n "${ipv6_interfaces}" ]; then
+			echo "ipv6_enable=\"YES\""
+			echo "ipv6_network_interfaces=\"lo0${ipv6_interfaces}\""
+		fi
 	done
-	echo "ipv6_activate_all_interfaces=\"YES\""
 }
 
 _host_config()
