@@ -23,7 +23,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $FreeBSD: head/usr.sbin/pc-sysinstall/backend-query/list-mirrors.sh 210036 2010-07-13 23:47:12Z imp $
+# $FreeBSD: src/usr.sbin/pc-sysinstall/backend-query/list-mirrors.sh,v 1.2 2010/07/13 23:47:12 imp Exp $
 
 . ${PROGDIR}/backend/functions.sh
 . ${PROGDIR}/backend/functions-ftp.sh

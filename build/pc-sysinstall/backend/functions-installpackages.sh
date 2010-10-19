@@ -23,7 +23,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $FreeBSD: head/usr.sbin/pc-sysinstall/backend/functions-installpackages.sh 211730 2010-08-24 06:11:46Z imp $
+# $FreeBSD: src/usr.sbin/pc-sysinstall/backend/functions-installpackages.sh,v 1.3 2010/08/24 06:11:46 imp Exp $
 
 # Functions which check and load any optional packages specified in the config
 

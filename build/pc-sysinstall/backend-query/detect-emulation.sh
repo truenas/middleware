@@ -23,7 +23,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $FreeBSD: head/usr.sbin/pc-sysinstall/backend-query/detect-emulation.sh 209752 2010-07-06 23:31:52Z imp $
+# $FreeBSD: src/usr.sbin/pc-sysinstall/backend-query/detect-emulation.sh,v 1.1 2010/07/06 23:31:52 imp Exp $
 
 case "$(kenv smbios.system.product)" in
 VirtualBox)

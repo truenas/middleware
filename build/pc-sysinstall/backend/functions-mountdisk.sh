@@ -23,7 +23,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $FreeBSD: head/usr.sbin/pc-sysinstall/backend/functions-mountdisk.sh 211730 2010-08-24 06:11:46Z imp $
+# $FreeBSD: src/usr.sbin/pc-sysinstall/backend/functions-mountdisk.sh,v 1.3 2010/08/24 06:11:46 imp Exp $
 
 # Functions related mounting the newly formatted disk partitions
 
@@ -126,6 +126,7 @@ mount_all_filesystems()
         UFS+S) mount_partition ${PART}${EXT} ${PARTFS} ${PARTMNT} "noatime" ;;
         UFS+J) mount_partition ${PART}${EXT}.journal ${PARTFS} ${PARTMNT} "async,noatime" ;;
         ZFS) mount_partition ${PART} ${PARTFS} ${PARTMNT} ;;
+        IMAGE) mount_partition ${PART} ${PARTFS} ${PARTMNT} ;;
         *) exit_err "ERROR: Got unknown file-system type $PARTFS" ;;
       esac
     fi
@@ -174,7 +175,14 @@ mount_all_filesystems()
              rc_halt "swapon /dev/${PART}"
             fi
             ;;
-          *) exit_err "ERROR: Got unknown file-system type $PARTFS" ;;
+         IMAGE)
+           if [ ! -d "${PARTMNT}" ]
+           then
+             mkdir -p "${PARTMNT}" 
+           fi 
+           mount_partition ${PART} ${PARTFS} ${PARTMNT}
+           ;;
+         *) exit_err "ERROR: Got unknown file-system type $PARTFS" ;;
       esac
     fi
   done

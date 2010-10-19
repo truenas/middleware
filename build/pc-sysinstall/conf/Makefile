@@ -1,4 +1,4 @@
-# $FreeBSD: head/usr.sbin/pc-sysinstall/conf/Makefile 209514 2010-06-24 22:29:36Z imp $
+# $FreeBSD: src/usr.sbin/pc-sysinstall/conf/Makefile,v 1.2 2010/06/24 22:29:36 imp Exp $
 
 NO_OBJ=
 

@@ -1,4 +1,4 @@
-# $FreeBSD: head/usr.sbin/pc-sysinstall/backend/Makefile 212337 2010-09-08 20:10:24Z imp $
+# $FreeBSD: src/usr.sbin/pc-sysinstall/backend/Makefile,v 1.5 2010/08/19 05:59:27 imp Exp $
 
 FILES=	functions-bsdlabel.sh functions-cleanup.sh functions-disk.sh \
 	functions-extractimage.sh functions-ftp.sh functions-installcomponents.sh \

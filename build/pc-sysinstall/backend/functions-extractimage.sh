@@ -23,7 +23,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $FreeBSD: head/usr.sbin/pc-sysinstall/backend/functions-extractimage.sh 212337 2010-09-08 20:10:24Z imp $
+# $FreeBSD: src/usr.sbin/pc-sysinstall/backend/functions-extractimage.sh,v 1.5 2010/08/24 06:11:46 imp Exp $
 
 # Functions which perform the extraction / installation of system to disk
 
@@ -147,6 +147,7 @@ start_extract_split()
     then
       exit_err "ERROR: Failed extracting ${KERNELS}"
     fi
+    rm -rf "${FSMNT}/boot/kernel"
     mv "${FSMNT}/boot/GENERIC" "${FSMNT}/boot/kernel"
   else
     exit_err "ERROR: ${KERNELS}/install.sh does not exist"
@@ -328,6 +329,46 @@ start_rsync_copy()
 
 };
 
+start_image_install()
+{
+  if [ -z "${IMAGE_FILE}" ]
+  then
+    exit_err "ERROR: installMedium set to image but no image file specified!"
+  fi
+
+  # We are ready to start mounting, lets read the config and do it
+  while read line
+  do
+    echo $line | grep "^disk0=" >/dev/null 2>/dev/null
+    if [ "$?" = "0" ]
+    then
+      # Found a disk= entry, lets get the disk we are working on
+      get_value_from_string "${line}"
+      strip_white_space "$VAL"
+      DISK="$VAL"
+    fi
+
+    echo $line | grep "^commitDiskPart" >/dev/null 2>/dev/null
+    if [ "$?" = "0" ]
+    then
+      # Found our flag to commit this disk setup / lets do sanity check and do it
+      if [ ! -z "${DISK}" ]
+      then
+
+        # Write the image
+        write_image "${IMAGE_FILE}" "${DISK}"
+
+        # Increment our disk counter to look for next disk and unset
+        unset DISK
+        break
+
+      else
+        exit_err "ERROR: commitDiskPart was called without procceding disk<num>= and partition= entries!!!"
+      fi
+    fi
+
+  done <${CFGF}
+};
 
 # Entrance function, which starts the installation process
 init_extraction()
@@ -393,6 +434,7 @@ init_extraction()
     sftp) ;;
 
     rsync) start_rsync_copy ;;
+    image) start_image_install ;;
     *) exit_err "ERROR: Unknown install medium" ;;
   esac
 

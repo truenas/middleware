@@ -23,7 +23,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $FreeBSD: head/usr.sbin/pc-sysinstall/backend/functions-runcommands.sh 211485 2010-08-19 05:59:27Z imp $
+# $FreeBSD: src/usr.sbin/pc-sysinstall/backend/functions-runcommands.sh,v 1.3 2010/08/19 05:59:27 imp Exp $
 
 # Functions which runs commands on the system
 

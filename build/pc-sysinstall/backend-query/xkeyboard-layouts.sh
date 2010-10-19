@@ -23,7 +23,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $FreeBSD: head/usr.sbin/pc-sysinstall/backend-query/xkeyboard-layouts.sh 211730 2010-08-24 06:11:46Z imp $
+# $FreeBSD: src/usr.sbin/pc-sysinstall/backend-query/xkeyboard-layouts.sh,v 1.3 2010/08/24 06:11:46 imp Exp $
 
 FOUND="0"
 

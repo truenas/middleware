@@ -1,4 +1,4 @@
-# $FreeBSD: head/usr.sbin/pc-sysinstall/backend-partmanager/Makefile 209527 2010-06-25 22:35:19Z imp $
+# $FreeBSD: src/usr.sbin/pc-sysinstall/backend-partmanager/Makefile,v 1.2 2010/06/25 22:35:19 imp Exp $
 
 FILES=	create-part.sh delete-part.sh
 FILESMODE=	${BINMODE}

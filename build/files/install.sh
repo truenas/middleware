@@ -55,21 +55,16 @@ get_image_name()
 
 build_config()
 {
-        # build_config ${_install_type} ${_disk} ${_image}
+        # build_config ${_disk} ${_image}
         # ${_config_file} ${_os_size} ${_swap_size}
-        # Couple of issues here:
-        # There is magic used to determine what to do based on what
-        # _install_type is set to.
 
-        local _install_type=$1
-        local _disk=$2
-        local _image=$3
-        local _config_file=$4
-        local _os_size=$5
-        local _swap_size=$6
+        local _disk=$1
+        local _image=$2
+        local _config_file=$3
+        local _os_size=$4
+        local _swap_size=$5
 
-        if [ "$_install_type" = "3" ]; then
-            cat << EOF > "${_config_file}"
+        cat << EOF > "${_config_file}"
 # Added to stop pc-sysinstall from complaining
 installMode=fresh
 installInteractive=no
@@ -83,7 +78,6 @@ image=/cdrom/FreeNAS-amd64-embedded.gz
 bootManager=bsd
 commitDiskPart
 EOF
-        fi
 }
 
 wait_keypress()
@@ -176,7 +170,6 @@ do_install()
 	local _cdrom
 	local _disk
         local _image
-        local _install_type=$1
         local _os_size
         local _swap_size
         local _config_file
@@ -185,14 +178,10 @@ do_install()
 	local _msg
 	local _i
 
-        if [ "$_install_type" = "1" ]; then
-	    _tmpfile="/tmp/msg"
+        _tmpfile="/tmp/msg"
 
-	    cat << EOD > "${_tmpfile}"
-FreeNAS 'embedded' installer for Flash device or HDD.
-
-- Create 1 partition for OS image
-- Uses a RAM disk to limit read/write access to the device
+        cat << EOD > "${_tmpfile}"
+FreeNAS  installer for Flash device or HDD.
 
 WARNING: There will be some limitations:
 1. This will erase ALL partitions and data on the destination disk
@@ -203,132 +192,74 @@ It saves you an IDE or SCSI channel for more hard drives.
 
 EOD
 
-	    _msg=`cat "${_tmpfile}"`
-	    rm -f "${_tmpfile}"
-        fi
-
-        if [ "$_install_type" = "3" ]; then
-	    _tmpfile="/tmp/msg"
-
-	    cat << EOD > "${_tmpfile}"
-FreeNAS 'full' installer for HDD.
-
-- Create MBR partition 1, using UFS, customizable size for OS
-- Create MBR partition 2, using UFS, for DATA
-- Create MBR partition 3, as SWAP
-- Easy to customize (e.g. install additional FreeBSD packages)
-
-WARNING: There will be some limitations:
-1. This will erase ALL partitions and data on the destination disk
-
-EOD
-
-	    _msg=`cat "${_tmpfile}"`
-	    rm -f "${_tmpfile}"
-        fi
-
-	dialog --title "FreeNAS installation" --yesno "${_msg}" 17 74
-	if [ "$?" != "0" ]
-	then
-		exit 1
-	fi
-
-	get_physical_disks_list
-	_disklist="${VAL}"
-
-	get_memory_disks_list
-	_disklist="${_disklist} ${VAL}"	
-
-	_list=""
-	_items=0
-	for _disk in ${_disklist}
-	do
-		get_media_description "${_disk}"
-		_desc="${VAL}"
-		_list="${_list} ${_disk} '${_desc}'"
-		_items=$((${_items} + 1))
-	done
-
-	_tmpfile="/tmp/answer"
-	eval "dialog --title 'Choose destination media' \
-		--menu 'Select media where FreeNAS OS should be installed.' \
-		15 60 ${_items} ${_list}" 2>"${_tmpfile}"
-	if [ "$?" != "0" ]
-	then
-		exit 1
-	fi
-
-	_disk=`cat "${_tmpfile}"`
-	rm -f "${_tmpfile}"
-
-        if [ "${_install_type}" = "3" ]; then
-            _tmpfile="/tmp/answer"
-            eval 'dialog --title \
-                 "Enter the size for OS partition in MB (min 380MB):" \
-                 --inputbox "" 10 60 380' 2>"${_tmpfile}"
-	    if [ "$?" != "0" ]
-	    then
-	        exit 1
-	    fi
-            _os_size=`cat "${_tmpfile}"`
-	    rm -f "${_tmpfile}"
-
-        dialog --yesno "Do you want a swap partition?" 5 50
-        ret="$?"
-        if [ "$ret" = "0" ]; then
-            eval 'dialog --title \
-                 "Enter the size of the swap partition in MB:" \
-                 --inputbox "" 10 60' 2>"${_tmpfile}"
-	    if [ "$?" != "0" ]
-	    then
-	        exit 1
-	    fi
-            _swap_size=`cat "${_tmpfile}"`
-	    rm -f "${_tmpfile}"
-        fi
+    _msg=`cat "${_tmpfile}"`
+    rm -f "${_tmpfile}"
 
 
+    dialog --title "FreeNAS installation" --yesno "${_msg}" 17 74
+    if [ "$?" != "0" ]
+    then
+        exit 1
+    fi
 
+    get_physical_disks_list
+    _disklist="${VAL}"
 
-        fi
+    get_memory_disks_list
+    _disklist="${_disklist} ${VAL}"	
 
-	if disk_is_mounted "${_disk}"
-	then
-		wait_keypress "The destination drive is already in use!"
-		exit 1
-	fi
+    _list=""
+    _items=0
+    for _disk in ${_disklist}
+    do
+        get_media_description "${_disk}"
+        _desc="${VAL}"
+        _list="${_list} ${_disk} '${_desc}'"
+        _items=$((${_items} + 1))
+    done
 
-        get_image_name
-        _image="${VAL}"
+    _tmpfile="/tmp/answer"
+    eval "dialog --title 'Choose destination media' \
+          --menu 'Select media where FreeNAS OS should be installed.' \
+          15 60 ${_items} ${_list}" 2>"${_tmpfile}"
+    if [ "$?" != "0" ]; then
+        exit 1
+    fi
 
-        # Can we avoid magic?  We need a way to tell build_config
-        # how we are going to lay out the disk, for the OS,
-        # swap, data.  For the moment 1 is defined as use the 
-        # whole device for a single slice that contains the image
+    _disk=`cat "${_tmpfile}"`
+    rm -f "${_tmpfile}"
 
-        _config_file="/tmp/pc-sysinstall.cfg"
+    if disk_is_mounted "${_disk}" ; then
+        wait_keypress "The destination drive is already in use!"
+        exit 1
+    fi
 
-        # _install_type, _cdrom, _disk, _image, _config_file
-        # we can now build a config file for pc-sysinstall
-        build_config ${_install_type} ${_disk} \
-                     ${_image} ${_config_file} \
-                     ${_os_size} ${_swap_size}
+    get_image_name
+    _image="${VAL}"
 
-        # Run pc-sysinstall against the config generated
-        ls /cdrom > /dev/null
-        /rescue/pc-sysinstall -c ${_config_file}
+    _config_file="/tmp/pc-sysinstall.cfg"
 
-	cat << EOD > "${_tmpfile}"
+    #  _cdrom, _disk, _image, _config_file
+    # we can now build a config file for pc-sysinstall
+    build_config  ${_disk} \
+                  ${_image} ${_config_file} \
+                  ${_os_size} ${_swap_size}
+
+    # Run pc-sysinstall against the config generated
+    ls /cdrom > /dev/null
+    /rescue/pc-sysinstall -c ${_config_file}
+
+    cat << EOD > "${_tmpfile}"
 
 FreeNAS has been installed on ${_disk}.
 You can now remove the CDROM and reboot the PC.
 EOD
 
-	_msg=`cat "${_tmpfile}"`
-	rm -f "${_tmpfile}"
+    _msg=`cat "${_tmpfile}"`
+    rm -f "${_tmpfile}"
 
-	wait_keypress "${_msg}"
-	return 0
+    wait_keypress "${_msg}"
+    return 0
 }
 
 menu_null()
@@ -370,12 +301,7 @@ menu_install()
 	_tmpfile="/tmp/answer"
 
 	dialog --clear --title "Install & Upgrade" --menu "" 12 73 6 \
-	"1" "Install 'embedded' OS on HDD/Flash/USB" \
-	"2" "Install 'embedded' OS on HDD/Flash/USB + DATA + SWAP partition" \
-	"3" "Install 'full' OS on HDD + DATA + SWAP partition" \
-	"4" "Upgrade 'embedded' OS from CDROM" \
-	"5" "Upgrade 'full' OS from CDROM" \
-	"6" "Upgrade and convert 'full' OS to 'embedded'" 2> "${_tmpfile}"
+	"1" "Install OS on HDD/Flash/USB" 2> "${_tmpfile}"
 
 	if [ "$?" != "0" ]
 	then
@@ -384,12 +310,7 @@ menu_install()
 
 	_number=`cat "${_tmpfile}"`
 	case "${_number}" in
-		1) do_install "1";;
-		2) ;;
-                3) do_install "3";;
-                4) ;;
-		5) ;;
-		6) ;;
+		1) do_install ;;
 	esac
 
 	return 0
@@ -426,7 +347,7 @@ menu_upgrade()
 }
 
 
-menu()
+install_menu()
 {
 	while :
 	do
@@ -447,7 +368,7 @@ menu()
 
 		case "${_number}" in
 			1) menu_install ;;
-                        2) menu_upgrade ;;
+			2) menu_upgrade ;;
 			3) menu_shell ;;
 			4) menu_reboot ;;
 			5) menu_shutdown ;;
@@ -456,10 +377,408 @@ menu()
 	done
 }
 
+get_interface_list()
+{
+	local _ifaces
+
+	_ifaces=`netstat -inW -f link | \
+		tail +2 | \
+		grep -Ev '^(ppp|sl|gif|faith|lo|vlan|tun|plip)' | \
+		cut -f1 -d'*' | \
+		awk '{ print $1 }'`
+
+	VAL=""
+	for i in ${_ifaces}
+	do
+		local _mac
+		local _status
+		local _up
+
+		ifconfig "${i}" >/dev/null 2>&1
+		if [ "$?" != "0" ]
+		then
+			continue
+		fi
+
+		_up="false"
+		_mac=`ifconfig "${i}"|grep -E 'ether '|awk '{ print $2 }'`
+		_status=`ifconfig "${i}"|grep status|awk '{ print $2 }'`
+		if [ "${_status}" = "active" -o "${_status}" = "associated" ]
+		then
+			_up="true"
+		fi
+
+		if [ -n "${VAL}" ]
+		then
+			VAL="${VAL}|${i} ${_mac} ${_up}"
+		else
+			VAL="${i} ${_mac} ${_up}"
+		fi
+
+	done
+
+	export VAL
+}
+
+autodetect_interface()
+{
+	local _ifname
+	local _iflist_pre
+	local _iflist_post
+	local _tmpfile
+	local _msg
+
+	_ifname="${1}"
+
+	get_interface_list;
+	_iflist_pre="${VAL}"
+
+	_tmpfile="/tmp/msg"
+	cat << EOD > "${_tmpfile}"
+Connect the ${_ifname} interface now and make
+sure that the link is up.
+Press OK to continue.
+EOD
+	_msg=`cat "${_tmpfile}"`
+	rm -f "${_tmpfile}"
+
+	dialog --clear --msgbox "${_msg}" 7 52
+
+	get_interface_list;
+	_iflist_post="${VAL}"
+
+	for i in ${_iflist_pre}
+	do
+		local _iface_pre
+		local _up_pre
+
+		_iface_pre=`echo $i|awk '{ print $1 }'`
+		_up_pre=`echo $i|awk '{ print $3 }'`
+
+		for j in ${_iflist_post}
+		do
+			local _iface_post
+			local _up_post
+
+			_iface_post=`echo $j|awk '{ print $1 }'`
+			_up_post=`echo $j|awk '{ print $3 }'`
+
+			if [ "${_iface_pre}" = "${_iface_post}" \
+				-a "${_up_post}" = "up" \
+				-a "${_up_pre}" != "${_up_post}" ]
+			then
+				dialog --clear \
+					--msgbox "Detected link-up on interface ${_iface_pre}" 5 44
+				VAL="${_iface_pre}"
+				export VAL
+
+				return 0
+			fi
+		done
+	done
+
+	VAL=""
+	export VAL
+
+	dialog --clear --msgbox "No link-up detected." 5 24
+	return 1
+}
+
+#
+#	This should be broken up =-)
+#
+menu_setports()
+{
+	local _lanif
+	local _iflist
+	local _save_ifs
+	local _tmpfile
+	local _menulist
+	local _msg
+
+	#
+	# Display detected interfaces
+	#
+	get_interface_list;
+	_iflist="${VAL}"
+
+	_tmpfile="/tmp/msg"
+	cat << EOD > "${_tmpfile}"
+If you don't know the names of your interfaces, you may use
+auto-detection. In that case, disconnect all interfaces before you
+begin, and reconnect each one when prompted to do so.
+EOD
+	_msg=`cat "${_tmpfile}"`
+	rm -f "${_tmpfile}"
+
+	_save_ifs="${IFS}"
+	IFS="|"
+	for i in ${_iflist}
+	do
+		local _iface
+		local _mac
+		local _up
+		local _new
+
+		_iface=`echo ${i}|awk '{ print $1 }'`
+		_mac=`echo ${i}|awk '{ print $2 }'`
+		_up=`echo ${i}|awk '{ print $3 }'`
+
+		if [ "${_up}" = "true" ]
+		then
+			_new="${_iface} \"${_mac} (up)\""
+		else
+			_new="${_iface} ${_mac}"
+		fi
+
+		_menulist="${_menulist} ${_new}"
+
+	done
+	IFS="${_save_ifs}"
+
+	_menulist="${_menulist} auto Auto-detection"
+
+	_tmpfile="/tmp/answer"
+	eval "dialog --clear  \
+		--title \"Configure LAN interface\"  \
+		--menu \"${_msg}\" \
+		13 70 4 ${_menulist}" 2>"${_tmpfile}"
+    if [ "$?" != "0" ]; then
+		exit 1
+    fi
+
+    _lanif=`cat "${_tmpfile}"`
+    rm -f "${_tmpfile}"
+
+	if [ "${_lanif}" = "auto" ]
+	then
+		autodetect_interface "LAN"
+		_lanif="${VAL}"
+	fi
+
+	
+	#
+	# Optional interfaces (XXX This needs testing XXX)
+	#
+	local _i1
+	local _i
+	local _loop
+	local _opt
+
+	_i=0
+	_loop=1
+	_opt="opt"
+	_menulist="${_menulist} none \"Finish and exit configuration\""
+	while [ "${_loop}" = "1" ]
+	do
+		local _tmp
+		local _var
+		local _val
+
+		_tmp=$(eval "echo \$${_opt}${_i}")
+		if [ -n "${_tmp}" ]
+		then
+			_i=`expr ${_i} + 1`
+		fi
+
+		_i1=`expr ${_i} + 1`
+
+		_tmpfile="/tmp/msg"
+		cat << EOD > "${_tmpfile}"
+Select the optional OPT${_i1} interface name, auto-detection or none to
+finish configuration.
+EOD
+		_msg=`cat "${_tmpfile}"`
+		rm -f "${_tmpfile}"
+
+		_tmpfile="/tmp/answer"
+		eval "dialog --clear  \
+			--title \"Configure OPT interface\"  \
+			--menu \"${_msg}\" \
+			13 70 5 ${_menulist}" 2>"${_tmpfile}"
+    	if [ "$?" != "0" ]; then
+			exit 1
+    	fi
+
+		eval "${_opt}${_i}=`cat ${_tmpfile}`"
+    	rm -f "${_tmpfile}"
+
+		_var=\$$(eval "echo ${_opt}${_i}")
+		_val=$(eval "echo $_var")
+
+		if [ -n "${_val}" ]
+		then
+			if [ "${_val}" = "auto" ]
+			then
+				local _ad
+
+				autodetect_interface "optional OPT${_i1}"
+				_ad="${VAL}"
+
+				if [ -n "${_ad}" ]
+				then
+					eval "${_opt}${_i}=${_ad}"
+				else
+					unset `echo "${_opt}${_i}"`
+				fi
+				
+			elif [ "${_val}" = "none" ]
+			then
+				unset `echo "${_opt}${_i}"`
+				_loop=0
+			fi
+		fi
+	done
+
+	#
+	# Build up OPT list
+	#
+	local _count
+	local _ifoptlist
+
+	_count="${_i}"
+	_i=0
+
+	while [ "${_i}" -lt "${_count}" ]
+	do
+		local _var
+		local _val
+
+		_var=\$$(eval "echo ${_opt}${_i}")
+		_val=$(eval "echo $_var")
+
+		if [ -n "${_val}" ]
+		then
+			_ifoptlist="${_ifoptlist} ${_val}"
+		fi
+
+		_i=`expr "${_i}" + 1`
+	done
+
+
+	#
+	# Check for duplicate assignments
+	#
+	local _ifall
+	local _files
+
+	_i=0
+	_ifall="${_lanif}"
+	while [ "${_i}" -lt "${_count}" ]
+	do
+		local _var
+		local _val
+
+		_var=\$$(eval "echo ${_opt}${_i}")
+		_val=$(eval "echo $_var")
+		_ifall="${_ifall} ${_val}"
+
+		_i=`expr "${_i}" + 1`
+	done
+
+	for i in ${_ifall}
+	do
+		local _file
+
+		_file="/tmp/.${i}"
+		if [ -f "${_file}" ]
+		then
+			dialog --clear --title "Error" \
+				--msgbox "You can't assign the same interface twice!" 5 46
+			rm ${_files}
+			exit 1
+		fi
+
+		touch "${_file}"
+		_files="${_files} ${_file}"
+	done
+
+	rm ${_files}
+
+
+	#
+	# ...
+	#
+	_tmpfile="/tmp/msg"
+	cat << EOD > "${_tmpfile}"
+The interfaces will be assigned as follows:
+
+LAN  -> ${_lanif}
+
+EOD
+	_i=0
+	for _ifopt in ${_ifoptlist}
+	do
+		local _n
+
+		_n=`expr "${_i}" + 1`
+		echo "OPT${_n} -> ${_ifopt}" >> "${_tmpfile}"
+		_i=`expr "${_i}" + 1`
+	done
+	echo "\nDo you want to proceed?" >> "${_tmpfile}"
+	_msg=`cat "${_tmpfile}"`
+	rm -f "${_tmpfile}"
+
+	dialog --clear --yesno "${_msg}" 100 47
+    if [ "$?" != "0" ]
+    then
+		return 0
+    fi
+
+	#
+	# Save config here....
+	#
+
+	return 0
+}
+
+config_menu()
+{
+	while :
+	do
+		local _number
+
+		echo " "
+		echo " "
+		echo "Console setup"
+		echo "-------------"
+		echo "1) Assign interfaces"
+		echo "2) Set LAP IP address"
+		echo "3) Reset WebGUI password"
+		echo "4) Reset to factory defaults"
+		echo "5) Ping host"
+		echo "6) Shell"
+		echo "7) Reboot system"
+		echo "8) Shutdown system"
+
+		case "${PLATFORM}" in
+			*-live[cC][dD])
+				echo "9) Install/Upgrade to hard drive/flash device, etc." ;;
+		esac
+
+		echo " "
+
+		read -p "Enter a number: " _number
+
+		case "${_number}" in
+			1) menu_setports ;;
+			2) menu_setlanip ;;
+			3) menu_password ;;
+			4) menu_defaults ;;
+			5) menu_ping ;;
+			6) menu_shell ;;
+			7) menu_reboot ;;
+			8) menu_halt ;;
+			9) install_menu ;;
+		esac
+
+	done
+}
+
 
 main()
 {
-	menu;
+	install_menu;
 }
 
 

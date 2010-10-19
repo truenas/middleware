@@ -23,7 +23,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $FreeBSD: head/usr.sbin/pc-sysinstall/backend-query/detect-laptop.sh 209753 2010-07-07 00:03:06Z imp $
+# $FreeBSD: src/usr.sbin/pc-sysinstall/backend-query/detect-laptop.sh,v 1.4 2010/07/07 00:03:06 imp Exp $
 
 if devinfo | grep -q acpi_acad0; then
   echo "laptop: YES"

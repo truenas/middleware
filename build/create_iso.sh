@@ -162,6 +162,9 @@ init_path="/rescue/init"
 init_shell="/rescue/sh"
 init_script="/baseroot.rc"
 init_chroot="/baseroot"
+opensolaris_load="YES"
+zfs_load="YES"
+geom_mirror_load="YES"
 EOF
 
     eval ${MKISOFS_CMD}
