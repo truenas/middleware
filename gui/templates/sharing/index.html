@@ -27,7 +27,7 @@
 
         <td> {{ mount.mp_options }}</td>
         <td>
-<a href="shares/mountpoint/delete/{{ mount.id }}/">Delete?</a>
+<a href="mountpoint/delete/{{ mount.id }}/">Delete?</a>
             </td>
     </tr>
 {% endfor %}
@@ -43,7 +43,7 @@
 {% for share in cifs_share_list %}
     <tr>
         <td>
-{{ share.cifs_share_name }}
+{{ share.cifs_name }}
 
 </td>
 
@@ -70,7 +70,7 @@
 {% for share in nfs_share_list %}
     <tr>
         <td>
-{{ share.nfs_share_path }}
+{{ share.nfs_path }}
 
 </td>
 

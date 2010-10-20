@@ -43,7 +43,7 @@ import os, commands
 
 @login_required
 def sharing(request, sharetype = None):
-    cifs_share = NFS_ShareForm(request.POST)
+    cifs_share = CIFS_ShareForm(request.POST)
     afp_share = AFP_ShareForm(request.POST)
     nfs_share = NFS_ShareForm(request.POST)
     if request.method == 'POST':
