@@ -175,5 +175,5 @@ class StaticRoute(models.Model):
         return self.sr_destination
     
     def save(self, *args, **kwargs):
-        super(networkStaticRoute, self).save(*args, **kwargs)
+        super(StaticRoute, self).save(*args, **kwargs)
 
