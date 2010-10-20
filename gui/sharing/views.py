@@ -47,14 +47,14 @@ def sharing(request, sharetype = None):
     afp_share = AFP_ShareForm(request.POST)
     nfs_share = NFS_ShareForm(request.POST)
     if request.method == 'POST':
-        if sharetype == 'windows':
+        if sharetype == 'cifs':
             cifs_share.save()
-        elif sharetype == 'apple':
+        elif sharetype == 'afp':
             afp_share.save()
-        elif sharetype == 'unix':
-            nfsshare.save()
+        elif sharetype == 'nfs':
+            nfs_share.save()
         else:
-            raise "Wrong request" # TODO: Should be something better
+            raise Http404() # TODO: Should be something better
         return HttpResponseRedirect('/sharing/')
     else:
         mountpoint_list = MountPoint.objects.all()
@@ -73,5 +73,5 @@ def sharing(request, sharetype = None):
         'afp_share': afp_share,
         'nfs_share': nfs_share,
         })
-    return render_to_response('freenas/shares/index.html', variables)
+    return render_to_response('sharing/index.html', variables)
 
