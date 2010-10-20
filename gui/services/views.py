@@ -170,3 +170,37 @@ def services(request):
             })
         return render_to_response('freenas/services/index.html', variables)
 
+"""TODO: This should be rewritten in a better way."""
+@login_required
+def servicesToggleView(request, formname):
+    form2namemap = {
+	'cifs_toggle' : 'cifs',
+	'afp_toggle' : 'afp',
+	'nfs_toggle' : 'nfs',
+	'unison_toggle' : 'unison',
+	'iscsi_toggle' : 'iscsi',
+	'dyndns_toggle' : 'dyndns',
+	'snmp_toggle' : 'snmp',
+	'ups_toggle' : 'ups',
+	'bt_toggle' : 'bittorrent',
+	'httpd_toggle' : 'httpd',
+	'ftp_toggle' : 'ftp',
+	'tftp_toggle' : 'tftp',
+	'ssh_toggle' : 'ssh',
+	'ad_toggle' : 'activedirectory',
+	'ldap_toggle' : 'ldap',
+    }
+    changing_service = form2namemap[formname]
+    if changing_service == "":
+        raise "Unknown service - Invalid request?"
+    svc_entry = Services.objects.get(srv_service=changing_service)
+    if svc_entry.srv_enable:
+	svc_entry.srv_enable = 0
+    else:
+	svc_entry.srv_enable = 1
+    svc_entry.save()
+    # forcestop then start to make sure the service is of the same
+    # status.
+    notifier().restart(changing_service)
+    return HttpResponseRedirect('/services/')
+

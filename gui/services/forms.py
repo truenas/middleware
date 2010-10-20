@@ -48,7 +48,7 @@ class CIFSForm(ModelForm):
         model = CIFS
     def save(self):
         super(CIFSForm, self).save()
-        notifier().reload("smbd")
+        notifier().reload("cifs")
 
 class AFPForm(ModelForm):
     class Meta:
@@ -62,7 +62,7 @@ class NFSForm(ModelForm):
         model = NFS
     def save(self):
         super(NFSForm, self).save()
-        notifier().restart("nfsd")
+        notifier().restart("nfs")
 
 class FTPForm(ModelForm):
     def save(self):

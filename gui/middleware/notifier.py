@@ -148,10 +148,10 @@ class notifier:
         def _restart_afp(self):
                 self.__system("/usr/sbin/service ix-afpd start")
                 self.__system("/usr/sbin/service netatalk restart")
-	def _reload_nfsd(self):
+	def _reload_nfs(self):
 		self.__system("/usr/sbin/service ix-nfsd start")
 		self.__system("/usr/sbin/service mountd forcerestart")
-	def _restart_nfsd(self):
+	def _restart_nfs(self):
 		self.__system("/usr/sbin/service mountd forcestop")
 		self.__system("/usr/sbin/service nfsd forcestop")
 		self.__system("/usr/sbin/service ix-nfsd start")
@@ -160,9 +160,12 @@ class notifier:
 		self.__system("/sbin/shutdown -r now")
 	def _stop_system(self):
 		self.__system("/sbin/shutdown -p now")
-	def _reload_smbd(self):
+	def _reload_cifs(self):
 		self.__system("/usr/sbin/service ix-samba start")
 		self.__system("/usr/sbin/service samba restart")
+	def _restart_cifs(self):
+		self.__system("/usr/sbin/service samba forcestop")
+		self.__system("/usr/sbin/service samba start")
         def __open_db(self):
                 """Open and return a cursor object for database access."""
 		dbname = ""

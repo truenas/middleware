@@ -61,5 +61,5 @@ class NFS_ShareForm(ModelForm):
         model = NFS_Share 
     def save(self):
         super(NFS_ShareForm, self).save()
-        notifier().reload("nfsd")
+        notifier().reload("nfs")
 

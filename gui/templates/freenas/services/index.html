@@ -10,6 +10,9 @@
             shutdownDlg = dijit.byId("shutdownDialog");
             dojo.connect(dijit.byId("shutdown_button"), "onClick", shutdownDlg, "show");
             });
+    function toggle_service(obj) {
+        window.location = '/services/toggle/' + obj.name + '/';
+    }
 </script>
 <script type="text/javascript">
     dojo.addOnLoad(function() {
@@ -31,7 +34,6 @@
     <h1>Services</h1>
 </div>
 
-{% include "freenas/services/submenu.html" %}
 {% endblock %}
 
 
@@ -46,7 +48,7 @@
                     <strong>Windows Shares</strong>
                 </td>
                 <td>
-                    <input id="cifs_toggle" name="cifs_toggle" dojoType="dijit.form.CheckBox" value="false" onChange="some_javascript_to_change_the_services_boolean">
+                    <input id="cifs_toggle" name="cifs_toggle" dojoType="dijit.form.CheckBox" checked="{% for s in srv %}{% if s.srv_service == "cifs" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
                 <td>
                     <button id="cifs_settings" dojoType="dijit.form.Button" type="button">
@@ -56,20 +58,13 @@
                     </script>
                     </button>
                 </td>
-                <td>
-                    {% for s in srv %}
-                        {% if s.srv_service == "cifs" %}
-                            {{ s.srv_enable }}
-                        {% endif %}
-                    {% endfor %}
-                </td>
             </tr>
             <tr>
                 <td>
                     <strong>Apple Shares</strong>
                 </td>
                 <td>
-                    <input id="afp_toggle" name="afp_toggle" dojoType="dijit.form.CheckBox" value="false" onChange="some_javascript_to_change_the_services_boolean">
+                    <input id="afp_toggle" name="afp_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "afp" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
                 <td>
                     <button id="afp_settings" dojoType="dijit.form.Button" type="button">
@@ -79,35 +74,21 @@
                     </script>
                     </button>
                 </td>
-                <td>
-                    {% for s in srv %}
-                        {% if s.srv_service == "afp" %}
-                            {{ s.srv_enable }}
-                        {% endif %}
-                    {% endfor %}
-                </td>
             </tr>
             <tr>
                 <td>
                     <strong>UNIX Shares</strong>
                 </td>
                 <td>
-                    <input id="unix_toggle" name="unix_toggle" dojoType="dijit.form.CheckBox" value="false" onChange="some_javascript_to_change_the_services_boolean">
+                    <input id="nfs_toggle" name="nfs_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "nfs" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="unix_settings" dojoType="dijit.form.Button" type="button">
+                    <button id="nfs_settings" dojoType="dijit.form.Button" type="button">
                         Settings
                     <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("unix").show();
+                        dijit.byId("nfs").show();
                     </script>
                     </button>
-                </td>
-                <td>
-                    {% for s in srv %}
-                        {% if s.srv_service == "nfs" %}
-                            {{ s.srv_enable }}
-                        {% endif %}
-                    {% endfor %}
                 </td>
             </tr>
             <tr>
@@ -115,7 +96,7 @@
                     <strong>Unison - Replication</strong>
                 </td>
                 <td>
-                    <input id="unison_toggle" name="unison_toggle" dojoType="dijit.form.CheckBox" value="false" onChange="some_javascript_to_change_the_services_boolean">
+                    <input id="unison_toggle" name="unison_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "unison" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
                 <td>
                     <button id="unison_settings" dojoType="dijit.form.Button" type="button">
@@ -125,20 +106,13 @@
                     </script>
                     </button>
                 </td>
-                <td>
-                    {% for s in srv %}
-                        {% if s.srv_service == "unison" %}
-                            {{ s.srv_enable }}
-                        {% endif %}
-                    {% endfor %}
-                </td>
             </tr>
             <tr>
                 <td>
                     <strong>iSCSI</strong>
                 </td>
                 <td>
-                    <input id="iscsi_toggle" name="iscsi_toggle" dojoType="dijit.form.CheckBox" value="false" onChange="some_javascript_to_change_the_services_boolean">
+                    <input id="iscsi_toggle" name="iscsi_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "iscsi" %}{{ s.srv_enable }}{% endif %}{% endfor %}">
                 </td>
                 <td>
                     <button id="iscsi_settings" dojoType="dijit.form.Button" type="button">
@@ -148,20 +122,13 @@
                     </script>
                     </button>
                 </td>
-                <td>
-                    {% for s in srv %}
-                        {% if s.srv_service == "iscsitarget" %}
-                            {{ s.srv_enable }}
-                        {% endif %}
-                    {% endfor %}
-                </td>
             </tr>
             <tr>
                 <td>
                     <strong>Dynamic DNS</strong>
                 </td>
                 <td>
-                    <input id="dyndns_toggle" name="dyndns_toggle" dojoType="dijit.form.CheckBox" value="false" onChange="some_javascript_to_change_the_services_boolean">
+                    <input id="dyndns_toggle" name="dyndns_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "dyndns" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
                 <td>
                     <button id="dyndns_settings" dojoType="dijit.form.Button" type="button">
@@ -171,20 +138,13 @@
                     </script>
                     </button>
                 </td>
-                <td>
-                    {% for s in srv %}
-                        {% if s.srv_service == "dynamicdns" %}
-                            {{ s.srv_enable }}
-                        {% endif %}
-                    {% endfor %}
-                </td>
             </tr>
             <tr>
                 <td>
                     <strong>SNMP</strong>
                 </td>
                 <td>
-                    <input id="snmp_toggle" name="snmp_toggle" dojoType="dijit.form.CheckBox" value="false" onChange="some_javascript_to_change_the_services_boolean">
+                    <input id="snmp_toggle" name="snmp_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "snmp" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
                 <td>
                     <button id="snmp_settings" dojoType="dijit.form.Button" type="button">
@@ -194,20 +154,13 @@
                     </script>
                     </button>
                 </td>
-                <td>
-                    {% for s in srv %}
-                        {% if s.srv_service == "snmp" %}
-                            {{ s.srv_enable }}
-                        {% endif %}
-                    {% endfor %}
-                </td>
             </tr>
             <tr>
                 <td>
                     <strong>UPS</strong>
                 </td>
                 <td>
-                    <input id="ups_toggle" name="ups_toggle" dojoType="dijit.form.CheckBox" value="false" onChange="some_javascript_to_change_the_services_boolean">
+                    <input id="ups_toggle" name="ups_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "ups" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
                 <td>
                     <button id="ups_settings" dojoType="dijit.form.Button" type="button">
@@ -217,20 +170,13 @@
                     </script>
                     </button>
                 </td>
-                <td>
-                    {% for s in srv %}
-                        {% if s.srv_service == "ups" %}
-                            {{ s.srv_enable }}
-                        {% endif %}
-                    {% endfor %}
-                </td>
             </tr>
             <tr>
                 <td>
                     <strong>Bit Torrent</strong>
                 </td>
                 <td>
-                    <input id="bt_toggle" name="bt_toggle" dojoType="dijit.form.CheckBox" value="false" onChange="some_javascript_to_change_the_services_boolean">
+                    <input id="bt_toggle" name="bt_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "bt" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
                 <td>
                     <button id="bt_settings" dojoType="dijit.form.Button" type="button">
@@ -240,20 +186,13 @@
                     </script>
                     </button>
                 </td>
-                <td>
-                    {% for s in srv %}
-                        {% if s.srv_service == "bittorrent" %}
-                            {{ s.srv_enable }}
-                        {% endif %}
-                    {% endfor %}
-                </td>
             </tr>
             <tr>
                 <td>
                     <strong>Web Server</strong>
                 </td>
                 <td>
-                    <input id="httpd_toggle" name="httpd_toggle" dojoType="dijit.form.CheckBox" value="false" onChange="some_javascript_to_change_the_services_boolean">
+                    <input id="httpd_toggle" name="httpd_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "httpd" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
                 <td>
                     <button id="httpd_settings" dojoType="dijit.form.Button" type="button">
@@ -263,20 +202,13 @@
                     </script>
                     </button>
                 </td>
-                <td>
-                    {% for s in srv %}
-                        {% if s.srv_service == "webserver" %}
-                            {{ s.srv_enable }}
-                        {% endif %}
-                    {% endfor %}
-                </td>
             </tr>
             <tr>
                 <td>
                     <strong>FTP</strong>
                 </td>
                 <td>
-                    <input id="ftp_toggle" name="ftp_toggle" dojoType="dijit.form.CheckBox" value="false" onChange="some_javascript_to_change_the_services_boolean">
+                    <input id="ftp_toggle" name="ftp_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "ftp" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
                 <td>
                     <button id="ftp_settings" dojoType="dijit.form.Button" type="button">
@@ -286,20 +218,13 @@
                     </script>
                     </button>
                 </td>
-                <td>
-                    {% for s in srv %}
-                        {% if s.srv_service == "ftp" %}
-                            {{ s.srv_enable }}
-                        {% endif %}
-                    {% endfor %}
-                </td>
             </tr>
             <tr>
                 <td>
                     <strong>TFTP</strong>
                 </td>
                 <td>
-                    <input id="tftp_toggle" name="tftp_toggle" dojoType="dijit.form.CheckBox" value="false" onChange="some_javascript_to_change_the_services_boolean">
+                    <input id="tftp_toggle" name="tftp_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "tftp" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
                 <td>
                     <button id="tftp_settings" dojoType="dijit.form.Button" type="button">
@@ -309,20 +234,13 @@
                     </script>
                     </button>
                 </td>
-                <td>
-                    {% for s in srv %}
-                        {% if s.srv_service == "tftp" %}
-                            {{ s.srv_enable }}
-                        {% endif %}
-                    {% endfor %}
-                </td>
             </tr>
             <tr>
                 <td>
                     <strong>SSH</strong>
                 </td>
                 <td>
-                    <input id="ssh_toggle" name="ssh_toggle" dojoType="dijit.form.CheckBox" value="false" onChange="some_javascript_to_change_the_services_boolean">
+                    <input id="ssh_toggle" name="ssh_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "ssh" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
                 <td>
                     <button id="ssh_settings" dojoType="dijit.form.Button" type="button">
@@ -332,20 +250,13 @@
                     </script>
                     </button>
                 </td>
-                <td>
-                    {% for s in srv %}
-                        {% if s.srv_service == "ssh" %}
-                            {{ s.srv_enable }}
-                        {% endif %}
-                    {% endfor %}
-                </td>
             </tr>
             <tr>
                 <td>
                     <strong>Active Directory</strong>
                 </td>
                 <td>
-                    <input id="ad_toggle" name="ad_toggle" dojoType="dijit.form.CheckBox" value="false" onChange="some_javascript_to_change_the_services_boolean">
+                    <input id="ad_toggle" name="ad_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "ad" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
                 <td>
                     <button id="ad_settings" dojoType="dijit.form.Button" type="button">
@@ -355,20 +266,13 @@
                     </script>
                     </button>
                 </td>
-                <td>
-                    {% for s in srv %}
-                        {% if s.srv_service == "activedirectory" %}
-                            {{ s.srv_enable }}
-                        {% endif %}
-                    {% endfor %}
-                </td>
             </tr>
             <tr>
                 <td>
                     <strong>LDAP</strong>
                 </td>
                 <td>
-                    <input id="ldap_toggle" name="ldap_toggle" dojoType="dijit.form.CheckBox" value="false" onChange="some_javascript_to_change_the_services_boolean">
+                    <input id="ldap_toggle" name="ldap_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "ldap" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
                 <td>
                     <button id="ldap_settings" dojoType="dijit.form.Button" type="button">
@@ -378,16 +282,8 @@
                     </script>
                     </button>
                 </td>
-                <td>
-                    {% for s in srv %}
-                        {% if s.srv_service == "ldap" %}
-                            {{ s.srv_enable }}
-                        {% endif %}
-                    {% endfor %}
-                </td>
             </tr>
         </table>
-        
 </div>
 <div id="cifs" dojoType="dijit.Dialog" title="Windows - CIFS/SAMBA Shares">
 <form action="/services/" method="post">{% csrf_token %}
@@ -415,7 +311,7 @@
 </form>
         </div>
           
-<div id="unix" dojoType="dijit.Dialog" title="UNIX - NFS Shares">
+<div id="nfs" dojoType="dijit.Dialog" title="UNIX - NFS Shares">
 <form action="/services/" method="post">{% csrf_token %}
      <table>
          {{ nfs.errors }}
