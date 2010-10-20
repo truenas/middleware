@@ -1,6 +1,7 @@
-# $FreeBSD: head/usr.sbin/pc-sysinstall/pc-sysinstall/Makefile 209554 2010-06-27 17:14:04Z imp $
+# $FreeBSD: src/usr.sbin/pc-sysinstall/pc-sysinstall/Makefile,v 1.3 2010/06/27 17:14:04 imp Exp $
 
 SCRIPTS=pc-sysinstall.sh
-BINDIR=	/rescue
+MAN=	pc-sysinstall.8
+BINDIR= /rescue
 
 .include <bsd.prog.mk>
