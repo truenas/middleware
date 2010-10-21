@@ -124,6 +124,7 @@ mount_all_filesystems()
       case ${PARTFS} in
         UFS) mount_partition ${PART}${EXT} ${PARTFS} ${PARTMNT} "noatime" ;;
         UFS+S) mount_partition ${PART}${EXT} ${PARTFS} ${PARTMNT} "noatime" ;;
+        UFS+SUJ) mount_partition ${PART}${EXT} ${PARTFS} ${PARTMNT} "noatime" ;;
         UFS+J) mount_partition ${PART}${EXT}.journal ${PARTFS} ${PARTMNT} "async,noatime" ;;
         ZFS) mount_partition ${PART} ${PARTFS} ${PARTMNT} ;;
         IMAGE) mount_partition ${PART} ${PARTFS} ${PARTMNT} ;;
@@ -159,6 +160,7 @@ mount_all_filesystems()
        case ${PARTFS} in
          UFS) mount_partition ${PART}${EXT} ${PARTFS} ${PARTMNT} "noatime" ;;
          UFS+S) mount_partition ${PART}${EXT} ${PARTFS} ${PARTMNT} "noatime" ;;
+         UFS+SUJ) mount_partition ${PART}${EXT} ${PARTFS} ${PARTMNT} "noatime" ;;
          UFS+J) mount_partition ${PART}${EXT}.journal ${PARTFS} ${PARTMNT} "async,noatime" ;;
          ZFS) mount_partition ${PART} ${PARTFS} ${PARTMNT} ;;
          SWAP)
