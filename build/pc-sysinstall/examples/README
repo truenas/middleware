@@ -189,13 +189,14 @@ The notation is as follows:
 Available FileSystems: 
   UFS - Standard UFS2 FileSystem
 UFS+S - UFS2 + Softupdates enabled
+UFS+SUJ - UFS2 + Soft Updates + Journaling enabled
 UFS+J - UFS2 + Journaling through gjournal
   ZFS - Z File System, pools / mounts created automatically
  SWAP - BSD Swap space partition, mountpoint should be set to "none"
 
 Adding the ".eli" extension to any of the above file systems
 will enable disk encryption via geli
-(UFS.eli, UFS+S.eli, UFS+J.eli, ZFS.eli, SWAP.eli)
+(UFS.eli, UFS+S.eli, UFS+SUJ.eli, UFS+J.eli, ZFS.eli, SWAP.eli)
 
 If you with to use a passphrase with this encrypted partition, on the next line
 the flag "encpass=" should be entered:
@@ -365,4 +366,4 @@ localizeKeyVariant is used to update the xorg config to set the keyboard variant
 Setting autoLoginUser will enable the specified user to log into the desktop 
 automatically without entering a password
 
-$FreeBSD: src/usr.sbin/pc-sysinstall/examples/README,v 1.2 2010/08/19 06:11:06 imp Exp $
+$FreeBSD: head/usr.sbin/pc-sysinstall/examples/README 213650 2010-10-09 08:52:09Z imp $
