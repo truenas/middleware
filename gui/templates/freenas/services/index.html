@@ -14,19 +14,6 @@
         window.location = '/services/toggle/' + obj.name + '/';
     }
 </script>
-<script type="text/javascript">
-    dojo.addOnLoad(function() {
-            var cifsButton = new dijit.form.CheckBox({
-                name: "cifs",
-                value: "false",
-                checked: false,
-                onChange: function(b) {
-                alert('onChange called with parameter = ' + b + ', and widget value = ' + cifs.attr('value'));
-                }
-                },
-                "cifs");
-            });
-</script>
 {% endblock %}
 
 {% block content %}
@@ -91,7 +78,7 @@
                     </button>
                 </td>
             </tr>
-            <tr>
+          <!--  <tr>
                 <td>
                     <strong>Unison - Replication</strong>
                 </td>
@@ -107,7 +94,8 @@
                     </button>
                 </td>
             </tr>
-            <tr>
+            -->
+           <!-- <tr>
                 <td>
                     <strong>iSCSI</strong>
                 </td>
@@ -123,7 +111,8 @@
                     </button>
                 </td>
             </tr>
-            <tr>
+            -->
+           <!-- <tr>
                 <td>
                     <strong>Dynamic DNS</strong>
                 </td>
@@ -139,7 +128,8 @@
                     </button>
                 </td>
             </tr>
-            <tr>
+            -->
+           <!-- <tr>
                 <td>
                     <strong>SNMP</strong>
                 </td>
@@ -154,8 +144,9 @@
                     </script>
                     </button>
                 </td>
-            </tr>
-            <tr>
+            </tr> 
+            -->
+          <!--  <tr>
                 <td>
                     <strong>UPS</strong>
                 </td>
@@ -171,7 +162,8 @@
                     </button>
                 </td>
             </tr>
-            <tr>
+            -->
+          <!--  <tr>
                 <td>
                     <strong>Bit Torrent</strong>
                 </td>
@@ -187,7 +179,8 @@
                     </button>
                 </td>
             </tr>
-            <tr>
+            -->
+         <!--   <tr>
                 <td>
                     <strong>Web Server</strong>
                 </td>
@@ -203,6 +196,7 @@
                     </button>
                 </td>
             </tr>
+            -->
             <tr>
                 <td>
                     <strong>FTP</strong>
@@ -251,7 +245,7 @@
                     </button>
                 </td>
             </tr>
-            <tr>
+          <!--  <tr>
                 <td>
                     <strong>Active Directory</strong>
                 </td>
@@ -267,13 +261,15 @@
                     </button>
                 </td>
             </tr>
-            <tr>
+            -->
+          <!--  <tr>
                 <td>
                     <strong>LDAP</strong>
                 </td>
                 <td>
                     <input id="ldap_toggle" name="ldap_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "ldap" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
+                -->
                 <td>
                     <button id="ldap_settings" dojoType="dijit.form.Button" type="button">
                         Settings
