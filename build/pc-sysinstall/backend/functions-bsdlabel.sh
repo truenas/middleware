@@ -23,7 +23,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $FreeBSD: src/usr.sbin/pc-sysinstall/backend/functions-bsdlabel.sh,v 1.4 2010/08/24 06:11:46 imp Exp $
+# $FreeBSD: head/usr.sbin/pc-sysinstall/backend/functions-bsdlabel.sh 214188 2010-10-21 22:46:10Z imp $
 
 # Functions related to disk operations using bsdlabel
 
@@ -218,7 +218,7 @@ setup_mbr_partitions()
       then
         USINGENCROOT="0" ; export USINGENCROOT
       fi
-
+          
       if [ -n "${IMAGE}" ]
       then
         FS="IMAGE"
@@ -229,7 +229,7 @@ setup_mbr_partitions()
 
       # Now check that these values are sane
       case $FS in
-       UFS|UFS+S|UFS+J|ZFS|SWAP|IMAGE) ;;
+        UFS|UFS+S|UFS+J|UFS+SUJ|ZFS|SWAP|IMAGE) ;;
        *) exit_err "ERROR: Invalid file system specified on $line" ;;
       esac
 
@@ -273,7 +273,7 @@ setup_mbr_partitions()
         check_for_mount "${MNT}" "/boot"
         if [ "${?}" = "0" ] ; then
           USINGBOOTPART="0" ; export USINGBOOTPART
-          if [ "${FS}" != "UFS" -a "${FS}" != "UFS+S" -a "${FS}" != "UFS+J" ]
+          if [ "${FS}" != "UFS" -a "${FS}" != "UFS+S" -a "${FS}" != "UFS+J" -a "${FS}" != "UFS+SUJ" ]
           then
             exit_err "/boot partition must be formatted with UFS"
           fi
@@ -415,7 +415,7 @@ setup_gpt_partitions()
           
       # Now check that these values are sane
       case $FS in
-        UFS|UFS+S|UFS+J|ZFS|SWAP) ;;
+        UFS|UFS+S|UFS+J|UFS+SUJ|ZFS|SWAP) ;;
        *) exit_err "ERROR: Invalid file system specified on $line" ;;
       esac
 
@@ -452,7 +452,7 @@ setup_gpt_partitions()
       if [ "${?}" = "0" ] ; then
         if [ "${CURPART}" = "2" ] ; then
           USINGBOOTPART="0" ; export USINGBOOTPART
-          if [ "${FS}" != "UFS" -a "${FS}" != "UFS+S" -a "${FS}" != "UFS+J" ]
+          if [ "${FS}" != "UFS" -a "${FS}" != "UFS+S" -a "${FS}" != "UFS+J" -a "${FS}" != "UFS+SUJ" ]
           then
             exit_err "/boot partition must be formatted with UFS"
           fi
