@@ -23,27 +23,18 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $FreeBSD: src/usr.sbin/pc-sysinstall/backend-query/disk-info.sh,v 1.4 2010/08/24 06:11:46 imp Exp $
+# $FreeBSD: head/usr.sbin/pc-sysinstall/backend-query/disk-info.sh 214192 2010-10-22 00:11:55Z imp $
 
 # Query a disk for partitions and display them
-#############################
+#############################################################################
 
-. ${PROGDIR}/backend/functions.sh
 . ${PROGDIR}/backend/functions-disk.sh
 
-if [ -z "${1}" ]
-then
-  echo "Error: No disk specified!"
-  exit 1
-fi
-
-if [ ! -e "/dev/${1}" ]
-then
-  echo "Error: Disk /dev/${1} does not exist!"
-  exit 1
-fi
-
 DISK="${1}"
+
+[ -z "${DISK}" ] && { echo 'Error: No disk specified!'; exit 1; }
+[ ! -e "/dev/${DISK}" ] && \
+	{ echo "Error: Disk /dev/${DISK} does not exist!"; exit 1; }
 
 get_disk_cyl "${DISK}"
 CYLS="${VAL}"
