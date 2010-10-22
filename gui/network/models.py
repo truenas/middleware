@@ -40,6 +40,42 @@ from django.utils.translation import ugettext_lazy as _
 from datetime import datetime
 from freenasUI.choices import *
 
+## Network|Global Configuration
+class GlobalConfiguration(models.Model):
+    gc_hostname = models.CharField(
+            max_length=120,
+            verbose_name="Hostname"
+            )
+    gc_domain = models.CharField(
+            max_length=120,
+            verbose_name="Domain"
+            )
+    gc_ipv4gateway = models.CharField(
+            max_length=120, 
+            verbose_name="IPv4 Default Gateway", 
+            blank=True
+            )
+    gc_ipv6gateway = models.CharField(
+            max_length=120, 
+            verbose_name="IPv6 Default Gateway", 
+            blank=True
+            )
+    gc_nameserver1 = models.CharField(
+            max_length=120, 
+            verbose_name="Nameserver 1", 
+            blank=True
+            )
+    gc_nameserver2 = models.CharField(
+            max_length=120, 
+            verbose_name="Nameserver 2", 
+            blank=True
+            )
+    gc_nameserver3 = models.CharField(
+            max_length=120, 
+            verbose_name="Nameserver 3", 
+            blank=True
+            )
+
 ## Network|Interface Management
 class Interfaces(models.Model):
     int_interface = models.CharField(
@@ -77,26 +113,7 @@ class Interfaces(models.Model):
             verbose_name="Options", 
             blank=True
             )
-    int_defaultrouter = models.CharField(
-            max_length=120, 
-            verbose_name="Default Router", 
-            blank=True
-            )
-    int_nameserver1 = models.CharField(
-            max_length=120, 
-            verbose_name="Nameserver 1", 
-            blank=True
-            )
-    int_nameserver2 = models.CharField(
-            max_length=120, 
-            verbose_name="Nameserver 2", 
-            blank=True
-            )
-    int_nameserver3 = models.CharField(
-            max_length=120, 
-            verbose_name="Nameserver 3", 
-            blank=True
-            )
+
     def __unicode__(self):
         return self.name + " - " + self.network_interface
     class Meta:

@@ -166,6 +166,9 @@ class notifier:
 	def _restart_cifs(self):
 		self.__system("/usr/sbin/service samba forcestop")
 		self.__system("/usr/sbin/service samba start")
+	def _restart_snmp(self):
+		self.__system("/usr/sbin/service bsnmpd forcestop")
+		self.__system("/usr/sbin/service bsnmpd start")
         def __open_db(self):
                 """Open and return a cursor object for database access."""
 		dbname = ""

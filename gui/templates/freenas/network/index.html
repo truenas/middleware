@@ -8,9 +8,16 @@
 {% block dojango_content %}
 {% if user.is_authenticated %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="False">
-
+<div dojoType="dijit.layout.ContentPane" title="Global Configuration">
+<form action="global/configuration/" method="post">{% csrf_token %}
+ <table>
+     {{ globalconfiguration }}
+    </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+</form>
+</div>
 <div dojoType="dijit.layout.ContentPane" title="Interfaces">
-<form action="." method="post">{% csrf_token %}
+<form action="global/int/" method="post">{% csrf_token %}
  <table>
      {{ interfaces }}
     </table>
@@ -19,7 +26,7 @@
 </div>
 
 <div dojoType="dijit.layout.ContentPane" title="VLAN">
-<form action="." method="post">{% csrf_token %}
+<form action="global/vlan/" method="post">{% csrf_token %}
     <table>
         {{ vlan }}
     </table>
@@ -28,7 +35,7 @@
 </div>
 
 <div dojoType="dijit.layout.ContentPane" title="LAGG">
-<form action="." method="post">{% csrf_token %}
+<form action="global/lagg/" method="post">{% csrf_token %}
     <table>
         {{ lagg }}
          </table>
@@ -37,7 +44,7 @@
 </div>
 
 <div dojoType="dijit.layout.ContentPane" title="Static Routes">
-<form action="." method="post">{% csrf_token %}
+<form action="global/sr/" method="post">{% csrf_token %}
     <table>
         {{ staticroute }}
     </table>

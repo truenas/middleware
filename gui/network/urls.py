@@ -32,6 +32,7 @@ from network.views import *
 
 urlpatterns = patterns('',
     (r'^$', network),
+    (r'^global/(?P<objtype>\w+)/$', network),
     (r'^staticroutes/(?P<staticrouteid>\d+)$', staticroute_detail), # detail
     (r'^staticroutes/delete/(?P<object_id>\d+)/$',
         'django.views.generic.create_update.delete_object', 

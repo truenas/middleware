@@ -92,27 +92,34 @@ def helperViewEm(request, theForm, model):
 ## Network Section
 
 @login_required
-def network(request):
+def network(request, objtype = None):
+    globalconfiguration = GlobalConfigurationForm(request.POST)
     interfaces = InterfacesForm(request.POST)
     vlan = VLANForm(request.POST)
     lagg = LAGGForm(request.POST)
     staticroute = StaticRouteForm(request.POST)
     if request.method == 'POST':
-        if interfaces.is_valid():
+        if objtype == 'configuration':
+            globalconfiguration.save()
+        elif objtype == 'int':
             interfaces.save()
-        if vlan.is_valid():
+        elif objtype == 'vlan':
             vlan.save()
-        if lagg.is_valid():
+        elif objtype == 'lagg':
             lagg.save()
-        if staticroute.is_valid():
+        elif objtype == 'sr':
             staticroute.save()
+        else:
+            raise "Invalid request"
         return HttpResponseRedirect('/network/')
     else:
+        globalconfiguration = GlobalConfigurationForm()
         interfaces = InterfacesForm()
         vlan = VLANForm()
         lagg = LAGGForm()
         staticroute = StaticRouteForm()
     variables = RequestContext(request, {
+        'globalconfiguration': globalconfiguration,
         'interfaces': interfaces,
         'vlan': vlan,
         'lagg': lagg,

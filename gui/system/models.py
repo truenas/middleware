@@ -37,14 +37,6 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI.choices import *
 
 class Settings(models.Model):
-    stg_hostname = models.CharField(
-            max_length=120, 
-            verbose_name="Hostname"
-            )
-    stg_domain = models.CharField(
-            max_length=120, 
-            verbose_name="Domain"
-            )
     stg_username = models.CharField(
             max_length=120, 
             verbose_name="Username"

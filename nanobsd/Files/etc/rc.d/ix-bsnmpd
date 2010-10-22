@@ -1,0 +1,136 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-bsnmpd
+# REQUIRE: FILESYSTEMS NETWORKING
+# BEFORE: bsnmpd
+
+. /etc/rc.subr
+
+bsnmp_config=/etc/snmpd.conf
+
+generate_snmpconf()
+{
+	local IFS=\|
+	local snmp_location snmp_contact snmp_community snmp_traps snmp_options
+
+        hw_machine=`/sbin/sysctl -n hw.machine`
+        hw_model=`/sbin/sysctl -n hw.model`
+        hw_clockrate=`/sbin/sysctl -n hw.clockrate`
+        kern_ostype=`/sbin/sysctl -n kern.ostype`
+        kern_osrelease=`/sbin/sysctl -n kern.osrelease`
+        kern_osrevision=`/sbin/sysctl -n kern.osrevision`
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_location, snmp_contact, snmp_community, snmp_traps, snmp_options FROM services_snmp ORDER BY -id LIMIT 1" | \
+	while read snmp_location snmp_contact snmp_community snmp_traps snmp_options; do
+		cat << E*O*F >> ${bsnmp_config}
+# Set some common variables
+host := ${hostname}
+contact := ${snmp_contact}
+location := ${snmp_location}
+system := 1 # FreeBSD
+description := "Hardware: ${hw_machine} ${hw_model} running at ${hw_clockrate} Software: ${kern_ostype} ${kern_osrelease} (revision ${kern_osrevision})"
+read := "${snmp_community}"
+# TODO: Trap
+#		-i "count(trapenable) > 0" \
+#			-n \
+#			-o "# Trap settings" -n \
+#			-v "concat('traphost := ',traphost)" -n \
+#			-v "concat('trapport := ',trapport)" -n \
+#			-v "concat('trap := &quot;',trap,'&quot;')" -n \
+# Configuration
+%snmpd
+begemotSnmpdDebugDumpPdus = 2
+begemotSnmpdDebugSyslogPri = 7
+
+# Set the read and write communities.
+begemotSnmpdCommunityString.0.1 = ${snmp_community}
+begemotSnmpdCommunityDisable = 1
+
+# open standard SNMP ports
+begemotSnmpdPortStatus.[${hostname}].161 = 1" -n \
+begemotSnmpdPortStatus.127.0.0.1.161 = 1
+
+# open a unix domain socket
+begemotSnmpdLocalPortStatus."/var/run/snmpd.sock" = 1
+begemotSnmpdLocalPortType."/var/run/snmpd.sock" = 4
+# TODO: Trap
+#		-i "count(trapenable) > 0" \
+#			-n \
+#			-o "# send traps to the traphost" -n \
+#			-o "begemotTrapSinkStatus.[\$(traphost)].\$(trapport) = 4" -n \
+#			-o "begemotTrapSinkVersion.[\$(traphost)].\$(trapport) = 2" -n \
+#			-o "begemotTrapSinkComm.[\$(traphost)].\$(trapport) = \$(trap)" -n \
+
+sysContact = \$(contact)
+sysLocation = \$(location)
+sysObjectId = 1.3.6.1.4.1.12325.1.1.2.1.\$(system)
+sysDescr = \$(description)
+
+# TODO: Trap
+# snmpEnableAuthenTraps = 2
+#		-i "count(modules/mibii) > 0" \
+#			-n \
+#			-o "#" -n \
+#			-o "# Load MIB-2 module" -n \
+#			-o "#" -n \
+#			-o "begemotSnmpdModulePath.&quot;mibII&quot; = &quot;/usr/lib/snmp_mibII.so&quot;" -n \
+#			-n \
+#			-o "#%mibII" -n \
+#			-o "#begemotIfForcePoll = 2000" -n \
+#		-b \
+#		-i "count(modules/netgraph) > 0" \
+#			-n \
+#			-o "#" -n \
+#			-o "# Netgraph module" -n \
+#			-o "#" -n \
+#			-o "begemotSnmpdModulePath.&quot;netgraph&quot; = &quot;/usr/lib/snmp_netgraph.so&quot;" -n \
+#			-n \
+#			-o "%netgraph" -n \
+#			-o "begemotNgControlNodeName = &quot;snmpd&quot;" -n \
+#		-b \
+#		-i "count(modules/hostres) > 0" \
+#			-n \
+#			-o "#" -n \
+#			-o "# Host resources module snmp_hostres(3)." -n \
+#			-o "# This requires the mibII module." -n \
+#			-o "#" -n \
+#			-o "begemotSnmpdModulePath.&quot;hostres&quot; = &quot;/usr/lib/snmp_hostres.so&quot;" -n \
+#		-b \
+#		-i "count(modules/ucd) > 0" \
+#			-n \
+#			-o "#" -n \
+#			-o "# bsnmp-ucd (8)" -n \
+#			-o "#" -n \
+#			-o "begemotSnmpdModulePath.&quot;ucd&quot; = &quot;/usr/lib/snmp_ucd.so&quot;" -n \
+#			-o "%ucd" -n \
+#			-o "memMinimumSwap = 1600" -n \
+#			-o "memSwapErrorMsg = &quot;No free swap!&quot;" -n \
+#			-n \
+#			-o "laConfig.1 = &quot;6.0&quot;" -n \
+#			-o "laConfig.2 = &quot;5.0&quot;" -n \
+#			-o "laConfig.3 = &quot;4.0&quot;" -n \
+#			-n \
+#			-o "laErrMessage.1 = &quot;1min load average is high!&quot;" -n \
+#			-o "laErrMessage.2 = &quot;5min load average is high!&quot;" -n \
+#			-o "laErrMessage.3 = &quot;15min load average is high!&quot;" -n \
+#			-n \
+#			-o "# Extension commands (extTable)" -n \
+#			-o "extNames.0 = &quot;uname&quot;" -n \
+#			-o "extCommand.0 = &quot;/usr/bin/uname -a&quot;" -n \
+#			-o "extNames.1 = &quot;uptime&quot;" -n \
+#			-o "extCommand.1 = &quot;/usr/bin/uptime&quot;" -n \
+#		-b \
+${snmp_options}
+E*O*F
+	done
+}
+
+name="ix-snmpd"
+start_cmd='generate_snmpconf'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

@@ -104,10 +104,15 @@ class Disk(models.Model):
 
 class DiskGroup(models.Model):
     group_name = models.CharField(
+            unique=True,
             max_length=120, 
             verbose_name="Name"
             )
-    group_members = models.ManyToManyField(Disk)
+    group_members = models.ForeignKey(
+            Disk,
+            verbose_name="Members",
+            help_text="Assign disks to a group"
+            )
     group_type = models.CharField(
             max_length=120, 
             choices=ZFS_Choices, 
@@ -133,7 +138,11 @@ class Volume(models.Model):
             verbose_name="Volume Type", 
             blank="True"
             )
-    vol_groups = models.ManyToManyField(DiskGroup)
+    vol_groups = models.ForeignKey(
+            DiskGroup,
+            verbose_name="Disk Groups",
+            help_text="Assign a disk group to a Volume",
+            )
     class Meta:
         verbose_name = "Volume"
     def __unicode__(self):

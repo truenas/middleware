@@ -46,12 +46,18 @@ class InterfacesForm(ModelForm):
         super(InterfacesForm, self).save()
         notifier().start("network")
 
+class GlobalConfigurationForm(ModelForm):
+    class Meta:
+        model = GlobalConfiguration
+
 class VLANForm(ModelForm):
     class Meta:
         model = VLAN 
+
 class LAGGForm(ModelForm):
     class Meta:
         model = LAGG
+
 class StaticRouteForm(ModelForm):
     class Meta:
         model = StaticRoute
