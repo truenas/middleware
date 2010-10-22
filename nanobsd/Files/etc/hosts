@@ -10,8 +10,8 @@
 # not be consulted at all; see /etc/nsswitch.conf for the resolution order.
 #
 #
-::1			localhost localhost.my.domain freenas
-127.0.0.1		localhost localhost.my.domain freenas
+::1			localhost localhost.my.domain freenas freenas.local
+127.0.0.1		localhost localhost.my.domain freenas freenas.local
 #
 # Imaginary network.
 #10.0.0.2		myname.my.domain myname
