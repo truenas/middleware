@@ -145,8 +145,6 @@ TABLE services_webserver {
 	web_dirlisting=0
 }
 TABLE system_settings {
-	stg_hostname=freenas
-	stg_domain=local
 	stg_username=admin
 	stg_guiprotocol=http
 	stg_language=english
@@ -205,6 +203,15 @@ TABLE system_swap {
 	swap_type=file
 	swap_mountpoint=
 	swap_size=
+}
+TABLE network_globalconfiguration {
+	gc_hostname=freenas
+	gc_domain=local
+	gc_ipv4gateway=
+	gc_ipv6gateway=
+	gc_nameserver1=
+	gc_nameserver2=
+	gc_nameserver3=
 }
 # grep TABLE schema | grep services_ | awk '{gsub("\"", "", $3); gsub("services_", "", $3); printf "TABLE services_services {\n\tsrv_service=%s\n\tsrv_enable=0\n}\n", $3;}' >> schema.init
 
