@@ -132,43 +132,49 @@ class notifier:
 	def _reload_named(self):
 		self.__system("/usr/sbin/service named reload")
 	def _reload_general(self):
-		self.__system("/usr/sbin/service hostname start")
+		self.__system("/usr/sbin/service hostname quietstart")
 	def _reload_ssh(self):
-		self.__system("/usr/sbin/service ix-sshd start")
+		self.__system("/usr/sbin/service ix-sshd quietstart")
+		self.__system("/usr/sbin/service sshd restart")
+	def _restart_ssh(self):
+		self.__system("/usr/sbin/service ix-sshd quietstart")
 		self.__system("/usr/sbin/service sshd restart")
 	def _reload_tftp(self):
-		self.__system("/usr/sbin/service ix-inetd start")
+		self.__system("/usr/sbin/service ix-inetd quietstart")
+		self.__system("/usr/sbin/service inetd restart")
+	def _restart_tftp(self):
+		self.__system("/usr/sbin/service ix-inetd quietstart")
 		self.__system("/usr/sbin/service inetd restart")
 	def _reload_ftp(self):
-		self.__system("/usr/sbin/service ix-proftpd start")
+		self.__system("/usr/sbin/service ix-proftpd quietstart")
 		self.__system("/usr/sbin/service proftpd restart")
         def _load_afp(self):
-                self.__system("/usr/sbin/service ix-afpd start")
-                self.__system("/usr/sbin/service netatalk start")
+                self.__system("/usr/sbin/service ix-afpd quietstart")
+                self.__system("/usr/sbin/service netatalk quietstart")
         def _restart_afp(self):
-                self.__system("/usr/sbin/service ix-afpd start")
+                self.__system("/usr/sbin/service ix-afpd quietstart")
                 self.__system("/usr/sbin/service netatalk restart")
 	def _reload_nfs(self):
-		self.__system("/usr/sbin/service ix-nfsd start")
+		self.__system("/usr/sbin/service ix-nfsd quietstart")
 		self.__system("/usr/sbin/service mountd forcerestart")
 	def _restart_nfs(self):
 		self.__system("/usr/sbin/service mountd forcestop")
 		self.__system("/usr/sbin/service nfsd forcestop")
-		self.__system("/usr/sbin/service ix-nfsd start")
-		self.__system("/usr/sbin/service nfsd start")
+		self.__system("/usr/sbin/service ix-nfsd quietstart")
+		self.__system("/usr/sbin/service nfsd quietstart")
 	def _restart_system(self):
 		self.__system("/sbin/shutdown -r now")
 	def _stop_system(self):
 		self.__system("/sbin/shutdown -p now")
 	def _reload_cifs(self):
-		self.__system("/usr/sbin/service ix-samba start")
+		self.__system("/usr/sbin/service ix-samba quietstart")
 		self.__system("/usr/sbin/service samba restart")
 	def _restart_cifs(self):
 		self.__system("/usr/sbin/service samba forcestop")
-		self.__system("/usr/sbin/service samba start")
+		self.__system("/usr/sbin/service samba quietstart")
 	def _restart_snmp(self):
 		self.__system("/usr/sbin/service bsnmpd forcestop")
-		self.__system("/usr/sbin/service bsnmpd start")
+		self.__system("/usr/sbin/service bsnmpd quietstart")
         def __open_db(self):
                 """Open and return a cursor object for database access."""
 		dbname = ""
@@ -277,8 +283,8 @@ class notifier:
 				self.__create_ufs_volume(c = c, u_id = u_id, u_name = u_name)
 		self._reload_disk()
         def _reload_disk(self):
-		self.__system("/usr/sbin/service ix-fstab start")
-		self.__system("/usr/sbin/service mountlate start")
+		self.__system("/usr/sbin/service ix-fstab quietstart")
+		self.__system("/usr/sbin/service mountlate quietstart")
 	# Create a user in system then samba
 	def __pw_with_password(self, command, password):
 		pw = self.__pipeopen(command)
