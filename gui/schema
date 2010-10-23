@@ -379,7 +379,7 @@ CREATE TABLE "storage_disk" (
 );
 CREATE TABLE "storage_diskgroup" (
     "id" integer NOT NULL PRIMARY KEY,
-    "group_name" varchar(120) NOT NULL,
+    "group_name" varchar(120) NOT NULL UNIQUE,
     "group_members_id" integer NOT NULL REFERENCES "storage_disk" ("id"),
     "group_type" varchar(120) NOT NULL
 );

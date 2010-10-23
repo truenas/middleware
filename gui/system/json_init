@@ -1,0 +1,62 @@
+[
+    {
+        "pk": 1, 
+        "model": "system.settings", 
+        "fields": {
+            "stg_timezone": "america-los_angeles", 
+            "stg_guiprotocol": "http", 
+            "stg_language": "english", 
+            "stg_username": "admin"
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "system.advanced", 
+        "fields": {
+            "adv_systembeep": true, 
+            "adv_serialconsole": false, 
+            "adv_consolescreensaver": false, 
+            "adv_zeroconfbonjour": true, 
+            "adv_tuning": false, 
+            "adv_firmwarevc": true, 
+            "adv_powerdaemon": false, 
+            "adv_motd": "Welcome to FreeNAS", 
+            "adv_consolemenu": true
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "system.email", 
+        "fields": {
+            "em_security": "None", 
+            "em_fromemail": "root@freenas.local", 
+            "em_port": "25", 
+            "em_smtp": false, 
+            "em_outgoingserver": ""
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "system.proxy", 
+        "fields": {
+            "pxy_ftpproxy": false, 
+            "pxy_ftpproxyaddress": "proxy", 
+            "pxy_httpproxyauth": false, 
+            "pxy_httpproxy": false, 
+            "pxy_ftpproxyport": "8080", 
+            "pxy_httpproxyport": "8080", 
+            "pxy_httpproxyaddress": "proxy", 
+            "pxy_ftpproxyauth": false
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "system.swap", 
+        "fields": {
+            "swap_mountpoint": "", 
+            "swap_size": "", 
+            "swap_type": "file", 
+            "swap_memory": false
+        }
+    }
+]

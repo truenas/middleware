@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="float:left;">
+    <h1>Network</h1>
+</div>
+{% endblock %}
+{% block dojango_content %}
+{% if user.is_authenticated %}
+<div dojoType="dijit.layout.TabContainer" style="width:100%;height:400px;" >
+    <div dojoType="dijit.layout.TabContainer" title="Network Settings" nested="true">
+        <div dojoType="dijit.layout.ContentPane" title="Global Configuration" selected="true">
+            <table>
+                <tr>
+                    <td><strong>Hostname:</strong></td>
+                    <td>
+                    {% for c in gc_config %}
+                        {{ c.gc_hostname }}
+                    {% endfor %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Domain:</strong></td>
+                    <td>
+                    {% for c in gc_config %}
+                        {{ c.gc_domain }}
+                    {% endfor %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>IPv4 Gateway:</strong></td>
+                    <td>
+                    {% for c in gc_config %}
+                        {{ c.gc_ipv4gateway }}
+                    {% endfor %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>IPv6 Gateway:</strong></td>
+                    <td>
+                    {% for c in gc_config %}
+                        {{ c.gc_ipv6gateway }}
+                    {% endfor %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Name Server 1:</strong></td>
+                    <td>
+                    {% for c in gc_config %}
+                        {{ c.gc_nameserver1 }}
+                    {% endfor %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Name Server 2:</strong></td>
+                    <td>
+                    {% for c in gc_config %}
+                        {{ c.gc_nameserver2 }}
+                    {% endfor %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Name Server 3:</strong></td>
+                    <td>
+                    {% for c in gc_config %}
+                        {{ c.gc_nameserver3 }}
+                    {% endfor %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <p>
+                        <button id="gc_button" dojoType="dijit.form.Button" type="button">
+                           Edit Global Configuration
+                           <script type="dojo/method" event="onClick" args="evt">
+                               dijit.byId("gc").show();
+                            </script>
+                        </button>
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="Interfaces">
+            <span style="margin:22px;">
+                    <button id="int_button" dojoType="dijit.form.Button" type="button">
+                        Add Interface
+                        <script type="dojo/method" event="onClick" args="evt">
+                        dijit.byId("int").show();
+                    </script>
+                    </button>
+                </span>
+                        {% for i in int_list %}
+            <table style="border:1px dotted #c5c5c5;margin:6px;float:left;">
+                <tr><td><strong>Interface:</strong></td>
+                    <td>
+                            {{ i.int_interface }}
+                    </td>
+                </tr>
+                <tr><td><strong>Name:</strong></td>
+                    <td>
+                            {{ i.int_name }}
+                    </td>
+                </tr>
+                <tr><td><strong>DHCP:</strong></td>
+                    <td>
+                            {{ i.int_dhcp }}
+                    </td>
+                </tr>
+                <tr><td><strong>IPv4 Gateway:</strong></td>
+                    <td>
+                            {{ i.int_ipv4gateway }}
+                    </td>
+                </tr>
+                <tr><td><strong>IPv6 Gateway:</strong></td>
+                    <td>
+                            {{ i.int_ipv6gateway }}
+                    </td>
+                </tr>
+                <tr><td><strong>IPv6 Auto-configure:</strong></td>
+                    <td>
+                            {{ i.int_ipv6auto }}
+                    </td>
+                </tr>
+                <tr><td><strong>IPv6 Address:</strong></td>
+                    <td>
+                            {{ i.int_ipv6address }}
+                    </td>
+                </tr>
+                <tr><td><strong>Options:</strong></td>
+                    <td>
+                            {{ i.int_options }}
+                    </td>
+                </tr>
+            </table>
+                        {% endfor %}
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="VLAN">
+                    <button id="vlan_button" dojoType="dijit.form.Button" type="button">
+                        Add VLAN Interface
+                        <script type="dojo/method" event="onClick" args="evt">
+                        dijit.byId("vlan").show();
+                    </script>
+                    </button>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="LAGG">
+                    <button id="lagg_button" dojoType="dijit.form.Button" type="button">
+                       Add LAGG Interface 
+                        <script type="dojo/method" event="onClick" args="evt">
+                        dijit.byId("lagg").show();
+                    </script>
+                    </button>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="Static Routes">
+                    <button id="sr_button" dojoType="dijit.form.Button" type="button">
+                       Add Static Route 
+                        <script type="dojo/method" event="onClick" args="evt">
+                        dijit.byId("sr").show();
+                    </script>
+        </div>
+</div>
+
+<br />
+</div>
+
+    <div id="gc" dojoType="dijit.Dialog" closable="true" title="Global Configuration">
+<form action="global/configuration/" method="post">{% csrf_token %}
+ <table>
+     {{ gc }}
+    </table>
+<button dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('gc').hide();">
+    Cancel
+</button>
+</form>
+</div>
+<div id="int" dojoType="dijit.Dialog" closable="true" title="Add Interface">
+<form action="global/int/" method="post">{% csrf_token %}
+ <table>
+     {{ interfaces }}
+    </table>
+<button dojoType="dijit.form.Button" type="submit">Add Interface</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('int').hide();">
+    Cancel
+</button>
+</form>
+</div>
+
+<div id="vlan" dojoType="dijit.Dialog" closable="true" title="Add VLAN">
+<form action="global/vlan/" method="post">{% csrf_token %}
+    <table>
+        {{ vlan }}
+    </table>
+<button dojoType="dijit.form.Button" type="submit">Add VLAN</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('vlan').hide();">
+    Cancel
+</button>
+</form>
+</div>
+
+<div id="lagg" dojoType="dijit.Dialog" closable="true" title="Add LAGG">
+<form action="global/lagg/" method="post">{% csrf_token %}
+    <table>
+        {{ lagg }}
+         </table>
+<button dojoType="dijit.form.Button" type="submit">Add LAGG</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('lagg').hide();">
+    Cancel
+</button>
+</form>
+</div>
+
+<div id="sr" dojoType="dijit.Dialog" closable="true" title="Add Static Route">
+<form action="global/sr/" method="post">{% csrf_token %}
+    <table>
+        {{ staticroute }}
+    </table>
+<button dojoType="dijit.form.Button" type="submit">Add Static Route</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('sr').hide();">
+    Cancel
+</button>
+</form>
+</div>
+            
+{% else %}
+    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
+{% endif %}
+
+{% endblock %}
+

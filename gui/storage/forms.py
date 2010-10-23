@@ -37,11 +37,36 @@ from dojango.forms.models import ModelForm as ModelForm
 from dojango.forms import fields, widgets 
 from dojango.forms.fields import BooleanField 
 
+attrs_dict = { 'class': 'required' }
+
 class DiskForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(DiskForm, self).__init__(*args, **kwargs)
+        self.fields['disk_disks'].choices = [ (x, x) for x in self._populate_disklist() ]
+    def _populate_disklist(self):
+        from os import popen
+        import re
+
+        disklist = []
+
+        # Grab disk list
+        pipe = popen("/sbin/sysctl -n kern.disks")
+        disklist = pipe.read().strip().split(' ')
+
+        # Exclude the root device
+        rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
+        rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
+        if rootdev_base != None:
+            disklist = [ x for x in disklist if x != rootdev_base.group(0) ]
+
+        # Exclude what's already added
+        known_disks = set([ x['disk_disks'] for x in Disk.objects.all().values('disk_disks') ])
+        disklist = set(disklist).difference(known_disks)
+        return disklist
+
     class Meta:
         model = Disk
-        # This doesn't do the trick
-        # widgets = {'disk_disks' : DiskChoices() }
+    disk_disks = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict))
 
 class DiskGroupForm(ModelForm):
     class Meta:

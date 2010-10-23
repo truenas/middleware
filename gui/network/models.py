@@ -75,6 +75,12 @@ class GlobalConfiguration(models.Model):
             verbose_name="Nameserver 3", 
             blank=True
             )
+    def __unicode__(self):
+            return u'%s' % self.id 
+    class Meta:
+        verbose_name = "Global Configuration"
+
+
 
 ## Network|Interface Management
 class Interfaces(models.Model):
@@ -115,7 +121,7 @@ class Interfaces(models.Model):
             )
 
     def __unicode__(self):
-        return self.name + " - " + self.network_interface
+            return u'%s' % self.int_name 
     class Meta:
         verbose_name = "Interfaces"
 

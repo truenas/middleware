@@ -25,7 +25,6 @@
 #
 # $FreeBSD$
 #####################################################################
-
 from freenasUI.storage.forms import * 
 from freenasUI.storage.models import * 
 from django.forms.models import modelformset_factory
@@ -40,6 +39,7 @@ from django.http import Http404
 from django.views.generic.list_detail import object_detail, object_list
 from django.views.generic.create_update import delete_object
 from freenasUI.middleware.notifier import notifier
+from django.core import serializers
 import os, commands
 
 def helperView(request, theForm, model, url):
@@ -112,18 +112,11 @@ def storage(request, objtype = None, template_name = 'storage/index.html'):
             raise "Invalid Request" # TODO: Find out the sane way to throw exception
         return HttpResponseRedirect('/storage/')
     else:
-
-        disk_list = Disk.objects.all()
-        group_list = DiskGroup.objects.all()
-        volume_list = Volume.objects.all()
         disk = DiskForm()
         diskgroup = DiskGroupForm()
         volume = VolumeForm()
         mountpoint = MountPointForm()
         variables = RequestContext(request, {
-            'disk_list': disk_list,
-            'group_list': group_list,
-            'volume_list': volume_list,
             'disk': disk,
             'diskgroup': diskgroup,
             'volume': volume,

@@ -93,14 +93,14 @@ def helperViewEm(request, theForm, model):
 
 @login_required
 def network(request, objtype = None):
-    globalconfiguration = GlobalConfigurationForm(request.POST)
+    gc = GlobalConfigurationForm(request.POST)
     interfaces = InterfacesForm(request.POST)
     vlan = VLANForm(request.POST)
     lagg = LAGGForm(request.POST)
     staticroute = StaticRouteForm(request.POST)
     if request.method == 'POST':
         if objtype == 'configuration':
-            globalconfiguration.save()
+            gc.save()
         elif objtype == 'int':
             interfaces.save()
         elif objtype == 'vlan':
@@ -110,38 +110,23 @@ def network(request, objtype = None):
         elif objtype == 'sr':
             staticroute.save()
         else:
-            raise "Invalid request"
+            raise Http404() 
         return HttpResponseRedirect('/network/')
     else:
-        globalconfiguration = GlobalConfigurationForm()
+        gc_config = GlobalConfiguration.objects.order_by("-id").values()[:1]
+        int_list = Interfaces.objects.order_by("-id").values()
+        gc = GlobalConfigurationForm()
         interfaces = InterfacesForm()
         vlan = VLANForm()
         lagg = LAGGForm()
         staticroute = StaticRouteForm()
     variables = RequestContext(request, {
-        'globalconfiguration': globalconfiguration,
+        'gc_config': gc_config,
+        'gc': gc,
         'interfaces': interfaces,
+        'int_list': int_list,
         'vlan': vlan,
         'lagg': lagg,
         'staticroute': staticroute,
     })
-    return render_to_response('freenas/network/index.html', variables)
-
-
-@login_required
-def staticroutes_list(request, template_name='freenas/network/staticroute_list.html'):
-    query_set = networkStaticRoute.objects.all()
-    return object_list(
-        request,
-        template_name = template_name,
-        queryset = query_set
-    )
-
-@login_required
-def staticroute_detail(request, staticrouteid, template_name='freenas/network/staticroute_detail.html'):
-    return object_detail(
-        request,
-        template_name = template_name,
-        object_id = staticrouteid,
-        queryset = networkStaticRoute.objects.all(),
-    ) 
+    return render_to_response('network/index.html', variables)

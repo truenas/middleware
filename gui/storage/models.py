@@ -52,7 +52,6 @@ class Disk(models.Model):
             )
     disk_disks = models.CharField(
             max_length=120, 
-            choices=DiskChoices(),
             verbose_name="Disks"
             )
     disk_description = models.CharField(

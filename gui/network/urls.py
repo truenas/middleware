@@ -33,8 +33,7 @@ from network.views import *
 urlpatterns = patterns('',
     (r'^$', network),
     (r'^global/(?P<objtype>\w+)/$', network),
-    (r'^staticroutes/(?P<staticrouteid>\d+)$', staticroute_detail), # detail
-    (r'^staticroutes/delete/(?P<object_id>\d+)/$',
+    (r'^(?P<objtype>\w+)/delete/(?P<object_id>\d+)/$',
         'django.views.generic.create_update.delete_object', 
-        dict(model = StaticRoute, post_delete_redirect = '/freenas/network/staticroutes/'),), 
+        dict(model = StaticRoute, post_delete_redirect = '/network/'),), 
     )

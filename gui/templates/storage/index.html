@@ -10,6 +10,9 @@
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
     <div dojoType="dijit.layout.ContentPane" title="Active">
 
+{% for o in storage_objs %}
+    {{ o }}
+{% endfor %}
 <table>
     <tr><td><h3>Disks</h3></td></tr>
     <tr>

@@ -1,0 +1,356 @@
+[
+    {
+        "pk": 1, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "activedirectory", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "afp", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 3, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "bittorrent", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 4, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "cifs", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 5, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "dynamicdns", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 6, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "ftp", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 7, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "iscsitarget", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 8, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "ldap", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 9, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "nfs", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 10, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "rsyncjob", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 11, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "snmp", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 12, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "ssh", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 13, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "tftp", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 14, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "unison", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 15, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "ups", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 16, 
+        "model": "services.services", 
+        "fields": {
+            "srv_service": "webserver", 
+            "srv_enable": false
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "services.cifs", 
+        "fields": {
+            "cifs_srv_netbiosname": "freenas", 
+            "cifs_srv_dosattr": true, 
+            "cifs_srv_nullpw": false, 
+            "cifs_srv_localmaster": true, 
+            "cifs_srv_description": "FreeNAS Server", 
+            "cifs_srv_largerw": false, 
+            "cifs_srv_loglevel": "1", 
+            "cifs_srv_guest": "www", 
+            "cifs_srv_filemask": "", 
+            "cifs_srv_unixcharset": "UTF-8", 
+            "cifs_srv_timeserver": true, 
+            "cifs_srv_dirmask": "", 
+            "cifs_srv_recvbuffer": "64240", 
+            "cifs_srv_sendfile": true, 
+            "cifs_srv_workgroup": "FREENAS", 
+            "cifs_srv_smb_options": "", 
+            "cifs_srv_doscharset": "CP437", 
+            "cifs_srv_easupport": false, 
+            "cifs_srv_sendbuffer": "64240"
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "services.afp", 
+        "fields": {
+            "afp_srv_local": true, 
+            "afp_srv_name": "freenas", 
+            "afp_srv_ddp": false, 
+            "afp_srv_guest": false
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "services.nfs", 
+        "fields": {
+            "nfs_srv_servers": "4"
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "services.unison", 
+        "fields": {
+            "uni_workingdir": "", 
+            "uni_createworkingdir": true
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "services.iscsitarget", 
+        "fields": {
+            "iscsi_maxrecdata": "262144", 
+            "iscsi_firstburst": "65536", 
+            "iscsi_discoveryauthmethod": "auto", 
+            "iscsi_maxconnect": "8", 
+            "iscsi_basename": "iqn.2007-09.jp.ne.peach.istgt", 
+            "iscsi_nopinint": "20", 
+            "iscsi_discoveryauthgroup": "none", 
+            "iscsi_maxburst": "262144", 
+            "iscsi_toggleluc": false, 
+            "iscsi_maxsesh": "32", 
+            "iscsi_io": "30"
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "services.dynamicdns", 
+        "fields": {
+            "ddns_options": "", 
+            "ddns_wildcard": false, 
+            "ddns_password": "freenas", 
+            "ddns_username": "admin", 
+            "ddns_provider": "dyndns", 
+            "ddns_fupdateperiod": "", 
+            "ddns_domain": "", 
+            "ddns_updateperiod": ""
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "services.snmp", 
+        "fields": {
+            "snmp_options": "", 
+            "snmp_traps": false, 
+            "snmp_community": "public", 
+            "snmp_contact": "", 
+            "snmp_location": ""
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "services.ups", 
+        "fields": {
+            "ups_rmonitor": false, 
+            "ups_shutdowntimer": "30", 
+            "ups_toemail": "", 
+            "ups_options": "", 
+            "ups_port": "", 
+            "ups_identifier": "ups", 
+            "ups_emailnotify": false, 
+            "ups_subject": "UPS report generated by %h", 
+            "ups_shutdown": "batt", 
+            "ups_driver": "", 
+            "ups_description": ""
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "services.webserver", 
+        "fields": {
+            "web_dirlisting": false, 
+            "web_protocol": "http", 
+            "web_docroot": "/usr/local/www", 
+            "web_port": "80", 
+            "web_auth": false
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "services.bittorrent", 
+        "fields": {
+            "bt_watchdir": "", 
+            "bt_disthash": true, 
+            "bt_adminuser": "admin", 
+            "bt_downloaddir": "", 
+            "bt_uploadbw": "", 
+            "bt_incompletedir": "", 
+            "bt_adminauth": "1", 
+            "bt_portfwd": true, 
+            "bt_umask": "0002", 
+            "bt_pex": true, 
+            "bt_configdir": "", 
+            "bt_adminpass": "freenas", 
+            "bt_peerport": "51413", 
+            "bt_encrypt": "preferred", 
+            "bt_adminport": "9091", 
+            "bt_downloadbw": "", 
+            "bt_options": ""
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "services.ftp", 
+        "fields": {
+            "ftp_anonuserbw": "", 
+            "ftp_ident": false, 
+            "ftp_timeout": "600", 
+            "ftp_resume": false, 
+            "ftp_options": "", 
+            "ftp_masqaddress": "", 
+            "ftp_passiveportsmax": "0", 
+            "ftp_ipconnections": "2", 
+            "ftp_ssltls": false, 
+            "ftp_defaultroot": true, 
+            "ftp_dirmask": "022", 
+            "ftp_passiveportsmin": "0", 
+            "ftp_onlylocal": false, 
+            "ftp_loginattempt": "1", 
+            "ftp_localuserbw": "", 
+            "ftp_rootlogin": false, 
+            "ftp_onlyanonymous": false, 
+            "ftp_reversedns": false, 
+            "ftp_anonuserdlbw": "", 
+            "ftp_clients": "5", 
+            "ftp_fxp": false, 
+            "ftp_filemask": "077", 
+            "ftp_localuserdlbw": "", 
+            "ftp_banner": ""
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "services.tftp", 
+        "fields": {
+            "tftp_username": "nobody", 
+            "tftp_umask": "022", 
+            "tftp_directory": "/tftproot", 
+            "tftp_port": "69", 
+            "tftp_options": "", 
+            "tftp_newfiles": false
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "services.ssh", 
+        "fields": {
+            "ssh_tcpport": "22", 
+            "ssh_options": "", 
+            "ssh_passwordauth": true, 
+            "ssh_compression": false, 
+            "ssh_rootlogin": false, 
+            "ssh_tcpfwd": false, 
+            "ssh_privatekey": ""
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "services.activedirectory", 
+        "fields": {
+            "ad_adminname": "", 
+            "ad_adminpw": "", 
+            "ad_dcname": "", 
+            "ad_domainname": "", 
+            "ad_netbiosname": ""
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "services.ldap", 
+        "fields": {
+            "ldap_hostname": "", 
+            "ldap_basedn": "", 
+            "ldap_rootbindpw": "", 
+            "ldap_options": "ldap_version 3\\ntimelimit 30\\nbind_timelimit 30\\nbind_policy soft\\npam_ldap_attribute uid", 
+            "ldap_pwencryption": "clear", 
+            "ldap_anonbind": false, 
+            "ldap_machinesuffix": "", 
+            "ldap_groupsuffix": "", 
+            "ldap_usersuffix": "", 
+            "ldap_rootbasedn": "", 
+            "ldap_passwordsuffix": ""
+        }
+    }
+]

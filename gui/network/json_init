@@ -1,0 +1,15 @@
+[
+    {
+        "pk": 1, 
+        "model": "network.globalconfiguration", 
+        "fields": {
+            "gc_domain": "local", 
+            "gc_ipv4gateway": "", 
+            "gc_hostname": "freenas", 
+            "gc_ipv6gateway": "", 
+            "gc_nameserver1": "", 
+            "gc_nameserver3": "", 
+            "gc_nameserver2": ""
+        }
+    }
+]
