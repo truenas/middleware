@@ -35,7 +35,7 @@ if [ ! -f FreeBSD/supfile -o -n "$force_update" ]; then
 src-all tag=RELENG_8_1_0_RELEASE
 ports-all tag=RELEASE_8_1_0
 EOF
-    csup -L 0 ${root}/FreeBSD/supfile
+    csup -L 1 ${root}/FreeBSD/supfile
 # cvsup fixes any changes we make, it seems.  Repatch
     rm -f ${root}/FreeBSD/src-patches
     rm -f ${root}/FreeBSD/ports-patches
