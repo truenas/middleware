@@ -58,4 +58,3 @@ obj.yyyy/FreeNAS-8rXXXX-yyyy.full where XXXX is the svn revision from
 the freenas repo, and yyyy is either i386 or amd64 depending on your
 platform.  This is a raw disk image, and needs to be converted to your
 favorite VM container format before use...
-y
