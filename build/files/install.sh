@@ -1,7 +1,93 @@
 #!/bin/sh
 
 . /.profile
-__FREENAS_DEBUG__=1
+
+${FREENAS_DATABASE="/data/freenas-v1.db"}
+
+db_set_network_interfaces()
+{
+	local _col0
+	local _col1
+	local _col2
+	local _col3
+	local _col4
+	local _col5
+	local _col6
+	local _col7
+	local _col8
+	local _col9
+	local _count
+	local _i
+
+	_col0="int_interface"
+	_col1="int_name"
+	_col2="int_dhcp"
+	_col3="int_ipv4address"
+	_col4="int_ipv6address"
+	_col5="int_options"
+	_col6="int_defaultrouter"
+	_col7="int_nameserver1"
+	_col8="int_nameserver2"
+	_col9="int_nameserver3"
+	_count=10
+
+	_i=0
+	while [ "${_i}" -lt "${_count}" ]
+	do
+		local _set
+		local _var
+		local _val
+
+		_var=\$$(eval "echo _col${_i}")
+		_val=$(eval "echo ${_var}")
+		_set="${i}"
+
+		if [ -z "${_var}" ]
+		then
+			return 1
+		fi
+
+		_i=`expr "${_i}" + 1`
+		shift
+	done
+
+	return 0
+}
+
+set_config_val()
+{
+	local _str
+
+	_str="${1}"
+	if [ -n "${_str}" ]
+	then
+		local _table
+		local _column
+		local _value
+		local _sql
+
+		_table=`echo "${_str}"|cut -f1 -d.`
+		_column=`echo "${_str}"|cut -f2 -d.|cut -f1 -d=`
+		_value=`echo "${_str}"|cut -f2 -d=`
+	fi
+}
+
+get_config_val()
+{
+	local _str
+
+	_str="${1}"
+	if [ -n "${_str}" ]
+	then
+		local _table
+		local _column
+		local _sql
+
+		_table=`echo "${_str}"|cut -f1 -d.`
+		_column=`echo "${_str}"|cut -f2 -d.`
+	fi
+
+}
 
 
 get_product_name()
@@ -732,6 +818,91 @@ EOD
 	return 0
 }
 
+menu_setlanip()
+{
+	dialog --clear --yesno \
+		"Do you want to use DHCP for this interface?" 5 47
+	if [ "$?" = "0" ]
+	then
+		# Use DHCP
+
+
+	else
+		# Configure interface
+		local _lanip
+
+		get_config_val "network_interfaces.int_ipv4address"
+		_lanip="${VAL}"
+
+	fi
+}
+
+menu_password()
+{
+}
+
+menu_defaults()
+{
+}
+
+is_validip()
+{
+	local _protocol_family
+	local _protocol
+
+	_protocol_family="$1"
+	shift 1
+
+	# ...
+	# ...
+
+	case "${_protocol}" in
+		ipv4) [ "inet" = "${_protocol_family}" ] && return 0 ;;
+		ipv6) [ "inet" = "${_protocol_family}" ] && return 0 ;;
+	esac
+
+	return 1
+}
+
+menu_ping()
+{
+	local _tmpfile
+	local _answer
+	local _ret
+
+	_tmpfile=`tmpfile 2>/dev/null` || _tmpfile="/tmp/tui$$"
+	trap "rm -f $_tmpfile" 0 1 2 5 15
+
+	dialog --clear --inputbox \
+		"Enter a host name or IP address." 8 50 2>"${_tmpfile}"
+	_ret="$?"
+
+    _answer=`cat "${_tmpfile}"`
+    rm -f "${_tmpfile}"
+
+	[ -z "${_answer}" ] && exit 0
+
+	if [ "${_ret}" = "0" ]
+	then
+		echo
+
+		is_validip inet "${_answer}"
+		if [ "$?" = "0" ]
+		then
+			echo "IPv6 address detected..."
+			ping6 -c 3 -n "${_answer}"
+
+		else
+			echo "Hostname supposed, trying IPv4 and IPv6 ping..."
+			ping -c 3 -n "${_answer}"
+			ping6 -c 3 -n "${_answer}"
+		fi
+	fi
+
+	echo
+	read -p "Press ENTER to continue." _answer
+}
+
 config_menu()
 {
 	while :
@@ -768,7 +939,7 @@ config_menu()
 			5) menu_ping ;;
 			6) menu_shell ;;
 			7) menu_reboot ;;
-			8) menu_halt ;;
+			8) menu_shutdown ;;
 			9) install_menu ;;
 		esac
 
