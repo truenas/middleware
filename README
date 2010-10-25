@@ -14,9 +14,9 @@ import old volumes.  This snapshot should be viewed as a technology
 preview only.
 
 The GUI is currently incomplete.  You can configure your network
-address, some misc system configuration, ssh, ftp, tftp, cifs/samba
-and nfs.  All the GUI screens should work at least to the point of
-saving the data to the database.
+address, some misc system configuration, ssh, ftp, tftp, cifs/samba,
+afp, smnp and nfs.  All the GUI screens should work at least to the
+point of saving the data to the database.
 
 The GUI should behave basically the same as 0.7's GUI, but there are
 some differences.  The biggest differences are in configuring disks.
@@ -31,36 +31,31 @@ pathnames that the old system had.  You'll have to type the path.
 
 To build the system (experts only):
 
-You will need your own FreeBSD src tree, your own ports tree.  FreeBSD
-8.1 Release ports should work.  The ports tree as of
-2010.06.24.12.00.00 is also known to work.
-
-The build tree I have under a common root:
-
-freebsd/src		FreeBSD 8.1 Release sources [*]
-freebsd/ports		FreeBSD /usr/ports tree
-freenas			The experimental/ix part of the FreeNAS svn tree
-
-[*] currently, you must apply the patches in experimental/ix/patches to the
-FreeBSD 8.1-RELEASE tree (once) before you start the build process.  Otherwise,
-the initial database won't be in /data and there will be a boatload of
-complaints from the boot scripts (there's one complaint that's expected, but
-without the patch you'll have like 20).
-
-cd freebsd/src
-sh tools/tools/nanobsd/nanobsd.sh -c ../../freenas/nanobsd/freenas64.conf
-
-# or for the i386 builds:
-cd freebsd/src
-sh tools/tools/nanobsd/nanobsd.sh -c ../../freenas/nanobsd/freenas32.conf
-
-If the build fails, and you want to try again, you can add -b to the end of
-the line and it will skip the FreeBSD build.
-
-You'll wind up with a tree in /tmp/$LOGNAME/obj.freenas64.   The final binary
-image will be in /tmp/$LOGNAME/obj.freenas64/_.disk.full and can be dd'd from
-there, or converted to a VM container.  The build takes between 2-4 hours
-depending on the speed of your machine.
-
 Native builds on amd64 and i386 work.  Cross building i386 on amd64 currently
 fails.
+
+To build the system:
+
+(1) Checkout the experimenal code from svn:
+
+% svn https://freenas.svn.sourceforge.net/experimenal/ix
+% cd ix
+
+(2) Use the build script (substituting your favorite cvsup mirror)
+
+% setenv FREEBSD_CVSUP_HOST cvsup10.freebsd.org
+% sudo sh build/do_build.sh
+
+That's it.  If you are rebuilding, then add '-b' to the
+build/do_build.sh line to prevent NanoBSD from rebuilding FreeBSD.
+When updating source patches and/or ports, you may need to some
+additional steps by hand.  The above is known to work on a FreeBSD
+8.1R system, FreeBSD 8-stable and has in the past worked on a
+FreeBSD-current system.
+
+Once (2) completes, you'll have an image in
+obj.yyyy/FreeNAS-8rXXXX-yyyy.full where XXXX is the svn revision from
+the freenas repo, and yyyy is either i386 or amd64 depending on your
+platform.  This is a raw disk image, and needs to be converted to your
+favorite VM container format before use...
+y
