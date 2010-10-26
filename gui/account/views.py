@@ -26,34 +26,3 @@
 # $FreeBSD$
 #####################################################################
 
-from freenasUI.freenas.forms import * 
-from freenasUI.freenas.models import * 
-from freenasUI.freenas.models import Disk, Volume, networkStaticRoute
-from django.forms.models import modelformset_factory
-from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.decorators import login_required
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
-from django.contrib.auth import authenticate, login, logout
-from django.template import RequestContext
-from django.http import Http404
-from django.views.generic.list_detail import object_detail, object_list
-from freenasUI.middleware.notifier import notifier
-import os, commands
-
-def login(request):
-    username = request.POST['username']
-    password = request.POST['password']
-    user = authenticate(username=username, password=password)
-    if user is not None:
-        if user.is_active:
-            login(request, user)
-            # Redirect to a success page.
-        return HttpResponseRedirect('/account/login/') # Redirect after POST
-
-def logout(request):
-    logout(request)
-    # Redirect to a success page.
-    return HttpResponseRedirect('/account/logout/') # Redirect after POST
-
