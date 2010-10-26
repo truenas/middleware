@@ -126,7 +126,8 @@ add_port devel/talloc
 add_port devel/libexecinfo
 add_port devel/popt
 #-net/samba
-add_port net/samba34		-DWITHOUT_CUPS -DWITH_LDAP -DWITH_AD -DWITH_PAM_SMBPASS -DWITH_AIO_SUPPORT
+add_port net/samba34		-DWITHOUT_CUPS -DWITH_LDAP -DWITH_ADS \
+	-DWITH_WINBIND -DWITH_ACL_SUPPORT -DWITH_PAM_SMBPASS -DWITH_AIO_SUPPORT
 add_port net/unison		-DWITHOUT_X11 -DWITHOUT_GTK2
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
