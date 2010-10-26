@@ -93,21 +93,21 @@ def helperViewEm(request, theForm, model):
 
 @login_required
 def network(request, objtype = None):
-    gc = GlobalConfigurationForm(request.POST)
-    interfaces = InterfacesForm(request.POST)
-    vlan = VLANForm(request.POST)
-    lagg = LAGGForm(request.POST)
-    staticroute = StaticRouteForm(request.POST)
     if request.method == 'POST':
         if objtype == 'configuration':
+            gc = GlobalConfigurationForm(request.POST)
             gc.save()
         elif objtype == 'int':
+            interfaces = InterfacesForm(request.POST)
             interfaces.save()
         elif objtype == 'vlan':
+            vlan = VLANForm(request.POST)
             vlan.save()
         elif objtype == 'lagg':
+            lagg = LAGGForm(request.POST)
             lagg.save()
         elif objtype == 'sr':
+            staticroute = StaticRouteForm(request.POST)
             staticroute.save()
         else:
             raise Http404() 
@@ -115,7 +115,7 @@ def network(request, objtype = None):
     else:
         gc_config = GlobalConfiguration.objects.order_by("-id").values()[:1]
         int_list = Interfaces.objects.order_by("-id").values()
-        gc = GlobalConfigurationForm()
+        gc = GlobalConfigurationForm(data = GlobalConfiguration.objects.order_by("-id").values()[0])
         interfaces = InterfacesForm()
         vlan = VLANForm()
         lagg = LAGGForm()
