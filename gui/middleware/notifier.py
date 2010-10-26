@@ -128,6 +128,10 @@ class notifier:
 		except:
 			self.start(what)
 	def _start_network(self):
+		# TODO: Skip this step when IPv6 is already enabled
+		self.__system("/sbin/sysctl net.inet6.ip6.auto_linklocal=1")
+		self.__system("/usr/sbin/service autolink auto_linklocal quietsatrt")
+		self.__system("/usr/sbin/service netif stop")
 		self.__system("/etc/netstart")
 	def _reload_named(self):
 		self.__system("/usr/sbin/service named reload")
@@ -256,6 +260,7 @@ class notifier:
 		volume = c.fetchone()
 
 		if volume[0] == 'zfs':
+			# zfs creation needs write access to /boot/zfs.
 			self.__system("/sbin/mount -uw /")
 			self.__create_zfs_volume(c, volume_id, volume[1])
 			self.__system("/sbin/mount -ur /")
