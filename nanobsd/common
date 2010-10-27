@@ -306,6 +306,13 @@ freenas_custom()
 	# Kill termcap and repalce it with the small version
 	rm -f ${NANO_WORLDDIR}/usr/share/misc/termcap.db
 	cp ${NANO_SRC}/etc/termcap.small ${NANO_WORLDDIR}/usr/share/misc/termcap
+
+	# Last second tweaks
+	chown -R root:wheel ${NANO_WORLDDIR}/root
+	chown -R root:wheel ${NANO_WORLDDIR}/etc
+	chown -R root:wheel ${NANO_WORLDDIR}/boot
+	chown root:wheel ${NANO_WORLDDIR}/
+	chown root:wheel ${NANO_WORLDDIR}/usr
 }
 late_customize_cmd freenas_custom
 
