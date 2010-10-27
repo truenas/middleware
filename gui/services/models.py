@@ -165,14 +165,22 @@ class rsyncjob(models.Model):
             default="(NONE)", 
             verbose_name="Weekdays"
             )
-    rj_recursive = models.BooleanField()
-    rj_times = models.BooleanField()
-    rj_compress = models.BooleanField()
-    rj_archive = models.BooleanField()
-    rj_delete = models.BooleanField()
-    rj_quiet = models.BooleanField()
-    rj_preserveperms = models.BooleanField()
-    rj_extattr = models.BooleanField()
+    rj_recursive = models.BooleanField(
+            verbose_name="Recursive")
+    rj_times = models.BooleanField(
+            verbose_name="Preserve Times")
+    rj_compress = models.BooleanField(
+            verbose_name="Compress Network Data")
+    rj_archive = models.BooleanField(
+            verbose_name="Use Archive Mode")
+    rj_delete = models.BooleanField(
+            verbose_name="Remove Deleted Files")
+    rj_quiet = models.BooleanField(
+            verbose_name="Less Logging")
+    rj_preserveperms = models.BooleanField(
+            verbose_name="Preserve Permissions")
+    rj_extattr = models.BooleanField(
+            verbose_name="Preserve Extended Attributes")
     rj_options = models.CharField(
             max_length=120, 
             verbose_name="Extra options",
@@ -185,7 +193,8 @@ class services(models.Model):
             verbose_name="Service",
             help_text="Name of Service, should be auto-generated at build time"
             )
-    srv_enable = models.BooleanField()
+    srv_enable = models.BooleanField(
+            verbose_name="Enable Service")
     class Meta:
         verbose_name = "Services"
     def __unicode__(self):
@@ -227,8 +236,10 @@ class CIFS(models.Model):
             default="Minimum", 
             verbose_name="Log level"
             )
-    cifs_srv_localmaster = models.BooleanField()
-    cifs_srv_timeserver = models.BooleanField()
+    cifs_srv_localmaster = models.BooleanField(
+            verbose_name="Local Master")
+    cifs_srv_timeserver = models.BooleanField(
+            verbose_name="Time Server for Domain")
     cifs_srv_guest = models.CharField(
             max_length=120, 
             choices=whoChoices(), 
@@ -260,11 +271,16 @@ class CIFS(models.Model):
             blank=True,
             help_text="Size of receive buffer (64240 by default)."
             )
-    cifs_srv_largerw = models.BooleanField()
-    cifs_srv_sendfile = models.BooleanField()
-    cifs_srv_easupport = models.BooleanField()
-    cifs_srv_dosattr = models.BooleanField()
-    cifs_srv_nullpw = models.BooleanField()
+    cifs_srv_largerw = models.BooleanField(
+            verbose_name="Large RW support")
+    cifs_srv_sendfile = models.BooleanField(
+            verbose_name="Send files with sendfile(2)")
+    cifs_srv_easupport = models.BooleanField(
+            verbose_name="EA Support")
+    cifs_srv_dosattr = models.BooleanField(
+            verbose_name="Support DOS File Attributes")
+    cifs_srv_nullpw = models.BooleanField(
+            verbose_name="Allow Empty Password")
     cifs_srv_smb_options = models.TextField(
             max_length=120, 
             verbose_name="Auxiliary paramters", 
@@ -304,7 +320,8 @@ class Unison(models.Model):
             verbose_name="Working directory", 
             blank=True
             )
-    uni_createworkingdir = models.BooleanField()
+    uni_createworkingdir = models.BooleanField(
+            verbose_name="Create Mirroed Directory")
     class Meta:
         verbose_name = "Unison"
 
@@ -361,7 +378,8 @@ class iSCSITarget(models.Model):
             verbose_name="Max receive data segment length",
             help_text="iSCSI initial parameter (262144 by default)."
             )
-    iscsi_toggleluc = models.BooleanField()
+    iscsi_toggleluc = models.BooleanField(
+            verbose_name="Enable LUC")
 
 class DynamicDNS(models.Model):            
     ddns_provider = models.CharField(
@@ -394,7 +412,8 @@ class DynamicDNS(models.Model):
             verbose_name="Forced update period", 
             blank=True
             )
-    ddns_wildcard = models.BooleanField()
+    ddns_wildcard = models.BooleanField(
+            verbose_name="Enable Wildcard Records")
     ddns_options = models.TextField(
             verbose_name="Auxiliary parameters", 
             blank=True,
@@ -419,7 +438,8 @@ class SNMP(models.Model):
             verbose_name="Community",
             help_text="In most cases, 'public' is used here."
             )
-    snmp_traps = models.BooleanField()
+    snmp_traps = models.BooleanField(
+            verbose_name="Send SNMP Traps")
     snmp_options = models.TextField(
             verbose_name="Auxiliary parameters", 
             blank=True,
@@ -465,8 +485,10 @@ class UPS(models.Model):
             verbose_name="Shutdown timer",
             help_text="The time in seconds until shutdown is initiated. If the UPS happens to come back before the time is up the shutdown is canceled."
             )
-    ups_rmonitor = models.BooleanField()
-    ups_emailnotify = models.BooleanField()
+    ups_rmonitor = models.BooleanField(
+            verbose_name="Remote Monitor")
+    ups_emailnotify = models.BooleanField(
+            verbose_name="Send Email Status Updates")
     ups_toemail = models.CharField(
             max_length=120, 
             verbose_name="To email", 
@@ -496,8 +518,10 @@ class Webserver(models.Model):
             verbose_name="Document root",
             help_text="Document root of the webserver. Home of the web page files."
             )
-    web_auth = models.BooleanField()
-    web_dirlisting = models.BooleanField()
+    web_auth = models.BooleanField(
+            verbose_name="Require Login")
+    web_dirlisting = models.BooleanField(
+            verbose_name="Allow Directory Browsing")
 
 class BitTorrent(models.Model):            
     bt_peerport = models.CharField(
@@ -517,9 +541,12 @@ class BitTorrent(models.Model):
             help_text="Alternative configuration directory (usually empty)", 
             blank=True
             )
-    bt_portfwd = models.BooleanField()
-    bt_pex = models.BooleanField()
-    bt_disthash = models.BooleanField()
+    bt_portfwd = models.BooleanField(
+            verbose_name="Enable Port Forwarding")
+    bt_pex = models.BooleanField(
+            verbose_name="Enable PEX")
+    bt_disthash = models.BooleanField(
+            verbose_name="Distribution Hashing Enable")
     bt_encrypt = models.CharField(
             max_length=120, 
             choices=BTENCRYPT_CHOICES, 
@@ -605,9 +632,12 @@ class FTP(models.Model):
             verbose_name="Timeout",
             help_text="Maximum idle time in seconds."
             )
-    ftp_rootlogin = models.BooleanField()
-    ftp_onlyanonymous = models.BooleanField()
-    ftp_onlylocal = models.BooleanField()
+    ftp_rootlogin = models.BooleanField(
+            verbose_name="Allow Root Login")
+    ftp_onlyanonymous = models.BooleanField(
+            verbose_name="Only Allow Anonymous Login")
+    ftp_onlylocal = models.BooleanField(
+            verbose_name="Only Allow Local User Login")
     ftp_banner = models.TextField(
             max_length=120, 
             verbose_name="Banner", 
@@ -624,11 +654,16 @@ class FTP(models.Model):
             verbose_name="Directory mask",
             help_text="Use this option to override the file creation mask (077 by default)."
             )
-    ftp_fxp = models.BooleanField()
-    ftp_resume = models.BooleanField()
-    ftp_defaultroot = models.BooleanField()
-    ftp_ident = models.BooleanField()
-    ftp_reversedns = models.BooleanField()
+    ftp_fxp = models.BooleanField(
+            verbose_name="Enable FXP")
+    ftp_resume = models.BooleanField(
+            verbose_name="Allow Transer Resumption")
+    ftp_defaultroot = models.BooleanField(
+            verbose_name="Always Chroot") # Is this right?
+    ftp_ident = models.BooleanField(
+            verbose_name="Require IDENT Authentication")
+    ftp_reversedns = models.BooleanField(
+            verbose_name="Require Reverse DNS for IP")
     ftp_masqaddress = models.CharField(
             max_length=120, 
             verbose_name="Masquerade address", 
@@ -669,7 +704,8 @@ class FTP(models.Model):
             blank=True,
             help_text="Anonymous user download bandwith in KB/s. An empty field means infinity."
             )
-    ftp_ssltls = models.BooleanField()
+    ftp_ssltls = models.BooleanField(
+            verbose_name="Enable SSL/TLS")
     ftp_options = models.TextField(
             max_length=120, 
             verbose_name="Banner", 
@@ -683,7 +719,8 @@ class TFTP(models.Model):
             verbose_name="Directory",
             help_text="The directory containing the files you want to publish. The remote host does not need to pass along the directory as part of the transfer."
             )
-    tftp_newfiles = models.BooleanField()
+    tftp_newfiles = models.BooleanField(
+            verbose_name="Allow New Files")
     tftp_port = models.CharField(
             max_length=120, 
             verbose_name="Port",
@@ -718,9 +755,12 @@ class SSH(models.Model):
             verbose_name="Login as Root with password",
             help_text="Disabled: Root can only login via public key authentication; Enabled: Root login permitted with password"
             )
-    ssh_passwordauth = models.BooleanField()
-    ssh_tcpfwd = models.BooleanField()
-    ssh_compression = models.BooleanField()
+    ssh_passwordauth = models.BooleanField(
+            verbose_name="Allow Password Authentication")
+    ssh_tcpfwd = models.BooleanField(
+            verbose_name="Allow TCP Port Forwarding")
+    ssh_compression = models.BooleanField(
+            verbose_name="Compress Connections")
     ssh_privatekey = models.TextField(
             max_length=1024,
             verbose_name="Host Private Key", 
@@ -774,7 +814,8 @@ class LDAP(models.Model):
             blank=True,
             help_text="The default base Distinguished Name (DN) to use for seraches, eg dc=test,dc=org"
             )
-    ldap_anonbind = models.BooleanField()
+    ldap_anonbind = models.BooleanField(
+            verbose_name="Allow Anonymous Binding")
     ldap_rootbasedn = models.CharField(
             max_length=120, 
             verbose_name="Root bind DN", 

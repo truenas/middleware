@@ -52,11 +52,16 @@ class CIFS_Share(models.Model):
             blank=True,
             )
     cifs_path = models.ForeignKey(MountPoint)
-    cifs_ro = models.BooleanField()
-    cifs_browsable = models.BooleanField()
-    cifs_inheritperms = models.BooleanField()
-    cifs_recyclebin = models.BooleanField()
-    cifs_showhiddenfiles = models.BooleanField()
+    cifs_ro = models.BooleanField(
+            verbose_name="Export Read Only")
+    cifs_browsable = models.BooleanField(
+            verbose_name="Browsable to Network Clients")
+    cifs_inheritperms = models.BooleanField(
+            verbose_name="Inherit Permissions")
+    cifs_recyclebin = models.BooleanField(
+            verbose_name="Export Recylce Bin")
+    cifs_showhiddenfiles = models.BooleanField(
+            verbose_name="Show Hidden Files")
     cifs_hostsallow = models.CharField(
             max_length=120, 
             blank=True, 
