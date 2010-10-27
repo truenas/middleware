@@ -85,17 +85,25 @@ class NewCharField(models.CharField):
 
 ## System|Advanced
 class Advanced(models.Model):
-    adv_consolemenu = models.BooleanField()
-    adv_serialconsole = models.BooleanField()
-    adv_consolescreensaver = models.BooleanField()
-    adv_firmwarevc = models.BooleanField()
-    adv_systembeep = models.BooleanField()
-    adv_tuning = models.BooleanField()
-    adv_powerdaemon = models.BooleanField()
-    adv_zeroconfbonjour = models.BooleanField()
+    adv_consolemenu = models.BooleanField(
+            verbose_name="Enable Console Menu")
+    adv_serialconsole = models.BooleanField(
+            verbose_name="Use Serial Console")
+    adv_consolescreensaver = models.BooleanField(
+            verbose_name="Enable screen saver")
+    adv_firmwarevc = models.BooleanField(
+            verbose_name="Automatically Check for New Firmware")
+    adv_systembeep = models.BooleanField(
+            verbose_name="Beep on boot")
+    adv_tuning = models.BooleanField(
+            verbose_name="Enable Special System Tuning")
+    adv_powerdaemon = models.BooleanField(
+            verbose_name="Enable powerd (Power Saving Daemon)")
+    adv_zeroconfbonjour = models.BooleanField(
+            verbose_name="Enable Zeroconf/Bonjour")
     adv_motd = models.TextField(
             max_length=1024,
-            verbose_name="MOTD",
+            verbose_name="MOTD banner",
             ) 
 
 ## System|Advanced|Email
@@ -112,7 +120,7 @@ class Email(models.Model):
             )
     em_port = models.CharField(
             max_length=120, 
-            verbose_name="Port"
+            verbose_name="Port to connect to"
             )
     em_security = models.CharField(
             max_length=120, 
@@ -120,7 +128,8 @@ class Email(models.Model):
             default="none", 
             verbose_name="Security"
             )
-    em_smtp = models.BooleanField()
+    em_smtp = models.BooleanField(
+            verbose_name="Use SMTP")
 
 ## System|Advanced|Proxy
 
@@ -128,7 +137,8 @@ class Email(models.Model):
 #### to give local services access to the internet via proxy. 
 
 class Proxy(models.Model):
-    pxy_httpproxy = models.BooleanField()
+    pxy_httpproxy = models.BooleanField(
+            verbose_name="HTTP Proxy Host")
     pxy_httpproxyaddress = models.CharField(
             max_length=120, 
             verbose_name="Address"
@@ -137,8 +147,10 @@ class Proxy(models.Model):
             max_length=120, 
             verbose_name="Port"
             )
-    pxy_httpproxyauth = models.BooleanField()
-    pxy_ftpproxy = models.BooleanField()
+    pxy_httpproxyauth = models.BooleanField(
+            verbose_name="HTTP Proxy Authorization")
+    pxy_ftpproxy = models.BooleanField(
+            verbose_name="FTP Proxy Host")
     pxy_ftpproxyaddress = models.CharField(
             max_length=120, 
             verbose_name="Address"
@@ -147,11 +159,13 @@ class Proxy(models.Model):
             max_length=120, 
             verbose_name="Port"
             )
-    pxy_ftpproxyauth = models.BooleanField()
+    pxy_ftpproxyauth = models.BooleanField(
+            verbose_name="FTP Proxy Authorization")
 
 ## System|Advanced|Swap
 class Swap(models.Model):
-    swap_memory = models.BooleanField()
+    swap_memory = models.BooleanField(
+            verbose_name="Swap File Size")
     # mountpoint info goes here
     swap_type = models.CharField(
             max_length=120, 
@@ -181,7 +195,8 @@ class CommandScripts(models.Model):
 
 ## System|Advanced|Cron
 class CronJob(models.Model):
-    cron_enable = models.BooleanField()
+    cron_enable = models.BooleanField(
+            verbose_name="Enable Cron")
     cron_command = models.CharField(
             max_length=120, 
             verbose_name="Command"
