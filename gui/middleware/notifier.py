@@ -205,17 +205,14 @@ class notifier:
                 """Internal procedure to create a ZFS volume identified by volume id"""
                 z_vdev = ""
                 # Grab all disk groups' id matching the volume ID
-                c.execute("SELECT diskgroup_id FROM storage_volume_vol_groups WHERE volume_id = ?", (z_id,))
+                c.execute("SELECT id, group_type FROM storage_diskgroup WHERE group_volume_id = ?", (z_id,))
 		vgroup_list = c.fetchall()
-		for vgrp in vgroup_list:
-			c.execute("SELECT group_type FROM storage_diskgroup WHERE id = ?", vgrp)
-			vgrp_type = c.fetchone()[0]
-			# TODO: Currently the volume manager does not give the expected blank
-			# in database.  Workaround this by handling it another way.
-			if vgrp_type != "single":
-				z_vdev += " " + vgrp_type
+		for vgrp_row in vgroup_list:
+			vgrp = (vgrp_row[0],)
+			vgrp_type = vgrp_row[1]
+			z_vdev += " " + vgrp_type
 			# Grab all member disks from the current vdev group
-			c.execute("SELECT disk.disk_disks, disk.disk_name FROM storage_disk AS disk LEFT OUTER JOIN storage_diskgroup_group_members AS diskgroup ON disk.id = diskgroup.disk_id WHERE diskgroup.diskgroup_id = ?", vgrp)
+			c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE disk_group_id = ?", vgrp)
 			vdev_member_list = c.fetchall()
 			for disk in vdev_member_list:
 				self.__gpt_labeldisk(type = "freebsd-zfs", devname = disk[0], label = disk[1])
@@ -228,35 +225,51 @@ class notifier:
 		self.__system("zpool destroy -f %s" % (z_name))
 
 		# Clear out disks associated with the volume
-                c.execute("SELECT diskgroup_id FROM storage_volume_vol_groups WHERE volume_id = ?", (z_id,))
+                c.execute("SELECT id FROM storage_diskgroup WHERE group_volume_id = ?", (z_id,))
 		vgroup_list = c.fetchall()
 		for vgrp in vgroup_list:
-			c.execute("SELECT disk.disk_disks, disk.disk_name FROM storage_disk AS disk LEFT OUTER JOIN storage_diskgroup_group_members AS diskgroup ON disk.id = diskgroup.disk_id WHERE diskgroup.diskgroup_id = ?", vgrp)
+			c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE disk_group_id = ?", vgrp)
 			vdev_member_list = c.fetchall()
 			for disk in vdev_member_list:
 				self.__gpt_unlabeldisk(devname = disk[0])
         def __create_ufs_volume(self, c, u_id, u_name):
-		c.execute("SELECT diskgroup_id FROM storage_volume_vol_groups WHERE volume_id = ?", (u_id,))
-		# TODO: For now we don't support RAID levels.
-		ufs_volume_id = c.fetchone()
-		c.execute("SELECT disk.disk_disks, disk.disk_name FROM storage_disk AS disk LEFT OUTER JOIN storage_diskgroup_group_members AS diskgroup ON disk.id = diskgroup.disk_id WHERE diskgroup.diskgroup_id = ?", ufs_volume_id)
-		disk = c.fetchone()
-		self.__gpt_labeldisk(type = "freebsd-ufs", devname = disk[0])
+                geom_vdev = ""
+		ufs_device = ""
+                c.execute("SELECT id, group_type, group_name FROM storage_diskgroup WHERE group_volume_id = ?", (u_id,))
+		# TODO: We do not support multiple GEOM levels for now.
+		vgrp_row = c.fetchone()
+		ufs_volume_id = (vgrp_row[0],)
+		geom_type = vgrp_row[1]
+		geom_name = vgrp_row[2]
+                # Grab all disks from the group
+		c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE disk_group_id = ?", ufs_volume_id)
+		if geom_type == '':
+			disk = c.fetchone()
+			self.__gpt_labeldisk(type = "freebsd-ufs", devname = disk[0])
+			ufs_device = "/dev/ufs/" + disk[1]
+		else:
+			geom_vdev = geom_type
+			vdev_member_list = c.fetchall()
+			for disk in vdev_member_list:
+				geom_vdev += " /dev/" + disk[0]
+			self.__system("geom %s label %s %s" % (geom_type, geom_name, geom_vdev))
+			ufs_device = "/dev/%s/%s" % (geom_type, geom_name)
+
 		# TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar generated automatically
 		ufs_device = "/dev/ufs/" + disk[1]
 		self.__system("newfs -U -L %s /dev/%sp1" % (u_name, disk[0]))
 	def __destroy_ufs_volume(self, c, u_id, u_name):
 		"""Internal procedure to destroy a UFS volume identified by volume id"""
-		c.execute("SELECT diskgroup_id FROM storage_diskgroup_group_members WHERE volume_id = ?", (u_id,))
+                c.execute("SELECT id FROM storage_diskgroup WHERE group_volume_id = ?", (u_id,))
 		ufs_volume_id = c.fetchone()
-		c.execute("SELECT disk.disk_disks, disk.disk_name FROM storage_disk AS disk LEFT OUTER JOIN storage_diskgroup_group_members AS diskgroup ON disk.id = diskgroup.disk_id WHERE diskgroup.diskgroup_id = ?", ufs_volume_id)
+		c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE disk_group_id = ?", ufs_volume_id)
 		disk = c.fetchone()
 		self.__system("umount -f /dev/ufs/" + disk[1])
 		self.__gpt_unlabeldisk(devname = disk[0])
         def _init_volume(self, volume_id):
 		"""Initialize a volume designated by volume_id"""
                 c = self.__open_db()
-		c.execute("SELECT vol_type, vol_name FROM storage_volume WHERE id = ?", (volume_id,))
+		c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?", (volume_id,))
 		volume = c.fetchone()
 
 		if volume[0] == 'zfs':
@@ -270,7 +283,7 @@ class notifier:
         def _init_allvolumes(self):
                 c = self.__open_db()
                 # Create ZFS pools
-                c.execute("SELECT id, vol_name FROM storage_volume WHERE vol_type = 'zfs'")
+                c.execute("SELECT id, vol_name FROM storage_volume WHERE vol_fstype = 'zfs'")
                 zfs_list = c.fetchall()
 		if len(zfs_list) > 0:
 			# We have to be able to write /boot/zfs and / to create mount points.
@@ -280,7 +293,7 @@ class notifier:
 				self.__create_zfs_volume(c = c, z_id = z_id, z_name = z_name)
 			self.__system("/sbin/mount -ur /")
                 # Create UFS file system and newfs
-                c.execute("SELECT id, vol_name FROM storage_volume WHERE vol_type = 'ufs'")
+                c.execute("SELECT id, vol_name FROM storage_volume WHERE vol_fstype = 'ufs'")
 	        ufs_list = c.fetchall()
 		if len(ufs_list) > 0:
 			for row in ufs_list:

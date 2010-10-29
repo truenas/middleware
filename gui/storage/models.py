@@ -27,22 +27,43 @@
 #####################################################################
 
 from django.db import models
-from django import forms
-from django.contrib.auth.models import User
-import datetime
-import time
-from os import popen
-from django.utils.text import capfirst
-from django.forms.widgets import RadioFieldRenderer
-from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
-from datetime import datetime
 from freenasUI.choices import *
 
-  
+class Volume(models.Model):
+    vol_name = models.CharField(
+            unique=True,
+            max_length=120, 
+            verbose_name="Name"
+            )
+    vol_fstype = models.CharField(
+            max_length=120, 
+            choices=VolumeType_Choices, 
+            verbose_name="File System Type", 
+            )
+    class Meta:
+        verbose_name = "Volume"
+    def __unicode__(self):
+        return "%s (%s)" % (self.vol_name, self.vol_fstype)
 
-""" Disk and Volume Management """
+class DiskGroup(models.Model):
+    group_name = models.CharField(
+            unique=True,
+            max_length=120, 
+            verbose_name="Name"
+            )
+    group_type = models.CharField(
+            max_length=120, 
+            choices=ZFS_Choices, 
+            verbose_name="Type", 
+            )
+    group_volume = models.ForeignKey(
+            Volume,
+            verbose_name="Volume",
+            help_text="Volume this group belongs to",
+            )
+    def __unicode__(self):
+        return "%s (%s)" % (self.group_name, self.group_type)
 
 class Disk(models.Model):
     disk_name = models.CharField(
@@ -59,10 +80,6 @@ class Disk(models.Model):
             verbose_name="Description", 
             blank=True
             )
-    disk_sort = models.IntegerField(
-            _('Disk order'), 
-            default=0, 
-            help_text='The order in which disks will be displayed.')
     disk_transfermode = models.CharField(
             max_length=120, 
             choices=TRANSFERMODE_CHOICES, 
@@ -93,65 +110,18 @@ class Disk(models.Model):
             verbose_name="S.M.A.R.T. extra options", 
             blank=True
             )
-    class Meta:
-        verbose_name = "Disk"
-        ordering = ['disk_sort',]
-    def __unicode__(self):
-        return self.disk_disks + ' (' + self.disk_name + ')'
-    def save(self, *args, **kwargs):
-        super(Disk, self).save(*args, **kwargs)
-
-class DiskGroup(models.Model):
-    group_name = models.CharField(
-            unique=True,
-            max_length=120, 
-            verbose_name="Name"
-            )
-    group_members = models.ForeignKey(
-            Disk,
-            verbose_name="Members",
+    disk_group = models.ForeignKey(
+            DiskGroup,
+            verbose_name="Group Membership",
             help_text="Assign disks to a group"
             )
-    group_type = models.CharField(
-            max_length=120, 
-            choices=ZFS_Choices, 
-            default=" ", 
-            verbose_name="Type", 
-            blank="True"
-            )
-    
-    def __unicode__(self):
-        return self.group_name
-
-""" Volume Management """
-class Volume(models.Model):
-    vol_name = models.CharField(
-            unique=True,
-            max_length=120, 
-            verbose_name="Name"
-            )
-    vol_type = models.CharField(
-            max_length=120, 
-            choices=VolumeType_Choices, 
-            default=" ", 
-            verbose_name="Volume Type", 
-            blank="True"
-            )
-    vol_groups = models.ForeignKey(
-            DiskGroup,
-            verbose_name="Disk Groups",
-            help_text="Assign a disk group to a Volume",
-            )
     class Meta:
-        verbose_name = "Volume"
+        verbose_name = "Disk"
     def __unicode__(self):
-        return self.vol_name
-    def save(self, *args, **kwargs):
-        super(Volume, self).save(*args, **kwargs)
-
+        return self.disk_disks + ' (' + self.disk_name + ')'
 
 class MountPoint(models.Model):
-    mp_volumeid = models.ForeignKey(Volume)
+    mp_volume = models.ForeignKey(Volume)
     mp_path = models.CharField(
             unique=True,
             max_length=120,

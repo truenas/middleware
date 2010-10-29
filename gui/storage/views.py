@@ -109,7 +109,7 @@ def storage(request, objtype = None, template_name = 'storage/index.html'):
         elif objtype == 'mountpoint':
             mountpoint.save()
         else:
-            raise "Invalid Request" # TODO: Find out the sane way to throw exception
+            raise ValueError("Invalid Request")
         return HttpResponseRedirect('/storage/')
     else:
         disk = DiskForm()

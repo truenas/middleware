@@ -26,23 +26,25 @@
 # $FreeBSD$
 #####################################################################
 
-from django.forms import ModelForm                             
-from django.shortcuts import render_to_response                
-from freenasUI.storage.models import *                         
+from django import forms
+from django.shortcuts import render_to_response
+from freenasUI.storage.models import *
 from freenasUI.middleware.notifier import notifier
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode 
-from dojango.forms.models import ModelForm as ModelForm
-from dojango.forms import fields, widgets 
-from dojango.forms.fields import BooleanField 
+from django.utils.encoding import force_unicode
+from dojango.forms.models import ModelForm
+from dojango.forms import fields, widgets
+from dojango.forms.fields import BooleanField
+from freenasUI.contrib.ext_formwizard import FormWizard
 
 attrs_dict = { 'class': 'required' }
 
-class DiskForm(ModelForm):
+# Step 1.  Creation of volumes manually is not supported.
+class VolumeWizard_VolumeNameTypeForm(forms.Form):
     def __init__(self, *args, **kwargs):
-        super(DiskForm, self).__init__(*args, **kwargs)
-        self.fields['disk_disks'].choices = [ (x, x) for x in self._populate_disklist() ]
+        super(VolumeWizard_VolumeNameTypeForm, self).__init__(*args, **kwargs)
+        self.fields['volume_disks'].choices = [ (x, x) for x in self._populate_disklist() ]
     def _populate_disklist(self):
         from os import popen
         import re
@@ -63,28 +65,103 @@ class DiskForm(ModelForm):
         known_disks = set([ x['disk_disks'] for x in Disk.objects.all().values('disk_disks') ])
         disklist = set(disklist).difference(known_disks)
         return disklist
+    volume_name = forms.CharField(max_length = 30)
+    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('ufs', 'zfs')), widget=forms.RadioSelect(attrs=attrs_dict))
+    volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict))
 
+# Step 2.  Creation of volumes manually is not supported.
+# This step only show up when more than 1 disks is being chosen.
+class VolumeWizard_DiskGroupTypeForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super(VolumeWizard_DiskGroupTypeForm, self).__init__(*args, **kwargs)
+        grouptype_choices = ( ('mirror', 'mirror'), )
+        fstype = kwargs['initial']['fstype']
+        disks =  kwargs['initial']['disks']
+        if fstype == "ufs":
+            grouptype_choices += (
+                ('stripe', 'stripe'),
+                )
+            if len(disks) >= 3:
+                grouptype_choices += (
+                    ('raid3', 'RAID-3'),
+                    ('raid5' , 'RAID-5'),
+                    )
+        elif fstype == "zfs":
+            grouptype_choices += (
+                ('', 'stripe'),
+                )
+            if len(disks) >= 3:
+                grouptype_choices += ( ('raidz', 'RAID-Z'), )
+            if len(disks) >= 4:
+                grouptype_choices += ( ('raidz2', 'RAID-Z2'), )
+            # Not yet
+            #if len(disks) >= 5:
+            #    grouptype_choices += ( ('raidz3', 'RAID-Z3'), )
+        self.fields['group_type'].choices = grouptype_choices
+    group_type = forms.ChoiceField(choices=(), widget=forms.RadioSelect(attrs=attrs_dict))
+
+# Step 3.  Just show a page with "Finish".
+class VolumeFinalizeForm(forms.Form):
+    pass
+
+#=================================
+
+# A partial form for editing disk.
+# we only show disk_name (used as GPT label), disk_disks
+# (device name), and disk_group (which group this disk belongs
+# to), but don't allow editing.
+class DiskFormPartial(ModelForm):
     class Meta:
         model = Disk
-    disk_disks = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict))
+        exclude = ('disk_name', 'disk_disks', 'disk_group')
 
-class DiskGroupForm(ModelForm):
-    class Meta:
-        model = DiskGroup
+#=================================
+# Finally, the wizard.
 
+class VolumeWizard(FormWizard):
+    def process_step(self, request, form, step):
+        if step==0:
+            disks = form.cleaned_data['volume_disks']
+            if self.step <= step:
+                if (len(disks) < 2):
+	            self.form_list.remove(VolumeWizard_DiskGroupTypeForm)
+                else:
+                    self.initial[1] = {'fstype': form.cleaned_data['volume_fstype'], 'disks': disks}
+            elif len(disks) < 2:
+	        self.form_list.remove(VolumeWizard_DiskGroupTypeForm)
+    def get_template(self, step):
+        return 'storage/wizard.html'
+    def done(self, request, form_list):
+        # Construct and fill forms into database.
+	#
+	volume_name = form_list[0].cleaned_data['volume_name']
+	volume_fstype = form_list[0].cleaned_data['volume_fstype']
+        disk_list = form_list[0].cleaned_data['volume_disks']
 
+        if (len(disk_list) < 2):
+            group_type = ''
+        else:
+            group_type = form_list[1].cleaned_data['group_type']
 
-class VolumeForm(ModelForm):
-    class Meta:
-        model = Volume
-    def save(self):
-        vinstance = super(VolumeForm, self).save()
-        # Create the inherited mountpoint
-        mp = MountPoint(mp_volumeid=vinstance, mp_path='/mnt/' + self.cleaned_data['vol_name'], mp_options='rw')
+        volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
+        volume.save()
+
+        mp = MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
         mp.save()
-        notifier().init("allvolumes")
 
-class MountPointForm(ModelForm):
-    class Meta:
-        model = MountPoint
+        grp = DiskGroup(group_name= volume_name + group_type, group_type = group_type, group_volume = volume)
+        grp.save()
+
+        for diskname in disk_list:
+            diskobj = Disk(disk_name = diskname, disk_disks = diskname, disk_description = "Member of " + volume_name + " " + group_type, disk_group = grp)
+            diskobj.save()
+
+	notifier().init("volume", volume.id)
+        return HttpResponseRedirect('/')
+
+# Wrapper for the wizard.  Without the wrapper we end up
+# messing with data in the global urls object which makes
+# it impossible to re-enter the wizard for the second time.
+def VolumeWizard_wrapper(request, *args, **kwargs):
+	return VolumeWizard([VolumeWizard_VolumeNameTypeForm, VolumeWizard_DiskGroupTypeForm, VolumeFinalizeForm])(request, *args, **kwargs)
 

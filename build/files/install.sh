@@ -2,93 +2,242 @@
 
 . /.profile
 
-${FREENAS_DATABASE="/data/freenas-v1.db"}
+FREENAS_DATABASE=${FREENAS_DATABASE:="/data/freenas-v1.db"}
 
-db_set_network_interfaces()
+schema_network_interfaces()
 {
-	local _col0
-	local _col1
-	local _col2
-	local _col3
-	local _col4
-	local _col5
-	local _col6
-	local _col7
-	local _col8
-	local _col9
-	local _count
-	local _i
+	local _columns
 
-	_col0="int_interface"
-	_col1="int_name"
-	_col2="int_dhcp"
-	_col3="int_ipv4address"
-	_col4="int_ipv6address"
-	_col5="int_options"
-	_col6="int_defaultrouter"
-	_col7="int_nameserver1"
-	_col8="int_nameserver2"
-	_col9="int_nameserver3"
-	_count=10
+	_columns="\
+id \
+int_interface \
+int_name \
+int_dhcp \
+int_ipv4address \
+int_ipv6auto \
+int_ipv6address \
+int_options \
+"
 
-	_i=0
-	while [ "${_i}" -lt "${_count}" ]
-	do
-		local _set
-		local _var
-		local _val
+	VAL="${_columns}"
+	export VAL
+}
 
-		_var=\$$(eval "echo _col${_i}")
-		_val=$(eval "echo ${_var}")
-		_set="${i}"
+get_schema()
+{
+	local _table
+	local _schema
+	local _func
 
-		if [ -z "${_var}" ]
-		then
-			return 1
-		fi
+	_table="${1}"
+	if [ -z "${_table}" ]
+	then
+		return 1
+	fi
 
-		_i=`expr "${_i}" + 1`
-		shift
-	done
+	_func=$(eval "echo schema_${_table}")
+	eval "${_func}"
+	_schema="${VAL}"
 
 	return 0
 }
 
-set_config_val()
+build_columns_string()
 {
+	local _table
+	local _schema
 	local _str
 
-	_str="${1}"
-	if [ -n "${_str}" ]
+	_table="${1}"
+	if [ -z "${_table}" ]
 	then
-		local _table
-		local _column
-		local _value
-		local _sql
-
-		_table=`echo "${_str}"|cut -f1 -d.`
-		_column=`echo "${_str}"|cut -f2 -d.|cut -f1 -d=`
-		_value=`echo "${_str}"|cut -f2 -d=`
+		return 1
 	fi
+
+	get_schema "${_table}"
+	_schema="${VAL}"
+
+	for _col in ${_schema}
+	do
+		_str="${_str},${_col}"
+	done
+
+	_str=`echo "${_str}" | sed -e 's|^,||' -e 's|,$||'`
+	VAL="${_str}"
+	export VAL
+
+	return 0
 }
 
-get_config_val()
+db_execute()
 {
-	local _str
+	local _sql
+	local _sqlfile
+	local _outfile
+	local _res
 
-	_str="${1}"
-	if [ -n "${_str}" ]
+	_sql="${1}"
+	if [ -z "${_sql}" ]
 	then
-		local _table
-		local _column
-		local _sql
-
-		_table=`echo "${_str}"|cut -f1 -d.`
-		_column=`echo "${_str}"|cut -f2 -d.`
+		return 1
 	fi
 
+	_sqlfile=/tmp/sql.txt
+	_outfile=/tmp/out.txt
+
+	_res=0
+	echo "${_sql}" > "${_sqlfile}"
+	sqlite3 -bail "${FREENAS_DATABASE}" < "${_sqlfile}" > "${_outfile}"
+	_res=$?
+
+	VAL=`cat "${_outfile}"`
+	rm -f "${_sqlfile}" "${_outfile}"
+
+	export VAL
+	return ${_res}
 }
 
+db_insert_network_interface()
+{
+	local _table
+	local _schema
+	local _cols
+	local _vals
+	local _sql
+	local _res
+	local _ifs
+
+	_ifs="${IFS}"
+	IFS=" "
+
+	_table="network_interfaces"
+	get_schema "${_table}"
+	_schema="${VAL}"
+
+	while [ "${#}" -gt "0" ]
+	do
+		local _var=`echo "${1}" | cut -f1 -d=`
+		local _val=`echo "${1}" | cut -f2 -d=`
+
+		for _col in ${_schema}
+		do
+			if [ "${_col}" = "${_var}" ]
+			then
+				_cols="${_cols},${_col}"
+				_vals="${_vals},'${_val}'"
+				break
+			fi
+		done
+
+		shift
+	done
+
+	_cols=`echo "${_cols}" | sed -e 's|^,||' -e 's|,$||'`
+	_vals=`echo "${_vals}" | sed -e 's|^,||' -e 's|,$||'`
+
+	_sql="insert into ${_table}(${_cols}) values(${_vals});"
+	db_execute "${_sql}"
+	_res=$?
+	export VAL
+
+	IFS="${_ifs}"
+	return ${_res}
+}
+
+db_update_network_interface()
+{
+	local _iface
+	local _column
+	local _value
+	local _table
+	local _res
+	local _sql
+	local _ifs
+
+	_iface="${1}"
+	_column="${2}"
+	_value="${3}"
+
+	if [ -z "${_iface}" -o \
+		-z "${_column}" -o \
+		-z "${_value}" ]
+	then
+		return 1
+	fi
+
+	_ifs="${IFS}"
+	IFS=" "
+
+	_table="network_interfaces"
+	_sql="update ${_table} set ${_column}=${_value} \
+		where int_interface='${_iface}';"
+	
+	db_execute "${_sql}"
+	_res=$?
+	export VAL
+
+	IFS="${_ifs}"
+	return ${_res}
+}
+
+db_get_network_interfaces()
+{
+	local _table
+	local _str
+	local _sql
+	local _res
+	local _columns
+	local _ifs
+
+	_ifs="${IFS}"
+	IFS=" "
+
+	_table="network_interfaces"
+	build_columns_string "${_table}"
+	_columns="${VAL}"
+
+	_sql="select ${_columns} from ${_table};"
+
+	db_execute "${_sql}"
+	_res=$?
+	export VAL
+
+	IFS="${_ifs}"
+	return ${_res}
+}
+
+db_get_network_interface()
+{
+	local _table
+	local _str
+	local _sql
+	local _columns
+	local _iface
+	local _res
+	local _ifs
+
+	_iface="${1}"
+	if [ -z "${_iface}" ]
+	then
+		return 1
+	fi
+
+	_ifs="${IFS}"
+	IFS=" "
+
+	_table="network_interfaces"
+	build_columns_string "${_table}"
+	_columns="${VAL}"
+
+	_sql="select ${_columns} from ${_table} where int_interface = '${_iface}';"
+
+	db_execute "${_sql}"
+	_res=$?
+	export VAL
+
+	IFS="${_ifs}"
+	return 0
+}
 
 get_product_name()
 {
@@ -170,7 +319,7 @@ wait_keypress()
 {
 	local _tmp
 
-	_msg=$1
+	_msg="${1}"
 	if [ -n "${_msg}" ]
 	then
 		echo "${_msg}"
@@ -218,7 +367,7 @@ get_media_description()
 {
 	local _media
 
-	_media=$1
+	_media="${1}"
 	VAL=""
 
 	if [ -n "${_media}" ]
@@ -238,7 +387,7 @@ disk_is_mounted()
 	local _res
 
 	_res=0
-	_disk=$1
+	_disk="${1}"
 	_dev="/dev/${_disk}"
 	mount -v|grep -E "^${_dev}[sp][0-9]+" >/dev/null 2>&1
 	_res=$?
@@ -538,8 +687,8 @@ EOD
 		local _iface_pre
 		local _up_pre
 
-		_iface_pre=`echo $i|awk '{ print $1 }'`
-		_up_pre=`echo $i|awk '{ print $3 }'`
+		_iface_pre=`echo "${i}"|awk '{ print $1 }'`
+		_up_pre=`echo "${i}"|awk '{ print $3 }'`
 
 		for j in ${_iflist_post}
 		do
@@ -818,23 +967,157 @@ EOD
 	return 0
 }
 
-menu_setlanip()
+configure_ipv4_dhcp()
 {
+	local _iface="${1}"
+	local _found
+
+	db_get_network_interface "${_iface}"
+	_found="${VAL}"
+
+	if [ -n "${_found}" ]
+	then
+		db_update_network_interface \
+			"${_iface}" "int_dhcp" "1"
+
+	else
+		db_insert_network_interface \
+			"int_interface=${_iface}" \
+			"int_dhcp=1" \
+			"int_name=" \
+			"int_ipv4address=" \
+			"int_ipv6address=" \
+			"int_ipv6auto=" \
+			"int_options="
+	fi
+}
+
+configure_ipv6_dhcp()
+{
+}
+
+get_ipv4_address()
+{
+	local _iface="${1}"
+	if [ -z "${_iface}" ]
+	then
+		return 1
+	fi
+
+	local _res=0
+	local _ip=`ifconfig "${_iface}"|grep 'inet '|awk '{ print $2 }'`
+	if [ -z "${_ip}" ]
+	then
+		_res=1
+	fi
+
+	VAL="${_ip}"
+	export VAL
+
+	return ${_res}
+}
+
+get_ipv6_address()
+{
+	local _iface="${1}"
+	if [ -z "${_iface}" ]
+	then
+		return 1
+	fi
+
+	local _res=0
+	local _ip=`ifconfig "${_iface}"|grep 'inet6 '|awk '{ print $2 }'`
+	if [ -z "${_ip}" ]
+	then
+		_res=1
+	fi
+
+	VAL="${_ip}"
+	export VAL
+
+	return ${_res}
+}
+
+configure_ipv4_interface()
+{
+	local _args="${1}"
+	local _iface=`echo "${_args}" | awk '{ print $1 }'`
+
 	dialog --clear --yesno \
-		"Do you want to use DHCP for this interface?" 5 47
+		"Do you want to use IPv4 DHCP for interface (${_iface})?" 5 75
 	if [ "$?" = "0" ]
 	then
-		# Use DHCP
-
+		configure_ipv4_dhcp "${_iface}"
 
 	else
 		# Configure interface
 		local _lanip
+		local _found
 
-		get_config_val "network_interfaces.int_ipv4address"
-		_lanip="${VAL}"
+		db_get_network_interface "${_iface}"
+		_found="${VAL}"
 
+		if [ -n "${_found}" ]
+		then
+			local _lanip
+			local _tmpfile
+			local _loop
+
+			local _dhcp=`echo "${_found}"|cut -f4 -d'|'`
+			if [ "${_dhcp}" = "1" ]
+			then
+				get_ipv4_address "${_iface}"
+				_lanip="${VAL}"
+			fi
+
+			_tmpfile="/tmp/answer.txt"
+			_loop=1
+
+			while [ "${_loop}" = "1" ]
+			do
+				local _ret
+
+				dialog --clear --inputbox "Enter new LAN IPv4 address." \
+					8 35 "${_lanip}" 2>"${_tmpfile}"
+				_ret=$?
+
+			    _lanip=`cat "${_tmpfile}"`
+				rm -f "${_tmpfile}"
+
+				# Is valid IP?
+			done
+
+
+		else
+
+		fi
+		
+		#get_config_val "network_interfaces.int_ipv4address"
+		#_lanip="${VAL}"
 	fi
+}
+
+configure_ipv6_interface()
+{
+}
+
+menu_setlanip()
+{
+	local _iflist
+	local _ifs
+
+	get_interface_list
+	_iflist="${VAL}"
+
+	_ifs="${IFS}"
+	IFS="|"
+	for i in ${_iflist}
+	do
+		configure_ipv4_interface "${i}"
+		configure_ipv6_interface "${i}"
+
+	done
+	IFS="${_ifs}"
 }
 
 menu_password()
@@ -850,7 +1133,7 @@ is_validip()
 	local _protocol_family
 	local _protocol
 
-	_protocol_family="$1"
+	_protocol_family="${1}"
 	shift 1
 
 	# ...
@@ -950,6 +1233,8 @@ config_menu()
 main()
 {
 	install_menu;
+	#config_menu;
+	#menu_setlanip
 }
 
 
