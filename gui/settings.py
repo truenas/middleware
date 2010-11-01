@@ -130,3 +130,5 @@ INSTALLED_APPS = (
     'sharing',
     'services',
 )
+
+FORCE_SCRIPT_NAME = ''
