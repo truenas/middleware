@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="float:left;">
+    <h1>Volume Wizard</h1>
+</div>
+{% endblock %}
+{% block dojango_content %}
+{% if user.is_authenticated %}
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
+    <div dojoType="dijit.layout.ContentPane" title="Active">
+
+<form action="." method="post">{% csrf_token %}
+<table>
+	{{ form }}
+</table>
+<input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
+<input type="hidden" name="{{ max_step_field }}" value="{{ max_step }}" />
+{{ previous_fields|safe }}
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Next &gt;&gt;</button>
+</form>
+
+    </div>
+</div>
+{% else %}
+    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
+{% endif %}
+
+{% endblock %}
+
