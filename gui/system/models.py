@@ -39,6 +39,7 @@ from freenasUI.choices import *
 class Settings(models.Model):
     stg_username = models.CharField(
             max_length=120, 
+            default="admin", 
             verbose_name="Username"
             )
     stg_guiprotocol = models.CharField(
@@ -58,6 +59,23 @@ class Settings(models.Model):
             choices=TIMEZONE_CHOICES, 
             default="america-los_angeles", 
             verbose_name="Timezone"
+            )
+    stg_ntpserver1 = models.CharField(
+            max_length=120, 
+            default="0.freebsd.pool.ntp.org iburst maxpoll 9",
+            verbose_name="NTP server 1"
+            )
+    stg_ntpserver2 = models.CharField(
+            max_length=120, 
+            default="1.freebsd.pool.ntp.org iburst maxpoll 9",
+            verbose_name="NTP server 2",
+            blank=True
+            )
+    stg_ntpserver3 = models.CharField(
+            max_length=120, 
+            default="2.freebsd.pool.ntp.org iburst maxpoll 9",
+            verbose_name="NTP server 3",
+            blank=True
             )
 
 ## System|General|Password

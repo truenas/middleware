@@ -113,7 +113,19 @@ class VolumeFinalizeForm(forms.Form):
 class DiskFormPartial(ModelForm):
     class Meta:
         model = Disk
-        exclude = ('disk_name', 'disk_disks', 'disk_group')
+    def __init__(self, *args, **kwargs):
+        super(DiskFormPartial, self).__init__(*args, **kwargs)
+        instance = getattr(self, 'instance', None)
+        if instance and instance.id:
+            self.fields['disk_name'].widget.attrs['readonly'] = True
+            self.fields['disk_disks'].widget.attrs['readonly'] = True
+            self.fields['disk_group'].widget.attrs['readonly'] = True
+    def clean_disk_name(self):
+        return self.instance.disk_name
+    def clean_disk_disks(self):
+        return self.instance.disk_disks
+    def clean_disk_group(self):
+        return self.instance.disk_group
 
 #=================================
 # Finally, the wizard.

@@ -3,6 +3,9 @@
         "pk": 1, 
         "model": "system.settings", 
         "fields": {
+            "stg_ntpserver1": "0.freebsd.pool.ntp.org iburst maxpoll 9",
+            "stg_ntpserver2": "1.freebsd.pool.ntp.org iburst maxpoll 9",
+            "stg_ntpserver3": "2.freebsd.pool.ntp.org iburst maxpoll 9",
             "stg_timezone": "america-los_angeles", 
             "stg_guiprotocol": "http", 
             "stg_language": "english", 

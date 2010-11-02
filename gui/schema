@@ -470,7 +470,10 @@ CREATE TABLE "system_settings" (
     "stg_username" varchar(120) NOT NULL,
     "stg_guiprotocol" varchar(120) NOT NULL,
     "stg_language" varchar(120) NOT NULL,
-    "stg_timezone" varchar(120) NOT NULL
+    "stg_timezone" varchar(120) NOT NULL,
+    "stg_ntpserver1" varchar(120) NOT NULL,
+    "stg_ntpserver2" varchar(120) NOT NULL,
+    "stg_ntpserver3" varchar(120) NOT NULL
 );
 CREATE TABLE "system_swap" (
     "id" integer NOT NULL PRIMARY KEY,

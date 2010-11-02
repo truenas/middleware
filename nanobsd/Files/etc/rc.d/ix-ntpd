@@ -16,7 +16,7 @@ generate_ntp_conf()
 	local IFS=\|
 
 	local ntpserver1 ntpserver2 ntpserver3
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ntpserver1, ntpserver2, ntpserver3 FROM freenas_hostconfiguration ORDER BY id DESC LIMIT 1" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_ntpserver1, stg_ntpserver2, stg_ntpserver3 FROM system_settings ORDER BY -id DESC LIMIT 1" | \
 	while read ntpserver1 ntpserver2 ntpserver3; do
 		if [ -n "${ntpserver1}" ]; then
 			echo "server ${ntpserver1}"

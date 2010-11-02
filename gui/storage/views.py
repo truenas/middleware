@@ -37,7 +37,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.template import RequestContext
 from django.http import Http404
 from django.views.generic.list_detail import object_detail, object_list
-from django.views.generic.create_update import delete_object
+from django.views.generic.create_update import update_object, delete_object
 from freenasUI.middleware.notifier import notifier
 from django.core import serializers
 import os, commands
@@ -95,10 +95,6 @@ def helperViewEm(request, theForm, model):
 
 @login_required
 def storage(request, objtype = None, template_name = 'storage/index.html'):
-    disk = DiskForm(request.POST)
-    diskgroup = DiskGroupForm(request.POST)
-    volume = VolumeForm(request.POST)
-    mountpoint = MountPointForm(request.POST)
     if request.method == 'POST':
         if objtype == 'disk':
             disk.save()
@@ -112,15 +108,7 @@ def storage(request, objtype = None, template_name = 'storage/index.html'):
             raise ValueError("Invalid Request")
         return HttpResponseRedirect('/storage/')
     else:
-        disk = DiskForm()
-        diskgroup = DiskGroupForm()
-        volume = VolumeForm()
-        mountpoint = MountPointForm()
         variables = RequestContext(request, {
-            'disk': disk,
-            'diskgroup': diskgroup,
-            'volume': volume,
-            'mountpoint': mountpoint,
             })
         return render_to_response('storage/index.html', variables)
 
@@ -187,3 +175,14 @@ def generic_delete(request, object_id, model_name):
 		post_delete_redirect = '/storage/',
 		object_id = object_id, )
 
+@login_required
+def generic_update(request, object_id, model_name):
+        model_name_to_model_and_form_map = {
+		'disk':	( Disk, DiskFormPartial ),
+	}
+	model, form_class = model_name_to_model_and_form_map[model_name]
+	return update_object(
+		request = request,
+		model = model, form_class = form_class,
+		post_save_redirect = '/storage/' + model_name + '/edit/' + object_id + "/",
+		object_id = object_id, )
