@@ -194,7 +194,6 @@ do_add_port ()
 	    ${NANO_WORLDDIR}/usr/ports/distfiles
 	mkdir -p ${NANO_WORLDDIR}/dev
 	mount -t devfs devfs ${NANO_WORLDDIR}/dev
-	mkdir -p ${NANO_WORLDDIR}/usr/pobj
 	mkdir -p ${NANO_WORLDDIR}/usr/workdir
 	cp /etc/resolv.conf ${NANO_WORLDDIR}/etc/resolv.conf
 # Improvement: Don't know why package-recursive don't works here
@@ -205,7 +204,6 @@ do_add_port ()
 	    package BATCH=yes $* clean FORCE_PKG_REGISTER=t"
 	rm ${NANO_WORLDDIR}/etc/resolv.conf
 	rm -rf ${NANO_WORLDDIR}/usr/obj
-	rm -rf ${NANO_WORLDDIR}/usr/pobj
 	rm -rf ${NANO_WORLDDIR}/usr/workdir
 	umount ${NANO_WORLDDIR}/dev
 	umount ${NANO_WORLDDIR}/usr/ports/packages
