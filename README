@@ -38,7 +38,7 @@ To build the system:
 
 (1) Checkout the experimental code from svn:
 
-% svn https://freenas.svn.sourceforge.net/experimental/ix
+% svn https://freenas.svn.sourceforge.net/trunk
 % cd ix
 
 (2) Use the build script (substituting your favorite cvsup mirror)
