@@ -39,55 +39,8 @@ from django.template import RequestContext
 from django.http import Http404
 from django.views.generic.list_detail import object_detail, object_list
 from freenasUI.middleware.notifier import notifier
+from freenasUI.common.helperview import helperViewEm
 import os, commands
-
-def helperView(request, theForm, model, url):
-    if request.method == 'POST':
-        form = theForm(request.POST)
-        if form.is_valid():
-            form.save()
-            if model.objects.count() > 3:
-                stale_id = model.objects.order_by("-id")[3].id
-                model.objects.filter(id__lte=stale_id).delete()
-        else:
-            # This is a debugging aid to raise exception when validation
-            # is not passed.
-            form.save()
-    else:
-        try:
-            _entity = model.objects.order_by("-id").values()[0]
-        except:
-            # TODO: We throw an exception (which makes this try/except
-            # meaningless) for now.  A future version will have the
-            # ability to set up default values.
-            raise
-        form = theForm(data = _entity)
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response(url, variables)
-
-def helperViewEm(request, theForm, model):
-    data_saved = 0
-    if request.method == 'POST':
-        form = theForm(request.POST)
-        if form.is_valid():
-            # TODO: test if the data is the same as what is in the database?
-            form.save()
-            data_saved = 1
-            if model.objects.count() > 3:
-                stale_id = model.objects.order_by("-id")[3].id
-                model.objects.filter(id__lte=stale_id).delete()
-        else:
-            pass
-    else:
-        try:
-            _entity = model.objects.order_by("-id").values()[0]
-        except:
-            _entity = None
-        form = theForm(data = _entity)
-    return (data_saved, form)
-
 
 @login_required
 def cronjobView(request):

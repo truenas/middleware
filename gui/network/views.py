@@ -28,6 +28,7 @@
 
 from freenasUI.network.forms import * 
 from freenasUI.network.models import * 
+from freenasUI.network.views import * 
 from django.forms.models import modelformset_factory
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.decorators import login_required
@@ -38,56 +39,9 @@ from django.contrib.auth import authenticate, login, logout
 from django.template import RequestContext
 from django.http import Http404
 from django.views.generic.list_detail import object_detail, object_list
+from django.views.generic.create_update import update_object, delete_object
 from freenasUI.middleware.notifier import notifier
 import os, commands
-
-def helperView(request, theForm, model, url):
-    if request.method == 'POST':
-        form = theForm(request.POST)
-        if form.is_valid():
-            form.save()
-            if model.objects.count() > 3:
-                stale_id = model.objects.order_by("-id")[3].id
-                model.objects.filter(id__lte=stale_id).delete()
-        else:
-            # This is a debugging aid to raise exception when validation
-            # is not passed.
-            form.save()
-    else:
-        try:
-            _entity = model.objects.order_by("-id").values()[0]
-        except:
-            # TODO: We throw an exception (which makes this try/except
-            # meaningless) for now.  A future version will have the
-            # ability to set up default values.
-            raise
-        form = theForm(data = _entity)
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response(url, variables)
-
-def helperViewEm(request, theForm, model):
-    data_saved = 0
-    if request.method == 'POST':
-        form = theForm(request.POST)
-        if form.is_valid():
-            # TODO: test if the data is the same as what is in the database?
-            form.save()
-            data_saved = 1
-            if model.objects.count() > 3:
-                stale_id = model.objects.order_by("-id")[3].id
-                model.objects.filter(id__lte=stale_id).delete()
-        else:
-            pass
-    else:
-        try:
-            _entity = model.objects.order_by("-id").values()[0]
-        except:
-            _entity = None
-        form = theForm(data = _entity)
-    return (data_saved, form)
-
 
 ## Network Section
 
@@ -120,6 +74,7 @@ def network(request, objtype = None):
         vlan = VLANForm()
         lagg = LAGGForm()
         staticroute = StaticRouteForm()
+        sr_list = StaticRoute.objects.order_by("-id").values()
     variables = RequestContext(request, {
         'gc_config': gc_config,
         'gc': gc,
@@ -128,5 +83,33 @@ def network(request, objtype = None):
         'vlan': vlan,
         'lagg': lagg,
         'staticroute': staticroute,
+        'sr_list': sr_list,
     })
     return render_to_response('network/index.html', variables)
+
+@login_required
+def generic_delete(request, object_id, model_name):
+    network_name_model_map = {
+        'interfaces':    Interfaces,
+        'staticroute':   StaticRoute,
+    }
+    return delete_object(
+        request = request,
+        model = network_name_model_map[model_name],
+        post_delete_redirect = '/network/',
+        object_id = object_id, )
+
+@login_required
+def generic_update(request, object_id, model_name):
+    model_name_to_model_and_form_map = {
+            'interfaces':   ( Interfaces, InterfacesForm ),
+            'staticroute':   ( StaticRoute, None ),
+            } 
+    model, form_class = model_name_to_model_and_form_map[model_name]
+    return update_object(
+        request = request,
+        model = model, form_class = form_class,
+        object_id = object_id, 
+        post_save_redirect = '/network/' + model_name + '/edit/' + object_id + "/",
+        )
+

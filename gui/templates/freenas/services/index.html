@@ -261,14 +261,14 @@
                 </td>
             </tr>
             -->
-          <!--  <tr>
+<!--
+            <tr>
                 <td>
                     <strong>LDAP</strong>
                 </td>
                 <td>
                     <input id="ldap_toggle" name="ldap_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "ldap" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
                 </td>
-                -->
                 <td>
                     <button id="ldap_settings" dojoType="dijit.form.Button" type="button">
                         Settings
@@ -278,6 +278,7 @@
                     </button>
                 </td>
             </tr>
+            -->
         </table>
 </div>
 <div id="cifs" dojoType="dijit.Dialog" title="Windows - CIFS/SAMBA Shares">

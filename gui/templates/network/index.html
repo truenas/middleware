@@ -10,76 +10,16 @@
 <div dojoType="dijit.layout.TabContainer" style="width:100%;height:400px;" >
     <div dojoType="dijit.layout.TabContainer" title="Network Settings" nested="true">
         <div dojoType="dijit.layout.ContentPane" title="Global Configuration" selected="true">
+                        <form action="global/configuration/" method="post">{% csrf_token %}
             <table>
                 <tr>
-                    <td><strong>Hostname:</strong></td>
                     <td>
-                    {% for c in gc_config %}
-                        {{ c.gc_hostname }}
-                    {% endfor %}
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>Domain:</strong></td>
-                    <td>
-                    {% for c in gc_config %}
-                        {{ c.gc_domain }}
-                    {% endfor %}
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>IPv4 Gateway:</strong></td>
-                    <td>
-                    {% for c in gc_config %}
-                        {{ c.gc_ipv4gateway }}
-                    {% endfor %}
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>IPv6 Gateway:</strong></td>
-                    <td>
-                    {% for c in gc_config %}
-                        {{ c.gc_ipv6gateway }}
-                    {% endfor %}
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>Name Server 1:</strong></td>
-                    <td>
-                    {% for c in gc_config %}
-                        {{ c.gc_nameserver1 }}
-                    {% endfor %}
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>Name Server 2:</strong></td>
-                    <td>
-                    {% for c in gc_config %}
-                        {{ c.gc_nameserver2 }}
-                    {% endfor %}
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>Name Server 3:</strong></td>
-                    <td>
-                    {% for c in gc_config %}
-                        {{ c.gc_nameserver3 }}
-                    {% endfor %}
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <p>
-                        <button id="gc_button" dojoType="dijit.form.Button" type="button">
-                           Edit Global Configuration
-                           <script type="dojo/method" event="onClick" args="evt">
-                               dijit.byId("gc").show();
-                            </script>
-                        </button>
-                        </p>
+                            {{ gc }}
                     </td>
                 </tr>
             </table>
+                        <button dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+                        </form>
         </div>
         <div dojoType="dijit.layout.ContentPane" title="Interfaces">
             <span style="margin:22px;">
@@ -132,6 +72,12 @@
                             {{ i.int_options }}
                     </td>
                 </tr>
+                <tr>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/interfaces/edit/{{ i.id }}/'">Edit {{ i.int_interface }}</button>
+                    </td>
+                </tr>
+
             </table>
                         {% endfor %}
         </div>
@@ -152,6 +98,29 @@
                     </button>
         </div>
         <div dojoType="dijit.layout.ContentPane" title="Static Routes">
+            <table style="border:1px dotted #c5c5c5;margin:6px;float:left;">
+	        <thead>
+		    <td>Destination</td>
+		    <td>Gateway</td>
+		    <td>Description</td>
+		    <td>Actions</td>
+		</thead>
+		{% for i in sr_list %}
+		<tr>
+		    <td>{{ i.sr_destination }}</td>
+		    <td>{{ i.sr_gateway }}</td>
+		    <td>{{ i.sr_description }}</td>
+                    <td>
+			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/staticroute/edit/{{ i.id }}/'">Edit</button>
+			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/staticroute/delete/{{ i.id }}/'">Delete</button>
+		    </td>
+		</tr>
+		{% empty %}
+		<tr>
+			<td colspan="5">No static route defined</td>
+		</tr>
+		{% endfor %}
+            </table>
                     <button id="sr_button" dojoType="dijit.form.Button" type="button">
                        Add Static Route 
                         <script type="dojo/method" event="onClick" args="evt">
@@ -163,17 +132,7 @@
 <br />
 </div>
 
-    <div id="gc" dojoType="dijit.Dialog" closable="true" title="Global Configuration">
-<form action="global/configuration/" method="post">{% csrf_token %}
- <table>
-     {{ gc }}
-    </table>
-<button dojoType="dijit.form.Button" type="submit">Save Configuration</button>
-<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('gc').hide();">
-    Cancel
-</button>
-</form>
-</div>
+
 <div id="int" dojoType="dijit.Dialog" closable="true" title="Add Interface">
 <form action="global/int/" method="post">{% csrf_token %}
  <table>

@@ -23,16 +23,5 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD$
 #####################################################################
 
-from django.conf.urls.defaults import *
-from django.views.generic import list_detail
-from network.views import * 
-
-urlpatterns = patterns('',
-    (r'^$', network),
-    (r'^global/(?P<objtype>\w+)/$', network),
-    (r'(?P<model_name>\w+)/edit/(?P<object_id>\d+)/$', generic_update),
-    (r'^(?P<model_name>\w+)/delete/(?P<object_id>\d+)/$', generic_delete),
-    )
