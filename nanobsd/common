@@ -161,9 +161,9 @@ do_add_pkg ()
 	mkdir -p ${NANO_OBJ}/ports/packages
 	mkdir -p ${NANO_WORLDDIR}/usr/ports/packages
 	mkdir -p ${NANO_WORLDDIR}/usr/ports/distfiles
-	mount -t unionfs -o noatime ${NANO_OBJ}/ports/packages \
+	mount -t nullfs -o noatime ${NANO_OBJ}/ports/packages \
 	    ${NANO_WORLDDIR}/usr/ports/packages
-	mount -t unionfs -o noatime ${NANO_OBJ}/ports/distfiles \
+	mount -t nullfs -o noatime ${NANO_OBJ}/ports/distfiles \
 	    ${NANO_WORLDDIR}/usr/ports/distfiles
 	CR "cd /usr/ports/packages/All;pkg_add -F $1.tbz"
 	umount ${NANO_WORLDDIR}/usr/ports/distfiles
@@ -184,13 +184,15 @@ do_add_port ()
 	# Need to create ${NANO_OBJ}/ports in this add_port_${port} function
 	mkdir -p ${NANO_OBJ}/ports/distfiles
 	mkdir -p ${NANO_OBJ}/ports/packages
-      	mkdir -p ${NANO_WORLDDIR}/usr/ports/packages
-	mkdir -p ${NANO_WORLDDIR}/usr/ports/distfiles
-      	mount -t unionfs -o noatime ${NANO_SRC} ${NANO_WORLDDIR}/usr/src
-	mount -t unionfs -o noatime ${NANO_PORTS} ${NANO_WORLDDIR}/usr/ports
-	mount -t unionfs -o noatime ${NANO_OBJ}/ports/packages \
+	mkdir -p ${NANO_PORTS}/packages
+	mkdir -p ${NANO_PORTS}/distfiles
+	mkdir -p ${NANO_WORLDDIR}/usr/src
+	mkdir -p ${NANO_WORLDDIR}/usr/ports
+      	mount -t nullfs -o noatime ${NANO_SRC} ${NANO_WORLDDIR}/usr/src
+	mount -t nullfs -o noatime ${NANO_PORTS} ${NANO_WORLDDIR}/usr/ports
+	mount -t nullfs -o noatime ${NANO_OBJ}/ports/packages \
 	    ${NANO_WORLDDIR}/usr/ports/packages
-	mount -t unionfs -o noatime ${NANO_OBJ}/ports/distfiles \
+	mount -t nullfs -o noatime ${NANO_OBJ}/ports/distfiles \
 	    ${NANO_WORLDDIR}/usr/ports/distfiles
 	mkdir -p ${NANO_WORLDDIR}/dev
 	mount -t devfs devfs ${NANO_WORLDDIR}/dev
@@ -210,9 +212,6 @@ do_add_port ()
 	umount ${NANO_WORLDDIR}/usr/ports/distfiles
 	umount ${NANO_WORLDDIR}/usr/ports
 	umount ${NANO_WORLDDIR}/usr/src
-	rmdir ${NANO_WORLDDIR}/usr/ports/packages
-	rmdir ${NANO_WORLDDIR}/usr/ports/distfiles
-	rmdir ${NANO_WORLDDIR}/usr/ports
 	set +x
 }
 
