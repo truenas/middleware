@@ -66,7 +66,8 @@ Index: tools/tools/nanobsd/nanobsd.sh
  	# Create first image
 -	newfs ${NANO_NEWFS} /dev/${MD}s1a
 +	populate_slice /dev/${MD}s1a ${NANO_WORLDDIR} ${MNT} "s1a"
- 	mount /dev/${MD}s1a ${MNT}
+- 	mount /dev/${MD}s1a ${MNT}
++ 	mount -o async /dev/${MD}s1a ${MNT}
 -	df -i ${MNT}
 -	echo "Copying worlddir..."
 -	( cd ${NANO_WORLDDIR} && find . -print | cpio -dump ${MNT} )
