@@ -2,19 +2,68 @@
 {% block dojango_header_extra %}
 {% endblock %} 
 {% block content %}
-<div style="float:left;">
-    <h1>Interface</h1>
+<div dojoType="dijit.MenuBar" id="navMenu">
+            <div dojoType="dijit.MenuBarItem" onClick="window.location='/'">
+                <div>
+                    System 
+                </div>
+            </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'" class=" dijitMenuItemSelected ">
+        <span>
+            Network 
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'">
+        <span>
+            Storage 
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'">
+        <span>
+            Sharing
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/services/'">
+        <span>
+            Services
+        </span>
+    </div>
+
+
+    {% if user.is_authenticated %}
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" style="position:relative;float:right;font-weight:bold;">
+        <span>
+            Log Out 
+        </span>
+    </div>
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/password_change/'">
+        <span>
+            Account 
+        </span>
+    </div>
+    {% else %}
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" style="position:relative;float:right;font-weight:bold;">
+        <span>
+            Log In
+        </span>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 {% block dojango_content %}
 {% if user.is_authenticated %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
-    <div dojoType="dijit.layout.ContentPane" title="Update {{ object }}">
+    <div dojoType="dijit.layout.ContentPane" title="Edit Interface">
         <form action="/network/interfaces/edit/{{ object.id }}/" method="post">{% csrf_token %}
             <table>
                 {{ form }}
             </table>
-            <button dojoType="dijit.form.Button" type="submit">Update {{ object.int_interface }}</button>
+            <button dojoType="dijit.form.Button" type="submit">Save Changes</button>
     </div>
 </div>
 {% else %}

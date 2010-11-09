@@ -49,38 +49,100 @@
 </script>
 {% endblock %} 
 {% block content %}
-<div style="float:left;">
-    <h1>Storage</h1>
+<div dojoType="dijit.MenuBar" id="navMenu">
+
+            <div dojoType="dijit.MenuBarItem" onClick="window.location='/'">
+                <div>
+                    System 
+                </div>
+            </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'">
+        <span>
+            Network 
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'" class=" dijitMenuItemSelected ">
+        <span>
+            Storage 
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'">
+        <span>
+            Sharing
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/services/'">
+        <span>
+            Services
+        </span>
+    </div>
+
+
+    {% if user.is_authenticated %}
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" style="position:relative;float:right;font-weight:bold;">
+        <span>
+            Log Out 
+        </span>
+    </div>
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/password_change/'">
+        <span>
+            Account 
+        </span>
+    </div>
+    {% else %}
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" style="position:relative;float:right;font-weight:bold;">
+        <span>
+            Log In
+        </span>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 {% block dojango_content %}
 {% if user.is_authenticated %}
-<div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
-    <div dojoType="dijit.layout.ContentPane" title="Active">
-       
-        
-        <label for="filesystem">
-	        Filesystem:
-        </label>
-        <br />
-        <input id="filesystem" />
-        <br />
- 
-        <label for="type">
-	        Type:
-        </label>
-        <br />
-        <input id="type" />
-        <br />
-        <label for="disk">
-	        Disk:
-        </label>
-        <br />
-        <input id="disk" />
-        <br />
-        
-
-
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
+    <div dojoType="dijit.layout.ContentPane" title="Storage">
+            <table class="grid">
+                <tbody>
+                    <tr>
+                        {% if disk_list %}
+                        <h5>Active Disks: <strong><a name="#windows">{{ disk_list|length }}</a></strong></h5>
+                        {% else %}
+                        There are no active disks.
+                        {% endif %}
+                    </tr>
+                </tbody>
+	            <thead class="ghead">
+                    <td>Name</td>
+		            <td>Description</td>
+		        </thead>
+                <tbody>
+                {% for d in disk_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ d.id }}">
+                    <td>
+                        {{ d.disk_name }}
+                    </td>
+                    <td>
+                        {{ d.disk_description }}
+                    </td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/disks/edit/{{ d.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/volumes/delete/{{ d.disk_group.group_volume.id  }}/'">Delete Associated Volume</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No disks defined</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/wizard/'">Storage Wizard</button>
     </div>
 </div>
 {% else %}

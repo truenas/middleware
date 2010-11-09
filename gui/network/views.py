@@ -68,21 +68,25 @@ def network(request, objtype = None):
         return HttpResponseRedirect('/network/')
     else:
         gc_config = GlobalConfiguration.objects.order_by("-id").values()[:1]
-        int_list = Interfaces.objects.order_by("-id").values()
         gc = GlobalConfigurationForm(data = GlobalConfiguration.objects.order_by("-id").values()[0])
         interfaces = InterfacesForm()
         vlan = VLANForm()
         lagg = LAGGForm()
         staticroute = StaticRouteForm()
+        int_list = Interfaces.objects.order_by("-id").values()
+        vlan_list = VLAN.objects.order_by("-id").values()
+        lagg_list = LAGG.objects.order_by("-id").values()
         sr_list = StaticRoute.objects.order_by("-id").values()
     variables = RequestContext(request, {
         'gc_config': gc_config,
         'gc': gc,
         'interfaces': interfaces,
-        'int_list': int_list,
         'vlan': vlan,
         'lagg': lagg,
         'staticroute': staticroute,
+        'int_list': int_list,
+        'vlan_list': vlan_list,
+        'lagg_list': lagg_list,
         'sr_list': sr_list,
     })
     return render_to_response('network/index.html', variables)
@@ -92,6 +96,8 @@ def generic_delete(request, object_id, model_name):
     network_name_model_map = {
         'interfaces':    Interfaces,
         'staticroute':   StaticRoute,
+        'lagg':   LAGG,
+        'vlan':   VLAN,
     }
     return delete_object(
         request = request,
@@ -102,7 +108,9 @@ def generic_delete(request, object_id, model_name):
 @login_required
 def generic_update(request, object_id, model_name):
     model_name_to_model_and_form_map = {
-            'interfaces':   ( Interfaces, InterfacesForm ),
+            'interfaces':   ( Interfaces, None ),
+            'vlan':   ( VLAN, None ),
+            'lagg':   ( LAGG, None ),
             'staticroute':   ( StaticRoute, None ),
             } 
     model, form_class = model_name_to_model_and_form_map[model_name]
@@ -110,6 +118,6 @@ def generic_update(request, object_id, model_name):
         request = request,
         model = model, form_class = form_class,
         object_id = object_id, 
-        post_save_redirect = '/network/' + model_name + '/edit/' + object_id + "/",
+        post_save_redirect = '/network/',
         )
 

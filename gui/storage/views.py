@@ -59,7 +59,13 @@ def storage(request, objtype = None, template_name = 'storage/index.html'):
             raise ValueError("Invalid Request")
         return HttpResponseRedirect('/storage/')
     else:
+        disk_list = Disk.objects.select_related().all()
+        diskgroup_list = DiskGroup.objects.all()
+        volume_list = Volume.objects.all()
         variables = RequestContext(request, {
+            'disk_list': disk_list,
+            'diskgroup_list': diskgroup_list,
+            'volume_list': volume_list,
             })
         return render_to_response('storage/index.html', variables)
 
@@ -129,7 +135,7 @@ def generic_delete(request, object_id, model_name):
 @login_required
 def generic_update(request, object_id, model_name):
         model_name_to_model_and_form_map = {
-		'disk':	( Disk, DiskFormPartial ),
+		'disks':	( Disk, DiskFormPartial ),
 	}
 	model, form_class = model_name_to_model_and_form_map[model_name]
 	return update_object(

@@ -1,7 +1,8 @@
 {% extends "base.html" %}
+{% block dojango_header_extra %}
+{% endblock %} 
 {% block content %}
 <div dojoType="dijit.MenuBar" id="navMenu">
-
             <div dojoType="dijit.MenuBarItem" onClick="window.location='/'">
                 <div>
                     System 
@@ -14,13 +15,13 @@
         </span>
     </div>
 
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'" class=" dijitMenuItemSelected ">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'">
         <span>
             Storage 
         </span>
     </div>
 
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'" class=" dijitMenuItemSelected ">
         <span>
             Sharing
         </span>
@@ -54,26 +55,19 @@
     {% endif %}
 </div>
 {% endblock %}
-
 {% block dojango_content %}
 {% if user.is_authenticated %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
-    <div dojoType="dijit.layout.ContentPane" title="Step {{ step0|add:1 }}">
-
-<form action="." method="post">{% csrf_token %}
-<table>
-	{{ form }}
-</table>
-<input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
-<input type="hidden" name="{{ max_step_field }}" value="{{ max_step }}" />
-{{ previous_fields|safe }}
-<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Next &gt;&gt;</button>
-</form>
-
+    <div dojoType="dijit.layout.ContentPane" title="Edit Windows Share">
+        <form action="/sharing/windows/edit/{{ object.id }}/" method="post">{% csrf_token %}
+            <table>
+                {{ form }}
+            </table>
+            <button dojoType="dijit.form.Button" type="submit">Save Changes</button>
     </div>
 </div>
 {% else %}
-    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
+    <p>Welcome. Please <a href="/account/login/">log in</a>.</p>
 {% endif %}
 
 {% endblock %}

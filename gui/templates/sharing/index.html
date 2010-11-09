@@ -1,119 +1,228 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="float:left;">
-    <h1>Sharing</h1>
+<div dojoType="dijit.MenuBar" id="navMenu">
+            <div dojoType="dijit.MenuBarItem" onClick="window.location='/'">
+                <div>
+                    System 
+                </div>
+            </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'">
+        <span>
+            Network 
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'">
+        <span>
+            Storage 
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'" class=" dijitMenuItemSelected ">
+        <span>
+            Sharing
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/services/'">
+        <span>
+            Services
+        </span>
+    </div>
+
+
+    {% if user.is_authenticated %}
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" style="position:relative;float:right;font-weight:bold;">
+        <span>
+            Log Out 
+        </span>
+    </div>
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/password_change/'">
+        <span>
+            Account 
+        </span>
+    </div>
+    {% else %}
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" style="position:relative;float:right;font-weight:bold;">
+        <span>
+            Log In
+        </span>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 {% block dojango_content %}
 
 {% if user.is_authenticated %}
-<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="False">
-        <div dojoType="dijit.layout.ContentPane" title="Active">
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
+    <div dojoType="dijit.layout.TabContainer" title="Shares" nested="true" style="width:100%;height:450px;">
+        <div dojoType="dijit.layout.ContentPane" title="Windows">
+            <table class="grid">
+                <tbody>
+                    <tr>
+                        {% if cifs_share_list %}
+                        <h5>Active Shares: <strong><a name="#windows">{{ cifs_share_list|length }}</a></strong></h5>
+                        {% else %}
+                        There are no active Windows Shares.
+                        {% endif %}
+                    </tr>
+                </tbody>
+	            <thead class="ghead">
+                    <td>Name</td>
+	            <td>Comment</td>
+	            <td>Path</td>
+	        </thead>
+                <tbody>
+                {% for c in cifs_share_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ c.id }}">
+                    <td>
+                        {{ c.cifs_name }}
+                    </td>
+                    <td>
+                        {{ c.cifs_comment }}
+                    </td>
+		    <td>
+			{{ c.cifs_path.mp_path }}
+		    </td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/windows/edit/{{ c.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/windows/delete/{{ c.id }}/'">Delete</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No shares defined</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+                </table>
+                <p class="btn">
+                <button dojoType="dijit.form.Button" type="button">
+                    Add Windows Share
+                <script type="dojo/method" event="onClick" args="evt">
+                    dijit.byId("cifs_share").show();
+                </script>
+                </button>
+                </p>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="Apple">
+            <table class="grid">
+                <tbody>
+                    <tr>
+                        {% if afp_share_list %}
+                        <h5>Active Shares: <strong><a name="#apple">{{ afp_share_list|length }}</a></strong></h5>
+                        {% else %}
+                        There are no active Apple Shares.
+                        {% endif %}
+                    </tr>
+                </tbody>
+	            <thead class="ghead">
+                    <td>Name</td>
+		            <td>Comment</td>
+		        </thead>
+                <tbody>
+                {% for a in afp_share_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ a.id }}">
+                    <td>
+                        {{ a.afp_name }}
+                    </td>
+                    <td>
+                        {{ a.afp_comment }}
+                    </td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/apple/edit/{{ a.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/apple/delete/{{ a.id }}/'">Delete</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No shares defined</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+                </table>
+                <p class="btn">
 
-<table>
-    <tr><td><h3>Mount Points</h3></td></tr>
-    <tr>
-        <td width="150px" style="background:#cfcfcf;"><strong>Mount Point</strong></td>
-        <td width="50px" style="background:#cfcfcf;"><strong>Mount Options</strong></td>
-        <td width="25px" style="background:#cfcfcf;"></td>
-    </tr>
-{% for mount in mountpoint_list %}
-    <tr>
-        <td>
-{{ mount.mp_path }}
-
-</td>
-
-        <td> {{ mount.mp_options }}</td>
-        <td>
-<a href="mountpoint/delete/{{ mount.id }}/">Delete?</a>
-            </td>
-    </tr>
-{% endfor %}
-</table>
-              
-<table>
-    <tr><td><h3>Shares</h3></td></tr>
-    <tr>
-        <td width="150px" style="background:#cfcfcf;"><strong>Share</strong></td>
-        <td width="50px" style="background:#cfcfcf;"><strong>Type</strong></td>
-        <td width="25px" style="background:#cfcfcf;"></td>
-    </tr>
-{% for share in cifs_share_list %}
-    <tr>
-        <td>
-{{ share.cifs_name }}
-
-</td>
-
-        <td>Windows</td>
-        <td>
-<a href="cifs/delete/{{ share.id }}/">Delete?</a>
-            </td>
-    </tr>
-{% endfor %}
-{% for share in afp_share_list %}
-    <tr>
-        <td>
-{{ share.afp_name }}
-
-</td>
-
-        <td>Apple</td>
-        <td>
-<a href="afp/delete/{{ share.id }}/">Delete?</a>
-            </td>
-    </tr>
-{% endfor %}
-
-{% for share in nfs_share_list %}
-    <tr>
-        <td>
-{{ share.nfs_path }}
-
-</td>
-
-        <td>Unix</td>
-        <td>
-<a href="nfs/delete/{{ share.id }}/">Delete?</a>
-            </td>
-    </tr>
-{% endfor %}
-</table>
-
+                <button dojoType="dijit.form.Button" type="button">
+                    Add Apple Share
+                <script type="dojo/method" event="onClick"   args="evt">
+                    dijit.byId("afp_share").show();
+                </script>
+                </button>
+                </p>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="UNIX">
+            <table class="grid">
+                <tbody>
+                    <tr>
+                        {% if nfs_share_list %}
+                        <h5>Active Shares: <strong>{{ nfs_share_list|length }}</strong></h5>
+                        {% else %}
+                        There are no active UNIX Shares.
+                        {% endif %}
+                    </tr>
+                </tbody>
+	            <thead class="ghead">
+		            <td>Comment</td>
+		        </thead>
+                <tbody>
+                {% for n in nfs_share_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ n.id }}">
+                    <td>
+                        {{ n.nfs_comment }}
+                    </td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/unix/edit/{{ n.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/unix/delete/{{ n.id }}/'">Delete</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No shares defined</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+                </table>
+                <p class="btn">
+                <button dojoType="dijit.form.Button" type="button">
+                    Add UNIX Share
+                <script type="dojo/method" event="onClick"   args="evt">
+                    dijit.byId("nfs_share").show();
+                </script>
+                </button>
+                </p>
+        </div>
+    </div>
 </div>
-    <div dojoType="dijit.layout.ContentPane" title="Windows Share">
-
-<form action="save/cifs/" method="post">{% csrf_token %}
+<div id="cifs_share" dojoType="dijit.Dialog" closable="true"  title="Windows Share">
+    <form action="save/cifs/" method="post">{% csrf_token %}
         <table>
             {{ cifs_share }}
         </table>
+        <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Add Windows Share</button>
+    </form>
+ </div>
 
-<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Add Windows Share</button>
-</form>
-        </div>
-        <div dojoType="dijit.layout.ContentPane" title="Apple Share">
-
-<form action="save/afp/" method="post">{% csrf_token %}
+<div id="afp_share" dojoType="dijit.Dialog" closable="true" title="Apple Share">
+    <form action="save/afp/" method="post">{% csrf_token %}
         <table>
             {{ afp_share }}
         </table>
+    <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Add Apple Share</button>
+    </form>
+</div>
 
-<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Add Apple Share</button>
-</form>
-        </div>
-        <div dojoType="dijit.layout.ContentPane" title="Unix Share">
-
-<form action="save/nfs/" method="post">{% csrf_token %}
+<div id="nfs_share" dojoType="dijit.Dialog" closable="true" title="Unix Share">
+     <form action="save/nfs/" method="post">{% csrf_token %}
         <table>
             {{ nfs_share }}
         </table>
-
-<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Add Unix Share</button>
-</form>
-        </div>
-      <br />
+        <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Add Unix Share</button>
+    </form>
+</div>
 </div>
 {% else %}
     <p>Welcome. Please <a href="login/">log in</a>.</p>

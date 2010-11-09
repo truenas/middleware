@@ -1,20 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
 <div dojoType="dijit.MenuBar" id="navMenu">
-
             <div dojoType="dijit.MenuBarItem" onClick="window.location='/'">
                 <div>
                     System 
                 </div>
             </div>
 
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'" class=" dijitMenuItemSelected ">
         <span>
             Network 
         </span>
     </div>
 
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'" class=" dijitMenuItemSelected ">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'">
         <span>
             Storage 
         </span>
@@ -31,9 +30,7 @@
             Services
         </span>
     </div>
-
-
-    {% if user.is_authenticated %}
+{% if user.is_authenticated %}
     <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" style="position:relative;float:right;font-weight:bold;">
         <span>
             Log Out 
@@ -51,30 +48,24 @@
             Log In
         </span>
     </div>
-    {% endif %}
 </div>
+    {% endif %}
 {% endblock %}
-
 {% block dojango_content %}
-{% if user.is_authenticated %}
-<div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
-    <div dojoType="dijit.layout.ContentPane" title="Step {{ step0|add:1 }}">
-
-<form action="." method="post">{% csrf_token %}
-<table>
-	{{ form }}
-</table>
-<input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
-<input type="hidden" name="{{ max_step_field }}" value="{{ max_step }}" />
-{{ previous_fields|safe }}
-<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Next &gt;&gt;</button>
-</form>
-
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="False">
+    <div dojoType="dijit.layout.ContentPane" title="Delete LAGG">
+        <form method="post" action=".">
+            <h1>Confirm Delete</h1>
+            <span class="alert" style="width:50%;">
+                <h2>WARNING!</h2>
+                <p>You are about to delete <strong>{{ object }}</strong></p>
+                <p align="right"><strong>Are you sure?</strong><br />
+                <input type="submit" value="Delete LAGG" >
+                </p>
+            </span>
+        </form>
     </div>
 </div>
-{% else %}
-    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
-{% endif %}
 
 {% endblock %}
 

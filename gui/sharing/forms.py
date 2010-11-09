@@ -46,20 +46,24 @@ class CIFS_ShareForm(ModelForm):
     class Meta:
         model = CIFS_Share 
     def save(self):
-        super(CIFS_ShareForm, self).save()
+        ret = super(CIFS_ShareForm, self).save()
         notifier().reload("smbd")
+        return ret
 
 class AFP_ShareForm(ModelForm):
     class Meta:
         model = AFP_Share 
     def save(self):
-        super(AFP_ShareForm, self).save()
+        ret = super(AFP_ShareForm, self).save()
         notifier().reload("afp")
+        return ret
 
 class NFS_ShareForm(ModelForm):
     class Meta:
         model = NFS_Share 
     def save(self):
-        super(NFS_ShareForm, self).save()
+        ret = super(NFS_ShareForm, self).save()
         notifier().reload("nfs")
+        return ret
+
 

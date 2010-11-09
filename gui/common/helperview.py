@@ -24,6 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from django.template import RequestContext
+from django.shortcuts import render_to_response
 
 def helperView(request, theForm, model, url):
     if request.method == 'POST':

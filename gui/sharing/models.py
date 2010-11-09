@@ -51,7 +51,8 @@ class CIFS_Share(models.Model):
             verbose_name="Comment",
             blank=True,
             )
-    cifs_path = models.ForeignKey(MountPoint)
+    cifs_path = models.ForeignKey(MountPoint,
+            verbose_name="Path")
     cifs_ro = models.BooleanField(
             verbose_name="Export Read Only")
     cifs_browsable = models.BooleanField(

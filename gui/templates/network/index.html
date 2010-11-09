@@ -1,8 +1,57 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="float:left;">
-    <h1>Network</h1>
+<div dojoType="dijit.MenuBar" id="navMenu">
+            <div dojoType="dijit.MenuBarItem" onClick="window.location='/'">
+                <div>
+                    System 
+                </div>
+            </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'" class=" dijitMenuItemSelected ">
+        <span>
+            Network 
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'">
+        <span>
+            Storage 
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'">
+        <span>
+            Sharing
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/services/'">
+        <span>
+            Services
+        </span>
+    </div>
+
+
+    {% if user.is_authenticated %}
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" style="position:relative;float:right;font-weight:bold;">
+        <span>
+            Log Out 
+        </span>
+    </div>
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/password_change/'">
+        <span>
+            Account 
+        </span>
+    </div>
+    {% else %}
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" style="position:relative;float:right;font-weight:bold;">
+        <span>
+            Log In
+        </span>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 {% block dojango_content %}
@@ -10,103 +59,149 @@
 <div dojoType="dijit.layout.TabContainer" style="width:100%;height:400px;" >
     <div dojoType="dijit.layout.TabContainer" title="Network Settings" nested="true">
         <div dojoType="dijit.layout.ContentPane" title="Global Configuration" selected="true">
-                        <form action="global/configuration/" method="post">{% csrf_token %}
-            <table>
+            <form action="global/configuration/" method="post">{% csrf_token %}
+            <table class="config">
+                {% for field in gc %}
                 <tr>
                     <td>
-                            {{ gc }}
+                        <label for="{{ field.auto_id }}">
+                            {% if field.field.required %}
+                                <span class="required">{{ field.label }}</span>
+                            {% else %}
+                                {{ field.label }}
+                            {% endif %}
+                        </label>
+                    </td>
+                    <td>
+                        {{ field }}
                     </td>
                 </tr>
+            {% endfor %}
             </table>
-                        <button dojoType="dijit.form.Button" type="submit">Save Configuration</button>
-                        </form>
+            <p class="btn">
+            <button dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+            </p>
+            </form>
         </div>
         <div dojoType="dijit.layout.ContentPane" title="Interfaces">
-            <span style="margin:22px;">
+            <table class="grid">
+	            <thead class="header">
+		            <td>Interface</td>
+		            <td>Name</td>
+		            <td>DHCP</td>
+		            <td>IPv4 Gateway</td>
+		            <td>IPv6 Gateway</td>
+		            <td>IPv6 Auto</td>
+		            <td>IPv6 Address</td>
+		            <td>Options</td>
+		        </thead>
+                {% for i in int_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ i.id }}">
+                    <td>{{ i.int_interface }}</td>
+                    <td>{{ i.int_name }}</td>
+                    <td>{{ i.int_dhcp }}</td>
+                    <td>{{ i.int_ipv4gateway }}</td>
+                    <td>{{ i.int_ipv6gateway }}</td>
+                    <td>{{ i.int_ipv6auto }}</td>
+                    <td>{{ i.int_ipv6address }}</td>
+                    <td>{{ i.int_options }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/interfaces/edit/{{ i.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/interfaces/delete/{{ i.id }}/'">Delete</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No interfaces defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+                <p class="btn">
                     <button id="int_button" dojoType="dijit.form.Button" type="button">
                         Add Interface
                         <script type="dojo/method" event="onClick" args="evt">
                         dijit.byId("int").show();
                     </script>
                     </button>
-                </span>
-                        {% for i in int_list %}
-            <table style="border:1px dotted #c5c5c5;margin:6px;float:left;">
-                <tr><td><strong>Interface:</strong></td>
-                    <td>
-                            {{ i.int_interface }}
-                    </td>
-                </tr>
-                <tr><td><strong>Name:</strong></td>
-                    <td>
-                            {{ i.int_name }}
-                    </td>
-                </tr>
-                <tr><td><strong>DHCP:</strong></td>
-                    <td>
-                            {{ i.int_dhcp }}
-                    </td>
-                </tr>
-                <tr><td><strong>IPv4 Gateway:</strong></td>
-                    <td>
-                            {{ i.int_ipv4gateway }}
-                    </td>
-                </tr>
-                <tr><td><strong>IPv6 Gateway:</strong></td>
-                    <td>
-                            {{ i.int_ipv6gateway }}
-                    </td>
-                </tr>
-                <tr><td><strong>IPv6 Auto-configure:</strong></td>
-                    <td>
-                            {{ i.int_ipv6auto }}
-                    </td>
-                </tr>
-                <tr><td><strong>IPv6 Address:</strong></td>
-                    <td>
-                            {{ i.int_ipv6address }}
-                    </td>
-                </tr>
-                <tr><td><strong>Options:</strong></td>
-                    <td>
-                            {{ i.int_options }}
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/interfaces/edit/{{ i.id }}/'">Edit {{ i.int_interface }}</button>
-                    </td>
-                </tr>
-
-            </table>
-                        {% endfor %}
+                    </p>
         </div>
         <div dojoType="dijit.layout.ContentPane" title="VLAN">
+              <table class="grid">
+	            <thead class="header">
+		            <td>Virtual Interface</td>
+		            <td>Physical Interface</td>
+		            <td>VLAN Tag</td>
+		            <td>Description</td>
+		        </thead>
+                {% for v in vlan_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ v.id }}">
+                    <td>{{ v.vlan_vint }}</td>
+                    <td>{{ v.vlan_pint }}</td>
+                    <td>{{ v.vlan_tag }}</td>
+                    <td>{{ v.vlan_description }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/vlan/edit/{{ v.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/vlan/delete/{{ v.id }}/'">Delete</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No VLAN defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+                <p class="btn">
                     <button id="vlan_button" dojoType="dijit.form.Button" type="button">
                         Add VLAN Interface
                         <script type="dojo/method" event="onClick" args="evt">
                         dijit.byId("vlan").show();
                     </script>
                     </button>
+                    </p>
         </div>
         <div dojoType="dijit.layout.ContentPane" title="LAGG">
+            <table class="grid">
+	            <thead class="header">
+		            <td>Virtual Interface</td>
+		            <td>Ports</td>
+		            <td>Description</td>
+		        </thead>
+                {% for l in lagg_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ l.id }}">
+                    <td>{{ l.lagg_vint }}</td>
+                    <td>{{ l.lagg_ports }}</td>
+                    <td>{{ l.lagg_description }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/lagg/edit/{{ l.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/lagg/delete/{{ l.id }}/'">Delete</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No LAGG interface defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+
+                <p class="btn">
                     <button id="lagg_button" dojoType="dijit.form.Button" type="button">
                        Add LAGG Interface 
                         <script type="dojo/method" event="onClick" args="evt">
                         dijit.byId("lagg").show();
                     </script>
                     </button>
+                    </p>
         </div>
         <div dojoType="dijit.layout.ContentPane" title="Static Routes">
-            <table style="border:1px dotted #c5c5c5;margin:6px;float:left;">
-	        <thead>
+            <table class="grid">
+	        <thead class="header">
 		    <td>Destination</td>
 		    <td>Gateway</td>
 		    <td>Description</td>
 		    <td>Actions</td>
 		</thead>
 		{% for i in sr_list %}
-		<tr>
+          <tr class="{% cycle 'odd' 'even' %}" id="{{ i.id }}">
 		    <td>{{ i.sr_destination }}</td>
 		    <td>{{ i.sr_gateway }}</td>
 		    <td>{{ i.sr_description }}</td>

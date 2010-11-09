@@ -1,19 +1,71 @@
 {% extends "base.html" %}
 {% block content %}
+<div dojoType="dijit.MenuBar" id="navMenu">
+            <div dojoType="dijit.MenuBarItem" onClick="window.location='/'">
+                <div>
+                    System 
+                </div>
+            </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'" class=" dijitMenuItemSelected ">
+        <span>
+            Network 
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'">
+        <span>
+            Storage 
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'">
+        <span>
+            Sharing
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/services/'">
+        <span>
+            Services
+        </span>
+    </div>
 {% if user.is_authenticated %}
-<form method="post" action=".">
-<h1>Confirm Delete</h1>
-<span class="alert" style="width:50%;">
-<h2>WARNING!</h2>
-<p>You are about to delete Static Route to: <strong>{{ object.sr_destination }}</strong> via {{ object.sr_gateway }}</p>
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" style="position:relative;float:right;font-weight:bold;">
+        <span>
+            Log Out 
+        </span>
+    </div>
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/password_change/'">
+        <span>
+            Account 
+        </span>
+    </div>
+    {% else %}
 
-<p align="right"><strong>Are you sure?</strong><br />
-<input type="submit" value="Delete Static Route" >
-</p>
-</span>
-</form>
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" style="position:relative;float:right;font-weight:bold;">
+        <span>
+            Log In
+        </span>
+    </div>
+</div>
+    {% endif %}
+{% endblock %}
+{% block dojango_content %}
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="False">
+    <div dojoType="dijit.layout.ContentPane" title="Delete Static Route">
+        <form method="post" action=".">
+            <h1>Confirm Delete</h1>
+            <span class="alert" style="width:50%;">
+                <h2>WARNING!</h2>
+                <p>You are about to delete <strong>{{ object }}</strong></p>
+                <p align="right"><strong>Are you sure?</strong><br />
+                <input type="submit" value="Delete Static Route" >
+                </p>
+            </span>
+        </form>
+    </div>
+</div>
 
-{% else %}
-{% endif %}
 {% endblock %}
 

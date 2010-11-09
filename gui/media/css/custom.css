@@ -1,7 +1,48 @@
 #rebootDialog_underlay { background-color:#000; }
 #shutdownDialog_underlay { background-color:#FD0000; }
 #top_dialog_underlay { background-color:#000; }
-
+span.required {
+    font-weight:bold;
+    color:#5C7990;
+}
+table.config {
+    margin-top:24px;
+}
+.config th{
+    color:#ff0000;
+}
+.config td{
+    padding-right:16px;
+}
+.dijitContentPane {
+    padding:0px !important;
+    padding-bottom:4px !important;
+}
+.odd {
+    background: #cccccc;
+}
+.odd td {
+    padding-left:10px;
+}
+.even td {
+    padding-left:10px;
+}
+table.grid {
+    margin-top:24px;
+}
+.grid thead td{
+    color:#50575F;
+    font-weight:bold;
+    line-height:10px;
+    padding-right:10px;
+}
+.grid tbody{
+    font-size:10px;
+    padding:10px;
+}
+p.btn {
+    padding:10px;
+}
 #breadcrumbs {
     float:left;
     vertical-align:bottom;
@@ -69,17 +110,16 @@ float:left;
 text-align:left;
 }
 .label {
-    background:none repeat scroll 0 0 #F4F4F4;
     border-bottom:1px solid #C5C5C5;
     border-left:1px solid #C5C5C5;
     border-right:1px dotted #C5C5C5;
     font-weight:bold;
+    color:#50575F;
     line-height:24px;
     padding-left:16px;
     width:135px
 }
 .descr {
-    background:none repeat scroll 0 0 #FFFFFF;
     border-bottom:1px dotted #C5C5C5;
     border-right:1px solid #C5C5C5;
     line-height:24px;

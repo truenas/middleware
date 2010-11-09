@@ -37,6 +37,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.template import RequestContext
 from django.http import Http404
 from django.views.generic.list_detail import object_detail, object_list
+from django.views.generic.create_update import update_object, delete_object
 from freenasUI.middleware.notifier import notifier
 import os, commands
 
@@ -58,9 +59,9 @@ def sharing(request, sharetype = None):
         return HttpResponseRedirect('/sharing/')
     else:
         mountpoint_list = MountPoint.objects.all()
-        cifs_share_list = CIFS_Share.objects.all()
-        afp_share_list = AFP_Share.objects.all()
-        nfs_share_list = NFS_Share.objects.all()
+        cifs_share_list = CIFS_Share.objects.select_related().all()
+        afp_share_list = AFP_Share.objects.order_by("-id").values()
+        nfs_share_list = NFS_Share.objects.order_by("-id").values()
         cifs_share = CIFS_ShareForm()
         afp_share = AFP_ShareForm()
         nfs_share = NFS_ShareForm()
@@ -74,4 +75,33 @@ def sharing(request, sharetype = None):
         'nfs_share': nfs_share,
         })
     return render_to_response('sharing/index.html', variables)
+
+@login_required
+def generic_delete(request, object_id, model_name):
+    network_name_model_map = {
+        'windows':   CIFS_Share,
+        'apple':   AFP_Share,
+        'unix':   NFS_Share,
+        'mountpoint':   MountPoint,
+    }
+    return delete_object(
+        request = request,
+        model = network_name_model_map[model_name],
+        post_delete_redirect = '/sharing/',
+        object_id = object_id, )
+
+@login_required
+def generic_update(request, object_id, model_name):
+    model_name_to_model_and_form_map = {
+            'windows':   ( CIFS_Share, CIFS_ShareForm ),
+            'apple':   ( AFP_Share, AFP_ShareForm ),
+            'unix':   ( NFS_Share, NFS_ShareForm ),
+            }
+    model, form_class = model_name_to_model_and_form_map[model_name]
+    return update_object(
+        request = request,
+        model = model, form_class = form_class,
+        object_id = object_id,
+        post_save_redirect = '/sharing/' + '#' + model_name,
+        )
 
