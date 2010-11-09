@@ -196,7 +196,7 @@ db_update_network_interface()
 	_table="network_interfaces"
 	_sql="update ${_table} set ${_column}='${_value}' \
 		where int_interface='${_iface}';"
-	
+
 	db_execute "${_sql}"
 	_res=$?
 	export VAL

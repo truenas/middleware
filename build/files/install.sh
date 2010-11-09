@@ -636,13 +636,80 @@ menu_setlanip()
 	get_interface_list
 	_iflist="${VAL}"
 
+	local _ipv4txt="Do you want to configure IPv4 for this interface?"
+	local _ipv6txt="Do you want to configure IPv6 for this interface?"
+
 	_ifs="${IFS}"
 	IFS="|"
 	for i in ${_iflist}
 	do
-		configure_ipv4_interface "${i}"
-		configure_ipv6_interface "${i}"
+		local _iface=`echo "${i}"|cut -f1 -d' '`
+		local _ipv4=0
+		local _ipv6=0
 
+		dialog --clear --yesno "${_ipv4txt} (${_iface})" 5 75
+		if [ "$?" = "0" ]
+		then
+			_ipv4=1
+			configure_interface "ipv4" "${i}"
+		fi
+
+		dialog --clear --yesno "${_ipv6txt} (${_iface})" 5 75
+		if [ "$?" = "0" ]
+		then
+			_ipv6=1
+			configure_interface "ipv6" "${i}"
+		fi
+
+		if [ "${_ipv4}" != "0" -o "${_ipv6}" != "0" ]
+		then
+			db_get_network_interface "${_iface}"
+			local _info="${VAL}"
+
+			echo "The LAN IP address has been set to:"
+
+			if [ "${_ipv4}" != "0" ]
+			then
+				local _ip=`echo "${_info}"|cut -f5 -d'|'`
+				local _dhcp=`echo "${_info}"|cut -f4 -d'|'`
+				if [ "${_dhcp}" = "1" ]
+				then
+					get_ipaddress "ipv4" "${_iface}"
+					_ip="${VAL}"
+
+					get_netmask "ipv4" "${_iface}" "1"
+					_ip="${_ip}/${VAL}"
+				fi
+
+				echo "IPv4: ${_ip}"
+			fi
+
+			if [ "${_ipv6}" != "0" ]
+			then
+				local _ip=`echo "${_info}"|cut -f7 -d'|'`
+				local _auto=`echo "${_info}"|cut -f6 -d'|'`
+				if [ "${_auto}" = "1" ]
+				then
+					get_ipaddress "ipv6" "${_iface}"
+					_ip="${VAL}"
+
+					get_netmask "ipv6" "${_iface}" "1"
+					_ip="${_ip}/${VAL}"
+				fi
+
+				echo "IPv6: ${_ip}"
+			fi
+
+			_ip=`echo "${_ip}"|cut -s -f1 -d'/'`
+
+			echo
+			echo "You can access the WebGUI using the following URL:"
+			[ "${_ipv4}" != "0" ] && echo "https://${_ip}:80"
+			[ "${_ipv6}" != "0" ] && echo "https://[${_ip}]:80"
+			echo
+
+			wait_keypress
+		fi
 	done
 	IFS="${_ifs}"
 }
@@ -705,7 +772,7 @@ config_menu()
 		echo "Console setup"
 		echo "-------------"
 		echo "1) Assign interfaces"
-		echo "2) Set LAP IP address"
+		echo "2) Set LAN IP address"
 		echo "3) Reset WebGUI password"
 		echo "4) Reset to factory defaults"
 		echo "5) Ping host"
@@ -737,12 +804,15 @@ config_menu()
 	done
 }
 
+exit_install()
+{
+	exit 0
+}
 
 main()
 {
-	#install_menu;
-	#config_menu;
-	menu_setlanip
+	trap exit_install INT
+	config_menu;
 }
 
 
