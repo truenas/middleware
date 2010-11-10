@@ -166,11 +166,16 @@
                     </tr>
                 </tbody>
 	            <thead class="ghead">
+		            <td>Mountpoint</td>
 		            <td>Comment</td>
+		            <td>Action</td>
 		        </thead>
                 <tbody>
                 {% for n in nfs_share_list %}
                 <tr class="{% cycle 'odd' 'even' %}" id="{{ n.id }}">
+                    <td>
+                        {{ n.nfs_path.mp_path }}
+                    </td>
                     <td>
                         {{ n.nfs_comment }}
                     </td>
@@ -181,7 +186,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5">No shares defined</td>
+                    <td colspan="3">No shares defined</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -21,13 +21,13 @@ generate_exports()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT mp_path, nfs_allroot, nfs_network, nfs_alldirs, nfs_ro, nfs_quiet FROM sharing_nfs_share AS us LEFT OUTER JOIN storage_mountpoint AS mp ON us.nfs_path_id = mp.id ORDER BY us.id DESC" | \
 	while read mountpoint allroot network alldirs nfsro quiet; do
 		echo -n ${mountpoint}
-		if [ -n "${alldirs}" ]; then
+		if [ "${alldirs}" = "1" ]; then
 			echo -n " -alldirs"
 		fi
-		if [ -n "${nfsro}" ]; then
+		if [ "${nfsro}" = "1" ]; then
 			echo -n " -ro"
 		fi
-		if [ -n "${quiet}" ]; then
+		if [ "${quiet}" = "1" ]; then
 			echo -n " -quiet"
 		fi
 		# Current schema can only do ON and OFF.

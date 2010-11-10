@@ -121,6 +121,19 @@ _bool_config()
 	done
 }
 
+# _count_config /variable/ /table/ /field/ /where/
+_count_config()
+{
+	local count value
+	count=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT($3) FROM $2 WHERE $3$4"`
+	if [ "${count}" -gt "0" ]; then
+		value="YES"
+	else
+		value="NO"
+	fi
+	echo $1=\"${value}\"
+}
+
 # _bool_svcconfig /variable/ /service_name/
 _bool_svcconfig()
 {
@@ -170,6 +183,8 @@ _gen_conf()
 	_bool_svcconfig rsyncd_enable rsync
 	_bool_svcconfig bsnmpd_enable snmp
 	_bool_svcconfig sshd_enable ssh
+
+	_count_config zfs_enable storage_volume vol_fstype =\'zfs\'
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT rcc_varname, rcc_varvalue FROM system_rcconf ORDER BY id ASC" | tr \| =
 }
