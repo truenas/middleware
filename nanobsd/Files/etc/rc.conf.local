@@ -172,8 +172,7 @@ _gen_conf()
 
 	## Daemons
 	_bool_config cron_enable system_cronjob cron_enable
-	## TODO: Need to make this a || logic.
-	_bool_config smartd_enable storage_disk disk_togglesmart
+	_count_config smartd_enable storage_disk disk_togglesmart =1
 	_bool_svcconfig netatalk_enable afp
 	_bool_svcconfig afpd_enable afp
 	_bool_svcconfig cnid_metad_enable afp
