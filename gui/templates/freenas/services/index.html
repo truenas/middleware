@@ -11,7 +11,7 @@
             dojo.connect(dijit.byId("shutdown_button"), "onClick", shutdownDlg, "show");
             });
     function toggle_service(obj) {
-        window.location = '/services/toggle/' + obj.name + '/';
+        obj.src = '/services/toggle/' + obj.name + '/';
     }
 </script>
 {% endblock %}
@@ -82,7 +82,7 @@
                     <strong>Windows Shares</strong>
                 </td>
                 <td>
-                    <input id="cifs_toggle" name="cifs_toggle" dojoType="dijit.form.CheckBox" checked="{% for s in srv %}{% if s.srv_service == "cifs" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
+		    <img id="cifs_toggle" name="cifs_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "cifs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <button id="cifs_settings" dojoType="dijit.form.Button" type="button">
@@ -98,7 +98,7 @@
                     <strong>Apple Shares</strong>
                 </td>
                 <td>
-                    <input id="afp_toggle" name="afp_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "afp" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
+		    <img id="afp_toggle" name="afp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "afp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <button id="afp_settings" dojoType="dijit.form.Button" type="button">
@@ -114,7 +114,7 @@
                     <strong>UNIX Shares</strong>
                 </td>
                 <td>
-                    <input id="nfs_toggle" name="nfs_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "nfs" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
+		    <img id="nfs_toggle" name="nfs_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "nfs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <button id="nfs_settings" dojoType="dijit.form.Button" type="button">
@@ -130,7 +130,7 @@
                     <strong>Unison - Replication</strong>
                 </td>
                 <td>
-                    <input id="unison_toggle" name="unison_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "unison" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
+		    <img id="unison_toggle" name="unison_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "unison" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <button id="unison_settings" dojoType="dijit.form.Button" type="button">
@@ -147,7 +147,7 @@
                     <strong>iSCSI</strong>
                 </td>
                 <td>
-                    <input id="iscsi_toggle" name="iscsi_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "iscsi" %}{{ s.srv_enable }}{% endif %}{% endfor %}">
+		    <img id="iscsi_toggle" name="iscsi_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "iscsi" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <button id="iscsi_settings" dojoType="dijit.form.Button" type="button">
@@ -164,7 +164,7 @@
                     <strong>Dynamic DNS</strong>
                 </td>
                 <td>
-                    <input id="dyndns_toggle" name="dyndns_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "dyndns" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
+		    <img id="dyndns_toggle" name="dyndns_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "dyndns" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <button id="dyndns_settings" dojoType="dijit.form.Button" type="button">
@@ -181,7 +181,7 @@
                     <strong>SNMP</strong>
                 </td>
                 <td>
-                    <input id="snmp_toggle" name="snmp_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "snmp" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
+		    <img id="snmp_toggle" name="snmp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "snmp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <button id="snmp_settings" dojoType="dijit.form.Button" type="button">
@@ -197,7 +197,7 @@
                     <strong>UPS</strong>
                 </td>
                 <td>
-                    <input id="ups_toggle" name="ups_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "ups" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
+		    <img id="ups_toggle" name="ups_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ups" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <button id="ups_settings" dojoType="dijit.form.Button" type="button">
@@ -214,7 +214,7 @@
                     <strong>Bit Torrent</strong>
                 </td>
                 <td>
-                    <input id="bt_toggle" name="bt_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "bt" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
+		    <img id="bt_toggle" name="bt_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "bt" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <button id="bt_settings" dojoType="dijit.form.Button" type="button">
@@ -231,7 +231,7 @@
                     <strong>Web Server</strong>
                 </td>
                 <td>
-                    <input id="httpd_toggle" name="httpd_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "httpd" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
+		    <img id="httpd_toggle" name="httpd_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "httpd" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <button id="httpd_settings" dojoType="dijit.form.Button" type="button">
@@ -248,7 +248,7 @@
                     <strong>FTP</strong>
                 </td>
                 <td>
-                    <input id="ftp_toggle" name="ftp_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "ftp" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
+		    <img id="ftp_toggle" name="ftp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <button id="ftp_settings" dojoType="dijit.form.Button" type="button">
@@ -264,7 +264,7 @@
                     <strong>TFTP</strong>
                 </td>
                 <td>
-                    <input id="tftp_toggle" name="tftp_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "tftp" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
+		    <img id="tftp_toggle" name="tftp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "tftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <button id="tftp_settings" dojoType="dijit.form.Button" type="button">
@@ -280,7 +280,7 @@
                     <strong>SSH</strong>
                 </td>
                 <td>
-                    <input id="ssh_toggle" name="ssh_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "ssh" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
+		    <img id="ssh_toggle" name="ssh_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ssh" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <button id="ssh_settings" dojoType="dijit.form.Button" type="button">
@@ -296,7 +296,7 @@
                     <strong>Active Directory</strong>
                 </td>
                 <td>
-                    <input id="ad_toggle" name="ad_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "ad" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
+		    <img id="ad_toggle" name="ad_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ad" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <button id="ad_settings" dojoType="dijit.form.Button" type="button">
@@ -314,7 +314,7 @@
                     <strong>LDAP</strong>
                 </td>
                 <td>
-                    <input id="ldap_toggle" name="ldap_toggle" dojoType="dijit.form.CheckBox" checked="{% for s  in srv %}{% if s.srv_service == "ldap" %}{{ s.srv_enable }}{% endif %}{% endfor %}" onChange="toggle_service(this)">
+		    <img id="ldap_toggle" name="ldap_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ldap" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <button id="ldap_settings" dojoType="dijit.form.Button" type="button">

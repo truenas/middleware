@@ -169,7 +169,7 @@ class VolumeWizard(FormWizard):
             diskobj.save()
 
 	notifier().init("volume", volume.id)
-        return HttpResponseRedirect('/')
+        return HttpResponseRedirect('/storage/')
 
 # Wrapper for the wizard.  Without the wrapper we end up
 # messing with data in the global urls object which makes

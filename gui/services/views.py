@@ -155,5 +155,9 @@ def servicesToggleView(request, formname):
     # forcestop then start to make sure the service is of the same
     # status.
     notifier().restart(changing_service)
-    return HttpResponseRedirect('/services/')
+    if svc_entry.srv_enable == 1:
+        return HttpResponseRedirect('/freenas/media/images/ui/on.png')
+    else:
+        return HttpResponseRedirect('/freenas/media/images/ui/off.png')
+
 
