@@ -777,7 +777,7 @@ config_menu()
 		echo "6) Shell"
 		echo "7) Reboot system"
 		echo "8) Shutdown system"
-		echo "9) Install/Upgrade to hard drive/flash device, etc." ;;
+		echo "9) Install/Upgrade to hard drive/flash device, etc."
 		echo " "
 
 		read -p "Enter a number: " _number
@@ -809,4 +809,4 @@ main()
 }
 
 
-main;
+main
