@@ -1,9 +1,7 @@
 #!/bin/sh
 
-. /.profile
-
-. include/db.sh
-. include/net.sh
+. /etc/ix/db.sh
+. /etc/ix/net.sh
 
 
 get_product_name()

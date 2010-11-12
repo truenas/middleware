@@ -1,8 +1,14 @@
-#!/bin/sh
+#!/bin/sh -x
 
 # This script creates a bootable LiveCD iso from a nanobsd image
 
-trap make_pristine 1 2 3 6
+root=$(pwd)
+: ${FREENAS_ARCH=$(uname -p)}
+export FREENAS_ARCH
+export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
+: ${REVISION=`svnversion ${root} | tr -d M`}
+export NANO_NAME="FreeNAS-8r${REVISION}-${FREENAS_ARCH}"
+export NANO_IMGNAME="${NANO_NAME}.full"
 
 main()
 {
@@ -13,87 +19,60 @@ main()
     fi
 
     # Paths that may need altering on the build system
-    IMGFILE="/home/jpaetzel/FreeNAS-8r5375-amd64.full.gz" # The FreeNAS image
-    BOOTFILE="/home/jpaetzel/ix2/build/files/cd.img" # The image used to make the CD
-    TEMP_IMGFILE="/usr/newfile" # Scratch file for image
-    INSTALL_SH="/home/jpaetzel/ix2/build/files/install.sh"
-    RC_FILE="/home/jpaetzel/ix2/build/files/rc"
-    RESCUE_TAR="/home/jpaetzel/ix2/build/files/rescue.tar"
+    IMGFILE="${NANO_OBJ}/$NANO_IMGNAME"
+    TEMP_IMGFILE="${NANO_OBJ}/_.imgfile" # Scratch file for image
+    ETC_FILES="$root/build/files"
 
     # Various mount points needed to build the CD, adjust to taste
-    STAGEDIR="/tmp/stage" # Scratch location for making filesystem image
-    ISODIR="/tmp/iso" # Directory ISO is rolled from
-    SRC_MNTPOINT="/mnt" # Scratch mountpoint where the image will be dissected
-    DEST_MNTPOINT="/mnt2" # Destination mountpoint for image
+    STAGEDIR="${NANO_OBJ}/_.stage" # Scratch location for making filesystem image
+    ISODIR="${NANO_OBJ}/_.isodir" # Directory ISO is rolled from
+    INSTALLUFSDIR="${NANO_OBJ}/_.instufs" # Scratch mountpoint where the image will be dissected
 
-    OUTPUT="fn2.iso" # Output file of mkisofs
+    OUTPUT="${NANO_OBJ}/$NANO_IMGNAME.iso" # Output file of mkisofs
 
     # A command forged by the gods themselves, change at your own risk
     MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
                  -allow-multidot -hide boot.catalog -o ${OUTPUT} -no-emul-boot \
                  -b boot/cdboot ${ISODIR}"
 
-    # END OF CONFIGURATION SECTION
-    BOOTFILE_MD=`md5 ${BOOTFILE} | awk '{print $4}'`
-
     cleanup
-    prep_imgfile_dest
 
     mkdir -p ${STAGEDIR}/dev
     mkdir -p ${ISODIR}/data
 
-    # Do this early because we are going to be mangling the image.
-    # Please beware that interrupting this command with ctrl-c will
-    # cause cleanup() to run, which attempts to restore the original
-    # image.  If this copy isn't completed bad things can happen.  Moral
-    # of the story: keep a pristine image around.
+    # Create a quick and dirty nano image from the world tree
+    mkdir -p ${INSTALLUFSDIR}
+    tar -cf - -C ${NANO_OBJ}/_.w --exclude local . | tar -xvf - -C ${INSTALLUFSDIR}
+    
+    # copy /rescue and /boot from the image to the iso
+    tar -cf - -C ${INSTALLUFSDIR} rescue | tar -xvf - -C ${STAGEDIR}
+    tar -cf - -C ${INSTALLUFSDIR} boot | tar -xvf - -C ${ISODIR}
+    xz --compress -9 < ${IMGFILE} > ${ISODIR}/FreeNAS-${FREENAS_ARCH}-embedded.xz
 
-    cp ${BOOTFILE} ${BOOTFILE}.orig
+    echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
+    echo 'root_rw_mount="NO"' >> ${INSTALLUFSDIR}/etc/rc.conf
+    sed -i "" -e '/^sshd/d;/^light/d;/^ntpd/d' ${INSTALLUFSDIR}/etc/rc.conf
+    echo 'cron_enable="NO"' >> ${INSTALLUFSDIR}/etc/rc.conf
+    echo 'syslogd_enable="NO"' >> ${INSTALLUFSDIR}/etc/rc.conf
+    echo 'inetd_enable="NO"' >> ${INSTALLUFSDIR}/etc/rc.conf
+    echo 'devd_enable="NO"' >> ${INSTALLUFSDIR}/etc/rc.conf
+    echo 'newsyslog_enable="NO"' >> ${INSTALLUFSDIR}/etc/rc.conf
+    (cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
+    rm ${INSTALLUFSDIR}/etc/rc.conf.local
+    rm ${INSTALLUFSDIR}/etc/rc.d/ix-*
+    rm ${INSTALLUFSDIR}/etc/rc.d/motd
+    rm ${INSTALLUFSDIR}/etc/rc.d/ip6addrctl
+    rm ${INSTALLUFSDIR}/etc/rc.initdiskless
+    rm -rf ${INSTALLUFSDIR}/bin ${INSTALLUFSDIR}/sbin ${INSTALLUFSDIR}/usr/local
+    rm -rf ${INSTALLUFSDIR}/usr/bin ${INSTALLUFSDIR}/usr/sbin
+    ln -s ../../rescue ${INSTALLUFSDIR}/usr/bin
+    ln -s ../../rescue ${INSTALLUFSDIR}/usr/sbin
+    ln -s ../rescue ${INSTALLUFSDIR}/bin
+    ln -s ../rescue ${INSTALLUFSDIR}/sbin
+    tar -cf - -C${ETC_FILES} . | tar -xvf - -C ${INSTALLUFSDIR}/etc
 
-    # move /boot from the image to the iso
-    md=`mdconfig -a -t vnode -f ${BOOTFILE}`
-    mount /dev/${md}s1a ${SRC_MNTPOINT}
-
-    rm -rf ${SRC_MNTPOINT}/rescue
-    mkdir ${SRC_MNTPOINT}/rescue
-    mkdir ${STAGEDIR}/rescue
-    tar -xvf ${RESCUE_TAR} -C ${SRC_MNTPOINT}/rescue
-    tar -xvf ${RESCUE_TAR} -C ${STAGEDIR}/rescue
-    mv ${SRC_MNTPOINT}/boot ${ISODIR}/
-    cp ${IMGFILE} ${ISODIR}/FreeNAS-amd64-embedded.gz
-
-    echo "#/dev/md0 / ufs ro 0 0" > ${SRC_MNTPOINT}/etc/fstab
-    echo 'root_rw_mount="NO"' >> ${SRC_MNTPOINT}/etc/rc.conf
-    sed -i "" -e 's/^\(sshd.*\)".*"/\1"NO"/' ${SRC_MNTPOINT}/etc/rc.conf
-    sed -i "" -e 's/^\(light.*\)".*"/\1"NO"/' ${SRC_MNTPOINT}/etc/rc.conf
-    echo 'cron_enable="NO"' >> ${SRC_MNTPOINT}/etc/rc.conf
-    echo 'syslogd_enable="NO"' >> ${SRC_MNTPOINT}/etc/rc.conf
-    echo 'inetd_enable="NO"' >> ${SRC_MNTPOINT}/etc/rc.conf
-    echo 'devd_enable="NO"' >> ${SRC_MNTPOINT}/etc/rc.conf
-    echo 'newsyslog_enable="NO"' >> ${SRC_MNTPOINT}/etc/rc.conf
-    # Had to hack pc-sysinstall to install to /rescue, troubleshoot why
-    (cd /home/jpaetzel/pc-sysinstall && make install DESTDIR=${SRC_MNTPOINT})
-    rm ${SRC_MNTPOINT}/etc/rc.conf.local
-    rm ${SRC_MNTPOINT}/etc/rc.d/ix-*
-    rm ${SRC_MNTPOINT}/etc/rc.d/motd
-    rm ${SRC_MNTPOINT}/etc/rc.d/ip6addrctl
-    rm ${SRC_MNTPOINT}/etc/rc.initdiskless
-    rm -rf ${SRC_MNTPOINT}/bin ${SRC_MNTPOINT}/sbin ${SRC_MNTPOINT}/usr/local
-    rm -rf ${SRC_MNTPOINT}/usr/bin ${SRC_MNTPOINT}/usr/sbin
-    ln -s ../../rescue ${SRC_MNTPOINT}/usr/bin
-    ln -s ../../rescue ${SRC_MNTPOINT}/usr/sbin
-    ln -s ../rescue ${SRC_MNTPOINT}/bin
-    ln -s ../rescue ${SRC_MNTPOINT}/sbin
-    cp ${RC_FILE} ${SRC_MNTPOINT}/etc/
-    cp ${INSTALL_SH} ${SRC_MNTPOINT}/etc/
-    chmod 755 ${SRC_MNTPOINT}/etc/install.sh
-    chown root:wheel ${SRC_MNTPOINT}/etc/install.sh
-
-    dump -0Laf - /dev/${md}s1a | ( cd ${DEST_MNTPOINT} && restore -rf -)
-    unmount ${SRC_MNTPOINT} ${md}
-    rm ${DEST_MNTPOINT}/restore*
-    unmount ${DEST_MNTPOINT} ${md_tmp}
     # Compress what's left of the image after mangling it
+    makefs -b 10%  ${TEMP_IMGFILE} ${INSTALLUFSDIR}
     mkuzip -o ${ISODIR}/data/base.ufs.uzip ${TEMP_IMGFILE}
 
     # Magic scripts for the LiveCD
@@ -144,7 +123,7 @@ exit 0
 EOF
 
     makefs -b 10% ${ISODIR}/boot/memroot.ufs ${STAGEDIR}
-    gzip ${ISODIR}/boot/memroot.ufs
+    gzip -9 ${ISODIR}/boot/memroot.ufs
 
     # More magic scripts for the LiveCD
     cat > ${ISODIR}/boot/loader.conf << EOF
@@ -166,81 +145,15 @@ opensolaris_load="YES"
 zfs_load="YES"
 geom_mirror_load="YES"
 EOF
-
     eval ${MKISOFS_CMD}
 }
 
 cleanup()
 {
     # Clean up directories used to create the liveCD
-    if [ -d ${STAGEDIR} ]; then
-        rm -rf ${STAGEDIR}
-    fi
-
-    if [ -d ${ISODIR} ]; then
-        rm -rf ${ISODIR}
-    fi
-}
-
-make_pristine()
-{
-    # Put everything back the way it was before this script was run
-    cleanup
-    unmount ${SRC_MNTPOINT} ${md}
-    unmount ${DEST_MNTPOINT} ${md_tmp}
-
-    CURR_BOOTFILE_MD=`md5 ${BOOTFILE} | awk '{print $4}'`
-    if [ "${CURR_BOOTFILE_MD}" = "${BOOTFILE_MD}" ]; then
-        if [ -f ${BOOTFILE}.orig ]; then
-            rm ${BOOTFILE}.orig
-        fi
-        exit
-    fi
-
-
-    if [ -f ${BOOTFILE}.orig ]; then
-        MD=`md5 ${BOOTFILE}.orig | awk '{print $4}'`
-        if [ ${MD} = ${BOOTFILE_MD} ]; then
-            mv ${BOOTFILE}.orig ${BOOTFILE}
-        fi
-    fi
-}
-
-unmount()
-{
-    local MNTPOINT=$1
-    local MD=$2
-
-    md_val=`echo ${MD} | sed s/^md//`
-    df ${MNTPOINT} | grep ${MNTPOINT} > /dev/null
-    if [ "$?" = "0" ]; then
-        while [ 1 ]
-        do
-            umount ${MNTPOINT}
-            if  [ "$?" = "0" ]; then
-                break
-            fi
-            echo "umount of ${MNTPOINT} failed! Trying again"
-            sleep 3
-        done
-    fi
-    mdconfig -l -u ${md_val}
-    if [ "$?" = "0" ]; then
-        mdconfig -d -u ${md_val}
-    fi
-
-}
-
-prep_imgfile_dest()
-{
-    if [ -f ${TEMP_IMGFILE} ]; then
-        rm ${TEMP_IMGFILE}
-    fi
-    dd if=/dev/zero of=${TEMP_IMGFILE} bs=1m count=1 seek=45
-    md_tmp=`mdconfig -a -t vnode -f ${TEMP_IMGFILE}`
-    newfs /dev/${md_tmp}
-    mount /dev/${md_tmp} ${DEST_MNTPOINT}
+    rm -rf ${STAGEDIR}
+    rm -rf ${ISODIR}
+    rm -rf ${INSTALLUFSDIR}
 }
 
 main
-make_pristine
