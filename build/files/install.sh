@@ -777,12 +777,7 @@ config_menu()
 		echo "6) Shell"
 		echo "7) Reboot system"
 		echo "8) Shutdown system"
-
-		case "${PLATFORM}" in
-			*-live[cC][dD])
-				echo "9) Install/Upgrade to hard drive/flash device, etc." ;;
-		esac
-
+		echo "9) Install/Upgrade to hard drive/flash device, etc." ;;
 		echo " "
 
 		read -p "Enter a number: " _number
