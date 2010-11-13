@@ -1,7 +1,5 @@
-Index: tools/tools/nanobsd/nanobsd.sh
-===================================================================
---- tools/tools/nanobsd/nanobsd.sh	(revision 211309)
-+++ tools/tools/nanobsd/nanobsd.sh	(working copy)
+--- FreeBSD/src/tools/tools/nanobsd/nanobsd.sh.orig	2010-06-13 20:09:06.000000000 -0600
++++ FreeBSD/src/tools/tools/nanobsd/nanobsd.sh	2010-11-12 17:50:35.000000000 -0700
 @@ -131,9 +131,15 @@
  # Progress Print level
  PPLEVEL=3
@@ -65,13 +63,13 @@ Index: tools/tools/nanobsd/nanobsd.sh
  
  	# Create first image
 -	newfs ${NANO_NEWFS} /dev/${MD}s1a
-+	populate_slice /dev/${MD}s1a ${NANO_WORLDDIR} ${MNT} "s1a"
-- 	mount /dev/${MD}s1a ${MNT}
-+ 	mount -o async /dev/${MD}s1a ${MNT}
+-	mount /dev/${MD}s1a ${MNT}
 -	df -i ${MNT}
 -	echo "Copying worlddir..."
 -	( cd ${NANO_WORLDDIR} && find . -print | cpio -dump ${MNT} )
 -	df -i ${MNT}
++	populate_slice /dev/${MD}s1a ${NANO_WORLDDIR} ${MNT} "s1a"
++ 	mount -o async /dev/${MD}s1a ${MNT}
  	echo "Generating mtree..."
  	( cd ${MNT} && mtree -c ) > ${NANO_OBJ}/_.mtree
  	( cd ${MNT} && du -k ) > ${NANO_OBJ}/_.du
