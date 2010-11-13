@@ -1,5 +1,5 @@
---- FreeBSD/src/tools/tools/nanobsd/nanobsd.sh.orig	2010-06-13 20:09:06.000000000 -0600
-+++ FreeBSD/src/tools/tools/nanobsd/nanobsd.sh	2010-11-12 17:50:35.000000000 -0700
+--- tools/tools/nanobsd/nanobsd.sh.orig	2010-06-13 20:09:06.000000000 -0600
++++ tools/tools/nanobsd/nanobsd.sh	2010-11-12 17:50:35.000000000 -0700
 @@ -131,9 +131,15 @@
  # Progress Print level
  PPLEVEL=3
