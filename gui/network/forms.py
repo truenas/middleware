@@ -26,7 +26,7 @@
 # $FreeBSD$
 #####################################################################
 
-from django.forms import ModelForm                             
+from django.forms import ModelForm, ValidationError
 from django.shortcuts import render_to_response                
 from freenasUI.network.models import *                         
 from freenasUI.middleware.notifier import notifier
@@ -49,6 +49,35 @@ class InterfacesForm(ModelForm):
 class GlobalConfigurationForm(ModelForm):
     class Meta:
         model = GlobalConfiguration
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        nameserver1 = cleaned_data.get("gc_nameserver1")
+        nameserver2 = cleaned_data.get("gc_nameserver2")
+        nameserver3 = cleaned_data.get("gc_nameserver3")
+        if nameserver3 != "":
+            if nameserver2 == "":
+                msg = u"Must fill out second name server before filling out nameserver 3"
+                self._errors["gc_nameserver3"] = self.error_class([msg])
+                msg = u"Required when using third nameserver"
+                self._errors["gc_nameserver2"] = self.error_class([msg])
+                del cleaned_data["gc_nameserver2"]
+            if nameserver1 == "":
+                msg = u"Must fill out first name server before filling out nameserver 3"
+                self._errors["gc_nameserver3"] = self.error_class([msg])
+                msg = u"Required when using third nameserver"
+                self._errors["gc_nameserver1"] = self.error_class([msg])
+                del cleaned_data["gc_nameserver1"]
+            if nameserver1 == "" or nameserver2 == "":
+                del cleaned_data["gc_nameserver3"]
+        elif nameserver2 != "":
+            if nameserver1 == "":
+                del cleaned_data["gc_nameserver2"]
+                msg = u"Must fill out first name server before filling out nameserver 2"
+                self._errors["gc_nameserver2"] = self.error_class([msg])
+                msg = u"Required when using third nameserver"
+                self._errors["gc_nameserver1"] = self.error_class([msg])
+                del cleaned_data["gc_nameserver1"]
+        return cleaned_data
 
 class VLANForm(ModelForm):
     class Meta:

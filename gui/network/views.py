@@ -47,38 +47,43 @@ import os, commands
 
 @login_required
 def network(request, objtype = None):
+    gc = GlobalConfigurationForm(data = GlobalConfiguration.objects.order_by("-id").values()[0])
+    interfaces = InterfacesForm()
+    vlan = VLANForm()
+    lagg = LAGGForm()
+    staticroute = StaticRouteForm()
+    int_list = Interfaces.objects.order_by("-id").values()
+    vlan_list = VLAN.objects.order_by("-id").values()
+    lagg_list = LAGG.objects.order_by("-id").values()
+    sr_list = StaticRoute.objects.order_by("-id").values()
     if request.method == 'POST':
         if objtype == 'configuration':
             gc = GlobalConfigurationForm(request.POST)
-            gc.save()
+            if gc.is_valid():
+                gc.save()
+                return HttpResponseRedirect('/network/')
         elif objtype == 'int':
             interfaces = InterfacesForm(request.POST)
-            interfaces.save()
+            if interfaces.is_valid():
+                interfaces.save()
+                return HttpResponseRedirect('/network/')
         elif objtype == 'vlan':
             vlan = VLANForm(request.POST)
-            vlan.save()
+            if vlan.is_valid():
+                vlan.save()
+                return HttpResponseRedirect('/network/')
         elif objtype == 'lagg':
             lagg = LAGGForm(request.POST)
-            lagg.save()
+            if lagg.is_valid():
+                lagg.save()
+                return HttpResponseRedirect('/network/')
         elif objtype == 'sr':
             staticroute = StaticRouteForm(request.POST)
-            staticroute.save()
+            if staticroute.is_valid():
+                staticroute.save()
         else:
             raise Http404() 
-        return HttpResponseRedirect('/network/')
-    else:
-        gc_config = GlobalConfiguration.objects.order_by("-id").values()[:1]
-        gc = GlobalConfigurationForm(data = GlobalConfiguration.objects.order_by("-id").values()[0])
-        interfaces = InterfacesForm()
-        vlan = VLANForm()
-        lagg = LAGGForm()
-        staticroute = StaticRouteForm()
-        int_list = Interfaces.objects.order_by("-id").values()
-        vlan_list = VLAN.objects.order_by("-id").values()
-        lagg_list = LAGG.objects.order_by("-id").values()
-        sr_list = StaticRoute.objects.order_by("-id").values()
     variables = RequestContext(request, {
-        'gc_config': gc_config,
         'gc': gc,
         'interfaces': interfaces,
         'vlan': vlan,

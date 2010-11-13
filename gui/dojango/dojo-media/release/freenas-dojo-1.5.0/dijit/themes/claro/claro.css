@@ -2733,10 +2733,10 @@ table.dojoTabular tfoot tr td {
 	background-image: none;
 }
 .claro .dijitDialog {
-	border: 1px solid #769dc0;
-	box-shadow:0px 1px 5px rgba(0,0,0,0.25);
-	-webkit-box-shadow:0px 1px 5px rgba(0,0,0,0.25);
-	-moz-box-shadow: 0px 1px 5px rgba(0,0,0,0.25);
+	border: 1px solid #373535;
+	box-shadow:0px 1px 5px #1d1d1d;
+	-webkit-box-shadow:0px 1px 5px #383838;
+	-moz-box-shadow: 0px 1px 5px #383838;
 } 
 .claro .dijitDialogPaneContent {
 	background: #fff repeat-x top left;
@@ -2762,16 +2762,19 @@ table.dojoTabular tfoot tr td {
 }
 .claro .dijitDialogTitleBar {
 	
-	border: 1px solid #fff;
-	border-top:none;
-	background-color: #abd6ff;
+	border: 1px solid #373535;
+	background-color: #242424;
 	background-image: url(images/titlebar.png);
+    background-position:-100px 100%;
 	background-repeat:repeat-x;
 	padding: 5px 7px 4px 7px;
 }
 .claro .dijitDialogTitle {
 	
-	padding: 0px 1px;
+	padding: 0px 2px;
+    color:#fafafa;
+    text-shadow:0 -1px 1px #000000;
+    font-weight:bold;
 	font-size:1.091em;
 }
 .claro .dijitDialogCloseIcon {
@@ -2779,6 +2782,7 @@ table.dojoTabular tfoot tr td {
 	background: url(images/dialogCloseIcon.png);
 	background-repeat:no-repeat;
 	position: absolute;
+	background-position:-21px;
 	right: 5px;
 	height: 15px;
 	width: 21px;
@@ -2891,7 +2895,7 @@ table.dojoTabular tfoot tr td {
 	height:14px;
 }
 .claro .dijitDialogUnderlay {
-	background: #fff;
+	background: #1d1d1d;
 }
 .claro .dijitAccordionContainer {
 	border:none;

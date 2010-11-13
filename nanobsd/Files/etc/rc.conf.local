@@ -77,7 +77,7 @@ _host_config()
 {
 	local IFS=\|
 	local hostname domainname nameserver1 nameserver2 nameserver3 ipv4gateway ipv6gateway
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT gc_hostname, gc_domain, gc_nameserver1, gc_nameserver2, gc_nameserver3, gc_ipv4gateway, gc_ipv6gateway FROM network_globalconfiguration ORDER BY -id DESC LIMIT 1" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT gc_hostname, gc_domain, gc_nameserver1, gc_nameserver2, gc_nameserver3, gc_ipv4gateway, gc_ipv6gateway FROM network_globalconfiguration ORDER BY -id LIMIT 1" | \
 	while read hostname domainname nameserver1 nameserver2 nameserver3 ipv4gateway ipv6gateway; do
 		echo hostname=\"${hostname}.${domainname}\"
 		if [ -n "${ipv4gateway}" ]; then
