@@ -17,9 +17,7 @@ get_product_name()
 
 get_product_arch()
 {
-	local _arch
-
-	_arch="amd64"
+	local _arch=$(uname -p)
 	VAL="${_arch}"
 
 	export VAL
@@ -61,6 +59,7 @@ build_config()
         local _disk=$1
         local _image=$2
         local _config_file=$3
+	local _arch=$(uname -p)
 
         cat << EOF > "${_config_file}"
 # Added to stop pc-sysinstall from complaining
@@ -72,7 +71,7 @@ packageType=tar
 
 disk0=${_disk}
 partition=image
-image=/cdrom/FreeNAS-amd64-embedded.xz
+image=/cdrom/FreeNAS-${_arch}-embedded.xz
 bootManager=bsd
 commitDiskPart
 EOF
