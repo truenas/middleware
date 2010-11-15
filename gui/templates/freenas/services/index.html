@@ -2,14 +2,6 @@
 
 {% block dojango_header_extra %}
 <script type="text/javascript">
-    dojo.addOnLoad(function() {
-            rebootDlg = dijit.byId("rebootDialog");
-            dojo.connect(dijit.byId("reboot_button"), "onClick", rebootDlg, "show");
-            });
-    dojo.addOnLoad(function() {
-            shutdownDlg = dijit.byId("shutdownDialog");
-            dojo.connect(dijit.byId("shutdown_button"), "onClick", shutdownDlg, "show");
-            });
     function toggle_service(obj) {
         obj.src = '/services/toggle/' + obj.name + '/';
     }

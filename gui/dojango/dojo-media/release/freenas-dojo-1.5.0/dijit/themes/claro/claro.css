@@ -665,6 +665,7 @@ body .dijitAlignRight {
 }
 body .dijitAlignClient { position: absolute; }
 .dijitBorderContainer, .dijitBorderContainerNoGutter {
+    background:#ECEFF0;
 	position:relative;
 	overflow: hidden;
 }

@@ -64,7 +64,7 @@
                 <tbody>
                     <tr>
                         {% if cifs_share_list %}
-                        <h5>Active Shares: <strong><a name="#windows">{{ cifs_share_list|length }}</a></strong></h5>
+                        <h5>Active Shares: <strong>{{ cifs_share_list|length }}</strong></h5>
                         {% else %}
                         There are no active Windows Shares.
                         {% endif %}
@@ -113,7 +113,7 @@
                 <tbody>
                     <tr>
                         {% if afp_share_list %}
-                        <h5>Active Shares: <strong><a name="#apple">{{ afp_share_list|length }}</a></strong></h5>
+                        <h5>Active Shares: <strong>{{ afp_share_list|length }}</strong></h5>
                         {% else %}
                         There are no active Apple Shares.
                         {% endif %}

@@ -56,6 +56,7 @@ def network(request, objtype = None):
     vlan_list = VLAN.objects.order_by("-id").values()
     lagg_list = LAGG.objects.order_by("-id").values()
     sr_list = StaticRoute.objects.order_by("-id").values()
+    errform = ""
     if request.method == 'POST':
         if objtype == 'configuration':
             gc = GlobalConfigurationForm(request.POST)
@@ -67,20 +68,28 @@ def network(request, objtype = None):
             if interfaces.is_valid():
                 interfaces.save()
                 return HttpResponseRedirect('/network/')
+            else:
+                errform = 'int'
         elif objtype == 'vlan':
             vlan = VLANForm(request.POST)
             if vlan.is_valid():
                 vlan.save()
                 return HttpResponseRedirect('/network/')
+            else:
+                errform = 'vlan'
         elif objtype == 'lagg':
             lagg = LAGGForm(request.POST)
             if lagg.is_valid():
                 lagg.save()
                 return HttpResponseRedirect('/network/')
+            else:
+                errform = 'lagg'
         elif objtype == 'sr':
             staticroute = StaticRouteForm(request.POST)
             if staticroute.is_valid():
                 staticroute.save()
+            else:
+                errform = 'sr'
         else:
             raise Http404() 
     variables = RequestContext(request, {
@@ -93,6 +102,7 @@ def network(request, objtype = None):
         'vlan_list': vlan_list,
         'lagg_list': lagg_list,
         'sr_list': sr_list,
+        'errform': errform,
     })
     return render_to_response('network/index.html', variables)
 
