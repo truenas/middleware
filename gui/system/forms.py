@@ -42,7 +42,7 @@ class SettingsForm(ModelForm):
         model = Settings
     def save(self):
         super(SettingsForm, self).save()
-        notifier().reload("general")
+        notifier().reload("timeservices")
 
 class PasswordForm(ModelForm):
     class Meta:

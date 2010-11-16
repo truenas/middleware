@@ -33,11 +33,10 @@ from freenasUI.system.views import *
 #django_nav.autodiscover()
 
 urlpatterns = patterns('',
+    (r'^(?P<objtype>\w+)/$', index),
     (r'^reboot/$', reboot),
     (r'^shutdown/$', shutdown),
-    (r'^settings/$', settings),
     (r'^password/$', password),
-    (r'^advanced/$', advanced),
     (r'^email/$', email),
     (r'^proxy/$', proxy),
     (r'^swap/$', swap),

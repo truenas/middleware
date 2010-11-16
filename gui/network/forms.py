@@ -78,6 +78,11 @@ class GlobalConfigurationForm(ModelForm):
                 self._errors["gc_nameserver1"] = self.error_class([msg])
                 del cleaned_data["gc_nameserver1"]
         return cleaned_data
+    def save(self):
+        # TODO: new IP address should be added in a side-by-side manner
+	# or the interface wouldn't appear once IP was changed.
+        super(GlobalConfigurationForm, self).save()
+        notifier().reload("networkgeneral")
 
 class VLANForm(ModelForm):
     class Meta:

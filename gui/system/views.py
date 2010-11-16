@@ -43,7 +43,7 @@ from freenasUI.common.helperview import helperView
 import os, commands
 
 @login_required
-def index(request):
+def index(request, objtype = None):
     hostname = commands.getoutput("hostname")
     uname1 = os.uname()[0]
     uname2 = os.uname()[2]
@@ -52,16 +52,27 @@ def index(request):
     uptime = commands.getoutput("uptime | awk -F', load averages:' '{    print $1 }'")
     loadavg = commands.getoutput("uptime | awk -F'load averages:' '{     print $2 }'")
     top = os.popen('top').read()
-    settings = SettingsForm(request.POST)
-    advanced = AdvancedForm(request.POST)
+    settings = SettingsForm(data = Settings.objects.order_by("-id").values()[0])
+    advanced = AdvancedForm(data = Advanced.objects.order_by("-id").values()[0])
+    if request.method == 'POST':
+        if objtype == 'settings':
+            settings = SettingsForm(request.POST)
+            if settings.is_valid():
+                settings.save()
+                return HttpResponseRedirect('/')
+        elif objtype == 'advanced':
+            advanced = AdvancedForm(request.POST)
+            if advanced.is_valid():
+                advanced.save()
+                return HttpResponseRedirect('/')
+        else: 
+            raise Http404()
     try:
         d = open('/etc/version.freenas', 'r')
         freenas_build = d.read()
         d.close()
     except:
         freenas_build = "Unrecognized build (/etc/version.freenas        missing?)"
-    settings = SettingsForm()
-    advanced = AdvancedForm()
     variables = RequestContext(request, {
         'settings': settings,
         'advanced': advanced,

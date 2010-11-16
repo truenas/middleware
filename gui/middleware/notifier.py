@@ -91,6 +91,15 @@ class notifier:
 				f(objectid)
 			except:
 				raise
+	def destroy(self, what, objectid = None):
+		if objectid == None:
+			raise ValueError("Calling destroy without id")
+		else:
+			try:
+				f = getattr(self, '_destroy_' + what)
+				f(objectid)
+			except:
+				raise
 	def start(self, what):
 		""" Start the service specified by "what".
 		
@@ -135,8 +144,13 @@ class notifier:
 		self.__system("/etc/netstart")
 	def _reload_named(self):
 		self.__system("/usr/sbin/service named reload")
-	def _reload_general(self):
+	def _reload_networkgeneral(self):
+		self.__system("/bin/hostname \"\"")
 		self.__system("/usr/sbin/service hostname quietstart")
+		self.__system("/usr/sbin/service routing restart")
+	def _reload_timeservices(self):
+		self.__system("/usr/sbin/service ix-ntpd quietstart")
+		self.__system("/usr/sbin/service ntpd restart")
 	def _reload_ssh(self):
 		self.__system("/usr/sbin/service ix-sshd quietstart")
 		self.__system("/usr/sbin/service sshd restart")
@@ -247,25 +261,38 @@ class notifier:
 			disk = c.fetchone()
 			self.__gpt_labeldisk(type = "freebsd-ufs", devname = disk[0])
 			ufs_device = "/dev/ufs/" + disk[1]
+			# TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar generated automatically
+			self.__system("newfs -U -L %s /dev/%sp1" % (u_name, disk[0]))
 		else:
-			geom_vdev = geom_type
 			vdev_member_list = c.fetchall()
 			for disk in vdev_member_list:
 				geom_vdev += " /dev/" + disk[0]
+			self.__system("geom %s load" % (geom_type))
 			self.__system("geom %s label %s %s" % (geom_type, geom_name, geom_vdev))
 			ufs_device = "/dev/%s/%s" % (geom_type, geom_name)
+			self.__system("newfs -U -L %s %s" % (u_name, ufs_device))
 
-		# TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar generated automatically
-		ufs_device = "/dev/ufs/" + disk[1]
-		self.__system("newfs -U -L %s /dev/%sp1" % (u_name, disk[0]))
 	def __destroy_ufs_volume(self, c, u_id, u_name):
 		"""Internal procedure to destroy a UFS volume identified by volume id"""
-                c.execute("SELECT id FROM storage_diskgroup WHERE group_volume_id = ?", (u_id,))
-		ufs_volume_id = c.fetchone()
+                c.execute("SELECT id, group_type, group_name FROM storage_diskgroup WHERE group_volume_id = ?", (u_id,))
+		vgrp_row = c.fetchone()
+		ufs_volume_id = (vgrp_row[0],)
+		geom_type = vgrp_row[1]
+		geom_name = vgrp_row[2]
+                # Grab all disks from the group
 		c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE disk_group_id = ?", ufs_volume_id)
-		disk = c.fetchone()
-		self.__system("umount -f /dev/ufs/" + disk[1])
-		self.__gpt_unlabeldisk(devname = disk[0])
+		if geom_type == '':
+			disk = c.fetchone()
+			self.__system("umount -f /dev/ufs/" + u_name)
+			self.__gpt_unlabeldisk(devname = disk[0])
+		else:
+			self.__system("umount -f /dev/ufs/" + u_name)
+			self.__system("geom %s stop %s" % (geom_type, geom_name))
+			vdev_member_list = c.fetchall()
+			for disk in vdev_member_list:
+				disk_name = " /dev/" + disk[0]
+				self.__system("geom %s clear %s" % (geom_type, disk_name))
+
         def _init_volume(self, volume_id):
 		"""Initialize a volume designated by volume_id"""
                 c = self.__open_db()
@@ -280,6 +307,18 @@ class notifier:
 		else:
 			self.__create_ufs_volume(c, volume_id, volume[1])
 		self._reload_disk()
+        def _destroy_volume(self, volume_id):
+		"""Initialize a volume designated by volume_id"""
+                c = self.__open_db()
+		c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?", (volume_id,))
+		volume = c.fetchone()
+
+		if volume[0] == 'zfs':
+			self.__system("/sbin/mount -uw /")
+        		self.__destroy_zfs_volume(c = c, z_id = volume_id, z_name = volume[1])
+			self.__system("/sbin/mount -ur /")
+                elif volume[0] == 'ufs':
+			self.__destroy_ufs_volume(c = c, u_id = volume_id, u_name = volume[1])
         def _init_allvolumes(self):
                 c = self.__open_db()
                 # Create ZFS pools

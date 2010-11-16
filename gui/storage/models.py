@@ -29,6 +29,7 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.choices import *
+from freenasUI.middleware.notifier import notifier
 
 class Volume(models.Model):
     vol_name = models.CharField(
@@ -43,6 +44,13 @@ class Volume(models.Model):
             )
     class Meta:
         verbose_name = "Volume"
+    def delete(self):
+        notifier().destroy("volume", self.id)
+        # The framework would cascade delete all database items
+        # referencing this volume.
+        super(Volume, self).delete()
+	# Refresh the fstab
+        notifier().reload("disk")
     def __unicode__(self):
         return "%s (%s)" % (self.vol_name, self.vol_fstype)
 

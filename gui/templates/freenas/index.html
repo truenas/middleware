@@ -67,12 +67,14 @@
     </div>
     {% endif %}
 </div>
-{% include "freenas/system/submenu.html" %}
 {% endblock %}
 
 {% block dojango_content %}
+    <div dojoType="dijit.layout.ContentPane">
+        {% include "freenas/system/submenu.html" %}
+    </div>
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
-    <div dojoType="dijit.layout.ContentPane" title="System Information">
+    <div dojoType="dijit.layout.ContentPane" title="System Information" id="Information">
         <table>
 
             <tr>
@@ -131,7 +133,7 @@
     </div>
 
     <div dojoType="dijit.layout.ContentPane" title="Advanced">
-<form action="/" method="post">{% csrf_token %}
+<form action="system/advanced/" method="post">{% csrf_token %}
     <table class="config">
                 {% for field in advanced %}
                 <td>
