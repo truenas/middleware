@@ -1,32 +1,49 @@
 {% extends "base.html" %}
+{% block dojango_header_extra %}
+<script type="text/javascript">
+    function toggle_service(obj) {
+        obj.src = '/services/toggle/' + obj.name + '/';
+        }
+</script>
+{% endblock %}
 {% block content %}
-<div dojoType="dijit.MenuBar" id="navMenu">
+<div dojoType="dijit.MenuBar" id="navMenu" style="height:56px;">
 
-            <div dojoType="dijit.MenuBarItem" onClick="window.location='/'">
+            <div dojoType="dijit.MenuBarItem" onClick="window.location='/'" class="menu_icon">
+        <img src="/freenas/media/images/ui/system.png">
+        <br />
                 <div>
                     System 
                 </div>
             </div>
 
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'" class="menu_icon">
+        <img src="/freenas/media/images/ui/network.png">
+        <br />
         <span>
             Network 
         </span>
     </div>
 
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'" class=" dijitMenuItemSelected ">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'" class="menu_icon dijitMenuItemSelected ">
+        <img src="/freenas/media/images/ui/storage.png">
+        <br />
         <span>
             Storage 
         </span>
     </div>
 
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'" class="menu_icon">
+        <img src="/freenas/media/images/ui/sharing.png">
+        <br />
         <span>
             Sharing
         </span>
     </div>
 
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/services/'">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/services/'" class="menu_icon">
+        <img src="/freenas/media/images/ui/services.png">
+        <br />
         <span>
             Services
         </span>
@@ -34,19 +51,25 @@
 
 
     {% if user.is_authenticated %}
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" style="position:relative;float:right;font-weight:bold;">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" class="menu_icon" style="float:right;">
+        <img src="/freenas/media/images/ui/logout.png">
+        <br />
         <span>
             Log Out 
         </span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/password_change/'">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/password_change/'" class="menu_icon" style="float:right;">
+        <img src="/freenas/media/images/ui/account.png">
+        <br />
         <span>
             Account 
         </span>
     </div>
     {% else %}
 
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" style="position:relative;float:right;font-weight:bold;">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" class="menu_icon" style="font-weight:bold;">
+        <img src="/freenas/media/images/ui/login.png">
+        <br />
         <span>
             Log In
         </span>
@@ -57,7 +80,7 @@
 
 {% block dojango_content %}
 {% if user.is_authenticated %}
-<div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
+<div dojoType="dijit.layout.TabContainer" style="width:100%;padding-right:16px;" dolayout="false">
     <div dojoType="dijit.layout.ContentPane" title="Storage Wizard">
         {% ifequal step0|add:1 step_count  %}
             <h3>Review & Save</h3>
@@ -81,7 +104,28 @@
             <input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
             <input type="hidden" name="{{ max_step_field }}" value="{{ max_step }}" />
                 {{ previous_fields|safe }}
-                <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">
+<br />
+{% ifequal step0|add:1 step_count  %}
+    <table>
+        <tr>
+                <td><h4>NFS</h4></td>
+                <td><h4>AFP</h4></td>
+                <td><h4>CIFS</h4></td>
+            </tr>
+                <td>
+                    <img class="srv" id="nfs_toggle" name="nfs_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "nfs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img class="srv" id="afp_toggle" name="afp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "afp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img class="srv" id="cifs_toggle" name="cifs_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "cifs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+            </tr>
+        </table>
+{% else %}
+{% endifequal %}
+                <button style="padding:4px;margin-top:16px;" dojoType="dijit.form.Button" type="submit">
                     {% ifequal step0|add:1 step_count  %}
                         Save
                     {% else %} 
@@ -89,8 +133,10 @@
                     {% endifequal %}
                 </button>
         </form>
-       </div>
-</div>
+            </div>
+        </div>
+
+
 {% else %}
     <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
 {% endif %}

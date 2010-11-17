@@ -1,6 +1,13 @@
 #rebootDialog_underlay { background-color:#000; }
 #shutdownDialog_underlay { background-color:#FD0000; }
 #top_dialog_underlay { background-color:#000; }
+ul.radio {
+    list-style: none;
+}
+ul.radio li{
+    position:relative;
+    left:-25px;
+}
 div.menu_icon {
     width:50px;
     text-align:center;

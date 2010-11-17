@@ -38,6 +38,7 @@ from dojango.forms import fields, widgets
 from dojango.forms.fields import BooleanField
 from freenasUI.contrib.ext_formwizard import FormWizard
 from freenasUI.common.helperview import helperViewEm
+from freenasUI.common.widgets import RadioFieldRendererBulletless
 from freenasUI.services.models import services, CIFS, AFP, NFS 
 from freenasUI.services.forms import CIFSForm, AFPForm, NFSForm 
 
@@ -68,9 +69,9 @@ class VolumeWizard_VolumeNameTypeForm(forms.Form):
         known_disks = set([ x['disk_disks'] for x in Disk.objects.all().values('disk_disks') ])
         disklist = set(disklist).difference(known_disks)
         return disklist
-    volume_name = forms.CharField(max_length = 30)
-    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict))
-    volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict))
+    volume_name = forms.CharField(max_length = 30, label = 'Volume name')
+    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict, renderer=RadioFieldRendererBulletless), label = 'File System type')
+    volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks')
 
 # Step 2.  Creation of volumes manually is not supported.
 # This step only show up when more than 1 disks is being chosen.
