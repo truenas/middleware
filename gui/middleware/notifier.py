@@ -181,7 +181,7 @@ class notifier:
 		self.__system("/usr/sbin/service ix-nfsd quietstart")
 		self.__system("/usr/sbin/service nfsd quietstart")
 	def _restart_system(self):
-		self.__system("/sbin/shutdown -r now")
+		self.__system("/bin/sleep 3 && /sbin/shutdown -r now &")
 	def _stop_system(self):
 		self.__system("/sbin/shutdown -p now")
 	def _reload_cifs(self):

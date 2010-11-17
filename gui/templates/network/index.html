@@ -60,7 +60,7 @@
 {% if user.is_authenticated %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;height:400px;" >
     <div dojoType="dijit.layout.TabContainer" title="Network Settings" nested="true">
-        <div dojoType="dijit.layout.ContentPane" title="Global Configuration" selected="true">
+        <div dojoType="dijit.layout.ContentPane" title="Global Configuration"{% if focus_form == "gc" %} selected="true"{% endif %}>
             <form action="/network/global/configuration/" method="post">{% csrf_token %}
             <table class="config">
                 {% for field in gc %}
@@ -86,7 +86,7 @@
             </p>
             </form>
         </div>
-        <div dojoType="dijit.layout.ContentPane" title="Interfaces">
+        <div dojoType="dijit.layout.ContentPane" title="Interfaces"{% if focus_form == "int" %} selected="true"{% endif %}>
             <table class="grid">
 	            <thead class="header">
 		            <td>Interface</td>
@@ -107,8 +107,8 @@
                     <td>{{ i.int_ipv6address }}</td>
                     <td>{{ i.int_options }}</td>
                     <td>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/interfaces/edit/{{ i.id }}/'">Edit</button>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/interfaces/delete/{{ i.id }}/'">Delete</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/int/edit/{{ i.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/int/delete/{{ i.id }}/'">Delete</button>
                     </td>
                 </tr>
                 {% empty %}
@@ -126,7 +126,7 @@
                     </button>
                     </p>
         </div>
-        <div dojoType="dijit.layout.ContentPane" title="VLAN">
+        <div dojoType="dijit.layout.ContentPane" title="VLAN"{% if focus_form == "vlan" %} selected="true"{% endif %}>
               <table class="grid">
 	            <thead class="header">
 		            <td>Virtual Interface</td>
@@ -161,7 +161,7 @@
                     </p>
         </div>
         <!--
-        <div dojoType="dijit.layout.ContentPane" title="LAGG">
+        <div dojoType="dijit.layout.ContentPane" title="LAGG"{% if focus_form == "lagg" %} selected="true"{% endif %}>
             <table class="grid">
 	            <thead class="header">
 		            <td>Virtual Interface</td>
@@ -195,7 +195,7 @@
                     </p>
         </div>
         -->
-        <div dojoType="dijit.layout.ContentPane" title="Static Routes">
+        <div dojoType="dijit.layout.ContentPane" title="Static Routes"{% if focus_form == "sr" %} selected="true"{% endif %}>
             <table class="grid">
 	        <thead class="header">
 		    <td>Destination</td>
@@ -209,8 +209,8 @@
 		    <td>{{ i.sr_gateway }}</td>
 		    <td>{{ i.sr_description }}</td>
                     <td>
-			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/staticroute/edit/{{ i.id }}/'">Edit</button>
-			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/staticroute/delete/{{ i.id }}/'">Delete</button>
+			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/sr/edit/{{ i.id }}/'">Edit</button>
+			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/sr/delete/{{ i.id }}/'">Delete</button>
 		    </td>
 		</tr>
 		{% empty %}

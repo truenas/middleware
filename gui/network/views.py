@@ -47,6 +47,10 @@ import os, commands
 
 @login_required
 def network(request, objtype = None):
+    if objtype != None:
+        focus_form = objtype
+    else:
+        focus_form = 'gc'
     gc = GlobalConfigurationForm(data = GlobalConfiguration.objects.order_by("-id").values()[0])
     interfaces = InterfacesForm()
     vlan = VLANForm()
@@ -62,33 +66,28 @@ def network(request, objtype = None):
             gc = GlobalConfigurationForm(request.POST)
             if gc.is_valid():
                 gc.save()
-                return HttpResponseRedirect('/network/')
         elif objtype == 'int':
             interfaces = InterfacesForm(request.POST)
             if interfaces.is_valid():
                 interfaces.save()
-                return HttpResponseRedirect('/network/')
             else:
                 errform = 'int'
         elif objtype == 'vlan':
             vlan = VLANForm(request.POST)
             if vlan.is_valid():
                 vlan.save()
-                return HttpResponseRedirect('/network/')
             else:
                 errform = 'vlan'
         elif objtype == 'lagg':
             lagg = LAGGForm(request.POST)
             if lagg.is_valid():
                 lagg.save()
-                return HttpResponseRedirect('/network/')
             else:
                 errform = 'lagg'
         elif objtype == 'sr':
             staticroute = StaticRouteForm(request.POST)
             if staticroute.is_valid():
                 staticroute.save()
-                return HttpResponseRedirect('/network/')
             else:
                 errform = 'sr'
         else:
@@ -104,36 +103,37 @@ def network(request, objtype = None):
         'lagg_list': lagg_list,
         'sr_list': sr_list,
         'errform': errform,
+        'focus_form': focus_form,
     })
     return render_to_response('network/index.html', variables)
 
 @login_required
-def generic_delete(request, object_id, model_name):
+def generic_delete(request, object_id, objtype):
     network_name_model_map = {
-        'interfaces':    Interfaces,
-        'staticroute':   StaticRoute,
+        'int':    Interfaces,
+        'sr':   StaticRoute,
         'lagg':   LAGG,
         'vlan':   VLAN,
     }
     return delete_object(
         request = request,
-        model = network_name_model_map[model_name],
-        post_delete_redirect = '/network/',
+        model = network_name_model_map[objtype],
+        post_delete_redirect = '/network/' + objtype + '/view/',
         object_id = object_id, )
 
 @login_required
-def generic_update(request, object_id, model_name):
-    model_name_to_model_and_form_map = {
-            'interfaces':   ( Interfaces, None ),
+def generic_update(request, object_id, objtype):
+    objtype2form = {
+            'int':   ( Interfaces, None ),
             'vlan':   ( VLAN, None ),
             'lagg':   ( LAGG, None ),
-            'staticroute':   ( StaticRoute, None ),
+            'sr':   ( StaticRoute, None ),
             } 
-    model, form_class = model_name_to_model_and_form_map[model_name]
+    model, form_class = objtype2form[objtype]
     return update_object(
         request = request,
         model = model, form_class = form_class,
         object_id = object_id, 
-        post_save_redirect = '/network/',
+        post_save_redirect = '/network/' + objtype + '/view/',
         )
 
