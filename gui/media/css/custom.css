@@ -1,7 +1,11 @@
 #rebootDialog_underlay { background-color:#000; }
 #shutdownDialog_underlay { background-color:#FD0000; }
 #top_dialog_underlay { background-color:#000; }
-table.srv tr,td{
+div.menu_icon {
+    width:50px;
+    text-align:center;
+}
+table.srv td{
     padding:8px;
 }
 
@@ -24,7 +28,7 @@ table.config {
     color:#ff0000;
 }
 .config td{
-    padding-right:16px;
+    padding-right:6px;
 }
 .dijitContentPane {
     padding:0px !important;
