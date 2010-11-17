@@ -1,8 +1,15 @@
 #rebootDialog_underlay { background-color:#000; }
 #shutdownDialog_underlay { background-color:#FD0000; }
 #top_dialog_underlay { background-color:#000; }
+table.srv tr,td{
+    padding:8px;
+}
+
 
 table.srv img{
+    cursor:pointer;
+}
+img.srv {
     cursor:pointer;
 }
 

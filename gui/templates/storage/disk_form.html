@@ -59,7 +59,7 @@
 {% block dojango_content %}
 {% if user.is_authenticated %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
-    <div dojoType="dijit.layout.ContentPane" title="Update {{ object }}">
+    <div dojoType="dijit.layout.ContentPane" title="Edit {{ object }}">
         <form action="/storage/disks/edit/{{ object.id }}/" method="post">{% csrf_token %}
             <table>
                 {{ form }}

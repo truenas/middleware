@@ -16,7 +16,7 @@ generate_fstab_real()
 	local IFS=\|
 
 	local volumename newmp mountpoint
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT v.vol_name, mp.mp_path FROM storage_volume AS v LEFT OUTER JOIN storage_mountpoint AS mp ON v.id = mp.mp_volume_id WHERE v.vol_fstype = 'ufs'" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT v.vol_name, mp.mp_path FROM storage_volume AS v LEFT OUTER JOIN storage_mountpoint AS mp ON v.id = mp.mp_volume_id WHERE v.vol_fstype = 'UFS'" | \
 	while read volumename newmp; do
 		if [ -z "${newmp}" ]; then
 			mountpoint=/mnt/${volumename}

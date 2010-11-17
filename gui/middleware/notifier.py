@@ -302,7 +302,7 @@ class notifier:
 		c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?", (volume_id,))
 		volume = c.fetchone()
 
-		if volume[0] == 'zfs':
+		if volume[0] == 'ZFS':
 			# zfs creation needs write access to /boot/zfs.
 			self.__system("/sbin/mount -uw /")
 			self.__create_zfs_volume(c, volume_id, volume[1])
@@ -316,16 +316,16 @@ class notifier:
 		c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?", (volume_id,))
 		volume = c.fetchone()
 
-		if volume[0] == 'zfs':
+		if volume[0] == 'ZFS':
 			self.__system("/sbin/mount -uw /")
         		self.__destroy_zfs_volume(c = c, z_id = volume_id, z_name = volume[1])
 			self.__system("/sbin/mount -ur /")
-                elif volume[0] == 'ufs':
+                elif volume[0] == 'UFS':
 			self.__destroy_ufs_volume(c = c, u_id = volume_id, u_name = volume[1])
         def _init_allvolumes(self):
                 c = self.__open_db()
                 # Create ZFS pools
-                c.execute("SELECT id, vol_name FROM storage_volume WHERE vol_fstype = 'zfs'")
+                c.execute("SELECT id, vol_name FROM storage_volume WHERE vol_fstype = 'ZFS'")
                 zfs_list = c.fetchall()
 		if len(zfs_list) > 0:
 			# We have to be able to write /boot/zfs and / to create mount points.
@@ -335,7 +335,7 @@ class notifier:
 				self.__create_zfs_volume(c = c, z_id = z_id, z_name = z_name)
 			self.__system("/sbin/mount -ur /")
                 # Create UFS file system and newfs
-                c.execute("SELECT id, vol_name FROM storage_volume WHERE vol_fstype = 'ufs'")
+                c.execute("SELECT id, vol_name FROM storage_volume WHERE vol_fstype = 'UFS'")
 	        ufs_list = c.fetchall()
 		if len(ufs_list) > 0:
 			for row in ufs_list:

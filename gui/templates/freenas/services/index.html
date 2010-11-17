@@ -77,12 +77,7 @@
 		    <img id="cifs_toggle" name="cifs_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "cifs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="cifs_settings" dojoType="dijit.form.Button" type="button">
-                        Settings
-                    <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("cifs").show();
-                    </script>
-                    </button>
+                    <img id="cifs_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('cifs').show();" title="CIFS Settings">
                 </td>
             </tr>
             <tr>
@@ -93,12 +88,7 @@
 		    <img id="afp_toggle" name="afp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "afp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="afp_settings" dojoType="dijit.form.Button" type="button">
-                        Settings
-                    <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("afp").show();
-                    </script>
-                    </button>
+                    <img id="afp_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('afp').show();" title="AFP Settings">
                 </td>
             </tr>
             <tr>
@@ -106,15 +96,10 @@
                     <strong>UNIX Shares</strong>
                 </td>
                 <td>
-		    <img id="nfs_toggle" name="nfs_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "nfs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+		            <img id="nfs_toggle" name="nfs_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "nfs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="nfs_settings" dojoType="dijit.form.Button" type="button">
-                        Settings
-                    <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("nfs").show();
-                    </script>
-                    </button>
+                    <img id="nfs_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('nfs').show();" title="NFS Settings">
                 </td>
             </tr>
           <!--  <tr>
@@ -125,12 +110,7 @@
 		    <img id="unison_toggle" name="unison_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "unison" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="unison_settings" dojoType="dijit.form.Button" type="button">
-                        Settings
-                    <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("unison").show();
-                    </script>
-                    </button>
+                    <img id="unison_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('unison').show();" title="Unison Settings">
                 </td>
             </tr>
             -->
@@ -142,12 +122,7 @@
 		    <img id="iscsi_toggle" name="iscsi_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "iscsi" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="iscsi_settings" dojoType="dijit.form.Button" type="button">
-                        Settings
-                    <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("iscsi").show();
-                    </script>
-                    </button>
+                    <img id="iscsi_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('iscsi').show();" title="ISCSI Settings">
                 </td>
             </tr>
             -->
@@ -159,12 +134,7 @@
 		    <img id="dyndns_toggle" name="dyndns_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "dyndns" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="dyndns_settings" dojoType="dijit.form.Button" type="button">
-                        Settings
-                    <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("dyndns").show();
-                    </script>
-                    </button>
+                    <img id="dyndns_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('dyndns').show();" title="Dynamic DNS Settings">
                 </td>
             </tr>
             -->
@@ -176,12 +146,7 @@
 		    <img id="snmp_toggle" name="snmp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "snmp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="snmp_settings" dojoType="dijit.form.Button" type="button">
-                        Settings
-                    <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("snmp").show();
-                    </script>
-                    </button>
+                    <img id="snmp_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('snmp').show();" title="SNMP Settings">
                 </td>
             </tr> 
           <!--  <tr>
@@ -192,12 +157,7 @@
 		    <img id="ups_toggle" name="ups_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ups" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="ups_settings" dojoType="dijit.form.Button" type="button">
-                        Settings
-                    <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("ups").show();
-                    </script>
-                    </button>
+                    <img id="ups_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('ups').show();" title="UPS Settings">
                 </td>
             </tr>
             -->
@@ -209,12 +169,7 @@
 		    <img id="bt_toggle" name="bt_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "bt" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="bt_settings" dojoType="dijit.form.Button" type="button">
-                        Settings
-                    <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("bt").show();
-                    </script>
-                    </button>
+                    <img id="bt_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('bt').show();" title="Bit Torrent Settings">
                 </td>
             </tr>
             -->
@@ -226,12 +181,7 @@
 		    <img id="httpd_toggle" name="httpd_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "httpd" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="httpd_settings" dojoType="dijit.form.Button" type="button">
-                        Settings
-                    <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("httpd").show();
-                    </script>
-                    </button>
+                    <img id="httpd_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('httpd').show();" title="Web Server Settings">
                 </td>
             </tr>
             -->
@@ -243,12 +193,7 @@
 		    <img id="ftp_toggle" name="ftp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="ftp_settings" dojoType="dijit.form.Button" type="button">
-                        Settings
-                    <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("ftp").show();
-                    </script>
-                    </button>
+                    <img id="ftp_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('ftp').show();" title="FTP Settings">
                 </td>
             </tr>
             <tr>
@@ -259,12 +204,7 @@
 		    <img id="tftp_toggle" name="tftp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "tftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="tftp_settings" dojoType="dijit.form.Button" type="button">
-                        Settings
-                    <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("tftp").show();
-                    </script>
-                    </button>
+                    <img id="tftp_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('tftp').show();" title="TFTP Settings">
                 </td>
             </tr>
             <tr>
@@ -275,12 +215,7 @@
 		    <img id="ssh_toggle" name="ssh_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ssh" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="ssh_settings" dojoType="dijit.form.Button" type="button">
-                        Settings
-                    <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("ssh").show();
-                    </script>
-                    </button>
+                    <img id="ssh_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('ssh').show();" title="SSH Settings">
                 </td>
             </tr>
           <!--  <tr>
@@ -291,12 +226,7 @@
 		    <img id="ad_toggle" name="ad_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ad" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="ad_settings" dojoType="dijit.form.Button" type="button">
-                        Settings
-                    <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("ad").show();
-                    </script>
-                    </button>
+                    <img id="ad_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('ad').show();" title="Active Directory Settings">
                 </td>
             </tr>
             -->
@@ -309,12 +239,7 @@
 		    <img id="ldap_toggle" name="ldap_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ldap" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <button id="ldap_settings" dojoType="dijit.form.Button" type="button">
-                        Settings
-                    <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("ldap").show();
-                    </script>
-                    </button>
+                    <img id="ldap_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('ldap').show();" title="LDAP Settings">
                 </td>
             </tr>
             -->

@@ -37,6 +37,9 @@ from dojango.forms.models import ModelForm
 from dojango.forms import fields, widgets
 from dojango.forms.fields import BooleanField
 from freenasUI.contrib.ext_formwizard import FormWizard
+from freenasUI.common.helperview import helperViewEm
+from freenasUI.services.models import services, CIFS, AFP, NFS 
+from freenasUI.services.forms import CIFSForm, AFPForm, NFSForm 
 
 attrs_dict = { 'class': 'required' }
 
@@ -66,7 +69,7 @@ class VolumeWizard_VolumeNameTypeForm(forms.Form):
         disklist = set(disklist).difference(known_disks)
         return disklist
     volume_name = forms.CharField(max_length = 30)
-    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('ufs', 'zfs')), widget=forms.RadioSelect(attrs=attrs_dict))
+    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict))
     volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict))
 
 # Step 2.  Creation of volumes manually is not supported.
@@ -77,16 +80,15 @@ class VolumeWizard_DiskGroupTypeForm(forms.Form):
         grouptype_choices = ( ('mirror', 'mirror'), )
         fstype = kwargs['initial']['fstype']
         disks =  kwargs['initial']['disks']
-        if fstype == "ufs":
+        if fstype == "UFS":
             grouptype_choices += (
                 ('stripe', 'stripe'),
                 )
             if len(disks) >= 3:
                 grouptype_choices += (
                     ('raid3', 'RAID-3'),
-                    ('raid5' , 'RAID-5'),
                     )
-        elif fstype == "zfs":
+        elif fstype == "ZFS":
             grouptype_choices += (
                 ('', 'stripe'),
                 )
@@ -133,21 +135,25 @@ class DiskFormPartial(ModelForm):
 class VolumeWizard(FormWizard):
     def process_step(self, request, form, step):
         if step==0:
+            self.extra_context = {'srv': services.objects.all()}
             disks = form.cleaned_data['volume_disks']
             if self.step <= step:
                 if (len(disks) < 2):
 	            self.form_list.remove(VolumeWizard_DiskGroupTypeForm)
                 else:
-                    self.initial[1] = {'fstype': form.cleaned_data['volume_fstype'], 'disks': disks}
+                    self.initial[1] = {
+                            'fstype': form.cleaned_data['volume_fstype'],
+                            'disks': disks
+                            }
             elif len(disks) < 2:
 	        self.form_list.remove(VolumeWizard_DiskGroupTypeForm)
     def get_template(self, step):
         return 'storage/wizard.html'
     def done(self, request, form_list):
         # Construct and fill forms into database.
-	#
-	volume_name = form_list[0].cleaned_data['volume_name']
-	volume_fstype = form_list[0].cleaned_data['volume_fstype']
+        #
+        volume_name = form_list[0].cleaned_data['volume_name']
+        volume_fstype = form_list[0].cleaned_data['volume_fstype']
         disk_list = form_list[0].cleaned_data['volume_disks']
 
         if (len(disk_list) < 2):
@@ -165,7 +171,10 @@ class VolumeWizard(FormWizard):
         grp.save()
 
         for diskname in disk_list:
-            diskobj = Disk(disk_name = diskname, disk_disks = diskname, disk_description = "Member of " + volume_name + " " + group_type, disk_group = grp)
+            diskobj = Disk(disk_name = diskname, disk_disks = diskname,
+                           disk_description = ("Member of %s %s" %
+                                              (volume_name, group_type)),
+                           disk_group = grp)
             diskobj.save()
 
 	notifier().init("volume", volume.id)

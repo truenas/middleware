@@ -112,7 +112,10 @@ class Disk(models.Model):
             default="Disabled", 
             verbose_name="Acoustic Level"
             )
-    disk_togglesmart = models.BooleanField(default=True)
+    disk_togglesmart = models.BooleanField(
+            default=True,
+            verbose_name="Enable S.M.A.R.T.",
+            )
     disk_smartoptions = models.CharField(
             max_length=120, 
             verbose_name="S.M.A.R.T. extra options", 
@@ -121,7 +124,7 @@ class Disk(models.Model):
     disk_group = models.ForeignKey(
             DiskGroup,
             verbose_name="Group Membership",
-            help_text="Assign disks to a group"
+            help_text="The disk group containing this disk"
             )
     class Meta:
         verbose_name = "Disk"
