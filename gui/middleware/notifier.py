@@ -188,7 +188,10 @@ class notifier:
 		self.__system("/usr/sbin/service ix-samba quietstart")
 		self.__system("/usr/sbin/service samba restart")
 	def _restart_cifs(self):
-		self.__system("/usr/sbin/service samba forcestop")
+		# TODO: bug in samba rc.d script
+		# self.__system("/usr/sbin/service samba forcestop")
+		self.__system("/usr/bin/killall nmbd")
+		self.__system("/usr/bin/killall smbd")
 		self.__system("/usr/sbin/service samba quietstart")
 	def _restart_snmp(self):
 		self.__system("/usr/sbin/service bsnmpd forcestop")

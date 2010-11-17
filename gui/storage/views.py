@@ -141,5 +141,5 @@ def generic_update(request, object_id, model_name):
 	return update_object(
 		request = request,
 		model = model, form_class = form_class,
-		post_save_redirect = '/storage/' + model_name + '/edit/' + object_id + "/",
+		post_save_redirect = '/storage/',
 		object_id = object_id, )

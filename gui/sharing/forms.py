@@ -47,7 +47,7 @@ class CIFS_ShareForm(ModelForm):
         model = CIFS_Share 
     def save(self):
         ret = super(CIFS_ShareForm, self).save()
-        notifier().reload("smbd")
+        notifier().reload("cifs")
         return ret
 
 class AFP_ShareForm(ModelForm):

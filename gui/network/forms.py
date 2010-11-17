@@ -42,7 +42,7 @@ class InterfacesForm(ModelForm):
         model = Interfaces 
     def save(self):
         # TODO: new IP address should be added in a side-by-side manner
-	# or the interface wouldn't appear once IP was changed.
+	    # or the interface wouldn't appear once IP was changed.
         super(InterfacesForm, self).save()
         notifier().start("network")
 
@@ -56,15 +56,15 @@ class GlobalConfigurationForm(ModelForm):
         nameserver3 = cleaned_data.get("gc_nameserver3")
         if nameserver3 != "":
             if nameserver2 == "":
-                msg = u"Must fill out second name server before filling out nameserver 3"
+                msg = u"Must fill out nameserver 2 before filling out nameserver 3"
                 self._errors["gc_nameserver3"] = self.error_class([msg])
-                msg = u"Required when using third nameserver"
+                msg = u"Required when using nameserver 3"
                 self._errors["gc_nameserver2"] = self.error_class([msg])
                 del cleaned_data["gc_nameserver2"]
             if nameserver1 == "":
-                msg = u"Must fill out first name server before filling out nameserver 3"
+                msg = u"Must fill out nameserver 1 before filling out nameserver 3"
                 self._errors["gc_nameserver3"] = self.error_class([msg])
-                msg = u"Required when using third nameserver"
+                msg = u"Required when using nameserver 3"
                 self._errors["gc_nameserver1"] = self.error_class([msg])
                 del cleaned_data["gc_nameserver1"]
             if nameserver1 == "" or nameserver2 == "":
@@ -72,15 +72,15 @@ class GlobalConfigurationForm(ModelForm):
         elif nameserver2 != "":
             if nameserver1 == "":
                 del cleaned_data["gc_nameserver2"]
-                msg = u"Must fill out first name server before filling out nameserver 2"
+                msg = u"Must fill out nameserver 1 before filling out nameserver 2"
                 self._errors["gc_nameserver2"] = self.error_class([msg])
-                msg = u"Required when using third nameserver"
+                msg = u"Required when using nameserver 3"
                 self._errors["gc_nameserver1"] = self.error_class([msg])
                 del cleaned_data["gc_nameserver1"]
         return cleaned_data
     def save(self):
         # TODO: new IP address should be added in a side-by-side manner
-	# or the interface wouldn't appear once IP was changed.
+	    # or the interface wouldn't appear once IP was changed.
         super(GlobalConfigurationForm, self).save()
         notifier().reload("networkgeneral")
 

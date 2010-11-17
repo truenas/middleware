@@ -58,19 +58,38 @@
 {% block dojango_content %}
 {% if user.is_authenticated %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
-    <div dojoType="dijit.layout.ContentPane" title="Step {{ step0|add:1 }}">
-
-<form action="." method="post">{% csrf_token %}
-<table>
-	{{ form }}
-</table>
-<input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
-<input type="hidden" name="{{ max_step_field }}" value="{{ max_step }}" />
-{{ previous_fields|safe }}
-<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Next &gt;&gt;</button>
-</form>
-
-    </div>
+    <div dojoType="dijit.layout.ContentPane" title="Storage Wizard">
+        {% ifequal step0|add:1 step_count  %}
+            <h3>Review & Save</h3>
+                <h4>Step {{ step0|add:1 }} of {{ step_count }}</h4>
+        {% else %} 
+            <h3>Easy Storage Setup</h3>
+                <h4>Step {{ step0|add:1 }} of {{ step_count }}</h4>
+        {% endifequal %}
+        {% for label, data in wizard_data.items %}
+        <table style="width:40%;">
+            <tr>
+                <td class="label" style="width:30%;"><strong>{{ label }}</strong></td>
+                <td class="descr" style="width:70%;">{{ data }}</td>
+            </tr>
+        </table>
+        {% endfor %}
+        <form action="." method="post">{% csrf_token %}
+            <table>
+                {{ form }}
+            </table>
+            <input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
+            <input type="hidden" name="{{ max_step_field }}" value="{{ max_step }}" />
+                {{ previous_fields|safe }}
+                <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">
+                    {% ifequal step0|add:1 step_count  %}
+                        Save
+                    {% else %} 
+                        Next &gt;&gt;
+                    {% endifequal %}
+                </button>
+        </form>
+       </div>
 </div>
 {% else %}
     <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>

@@ -59,7 +59,7 @@
 {% if user.is_authenticated %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
     <div dojoType="dijit.layout.ContentPane" title="Edit Apple Share">
-        <form action="/sharing/apple/edit/{{ object.id }}/" method="post">{% csrf_token %}
+        <form action="/sharing/afp/edit/{{ object.id }}/" method="post">{% csrf_token %}
             <table>
                 {{ form }}
             </table>

@@ -79,29 +79,32 @@ def sharing(request, sharetype = None):
 @login_required
 def generic_delete(request, object_id, model_name):
     network_name_model_map = {
-        'windows':   CIFS_Share,
-        'apple':   AFP_Share,
-        'unix':   NFS_Share,
-        'mountpoint':   MountPoint,
+        'cifs':   CIFS_Share,
+        'afp':   AFP_Share,
+        'nfs':   NFS_Share,
     }
-    return delete_object(
+    retval = delete_object(
         request = request,
         model = network_name_model_map[model_name],
         post_delete_redirect = '/sharing/',
         object_id = object_id, )
+    notifier().reload(model_name)
+    return retval
 
 @login_required
 def generic_update(request, object_id, model_name):
     model_name_to_model_and_form_map = {
-            'windows':   ( CIFS_Share, CIFS_ShareForm ),
-            'apple':   ( AFP_Share, AFP_ShareForm ),
-            'unix':   ( NFS_Share, NFS_ShareForm ),
+            'cifs':   ( CIFS_Share, CIFS_ShareForm ),
+            'afp':   ( AFP_Share, AFP_ShareForm ),
+            'nfs':   ( NFS_Share, NFS_ShareForm ),
             }
     model, form_class = model_name_to_model_and_form_map[model_name]
-    return update_object(
+    retval = update_object(
         request = request,
         model = model, form_class = form_class,
         object_id = object_id,
         post_save_redirect = '/sharing/' + '#' + model_name,
         )
+    notifier().reload(model_name)
+    return retval
 

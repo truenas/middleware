@@ -88,6 +88,7 @@ def network(request, objtype = None):
             staticroute = StaticRouteForm(request.POST)
             if staticroute.is_valid():
                 staticroute.save()
+                return HttpResponseRedirect('/network/')
             else:
                 errform = 'sr'
         else:

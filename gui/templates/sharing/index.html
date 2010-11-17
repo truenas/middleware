@@ -88,8 +88,8 @@
 			{{ c.cifs_path.mp_path }}
 		    </td>
                     <td>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/windows/edit/{{ c.id }}/'">Edit</button>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/windows/delete/{{ c.id }}/'">Delete</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/cifs/edit/{{ c.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/cifs/delete/{{ c.id }}/'">Delete</button>
                     </td>
                 </tr>
                 {% empty %}
@@ -133,8 +133,8 @@
                         {{ a.afp_comment }}
                     </td>
                     <td>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/apple/edit/{{ a.id }}/'">Edit</button>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/apple/delete/{{ a.id }}/'">Delete</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/afp/edit/{{ a.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/afp/delete/{{ a.id }}/'">Delete</button>
                     </td>
                 </tr>
                 {% empty %}
@@ -180,8 +180,8 @@
                         {{ n.nfs_comment }}
                     </td>
                     <td>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/unix/edit/{{ n.id }}/'">Edit</button>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/unix/delete/{{ n.id }}/'">Delete</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/nfs/edit/{{ n.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/sharing/nfs/delete/{{ n.id }}/'">Delete</button>
                     </td>
                 </tr>
                 {% empty %}

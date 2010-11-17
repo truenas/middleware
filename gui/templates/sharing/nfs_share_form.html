@@ -59,7 +59,7 @@
 {% if user.is_authenticated %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
     <div dojoType="dijit.layout.ContentPane" title="Edit UNIX Share">
-        <form action="/sharing/unix/edit/{{ object.id }}/" method="post">{% csrf_token %}
+        <form action="/sharing/nfs/edit/{{ object.id }}/" method="post">{% csrf_token %}
             <table>
                 {{ form }}
             </table>
