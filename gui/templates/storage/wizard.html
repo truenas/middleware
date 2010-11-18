@@ -127,18 +127,20 @@
         {% ifequal step0|add:1 step_count  %}
             <h3>Review & Save</h3>
                 <h4>Step {{ step0|add:1 }} of {{ step_count }}</h4>
+        <table style="width:300px;">
+        {% for label, list in wizard_data.lists %}
+	{% if "0-" in label or "1-" in label %}
+            <tr>
+                <td class="label" style="width:120px;"><strong>{% if label == "0-volume_fstype" %}File System type{% else %}{% if label == "1-group_type" %}Group type{% else %}{% if label == "0-volume_disks" %}Disks{% else %}{% if label == "0-volume_name" %}Volume name{% endif %}{% endif %}{% endif %}{% endif %}</strong></td>
+                <td class="descr" style="width:100px;">{% if label != "0-volume_disks" %}{% for data in list %}{{ data }}{% endfor %}{% else %}<ul>{% for dsk in list %}<li>{{ dsk }}</li>{% endfor %}</ul>{% endif %}</td>
+            </tr>
+	{% endif %}
+        {% endfor %}
+        </table>
         {% else %} 
             <h3>Easy Storage Setup</h3>
                 <h4>Step {{ step0|add:1 }} of {{ step_count }}</h4>
         {% endifequal %}
-        {% for label, data in wizard_data.items %}
-        <table style="width:300px;">
-            <tr>
-                <td class="label" style="width:120px;"><strong>{{ label }}</strong></td>
-                <td class="descr" style="width:100px;">{{ data }}</td>
-            </tr>
-        </table>
-        {% endfor %}
         <form action="." method="post">{% csrf_token %}
             <table>
                 {{ form }}
