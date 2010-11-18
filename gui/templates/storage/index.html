@@ -127,40 +127,40 @@
 {% endblock %}
 {% block dojango_content %}
 {% if user.is_authenticated %}
-<div dojoType="dijit.layout.TabContainer" style="width:100%;float:left;padding-right:16px;" doLayout="false">
+<div dojoType="dijit.layout.TabContainer" style="width:100%;float:left;" doLayout="false">
     <div dojoType="dijit.layout.ContentPane" title="Storage">
-                  <table class="grid">
+                <table class="grid">
                 <tbody>
                     <tr>
-                        {% if disk_list %}
-                        <h5>Active Disks: <strong>{{ disk_list|length }}</strong></h5>
+                        {% if mp_list %}
+                        <h5>Active Volumes: <strong>{{ mp_list|length }}</strong></h5>
                         {% else %}
-                        There are no active disks.
+                        There are no active volumes.
                         {% endif %}
                     </tr>
                 </tbody>
 	            <thead class="ghead">
-                    <td>Name</td>
-	            <td>Description</td>
+                    <td>Volume</td>
+	            <td>Path</td>
 	            <td>Available actions</td>
 	        </thead>
                 <tbody>
-                {% for d in disk_list %}
-                <tr class="{% cycle 'odd' 'even' %}" id="{{ d.id }}">
+                {% for m in mp_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ m.id }}">
                     <td>
-                        {{ d.disk_name }}
+                        {{ m.mp_volume.vol_name }}
                     </td>
                     <td>
-                        {{ d.disk_description }}
+                        {{ m.mp_path }}
                     </td>
                     <td>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/disks/edit/{{ d.id }}/'">Edit</button>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/volumes/delete/{{ d.disk_group.group_volume.id  }}/'">Delete Associated Volume</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/volumes/delete/{{ m.disk_group.group_volume.id  }}/'">Delete Volume</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/disks/{{ m.id }}/'">View Disks</button>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="3">No disks defined</td>
+                    <td colspan="3">No volumes defined</td>
                 </tr>
                 {% endfor %}
                 </tbody>
@@ -170,10 +170,6 @@
     </div>
 </div>
 
-
-
-
-</div>
 <div id="cifs" dojoType="dijit.Dialog" title="Windows - CIFS/SAMBA Shares">
 <form action="/storage/" method="post">{% csrf_token %}
                     <table>

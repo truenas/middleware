@@ -7,15 +7,13 @@
 <link href="/freenas/media/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 <link rel="stylesheet" href="/freenas/media/css/template.css" type="text/css" />
 {% block dojango_header_extra %}{% endblock %}
-{% if errform %}
 <script type="text/javascript">
-      var err  = function () {
-          dijit.byId("{{ errform }}").show();
+      var wiz  = function () {
+          dijit.byId("wiz").show();
       }
 </script>
-{% endif %}
 </head>
-<body  class="{{ DOJANGO.THEME }}" {% if errform %}onLoad="err()")"{% else %}{% endif %}>
+<body  class="{{ DOJANGO.THEME }}" onLoad="wiz()">
 <div dojoType="dijit.layout.BorderContainer" style="width: 100%; height: 100%;" gutters="false">
     <div dojoType="dijit.layout.ContentPane" region="top" gutters="false">
                 <div id="page-header">
@@ -84,7 +82,7 @@
 
             <!-- 
     <div dojoType="dijit.layout.ContentPane" region="leading">
-        <div dojoType="dijit.layout.ContentPane" style="width:180px;">
+        <div dojoType="dijit.layout.ContentPane" style="width:180px;padding-right:16px;">
                 {% include "sidemenu.html" %}
         </div>
     </div>

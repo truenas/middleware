@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "wizard_base.html" %}
 {% block dojango_header_extra %}
 <script type="text/javascript">
     function toggle_service(obj) {
@@ -80,8 +80,50 @@
 
 {% block dojango_content %}
 {% if user.is_authenticated %}
-<div dojoType="dijit.layout.TabContainer" style="width:100%;padding-right:16px;" dolayout="false">
-    <div dojoType="dijit.layout.ContentPane" title="Storage Wizard">
+<div dojoType="dijit.layout.TabContainer" style="width:100%;float:left;" doLayout="false">
+    <div dojoType="dijit.layout.ContentPane" title="Storage">
+                  <table class="grid">
+                <tbody>
+                    <tr>
+                        {% if mp_list %}
+                        <h5>Active Volumes: <strong>{{ mp_list|length }}</strong></h5>
+                        {% else %}
+                        There are no active volumes.
+                        {% endif %}
+                    </tr>
+                </tbody>
+	            <thead class="ghead">
+                    <td>Volume</td>
+	            <td>Path</td>
+	            <td>Available actions</td>
+	        </thead>
+                <tbody>
+                {% for m in mp_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ m.id }}">
+                    <td>
+                        {{ m.mp_volume.vol_name }}
+                    </td>
+                    <td>
+                        {{ m.mp_path }}
+                    </td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/volumes/delete/{{ m.disk_group.group_volume.id  }}/'">Delete Volume</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/disks/{{ m.id }}/'"> View Disks</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">No volumes defined</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                <div style="padding:12px;"><button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/wizard/'">Storage Wizard</button>
+                </div>
+    </div>
+</div>
+
+<div id="wiz" dojoType="dijit.Dialog" title="Storage Wizard"  dolayout="false">
         {% ifequal step0|add:1 step_count  %}
             <h3>Review & Save</h3>
                 <h4>Step {{ step0|add:1 }} of {{ step_count }}</h4>
@@ -90,10 +132,10 @@
                 <h4>Step {{ step0|add:1 }} of {{ step_count }}</h4>
         {% endifequal %}
         {% for label, data in wizard_data.items %}
-        <table style="width:40%;">
+        <table style="width:300px;">
             <tr>
-                <td class="label" style="width:30%;"><strong>{{ label }}</strong></td>
-                <td class="descr" style="width:70%;">{{ data }}</td>
+                <td class="label" style="width:120px;"><strong>{{ label }}</strong></td>
+                <td class="descr" style="width:100px;">{{ data }}</td>
             </tr>
         </table>
         {% endfor %}
@@ -112,8 +154,7 @@
                     {% endifequal %}
                 </button>
         </form>
-            </div>
-        </div>
+</div>
 
 
 {% else %}

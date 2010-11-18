@@ -27,6 +27,8 @@
 #####################################################################
 from freenasUI.storage.forms import * 
 from freenasUI.storage.models import * 
+from freenasUI.services.models import services, CIFS, AFP, NFS 
+from freenasUI.services.forms import CIFSForm, AFPForm, NFSForm 
 from django.forms.models import modelformset_factory
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.decorators import login_required
@@ -39,6 +41,7 @@ from django.http import Http404
 from django.views.generic.list_detail import object_detail, object_list
 from django.views.generic.create_update import update_object, delete_object
 from freenasUI.middleware.notifier import notifier
+from freenasUI.common.helperview import helperViewEm
 from django.core import serializers
 import os, commands
 
@@ -46,7 +49,15 @@ import os, commands
 
 @login_required
 def storage(request, objtype = None, template_name = 'storage/index.html'):
+    forms_saved = 0
+    saved, cifs = helperViewEm(request, CIFSForm, CIFS)
+    forms_saved = forms_saved + saved
+    saved, afp = helperViewEm(request, AFPForm, AFP)
+    forms_saved = forms_saved + saved
+    saved, nfs = helperViewEm(request, NFSForm, NFS)
+    forms_saved = forms_saved + saved
     if request.method == 'POST':
+        srv = services.objects.all()
         if objtype == 'disk':
             disk.save()
         elif objtype == 'diskgroup':
@@ -55,17 +66,20 @@ def storage(request, objtype = None, template_name = 'storage/index.html'):
             volume.save()
         elif objtype == 'mountpoint':
             mountpoint.save()
+        elif forms_saved > 0:
+            return HttpResponseRedirect('/storage/')
         else:
             raise ValueError("Invalid Request")
         return HttpResponseRedirect('/storage/')
     else:
-        disk_list = Disk.objects.select_related().all()
-        diskgroup_list = DiskGroup.objects.all()
-        volume_list = Volume.objects.all()
+        srv = services.objects.all()
+        mp_list = MountPoint.objects.select_related().all()
         variables = RequestContext(request, {
-            'disk_list': disk_list,
-            'diskgroup_list': diskgroup_list,
-            'volume_list': volume_list,
+            'srv': srv,
+            'mp_list': mp_list,
+            'cifs': cifs,
+            'nfs': nfs,
+            'afp': afp,
             })
         return render_to_response('storage/index.html', variables)
 

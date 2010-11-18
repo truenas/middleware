@@ -39,8 +39,6 @@ from dojango.forms.fields import BooleanField
 from freenasUI.contrib.ext_formwizard import FormWizard
 from freenasUI.common.helperview import helperViewEm
 from freenasUI.common.widgets import RadioFieldRendererBulletless
-from freenasUI.services.models import services, CIFS, AFP, NFS 
-from freenasUI.services.forms import CIFSForm, AFPForm, NFSForm 
 
 attrs_dict = { 'class': 'required' }
 
@@ -135,9 +133,11 @@ class DiskFormPartial(ModelForm):
 # Finally, the wizard.
 
 class VolumeWizard(FormWizard):
+    def __init__(self, *args, **kwargs):
+            super(VolumeWizard, self).__init__(*args, **kwargs)
+            self.extra_context = {'mp_list': MountPoint.objects.select_related().all()}
     def process_step(self, request, form, step):
         if step==0:
-            self.extra_context = {'srv': services.objects.all()}
             disks = form.cleaned_data['volume_disks']
             if self.step <= step:
                 if (len(disks) < 2):
