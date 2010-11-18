@@ -67,6 +67,14 @@ class VolumeWizard_VolumeNameTypeForm(forms.Form):
         known_disks = set([ x['disk_disks'] for x in Disk.objects.all().values('disk_disks') ])
         disklist = set(disklist).difference(known_disks)
         return disklist
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        volume_name = cleaned_data.get("volume_name")
+	if Volume.objects.filter(vol_name = volume_name).count() > 0:
+                msg = u"You already have a volume with same name"
+                self._errors["volume_name"] = self.error_class([msg])
+                del cleaned_data["volume_name"]
+        return cleaned_data
     volume_name = forms.CharField(max_length = 30, label = 'Volume name')
     volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict, renderer=RadioFieldRendererBulletless), label = 'File System type')
     volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks')
