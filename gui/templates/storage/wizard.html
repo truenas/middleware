@@ -104,27 +104,6 @@
             <input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
             <input type="hidden" name="{{ max_step_field }}" value="{{ max_step }}" />
                 {{ previous_fields|safe }}
-<br />
-{% ifequal step0|add:1 step_count  %}
-    <table>
-        <tr>
-                <td><h4>NFS</h4></td>
-                <td><h4>AFP</h4></td>
-                <td><h4>CIFS</h4></td>
-            </tr>
-                <td>
-                    <img class="srv" id="nfs_toggle" name="nfs_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "nfs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-                </td>
-                <td>
-                    <img class="srv" id="afp_toggle" name="afp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "afp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-                </td>
-                <td>
-                    <img class="srv" id="cifs_toggle" name="cifs_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "cifs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-                </td>
-            </tr>
-        </table>
-{% else %}
-{% endifequal %}
                 <button style="padding:4px;margin-top:16px;" dojoType="dijit.form.Button" type="submit">
                     {% ifequal step0|add:1 step_count  %}
                         Save

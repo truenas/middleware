@@ -85,7 +85,8 @@ class VolumeWizard_DiskGroupTypeForm(forms.Form):
             grouptype_choices += (
                 ('stripe', 'stripe'),
                 )
-            if len(disks) >= 3:
+            l = len(disks) - 1
+            if l >= 2 and (((l-1)&l) == 0):
                 grouptype_choices += (
                     ('raid3', 'RAID-3'),
                     )
