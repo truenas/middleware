@@ -6,7 +6,7 @@ root=$(pwd)
 : ${FREENAS_ARCH=$(uname -p)}
 export FREENAS_ARCH
 export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
-: ${REVISION=`svnversion ${root} | tr -d M`}
+: ${REVISION=`svnversion ${root}`}
 export NANO_NAME="FreeNAS-8r${REVISION}-${FREENAS_ARCH}"
 export NANO_IMGNAME="${NANO_NAME}.full"
 
