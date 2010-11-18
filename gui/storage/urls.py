@@ -29,6 +29,7 @@
 from django.conf.urls.defaults import patterns
 from freenasUI.storage.forms import *
 from freenasUI.storage.views import *
+from freenasUI.services.views import servicesToggleView as servicesToggleView
 
 
 
@@ -41,5 +42,6 @@ urlpatterns = patterns('',
     (r'^(?P<model_name>\w+)/delete/(?P<object_id>\d+)/$', generic_delete),
     (r'(?P<model_name>\w+)/edit/(?P<object_id>\d+)/$', generic_update),
     (r'^(?P<model_url>\d+)/(?P<object_id>\d+)$', generic_detail), # detail based on URL
+    (r'toggle/(?P<formname>\w+)/$', servicesToggleView),
     )
 
