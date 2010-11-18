@@ -239,7 +239,13 @@ EOD
     build_config  ${_disk} ${_image} ${_config_file}
 
     # Run pc-sysinstall against the config generated
+
+	# Hack #1
+	export ROOTIMAGE=1
+
+	# Hack #2
     ls /cdrom > /dev/null
+
     /rescue/pc-sysinstall -c ${_config_file}
 
     cat << EOD > "${_tmpfile}"
