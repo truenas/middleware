@@ -148,6 +148,11 @@
             <input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
             <input type="hidden" name="{{ max_step_field }}" value="{{ max_step }}" />
                 {{ previous_fields|safe }}
+		{% if step0 > 0 %}
+                <button style="padding:4px;margin-top:16px;" dojoType="dijit.form.Button" onClick="window.history.back();">
+			&lt;&lt; Back
+                </button>
+		{% endif %}
                 <button style="padding:4px;margin-top:16px;" dojoType="dijit.form.Button" type="submit">
                     {% ifequal step0|add:1 step_count  %}
                         Save
