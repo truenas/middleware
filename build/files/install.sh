@@ -157,7 +157,7 @@ disk_is_mounted()
 	return ${_res}
 }
 
-do_install()
+menu_install()
 {
 	local _disklist
 	local _tmpfile
@@ -240,24 +240,22 @@ EOD
 
     # Run pc-sysinstall against the config generated
 
-	# Hack #1
-	export ROOTIMAGE=1
-
-	# Hack #2
+    # Hack #1
+    export ROOTIMAGE=1
+    # Hack #2
     ls /cdrom > /dev/null
-
+    export LOGOUT=/var/log/freenas-install.log
+    cp /dev/null $LOGOUT
+    tail -F $LOGOUT &
     /rescue/pc-sysinstall -c ${_config_file}
 
-    cat << EOD > "${_tmpfile}"
+    cat << EOD
 
-FreeNAS has been installed on ${_disk}.
-You can now remove the CDROM and reboot the PC.
+FreeNAS has been successfully installed on ${_disk}.
+Please remove the CDROM and reboot this machine.
+
 EOD
-
-    _msg=`cat "${_tmpfile}"`
-    rm -f "${_tmpfile}"
-
-    wait_keypress "${_msg}"
+    wait_keypress ""
     return 0
 }
 
@@ -292,90 +290,28 @@ menu_shutdown()
 	fi
 }
 
-menu_install()
-{
-	local _number
-	local _tmpfile
-
-	_tmpfile="/tmp/answer"
-
-	dialog --clear --title "Install & Upgrade" --menu "" 12 73 6 \
-	"1" "Install OS on HDD/Flash/USB" 2> "${_tmpfile}"
-
-	if [ "$?" != "0" ]
-	then
-		return 1
-	fi
-
-	_number=`cat "${_tmpfile}"`
-	case "${_number}" in
-		1) do_install ;;
-	esac
-
-	return 0
-}
-
-menu_upgrade()
-{
-        # What we are really interested in doing here is preserving the
-        # existing XML config file.
-	local _number
-	local _tmpfile
-
-	_tmpfile="/tmp/answer"
-
-	dialog --clear --title "Upgrade" --menu "" 12 73 6 \
-	"1" "Upgrade and convert 'full' OS to 'embedded'" 2> "${_tmpfile}"
-
-	if [ "$?" != "0" ]
-	then
-		return 1
-	fi
-
-	_number=`cat "${_tmpfile}"`
-	case "${_number}" in
-		1) do_upgrade_1 ;;
-		2) ;;
-		3) ;;
-		4) ;;
-		5) ;;
-		6) ;;
-	esac
-
-	return 0
-}
-
-
 menu()
 {
+	local _tmpfile="/tmp/answer"
 	while :
 	do
 		local _number
 
-		echo " "
-		echo " "
-		echo "Console setup"
-		echo "-------------"
-		echo "1) Install/Upgrade to hard drive/flash device, etc."
-		echo "2) Upgrade existing installation."
-		echo "3) Shell"
-		echo "4) Reboot system"
-		echo "5) Shutdown System"
-		echo " "
-
-		read -p "Enter a number: " _number
-
+		dialog --clear --title "Console Setup" --menu "" 12 73 6 \
+		"1" "Install/Upgrade to hard drive/flash device, etc." \
+		"2" "Shell" \
+		"3" "Reboot system" \
+		"4" "hutdown System" \
+		2> "${_tmpfile}"
+		_number=`cat "${_tmpfile}"`
 		case "${_number}" in
 			1) menu_install ;;
-                        2) menu_upgrade ;;
-			3) menu_shell ;;
-			4) menu_reboot ;;
-			5) menu_shutdown ;;
+			2) menu_shell ;;
+			3) menu_reboot ;;
+			4) menu_shutdown ;;
 		esac
-
 	done
 }
-
 
 main()
 {

@@ -282,6 +282,9 @@ stop_all_zfs()
 # Function which stops all gmirrors before doing any disk manipulation
 stop_all_gmirror()
 {
+  if [ ! -x /sbin/gmirror ]; then
+    return;
+  fi
   DISK="${1}"
   GPROV="`gmirror list | grep ". Name: mirror/" | cut -d '/' -f 2`"
   for gprov in $GPROV 

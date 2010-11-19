@@ -365,37 +365,32 @@ write_image()
     case "${COMPRESSION}" in
       lzw)
         rc_halt "uncompress ${IMAGE_FILE} -c | dd of=${DEVICE_FILE}"
-        IMAGE_FILE="${IMAGE_FILE%.Z}"
         ;;
 
       lzo)
         rc_halt "lzop -d $IMAGE_{FILE} -c | dd of=${DEVICE_FILE}"
-        IMAGE_FILE="${IMAGE_FILE%.lzo}"
         ;;
 
       lzma)
         rc_halt "lzma -d ${IMAGE_FILE} -c | dd of=${DEVICE_FILE}"
-        IMAGE_FILE="${IMAGE_FILE%.lzma}"
         ;;
 
       gzip)
         rc_halt "gunzip ${IMAGE_FILE} -c | dd of=${DEVICE_FILE}"
-        IMAGE_FILE="${IMAGE_FILE%.gz}"
         ;;
 
       bzip2)
         rc_halt "bunzip2 ${IMAGE_FILE} -c | dd of=${DEVICE_FILE}"
-        IMAGE_FILE="${IMAGE_FILE%.bz2}"
         ;;
 
       xz)
-        rc_halt "xz -d ${IMAGE_FILE} -c | dd of=${DEVICE_FILE}"
-        IMAGE_FILE="${IMAGE_FILE%.xz}"
+        if ! xz -d ${IMAGE_FILE} -c -v > ${DEVICE_FILE}; then
+	    exit_err "Error ${STATUS}: xz"
+	fi
         ;;
 
       zip)
         rc_halt "unzip ${IMAGE_FILE} -c | dd of=${DEVICE_FILE}"
-        IMAGE_FILE="${IMAGE_FILE%.zip}"
         ;;
 
       *) 
