@@ -47,7 +47,10 @@ main()
     # copy /rescue and /boot from the image to the iso
     tar -cf - -C ${INSTALLUFSDIR} rescue | tar -xvf - -C ${STAGEDIR}
     tar -cf - -C ${INSTALLUFSDIR} boot | tar -xvf - -C ${ISODIR}
-    xz --compress -9 < ${IMGFILE} > ${ISODIR}/FreeNAS-${FREENAS_ARCH}-embedded.xz
+    if [ ! \( -f ${IMGFILE}.xz \) -o ${IMGFILE} -nt ${IMGFILE}.xz ]; then
+	xz --verbose --stdout --compress -9 ${IMGFILE} > ${IMGFILE}.xz
+    fi
+    cp ${IMGFILE}.xz ${ISODIR}/FreeNAS-${FREENAS_ARCH}-embedded.xz
 
     echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
     echo 'root_rw_mount="NO"' >> ${INSTALLUFSDIR}/etc/rc.conf
