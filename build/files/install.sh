@@ -301,7 +301,7 @@ menu()
 		"1" "Install/Upgrade to hard drive/flash device, etc." \
 		"2" "Shell" \
 		"3" "Reboot system" \
-		"4" "hutdown System" \
+		"4" "Shutdown System" \
 		2> "${_tmpfile}"
 		_number=`cat "${_tmpfile}"`
 		case "${_number}" in
