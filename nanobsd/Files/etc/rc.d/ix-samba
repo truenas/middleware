@@ -37,6 +37,7 @@ disable spoolss = yes
 smb passwd file = /var/etc/private/smbpasswd
 private dir = /var/etc/private
 getwd cache = yes'
+		echo ${guest} > /tmp/ix-samba
 		echo "netbios name = ${netbiosname}"
 		echo "workgroup = ${workgroup}"
 		if [ -n "${cifs_description}" ]; then
@@ -117,6 +118,9 @@ generate_exports()
 	local name comment mountpoint cifsro browsable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny auxsmbconf
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_name, cifs_comment, mp_path, cifs_ro, cifs_browsable, cifs_inheritperms, cifs_recyclebin, cifs_showhiddenfiles, cifs_hostsallow, cifs_hostsdeny, cifs_auxsmbconf FROM sharing_cifs_share AS cs LEFT OUTER JOIN storage_mountpoint AS mp ON cs.cifs_path_id = mp.id ORDER BY cs.id ASC" | \
 	while read name comment mountpoint cifsro browsable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny auxsmbconf; do
+		chmod 777 ${mountpoint}
+		chown -R `cat /tmp/ix-samba` ${mountpoint}
+		rm /tmp/ix-samba
 		echo "[${name}]"
 		echo "path = ${mountpoint}"
 		echo "printable = no"
