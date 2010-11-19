@@ -297,10 +297,10 @@ menu()
 	do
 		local _number
 
-		dialog --clear --title "Console Setup" --menu "" 12 73 6 \
+		dialog --clear --title "FreeNAS 8.0 Beta Console Setup" --menu "" 12 73 6 \
 		"1" "Install/Upgrade to hard drive/flash device, etc." \
 		"2" "Shell" \
-		"3" "Reboot system" \
+		"3" "Reboot System" \
 		"4" "Shutdown System" \
 		2> "${_tmpfile}"
 		_number=`cat "${_tmpfile}"`
