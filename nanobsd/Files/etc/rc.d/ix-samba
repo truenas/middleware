@@ -97,7 +97,7 @@ getwd cache = yes'
 		if [ -n "${sendbuffer}" -o -n "${recvbuffer}" ]; then
 			echo -n "socket options ="
 			if [ -n "${sendbuffer}" ]; then
-				echo " SO_SNDBUF= ${sendbuffer}"
+				echo -n " SO_SNDBUF= ${sendbuffer}"
 			fi
 			if [ -n "${recvbuffer}" ]; then
 				echo " SO_RCVBUF= ${recvbuffer}"
