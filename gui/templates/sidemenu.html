@@ -1,0 +1,12 @@
+<div dojoType="dojo.data.ItemFileReadStore" jsId="appStore" url="/freenas/media/lib/js/treeMenu.json">
+</div>
+<div dojoType="dijit.tree.ForestStoreModel" jsId="appModel" store="appStore"
+    query="{type:'app'}" rootId="appRoot" rootLabel="Applications"
+    childrenAttrs="models">
+</div>
+
+<div dojoType="dijit.Tree" id="sideTree" model="appModel" openOnClick="true" showRoot="false">
+    <script type="dojo/method" event="onClick" args="item">
+        alert("Executing " + appStore.getLabel(item) + ", NOTE: this alert should open a Dialog and/or Tab");
+    </script>
+</div>
