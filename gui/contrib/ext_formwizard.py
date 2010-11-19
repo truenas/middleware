@@ -19,7 +19,7 @@ the latest step, where the user should see an overview of his input.
 
 from django import forms
 from django.conf import settings
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.utils.hashcompat import md5_constructor
@@ -38,10 +38,11 @@ class FormWizard(object):
 
     # METHODS SUBCLASSES SHOULDN'T OVERRIDE ###################################
 
-    def __init__(self, form_list, initial=None):
+    def __init__(self, form_list, initial=None, error_redirect=None):
         "form_list should be a list of Form classes (not instances)."
         self.form_list = form_list[:]
         self.initial = initial or {}
+        self.error_redirect = error_redirect
         self.step = 0 # A zero-based counter keeping track of which step we're in.
 
     def __repr__(self):
@@ -81,7 +82,12 @@ class FormWizard(object):
             form.full_clean() # to make cleaned data
             if request.POST.get("hash_%d" % i, '') != self.security_hash(request, form):
                 return self.render_hash_failure(request, i, max_step)
-            self.process_step(request, form, i)
+            if form.is_valid():
+                self.process_step(request, form, i)
+            elif self.error_redirect != None:
+                return HttpResponseRedirect(self.error_redirect)
+            else:
+                raise Http404('Step %d no longer validates (saved and gone back?)' % current_step)
 
         # Process the current step. If it's valid, go to the next step or call
         # done(), depending on whether any steps remain.

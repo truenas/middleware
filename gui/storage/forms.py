@@ -46,27 +46,43 @@ attrs_dict = { 'class': 'required' }
 class VolumeWizard_VolumeNameTypeForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(VolumeWizard_VolumeNameTypeForm, self).__init__(*args, **kwargs)
-        self.fields['volume_disks'].choices = [ (x, x) for x in self._populate_disklist() ]
-    def _populate_disklist(self):
+        self.fields['volume_disks'].choices = self._populate_disk_choices()
+    def _populate_disk_choices(self):
         from os import popen
         import re
-
-        disklist = []
-
+    
+        diskchoices = dict()
+    
         # Grab disk list
-        pipe = popen("/sbin/sysctl -n kern.disks")
-        disklist = pipe.read().strip().split(' ')
-
+        pipe = popen("/usr/sbin/diskinfo ` /sbin/sysctl -n kern.disks` | /usr/bin/cut -f1,3")
+        diskinfo = pipe.read().strip().split('\n')
+        for disk in diskinfo:
+            devname, capacity = disk.split('\t')
+            capacity = int(capacity)
+            if capacity >= 1099511627776:
+                    capacity = "%.1f TiB" % (capacity / 1099511627776.0)
+            elif capacity >= 1073741824:
+                    capacity = "%.1f GiB" % (capacity / 1073741824.0)
+            elif capacity >= 1048576:
+                    capacity = "%.1f MiB" % (capacity / 1048576.0)
+            else:
+                    capacity = "%d Bytes" % (capacity)
+            diskchoices[devname] = "%s (%s)" % (devname, capacity)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
         rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
         if rootdev_base != None:
-            disklist = [ x for x in disklist if x != rootdev_base.group(0) ]
-
+            try:
+                del diskchoices[rootdev_base.group(0)]
+            except:
+                pass
         # Exclude what's already added
-        known_disks = set([ x['disk_disks'] for x in Disk.objects.all().values('disk_disks') ])
-        disklist = set(disklist).difference(known_disks)
-        return disklist
+        for devname in [ x['disk_disks'] for x in Disk.objects.all().values('disk_disks')]:
+            try:
+                del diskchoices[devname]
+            except:
+                pass
+        return diskchoices.items()
     def clean(self):
         cleaned_data = self.cleaned_data
         volume_name = cleaned_data.get("volume_name")
@@ -87,19 +103,16 @@ class VolumeWizard_DiskGroupTypeForm(forms.Form):
         grouptype_choices = ( ('mirror', 'mirror'), )
         fstype = kwargs['initial']['fstype']
         disks =  kwargs['initial']['disks']
+        grouptype_choices += (
+            ('stripe', 'stripe'),
+            )
         if fstype == "UFS":
-            grouptype_choices += (
-                ('stripe', 'stripe'),
-                )
             l = len(disks) - 1
             if l >= 2 and (((l-1)&l) == 0):
                 grouptype_choices += (
                     ('raid3', 'RAID-3'),
                     )
         elif fstype == "ZFS":
-            grouptype_choices += (
-                ('', 'stripe'),
-                )
             if len(disks) >= 3:
                 grouptype_choices += ( ('raidz', 'RAID-Z'), )
             if len(disks) >= 4:
@@ -194,5 +207,5 @@ class VolumeWizard(FormWizard):
 # messing with data in the global urls object which makes
 # it impossible to re-enter the wizard for the second time.
 def VolumeWizard_wrapper(request, *args, **kwargs):
-	return VolumeWizard([VolumeWizard_VolumeNameTypeForm, VolumeWizard_DiskGroupTypeForm, VolumeFinalizeForm])(request, *args, **kwargs)
+	return VolumeWizard([VolumeWizard_VolumeNameTypeForm, VolumeWizard_DiskGroupTypeForm, VolumeFinalizeForm], error_redirect="/storage/")(request, *args, **kwargs)
 

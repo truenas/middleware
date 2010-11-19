@@ -48,40 +48,12 @@ import os, commands
 ## Disk section
 
 @login_required
-def storage(request, objtype = None, template_name = 'storage/index.html'):
-    forms_saved = 0
-    saved, cifs = helperViewEm(request, CIFSForm, CIFS)
-    forms_saved = forms_saved + saved
-    saved, afp = helperViewEm(request, AFPForm, AFP)
-    forms_saved = forms_saved + saved
-    saved, nfs = helperViewEm(request, NFSForm, NFS)
-    forms_saved = forms_saved + saved
-    if request.method == 'POST':
-        srv = services.objects.all()
-        if objtype == 'disk':
-            disk.save()
-        elif objtype == 'diskgroup':
-            diskgroup.save()
-        elif objtype == 'volume':
-            volume.save()
-        elif objtype == 'mountpoint':
-            mountpoint.save()
-        elif forms_saved > 0:
-            return HttpResponseRedirect('/storage/')
-        else:
-            raise ValueError("Invalid Request")
-        return HttpResponseRedirect('/storage/')
-    else:
-        srv = services.objects.all()
-        mp_list = MountPoint.objects.select_related().all()
-        variables = RequestContext(request, {
-            'srv': srv,
-            'mp_list': mp_list,
-            'cifs': cifs,
-            'nfs': nfs,
-            'afp': afp,
-            })
-        return render_to_response('storage/index.html', variables)
+def storage(request):
+    mp_list = MountPoint.objects.select_related().all()
+    variables = RequestContext(request, {
+        'mp_list': mp_list,
+    })
+    return render_to_response('storage/index.html', variables)
 
 
 @login_required

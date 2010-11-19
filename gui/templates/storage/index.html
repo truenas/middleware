@@ -169,46 +169,6 @@
                 </div>
     </div>
 </div>
-
-<div id="cifs" dojoType="dijit.Dialog" title="Windows - CIFS/SAMBA Shares">
-<form action="/storage/" method="post">{% csrf_token %}
-                    <table>
-                        {{ cifs.errors }}
-                        {{ cifs }}
-                                   </table>
-<button dojoType="dijit.form.Button" type="submit">Save Configuration</button>
-<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('cifs').hide();">
-    Cancel
-</button>
-
-</form>
-    </div>
-<div id="afp" dojoType="dijit.Dialog" title="Apple - AFP Shares">
-<form action="/storage/" method="post">{% csrf_token %}
-            <table>
-                {{ afp.errors }}
-                {{ afp }}
-            </table>
-<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
-<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('afp').hide();">
-    Cancel
-</button>
-</form>
-        </div>
-          
-<div id="nfs" dojoType="dijit.Dialog" title="UNIX - NFS Shares">
-<form action="/storage/" method="post">{% csrf_token %}
-     <table>
-         {{ nfs.errors }}
-         {{ nfs }}
-                     </table>
-<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
-<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('nfs').hide();">
-    Cancel
-</button>
-</form>
-        </div>
-
 {% else %}
     <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
 {% endif %}

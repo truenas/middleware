@@ -227,7 +227,8 @@ class notifier:
 		for vgrp_row in vgroup_list:
 			vgrp = (vgrp_row[0],)
 			vgrp_type = vgrp_row[1]
-			z_vdev += " " + vgrp_type
+                        if vgrp_type != 'stripe':
+			    z_vdev += " " + vgrp_type
 			# Grab all member disks from the current vdev group
 			c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE disk_group_id = ?", vgrp)
 			vdev_member_list = c.fetchall()
