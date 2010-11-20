@@ -79,7 +79,7 @@ main()
     ln -s ../../rescue ${INSTALLUFSDIR}/usr/sbin
     ln -s ../rescue ${INSTALLUFSDIR}/bin
     ln -s ../rescue ${INSTALLUFSDIR}/sbin
-    tar -cf - -C${ETC_FILES} . | tar -xvf - -C ${INSTALLUFSDIR}/etc
+    tar -cf - -C${ETC_FILES} --exclude .svn . | tar -xvf - -C ${INSTALLUFSDIR}/etc
 
     # Compress what's left of the image after mangling it
     makefs -b 10%  ${TEMP_IMGFILE} ${INSTALLUFSDIR}
