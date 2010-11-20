@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block dojango_header_extra %}
+<script type="text/javascript" src="/freenas/media/lib/js/test.json"></script>
+<script type="text/javascript">
+  dojo.addOnLoad(function() {
+    var unitFilesystemId = null;
+    var unitTypeId = null;
+    var unitGroupId = null;
+		new dijit.form.FilteringSelect({
+			store: new dojo.data.ItemFileReadStore({
+				data: filesystems
+			}),
+			autoComplete: true,
+			style: "width: 150px;",
+			required: false,
+			id: "filesystem",
+            onChange: function(filesystem) 
+                {
+                    unitFilesystemId = filesystem;
+                    dijit.byId('type').query = {filesystemId: filesystem};
+                }
+            }, "filesystem");
+        
+		new dijit.form.FilteringSelect({
+			store: new dojo.data.ItemFileReadStore({
+				data: types
+			}),
+			autoComplete: true,
+			style: "width: 150px;",
+			required: false,
+			id: "type",
+             onChange: function(type) 
+                {
+                    unitTypeId = type;
+                    dijit.byId('disk').query = {typeId: type};
+                },
+            }, "type");
+
+        new dijit.form.FilteringSelect({
+			store: new dojo.data.ItemFileReadStore({
+				data: disks
+			}),
+			autoComplete: true,
+			style: "width: 150px;",
+			required: false,
+			id: "disk",
+            }, "disk");
+      	});
+</script>
+{% endblock %} 
+{% block content %}
+<div dojoType="dijit.MenuBar" id="navMenu" style="height:56px;">
+
+            <div dojoType="dijit.MenuBarItem" onClick="window.location='/'" class="menu_icon">
+        <img src="/freenas/media/images/ui/system.png">
+        <br />
+                <div>
+                    System 
+                </div>
+            </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'" class="menu_icon">
+        <img src="/freenas/media/images/ui/network.png">
+        <br />
+        <span>
+            Network 
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'" class="menu_icon dijitMenuItemSelected ">
+        <img src="/freenas/media/images/ui/storage.png">
+        <br />
+        <span>
+            Storage 
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'" class="menu_icon">
+        <img src="/freenas/media/images/ui/sharing.png">
+        <br />
+        <span>
+            Sharing
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/services/'" class="menu_icon">
+        <img src="/freenas/media/images/ui/services.png">
+        <br />
+        <span>
+            Services
+        </span>
+    </div>
+
+
+    {% if user.is_authenticated %}
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" class="menu_icon" style="float:right;">
+        <img src="/freenas/media/images/ui/logout.png">
+        <br />
+        <span>
+            Log Out 
+        </span>
+    </div>
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/password_change/'" class="menu_icon" style="float:right;">
+        <img src="/freenas/media/images/ui/account.png">
+        <br />
+        <span>
+            Account 
+        </span>
+    </div>
+    {% else %}
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" class="menu_icon" style="font-weight:bold;">
+        <img src="/freenas/media/images/ui/login.png">
+        <br />
+        <span>
+            Log In
+        </span>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+{% block dojango_content %}
+{% if user.is_authenticated %}
+<div dojoType="dijit.layout.TabContainer" style="width:100%;float:left;padding-right:16px;" doLayout="false">
+    <div dojoType="dijit.layout.ContentPane" title="Disks in {{ volume.vol_fstype }} volume {{ volume.vol_name }}">
+        <h5>
+                  {% if disk_list %}
+                  Disks in volume: <strong>{{ disk_list|length }}</strong>
+                  {% else %}
+                  <h5>The volume have no disks.</h5>
+                  {% endif %}
+        </h5>
+                  <table class="grid">
+	            <thead class="ghead">
+                    <td>Name</td>
+	            <td>Description</td>
+	            <td>Available actions</td>
+	        </thead>
+                <tbody>
+                {% for d in disk_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ d.id }}">
+                    <td>
+                        {{ d.disk_name }}
+                    </td>
+                    <td>
+                        {{ d.disk_description }}
+                    </td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/disks/edit/{{ d.id }}/'">Edit</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">No disks defined</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+    </div>
+</div>
+
+</div>
+{% else %}
+    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
+{% endif %}
+{% endblock %}
+

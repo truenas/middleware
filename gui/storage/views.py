@@ -55,6 +55,16 @@ def storage(request):
     })
     return render_to_response('storage/index.html', variables)
 
+@login_required
+def volume_disks(request, volume_id):
+    # mp = MountPoint.objects.get(mp_volume = volume_id)
+    volume = Volume.objects.get(id = volume_id)
+    disk_list = Disk.objects.filter(disk_group__group_volume = volume_id)
+    variables = RequestContext(request, {
+        'volume': volume,
+        'disk_list': disk_list,
+    })
+    return render_to_response('storage/volume_detail.html', variables)
 
 @login_required
 def diskgroup_add_wrapper(request, *args, **kwargs):
