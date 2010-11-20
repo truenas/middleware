@@ -14,7 +14,7 @@ bsnmp_config=/etc/snmpd.conf
 generate_snmpconf()
 {
 	local IFS=\|
-	local snmp_location snmp_contact snmp_community snmp_traps snmp_options
+	local snmp_location snmp_contact snmp_community snmp_traps
 
         hw_machine=`/sbin/sysctl -n hw.machine`
         hw_model=`/sbin/sysctl -n hw.model`
@@ -23,9 +23,9 @@ generate_snmpconf()
         kern_osrelease=`/sbin/sysctl -n kern.osrelease`
         kern_osrevision=`/sbin/sysctl -n kern.osrevision`
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_location, snmp_contact, snmp_community, snmp_traps, snmp_options FROM services_snmp ORDER BY -id LIMIT 1" | \
-	while read snmp_location snmp_contact snmp_community snmp_traps snmp_options; do
-		cat << E*O*F >> ${bsnmp_config}
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_location, snmp_contact, snmp_community, snmp_traps FROM services_snmp ORDER BY -id LIMIT 1" | \
+	while read snmp_location snmp_contact snmp_community snmp_traps; do
+		cat << E*O*F > ${bsnmp_config}
 # Set some common variables
 host := ${hostname}
 contact := ${snmp_contact}
@@ -122,10 +122,10 @@ sysDescr = \$(description)
 #			-o "extCommand.0 = &quot;/usr/bin/uname -a&quot;" -n \
 #			-o "extNames.1 = &quot;uptime&quot;" -n \
 #			-o "extCommand.1 = &quot;/usr/bin/uptime&quot;" -n \
-#		-b \
-${snmp_options}
+#		-b
 E*O*F
 	done
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_options FROM services_snmp ORDER BY -id LIMIT 1" >> ${bsnmp_config}
 }
 
 name="ix-snmpd"

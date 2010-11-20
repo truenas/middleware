@@ -86,7 +86,7 @@ generate_proftp()
 #XXX missing: ftp_port ftp_chrooteveryone ftp_tlsrequired ftp_mod_ban
     local ftp_port=0 ftp_chrooteveryone=0 ftp_mod_ban=0
 #XXX unused: ftp_defaultroot ftp_ssltls
-    local f="ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_banner ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_ssltls ftp_options"
+    local f="ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_banner ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_ssltls"
     eval local $f
     local sf
     sf=$(echo $f | sed -e 's/ /, /g')
@@ -130,8 +130,7 @@ generate_proftp()
 #		fi
 #	fi
 echo "Creating ${proftpd_config}"
-	cp /dev/null ${proftpd_config}
-	cat <<EOF >> ${proftpd_config}
+	cat <<EOF > ${proftpd_config}
 ServerName "$(hostname) FTP Server"
 ServerType standalone
 DefaultServer on
@@ -241,9 +240,7 @@ EOF
 </IfModule>
 
 EOF
-	if [ -n "${ftp_options}" ]; then
-	    echo "${ftp_options}" >> ${proftpd_config}
-	fi
+        ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ftp_options FROM services_ftp ORDER BY -id LIMIT 1" >> ${proftpd_config}
 
 	if checkyesno proftpd_moddelay_enable; then
 	    cat <<EOF >> ${proftpd_config}

@@ -708,7 +708,7 @@ class FTP(models.Model):
             verbose_name="Enable SSL/TLS")
     ftp_options = models.TextField(
             max_length=120, 
-            verbose_name="Banner", 
+            verbose_name="Auxiliary parameters", 
             blank=True,
             help_text="These parameters are added to proftpd.conf."
             )

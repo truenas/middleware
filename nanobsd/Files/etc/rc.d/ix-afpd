@@ -87,7 +87,7 @@ generate_av_default()
     eval local $f
     local sf=$(echo $f | sed -e 's/ /, /g')
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-        "SELECT $sf mp_path FROM sharing_afp_share AS aps LEFT OUTER JOIN storage_mountpoint AS mp ON aps.afp_path_id = mp.mp_volume_id ORDER BY -aps.id LIMIT 1" | \
+        "SELECT ${sf}, mp_path FROM sharing_afp_share AS aps LEFT OUTER JOIN storage_mountpoint AS mp ON aps.afp_path_id = mp.mp_volume_id ORDER BY -aps.id LIMIT 1" | \
     while eval read $f mountpoint; do
 	echo "# ${afp_comment}"
 	echo -n "\"${mountpoint}\" \"${afp_name}\""

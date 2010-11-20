@@ -15,7 +15,7 @@
 generate_sshd()
 {
     local IFS=\|
-    local f="ssh_tcpport ssh_rootlogin ssh_passwordauth ssh_tcpfwd ssh_compression ssh_options"
+    local f="ssh_tcpport ssh_rootlogin ssh_passwordauth ssh_tcpfwd ssh_compression"
     eval local $f
     local cmd sf cfg
     sf=$(echo $f | sed -e 's/ /, /g')
@@ -30,35 +30,33 @@ UseDNS no
 Subsystem       sftp    /usr/libexec/sftp-server
 ChallengeResponseAuthentication no
 EOF
-	    if [ $ssh_tcpport -gt 0 ]; then
+	    if [ "$ssh_tcpport" -gt 0 ]; then
 		echo "Port $ssh_tcpport" >> $cfg
 	    fi
-	    if [ $ssh_rootlogin = 1 ]; then
+	    if [ "$ssh_rootlogin" = 1 ]; then
 		echo "PermitRootLogin yes" >> $cfg
 	    else
 		echo "PermitRootLogin without-password" >> $cfg
 	    fi
-	    if [ $ssh_tcpfwd = 1 ]; then
+	    if [ "$ssh_tcpfwd" = 1 ]; then
 		echo "AllowTcpForwarding yes" >> $cfg
 	    else
 		echo "AllowTcpForwarding no" >> $cfg
 	    fi
-	    if [ $ssh_compression = 1 ]; then
+	    if [ "$ssh_compression" = 1 ]; then
 		echo "Compression delayed" >> $cfg
 	    else
 		echo "Compression no" >> $cfg
 	    fi
-	    if [ $ssh_passwordauth = 1 ]; then
+	    if [ "$ssh_passwordauth" = 1 ]; then
 		echo "PasswordAuthentication yes" >> $cfg
 	    fi
 	    ssh_pubkeyauth=1		# Missing in schema
-	    if [ $ssh_pubkeyauth = 1 ]; then
+	    if [ "$ssh_pubkeyauth" = 1 ]; then
 		echo "PubkeyAuthentication yes" >> $cfg
 	    fi
-	    if [ -n "$ssh_options" ]; then
-		echo "$ssh_options" >> $cfg
-	    fi
     done
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ssh_options FROM services_ssh ORDER BY -id LIMIT 1" >> $cfg
 }
 
 name="ix-sshd"
