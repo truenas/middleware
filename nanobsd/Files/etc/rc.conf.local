@@ -183,7 +183,7 @@ _gen_conf()
 	_bool_svcconfig bsnmpd_enable snmp
 	_bool_svcconfig sshd_enable ssh
 
-	_count_config zfs_enable storage_volume vol_fstype =\'zfs\'
+	_count_config zfs_enable storage_volume vol_fstype =\'ZFS\'
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT rcc_varname, rcc_varvalue FROM system_rcconf ORDER BY id ASC" | tr \| =
 }
