@@ -141,13 +141,6 @@ add_port devel/libublio
 #-sysutils/fusefs-ntfs
 add_port sysutils/fusefs-ntfs
 add_port sysutils/ntfsprogs
-#+sysutils/nut
-add_port textproc/expat2
-#-sysutils/nut
-# originally, FreeNAS' version of this port added --with-wrap, but that's
-# automatic now, so I don't think we need to worry about it.
-add_port sysutils/nut		-DWITHOUT_SNMP -DWITHOUT_NEON -DWITHOUT_CGI \
-				-DWITHOUT_POWERMAN -DWITHOUT_HAL
 add_port sysutils/smartmontools
 add_port lang/python26
 #+emulators/open-vm-tools-nox11

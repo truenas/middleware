@@ -126,7 +126,7 @@
 <div id="wiz" dojoType="dijit.Dialog" title="Storage Wizard"  dolayout="false">
         {% ifequal step0|add:1 step_count  %}
             <h3>Review & Save</h3>
-                <h4>Step {{ step0|add:1 }} of {{ step_count }}</h4>
+                <h4>Step {{ step0|add:1 }}</h4>
         <table style="width:300px;">
         {% for label, list in wizard_data.lists %}
 	{% if "0-" in label or "1-" in label %}

@@ -155,26 +155,51 @@ class VLAN(models.Model):
         verbose_name = "VLAN"
 
 
-class LAGG(models.Model):
-    lagg_vint = models.CharField(
+class LAGGmembers(models.Model):
+    lagg_devname = models.CharField(
             max_length=120, 
-            verbose_name="Virtual Interface"
+            verbose_name="Device Name"
             )
-    lagg_ports = models.CharField(
+    lagg_options = models.CharField(
             max_length=120, 
-            verbose_name="Ports"
+            verbose_name="Options"
             )
-    lagg_description = models.CharField(
-            max_length=120, 
-            verbose_name="Description", 
-            blank=True
-            )
-    
     def __unicode__(self):
-        return self.lagg_vint
+        return self.lagg_devname
 
     class Meta:
         verbose_name = "LAGG"
+
+class LAGGint2type(models.Model):
+    lagg_interface = models.ForeignKey(
+            Interfaces,
+            verbose_name="Interface"
+            )
+    lagg_type = models.CharField(
+            max_length=120, 
+            verbose_name="LAGG Type",
+            choices=LAGGType, 
+            )
+    def __unicode__(self):
+        return self.lagg_interface + " , " + self.lagg_type
+
+class LAGGint2mbrs(models.Model):
+    lagg_ordernum = models.IntegerField(
+            verbose_name="LAGG Order Number"
+            )
+    lagg_device = models.ForeignKey(
+            LAGGmembers,
+            verbose_name="LAGG Device"
+            )
+    lagg_interface = models.ForeignKey(
+            Interfaces, 
+            verbose_name="Interface"
+            )
+
+    def __unicode__(self):
+        return self.lagg_device
+    class Meta:
+        verbose_name = "LAGG Interface/Member"
 
 class StaticRoute(models.Model):
     sr_destination = models.CharField(

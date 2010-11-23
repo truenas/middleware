@@ -289,6 +289,12 @@ PWEncryptionChoices = (
         ('ad', 'ad'),
         ('exop', 'exop'),
         )
+LAGGType = (
+        ('a', 'a'),
+        ('b', 'b'),
+        ('c', 'c'),
+        )
+
 
 class whoChoices:
     """Populate a list of system user choices"""
