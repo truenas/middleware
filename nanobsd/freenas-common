@@ -150,12 +150,12 @@ add_port sysutils/nut		-DWITHOUT_SNMP -DWITHOUT_NEON -DWITHOUT_CGI \
 				-DWITHOUT_POWERMAN -DWITHOUT_HAL
 add_port sysutils/smartmontools
 add_port lang/python26
-#+
+#+emulators/open-vm-tools-nox11
 add_port devel/icu
 add_port devel/pcre
-add_port net/libdnet
 add_port devel/glib20
-#-
+add_port net/libdnet
+#-emulators/open-vm-tools-nox11
 add_port emulators/open-vm-tools-nox11
 add_port databases/py-sqlite3
 add_port www/py-django		-DWITHOUT_MYSQL
