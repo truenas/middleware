@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 
 # This script creates a bootable LiveCD iso from a nanobsd image
 
@@ -49,11 +49,11 @@ main()
 
     # Create a quick and dirty nano image from the world tree
     mkdir -p ${INSTALLUFSDIR}
-    tar -cf - -C ${NANO_OBJ}/_.w --exclude local . | tar -xvf - -C ${INSTALLUFSDIR}
+    tar -cf - -C ${NANO_OBJ}/_.w --exclude local . | tar -xf - -C ${INSTALLUFSDIR}
     
     # copy /rescue and /boot from the image to the iso
-    tar -cf - -C ${INSTALLUFSDIR} rescue | tar -xvf - -C ${STAGEDIR}
-    tar -cf - -C ${INSTALLUFSDIR} boot | tar -xvf - -C ${ISODIR}
+    tar -cf - -C ${INSTALLUFSDIR} rescue | tar -xf - -C ${STAGEDIR}
+    tar -cf - -C ${INSTALLUFSDIR} boot | tar -xf - -C ${ISODIR}
     if [ ! \( -f ${IMGFILE}.xz \) -o ${IMGFILE} -nt ${IMGFILE}.xz ]; then
 	xz --verbose --stdout --compress -9 ${IMGFILE} > ${IMGFILE}.xz
     fi
@@ -79,7 +79,7 @@ main()
     ln -s ../../rescue ${INSTALLUFSDIR}/usr/sbin
     ln -s ../rescue ${INSTALLUFSDIR}/bin
     ln -s ../rescue ${INSTALLUFSDIR}/sbin
-    tar -cf - -C${ETC_FILES} --exclude .svn . | tar -xvf - -C ${INSTALLUFSDIR}/etc
+    tar -cf - -C${ETC_FILES} --exclude .svn . | tar -xf - -C ${INSTALLUFSDIR}/etc
 
     # Compress what's left of the image after mangling it
     makefs -b 10%  ${TEMP_IMGFILE} ${INSTALLUFSDIR}
