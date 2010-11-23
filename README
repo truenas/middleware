@@ -38,14 +38,15 @@ To build the system:
 
 (1) Checkout the experimental code from svn:
 
-% svn https://freenas.svn.sourceforge.net/trunk
-% cd ix
+% svn co https://freenas.svn.sourceforge.net/trunk
+% cd trunk
 
 (2) Use the build script (substituting your favorite cvsup mirror)
 
 % setenv FREEBSD_CVSUP_HOST cvsup10.freebsd.org
 % sudo sh build/do_build.sh
 % sudo sh build/do_build.sh -b
+% sudo sh build/create_iso.sh
 
 That's it.  If you are rebuilding, just use the last line of #2.
 When updating source patches and/or ports, you may need to some
@@ -57,4 +58,6 @@ Once (2) completes, you'll have an image in
 obj.yyyy/FreeNAS-8rXXXX-yyyy.full where XXXX is the svn revision from
 the freenas repo, and yyyy is either i386 or amd64 depending on your
 platform.  This is a raw disk image, and needs to be converted to your
-favorite VM container format before use...
+favorite VM container format before use...  Alternatively, there will
+also be a obj.yyy/FreeNAS-8rXXXX-yyyy.full.iso that contains an ISO
+image that you can use to install FreeNAS with.
