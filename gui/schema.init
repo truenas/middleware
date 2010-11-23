@@ -148,7 +148,7 @@ TABLE system_settings {
 	stg_username=admin
 	stg_guiprotocol=http
 	stg_language=english
-	stg_timezone=america-los_angeles
+	stg_timezone=America/Los_Angeles
 	stg_ntpserver1=0.freebsd.pool.ntp.org iburst maxpoll 9
 	stg_ntpserver2=1.freebsd.pool.ntp.org iburst maxpoll 9
 	stg_ntpserver3=2.freebsd.pool.ntp.org iburst maxpoll 9

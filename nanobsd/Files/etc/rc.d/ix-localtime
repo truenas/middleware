@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+#
+
+# PROVIDE: ix-localtime
+# REQUIRE: FILESYSTEMS
+# BEFORE: NETWORKING
+
+. /etc/rc.subr
+
+#
+# Set up timezone
+#
+install_timezone()
+{
+	local IFS=\|
+
+	local timezone
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_timezone FROM system_settings ORDER BY -id LIMIT 1" | \
+	while read timezone; do
+		if [ -z "${timezone}" ]; then
+			timezone=America/Los_Angeles
+		fi
+		cp /usr/share/zoneinfo/${timezone} /etc/localtime
+		echo ${timezone} > /var/db/zoneinfo
+	done
+}
+
+name="ix-localtime"
+start_cmd='install_timezone'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

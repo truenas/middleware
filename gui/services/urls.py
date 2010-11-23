@@ -43,5 +43,5 @@ import os, commands
 
 urlpatterns = patterns('',
     (r'^$', services),
-    (r'toggle/(?P<formname>\w+)/$', servicesToggleView),
+    (r'toggle/(?P<formname>\w+)/.*$', servicesToggleView),
     )

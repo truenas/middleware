@@ -176,7 +176,6 @@
                     </button>
                     </p>
         </div>
-        <!--
         <div dojoType="dijit.layout.ContentPane" title="LAGG"{% if focus_form == "lagg" %} selected="true"{% endif %}>
             <table class="grid">
 	            <thead class="header">
@@ -210,7 +209,6 @@
                     </button>
                     </p>
         </div>
-        -->
         <div dojoType="dijit.layout.ContentPane" title="Static Routes"{% if focus_form == "sr" %} selected="true"{% endif %}>
             <table class="grid">
 	        <thead class="header">
@@ -270,7 +268,6 @@
 </button>
 </form>
 </div>
-<!--
 <div id="lagg" dojoType="dijit.Dialog" closable="true" title="Add LAGG">
 <form action="/network/global/lagg/" method="post">{% csrf_token %}
     <table>
@@ -282,7 +279,6 @@
 </button>
 </form>
 </div>
--->
 <div id="sr" dojoType="dijit.Dialog" closable="true" title="Add Static Route">
 <form action="/network/global/sr/" method="post">{% csrf_token %}
     <table>

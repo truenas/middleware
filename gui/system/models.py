@@ -56,8 +56,8 @@ class Settings(models.Model):
             )
     stg_timezone = models.CharField(
             max_length=120, 
-            choices=TIMEZONE_CHOICES, 
-            default="america-los_angeles", 
+            choices=TimeZoneChoices(),
+            default="America/Los_Angeles", 
             verbose_name="Timezone"
             )
     stg_ntpserver1 = models.CharField(

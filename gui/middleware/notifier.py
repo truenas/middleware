@@ -149,6 +149,7 @@ class notifier:
 		self.__system("/usr/sbin/service hostname quietstart")
 		self.__system("/usr/sbin/service routing restart")
 	def _reload_timeservices(self):
+		self.__system("/usr/sbin/service ix-localtime quietstart")
 		self.__system("/usr/sbin/service ix-ntpd quietstart")
 		self.__system("/usr/sbin/service ntpd restart")
 	def _reload_ssh(self):
@@ -210,6 +211,8 @@ class notifier:
                 return c
 	def __gpt_labeldisk(self, type, devname, label = ""):
                 """Label the whole disk with GPT under the desired label and type"""
+                # To be safe, wipe out the disk
+                self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname))
                 # TODO: Support for 4k sectors (requires 8.1-STABLE after 213467).
 		if label != "":
 			self.__system("gpart create -s gpt /dev/%s && gpart add -t %s -l %s %s" % (devname, type, label, devname))

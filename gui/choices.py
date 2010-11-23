@@ -52,10 +52,6 @@ PROTOCOL_CHOICES = (
 LANG_CHOICES = (
         ('english', 'English'),
         )
-# TIMEZONE_CHOICES should be replaced by system timezone info
-TIMEZONE_CHOICES = (
-        ('america-los_angeles', 'America/Los_Angeles'),
-        )
 ZPOOL_CHOICES = (
         ('Basic', 'Basic'),
         ('Mirror', 'Mirror'),
@@ -315,4 +311,16 @@ class NICChoices:
 
     def __iter__(self):
         return iter((i, i) for i in self._NIClist)
+
+class TimeZoneChoices:
+    """Populate timezone from /usr/share/zoneinfo choices"""
+    def __init__(self):
+        pipe = popen('find /usr/share/zoneinfo/ -type f -not -name zone.tab')
+        self._TimeZoneList = pipe.read().strip().split('\n')
+        self._TimeZoneList = [ x[20:] for x in self._TimeZoneList ]
+        self._TimeZoneList.sort()
+        self.max_choices = len(self._TimeZoneList)
+
+    def __iter__(self):
+        return iter((i, i) for i in self._TimeZoneList)
 

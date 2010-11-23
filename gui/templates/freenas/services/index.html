@@ -3,7 +3,7 @@
 {% block dojango_header_extra %}
 <script type="text/javascript">
     function toggle_service(obj) {
-        obj.src = '/services/toggle/' + obj.name + '/';
+        obj.src = '/services/toggle/' + obj.name + '/' + Date();
     }
 </script>
 {% endblock %}
@@ -129,18 +129,18 @@
                 </td>
             </tr>
             -->
-           <!-- <tr>
+           <tr>
                 <td>
                     <strong>iSCSI</strong>
                 </td>
                 <td>
-		    <img id="iscsi_toggle" name="iscsi_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "iscsi" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+		    <img id="iscsitarget_toggle" name="iscsitarget_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "iscsitarget" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <img id="iscsi_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('iscsi').show();" title="ISCSI Settings">
+                    <img id="iscsitarget_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('iscsitarget').show();" title="ISCSI Settings">
                 </td>
             </tr>
-            -->
+          
            <!-- <tr>
                 <td>
                     <strong>Dynamic DNS</strong>
@@ -313,15 +313,15 @@
 </button>
 </form>
 </div>
-<div id="iscsi" dojoType="dijit.Dialog" title="iSCSI">
+<div id="iscsitarget" dojoType="dijit.Dialog" title="iSCSI">
 <form action="/services/" method="post">{% csrf_token %}
             <table>
-                {{ iscsi.errors }}
-                {{ iscsi }}
+                {{ iscsitarget.errors }}
+                {{ iscsitarget }}
         
                          </table>
 <button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
-<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('iscsi').hide();">
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('iscsitarget').hide();">
     Cancel
 </button>
 </form>
