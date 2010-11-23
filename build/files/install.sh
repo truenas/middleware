@@ -10,60 +10,33 @@ export TERM
 
 get_product_name()
 {
-	local _product
-
-	_product="FreeNAS"
-	VAL="${_product}"
-
-	export VAL
+    echo "FreeNAS"
 }
 
 get_product_arch()
 {
-	local _arch=$(uname -p)
-	VAL="${_arch}"
-
-	export VAL
+    uname -p
 }
 
 get_product_path()
 {
-	local _path
-
-	_path=""
-	VAL="${_path}"
-
-	export VAL
+    echo "/cdrom"
 }
 
 get_image_name()
 {
-	local _product
-	local _arch
-	local _path
-
-	get_product_name
-	_product="${VAL}"
-
-	get_product_arch
-	_arch="${VAL}"
-
-	get_product_path
-	_path="${VAL}"
-
-	echo "${_path}/${_product}-${_arch}-embedded.xz"
+    echo "$(get_product_path)/$(get_product_name)-$(get_product_arch)-embedded.xz"
 }
 
 build_config()
 {
-        # build_config ${_disk} ${_image} ${_config_file}
+    # build_config ${_disk} ${_image} ${_config_file}
 
-        local _disk=$1
-        local _image=$2
-        local _config_file=$3
-	local _arch=$(uname -p)
+    local _disk=$1
+    local _image=$2
+    local _config_file=$3
 
-        cat << EOF > "${_config_file}"
+    cat << EOF > "${_config_file}"
 # Added to stop pc-sysinstall from complaining
 installMode=fresh
 installInteractive=no
@@ -73,7 +46,7 @@ packageType=tar
 
 disk0=${_disk}
 partition=image
-image=/cdrom/FreeNAS-${_arch}-embedded.xz
+image=${_image}
 bootManager=bsd
 commitDiskPart
 EOF
@@ -81,117 +54,85 @@ EOF
 
 wait_keypress()
 {
-	local _tmp
-
-	_msg=$1
-	if [ -n "${_msg}" ]
-	then
-		echo "${_msg}"
-	fi
-
-	_msg="Press ENTER to continue."
-	read -p "${_msg}" _tmp
+    local _tmp
+    read -p "Press ENTER to continue." _tmp
 }
 
 get_physical_disks_list()
 {
-	local _disks
-	local _list
-	local _d
+    local _disks
+    local _list
+    local _d
 
-	_list=""
-	_disks=`sysctl -n kern.disks`
-	for _d in ${_disks}
-	do
-		if echo "${_d}" | grep -vE '^cd' >/dev/null 2>&1
-		then
-			_list="${_list}${_d} "
-		fi
-	done
+    _list=""
+    _disks=`sysctl -n kern.disks`
+    for _d in ${_disks}; do
+	if echo "${_d}" | grep -vE '^cd' >/dev/null 2>&1; then
+	    _list="${_list}${_d} "
+	fi
+    done
 
-	VAL="${_list}"
-	export VAL
+    VAL="${_list}"
+    export VAL
 }
 
 get_media_description()
 {
-	local _media
+    local _media
+    local _description
+    local _cap
 
-	_media=$1
-	VAL=""
-
-	if [ -n "${_media}" ]
-	then
-		_description=`pc-sysinstall disk-list -c |grep "^${_media}"\
-			|awk -F':' '{print $2}'|sed -E 's|.*<(.*)>.*$|\1|'`
-		VAL="${_description}"
-	fi
-
-	export VAL
+    _media=$1
+    VAL=""
+    if [ -n "${_media}" ]; then
+	_description=`pc-sysinstall disk-list -c |grep "^${_media}"\
+	    | awk -F':' '{print $2}'|sed -E 's|.*<(.*)>.*$|\1|'`
+	_cap=`diskinfo ${_media} | awk '{
+	    capacity = $3;
+	    if (capacity >= 1099511627776) {
+		printf("%.1f TiB", capacity / 1099511627776.0);
+	    } else if (capacity >= 1073741824) {
+		printf("%.1f GiB", capacity / 1073741824.0);
+	    } else if (capacity >= 1048576) {
+		printf("%.1f MiB", capacity / 1048576.0);
+	    } else {
+		printf("%d Bytes", capacity);
+	}}'`
+	VAL="${_description} -- ${_cap}"
+    fi
+    export VAL
 }
 
 disk_is_mounted()
 {
-	local _disk
-	local _dev
-	local _res
+    local _dev
 
-	_res=0
-	_disk=$1
-	_dev="/dev/${_disk}"
-	mount -v|grep -E "^${_dev}[sp][0-9]+" >/dev/null 2>&1
-	_res=$?
-
-	return ${_res}
+    _dev="/dev/$1"
+    mount -v|grep -E "^${_dev}[sp][0-9]+" >/dev/null 2>&1
+    return $?
 }
 
 menu_install()
 {
-	local _disklist
-	local _tmpfile
-	local _answer
-	local _cdlist
-	local _items
-	local _cdrom
-	local _disk
-        local _image
-        local _config_file
-	local _desc
-	local _list
-	local _msg
-	local _i
-
-        _tmpfile="/tmp/msg"
-
-        cat << EOD > "${_tmpfile}"
-FreeNAS  installer for Flash device or HDD.
-
-WARNING: There will be some limitations:
-1. This will erase ALL partitions and data on the destination disk
-2. You can't use your destination disk for sharing data
-
-Installing on USB key is the preferred way:
-It saves you an IDE, SATA or SCSI channel for more hard drives.
-
-EOD
-
-    _msg=`cat "${_tmpfile}"`
-    rm -f "${_tmpfile}"
-
-
-    dialog --title "FreeNAS installation" --yesno "${_msg}" 17 74
-    if [ "$?" != "0" ]
-    then
-        exit 1
-    fi
+    local _disklist
+    local _tmpfile
+    local _answer
+    local _cdlist
+    local _items
+    local _disk
+    local _image
+    local _config_file
+    local _desc
+    local _list
+    local _msg
+    local _i
 
     get_physical_disks_list
     _disklist="${VAL}"
 
     _list=""
     _items=0
-    for _disk in ${_disklist}
-    do
+    for _disk in ${_disklist}; do
         get_media_description "${_disk}"
         _desc="${VAL}"
         _list="${_list} ${_disk} '${_desc}'"
@@ -205,19 +146,37 @@ EOD
     if [ "$?" != "0" ]; then
         exit 1
     fi
-
     _disk=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
 
     if disk_is_mounted "${_disk}" ; then
-        wait_keypress "The destination drive is already in use!"
+        dialog --msgbox "The destination drive is already in use!" 17 74
+        exit 1
+    fi
+
+    _tmpfile="/tmp/msg"
+    cat << EOD > "${_tmpfile}"
+FreeNAS  installer for Flash device or HDD.
+
+WARNING: There will be some limitations:
+1. This will erase ALL partitions and data on the destination disk
+2. You can't use your destination disk for sharing data
+
+Installing on USB key is the preferred way:
+It saves you an IDE, SATA or SCSI channel for more hard drives.
+
+EOD
+    _msg=`cat "${_tmpfile}"`
+    rm -f "${_tmpfile}"
+    dialog --title "FreeNAS installation" --yesno "${_msg}" 17 74
+    if [ "$?" != "0" ]; then
         exit 1
     fi
 
     _image="$(get_image_name)"
     _config_file="/tmp/pc-sysinstall.cfg"
 
-    #  _cdrom, _disk, _image, _config_file
+    #  _disk, _image, _config_file
     # we can now build a config file for pc-sysinstall
     build_config  ${_disk} ${_image} ${_config_file}
 
@@ -227,24 +186,20 @@ EOD
     export ROOTIMAGE=1
     # Hack #2
     ls /cdrom > /dev/null
-    export LOGOUT=/var/log/freenas-install.log
-    cp /dev/null $LOGOUT
-    tail -F $LOGOUT &
     /rescue/pc-sysinstall -c ${_config_file}
 
-    cat << EOD
+    dialog --msgbox '
 
-FreeNAS has been successfully installed on ${_disk}.
+FreeNAS has been successfully installed on '"${_disk}."'
 Please remove the CDROM and reboot this machine.
 
-EOD
-    wait_keypress ""
+' 17 74
     return 0
 }
 
 menu_shell()
 {
-	eval /bin/sh
+    /bin/sh
 }
 
 menu_reboot()
@@ -259,12 +214,12 @@ menu_shutdown()
     halt -p >/dev/null
 }
 
-menu()
+main()
 {
     local _tmpfile="/tmp/answer"
-    while :
-    do
-	local _number
+    local _number
+
+    while :; do
 
 	dialog --clear --title "FreeNAS 8.0 Beta Console Setup" --menu "" 12 73 6 \
 	    "1" "Install/Upgrade to hard drive/flash device, etc." \
@@ -281,10 +236,4 @@ menu()
 	esac
     done
 }
-
-main()
-{
-	menu
-}
-
 main
