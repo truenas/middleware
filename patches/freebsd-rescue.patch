@@ -32,7 +32,7 @@ Index: rescue/rescue/Makefile
  CRUNCH_SRCDIRS+= usr.sbin
  
  CRUNCH_PROGS_usr.sbin= chroot
-+CRUNCH_PROGS_usr.sbin+= vidcontrol
++CRUNCH_PROGS_usr.sbin+= diskinfo vidcontrol
  
  CRUNCH_PROGS_usr.sbin+= chown
  CRUNCH_ALIAS_chown= chgrp
