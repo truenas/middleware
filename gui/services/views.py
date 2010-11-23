@@ -71,7 +71,7 @@ def services(request):
     forms_saved = forms_saved + saved
     saved, unison = helperViewEm(request, UnisonForm, Unison)
     forms_saved = forms_saved + saved
-    saved, iscsi = helperViewEm(request, iSCSITargetForm, iSCSITarget)
+    saved, iscsitarget = helperViewEm(request, iSCSITargetForm, iSCSITarget)
     forms_saved = forms_saved + saved
     saved, dynamicdns = helperViewEm(request, DynamicDNSForm, DynamicDNS)
     forms_saved = forms_saved + saved
@@ -109,7 +109,7 @@ def services(request):
             'nfs': nfs,
             'rsync': rsync,
             'unison': unison,
-            'iscsi': iscsi,
+            'iscsitarget': iscsitarget,
             'dynamicdns': dynamicdns,
             'snmp': snmp,
             'ups': ups,
@@ -131,7 +131,7 @@ def servicesToggleView(request, formname):
 	'afp_toggle' : 'afp',
 	'nfs_toggle' : 'nfs',
 	'unison_toggle' : 'unison',
-	'iscsi_toggle' : 'iscsi',
+	'iscsitarget_toggle' : 'iscsitarget',
 	'dyndns_toggle' : 'dyndns',
 	'snmp_toggle' : 'snmp',
 	'ups_toggle' : 'ups',
