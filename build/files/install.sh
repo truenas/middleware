@@ -1,9 +1,12 @@
 #!/bin/sh
 
-. /.profile
-
-__FREENAS_DEBUG__=""
-
+# Setup a semi-sane environment
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+export PATH
+HOME=/root
+export HOME
+TERM=${TERM:-cons25}
+export TERM
 
 get_product_name()
 {
@@ -48,8 +51,7 @@ get_image_name()
 	get_product_path
 	_path="${VAL}"
 
-	VAL="${_path}/${_product}-${_arch}-embedded.xz"
-	export VAL
+	echo "${_path}/${_product}-${_arch}-embedded.xz"
 }
 
 build_config()
@@ -89,20 +91,6 @@ wait_keypress()
 
 	_msg="Press ENTER to continue."
 	read -p "${_msg}" _tmp
-}
-
-get_memory_disks_list()
-{
-	local _disks
-
-	VAL=""
-	if [ -n "${__FREENAS_DEBUG__}" ]
-	then
-		_disks=`mdconfig -l`
-		VAL="${_disks}"
-	fi
-
-	export VAL
 }
 
 get_physical_disks_list()
@@ -200,9 +188,6 @@ EOD
     get_physical_disks_list
     _disklist="${VAL}"
 
-    get_memory_disks_list
-    _disklist="${_disklist} ${VAL}"	
-
     _list=""
     _items=0
     for _disk in ${_disklist}
@@ -229,9 +214,7 @@ EOD
         exit 1
     fi
 
-    get_image_name
-    _image="${VAL}"
-
+    _image="$(get_image_name)"
     _config_file="/tmp/pc-sysinstall.cfg"
 
     #  _cdrom, _disk, _image, _config_file
@@ -259,14 +242,6 @@ EOD
     return 0
 }
 
-menu_null()
-{
-}
-
-menu_reset()
-{
-}
-
 menu_shell()
 {
 	eval /bin/sh
@@ -274,49 +249,42 @@ menu_shell()
 
 menu_reboot()
 {
-	dialog --yesno "Do you really want to reboot the system?" 5 46 no
-	if [ "$?" = "0" ]
-	then
-		reboot >/dev/null
-	fi
+    echo "Rebooting the system..."
+    reboot >/dev/null
 }
 
 menu_shutdown()
 {
-	dialog --yesno "Do you really want to shutdown the system?" 5 46 no
-	if [ "$?" = "0" ]
-	then
-		halt -p >/dev/null
-	fi
+    echo "Halting and powering down..."
+    halt -p >/dev/null
 }
 
 menu()
 {
-	local _tmpfile="/tmp/answer"
-	while :
-	do
-		local _number
+    local _tmpfile="/tmp/answer"
+    while :
+    do
+	local _number
 
-		dialog --clear --title "FreeNAS 8.0 Beta Console Setup" --menu "" 12 73 6 \
-		"1" "Install/Upgrade to hard drive/flash device, etc." \
-		"2" "Shell" \
-		"3" "Reboot System" \
-		"4" "Shutdown System" \
-		2> "${_tmpfile}"
-		_number=`cat "${_tmpfile}"`
-		case "${_number}" in
-			1) menu_install ;;
-			2) menu_shell ;;
-			3) menu_reboot ;;
-			4) menu_shutdown ;;
-		esac
-	done
+	dialog --clear --title "FreeNAS 8.0 Beta Console Setup" --menu "" 12 73 6 \
+	    "1" "Install/Upgrade to hard drive/flash device, etc." \
+	    "2" "Shell" \
+	    "3" "Reboot System" \
+	    "4" "Shutdown System" \
+	    2> "${_tmpfile}"
+	_number=`cat "${_tmpfile}"`
+	case "${_number}" in
+	    1) menu_install ;;
+	    2) menu_shell ;;
+	    3) menu_reboot ;;
+	    4) menu_shutdown ;;
+	esac
+    done
 }
 
 main()
 {
-	menu;
+	menu
 }
 
-
-main;
+main
