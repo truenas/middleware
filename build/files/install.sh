@@ -165,10 +165,11 @@ WARNING: There will be some limitations:
 Installing on USB key is the preferred way:
 It saves you an IDE, SATA or SCSI channel for more hard drives.
 
+Proceed with the installation onto ${_disk}?
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog --title "FreeNAS installation" --yesno "${_msg}" 17 74
+    dialog --title "Start FreeNAS installation" --yesno "${_msg}" 13 74
     if [ "$?" != "0" ]; then
         exit 1
     fi
