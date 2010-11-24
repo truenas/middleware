@@ -47,6 +47,7 @@ class VolumeWizard_VolumeNameTypeForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(VolumeWizard_VolumeNameTypeForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
+        self.fields['volume_disks'].choices.sort()
     def _populate_disk_choices(self):
         from os import popen
         import re
@@ -54,6 +55,7 @@ class VolumeWizard_VolumeNameTypeForm(forms.Form):
         diskchoices = dict()
     
         # Grab disk list
+        # NOTE: This approach may fail if device nodes are not accessible.
         pipe = popen("/usr/sbin/diskinfo ` /sbin/sysctl -n kern.disks` | /usr/bin/cut -f1,3")
         diskinfo = pipe.read().strip().split('\n')
         for disk in diskinfo:
