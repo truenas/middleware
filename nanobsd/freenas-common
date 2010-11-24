@@ -57,6 +57,7 @@ if [ -n "${FREENAS_ARCH}" ]; then
 fi
 NANO_LABEL=FreeNAS
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
+NANO_RAM_TMPVARSIZE=$((40*1024))
 
 # Tmp hack for transition to lighttpd
 use_lighttpd=1
