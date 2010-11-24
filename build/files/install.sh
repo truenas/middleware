@@ -142,7 +142,7 @@ menu_install()
     _tmpfile="/tmp/answer"
     eval "dialog --title 'Choose destination media' \
           --menu 'Select media where FreeNAS OS should be installed.' \
-          15 60 ${_items} ${_list}" 2>"${_tmpfile}"
+          15 60 ${_items} ${_list}" 2>${_tmpfile}
     if [ "$?" != "0" ]; then
         exit 1
     fi
@@ -150,13 +150,13 @@ menu_install()
     rm -f "${_tmpfile}"
 
     if disk_is_mounted "${_disk}" ; then
-        dialog --msgbox "The destination drive is already in use!" 17 74
+        dialog --msgbox "The destination drive is already in use!" 4 74
         exit 1
     fi
 
     _tmpfile="/tmp/msg"
     cat << EOD > "${_tmpfile}"
-FreeNAS  installer for Flash device or HDD.
+FreeNAS installer for Flash device or HDD.
 
 WARNING: There will be some limitations:
 1. This will erase ALL partitions and data on the destination disk
@@ -189,11 +189,9 @@ EOD
     /rescue/pc-sysinstall -c ${_config_file}
 
     dialog --msgbox '
-
 FreeNAS has been successfully installed on '"${_disk}."'
 Please remove the CDROM and reboot this machine.
-
-' 17 74
+' 8 74
     return 0
 }
 

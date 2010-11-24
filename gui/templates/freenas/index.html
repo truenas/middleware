@@ -151,9 +151,6 @@
 <form action="system/advanced/" method="post">{% csrf_token %}
     <table class="config">
                 {% for field in advanced %}
-                <td>
-                    {{ field.errors }}
-                </td>
                 <tr>
                     <td>
                         <label for="{{ field.auto_id }}">
@@ -166,11 +163,12 @@
                     </td>
                     <td>
                         {{ field }}
+                        {{ field.errors }}
                     </td>
                 </tr>
             {% endfor %}
     </table>
-    <p clss="btn">
+    <p class="btn">
     <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Settings</button>
     </p>
     </form>
