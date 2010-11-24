@@ -154,6 +154,10 @@ add_port emulators/open-vm-tools-nox11
 add_port databases/py-sqlite3
 add_port www/py-django		-DWITHOUT_MYSQL
 add_port www/py-dojango
+#+databases/py-south
+add_port devel/py-setuptools
+#-databases/py-south
+add_port databases/py-south
 if [ $use_lighttpd -eq 0 ]; then
     #+www/apache22
     add_port devel/apr1
@@ -168,7 +172,6 @@ else
     #-add_port www/lighttpd
     add_port www/lighttpd
     #+add_port www/py-flup
-    add_port devel/py-setuptools
     #-add_port www/py-flup
     add_port www/py-flup
 fi

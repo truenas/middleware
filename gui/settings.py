@@ -121,6 +121,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     #'django.contrib.admin',
     #'freenas',
+    'south',
     'dojango',
     'account',
     'system',

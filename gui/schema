@@ -77,21 +77,17 @@ CREATE TABLE "network_interfaces" (
     "int_ipv6address" varchar(42) NOT NULL,
     "int_options" varchar(120) NOT NULL
 );
-CREATE TABLE "network_laggint2mbrs" (
+CREATE TABLE "network_lagginterface" (
     "id" integer NOT NULL PRIMARY KEY,
+    "lagg_interface_id" integer NOT NULL UNIQUE REFERENCES "network_interfaces" ("id"),
+    "lagg_protocol" varchar(120) NOT NULL
+);
+CREATE TABLE "network_lagginterfacemembers" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "lagg_interfacegroup_id" integer NOT NULL REFERENCES "network_lagginterface" ("id"),
     "lagg_ordernum" integer NOT NULL,
-    "lagg_device_id" integer NOT NULL REFERENCES "network_laggmembers" ("id"),
-    "lagg_interface_id" integer NOT NULL REFERENCES "network_interfaces" ("id")
-);
-CREATE TABLE "network_laggint2type" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "lagg_interface_id" integer NOT NULL REFERENCES "network_interfaces" ("id"),
-    "lagg_type" varchar(120) NOT NULL
-);
-CREATE TABLE "network_laggmembers" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "lagg_devname" varchar(120) NOT NULL,
-    "lagg_options" varchar(120) NOT NULL
+    "lagg_physnic" varchar(120) NOT NULL UNIQUE,
+    "lagg_deviceoptions" varchar(120) NOT NULL
 );
 CREATE TABLE "network_staticroute" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -506,9 +502,7 @@ CREATE INDEX "auth_user_groups_bda51c3c" ON "auth_user_groups" ("group_id");
 CREATE INDEX "auth_user_groups_fbfc09f1" ON "auth_user_groups" ("user_id");
 CREATE INDEX "auth_user_user_permissions_1e014c8f" ON "auth_user_user_permissions" ("permission_id");
 CREATE INDEX "auth_user_user_permissions_fbfc09f1" ON "auth_user_user_permissions" ("user_id");
-CREATE INDEX "network_laggint2mbrs_15f7e3bb" ON "network_laggint2mbrs" ("lagg_interface_id");
-CREATE INDEX "network_laggint2mbrs_7827acfd" ON "network_laggint2mbrs" ("lagg_device_id");
-CREATE INDEX "network_laggint2type_15f7e3bb" ON "network_laggint2type" ("lagg_interface_id");
+CREATE INDEX "network_lagginterfacemembers_c784c51" ON "network_lagginterfacemembers" ("lagg_interfacegroup_id");
 CREATE INDEX "sharing_afp_share_59543197" ON "sharing_afp_share" ("afp_path_id");
 CREATE INDEX "sharing_cifs_share_f37b7640" ON "sharing_cifs_share" ("cifs_path_id");
 CREATE INDEX "sharing_nfs_share_4b883b8f" ON "sharing_nfs_share" ("nfs_path_id");

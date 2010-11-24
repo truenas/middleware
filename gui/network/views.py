@@ -54,11 +54,11 @@ def network(request, objtype = None):
     gc = GlobalConfigurationForm(data = GlobalConfiguration.objects.order_by("-id").values()[0])
     interfaces = InterfacesForm()
     vlan = VLANForm()
-    lagg = LAGGForm()
+    lagg = LAGGInterfaceForm()
     staticroute = StaticRouteForm()
     int_list = Interfaces.objects.order_by("-id").values()
     vlan_list = VLAN.objects.order_by("-id").values()
-    lagg_list = LAGGmembers.objects.order_by("-id").values()
+    lagg_list = LAGGInterface.objects.order_by("-id").values()
     sr_list = StaticRoute.objects.order_by("-id").values()
     errform = ""
     if request.method == 'POST':
@@ -79,9 +79,29 @@ def network(request, objtype = None):
             else:
                 errform = 'vlan'
         elif objtype == 'lagg':
-            lagg = LAGGForm(request.POST)
+            lagg = LAGGInterfaceForm(request.POST)
             if lagg.is_valid():
-                lagg.save()
+                # Search for a available slot for laggX interface
+                interface_names = Interfaces.objects.all().values('int_interface')
+                candidate_index = 0
+                while ("lagg%d" % (candidate_index)) in interface_names:
+                    candidate_index = candidate_index + 1
+                lagg_name = "lagg%d" % (candidate_index)
+                lagg_protocol = lagg.cleaned_data['lagg_protocol']
+                lagg_member_list = lagg.cleaned_data['lagg_interfaces']
+                # Step 1: Create an entry in interface table that represents the lagg interface
+                lagg_interface = Interfaces(int_interface = lagg_name, int_name = lagg_name, int_dhcp = True, int_ipv6auto = False)
+                lagg_interface.save()
+                # Step 2: Write associated lagg attributes
+                lagg_interfacegroup = LAGGInterface(lagg_interface = lagg_interface, lagg_protocol = lagg_protocol)
+                lagg_interfacegroup.save()
+                # Step 3: Write lagg's members in the right order
+                order = 0
+                for interface in lagg_member_list:
+                    lagg_member_entry = LAGGInterfaceMembers(lagg_interfacegroup = lagg_interfacegroup, lagg_ordernum = order, lagg_physnic = interface, lagg_deviceoptions = 'up')
+                    lagg_member_entry.save()
+                    order = order + 1
+                return HttpResponseRedirect('/network/')
             else:
                 errform = 'lagg'
         elif objtype == 'sr':
@@ -112,7 +132,6 @@ def generic_delete(request, object_id, objtype):
     network_name_model_map = {
         'int':    Interfaces,
         'sr':   StaticRoute,
-        'lagg':   LAGG,
         'vlan':   VLAN,
     }
     return delete_object(
@@ -126,7 +145,7 @@ def generic_update(request, object_id, objtype):
     objtype2form = {
             'int':   ( Interfaces, None ),
             'vlan':   ( VLAN, None ),
-            'lagg':   ( LAGG, None ),
+            'lagg':   ( LAGGInterface, None ),
             'sr':   ( StaticRoute, None ),
             } 
     model, form_class = objtype2form[objtype]

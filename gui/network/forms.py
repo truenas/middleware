@@ -26,7 +26,7 @@
 # $FreeBSD$
 #####################################################################
 
-from django.forms import ModelForm, ValidationError
+import django.forms
 from django.shortcuts import render_to_response                
 from freenasUI.network.models import *                         
 from freenasUI.middleware.notifier import notifier
@@ -88,9 +88,11 @@ class VLANForm(ModelForm):
     class Meta:
         model = VLAN 
 
-class LAGGForm(ModelForm):
-    class Meta:
-        model = LAGGmembers
+attrs_dict = { 'class': 'required' }
+
+class LAGGInterfaceForm(forms.Form):
+    lagg_protocol = forms.ChoiceField(choices=LAGGType, widget=forms.RadioSelect(attrs=attrs_dict))
+    lagg_interfaces = forms.MultipleChoiceField(choices=NICChoices(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Physical NICs in the LAGG')
 
 class StaticRouteForm(ModelForm):
     class Meta:

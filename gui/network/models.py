@@ -154,52 +154,47 @@ class VLAN(models.Model):
     class Meta:
         verbose_name = "VLAN"
 
-
-class LAGGmembers(models.Model):
-    lagg_devname = models.CharField(
-            max_length=120, 
-            verbose_name="Device Name"
+# LAGG interface to protocol type map.
+# This model amends Interface to provide information regarding to a lagg interface
+class LAGGInterface(models.Model):
+    # A corresponding interface is created as "laggX"
+    lagg_interface = models.ForeignKey(
+            Interfaces,
+            unique = True,
+            verbose_name="Interface"
             )
-    lagg_options = models.CharField(
+    lagg_protocol = models.CharField(
+            max_length=120, 
+            verbose_name="Protocol Type",
+            choices=LAGGType,
+            )
+    def __unicode__(self):
+        return "%s (%s)" % (self.lagg_interface, self.lagg_type)
+
+# Physical interfaces list inside one LAGG group
+class LAGGInterfaceMembers(models.Model):
+    lagg_interfacegroup = models.ForeignKey(
+            LAGGInterface, 
+            verbose_name="LAGG Interface group"
+            )
+    lagg_ordernum = models.IntegerField(
+            verbose_name="LAGG Priority Number",
+            )
+    lagg_physnic = models.CharField(
+            max_length=120, 
+            choices=NICChoices(), 
+            unique = True,
+            verbose_name="Physical NIC"
+            )
+    lagg_deviceoptions = models.CharField(
             max_length=120, 
             verbose_name="Options"
             )
     def __unicode__(self):
-        return self.lagg_devname
+        return self.lagg_devicename
 
     class Meta:
         verbose_name = "LAGG"
-
-class LAGGint2type(models.Model):
-    lagg_interface = models.ForeignKey(
-            Interfaces,
-            verbose_name="Interface"
-            )
-    lagg_type = models.CharField(
-            max_length=120, 
-            verbose_name="LAGG Type",
-            choices=LAGGType, 
-            )
-    def __unicode__(self):
-        return self.lagg_interface + " , " + self.lagg_type
-
-class LAGGint2mbrs(models.Model):
-    lagg_ordernum = models.IntegerField(
-            verbose_name="LAGG Order Number"
-            )
-    lagg_device = models.ForeignKey(
-            LAGGmembers,
-            verbose_name="LAGG Device"
-            )
-    lagg_interface = models.ForeignKey(
-            Interfaces, 
-            verbose_name="Interface"
-            )
-
-    def __unicode__(self):
-        return self.lagg_device
-    class Meta:
-        verbose_name = "LAGG Interface/Member"
 
 class StaticRoute(models.Model):
     sr_destination = models.CharField(
