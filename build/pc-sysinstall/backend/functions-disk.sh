@@ -265,8 +265,9 @@ delete_all_gpart()
    fi
   done
 
-  rc_nohalt "dd if=/dev/zero of=/dev/${DISK} count=3000"
-
+  # Blank front and end of disk to kill all known meta data locations
+  rc_nohalt "dd if=/dev/zero of=/dev/${DISK} bs=1m count=10"
+  rc_nohalt "dd if=/dev/zero of=/dev/${DISK} bs=1m oskip=$(diskinfo ${DISK} | awk '{print ($3 / (1024*1024))-2;}')"
 };
 
 # Function to export all zpools before starting an install
@@ -575,10 +576,6 @@ init_gpt_full_disk()
   # Remove any existing partitions
   delete_all_gpart "${_intDISK}"
 
-  #Erase any existing bootloader
-  echo_log "Cleaning up ${_intDISK}"
-  rc_halt "dd if=/dev/zero of=/dev/${_intDISK} count=2048"
-
   sleep 2
 
   echo_log "Running gpart on ${_intDISK}"
@@ -606,10 +603,6 @@ init_mbr_full_disk()
 
   # Remove any existing partitions
   delete_all_gpart "${_intDISK}"
-
-  #Erase any existing bootloader
-  echo_log "Cleaning up ${_intDISK}"
-  rc_halt "dd if=/dev/zero of=/dev/${_intDISK} count=2048"
 
   sleep 2
 
@@ -804,7 +797,7 @@ run_gpart_free()
   sleep 2
   
   echo_log "Cleaning up $slice"
-  rc_halt "dd if=/dev/zero of=/dev/${slice} count=1024"
+  rc_halt "dd if=/dev/zero of=/dev/${slice} bs=1m count=10"
 
   sleep 1
 
