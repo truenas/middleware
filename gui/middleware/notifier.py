@@ -211,8 +211,9 @@ class notifier:
                 return c
 	def __gpt_labeldisk(self, type, devname, label = ""):
                 """Label the whole disk with GPT under the desired label and type"""
-                # To be safe, wipe out the disk
+                # To be safe, wipe out the disk, both ends... before we start
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname))
+                self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s | awk '{print ($3 / (1024*1024)) - 3;}'`" % (devname, devname))
                 # TODO: Support for 4k sectors (requires 8.1-STABLE after 213467).
 		if label != "":
 			self.__system("gpart create -s gpt /dev/%s && gpart add -t %s -l %s %s" % (devname, type, label, devname))
@@ -221,6 +222,9 @@ class notifier:
 	def __gpt_unlabeldisk(self, devname):
 		"""Unlabel the disk"""
 		self.__system("gpart delete -i 1 /dev/%s && gpart destroy /dev/%s" % (devname, devname))
+                # To be safe, wipe out the disk, both ends...
+                self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=10" % (devname))
+                self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s | awk '{print ($3 / (1024*1024)) - 3;}'`" % (devname, devname))
         def __create_zfs_volume(self, c, z_id, z_name):
                 """Internal procedure to create a ZFS volume identified by volume id"""
                 z_vdev = ""
