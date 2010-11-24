@@ -58,7 +58,7 @@ def network(request, objtype = None):
     staticroute = StaticRouteForm()
     int_list = Interfaces.objects.order_by("-id").values()
     vlan_list = VLAN.objects.order_by("-id").values()
-    lagg_list = LAGG.objects.order_by("-id").values()
+    lagg_list = LAGGmembers.objects.order_by("-id").values()
     sr_list = StaticRoute.objects.order_by("-id").values()
     errform = ""
     if request.method == 'POST':

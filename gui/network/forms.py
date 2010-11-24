@@ -90,7 +90,7 @@ class VLANForm(ModelForm):
 
 class LAGGForm(ModelForm):
     class Meta:
-        model = LAGG
+        model = LAGGmembers
 
 class StaticRouteForm(ModelForm):
     class Meta:
