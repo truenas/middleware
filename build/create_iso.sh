@@ -104,7 +104,15 @@ mkdir -p ${RWROOT_MP}
 mkdir -p ${CDROM_MP}
 
 # mount CD device
-mount -t cd9660 /dev/acd0 ${CDROM_MP}
+for CD in /dev/acd0 /dev/cd0 EoM; do
+    [ -c ${CD} ] && break
+done
+if [ "${CD}" = EoM ]; then
+    echo "Can't find the device for the cdrom to mount!  Help!"
+    read -p "Hit return to reboot" junk
+    reboot
+fi
+mount -t cd9660 $CD ${CDROM_MP}
 
 # Mount future live root
 mdconfig -a -t vnode -f ${CDROM_MP}${BASEROOT_IMG} -u 9
