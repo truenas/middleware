@@ -1,6 +1,12 @@
 #rebootDialog_underlay { background-color:#000; }
 #shutdownDialog_underlay { background-color:#FD0000; }
 #top_dialog_underlay { background-color:#000; }
+#id_stg_timezone_menu {
+    max-height:200px;
+    overflow:auto !important;
+}
+
+
 ul.radio {
     list-style: none;
 }
