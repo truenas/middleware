@@ -54,25 +54,15 @@ main()
     # copy /rescue and /boot from the image to the iso
     tar -cf - -C ${INSTALLUFSDIR} rescue | tar -xf - -C ${STAGEDIR}
     tar -cf - -C ${INSTALLUFSDIR} boot | tar -xf - -C ${ISODIR}
+    # Copy the image file to the cdrom.  Cache the compressed version to
+    # make it easier to debug this and the install scripts.
     if [ ! \( -f ${IMGFILE}.xz \) -o ${IMGFILE} -nt ${IMGFILE}.xz ]; then
 	xz --verbose --stdout --compress -9 ${IMGFILE} > ${IMGFILE}.xz
     fi
     cp ${IMGFILE}.xz ${ISODIR}/FreeNAS-${FREENAS_ARCH}-embedded.xz
 
     echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
-    echo 'root_rw_mount="NO"' >> ${INSTALLUFSDIR}/etc/rc.conf
-    sed -i "" -e '/^sshd/d;/^light/d;/^ntpd/d' ${INSTALLUFSDIR}/etc/rc.conf
-    echo 'cron_enable="NO"' >> ${INSTALLUFSDIR}/etc/rc.conf
-    echo 'syslogd_enable="NO"' >> ${INSTALLUFSDIR}/etc/rc.conf
-    echo 'inetd_enable="NO"' >> ${INSTALLUFSDIR}/etc/rc.conf
-    echo 'devd_enable="NO"' >> ${INSTALLUFSDIR}/etc/rc.conf
-    echo 'newsyslog_enable="NO"' >> ${INSTALLUFSDIR}/etc/rc.conf
     (cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
-    rm ${INSTALLUFSDIR}/etc/rc.conf.local
-    rm ${INSTALLUFSDIR}/etc/rc.d/ix-*
-    rm ${INSTALLUFSDIR}/etc/rc.d/motd
-    rm ${INSTALLUFSDIR}/etc/rc.d/ip6addrctl
-    rm ${INSTALLUFSDIR}/etc/rc.initdiskless
     rm -rf ${INSTALLUFSDIR}/bin ${INSTALLUFSDIR}/sbin ${INSTALLUFSDIR}/usr/local
     rm -rf ${INSTALLUFSDIR}/usr/bin ${INSTALLUFSDIR}/usr/sbin
     ln -s ../../rescue ${INSTALLUFSDIR}/usr/bin
