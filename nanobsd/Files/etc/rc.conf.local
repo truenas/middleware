@@ -76,6 +76,9 @@ _interface_config()
 		else
 			ipv6_interfaces="${ipv6_interfaces} ${interface}"
 		fi
+		if [ -n "${lagg_id}" ]; then
+			echo cloned_interfaces=\"${interface} \${cloned_interfaces}\"
+		fi
 		# TODO: Since the variable exists only in the subshell, we 
 		# have to make a workaround.
 		if [ -n "${ipv6_interfaces}" ]; then
