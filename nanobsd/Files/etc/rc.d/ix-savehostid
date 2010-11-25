@@ -19,10 +19,10 @@ ix_save_hostid()()
 	# save it to our "readonly" conf copy rather than the /cfg copy
 	# so we don't create another dependency on /cfg which we're trying
 	# to eliminate to support 1 spindle systems.
-	if ! cmp /etc/hostid /conf/base/etc/hostid; then
+	if ! cmp -s /etc/hostid /conf/base/etc/hostid; then
 		mount -uw /
 		cp /etc/hostid /conf/base/etc/hostid
-		moutn -ur /
+		mount -ur /
 	fi
 }
 
