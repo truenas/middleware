@@ -112,6 +112,72 @@ disk_is_mounted()
     return $?
 }
 
+
+new_install_verify()
+{
+    local _type="$1" _disk="$2"
+    local _tmpfile="/tmp/msg"
+    cat << EOD > "${_tmpfile}"
+FreeNAS installer for Flash device or HDD.
+
+WARNING: There will be some limitations:
+1. This will erase ALL partitions and data on the destination disk
+2. You can't use your destination disk for sharing data
+
+Installing on USB key is the preferred way:
+It saves you an IDE, SATA or SCSI channel for more hard drives.
+
+Proceed with the ${_type} onto ${_disk}?
+EOD
+    _msg=`cat "${_tmpfile}"`
+    rm -f "${_tmpfile}"
+    dialog --title "Start FreeNAS installation" --yesno "${_msg}" 13 74
+    if [ "$?" != "0" ]; then
+        exit 1
+    fi
+}
+
+ask_upgrade()
+{
+    local _disk="$1"
+    local _tmpfile="/tmp/msg"
+    cat << EOD > "${_tmpfile}"
+The FreeNAS installer can preserve your existing parameters, or
+it can do a fresh install overwriting the current settings,
+configuration, etc.
+
+Would you like to upgrade the installation on ${_disk}?
+EOD
+    _msg=`cat "${_tmpfile}"`
+    rm -f "${_tmpfile}"
+    dialog --title "Upgrade this FreeNAS installation" --yesno "${_msg}" 8 74
+    return $?
+}
+
+disk_is_freenas()
+{
+    local _disk="$1"
+    local _rv=1
+
+    mkdir /tmp/junk
+    mount /dev/${_disk}s4 /tmp/junk
+    ls /tmp/junk > /tmp/junk.ls
+    if [ -f /tmp/junk/freenas-v1.db ]; then
+	cp /tmp/junk/freenas-v1.db /tmp/freenas-v1.db
+	_rv=0
+    fi
+    umount /tmp/junk
+    if [ $_rv -eq 0 ]; then
+	mount /dev/${_disk}s1a /tmp/junk
+	cp /tmp/junk/conf/base/etc /tmp/hostis
+	umount /tmp/junk
+	# ssh keys?
+    fi
+    rmdir /tmp/junk
+
+    return ${_rv}
+}
+
 menu_install()
 {
     local _disklist
@@ -120,12 +186,12 @@ menu_install()
     local _cdlist
     local _items
     local _disk
-    local _image
     local _config_file
     local _desc
     local _list
     local _msg
     local _i
+    local _do_upgrade
 
     get_physical_disks_list
     _disklist="${VAL}"
@@ -149,37 +215,28 @@ menu_install()
     _disk=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
 
+    # Debugging seatbelts
     if disk_is_mounted "${_disk}" ; then
         dialog --msgbox "The destination drive is already in use!" 4 74
         exit 1
     fi
 
-    _tmpfile="/tmp/msg"
-    cat << EOD > "${_tmpfile}"
-FreeNAS installer for Flash device or HDD.
-
-WARNING: There will be some limitations:
-1. This will erase ALL partitions and data on the destination disk
-2. You can't use your destination disk for sharing data
-
-Installing on USB key is the preferred way:
-It saves you an IDE, SATA or SCSI channel for more hard drives.
-
-Proceed with the installation onto ${_disk}?
-EOD
-    _msg=`cat "${_tmpfile}"`
-    rm -f "${_tmpfile}"
-    dialog --title "Start FreeNAS installation" --yesno "${_msg}" 13 74
-    if [ "$?" != "0" ]; then
-        exit 1
+    _do_upgrade=0
+    if disk_is_freenas ${_disk} ; then
+	if ask_upgrade ${_disk} ; then
+	    new_install_verify "upgrade" ${_disk}
+	    _do_upgrade=1
+	else
+	    new_install_verify "installation" ${_disk}
+	fi
+    else
+	new_install_verify "installation" ${_disk}
     fi
-
-    _image="$(get_image_name)"
     _config_file="/tmp/pc-sysinstall.cfg"
 
     #  _disk, _image, _config_file
     # we can now build a config file for pc-sysinstall
-    build_config  ${_disk} ${_image} ${_config_file}
+    build_config  ${_disk} "$(get_image_name)" ${_config_file}
 
     # Run pc-sysinstall against the config generated
 
@@ -188,11 +245,24 @@ EOD
     # Hack #2
     ls /cdrom > /dev/null
     /rescue/pc-sysinstall -c ${_config_file}
-
-    dialog --msgbox '
-FreeNAS has been successfully installed on '"${_disk}."'
+    if [ ${_do_upgrade} -eq 1 ]; then
+	mkdir /tmp/junk
+	mount /dev/${_disk}s4 /tmp/junk
+	cp /tmp/freenas-v1.db /tmp/junk
+	cp /dev/null /tmp/junk/need-update
+	umount /tmp/junk
+	mount /dev/${disk}s1a /tmp/junk
+	cp /tmp/hostis /tmp/junk/conf/base/etc
+	umount /tmp/junk
+	# ssh keys
+	rmdir /tmp/junk
+	dialog --msgbox 'The installer has preserved your database file.  FreeNAS
+will migrate this file, if necessary, to the current format.
+' 6 74
+    fi
+    dialog --msgbox 'FreeNAS has been successfully installed on '"${_disk}."'
 Please remove the CDROM and reboot this machine.
-' 8 74
+' 6 74
     return 0
 }
 
