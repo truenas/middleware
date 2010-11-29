@@ -169,7 +169,12 @@ class LAGGInterface(models.Model):
             choices=LAGGType,
             )
     def __unicode__(self):
-        return "%s (%s)" % (self.lagg_interface, self.lagg_type)
+        interface_list = LAGGInterfaceMembers.objects.filter(lagg_interfacegroup = self.id)
+        if interface_list != None:
+            interfaces = ', '.join([int.lagg_physnic for int in interface_list])
+        else:
+            interfaces = 'None'
+        return "%s (%s: %s)" % (self.lagg_interface, self.lagg_protocol, interfaces)
 
 # Physical interfaces list inside one LAGG group
 class LAGGInterfaceMembers(models.Model):
@@ -191,7 +196,7 @@ class LAGGInterfaceMembers(models.Model):
             verbose_name="Options"
             )
     def __unicode__(self):
-        return self.lagg_devicename
+        return self.lagg_physnic
 
     class Meta:
         verbose_name = "LAGG"

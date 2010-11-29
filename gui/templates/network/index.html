@@ -180,14 +180,11 @@
             <table class="grid">
 	            <thead class="header">
 		            <td>Virtual Interface</td>
-		            <td>Ports</td>
-		            <td>Description</td>
+		            <td>Actions</td>
 		        </thead>
                 {% for l in lagg_list %}
                 <tr class="{% cycle 'odd' 'even' %}" id="{{ l.id }}">
-                    <td>{{ l.lagg_vint }}</td>
-                    <td>{{ l.lagg_ports }}</td>
-                    <td>{{ l.lagg_description }}</td>
+                    <td>{{ l }}</td>
                     <td>
                         <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/lagg/edit/{{ l.id }}/'">Edit</button>
                         <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/lagg/delete/{{ l.id }}/'">Delete</button>
@@ -195,7 +192,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5">No LAGG interface defined</td>
+                    <td colspan="2">No LAGG interface defined</td>
                 </tr>
                 {% endfor %}
                 </table>
