@@ -1,0 +1,45 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-update
+# BEFORE: ix-fstab
+
+. /etc/rc.subr
+
+db_update()
+{
+	fsck -y /data > /dev/null
+	mount /data
+	if [ -f /data/need-update ]; then
+		# We need to run an upgrade.
+		# Check if this is pre-south or post-south
+		echo "Updating database"
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} .schema | grep south_migrationhistory > /dev/null
+		if [ "$?" != "0" ]; then
+			echo "Converting pre-south database"
+			/usr/local/bin/python /usr/local/www/freenasUI/manage.py syncdb > /dev/null
+			/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate network 0001 --fake > /dev/null
+			/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate services 0001 --fake > /dev/null
+			/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate sharing 0001 --fake > /dev/null
+			/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate storage 0001 --fake > /dev/null
+			/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate system 0001 --fake > /dev/null
+		fi
+		echo "Applying database schema changes"
+		yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate network > /dev/null
+		yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate services > /dev/null
+		yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate sharing > /dev/null
+		yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate storage > /dev/null
+		yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate system > /dev/null
+		rm /data/need-update
+		fi
+	umount /data
+}
+
+name="ix-update"
+start_cmd='db_update'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

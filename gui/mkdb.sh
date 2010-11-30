@@ -9,12 +9,6 @@ if [ -f ${db} ]; then
     rm ${db}
 fi
 
-python manage.py syncdb
-
-python manage.py migrate network
-python manage.py migrate services
-python manage.py migrate sharing
-python manage.py migrate storage
-python manage.py migrate system
+python manage.py syncdb --migrate
 
 $dir/set_schema_defaults.sh $dir/schema.init $db
