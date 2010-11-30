@@ -186,8 +186,9 @@
                 <tr class="{% cycle 'odd' 'even' %}" id="{{ l.id }}">
                     <td>{{ l }}</td>
                     <td>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/lagg/edit/{{ l.id }}/'">Edit</button>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/lagg/delete/{{ l.id }}/'">Delete</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/int/edit/{{ l.lagg_interface.id }}/'">Edit Interface</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/lagg/edit/{{ l.id }}/'">Edit Members</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/int/delete/{{ l.lagg_interface.id }}/'">Delete</button>
                     </td>
                 </tr>
                 {% empty %}
