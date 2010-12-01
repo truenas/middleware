@@ -101,7 +101,7 @@ def network(request, objtype = None):
                     lagg_member_entry = LAGGInterfaceMembers(lagg_interfacegroup = lagg_interfacegroup, lagg_ordernum = order, lagg_physnic = interface, lagg_deviceoptions = 'up')
                     lagg_member_entry.save()
                     order = order + 1
-                return HttpResponseRedirect('/network/')
+                return HttpResponseRedirect('/network/global/lagg/')
             else:
                 errform = 'lagg'
         elif objtype == 'sr':
@@ -128,15 +128,22 @@ def network(request, objtype = None):
     return render_to_response('network/index.html', variables)
 
 @login_required
+def lagg_members(request, object_id):
+    laggmembers = LAGGInterfaceMembers.objects.filter(lagg_interfacegroup = object_id) 
+    variables = RequestContext(request, { 'laggmembers': laggmembers, })
+    return render_to_response('network/lagg_members.html', variables)
+
+@login_required
 def generic_delete(request, object_id, objtype):
-    network_name_model_map = {
+    network_model_map = {
         'int':    Interfaces,
-        'sr':   StaticRoute,
         'vlan':   VLAN,
+        'lagg':   LAGGInterface,
+        'sr':   StaticRoute,
     }
     return delete_object(
         request = request,
-        model = network_name_model_map[objtype],
+        model = network_model_map[objtype],
         post_delete_redirect = '/network/' + objtype + '/view/',
         object_id = object_id, )
 
@@ -145,7 +152,7 @@ def generic_update(request, object_id, objtype):
     objtype2form = {
             'int':   ( Interfaces, None ),
             'vlan':   ( VLAN, None ),
-            'lagg':   ( LAGGInterface, None ),
+            'laggint':   ( LAGGInterfaceMembers, LAGGInterfaceMemberForm ),
             'sr':   ( StaticRoute, None ),
             } 
     model, form_class = objtype2form[objtype]

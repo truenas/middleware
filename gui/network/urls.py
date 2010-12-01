@@ -33,6 +33,7 @@ from network.views import *
 urlpatterns = patterns('',
     (r'^$', network),
     (r'^global/(?P<objtype>\w+)/$', network),
+    (r'laggmembers/view/(?P<object_id>\d+)/$', lagg_members),
     (r'(?P<objtype>\w+)/view/$', network),
     (r'(?P<objtype>\w+)/edit/(?P<object_id>\d+)/$', generic_update),
     (r'(?P<objtype>\w+)/delete/(?P<object_id>\d+)/$', generic_delete),

@@ -94,6 +94,20 @@ class LAGGInterfaceForm(forms.Form):
     lagg_protocol = forms.ChoiceField(choices=LAGGType, widget=forms.RadioSelect(attrs=attrs_dict))
     lagg_interfaces = forms.MultipleChoiceField(choices=NICChoices(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Physical NICs in the LAGG')
 
+class LAGGInterfaceMemberForm(ModelForm):
+    class Meta:
+        model = LAGGInterfaceMembers
+    def __init__(self, *args, **kwargs):
+        super(LAGGInterfaceMemberForm, self).__init__(*args, **kwargs)
+        instance = getattr(self, 'instance', None)
+        if instance and instance.id:
+            self.fields['lagg_interfacegroup'].widget.attrs['readonly'] = True
+            self.fields['lagg_physnic'].widget.attrs['readonly'] = True
+    def clean_lagg_interfacegroup(self):
+        return self.instance.lagg_interfacegroup
+    def clean_lagg_physnic(self):
+        return self.instance.lagg_physnic
+
 class StaticRouteForm(ModelForm):
     class Meta:
         model = StaticRoute
