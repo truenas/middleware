@@ -89,6 +89,57 @@
         {% include "freenas/system/submenu.html" %}
     </div>
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
+
+    <div dojoType="dijit.layout.ContentPane" title="Settings" {% if focus_form == "settings" %} selected="true"{% endif %}>
+<form action="/system/settings/" method="post">{% csrf_token %}
+    <table class="config">
+                {% for field in settings %}
+                <tr>
+                    <td>
+                        <label for="{{ field.auto_id }}_label">
+                            {% if field.field.required %}
+                                <span class="required">{{ field.label }}</span>
+                            {% else %}
+                                {{ field.label }}
+                            {% endif %}
+                        </label>
+                    </td>
+                    <td>
+                        {{ field }}
+                    </td>
+                </tr>
+            {% endfor %}
+    </table>
+<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Settings</button>
+</form>
+    </div>
+
+    <div dojoType="dijit.layout.ContentPane" title="Advanced" {% if focus_form == "advanced" %} selected="true"{% endif %}>
+<form action="/system/advanced/" method="post">{% csrf_token %}
+    <table class="config">
+                {% for field in advanced %}
+                <tr>
+                    <td>
+                        <label for="{{ field.auto_id }}">
+                            {% if field.field.required %}
+                                <span class="required">{{ field.label }}</span>
+                            {% else %}
+                                {{ field.label }}
+                            {% endif %}
+                        </label>
+                    </td>
+                    <td>
+                        {{ field }}
+                        {{ field.errors }}
+                    </td>
+                </tr>
+            {% endfor %}
+    </table>
+    <p class="btn">
+    <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Settings</button>
+    </p>
+    </form>
+    </div>
     <div dojoType="dijit.layout.ContentPane" title="System Information" id="Information">
         <table>
 
@@ -122,56 +173,6 @@
             </tr>
         
                   </table>
-    </div>
-    <div dojoType="dijit.layout.ContentPane" title="Settings">
-<form action="system/settings/" method="post">{% csrf_token %}
-    <table class="config">
-                {% for field in settings %}
-                <tr>
-                    <td>
-                        <label for="{{ field.auto_id }}_label">
-                            {% if field.field.required %}
-                                <span class="required">{{ field.label }}</span>
-                            {% else %}
-                                {{ field.label }}
-                            {% endif %}
-                        </label>
-                    </td>
-                    <td>
-                        {{ field }}
-                    </td>
-                </tr>
-            {% endfor %}
-    </table>
-<button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Settings</button>
-</form>
-    </div>
-
-    <div dojoType="dijit.layout.ContentPane" title="Advanced">
-<form action="system/advanced/" method="post">{% csrf_token %}
-    <table class="config">
-                {% for field in advanced %}
-                <tr>
-                    <td>
-                        <label for="{{ field.auto_id }}">
-                            {% if field.field.required %}
-                                <span class="required">{{ field.label }}</span>
-                            {% else %}
-                                {{ field.label }}
-                            {% endif %}
-                        </label>
-                    </td>
-                    <td>
-                        {{ field }}
-                        {{ field.errors }}
-                    </td>
-                </tr>
-            {% endfor %}
-    </table>
-    <p class="btn">
-    <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Settings</button>
-    </p>
-    </form>
     </div>
 </div>
 {% endblock %}

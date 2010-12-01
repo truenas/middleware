@@ -44,6 +44,10 @@ import os, commands
 
 @login_required
 def index(request, objtype = None):
+    if objtype != None:
+        focus_form = objtype
+    else:
+        focus_form = 'settings'
     hostname = commands.getoutput("hostname")
     uname1 = os.uname()[0]
     uname2 = os.uname()[2]
@@ -59,14 +63,13 @@ def index(request, objtype = None):
             settings = SettingsForm(request.POST)
             if settings.is_valid():
                 settings.save()
-                return HttpResponseRedirect('/')
         elif objtype == 'advanced':
             advanced = AdvancedForm(request.POST)
             if advanced.is_valid():
                 advanced.save()
-                return HttpResponseRedirect('/')
         else: 
             raise Http404()
+        return HttpResponseRedirect('/system/' + objtype)
     try:
         d = open('/etc/version.freenas', 'r')
         freenas_build = d.read()
@@ -85,6 +88,7 @@ def index(request, objtype = None):
         'loadavg': loadavg,
         'top': top,
         'freenas_build': freenas_build,
+        'focus_form': focus_form,
     })
     return render_to_response('freenas/index.html', variables)
 

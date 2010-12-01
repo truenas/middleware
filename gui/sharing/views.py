@@ -44,67 +44,79 @@ import os, commands
 
 @login_required
 def sharing(request, sharetype = None):
-    cifs_share = CIFS_ShareForm(request.POST)
-    afp_share = AFP_ShareForm(request.POST)
-    nfs_share = NFS_ShareForm(request.POST)
+    if sharetype != None:
+        focus_form = sharetype
+    else:
+        focus_form = 'cifs'
+    cifs = CIFS_ShareForm(request.POST)
+    afp = AFP_ShareForm(request.POST)
+    nfs = NFS_ShareForm(request.POST)
     if request.method == 'POST':
         if sharetype == 'cifs':
-            cifs_share.save()
+            cifs = CIFS_ShareForm(request.POST)
+            if cifs.is_valid():
+                cifs.save()
         elif sharetype == 'afp':
-            afp_share.save()
+            afp = AFP_ShareForm(request.POST)
+            if afp.is_valid():
+                afp.save()
         elif sharetype == 'nfs':
-            nfs_share.save()
+            nfs = NFS_ShareForm(request.POST)
+            if nfs.is_valid():
+                nfs.save()
         else:
             raise Http404() # TODO: Should be something better
-        return HttpResponseRedirect('/sharing/')
+        return HttpResponseRedirect('/sharing' + '/global/' + sharetype)
     else:
         mountpoint_list = MountPoint.objects.all()
         cifs_share_list = CIFS_Share.objects.select_related().all()
         afp_share_list = AFP_Share.objects.order_by("-id").values()
         nfs_share_list = NFS_Share.objects.select_related().all()
-        cifs_share = CIFS_ShareForm()
-        afp_share = AFP_ShareForm()
-        nfs_share = NFS_ShareForm()
+        cifs = CIFS_ShareForm()
+        afp = AFP_ShareForm()
+        nfs = NFS_ShareForm()
     variables = RequestContext(request, {
         'mountpoint_list': mountpoint_list,
         'cifs_share_list': cifs_share_list,
         'afp_share_list': afp_share_list,
         'nfs_share_list': nfs_share_list,
-        'cifs_share': cifs_share,
-        'afp_share': afp_share,
-        'nfs_share': nfs_share,
+        'cifs': cifs,
+        'afp': afp,
+        'nfs': nfs,
+        'focus_form': focus_form,
         })
     return render_to_response('sharing/index.html', variables)
 
+
+
 @login_required
-def generic_delete(request, object_id, model_name):
-    network_name_model_map = {
+def generic_delete(request, object_id, sharetype):
+    sharing_model_map = {
         'cifs':   CIFS_Share,
         'afp':   AFP_Share,
         'nfs':   NFS_Share,
     }
-    retval = delete_object(
+    return delete_object(
         request = request,
-        model = network_name_model_map[model_name],
-        post_delete_redirect = '/sharing/',
+        model = sharing_model_map[sharetype],
+        post_delete_redirect = '/sharing/' + sharetype + '/view/',
         object_id = object_id, )
-    notifier().reload(model_name)
+    notifier().reload(sharetype)
     return retval
 
 @login_required
-def generic_update(request, object_id, model_name):
-    model_name_to_model_and_form_map = {
+def generic_update(request, object_id, sharetype):
+    sharetype2form = {
             'cifs':   ( CIFS_Share, CIFS_ShareForm ),
             'afp':   ( AFP_Share, AFP_ShareForm ),
             'nfs':   ( NFS_Share, NFS_ShareForm ),
-            }
-    model, form_class = model_name_to_model_and_form_map[model_name]
-    retval = update_object(
+            } 
+    model, form_class = sharetype2form[sharetype]
+    return update_object(
         request = request,
         model = model, form_class = form_class,
-        object_id = object_id,
-        post_save_redirect = '/sharing/' + '#' + model_name,
+        object_id = object_id, 
+        post_save_redirect = '/sharing/' + sharetype + '/view/',
         )
-    notifier().reload(model_name)
+    notifier().reload(sharetype)
     return retval
-

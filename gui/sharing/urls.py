@@ -38,7 +38,9 @@ import os, commands
 
 urlpatterns = patterns('',
     (r'^$', sharing), 
+    (r'^global/(?P<sharetype>\w+)/$', sharing),
+    (r'(?P<sharetype>\w+)/view/$', sharing),
     (r'^save/(?P<sharetype>\w+)/$', sharing), 
-    (r'(?P<model_name>\w+)/edit/(?P<object_id>\d+)/$', generic_update),
-    (r'^(?P<model_name>\w+)/delete/(?P<object_id>\d+)/$', generic_delete),
+    (r'(?P<sharetype>\w+)/edit/(?P<object_id>\d+)/$', generic_update),
+    (r'^(?P<sharetype>\w+)/delete/(?P<object_id>\d+)/$', generic_delete),
     )
