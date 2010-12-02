@@ -1,11 +1,4 @@
 {% extends "wizard_base.html" %}
-{% block dojango_header_extra %}
-<script type="text/javascript">
-    function toggle_service(obj) {
-        obj.src = '/services/toggle/' + obj.name + '/';
-        }
-</script>
-{% endblock %}
 {% block content %}
 <div dojoType="dijit.MenuBar" id="navMenu" style="height:56px;">
 
@@ -80,48 +73,6 @@
 
 {% block dojango_content %}
 {% if user.is_authenticated %}
-<div dojoType="dijit.layout.TabContainer" style="width:100%;float:left;" doLayout="false">
-    <div dojoType="dijit.layout.ContentPane" title="Storage">
-                  <table class="grid">
-                <tbody>
-                    <tr>
-                        {% if mp_list %}
-                        <h5>Active Volumes: <strong>{{ mp_list|length }}</strong></h5>
-                        {% else %}
-                        There are no active volumes.
-                        {% endif %}
-                    </tr>
-                </tbody>
-	            <thead class="ghead">
-                    <td>Volume</td>
-	            <td>Path</td>
-	            <td>Available actions</td>
-	        </thead>
-                <tbody>
-                {% for m in mp_list %}
-                <tr class="{% cycle 'odd' 'even' %}" id="{{ m.id }}">
-                    <td>
-                        {{ m.mp_volume.vol_name }}
-                    </td>
-                    <td>
-                        {{ m.mp_path }}
-                    </td>
-                    <td>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/volumes/delete/{{ m.mp_volume.id }}/'">Delete Volume</button>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/disks/{{ m.id }}/'"> View Disks</button>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="3">No volumes defined</td>
-                </tr>
-                {% endfor %}
-                </tbody>
-                </table>
-                <div style="padding:12px;"><button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/wizard/'">Storage Wizard</button>
-                </div>
-    </div>
-</div>
 
 <div id="wiz" dojoType="dijit.Dialog" title="Storage Wizard"  dolayout="false">
         {% ifequal step0|add:1 step_count  %}
@@ -164,6 +115,48 @@
 </div>
 
 
+<div dojoType="dijit.layout.TabContainer" style="width:100%;float:left;" doLayout="false">
+    <div dojoType="dijit.layout.ContentPane" title="Storage">
+                  <table class="grid">
+                <tbody>
+                    <tr>
+                        {% if mp_list %}
+                        <h5>Active Volumes: <strong>{{ mp_list|length }}</strong></h5>
+                        {% else %}
+                        There are no active volumes.
+                        {% endif %}
+                    </tr>
+                </tbody>
+	            <thead class="ghead">
+                    <td>Volume</td>
+	            <td>Path</td>
+	            <td>Available actions</td>
+	        </thead>
+                <tbody>
+                {% for m in mp_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ m.id }}">
+                    <td>
+                        {{ m.mp_volume.vol_name }}
+                    </td>
+                    <td>
+                        {{ m.mp_path }}
+                    </td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/volumes/delete/{{ m.mp_volume.id }}/'">Delete Volume</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/disks/{{ m.id }}/'"> View Disks</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">No volumes defined</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                <div style="padding:12px;"><button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/wizard/'">Storage Wizard</button>
+                </div>
+    </div>
+</div>
 {% else %}
     <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
 {% endif %}

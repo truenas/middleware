@@ -1,6 +1,4 @@
 {% extends "base.html" %}
-{% block dojango_header_extra %}
-{% endblock %}
 {% block content %}
 <div dojoType="dijit.MenuBar" id="navMenu" style="height:56px;">
 
@@ -209,84 +207,85 @@
         </div>
         <div dojoType="dijit.layout.ContentPane" title="Static Routes"{% if focus_form == "sr" %} selected="true"{% endif %}>
             <table class="grid">
-	        <thead class="header">
-		    <td>Destination</td>
-		    <td>Gateway</td>
-		    <td>Description</td>
-		    <td>Actions</td>
-		</thead>
-		{% for i in sr_list %}
-          <tr class="{% cycle 'odd' 'even' %}" id="{{ i.id }}">
-		    <td>{{ i.sr_destination }}</td>
-		    <td>{{ i.sr_gateway }}</td>
-		    <td>{{ i.sr_description }}</td>
-                    <td>
-			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/sr/edit/{{ i.id }}/'">Edit</button>
-			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/sr/delete/{{ i.id }}/'">Delete</button>
-		    </td>
-		</tr>
-		{% empty %}
-		<tr>
-			<td colspan="5">No static route defined</td>
-		</tr>
-		{% endfor %}
+                <thead class="header">
+                    <td>Destination</td>
+		            <td>Gateway</td>
+		            <td>Description</td>
+		            <td>Actions</td>
+		        </thead>
+                {% for i in sr_list %}
+                    <tr class="{% cycle 'odd' 'even' %}" id="{{ i.id }}">
+                        <td>{{ i.sr_destination }}</td>
+                        <td>{{ i.sr_gateway }}</td>
+                        <td>{{ i.sr_description }}</td>
+                        <td>
+                            <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/sr/edit/{{ i.id }}/'">Edit</button>
+                            <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/sr/delete/{{ i.id }}/'">Delete</button>
+                        </td>
+                    </tr>
+		        {% empty %}
+                    <tr>
+                        <td colspan="5">No static route defined</td>
+                    </tr>
+                {% endfor %}
             </table>
-                    <button id="sr_button" dojoType="dijit.form.Button" type="button">
-                       Add Static Route 
-                        <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("sr").show();
-                    </script>
-        </div>
-</div>
 
-<br />
+            <button id="sr_button" dojoType="dijit.form.Button" type="button">
+                Add Static Route 
+            <script type="dojo/method" event="onClick" args="evt">
+                dijit.byId("sr").show();
+            </script>
+        </div>
+    </div>
 </div>
 
 
 <div id="int" dojoType="dijit.Dialog" closable="true" title="Add Interface">
-<form action="/network/global/int/" method="post">{% csrf_token %}
- <table>
-     {{ interfaces }}
-    </table>
-<button dojoType="dijit.form.Button" type="submit">Add Interface</button>
-<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('int').hide();">
-    Cancel
-</button>
-</form>
+    <form action="/network/global/int/" method="post">{% csrf_token %}
+        <table>
+            {{ interfaces }}
+        </table>
+        <button dojoType="dijit.form.Button" type="submit">Add Interface</button>
+        <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('int').hide();">
+            Cancel
+        </button>
+    </form>
 </div>
 
 <div id="vlan" dojoType="dijit.Dialog" closable="true" title="Add VLAN">
-<form action="/network/global/vlan/" method="post">{% csrf_token %}
-    <table>
-        {{ vlan }}
-    </table>
-<button dojoType="dijit.form.Button" type="submit">Add VLAN</button>
-<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('vlan').hide();">
-    Cancel
-</button>
-</form>
+    <form action="/network/global/vlan/" method="post">{% csrf_token %}
+        <table>
+            {{ vlan }}
+        </table>
+        <button dojoType="dijit.form.Button" type="submit">Add VLAN</button>
+        <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('vlan').hide();">
+            Cancel
+        </button>
+    </form>
 </div>
+
 <div id="lagg" dojoType="dijit.Dialog" closable="true" title="Add LAGG">
-<form action="/network/global/lagg/" method="post">{% csrf_token %}
-    <table>
-        {{ lagg }}
-         </table>
-<button dojoType="dijit.form.Button" type="submit">Add LAGG</button>
-<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('lagg').hide();">
-    Cancel
-</button>
-</form>
+    <form action="/network/global/lagg/" method="post">{% csrf_token %}
+        <table>
+            {{ lagg }}
+        </table>
+        <button dojoType="dijit.form.Button" type="submit">Add LAGG</button>
+        <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('lagg').hide();">
+            Cancel
+        </button>
+    </form>
 </div>
+
 <div id="sr" dojoType="dijit.Dialog" closable="true" title="Add Static Route">
-<form action="/network/global/sr/" method="post">{% csrf_token %}
-    <table>
-        {{ staticroute }}
-    </table>
-<button dojoType="dijit.form.Button" type="submit">Add Static Route</button>
-<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('sr').hide();">
-    Cancel
-</button>
-</form>
+    <form action="/network/global/sr/" method="post">{% csrf_token %}
+        <table>
+            {{ staticroute }}
+        </table>
+        <button dojoType="dijit.form.Button" type="submit">Add Static Route</button>
+        <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('sr').hide();">
+            Cancel
+        </button>
+    </form>
 </div>
             
 {% else %}

@@ -1,6 +1,11 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-gb" lang="en-gb" dir="ltr" >
 <head>
+<script type="text/javascript">
+      var err  = function () {
+          dijit.byId("{{ errform }}").show();
+      }
+</script>
     <title>FreeNAS 8 BETA</title>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
     {% include "dojango/include.html" %}
@@ -8,15 +13,11 @@
 <link rel="stylesheet" href="/freenas/media/css/template.css" type="text/css" />
 {% block dojango_header_extra %}{% endblock %}
 {% if errform %}
-<script type="text/javascript">
-      var err  = function () {
-          dijit.byId("{{ errform }}").show();
-      }
-</script>
 {% endif %}
+<script type="text/javascript" src="https://getfirebug.com/firebug-lite.js"></script>
 </head>
 <body  class="{{ DOJANGO.THEME }}" {% if errform %}onLoad="err()")"{% else %}{% endif %}>
-<div dojoType="dijit.layout.BorderContainer" style="width: 100%; height: 100%;" gutters="false">
+<div dojoType="dijit.layout.BorderContainer" style="width: 100%;height:90% !important;" gutters="false">
     <div dojoType="dijit.layout.ContentPane" region="top" gutters="false">
                 <div id="page-header">
                 <div id="logo">
