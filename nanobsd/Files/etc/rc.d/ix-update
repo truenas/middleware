@@ -10,31 +10,92 @@
 
 db_update()
 {
-	fsck -y /data > /dev/null
-	mount /data
-	if [ -f /data/need-update ]; then
-		# We need to run an upgrade.
-		# Check if this is pre-south or post-south
-		echo "Updating database"
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} .schema | grep south_migrationhistory > /dev/null
+	if ! fsck -p /data; then
+		echo "/data couldn't be preened clean, trying full fsck"
+		if ! fsck -y /data; then
+			echo "Cannot fsck -y /data either, your system is likely AFU: sorry."
+			exit;
+		fi
+	fi
+	if ! mount -w /data; then
+		echo "Cannot mount /data to see if you need an upgrade."
+		echo "Your system is likely AFU: bummer!"
+		exit;
+	fi
+	if [ ! -f /data/need-update ]; then
+		umount /data
+		# No need to update, exit script and continue boot
+		exit
+	fi
+	echo "Saving current ${FREENAS_CONFIG} to ${FREENAS_CONFIG}.bak"
+	cp ${FREENAS_CONFIG} ${FREENAS_CONFIG}.bak
+	echo "Updating database"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} .schema | grep south_migrationhistory > /dev/null
+	if [ "$?" != "0" ]; then
+		echo "Converting pre-south database"
+		/usr/local/bin/python /usr/local/www/freenasUI/manage.py syncdb > /dev/null
 		if [ "$?" != "0" ]; then
-			echo "Converting pre-south database"
-			/usr/local/bin/python /usr/local/www/freenasUI/manage.py syncdb > /dev/null
-			/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate network 0001 --fake > /dev/null
-			/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate services 0001 --fake > /dev/null
-			/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate sharing 0001 --fake > /dev/null
-			/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate storage 0001 --fake > /dev/null
-			/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate system 0001 --fake > /dev/null
+			echo "manage.py syncdb failed"
+			exit
 		fi
-		echo "Applying database schema changes"
-		yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate network > /dev/null
-		yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate services > /dev/null
-		yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate sharing > /dev/null
-		yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate storage > /dev/null
-		yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate system > /dev/null
-		rm /data/need-update
+		/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate network 0001 --fake > /dev/null
+		if [ "$?" != "0" ]; then
+			echo "manage.py migrate network 0001 --fake failed"
+			exit
 		fi
+		/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate services 0001 --fake > /dev/null
+		if [ "$?" != "0" ]; then
+			echo "manage.py migrate services 0001 --fake failed"
+			exit
+		fi
+		/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate sharing 0001 --fake > /dev/null
+		if [ "$?" != "0" ]; then
+			echo "manage.py migrate sharing 0001 --fake failed"
+			exit
+		fi
+		/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate storage 0001 --fake > /dev/null
+		if [ "$?" != "0" ]; then
+			echo "manage.py migrate storage 0001 --fake failed"
+			exit
+		fi
+		/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate system 0001 --fake > /dev/null
+		if [ "$?" != "0" ]; then
+			echo "manage.py migrate system 0001 --fake failed"
+			exit
+		fi
+	fi
+	echo "Applying database schema changes"
+	yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate network > /dev/null
+	if [ "$?" != "0" ]; then
+		echo "manage.py migrate network failed"
+		exit
+	fi
+	yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate services > /dev/null
+	if [ "$?" != "0" ]; then
+		echo "manage.py migrate services failed"
+		exit
+	fi
+	yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate sharing > /dev/null
+	if [ "$?" != "0" ]; then
+		echo "manage.py migrate sharing failed"
+		exit
+	fi
+	yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate storage > /dev/null
+	if [ "$?" != "0" ]; then
+		echo "manage.py migrate storage failed"
+		exit
+	fi
+	yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate system > /dev/null
+	if [ "$?" != "0" ]; then
+		echo "manage.py migrate system failed"
+		exit
+	fi
+	rm -f /data/need-update
 	umount /data
+	echo "Database upgrade complete.  Rebooting."
+	cd /
+	sleep 2
+	reboot
 }
 
 name="ix-update"
