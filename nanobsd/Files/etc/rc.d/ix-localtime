@@ -18,6 +18,7 @@ install_timezone()
 	local timezone
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT stg_timezone FROM system_settings ORDER BY -id LIMIT 1" | \
 	while read timezone; do
+		timezone=$(echo ${timezone} | sed -es=america-los_angeles=America/Los_Angeles=)
 		if [ -z "${timezone}" ]; then
 			timezone=America/Los_Angeles
 		fi
