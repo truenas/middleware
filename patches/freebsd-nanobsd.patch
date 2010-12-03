@@ -1,5 +1,5 @@
 --- FreeBSD/src/tools/tools/nanobsd/nanobsd.sh.orig	2010-06-13 20:09:06.000000000 -0600
-+++ FreeBSD/src/tools/tools/nanobsd/nanobsd.sh	2010-12-03 00:17:39.000000000 -0700
++++ FreeBSD/src/tools/tools/nanobsd/nanobsd.sh	2010-12-03 00:32:01.000000000 -0700
 @@ -131,9 +131,15 @@
  # Progress Print level
  PPLEVEL=3
@@ -58,7 +58,7 @@
  create_i386_diskimage ( ) (
  	pprint 2 "build diskimage"
  	pprint 3 "log: ${NANO_OBJ}/_.di"
-@@ -436,8 +476,9 @@
+@@ -436,8 +476,8 @@
  			-y ${NANO_HEADS}`
  	else
  		echo "Creating md backing file..."
@@ -66,11 +66,10 @@
 -			count=`expr ${NANO_MEDIASIZE} / ${NANO_SECTS}`
 +		rm -f ${IMG}
 +		dd if=/dev/zero of=${IMG} seek=${NANO_MEDIASIZE} count=0
-+		ls -ls ${IMG}
  		MD=`mdconfig -a -t vnode -f ${IMG} -x ${NANO_SECTS} \
  			-y ${NANO_HEADS}`
  	fi
-@@ -453,12 +494,8 @@
+@@ -453,12 +493,8 @@
  	bsdlabel ${MD}s1
  
  	# Create first image
@@ -85,7 +84,7 @@
  	echo "Generating mtree..."
  	( cd ${MNT} && mtree -c ) > ${NANO_OBJ}/_.mtree
  	( cd ${MNT} && du -k ) > ${NANO_OBJ}/_.du
-@@ -468,22 +505,23 @@
+@@ -468,22 +504,23 @@
  		# Duplicate to second image (if present)
  		echo "Duplicating to second image..."
  		dd if=/dev/${MD}s1 of=/dev/${MD}s2 bs=64k
@@ -115,7 +114,7 @@
  	fi
  
  	if [ "${NANO_MD_BACKING}" = "swap" ] ; then
-@@ -650,19 +688,19 @@
+@@ -650,19 +687,19 @@
  
  #######################################################################
  # Convenience function:
@@ -139,7 +138,7 @@
  }
  
  #######################################################################
-@@ -790,6 +828,11 @@
+@@ -790,6 +827,11 @@
  	NANO_PMAKE="${NANO_PMAKE} -DNO_CLEAN"
  fi
  
@@ -151,7 +150,7 @@
  export MAKEOBJDIRPREFIX
  
  export NANO_ARCH
-@@ -814,6 +857,7 @@
+@@ -814,6 +856,7 @@
  export NANO_WORLDDIR
  export NANO_BOOT0CFG
  export NANO_BOOTLOADER
