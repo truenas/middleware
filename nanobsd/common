@@ -41,6 +41,12 @@ NANO_DATASIZE=4096
 NANO_RAM_TMPVARSIZE=15360
 unset MAKEOBJDIRPREFIX
 
+# Defeat the python auto versioning goo that contaminates the build slightly
+# with the host's python version rather than the version that's inside the
+# port tree we're building.  We do this by adding PYTHON_CMD=/bin/true to the
+# make package-name invocation.
+PKGNAME_HACK=PYTHON_CMD=/bin/true
+
 # this to go into nanobsd.sh
 NANO_PORTS=${NANO_PORTS:-/usr/ports}
 
@@ -225,7 +231,7 @@ add_port () {
     # 1. check ARCH of this package!
     # 2. Add a trap
     cd ${NANO_PORTS}/${port_path}
-    PKG_NAME=`make PORTSDIR=${NANO_PORTS} __MAKE_CONF=${NANO_MAKE_CONF_BUILD} package-name` 
+    PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${NANO_PORTS} __MAKE_CONF=${NANO_MAKE_CONF_BUILD} package-name` 
     if [ -f ${NANO_OBJ}/ports/packages/All/${PKG_NAME}.tbz ]; then
 	# Pkg file found: Generate add_pkg_NAME function
 	eval "
