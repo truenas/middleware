@@ -47,14 +47,14 @@ case $2 in
     ;;
 esac
 
+if [ -n "${FREENAS_ARCH}" ]; then
+    NANO_ARCH=${FREENAS_ARCH}
+fi
 : ${REVISION=`svnversion ${NANO_CFG_BASE}`}
 NANO_NAME="FreeNAS-8r${REVISION}-${NANO_ARCH}"
 NANO_IMGNAME="${NANO_NAME}.full"
 NANO_KERNEL=${NANO_CFG_BASE}/FREENAS.${NANO_ARCH}
 : ${NANO_OBJ=/tmp/${LOGNAME}/obj.freenas.${NANO_ARCH}}
-if [ -n "${FREENAS_ARCH}" ]; then
-    NANO_ARCH=${FREENAS_ARCH}
-fi
 NANO_LABEL=FreeNAS
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 NANO_RAM_TMPVARSIZE=$((40*1024))
@@ -129,7 +129,6 @@ add_port devel/popt
 #-net/samba
 add_port net/samba34		-DWITHOUT_CUPS -DWITH_LDAP -DWITH_ADS \
 	-DWITH_WINBIND -DWITH_ACL_SUPPORT -DWITH_PAM_SMBPASS -DWITH_AIO_SUPPORT
-add_port net/unison		-DWITHOUT_X11 -DWITHOUT_GTK2
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
 add_port shells/bash
