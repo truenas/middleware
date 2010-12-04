@@ -100,8 +100,9 @@ getwd cache = yes'
 				echo -n " SO_SNDBUF=${sendbuffer}"
 			fi
 			if [ -n "${recvbuffer}" ]; then
-				echo " SO_RCVBUF=${recvbuffer}"
+				echo -n " SO_RCVBUF=${recvbuffer}"
 			fi
+			echo
 		fi
 	done
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_srv_smb_options FROM services_cifs ORDER BY id DESC LIMIT 1"
