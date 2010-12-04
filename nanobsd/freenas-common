@@ -67,34 +67,15 @@ FlashDevice Sandisk 512
 
 . ${NANO_CFG_BASE}/common
 
-#+audio/firefly
-add_port security/ca_root_nss
-add_port ftp/curl
 add_port devel/pkg-config
-add_port databases/sqlite3
-add_port lang/perl5.10
-add_port converters/iconv
-add_port converters/libiconv
-add_port devel/gettext
-add_port audio/libogg
-add_port audio/speex
-add_port audio/libvorbis
-add_port audio/libid3tag
-add_port audio/libao
-add_port audio/flac
-#+port audio/vorbis-tools
-add_port graphics/png
-add_port multimedia/libkate
-#-port audio/vorbis-tools
-add_port audio/vorbis-tools
-#-audio/firefly
-add_port audio/firefly		# Pulls in sqlite3?
-#+audio/mt-daapd
-add_port databases/gdbm
-#-audio/mt-daapd
-add_port audio/mt-daapd
 add_port devel/cdialog
 add_port dns/inadyn			# -mt?
+#+editors/nano
+add_port lang/perl5.10
+add_port converters/libiconv
+add_port converters/iconv
+add_port devel/gettext
+#-editors/nano
 add_port editors/nano
 add_port ftp/proftpd
 #+mail/msmtp
@@ -105,10 +86,6 @@ add_port net-mgmt/bsnmp-ucd
 add_port net-mgmt/bsnmptools
 add_port net-mgmt/clog
 add_port net-mgmt/sipcalc
-#+net-p2p/transmission-cli
-add_port devel/libevent
-#-net-p2p/transmission-cli
-add_port net-p2p/transmission-cli
 add_port net/istgt
 add_port net/mDNSResponder
 #+net/netatalk
@@ -150,6 +127,7 @@ add_port devel/glib20
 add_port net/libdnet
 #-emulators/open-vm-tools-nox11
 add_port emulators/open-vm-tools-nox11
+add_port databases/sqlite3
 add_port databases/py-sqlite3
 add_port www/py-django		-DWITHOUT_MYSQL
 add_port www/py-dojango
@@ -181,7 +159,7 @@ ${PKG_ONLY_MAKE_CONF}
 "
 	echo "Automatically building a thin image with packages"
 else
-	echo "Automatically building a fat image so we can build ports"
+	echo "Automatically building a * * F A T * * image so we can build ports"
 fi
 
 hack_nsswitch_conf ( )
@@ -263,7 +241,7 @@ fix_mt_daapd ( )
 	cp  ${NANO_WORLDDIR}/usr/local/etc/mt-daapd.conf.sample \
 	    ${NANO_WORLDDIR}/usr/local/etc/mt-daapd.conf
 }
-customize_cmd fix_mt_daapd
+# customize_cmd fix_mt_daapd
 
 select_httpd ( )
 {
