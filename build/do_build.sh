@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 
 # interface:
 # cd to top of tree
