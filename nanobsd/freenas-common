@@ -51,7 +51,7 @@ if [ -n "${FREENAS_ARCH}" ]; then
     NANO_ARCH=${FREENAS_ARCH}
 fi
 : ${REVISION=`svnversion ${NANO_CFG_BASE}`}
-NANO_NAME="FreeNAS-8r${REVISION}-${NANO_ARCH}"
+NANO_NAME="FreeNAS-8.2r${REVISION}-${NANO_ARCH}"
 NANO_IMGNAME="${NANO_NAME}.full"
 NANO_KERNEL=${NANO_CFG_BASE}/FREENAS.${NANO_ARCH}
 : ${NANO_OBJ=/tmp/${LOGNAME}/obj.freenas.${NANO_ARCH}}
@@ -104,7 +104,7 @@ add_port devel/talloc
 add_port devel/libexecinfo
 add_port devel/popt
 #-net/samba
-add_port net/samba34		-DWITHOUT_CUPS -DWITH_LDAP -DWITH_ADS \
+add_port net/samba35		-DWITHOUT_CUPS -DWITH_LDAP -DWITH_ADS \
 	-DWITH_WINBIND -DWITH_ACL_SUPPORT -DWITH_PAM_SMBPASS -DWITH_AIO_SUPPORT
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
