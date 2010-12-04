@@ -21,8 +21,8 @@ fi
 # Make sure we have FreeBSD src, fetch using csup if not
 if [ ! -f FreeBSD/supfile -o -n "$force_update" ]; then
     if [ -z "$FREEBSD_CVSUP_HOST" ]; then
-	echo "No sup host defined, please define FREEBSD_CVSUP_HOST and rerun"
-	exit 1
+        echo "No sup host defined, please define FREEBSD_CVSUP_HOST and rerun"
+        exit 1
     fi
     echo "Checking out tree from ${FREEBSD_CVSUP_HOST}..."
     cat <<EOF > FreeBSD/supfile
@@ -45,17 +45,17 @@ fi
 touch ${root}/FreeBSD/src-patches
 for i in $(cd ${root}/patches && echo freebsd-*); do
     if ! grep $i ${root}/FreeBSD/src-patches > /dev/null 2>&1; then
-	echo "Applying patch $i..."
-	(cd FreeBSD/src && patch -p0 < ${root}/patches/$i)
-	echo $i >> ${root}/FreeBSD/src-patches
+        echo "Applying patch $i..."
+        (cd FreeBSD/src && patch -p0 < ${root}/patches/$i)
+        echo $i >> ${root}/FreeBSD/src-patches
     fi
 done
 touch ${root}/FreeBSD/ports-patches
 for i in $(cd ${root}/patches && echo ports-*); do
     if ! grep $i ${root}/FreeBSD/ports-patches > /dev/null 2>&1; then
-	echo "Applying patch $i..."
-	(cd FreeBSD/ports && patch -p0 < ${root}/patches/$i)
-	echo $i >> ${root}/FreeBSD/ports-patches
+        echo "Applying patch $i..."
+        (cd FreeBSD/ports && patch -p0 < ${root}/patches/$i)
+        echo $i >> ${root}/FreeBSD/ports-patches
     fi
 done
 
