@@ -43,7 +43,7 @@ fi
 
 # Make sure that all the patches are applied
 touch ${root}/FreeBSD/src-patches
-for i in $(cd ${root}/patches && echo freebsd-*); do
+for i in $(cd ${root}/patches && echo freebsd-*.patch); do
     if ! grep $i ${root}/FreeBSD/src-patches > /dev/null 2>&1; then
         echo "Applying patch $i..."
         (cd FreeBSD/src && patch -p0 < ${root}/patches/$i)
@@ -51,7 +51,7 @@ for i in $(cd ${root}/patches && echo freebsd-*); do
     fi
 done
 touch ${root}/FreeBSD/ports-patches
-for i in $(cd ${root}/patches && echo ports-*); do
+for i in $(cd ${root}/patches && echo ports-*.patch); do
     if ! grep $i ${root}/FreeBSD/ports-patches > /dev/null 2>&1; then
         echo "Applying patch $i..."
         (cd FreeBSD/ports && patch -p0 < ${root}/patches/$i)
