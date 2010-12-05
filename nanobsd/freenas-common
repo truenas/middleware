@@ -138,13 +138,11 @@ add_port databases/py-south
 if [ $use_lighttpd -eq 0 ]; then
     #+www/apache22
     add_port devel/apr1
-    add_port devel/pcre
     #-www/apache22
     add_port www/apache22
     add_port www/mod_wsgi3
 else
     #+add_port www/lighttpd
-    add_port devel/pcre
     add_port www/spawn-fcgi
     #-add_port www/lighttpd
     add_port www/lighttpd
