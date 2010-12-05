@@ -15,14 +15,14 @@ main()
     export FREENAS_ARCH
     export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
     : ${REVISION=`svnversion ${root} | tr -d M`}
-    if [ ! -f ${NANO_OBJ}/"FreeNAS-8r${REVISION}-${FREENAS_ARCH}.full" ]; then
+    if [ ! -f ${NANO_OBJ}/"FreeNAS-8.2r${REVISION}-${FREENAS_ARCH}.full" ]; then
 	REVISION=${REVISION}M
     fi
-    if [ ! -f ${NANO_OBJ}/"FreeNAS-8r${REVISION}-${FREENAS_ARCH}.full" ]; then
+    if [ ! -f ${NANO_OBJ}/"FreeNAS-8.2r${REVISION}-${FREENAS_ARCH}.full" ]; then
 	echo "Can't find image file for ${REVISION}, punting"
 	exit 1
     fi
-    export NANO_NAME="FreeNAS-8r${REVISION}-${FREENAS_ARCH}"
+    export NANO_NAME="FreeNAS-8.2r${REVISION}-${FREENAS_ARCH}"
     export NANO_IMGNAME="${NANO_NAME}.full"
 
     # Paths that may need altering on the build system
@@ -35,7 +35,7 @@ main()
     ISODIR="${NANO_OBJ}/_.isodir" # Directory ISO is rolled from
     INSTALLUFSDIR="${NANO_OBJ}/_.instufs" # Scratch mountpoint where the image will be dissected
 
-    OUTPUT="${NANO_OBJ}/$NANO_IMGNAME.iso" # Output file of mkisofs
+    OUTPUT="${NANO_OBJ}/$NANO_NAME.iso" # Output file of mkisofs
 
     # A command forged by the gods themselves, change at your own risk
     MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
