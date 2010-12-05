@@ -31,8 +31,9 @@ pathnames that the old system had.  You'll have to type the path.
 
 To build the system (experts only):
 
-Native builds on amd64 and i386 work.  Cross building i386 on amd64 currently
-fails.
+Native builds on amd64 and i386 work.  You can build i386 binaries
+on a FreeBSD/amd64 system by setting FREENAS_ARCH=i386 in your
+environment.
 
 To build the system:
 
