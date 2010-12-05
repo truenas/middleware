@@ -1,7 +1,5 @@
-Index: rescue/rescue/Makefile
-===================================================================
---- FreeBSD/src/rescue/rescue/Makefile	2010-06-13 20:09:06.000000000 -0600
-+++ FreeBSD/src/rescue/rescue/Makefile	2010-09-08 11:37:20.000000000 -0600
+--- rescue/rescue/Makefile.orig	2010-06-13 20:09:06.000000000 -0600
++++ src/rescue/rescue/Makefile	2010-12-04 18:31:45.000000000 -0700
 @@ -72,6 +72,7 @@
  CRUNCH_PROGS_bin= cat chflags chio chmod cp date dd df echo 	\
  	 ed expr getfacl hostname kenv kill ln ls mkdir mv	\
@@ -36,3 +34,12 @@ Index: rescue/rescue/Makefile
  
  CRUNCH_PROGS_usr.sbin+= chown
  CRUNCH_ALIAS_chown= chgrp
+@@ -320,7 +327,7 @@
+ # <sigh> Someone should replace the bin/csh and bin/sh build-tools with
+ # shell scripts so we can remove this nonsense.
+ build-tools:
+-.for _tool in bin/csh bin/sh
++.for _tool in bin/csh bin/sh usr.bin/awk
+ 	cd $(.CURDIR)/../../${_tool}; \
+ 	MAKEOBJDIRPREFIX=${CRUNCHOBJS} ${MAKE} obj; \
+ 	MAKEOBJDIRPREFIX=${CRUNCHOBJS} ${MAKE} build-tools
