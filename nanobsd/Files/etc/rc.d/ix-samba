@@ -13,9 +13,9 @@ generate_smbconf()
 {
 	local IFS=\|
 
-	local netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest cifs_filemask cifs_dirmask sendbuffer recvbuffer largerw sendfile easupport dosattr nullpw smb_options
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_srv_netbiosname, cifs_srv_workgroup, cifs_srv_description, cifs_srv_doscharset, cifs_srv_unixcharset, cifs_srv_loglevel, cifs_srv_localmaster, cifs_srv_timeserver, cifs_srv_guest, cifs_srv_filemask, cifs_srv_dirmask, cifs_srv_sendbuffer, cifs_srv_recvbuffer, cifs_srv_largerw, cifs_srv_sendfile, cifs_srv_easupport, cifs_srv_dosattr, cifs_srv_nullpw FROM services_cifs ORDER BY id DESC LIMIT 1" | \
-	while read netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest cifs_filemask cifs_dirmask sendbuffer recvbuffer largerw sendfile easupport dosattr nullpw; do
+	local netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest cifs_filemask cifs_dirmask sendbuffer recvbuffer largerw sendfile easupport dosattr nullpw cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_homedir smb_options
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_srv_netbiosname, cifs_srv_workgroup, cifs_srv_description, cifs_srv_doscharset, cifs_srv_unixcharset, cifs_srv_loglevel, cifs_srv_localmaster, cifs_srv_timeserver, cifs_srv_guest, cifs_srv_filemask, cifs_srv_dirmask, cifs_srv_sendbuffer, cifs_srv_recvbuffer, cifs_srv_largerw, cifs_srv_sendfile, cifs_srv_easupport, cifs_srv_dosattr, cifs_srv_nullpw, cifs_srv_aio_enable, cifs_srv_aio_rs, cifs_srv_aio_ws, cifs_srv_homedir_enable FROM services_cifs ORDER BY id DESC LIMIT 1" | \
+	while read netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest cifs_filemask cifs_dirmask sendbuffer recvbuffer largerw sendfile easupport dosattr nullpw cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_homedir; do
 		echo '
 [global]
 encrypt passwords = yes
@@ -103,6 +103,18 @@ getwd cache = yes'
 				echo -n " SO_RCVBUF=${recvbuffer}"
 			fi
 			echo
+		fi
+		if [ "${cifs_aio_enable}" = "1" ]; then
+			echo "aio read size = ${cifs_aio_rs}"
+			echo "aio write size = ${cifs_aio_ws}"
+		fi
+		if [ "${cifs_homedir}" = "1" ]; then
+			echo '
+[homes]
+comment = Home Directories
+browseable = yes
+valid users = %S
+writable = yes'
 		fi
 	done
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_srv_smb_options FROM services_cifs ORDER BY id DESC LIMIT 1"

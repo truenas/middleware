@@ -287,6 +287,26 @@ class CIFS(models.Model):
             blank=True,
             help_text="These parameters are added to [Global] section of smb.conf"
             )
+    cifs_srv_homedir_enable = models.BooleanField(
+            verbose_name="Enable home directories", 
+            help_text="This enables\disables home directories for samba user."
+            )
+    cifs_srv_aio_enable = models.BooleanField(
+            verbose_name="Enable AIO", 
+            help_text="This enables\disables AIO support."
+            )
+    cifs_srv_aio_rs = models.IntegerField(
+            max_length=120,
+            verbose_name="AIO read size", 
+            help_text="The default read size is 1.",
+            default="1"
+            )
+    cifs_srv_aio_ws = models.IntegerField(
+            max_length=120,
+            verbose_name="AIO write size", 
+            help_text="The default write size is 1.",
+            default="1"
+            )
 
 class AFP(models.Model):            
     afp_srv_name = models.CharField(
