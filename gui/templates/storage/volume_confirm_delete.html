@@ -1,18 +1,21 @@
 {% extends "base.html" %}
 {% block content %}
 {% if user.is_authenticated %}
-<form method="post" action=".">
-<h1>Confirm Delete</h1>
-<span class="alert" style="width:50%;">
-<h2>WARNING!</h2>
-<p>You are about to delete <strong>{{ object.vol_name }}</strong></p>
-
-<p align="right"><strong>Are you sure?</strong><br />
-<input type="submit" value="Delete Volume" >
-</p>
-</span>
-</form>
-
+<script type="text/javascript">
+    var delDlg;
+        dojo.addOnLoad(function() {
+            delDlg = new dijit.Dialog({
+                title: "Delete {{ object.vol_name }}",
+                style: "width: 300px",
+                });
+        });
+    function showDelDlg() {
+    // set the content of the dialog:
+        delDlg.attr('content', '<form method="post"><p>Are you sure you want to delete <strong>volume</strong> {{ object.vol_name }}?</p><button dojoType="dijit.form.Button" type="submit">Delete</button><button dojoType="dijit.form.Button"type="button" onClick="history.back();">Cancel</button>');
+    delDlg.show();
+    }
+    dojo.addOnLoad(showDelDlg);
+</script>
 {% else %}
 {% endif %}
 {% endblock %}
