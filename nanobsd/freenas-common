@@ -103,8 +103,10 @@ add_port net/rsync
 add_port devel/talloc
 add_port devel/libexecinfo
 add_port devel/popt
+add_port databases/tdb
+add_port sysutils/libsunacl
 #-net/samba
-add_port net/samba34		-DWITHOUT_CUPS -DWITH_LDAP -DWITH_ADS \
+add_port net/samba35		-DWITHOUT_CUPS -DWITH_LDAP -DWITH_ADS \
 	-DWITH_WINBIND -DWITH_ACL_SUPPORT -DWITH_PAM_SMBPASS -DWITH_AIO_SUPPORT
 add_port security/pam_ldap
 add_port security/pam_mkhomedir

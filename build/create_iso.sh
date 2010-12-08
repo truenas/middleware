@@ -35,7 +35,7 @@ main()
     ISODIR="${NANO_OBJ}/_.isodir" # Directory ISO is rolled from
     INSTALLUFSDIR="${NANO_OBJ}/_.instufs" # Scratch mountpoint where the image will be dissected
 
-    OUTPUT="${NANO_OBJ}/$NANO_IMGNAME.iso" # Output file of mkisofs
+    OUTPUT="${NANO_OBJ}/$NANO_NAME.iso" # Output file of mkisofs
 
     # A command forged by the gods themselves, change at your own risk
     MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \

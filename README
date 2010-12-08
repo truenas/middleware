@@ -1,6 +1,6 @@
-Here's a snapshot of the FreeBSD 8.1-based FreeNAS.  It features a move to
-the /etc/rc.d startup scripting, a move to a Django-based GUI and should
-set the stage for a more modular system in the future.
+Here's a snapshot of FreeBSD 8.2-based FreeNAS.  It features a move to
+the /etc/rc.d startup scripting, a move to a Django-based GUI and
+should set the stage for a more modular system in the future.
 
 This snapshot is for developers and very experienced users only.  It
 is not functionally complete yet, and there are likely many rough
