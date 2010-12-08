@@ -1,6 +1,6 @@
---- tools/tools/nanobsd/nanobsd.sh.orig	2010-06-13 20:09:06.000000000 -0600
-+++ tools/tools/nanobsd/nanobsd.sh	2010-12-03 00:32:01.000000000 -0700
-@@ -131,9 +131,15 @@
+--- tools/tools/nanobsd/nanobsd.sh.orig	2010-09-09 21:52:05.000000000 -0600
++++ tools/tools/nanobsd/nanobsd.sh	2010-12-08 15:23:28.000000000 -0700
+@@ -135,12 +135,18 @@
  # Progress Print level
  PPLEVEL=3
  
@@ -12,13 +12,16 @@
 +NANO_LABEL=""
 +
  #######################################################################
- # Not a variable at this time
+ # Architecture to build.  Corresponds to TARGET_ARCH in a buildworld.
+ # Unfortunately, there's no way to set TARGET at this time, and it 
+ # conflates the two, so architectures where TARGET != TARGET_ARCH do
+ # not work.  This defaults to the arch of the current machine.
 -
  NANO_ARCH=`uname -p`
  
  #######################################################################
-@@ -354,6 +360,40 @@
- 		done
+@@ -385,6 +391,40 @@
+ 	populate_slice "$1" "$2" "$3"
  )
  
 +newfs_part ( ) (
@@ -58,7 +61,7 @@
  create_i386_diskimage ( ) (
  	pprint 2 "build diskimage"
  	pprint 3 "log: ${NANO_OBJ}/_.di"
-@@ -436,8 +476,8 @@
+@@ -467,8 +507,8 @@
  			-y ${NANO_HEADS}`
  	else
  		echo "Creating md backing file..."
@@ -69,10 +72,11 @@
  		MD=`mdconfig -a -t vnode -f ${IMG} -x ${NANO_SECTS} \
  			-y ${NANO_HEADS}`
  	fi
-@@ -453,12 +493,8 @@
+@@ -484,13 +524,8 @@
  	bsdlabel ${MD}s1
  
  	# Create first image
+-	# XXX: should use populate_slice for easier override
 -	newfs ${NANO_NEWFS} /dev/${MD}s1a
 -	mount /dev/${MD}s1a ${MNT}
 -	df -i ${MNT}
@@ -84,7 +88,7 @@
  	echo "Generating mtree..."
  	( cd ${MNT} && mtree -c ) > ${NANO_OBJ}/_.mtree
  	( cd ${MNT} && du -k ) > ${NANO_OBJ}/_.du
-@@ -468,22 +504,23 @@
+@@ -500,20 +535,23 @@
  		# Duplicate to second image (if present)
  		echo "Duplicating to second image..."
  		dd if=/dev/${MD}s1 of=/dev/${MD}s2 bs=64k
@@ -92,8 +96,7 @@
 +		mount -o async /dev/${MD}s2a ${MNT}
  		for f in ${MNT}/etc/fstab ${MNT}/conf/base/etc/fstab
  		do
--			sed -i "" "s/${NANO_DRIVE}s1/${NANO_DRIVE}s2/g" $f
-+			sed -i "" "s=${NANO_DRIVE}s1=${NANO_DRIVE}s2=g" $f
+ 			sed -i "" "s=${NANO_DRIVE}s1=${NANO_DRIVE}s2=g" $f
  		done
  		umount ${MNT}
 +		if [ ! -z ${NANO_LABEL} ]; then
@@ -102,43 +105,17 @@
  	fi
  	
  	# Create Config slice
--	newfs ${NANO_NEWFS} /dev/${MD}s3
--	# XXX: fill from where ?
+-	populate_cfg_slice /dev/${MD}s3 "${NANO_CFGDIR}" ${MNT}
 +	populate_cfg_slice /dev/${MD}s3 "${NANO_CFGDIR}" ${MNT} "s3"
  
  	# Create Data slice, if any.
  	if [ $NANO_DATASIZE -ne 0 ] ; then
--		newfs ${NANO_NEWFS} /dev/${MD}s4
--		# XXX: fill from where ?
+-		populate_data_slice /dev/${MD}s4 "${NANO_DATADIR}" ${MNT}
 +		populate_data_slice /dev/${MD}s4 "${NANO_DATADIR}" ${MNT} "s4"
  	fi
  
  	if [ "${NANO_MD_BACKING}" = "swap" ] ; then
-@@ -650,19 +687,19 @@
- 
- #######################################################################
- # Convenience function:
--# 	Register $1 as customize function.
-+# 	Register all args as customize function.
- 
- customize_cmd () {
--	NANO_CUSTOMIZE="$NANO_CUSTOMIZE $1"
-+	NANO_CUSTOMIZE="$NANO_CUSTOMIZE $*"
- }
- 
- #######################################################################
- # Convenience function:
--# 	Register $1 as late customize function to run just before
-+# 	Register all args as late customize function to run just before
- #	image creation.
- 
- late_customize_cmd () {
--	NANO_LATE_CUSTOMIZE="$NANO_LATE_CUSTOMIZE $1"
-+	NANO_LATE_CUSTOMIZE="$NANO_LATE_CUSTOMIZE $*"
- }
- 
- #######################################################################
-@@ -790,6 +827,11 @@
+@@ -820,6 +858,11 @@
  	NANO_PMAKE="${NANO_PMAKE} -DNO_CLEAN"
  fi
  
@@ -150,7 +127,7 @@
  export MAKEOBJDIRPREFIX
  
  export NANO_ARCH
-@@ -814,6 +856,7 @@
+@@ -844,6 +887,7 @@
  export NANO_WORLDDIR
  export NANO_BOOT0CFG
  export NANO_BOOTLOADER
