@@ -52,20 +52,20 @@
     {% endif %}
 {% endblock %}
 {% block dojango_content %}
-<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="False" gutters="false">
-    <div dojoType="dijit.layout.ContentPane" title="Delete Windows Share">
-        <form method="post" action=".">{% csrf_token %}
-            <h1>Confirm Delete</h1>
-            <span class="alert" style="width:50%;">
-                <h2>WARNING!</h2>
-                <p>You are about to delete <strong>{{ object }}</strong></p>
-                <p align="right"><strong>Are you sure?</strong><br />
-                <input type="submit" value="Delete Windows Share" >
-                </p>
-            </span>
-        </form>
-    </div>
-</div>
-
+<script type="text/javascript">
+    var delDlg;
+        dojo.addOnLoad(function() {
+            delDlg = new dijit.Dialog({
+title: "Delete {{ object.cifs_path }}",
+                style: "width: 300px",
+                });
+        });
+    function showDelDlg() {
+    // set the content of the dialog:
+        delDlg.attr('content', '<form method="post"><p>Are you sure you want to delete <strong>{{ object.cifs_path }}?</strong></p><button dojoType="dijit.form.Button" type="submit">Delete</button><button dojoType="dijit.form.Button"type="button" onClick="history.back();">Cancel</button>');
+    delDlg.show();
+    }
+    dojo.addOnLoad(showDelDlg);
+</script>
 {% endblock %}
 
