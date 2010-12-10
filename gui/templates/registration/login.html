@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
 {% if form.errors %}
 <p>Your username and password didn't match. Please try again.</p>
 {% endif %}
@@ -32,7 +32,7 @@
 
 {% else %} 
 <br />
-<p><span class="info"><p>Welcome. Please log in.</p>
+<p><span class="info">Welcome. Please log in.</span></p>
 <form method="post" action=".">{% csrf_token %}
 <table>
 <tr>
@@ -47,8 +47,7 @@
 
 <input type="submit" value="Log-in" />
 <input type="hidden" name="next" value="{{ next }}" />
-</p></span>
 </form>
-{% endif %}   
-
+{% endif %}
+</div>
 {% endblock %}

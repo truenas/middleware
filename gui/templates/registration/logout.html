@@ -3,9 +3,8 @@
 {% block title %}Logged Out{% endblock %}
 
 {% block content %}
-<br />
-<p><span class="alert">
-    <p>You are now logged out. <a href="/account/login/">Log back in</a>.</p>
-</p></span>
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
+<p><span class="alert">You are now logged out. <a href="/account/login/">Log back in</a>.</span></p>
+</div>
 {% endblock %}
 
