@@ -78,7 +78,41 @@ main()
     # Magic scripts for the LiveCD
     cat > ${STAGEDIR}/baseroot.rc << 'EOF'
 #!/bin/sh
-#set -x
+
+# Helper routines for mounting the CD...
+try_mount()
+{
+    local CD="$1" T="$2"
+
+    [ -c ${CD} ] || return 1
+    echo -n " ${CD}"
+    if mount -r ${T} ${CD} ${CDROM_MP} > /dev/null 2>&1; then
+        [ -f ${CDROM_MP}${BASEROOT_IMG} ] && return 0
+        umount ${CDROM_MP}
+    fi
+    return 1
+}
+
+mount_cd()
+{
+    local CD
+
+    for CD in /dev/cd[0-9] /dev/acd[0-9]; do
+        try_mount ${CD} "-t cd9660" && return 0
+    done
+    return 1
+}
+
+mount_memstick()
+{
+    local DA
+
+    for DA in /dev/da[0-9]*; do
+        try_mount ${DA} && return 0
+    done
+    return 1
+}
+
 PATH=/rescue
 
 BASEROOT_MP=/baseroot
@@ -93,16 +127,14 @@ mkdir -p ${BASEROOT_MP}
 mkdir -p ${RWROOT_MP}
 mkdir -p ${CDROM_MP}
 
-# mount CD device
-for CD in /dev/acd0 /dev/cd0 EoM; do
-    [ -c ${CD} ] && break
+# Mount the CD device.  Maybe CAM hasn't finished enumerating it
+# yet, so we have to loop a bit.  No sense giving up...
+echo -n "Looking for installation cdrom on "
+while [ ! -f ${CDROM_MP}${BASEROOT_IMG} ]; do
+    mount_cd && break
+    mount_memstick && break
+    sleep 1
 done
-if [ "${CD}" = EoM ]; then
-    echo "Can't find the device for the cdrom to mount!  Help!"
-    read -p "Hit return to reboot" junk
-    reboot
-fi
-mount -t cd9660 $CD ${CDROM_MP}
 
 # Mount future live root
 mdconfig -a -t vnode -f ${CDROM_MP}${BASEROOT_IMG} -u 9
@@ -154,6 +186,7 @@ zfs_load="YES"
 geom_mirror_load="YES"
 EOF
     eval ${MKISOFS_CMD}
+    echo "Created ${OUTPUT}"
 }
 
 cleanup()
