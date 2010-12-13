@@ -77,7 +77,7 @@
 <div id="wiz" dojoType="dijit.Dialog" title="Storage Wizard"  dolayout="false">
         {% ifequal step0|add:1 step_count  %}
             <h3>Review & Save</h3>
-                <h4>Step {{ step0|add:1 }}</h4>
+	    <h4>Review and make sure that the following is correct.</h4>
         <table style="width:300px;">
         {% for label, list in wizard_data.lists %}
 	{% if "0-" in label or "1-" in label %}
@@ -106,7 +106,8 @@
 		{% endif %}
                 <button style="padding:4px;margin-top:16px;" dojoType="dijit.form.Button" type="submit">
                     {% ifequal step0|add:1 step_count  %}
-                        Save
+                        Create volume<br />
+            <b style="color: red">Existing data will be cleared</b>
                     {% else %} 
                         Next &gt;&gt;
                     {% endifequal %}
