@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block dojango_header_extra %}
+{% endblock %} 
+{% block content %}
+<div dojoType="dijit.MenuBar" id="navMenu">
+            <div dojoType="dijit.MenuBarItem" onClick="window.location='/'">
+                <div>
+                    System 
+                </div>
+            </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'" class=" dijitMenuItemSelected ">
+        <span>
+            Network 
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'">
+        <span>
+            Storage 
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'">
+        <span>
+            Sharing
+        </span>
+    </div>
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/services/'">
+        <span>
+            Services
+        </span>
+    </div>
+
+
+    {% if user.is_authenticated %}
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" style="position:relative;float:right;font-weight:bold;">
+        <span>
+            Log Out 
+        </span>
+    </div>
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/password_change/'">
+        <span>
+            Account 
+        </span>
+    </div>
+    {% else %}
+
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" style="position:relative;float:right;font-weight:bold;">
+        <span>
+            Log In
+        </span>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+{% block dojango_content %}
+{% if user.is_authenticated %}
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
+    <div dojoType="dijit.layout.ContentPane" title="Edit LAGG Member">
+	<table class="grid">
+	    <thead class="header">
+	            <td>Physical Interface</td>
+	            <td>Ordering Priority</td>
+		    <td>Startup option</td>
+		    <td>Action</td>
+	    </thead>
+	    {% for nic in laggmembers %}
+	    <tr class="{% cycle 'odd' 'even' %}" id="{{ nic.id }}">
+		<td>{{ nic.lagg_physnic }}</td>
+		<td>{{ nic.lagg_ordernum }}</td>
+		<td>{{ nic.lagg_deviceoptions }}</td>
+		<td>
+		    <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/laggint/edit/{{ nic.id }}/'">Edit</button>
+		    <!-- <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/laggint/delete/{{ nic.id }}/'">Delete</button> -->
+		</td>
+	    </tr>
+            {% empty %}
+	    <tr>
+		<td colspan="4">No LAGG interface defined</td>
+	    </tr>
+	    {% endfor %}
+        </table>
+
+	<!-- (TODO: Show a list of interfaces that can be added, a button to add them through the form) -->
+    </div>
+</div>
+{% else %}
+    <p>Welcome. Please <a href="/account/login/">log in</a>.</p>
+{% endif %}
+
+{% endblock %}
+
