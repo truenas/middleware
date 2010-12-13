@@ -80,6 +80,10 @@ main()
 #!/bin/sh
 
 # Helper routines for mounting the CD...
+
+# Try to mount the media.  If successful, check to see if there's
+# actually a baseroot image on it.  If so, leave it mounted and
+# return 0.  Otherwise, return 1 with the media unmounted.
 try_mount()
 {
     local CD="$1" T="$2"
@@ -93,6 +97,8 @@ try_mount()
     return 1
 }
 
+# Loop over the first 10 /dev/cd devices and the first 10 /dev/acd
+# devices.  These devices are cd9660 formatted.
 mount_cd()
 {
     local CD
@@ -103,6 +109,9 @@ mount_cd()
     return 1
 }
 
+# Loop over all the daX devices that we can find.  These devices
+# are assumed to be in UFS format, so no second arg is passed
+# to try_mount.
 mount_memstick()
 {
     local DA
@@ -127,8 +136,12 @@ mkdir -p ${BASEROOT_MP}
 mkdir -p ${RWROOT_MP}
 mkdir -p ${CDROM_MP}
 
-# Mount the CD device.  Maybe CAM hasn't finished enumerating it
-# yet, so we have to loop a bit.  No sense giving up...
+# Mount the CD device.  Since we mounted off the MD device loaded
+# into memory, CAM might not have had a chance to fully discover
+# a USB or SCSI cdrom drive.  Loop looking for it (also look
+# for memory sticks, but that isn't fully tested yet).  Loop forever
+# so you can insert a different CD if there's problems with the
+# first.
 echo -n "Looking for installation cdrom on "
 while [ ! -f ${CDROM_MP}${BASEROOT_IMG} ]; do
     mount_cd && break
