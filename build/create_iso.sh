@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# This script creates a bootable LiveCD iso from a nanobsd image
+# This script creates a bootable LiveCD iso from a nanobsd image for FreeNAS
 
 main()
 {
