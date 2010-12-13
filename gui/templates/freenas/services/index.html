@@ -238,7 +238,9 @@
                     <strong>Active Directory</strong>
                 </td>
                 <td>
-		    <img id="ad_toggle" name="ad_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ad" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+		    <img id="ad_toggle" name="ad_toggle"
+                    src="/freenas/media/images/ui/{% for s  in srv %}{%
+                    if s.srv_service == "activedirectory" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
                     <img id="ad_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('ad').show();" title="Active Directory Settings">
