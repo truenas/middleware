@@ -1,0 +1,276 @@
+diff -ru www/py-django/files/patch-django-core-validators.py www/py-django.patch/files/patch-django-core-validators.py
+--- www/py-django/files/patch-django-core-validators.py	2010-12-14 16:17:03.000000000 -0600
++++ www/py-django.patch/files/patch-django-core-validators.py	2010-12-14 16:13:05.000000000 -0600
+@@ -0,0 +1,61 @@
++--- django/core/validators.py.orig	2010-05-10 07:40:54.000000000 -0500
+++++ django/core/validators.py	2010-12-14 15:37:35.000000000 -0600
++@@ -4,6 +4,7 @@
++ from django.core.exceptions import ValidationError
++ from django.utils.translation import ugettext_lazy as _
++ from django.utils.encoding import smart_unicode
+++from django.utils.ip import ipv6_normalize
++ 
++ # These values, if given to validate(), will trigger the self.required check.
++ EMPTY_VALUES = (None, '', [], (), {})
++@@ -19,14 +20,17 @@
++     regex = ''
++     message = _(u'Enter a valid value.')
++     code = 'invalid'
+++    normalizer = None
++ 
++-    def __init__(self, regex=None, message=None, code=None):
+++    def __init__(self, regex=None, message=None, code=None, normalizer=None):
++         if regex is not None:
++             self.regex = regex
++         if message is not None:
++             self.message = message
++         if code is not None:
++             self.code = code
+++        if normalizer is not None:
+++            self.normalizer = normalizer
++ 
++         if isinstance(self.regex, basestring):
++             self.regex = re.compile(regex)
++@@ -35,6 +39,12 @@
++         """
++         Validates that the input matches the regular expression.
++         """
+++        if self.normalizer:
+++            try:
+++                value = self.normalizer(value)
+++            except ValueError:
+++                raise ValidationError(self.message, code=self.code)
+++        
++         if not self.regex.search(smart_unicode(value)):
++             raise ValidationError(self.message, code=self.code)
++ 
++@@ -125,6 +135,18 @@
++ ipv4_re = re.compile(r'^(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}$')
++ validate_ipv4_address = RegexValidator(ipv4_re, _(u'Enter a valid IPv4 address.'), 'invalid')
++ 
+++ipv6_re = re.compile(r'^[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){7}$') 
+++validate_ipv6_address = RegexValidator(ipv6_re, _(u'Enter a valid IPv6 address.'), 'invalid', ipv6_normalize)
+++
+++def validate_ip_address(value):
+++    try:
+++        validate_ipv4_address(value)
+++    except ValidationError:
+++        try:
+++            validate_ipv6_address(value)
+++        except ValidationError:
+++            raise ValidationError(_(u'Enter a valid IP address.'), code='invalid')
+++
++ comma_separated_int_list_re = re.compile('^[\d,]+$')
++ validate_comma_separated_integer_list = RegexValidator(comma_separated_int_list_re, _(u'Enter only digits separated by commas.'), 'invalid')
++ 
+diff -ru www/py-django/files/patch-django-db-backends-mysql-creation.py www/py-django.patch/files/patch-django-db-backends-mysql-creation.py
+--- www/py-django/files/patch-django-db-backends-mysql-creation.py	2010-12-14 16:17:13.000000000 -0600
++++ www/py-django.patch/files/patch-django-db-backends-mysql-creation.py	2010-12-14 16:13:05.000000000 -0600
+@@ -0,0 +1,11 @@
++--- django/db/backends/mysql/creation.py.orig	2009-12-22 09:18:51.000000000 -0600
+++++ django/db/backends/mysql/creation.py	2010-12-14 15:37:35.000000000 -0600
++@@ -18,7 +18,7 @@
++         'FloatField':        'double precision',
++         'IntegerField':      'integer',
++         'BigIntegerField':   'bigint',
++-        'IPAddressField':    'char(15)',
+++        'IPAddressField':    'char(%(max_length)s)',
++         'NullBooleanField':  'bool',
++         'OneToOneField':     'integer',
++         'PositiveIntegerField': 'integer UNSIGNED',
+diff -ru www/py-django/files/patch-django-db-backends-oracle-creation.py www/py-django.patch/files/patch-django-db-backends-oracle-creation.py
+--- www/py-django/files/patch-django-db-backends-oracle-creation.py	2010-12-14 16:17:22.000000000 -0600
++++ www/py-django.patch/files/patch-django-db-backends-oracle-creation.py	2010-12-14 16:13:05.000000000 -0600
+@@ -0,0 +1,11 @@
++--- django/db/backends/oracle/creation.py.orig	2009-12-22 09:18:51.000000000 -0600
+++++ django/db/backends/oracle/creation.py	2010-12-14 15:37:35.000000000 -0600
++@@ -27,7 +27,7 @@
++         'FloatField':                   'DOUBLE PRECISION',
++         'IntegerField':                 'NUMBER(11)',
++         'BigIntegerField':              'NUMBER(19)',
++-        'IPAddressField':               'VARCHAR2(15)',
+++        'IPAddressField':               'VARCHAR2(%(max_length)s)',
++         'NullBooleanField':             'NUMBER(1) CHECK ((%(qn_column)s IN (0,1)) OR (%(qn_column)s IS NULL))',
++         'OneToOneField':                'NUMBER(11)',
++         'PositiveIntegerField':         'NUMBER(11) CHECK (%(qn_column)s >= 0)',
+diff -ru www/py-django/files/patch-django-db-backends-sqlite3-creation.py www/py-django.patch/files/patch-django-db-backends-sqlite3-creation.py
+--- www/py-django/files/patch-django-db-backends-sqlite3-creation.py	2010-12-14 16:17:29.000000000 -0600
++++ www/py-django.patch/files/patch-django-db-backends-sqlite3-creation.py	2010-12-14 16:13:05.000000000 -0600
+@@ -0,0 +1,11 @@
++--- django/db/backends/sqlite3/creation.py.orig	2009-12-22 09:18:51.000000000 -0600
+++++ django/db/backends/sqlite3/creation.py	2010-12-14 15:37:35.000000000 -0600
++@@ -19,7 +19,7 @@
++         'FloatField':                   'real',
++         'IntegerField':                 'integer',
++         'BigIntegerField':              'bigint',
++-        'IPAddressField':               'char(15)',
+++        'IPAddressField':               'char(%(max_length)s)',
++         'NullBooleanField':             'bool',
++         'OneToOneField':                'integer',
++         'PositiveIntegerField':         'integer unsigned',
+diff -ru www/py-django/files/patch-django-db-models-fields-____init____.py www/py-django.patch/files/patch-django-db-models-fields-____init____.py
+--- www/py-django/files/patch-django-db-models-fields-____init____.py	2010-12-14 16:17:39.000000000 -0600
++++ www/py-django.patch/files/patch-django-db-models-fields-____init____.py	2010-12-14 16:13:05.000000000 -0600
+@@ -0,0 +1,28 @@
++--- django/db/models/fields/__init__.py.orig	2010-08-07 02:39:19.000000000 -0500
+++++ django/db/models/fields/__init__.py	2010-12-14 15:37:35.000000000 -0600
++@@ -905,15 +905,22 @@
++ class IPAddressField(Field):
++     empty_strings_allowed = False
++     description = _("IP address")
++-    def __init__(self, *args, **kwargs):
++-        kwargs['max_length'] = 15
+++    def __init__(self, allowv4=True, allowv6=False, *args, **kwargs):
+++        assert allowv4 or allowv6, "%ss must have allowv4=True and/or allowv6=True." % self.__class__.__name__
+++        self.allowv4, self.allowv6 = allowv4, allowv6
+++        if allowv6:
+++            kwargs['max_length'] = 39
+++        else:
+++            kwargs['max_length'] = 15
++         Field.__init__(self, *args, **kwargs)
++ 
++     def get_internal_type(self):
++         return "IPAddressField"
++ 
++     def formfield(self, **kwargs):
++-        defaults = {'form_class': forms.IPAddressField}
+++        defaults = {'form_class': forms.IPAddressField,
+++                    'allowv4': self.allowv4,
+++                    'allowv6': self.allowv6}
++         defaults.update(kwargs)
++         return super(IPAddressField, self).formfield(**defaults)
++ 
+diff -ru www/py-django/files/patch-django-forms-fields.py www/py-django.patch/files/patch-django-forms-fields.py
+--- www/py-django/files/patch-django-forms-fields.py	2010-12-14 16:17:48.000000000 -0600
++++ www/py-django.patch/files/patch-django-forms-fields.py	2010-12-14 16:13:05.000000000 -0600
+@@ -0,0 +1,23 @@
++--- django/forms/fields.py.orig	2010-08-14 07:07:25.000000000 -0500
+++++ django/forms/fields.py	2010-12-14 15:50:25.000000000 -0600
++@@ -869,10 +869,18 @@
++ 
++ 
++ class IPAddressField(CharField):
+++    def __init__(self, allowv4=True, allowv6=False, *args, **kwargs):
+++        self.allowv4, self.allowv6 = allowv4, allowv6
+++        super(IPAddressField, self).__init__(*args, **kwargs)
+++        if allowv4 and allowv6:
+++            self.validators.append(validators.validate_ip_address)
+++        elif allowv4:
+++            self.validators.append(validators.validate_ipv4_address)
+++        elif allowv6:
+++            self.validators.append(validators.validate_ipv6_address)
++     default_error_messages = {
++-        'invalid': _(u'Enter a valid IPv4 address.'),
+++        'invalid': _(u'Enter a valid IP address.'),
++     }
++-    default_validators = [validators.validate_ipv4_address]
++ 
++ 
++ class SlugField(CharField):
+diff -ru www/py-django/files/patch-django-utils-ip.py www/py-django.patch/files/patch-django-utils-ip.py
+--- www/py-django/files/patch-django-utils-ip.py	2010-12-14 16:18:05.000000000 -0600
++++ www/py-django.patch/files/patch-django-utils-ip.py	2010-12-14 16:13:05.000000000 -0600
+@@ -0,0 +1,57 @@
++--- django/utils/ip.py.orig	2010-12-14 16:09:49.000000000 -0600
+++++ django/utils/ip.py	2010-12-14 16:09:49.000000000 -0600
++@@ -0,0 +1,54 @@
+++def ipv6_normalize(addr):
+++    """
+++    Normalize an IPv6 address to allow easy regexp validation.
+++    Mostly checks the length, and gets rid of tricky things
+++    like IPv4 mapped addresses and :: shortcuts
+++    
+++    Outputs a string
+++    """
+++    # Some basic error checking
+++    if addr.count('::') > 2 or ':::' in addr:
+++        raise ValueError
+++
+++    ip = addr.split(':')
+++    nbfull = len([elem for elem in ip if elem != ''])
+++    nb = len(ip)
+++    
+++    if nb < 3:
+++        # The minimal IPv6 address is :: so at least 3 parts after split
+++        raise ValueError
+++
+++    if nbfull >= 1 and '.' in ip[-1]:
+++        # Convert IPv4 mapped addresses to full hexadecimal notation
+++        ipv4 = ip[-1].split('.')
+++        hex1 = (int(ipv4[0]) << 8) + int(ipv4[1])
+++        hex2 = (int(ipv4[2]) << 8) + int(ipv4[3])
+++        ip[-1:] = [hex(hex1)[2:], hex(hex2)[2:]]
+++        nbfull = nbfull + 1
+++        nb = nb + 1
+++
+++    if nbfull == 8 or nbfull == nb:
+++        # No need to bother
+++        return addr
+++    elif nbfull > 8:
+++        # Has to be invalid anyway
+++        raise ValueError
+++
+++    # Begin normalization
+++    start, end, index = (None, None, 0)
+++    for elem in ip:
+++        if elem == '':
+++            if start is None:
+++                start = index
+++                end = index
+++            else:
+++                end = index
+++        index += 1
+++    pad = 8 - nbfull
+++    if end != start:
+++        ip[start:end-start+1] = ['0'] * pad
+++    else:
+++        ip[start] = '0'
+++        if pad > 1:
+++            ip[start:1] = ['0'] * (pad - 1)
+++    return ':'.join([item for item in ip if len(item) > 0])
+diff -ru www/py-django/files/patch-tests-regressiontests-serializer__regress-models.py www/py-django.patch/files/patch-tests-regressiontests-serializer__regress-models.py
+--- www/py-django/files/patch-tests-regressiontests-serializer__regress-models.py	2010-12-14 16:18:16.000000000 -0600
++++ www/py-django.patch/files/patch-tests-regressiontests-serializer__regress-models.py	2010-12-14 16:13:05.000000000 -0600
+@@ -0,0 +1,20 @@
++--- tests/regressiontests/serializers_regress/models.py.orig	2010-02-24 09:54:03.000000000 -0600
+++++ tests/regressiontests/serializers_regress/models.py	2010-12-14 15:37:35.000000000 -0600
++@@ -50,7 +50,7 @@
++ #    data = models.ImageField(null=True)
++ 
++ class IPAddressData(models.Model):
++-    data = models.IPAddressField(null=True)
+++    data = models.IPAddressField(null=True, allowv4=True, allowv6=True)
++ 
++ class NullBooleanData(models.Model):
++     data = models.NullBooleanField(null=True)
++@@ -188,7 +188,7 @@
++ #    data = models.ImageField(primary_key=True)
++ 
++ class IPAddressPKData(models.Model):
++-    data = models.IPAddressField(primary_key=True)
+++    data = models.IPAddressField(primary_key=True, allowv4=True, allowv6=True)
++ 
++ # This is just a Boolean field with null=True, and we can't test a PK value of NULL.
++ # class NullBooleanPKData(models.Model):
+diff -ru www/py-django/files/patch-tests-regressiontests-serializer__regress-tests.py www/py-django.patch/files/patch-tests-regressiontests-serializer__regress-tests.py
+--- www/py-django/files/patch-tests-regressiontests-serializer__regress-tests.py	2010-12-14 16:18:21.000000000 -0600
++++ www/py-django.patch/files/patch-tests-regressiontests-serializer__regress-tests.py	2010-12-14 16:13:05.000000000 -0600
+@@ -0,0 +1,18 @@
++--- tests/regressiontests/serializers_regress/tests.py.orig	2010-05-28 04:52:24.000000000 -0500
+++++ tests/regressiontests/serializers_regress/tests.py	2010-12-14 15:37:35.000000000 -0600
++@@ -195,6 +195,7 @@
++     #(XX, ImageData
++     (data_obj, 90, IPAddressData, "127.0.0.1"),
++     (data_obj, 91, IPAddressData, None),
+++    (data_obj, 92, IPAddressData, "::1"),
++     (data_obj, 100, NullBooleanData, True),
++     (data_obj, 101, NullBooleanData, False),
++     (data_obj, 102, NullBooleanData, None),
++@@ -300,6 +301,7 @@
++     (pk_obj, 682, IntegerPKData, 0),
++ #     (XX, ImagePKData
++     (pk_obj, 690, IPAddressPKData, "127.0.0.1"),
+++    (pk_obj, 691, IPAddressPKData, "::1"),
++     # (pk_obj, 700, NullBooleanPKData, True),
++     # (pk_obj, 701, NullBooleanPKData, False),
++     (pk_obj, 710, PhonePKData, "212-634-5789"),
