@@ -11,8 +11,6 @@
 
 generate_motd()
 {
-	local IFS=\|
-
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_motd FROM system_advanced ORDER BY id DESC LIMIT 1"
 }
 
