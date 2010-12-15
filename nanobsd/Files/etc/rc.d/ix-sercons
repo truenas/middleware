@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-sercons
+# REQUIRE: FILESYSTEMS
+
+. /etc/rc.subr
+
+update_sercons()
+{
+	local sercons=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_serialconsole FROM system_advanced ORDER BY id DESC LIMIT 1")
+	local bc=/boot.config
+
+	case $sercons in
+	0)
+		if [ -f ${bc} ]; then
+			mount -uw /
+			rm -f ${bc}
+			mount -ur /
+		fi
+		;;
+	1)
+		if [ ! -f ${bc} ] || ! grep -q -- -h ${bc} then
+			mount -uw /
+			echo -h > ${bc}
+			mount -ur /
+		fi
+		;;
+}
+
+name="ix-sercons"
+start_cmd='update_sercons'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
