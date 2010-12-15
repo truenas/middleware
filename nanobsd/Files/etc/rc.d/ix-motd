@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-motd
+# REQUIRE: FILESYSTEMS
+# BEFORE: motd
+
+. /etc/rc.subr
+
+generate_motd()
+{
+	local IFS=\|
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_motd FROM system_advanced ORDER BY id DESC LIMIT 1"
+}
+
+generate_motd()
+{
+	cp /conf/base/etc/motd /etc/motd
+	generate_motd >> /etc/motd
+}
+
+name="ix-motd"
+start_cmd='generate_motd'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
