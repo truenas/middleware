@@ -46,19 +46,8 @@ _interface_config()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv6auto, int_ipv6address, int_options FROM network_interfaces ORDER BY id" | \
 	while read interface_id interface dodhcp ipv4 doipv6auto ipv6 options; do
 		echo -n ifconfig_${interface}=\"
-		# Hook to support lagg(4) interfaces
-		lagg_id=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM network_lagginterface WHERE lagg_interface_id = ${interface_id}"`
-		if [ -n "${lagg_id}" ]; then
-			laggproto=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_protocol FROM network_lagginterface WHERE lagg_interface_id = ${interface_id}"`
-			echo -n "laggproto ${laggproto}"
-			${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_physnic FROM network_lagginterfacemembers WHERE lagg_interfacegroup_id=${lagg_id} ORDER BY lagg_ordernum" | \
-                        while read lagg_physnic; do
-				echo -n " laggport ${lagg_physnic}"
-			done
-			echo -n " "
-		fi
 		if [ "${dodhcp}" = "1" ]; then
-			echo "DHCP"\"
+			echo -n "DHCP"
 		else
 			if [ -n "${ipv4}" ]; then
 				echo -n "inet ${ipv4} "
@@ -66,8 +55,18 @@ _interface_config()
 			if [ -n "${options}" ]; then
 				echo -n "${options}"
 			fi
-			echo \"
 		fi
+		# Hook to support lagg(4) interfaces
+		lagg_id=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM network_lagginterface WHERE lagg_interface_id = ${interface_id}"`
+		if [ -n "${lagg_id}" ]; then
+			laggproto=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_protocol FROM network_lagginterface WHERE lagg_interface_id = ${interface_id}"`
+			echo -n " laggproto ${laggproto}"
+			${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_physnic FROM network_lagginterfacemembers WHERE lagg_interfacegroup_id=${lagg_id} ORDER BY lagg_ordernum" | \
+                        while read lagg_physnic; do
+				echo -n " laggport ${lagg_physnic}"
+			done
+		fi
+		echo \"
 		if [ "${doipv6auto}" = "0" ]; then
 			if [ -n "${ipv6}" ]; then
 				echo ipv6_ifconfig_${interface}=\"${ipv6}\"
