@@ -11,13 +11,8 @@
 
 generate_motd()
 {
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_motd FROM system_advanced ORDER BY id DESC LIMIT 1"
-}
-
-generate_motd()
-{
 	cp /conf/base/etc/motd /etc/motd
-	generate_motd >> /etc/motd
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_motd FROM system_advanced ORDER BY id DESC LIMIT 1" >> /etc/motd
 }
 
 name="ix-motd"
