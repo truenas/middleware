@@ -43,8 +43,9 @@ class InterfacesForm(ModelForm):
     def save(self):
         # TODO: new IP address should be added in a side-by-side manner
 	    # or the interface wouldn't appear once IP was changed.
-        super(InterfacesForm, self).save()
+        retval = super(InterfacesForm, self).save()
         notifier().start("network")
+        return retval
 
 class GlobalConfigurationForm(ModelForm):
     class Meta:
@@ -107,6 +108,21 @@ class LAGGInterfaceMemberForm(ModelForm):
         return self.instance.lagg_interfacegroup
     def clean_lagg_physnic(self):
         return self.instance.lagg_physnic
+
+class InterfaceEditForm(InterfacesForm):
+    def __init__(self, *args, **kwargs):
+        super(InterfaceEditForm, self).__init__(*args, **kwargs)
+        instance = getattr(self, 'instance', None)
+        if instance and instance.id:
+            self.fields['int_interface'] = forms.CharField(initial = instance.int_interface, widget = forms.TextInput(attrs = { 'readonly' : True }))
+    def clean(self):
+        super(InterfaceEditForm, self).clean()
+        if 'int_interface' in self._errors:
+            del self._errors['int_interface']
+        self.cleaned_data['int_interface'] = self.instance.int_interface
+        return self.cleaned_data
+    def clean_int_interface(self):
+        return self.instance.int_interface
 
 class StaticRouteForm(ModelForm):
     class Meta:

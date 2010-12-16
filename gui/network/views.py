@@ -150,7 +150,7 @@ def generic_delete(request, object_id, objtype):
 @login_required
 def generic_update(request, object_id, objtype):
     objtype2form = {
-            'int':   ( Interfaces, None ),
+            'int':   ( Interfaces, InterfaceEditForm ),
             'vlan':   ( VLAN, None ),
             'laggint':   ( LAGGInterfaceMembers, LAGGInterfaceMemberForm ),
             'sr':   ( StaticRoute, None ),
