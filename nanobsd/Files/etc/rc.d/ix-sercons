@@ -22,12 +22,13 @@ update_sercons()
 		fi
 		;;
 	1)
-		if [ ! -f ${bc} ] || ! grep -q -- -h ${bc} then
+		if [ ! -f ${bc} ] || ! grep -q -- -h ${bc} ; then
 			mount -uw /
 			echo -h > ${bc}
 			mount -ur /
 		fi
 		;;
+        esac
 }
 
 name="ix-sercons"
