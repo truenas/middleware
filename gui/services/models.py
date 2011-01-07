@@ -810,6 +810,11 @@ class ActiveDirectory(models.Model):
             verbose_name="Domain Name (NetBIOS-Name)",
             help_text="Domain Name in old format, eg EXAMPLE"
             )
+    ad_workgroup = models.CharField(
+            max_length=120,
+            verbose_name="Workgroup Name",
+            help_text="Workgroup Name in old format, eg EXAMPLE"
+            )
     ad_adminname = models.CharField(
             max_length=120, 
             verbose_name="Administrator Name",
@@ -877,6 +882,17 @@ class LDAP(models.Model):
             verbose_name="Machine Suffix", 
             blank=True,
             help_text="This parameter specifies the suffix that is used for machines when these are added to the LDAP directory, e.g. ou=Computers"
+            )
+    ldap_ssl = models.CharField(
+            max_length=120, 
+            verbose_name="Turn on/off TLS", 
+            blank=True,
+            help_text="This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
+            )
+    ldap_tls_cacertfile = models.TextField(
+            verbose_name="Self signed certificate", 
+            blank=True,
+            help_text="Place the contents of your self signed certificate file here."
             )
     ldap_options = models.TextField(
             max_length=120,
