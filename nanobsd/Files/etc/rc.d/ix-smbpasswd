@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-smbpasswd
+# REQUIRE: smbd
+
+. /etc/rc.subr
+
+generate_smbpasswd()
+{
+	local IFS=\|
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ldap_rootbindpw
+
+	FROM
+		services_services,
+		services_ldap
+
+	WHERE (
+		srv_service = 'ldap' and
+		srv_enable = 1
+	)
+
+	ORDER BY
+		-services_ldap.id
+
+	LIMIT 1 " | \
+	while read rootbindpw
+	do
+		if [ -n "${rootbindpw}" ]; then
+			mount -u /
+			/usr/local/bin/smbpasswd -w "${rootbindpw}" >/dev/null 2>&1
+			mount -ur /
+		fi
+	done
+}
+
+name="ix-smbpasswd"
+start_cmd='generate_smbpasswd'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

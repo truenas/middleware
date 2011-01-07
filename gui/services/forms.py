@@ -120,10 +120,16 @@ class BitTorrentForm(ModelForm):
 
 
 class ActiveDirectoryForm(ModelForm):
+    def save(self):
+        super(ActiveDirectoryForm, self).save()
+        notifier().restart("activedirectory")
     class Meta:
         model = ActiveDirectory
 
 class LDAPForm(ModelForm):
+    def save(self):
+        super(LDAPForm, self).save()
+        notifier().restart("ldap")
     class Meta:
         model = LDAP
 

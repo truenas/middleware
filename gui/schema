@@ -107,6 +107,7 @@ CREATE TABLE "services_activedirectory" (
     "ad_dcname" varchar(120) NOT NULL,
     "ad_domainname" varchar(120) NOT NULL,
     "ad_netbiosname" varchar(120) NOT NULL,
+    "ad_workgroup" varchar(120) NOT NULL,
     "ad_adminname" varchar(120) NOT NULL,
     "ad_adminpw" varchar(120) NOT NULL
 );
@@ -223,6 +224,8 @@ CREATE TABLE "services_ldap" (
     "ldap_groupsuffix" varchar(120) NOT NULL,
     "ldap_passwordsuffix" varchar(120) NOT NULL,
     "ldap_machinesuffix" varchar(120) NOT NULL,
+    "ldap_ssl" varchar(120) NOT NULL,
+    "ldap_tls_cacertfile" text NOT NULL,
     "ldap_options" text NOT NULL
 );
 CREATE TABLE "services_nfs" (

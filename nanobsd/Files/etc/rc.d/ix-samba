@@ -4,98 +4,268 @@
 #
 
 # PROVIDE: ix-samba
-# REQUIRE: FILESYSTEMS
-# BEFORE: samba
+# REQUIRE: FILESYSTEMS ix-ldap ix-nsswitch ix-pam
+# BEFORE: smbd
 
 . /etc/rc.subr
+
+: ${SMB_CONF:="/usr/local/etc/smb.conf"}
 
 generate_smbconf()
 {
 	local IFS=\|
 
-	local netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest cifs_filemask cifs_dirmask sendbuffer recvbuffer largerw sendfile easupport dosattr nullpw cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_homedir smb_options
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_srv_netbiosname, cifs_srv_workgroup, cifs_srv_description, cifs_srv_doscharset, cifs_srv_unixcharset, cifs_srv_loglevel, cifs_srv_localmaster, cifs_srv_timeserver, cifs_srv_guest, cifs_srv_filemask, cifs_srv_dirmask, cifs_srv_sendbuffer, cifs_srv_recvbuffer, cifs_srv_largerw, cifs_srv_sendfile, cifs_srv_easupport, cifs_srv_dosattr, cifs_srv_nullpw, cifs_srv_aio_enable, cifs_srv_aio_rs, cifs_srv_aio_ws, cifs_srv_homedir_enable FROM services_cifs ORDER BY id DESC LIMIT 1" | \
-	while read netbiosname workgroup cifs_description doscharset unixcharset loglevel localmaster timeserver guest cifs_filemask cifs_dirmask sendbuffer recvbuffer largerw sendfile easupport dosattr nullpw cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_homedir; do
-		echo '
-[global]
-encrypt passwords = yes
-dns proxy = no
-strict locking = no
-read raw = yes
-write raw = yes
-oplocks = yes
-max xmit = 65535
-deadtime = 15
-display charset = LOCALE
-max log size = 10
-syslog only = yes
-syslog = yes
-load printers = no
-printing = bsd
-printcap name = /dev/null
-disable spoolss = yes
-smb passwd file = /var/etc/private/smbpasswd
-private dir = /var/etc/private
-getwd cache = yes'
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		cifs_srv_netbiosname,
+		cifs_srv_workgroup,
+		cifs_srv_description,
+		cifs_srv_doscharset,
+		cifs_srv_unixcharset,
+		cifs_srv_loglevel,
+		cifs_srv_localmaster,
+		cifs_srv_timeserver,
+		cifs_srv_guest,
+		cifs_srv_filemask,
+		cifs_srv_dirmask,
+		cifs_srv_sendbuffer,
+		cifs_srv_recvbuffer,
+		cifs_srv_largerw,
+		cifs_srv_sendfile,
+		cifs_srv_easupport,
+		cifs_srv_dosattr,
+		cifs_srv_nullpw,
+		cifs_srv_aio_enable,
+		cifs_srv_aio_rs,
+		cifs_srv_aio_ws,
+		cifs_srv_homedir_enable,
+		(
+			SELECT
+				srv_enable
+			FROM
+				services_services
+			WHERE
+				srv_service = 'activedirectory'
+			ORDER BY
+				-id
+			LIMIT 1
+		) as cifs_srv_ad_enable,
+		(
+			SELECT
+				srv_enable
+			FROM
+				services_services
+			WHERE
+				srv_service = 'ldap'
+			ORDER BY
+				-id
+			LIMIT 1
+		) as cifs_srv_ldap_enable,
+		ad_dcname,
+		ad_domainname,
+		ad_netbiosname,
+		ad_workgroup,
+		ad_adminname,
+		ad_adminpw,
+		ldap_hostname,
+		ldap_basedn,
+		ldap_anonbind,
+		ldap_rootbasedn,
+		ldap_rootbindpw,
+		ldap_pwencryption,
+		ldap_usersuffix,
+		ldap_groupsuffix,
+		ldap_passwordsuffix,
+		ldap_machinesuffix
+
+	FROM
+		services_cifs
+
+	JOIN services_ldap ON (1 = 1)
+	JOIN services_activedirectory ON (1 = 1 )
+
+	ORDER BY
+		-services_cifs.id,
+		-services_ldap.id,
+		-services_activedirectory.id
+
+	LIMIT 1
+	" | \
+	while read netbiosname workgroup cifs_description doscharset \
+		unixcharset loglevel localmaster timeserver guest \
+		cifs_filemask cifs_dirmask sendbuffer recvbuffer \
+		largerw sendfile easupport dosattr nullpw \
+		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_homedir \
+		ad_enable ldap_enable ad_dcname ad_domainname \
+		ad_netbiosname ad_workgroup ad_adminname ad_adminpw \
+		ldap_hostname ldap_basedn ldap_anonbind ldap_rootbasedn \
+		ldap_rootbindpw ldap_pwencryption ldap_usersuffix \
+		ldap_groupsuffixldap_passwordsuffix ldap_machinesuffix;
+	do
+		cat<<-EOF
+		[global]
+		    encrypt passwords = yes
+		    dns proxy = no
+		    strict locking = no
+		    read raw = yes
+		    write raw = yes
+		    oplocks = yes
+		    max xmit = 65535
+		    deadtime = 15
+		    display charset = LOCALE
+		    max log size = 10
+		    syslog only = yes
+		    syslog = yes
+		    load printers = no
+		    printing = bsd
+		    printcap name = /dev/null
+		    disable spoolss = yes
+		    smb passwd file = /var/etc/private/smbpasswd
+		    private dir = /var/etc/private
+		    getwd cache = yes
+EOF
 		echo ${guest} > /tmp/ix-samba
-		echo "netbios name = ${netbiosname}"
-		echo "workgroup = ${workgroup}"
+
+		if [ "${ad_enable}" = "0" ]; then
+			echo "    netbios name = ${netbiosname}"
+			echo "    workgroup = ${workgroup}"
+		fi
+
 		if [ -n "${cifs_description}" ]; then
-			echo "server string = ${cifs_description}"
+			echo "    server string = ${cifs_description}"
 		fi
+
 		if [ "${sendfile}" = "1" ]; then
-			echo "use sendfile = yes"
+			echo "    use sendfile = yes"
 		fi
+
 		if [ "${largerw}" = "0" ]; then
-			echo "large readwrite = no"
+			echo "    large readwrite = no"
 		fi
+
 		if [ "${easupport}" = "1" ]; then
-			echo "ea support = yes"
+			echo "    ea support = yes"
 		fi
+
 		if [ "${dosattr}" = "1" ]; then
-			echo "store dos attributes = yes"
+			echo "    store dos attributes = yes"
 		fi
-		if [ "${localmaster}" = "1" ]; then
-			echo "local master = yes"
+
+		if [ "${localmaster}" = "1" -a "${ad_enable}" !=  "1" ]; then
+			echo "    local master = yes"
 		fi
+
 		if [ "${timeserver}" = "1" ]; then
-			echo "time server = yes"
+			echo "    time server = yes"
 		fi
+
 		if [ "${nullpw}" = "1" ]; then
-			echo "null passwords = yes"
+			echo "    null passwords = yes"
 		fi
+
 		# Default user and group is ftp:ftp
 		if [ -z "${guest}" ]; then
 			guest=ftp
 		fi
-		# For now, we only support "SHARE" model.
-		# TODO: user group; other models;
-		echo "security = share"
-		echo "guest account = ${guest}"
-		echo "force user = ${guest}"
-		echo "force group = ${guest}"
-		echo "passdb backend = smbpasswd"
+
+		if [ "${ldap_enable}" = "1" ]; then
+			echo "    security = user"
+			echo "    guest account = ${guest}"
+
+		elif [ "${ad_enable}" = "1" ]; then
+			local domain=$(echo "${ad_domainname}"|tr a-z A-Z)
+			local ad_workgroup="${ad_workgroup}"
+
+			# wins server ?
+			# domain master ?
+			# preferred master ?
+
+			# idmap settings?
+			# winbind settings?
+			# template??
+			# admin users??
+			# valid users??
+			# acls?
+
+			cat<<-EOF
+			    security = ADS
+			    realm = ${domain}
+			    workgroup = ${ad_workgroup}	
+			    netbios name = ${ad_netbiosname}
+			    client use spnego = yes
+			    
+			    wins server = ${ad_dcname}.${ad_domainname}
+			    password server = ${ad_dcname}.${ad_domainname}
+			    
+			    local master = no
+			    domain master = no
+			    preferred master = no
+		
+			    inherit acls = yes
+			    acl compatibility = auto
+			    acl check permissions = true
+			    acl map full control = true
+			    dos filemode = yes
+
+			    idmap uid = 10000-20000000
+			    idmap gid = 10000-20000000
+
+			    winbind separator = +
+			    winbind cache time = 10
+			    winbind offline logon = yes
+			    winbind enum users = yes
+			    winbind enum groups = yes
+			    winbind nested groups = yes
+			    winbind separator = -
+			    winbind use default domain = yes
+			    winbind refresh tickets = yes
+			    allow trusted domains = no
+
+			    template shell = /bin/sh
+			    template homedir = /home/%U
+
+			    guest account = ${guest}
+EOF
+		else
+
+			# For now, we only support "SHARE" model.
+			# TODO: user group; other models;
+			cat<<-EOF
+			    security = share
+			    guest account = ${guest}
+			    force user = ${guest}
+			    force group = ${guest}
+			    passdb backend = smbpasswd
+EOF
+		fi
+
 		if [ -z "${cifs_filemask}" ]; then
 			cifs_filemask=0666
 		fi
-		echo "create mask = ${cifs_filemask}"
+
+		echo "    create mask = ${cifs_filemask}"
+
 		if [ -z "${cifs_dirmask}" ]; then
 			cifs_dirmask=0777
 		fi
-		echo "create mask = ${cifs_filemask}"
-		echo "directory mask = ${cifs_dirmask}"
+
+		echo "    create mask = ${cifs_filemask}"
+		echo "    directory mask = ${cifs_dirmask}"
 
 		if [ -n "${doscharset}" ]; then
-			echo "dos charset = ${doscharset}"
+			echo "    dos charset = ${doscharset}"
 		fi
+
 		if [ -n "${unixcharset}" ]; then
-			echo "unix charset = ${unixcharset}"
+			echo "    unix charset = ${unixcharset}"
 		fi
+
 		if [ -n "${loglevel}" ]; then
-			echo "log level = ${loglevel}"
+			echo "    log level = ${loglevel}"
 		fi
+
 		if [ -n "${sendbuffer}" -o -n "${recvbuffer}" ]; then
-			echo -n "socket options ="
+			echo -n "    socket options ="
 			if [ -n "${sendbuffer}" ]; then
 				echo -n " SO_SNDBUF=${sendbuffer}"
 			fi
@@ -104,20 +274,81 @@ getwd cache = yes'
 			fi
 			echo
 		fi
+
 		if [ "${cifs_aio_enable}" = "1" ]; then
-			echo "aio read size = ${cifs_aio_rs}"
-			echo "aio write size = ${cifs_aio_ws}"
+			echo "    aio read size = ${cifs_aio_rs}"
+			echo "    aio write size = ${cifs_aio_ws}"
 		fi
+
 		if [ "${cifs_homedir}" = "1" ]; then
-			echo '
-[homes]
-comment = Home Directories
-browseable = yes
-valid users = %S
-writable = yes'
+			cat<<-EOF
+			[homes]
+			    comment = Home Directories
+			    browseable = yes
+			    valid users = %S
+			    writable = yes
+EOF
 		fi
+
+		# XXX TODO XXX
+		if [ "${ad_enable}" = "1" ]; then
+			:
+		fi
+
+		if [ "${ldap_enable}" = "1" ]; then
+			if [ -n "${ldap_hostname}" ]; then
+				echo "    passdb backend = ldapsam:ldap://${ldap_hostname}"
+			fi
+
+			if [ -n "${ldap_rootbasedn}" ]; then
+			    echo "    ldap admin dn = ${ldap_rootbasedn}"
+			fi
+
+			if [ -n "${ldap_rootbindpw}" ]; then
+				mount -u /
+				/usr/local/bin/smbpasswd -w "${ldap_rootbindpw}" >/dev/null 2>&1
+				mount -ur /
+			fi
+
+			if [ -n "${ldap_basedn}" ]; then
+			    echo "    ldap suffix = ${ldap_basedn}"
+			fi
+
+			if [ -n "${ldap_usersuffix}" ]; then
+			    echo "    ldap user suffix = ${ldap_usersuffix}"
+			fi
+
+			if [ -n "${ldap_groupsuffix}" ]; then
+			    echo "    ldap group suffix = ${ldap_groupsuffix}"
+			fi
+
+			if [ -n "${ldap_machinesuffix}" ]; then
+			    echo "    ldap machine suffix = ${ldap_machinesuffix}"
+			fi
+
+			cat<<-EOF
+			    ldap replication sleep = 1000
+			    ldap passwd sync = yes
+			    ldap ssl = no
+			    #ldap debug level = 1
+			    #ldap debug threshold = 1
+			    ldapsam:trusted = yes
+			    idmap uid = 10000-39999
+			    idmap gid = 10000-39999
+EOF
+		fi
+
 	done
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_srv_smb_options FROM services_cifs ORDER BY id DESC LIMIT 1"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		cifs_srv_smb_options
+	FROM
+		services_cifs
+	ORDER BY
+		-id
+	LIMIT 1
+	"
 	echo
 }
 
@@ -125,9 +356,32 @@ generate_exports()
 {
 	local IFS=\|
 
-	local name comment mountpoint cifsro browsable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny auxsmbconf
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_name, cifs_comment, mp_path, cifs_ro, cifs_browsable, cifs_inheritperms, cifs_recyclebin, cifs_showhiddenfiles, cifs_hostsallow, cifs_hostsdeny, cifs_auxsmbconf FROM sharing_cifs_share AS cs LEFT OUTER JOIN storage_mountpoint AS mp ON cs.cifs_path_id = mp.id ORDER BY cs.id ASC" | \
-	while read name comment mountpoint cifsro browsable inheritperms recyclebin showhiddenfiles hostsallow hostsdeny auxsmbconf; do
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		cifs_name,
+		cifs_comment,
+		mp_path,
+		cifs_ro,
+		cifs_browsable,
+		cifs_inheritperms,
+		cifs_recyclebin,
+		cifs_showhiddenfiles,
+		cifs_hostsallow,
+		cifs_hostsdeny,
+		cifs_auxsmbconf
+	FROM
+		sharing_cifs_share AS cs
+
+	LEFT OUTER JOIN
+		storage_mountpoint AS mp
+	ON cs.cifs_path_id = mp.id
+
+	ORDER BY
+		cs.id ASC
+	" | \
+	while read name comment mountpoint cifsro browsable inheritperms \
+		recyclebin showhiddenfiles hostsallow hostsdeny auxsmbconf;
+	do
 		chmod 777 ${mountpoint}
 		chown `cat /tmp/ix-samba` ${mountpoint}
 		rm /tmp/ix-samba
@@ -182,12 +436,12 @@ generate_exports()
 
 generate_smb_config()
 {
-	generate_smbconf > /usr/local/etc/smb.conf
-	generate_exports >> /usr/local/etc/smb.conf
+	generate_smbconf > ${SMB_CONF}
+	generate_exports >> ${SMB_CONF}
 	mkdir -p /var/etc/private
 }
 
-name="ix-nfsd"
+name="ix-samba"
 start_cmd='generate_smb_config'
 stop_cmd=':'
 

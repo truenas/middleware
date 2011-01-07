@@ -1,0 +1,45 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-activedirectory
+# REQUIRE: ix-kinit
+
+. /etc/rc.subr
+    
+join_activedirectory_domain()
+{
+	local IFS="|"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ad_adminname,
+		ad_adminpw
+
+	FROM
+		services_services,
+		services_activedirectory
+
+	WHERE (
+		srv_service = 'activedirectory' and
+		srv_enable = '1'
+	)
+
+	ORDER BY
+		-services_activedirectory.id
+
+	LIMIT 1
+	" | \
+	while read adminname adminpw
+	do
+		/usr/local/bin/net ads join -U "${adminname}%${adminpw}"
+	done
+}
+
+name="ix-activedirectory"
+start_cmd='join_activedirectory_domain'
+stop_cmd=':'
+            
+load_rc_config $name
+run_rc_command "$1"

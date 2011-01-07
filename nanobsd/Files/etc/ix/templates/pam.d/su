@@ -1,0 +1,20 @@
+#
+# $FreeBSD: src/etc/pam.d/su,v 1.16 2003/07/09 18:40:49 des Exp $
+#
+# PAM configuration for the "su" service
+#
+
+# auth
+auth		sufficient	pam_rootok.so		no_warn
+auth		sufficient	pam_self.so		no_warn
+#@@WINBIND@@	auth		sufficient	/usr/local/lib/pam_winbind.so silent try_first_pass
+#@@LDAP@@	auth		sufficient	/usr/local/lib/pam_ldap.so no_warn try_first_pass
+auth		requisite	pam_group.so		no_warn group=wheel root_only fail_safe
+auth		include		system
+
+# account
+account		include		system
+
+# session
+session		required	pam_permit.so
+#@@MKHOMEDIR@@	session		required	/usr/local/lib/pam_mkhomedir.so

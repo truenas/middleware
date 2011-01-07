@@ -1,0 +1,33 @@
+#
+# $FreeBSD: src/etc/pam.d/sshd,v 1.18 2009/10/05 09:28:54 des Exp $
+#
+# PAM configuration for the "sshd" service
+#
+
+# auth
+auth		sufficient	pam_opie.so		no_warn no_fake_prompts
+auth		requisite	pam_opieaccess.so	no_warn allow_local
+#@@WINBIND@@	auth		sufficient	/usr/local/lib/pam_winbind.so	silent try_first_pass
+#@@LDAP@@	auth		sufficient	/usr/local/lib/pam_ldap.so	no_warn try_first_pass
+#auth		sufficient	pam_krb5.so		no_warn try_first_pass
+#auth		sufficient	pam_ssh.so		no_warn try_first_pass
+auth		required	pam_unix.so		no_warn try_first_pass
+
+# account
+account		required	pam_nologin.so
+#account	required	pam_krb5.so
+account		required	pam_login_access.so
+#@@WINBIND@@	account		sufficient	/usr/local/lib/pam_winbind.so
+#@@LDAP@@	account		sufficient	/usr/local/lib/pam_ldap.so ignore_authinfo_unavail
+account		required	pam_unix.so
+
+# session
+#session	optional	pam_ssh.so		want_agent
+session		required	pam_permit.so
+#@@MKHOMEDIR@@	session		required	/usr/local/lib/pam_mkhomedir.so
+
+# password
+#password	sufficient	pam_krb5.so		no_warn try_first_pass
+#@@WINBIND@@	password	sufficient	/usr/local/lib/pam_winbind.so	try_first_pass
+#@@LDAP@@	password	sufficient	/usr/local/lib/pam_ldap.so	try_first_pass
+password	required	pam_unix.so		no_warn try_first_pass

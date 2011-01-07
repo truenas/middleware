@@ -157,6 +157,7 @@ TABLE services_activedirectory {
 	ad_dcname=
 	ad_domainname=
 	ad_netbiosname=
+	ad_workgroup=
 	ad_adminname=
 	ad_adminpw=
 }
@@ -171,6 +172,8 @@ TABLE services_ldap {
 	ldap_groupsuffix=
 	ldap_passwordsuffix=
 	ldap_machinesuffix=
+	ldap_ssl=0
+	ldap_tls_cacertfile=
 	ldap_options=ldap_version 3\ntimelimit 30\nbind_timelimit 30\nbind_policy soft\npam_ldap_attribute uid
 }
 TABLE system_advanced {

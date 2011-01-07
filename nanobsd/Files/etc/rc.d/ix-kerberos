@@ -1,0 +1,92 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-kerberos
+# REQUIRE: NETWORKING
+# BEFORE: kerberos
+
+. /etc/rc.subr
+
+: ${PATH_KRB5_TEMPLATE:="/etc/ix/templates/kerberos/krb5.conf"}
+: ${PATH_KRB5_CONFIG:="/etc/krb5.conf"}
+
+generate_krb5_conf()
+{
+	local _dcname="${1}"
+	local _domainname="${2}"
+	local _netbiosname="${3}"
+	local _adminname="${4}"
+	local _adminpw="${5}"
+	local _template
+
+	_template="${PATH_KRB5_TEMPLATE}"
+
+	if [ ! -f "${_template}" ]
+	then
+		return 1
+	fi
+
+	awk -v dcname="${_dcname}" \
+		-v domainname="${_domainname}" \
+		-v netbios="${_netbiosname}" \
+	'
+	BEGIN {
+		kdc = sprintf("%s.%s", tolower(dcname), tolower(domainname));
+		vars["@@UPPER_REALM@@"]  = toupper(domainname);	
+		vars["@@LOWER_REALM@@"]  = tolower(domainname);	
+		vars["@@ADMIN_SERVER@@"]  = kdc;	
+		vars["@@DOMAIN@@"]  = tolower(domainname);
+		vars["@@KDC@@"]  = kdc;	
+	}
+	{
+		if (/@@.+@@/) {
+			for (var in vars) {
+				gsub(var, vars[var]);
+			}
+		}
+
+		print $0;
+	}
+	' < "${_template}" > "${PATH_KRB5_CONFIG}"
+
+	return 0
+}
+
+generate_kerberos_files()
+{
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ad_dcname,
+		ad_domainname,
+		ad_netbiosname,
+		ad_adminname,
+		ad_adminpw
+
+    FROM
+		services_services,
+		services_activedirectory
+
+	WHERE (
+		srv_service = 'activedirectory' and
+		srv_enable = '1'
+	)
+
+	ORDER BY
+		-services_activedirectory.id
+
+	LIMIT 1
+	" | \
+	while read _line
+	do
+		generate_krb5_conf $(echo "${_line}"|tr '|' ' ')
+	done
+}
+
+name="ix-kerberos"
+start_cmd='generate_kerberos_files'
+stop_cmd=':'
+        
+load_rc_config $name
+run_rc_command "$1"

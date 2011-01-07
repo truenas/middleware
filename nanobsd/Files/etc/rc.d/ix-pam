@@ -1,0 +1,113 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-pam
+# REQUIRE: root
+# BEFORE: NETWORK
+
+. /etc/rc.subr
+
+: ${PAM_TEMPLATE_DIR:="/etc/ix/templates/pam.d"}
+: ${PAM_DIR:="/etc/pam.d"}
+
+generate_pam_service_file()
+{
+	local _service="${1}"
+	local _winbind="${2}"
+	local _ldap="${3}"
+	local _template
+	local _temp
+	local _file
+
+	_template="${PAM_TEMPLATE_DIR}/${_service}"
+	_temp="/tmp/.tmp.${_service}"
+	_file="${PAM_DIR}/${_service}"
+
+	if [ ! -f "${_template}" ]
+	then
+		return 1
+	fi
+
+	awk -v ldap="${_ldap}" -v winbind="${_winbind}" '{
+		if (/^#.*@@LDAP@@/ && ldap) {
+			gsub("^#.*@@LDAP@@[^a-zA-Z0-9]+", "");
+			print $0;
+		} else if (/^#.*@@WINBIND@@/ && winbind) {
+			gsub("^#.*@@WINBIND@@[^a-zA-Z0-9]+", "");
+			print $0;
+		} else if (/^#.*@@MKHOMEDIR@@/ && (winbind || ldap)) {
+			gsub("^#.*@@MKHOMEDIR@@[^a-zA-Z0-9]+", "");
+			print $0;
+		} else if (/^#.*@@.*@@/) {
+		} else {
+			print $0;
+		}
+	}' < "${_template}" > "${_temp}"
+
+	if [ -f "${_temp}" ]
+	then
+		mv "${_temp}" "${_file}" >/dev/null 2>&1
+		if [ "$?" != "0" ]
+		then
+			rm -f "${_temp}"
+			return 1
+		fi
+	fi
+
+	return 0
+}
+
+
+generate_pam_files()
+{
+	local _ldap=0
+	local _winbind=0
+
+	if [ ! -d "${PAM_TEMPLATE_DIR}" -o ! -d "${PAM_DIR}" ]
+	then
+		return 1
+	fi
+
+	while read _line
+	do
+		local _var=$(echo "${_line}"|cut -s -f1 -d'|')
+		local _val=$(echo "${_line}"|cut -s -f2 -d'|')
+
+		case "${_var}" in
+			activedirectory) _winbind="${_val}" ;;
+			ldap)_ldap="${_val}" ;;
+		esac
+
+	done <<EOF
+	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		srv_service,
+		srv_enable
+
+	FROM
+		services_services
+
+	WHERE
+		srv_service IN (
+			'ldap',
+			'activedirectory'
+	)")
+EOF
+
+	for _service in $(ls "${PAM_TEMPLATE_DIR}")
+	do
+		generate_pam_service_file "${_service}" \
+			"${_winbind}" "${_ldap}"
+	done
+
+	return 0
+}
+
+name="ix-pam"
+start_cmd='generate_pam_files'
+stop_cmd=':'
+        
+load_rc_config $name
+run_rc_command "$1"

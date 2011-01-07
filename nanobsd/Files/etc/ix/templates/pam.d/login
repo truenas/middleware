@@ -1,0 +1,24 @@
+#
+# $FreeBSD: src/etc/pam.d/login,v 1.17 2007/06/10 18:57:20 yar Exp $
+#
+# PAM configuration for the "login" service
+#
+
+# auth
+auth		sufficient	pam_self.so		no_warn
+#@@WINBIND@@	auth		sufficient	/usr/local/lib/pam_winbind.so silent try_first_pass
+#@@LDAP@@	auth		sufficient	/usr/local/lib/pam_ldap.so no_warn try_first_pass
+auth		include		system
+
+# account
+account		requisite	pam_securetty.so
+account		required	pam_nologin.so
+#@@WINBIND@@	account		sufficient	/usr/local/lib/pam_winbind.so
+#@@LDAP@@	account		sufficient	/usr/local/lib/pam_ldap.so	ignore_authinfo_unavail
+account		include		system
+
+# session
+session		include		system
+
+# password
+password	include		system

@@ -1,0 +1,132 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-ldap
+# REQUIRE: root
+# BEFORE: NETWORK
+
+. /etc/rc.subr
+    
+: ${NSS_LDAP_CONF:="/usr/local/etc/nss_ldap.conf"}
+: ${NSS_LDAP_SECRET:="/usr/local/etc/nss_ldap.secret"}
+: ${LDAP_CONF:="/usr/local/etc/openldap/ldap.conf"}
+: ${CERT_FILE:="/usr/local/etc/certs/cacert.crt"}
+
+generate_ldapconf()
+{
+	local IFS=\|
+	local nssconf="${NSS_LDAP_CONF}"
+	local ldapconf="${LDAP_CONF}"
+	local secret="${NSS_LDAP_SECRET}"
+	local hdsrc="/var/home"
+	local hddst="/home"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ldap_hostname,
+		ldap_basedn,
+		ldap_anonbind,
+		ldap_rootbasedn,
+		ldap_rootbindpw,
+		ldap_pwencryption,
+		ldap_usersuffix,
+		ldap_groupsuffix,
+		ldap_passwordsuffix,
+		ldap_machinesuffix,
+		ldap_ssl,
+		ldap_tls_cacertfile,
+		trim(
+			rtrim(
+				replace(
+					replace(
+						replace(ldap_options, '\n', '|'),
+					x'0A', '|'),
+				x'0D', ''),
+			'|')
+		) as ldap_options
+
+	FROM
+		services_services,
+		services_ldap
+
+	WHERE (
+		srv_service = 'ldap' and
+		srv_enable = 1
+	)
+
+	ORDER BY
+		-services_ldap.id
+
+	LIMIT 1
+	" | \
+	while read hostname basedn anonbind rootbasedn \
+		rootbindpw pwencryption usersuffix groupsuffix \
+		passwordsuffix machinesuffix ssl cacert options;
+	do
+		[ -z "${hostname}" -o -z "${basedn}" ] && return 1
+
+		cat<<-EOF>"${nssconf}"
+		host ${hostname}
+		base ${basedn}
+		rootbinddn ${rootbasedn}
+		pam_password ${pwencryption}
+		nss_base_passwd ${usersuffix},${basedn}
+		nss_base_group ${groupsuffix},${basedn}
+EOF
+		if [ "${ssl}" = "start_tls" ]
+		then
+			mkdir -p "$(dirname ${CERT_FILE})"
+			echo "${cacert}" > "${CERT_FILE}"
+			echo "ssl ${ssl}" >> "${nssconf}"
+			echo "tls_cacert ${CERT_FILE}" >> "${nssconf}"
+		fi
+
+		for opt in ${options}
+		do
+			echo ${opt} >> "${nssconf}"
+		done
+
+		echo "${rootbindpw}" > "${secret}"
+		chmod 600 "${secret}"
+
+		ln -s ${nssconf} "$(dirname ${nssconf})/ldap.conf" 2>/dev/null
+		ln -s ${secret} "$(dirname ${secret})/ldap.secret" 2>/dev/null
+
+		echo "HOST ${hostname}" > "${ldapconf}"
+		echo "BASE ${basedn}" >> "${ldapconf}"
+		if [ "${ssl}" = "start_tls" ]
+		then
+			echo "SSL ${ssl}" >> "${ldapconf}"
+			echo "TLS_CACERT ${CERT_FILE}" >> "${ldapconf}"
+		fi
+
+		if [ -n "${hdsrc}" -a -n "${hddst}" ]
+		then
+			local dst=$(dirname "${hddst}")
+
+			mount -uw /	
+
+			mkdir -p "${hdsrc}"
+			mkdir -p "${dst}"
+			ln -s "${hdsrc}" "${dst}" 2>/dev/null
+
+			mount -ur /
+		fi
+	done
+
+	return 0
+}
+
+generate_ldap_config()
+{
+	generate_ldapconf
+}
+
+name="ix-ldap"
+start_cmd='generate_ldap_config'
+stop_cmd=':'
+            
+load_rc_config $name
+run_rc_command "$1"

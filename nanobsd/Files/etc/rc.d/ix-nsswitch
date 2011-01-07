@@ -1,0 +1,90 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-nsswitch
+# REQUIRE: root
+# BEFORE: nsswitch
+
+. /etc/rc.subr
+
+: ${PATH_NS_CONF:="/etc/nsswitch.conf"}
+
+generate_nsswitch_conf()
+{
+	local _ldap=0
+	local _winbind=0
+	local _conf="${PATH_NS_CONF}"
+
+	while read _line
+	do
+		local _var=$(echo "${_line}"|cut -s -f1 -d'|')
+		local _val=$(echo "${_line}"|cut -s -f2 -d'|')
+
+		case "${_var}" in
+			activedirectory) _winbind="${_val}" ;;
+			ldap)_ldap="${_val}" ;;
+		esac
+
+	done <<EOF
+	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		srv_service,
+		srv_enable
+
+	FROM
+		services_services
+
+	WHERE
+		srv_service IN (
+			'ldap',
+			'activedirectory'
+	)")
+EOF
+
+	local _p="compat"
+	local _g="compat"
+
+	if [ "${_ldap}" = "1" -o "${_winbind}" = "1" ]
+	then
+		_p="files"
+		_g="files"
+
+		if [ "${_winbind}" = "1" ]
+		then
+			_p="${_p} winbind"
+			_g="${_g} winbind"
+		fi
+
+		if [ "${_ldap}" = "1" ]
+		then
+			_p="${_p} ldap"
+			_g="${_g} ldap"
+		fi
+	fi
+	
+	cat<<-EOF>"${_conf}"
+	group: ${_g}
+	group_compat: nis
+	hosts: files dns
+	networks: files
+	passwd: ${_p}
+	passwd_compat: nis
+	shells: files
+	services: compat
+	services_compat: nis
+	protocols: files
+	rpc: files
+EOF
+	
+	/etc/rc.d/nsswitch start
+	return 0
+}
+
+name="ix-nsswitch"
+start_cmd='generate_nsswitch_conf'
+stop_cmd=':'
+        
+load_rc_config $name
+run_rc_command "$1"
