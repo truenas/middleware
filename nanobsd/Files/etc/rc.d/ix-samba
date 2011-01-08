@@ -73,6 +73,7 @@ generate_smbconf()
 		ldap_rootbasedn,
 		ldap_rootbindpw,
 		ldap_pwencryption,
+		ldap_ssl,
 		ldap_usersuffix,
 		ldap_groupsuffix,
 		ldap_passwordsuffix,
@@ -99,8 +100,8 @@ generate_smbconf()
 		ad_enable ldap_enable ad_dcname ad_domainname \
 		ad_netbiosname ad_workgroup ad_adminname ad_adminpw \
 		ldap_hostname ldap_basedn ldap_anonbind ldap_rootbasedn \
-		ldap_rootbindpw ldap_pwencryption ldap_usersuffix \
-		ldap_groupsuffixldap_passwordsuffix ldap_machinesuffix;
+		ldap_rootbindpw ldap_pwencryption ldap_ssl ldap_usersuffix \
+		ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix;
 	do
 		cat<<-EOF
 		[global]
@@ -326,10 +327,15 @@ EOF
 			    echo "    ldap machine suffix = ${ldap_machinesuffix}"
 			fi
 
+			if [ "${ldap_ssl}" = "start_tls" ]; then
+				echo "    ldap ssl = start tls"
+			else
+				echo "    ldap ssl = off"
+			fi
+
 			cat<<-EOF
 			    ldap replication sleep = 1000
 			    ldap passwd sync = yes
-			    ldap ssl = no
 			    #ldap debug level = 1
 			    #ldap debug threshold = 1
 			    ldapsam:trusted = yes
