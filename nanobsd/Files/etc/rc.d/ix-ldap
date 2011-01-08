@@ -77,7 +77,9 @@ generate_ldapconf()
 EOF
 		if [ "${ssl}" = "start_tls" ]
 		then
+			mount -uw /
 			mkdir -p "$(dirname ${CERT_FILE})"
+			mount -ur /
 			echo "${cacert}" > "${CERT_FILE}"
 			echo "ssl ${ssl}" >> "${nssconf}"
 			echo "tls_cacert ${CERT_FILE}" >> "${nssconf}"
