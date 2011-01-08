@@ -333,6 +333,7 @@
             "ad_adminpw": "", 
             "ad_dcname": "", 
             "ad_domainname": "", 
+            "ad_workgroup": "", 
             "ad_netbiosname": ""
         }
     }, 
@@ -350,6 +351,8 @@
             "ldap_groupsuffix": "", 
             "ldap_usersuffix": "", 
             "ldap_rootbasedn": "", 
+            "ldap_ssl": "", 
+            "ldap_tls_cacertificate": "", 
             "ldap_passwordsuffix": ""
         }
     }
