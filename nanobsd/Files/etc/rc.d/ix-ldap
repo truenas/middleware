@@ -14,6 +14,28 @@
 : ${LDAP_CONF:="/usr/local/etc/openldap/ldap.conf"}
 : ${CERT_FILE:="/usr/local/etc/certs/cacert.crt"}
 
+save_certificate()
+{
+	local ldap_id="${1}"
+
+	mount -uw /
+	mkdir -p "$(dirname ${CERT_FILE})"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ldap_tls_cacertfile
+
+	FROM
+		services_ldap
+
+	WHERE
+		id = ${ldap_id}
+
+	" > "${CERT_FILE}"
+
+	mount -ur /
+}
+
 generate_ldapconf()
 {
 	local IFS=\|
@@ -25,6 +47,7 @@ generate_ldapconf()
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
+		services_ldap.id as ldap_id,
 		ldap_hostname,
 		ldap_basedn,
 		ldap_anonbind,
@@ -36,7 +59,6 @@ generate_ldapconf()
 		ldap_passwordsuffix,
 		ldap_machinesuffix,
 		ldap_ssl,
-		ldap_tls_cacertfile,
 		trim(
 			rtrim(
 				replace(
@@ -61,9 +83,9 @@ generate_ldapconf()
 
 	LIMIT 1
 	" | \
-	while read hostname basedn anonbind rootbasedn \
+	while read id hostname basedn anonbind rootbasedn \
 		rootbindpw pwencryption usersuffix groupsuffix \
-		passwordsuffix machinesuffix ssl cacert options;
+		passwordsuffix machinesuffix ssl options;
 	do
 		[ -z "${hostname}" -o -z "${basedn}" ] && return 1
 
@@ -77,10 +99,8 @@ generate_ldapconf()
 EOF
 		if [ "${ssl}" = "start_tls" ]
 		then
-			mount -uw /
-			mkdir -p "$(dirname ${CERT_FILE})"
-			mount -ur /
-			echo "${cacert}" > "${CERT_FILE}"
+			save_certificate "${id}"
+
 			echo "ssl ${ssl}" >> "${nssconf}"
 			echo "tls_cacert ${CERT_FILE}" >> "${nssconf}"
 		fi
