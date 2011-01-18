@@ -39,42 +39,51 @@ from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
 from datetime import datetime
 from freenasUI.choices import *
+from freenasUI.contrib.IPAddressField import *
 
 ## Network|Global Configuration
 class GlobalConfiguration(models.Model):
+
     gc_hostname = models.CharField(
             max_length=120,
             verbose_name="Hostname"
             )
+
     gc_domain = models.CharField(
             max_length=120,
             verbose_name="Domain"
             )
-    gc_ipv4gateway = models.CharField(
-            max_length=120, 
+
+    gc_ipv4gateway = IP4AddressField(
+            blank=True,
+            null=True,
             verbose_name="IPv4 Default Gateway", 
-            blank=True
             )
-    gc_ipv6gateway = models.CharField(
-            max_length=120, 
+
+    gc_ipv6gateway = IP6AddressField(
+            blank=True,
+            null=True,
             verbose_name="IPv6 Default Gateway", 
-            blank=True
             )
-    gc_nameserver1 = models.CharField(
-            max_length=120, 
-            verbose_name="Nameserver 1", 
-            blank=True
+
+    gc_nameserver1 = IPAddressField(
+            blank=True,
+            null=True,
+            verbose_name="Nameserver 1"
             )
-    gc_nameserver2 = models.CharField(
-            max_length=120, 
-            verbose_name="Nameserver 2", 
-            blank=True
+
+    gc_nameserver2 = IPAddressField(
+            blank=True,
+            null=True,
+            verbose_name="Nameserver 2"
             )
-    gc_nameserver3 = models.CharField(
-            max_length=120, 
-            verbose_name="Nameserver 3", 
-            blank=True
+
+    gc_nameserver3 = IPAddressField(
+            blank=True,
+            null=True,
+            verbose_name="Nameserver 3"
             )
+
     def __unicode__(self):
             return u'%s' % self.id 
     class Meta:
@@ -84,6 +93,7 @@ class GlobalConfiguration(models.Model):
 
 ## Network|Interface Management
 class Interfaces(models.Model):
+
     int_interface = models.CharField(
             max_length=300, 
             choices=NICChoices(), 
@@ -91,29 +101,53 @@ class Interfaces(models.Model):
             verbose_name="NIC",
             help_text="Pick your NIC"
             )
+
     int_name = models.CharField(
             max_length="120", 
             verbose_name="Interface Name",
             help_text="Name your NIC."
             )
+
     int_dhcp = models.BooleanField(
             verbose_name="DHCP", 
             help_text="When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
             )
-    int_ipv4address = models.CharField(
-            max_length=18, 
-            verbose_name="IPv4 Address", 
-            blank=True
+
+    int_ipv4address = IPAddressField(
+            verbose_name="IPv4 Address",
+            blank=True,
+            null=True,
             )
+
+    int_v4netmaskbit = models.CharField(
+            max_length=300, 
+            choices=v4NetmaskBitList, 
+            blank=True, 
+            null=True,
+            verbose_name="IPv4 Netmask",
+            help_text=""
+            )
+
     int_ipv6auto = models.BooleanField(
             verbose_name="Auto configure IPv6", 
             help_text="When enabled, automatically configurate IPv6 address via rtsol(8)."
             )
-    int_ipv6address = models.CharField(
-            max_length=42, 
-            verbose_name="IPv6 Address", 
-            blank=True
+
+    int_ipv6address = IPAddressField(
+            verbose_name="IPv6 Address",
+            blank=True,
+            null=True
             )
+
+    int_v6netmaskbit = models.CharField(
+            max_length=300, 
+            choices=v6NetmaskBitList, 
+            blank=True,
+            null=True,
+            verbose_name="IPv6 Netmask",
+            help_text=""
+            )
+
     int_options = models.CharField(
             max_length=120, 
             verbose_name="Options", 

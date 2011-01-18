@@ -3,7 +3,7 @@
 <div dojoType="dijit.MenuBar" id="navMenu" style="height:56px;">
 
             <div dojoType="dijit.MenuBarItem" onClick="window.location='/'" class="menu_icon">
-        <img src="/freenas/media/images/ui/system.png">
+        <img src="/freenas/media/images/ui/system.png" alt="System" />
         <br />
                 <div>
                     System 
@@ -11,7 +11,7 @@
             </div>
 
     <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'" class="menu_icon dijitMenuItemSelected">
-        <img src="/freenas/media/images/ui/network.png">
+        <img src="/freenas/media/images/ui/network.png" alt="Network" />
         <br />
         <span>
             Network 
@@ -19,7 +19,7 @@
     </div>
 
     <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'" class="menu_icon ">
-        <img src="/freenas/media/images/ui/storage.png">
+        <img src="/freenas/media/images/ui/storage.png" alt="Storage" />
         <br />
         <span>
             Storage 
@@ -27,7 +27,7 @@
     </div>
 
     <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'" class="menu_icon">
-        <img src="/freenas/media/images/ui/sharing.png">
+        <img src="/freenas/media/images/ui/sharing.png" alt="Sharing" />
         <br />
         <span>
             Sharing
@@ -35,7 +35,7 @@
     </div>
 
     <div dojoType="dijit.MenuBarItem" onClick="window.location='/services/'" class="menu_icon">
-        <img src="/freenas/media/images/ui/services.png">
+        <img src="/freenas/media/images/ui/services.png" alt="Services" />
         <br />
         <span>
             Services
@@ -45,14 +45,14 @@
 
     {% if user.is_authenticated %}
     <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" class="menu_icon" style="float:right;">
-        <img src="/freenas/media/images/ui/logout.png">
+        <img src="/freenas/media/images/ui/logout.png" alt="Log out" />
         <br />
         <span>
             Log Out 
         </span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/password_change/'" class="menu_icon" style="float:right;">
-        <img src="/freenas/media/images/ui/account.png">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/'" class="menu_icon" style="float:right;">
+        <img src="/freenas/media/images/ui/account.png" alt="Account" />
         <br />
         <span>
             Account 
@@ -61,7 +61,7 @@
     {% else %}
 
     <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" class="menu_icon" style="font-weight:bold;">
-        <img src="/freenas/media/images/ui/login.png">
+        <img src="/freenas/media/images/ui/login.png" alt="Log in" />
         <br />
         <span>
             Log In
@@ -72,8 +72,8 @@
 {% endblock %}
 {% block dojango_content %}
 {% if user.is_authenticated %}
-<div dojoType="dijit.layout.TabContainer" style="width:100%;height:400px;" >
-    <div dojoType="dijit.layout.TabContainer" title="Network Settings" nested="true">
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false" >
+    <div dojoType="dijit.layout.TabContainer" title="Network Settings" nested="true" doLayout="false">
         <div dojoType="dijit.layout.ContentPane" title="Global Configuration"{% if focus_form == "gc" %} selected="true"{% endif %}>
             <form action="/network/global/configuration/" method="post">{% csrf_token %}
             <table class="config">
@@ -103,22 +103,38 @@
         <div dojoType="dijit.layout.ContentPane" title="Interfaces"{% if focus_form == "int" %} selected="true"{% endif %}>
             <table class="grid">
 	            <thead class="header">
+			<tr>
 		            <td>Interface</td>
 		            <td>Name</td>
 		            <td>DHCP</td>
 		            <td>IPv4 Address</td>
+		            <td>IPv4 Netmask</td>
 		            <td>IPv6 Auto</td>
 		            <td>IPv6 Address</td>
+		            <td>IPv6 Netmask</td>
 		            <td>Options</td>
+			</tr>
 		        </thead>
                 {% for i in int_list %}
                 <tr class="{% cycle 'odd' 'even' %}" id="{{ i.id }}">
                     <td>{{ i.int_interface }}</td>
                     <td>{{ i.int_name }}</td>
                     <td>{{ i.int_dhcp }}</td>
+                    {% if i.int_ipv4address != "0.0.0.0" %}
                     <td>{{ i.int_ipv4address }}</td>
+                    <td>/{{ i.int_v4netmaskbit }}</td>
+                    {% else %}
+                    <td></td>
+                    <td></td>
+                    {% endif %}
                     <td>{{ i.int_ipv6auto }}</td>
+                    {% if i.int_ipv6address != "::" %}
                     <td>{{ i.int_ipv6address }}</td>
+                    <td>/{{ i.int_v6netmaskbit }}</td>
+                    {% else %}
+                    <td></td>
+                    <td></td>
+                    {% endif %}
                     <td>{{ i.int_options }}</td>
                     <td>
                         <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/int/edit/{{ i.id }}/'">Edit</button>
@@ -127,7 +143,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5">No interfaces defined</td>
+                    <td colspan="9">No interfaces defined</td>
                 </tr>
                 {% endfor %}
                 </table>
@@ -143,10 +159,12 @@
         <div dojoType="dijit.layout.ContentPane" title="VLAN"{% if focus_form == "vlan" %} selected="true"{% endif %}>
               <table class="grid">
 	            <thead class="header">
+			<tr>
 		            <td>Virtual Interface</td>
 		            <td>Physical Interface</td>
 		            <td>VLAN Tag</td>
 		            <td>Description</td>
+			</tr>
 		        </thead>
                 {% for v in vlan_list %}
                 <tr class="{% cycle 'odd' 'even' %}" id="{{ v.id }}">
@@ -161,7 +179,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5">No VLAN defined</td>
+                    <td colspan="4">No VLAN defined</td>
                 </tr>
                 {% endfor %}
                 </table>
@@ -177,8 +195,10 @@
         <div dojoType="dijit.layout.ContentPane" title="LAGG"{% if focus_form == "lagg" %} selected="true"{% endif %}>
             <table class="grid">
 	            <thead class="header">
+			<tr>
 		            <td>Virtual Interface</td>
 		            <td>Actions</td>
+			</tr>
 		        </thead>
                 {% for l in lagg_list %}
                 <tr class="{% cycle 'odd' 'even' %}" id="{{ l.id }}">
@@ -208,10 +228,12 @@
         <div dojoType="dijit.layout.ContentPane" title="Static Routes"{% if focus_form == "sr" %} selected="true"{% endif %}>
             <table class="grid">
                 <thead class="header">
+		    <tr>
                     <td>Destination</td>
 		            <td>Gateway</td>
 		            <td>Description</td>
 		            <td>Actions</td>
+		    </tr>
 		        </thead>
                 {% for i in sr_list %}
                     <tr class="{% cycle 'odd' 'even' %}" id="{{ i.id }}">
@@ -225,7 +247,7 @@
                     </tr>
 		        {% empty %}
                     <tr>
-                        <td colspan="5">No static route defined</td>
+                        <td colspan="3">No static route defined</td>
                     </tr>
                 {% endfor %}
             </table>
@@ -235,6 +257,7 @@
             <script type="dojo/method" event="onClick" args="evt">
                 dijit.byId("sr").show();
             </script>
+	    </button>
         </div>
     </div>
 </div>

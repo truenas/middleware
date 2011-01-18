@@ -47,11 +47,11 @@ import os, commands
 
 @login_required
 def network(request, objtype = None):
+    gc = GlobalConfigurationForm(data = GlobalConfiguration.objects.order_by("-id").values()[0])
     if objtype != None:
         focus_form = objtype
     else:
         focus_form = 'gc'
-    gc = GlobalConfigurationForm(data = GlobalConfiguration.objects.order_by("-id").values()[0])
     interfaces = InterfacesForm()
     vlan = VLANForm()
     lagg = LAGGInterfaceForm()

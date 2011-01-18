@@ -5,6 +5,16 @@
     max-height:200px;
     overflow:auto !important;
 }
+.dijitDialogCloseIcon {
+    display:none;
+}
+
+#id_int_v4netmaskbit_menu {
+    max-height:200px;
+    overflow:auto !important;
+    width:155px;
+}
+
 
 
 ul.radio {
@@ -101,6 +111,20 @@ p.btn {
     overflow:auto;
 }
 #srv div.p {
+    padding:2px;
+}
+#reports div.chart {
+    width: 525px;
+    height: 315px;
+    border-right: 1px solid #c5c5c5;
+    border-bottom: 1px solid #c2c2c2;
+    text-align:left;
+    float: left;
+    margin:16px;
+    background: #f5f5f5;
+    overflow:auto;
+}
+#reports div.h3 {
     padding:2px;
 }
 #cp div {

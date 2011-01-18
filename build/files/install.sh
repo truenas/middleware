@@ -85,20 +85,20 @@ get_media_description()
     _media=$1
     VAL=""
     if [ -n "${_media}" ]; then
-	_description=`pc-sysinstall disk-list -c |grep "^${_media}"\
-	    | awk -F':' '{print $2}'|sed -E 's|.*<(.*)>.*$|\1|'`
-	_cap=`diskinfo ${_media} | awk '{
-	    capacity = $3;
-	    if (capacity >= 1099511627776) {
-		printf("%.1f TiB", capacity / 1099511627776.0);
-	    } else if (capacity >= 1073741824) {
-		printf("%.1f GiB", capacity / 1073741824.0);
-	    } else if (capacity >= 1048576) {
-		printf("%.1f MiB", capacity / 1048576.0);
-	    } else {
-		printf("%d Bytes", capacity);
-	}}'`
-	VAL="${_description} -- ${_cap}"
+        _description=`pc-sysinstall disk-list -c |grep "^${_media}"\
+            | awk -F':' '{print $2}'|sed -E 's|.*<(.*)>.*$|\1|'`
+        _cap=`diskinfo ${_media} | awk '{
+            capacity = $3;
+            if (capacity >= 1099511627776) {
+                printf("%.1f TiB", capacity / 1099511627776.0);
+            } else if (capacity >= 1073741824) {
+                printf("%.1f GiB", capacity / 1073741824.0);
+            } else if (capacity >= 1048576) {
+                printf("%.1f MiB", capacity / 1048576.0);
+            } else {
+                printf("%d Bytes", capacity);
+        }}'`
+        VAL="${_description} -- ${_cap}"
     fi
     export VAL
 }
@@ -108,7 +108,7 @@ disk_is_mounted()
     local _dev
 
     _dev="/dev/$1"
-    mount -v|grep -E "^${_dev}[sp][0-9]+" >/dev/null 2>&1
+    mount -v|grep -qE "^${_dev}[sp][0-9]+"
     return $?
 }
 
@@ -132,9 +132,7 @@ EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
     dialog --title "Start FreeNAS installation" --yesno "${_msg}" 13 74
-    if [ "$?" != "0" ]; then
-        exit 1
-    fi
+    [ $? -eq 0 ] || exit 1
 }
 
 ask_upgrade()
@@ -163,15 +161,17 @@ disk_is_freenas()
     mount /dev/${_disk}s4 /tmp/junk
     ls /tmp/junk > /tmp/junk.ls
     if [ -f /tmp/junk/freenas-v1.db ]; then
-	cp /tmp/junk/freenas-v1.db /tmp/freenas-v1.db
-	_rv=0
+        cp /tmp/junk/freenas-v1.db /tmp/freenas-v1.db
+        _rv=0
     fi
     umount /tmp/junk
     if [ $_rv -eq 0 ]; then
 	mount /dev/${_disk}s1a /tmp/junk
-	cp /tmp/junk/conf/base/etc /tmp/hostis
-	umount /tmp/junk
-	# ssh keys?
+        # ah my old friend, the can't see the mount til I access the mountpoint
+        # bug
+        ls /tmp/junk > /dev/null
+        cp /tmp/junk/conf/base/etc/hostid /tmp/
+        umount /tmp/junk
     fi
     rmdir /tmp/junk
 
@@ -209,9 +209,7 @@ menu_install()
     eval "dialog --title 'Choose destination media' \
           --menu 'Select media where FreeNAS OS should be installed.' \
           15 60 ${_items} ${_list}" 2>${_tmpfile}
-    if [ "$?" != "0" ]; then
-        exit 1
-    fi
+    [ $? -eq 0 ] || exit 1
     _disk=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
 
@@ -223,14 +221,14 @@ menu_install()
 
     _do_upgrade=0
     if disk_is_freenas ${_disk} ; then
-	if ask_upgrade ${_disk} ; then
-	    new_install_verify "upgrade" ${_disk}
-	    _do_upgrade=1
-	else
-	    new_install_verify "installation" ${_disk}
-	fi
+        if ask_upgrade ${_disk} ; then
+        new_install_verify "upgrade" ${_disk}
+            _do_upgrade=1
+        else
+            new_install_verify "installation" ${_disk}
+        fi
     else
-	new_install_verify "installation" ${_disk}
+        new_install_verify "installation" ${_disk}
     fi
     _config_file="/tmp/pc-sysinstall.cfg"
 
@@ -246,23 +244,27 @@ menu_install()
     ls /cdrom > /dev/null
     /rescue/pc-sysinstall -c ${_config_file}
     if [ ${_do_upgrade} -eq 1 ]; then
-	mkdir /tmp/junk
-	mount /dev/${_disk}s4 /tmp/junk
-	cp /tmp/freenas-v1.db /tmp/junk
-	cp /dev/null /tmp/junk/need-update
-	umount /tmp/junk
-	mount /dev/${disk}s1a /tmp/junk
-	cp /tmp/hostis /tmp/junk/conf/base/etc
-	umount /tmp/junk
-	# ssh keys
-	rmdir /tmp/junk
-	dialog --msgbox 'The installer has preserved your database file.  FreeNAS
-will migrate this file, if necessary, to the current format.
-' 6 74
+        mkdir /tmp/junk
+        mount /dev/${_disk}s4 /tmp/junk
+        ls /tmp/junk > /dev/null
+        cp /tmp/freenas-v1.db /tmp/junk
+        cp /dev/null /tmp/junk/need-update
+        umount /tmp/junk
+        mount /dev/${_disk}s1a /tmp/junk
+        ls /tmp/junk > /dev/null
+        cp /tmp/hostid /tmp/junk/conf/base/etc
+        umount /tmp/junk
+        rmdir /tmp/junk
+	dialog --msgbox 'The installer has preserved your database file.
+FreeNAS will migrate this file, if necessary, to the current format.' 6 74
     fi
-    dialog --msgbox 'FreeNAS has been successfully installed on '"${_disk}."'
-Please remove the CDROM and reboot this machine.
-' 6 74
+    if [ ${_do_upgrade} -eq 1 ]; then
+        dialog --msgbox 'FreeNAS has been successfully upgraded on '${_disk}.'
+Please remove the CDROM and reboot this machine.' 6 74
+    else
+        dialog --msgbox 'FreeNAS has been successfully installed on '${_disk}.'
+Please remove the CDROM and reboot this machine.' 6 74
+    fi
     return 0
 }
 
@@ -290,19 +292,19 @@ main()
 
     while :; do
 
-	dialog --clear --title "FreeNAS 8.0 Beta Console Setup" --menu "" 12 73 6 \
-	    "1" "Install/Upgrade to hard drive/flash device, etc." \
-	    "2" "Shell" \
-	    "3" "Reboot System" \
-	    "4" "Shutdown System" \
-	    2> "${_tmpfile}"
-	_number=`cat "${_tmpfile}"`
-	case "${_number}" in
-	    1) menu_install ;;
-	    2) menu_shell ;;
-	    3) menu_reboot ;;
-	    4) menu_shutdown ;;
-	esac
+        dialog --clear --title "FreeNAS 8.0 Beta Console Setup" --menu "" 12 73 6 \
+            "1" "Install/Upgrade to hard drive/flash device, etc." \
+            "2" "Shell" \
+            "3" "Reboot System" \
+            "4" "Shutdown System" \
+            2> "${_tmpfile}"
+        _number=`cat "${_tmpfile}"`
+        case "${_number}" in
+            1) menu_install ;;
+            2) menu_shell ;;
+            3) menu_reboot ;;
+            4) menu_shutdown ;;
+        esac
     done
 }
 main

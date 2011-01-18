@@ -47,7 +47,7 @@ def index(request, objtype = None):
     if objtype != None:
         focus_form = objtype
     else:
-        focus_form = 'settings'
+        focus_form = 'system'
     hostname = commands.getoutput("hostname")
     uname1 = os.uname()[0]
     uname2 = os.uname()[2]
@@ -55,7 +55,6 @@ def index(request, objtype = None):
     date = os.popen('env -u TZ date').read()
     uptime = commands.getoutput("uptime | awk -F', load averages:' '{    print $1 }'")
     loadavg = commands.getoutput("uptime | awk -F'load averages:' '{     print $2 }'")
-    top = os.popen('top').read()
     settings = SettingsForm(data = Settings.objects.order_by("-id").values()[0])
     advanced = AdvancedForm(data = Advanced.objects.order_by("-id").values()[0])
     if request.method == 'POST':
@@ -86,20 +85,18 @@ def index(request, objtype = None):
         'date': date,
         'uptime': uptime,
         'loadavg': loadavg,
-        'top': top,
         'freenas_build': freenas_build,
         'focus_form': focus_form,
     })
     return render_to_response('freenas/index.html', variables)
 
 @login_required
-def statusProcessesView(request):
+def top(request):
     top = os.popen('top').read()
     variables = RequestContext(request, {
         'top': top,
-    })  
-    return render_to_response('freenas/status/processes.html', variables)
-
+    })
+    return render_to_response('freenas/status/top.xml', variables, mimetype='text/xml')
 
 def login(request):
     username = request.POST['username']

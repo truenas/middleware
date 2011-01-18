@@ -2,8 +2,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-gb" lang="en-gb" dir="ltr" >
 <head>
 <script type="text/javascript">
-      var wizShow  = function () {
-          dijit.byId("wiz").show();
+      var bsduserShow  = function () {
+          dijit.byId("bsduserDlg").show();
       }
 </script>
     <title>FreeNAS 8 BETA</title>
@@ -13,8 +13,9 @@
 <link rel="stylesheet" href="/freenas/media/css/template.css" type="text/css" />
 {% block dojango_header_extra %}{% endblock %}
 </head>
-<body  class="{{ DOJANGO.THEME }}" onLoad="wizShow();">
-   <!--[if !IE 7]>
+<body  class="{{ DOJANGO.THEME }}" onLoad="bsduserShow();">
+
+  <!--[if !IE 7]>
         <style type="text/css">
             #wrap {display:table;height:100%}
         </style>
@@ -40,7 +41,7 @@
                 Network 
             </span>
         </div>
-        <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'" class="dijitMenuItemSelected">
+        <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'">
             <span>
                 Storage 
             </span>
@@ -63,7 +64,7 @@
                 Log Out 
             </span>
         </div>
-        <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/'">
+        <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/'" class="dijitMenuItemSelected">
             <span>
                 Account 
             </span>

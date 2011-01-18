@@ -1,11 +1,16 @@
-
+:<script type="text/javascript" src="/media/lib/js/top.js"></script>
 <div id="sub-menu">
         <div id="top_dialog" dojoType="dijit.Dialog" title="Running Processes">
-                    <pre class="ix">{{ top }}</pre>
+                    <pre class="ix" id="top_output">Loading...</pre>
+                    <br />
+                <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('top_dialog').hide();_StopTopOutput();">
+                    Close
+                </button>
                     </div>
                     <button id="topbtn" dojoType="dijit.form.Button" type="button">
                         Display Processes
                         <script type="dojo/method" event="onClick" args="evt">
+                            _InitTopOutput();
                             dijit.byId("top_dialog").show();
                         </script>
                     </button>

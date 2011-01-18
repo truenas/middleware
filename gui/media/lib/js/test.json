@@ -1,0 +1,39 @@
+var filesystems =
+    {
+        label: "name",
+        identifier: "filesystemId",
+        items:
+            [
+                {filesystemId: 0, name: "ufs"},
+                {filesystemId: 1, name: "zfs"},
+            ]   
+    };   
+var types =
+    {
+        label: "name",
+        identifier: "typeId",
+        items:
+            [
+                {typeId: 0, name: "single", filesystemId: 0},
+                {typeId: 1, name: "mirror", filesystemId: 1},
+                {typeId: 2, name: "gmirror", filesystemId: 0},
+                {typeId: 3, name: "graid5", filesystemId: 0},
+                {typeId: 4, name: "zpool", filesystemId: 1},
+                {typeId: 5, name: "raidz", filesystemId: 1}
+            ]   
+    };      
+var disks =
+    {
+        label: "name",
+        identifier: "diskId",
+        items: 
+            [
+                {diskId: 0, name: "ada0", filesystemId: 1, typeId: 1},
+                {diskId: 1, name: "ada1", filesystemId: 1, typeId: 1},
+                {diskId: 2, name: "da0", filesystemId: 0, typeId: 0},
+                {diskId: 3, name: "da1", filesystemId: 1, typeId: 4},
+                {diskId: 4, name: "da2", filesystemId: 1, typeId: 5},
+                {diskId: 5, name: "da3", filesystemId: 0, typeId: 5},
+                {diskId: 6, name: "da4", filesystemId: 0, typeId: 5}
+            ]   
+    };  

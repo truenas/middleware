@@ -60,7 +60,7 @@
             Log Out 
         </span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/password_change/'" class="menu_icon" style="float:right;">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/'" class="menu_icon" style="float:right;">
         <img src="/freenas/media/images/ui/account.png">
         <br />
         <span>
@@ -82,7 +82,7 @@
 {% block dojango_content %}
 {% if user.is_authenticated %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
-    <div dojoType="dijit.layout.ContentPane" title="Services">
+    <div dojoType="dijit.layout.ContentPane" title="Services" doLayout="false">
         <table class="srv">
             <tr>
                 <td>
@@ -137,7 +137,7 @@
 		    <img id="iscsitarget_toggle" name="iscsitarget_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "iscsitarget" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <img id="iscsitarget_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('iscsitarget').show();" title="ISCSI Settings">
+                    <img id="istgt_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('istgtglobal').show();" title="ISCSI Settings">
                 </td>
             </tr>
           
@@ -310,15 +310,14 @@
 </button>
 </form>
 </div>
-<div id="iscsitarget" dojoType="dijit.Dialog" title="iSCSI">
+<div id="istgtglobal" dojoType="dijit.Dialog" title="iSCSI">
 <form action="/services/" method="post">{% csrf_token %}
             <table>
-                {{ iscsitarget.errors }}
-                {{ iscsitarget }}
-        
-                         </table>
+                {{ istgtglobal.errors }}
+                {{ istgtglobal }}
+            </table>
 <button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
-<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('iscsitarget').hide();">
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('istgtglobal').hide();">
     Cancel
 </button>
 </form>

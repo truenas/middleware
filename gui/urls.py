@@ -35,6 +35,9 @@ from freenasUI.system.views import index
 
 urlpatterns = patterns('',
     ('^$', index),
+    (r'^reporting/graphs/(?P<path>.*)',
+        'django.views.static.serve',
+        {'document_root': '/var/db/graphs/'}),
     (r'^media/(?P<path>.*)',
         'django.views.static.serve',
         {'document_root': '/usr/local/www/freenasUI/media'}),
@@ -51,4 +54,5 @@ urlpatterns = patterns('',
     (r'^storage/', include('storage.urls')),
     (r'^sharing/', include('sharing.urls')),
     (r'^services/', include('services.urls')),
+#    (r'^profiles/', include('profiles.urls')),
     )

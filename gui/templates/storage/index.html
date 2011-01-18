@@ -106,7 +106,7 @@
             Log Out 
         </span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/password_change/'" class="menu_icon" style="float:right;">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/'" class="menu_icon" style="float:right;">
         <img src="/freenas/media/images/ui/account.png">
         <br />
         <span>
@@ -127,7 +127,7 @@
 {% endblock %}
 {% block dojango_content %}
 {% if user.is_authenticated %}
-<div dojoType="dijit.layout.TabContainer" style="width:100%;float:left;" doLayout="false">
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
     <div dojoType="dijit.layout.ContentPane" title="Storage">
                 <table class="grid">
                 <tbody>

@@ -26,8 +26,9 @@
 #####################################################################
 from django.template import RequestContext
 from django.shortcuts import render_to_response
+import collections
 
-def helperView(request, theForm, model, url):
+def helperView(request, theForm, model, url, defaults_callback=None):
     if request.method == 'POST':
         form = theForm(request.POST)
         if form.is_valid():
@@ -43,17 +44,17 @@ def helperView(request, theForm, model, url):
         try:
             _entity = model.objects.order_by("-id").values()[0]
         except:
-            # TODO: We throw an exception (which makes this try/except
-            # meaningless) for now.  A future version will have the
-            # ability to set up default values.
-            raise
+            if isinstance(defaults_callback, collections.Callable):
+                _entity = defaults_callback()
+            else:
+                raise
         form = theForm(data = _entity)
     variables = RequestContext(request, {
         'form': form
     })
     return render_to_response(url, variables)
 
-def helperViewEm(request, theForm, model):
+def helperViewEm(request, theForm, model, defaults_callback=None):
     data_saved = 0
     if request.method == 'POST':
         form = theForm(request.POST)
@@ -70,7 +71,10 @@ def helperViewEm(request, theForm, model):
         try:
             _entity = model.objects.order_by("-id").values()[0]
         except:
-            _entity = None
+            if isinstance(defaults_callback, collections.Callable):
+                _entity = defaults_callback()
+            else:
+                _entity = None
         form = theForm(data = _entity)
     return (data_saved, form)
 

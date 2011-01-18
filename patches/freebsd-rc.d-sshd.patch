@@ -1,0 +1,33 @@
+--- etc/rc.d/sshd	2011-01-18 09:39:38.597948153 -0600
++++ etc/rc.d/sshd	2011-01-18 08:24:02.951617758 -0600
+@@ -76,11 +76,30 @@
+ 	else
+ 		/usr/bin/ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
+ 	fi
++	for i in "ssh_host_key" "ssh_host_key.pub" "ssh_host_dsa_key" "ssh_host_dsa_key.pub" "ssh_host_rsa_key" "ssh_host_rsa_key.pub"
++	do
++		if [ -f /etc/ssh/${i} ] ; then
++			_tmp=`cat /etc/ssh/${i} | /usr/local/bin/base64`
++			table=`echo ${i} | tr "." "_"`
++			cmd="UPDATE services_ssh SET '${table}' = '${_tmp}' WHERE id = 1;"
++			echo ${cmd} | ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG}
++		fi
++	done
+ 	)
+ }
+ 
+ sshd_precmd()
+ {
++	for i in "ssh_host_key" "ssh_host_key.pub" "ssh_host_dsa_key" "ssh_host_dsa_key.pub" "ssh_host_rsa_key" "ssh_host_rsa_key.pub"
++	do
++		table=`echo ${i} | tr "." "_"`
++		_tmp=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${table} from services_ssh"`
++		_tmpx=`echo ${_tmp} | tr '\n' '1'`
++		if ! [ "${_tmpx}" = "1" ] ; then
++			echo ${_tmp} | /usr/local/bin/base64 -d > /etc/ssh/${i}
++		fi
++	done
++	chmod 600 /etc/ssh/ssh_host_key /etc/ssh/ssh_host_dsa_key /etc/ssh/ssh_host_rsa_key
+ 	if [ ! -f /etc/ssh/ssh_host_key -o \
+ 	    ! -f /etc/ssh/ssh_host_dsa_key -o \
+ 	    ! -f /etc/ssh/ssh_host_rsa_key ]; then

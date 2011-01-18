@@ -51,7 +51,7 @@
             Log Out 
         </span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/password_change/'" class="menu_icon" style="float:right;">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/'" class="menu_icon" style="float:right;">
         <img src="/freenas/media/images/ui/account.png">
         <br />
         <span>
@@ -100,11 +100,11 @@
             <input type="hidden" name="{{ max_step_field }}" value="{{ max_step }}" />
                 {{ previous_fields|safe }}
 		{% if step0 > 0 %}
-                <button style="padding:4px;margin-top:16px;" dojoType="dijit.form.Button" onClick="window.history.back();">
+                <button dojoType="dijit.form.Button" onClick="window.history.back();">
 			&lt;&lt; Back
                 </button>
 		{% endif %}
-                <button style="padding:4px;margin-top:16px;" dojoType="dijit.form.Button" type="submit">
+                <button dojoType="dijit.form.Button" type="submit">
                     {% ifequal step0|add:1 step_count  %}
                         Create volume<br />
             <b style="color: red">Existing data will be cleared</b>
@@ -112,6 +112,7 @@
                         Next &gt;&gt;
                     {% endifequal %}
                 </button>
+                <button dojoType="dijit.form.Button"type="button" onClick="window.location='/storage/'">Cancel</button>
         </form>
 </div>
 

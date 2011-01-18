@@ -190,6 +190,7 @@ add_port devel/gobject-introspection -DWITHOUT_X11 # run dep of collectd
 add_port net/liboping -DWITHOUT_X11 # run dep of collectd
 add_port net-mgmt/collectd -DWITHOUT_BIND -DWITHOUT_SNMP -DWITHOUT_X11
 add_port devel/py-ipaddr
+add_port converters/base64
 
 if [ "${NANO_PACKAGE_ONLY}" -eq 1 ]; then
  	CONF_INSTALL="${CONF_INSTALL}
@@ -290,17 +291,6 @@ select_httpd ( )
 	fi
 }
 customize_cmd select_httpd
-
-fix_rc_d_sshd ( )
-{
-	(
-	# Hack /etc/rc.d/sshd to save ssh keys when regenreated
-	cd ${NANO_WORLDDIR}
-	patch -p0 < ${NANO_CFG_BASE}/Patches/patch.sshd-save-keys
-	chmod +x ${NANO_WORLDDIR}/root/save_sshkeys
-	)
-}
-customize_cmd fix_rc_d_sshd
 
 remove_patch_divots ( )
 {

@@ -42,6 +42,9 @@ TABLE services_cifs {
 	cifs_srv_easupport=0
 	cifs_srv_dosattr=1
 	cifs_srv_nullpw=0
+        cifs_srv_aio_enable=0
+	cifs_srv_aio_rs=1
+	cifs_srv_aio_ws=1
 	cifs_srv_smb_options=
 }
 TABLE services_dynamicdns {

@@ -35,6 +35,7 @@ from freenasUI.system.views import *
 urlpatterns = patterns('',
     (r'^reboot/$', reboot),
     (r'^shutdown/$', shutdown),
+    (r'^top/', top),
     (r'^password/$', password),
     (r'^email/$', email),
     (r'^proxy/$', proxy),

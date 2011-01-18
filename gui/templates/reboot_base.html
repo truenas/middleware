@@ -51,34 +51,85 @@
 </script>
 
 </head>
-<body  onload="timer=setTimeout('reboot()',2000)">
+<body  onload="timer=setTimeout('reboot()',8000)">
 
 <body id="page" class="{{ DOJANGO.THEME }}" style="background:none repeat scroll 0 0 #ECEFF0;">
-<div dojoType="dijit.layout.BorderContainer" style="width: 100%; height: 100%;" gutters="false">
-    <div dojoType="dijit.layout.ContentPane" region="top" gutters="false">
-                <div id="page-header">
-                <div id="logo">
-                    <a href="/" title="FreeNAS"><img src="/freenas/media/images/ui/freenas-logo.png" alt="FreeNAS" /></a>
-                </div>
-                </div>
-                {% include "toolbar.html" %}
-        
-    </div>
 
-    <div dojoType="dijit.layout.ContentPane" region="center">
-            <div dojoType="dijit.layout.BorderContainer" gutters="false" style="height:50p;">
-                <div dojoType="dijit.layout.ContentPane">
+  <!--[if !IE 7]>
+        <style type="text/css">
+            #wrap {display:table;height:100%}
+        </style>
+    <![endif]-->
+
+    <div id="wrap">
+    <div id="main" data-dojo-type="dijit.layout.BorderContainer"> 
+		<div data-dojo-type="dijit.layout.ContentPane" region:"top", style:"height: 100px;"' gutters="false">
+                <div id="page-header">
+                    <div style="padding:18px;">
+                        <a href="/" title="FreeNAS"><img src="/freenas/media/images/ui/freenas-logo.png" alt="FreeNAS" /></a>
+                    </div>
+                </div>
+        {% block content %}
+        <div dojoType="dijit.MenuBar" id="navMenu">
+            <div dojoType="dijit.MenuBarItem" onClick="window.location='/'">
+                <div>
+                    System 
                 </div>
             </div>
-                {% block content %}
-                {% endblock %}
-                {% block dojango_content %}
-                {% endblock %}
-            {% block footer %}
-            {% include "footer.html" %}
-            {% endblock %}
-    </div>
+        <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'">
+            <span>
+                Network 
+            </span>
+        </div>
+        <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'">
+            <span>
+                Storage 
+            </span>
+        </div>
 
+        <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'">
+            <span>
+                Sharing
+            </span>
+        </div>
+
+        <div dojoType="dijit.MenuBarItem" onClick="window.location='/services/'">
+            <span>
+                Services
+            </span>
+        </div>
+    {% if user.is_authenticated %}
+        <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" style="position:relative;float:right;font-weight:bold;">
+            <span>
+                Log Out 
+            </span>
+        </div>
+        <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/'" class="dijitMenuItemSelected">
+            <span>
+                Account 
+            </span>
+        </div>
+    {% else %}
+        <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" style="position:relative;float:right;font-weight:bold;">
+            <span>
+                Log In
+            </span>
+        </div>
+    {% endif %}
+    {% endblock %}
+	</div>
+		<div data-dojo-type="dijit.layout.ContentPane" region:"center", style:"padding: 10px;"'>
+            {% block dojango_content %}
+            {% endblock %}
+		</div>
+	</div>
 </div>
+	<div id="footer" data-dojo-type="dijit.layout.ContentPane" region:"bottom", style:"height: 100px;background: #464C53 !important; ", splitter:true'>
+        {% block footer %}
+        {% include "footer.html" %}
+        {% endblock %}
+	</div>
+
+
 </body>
 </html>

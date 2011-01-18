@@ -56,6 +56,22 @@ class notifier:
 		self.___system("(" + command + ") 2>&1 | logger -p daemon.notice -t freenas")
 		libc.sigprocmask(3, pomask, None)
 		syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
+	def __system_nolog(self, command):
+                retval = 0
+		syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
+		syslog.syslog(syslog.LOG_NOTICE, "Executing: " + command)
+		# TODO: python's signal class should be taught about sigprocmask(2)
+		# This is hacky hack to work around this issue.
+		libc = ctypes.cdll.LoadLibrary("libc.so.7")
+		omask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
+		mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
+		pmask = ctypes.pointer(mask)
+		pomask = ctypes.pointer(omask)
+		libc.sigprocmask(3, pmask, pomask)
+		retval = self.___system("(" + command + ") 2>&1 > /dev/null")
+		libc.sigprocmask(3, pomask, None)
+		syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
+                return retval
 	def __pipeopen(self, command):
 		syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
 		syslog.syslog(syslog.LOG_NOTICE, "Popen()ing: " + command)
@@ -136,6 +152,12 @@ class notifier:
 			self.reload(what)
 		except:
 			self.start(what)
+        def _restart_iscsitarget(self):
+                self.__system("/usr/sbin/service ix-istgt quietstart")
+                self.__system("/usr/sbin/service istgt restart")
+        def _reload_iscsitarget(self):
+                self.__system("/usr/sbin/service ix-istgt quietstart")
+                self.__system("/usr/sbin/service istgt restart")
 	def _start_network(self):
 		# TODO: Skip this step when IPv6 is already enabled
 		self.__system("/sbin/sysctl net.inet6.ip6.auto_linklocal=1")
@@ -236,14 +258,23 @@ class notifier:
                 return c
 	def __gpt_labeldisk(self, type, devname, label = ""):
                 """Label the whole disk with GPT under the desired label and type"""
+                # Taste the disk to know whether it's 4K formatted.  (requires > 8.1-STABLE after 213467).
+                ret_4kstripe = self.__system_nolog("geom disk list %s | grep 'Stripesize: 4096'" % (devname))
+                ret_512bsector = self.__system_nolog("geom disk list %s | grep 'Sectorsize: 512'" % (devname))
+                # Make sure that the partition is 4k-aligned, if the disk reports 512byte sector
+                # while using 4k stripe, use an offset of 64.
+                need4khack = (ret_4kstripe == 0) and (ret_512bsector == 0)
+                bflag = ""
+                if need4khack:
+                    bflag = "-b 64"
                 # To be safe, wipe out the disk, both ends... before we start
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname))
-                self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s | awk '{print ($3 / (1024*1024)) - 3;}'`" % (devname, devname))
-                # TODO: Support for 4k sectors (requires 8.1-STABLE after 213467).
+                self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s | awk '{print ($3 / (1024*1024)) - 4;}'`" % (devname, devname))
 		if label != "":
-			self.__system("gpart create -s gpt /dev/%s && gpart add -t %s -l %s %s" % (devname, type, label, devname))
+			self.__system("gpart create -s gpt /dev/%s && gpart add %s -t %s -l %s %s" % (devname, bflag, type, label, devname))
 		else:
-			self.__system("gpart create -s gpt /dev/%s && gpart add -t %s %s" % (devname, type, devname))
+			self.__system("gpart create -s gpt /dev/%s && gpart add %s -t %s %s" % (devname, bflag, type, devname))
+                return need4khack
 	def __gpt_unlabeldisk(self, devname):
 		"""Unlabel the disk"""
 		self.__system("gpart delete -i 1 /dev/%s && gpart destroy /dev/%s" % (devname, devname))
@@ -253,10 +284,12 @@ class notifier:
         def __create_zfs_volume(self, c, z_id, z_name):
                 """Internal procedure to create a ZFS volume identified by volume id"""
                 z_vdev = ""
+                need4khack = False
                 # Grab all disk groups' id matching the volume ID
                 c.execute("SELECT id, group_type FROM storage_diskgroup WHERE group_volume_id = ?", (z_id,))
 		vgroup_list = c.fetchall()
 		for vgrp_row in vgroup_list:
+                        hack_vdevs = []
 			vgrp = (vgrp_row[0],)
 			vgrp_type = vgrp_row[1]
                         if vgrp_type != 'stripe':
@@ -265,10 +298,24 @@ class notifier:
 			c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE disk_group_id = ?", vgrp)
 			vdev_member_list = c.fetchall()
 			for disk in vdev_member_list:
-				self.__gpt_labeldisk(type = "freebsd-zfs", devname = disk[0], label = disk[1])
-				z_vdev += " /dev/gpt/" + disk[1]
+				need4khack = self.__gpt_labeldisk(type = "freebsd-zfs", devname = disk[0], label = disk[1])
+                                if need4khack:
+                                    hack_vdevs.append(disk[1])
+                                    self.__system("gnop create -S 4096 /dev/gpt/" + disk[1])
+                                    z_vdev += " /dev/gpt/" + disk[1] + ".nop"
+                                else:
+				    z_vdev += " /dev/gpt/" + disk[1]
 		# Finally, create the zpool.
-		self.__system("zpool create -fm /mnt/%s %s %s" % (z_name, z_name, z_vdev))
+                # TODO: disallowing cachefile  may cause problems if
+                # there is a preexisting zpool having the exact same
+                # name
+		self.__system("zpool create -o cachefile=none -fm /mnt/%s %s %s" % (z_name, z_name, z_vdev))
+                # If we have 4k hack then restore system to whatever it should be
+                if need4khack:
+		    self.__system("zpool export %s" % (z_name))
+                    for disk in hack_vdevs:
+                         self.__system("gnop destroy /dev/gpt/" + disk + ".nop")
+		    self.__system("zpool import %s" % (z_name))
         def __destroy_zfs_volume(self, c, z_id, z_name):
 		"""Internal procedure to destroy a ZFS volume identified by volume id"""
 		# First, destroy the zpool.
@@ -337,9 +384,7 @@ class notifier:
 
 		if volume[0] == 'ZFS':
 			# zfs creation needs write access to /boot/zfs.
-			self.__system("/sbin/mount -uw /")
 			self.__create_zfs_volume(c, volume_id, volume[1])
-			self.__system("/sbin/mount -ur /")
 		else:
 			self.__create_ufs_volume(c, volume_id, volume[1])
 		self._reload_disk()
@@ -350,9 +395,7 @@ class notifier:
 		volume = c.fetchone()
 
 		if volume[0] == 'ZFS':
-			self.__system("/sbin/mount -uw /")
         		self.__destroy_zfs_volume(c = c, z_id = volume_id, z_name = volume[1])
-			self.__system("/sbin/mount -ur /")
                 elif volume[0] == 'UFS':
 			self.__destroy_ufs_volume(c = c, u_id = volume_id, u_name = volume[1])
         def _init_allvolumes(self):
@@ -362,11 +405,9 @@ class notifier:
                 zfs_list = c.fetchall()
 		if len(zfs_list) > 0:
 			# We have to be able to write /boot/zfs and / to create mount points.
-			self.__system("/sbin/mount -uw /")
 			for row in zfs_list:
 				z_id, z_name = row
 				self.__create_zfs_volume(c = c, z_id = z_id, z_name = z_name)
-			self.__system("/sbin/mount -ur /")
                 # Create UFS file system and newfs
                 c.execute("SELECT id, vol_name FROM storage_volume WHERE vol_fstype = 'UFS'")
 	        ufs_list = c.fetchall()

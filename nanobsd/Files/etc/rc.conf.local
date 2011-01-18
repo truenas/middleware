@@ -34,7 +34,7 @@ FREENAS_RC=/var/tmp/rc.conf.freenas
 _interface_config()
 {
 	local IFS=\|
-	local _ifid interface_id interface dodhcp ipv4addr subnetmask interfaces ipv6_interfaces
+	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options
 	local lagg_id laggproto lagg_physnic lagg_deviceoptions
 
 	ipv6_interfaces=""
@@ -43,14 +43,14 @@ _interface_config()
 
 	# Traverse the network interface table and generate rc.conf style
 	# configuration.
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv6auto, int_ipv6address, int_options FROM network_interfaces ORDER BY id" | \
-	while read interface_id interface dodhcp ipv4 doipv6auto ipv6 options; do
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_v6netmaskbit, int_options FROM network_interfaces ORDER BY id" | \
+	while read interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options; do
 		echo -n ifconfig_${interface}=\"
 		if [ "${dodhcp}" = "1" ]; then
 			echo -n "DHCP"
 		else
-			if [ -n "${ipv4}" ]; then
-				echo -n "inet ${ipv4} "
+			if [ -n "${ipv4addr}" ]; then
+				echo -n "inet ${ipv4addr}/${ipv4netmask} "
 			fi
 			if [ -n "${options}" ]; then
 				echo -n "${options}"
@@ -68,8 +68,8 @@ _interface_config()
 		fi
 		echo \"
 		if [ "${doipv6auto}" = "0" ]; then
-			if [ -n "${ipv6}" ]; then
-				echo ipv6_ifconfig_${interface}=\"${ipv6}\"
+			if [ -n "${ipv6addr}" ]; then
+				echo ipv6_ifconfig_${interface}=\"${ipv6addr}/${ipv6netmask}\"
 				ipv6_interfaces="${ipv6_interfaces} ${interface}"
 			fi
 		else
@@ -99,19 +99,19 @@ _host_config()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT gc_hostname, gc_domain, gc_nameserver1, gc_nameserver2, gc_nameserver3, gc_ipv4gateway, gc_ipv6gateway FROM network_globalconfiguration ORDER BY -id LIMIT 1" | \
 	while read hostname domainname nameserver1 nameserver2 nameserver3 ipv4gateway ipv6gateway; do
 		echo hostname=\"${hostname}.${domainname}\"
-		if [ -n "${ipv4gateway}" ]; then
+		if [ "${ipv4gateway}" != "0.0.0.0" ]; then
 			echo defaultrouter=\"${ipv4gateway}\"
 		fi
-		if [ -n "${ipv6gateway}" ]; then
+		if [ "${ipv6gateway}" != "::" ]; then
 			echo defaultrouter=\"${ipv6gateway}\"
 		fi
 		# Generate resolv.conf
-		if [ -n "${nameserver1}" ]; then
+		if [ "${nameserver1}" != "0.0.0.0" ]; then
 			echo search ${domainname} > /etc/resolv.conf
 			echo nameserver ${nameserver1} >> /etc/resolv.conf
-			if [ -n "${nameserver2}" ]; then
+			if [ "${nameserver2}" != "0.0.0.0" ]; then
 				echo nameserver ${nameserver2} >> /etc/resolv.conf
-				if [ -n "${nameserver3}" ]; then
+				if [ "${nameserver3}" != "0.0.0.0" ]; then
 					echo nameserver ${nameserver3} >> /etc/resolv.conf
 				fi
 			fi
@@ -201,6 +201,7 @@ _gen_conf()
 	_bool_svcconfig rsyncd_enable rsync
 	_bool_svcconfig bsnmpd_enable snmp
 	_bool_svcconfig sshd_enable ssh
+	_bool_svcconfig istgt_enable iscsitarget
 
 	_count_config zfs_enable storage_volume vol_fstype =\'ZFS\'
 

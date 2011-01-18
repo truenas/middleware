@@ -51,7 +51,7 @@
             Log Out 
         </span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/password_change/'" class="menu_icon" style="float:right;">
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/'" class="menu_icon" style="float:right;">
         <img src="/freenas/media/images/ui/account.png">
         <br />
         <span>
@@ -73,7 +73,7 @@
 {% block dojango_content %}
 {% if user.is_authenticated %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
-    <div dojoType="dijit.layout.TabContainer" title="Shares" nested="true" style="width:100%;height:450px;">
+    <div dojoType="dijit.layout.TabContainer" title="Shares" nested="true" style="width:100%;" doLayout="false">
         <div dojoType="dijit.layout.ContentPane" title="Windows" {% if focus_form == "cifs" %} selected="true"{% endif %}>
             <table class="grid">
                 <tbody>
@@ -222,7 +222,8 @@
         <table>
             {{ cifs }}
         </table>
-        <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Add Windows Share</button>
+        <button dojoType="dijit.form.Button" type="submit">Add Windows Share</button>
+                <button dojoType="dijit.form.Button"type="button" onClick="window.location='/sharing/'">Cancel</button>
     </form>
  </div>
 
@@ -231,7 +232,8 @@
         <table>
             {{ afp }}
         </table>
-    <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Add Apple Share</button>
+    <button dojoType="dijit.form.Button" type="submit">Add Apple Share</button>
+                <button dojoType="dijit.form.Button"type="button" onClick="window.location='/sharing/'">Cancel</button>
     </form>
 </div>
 
@@ -240,7 +242,8 @@
         <table>
             {{ nfs }}
         </table>
-        <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Add Unix Share</button>
+        <button dojoType="dijit.form.Button" type="submit">Add Unix Share</button>
+                <button dojoType="dijit.form.Button"type="button" onClick="window.location='/sharing/'">Cancel</button>
     </form>
 </div>
 {% else %}

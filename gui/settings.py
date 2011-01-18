@@ -115,6 +115,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
         'dojango.context_processors.config',
         )
 
+
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',

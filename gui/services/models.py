@@ -793,7 +793,43 @@ class SSH(models.Model):
             blank=True,
             help_text="Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect entered options prevent SSH service to be started."
             )
-  
+    ssh_host_dsa_key = models.TextField(
+            max_length=1024,
+            editable=False,
+            blank=True,
+            null=True
+            )
+    ssh_host_dsa_key_pub = models.TextField(
+            max_length=1024,
+            editable=False,
+            blank=True,
+            null=True
+            )
+    ssh_host_key = models.TextField(
+            max_length=1024,
+            editable=False,
+            blank=True,
+            null=True
+            )
+    ssh_host_key_pub = models.TextField(
+            max_length=1024,
+            editable=False,
+            blank=True,
+            null=True
+            )
+    ssh_host_rsa_key = models.TextField(
+            max_length=1024,
+            editable=False,
+            blank=True,
+            null=True
+            )
+    ssh_host_rsa_key_pub = models.TextField(
+            max_length=1024,
+            editable=False,
+            blank=True,
+            null=True
+            )
+
 class ActiveDirectory(models.Model):            
     ad_dcname = models.CharField(
             max_length=120, 
