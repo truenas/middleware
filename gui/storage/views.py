@@ -98,6 +98,48 @@ def volume_list(request, template_name='freenas/disks/volumes/volume_list.html')
     )
 
 @login_required
+def dataset_create(request):
+    mp_list = MountPoint.objects.select_related().all()
+    defaults = { 'dataset_compression' : 'inherit', 'dataset_atime' : 'inherit', }
+    dataset_form = ZFSDataset_CreateForm(initial=defaults)
+    if request.method == 'POST':
+        dataset_form = ZFSDataset_CreateForm(request.POST)
+        if dataset_form.is_valid():
+            props = {}
+            cleaned_data = dataset_form.cleaned_data
+            volume = Volume.objects.get(id=cleaned_data.get('dataset_volid'))
+            volume_name = volume.vol_name
+            dataset_name = "%s/%s" % (volume_name, cleaned_data.get('dataset_name'))
+            dataset_compression = cleaned_data.get('dataset_compression')
+            if dataset_compression != 'inherit':
+                props['compression']=dataset_compression
+            dataset_atime = cleaned_data.get('dataset_atime')
+            if dataset_atime != 'inherit':
+                props['atime']=dataset_atime
+            notifier().create_zfs_dataset(path=dataset_name.__str__(), props=props)
+            mp = MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (dataset_name), mp_options='noauto', mp_ischild=True)
+            mp.save()
+            return HttpResponseRedirect('/storage/')
+    variables = RequestContext(request, {
+        'mp_list': mp_list,
+        'form': dataset_form
+    })
+    return render_to_response('storage/datasets.html', variables)
+
+@login_required
+def dataset_delete(request, object_id):
+    obj = MountPoint.objects.get(id=object_id)
+    if request.method == 'POST':
+        notifier().destroy_zfs_dataset(path = obj.mp_path[5:].__str__())
+        obj.delete()
+        return HttpResponseRedirect('/storage/')
+    else:
+        c = RequestContext(request, {
+            'object': obj,
+        })
+        return render_to_response('storage/dataset_confirm_delete.html', c)
+
+@login_required
 def generic_detail(object_id, model_url):
     if model_url == "volume":
         return object_detail(

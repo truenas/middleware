@@ -1,0 +1,24 @@
+{% extends "wizard_base.html" %}
+{% block content %}
+{% include "storage/common/menubar.html" %}
+{% endblock %}
+{% block dojango_content %}
+{% if user.is_authenticated %}
+
+<div id="wiz" dojoType="dijit.Dialog" title="Create ZFS dataset" dolayout="false">
+    <h3>Create dataset</h3>
+    <form action="." method="post">{% csrf_token %}
+	<table>
+	{{ form }}
+	</table>
+	<button dojoType="dijit.form.Button" type="submit">Create</button>
+	<button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/'">Cancel</button>
+    </form>
+</div>
+{% include "storage/common/volume_list.html" %}
+{% else %}
+    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
+{% endif %}
+
+{% endblock %}
+

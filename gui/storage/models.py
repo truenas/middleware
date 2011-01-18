@@ -145,6 +145,9 @@ class MountPoint(models.Model):
             help_text="Enter Mount Point options here",
             null=True,
             )
+    mp_ischild = models.BooleanField(
+            default=False,
+            )
     def __unicode__(self):
         return self.mp_path
 

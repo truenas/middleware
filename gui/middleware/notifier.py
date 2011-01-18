@@ -38,7 +38,7 @@ import ctypes
 import syslog
 from pwd import getpwnam as ___getpwnam
 from shlex import split as shlex_split
-from subprocess import Popen, PIPE as ___PIPE
+from subprocess import Popen, PIPE
 
 class notifier:
 	from os import system as ___system
@@ -76,7 +76,7 @@ class notifier:
 		syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
 		syslog.syslog(syslog.LOG_NOTICE, "Popen()ing: " + command)
 		args = shlex_split(command)
-		return Popen(args, stdin = ___PIPE, stdout = ___PIPE, stderr = ___PIPE, close_fds = True)
+		return Popen(args, stdin = PIPE, stdout = PIPE, stderr = PIPE, close_fds = True)
 	def _do_nada(self):
 		pass
 	def _simplecmd(self, action, what):
@@ -306,9 +306,8 @@ class notifier:
                                 else:
 				    z_vdev += " /dev/gpt/" + disk[1]
 		# Finally, create the zpool.
-                # TODO: disallowing cachefile  may cause problems if
-                # there is a preexisting zpool having the exact same
-                # name
+                # TODO: disallowing cachefile may cause problem if there is preexisting zpool having the
+                # exact same name.
 		self.__system("zpool create -o cachefile=none -fm /mnt/%s %s %s" % (z_name, z_name, z_vdev))
                 # If we have 4k hack then restore system to whatever it should be
                 if need4khack:
@@ -316,6 +315,42 @@ class notifier:
                     for disk in hack_vdevs:
                          self.__system("gnop destroy /dev/gpt/" + disk + ".nop")
 		    self.__system("zpool import %s" % (z_name))
+        def create_zfs_dataset(self, path, props=None):
+                """Internal procedure to create ZFS volume"""
+                options = " "
+                if props is not None:
+                    for k in props:
+                        options = options + "-o %s=%s " % (k, props[k])
+                self.__system("zfs create %s %s" % (options, path))
+        def list_zfs_datasets(self, path="", recursive=False):
+                """Return a dictionary that contains all ZFS dataset list and their mountpoints"""
+                if recursive:
+                    zfsproc = self.__pipeopen("/sbin/zfs list -Hr %s" % (path))
+                else:
+                    zfsproc = self.__pipeopen("/sbin/zfs list -H %s" % (path))
+                zfs_output, zfs_err = zfsproc.communicate()
+                zfs_output = zfs_output.split('\n')
+                retval = {}
+                for line in zfs_output:
+                    if line != "":
+                       data = line.split('\t')
+                       retval[data[0]] = data[4]
+                return retval
+        def get_zfs_attributes(self, zfsname):
+                """Return a dictionary that contains all ZFS attributes"""
+                zfsproc = self.__pipeopen("/sbin/zfs get all %s" % (zfsname))
+                zfs_output, zfs_err = zfsproc.communicate()
+                zfs_output = zfs_output.split('\n')
+                retval = {}
+                for line in zfs_output:
+                    if line != "":
+                       data = line.split('\t')
+                       retval[data[1]] = data[2]
+                return retval
+        def set_zfs_attribute(self, name, attr, value):
+                self.__system("zfs set %s=%s %s" % (attr, value, name))
+        def destroy_zfs_dataset(self, path):
+                self.__system("zfs destroy %s" % (path))
         def __destroy_zfs_volume(self, c, z_id, z_name):
 		"""Internal procedure to destroy a ZFS volume identified by volume id"""
 		# First, destroy the zpool.

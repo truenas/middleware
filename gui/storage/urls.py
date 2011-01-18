@@ -37,6 +37,8 @@ from freenasUI.services.views import servicesToggleView as servicesToggleView
 
 urlpatterns = patterns('',
     (r'^$', storage),
+    (r'dataset/$', dataset_create),
+    (r'dataset/delete/(?P<object_id>\d+)/$', dataset_delete),
     (r'wizard/$', VolumeWizard_wrapper),
     (r'save/(?P<objtype>\w+)/$', storage),
     (r'disks/(?P<volume_id>\d+)/$', volume_disks),

@@ -1,0 +1,47 @@
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
+    <div dojoType="dijit.layout.ContentPane" title="Storage">
+	<h5>
+	    {% if mp_list %}
+	    Active Volumes: <strong>{{ mp_list|length }}</strong>
+	    {% else %}
+	    There are no active volumes.
+	    {% endif %}
+	</h5>
+	<table class="grid">
+	    <thead class="ghead">
+		<td>Volume</td>
+		<td>Path</td>
+		<td>Available actions</td>
+	    </thead>
+	    <tbody>
+		{% for m in mp_list %}
+		<tr class="{% cycle 'odd' 'even' %}" id="{{ m.id }}">
+		    <td>
+			{{ m.mp_volume.vol_name }}
+		    </td>
+		    <td>
+			{{ m.mp_path }}
+		    </td>
+		    <td>
+			{% if m.mp_ischild %}
+			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/dataset/delete/{{ m.id }}/'">Remove dataset</button>
+			{% else %}
+			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/volumes/delete/{{ m.mp_volume.id  }}/'">Delete Volume</button>
+			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/disks/{{ m.mp_volume.id }}/'">View Disks</button>
+			{% endif %}
+		    </td>
+		</tr>
+		{% empty %}
+		<tr>
+		    <td colspan="3">No volumes defined</td>
+		</tr>
+		{% endfor %}
+	    </tbody>
+	</table>
+	<div style="padding:12px;">
+	    <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/wizard/'">Storage Wizard</button>
+	    <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/dataset/'">Create dataset</button>
+	</div>
+    </div>
+</div>
+

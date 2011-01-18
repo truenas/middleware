@@ -211,3 +211,27 @@ class VolumeWizard(FormWizard):
 def VolumeWizard_wrapper(request, *args, **kwargs):
 	return VolumeWizard([VolumeWizard_VolumeNameTypeForm, VolumeWizard_DiskGroupTypeForm, VolumeFinalizeForm], error_redirect="/storage/")(request, *args, **kwargs)
 
+class ZFSDataset_CreateForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super(ZFSDataset_CreateForm, self).__init__(*args, **kwargs)
+        self.fields['dataset_volid'].choices = self._populate_volume_choices()
+    def _populate_volume_choices(self):
+        volumechoices = dict()
+        volumes = Volume.objects.filter(vol_fstype='ZFS')
+        for volume in volumes:
+            volumechoices[volume.id] = volume.vol_name
+        return volumechoices.items()
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        volume_name = Volume.objects.get(id=cleaned_data.get("dataset_volid")).vol_name.__str__()
+        full_dataset_name = "%s/%s" % (volume_name, cleaned_data.get("dataset_name").__str__())
+        if len(notifier().list_zfs_datasets(path=full_dataset_name)) > 0:
+            msg = u"You already have a dataset with the same name"
+            self._errors["dataset_name"] = self.error_class([msg])
+            del cleaned_data["dataset_name"]
+        return cleaned_data
+    dataset_volid = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict),  label='Volume from which this dataset will be created on')
+    dataset_name = forms.CharField(max_length = 128, label = 'Dataset Name')
+    dataset_compression = forms.ChoiceField(choices=ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label='Compression level')
+    dataset_atime = forms.ChoiceField(choices=ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label='Enable atime')
+
