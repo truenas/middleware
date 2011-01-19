@@ -311,6 +311,21 @@ LAGGType = (
         ('none', 'none'),
         )
 
+ZFS_AtimeChoices = (
+        ('inherit', 'Inherit'),
+        ('on', 'On'),
+        ('off', 'off'),
+        )
+
+ZFS_CompressionChoices = (
+        ('inherit', 'Inherit'),
+        ('off', 'off'),
+        ('on', 'Default (lzjb)'),
+        ('lzjb', 'lzjb'),
+        ('gzip', 'gzip (default level, 6)'),
+        ('gzip-1', 'gzip (fastest)'),
+        ('gzip-9', 'gzip (maximum, slow)'),
+        )
 
 class whoChoices:
     """Populate a list of system user choices"""
