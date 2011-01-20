@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block content %}
+{% block dojango_content %}
 {% if user.is_authenticated %}
 <script type="text/javascript">
     var delDlg;
@@ -16,7 +16,6 @@
     }
     dojo.addOnLoad(showDelDlg);
 </script>
-{% else %}
 {% endif %}
 {% endblock %}
 

@@ -28,14 +28,16 @@
 
 from django.conf.urls.defaults import *
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import password_change, password_change_done
+from django.contrib.auth.views import password_change_done
+from freenasUI.account.views import *
 
 # Active FreeNAS URLs
 
 urlpatterns = patterns('',
-    (r'^password_change/$', password_change, 
-        {'template_name': 'registration/password_change_form.html',
-	 'post_change_redirect': '/account/password_change/done/'}),
+    (r'^$', bsdUsersView), 
+    (r'^(?P<objtype>\w+)/add/$', bsdUsersView),
+    (r'(?P<objtype>\w+)/delete/(?P<object_id>\d+)/$', generic_delete),
+    (r'(?P<objtype>\w+)/edit/(?P<object_id>\d+)/$', generic_update),
     (r'^password_change/done/$', password_change_done, 
         {'template_name': 'registration/password_change_done.html'}),
     (r'^login/$', 'django.contrib.auth.views.login',

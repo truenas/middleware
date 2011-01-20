@@ -83,19 +83,6 @@ TABLE services_ftp {
 	ftp_ssltls=0
 	ftp_options=
 }
-TABLE services_iscsitarget {
-	iscsi_basename=iqn.2007-09.jp.ne.peach.istgt
-	iscsi_discoveryauthmethod=auto
-	iscsi_discoveryauthgroup=none
-	iscsi_io=30
-	iscsi_nopinint=20
-	iscsi_maxsesh=32
-	iscsi_maxconnect=8
-	iscsi_firstburst=65536
-	iscsi_maxburst=262144
-	iscsi_maxrecdata=262144
-	iscsi_toggleluc=0
-}
 TABLE services_nfs {
 	nfs_srv_servers=4
 }

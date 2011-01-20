@@ -44,4 +44,8 @@ import os, commands
 urlpatterns = patterns('',
     (r'^$', services),
     (r'toggle/(?P<formname>\w+)/.*$', servicesToggleView),
+    (r'(?P<objtype>\w+)/view/$', services),
+    (r'global/(?P<objtype>\w+)/$', services),
+    (r'(?P<objtype>\w+)/edit/(?P<object_id>\d+)/$', generic_update),
+    (r'(?P<objtype>\w+)/delete/(?P<object_id>\d+)/$', generic_delete),
     )

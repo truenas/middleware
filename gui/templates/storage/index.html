@@ -54,9 +54,6 @@
       	});
 </script>
 {% endblock %} 
-{% block content %}
-{% include "storage/common/menubar.html" %}
-{% endblock %} 
 {% block dojango_content %}
 {% if user.is_authenticated %}
 {% include "storage/common/volume_list.html" %}

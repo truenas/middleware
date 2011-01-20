@@ -19,10 +19,12 @@ class Migration(DataMigration):
 
 			if mask:
 				iface.int_v4netmaskbit = mask
-
-			try:
-				iface.int_ipv4address_temp = IPAddressField(ip).to_python(ip)
-			except ValueError:
+				try:
+					iface.int_ipv4address_temp = IPAddressField(ip).to_python(ip)
+				except ValueError:
+					iface.int_ipv4address_temp = None
+					iface.int_v4netmaskbit = None
+			else:		
 				iface.int_ipv4address_temp = None
 				iface.int_v4netmaskbit = None
 
@@ -36,10 +38,12 @@ class Migration(DataMigration):
 
 			if mask:
 				iface.int_v6netmaskbit = mask
-
-			try:
-				iface.int_ipv6address_temp = IPAddressField(ip).to_python(ip)
-			except ValueError:
+				try:
+					iface.int_ipv6address_temp = IPAddressField(ip).to_python(ip)
+				except ValueError:
+					iface.int_ipv6address_temp = None
+					iface.int_v6netmaskbit = None
+			else:
 				iface.int_ipv6address_temp = None
 				iface.int_v6netmaskbit = None
 	

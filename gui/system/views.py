@@ -76,6 +76,7 @@ def index(request, objtype = None):
     except:
         freenas_build = "Unrecognized build (/etc/version.freenas        missing?)"
     variables = RequestContext(request, {
+        'focused_tab' : 'system',
         'settings': settings,
         'advanced': advanced,
         'hostname': hostname,
@@ -88,118 +89,26 @@ def index(request, objtype = None):
         'freenas_build': freenas_build,
         'focus_form': focus_form,
     })
-    return render_to_response('freenas/index.html', variables)
+    return render_to_response('system/index.html', variables)
 
 @login_required
 def top(request):
     top = os.popen('top').read()
     variables = RequestContext(request, {
+        'focused_tab' : 'system',
         'top': top,
     })
-    return render_to_response('freenas/status/top.xml', variables, mimetype='text/xml')
-
-def login(request):
-    username = request.POST['username']
-    password = request.POST['password']
-    user = authenticate(username=username, password=password)
-    if user is not None:
-        if user.is_active:
-            login(request, user)
-            # Redirect to a success page.
-        return HttpResponseRedirect('/freenas/login/') # Redirect after POST
-
-def logout(request):
-    logout(request)
-    # Redirect to a success page.
-    return HttpResponseRedirect('/freenas/logout/') # Redirect after POST
-
-
-## System Section
+    return render_to_response('system/status/top.xml', variables, mimetype='text/xml')
 
 @login_required
 def reboot(request):
     """ reboots the system """
     notifier().restart("system")
-    return render_to_response('freenas/system/reboot.html')
+    return render_to_response('system/reboot.html')
 
 @login_required
 def shutdown(request):
     """ shuts down the system and powers off the system """
     notifier().stop("system")
-    return render_to_response('freenas/system/shutdown.html')
+    return render_to_response('system/shutdown.html')
 
-@login_required
-def settings(request):
-    return helperView(request, SettingsForm, Settings, 'freenas/system/general_setup.html')
-
-@login_required
-def password(request):
-    return helperView(request, systemGeneralPasswordForm, systemGeneralPassword, 'freenas/system/general_password.html')
-
-@login_required
-def advanced(request):
-    return helperView(request, AdvancedForm, Advanced, 'freenas/system/advanced.html')
-
-@login_required
-def email(request):
-    return helperView(request, EmailForm, Email, 'freenas/system/advanced_email.html')
-
-@login_required
-def proxy(request):
-    return helperView(request, ProxyForm, Proxy, 'freenas/system/advanced_proxy.html')
-
-@login_required
-def swap(request):
-    return helperView(request, SwapForm, Swap, 'freenas/system/advanced_swap.html')
-
-@login_required
-def commandscripts(request):
-    if request.method == 'POST':
-        form = CommandScriptsForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = CommandScriptsForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/system/commandscripts_add.html', variables)
-
-@login_required
-def cronjob(request):
-    if request.method == 'POST':
-        form = CronJobForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = CronJobForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/system/cronjob.html', variables)
-
-@login_required
-def rcconf(request):
-    if request.method == 'POST':
-        form = rcconfForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = rcconfForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/system/rcconf.html', variables)
-
-@login_required
-def sysctl(request):
-    if request.method == 'POST':
-        form = sysctlForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = sysctlForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/system/sysctlMIB.html', variables)

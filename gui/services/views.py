@@ -38,29 +38,21 @@ from django.contrib.auth import authenticate, login, logout
 from django.template import RequestContext
 from django.http import Http404
 from django.views.generic.list_detail import object_detail, object_list
+from django.views.generic.create_update import update_object, delete_object
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.helperview import helperViewEm
 import os, commands
 
 @login_required
-def cronjobView(request):
-    if request.method == 'POST':
-        form = cronjobForm(request.POST)
-        if form.is_valid():
-            form.save()
+def services(request, objtype=None):
+    istgtglobal = iSCSITargetGlobalConfigurationForm()
+    if objtype != None:
+        focus_form = objtype
     else:
-        form = cronjobForm()
-    variables = RequestContext(request, {
-        'form': form
-    })
-    return render_to_response('freenas/system/cronjob.html', variables)
-
-## Services section
-
-@login_required
-def services(request):
+        focus_form = 'istgtglobal'
     # Counter for forms we have validated.
     forms_saved = 0
+    # TODO: Clean this up
     saved, cifs = helperViewEm(request, CIFSForm, CIFS)
     forms_saved = forms_saved + saved
     saved, afp = helperViewEm(request, AFPForm, AFP)
@@ -71,7 +63,7 @@ def services(request):
     forms_saved = forms_saved + saved
     saved, unison = helperViewEm(request, UnisonForm, Unison)
     forms_saved = forms_saved + saved
-    saved, iscsitarget = helperViewEm(request, iSCSITargetForm, iSCSITarget)
+    saved, istgtglobal = helperViewEm(request, iSCSITargetGlobalConfigurationForm, iSCSITargetGlobalConfiguration)
     forms_saved = forms_saved + saved
     saved, dynamicdns = helperViewEm(request, DynamicDNSForm, DynamicDNS)
     forms_saved = forms_saved + saved
@@ -93,35 +85,67 @@ def services(request):
     forms_saved = forms_saved + saved
     saved, ldap = helperViewEm(request, LDAPForm, LDAP)
     forms_saved = forms_saved + saved
+    saved, iscsitarget = helperViewEm(request, iSCSITargetForm, iSCSITarget)
+    forms_saved = forms_saved + saved
+    saved, iscsiextent = helperViewEm(request, iSCSITargetExtentForm, iSCSITargetExtent)
+    forms_saved = forms_saved + saved
+    saved, asctarget = helperViewEm(request, iSCSITargetToExtentForm, iSCSITargetToExtent)
+    forms_saved = forms_saved + saved
+    saved, target_auth = helperViewEm(request, iSCSITargetAuthCredentialForm, iSCSITargetAuthCredential)
+    forms_saved = forms_saved + saved
+    saved, auth_initiator = helperViewEm(request, iSCSITargetAuthorizedInitiatorForm, iSCSITargetAuthorizedInitiator)
+    forms_saved = forms_saved + saved
+    saved, iscsiportal = helperViewEm(request, iSCSITargetPortalForm, iSCSITargetPortal)
+    forms_saved = forms_saved + saved
     
+
     if request.method == 'POST':
-        srv = Services.objects.all()
         if forms_saved > 0:
             return HttpResponseRedirect('/services/')
         else:
             pass # Need to raise a validation exception
-    else:
-        srv = Services.objects.all()
-        variables = RequestContext(request, {
-            'srv': srv,
-            'cifs': cifs,
-            'afp': afp,
-            'nfs': nfs,
-            'rsync': rsync,
-            'unison': unison,
-            'iscsitarget': iscsitarget,
-            'dynamicdns': dynamicdns,
-            'snmp': snmp,
-            'ups': ups,
-            'webserver': webserver,
-            'bittorrent': bittorrent,
-            'ftp': ftp,
-            'tftp': tftp,
-            'ssh': ssh,
-            'activedirectory': activedirectory,
-            'ldap': ldap,
-            })
-        return render_to_response('freenas/services/index.html', variables)
+
+    srv = Services.objects.all()
+    target_list = iSCSITarget.objects.all()
+    extent_list = iSCSITargetExtent.objects.all()
+    asctarget_list = iSCSITargetToExtent.objects.all()
+    target_auth_list = iSCSITargetAuthCredential.objects.all()
+    auth_initiator_list = iSCSITargetAuthorizedInitiator.objects.all()
+    iscsiportal_list = iSCSITargetPortal.objects.all()
+    variables = RequestContext(request, {
+        'focused_tab' : 'services',
+        'srv': srv,
+        'cifs': cifs,
+        'afp': afp,
+        'nfs': nfs,
+        'rsync': rsync,
+        'unison': unison,
+        'istgtglobal': istgtglobal,
+        'dynamicdns': dynamicdns,
+        'snmp': snmp,
+        'ups': ups,
+        'webserver': webserver,
+        'bittorrent': bittorrent,
+        'ftp': ftp,
+        'tftp': tftp,
+        'ssh': ssh,
+        'activedirectory': activedirectory,
+        'ldap': ldap,
+        'iscsitarget': iscsitarget,
+        'target_list': target_list,
+        'iscsiextent': iscsiextent,
+        'extent_list': extent_list,
+        'asctarget': asctarget,
+        'asctarget_list': asctarget_list,
+        'target_auth': target_auth,
+        'target_auth_list': target_auth_list,
+        'auth_initiator': auth_initiator,
+        'auth_initiator_list': auth_initiator_list,
+        'iscsiportal': iscsiportal,
+        'iscsiportal_list': iscsiportal_list,
+        'focus_form': focus_form,
+        })
+    return render_to_response('services/index.html', variables)
 
 """TODO: This should be rewritten in a better way."""
 @login_required
@@ -160,4 +184,40 @@ def servicesToggleView(request, formname):
     else:
         return HttpResponseRedirect('/freenas/media/images/ui/off.png')
 
+@login_required
+def generic_delete(request, object_id, objtype):
+    services_model_map = {
+            'iscsitarget':    iSCSITarget,
+            'iscsiextent':   iSCSITargetExtent,
+            'asctarget':   iSCSITargetToExtent,
+            'target_auth':   iSCSITargetAuthCredential,
+            'iscsiportal':   iSCSITargetPortal,
+            'auth_initiator':  iSCSITargetAuthorizedInitiator,
+            'iscsiportal':   iSCSITargetPortal,
+    }
+    return delete_object(
+        request = request,
+        model = services_model_map[objtype],
+        post_delete_redirect = '/services/', 
+        object_id = object_id, 
+        )
+
+@login_required
+def generic_update(request, object_id, objtype):
+    objtype2form = {
+            'iscsitarget':   ( iSCSITarget, iSCSITargetForm ),
+            'iscsiextent':   ( iSCSITargetExtent, iSCSITargetExtentForm ),
+            'asctarget':   ( iSCSITargetToExtent, iSCSITargetToExtentForm ),
+            'target_auth':   ( iSCSITargetAuthCredential, iSCSITargetAuthCredentialForm ),
+            'iscsiportal':   ( iSCSITargetPortal, iSCSITargetPortalForm ),
+            'auth_initiator':   ( iSCSITargetAuthorizedInitiator, iSCSITargetAuthorizedInitiatorForm ),
+            'iscsiportal':   ( iSCSITargetPortal, iSCSITargetPortalForm ),
+            } 
+    model, form_class = objtype2form[objtype]
+    return update_object(
+        request = request,
+        model = model, form_class = form_class,
+        object_id = object_id, 
+        post_save_redirect = '/services/' + objtype + '/view/',
+        )
 

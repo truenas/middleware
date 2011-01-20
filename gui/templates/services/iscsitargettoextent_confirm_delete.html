@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block dojango_content %}
+<script type="text/javascript">
+    var delDlg;
+        dojo.addOnLoad(function() {
+            delDlg = new dijit.Dialog({
+title: "Delete ({{ object.iscsi_target }} / {{ object.iscsi_extent }})",
+                style: "width: 300px",
+                });
+        });
+    function showDelDlg() {
+    // set the content of the dialog:
+        delDlg.attr('content', '<form method="post"><p>Are you sure you want to delete <strong>iSCSI Associated Target</strong> ({{ object.iscsi_target }} / {{ object.iscsi_extent }}) ?</p><button dojoType="dijit.form.Button" type="submit">Delete</button><button dojoType="dijit.form.Button"type="button" onClick="history.back();">Cancel</button>');
+    delDlg.show();
+    }
+    dojo.addOnLoad(showDelDlg);
+</script>
+
+{% endblock %}
+

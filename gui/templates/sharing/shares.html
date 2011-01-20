@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block dojango_content %}
 {% if user.is_authenticated %}
 <form action="." method="post">{% csrf_token %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;height:380px;">

@@ -113,6 +113,7 @@ def network(request, objtype = None):
         else:
             raise Http404() 
     variables = RequestContext(request, {
+        'focused_tab' : 'network',
         'gc': gc,
         'interfaces': interfaces,
         'vlan': vlan,
@@ -130,7 +131,10 @@ def network(request, objtype = None):
 @login_required
 def lagg_members(request, object_id):
     laggmembers = LAGGInterfaceMembers.objects.filter(lagg_interfacegroup = object_id) 
-    variables = RequestContext(request, { 'laggmembers': laggmembers, })
+    variables = RequestContext(request, {
+        'focused_tab' : 'account',
+        'laggmembers': laggmembers,
+    })
     return render_to_response('network/lagg_members.html', variables)
 
 @login_required

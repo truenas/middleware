@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block dojango_header_extra %}
+<script type="text/javascript">
+    function toggle_service(obj) {
+        obj.src = '/services/toggle/' + obj.name + '/';
+        }
+</script>
+
+<script type="text/javascript" src="/freenas/media/lib/js/test.json"></script>
+<script type="text/javascript">
+  dojo.addOnLoad(function() {
+    var unitFilesystemId = null;
+    var unitTypeId = null;
+    var unitGroupId = null;
+		new dijit.form.FilteringSelect({
+			store: new dojo.data.ItemFileReadStore({
+				data: filesystems
+			}),
+			autoComplete: true,
+			style: "width: 150px;",
+			required: false,
+			id: "filesystem",
+            onChange: function(filesystem) 
+                {
+                    unitFilesystemId = filesystem;
+                    dijit.byId('type').query = {filesystemId: filesystem};
+                }
+            }, "filesystem");
+        
+		new dijit.form.FilteringSelect({
+			store: new dojo.data.ItemFileReadStore({
+				data: types
+			}),
+			autoComplete: true,
+			style: "width: 150px;",
+			required: false,
+			id: "type",
+             onChange: function(type) 
+                {
+                    unitTypeId = type;
+                    dijit.byId('disk').query = {typeId: type};
+                },
+            }, "type");
+
+        new dijit.form.FilteringSelect({
+			store: new dojo.data.ItemFileReadStore({
+				data: disks
+			}),
+			autoComplete: true,
+			style: "width: 150px;",
+			required: false,
+			id: "disk",
+            }, "disk");
+      	});
+</script>
+{% endblock %} 
+{% block dojango_content %}
+{% if user.is_authenticated %}
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
+    <div dojoType="dijit.layout.TabContainer" title="My Account"  nested="true" style="width:100%;" doLayout="false">
+        <div dojoType="dijit.layout.ContentPane" title="Change Password" {% if focus_form == "passform" %} selected="true"{% endif %}>
+        <form action="/account/password_change/done/" method="post">{% csrf_token %}
+            <table class="config">
+                {% for field in passform %}
+                <tr>
+                    <td>
+                        <label for="{{ field.auto_id }}_label">
+                            {% if field.field.required %}
+                                <span class="required">{{ field.label }}</span>
+                            {% else %}
+                                {{ field.label }}
+                            {% endif %}
+                        </label>
+                    </td>
+                    <td>
+                        {{ field }}
+                    </td>
+                </tr>
+            {% endfor %}
+            </table>
+            <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Change Admin Password</button>
+        </form>
+        </div>
+    </div>
+    <div dojoType="dijit.layout.TabContainer" title="User Management"  nested="true" style="width:100%;" doLayout="false" {% if focus_form == "bsduser" %} selected="true"{% endif %}>
+        <div dojoType="dijit.layout.ContentPane" title="Users">
+                <table class="grid">
+                <tbody>
+                    <tr>
+                        {% if bsduser_list %}
+                        <h5>Active Users: <strong>{{ bsduser_list|length }}</strong></h5>
+                        {% else %}
+                        <p>There are no active users.</p>
+                        {% endif %}
+                    </tr>
+                </tbody>
+	            <thead class="ghead">
+                <td>ID</td>
+                <td>Username</td>
+	            <td>Group</td>
+	            <td>Home</td>
+	            <td>Shell</td>
+	            <td>Modify</td>
+	            <td>Remove</td>
+	        </thead>
+                <tbody>
+                {% for u in bsduser_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ u.id }}">
+                    <td>
+                        {{ u.bsdusr_uid }}
+                    </td>
+                    <td>
+                        {{ u.bsdusr_username }}
+                    </td>
+                    <td>
+                        {{ u.bsdusr_gid.bsdgrp_group }}
+                    </td>
+                    <td>
+                        {{ u.bsdusr_home }}
+                    </td>
+                    <td>
+                        {{ u.bsdusr_shell }}
+                    </td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsduser/edit/{{ u.id  }}/'">Modify User</button>
+                    </td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsduser/delete/{{ u.id }}/'">Remove User</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">No users defined</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                <div style="padding:12px;"><button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('bsduser').show();">Add New User</button>
+                </div>
+        </div>
+
+   <div dojoType="dijit.layout.ContentPane" title="Groups" {% if focus_form == "bsdgroup" %} selected="true"{% endif %}>
+                <table class="grid">
+                <tbody>
+                    <tr>
+                        {% if bsdgroup_list %}
+                        <h5>Active Groups: <strong>{{ bsdgroup_list|length }}</strong></h5>
+                        {% else %}
+                        <p>There are no active groups.</p>
+                        {% endif %}
+                    </tr>
+                </tbody>
+	            <thead class="ghead">
+                <td>ID</td>
+	            <td>Group</td>
+	            <td>Modify</td>
+	            <td>Remove</td>
+	        </thead>
+                <tbody>
+                {% for g in bsdgroup_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ g.id }}">
+                    <td>
+                        {{ g.bsdgrp_gid }}
+                    </td>
+                    <td>
+                        {{ g.bsdgrp_group }}
+                    </td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsdgroup/edit/{{ g.id }}/'">Modify Group</button>
+                    </td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsdgroup/delete/{{ g.id  }}/'">Delete Group</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">No groups defined</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                <div style="padding:12px;"><button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('bsdgroup').show();">Add New Group</button>
+                </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="bsduser" dojoType="dijit.Dialog" title="Add a New User">
+    <form action="/account/bsduser/add/" method="post">{% csrf_token %}
+        <table>
+            {{ bsduser.errors }}
+            {{ bsduser }}
+        </table>
+        <button  dojoType="dijit.form.Button" type="submit">Add User</button>
+        <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('bsduser').hide();">
+            Cancel
+        </button>
+    </form>
+</div>
+
+
+<div id="bsdgroup" dojoType="dijit.Dialog" title="Add a New Group">
+    <form action="/account/bsdgroup/add/" method="post">{% csrf_token %}
+        <table>
+            {{ bsdgroup.errors }}
+            {{ bsdgroup }}
+        </table>
+        <button  dojoType="dijit.form.Button" type="submit">Add Group</button>
+        <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('bsdgroup').hide();">
+            Cancel
+        </button>
+    </form>
+</div>
+
+
+
+{% else %}
+    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
+{% endif %}
+
+{% endblock %}
+

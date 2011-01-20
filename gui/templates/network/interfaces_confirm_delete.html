@@ -1,58 +1,5 @@
 {% extends "base.html" %}
-{% block content %}
-<div dojoType="dijit.MenuBar" id="navMenu">
-            <div dojoType="dijit.MenuBarItem" onClick="window.location='/'">
-                <div>
-                    System 
-                </div>
-            </div>
-
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'" class=" dijitMenuItemSelected ">
-        <span>
-            Network 
-        </span>
-    </div>
-
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'">
-        <span>
-            Storage 
-        </span>
-    </div>
-
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'">
-        <span>
-            Sharing
-        </span>
-    </div>
-
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/services/'">
-        <span>
-            Services
-        </span>
-    </div>
-{% if user.is_authenticated %}
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" style="position:relative;float:right;font-weight:bold;">
-        <span>
-            Log Out 
-        </span>
-    </div>
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/'">
-        <span>
-            Account 
-        </span>
-    </div>
-    {% else %}
-
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" style="position:relative;float:right;font-weight:bold;">
-        <span>
-            Log In
-        </span>
-    </div>
-</div>
-    {% endif %}
-{% endblock %}
 {% block dojango_content %}
-
 <script type="text/javascript">
     var delDlg;
         dojo.addOnLoad(function() {

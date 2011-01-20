@@ -26,7 +26,6 @@
 # $FreeBSD$
 #####################################################################
 
-from django.forms import ModelForm                             
 from django.shortcuts import render_to_response                
 from freenasUI.services.models import *                         
 from freenasUI.middleware.notifier import notifier
@@ -34,8 +33,8 @@ from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode 
 from dojango.forms.models import ModelForm as ModelForm
-from dojango.forms import fields, widgets 
-from dojango.forms.fields import BooleanField 
+from dojango.forms import fields, widgets
+from dojango import forms
 
 """ Services """
 
@@ -117,8 +116,6 @@ class BitTorrentForm(ModelForm):
     class Meta:
         model = BitTorrent
 
-
-
 class ActiveDirectoryForm(ModelForm):
     def save(self):
         super(ActiveDirectoryForm, self).save()
@@ -133,3 +130,57 @@ class LDAPForm(ModelForm):
     class Meta:
         model = LDAP
 
+class iSCSITargetAuthCredentialForm(ModelForm):
+    iscsi_target_auth_secret1 = forms.CharField(label="Secret", widget=forms.PasswordInput, help_text="Target side secret.")
+    iscsi_target_auth_secret2 = forms.CharField(label="Secret (Confirm)", widget=forms.PasswordInput, help_text="Enter the same secret above for verification.")
+    iscsi_target_auth_peersecret1 = forms.CharField(label="Initiator Secret", widget=forms.PasswordInput, help_text="Initiator side secret. (for mutual CHAP autentication)")
+    iscsi_target_auth_peersecret2 = forms.CharField(label="Initiator Secret (Confirm)", widget=forms.PasswordInput, help_text="Enter the same secret above for verification.")
+
+    def _clean_secret_common(self, secretprefix):
+        secret1 = self.cleaned_data.get(("%s1" % secretprefix), "")
+        secret2 = self.cleaned_data[("%s2" % secretprefix)]
+        if secret1 != secret2:
+            raise forms.ValidationError("Secret does not match")
+        return secret2
+
+    def clean_iscsi_target_auth_secret2(self):
+        return self._clean_secret_common("iscsi_target_auth_secret")
+
+    def clean_iscsi_target_auth_peersecret2(self):
+        return self._clean_secret_common("iscsi_target_auth_peersecret")
+
+    class Meta:
+        model = iSCSITargetAuthCredential
+        exclude = ('iscsi_target_auth_secret', 'iscsi_target_auth_peersecret',)
+
+    def save(self, commit=True):
+        oAuthCredential = super(iSCSITargetAuthCredentialForm, self).save(commit=False)
+        oAuthCredential.iscsi_target_auth_secret = self.cleaned_data["iscsi_target_auth_secret1"]
+        oAuthCredential.iscsi_target_peerauth_secret = self.cleaned_data["iscsi_target_auth_peersecret1"]
+        if commit:
+            oAuthCredential.save()
+        return oAuthCredential
+
+class iSCSITargetToExtentForm(ModelForm):
+    class Meta:
+        model = iSCSITargetToExtent
+
+class iSCSITargetGlobalConfigurationForm(ModelForm):
+    class Meta:
+        model = iSCSITargetGlobalConfiguration
+
+class iSCSITargetExtentForm(ModelForm):
+    class Meta:
+        model = iSCSITargetExtent
+
+class iSCSITargetPortalForm(ModelForm):
+    class Meta:
+        model = iSCSITargetPortal
+
+class iSCSITargetAuthorizedInitiatorForm(ModelForm):
+    class Meta:
+        model = iSCSITargetAuthorizedInitiator
+
+class iSCSITargetForm(ModelForm):
+    class Meta:
+        model = iSCSITarget

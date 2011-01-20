@@ -1,0 +1,708 @@
+{% extends "base.html" %}
+
+{% block dojango_header_extra %}
+<script type="text/javascript">
+    function toggle_service(obj) {
+        obj.src = '/services/toggle/' + obj.name + '/' + Date();
+    }
+</script>
+{% endblock %}
+{% block dojango_content %}
+{% if user.is_authenticated %}
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
+    <div dojoType="dijit.layout.ContentPane" title="Services" doLayout="false">
+        <table class="srv">
+            <tr>
+                <td>
+                    <strong>Windows Shares</strong>
+                </td>
+                <td>
+		    <img id="cifs_toggle" name="cifs_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "cifs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="cifs_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('cifs').show();" title="CIFS Settings">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <strong>Apple Shares</strong>
+                </td>
+                <td>
+		    <img id="afp_toggle" name="afp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "afp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="afp_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('afp').show();" title="AFP Settings">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <strong>UNIX Shares</strong>
+                </td>
+                <td>
+		            <img id="nfs_toggle" name="nfs_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "nfs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="nfs_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('nfs').show();" title="NFS Settings">
+                </td>
+            </tr>
+          <!--  <tr>
+                <td>
+                    <strong>Unison - Replication</strong>
+                </td>
+                <td>
+		    <img id="unison_toggle" name="unison_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "unison" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="unison_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('unison').show();" title="Unison Settings">
+                </td>
+            </tr>
+            -->
+           <tr>
+                <td>
+                    <strong>iSCSI</strong>
+                </td>
+                <td>
+		    <img id="iscsitarget_toggle" name="iscsitarget_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "iscsitarget" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="istgt_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('istgtglobal').show();" title="ISCSI Settings">
+                </td>
+            </tr>
+          
+           <!-- <tr>
+                <td>
+                    <strong>Dynamic DNS</strong>
+                </td>
+                <td>
+		    <img id="dyndns_toggle" name="dyndns_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "dyndns" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="dyndns_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('dyndns').show();" title="Dynamic DNS Settings">
+                </td>
+            </tr>
+            -->
+           <tr>
+                <td>
+                    <strong>SNMP</strong>
+                </td>
+                <td>
+		    <img id="snmp_toggle" name="snmp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "snmp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="snmp_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('snmp').show();" title="SNMP Settings">
+                </td>
+            </tr> 
+          <!--  <tr>
+                <td>
+                    <strong>UPS</strong>
+                </td>
+                <td>
+		    <img id="ups_toggle" name="ups_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ups" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="ups_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('ups').show();" title="UPS Settings">
+                </td>
+            </tr>
+            -->
+          <!--  <tr>
+                <td>
+                    <strong>Bit Torrent</strong>
+                </td>
+                <td>
+		    <img id="bt_toggle" name="bt_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "bt" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="bt_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('bt').show();" title="Bit Torrent Settings">
+                </td>
+            </tr>
+            -->
+         <!--   <tr>
+                <td>
+                    <strong>Web Server</strong>
+                </td>
+                <td>
+		    <img id="httpd_toggle" name="httpd_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "httpd" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="httpd_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('httpd').show();" title="Web Server Settings">
+                </td>
+            </tr>
+            -->
+            <tr>
+                <td>
+                    <strong>FTP</strong>
+                </td>
+                <td>
+		    <img id="ftp_toggle" name="ftp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="ftp_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('ftp').show();" title="FTP Settings">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <strong>TFTP</strong>
+                </td>
+                <td>
+		    <img id="tftp_toggle" name="tftp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "tftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="tftp_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('tftp').show();" title="TFTP Settings">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <strong>SSH</strong>
+                </td>
+                <td>
+		    <img id="ssh_toggle" name="ssh_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ssh" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="ssh_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('ssh').show();" title="SSH Settings">
+                </td>
+            </tr>
+                <tr>
+                <td>
+                    <strong>Active Directory</strong>
+                </td>
+                <td>
+		    <img id="ad_toggle" name="ad_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "activedirectory" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="ad_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('ad').show();" title="Active Directory Settings">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <strong>LDAP</strong>
+                </td>
+                <td>
+		    <img id="ldap_toggle" name="ldap_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ldap" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="ldap_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('ldap').show();" title="LDAP Settings">
+                </td>
+            </tr>
+        </table>
+</div>
+<div id="cifs" dojoType="dijit.Dialog" title="Windows - CIFS/SAMBA Shares">
+<form action="/services/" method="post">{% csrf_token %}
+                    <table>
+                        {{ cifs.errors }}
+                        {{ cifs }}
+                                   </table>
+<button dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('cifs').hide();">
+    Cancel
+</button>
+
+</form>
+    </div>
+<div id="afp" dojoType="dijit.Dialog" title="Apple - AFP Shares">
+<form action="/services/" method="post">{% csrf_token %}
+            <table>
+                {{ afp.errors }}
+                {{ afp }}
+            </table>
+<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('afp').hide();">
+    Cancel
+</button>
+</form>
+        </div>
+          
+<div id="nfs" dojoType="dijit.Dialog" title="UNIX - NFS Shares">
+<form action="/services/" method="post">{% csrf_token %}
+     <table>
+         {{ nfs.errors }}
+         {{ nfs }}
+                     </table>
+<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('nfs').hide();">
+    Cancel
+</button>
+</form>
+        </div>
+
+
+<div id="unison" dojoType="dijit.Dialog" title="Unison - File Replication">
+<form action="/services/" method="post">{% csrf_token %}
+            <table>
+                {{ unison.errors }}
+                {{ unison }}
+
+                        </table>
+<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('unison').hide();">
+    Cancel
+</button>
+</form>
+</div>
+
+
+<div id="istgtglobal" dojoType="dijit.Dialog" title="iSCSI" {% if focus_form == "istgtglobal" %}  selected="true"{% endif %}>
+    <h3>iSCSI Management</h3>
+   <div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="False">
+    <div dojoType="dijit.layout.ContentPane" title="Global Settings" doLayout="False">
+
+<form action="/services/" method="post">{% csrf_token %}
+            <table>
+                {{ istgtglobal.errors }}
+                {{ istgtglobal }}
+            </table>
+<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+</form>
+</div>
+  <div dojoType="dijit.layout.ContentPane" title="Targets" doLayout="False">
+            <table class="grid">
+	            <thead class="header">
+			<tr>
+		            <td>Target</td>
+		            <td>Alias</td>
+		            <td>Type</td>
+			</tr>
+		        </thead>
+                {% for t in target_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ t.id }}">
+                    <td>{{ t.iscsi_target_name }}</td>
+                    <td>{{ t.iscsi_target_alias }}</td>
+                    <td>{{ t.iscsi_target_type }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/iscsitarget/edit/{{ t.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/iscsitarget/delete/{{ t.id }}/'">Delete</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">No targets defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+                <p class="btn">
+                    <button id="tgt_button" dojoType="dijit.form.Button" type="button">
+                        Add Target 
+                        <script type="dojo/method" event="onClick" args="evt">
+                        dijit.byId("target").show();
+                    </script>
+                    </button>
+                    </p>
+        </div>
+  <div dojoType="dijit.layout.ContentPane" title="Extents" doLayout="False">
+            <table class="grid">
+	            <thead class="header">
+			<tr>
+		            <td>Target</td>
+		            <td>Alias</td>
+		            <td>Path</td>
+			</tr>
+		        </thead>
+                {% for e in extent_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ e.id }}">
+                    <td>{{ e.iscsi_target_extent_name }}</td>
+                    <td>{{ e.iscsi_target_extent_type }}</td>
+                    <td>{{ e.iscsi_target_extent_path }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/iscsiextent/edit/{{ e.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/iscsiextent/delete/{{ e.id }}/'">Delete</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">No targets defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+                          <p class="btn">
+                    <button id="extent_button" dojoType="dijit.form.Button" type="button">
+                        Add Extent 
+                        <script type="dojo/method" event="onClick" args="evt">
+                        dijit.byId("extent").show();
+                    </script>
+                    </button>
+                    </p>
+        </div>
+  <div dojoType="dijit.layout.ContentPane" title="Associated Targets" doLayout="False">
+            <table class="grid">
+	            <thead class="header">
+			<tr>
+		            <td>Target</td>
+		            <td>Extent</td>
+		            <td>LUN</td>
+			</tr>
+		        </thead>
+                {% for tte in asctarget_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ tte.id }}">
+                    <td>{{ tte.iscsi_target }}</td>
+                    <td>{{ tte.iscsi_extent }}</td>
+                    <td>{{ tte.iscsi_target_lun }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/asctarget/edit/{{ tte.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/asctarget/delete/{{ tte.id }}/'">Delete</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">No targets defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+                         <p class="btn">
+                    <button id="et_button" dojoType="dijit.form.Button" type="button">
+                        Add Extent to Target
+                        <script type="dojo/method" event="onClick" args="evt">
+                        dijit.byId("asctarget").show();
+                    </script>
+                    </button>
+                    </p>
+        </div>
+  <div dojoType="dijit.layout.ContentPane" title="Authentication" doLayout="False">
+     <table class="grid">
+	            <thead class="header">
+			<tr>
+		            <td>Tag</td>
+		            <td>User</td>
+		            <td>Secret</td>
+		            <td>Peer</td>
+		            <td>Peer Secret</td>
+		            <td></td>
+			</tr>
+		        </thead>
+                {% for ta in target_auth_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ ta.id }}">
+                    <td>{{ ta.iscsi_target_auth_tag }}</td>
+                    <td>{{ ta.iscsi_target_auth_user }}</td>
+                    <td>{{ ta.iscsi_target_auth_secret }}</td>
+                    <td>{{ ta.iscsi_target_auth_peeruser }}</td>
+                    <td>{{ ta.iscsi_target_auth_peersecret }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/target_auth/edit/{{ ta.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/target_auth/delete/{{ ta.id }}/'">Delete</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">No targets defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+
+                        <p class="btn">
+                    <button id="tgt_auth_button" dojoType="dijit.form.Button" type="button">
+                        Add iSCSI User 
+                        <script type="dojo/method" event="onClick" args="evt">
+                        dijit.byId("target_auth").show();
+                    </script>
+                    </button>
+                    </p>
+        </div>
+  <div dojoType="dijit.layout.ContentPane" title="Authorized Initiator" doLayout="False">
+  <table class="grid">
+	            <thead class="header">
+			<tr>
+		            <td>Tag</td>
+		            <td>Initiators</td>
+		            <td>Authorized Network</td>
+		            <td>Comment</td>
+		            <td></td>
+			</tr>
+		        </thead>
+                {% for ai in auth_initiator_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ ai.id }}">
+                    <td>{{ ai.iscsi_target_initiator_tag }}</td>
+                    <td>{{ ai.iscsi_target_initiator_initiators }}</td>
+                    <td>{{ ai.iscsi_target_initiator_auth_network }}</td>
+                    <td>{{ ai.iscsi_target_initiator_comment }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/auth_initiator/edit/{{ ai.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/auth_initiator/delete/{{ ai.id }}/'">Delete</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">No targets defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+
+                          <p class="btn">
+                    <button id="access_button" dojoType="dijit.form.Button" type="button">
+                        Modify Access 
+                        <script type="dojo/method" event="onClick" args="evt">
+                        dijit.byId("initiator_access").show();
+                    </script>
+                    </button>
+                    </p>
+        </div>
+  <div dojoType="dijit.layout.ContentPane" title="Portals" doLayout="False">
+  <table class="grid">
+	            <thead class="header">
+			<tr>
+		            <td>Tag</td>
+		            <td>Listen</td>
+		            <td>Comment</td>
+                    <td></td>
+			</tr>
+		        </thead>
+                {% for p in iscsiportal_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ p.id }}">
+                    <td>{{ p.iscsi_target_portal_tag }}</td>
+                    <td>{{ p.iscsi_target_portal_listen }}</td>
+                    <td>{{ p.iscsi_target_portal_comment }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/iscsiportal/edit/{{ p.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/iscsiportal/delete/{{ p.id }}/'">Delete</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">No targets defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+
+                        <p class="btn">
+                    <button id="portal_button" dojoType="dijit.form.Button" type="button">
+                        Add Portal 
+                        <script type="dojo/method" event="onClick" args="evt">
+                        dijit.byId("portal").show();
+                    </script>
+                    </button>
+                    </p>
+        </div>
+</div>
+<p>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('istgtglobal').hide();">
+    Close Window
+</button>
+</p>
+</div>
+
+<div id="target" dojoType="dijit.Dialog" title="Add New iSCSI Target" {% if focus_form == "iscsitarget" %} selected="true"{% endif %}>
+<form action="/services/global/iscsitarget/" method="post">{% csrf_token %}
+            <table>
+                {{ iscsitarget.errors }}
+                {{ iscsitarget }}
+
+                         </table>
+<button  dojoType="dijit.form.Button" type="submit">Add Target</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('target').hide();">
+    Cancel
+</button>
+</form>
+</div>
+<div id="extent" dojoType="dijit.Dialog" title="Add New Extent">
+<form action="/services/global/iscsiextent/" method="post">{% csrf_token %}
+            <table>
+                {{ iscsiextent.errors }}
+                {{ iscsiextent }}
+
+                         </table>
+<button  dojoType="dijit.form.Button" type="submit">Add Extent</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('extent').hide();">
+    Cancel
+</button>
+</form>
+</div>
+<div id="asctarget" dojoType="dijit.Dialog" title="Add Extent to iSCSI Target">
+<form action="/services/global/asctarget/" method="post">{% csrf_token %}
+            <table>
+                {{ asctargets.errors }}
+                {{ asctarget }}
+            </table>
+<button  dojoType="dijit.form.Button" type="submit">Add Extent to Target</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('asctarget').hide();">
+    Cancel
+</button>
+</form>
+</div>
+<div id="target_auth" dojoType="dijit.Dialog" title="Add New iSCSI User">
+<form action="/services/global/target_auth/" method="post">{% csrf_token %}
+            <table>
+                {{ target_auth.errors }}
+                {{ target_auth }}
+
+                         </table>
+<button  dojoType="dijit.form.Button" type="submit">Add Target</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('target_auth').hide();">
+    Cancel
+</button>
+</form>
+</div>
+<div id="initiator_access" dojoType="dijit.Dialog" title="Access">
+<form action="/services/global/initiator_access/" method="post">{% csrf_token %}
+            <table>
+                {{ auth_initiator.errors }}
+                {{ auth_initiator }}
+
+                         </table>
+<button  dojoType="dijit.form.Button" type="submit">Add Access</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('initiator_access').hide();">
+    Cancel
+</button>
+</form>
+</div>
+
+<div id="portal" dojoType="dijit.Dialog" title="Portal">
+<form action="/services/global/iscsiportal/" method="post">{% csrf_token %}
+            <table>
+                {{ iscsiportal.errors }}
+                {{ iscsiportal }}
+
+                         </table>
+<button  dojoType="dijit.form.Button" type="submit">Add Portal</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('portal').hide();">
+    Cancel
+</button>
+</form>
+</div>
+
+
+
+
+
+<div id="dyndns" dojoType="dijit.Dialog" title="Dynamic DNS">
+<form action="/services/" method="post">{% csrf_token %}
+            <table>
+                {{ dynamicdns.errors }}
+                {{ dynamicdns }}
+
+                         </table>
+<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('dyndns').hide();">
+    Cancel
+</button>
+</form>
+</div>
+
+<div id="snmp" dojoType="dijit.Dialog" title="SNMP">
+<form action="/services/" method="post">{% csrf_token %}
+            <table>
+                {{ snmp.errors }}
+                {{ snmp }}
+
+                         </table>
+<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('snmp').hide();">
+    Cancel
+</button>
+</form>
+</div>
+
+<div id="ups" dojoType="dijit.Dialog" title="UPS">
+<form action="/services/" method="post">{% csrf_token %}
+   <table>
+       {{ ups.errors }}
+       {{ ups }}
+
+                         </table>
+<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('ups').hide();">
+    Cancel
+</button>
+</form>
+</div>
+
+<div id="bt" dojoType="dijit.Dialog" title="Bit Torrent">
+<form action="/services/" method="post">{% csrf_token %}
+  <table>
+      {{ bittorrent.errors }}
+      {{ bittorrent }}
+
+                        </table>
+<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('bt').hide();">
+    Cancel
+</button>
+</form>
+</div>
+
+<div id="httpd" dojoType="dijit.Dialog" title="Web Server">
+<form action="/services/" method="post">{% csrf_token %}
+          <table>
+              {{ webserver.errors }}
+              {{ webserver }}
+    
+                        </table>
+<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('httpd').hide();">
+    Cancel
+</button>
+</form>
+</div>
+
+
+<div id="ftp" dojoType="dijit.Dialog" title="FTP">
+<form action="/services/" method="post">{% csrf_token %}
+            <table>
+                {{ ftp.errors }}
+                {{ ftp }}
+            </table>
+<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('ftp').hide();">
+    Cancel
+</button>
+</form>
+</div>
+
+<div id="tftp" dojoType="dijit.Dialog" title="TFTP">
+<form action="/services/" method="post">{% csrf_token %}
+            <table>
+                {{ tftp.errors }}
+                {{ tftp }}
+              </table>
+<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('tftp').hide();">
+    Cancel
+</button>
+</form>
+</div>
+
+<div id="ssh" dojoType="dijit.Dialog" title="SSH">
+<form action="/services/" method="post">{% csrf_token %}
+            <table>
+                {{ ssh.errors }}
+                {{ ssh }}
+  
+                          </table>
+<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('ssh').hide();">
+    Cancel
+</button>
+</form>
+</div>
+
+<div id="ad" dojoType="dijit.Dialog" title="Active Directory">
+<form action="/services/" method="post">{% csrf_token %}
+            <table>
+                {{ activedirectory.errors }}
+                {{ activedirectory }}
+  
+                          </table>
+<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('ad').hide();">
+    Cancel
+</button>
+</form>
+</div>
+
+<div id="ldap" dojoType="dijit.Dialog" title="LDAP">
+<form action="/services/" method="post">{% csrf_token %}
+            <table>
+                {{ ldap.errors }}
+                {{ ldap }}
+  
+                          </table>
+<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('ldap').hide();">
+    Cancel
+</button>
+</form>
+</div>
+<br />
+</div>
+{% else %}
+    <p>Welcome. Please <a href="/login/">log in</a>.</p>
+{% endif %}
+
+{% endblock %}
+

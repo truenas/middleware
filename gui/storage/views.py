@@ -51,6 +51,7 @@ import os, commands
 def storage(request):
     mp_list = MountPoint.objects.select_related().all()
     variables = RequestContext(request, {
+        'focused_tab' : 'storage',
         'mp_list': mp_list,
     })
     return render_to_response('storage/index.html', variables)
@@ -61,6 +62,7 @@ def volume_disks(request, volume_id):
     volume = Volume.objects.get(id = volume_id)
     disk_list = Disk.objects.filter(disk_group__group_volume = volume_id)
     variables = RequestContext(request, {
+        'focused_tab' : 'storage',
         'volume': volume,
         'disk_list': disk_list,
     })
@@ -121,6 +123,7 @@ def dataset_create(request):
             mp.save()
             return HttpResponseRedirect('/storage/')
     variables = RequestContext(request, {
+        'focused_tab' : 'storage',
         'mp_list': mp_list,
         'form': dataset_form
     })
@@ -135,6 +138,7 @@ def dataset_delete(request, object_id):
         return HttpResponseRedirect('/storage/')
     else:
         c = RequestContext(request, {
+            'focused_tab' : 'storage',
             'object': obj,
         })
         return render_to_response('storage/dataset_confirm_delete.html', c)

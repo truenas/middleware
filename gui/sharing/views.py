@@ -76,6 +76,7 @@ def sharing(request, sharetype = None):
         afp = AFP_ShareForm()
         nfs = NFS_ShareForm()
     variables = RequestContext(request, {
+        'focused_tab' : 'sharing',
         'mountpoint_list': mountpoint_list,
         'cifs_share_list': cifs_share_list,
         'afp_share_list': afp_share_list,
