@@ -1,34 +1,43 @@
+CREATE TABLE "account_bsdgroups" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "bsdgrp_gid" integer NOT NULL,
+    "bsdgrp_group" varchar(120) NOT NULL
+);
+CREATE TABLE "account_bsdusers" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "bsdusr_uid" integer NOT NULL UNIQUE,
+    "bsdusr_username" varchar(30) NOT NULL UNIQUE,
+    "bsdusr_password" varchar(128) NOT NULL,
+    "bsdusr_home" varchar(120) NOT NULL,
+    "bsdusr_shell" varchar(120) NOT NULL DEFAULT 'csh',
+    "bsdusr_full_name" varchar(120) NOT NULL
+);
+CREATE TABLE "account_bsdusers_bsdusr_gid" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "bsdusers_id" integer NOT NULL,
+    "bsdgroups_id" integer NOT NULL
+);
 CREATE TABLE "auth_group" (
     "id" integer NOT NULL PRIMARY KEY,
     "name" varchar(80) NOT NULL UNIQUE
-
 );
 CREATE TABLE "auth_group_permissions" (
     "id" integer NOT NULL PRIMARY KEY,
     "group_id" integer NOT NULL,
-    "permission_id" integer NOT NULL REFERENCES "auth_permission" (
-    "id"),
-    UNIQUE (
-    "group_id",
-    "permission_id")
-
+    "permission_id" integer NOT NULL REFERENCES "auth_permission" ("id"),
+    UNIQUE ("group_id", "permission_id")
 );
 CREATE TABLE "auth_message" (
     "id" integer NOT NULL PRIMARY KEY,
-    "user_id" integer NOT NULL REFERENCES "auth_user" (
-    "id"),
+    "user_id" integer NOT NULL REFERENCES "auth_user" ("id"),
     "message" text NOT NULL
-
 );
 CREATE TABLE "auth_permission" (
     "id" integer NOT NULL PRIMARY KEY,
     "name" varchar(50) NOT NULL,
     "content_type_id" integer NOT NULL,
     "codename" varchar(100) NOT NULL,
-    UNIQUE (
-    "content_type_id",
-    "codename")
-
+    UNIQUE ("content_type_id", "codename")
 );
 CREATE TABLE "auth_user" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -42,73 +51,55 @@ CREATE TABLE "auth_user" (
     "is_superuser" bool NOT NULL,
     "last_login" datetime NOT NULL,
     "date_joined" datetime NOT NULL
-
 );
 CREATE TABLE "auth_user_groups" (
     "id" integer NOT NULL PRIMARY KEY,
     "user_id" integer NOT NULL,
-    "group_id" integer NOT NULL REFERENCES "auth_group" (
-    "id"),
-    UNIQUE (
-    "user_id",
-    "group_id")
-
+    "group_id" integer NOT NULL REFERENCES "auth_group" ("id"),
+    UNIQUE ("user_id", "group_id")
 );
 CREATE TABLE "auth_user_user_permissions" (
     "id" integer NOT NULL PRIMARY KEY,
     "user_id" integer NOT NULL,
-    "permission_id" integer NOT NULL REFERENCES "auth_permission" (
-    "id"),
-    UNIQUE (
-    "user_id",
-    "permission_id")
-
+    "permission_id" integer NOT NULL REFERENCES "auth_permission" ("id"),
+    UNIQUE ("user_id", "permission_id")
 );
 CREATE TABLE "django_content_type" (
     "id" integer NOT NULL PRIMARY KEY,
     "name" varchar(100) NOT NULL,
     "app_label" varchar(100) NOT NULL,
     "model" varchar(100) NOT NULL,
-    UNIQUE (
-    "app_label",
-    "model")
-
+    UNIQUE ("app_label", "model")
 );
 CREATE TABLE "django_session" (
     "session_key" varchar(40) NOT NULL PRIMARY KEY,
     "session_data" text NOT NULL,
     "expire_date" datetime NOT NULL
-
 );
 CREATE TABLE "network_globalconfiguration" (
-    "gc_domain" varchar(120),
-    "gc_ipv4gateway" varchar(42),
-    "gc_hostname" varchar(120),
-    "gc_ipv6gateway" varchar(42),
-    "gc_nameserver1" varchar(42),
-    "gc_nameserver3" varchar(42),
-    "gc_nameserver2" varchar(42) NULL,
-    "id" integer PRIMARY KEY
-
+    "id" integer NOT NULL PRIMARY KEY,
+    "gc_hostname" varchar(120) NOT NULL,
+    "gc_domain" varchar(120) NOT NULL,
+    "gc_ipv4gateway" varchar(120) NOT NULL,
+    "gc_ipv6gateway" varchar(120) NOT NULL,
+    "gc_nameserver1" varchar(120) NOT NULL,
+    "gc_nameserver2" varchar(120) NOT NULL,
+    "gc_nameserver3" varchar(120) NOT NULL
 );
 CREATE TABLE "network_interfaces" (
-    "int_v6netmaskbit" varchar(300),
-    "int_ipv4address" varchar(42),
-    "int_name" varchar(120),
-    "int_ipv6address" varchar(42) NULL,
-    "int_options" varchar(120),
-    "int_dhcp" bool,
-    "int_v4netmaskbit" varchar(300),
-    "int_ipv6auto" bool,
-    "int_interface" varchar(300),
-    "id" integer PRIMARY KEY
-
+    "id" integer NOT NULL PRIMARY KEY,
+    "int_interface" varchar(300) NOT NULL,
+    "int_name" varchar(120) NOT NULL,
+    "int_dhcp" bool NOT NULL DEFAULT False,
+    "int_ipv4address" varchar(18) NOT NULL,
+    "int_ipv6auto" bool NOT NULL DEFAULT False,
+    "int_ipv6address" varchar(42) NOT NULL,
+    "int_options" varchar(120) NOT NULL
 );
 CREATE TABLE "network_lagginterface" (
     "id" integer NOT NULL PRIMARY KEY,
     "lagg_interface_id" integer NOT NULL UNIQUE,
     "lagg_protocol" varchar(120) NOT NULL
-
 );
 CREATE TABLE "network_lagginterfacemembers" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -116,14 +107,12 @@ CREATE TABLE "network_lagginterfacemembers" (
     "lagg_ordernum" integer NOT NULL,
     "lagg_physnic" varchar(120) NOT NULL UNIQUE,
     "lagg_deviceoptions" varchar(120) NOT NULL
-
 );
 CREATE TABLE "network_staticroute" (
     "id" integer NOT NULL PRIMARY KEY,
     "sr_destination" varchar(120) NOT NULL,
     "sr_gateway" varchar(120) NOT NULL,
     "sr_description" varchar(120) NOT NULL
-
 );
 CREATE TABLE "network_vlan" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -131,7 +120,6 @@ CREATE TABLE "network_vlan" (
     "vlan_pint" varchar(300) NOT NULL,
     "vlan_tag" varchar(120) NOT NULL,
     "vlan_description" varchar(120) NOT NULL
-
 );
 CREATE TABLE "services_activedirectory" (
     "ad_workgroup" varchar(120) NOT NULL DEFAULT '',
@@ -141,7 +129,6 @@ CREATE TABLE "services_activedirectory" (
     "ad_adminpw" varchar(120),
     "id" integer PRIMARY KEY,
     "ad_dcname" varchar(120)
-
 );
 CREATE TABLE "services_afp" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -149,7 +136,6 @@ CREATE TABLE "services_afp" (
     "afp_srv_guest" bool NOT NULL DEFAULT False,
     "afp_srv_local" bool NOT NULL DEFAULT False,
     "afp_srv_ddp" bool NOT NULL DEFAULT False
-
 );
 CREATE TABLE "services_bittorrent" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -170,7 +156,6 @@ CREATE TABLE "services_bittorrent" (
     "bt_adminauth" varchar(120) NOT NULL,
     "bt_adminuser" varchar(120) NOT NULL,
     "bt_adminpass" varchar(120) NOT NULL
-
 );
 CREATE TABLE "services_cifs" (
     "cifs_srv_dirmask" varchar(120),
@@ -197,7 +182,6 @@ CREATE TABLE "services_cifs" (
     "cifs_srv_easupport" bool,
     "cifs_srv_sendfile" bool,
     "cifs_srv_unixcharset" varchar(120)
-
 );
 CREATE TABLE "services_dynamicdns" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -318,20 +302,14 @@ CREATE TABLE "services_snmp" (
     "snmp_options" text NOT NULL
 );
 CREATE TABLE "services_ssh" (
-    "ssh_host_dsa_key_pub" text,
-    "ssh_host_rsa_key_pub" text NULL,
-    "ssh_host_key" text,
-    "ssh_tcpport" varchar(120),
-    "ssh_options" text,
-    "ssh_passwordauth" bool,
-    "id" integer PRIMARY KEY,
-    "ssh_compression" bool,
-    "ssh_host_key_pub" text,
-    "ssh_rootlogin" bool,
-    "ssh_tcpfwd" bool,
-    "ssh_host_rsa_key" text,
-    "ssh_privatekey" text,
-    "ssh_host_dsa_key" text
+    "id" integer NOT NULL PRIMARY KEY,
+    "ssh_tcpport" varchar(120) NOT NULL,
+    "ssh_rootlogin" bool NOT NULL DEFAULT False,
+    "ssh_passwordauth" bool NOT NULL DEFAULT False,
+    "ssh_tcpfwd" bool NOT NULL DEFAULT False,
+    "ssh_compression" bool NOT NULL DEFAULT False,
+    "ssh_privatekey" text NOT NULL,
+    "ssh_options" text NOT NULL
 );
 CREATE TABLE "services_tftp" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -548,6 +526,8 @@ CREATE TABLE "system_sysctl" (
     "sctl_MIBvalue" varchar(120) NOT NULL,
     "sctl_MIBcomment" varchar(120) NOT NULL
 );
+CREATE INDEX "account_bsdusers_bsdusr_gid_45d1cb6a" ON "account_bsdusers_bsdusr_gid" ("bsdgroups_id");
+CREATE INDEX "account_bsdusers_bsdusr_gid_48570227" ON "account_bsdusers_bsdusr_gid" ("bsdusers_id");
 CREATE INDEX "auth_group_permissions_1e014c8f" ON "auth_group_permissions" ("permission_id");
 CREATE INDEX "auth_group_permissions_bda51c3c" ON "auth_group_permissions" ("group_id");
 CREATE INDEX "auth_message_fbfc09f1" ON "auth_message" ("user_id");
