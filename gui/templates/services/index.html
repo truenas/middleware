@@ -287,7 +287,7 @@
                     </button>
                     </p>
         </div>
-  <div dojoType="dijit.layout.ContentPane" title="Extents" doLayout="False">
+  <div dojoType="dijit.layout.ContentPane" title="Device Extents" doLayout="False">
             <table class="grid">
 	            <thead class="header">
 			<tr>
@@ -296,7 +296,7 @@
 		            <td>Path</td>
 			</tr>
 		        </thead>
-                {% for e in extent_list %}
+                {% for e in extent_device_list %}
                 <tr class="{% cycle 'odd' 'even' %}" id="{{ e.id }}">
                     <td>{{ e.iscsi_target_extent_name }}</td>
                     <td>{{ e.iscsi_target_extent_type }}</td>
@@ -313,10 +313,44 @@
                 {% endfor %}
                 </table>
                           <p class="btn">
-                    <button id="extent_button" dojoType="dijit.form.Button" type="button">
+                    <button id="fe_button" dojoType="dijit.form.Button" type="button">
                         Add Extent 
                         <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("extent").show();
+                        dijit.byId("extent_device").show();
+                    </script>
+                    </button>
+                    </p>
+  </div>
+  <div dojoType="dijit.layout.ContentPane" title="Extents" doLayout="False">
+            <table class="grid">
+	            <thead class="header">
+			<tr>
+		            <td>Target</td>
+		            <td>Alias</td>
+		            <td>Path</td>
+			</tr>
+		        </thead>
+                {% for e in extent_file_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ e.id }}">
+                    <td>{{ e.iscsi_target_extent_name }}</td>
+                    <td>{{ e.iscsi_target_extent_type }}</td>
+                    <td>{{ e.iscsi_target_extent_path }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/iscsiextent/edit/{{ e.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/iscsiextent/delete/{{ e.id }}/'">Delete</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">No targets defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+                          <p class="btn">
+                    <button id="de_button" dojoType="dijit.form.Button" type="button">
+                        Add Extent 
+                        <script type="dojo/method" event="onClick" args="evt">
+                        dijit.byId("extent_file").show();
                     </script>
                     </button>
                     </p>
@@ -490,17 +524,24 @@
 </button>
 </form>
 </div>
-<div id="extent" dojoType="dijit.Dialog" title="Add New Extent">
+<div id="extent_device" dojoType="dijit.Dialog" title="Add New Extent">
 <form action="/services/global/iscsiextent/" method="post">{% csrf_token %}
-            <table>
-                {{ iscsiextent.errors }}
-                {{ iscsiextent }}
-
-                         </table>
-<button  dojoType="dijit.form.Button" type="submit">Add Extent</button>
-<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('extent').hide();">
-    Cancel
-</button>
+	<table>
+		{{ iscsiextentdevice.errors }}
+		{{ iscsiextentdevice }}
+	</table>
+	<button  dojoType="dijit.form.Button" type="submit">Add Extent</button>
+	<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('extent_device').hide();">Cancel</button>
+</form>
+</div>
+<div id="extent_file" dojoType="dijit.Dialog" title="Add New Extent">
+<form action="/services/global/iscsiextent/" method="post">{% csrf_token %}
+	<table>
+		{{ iscsiextentfile.errors }}
+		{{ iscsiextentfile }}
+	</table>
+	<button  dojoType="dijit.form.Button" type="submit">Add Extent</button>
+	<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('extent_file').hide();">Cancel</button>
 </form>
 </div>
 <div id="asctarget" dojoType="dijit.Dialog" title="Add Extent to iSCSI Target">

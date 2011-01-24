@@ -87,7 +87,9 @@ def services(request, objtype=None):
     forms_saved = forms_saved + saved
     saved, iscsitarget = helperViewEm(request, iSCSITargetForm, iSCSITarget)
     forms_saved = forms_saved + saved
-    saved, iscsiextent = helperViewEm(request, iSCSITargetExtentForm, iSCSITargetExtent)
+    saved, iscsiextentfile = helperViewEm(request, iSCSITargetFileExtentForm, iSCSITargetExtent, prefix="fe")
+    forms_saved = forms_saved + saved
+    saved, iscsiextentdevice = helperViewEm(request, iSCSITargetDeviceExtentForm, iSCSITargetExtent, prefix="de")
     forms_saved = forms_saved + saved
     saved, asctarget = helperViewEm(request, iSCSITargetToExtentForm, iSCSITargetToExtent)
     forms_saved = forms_saved + saved
@@ -97,7 +99,6 @@ def services(request, objtype=None):
     forms_saved = forms_saved + saved
     saved, iscsiportal = helperViewEm(request, iSCSITargetPortalForm, iSCSITargetPortal)
     forms_saved = forms_saved + saved
-    
 
     if request.method == 'POST':
         if forms_saved > 0:
@@ -107,7 +108,8 @@ def services(request, objtype=None):
 
     srv = Services.objects.all()
     target_list = iSCSITarget.objects.all()
-    extent_list = iSCSITargetExtent.objects.all()
+    extent_device_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
+    extent_file_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='File')
     asctarget_list = iSCSITargetToExtent.objects.all()
     target_auth_list = iSCSITargetAuthCredential.objects.all()
     auth_initiator_list = iSCSITargetAuthorizedInitiator.objects.all()
@@ -133,8 +135,11 @@ def services(request, objtype=None):
         'ldap': ldap,
         'iscsitarget': iscsitarget,
         'target_list': target_list,
-        'iscsiextent': iscsiextent,
-        'extent_list': extent_list,
+        'iscsiextentfile': iscsiextentfile,
+        'iscsiextentdevice': iscsiextentdevice,
+        'extent_file_list': extent_file_list,
+        'extent_device_list': extent_device_list,
+        'extent_file_list': extent_file_list,
         'asctarget': asctarget,
         'asctarget_list': asctarget_list,
         'target_auth': target_auth,

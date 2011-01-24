@@ -258,6 +258,11 @@ ISCSI_TARGET_TYPE_CHOICES = (
         ('Pass-thru Device', 'Pass'),
         )
 
+ISCSI_TARGET_FLAGS_CHOICES = (
+        ('rw', 'read-write'),
+        ('ro', 'read-only'),
+        )
+
 DISCOVERYAUTHMETHOD_CHOICES = (
         ('auto', 'Auto'),
         ('chap', 'CHAP'),

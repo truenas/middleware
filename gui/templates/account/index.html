@@ -59,7 +59,7 @@
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
     <div dojoType="dijit.layout.TabContainer" title="My Account"  nested="true" style="width:100%;" doLayout="false">
         <div dojoType="dijit.layout.ContentPane" title="Change Password" {% if focus_form == "passform" %} selected="true"{% endif %}>
-        <form action="/account/password_change/done/" method="post">{% csrf_token %}
+        <form action="/account/password_change/" method="post">{% csrf_token %}
             <table class="config">
                 {% for field in passform %}
                 <tr>

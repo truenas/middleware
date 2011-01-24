@@ -28,6 +28,7 @@
 
 from django.shortcuts import render_to_response                
 from freenasUI.services.models import *                         
+from freenasUI.storage.models import *
 from freenasUI.middleware.notifier import notifier
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
@@ -169,9 +170,93 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
     class Meta:
         model = iSCSITargetGlobalConfiguration
 
-class iSCSITargetExtentForm(ModelForm):
+class iSCSITargetFileExtentForm(ModelForm):
     class Meta:
         model = iSCSITargetExtent
+        exclude = ('iscsi_target_extent_type')
+    def save(self, commit=True):
+        oExtent = super(iSCSITargetFileExtentForm, self).save(commit=False)
+        oExtent.iscsi_target_extent_type = 'File'
+        if commit:
+            oExtent.save()
+        return oExtent
+
+attrs_dict = { 'class': 'required' }
+class iSCSITargetDeviceExtentForm(ModelForm):
+    iscsi_extent_disk = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label = 'Disk device')
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetDeviceExtentForm, self).__init__(*args, **kwargs)
+        self.fields['iscsi_extent_disk'].choices = self._populate_disk_choices()
+        self.fields['iscsi_extent_disk'].choices.sort()
+    # TODO: This is largely the same with disk wizard.
+    def _populate_disk_choices(self):
+        from os import popen
+        import re
+    
+        diskchoices = dict()
+    
+        # Grab disk list
+        # NOTE: This approach may fail if device nodes are not accessible.
+        pipe = popen("/usr/sbin/diskinfo ` /sbin/sysctl -n kern.disks` | /usr/bin/cut -f1,3")
+        diskinfo = pipe.read().strip().split('\n')
+        for disk in diskinfo:
+            devname, capacity = disk.split('\t')
+            capacity = int(capacity)
+            if capacity >= 1099511627776:
+                    capacity = "%.1f TiB" % (capacity / 1099511627776.0)
+            elif capacity >= 1073741824:
+                    capacity = "%.1f GiB" % (capacity / 1073741824.0)
+            elif capacity >= 1048576:
+                    capacity = "%.1f MiB" % (capacity / 1048576.0)
+            else:
+                    capacity = "%d Bytes" % (capacity)
+            diskchoices[devname] = "%s (%s)" % (devname, capacity)
+        # Exclude the root device
+        rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
+        rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
+        if rootdev_base != None:
+            try:
+                del diskchoices[rootdev_base.group(0)]
+            except:
+                pass
+        # Exclude what's already added
+        for devname in [ x['disk_disks'] for x in Disk.objects.all().values('disk_disks')]:
+            try:
+                del diskchoices[devname]
+            except:
+                pass
+        return diskchoices.items()
+    class Meta:
+        model = iSCSITargetExtent
+        exclude = ('iscsi_target_extent_type', 'iscsi_target_extent_path', 'iscsi_target_extent_filesize')
+    def save(self, commit=True):
+        oExtent = super(iSCSITargetDeviceExtentForm, self).save(commit=False)
+        oExtent.iscsi_target_extent_type = 'Disk'
+        oExtent.iscsi_target_extent_filesize = 0
+        oExtent.iscsi_target_extent_path = '/dev/' + self.cleaned_data["iscsi_extent_disk"]
+        if commit:
+            oExtent.save()
+            # Construct a corresponding volume.
+            volume_name = 'iscsi:' + self.cleaned_data["iscsi_extent_disk"]
+            volume_fstype = 'iscsi'
+
+            volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
+            volume.save()
+
+            disk_list = [ self.cleaned_data["iscsi_extent_disk"] ]
+
+            mp = MountPoint(mp_volume=volume, mp_path=volume_name, mp_options='noauto')
+            mp.save()
+
+            grp = DiskGroup(group_name= volume_name, group_type = 'raw', group_volume = volume)
+            grp.save()
+
+            diskobj = Disk(disk_name = self.cleaned_data["iscsi_extent_disk"],
+                           disk_disks = self.cleaned_data["iscsi_extent_disk"],
+                           disk_description = 'iSCSI exported disk',
+                           disk_group = grp)
+            diskobj.save()
+        return oExtent
 
 class iSCSITargetPortalForm(ModelForm):
     class Meta:

@@ -13,78 +13,6 @@
 </script>
 {% endblock %}
 
-{% block content %}
-<div dojoType="dijit.MenuBar" id="navMenu">
-
-            <div dojoType="dijit.MenuBarItem" onClick="window.location='/'" class="menu_icon dijitMenuItemSelected">
-        <img src="/freenas/media/images/ui/system.png">
-        <br />
-                <div>
-                    System 
-                </div>
-            </div>
-
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/network/'" class="menu_icon">
-        <img src="/freenas/media/images/ui/network.png">
-        <br />
-        <span>
-            Network 
-        </span>
-    </div>
-
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/storage/'" class="menu_icon ">
-        <img src="/freenas/media/images/ui/storage.png">
-        <br />
-        <span>
-            Storage 
-        </span>
-    </div>
-
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/sharing/'" class="menu_icon">
-        <img src="/freenas/media/images/ui/sharing.png">
-        <br />
-        <span>
-            Sharing
-        </span>
-    </div>
-
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/services/'" class="menu_icon">
-        <img src="/freenas/media/images/ui/services.png">
-        <br />
-        <span>
-            Services
-        </span>
-    </div>
-
-
-    {% if user.is_authenticated %}
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" class="menu_icon" style="float:right;">
-        <img src="/freenas/media/images/ui/logout.png">
-        <br />
-        <span>
-            Log Out 
-        </span>
-    </div>
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/'" class="menu_icon" style="float:right;">
-        <img src="/freenas/media/images/ui/account.png">
-        <br />
-        <span>
-            Account 
-        </span>
-    </div>
-    {% else %}
-
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" class="menu_icon" style="font-weight:bold;">
-        <img src="/freenas/media/images/ui/login.png">
-        <br />
-        <span>
-            Log In
-        </span>
-    </div>
-    {% endif %}
-</div>
-{% endblock %}
-
 {% block dojango_content %}
     <div dojoType="dijit.layout.ContentPane">
         {% include "system/submenu.html" %}
@@ -147,6 +75,7 @@
         <br />
         <br />
     </div>
+    <div dojoType="dijit.layout.TabContainer" nested="true" style="width:100%;" title="Reporting" {% if focus_form == "system" %} selected="true"{% endif %} doLayout="false">
         <div dojoType="dijit.layout.ContentPane" title="System Information" doLayout="false">
             <h3>System Information</h3>
             <br />
@@ -180,6 +109,7 @@
                     <td class="descr">{{ freenas_build }}</td>
                 </tr>
             </table>
+        </div>
     </div>
 </div>
 {% endblock %}

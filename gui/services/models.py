@@ -612,6 +612,8 @@ class iSCSITarget(models.Model):
             )
     iscsi_target_flags = models.CharField(
             max_length=120,
+            choices=ISCSI_TARGET_FLAGS_CHOICES,
+            default='rw',
             verbose_name="Target Flags",
             )
     iscsi_target_portalgroup = models.IntegerField(

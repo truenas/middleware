@@ -28,9 +28,9 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response
 import collections
 
-def helperView(request, theForm, model, url, focused_tab = "system", defaults_callback=None):
+def helperView(request, theForm, model, url, focused_tab = "system", defaults_callback=None, prefix=""):
     if request.method == 'POST':
-        form = theForm(request.POST)
+        form = theForm(request.POST, prefix=prefix)
         if form.is_valid():
             form.save()
             if model.objects.count() > 3:
@@ -48,17 +48,17 @@ def helperView(request, theForm, model, url, focused_tab = "system", defaults_ca
                 _entity = defaults_callback()
             else:
                 raise
-        form = theForm(data = _entity)
+        form = theForm(data = _entity, prefix=prefix)
     variables = RequestContext(request, {
         'focused_tab' : focused_tab,
         'form': form
     })
     return render_to_response(url, variables)
 
-def helperViewEm(request, theForm, model, defaults_callback=None):
+def helperViewEm(request, theForm, model, defaults_callback=None, prefix=""):
     data_saved = 0
     if request.method == 'POST':
-        form = theForm(request.POST)
+        form = theForm(request.POST, prefix=prefix)
         if form.is_valid():
             # TODO: test if the data is the same as what is in the database?
             form.save()
@@ -76,6 +76,6 @@ def helperViewEm(request, theForm, model, defaults_callback=None):
                 _entity = defaults_callback()
             else:
                 _entity = None
-        form = theForm(data = _entity)
+        form = theForm(data = _entity, prefix=prefix)
     return (data_saved, form)
 
