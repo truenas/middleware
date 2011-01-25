@@ -39,7 +39,7 @@ To build the system:
 
 (1) Checkout the experimental code from svn:
 
-% svn co https://freenas.svn.sourceforge.net/trunk
+% svn co https://freenas.svn.sourceforge.net/svnroot/freenas/trunk
 % cd trunk
 
 (2) Use the build script (substituting your favorite cvsup mirror)
@@ -49,8 +49,8 @@ To build the system:
 % sudo sh build/do_build.sh -b
 % sudo sh build/create_iso.sh
 
-That's it.  If you are rebuilding, just use the last line of #2.
-When updating source patches and/or ports, you may need to some
+That's it.  If you are rebuilding, just use the last two lines of
+#2.  When updating source patches and/or ports, you may need to some
 additional steps by hand.  The above is known to work on a FreeBSD
 8.1R system, FreeBSD 8-stable and has in the past worked on a
 FreeBSD-current system.
