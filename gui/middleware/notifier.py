@@ -418,7 +418,6 @@ class notifier:
 		volume = c.fetchone()
 
 		if volume[0] == 'ZFS':
-			# zfs creation needs write access to /boot/zfs.
 			self.__create_zfs_volume(c, volume_id, volume[1])
 		else:
 			self.__create_ufs_volume(c, volume_id, volume[1])
@@ -439,7 +438,6 @@ class notifier:
                 c.execute("SELECT id, vol_name FROM storage_volume WHERE vol_fstype = 'ZFS'")
                 zfs_list = c.fetchall()
 		if len(zfs_list) > 0:
-			# We have to be able to write /boot/zfs and / to create mount points.
 			for row in zfs_list:
 				z_id, z_name = row
 				self.__create_zfs_volume(c = c, z_id = z_id, z_name = z_name)
