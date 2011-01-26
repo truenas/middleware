@@ -62,8 +62,8 @@ NANO_RAM_TMPVARSIZE=$((40*1024))
 # Tmp hack for transition to lighttpd
 use_lighttpd=1
 
-NANO_IMAGES=1
-FlashDevice Sandisk 512
+NANO_IMAGES=2
+FlashDevice generic 1g
 
 . ${NANO_CFG_BASE}/common
 
