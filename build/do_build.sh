@@ -66,5 +66,16 @@ if [ `whoami` != "root" ]; then
     echo "You must be root to run this"
     exit 1
 fi
-echo tools/tools/nanobsd/nanobsd.sh $args $*
-sh tools/tools/nanobsd/nanobsd.sh $args $*
+if [ -d ${NANO_OBJ} ]; then
+	extra_args="-b"
+fi
+for i in $*; do
+	case $i in
+	-f)
+		extra_args="" ;;
+	*)	args="$args $i" ;;
+	esac
+	
+done
+echo tools/tools/nanobsd/nanobsd.sh $args $extra_args
+sh tools/tools/nanobsd/nanobsd.sh $args $extra_args
