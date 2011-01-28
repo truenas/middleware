@@ -1,0 +1,351 @@
+#!/usr/bin/env python
+
+WWW_PATH = "/usr/local/www"
+FREENAS_PATH= WWW_PATH + "/freenasUI"
+NETWORK_PATH = FREENAS_PATH + "/network"
+NOTIFIER_PATH = FREENAS_PATH + "/middleware/notifier.py"
+
+import os
+import sys
+from signal import signal, SIGINT, SIG_IGN
+import re
+
+sys.path.append(WWW_PATH)
+sys.path.append(FREENAS_PATH)
+sys.path.append(NETWORK_PATH)
+
+os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
+
+from django.db import models
+
+from freenasUI.choices import NICChoices
+from freenasUI.network import models
+from freenasUI.network.models import GlobalConfiguration, Interfaces, StaticRoute
+from freenasUI.middleware.notifier import notifier
+
+
+#
+#	I'm sure there is a better/faster way to do this ;-)
+#
+def quad_to_cidr(quad):
+	vals = { 0:True, 128:True, 192:True,
+		224:True, 240:True, 248:True,
+		252:True, 254:True, 255:True }
+	
+	count = 0
+	octets = quad.split('.')
+	for oct in octets:
+		i = 7
+		o = int(oct)
+		if vals.get(o):
+			while i >= 0:
+				if o & (1 << i):
+					count += 1
+				else:
+					return count
+				i -= 1
+
+		else:
+			return -1
+
+	return count
+
+
+#
+#	Same crappy algorithm as quad_to_cidr()
+#
+def hex_to_cidr(hex):
+	h = hex.replace("0x", "")
+	h = h.replace("0X", "")
+	h = int(h, 16)
+
+	i = 31
+	count = 0
+	while h & (1 << i):
+		count += 1
+		i -= 1
+
+	return count
+
+
+#
+#	If a value already exists, set it into the prompt.
+#
+def prompt(s, val):
+	prompt = s 
+	if val:
+		prompt += "[" + str(val) + "]"
+	prompt += ": "
+	return prompt
+
+
+#
+#	Grab IPv4 settings from database, if they exist default to them
+#	unless overridden. Check for and allow various forms for the
+#	netmask.
+#
+def configure_ipv4_interface(iface, nic):
+	ip_prompt = prompt("IPv4 Address", iface.int_ipv4address)
+	mask_prompt = prompt("IPv4 Netmask", iface.int_v4netmaskbit)
+
+	ip = mask = None
+	sys.stdout.write(ip_prompt)
+	ip = sys.stdin.readline().strip()
+	if not ip and iface.int_ipv4address:
+		ip = iface.int_ipv4address
+
+	try:
+		ip, mask = ip.split('/')
+
+	except:
+		pass
+
+	if not mask:
+		sys.stdout.write(mask_prompt)
+		mask = sys.stdin.readline().strip().lstrip('/')
+		if not mask and iface.int_v4netmaskbit:
+			mask = iface.int_v4netmaskbit
+
+	if re.match("^(\d\.){3}\d$", mask):
+		mask = quad_to_cidr(mask)
+	elif re.match("^(0[xX])?([0-9a-fA-F]){8}$", mask):
+		mask = hex_to_cidr(mask)
+	elif re.match("^(([1-9])|([12][0-9])|([3][012]))$", mask):
+		mask = int(mask, 10)
+	else:
+		return -1
+
+	iface.int_interface = nic
+	iface.int_ipv4address = ip
+	iface.int_v4netmaskbit = mask
+	iface.save()
+
+	return 0
+
+
+def configure_ipv6_interface(iface, nic):
+	ip_prompt = prompt("IPv6 Address", iface.int_ipv6address)
+	mask_prompt = prompt("IPv6 Netmask", iface.int_v6netmaskbit)
+
+	ip = mask = None
+	sys.stdout.write(ip_prompt)
+	ip = sys.stdin.readline().strip()
+	if not ip and iface.int_ipv6address:
+		ip = iface.int_ipv6address
+
+	try:
+		ip, mask = ip.split('/')
+
+	except:
+		pass
+
+	if not mask:
+		sys.stdout.write(mask_prompt)
+		mask = sys.stdin.readline().strip().lstrip('/')
+		if not mask and iface.int_v6netmask:
+			mask = iface.int_v6netmaskbit
+
+	iface.int_interface = nic
+	iface.int_ipv6address = ip
+	iface.int_v6netmaskbit = mask
+	iface.save()
+
+	return 0
+
+
+def configure_interface():
+	i = 0
+	nics = { }
+	choices = NICChoices()
+	for c in choices:
+		nics[i] = c[0]
+		print "%d) %s" % (i + 1, nics[i])
+		i += 1
+	
+	i = input()
+	nic = nics[i - 1]
+
+	iface = Interfaces.objects.filter(int_interface = nic)
+	if iface:
+		iface = iface[0]
+	else:
+		iface = Interfaces()
+
+	sys.stdout.write("Configure IPv4? ")
+	yes = sys.stdin.readline().strip()
+	if yes and (yes[0] == 'y' or yes[0] == 'Y'):
+		configure_ipv4_interface(iface, nic)
+
+	sys.stdout.write("Configure IPv6? ")
+	yes = sys.stdin.readline().strip()
+	if yes and (yes[0] == 'y' or yes[0] == 'Y'):
+		configure_ipv6_interface(iface, nic)
+
+	notify("network", "start")
+	return 0
+
+
+def configure_ipv4_default_route(gc):
+	gwprompt = prompt("IPv4 Default Route", gc.gc_ipv4gateway)
+
+	sys.stdout.write(gwprompt)
+	gateway = sys.stdin.readline().strip()
+	if gateway:
+		gc.gc_ipv4gateway = gateway 
+
+	gc.save()
+	return 0
+
+
+def configure_ipv6_default_route(gc):
+	gwprompt = prompt("IPv6 Default Route", gc.gc_ipv6gateway)
+
+	sys.stdout.write(gwprompt)
+	gateway = sys.stdin.readline().strip()
+	if gateway:
+		gc.gc_ipv6gateway = gateway 
+
+	gc.save()
+
+
+def configure_default_route():
+	gc = GlobalConfiguration.objects.all()
+	gc = gc[0]
+
+	sys.stdout.write("Configure IPv4 Default Route? ")
+	yes = sys.stdin.readline().strip()
+	if yes and (yes[0] == 'y' or yes[0] == 'Y'):
+		configure_ipv4_default_route(gc)
+
+	sys.stdout.write("Configure IPv6 Default Route? ")
+	yes = sys.stdin.readline().strip()
+	if yes and (yes[0] == 'y' or yes[0] == 'Y'):
+		configure_ipv6_default_route(gc)
+
+	notify("routing", "start")
+	return 0
+
+
+def configure_static_routes():
+	sys.stdout.write("Destination Network: ")
+	dest = sys.stdin.readline().strip()
+
+	sys.stdout.write("Gateway: ")
+	gateway = sys.stdin.readline().strip()
+
+	sys.stdout.write("Description: ")
+	desc = sys.stdin.readline().strip()
+
+	sr = StaticRoute()
+
+	if dest:
+		sr.sr_destination = dest
+	if gateway:
+		sr.sr_gateway = gateway
+	if desc:
+		sr.sr_description = desc
+
+	if dest or gateway:
+		sr.save()
+	
+	notify("routing", "start")
+	return 0
+
+
+def configure_dns():
+	ns1 = ns2 = ns3 = domain = None
+	gc = GlobalConfiguration.objects.all()
+	gc = gc[0]
+
+	domain_prompt = prompt("DNS Domain", gc.gc_domain)
+	ns1_prompt = prompt("DNS Nameserver 1", gc.gc_nameserver1)
+	ns2_prompt = prompt("DNS Nameserver 2", gc.gc_nameserver2)
+	ns3_prompt = prompt("DNS Nameserver 3", gc.gc_nameserver3)
+
+	sys.stdout.write(domain_prompt)
+	domain = sys.stdin.readline().strip()
+	if domain:
+		gc.gc_domain = domain
+
+	sys.stdout.write(ns1_prompt)
+	ns1 = sys.stdin.readline().strip()
+	if ns1:
+		gc.gc_nameserver1 = ns1
+
+	sys.stdout.write(ns2_prompt)
+	ns2 = sys.stdin.readline().strip()
+	if ns2:
+		gc.gc_nameserver2 = ns2
+
+	sys.stdout.write(ns3_prompt)
+	ns3 = sys.stdin.readline().strip()
+	if ns3:
+		gc.gc_nameserver3 = ns3
+
+	gc.save()
+
+	notify("networkgeneral", "reload")
+	return 0
+
+
+def forkexec(path, *args):
+	pid = os.fork()
+	if pid < 0:
+		sys.exit(1)
+	elif pid == 0:
+		os.execvp(path, (path,) + tuple(args))
+		os._exit(1)
+	else:
+		(cpid, status) = os.waitpid(pid, 0)
+
+	return status
+
+
+def shell():
+	return forkexec("/bin/sh")
+
+
+def reboot():
+	return forkexec("/sbin/reboot")
+
+
+def notify(what, how):
+	return forkexec("python", NOTIFIER_PATH, how, what)
+
+
+def main_menu():
+	handler = { }
+	handler[0] = configure_interface
+	handler[1] = configure_default_route
+	handler[2] = configure_static_routes
+	handler[3] = configure_dns
+	handler[4] = shell
+	handler[5] = reboot
+
+	print """
+Console setup
+-------------
+1) Configure Network Interfaces
+2) Configure Default Route
+3) Configure Static Routes
+4) Configure DNS
+5) Shell
+6) Reboot
+	"""
+
+	ch = input()
+	handler[ch - 1]()
+
+		
+#
+#	No signal handling here, it is assumed that this script
+#	will be setup in /etc/ttys, so we just exit ;-). 
+#
+if __name__ == '__main__':
+	while True:
+		main_menu()
+		try:
+			main_menu()
+		except:
+			exit(1)
+
