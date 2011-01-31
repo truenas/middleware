@@ -333,8 +333,11 @@ Console setup
 6) Reboot
 	"""
 
-	ch = input()
-	handler[ch - 1]()
+	try:
+		ch = input()
+		handler[ch - 1]()
+	except:
+		pass
 
 		
 #
