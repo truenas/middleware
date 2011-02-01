@@ -162,8 +162,13 @@ def configure_interface():
 		print "%d) %s" % (i + 1, nics[i])
 		i += 1
 	
-	i = input()
-	nic = nics[i - 1]
+	regex = "^[1-%d]$" % i
+
+	i = raw_input()
+	if re.match(regex, i):
+		nic = nics[int(i) - 1]
+	else:
+		return -1
 
 	iface = Interfaces.objects.filter(int_interface = nic)
 	if iface:
@@ -333,20 +338,19 @@ Console setup
 6) Reboot
 	"""
 
-	try:
-		ch = input()
-		handler[ch - 1]()
-	except:
-		pass
+	ch = raw_input()
+	if re.match("^[1-6]$", ch):
+		handler[int(ch) - 1]()
 
-		
+
 #
 #	No signal handling here, it is assumed that this script
 #	will be setup in /etc/ttys, so we just exit ;-). 
 #
 if __name__ == '__main__':
+	signal(SIGINT, SIG_IGN)
+
 	while True:
-		main_menu()
 		try:
 			main_menu()
 		except:
