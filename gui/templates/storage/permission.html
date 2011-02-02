@@ -1,0 +1,22 @@
+{% extends "wizard_base.html" %}
+{% block dojango_content %}
+{% if user.is_authenticated %}
+
+<div id="wiz" dojoType="dijit.Dialog" title="Change permission on mountpoint" dolayout="false">
+    <h3>Change permission</h3>
+    <p>Change permission on {{ mp.mp_path }} to:</p>
+    <form action="." method="post">{% csrf_token %}
+	<table>
+	{{ form }}
+	</table>
+	<button dojoType="dijit.form.Button" type="submit">Change</button>
+	<button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/'">Cancel</button>
+    </form>
+</div>
+{% include "storage/common/volume_list.html" %}
+{% else %}
+    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
+{% endif %}
+
+{% endblock %}
+

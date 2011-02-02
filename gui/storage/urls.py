@@ -39,12 +39,13 @@ urlpatterns = patterns('',
     (r'^$', storage),
     (r'dataset/$', dataset_create),
     (r'dataset/delete/(?P<object_id>\d+)/$', dataset_delete),
+    (r'toggle/(?P<formname>\w+)/$', servicesToggleView),
     (r'wizard/$', VolumeWizard_wrapper),
     (r'save/(?P<objtype>\w+)/$', storage),
-    (r'disks/(?P<volume_id>\d+)/$', volume_disks),
-    (r'^(?P<model_name>\w+)/delete/(?P<object_id>\d+)/$', generic_delete),
+    (r'volume/(?P<volume_id>\d+)/$', volume_disks),
+    (r'mountpoint/permission/(?P<object_id>\d+)/$', mp_permission),
+    (r'(?P<model_name>\w+)/delete/(?P<object_id>\d+)/$', generic_delete),
     (r'(?P<model_name>\w+)/edit/(?P<object_id>\d+)/$', generic_update),
-    (r'^(?P<model_url>\d+)/(?P<object_id>\d+)$', generic_detail), # detail based on URL
-    (r'toggle/(?P<formname>\w+)/$', servicesToggleView),
+    (r'(?P<model_name>\w+)/(?P<object_id>\d+)/$', generic_detail), # detail based on URL
     )
 

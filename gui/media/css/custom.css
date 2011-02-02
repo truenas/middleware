@@ -5,9 +5,6 @@
     max-height:200px;
     overflow:auto !important;
 }
-.dijitDialogCloseIcon {
-    display:none;
-}
 
 #id_int_v4netmaskbit_menu {
     max-height:200px;

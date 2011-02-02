@@ -1,0 +1,71 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-passwd
+# REQUIRE: mountcritlocal
+# BEFORE: ix-zfs
+
+. /etc/rc.subr
+
+generate_master.passwd()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT
+		bsdusr_username,
+		bsdusr_unixhash,
+		bsdusr_uid,
+		bsdgrp_gid,
+		\"\",0,0,
+		bsdusr_full_name,
+		bsdusr_home,
+		bsdusr_shell
+	FROM
+		account_bsdusers AS u
+	INNER JOIN account_bsdgroups AS g
+		ON u.bsdusr_group_id=g.id;" | tr \| : > /etc/master.passwd
+}
+
+group_membership()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT
+		bsdusr_username
+	FROM
+		account_bsdgroupmembership AS m
+	CROSS JOIN
+		account_bsdusers AS u
+		ON m.bsdgrpmember_user_id = u.id
+	WHERE
+		bsdgrpmember_group_id=$1" | tr \\n ,
+}
+
+generate_group()
+{
+	local IFS=\|
+
+	local groupname groupid
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT
+		bsdgrp_group, bsdgrp_gid
+	FROM
+		account_bsdgroups" | \
+	while read groupname groupid; do
+		echo -n "${groupname}:*:${groupid}:"
+		group_membership ${groupid} | sed -e 's/,$//g' | tr -d \\n
+		echo
+	done > /etc/group
+}
+
+generate_all()
+{
+	generate_group
+	generate_master.passwd
+	pwd_mkdb -p /etc/master.passwd
+}
+
+name="ix-passwd"
+start_cmd='generate_all'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

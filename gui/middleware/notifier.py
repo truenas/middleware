@@ -36,12 +36,12 @@ actions.
 
 import ctypes
 import syslog
-from pwd import getpwnam as ___getpwnam
 from shlex import split as shlex_split
 from subprocess import Popen, PIPE
 
 class notifier:
 	from os import system as ___system
+        from pwd import getpwnam as ___getpwnam
 	def __system(self, command):
 		syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
 		syslog.syslog(syslog.LOG_NOTICE, "Executing: " + command)
@@ -418,6 +418,7 @@ class notifier:
 		volume = c.fetchone()
 
 		if volume[0] == 'ZFS':
+			# zfs creation needs write access to /boot/zfs.
 			self.__create_zfs_volume(c, volume_id, volume[1])
 		else:
 			self.__create_ufs_volume(c, volume_id, volume[1])
@@ -438,6 +439,7 @@ class notifier:
                 c.execute("SELECT id, vol_name FROM storage_volume WHERE vol_fstype = 'ZFS'")
                 zfs_list = c.fetchall()
 		if len(zfs_list) > 0:
+			# We have to be able to write /boot/zfs and / to create mount points.
 			for row in zfs_list:
 				z_id, z_name = row
 				self.__create_zfs_volume(c = c, z_id = z_id, z_name = z_name)
@@ -473,7 +475,7 @@ class notifier:
 		The default shell is /sbin/nologin.
 
 		Returns user uid and gid"""
-		command = "/usr/sbin/pw useradd \"%s\" -h 0 -c \"%s\"" % (username, fullname)
+		command = "/usr/sbin/pw useradd \"%s\" -h 0 -c \"%s\" -m" % (username, fullname)
 		if uid >= 0:
 			command = command + " -u %d" % (uid)
 		if gid >= 0:
@@ -482,12 +484,48 @@ class notifier:
 			homedir = "/mnt/" + homedir
 		command = command + " -s \"%s\" -d \"%s\"" % (shell, homedir)
 		self.__issue_pwdchange(username, command, password)
-		user = ___getpwnam(username)
-		return (user.pw_uid, user.pw_gid)
+                smb_command = "/usr/local/bin/pdbedit -w %s" % username
+                smb_cmd = self.__pipeopen(smb_command)
+                smb_hash = smb_cmd.communicate()
+                smb_hash = smb_hash[0]
+		user = self.___getpwnam(username)
+		return (user.pw_uid, user.pw_gid, user.pw_passwd, smb_hash)
 	def user_changepassword(self, username, password):
 		"""Changes user password"""
 		command = "/usr/sbin/pw usermod \"%s\" -h 0" % (username)
 		self.__issue_pwdchange(username, command, password)
+                smb_command = "/usr/local/bin/pdbedit -w %s" % username
+                smb_cmd = self.__pipeopen(smb_command)
+                smb_hash = smb_cmd.communicate()
+                smb_hash = smb_hash[0]
+		user = self.___getpwnam(username)
+		return (user.pw_passwd, smb_hash)
+        def user_deleteuser(self, username):
+                self.__system("/usr/sbin/pw userdel \"%s\"" % (username))
+        def user_deletegroup(self, groupname):
+                self.__system("/usr/sbin/pw groupdel \"%s\"" % (groupname))
+        def user_getnextuid(self):
+		command = "/usr/sbin/pw usernext"
+                pw = self.__pipeopen(command)
+                uidgid = pw.communicate()
+                uid = uidgid[0].split(':')[0]
+                return uid
+        def user_getnextgid(self):
+		command = "/usr/sbin/pw groupnext"
+                pw = self.__pipeopen(command)
+                uidgid = pw.communicate()
+                gid = uidgid[0]
+                return gid
+        def _reload_user(self):
+		self.__system("/usr/sbin/service ix-passwd quietstart")
+		self.__system("/usr/sbin/service ix-samba quietstart")
+        def mp_change_permission(self, path='/mnt', user='root', group='wheel', mode='0755', recursive=False):
+                if recursive:
+                    flags='-R '
+                else:
+                    flags=''
+		self.__system("/usr/sbin/chown %s%s:%s %s" % (flags, user, group, path))
+		self.__system("/bin/chmod %s%s %s" % (flags, mode, path))
 
 def usage():
 	print ("Usage: %s action command" % argv[0])

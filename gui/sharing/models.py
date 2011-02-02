@@ -41,6 +41,8 @@ from datetime import datetime
 from storage.models import MountPoint as MountPoint 
 from freenasUI.choices import *
 
+mountpoint_limiter = { 'mp_path__startswith': '/mnt/' }
+
 class CIFS_Share(models.Model):
     cifs_name = models.CharField(
             max_length=120, 
@@ -51,7 +53,7 @@ class CIFS_Share(models.Model):
             verbose_name="Comment",
             blank=True,
             )
-    cifs_path = models.ForeignKey(MountPoint,
+    cifs_path = models.ForeignKey(MountPoint, limit_choices_to=mountpoint_limiter,
             verbose_name="Path")
     cifs_ro = models.BooleanField(
             verbose_name="Export Read Only")
@@ -63,6 +65,17 @@ class CIFS_Share(models.Model):
             verbose_name="Export Recylce Bin")
     cifs_showhiddenfiles = models.BooleanField(
             verbose_name="Show Hidden Files")
+    cifs_guest = models.CharField(
+            max_length=120, 
+            choices=whoChoices(), 
+            default="www", 
+            verbose_name="Guest account", 
+            help_text="Use this option to override the username ('ftp' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login."
+            )
+    cifs_guestok = models.BooleanField(
+            verbose_name="Allow guest access")
+    cifs_guestonly = models.BooleanField(
+            verbose_name="Only allow guest access")
     cifs_hostsallow = models.CharField(
             max_length=120, 
             blank=True, 
@@ -87,7 +100,6 @@ class CIFS_Share(models.Model):
     class Meta:
         verbose_name = "Windows Share"
 
-       
 class AFP_Share(models.Model):
     afp_name = models.CharField(
             max_length=120, 
@@ -99,7 +111,7 @@ class AFP_Share(models.Model):
             verbose_name="Share Comment",
             blank=True
             )
-    afp_path = models.ForeignKey(MountPoint, verbose_name="Volume Path")
+    afp_path = models.ForeignKey(MountPoint, limit_choices_to=mountpoint_limiter, verbose_name="Volume Path")
     afp_sharepw = models.CharField(
             max_length=120, 
             verbose_name="Share password",
@@ -206,7 +218,7 @@ class NFS_Share(models.Model):
             verbose_name="Comment",
             blank=True,
             )
-    nfs_path = models.ForeignKey(MountPoint, verbose_name="Volume Path")
+    nfs_path = models.ForeignKey(MountPoint, limit_choices_to=mountpoint_limiter, verbose_name="Volume Path")
     nfs_allroot = models.BooleanField(
             verbose_name="Map All Remote users as local Root",
             help_text="When enabled, map all remote access to local root.  THIS SETTING IS NOT RECOMMENDED FOR SECURITY REASONS."

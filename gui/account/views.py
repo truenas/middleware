@@ -49,15 +49,16 @@ from django.core.urlresolvers import reverse
 @csrf_protect
 @login_required
 def bsdUsersView(request, objtype = None, post_change_redirect=None, password_change_form=PasswordChangeForm):
-    if objtype != None:
+    if objtype != None and objtype != 'bsdgroup':
         focus_form = objtype
     else:
         focus_form = 'bsduser'
 
     bsduser = bsdUserCreationForm()
     passform = password_change_form(user=request.user, data=request.GET)
+    changeform = UserChangeForm(instance=request.user)
     bsdgroup = bsdGroupsForm()
-    bsduser_list = bsdUsers.objects.order_by("id").values()
+    bsduser_list = bsdUsers.objects.order_by("id").select_related().all()
     bsdgroup_list = bsdGroups.objects.order_by("id").values()
 
     #if post_change_redirect is None:
@@ -67,6 +68,10 @@ def bsdUsersView(request, objtype = None, post_change_redirect=None, password_ch
             passform = password_change_form(user=request.user, data=request.POST)
             if passform.is_valid():
                 passform.save()
+        elif objtype == 'changeform':
+            changeform = UserChangeForm(instance=request.user, data=request.POST)
+            if changeform.is_valid():
+                changeform.save()
         elif objtype == 'bsduser':
             bsduser = bsdUserCreationForm(request.POST)
             if bsduser.is_valid():
@@ -77,10 +82,10 @@ def bsdUsersView(request, objtype = None, post_change_redirect=None, password_ch
                 bsdgroup.save()
         else: 
             raise Http404()
-        return HttpResponseRedirect('/account/' + objtype + '/add/')
     variables = RequestContext(request, {
         'focused_tab' : 'account',
         'passform': passform,
+        'changeform': changeform,
         'bsduser': bsduser,
         'bsdgroup': bsdgroup,
         'bsduser_list': bsduser_list,
@@ -90,40 +95,90 @@ def bsdUsersView(request, objtype = None, post_change_redirect=None, password_ch
     return render_to_response('account/index.html', variables)
 
 @login_required
-def generic_delete(request, object_id, objtype):
+def usergroup_delete(request, object_id, objtype):
     account_model_map = {
         'bsduser':   bsdUsers,
         'bsdgroup':   bsdGroups,
     }
-    return delete_object(
-        request = request,
-        model = account_model_map[objtype],
-        post_delete_redirect = '/account/',
-        object_id = object_id, )
+    obj = account_model_map[objtype].objects.get(id=object_id)
+    if request.method == 'POST':
+        if objtype == 'bsduser':
+            notifier().user_deleteuser(obj.bsdusr_username.__str__())
+            try:
+                gobj = bsdGroups.objects.get(bsdgrp_group = obj.bsdusr_username)
+                if not gobj.bsdgrp_builtin:
+                    gobj.delete()
+            except:
+                pass
+        else:
+            notifier().user_deletegroup(obj.bsdgrp_group.__str__())
+        obj.delete()
+        notifier().reload("user")
+        return HttpResponseRedirect('/account/')
+    else:
+        c = RequestContext(request, {
+            'focused_tab' : 'account',
+            'object': obj,
+        })
+        return render_to_response('storage/dataset_confirm_delete.html', c)
 
 @login_required
 def generic_update(request, object_id, objtype):
     objtype2form = {
-            'bsduser':   ( bsdUsers, None ),
-            'bsdgroup':   ( bsdGroups, None ),
+            'bsduser':   ( bsdUsers, bsdUserChangeForm ),
+            'bsdgroup':   ( bsdGroups, bsdGroupsForm ),
             } 
     model, form_class = objtype2form[objtype]
     return update_object(
         request = request,
         model = model, form_class = form_class,
         object_id = object_id, 
-        post_save_redirect = '/account/' + objtype + '/edit/' + object_id + '/',
+        post_save_redirect = '/account/',
         )
 
 @login_required
-def reboot(request):
-    """ reboots the system """
-    notifier().restart("system")
-    return render_to_response('system/reboot.html')
+def password_update(request, object_id):
+    obj = bsdUsers.objects.get(id=object_id)
+    if request.method == 'POST':
+        f = bsdUserPasswordForm(request.POST, instance=obj)
+        if f.is_valid():
+            f.save()
+            return HttpResponseRedirect('/account/')
+    else:
+        f = bsdUserPasswordForm(instance=obj)
+    variables = RequestContext(request, {
+        'focused_tab' : 'account',
+        'form' : f,
+        'object' : obj,
+    })
+    return render_to_response('account/bsdaccount_form.html', variables)
 
 @login_required
-def shutdown(request):
-    """ shuts down the system and powers off the system """
-    notifier().stop("system")
-    return render_to_response('system/shutdown.html')
+def group2user_update(request, object_id):
+    if request.method == 'POST':
+        f = bsdGroupToUserForm(object_id, request.POST)
+        if f.is_valid():
+            f.save()
+            return HttpResponseRedirect('/account/')
+    else:
+        f = bsdGroupToUserForm(groupid=object_id)
+    variables = RequestContext(request, {
+        'focused_tab' : 'account',
+        'form' : f,
+    })
+    return render_to_response('account/bsdgroup2user_form.html', variables)
 
+@login_required
+def user2group_update(request, object_id):
+    if request.method == 'POST':
+        f = bsdUserToGroupForm(object_id, request.POST)
+        if f.is_valid():
+            f.save()
+            return HttpResponseRedirect('/account/')
+    else:
+        f = bsdUserToGroupForm(userid=object_id)
+    variables = RequestContext(request, {
+        'focused_tab' : 'account',
+        'form' : f,
+    })
+    return render_to_response('account/bsdgroup2user_form.html', variables)

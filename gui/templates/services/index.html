@@ -6,9 +6,111 @@
         obj.src = '/services/toggle/' + obj.name + '/' + Date();
     }
 </script>
+<script type="text/javascript">
+      var  cifsDlg = function () {
+          dijit.byId("cifs").show();
+      }
+      var  afpDlg = function () {
+          dijit.byId("afp").show();
+      }
+      var  nfsDlg = function () {
+          dijit.byId("nfs").show();
+      }
+      var  iscsiDlg = function () {
+          dijit.byId("istgtglobal").show();
+      }
+      var  snmpDlg = function () {
+          dijit.byId("snmp").show();
+      }
+      var  ftpDlg = function () {
+          dijit.byId("cifs").show();
+      }
+      var  tftpDlg = function () {
+          dijit.byId("tftp").show();
+      }
+      var  sshDlg = function () {
+          dijit.byId("ssh").show();
+      }
+      var  activedirectoryDlg = function () {
+          dijit.byId("activedirectory").show();
+      }
+      var  ldapDlg = function () {
+          dijit.byId("ldap").show();
+      }
+</script>
+
 {% endblock %}
 {% block dojango_content %}
 {% if user.is_authenticated %}
+
+{% if focus_form == 'cifs' %}
+<body onLoad="cifsDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'afp' %}
+<body onLoad="afpDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'nfs' %}
+<body onLoad="nfsDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'istgtglobal' %}
+<body onLoad="iscsiDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'iscsitarget' %}
+<body onLoad="iscsiDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'iscsiextentfile' %}
+<body onLoad="iscsiDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'iscsiextentdevice' %}
+<body onLoad="iscsiDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'asctarget' %}
+<body onLoad="iscsiDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'target_auth' %}
+<body onLoad="iscsiDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'auth_initiator' %}
+<body onLoad="iscsiDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'iscsiportal' %}
+<body onLoad="iscsiDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'snmp' %}
+<body onLoad="snmpDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'ftp' %}
+<body onLoad="ftpDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'tftp' %}
+<body onLoad="tftpDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'ssh' %}
+<body onLoad="sshDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'activedirectory' %}
+<body onLoad="activedirectoryDlg();">
+{% else %}
+{% endif %}
+{% if focus_form == 'ldap' %}
+<body onLoad="ldapDlg();">
+{% else %}
+{% endif %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
     <div dojoType="dijit.layout.ContentPane" title="Services" doLayout="false">
         <table class="srv">
@@ -45,19 +147,7 @@
                     <img id="nfs_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('nfs').show();" title="NFS Settings">
                 </td>
             </tr>
-          <!--  <tr>
-                <td>
-                    <strong>Unison - Replication</strong>
-                </td>
-                <td>
-		    <img id="unison_toggle" name="unison_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "unison" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-                </td>
-                <td>
-                    <img id="unison_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('unison').show();" title="Unison Settings">
-                </td>
-            </tr>
-            -->
-           <tr>
+            <tr>
                 <td>
                     <strong>iSCSI</strong>
                 </td>
@@ -68,20 +158,7 @@
                     <img id="istgt_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('istgtglobal').show();" title="ISCSI Settings">
                 </td>
             </tr>
-          
-           <!-- <tr>
-                <td>
-                    <strong>Dynamic DNS</strong>
-                </td>
-                <td>
-		    <img id="dyndns_toggle" name="dyndns_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "dyndns" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-                </td>
-                <td>
-                    <img id="dyndns_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('dyndns').show();" title="Dynamic DNS Settings">
-                </td>
-            </tr>
-            -->
-           <tr>
+            <tr>
                 <td>
                     <strong>SNMP</strong>
                 </td>
@@ -92,42 +169,6 @@
                     <img id="snmp_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('snmp').show();" title="SNMP Settings">
                 </td>
             </tr> 
-          <!--  <tr>
-                <td>
-                    <strong>UPS</strong>
-                </td>
-                <td>
-		    <img id="ups_toggle" name="ups_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ups" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-                </td>
-                <td>
-                    <img id="ups_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('ups').show();" title="UPS Settings">
-                </td>
-            </tr>
-            -->
-          <!--  <tr>
-                <td>
-                    <strong>Bit Torrent</strong>
-                </td>
-                <td>
-		    <img id="bt_toggle" name="bt_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "bt" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-                </td>
-                <td>
-                    <img id="bt_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('bt').show();" title="Bit Torrent Settings">
-                </td>
-            </tr>
-            -->
-         <!--   <tr>
-                <td>
-                    <strong>Web Server</strong>
-                </td>
-                <td>
-		    <img id="httpd_toggle" name="httpd_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "httpd" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
-                </td>
-                <td>
-                    <img id="httpd_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('httpd').show();" title="Web Server Settings">
-                </td>
-            </tr>
-            -->
             <tr>
                 <td>
                     <strong>FTP</strong>
@@ -186,47 +227,47 @@
         </table>
 </div>
 <div id="cifs" dojoType="dijit.Dialog" title="Windows - CIFS/SAMBA Shares">
-<form action="/services/" method="post">{% csrf_token %}
+<form action="/services/global/cifs/" method="post">{% csrf_token %}
                     <table>
                         {{ cifs.errors }}
                         {{ cifs }}
                                    </table>
 <button dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('cifs').hide();">
-    Cancel
+    Close
 </button>
 
 </form>
     </div>
 <div id="afp" dojoType="dijit.Dialog" title="Apple - AFP Shares">
-<form action="/services/" method="post">{% csrf_token %}
+<form action="/services/global/afp/" method="post">{% csrf_token %}
             <table>
                 {{ afp.errors }}
                 {{ afp }}
             </table>
 <button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('afp').hide();">
-    Cancel
+    Close
 </button>
 </form>
         </div>
           
 <div id="nfs" dojoType="dijit.Dialog" title="UNIX - NFS Shares">
-<form action="/services/" method="post">{% csrf_token %}
+<form action="/services/global/nfs/" method="post">{% csrf_token %}
      <table>
          {{ nfs.errors }}
          {{ nfs }}
                      </table>
 <button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('nfs').hide();">
-    Cancel
+    Close
 </button>
 </form>
         </div>
 
 
 <div id="unison" dojoType="dijit.Dialog" title="Unison - File Replication">
-<form action="/services/" method="post">{% csrf_token %}
+<form action="/services/global/unison/" method="post">{% csrf_token %}
             <table>
                 {{ unison.errors }}
                 {{ unison }}
@@ -234,7 +275,7 @@
                         </table>
 <button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('unison').hide();">
-    Cancel
+    Close
 </button>
 </form>
 </div>
@@ -245,7 +286,7 @@
    <div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="False">
     <div dojoType="dijit.layout.ContentPane" title="Global Settings" doLayout="False">
 
-<form action="/services/" method="post">{% csrf_token %}
+<form action="/services/global/istgtglobal/" method="post">{% csrf_token %}
             <table>
                 {{ istgtglobal.errors }}
                 {{ istgtglobal }}
@@ -294,6 +335,7 @@
 		            <td>Target</td>
 		            <td>Alias</td>
 		            <td>Path</td>
+		            <td>Actions</td>
 			</tr>
 		        </thead>
                 {% for e in extent_device_list %}
@@ -308,7 +350,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="9">No targets defined</td>
+                    <td colspan="4">No extents defined</td>
                 </tr>
                 {% endfor %}
                 </table>
@@ -328,6 +370,7 @@
 		            <td>Target</td>
 		            <td>Alias</td>
 		            <td>Path</td>
+		            <td>Actions</td>
 			</tr>
 		        </thead>
                 {% for e in extent_file_list %}
@@ -342,7 +385,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="9">No targets defined</td>
+                    <td colspan="4">No extents defined</td>
                 </tr>
                 {% endfor %}
                 </table>
@@ -395,19 +438,15 @@
 			<tr>
 		            <td>Tag</td>
 		            <td>User</td>
-		            <td>Secret</td>
 		            <td>Peer</td>
-		            <td>Peer Secret</td>
-		            <td></td>
+		            <td>Actions</td>
 			</tr>
 		        </thead>
                 {% for ta in target_auth_list %}
                 <tr class="{% cycle 'odd' 'even' %}" id="{{ ta.id }}">
                     <td>{{ ta.iscsi_target_auth_tag }}</td>
                     <td>{{ ta.iscsi_target_auth_user }}</td>
-                    <td>{{ ta.iscsi_target_auth_secret }}</td>
                     <td>{{ ta.iscsi_target_auth_peeruser }}</td>
-                    <td>{{ ta.iscsi_target_auth_peersecret }}</td>
                     <td>
                         <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/target_auth/edit/{{ ta.id }}/'">Edit</button>
                         <button dojoType="dijit.form.Button" type="button" onClick="window.location='/services/target_auth/delete/{{ ta.id }}/'">Delete</button>
@@ -415,7 +454,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="9">No targets defined</td>
+                    <td colspan="4">No authentication credential defined</td>
                 </tr>
                 {% endfor %}
                 </table>
@@ -520,28 +559,28 @@
                          </table>
 <button  dojoType="dijit.form.Button" type="submit">Add Target</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('target').hide();">
-    Cancel
+    Close
 </button>
 </form>
 </div>
 <div id="extent_device" dojoType="dijit.Dialog" title="Add New Extent">
-<form action="/services/global/iscsiextent/" method="post">{% csrf_token %}
+<form action="/services/global/iscsiextentdevice/" method="post">{% csrf_token %}
 	<table>
 		{{ iscsiextentdevice.errors }}
 		{{ iscsiextentdevice }}
 	</table>
 	<button  dojoType="dijit.form.Button" type="submit">Add Extent</button>
-	<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('extent_device').hide();">Cancel</button>
+	<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('extent_device').hide();">Close</button>
 </form>
 </div>
 <div id="extent_file" dojoType="dijit.Dialog" title="Add New Extent">
-<form action="/services/global/iscsiextent/" method="post">{% csrf_token %}
+<form action="/services/global/iscsiextentfile/" method="post">{% csrf_token %}
 	<table>
 		{{ iscsiextentfile.errors }}
 		{{ iscsiextentfile }}
 	</table>
 	<button  dojoType="dijit.form.Button" type="submit">Add Extent</button>
-	<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('extent_file').hide();">Cancel</button>
+	<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('extent_file').hide();">Close</button>
 </form>
 </div>
 <div id="asctarget" dojoType="dijit.Dialog" title="Add Extent to iSCSI Target">
@@ -552,7 +591,7 @@
             </table>
 <button  dojoType="dijit.form.Button" type="submit">Add Extent to Target</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('asctarget').hide();">
-    Cancel
+    Close
 </button>
 </form>
 </div>
@@ -565,12 +604,12 @@
                          </table>
 <button  dojoType="dijit.form.Button" type="submit">Add Target</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('target_auth').hide();">
-    Cancel
+    Close
 </button>
 </form>
 </div>
 <div id="initiator_access" dojoType="dijit.Dialog" title="Access">
-<form action="/services/global/initiator_access/" method="post">{% csrf_token %}
+<form action="/services/global/auth_initiator/" method="post">{% csrf_token %}
             <table>
                 {{ auth_initiator.errors }}
                 {{ auth_initiator }}
@@ -578,7 +617,7 @@
                          </table>
 <button  dojoType="dijit.form.Button" type="submit">Add Access</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('initiator_access').hide();">
-    Cancel
+    Close
 </button>
 </form>
 </div>
@@ -592,17 +631,13 @@
                          </table>
 <button  dojoType="dijit.form.Button" type="submit">Add Portal</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('portal').hide();">
-    Cancel
+    Close
 </button>
 </form>
 </div>
 
-
-
-
-
 <div id="dyndns" dojoType="dijit.Dialog" title="Dynamic DNS">
-<form action="/services/" method="post">{% csrf_token %}
+<form action="/services/global/dynamicdns/" method="post">{% csrf_token %}
             <table>
                 {{ dynamicdns.errors }}
                 {{ dynamicdns }}
@@ -610,13 +645,13 @@
                          </table>
 <button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('dyndns').hide();">
-    Cancel
+    Close
 </button>
 </form>
 </div>
 
 <div id="snmp" dojoType="dijit.Dialog" title="SNMP">
-<form action="/services/" method="post">{% csrf_token %}
+<form action="/services/global/snmp/" method="post">{% csrf_token %}
             <table>
                 {{ snmp.errors }}
                 {{ snmp }}
@@ -624,13 +659,13 @@
                          </table>
 <button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('snmp').hide();">
-    Cancel
+    Close
 </button>
 </form>
 </div>
 
 <div id="ups" dojoType="dijit.Dialog" title="UPS">
-<form action="/services/" method="post">{% csrf_token %}
+<form action="/services/global/ups/" method="post">{% csrf_token %}
    <table>
        {{ ups.errors }}
        {{ ups }}
@@ -638,68 +673,39 @@
                          </table>
 <button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('ups').hide();">
-    Cancel
+    Close
 </button>
 </form>
 </div>
-
-<div id="bt" dojoType="dijit.Dialog" title="Bit Torrent">
-<form action="/services/" method="post">{% csrf_token %}
-  <table>
-      {{ bittorrent.errors }}
-      {{ bittorrent }}
-
-                        </table>
-<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
-<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('bt').hide();">
-    Cancel
-</button>
-</form>
-</div>
-
-<div id="httpd" dojoType="dijit.Dialog" title="Web Server">
-<form action="/services/" method="post">{% csrf_token %}
-          <table>
-              {{ webserver.errors }}
-              {{ webserver }}
-    
-                        </table>
-<button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
-<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('httpd').hide();">
-    Cancel
-</button>
-</form>
-</div>
-
 
 <div id="ftp" dojoType="dijit.Dialog" title="FTP">
-<form action="/services/" method="post">{% csrf_token %}
+<form action="/services/global/ftp/" method="post">{% csrf_token %}
             <table>
                 {{ ftp.errors }}
                 {{ ftp }}
             </table>
 <button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('ftp').hide();">
-    Cancel
+    Close
 </button>
 </form>
 </div>
 
 <div id="tftp" dojoType="dijit.Dialog" title="TFTP">
-<form action="/services/" method="post">{% csrf_token %}
+<form action="/services/global/tftp/" method="post">{% csrf_token %}
             <table>
                 {{ tftp.errors }}
                 {{ tftp }}
               </table>
 <button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('tftp').hide();">
-    Cancel
+    Close
 </button>
 </form>
 </div>
 
 <div id="ssh" dojoType="dijit.Dialog" title="SSH">
-<form action="/services/" method="post">{% csrf_token %}
+<form action="/services/global/ssh/" method="post">{% csrf_token %}
             <table>
                 {{ ssh.errors }}
                 {{ ssh }}
@@ -707,13 +713,13 @@
                           </table>
 <button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('ssh').hide();">
-    Cancel
+    Close
 </button>
 </form>
 </div>
 
 <div id="ad" dojoType="dijit.Dialog" title="Active Directory">
-<form action="/services/" method="post">{% csrf_token %}
+<form action="/services/global/activedirectory/" method="post">{% csrf_token %}
             <table>
                 {{ activedirectory.errors }}
                 {{ activedirectory }}
@@ -721,13 +727,13 @@
                           </table>
 <button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('ad').hide();">
-    Cancel
+    Close
 </button>
 </form>
 </div>
 
 <div id="ldap" dojoType="dijit.Dialog" title="LDAP">
-<form action="/services/" method="post">{% csrf_token %}
+<form action="/services/global/ldap/" method="post">{% csrf_token %}
             <table>
                 {{ ldap.errors }}
                 {{ ldap }}
@@ -735,7 +741,7 @@
                           </table>
 <button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('ldap').hide();">
-    Cancel
+    Close
 </button>
 </form>
 </div>

@@ -164,6 +164,9 @@ disk_is_freenas()
         cp /tmp/junk/freenas-v1.db /tmp/freenas-v1.db
         _rv=0
     fi
+    if [ -f /tmp/junk/rrd_dir.tar.bz2 ]; then
+        cp /tmp/junk/rrd_dir.tar.bz2 /tmp/
+    fi
     umount /tmp/junk
     if [ $_rv -eq 0 ]; then
 	mount /dev/${_disk}s1a /tmp/junk
@@ -248,6 +251,9 @@ menu_install()
         mount /dev/${_disk}s4 /tmp/junk
         ls /tmp/junk > /dev/null
         cp /tmp/freenas-v1.db /tmp/junk
+        if [ -f /tmp/rrd_dir.tar.bz2 ]; then
+            cp /tmp/rrd_dir.tar.bz2 /tmp/junk/
+        fi
         cp /dev/null /tmp/junk/need-update
         umount /tmp/junk
         mount /dev/${_disk}s1a /tmp/junk

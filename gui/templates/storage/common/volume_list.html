@@ -26,9 +26,10 @@
 			{% if m.mp_ischild %}
 			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/dataset/delete/{{ m.id }}/'">Remove dataset</button>
 			{% else %}
-			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/volumes/delete/{{ m.mp_volume.id  }}/'">Delete Volume</button>
-			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/disks/{{ m.mp_volume.id }}/'">View Disks</button>
+			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/volume/delete/{{ m.mp_volume.id  }}/'">Delete Volume</button>
+			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/volume/{{ m.mp_volume.id }}/'">View Disks</button>
 			{% endif %}
+			<button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/mountpoint/permission/{{ m.id }}/'">Change permissions</button>
 		    </td>
 		</tr>
 		{% empty %}

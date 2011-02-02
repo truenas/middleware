@@ -50,7 +50,7 @@
 {% endblock %} 
 {% block dojango_content %}
 {% if user.is_authenticated %}
-<div dojoType="dijit.layout.TabContainer" style="width:100%;float:left;padding-right:16px;" doLayout="false">
+<div dojoType="dijit.layout.TabContainer" doLayout="false">
     <div dojoType="dijit.layout.ContentPane" title="Disks in {{ volume.vol_fstype }} volume {{ volume.vol_name }}">
         <h5>
                   {% if disk_list %}
@@ -75,7 +75,7 @@
                         {{ d.disk_description }}
                     </td>
                     <td>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/disks/edit/{{ d.id }}/'">Edit</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/storage/disk/edit/{{ d.id }}/'">Edit</button>
                     </td>
                 </tr>
                 {% empty %}

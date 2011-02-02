@@ -27,15 +27,17 @@
 #####################################################################
 
 from django.shortcuts import render_to_response                
+from django.core.exceptions import ObjectDoesNotExist
 from freenasUI.services.models import *                         
 from freenasUI.storage.models import *
 from freenasUI.middleware.notifier import notifier
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode 
-from dojango.forms.models import ModelForm as ModelForm
+from freenasUI.common.forms import ModelForm
+from freenasUI.common.forms import Form
+from django import forms
 from dojango.forms import fields, widgets
-from dojango import forms
 
 """ Services """
 
@@ -85,14 +87,6 @@ class SSHForm(ModelForm):
     class Meta:
         model = SSH 
 
-class rsyncjobForm(ModelForm):
-    class Meta:
-        model = rsyncjob
-
-class UnisonForm(ModelForm):
-    class Meta:
-        model = Unison
-
 class iSCSITargetForm(ModelForm):
     class Meta:
         model = iSCSITarget
@@ -108,14 +102,6 @@ class SNMPForm(ModelForm):
 class UPSForm(ModelForm):
     class Meta:
         model = UPS
-
-class WebserverForm(ModelForm):
-    class Meta:
-        model = Webserver
-
-class BitTorrentForm(ModelForm):
-    class Meta:
-        model = BitTorrent
 
 class ActiveDirectoryForm(ModelForm):
     def save(self):
@@ -165,10 +151,22 @@ class iSCSITargetAuthCredentialForm(ModelForm):
 class iSCSITargetToExtentForm(ModelForm):
     class Meta:
         model = iSCSITargetToExtent
+    def clean_iscsi_target_lun(self):
+        try:
+            obj = iSCSITargetToExtent.objects.get(iscsi_target=self.cleaned_data.get('iscsi_target'),
+                                                  iscsi_target_lun=self.cleaned_data.get('iscsi_target_lun'))
+            raise forms.ValidationError("LUN already exists in the same target.")
+        except ObjectDoesNotExist:
+            return self.cleaned_data.get('iscsi_target_lun')
 
 class iSCSITargetGlobalConfigurationForm(ModelForm):
     class Meta:
         model = iSCSITargetGlobalConfiguration
+
+class iSCSITargeExtentEditForm(ModelForm):
+    class Meta:
+        model = iSCSITargetExtent
+        exclude = ('iscsi_target_extent_type', 'iscsi_target_extent_path',)
 
 class iSCSITargetFileExtentForm(ModelForm):
     class Meta:

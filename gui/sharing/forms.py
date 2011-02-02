@@ -26,14 +26,15 @@
 # $FreeBSD$
 #####################################################################
 
-from django.forms import ModelForm                             
 from django.shortcuts import render_to_response                
 from freenasUI.sharing.models import *                         
 from freenasUI.middleware.notifier import notifier
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode 
-from dojango.forms.models import ModelForm as ModelForm
+from freenasUI.common.forms import ModelForm
+from freenasUI.common.forms import Form
+from django import forms
 from dojango.forms import fields, widgets 
 from dojango.forms.fields import BooleanField 
 

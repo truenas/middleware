@@ -8,8 +8,8 @@
 +	do
 +		if [ -f /etc/ssh/${i} ] ; then
 +			_tmp=`cat /etc/ssh/${i} | /usr/local/bin/base64`
-+			table=`echo ${i} | tr "." "_"`
-+			cmd="UPDATE services_ssh SET '${table}' = '${_tmp}' WHERE id = 1;"
++			column=`echo ${i} | tr "." "_"`
++			cmd="UPDATE services_ssh SET '${column}' = '${_tmp}' WHERE id = (SELECT id FROM services_ssh ORDER BY id LIMIT 1);"
 +			echo ${cmd} | ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG}
 +		fi
 +	done
@@ -20,8 +20,8 @@
  {
 +	for i in "ssh_host_key" "ssh_host_key.pub" "ssh_host_dsa_key" "ssh_host_dsa_key.pub" "ssh_host_rsa_key" "ssh_host_rsa_key.pub"
 +	do
-+		table=`echo ${i} | tr "." "_"`
-+		_tmp=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${table} from services_ssh"`
++		column=`echo ${i} | tr "." "_"`
++		_tmp=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${column} from services_ssh"`
 +		_tmpx=`echo ${_tmp} | tr '\n' '1'`
 +		if ! [ "${_tmpx}" = "1" ] ; then
 +			echo ${_tmp} | /usr/local/bin/base64 -d > /etc/ssh/${i}

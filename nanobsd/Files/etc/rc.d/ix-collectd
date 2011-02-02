@@ -1,0 +1,83 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-collectd
+# REQUIRE: var
+# BEFORE: collectd
+
+. /etc/rc.subr
+
+generate_collectd()
+{
+    if [ -f "/data/rrd_dir.tar.bz2" ]; then
+        if [ -d "/var/db" ]; then
+            (cd /var/db && tar jxf /data/rrd_dir.tar.bz2)
+            /usr/local/bin/python /root/graph.py
+        fi
+    fi
+
+    cfg="/usr/local/etc/collectd.conf"
+    cat << EOF > $cfg
+Hostname "localhost"
+FQDNLookup true
+BaseDir "/var/db/collectd"
+PIDFile "/var/run/collectd.pid"
+PluginDir "/usr/local/lib/collectd"
+LoadPlugin syslog
+LoadPlugin logfile
+
+<Plugin "logfile">
+    LogLevel info
+    File STDOUT
+    Timestamp true
+</Plugin>
+
+<Plugin "syslog">
+    LogLevel info
+</Plugin>
+
+LoadPlugin cpu
+LoadPlugin df
+LoadPlugin interface
+LoadPlugin load
+LoadPlugin memory
+LoadPlugin network
+LoadPlugin processes
+LoadPlugin rrdtool
+LoadPlugin swap
+LoadPlugin uptime
+
+<Plugin "df">
+    Mountpoint "/"
+    Mountpoint "/dev"
+    Mountpoint "/etc"
+    Mountpoint "/var"
+    Mountpoint "/mnt"
+    Mountpoint "/data"
+    IgnoreSelected true
+</Plugin>
+
+<Plugin "interface">
+    Interface "lo0"
+    Interface "plip0"
+    IgnoreSelected true
+</Plugin>
+
+<Plugin "rrdtool">
+    DataDir "/var/db/collectd/rrd"
+    CacheTimeout 120
+    CacheFlush 900
+</Plugin>
+EOF
+}
+
+
+
+name="ix-collectd"
+start_cmd='generate_collectd'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

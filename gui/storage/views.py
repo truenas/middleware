@@ -41,7 +41,6 @@ from django.http import Http404
 from django.views.generic.list_detail import object_detail, object_list
 from django.views.generic.create_update import update_object, delete_object
 from freenasUI.middleware.notifier import notifier
-from freenasUI.common.helperview import helperViewEm
 from django.core import serializers
 import os, commands
 
@@ -130,6 +129,26 @@ def dataset_create(request):
     return render_to_response('storage/datasets.html', variables)
 
 @login_required
+def mp_permission(request, object_id):
+    mp = MountPoint.objects.get(id = object_id)
+    mp_list = MountPoint.objects.select_related().all()
+    if request.method == 'POST':
+        form = MountPointAccessForm(request.POST)
+        if form.is_valid():
+            mp_path=mp.mp_path.__str__()
+            form.commit(path=mp_path)
+            return HttpResponseRedirect('/storage/')
+    else:
+        form = MountPointAccessForm()
+    variables = RequestContext(request, {
+        'focused_tab' : 'storage',
+        'mp': mp,
+        'mp_list': mp_list,
+        'form': form,
+    })
+    return render_to_response('storage/permission.html', variables)
+
+@login_required
 def dataset_delete(request, object_id):
     obj = MountPoint.objects.get(id=object_id)
     if request.method == 'POST':
@@ -144,30 +163,31 @@ def dataset_delete(request, object_id):
         return render_to_response('storage/dataset_confirm_delete.html', c)
 
 @login_required
-def generic_detail(object_id, model_url):
-    if model_url == "volume":
-        return object_detail(
-                object_id,
-                queryset = Volume.objects.all(),
-                )
-    elif model_url == "diskgroup":
-        return object_detail(
-                object_id,
-                queryset = DiskGroup.objects.all(),
-                )
-    elif model_url == "disk":
-        return object_detail(
-                object_id,
-                queryset = Disk.objects.all(),
-                )
+def generic_detail(request, object_id, model_name):
+    storage_name_model_map = {
+        'disk':		Disk,
+        'diskgroup':	DiskGroup,
+        'volume':	Volume,
+    }
+    model = storage_name_model_map[model_name]
+    return object_detail(request, queryset=model.objects.all(), object_id=object_id)
 
 @login_required
 def generic_delete(request, object_id, model_name):
 	storage_name_model_map = {
-		'disks':	Disk,
-		'groups':	DiskGroup,
-		'volumes':	Volume,
+		'disk':	Disk,
+		'group':	DiskGroup,
+		'volume':	Volume,
 	}
+        # TODO: Extend delete_object to add a callback to do this
+        # TODO: Recursively delete file extents as well
+        if request.method == 'POST' and model_name == 'volumes':
+            vol = Volume.objects.get(id = object_id)
+            if vol.vol_fstype == 'iscsi':
+                from freenasUI.services.models import *
+                diskdev = u'/dev/' + vol.vol_name[6:]
+                ist = iSCSITargetExtent.objects.get(iscsi_target_extent_path = diskdev)
+                ist.delete()
 	return delete_object(
 		request = request,
 		model = storage_name_model_map[model_name],
@@ -177,7 +197,7 @@ def generic_delete(request, object_id, model_name):
 @login_required
 def generic_update(request, object_id, model_name):
         model_name_to_model_and_form_map = {
-		'disks':	( Disk, DiskFormPartial ),
+		'disk':	( Disk, DiskFormPartial ),
 	}
 	model, form_class = model_name_to_model_and_form_map[model_name]
 	return update_object(

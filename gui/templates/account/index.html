@@ -81,6 +81,29 @@
             <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Change Admin Password</button>
         </form>
         </div>
+        <div dojoType="dijit.layout.ContentPane" title="Change Admin User" {% if focus_form == "changeform" %} selected="true"{% endif %}>
+        <form action="/account/admin/changeform/" method="post">{% csrf_token %}
+            <table class="config">
+                {% for field in changeform %}
+                <tr>
+                    <td>
+                        <label for="{{ field.auto_id }}_label">
+                            {% if field.field.required %}
+                                <span class="required">{{ field.label }}</span>
+                            {% else %}
+                                {{ field.label }}
+                            {% endif %}
+                        </label>
+                    </td>
+                    <td>
+                        {{ field }}
+                    </td>
+                </tr>
+            {% endfor %}
+            </table>
+            <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Change Admin User</button>
+        </form>
+        </div>
     </div>
     <div dojoType="dijit.layout.TabContainer" title="User Management"  nested="true" style="width:100%;" doLayout="false" {% if focus_form == "bsduser" %} selected="true"{% endif %}>
         <div dojoType="dijit.layout.ContentPane" title="Users">
@@ -100,6 +123,7 @@
 	            <td>Group</td>
 	            <td>Home</td>
 	            <td>Shell</td>
+	            <td>Password</td>
 	            <td>Modify</td>
 	            <td>Remove</td>
 	        </thead>
@@ -113,7 +137,7 @@
                         {{ u.bsdusr_username }}
                     </td>
                     <td>
-                        {{ u.bsdusr_gid.bsdgrp_group }}
+                        {{ u.bsdusr_group.bsdgrp_group }}
                     </td>
                     <td>
                         {{ u.bsdusr_home }}
@@ -122,10 +146,18 @@
                         {{ u.bsdusr_shell }}
                     </td>
                     <td>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsduser/edit/{{ u.id  }}/'">Modify User</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsdpasswd/edit/{{ u.id  }}/'">Change Password</button>
                     </td>
                     <td>
+			{% if not u.bsdusr_builtin %}
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsduser/edit/{{ u.id  }}/'">Modify User</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsduser/auxgroup/{{ u.id  }}/'">Auxilary Groups</button>
+			{% endif %}
+                    </td>
+                    <td>
+			{% if not u.bsdusr_builtin %}
                         <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsduser/delete/{{ u.id }}/'">Remove User</button>
+			{% endif %}
                     </td>
                 </tr>
                 {% empty %}
@@ -153,6 +185,7 @@
 	            <thead class="ghead">
                 <td>ID</td>
 	            <td>Group</td>
+	            <td>Members</td>
 	            <td>Modify</td>
 	            <td>Remove</td>
 	        </thead>
@@ -166,10 +199,17 @@
                         {{ g.bsdgrp_group }}
                     </td>
                     <td>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsdgroup/edit/{{ g.id }}/'">Modify Group</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsdgroup/members/{{ g.id }}/'">Members</button>
                     </td>
                     <td>
+			{% if not g.bsdgrp_builtin %}
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsdgroup/edit/{{ g.id }}/'">Modify Group</button>
+			{% endif %}
+                    </td>
+                    <td>
+			{% if not g.bsdgrp_builtin %}
                         <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsdgroup/delete/{{ g.id  }}/'">Delete Group</button>
+			{% endif %}
                     </td>
                 </tr>
                 {% empty %}

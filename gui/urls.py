@@ -29,9 +29,7 @@
 from django.conf.urls.defaults import *
 from django.contrib import admin
 from freenasUI.system.views import index 
-#import django_nav
-#django_nav.autodiscover()
-#admin.autodiscover()
+from django.conf import settings
 
 urlpatterns = patterns('',
     ('^$', index),
@@ -40,19 +38,18 @@ urlpatterns = patterns('',
         {'document_root': '/var/db/graphs/'}),
     (r'^media/(?P<path>.*)',
         'django.views.static.serve',
-        {'document_root': '/usr/local/www/freenasUI/media'}),
+        {'document_root': settings.MEDIA_ROOT}),
     (r'^freenas/media/(?P<path>.*)$',
         'django.views.static.serve',
-        {'document_root': '/usr/local/www/freenasUI/media'}),
+        {'document_root': settings.MEDIA_ROOT}),
 # Not sure why I need the this entry, but the last one works for James..
     (r'^dojango/(?P<path>.*)$',
         'django.views.static.serve',
-        {'document_root': '/usr/local/www/freenasUI/dojango'}),
+        {'document_root': settings.MEDIA_ROOT+'/../dojango'}),
     (r'^account/', include('account.urls')),
     (r'^system/', include('system.urls')),
     (r'^network/', include('network.urls')),
     (r'^storage/', include('storage.urls')),
     (r'^sharing/', include('sharing.urls')),
     (r'^services/', include('services.urls')),
-#    (r'^profiles/', include('profiles.urls')),
     )

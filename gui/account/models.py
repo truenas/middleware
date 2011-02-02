@@ -35,8 +35,12 @@ class bsdGroups(models.Model):
             verbose_name="Group ID"
             )
     bsdgrp_group = models.CharField(
+            unique = True,
             max_length=120,
-            verbose_name="Group"
+            verbose_name="Group Name"
+            )
+    bsdgrp_builtin = models.BooleanField(
+            default=False,
             )
     class Meta:
         verbose_name = "Group"
@@ -52,15 +56,24 @@ class bsdUsers(models.Model):
     bsdusr_username = models.CharField(
             max_length=30,
             unique=True,
+            default='User &',
             verbose_name="Username"
             )
-    bsdusr_password = models.CharField(
+    bsdusr_unixhash = models.CharField(
             max_length=128,
-            verbose_name="Password"
+            blank=True,
+            default='*',
+            verbose_name="Hashed UNIX password"
             )
-    bsdusr_gid = models.ManyToManyField(
-            bsdGroups, 
-            verbose_name="Group ID"
+    bsdusr_smbhash = models.CharField(
+            max_length=128,
+            blank=True,
+            default='*',
+            verbose_name="Hashed SMB password"
+            )
+    bsdusr_group = models.ForeignKey(
+            bsdGroups,
+            verbose_name="Primary Group ID"
             )
     bsdusr_home = models.CharField(
             max_length=120,
@@ -68,49 +81,28 @@ class bsdUsers(models.Model):
             )
     bsdusr_shell = models.CharField(
             max_length=120,
-            choices=UserShell,
-            default="csh",
+            default='/bin/csh',
             verbose_name="Shell"
             )
     bsdusr_full_name = models.CharField(
             max_length=120,
             verbose_name="Full Name"
             )
-
-    def set_password(self, raw_password):
-        import random
-        algo = 'sha1'
-        salt = get_hexdigest(algo, str(random.random()), str(random.random()))[:5]
-        hsh = get_hexdigest(algo, salt, raw_password)
-        self.bsdusr_password = '%s$%s$%s' % (algo, salt, hsh)
-
-    def check_password(self, raw_password):
-        """
-        Returns a boolean of whether the raw_password was correct. Handles
-        encryption formats behind the scenes.
-        """
-        # Backwards-compatibility check. Older passwords won't include the
-        # algorithm or salt.
-        if '$' not in self.bsdusr_password:
-            is_correct = (self.bsdusr_password == get_hexdigest('md5', '', raw_password))
-            if is_correct:
-                # Convert the password to the new, more secure format.
-                self.set_password(raw_password)
-                self.save()
-            return is_correct
-        return check_password(raw_password, self.bsdusr_password)
-
-    def set_unusable_password(self):
-        # Sets a value that will never be a valid hash
-        self.bsdusr_password = UNUSABLE_PASSWORD
-
-    def has_usable_password(self):
-        return self.bsdusr_password != UNUSABLE_PASSWORD
-
+    bsdusr_builtin = models.BooleanField(
+            default=False,
+            )
 
     class Meta:
         verbose_name = "User"
     def __unicode__(self):
         return self.bsdusr_username
 
-
+class bsdGroupMembership(models.Model):
+    bsdgrpmember_group = models.ForeignKey(
+        bsdGroups,
+        verbose_name="Group",
+    )
+    bsdgrpmember_user = models.ForeignKey(
+        bsdUsers,
+        verbose_name="User",
+    )

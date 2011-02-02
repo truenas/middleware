@@ -28,54 +28,31 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response
 import collections
 
-def helperView(request, theForm, model, url, focused_tab = "system", defaults_callback=None, prefix=""):
-    if request.method == 'POST':
-        form = theForm(request.POST, prefix=prefix)
+def helperViewEx(request, formClass, model, variable, key, data=None, prefix=""):
+    if request.method == 'POST' and variable == key:
+        form = formClass(request.POST, prefix=prefix)
         if form.is_valid():
             form.save()
             if model.objects.count() > 3:
                 stale_id = model.objects.order_by("-id")[3].id
                 model.objects.filter(id__lte=stale_id).delete()
-        else:
-            # This is a debugging aid to raise exception when validation
-            # is not passed.
-            form.save()
+        # Pass through so that the errors would appear
     else:
-        try:
-            _entity = model.objects.order_by("-id").values()[0]
-        except:
-            if isinstance(defaults_callback, collections.Callable):
-                _entity = defaults_callback()
-            else:
-                raise
-        form = theForm(data = _entity, prefix=prefix)
-    variables = RequestContext(request, {
-        'focused_tab' : focused_tab,
-        'form': form
-    })
-    return render_to_response(url, variables)
+        if data is not None:
+            e = data
+        else:
+            try:
+                e = model.objects.order_by("-id").values()[0]
+            except:
+                e = None
+        form = formClass(data=e, prefix=prefix)
+    return form
 
-def helperViewEm(request, theForm, model, defaults_callback=None, prefix=""):
-    data_saved = 0
-    if request.method == 'POST':
-        form = theForm(request.POST, prefix=prefix)
+def helperViewEmpty(request, formClass, variable, key, prefix=""):
+    if request.method == 'POST' and variable == key:
+        form = formClass(request.POST, prefix=prefix)
         if form.is_valid():
-            # TODO: test if the data is the same as what is in the database?
             form.save()
-            data_saved = 1
-            if model.objects.count() > 3:
-                stale_id = model.objects.order_by("-id")[3].id
-                model.objects.filter(id__lte=stale_id).delete()
-        else:
-            pass
     else:
-        try:
-            _entity = model.objects.order_by("-id").values()[0]
-        except:
-            if isinstance(defaults_callback, collections.Callable):
-                _entity = defaults_callback()
-            else:
-                _entity = None
-        form = theForm(data = _entity, prefix=prefix)
-    return (data_saved, form)
-
+        form = formClass(prefix=prefix)
+    return form

@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 
 {% block dojango_content %}
+<script type="text/javascript">
+      var  loginDlg = function () {
+          dijit.byId("login").show();
+      }
+</script>
+<body onLoad="loginDlg();">
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
 {% if form.errors %}
 <p>Your username and password didn't match. Please try again.</p>
@@ -8,32 +14,10 @@
 
 {% if user.is_authenticated %}
     <p>Welcome, {{ user.username }}. Thanks for logging in.</p>
-<br />
-<br />
-<h2>System Information</h2>
-<strong>Hostname:</strong> {{ hostname }}
-<br />
-<strong>OS Version:</strong> {{ uname1 }} {{ uname2 }}
-<br />
-<strong>Platform:</strong> {{ platform }}
-<br />
-<strong>System Time:</strong> {{ date }}
-<br />
-<strong>Uptime:</strong> {{ uptime }}
-<br />
-<strong>Memory Usage:</strong> {{ mem_usage }}
-<br />
-<strong>Load Average:</strong>{{ loadavg }}
-<br />
-<br />
-<br />
-<strong><a href='/freenas/status/processes'>Proccess Information</a></strong>
-<br />
-
 {% else %} 
-<br />
-<p><span class="info">Welcome. Please log in.</span></p>
-<form method="post" action=".">{% csrf_token %}
+<div id="login" dojoType="dijit.Dialog" title="Welcome to FreeNAS 8">
+    <h3>Please log in.</h3>
+<form action="." method="post">{% csrf_token %}
 <table>
 <tr>
     <td>{{ form.username.label_tag }}</td>
@@ -44,10 +28,10 @@
     <td>{{ form.password }}</td>
 </tr>
 </table>
-
-<input type="submit" value="Log-in" />
+<button dojoType="dijit.form.Button" type="submit">Log In</button>
 <input type="hidden" name="next" value="{{ next }}" />
 </form>
+    </div>
 {% endif %}
 </div>
 {% endblock %}

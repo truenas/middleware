@@ -40,153 +40,6 @@ from django.utils.translation import ugettext_lazy as _
 from datetime import datetime
 from freenasUI.choices import *
    
-
-
-class rsyncjob(models.Model):
-    rj_type = models.CharField(
-            max_length=120, 
-            choices=RSYNCJob_Choices, 
-            default="(NONE)", 
-            verbose_name=""
-            )
-    rj_path = models.CharField(
-            max_length=120, verbose_name="Share Path",
-            help_text="Path to be shared."
-            )
-    rj_server = models.CharField(
-            max_length=120, 
-            verbose_name="Remote RSYNC server",
-            help_text="IP or FQDN address of remote Rsync server."
-            )
-    rj_who = models.CharField(
-            max_length=120, 
-            choices=whoChoices(), 
-            default="root", 
-            verbose_name="Who"
-            )
-    rj_description = models.CharField(
-            max_length=120, 
-            verbose_name="Description", 
-            blank=True
-            )
-    rj_ToggleMinutes = models.CharField(
-            max_length=120, 
-            choices=TOGGLECRON_CHOICES, 
-            default="Selected", 
-            verbose_name="Minutes"
-            )
-    rj_Minutes1 = models.CharField(
-            max_length=120, 
-            choices=MINUTES1_CHOICES, 
-            default="(NONE)", 
-            verbose_name=""
-            )
-    rj_Minutes2 = models.CharField(
-            max_length=120, 
-            choices=MINUTES2_CHOICES, 
-            default="(NONE)", 
-            verbose_name=""
-            )
-    rj_Minutes3 = models.CharField(
-            max_length=120, 
-            choices=MINUTES3_CHOICES, 
-            default="(NONE)", 
-            verbose_name=""
-            )
-    rj_Minutes4 = models.CharField(
-            max_length=120, 
-            choices=MINUTES4_CHOICES, 
-            default="(NONE)", 
-            verbose_name=""
-            )
-    rj_ToggleHours = models.CharField(
-            max_length=120, 
-            choices=TOGGLECRON_CHOICES, 
-            default="Selected", 
-            verbose_name="Hours"
-            )
-    rj_Hours1 = models.CharField(
-            max_length=120, 
-            choices=HOURS1_CHOICES, 
-            default="(NONE)", 
-            verbose_name=""
-            )
-    rj_Hours2 = models.CharField(
-            max_length=120, 
-            choices=HOURS2_CHOICES, 
-            default="(NONE)", 
-            verbose_name=""
-            )
-    rj_ToggleDays = models.CharField(
-            max_length=120, 
-            choices=TOGGLECRON_CHOICES, 
-            default="Selected", 
-            verbose_name="Days"
-            )
-    rj_Days1 = models.CharField(
-            max_length=120, 
-            choices=DAYS1_CHOICES, 
-            default="(NONE)", 
-            verbose_name=""
-            )
-    rj_Days2 = models.CharField(
-            max_length=120, 
-            choices=DAYS2_CHOICES, 
-            default="(NONE)", 
-            verbose_name=""
-            )
-    rj_Days3 = models.CharField(
-            max_length=120, 
-            choices=DAYS3_CHOICES, 
-            default="(NONE)", 
-            verbose_name=""
-            )
-    rj_ToggleMonths = models.CharField(
-            max_length=120, 
-            choices=TOGGLECRON_CHOICES, 
-            default="Selected", 
-            verbose_name="Months"
-            )
-    rj_Months = models.CharField(
-            max_length=120, 
-            choices=MONTHS_CHOICES, 
-            default="(NONE)", 
-            verbose_name=""
-            )
-    rj_ToggleWeekdays = models.CharField(
-            max_length=120, 
-            choices=TOGGLECRON_CHOICES, 
-            default="Selected", 
-            verbose_name=""
-            )
-    rj_Weekdays = models.CharField(
-            max_length=120, 
-            choices=WEEKDAYS_CHOICES, 
-            default="(NONE)", 
-            verbose_name="Weekdays"
-            )
-    rj_recursive = models.BooleanField(
-            verbose_name="Recursive")
-    rj_times = models.BooleanField(
-            verbose_name="Preserve Times")
-    rj_compress = models.BooleanField(
-            verbose_name="Compress Network Data")
-    rj_archive = models.BooleanField(
-            verbose_name="Use Archive Mode")
-    rj_delete = models.BooleanField(
-            verbose_name="Remove Deleted Files")
-    rj_quiet = models.BooleanField(
-            verbose_name="Less Logging")
-    rj_preserveperms = models.BooleanField(
-            verbose_name="Preserve Permissions")
-    rj_extattr = models.BooleanField(
-            verbose_name="Preserve Extended Attributes")
-    rj_options = models.CharField(
-            max_length=120, 
-            verbose_name="Extra options",
-            help_text="Extra options to rsync (usually empty)."
-            )
-
 class services(models.Model):
     srv_service = models.CharField(
             max_length=120, 
@@ -203,6 +56,12 @@ class services(models.Model):
         super(services, self).save(*args, **kwargs)
 
 class CIFS(models.Model):
+    cifs_srv_authmodel = models.CharField(
+            max_length=10,
+            choices=CIFSAUTH_CHOICES,
+            verbose_name="Authentication Model",
+            help_text="Using Active Directory or LDAP authentication will supersede this option",
+            )
     cifs_srv_netbiosname = models.CharField(
             max_length=120, 
             verbose_name="NetBIOS name"
@@ -247,6 +106,10 @@ class CIFS(models.Model):
             verbose_name="Guest account", 
             help_text="Use this option to override the username ('ftp' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login."
             )
+    cifs_srv_guestok = models.BooleanField(
+            verbose_name="Allow guest access")
+    cifs_srv_guestonly = models.BooleanField(
+            verbose_name="Only allow guest access")
     cifs_srv_filemask = models.CharField(
             max_length=120, 
             verbose_name="File mask", 
@@ -333,17 +196,6 @@ class NFS(models.Model):
             verbose_name="Number of servers",
             help_text="Specifies how many servers to create. There should be enough to handle the maximum level of concurrency from its clients, typically four to six."
             )
-
-class Unison(models.Model):            
-    uni_workingdir = models.CharField(
-            max_length=120, 
-            verbose_name="Working directory", 
-            blank=True
-            )
-    uni_createworkingdir = models.BooleanField(
-            verbose_name="Create Mirroed Directory")
-    class Meta:
-        verbose_name = "Unison"
 
 class iSCSITargetGlobalConfiguration(models.Model):
     iscsi_basename = models.CharField(
@@ -801,116 +653,6 @@ class UPS(models.Model):
             max_length=120, 
             verbose_name="To email",
             help_text="The subject of the email. You can use the following parameters for substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
-            )
-
-class Webserver(models.Model):            
-    web_protocol = models.CharField(
-            max_length=120, 
-            choices=PROTOCOL_CHOICES, 
-            default='OFF', 
-            verbose_name="Protocol"
-            )
-    web_port = models.CharField(
-            max_length=120, 
-            verbose_name="Port",
-            help_text="TCP port to bind the server to."
-            )
-    web_docroot = models.CharField(
-            max_length=120, 
-            verbose_name="Document root",
-            help_text="Document root of the webserver. Home of the web page files."
-            )
-    web_auth = models.BooleanField(
-            verbose_name="Require Login")
-    web_dirlisting = models.BooleanField(
-            verbose_name="Allow Directory Browsing")
-
-class BitTorrent(models.Model):            
-    bt_peerport = models.CharField(
-            max_length=120, 
-            verbose_name="Peer port",
-            help_text="Port to listen for incoming peer connections. Default port is 51413."
-            )
-    bt_downloaddir = models.CharField(
-            max_length=120, 
-            verbose_name="Download directory", 
-            blank=True,
-            help_text="Where to save downloaded data."
-            )
-    bt_configdir = models.CharField(
-            max_length=120, 
-            verbose_name="Configuration directory",
-            help_text="Alternative configuration directory (usually empty)", 
-            blank=True
-            )
-    bt_portfwd = models.BooleanField(
-            verbose_name="Enable Port Forwarding")
-    bt_pex = models.BooleanField(
-            verbose_name="Enable PEX")
-    bt_disthash = models.BooleanField(
-            verbose_name="Distribution Hashing Enable")
-    bt_encrypt = models.CharField(
-            max_length=120, 
-            choices=BTENCRYPT_CHOICES, 
-            default='preferred',
-            verbose_name="Encryption",
-            help_text="The peer connection encryption mode.", 
-            blank=True
-            )
-    bt_uploadbw = models.CharField(
-            max_length=120, 
-            verbose_name="Upload bandwidth",
-            help_text="The maximum upload bandwith in KB/s. An empty field means infinity.", 
-            blank=True
-            )
-    bt_downloadbw = models.CharField(
-            max_length=120, 
-            verbose_name="Download bandwidth",
-            help_text="The maximum download bandwith in KiB/s. An empty field means infinity.",
-            blank=True
-            )
-    bt_watchdir = models.CharField(
-            max_length=120,
-            verbose_name="Watch directory",
-            help_text="Directory to watch for new .torrent files.",
-            blank=True
-            )
-    bt_incompletedir = models.CharField(
-            max_length=120, 
-            verbose_name="Incomplete directory",
-            help_text="Directory to incomplete files. An empty field means disable.", 
-            blank=True
-            )
-    bt_umask = models.CharField(
-            max_length=120,
-            verbose_name="User mask",
-            help_text="Use this option to override the default permission modes for newly created files (0002 by default).", 
-            blank=True
-            )
-    bt_options = models.CharField(
-            max_length=120, 
-            verbose_name="Extra Options", 
-            blank=True
-            )
-    bt_adminport = models.CharField(
-            max_length=120, 
-            verbose_name="Web admin port",
-            help_text="Port to run bittorrent's web administration app on"
-            )
-    bt_adminauth = models.CharField(
-            max_length=120, 
-            verbose_name="Authorize Web Interface",
-            help_text="When turned on, require authorization before allowing access to the web interface"
-            )
-    bt_adminuser = models.CharField(
-            max_length=120, 
-            verbose_name="Web admin username",
-            help_text="Username to authenticate to web interface with"
-            )
-    bt_adminpass = models.CharField(
-            max_length=120, 
-            verbose_name="Web admin password",
-            help_text="Password to authenticate to web interface with"
             )
 
 class FTP(models.Model):            

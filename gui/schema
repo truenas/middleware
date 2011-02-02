@@ -1,21 +1,25 @@
-CREATE TABLE "account_bsdgroups" (
+CREATE TABLE "account_bsdgroupmembership" (
     "id" integer NOT NULL PRIMARY KEY,
-    "bsdgrp_gid" integer NOT NULL,
-    "bsdgrp_group" varchar(120) NOT NULL
+    "bsdgrpmember_group_id" integer NOT NULL,
+    "bsdgrpmember_user_id" integer NOT NULL
+);
+CREATE TABLE "account_bsdgroups" (
+    "bsdgrp_group" varchar(120),
+    "bsdgrp_gid" integer,
+    "id" integer PRIMARY KEY,
+    "bsdgrp_builtin" bool NOT NULL DEFAULT False
 );
 CREATE TABLE "account_bsdusers" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "bsdusr_uid" integer NOT NULL UNIQUE,
-    "bsdusr_username" varchar(30) NOT NULL UNIQUE,
-    "bsdusr_password" varchar(128) NOT NULL,
-    "bsdusr_home" varchar(120) NOT NULL,
-    "bsdusr_shell" varchar(120) NOT NULL DEFAULT 'csh',
-    "bsdusr_full_name" varchar(120) NOT NULL
-);
-CREATE TABLE "account_bsdusers_bsdusr_gid" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "bsdusers_id" integer NOT NULL,
-    "bsdgroups_id" integer NOT NULL
+    "bsdusr_full_name" varchar(120),
+    "bsdusr_username" varchar(30) UNIQUE,
+    "bsdusr_group_id" integer,
+    "bsdusr_uid" integer UNIQUE,
+    "bsdusr_unixhash" varchar(128),
+    "bsdusr_shell" varchar(120),
+    "bsdusr_builtin" bool NOT NULL DEFAULT False,
+    "bsdusr_home" varchar(120),
+    "bsdusr_smbhash" varchar(128),
+    "id" integer PRIMARY KEY
 );
 CREATE TABLE "auth_group" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -24,12 +28,16 @@ CREATE TABLE "auth_group" (
 CREATE TABLE "auth_group_permissions" (
     "id" integer NOT NULL PRIMARY KEY,
     "group_id" integer NOT NULL,
-    "permission_id" integer NOT NULL REFERENCES "auth_permission" ("id"),
-    UNIQUE ("group_id", "permission_id")
+    "permission_id" integer NOT NULL REFERENCES "auth_permission" (
+    "id"),
+    UNIQUE (
+    "group_id",
+    "permission_id")
 );
 CREATE TABLE "auth_message" (
     "id" integer NOT NULL PRIMARY KEY,
-    "user_id" integer NOT NULL REFERENCES "auth_user" ("id"),
+    "user_id" integer NOT NULL REFERENCES "auth_user" (
+    "id"),
     "message" text NOT NULL
 );
 CREATE TABLE "auth_permission" (
@@ -37,7 +45,9 @@ CREATE TABLE "auth_permission" (
     "name" varchar(50) NOT NULL,
     "content_type_id" integer NOT NULL,
     "codename" varchar(100) NOT NULL,
-    UNIQUE ("content_type_id", "codename")
+    UNIQUE (
+    "content_type_id",
+    "codename")
 );
 CREATE TABLE "auth_user" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -55,21 +65,29 @@ CREATE TABLE "auth_user" (
 CREATE TABLE "auth_user_groups" (
     "id" integer NOT NULL PRIMARY KEY,
     "user_id" integer NOT NULL,
-    "group_id" integer NOT NULL REFERENCES "auth_group" ("id"),
-    UNIQUE ("user_id", "group_id")
+    "group_id" integer NOT NULL REFERENCES "auth_group" (
+    "id"),
+    UNIQUE (
+    "user_id",
+    "group_id")
 );
 CREATE TABLE "auth_user_user_permissions" (
     "id" integer NOT NULL PRIMARY KEY,
     "user_id" integer NOT NULL,
-    "permission_id" integer NOT NULL REFERENCES "auth_permission" ("id"),
-    UNIQUE ("user_id", "permission_id")
+    "permission_id" integer NOT NULL REFERENCES "auth_permission" (
+    "id"),
+    UNIQUE (
+    "user_id",
+    "permission_id")
 );
 CREATE TABLE "django_content_type" (
     "id" integer NOT NULL PRIMARY KEY,
     "name" varchar(100) NOT NULL,
     "app_label" varchar(100) NOT NULL,
     "model" varchar(100) NOT NULL,
-    UNIQUE ("app_label", "model")
+    UNIQUE (
+    "app_label",
+    "model")
 );
 CREATE TABLE "django_session" (
     "session_key" varchar(40) NOT NULL PRIMARY KEY,
@@ -77,24 +95,26 @@ CREATE TABLE "django_session" (
     "expire_date" datetime NOT NULL
 );
 CREATE TABLE "network_globalconfiguration" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "gc_hostname" varchar(120) NOT NULL,
-    "gc_domain" varchar(120) NOT NULL,
-    "gc_ipv4gateway" varchar(120) NOT NULL,
-    "gc_ipv6gateway" varchar(120) NOT NULL,
-    "gc_nameserver1" varchar(120) NOT NULL,
-    "gc_nameserver2" varchar(120) NOT NULL,
-    "gc_nameserver3" varchar(120) NOT NULL
+    "gc_domain" varchar(120),
+    "gc_ipv4gateway" varchar(42),
+    "gc_hostname" varchar(120),
+    "gc_ipv6gateway" varchar(42),
+    "gc_nameserver1" varchar(42),
+    "gc_nameserver3" varchar(42),
+    "gc_nameserver2" varchar(42) NULL,
+    "id" integer PRIMARY KEY
 );
 CREATE TABLE "network_interfaces" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "int_interface" varchar(300) NOT NULL,
-    "int_name" varchar(120) NOT NULL,
-    "int_dhcp" bool NOT NULL DEFAULT False,
-    "int_ipv4address" varchar(18) NOT NULL,
-    "int_ipv6auto" bool NOT NULL DEFAULT False,
-    "int_ipv6address" varchar(42) NOT NULL,
-    "int_options" varchar(120) NOT NULL
+    "int_v6netmaskbit" varchar(300),
+    "int_ipv4address" varchar(42),
+    "int_name" varchar(120),
+    "int_ipv6address" varchar(42) NULL,
+    "int_options" varchar(120),
+    "int_dhcp" bool,
+    "int_v4netmaskbit" varchar(300),
+    "int_ipv6auto" bool,
+    "int_interface" varchar(300),
+    "id" integer PRIMARY KEY
 );
 CREATE TABLE "network_lagginterface" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -137,36 +157,18 @@ CREATE TABLE "services_afp" (
     "afp_srv_local" bool NOT NULL DEFAULT False,
     "afp_srv_ddp" bool NOT NULL DEFAULT False
 );
-CREATE TABLE "services_bittorrent" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "bt_peerport" varchar(120) NOT NULL,
-    "bt_downloaddir" varchar(120) NOT NULL,
-    "bt_configdir" varchar(120) NOT NULL,
-    "bt_portfwd" bool NOT NULL DEFAULT False,
-    "bt_pex" bool NOT NULL DEFAULT False,
-    "bt_disthash" bool NOT NULL DEFAULT False,
-    "bt_encrypt" varchar(120) NOT NULL DEFAULT 'preferred',
-    "bt_uploadbw" varchar(120) NOT NULL,
-    "bt_downloadbw" varchar(120) NOT NULL,
-    "bt_watchdir" varchar(120) NOT NULL,
-    "bt_incompletedir" varchar(120) NOT NULL,
-    "bt_umask" varchar(120) NOT NULL,
-    "bt_options" varchar(120) NOT NULL,
-    "bt_adminport" varchar(120) NOT NULL,
-    "bt_adminauth" varchar(120) NOT NULL,
-    "bt_adminuser" varchar(120) NOT NULL,
-    "bt_adminpass" varchar(120) NOT NULL
-);
 CREATE TABLE "services_cifs" (
+    "cifs_srv_guestok" bool,
     "cifs_srv_dirmask" varchar(120),
     "cifs_srv_description" varchar(120),
     "cifs_srv_loglevel" varchar(120),
     "cifs_srv_guest" varchar(120),
     "cifs_srv_filemask" varchar(120),
+    "cifs_srv_guestonly" bool NOT NULL DEFAULT False,
     "cifs_srv_recvbuffer" varchar(120),
     "cifs_srv_smb_options" text,
     "id" integer PRIMARY KEY,
-    "cifs_srv_aio_ws" integer NOT NULL DEFAULT '1',
+    "cifs_srv_aio_ws" integer,
     "cifs_srv_dosattr" bool,
     "cifs_srv_sendbuffer" varchar(120),
     "cifs_srv_homedir_enable" bool,
@@ -174,10 +176,10 @@ CREATE TABLE "services_cifs" (
     "cifs_srv_largerw" bool,
     "cifs_srv_aio_rs" integer,
     "cifs_srv_nullpw" bool,
-    "cifs_srv_timeserver" bool,
+    "cifs_srv_netbiosname" varchar(120),
     "cifs_srv_workgroup" varchar(120),
     "cifs_srv_doscharset" varchar(120),
-    "cifs_srv_netbiosname" varchar(120),
+    "cifs_srv_timeserver" bool,
     "cifs_srv_localmaster" bool,
     "cifs_srv_easupport" bool,
     "cifs_srv_sendfile" bool,
@@ -222,18 +224,77 @@ CREATE TABLE "services_ftp" (
     "ftp_options" text NOT NULL
 );
 CREATE TABLE "services_iscsitarget" (
+    "iscsi_target_logical_blocksize" integer NOT NULL DEFAULT 512,
+    "iscsi_target_portalgroup" integer,
+    "iscsi_target_initialdigest" varchar(120),
+    "iscsi_target_queue_depth" integer,
+    "iscsi_target_name" varchar(120) UNIQUE,
+    "iscsi_target_initiatorgroup" integer,
+    "iscsi_target_alias" varchar(120) UNIQUE,
+    "iscsi_target_type" varchar(120),
+    "iscsi_target_authgroup" integer,
+    "iscsi_target_authtype" varchar(120),
+    "iscsi_target_flags" varchar(120),
+    "id" integer PRIMARY KEY
+);
+CREATE TABLE "services_iscsitargetauthcredential" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "iscsi_target_auth_tag" integer NOT NULL DEFAULT 1,
+    "iscsi_target_auth_user" varchar(120) NOT NULL,
+    "iscsi_target_auth_secret" varchar(120) NOT NULL,
+    "iscsi_target_auth_peeruser" varchar(120) NOT NULL,
+    "iscsi_target_auth_peersecret" varchar(120) NOT NULL
+);
+CREATE TABLE "services_iscsitargetauthorizedinitiator" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "iscsi_target_initiator_tag" integer NOT NULL UNIQUE,
+    "iscsi_target_initiator_initiators" text NOT NULL DEFAULT 'ALL',
+    "iscsi_target_initiator_auth_network" text NOT NULL DEFAULT 'ALL',
+    "iscsi_target_initiator_comment" varchar(120) NOT NULL
+);
+CREATE TABLE "services_iscsitargetextent" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "iscsi_target_extent_name" varchar(120) NOT NULL,
+    "iscsi_target_extent_type" varchar(120) NOT NULL,
+    "iscsi_target_extent_path" varchar(120) NOT NULL,
+    "iscsi_target_extent_filesize" integer NOT NULL DEFAULT 0,
+    "iscsi_target_extent_comment" varchar(120) NOT NULL
+);
+CREATE TABLE "services_iscsitargetglobalconfiguration" (
     "id" integer NOT NULL PRIMARY KEY,
     "iscsi_basename" varchar(120) NOT NULL,
+    "iscsi_mediadirectory" varchar(120) NOT NULL DEFAULT '/mnt',
     "iscsi_discoveryauthmethod" varchar(120) NOT NULL DEFAULT 'auto',
     "iscsi_discoveryauthgroup" varchar(120) NOT NULL DEFAULT 'none',
-    "iscsi_io" varchar(120) NOT NULL,
-    "iscsi_nopinint" varchar(120) NOT NULL,
-    "iscsi_maxsesh" varchar(120) NOT NULL,
-    "iscsi_maxconnect" varchar(120) NOT NULL,
-    "iscsi_firstburst" varchar(120) NOT NULL,
-    "iscsi_maxburst" varchar(120) NOT NULL,
-    "iscsi_maxrecdata" varchar(120) NOT NULL,
-    "iscsi_toggleluc" bool NOT NULL DEFAULT False
+    "iscsi_iotimeout" integer NOT NULL DEFAULT 30,
+    "iscsi_nopinint" integer NOT NULL DEFAULT 20,
+    "iscsi_maxsesh" integer NOT NULL DEFAULT 16,
+    "iscsi_maxconnect" integer NOT NULL DEFAULT 8,
+    "iscsi_r2t" integer NOT NULL DEFAULT 32,
+    "iscsi_maxoutstandingr2t" integer NOT NULL DEFAULT 16,
+    "iscsi_firstburst" integer NOT NULL DEFAULT 65536,
+    "iscsi_maxburst" integer NOT NULL DEFAULT 262144,
+    "iscsi_maxrecdata" integer NOT NULL DEFAULT 262144,
+    "iscsi_defaultt2w" integer NOT NULL DEFAULT 2,
+    "iscsi_defaultt2r" integer NOT NULL DEFAULT 60,
+    "iscsi_toggleluc" bool NOT NULL DEFAULT False,
+    "iscsi_lucip" varchar(120) NOT NULL DEFAULT '127.0.0.1',
+    "iscsi_lucport" integer NOT NULL DEFAULT 3261,
+    "iscsi_luc_authnetwork" varchar(120) NOT NULL DEFAULT '127.0.0.1/8',
+    "iscsi_luc_authmethod" varchar(120) NOT NULL DEFAULT 'CHAP',
+    "iscsi_luc_authgroup" integer NOT NULL DEFAULT 1
+);
+CREATE TABLE "services_iscsitargetportal" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "iscsi_target_portal_tag" integer NOT NULL DEFAULT 1,
+    "iscsi_target_portal_listen" varchar(120) NOT NULL DEFAULT '0.0.0.0:3260',
+    "iscsi_target_portal_comment" varchar(120) NOT NULL
+);
+CREATE TABLE "services_iscsitargettoextent" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "iscsi_target_id" integer NOT NULL,
+    "iscsi_extent_id" integer NOT NULL UNIQUE,
+    "iscsi_target_lun" integer NOT NULL DEFAULT 0
 );
 CREATE TABLE "services_ldap" (
     "ldap_hostname" varchar(120),
@@ -255,39 +316,6 @@ CREATE TABLE "services_nfs" (
     "id" integer NOT NULL PRIMARY KEY,
     "nfs_srv_servers" varchar(120) NOT NULL
 );
-CREATE TABLE "services_rsyncjob" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "rj_type" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "rj_path" varchar(120) NOT NULL,
-    "rj_server" varchar(120) NOT NULL,
-    "rj_who" varchar(120) NOT NULL DEFAULT 'root',
-    "rj_description" varchar(120) NOT NULL,
-    "rj_ToggleMinutes" varchar(120) NOT NULL DEFAULT 'Selected',
-    "rj_Minutes1" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "rj_Minutes2" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "rj_Minutes3" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "rj_Minutes4" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "rj_ToggleHours" varchar(120) NOT NULL DEFAULT 'Selected',
-    "rj_Hours1" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "rj_Hours2" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "rj_ToggleDays" varchar(120) NOT NULL DEFAULT 'Selected',
-    "rj_Days1" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "rj_Days2" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "rj_Days3" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "rj_ToggleMonths" varchar(120) NOT NULL DEFAULT 'Selected',
-    "rj_Months" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "rj_ToggleWeekdays" varchar(120) NOT NULL DEFAULT 'Selected',
-    "rj_Weekdays" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "rj_recursive" bool NOT NULL DEFAULT False,
-    "rj_times" bool NOT NULL DEFAULT False,
-    "rj_compress" bool NOT NULL DEFAULT False,
-    "rj_archive" bool NOT NULL DEFAULT False,
-    "rj_delete" bool NOT NULL DEFAULT False,
-    "rj_quiet" bool NOT NULL DEFAULT False,
-    "rj_preserveperms" bool NOT NULL DEFAULT False,
-    "rj_extattr" bool NOT NULL DEFAULT False,
-    "rj_options" varchar(120) NOT NULL
-);
 CREATE TABLE "services_services" (
     "id" integer NOT NULL PRIMARY KEY,
     "srv_service" varchar(120) NOT NULL,
@@ -302,14 +330,20 @@ CREATE TABLE "services_snmp" (
     "snmp_options" text NOT NULL
 );
 CREATE TABLE "services_ssh" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "ssh_tcpport" varchar(120) NOT NULL,
-    "ssh_rootlogin" bool NOT NULL DEFAULT False,
-    "ssh_passwordauth" bool NOT NULL DEFAULT False,
-    "ssh_tcpfwd" bool NOT NULL DEFAULT False,
-    "ssh_compression" bool NOT NULL DEFAULT False,
-    "ssh_privatekey" text NOT NULL,
-    "ssh_options" text NOT NULL
+    "ssh_host_dsa_key_pub" text,
+    "ssh_host_rsa_key_pub" text NULL,
+    "ssh_host_key" text,
+    "ssh_tcpport" varchar(120),
+    "ssh_options" text,
+    "ssh_passwordauth" bool,
+    "id" integer PRIMARY KEY,
+    "ssh_compression" bool,
+    "ssh_host_key_pub" text,
+    "ssh_rootlogin" bool,
+    "ssh_tcpfwd" bool,
+    "ssh_host_rsa_key" text,
+    "ssh_privatekey" text,
+    "ssh_host_dsa_key" text
 );
 CREATE TABLE "services_tftp" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -319,11 +353,6 @@ CREATE TABLE "services_tftp" (
     "tftp_username" varchar(120) NOT NULL DEFAULT 'nobody',
     "tftp_umask" varchar(120) NOT NULL,
     "tftp_options" varchar(120) NOT NULL
-);
-CREATE TABLE "services_unison" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "uni_workingdir" varchar(120) NOT NULL,
-    "uni_createworkingdir" bool NOT NULL DEFAULT False
 );
 CREATE TABLE "services_ups" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -338,14 +367,6 @@ CREATE TABLE "services_ups" (
     "ups_emailnotify" bool NOT NULL DEFAULT False,
     "ups_toemail" varchar(120) NOT NULL,
     "ups_subject" varchar(120) NOT NULL
-);
-CREATE TABLE "services_webserver" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "web_protocol" varchar(120) NOT NULL DEFAULT 'OFF',
-    "web_port" varchar(120) NOT NULL,
-    "web_docroot" varchar(120) NOT NULL,
-    "web_auth" bool NOT NULL DEFAULT False,
-    "web_dirlisting" bool NOT NULL DEFAULT False
 );
 CREATE TABLE "sharing_afp_share" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -373,18 +394,21 @@ CREATE TABLE "sharing_afp_share" (
     "afp_upriv" bool NOT NULL DEFAULT False
 );
 CREATE TABLE "sharing_cifs_share" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "cifs_name" varchar(120) NOT NULL,
-    "cifs_comment" varchar(120) NOT NULL,
-    "cifs_path_id" integer NOT NULL,
-    "cifs_ro" bool NOT NULL DEFAULT False,
-    "cifs_browsable" bool NOT NULL DEFAULT False,
-    "cifs_inheritperms" bool NOT NULL DEFAULT False,
-    "cifs_recyclebin" bool NOT NULL DEFAULT False,
-    "cifs_showhiddenfiles" bool NOT NULL DEFAULT False,
-    "cifs_hostsallow" varchar(120) NOT NULL,
-    "cifs_hostsdeny" varchar(120) NOT NULL,
-    "cifs_auxsmbconf" text NOT NULL
+    "cifs_hostsallow" varchar(120),
+    "cifs_name" varchar(120),
+    "cifs_guest" varchar(120),
+    "cifs_path_id" integer,
+    "cifs_showhiddenfiles" bool,
+    "cifs_hostsdeny" varchar(120),
+    "cifs_browsable" bool,
+    "cifs_recyclebin" bool,
+    "cifs_guestok" bool,
+    "cifs_comment" varchar(120),
+    "cifs_ro" bool,
+    "cifs_inheritperms" bool,
+    "cifs_guestonly" bool NOT NULL DEFAULT False,
+    "id" integer PRIMARY KEY,
+    "cifs_auxsmbconf" text
 );
 CREATE TABLE "sharing_nfs_share" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -422,10 +446,11 @@ CREATE TABLE "storage_diskgroup" (
     "group_volume_id" integer NOT NULL
 );
 CREATE TABLE "storage_mountpoint" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "mp_volume_id" integer NOT NULL,
-    "mp_path" varchar(120) NOT NULL UNIQUE,
-    "mp_options" varchar(120) NULL
+    "mp_path" varchar(120) UNIQUE,
+    "mp_ischild" bool NOT NULL DEFAULT False,
+    "mp_options" varchar(120),
+    "mp_volume_id" integer,
+    "id" integer PRIMARY KEY
 );
 CREATE TABLE "storage_volume" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -444,90 +469,18 @@ CREATE TABLE "system_advanced" (
     "adv_zeroconfbonjour" bool NOT NULL DEFAULT False,
     "adv_motd" text NOT NULL
 );
-CREATE TABLE "system_commandscripts" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "cmds_command" varchar(120) NOT NULL,
-    "cmds_commandtype" varchar(120) NOT NULL
-);
-CREATE TABLE "system_cronjob" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "cron_enable" bool NOT NULL DEFAULT False,
-    "cron_command" varchar(120) NOT NULL,
-    "cron_who" varchar(120) NOT NULL DEFAULT 'root',
-    "cron_description" varchar(120) NOT NULL,
-    "cron_ToggleMinutes" varchar(120) NOT NULL DEFAULT 'Selected',
-    "cron_Minutes1" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_Minutes2" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_Minutes3" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_Minutes4" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_ToggleHours" varchar(120) NOT NULL DEFAULT 'Selected',
-    "cron_Hours1" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_Hours2" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_ToggleDays" varchar(120) NOT NULL DEFAULT 'Selected',
-    "cron_Days1" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_Days2" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_Days3" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_ToggleMonths" varchar(120) NOT NULL DEFAULT 'Selected',
-    "cron_Months" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_ToggleWeekdays" varchar(120) NOT NULL DEFAULT 'Selected',
-    "cron_Weekdays" varchar(120) NOT NULL DEFAULT '(NONE)'
-);
-CREATE TABLE "system_email" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "em_fromemail" varchar(120) NOT NULL,
-    "em_outgoingserver" varchar(120) NOT NULL,
-    "em_port" varchar(120) NOT NULL,
-    "em_security" varchar(120) NOT NULL DEFAULT 'none',
-    "em_smtp" bool NOT NULL DEFAULT False
-);
-CREATE TABLE "system_password" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "pw_currentpw" varchar(120) NOT NULL,
-    "pw_newpw" varchar(120) NOT NULL,
-    "pw_newpw2" varchar(120) NOT NULL
-);
-CREATE TABLE "system_proxy" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "pxy_httpproxy" bool NOT NULL DEFAULT False,
-    "pxy_httpproxyaddress" varchar(120) NOT NULL,
-    "pxy_httpproxyport" varchar(120) NOT NULL,
-    "pxy_httpproxyauth" bool NOT NULL DEFAULT False,
-    "pxy_ftpproxy" bool NOT NULL DEFAULT False,
-    "pxy_ftpproxyaddress" varchar(120) NOT NULL,
-    "pxy_ftpproxyport" varchar(120) NOT NULL,
-    "pxy_ftpproxyauth" bool NOT NULL DEFAULT False
-);
-CREATE TABLE "system_rcconf" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "rcc_varname" varchar(120) NOT NULL,
-    "rcc_varvalue" varchar(120) NOT NULL,
-    "rcc_varcomment" varchar(120) NOT NULL
-);
 CREATE TABLE "system_settings" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "stg_username" varchar(120) NOT NULL DEFAULT 'admin',
-    "stg_guiprotocol" varchar(120) NOT NULL DEFAULT 'http',
-    "stg_language" varchar(120) NOT NULL DEFAULT 'english',
-    "stg_timezone" varchar(120) NOT NULL DEFAULT 'america-los_angeles',
-    "stg_ntpserver1" varchar(120) NOT NULL DEFAULT '0.freebsd.pool.ntp.org iburst maxpoll 9',
-    "stg_ntpserver2" varchar(120) NOT NULL DEFAULT '1.freebsd.pool.ntp.org iburst maxpoll 9',
-    "stg_ntpserver3" varchar(120) NOT NULL DEFAULT '2.freebsd.pool.ntp.org iburst maxpoll 9'
+    "stg_language" varchar(120),
+    "stg_timezone" varchar(120),
+    "stg_guiprotocol" varchar(120),
+    "id" integer PRIMARY KEY,
+    "stg_ntpserver1" varchar(120),
+    "stg_ntpserver2" varchar(120),
+    "stg_ntpserver3" varchar(120)
 );
-CREATE TABLE "system_swap" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "swap_memory" bool NOT NULL DEFAULT False,
-    "swap_type" varchar(120) NOT NULL,
-    "swap_mountpoint" varchar(120) NOT NULL,
-    "swap_size" varchar(120) NOT NULL
-);
-CREATE TABLE "system_sysctl" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "sctl_MIBname" varchar(120) NOT NULL,
-    "sctl_MIBvalue" varchar(120) NOT NULL,
-    "sctl_MIBcomment" varchar(120) NOT NULL
-);
-CREATE INDEX "account_bsdusers_bsdusr_gid_45d1cb6a" ON "account_bsdusers_bsdusr_gid" ("bsdgroups_id");
-CREATE INDEX "account_bsdusers_bsdusr_gid_48570227" ON "account_bsdusers_bsdusr_gid" ("bsdusers_id");
+CREATE INDEX "account_bsdgroupmembership_9303d695" ON "account_bsdgroupmembership" ("bsdgrpmember_user_id");
+CREATE INDEX "account_bsdgroupmembership_d3b92950" ON "account_bsdgroupmembership" ("bsdgrpmember_group_id");
+CREATE INDEX "account_bsdusers_f22bd9ef" ON "account_bsdusers" ("bsdusr_group_id");
 CREATE INDEX "auth_group_permissions_1e014c8f" ON "auth_group_permissions" ("permission_id");
 CREATE INDEX "auth_group_permissions_bda51c3c" ON "auth_group_permissions" ("group_id");
 CREATE INDEX "auth_message_fbfc09f1" ON "auth_message" ("user_id");
@@ -537,9 +490,8 @@ CREATE INDEX "auth_user_groups_fbfc09f1" ON "auth_user_groups" ("user_id");
 CREATE INDEX "auth_user_user_permissions_1e014c8f" ON "auth_user_user_permissions" ("permission_id");
 CREATE INDEX "auth_user_user_permissions_fbfc09f1" ON "auth_user_user_permissions" ("user_id");
 CREATE INDEX "network_lagginterfacemembers_c784c51" ON "network_lagginterfacemembers" ("lagg_interfacegroup_id");
+CREATE INDEX "services_iscsitargettoextent_6ab3fe8b" ON "services_iscsitargettoextent" ("iscsi_target_id");
 CREATE INDEX "sharing_afp_share_59543197" ON "sharing_afp_share" ("afp_path_id");
-CREATE INDEX "sharing_cifs_share_f37b7640" ON "sharing_cifs_share" ("cifs_path_id");
 CREATE INDEX "sharing_nfs_share_4b883b8f" ON "sharing_nfs_share" ("nfs_path_id");
 CREATE INDEX "storage_disk_50820085" ON "storage_disk" ("disk_group_id");
 CREATE INDEX "storage_diskgroup_31360cd6" ON "storage_diskgroup" ("group_volume_id");
-CREATE INDEX "storage_mountpoint_67d4317f" ON "storage_mountpoint" ("mp_volume_id");

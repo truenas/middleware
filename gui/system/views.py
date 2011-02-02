@@ -39,7 +39,6 @@ from django.template import RequestContext
 from django.http import Http404
 from django.views.generic.list_detail import object_detail, object_list
 from freenasUI.middleware.notifier import notifier
-from freenasUI.common.helperview import helperView
 import os, commands
 
 @login_required
@@ -75,6 +74,28 @@ def index(request, objtype = None):
         d.close()
     except:
         freenas_build = "Unrecognized build (/etc/version.freenas        missing?)"
+
+    graphs = {} 
+    try: 
+        graphs['hourly']  = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'hourly/') )], 
+    except OSError: 
+        pass 
+    try: 
+        graphs['daily']   = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'daily/') )], 
+    except OSError: 
+        pass 
+    try: 
+        graphs['weekly']  = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'weekly/') )], 
+    except OSError: 
+        pass 
+    try: 
+        graphs['monthly'] = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'monthly/') )], 
+    except OSError: 
+        pass 
+    try: 
+        graphs['yearly']  = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'yearly/') )], 
+    except OSError: 
+        pass 
     variables = RequestContext(request, {
         'focused_tab' : 'system',
         'settings': settings,
@@ -88,6 +109,7 @@ def index(request, objtype = None):
         'loadavg': loadavg,
         'freenas_build': freenas_build,
         'focus_form': focus_form,
+        'graphs': graphs,
     })
     return render_to_response('system/index.html', variables)
 

@@ -46,6 +46,7 @@ class Volume(models.Model):
         verbose_name = "Volume"
     def delete(self):
         notifier().destroy("volume", self.id)
+        notifier().restart("collectd")
         # The framework would cascade delete all database items
         # referencing this volume.
         super(Volume, self).delete()
@@ -62,7 +63,7 @@ class DiskGroup(models.Model):
             )
     group_type = models.CharField(
             max_length=120, 
-            choices=ZFS_Choices, 
+            choices=(), 
             verbose_name="Type", 
             )
     group_volume = models.ForeignKey(

@@ -40,72 +40,15 @@ from django.http import Http404
 from django.views.generic.list_detail import object_detail, object_list
 from django.views.generic.create_update import update_object, delete_object
 from freenasUI.middleware.notifier import notifier
-from freenasUI.common.helperview import helperViewEm
+from freenasUI.common.helperview import helperViewEx, helperViewEmpty
 import os, commands
 
 @login_required
 def services(request, objtype=None):
-    istgtglobal = iSCSITargetGlobalConfigurationForm()
     if objtype != None:
         focus_form = objtype
     else:
-        focus_form = 'istgtglobal'
-    # Counter for forms we have validated.
-    forms_saved = 0
-    # TODO: Clean this up
-    saved, cifs = helperViewEm(request, CIFSForm, CIFS)
-    forms_saved = forms_saved + saved
-    saved, afp = helperViewEm(request, AFPForm, AFP)
-    forms_saved = forms_saved + saved
-    saved, nfs = helperViewEm(request, NFSForm, NFS)
-    forms_saved = forms_saved + saved
-    saved, rsync = helperViewEm(request, rsyncjobForm, rsyncjob)
-    forms_saved = forms_saved + saved
-    saved, unison = helperViewEm(request, UnisonForm, Unison)
-    forms_saved = forms_saved + saved
-    saved, istgtglobal = helperViewEm(request, iSCSITargetGlobalConfigurationForm, iSCSITargetGlobalConfiguration)
-    forms_saved = forms_saved + saved
-    saved, dynamicdns = helperViewEm(request, DynamicDNSForm, DynamicDNS)
-    forms_saved = forms_saved + saved
-    saved, snmp = helperViewEm(request, SNMPForm, SNMP)
-    forms_saved = forms_saved + saved
-    saved, ups = helperViewEm(request, UPSForm, UPS)
-    forms_saved = forms_saved + saved
-    saved, webserver = helperViewEm(request, WebserverForm, Webserver)
-    forms_saved = forms_saved + saved
-    saved, bittorrent = helperViewEm(request, BitTorrentForm, BitTorrent)
-    forms_saved = forms_saved + saved
-    saved, ftp = helperViewEm(request, FTPForm, FTP)
-    forms_saved = forms_saved + saved
-    saved, tftp = helperViewEm(request, TFTPForm, TFTP)
-    forms_saved = forms_saved + saved
-    saved, ssh = helperViewEm(request, SSHForm, SSH)
-    forms_saved = forms_saved + saved
-    saved, activedirectory = helperViewEm(request, ActiveDirectoryForm, ActiveDirectory)
-    forms_saved = forms_saved + saved
-    saved, ldap = helperViewEm(request, LDAPForm, LDAP)
-    forms_saved = forms_saved + saved
-    saved, iscsitarget = helperViewEm(request, iSCSITargetForm, iSCSITarget)
-    forms_saved = forms_saved + saved
-    saved, iscsiextentfile = helperViewEm(request, iSCSITargetFileExtentForm, iSCSITargetExtent, prefix="fe")
-    forms_saved = forms_saved + saved
-    saved, iscsiextentdevice = helperViewEm(request, iSCSITargetDeviceExtentForm, iSCSITargetExtent, prefix="de")
-    forms_saved = forms_saved + saved
-    saved, asctarget = helperViewEm(request, iSCSITargetToExtentForm, iSCSITargetToExtent)
-    forms_saved = forms_saved + saved
-    saved, target_auth = helperViewEm(request, iSCSITargetAuthCredentialForm, iSCSITargetAuthCredential)
-    forms_saved = forms_saved + saved
-    saved, auth_initiator = helperViewEm(request, iSCSITargetAuthorizedInitiatorForm, iSCSITargetAuthorizedInitiator)
-    forms_saved = forms_saved + saved
-    saved, iscsiportal = helperViewEm(request, iSCSITargetPortalForm, iSCSITargetPortal)
-    forms_saved = forms_saved + saved
-
-    if request.method == 'POST':
-        if forms_saved > 0:
-            return HttpResponseRedirect('/services/')
-        else:
-            pass # Need to raise a validation exception
-
+        focus_form = None 
     srv = Services.objects.all()
     target_list = iSCSITarget.objects.all()
     extent_device_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
@@ -114,20 +57,34 @@ def services(request, objtype=None):
     target_auth_list = iSCSITargetAuthCredential.objects.all()
     auth_initiator_list = iSCSITargetAuthorizedInitiator.objects.all()
     iscsiportal_list = iSCSITargetPortal.objects.all()
+
+    cifs = helperViewEx(request, CIFSForm, CIFS, objtype, 'cifs')
+    afp = helperViewEx(request, AFPForm, AFP, objtype, 'afp')
+    nfs = helperViewEx(request, NFSForm, NFS, objtype, 'nfs')
+    istgtglobal = helperViewEx(request, iSCSITargetGlobalConfigurationForm, iSCSITargetGlobalConfiguration, objtype, 'istgtglobal')
+    snmp = helperViewEx(request, SNMPForm, SNMP, objtype, 'snmp')
+    ftp = helperViewEx(request, FTPForm, FTP, objtype, 'ftp')
+    tftp = helperViewEx(request, TFTPForm, TFTP, objtype, 'tftp')
+    ssh = helperViewEx(request, SSHForm, SSH, objtype, 'ssh')
+    activedirectory = helperViewEx(request, ActiveDirectoryForm, ActiveDirectory, objtype, 'activedirectory')
+    ldap = helperViewEx(request, LDAPForm, LDAP, objtype, 'ldap')
+
+    iscsitarget = helperViewEmpty(request, iSCSITargetForm, objtype, 'iscsitarget')
+    iscsiextentfile = helperViewEmpty(request, iSCSITargetFileExtentForm, objtype, 'iscsiextentfile', prefix="fe")
+    iscsiextentdevice = helperViewEmpty(request, iSCSITargetDeviceExtentForm, objtype, 'iscsiextentdevice', prefix="de")
+    asctarget = helperViewEmpty(request, iSCSITargetToExtentForm, objtype, 'asctarget')
+    target_auth = helperViewEmpty(request, iSCSITargetAuthCredentialForm, objtype, 'target_auth')
+    auth_initiator = helperViewEmpty(request, iSCSITargetAuthorizedInitiatorForm, objtype, 'auth_initiator')
+    iscsiportal = helperViewEmpty(request, iSCSITargetPortalForm, objtype, 'iscsiportal')
+
     variables = RequestContext(request, {
         'focused_tab' : 'services',
         'srv': srv,
         'cifs': cifs,
         'afp': afp,
         'nfs': nfs,
-        'rsync': rsync,
-        'unison': unison,
         'istgtglobal': istgtglobal,
-        'dynamicdns': dynamicdns,
         'snmp': snmp,
-        'ups': ups,
-        'webserver': webserver,
-        'bittorrent': bittorrent,
         'ftp': ftp,
         'tftp': tftp,
         'ssh': ssh,
@@ -159,12 +116,9 @@ def servicesToggleView(request, formname):
 	'cifs_toggle' : 'cifs',
 	'afp_toggle' : 'afp',
 	'nfs_toggle' : 'nfs',
-	'unison_toggle' : 'unison',
 	'iscsitarget_toggle' : 'iscsitarget',
 	'dyndns_toggle' : 'dyndns',
 	'snmp_toggle' : 'snmp',
-	'ups_toggle' : 'ups',
-	'bt_toggle' : 'bittorrent',
 	'httpd_toggle' : 'httpd',
 	'ftp_toggle' : 'ftp',
 	'tftp_toggle' : 'tftp',
@@ -211,7 +165,7 @@ def generic_delete(request, object_id, objtype):
 def generic_update(request, object_id, objtype):
     objtype2form = {
             'iscsitarget':   ( iSCSITarget, iSCSITargetForm ),
-            'iscsiextent':   ( iSCSITargetExtent, iSCSITargetExtentForm ),
+            'iscsiextent':   ( iSCSITargetExtent, iSCSITargeExtentEditForm),
             'asctarget':   ( iSCSITargetToExtent, iSCSITargetToExtentForm ),
             'target_auth':   ( iSCSITargetAuthCredential, iSCSITargetAuthCredentialForm ),
             'iscsiportal':   ( iSCSITargetPortal, iSCSITargetPortalForm ),

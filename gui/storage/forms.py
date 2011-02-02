@@ -25,7 +25,6 @@
 #
 # $FreeBSD$
 #####################################################################
-
 from django import forms
 from django.shortcuts import render_to_response
 from freenasUI.storage.models import *
@@ -33,17 +32,18 @@ from freenasUI.middleware.notifier import notifier
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
-from dojango.forms.models import ModelForm
 from dojango.forms import fields, widgets
+from freenasUI.common.forms import ModelForm
+from freenasUI.common.forms import Form
 from dojango.forms.fields import BooleanField
 from freenasUI.contrib.ext_formwizard import FormWizard
-from freenasUI.common.helperview import helperViewEm
 from freenasUI.common.widgets import RadioFieldRendererBulletless
+from freenasUI.account.models import bsdUsers, bsdGroups
 
 attrs_dict = { 'class': 'required' }
 
 # Step 1.  Creation of volumes manually is not supported.
-class VolumeWizard_VolumeNameTypeForm(forms.Form):
+class VolumeWizard_VolumeNameTypeForm(Form):
     def __init__(self, *args, **kwargs):
         super(VolumeWizard_VolumeNameTypeForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
@@ -99,7 +99,7 @@ class VolumeWizard_VolumeNameTypeForm(forms.Form):
 
 # Step 2.  Creation of volumes manually is not supported.
 # This step only show up when more than 1 disks is being chosen.
-class VolumeWizard_DiskGroupTypeForm(forms.Form):
+class VolumeWizard_DiskGroupTypeForm(Form):
     def __init__(self, *args, **kwargs):
         super(VolumeWizard_DiskGroupTypeForm, self).__init__(*args, **kwargs)
         grouptype_choices = ( ('mirror', 'mirror'), )
@@ -126,7 +126,7 @@ class VolumeWizard_DiskGroupTypeForm(forms.Form):
     group_type = forms.ChoiceField(choices=(), widget=forms.RadioSelect(attrs=attrs_dict))
 
 # Step 3.  Just show a page with "Finish".
-class VolumeFinalizeForm(forms.Form):
+class VolumeFinalizeForm(Form):
     pass
 
 #=================================
@@ -203,6 +203,7 @@ class VolumeWizard(FormWizard):
             diskobj.save()
 
 	notifier().init("volume", volume.id)
+        notifier().restart("collectd")
         return HttpResponseRedirect('/storage/')
 
 # Wrapper for the wizard.  Without the wrapper we end up
@@ -211,7 +212,7 @@ class VolumeWizard(FormWizard):
 def VolumeWizard_wrapper(request, *args, **kwargs):
 	return VolumeWizard([VolumeWizard_VolumeNameTypeForm, VolumeWizard_DiskGroupTypeForm, VolumeFinalizeForm], error_redirect="/storage/")(request, *args, **kwargs)
 
-class ZFSDataset_CreateForm(forms.Form):
+class ZFSDataset_CreateForm(Form):
     def __init__(self, *args, **kwargs):
         super(ZFSDataset_CreateForm, self).__init__(*args, **kwargs)
         self.fields['dataset_volid'].choices = self._populate_volume_choices()
@@ -234,4 +235,21 @@ class ZFSDataset_CreateForm(forms.Form):
     dataset_name = forms.CharField(max_length = 128, label = 'Dataset Name')
     dataset_compression = forms.ChoiceField(choices=ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label='Compression level')
     dataset_atime = forms.ChoiceField(choices=ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label='Enable atime')
+
+class MountPointAccessForm(Form):
+    mp_user = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label='Owner (user)')
+    mp_group = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label='Owner (group)')
+    mp_mode = forms.ChoiceField(choices=PermissionChoices, widget=forms.Select(attrs=attrs_dict), label='Mode')
+    mp_recursive = forms.BooleanField(initial=False,required=False,label='Set permission recursively')
+    def __init__(self, *args, **kwargs):
+        super(MountPointAccessForm, self).__init__(*args, **kwargs)
+        self.fields['mp_user'].choices = [(x.bsdusr_username, x.bsdusr_username) for x in bsdUsers.objects.all()]
+        self.fields['mp_group'].choices = [(x.bsdgrp_group, x.bsdgrp_group) for x in bsdGroups.objects.all()]
+    def commit(self, path='/mnt/'):
+        notifier().mp_change_permission(
+            path=path,
+            user=self.cleaned_data['mp_user'].__str__(),
+            group=self.cleaned_data['mp_group'].__str__(),
+            mode=self.cleaned_data['mp_mode'].__str__(),
+            recursive=self.cleaned_data['mp_recursive'])
 

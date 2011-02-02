@@ -17,6 +17,7 @@ generate_smbconf()
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
+		cifs_srv_authmodel,
 		cifs_srv_netbiosname,
 		cifs_srv_workgroup,
 		cifs_srv_description,
@@ -26,6 +27,8 @@ generate_smbconf()
 		cifs_srv_localmaster,
 		cifs_srv_timeserver,
 		cifs_srv_guest,
+		cifs_srv_guestok,
+		cifs_srv_guestonly,
 		cifs_srv_filemask,
 		cifs_srv_dirmask,
 		cifs_srv_sendbuffer,
@@ -92,8 +95,8 @@ generate_smbconf()
 
 	LIMIT 1
 	" | \
-	while read netbiosname workgroup cifs_description doscharset \
-		unixcharset loglevel localmaster timeserver guest \
+	while read authmodel netbiosname workgroup cifs_description doscharset \
+		unixcharset loglevel localmaster timeserver guest guestok guestonly \
 		cifs_filemask cifs_dirmask sendbuffer recvbuffer \
 		largerw sendfile easupport dosattr nullpw \
 		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_homedir \
@@ -103,6 +106,11 @@ generate_smbconf()
 		ldap_rootbindpw ldap_pwencryption ldap_ssl ldap_usersuffix \
 		ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix;
 	do
+		# Default user and group is ftp:ftp
+		if [ -z "${guest}" ]; then
+			guest=ftp
+		fi
+
 		cat<<-EOF
 		[global]
 		    encrypt passwords = yes
@@ -124,8 +132,14 @@ generate_smbconf()
 		    smb passwd file = /var/etc/private/smbpasswd
 		    private dir = /var/etc/private
 		    getwd cache = yes
+		    guest account = ${guest}
 EOF
-		echo ${guest} > /tmp/ix-samba
+		if [ "${guestok}" = "1" ]; then
+			echo "    guest ok = yes"
+		fi
+		if [ "${guestonly}" = "1" ]; then
+			echo "    guest only = yes"
+		fi
 
 		if [ "${ad_enable}" = "0" ]; then
 			echo "    netbios name = ${netbiosname}"
@@ -164,14 +178,8 @@ EOF
 			echo "    null passwords = yes"
 		fi
 
-		# Default user and group is ftp:ftp
-		if [ -z "${guest}" ]; then
-			guest=ftp
-		fi
-
 		if [ "${ldap_enable}" = "1" ]; then
 			echo "    security = user"
-			echo "    guest account = ${guest}"
 
 		elif [ "${ad_enable}" = "1" ]; then
 			local domain=$(echo "${ad_domainname}"|tr a-z A-Z)
@@ -225,19 +233,16 @@ EOF
 			    template shell = /bin/sh
 			    template homedir = /home/%U
 
-			    guest account = ${guest}
 EOF
 		else
-
-			# For now, we only support "SHARE" model.
-			# TODO: user group; other models;
-			cat<<-EOF
-			    security = share
-			    guest account = ${guest}
+			echo "    security = ${authmodel}"
+			if [ "${authmodel}" = "share" ]; then
+				cat<<-EOF
 			    force user = ${guest}
 			    force group = ${guest}
-			    passdb backend = smbpasswd
+			    passdb backend = tdbsam:/var/etc/private/passdb.tdb
 EOF
+			fi
 		fi
 
 		if [ -z "${cifs_filemask}" ]; then
@@ -372,6 +377,9 @@ generate_exports()
 		cifs_inheritperms,
 		cifs_recyclebin,
 		cifs_showhiddenfiles,
+		cifs_guest,
+		cifs_guestok,
+		cifs_guestonly,
 		cifs_hostsallow,
 		cifs_hostsdeny,
 		cifs_auxsmbconf
@@ -386,11 +394,8 @@ generate_exports()
 		cs.id ASC
 	" | \
 	while read name comment mountpoint cifsro browsable inheritperms \
-		recyclebin showhiddenfiles hostsallow hostsdeny auxsmbconf;
+		recyclebin showhiddenfiles guest guestok guestonly hostsallow hostsdeny auxsmbconf;
 	do
-		chmod 777 ${mountpoint}
-		chown `cat /tmp/ix-samba` ${mountpoint}
-		rm /tmp/ix-samba
 		echo "[${name}]"
 		echo "path = ${mountpoint}"
 		echo "printable = no"
@@ -431,8 +436,15 @@ generate_exports()
 		if [ -n "${hostsdeny}" ]; then
 			echo "hosts deny = ${hostsdeny}"
 		fi
-		# TODO: Other models
-		echo "guest ok = yes"
+		if [ "${guestok}" = "1" -o "${guestonly}" = "1" ]; then
+			echo "guest account = ${guest}"
+		fi
+		if [ "${guestok}" = "1" ]; then
+			echo "guest ok = yes"
+		fi
+		if [ "${guestonly}" = "1" ]; then
+			echo "guest only = yes"
+		fi
 		if [ -n "${auxsmbconf}" ]; then
 			echo ${auxsmbconf}
 		fi
@@ -440,11 +452,21 @@ generate_exports()
 	echo
 }
 
+generate_smb_tdb()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT bsdusr_smbhash FROM account_bsdusers WHERE bsdusr_smbhash LIKE '%:%:XXXX%'" > /tmp/smbpasswd
+	rm /var/etc/private/passdb.tdb
+	/usr/local/bin/pdbedit -i smbpasswd:/tmp/smbpasswd -e tdbsam:/var/etc/private/passdb.tdb
+	rm -f /tmp/smbpasswd
+}
+
 generate_smb_config()
 {
+	mkdir -p /var/etc/private
+	chmod 700 /var/etc/private
+	generate_smb_tdb
 	generate_smbconf > ${SMB_CONF}
 	generate_exports >> ${SMB_CONF}
-	mkdir -p /var/etc/private
 }
 
 name="ix-samba"

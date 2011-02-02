@@ -25,25 +25,25 @@
 #
 # $FreeBSD$
 #####################################################################
+from dojango.forms import ModelForm as MF
+from dojango.forms import Form as F
 
-from django.shortcuts import render_to_response                
-from freenasUI.system.models import *                         
-from freenasUI.middleware.notifier import notifier
-from django.http import HttpResponseRedirect
-from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode 
-from freenasUI.common.forms import ModelForm
-from freenasUI.common.forms import Form
-from dojango.forms import fields, widgets 
-from dojango.forms.fields import BooleanField 
+class ModelForm(MF):
+    def as_table(self):
+        "Returns this form rendered as HTML <tr>s -- excluding the <table></table>."
+        return self._html_output(
+            normal_row = u'<tr%(html_class_attr)s><th>%(label)s</th><td>%(errors)s%(field)s</td></tr>',
+            error_row = u'<tr><td colspan="2">%s</td></tr>',
+            row_ender = u'</td></tr>',
+            help_text_html = u'<br />%s',
+            errors_on_separate_row = False)
 
-class SettingsForm(ModelForm):
-    class Meta:
-        model = Settings
-    def save(self):
-        super(SettingsForm, self).save()
-        notifier().reload("timeservices")
-
-class AdvancedForm(ModelForm):
-    class Meta:
-        model = Advanced
+class Form(F):
+    def as_table(self):
+        "Returns this form rendered as HTML <tr>s -- excluding the <table></table>."
+        return self._html_output(
+            normal_row = u'<tr%(html_class_attr)s><th>%(label)s</th><td>%(errors)s%(field)s</td></tr>',
+            error_row = u'<tr><td colspan="2">%s</td></tr>',
+            row_ender = u'</td></tr>',
+            help_text_html = u'<br />%s',
+            errors_on_separate_row = False)
