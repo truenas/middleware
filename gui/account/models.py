@@ -77,6 +77,7 @@ class bsdUsers(models.Model):
             )
     bsdusr_home = models.CharField(
             max_length=120,
+            default="/nonexistent",
             verbose_name="Home Directory"
             )
     bsdusr_shell = models.CharField(

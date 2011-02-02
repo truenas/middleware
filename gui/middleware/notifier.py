@@ -475,14 +475,17 @@ class notifier:
 		The default shell is /sbin/nologin.
 
 		Returns user uid and gid"""
-		command = "/usr/sbin/pw useradd \"%s\" -h 0 -c \"%s\" -m" % (username, fullname)
+		command = "/usr/sbin/pw useradd \"%s\" -h 0 -c \"%s\"" % (username, fullname)
 		if uid >= 0:
 			command = command + " -u %d" % (uid)
 		if gid >= 0:
 			command = command + " -g %d" % (gid)
 		if homedir[0:4] != "/mnt":
 			homedir = "/mnt/" + homedir
-		command = command + " -s \"%s\" -d \"%s\"" % (shell, homedir)
+                if homedir != '/nonexistent':
+		        command = command + " -s \"%s\" -d \"%s\" -m" % (shell, homedir)
+                else:
+		        command = command + " -s \"%s\" -d \"%s\"" % (shell, homedir)
 		self.__issue_pwdchange(username, command, password)
                 smb_command = "/usr/local/bin/pdbedit -w %s" % username
                 smb_cmd = self.__pipeopen(smb_command)
@@ -526,6 +529,11 @@ class notifier:
                     flags=''
 		self.__system("/usr/sbin/chown %s%s:%s %s" % (flags, user, group, path))
 		self.__system("/bin/chmod %s%s %s" % (flags, mode, path))
+        def validate_xz(self, path):
+                ret = self.__system_nolog("/usr/bin/xz -t %s" % (path))
+                if ret == 0:
+                    return True
+                return False
 
 def usage():
 	print ("Usage: %s action command" % argv[0])

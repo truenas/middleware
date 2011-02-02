@@ -88,7 +88,10 @@ class bsdUserCreationForm(ModelForm):
         if bsdusr_password1 != bsdusr_password2:
             raise forms.ValidationError(_("The two password fields didn't match."))
         return bsdusr_password2
-
+    def clean_bsdusr_home(self):
+        if self.cleaned_data['bsdusr_home'][0:5] != u'/mnt/':
+            raise forms.ValidationError(_("Home directory has to start with /mnt/"))
+        return self.cleaned_data['bsdusr_home']
     def save(self, commit=True):
         if commit:
             uid, gid, unixhash, smbhash = notifier().user_create(

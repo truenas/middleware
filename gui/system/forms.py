@@ -47,3 +47,18 @@ class SettingsForm(ModelForm):
 class AdvancedForm(ModelForm):
     class Meta:
         model = Advanced
+
+class FirmwareForm(Form):
+    firmware = forms.FileField(label="New image to be installed")
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        fw = open('/tmp/firmware.xz', 'wb+')
+        for c in self.files['firmware'].chunks():
+            fw.write(c)
+        fw.close
+        if not notifier().validate_xz('/tmp/firmware.xz'):
+            msg = u"Invalid firmware"
+            self._errors["firmware"] = self.error_class([msg])
+            del cleaned_data["firmware"]
+        return cleaned_data
+
