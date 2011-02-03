@@ -551,7 +551,7 @@ class notifier:
         The default shell is /sbin/nologin.
 
         Returns user uid and gid"""
-        command = '/usr/sbin/pw useradd "%s" -h 0 -c "%s" -m' % (username, fullname)
+        command = '/usr/sbin/pw useradd "%s" -h 0 -c "%s"' % (username, fullname)
         if uid >= 0:
             command += " -u %d" % (uid)
         if gid >= 0:
