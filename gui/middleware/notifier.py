@@ -556,7 +556,10 @@ class notifier:
             command += " -u %d" % (uid)
         if gid >= 0:
             command += " -g %d" % (gid)
-        command += ' -s "%s" -d "%s"' % (shell, homedir)
+        if homedir != '/nonexistent':
+            command += ' -s "%s" -d "%s" -m' % (shell, homedir)
+        else:
+            command += ' -s "%s" -d "%s"' % (shell, homedir)
         self.__issue_pwdchange(username, command, password)
         smb_command = "/usr/local/bin/pdbedit -w %s" % username
         smb_cmd = self.__pipeopen(smb_command)
