@@ -130,7 +130,7 @@ class Disk(models.Model):
     class Meta:
         verbose_name = "Disk"
     def __unicode__(self):
-        return self.disk_disks + ' (' + self.disk_name + ')'
+        return self.disk_disks + ' (' + self.disk_description + ')'
 
 class MountPoint(models.Model):
     mp_volume = models.ForeignKey(Volume)
