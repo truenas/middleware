@@ -94,6 +94,34 @@
         <br />
         <br />
     </div>
+    <div dojoType="dijit.layout.ContentPane" title="Firmware Update" {% if focus_form == "settings" %} selected="true"{% endif %}>
+        <form action="/system/firmware/" enctype="multipart/form-data" method="post">{% csrf_token %}
+        <table class="config">
+            {% for field in firmware %}
+                <tr>
+                    <td>
+                        <label for="{{ field.auto_id }}">
+                            {% if field.field.required %}
+                                <span class="required">{{ field.label }}</span>
+                            {% else %}
+                                {{ field.label }}
+                            {% endif %}
+                        </label>
+                    </td>
+                    <td>
+                         {{ field }}
+                         {{ field.errors }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        <p class="btn">
+            <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Upgrade</button>
+        </p>
+    </form>
+        <br />
+        <br />
+    </div>
     <div dojoType="dijit.layout.TabContainer" nested="true" style="width:100%;" title="Reporting" {% if focus_form == "system" %} selected="true"{% endif %} doLayout="false">
         <div dojoType="dijit.layout.ContentPane" title="System Information" doLayout="false">
             <h3>System Information</h3>
