@@ -57,9 +57,9 @@ class notifier:
         self.___system("(" + command + ") 2>&1 | logger -p daemon.notice -t freenas")
         libc.sigprocmask(3, pomask, None)
         syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
-        
-        def __system_nolog(self, command):
-            retval = 0
+
+    def __system_nolog(self, command):
+        retval = 0
         syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
         syslog.syslog(syslog.LOG_NOTICE, "Executing: " + command)
         # TODO: python's signal class should be taught about sigprocmask(2)
@@ -74,16 +74,16 @@ class notifier:
         libc.sigprocmask(3, pomask, None)
         syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
         return retval
-    
+
     def __pipeopen(self, command):
         syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
         syslog.syslog(syslog.LOG_NOTICE, "Popen()ing: " + command)
         args = shlex_split(command)
         return Popen(args, stdin = PIPE, stdout = PIPE, stderr = PIPE, close_fds = True)
-    
+
     def _do_nada(self):
         pass
-    
+
     def _simplecmd(self, action, what):
         syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
         syslog.syslog(syslog.LOG_DEBUG, "Calling: %s(%s) " % (action, what))
@@ -100,7 +100,7 @@ class notifier:
             f()
         except:
             raise
-    
+
     def init(self, what, objectid = None):
         """ Dedicated command to create "what" designated by an optional objectid.
 
@@ -113,7 +113,7 @@ class notifier:
                 f(objectid)
             except:
                 raise
-    
+
     def destroy(self, what, objectid = None):
         if objectid == None:
             raise ValueError("Calling destroy without id")
@@ -123,28 +123,28 @@ class notifier:
                 f(objectid)
             except:
                 raise
-    
+
     def start(self, what):
         """ Start the service specified by "what".
 
         The helper will use method self._start_[what]() to start the service.
         If the method does not exist, it would fallback using service(8)."""
         self._simplecmd("start", what)
-    
+
     def stop(self, what):
         """ Stop the service specified by "what".
 
         The helper will use method self._stop_[what]() to stop the service.
         If the method does not exist, it would fallback using service(8)."""
         self._simplecmd("stop", what)
-    
+
     def restart(self, what):
         """ Restart the service specified by "what".
 
         The helper will use method self._restart_[what]() to restart the service.
         If the method does not exist, it would fallback using service(8)."""
         self._simplecmd("restart", what)
-    
+
     def reload(self, what):
         """ Reload the service specified by "what".
 
@@ -155,7 +155,7 @@ class notifier:
             self._simplecmd("reload", what)
         except:
             self.restart(what)
-    
+
     def change(self, what):
         """ Notify the service specified by "what" about a change.
 
@@ -166,43 +166,43 @@ class notifier:
             self.reload(what)
         except:
             self.start(what)
-    
+
     def _restart_iscsitarget(self):
         self.__system("/usr/sbin/service ix-istgt quietstart")
         self.__system("/usr/sbin/service istgt restart")
-    
+
     def _reload_iscsitarget(self):
         self.__system("/usr/sbin/service ix-istgt quietstart")
         self.__system("/usr/sbin/service istgt restart")
-    
+
     def _start_network(self):
         # TODO: Skip this step when IPv6 is already enabled
         self.__system("/sbin/sysctl net.inet6.ip6.auto_linklocal=1")
         self.__system("/usr/sbin/service autolink auto_linklocal quietsatrt")
         self.__system("/usr/sbin/service netif stop")
         self.__system("/etc/netstart")
-    
+
     def _reload_named(self):
         self.__system("/usr/sbin/service named reload")
-    
+
     def _reload_networkgeneral(self):
         self.__system('/bin/hostname ""')
         self.__system("/usr/sbin/service hostname quietstart")
         self.__system("/usr/sbin/service routing restart")
-    
+
     def _reload_timeservices(self):
         self.__system("/usr/sbin/service ix-localtime quietstart")
         self.__system("/usr/sbin/service ix-ntpd quietstart")
         self.__system("/usr/sbin/service ntpd restart")
-    
+
     def _reload_ssh(self):
         self.__system("/usr/sbin/service ix-sshd quietstart")
         self.__system("/usr/sbin/service sshd restart")
-    
+
     def _restart_ssh(self):
         self.__system("/usr/sbin/service ix-sshd quietstart")
         self.__system("/usr/sbin/service sshd restart")
-    
+
     def _restart_ldap(self):
         self.__system("/usr/sbin/service ix-ldap quietstart")
         self.__system("/usr/sbin/service ix-nsswitch quietstart")
@@ -214,7 +214,7 @@ class notifier:
         self.__system("/usr/bin/killall winbindd")
         self.__system("/bin/sleep 5")
         self.__system("/usr/sbin/service samba quietstart")
-    
+
     def _restart_activedirectory(self):
         self.__system("/usr/sbin/service ix-kerberos quietstart")
         self.__system("/usr/sbin/service ix-nsswitch quietstart")
@@ -229,40 +229,40 @@ class notifier:
         self.__system("/usr/bin/killall winbindd")
         self.__system("/bin/sleep 5")
         self.__system("/usr/sbin/service samba quietstart")
-    
+
     def _reload_tftp(self):
         self.__system("/usr/sbin/service ix-inetd quietstart")
         self.__system("/usr/sbin/service inetd restart")
-    
+
     def _restart_tftp(self):
         self.__system("/usr/sbin/service ix-inetd quietstart")
         self.__system("/usr/sbin/service inetd restart")
-    
+
     def _reload_ftp(self):
         self.__system("/usr/sbin/service ix-proftpd quietstart")
         self.__system("/usr/sbin/service proftpd restart")
-    
+
     def _load_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
         self.__system("/usr/sbin/service netatalk quietstart")
-    
+
     def _restart_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
         self.__system("/usr/sbin/service netatalk restart")
-    
+
     def _reload_nfs(self):
         self.__system("/usr/sbin/service ix-nfsd quietstart")
         self.__system("/usr/sbin/service mountd forcerestart")
-    
+
     def _restart_nfs(self):
         self.__system("/usr/sbin/service mountd forcestop")
         self.__system("/usr/sbin/service nfsd forcestop")
         self.__system("/usr/sbin/service ix-nfsd quietstart")
         self.__system("/usr/sbin/service nfsd quietstart")
-    
+
     def _restart_system(self):
         self.__system("/bin/sleep 3 && /sbin/shutdown -r now &")
-    
+
     def _stop_system(self):
         self.__system("/sbin/shutdown -p now")
 
@@ -556,11 +556,6 @@ class notifier:
             command += " -u %d" % (uid)
         if gid >= 0:
             command += " -g %d" % (gid)
-        homedir = os.path.normpath(homedir)
-        if not homedir.startswith("/mnt"):
-            if homedir.startswith("/"):
-                homedir = homedir[1:]
-            homedir = os.path.join("/mnt/", homedir)
         command += ' -s "%s" -d "%s"' % (shell, homedir)
         self.__issue_pwdchange(username, command, password)
         smb_command = "/usr/local/bin/pdbedit -w %s" % username
@@ -613,6 +608,12 @@ class notifier:
             flags=''
         self.__system("/usr/sbin/chown %s%s:%s %s" % (flags, user, group, path))
         self.__system("/bin/chmod %s%s %s" % (flags, mode, path))
+
+    def validate_xz(self, path):
+        ret = self.__system_nolog("/usr/bin/xz -t %s" % (path))
+        if ret == 0:
+            return True
+        return False
 
 def usage():
     print ("Usage: %s action command" % argv[0])
