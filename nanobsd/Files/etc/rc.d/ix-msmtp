@@ -9,12 +9,12 @@
 
 . /etc/rc.subr
 
-msmtp_config=${msmtp_config:-"/usr/local/etc/msmtp.conf"}
+msmtp_config=${msmtp_config:-"/usr/local/etc/msmtprc"}
 
 generate_msmtp_cfg()
 {
 	local IFS=\|
-	local f="em_fromemail em_outgoingserver em_port em_security em_smtp"
+	local f="em_fromemail em_outgoingserver em_port em_security em_smtp em_user em_pass"
 	eval local $f
 	local cmd sf
 	sf=$(echo $f | sed -e 's/ /, /g')
@@ -28,15 +28,8 @@ port ${em_port}
 protocol smtp
 from ${em_fromemail}
 syslog LOG_MAIL
-auth none
 __EOF__
-		# xxx need support for auth method
-		# xxx need user/pass in database
-		# eg: -i "count(//system/email/auth) > 0"
-  		# -v "concat('auth ',//system/email/authmethod)" -n
-		# -v "concat('user ',//system/email/username)" -n
-		# -v "concat('password ',//system/email/password)" -n
-		if [ ${em_security} != "None" ]; then
+		if [ ${em_security} != "plain" ]; then
 		    echo tls on
 		    echo tls_certcheck off
 		    if [ ${em_port} -eq 25 ]; then
@@ -45,6 +38,13 @@ __EOF__
 		        echo tls_starttls on
 		    fi
 		fi
+                if [ "${em_smtp}" = "1" ]; then
+		    echo auth login
+                    echo user ${em_user}
+                    echo password ${em_pass}
+		else
+		    echo auth none
+                fi
 	    done
 }
 
