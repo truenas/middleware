@@ -53,9 +53,10 @@ def index(request, objtype = None):
     platform = os.popen("sysctl -n hw.model").read()
     date = os.popen('env -u TZ date').read()
     uptime = commands.getoutput("uptime | awk -F', load averages:' '{    print $1 }'")
-    loadavg = commands.getoutput("uptime | awk -F'load averages:' '{     print $2 }'")
+    loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
     settings = SettingsForm(data = Settings.objects.order_by("-id").values()[0])
     advanced = AdvancedForm(data = Advanced.objects.order_by("-id").values()[0])
+    firmware = FirmwareForm()
     if request.method == 'POST':
         if objtype == 'settings':
             settings = SettingsForm(request.POST)
@@ -65,6 +66,10 @@ def index(request, objtype = None):
             advanced = AdvancedForm(request.POST)
             if advanced.is_valid():
                 advanced.save()
+        elif objtype == 'firmware':
+            firmware = FirmwareForm(request.POST, request.FILES)
+            if firmware.is_valid():
+                firmware.save()
         else: 
             raise Http404()
         return HttpResponseRedirect('/system/' + objtype)
@@ -100,6 +105,7 @@ def index(request, objtype = None):
         'focused_tab' : 'system',
         'settings': settings,
         'advanced': advanced,
+        'firmware': firmware,
         'hostname': hostname,
         'uname1': uname1,
         'uname2': uname2,
