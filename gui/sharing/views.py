@@ -68,7 +68,6 @@ def sharing(request, sharetype = None):
             raise Http404() # TODO: Should be something better
         return HttpResponseRedirect('/sharing' + '/global/' + sharetype)
     else:
-        mountpoint_list = MountPoint.objects.all()
         cifs_share_list = CIFS_Share.objects.select_related().all()
         afp_share_list = AFP_Share.objects.order_by("-id").values()
         nfs_share_list = NFS_Share.objects.select_related().all()
@@ -77,7 +76,6 @@ def sharing(request, sharetype = None):
         nfs = NFS_ShareForm()
     variables = RequestContext(request, {
         'focused_tab' : 'sharing',
-        'mountpoint_list': mountpoint_list,
         'cifs_share_list': cifs_share_list,
         'afp_share_list': afp_share_list,
         'nfs_share_list': nfs_share_list,
