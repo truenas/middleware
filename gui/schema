@@ -28,16 +28,12 @@ CREATE TABLE "auth_group" (
 CREATE TABLE "auth_group_permissions" (
     "id" integer NOT NULL PRIMARY KEY,
     "group_id" integer NOT NULL,
-    "permission_id" integer NOT NULL REFERENCES "auth_permission" (
-    "id"),
-    UNIQUE (
-    "group_id",
-    "permission_id")
+    "permission_id" integer NOT NULL REFERENCES "auth_permission" ("id"),
+    UNIQUE ("group_id", "permission_id")
 );
 CREATE TABLE "auth_message" (
     "id" integer NOT NULL PRIMARY KEY,
-    "user_id" integer NOT NULL REFERENCES "auth_user" (
-    "id"),
+    "user_id" integer NOT NULL REFERENCES "auth_user" ("id"),
     "message" text NOT NULL
 );
 CREATE TABLE "auth_permission" (
@@ -45,9 +41,7 @@ CREATE TABLE "auth_permission" (
     "name" varchar(50) NOT NULL,
     "content_type_id" integer NOT NULL,
     "codename" varchar(100) NOT NULL,
-    UNIQUE (
-    "content_type_id",
-    "codename")
+    UNIQUE ("content_type_id", "codename")
 );
 CREATE TABLE "auth_user" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -65,29 +59,21 @@ CREATE TABLE "auth_user" (
 CREATE TABLE "auth_user_groups" (
     "id" integer NOT NULL PRIMARY KEY,
     "user_id" integer NOT NULL,
-    "group_id" integer NOT NULL REFERENCES "auth_group" (
-    "id"),
-    UNIQUE (
-    "user_id",
-    "group_id")
+    "group_id" integer NOT NULL REFERENCES "auth_group" ("id"),
+    UNIQUE ("user_id", "group_id")
 );
 CREATE TABLE "auth_user_user_permissions" (
     "id" integer NOT NULL PRIMARY KEY,
     "user_id" integer NOT NULL,
-    "permission_id" integer NOT NULL REFERENCES "auth_permission" (
-    "id"),
-    UNIQUE (
-    "user_id",
-    "permission_id")
+    "permission_id" integer NOT NULL REFERENCES "auth_permission" ("id"),
+    UNIQUE ("user_id", "permission_id")
 );
 CREATE TABLE "django_content_type" (
     "id" integer NOT NULL PRIMARY KEY,
     "name" varchar(100) NOT NULL,
     "app_label" varchar(100) NOT NULL,
     "model" varchar(100) NOT NULL,
-    UNIQUE (
-    "app_label",
-    "model")
+    UNIQUE ("app_label", "model")
 );
 CREATE TABLE "django_session" (
     "session_key" varchar(40) NOT NULL PRIMARY KEY,
