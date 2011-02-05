@@ -30,8 +30,9 @@ from dojango import forms
 from freenasUI.account.models import *
 from freenasUI.middleware.notifier import notifier
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.auth.forms import UserChangeForm as django_UCF
+from dojango import forms
 from django.contrib.auth.models import User as django_User
+from django.contrib.auth.forms import UserChangeForm as django_UCF
 
 class UserChangeForm(django_UCF):
     class Meta:
@@ -48,9 +49,9 @@ class bsdUserCreationForm(ModelForm):
     bsdusr_username = forms.RegexField(label=_("Username"), max_length=30, regex=r'^[\w.@+-]+$',
         help_text = _("Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."),
         error_messages = {'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
-    bsdusr_password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
+    bsdusr_password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput, required=False)
     bsdusr_password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput,
-        help_text = _("Enter the same password as above, for verification."))
+        help_text = _("Enter the same password as above, for verification."), required=False)
     bsdusr_shell = forms.ChoiceField(label=_("Shell"), initial=u'/bin/csh', choices=())
 
     class Meta:
@@ -75,21 +76,33 @@ class bsdUserCreationForm(ModelForm):
         return shell_dict.items()
 
     def clean_bsdusr_username(self):
-        bsdusr_username = self.cleaned_data["bsdusr_username"]
-        try:
-            bsdUsers.objects.get(bsdusr_username=bsdusr_username)
-        except bsdUsers.DoesNotExist:
-            return bsdusr_username
-        raise forms.ValidationError(_("A user with that username already exists."))
+        if self.instance.id is None:
+            bsdusr_username = self.cleaned_data["bsdusr_username"]
+            try:
+                bsdUsers.objects.get(bsdusr_username=bsdusr_username)
+            except bsdUsers.DoesNotExist:
+                return bsdusr_username
+            raise forms.ValidationError(_("A user with that username already exists."))
+        else:
+            return self.instance.bsdusr_username
+
+    def clean_bsdusr_password1(self):
+        if (self.instance.id is not None and self.cleaned_data["bsdusr_password1"] != "") or \
+                (self.instance.id is None and self.cleaned_data["bsdusr_password1"] == ""):
+            raise forms.ValidationError(_("This field is required."))
+        return self.cleaned_data["bsdusr_password1"]
 
     def clean_bsdusr_password2(self):
         bsdusr_password1 = self.cleaned_data.get("bsdusr_password1", "")
         bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
+        if (self.instance.id is not None and self.cleaned_data["bsdusr_password2"] != "") or \
+                (self.instance.id is None and self.cleaned_data["bsdusr_password2"] == ""):
+            raise forms.ValidationError(_("This field is required."))
         if bsdusr_password1 != bsdusr_password2:
             raise forms.ValidationError(_("The two password fields didn't match."))
         return bsdusr_password2
     def clean_bsdusr_home(self):
-        if self.cleaned_data['bsdusr_home'][0:5] != u'/mnt/':
+        if self.cleaned_data['bsdusr_home'][0:5] != u'/mnt/' and self.cleaned_data['bsdusr_home'] != u'/nonexistent':
             raise forms.ValidationError(_("Home directory has to start with /mnt/"))
         return self.cleaned_data['bsdusr_home']
     def save(self, commit=True):

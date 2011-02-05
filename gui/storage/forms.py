@@ -25,7 +25,7 @@
 #
 # $FreeBSD$
 #####################################################################
-from django import forms
+from dojango import forms
 from django.shortcuts import render_to_response
 from freenasUI.storage.models import *
 from freenasUI.middleware.notifier import notifier
@@ -41,6 +41,119 @@ from freenasUI.common.widgets import RadioFieldRendererBulletless
 from freenasUI.account.models import bsdUsers, bsdGroups
 
 attrs_dict = { 'class': 'required' }
+
+class VolumeWizardForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super(VolumeWizardForm, self).__init__(*args, **kwargs)
+        self.fields['volume_disks'].choices = self._populate_disk_choices()
+        self.fields['volume_disks'].choices.sort()
+        self.fields['volume_fstype'].widget.attrs['onClick'] = 'wizardcheckings();'
+
+        grouptype_choices = ( ('mirror', 'mirror'), )
+        grouptype_choices += ( ('stripe', 'stripe'),)
+        fstype = self.data.get("volume_fstype", None)
+        disks = self.data.get("volume_disks", [])
+        if fstype == "UFS":
+            l = len(disks) - 1
+            if l >= 2 and (((l-1)&l) == 0):
+                grouptype_choices += (
+                    ('raid3', 'RAID-3'),
+                    )
+        elif fstype == "ZFS":
+            if len(disks) >= 3:
+                grouptype_choices += ( ('raidz', 'RAID-Z'), )
+            if len(disks) >= 4:
+                grouptype_choices += ( ('raidz2', 'RAID-Z2'), )
+            # Not yet
+            #if len(disks) >= 5:
+            #    grouptype_choices += ( ('raidz3', 'RAID-Z3'), )
+        self.fields['group_type'].choices = grouptype_choices
+
+    def _populate_disk_choices(self):
+        from os import popen
+        import re
+    
+        diskchoices = dict()
+    
+        # Grab disk list
+        # NOTE: This approach may fail if device nodes are not accessible.
+        pipe = popen("/usr/sbin/diskinfo ` /sbin/sysctl -n kern.disks` | /usr/bin/cut -f1,3")
+        diskinfo = pipe.read().strip().split('\n')
+        for disk in diskinfo:
+            devname, capacity = disk.split('\t')
+            capacity = int(capacity)
+            if capacity >= 1099511627776:
+                    capacity = "%.1f TiB" % (capacity / 1099511627776.0)
+            elif capacity >= 1073741824:
+                    capacity = "%.1f GiB" % (capacity / 1073741824.0)
+            elif capacity >= 1048576:
+                    capacity = "%.1f MiB" % (capacity / 1048576.0)
+            else:
+                    capacity = "%d Bytes" % (capacity)
+            diskchoices[devname] = "%s (%s)" % (devname, capacity)
+        # Exclude the root device
+        rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
+        rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
+        if rootdev_base != None:
+            try:
+                del diskchoices[rootdev_base.group(0)]
+            except:
+                pass
+        # Exclude what's already added
+        for devname in [ x['disk_disks'] for x in Disk.objects.all().values('disk_disks')]:
+            try:
+                del diskchoices[devname]
+            except:
+                pass
+        return diskchoices.items()
+
+    #def clean(self):
+    #    cleaned_data = self.cleaned_data
+    #    volume_name = cleaned_data.get("volume_name")
+    #    if Volume.objects.filter(vol_name = volume_name).count() > 0:
+    #        msg = u"You already have a volume with same name"
+    #        self._errors["volume_name"] = self.error_class([msg])
+    #        del cleaned_data["volume_name"]
+    #    return cleaned_data
+
+    def done(self):
+        # Construct and fill forms into database.
+        volume_name = self.cleaned_data['volume_name']
+        volume_fstype = self.cleaned_data['volume_fstype']
+        disk_list = self.cleaned_data['volume_disks']
+
+        if (len(disk_list) < 2):
+            group_type = ''
+        else:
+            group_type = self.cleaned_data['group_type']
+
+        volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
+        volume.save()
+
+        mp = MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
+        mp.save()
+
+        grp = DiskGroup(group_name= volume_name + group_type, group_type = group_type, group_volume = volume)
+        grp.save()
+
+        for diskname in disk_list:
+            diskobj = Disk(disk_name = diskname, disk_disks = diskname,
+                           disk_description = ("Member of %s %s" %
+                                              (volume_name, group_type)),
+                           disk_group = grp)
+            diskobj.save()
+
+        notifier().init("volume", volume.id)
+
+    volume_name = forms.CharField(max_length = 30, label = 'Volume name')
+    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
+    volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks')
+    group_type = forms.ChoiceField(choices=(), widget=forms.RadioSelect(attrs=attrs_dict), required=False)
+
+    def clean_group_type(self):
+        if len(self.data['volume_disks']) > 1 and self.cleaned_data['group_type'] in (None, ''):
+            raise forms.ValidationError("This field is required.")
+        return self.cleaned_data['group_type']
 
 # Step 1.  Creation of volumes manually is not supported.
 class VolumeWizard_VolumeNameTypeForm(Form):
@@ -94,7 +207,8 @@ class VolumeWizard_VolumeNameTypeForm(Form):
                 del cleaned_data["volume_name"]
         return cleaned_data
     volume_name = forms.CharField(max_length = 30, label = 'Volume name')
-    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict, renderer=RadioFieldRendererBulletless), label = 'File System type')
+    #volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict, renderer=RadioFieldRendererBulletless), label = 'File System type')
+    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
     volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks')
 
 # Step 2.  Creation of volumes manually is not supported.

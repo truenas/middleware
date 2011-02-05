@@ -1,0 +1,48 @@
+{% load getattr %}
+<script>
+    function opn(url) {
+		dijit.byId('view_dialog').hide();
+                dialog = new dijit.Dialog({ 
+                    id: 'edit_dialog',
+                    title: 'Edit', 
+                    href: url, 
+                    parseOnLoad: true,
+                    closable: true, 
+                    style: "width: 650px;min-height:400px;background-color:white;overflow:auto;",
+                    //onLoad: function() { dojo.parser.parse('add_dialog'); },
+                    onHide: function() { this.destroyRecursive() },
+                });
+                dialog.show();
+    }
+    function page(page) {
+            dojo.stopEvent(e); // prevent the default submit
+            var newData = this.get("value");
+
+            dojo.xhrPost( {
+                url: '{% url system_model_add app=app,model=model %}',
+                 content: newData,
+                 handleAs: 'text',
+                 load: function(data) { dijit.byId('add_dialog').set('content', data); },
+                 error: function(data) { alert("error"); }
+             });
+    }
+</script>
+
+<table>
+    <thead>
+        <tr>
+        {% for field in field_names %}
+        <th>{{ field }}</th>
+        {% endfor %}
+    </tr>
+    </thead>
+    <tbody>
+{% for object in object_list %}
+        <tr>
+            {% for field in fields %}<td><a href="javascript:void(0);" onClick="javascript:opn('{% url system_model_edit app=app,model=model,oid=object.id %}');">{{ object|getattr:field }}</a></td>{% endfor %}
+        </tr>
+{% empty %}
+<tr><td colspan="{{ fields|length }}" align="center">There are no objects for {{ model }}</td></tr>
+{% endfor %}
+    </tbody>
+</table>

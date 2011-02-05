@@ -88,15 +88,17 @@ class GlobalConfiguration(models.Model):
             return u'%s' % self.id 
     class Meta:
         verbose_name = "Global Configuration"
+        verbose_name_plural = "Global Configuration"
 
-
+    class FreeAdmin:
+        deletable = False
 
 ## Network|Interface Management
 class Interfaces(models.Model):
 
     int_interface = models.CharField(
             max_length=300, 
-            choices=NICChoices(), 
+            choices=list(NICChoices()), 
             blank=False, 
             verbose_name="NIC",
             help_text="Pick your NIC"
@@ -158,6 +160,10 @@ class Interfaces(models.Model):
             return u'%s' % self.int_name 
     class Meta:
         verbose_name = "Interfaces"
+        verbose_name_plural = "Interfaces"
+    class FreeAdmin:
+        create_modelform = "InterfacesForm"
+        edit_modelform = "InterfacesEditForm"
 
 
 ## Network|Interface Management|VLAN

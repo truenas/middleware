@@ -27,6 +27,9 @@
 
 # Django settings for FreeNAS project.
 
+import os
+    
+HERE = os.path.abspath(os.path.dirname(__file__))
 
 DEBUG = True
 #DEBUG = False
@@ -69,7 +72,7 @@ USE_I18N = True
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = '/usr/local/www/freenasUI/media'
+MEDIA_ROOT = os.path.join(HERE, 'media')
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
@@ -98,15 +101,21 @@ MIDDLEWARE_CLASSES = (
     'dojango.middleware.DojoCollector',
 )
 DOJANGO_DATAGRID_ACCESS = (
-        'freenas.servicesCIFS',
-        'freenas.shareCIFS',
-        'freenas.Disk',
-            )
+    'account',
+    'system',
+    'network',
+    'storage',
+    'sharing',
+    'services',
+)
+#DOJANGO_DOJO_PROFILE = 'local'
+#DOJANGO_DOJO_VERSION = '1.6.0b1'
+#DOJANGO_DOJO_BUILD_VERSION = '1.6.0b1'
 
 ROOT_URLCONF = 'freenasUI.urls'
 
 TEMPLATE_DIRS = (
-    '/usr/local/www/freenasUI/templates',
+    os.path.join(HERE, 'templates'),
     '/usr/local/lib/python2.6/site-packages/dojango/templates',
 )
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -122,6 +131,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     #'django.contrib.admin',
     #'freenas',
+    'freeadmin',
     'south',
     'dojango',
     'account',
@@ -130,6 +140,16 @@ INSTALLED_APPS = (
     'storage',
     'sharing',
     'services',
+)
+
+BLACKLIST_NAV = (
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django_nav',
+    'south',
+    'dojango',
+    'freeadmin',
 )
 
 FORCE_SCRIPT_NAME = ''

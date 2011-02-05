@@ -210,7 +210,7 @@ class AFP_Share(models.Model):
         return self.as_path
 
     class Meta:
-        verbose_name = "Share"
+        verbose_name = "Apple Share"
     
 class NFS_Share(models.Model):
     nfs_comment = models.CharField(
@@ -246,5 +246,4 @@ class NFS_Share(models.Model):
         return self.nfs_path
 
     class Meta:
-        verbose_name = "NFS Share"
-
+        verbose_name = "UNIX Share"

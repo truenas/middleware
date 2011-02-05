@@ -28,13 +28,14 @@
 
 from django.conf.urls.defaults import *
 from django.views.generic import list_detail
-from network.views import * 
 
-urlpatterns = patterns('',
-    (r'^$', network),
-    (r'^global/(?P<objtype>\w+)/$', network),
-    (r'laggmembers/view/(?P<object_id>\d+)/$', lagg_members),
-    (r'(?P<objtype>\w+)/view/$', network),
-    (r'(?P<objtype>\w+)/edit/(?P<object_id>\d+)/$', generic_update),
-    (r'(?P<objtype>\w+)/delete/(?P<object_id>\d+)/$', generic_delete),
+urlpatterns = patterns('network.views',
+    (r'^$', 'network'),
+    url(r'^home/$', 'network2', name='network_home'),
+    (r'^global/(?P<objtype>\w+)/$', 'network'),
+    (r'laggmembers/view/(?P<object_id>\d+)/$', 'lagg_members'),
+    url(r'^global-configuration/$', 'globalconf', name='network_globalconf'),
+    (r'(?P<objtype>\w+)/view/$', 'network'),
+    (r'(?P<objtype>\w+)/edit/(?P<object_id>\d+)/$', 'generic_update'),
+    (r'(?P<objtype>\w+)/delete/(?P<object_id>\d+)/$', 'generic_delete'),
     )

@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
-WWW_PATH = "/usr/local/www"
-FREENAS_PATH= WWW_PATH + "/freenasUI"
-NETWORK_PATH = FREENAS_PATH + "/network"
-NOTIFIER_PATH = FREENAS_PATH + "/middleware/notifier.py"
-
 import os
 import sys
 from signal import signal, SIGINT, SIG_IGN
 import re
+
+WWW_PATH = "/usr/local/www"
+FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
+NETWORK_PATH = os.path.join(FREENAS_PATH, "network")
+NOTIFIER_PATH = os.path.join(FREENAS_PATH, "middleware/notifier.py")
 
 sys.path.append(WWW_PATH)
 sys.path.append(FREENAS_PATH)
@@ -24,310 +24,342 @@ from freenasUI.network.models import GlobalConfiguration, Interfaces, StaticRout
 from freenasUI.middleware.notifier import notifier
 
 
-#
-#	I'm sure there is a better/faster way to do this ;-)
-#
 def quad_to_cidr(quad):
-	vals = { 0:True, 128:True, 192:True,
-		224:True, 240:True, 248:True,
-		252:True, 254:True, 255:True }
+    vals = { 0:True, 128:True, 192:True,
+             224:True, 240:True, 248:True,
+             252:True, 254:True, 255:True }
 	
-	count = 0
-	octets = quad.split('.')
-	for oct in octets:
-		i = 7
-		o = int(oct)
-		if vals.get(o):
-			while i >= 0:
-				if o & (1 << i):
-					count += 1
-				else:
-					return count
-				i -= 1
+    count = 0
+    octets = quad.split('.')
+    for oct in octets:
+        i = 7
+        o = int(oct)
+        if vals.get(o):
+            while i >= 0:
+                if o & (1 << i):
+                    count += 1
+                else:
+                    return count
+                i -= 1
 
-		else:
-			return -1
+        else:
+            return False
 
-	return count
+    return count
 
 
-#
-#	Same crappy algorithm as quad_to_cidr()
-#
 def hex_to_cidr(hex):
-	h = hex.replace("0x", "")
-	h = h.replace("0X", "")
-	h = int(h, 16)
+    h = hex.replace("0x", "")
+    h = h.replace("0X", "")
+    h = int(h, 16)
 
-	i = 31
-	count = 0
-	while h & (1 << i):
-		count += 1
-		i -= 1
+    i = 31
+    count = 0
+    while h & (1 << i):
+        count += 1
+        i -= 1
 
-	return count
+    return count
 
 
-#
-#	If a value already exists, set it into the prompt.
-#
 def prompt(s, val):
-	prompt = s 
-	if val:
-		prompt += "[" + str(val) + "]"
-	prompt += ": "
-	return prompt
+    """Returns a string that forms a prompt, based on values passed in"""
+    # This function is used to set a prompt that reflects existing
+    # values
+    prompt = []
+    prompt.append(s) 
+    if val:
+        prompt.append(" ")
+        prompt.append("[")
+        prompt.append(str(val))
+        prompt.append("]")
+    prompt.append(": ")
+    return "".join(prompt)
 
 
-#
-#	Grab IPv4 settings from database, if they exist default to them
-#	unless overridden. Check for and allow various forms for the
-#	netmask.
-#
-def configure_ipv4_interface(iface, nic):
-	ip_prompt = prompt("IPv4 Address", iface.int_ipv4address)
-	mask_prompt = prompt("IPv4 Netmask", iface.int_v4netmaskbit)
+def configure_ipv4_interface(iface, nic, dhcp):
+    """Grab IPv4 settings from database, if they exist default to them
+unless overridden. Check for and allow various forms for the
+netmask."""
+    while True:
+        iface.int_name = raw_input("Interface name (eg: external): ")
+        if iface.int_name:
+            break
+        else:
+            continue
+    if dhcp:
+        iface.int_interface = nic
+        iface.int_dhcp = 1
+        iface.int_ipv4address = None
+        iface.int_v4netmaskbit = None
+        iface.save()
+        return True
 
-	ip = mask = None
-	sys.stdout.write(ip_prompt)
-	ip = sys.stdin.readline().strip()
-	if not ip and iface.int_ipv4address:
-		ip = iface.int_ipv4address
+    ip_prompt = prompt("IPv4 Address", iface.int_ipv4address)
+    mask_prompt = prompt("IPv4 Netmask", iface.int_v4netmaskbit)
 
-	try:
-		ip, mask = ip.split('/')
+    ip = mask = None
+    ip = raw_input(ip_prompt)
+    if not ip and iface.int_ipv4address:
+        ip = iface.int_ipv4address
 
-	except:
-		pass
+    try:
+        ip, mask = ip.split('/')
 
-	if not mask:
-		sys.stdout.write(mask_prompt)
-		mask = sys.stdin.readline().strip().lstrip('/')
-		if not mask and iface.int_v4netmaskbit:
-			mask = iface.int_v4netmaskbit
+    except:
+        pass
 
-	if re.match("^(\d\.){3}\d$", mask):
-		mask = quad_to_cidr(mask)
-	elif re.match("^(0[xX])?([0-9a-fA-F]){8}$", mask):
-		mask = hex_to_cidr(mask)
-	elif re.match("^(([1-9])|([12][0-9])|([3][012]))$", mask):
-		mask = int(mask, 10)
-	else:
-		return -1
+    if not mask:
+        mask = raw_input(mask_prompt)
+        if mask.startswith("/"):
+            mask = mask.lstrip("/")
+        if not mask and iface.int_v4netmaskbit:
+            mask = iface.int_v4netmaskbit
 
-	iface.int_interface = nic
-	iface.int_ipv4address = ip
-	iface.int_v4netmaskbit = mask
-	iface.save()
+    if re.match("^(\d\.){3}\d$", mask):
+        mask = quad_to_cidr(mask)
+    elif re.match("^(0[xX])?([0-9a-fA-F]){8}$", mask):
+        mask = hex_to_cidr(mask)
+    elif re.match("^(([1-9])|([12][0-9])|([3][012]))$", mask):
+        mask = int(mask, 10)
+    else:
+        return False
 
-	return 0
+    iface.int_interface = nic
+    iface.int_ipv4address = ip
+    iface.int_v4netmaskbit = mask
+    iface.int_dhcp = 0
+    iface.save()
+
+    return True
 
 
 def configure_ipv6_interface(iface, nic):
-	ip_prompt = prompt("IPv6 Address", iface.int_ipv6address)
-	mask_prompt = prompt("IPv6 Netmask", iface.int_v6netmaskbit)
+    ip_prompt = prompt("IPv6 Address", iface.int_ipv6address)
+    mask_prompt = prompt("IPv6 Netmask", iface.int_v6netmaskbit)
 
-	ip = mask = None
-	sys.stdout.write(ip_prompt)
-	ip = sys.stdin.readline().strip()
-	if not ip and iface.int_ipv6address:
-		ip = iface.int_ipv6address
+    ip = mask = None
+    sys.stdout.write(ip_prompt)
+    ip = sys.stdin.readline().strip()
+    if not ip and iface.int_ipv6address:
+        ip = iface.int_ipv6address
 
-	try:
-		ip, mask = ip.split('/')
+    try:
+        ip, mask = ip.split('/')
 
-	except:
-		pass
+    except:
+        pass
 
-	if not mask:
-		sys.stdout.write(mask_prompt)
-		mask = sys.stdin.readline().strip().lstrip('/')
-		if not mask and iface.int_v6netmask:
-			mask = iface.int_v6netmaskbit
+    if not mask:
+        sys.stdout.write(mask_prompt)
+        mask = sys.stdin.readline().strip().lstrip('/')
+        if not mask and iface.int_v6netmask:
+            mask = iface.int_v6netmaskbit
 
-	iface.int_interface = nic
-	iface.int_ipv6address = ip
-	iface.int_v6netmaskbit = mask
-	iface.save()
+    iface.int_interface = nic
+    iface.int_ipv6address = ip
+    iface.int_v6netmaskbit = mask
+    iface.save()
 
-	return 0
+    return True
 
 
 def configure_interface():
-	i = 0
-	nics = { }
-	choices = NICChoices()
-	for c in choices:
-		nics[i] = c[0]
-		print "%d) %s" % (i + 1, nics[i])
-		i += 1
+    while True:
+        i = 0
+        nics = {}
+        choices = NICChoices()
+        for c in choices:
+            nics[i] = c[0]
+            print "%d) %s" % (i + 1, nics[i])
+            i += 1
 	
-	regex = "^[1-%d]$" % i
+        regex = "^[1-%d]$" % i
 
-	i = raw_input()
-	if re.match(regex, i):
-		nic = nics[int(i) - 1]
-	else:
-		return -1
+        i = raw_input("Select an interface (q to quit): ")
+        if re.match(regex, i):
+            nic = nics[int(i) - 1]
+            break
+        elif i.lower().startswith("q"):
+            break
+        else:
+            continue
 
-	iface = Interfaces.objects.filter(int_interface = nic)
-	if iface:
-		iface = iface[0]
-	else:
-		iface = Interfaces()
+    iface = Interfaces.objects.filter(int_interface = nic)
+    if iface:
+        iface = iface[0]
+    else:
+        iface = Interfaces()
 
-	sys.stdout.write("Configure IPv4? ")
-	yes = sys.stdin.readline().strip()
-	if yes and (yes[0] == 'y' or yes[0] == 'Y'):
-		configure_ipv4_interface(iface, nic)
+    while True:
+        input = raw_input("Configure interface for DHCP? (y/n) ")
+        if input.lower().startswith("y"):
+            configure_ipv4_interface(iface, nic, dhcp=True)
+            return True
+        elif input.lower().startswith("n"):
+            break
+        else:
+            continue
 
-	sys.stdout.write("Configure IPv6? ")
-	yes = sys.stdin.readline().strip()
-	if yes and (yes[0] == 'y' or yes[0] == 'Y'):
-		configure_ipv6_interface(iface, nic)
+    while True:
+        yes = raw_input("Configure IPv4? (y/n) ")
+        if yes.lower().startswith("y"):
+            configure_ipv4_interface(iface, nic, dhcp=False)
+            break
+        elif yes.lower().startswith("n"):
+            break
 
-	notify("network", "start")
-	return 0
+    while True:
+        yes = raw_input("Configure IPv6? (y/n)")
+        if yes.lower().startswith("y"):
+            configure_ipv6_interface(iface, nic)
+            break
+        elif yes.lower().startswith("n"):
+            break
+
+    notify("network", "start")
+    return True
 
 
 def configure_ipv4_default_route(gc):
-	gwprompt = prompt("IPv4 Default Route", gc.gc_ipv4gateway)
+    gwprompt = prompt("IPv4 Default Route", gc.gc_ipv4gateway)
 
-	sys.stdout.write(gwprompt)
-	gateway = sys.stdin.readline().strip()
-	if gateway:
-		gc.gc_ipv4gateway = gateway 
+    sys.stdout.write(gwprompt)
+    gateway = sys.stdin.readline().strip()
+    if gateway:
+        gc.gc_ipv4gateway = gateway 
 
-	gc.save()
-	return 0
+    gc.save()
+    return True
 
 
 def configure_ipv6_default_route(gc):
-	gwprompt = prompt("IPv6 Default Route", gc.gc_ipv6gateway)
+    gwprompt = prompt("IPv6 Default Route", gc.gc_ipv6gateway)
 
-	sys.stdout.write(gwprompt)
-	gateway = sys.stdin.readline().strip()
-	if gateway:
-		gc.gc_ipv6gateway = gateway 
+    sys.stdout.write(gwprompt)
+    gateway = sys.stdin.readline().strip()
+    if gateway:
+        gc.gc_ipv6gateway = gateway 
 
-	gc.save()
+    gc.save()
 
 
 def configure_default_route():
-	gc = GlobalConfiguration.objects.all()
-	gc = gc[0]
+    gc = GlobalConfiguration.objects.all()
+    gc = gc[0]
 
-	sys.stdout.write("Configure IPv4 Default Route? ")
-	yes = sys.stdin.readline().strip()
-	if yes and (yes[0] == 'y' or yes[0] == 'Y'):
-		configure_ipv4_default_route(gc)
+    sys.stdout.write("Configure IPv4 Default Route? ")
+    yes = sys.stdin.readline().strip()
+    if yes and (yes[0] == 'y' or yes[0] == 'Y'):
+        configure_ipv4_default_route(gc)
 
-	sys.stdout.write("Configure IPv6 Default Route? ")
-	yes = sys.stdin.readline().strip()
-	if yes and (yes[0] == 'y' or yes[0] == 'Y'):
-		configure_ipv6_default_route(gc)
+    sys.stdout.write("Configure IPv6 Default Route? ")
+    yes = sys.stdin.readline().strip()
+    if yes and (yes[0] == 'y' or yes[0] == 'Y'):
+        configure_ipv6_default_route(gc)
 
-	notify("routing", "start")
-	return 0
+    notify("routing", "start")
+    return True
 
 
 def configure_static_routes():
-	sys.stdout.write("Destination Network: ")
-	dest = sys.stdin.readline().strip()
+    sys.stdout.write("Destination Network: ")
+    dest = sys.stdin.readline().strip()
 
-	sys.stdout.write("Gateway: ")
-	gateway = sys.stdin.readline().strip()
+    sys.stdout.write("Gateway: ")
+    gateway = sys.stdin.readline().strip()
 
-	sys.stdout.write("Description: ")
-	desc = sys.stdin.readline().strip()
+    sys.stdout.write("Description: ")
+    desc = sys.stdin.readline().strip()
 
-	sr = StaticRoute()
+    sr = StaticRoute()
 
-	if dest:
-		sr.sr_destination = dest
-	if gateway:
-		sr.sr_gateway = gateway
-	if desc:
-		sr.sr_description = desc
+    if dest:
+        sr.sr_destination = dest
+    if gateway:
+        sr.sr_gateway = gateway
+    if desc:
+        sr.sr_description = desc
 
-	if dest or gateway:
-		sr.save()
+    if dest or gateway:
+        sr.save()
 	
-	notify("routing", "start")
-	return 0
+    notify("routing", "start")
+    return True
 
 
 def configure_dns():
-	ns1 = ns2 = ns3 = domain = None
-	gc = GlobalConfiguration.objects.all()
-	gc = gc[0]
+    ns1 = ns2 = ns3 = domain = None
+    gc = GlobalConfiguration.objects.all()
+    gc = gc[0]
 
-	domain_prompt = prompt("DNS Domain", gc.gc_domain)
-	ns1_prompt = prompt("DNS Nameserver 1", gc.gc_nameserver1)
-	ns2_prompt = prompt("DNS Nameserver 2", gc.gc_nameserver2)
-	ns3_prompt = prompt("DNS Nameserver 3", gc.gc_nameserver3)
+    domain_prompt = prompt("DNS Domain", gc.gc_domain)
+    ns1_prompt = prompt("DNS Nameserver 1", gc.gc_nameserver1)
+    ns2_prompt = prompt("DNS Nameserver 2", gc.gc_nameserver2)
+    ns3_prompt = prompt("DNS Nameserver 3", gc.gc_nameserver3)
 
-	sys.stdout.write(domain_prompt)
-	domain = sys.stdin.readline().strip()
-	if domain:
-		gc.gc_domain = domain
+    sys.stdout.write(domain_prompt)
+    domain = sys.stdin.readline().strip()
+    if domain:
+        gc.gc_domain = domain
 
-	sys.stdout.write(ns1_prompt)
-	ns1 = sys.stdin.readline().strip()
-	if ns1:
-		gc.gc_nameserver1 = ns1
+    sys.stdout.write(ns1_prompt)
+    ns1 = sys.stdin.readline().strip()
+    if ns1:
+        gc.gc_nameserver1 = ns1
 
-	sys.stdout.write(ns2_prompt)
-	ns2 = sys.stdin.readline().strip()
-	if ns2:
-		gc.gc_nameserver2 = ns2
+    sys.stdout.write(ns2_prompt)
+    ns2 = sys.stdin.readline().strip()
+    if ns2:
+        gc.gc_nameserver2 = ns2
 
-	sys.stdout.write(ns3_prompt)
-	ns3 = sys.stdin.readline().strip()
-	if ns3:
-		gc.gc_nameserver3 = ns3
+    sys.stdout.write(ns3_prompt)
+    ns3 = sys.stdin.readline().strip()
+    if ns3:
+        gc.gc_nameserver3 = ns3
 
-	gc.save()
+    gc.save()
 
-	notify("networkgeneral", "reload")
-	return 0
+    notify("networkgeneral", "reload")
+    return True
 
 
 def forkexec(path, *args):
-	pid = os.fork()
-	if pid < 0:
-		sys.exit(1)
-	elif pid == 0:
-		os.execvp(path, (path,) + tuple(args))
-		os._exit(1)
-	else:
-		(cpid, status) = os.waitpid(pid, 0)
+    pid = os.fork()
+    if pid < 0:
+        sys.exit(1)
+    elif pid == 0:
+        os.execvp(path, (path,) + tuple(args))
+        os._exit(1)
+    else:
+        (cpid, status) = os.waitpid(pid, 0)
 
-	return status
+    return status
 
 
 def shell():
-	return forkexec("/bin/sh")
+    return forkexec("/bin/sh")
 
 
 def reboot():
-	return forkexec("/sbin/reboot")
+    return forkexec("/sbin/reboot")
 
 
 def notify(what, how):
-	return forkexec("python", NOTIFIER_PATH, how, what)
+    return forkexec("python", NOTIFIER_PATH, how, what)
 
 
 def main_menu():
-	handler = { }
-	handler[0] = configure_interface
-	handler[1] = configure_default_route
-	handler[2] = configure_static_routes
-	handler[3] = configure_dns
-	handler[4] = shell
-	handler[5] = reboot
+    handler = { 1: configure_interface,
+                2: configure_default_route,
+                3: configure_static_routes,
+                4: configure_dns,
+                5: shell,
+                6: reboot
+              }
 
-	print """
+    while True:
+        print """
 Console setup
 -------------
 1) Configure Network Interfaces
@@ -336,11 +368,14 @@ Console setup
 4) Configure DNS
 5) Shell
 6) Reboot
-	"""
+        """
 
-	ch = raw_input()
-	if re.match("^[1-6]$", ch):
-		handler[int(ch) - 1]()
+        ch = raw_input("Enter an option from 1-6: ")
+        if re.match("^[1-6]$", ch):
+            handler[int(ch)]()
+            continue
+        else:
+            continue
 
 
 #
@@ -348,11 +383,10 @@ Console setup
 #	will be setup in /etc/ttys, so we just exit ;-). 
 #
 if __name__ == '__main__':
-	signal(SIGINT, SIG_IGN)
+    signal(SIGINT, SIG_IGN)
 
-	while True:
-		try:
-			main_menu()
-		except:
-			exit(1)
-
+    while True:
+        try:
+            main_menu()
+        except:
+            exit(1)

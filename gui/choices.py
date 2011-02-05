@@ -58,11 +58,6 @@ ZPOOL_CHOICES = (
         ('RAID-Z', 'RAID-Z'),
         ('RAID-Z2', 'RAID-Z2'),
         )
-EMAILSECURITY_CHOICES = (
-        ('None', 'None'),
-        ('SSL', 'SSL'),
-        ('TLS', 'TLS'),
-        )
 SWAPTYPE_CHOICES = (
         ('File', 'File'),
         ('Device', 'Device'),
@@ -132,34 +127,34 @@ ACOUSTICLVL_CHOICES = (
         ('Maximum', 'Maximum'),
         )
 
-temp = [x for x in xrange(0, 12)]
+temp = [str(x) for x in xrange(0, 12)]
 MINUTES1_CHOICES = tuple(zip(temp, temp))
 
-temp = [x for x in xrange(12, 24)]
+temp = [str(x) for x in xrange(12, 24)]
 MINUTES2_CHOICES = tuple(zip(temp, temp))
 
-temp = [x for x in xrange(24, 36)]
+temp = [str(x) for x in xrange(24, 36)]
 MINUTES3_CHOICES = tuple(zip(temp, temp))
 
-temp = [x for x in xrange(36, 48)]
+temp = [str(x) for x in xrange(36, 48)]
 MINUTES4_CHOICES = tuple(zip(temp, temp))
 
-temp = [x for x in xrange(48, 60)]
+temp = [str(x) for x in xrange(48, 60)]
 MINUTES5_CHOICES = tuple(zip(temp, temp))
 
-temp = [x for x in xrange(0, 12)]
+temp = [str(x) for x in xrange(0, 12)]
 HOURS1_CHOICES = tuple(zip(temp, temp))
 
-temp = [x for x in xrange(12, 24)]
+temp = [str(x) for x in xrange(12, 24)]
 HOURS2_CHOICES = tuple(zip(temp, temp))
 
-temp = [x for x in xrange(1, 13)]
+temp = [str(x) for x in xrange(1, 13)]
 DAYS1_CHOICES = tuple(zip(temp, temp))
 
-temp = [x for x in xrange(13, 25)]
+temp = [str(x) for x in xrange(13, 25)]
 DAYS2_CHOICES = tuple(zip(temp, temp))
 
-temp = [x for x in xrange(25, 32)]
+temp = [str(x) for x in xrange(25, 32)]
 DAYS3_CHOICES = tuple(zip(temp, temp))
 
 MONTHS_CHOICES = (

@@ -44,6 +44,96 @@ from freenasUI.common.helperview import helperViewEx, helperViewEmpty
 import os, commands
 
 @login_required
+def home(request, objtype=None):
+    istgtglobal = iSCSITargetGlobalConfigurationForm()
+    if objtype != None:
+        focus_form = objtype
+    else:
+        focus_form = 'istgtglobal'
+    # Counter for forms we have validated.
+    forms_saved = 0
+
+    if request.method == 'POST':
+        if forms_saved > 0:
+            return HttpResponseRedirect('/services/')
+        else:
+            pass # Need to raise a validation exception
+
+    try:
+        cifs = CIFS.objects.order_by("-id")[0]
+    except IndexError:
+        cifs = None
+
+    try:
+        afp = AFP.objects.order_by("-id")[0]
+    except IndexError:
+        afp = None
+
+    try:
+        nfs = NFS.objects.order_by("-id")[0]
+    except IndexError:
+        nfs = None
+
+    try:
+        dynamicdns = DynamicDNS.objects.order_by("-id")[0]
+    except IndexError:
+        dynamicdns = None
+
+    try:
+        snmp = SNMP.objects.order_by("-id")[0]
+    except IndexError:
+        snmp = None
+
+    try:
+        ftp = FTP.objects.order_by("-id")[0]
+    except IndexError:
+        ftp = None
+
+    try:
+        tftp = TFTP.objects.order_by("-id")[0]
+    except IndexError:
+        tftp = None
+
+    try:
+        ssh = SSH.objects.order_by("-id")[0]
+    except IndexError:
+        ssh = None
+
+    try:
+        activedirectory = ActiveDirectory.objects.order_by("-id")[0]
+    except IndexError:
+        activedirectory = None
+
+    try:
+        ldap = LDAP.objects.order_by("-id")[0]
+    except IndexError:
+        ldap = None
+
+    srv = Services.objects.all()
+    variables = RequestContext(request, {
+        'focused_tab' : 'services',
+        'srv': srv,
+        'cifs': cifs,
+        'afp': afp,
+        'nfs': nfs,
+        #'rsync': rsync,
+        #'unison': unison,
+        'istgtglobal': istgtglobal,
+        'dynamicdns': dynamicdns,
+        'snmp': snmp,
+        #'ups': ups,
+        #'webserver': webserver,
+        #'bittorrent': bittorrent,
+        'ftp': ftp,
+        'tftp': tftp,
+        'ssh': ssh,
+        'activedirectory': activedirectory,
+        'ldap': ldap,
+        'focus_form': focus_form,
+        })
+    return render_to_response('services/index2.html', variables)
+
+@login_required
 def services(request, objtype=None):
     if objtype != None:
         focus_form = objtype
@@ -108,6 +198,37 @@ def services(request, objtype=None):
         'focus_form': focus_form,
         })
     return render_to_response('services/index.html', variables)
+
+
+@login_required
+def iscsi(request, objtype=None):
+
+    target_list = iSCSITarget.objects.all()
+    extent_device_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
+    extent_file_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='File')
+    asctarget_list = iSCSITargetToExtent.objects.all()
+    target_auth_list = iSCSITargetAuthCredential.objects.all()
+    auth_initiator_list = iSCSITargetAuthorizedInitiator.objects.all()
+    iscsiportal_list = iSCSITargetPortal.objects.all()
+
+    variables = RequestContext(request, {
+        #'iscsitarget': iscsitarget,
+        'target_list': target_list,
+        #'iscsiextentfile': iscsiextentfile,
+        #'iscsiextentdevice': iscsiextentdevice,
+        'extent_file_list': extent_file_list,
+        'extent_device_list': extent_device_list,
+        'extent_file_list': extent_file_list,
+        #'asctarget': asctarget,
+        'asctarget_list': asctarget_list,
+        #'target_auth': target_auth,
+        'target_auth_list': target_auth_list,
+        #'auth_initiator': auth_initiator,
+        'auth_initiator_list': auth_initiator_list,
+        #'iscsiportal': iscsiportal,
+        'iscsiportal_list': iscsiportal_list,
+    })
+    return render_to_response('services/iscsi.html', variables)
 
 """TODO: This should be rewritten in a better way."""
 @login_required

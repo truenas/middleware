@@ -1,0 +1,91 @@
+    <h3>Easy Storage Setup</h3>
+        <form dojoType="dijit.form.Form">
+            <script type="dojo/event" event="onSubmit" args="e">
+                  dojo.stopEvent(e); // prevent the default submit
+                  //dijit.byId("submitform").set('disabled', true);
+            
+                  var newData = this.get("value");
+            
+                  dojo.xhrPost( {
+                      url: '{% url storage_wizard %}',
+                       content: newData,
+                       handleAs: 'text',
+                       load: function(data) { dijit.byId('wizard_dialog').set('content', data); if(dijit.byId("wizarddisks")) wizardcheckings(); },
+                       //error: function(data) { alert("error"); }
+                   });
+                  
+            </script>
+            <table>
+                <tr>
+                    <td style="width:150px;">
+                        Volume name
+                    </td>
+                    <td>
+                        {{ form.volume_name.errors }}
+                        {{ form.volume_name }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Member disks
+                    </td>
+                    <td>
+                    <select dojoType="dijit.form.MultiSelect" id="wizarddisks" name="volume_disks" size="4" multiple="true">
+                        <script type="dojo/method" event="onClick" args="evt">
+                            wizardcheckings();
+                        </script>
+                        {{ form.volume_disks.errors }}
+                        {% for e in form.volume_disks.field.choices %}
+                        <option value="{{ e.0 }}" {% if e.0 in disks %}selected="selected"{% endif %}>{{ e.1 }}</option>
+                        {% empty %}
+                        {% endfor %}
+                    </select>
+                    </td>
+                </tr>
+                <tr id="fsopt">
+                    <td>
+                        Filesystem type
+                    </td>
+                    <td>
+                        {{ form.volume_fstype.errors }}
+                        <input type="radio" dojoType="dijit.form.RadioButton" name="volume_fstype" value="UFS" onClick="wizardcheckings();" {% if form.data.volume_fstype == "UFS" %}checked{%endif%}/> UFS<br />
+                        <input type="radio" dojoType="dijit.form.RadioButton" name="volume_fstype" value="ZFS" onClick="wizardcheckings();" {% if form.data.volume_fstype == "ZFS" %}checked{%endif%}/>
+                        ZFS
+                    </td>
+                </tr>
+                <tr id="grpopt" {% if disks and disks|length >= 2 %}{% else %}style="display:none;"{% endif %}>
+                    <td style="width:200px;">
+                        Group type 
+                    </td>
+                    <td style="width:250px;">
+                        {{ form.group_type.errors }}
+                        <span id="grpmirror">
+                            <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="mirror" {% if form.data.group_type == "mirror" %}checked{%endif%}/> mirror<br />
+                        </span>
+                        <span id="grpstripe">
+                            <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="stripe" {% if form.data.group_type == "mirror" %}checked{%endif%}/> stripe<br/>
+                        </span>
+                        <span id="grpraid3">
+                            <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="raid3" {% if form.data.group_type == "mirror" %}checked{%endif%}/> raid3<br />
+                        </span>
+                        <span id="grpraidz">
+                            <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="raidz" {% if form.data.group_type == "mirror" %}checked{%endif%}/> RAID-Z<br />
+                        </span>
+                        <span id="grpraidz2">
+                            <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="raidz2" > RAID-Z2 </input>
+                        </span>
+                    </td>
+                </tr>
+            </table>
+                <button dojoType="dijit.form.Button" type="submit">
+                        Create volume<br />
+            <b style="color: red">Existing data will be cleared</b>
+                </button>
+                <button dojoType="dijit.form.Button"type="button">
+                    Cancel
+                    <script type="dojo/method" event="onClick" args="evt">
+                        dijit.byId("wizard_dialog").hide();
+                    </script>
+                </button>
+        </form>
+</div>

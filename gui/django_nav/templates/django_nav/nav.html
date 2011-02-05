@@ -1,0 +1,7 @@
+<li onclick="window.location = '{{ nav.get_absolute_url }}'" class="rounded nav {{ nav.nav_group }}{% if nav.active %} active{% endif %}">
+    <a href="{{ nav.get_absolute_url }}">{{ nav.name }}</a>
+    {% if nav.option_list %}<ul class="options">
+    {% for option in nav.option_list %}
+    {{ option }}{% endfor %}
+    </ul>{% endif %}
+</li>

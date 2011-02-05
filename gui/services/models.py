@@ -39,6 +39,7 @@ from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
 from datetime import datetime
 from freenasUI.choices import *
+import nav
    
 class services(models.Model):
     srv_service = models.CharField(
@@ -48,10 +49,14 @@ class services(models.Model):
             )
     srv_enable = models.BooleanField(
             verbose_name="Enable Service")
+
     class Meta:
         verbose_name = "Services"
+        verbose_name_plural = "Services"
+
     def __unicode__(self):
         return self.srv_service
+
     def save(self, *args, **kwargs):
         super(services, self).save(*args, **kwargs)
 
@@ -171,6 +176,13 @@ class CIFS(models.Model):
             default="1"
             )
 
+    class Meta:
+        verbose_name = u"CIFS"
+        verbose_name_plural = u"CIFS"
+
+    class FreeAdmin:
+        deletable = False
+
 class AFP(models.Model):            
     afp_srv_name = models.CharField(
             max_length=120, 
@@ -190,12 +202,26 @@ class AFP(models.Model):
             help_text="Enables DDP support for low-level appletalk access."
             )
 
+    class Meta:
+        verbose_name = u"AFP"
+        verbose_name_plural = u"AFP"
+
+    class FreeAdmin:
+        deletable = False
+
 class NFS(models.Model):            
     nfs_srv_servers = models.CharField(
             max_length=120, 
             verbose_name="Number of servers",
             help_text="Specifies how many servers to create. There should be enough to handle the maximum level of concurrency from its clients, typically four to six."
             )
+
+    class Meta:
+        verbose_name = u"NFS"
+        verbose_name_plural = u"NFS"
+
+    class FreeAdmin:
+        deletable = False
 
 class iSCSITargetGlobalConfiguration(models.Model):
     iscsi_basename = models.CharField(
@@ -321,6 +347,14 @@ class iSCSITargetGlobalConfiguration(models.Model):
             help_text="The istgtcontrol can access the targets with correct user and secret in specific Auth Group.",
             )
 
+    class Meta:
+        verbose_name = u"Target Global Configuration"
+        verbose_name_plural = u"Target Global Configuration"
+
+    class FreeAdmin:
+        deletable = False
+        menu_child_of = "ISCSI"
+
 class iSCSITargetExtent(models.Model):
     iscsi_target_extent_name = models.CharField(
             max_length=120,
@@ -351,7 +385,9 @@ class iSCSITargetExtent(models.Model):
             help_text="You may enter a description here for your reference.",
             )
     class Meta:
-        verbose_name = "iSCSI Target - Extent"
+        verbose_name = "Extent"
+    class FreeAdmin:
+        menu_child_of = "ISCSI"
     def __unicode__(self):
         return self.iscsi_target_extent_name
 
@@ -374,9 +410,11 @@ class iSCSITargetPortal(models.Model):
             help_text="You may enter a description here for your reference."
             )
     class Meta:
-        verbose_name = "iSCSI Target - Portal"
+        verbose_name = "Portal"
+    class FreeAdmin:
+        menu_child_of = "ISCSI"
     def __unicode__(self):
-        return self.iscsi_target_portal_tag
+        return unicode(self.iscsi_target_portal_tag)
 
 
 class iSCSITargetAuthorizedInitiator(models.Model):
@@ -404,7 +442,9 @@ class iSCSITargetAuthorizedInitiator(models.Model):
             help_text="You may enter a description here for your reference."
             )
     class Meta:
-        verbose_name = "iSCSI Target - Initiator"
+        verbose_name = "Initiator"
+    class FreeAdmin:
+        menu_child_of = "ISCSI"
     def __unicode__(self):
         return self.iscsi_target_initiator_tag
 
@@ -437,7 +477,10 @@ class iSCSITargetAuthCredential(models.Model):
             help_text="Initiator side secret. (for mutual CHAP autentication)",
             )
     class Meta:
-        verbose_name = "iSCSI Target - Authorized Access"
+        verbose_name = "Authorized Access"
+        verbose_name_plural = "Authorized Accesses"
+    class FreeAdmin:
+        menu_child_of = "ISCSI"
     def __unicode__(self):
         return self.iscsi_target_auth_tag
 
@@ -508,7 +551,9 @@ class iSCSITarget(models.Model):
             help_text="You may specify logical block length (512 by default). The recommended length for compatibility is 512.",
             )
     class Meta:
-        verbose_name = "iSCSI Target"
+        verbose_name = "Target"
+    class FreeAdmin:
+        menu_child_of = "ISCSI"
     def __unicode__(self):
         return self.iscsi_target_name
 
@@ -530,7 +575,9 @@ class iSCSITargetToExtent(models.Model):
             verbose_name="Logical Unit Number",
             )
     class Meta:
-        verbose_name = "iSCSI Target / Extent"
+        verbose_name = "Target / Extent"
+    class FreeAdmin:
+        menu_child_of = "ISCSI"
     def __unicode__(self):
         return self.iscsi_target + ' / ' + self.iscsi_extent
 
@@ -574,6 +621,13 @@ class DynamicDNS(models.Model):
             help_text="These parameters will be added to global settings in inadyn.conf."
             ) 
 
+    class Meta:
+        verbose_name = u"Dynamic DNS"
+        verbose_name_plural = u"Dynamic DNS"
+
+    class FreeAdmin:
+        deletable = False
+
 class SNMP(models.Model):
     snmp_location = models.CharField(
             max_length=120, 
@@ -599,6 +653,13 @@ class SNMP(models.Model):
             blank=True,
             help_text="These parameters will be added to global settings in inadyn.conf."
             ) 
+
+    class Meta:
+        verbose_name = u"SNMP"
+        verbose_name_plural = u"SNMP"
+
+    class FreeAdmin:
+        deletable = False
 
 class UPS(models.Model):            
     ups_identifier = models.CharField(
@@ -654,6 +715,13 @@ class UPS(models.Model):
             verbose_name="To email",
             help_text="The subject of the email. You can use the following parameters for substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
             )
+
+    class Meta:
+        verbose_name = u"UPS"
+        verbose_name_plural = u"UPS"
+
+    class FreeAdmin:
+        deletable = False
 
 class FTP(models.Model):            
     ftp_clients = models.CharField(
@@ -757,6 +825,13 @@ class FTP(models.Model):
             help_text="These parameters are added to proftpd.conf."
             )
 
+    class Meta:
+        verbose_name = u"FTP"
+        verbose_name_plural = u"FTP"
+
+    class FreeAdmin:
+        deletable = False
+
 class TFTP(models.Model):            
     tftp_directory = models.CharField(
             max_length=120, 
@@ -788,6 +863,13 @@ class TFTP(models.Model):
             blank=True, 
             help_text="Extra command line options (usually empty)."
             )
+
+    class Meta:
+        verbose_name = u"TFTP"
+        verbose_name_plural = u"TFTP"
+
+    class FreeAdmin:
+        deletable = False
 
 class SSH(models.Model):            
     ssh_tcpport = models.CharField(
@@ -853,6 +935,13 @@ class SSH(models.Model):
             blank=True,
             null=True
             )
+
+    class Meta:
+        verbose_name = u"SSH"
+        verbose_name_plural = u"SSH"
+
+    class FreeAdmin:
+        deletable = False
   
 class ActiveDirectory(models.Model):            
     ad_dcname = models.CharField(
@@ -885,6 +974,12 @@ class ActiveDirectory(models.Model):
             verbose_name="Administrator Password",
             help_text="Password of Domain Administrator account."
             )
+
+    class Meta:
+        verbose_name_plural = u"Active Directory"
+
+    class FreeAdmin:
+        deletable = False
 
 class LDAP(models.Model):            
     ldap_hostname = models.CharField(
@@ -960,3 +1055,10 @@ class LDAP(models.Model):
             blank=True,
             help_text="These parameters are added to ldap.conf."
             )
+
+    class Meta:
+        verbose_name = u"LDAP"
+        verbose_name_plural = u"LDAP"
+
+    class FreeAdmin:
+        deletable = False

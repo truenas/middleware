@@ -31,6 +31,9 @@ from django.contrib import admin
 from freenasUI.system.views import index 
 from django.conf import settings
 
+from freenasUI import nav
+nav.auto_generate()
+
 urlpatterns = patterns('',
     ('^$', index),
     (r'^reporting/graphs/(?P<path>.*)',
@@ -45,7 +48,9 @@ urlpatterns = patterns('',
 # Not sure why I need the this entry, but the last one works for James..
     (r'^dojango/(?P<path>.*)$',
         'django.views.static.serve',
-        {'document_root': settings.MEDIA_ROOT+'/../dojango'}),
+        {'document_root': settings.MEDIA_ROOT+'/../dojango/'}),
+    (r'^dojangogrid/', include('dojango.urls')),
+    (r'^admin/', include('freeadmin.urls')),
     (r'^account/', include('account.urls')),
     (r'^system/', include('system.urls')),
     (r'^network/', include('network.urls')),

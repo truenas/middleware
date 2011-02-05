@@ -1,0 +1,46 @@
+            <form dojoType="dijit.form.Form">
+            <script type="dojo/event" event="onSubmit" args="e">
+                        
+                        dojo.stopEvent(e); // prevent the default submit
+                        dijit.byId("gcsubmitform").set('disabled', true);
+            
+                        var newData = this.get("value");
+                        dojo.xhrPost( {
+                            url: '{% url network_globalconf %}',
+                            content: newData,
+                            handleAs: 'text',
+                            load: function(data) { dijit.byId('network_gc').             set('content', data); },
+                            error: function(data) { alert("error"); }
+                         });
+                        
+            </script>
+            {% if saved %}
+            <p>Your configuration has been successfully saved!</p>
+            {% endif %}
+            <table>
+                {% for field in gc %}
+                <tr>
+                    <td>
+                        <label for="{{ field.auto_id }}">
+                            {% if field.field.required %}
+                                <span class="required">{{ field.label }}</span>
+                            {% else %}
+                                {{ field.label }}
+                            {% endif %}
+                        </label>
+                    </td>
+                    <td>
+                        {{ field }}
+            {{ field.errors }}
+                    </td>
+                </tr>
+            {% endfor %}
+
+                <tr>
+                    <td>
+                        <button id="gcsubmitform" dojoType="dijit.form.Button"           type="submit" onClick="this.set('label', 'Please wait...');"> Save Settings </button>
+                    </td>
+                </tr>
+            </table>
+            </form>
+

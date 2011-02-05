@@ -190,7 +190,6 @@ _gen_conf()
 	_staticroute_config
 
 	## Daemons
-	_bool_config cron_enable system_cronjob cron_enable
 	_count_config smartd_enable storage_disk disk_togglesmart =1
 	_bool_svcconfig netatalk_enable afp
 	_bool_svcconfig afpd_enable afp

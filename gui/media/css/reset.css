@@ -148,16 +148,13 @@ blockquote > *:first-child:first-letter { font-size: 150% }
  
 pre.ix {
 	margin: 10px 0 10px 0px;
-    background:#cfcfcf !important;
+    background:#000000;
 	padding: 5px 0 5px 10px;
-	border: 2px solid #ddd;
-	border-left: 10px solid #ddd;
-	background: #fafafa;
 	font-size: 100%;
-	color: #333;
+	color: #00ff00;
 	font-family: "Courier New", Courier, monospace;
 	white-space: pre-wrap;
-    width:600px;
+    width:525px;
 }
 
  

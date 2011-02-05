@@ -36,7 +36,7 @@ from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode 
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.forms import Form
-from django import forms
+from dojango import forms
 from dojango.forms import fields, widgets
 
 """ Services """
@@ -267,3 +267,4 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
 class iSCSITargetForm(ModelForm):
     class Meta:
         model = iSCSITarget
+

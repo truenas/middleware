@@ -1,0 +1,185 @@
+{% block dojango_header_extra %}
+<script type="text/javascript">
+    function toggle_service(obj) {
+        obj.src = '/services/toggle/' + obj.name + '/' + Date();
+    }
+</script>
+{% endblock %}
+{% block dojango_content %}
+    <div dojoType="dijit.layout.ContentPane" title="Services" doLayout="false">
+        <table class="srv">
+            <tr>
+                <td>
+                    <strong>Windows Shares</strong>
+                </td>
+                <td>
+		    <img id="cifs_toggle" name="cifs_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "cifs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="cifs_settings" src="/freenas/media/images/ui/settings.png" onClick="editObject('CIFS Settings', '{% url freeadmin_model_edit app="services",model="CIFS",oid=cifs.id %}');" title="CIFS Settings">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <strong>Apple Shares</strong>
+                </td>
+                <td>
+		    <img id="afp_toggle" name="afp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "afp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="afp_settings" src="/freenas/media/images/ui/settings.png" onClick="editObject('AFP Settings', '{% url freeadmin_model_edit app="services",          model="AFP",oid=afp.id %}');" title="AFP Settings">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <strong>UNIX Shares</strong>
+                </td>
+                <td>
+		            <img id="nfs_toggle" name="nfs_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "nfs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="nfs_settings" src="/freenas/media/images/ui/settings.png" onClick="editObject('NFS Settings', '{% url freeadmin_model_edit app="services",          model="NFS",oid=nfs.id %}');" title="NFS Settings">
+                </td>
+            </tr>
+          <!--  <tr>
+                <td>
+                    <strong>Unison - Replication</strong>
+                </td>
+                <td>
+		    <img id="unison_toggle" name="unison_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "unison" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="unison_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('unison').show();" title="Unison Settings">
+                </td>
+            </tr>
+            -->
+           <tr>
+                <td>
+                    <strong>iSCSI</strong>
+                </td>
+                <td>
+		    <img id="iscsitarget_toggle" name="iscsitarget_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "iscsitarget" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="istgt_settings" src="/freenas/media/images/ui/settings.png" onClick="viewModel('iSCSI', '{% url services_iscsi %}');" title="ISCSI Settings">
+                </td>
+            </tr>
+          
+           <!-- <tr>
+                <td>
+                    <strong>Dynamic DNS</strong>
+                </td>
+                <td>
+		    <img id="dyndns_toggle" name="dyndns_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "dyndns" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="dyndns_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('dyndns').show();" title="Dynamic DNS Settings">
+                </td>
+            </tr>
+            -->
+           <tr>
+                <td>
+                    <strong>SNMP</strong>
+                </td>
+                <td>
+		    <img id="snmp_toggle" name="snmp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "snmp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="snmp_settings" src="/freenas/media/images/ui/settings.png" onClick="editObject('SNMP Settings', '{% url freeadmin_model_edit app="services",model="SNMP",oid=snmp.id %}');" title="SNMP Settings">
+                </td>
+            </tr> 
+          <!--  <tr>
+                <td>
+                    <strong>UPS</strong>
+                </td>
+                <td>
+		    <img id="ups_toggle" name="ups_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ups" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="ups_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('ups').show();" title="UPS Settings">
+                </td>
+            </tr>
+            -->
+          <!--  <tr>
+                <td>
+                    <strong>Bit Torrent</strong>
+                </td>
+                <td>
+		    <img id="bt_toggle" name="bt_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "bt" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="bt_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('bt').show();" title="Bit Torrent Settings">
+                </td>
+            </tr>
+            -->
+         <!--   <tr>
+                <td>
+                    <strong>Web Server</strong>
+                </td>
+                <td>
+		    <img id="httpd_toggle" name="httpd_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "httpd" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="httpd_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('httpd').show();" title="Web Server Settings">
+                </td>
+            </tr>
+            -->
+            <tr>
+                <td>
+                    <strong>FTP</strong>
+                </td>
+                <td>
+		    <img id="ftp_toggle" name="ftp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="ftp_settings" src="/freenas/media/images/ui/settings.png" onClick="editObject('FTP Settings', '{% url freeadmin_model_edit app="services",         model="FTP",oid=ftp.id %}');" title="FTP Settings">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <strong>TFTP</strong>
+                </td>
+                <td>
+		    <img id="tftp_toggle" name="tftp_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "tftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="tftp_settings" src="/freenas/media/images/ui/settings.png" onClick="editObject('TFTP Settings', '{% url freeadmin_model_edit app="services",          model="TFTP",oid=tftp.id %}');" title="TFTP Settings">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <strong>SSH</strong>
+                </td>
+                <td>
+		    <img id="ssh_toggle" name="ssh_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ssh" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="ssh_settings" src="/freenas/media/images/ui/settings.png" onClick="editObject('SSH Settings', '{% url freeadmin_model_edit app="services",          model="SSH",oid=ssh.id %}');" title="SSH Settings">
+                </td>
+            </tr>
+                <tr>
+                <td>
+                    <strong>Active Directory</strong>
+                </td>
+                <td>
+		    <img id="ad_toggle" name="ad_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "activedirectory" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="ad_settings" src="/freenas/media/images/ui/settings.png" onClick="editObject('ActiveDirectory Settings', '{% url freeadmin_model_edit app="services", model="ActiveDirectory",oid=activedirectory.id %}');" title="Active Directory Settings">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <strong>LDAP</strong>
+                </td>
+                <td>
+		    <img id="ldap_toggle" name="ldap_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ldap" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="ldap_settings" src="/freenas/media/images/ui/settings.png" onClick="editObject('LDAP Settings', '{% url freeadmin_model_edit app="services",          model="LDAP",oid=ldap.id %}');" title="LDAP Settings">
+                </td>
+            </tr>
+        </table>
+
+
+{% endblock %}

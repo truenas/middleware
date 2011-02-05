@@ -44,6 +44,7 @@ class bsdGroups(models.Model):
             )
     class Meta:
         verbose_name = "Group"
+
     def __unicode__(self):
         return self.bsdgrp_group
 
@@ -95,6 +96,9 @@ class bsdUsers(models.Model):
 
     class Meta:
         verbose_name = "User"
+    class FreeAdmin:
+        create_modelform = "bsdUserCreationForm"
+        edit_modelform = "bsdUserChangeForm"
     def __unicode__(self):
         return self.bsdusr_username
 

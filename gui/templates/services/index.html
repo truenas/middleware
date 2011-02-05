@@ -6,110 +6,21 @@
         obj.src = '/services/toggle/' + obj.name + '/' + Date();
     }
 </script>
+{% if focus_form != '' %}
 <script type="text/javascript">
-      var  cifsDlg = function () {
-          dijit.byId("cifs").show();
-      }
-      var  afpDlg = function () {
-          dijit.byId("afp").show();
-      }
-      var  nfsDlg = function () {
-          dijit.byId("nfs").show();
-      }
-      var  iscsiDlg = function () {
-          dijit.byId("istgtglobal").show();
-      }
-      var  snmpDlg = function () {
-          dijit.byId("snmp").show();
-      }
-      var  ftpDlg = function () {
-          dijit.byId("cifs").show();
-      }
-      var  tftpDlg = function () {
-          dijit.byId("tftp").show();
-      }
-      var  sshDlg = function () {
-          dijit.byId("ssh").show();
-      }
-      var  activedirectoryDlg = function () {
-          dijit.byId("activedirectory").show();
-      }
-      var  ldapDlg = function () {
-          dijit.byId("ldap").show();
+      var  showDlg = function () {
+          dijit.byId("{{ focus_form }}").show();
       }
 </script>
-
+{% endif %}
 {% endblock %}
 {% block dojango_content %}
 {% if user.is_authenticated %}
 
-{% if focus_form == 'cifs' %}
-<body onLoad="cifsDlg();">
+{% if focus_form != '' %}
+<body onLoad="showDlg();">
 {% else %}
-{% endif %}
-{% if focus_form == 'afp' %}
-<body onLoad="afpDlg();">
-{% else %}
-{% endif %}
-{% if focus_form == 'nfs' %}
-<body onLoad="nfsDlg();">
-{% else %}
-{% endif %}
-{% if focus_form == 'istgtglobal' %}
-<body onLoad="iscsiDlg();">
-{% else %}
-{% endif %}
-{% if focus_form == 'iscsitarget' %}
-<body onLoad="iscsiDlg();">
-{% else %}
-{% endif %}
-{% if focus_form == 'iscsiextentfile' %}
-<body onLoad="iscsiDlg();">
-{% else %}
-{% endif %}
-{% if focus_form == 'iscsiextentdevice' %}
-<body onLoad="iscsiDlg();">
-{% else %}
-{% endif %}
-{% if focus_form == 'asctarget' %}
-<body onLoad="iscsiDlg();">
-{% else %}
-{% endif %}
-{% if focus_form == 'target_auth' %}
-<body onLoad="iscsiDlg();">
-{% else %}
-{% endif %}
-{% if focus_form == 'auth_initiator' %}
-<body onLoad="iscsiDlg();">
-{% else %}
-{% endif %}
-{% if focus_form == 'iscsiportal' %}
-<body onLoad="iscsiDlg();">
-{% else %}
-{% endif %}
-{% if focus_form == 'snmp' %}
-<body onLoad="snmpDlg();">
-{% else %}
-{% endif %}
-{% if focus_form == 'ftp' %}
-<body onLoad="ftpDlg();">
-{% else %}
-{% endif %}
-{% if focus_form == 'tftp' %}
-<body onLoad="tftpDlg();">
-{% else %}
-{% endif %}
-{% if focus_form == 'ssh' %}
-<body onLoad="sshDlg();">
-{% else %}
-{% endif %}
-{% if focus_form == 'activedirectory' %}
-<body onLoad="activedirectoryDlg();">
-{% else %}
-{% endif %}
-{% if focus_form == 'ldap' %}
-<body onLoad="ldapDlg();">
-{% else %}
+<body>
 {% endif %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
     <div dojoType="dijit.layout.ContentPane" title="Services" doLayout="false">
@@ -549,7 +460,6 @@
 </button>
 </p>
 </div>
-
 <div id="target" dojoType="dijit.Dialog" title="Add New iSCSI Target" {% if focus_form == "iscsitarget" %} selected="true"{% endif %}>
 <form action="/services/global/iscsitarget/" method="post">{% csrf_token %}
             <table>
@@ -745,6 +655,7 @@
 </button>
 </form>
 </div>
+
 <br />
 </div>
 {% else %}

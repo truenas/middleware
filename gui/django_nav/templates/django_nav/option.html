@@ -1,0 +1,7 @@
+<li onclick="window.location = '{{ option.get_absolute_url }}'" class="nav option">
+    <a href="{{ option.get_absolute_url }}">{{ option.name }}</a>
+    {% if option.option_list %}<ul class="options">
+    {% for opt in option.option_list %}
+    {{ opt }}{% endfor %}
+    </ul>{% endif %}
+</li>

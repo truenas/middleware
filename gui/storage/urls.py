@@ -26,21 +26,25 @@
 # $FreeBSD$
 #####################################################################
 
-from django.conf.urls.defaults import patterns
+from django.conf.urls.defaults import patterns, url
 from freenasUI.storage.forms import *
 from freenasUI.storage.views import *
 from freenasUI.services.views import servicesToggleView as servicesToggleView
-
-
 
 # Active FreeNAS URLs
 
 urlpatterns = patterns('',
     (r'^$', storage),
-    (r'dataset/$', dataset_create),
-    (r'dataset/delete/(?P<object_id>\d+)/$', dataset_delete),
+    url(r'^home/$', home, name="storage_home"),
+    url(r'^datagrid/volume-(?P<vid>\d+)/disks/$', disks_datagrid, name="storage_datagrid_disks"),
+    url(r'^datagrid/volume-(?P<vid>\d+)/disks/json$', disks_datagrid_json, name="storage_datagrid_disks_json"),
+    url(r'dataset/$', dataset_create),
+    url(r'dataset2/$', dataset_create2, name="storage_dataset"),
+    url(r'dataset/delete/(?P<object_id>\d+)/$', dataset_delete),
+    url(r'dataset2/delete/(?P<object_id>\d+)/$', dataset_delete2, name="storage_dataset_delete"),
     (r'toggle/(?P<formname>\w+)/$', servicesToggleView),
     (r'wizard/$', VolumeWizard_wrapper),
+    url(r'wizard2/$', wizard, name="storage_wizard"),
     (r'save/(?P<objtype>\w+)/$', storage),
     (r'volume/(?P<volume_id>\d+)/$', volume_disks),
     (r'mountpoint/permission/(?P<object_id>\d+)/$', mp_permission),

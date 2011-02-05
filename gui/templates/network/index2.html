@@ -1,0 +1,208 @@
+    <div dojoType="dijit.layout.TabContainer" title="Network Settings" nested="true" doLayout="false">
+        <div id="network_gc" dojoType="dijit.layout.ContentPane" href="{% url network_globalconf %}" title="Global Configuration"{% if focus_form == "gc" %} selected="true"{% endif %}>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="Interfaces"{% if focus_form == "int" %} selected="true"{% endif %}>
+            <table class="grid">
+	            <thead class="header">
+			<tr>
+		            <td>Interface</td>
+		            <td>Name</td>
+		            <td>DHCP</td>
+		            <td>IPv4 Address</td>
+		            <td>IPv4 Netmask</td>
+		            <td>IPv6 Auto</td>
+		            <td>IPv6 Address</td>
+		            <td>IPv6 Netmask</td>
+		            <td>Options</td>
+			</tr>
+		        </thead>
+                {% for i in int_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ i.id }}">
+                    <td>{{ i.int_interface }}</td>
+                    <td>{{ i.int_name }}</td>
+                    <td>{{ i.int_dhcp }}</td>
+                    {% if i.int_ipv4address != "0.0.0.0" %}
+                    <td>{{ i.int_ipv4address }}</td>
+                    <td>/{{ i.int_v4netmaskbit }}</td>
+                    {% else %}
+                    <td></td>
+                    <td></td>
+                    {% endif %}
+                    <td>{{ i.int_ipv6auto }}</td>
+                    {% if i.int_ipv6address != "::" %}
+                    <td>{{ i.int_ipv6address }}</td>
+                    <td>/{{ i.int_v6netmaskbit }}</td>
+                    {% else %}
+                    <td></td>
+                    <td></td>
+                    {% endif %}
+                    <td>{{ i.int_options }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Edit
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Edit Interface', '{% url freeadmin_model_edit app="network",model="Interfaces",oid=i.id %}');
+                        </script>
+                        </button>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Delete
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Delete Interface', '{% url freeadmin_model_delete app="network",model="Interfaces",oid=i.id %}');
+                        </script>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">No interfaces defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+                <p class="btn">
+                    <button id="int_button" dojoType="dijit.form.Button" type="button">
+                        Add Interface
+                        <script type="dojo/method" event="onClick" args="evt">
+                        addObject('Add Interface', '{% url freeadmin_model_add app="network",model="Interfaces" %}');
+                    </script>
+                    </button>
+                    </p>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="VLAN"{% if focus_form == "vlan" %} selected="true"{% endif %}>
+              <table class="grid">
+	            <thead class="header">
+			<tr>
+		            <td>Virtual Interface</td>
+		            <td>Physical Interface</td>
+		            <td>VLAN Tag</td>
+		            <td>Description</td>
+			</tr>
+		        </thead>
+                {% for v in vlan_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ v.id }}">
+                    <td>{{ v.vlan_vint }}</td>
+                    <td>{{ v.vlan_pint }}</td>
+                    <td>{{ v.vlan_tag }}</td>
+                    <td>{{ v.vlan_description }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Edit
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Edit VLAN', '{% url freeadmin_model_edit app="network",model="VLAN",oid=v.id %}');
+                        </script>
+                        </button>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Delete
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Delete VLAN', '{% url freeadmin_model_delete app="network",model="VLAN",oid=v.id %}');
+                        </script>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">No VLAN defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+                <p class="btn">
+                    <button id="vlan_button" dojoType="dijit.form.Button" type="button">
+                        Add VLAN Interface
+                        <script type="dojo/method" event="onClick" args="evt">
+                        addObject('Add VLAN', '{% url freeadmin_model_add app="network",model="VLAN" %}');
+                    </script>
+                    </button>
+                    </p>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="LAGG"{% if focus_form == "lagg" %} selected="true"{% endif %}>
+            <table class="grid">
+	            <thead class="header">
+			<tr>
+		            <td>Virtual Interface</td>
+		            <td>Actions</td>
+			</tr>
+		        </thead>
+                {% for l in lagg_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ l.id }}">
+                    <td>{{ l }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Edit Interface
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Edit Interface', '{% url freeadmin_model_edit app="network",model="Interfaces",oid=l.lagg_iinterface.id %}');
+                        </script>
+                        </button>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Edit Members
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Edit Members ', '{% url freeadmin_model_edit app="network",model="LAGGInterfacesMembers",oid=l.id %}');
+                        </script>
+                        </button>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Delete
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Delete Interface', '{% url freeadmin_model_delete app="network",model="Interfaces",oid=l.lagg_interface.id %}');
+                        </script>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2">No LAGG interface defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+
+                <p class="btn">
+                    <button id="lagg_button" dojoType="dijit.form.Button" type="button">
+                       Add LAGG Interface 
+                        <script type="dojo/method" event="onClick" args="evt">
+                        addObject('Add LAGG', '{% url freeadmin_model_add app="network",model="LAGGInterfaceMembers" %}');
+                    </script>
+                    </button>
+                    </p>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="Static Routes"{% if focus_form == "sr" %} selected="true"{% endif %}>
+            <table class="grid">
+                <thead class="header">
+		    <tr>
+                    <td>Destination</td>
+		            <td>Gateway</td>
+		            <td>Description</td>
+		            <td>Actions</td>
+		    </tr>
+		        </thead>
+                {% for i in sr_list %}
+                    <tr class="{% cycle 'odd' 'even' %}" id="{{ i.id }}">
+                        <td>{{ i.sr_destination }}</td>
+                        <td>{{ i.sr_gateway }}</td>
+                        <td>{{ i.sr_description }}</td>
+                        <td>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Edit
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Edit Static Route', '{% url freeadmin_model_edit app="network",model="StaticRoute",oid=i.id %}');
+                        </script>
+                        </button>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Delete
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Delete Static Route', '{% url freeadmin_model_delete app="network",model="StaticRoute",oid=i.id %}');
+                        </script>
+                        </button>
+                        </td>
+                    </tr>
+		        {% empty %}
+                    <tr>
+                        <td colspan="3">No static route defined</td>
+                    </tr>
+                {% endfor %}
+            </table>
+
+            <button id="sr_button" dojoType="dijit.form.Button" type="button">
+                Add Static Route 
+            <script type="dojo/method" event="onClick" args="evt">
+                addObject('Add Static Route', '{% url freeadmin_model_add app="network",model="StaticRoute" %}');
+            </script>
+	    </button>
+        </div>
+    </div>

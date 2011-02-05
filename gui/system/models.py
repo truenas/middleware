@@ -34,6 +34,7 @@ import time
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
+from django.core.validators import *
 from freenasUI.choices import *
 
 class Settings(models.Model):
@@ -73,6 +74,12 @@ class Settings(models.Model):
             blank=True
             )
 
+    class Meta:
+        verbose_name_plural = u"Settings"
+
+    class FreeAdmin:
+        deletable = False
+
 class Advanced(models.Model):
     adv_consolemenu = models.BooleanField(
             verbose_name="Enable Console Menu")
@@ -94,3 +101,60 @@ class Advanced(models.Model):
             max_length=1024,
             verbose_name="MOTD banner",
             ) 
+
+    class Meta:
+        verbose_name_plural = u"Advanced"
+
+    class FreeAdmin:
+        deletable = False
+
+## System|Advanced|Email
+class Email(models.Model):
+    em_fromemail = models.CharField(
+            max_length=120, 
+            verbose_name="From email", 
+            help_text="An email address that the system will use for the sending address for mail it sends, eg: freenas@mydomain.com",
+            blank=True
+            )
+    em_outgoingserver = models.CharField(
+            max_length=120, 
+            verbose_name="Outgoing mail server", 
+            help_text="A hostname or ip that will accept our mail, for instance mail.example.org, or 192.168.1.1",
+            blank=True
+            )
+    em_port = models.IntegerField(
+            default=25,
+            validators=[MinValueValidator(1), MaxValueValidator(65535)],
+            help_text="An integer from 1 - 65535, generally will be 25, 465, or 587",
+            verbose_name="Port to connect to"
+            )
+    em_security = models.CharField(
+            max_length=120, 
+            choices=SMTPAUTH_CHOICES,
+            default="plain", 
+            help_text="encryption of the connection",
+            verbose_name="TLS/SSL"
+            )
+    em_smtp = models.BooleanField(
+            verbose_name="Use SMTP Authentication",
+            default=False
+            )
+    em_user = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120, 
+            verbose_name="Username",
+            help_text="A username to authenticate to the remote server",
+            )
+    em_pass = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120, 
+            verbose_name="Password",
+            help_text="A password to authenticate to the remote server",
+            )
+    class Meta:
+        verbose_name_plural = u"Email"
+
+    class FreeAdmin:
+        deletable = False

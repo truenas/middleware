@@ -36,11 +36,12 @@ from freenasUI.sharing.views import *
 from freenasUI.sharing.models import *
 import os, commands
 
-urlpatterns = patterns('',
-    (r'^$', sharing), 
-    (r'^global/(?P<sharetype>\w+)/$', sharing),
-    (r'(?P<sharetype>\w+)/view/$', sharing),
-    (r'^save/(?P<sharetype>\w+)/$', sharing), 
-    (r'(?P<sharetype>\w+)/edit/(?P<object_id>\d+)/$', generic_update),
-    (r'^(?P<sharetype>\w+)/delete/(?P<object_id>\d+)/$', generic_delete),
+urlpatterns = patterns('sharing.views',
+    (r'^$', 'sharing'), 
+    url(r'^home/$', 'home', name="sharing_home"), 
+    (r'^global/(?P<sharetype>\w+)/$', 'sharing'),
+    (r'(?P<sharetype>\w+)/view/$', 'sharing'),
+    (r'^save/(?P<sharetype>\w+)/$', 'sharing'), 
+    (r'(?P<sharetype>\w+)/edit/(?P<object_id>\d+)/$', 'generic_update'),
+    (r'^(?P<sharetype>\w+)/delete/(?P<object_id>\d+)/$', 'generic_delete'),
     )

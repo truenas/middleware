@@ -1,0 +1,45 @@
+<div dojoType="dijit.MenuBar" id="navMenu">
+    {% if user.is_authenticated %}
+    <div dojoType="dijit.MenuBarItem" onClick="openSystem();" class="menu_icon{% if focused_tab == "system" %} dijitMenuItemSelected{% endif %}">
+	<img src="/media/images/ui/system.png">
+	<br />
+	<span>System</span>
+    </div>
+    <div dojoType="dijit.MenuBarItem" onClick="openNetwork();" class="menu_icon{% if focused_tab == "network" %} dijitMenuItemSelected{% endif %}">
+	<img src="/media/images/ui/network.png">
+	<br />
+	<span>Network</span>
+    </div>
+    <div dojoType="dijit.MenuBarItem" onClick="openStorage();" class="menu_icon{% if focused_tab == "storage" %} dijitMenuItemSelected{% endif %}">
+	<img src="/media/images/ui/storage.png">
+	<br />
+	<span>Storage</span>
+    </div>
+    <div dojoType="dijit.MenuBarItem" onClick="openSharing();" class="menu_icon{% if focused_tab == "sharing" %} dijitMenuItemSelected{% endif %}">
+	<img src="/media/images/ui/sharing.png">
+	<br />
+	<span>Sharing</span>
+    </div>
+    <div dojoType="dijit.MenuBarItem" onClick="openServices();" class="menu_icon{% if focused_tab == "services" %} dijitMenuItemSelected{% endif %}">
+	<img src="/media/images/ui/services.png">
+	<br />
+	<span>Services</span>
+    </div>
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" class="menu_icon" style="float:right;">
+	<img src="/media/images/ui/logout.png">
+	<br />
+	<span>Log Out</span>
+    </div>
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/'" class="menu_icon{% if focused_tab == "account" %} dijitMenuItemSelected{% endif %}" style="float:right;">
+	<img src="/media/images/ui/account.png">
+	<br />
+	<span>Account</span>
+    </div>
+    {% else %}
+    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" class="menu_icon" style="font-weight:bold;">
+	<img src="/media/images/ui/login.png">
+	<br />
+	<span>Log In</span>
+    </div>
+    {% endif %}
+</div>

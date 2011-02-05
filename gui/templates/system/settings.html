@@ -1,0 +1,24 @@
+<form dojoType="dijit.form.Form">
+<script type="dojo/event" event="onSubmit" args="e">
+    dojo.stopEvent(e); // prevent the default submit
+    dijit.byId("setsubmitform").set('disabled', true);
+
+    var newData = this.get("value");
+
+    dojo.xhrPost( {
+        url: '{% url system_settings %}',
+         content: newData,
+         handleAs: 'text',
+         load: function(data) { dijit.byId('settingstab').set('content', data); },
+     });
+    
+</script>
+{% if saved %}
+<p>Your configuration has been successfully saved!</p>
+{% endif %}
+{% csrf_token %}
+    <table>
+        {{ settings }}
+    </table>
+    <button style="margin-top:16px;" id="setsubmitform" dojoType="dijit.form.Button" type="submit">Save Settings</button>
+</form>

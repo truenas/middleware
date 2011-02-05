@@ -35,17 +35,15 @@ from django.views.generic import list_detail
 from freenasUI.services.views import *
 import os, commands
 
-#import django_nav
-#django_nav.autodiscover()
-#admin.autodiscover()
-
 # Active FreeNAS URLs
 
-urlpatterns = patterns('',
-    (r'^$', services),
-    (r'toggle/(?P<formname>\w+)/.*$', servicesToggleView),
-    (r'(?P<objtype>\w+)/view/$', services),
-    (r'global/(?P<objtype>\w+)/$', services),
-    (r'(?P<objtype>\w+)/edit/(?P<object_id>\d+)/$', generic_update),
-    (r'(?P<objtype>\w+)/delete/(?P<object_id>\d+)/$', generic_delete),
+urlpatterns = patterns('services.views',
+    (r'^$', 'services'),
+    url(r'^home/$', 'home', name="services_home"),
+    url(r'^iscsi/$', 'iscsi', name="services_iscsi"),
+    url(r'toggle/(?P<formname>\w+)/.*$', 'servicesToggleView', name="services_toggle"),
+    (r'(?P<objtype>\w+)/view/$', 'services'),
+    (r'global/(?P<objtype>\w+)/$', 'services'),
+    (r'(?P<objtype>\w+)/edit/(?P<object_id>\d+)/$', 'generic_update'),
+    (r'(?P<objtype>\w+)/delete/(?P<object_id>\d+)/$', 'generic_delete'),
     )

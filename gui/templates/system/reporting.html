@@ -1,0 +1,90 @@
+{% block dojango_header_extra %}
+<script type="text/javascript">
+    refreshImgs = function() {
+
+        dojo.query(".chart > img").forEach(function(e) { 
+            e.src = new String(e.src).split('?')[0] + '?' + new Date().getTime();
+        });
+        setTimeout(refreshImgs, 300000);
+    }
+    dojo.addOnLoad(function() {
+            setTimeout(refreshImgs, 300000);
+
+            });
+</script>
+{% endblock %}
+
+{% block dojango_content %}
+    <div dojoType="dijit.layout.TabContainer" nested="true" style="width:100%;" title="Reporting" {% if focus_form == "system" %} selected="true"{% endif %}    doLayout="false">
+        {% if graphs.hourly %}
+        <div dojoType="dijit.layout.ContentPane" nested="true" title="Hourly" {% if focus_form == "system" %} selected="true"{% endif %}>
+            <h3>Hourly Graphs</h3>
+            <div id="reports">
+            {% for hourly in graphs.hourly %}
+                {% for img in hourly %}
+                <div class="chart">
+                    <img src="/reporting/graphs/hourly/{{ img }}">
+                </div>
+                {% endfor %}
+            {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% if graphs.daily %}
+        <div dojoType="dijit.layout.ContentPane" title="Daily">
+            <h3>Daily Graphs</h3>
+            <div id="reports">
+            {% for daily in graphs.daily %}
+                {% for img in daily %}
+                <div class="chart">
+                    <img src="/reporting/graphs/daily/{{ img }}">
+                </div>
+                {% endfor %}
+            {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% if graphs.weekly %}
+        <div dojoType="dijit.layout.ContentPane" title="Weekly">
+            <h3>Weekly Graphs</h3>
+            <div id="reports">
+            {% for weekly in graphs.weekly %}
+                {% for img in weekly %}
+                <div class="chart">
+                    <img src="/reporting/graphs/weekly/{{ img }}">
+                </div>
+                {% endfor %}
+            {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% if graphs.monthly %}
+        <div dojoType="dijit.layout.ContentPane" title="Monthly">
+            <h3>Monthly Graphs</h3>
+            <div id="reports">
+            {% for monthly in graphs.monthly %}
+                {% for img in monthly %}
+                <div class="chart">
+                    <img src="/reporting/graphs/monthly/{{ img }}">
+                </div>
+                {% endfor %}
+            {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% if graphs.yearly %}
+        <div dojoType="dijit.layout.ContentPane" title="Yearly">
+            <h3>Yearly Graphs</h3>
+            <div id="reports">
+            {% for yearly in graphs.yearly %}
+                {% for img in yearly %}
+                <div class="chart">
+                    <img src="/reporting/graphs/yearly/{{ img }}">
+                </div>
+                {% endfor %}
+            {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -455,7 +455,7 @@ generate_exports()
 generate_smb_tdb()
 {
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT bsdusr_smbhash FROM account_bsdusers WHERE bsdusr_smbhash LIKE '%:%:XXXX%'" > /tmp/smbpasswd
-	rm /var/etc/private/passdb.tdb
+	rm -f /var/etc/private/passdb.tdb
 	/usr/local/bin/pdbedit -i smbpasswd:/tmp/smbpasswd -e tdbsam:/var/etc/private/passdb.tdb
 	rm -f /tmp/smbpasswd
 }

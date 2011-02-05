@@ -1,0 +1,180 @@
+    <div dojoType="dijit.layout.TabContainer" nested="true" style="width:100%;" title="Reporting" {% if focus_form == "system" %} selected="true"{% endif %} doLayout="false">
+        <div dojoType="dijit.layout.ContentPane" title="System Information" doLayout="false">
+            <h3>System Information</h3>
+            <br />
+            <table>
+                <tr>
+                    <td class="label"><strong>Hostname:</strong></td>
+                    <td class="descr">{{ hostname }}</td>
+                </tr>
+                <tr>
+                    <td class="label"><strong>OS Version:</strong></td>
+                    <td class="descr">{{ uname1 }} {{ uname2 }}</td>
+                </tr>
+                <tr>
+                    <td class="label"><strong>Platform:</strong></td>
+                    <td class="descr">{{ platform }}</td>
+                </tr>
+                <tr>
+                    <td class="label"><strong>System Time:</strong></td>
+                    <td class="descr">{{ date }}</td>
+                </tr>
+                <tr>
+                    <td class="label"><strong>Uptime:</strong></td>
+                    <td class="descr">{{ uptime }}</td>
+                </tr>
+                <tr>
+                    <td class="label"><strong>Load Average:</strong></td>
+                    <td class="descr">{{ loadavg }}</td>
+                </tr>
+                <tr>
+                    <td class="label"><strong>FreeNAS Build:</strong></td>
+                    <td class="descr">{{ freenas_build }}</td>
+                </tr>
+            </table>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="Hourly" {% if focus_form == "system" %} selected="true"{% endif %}>
+            <h3>Hourly Graphs</h3>
+            <div id="reports">
+                <div class="chart">
+                    <h3>CPU</h3>
+                    <img src="/reporting/graphs/hourly/cpu1h.png">
+                </div>
+                <div class="chart">
+                    <h3>Interface</h3>
+                    <img src="/reporting/graphs/hourly/iface1h.png">
+                </div>
+                <div class="chart">
+                    <h3>Memory</h3>
+                    <img src="/reporting/graphs/hourly/memory1h.png">
+                </div>
+                <div class="chart">
+                    <h3>Load</h3>
+                    <img src="/reporting/graphs/hourly/load1h.png">
+                </div>
+                <div class="chart">
+                    <h3>Processes</h3>
+                    <img src="/reporting/graphs/hourly/processes1h.png">
+                </div>
+                <div class="chart">
+                    <h3>Swap</h3>
+                    <img src="/reporting/graphs/hourly/swap1h.png">
+                </div>
+            </div>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="Daily">
+            <h3>Daily Graphs</h3>
+            <div id="reports">
+                <div class="chart">
+                    <h3>CPU</h3>
+                    <img src="/reporting/graphs/daily/cpu1d.png">
+                </div>
+                <div class="chart">
+                    <h3>Interface</h3>
+                    <img src="/reporting/graphs/daily/iface1d.png">
+                </div>
+                <div class="chart">
+                    <h3>Memory</h3>
+                    <img src="/reporting/graphs/daily/memory1d.png">
+                </div>
+                <div class="chart">
+                    <h3>Load</h3>
+                    <img src="/reporting/graphs/daily/load1d.png">
+                </div>
+                <div class="chart">
+                    <h3>Processes</h3>
+                    <img src="/reporting/graphs/daily/processes1d.png">
+                </div>
+                <div class="chart">
+                    <h3>Swap</h3>
+                    <img src="/reporting/graphs/daily/swap1d.png">
+                </div>
+            </div>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="Weekly">
+            <h3>Weekly Graphs</h3>
+            <div id="reports">
+                <div class="chart">
+                    <h3>CPU</h3>
+                    <img src="/reporting/graphs/weekly/cpu1w.png">
+                </div>
+                <div class="chart">
+                    <h3>Interface</h3>
+                    <img src="/reporting/graphs/weekly/iface1w.png">
+                </div>
+                <div class="chart">
+                    <h3>Memory</h3>
+                    <img src="/reporting/graphs/weekly/memory1w.png">
+                </div>
+                <div class="chart">
+                    <h3>Load</h3>
+                    <img src="/reporting/graphs/weekly/load1w.png">
+                </div>
+                <div class="chart">
+                    <h3>Processes</h3>
+                    <img src="/reporting/graphs/weekly/processes1w.png">
+                </div>
+                <div class="chart">
+                    <h3>Swap</h3>
+                    <img src="/reporting/graphs/weekly/swap1w.png">
+                </div>
+            </div>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="Monthly">
+            <h3>Monthly Graphs</h3>
+            <div id="reports">
+                <div class="chart">
+                    <h3>CPU</h3>
+                    <img src="/reporting/graphs/monthly/cpu1m.png">
+                </div>
+                <div class="chart">
+                    <h3>Interface</h3>
+                    <img src="/reporting/graphs/monthly/iface1m.png">
+                </div>
+                <div class="chart">
+                    <h3>Memory</h3>
+                    <img src="/reporting/graphs/monthly/memory1m.png">
+                </div>
+                <div class="chart">
+                    <h3>Load</h3>
+                    <img src="/reporting/graphs/monthly/load1m.png">
+                </div>
+                <div class="chart">
+                    <h3>Processes</h3>
+                    <img src="/reporting/graphs/monthly/processes1m.png">
+                </div>
+                <div class="chart">
+                    <h3>Swap</h3>
+                    <img src="/reporting/graphs/monthly/swap1m.png">
+                </div>
+            </div>
+        </div>
+        <div dojoType="dijit.layout.ContentPane" title="Yearly">
+            <h3>Yearly Graphs</h3>
+            <div id="reports">
+                <div class="chart">
+                    <h3>CPU</h3>
+                    <img src="/reporting/graphs/yearly/cpu1y.png">
+                </div>
+                <div class="chart">
+                    <h3>Interface</h3>
+                    <img src="/reporting/graphs/yearly/iface1y.png">
+                </div>
+                <div class="chart">
+                    <h3>Memory</h3>
+                    <img src="/reporting/graphs/yearly/memory1y.png">
+                </div>
+                <div class="chart">
+                    <h3>Load</h3>
+                    <img src="/reporting/graphs/yearly/load1y.png">
+                </div>
+                <div class="chart">
+                    <h3>Processes</h3>
+                    <img src="/reporting/graphs/yearly/processes1y.png">
+                </div>
+                <div class="chart">
+                    <h3>Swap</h3>
+                    <img src="/reporting/graphs/yearly/swap1y.png">
+            </div>
+        </div>
+    </div>

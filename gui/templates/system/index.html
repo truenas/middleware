@@ -38,7 +38,8 @@
         <h1>{{ freenas_build }}</h1>
     </div>
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
-    <div dojoType="dijit.layout.ContentPane" title="Settings" {% if focus_form == "settings" %} selected="true"{% endif %}>
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false" title="Settings" nested="true">
+    <div dojoType="dijit.layout.ContentPane" title="General" {% if focus_form == "settings" %} selected="true"{% endif %}>
             <h3>System Settings</h3>
         <form action="/system/settings/" method="post">{% csrf_token %}
             <table class="config">
@@ -94,7 +95,38 @@
         <br />
         <br />
     </div>
-    <div dojoType="dijit.layout.ContentPane" title="Firmware Update" {% if focus_form == "settings" %} selected="true"{% endif %}>
+
+    <div dojoType="dijit.layout.ContentPane" title="Email" {% if focus_form == "email" %} selected="true"{% endif %}>
+            <h3>Email Settings</h3>
+        <form action="/system/email/" method="post">{% csrf_token %}
+        <table class="config">
+                {% for field in email %}
+                <tr>
+                    <td>
+                        <label for="{{ field.auto_id }}">
+                            {% if field.field.required %}
+                                <span class="required">{{ field.label }}</span>
+                            {% else %}
+                                {{ field.label }}
+                            {% endif %}
+                        </label>
+                    </td>
+                    <td>
+                        {{ field }}
+                        {{ field.errors }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        <p class="btn">
+            <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Save Settings</button>
+        </p>
+    </form>
+        <br />
+        <br />
+    </div>
+ <div dojoType="dijit.layout.ContentPane" title="Firmware Update" {% if focus_form == "settings" %} selected="true"{% endif %}>
+            <h3>Firmware Update</h3>
         <form action="/system/firmware/" enctype="multipart/form-data" method="post">{% csrf_token %}
         <table class="config">
             {% for field in firmware %}
@@ -122,10 +154,9 @@
         <br />
         <br />
     </div>
-    <div dojoType="dijit.layout.TabContainer" nested="true" style="width:100%;" title="Reporting" {% if focus_form == "system" %} selected="true"{% endif %} doLayout="false">
-        <div dojoType="dijit.layout.ContentPane" title="System Information" doLayout="false">
-            <h3>System Information</h3>
-            <br />
+</div>
+
+     <div dojoType="dijit.layout.ContentPane" title="System Information" doLayout="false">
             <table>
                 <tr>
                     <td class="label"><strong>Hostname:</strong></td>
@@ -157,7 +188,8 @@
                 </tr>
             </table>
         </div>
-        {% if graphs.hourly %} 
+     <div dojoType="dijit.layout.TabContainer" nested="true" style="width:100%;" title="Reporting" {% if focus_form == "system" %} selected="true"{% endif %} doLayout="false">
+        {% if graphs.hourly %}
         <div dojoType="dijit.layout.ContentPane" title="Hourly" {% if focus_form == "system" %} selected="true"{% endif %}>
             <h3>Hourly Graphs</h3>
             <div id="reports">
@@ -171,7 +203,7 @@
             </div>
         </div>
         {% endif %}
-        {% if graphs.daily %} 
+        {% if graphs.daily %}
         <div dojoType="dijit.layout.ContentPane" title="Daily">
             <h3>Daily Graphs</h3>
             <div id="reports">
@@ -185,7 +217,7 @@
             </div>
         </div>
         {% endif %}
-        {% if graphs.weekly %} 
+        {% if graphs.weekly %}
         <div dojoType="dijit.layout.ContentPane" title="Weekly">
             <h3>Weekly Graphs</h3>
             <div id="reports">
@@ -199,7 +231,7 @@
             </div>
         </div>
         {% endif %}
-        {% if graphs.monthly %} 
+        {% if graphs.monthly %}
         <div dojoType="dijit.layout.ContentPane" title="Monthly">
             <h3>Monthly Graphs</h3>
             <div id="reports">
@@ -213,7 +245,7 @@
             </div>
         </div>
         {% endif %}
-        {% if graphs.yearly %} 
+        {% if graphs.yearly %}
         <div dojoType="dijit.layout.ContentPane" title="Yearly">
             <h3>Yearly Graphs</h3>
             <div id="reports">
@@ -228,5 +260,7 @@
         </div>
         {% endif %}
     </div>
+
+
 </div>
 {% endblock %}

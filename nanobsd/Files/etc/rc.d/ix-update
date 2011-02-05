@@ -43,6 +43,11 @@ db_update()
 			echo "manage.py migrate account 0001 --fake failed"
 			exit
 		fi
+		/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate freeadmin 0001 --fake > /dev/null
+		if [ "$?" != "0" ]; then
+			echo "manage.py migrate freeadmin 0001 --fake failed"
+			exit
+		fi
 		/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate network 0001 --fake > /dev/null
 		if [ "$?" != "0" ]; then
 			echo "manage.py migrate network 0001 --fake failed"
@@ -73,6 +78,11 @@ db_update()
 	yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate account > /dev/null
 	if [ "$?" != "0" ]; then
 		echo "manage.py migrate account failed"
+		exit
+	fi
+	yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate freeadmin > /dev/null
+	if [ "$?" != "0" ]; then
+		echo "manage.py migrate freeadmin failed"
 		exit
 	fi
 	yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate network > /dev/null

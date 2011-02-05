@@ -305,10 +305,6 @@ freenas_custom()
 	# strip binaries for ports (saves 10MB)
 	(strip ${NANO_WORLDDIR}/usr/local/*bin/* > /dev/null 2>&1) || true
 
-	# Kill termcap and repalce it with the small version
-	rm -f ${NANO_WORLDDIR}/usr/share/misc/termcap.db
-	cp ${NANO_SRC}/etc/termcap.small ${NANO_WORLDDIR}/usr/share/misc/termcap
-
 	# Last second tweaks
 	chown -R root:wheel ${NANO_WORLDDIR}/root
 	chmod 0755 ${NANO_WORLDDIR}/root

@@ -28,13 +28,15 @@
 
 from django.conf.urls.defaults import *
 from django.contrib.auth.decorators import login_required
-from freenasUI.system.views import *
-#import django_nav
-#django_nav.autodiscover()
 
-urlpatterns = patterns('',
-    (r'^reboot/$', reboot),
-    (r'^shutdown/$', shutdown),
-    (r'^top/', top),
-    (r'^(?P<objtype>\w+)/$', index),
+urlpatterns = patterns('freenasUI.system.views',
+    (r'^reboot/$', 'reboot'),
+    (r'^shutdown/$', 'shutdown'),
+    url(r'^reporting/$', 'reporting', name="system_reporting"),
+    url(r'^settings2/$', 'settings', name="system_settings"),
+    url(r'^advanced2/$', 'advanced', name="system_advanced"),
+    (r'^top/', 'top'),
+    (r'^test/$', 'test'),
+    url(r'^test1/$', 'test1', name="system_test1"),
+    (r'^(?P<objtype>\w+)/$', 'index'),
     )

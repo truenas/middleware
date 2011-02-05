@@ -86,6 +86,35 @@ def sharing(request, sharetype = None):
         })
     return render_to_response('sharing/index.html', variables)
 
+@login_required
+def home(request):
+
+    cifs_share_list = CIFS_Share.objects.select_related().all()
+    afp_share_list = AFP_Share.objects.order_by("-id").values()
+    nfs_share_list = NFS_Share.objects.select_related().all()
+
+    variables = RequestContext(request, {
+    'focused_tab' : 'sharing',
+    'cifs_share_list': cifs_share_list,
+    'afp_share_list': afp_share_list,
+    'nfs_share_list': nfs_share_list,
+    })
+    return render_to_response('sharing/index2.html', variables)
+
+@login_required
+def generic_delete(request, object_id, sharetype):
+    sharing_model_map = {
+        'cifs':   CIFS_Share,
+        'afp':   AFP_Share,
+        'nfs':   NFS_Share,
+    }
+    return delete_object(
+        request = request,
+        model = sharing_model_map[sharetype],
+        post_delete_redirect = '/sharing/' + sharetype + '/view/',
+        object_id = object_id, )
+    notifier().reload(sharetype)
+    return retval
 
 
 @login_required

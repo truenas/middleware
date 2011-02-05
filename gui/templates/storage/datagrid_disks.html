@@ -1,0 +1,26 @@
+<div dojoType="dojo.data.ItemFileReadStore" jsId="store1" url="{% url storage_datagrid_disks_json vid=vid %}" >
+    </div>
+</span>
+<table dojoType="dojox.grid.DataGrid" store="store1" 
+clientSort="true" style="width: 100%; height: 100%;" rowSelector="25px">
+    <script type="dojo/method" event="onRowDblClick" args="evt">
+  	var item = this.selection.getSelected()[0];
+		 dialog = new dijit.Dialog({ 
+                    id: 'edit_dialog',
+                    title: 'Edit', 
+                    href: '{% url freeadmin_model_view app=app,model=model %}edit/'+item.id+'/', 
+                    parseOnLoad: true,
+                    closable: true, 
+                    style: "width: 650px;min-height:400px;background-color:    white;overflow:auto;",
+                    onHide: function() { this.destroyRecursive() },
+                });
+                dialog.show();
+    </script>
+    <thead>
+        <tr>
+        {% for field in fields %}
+        <th field="{{ field.1 }}" width="{{ field.2 }}px">{{ field.0 }}</th>
+        {% endfor %}
+        </tr>
+    </thead>
+</table>

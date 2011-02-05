@@ -129,6 +129,49 @@ def network(request, objtype = None):
     return render_to_response('network/index.html', variables)
 
 @login_required
+def network2(request, objtype = None):
+    gc = GlobalConfigurationForm(data = GlobalConfiguration.objects.order_by("-id").values()[0], auto_id=False)
+    if objtype != None:
+        focus_form = objtype
+    else:
+        focus_form = 'gc'
+    int_list = Interfaces.objects.order_by("-id").values()
+    vlan_list = VLAN.objects.order_by("-id").values()
+    lagg_list = LAGGInterface.objects.order_by("-id").all()
+    sr_list = StaticRoute.objects.order_by("-id").values()
+    errform = ""
+
+    variables = RequestContext(request, {
+        'focused_tab' : 'network',
+        'gc': gc,
+        'int_list': int_list,
+        'vlan_list': vlan_list,
+        'lagg_list': lagg_list,
+        'sr_list': sr_list,
+        'errform': errform,
+        'focus_form': focus_form,
+    })
+    return render_to_response('network/index2.html', variables)
+
+@login_required
+def globalconf(request):
+
+    extra_context = {}
+    gc = GlobalConfigurationForm(data = GlobalConfiguration.objects.order_by("-id").values()[0], auto_id=False)
+    if request.method == 'POST':
+        gc = GlobalConfigurationForm(request.POST,auto_id=False)
+        if gc.is_valid():
+            gc.save()
+            extra_context['saved'] = True
+
+    extra_context.update({
+        'gc': gc,
+    })
+    variables = RequestContext(request, extra_context)
+
+    return render_to_response('network/globalconf.html', variables)
+
+@login_required
 def lagg_members(request, object_id):
     laggmembers = LAGGInterfaceMembers.objects.filter(lagg_interfacegroup = object_id) 
     variables = RequestContext(request, {
