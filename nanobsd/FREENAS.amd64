@@ -31,7 +31,7 @@ ident		FREENAS64
 # env		"GENERIC.env"
 
 #makeoptions	DEBUG=-g		# Build kernel with gdb(1) debug symbols
-makeoptions	MODULES_OVERRIDE="zfs opensolaris acpi geom"
+makeoptions	MODULES_OVERRIDE="zfs opensolaris acpi geom mps"
 
 options 	SCHED_ULE		# ULE scheduler
 options 	PREEMPTION		# Enable kernel thread preemption
