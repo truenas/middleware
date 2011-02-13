@@ -3,8 +3,8 @@ Index: Makefile
 RCS file: /home/ncvs/ports/dns/inadyn/Makefile,v
 retrieving revision 1.9
 diff -u -r1.9 Makefile
---- Makefile	10 Jul 2009 23:23:38 -0000	1.9
-+++ Makefile	13 Feb 2011 04:38:47 -0000
+--- dns/inadyn/Makefile	10 Jul 2009 23:23:38 -0000	1.9
++++ dns/inadyn/Makefile	13 Feb 2011 04:38:47 -0000
 @@ -38,6 +38,7 @@
  
  post-patch:
