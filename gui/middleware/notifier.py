@@ -37,6 +37,10 @@ actions.
 import ctypes
 import types
 import syslog
+import stat
+import os
+import grp
+import pwd
 from shlex import split as shlex_split
 from subprocess import Popen, PIPE
 
@@ -616,6 +620,27 @@ class notifier:
             flags=''
         self.__system("/usr/sbin/chown %s%s:%s %s" % (flags, user, group, path))
         self.__system("/bin/chmod %s%s %s" % (flags, mode, path))
+
+    def mp_get_permission(self, path):
+        if os.path.isdir(path):
+            return stat.S_IMODE(os.stat(path)[stat.ST_MODE])
+
+    def mp_get_owner(self, path):
+        if os.path.isdir(path):
+            stat_info = os.stat(path)
+            uid = stat_info.st_uid
+            gid = stat_info.st_gid
+            try:
+                user = pwd.getpwuid(uid)[0]
+            except KeyError:
+                user = 'root'
+                self.__system("/usr/bin/chown %s %s" % (user, path))
+            try:
+                group = grp.getgrgid(gid)[0]
+            except KeyError:
+                group = 'wheel'
+                self.__system("/usr/bin/chown :%s %s" % (group, path))
+            return [user, group]
 
     def validate_xz(self, path):
         ret = self.__system_nolog("/usr/bin/xz -t %s" % (path))

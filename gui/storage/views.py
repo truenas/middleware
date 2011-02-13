@@ -325,7 +325,7 @@ def mp_permission2(request, object_id):
             return HttpResponse(simplejson.dumps({"error": False, "message": "Mount Point permissions successfully updated."}), mimetype="application/json")
             #return HttpResponseRedirect('/storage/')
     else:
-        form = MountPointAccessForm()
+        form = MountPointAccessForm(initial={'path':mp.mp_path})
     variables = RequestContext(request, {
         'mp': mp,
         'mp_list': mp_list,

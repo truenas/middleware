@@ -42,7 +42,7 @@ from freenasUI.common.widgets import RadioFieldRendererBulletless
 from freenasUI.account.models import bsdUsers, bsdGroups
 import re
 
-attrs_dict = { 'class': 'required' }
+attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 
 class UnixPermissionWidget(widgets.MultiWidget):
 
@@ -57,7 +57,11 @@ class UnixPermissionWidget(widgets.MultiWidget):
                 owner = bin(int(value[0]))[2:]
                 group = bin(int(value[1]))[2:]
                 other = bin(int(value[2]))[2:]
-                mode = owner + group + other
+                # make sure we end up with 9 bits
+                mode = "0" * (3-len(owner)) + owner + \
+                        "0" * (3-len(group)) + group + \
+                        "0" * (3-len(other)) + other
+
                 rv = [False, False, False, False, False, False, False, False, False]
                 for i in range(9):
                     if mode[i] == '1':
@@ -465,13 +469,21 @@ class MountPointAccessForm(Form):
     mp_user = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label='Owner (user)')
     mp_group = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label='Owner (group)')
     #mp_mode = forms.ChoiceField(choices=PermissionChoices, widget=forms.Select(attrs=attrs_dict), label='Mode')
-    mp_mode = UnixPermissionField()
+    mp_mode = UnixPermissionField(label='Mode')
     mp_recursive = forms.BooleanField(initial=False,required=False,label='Set permission recursively')
     def __init__(self, *args, **kwargs):
         super(MountPointAccessForm, self).__init__(*args, **kwargs)
         self.fields['mp_user'].choices = [(x.bsdusr_username, x.bsdusr_username) for x in bsdUsers.objects.all()]
         self.fields['mp_group'].choices = [(x.bsdgrp_group, x.bsdgrp_group) for x in bsdGroups.objects.all()]
+
+        path = kwargs.get('initial', {}).get('path', None)
+        if path:
+            user, group = notifier().mp_get_owner(path)
+            self.fields['mp_mode'].initial = "%.3o" % notifier().mp_get_permission(path)
+            self.fields['mp_user'].initial = user
+            self.fields['mp_group'].initial = group
     def commit(self, path='/mnt/'):
+
         notifier().mp_change_permission(
             path=path,
             user=self.cleaned_data['mp_user'].__str__(),
