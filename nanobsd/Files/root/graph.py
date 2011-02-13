@@ -88,7 +88,7 @@ times = ['1h', '1d', '1w', '1m', '1y']
 for time in times:
     rrdtool.graph("/tmp/%s-%s.png" % (file, time),
               '--imgformat', 'PNG',
-              '--vertical-label', 'Jiffies',
+              '--vertical-label', '%CPU',
               '--title', 'CPU Usage',
               '--lower-limit', '0',
               '--end', 'now',

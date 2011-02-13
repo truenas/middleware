@@ -1,0 +1,10 @@
+<form dojoType="dijit.form.Form">
+<script type="dojo/event" event="onSubmit" args="e">
+    formSubmit(this, e, '{{ url }}');
+</script>
+            <table>
+                {{ form }}
+            </table>
+            <button class="submitform" dojoType="dijit.form.Button" type="submit" onClick="this.set('label', 'Please wait...');"> OK </button>
+<button dojoType="dijit.form.Button" onClick="dijit.byId('edit_dialog').hide('cancel');"> Cancel </button>
+</form>

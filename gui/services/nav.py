@@ -5,4 +5,6 @@ BLACKLIST = ['services',]
 class ISCSI(NavOption):
 
         name = u'ISCSI'
+        type = u'iscsi'
+        icon = u'iSCSIIcon'
         options = []

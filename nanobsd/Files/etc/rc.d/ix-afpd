@@ -68,16 +68,6 @@ EOF
 
 generate_av_system()
 {
-    local IFS=\|
-    local vol_name
-
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-        "SELECT vol_name FROM storage_volume" | \
-    while read vol_name; do
-	cat <<EOF
-"/mnt/${vol_name}" "${vol_name}" options:usedots allow:@admin
-EOF
-    done
 }
 
 generate_av_default()

@@ -35,6 +35,13 @@ from freenasUI.account.views import *
 
 urlpatterns = patterns('',
     (r'^$', bsdUsersView), 
+    url(r'^home/$', home, name="account_home"), 
+    url(r'^bsduser/$', bsduser, name="account_bsduser"), 
+    url(r'^bsduser/(?P<object_id>\d+)/groups/$', user2group_update2, name="account_bsduser_groups"), 
+    url(r'^bsdgroup/$', bsdgroup, name="account_bsdgroup"), 
+    url(r'^bsdgroup/(?P<object_id>\d+)/members/$', group2user_update2, name="account_bsdgroup_members"), 
+    url(r'^password_change2/$', password_change2, name="account_passform"),
+    url(r'^user_change/$', user_change, name="account_changeform"),
     (r'admin/(?P<objtype>\w+)/$', bsdUsersView),
     (r'^(?P<objtype>\w+)/add/$', bsdUsersView),
     (r'(?P<objtype>\w+)/delete/(?P<object_id>\d+)/$', usergroup_delete),

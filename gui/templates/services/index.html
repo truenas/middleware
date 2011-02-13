@@ -71,6 +71,17 @@
             </tr>
             <tr>
                 <td>
+                    <strong>Dynamic DNS</strong>
+                </td>
+                <td>
+                   <img id="dynamicdns_toggle" name="dynamicdns_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "dynamicdns" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+                </td>
+                <td>
+                    <img id="dynamicdns_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('dynamicdns').show();" title="Dynamic DNS Settings">
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <strong>SNMP</strong>
                 </td>
                 <td>
@@ -546,7 +557,7 @@
 </form>
 </div>
 
-<div id="dyndns" dojoType="dijit.Dialog" title="Dynamic DNS">
+<div id="dynamicdns" dojoType="dijit.Dialog" title="Dynamic DNS">
 <form action="/services/global/dynamicdns/" method="post">{% csrf_token %}
             <table>
                 {{ dynamicdns.errors }}
@@ -554,7 +565,7 @@
 
                          </table>
 <button  dojoType="dijit.form.Button" type="submit">Save Configuration</button>
-<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('dyndns').hide();">
+<button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('dynamicdns').hide();">
     Close
 </button>
 </form>

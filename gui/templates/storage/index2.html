@@ -22,9 +22,10 @@
 		    </td>
 		    <td>
 			{% if m.mp_ischild %}
-            <button dojoType="dijit.form.Button" type="button" onClick="editObject('Delete Volume', '{% url storage_dataset_delete object_id=m.id %}');">Remove dataset</button>
+            <button dojoType="dijit.form.Button" type="button"
+                onClick="editObject('Remove Dataset', '{% url storage_dataset_delete object_id=m.id %}', [this,]);">Remove dataset</button>
 			{% else %}
-            <button dojoType="dijit.form.Button" type="button" onClick="editObject('Delete Volume', '{% url freeadmin_model_delete app="storage",model="Volume",oid=m.id %}');">Delete Volume</button>
+            <button dojoType="dijit.form.Button" type="button" onClick="editObject('Delete Volume', '{% url freeadmin_model_delete app="storage",model="Volume",oid=m.id %}', [this,]);">Delete Volume</button>
             <button dojoType="dijit.form.Button" type="button">
                 View Disks
                 <script type="dojo/method" event="onClick" args="evt">
@@ -32,6 +33,8 @@
                 </script>
             </button>
 			{% endif %}
+            <button dojoType="dijit.form.Button" type="button"
+                onClick="editObject('Change Permissions', '{% url storage_mp_permission object_id=m.id %}', [this,]);">Change Permissions</button>
 		    </td>
 		</tr>
 		{% empty %}
@@ -45,31 +48,13 @@
         <button dojoType="dijit.form.Button" type="button" >
             Storage Wizard
             <script type="dojo/method" event="onClick" args="evt">
-        dialog = new dijit.Dialog({ 
-            id: 'wizard_dialog',
-            title: 'Wizard', 
-            href: '{% url storage_wizard %}', 
-            parseOnLoad: true,
-            closable: true, 
-            style: "max-width: 650px;min-height:400px;max-height:600px;background-color:white;overflow:auto;",
-            onHide: function() { this.destroyRecursive() },
-        });
-        dialog.show();
+                volumeWizard('Wizard', '{% url storage_wizard %}', [this,]);
             </script>
         </button>
         <button dojoType="dijit.form.Button" type="button" >
             Create dataset
             <script type="dojo/method" event="onClick" args="evt">
-        dialog = new dijit.Dialog({ 
-            id: 'add_dialog',
-            title: 'Create Dataset', 
-            href: '{% url storage_dataset %}', 
-            parseOnLoad: true,
-            closable: true, 
-            style: "max-width: 650px;min-height:400px;max-height:600px;background-color:white;overflow:auto;",
-            onHide: function() { this.destroyRecursive() },
-        });
-        dialog.show();
+                addObject('Create Dataset', '{% url storage_dataset %}', [this,]);
             </script>
         </button>
 	</div>

@@ -36,8 +36,9 @@ from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import *
 from freenasUI.choices import *
+from freeadmin.models import Model
 
-class Settings(models.Model):
+class Settings(Model):
     stg_guiprotocol = models.CharField(
             max_length=120, 
             choices=PROTOCOL_CHOICES, 
@@ -80,7 +81,7 @@ class Settings(models.Model):
     class FreeAdmin:
         deletable = False
 
-class Advanced(models.Model):
+class Advanced(Model):
     adv_consolemenu = models.BooleanField(
             verbose_name="Enable Console Menu")
     adv_serialconsole = models.BooleanField(
@@ -97,10 +98,17 @@ class Advanced(models.Model):
             verbose_name="Enable powerd (Power Saving Daemon)")
     adv_zeroconfbonjour = models.BooleanField(
             verbose_name="Enable Zeroconf/Bonjour")
+    adv_swapondrive = models.IntegerField(
+            verbose_name="Swap size on each drive in GiB, affects new disks only",
+            default=2)
+    # TODO: need geom_eli in kernel
+    #adv_encswap = models.BooleanField(
+    #        verbose_name="Encrypt swap space",
+    #        default=False)
     adv_motd = models.TextField(
             max_length=1024,
             verbose_name="MOTD banner",
-            ) 
+            )
 
     class Meta:
         verbose_name_plural = u"Advanced"
@@ -109,7 +117,7 @@ class Advanced(models.Model):
         deletable = False
 
 ## System|Advanced|Email
-class Email(models.Model):
+class Email(Model):
     em_fromemail = models.CharField(
             max_length=120, 
             verbose_name="From email", 

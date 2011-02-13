@@ -1,0 +1,48 @@
+     <table class="grid">
+	            <thead class="header">
+			<tr>
+		            <td>Tag</td>
+		            <td>User</td>
+		            <td>Secret</td>
+		            <td>Peer</td>
+		            <td>Peer Secret</td>
+		            <td></td>
+			</tr>
+		        </thead>
+                {% for ta in target_auth_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ ta.id }}">
+                    <td>{{ ta.iscsi_target_auth_tag }}</td>
+                    <td>{{ ta.iscsi_target_auth_user }}</td>
+                    <td>{{ ta.iscsi_target_auth_secret }}</td>
+                    <td>{{ ta.iscsi_target_auth_peeruser }}</td>
+                    <td>{{ ta.iscsi_target_auth_peersecret }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Edit
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Edit', '{% url freeadmin_model_edit app="services",model="iSCSITargetAuthCredential",oid=ta.id %}', [this,]);
+                        </script>
+                        </button>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Delete
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Delete', '{% url freeadmin_model_delete app="services",model="iSCSITargetAuthCredential",oid=ta.id %}', [this,]);
+                        </script>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">No targets defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+
+                        <p class="btn">
+                    <button id="tgt_auth_button" dojoType="dijit.form.Button" type="button">
+                        Add iSCSI User 
+                        <script type="dojo/method" event="onClick" args="evt">
+                         addObject('Add iSCSI User', '{% url freeadmin_model_add app="services",model="iSCSITargetAuthCredential" %}', [this,]);
+                    </script>
+                    </button>
+                    </p>

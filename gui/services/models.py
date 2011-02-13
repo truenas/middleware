@@ -39,9 +39,9 @@ from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
 from datetime import datetime
 from freenasUI.choices import *
-import nav
+from freeadmin.models import Model
    
-class services(models.Model):
+class services(Model):
     srv_service = models.CharField(
             max_length=120, 
             verbose_name="Service",
@@ -60,7 +60,7 @@ class services(models.Model):
     def save(self, *args, **kwargs):
         super(services, self).save(*args, **kwargs)
 
-class CIFS(models.Model):
+class CIFS(Model):
     cifs_srv_authmodel = models.CharField(
             max_length=10,
             choices=CIFSAUTH_CHOICES,
@@ -127,18 +127,6 @@ class CIFS(models.Model):
             blank=True,
             help_text="Use this option to override the directory creation mask (0777 by default)."
             )
-    cifs_srv_sendbuffer = models.CharField(
-            max_length=120, 
-            verbose_name="Send Buffer Size", 
-            blank=True,
-            help_text="Size of send buffer (64240 by default)."
-            )
-    cifs_srv_recvbuffer = models.CharField(
-            max_length=120, 
-            verbose_name="Receive Buffer Size", 
-            blank=True,
-            help_text="Size of receive buffer (64240 by default)."
-            )
     cifs_srv_largerw = models.BooleanField(
             verbose_name="Large RW support")
     cifs_srv_sendfile = models.BooleanField(
@@ -165,14 +153,14 @@ class CIFS(models.Model):
             )
     cifs_srv_aio_rs = models.IntegerField(
             max_length=120,
-            verbose_name="AIO read size", 
-            help_text="The default read size is 1.",
+            verbose_name="Minimal AIO read size", 
+            help_text="Samba will read asynchronously if request size is larger than this value.  The default read size is 1.",
             default="1"
             )
     cifs_srv_aio_ws = models.IntegerField(
             max_length=120,
-            verbose_name="AIO write size", 
-            help_text="The default write size is 1.",
+            verbose_name="Minimal AIO write size", 
+            help_text="Samba will write asynchronously if request size is larger than this value.  The default write size is 1.",
             default="1"
             )
 
@@ -182,8 +170,9 @@ class CIFS(models.Model):
 
     class FreeAdmin:
         deletable = False
+        icon_model = u"CIFSIcon"
 
-class AFP(models.Model):            
+class AFP(Model):            
     afp_srv_name = models.CharField(
             max_length=120, 
             verbose_name="Server Name",
@@ -208,8 +197,9 @@ class AFP(models.Model):
 
     class FreeAdmin:
         deletable = False
+        icon_model = u"AFPIcon"
 
-class NFS(models.Model):            
+class NFS(Model):            
     nfs_srv_servers = models.CharField(
             max_length=120, 
             verbose_name="Number of servers",
@@ -222,8 +212,9 @@ class NFS(models.Model):
 
     class FreeAdmin:
         deletable = False
+        icon_model = u"NFSIcon"
 
-class iSCSITargetGlobalConfiguration(models.Model):
+class iSCSITargetGlobalConfiguration(Model):
     iscsi_basename = models.CharField(
             max_length=120,
             verbose_name="Base Name",
@@ -354,8 +345,9 @@ class iSCSITargetGlobalConfiguration(models.Model):
     class FreeAdmin:
         deletable = False
         menu_child_of = "ISCSI"
+        icon_model = u"SettingsIcon"
 
-class iSCSITargetExtent(models.Model):
+class iSCSITargetExtent(Model):
     iscsi_target_extent_name = models.CharField(
             max_length=120,
             verbose_name="Extent Name",
@@ -388,10 +380,14 @@ class iSCSITargetExtent(models.Model):
         verbose_name = "Extent"
     class FreeAdmin:
         menu_child_of = "ISCSI"
+        icon_object = u"ExtentIcon"
+        icon_model = u"ExtentIcon"
+        icon_add = u"AddExtentIcon"
+        icon_view = u"ViewAllExtentsIcon"
     def __unicode__(self):
-        return self.iscsi_target_extent_name
+        return unicode(self.iscsi_target_extent_name)
 
-class iSCSITargetPortal(models.Model):
+class iSCSITargetPortal(Model):
     iscsi_target_portal_tag = models.IntegerField(
             max_length=120,
             default=1,
@@ -413,11 +409,15 @@ class iSCSITargetPortal(models.Model):
         verbose_name = "Portal"
     class FreeAdmin:
         menu_child_of = "ISCSI"
+        icon_object = u"PortalIcon"
+        icon_model = u"PortalIcon"
+        icon_add = u"AddPortalIcon"
+        icon_view = u"ViewAllPortalsIcon"
     def __unicode__(self):
         return unicode(self.iscsi_target_portal_tag)
 
 
-class iSCSITargetAuthorizedInitiator(models.Model):
+class iSCSITargetAuthorizedInitiator(Model):
     iscsi_target_initiator_tag = models.IntegerField(
             max_length=120,
             unique=True,
@@ -445,11 +445,15 @@ class iSCSITargetAuthorizedInitiator(models.Model):
         verbose_name = "Initiator"
     class FreeAdmin:
         menu_child_of = "ISCSI"
+        icon_object = u"InitiatorIcon"
+        icon_model = u"InitiatorIcon"
+        icon_add = u"AddInitiatorIcon"
+        icon_view = u"ViewAllInitiatorsIcon"
     def __unicode__(self):
-        return self.iscsi_target_initiator_tag
+        return unicode(self.iscsi_target_initiator_tag)
 
 
-class iSCSITargetAuthCredential(models.Model):
+class iSCSITargetAuthCredential(Model):
     iscsi_target_auth_tag = models.IntegerField(
             max_length=120,
             default=1,
@@ -481,11 +485,15 @@ class iSCSITargetAuthCredential(models.Model):
         verbose_name_plural = "Authorized Accesses"
     class FreeAdmin:
         menu_child_of = "ISCSI"
+        icon_object = u"AuthorizedAccessIcon"
+        icon_model = u"AuthorizedAccessIcon"
+        icon_add = u"AddAuthorizedAccessIcon"
+        icon_view = u"ViewAllAuthorizedAccessIcon"
     def __unicode__(self):
-        return self.iscsi_target_auth_tag
+        return unicode(self.iscsi_target_auth_tag)
 
 
-class iSCSITarget(models.Model):
+class iSCSITarget(Model):
     iscsi_target_name = models.CharField(
             unique=True,
             max_length=120,
@@ -540,7 +548,7 @@ class iSCSITarget(models.Model):
             )
     iscsi_target_queue_depth = models.IntegerField(
             max_length=3,
-            default=0,
+            default=32,
             verbose_name="Queue Depth",
             help_text="0=disabled, 1-255=enabled command queuing with specified depth. The recommended queue depth is 32.",
             )
@@ -554,11 +562,16 @@ class iSCSITarget(models.Model):
         verbose_name = "Target"
     class FreeAdmin:
         menu_child_of = "ISCSI"
+        icon_object = u"TargetIcon"
+        icon_model = u"TargetIcon"
+        icon_add = u"AddTargetIcon"
+        icon_view = u"ViewAllTargetsIcon"
+
     def __unicode__(self):
         return self.iscsi_target_name
 
 
-class iSCSITargetToExtent(models.Model):
+class iSCSITargetToExtent(Model):
     iscsi_target = models.ForeignKey(
             iSCSITarget,
             verbose_name="Target",
@@ -579,10 +592,15 @@ class iSCSITargetToExtent(models.Model):
     class FreeAdmin:
         menu_child_of = "ISCSI"
     def __unicode__(self):
-        return self.iscsi_target + ' / ' + self.iscsi_extent
+        return unicode(self.iscsi_target) + u' / ' + unicode(self.iscsi_extent)
+    class FreeAdmin:
+        menu_child_of = "ISCSI"
+        icon_object = u"TargetExtentIcon"
+        icon_model = u"TargetExtentIcon"
+        icon_add = u"AddTargetExtentIcon"
+        icon_view = u"ViewAllTargetExtentsIcon"
 
-
-class DynamicDNS(models.Model):
+class DynamicDNS(Model):
     ddns_provider = models.CharField(
             max_length=120, 
             choices=DYNDNSPROVIDER_CHOICES, 
@@ -627,8 +645,9 @@ class DynamicDNS(models.Model):
 
     class FreeAdmin:
         deletable = False
+        icon_model = u"DDNSIcon"
 
-class SNMP(models.Model):
+class SNMP(Model):
     snmp_location = models.CharField(
             max_length=120, 
             verbose_name="Location", 
@@ -660,8 +679,9 @@ class SNMP(models.Model):
 
     class FreeAdmin:
         deletable = False
+        icon_model = u"SNMPIcon"
 
-class UPS(models.Model):            
+class UPS(Model):            
     ups_identifier = models.CharField(
             max_length=120, 
             verbose_name="Identifier",
@@ -722,8 +742,9 @@ class UPS(models.Model):
 
     class FreeAdmin:
         deletable = False
+        icon_model = u"UPSIcon"
 
-class FTP(models.Model):            
+class FTP(Model):            
     ftp_clients = models.CharField(
             max_length=120, 
             verbose_name="Clients",
@@ -831,8 +852,9 @@ class FTP(models.Model):
 
     class FreeAdmin:
         deletable = False
+        icon_model = "FTPIcon"
 
-class TFTP(models.Model):            
+class TFTP(Model):            
     tftp_directory = models.CharField(
             max_length=120, 
             verbose_name="Directory",
@@ -870,8 +892,9 @@ class TFTP(models.Model):
 
     class FreeAdmin:
         deletable = False
+        icon_model = "TFTPIcon"
 
-class SSH(models.Model):            
+class SSH(Model):            
     ssh_tcpport = models.CharField(
             max_length=120, 
             verbose_name="TCP Port",
@@ -942,8 +965,9 @@ class SSH(models.Model):
 
     class FreeAdmin:
         deletable = False
+        icon_model = "OpenSSHIcon"
   
-class ActiveDirectory(models.Model):            
+class ActiveDirectory(Model):            
     ad_dcname = models.CharField(
             max_length=120, 
             verbose_name="Domain Controller Name",
@@ -975,13 +999,15 @@ class ActiveDirectory(models.Model):
             help_text="Password of Domain Administrator account."
             )
 
+
     class Meta:
         verbose_name_plural = u"Active Directory"
 
     class FreeAdmin:
         deletable = False
+        icon_model = "ActiveDirectoryIcon"
 
-class LDAP(models.Model):            
+class LDAP(Model):            
     ldap_hostname = models.CharField(
             max_length=120, 
             verbose_name="Hostname", 
@@ -992,7 +1018,7 @@ class LDAP(models.Model):
             max_length=120, 
             verbose_name="Base DN",
             blank=True,
-            help_text="The default base Distinguished Name (DN) to use for seraches, eg dc=test,dc=org"
+            help_text="The default base Distinguished Name (DN) to use for searches, eg dc=test,dc=org"
             )
     ldap_anonbind = models.BooleanField(
             verbose_name="Allow Anonymous Binding")
@@ -1062,3 +1088,4 @@ class LDAP(models.Model):
 
     class FreeAdmin:
         deletable = False
+        icon_model = "LDAPIcon"

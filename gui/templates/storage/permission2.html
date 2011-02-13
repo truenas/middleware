@@ -1,0 +1,12 @@
+<form dojoType="dijit.form.Form">
+    <script type="dojo/event" event="onSubmit" args="e">
+        formSubmit(this, e, '{% url storage_mp_permission object_id=mp.id %}');
+    </script>
+    <h3>Change permission</h3>
+    <p>Change permission on {{ mp.mp_path }} to:</p>
+	<table>
+	{{ form }}
+	</table>
+	<button dojoType="dijit.form.Button" type="submit">Change</button>
+	<button dojoType="dijit.form.Button" type="button" onClick="cancelDialog(this);">Cancel</button>
+    </form>

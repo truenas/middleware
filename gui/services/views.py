@@ -44,20 +44,7 @@ from freenasUI.common.helperview import helperViewEx, helperViewEmpty
 import os, commands
 
 @login_required
-def home(request, objtype=None):
-    istgtglobal = iSCSITargetGlobalConfigurationForm()
-    if objtype != None:
-        focus_form = objtype
-    else:
-        focus_form = 'istgtglobal'
-    # Counter for forms we have validated.
-    forms_saved = 0
-
-    if request.method == 'POST':
-        if forms_saved > 0:
-            return HttpResponseRedirect('/services/')
-        else:
-            pass # Need to raise a validation exception
+def home(request):
 
     try:
         cifs = CIFS.objects.order_by("-id")[0]
@@ -111,14 +98,12 @@ def home(request, objtype=None):
 
     srv = Services.objects.all()
     variables = RequestContext(request, {
-        'focused_tab' : 'services',
         'srv': srv,
         'cifs': cifs,
         'afp': afp,
         'nfs': nfs,
         #'rsync': rsync,
         #'unison': unison,
-        'istgtglobal': istgtglobal,
         'dynamicdns': dynamicdns,
         'snmp': snmp,
         #'ups': ups,
@@ -129,7 +114,6 @@ def home(request, objtype=None):
         'ssh': ssh,
         'activedirectory': activedirectory,
         'ldap': ldap,
-        'focus_form': focus_form,
         })
     return render_to_response('services/index2.html', variables)
 
@@ -157,6 +141,7 @@ def services(request, objtype=None):
     tftp = helperViewEx(request, TFTPForm, TFTP, objtype, 'tftp')
     ssh = helperViewEx(request, SSHForm, SSH, objtype, 'ssh')
     activedirectory = helperViewEx(request, ActiveDirectoryForm, ActiveDirectory, objtype, 'activedirectory')
+    dynamicdns = helperViewEx(request, DynamicDNSForm, DynamicDNS, objtype, 'dynamicdns')
     ldap = helperViewEx(request, LDAPForm, LDAP, objtype, 'ldap')
 
     iscsitarget = helperViewEmpty(request, iSCSITargetForm, objtype, 'iscsitarget')
@@ -171,6 +156,7 @@ def services(request, objtype=None):
         'focused_tab' : 'services',
         'srv': srv,
         'cifs': cifs,
+        'dynamicdns': dynamicdns,
         'afp': afp,
         'nfs': nfs,
         'istgtglobal': istgtglobal,
@@ -201,34 +187,80 @@ def services(request, objtype=None):
 
 
 @login_required
-def iscsi(request, objtype=None):
+def iscsi(request):
+
+    variables = RequestContext(request)
+    return render_to_response('services/iscsi.html', variables)
+
+@login_required
+def iscsi_targets(request):
 
     target_list = iSCSITarget.objects.all()
-    extent_device_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-    extent_file_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='File')
+
+    variables = RequestContext(request, {
+        'target_list': target_list,
+    })
+    return render_to_response('services/iscsi_targets.html', variables)
+
+@login_required
+def iscsi_assoctargets(request, objtype=None):
+
     asctarget_list = iSCSITargetToExtent.objects.all()
+
+    variables = RequestContext(request, {
+        'asctarget_list': asctarget_list,
+    })
+    return render_to_response('services/iscsi_assoctargets.html', variables)
+
+@login_required
+def iscsi_extents(request, objtype=None):
+
+    extent_file_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='File')
+
+    variables = RequestContext(request, {
+        'extent_file_list': extent_file_list,
+    })
+    return render_to_response('services/iscsi_extents.html', variables)
+
+@login_required
+def iscsi_dextents(request):
+
+    extent_device_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
+
+    variables = RequestContext(request, {
+        'extent_device_list': extent_device_list,
+    })
+    return render_to_response('services/iscsi_dextents.html', variables)
+
+@login_required
+def iscsi_auth(request):
+
     target_auth_list = iSCSITargetAuthCredential.objects.all()
+
+    variables = RequestContext(request, {
+        'target_auth_list': target_auth_list,
+    })
+    return render_to_response('services/iscsi_auth.html', variables)
+
+@login_required
+def iscsi_authini(request):
+
     auth_initiator_list = iSCSITargetAuthorizedInitiator.objects.all()
+
+    variables = RequestContext(request, {
+        'auth_initiator_list': auth_initiator_list,
+    })
+    return render_to_response('services/iscsi_authini.html', variables)
+
+@login_required
+def iscsi_portals(request):
+
     iscsiportal_list = iSCSITargetPortal.objects.all()
 
     variables = RequestContext(request, {
-        #'iscsitarget': iscsitarget,
-        'target_list': target_list,
-        #'iscsiextentfile': iscsiextentfile,
-        #'iscsiextentdevice': iscsiextentdevice,
-        'extent_file_list': extent_file_list,
-        'extent_device_list': extent_device_list,
-        'extent_file_list': extent_file_list,
-        #'asctarget': asctarget,
-        'asctarget_list': asctarget_list,
-        #'target_auth': target_auth,
-        'target_auth_list': target_auth_list,
-        #'auth_initiator': auth_initiator,
-        'auth_initiator_list': auth_initiator_list,
-        #'iscsiportal': iscsiportal,
         'iscsiportal_list': iscsiportal_list,
     })
-    return render_to_response('services/iscsi.html', variables)
+    return render_to_response('services/iscsi_portals.html', variables)
 
 """TODO: This should be rewritten in a better way."""
 @login_required
@@ -238,7 +270,7 @@ def servicesToggleView(request, formname):
 	'afp_toggle' : 'afp',
 	'nfs_toggle' : 'nfs',
 	'iscsitarget_toggle' : 'iscsitarget',
-	'dyndns_toggle' : 'dyndns',
+	'dynamicdns_toggle' : 'dynamicdns',
 	'snmp_toggle' : 'snmp',
 	'httpd_toggle' : 'httpd',
 	'ftp_toggle' : 'ftp',

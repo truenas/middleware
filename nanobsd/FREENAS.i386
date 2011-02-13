@@ -81,6 +81,8 @@ options		VFS_AIO
 options		UNIONFS
 options		NULLFS
 options		GEOM_UZIP
+options		GEOM_ELI
+device		crypto
 
 # To make an SMP kernel, the next two lines are needed
 options 	SMP			# Symmetric MultiProcessor Kernel

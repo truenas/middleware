@@ -73,8 +73,10 @@ def wizard(request):
         form = VolumeWizardForm(request.POST)
         if form.is_valid():
             form.done()
-            return render_to_response('storage/wizard_ok.html', {})
+            return HttpResponse(simplejson.dumps({"error": False, "message": "Volume successfully added."}), mimetype="application/json")
+            #return render_to_response('storage/wizard_ok.html')
         else:
+            print form._errors
             if 'volume_disks' in request.POST:
                 disks = request.POST.getlist('volume_disks')
             else:
@@ -215,14 +217,29 @@ def dataset_create(request):
             dataset_name = "%s/%s" % (volume_name, cleaned_data.get('dataset_name'))
             dataset_compression = cleaned_data.get('dataset_compression')
             if dataset_compression != 'inherit':
-                props['compression']=dataset_compression
+                props['compression']=dataset_compression.__str__()
             dataset_atime = cleaned_data.get('dataset_atime')
             if dataset_atime != 'inherit':
-                props['atime']=dataset_atime
-            notifier().create_zfs_dataset(path=dataset_name.__str__(), props=props)
-            mp = MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (dataset_name), mp_options='noauto', mp_ischild=True)
-            mp.save()
-            return HttpResponseRedirect('/storage/')
+                props['atime']=dataset_atime.__str__()
+            refquota = cleaned_data.get('dataset_refquota')
+            if refquota != '0':
+                props['refquota']=refquota.__str__()
+            quota = cleaned_data.get('dataset_quota')
+            if quota != '0':
+                props['quota']=quota.__str__()
+            refreservation = cleaned_data.get('dataset_refreserv')
+            if refreservation != '0':
+                props['refreservation']=refreservation.__str__()
+            refreservation = cleaned_data.get('dataset_reserv')
+            if refreservation != '0':
+                props['refreservation']=refreservation.__str__()
+            errno, errmsg = notifier().create_zfs_dataset(path=dataset_name.__str__(), props=props)
+            if errno == 0:
+                mp = MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (dataset_name), mp_options='noauto', mp_ischild=True)
+                mp.save()
+                return HttpResponseRedirect('/storage/')
+            else:
+                dataset_form.set_error(errmsg)
     variables = RequestContext(request, {
         'focused_tab' : 'storage',
         'mp_list': mp_list,
@@ -245,14 +262,30 @@ def dataset_create2(request):
             dataset_name = "%s/%s" % (volume_name, cleaned_data.get('dataset_name'))
             dataset_compression = cleaned_data.get('dataset_compression')
             if dataset_compression != 'inherit':
-                props['compression']=dataset_compression
+                props['compression']=dataset_compression.__str__()
             dataset_atime = cleaned_data.get('dataset_atime')
             if dataset_atime != 'inherit':
-                props['atime']=dataset_atime
-            notifier().create_zfs_dataset(path=dataset_name.__str__(), props=props)
-            mp = MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (dataset_name), mp_options='noauto', mp_ischild=True)
-            mp.save()
-            return render_to_response('storage/dataset_ok.html', {})
+                props['atime']=dataset_atime.__str__()
+            refquota = cleaned_data.get('dataset_refquota')
+            if refquota != '0':
+                props['refquota']=refquota.__str__()
+            quota = cleaned_data.get('dataset_quota')
+            if quota != '0':
+                props['quota']=quota.__str__()
+            refreservation = cleaned_data.get('dataset_refreserv')
+            if refreservation != '0':
+                props['refreservation']=refreservation.__str__()
+            refreservation = cleaned_data.get('dataset_reserv')
+            if refreservation != '0':
+                props['refreservation']=refreservation.__str__()
+            errno, errmsg = notifier().create_zfs_dataset(path=dataset_name.__str__(), props=props)
+            if errno == 0:
+                mp = MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (dataset_name), mp_options='noauto', mp_ischild=True)
+                mp.save()
+                return HttpResponse(simplejson.dumps({"error": False, "message": "Dataset successfully added."}), mimetype="application/json")
+                #return render_to_response('storage/dataset_ok.html')
+            else:
+                dataset_form.set_error(errmsg)
     variables = RequestContext(request, {
         'focused_tab' : 'storage',
         'mp_list': mp_list,
@@ -281,6 +314,26 @@ def mp_permission(request, object_id):
     return render_to_response('storage/permission.html', variables)
 
 @login_required
+def mp_permission2(request, object_id):
+    mp = MountPoint.objects.get(id = object_id)
+    mp_list = MountPoint.objects.select_related().all()
+    if request.method == 'POST':
+        form = MountPointAccessForm(request.POST)
+        if form.is_valid():
+            mp_path=mp.mp_path.__str__()
+            form.commit(path=mp_path)
+            return HttpResponse(simplejson.dumps({"error": False, "message": "Mount Point permissions successfully updated."}), mimetype="application/json")
+            #return HttpResponseRedirect('/storage/')
+    else:
+        form = MountPointAccessForm()
+    variables = RequestContext(request, {
+        'mp': mp,
+        'mp_list': mp_list,
+        'form': form,
+    })
+    return render_to_response('storage/permission2.html', variables)
+
+@login_required
 def dataset_delete(request, object_id):
     obj = MountPoint.objects.get(id=object_id)
     if request.method == 'POST':
@@ -300,7 +353,8 @@ def dataset_delete2(request, object_id):
     if request.method == 'POST':
         notifier().destroy_zfs_dataset(path = obj.mp_path[5:].__str__())
         obj.delete()
-        return render_to_response('storage/dataset_confirm_delete_ok.html', {})
+        return HttpResponse(simplejson.dumps({"error": False, "message": "Dataset successfully deleted."}), mimetype="application/json")
+        #return render_to_response('storage/dataset_confirm_delete_ok.html', {})
     else:
         c = RequestContext(request, {
             'focused_tab' : 'storage',

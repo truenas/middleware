@@ -54,9 +54,9 @@ class AdvancedForm(ModelForm):
         model = Advanced
 
 class EmailForm(ModelForm):
-    em_pass1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
+    em_pass1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput, required=False)
     em_pass2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput,
-        help_text = _("Enter the same password as above, for verification."))
+        help_text = _("Enter the same password as above, for verification."), required=False)
     class Meta:
         model = Email
         exclude = ('em_pass',)
@@ -67,9 +67,37 @@ class EmailForm(ModelForm):
             self.fields['em_pass2'].initial = self.instance.em_pass
         except:
             pass
+        self.fields['em_smtp'].widget.attrs['onChange'] = 'javascript:toggleEmail(this);'
+        ro = True
+
+        if len(self.data) > 0:
+            if self.data.get("em_smtp", None) == "on":
+                ro = False
+        else:
+            if self.instance.em_smtp == True:
+                ro = False
+        if ro:
+            self.fields['em_user'].widget.attrs['disabled'] = 'disabled'
+            self.fields['em_pass1'].widget.attrs['disabled'] = 'disabled' 
+            self.fields['em_pass2'].widget.attrs['disabled'] = 'disabled' 
+
+    def clean_em_user(self):
+        if self.cleaned_data['em_smtp'] == True and \
+                self.cleaned_data['em_user'] == "":
+            raise forms.ValidationError("This field is required")
+        return self.cleaned_data['em_user']
+
+    def clean_em_pass1(self):
+        if self.cleaned_data['em_smtp'] == True and \
+                self.cleaned_data['em_pass1'] == "":
+            raise forms.ValidationError("This field is required")
+        return self.cleaned_data['em_pass1']
     def clean_em_pass2(self):
+        if self.cleaned_data['em_smtp'] == True and \
+                self.cleaned_data.get('em_pass2', "") == "":
+            raise forms.ValidationError("This field is required")
         pass1 = self.cleaned_data.get("em_pass1", "")
-        pass2 = self.cleaned_data.get("em_pass2", None)
+        pass2 = self.cleaned_data.get("em_pass2", "")
         if pass1 != pass2:
             raise forms.ValidationError(_("The two password fields didn't match."))
         return pass2

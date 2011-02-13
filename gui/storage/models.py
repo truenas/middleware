@@ -30,8 +30,9 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.choices import *
 from freenasUI.middleware.notifier import notifier
+from freeadmin.models import Model
 
-class Volume(models.Model):
+class Volume(Model):
     vol_name = models.CharField(
             unique=True,
             max_length=120, 
@@ -55,7 +56,7 @@ class Volume(models.Model):
     def __unicode__(self):
         return "%s (%s)" % (self.vol_name, self.vol_fstype)
 
-class DiskGroup(models.Model):
+class DiskGroup(Model):
     group_name = models.CharField(
             unique=True,
             max_length=120, 
@@ -74,7 +75,7 @@ class DiskGroup(models.Model):
     def __unicode__(self):
         return "%s (%s)" % (self.group_name, self.group_type)
 
-class Disk(models.Model):
+class Disk(Model):
     disk_name = models.CharField(
             unique=True,
             max_length=120, 
@@ -132,7 +133,7 @@ class Disk(models.Model):
     def __unicode__(self):
         return self.disk_disks + ' (' + self.disk_description + ')'
 
-class MountPoint(models.Model):
+class MountPoint(Model):
     mp_volume = models.ForeignKey(Volume)
     mp_path = models.CharField(
             unique=True,

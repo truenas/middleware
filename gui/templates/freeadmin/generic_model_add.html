@@ -1,25 +1,13 @@
 <form dojoType="dijit.form.Form">
 <script type="dojo/event" event="onSubmit" args="e">
-            dojo.stopEvent(e); // prevent the default submit
-            dijit.byId("submitform").set('disabled', true);
-
-            var newData = this.get("value");
-
-            dojo.xhrPost( {
-                url: '{% url freeadmin_model_add app=app,model=model,mf=mf|default_if_none:"" %}',
-                 content: newData,
-                 handleAs: 'text',
-                 load: function(data) { dijit.byId('add_dialog').set('content', data); },
-                 error: function(data) { alert("error"); }
-             });
-            
+    formSubmit(this, e, '{% url freeadmin_model_add app=app,model=model,mf=mf|default_if_none:"" %}');
 </script>
 <table> 
     {{ form }}
 <tr><td>
-<button id="submitform" dojoType="dijit.form.Button" type="submit"            onClick="this.set('label', 'Please wait...');"> OK </button>
+<button class="submitform" dojoType="dijit.form.Button" type="submit"            onClick="this.set('label', 'Please wait...');"> OK </button>
 
-<button dojoType="dijit.form.Button" onClick="dijit.byId('add_dialog').hide();"> Cancel </button>
+<button dojoType="dijit.form.Button" onClick="cancelDialog(this);"> Cancel </button>
         </td></tr>
 </table>
 </form>

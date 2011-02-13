@@ -1,0 +1,39 @@
+body.iXpage { background:#eceff0;}
+#page-header { height:73px;background: #464C53 url("/freenas/media/images/headerbg.png") repeat-x;}
+#footer { 
+    height:80px;
+    background: #464C53 url("/freenas/media/images/footerbg.png") repeat-x; 
+} 
+
+/*Opera Fix*/
+body:before {
+	content:"";
+	height:100%;
+	float:left;
+	width:0;
+	margin-top:-32767px;/
+}
+body, html { overflow:hidden; width:100%; height:100%; margin:0; padding:0; }
+#main {overflow:auto;
+        padding-bottom: 150px;}  /* must be same height as the footer */
+
+
+#wrap {min-height: 100%;}
+
+#toolbar {
+	height: 30px;
+	padding-right: 140px;
+	overflow: hidden;
+	line-height: 30px;
+	font-size: 9px;
+	color: #ffffff;
+}
+
+#menu {	
+    position:relative;
+    width:100%;
+    border:0 !important;
+    margin:0 0 0 0;
+    padding:0;
+
+}

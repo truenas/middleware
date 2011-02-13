@@ -1,0 +1,15 @@
+Index: Makefile
+===================================================================
+RCS file: /home/ncvs/ports/dns/inadyn/Makefile,v
+retrieving revision 1.9
+diff -u -r1.9 Makefile
+--- Makefile	10 Jul 2009 23:23:38 -0000	1.9
++++ Makefile	13 Feb 2011 04:38:47 -0000
+@@ -38,6 +38,7 @@
+ 
+ post-patch:
+ 	@${REINPLACE_CMD} -e 's|gcc|$$\(CC\)|g' ${WRKSRC}/makefile
++	@${REINPLACE_CMD} -e 's|TARGET_ARCH|OSNAME|g' ${WRKSRC}/makefile
+ 	${REINPLACE_CMD} -e "s,%%PREFIX%%,${PREFIX},g" \
+ 		${WRKSRC}/man/inadyn.8 ${WRKSRC}/readme.html \
+ 		${WRKSRC}/src/dyndns.h

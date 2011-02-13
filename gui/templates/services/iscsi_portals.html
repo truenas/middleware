@@ -1,0 +1,45 @@
+      <table class="grid">
+        <thead class="header">
+			<tr>
+		            <td>Tag</td>
+		            <td>Listen</td>
+		            <td>Comment</td>
+                    <td></td>
+			</tr>
+		        </thead>
+                {% for p in iscsiportal_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ p.id }}">
+                    <td>{{ p.iscsi_target_portal_tag }}</td>
+                    <td>{{ p.iscsi_target_portal_listen }}</td>
+                    <td>{{ p.iscsi_target_portal_comment }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Edit
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Edit Portal', '{% url freeadmin_model_edit app="services",model="iSCSITargetPortal",oid=p.id %}', [this,]);
+                        </script>
+                        </button>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Delete
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Delete Portal', '{% url freeadmin_model_delete app="services",model="iSCSITargetPortal",oid=p.id %}', [this,]);
+                        </script>
+                        </button>
+
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">No targets defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+
+                 <p class="btn">
+                 <button id="portal_button" dojoType="dijit.form.Button" type="button">
+                     Add Portal 
+                     <script type="dojo/method" event="onClick" args="evt">
+                         addObject('Add Portal', '{% url freeadmin_model_add app="services",model="iSCSITargetPortal" %}', [this,]);
+                 </script>
+                 </button>
+                 </p>

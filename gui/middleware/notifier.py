@@ -242,6 +242,14 @@ class notifier:
         self.__system("/usr/sbin/service ix-proftpd quietstart")
         self.__system("/usr/sbin/service proftpd restart")
 
+    def _restart_ftp(self):
+        self.__system("/usr/sbin/service ix-proftpd quietstart")
+        self.__system("/usr/sbin/service proftpd restart")
+
+    def _start_ftp(self):
+        self.__system("/usr/sbin/service ix-proftpd quietstart")
+        self.__system("/usr/sbin/service proftpd start")
+
     def _load_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
         self.__system("/usr/sbin/service netatalk quietstart")
@@ -259,6 +267,10 @@ class notifier:
         self.__system("/usr/sbin/service nfsd forcestop")
         self.__system("/usr/sbin/service ix-nfsd quietstart")
         self.__system("/usr/sbin/service nfsd quietstart")
+
+    def _restart_dynamicdns(self):
+        self.__system("/usr/sbin/service ix-inadyn quietstart")
+        self.__system("/usr/sbin/service inadyn restart")
 
     def _restart_system(self):
         self.__system("/bin/sleep 3 && /sbin/shutdown -r now &")
@@ -294,7 +306,7 @@ class notifier:
         c = conn.cursor()
         return c
 
-    def __gpt_labeldisk(self, type, devname, label = ""):
+    def __gpt_labeldisk(self, type, devname, label = "", swapsize=2):
         """Label the whole disk with GPT under the desired label and type"""
         # Taste the disk to know whether it's 4K formatted.
         # requires > 8.1-STABLE after r213467
@@ -305,31 +317,35 @@ class notifier:
         # Make sure that the partition is 4k-aligned, if the disk reports 512byte sector
         # while using 4k stripe, use an offset of 64.
         need4khack = (ret_4kstripe == 0) and (ret_512bsector == 0)
-        bflag = ""
+        # Caculate swap size.
+        swapsize = swapsize * 1024 * 1024 * 2
+        # Round up to nearest whole integral multiple of 64 if we need 4k hack
         if need4khack:
-            bflag = "-b 64"
+            swapsize = ((swapsize+34+63)/64)*64
         # To be safe, wipe out the disk, both ends... before we start
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname))
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
                       "| awk '{print ($3 / (1024*1024)) - 4;}'`" % (devname, devname))
         if label != "":
-            self.__system("gpart create -s gpt /dev/%s && gpart add %s -t %s -l %s %s" %
-                         (devname, bflag, type, label, devname))
+            self.__system("gpart create -s gpt /dev/%s && gpart add -t freebsd-swap -l swap-%s -s %d %s && gpart add -t %s -l %s %s" %
+                         (devname, label, swapsize, devname, type, label, devname))
         else:
-            self.__system("gpart create -s gpt /dev/%s && gpart add %s -t %s %s" %
-                         (devname, bflag, type, devname))
+            self.__system("gpart create -s gpt /dev/%s && gpart add -t freebsd-swap -l swap-%s -s %d %s && gpart add -t %s %s" %
+                         (devname, devname, swapsize, devname, type, devname))
         return need4khack
 
     def __gpt_unlabeldisk(self, devname):
         """Unlabel the disk"""
-        self.__system("gpart delete -i 1 /dev/%s && gpart destroy /dev/%s" %
+        self.__system("swapoff -a && gpart delete -i 1 /dev/%s && gpart destroy /dev/%s" %
+                     (devname, devname))
+        self.__system("gpart delete -i 2 /dev/%s && gpart destroy /dev/%s" %
                      (devname, devname))
         # To be safe, wipe out the disk, both ends...
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=10" % (devname))
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
                       "| awk '{print ($3 / (1024*1024)) - 3;}'`" % (devname, devname))
 
-    def __create_zfs_volume(self, c, z_id, z_name):
+    def __create_zfs_volume(self, c, z_id, z_name, swapsize):
         """Internal procedure to create a ZFS volume identified by volume id"""
         z_vdev = ""
         need4khack = False
@@ -350,7 +366,8 @@ class notifier:
             for disk in vdev_member_list:
                 need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
                                                   devname = disk[0],
-                                                  label = disk[1])
+                                                  label = disk[1],
+                                                  swapsize=swapsize)
                 if need4khack:
                     hack_vdevs.append(disk[1])
                     self.__system("gnop create -S 4096 /dev/gpt/" + disk[1])
@@ -376,7 +393,10 @@ class notifier:
             assert type(props) is types.DictType
             for k in props.keys():
                 options += "-o %s=%s " % (k, props[k])
-        self.__system("zfs create %s %s" % (options, path))
+        zfsproc = self.__pipeopen("/sbin/zfs create %s %s" % (options, path))
+        zfs_output, zfs_err = zfsproc.communicate()
+        zfs_error = zfsproc.wait()
+        return zfs_error, zfs_err
 
     def list_zfs_datasets(self, path="", recursive=False):
         """Return a dictionary that contains all ZFS dataset list and their mountpoints"""
@@ -425,7 +445,7 @@ class notifier:
             for disk in vdev_member_list:
                 self.__gpt_unlabeldisk(devname = disk[0])
 
-    def __create_ufs_volume(self, c, u_id, u_name):
+    def __create_ufs_volume(self, c, u_id, u_name, swapsize):
         geom_vdev = ""
         ufs_device = ""
         c.execute("SELECT id, group_type, group_name FROM storage_diskgroup "
@@ -440,11 +460,11 @@ class notifier:
                   "disk_group_id = ?", ufs_volume_id)
         if geom_type == '':
             disk = c.fetchone()
-            self.__gpt_labeldisk(type = "freebsd-ufs", devname = disk[0])
+            self.__gpt_labeldisk(type = "freebsd-ufs", devname = disk[0], swapsize=swapsize)
             ufs_device = "/dev/ufs/" + disk[1]
             # TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar
             # generated automatically
-            self.__system("newfs -U -L %s /dev/%sp1" % (u_name, disk[0]))
+            self.__system("newfs -U -L %s /dev/%sp2" % (u_name, disk[0]))
         else:
             vdev_member_list = c.fetchall()
             for disk in vdev_member_list:
@@ -480,15 +500,17 @@ class notifier:
     def _init_volume(self, volume_id):
         """Initialize a volume designated by volume_id"""
         c = self.__open_db()
+        c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
+        swapsize=c.fetchone()[0]
         c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
                  (volume_id,))
         volume = c.fetchone()
 
         assert volume[0] == 'ZFS' or volume[0] == 'UFS'
         if volume[0] == 'ZFS':
-            self.__create_zfs_volume(c, volume_id, volume[1])
+            self.__create_zfs_volume(c, volume_id, volume[1], swapsize)
         elif volume[0] == 'UFS':
-            self.__create_ufs_volume(c, volume_id, volume[1])
+            self.__create_ufs_volume(c, volume_id, volume[1], swapsize)
         self._reload_disk()
 
     def _destroy_volume(self, volume_id):
@@ -498,32 +520,15 @@ class notifier:
                  (volume_id,))
         volume = c.fetchone()
 
-        assert volume[0] == 'ZFS' or volume[0] == 'UFS'
+        assert volume[0] == 'ZFS' or volume[0] == 'UFS' or volume[0] == 'iscsi'
         if volume[0] == 'ZFS':
             self.__destroy_zfs_volume(c = c, z_id = volume_id, z_name = volume[1])
         elif volume[0] == 'UFS':
             self.__destroy_ufs_volume(c = c, u_id = volume_id, u_name = volume[1])
 
-    def _init_allvolumes(self):
-        c = self.__open_db()
-        # Create ZFS pools
-        c.execute("SELECT id, vol_name FROM storage_volume WHERE vol_fstype = 'ZFS'")
-        zfs_list = c.fetchall()
-        if zfs_list:
-            for row in zfs_list:
-                z_id, z_name = row
-                self.__create_zfs_volume(c = c, z_id = z_id, z_name = z_name)
-        # Create UFS file system and newfs
-        c.execute("SELECT id, vol_name FROM storage_volume WHERE vol_fstype = 'UFS'")
-        ufs_list = c.fetchall()
-        if ufs_list:
-            for row in ufs_list:
-                u_id, u_name = row
-                self.__create_ufs_volume(c = c, u_id = u_id, u_name = u_name)
-        self._reload_disk()
-
     def _reload_disk(self):
         self.__system("/usr/sbin/service ix-fstab quietstart")
+        self.__system("/usr/sbin/service swap1 quietstart")
         self.__system("/usr/sbin/service mountlate quietstart")
 
     # Create a user in system then samba
@@ -601,7 +606,7 @@ class notifier:
 
     def _reload_user(self):
         self.__system("/usr/sbin/service ix-passwd quietstart")
-        self.__system("/usr/sbin/service ix-samba quietstart")
+        self.reload("cifs")
 
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',
                              mode='0755', recursive=False):
@@ -625,7 +630,7 @@ def usage():
         start: start a command
         stop: stop a command
         restart: restart a command
-        reload: reload a command (try reload, if unsuccessful do restart
+        reload: reload a command (try reload, if unsuccessful do restart)
         change: notify change for a command (try self.reload, if unsuccessful do start)"""
     exit
 

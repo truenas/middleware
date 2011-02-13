@@ -27,7 +27,6 @@
 #####################################################################
 
 from django.conf.urls.defaults import *
-from django.contrib.auth.decorators import login_required
 
 urlpatterns = patterns('freenasUI.system.views',
     (r'^reboot/$', 'reboot'),
@@ -35,6 +34,8 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^reporting/$', 'reporting', name="system_reporting"),
     url(r'^settings2/$', 'settings', name="system_settings"),
     url(r'^advanced2/$', 'advanced', name="system_advanced"),
+    url(r'^info/$', 'system_info', name="system_info"),
+    url(r'^firmware/$', 'firmware', name="system_firmware"),
     (r'^top/', 'top'),
     (r'^test/$', 'test'),
     url(r'^test1/$', 'test1', name="system_test1"),

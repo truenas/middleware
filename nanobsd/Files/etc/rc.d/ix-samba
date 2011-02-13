@@ -31,8 +31,6 @@ generate_smbconf()
 		cifs_srv_guestonly,
 		cifs_srv_filemask,
 		cifs_srv_dirmask,
-		cifs_srv_sendbuffer,
-		cifs_srv_recvbuffer,
 		cifs_srv_largerw,
 		cifs_srv_sendfile,
 		cifs_srv_easupport,
@@ -97,7 +95,7 @@ generate_smbconf()
 	" | \
 	while read authmodel netbiosname workgroup cifs_description doscharset \
 		unixcharset loglevel localmaster timeserver guest guestok guestonly \
-		cifs_filemask cifs_dirmask sendbuffer recvbuffer \
+		cifs_filemask cifs_dirmask \
 		largerw sendfile easupport dosattr nullpw \
 		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_homedir \
 		ad_enable ldap_enable ad_dcname ad_domainname \
@@ -268,17 +266,6 @@ EOF
 
 		if [ -n "${loglevel}" ]; then
 			echo "    log level = ${loglevel}"
-		fi
-
-		if [ -n "${sendbuffer}" -o -n "${recvbuffer}" ]; then
-			echo -n "    socket options ="
-			if [ -n "${sendbuffer}" ]; then
-				echo -n " SO_SNDBUF=${sendbuffer}"
-			fi
-			if [ -n "${recvbuffer}" ]; then
-				echo -n " SO_RCVBUF=${recvbuffer}"
-			fi
-			echo
 		fi
 
 		if [ "${cifs_aio_enable}" = "1" ]; then

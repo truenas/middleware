@@ -76,6 +76,8 @@ options		VFS_AIO
 options		UNIONFS
 options		NULLFS
 options		GEOM_UZIP
+options		GEOM_ELI
+device		crypto
 
 # Make an SMP-capable kernel by default
 options 	SMP			# Symmetric MultiProcessor Kernel

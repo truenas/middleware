@@ -42,12 +42,7 @@ from freenasUI.system.forms import *
 from freenasUI.system.models import * 
 from freenasUI.middleware.notifier import notifier
 
-@login_required
-def index(request, objtype = None):
-    if objtype != None:
-        focus_form = objtype
-    else:
-        focus_form = 'system'
+def _system_info():
     hostname = commands.getoutput("hostname")
     uname1 = os.uname()[0]
     uname2 = os.uname()[2]
@@ -55,6 +50,32 @@ def index(request, objtype = None):
     date = os.popen('env -u TZ date').read()
     uptime = commands.getoutput("uptime | awk -F', load averages:' '{    print $1 }'")
     loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
+
+    try:
+        d = open('/etc/version.freenas', 'r')
+        freenas_build = d.read()
+        d.close()
+    except:
+        freenas_build = "Unrecognized build (/etc/version.freenas        missing?)"
+
+    return {
+        'hostname': hostname,
+        'uname1': uname1,
+        'uname2': uname2,
+        'platform': platform,
+        'date': date,
+        'uptime': uptime,
+        'loadavg': loadavg,
+        'freenas_build': freenas_build,
+    }
+
+@login_required
+def index(request, objtype = None):
+    if objtype != None:
+        focus_form = objtype
+    else:
+        focus_form = 'system'
+    sysinfo = _system_info()
     settings = SettingsForm(data = Settings.objects.order_by("-id").values()[0])
     advanced = AdvancedForm(data = Advanced.objects.order_by("-id").values()[0])
     try:
@@ -85,12 +106,6 @@ def index(request, objtype = None):
                 return HttpResponseRedirect('/system/' + objtype)
         else: 
             raise Http404()
-    try:
-        d = open('/etc/version.freenas', 'r')
-        freenas_build = d.read()
-        d.close()
-    except:
-        freenas_build = "Unrecognized build (/etc/version.freenas        missing?)"
 
     graphs = {}
     try:
@@ -121,18 +136,47 @@ def index(request, objtype = None):
         'email': email,
         'advanced': advanced,
         'firmware': firmware,
-        'hostname': hostname,
-        'uname1': uname1,
-        'uname2': uname2,
-        'platform': platform,
-        'date': date,
-        'uptime': uptime,
-        'loadavg': loadavg,
-        'freenas_build': freenas_build,
         'focus_form': focus_form,
         'graphs': graphs,
     })
+    variables.update(sysinfo)
     return render_to_response('system/index.html', variables)
+
+@login_required
+def system_info(request):
+
+    sysinfo = _system_info()
+
+    variables = RequestContext(request, {
+
+    })
+    variables.update(sysinfo)
+    return render_to_response('system/system_info.html', variables)
+
+@login_required
+def firmware(request):
+
+    firmware = FirmwareForm()
+    variables = RequestContext(request)
+    if request.method == 'POST':
+        try:
+            firmware = FirmwareForm(request.POST, request.FILES)
+            if firmware.is_valid():
+                firmware.save()
+                return render_to_response('system/firmware_ok.html')
+        except:
+            firmware = FirmwareForm()
+            #return HttpResponseRedirect('/system/' + objtype)
+        variables.update({
+            'firmware': firmware,
+        })
+        return render_to_response('system/firmware2.html', variables)
+
+    variables.update({
+        'firmware': firmware,
+    })
+    
+    return render_to_response('system/firmware.html', variables)
 
 @login_required
 def reporting(request):
@@ -169,19 +213,15 @@ def reporting(request):
 @login_required
 def settings(request):
 
-    extra_context = {}
-    settings = SettingsForm(data = Settings.objects.order_by("-id").values()[0], auto_id=False)
-    if request.method == 'POST':
-        settings = SettingsForm(request.POST, auto_id=False)
-        if settings.is_valid():
-            settings.save()
-            extra_context['saved'] = True
+    settings = Settings.objects.order_by("-id")[0].id
+    email = Email.objects.order_by("-id")[0].id
+    advanced = Advanced.objects.order_by("-id")[0].id
 
-
-    extra_context.update({
+    variables = RequestContext(request, {
         'settings': settings,
+        'email': email,
+        'advanced': advanced,
     })
-    variables = RequestContext(request, extra_context)
 
     return render_to_response('system/settings.html', variables)
 

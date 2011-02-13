@@ -67,7 +67,7 @@ class IPNetworkField(models.Field):
 
     def to_python(self, value):
         if not value:
-            return None
+            return ""
 
         if isinstance(value, _IPAddrBase):
             return value
@@ -102,13 +102,13 @@ class IPNetworkField(models.Field):
 class IPAddressFormFieldBase(forms.CharField):
     def to_python(self, value):
         if not value:
-            return None
+            return ""
 
         if isinstance(value, _IPAddrBase):
             return value
 
         if value == "None":
-            return None
+            return ""
         else:
             try:
                 return IPAddress(value.encode('latin-1'))
@@ -123,13 +123,13 @@ class IPAddressFormField(IPAddressFormFieldBase):
 class IP4AddressFormField(IPAddressFormFieldBase):
     def to_python(self, value):
         if not value:
-            return None
+            return ""
 
         if isinstance(value, _IPAddrBase):
             return value
 
         if value == "None":
-            return None
+            return ""
         else:
             try:
                 return IPAddress(value.encode('latin-1'), version = 4)
@@ -142,13 +142,13 @@ class IP4AddressFormField(IPAddressFormFieldBase):
 class IP6AddressFormField(IPAddressFormFieldBase):
     def to_python(self, value):
         if not value:
-            return None
+            return ""
 
         if isinstance(value, _IPAddrBase):
             return value
 
         if value == "None":
-            return None
+            return ""
         else:
             try:
                 return IPAddress(value.encode('latin-1'), version = 6)
@@ -166,13 +166,13 @@ class IPAddressFieldBase(models.Field):
 
     def to_python(self, value):
         if not value:
-            return None
+            return ""
 
         if isinstance(value, _IPAddrBase):
             return value
 
         if value == "None":
-            return None
+            return ""
         else:
             return IPAddress(value.encode('latin-1'))
 
@@ -208,13 +208,13 @@ class IP4AddressField(IPAddressFieldBase):
     
     def to_python(self, value):
         if not value:
-            return None
+            return ""
 
         if isinstance(value, _IPAddrBase):
             return value
 
         if value == "None":
-            return None
+            return ""
         else:
             return IPAddress(value.encode('latin-1'), version = 4)
 
@@ -232,13 +232,13 @@ class IP6AddressField(IPAddressFieldBase):
     
     def to_python(self, value):
         if not value:
-            return None
+            return ""
 
         if isinstance(value, _IPAddrBase):
             return value
 
         if value == "None":
-            return None
+            return ""
         else:
             return IPAddress(value.encode('latin-1'), version = 6)
 

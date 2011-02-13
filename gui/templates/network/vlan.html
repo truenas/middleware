@@ -1,0 +1,44 @@
+              <table class="grid">
+	            <thead class="header">
+			<tr>
+		            <td>Virtual Interface</td>
+		            <td>Physical Interface</td>
+		            <td>VLAN Tag</td>
+		            <td>Description</td>
+			</tr>
+		        </thead>
+                {% for v in vlan_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ v.id }}">
+                    <td>{{ v.vlan_vint }}</td>
+                    <td>{{ v.vlan_pint }}</td>
+                    <td>{{ v.vlan_tag }}</td>
+                    <td>{{ v.vlan_description }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Edit
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Edit VLAN', '{% url freeadmin_model_edit app="network",model="VLAN",oid=v.id %}', [this,]);
+                        </script>
+                        </button>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Delete
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Delete VLAN', '{% url freeadmin_model_delete app="network",model="VLAN",oid=v.id %}', [this,]);
+                        </script>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">No VLAN defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+                <p class="btn">
+                    <button id="vlan_button" dojoType="dijit.form.Button" type="button">
+                        Add VLAN Interface
+                        <script type="dojo/method" event="onClick" args="evt">
+                        addObject('Add VLAN', '{% url freeadmin_model_add app="network",model="VLAN" %}', [this,]);
+                    </script>
+                    </button>
+                    </p>

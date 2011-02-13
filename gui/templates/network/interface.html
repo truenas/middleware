@@ -1,0 +1,58 @@
+      <table class="grid">
+	      <thead class="header">
+	  <tr>
+	          <td>Interface</td>
+	          <td>Name</td>
+	          <td>DHCP</td>
+	          <td>IPv4 Address</td>
+	          <td>IPv6 Auto</td>
+	          <td>IPv6 Address</td>
+	          <td>Options</td>
+	  </tr>
+	      </thead>
+          {% for i in int_list %}
+          <tr class="{% cycle 'odd' 'even' %}" id="{{ i.id }}">
+              <td>{{ i.int_interface }}</td>
+              <td>{{ i.int_name }}</td>
+              <td>{{ i.int_dhcp }}</td>
+              {% if i.int_ipv4address != "" %}
+              <td>{{ i.int_ipv4address }}/{{ i.int_v4netmaskbit }}</td>
+              {% else %}
+              <td></td>
+              {% endif %}
+              <td>{{ i.int_ipv6auto }}</td>
+              {% if i.int_ipv6address != "" %}
+              <td>{{ i.int_ipv6address }}/{{ i.int_v6netmaskbit }}</td>
+              {% else %}
+              <td></td>
+              {% endif %}
+              <td>{{ i.int_options }}</td>
+              <td>
+                  <button dojoType="dijit.form.Button" type="button">
+                      Edit
+                  <script type="dojo/method" event="onClick" args="evt">
+                  editObject('Edit Interface', '{% url freeadmin_model_edit app="network",model="Interfaces",oid=i.id %}', [this,]);
+                  </script>
+                  </button>
+                  <button dojoType="dijit.form.Button" type="button">
+                      Delete
+                  <script type="dojo/method" event="onClick" args="evt">
+                  editObject('Delete Interface', '{% url freeadmin_model_delete app="network",model="Interfaces",oid=i.id %}', [this,]);
+                  </script>
+                  </button>
+              </td>
+          </tr>
+          {% empty %}
+          <tr>
+              <td colspan="9">No interfaces defined</td>
+          </tr>
+          {% endfor %}
+          </table>
+          <p class="btn">
+              <button id="int_button" dojoType="dijit.form.Button" type="button">
+                  Add Interface
+                  <script type="dojo/method" event="onClick" args="evt">
+                  addObject('Add Interface', '{% url freeadmin_model_add app="network",model="Interfaces" %}', [this,]);
+              </script>
+              </button>
+              </p>

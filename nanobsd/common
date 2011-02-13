@@ -41,6 +41,13 @@ NANO_DATASIZE=40960
 NANO_INIT_IMG2=0
 unset MAKEOBJDIRPREFIX
 
+# Python version needs to be known when we are picking port vs package.  However,
+# we've not yet created the make.conf.build file, nor setup things so that the nano
+# vars for that are even defined.  To cope, export this globally.  We may be able
+# to remove it from make.conf.build, but it doesn't hurt to have it there and
+# may help.
+export PYTHON_DEFAULT_VERSION=python2.7
+
 # Defeat the python auto versioning goo that contaminates the build slightly
 # with the host's python version rather than the version that's inside the
 # port tree we're building.  We do this by adding PYTHON_CMD=/bin/true to the
@@ -130,6 +137,7 @@ WITHOUT_SHAREDOCS=true
 WITHOUT_SSP=true
 WITHOUT_SYSCONS=true
 WITHOUT_LIB32=true
+PYTHON_DEFAULT_VERSION=python2.7
 "
 CONF_INSTALL="$CONF_BUILD
 INSTALL_NODEBUG=t
@@ -222,6 +230,9 @@ do_add_port ()
 
 # Need to check if this function works with cross-compiling architecture!!!!
 # Recursive complex fonction: Generate one function for each ports
+#
+# Note: most nano variables aren't set yet, especially NANO_MAKE_CONF_BUILD, so
+# we can't use that here.  Instead, use no MAKE_CONF to avoid host contamination.
 add_port () {
     local port_path=$1
     local port=`echo $1 | sed -e 's/\//_/'`
@@ -231,7 +242,7 @@ add_port () {
     # 1. check ARCH of this package!
     # 2. Add a trap
     cd ${NANO_PORTS}/${port_path}
-    PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${NANO_PORTS} __MAKE_CONF=${NANO_MAKE_CONF_BUILD} package-name` 
+    PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${NANO_PORTS} __MAKE_CONF= package-name` 
     if [ -f ${NANO_OBJ}/ports/packages/All/${PKG_NAME}.tbz ]; then
 	# Pkg file found: Generate add_pkg_NAME function
 	eval "
@@ -279,9 +290,6 @@ freenas_custom()
 
 	# and man pages (4.4MB)
 	rm -rf ${NANO_WORLDDIR}/usr/local/man
-
-	# and includes (3.9MB)
-	rm -rf ${NANO_WORLDDIR}/usr/local/include
 
 	# and examples (1.7M)
 	rm -rf ${NANO_WORLDDIR}/usr/local/share/examples

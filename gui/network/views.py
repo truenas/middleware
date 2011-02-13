@@ -37,13 +37,36 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.contrib.auth import authenticate, login, logout
 from django.template import RequestContext
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.views.generic.list_detail import object_detail, object_list
 from django.views.generic.create_update import update_object, delete_object
+from django.utils import simplejson
 from freenasUI.middleware.notifier import notifier
 import os, commands
 
 ## Network Section
+
+def _lagg_performadd(lagg):
+    # Search for a available slot for laggX interface
+    interface_names = [v[0] for v in Interfaces.objects.all().values_list('int_interface')]
+    candidate_index = 0
+    while ("lagg%d" % (candidate_index)) in interface_names:
+        candidate_index = candidate_index + 1
+    lagg_name = "lagg%d" % (candidate_index)
+    lagg_protocol = lagg.cleaned_data['lagg_protocol']
+    lagg_member_list = lagg.cleaned_data['lagg_interfaces']
+    # Step 1: Create an entry in interface table that represents the lagg interface
+    lagg_interface = Interfaces(int_interface = lagg_name, int_name = lagg_name, int_dhcp = True, int_ipv6auto = False)
+    lagg_interface.save()
+    # Step 2: Write associated lagg attributes
+    lagg_interfacegroup = LAGGInterface(lagg_interface = lagg_interface, lagg_protocol = lagg_protocol)
+    lagg_interfacegroup.save()
+    # Step 3: Write lagg's members in the right order
+    order = 0
+    for interface in lagg_member_list:
+        lagg_member_entry = LAGGInterfaceMembers(lagg_interfacegroup = lagg_interfacegroup, lagg_ordernum = order, lagg_physnic = interface, lagg_deviceoptions = 'up')
+        lagg_member_entry.save()
+        order = order + 1
 
 @login_required
 def network(request, objtype = None):
@@ -81,26 +104,7 @@ def network(request, objtype = None):
         elif objtype == 'lagg':
             lagg = LAGGInterfaceForm(request.POST)
             if lagg.is_valid():
-                # Search for a available slot for laggX interface
-                interface_names = Interfaces.objects.all().values('int_interface')
-                candidate_index = 0
-                while ("lagg%d" % (candidate_index)) in interface_names:
-                    candidate_index = candidate_index + 1
-                lagg_name = "lagg%d" % (candidate_index)
-                lagg_protocol = lagg.cleaned_data['lagg_protocol']
-                lagg_member_list = lagg.cleaned_data['lagg_interfaces']
-                # Step 1: Create an entry in interface table that represents the lagg interface
-                lagg_interface = Interfaces(int_interface = lagg_name, int_name = lagg_name, int_dhcp = True, int_ipv6auto = False)
-                lagg_interface.save()
-                # Step 2: Write associated lagg attributes
-                lagg_interfacegroup = LAGGInterface(lagg_interface = lagg_interface, lagg_protocol = lagg_protocol)
-                lagg_interfacegroup.save()
-                # Step 3: Write lagg's members in the right order
-                order = 0
-                for interface in lagg_member_list:
-                    lagg_member_entry = LAGGInterfaceMembers(lagg_interfacegroup = lagg_interfacegroup, lagg_ordernum = order, lagg_physnic = interface, lagg_deviceoptions = 'up')
-                    lagg_member_entry.save()
-                    order = order + 1
+                _lagg_performadd(lagg)
                 return HttpResponseRedirect('/network/global/lagg/')
             else:
                 errform = 'lagg'
@@ -142,16 +146,73 @@ def network2(request, objtype = None):
     errform = ""
 
     variables = RequestContext(request, {
-        'focused_tab' : 'network',
+        'focus_form' : request.GET.get('tab','network'),
         'gc': gc,
         'int_list': int_list,
         'vlan_list': vlan_list,
         'lagg_list': lagg_list,
         'sr_list': sr_list,
         'errform': errform,
-        'focus_form': focus_form,
     })
     return render_to_response('network/index2.html', variables)
+
+@login_required
+def interface(request):
+
+    int_list = Interfaces.objects.order_by("-id").values()
+
+    variables = RequestContext(request, {
+        'int_list': int_list,
+    })
+    return render_to_response('network/interface.html', variables)
+
+@login_required
+def vlan(request):
+
+    vlan_list = VLAN.objects.order_by("-id").values()
+
+    variables = RequestContext(request, {
+        'vlan_list': vlan_list,
+    })
+    return render_to_response('network/vlan.html', variables)
+
+@login_required
+def staticroute(request):
+
+    sr_list = StaticRoute.objects.order_by("-id").values()
+
+    variables = RequestContext(request, {
+        'sr_list': sr_list,
+    })
+    return render_to_response('network/staticroute.html', variables)
+
+
+@login_required
+def lagg(request):
+
+    lagg_list = LAGGInterface.objects.order_by("-id").all()
+
+    variables = RequestContext(request, {
+        'lagg_list': lagg_list,
+    })
+    return render_to_response('network/lagg.html', variables)
+
+@login_required
+def lagg_add(request):
+
+    lagg = LAGGInterfaceForm()
+    if request.method == 'POST':
+        lagg = LAGGInterfaceForm(request.POST)
+        if lagg.is_valid():
+            _lagg_performadd(lagg)
+            return HttpResponse(simplejson.dumps({"error": False, "message": "LAGG successfully added."}), mimetype="application/json")
+            #return render_to_response('network/lagg_add_ok.html')
+            #return HttpResponseRedirect('/network/global/lagg/')
+
+    variables = RequestContext(request, {
+        'lagg': lagg,
+    })
+    return render_to_response('network/lagg_add.html', variables)
 
 @login_required
 def globalconf(request):
@@ -179,6 +240,14 @@ def lagg_members(request, object_id):
         'laggmembers': laggmembers,
     })
     return render_to_response('network/lagg_members.html', variables)
+
+@login_required
+def lagg_members2(request, object_id):
+    laggmembers = LAGGInterfaceMembers.objects.filter(lagg_interfacegroup = object_id) 
+    variables = RequestContext(request, {
+        'laggmembers': laggmembers,
+    })
+    return render_to_response('network/lagg_members2.html', variables)
 
 @login_required
 def generic_delete(request, object_id, objtype):

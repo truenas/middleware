@@ -1,24 +1,12 @@
-<form dojoType="dijit.form.Form">
-<script type="dojo/event" event="onSubmit" args="e">
-    dojo.stopEvent(e); // prevent the default submit
-    dijit.byId("setsubmitform").set('disabled', true);
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false" title="Settings" nested="true">
+    <div dojoType="dijit.layout.ContentPane" title="General" {% if focus_form == "settings" %} selected="true"{% endif %} href="{% url freeadmin_model_edit app="system", model="Settings",oid=settings %}?inline=true" class="objrefresh">
+    </div>
 
-    var newData = this.get("value");
+    <div dojoType="dijit.layout.ContentPane" title="Advanced" {% if focus_form == "advanced" %} selected="true"{% endif %} href="{% url freeadmin_model_edit app="system",model="Advanced",oid=advanced %}?inline=true" class="objrefresh" parseOnLoad="true">
+    </div>
 
-    dojo.xhrPost( {
-        url: '{% url system_settings %}',
-         content: newData,
-         handleAs: 'text',
-         load: function(data) { dijit.byId('settingstab').set('content', data); },
-     });
-    
-</script>
-{% if saved %}
-<p>Your configuration has been successfully saved!</p>
-{% endif %}
-{% csrf_token %}
-    <table>
-        {{ settings }}
-    </table>
-    <button style="margin-top:16px;" id="setsubmitform" dojoType="dijit.form.Button" type="submit">Save Settings</button>
-</form>
+    <div dojoType="dijit.layout.ContentPane" title="Email" {% if focus_form == "email" %} selected="true"{% endif %} href="{% url freeadmin_model_edit app="system", model="Email",oid=email %}?inline=true" class="objrefresh">
+    </div>
+    <div dojoType="dijit.layout.ContentPane" title="Firmware Update" {% if focus_form == "settings" %} selected="true"{% endif %} href="{% url system_firmware %}?inline=true" class="objrefresh">
+    </div>
+</div>

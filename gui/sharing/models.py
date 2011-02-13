@@ -40,10 +40,11 @@ from django.utils.translation import ugettext_lazy as _
 from datetime import datetime
 from storage.models import MountPoint as MountPoint 
 from freenasUI.choices import *
+from freeadmin.models import Model
 
 mountpoint_limiter = { 'mp_path__startswith': '/mnt/' }
 
-class CIFS_Share(models.Model):
+class CIFS_Share(Model):
     cifs_name = models.CharField(
             max_length=120, 
             verbose_name="Name"
@@ -62,7 +63,7 @@ class CIFS_Share(models.Model):
     cifs_inheritperms = models.BooleanField(
             verbose_name="Inherit Permissions")
     cifs_recyclebin = models.BooleanField(
-            verbose_name="Export Recylce Bin")
+            verbose_name="Export Recycle Bin")
     cifs_showhiddenfiles = models.BooleanField(
             verbose_name="Show Hidden Files")
     cifs_guest = models.CharField(
@@ -99,8 +100,13 @@ class CIFS_Share(models.Model):
         return self.cifs_name
     class Meta:
         verbose_name = "Windows Share"
+    class FreeAdmin:
+        icon_model = u"WindowsShareIcon"
+        icon_add = u"AddWindowsShareIcon"
+        icon_view = u"ViewAllWindowsSharesIcon"
+        icon_object = u"WindowsShareIcon"
 
-class AFP_Share(models.Model):
+class AFP_Share(Model):
     afp_name = models.CharField(
             max_length=120, 
             verbose_name="Name",
@@ -207,12 +213,17 @@ class AFP_Share(models.Model):
             )
     
     def __unicode__(self):
-        return self.as_path
+        return unicode(self.afp_path)
 
     class Meta:
         verbose_name = "Apple Share"
+    class FreeAdmin:
+        icon_model = u"AppleShareIcon"
+        icon_add = u"AddAppleShareIcon"
+        icon_view = u"ViewAllAppleSharesIcon"
+        icon_object = u"AppleShareIcon"
     
-class NFS_Share(models.Model):
+class NFS_Share(Model):
     nfs_comment = models.CharField(
             max_length=120, 
             verbose_name="Comment",
@@ -243,7 +254,12 @@ class NFS_Share(models.Model):
             )
     
     def __unicode__(self):
-        return self.nfs_path
+        return unicode(self.nfs_path)
 
     class Meta:
         verbose_name = "UNIX Share"
+    class FreeAdmin:
+        icon_model = u"UNIXShareIcon"
+        icon_add = u"AddUNIXShareIcon"
+        icon_view = u"ViewAllUNIXSharesIcon"
+        icon_object = u"UNIXShareIcon"

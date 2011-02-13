@@ -40,9 +40,10 @@ from django.utils.translation import ugettext_lazy as _
 from datetime import datetime
 from freenasUI.choices import *
 from freenasUI.contrib.IPAddressField import *
+from freeadmin.models import Model
 
 ## Network|Global Configuration
-class GlobalConfiguration(models.Model):
+class GlobalConfiguration(Model):
 
     gc_hostname = models.CharField(
             max_length=120,
@@ -56,31 +57,31 @@ class GlobalConfiguration(models.Model):
 
     gc_ipv4gateway = IP4AddressField(
             blank=True,
-            null=True,
+            default='',
             verbose_name="IPv4 Default Gateway", 
             )
 
     gc_ipv6gateway = IP6AddressField(
             blank=True,
-            null=True,
+            default='',
             verbose_name="IPv6 Default Gateway", 
             )
 
     gc_nameserver1 = IPAddressField(
             blank=True,
-            null=True,
+            default='',
             verbose_name="Nameserver 1"
             )
 
     gc_nameserver2 = IPAddressField(
+            default='',
             blank=True,
-            null=True,
             verbose_name="Nameserver 2"
             )
 
     gc_nameserver3 = IPAddressField(
+            default='',
             blank=True,
-            null=True,
             verbose_name="Nameserver 3"
             )
 
@@ -94,7 +95,7 @@ class GlobalConfiguration(models.Model):
         deletable = False
 
 ## Network|Interface Management
-class Interfaces(models.Model):
+class Interfaces(Model):
 
     int_interface = models.CharField(
             max_length=300, 
@@ -118,14 +119,14 @@ class Interfaces(models.Model):
     int_ipv4address = IPAddressField(
             verbose_name="IPv4 Address",
             blank=True,
-            null=True,
+            default='',
             )
 
     int_v4netmaskbit = models.CharField(
-            max_length=300, 
+            max_length=3, 
             choices=v4NetmaskBitList, 
             blank=True, 
-            null=True,
+            default='',
             verbose_name="IPv4 Netmask",
             help_text=""
             )
@@ -138,14 +139,14 @@ class Interfaces(models.Model):
     int_ipv6address = IPAddressField(
             verbose_name="IPv6 Address",
             blank=True,
-            null=True
+            default='',
             )
 
     int_v6netmaskbit = models.CharField(
-            max_length=300, 
+            max_length=4, 
             choices=v6NetmaskBitList, 
             blank=True,
-            null=True,
+            default='',
             verbose_name="IPv6 Netmask",
             help_text=""
             )
@@ -164,10 +165,14 @@ class Interfaces(models.Model):
     class FreeAdmin:
         create_modelform = "InterfacesForm"
         edit_modelform = "InterfacesEditForm"
+        icon_object = u"InterfacesIcon"
+        icon_model = u"InterfacesIcon"
+        icon_add = u"AddInterfaceIcon"
+        icon_view = u"ViewAllInterfacesIcon"
 
 
 ## Network|Interface Management|VLAN
-class VLAN(models.Model):
+class VLAN(Model):
     vlan_vint = models.CharField(
             max_length=120, 
             verbose_name="Virtual Interface"
@@ -194,9 +199,16 @@ class VLAN(models.Model):
     class Meta:
         verbose_name = "VLAN"
 
+    class FreeAdmin:
+        icon_object = u"VLANIcon"
+        icon_model = u"VLANIcon"
+        icon_add = u"AddVLANIcon"
+        icon_view = u"ViewAllVLANsIcon"
+
+
 # LAGG interface to protocol type map.
 # This model amends Interface to provide information regarding to a lagg interface
-class LAGGInterface(models.Model):
+class LAGGInterface(Model):
     # A corresponding interface is created as "laggX"
     lagg_interface = models.ForeignKey(
             Interfaces,
@@ -216,8 +228,14 @@ class LAGGInterface(models.Model):
             interfaces = 'None'
         return "%s (%s: %s)" % (self.lagg_interface, self.lagg_protocol, interfaces)
 
+    class FreeAdmin:
+        icon_object = u"VLANIcon"
+        icon_model = u"VLANIcon"
+        icon_add = u"AddVLANIcon"
+        icon_view = u"ViewAllVLANsIcon"
+
 # Physical interfaces list inside one LAGG group
-class LAGGInterfaceMembers(models.Model):
+class LAGGInterfaceMembers(Model):
     lagg_interfacegroup = models.ForeignKey(
             LAGGInterface, 
             verbose_name="LAGG Interface group"
@@ -239,9 +257,13 @@ class LAGGInterfaceMembers(models.Model):
         return self.lagg_physnic
 
     class Meta:
-        verbose_name = "LAGG"
+        verbose_name = "Link Aggregation"
+    
+    class FreeAdmin:
+        icon_object = u"LAGGIcon"
+        icon_model = u"LAGGIcon"
 
-class StaticRoute(models.Model):
+class StaticRoute(Model):
     sr_destination = models.CharField(
             max_length=120, 
             verbose_name="Destination network"
@@ -258,6 +280,12 @@ class StaticRoute(models.Model):
 
     class Meta:
         verbose_name = "Static Route"
+
+    class FreeAdmin:
+        icon_object = u"StaticRouteIcon"
+        icon_model = u"StaticRouteIcon"
+        icon_add = u"AddStaticRouteIcon"
+        icon_view = u"ViewAllStaticRoutesIcon"
 
     def __unicode__(self):
         return self.sr_destination

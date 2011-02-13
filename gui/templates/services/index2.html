@@ -1,10 +1,3 @@
-{% block dojango_header_extra %}
-<script type="text/javascript">
-    function toggle_service(obj) {
-        obj.src = '/services/toggle/' + obj.name + '/' + Date();
-    }
-</script>
-{% endblock %}
 {% block dojango_content %}
     <div dojoType="dijit.layout.ContentPane" title="Services" doLayout="false">
         <table class="srv">
@@ -65,18 +58,19 @@
                 </td>
             </tr>
           
-           <!-- <tr>
+           <tr>
                 <td>
                     <strong>Dynamic DNS</strong>
                 </td>
                 <td>
-		    <img id="dyndns_toggle" name="dyndns_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "dyndns" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+		    <img id="dynamicdns_toggle" name="dynamicdns_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "dynamicdns" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <img id="dyndns_settings" src="/freenas/media/images/ui/settings.png" onClick="dijit.byId('dyndns').show();" title="Dynamic DNS Settings">
+                    <img id="dynamicdns_settings"
+                    src="/freenas/media/images/ui/settings.png"
+                    onClick="editObject('Dynamic DNS Settings', '{% url freeadmin_model_edit app="services",model="DynamicDNS",oid=dynamicdns.id %}');" title="Dynamic DNS Settings">
                 </td>
             </tr>
-            -->
            <tr>
                 <td>
                     <strong>SNMP</strong>
@@ -176,7 +170,7 @@
 		    <img id="ldap_toggle" name="ldap_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "ldap" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
                 </td>
                 <td>
-                    <img id="ldap_settings" src="/freenas/media/images/ui/settings.png" onClick="editObject('LDAP Settings', '{% url freeadmin_model_edit app="services",          model="LDAP",oid=ldap.id %}');" title="LDAP Settings">
+                    <img id="ldap_settings" src="/freenas/media/images/ui/settings.png" onClick="editObject('LDAP Settings', '{% url freeadmin_model_edit app="services", model="LDAP",oid=ldap.id %}');" title="LDAP Settings">
                 </td>
             </tr>
         </table>

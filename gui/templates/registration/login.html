@@ -2,11 +2,11 @@
 
 {% block dojango_content %}
 <script type="text/javascript">
-      var  loginDlg = function () {
+    dojo.addOnLoad(function() {
           dijit.byId("login").show();
-      }
+    });
 </script>
-<body onLoad="loginDlg();">
+<body>
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
 {% if form.errors %}
 <p>Your username and password didn't match. Please try again.</p>

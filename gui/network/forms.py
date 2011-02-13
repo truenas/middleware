@@ -34,9 +34,9 @@ from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode 
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.forms import Form
-from django import forms
 from dojango.forms import fields, widgets 
 from dojango.forms.fields import BooleanField 
+from dojango import forms
 
 class InterfacesForm(ModelForm):
     class Meta:
@@ -94,7 +94,29 @@ attrs_dict = { 'class': 'required' }
 
 class LAGGInterfaceForm(forms.Form):
     lagg_protocol = forms.ChoiceField(choices=LAGGType, widget=forms.RadioSelect(attrs=attrs_dict))
-    lagg_interfaces = forms.MultipleChoiceField(choices=NICChoices(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Physical NICs in the LAGG')
+    lagg_interfaces = forms.MultipleChoiceField(choices=list(NICChoices()), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Physical NICs in the LAGG')
+
+    def __init__(self, *args, **kwargs):
+        super(LAGGInterfaceForm, self).__init__(*args, **kwargs)
+        choices = self.fields['lagg_interfaces'].choices
+        nics = [value for value, label in choices]
+
+        physnics = LAGGInterfaceMembers.objects.filter(lagg_physnic__in=nics).values('lagg_physnic')
+        for each in physnics:
+            choices.remove( (each['lagg_physnic'], each['lagg_physnic']) )
+
+        self.fields['lagg_interfaces'].choices = choices
+
+    def clean_lagg_interfaces(self):
+
+        ifaces = self.cleaned_data['lagg_interfaces']
+        physnics = LAGGInterfaceMembers.objects.filter(lagg_physnic__in=ifaces).values_list('lagg_physnic')
+        if len(physnics) > 0:
+            if len(physnics) == 1:
+                raise forms.ValidationError("The interfaces %s is already registered for another LAGG Interface" % ( physnics[0] ) )
+            else:
+                raise forms.ValidationError("The interfaces (%s) are already registered for another LAGG Interface" % ( ','.join([v[0] for v in physnics]) ) )
+        return self.cleaned_data['lagg_interfaces']
 
 class LAGGInterfaceMemberForm(ModelForm):
     class Meta:

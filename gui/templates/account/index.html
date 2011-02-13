@@ -5,7 +5,9 @@
         obj.src = '/services/toggle/' + obj.name + '/';
         }
 </script>
-
+<script type="text/javascript">
+dojo.require("dojox.validate.regexp");
+</script>
 <script type="text/javascript" src="/freenas/media/lib/js/test.json"></script>
 <script type="text/javascript">
   dojo.addOnLoad(function() {
@@ -106,26 +108,17 @@
         </div>
     </div>
     <div dojoType="dijit.layout.TabContainer" title="User Management"  nested="true" style="width:100%;" doLayout="false" {% if focus_form == "bsduser" %} selected="true"{% endif %}>
-        <div dojoType="dijit.layout.ContentPane" title="Users">
-                <table class="grid">
-                <tbody>
-                    <tr>
-                        {% if bsduser_list %}
-                        <h5>Active Users: <strong>{{ bsduser_list|length }}</strong></h5>
-                        {% else %}
-                        <p>There are no active users.</p>
-                        {% endif %}
-                    </tr>
-                </tbody>
-	            <thead class="ghead">
-                <td>ID</td>
-                <td>Username</td>
-	            <td>Group</td>
-	            <td>Home</td>
-	            <td>Shell</td>
-	            <td>Password</td>
-	            <td>Modify</td>
-	            <td>Remove</td>
+	<div dojoType="dijit.layout.ContentPane" title="Users">
+	    <table class="grid">
+		<thead class="ghead">
+		    <td>ID</td>
+		    <td>Username</td>
+		    <td>Group</td>
+		    <td>Home</td>
+		    <td>Shell</td>
+		    <td>Password</td>
+		    <td>Modify</td>
+		    <td>Remove</td>
 	        </thead>
                 <tbody>
                 {% for u in bsduser_list %}
@@ -151,7 +144,7 @@
                     <td>
 			{% if not u.bsdusr_builtin %}
                         <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsduser/edit/{{ u.id  }}/'">Modify User</button>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsduser/auxgroup/{{ u.id  }}/'">Auxilary Groups</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsduser/auxgroup/{{ u.id  }}/'">Auxiliary Groups</button>
 			{% endif %}
                     </td>
                     <td>
@@ -160,35 +153,73 @@
 			{% endif %}
                     </td>
                 </tr>
-                {% empty %}
+		{% empty %}
                 <tr>
-                    <td colspan="3">No users defined</td>
+		    <td colspan="8">
+			<h5>No user defined users present</h5>
+		    </td>
+		</tr>
+                {% endfor %}
+                <tr>
+		    <td colspan="8">
+			<div style="padding:12px;"><button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('bsduser').show();">Create New User</button>
+		    </td>
+                </tr>
+		<thead class="ghead">
+		    <td>ID</td>
+		    <td>Username</td>
+		    <td>Group</td>
+		    <td>Home</td>
+		    <td>Shell</td>
+		    <td colspan="3">Password</td>
+	        </thead>
+                {% for u in bsduser_list_builtin %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ u.id }}">
+                    <td>
+                        {{ u.bsdusr_uid }}
+                    </td>
+                    <td>
+                        {{ u.bsdusr_username }}
+                    </td>
+                    <td>
+                        {{ u.bsdusr_group.bsdgrp_group }}
+                    </td>
+                    <td>
+                        {{ u.bsdusr_home }}
+                    </td>
+                    <td>
+                        {{ u.bsdusr_shell }}
+                    </td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsdpasswd/edit/{{ u.id  }}/'">Change Password</button>
+                    </td>
+                    <td>
+			{% if not u.bsdusr_builtin %}
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsduser/edit/{{ u.id  }}/'">Modify User</button>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsduser/auxgroup/{{ u.id  }}/'">Auxiliary Groups</button>
+			{% endif %}
+                    </td>
+                    <td>
+			{% if not u.bsdusr_builtin %}
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsduser/delete/{{ u.id }}/'">Remove User</button>
+			{% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
                 </tbody>
-                </table>
-                <div style="padding:12px;"><button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('bsduser').show();">Add New User</button>
+		</table>
                 </div>
         </div>
 
    <div dojoType="dijit.layout.ContentPane" title="Groups" {% if focus_form == "bsdgroup" %} selected="true"{% endif %}>
-                <table class="grid">
-                <tbody>
-                    <tr>
-                        {% if bsdgroup_list %}
-                        <h5>Active Groups: <strong>{{ bsdgroup_list|length }}</strong></h5>
-                        {% else %}
-                        <p>There are no active groups.</p>
-                        {% endif %}
-                    </tr>
-                </tbody>
-	            <thead class="ghead">
-                <td>ID</td>
-	            <td>Group</td>
-	            <td>Members</td>
-	            <td>Modify</td>
-	            <td>Remove</td>
-	        </thead>
+		<table class="grid">
+		<thead class="ghead">
+		    <td>ID</td>
+		    <td>Group</td>
+		    <td>Members</td>
+		    <td>Modify</td>
+		    <td>Remove</td>
+		</thead>
                 <tbody>
                 {% for g in bsdgroup_list %}
                 <tr class="{% cycle 'odd' 'even' %}" id="{{ g.id }}">
@@ -212,14 +243,48 @@
 			{% endif %}
                     </td>
                 </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="3">No groups defined</td>
+		{% empty %}
+		<tr>
+		    <td colspan="5">
+			<h5>No user defined groups present</h5>
+		    </td>
+		</tr>
+                {% endfor %}
+		<tr>
+		    <td colspan="5">
+                	<div style="padding:12px;"><button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('bsdgroup').show();">Add New Group</button>
+		    </td>
+		</tr>
+		<thead class="ghead">
+		    <td>ID</td>
+		    <td>Group</td>
+		    <td colspan="3">Members</td>
+		</thead>
+                {% for g in bsdgroup_list_builtin %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ g.id }}">
+                    <td>
+                        {{ g.bsdgrp_gid }}
+                    </td>
+                    <td>
+                        {{ g.bsdgrp_group }}
+                    </td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsdgroup/members/{{ g.id }}/'">Members</button>
+                    </td>
+                    <td>
+			{% if not g.bsdgrp_builtin %}
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsdgroup/edit/{{ g.id }}/'">Modify Group</button>
+			{% endif %}
+                    </td>
+                    <td>
+			{% if not g.bsdgrp_builtin %}
+                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsdgroup/delete/{{ g.id  }}/'">Delete Group</button>
+			{% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
                 </tbody>
                 </table>
-                <div style="padding:12px;"><button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('bsdgroup').show();">Add New Group</button>
                 </div>
         </div>
 

@@ -2,9 +2,6 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-gb" lang="en-gb" dir="ltr">
 <head>
 <script type="text/javascript">
-    var err  = function () {
-        dijit.byId("{{ errform }}").show();
-    }
 
     openSystem = function() {
         var opened = false;
@@ -20,7 +17,7 @@
             } else if(c[i].title == 'Settings'){
                 p.selectChild(c[i]);
                 opened2 = true;
-            } else if(c[i].title == 'Advanced'){
+            } else if(c[i].title == 'System Information'){
                 p.selectChild(c[i]);
                 opened3 = true;
             }
@@ -48,13 +45,14 @@
 
         if(opened3 != true) {
             var pane3 = new dijit.layout.ContentPane({ 
-                id: 'advancedtab',
-                title: 'Advanced',
+                id: 'sysinfotab',
+                title: 'System Information',
                 refreshOnShow: true,
                 closable: true,
-                href:'{% url system_advanced %}',
+                href:'{% url system_info %}',
             });
             p.addChild(pane3);
+            p.selectChild(pane3);
         }
         //p.selectChild(pane);
         //var mytree = dijit.byId("mytree");
@@ -62,7 +60,7 @@
 
     }
 
-    openNetwork = function() {
+    openNetwork = function(tab) {
         var opened = false;
         var p = dijit.byId("content");
 
@@ -71,17 +69,36 @@
             if(c[i].title == 'Network Settings'){
                 p.selectChild(c[i]);
                 opened = true;
+                if(tab) {
+                    var tabnet = dijit.byId("tab_networksettings");
+                    if(tabnet) {
+                        var c2 = tabnet.getChildren();
+                        for(var j=0; j<c2.length; j++){
+                            if(c2[j].title == tab)
+                                tabnet.selectChild(c2[j]);
+                        }
+                    }
+                }
+
             }
         }
         if(opened != true) {
+            openurl = '{% url network_home %}';
+            if(tab) {
+                openurl += '?tab='+tab;
+            }
+
             var pane = new dijit.layout.ContentPane({ 
                 title: 'Network Settings',
                 closable: true,
-                refreshOnShow: true,
-                href:'{% url network_home %}',
+                //refreshOnShow: true,
+                href: openurl,
             });
             p.addChild(pane);
+            p.selectChild(pane);
         }
+
+        //if(tab) { alert("open "+tab); }
 
         //p.selectChild(pane);
         //var mytree = dijit.byId("mytree");
@@ -104,15 +121,15 @@
             var pane = new dijit.layout.ContentPane({ 
                 title: 'Shares',
                 closable: true,
-                refreshOnShow: true,
+                //refreshOnShow: true,
                 href:'{% url sharing_home %}',
             });
             p.addChild(pane);
+            p.selectChild(pane);
         }
 
-        //p.selectChild(pane);
         //var mytree = dijit.byId("mytree");
-        //mytree.set('path', ['continentRoot','System']);
+        //mytree.set('path', ['Sharing']);
     }
 
     openServices = function() {
@@ -133,9 +150,49 @@
                 href:'{% url services_home %}',
             });
             p.addChild(pane);
+            p.selectChild(pane);
         }
 
-        //p.selectChild(pane);
+        //var mytree = dijit.byId("mytree");
+        //mytree.set('path', ['continentRoot','System']);
+    }
+
+    openAccount = function(tab) {
+        var opened = false;
+        var p = dijit.byId("content");
+
+        var c = p.getChildren();
+        for(var i=0; i<c.length; i++){
+            if(c[i].title == 'Account'){
+                p.selectChild(c[i]);
+                opened = true;
+                if(tab) {
+                    var tabnet = dijit.byId("tab_account");
+                    if(tabnet) {
+                        var c2 = tabnet.getChildren();
+                        for(var j=0; j<c2.length; j++){
+                            if(c2[j].title == tab)
+                                tabnet.selectChild(c2[j]);
+                        }
+                    }
+                }
+                
+            }
+        }
+        if(opened != true) {
+            openurl = '{% url account_home %}';
+            if(tab) {
+                openurl += '?tab='+tab;
+            }
+            var pane = new dijit.layout.ContentPane({ 
+                title: 'Account',
+                closable: true,
+                href:openurl,
+            });
+            p.addChild(pane);
+            p.selectChild(pane);
+
+        }
         //var mytree = dijit.byId("mytree");
         //mytree.set('path', ['continentRoot','System']);
     }
@@ -160,9 +217,10 @@
                 href:'{% url storage_home %}',
             });
             p.addChild(pane);
+            dojo.addClass(pane.domNode,["objrefresh", "data_storage_Volumes"]);
+            p.selectChild(pane);
         }
 
-        //p.selectChild(pane);
         //var mytree = dijit.byId("mytree");
         //mytree.set('path', ['continentRoot','System']);
     }
@@ -178,30 +236,24 @@
 <link href="/freenas/media/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 <link rel="stylesheet" href="/freenas/media/css/template.css" type="text/css" />
 {% block dojango_header_extra %}{% endblock %}
-{% if errform %}
-{% endif %}
-
 </head>
-<body class="{{ DOJANGO.THEME }}" {% if errform %}onLoad="err()")"{% else %}{% endif %}>
+<body class="{{ DOJANGO.THEME }}">
     <div id="wrap">
-    <div id="main" data-dojo-type="dijit.layout.BorderContainer"> 
-		<div data-dojo-type="dijit.layout.ContentPane" region:"top", style:"height: 100px;"' gutters="false">
+		<div data-dojo-type="dijit.layout.ContentPane" region:"top", style:"height: 100px;" gutters="false">
                 <div id="page-header">
-                    <div style="padding:18px;">
+                    <div>
                         <a href="/" title="FreeNAS"><img src="/freenas/media/images/ui/freenas-logo.png" alt="FreeNAS" /></a>
                     </div>
                 </div>
 		{% block menubar %}
 		{% include "common/menubar2.html" %}
                 {% endblock %}
-	</div>
-		<div data-dojo-type="dijit.layout.ContentPane" region:"center", style:"padding: 10px;"'>
+            	</div>
+           
             {% block dojango_content %}
             {% endblock %}
-		</div>
-	</div>
 </div>
-	<div id="footer" data-dojo-type="dijit.layout.ContentPane" region:"bottom", style:"height: 100px;background: #464C53 !important; ", splitter:true'>
+	<div id="footer" data-dojo-type="dijit.layout.ContentPane" region:"bottom", style:"height: 100px;background: #464C53 !important; " splitter="true">
         {% block footer %}
         {% include "footer.html" %}
         {% endblock %}

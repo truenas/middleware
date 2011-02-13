@@ -89,17 +89,40 @@ def sharing(request, sharetype = None):
 @login_required
 def home(request):
 
+    variables = RequestContext(request, {
+    'focused_tab' : 'sharing',
+    })
+    return render_to_response('sharing/index2.html', variables)
+
+@login_required
+def windows(request):
+
     cifs_share_list = CIFS_Share.objects.select_related().all()
+
+    variables = RequestContext(request, {
+        'cifs_share_list': cifs_share_list,
+    })
+    return render_to_response('sharing/windows.html', variables)
+
+@login_required
+def apple(request):
+
     afp_share_list = AFP_Share.objects.order_by("-id").values()
+
+    variables = RequestContext(request, {
+    'afp_share_list': afp_share_list,
+    })
+    return render_to_response('sharing/apple.html', variables)
+
+@login_required
+def unix(request):
+
     nfs_share_list = NFS_Share.objects.select_related().all()
 
     variables = RequestContext(request, {
-    'focused_tab' : 'sharing',
-    'cifs_share_list': cifs_share_list,
-    'afp_share_list': afp_share_list,
     'nfs_share_list': nfs_share_list,
     })
-    return render_to_response('sharing/index2.html', variables)
+    return render_to_response('sharing/unix.html', variables)
 
 @login_required
 def generic_delete(request, object_id, sharetype):

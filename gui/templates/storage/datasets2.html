@@ -1,18 +1,6 @@
         <form dojoType="dijit.form.Form">
             <script type="dojo/event" event="onSubmit" args="e">
-                  dojo.stopEvent(e); // prevent the default submit
-                  //dijit.byId("submitform").set('disabled', true);
-            
-                  var newData = this.get("value");
-            
-                  dojo.xhrPost( {
-                      url: '{% url storage_dataset %}',
-                       content: newData,
-                       handleAs: 'text',
-                       load: function(data) { dijit.byId('add_dialog').set('content', data); },
-                       //error: function(data) { alert("error"); }
-                   });
-                  
+                formSubmit(this, e, '{% url storage_dataset %}');
             </script>
 
     <h3>Create dataset</h3>
@@ -20,11 +8,11 @@
 	<table>
 	{{ form }}
 	</table>
-	<button dojoType="dijit.form.Button" type="submit">Create</button>
+	<button dojoType="dijit.form.Button" type="submit" class="submitform">Create</button>
                 <button dojoType="dijit.form.Button"type="button">
                     Cancel
                     <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("add_dialog").hide();
+                        cancelDialog(this);
                     </script>
                 </button>
 

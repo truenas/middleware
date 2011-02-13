@@ -15,9 +15,9 @@
 {% endblock %}
 
 {% block dojango_content %}
-    <div dojoType="dijit.layout.TabContainer" nested="true" style="width:100%;" title="Reporting" {% if focus_form == "system" %} selected="true"{% endif %}    doLayout="false">
+    <div dojoType="dijit.layout.TabContainer" nested="true" style="width:100%;" title="Reporting" {% if focus_form == "system" %} selected="true"{% endif %}    doLayout="true">
         {% if graphs.hourly %}
-        <div dojoType="dijit.layout.ContentPane" nested="true" title="Hourly" {% if focus_form == "system" %} selected="true"{% endif %}>
+        <div dojoType="dijit.layout.ContentPane" nested="true" title="Hourly" {% if focus_form == "system" %} selected="true"{% endif %} style="overflow-y:scroll;">
             <h3>Hourly Graphs</h3>
             <div id="reports">
             {% for hourly in graphs.hourly %}

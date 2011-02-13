@@ -1,4 +1,4 @@
-<div dojoType="dojo.data.ItemFileReadStore" jsId="store1" url="{% url dojango-datagrid-list app_name=app,model_name=model %}?inclusions=&start=0&count=25" >
+<div dojoType="dojo.data.ItemFileReadStore" jsId="store1" url="{% url freeadmin_model_datagrid_json app=app,model=model %}?inclusions=&start=0&count=200" >
     </div>
 </span>
 <table dojoType="dojox.grid.DataGrid" store="store1" 
@@ -11,7 +11,7 @@ clientSort="true" style="width: 100%; height: 100%;" rowSelector="25px">
                     href: '{% url freeadmin_model_view app=app,model=model %}edit/'+item.id+'/', 
                     parseOnLoad: true,
                     closable: true, 
-                    style: "width: 650px;min-height:400px;background-color:    white;overflow:auto;",
+                    style: "max-width: 650px;min-height:400px;background-color: white;overflow:auto;",
                     onHide: function() { this.destroyRecursive() },
                 });
                 dialog.show();

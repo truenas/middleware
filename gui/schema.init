@@ -16,8 +16,6 @@ TABLE services_cifs {
 	cifs_srv_guest=www
 	cifs_srv_filemask=
 	cifs_srv_dirmask=
-	cifs_srv_sendbuffer=64240
-	cifs_srv_recvbuffer=64240
 	cifs_srv_largerw=0
 	cifs_srv_sendfile=1
 	cifs_srv_easupport=0

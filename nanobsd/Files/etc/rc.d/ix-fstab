@@ -28,6 +28,21 @@ generate_fstab_real()
 	done
 }
 
+generate_fstab_swap()
+{
+	local IFS=\|
+	local encrypted_swap swap_suffix
+	swap_suffix=""
+	#encrypted_swap=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_encswap FROM system_advanced ORDER BY -id LIMIT 1"`
+        #if [ "${encrypted_swap}" = "1" ]; then
+	#	swap_suffix=.eli
+	#fi
+        /usr/bin/find /dev/gpt/ -type c -name 'swap-*' | \
+        while read devname; do
+        	echo "${devname}${swap_suffix}	none			swap		sw		0	0"
+	done
+}
+
 generate_fstab()
 {
 	local _doumount=0
@@ -39,6 +54,7 @@ generate_fstab()
 	fi
 	cp /conf/base/etc/fstab /etc/fstab
 	generate_fstab_real >> /etc/fstab
+	generate_fstab_swap >> /etc/fstab
 	if [ "${_doumount}" -eq 1 ]; then
 		umount /data
 	fi

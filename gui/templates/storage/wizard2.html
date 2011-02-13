@@ -1,19 +1,8 @@
     <h3>Easy Storage Setup</h3>
         <form dojoType="dijit.form.Form">
             <script type="dojo/event" event="onSubmit" args="e">
-                  dojo.stopEvent(e); // prevent the default submit
-                  //dijit.byId("submitform").set('disabled', true);
-            
-                  var newData = this.get("value");
-            
-                  dojo.xhrPost( {
-                      url: '{% url storage_wizard %}',
-                       content: newData,
-                       handleAs: 'text',
-                       load: function(data) { dijit.byId('wizard_dialog').set('content', data); if(dijit.byId("wizarddisks")) wizardcheckings(); },
-                       //error: function(data) { alert("error"); }
-                   });
-                  
+                formSubmit(this, e,  '{% url storage_wizard %}',
+                function(){wizardcheckings();}); 
             </script>
             <table>
                 <tr>
@@ -77,14 +66,14 @@
                     </td>
                 </tr>
             </table>
-                <button dojoType="dijit.form.Button" type="submit">
+                <button dojoType="dijit.form.Button" type="submit" class="submitform">
                         Create volume<br />
             <b style="color: red">Existing data will be cleared</b>
                 </button>
-                <button dojoType="dijit.form.Button"type="button">
+                <button dojoType="dijit.form.Button" type="button" class="cancelform">
                     Cancel
                     <script type="dojo/method" event="onClick" args="evt">
-                        dijit.byId("wizard_dialog").hide();
+                        cancelDialog(this);
                     </script>
                 </button>
         </form>

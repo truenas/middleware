@@ -26,7 +26,8 @@
 # $FreeBSD$
 #####################################################################
 
-import os, commands
+import os
+import commands
 
 from django.forms.models import modelformset_factory
 from django.contrib.auth.decorators import permission_required
@@ -41,7 +42,7 @@ from django.views.generic.list_detail import object_detail, object_list
 from django.template.loader import get_template
 
 from freenasUI.middleware.notifier import notifier
-from django_nav import nav_groups
+from freeadmin import navtree
 
 @login_required
 def adminInterface(request, objtype = None):
@@ -53,106 +54,12 @@ def adminInterface(request, objtype = None):
 def menu(request, objtype = None):
     context = RequestContext(request)
 
-    class ByRef(object):
-        def __init__(self, val):
-            self.val = val
-        def new(self):
-            old = self.val
-            self.val += 1
-            return old
-
-    def build_nav():
-
-        navs = []
-        for nav in nav_groups['main']:
-
-            nav.option_list = build_options(nav.options)
-            nav.active = False
-            url = nav.get_absolute_url()
-            nav.active = nav.active_if(url, request.path)
-            navs.append(nav)
-
-        return navs
-
-    def build_options(nav_options):
-        options = []
-        for option in nav_options:
-            try:
-                option = option()
-            except:
-                pass
-            url = option.get_absolute_url()
-            option.active = option.active_if(url, request.path)
-            option.option_list = build_options(option.options)
-            options.append(option)
-        return options
-
-    def sernav(o, **kwargs):
-
-        items = []
-
-        # info about current node
-        my = {
-            'id': str(kwargs['uid'].new()),
-            'view': o.get_absolute_url(),
-        }
-        if hasattr(o, 'rename'):
-            my['name'] = o.rename
-        else:
-            my['name'] = o.name
-        for attr in ('model', 'app', 'type'):
-            if hasattr(o, attr):
-                my[attr] = getattr(o, attr)
-
-        # root nodes identified as type app
-        if kwargs['level'] == 0:
-            my['type'] = 'app'
-
-        if not kwargs['parents'].has_key(kwargs['level']):
-            kwargs['parents'][kwargs['level']] = []
-
-        if kwargs['level'] > 0:
-            kwargs['parents'][kwargs['level']].append(my['id'])
-
-        # this node has no childs
-        if o.option_list is None:
-            return items
-
-        for i in o.option_list:
-            kwargs['level'] += 1
-            opts = sernav(i, **kwargs)
-            kwargs['level'] -= 1
-            items += opts
-
-        # if this node has childs
-        # then we may found then in [parents][level+1]
-        if len(o.option_list) > 0:
-        
-            my['children'] = []
-            for all in kwargs['parents'][ kwargs['level']+1 ]:
-                my['children'].append( {'_reference': all } )
-                #kwargs['parents'][ kwargs['level']+1 ].remove(all)
-            kwargs['parents'][ kwargs['level']+1 ] = []
-
-        items.append(my)
-
-        return items
-
-    items = []
-    uid = ByRef(1)
-    for n in build_nav():
-        items += sernav(n, level=0, uid=uid, parents={})
-    final = {
-        'items': items,
-        'label': 'name',
-        'identifier': 'id',
-    }
-
+    final = navtree.dijitTree()
     json = simplejson.dumps(final, indent=3)
     #from freenasUI.nav import json2nav
     #json2nav(json)['main']
 
-    return HttpResponse( json )
+    return HttpResponse( json , mimetype="application/json")
 
 """
 Magic happens here
@@ -171,26 +78,26 @@ def generic_model_add(request, app, model, mf=None):
     except ImportError, e:
         raise
 
-    from freenasUI.nav import _modelforms
+    m = getattr(_temp, model)
     context = RequestContext(request, {
         'app': app,
         'model': model,
         'mf': mf,
+        'verbose_name': m._meta.verbose_name,
     })
-    m = getattr(_temp, model)
-    if not isinstance(_modelforms[m], dict):
-        mf = _modelforms[m]
+    if not isinstance(navtree._modelforms[m], dict):
+        mf = navtree._modelforms[m]
     else:
         if mf == None:
             try:
-                mf = _modelforms[m][m.FreeAdmin.create_modelform]
+                mf = navtree._modelforms[m][m._admin.create_modelform]
             except:
                 try:
-                    mf = _modelforms[m][m.FreeAdmin.edit_modelform]
+                    mf = navtree._modelforms[m][m._admin.edit_modelform]
                 except:
-                    mf = _modelforms[m].values()[-1]
+                    mf = navtree._modelforms[m].values()[-1]
         else:
-            mf = _modelforms[m][mf]
+            mf = navtree._modelforms[m][mf]
 
 
     if request.method == "POST":
@@ -198,7 +105,8 @@ def generic_model_add(request, app, model, mf=None):
         mf = mf(request.POST, request.FILES, instance=instance)
         if mf.is_valid():
             obj = mf.save()
-            return render_to_response('freeadmin/generic_model_add_ok.html', context)
+            return HttpResponse(simplejson.dumps({"error": False, "message": "%s successfully added." % m._meta.verbose_name}), mimetype="application/json")
+            #return render_to_response('freeadmin/generic_model_add_ok.html', context)
 
     else:
         mf = mf()
@@ -249,8 +157,18 @@ def generic_model_datagrid(request, app, model):
     })
     m = getattr(_temp, model)
 
-    names = [x.verbose_name for x in m._meta.fields]
-    _n = [x.name for x in m._meta.fields]
+    exclude = m._admin.exclude_fields
+    names = []
+    for x in m._meta.fields:
+        if not x.name in exclude:
+            names.append(x.verbose_name)
+    #names = [if not x.name in exclude: x.verbose_name for x in m._meta.fields]
+
+    _n = []
+    for x in m._meta.fields:
+        if not x.name in exclude:
+            _n.append(x.name)
+    #_n = [x.name for x in m._meta.fields]
     #width = [len(x.verbose_name)*10 for x in m._meta.fields]
     """
     Nasty hack to calculate the width of the datagrid column
@@ -259,6 +177,8 @@ def generic_model_datagrid(request, app, model):
     """
     width = []
     for x in m._meta.fields:
+        if x.name in exclude:
+            continue
         val = 8
         for letter in x.verbose_name:
             if letter.isupper():
@@ -269,13 +189,39 @@ def generic_model_datagrid(request, app, model):
                 val += 7
         width.append(val)
     fields = zip(names, _n, width)
-    object_list = m.objects.all()
 
     context.update({
-        'object_list': object_list,
         'fields': fields,
     })
     return render_to_response('freeadmin/generic_model_datagrid.html', context)
+
+@login_required
+def generic_model_datagrid_json(request, app, model):
+
+    def mycallback(app_name, model_name, attname, request, data):
+
+        try:
+            _temp = __import__('%s.models' % app_name, globals(), locals(), [model_name], -1)
+        except ImportError, e:
+            print "error!"
+            return True
+
+        context = RequestContext(request, {
+            'app': app,
+            'model': model,
+        })
+        m = getattr(_temp, model)
+
+        if attname in ('detele', '_state'):
+            return False
+
+        if attname in m._admin.exclude_fields:
+            return False
+
+        return True
+
+    from dojango.views import datagrid_list
+    return datagrid_list(request, app, model, access_field_callback=mycallback)
 
 @login_required
 def generic_model_edit(request, app, model, oid, mf=None):
@@ -284,38 +230,49 @@ def generic_model_edit(request, app, model, oid, mf=None):
         _temp = __import__('%s.models' % app, globals(), locals(), [model], -1)
     except ImportError, e:
         raise
+    m = getattr(_temp, model)
 
-    from freenasUI.nav import _modelforms
+    if request.GET.has_key("inline"):
+        inline = True
+    else:
+        inline = False
+
     context = RequestContext(request, {
         'app': app,
         'model': model,
         'mf': mf,
         'oid': oid,
+        'inline': inline,
+        'verbose_name': m._meta.verbose_name,
     })
 
-    m = getattr(_temp, model)
-
-    if hasattr(m, 'FreeAdmin') and hasattr(m.FreeAdmin, 'deletable'):
-        context.update({'deletable': m.FreeAdmin.deletable})
+    if m._admin.deletable is False:
+        context.update({'deletable': False})
+    if request.GET.has_key("deletable") and not context.has_key("deletable"):
+        context.update({'deletable': False})
 
     instance = get_object_or_404(m, pk=oid)
-    if not isinstance(_modelforms[m], dict):
-        mf = _modelforms[m]
+    if not isinstance(navtree._modelforms[m], dict):
+        mf = navtree._modelforms[m]
     else:
         if mf == None:
             try:
-                mf = _modelforms[m][m.FreeAdmin.edit_modelform]
+                mf = navtree._modelforms[m][m.FreeAdmin.edit_modelform]
             except:
-                mf = _modelforms[m].values()[-1]
+                mf = navtree._modelforms[m].values()[-1]
         else:
-            mf = _modelforms[m][mf]
+            mf = navtree._modelforms[m][mf]
 
     if request.method == "POST":
         mf = mf(request.POST, instance=instance)
         if mf.is_valid():
             obj = mf.save()
             #instance.save()
-            return render_to_response('freeadmin/generic_model_edit_ok.html', context, mimetype='text/html')
+            if inline:
+                context.update({'saved': True})
+            else:
+                return HttpResponse(simplejson.dumps({"error": False, "message": "%s successfully updated." % m._meta.verbose_name}), mimetype="application/json")
+                #return render_to_response('freeadmin/generic_model_edit_ok.html', context, mimetype='text/html')
 
     else:
         mf = mf(instance=instance)
@@ -349,10 +306,12 @@ def generic_model_delete(request, app, model, oid):
         'model': model,
         'oid': oid,
         'object': instance,
+        'verbose_name': instance._meta.verbose_name,
     })
 
     if request.method == "POST":
         instance.delete()
-        return render_to_response('freeadmin/generic_model_delete_ok.html', context)
+        return HttpResponse(simplejson.dumps({"error": False, "message": "%s successfully deleted." % m._meta.verbose_name}), mimetype="application/json")
+        #return render_to_response('freeadmin/generic_model_delete_ok.html', context)
 
     return render_to_response('freeadmin/generic_model_delete.html', context)

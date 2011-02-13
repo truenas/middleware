@@ -1,22 +1,14 @@
 <form dojoType="dijit.form.Form">
 <script type="dojo/event" event="onSubmit" args="e">
-            dojo.stopEvent(e); // prevent the default submit
-            dijit.byId("submitform").set('disabled', true);
-
-            dojo.xhrPost( {
-                url: '{% url storage_dataset_delete object_id=object.id %}',
-                 handleAs: 'text',
-                 load: function(data) { dijit.byId('edit_dialog').set('content', data); },
-             });
-            
+    formSubmit(this, e, '{% url storage_dataset_delete object_id=object.id %}');
 </script>
 <table> 
     <tr><td>Are you sure you want to delete?</td></tr>
     <tr>
         <td>
             <button id="submitform" dojoType="dijit.form.Button" type="submit" onClick="this.set('label', 'Please wait...');"> Yes </button>
-
-<button dojoType="dijit.form.Button" onClick="dijit.byId('edit_dialog').hide();"> Cancel </button>
-        </td></tr>
+<button dojoType="dijit.form.Button" onClick="cancelDialog(this);"> Cancel </button>
+        </td>
+    </tr>
 </table>
 </form>

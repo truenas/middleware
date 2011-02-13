@@ -143,10 +143,28 @@ class iSCSITargetAuthCredentialForm(ModelForm):
     def save(self, commit=True):
         oAuthCredential = super(iSCSITargetAuthCredentialForm, self).save(commit=False)
         oAuthCredential.iscsi_target_auth_secret = self.cleaned_data["iscsi_target_auth_secret1"]
-        oAuthCredential.iscsi_target_peerauth_secret = self.cleaned_data["iscsi_target_auth_peersecret1"]
+        oAuthCredential.iscsi_target_auth_peersecret = self.cleaned_data["iscsi_target_auth_peersecret1"]
         if commit:
             oAuthCredential.save()
         return oAuthCredential
+
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetAuthCredentialForm, self).__init__(*args, **kwargs)
+        self.fields.keyOrder = [
+            'iscsi_target_auth_tag',
+            'iscsi_target_auth_user',
+            'iscsi_target_auth_secret1',
+            'iscsi_target_auth_secret2',
+            'iscsi_target_auth_peeruser',
+            'iscsi_target_auth_peersecret1',
+            'iscsi_target_auth_peersecret2']
+        try:
+            self.fields['iscsi_target_auth_secret1'].initial = self.instance.iscsi_target_auth_secret
+            self.fields['iscsi_target_auth_secret2'].initial = self.instance.iscsi_target_auth_secret
+            self.fields['iscsi_target_auth_peersecret1'].initial = self.instance.iscsi_target_auth_peersecret
+            self.fields['iscsi_target_auth_peersecret2'].initial = self.instance.iscsi_target_auth_peersecret
+        except:
+            pass
 
 class iSCSITargetToExtentForm(ModelForm):
     class Meta:

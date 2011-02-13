@@ -28,14 +28,16 @@
 
 from django.conf.urls.defaults import *
 from django.contrib import admin
-from freenasUI.system.views import index 
+#from freenasUI.system.views import index 
+from freenasUI.freeadmin.views import adminInterface
 from django.conf import settings
 
-from freenasUI import nav
-nav.auto_generate()
+from freeadmin import navtree
+navtree.auto_generate()
 
 urlpatterns = patterns('',
-    ('^$', index),
+    #('^$', index),
+    ('^$', adminInterface),
     (r'^reporting/graphs/(?P<path>.*)',
         'django.views.static.serve',
         {'document_root': '/var/db/graphs/'}),

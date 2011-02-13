@@ -1,0 +1,103 @@
+<table class="grid">
+    <thead class="ghead">
+	<td>ID</td>
+	<td>Username</td>
+	<td>Group</td>
+	<td>Home</td>
+	<td>Shell</td>
+	<td>Password</td>
+	<td>Modify</td>
+	<td>Remove</td>
+    </thead>
+    <tbody>
+	{% for u in bsduser_list %}
+	<tr class="{% cycle 'odd' 'even' %}">
+	    <td>
+		{{ u.bsdusr_uid }}
+	    </td>
+	    <td>
+		{{ u.bsdusr_username }}
+	    </td>
+	    <td>
+		{{ u.bsdusr_group.bsdgrp_group }}
+	    </td>
+	    <td>
+		{{ u.bsdusr_home }}
+	    </td>
+	    <td>
+		{{ u.bsdusr_shell }}
+	    </td>
+	    <td>
+		<button dojoType="dijit.form.Button" type="button" onClick="editObject('Change Password', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserPasswordForm" %}?deletable=false', [this,]);">Change Password</button>
+	    </td>
+	    <td>
+		{% if not u.bsdusr_builtin %}
+		<button dojoType="dijit.form.Button" type="button" onClick="editObject('Modify User', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id %}?deletable=false', [this,]);">Modify User</button>
+		<button dojoType="dijit.form.Button" type="button" onClick="editObject('Modify User', '{% url account_bsduser_groups object_id=u.id %}', [this,]);">Auxiliary Groups</button>
+		{% endif %}
+	    </td>
+	    <td>
+		{% if not u.bsdusr_builtin %}
+		<button dojoType="dijit.form.Button" type="button" onClick="editObject('Delete User', '{% url freeadmin_model_delete app='account',model='bsdUsers',oid=u.id %}', [this,]);">Remove User</button>
+		{% endif %}
+	    </td>
+	</tr>
+	{% empty %}
+	<tr>
+	    <td colspan="8">No users defined</td>
+	</tr>
+	{% endfor %}
+	<tr>
+	    <td colspan="8">
+		<div style="padding:12px;"><button dojoType="dijit.form.Button" type="button" onClick="addObject('Add User', '{% url freeadmin_model_add app="account",model="bsdUsers" %}', [this,]);">Add New User</button></div>
+	    </td>
+	</tr>
+    </tbody>
+    <thead class="ghead">
+	<td>ID</td>
+	<td>Username</td>
+	<td>Group</td>
+	<td>Home</td>
+	<td>Shell</td>
+	<td colspan="3">Password</td>
+    </thead>
+    <tbody>
+	{% for u in bsduser_list_builtin %}
+	<tr class="{% cycle 'odd' 'even' %}">
+	    <td>
+		{{ u.bsdusr_uid }}
+	    </td>
+	    <td>
+		{{ u.bsdusr_username }}
+	    </td>
+	    <td>
+		{{ u.bsdusr_group.bsdgrp_group }}
+	    </td>
+	    <td>
+		{{ u.bsdusr_home }}
+	    </td>
+	    <td>
+		{{ u.bsdusr_shell }}
+	    </td>
+	    <td>
+		<button dojoType="dijit.form.Button" type="button" onClick="editObject('Change Password', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserPasswordForm" %}?deletable=false', [this,]);">Change Password</button>
+	    </td>
+	    <td>
+		{% if not u.bsdusr_builtin %}
+		<button dojoType="dijit.form.Button" type="button" onClick="editObject('Modify User', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id %}?deletable=false', [this,]);">Modify User</button>
+		<button dojoType="dijit.form.Button" type="button" onClick="editObject('Modify User', '{% url account_bsduser_groups object_id=u.id %}', [this,]);">Auxiliary Groups</button>
+		{% endif %}
+	    </td>
+	    <td>
+		{% if not u.bsdusr_builtin %}
+		<button dojoType="dijit.form.Button" type="button" onClick="editObject('Delete User', '{% url freeadmin_model_delete app='account',model='bsdUsers',oid=u.id %}', [this,]);">Remove User</button>
+		{% endif %}
+	    </td>
+	</tr>
+	{% empty %}
+	<tr>
+	    <td colspan="8">No users defined</td>
+	</tr>
+	{% endfor %}
+    </tbody>
+</table>

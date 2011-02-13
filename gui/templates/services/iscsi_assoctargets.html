@@ -1,0 +1,42 @@
+            <table class="grid">
+	            <thead class="header">
+			<tr>
+		            <td>Target</td>
+		            <td>Extent</td>
+		            <td>LUN</td>
+			</tr>
+		        </thead>
+                {% for tte in asctarget_list %}
+                <tr class="{% cycle 'odd' 'even' %}" id="{{ tte.id }}">
+                    <td>{{ tte.iscsi_target }}</td>
+                    <td>{{ tte.iscsi_extent }}</td>
+                    <td>{{ tte.iscsi_target_lun }}</td>
+                    <td>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Edit
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Edit', '{% url freeadmin_model_edit app="services",model="iSCSITargetToExtent",oid=tte.id %}', [this,]);
+                        </script>
+                        </button>
+                        <button dojoType="dijit.form.Button" type="button">
+                            Delete
+                        <script type="dojo/method" event="onClick" args="evt">
+                        editObject('Delete', '{% url freeadmin_model_delete app="services",model="iSCSITargetToExtent",oid=tte.id %}', [this,]);
+                        </script>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">No targets defined</td>
+                </tr>
+                {% endfor %}
+                </table>
+                         <p class="btn">
+                    <button id="et_button" dojoType="dijit.form.Button" type="button">
+                        Add Extent to Target
+                        <script type="dojo/method" event="onClick" args="evt">
+                         addObject('Add Extent To Target', '{% url freeadmin_model_add app="services",model="iSCSITargetToExtent" %}', [this,]);
+                    </script>
+                    </button>
+                    </p>

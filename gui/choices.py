@@ -257,13 +257,12 @@ DISCOVERYAUTHGROUP_CHOICES = (
 
 
 DYNDNSPROVIDER_CHOICES = (
-        ('dyndns', 'dyndns.org'),
-        ('freedns', 'freedns.afraid.org'),
-        ('zoneedit', 'zoneedit.com'),
-        ('no-ip', 'no-ip.com'),
-        ('easydns', 'easydns.com'),
-        ('3322', '3322.org'),
-        ('Custom', 'Custom'),
+        ('dyndns@dyndns.org', 'dyndns.org'),
+        ('default@freedns.afraid.org', 'freedns.afraid.org'),
+        ('default@zoneedit.com', 'zoneedit.com'),
+        ('default@no-ip.com', 'no-ip.com'),
+        ('default@easydns.com', 'easydns.com'),
+        ('dyndns@3322.org', '3322.org'),
         )
 SNMP_CHOICES = (
         ('mibll', 'Mibll'),
@@ -299,6 +298,12 @@ LAGGType = (
         ('none', 'None'),
         )
 
+WindowsVersions = (
+        ('windows2000', 'Windows 2000'),
+        ('windows2003', 'Windows Server 2003'),
+        ('windows2008', 'Windows Server 2008'),
+        )
+
 ZFS_AtimeChoices = (
         ('inherit', 'Inherit'),
         ('on', 'On'),
@@ -332,6 +337,12 @@ class NICChoices:
     def __init__(self):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
+
+        # Remove lo0 and plip0 from choices
+        if 'lo0' in self._NIClist:
+            self._NIClist.remove('lo0')
+        if 'plip0' in self._NIClist:
+            self._NIClist.remove('plip0')
         self.max_choices = len(self._NIClist)
 
     def __iter__(self):

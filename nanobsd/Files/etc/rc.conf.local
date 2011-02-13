@@ -99,19 +99,19 @@ _host_config()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT gc_hostname, gc_domain, gc_nameserver1, gc_nameserver2, gc_nameserver3, gc_ipv4gateway, gc_ipv6gateway FROM network_globalconfiguration ORDER BY -id LIMIT 1" | \
 	while read hostname domainname nameserver1 nameserver2 nameserver3 ipv4gateway ipv6gateway; do
 		echo hostname=\"${hostname}.${domainname}\"
-		if [ "${ipv4gateway}" != "0.0.0.0" ]; then
+		if [ -n "${ipv4gateway}" ]; then
 			echo defaultrouter=\"${ipv4gateway}\"
 		fi
-		if [ "${ipv6gateway}" != "::" ]; then
-			echo defaultrouter=\"${ipv6gateway}\"
+		if [ -n "${ipv6gateway}" ]; then
+			echo ipv6_defaultrouter=\"${ipv6gateway}\"
 		fi
 		# Generate resolv.conf
-		if [ "${nameserver1}" != "0.0.0.0" ]; then
+		if [ -n "${nameserver1}" ]; then
 			echo search ${domainname} > /etc/resolv.conf
 			echo nameserver ${nameserver1} >> /etc/resolv.conf
-			if [ "${nameserver2}" != "0.0.0.0" ]; then
+			if [ -n "${nameserver2}"  ]; then
 				echo nameserver ${nameserver2} >> /etc/resolv.conf
-				if [ "${nameserver3}" != "0.0.0.0" ]; then
+				if [ -n "${nameserver3}" ]; then
 					echo nameserver ${nameserver3} >> /etc/resolv.conf
 				fi
 			fi
@@ -201,10 +201,11 @@ _gen_conf()
 	_bool_svcconfig bsnmpd_enable snmp
 	_bool_svcconfig sshd_enable ssh
 	_bool_svcconfig istgt_enable iscsitarget
+	_bool_svcconfig istgt_enable iscsitarget
+	_bool_svcconfig inadyn_enable dyndns
 
 	_count_config zfs_enable storage_volume vol_fstype =\'ZFS\'
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT rcc_varname, rcc_varvalue FROM system_rcconf ORDER BY id ASC" | tr \| =
 }
 
 # If we're running really early, then mount /data read-only

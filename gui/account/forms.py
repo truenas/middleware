@@ -30,16 +30,25 @@ from dojango import forms
 from freenasUI.account.models import *
 from freenasUI.middleware.notifier import notifier
 from django.utils.translation import ugettext_lazy as _
-from dojango import forms
 from django.contrib.auth.models import User as django_User
 from django.contrib.auth.forms import UserChangeForm as django_UCF
+from dojango import forms
 
-class UserChangeForm(django_UCF):
+class UserChangeForm(ModelForm):
+    username = forms.RegexField(label=_("Username"), max_length=30, regex=r'^[\w.@+-]+$',
+        help_text = _("Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."),
+        error_messages = {'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
+    email = forms.EmailField("aa", required=False)
+
     class Meta:
         fields = ('username', 'first_name', 'last_name', 'email',)
         model = django_User
+
     def __init__(self, *args, **kwargs):
         super(UserChangeForm, self).__init__(*args, **kwargs)
+        f = self.fields.get('user_permissions', None)
+        if f is not None:
+            f.queryset = f.queryset.select_related('content_type')
 
 class bsdUserCreationForm(ModelForm):
     """
@@ -128,6 +137,7 @@ class bsdUserCreationForm(ModelForm):
             bsduser.bsdusr_smbhash=smbhash
             bsduser.bsdusr_builtin=False
             bsduser.save()
+            notifier().reload("user")
         return bsduser
 
 class bsdUserPasswordForm(ModelForm):
@@ -230,7 +240,7 @@ class bsdGroupToUserForm(Form):
         notifier().reload("user")
 
 class bsdUserToGroupForm(Form):
-    bsduser_to_group = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Auxilary groups')
+    bsduser_to_group = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Auxiliary groups')
     def __init__(self, userid, *args, **kwargs):
         super(bsdUserToGroupForm, self).__init__(*args, **kwargs)
         self.userid = userid
@@ -246,4 +256,47 @@ class bsdUserToGroupForm(Form):
             m = bsdGroupMembership(bsdgrpmember_group=group, bsdgrpmember_user=user)
             m.save()
         notifier().reload("user")
+
+class SetPasswordForm(forms.Form):
+    """
+    A form that lets a user change set his/her password without
+    entering the old password
+    """
+    new_password1 = forms.CharField(label=_("New password"), widget=forms.PasswordInput)
+    new_password2 = forms.CharField(label=_("New password confirmation"), widget=forms.PasswordInput)
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super(SetPasswordForm, self).__init__(*args, **kwargs)
+
+    def clean_new_password2(self):
+        password1 = self.cleaned_data.get('new_password1')
+        password2 = self.cleaned_data.get('new_password2')
+        if password1 and password2:
+            if password1 != password2:
+                raise forms.ValidationError(_("The two password fields didn't match."))
+        return password2
+
+    def save(self, commit=True):
+        self.user.set_password(self.cleaned_data['new_password1'])
+        if commit:
+            self.user.save()
+        return self.user
+
+class PasswordChangeForm(SetPasswordForm):
+    """
+    A form that lets a user change his/her password by entering
+    their old password.
+    """
+    old_password = forms.CharField(label=_("Old password"), widget=forms.PasswordInput)
+
+    def clean_old_password(self):
+        """
+        Validates that the old_password field is correct.
+        """
+        old_password = self.cleaned_data["old_password"]
+        if not self.user.check_password(old_password):
+            raise forms.ValidationError(_("Your old password was entered incorrectly. Please enter it again."))
+        return old_password
+PasswordChangeForm.base_fields.keyOrder = ['old_password', 'new_password1', 'new_password2']
 

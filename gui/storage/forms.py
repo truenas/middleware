@@ -33,14 +33,103 @@ from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
 from dojango.forms import fields, widgets
+from dojango import forms
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.forms import Form
 from dojango.forms.fields import BooleanField
 from freenasUI.contrib.ext_formwizard import FormWizard
 from freenasUI.common.widgets import RadioFieldRendererBulletless
 from freenasUI.account.models import bsdUsers, bsdGroups
+import re
 
 attrs_dict = { 'class': 'required' }
+
+class UnixPermissionWidget(widgets.MultiWidget):
+
+    def __init__(self, attrs=None):
+
+        widgets = [forms.widgets.CheckboxInput,] * 9
+        super(UnixPermissionWidget, self).__init__(widgets, attrs)
+
+    def decompress(self, value):
+        if value:
+            if isinstance(value, str):
+                owner = bin(int(value[0]))[2:]
+                group = bin(int(value[1]))[2:]
+                other = bin(int(value[2]))[2:]
+                mode = owner + group + other
+                rv = [False, False, False, False, False, False, False, False, False]
+                for i in range(9):
+                    if mode[i] == '1':
+                        rv[i] = True
+
+            return rv
+        return [False, False, False, False, False, False, False, False, False]
+
+    def format_output(self, rendered_widgets):
+
+        maprow = {
+                1: 'Read',
+                2: 'Write',
+                3: 'Execute',
+            }
+
+        html = """<table>
+        <thead>
+        <tr>
+        <td></td>
+        <td>Owner</td>
+        <td>Group</td>
+        <td>Other</td>
+        </tr>
+        </thead>
+        <tbody>
+        """
+        for i in range(1,4):
+            html += "<tr>"
+            html += "<td>%s</td>" % maprow[i]
+            for j in range(1,4):
+                html += "<td>" + rendered_widgets[j*3-3+i-1] + "</td>"
+            html += "</tr>"
+        html += "</tbody></table>"
+
+        return html
+
+class UnixPermissionField(forms.MultiValueField):
+    """Input accurate timing. Interface with models.DecimalField for great success."""
+    
+    widget = UnixPermissionWidget()
+    
+    def __init__(self, *args, **kwargs):
+        fields = [forms.BooleanField()] * 9
+        super(UnixPermissionField, self).__init__(fields, *args, **kwargs)
+    
+    def compress(self, value):
+        if value:
+            owner = 0
+            group = 0
+            other = 0
+            if value[0] == True:
+                owner += 4
+            if value[1] == True:
+                owner += 2
+            if value[2] == True:
+                owner += 1
+            if value[3] == True:
+                group += 4
+            if value[4] == True:
+                group += 2
+            if value[5] == True:
+                group += 1
+            if value[6] == True:
+                other += 4
+            if value[7] == True:
+                other += 2
+            if value[8] == True:
+                other += 1
+
+            return str(owner*100 + group *10 + other)
+        return None
 
 class VolumeWizardForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -151,7 +240,7 @@ class VolumeWizardForm(forms.Form):
     group_type = forms.ChoiceField(choices=(), widget=forms.RadioSelect(attrs=attrs_dict), required=False)
 
     def clean_group_type(self):
-        if len(self.data['volume_disks']) > 1 and self.cleaned_data['group_type'] in (None, ''):
+        if len(self.cleaned_data['volume_disks']) > 1 and self.cleaned_data['group_type'] in (None, ''):
             raise forms.ValidationError("This field is required.")
         return self.cleaned_data['group_type']
 
@@ -344,16 +433,39 @@ class ZFSDataset_CreateForm(Form):
             msg = u"You already have a dataset with the same name"
             self._errors["dataset_name"] = self.error_class([msg])
             del cleaned_data["dataset_name"]
+        r = re.compile('^(0|[1-9]\d*[mMgGtT]?)$')
+        msg = u"Enter positive number (optionally suffixed by M, G, T), or, 0"
+        if r.match(cleaned_data['dataset_refquota'].__str__())==None:
+            self._errors['dataset_refquota'] = self.error_class([msg])
+            del cleaned_data['dataset_refquota']
+        if r.match(cleaned_data['dataset_quota'].__str__())==None:
+            self._errors['dataset_quota'] = self.error_class([msg])
+            del cleaned_data['dataset_quota']
+        if r.match(cleaned_data['dataset_refreserv'].__str__())==None:
+            self._errors['dataset_refreserv'] = self.error_class([msg])
+            del cleaned_data['dataset_refreserv']
+        if r.match(cleaned_data['dataset_reserv'].__str__())==None:
+            self._errors['dataset_reserv'] = self.error_class([msg])
+            del cleaned_data['dataset_reserv']
         return cleaned_data
+    def set_error(self, msg):
+        msg = u"%s" % msg
+        self._errors['__all__'] = self.error_class([msg])
+        del self.cleaned_data
     dataset_volid = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict),  label='Volume from which this dataset will be created on')
     dataset_name = forms.CharField(max_length = 128, label = 'Dataset Name')
     dataset_compression = forms.ChoiceField(choices=ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label='Compression level')
     dataset_atime = forms.ChoiceField(choices=ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label='Enable atime')
+    dataset_refquota = forms.CharField(max_length = 128, initial=0, label='Quota for this dataset', help_text='0=Unlimited; example: 1g')
+    dataset_quota = forms.CharField(max_length = 128, initial=0, label='Quota for this dataset and all children', help_text='0=Unlimited; example: 1g')
+    dataset_refreserv = forms.CharField(max_length = 128, initial=0, label='Reserved space for this dataset', help_text='0=None; example: 1g')
+    dataset_reserv = forms.CharField(max_length = 128, initial=0, label='Reserved space for this dataset and all children', help_text='0=None; example: 1g')
 
 class MountPointAccessForm(Form):
     mp_user = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label='Owner (user)')
     mp_group = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label='Owner (group)')
-    mp_mode = forms.ChoiceField(choices=PermissionChoices, widget=forms.Select(attrs=attrs_dict), label='Mode')
+    #mp_mode = forms.ChoiceField(choices=PermissionChoices, widget=forms.Select(attrs=attrs_dict), label='Mode')
+    mp_mode = UnixPermissionField()
     mp_recursive = forms.BooleanField(initial=False,required=False,label='Set permission recursively')
     def __init__(self, *args, **kwargs):
         super(MountPointAccessForm, self).__init__(*args, **kwargs)

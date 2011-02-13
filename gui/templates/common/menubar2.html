@@ -30,7 +30,12 @@
 	<br />
 	<span>Log Out</span>
     </div>
-    <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/'" class="menu_icon{% if focused_tab == "account" %} dijitMenuItemSelected{% endif %}" style="float:right;">
+    <div dojoType="dijit.MenuBarItem" id="successmsg"
+        style="margin-left: 22px;max-width:400px;"
+        onClick="dojo.fadeOut({ node: 'successmsg' }).play();">
+
+    </div>
+    <div dojoType="dijit.MenuBarItem" onClick="openAccount();" class="menu_icon{% if focused_tab == "account" %} dijitMenuItemSelected{% endif %}" style="float:right;">
 	<img src="/media/images/ui/account.png">
 	<br />
 	<span>Account</span>

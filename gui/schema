@@ -28,12 +28,16 @@ CREATE TABLE "auth_group" (
 CREATE TABLE "auth_group_permissions" (
     "id" integer NOT NULL PRIMARY KEY,
     "group_id" integer NOT NULL,
-    "permission_id" integer NOT NULL REFERENCES "auth_permission" ("id"),
-    UNIQUE ("group_id", "permission_id")
+    "permission_id" integer NOT NULL REFERENCES "auth_permission" (
+    "id"),
+    UNIQUE (
+    "group_id",
+    "permission_id")
 );
 CREATE TABLE "auth_message" (
     "id" integer NOT NULL PRIMARY KEY,
-    "user_id" integer NOT NULL REFERENCES "auth_user" ("id"),
+    "user_id" integer NOT NULL REFERENCES "auth_user" (
+    "id"),
     "message" text NOT NULL
 );
 CREATE TABLE "auth_permission" (
@@ -41,7 +45,9 @@ CREATE TABLE "auth_permission" (
     "name" varchar(50) NOT NULL,
     "content_type_id" integer NOT NULL,
     "codename" varchar(100) NOT NULL,
-    UNIQUE ("content_type_id", "codename")
+    UNIQUE (
+    "content_type_id",
+    "codename")
 );
 CREATE TABLE "auth_user" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -59,21 +65,29 @@ CREATE TABLE "auth_user" (
 CREATE TABLE "auth_user_groups" (
     "id" integer NOT NULL PRIMARY KEY,
     "user_id" integer NOT NULL,
-    "group_id" integer NOT NULL REFERENCES "auth_group" ("id"),
-    UNIQUE ("user_id", "group_id")
+    "group_id" integer NOT NULL REFERENCES "auth_group" (
+    "id"),
+    UNIQUE (
+    "user_id",
+    "group_id")
 );
 CREATE TABLE "auth_user_user_permissions" (
     "id" integer NOT NULL PRIMARY KEY,
     "user_id" integer NOT NULL,
-    "permission_id" integer NOT NULL REFERENCES "auth_permission" ("id"),
-    UNIQUE ("user_id", "permission_id")
+    "permission_id" integer NOT NULL REFERENCES "auth_permission" (
+    "id"),
+    UNIQUE (
+    "user_id",
+    "permission_id")
 );
 CREATE TABLE "django_content_type" (
     "id" integer NOT NULL PRIMARY KEY,
     "name" varchar(100) NOT NULL,
     "app_label" varchar(100) NOT NULL,
     "model" varchar(100) NOT NULL,
-    UNIQUE ("app_label", "model")
+    UNIQUE (
+    "app_label",
+    "model")
 );
 CREATE TABLE "django_session" (
     "session_key" varchar(40) NOT NULL PRIMARY KEY,
@@ -91,13 +105,13 @@ CREATE TABLE "network_globalconfiguration" (
     "id" integer PRIMARY KEY
 );
 CREATE TABLE "network_interfaces" (
-    "int_v6netmaskbit" varchar(300),
+    "int_v6netmaskbit" varchar(4),
     "int_ipv4address" varchar(42),
     "int_name" varchar(120),
-    "int_ipv6address" varchar(42) NULL,
+    "int_ipv6address" varchar(42),
     "int_options" varchar(120),
     "int_dhcp" bool,
-    "int_v4netmaskbit" varchar(300),
+    "int_v4netmaskbit" varchar(3) NULL,
     "int_ipv6auto" bool,
     "int_interface" varchar(300),
     "id" integer PRIMARY KEY
@@ -150,13 +164,12 @@ CREATE TABLE "services_cifs" (
     "cifs_srv_loglevel" varchar(120),
     "cifs_srv_guest" varchar(120),
     "cifs_srv_filemask" varchar(120),
-    "cifs_srv_guestonly" bool NOT NULL DEFAULT False,
-    "cifs_srv_recvbuffer" varchar(120),
-    "cifs_srv_smb_options" text,
+    "cifs_srv_guestonly" bool,
+    "cifs_srv_easupport" bool,
     "id" integer PRIMARY KEY,
     "cifs_srv_aio_ws" integer,
     "cifs_srv_dosattr" bool,
-    "cifs_srv_sendbuffer" varchar(120),
+    "cifs_srv_timeserver" bool,
     "cifs_srv_homedir_enable" bool,
     "cifs_srv_aio_enable" bool,
     "cifs_srv_largerw" bool,
@@ -165,9 +178,9 @@ CREATE TABLE "services_cifs" (
     "cifs_srv_netbiosname" varchar(120),
     "cifs_srv_workgroup" varchar(120),
     "cifs_srv_doscharset" varchar(120),
-    "cifs_srv_timeserver" bool,
+    "cifs_srv_smb_options" text,
     "cifs_srv_localmaster" bool,
-    "cifs_srv_easupport" bool,
+    "cifs_srv_authmodel" varchar(10),
     "cifs_srv_sendfile" bool,
     "cifs_srv_unixcharset" varchar(120)
 );
@@ -444,100 +457,39 @@ CREATE TABLE "storage_volume" (
     "vol_fstype" varchar(120) NOT NULL
 );
 CREATE TABLE "system_advanced" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "adv_consolemenu" bool NOT NULL DEFAULT False,
-    "adv_serialconsole" bool NOT NULL DEFAULT False,
-    "adv_consolescreensaver" bool NOT NULL DEFAULT False,
-    "adv_firmwarevc" bool NOT NULL DEFAULT False,
-    "adv_systembeep" bool NOT NULL DEFAULT False,
-    "adv_tuning" bool NOT NULL DEFAULT False,
-    "adv_powerdaemon" bool NOT NULL DEFAULT False,
-    "adv_zeroconfbonjour" bool NOT NULL DEFAULT False,
-    "adv_motd" text NOT NULL
-);
-CREATE TABLE "system_commandscripts" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "cmds_command" varchar(120) NOT NULL,
-    "cmds_commandtype" varchar(120) NOT NULL
-);
-CREATE TABLE "system_cronjob" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "cron_enable" bool NOT NULL DEFAULT False,
-    "cron_command" varchar(120) NOT NULL,
-    "cron_who" varchar(120) NOT NULL DEFAULT 'root',
-    "cron_description" varchar(120) NOT NULL,
-    "cron_ToggleMinutes" varchar(120) NOT NULL DEFAULT 'Selected',
-    "cron_Minutes1" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_Minutes2" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_Minutes3" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_Minutes4" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_ToggleHours" varchar(120) NOT NULL DEFAULT 'Selected',
-    "cron_Hours1" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_Hours2" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_ToggleDays" varchar(120) NOT NULL DEFAULT 'Selected',
-    "cron_Days1" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_Days2" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_Days3" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_ToggleMonths" varchar(120) NOT NULL DEFAULT 'Selected',
-    "cron_Months" varchar(120) NOT NULL DEFAULT '(NONE)',
-    "cron_ToggleWeekdays" varchar(120) NOT NULL DEFAULT 'Selected',
-    "cron_Weekdays" varchar(120) NOT NULL DEFAULT '(NONE)'
+    "adv_systembeep" bool,
+    "adv_serialconsole" bool,
+    "adv_consolescreensaver" bool,
+    "adv_zeroconfbonjour" bool,
+    "adv_tuning" bool,
+    "adv_firmwarevc" bool,
+    "adv_powerdaemon" bool,
+    "adv_swapondrive" integer NOT NULL DEFAULT 2,
+    "adv_motd" text,
+    "adv_consolemenu" bool,
+    "id" integer PRIMARY KEY
 );
 CREATE TABLE "system_email" (
     "id" integer NOT NULL PRIMARY KEY,
     "em_fromemail" varchar(120) NOT NULL,
     "em_outgoingserver" varchar(120) NOT NULL,
-    "em_port" varchar(120) NOT NULL,
-    "em_security" varchar(120) NOT NULL DEFAULT 'none',
-    "em_smtp" bool NOT NULL DEFAULT False
-);
-CREATE TABLE "system_password" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "pw_currentpw" varchar(120) NOT NULL,
-    "pw_newpw" varchar(120) NOT NULL,
-    "pw_newpw2" varchar(120) NOT NULL
-);
-CREATE TABLE "system_proxy" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "pxy_httpproxy" bool NOT NULL DEFAULT False,
-    "pxy_httpproxyaddress" varchar(120) NOT NULL,
-    "pxy_httpproxyport" varchar(120) NOT NULL,
-    "pxy_httpproxyauth" bool NOT NULL DEFAULT False,
-    "pxy_ftpproxy" bool NOT NULL DEFAULT False,
-    "pxy_ftpproxyaddress" varchar(120) NOT NULL,
-    "pxy_ftpproxyport" varchar(120) NOT NULL,
-    "pxy_ftpproxyauth" bool NOT NULL DEFAULT False
-);
-CREATE TABLE "system_rcconf" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "rcc_varname" varchar(120) NOT NULL,
-    "rcc_varvalue" varchar(120) NOT NULL,
-    "rcc_varcomment" varchar(120) NOT NULL
+    "em_port" integer NOT NULL DEFAULT 25,
+    "em_security" varchar(120) NOT NULL DEFAULT 'plain',
+    "em_smtp" bool NOT NULL DEFAULT False,
+    "em_user" varchar(120) NULL,
+    "em_pass" varchar(120) NULL
 );
 CREATE TABLE "system_settings" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "stg_username" varchar(120) NOT NULL DEFAULT 'admin',
-    "stg_guiprotocol" varchar(120) NOT NULL DEFAULT 'http',
-    "stg_language" varchar(120) NOT NULL DEFAULT 'english',
-    "stg_timezone" varchar(120) NOT NULL DEFAULT 'america-los_angeles',
-    "stg_ntpserver1" varchar(120) NOT NULL DEFAULT '0.freebsd.pool.ntp.org iburst maxpoll 9',
-    "stg_ntpserver2" varchar(120) NOT NULL DEFAULT '1.freebsd.pool.ntp.org iburst maxpoll 9',
-    "stg_ntpserver3" varchar(120) NOT NULL DEFAULT '2.freebsd.pool.ntp.org iburst maxpoll 9'
+    "stg_language" varchar(120),
+    "stg_timezone" varchar(120),
+    "stg_guiprotocol" varchar(120),
+    "id" integer PRIMARY KEY,
+    "stg_ntpserver1" varchar(120),
+    "stg_ntpserver2" varchar(120),
+    "stg_ntpserver3" varchar(120)
 );
-CREATE TABLE "system_swap" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "swap_memory" bool NOT NULL DEFAULT False,
-    "swap_type" varchar(120) NOT NULL,
-    "swap_mountpoint" varchar(120) NOT NULL,
-    "swap_size" varchar(120) NOT NULL
-);
-CREATE TABLE "system_sysctl" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "sctl_MIBname" varchar(120) NOT NULL,
-    "sctl_MIBvalue" varchar(120) NOT NULL,
-    "sctl_MIBcomment" varchar(120) NOT NULL
-);
-CREATE INDEX "account_bsdgroupmembership_9303d695" ON "account_bsdgroupmembership" ("bsdgrpmember_user_id");
+CREATE INDEX "account_bsdgroupmembership_9303d695" ON "account_bsdgroupmembership" (
+    "bsdgrpmember_user_id");
 CREATE INDEX "account_bsdgroupmembership_d3b92950" ON "account_bsdgroupmembership" ("bsdgrpmember_group_id");
 CREATE INDEX "account_bsdusers_f22bd9ef" ON "account_bsdusers" ("bsdusr_group_id");
 CREATE INDEX "auth_group_permissions_1e014c8f" ON "auth_group_permissions" ("permission_id");

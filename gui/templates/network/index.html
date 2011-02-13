@@ -37,10 +37,8 @@
 		            <td>Name</td>
 		            <td>DHCP</td>
 		            <td>IPv4 Address</td>
-		            <td>IPv4 Netmask</td>
 		            <td>IPv6 Auto</td>
 		            <td>IPv6 Address</td>
-		            <td>IPv6 Netmask</td>
 		            <td>Options</td>
 			</tr>
 		        </thead>
@@ -49,19 +47,15 @@
                     <td>{{ i.int_interface }}</td>
                     <td>{{ i.int_name }}</td>
                     <td>{{ i.int_dhcp }}</td>
-                    {% if i.int_ipv4address != "0.0.0.0" %}
-                    <td>{{ i.int_ipv4address }}</td>
-                    <td>/{{ i.int_v4netmaskbit }}</td>
-                    {% else %}
-                    <td></td>
-                    <td></td>
-                    {% endif %}
+                    {% if i.int_ipv4address != "" %}
+                    <td>{{ i.int_ipv4address }}/{{ i.int_v4netmaskbit }}</td>
+		    {% else %}
+		    <td></td>
+		    {% endif %}
                     <td>{{ i.int_ipv6auto }}</td>
-                    {% if i.int_ipv6address != "::" %}
-                    <td>{{ i.int_ipv6address }}</td>
-                    <td>/{{ i.int_v6netmaskbit }}</td>
+                    {% if i.int_ipv6address != "" %}
+                    <td>{{ i.int_ipv6address }}/{{ i.int_v6netmaskbit }}</td>
                     {% else %}
-                    <td></td>
                     <td></td>
                     {% endif %}
                     <td>{{ i.int_options }}</td>

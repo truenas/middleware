@@ -26,11 +26,12 @@
 # $FreeBSD$
 #####################################################################
 from django.db import models
+from freeadmin.models import Model
 from django import forms
 from freenasUI.choices import UserShell
 from django.contrib.auth.models import get_hexdigest
 
-class bsdGroups(models.Model):
+class bsdGroups(Model):
     bsdgrp_gid = models.IntegerField(
             verbose_name="Group ID"
             )
@@ -45,10 +46,18 @@ class bsdGroups(models.Model):
     class Meta:
         verbose_name = "Group"
 
+    class FreeAdmin:
+        object_filters = {'bsdgrp_builtin__exact': False}
+        object_num = -1
+
+        icon_object = u"GroupIcon"
+        icon_model = u"GroupsIcon"
+        icon_add = u"AddGroupIcon"
+
     def __unicode__(self):
         return self.bsdgrp_group
 
-class bsdUsers(models.Model):
+class bsdUsers(Model):
     bsdusr_uid = models.IntegerField(
             max_length=10,
             unique="True",
@@ -99,10 +108,18 @@ class bsdUsers(models.Model):
     class FreeAdmin:
         create_modelform = "bsdUserCreationForm"
         edit_modelform = "bsdUserChangeForm"
+
+        object_filters = {'bsdusr_builtin__exact': False}
+        object_num = -1
+
+        icon_object = u"UserIcon"
+        icon_model = u"UsersIcon"
+        icon_add = u"AddUserIcon"
+
     def __unicode__(self):
         return self.bsdusr_username
 
-class bsdGroupMembership(models.Model):
+class bsdGroupMembership(Model):
     bsdgrpmember_group = models.ForeignKey(
         bsdGroups,
         verbose_name="Group",
