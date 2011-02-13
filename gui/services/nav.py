@@ -1,6 +1,6 @@
 from django_nav import Nav, NavOption
 
-BLACKLIST = ['services',]
+BLACKLIST = ['services','UPS']
 
 class ISCSI(NavOption):
 

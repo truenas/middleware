@@ -1,4 +1,4 @@
-<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false" title="Settings" nested="true">
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="true" title="Settings" nested="true">
     <div dojoType="dijit.layout.ContentPane" title="General" {% if focus_form == "settings" %} selected="true"{% endif %} href="{% url freeadmin_model_edit app="system", model="Settings",oid=settings %}?inline=true" class="objrefresh">
     </div>
 

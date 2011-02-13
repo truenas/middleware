@@ -40,16 +40,18 @@ class Volumes(NavOption):
 
         name = u'Volumes'
         icon = u'VolumesIcon'
-        options = [AddVolume,ViewVolumes, AddDataset]
 
         def __init__(self, *args, **kwargs):
 
-            super(Volumes, self).__init__(*args, **kwargs)
+            self.options = [AddVolume,ViewVolumes, AddDataset]
+            #super(Volumes, self).__init__(*args, **kwargs)
             mp = models.MountPoint.objects.filter(mp_ischild=False).select_related().order_by('-id')
             for i in mp:
                 nav = NavOption()
                 nav.name = i.mp_path
                 nav.order = -i.id
+                nav.model = 'Volume'
+                nav.kwargs = {'oid': i.mp_volume.id, 'model': 'Volume'}
                 nav.icon = u'VolumesIcon'
                 nav.options = []
 
@@ -58,7 +60,7 @@ class Volumes(NavOption):
                 subnav.type = 'editobject'
                 subnav.view = 'storage_mp_permission'
                 subnav.kwargs = {'object_id': i.id}
-                subnav.model = 'Volumes'
+                subnav.model = 'Volume'
                 subnav.icon = u'ChangePasswordIcon'
                 subnav.app_name = 'storage'
                 subnav.options = []
@@ -69,6 +71,8 @@ class Volumes(NavOption):
                     nav2 = NavOption()
                     nav2.name = d.mp_path
                     nav2.icon = u'VolumesIcon'
+                    nav2.model = 'MountPoint'
+                    nav2.kwargs = {'oid': d.id, 'model': 'MountPoint'}
                     nav2.options = []
 
                     subnav2 = NavOption()
