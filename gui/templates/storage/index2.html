@@ -18,18 +18,19 @@
 			{{ m.mp_volume.vol_name }}
 		    </td>
 		    <td>
-			{{ m.mp_path }}
+			{{ m }}
 		    </td>
 		    <td>
 			{% if m.mp_ischild %}
             <button dojoType="dijit.form.Button" type="button"
                 onClick="editObject('Remove Dataset', '{% url storage_dataset_delete object_id=m.id %}', [this,]);">Remove dataset</button>
 			{% else %}
-            <button dojoType="dijit.form.Button" type="button" onClick="editObject('Delete Volume', '{% url freeadmin_model_delete app="storage",model="Volume",oid=m.id %}', [this,]);">Delete Volume</button>
+            <button dojoType="dijit.form.Button" type="button"
+                onClick="editObject('Delete Volume', '{% url freeadmin_model_delete app="storage",model="Volume",oid=m.mp_volume.id %}', [this,]);">Delete Volume</button>
             <button dojoType="dijit.form.Button" type="button">
                 View Disks
                 <script type="dojo/method" event="onClick" args="evt">
-                viewModel('View Disks', '{% url storage_datagrid_disks vid=m.id %}');
+                viewModel('View Disks', '{% url storage_datagrid_disks vid=m.mp_volume.id %}');
                 </script>
             </button>
 			{% endif %}

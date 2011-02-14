@@ -31,6 +31,7 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI.choices import *
 from freenasUI.middleware.notifier import notifier
 from freeadmin.models import Model
+from os import statvfs
 
 class Volume(Model):
     vol_name = models.CharField(
@@ -151,5 +152,26 @@ class MountPoint(Model):
             default=False,
             )
     def __unicode__(self):
-        return self.mp_path
+        def _humanize_number(number):
+            humanize_si_map = (
+                ('TB', 1000000000000),
+                ('GB', 1000000000),
+                ('MB', 1000000),
+                ('KB', 1000),
+                ('B', 1),
+                )
+            for suffix, factor in humanize_si_map:
+                if number > factor:
+                    return ('%.1f %s' % (number/factor, suffix))
+        try:
+            vfs = statvfs(self.mp_path)
+            totalbytes = vfs.f_blocks*vfs.f_frsize
+            availbytes = vfs.f_bavail*vfs.f_frsize
+            availpct = 100*vfs.f_bavail/vfs.f_blocks
+            return u"%s (%s available (%d%%), %s total)" % (self.mp_path,
+                _humanize_number(availbytes),
+                availpct,
+                _humanize_number(totalbytes))
+        except:
+            return self.mp_path
 
