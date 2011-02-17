@@ -33,12 +33,106 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User as django_User
 from django.contrib.auth.forms import UserChangeForm as django_UCF
 from dojango import forms
+from django.conf import settings
+from django.utils.safestring import mark_safe
+
+class FilteredSelectMultiple(forms.widgets.SelectMultiple):
+
+    def __init__(self, attrs=None, choices=()):
+
+        super(FilteredSelectMultiple, self).__init__(attrs, choices)
+
+    def render(self, name, value, attrs=None, choices=()):
+
+        selected = []
+        for choice in list(self.choices):
+            if choice[0] in value:
+                selected.append(choice)
+                self.choices.remove(choice)
+
+        output = ['<div class="selector" style>', '<div class="select-available">%s<br/>' % _('Available')]
+        _from = super(FilteredSelectMultiple, self).render('select_from', value, {'id': 'select_from'}, ())
+        _from = _from.split('</select>')
+        output.append(u''.join(_from[:-1]))
+        output.append("""
+        <script type="dojo/method">
+                var turn = this;
+                     while(1) {
+                        turn = dijit.getEnclosingWidget(turn.domNode.parentNode);
+                         if(turn.isInstanceOf(dijit.form.Form)) break;
+                   }
+            old = turn.onSubmit;
+            turn.onSubmit = function(e) {
+                dojo.query("select", turn.domNode).forEach(function(s) { 
+                                for (var i = 0; i < s.length; i++) {
+                                        s.options[i].selected = 'selected';
+                                   }
+                       });
+                old.call(turn, e);
+                };
+        </script>
+        <script type="dojo/connect" event="onDblClick" item="e">
+        var s = this.getSelected()[0];
+        var sel = dijit.byId("%s");
+        var c = dojo.doc.createElement('option');
+        c.innerHTML = s.text;
+        c.value = s.value;
+        sel.domNode.appendChild(c);
+        s.parentNode.removeChild(s);
+        </script>
+        """ % attrs['id'])
+        output.append('</select>')
+        output.append('</div>')
+
+        output.append('''
+            <div class="select-options">
+            <br />
+            <br />
+            <br />
+            <a href="#" onClick=" var s=dijit.byId('%s'); var s2=dijit.byId('select_from'); s.getSelected().forEach(function(i){ var c = dojo.doc.createElement('option');c.innerHTML = i.text;c.value = i.value; s2.domNode.appendChild(c); i.parentNode.removeChild(i); }); ">
+                &lt;&lt;
+            </a>
+            <br />
+            <br />
+            <br />
+            <a href="#" onClick=" var s2=dijit.byId('%s'); var s=dijit.byId('select_from'); s.getSelected().forEach(function(i){ var c = dojo.doc.createElement('option');c.innerHTML = i.text;c.value = i.value; s2.domNode.appendChild(c); i.parentNode.removeChild(i); }); ">
+                &gt;&gt;
+            </a>
+            </div>
+            <div class="select-selected">
+            %s<br/>
+        ''' % (attrs['id'], attrs['id'], _('Selected')))
+
+        #print output
+        _from = forms.widgets.SelectMultiple().render(name, value, attrs, selected)
+        _from = _from.split('</select>')
+        output.append(u''.join(_from[:-1]))
+        output.append("""
+        <script type="dojo/connect" event="onDblClick" item="e">
+        var s = this.getSelected()[0];
+        var sel = dijit.byId("%s");
+        var c = dojo.doc.createElement('option');
+        c.innerHTML = s.text;
+        c.value = s.value;
+        sel.domNode.appendChild(c);
+        s.parentNode.removeChild(s);
+        </script>
+        """ % 'select_from')
+        output.append('</select>')
+        output.append('</div></div>')
+        return mark_safe(u''.join(output))
+
+class FilteredSelectField(forms.fields.MultipleChoiceField):
+
+    widget = FilteredSelectMultiple
+    def __init__(self, *args, **kwargs):
+        super(FilteredSelectField, self).__init__(*args, **kwargs)
 
 class UserChangeForm(ModelForm):
     username = forms.RegexField(label=_("Username"), max_length=30, regex=r'^[\w.@+-]+$',
         help_text = _("Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."),
         error_messages = {'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
-    email = forms.EmailField("aa", required=False)
+    email = forms.EmailField(_('E-mail'), required=False)
 
     class Meta:
         fields = ('username', 'first_name', 'last_name', 'email',)
@@ -222,7 +316,7 @@ class bsdGroupsForm(ModelForm):
 attrs_dict = { 'class': 'required' }
 
 class bsdGroupToUserForm(Form):
-    bsdgroup_to_user = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member users')
+    bsdgroup_to_user = FilteredSelectField(label = _('Auxiliary groups'), choices=(), required=False)
     def __init__(self, groupid, *args, **kwargs):
         super(bsdGroupToUserForm, self).__init__(*args, **kwargs)
         self.groupid = groupid
@@ -240,7 +334,7 @@ class bsdGroupToUserForm(Form):
         notifier().reload("user")
 
 class bsdUserToGroupForm(Form):
-    bsduser_to_group = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Auxiliary groups')
+    bsduser_to_group = FilteredSelectField(label = _('Auxiliary groups'), choices=(), required=False)
     def __init__(self, userid, *args, **kwargs):
         super(bsdUserToGroupForm, self).__init__(*args, **kwargs)
         self.userid = userid

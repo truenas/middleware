@@ -43,6 +43,7 @@ from django.views.generic.create_update import update_object, delete_object
 from django.utils import simplejson
 from freenasUI.middleware.notifier import notifier
 from django.core import serializers
+from freenasUI.services.models import *
 import os, commands
 
 ## Disk section
@@ -72,11 +73,12 @@ def wizard(request):
 
         form = VolumeWizardForm(request.POST)
         if form.is_valid():
-            form.done()
+            form.done(request)
+
             return HttpResponse(simplejson.dumps({"error": False, "message": "Volume successfully added."}), mimetype="application/json")
             #return render_to_response('storage/wizard_ok.html')
         else:
-            print form._errors
+
             if 'volume_disks' in request.POST:
                 disks = request.POST.getlist('volume_disks')
             else:
@@ -354,7 +356,6 @@ def dataset_delete2(request, object_id):
         notifier().destroy_zfs_dataset(path = obj.mp_path[5:].__str__())
         obj.delete()
         return HttpResponse(simplejson.dumps({"error": False, "message": "Dataset successfully deleted."}), mimetype="application/json")
-        #return render_to_response('storage/dataset_confirm_delete_ok.html', {})
     else:
         c = RequestContext(request, {
             'focused_tab' : 'storage',
@@ -381,10 +382,9 @@ def generic_delete(request, object_id, model_name):
 	}
         # TODO: Extend delete_object to add a callback to do this
         # TODO: Recursively delete file extents as well
-        if request.method == 'POST' and model_name == 'volumes':
+        if request.method == 'POST' and model_name == 'volume':
             vol = Volume.objects.get(id = object_id)
             if vol.vol_fstype == 'iscsi':
-                from freenasUI.services.models import *
                 diskdev = u'/dev/' + vol.vol_name[6:]
                 ist = iSCSITargetExtent.objects.get(iscsi_target_extent_path = diskdev)
                 ist.delete()

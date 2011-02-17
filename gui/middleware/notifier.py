@@ -381,8 +381,10 @@ class notifier:
         # Finally, create the zpool.
         # TODO: disallowing cachefile may cause problem if there is
         # preexisting zpool having the exact same name.
-        self.__system("zpool create -o cachefile=none -fm /mnt/%s %s %s" %
-                     (z_name, z_name, z_vdev))
+        if not os.path.isdir("/data/zfs"):
+            os.makedirs("/data/zfs")
+        self.__system("zpool create -o cachefile=/data/zfs/zpool.cache "
+                      "-fm /mnt/%s %s %s" % (z_name, z_name, z_vdev))
         # If we have 4k hack then restore system to whatever it should be
         if need4khack:
             self.__system("zpool export %s" % (z_name))
@@ -642,11 +644,21 @@ class notifier:
                 self.__system("/usr/bin/chown :%s %s" % (group, path))
             return [user, group]
 
+    def change_upload_location(self, path):
+        self.__system("/bin/rm -rf /var/tmp/firmware")
+        self.__system("/bin/mkdir -p %s/.freenas" % path)
+        self.__system("/usr/sbin/chown www:www %s/.freenas" % path)
+        self.__system("/bin/ln -s %s/.freenas /var/tmp/firmware" % path)
+
     def validate_xz(self, path):
         ret = self.__system_nolog("/usr/bin/xz -t %s" % (path))
         if ret == 0:
             return True
         return False
+
+    def update_firmware(self, path):
+        #self.__system("/usr/bin/xz -d %s | sh /root/update")
+        self.__system("/bin/rm -fr /var/tmp/firmware/firmware.xz")
 
 def usage():
     print ("Usage: %s action command" % argv[0])

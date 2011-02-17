@@ -3,7 +3,37 @@
 #top_dialog_underlay { background-color:#000; }
 #top_dialog .dijitDialogPaneContent { background-color:#000 !important; }
 .dijitDialogPaneContent { border-top:1px solid #333 !important; }
-#top_dialog pre {border:none !important;}
+#top_dialog pre {border:none !important;} 
+.error {
+background-color:#F7977A;
+border:1px solid #222;
+max-width:500px;word-wrap:break-word;color:#000;height:60px;text-align:center;opacity:0.6;filter:alpha(opacity=18);
+}
+.success {
+background-color:#40664D;
+border:1px solid #222;
+max-width:500px;word-wrap:break-word;color:#000;height:60px;text-align:center;opacity:0.6;filter:alpha(opacity=18);
+}
+.error p {
+    padding-top:23px;
+    color:#fff;
+}
+.success p {
+    padding-top:23px;
+    color:#fff;
+}
+.footer-block {
+float:left;width:28%;color:#f5f5f5;
+}
+.dijitTooltipContainer {
+    max-width:250px;
+    margin-top:10px;
+    overflow:auto;
+}
+#successmsg {
+    margin-left:100px;
+
+}
 #id_stg_timezone_menu {
     max-height:200px;
     overflow:auto !important;
@@ -37,13 +67,15 @@ table.srv img{
 img.srv {
     cursor:pointer;
 }
-
+div form {
+    margin-top:10px;
+}
 span.required {
     font-weight:bold;
     color:#5C7990;
 }
 table.config {
-    margin-top:24px;
+    margin-top:10px;
 }
 .config th{
     color:#ff0000;
@@ -73,7 +105,7 @@ thead td:hover {
     background-color:#96c6f5;
 }
 table.grid  {
-    margin-top:24px;
+    margin-top:10px;
     margin-left:10px;
     border-spacing:0;
     border-collapse:collapse;

@@ -82,7 +82,8 @@ def index(request, objtype = None):
         email = EmailForm(instance = Email.objects.order_by("-id")[0])
     except:
         email = EmailForm()
-    firmware = FirmwareForm()
+    firmloc = FirmwareTemporaryLocationForm()
+    firmware = FirmwareUploadForm()
     if request.method == 'POST':
         if objtype == 'settings':
             settings = SettingsForm(request.POST)
@@ -99,10 +100,15 @@ def index(request, objtype = None):
             if email.is_valid():
                 email.save()
                 return HttpResponseRedirect('/system/' + objtype)
+        elif objtype == 'firmloc':
+            firmloc = FirmwareTemporaryLocationForm(request.POST)
+            if firmloc.is_valid():
+                firmloc.done()
+                return HttpResponseRedirect('/system/firmware/')
         elif objtype == 'firmware':
-            firmware = FirmwareForm(request.POST, request.FILES)
+            firmware = FirmwareUploadForm(request.POST, request.FILES)
             if firmware.is_valid():
-                firmware.save()
+                firmware.done()
                 return HttpResponseRedirect('/system/' + objtype)
         else: 
             raise Http404()
@@ -135,6 +141,7 @@ def index(request, objtype = None):
         'settings': settings,
         'email': email,
         'advanced': advanced,
+        'firmloc': firmloc,
         'firmware': firmware,
         'focus_form': focus_form,
         'graphs': graphs,

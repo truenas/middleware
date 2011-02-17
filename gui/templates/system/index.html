@@ -125,7 +125,36 @@
         <br />
         <br />
     </div>
- <div dojoType="dijit.layout.ContentPane" title="Firmware Update" {% if focus_form == "settings" %} selected="true"{% endif %}>
+ <div dojoType="dijit.layout.ContentPane" title="Temporary Directory" {% if focus_form == "firmloc" %} selected="true"{% endif %}>
+            <h3>Temporary Directory for firmware</h3>
+        <form action="/system/firmloc/" enctype="multipart/form-data" method="post">{% csrf_token %}
+        <table class="config">
+            {% for field in firmloc %}
+                <tr>
+                    <td>
+                        <label for="{{ field.auto_id }}">
+                            {% if field.field.required %}
+                                <span class="required">{{ field.label }}</span>
+                            {% else %}
+                                {{ field.label }}
+                            {% endif %}
+                        </label>
+                    </td>
+                    <td>
+                         {{ field }}
+                         {{ field.errors }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        <p class="btn">
+            <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">Continue</button>
+        </p>
+    </form>
+        <br />
+        <br />
+    </div>
+ <div dojoType="dijit.layout.ContentPane" title="Firmware Update" {% if focus_form == "firmware" %} selected="true"{% endif %}>
             <h3>Firmware Update</h3>
         <form action="/system/firmware/" enctype="multipart/form-data" method="post">{% csrf_token %}
         <table class="config">

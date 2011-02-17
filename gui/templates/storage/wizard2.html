@@ -1,4 +1,3 @@
-    <h3>Easy Storage Setup</h3>
         <form dojoType="dijit.form.Form">
             <script type="dojo/event" event="onSubmit" args="e">
                 formSubmit(this, e,  '{% url storage_wizard %}',
@@ -21,7 +20,7 @@
                     <td>
                     <select dojoType="dijit.form.MultiSelect" id="wizarddisks" name="volume_disks" size="4" multiple="true">
                         <script type="dojo/method" event="onClick" args="evt">
-                            wizardcheckings();
+                            wizardcheckings(true);
                         </script>
                         {{ form.volume_disks.errors }}
                         {% for e in form.volume_disks.field.choices %}
@@ -37,8 +36,8 @@
                     </td>
                     <td>
                         {{ form.volume_fstype.errors }}
-                        <input type="radio" dojoType="dijit.form.RadioButton" name="volume_fstype" value="UFS" onClick="wizardcheckings();" {% if form.data.volume_fstype == "UFS" %}checked{%endif%}/> UFS<br />
-                        <input type="radio" dojoType="dijit.form.RadioButton" name="volume_fstype" value="ZFS" onClick="wizardcheckings();" {% if form.data.volume_fstype == "ZFS" %}checked{%endif%}/>
+                        <input type="radio" dojoType="dijit.form.RadioButton" name="volume_fstype" value="UFS" onClick="wizardcheckings(true);" {% if form.data.volume_fstype == "UFS" %}checked{%endif%}/> UFS<br />
+                        <input type="radio" dojoType="dijit.form.RadioButton" name="volume_fstype" value="ZFS" onClick="wizardcheckings(true);" {% if form.data.volume_fstype == "ZFS" %}checked{%endif%}/>
                         ZFS
                     </td>
                 </tr>
@@ -49,25 +48,46 @@
                     <td style="width:250px;">
                         {{ form.group_type.errors }}
                         <span id="grpmirror">
-                            <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="mirror" {% if form.data.group_type == "mirror" %}checked{%endif%}/> mirror<br />
+                            <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="mirror" {% if form.data.group_type == "mirror" %}checked{%endif%} onClick="wizardcheckings();"/> mirror<br />
                         </span>
                         <span id="grpstripe">
-                            <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="stripe" {% if form.data.group_type == "mirror" %}checked{%endif%}/> stripe<br/>
+                            <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="stripe" {% if form.data.group_type == "stripe" %}checked{%endif%} onClick="wizardcheckings();"/> stripe<br/>
                         </span>
                         <span id="grpraid3">
-                            <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="raid3" {% if form.data.group_type == "mirror" %}checked{%endif%}/> raid3<br />
+                            <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="raid3" {% if form.data.group_type == "raid3" %}checked{%endif%} onClick="wizardcheckings();"/> raid3<br />
                         </span>
                         <span id="grpraidz">
-                            <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="raidz" {% if form.data.group_type == "mirror" %}checked{%endif%}/> RAID-Z<br />
+                            <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="raidz" {% if form.data.group_type == "raidz" %}checked{%endif%} onClick="wizardcheckings();"/> RAID-Z<br />
                         </span>
                         <span id="grpraidz2">
-                            <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="raidz2" > RAID-Z2 </input>
+                            <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="raidz2" {% if form.data.group_type == "raidz2" %}checked{%endif%} onClick="wizardcheckings()> ;"/> RAID-Z2 </input>
                         </span>
+                    </td>
+                </tr>
+                <tr id="zfsextra" style="display:none;">
+                    <td style="width:200px;">
+                        ZFS Extra
+                    </td>
+                    <td style="width:250px;" id="disks_unselected">
+                        <span id="lowlog" style="display:none;color:red;">The use of only 1 log disk is highly discouraged</span>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <td>Disk</td>
+                                    <td>None</td>
+                                    <td>Log</td>
+                                    <td>Cache</td>
+                                    <td>Spare</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
                     </td>
                 </tr>
             </table>
                 <button dojoType="dijit.form.Button" type="submit" class="submitform">
-                        Create volume<br />
+                        Add Volume<br />
             <b style="color: red">Existing data will be cleared</b>
                 </button>
                 <button dojoType="dijit.form.Button" type="button" class="cancelform">

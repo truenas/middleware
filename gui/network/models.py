@@ -257,9 +257,11 @@ class LAGGInterfaceMembers(Model):
         return self.lagg_physnic
 
     class Meta:
-        verbose_name = "Link Aggregation"
+        verbose_name = "Link"
     
     class FreeAdmin:
+        deletable = False
+
         icon_object = u"LAGGIcon"
         icon_model = u"LAGGIcon"
 

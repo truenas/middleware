@@ -338,7 +338,7 @@ def forkexec(path, *args):
 
 
 def shell():
-    return forkexec("/bin/sh")
+    return forkexec("/usr/local/bin/bash")
 
 
 def reboot():

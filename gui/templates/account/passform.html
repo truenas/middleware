@@ -1,9 +1,10 @@
+{% load i18n %}
 <form dojoType="dijit.form.Form">
 <script type="dojo/event" event="onSubmit" args="e">
     formSubmit(this, e, '{% url account_passform %}');
 </script>
 {% if saved %}
-Password Successfully saved!
+{% trans "Password successfully saved!" %}
 {% endif %}
     <table class="config">
         {% for field in passform %}
@@ -24,5 +25,6 @@ Password Successfully saved!
         </tr>
     {% endfor %}
     </table>
-    <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit" class="submitform" >Change Admin Password</button>
+    <button style="margin-top:16px;" dojoType="dijit.form.Button"
+        type="submit" class="submitform" >{% trans "Change Admin Password" %}</button>
 </form>

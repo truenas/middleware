@@ -9,6 +9,9 @@
 	    <thead class="ghead">
 		<td>Volume</td>
 		<td>Path</td>
+		<td>Used</td>
+		<td>Available</td>
+		<td>Size</td>
 		<td>Available actions</td>
 	    </thead>
 	    <tbody>
@@ -18,7 +21,16 @@
 			{{ m.mp_volume.vol_name }}
 		    </td>
 		    <td>
-			{{ m }}
+			{{ m.mp_path }}
+		    </td>
+		    <td>
+			{{ m.used_si }} ({{ m.used_pct }})
+		    </td>
+		    <td>
+			{{ m.avail_si }}
+		    </td>
+		    <td>
+			{{ m.total_si }}
 		    </td>
 		    <td>
 			{% if m.mp_ischild %}
@@ -47,15 +59,15 @@
 	</table>
 	<div style="padding:12px;">
         <button dojoType="dijit.form.Button" type="button" >
-            Storage Wizard
+           Add Volume 
             <script type="dojo/method" event="onClick" args="evt">
-                volumeWizard('Wizard', '{% url storage_wizard %}', [this,]);
+                volumeWizard('Add Volume', '{% url storage_wizard %}', [this,]);
             </script>
         </button>
         <button dojoType="dijit.form.Button" type="button" >
-            Create dataset
+            Add Dataset
             <script type="dojo/method" event="onClick" args="evt">
-                addObject('Create Dataset', '{% url storage_dataset %}', [this,]);
+                addObject('Add Dataset', '{% url storage_dataset %}', [this,]);
             </script>
         </button>
 	</div>

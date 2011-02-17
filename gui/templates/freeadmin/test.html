@@ -136,13 +136,15 @@
                 } else
                     editObject(item.name, item.view);
             } else if(item.type && item.type == 'viewlagg') {
-                openNetwork('LAGG');
+                openNetwork('Link Aggregation');
             } else if(item.type && item.type == 'viewinterfaces') {
                 openNetwork('Interfaces');
             } else if(item.type && item.type == 'viewvlans') {
                 openNetwork('VLAN');
             } else if(item.type && item.type == 'viewsr') {
                 openNetwork('Static Routes');
+            } else if(item.type && item.type == 'network_global') {
+                openNetwork('Global Configuration');
             } else if(item.type && item.type == 'changepass') {
                 openAccount('Change Password');
             } else if(item.type && item.type == 'changeadmin') {
@@ -277,50 +279,212 @@
                dijit.getEnclosingWidget(inputElem).set('disabled',true);
            }
         );
-        //var qry = dojo.query('.submitform', item.domNode)[0];
-        //dijit.byNode(qry).set('disabled', true);
-        //var qry = dojo.query('.cancelform', item.domNode);
-        //if(qry.length>0) dijit.byNode(qry[0]).set('disabled', true);
 
         var rnode = dijit.getEnclosingWidget(item.domNode.parentNode);
         if(!rnode) rnode = dijit.byId("edit_dialog");
 
-        var newData = item.get("value");
-        dojo.xhrPost( {
-            url: url,
-            content: newData,
-            handleAs: 'text',
-            load: function(data) { 
+        // are there any files to be submited?
+        var files = dojo.query("input[type=file]", item.domNode);
+        if(files.length > 0) {
 
-                try {
-                var json = dojo.fromJson(data);
-                    rnode.hide();
+            dojo.io.iframe.send( {
+                url: url + '?iframe=true',
+                method: 'POST',
+                form: item.domNode,
+                handleAs: 'text',
+                load: function(data, ioArgs) { 
 
-                    dojo.style("successmsg", "opacity", "0");
-                    dijit.byId("successmsg").set('label', json.message);
-                    dojo.fadeIn({ node: "successmsg" }).play();
-                } catch(err) {
-                    rnode.set('content', data); 
-                    if(callback) callback();
-                    var qry = dojo.query('#success', rnode.domNode);
-                    if(qry.length>0)
-                        dojo.fadeOut({node: rnode, onEnd: function() { rnode.hide(); }}).play();
-                }
-            },
-            error: function(data) { 
-                    dojo.style("successmsg", "opacity", "0");
-                    dijit.byId("successmsg").set('label', 'Some error ocurred!');
-                    dojo.fadeIn({ node: "successmsg" }).play();
-                    rnode.hide();
-             }
-         });
+                    try {
+                        var json = dojo.fromJson(data);
+                        rnode.hide();
+
+                        var footer = dojo.query(".footer-block")[1];
+                        dojo.empty(footer);
+                        var suc = dojo.create("div");
+                        footer.appendChild(suc);
+                        dojo.addClass(suc, "success");
+                        dojo.html.set(suc, json.message);
+                        //dojo.style(suc, "opacity", "0");
+                        //dojo.fadeIn({ node: suc }).play();
+                    } catch(err) {
+                        rnode.set('content', data); 
+                        if(callback) callback();
+                        var qry = dojo.query('#success', rnode.domNode);
+                        if(qry.length>0)
+                            dojo.fadeOut({node: rnode, onEnd: function() { rnode.hide(); }}).play();
+                    }
+
+                },
+	        error: function(response, ioArgs) {alert("error"); },
+             });
+
+        } else {
+
+            var newData = item.get("value");
+            dojo.xhrPost( {
+                url: url,
+                content: newData,
+                handleAs: 'text',
+                load: function(data) { 
+
+                    try {
+                        var json = dojo.fromJson(data);
+
+                        try {
+                         rnode.hide();
+                        } catch(err2) {
+                            dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
+                              function(inputElem){
+                                   dijit.getEnclosingWidget(inputElem).set('disabled',false);
+                               }
+                            );
+
+                            dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','OK');
+                        }
+
+                        var footer = dojo.query(".footer-block")[1];
+                        dojo.empty(footer);
+                        var suc = dojo.create("div");
+                        dojo.connect(suc, 'onclick', function() {
+                            dojo.fadeOut({ node: suc }).play();
+                        });
+                        footer.appendChild(suc);
+                        dojo.addClass(suc, "success");
+                        dojo.html.set(suc, "<p>"+json.message+"</p>");
+                        //dojo.style(suc, "opacity", "0");
+                        //dojo.fadeIn({ node: suc }).play();
+                    } catch(err) {
+                        rnode.set('content', data); 
+                        if(callback) callback();
+                        var qry = dojo.query('#success', rnode.domNode);
+                        if(qry.length>0)
+                            dojo.fadeOut({node: rnode, onEnd: function() { rnode.hide(); }}).play();
+                    }
+                },
+                error: function(data) { 
+
+                        var footer = dojo.query(".footer-block")[1];
+                        dojo.empty(footer);
+                        var suc = dojo.create("div");
+                        dojo.connect(suc, 'onClick', function() {
+                            dojo.fadeOut({ node: suc }).play();
+                        });
+                        footer.appendChild(suc);
+                        dojo.addClass(suc, "error");
+
+                        dojo.html.set(suc, '<p>Some error ocurried!</p>');
+                        //dojo.style(suc, "opacity", "0");
+                        //dojo.fadeIn({ node: suc }).play();
+                        try {
+                           rnode.hide();
+                        } catch(err2) {
+                            dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
+                              function(inputElem){
+                                   dijit.getEnclosingWidget(inputElem).set('disabled',false);
+                               }
+                            );
+
+                            dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','OK');
+                        }
+                 }
+             });
+
+         }
 
     }
 
-    wizardcheckings = function() {
+    function checkNumLog(unselected) {
+        var num = 0;
+        for(var i=0;i<unselected.length;i++) {
+            var q = dojo.query("input[name=zpool_"+unselected[i]+"]:checked");
+            if(q.length > 0) {
+                if(q[0].value == 'log')
+                num += 1;
+            }
+        }
+        if(num == 1) {
+            dojo.style("lowlog", "display", "");
+        } else {
+            dojo.style("lowlog", "display", "none");
+        }
+    }
+
+    wizardcheckings = function(vol_change) {
 
         if(!dijit.byId("wizarddisks")) return;
-        var d = dijit.byId("wizarddisks").getSelected();
+        var disks = dijit.byId("wizarddisks");
+        var d = disks.getSelected();
+
+        var zfs = dojo.query("input[name=volume_fstype]")[1].checked;
+
+        if(vol_change == true) {
+            var unselected = [];
+            for(var i=0;i<disks.domNode.length;i++) {
+
+                var selected = false;
+                for(var j=0;j<d.length;j++) {
+                    if (disks.domNode.options[i].value == d[j].value) {
+                        selected = true;
+                    }
+                }
+                if(selected == false) {
+                    unselected.push(disks.domNode.options[i].value);
+                }
+
+            }
+
+            if(unselected.length > 0 && zfs == true) {
+
+                var tab = dojo.byId("disks_unselected");
+                dojo.query("#disks_unselected tbody tr").orphan();
+                var txt = "";
+                var toappend = [];
+                for(var i=0;i<unselected.length;i++) {
+                    var tr = dojo.create("tr");
+                    var td = dojo.create("td", {innerHTML: unselected[i]});
+                    tr.appendChild(td);
+
+                    var td = dojo.create("td");
+                    var rad = new dijit.form.RadioButton({ checked: true, value: "none", name: "zpool_"+unselected[i]});
+                    dojo.connect(rad, 'onClick', function() {checkNumLog(unselected);});
+                    td.appendChild(rad.domNode);
+                    tr.appendChild(td);
+
+                    var td = dojo.create("td");
+                    var rad = new dijit.form.RadioButton({ value: "log", name: "zpool_"+unselected[i]});
+                    dojo.connect(rad, 'onClick', function() {checkNumLog(unselected);});
+                    td.appendChild(rad.domNode);
+                    tr.appendChild(td);
+
+                    var td = dojo.create("td");
+                    var rad = new dijit.form.RadioButton({ value: "cache", name: "zpool_"+unselected[i]});
+                    dojo.connect(rad, 'onClick', function() {checkNumLog(unselected);});
+                    td.appendChild(rad.domNode);
+                    tr.appendChild(td);
+
+                    var td = dojo.create("td");
+                    var rad = new dijit.form.RadioButton({ value: "spare", name: "zpool_"+unselected[i]});
+                    dojo.connect(rad, 'onClick', function() {checkNumLog(unselected);});
+                    td.appendChild(rad.domNode);
+                    tr.appendChild(td);
+
+                    toappend.push(tr);
+                }
+
+                for(var i=0;i<toappend.length;i++) {
+                    dojo.place(toappend[i], dojo.query("#disks_unselected tbody")[0]);
+                }
+
+               dojo.style("zfsextra", "display", "");
+
+            } else {
+               dojo.query("#disks_unselected tbody tr").orphan();
+               dojo.style("zfsextra", "display", "none");
+            }
+        } else if(zfs == false) {
+               dojo.style("zfsextra", "display", "");
+
+        }
 
         var ufs = dojo.query("#fsopt input")[0].checked;
         var zfs = dojo.query("#fsopt input")[1].checked;
@@ -430,7 +594,7 @@
     volumeWizard = function(name, url, nodes) {
          dialog = new dijit.Dialog({ 
              id: 'wizard_dialog',
-             title: 'Wizard', 
+             title: 'Add Volume', 
              href: '{% url storage_wizard %}', 
              parseOnLoad: true,
              closable: true, 
@@ -459,6 +623,7 @@
             parseOnLoad: true,
             refreshOnShow: true,
         });
+        dojo.addClass(pane.domNode, "objrefresh" );
         p.addChild(pane);
         p.selectChild(pane);
     }
@@ -475,23 +640,23 @@
 <div dojoType="dijit.Dialog" id="rebootDialog" title="Reboot the System" >
     <h3>Warning!</h3>
     <p>You are about to <strong>REBOOT</strong> the system, what would you like to do?</p>
-                <button dojoType="dijit.form.Button" type="submit" onClick="window.location='/system/reboot/'">
-                    Reboot
-                </button>
                 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('rebootDialog').hide();">
                     Cancel
+                </button>
+                <button dojoType="dijit.form.Button" type="submit" onClick="window.location='/system/reboot/'">
+                    Reboot
                 </button>
 </div>
              
 <div dojoType="dijit.Dialog" id="shutdownDialog" title="Shutdown the System" >
     <h3>Warning!</h3>
     <p>You are about to <strong>SHUTDOWN</strong> the system, what would you like to do?</p>
-                <button dojoType="dijit.form.Button" type="submit" onClick="window.location='/system/shutdown/'">
-                    Shutdown
-                </button>
                 <button dojoType="dijit.form.Button" type="button"
                     onClick="dijit.byId('shutdownDialog').hide();">
                     Cancel
+                </button>
+                <button dojoType="dijit.form.Button" type="button" onClick="window.location='/system/shutdown/'">
+                    Shutdown
                 </button>
 </div>
 {% endblock %}

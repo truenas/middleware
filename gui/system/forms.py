@@ -109,26 +109,30 @@ class EmailForm(ModelForm):
              notifier().start("ix-msmtp")
         return email
 
-class FirmwareForm(Form):
+class FirmwareTemporaryLocationForm(Form):
     mountpoint = forms.ChoiceField(label="Place to temporarily place firmware file", help_text="The system will use this place to temporarily store the firmware file before it's being applied.",choices=(), widget=forms.Select(attrs={ 'class': 'required' }),)
-    firmware = django.forms.FileField(label="New image to be installed")
     def __init__(self, *args, **kwargs):
         from freenasUI.storage.models import MountPoint
-        super(FirmwareForm, self).__init__(*args, **kwargs)
+        super(FirmwareTemporaryLocationForm, self).__init__(*args, **kwargs)
         self.fields['mountpoint'].choices = [(x.mp_path, x.mp_path) for x in MountPoint.objects.all()]
+    def done(self):
+        notifier().change_upload_location(self.cleaned_data["mountpoint"].__str__())
+
+class FirmwareUploadForm(Form):
+    firmware = django.forms.FileField(label="New image to be installed")
     def clean(self):
         cleaned_data = self.cleaned_data
-        filename = "%s/firmware.xz" % (cleaned_data["mountpoint"])
+        filename = '/var/tmp/firmware/firmware.xz'
         fw = open(filename, 'wb+')
         for c in self.files['firmware'].chunks():
             fw.write(c)
         fw.close()
         retval = notifier().validate_xz(filename)
-        if retval:
-            raise ValueError("Not implemented yet")
-        else:
+        if retval == False:
             msg = u"Invalid firmware"
             self._errors["firmware"] = self.error_class([msg])
             del cleaned_data["firmware"]
         return cleaned_data
+    def done(self):
+        notifier().update_firmware('/var/tmp/firmware/firmware.xz')
 

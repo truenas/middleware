@@ -174,10 +174,10 @@ def usergroup_delete(request, object_id, objtype):
     obj = account_model_map[objtype].objects.get(id=object_id)
     if objtype == 'bsduser':
         if obj.bsdusr_builtin == True:
-            raise ValueError("User %s is built-in and can not be deleted!" % (obj.bsdusr_username))
+            raise ValueError(_("User %s is built-in and can not be deleted!") % (obj.bsdusr_username))
     else:
         if obj.bsdgrp_builtin == True:
-            raise ValueError("Group %s is built-in and can not be deleted!" % (obj.bsdgrp_group))
+            raise ValueError(_("Group %s is built-in and can not be deleted!") % (obj.bsdgrp_group))
     if request.method == 'POST':
         if objtype == 'bsduser':
             notifier().user_deleteuser(obj.bsdusr_username.__str__())
@@ -288,7 +288,7 @@ def group2user_update2(request, object_id):
         f = bsdGroupToUserForm(object_id, request.POST)
         if f.is_valid():
             f.save()
-            return HttpResponse(simplejson.dumps({"error": False, "message": "Users successfully update."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Users")}), mimetype="application/json")
             #return render_to_response('account/bsdgroup2user_form_ok.html')
     else:
         f = bsdGroupToUserForm(groupid=object_id)
@@ -319,7 +319,7 @@ def user2group_update2(request, object_id):
         f = bsdUserToGroupForm(object_id, request.POST)
         if f.is_valid():
             f.save()
-            return HttpResponse(simplejson.dumps({"error": False, "message": "Groups successfully update."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Groups")}), mimetype="application/json")
             #return render_to_response('account/bsdgroup2user_form_ok.html')
     else:
         f = bsdUserToGroupForm(userid=object_id)

@@ -3,12 +3,11 @@
                 formSubmit(this, e, '{% url storage_dataset %}');
             </script>
 
-    <h3>Create dataset</h3>
     <form action="." method="post">{% csrf_token %}
 	<table>
 	{{ form }}
 	</table>
-	<button dojoType="dijit.form.Button" type="submit" class="submitform">Create</button>
+	<button dojoType="dijit.form.Button" type="submit" class="submitform">Add Dataset</button>
                 <button dojoType="dijit.form.Button"type="button">
                     Cancel
                     <script type="dojo/method" event="onClick" args="evt">

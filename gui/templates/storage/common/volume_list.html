@@ -11,6 +11,9 @@
 	    <thead class="ghead">
 		<td>Volume</td>
 		<td>Path</td>
+		<td>Used</td>
+		<td>Available</td>
+		<td>Size</td>
 		<td>Available actions</td>
 	    </thead>
 	    <tbody>
@@ -20,7 +23,16 @@
 			{{ m.mp_volume.vol_name }}
 		    </td>
 		    <td>
-			{{ m }}
+			{{ m.mp_path }}
+		    </td>
+		    <td>
+			{{ m.used_si }} ({{ m.used_pct }})
+		    </td>
+		    <td>
+			{{ m.avail_si }}
+		    </td>
+		    <td>
+			{{ m.total_si }}
 		    </td>
 		    <td>
 			{% if m.mp_ischild %}

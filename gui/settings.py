@@ -32,8 +32,6 @@ import os
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 DEBUG = True
-#DEBUG = False
-# use 'DEBUG= True' to display error logs instead of 404 page
 
 TEMPLATE_DEBUG = DEBUG
 LOGIN_REDIRECT_URL = '/'
@@ -74,18 +72,7 @@ USE_I18N = True
 # Example: "/home/media/media.lawrence.com/"
 MEDIA_ROOT = os.path.join(HERE, 'media')
 
-# URL that handles the media served from MEDIA_ROOT. Make sure to use a
-# trailing slash if there is a path component (optional in other cases).
-# Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = 'https://raidzilla.ixsystems.com/media/'
-
-# URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
-# trailing slash.
-# Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = 'https://raidzilla.ixsystems.com/admin_media/'
-
-# This should be unique for every FreeNAS installation
-""" this should be addressed soon, any takers?"""
+# Updated every time /usr/local/etc/rc.d/django is run
 SECRET_KEY = '7j%4n@h$+eye^)!*^jk*ni=vj!r70!#y9sdsw)x^*!502bcu2_'
 
 # List of callables that know how to import templates from various sources.
@@ -100,6 +87,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'dojango.middleware.DojoCollector',
 )
+
 DOJANGO_DATAGRID_ACCESS = (
     'account',
     'system',
@@ -108,29 +96,28 @@ DOJANGO_DATAGRID_ACCESS = (
     'sharing',
     'services',
 )
+
 #DOJANGO_DOJO_PROFILE = 'local'
 #DOJANGO_DOJO_VERSION = '1.6.0b1'
 #DOJANGO_DOJO_BUILD_VERSION = '1.6.0b1'
+DOJANGO_DOJO_DEBUG = False
 
 ROOT_URLCONF = 'freenasUI.urls'
 
 TEMPLATE_DIRS = (
     os.path.join(HERE, 'templates'),
-    '/usr/local/lib/python2.6/site-packages/dojango/templates',
 )
+
 TEMPLATE_CONTEXT_PROCESSORS = (
         'django.core.context_processors.request',
         'django.contrib.auth.context_processors.auth',
         'dojango.context_processors.config',
         )
 
-
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    #'django.contrib.admin',
-    #'freenas',
     'freeadmin',
     'south',
     'dojango',
@@ -153,3 +140,6 @@ BLACKLIST_NAV = (
 )
 
 FORCE_SCRIPT_NAME = ''
+
+FILE_UPLOAD_MAX_MEMORY_SIZE = 268435456
+FILE_UPLOAD_TEMP_DIR = "/var/tmp/firmware/"

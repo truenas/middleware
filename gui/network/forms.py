@@ -94,7 +94,7 @@ attrs_dict = { 'class': 'required' }
 
 class LAGGInterfaceForm(forms.Form):
     lagg_protocol = forms.ChoiceField(choices=LAGGType, widget=forms.RadioSelect(attrs=attrs_dict))
-    lagg_interfaces = forms.MultipleChoiceField(choices=list(NICChoices()), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Physical NICs in the LAGG')
+    lagg_interfaces = forms.MultipleChoiceField(choices=list(NICChoices(nolagg=True)), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Physical NICs in the LAGG')
 
     def __init__(self, *args, **kwargs):
         super(LAGGInterfaceForm, self).__init__(*args, **kwargs)

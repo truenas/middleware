@@ -25,3 +25,16 @@
 #
 #####################################################################
 
+# The hard drive industry is using SI (10^n) rather than 2^n
+def humanize_number_si(number):
+    humanize_si_map = (
+        ('TB', 1000000000000.0),
+        ('GB', 1000000000.0),
+        ('MB', 1000000.0),
+        ('KB', 1000.0),
+        ('B', 1),
+        )
+    for suffix, factor in humanize_si_map:
+        if number > factor:
+            return ('%.1f %s' % (number/factor, suffix))
+

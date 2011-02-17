@@ -234,18 +234,19 @@
     <style type="text/css">html, body.{{ DOJANGO.THEME }} { width: 100%; height: 100%; }</style>
     {% include "dojango/include.html" %}
     <link rel="stylesheet" href="/freenas/media/css/template2.css" type="text/css" />
+ <link rel="stylesheet" href="/dojango/dojo-media/release/freenas-dojo-1.5.0/dojox/form/resources/FileInput.css" />
 <link href="/freenas/media/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 <script type="text/javascript"> 
     dojo.require("dijit.layout.BorderContainer");
     dojo.require("dijit.layout.ContentPane");
     dojo.require("dijit.layout.TabContainer");
-    dojo.require("dijit.layout.AccordionContainer");
+    dojo.require("dojox.form.FileInput");
 </script> 
 {% block dojango_header_extra %}{% endblock %}
 </head>
 
 <body class="{{ DOJANGO.THEME }}">
-    <div dojoType="dijit.layout.BorderContainer" id="outer" style="width:100%; height:100%">
+    <div dojoType="dijit.layout.BorderContainer" id="outer" style="width:100%; height:100%" gutters="false">
         <div dojoType="dijit.layout.ContentPane" style="height:121px;overflow:hidden;" region="top">
             <div id="page-header">
                  <div>
@@ -257,7 +258,7 @@
             {% endblock %}
         </div>
         <div dojoType="dijit.layout.ContentPane" id="menupane"
-            region="left" style="width:200px;" splitter="true">
+            region="left" splitter="true">
         </div>
         <div dojoType="dijit.layout.TabContainer" region="center" id="content">
         </div>

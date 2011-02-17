@@ -34,7 +34,7 @@
                                 closable: true,
                                 href:'{% url network_lagg_members object_id=l.id %}',
                             });
-                            dojo.addClass(pane2.domNode,"objrefresh");
+                            dojo.addClass(pane2.domNode,["data_network_LAGGInterfaceMembers{{ l.lagg_interface.int_name }}","objrefresh"]);
                             p.addChild(pane2);
                             p.selectChild(pane2);
                         </script>

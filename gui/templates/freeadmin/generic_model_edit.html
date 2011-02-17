@@ -1,4 +1,4 @@
-<form dojoType="dijit.form.Form">
+<form dojoType="dijit.form.Form" encType="multipart/form-data">
 <script type="dojo/event" event="onSubmit" args="e">
             formSubmit(this, e, '{% url freeadmin_model_edit app=app,model=model,oid=oid,mf=mf|default_if_none:"" %}{% if inline %}?inline=true{% endif %}');
 </script>{% if inline and saved %}<span class="saved">Your changes have been successfully updated!</span>{% endif %}

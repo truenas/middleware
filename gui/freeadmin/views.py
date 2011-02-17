@@ -105,7 +105,7 @@ def generic_model_add(request, app, model, mf=None):
         mf = mf(request.POST, request.FILES, instance=instance)
         if mf.is_valid():
             obj = mf.save()
-            return HttpResponse(simplejson.dumps({"error": False, "message": "%s successfully added." % m._meta.verbose_name}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": "%s successfully added." % m._meta.verbose_name}))
             #return render_to_response('freeadmin/generic_model_add_ok.html', context)
 
     else:
@@ -264,15 +264,15 @@ def generic_model_edit(request, app, model, oid, mf=None):
             mf = navtree._modelforms[m][mf]
 
     if request.method == "POST":
-        mf = mf(request.POST, instance=instance)
+        mf = mf(request.POST, request.FILES, instance=instance)
         if mf.is_valid():
             obj = mf.save()
             #instance.save()
-            if inline:
-                context.update({'saved': True})
+            if request.GET.has_key("iframe"):
+                return HttpResponse("<html><body><textarea>"+simplejson.dumps({"error": False, "message": "%s successfully updated." % m._meta.verbose_name})+"</textarea></boby></html>")
             else:
-                return HttpResponse(simplejson.dumps({"error": False, "message": "%s successfully updated." % m._meta.verbose_name}), mimetype="application/json")
-                #return render_to_response('freeadmin/generic_model_edit_ok.html', context, mimetype='text/html')
+                return HttpResponse(simplejson.dumps({"error": False, "message": "%s successfully updated." % m._meta.verbose_name}))
+            #return render_to_response('freeadmin/generic_model_edit_ok.html', context, mimetype='text/html')
 
     else:
         mf = mf(instance=instance)
@@ -287,7 +287,12 @@ def generic_model_edit(request, app, model, oid, mf=None):
     except:
         template = 'freeadmin/generic_model_edit.html'
 
-    return render_to_response('freeadmin/generic_model_edit.html', context, mimetype='text/html')
+    if request.GET.has_key("iframe"):
+    	resp = render_to_response('freeadmin/generic_model_edit.html', context, mimetype='text/html')
+        resp.content = "<html><body><textarea>"+resp.content+"</textarea></boby></html>"
+        return resp
+    else:
+    	return render_to_response('freeadmin/generic_model_edit.html', context, mimetype='text/html')
 
 
 @login_required

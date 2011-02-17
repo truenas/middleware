@@ -5,7 +5,7 @@
 clientSort="true" style="width: 100%; height: 100%;" rowSelector="25px">
     <script type="dojo/method" event="onRowDblClick" args="evt">
   	var item = this.selection.getSelected()[0];
-        editObject('Edit Disk', '{% url freeadmin_model_view app=app,model=model %}edit/'+item.id+'/?deletable=false');
+        editObject('Edit Disk', '{% url freeadmin_model_view app=app,model=model %}edit/'+item.id+'/?deletable=false', [this,]);
     </script>
     <thead>
         <tr>

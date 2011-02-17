@@ -70,28 +70,28 @@ class CIFS_Share(Model):
             max_length=120, 
             choices=whoChoices(), 
             default="www", 
-            verbose_name="Guest account", 
+            verbose_name="Guest Account", 
             help_text="Use this option to override the username ('ftp' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login."
             )
     cifs_guestok = models.BooleanField(
-            verbose_name="Allow guest access")
+            verbose_name="Allow Guest Access")
     cifs_guestonly = models.BooleanField(
-            verbose_name="Only allow guest access")
+            verbose_name="Only Allow Guest Access")
     cifs_hostsallow = models.CharField(
             max_length=120, 
             blank=True, 
-            verbose_name="Hosts allow",
+            verbose_name="Hosts Allow",
             help_text="This option is a comma, space, or tab delimited set of hosts which are permitted to access this share. You can specify the hosts by name or IP number. Leave this field empty to use default settings."
             )
     cifs_hostsdeny = models.CharField(
             max_length=120, 
             blank=True, 
-            verbose_name="Hosts deny",
+            verbose_name="Hosts Deny",
             help_text="This option is a comma, space, or tab delimited set of host which are NOT permitted to access this share. Where the lists conflict, the allow list takes precedence. In the event that it is necessary to deny all by default, use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify to the hosts allow parameter those hosts that should be permitted access. Leave this field empty to use default settings."
             )
     cifs_auxsmbconf = models.TextField(
             max_length=120, 
-            verbose_name="Auxiliary paramters", 
+            verbose_name="Auxiliary Parameters", 
             blank=True,
             help_text="These parameters are added to [Share] section of smb.conf"
             )
@@ -126,7 +126,7 @@ class AFP_Share(Model):
         )
     afp_sharecharset = models.CharField(
             max_length=120, 
-            verbose_name="Share character set", 
+            verbose_name="Share Character Set", 
             blank=True,
             help_text="Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, etc."
             )
@@ -144,13 +144,13 @@ class AFP_Share(Model):
             )
     afp_ro = models.CharField(
             max_length=120, 
-            verbose_name="Read-only access",
+            verbose_name="Read-only Access",
             blank=True,
             help_text="Allows certain users and groups to have read-only access to a share. This follows the allow option format."
         )
     afp_rw = models.CharField(
             max_length=120, 
-            verbose_name="Read-write access",
+            verbose_name="Read-write Access",
             blank=True,
             help_text="Allows certain users and groups to have read/write access to a share. This follows the allow option format. "
             )
@@ -231,7 +231,7 @@ class NFS_Share(Model):
             )
     nfs_path = models.ForeignKey(MountPoint, limit_choices_to=mountpoint_limiter, verbose_name="Volume Path")
     nfs_allroot = models.BooleanField(
-            verbose_name="Map All Remote users as local Root",
+            verbose_name="Map All Remote Users As Local Root",
             help_text="When enabled, map all remote access to local root.  THIS SETTING IS NOT RECOMMENDED FOR SECURITY REASONS."
             )
     nfs_network = models.CharField(
@@ -241,7 +241,7 @@ class NFS_Share(Model):
             blank=True,
             )
     nfs_alldirs = models.BooleanField(
-            verbose_name="All dirs",
+            verbose_name="All Directories",
             help_text="Allow mounting of any subdirectory under this mount point if selected.  Otherwise, only the top level directory can be mounted.",
             )
     nfs_ro = models.BooleanField(

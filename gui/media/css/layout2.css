@@ -1,5 +1,5 @@
 body.iXpage { background:#eceff0;}
-#page-header { height:73px;background: #464C53 url("/freenas/media/images/headerbg.png") repeat-x;}
+#page-header { height:72px;background: #464C53 url("/freenas/media/images/headerbg.png") repeat-x;}
 #footer { 
     height:80px;
     background: #464C53 url("/freenas/media/images/footerbg.png") repeat-x; 
@@ -36,4 +36,18 @@ body, html { overflow:hidden; width:100%; height:100%; margin:0; padding:0; }
     margin:0 0 0 0;
     padding:0;
 
+}
+.selector { width: 400px; float:left; }
+
+.select-available { width:170px; float:left; }
+.select-available select { width:100%; }
+.select-options { text-align:center;width:60px; float:left; }
+.select-selected { width:170px; float:left; }
+.select-selected select { width:100%; }
+#mytree,#menupane { width:272px; background-color:white;}
+#menupane { border-right:1px solid #ccc; margin-top:6px;border-top:1px solid #ccc;margin-left:5px;border-left:1px solid #ccc;margin-bottom:6px;border-bottom:1px solid #ccc;}
+.nohover {
+background-image: none;
+background-color: none;
+border: none;
 }

@@ -1,14 +1,16 @@
-    <div dojoType="dijit.layout.TabContainer" title="My Account"  nested="true" style="width:100%;" doLayout="true" id="tab_account">
-        <div dojoType="dijit.layout.ContentPane" title="Change Password" {% if focus_form == "passform" %} selected="true"{% endif %} href="{% url account_passform %}" class="objrefresh">
+{% load i18n %}
+<div dojoType="dijit.layout.TabContainer" title="{% trans "My Account" %}"  nested="true" style="width:100%;" doLayout="true" id="tab_account">
+        
+    <div dojoType="dijit.layout.ContentPane" title="{% trans "Change Admin User" %}" {% if focus_form == "Change Admin User" %} selected="true"{% endif %} href="{% url account_changeform %}" class="objrefresh">
         </div>
 
-        <div dojoType="dijit.layout.ContentPane" title="Change Admin User" {% if focus_form == "Change Admin User" %} selected="true"{% endif %} href="{% url account_changeform %}" class="objrefresh">
+        <div dojoType="dijit.layout.ContentPane" title="{% trans "Change Password" %}" {% if focus_form == "passform" %} selected="true"{% endif %} href="{% url account_passform %}" class="objrefresh">
         </div>
 
-        <div dojoType="dijit.layout.ContentPane" title="Users" {% if focus_form == "Users" %}selected="true"{% endif %} class="objrefresh data_account_bsdUsers" href="{% url account_bsduser %}" style="overflow-y:scroll;" refreshOnShow="true">
+        <div dojoType="dijit.layout.ContentPane" title="{% trans "Groups" %}" {% if focus_form == "Groups" %}selected="true"{% endif %} class="objrefresh data_account_bsdGroups" href="{% url account_bsdgroup %}" style="overflow-y:scroll;" refreshOnShow="true">
         </div>
 
-        <div dojoType="dijit.layout.ContentPane" title="Groups" {% if focus_form == "Groups" %}selected="true"{% endif %} class="objrefresh data_account_bsdGroups" href="{% url account_bsdgroup %}" style="overflow-y:scroll;" refreshOnShow="true">
+        <div dojoType="dijit.layout.ContentPane" title="{% trans "Users" %}" {% if focus_form == "Users" %}selected="true"{% endif %} class="objrefresh data_account_bsdUsers" href="{% url account_bsduser %}" style="overflow-y:scroll;" refreshOnShow="true">
         </div>
 
     </div>

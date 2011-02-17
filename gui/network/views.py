@@ -134,25 +134,17 @@ def network(request, objtype = None):
 
 @login_required
 def network2(request, objtype = None):
-    gc = GlobalConfigurationForm(data = GlobalConfiguration.objects.order_by("-id").values()[0], auto_id=False)
+
     if objtype != None:
         focus_form = objtype
     else:
         focus_form = 'gc'
-    int_list = Interfaces.objects.order_by("-id").values()
-    vlan_list = VLAN.objects.order_by("-id").values()
-    lagg_list = LAGGInterface.objects.order_by("-id").all()
-    sr_list = StaticRoute.objects.order_by("-id").values()
-    errform = ""
+
+    globalconf = GlobalConfiguration.objects.order_by("-id")[0].id
 
     variables = RequestContext(request, {
         'focus_form' : request.GET.get('tab','network'),
-        'gc': gc,
-        'int_list': int_list,
-        'vlan_list': vlan_list,
-        'lagg_list': lagg_list,
-        'sr_list': sr_list,
-        'errform': errform,
+        'globalconf': globalconf,
     })
     return render_to_response('network/index2.html', variables)
 

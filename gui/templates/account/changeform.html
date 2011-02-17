@@ -1,9 +1,10 @@
+{% load i18n %}
 <form dojoType="dijit.form.Form">
 <script type="dojo/event" event="onSubmit" args="e">
     formSubmit(this, e, '{% url account_changeform %}');
 </script>
 {% if saved %}
-User Successfully saved!
+{% trans "User Successfully saved!" %}
 {% endif %}
      <table class="config">
          {% for field in changeform %}
@@ -22,7 +23,7 @@ User Successfully saved!
                  {{ field.errors }}
              </td>
          </tr>
-     {% endfor %}
+        {% endfor %}
      </table>
-     <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit" class="submitform">Change Admin User</button>
+     <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit" class="submitform">{% trans "Change Admin User" %}</button>
  </form>

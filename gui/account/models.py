@@ -30,21 +30,22 @@ from freeadmin.models import Model
 from django import forms
 from freenasUI.choices import UserShell
 from django.contrib.auth.models import get_hexdigest
+from django.utils.translation import ugettext_lazy as _
 
 class bsdGroups(Model):
     bsdgrp_gid = models.IntegerField(
-            verbose_name="Group ID"
+            verbose_name=_("Group ID")
             )
     bsdgrp_group = models.CharField(
             unique = True,
             max_length=120,
-            verbose_name="Group Name"
+            verbose_name=_("Group Name")
             )
     bsdgrp_builtin = models.BooleanField(
             default=False,
             )
     class Meta:
-        verbose_name = "Group"
+        verbose_name = _("Group")
 
     class FreeAdmin:
         object_filters = {'bsdgrp_builtin__exact': False}
@@ -61,50 +62,50 @@ class bsdUsers(Model):
     bsdusr_uid = models.IntegerField(
             max_length=10,
             unique="True",
-            verbose_name="User ID"
+            verbose_name=_("User ID")
             )
     bsdusr_username = models.CharField(
             max_length=30,
             unique=True,
-            default='User &',
-            verbose_name="Username"
+            default=_('User &'),
+            verbose_name=_("Username")
             )
     bsdusr_unixhash = models.CharField(
             max_length=128,
             blank=True,
             default='*',
-            verbose_name="Hashed UNIX password"
+            verbose_name=_("Hashed UNIX password")
             )
     bsdusr_smbhash = models.CharField(
             max_length=128,
             blank=True,
             default='*',
-            verbose_name="Hashed SMB password"
+            verbose_name=_("Hashed SMB password")
             )
     bsdusr_group = models.ForeignKey(
             bsdGroups,
-            verbose_name="Primary Group ID"
+            verbose_name=_("Primary Group ID")
             )
     bsdusr_home = models.CharField(
             max_length=120,
             default="/nonexistent",
-            verbose_name="Home Directory"
+            verbose_name=_("Home Directory")
             )
     bsdusr_shell = models.CharField(
             max_length=120,
             default='/bin/csh',
-            verbose_name="Shell"
+            verbose_name=_("Shell")
             )
     bsdusr_full_name = models.CharField(
             max_length=120,
-            verbose_name="Full Name"
+            verbose_name=_("Full Name")
             )
     bsdusr_builtin = models.BooleanField(
             default=False,
             )
 
     class Meta:
-        verbose_name = "User"
+        verbose_name = _("User")
     class FreeAdmin:
         create_modelform = "bsdUserCreationForm"
         edit_modelform = "bsdUserChangeForm"
@@ -122,9 +123,9 @@ class bsdUsers(Model):
 class bsdGroupMembership(Model):
     bsdgrpmember_group = models.ForeignKey(
         bsdGroups,
-        verbose_name="Group",
+        verbose_name=_("Group"),
     )
     bsdgrpmember_user = models.ForeignKey(
         bsdUsers,
-        verbose_name="User",
+        verbose_name=_("User"),
     )

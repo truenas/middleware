@@ -209,7 +209,7 @@ class VolumeWizardForm(forms.Form):
     #        del cleaned_data["volume_name"]
     #    return cleaned_data
 
-    def done(self):
+    def done(self, request):
         # Construct and fill forms into database.
         volume_name = self.cleaned_data['volume_name']
         volume_fstype = self.cleaned_data['volume_fstype']
@@ -222,6 +222,7 @@ class VolumeWizardForm(forms.Form):
 
         volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
         volume.save()
+        self.volume = volume
 
         mp = MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
         mp.save()
@@ -235,6 +236,35 @@ class VolumeWizardForm(forms.Form):
                                               (volume_name, group_type)),
                            disk_group = grp)
             diskobj.save()
+
+        zpoolfields = re.compile(r'zpool_(.+)')
+        disks = [(i, zpoolfields.search(i).group(1)) for i in request.POST.keys() \
+                if zpoolfields.match(i)]
+
+        grouped = {}
+        for key, disk in disks:
+            if request.POST[key] in grouped:
+                grouped[request.POST[key]].append(disk)
+            else:
+                grouped[request.POST[key]] = [disk,]
+
+        for grp_type in grouped:
+
+            if grp_type in ('log','cache','spare'):
+                # When doing log, we assume it's always 'mirror' for data safety
+                if grp_type == 'log' and len(grouped[grp_type]) > 1:
+                    group_type='log mirror'
+                else:
+                    group_type=grp_type
+                grp = DiskGroup(group_name=volume.vol_name+grp_type, \
+                        group_type=group_type , group_volume = volume)
+                grp.save()
+
+                for diskname in grouped[grp_type]:
+                    diskobj = Disk(disk_name = diskname, disk_disks = diskname,
+                              disk_description = ("Member of %s %s" %
+                                (volume.vol_name, request.POST[key])), disk_group = grp)
+                    diskobj.save()
 
         notifier().init("volume", volume.id)
 
@@ -399,6 +429,8 @@ class VolumeWizard(FormWizard):
         mp = MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
         mp.save()
 
+
+
         grp = DiskGroup(group_name= volume_name + group_type, group_type = group_type, group_volume = volume)
         grp.save()
 
@@ -468,7 +500,6 @@ class ZFSDataset_CreateForm(Form):
 class MountPointAccessForm(Form):
     mp_user = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label='Owner (user)')
     mp_group = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label='Owner (group)')
-    #mp_mode = forms.ChoiceField(choices=PermissionChoices, widget=forms.Select(attrs=attrs_dict), label='Mode')
     mp_mode = UnixPermissionField(label='Mode')
     mp_recursive = forms.BooleanField(initial=False,required=False,label='Set permission recursively')
     def __init__(self, *args, **kwargs):

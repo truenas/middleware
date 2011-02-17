@@ -32,6 +32,7 @@ from freenasUI.choices import *
 from freenasUI.middleware.notifier import notifier
 from freeadmin.models import Model
 from os import statvfs
+from freenasUI.common import humanize_number_si
 
 class Volume(Model):
     vol_name = models.CharField(
@@ -152,26 +153,38 @@ class MountPoint(Model):
             default=False,
             )
     def __unicode__(self):
-        def _humanize_number(number):
-            humanize_si_map = (
-                ('TB', 1000000000000),
-                ('GB', 1000000000),
-                ('MB', 1000000),
-                ('KB', 1000),
-                ('B', 1),
-                )
-            for suffix, factor in humanize_si_map:
-                if number > factor:
-                    return ('%.1f %s' % (number/factor, suffix))
+        return self.mp_path
+    def _get__vfs(self):
+        if not hasattr(self, '__vfs'):
+            self.__vfs = statvfs(self.mp_path)
+        return self.__vfs
+    def _get_total_si(self):
         try:
-            vfs = statvfs(self.mp_path)
-            totalbytes = vfs.f_blocks*vfs.f_frsize
-            availbytes = vfs.f_bavail*vfs.f_frsize
-            availpct = 100*vfs.f_bavail/vfs.f_blocks
-            return u"%s (%s available (%d%%), %s total)" % (self.mp_path,
-                _humanize_number(availbytes),
-                availpct,
-                _humanize_number(totalbytes))
+            totalbytes = self._vfs.f_blocks*self._vfs.f_frsize
+            return u"%s" % (humanize_number_si(totalbytes))
         except:
-            return self.mp_path
+            return u"Error getting total space"
+    def _get_avail_si(self):
+        try:
+            availbytes = self._vfs.f_bavail*self._vfs.f_frsize
+            return u"%s" % (humanize_number_si(availbytes))
+        except:
+            return u"Error getting available space"
+    def _get_used_si(self):
+        try:
+            usedbytes = (self._vfs.f_blocks-self._vfs.f_bfree)*self._vfs.f_frsize
+            return u"%s" % (humanize_number_si(usedbytes))
+        except:
+            return u"Error getting used space"
+    def _get_used_pct(self):
+        try:
+            availpct = 100*(self._vfs.f_blocks-self._vfs.f_bavail)/self._vfs.f_blocks
+            return u"%d%%" % (availpct)
+        except:
+            return u"Error"
+    _vfs = property(_get__vfs)
+    total_si = property(_get_total_si)
+    avail_si = property(_get_avail_si)
+    used_pct = property(_get_used_pct)
+    used_si = property(_get_used_si)
 

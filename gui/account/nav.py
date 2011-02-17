@@ -1,9 +1,10 @@
 from django_nav import Nav, NavOption
+from django.utils.translation import ugettext as _
 import models
 
 class ChangePass(NavOption):
 
-        name = u'Change Password'
+        name = _('Change Password')
         type = 'changepass'
         icon = u'ChangePasswordIcon'
         append_app = False
@@ -11,7 +12,7 @@ class ChangePass(NavOption):
 
 class ChangeAdmin(NavOption):
 
-        name = u'Change Admin User'
+        name = _('Change Admin User')
         type = 'changeadmin'
         icon = u'ChangeAdminIcon'
         append_app = False
@@ -19,7 +20,7 @@ class ChangeAdmin(NavOption):
 
 class Logout(NavOption):
 
-        name = u'Logout'
+        name = _('Logout')
         type = 'logout'
         icon = u'LogOutIcon'
         append_app = False
@@ -27,14 +28,14 @@ class Logout(NavOption):
 
 class MyAccount(NavOption):
 
-        name = u'My Account'
+        name = _('My Account')
         icon = u'MyAccountIcon'
         order = -1
         options = [ChangePass, ChangeAdmin, Logout]
 
 class ViewUsers(NavOption):
 
-        name = u'View All Users'
+        name = _('View All Users')
         type = 'viewusers'
         icon = u'ViewAllUsersIcon'
         append_app = False
@@ -47,7 +48,7 @@ class ViewUsers(NavOption):
 
 class ViewGroups(NavOption):
 
-        name = u'View All Groups'
+        name = _('View All Groups')
         type = 'viewgroups'
         icon = u'ViewAllGroupsIcon'
         append_app = False
