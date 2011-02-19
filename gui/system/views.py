@@ -161,19 +161,18 @@ def system_info(request):
     return render_to_response('system/system_info.html', variables)
 
 @login_required
-def firmware(request):
+def firmware_upload(request):
 
-    firmware = FirmwareForm()
+    firmware = FirmwareUploadForm()
     variables = RequestContext(request)
     if request.method == 'POST':
         try:
-            firmware = FirmwareForm(request.POST, request.FILES)
+            firmware = FirmwareUploadForm(request.POST, request.FILES)
             if firmware.is_valid():
-                firmware.save()
+                firmware.done()
                 return render_to_response('system/firmware_ok.html')
         except:
-            firmware = FirmwareForm()
-            #return HttpResponseRedirect('/system/' + objtype)
+            firmware = FirmwareUploadForm()
         variables.update({
             'firmware': firmware,
         })
@@ -184,6 +183,30 @@ def firmware(request):
     })
     
     return render_to_response('system/firmware.html', variables)
+
+@login_required
+def firmware_location(request):
+
+    firmloc = FirmwareTemporaryLocationForm()
+    variables = RequestContext(request)
+    if request.method == 'POST':
+        try:
+            firmloc = FirmwareTemporaryLocationForm(request.POST)
+            if firmloc.is_valid():
+                firmloc.done()
+                return render_to_response('system/firmware_location_ok.html')
+        except:
+            pass
+        variables.update({
+            'firmloc': firmloc,
+        })
+        return render_to_response('system/firmware_location2.html', variables)
+
+    variables.update({
+        'firmloc': firmloc,
+    })
+    
+    return render_to_response('system/firmware_location.html', variables)
 
 @login_required
 def reporting(request):

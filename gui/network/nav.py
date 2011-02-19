@@ -1,11 +1,11 @@
 from django_nav import Nav, NavOption
 from freenasUI.choices import LAGGType
+from django.utils.translation import ugettext as _
 import models
-
 
 class AddLagg(NavOption):
 
-        name = u'Add Link'
+        name = _(u'Add Link')
         rename = u'Create Link'
         view = 'network_lagg_add'
         type = 'object'
@@ -17,7 +17,7 @@ class AddLagg(NavOption):
 
 class GlobalConf(NavOption):
 
-        name = u'Global Configuration'
+        name = _(u'Global Configuration')
         type = 'network_global'
         model = 'GlobalConfiguration'
         app_name = 'network'
@@ -25,7 +25,7 @@ class GlobalConf(NavOption):
 
 class ViewLagg(NavOption):
 
-        name = u'View All Links'
+        name = _(u'View All Links')
         type = 'viewlagg'
         icon = u'ViewAllLAGGsIcon'
         model = 'LAGGInterface'
@@ -33,11 +33,11 @@ class ViewLagg(NavOption):
         append_app = False
         options = []
 
-class Link(NavOption):
+class Linkss(NavOption):
 
     model = 'LAGGInterface'
     app_name = 'network'
-    name = u'Links'
+    name = _(u'Links')
     icon = u'LAGGIcon'
 
     def __init__(self, *args, **kwargs):
@@ -75,6 +75,7 @@ class Link(NavOption):
                     subsubnav.model = 'LAGGInterfaceMembers'+lagg.lagg_interface.int_name
                     subsubnav.kwargs = {'app': 'network', 'model': 'LAGGInterfaceMembers', \
                             'oid': member.id}
+                    subsubnav.append_url = '?deletable=false'
                     subsubnav.options = []
                     subnav.options.append(subsubnav)
 
@@ -82,7 +83,7 @@ class Link(NavOption):
 
 class ViewInterfaces(NavOption):
 
-        name = u'View All Interfaces'
+        name = _(u'View All Interfaces')
         type = 'viewinterfaces'
         append_app = False
         options = []
@@ -94,7 +95,7 @@ class ViewInterfaces(NavOption):
 
 class ViewVLAN(NavOption):
 
-        name = u'View All VLANs'
+        name = _(u'View All VLANs')
         type = 'viewvlans'
         append_app = False
         options = []
@@ -106,7 +107,7 @@ class ViewVLAN(NavOption):
 
 class ViewSR(NavOption):
 
-        name = u'View All Static Routes'
+        name = _(u'View All Static Routes')
         type = 'viewsr'
         append_app = False
         options = []

@@ -30,7 +30,7 @@ from freeadmin.models import Model
 from django import forms
 from freenasUI.choices import UserShell
 from django.contrib.auth.models import get_hexdigest
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 class bsdGroups(Model):
     bsdgrp_gid = models.IntegerField(

@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Logged Out{% endblock %}
+{% block title %}{% trans "Logged Out" %}{% endblock %}
 
 {% block dojango_content %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
-<p><span class="alert">You are now logged out. <a href="/account/login/">Log back in</a>.</span></p>
+    <p><span class="alert">{% trans "You are now logged out." %} <a href="/account/login/">{% trans "Log back in" %}</a>.</span></p>
 </div>
 {% endblock %}
 

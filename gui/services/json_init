@@ -334,7 +334,11 @@
             "ad_dcname": "", 
             "ad_domainname": "", 
             "ad_workgroup": "", 
-            "ad_netbiosname": ""
+            "ad_netbiosname": "",
+            "ad_windows_version": "",
+            "ad_spn": "",
+            "ad_spnpw": "",
+            "ad_keytab": ""
         }
     }, 
     {

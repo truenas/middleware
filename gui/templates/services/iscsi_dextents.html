@@ -1,42 +1,43 @@
-            <table class="grid">
-	            <thead class="header">
-			<tr>
-		            <td>Target</td>
-		            <td>Alias</td>
-		            <td>Path</td>
-			</tr>
-		        </thead>
-                {% for e in extent_device_list %}
-                <tr class="{% cycle 'odd' 'even' %}" id="{{ e.id }}">
-                    <td>{{ e.iscsi_target_extent_name }}</td>
-                    <td>{{ e.iscsi_target_extent_type }}</td>
-                    <td>{{ e.iscsi_target_extent_path }}</td>
-                    <td>
-                        <button dojoType="dijit.form.Button" type="button">
-                            Edit
-                        <script type="dojo/method" event="onClick" args="evt">
-                        editObject('Edit', '{% url freeadmin_model_edit app="services",model="iSCSITargetExtent",oid=e.id,mf="iSCSITargetDeviceExtentForm" %}', [this,]);
-                        </script>
-                        </button>
-                        <button dojoType="dijit.form.Button" type="button">
-                            Delete
-                        <script type="dojo/method" event="onClick" args="evt">
-                        editObject('Delete', '{% url freeadmin_model_delete app="services",model="iSCSITargetExtent",oid=e.id %}', [this,]);
-                        </script>
-                        </button>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="9">No targets defined</td>
-                </tr>
-                {% endfor %}
-                </table>
-                          <p class="btn">
-                    <button id="fe_button" dojoType="dijit.form.Button" type="button">
-                        Add Extent 
-                        <script type="dojo/method" event="onClick" args="evt">
-                         addObject('Add Extent', '{% url freeadmin_model_add app="services",model="iSCSITargetExtent",mf="iSCSITargetDeviceExtentForm" %}', [this,]);
-                    </script>
-                    </button>
-                    </p>
+{% load i18n %}
+<table class="grid">
+        <thead class="header">
+    	<tr>
+            <td>{% trans "Target" %}</td>
+            <td>{% trans "Alias" %}</td>
+            <td>{% trans "Path" %}</td>
+    	</tr>
+        </thead>
+    {% for e in extent_device_list %}
+    <tr class="{% cycle 'odd' 'even' %}" id="{{ e.id }}">
+        <td>{{ e.iscsi_target_extent_name }}</td>
+        <td>{{ e.iscsi_target_extent_type }}</td>
+        <td>{{ e.iscsi_target_extent_path }}</td>
+        <td>
+            <button dojoType="dijit.form.Button" type="button">
+                {% trans "Edit" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                editObject('{% trans "Edit" %}', '{% url freeadmin_model_edit app="services",model="iSCSITargetExtent",oid=e.id,mf="iSCSITargetDeviceExtentForm" %}', [this,]);
+            </script>
+            </button>
+            <button dojoType="dijit.form.Button" type="button">
+                {% trans "Delete" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                editObject('{% trans "Delete" %}', '{% url freeadmin_model_delete app="services",model="iSCSITargetExtent",oid=e.id %}', [this,]);
+            </script>
+            </button>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="9">{% trans "No targets defined" %}</td>
+    </tr>
+    {% endfor %}
+    </table>
+              <p class="btn">
+        <button id="fe_button" dojoType="dijit.form.Button" type="button">
+            {% trans "Add Extent" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                addObject('{% trans "Add Extent" %}', '{% url freeadmin_model_add app="services",model="iSCSITargetExtent",mf="iSCSITargetDeviceExtentForm" %}', [this,]);
+        </script>
+        </button>
+        </p>

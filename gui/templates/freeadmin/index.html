@@ -1,4 +1,5 @@
 {% extends "base3.html" %}
+{% load i18n %}
 
 {% block dojango_header_extra %}
 <link rel="stylesheet" href="/dojango/dojo-media/release/freenas-dojo-1.5.0/dojox/grid/resources/claroGrid.css" type="text/css" /> 
@@ -14,6 +15,18 @@
     dojo.require("dojo.NodeList-traverse");
     dojo.require("dojo.io.iframe");
     dojo.require("dojox.validate.regexp");
+
+    function buttongrid(v) {
+        var json = dojo.fromJson(v);
+        dojo.parser.parse(dojo.byId(this.id));
+
+        var b = new dijit.form.Button({label: "Edit"});
+
+        var gridhtml = dijit.getEnclosingWidget(dojo.byId(this.id));
+        dojo.connect(b.domNode, 'onclick', function(){ editObject('Edit Disk', json.edit_url, [gridhtml,]); });
+
+        return b;
+    }
 
     dojo.addOnLoad(function() {
 
@@ -155,12 +168,12 @@
                 openAccount('Groups');
             } else if(item.type && item.type == 'logout') {
                 window.location='/account/logout/';
-            } else if(item.name == 'Display System Processes') {
+            } else if(item.action && item.action == 'displayprocs') {
                     _InitTopOutput();
                     dijit.byId("top_dialog").show();
-            } else if(item.name == 'Reboot') {
+            } else if(item.action && item.action == 'reboot') {
                     dijit.byId("rebootDialog").show();
-            } else if(item.name == 'Shutdown') {
+            } else if(item.action && item.action == 'shutdown') {
                     dijit.byId("shutdownDialog").show();
             } else if(item.type && item.type == 'openstorage') {
                 //  get the children and make sure we haven't opened this yet.
@@ -296,7 +309,21 @@
 
                     try {
                         var json = dojo.fromJson(data);
-                        rnode.hide();
+                        // TODO, workaound for firefox, it does parse html as JSON!!!
+                        if(json.error != true && json.error != false) {
+                            throw "not json"
+                        }
+
+                        try {
+                            rnode.hide();
+                        } catch(err2) {
+                            dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
+                              function(inputElem){
+                                   dijit.getEnclosingWidget(inputElem).set('disabled',false);
+                               }
+                            );
+                            dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','OK');
+                        }
 
                         var footer = dojo.query(".footer-block")[1];
                         dojo.empty(footer);
@@ -329,16 +356,19 @@
 
                     try {
                         var json = dojo.fromJson(data);
+                        // TODO, workaound for firefox, it does parse html as JSON!!!
+                        if(json.error != true && json.error != false) {
+                            throw "not json"
+                        }
 
                         try {
-                         rnode.hide();
+                            rnode.hide();
                         } catch(err2) {
                             dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
                               function(inputElem){
                                    dijit.getEnclosingWidget(inputElem).set('disabled',false);
                                }
                             );
-
                             dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','OK');
                         }
 
@@ -354,6 +384,7 @@
                         //dojo.style(suc, "opacity", "0");
                         //dojo.fadeIn({ node: suc }).play();
                     } catch(err) {
+
                         rnode.set('content', data); 
                         if(callback) callback();
                         var qry = dojo.query('#success', rnode.domNode);
@@ -372,7 +403,7 @@
                         footer.appendChild(suc);
                         dojo.addClass(suc, "error");
 
-                        dojo.html.set(suc, '<p>Some error ocurried!</p>');
+                        dojo.html.set(suc, '<p>{% trans "Some error ocurried!" %}</p>');
                         //dojo.style(suc, "opacity", "0");
                         //dojo.fadeIn({ node: suc }).play();
                         try {
@@ -594,7 +625,7 @@
     volumeWizard = function(name, url, nodes) {
          dialog = new dijit.Dialog({ 
              id: 'wizard_dialog',
-             title: 'Add Volume', 
+             title: '{% trans "Add" %} {% trans "Volume" %}', 
              href: '{% url storage_wizard %}', 
              parseOnLoad: true,
              closable: true, 
@@ -634,29 +665,62 @@
 {% endblock %}
 
 {% block dojango_content %}
-<div id="top_dialog" dojoType="dijit.Dialog" title="Running Processes" style="min-height:400px;">
-    <pre class="ix" id="top_output">Loading...</pre>
+<div id="top_dialog" dojoType="dijit.Dialog" title="{% trans "Running Processes" %}" style="min-height:400px;">
+    <pre class="ix" id="top_output">{% trans "Loading" %}...</pre>
 </div>
-<div dojoType="dijit.Dialog" id="rebootDialog" title="Reboot the System" >
-    <h3>Warning!</h3>
-    <p>You are about to <strong>REBOOT</strong> the system, what would you like to do?</p>
+<div dojoType="dijit.Dialog" id="rebootDialog" title="{% trans "Reboot the System" %}" >
+    <h3>{% trans "Warning!" %}</h3>
+    <p>{% trans "You are about to <strong>REBOOT</strong> the system, what would you like to do?" %}</p>
                 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('rebootDialog').hide();">
-                    Cancel
+                    {% trans "Cancel" %}
                 </button>
                 <button dojoType="dijit.form.Button" type="submit" onClick="window.location='/system/reboot/'">
-                    Reboot
+                    {% trans "Reboot" %}
                 </button>
 </div>
              
-<div dojoType="dijit.Dialog" id="shutdownDialog" title="Shutdown the System" >
-    <h3>Warning!</h3>
-    <p>You are about to <strong>SHUTDOWN</strong> the system, what would you like to do?</p>
+<div dojoType="dijit.Dialog" id="shutdownDialog" title="{% trans "Shutdown the System" %}" >
+    <h3>{% trans "Warning!" %}</h3>
+    <p>{% trans "You are about to <strong>SHUTDOWN</strong> the system, what would you like to do?" %}</p>
                 <button dojoType="dijit.form.Button" type="button"
                     onClick="dijit.byId('shutdownDialog').hide();">
-                    Cancel
+                    {% trans "Cancel" %}
                 </button>
                 <button dojoType="dijit.form.Button" type="button" onClick="window.location='/system/shutdown/'">
-                    Shutdown
+                    {% trans "Shutdown" %}
                 </button>
 </div>
+
+<div dojoType="dijit.Dialog" id="helpDialog" title="{% trans "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support" %}"  style="background:#fff;width:400px;">
+    <img src="/freenas/media/images/ui/help.png" style="float:left;position:relative;top:-36px;right:5px;">
+    <div style="float:left;">
+    <h3>{% trans "Forum" %}</h3>
+    <ul>
+        <li><a href="http://sourceforge.net/apps/phpbb/freenas/" title="FreeNAS Community Support Forum" target="_blank">{% trans "Community Forum" %}</a></li>
+    </ul>
+    </div>
+    <div style="float:left;padding-left:36px;">
+    <h3>{% trans "IRC (Chat)" %}</h3>
+    <ul>
+        <li><a href="http://webchat.freenode.net/?channels=freenas" target="_blank" title="#freenas on freenode">{% trans "#freenas on freenode" %}</a></li>
+    </ul>
+    </div>
+
+    <div style="float:left;padding-left:24px;">
+    <h3>{% trans "Mailing Lists" %}</h3>
+    <ul>
+        <li><a href="http://lists.sourceforge.net/mailman/listinfo/freenas-announce" title="FreeNAS Announce" target="_blank">{% trans "FreeNAS Announce" %}</a></li>
+        <li><a href="http://lists.sourceforge.net/mailman/listinfo/freenas-commit" title="FreeNAS Commit" target="_blank">{% trans "FreeNAS Commit" %}</a></li>
+        <li><a href="http://lists.sourceforge.net/mailman/listinfo/freenas-devel" title="FreeNAS Devel" target="_blank">{% trans "FreeNAS Devel" %}</a></li>
+        <li><a href="http://lists.sourceforge.net/mailman/listinfo/freenas-testing" title="FreeNAS Testing" target="_blank">{% trans "FreeNAS Testing" %}</a></li>
+    </ul>
+    </div>
+    <div style="float:left;padding-left:36px;">
+    <h3>{% trans "Support Issues" %}</h3>
+    <ul>
+        <li><a href="http://support.freenas.org" title="FreeNAS Bug Tracker" target="_blank">{% trans "Bug Tracker" %}</a></li>
+    </ul>
+    </div>
+    <br />
+   </div>
 {% endblock %}

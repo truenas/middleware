@@ -43,6 +43,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.common.helperview import helperViewEx, helperViewEmpty
 import os, commands
 
+
 @login_required
 def home(request):
 
@@ -119,6 +120,7 @@ def home(request):
 
 @login_required
 def services(request, objtype=None):
+
     if objtype != None:
         focus_form = objtype
     else:
@@ -143,7 +145,6 @@ def services(request, objtype=None):
     activedirectory = helperViewEx(request, ActiveDirectoryForm, ActiveDirectory, objtype, 'activedirectory')
     dynamicdns = helperViewEx(request, DynamicDNSForm, DynamicDNS, objtype, 'dynamicdns')
     ldap = helperViewEx(request, LDAPForm, LDAP, objtype, 'ldap')
-
     iscsitarget = helperViewEmpty(request, iSCSITargetForm, objtype, 'iscsitarget')
     iscsiextentfile = helperViewEmpty(request, iSCSITargetFileExtentForm, objtype, 'iscsiextentfile', prefix="fe")
     iscsiextentdevice = helperViewEmpty(request, iSCSITargetDeviceExtentForm, objtype, 'iscsiextentdevice', prefix="de")
@@ -188,13 +189,11 @@ def services(request, objtype=None):
 
 @login_required
 def iscsi(request):
-
     variables = RequestContext(request)
     return render_to_response('services/iscsi.html', variables)
 
 @login_required
 def iscsi_targets(request):
-
     target_list = iSCSITarget.objects.all()
 
     variables = RequestContext(request, {
@@ -204,7 +203,6 @@ def iscsi_targets(request):
 
 @login_required
 def iscsi_assoctargets(request, objtype=None):
-
     asctarget_list = iSCSITargetToExtent.objects.all()
 
     variables = RequestContext(request, {
@@ -214,7 +212,6 @@ def iscsi_assoctargets(request, objtype=None):
 
 @login_required
 def iscsi_extents(request, objtype=None):
-
     extent_file_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='File')
 
     variables = RequestContext(request, {
@@ -224,7 +221,6 @@ def iscsi_extents(request, objtype=None):
 
 @login_required
 def iscsi_dextents(request):
-
     extent_device_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
 
     variables = RequestContext(request, {
@@ -234,7 +230,6 @@ def iscsi_dextents(request):
 
 @login_required
 def iscsi_auth(request):
-
     target_auth_list = iSCSITargetAuthCredential.objects.all()
 
     variables = RequestContext(request, {
@@ -244,7 +239,6 @@ def iscsi_auth(request):
 
 @login_required
 def iscsi_authini(request):
-
     auth_initiator_list = iSCSITargetAuthorizedInitiator.objects.all()
 
     variables = RequestContext(request, {
@@ -254,7 +248,6 @@ def iscsi_authini(request):
 
 @login_required
 def iscsi_portals(request):
-
     iscsiportal_list = iSCSITargetPortal.objects.all()
 
     variables = RequestContext(request, {

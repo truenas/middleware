@@ -27,16 +27,19 @@
 #####################################################################
 
 from django.shortcuts import render_to_response                
-from freenasUI.network.models import *                         
-from freenasUI.middleware.notifier import notifier
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode 
-from freenasUI.common.forms import ModelForm
-from freenasUI.common.forms import Form
 from dojango.forms import fields, widgets 
 from dojango.forms.fields import BooleanField 
+from django.utils.translation import ugettext as _
 from dojango import forms
+
+from freenasUI.common.forms import ModelForm
+from freenasUI.common.forms import Form
+from freenasUI.middleware.notifier import notifier
+#TODO: do not import *
+from freenasUI.network.models import *                         
 
 class InterfacesForm(ModelForm):
     class Meta:
@@ -58,15 +61,15 @@ class GlobalConfigurationForm(ModelForm):
         nameserver3 = cleaned_data.get("gc_nameserver3")
         if nameserver3 != "":
             if nameserver2 == "":
-                msg = u"Must fill out nameserver 2 before filling out nameserver 3"
+                msg = _(u"Must fill out nameserver 2 before filling out nameserver 3")
                 self._errors["gc_nameserver3"] = self.error_class([msg])
-                msg = u"Required when using nameserver 3"
+                msg = _(u"Required when using nameserver 3")
                 self._errors["gc_nameserver2"] = self.error_class([msg])
                 del cleaned_data["gc_nameserver2"]
             if nameserver1 == "":
-                msg = u"Must fill out nameserver 1 before filling out nameserver 3"
+                msg = _(u"Must fill out nameserver 1 before filling out nameserver 3")
                 self._errors["gc_nameserver3"] = self.error_class([msg])
-                msg = u"Required when using nameserver 3"
+                msg = _(u"Required when using nameserver 3")
                 self._errors["gc_nameserver1"] = self.error_class([msg])
                 del cleaned_data["gc_nameserver1"]
             if nameserver1 == "" or nameserver2 == "":
@@ -74,9 +77,9 @@ class GlobalConfigurationForm(ModelForm):
         elif nameserver2 != "":
             if nameserver1 == "":
                 del cleaned_data["gc_nameserver2"]
-                msg = u"Must fill out nameserver 1 before filling out nameserver 2"
+                msg = _(u"Must fill out nameserver 1 before filling out nameserver 2")
                 self._errors["gc_nameserver2"] = self.error_class([msg])
-                msg = u"Required when using nameserver 3"
+                msg = _(u"Required when using nameserver 3")
                 self._errors["gc_nameserver1"] = self.error_class([msg])
                 del cleaned_data["gc_nameserver1"]
         return cleaned_data
@@ -93,8 +96,11 @@ class VLANForm(ModelForm):
 attrs_dict = { 'class': 'required' }
 
 class LAGGInterfaceForm(forms.Form):
-    lagg_protocol = forms.ChoiceField(choices=LAGGType, widget=forms.RadioSelect(attrs=attrs_dict))
-    lagg_interfaces = forms.MultipleChoiceField(choices=list(NICChoices(nolagg=True)), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Physical NICs in the LAGG')
+    lagg_protocol = forms.ChoiceField(choices=LAGGType, \
+            widget=forms.RadioSelect(attrs=attrs_dict))
+    lagg_interfaces = forms.MultipleChoiceField(choices=list(NICChoices(nolagg=True)), \
+            widget=forms.SelectMultiple(attrs=attrs_dict), \
+            label = _('Physical NICs in the LAGG'))
 
     def __init__(self, *args, **kwargs):
         super(LAGGInterfaceForm, self).__init__(*args, **kwargs)
@@ -113,9 +119,9 @@ class LAGGInterfaceForm(forms.Form):
         physnics = LAGGInterfaceMembers.objects.filter(lagg_physnic__in=ifaces).values_list('lagg_physnic')
         if len(physnics) > 0:
             if len(physnics) == 1:
-                raise forms.ValidationError("The interfaces %s is already registered for another LAGG Interface" % ( physnics[0] ) )
+                raise forms.ValidationError(_("The interfaces %s is already registered for another LAGG Interface") % ( physnics[0] ) )
             else:
-                raise forms.ValidationError("The interfaces (%s) are already registered for another LAGG Interface" % ( ','.join([v[0] for v in physnics]) ) )
+                raise forms.ValidationError(_("The interfaces (%s) are already registered for another LAGG Interface") % ( ','.join([v[0] for v in physnics]) ) )
         return self.cleaned_data['lagg_interfaces']
 
 class LAGGInterfaceMemberForm(ModelForm):
@@ -153,4 +159,3 @@ class StaticRouteForm(ModelForm):
     def save(self):
         super(StaticRouteForm, self).save()
         notifier().start("routing")
-

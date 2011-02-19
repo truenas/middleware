@@ -8,17 +8,22 @@
 
 . /etc/rc.subr
 
+: ${PATH_AD_KEYTAB:="/etc/AD.keytab"}
+
 kerberos_init()
 {
 	local IFS="|"
 
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ad_dcname,
 		ad_domainname,
 		ad_netbiosname,
 		ad_adminname,
-		ad_adminpw
+		ad_adminpw,
+		ad_windows_version,
+		ad_spn,
+		ad_spnpw
 
 	FROM
 		services_services,
@@ -34,9 +39,9 @@ kerberos_init()
 
 	LIMIT 1
 	" | \
-	while read dc domain netbios admin pw
+	while read dc domain netbios admin pw version spn spnpw
 	do
-		if [ -n "${admin}" -a -n "${domain}" -a -n "${pw}" ]
+		if [ "${version}" != "windows2008" -a -n "${admin}" -a -n "${domain}" -a -n "${pw}" ]
 		then
 			local pwfile="/tmp/."$(date '+%H%M%S')
 			touch "${pwfile}"
@@ -45,6 +50,18 @@ kerberos_init()
 
 			domain=$(echo "${domain}"|tr a-z A-Z)
 			kinit --password-file="${pwfile}" "${admin}@${domain}"
+
+			rm "${pwfile}"
+
+		elif [ "${version}" = "windows2008" -a -n "${domain}" -a -n "${pw}" ]
+		then
+			local pwfile="/tmp/."$(date '+%H%M%S')
+			touch "${pwfile}"
+			chmod 600 "${pwfile}"
+			echo "${spnpw}" > ${pwfile}
+
+			domain=$(echo "${domain}"|tr a-z A-Z)
+			kinit -k -t /etc/AD.keytab --password-file="${pwfile}" "${spn}@${domain}"
 
 			rm "${pwfile}"
 		fi

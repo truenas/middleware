@@ -11,20 +11,44 @@
 
 : ${PATH_NS_CONF:="/etc/nsswitch.conf"}
 
+is_win2k8()
+{
+	local res=0
+
+	while read version
+	do
+		if [ "${version}" = "windows2008" ]
+		then
+			res=1
+			break
+		fi
+
+	done <<EOF
+	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ad_windows_version
+	FROM
+		services_activedirectory
+	")
+EOF
+
+	return ${res}
+}
+
 generate_nsswitch_conf()
 {
-	local _ldap=0
-	local _winbind=0
-	local _conf="${PATH_NS_CONF}"
+	local ldap=0
+	local ad=0
+	local conf="${PATH_NS_CONF}"
 
-	while read _line
+	while read line
 	do
-		local _var=$(echo "${_line}"|cut -s -f1 -d'|')
-		local _val=$(echo "${_line}"|cut -s -f2 -d'|')
+		local var=$(echo "${line}"|cut -s -f1 -d'|')
+		local val=$(echo "${line}"|cut -s -f2 -d'|')
 
-		case "${_var}" in
-			activedirectory) _winbind="${_val}" ;;
-			ldap)_ldap="${_val}" ;;
+		case "${var}" in
+			activedirectory) ad="${val}" ;;
+			ldap) ldap="${val}" ;;
 		esac
 
 	done <<EOF
@@ -43,33 +67,36 @@ generate_nsswitch_conf()
 	)")
 EOF
 
-	local _p="compat"
-	local _g="compat"
+	local p="compat"
+	local g="compat"
 
-	if [ "${_ldap}" = "1" -o "${_winbind}" = "1" ]
+	is_win2k8;
+	local win2k8=$?
+
+	if [ "${ldap}" = "1" -o "${ad}" = "1" ]
 	then
-		_p="files"
-		_g="files"
+		p="files"
+		g="files"
 
-		if [ "${_winbind}" = "1" ]
+		if [ "${ad}" = "1" -a "${win2k8}" = "0" ]
 		then
-			_p="${_p} winbind"
-			_g="${_g} winbind"
+			p="${p} winbind"
+			g="${g} winbind"
 		fi
 
-		if [ "${_ldap}" = "1" ]
+		if [ "${ldap}" = "1" -o "${win2k8}" = "1" ]
 		then
-			_p="${_p} ldap"
-			_g="${_g} ldap"
+			p="${p} ldap"
+			g="${g} ldap"
 		fi
 	fi
 	
-	cat<<-EOF>"${_conf}"
-	group: ${_g}
+	cat<<-EOF>"${conf}"
+	group: ${g}
 	group_compat: nis
 	hosts: files dns
 	networks: files
-	passwd: ${_p}
+	passwd: ${p}
 	passwd_compat: nis
 	shells: files
 	services: compat

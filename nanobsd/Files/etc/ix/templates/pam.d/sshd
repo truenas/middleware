@@ -10,14 +10,12 @@ auth		requisite	pam_opieaccess.so	no_warn allow_local
 #@@WINBIND@@	auth		sufficient	/usr/local/lib/pam_winbind.so	silent try_first_pass
 #@@LDAP@@	auth		sufficient	/usr/local/lib/pam_ldap.so	no_warn try_first_pass
 #@@KRB5@@	auth		sufficient	pam_krb5.so		no_warn try_first_pass
-#auth		sufficient	pam_krb5.so		no_warn try_first_pass
 #auth		sufficient	pam_ssh.so		no_warn try_first_pass
 auth		required	pam_unix.so		no_warn try_first_pass
 
 # account
 account		required	pam_nologin.so
 #@@KRB5@@	account	required	pam_krb5.so
-#account	required	pam_krb5.so
 account		required	pam_login_access.so
 #@@WINBIND@@	account		sufficient	/usr/local/lib/pam_winbind.so
 #@@LDAP@@	account		sufficient	/usr/local/lib/pam_ldap.so ignore_authinfo_unavail
@@ -30,7 +28,6 @@ session		required	pam_permit.so
 
 # password
 #@@KRB5@@	password	sufficient	pam_krb5.so		no_warn try_first_pass
-#password	sufficient	pam_krb5.so		no_warn try_first_pass
 #@@WINBIND@@	password	sufficient	/usr/local/lib/pam_winbind.so	try_first_pass
 #@@LDAP@@	password	sufficient	/usr/local/lib/pam_ldap.so	try_first_pass
 password	required	pam_unix.so		no_warn try_first_pass

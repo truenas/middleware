@@ -25,10 +25,8 @@
 #
 # $FreeBSD$
 #####################################################################
-from freenasUI.storage.forms import * 
-from freenasUI.storage.models import * 
-from freenasUI.services.models import services, CIFS, AFP, NFS 
-from freenasUI.services.forms import CIFSForm, AFPForm, NFSForm 
+import os
+
 from django.forms.models import modelformset_factory
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.decorators import login_required
@@ -41,10 +39,17 @@ from django.http import Http404, HttpResponse
 from django.views.generic.list_detail import object_detail, object_list
 from django.views.generic.create_update import update_object, delete_object
 from django.utils import simplejson
-from freenasUI.middleware.notifier import notifier
 from django.core import serializers
+from django.utils.translation import ugettext as _
+
+#TODO remove import *
 from freenasUI.services.models import *
-import os, commands
+from freenasUI.storage.forms import * 
+from freenasUI.storage.models import * 
+from freenasUI.services.models import services, CIFS, AFP, NFS 
+from freenasUI.services.forms import CIFSForm, AFPForm, NFSForm 
+from freenasUI.middleware.notifier import notifier
+import commands
 
 ## Disk section
 
@@ -75,7 +80,7 @@ def wizard(request):
         if form.is_valid():
             form.done(request)
 
-            return HttpResponse(simplejson.dumps({"error": False, "message": "Volume successfully added."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume") + " " + _("successfully added") + "."}), mimetype="application/json")
             #return render_to_response('storage/wizard_ok.html')
         else:
 
@@ -136,6 +141,9 @@ def disks_datagrid_json(request, vid):
     complete = []
     for data in disks:
         ret = {}
+        ret['edit'] = simplejson.dumps({
+            'edit_url': reverse('freeadmin_model_edit', kwargs={'app':'storage', 'model': 'Disk', 'oid': data.id})+'?deletable=false'
+            })
         for f in data._meta.fields:
             if isinstance(f, models.ImageField) or isinstance(f, models.           FileField): # filefields can't be json serialized
                 ret[f.attname] = unicode(getattr(data, f.attname))
@@ -284,7 +292,7 @@ def dataset_create2(request):
             if errno == 0:
                 mp = MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (dataset_name), mp_options='noauto', mp_ischild=True)
                 mp.save()
-                return HttpResponse(simplejson.dumps({"error": False, "message": "Dataset successfully added."}), mimetype="application/json")
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset") + " " + _("successfully added") + "."}), mimetype="application/json")
                 #return render_to_response('storage/dataset_ok.html')
             else:
                 dataset_form.set_error(errmsg)

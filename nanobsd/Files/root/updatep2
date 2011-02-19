@@ -42,21 +42,25 @@ if mount | grep ${NANO_DRIVE}s2 > /dev/null ; then
 	exit 1
 fi
 
+LABELNAME=`echo ${NANO_DRIVE} | cut -f2 -d/`
+TARGET_DRIVE=`glabel status | awk '/ufs\/'${LABELNAME}'s1a/ { print $3; }' | sed -e s,s1a,,`
+
 # Blow away old system.
-dd if=/dev/zero of=/dev/${NANO_DRIVE}s2 bs=1m count=1 > /dev/null 2>&1
+dd if=/dev/zero of=/dev/${TARGET_DRIVE}s2 bs=1m count=1 > /dev/null 2>&1
 
 # Copy in new system
-dd of=/dev/${NANO_DRIVE}s2 obs=64k
+dd of=/dev/${TARGET_DRIVE}s2 obs=128k
 
 # Check that it worked
-fsck_ffs -n /dev/${NANO_DRIVE}s2
+fsck_ffs -n /dev/${TARGET_DRIVE}s2a
+tunefs -L ${LABELNAME}s2a /dev/${TARGET_DRIVE}s2a
 
 # Update the /etc/fstab
 trap "umount /mnt" 1 2 15 EXIT
-mount /dev/${NANO_DRIVE}s2 /mnt
-sed -i "" "s/${NANO_DRIVE}s1/${NANO_DRIVE}s2/" /mnt/conf/base/etc/fstab
-sed -i "" "s/${NANO_DRIVE}s1/${NANO_DRIVE}s2/" /mnt/etc/fstab
+mount /dev/${NANO_DRIVE}s2a /mnt
+sed -i "" "s,${NANO_DRIVE}s1,${NANO_DRIVE}s2," /mnt/conf/base/etc/fstab
+sed -i "" "s,${NANO_DRIVE}s1,${NANO_DRIVE}s2," /mnt/etc/fstab
 umount /mnt
 trap 1 2 15 EXIT
 
-gpart set -a active -i 2 ${NANO_DRIVE}
+gpart set -a active -i 2 ${TARGET_DRIVE}

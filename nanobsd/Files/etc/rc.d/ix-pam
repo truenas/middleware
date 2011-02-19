@@ -12,46 +12,74 @@
 : ${PAM_TEMPLATE_DIR:="/etc/ix/templates/pam.d"}
 : ${PAM_DIR:="/etc/pam.d"}
 
+is_win2k8()
+{
+	local res=0
+
+	while read version
+	do
+		if [ "${version}" = "windows2008" ]
+		then
+			res=1
+			break
+		fi
+
+	done <<EOF
+	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ad_windows_version
+	FROM
+		services_activedirectory
+	")
+EOF
+
+	return ${res}
+}
+
 generate_pam_service_file()
 {
-	local _service="${1}"
-	local _winbind="${2}"
-	local _ldap="${3}"
-	local _template
-	local _temp
-	local _file
+	local service="${1}"
+	local winbind="${2}"
+	local ldap="${3}"
+	local krb5="${4}"
+	local template
+	local temp
+	local file
 
-	_template="${PAM_TEMPLATE_DIR}/${_service}"
-	_temp="/tmp/.tmp.${_service}"
-	_file="${PAM_DIR}/${_service}"
+	template="${PAM_TEMPLATE_DIR}/${service}"
+	temp="/tmp/.tmp.${service}"
+	file="${PAM_DIR}/${service}"
 
-	if [ ! -f "${_template}" ]
+	if [ ! -f "${template}" ]
 	then
 		return 1
 	fi
 
-	awk -v ldap="${_ldap}" -v winbind="${_winbind}" '{
+	awk -v ldap="${ldap}" -v winbind="${winbind}" -v krb5="${krb5}" '{
 		if (/^#.*@@LDAP@@/ && ldap) {
 			gsub("^#.*@@LDAP@@[^a-zA-Z0-9]+", "");
 			print $0;
 		} else if (/^#.*@@WINBIND@@/ && winbind) {
 			gsub("^#.*@@WINBIND@@[^a-zA-Z0-9]+", "");
 			print $0;
-		} else if (/^#.*@@MKHOMEDIR@@/ && (winbind || ldap)) {
+		} else if (/^#.*@@KRB5@@/ && krb5) {
+			gsub("^#.*@@KRB5@@[^a-zA-Z0-9]+", "");
+			print $0;
+		} else if (/^#.*@@MKHOMEDIR@@/ && (winbind || ldap || krb5)) {
 			gsub("^#.*@@MKHOMEDIR@@[^a-zA-Z0-9]+", "");
 			print $0;
 		} else if (/^#.*@@.*@@/) {
 		} else {
 			print $0;
 		}
-	}' < "${_template}" > "${_temp}"
+	}' < "${template}" > "${temp}"
 
-	if [ -f "${_temp}" ]
+	if [ -f "${temp}" ]
 	then
-		mv "${_temp}" "${_file}" >/dev/null 2>&1
+		mv "${temp}" "${file}" >/dev/null 2>&1
 		if [ "$?" != "0" ]
 		then
-			rm -f "${_temp}"
+			rm -f "${temp}"
 			return 1
 		fi
 	fi
@@ -62,22 +90,23 @@ generate_pam_service_file()
 
 generate_pam_files()
 {
-	local _ldap=0
-	local _winbind=0
+	local ldap=0
+	local krb5=0
+	local winbind=0
 
 	if [ ! -d "${PAM_TEMPLATE_DIR}" -o ! -d "${PAM_DIR}" ]
 	then
 		return 1
 	fi
 
-	while read _line
+	while read line
 	do
-		local _var=$(echo "${_line}"|cut -s -f1 -d'|')
-		local _val=$(echo "${_line}"|cut -s -f2 -d'|')
+		local var=$(echo "${line}"|cut -s -f1 -d'|')
+		local val=$(echo "${line}"|cut -s -f2 -d'|')
 
-		case "${_var}" in
-			activedirectory) _winbind="${_val}" ;;
-			ldap)_ldap="${_val}" ;;
+		case "${var}" in
+			activedirectory) winbind="${val}" ;;
+			ldap) ldap="${val}" ;;
 		esac
 
 	done <<EOF
@@ -95,11 +124,17 @@ generate_pam_files()
 			'activedirectory'
 	)")
 EOF
+	is_win2k8;
+	if [ "$?" = "1" ]
+	then
+		winbind=0
+		krb5=1
+	fi
 
-	for _service in $(ls "${PAM_TEMPLATE_DIR}")
+	for service in $(ls "${PAM_TEMPLATE_DIR}")
 	do
-		generate_pam_service_file "${_service}" \
-			"${_winbind}" "${_ldap}"
+		generate_pam_service_file "${service}" \
+			"${winbind}" "${ldap}" "${krb5}"
 	done
 
 	return 0

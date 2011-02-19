@@ -26,9 +26,7 @@
 # $FreeBSD$
 #####################################################################
 
-from freenasUI.network.forms import * 
-from freenasUI.network.models import * 
-from freenasUI.network.views import * 
+import os
 from django.forms.models import modelformset_factory
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.decorators import login_required
@@ -41,8 +39,14 @@ from django.http import Http404, HttpResponse
 from django.views.generic.list_detail import object_detail, object_list
 from django.views.generic.create_update import update_object, delete_object
 from django.utils import simplejson
+from django.utils.translation import ugettext as _
+
 from freenasUI.middleware.notifier import notifier
-import os, commands
+#TODO: do not import *
+from freenasUI.network.forms import * 
+from freenasUI.network.models import * 
+from freenasUI.network.views import * 
+import commands
 
 ## Network Section
 
@@ -178,6 +182,29 @@ def staticroute(request):
     })
     return render_to_response('network/staticroute.html', variables)
 
+@login_required
+def routetable(request):
+    routetable = os.popen('netstat -rn').read()
+    variables = RequestContext(request, {
+        'commandoutput': routetable,
+    })
+    return render_to_response('network/justcontent.html', variables)
+
+@login_required
+def ifconfigall(request):
+    ifconfigall = os.popen('ifconfig -a').read()
+    variables = RequestContext(request, {
+        'commandoutput': ifconfigall,
+    })
+    return render_to_response('network/justcontent.html', variables)
+
+@login_required
+def resolvconf(request):
+    resolvconf = os.popen('cat /etc/resolv.conf').read()
+    variables = RequestContext(request, {
+        'commandoutput': resolvconf,
+    })
+    return render_to_response('network/justcontent.html', variables)
 
 @login_required
 def lagg(request):
@@ -197,7 +224,7 @@ def lagg_add(request):
         lagg = LAGGInterfaceForm(request.POST)
         if lagg.is_valid():
             _lagg_performadd(lagg)
-            return HttpResponse(simplejson.dumps({"error": False, "message": "LAGG successfully added."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully added") % "LAGG"}), mimetype="application/json")
             #return render_to_response('network/lagg_add_ok.html')
             #return HttpResponseRedirect('/network/global/lagg/')
 

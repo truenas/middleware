@@ -7,6 +7,32 @@
 # REQUIRE: ix-kinit
 
 . /etc/rc.subr
+
+: ${NSS_LDAP_CONF:="/usr/local/etc/nss_ldap.conf"}
+
+is_win2k8()
+{
+	local res=0
+
+	while read version
+	do
+		if [ "${version}" = "windows2008" ]
+		then
+			res=1
+			break
+		fi
+
+	done <<EOF
+	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ad_windows_version
+	FROM
+		services_activedirectory
+	")
+EOF
+
+	return ${res}
+}
     
 join_activedirectory_domain()
 {
@@ -37,8 +63,96 @@ join_activedirectory_domain()
 	done
 }
 
+generate_nss_ldap_conf()
+{
+	local IFS="|"
+	local nssconf="${NSS_LDAP_CONF}"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ad_dcname,
+		ad_domainname,
+		ad_adminname,
+		ad_adminpw,
+		ad_spn,
+		ad_spnpw
+	FROM
+		services_services,
+		services_activedirectory
+
+	WHERE
+		(srv_service = 'activedirectory' and srv_enable = 1)
+	" | \
+	while read dcname domainname adminname adminpw spn spnpw
+	do
+		base=$(echo "${domainname}" | awk '{
+			n = split($0, parts, ".");
+			if (n > 0) {
+				base = sprintf("dc=%s", parts[1]);
+				for (i=2;i <= n;i++) {
+					base = sprintf("%s,dc=%s", base, parts[i]);
+				}
+				printf("%s", base);
+			}
+		}')
+
+		[ -z "${dcname}" -o -z "${base}" ] && return 1 
+
+		cat<<-EOF>"${nssconf}"
+		host ${dcname}
+		base ${base}
+		uri ldap://${dcname}/
+		binddn ${adminname}@${domainname}
+		bindpw ${adminpw}
+		scope sub
+		ssl no
+		nss_base_passwd ${base}?sub
+		nss_base_shadow ${base}?sub
+		nss_base_group ${base}?sub? &(objectCategory=group)(gidnumber=*)
+		nss_map_objectclass posixAccount user
+		nss_map_objectclass shadowAccount user
+		nss_map_objectclass posixGroup group
+		nss_map_attribute gecos cn
+		nss_map_attribute homeDirectory unixHomeDirectory
+		nss_map_attribute uniqueMember member
+EOF
+	done
+
+	ln -s ${nssconf} "$(dirname ${nssconf})/ldap.conf" 2>/dev/null
+
+	return 0
+}
+
+setup_homedirs()
+{
+	local hdsrc="/var/home"
+	local hddst="/home"
+
+	local dst=$(dirname "${hddst}")
+
+	mount -uw /	
+
+	mkdir -p "${hdsrc}"
+	mkdir -p "${dst}"
+	ln -s "${hdsrc}" "${dst}" 2>/dev/null
+
+	mount -ur /
+}
+
+do_activedirectory_stuff()
+{
+	is_win2k8
+	if [ "$?" = "1" ]
+	then
+		generate_nss_ldap_conf
+	fi
+
+	join_activedirectory_domain
+	setup_homedirs
+}
+
 name="ix-activedirectory"
-start_cmd='join_activedirectory_domain'
+start_cmd='do_activedirectory_stuff'
 stop_cmd=':'
             
 load_rc_config $name

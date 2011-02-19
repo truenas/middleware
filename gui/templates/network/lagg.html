@@ -1,65 +1,65 @@
+{% load i18n %}
 <table class="grid">
     <thead class="header">
 <tr>
-        <td>Virtual Interface</td>
-        <td>Actions</td>
+    <td>{% trans "Virtual Interface" %}</td>
+    <td>{% trans "Actions" %}</td>
 </tr>
     </thead>
     {% for l in lagg_list %}
     <tr class="{% cycle 'odd' 'even' %}" id="{{ l.id }}">
         <td>{{ l }}</td>
         <td>
-                        <button dojoType="dijit.form.Button" type="button">
-                            Edit Interface
-                        <script type="dojo/method" event="onClick" args="evt">
-                        editObject('Edit Interface', '{% url freeadmin_model_edit app="network",model="Interfaces",oid=l.lagg_interface.id %}?deletable=false', [this,]);
-                        </script>
-                        </button>
-                        <button dojoType="dijit.form.Button" type="button">
-                            Edit Members
-                        <script type="dojo/method" event="onClick" args="evt">
-                            var p = dijit.byId('tab_networksettings');
+             <button dojoType="dijit.form.Button" type="button">
+                 {% trans "Edit Interface" %}
+             <script type="dojo/method" event="onClick" args="evt">
+                 editObject('{% trans "Edit Interface" %}', '{% url freeadmin_model_edit app="network",model="Interfaces",oid=l.lagg_interface.id %}?deletable=false', [this,]);
+             </script>
+             </button>
+             <button dojoType="dijit.form.Button" type="button">
+                 {% trans "Edit Members" %}
+             <script type="dojo/method" event="onClick" args="evt">
+                 var p = dijit.byId('tab_networksettings');
 
-                            var c = p.getChildren();
-                            for(var i=0; i<c.length; i++){
-                                if(c[i].title == 'LAGG Members {{ l.lagg_interface.int_interface }}'){
-                                    p.selectChild(c[i]);
-                                    return;
-                                }
-                            }
+                 var c = p.getChildren();
+                 for(var i=0; i<c.length; i++){
+                     if(c[i].title == '{% trans "LAGG Members" %} {{ l.lagg_interface.int_interface }}'){
+                         p.selectChild(c[i]);
+                         return;
+                     }
+                 }
 
-                            var pane2 = new dijit.layout.ContentPane({
-                                title: 'LAGG Members {{ l.lagg_interface.int_interface }}',
-                                refreshOnShow: true,
-                                closable: true,
-                                href:'{% url network_lagg_members object_id=l.id %}',
-                            });
-                            dojo.addClass(pane2.domNode,["data_network_LAGGInterfaceMembers{{ l.lagg_interface.int_name }}","objrefresh"]);
-                            p.addChild(pane2);
-                            p.selectChild(pane2);
-                        </script>
-                        </button>
-                        <button dojoType="dijit.form.Button" type="button">
-                            Delete
-                        <script type="dojo/method" event="onClick" args="evt">
-                        editObject('Delete Interface', '{% url freeadmin_model_delete  app="network",model="Interfaces",oid=l.lagg_interface.id %}', [this,]);
-                        </script>
-                        </button>
-
+                 var pane2 = new dijit.layout.ContentPane({
+                     title: '{% trans "LAGG Members" %} {{ l.lagg_interface.int_interface }}',
+                     refreshOnShow: true,
+                     closable: true,
+                     href:'{% url network_lagg_members object_id=l.id %}',
+                 });
+                 dojo.addClass(pane2.domNode,["data_network_LAGGInterfaceMembers{{ l.lagg_interface.int_name }}","objrefresh"]);
+                 p.addChild(pane2);
+                 p.selectChild(pane2);
+             </script>
+             </button>
+             <button dojoType="dijit.form.Button" type="button">
+                 {% trans "Delete" %}
+             <script type="dojo/method" event="onClick" args="evt">
+                 editObject('{% trans "Delete Interface" %}', '{% url freeadmin_model_delete  app="network",model="Interfaces",oid=l.lagg_interface.id %}', [this,]);
+             </script>
+             </button>
         </td>
     </tr>
     {% empty %}
     <tr>
-        <td colspan="2">No LAGG interface defined</td>
+        <td colspan="2">{% trans "No LAGG interface defined" %}</td>
     </tr>
     {% endfor %}
     </table>
 
     <p class="btn">
         <button id="lagg_button" dojoType="dijit.form.Button" type="button">
-           Add LAGG Interface 
+            {% trans "Add LAGG Interface " %}
             <script type="dojo/method" event="onClick" args="evt">
-		    addObject('Add LAGG', '{% url network_lagg_add %}', [this,]);
+                addObject('{% trans "Add LAGG" %}', '{% url network_lagg_add %}', [this,]);
             </script>
         </button>
         </p>

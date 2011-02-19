@@ -9,6 +9,7 @@ auth		sufficient	pam_rootok.so		no_warn
 auth		sufficient	pam_self.so		no_warn
 #@@WINBIND@@	auth		sufficient	/usr/local/lib/pam_winbind.so silent try_first_pass
 #@@LDAP@@	auth		sufficient	/usr/local/lib/pam_ldap.so no_warn try_first_pass
+#@@KRB5@@	auth		sufficient	pam_krb5.so		no_warn try_first_pass
 auth		requisite	pam_group.so		no_warn group=wheel root_only fail_safe
 auth		include		system
 

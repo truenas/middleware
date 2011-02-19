@@ -142,13 +142,18 @@ CREATE TABLE "network_vlan" (
     "vlan_description" varchar(120) NOT NULL
 );
 CREATE TABLE "services_activedirectory" (
+    "id" integer PRIMARY KEY,
     "ad_workgroup" varchar(120) NOT NULL DEFAULT '',
     "ad_netbiosname" varchar(120),
     "ad_adminname" varchar(120),
     "ad_domainname" varchar(120),
     "ad_adminpw" varchar(120),
-    "id" integer PRIMARY KEY,
-    "ad_dcname" varchar(120)
+    "ad_dcname" varchar(120),
+    "ad_windows_version" varchar(120),
+    "ad_spn" varchar(120),
+    "ad_spnpw" varchar(120),
+    "ad_keytab" text NOT NULL DEFAULT ''
+     
 );
 CREATE TABLE "services_afp" (
     "id" integer NOT NULL PRIMARY KEY,

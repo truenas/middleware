@@ -40,6 +40,7 @@ from django.template import RequestContext
 from django.utils import simplejson
 from django.views.generic.list_detail import object_detail, object_list
 from django.template.loader import get_template
+from django.utils.translation import ugettext as _
 
 from freenasUI.middleware.notifier import notifier
 from freeadmin import navtree
@@ -48,7 +49,7 @@ from freeadmin import navtree
 def adminInterface(request, objtype = None):
     context = RequestContext(request)
 
-    return render_to_response('freeadmin/test.html', context)
+    return render_to_response('freeadmin/index.html', context)
 
 @login_required
 def menu(request, objtype = None):
@@ -105,7 +106,7 @@ def generic_model_add(request, app, model, mf=None):
         mf = mf(request.POST, request.FILES, instance=instance)
         if mf.is_valid():
             obj = mf.save()
-            return HttpResponse(simplejson.dumps({"error": False, "message": "%s successfully added." % m._meta.verbose_name}))
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully added.") % m._meta.verbose_name}))
             #return render_to_response('freeadmin/generic_model_add_ok.html', context)
 
     else:
@@ -203,7 +204,6 @@ def generic_model_datagrid_json(request, app, model):
         try:
             _temp = __import__('%s.models' % app_name, globals(), locals(), [model_name], -1)
         except ImportError, e:
-            print "error!"
             return True
 
         context = RequestContext(request, {
@@ -269,9 +269,9 @@ def generic_model_edit(request, app, model, oid, mf=None):
             obj = mf.save()
             #instance.save()
             if request.GET.has_key("iframe"):
-                return HttpResponse("<html><body><textarea>"+simplejson.dumps({"error": False, "message": "%s successfully updated." % m._meta.verbose_name})+"</textarea></boby></html>")
+                return HttpResponse("<html><body><textarea>"+simplejson.dumps({"error": False, "message": _("%s successfully updated.") % m._meta.verbose_name})+"</textarea></boby></html>")
             else:
-                return HttpResponse(simplejson.dumps({"error": False, "message": "%s successfully updated." % m._meta.verbose_name}))
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully updated.") % m._meta.verbose_name}))
             #return render_to_response('freeadmin/generic_model_edit_ok.html', context, mimetype='text/html')
 
     else:
@@ -288,11 +288,13 @@ def generic_model_edit(request, app, model, oid, mf=None):
         template = 'freeadmin/generic_model_edit.html'
 
     if request.GET.has_key("iframe"):
-    	resp = render_to_response('freeadmin/generic_model_edit.html', context, mimetype='text/html')
+    	resp = render_to_response('freeadmin/generic_model_edit.html', context, \
+                mimetype='text/html')
         resp.content = "<html><body><textarea>"+resp.content+"</textarea></boby></html>"
         return resp
     else:
-    	return render_to_response('freeadmin/generic_model_edit.html', context, mimetype='text/html')
+    	return render_to_response('freeadmin/generic_model_edit.html', context, \
+                mimetype='text/html')
 
 
 @login_required
@@ -316,7 +318,7 @@ def generic_model_delete(request, app, model, oid):
 
     if request.method == "POST":
         instance.delete()
-        return HttpResponse(simplejson.dumps({"error": False, "message": "%s successfully deleted." % m._meta.verbose_name}), mimetype="application/json")
+        return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully deleted.") % m._meta.verbose_name}), mimetype="application/json")
         #return render_to_response('freeadmin/generic_model_delete_ok.html', context)
 
     return render_to_response('freeadmin/generic_model_delete.html', context)

@@ -43,75 +43,75 @@ class Settings(Model):
             max_length=120, 
             choices=PROTOCOL_CHOICES, 
             default="http", 
-            verbose_name="Protocol"
+            verbose_name = _("Protocol")
             )
     stg_language = models.CharField(
             max_length=120, 
             choices=LANG_CHOICES, 
             default="english", 
-            verbose_name="Language"
+            verbose_name = _("Language")
             )
     stg_timezone = models.CharField(
             max_length=120, 
             choices=TimeZoneChoices(),
             default="America/Los_Angeles", 
-            verbose_name="Timezone"
+            verbose_name = _("Timezone")
             )
     stg_ntpserver1 = models.CharField(
             max_length=120, 
             default="0.freebsd.pool.ntp.org iburst maxpoll 9",
-            verbose_name="NTP server 1"
+            verbose_name = _("NTP server 1")
             )
     stg_ntpserver2 = models.CharField(
             max_length=120, 
             default="1.freebsd.pool.ntp.org iburst maxpoll 9",
-            verbose_name="NTP server 2",
+            verbose_name = _("NTP server 2"),
             blank=True
             )
     stg_ntpserver3 = models.CharField(
             max_length=120, 
             default="2.freebsd.pool.ntp.org iburst maxpoll 9",
-            verbose_name="NTP server 3",
+            verbose_name = _("NTP server 3"),
             blank=True
             )
 
     class Meta:
-        verbose_name_plural = u"Settings"
+        verbose_name = _("Settings")
 
     class FreeAdmin:
         deletable = False
 
 class Advanced(Model):
     adv_consolemenu = models.BooleanField(
-            verbose_name="Enable Console Menu")
+            verbose_name = _("Enable Console Menu"))
     adv_serialconsole = models.BooleanField(
-            verbose_name="Use Serial Console")
+            verbose_name = _("Use Serial Console"))
     adv_consolescreensaver = models.BooleanField(
-            verbose_name="Enable screen saver")
+            verbose_name = _("Enable screen saver"))
     adv_firmwarevc = models.BooleanField(
-            verbose_name="Automatically Check for New Firmware")
+            verbose_name = _("Automatically Check for New Firmware"))
     adv_systembeep = models.BooleanField(
-            verbose_name="Beep on boot")
+            verbose_name = _("Beep on boot"))
     adv_tuning = models.BooleanField(
-            verbose_name="Enable Special System Tuning")
+            verbose_name = _("Enable Special System Tuning"))
     adv_powerdaemon = models.BooleanField(
-            verbose_name="Enable powerd (Power Saving Daemon)")
+            verbose_name = _("Enable powerd (Power Saving Daemon)"))
     adv_zeroconfbonjour = models.BooleanField(
-            verbose_name="Enable Zeroconf/Bonjour")
+            verbose_name = _("Enable Zeroconf/Bonjour"))
     adv_swapondrive = models.IntegerField(
-            verbose_name="Swap size on each drive in GiB, affects new disks only",
+            verbose_name = _("Swap size on each drive in GiB, affects new disks only"),
             default=2)
     # TODO: need geom_eli in kernel
     #adv_encswap = models.BooleanField(
-    #        verbose_name="Encrypt swap space",
+    #        verbose_name = _("Encrypt swap space"),
     #        default=False)
     adv_motd = models.TextField(
             max_length=1024,
-            verbose_name="MOTD banner",
+            verbose_name = _("MOTD banner"),
             )
 
     class Meta:
-        verbose_name_plural = u"Advanced"
+        verbose_name = _("Advanced")
 
     class FreeAdmin:
         deletable = False
@@ -120,49 +120,49 @@ class Advanced(Model):
 class Email(Model):
     em_fromemail = models.CharField(
             max_length=120, 
-            verbose_name="From email", 
-            help_text="An email address that the system will use for the sending address for mail it sends, eg: freenas@mydomain.com",
+            verbose_name = _("From email"), 
+            help_text = _("An email address that the system will use for the sending address for mail it sends, eg: freenas@mydomain.com"),
             blank=True
             )
     em_outgoingserver = models.CharField(
             max_length=120, 
-            verbose_name="Outgoing mail server", 
-            help_text="A hostname or ip that will accept our mail, for instance mail.example.org, or 192.168.1.1",
+            verbose_name = _("Outgoing mail server"), 
+            help_text = _("A hostname or ip that will accept our mail, for instance mail.example.org, or 192.168.1.1"),
             blank=True
             )
     em_port = models.IntegerField(
             default=25,
             validators=[MinValueValidator(1), MaxValueValidator(65535)],
-            help_text="An integer from 1 - 65535, generally will be 25, 465, or 587",
-            verbose_name="Port to connect to"
+            help_text = _("An integer from 1 - 65535, generally will be 25, 465, or 587"),
+            verbose_name = _("Port to connect to")
             )
     em_security = models.CharField(
             max_length=120, 
             choices=SMTPAUTH_CHOICES,
             default="plain", 
-            help_text="encryption of the connection",
-            verbose_name="TLS/SSL"
+            help_text = _("encryption of the connection"),
+            verbose_name = _("TLS/SSL")
             )
     em_smtp = models.BooleanField(
-            verbose_name="Use SMTP Authentication",
+            verbose_name = _("Use SMTP Authentication"),
             default=False
             )
     em_user = models.CharField(
             blank=True,
             null=True,
             max_length=120, 
-            verbose_name="Username",
-            help_text="A username to authenticate to the remote server",
+            verbose_name = _("Username"),
+            help_text = _("A username to authenticate to the remote server"),
             )
     em_pass = models.CharField(
             blank=True,
             null=True,
             max_length=120, 
-            verbose_name="Password",
-            help_text="A password to authenticate to the remote server",
+            verbose_name = _("Password"),
+            help_text = _("A password to authenticate to the remote server"),
             )
     class Meta:
-        verbose_name_plural = u"Email"
+        verbose_name = _("Email")
 
     class FreeAdmin:
         deletable = False

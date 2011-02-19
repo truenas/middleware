@@ -1,7 +1,9 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block dojango_content %}
 <script type="text/javascript">
+    dojo.require("dojox.fx.easing");
     dojo.addOnLoad(function() {
           dijit.byId("login").show();
     });
@@ -9,11 +11,26 @@
 <body>
 <div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
 {% if form.errors %}
-<p>Your username and password didn't match. Please try again.</p>
+<script type="dojo/method">
+    dojo.addOnLoad(function() {
+         var easingArea = dojo.byId("login");
+             var easingCoords = dojo.coords(easingArea);
+        dojo.animateProperty({
+             node: dojo.byId("login"),
+             easing: dojox.fx.easing["elasticInOut"],
+             duration: 1000,
+              properties: {
+                    left: easingCoords.x-5,
+                    top:easingCoords.y-5 
+              }
+           }).play();
+    });
+</script>
+<p>{% trans "Your username and password didn't match. Please try again." %}</p>
 {% endif %}
 
 {% if user.is_authenticated %}
-    <p>Welcome, {{ user.username }}. Thanks for logging in.</p>
+<p>{% blocktrans with user.username as username %}Welcome, {{ username }}. Thanks for logging in.{% endblocktrans %}</p>
 {% else %} 
 <div id="login" dojoType="dijit.Dialog" title="Welcome to FreeNAS 8">
     <h3>Please log in.</h3>
@@ -28,7 +45,7 @@
     <td>{{ form.password }}</td>
 </tr>
 </table>
-<button dojoType="dijit.form.Button" type="submit">Log In</button>
+<button dojoType="dijit.form.Button" type="submit">{% trans "Log In" %}</button>
 <input type="hidden" name="next" value="{{ next }}" />
 </form>
     </div>

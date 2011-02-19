@@ -84,18 +84,18 @@ class EmailForm(ModelForm):
     def clean_em_user(self):
         if self.cleaned_data['em_smtp'] == True and \
                 self.cleaned_data['em_user'] == "":
-            raise forms.ValidationError("This field is required")
+            raise forms.ValidationError(_("This field is required"))
         return self.cleaned_data['em_user']
 
     def clean_em_pass1(self):
         if self.cleaned_data['em_smtp'] == True and \
                 self.cleaned_data['em_pass1'] == "":
-            raise forms.ValidationError("This field is required")
+            raise forms.ValidationError(_("This field is required"))
         return self.cleaned_data['em_pass1']
     def clean_em_pass2(self):
         if self.cleaned_data['em_smtp'] == True and \
                 self.cleaned_data.get('em_pass2', "") == "":
-            raise forms.ValidationError("This field is required")
+            raise forms.ValidationError(_("This field is required"))
         pass1 = self.cleaned_data.get("em_pass1", "")
         pass2 = self.cleaned_data.get("em_pass2", "")
         if pass1 != pass2:
@@ -110,7 +110,7 @@ class EmailForm(ModelForm):
         return email
 
 class FirmwareTemporaryLocationForm(Form):
-    mountpoint = forms.ChoiceField(label="Place to temporarily place firmware file", help_text="The system will use this place to temporarily store the firmware file before it's being applied.",choices=(), widget=forms.Select(attrs={ 'class': 'required' }),)
+    mountpoint = forms.ChoiceField(label="Place to temporarily place firmware file", help_text = _("The system will use this place to temporarily store the firmware file before it's being applied."),choices=(), widget=forms.Select(attrs={ 'class': 'required' }),)
     def __init__(self, *args, **kwargs):
         from freenasUI.storage.models import MountPoint
         super(FirmwareTemporaryLocationForm, self).__init__(*args, **kwargs)
@@ -119,7 +119,8 @@ class FirmwareTemporaryLocationForm(Form):
         notifier().change_upload_location(self.cleaned_data["mountpoint"].__str__())
 
 class FirmwareUploadForm(Form):
-    firmware = django.forms.FileField(label="New image to be installed")
+    firmware = django.forms.FileField(label=_("New image to be installed"))
+    sha256 = forms.CharField(label=_("SHA256 sum for the image"))
     def clean(self):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/firmware.xz'
@@ -127,9 +128,10 @@ class FirmwareUploadForm(Form):
         for c in self.files['firmware'].chunks():
             fw.write(c)
         fw.close()
+        checksum = notifier().checksum(filename)
         retval = notifier().validate_xz(filename)
-        if retval == False:
-            msg = u"Invalid firmware"
+        if checksum != cleaned_data['sha256'].__str__() or retval == False:
+            msg = u"Invalid firmware or checksum"
             self._errors["firmware"] = self.error_class([msg])
             del cleaned_data["firmware"]
         return cleaned_data

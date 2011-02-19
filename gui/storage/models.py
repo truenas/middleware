@@ -27,7 +27,7 @@
 #####################################################################
 
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from freenasUI.choices import *
 from freenasUI.middleware.notifier import notifier
 from freeadmin.models import Model
@@ -38,15 +38,15 @@ class Volume(Model):
     vol_name = models.CharField(
             unique=True,
             max_length=120, 
-            verbose_name="Name"
+            verbose_name = _("Name")
             )
     vol_fstype = models.CharField(
             max_length=120, 
             choices=VolumeType_Choices, 
-            verbose_name="File System Type", 
+            verbose_name = _("File System Type"), 
             )
     class Meta:
-        verbose_name = "Volume"
+        verbose_name = _("Volume")
     def delete(self):
         notifier().destroy("volume", self.id)
         notifier().restart("collectd")
@@ -62,17 +62,17 @@ class DiskGroup(Model):
     group_name = models.CharField(
             unique=True,
             max_length=120, 
-            verbose_name="Name"
+            verbose_name = _("Name")
             )
     group_type = models.CharField(
             max_length=120, 
             choices=(), 
-            verbose_name="Type", 
+            verbose_name = _("Type"), 
             )
     group_volume = models.ForeignKey(
             Volume,
-            verbose_name="Volume",
-            help_text="Volume this group belongs to",
+            verbose_name = _("Volume"),
+            help_text = _("Volume this group belongs to"),
             )
     def __unicode__(self):
         return "%s (%s)" % (self.group_name, self.group_type)
@@ -81,57 +81,57 @@ class Disk(Model):
     disk_name = models.CharField(
             unique=True,
             max_length=120, 
-            verbose_name="Name"
+            verbose_name = _("Name")
             )
     disk_disks = models.CharField(
             max_length=120, 
-            verbose_name="Disks"
+            verbose_name = _("Disks")
             )
     disk_description = models.CharField(
             max_length=120, 
-            verbose_name="Description", 
+            verbose_name = _("Description"), 
             blank=True
             )
     disk_transfermode = models.CharField(
             max_length=120, 
             choices=TRANSFERMODE_CHOICES, 
             default="Auto", 
-            verbose_name="Transfer Mode"
+            verbose_name = _("Transfer Mode")
             )
     disk_hddstandby = models.CharField(
             max_length=120, 
             choices=HDDSTANDBY_CHOICES, 
             default="Always On", 
-            verbose_name="HDD Standby"
+            verbose_name = _("HDD Standby")
             )
     disk_advpowermgmt = models.CharField(
             max_length=120, 
             choices=ADVPOWERMGMT_CHOICES, 
             default="Disabled", 
-            verbose_name="Advanced Power Management"
+            verbose_name = _("Advanced Power Management")
             )
     disk_acousticlevel = models.CharField(
             max_length=120, 
             choices=ACOUSTICLVL_CHOICES, 
             default="Disabled", 
-            verbose_name="Acoustic Level"
+            verbose_name = _("Acoustic Level")
             )
     disk_togglesmart = models.BooleanField(
             default=True,
-            verbose_name="Enable S.M.A.R.T.",
+            verbose_name = _("Enable S.M.A.R.T."),
             )
     disk_smartoptions = models.CharField(
             max_length=120, 
-            verbose_name="S.M.A.R.T. extra options", 
+            verbose_name = _("S.M.A.R.T. extra options"), 
             blank=True
             )
     disk_group = models.ForeignKey(
             DiskGroup,
-            verbose_name="Group Membership",
-            help_text="The disk group containing this disk"
+            verbose_name = _("Group Membership"),
+            help_text = _("The disk group containing this disk")
             )
     class Meta:
-        verbose_name = "Disk"
+        verbose_name = _("Disk")
     def __unicode__(self):
         return self.disk_disks + ' (' + self.disk_description + ')'
 
@@ -140,13 +140,13 @@ class MountPoint(Model):
     mp_path = models.CharField(
             unique=True,
             max_length=120,
-            verbose_name="Mount Point",
-            help_text="Path to mount point",
+            verbose_name = _("Mount Point"),
+            help_text = _("Path to mount point"),
             )
     mp_options = models.CharField(
             max_length=120,
-            verbose_name="Mount options",
-            help_text="Enter Mount Point options here",
+            verbose_name = _("Mount options"),
+            help_text = _("Enter Mount Point options here"),
             null=True,
             )
     mp_ischild = models.BooleanField(
@@ -163,28 +163,40 @@ class MountPoint(Model):
             totalbytes = self._vfs.f_blocks*self._vfs.f_frsize
             return u"%s" % (humanize_number_si(totalbytes))
         except:
-            return u"Error getting total space"
+            return _(u"Error getting total space")
     def _get_avail_si(self):
         try:
             availbytes = self._vfs.f_bavail*self._vfs.f_frsize
             return u"%s" % (humanize_number_si(availbytes))
         except:
-            return u"Error getting available space"
+            return _(u"Error getting available space")
     def _get_used_si(self):
         try:
             usedbytes = (self._vfs.f_blocks-self._vfs.f_bfree)*self._vfs.f_frsize
             return u"%s" % (humanize_number_si(usedbytes))
         except:
-            return u"Error getting used space"
+            return _(u"Error getting used space")
     def _get_used_pct(self):
         try:
             availpct = 100*(self._vfs.f_blocks-self._vfs.f_bavail)/self._vfs.f_blocks
             return u"%d%%" % (availpct)
         except:
-            return u"Error"
+            return _(u"Error")
+    def _get_status(self):
+        try:
+            # Make sure do not compute it twice
+            if not hasattr(self, '_status'):
+                fs = self.mp_volume.vol_fstype
+                name = self.mp_volume.vol_name
+                group_type = DiskGroup.objects.filter(group_volume__exact=\
+                        self.mp_volume).values_list('group_type')
+                self._status = notifier().get_volume_status(name, fs, group_type)
+            return self._status
+        except Exception, e:
+            return _(u"Error")
     _vfs = property(_get__vfs)
     total_si = property(_get_total_si)
     avail_si = property(_get_avail_si)
     used_pct = property(_get_used_pct)
     used_si = property(_get_used_si)
-
+    status = property(_get_status)

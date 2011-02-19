@@ -1,20 +1,20 @@
+{% load i18n %}
 {% block dojango_content %}
+<div dojoType="dijit.layout.TabContainer" nested="true" style="width:100%;" title="{% trans "iSCSI Management" %}" selected="true" doLayout="false">
 
-<div dojoType="dijit.layout.TabContainer" nested="true" style="width:100%;" title="iSCSI Management" selected="true" doLayout="false">
-
-    <div dojoType="dijit.layout.ContentPane" title="Targets" doLayout="False" href="{% url services_iscsi_targets %}" class="objrefresh data_services_iSCSITarget" refreshOnShow="true">
+    <div dojoType="dijit.layout.ContentPane" title="{% trans "Targets" %}" doLayout="False" href="{% url services_iscsi_targets %}" class="objrefresh data_services_iSCSITarget" refreshOnShow="true">
         </div>
-        <div dojoType="dijit.layout.ContentPane" title="Device Extents" doLayout="False" href="{% url services_iscsi_dextents %}" class="objrefresh data_services_iSCSITargetExtent" refreshOnShow="true">
+        <div dojoType="dijit.layout.ContentPane" title="{% trans "Device Extents" %}" doLayout="False" href="{% url services_iscsi_dextents %}" class="objrefresh data_services_iSCSITargetExtent" refreshOnShow="true">
   </div>
-  <div dojoType="dijit.layout.ContentPane" title="Extents" doLayout="False" href="{% url services_iscsi_extents %}" class="objrefresh data_services_iSCSITargetExtent" refreshOnShow="true">
+  <div dojoType="dijit.layout.ContentPane" title="{% trans "Extents" %}" doLayout="False" href="{% url services_iscsi_extents %}" class="objrefresh data_services_iSCSITargetExtent" refreshOnShow="true">
   </div>
-  <div dojoType="dijit.layout.ContentPane" title="Associated Targets" doLayout="False" href="{% url services_iscsi_assoctargets %}" class="objrefresh data_services_iSCSITargetToExtent" refreshOnShow="true">
+  <div dojoType="dijit.layout.ContentPane" title="{% trans "Associated Targets" %}" doLayout="False" href="{% url services_iscsi_assoctargets %}" class="objrefresh data_services_iSCSITargetToExtent" refreshOnShow="true">
         </div>
-        <div dojoType="dijit.layout.ContentPane" title="Authentication" doLayout="False" href="{% url services_iscsi_auth %}" class="objrefresh data_services_iSCSITargetAuthCredential" refreshOnShow="true">
+        <div dojoType="dijit.layout.ContentPane" title="{% trans "Authentication" %}" doLayout="False" href="{% url services_iscsi_auth %}" class="objrefresh data_services_iSCSITargetAuthCredential" refreshOnShow="true">
   </div>
-  <div dojoType="dijit.layout.ContentPane" title="Authorized Initiator" doLayout="False" href="{% url services_iscsi_authini %}" class="objrefresh data_services_iSCSITargetAuthorizedInitiator" refreshOnShow="true">
+  <div dojoType="dijit.layout.ContentPane" title="{% trans "Authorized Initiator" %}" doLayout="False" href="{% url services_iscsi_authini %}" class="objrefresh data_services_iSCSITargetAuthorizedInitiator" refreshOnShow="true">
   </div>
-  <div dojoType="dijit.layout.ContentPane" title="Portals" doLayout="False" href="{% url services_iscsi_portals %}" class="objrefresh data_services_iSCSITargetPortal" refreshOnShow="true">
+  <div dojoType="dijit.layout.ContentPane" title="{% trans "Portals" %}" doLayout="False" href="{% url services_iscsi_portals %}" class="objrefresh data_services_iSCSITargetPortal" refreshOnShow="true">
         </div>
 </div>
 {% endblock %}

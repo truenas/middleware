@@ -1,3 +1,4 @@
+{% load i18n %}
 <form dojoType="dijit.form.Form">
 <script type="dojo/event" event="onSubmit" args="e">
     formSubmit(this, e, '{% url network_lagg_add %}');
@@ -5,9 +6,10 @@
 <table> 
     {{ lagg }}
 <tr><td>
-<button class="submitform" dojoType="dijit.form.Button" type="submit"            onClick="this.set('label', 'Please wait...');"> OK </button>
+        <button class="submitform" dojoType="dijit.form.Button" type="submit" onClick="this.set('label', '{% trans "Please wait..." %}');">{% trans "OK" %}</button>
 
-<button dojoType="dijit.form.Button" onClick="cancelDialog(this);"> Cancel </button>
+        <button dojoType="dijit.form.Button"
+            onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
         </td></tr>
 </table>
 </form>

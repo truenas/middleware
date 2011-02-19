@@ -1,9 +1,10 @@
+{% load i18n %}
  <table class="grid">
      <thead class="header">
  <tr>
-         <td>Target</td>
-         <td>Alias</td>
-         <td>Type</td>
+     <td>{% trans "Target" %}</td>
+     <td>{% trans "Alias" %}</td>
+     <td>{% trans "Type" %}</td>
  </tr>
      </thead>
      {% for t in target_list %}
@@ -12,32 +13,32 @@
          <td>{{ t.iscsi_target_alias }}</td>
          <td>{{ t.iscsi_target_type }}</td>
          <td>
-                        <button dojoType="dijit.form.Button" type="button">
-                            Edit
-                        <script type="dojo/method" event="onClick" args="evt">
-                        editObject('Edit', '{% url freeadmin_model_edit app="services",   model="iSCSITarget",oid=t.id %}', [this,]);
-                        </script>
-                        </button>
-                        <button dojoType="dijit.form.Button" type="button">
-                            Delete
-                        <script type="dojo/method" event="onClick" args="evt">
-                        editObject('Delete', '{% url freeadmin_model_delete               app="services",model="iSCSITarget",oid=t.id %}', [this,]);
-                        </script>
-                        </button>
+              <button dojoType="dijit.form.Button" type="button">
+                  {% trans "Edit" %}
+              <script type="dojo/method" event="onClick" args="evt">
+                  editObject('{% trans "Edit" %}', '{% url freeadmin_model_edit app="services", model="iSCSITarget",oid=t.id %}', [this,]);
+              </script>
+              </button>
+              <button dojoType="dijit.form.Button" type="button">
+                  {% trans "Delete" %}
+              <script type="dojo/method" event="onClick" args="evt">
+                  editObject('{% trans "Delete" %}', '{% url freeadmin_model_delete app="services",model="iSCSITarget",oid=t.id %}', [this,]);
+              </script>
+              </button>
 
          </td>
      </tr>
      {% empty %}
      <tr>
-         <td colspan="9">No targets defined</td>
+         <td colspan="9">{% trans "No targets defined" %}</td>
      </tr>
      {% endfor %}
      </table>
      <p class="btn">
          <button id="tgt_button" dojoType="dijit.form.Button" type="button">
-             Add Target 
+             {% trans "Add Target" %}
              <script type="dojo/method" event="onClick" args="evt">
-              addObject('Add Target', '{% url freeadmin_model_add app="services",model="iSCSITarget" %}', [this,]);
+                 addObject('{% trans "Add Target" %}', '{% url freeadmin_model_add app="services",model="iSCSITarget" %}', [this,]);
          </script>
          </button>
          </p>

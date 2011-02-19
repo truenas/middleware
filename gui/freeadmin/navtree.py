@@ -7,6 +7,7 @@ from django.db import models
 from django.forms import ModelForm
 from django.core.urlresolvers import resolve
 from django.http import Http404
+from django.utils.translation import ugettext as _
 
 class NavTree(object):
 
@@ -309,23 +310,23 @@ class NavTree(object):
             self.sort_navoption(nav)
     
         nav = Nav()
-        nav.name = 'Display System Processes'
+        nav.name = _('Display System Processes')
         nav.nav_group = 'main'
-        nav.type = 'displayprocs'
+        nav.action = 'displayprocs'
         nav.options = []
         nav_groups.register(nav)
     
         nav = Nav()
-        nav.name = 'Reboot'
+        nav.name = _('Reboot')
         nav.nav_group = 'main'
-        nav.type = 'reboot'
+        nav.action = 'reboot'
         nav.options = []
         nav_groups.register(nav)
     
         nav = Nav()
-        nav.name = 'Shutdown'
+        nav.name = _('Shutdown')
         nav.nav_group = 'main'
-        nav.type = 'shutdown'
+        nav.action = 'shutdown'
         nav.options = []
         nav_groups.register(nav)
         #print self._modelforms
@@ -367,11 +368,13 @@ class NavTree(object):
             'id': str(kwargs['uid'].new()),
             'view': o.get_absolute_url(),
         }
+        if hasattr(o, 'append_url'):
+            my['view'] += o.append_url
         if hasattr(o, 'rename'):
             my['name'] = o.rename
         else:
             my['name'] = o.name
-        for attr in ('model', 'app', 'type', 'app_name', 'icon'):
+        for attr in ('model', 'app', 'type', 'app_name', 'icon', 'action'):
             if hasattr(o, attr):
                 my[attr] = getattr(o, attr)
 

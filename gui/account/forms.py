@@ -144,6 +144,11 @@ class UserChangeForm(ModelForm):
         if f is not None:
             f.queryset = f.queryset.select_related('content_type')
 
+    def save(self):
+        super(UserChangeForm, self).save()
+        notifier().change_root_alias(self.instance.email)
+        return self.instance
+
 class bsdUserCreationForm(ModelForm):
     """
     # Yanked from django/contrib/auth/
@@ -156,6 +161,7 @@ class bsdUserCreationForm(ModelForm):
     bsdusr_password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput,
         help_text = _("Enter the same password as above, for verification."), required=False)
     bsdusr_shell = forms.ChoiceField(label=_("Shell"), initial=u'/bin/csh', choices=())
+    bsdusr_login_disabled = forms.BooleanField(label=_("Disable logins"), required=False)
 
     class Meta:
         model = bsdUsers
@@ -176,6 +182,7 @@ class bsdUserCreationForm(ModelForm):
         shells = popen("grep ^/ /etc/shells").read().split('\n')
         for shell in shells:
             shell_dict[shell] = basename(shell)
+        shell_dict['/sbin/nologin'] = 'nologin'
         return shell_dict.items()
 
     def clean_bsdusr_username(self):
@@ -189,25 +196,38 @@ class bsdUserCreationForm(ModelForm):
         else:
             return self.instance.bsdusr_username
 
-    def clean_bsdusr_password1(self):
-        if (self.instance.id is not None and self.cleaned_data["bsdusr_password1"] != "") or \
-                (self.instance.id is None and self.cleaned_data["bsdusr_password1"] == ""):
-            raise forms.ValidationError(_("This field is required."))
-        return self.cleaned_data["bsdusr_password1"]
-
     def clean_bsdusr_password2(self):
         bsdusr_password1 = self.cleaned_data.get("bsdusr_password1", "")
         bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
-        if (self.instance.id is not None and self.cleaned_data["bsdusr_password2"] != "") or \
-                (self.instance.id is None and self.cleaned_data["bsdusr_password2"] == ""):
-            raise forms.ValidationError(_("This field is required."))
         if bsdusr_password1 != bsdusr_password2:
             raise forms.ValidationError(_("The two password fields didn't match."))
         return bsdusr_password2
+
     def clean_bsdusr_home(self):
         if self.cleaned_data['bsdusr_home'][0:5] != u'/mnt/' and self.cleaned_data['bsdusr_home'] != u'/nonexistent':
             raise forms.ValidationError(_("Home directory has to start with /mnt/"))
         return self.cleaned_data['bsdusr_home']
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+
+        login = cleaned_data["bsdusr_login_disabled"] = \
+                cleaned_data.get("bsdusr_login_disabled", False)
+        if login:
+            cleaned_data['bsdusr_password'] = ""
+            cleaned_data['bsdusr_password2'] = ""
+        else:
+            if ((self.instance.id is not None and cleaned_data["bsdusr_password1"] != "") or \
+                (self.instance.id is None and cleaned_data["bsdusr_password1"] == "")):
+                self._errors['bsdusr_password1'] = self.error_class([_("This field is required.")])
+                del cleaned_data['bsdusr_password1']
+            if ((self.instance.id is not None and cleaned_data["bsdusr_password2"] != "") or \
+                (self.instance.id is None and cleaned_data["bsdusr_password2"] == "")):
+                self._errors['bsdusr_password2'] = self.error_class([_("This field is required.")])
+                del cleaned_data['bsdusr_password2']
+
+        return cleaned_data
+
     def save(self, commit=True):
         if commit:
             uid, gid, unixhash, smbhash = notifier().user_create(
@@ -217,6 +237,7 @@ class bsdUserCreationForm(ModelForm):
                 uid = self.cleaned_data['bsdusr_uid'],
                 shell = self.cleaned_data['bsdusr_shell'].__str__(),
                 homedir = self.cleaned_data['bsdusr_home'].__str__(),
+                password_disabled = self.cleaned_data['bsdusr_login_disabled']
             )
             bsduser = super(bsdUserCreationForm, self).save(commit=False)
             try:
@@ -272,22 +293,39 @@ class bsdUserPasswordForm(ModelForm):
         return self.instance
 
 class bsdUserChangeForm(ModelForm):
+    bsdusr_login_disabled = forms.BooleanField(label=_("Disable logins"), required=False)
+
     class Meta:
         model = bsdUsers
         exclude = ('bsdusr_unixhash', 'bsdusr_smbhash', 'bsdusr_builtin',)
+
     def __init__(self, *args, **kwargs):
         super(bsdUserChangeForm, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
-        if instance and instance.id:
-            self.fields['bsdusr_username'].widget.attrs['readonly'] = True
+        if instance:
+            if instance.id:
+                self.fields['bsdusr_username'].widget.attrs['readonly'] = True
+            if instance.bsdusr_unixhash == '*' and instance.bsdusr_smbhash == '':
+                self.fields['bsdusr_login_disabled'].initial = True
 
     def clean_bsdusr_username(self):
         return self.instance.bsdusr_username
 
+    def clean_bsdusr_login_disabled(self):
+        return self.cleaned_data.get("bsdusr_login_disabled", False)
+
     def save(self):
-        super(bsdUserChangeForm, self).save()
+        
+        bsduser = super(bsdUserChangeForm, self).save(commit=False)
+        if self.cleaned_data["bsdusr_login_disabled"] == True and \
+                self.instance.bsdusr_unixhash != '*' and self.instance.bsdusr_smbhash != '':
+            bsduser.bsdusr_unixhash = '*'
+            bsduser.bsdusr_smbhash = ''
+        elif self.cleaned_data["bsdusr_login_disabled"] == False:
+            bsduser.bsdusr_unixhash = ''
+        bsduser.save()
         notifier().reload("user")
-        return self.instance
+        return bsduser
 
 class bsdGroupsForm(ModelForm):
     class Meta:

@@ -26,18 +26,24 @@
 # $FreeBSD$
 #####################################################################
 
+import base64
+
 from django.shortcuts import render_to_response                
 from django.core.exceptions import ObjectDoesNotExist
-from freenasUI.services.models import *                         
-from freenasUI.storage.models import *
 from freenasUI.middleware.notifier import notifier
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode 
-from freenasUI.common.forms import ModelForm
-from freenasUI.common.forms import Form
 from dojango import forms
 from dojango.forms import fields, widgets
+from django.utils.translation import ugettext as _
+
+#TODO do not import *
+from freenasUI.services.models import *                         
+from freenasUI.storage.models import *
+from freenasUI.common.forms import ModelForm
+from freenasUI.common.forms import Form
+import dojango.forms
 
 """ Services """
 
@@ -70,6 +76,12 @@ class FTPForm(ModelForm):
     def save(self):
         super(FTPForm, self).save()
         notifier().reload("ftp")
+    def clean_ftp_anonpath(self):
+        anon = self.cleaned_data['ftp_onlyanonymous']
+        path = self.cleaned_data['ftp_anonpath']
+        if anon and not path:
+            raise forms.ValidationError(_("This field is required for anonymous login"))
+        return path
     class Meta:
         model = FTP 
 
@@ -103,12 +115,17 @@ class UPSForm(ModelForm):
     class Meta:
         model = UPS
 
+
 class ActiveDirectoryForm(ModelForm):
+    file = forms.FileField(label="Kerberos Keytab File", required=False)
     def save(self):
+        if self.files.has_key('file'):
+            self.instance.ad_keytab = base64.encodestring(self.files['file'].read())
         super(ActiveDirectoryForm, self).save()
         notifier().restart("activedirectory")
     class Meta:
         model = ActiveDirectory
+        exclude = ('ad_keytab',)
 
 class LDAPForm(ModelForm):
     def save(self):
@@ -118,16 +135,24 @@ class LDAPForm(ModelForm):
         model = LDAP
 
 class iSCSITargetAuthCredentialForm(ModelForm):
-    iscsi_target_auth_secret1 = forms.CharField(label="Secret", widget=forms.PasswordInput, help_text="Target side secret.")
-    iscsi_target_auth_secret2 = forms.CharField(label="Secret (Confirm)", widget=forms.PasswordInput, help_text="Enter the same secret above for verification.")
-    iscsi_target_auth_peersecret1 = forms.CharField(label="Initiator Secret", widget=forms.PasswordInput, help_text="Initiator side secret. (for mutual CHAP autentication)")
-    iscsi_target_auth_peersecret2 = forms.CharField(label="Initiator Secret (Confirm)", widget=forms.PasswordInput, help_text="Enter the same secret above for verification.")
+    iscsi_target_auth_secret1 = forms.CharField(label=_("Secret"), 
+            widget=forms.PasswordInput, help_text=_("Target side secret."))
+    iscsi_target_auth_secret2 = forms.CharField(label=_("Secret (Confirm)"), 
+            widget=forms.PasswordInput, 
+            help_text=_("Enter the same secret above for verification."))
+    iscsi_target_auth_peersecret1 = forms.CharField(label=_("Initiator Secret"),
+            widget=forms.PasswordInput, help_text=
+            _("Initiator side secret. (for mutual CHAP autentication)"))
+    iscsi_target_auth_peersecret2 = forms.CharField(
+            label=_("Initiator Secret (Confirm)"), 
+            widget=forms.PasswordInput, 
+            help_text=_("Enter the same secret above for verification."))
 
     def _clean_secret_common(self, secretprefix):
         secret1 = self.cleaned_data.get(("%s1" % secretprefix), "")
         secret2 = self.cleaned_data[("%s2" % secretprefix)]
         if secret1 != secret2:
-            raise forms.ValidationError("Secret does not match")
+            raise forms.ValidationError(_("Secret does not match"))
         return secret2
 
     def clean_iscsi_target_auth_secret2(self):
@@ -173,7 +198,7 @@ class iSCSITargetToExtentForm(ModelForm):
         try:
             obj = iSCSITargetToExtent.objects.get(iscsi_target=self.cleaned_data.get('iscsi_target'),
                                                   iscsi_target_lun=self.cleaned_data.get('iscsi_target_lun'))
-            raise forms.ValidationError("LUN already exists in the same target.")
+            raise forms.ValidationError(_("LUN already exists in the same target."))
         except ObjectDoesNotExist:
             return self.cleaned_data.get('iscsi_target_lun')
 
@@ -199,7 +224,8 @@ class iSCSITargetFileExtentForm(ModelForm):
 
 attrs_dict = { 'class': 'required' }
 class iSCSITargetDeviceExtentForm(ModelForm):
-    iscsi_extent_disk = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label = 'Disk device')
+    iscsi_extent_disk = forms.ChoiceField(choices=(), 
+            widget=forms.Select(attrs=attrs_dict), label = _('Disk device'))
     def __init__(self, *args, **kwargs):
         super(iSCSITargetDeviceExtentForm, self).__init__(*args, **kwargs)
         self.fields['iscsi_extent_disk'].choices = self._populate_disk_choices()
@@ -285,4 +311,3 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
 class iSCSITargetForm(ModelForm):
     class Meta:
         model = iSCSITarget
-

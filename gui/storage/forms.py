@@ -25,22 +25,23 @@
 #
 # $FreeBSD$
 #####################################################################
-from dojango import forms
+import re
 from django.shortcuts import render_to_response
-from freenasUI.storage.models import *
-from freenasUI.middleware.notifier import notifier
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
 from dojango.forms import fields, widgets
 from dojango import forms
-from freenasUI.common.forms import ModelForm
-from freenasUI.common.forms import Form
 from dojango.forms.fields import BooleanField
+from django.utils.translation import ugettext as _
 from freenasUI.contrib.ext_formwizard import FormWizard
 from freenasUI.common.widgets import RadioFieldRendererBulletless
 from freenasUI.account.models import bsdUsers, bsdGroups
-import re
+from freenasUI.middleware.notifier import notifier
+from freenasUI.common.forms import ModelForm
+from freenasUI.common.forms import Form
+from freenasUI.storage.models import *
+from dojango import forms
 
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 
@@ -73,22 +74,22 @@ class UnixPermissionWidget(widgets.MultiWidget):
     def format_output(self, rendered_widgets):
 
         maprow = {
-                1: 'Read',
-                2: 'Write',
-                3: 'Execute',
+                1: _('Read'),
+                2: _('Write'),
+                3: _('Execute'),
             }
 
         html = """<table>
         <thead>
         <tr>
         <td></td>
-        <td>Owner</td>
-        <td>Group</td>
-        <td>Other</td>
+        <td>%s</td>
+        <td>%s</td>
+        <td>%s</td>
         </tr>
         </thead>
         <tbody>
-        """
+        """ % ( _('Owner'), _('Group'), _('Other') )
         for i in range(1,4):
             html += "<tr>"
             html += "<td>%s</td>" % maprow[i]
@@ -268,14 +269,15 @@ class VolumeWizardForm(forms.Form):
 
         notifier().init("volume", volume.id)
 
-    volume_name = forms.CharField(max_length = 30, label = 'Volume name')
+    volume_name = forms.CharField(max_length = 30, label = _('Volume name') )
     volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
     volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks')
     group_type = forms.ChoiceField(choices=(), widget=forms.RadioSelect(attrs=attrs_dict), required=False)
 
     def clean_group_type(self):
-        if len(self.cleaned_data['volume_disks']) > 1 and self.cleaned_data['group_type'] in (None, ''):
-            raise forms.ValidationError("This field is required.")
+        if not self.cleaned_data.has_key('volume_disks') or \
+                len(self.cleaned_data['volume_disks']) > 1 and self.cleaned_data['group_type'] in (None, ''):
+            raise forms.ValidationError(_("This field is required."))
         return self.cleaned_data['group_type']
 
 # Step 1.  Creation of volumes manually is not supported.
@@ -325,14 +327,14 @@ class VolumeWizard_VolumeNameTypeForm(Form):
         cleaned_data = self.cleaned_data
         volume_name = cleaned_data.get("volume_name")
 	if Volume.objects.filter(vol_name = volume_name).count() > 0:
-                msg = u"You already have a volume with same name"
+                msg = _(u"You already have a volume with same name")
                 self._errors["volume_name"] = self.error_class([msg])
                 del cleaned_data["volume_name"]
         return cleaned_data
-    volume_name = forms.CharField(max_length = 30, label = 'Volume name')
+    volume_name = forms.CharField(max_length = 30, label = _('Volume name'))
     #volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict, renderer=RadioFieldRendererBulletless), label = 'File System type')
-    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
-    volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks')
+    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = _('File System type'))
+    volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = _('Member disks'))
 
 # Step 2.  Creation of volumes manually is not supported.
 # This step only show up when more than 1 disks is being chosen.
@@ -429,8 +431,6 @@ class VolumeWizard(FormWizard):
         mp = MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
         mp.save()
 
-
-
         grp = DiskGroup(group_name= volume_name + group_type, group_type = group_type, group_volume = volume)
         grp.save()
 
@@ -466,11 +466,11 @@ class ZFSDataset_CreateForm(Form):
         volume_name = Volume.objects.get(id=cleaned_data.get("dataset_volid")).vol_name.__str__()
         full_dataset_name = "%s/%s" % (volume_name, cleaned_data.get("dataset_name").__str__())
         if len(notifier().list_zfs_datasets(path=full_dataset_name)) > 0:
-            msg = u"You already have a dataset with the same name"
+            msg = _(u"You already have a dataset with the same name")
             self._errors["dataset_name"] = self.error_class([msg])
             del cleaned_data["dataset_name"]
         r = re.compile('^(0|[1-9]\d*[mMgGtT]?)$')
-        msg = u"Enter positive number (optionally suffixed by M, G, T), or, 0"
+        msg = _(u"Enter positive number (optionally suffixed by M, G, T), or, 0")
         if r.match(cleaned_data['dataset_refquota'].__str__())==None:
             self._errors['dataset_refquota'] = self.error_class([msg])
             del cleaned_data['dataset_refquota']
@@ -488,20 +488,20 @@ class ZFSDataset_CreateForm(Form):
         msg = u"%s" % msg
         self._errors['__all__'] = self.error_class([msg])
         del self.cleaned_data
-    dataset_volid = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict),  label='Volume from which this dataset will be created on')
-    dataset_name = forms.CharField(max_length = 128, label = 'Dataset Name')
-    dataset_compression = forms.ChoiceField(choices=ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label='Compression level')
-    dataset_atime = forms.ChoiceField(choices=ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label='Enable atime')
-    dataset_refquota = forms.CharField(max_length = 128, initial=0, label='Quota for this dataset', help_text='0=Unlimited; example: 1g')
-    dataset_quota = forms.CharField(max_length = 128, initial=0, label='Quota for this dataset and all children', help_text='0=Unlimited; example: 1g')
-    dataset_refreserv = forms.CharField(max_length = 128, initial=0, label='Reserved space for this dataset', help_text='0=None; example: 1g')
-    dataset_reserv = forms.CharField(max_length = 128, initial=0, label='Reserved space for this dataset and all children', help_text='0=None; example: 1g')
+    dataset_volid = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict),  label=_('Volume from which this dataset will be created on'))
+    dataset_name = forms.CharField(max_length = 128, label = _('Dataset Name'))
+    dataset_compression = forms.ChoiceField(choices=ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
+    dataset_atime = forms.ChoiceField(choices=ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label=_('Enable atime'))
+    dataset_refquota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset'), help_text=_('0=Unlimited; example: 1g'))
+    dataset_quota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset and all children'), help_text=_('0=Unlimited; example: 1g'))
+    dataset_refreserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset'), help_text=_('0=None; example: 1g'))
+    dataset_reserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset and all children'), help_text=_('0=None; example: 1g'))
 
 class MountPointAccessForm(Form):
-    mp_user = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label='Owner (user)')
-    mp_group = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label='Owner (group)')
-    mp_mode = UnixPermissionField(label='Mode')
-    mp_recursive = forms.BooleanField(initial=False,required=False,label='Set permission recursively')
+    mp_user = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label=_('Owner (user)'))
+    mp_group = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label=_('Owner (group)'))
+    mp_mode = UnixPermissionField(label=_('Mode'))
+    mp_recursive = forms.BooleanField(initial=False,required=False,label=_('Set permission recursively'))
     def __init__(self, *args, **kwargs):
         super(MountPointAccessForm, self).__init__(*args, **kwargs)
         self.fields['mp_user'].choices = [(x.bsdusr_username, x.bsdusr_username) for x in bsdUsers.objects.all()]

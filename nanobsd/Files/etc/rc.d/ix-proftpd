@@ -12,7 +12,7 @@
 # Defaults
 proftpd_enable=${proftpd_enable:-"NO"}
 proftpd_flags=${proftpd_flags:-""}
-proftpd_config=${proftpd_config:-"/etc/proftpd.conf"}
+proftpd_config=${proftpd_config:-"/usr/local/etc/proftpd.conf"}
 proftpd_delaytable=${proftpd_delaytable:-"/var/run/proftpd/proftpd.delay"}
 proftpd_displaylogin=${proftpd_displaylogin:-"/var/run/proftpd/proftpd.motd"}
 proftpd_tlsrsacertfile=${proftpd_tlsrsacertfile:-"/etc/ssl/private/proftpd.cert"}
@@ -84,14 +84,11 @@ generate_proftp()
 {
     local IFS=\|
 #XXX missing: ftp_port ftp_chrooteveryone ftp_tlsrequired ftp_mod_ban
-    local ftp_port=0 ftp_chrooteveryone=0 ftp_mod_ban=0
+    local ftp_port=21 ftp_chrooteveryone=0 ftp_mod_ban=0
 #XXX unused: ftp_defaultroot ftp_ssltls
-    local f="ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_banner ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_ssltls"
-    eval local $f
-    local sf
-    sf=$(echo $f | sed -e 's/ /, /g')
+    local f="ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_banner ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_ssltls ftp_anondir"
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-        "SELECT $sf FROM services_ftp ORDER BY -id LIMIT 1" | \
+        "SELECT ftp_clients, ftp_ipconnections, ftp_loginattempt, ftp_timeout, ftp_rootlogin, ftp_onlyanonymous, ftp_onlylocal, ftp_banner, ftp_filemask, ftp_dirmask, ftp_fxp, ftp_resume, ftp_defaultroot, ftp_ident, ftp_reversedns, ftp_masqaddress, ftp_passiveportsmin, ftp_passiveportsmax, ftp_localuserbw, ftp_localuserdlbw, ftp_anonuserbw, ftp_anonuserdlbw, ftp_ssltls, storage_mountpoint.mp_path FROM services_ftp INNER JOIN storage_mountpoint ON services_ftp.ftp_anonpath_id=storage_mountpoint.mp_volume_id ORDER BY -services_ftp.id LIMIT 1" | \
     while eval read $f; do
 
 	# Check if required directories exists.
@@ -134,7 +131,7 @@ echo "Creating ${proftpd_config}"
 ServerName "$(hostname) FTP Server"
 ServerType standalone
 DefaultServer on
-Default Address $(hostname)
+#Default Address $(hostname)
 UseIPv6 on
 Port ${ftp_port}
 User nobody
@@ -163,7 +160,7 @@ EOF
 
 	if [ ${ftp_onlylocal} -eq 0 ]; then
 	    cat <<EOF >> ${proftpd_config}
-<Anonymous ${proftpd_anonymousrootdir}>
+<Anonymous ${ftp_anondir}>
   User ftp
   Group ftp
   UserAlias anonymous ftp
@@ -203,7 +200,7 @@ $(bool_on ${ftp_resume} "  AllowStoreRestart on")
   DeleteAbortedStores ${proftpd_deleteabortedstores}
   TransferRate STOR ${ftp_localuserbw}
   TransferRate RETR ${ftp_localuserdlbw}
-  TimesGMT ${proftpd_timesgmt}>
+  TimesGMT ${proftpd_timesgmt}
 </Global>
 EOF
 	if [ ${ftp_onlyanonymous} -gt 0 ]; then

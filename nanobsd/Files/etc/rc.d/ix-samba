@@ -201,8 +201,8 @@ EOF
 			    netbios name = ${ad_netbiosname}
 			    client use spnego = yes
 			    
-			    wins server = ${ad_dcname}.${ad_domainname}
-			    password server = ${ad_dcname}.${ad_domainname}
+			    wins server = ${ad_dcname}
+			    password server = ${ad_dcname}
 			    
 			    local master = no
 			    domain master = no

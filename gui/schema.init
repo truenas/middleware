@@ -117,6 +117,10 @@ TABLE services_activedirectory {
 	ad_workgroup=
 	ad_adminname=
 	ad_adminpw=
+        ad_windows_version=windows2000
+        ad_spn=
+        ad_spnpw=
+        ad_keytab=
 }
 TABLE services_ldap {
 	ldap_hostname=

@@ -37,6 +37,7 @@ from freenasUI.common.forms import Form
 from django import forms
 from dojango.forms import fields, widgets 
 from dojango.forms.fields import BooleanField 
+from django.utils.translation import ugettext as _
 
 """ Shares """
 class MountPointForm(ModelForm):

@@ -105,6 +105,18 @@ class notifier:
         except:
             raise
 
+    def _started(self, what):
+        service2daemon = {
+            'ssh': ('sshd', '/var/run/sshd.pid'),
+        }
+        if what in service2daemon:
+            procname, pidfile = service2daemon[what]
+            retval = self.__system_nolog("/bin/pgrep -F %s %s" % (pidfile, procname))
+            if retval == 0:
+                return True
+            else:
+                return False
+
     def init(self, what, objectid = None):
         """ Dedicated command to create "what" designated by an optional objectid.
 
@@ -134,6 +146,14 @@ class notifier:
         The helper will use method self._start_[what]() to start the service.
         If the method does not exist, it would fallback using service(8)."""
         self._simplecmd("start", what)
+
+    def started(self, what):
+        """ Test if service specified by "what" has been started. """
+        try:
+            f = getattr(self, '_started_' + what)
+            return f()
+        except:
+            return self._started(what)
 
     def stop(self, what):
         """ Stop the service specified by "what".
@@ -554,7 +574,7 @@ class notifier:
         self.__smbpasswd(username, password)
 
     def user_create(self, username, fullname, password, uid = -1, gid = -1,
-                    shell = "/sbin/nologin", homedir = "/mnt"):
+                    shell = "/sbin/nologin", homedir = "/mnt", password_disabled=False):
         """Creates a user with the given parameters.
         uid and gid can be omitted or specified as -1 which means the system should
         choose automatically.
@@ -562,7 +582,10 @@ class notifier:
         The default shell is /sbin/nologin.
 
         Returns user uid and gid"""
-        command = '/usr/sbin/pw useradd "%s" -h 0 -c "%s"' % (username, fullname)
+        if password_disabled:
+            command = '/usr/sbin/pw useradd "%s" -h - -c "%s"' % (username, fullname)
+        else:
+            command = '/usr/sbin/pw useradd "%s" -h 0 -c "%s"' % (username, fullname)
         if uid >= 0:
             command += " -u %d" % (uid)
         if gid >= 0:
@@ -572,10 +595,13 @@ class notifier:
         else:
             command += ' -s "%s" -d "%s"' % (shell, homedir)
         self.__issue_pwdchange(username, command, password)
-        smb_command = "/usr/local/bin/pdbedit -w %s" % username
-        smb_cmd = self.__pipeopen(smb_command)
-        smb_hash = smb_cmd.communicate()
-        smb_hash = smb_hash[0]
+        if password_disabled:
+            smb_hash = ""
+        else:
+            smb_command = "/usr/local/bin/pdbedit -w %s" % username
+            smb_cmd = self.__pipeopen(smb_command)
+            smb_hash = smb_cmd.communicate()
+            smb_hash = smb_hash[0]
         user = self.___getpwnam(username)
         return (user.pw_uid, user.pw_gid, user.pw_passwd, smb_hash)
 
@@ -657,8 +683,64 @@ class notifier:
         return False
 
     def update_firmware(self, path):
-        #self.__system("/usr/bin/xz -d %s | sh /root/update")
+        self.__system("/usr/bin/xz -cd %s | sh /root/update && touch /data/need-update" % (path))
         self.__system("/bin/rm -fr /var/tmp/firmware/firmware.xz")
+
+    def change_root_alias(self, email):
+        self.__system("""grep -v ^root: /etc/aliases > /etc/aliases.new""")
+        self.__system("""echo 'root: %s/' >> /etc/aliases.new""" % email)
+        self.__system("""mv /etc/aliases.new /etc/aliases""")
+
+    def get_volume_status(self, name, fs, group_type):
+        if fs == 'ZFS':
+            zpoolproc = self.__pipeopen('zpool list')
+            p2 = Popen(["grep", "^%s" % name], stdin=zpoolproc.stdout, stdout=PIPE)
+            p3 = Popen(["tr", "-s", " "], stdin=p2.stdout, stdout=PIPE)
+            zpoolproc.wait()
+            p2.wait()
+            p3.wait()
+            output = p3.communicate()[0]
+            return output.split(' ')[5]
+        elif fs == 'UFS':
+            gtype = None
+            for gtypes in group_type:
+                if 'mirror' == gtypes[0]:
+                    gtype = 'mirror'
+                    break
+                elif 'stripe' == gtypes[0]:
+                    gtype = 'stripe'
+                    break
+                elif 'raid3' == gtypes[0]:
+                    gtype = 'raid3'
+                    break
+
+            if gtype == 'mirror':
+                p1 = self.__pipeopen('gmirror list')
+            if gtype == 'stripe':
+                p1 = self.__pipeopen('gstripe list')
+            if gtype == 'raid3':
+                p1 = self.__pipeopen('graid3 list')
+
+            if gtype:
+                p2 = Popen(["grep", "name: %s%s" % (name, gtype), "-A", "1"], stdin=p1.stdout, stdout=PIPE)
+                p3 = Popen(["grep", "State:"], stdin=p2.stdout, stdout=PIPE)
+                p1.wait()
+                p2.wait()
+                p3.wait()
+                output = p3.communicate()[0]
+                return output.split(' ')[1]
+            else:
+                return 'ONLINE'
+        else:
+                return 'UNKNOWN'
+
+    def checksum(self, path, algorithm='sha256'):
+        algorithm2map = {
+            'sha256' : '/sbin/sha256 -q',
+        }
+        hasher=self.__pipeopen('%s %s' % (algorithm2map[algorithm], path))
+        sum=hasher.communicate()[0].split('\n')[0]
+        return sum
 
 def usage():
     print ("Usage: %s action command" % argv[0])

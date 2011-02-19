@@ -42,13 +42,16 @@ if mount | grep ${NANO_DRIVE}s1 > /dev/null ; then
 	exit 1
 fi
 
+LABELNAME=`echo ${NANO_DRIVE} | cut -f2 -d/`
+TARGET_DRIVE=`glabel status | awk '/ufs\/'${LABELNAME}'s2a/ { print $3; }' | sed -e s,s2a,,`
+
 # Blow away old system.
-dd if=/dev/zero of=/dev/${NANO_DRIVE}s1 bs=1m count=1 > /dev/null 2>&1
+dd if=/dev/zero of=/dev/${TARGET_DRIVE}s1 bs=1m count=1 > /dev/null 2>&1
 
 # Copy in new system
-dd of=/dev/${NANO_DRIVE}s1 obs=64k
+dd of=/dev/${TARGET_DRIVE}s1 obs=128k
 
 # Check that it worked
-fsck_ffs -n /dev/${NANO_DRIVE}s1
+fsck_ffs -n /dev/${TARGET_DRIVE}s1a
 
-gpart set -a active -i 1 ${NANO_DRIVE}
+gpart set -a active -i 1 ${TARGET_DRIVE}
