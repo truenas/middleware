@@ -1,9 +1,37 @@
 #!/usr/bin/env python
+#+
+# Copyright 2010 iXsystems
+# All rights reserved
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted providing that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# $FreeBSD$
+#####################################################################
 
 import os
 import sys
 from signal import signal, SIGINT, SIG_IGN
 import re
+import ipaddr
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
@@ -64,8 +92,6 @@ def hex_to_cidr(hex):
 
 def prompt(s, val):
     """Returns a string that forms a prompt, based on values passed in"""
-    # This function is used to set a prompt that reflects existing
-    # values
     prompt = []
     prompt.append(s) 
     if val:
@@ -75,94 +101,6 @@ def prompt(s, val):
         prompt.append("]")
     prompt.append(": ")
     return "".join(prompt)
-
-
-def configure_ipv4_interface(iface, nic, dhcp):
-    """Grab IPv4 settings from database, if they exist default to them
-unless overridden. Check for and allow various forms for the
-netmask."""
-    while True:
-        iface.int_name = raw_input("Interface name (eg: external): ")
-        if iface.int_name:
-            break
-        else:
-            continue
-    if dhcp:
-        iface.int_interface = nic
-        iface.int_dhcp = 1
-        iface.int_ipv4address = None
-        iface.int_v4netmaskbit = None
-        iface.save()
-        return True
-
-    ip_prompt = prompt("IPv4 Address", iface.int_ipv4address)
-    mask_prompt = prompt("IPv4 Netmask", iface.int_v4netmaskbit)
-
-    ip = mask = None
-    ip = raw_input(ip_prompt)
-    if not ip and iface.int_ipv4address:
-        ip = iface.int_ipv4address
-
-    try:
-        ip, mask = ip.split('/')
-
-    except:
-        pass
-
-    if not mask:
-        mask = raw_input(mask_prompt)
-        if mask.startswith("/"):
-            mask = mask.lstrip("/")
-        if not mask and iface.int_v4netmaskbit:
-            mask = iface.int_v4netmaskbit
-
-    if re.match("^(\d\.){3}\d$", mask):
-        mask = quad_to_cidr(mask)
-    elif re.match("^(0[xX])?([0-9a-fA-F]){8}$", mask):
-        mask = hex_to_cidr(mask)
-    elif re.match("^(([1-9])|([12][0-9])|([3][012]))$", mask):
-        mask = int(mask, 10)
-    else:
-        return False
-
-    iface.int_interface = nic
-    iface.int_ipv4address = ip
-    iface.int_v4netmaskbit = mask
-    iface.int_dhcp = 0
-    iface.save()
-
-    return True
-
-
-def configure_ipv6_interface(iface, nic):
-    ip_prompt = prompt("IPv6 Address", iface.int_ipv6address)
-    mask_prompt = prompt("IPv6 Netmask", iface.int_v6netmaskbit)
-
-    ip = mask = None
-    sys.stdout.write(ip_prompt)
-    ip = sys.stdin.readline().strip()
-    if not ip and iface.int_ipv6address:
-        ip = iface.int_ipv6address
-
-    try:
-        ip, mask = ip.split('/')
-
-    except:
-        pass
-
-    if not mask:
-        sys.stdout.write(mask_prompt)
-        mask = sys.stdin.readline().strip().lstrip('/')
-        if not mask and iface.int_v6netmask:
-            mask = iface.int_v6netmaskbit
-
-    iface.int_interface = nic
-    iface.int_ipv6address = ip
-    iface.int_v6netmaskbit = mask
-    iface.save()
-
-    return True
-
 
 def configure_interface():
     while True:
@@ -181,7 +119,7 @@ def configure_interface():
             nic = nics[int(i) - 1]
             break
         elif i.lower().startswith("q"):
-            break
+            return True
         else:
             continue
 
@@ -191,20 +129,116 @@ def configure_interface():
     else:
         iface = Interfaces()
 
+    need_restart = False
     while True:
         input = raw_input("Configure interface for DHCP? (y/n) ")
         if input.lower().startswith("y"):
-            configure_ipv4_interface(iface, nic, dhcp=True)
-            return True
+            int_name_prompt = prompt("Interface name", iface.int_name)
+            int_name = raw_input(int_name_prompt)
+            if not int_name and iface.int_name:
+                int_name = iface.int_name
+            iface.int_interface = nic
+            iface.int_dhcp = True
+            iface.int_ipv4address = ""
+            iface.int_v4netmaskbit = ""
+            print "Saving interface configuration:",
+            try:
+                iface.save()
+            except Exception, err:
+                print "Failed %s" % str(err)
+                return False
+            print "Ok"
+            need_restart = "DHCP"
+            gc = GlobalConfiguration.objects.all()
+            gc = gc[0]
+            gc.gc_ipv4gateway = ''
+
+            print "Removing IPv4 default gateway:",
+            try:
+                gc.save()
+            except:
+                print "Failed"
+                return False
+            print "Ok"
+            break
         elif input.lower().startswith("n"):
             break
         else:
             continue
 
-    while True:
+    while True and need_restart != "DHCP":
         yes = raw_input("Configure IPv4? (y/n) ")
         if yes.lower().startswith("y"):
-            configure_ipv4_interface(iface, nic, dhcp=False)
+            int_name_prompt = prompt("Interface name", iface.int_name)
+            int_name = raw_input(int_name_prompt)
+            if not int_name and iface.int_name:
+                int_name = iface.int_name
+            ip_prompt = prompt("IPv4 Address", iface.int_ipv4address)
+            mask_prompt = prompt("IPv4 Netmask", iface.int_v4netmaskbit)
+            print "Several input formats are supported"
+            print "Example 1 CIDR Notation:"
+            print "    192.168.1.1/24"
+            print "Example 2 IP and Netmask seperate:"
+            print "    IP: 192.168.1.1"
+            print "    Netmask: 255.255.255.0, /24 or 24"
+
+            ip = mask = None
+            while True:
+                ip = raw_input(ip_prompt)
+
+                if not ip and iface.int_ipv4address:
+                    ip = iface.int_ipv4address
+
+                try:
+                    try:
+                        ipaddr.IPNetwork(ip, version=4)
+                    except ValueError:
+                        print "Invalid value entered"
+                        continue
+                    ip, mask = ip.split('/')
+                    break
+                except:
+                    mask = raw_input(mask_prompt)
+                    if mask.startswith("/"):
+                        mask = mask.lstrip("/")
+                    if not mask and iface.int_v4netmaskbit:
+                        mask = iface.int_v4netmaskbit
+                        break
+                    elif re.match(r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}"
+                                  "(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$", mask):
+                        try:
+                            ipaddr.IPAddress(mask, version=4)
+                        except ValueError:
+                            print "Invalid Netmask"
+                            continue
+                        mask = quad_to_cidr(mask)
+                        break
+                    elif re.match("^(0[xX])?([0-9a-fA-F]){8}$", mask):
+                        mask = hex_to_cidr(mask)
+                        break
+                    elif int(mask) > 0 and int(mask) < 33:
+                        mask = int(mask, 10)
+                        break
+                    else:
+                        print "Enter netmask as a dotted quad, a hex number,",
+                        print "or CIDR prefix"
+                        print "Acceptable formats are 255.255.255.0, 0xffffff00,",
+                        print "/24, or 24"
+                        continue
+
+            iface.int_interface = nic
+            iface.int_name = int_name
+            iface.int_ipv4address = ip
+            iface.int_v4netmaskbit = mask
+            iface.int_dhcp = False
+            print "Saving interface configuration:",
+            try:
+                iface.save()
+            except:
+                print "Failed"
+                return False
+            print "Ok"
+            need_restart = True
             break
         elif yes.lower().startswith("n"):
             break
@@ -212,81 +246,185 @@ def configure_interface():
     while True:
         yes = raw_input("Configure IPv6? (y/n)")
         if yes.lower().startswith("y"):
-            configure_ipv6_interface(iface, nic)
+            ip_prompt = prompt("IPv6 Address", iface.int_ipv6address)
+            mask_prompt = prompt("IPv6 Netmask", iface.int_v6netmaskbit)
+
+            ip = mask = None
+            ip = raw_input(ip_prompt)
+            if not ip and iface.int_ipv6address:
+                ip = iface.int_ipv6address
+
+            try:
+                try:
+                    ipaddr.IPNetwork(ip, version=6)
+                except ValueError:
+                    print "Invalid value entered"
+                    continue
+                ip, mask = ip.split('/')
+            except:
+                while True:
+                    mask = raw_input(mask_prompt)
+                    if not mask and iface.int_v6netmask:
+                        if int(mask) > 0 and int(mask) < 128:
+                            mask = iface.int_v6netmaskbit
+                            break
+                        else:
+                            print "Enter ipv6 netmask as number of bits eg: 64"
+                            continue
+
+            iface.int_interface = nic
+            iface.int_ipv6address = ip
+            iface.int_v6netmaskbit = mask
+
+            print "Saving interface configuration:",
+            try:
+                iface.save()
+            except:
+                print "Failed"
+                return False
+            print "Ok"
+            if not need_restart:
+                need_restart = True
             break
+
         elif yes.lower().startswith("n"):
             break
 
-    notify("network", "start")
-    return True
-
+    if need_restart:
+        print "Restarting network:",
+        try:
+            notifier().start("network")
+        except:
+            print "Failed"
+        print "ok"
+    if need_restart == "DHCP":
+        print "Restarting routing:",
+        try:
+            notifier().restart("routing")
+        except:
+            print "Failed"
+        print "ok"
+        return True
 
 def configure_ipv4_default_route(gc):
     gwprompt = prompt("IPv4 Default Route", gc.gc_ipv4gateway)
 
-    sys.stdout.write(gwprompt)
-    gateway = sys.stdin.readline().strip()
+    gateway = raw_input(gwprompt)
     if gateway:
+        try:
+            ipaddr.IPAddress(gateway, version=4)
+        except ValueError:
+            print "Invalid value entered"
+            return False
         gc.gc_ipv4gateway = gateway 
 
-    gc.save()
-    return True
-
+        print "Saving IPv4 gateway:",
+        try:
+            gc.save()
+        except:
+            print "Failed"
+            return False
+        print "Ok"
+        return True
+    else:
+        print "No default route entered."
+        return False
 
 def configure_ipv6_default_route(gc):
     gwprompt = prompt("IPv6 Default Route", gc.gc_ipv6gateway)
 
-    sys.stdout.write(gwprompt)
-    gateway = sys.stdin.readline().strip()
+    gateway = raw_input(gwprompt)
     if gateway:
+        try:
+            ipaddr.IPAddress(gateway, version=6)
+        except ValueError:
+            print "Invalid value entered"
+            return False
         gc.gc_ipv6gateway = gateway 
-
-    gc.save()
-
+        print "Saving IPv6 gateway:",
+        try:
+            gc.save()
+        except:
+            print "Failed"
+            return False
+        print "Ok"
+        return True
+    else:
+        print "No default route entered."
+        return False
 
 def configure_default_route():
     gc = GlobalConfiguration.objects.all()
     gc = gc[0]
+    need_save = False
 
-    sys.stdout.write("Configure IPv4 Default Route? ")
-    yes = sys.stdin.readline().strip()
-    if yes and (yes[0] == 'y' or yes[0] == 'Y'):
-        configure_ipv4_default_route(gc)
+    while True:
+        yes = raw_input("Configure IPv4 Default Route? (y/n)")
+        if yes.lower().startswith("y"):
+            configure_ipv4_default_route(gc)
+            need_save = True
+            break
+        elif yes.lower().startswith("n"):
+            break
 
-    sys.stdout.write("Configure IPv6 Default Route? ")
-    yes = sys.stdin.readline().strip()
-    if yes and (yes[0] == 'y' or yes[0] == 'Y'):
-        configure_ipv6_default_route(gc)
+    while True:
+        yes = raw_input("Configure IPv6 Default Route? (y/n)")
+        if yes.lower().startswith("y"):
+            configure_ipv6_default_route(gc)
+            need_save = True
+            break
+        elif yes.lower().startswith("n"):
+            break
 
-    notify("routing", "start")
-    return True
-
+    if need_save:
+        print "Restarting routing:",
+        try:
+            notifier().restart("routing")
+        except:
+            print "Failed"
+            return False
+        print "ok"
+        return True
+    else:
+        print "Routing configuration unchanged."
+        return True
 
 def configure_static_routes():
-    sys.stdout.write("Destination Network: ")
-    dest = sys.stdin.readline().strip()
+    dest = raw_input("Destination network: ")
+    gateway = raw_input("Gateway: ")
+    desc = raw_input("Description: ")
 
-    sys.stdout.write("Gateway: ")
-    gateway = sys.stdin.readline().strip()
-
-    sys.stdout.write("Description: ")
-    desc = sys.stdin.readline().strip()
+    try:
+        ipaddr.IPNetwork(dest)
+    except ValueError:
+        print "Invalid destination network"
+        return False
+    try:
+        ipaddr.IPAddress(gateway)
+    except ValueError:
+        print "Invalid gateway"
+        return False
 
     sr = StaticRoute()
-
-    if dest:
-        sr.sr_destination = dest
-    if gateway:
-        sr.sr_gateway = gateway
+    sr.sr_destination = dest
+    sr.sr_gateway = gateway
     if desc:
         sr.sr_description = desc
-
-    if dest or gateway:
+    print "Saving static route:",
+    try:
         sr.save()
-	
-    notify("routing", "start")
+    except:
+        print "Failed"
+        return false
+    print "ok"
+    try:
+        print "Restarting routing:",
+        notifier().restart("routing")
+    except:
+        print "Failed"
+        return False
+    print "ok"
     return True
-
 
 def configure_dns():
     ns1 = ns2 = ns3 = domain = None
@@ -298,31 +436,65 @@ def configure_dns():
     ns2_prompt = prompt("DNS Nameserver 2", gc.gc_nameserver2)
     ns3_prompt = prompt("DNS Nameserver 3", gc.gc_nameserver3)
 
-    sys.stdout.write(domain_prompt)
-    domain = sys.stdin.readline().strip()
+    domain = raw_input(domain_prompt)
     if domain:
         gc.gc_domain = domain
 
-    sys.stdout.write(ns1_prompt)
-    ns1 = sys.stdin.readline().strip()
-    if ns1:
-        gc.gc_nameserver1 = ns1
+    need_save = False
+    print "Enter nameserver IPs, an empty value ends input"
+    while True:
+        ns1 = raw_input(ns1_prompt)
+        if ns1:
+            try:
+                ipaddr.IPAddress(ns1, version=4)
+            except ValueError:
+                print "Invalid nameserver"
+                return False
+            gc.gc_nameserver1 = ns1
+            need_save = True
+            gc.gc_nameserver2 = ''
+            gc.gc_nameserver3 = ''
+        else:
+            return False
 
-    sys.stdout.write(ns2_prompt)
-    ns2 = sys.stdin.readline().strip()
-    if ns2:
-        gc.gc_nameserver2 = ns2
+        ns2 = raw_input(ns2_prompt)
+        if ns2:
+            try:
+                ipaddr.IPAddress(ns2, version=4)
+            except ValueError:
+                print "Invalid nameserver"
+                break
+            gc.gc_nameserver2 = ns2
+        else:
+            break
 
-    sys.stdout.write(ns3_prompt)
-    ns3 = sys.stdin.readline().strip()
-    if ns3:
-        gc.gc_nameserver3 = ns3
+        ns3 = raw_input(ns3_prompt)
+        if ns3:
+            try:
+                ipaddr.IPAddress(ns3, version=4)
+            except ValueError:
+                print "Invalid nameserver"
+                break
+            gc.gc_nameserver3 = ns3
+        break
 
-    gc.save()
+    if need_save:
+        print "Saving DNS configuration:",
+        try:
+            gc.save()
+        except:
+            print "Failed"
+            return False
+        print "ok"
 
-    notify("networkgeneral", "reload")
-    return True
-
+        print "Reloading network config:",
+        try:
+            notifier().reload("networkgeneral")
+        except:
+            print "Failed"
+            return False
+        print "ok"
+        return True
 
 def forkexec(path, *args):
     pid = os.fork()
@@ -342,7 +514,12 @@ def shell():
 
 
 def reboot():
-    return forkexec("/sbin/reboot")
+    while True:
+        ret = raw_input("Confirm reboot (y/n): ")
+        if ret.lower().startswith("y"):
+            os.system("/sbin/reboot")
+        if ret.lower().startswith("n"):
+            return False
 
 def shutdown():
     while True:
@@ -351,9 +528,6 @@ def shutdown():
             os.system("/sbin/shutdown -p now")
         if ret.lower().startswith("n"):
             return False
-
-def notify(what, how):
-    return forkexec("python", NOTIFIER_PATH, how, what)
 
 def show_ip():
     from os import system
