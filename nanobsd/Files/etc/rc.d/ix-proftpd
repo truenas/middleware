@@ -61,6 +61,14 @@ ifset()
     fi
 }
 
+# If $1 is not 0, then return $2
+ifnz()
+{
+    if [ "$1" -ne 0 ]; then
+	echo -n $2
+    fi
+}
+
 # If $1 == 1, return $2, otherwise return nothing
 bool_on()
 {
@@ -83,12 +91,12 @@ on_off()
 generate_proftp()
 {
     local IFS=\|
-#XXX missing: ftp_port ftp_chrooteveryone ftp_tlsrequired ftp_mod_ban
-    local ftp_port=21 ftp_chrooteveryone=0 ftp_mod_ban=0
+#XXX missing: ftp_chrooteveryone ftp_tlsrequired ftp_mod_ban
+    local ftp_chrooteveryone=0 ftp_mod_ban=0
 #XXX unused: ftp_defaultroot ftp_ssltls
-    local f="ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_banner ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_ssltls ftp_anondir"
+    local f="ftp_port ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_banner ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_ssltls ftp_anondir"
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-        "SELECT ftp_clients, ftp_ipconnections, ftp_loginattempt, ftp_timeout, ftp_rootlogin, ftp_onlyanonymous, ftp_onlylocal, ftp_banner, ftp_filemask, ftp_dirmask, ftp_fxp, ftp_resume, ftp_defaultroot, ftp_ident, ftp_reversedns, ftp_masqaddress, ftp_passiveportsmin, ftp_passiveportsmax, ftp_localuserbw, ftp_localuserdlbw, ftp_anonuserbw, ftp_anonuserdlbw, ftp_ssltls, storage_mountpoint.mp_path FROM services_ftp INNER JOIN storage_mountpoint ON services_ftp.ftp_anonpath_id=storage_mountpoint.mp_volume_id ORDER BY -services_ftp.id LIMIT 1" | \
+        "SELECT ftp_port, ftp_clients, ftp_ipconnections, ftp_loginattempt, ftp_timeout, ftp_rootlogin, ftp_onlyanonymous, ftp_onlylocal, ftp_banner, ftp_filemask, ftp_dirmask, ftp_fxp, ftp_resume, ftp_defaultroot, ftp_ident, ftp_reversedns, ftp_masqaddress, ftp_passiveportsmin, ftp_passiveportsmax, ftp_localuserbw, ftp_localuserdlbw, ftp_anonuserbw, ftp_anonuserdlbw, ftp_ssltls, storage_mountpoint.mp_path FROM services_ftp LEFT OUTER JOIN storage_mountpoint ON services_ftp.ftp_anonpath_id=storage_mountpoint.id ORDER BY -services_ftp.id LIMIT 1" | \
     while eval read $f; do
 
 	# Check if required directories exists.
@@ -146,49 +154,53 @@ TimeoutLogin ${proftpd_timeoutlogin}
 TimeoutNoTransfer ${proftpd_timeoutnotransfer}
 TimeoutStalled ${proftpd_timeoutstalled}
 MaxInstances ${proftpd_maxinstances}
-MaxClients ${ftp_clients}
-MaxConnectionsPerHost ${ftp_ipconnections}
-MaxLoginAttempts ${ftp_loginattempt}
+$(ifnz ${ftp_clients} "MaxClients ${ftp_clients}")
+$(ifnz ${ftp_ipconnections} "MaxConnectionsPerHost ${ftp_ipconnections}")
+$(ifnz ${ftp_loginattempt} "MaxLoginAttempts ${ftp_loginattempt}")
 DefaultTransferMode ${proftpd_defaulttransfermode}
 AllowForeignAddress $(on_off ${ftp_fxp})
 $(ifset ${ftp_masqaddress} "MasqueradeAddress ${ftp_masqaddress}")
-PassivePorts ${ftp_passiveportsmin} ${ftp_passiveportsmax}
 IdentLookups $(on_off ${ftp_ident})
 UseReverseDNS $(on_off ${ftp_reversedns})
+$(ifnz ${ftp_passiveportsmin} "PassivePorts ${ftp_passiveportsmin} ${ftp_passiveportsmax}")
 
 EOF
 
-	if [ ${ftp_onlylocal} -eq 0 ]; then
+	if [ ${ftp_onlyanonymous} -eq 1 ]; then
 	    cat <<EOF >> ${proftpd_config}
 <Anonymous ${ftp_anondir}>
   User ftp
   Group ftp
   UserAlias anonymous ftp
-  TransferRate STOR ${ftp_anonuserbw}
-  TransferRate RETR ${ftp_anonuserdlbw}
-EOF
-	    if [ ${ftp_onlyanonymous} -eq 1 ]; then
-		cat <<EOF >> ${proftpd_config}
+  $(ifnz ${ftp_anonuserbw} "TransferRate STOR ${ftp_anonuserbw}")
+  $(ifnz ${ftp_anonuserdlbw} "TransferRate RETR ${ftp_anonuserdlbw}")
   <Limit LOGIN>
     AllowAll
   </Limit>
-
-EOF
-	    fi
-	    cat <<EOF >> ${proftpd_config}
 </Anonymous>
 
 EOF
-	else
-	    cat <<EOF >> ${proftpd_config}
+        fi
+
+	if [ ${ftp_onlylocal} -eq 1 ]; then
+		cat <<EOF >> ${proftpd_config}
+<Limit LOGIN>
+  AllowAll
+</Limit>
+
+EOF
+        fi
+        if [ ${ftp_onlyanonymous} -ne 1 ] && [ ${ftp_onlylocal} -ne 1 ]; then
+	        cat <<EOF >> ${proftpd_config}
 <Limit LOGIN>
   AllowGroup ftp
-$(bool_on ${permitrootlogin} "  AllowGroup wheel")
+$(bool_on ${ftp_rootlogin} "  AllowGroup wheel")
   DenyAll
 </Limit>
 
 EOF
-	fi
+        fi
+
 	cat <<EOF >> ${proftpd_config}
 <Global>
   RequireValidShell ${proftpd_requirevalidshell}
@@ -198,19 +210,12 @@ $(bool_on ${ftp_rootlogin} "  RootLogin on")
 $(bool_on ${ftp_resume} "  AllowRetrieveRestart on")
 $(bool_on ${ftp_resume} "  AllowStoreRestart on")
   DeleteAbortedStores ${proftpd_deleteabortedstores}
-  TransferRate STOR ${ftp_localuserbw}
-  TransferRate RETR ${ftp_localuserdlbw}
+  $(ifnz ${ftp_localuserbw} "TransferRate STOR ${ftp_localuserbw}")
+  $(ifnz ${ftp_localuserbw} "TransferRate RETR ${ftp_localuserdlbw}")
   TimesGMT ${proftpd_timesgmt}
 </Global>
 EOF
-	if [ ${ftp_onlyanonymous} -gt 0 ]; then
-	    cat <<EOF >> ${proftpd_config}
-<Limit LOGIN>
-$(bool_on ${ftp_rootlogin} "  AllowGroup wheel")
-  DenyAll
-</Limit>
-EOF
-	fi
+
 	if [ ${ftp_ssltls} -gt 0 ]; then
 	    cat <<EOF >> ${proftpd_config}
 <IfModule mod_tls.c>

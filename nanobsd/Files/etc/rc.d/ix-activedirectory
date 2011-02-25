@@ -141,12 +141,6 @@ setup_homedirs()
 
 do_activedirectory_stuff()
 {
-	is_win2k8
-	if [ "$?" = "1" ]
-	then
-		generate_nss_ldap_conf
-	fi
-
 	join_activedirectory_domain
 	setup_homedirs
 }

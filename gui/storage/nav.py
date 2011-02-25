@@ -1,11 +1,13 @@
 from django_nav import Nav, NavOption
+from django.utils.translation import ugettext as _
 import models
 
 BLACKLIST = ['Disk',]
+ICON = u'StorageIcon'
 
 class AddVolume(NavOption):
 
-        name = u'Add Volume'
+        name = _(u'Add Volume')
         view = 'storage_wizard'
         type = 'volumewizard'
         icon = u'AddVolumeIcon'
@@ -16,7 +18,7 @@ class AddVolume(NavOption):
 
 class ViewVolumes(NavOption):
 
-        name = u'View All Volumes'
+        name = _(u'View All Volumes')
         view = u'storage_home'
         type = 'openstorage'
         icon = u'ViewAllVolumesIcon'
@@ -27,7 +29,7 @@ class ViewVolumes(NavOption):
 
 class AddDataset(NavOption):
 
-        name = u'Add Dataset'
+        name = _(u'Add ZFS Dataset')
         view = 'storage_dataset'
         icon = u'AddDatasetIcon'
         type = 'object'
@@ -38,13 +40,17 @@ class AddDataset(NavOption):
 
 class Volumes(NavOption):
 
-        name = u'Volumes'
+        name = _(u'Volumes')
         icon = u'VolumesIcon'
 
         def __init__(self, *args, **kwargs):
 
-            self.options = [AddVolume,ViewVolumes, AddDataset]
             #super(Volumes, self).__init__(*args, **kwargs)
+            self.options = [AddVolume,ViewVolumes]
+            en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
+            if en_dataset:
+                self.options.append(AddDataset)
+
             mp = models.MountPoint.objects.filter(mp_ischild=False).select_related().order_by('-id')
             for i in mp:
                 nav = NavOption()
@@ -56,7 +62,7 @@ class Volumes(NavOption):
                 nav.options = []
 
                 subnav = NavOption()
-                subnav.name = 'Change Permissions'
+                subnav.name = _('Change Permissions')
                 subnav.type = 'editobject'
                 subnav.view = 'storage_mp_permission'
                 subnav.kwargs = {'object_id': i.id}
@@ -76,7 +82,7 @@ class Volumes(NavOption):
                     nav2.options = []
 
                     subnav2 = NavOption()
-                    subnav2.name = 'Change Permissions'
+                    subnav2.name = _(u'Change Permissions')
                     subnav2.type = 'editobject'
                     subnav2.view = 'storage_mp_permission'
                     subnav2.kwargs = {'object_id': d.id}

@@ -65,8 +65,9 @@ def storage(request):
 @login_required
 def home(request):
     mp_list = MountPoint.objects.select_related().all()
+    en_dataset = MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
     variables = RequestContext(request, {
-        'focused_tab' : 'storage',
+        'en_dataset' : en_dataset,
         'mp_list': mp_list,
     })
     return render_to_response('storage/index2.html', variables)

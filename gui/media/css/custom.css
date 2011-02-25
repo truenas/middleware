@@ -2,28 +2,55 @@
 #shutdownDialog_underlay { background-color:#FD0000; }
 #top_dialog_underlay { background-color:#000; }
 #top_dialog .dijitDialogPaneContent { background-color:#000 !important; }
+#log_dialog .dijitDialogPaneContent { width:800px;background-color:#000 !important; }
 .dijitDialogPaneContent { border-top:1px solid #333 !important; }
 #top_dialog pre {border:none !important;} 
 .error {
 background-color:#F7977A;
 border:1px solid #222;
-max-width:500px;word-wrap:break-word;color:#000;height:60px;text-align:center;opacity:0.6;filter:alpha(opacity=18);
+max-width:500px;word-wrap:break-word;color:#000;height:50px;text-align:center;opacity:0.6;filter:alpha(opacity=18);
+}
+#msgfull_output {
+min-width:900px;
+}
+pre.message {
+font-family: monospace, Courier New, Courier; 
+font-size: 9pt; 
+color:#00FF00;
+padding:4px;
+width:800px;
+background-color:#000;
+border:1px solid #222;
+height:46px;
+margin-top:5px;
+white-space:pre-wrap;
+max-height:46px;
+opacity:0.6;filter:alpha(opacity=18);
+}
+.error {
+background-color:#40664D;
+margin-left:100px;
+min-width:400px;
+border:1px solid #222;
+max-width:500px;word-wrap:break-word;color:#000;height:50px;text-align:center;opacity:0.6;filter:alpha(opacity=18);
 }
 .success {
 background-color:#40664D;
+min-width:400px;
+margin-left:100px;
 border:1px solid #222;
-max-width:500px;word-wrap:break-word;color:#000;height:60px;text-align:center;opacity:0.6;filter:alpha(opacity=18);
+max-width:500px;word-wrap:break-word;color:#000;height:50px;text-align:center;opacity:0.6;filter:alpha(opacity=18);
 }
 .error p {
-    padding-top:23px;
+    padding-top:18px;
     color:#fff;
 }
 .success p {
-    padding-top:23px;
+    padding-top:18px;
     color:#fff;
 }
 .footer-block {
-float:left;width:28%;color:#f5f5f5;
+float:left;color:#f5f5f5;
 }
 .dijitTooltipContainer {
     max-width:250px;
@@ -85,7 +112,6 @@ table.config {
 }
 .dijitContentPane {
     padding:0px !important;
-    padding-bottom:4px !important;
 }
 table.grid thead {
     color:#000;

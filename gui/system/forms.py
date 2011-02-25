@@ -42,10 +42,16 @@ from dojango import forms
 # so we use django.forms.FileField for this release.
 import django.forms
 
+
 class SettingsForm(ModelForm):
     class Meta:
         model = Settings
+    def __init__(self, *args, **kwargs):
+        super(SettingsForm, self).__init__( *args, **kwargs)
+        self.instance._original_stg_guiprotocol = self.instance.stg_guiprotocol
     def save(self):
+        if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol:
+            notifier().restart("http")
         super(SettingsForm, self).save()
         notifier().reload("timeservices")
 

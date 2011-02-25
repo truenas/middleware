@@ -302,7 +302,6 @@ LAGGType = (
 WindowsVersions = (
         ('windows2000', 'Windows 2000'),
         ('windows2003', 'Windows Server 2003'),
-        ('windows2008', 'Windows Server 2008'),
         )
 
 ZFS_AtimeChoices = (

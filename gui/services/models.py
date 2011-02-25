@@ -749,36 +749,41 @@ class UPS(Model):
         icon_model = u"UPSIcon"
 
 class FTP(Model):            
-    ftp_clients = models.CharField(
-            max_length=120, 
+    ftp_port = models.PositiveIntegerField(
+            default=21,
+            verbose_name = _("Port"),
+            help_text = _("Port to bind FTP server.")
+            )
+    ftp_clients = models.PositiveIntegerField(
+            default=0,
             verbose_name = _("Clients"),
             help_text = _("Maximum number of simultaneous clients.")
             )
-    ftp_ipconnections = models.CharField(
-            max_length=120, 
+    ftp_ipconnections = models.PositiveIntegerField(
+            default=0,
             verbose_name = _("Connections"),
             help_text = _("Maximum number of connections per IP address (0 = unlimited).")
             )
-    ftp_loginattempt = models.CharField(
-            max_length=120, 
+    ftp_loginattempt = models.PositiveIntegerField(
+            default=0,
             verbose_name = _("Login Attempts"),
             help_text = _("Maximum number of allowed password attempts before disconnection.")
             )
-    ftp_timeout = models.CharField(
-            max_length=120, 
+    ftp_timeout = models.PositiveIntegerField(
+            default=0,
             verbose_name = _("Timeout"),
             help_text = _("Maximum idle time in seconds.")
             )
     ftp_rootlogin = models.BooleanField(
             verbose_name = _("Allow Root Login"))
     ftp_onlyanonymous = models.BooleanField(
-            verbose_name = _("Only Allow Anonymous Login"))
+            verbose_name = _("Allow Anonymous Login"))
     ftp_anonpath = models.ForeignKey(MountPoint, limit_choices_to=mountpoint_limiter,
                                      blank=True,
                                      null=True,
                                      verbose_name = _("Path"))
     ftp_onlylocal = models.BooleanField(
-            verbose_name = _("Only Allow Local User Login"))
+            verbose_name = _("Allow Local User Login"))
     ftp_banner = models.TextField(
             max_length=120, 
             verbose_name = _("Banner"), 
@@ -786,12 +791,14 @@ class FTP(Model):
             help_text = _("Greeting banner displayed by FTP when a connection first comes in.")
             )
     ftp_filemask = models.CharField(
-            max_length=120, 
+            max_length=3, 
+            default = "077",
             verbose_name = _("File mask"),
             help_text = _("Use this option to override the file creation mask (077 by default).")
             )
     ftp_dirmask = models.CharField(
-            max_length=120, 
+            max_length=3, 
+            default="077",
             verbose_name = _("Directory mask"),
             help_text = _("Use this option to override the file creation mask (077 by default).")
             )
@@ -805,45 +812,40 @@ class FTP(Model):
             verbose_name = _("Require IDENT Authentication"))
     ftp_reversedns = models.BooleanField(
             verbose_name = _("Require Reverse DNS for IP"))
-    ftp_masqaddress = models.CharField(
-            max_length=120, 
+    ftp_masqaddress = models.IPAddressField(
             verbose_name = _("Masquerade address"), 
             blank=True,
-            help_text = _("Causes the server to display the network information for the specified IP address or DNS hostname to the client, on the assumption that that IP address or DNS host is acting as a NAT gateway or port forwarder for the server.")
+            help_text = _("Causes the server to display the network information for the specified IP address to the client, on the assumption that that IP address or DNS host is acting as a NAT gateway or port forwarder for the server.")
             )
-    ftp_passiveportsmin = models.CharField(
-            max_length=120, 
+    ftp_passiveportsmin = models.PositiveIntegerField(
+            default = 0,
             verbose_name = _("Minimum passive port"),
             help_text = _("The minimum port to allocate for PASV style data connections (0 = use any port).")
             )
-    ftp_passiveportsmax = models.CharField(
-            max_length=120, 
+    ftp_passiveportsmax = models.PositiveIntegerField(
+            default = 0,
             verbose_name = _("Maximum passive port"),
             help_text = _("The maximum port to allocate for PASV style data connections (0 = use any port). Passive ports restricts the range of ports from which the server will select when sent the PASV command from a client. The server will randomly choose a number from within the specified range until an open port is found. The port range selected must be in the non-privileged range (eg. greater than or equal to 1024). It is strongly recommended that the chosen range be large enough to handle many simultaneous passive connections (for example, 49152-65534, the IANA-registered ephemeral port range).")
             )
-    ftp_localuserbw = models.CharField(
-            max_length=120, 
+    ftp_localuserbw = models.PositiveIntegerField(
+            default=0,
             verbose_name = _("Local user upload bandwidth"), 
-            blank=True,
-            help_text = _("Local user upload bandwith in KB/s. An empty field means infinity.")
+            help_text = _("Local user upload bandwith in KB/s. Zero means infinity.")
             )
-    ftp_localuserdlbw = models.CharField(
-            max_length=120, 
+    ftp_localuserdlbw = models.PositiveIntegerField(
+            default=0,
             verbose_name = _("Local user download bandwidth"), 
-            blank=True,
-            help_text = _("Local user download bandwith in KB/s. An empty field means infinity.")
+            help_text = _("Local user download bandwith in KB/s. Zero means infinity.")
             )
-    ftp_anonuserbw = models.CharField(
-            max_length=120, 
+    ftp_anonuserbw = models.PositiveIntegerField(
+            default=0,
             verbose_name = _("Anonymous user upload bandwidth"), 
-            blank=True,
-            help_text = _("Anonymous user upload bandwith in KB/s. An empty field means infinity.")
+            help_text = _("Anonymous user upload bandwith in KB/s. Zero means infinity.")
             )
-    ftp_anonuserdlbw = models.CharField(
-            max_length=120, 
+    ftp_anonuserdlbw = models.PositiveIntegerField(
+            default=0,
             verbose_name = _("Anonymous user download bandwidth"), 
-            blank=True,
-            help_text = _("Anonymous user download bandwith in KB/s. An empty field means infinity.")
+            help_text = _("Anonymous user download bandwith in KB/s. Zero means infinity.")
             )
     ftp_ssltls = models.BooleanField(
             verbose_name = _("Enable SSL/TLS"))

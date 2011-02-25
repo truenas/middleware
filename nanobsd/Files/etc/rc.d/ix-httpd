@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-httpd
+# REQUIRE: FILESYSTEMS
+# BEFORE: lighttpd
+
+. /etc/rc.subr
+
+: ${HTTPD_DIR:="/usr/local/etc/lighttpd"}
+: ${HTTPD_CONF:="${HTTPD_DIR}/lighttpd.conf"}
+
+generate_httpd_conf()
+{
+	# Stub!
+}
+
+name="ix-httpd"
+start_cmd='generate_httpd_conf'
+stop_cmd=':'
+            
+load_rc_config $name
+run_rc_command "$1"

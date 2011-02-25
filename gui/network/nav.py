@@ -3,10 +3,45 @@ from freenasUI.choices import LAGGType
 from django.utils.translation import ugettext as _
 import models
 
+ICON = u'NetworkIcon'
+
+class InterfaceSummary(NavOption):
+
+        name = _(u'Interface Summary')
+        type = 'network_intsummary'
+        icon = u'SettingsIcon'
+        app_name = 'network'
+        options = []
+
+class RouteTable(NavOption):
+
+        name = _(u'Routing Tables')
+        type = 'network_routetable'
+        icon = u'SettingsIcon'
+        app_name = 'network'
+        options = []
+
+class ResolvConf(NavOption):
+
+        name = _(u'resolv.conf')
+        type = 'network_resolv'
+        icon = u'SettingsIcon'
+        app_name = 'network'
+        options = []
+
+class GlobalConf(NavOption):
+
+        name = _(u'Global Configuration')
+        type = 'network_global'
+        model = 'GlobalConfiguration'
+        icon = u'SettingsIcon'
+        app_name = 'network'
+        options = []
+
 class AddLagg(NavOption):
 
-        name = _(u'Add Link')
-        rename = u'Create Link'
+        name = _(u'Add Link Aggregation')
+        rename = _(u'Create Link Aggregation')
         view = 'network_lagg_add'
         type = 'object'
         icon = u'AddLAGGIcon'
@@ -15,17 +50,9 @@ class AddLagg(NavOption):
         append_app = False
         options = []
 
-class GlobalConf(NavOption):
-
-        name = _(u'Global Configuration')
-        type = 'network_global'
-        model = 'GlobalConfiguration'
-        app_name = 'network'
-        options = []
-
 class ViewLagg(NavOption):
 
-        name = _(u'View All Links')
+        name = _(u'View All Link Aggregations')
         type = 'viewlagg'
         icon = u'ViewAllLAGGsIcon'
         model = 'LAGGInterface'
@@ -37,7 +64,7 @@ class Linkss(NavOption):
 
     model = 'LAGGInterface'
     app_name = 'network'
-    name = _(u'Links')
+    name = _(u'Link Aggregations')
     icon = u'LAGGIcon'
 
     def __init__(self, *args, **kwargs):

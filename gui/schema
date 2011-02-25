@@ -28,16 +28,12 @@ CREATE TABLE "auth_group" (
 CREATE TABLE "auth_group_permissions" (
     "id" integer NOT NULL PRIMARY KEY,
     "group_id" integer NOT NULL,
-    "permission_id" integer NOT NULL REFERENCES "auth_permission" (
-    "id"),
-    UNIQUE (
-    "group_id",
-    "permission_id")
+    "permission_id" integer NOT NULL REFERENCES "auth_permission" ("id"),
+    UNIQUE ("group_id", "permission_id")
 );
 CREATE TABLE "auth_message" (
     "id" integer NOT NULL PRIMARY KEY,
-    "user_id" integer NOT NULL REFERENCES "auth_user" (
-    "id"),
+    "user_id" integer NOT NULL REFERENCES "auth_user" ("id"),
     "message" text NOT NULL
 );
 CREATE TABLE "auth_permission" (
@@ -45,9 +41,7 @@ CREATE TABLE "auth_permission" (
     "name" varchar(50) NOT NULL,
     "content_type_id" integer NOT NULL,
     "codename" varchar(100) NOT NULL,
-    UNIQUE (
-    "content_type_id",
-    "codename")
+    UNIQUE ("content_type_id", "codename")
 );
 CREATE TABLE "auth_user" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -65,29 +59,21 @@ CREATE TABLE "auth_user" (
 CREATE TABLE "auth_user_groups" (
     "id" integer NOT NULL PRIMARY KEY,
     "user_id" integer NOT NULL,
-    "group_id" integer NOT NULL REFERENCES "auth_group" (
-    "id"),
-    UNIQUE (
-    "user_id",
-    "group_id")
+    "group_id" integer NOT NULL REFERENCES "auth_group" ("id"),
+    UNIQUE ("user_id", "group_id")
 );
 CREATE TABLE "auth_user_user_permissions" (
     "id" integer NOT NULL PRIMARY KEY,
     "user_id" integer NOT NULL,
-    "permission_id" integer NOT NULL REFERENCES "auth_permission" (
-    "id"),
-    UNIQUE (
-    "user_id",
-    "permission_id")
+    "permission_id" integer NOT NULL REFERENCES "auth_permission" ("id"),
+    UNIQUE ("user_id", "permission_id")
 );
 CREATE TABLE "django_content_type" (
     "id" integer NOT NULL PRIMARY KEY,
     "name" varchar(100) NOT NULL,
     "app_label" varchar(100) NOT NULL,
     "model" varchar(100) NOT NULL,
-    UNIQUE (
-    "app_label",
-    "model")
+    UNIQUE ("app_label", "model")
 );
 CREATE TABLE "django_session" (
     "session_key" varchar(40) NOT NULL PRIMARY KEY,
@@ -101,7 +87,7 @@ CREATE TABLE "network_globalconfiguration" (
     "gc_ipv6gateway" varchar(42),
     "gc_nameserver1" varchar(42),
     "gc_nameserver3" varchar(42),
-    "gc_nameserver2" varchar(42) NULL,
+    "gc_nameserver2" varchar(42) NOT NULL,
     "id" integer PRIMARY KEY
 );
 CREATE TABLE "network_interfaces" (
@@ -111,7 +97,7 @@ CREATE TABLE "network_interfaces" (
     "int_ipv6address" varchar(42),
     "int_options" varchar(120),
     "int_dhcp" bool,
-    "int_v4netmaskbit" varchar(3) NULL,
+    "int_v4netmaskbit" varchar(3) NOT NULL,
     "int_ipv6auto" bool,
     "int_interface" varchar(300),
     "id" integer PRIMARY KEY
@@ -142,18 +128,17 @@ CREATE TABLE "network_vlan" (
     "vlan_description" varchar(120) NOT NULL
 );
 CREATE TABLE "services_activedirectory" (
-    "id" integer PRIMARY KEY,
-    "ad_workgroup" varchar(120) NOT NULL DEFAULT '',
+    "ad_workgroup" varchar(120),
     "ad_netbiosname" varchar(120),
     "ad_adminname" varchar(120),
-    "ad_domainname" varchar(120),
-    "ad_adminpw" varchar(120),
-    "ad_dcname" varchar(120),
     "ad_windows_version" varchar(120),
-    "ad_spn" varchar(120),
     "ad_spnpw" varchar(120),
-    "ad_keytab" text NOT NULL DEFAULT ''
-     
+    "ad_spn" varchar(120),
+    "ad_domainname" varchar(120),
+    "ad_keytab" text NOT NULL DEFAULT '',
+    "ad_adminpw" varchar(120),
+    "id" integer PRIMARY KEY,
+    "ad_dcname" varchar(120)
 );
 CREATE TABLE "services_afp" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -201,31 +186,33 @@ CREATE TABLE "services_dynamicdns" (
     "ddns_options" text NOT NULL
 );
 CREATE TABLE "services_ftp" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "ftp_clients" varchar(120) NOT NULL,
-    "ftp_ipconnections" varchar(120) NOT NULL,
-    "ftp_loginattempt" varchar(120) NOT NULL,
-    "ftp_timeout" varchar(120) NOT NULL,
-    "ftp_rootlogin" bool NOT NULL DEFAULT False,
-    "ftp_onlyanonymous" bool NOT NULL DEFAULT False,
-    "ftp_onlylocal" bool NOT NULL DEFAULT False,
-    "ftp_banner" text NOT NULL,
-    "ftp_filemask" varchar(120) NOT NULL,
-    "ftp_dirmask" varchar(120) NOT NULL,
-    "ftp_fxp" bool NOT NULL DEFAULT False,
-    "ftp_resume" bool NOT NULL DEFAULT False,
-    "ftp_defaultroot" bool NOT NULL DEFAULT False,
-    "ftp_ident" bool NOT NULL DEFAULT False,
-    "ftp_reversedns" bool NOT NULL DEFAULT False,
-    "ftp_masqaddress" varchar(120) NOT NULL,
-    "ftp_passiveportsmin" varchar(120) NOT NULL,
-    "ftp_passiveportsmax" varchar(120) NOT NULL,
-    "ftp_localuserbw" varchar(120) NOT NULL,
-    "ftp_localuserdlbw" varchar(120) NOT NULL,
-    "ftp_anonuserbw" varchar(120) NOT NULL,
-    "ftp_anonuserdlbw" varchar(120) NOT NULL,
-    "ftp_ssltls" bool NOT NULL DEFAULT False,
-    "ftp_options" text NOT NULL
+    "ftp_anonuserbw" integer unsigned,
+    "ftp_ident" bool,
+    "ftp_timeout" integer unsigned,
+    "ftp_resume" bool,
+    "ftp_options" text,
+    "ftp_masqaddress" char(15),
+    "id" integer PRIMARY KEY,
+    "ftp_anonpath_id" integer,
+    "ftp_passiveportsmax" integer unsigned,
+    "ftp_port" integer unsigned NOT NULL DEFAULT 21,
+    "ftp_ipconnections" integer unsigned,
+    "ftp_ssltls" bool,
+    "ftp_defaultroot" bool,
+    "ftp_dirmask" varchar(3),
+    "ftp_passiveportsmin" integer unsigned,
+    "ftp_onlylocal" bool,
+    "ftp_loginattempt" integer unsigned,
+    "ftp_localuserbw" integer unsigned,
+    "ftp_rootlogin" bool,
+    "ftp_onlyanonymous" bool,
+    "ftp_reversedns" bool,
+    "ftp_anonuserdlbw" integer unsigned,
+    "ftp_clients" integer unsigned,
+    "ftp_fxp" bool,
+    "ftp_filemask" varchar(3),
+    "ftp_localuserdlbw" integer unsigned,
+    "ftp_banner" text
 );
 CREATE TABLE "services_iscsitarget" (
     "iscsi_target_logical_blocksize" integer NOT NULL DEFAULT 512,
@@ -466,10 +453,11 @@ CREATE TABLE "system_advanced" (
     "adv_serialconsole" bool,
     "adv_consolescreensaver" bool,
     "adv_zeroconfbonjour" bool,
+    "adv_consolemsg" bool NOT NULL DEFAULT True,
     "adv_tuning" bool,
     "adv_firmwarevc" bool,
     "adv_powerdaemon" bool,
-    "adv_swapondrive" integer NOT NULL DEFAULT 2,
+    "adv_swapondrive" integer,
     "adv_motd" text,
     "adv_consolemenu" bool,
     "id" integer PRIMARY KEY
@@ -493,8 +481,7 @@ CREATE TABLE "system_settings" (
     "stg_ntpserver2" varchar(120),
     "stg_ntpserver3" varchar(120)
 );
-CREATE INDEX "account_bsdgroupmembership_9303d695" ON "account_bsdgroupmembership" (
-    "bsdgrpmember_user_id");
+CREATE INDEX "account_bsdgroupmembership_9303d695" ON "account_bsdgroupmembership" ("bsdgrpmember_user_id");
 CREATE INDEX "account_bsdgroupmembership_d3b92950" ON "account_bsdgroupmembership" ("bsdgrpmember_group_id");
 CREATE INDEX "account_bsdusers_f22bd9ef" ON "account_bsdusers" ("bsdusr_group_id");
 CREATE INDEX "auth_group_permissions_1e014c8f" ON "auth_group_permissions" ("permission_id");

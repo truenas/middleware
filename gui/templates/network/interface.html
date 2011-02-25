@@ -1,13 +1,14 @@
+{% load i18n %}
       <table class="grid">
 	      <thead class="header">
 	  <tr>
-	          <td>Interface</td>
-	          <td>Name</td>
-	          <td>DHCP</td>
-	          <td>IPv4 Address</td>
-	          <td>IPv6 Auto</td>
-	          <td>IPv6 Address</td>
-	          <td>Options</td>
+              <td>{% trans "Interface" %}</td>
+              <td>{% trans "Name" %}</td>
+              <td>{% trans "DHCP" %}</td>
+              <td>{% trans "IPv4 Address" %}</td>
+              <td>{% trans "IPv6 Auto" %}</td>
+              <td>{% trans "IPv6 Address" %}</td>
+              <td>{% trans "Options" %}</td>
 	  </tr>
 	      </thead>
           {% for i in int_list %}
@@ -29,30 +30,30 @@
               <td>{{ i.int_options }}</td>
               <td>
                   <button dojoType="dijit.form.Button" type="button">
-                      Edit
+                      {% trans "Edit" %}
                   <script type="dojo/method" event="onClick" args="evt">
-                  editObject('Edit Interface', '{% url freeadmin_model_edit app="network",model="Interfaces",oid=i.id %}', [this,]);
+                      editObject('{% trans "Edit Interface" %}', '{% url freeadmin_model_edit app="network",model="Interfaces",oid=i.id %}', [this,]);
                   </script>
                   </button>
                   <button dojoType="dijit.form.Button" type="button">
-                      Delete
+                      {% trans "Delete" %}
                   <script type="dojo/method" event="onClick" args="evt">
-                  editObject('Delete Interface', '{% url freeadmin_model_delete app="network",model="Interfaces",oid=i.id %}', [this,]);
+                      editObject('{% trans "Delete Interface" %}', '{% url freeadmin_model_delete app="network",model="Interfaces",oid=i.id %}', [this,]);
                   </script>
                   </button>
               </td>
           </tr>
           {% empty %}
           <tr>
-              <td colspan="9">No interfaces defined</td>
+              <td colspan="9">{% trans "No interfaces defined" %}</td>
           </tr>
           {% endfor %}
           </table>
           <p class="btn">
               <button id="int_button" dojoType="dijit.form.Button" type="button">
-                  Add Interface
+                  {% trans "Add Interface" %}
                   <script type="dojo/method" event="onClick" args="evt">
-                  addObject('Add Interface', '{% url freeadmin_model_add app="network",model="Interfaces" %}', [this,]);
+                      addObject('{% trans "Add Interface" %}', '{% url freeadmin_model_add app="network",model="Interfaces" %}', [this,]);
               </script>
               </button>
               </p>

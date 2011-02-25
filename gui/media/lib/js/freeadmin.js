@@ -1,0 +1,889 @@
+/*-
+ * Copyright (c) 2011 iXsystems, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ */
+
+    dojo.require("dojo.data.ItemFileReadStore");
+    dojo.require("dojo.data.ItemFileWriteStore");
+    dojo.require("dijit.Tree");
+    dojo.require("dojo.dnd.Moveable");
+    //dojo.require("dijit.tree.dndSource");
+    dojo.require("dojox.grid.DataGrid");
+    dojo.require("dojox.data.JsonRestStore");
+    dojo.require("dojo.NodeList-traverse");
+    dojo.require("dojo.io.iframe");
+    dojo.require("dojox.validate.regexp");
+    dojo.require("dijit.layout.BorderContainer");
+    dojo.require("dijit.layout.ContentPane");
+    dojo.require("dijit.layout.TabContainer");
+    dojo.require("dojox.form.FileInput");
+
+    /*
+     * Menu Object
+     * Responsible for opening menu tabs
+     * URLs are loaded OnLoad from djang reverse()
+     */
+    var Menu = {
+
+        openSystem: function() {
+            var opened = false;
+            var opened2 = false;
+            var opened3 = false;
+            var p = dijit.byId("content");
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+                if(c[i].title == 'Reporting'){
+                    p.selectChild(c[i]);
+                    opened = true;
+                } else if(c[i].title == 'Settings'){
+                    p.selectChild(c[i]);
+                    opened2 = true;
+                } else if(c[i].title == 'System Information'){
+                    p.selectChild(c[i]);
+                    opened3 = true;
+                }
+            }
+            if(opened != true) {
+                var pane = new dijit.layout.ContentPane({ 
+                    title: 'Reporting',
+                    refreshOnShow: true,
+                    closable: true,
+                    href: this.urlReporting,
+                });
+                p.addChild(pane);
+            }
+
+            if(opened2 != true) {
+                var pane2 = new dijit.layout.ContentPane({ 
+                    id: 'settingstab',
+                    title: 'Settings',
+                    refreshOnShow: true,
+                    closable: true,
+                    href: this.urlSettings,
+                });
+                p.addChild(pane2);
+            }
+
+            if(opened3 != true) {
+                var pane3 = new dijit.layout.ContentPane({ 
+                    id: 'sysinfotab',
+                    title: 'System Information',
+                    refreshOnShow: true,
+                    closable: true,
+                    href: this.urlInfo,
+                });
+                p.addChild(pane3);
+                p.selectChild(pane3);
+            }
+
+        },
+        openNetwork: function(tab) {
+            var opened = false;
+            var p = dijit.byId("content");
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+                if(c[i].title == 'Network Settings'){
+                    p.selectChild(c[i]);
+                    opened = true;
+                    if(tab) {
+                        var tabnet = dijit.byId("tab_networksettings");
+                        if(tabnet) {
+                            var c2 = tabnet.getChildren();
+                            for(var j=0; j<c2.length; j++){
+                                if(c2[j].title == tab)
+                                    tabnet.selectChild(c2[j]);
+                            }
+                        }
+                    }
+
+                }
+            }
+            if(opened != true) {
+                openurl = this.urlNetwork;
+                if(tab) {
+                    openurl += '?tab='+tab;
+                }
+
+                var pane = new dijit.layout.ContentPane({ 
+                    title: 'Network Settings',
+                    closable: true,
+                    //refreshOnShow: true,
+                    href: openurl,
+                });
+                p.addChild(pane);
+                p.selectChild(pane);
+            }
+
+        },
+        openSharing: function() {
+            var opened = false;
+            var p = dijit.byId("content");
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+                if(c[i].title == 'Shares'){
+                    p.selectChild(c[i]);
+                    opened = true;
+                }
+            }
+            if(opened != true) {
+                var pane = new dijit.layout.ContentPane({ 
+                    title: 'Shares',
+                    closable: true,
+                    //refreshOnShow: true,
+                    href: this.urlSharing,
+                });
+                p.addChild(pane);
+                p.selectChild(pane);
+            }
+
+        },
+        openServices: function() {
+            var opened = false;
+            var p = dijit.byId("content");
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+                if(c[i].title == 'Services'){
+                    p.selectChild(c[i]);
+                    opened = true;
+                }
+            }
+            if(opened != true) {
+                var pane = new dijit.layout.ContentPane({ 
+                    title: 'Services',
+                    closable: true,
+                    href: this.urlServices,
+                });
+                p.addChild(pane);
+                p.selectChild(pane);
+            }
+
+        },
+
+        openAccount: function(tab) {
+            var opened = false;
+            var p = dijit.byId("content");
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+                if(c[i].title == 'Account'){
+                    p.selectChild(c[i]);
+                    opened = true;
+                    if(tab) {
+                        var tabnet = dijit.byId("tab_account");
+                        if(tabnet) {
+                            var c2 = tabnet.getChildren();
+                            for(var j=0; j<c2.length; j++){
+                                if(c2[j].title == tab)
+                                    tabnet.selectChild(c2[j]);
+                            }
+                        }
+                    }
+                    
+                }
+            }
+            if(opened != true) {
+                openurl = this.urlAccount;
+                if(tab) {
+                    openurl += '?tab='+tab;
+                }
+                var pane = new dijit.layout.ContentPane({ 
+                    title: 'Account',
+                    closable: true,
+                    href:openurl,
+                });
+                p.addChild(pane);
+                p.selectChild(pane);
+
+            }
+
+        },
+
+        openStorage: function() {
+            var opened = false;
+            var p = dijit.byId("content");
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+                if(c[i].title == 'Storage'){
+                    p.selectChild(c[i]);
+                    opened = true;
+                }
+            }
+            if(opened != true) {
+                var pane = new dijit.layout.ContentPane({ 
+                    id: 'topmenu_storage',
+                    title: 'Storage',
+                    closable: true,
+                    refreshOnShow: true,
+                    href: this.urlStorage,
+                });
+                p.addChild(pane);
+                dojo.addClass(pane.domNode,["objrefresh", "data_storage_Volumes"]);
+                p.selectChild(pane);
+            }
+
+        }
+
+    };
+    /* end Menu */
+
+    function toggle_service(obj) {
+         obj.src = '/services/toggle/' + obj.name + '/' + Date();
+    }
+
+    function buttongrid(v) {
+        var json = dojo.fromJson(v);
+        dojo.parser.parse(dojo.byId(this.id));
+
+        var b = new dijit.form.Button({label: "Edit"});
+
+        var gridhtml = dijit.getEnclosingWidget(dojo.byId(this.id));
+        dojo.connect(b.domNode, 'onclick', function(){ editObject('Edit Disk', json.edit_url, [gridhtml,]); });
+
+        return b;
+    }
+
+
+    var canceled = false;
+
+    function itemAccept(node, source, position){
+        var item = dijit.getEnclosingWidget(node).item;
+        if (item && item.children){
+                return true;
+        }
+        return false;
+    }
+
+    toggleEmail = function(c) {
+
+        var toset;
+        var box = dijit.byId("id_em_smtp");
+        if(box.attr("value")==false) {
+            toset = true;
+        } else{
+            toset = false;
+        }
+        dijit.byId("id_em_pass1").set('disabled', toset);
+        dijit.byId("id_em_pass2").attr("disabled", toset);
+        dijit.byId("id_em_user").attr("disabled", toset);
+
+    }
+
+    formSubmit = function(item, e, url, callback) {
+        dojo.stopEvent(e); // prevent the default submit
+        var qry = dojo.query('.saved', item.domNode)[0];
+        if(qry) dojo.style(qry, 'display', 'none');
+
+        dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
+          function(inputElem){
+               dijit.getEnclosingWidget(inputElem).set('disabled',true);
+           }
+        );
+
+        var rnode = dijit.getEnclosingWidget(item.domNode.parentNode);
+        if(!rnode) rnode = dijit.byId("edit_dialog");
+
+        // are there any files to be submited?
+        var files = dojo.query("input[type=file]", item.domNode);
+        if(files.length > 0) {
+
+            dojo.io.iframe.send( {
+                url: url + '?iframe=true',
+                method: 'POST',
+                form: item.domNode,
+                handleAs: 'text',
+                load: function(data, ioArgs) { 
+
+                    try {
+                        var json = dojo.fromJson(data);
+                        // TODO, workaound for firefox, it does parse html as JSON!!!
+                        if(json.error != true && json.error != false) {
+                            throw "not json"
+                        }
+
+                        try {
+                            rnode.hide();
+                        } catch(err2) {
+                            dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
+                              function(inputElem){
+                                   dijit.getEnclosingWidget(inputElem).set('disabled',false);
+                               }
+                            );
+                            dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','OK');
+                        }
+
+                        var footer = dojo.byId("messages");
+                        dojo.empty(footer);
+                        var suc = dojo.create("div");
+                        footer.appendChild(suc);
+                        dojo.addClass(suc, "success");
+                        dojo.html.set(suc, json.message);
+                        setTimeout(function() { if(suc) dojo.fadeOut({node: suc}).play();}, 7000);
+
+                        //dojo.style(suc, "opacity", "0");
+                        //dojo.fadeIn({ node: suc }).play();
+                    } catch(err) {
+                        rnode.set('content', data); 
+                        if(callback) callback();
+                        var qry = dojo.query('#success', rnode.domNode);
+                        if(qry.length>0)
+                            dojo.fadeOut({node: rnode, onEnd: function() { rnode.hide(); }}).play();
+                    }
+
+                },
+	        error: function(response, ioArgs) {alert("error"); },
+             });
+
+        } else {
+
+            var newData = item.get("value");
+            dojo.xhrPost( {
+                url: url,
+                content: newData,
+                handleAs: 'text',
+                load: function(data) { 
+
+                    try {
+                        var json = dojo.fromJson(data);
+                        // TODO, workaound for firefox, it does parse html as JSON!!!
+                        if(json.error != true && json.error != false) {
+                            throw "not json"
+                        }
+
+                        try {
+                            rnode.hide();
+                        } catch(err2) {
+                            dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
+                              function(inputElem){
+                                   dijit.getEnclosingWidget(inputElem).set('disabled',false);
+                               }
+                            );
+                            dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','OK');
+                        }
+
+                        var footer = dojo.byId("messages");
+                        dojo.empty(footer);
+                        var suc = dojo.create("div");
+                        dojo.connect(suc, 'onclick', function() {
+                            dojo.fadeOut({ node: suc }).play();
+                        });
+                        footer.appendChild(suc);
+                        dojo.addClass(suc, "success");
+                        dojo.html.set(suc, "<p>"+json.message+"</p>");
+                        setTimeout(function() { if(suc) dojo.fadeOut({node: suc}).play();}, 7000);
+                        //dojo.style(suc, "opacity", "0");
+                        //dojo.fadeIn({ node: suc }).play();
+                    } catch(err) {
+
+                        rnode.set('content', data); 
+                        if(callback) callback();
+                        var qry = dojo.query('#success', rnode.domNode);
+                        if(qry.length>0)
+                            dojo.fadeOut({node: rnode, onEnd: function() { rnode.hide(); }}).play();
+                    }
+                },
+                error: function(data) { 
+
+                        var footer = dojo.byId("messages");
+                        dojo.empty(footer);
+                        var suc = dojo.create("div");
+                        dojo.connect(suc, 'onClick', function() {
+                            dojo.fadeOut({ node: suc }).play();
+                        });
+                        footer.appendChild(suc);
+                        dojo.addClass(suc, "error");
+                        dojo.html.set(suc, '<p>Some error ocurried!</p>');
+                        setTimeout(function() { if(suc) dojo.fadeOut({node: suc}).play();}, 7000);
+
+                        try {
+                           rnode.hide();
+                        } catch(err2) {
+                            dojo.query('input[type=button],input[type=submit]', item.domNode).forEach(
+                              function(inputElem){
+                                   dijit.getEnclosingWidget(inputElem).set('disabled',false);
+                               }
+                            );
+
+                            dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','OK');
+                        }
+                 }
+             });
+
+         }
+
+    }
+
+    function checkNumLog(unselected) {
+        var num = 0;
+        for(var i=0;i<unselected.length;i++) {
+            var q = dojo.query("input[name=zpool_"+unselected[i]+"]:checked");
+            if(q.length > 0) {
+                if(q[0].value == 'log')
+                num += 1;
+            }
+        }
+        if(num == 1) {
+            dojo.style("lowlog", "display", "");
+        } else {
+            dojo.style("lowlog", "display", "none");
+        }
+    }
+
+    wizardcheckings = function(vol_change) {
+
+        if(!dijit.byId("wizarddisks")) return;
+        var disks = dijit.byId("wizarddisks");
+        var d = disks.getSelected();
+
+        var zfs = dojo.query("input[name=volume_fstype]")[1].checked;
+
+        if(vol_change == true) {
+            var unselected = [];
+            for(var i=0;i<disks.domNode.length;i++) {
+
+                var selected = false;
+                for(var j=0;j<d.length;j++) {
+                    if (disks.domNode.options[i].value == d[j].value) {
+                        selected = true;
+                    }
+                }
+                if(selected == false) {
+                    unselected.push(disks.domNode.options[i].value);
+                }
+
+            }
+
+            if(unselected.length > 0 && zfs == true) {
+
+                var tab = dojo.byId("disks_unselected");
+                dojo.query("#disks_unselected tbody tr").orphan();
+                var txt = "";
+                var toappend = [];
+                for(var i=0;i<unselected.length;i++) {
+                    var tr = dojo.create("tr");
+                    var td = dojo.create("td", {innerHTML: unselected[i]});
+                    tr.appendChild(td);
+
+                    var td = dojo.create("td");
+                    var rad = new dijit.form.RadioButton({ checked: true, value: "none", name: "zpool_"+unselected[i]});
+                    dojo.connect(rad, 'onClick', function() {checkNumLog(unselected);});
+                    td.appendChild(rad.domNode);
+                    tr.appendChild(td);
+
+                    var td = dojo.create("td");
+                    var rad = new dijit.form.RadioButton({ value: "log", name: "zpool_"+unselected[i]});
+                    dojo.connect(rad, 'onClick', function() {checkNumLog(unselected);});
+                    td.appendChild(rad.domNode);
+                    tr.appendChild(td);
+
+                    var td = dojo.create("td");
+                    var rad = new dijit.form.RadioButton({ value: "cache", name: "zpool_"+unselected[i]});
+                    dojo.connect(rad, 'onClick', function() {checkNumLog(unselected);});
+                    td.appendChild(rad.domNode);
+                    tr.appendChild(td);
+
+                    var td = dojo.create("td");
+                    var rad = new dijit.form.RadioButton({ value: "spare", name: "zpool_"+unselected[i]});
+                    dojo.connect(rad, 'onClick', function() {checkNumLog(unselected);});
+                    td.appendChild(rad.domNode);
+                    tr.appendChild(td);
+
+                    toappend.push(tr);
+                }
+
+                for(var i=0;i<toappend.length;i++) {
+                    dojo.place(toappend[i], dojo.query("#disks_unselected tbody")[0]);
+                }
+
+               dojo.style("zfsextra", "display", "");
+
+            } else {
+               dojo.query("#disks_unselected tbody tr").orphan();
+               dojo.style("zfsextra", "display", "none");
+            }
+        } else if(zfs == false) {
+               dojo.style("zfsextra", "display", "none");
+        }
+
+        var ufs = dojo.query("#fsopt input")[0].checked;
+        var zfs = dojo.query("#fsopt input")[1].checked;
+        if(d.length >= 2) {
+            dojo.style("grpopt", "display", "");
+        } else {
+            dojo.style("grpopt", "display", "none");
+        }
+
+        if(d.length >= 3 && zfs) {
+                dojo.style("grpraidz", "display", "block");
+        } else {
+                dojo.style("grpraidz", "display", "none");
+        }
+        if(d.length >= 4 && zfs) {
+                dojo.style("grpraidz2", "display", "block");
+        } else {
+                dojo.style("grpraidz2", "display", "none");
+        }
+        if(ufs && d.length-1 >= 2 && (((d.length-2)&(d.length-1)) == 0)) {
+            if(ufs)
+                dojo.style("grpraid3", "display", "block");
+        } else {
+            dojo.style("grpraid3", "display", "none");
+        }
+
+    }
+
+    getDialog = function(from) {
+
+        var turn = from;
+        while(1) {
+            turn = dijit.getEnclosingWidget(turn.domNode.parentNode);
+            if(turn.isInstanceOf(dijit.Dialog)) break;
+        }
+        return turn;
+    
+    };
+
+    cancelDialog = function(from) {
+    
+        var dialog = getDialog(from);
+        canceled = true;
+        dialog.hide();
+
+    };
+
+    addObject = function(name, url, nodes) {
+        canceled = false;
+        dialog = new dijit.Dialog({ 
+            id: 'add_dialog',
+            title: name, 
+            href: url, 
+            parseOnLoad: true,
+            closable: true, 
+            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+            onHide: function() { 
+                this.destroyRecursive();
+                refreshTabs(nodes);
+            },
+        });
+        dialog.show();
+    };
+
+    refreshTabs = function(nodes) {
+        if(nodes && canceled == false) {
+            var fadeArgs = {
+               node: "mytree",
+               onEnd: function() { dijit.byId("mytree").reload(); }
+             };
+            dojo.fadeOut(fadeArgs).play();
+            dojo.forEach(nodes, function(entry, i) {
+                if(entry.isInstanceOf(dijit.layout.ContentPane)) {
+                    entry.refresh();
+                    var par = dijit.getEnclosingWidget(entry.domNode.parentNode);
+                    par.selectChild(entry);
+                    var par2 = dijit.getEnclosingWidget(par.domNode.parentNode);
+                    if(par2 && par2.isInstanceOf(dijit.layout.ContentPane))
+                        dijit.byId("content").selectChild(par2);
+                } else {
+                    var par = dojo.query(entry.domNode).parents(".objrefresh").first()[0];
+                    var cp = dijit.getEnclosingWidget(par);
+                    if(cp) cp.refresh();
+                }
+            });
+
+        }
+    }
+
+    editObject = function(name, url, nodes) {
+        canceled = false;
+        dialog = new dijit.Dialog({ 
+            id: 'edit_dialog',
+            title: name, 
+            href: url, 
+            parseOnLoad: true,
+            closable: true, 
+            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+            onHide: function() { 
+                this.destroyRecursive();
+                refreshTabs(nodes);
+            },
+        });
+        dialog.show();
+    };
+
+    volumeWizard = function(name, url, nodes) {
+         dialog = new dijit.Dialog({ 
+             id: 'wizard_dialog',
+             title: 'Add Volume', 
+             href: url, 
+             parseOnLoad: true,
+             closable: true, 
+             style: "max-width: 650px;min-height:200px;max-height:500px;background-color:white;overflow:auto;",
+             onHide: function() { 
+                this.destroyRecursive() 
+                refreshTabs(nodes);
+             },
+         });
+         dialog.show();
+    }
+
+    viewModel = function(name, url) {
+        var p = dijit.byId("content");
+        var c = p.getChildren();
+        for(var i=0; i<c.length; i++){
+            if(c[i].title == name){
+                p.selectChild(c[i]);
+                return;
+            }
+        }
+        var pane = new dijit.layout.ContentPane({ 
+            href: url, 
+            title: name, 
+            closable: true,
+            parseOnLoad: true,
+            refreshOnShow: true,
+        });
+        dojo.addClass(pane.domNode, "objrefresh" );
+        p.addChild(pane);
+        p.selectChild(pane);
+    }
+
+    dojo.addOnLoad(function() {
+
+        dojo.declare("my.Tree", dijit.Tree, {  
+           
+            _expandNode: function( node, recursive){
+                if(node._expandNodeDeferred && !recursive){
+                    return node._expandNodeDeferred;    // dojo.Deferred
+                }
+                
+                //item = node.item;
+                //alert("doing ya");
+                //if (item._loadObject && !node._loadObjectFunction) {
+                //    node._loadObjectFunction = item._loadObject;
+                //}
+                return this.inherited(arguments);
+            }, 
+            reload: function () {
+
+                this.model.store.close();
+                path = this.get('path');
+                
+                if (this.rootNode) {
+                    this.rootNode.destroyRecursive();
+                }
+            
+                this.rootNode.state = "UNCHECKED";
+              
+                this.model.constructor(this.model);
+                
+                this.postMixInProperties();
+                this._load();
+                this.set('path', path).then(
+                        dojo.hitch(this, function() { 
+                            this.focusNode(this.get('selectedNode')); 
+                        } 
+                ));
+
+            } 
+            
+        });
+
+        var store = new dojo.data.ItemFileReadStore({
+            url: "/admin/menu.json",
+            urlPreventCache: true, 
+            clearOnClose: true,
+        });
+
+        var treeModel = new dijit.tree.ForestStoreModel({
+            store: store,
+            query: {
+                "type": "app"
+            },
+            rootId: "root",
+            rootLabel: "FreeNAS",
+            childrenAttrs: ["children"]
+        });
+
+        geticons = function(item,opened) {
+            if(item.icon) return item.icon;
+            return (!item || this.model.mayHaveChildren(item)) ? (opened ? "dijitFolderOpened" : "dijitFolderClosed") : "dijitLeaf";
+        };
+
+        treeclick = function(item) {
+            var p = dijit.byId("content");
+                
+            if(item.type && item.type == 'object') {
+                var data = dojo.query(".data_"+item.app_name+"_"+item.model);
+                if(data) {
+                    widgets = [];
+                    data.forEach(function(item, idx) {
+                        widget = dijit.getEnclosingWidget(item);
+                        if(widget) {
+                            widgets.push(widget);
+                        }
+                    });
+                    addObject(item.name, item.view, widgets);
+                } else
+                    addObject(item.name, item.view);
+            } else if(item.type && item.type == 'volumewizard') {
+                var data = dojo.query(".data_"+item.app_name+"_"+item.model);
+                if(data) {
+                    widgets = [];
+                    data.forEach(function(item, idx) {
+                        widget = dijit.getEnclosingWidget(item);
+                        if(widget) {
+                            widgets.push(widget);
+                        }
+                    });
+                    volumeWizard('Wizard', STORAGE_URL, widgets);
+                } else 
+                    volumeWizard('Wizard', STORAGE_URL);
+            } else if(item.type && item.type == 'editobject') {
+                var data = dojo.query(".data_"+item.app_name+"_"+item.model);
+                if(data) {
+                    widgets = [];
+                    data.forEach(function(item, idx) {
+                        widget = dijit.getEnclosingWidget(item);
+                        if(widget) {
+                            widgets.push(widget);
+                        }
+                    });
+                    editObject(item.name, item.view, widgets);
+                } else
+                    editObject(item.name, item.view);
+            } else if(item.type && item.type == 'viewlagg') {
+                Menu.openNetwork('Link Aggregation');
+            } else if(item.type && item.type == 'viewinterfaces') {
+                Menu.openNetwork('Interfaces');
+            } else if(item.type && item.type == 'viewvlans') {
+                Menu.openNetwork('VLAN');
+            } else if(item.type && item.type == 'viewsr') {
+                Menu.openNetwork('Static Routes');
+            } else if(item.type && item.type == 'network_global') {
+                Menu.openNetwork('Global Configuration');
+            } else if(item.type && item.type == 'network_intsummary') {
+                Menu.openNetwork('Interface Summary');
+            } else if(item.type && item.type == 'network_routetable') {
+                Menu.openNetwork('Routing Tables');
+            } else if(item.type && item.type == 'network_resolv') {
+                Menu.openNetwork('resolv.conf');
+            } else if(item.type && item.type == 'changepass') {
+                Menu.openAccount('Change Password');
+            } else if(item.type && item.type == 'changeadmin') {
+                Menu.openAccount('Change Admin User');
+            } else if(item.type && item.type == 'viewusers') {
+                Menu.openAccount('Users');
+            } else if(item.type && item.type == 'viewgroups') {
+                Menu.openAccount('Groups');
+            } else if(item.type && item.type == 'logout') {
+                window.location='/account/logout/';
+            } else if(item.action && item.action == 'displayprocs') {
+                    _InitTopOutput();
+                    dijit.byId("top_dialog").show();
+            } else if(item.action && item.action == 'reboot') {
+                    dijit.byId("rebootDialog").show();
+            } else if(item.action && item.action == 'shutdown') {
+                    dijit.byId("shutdownDialog").show();
+            } else if(item.type && item.type == 'openstorage') {
+                //  get the children and make sure we haven't opened this yet.
+                var c = p.getChildren();
+                for(var i=0; i<c.length; i++){
+                    if(c[i].title == 'Storage'){
+                        p.selectChild(c[i]);
+                        return;
+                    }
+                }
+                var pane = new dijit.layout.ContentPane({ 
+                    href: item.view, 
+                    title: 'Storage', 
+                    closable: true,
+                    parseOnLoad: true,
+                });
+                dojo.addClass(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
+                p.addChild(pane);
+                p.selectChild(pane);
+            } else if(item.type && item.type == 'viewmodel') {
+                //  get the children and make sure we haven't opened this yet.
+                var c = p.getChildren();
+                for(var i=0; i<c.length; i++){
+                    if(c[i].title == item.name){
+                        p.selectChild(c[i]);
+                        return;
+                    }
+                }
+                var pane = new dijit.layout.ContentPane({ 
+                    id: "data_"+item.app_name+"_"+item.model,
+                    href: item.view, 
+                    title: item.name, 
+                    closable: true,
+                    refreshOnShow: true,
+                    parseOnLoad: true,
+                });
+                p.addChild(pane);
+                dojo.addClass(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
+                p.selectChild(pane);
+            } else {
+                //  get the children and make sure we haven't opened this yet.
+                var c = p.getChildren();
+                for(var i=0; i<c.length; i++){
+                    if(c[i].title == item.name){
+                        p.selectChild(c[i]);
+                        return;
+                    }
+                }
+                var pane = new dijit.layout.ContentPane({ 
+                    href: item.view, 
+                    title: item.name, 
+                    closable: true,
+                    parseOnLoad: true,
+                });
+                p.addChild(pane);
+                p.selectChild(pane);
+            }
+
+        };
+
+        mytree = new my.Tree({
+            id: "mytree",
+            model: treeModel,
+            showRoot: false,
+            onClick: treeclick,
+            onLoad: function() { 
+                var fadeArgs = {
+                   node: "mytree",
+                 };
+                dojo.fadeIn(fadeArgs).play();
+            },
+            openOnClick: true,
+            getIconClass: geticons,
+        }
+        );
+        dijit.byId("menupane").set('content', mytree);
+
+    });

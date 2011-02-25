@@ -108,11 +108,6 @@ generate_kerberos_files()
 	do
 		generate_krb5_conf "${dcname}" "${domainname}" \
 			"${netbiosname}" "${adminname}" "${adminpw}"
-
-		if [ "${version}" = "windows2008" ]
-		then
-			generate_AD_keytab
-		fi
 	done
 }
 

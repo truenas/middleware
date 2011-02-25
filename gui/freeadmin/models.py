@@ -10,7 +10,7 @@ class FreeAdminWrapper(object):
     menu_child_of = None
 
     object_filters = {}
-    object_num = 2
+    object_num = -1
 
     icon_model = None
     icon_object = None

@@ -146,7 +146,7 @@ class UserChangeForm(ModelForm):
 
     def save(self):
         super(UserChangeForm, self).save()
-        notifier().change_root_alias(self.instance.email)
+        notifier().start('ix-msmtp')
         return self.instance
 
 class bsdUserCreationForm(ModelForm):

@@ -31,6 +31,7 @@ from django import forms
 from freenasUI.choices import UserShell
 from django.contrib.auth.models import get_hexdigest
 from django.utils.translation import ugettext as _
+from freenasUI.middleware.notifier import notifier
 
 class bsdGroups(Model):
     bsdgrp_gid = models.IntegerField(
@@ -57,6 +58,13 @@ class bsdGroups(Model):
 
     def __unicode__(self):
         return self.bsdgrp_group
+    def delete(self, using=None, reload=True):
+        if self.bsdgrp_builtin == True:
+            raise ValueError(_("Group %s is built-in and can not be deleted!") % (obj.bsdgroup_group))
+        notifier().user_deletegroup(self.bsdgrp_group.__str__())
+        super(bsdGroups, self).delete(using)
+        if reload:
+            notifier().reload("user")
 
 class bsdUsers(Model):
     bsdusr_uid = models.IntegerField(
@@ -119,6 +127,19 @@ class bsdUsers(Model):
 
     def __unicode__(self):
         return self.bsdusr_username
+    def delete(self, using=None, reload=True):
+        if self.bsdusr_builtin == True:
+            raise ValueError(_("User %s is built-in and can not be deleted!") % (self.bsdusr_username))
+        notifier().user_deleteuser(self.bsdusr_username.__str__())
+        try:
+            gobj = bsdGroups.objects.get(bsdgrp_group = self.bsdusr_username)
+            if not gobj.bsdgrp_builtin:
+                gobj.delete(reload=False)
+        except:
+            pass
+        super(bsdUsers, self).delete(using)
+        if reload:
+            notifier().reload("user")
 
 class bsdGroupMembership(Model):
     bsdgrpmember_group = models.ForeignKey(

@@ -329,6 +329,16 @@ def test1(request, objtype = None):
     return render_to_response('system/test1.html', variables)
 
 @login_required
+def varlogmessages(request, lines):
+    if lines == None:
+        lines = 3
+    msg = os.popen('tail -n %s /var/log/messages' % int(lines)).read().strip()
+    variables = RequestContext(request, {
+        'msg': msg,
+    })
+    return render_to_response('system/status/msg.xml', variables, mimetype='text/xml')
+
+@login_required
 def top(request):
     top = os.popen('top').read()
     variables = RequestContext(request, {

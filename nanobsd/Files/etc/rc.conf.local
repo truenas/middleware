@@ -41,6 +41,10 @@ _interface_config()
 
 	ipv6_interfaces=""
 
+	if [ `${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(id) FROM network_interfaces"` -eq 0 ]; then
+		echo "ifconfig_DEFAULT=\"DHCP\""
+	fi
+
 	# Note: ipv4/ipv6 are supposed in ip/masklen format.
 
 	# Traverse the network interface table and generate rc.conf style
@@ -205,6 +209,12 @@ _gen_conf()
 	_bool_svcconfig istgt_enable iscsitarget
 	_bool_svcconfig istgt_enable iscsitarget
 	_bool_svcconfig inadyn_enable dyndns
+
+	# Workaround: we don't enable ZFS by default but still want /etc/zfs/exports
+	# be exist for mountd(8)
+	if [ ! -r /etc/zfs/exports ]; then
+		touch /etc/zfs/exports
+	fi
 
 	_count_config zfs_enable storage_volume vol_fstype =\'ZFS\'
 

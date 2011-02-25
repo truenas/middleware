@@ -101,6 +101,9 @@ class Advanced(Model):
     adv_swapondrive = models.IntegerField(
             verbose_name = _("Swap size on each drive in GiB, affects new disks only"),
             default=2)
+    adv_consolemsg = models.BooleanField(
+            verbose_name = _("Show console messages in the footer (Requires UI reload)"),
+            default=True)
     # TODO: need geom_eli in kernel
     #adv_encswap = models.BooleanField(
     #        verbose_name = _("Encrypt swap space"),

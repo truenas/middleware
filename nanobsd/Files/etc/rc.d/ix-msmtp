@@ -11,6 +11,19 @@
 
 msmtp_config=${msmtp_config:-"/usr/local/etc/msmtprc"}
 
+generate_alias_root()
+{
+	local IFS=\|
+	local email
+	email=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT email FROM auth_user LIMIT 1"`
+	if [ -n "${email}" -a "${email}" ]; then
+		/usr/bin/grep -v ^root: /conf/base/etc/aliases > /etc/aliases
+		echo "root: ${email}" >> /etc/aliases
+	else
+		cp /conf/base/etc/aliases /etc/aliases
+	fi
+}
+
 generate_msmtp_cfg()
 {
 	local IFS=\|
@@ -51,6 +64,7 @@ __EOF__
 generate_msmtp()
 {
 	generate_msmtp_cfg > ${msmtp_config}
+	generate_alias_root
 	chmod 600 ${msmtp_config}
 }
 

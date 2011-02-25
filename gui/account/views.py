@@ -179,18 +179,7 @@ def usergroup_delete(request, object_id, objtype):
         if obj.bsdgrp_builtin == True:
             raise ValueError(_("Group %s is built-in and can not be deleted!") % (obj.bsdgrp_group))
     if request.method == 'POST':
-        if objtype == 'bsduser':
-            notifier().user_deleteuser(obj.bsdusr_username.__str__())
-            try:
-                gobj = bsdGroups.objects.get(bsdgrp_group = obj.bsdusr_username)
-                if not gobj.bsdgrp_builtin:
-                    gobj.delete()
-            except:
-                pass
-        else:
-            notifier().user_deletegroup(obj.bsdgrp_group.__str__())
         obj.delete()
-        notifier().reload("user")
         return HttpResponseRedirect('/account/')
     else:
         c = RequestContext(request, {

@@ -153,6 +153,9 @@ class NavTree(object):
                 BLACKLIST = modnav.BLACKLIST
             else:
                 BLACKLIST = []
+
+            if hasattr(modnav, 'ICON'):
+                nav.icon = modnav.ICON
     
             """
             BEGIN
@@ -313,6 +316,7 @@ class NavTree(object):
         nav.name = _('Display System Processes')
         nav.nav_group = 'main'
         nav.action = 'displayprocs'
+        nav.icon = 'TopIcon'
         nav.options = []
         nav_groups.register(nav)
     
@@ -320,16 +324,17 @@ class NavTree(object):
         nav.name = _('Reboot')
         nav.nav_group = 'main'
         nav.action = 'reboot'
+        nav.icon = u'RebootIcon'
         nav.options = []
         nav_groups.register(nav)
     
         nav = Nav()
         nav.name = _('Shutdown')
         nav.nav_group = 'main'
+        nav.icon = 'ShutdownIcon'
         nav.action = 'shutdown'
         nav.options = []
         nav_groups.register(nav)
-        #print self._modelforms
 
     def getmfs(self):
         print self._modelforms

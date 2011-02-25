@@ -41,7 +41,7 @@ kerberos_init()
 	" | \
 	while read dc domain netbios admin pw version spn spnpw
 	do
-		if [ "${version}" != "windows2008" -a -n "${admin}" -a -n "${domain}" -a -n "${pw}" ]
+		if [ -n "${admin}" -a -n "${domain}" -a -n "${pw}" ]
 		then
 			local pwfile="/tmp/."$(date '+%H%M%S')
 			touch "${pwfile}"
@@ -50,18 +50,6 @@ kerberos_init()
 
 			domain=$(echo "${domain}"|tr a-z A-Z)
 			kinit --password-file="${pwfile}" "${admin}@${domain}"
-
-			rm "${pwfile}"
-
-		elif [ "${version}" = "windows2008" -a -n "${domain}" -a -n "${pw}" ]
-		then
-			local pwfile="/tmp/."$(date '+%H%M%S')
-			touch "${pwfile}"
-			chmod 600 "${pwfile}"
-			echo "${spnpw}" > ${pwfile}
-
-			domain=$(echo "${domain}"|tr a-z A-Z)
-			kinit -k -t /etc/AD.keytab --password-file="${pwfile}" "${spn}@${domain}"
 
 			rm "${pwfile}"
 		fi

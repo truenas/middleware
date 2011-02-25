@@ -54,7 +54,7 @@ generate_afpd_config()
 	cat <<EOF
 "${afp_srv_name}" $(bool_off ${afp_srv_ddp} "-noddp") -nosavepassword \\
 -defaultvol ${afpd_avdefault} -systemvol ${afpd_avsystem} \\
--uservol -uampath /etc/uams -guestname "ftp" \\
+-uservol -uampath /usr/local/libexec/netatalk-uams -guestname "ftp" \\
 EOF
 	if [ ${afp_srv_guest} -eq 1 -a ${afp_srv_local} -eq 0 ]; then
 	    echo "-uamlist uams_guest.so"
@@ -77,7 +77,7 @@ generate_av_default()
     eval local $f
     local sf=$(echo $f | sed -e 's/ /, /g')
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-        "SELECT ${sf}, mp_path FROM sharing_afp_share AS aps LEFT OUTER JOIN storage_mountpoint AS mp ON aps.afp_path_id = mp.mp_volume_id ORDER BY -aps.id LIMIT 1" | \
+        "SELECT ${sf}, mp_path FROM sharing_afp_share AS aps LEFT OUTER JOIN storage_mountpoint AS mp ON aps.afp_path_id = mp.mp_volume_id ORDER BY aps.id DESC" | \
     while eval read $f mountpoint; do
 	echo "# ${afp_comment}"
 	echo -n "\"${mountpoint}\" \"${afp_name}\""

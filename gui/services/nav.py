@@ -1,6 +1,7 @@
 from django_nav import Nav, NavOption
 
 BLACKLIST = ['services','UPS']
+ICON = u'ServicesIcon'
 
 class ISCSI(NavOption):
 

@@ -54,7 +54,7 @@ class UnixPermissionWidget(widgets.MultiWidget):
 
     def decompress(self, value):
         if value:
-            if isinstance(value, str):
+            if isinstance(value, str) or isinstance(value, unicode):
                 owner = bin(int(value[0]))[2:]
                 group = bin(int(value[1]))[2:]
                 other = bin(int(value[2]))[2:]
@@ -68,7 +68,7 @@ class UnixPermissionWidget(widgets.MultiWidget):
                     if mode[i] == '1':
                         rv[i] = True
 
-            return rv
+                return rv
         return [False, False, False, False, False, False, False, False, False]
 
     def format_output(self, rendered_widgets):
@@ -146,7 +146,10 @@ class VolumeWizardForm(forms.Form):
         grouptype_choices = ( ('mirror', 'mirror'), )
         grouptype_choices += ( ('stripe', 'stripe'),)
         fstype = self.data.get("volume_fstype", None)
-        disks = self.data.get("volume_disks", [])
+        if self.data.has_key("volume_disks"):
+            disks = self.data.getlist("volume_disks")
+        else:
+            disks = []
         if fstype == "UFS":
             l = len(disks) - 1
             if l >= 2 and (((l-1)&l) == 0):
@@ -201,14 +204,14 @@ class VolumeWizardForm(forms.Form):
                 pass
         return diskchoices.items()
 
-    #def clean(self):
-    #    cleaned_data = self.cleaned_data
-    #    volume_name = cleaned_data.get("volume_name")
-    #    if Volume.objects.filter(vol_name = volume_name).count() > 0:
-    #        msg = u"You already have a volume with same name"
-    #        self._errors["volume_name"] = self.error_class([msg])
-    #        del cleaned_data["volume_name"]
-    #    return cleaned_data
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        volume_name = cleaned_data.get("volume_name")
+        if Volume.objects.filter(vol_name = volume_name).count() > 0:
+            msg = _(u"You already have a volume with same name")
+            self._errors["volume_name"] = self.error_class([msg])
+            del cleaned_data["volume_name"]
+        return cleaned_data
 
     def done(self, request):
         # Construct and fill forms into database.

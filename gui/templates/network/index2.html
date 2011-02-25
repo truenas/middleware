@@ -10,9 +10,9 @@
         </div>
         <div dojoType="dijit.layout.ContentPane" title="{% trans "VLAN" %}" {% if focus_form == "VLAN" %} selected="true"{% endif %} href="{% url network_vlan %}" class="objrefresh data_network_VLAN" refreshOnShow="true">
         </div>
-        <div dojoType="dijit.layout.ContentPane" title="{% trans "Interface summary" %}"{% if focus_form == "Interface summary" %} selected="true"{% endif %} href="{% url network_ifconfigall %}" class="objrefresh data_network_IfconfigAll" refreshOnShow="true">
+        <div dojoType="dijit.layout.ContentPane" title="{% trans "Interface Summary" %}"{% if focus_form == "Interface Summary" %} selected="true"{% endif %} href="{% url network_ifconfigall %}" class="objrefresh data_network_IfconfigAll" refreshOnShow="true">
         </div>
-        <div dojoType="dijit.layout.ContentPane" title="{% trans "Route Table" %}"{% if focus_form == "Route Table" %} selected="true"{% endif %} href="{% url network_routetable %}" class="objrefresh data_network_RouteTable" refreshOnShow="true">
+        <div dojoType="dijit.layout.ContentPane" title="{% trans "Routing Tables" %}"{% if focus_form == "Routing Tables" %} selected="true"{% endif %} href="{% url network_routetable %}" class="objrefresh data_network_RouteTable" refreshOnShow="true">
         </div>
         <div dojoType="dijit.layout.ContentPane" title="{% trans "resolv.conf" %}"{% if focus_form == "resolv.conf" %} selected="true"{% endif %} href="{% url network_resolvconf %}" class="objrefresh data_network_ResolvConf" refreshOnShow="true">
         </div>

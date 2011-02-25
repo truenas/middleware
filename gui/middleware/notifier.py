@@ -317,6 +317,10 @@ class notifier:
         self.__system("/usr/sbin/service bsnmpd forcestop")
         self.__system("/usr/sbin/service bsnmpd quietstart")
 
+    def _restart_http(self):
+        self.__system("/usr/sbin/service ix-httpd quietstart")
+        self.__system("/usr/sbin/service lighttpd restart")
+
     def __open_db(self):
         """Open and return a cursor object for database access."""
         dbname = ""
@@ -343,15 +347,15 @@ class notifier:
         need4khack = (ret_4kstripe == 0) and (ret_512bsector == 0)
         # Caculate swap size.
         swapsize = swapsize * 1024 * 1024 * 2
-        # Round up to nearest whole integral multiple of 64 if we need 4k hack
-        if need4khack:
-            swapsize = ((swapsize+34+63)/64)*64
+        # Round up to nearest whole integral multiple of 128 and subtract by 34
+        # so next partition starts at mutiple of 128.
+        swapsize = ((swapsize+127)/128)*128
         # To be safe, wipe out the disk, both ends... before we start
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname))
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
                       "| awk '{print ($3 / (1024*1024)) - 4;}'`" % (devname, devname))
         if label != "":
-            self.__system("gpart create -s gpt /dev/%s && gpart add -t freebsd-swap -l swap-%s -s %d %s && gpart add -t %s -l %s %s" %
+            self.__system("gpart create -s gpt /dev/%s && gpart add -b 128 -t freebsd-swap -l swap-%s -s %d %s && gpart add -t %s -l %s %s" %
                          (devname, label, swapsize, devname, type, label, devname))
         else:
             self.__system("gpart create -s gpt /dev/%s && gpart add -t freebsd-swap -l swap-%s -s %d %s && gpart add -t %s %s" %
@@ -377,6 +381,7 @@ class notifier:
         c.execute("SELECT id, group_type FROM storage_diskgroup WHERE "
                   "group_volume_id = ?", (z_id,))
         vgroup_list = c.fetchall()
+        self.__system("swapoff -a")
         for vgrp_row in vgroup_list:
             hack_vdevs = []
             vgrp = (vgrp_row[0],)
@@ -398,6 +403,7 @@ class notifier:
                     z_vdev += " /dev/gpt/" + disk[1] + ".nop"
                 else:
                     z_vdev += " /dev/gpt/" + disk[1]
+        self._reload_disk()
         # Finally, create the zpool.
         # TODO: disallowing cachefile may cause problem if there is
         # preexisting zpool having the exact same name.
@@ -470,6 +476,7 @@ class notifier:
             vdev_member_list = c.fetchall()
             for disk in vdev_member_list:
                 self.__gpt_unlabeldisk(devname = disk[0])
+        self._reload_disk()
 
     def __create_ufs_volume(self, c, u_id, u_name, swapsize):
         geom_vdev = ""
@@ -516,12 +523,17 @@ class notifier:
             self.__system("umount -f /dev/ufs/" + u_name)
             self.__gpt_unlabeldisk(devname = disk[0])
         else:
+            self.__system("swapoff -a")
             self.__system("umount -f /dev/ufs/" + u_name)
             self.__system("geom %s stop %s" % (geom_type, geom_name))
             vdev_member_list = c.fetchall()
             for disk in vdev_member_list:
                 disk_name = " /dev/" + disk[0]
                 self.__system("geom %s clear %s" % (geom_type, disk_name))
+                self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (disk[0]))
+                self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
+                      "| awk '{print ($3 / (1024*1024)) - 4;}'`" % (disk[0], disk[0]))
+        self._reload_disk()
 
     def _init_volume(self, volume_id):
         """Initialize a volume designated by volume_id"""
@@ -685,11 +697,6 @@ class notifier:
     def update_firmware(self, path):
         self.__system("/usr/bin/xz -cd %s | sh /root/update && touch /data/need-update" % (path))
         self.__system("/bin/rm -fr /var/tmp/firmware/firmware.xz")
-
-    def change_root_alias(self, email):
-        self.__system("""grep -v ^root: /etc/aliases > /etc/aliases.new""")
-        self.__system("""echo 'root: %s/' >> /etc/aliases.new""" % email)
-        self.__system("""mv /etc/aliases.new /etc/aliases""")
 
     def get_volume_status(self, name, fs, group_type):
         if fs == 'ZFS':

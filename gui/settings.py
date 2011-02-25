@@ -71,9 +71,10 @@ USE_I18N = True
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
 MEDIA_ROOT = os.path.join(HERE, 'media')
+MEDIA_URL = '/media/'
 
-# Updated every time /usr/local/etc/rc.d/django is run
-SECRET_KEY = '7j%4n@h$+eye^)!*^jk*ni=vj!r70!#y9sdsw)x^*!502bcu2_'
+#This is required for django development server work (BUG fixed in django 1.3)
+ADMIN_MEDIA_PREFIX = '/admin-media'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -143,3 +144,8 @@ FORCE_SCRIPT_NAME = ''
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 268435456
 FILE_UPLOAD_TEMP_DIR = "/var/tmp/firmware/"
+
+try:
+    from local_settings import *
+except:
+    pass

@@ -1,42 +1,43 @@
-            <table class="grid">
-                <thead class="header">
-		    <tr>
-                    <td>Destination</td>
-		            <td>Gateway</td>
-		            <td>Description</td>
-		            <td>Actions</td>
-		    </tr>
-		        </thead>
-                {% for i in sr_list %}
-                    <tr class="{% cycle 'odd' 'even' %}" id="{{ i.id }}">
-                        <td>{{ i.sr_destination }}</td>
-                        <td>{{ i.sr_gateway }}</td>
-                        <td>{{ i.sr_description }}</td>
-                        <td>
-                        <button dojoType="dijit.form.Button" type="button">
-                            Edit
-                        <script type="dojo/method" event="onClick" args="evt">
-                        editObject('Edit Static Route', '{% url freeadmin_model_edit app="network",model="StaticRoute",oid=i.id %}', [this,]);
-                        </script>
-                        </button>
-                        <button dojoType="dijit.form.Button" type="button">
-                            Delete
-                        <script type="dojo/method" event="onClick" args="evt">
-                        editObject('Delete Static Route', '{% url freeadmin_model_delete app="network",model="StaticRoute",oid=i.id %}', [this,]);
-                        </script>
-                        </button>
-                        </td>
-                    </tr>
-		        {% empty %}
-                    <tr>
-                        <td colspan="3">No static route defined</td>
-                    </tr>
-                {% endfor %}
-            </table>
+{% load i18n %}
+    <table class="grid">
+        <thead class="header">
+	    <tr>
+                <td>{% trans "Destination" %}</td>
+                <td>{% trans "Gateway" %}</td>
+                <td>{% trans "Description" %}</td>
+                <td>{% trans "Actions" %}</td>
+	    </tr>
+	        </thead>
+        {% for i in sr_list %}
+            <tr class="{% cycle 'odd' 'even' %}" id="{{ i.id }}">
+                <td>{{ i.sr_destination }}</td>
+                <td>{{ i.sr_gateway }}</td>
+                <td>{{ i.sr_description }}</td>
+                <td>
+                <button dojoType="dijit.form.Button" type="button">
+                    {% trans "Edit" %}
+                <script type="dojo/method" event="onClick" args="evt">
+                    editObject('{% trans "Edit Static Route" %}', '{% url freeadmin_model_edit app="network",model="StaticRoute",oid=i.id %}', [this,]);
+                </script>
+                </button>
+                <button dojoType="dijit.form.Button" type="button">
+                    {% trans "Delete" %}
+                <script type="dojo/method" event="onClick" args="evt">
+                    editObject('{% trans "Delete Static Route" %}', '{% url freeadmin_model_delete app="network",model="StaticRoute",oid=i.id %}', [this,]);
+                </script>
+                </button>
+                </td>
+            </tr>
+	        {% empty %}
+            <tr>
+                <td colspan="4">{% trans "No static route defined" %}</td>
+            </tr>
+        {% endfor %}
+    </table>
 
-            <button id="sr_button" dojoType="dijit.form.Button" type="button">
-                Add Static Route 
-            <script type="dojo/method" event="onClick" args="evt">
-                addObject('Add Static Route', '{% url freeadmin_model_add app="network",model="StaticRoute" %}', [this,]);
-            </script>
-	    </button>
+    <button id="sr_button" dojoType="dijit.form.Button" type="button">
+        {% trans "Add Static Route" %}
+    <script type="dojo/method" event="onClick" args="evt">
+        addObject('{% trans "Add Static Route" %}', '{% url freeadmin_model_add app="network",model="StaticRoute" %}', [this,]);
+    </script>
+    </button>

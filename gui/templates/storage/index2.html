@@ -69,11 +69,13 @@
         volumeWizard('{% trans "Add Volume" %}', '{% url storage_wizard %}', [this,]);
     </script>
 </button>
+{% if en_dataset %}
 <button dojoType="dijit.form.Button" type="button" >
-    {% trans "Add Dataset" %}
+    {% trans "Add ZFS Dataset" %}
     <script type="dojo/method" event="onClick" args="evt">
-        addObject('{% trans "Add Dataset" %}', '{% url storage_dataset %}', [this,]);
+        addObject('{% trans "Add ZFS Dataset" %}', '{% url storage_dataset %}', [this,]);
     </script>
 </button>
+{% endif %}
 </div>
 

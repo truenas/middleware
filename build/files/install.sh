@@ -195,6 +195,7 @@ menu_install()
     local _msg
     local _i
     local _do_upgrade
+    local _menuheight
 
     get_physical_disks_list
     _disklist="${VAL}"
@@ -209,9 +210,16 @@ menu_install()
     done
 
     _tmpfile="/tmp/answer"
+    if [ ${_items} -ge 10 ]; then
+        _items=10
+        _menuheight=20
+    else
+        _menuheight=8
+        _menuheight=$((${_menuheight} + ${_items}))
+    fi
     eval "dialog --title 'Choose destination media' \
           --menu 'Select media where FreeNAS OS should be installed.' \
-          15 60 ${_items} ${_list}" 2>${_tmpfile}
+          ${_menuheight} 60 ${_items} ${_list}" 2>${_tmpfile}
     [ $? -eq 0 ] || exit 1
     _disk=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"

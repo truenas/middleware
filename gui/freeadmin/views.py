@@ -44,10 +44,15 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.middleware.notifier import notifier
 from freeadmin import navtree
+from system.models import Advanced
 
 @login_required
 def adminInterface(request, objtype = None):
-    context = RequestContext(request)
+
+    adv = Advanced.objects.all().order_by('-id')[0]
+    context = RequestContext(request, {
+        'consolemsg': adv.adv_consolemsg
+    })
 
     return render_to_response('freeadmin/index.html', context)
 

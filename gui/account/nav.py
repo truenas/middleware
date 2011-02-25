@@ -2,6 +2,8 @@ from django_nav import Nav, NavOption
 from django.utils.translation import ugettext as _
 import models
 
+ICON = u'AccountIcon'
+
 class ChangePass(NavOption):
 
         name = _('Change Password')
@@ -18,20 +20,21 @@ class ChangeAdmin(NavOption):
         append_app = False
         options = []
 
-class Logout(NavOption):
-
-        name = _('Logout')
-        type = 'logout'
-        icon = u'LogOutIcon'
-        append_app = False
-        options = []
+#class Logout(NavOption):
+#
+#        name = _('Logout')
+#        type = 'logout'
+#        icon = u'LogOutIcon'
+#        append_app = False
+#        options = []
 
 class MyAccount(NavOption):
 
         name = _('My Account')
         icon = u'MyAccountIcon'
         order = -1
-        options = [ChangePass, ChangeAdmin, Logout]
+        #options = [ChangePass, ChangeAdmin, Logout]
+        options = [ChangePass, ChangeAdmin]
 
 class ViewUsers(NavOption):
 

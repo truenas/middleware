@@ -55,10 +55,10 @@ TABLE services_ftp {
 	ftp_masqaddress=
 	ftp_passiveportsmin=0
 	ftp_passiveportsmax=0
-	ftp_localuserbw=
-	ftp_localuserdlbw=
-	ftp_anonuserbw=
-	ftp_anonuserdlbw=
+	ftp_localuserbw=0
+	ftp_localuserdlbw=0
+	ftp_anonuserbw=0
+	ftp_anonuserdlbw=0
 	ftp_ssltls=0
 	ftp_options=
 }
@@ -147,6 +147,7 @@ TABLE system_advanced {
 	adv_powerdaemon=0
 	adv_zeroconfbonjour=1
 	adv_motd=Welcome to FreeNAS
+        adv_swapondrive=2
 }
 TABLE system_email {
 	em_fromemail=root@freenas.local

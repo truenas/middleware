@@ -43,6 +43,7 @@ from freenasUI.services.models import *
 from freenasUI.storage.models import *
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.forms import Form
+from storage.forms import UnixPermissionField
 import dojango.forms
 
 """ Services """
@@ -73,17 +74,88 @@ class NFSForm(ModelForm):
         notifier().restart("nfs")
 
 class FTPForm(ModelForm):
-    def save(self):
-        super(FTPForm, self).save()
-        notifier().reload("ftp")
+
+    ftp_filemask = UnixPermissionField(label=_('File Permission'))
+    ftp_dirmask = UnixPermissionField(label=_('Directory Permission'))
+    class Meta:
+        model = FTP 
+
+    def __init__(self, *args, **kwargs):
+
+        if kwargs.has_key('instance'):
+            instance = kwargs['instance']
+            mask = int(instance.ftp_filemask, 8)
+            instance.ftp_filemask = "%.3o" % (~mask & 0o666)
+
+            mask = int(instance.ftp_dirmask, 8)
+            instance.ftp_dirmask = "%.3o" % (~mask & 0o777)
+
+        super(FTPForm, self).__init__(*args, **kwargs)
+
+    def clean_ftp_port(self):
+        port = self.cleaned_data['ftp_port']
+        if port < 0 or port > 65535:
+            raise forms.ValidationError(_("This value must be between 0 and 65535, inclusive."))
+        return port
+
+    def clean_ftp_clients(self):
+        clients = self.cleaned_data['ftp_clients']
+        if clients < 0 or clients > 10000:
+            raise forms.ValidationError(_("This value must be between 0 and 10000, inclusive."))
+        return clients
+
+    def clean_ftp_ipconnections(self):
+        conn = self.cleaned_data['ftp_ipconnections']
+        if conn < 0 or conn > 1000:
+            raise forms.ValidationError(_("This value must be between 0 and 1000, inclusive."))
+        return conn
+
+    def clean_ftp_loginattempt(self):
+        attempt = self.cleaned_data['ftp_loginattempt']
+        if attempt < 0 or attempt > 1000:
+            raise forms.ValidationError(_("This value must be between 0 and 1000, inclusive."))
+        return attempt
+
+    def clean_ftp_timeout(self):
+        timeout = self.cleaned_data['ftp_timeout']
+        if timeout < 0 or timeout > 10000:
+            raise forms.ValidationError(_("This value must be between 0 and 10000, inclusive."))
+        return timeout
+
+    def clean_ftp_passiveportsmin(self):
+        ports = self.cleaned_data['ftp_passiveportsmin']
+        if (ports < 1024 or ports > 65535) and ports != 0:
+            raise forms.ValidationError(_("This value must be between 1024 and 65535, inclusive. 0 for default"))
+        return ports
+
+    def clean_ftp_passiveportsmax(self):
+        ports = self.cleaned_data['ftp_passiveportsmax']
+        if (ports < 1024 or ports > 65535) and ports != 0:
+            raise forms.ValidationError(_("This value must be between 1024 and 65535, inclusive. 0 for default."))
+        return ports
+
+    def clean_ftp_filemask(self):
+        perm = self.cleaned_data['ftp_filemask']
+        perm = int(perm, 8)
+        mask = (~perm & 0o666)
+        return "%.3o" % mask
+
+    def clean_ftp_dirmask(self):
+        perm = self.cleaned_data['ftp_dirmask']
+        perm = int(perm, 8)
+        mask = (~perm & 0o777)
+        return "%.3o" % mask
+
     def clean_ftp_anonpath(self):
         anon = self.cleaned_data['ftp_onlyanonymous']
         path = self.cleaned_data['ftp_anonpath']
         if anon and not path:
             raise forms.ValidationError(_("This field is required for anonymous login"))
         return path
-    class Meta:
-        model = FTP 
+
+    def save(self):
+        super(FTPForm, self).save()
+        notifier().reload("ftp")
 
 class TFTPForm(ModelForm):
     def save(self):
@@ -117,7 +189,7 @@ class UPSForm(ModelForm):
 
 
 class ActiveDirectoryForm(ModelForm):
-    file = forms.FileField(label="Kerberos Keytab File", required=False)
+    #file = forms.FileField(label="Kerberos Keytab File", required=False)
     def save(self):
         if self.files.has_key('file'):
             self.instance.ad_keytab = base64.encodestring(self.files['file'].read())
@@ -125,7 +197,8 @@ class ActiveDirectoryForm(ModelForm):
         notifier().restart("activedirectory")
     class Meta:
         model = ActiveDirectory
-        exclude = ('ad_keytab',)
+        exclude = ('ad_keytab','ad_spn','ad_spnpw')
+        widgets = {'ad_adminpw': dojango.forms.widgets.PasswordInput(render_value=True), } 
 
 class LDAPForm(ModelForm):
     def save(self):
@@ -133,6 +206,7 @@ class LDAPForm(ModelForm):
         notifier().restart("ldap")
     class Meta:
         model = LDAP
+        widgets = {'ldap_rootbindpw': dojango.forms.widgets.PasswordInput(render_value=True), } 
 
 class iSCSITargetAuthCredentialForm(ModelForm):
     iscsi_target_auth_secret1 = forms.CharField(label=_("Secret"), 
