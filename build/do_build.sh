@@ -80,8 +80,7 @@ done
 echo tools/tools/nanobsd/nanobsd.sh $args $extra_args
 sh tools/tools/nanobsd/nanobsd.sh $args $extra_args
 
-REVISION=`svnversion ${root}`
-NANO_NAME="FreeNAS-8r${REVISION}-${FREENAS_ARCH}"
+NANO_NAME="FreeNAS-8.0-RC2-${FREENAS_ARCH}"
 xz -f ${NANO_OBJ}/_.disk.image
 mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_NAME}.xz
 sha256 ${NANO_OBJ}/${NANO_NAME}.xz
