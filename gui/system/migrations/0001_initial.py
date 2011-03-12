@@ -132,6 +132,27 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('system', ['sysctl'])
 
+        stg = orm.Settings()
+        stg.stg_guiprotocol='http'
+        stg.stg_language='english'
+        stg.stg_timezone='America/Los_Angeles'
+        stg.stg_ntpserver1='0.freebsd.pool.ntp.org iburst maxpoll 9'
+        stg.stg_ntpserver2='1.freebsd.pool.ntp.org iburst maxpoll 9'
+        stg.stg_ntpserver3='2.freebsd.pool.ntp.org iburst maxpoll 9'
+        stg.save()
+
+        adv = orm.Advanced()
+        adv.adv_consolemenu=1
+        adv.adv_serialconsole=0
+        adv.adv_consolescreensaver=0
+        adv.adv_firmwarevc=1
+        adv.adv_systembeep=1
+        adv.adv_tuning=0
+        adv.adv_powerdaemon=0
+        adv.adv_zeroconfbonjour=1
+        adv.adv_motd='Welcome to FreeNAS'
+        adv.adv_swapondrive=2
+        adv.save()
 
     def backwards(self, orm):
         

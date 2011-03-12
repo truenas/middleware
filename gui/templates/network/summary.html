@@ -1,0 +1,49 @@
+{% load i18n %}
+      <table class="grid" style="width: 200px;">
+	      <thead class="header">
+	  <tr>
+              <td>{% trans "Name" %}</td>
+              <td>{% trans "IPv4 Address" %}</td>
+	  </tr>
+	      </thead>
+          {% for i in ifaces %}
+          <tr class="{% cycle 'odd' 'even' %}">
+              <td>{{ i.name }}</td>
+              <td>{{ i.inet }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+              <td colspan="9">{% trans "No interfaces defined" %}</td>
+          </tr>
+          {% endfor %}
+
+	      <thead class="header">
+	  <tr>
+              <td colspan="2">{% trans "Nameserver" %}</td>
+	  </tr>
+	     </thead>
+          {% for ns in nss %}
+          <tr class="{% cycle 'odd' 'even' %}">
+              <td colspan="2">{{ ns }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+              <td colspan="2">{% trans "No nameserver defined" %}</td>
+          </tr>
+          {% endfor %}
+
+	      <thead class="header">
+	  <tr>
+              <td colspan="2">{% trans "Default route" %}</td>
+	  </tr>
+	     </thead>
+             {% if default %}
+          <tr class="{% cycle 'odd' 'even' %}">
+              <td colspan="2">{{ default }}</td>
+          </tr>
+          {% else %}
+          <tr>
+              <td colspan="2">{% trans "No default route defined" %}</td>
+          </tr>
+          {% endif %}
+      </table>

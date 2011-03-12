@@ -62,6 +62,10 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('network', ['StaticRoute'])
 
+        gc = orm.GlobalConfiguration()
+        gc.gc_hostname='freenas'
+        gc.gc_domain='local'
+        gc.save()
 
     def backwards(self, orm):
         

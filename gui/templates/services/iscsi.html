@@ -1,10 +1,12 @@
 {% load i18n %}
 {% block dojango_content %}
-<div dojoType="dijit.layout.TabContainer" nested="true" style="width:100%;" title="{% trans "iSCSI Management" %}" selected="true" doLayout="false">
+<div dojoType="dijit.layout.TabContainer" nested="true" style="width:100%;" title="{% trans "iSCSI Management" %}" selected="true" id="tab_iscsi" doLayout="true">
 
+    <div dojoType="dijit.layout.ContentPane" title="{% trans "Target Global Configuration" %}" doLayout="False" {% if focus_tab == "Target Global Configuration" %}selected="true" {% endif %}href="{% url freeadmin_model_edit app="services",model="iSCSITargetGlobalConfiguration",oid=gconfid %}?inline=true" class="objrefresh data_services_iSCSITarget" refreshOnShow="true">
+    </div>
     <div dojoType="dijit.layout.ContentPane" title="{% trans "Targets" %}" doLayout="False" href="{% url services_iscsi_targets %}" class="objrefresh data_services_iSCSITarget" refreshOnShow="true">
-        </div>
-        <div dojoType="dijit.layout.ContentPane" title="{% trans "Device Extents" %}" doLayout="False" href="{% url services_iscsi_dextents %}" class="objrefresh data_services_iSCSITargetExtent" refreshOnShow="true">
+    </div>
+   <div dojoType="dijit.layout.ContentPane" title="{% trans "Device Extents" %}" doLayout="False" href="{% url services_iscsi_dextents %}" class="objrefresh data_services_iSCSITargetExtent" refreshOnShow="true">
   </div>
   <div dojoType="dijit.layout.ContentPane" title="{% trans "Extents" %}" doLayout="False" href="{% url services_iscsi_extents %}" class="objrefresh data_services_iSCSITargetExtent" refreshOnShow="true">
   </div>

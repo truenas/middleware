@@ -99,7 +99,8 @@ class Advanced(Model):
     adv_zeroconfbonjour = models.BooleanField(
             verbose_name = _("Enable Zeroconf/Bonjour"))
     adv_swapondrive = models.IntegerField(
-            verbose_name = _("Swap size on each drive in GiB, affects new disks only"),
+            validators=[MinValueValidator(1)],
+            verbose_name = _("Swap size on each drive in GiB, affects new disks only.  Must be non-zero"),
             default=2)
     adv_consolemsg = models.BooleanField(
             verbose_name = _("Show console messages in the footer (Requires UI reload)"),
@@ -166,6 +167,69 @@ class Email(Model):
             )
     class Meta:
         verbose_name = _("Email")
+
+    class FreeAdmin:
+        deletable = False
+
+class SSL(Model):
+    ssl_org = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120, 
+            verbose_name = _("Organization"),
+            help_text = _("Organization Name (eg, company)"),
+            )
+    ssl_unit = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120, 
+            verbose_name = _("Organizational Unit"),
+            help_text = _("Organizational Unit Name (eg, section)"),
+            )
+    ssl_email = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120, 
+            verbose_name = _("Email Address"),
+            help_text = _("Email Address"),
+            )
+    ssl_city = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120, 
+            verbose_name = _("Locality"),
+            help_text = _("Locality Name (eg, city)"),
+            )
+    ssl_state = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120, 
+            verbose_name = _("State"),
+            help_text = _("State or Province Name (full name)"),
+            )
+    ssl_country = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120, 
+            verbose_name = _("Country"),
+            help_text = _("Country Name (2 letter code)"),
+            )
+    ssl_common = models.CharField(
+            blank=True,
+            null=True,
+            max_length=120, 
+            verbose_name = _("Common Name"),
+            help_text = _("Common Name (eg, YOUR name)"),
+            )
+    ssl_certfile = models.TextField(
+            blank=True,
+            null=True,
+            verbose_name = _("SSL Certificate"),
+            help_text = _("Cut and paste the contents of your private and public certificate files here."),
+            )
+
+    class Meta:
+        verbose_name = _("SSL")
 
     class FreeAdmin:
         deletable = False

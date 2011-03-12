@@ -82,6 +82,10 @@ def index(request, objtype = None):
         email = EmailForm(instance = Email.objects.order_by("-id")[0])
     except:
         email = EmailForm()
+    try:
+         ssl = SSLForm(instance = SSL.objects.order_by("-id")[0])
+    except:
+         ssl = SSLForm()
     firmloc = FirmwareTemporaryLocationForm()
     firmware = FirmwareUploadForm()
     if request.method == 'POST':
@@ -99,6 +103,11 @@ def index(request, objtype = None):
             email = EmailForm(request.POST)
             if email.is_valid():
                 email.save()
+                return HttpResponseRedirect('/system/' + objtype)
+        elif objtype == 'ssl':
+            ssl = SSLForm(request.POST)
+            if ssl.is_valid():
+                ssl.save()
                 return HttpResponseRedirect('/system/' + objtype)
         elif objtype == 'firmloc':
             firmloc = FirmwareTemporaryLocationForm(request.POST)
@@ -140,6 +149,7 @@ def index(request, objtype = None):
         'focused_tab' : 'system',
         'settings': settings,
         'email': email,
+        'ssl': ssl,
         'advanced': advanced,
         'firmloc': firmloc,
         'firmware': firmware,
@@ -194,7 +204,11 @@ def firmware_location(request):
             firmloc = FirmwareTemporaryLocationForm(request.POST)
             if firmloc.is_valid():
                 firmloc.done()
-                return render_to_response('system/firmware_location_ok.html')
+                firmware = FirmwareUploadForm()
+                variables.update({
+                    'firmware': firmware,
+                })
+                return render_to_response('system/firmware2.html', variables)
         except:
             pass
         variables.update({
@@ -245,11 +259,13 @@ def settings(request):
 
     settings = Settings.objects.order_by("-id")[0].id
     email = Email.objects.order_by("-id")[0].id
+    ssl = SSL.objects.order_by("-id")[0].id
     advanced = Advanced.objects.order_by("-id")[0].id
 
     variables = RequestContext(request, {
         'settings': settings,
         'email': email,
+        'ssl': ssl,
         'advanced': advanced,
     })
 

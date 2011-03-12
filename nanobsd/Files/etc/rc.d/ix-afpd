@@ -79,25 +79,27 @@ generate_av_default()
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
         "SELECT ${sf}, mp_path FROM sharing_afp_share AS aps LEFT OUTER JOIN storage_mountpoint AS mp ON aps.afp_path_id = mp.mp_volume_id ORDER BY aps.id DESC" | \
     while eval read $f mountpoint; do
-	echo "# ${afp_comment}"
-	echo -n "\"${mountpoint}\" \"${afp_name}\""
-	echo -n "${afp_sharepw:+ password:${afp_sharepw}}"
-#	echo -n "${casefold:+ casefold:${casefold}}"
-	echo -n "${afp_sharecharsets:+ sharecharsets:${sharecharsets}}"
-	echo -n " options:usedots"
-	for _i in cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv; do
-	    bool_on $(eval echo \$afp_${_i}) ",${_i}"
-        done
-	if [ ${afp_diskdiscovery} -eq 1 -a ${afp_discoverymode} = "time-machine" ]; then
-	    echo -n ",tm"
+	if [ -d "${mountpoint}" ]; then
+		echo "# ${afp_comment}"
+		echo -n "\"${mountpoint}\" \"${afp_name}\""
+		echo -n "${afp_sharepw:+ password:${afp_sharepw}}"
+#		echo -n "${casefold:+ casefold:${casefold}}"
+		echo -n "${afp_sharecharsets:+ sharecharsets:${sharecharsets}}"
+		echo -n " options:usedots"
+		for _i in cachecnid crlf mswindows noadouble nodev nofileid nohex prodos nostat upriv; do
+		    bool_on $(eval echo \$afp_${_i}) ",${_i}"
+	        done
+		if [ ${afp_diskdiscovery} -eq 1 -a ${afp_discoverymode} = "time-machine" ]; then
+		    echo -n ",tm"
+		fi
+		echo -n "${afp_allow:+ allow:${afp_allow}}"
+		echo -n "${afp_deny:+ deny:${afp_deny}}"
+		echo -n "${afp_ro:+ rolist:${afp_ro}}"
+		echo -n "${afp_rw:+ rwlist:${afp_rw}}"
+		echo -n "${afp_dbpath:+ dbpath:\"${afp_dbpath}\"}"
+#			-i "string-length(cnidscheme) > 0" -v "concat('cnidscheme:',cnidscheme,' ')" -b \
+		echo ""
 	fi
-	echo -n "${afp_allow:+ allow:${afp_allow}}"
-	echo -n "${afp_deny:+ deny:${afp_deny}}"
-	echo -n "${afp_ro:+ rolist:${afp_ro}}"
-	echo -n "${afp_rw:+ rwlist:${afp_rw}}"
-	echo -n "${afp_dbpath:+ dbpath:\"${afp_dbpath}\"}"
-#		-i "string-length(cnidscheme) > 0" -v "concat('cnidscheme:',cnidscheme,' ')" -b \
-	echo ""
     done
 }
 

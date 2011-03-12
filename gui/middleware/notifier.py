@@ -39,6 +39,8 @@ import types
 import syslog
 import stat
 import os
+import re
+import glob
 import grp
 import pwd
 from shlex import split as shlex_split
@@ -369,6 +371,7 @@ class notifier:
         self.__system("gpart delete -i 2 /dev/%s && gpart destroy /dev/%s" %
                      (devname, devname))
         # To be safe, wipe out the disk, both ends...
+        # TODO: This should be fixed, it's an overkill to overwrite that much
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=10" % (devname))
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
                       "| awk '{print ($3 / (1024*1024)) - 3;}'`" % (devname, devname))
@@ -447,7 +450,7 @@ class notifier:
 
     def get_zfs_attributes(self, zfsname):
         """Return a dictionary that contains all ZFS attributes"""
-        zfsproc = self.__pipeopen("/sbin/zfs get all %s" % (zfsname))
+        zfsproc = self.__pipeopen("/sbin/zfs get -H all %s" % (zfsname))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_output = zfs_output.split('\n')
         retval = {}
@@ -551,6 +554,74 @@ class notifier:
             self.__create_ufs_volume(c, volume_id, volume[1], swapsize)
         self._reload_disk()
 
+    def _init_zfs_disk(self, disk_id):
+        """Initialize a disk designated by disk_id"""
+        """notifier().init("disk", 1)"""
+        c = self.__open_db()
+        c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
+        swapsize=c.fetchone()[0]
+        c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE id = ?", disk_id)
+        disk = c.fetchone()
+        self.__gpt_labeldisk(type = "freebsd-zfs", devname = disk[0],
+                             label = disk[1], swapsize=swapsize)
+
+    def zfs_replace_disk(self, volume_id, from_diskid, to_diskid):
+        """Replace disk in volume_id from from_diskid to to_diskid"""
+        """Gather information"""
+        c = self.__open_db()
+
+        c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
+                 (volume_id,))
+        volume = c.fetchone()
+        assert volume[0] == 'ZFS' or volume[0] == 'UFS'
+
+        # TODO: Handle with 4khack aftermath
+        volume = volume[1]
+        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", from_diskid)
+        fromdev = 'gpt/' + c.fetchone()[0]
+        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", to_diskid)
+        todev = 'gpt/' + c.fetchone()[0]
+        
+        ret = self.__system_nolog('/sbin/zpool replace %s %s %s' % (volume, fromdev, todev))
+        return ret
+
+    def zfs_detach_disk(self, volume_id, disk_id):
+        """Detach a disk from zpool
+           (more technically speaking, a replaced disk.  The replacement actually
+           creates a mirror for the device to be replaced)"""
+        c = self.__open_db()
+
+        c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
+                 (volume_id,))
+        volume = c.fetchone()
+        assert volume[0] == 'ZFS' or volume[0] == 'UFS'
+
+        # TODO: Handle with 4khack aftermath
+        volume = volume[1]
+        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", disk_id)
+        devname = 'gpt/' + c.fetchone()[0]
+
+        ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume, devname))
+        # TODO: This operation will cause damage to disk data which should be limited
+        self.__gpt_unlabeldisk(self, devname)
+        return ret
+
+    def zfs_add_spare(self, volume_id, disk_id):
+        """Add a disk to a zpool as spare"""
+        c = self.__open_db()
+        c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
+                 (volume_id,))
+        volume = c.fetchone()
+        assert volume[0] == 'ZFS' or volume[0] == 'UFS'
+
+        # TODO: Handle with 4khack aftermath
+        volume = volume[1]
+        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", disk_id)
+        devname = 'gpt/' + c.fetchone()[0]
+
+        ret = self.__system_nolog('/sbin/zpool add %s spare %s' % (volume, devname))
+        return ret
+
     def _destroy_volume(self, volume_id):
         """Destroy a volume designated by volume_id"""
         c = self.__open_db()
@@ -558,7 +629,7 @@ class notifier:
                  (volume_id,))
         volume = c.fetchone()
 
-        assert volume[0] == 'ZFS' or volume[0] == 'UFS' or volume[0] == 'iscsi'
+        assert volume[0] in ('ZFS', 'UFS', 'iscsi', 'NTFS', 'MSDOSFS')
         if volume[0] == 'ZFS':
             self.__destroy_zfs_volume(c = c, z_id = volume_id, z_name = volume[1])
         elif volume[0] == 'UFS':
@@ -700,14 +771,8 @@ class notifier:
 
     def get_volume_status(self, name, fs, group_type):
         if fs == 'ZFS':
-            zpoolproc = self.__pipeopen('zpool list')
-            p2 = Popen(["grep", "^%s" % name], stdin=zpoolproc.stdout, stdout=PIPE)
-            p3 = Popen(["tr", "-s", " "], stdin=p2.stdout, stdout=PIPE)
-            zpoolproc.wait()
-            p2.wait()
-            p3.wait()
-            output = p3.communicate()[0]
-            return output.split(' ')[5]
+            result = self.__pipeopen('zpool list -H -o health %s' % name.__str__()).communicate()[0].strip('\n')
+            return result
         elif fs == 'UFS':
             gtype = None
             for gtypes in group_type:
@@ -748,6 +813,205 @@ class notifier:
         hasher=self.__pipeopen('%s %s' % (algorithm2map[algorithm], path))
         sum=hasher.communicate()[0].split('\n')[0]
         return sum
+
+    def get_disks(self):
+        disks = self.__pipeopen("/sbin/sysctl -n kern.disks").communicate()[0].strip('\n').split(' ')
+        regexp_nocamcdrom = re.compile('^cd[0-9]')
+
+        disksd = {}
+
+        for disk in disks:
+            if regexp_nocamcdrom.match(disk) == None:
+                info = self.__pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
+                disksd.update({
+                    disk: {
+                        'devname': info[0],
+                        'capacity': info[2]
+                    },
+                })
+
+        return disksd
+
+    def get_partitions(self):
+        disks = self.get_disks().keys()
+        partitions = {}
+        for disk in disks:
+
+            listing = glob.glob('/dev/%s[a-fps]*' % disk)
+            listing.sort()
+            for part in list(listing):
+                toremove = len([i for i in listing if i.startswith(part) and i != part]) > 0
+                if toremove:
+                    listing.remove(part)
+
+            for part in listing:
+                p1 = Popen(["/usr/sbin/diskinfo", part], stdin=PIPE, stdout=PIPE)
+                p1.wait()
+                info = p1.communicate()[0].split('\t')
+                partitions.update({
+                    part: {
+                        'devname': info[0].split('/')[-1],
+                        'capacity': info[2]
+                    },
+                })
+        return partitions
+
+    def precheck_partition(self, dev, fstype):
+
+        if fstype == 'UFS':
+            p1 = Popen(["fsck_ufs", "-p", dev], stdin=PIPE, stdout=PIPE)
+            p1.wait()
+            if p1.returncode == 0:
+                return True
+        elif fstype == 'NTFS':
+            p1 = Popen(["ntfsfix", dev], stdin=PIPE, stdout=PIPE)
+            p1.wait()
+            if p1.returncode == 0:
+                return True
+        elif fstype == 'MSDOSFS':
+            p1 = Popen(["fsck_msdosfs", "-p", dev], stdin=PIPE, stdout=PIPE)
+            p1.wait()
+            if p1.returncode == 0:
+                return True
+
+        return False
+
+    def label_disk(self, label, dev, fstype):
+        """
+        Label the disk being manually imported
+        Currently UFS, NTFS and MSDOSFS are supported
+        """
+
+        if fstype == 'UFS':
+            p1 = Popen(["tunefs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
+            p1.wait()
+            if p1.returncode == 0:
+                return True
+        elif fstype == 'NTFS':
+            p1 = Popen(["ntfslabel", dev, label], stdin=PIPE, stdout=PIPE)
+            p1.wait()
+            if p1.returncode == 0:
+                return True
+        elif fstype == 'MSDOSFS':
+            p1 = Popen(["mlabel", "-i", dev, "::%s" % label], stdin=PIPE, stdout=PIPE)
+            p1.wait()
+            if p1.returncode == 0:
+                return True
+
+        return False
+
+    def detect_volumes(self, extra=None):
+        """
+        Responsible to detect existing volumes by running
+        g{mirror,stripe,raid3},zpool commands
+
+        Used by: Automatic Volume Import
+        """
+
+        volumes = []
+        # Detect GEOM mirror, stripe and raid3
+        RE_GEOM_NAME = re.compile(r'^Geom name: (?P<name>\w+)', re.I)
+        RE_DEV_NAME = re.compile(r'Name: (?P<name>\w+)', re.I)
+        for geom in ('mirror', 'stripe', 'raid3'):
+            p1 = Popen(["geom", geom, "list"], stdin=PIPE, stdout=PIPE)
+            p1.wait()
+            if p1.returncode == 0:
+                res = p1.communicate()[0]
+                for item in res.split('\n\n')[:-1]:
+                    search = RE_GEOM_NAME.search(item)
+                    if search:
+                        label = search.group("name")
+                        label = label.replace(geom, '')
+                        consumers = item.split('Consumers:')[1]
+                        if RE_DEV_NAME.search(consumers):
+                            disks = []
+                            for search in RE_DEV_NAME.finditer(consumers):
+                                disks.append(search.group("name"))
+                            volumes.append({
+                                'label': label,
+                                'type': 'geom',
+                                'group_type': geom,
+                                'disks': disks,
+                                })
+
+        RE_POOL_NAME = re.compile(r'pool: (?P<name>\w+)', re.I)
+        RE_DISK = re.compile(r'(?P<disk>[a-d]{2}\d+)[a-fsp]')
+        p1 = Popen(["zpool", "import"], stdin=PIPE, stdout=PIPE)
+        p1.wait()
+        if p1.returncode == 0:
+            res = p1.communicate()[0]
+            if RE_POOL_NAME.search(res):
+                label = RE_POOL_NAME.search(res).group("name")
+                status = res.split('pool: %s' % label)[1].split('config:')[1].split('pool:')[0]
+                if status.find("mirror"):
+                    group_type = 'mirror'
+                elif status.find("raidz1"):
+                    group_type = 'raidz1'
+                elif status.find("raidz2"):
+                    group_type = 'raidz2'
+                else:
+                    group_type = 'strype'
+
+                disks = []
+                logs = []
+                cache = []
+                spare = []
+                section = None # None, log, cache or spare
+                for line in status.split('\n'):
+                    if re.compile('^$').search(line) or not line.startswith('\t  '):
+                        if line.startswith('\tlogs'):
+                            section = 'logs'
+                        if line.startswith('\tcache'):
+                            section = 'cache'
+                        if line.startswith('\tspare'):
+                            section = 'spare'
+                        continue
+                    line = line.strip('\t').strip(' ')
+                    name = line.split(' ')[0]
+                    p1 = Popen(["geom", "label", "status", "-s"], stdin=PIPE, stdout=PIPE)
+                    p2 = Popen(["tr", "-s", " "], stdin=p1.stdout, stdout=PIPE)
+                    p3 = Popen(["sed", "-e", "s/^[ \t]//g"], stdin=p2.stdout, stdout=PIPE)
+                    p4 = Popen(["grep", "^%s" % name], stdin=p3.stdout, stdout=PIPE)
+                    p1.wait()
+                    p2.wait()
+                    p3.wait()
+                    p4.wait()
+                    if p4.returncode == 0:
+                        disk = p4.communicate()[0].split(' ')[2].split('\n')[0]
+                    else:
+                        disk = name
+                    if RE_DISK.search(disk):
+                        disk = RE_DISK.search(disk).group("disk")
+                    if disk in ('mirror', 'raidz1', 'raidz2'):
+                        continue
+
+                    if section == 'logs':
+                        logs.append(disk)
+                    elif section == 'cache':
+                        cache.append(disk)
+                    elif section == 'spare':
+                        spare.append(disk)
+                    else:
+                        disks.append(disk)
+
+                volumes.append({
+                    'label': label,
+                    'type': 'zfs',
+                    'group_type': group_type,
+                    'cache': cache,
+                    'logs': logs,
+                    'spare': spare,
+                    'disks': disks,
+                    })
+
+        return volumes
+            
+    def zfs_import(self, name):
+        imp = self.__pipeopen('zpool import %s' % name)
+        imp.wait()
+        if imp.returncode == 0:
+            return True
+        return False
 
 def usage():
     print ("Usage: %s action command" % argv[0])

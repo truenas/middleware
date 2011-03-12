@@ -193,6 +193,9 @@ add_port net/liboping -DWITHOUT_X11 # run dep of collectd
 add_port net-mgmt/collectd -DWITHOUT_BIND -DWITHOUT_SNMP -DWITHOUT_X11
 add_port devel/py-ipaddr
 add_port converters/base64
+add_port emulators/mtools -DWITHOUT_X11
+add_port sysutils/arcconf
+add_port sysutils/tw_cli
 
 if [ "${DEBUG}" -eq "1" ]; then 
 	add_port databases/db42
@@ -248,7 +251,6 @@ root@freenas.local
 freenas
 freenas
 __EOF__
-	CR "(cd ${dstCR}; ${dstCR}/set_schema_defaults.sh ${dstCR}/schema.init /data/freenas-v1.db)"
 	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
 	CR "chown -R www:www ${dstCR} data"
 # KLUDGE: copy over dojango settings

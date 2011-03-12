@@ -7,7 +7,7 @@
 # REQUIRE: root
 # BEFORE: nsswitch
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 : ${PATH_NS_CONF:="/etc/nsswitch.conf"}
 

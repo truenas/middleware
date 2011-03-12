@@ -247,13 +247,14 @@ ISCSI_TARGET_FLAGS_CHOICES = (
         ('ro', _('read-only')),
         )
 
-DISCOVERYAUTHMETHOD_CHOICES = (
-        ('auto',  _('Auto')),
-        ('chap',  _('CHAP')),
-        ('mchap', _('Mutual CHAP')),
+AUTHMETHOD_CHOICES = (
+        ('None',  _('None')),
+        ('Auto',  _('Auto')),
+        ('CHAP',  _('CHAP')),
+        ('CHAP Mutual', _('Mutual CHAP')),
         )
-DISCOVERYAUTHGROUP_CHOICES = (
-        ('none', _('None')),
+AUTHGROUP_CHOICES = (
+        ('None', _('None')),
         )
 
 
@@ -349,6 +350,9 @@ class NICChoices:
 
         self.max_choices = len(self._NIClist)
 
+    def remove(self, nic):
+        return self._NIClist.remove(nic)
+
     def __iter__(self):
         return iter((i, i) for i in self._NIClist)
 
@@ -414,4 +418,9 @@ UserShell = (
         ('ksh', 'ksh'),
         ('bash', 'bash'),
         )
-
+RetentionUnit_Choices = (
+        ('day', 'Day'),
+        ('week', 'Week'),
+        ('month', 'Month'),
+        ('year', 'Year'),
+        )

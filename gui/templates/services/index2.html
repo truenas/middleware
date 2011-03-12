@@ -122,7 +122,9 @@
    	    <img id="iscsitarget_toggle" name="iscsitarget_toggle" src="/freenas/media/images/ui/{% for s  in srv %}{% if s.srv_service == "iscsitarget" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
            </td>
            <td>
-               <img id="istgt_settings" src="/freenas/media/images/ui/settings.png" onClick="viewModel('{% trans "iSCSI" %}', '{% url services_iscsi %}');" title="{% trans "ISCSI Settings" %}">
+               <img id="istgt_settings"
+               src="/freenas/media/images/ui/settings.png"
+               onClick="Menu.openISCSI();" title="{% trans "ISCSI Settings" %}">
            </td>
        </tr>
     </table>

@@ -139,22 +139,6 @@ def generic_delete(request, object_id, sharetype):
     notifier().reload(sharetype)
     return retval
 
-
-@login_required
-def generic_delete(request, object_id, sharetype):
-    sharing_model_map = {
-        'cifs':   CIFS_Share,
-        'afp':   AFP_Share,
-        'nfs':   NFS_Share,
-    }
-    return delete_object(
-        request = request,
-        model = sharing_model_map[sharetype],
-        post_delete_redirect = '/sharing/' + sharetype + '/view/',
-        object_id = object_id, )
-    notifier().reload(sharetype)
-    return retval
-
 @login_required
 def generic_update(request, object_id, sharetype):
     sharetype2form = {

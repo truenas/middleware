@@ -20,24 +20,26 @@ generate_exports()
 	local mountpoint allroot network alldirs nfsro quiet
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT mp_path, nfs_allroot, nfs_network, nfs_alldirs, nfs_ro, nfs_quiet FROM sharing_nfs_share AS us LEFT OUTER JOIN storage_mountpoint AS mp ON us.nfs_path_id = mp.id ORDER BY us.id DESC" | \
 	while read mountpoint allroot network alldirs nfsro quiet; do
-		echo -n ${mountpoint}
-		if [ "${alldirs}" = "1" ]; then
-			echo -n " -alldirs"
+		if [ -d "${mountpoint}" ]; then
+			echo -n ${mountpoint}
+			if [ "${alldirs}" = "1" ]; then
+				echo -n " -alldirs"
+			fi
+			if [ "${nfsro}" = "1" ]; then
+				echo -n " -ro"
+			fi
+			if [ "${quiet}" = "1" ]; then
+				echo -n " -quiet"
+			fi
+			# Current schema can only do ON and OFF.
+			if [ "${allroot}" = "1" ]; then
+				echo -n " -mapall=root"
+			fi
+			if [ -n "${network}" ]; then
+				echo -n " -network ${network}"
+			fi
+			echo
 		fi
-		if [ "${nfsro}" = "1" ]; then
-			echo -n " -ro"
-		fi
-		if [ "${quiet}" = "1" ]; then
-			echo -n " -quiet"
-		fi
-		# Current schema can only do ON and OFF.
-		if [ "${allroot}" = "1" ]; then
-			echo -n " -mapall=root"
-		fi
-		if [ -n "${network}" ]; then
-			echo -n " -network ${network}"
-		fi
-		echo
 	done > /etc/exports
 }
 

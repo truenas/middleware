@@ -21,6 +21,11 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('system', ['Email'])
 
+        em = orm.Email()
+        em.em_fromemail='root@freenas.local'
+        em.em_port=25
+        em.em_smtp=False
+        em.save()
 
     def backwards(self, orm):
         

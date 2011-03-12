@@ -17,14 +17,14 @@ pre.message {
 font-family: monospace, Courier New, Courier; 
 font-size: 9pt; 
 color:#00FF00;
-padding:4px;
-width:800px;
+padding:0;
+width:70%;
 background-color:#000;
+min-width:600px;
 border:1px solid #222;
-height:46px;
-margin-top:5px;
+height:77px;
 white-space:pre-wrap;
-max-height:46px;
+max-height:77px;
 opacity:0.6;filter:alpha(opacity=18);
 }
 .error {
@@ -151,8 +151,6 @@ table.grid  {
     padding:2px;
 }
 #reports div.chart {
-    width: 525px;
-    height: 315px;
     border-right: 1px solid #c5c5c5;
     border-bottom: 1px solid #c2c2c2;
     text-align:left;

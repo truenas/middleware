@@ -103,6 +103,11 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('services', ['iSCSITargetPortal'])
 
+        gc = orm.iSCSITargetGlobalConfiguration()
+        gc.iscsi_basename='iqn.2011-03.example.org.istgt'
+        gc.iscsi_discoveryauthgroup=''
+        gc.save()
+
     def backwards(self, orm):
         
         # Deleting model 'iSCSITargetAuthorizedInitiator'

@@ -1,0 +1,65 @@
+Index: net/istgt/Makefile
+--- net/istgt/Makefile.orig	2011-03-06 10:40:03.466360766 -0600
++++ net/istgt/Makefile	2011-03-06 10:40:31.656353388 -0600
+@@ -2,16 +2,16 @@
+ # Date created:		2009-02-23
+ # Whom:			Daisuke Aoyama <aoyama@peach.ne.jp>
+ #
+-# $FreeBSD: ports/net/istgt/Makefile,v 1.19 2011/01/06 07:53:25 wen Exp $
++# $FreeBSD: ports/net/istgt/Makefile,v 1.21 2011/02/23 18:09:53 sylvio Exp $
+ #
+ 
+ PORTNAME=	istgt
+-PORTVERSION=	20110103
++PORTVERSION=	20110223
+ CATEGORIES=	net
+ MASTER_SITES=	http://www.peach.ne.jp/archives/istgt/
+ 
+ MAINTAINER=	aoyama@peach.ne.jp
+-COMMENT=	An iSCSI target for FreeBSD 7.x
++COMMENT=	An iSCSI target for FreeBSD
+ 
+ SUB_FILES=	pkg-message
+ PKGMESSAGE=	${WRKDIR}/pkg-message
+@@ -21,20 +21,25 @@
+ MAN1=		istgt.1
+ MANCOMPRESSED=	yes
+ 
+-PORTDOCS=	README ChangeLog.jp QUICKSTART QUICKSTART.jp
++PLIST_FILES=	bin/istgt \
++		bin/istgtcontrol \
++		etc/rc.d/istgt \
++		%%ETCDIR%%/auth.conf.sample \
++		%%ETCDIR%%/istgt.conf.sample \
++		%%ETCDIR%%/istgt.large.conf.sample \
++		%%ETCDIR%%/istgtcontrol.conf.sample
++PLIST_DIRS=	%%ETCDIR%%
++PORTDOCS=	${DOCS:T}
++
++DOCS=		ChangeLog.jp README doc/QUICKSTART doc/QUICKSTART.jp
+ 
+ post-extract:
+-	@${MV} ${WRKSRC}/doc/Makefile.in ${WRKSRC}/doc/Makefile.tmp
+-	@${SED} -e '/\/doc\/istgt/d' < ${WRKSRC}/doc/Makefile.tmp \
+-		> ${WRKSRC}/doc/Makefile.in
++	@${REINPLACE_CMD} -e '/\/doc\/istgt/d' ${WRKSRC}/doc/Makefile.in
+ 
+ post-install:
+ .if !defined(NOPORTDOCS)
+ 	${MKDIR} ${DOCSDIR}
+-	${INSTALL_MAN} ${WRKSRC}/README ${DOCSDIR}
+-	${INSTALL_MAN} ${WRKSRC}/ChangeLog.jp ${DOCSDIR}
+-	${INSTALL_MAN} ${WRKSRC}/doc/QUICKSTART ${DOCSDIR}
+-	${INSTALL_MAN} ${WRKSRC}/doc/QUICKSTART.jp ${DOCSDIR}
++	cd ${WRKSRC} && ${INSTALL_MAN} ${DOCS} ${DOCSDIR}
+ .endif
+ 	@${CAT} ${PKGMESSAGE}
+ 
+Index: net/istgt/distinfo
+--- net/istgt/distinfo.orig	2011-03-06 10:40:12.303218387 -0600
++++ net/istgt/distinfo	2011-03-06 10:40:39.323713522 -0600
+@@ -1,2 +1,2 @@
+-SHA256 (istgt-20110103.tar.gz) = 9f889d1e738a477c6f6f3608838f9fad642bcd44ec235d38477e522723d93fed
+-SIZE (istgt-20110103.tar.gz) = 224143
++SHA256 (istgt-20110223.tar.gz) = 5ef5663f37932290d973954dc683b64938989ccc856eca08b4075699a22916aa
++SIZE (istgt-20110223.tar.gz) = 223384

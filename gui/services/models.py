@@ -224,22 +224,18 @@ class iSCSITargetGlobalConfiguration(Model):
             verbose_name=_("Base Name"),
             help_text=_("The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for details) will append the target name that is not starting with 'iqn.'")
             )
-    iscsi_mediadirectory = models.CharField(
-            max_length=120,
-            default='/mnt',
-            verbose_name=_("Media Directory"),
-            )
     iscsi_discoveryauthmethod = models.CharField(
             max_length=120,
-            choices=DISCOVERYAUTHMETHOD_CHOICES,
-            default='auto',
+            choices=AUTHMETHOD_CHOICES,
+            default='Auto',
             verbose_name=_("Discovery Auth Method")
             )
-    iscsi_discoveryauthgroup = models.CharField(
+    iscsi_discoveryauthgroup = models.IntegerField(
             max_length=120,
-            choices=DISCOVERYAUTHGROUP_CHOICES,
-            default='none',
-            verbose_name=_("Discovery Auth Group")
+            default='None',
+            verbose_name=_("Discovery Auth Group"),
+            blank=True,
+            null=True,
             )
     iscsi_iotimeout = models.IntegerField(
             max_length=120,
@@ -311,35 +307,42 @@ class iSCSITargetGlobalConfiguration(Model):
     iscsi_toggleluc = models.BooleanField(
             default=False,
             verbose_name=_("Enable LUC"))
-    iscsi_lucip =  models.CharField(
+    iscsi_lucip =  models.IPAddressField(
             max_length=120,
             default = "127.0.0.1",
             verbose_name=_("Controller IP address"),
             help_text=_("Logical Unit Controller IP address (127.0.0.1(localhost) by default)"),
+            blank=True,
             )
     iscsi_lucport =  models.IntegerField(
             max_length=120,
             default=3261,
             verbose_name=_("Controller TCP port"),
             help_text=_("Logical Unit Controller TCP port (3261 by default)"),
+            blank=True,
+            null=True,
             )
-    iscsi_luc_authnetwork = models.CharField(
+    iscsi_luc_authnetwork = models.IPAddressField(
             max_length=120,
-            verbose_name=_("Controller Authorised network"),
-            default = "127.0.0.1/8",
-            help_text=_("Logical Unit Controller Authorised network (127.0.0.1/8 by default)"),
+            verbose_name=_("Controller Authorised netmask"),
+            default = "255.255.255.0",
+            help_text=_("Logical Unit Controller Authorised netmask (255.255.255.0 by default)"),
+            blank=True,
             )
     iscsi_luc_authmethod = models.CharField(
             max_length=120,
-            default = "CHAP",
+            choices=AUTHMETHOD_CHOICES,
+            default = "chap",
             verbose_name=_("Controller Auth Method"),
             help_text=_("The method can be accepted in the controller."),
+            blank=True,
             )
     iscsi_luc_authgroup = models.IntegerField(
             max_length=120,
-            default=1,
             verbose_name=_("Controller Auth Group"),
             help_text=_("The istgtcontrol can access the targets with correct user and secret in specific Auth Group."),
+            blank=True,
+            null=True,
             )
 
     class Meta:
@@ -350,6 +353,7 @@ class iSCSITargetGlobalConfiguration(Model):
         deletable = False
         menu_child_of = "ISCSI"
         icon_model = u"SettingsIcon"
+        nav_extra = {'type': 'openiscsiconf'}
 
 class iSCSITargetExtent(Model):
     iscsi_target_extent_name = models.CharField(
@@ -368,11 +372,11 @@ class iSCSITargetExtent(Model):
             verbose_name = _("Path to the extent"),
             help_text = _("File path (e.g. /mnt/sharename/extent/extent0) used as extent."),
             )
-    iscsi_target_extent_filesize = models.IntegerField(
+    iscsi_target_extent_filesize = models.CharField(
             max_length=120,
             default=0,
-            verbose_name = _("Size for the extent; 0 means auto"),
-            help_text = _("File size (only meaningful when the extent is a file)"),
+            verbose_name = _("Extent size"),
+            help_text = _("Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, TB for convenience."),
             )
     iscsi_target_extent_comment = models.CharField(
             blank=True,
@@ -395,7 +399,7 @@ class iSCSITargetPortal(Model):
     iscsi_target_portal_tag = models.IntegerField(
             max_length=120,
             default=1,
-            verbose_name = _("Portal Group number"),
+            verbose_name = _("Portal Group ID"),
             )
     iscsi_target_portal_listen = models.CharField(
             max_length=120,
@@ -423,9 +427,9 @@ class iSCSITargetPortal(Model):
 
 class iSCSITargetAuthorizedInitiator(Model):
     iscsi_target_initiator_tag = models.IntegerField(
-            max_length=120,
+            default=1,
             unique=True,
-            verbose_name = _("Identifier number"),
+            verbose_name = _("Group ID"),
             )
     iscsi_target_initiator_initiators = models.TextField(
             max_length=2048,
@@ -459,9 +463,8 @@ class iSCSITargetAuthorizedInitiator(Model):
 
 class iSCSITargetAuthCredential(Model):
     iscsi_target_auth_tag = models.IntegerField(
-            max_length=120,
             default=1,
-            verbose_name = _("Identifier number"),
+            verbose_name = _("Group ID"),
             )
     iscsi_target_auth_user = models.CharField(
             max_length=120,
@@ -507,6 +510,7 @@ class iSCSITarget(Model):
     iscsi_target_alias = models.CharField(
             unique=True,
             blank=True,
+            null=True,
             max_length=120,
             verbose_name = _("Target Alias"),
             help_text = _("Optional user-friendly string of the target."),
@@ -523,26 +527,26 @@ class iSCSITarget(Model):
             default='rw',
             verbose_name = _("Target Flags"),
             )
-    iscsi_target_portalgroup = models.IntegerField(
-            max_length=120,
-            default=1,
-            verbose_name = _("Portal Group number"),
+    iscsi_target_portalgroup = models.ForeignKey(
+            iSCSITargetPortal,
+            verbose_name = _("Portal Group ID"),
             )
-    iscsi_target_initiatorgroup = models.IntegerField(
-            max_length=120,
-            default=1,
-            verbose_name = _("Initiator Group number"),
+    iscsi_target_initiatorgroup = models.ForeignKey(
+            iSCSITargetAuthorizedInitiator,
+            verbose_name = _("Initiator Group ID"),
             )
     iscsi_target_authtype = models.CharField(
             max_length=120,
+            choices = AUTHMETHOD_CHOICES,
             default = "Auto",
             verbose_name = _("Auth Method"),
             help_text = _("The method can be accepted by the target. Auto means both none and authentication."),
             )
     iscsi_target_authgroup = models.IntegerField(
             max_length=120,
-            default=1,
-            verbose_name = _("Authentication Group number"),
+            verbose_name = _("Authentication Group ID"),
+            null=True,
+            blank=True,
             )
     iscsi_target_initialdigest = models.CharField(
             max_length=120,
@@ -585,11 +589,6 @@ class iSCSITargetToExtent(Model):
             iSCSITargetExtent,
             unique=True,
             verbose_name = _("Extent"),
-            )
-    iscsi_target_lun = models.IntegerField(
-            max_length=120,
-            default=0,
-            verbose_name = _("Logical Unit Number"),
             )
     class Meta:
         verbose_name = _("Target / Extent")

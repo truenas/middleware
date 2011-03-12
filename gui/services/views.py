@@ -189,7 +189,11 @@ def services(request, objtype=None):
 
 @login_required
 def iscsi(request):
-    variables = RequestContext(request)
+    gconfid = iSCSITargetGlobalConfiguration.objects.all().order_by("-id")[0].id
+    variables = RequestContext(request, {
+        'focus_tab' : request.GET.get('tab',''),
+        'gconfid': gconfid,
+        })
     return render_to_response('services/iscsi.html', variables)
 
 @login_required

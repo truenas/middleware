@@ -34,7 +34,6 @@ from freenasUI.middleware.notifier import notifier
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode 
-from dojango import forms
 from dojango.forms import fields, widgets
 from django.utils.translation import ugettext as _
 
@@ -44,7 +43,8 @@ from freenasUI.storage.models import *
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.forms import Form
 from storage.forms import UnixPermissionField
-import dojango.forms
+from dojango import forms
+import re
 
 """ Services """
 
@@ -84,10 +84,10 @@ class FTPForm(ModelForm):
 
         if kwargs.has_key('instance'):
             instance = kwargs['instance']
-            mask = int(instance.ftp_filemask, 8)
+            mask = int(instance.ftp_filemask)
             instance.ftp_filemask = "%.3o" % (~mask & 0o666)
 
-            mask = int(instance.ftp_dirmask, 8)
+            mask = int(instance.ftp_dirmask)
             instance.ftp_dirmask = "%.3o" % (~mask & 0o777)
 
         super(FTPForm, self).__init__(*args, **kwargs)
@@ -142,6 +142,7 @@ class FTPForm(ModelForm):
 
     def clean_ftp_dirmask(self):
         perm = self.cleaned_data['ftp_dirmask']
+        print perm, type(perm)
         perm = int(perm, 8)
         mask = (~perm & 0o777)
         return "%.3o" % mask
@@ -198,7 +199,7 @@ class ActiveDirectoryForm(ModelForm):
     class Meta:
         model = ActiveDirectory
         exclude = ('ad_keytab','ad_spn','ad_spnpw')
-        widgets = {'ad_adminpw': dojango.forms.widgets.PasswordInput(render_value=True), } 
+        widgets = {'ad_adminpw': forms.widgets.PasswordInput(render_value=True), } 
 
 class LDAPForm(ModelForm):
     def save(self):
@@ -206,7 +207,7 @@ class LDAPForm(ModelForm):
         notifier().restart("ldap")
     class Meta:
         model = LDAP
-        widgets = {'ldap_rootbindpw': dojango.forms.widgets.PasswordInput(render_value=True), } 
+        widgets = {'ldap_rootbindpw': forms.widgets.PasswordInput(render_value=True), } 
 
 class iSCSITargetAuthCredentialForm(ModelForm):
     iscsi_target_auth_secret1 = forms.CharField(label=_("Secret"), 
@@ -216,11 +217,13 @@ class iSCSITargetAuthCredentialForm(ModelForm):
             help_text=_("Enter the same secret above for verification."))
     iscsi_target_auth_peersecret1 = forms.CharField(label=_("Initiator Secret"),
             widget=forms.PasswordInput, help_text=
-            _("Initiator side secret. (for mutual CHAP autentication)"))
+            _("Initiator side secret. (for mutual CHAP autentication)"),
+            required=False)
     iscsi_target_auth_peersecret2 = forms.CharField(
             label=_("Initiator Secret (Confirm)"), 
             widget=forms.PasswordInput, 
-            help_text=_("Enter the same secret above for verification."))
+            help_text=_("Enter the same secret above for verification."),
+            required=False)
 
     def _clean_secret_common(self, secretprefix):
         secret1 = self.cleaned_data.get(("%s1" % secretprefix), "")
@@ -235,6 +238,20 @@ class iSCSITargetAuthCredentialForm(ModelForm):
     def clean_iscsi_target_auth_peersecret2(self):
         return self._clean_secret_common("iscsi_target_auth_peersecret")
 
+    def clean(self):
+        cdata = self.cleaned_data
+
+        if len(cdata.get('iscsi_target_auth_peeruser', '')) > 0:
+            if len(cdata.get('iscsi_target_auth_peersecret1', '')) == 0:
+                del cdata['iscsi_target_auth_peersecret1']
+                self._errors['iscsi_target_auth_peersecret1'] = self.error_class([_("The peer secret is required if you set a peer user.")])
+                self._errors['iscsi_target_auth_peersecret2'] = self.error_class([_("The peer secret is required if you set a peer user.")])
+            elif cdata.get('iscsi_target_auth_peersecret1', '') == cdata.get('iscsi_target_auth_secret1', ''):
+                del cdata['iscsi_target_auth_peersecret1']
+                self._errors['iscsi_target_auth_peersecret1'] = self.error_class([_("The peer secret cannot be the same as user secret.")])
+
+        return cdata
+
     class Meta:
         model = iSCSITargetAuthCredential
         exclude = ('iscsi_target_auth_secret', 'iscsi_target_auth_peersecret',)
@@ -245,6 +262,7 @@ class iSCSITargetAuthCredentialForm(ModelForm):
         oAuthCredential.iscsi_target_auth_peersecret = self.cleaned_data["iscsi_target_auth_peersecret1"]
         if commit:
             oAuthCredential.save()
+        notifier().reload("iscsitarget")
         return oAuthCredential
 
     def __init__(self, *args, **kwargs):
@@ -257,6 +275,7 @@ class iSCSITargetAuthCredentialForm(ModelForm):
             'iscsi_target_auth_peeruser',
             'iscsi_target_auth_peersecret1',
             'iscsi_target_auth_peersecret2']
+
         try:
             self.fields['iscsi_target_auth_secret1'].initial = self.instance.iscsi_target_auth_secret
             self.fields['iscsi_target_auth_secret2'].initial = self.instance.iscsi_target_auth_secret
@@ -276,24 +295,153 @@ class iSCSITargetToExtentForm(ModelForm):
         except ObjectDoesNotExist:
             return self.cleaned_data.get('iscsi_target_lun')
 
+    def save(self):
+        super(iSCSITargetToExtentForm, self).save()
+        notifier().reload("iscsitarget")
+
 class iSCSITargetGlobalConfigurationForm(ModelForm):
+    iscsi_luc_authgroup = forms.ChoiceField(label=_("Controller Auth Group"),
+            help_text=_("The istgtcontrol can access the targets with correct user and secret in specific Auth Group."))
+    iscsi_discoveryauthgroup = forms.ChoiceField(label=_("Discovery Auth Group"))
     class Meta:
         model = iSCSITargetGlobalConfiguration
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetGlobalConfigurationForm, self).__init__(*args, **kwargs)
+        self.fields['iscsi_luc_authgroup'].required = False
+        self.fields['iscsi_luc_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
+        self.fields['iscsi_discoveryauthgroup'].required = False
+        self.fields['iscsi_discoveryauthgroup'].choices = [('-1', _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
+        self.fields['iscsi_toggleluc'].widget.attrs['onChange'] = 'javascript:toggleLuc(this);'
+        ro = True
+        if len(self.data) > 0:
+            if self.data.get("iscsi_toggleluc", None) == "on":
+                ro = False
+        else:
+            if self.instance.iscsi_toggleluc == True:
+                ro = False
+        if ro:
+            self.fields['iscsi_lucip'].widget.attrs['disabled'] = 'disabled'
+            self.fields['iscsi_lucport'].widget.attrs['disabled'] = 'disabled'
+            self.fields['iscsi_luc_authnetwork'].widget.attrs['disabled'] = 'disabled'
+            self.fields['iscsi_luc_authmethod'].widget.attrs['disabled'] = 'disabled'
+            self.fields['iscsi_luc_authgroup'].widget.attrs['disabled'] = 'disabled'
+
+    def _clean_number_range(self, field, start, end):
+        f = self.cleaned_data[field]
+        if f < start  or f > end:
+            raise forms.ValidationError(_("This value must be between %d and %d, inclusive.") % (start, end))
+        return f
+
+    def clean_iscsi_discoveryauthgroup(self):
+        discoverymethod = self.cleaned_data['iscsi_discoveryauthmethod']
+        discoverygroup = self.cleaned_data['iscsi_discoveryauthgroup']
+        if discoverymethod in ('CHAP', 'CHAP Mutual'):
+            if int(discoverygroup) == -1:
+                raise forms.ValidationError(_("This field is required."))
+        elif int(discoverygroup) == -1:
+            return None
+        return discoverygroup
+
+    def clean_iscsi_iotimeout(self):
+        return self._clean_number_range("iscsi_iotimeout", 0, 300)
+
+    def clean_iscsi_nopinint(self):
+        return self._clean_number_range("iscsi_nopinint", 0, 300)
+
+    def clean_iscsi_maxsesh(self):
+        return self._clean_number_range("iscsi_maxsesh", 1, 64)
+
+    def clean_iscsi_maxconnect(self):
+        return self._clean_number_range("iscsi_maxconnect", 1, 64)
+
+    def clean_iscsi_r2t(self):
+        return self._clean_number_range("iscsi_r2t", 1, 255)
+
+    def clean_iscsi_maxoutstandingr2t(self):
+        return self._clean_number_range("iscsi_maxoutstandingr2t", 1, 255)
+
+    def clean_iscsi_firstburst(self):
+        return self._clean_number_range("iscsi_firstburst", 1, pow(2,32))
+
+    def clean_iscsi_maxburst(self):
+        return self._clean_number_range("iscsi_maxburst", 1, pow(2,32))
+
+    def clean_iscsi_maxrecdata(self):
+        return self._clean_number_range("iscsi_maxrecdata", 1, pow(2,32))
+
+    def clean_iscsi_defaultt2w(self):
+        return self._clean_number_range("iscsi_defaultt2w", 1, 300)
+
+    def clean_iscsi_defaultt2r(self):
+        return self._clean_number_range("iscsi_defaultt2r", 1, 300)
+
+    def clean_iscsi_lucport(self):
+        if self.cleaned_data.get('iscsi_toggleluc', False):
+            return self._clean_number_range("iscsi_lucport", 1000, pow(2,16))
+        return None
+
+    def clean_iscsi_luc_authgroup(self):
+        lucmethod = self.cleaned_data['iscsi_luc_authmethod']
+        lucgroup = self.cleaned_data['iscsi_luc_authgroup']
+        if lucmethod in ('CHAP', 'CHAP Mutual'):
+            if lucgroup != '' and int(lucgroup) == -1:
+                raise forms.ValidationError(_("This field is required."))
+        elif lucgroup != '' and int(lucgroup) == -1:
+            return None
+        return lucgroup
+
+    def clean(self):
+        cdata = self.cleaned_data
+
+        luc = cdata.get("iscsi_toggleluc", False)
+        if luc:
+            for field in ('iscsi_lucip', 'iscsi_luc_authnetwork', 
+                    'iscsi_luc_authmethod', 'iscsi_luc_authgroup'):
+                if cdata.has_key(field) and cdata[field] == '':
+                    self._errors[field] = self.error_class([_("This field is required.")])
+                    del cdata[field]
+        else:
+            cdata['iscsi_lucip'] = None
+            cdata['iscsi_lucport'] = None
+            cdata['iscsi_luc_authgroup'] = None
+
+        return cdata
+
+    def save(self):
+        super(iSCSITargetGlobalConfigurationForm, self).save()
+        notifier().reload("iscsitarget")
 
 class iSCSITargeExtentEditForm(ModelForm):
     class Meta:
         model = iSCSITargetExtent
         exclude = ('iscsi_target_extent_type', 'iscsi_target_extent_path',)
+    def save(self):
+        super(iSCSITargetExtentEditForm, self).save()
+        notifier().reload("iscsitarget")
 
 class iSCSITargetFileExtentForm(ModelForm):
     class Meta:
         model = iSCSITargetExtent
         exclude = ('iscsi_target_extent_type')
+    def clean_iscsi_target_extent_filesize(self):
+        size = self.cleaned_data['iscsi_target_extent_filesize']
+        try:
+            int(size)
+        except ValueError:
+            suffixes = ['KB', 'MB', 'GB', 'TB']
+            for x in suffixes:
+                if size.upper().endswith(x):
+                    m = re.match(r'(\d+)\s*?(%s)' % x, size)
+                    if m:
+                        return "%s%s" % (m.group(1), m.group(2))
+            raise forms.ValidationError(_("This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"))
+        return size
     def save(self, commit=True):
         oExtent = super(iSCSITargetFileExtentForm, self).save(commit=False)
         oExtent.iscsi_target_extent_type = 'File'
         if commit:
             oExtent.save()
+        notifier().reload("iscsitarget")
         return oExtent
 
 attrs_dict = { 'class': 'required' }
@@ -372,16 +520,49 @@ class iSCSITargetDeviceExtentForm(ModelForm):
                            disk_description = 'iSCSI exported disk',
                            disk_group = grp)
             diskobj.save()
+        notifier().reload("iscsitarget")
         return oExtent
 
 class iSCSITargetPortalForm(ModelForm):
     class Meta:
         model = iSCSITargetPortal
+    def save(self):
+        super(iSCSITargetPortalForm, self).save()
+        notifier().reload("iscsitarget")
 
 class iSCSITargetAuthorizedInitiatorForm(ModelForm):
     class Meta:
         model = iSCSITargetAuthorizedInitiator
+    def save(self):
+        super(iSCSITargetAuthorizedInitiatorForm, self).save()
+        notifier().reload("iscsitarget")
 
 class iSCSITargetForm(ModelForm):
+    iscsi_target_authgroup = forms.ChoiceField(label=_("Authentication Group number"))
     class Meta:
         model = iSCSITarget
+        exclude = ('iscsi_target_initialdigest',)
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetForm, self).__init__(*args, **kwargs)
+        self.fields['iscsi_target_authgroup'].required = False
+        self.fields['iscsi_target_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
+
+    def clean_iscsi_target_authgroup(self):
+        method = self.cleaned_data['iscsi_target_authtype']
+        group = self.cleaned_data['iscsi_target_authgroup']
+        if method in ('CHAP', 'CHAP Mutual'):
+            if group != '' and int(group) == -1:
+                raise forms.ValidationError(_("This field is required."))
+        elif group != '' and int(group) == -1:
+            return None
+        return int(group)
+
+    def clean_iscsi_target_alias(self):
+        alias = self.cleaned_data['iscsi_target_alias']
+        if not alias:
+            alias = None
+        return alias
+
+    def save(self):
+        super(iSCSITargetForm, self).save()
+        notifier().reload("iscsitarget")

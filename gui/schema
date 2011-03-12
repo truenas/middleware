@@ -215,18 +215,18 @@ CREATE TABLE "services_ftp" (
     "ftp_banner" text
 );
 CREATE TABLE "services_iscsitarget" (
-    "iscsi_target_logical_blocksize" integer NOT NULL DEFAULT 512,
-    "iscsi_target_portalgroup" integer,
-    "iscsi_target_initialdigest" varchar(120),
-    "iscsi_target_queue_depth" integer,
-    "iscsi_target_name" varchar(120) UNIQUE,
-    "iscsi_target_initiatorgroup" integer,
-    "iscsi_target_alias" varchar(120) UNIQUE,
-    "iscsi_target_type" varchar(120),
-    "iscsi_target_authgroup" integer,
-    "iscsi_target_authtype" varchar(120),
-    "iscsi_target_flags" varchar(120),
-    "id" integer PRIMARY KEY
+    "id" integer NOT NULL PRIMARY KEY,
+    "iscsi_target_name" varchar(120) NOT NULL UNIQUE,
+    "iscsi_target_alias" varchar(120) NOT NULL UNIQUE,
+    "iscsi_target_type" varchar(120) NOT NULL,
+    "iscsi_target_flags" varchar(120) NOT NULL,
+    "iscsi_target_portalgroup" integer NOT NULL DEFAULT 1,
+    "iscsi_target_initiatorgroup" integer NOT NULL DEFAULT 1,
+    "iscsi_target_authtype" varchar(120) NOT NULL DEFAULT 'Auto',
+    "iscsi_target_authgroup" integer NOT NULL DEFAULT 1,
+    "iscsi_target_initialdigest" varchar(120) NOT NULL DEFAULT 'Auto',
+    "iscsi_target_queue_depth" integer NOT NULL DEFAULT 0,
+    "iscsi_target_logical_blocksize" integer NOT NULL DEFAULT 512
 );
 CREATE TABLE "services_iscsitargetauthcredential" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -252,28 +252,27 @@ CREATE TABLE "services_iscsitargetextent" (
     "iscsi_target_extent_comment" varchar(120) NOT NULL
 );
 CREATE TABLE "services_iscsitargetglobalconfiguration" (
-    "id" integer NOT NULL PRIMARY KEY,
-    "iscsi_basename" varchar(120) NOT NULL,
-    "iscsi_mediadirectory" varchar(120) NOT NULL DEFAULT '/mnt',
-    "iscsi_discoveryauthmethod" varchar(120) NOT NULL DEFAULT 'auto',
-    "iscsi_discoveryauthgroup" varchar(120) NOT NULL DEFAULT 'none',
-    "iscsi_iotimeout" integer NOT NULL DEFAULT 30,
-    "iscsi_nopinint" integer NOT NULL DEFAULT 20,
-    "iscsi_maxsesh" integer NOT NULL DEFAULT 16,
-    "iscsi_maxconnect" integer NOT NULL DEFAULT 8,
-    "iscsi_r2t" integer NOT NULL DEFAULT 32,
-    "iscsi_maxoutstandingr2t" integer NOT NULL DEFAULT 16,
-    "iscsi_firstburst" integer NOT NULL DEFAULT 65536,
-    "iscsi_maxburst" integer NOT NULL DEFAULT 262144,
-    "iscsi_maxrecdata" integer NOT NULL DEFAULT 262144,
-    "iscsi_defaultt2w" integer NOT NULL DEFAULT 2,
-    "iscsi_defaultt2r" integer NOT NULL DEFAULT 60,
-    "iscsi_toggleluc" bool NOT NULL DEFAULT False,
-    "iscsi_lucip" varchar(120) NOT NULL DEFAULT '127.0.0.1',
-    "iscsi_lucport" integer NOT NULL DEFAULT 3261,
-    "iscsi_luc_authnetwork" varchar(120) NOT NULL DEFAULT '127.0.0.1/8',
-    "iscsi_luc_authmethod" varchar(120) NOT NULL DEFAULT 'CHAP',
-    "iscsi_luc_authgroup" integer NOT NULL DEFAULT 1
+    "iscsi_luc_authmethod" varchar(120),
+    "iscsi_firstburst" integer,
+    "iscsi_r2t" integer,
+    "iscsi_luc_authnetwork" varchar(120),
+    "iscsi_maxburst" integer,
+    "iscsi_maxsesh" integer,
+    "iscsi_maxoutstandingr2t" integer,
+    "id" integer PRIMARY KEY,
+    "iscsi_maxrecdata" integer,
+    "iscsi_iotimeout" integer,
+    "iscsi_lucip" char(15),
+    "iscsi_discoveryauthmethod" varchar(120),
+    "iscsi_maxconnect" integer,
+    "iscsi_basename" varchar(120),
+    "iscsi_defaultt2r" integer,
+    "iscsi_nopinint" integer,
+    "iscsi_discoveryauthgroup" varchar(120),
+    "iscsi_toggleluc" bool,
+    "iscsi_lucport" integer,
+    "iscsi_luc_authgroup" integer NULL,
+    "iscsi_defaultt2w" integer
 );
 CREATE TABLE "services_iscsitargetportal" (
     "id" integer NOT NULL PRIMARY KEY,
@@ -480,6 +479,16 @@ CREATE TABLE "system_settings" (
     "stg_ntpserver1" varchar(120),
     "stg_ntpserver2" varchar(120),
     "stg_ntpserver3" varchar(120)
+);
+CREATE TABLE "system_ssl" (
+    "ssl_org" varchar(120),
+    "ssl_unit" varchar(120),
+    "ssl_email" varchar(120),
+    "ssl_city" varchar(120),
+    "ssl_state" varchar(120),
+    "ssl_country" varchar(120),
+    "ssl_common" varchar(120),
+	"ssl_certfile" text
 );
 CREATE INDEX "account_bsdgroupmembership_9303d695" ON "account_bsdgroupmembership" ("bsdgrpmember_user_id");
 CREATE INDEX "account_bsdgroupmembership_d3b92950" ON "account_bsdgroupmembership" ("bsdgrpmember_group_id");

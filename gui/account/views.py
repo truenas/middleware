@@ -26,27 +26,26 @@
 # $FreeBSD$
 #####################################################################
 
+import os
 from freenasUI.account.forms import * 
 from freenasUI.account.models import * 
 from django.forms.models import modelformset_factory
-from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import permission_required, login_required
 from django.contrib.auth.views import password_change_done
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render_to_response
 from django.contrib.auth import authenticate, login, logout
 from django.template import RequestContext
-from django.http import Http404, HttpResponse
 from django.views.generic.list_detail import object_detail, object_list
 from django.views.generic.create_update import update_object, delete_object
 from django.utils import simplejson
-from freenasUI.middleware.notifier import notifier
-from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm, PasswordChangeForm
-from forms import SetPasswordForm, PasswordChangeForm
 from django.views.decorators.csrf import csrf_protect
-import os, commands
-from django.core.urlresolvers import reverse
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm, PasswordChangeForm
+from django.utils.translation import ugettext as _
+from freenasUI.middleware.notifier import notifier
+from forms import SetPasswordForm, PasswordChangeForm
+import commands
 
 @csrf_protect
 @login_required

@@ -55,7 +55,7 @@ import commands
 
 @login_required
 def storage(request):
-    mp_list = MountPoint.objects.select_related().all()
+    mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     variables = RequestContext(request, {
         'focused_tab' : 'storage',
         'mp_list': mp_list,
@@ -64,7 +64,7 @@ def storage(request):
 
 @login_required
 def home(request):
-    mp_list = MountPoint.objects.select_related().all()
+    mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     en_dataset = MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
     variables = RequestContext(request, {
         'en_dataset' : en_dataset,
@@ -90,13 +90,65 @@ def wizard(request):
             else:
                 disks = None
     else:
-        form = VolumeWizard_VolumeNameTypeForm()
+        form = VolumeWizardForm()
         disks = []
     variables = RequestContext(request, {
         'form': form,
         'disks': disks
     })
     return render_to_response('storage/wizard2.html', variables)
+
+@login_required
+def volimport(request):
+
+    if request.method == "POST":
+
+        form = VolumeImportForm(request.POST)
+        if form.is_valid():
+            form.done(request)
+
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume") + " " + _("successfully added") + "."}), mimetype="application/json")
+            #return render_to_response('storage/wizard_ok.html')
+        else:
+
+            if 'volume_disks' in request.POST:
+                disks = request.POST.getlist('volume_disks')
+            else:
+                disks = None
+    else:
+        form = VolumeImportForm()
+        disks = []
+    variables = RequestContext(request, {
+        'form': form,
+        'disks': disks
+    })
+    return render_to_response('storage/import.html', variables)
+
+@login_required
+def volautoimport(request):
+
+    if request.method == "POST":
+
+        form = VolumeAutoImportForm(request.POST)
+        if form.is_valid():
+            form.done(request)
+
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume") + " " + _("successfully added") + "."}), mimetype="application/json")
+            #return render_to_response('storage/wizard_ok.html')
+        else:
+
+            if 'volume_disks' in request.POST:
+                disks = request.POST.getlist('volume_disks')
+            else:
+                disks = None
+    else:
+        form = VolumeAutoImportForm()
+        disks = []
+    variables = RequestContext(request, {
+        'form': form,
+        'disks': disks
+    })
+    return render_to_response('storage/autoimport.html', variables)
 
 @login_required
 def disks_datagrid(request, vid):
@@ -215,7 +267,7 @@ def volume_list(request, template_name='freenas/disks/volumes/volume_list.html')
 
 @login_required
 def dataset_create(request):
-    mp_list = MountPoint.objects.select_related().all()
+    mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     defaults = { 'dataset_compression' : 'inherit', 'dataset_atime' : 'inherit', }
     dataset_form = ZFSDataset_CreateForm(initial=defaults)
     if request.method == 'POST':
@@ -260,7 +312,7 @@ def dataset_create(request):
 
 @login_required
 def dataset_create2(request):
-    mp_list = MountPoint.objects.select_related().all()
+    mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     defaults = { 'dataset_compression' : 'inherit', 'dataset_atime' : 'inherit', }
     dataset_form = ZFSDataset_CreateForm(initial=defaults)
     if request.method == 'POST':
@@ -307,7 +359,7 @@ def dataset_create2(request):
 @login_required
 def mp_permission(request, object_id):
     mp = MountPoint.objects.get(id = object_id)
-    mp_list = MountPoint.objects.select_related().all()
+    mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     if request.method == 'POST':
         form = MountPointAccessForm(request.POST)
         if form.is_valid():
@@ -327,7 +379,7 @@ def mp_permission(request, object_id):
 @login_required
 def mp_permission2(request, object_id):
     mp = MountPoint.objects.get(id = object_id)
-    mp_list = MountPoint.objects.select_related().all()
+    mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     if request.method == 'POST':
         form = MountPointAccessForm(request.POST)
         if form.is_valid():

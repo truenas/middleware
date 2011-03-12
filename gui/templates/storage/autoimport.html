@@ -1,0 +1,33 @@
+{% load i18n %}
+<form dojoType="dijit.form.Form">
+    <script type="dojo/event" event="onSubmit" args="e">
+        formSubmit(this, e,  '{% url storage_autoimport %}');
+    </script>
+    <table>
+        <tr>
+            <td>
+                {% trans "Disk" %}
+            </td>
+            <td>
+                {{ form.volume_disks.errors }}
+            <select dojoType="dijit.form.Select" id="wizarddisks" name="volume_disks" size="4">
+                {% for e in form.volume_disks.field.choices %}
+                <option value="{{ e.0 }}" {% if e.0 in disks %}selected="selected"{% endif %}>{{ e.1 }}</option>
+                {% empty %}
+                {% endfor %}
+            </select>
+            </td>
+        </tr>
+    </table>
+        <button dojoType="dijit.form.Button" type="submit" class="submitform">
+    <script type="dojo/method">
+    </script>
+    {% trans "Import Volume" %}<br />
+        </button>
+        <button dojoType="dijit.form.Button" type="button" class="cancelform">
+            {% trans "Cancel" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                cancelDialog(this);
+            </script>
+        </button>
+</form>

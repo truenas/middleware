@@ -31,7 +31,7 @@ ident		FREENAS64
 # env		"GENERIC.env"
 
 #makeoptions	DEBUG=-g		# Build kernel with gdb(1) debug symbols
-makeoptions	MODULES_OVERRIDE="zfs opensolaris acpi geom mps cxgb"
+makeoptions	MODULES_OVERRIDE="zfs opensolaris acpi geom mps cxgb ntfs"
 
 options 	SCHED_ULE		# ULE scheduler
 options 	PREEMPTION		# Enable kernel thread preemption
@@ -149,6 +149,7 @@ device		hptrr		# Highpoint RocketRAID 17xx, 22xx, 23xx, 25xx
 #device		ips		# IBM (Adaptec) ServeRAID
 device		mly		# Mylex AcceleRAID/eXtremeRAID
 device		twa		# 3ware 9000 series PATA/SATA RAID
+device		tws		# LSI 3ware 9750 SATA+SAS 6Gb/s RAID controller
 
 # RAID controllers
 device		aac		# Adaptec FSA RAID
@@ -189,7 +190,6 @@ device		uart		# Generic UART driver
 device		ppc
 device		ppbus		# Parallel port bus (required)
 device		lpt		# Printer
-device		plip		# TCP/IP over parallel
 device		ppi		# Parallel port interface device
 #device		vpo		# Requires scbus and da
 

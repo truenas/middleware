@@ -10,5 +10,3 @@ if [ -f ${db} ]; then
 fi
 
 python manage.py syncdb --migrate
-
-$dir/set_schema_defaults.sh $dir/schema.init $db

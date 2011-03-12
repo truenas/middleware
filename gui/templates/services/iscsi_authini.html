@@ -2,7 +2,7 @@
 <table class="grid">
    <thead class="header">
 		<tr>
-                    <td>{% trans "Tag" %}</td>
+                    <td>{% trans "Group ID" %}</td>
                     <td>{% trans "Initiators" %}</td>
                     <td>{% trans "Authorized Network" %}</td>
                     <td>{% trans "Comment" %}</td>
@@ -32,16 +32,16 @@
         </tr>
         {% empty %}
         <tr>
-            <td colspan="9">{% trans "No targets defined" %}</td>
+            <td colspan="5">{% trans "No targets defined" %}</td>
         </tr>
         {% endfor %}
         </table>
 
             <p class="btn">
             <button id="access_button" dojoType="dijit.form.Button" type="button">
-                {% trans "Modify Access" %}
+                {% trans "Add Authorized Initiator" %}
                 <script type="dojo/method" event="onClick" args="evt">
-                    addObject('{% trans "Modify Access" %}', '{% url freeadmin_model_add app="services",model="iSCSITargetAuthorizedInitiator" %}', [this,]);
+                    addObject('{% trans "Add Authorized Initiator" %}', '{% url freeadmin_model_add app="services",model="iSCSITargetAuthorizedInitiator" %}', [this,]);
             </script>
             </button>
             </p>

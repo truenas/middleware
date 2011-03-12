@@ -1,0 +1,303 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-ssl
+# REQUIRE: FILESYSTEMS
+
+. /etc/rc.freenas
+
+generate_openssl_conf()
+{
+	local org
+	local unit
+	local email
+	local city
+	local state
+	local country
+	local common
+	local _IFS="${IFS}"
+	local IFS="|"
+
+	read org unit email city state country common<<-__SSL__
+	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ssl_org,
+		ssl_unit,
+		ssl_email,
+		ssl_city,
+		ssl_state,
+		ssl_country,
+		ssl_common
+
+	FROM
+		system_ssl
+
+	ORDER BY
+		-id
+
+	LIMIT 1
+	")
+__SSL__
+	IFS="${_IFS}"
+
+	mkdir -p "${SSLDIR}"
+	mkdir -p "${SSLCADIR}"
+	mkdir -p "${SSLCACERTDIR}"
+	mkdir -p "${SSLCAPRIVDIR}"
+
+	if [ ! -f "${SSLCADIR}/index.txt" ]
+	then
+		touch "${SSLCADIR}/index.txt"
+	fi
+
+	if [ ! -f "${SSLCADIR}/serial" ]
+	then
+		echo 01 > "${SSLCADIR}/serial"
+	fi
+
+	if [ -z "${org}" ]
+	then
+		org="iXsystems, Inc."
+	fi
+	if [ -z "${unit}" ]
+	then		
+		unit="Systems"
+	fi
+	if [ -z "${email}" ]
+	then
+		email="root@localhost"
+	fi
+	if [ -z "${city}" ]
+	then
+		city="San Jose"
+	fi
+	if [ -z "${state}" ]
+	then
+		state="California"
+	fi
+	if [ -z "${country}" ]
+	then
+		country="US"
+	else
+		country=$(echo "${country}"|sed -E 's|^(..).+|\1|')
+	fi
+	if [ -z "${common}" ]
+	then
+		common="localhost"
+	fi
+
+	cat<<-__EOF__>"${SSLCONF}"
+	[ ca ]
+	default_ca                      = CA_default
+
+	[ CA_default ]
+	dir                             = ${SSLCADIR}
+	serial                          = ${SSLCADIR}/serial
+	database                        = ${SSLCADIR}/index.txt
+	new_certs_dir                   = ${SSLCACERTDIR}
+	certificate                     = ${SSLCACERT}
+	private_key                     = ${SSLCAKEY}
+	default_days                    = 3650
+	default_md                      = md5
+	preserve                        = no
+	email_in_dn                     = no
+	nameopt                         = default_ca
+	certopt                         = default_ca
+	policy                          = policy_match
+	x509_extensions                 = v3_ca
+
+	[ policy_match ]
+	countryName                     = match
+	stateOrProvinceName             = match
+	organizationName                = match
+	organizationalUnitName          = optional
+	commonName                      = supplied
+	emailAddress                    = optional
+
+	[ req ]
+	default_bits                    = 1024
+	default_keyfile                 = key.pem
+	default_md                      = md5
+	string_mask                     = nombstr
+	distinguished_name              = req_distinguished_name
+	req_extensions                  = v3_req
+	prompt                          = no
+
+	[ req_distinguished_name ]
+	0.organizationName              = ${org}
+	organizationalUnitName          = ${unit}
+	emailAddress                    = ${email}
+	localityName                    = ${city}
+	stateOrProvinceName             = ${state}
+	countryName                     = ${country}
+	commonName                      = ${common}
+
+	[ v3_ca ]
+	basicConstraints                = CA:TRUE
+	subjectKeyIdentifier            = hash
+	authorityKeyIdentifier          = keyid:always,issuer:always
+
+	[ v3_req ]
+	basicConstraints                = CA:FALSE
+	subjectKeyIdentifier            = hash
+__EOF__
+}
+
+create_CA()
+{
+	local tmp="/var/tmp/pass.txt"
+	if [ -f "${SSLCAKEY}" -a -f "${SSLCACERT}" ]
+	then
+		return
+	fi
+
+	dd if=/dev/urandom count=16 bs=1|uuencode -|head -2|tail -1 > "${tmp}"
+	${OPENSSL} req -config "${SSLCONF}" -batch -passout file:"${tmp}" \
+		-new -x509 -keyout "${SSLCAKEY}" -out "${SSLCACERT}"
+
+	cp "${SSLCAKEY}" "${SSLCAKEY}.orig"
+	${OPENSSL} rsa -passin file:"${tmp}" -in "${SSLCAKEY}.orig" -out "${SSLCAKEY}"
+	rm -f "${SSLCAKEY}.orig" "${tmp}"
+	chmod 400 "${SSLCAKEY}"
+}
+
+import_certificate()
+{
+	local certpath="${1}"
+	local certfile
+	local id
+
+	if [ ! -f "${certpath}" ]
+	then
+		return 1
+	fi
+
+	certfile=$(cat "${certpath}")
+	if [ -z "${certfile}" ]
+	then
+		return 1
+	fi
+
+	id=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		id
+	FROM
+		system_ssl
+	ORDER BY
+		-id
+	LIMIT 1
+	")
+
+	if [ -n "${id}" ]
+	then
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		UPDATE
+			system_ssl
+		SET
+			ssl_certfile = '${certfile}'
+		WHERE
+			id = ${id}
+		"
+	else
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		INSERT INTO 
+			system_ssl (ssl_certfile)
+		VALUES ('${certfile}')
+		"
+	fi
+
+	return $?
+}
+
+generate_certificate()
+{
+	local certfile
+
+	certfile=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		ssl_certfile
+
+	FROM
+		system_ssl
+
+	ORDER BY
+		-id
+
+	LIMIT 1
+	")
+
+	if [ -s "${HTTPDCERT}" -a -n "${certfile}" ]
+	then
+		echo "${certfile}" > /tmp/.cert
+		chmod 400 /tmp/.cert
+
+		diff "${HTTPDCERT}" /tmp/.cert >/dev/null
+		if [ "$?" != "0" ]
+		then
+			echo "THEY DIFFER"
+			mv /tmp/.cert "${HTTPDCERT}"
+		fi
+
+		rm /tmp/.cert
+	fi
+
+	if [ -n "${certfile}" ]
+	then
+		echo "${certfile}" > "${HTTPDCERT}"
+		chmod 400 "${HTTPDCERT}"
+
+	else
+		create_CA
+	fi
+
+	if [ -s "${SSLCAKEY}" -a -s "${SSLCACERT}" ]
+	then
+		cat "${SSLCAKEY}" "${SSLCACERT}" > "${HTTPDCERT}"
+		chmod 400 "${HTTPDCERT}"
+
+		import_certificate "${HTTPDCERT}"
+	else
+		echo "${SSLCAKEY} and/or ${SSLCACERT} does not exist."
+	fi
+}
+
+
+create_CSR()
+{
+	${OPENSSL} req -config ${SSLCONF} -batch -new -nodes -out req.pem 
+}
+
+sign_CSR()
+{
+	${OPENSSL} ca -config ${SSLCONF} -batch -out cert.pem -infiles req.pem 
+}
+
+verify_CA()
+{
+	${OPENSSL} x509 -in cacert.pem -noout -text -dates -purpose
+}
+
+verify_CSR()
+{
+	${OPENSSL} req -in req.pem -text -verify -noout 
+}
+
+verify_signature()
+{
+	${OPENSSL} x509 -in cert.pem -noout -text -dates -purpose
+}
+
+do_openssl_config()
+{
+	generate_openssl_conf
+	generate_certificate
+}
+
+name="ix-ssl"
+start_cmd='do_openssl_config'
+stop_cmd=':'
+            
+load_rc_config $name
+run_rc_command "$1"

@@ -16,6 +16,17 @@ class AddVolume(NavOption):
         append_app = False
         options = []
 
+class ImportVolume(NavOption):
+
+        name = _(u'Import Volume')
+        view = 'storage_import'
+        type = 'volumewizard'
+        icon = u'AddVolumeIcon'
+        app_name = 'storage'
+        model = 'Volumes'
+        append_app = False
+        options = []
+
 class ViewVolumes(NavOption):
 
         name = _(u'View All Volumes')
@@ -46,7 +57,7 @@ class Volumes(NavOption):
         def __init__(self, *args, **kwargs):
 
             #super(Volumes, self).__init__(*args, **kwargs)
-            self.options = [AddVolume,ViewVolumes]
+            self.options = [AddVolume,ImportVolume,ViewVolumes]
             en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
             if en_dataset:
                 self.options.append(AddDataset)

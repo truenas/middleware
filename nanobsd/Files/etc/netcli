@@ -46,9 +46,10 @@ os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
 from django.db import models
 
-from freenasUI.choices import NICChoices
+from freenasUI.choices import NICChoices, LAGGType
 from freenasUI.network import models
-from freenasUI.network.models import GlobalConfiguration, Interfaces, StaticRoute
+from freenasUI.network.models import GlobalConfiguration, Interfaces, \
+	LAGGInterface, LAGGInterfaceMembers, StaticRoute
 from freenasUI.middleware.notifier import notifier
 
 
@@ -101,6 +102,68 @@ def prompt(s, val):
         prompt.append("]")
     prompt.append(": ")
     return "".join(prompt)
+
+
+def get_nic(choices = NICChoices()):
+    nic = False
+
+    while True:
+        i = 0
+        nics = { }
+        for c in choices:
+            nics[i] = c[0]
+            print "%d) %s" % (i + 1, nics[i])
+            i += 1
+
+        i = raw_input("Select an interface (q to quit): ")
+        if i.isdigit() and nics.has_key(int(i) - 1):
+            nic = nics[int(i) - 1]
+            break
+        elif i.lower().startswith("q"):
+            return False
+        else:
+            continue
+
+    return nic
+
+
+def get_lagg_proto():
+    proto = False
+
+    while True:
+        i = 0
+        protos = { }
+        types = LAGGType
+        for t in types:
+            protos[i] = t[0]
+            print "%d) %s" % (i + 1, protos[i])
+            i += 1
+
+        i = raw_input("Select a lagg protocol (q to quit): ")
+        if i.isdigit() and protos.has_key(int(i) - 1):
+            proto = protos[int(i) - 1]
+            break
+        elif i.lower().startswith("q"):
+            return False
+        else:
+            continue
+
+    return proto
+
+
+def get_lagg_nics(nics = NICChoices()):
+    group = [ ]
+
+    while True:
+        nic = get_nic(nics)
+        if not nic:
+            break
+
+        nics.remove(nic)
+        group.append(nic)
+
+    return group
+
 
 def configure_interface():
     while True:
@@ -204,8 +267,9 @@ def configure_interface():
                     if not mask and iface.int_v4netmaskbit:
                         mask = iface.int_v4netmaskbit
                         break
-                    elif re.match(r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}"
-                                  "(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$", mask):
+                    elif re.match(r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9]"
+                                   "[0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|"
+                                   "[01]?[0-9][0-9]?)$", mask):
                         try:
                             ipaddr.IPAddress(mask, version=4)
                         except ValueError:
@@ -222,7 +286,8 @@ def configure_interface():
                     else:
                         print "Enter netmask as a dotted quad, a hex number,",
                         print "or CIDR prefix"
-                        print "Acceptable formats are 255.255.255.0, 0xffffff00,",
+                        print "Acceptable formats are 255.255.255.0,",
+                        print "0xffffff00,",
                         print "/24, or 24"
                         continue
 
@@ -305,6 +370,65 @@ def configure_interface():
             print "Failed"
         print "ok"
         return True
+
+def configure_lagg_interface():
+    lagg_index = 0
+    lagg_interfaces = LAGGInterface.objects.all()
+    for li in lagg_interfaces:
+        lagg_index = int(re.split('([0-9]+)$', str(li.lagg_interface))[1]) + 1
+
+    lagg_proto = get_lagg_proto()
+    if not lagg_proto:
+        return True
+
+    lagg_nics = get_lagg_nics()
+    if not lagg_nics:
+        return True
+
+    lagg_name = 'lagg%d' % lagg_index
+    iface = Interfaces(int_interface = lagg_name, int_name = lagg_name,
+        int_dhcp = True, int_ipv6auto = False)
+
+    print "Saving interface configuration:",
+    try:
+        iface.save()
+    except:
+        print "Failed"
+        return False
+    print "Ok"  
+
+    lagg_iface = LAGGInterface(lagg_interface = iface,
+                               lagg_protocol = lagg_proto)
+
+    print "Saving Link Aggregation configuration:",
+    try:
+        lagg_iface.save()
+    except:
+        print "Failed"
+        return False
+    print "Ok"
+
+    order = 0
+    for nic in lagg_nics: 
+        lagg_iface_member = LAGGInterfaceMembers(lagg_interfacegroup =
+                                                 lagg_iface,
+                                                 lagg_ordernum = order,
+                                                 lagg_physnic = nic,
+                                                 lagg_deviceoptions = 'up')
+
+        print "Saving Link Aggregation member configuration:",
+        try:
+            lagg_iface_member.save()
+        except:
+            print "Failed"
+            return False
+        print "Ok"
+
+        order += 1
+
+    print "The system must be rebooted for these changes to take effect."
+    return True
+
 
 def configure_ipv4_default_route(gc):
     gwprompt = prompt("IPv4 Default Route", gc.gc_ipv4gateway)
@@ -534,16 +658,18 @@ def show_ip():
     print """
 You may try the following URLs to access the web user interface:
 """
-    system('ifconfig -a inet | grep broadcast | cut -f2 -d\  | sed -e s,^,http://,g -e s,$,/,g')
+    system('ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
+           'sed -e s,^,http://,g -e s,$,/,g')
 
 def main_menu():
     handler = { 1: configure_interface,
-                2: configure_default_route,
-                3: configure_static_routes,
-                4: configure_dns,
-                5: shell,
-                6: reboot,
-                7: shutdown
+                2: configure_lagg_interface,
+                3: configure_default_route,
+                4: configure_static_routes,
+                5: configure_dns,
+                6: shell,
+                7: reboot,
+                8: shutdown
               }
 
     while True:
@@ -551,17 +677,18 @@ def main_menu():
 Console setup
 -------------
 1) Configure Network Interfaces
-2) Configure Default Route
-3) Configure Static Routes
-4) Configure DNS
-5) Shell
-6) Reboot
-7) Shutdown
+2) Configure Link Aggregation
+3) Configure Default Route
+4) Configure Static Routes
+5) Configure DNS
+6) Shell
+7) Reboot
+8) Shutdown
         """
         show_ip()
 
-        ch = raw_input("Enter an option from 1-7: ")
-        if re.match("^[1-7]$", ch):
+        ch = raw_input("Enter an option from 1-8: ")
+        if re.match("^[1-8]$", ch):
             handler[int(ch)]()
             continue
         else:

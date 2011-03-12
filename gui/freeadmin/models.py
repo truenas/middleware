@@ -9,6 +9,8 @@ class FreeAdminWrapper(object):
     deletable = True
     menu_child_of = None
 
+    nav_extra = {}
+
     object_filters = {}
     object_num = -1
 

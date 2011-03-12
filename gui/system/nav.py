@@ -1,7 +1,7 @@
 from django_nav import Nav, NavOption
 from django.utils.translation import ugettext as _
 
-BLACKLIST = ['Email', 'Advanced', 'Settings']
+BLACKLIST = ['Email', 'Advanced', 'Settings', 'SSL']
 ICON = u'SystemIcon'
 
 class Reporting(NavOption):

@@ -18,13 +18,42 @@ generate_fstab_real()
 	local volumename newmp mountpoint
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT v.vol_name, mp.mp_path FROM storage_volume AS v LEFT OUTER JOIN storage_mountpoint AS mp ON v.id = mp.mp_volume_id WHERE v.vol_fstype = 'UFS'" | \
 	while read volumename newmp; do
-		if [ -z "${newmp}" ]; then
-			mountpoint=/mnt/${volumename}
-		else
-			mountpoint=${newmp}
+		if [ -c "/dev/ufs/${volumename}" ]; then
+			if [ -z "${newmp}" ]; then
+				mountpoint=/mnt/${volumename}
+			else
+				mountpoint=${newmp}
+			fi
+			mkdir -p ${mountpoint}
+			echo "/dev/ufs/${volumename}		${mountpoint}			ufs		rw,late	2	2"
 		fi
-		mkdir -p ${mountpoint}
-		echo "/dev/ufs/${volumename}		${mountpoint}			ufs		rw,late	2	2"
+	done
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT v.vol_name, mp.mp_path FROM storage_volume AS v LEFT OUTER JOIN storage_mountpoint AS mp ON v.id = mp.mp_volume_id WHERE v.vol_fstype = 'NTFS'" | \
+	while read volumename newmp; do
+		if [ -c "/dev/ntfs/${volumename}" ]; then
+			if [ -z "${newmp}" ]; then
+				mountpoint=/mnt/${volumename}
+			else
+				mountpoint=${newmp}
+			fi
+			mkdir -p ${mountpoint}
+			echo "/dev/ntfs/${volumename}		${mountpoint}			ntfs-3g		rw,late	2	2"
+		fi
+	done
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT v.vol_name, mp.mp_path FROM storage_volume AS v LEFT OUTER JOIN storage_mountpoint AS mp ON v.id = mp.mp_volume_id WHERE v.vol_fstype = 'MSDOSFS'" | \
+	while read volumename newmp; do
+            vname=$(echo ${volumename}|tr '[:lower:]' '[:upper:]')
+		if [ -c "/dev/msdosfs/${vname}" ]; then
+			if [ -z "${newmp}" ]; then
+				mountpoint=/mnt/${volumename}
+			else
+				mountpoint=${newmp}
+			fi
+			mkdir -p ${mountpoint}
+			echo "/dev/msdosfs/${vname}		${mountpoint}			msdosfs		rw,late	2	2"
+		fi
 	done
 }
 
@@ -37,7 +66,7 @@ generate_fstab_swap()
         #if [ "${encrypted_swap}" = "1" ]; then
 	#	swap_suffix=.eli
 	#fi
-        /usr/bin/find /dev/gpt/ -type c -name 'swap-*' | \
+        /usr/bin/find /dev/gpt/ -type c -name 'swap-*' 2>/dev/null | \
         while read devname; do
         	echo "${devname}${swap_suffix}	none			swap		sw		0	0"
 	done

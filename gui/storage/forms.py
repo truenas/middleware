@@ -283,6 +283,251 @@ class VolumeWizardForm(forms.Form):
             raise forms.ValidationError(_("This field is required."))
         return self.cleaned_data['group_type']
 
+class VolumeImportForm(forms.Form):
+
+    volume_name = forms.CharField(max_length = 30, label = _('Volume name') )
+    volume_disks = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label = _('Member disk'))
+    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'NTFS', 'MSDOSFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
+
+    def __init__(self, *args, **kwargs):
+        super(VolumeImportForm, self).__init__(*args, **kwargs)
+        self.fields['volume_disks'].choices = self._populate_disk_choices()
+        self.fields['volume_disks'].choices.sort()
+
+    def _populate_disk_choices(self):
+    
+        diskchoices = dict()
+        used_disks = [i[0] for i in Disk.objects.all().values_list('disk_name').distinct()]
+    
+        # Grab partition list
+        # NOTE: This approach may fail if device nodes are not accessible.
+        parts = notifier().get_partitions()
+
+        for part in parts.keys():
+            if len([i for i in used_disks if parts[part]['devname'].startswith(i)]) > 0:
+                del parts[part]
+
+        for part in parts:
+            devname, capacity = parts[part]['devname'], parts[part]['capacity']
+
+            capacity = int(capacity)
+            if capacity >= 1099511627776:
+                    capacity = "%.1f TiB" % (capacity / 1099511627776.0)
+            elif capacity >= 1073741824:
+                    capacity = "%.1f GiB" % (capacity / 1073741824.0)
+            elif capacity >= 1048576:
+                    capacity = "%.1f MiB" % (capacity / 1048576.0)
+            else:
+                    capacity = "%d Bytes" % (capacity)
+            diskchoices[devname] = "%s (%s)" % (devname, capacity)
+        # Exclude the root device
+        rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
+        rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
+        if rootdev_base != None:
+            for part in diskchoices.keys():
+                if part.startswith(rootdev_base.group(0)):
+                    del diskchoices[part]
+
+        return diskchoices.items()
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        volume_name = cleaned_data.get("volume_name")
+        if Volume.objects.filter(vol_name = volume_name).count() > 0:
+            msg = _(u"You already have a volume with same name")
+            self._errors["volume_name"] = self.error_class([msg])
+            del cleaned_data["volume_name"]
+
+        isvalid = notifier().precheck_partition("/dev/%s" % cleaned_data.get('volume_disks', []), cleaned_data.get('volume_fstype', ''))
+        if not isvalid:
+            msg = _(u"The selected disks were not verified for this import rules.")
+            self._errors["volume_name"] = self.error_class([msg])
+            if cleaned_data.has_key("volume_name"):
+                del cleaned_data["volume_name"]
+
+        if cleaned_data.has_key("volume_name"):
+            dolabel = notifier().label_disk(cleaned_data["volume_name"], "/dev/%s" % cleaned_data['volume_disks'], cleaned_data['volume_fstype'])
+            if not dolabel:
+                msg = _(u"Some error ocurried while labelling the disk.")
+                self._errors["volume_name"] = self.error_class([msg])
+                if cleaned_data.has_key("volume_name"):
+                    del cleaned_data["volume_name"]
+
+        return cleaned_data
+
+    def done(self, request):
+        # Construct and fill forms into database.
+        volume_name = self.cleaned_data['volume_name']
+        volume_fstype = self.cleaned_data['volume_fstype']
+        disk_list = self.cleaned_data['volume_disks']
+
+        volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
+        volume.save()
+        self.volume = volume
+
+        mp = MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
+        mp.save()
+
+        grp = DiskGroup(group_name= volume_name, group_type = '', group_volume = volume)
+        grp.save()
+
+        diskname = disk_list
+        diskobj = Disk(disk_name = diskname, disk_disks = diskname,
+                       disk_description = ("Member of %s" %
+                                          (volume_name)),
+                       disk_group = grp)
+        diskobj.save()
+
+        notifier().reload("disk")
+
+class VolumeAutoImportForm(forms.Form):
+
+    #volume_name = forms.CharField(max_length = 30, label = _('Volume name') )
+    volume_disks = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label = _('Member disk'))
+
+    def __init__(self, *args, **kwargs):
+        super(VolumeAutoImportForm, self).__init__(*args, **kwargs)
+        self.fields['volume_disks'].choices = self._populate_disk_choices()
+        self.fields['volume_disks'].choices.sort()
+
+    def _populate_disk_choices(self):
+    
+        diskchoices = dict()
+        used_disks = [i[0] for i in Disk.objects.all().values_list('disk_name').distinct()]
+    
+        # Grab partition list
+        # NOTE: This approach may fail if device nodes are not accessible.
+        vols = notifier().detect_volumes()
+
+        for vol in list(vols):
+            for disk in vol['disks']:
+                if len([i for i in used_disks if disk.startswith(i)]) > 0:
+                    vols.remove(vol)
+                    break
+
+        for vol in vols:
+            devname = "%s [%s - %s]" % (vol['label'],vol['type'],vol['group_type'])
+
+            """
+            capacity = int(capacity)
+            if capacity >= 1099511627776:
+                    capacity = "%.1f TiB" % (capacity / 1099511627776.0)
+            elif capacity >= 1073741824:
+                    capacity = "%.1f GiB" % (capacity / 1073741824.0)
+            elif capacity >= 1048576:
+                    capacity = "%.1f MiB" % (capacity / 1048576.0)
+            else:
+                    capacity = "%d Bytes" % (capacity)
+            """
+            diskchoices[vol['label']] = "%s" % (devname,)
+        # Exclude the root device
+        rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
+        rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
+        if rootdev_base != None:
+            for part in diskchoices.keys():
+                if part.startswith(rootdev_base.group(0)):
+                    del diskchoices[part]
+
+        return diskchoices.items()
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        volume_name = cleaned_data.get("volume_name")
+        if Volume.objects.filter(vol_name = volume_name).count() > 0:
+            msg = _(u"You already have a volume with same name")
+            self._errors["volume_disks"] = self.error_class([msg])
+            del cleaned_data["volume_disks"]
+
+        vols = notifier().detect_volumes()
+        for vol in vols:
+            if vol['label'] == cleaned_data['volume_disks']:
+                cleaned_data['volume'] = vol
+                break
+
+        if cleaned_data['volume']['type'] == 'geom':
+            if cleaned_data['volume']['group_type'] == 'mirror':
+                dev = "/dev/mirror/%s%s" % (cleaned_data['volume']['label'],
+                        cleaned_data['volume']['group_type'])
+            elif cleaned_data['volume']['group_type'] == 'stripe':
+                dev = "/dev/stripe/%s%s" % (cleaned_data['volume']['label'],
+                        cleaned_data['volume']['group_type'])
+            elif cleaned_data['volume']['group_type'] == 'raid3':
+                dev = "/dev/raid3/%s%s" % (cleaned_data['volume']['label'],
+                        cleaned_data['volume']['group_type'])
+            else:
+                #TODO
+                raise NotImplementedError
+            isvalid = notifier().precheck_partition(dev, 'UFS')
+            if not isvalid:
+                msg = _(u"The selected disks were not verified for this import rules.")
+                self._errors["volume_disks"] = self.error_class([msg])
+                if cleaned_data.has_key("volume_disks"):
+                    del cleaned_data["volume_disks"]
+        elif cleaned_data['volume']['type'] == 'zfs':
+            pass
+        else:
+            #TODO
+            raise NotImplementedError
+
+        return cleaned_data
+
+    def done(self, request):
+
+        vol = self.cleaned_data['volume']
+        volume_name = vol['label']
+        group_type = vol['group_type']
+        if vol['type'] == 'geom':
+            volume_fstype = 'UFS'
+            grouped = {}
+        elif vol['type'] == 'zfs':
+            volume_fstype = 'ZFS'
+            grouped = {
+                    'log': vol['logs'],
+                    'cache': vol['cache'],
+                    'spare': vol['spare'],
+                    }
+
+            if not notifier().zfs_import(vol['label']):
+                assert False, "Could not run zfs import"
+
+        volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
+        volume.save()
+        self.volume = volume
+
+        mp = MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
+        mp.save()
+
+        grp = DiskGroup(group_name= volume_name, group_type = group_type, group_volume = volume)
+        grp.save()
+
+        for diskname in vol['disks']:
+            diskobj = Disk(disk_name = diskname, disk_disks = diskname,
+                           disk_description = ("Member of %s %s" %
+                                              (volume_name, group_type)),
+                           disk_group = grp)
+            diskobj.save()
+
+
+        for grp_type in grouped:
+
+            if grp_type in ('log','cache','spare'):
+                # When doing log, we assume it's always 'mirror' for data safety
+                if grp_type == 'log' and len(grouped[grp_type]) > 1:
+                    group_type='log mirror'
+                else:
+                    group_type=grp_type
+                grp = DiskGroup(group_name=volume.vol_name+grp_type, \
+                        group_type=group_type , group_volume = volume)
+                grp.save()
+
+                for diskname in grouped[grp_type]:
+                    diskobj = Disk(disk_name = diskname, disk_disks = diskname,
+                              disk_description = ("Member of %s %s" %
+                                (volume.vol_name, grp_type)), disk_group = grp)
+                    diskobj.save()
+
+        notifier().reload("disk")
+
 # Step 1.  Creation of volumes manually is not supported.
 class VolumeWizard_VolumeNameTypeForm(Form):
     def __init__(self, *args, **kwargs):
@@ -524,4 +769,3 @@ class MountPointAccessForm(Form):
             group=self.cleaned_data['mp_group'].__str__(),
             mode=self.cleaned_data['mp_mode'].__str__(),
             recursive=self.cleaned_data['mp_recursive'])
-

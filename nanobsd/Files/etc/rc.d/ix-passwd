@@ -46,12 +46,12 @@ generate_group()
 	local groupname groupid
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT
-		bsdgrp_group, bsdgrp_gid
+		bsdgrp_group, bsdgrp_gid, id
 	FROM
 		account_bsdgroups" | \
-	while read groupname groupid; do
+	while read groupname groupid id; do
 		echo -n "${groupname}:*:${groupid}:"
-		group_membership ${groupid} | sed -e 's/,$//g' | tr -d \\n
+		group_membership ${id} | sed -e 's/,$//g' | tr -d \\n
 		echo
 	done > /etc/group
 }

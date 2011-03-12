@@ -27,5 +27,55 @@
 . /etc/rc.subr
 
 #
-#	Stub for FreeNAS specific functions and variables. Coming soon!
+#	OPENSSL settings
 #
+: ${OPENSSL:="/usr/bin/openssl"}
+: ${SSLDIR:="/etc/ssl/freenas"}
+: ${SSLCONF:="${SSLDIR}/openssl.conf"}
+: ${SSLCADIR:="${SSLDIR}/CA"}
+: ${SSLCACERTDIR:="${SSLCADIR}/certs"}
+: ${SSLCAPRIVDIR:="${SSLCADIR}/private"}
+: ${SSLCACERT:="${SSLCADIR}/cacert.pem"}
+: ${SSLCAKEY:="${SSLCAPRIVDIR}/cakey.pem"}
+
+#
+#	HTTPD settings
+#
+: ${HTTPD:="/usr/local/sbin/lighttpd"}
+: ${HTTPDDIR:="/usr/local/etc/lighttpd"}
+: ${HTTPDSCRIPT:="/usr/local/etc/rc.d/lighttpd"}
+: ${HTTPDCONF:="${HTTPDDIR}/lighttpd.conf"}
+: ${HTTPDCERT:="${SSLDIR}/httpd.pem"}
+: ${HTTPDSSLPORT:="443"}
+: ${HTTPDPORT:="80"}
+
+#
+#	LDAP settings
+#
+: ${NSS_LDAP_CONF:="/usr/local/etc/nss_ldap.conf"}
+: ${NSS_LDAP_SECRET:="/usr/local/etc/nss_ldap.secret"}
+: ${LDAP_CONF:="/usr/local/etc/openldap/ldap.conf"}
+: ${CERT_FILE:="/usr/local/etc/certs/cacert.crt"}
+
+#
+#	PAM settings
+#
+: ${PAM_TEMPLATE_DIR:="/etc/ix/templates/pam.d"}
+: ${PAM_DIR:="/etc/pam.d"}
+
+#
+#	NSS settings
+#
+: ${PATH_NS_CONF:="/etc/nsswitch.conf"}
+
+#
+#	Kerberos settings
+#
+: ${PATH_KRB5_TEMPLATE:="/etc/ix/templates/kerberos/krb5.conf"}
+: ${PATH_KRB5_CONFIG:="/etc/krb5.conf"}
+: ${PATH_AD_KEYTAB:="/etc/AD.keytab"}
+
+#
+#	Samba settings
+#
+: ${SMB_CONF:="/usr/local/etc/smb.conf"}

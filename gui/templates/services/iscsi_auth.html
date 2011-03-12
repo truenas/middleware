@@ -2,7 +2,7 @@
 <table class="grid">
        <thead class="header">
 	<tr>
-            <td>{% trans "Tag" %}</td>
+            <td>{% trans "Group ID" %}</td>
             <td>{% trans "User" %}</td>
             <td>{% trans "Secret" %}</td>
             <td>{% trans "Peer" %}</td>
@@ -34,7 +34,7 @@
    </tr>
    {% empty %}
    <tr>
-       <td colspan="9">{% trans "No targets defined" %}</td>
+       <td colspan="6">{% trans "No targets defined" %}</td>
    </tr>
    {% endfor %}
    </table>

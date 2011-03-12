@@ -27,7 +27,7 @@
 #####################################################################
 
 import os
-from django.forms.models import modelformset_factory
+from subprocess import *
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
@@ -153,6 +153,71 @@ def network2(request, objtype = None):
     return render_to_response('network/index2.html', variables)
 
 @login_required
+def summary(request):
+
+    p1 = Popen(["ifconfig", "-lu"], stdin=PIPE, stdout=PIPE)
+    p1.wait()
+    int_list = p1.communicate()[0].split('\n')[0].split(' ')
+
+    if 'lo0' in int_list:
+        int_list.remove('lo0')
+    if 'plip0' in int_list:
+        int_list.remove('plip0')
+
+    ifaces = []
+    for iface in int_list:
+
+        p1 = Popen(["ifconfig", iface, "inet"], stdin=PIPE, stdout=PIPE)
+        p2 = Popen(["grep", "inet "], stdin=p1.stdout, stdout=PIPE)
+        p1.wait()
+        p2.wait()
+        if p2.returncode == 0:
+            output = p2.communicate()[0]
+            output = output.strip('\t').strip().split(' ')
+            ifaces.append({
+                'name': iface,
+                'inet': output[1],
+                'netmask': output[3],
+                'broadcast': output[5],
+                })
+        #else:
+        #    ifaces.append({
+        #        'name': iface,
+        #        'inet': '-',
+        #        'netmask': '-',
+        #        'broadcast': '-',
+        #        })
+
+    p1 = Popen(["cat", "/etc/resolv.conf"], stdin=PIPE, stdout=PIPE)
+    p2 = Popen(["grep", "nameserver"], stdin=p1.stdout, stdout=PIPE)
+    p1.wait()
+    p2.wait()
+    nss = []
+    if p2.returncode == 0:
+        output = p2.communicate()[0]
+        for ns in output.split('\n')[:-1]:
+            addr = ns.split(' ')[-1]
+            nss.append(addr)
+
+    p1 = Popen(["netstat", "-rn"], stdin=PIPE, stdout=PIPE)
+    p2 = Popen(["grep", "^default"], stdin=p1.stdout, stdout=PIPE)
+    p3 = Popen(["awk", "{print $2}"], stdin=p2.stdout, stdout=PIPE)
+    p1.wait()
+    p2.wait()
+    p3.wait()
+    default = None
+    if p3.returncode == 0:
+        output = p3.communicate()[0]
+        default = output.replace('\n','')
+
+    variables = RequestContext(request, {
+        'ifaces': ifaces,
+        'nss': nss,
+        'default': default,
+    })
+    return render_to_response('network/summary.html', variables)
+
+@login_required
 def interface(request):
 
     int_list = Interfaces.objects.order_by("-id").values()
@@ -181,30 +246,6 @@ def staticroute(request):
         'sr_list': sr_list,
     })
     return render_to_response('network/staticroute.html', variables)
-
-@login_required
-def routetable(request):
-    routetable = os.popen('netstat -rn').read()
-    variables = RequestContext(request, {
-        'commandoutput': routetable,
-    })
-    return render_to_response('network/justcontent.html', variables)
-
-@login_required
-def ifconfigall(request):
-    ifconfigall = os.popen('ifconfig -a').read()
-    variables = RequestContext(request, {
-        'commandoutput': ifconfigall,
-    })
-    return render_to_response('network/justcontent.html', variables)
-
-@login_required
-def resolvconf(request):
-    resolvconf = os.popen('cat /etc/resolv.conf').read()
-    variables = RequestContext(request, {
-        'commandoutput': resolvconf,
-    })
-    return render_to_response('network/justcontent.html', variables)
 
 @login_required
 def lagg(request):

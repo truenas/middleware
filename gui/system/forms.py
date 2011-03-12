@@ -42,7 +42,6 @@ from dojango import forms
 # so we use django.forms.FileField for this release.
 import django.forms
 
-
 class SettingsForm(ModelForm):
     class Meta:
         model = Settings
@@ -50,9 +49,9 @@ class SettingsForm(ModelForm):
         super(SettingsForm, self).__init__( *args, **kwargs)
         self.instance._original_stg_guiprotocol = self.instance.stg_guiprotocol
     def save(self):
+        super(SettingsForm, self).save()
         if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol:
             notifier().restart("http")
-        super(SettingsForm, self).save()
         notifier().reload("timeservices")
 
 class AdvancedForm(ModelForm):
@@ -114,6 +113,13 @@ class EmailForm(ModelForm):
              email.save()
              notifier().start("ix-msmtp")
         return email
+
+class SSLForm(ModelForm):
+    def save(self):
+        super(SSLForm, self).save()
+        notifier().start("ix-ssl")
+    class Meta:
+        model = SSL
 
 class FirmwareTemporaryLocationForm(Form):
     mountpoint = forms.ChoiceField(label="Place to temporarily place firmware file", help_text = _("The system will use this place to temporarily store the firmware file before it's being applied."),choices=(), widget=forms.Select(attrs={ 'class': 'required' }),)

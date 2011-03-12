@@ -40,6 +40,17 @@
     dojo.require("dijit.layout.TabContainer");
     dojo.require("dojox.form.FileInput");
 
+    dojo._contentHandlers.text = (function(old){
+      return function(xhr){
+        if(xhr.responseText.match("<!-- THIS IS A LOGIN WEBPAGE -->")){
+          window.location='/';
+          return '';
+        }
+        var text = old(xhr);
+        return text;
+      }
+    })(dojo._contentHandlers.text);
+
     /*
      * Menu Object
      * Responsible for opening menu tabs
@@ -248,6 +259,45 @@
                 p.selectChild(pane);
             }
 
+        },
+        openISCSI: function(tab) {
+            var opened = false;
+            var p = dijit.byId("content");
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+                if(c[i].title == 'iSCSI'){
+                    p.selectChild(c[i]);
+                    opened = true;
+                    if(tab) {
+                        var tabnet = dijit.byId("tab_iscsi");
+                        if(tabnet) {
+                            var c2 = tabnet.getChildren();
+                            for(var j=0; j<c2.length; j++){
+                                if(c2[j].title == tab)
+                                    tabnet.selectChild(c2[j]);
+                            }
+                        }
+                    }
+
+                }
+            }
+            if(opened != true) {
+                openurl = this.urlISCSI;
+                if(tab) {
+                    openurl += '?tab='+tab;
+                }
+
+                var pane = new dijit.layout.ContentPane({ 
+                    title: 'iSCSI',
+                    closable: true,
+                    //refreshOnShow: true,
+                    href: openurl,
+                });
+                p.addChild(pane);
+                p.selectChild(pane);
+            }
+
         }
 
     };
@@ -278,6 +328,23 @@
                 return true;
         }
         return false;
+    }
+
+    toggleLuc = function(c) {
+
+        var toset;
+        var box = dijit.byId("id_iscsi_toggleluc");
+        if(box.attr("value")==false) {
+            toset = true;
+        } else{
+            toset = false;
+        }
+        dijit.byId("id_iscsi_lucip").set('disabled', toset);
+        dijit.byId("id_iscsi_lucport").set("disabled", toset);
+        dijit.byId("id_iscsi_luc_authnetwork").set("disabled", toset);
+        dijit.byId("id_iscsi_luc_authmethod").set("disabled", toset);
+        dijit.byId("id_iscsi_luc_authgroup").set("disabled", toset);
+
     }
 
     toggleEmail = function(c) {
@@ -338,6 +405,10 @@
                             dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','OK');
                         }
 
+                        if(json.error == false){
+                            dojo.query('ul[class=errorlist]', rnode.domNode).forEach(function(i) { i.parentNode.removeChild(i); });
+                        }
+
                         var footer = dojo.byId("messages");
                         dojo.empty(footer);
                         var suc = dojo.create("div");
@@ -385,6 +456,9 @@
                                }
                             );
                             dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','OK');
+                        }
+                        if(json.error == false){
+                            dojo.query('ul[class=errorlist]', rnode.domNode).forEach(function(i) { i.parentNode.removeChild(i); });
                         }
 
                         var footer = dojo.byId("messages");
@@ -639,7 +713,7 @@
     volumeWizard = function(name, url, nodes) {
          dialog = new dijit.Dialog({ 
              id: 'wizard_dialog',
-             title: 'Add Volume', 
+             title: name, 
              href: url, 
              parseOnLoad: true,
              closable: true, 
@@ -761,9 +835,9 @@
                             widgets.push(widget);
                         }
                     });
-                    volumeWizard('Wizard', STORAGE_URL, widgets);
+                    volumeWizard(item.name, item.view, widgets);
                 } else 
-                    volumeWizard('Wizard', STORAGE_URL);
+                    volumeWizard(item.name, item.view);
             } else if(item.type && item.type == 'editobject') {
                 var data = dojo.query(".data_"+item.app_name+"_"+item.model);
                 if(data) {
@@ -787,12 +861,8 @@
                 Menu.openNetwork('Static Routes');
             } else if(item.type && item.type == 'network_global') {
                 Menu.openNetwork('Global Configuration');
-            } else if(item.type && item.type == 'network_intsummary') {
-                Menu.openNetwork('Interface Summary');
-            } else if(item.type && item.type == 'network_routetable') {
-                Menu.openNetwork('Routing Tables');
-            } else if(item.type && item.type == 'network_resolv') {
-                Menu.openNetwork('resolv.conf');
+            } else if(item.type && item.type == 'network_summary') {
+                Menu.openNetwork('Network Summary');
             } else if(item.type && item.type == 'changepass') {
                 Menu.openAccount('Change Password');
             } else if(item.type && item.type == 'changeadmin') {
@@ -801,6 +871,8 @@
                 Menu.openAccount('Users');
             } else if(item.type && item.type == 'viewgroups') {
                 Menu.openAccount('Groups');
+            } else if(item.type && item.type == 'openiscsiconf') {
+                Menu.openISCSI('Target Global Configuration');
             } else if(item.type && item.type == 'logout') {
                 window.location='/account/logout/';
             } else if(item.action && item.action == 'displayprocs') {

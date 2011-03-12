@@ -25,18 +25,6 @@ FQDNLookup true
 BaseDir "/var/db/collectd"
 PIDFile "/var/run/collectd.pid"
 PluginDir "/usr/local/lib/collectd"
-LoadPlugin syslog
-LoadPlugin logfile
-
-<Plugin "logfile">
-    LogLevel info
-    File STDOUT
-    Timestamp true
-</Plugin>
-
-<Plugin "syslog">
-    LogLevel info
-</Plugin>
 
 LoadPlugin cpu
 LoadPlugin df

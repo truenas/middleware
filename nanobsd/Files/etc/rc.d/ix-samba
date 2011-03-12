@@ -131,6 +131,7 @@ generate_smbconf()
 		    private dir = /var/etc/private
 		    getwd cache = yes
 		    guest account = ${guest}
+		    map to guest = Bad Password
 EOF
 		if [ "${guestok}" = "1" ]; then
 			echo "    guest ok = yes"
@@ -383,57 +384,59 @@ generate_exports()
 	while read name comment mountpoint cifsro browsable inheritperms \
 		recyclebin showhiddenfiles guest guestok guestonly hostsallow hostsdeny auxsmbconf;
 	do
-		echo "[${name}]"
-		echo "path = ${mountpoint}"
-		echo "printable = no"
-		echo "veto files = /.snap/"
-		if [ -n "${comment}" ]; then
-			echo "comment = ${comment}"
-		fi
-		if [ "${cifsro}" = "0" ]; then
-			echo "writeable = yes"
-		else
-			echo "writeable = no"
-		fi
-		if [ "${browsable}" = "0" ]; then
-			echo "browseable = no"
-		else
-			echo "browseable = yes"
-		fi
-		if [ "${inheritperms}" = "1" ]; then
-			echo "inherit permissions = yes"
-		else
-			echo "inherit permissions = no"
-		fi
-		if [ "${recyclebin}" = "1" ]; then
-			echo "vfs objects = recycle"
-			echo "recycle:repository = .recycle/%U"
-			echo "recycle:keeptree = yes"
-			echo "recycle:versions = yes"
-			echo "recycle:touch = yes"
-			echo "recycle:directory_mode = 0777"
-			echo "recycle:subdir_mode = 0700"
-		fi
-		if [ "${showhiddenfiles}" = "1" ]; then
-			echo "hide dot files = no"
-		fi
-		if [ -n "${hostsallow}" ]; then
-			echo "hosts allow = ${hostsallow}"
-		fi
-		if [ -n "${hostsdeny}" ]; then
-			echo "hosts deny = ${hostsdeny}"
-		fi
-		if [ "${guestok}" = "1" -o "${guestonly}" = "1" ]; then
-			echo "guest account = ${guest}"
-		fi
-		if [ "${guestok}" = "1" ]; then
-			echo "guest ok = yes"
-		fi
-		if [ "${guestonly}" = "1" ]; then
-			echo "guest only = yes"
-		fi
-		if [ -n "${auxsmbconf}" ]; then
-			echo ${auxsmbconf}
+		if [ -d "${mountpoint}" ]; then
+			echo "[${name}]"
+			echo "path = ${mountpoint}"
+			echo "printable = no"
+			echo "veto files = /.snap/"
+			if [ -n "${comment}" ]; then
+				echo "comment = ${comment}"
+			fi
+			if [ "${cifsro}" = "0" ]; then
+				echo "writeable = yes"
+			else
+				echo "writeable = no"
+			fi
+			if [ "${browsable}" = "0" ]; then
+				echo "browseable = no"
+			else
+				echo "browseable = yes"
+			fi
+			if [ "${inheritperms}" = "1" ]; then
+				echo "inherit permissions = yes"
+			else
+				echo "inherit permissions = no"
+			fi
+			if [ "${recyclebin}" = "1" ]; then
+				echo "vfs objects = recycle"
+				echo "recycle:repository = .recycle/%U"
+				echo "recycle:keeptree = yes"
+				echo "recycle:versions = yes"
+				echo "recycle:touch = yes"
+				echo "recycle:directory_mode = 0777"
+				echo "recycle:subdir_mode = 0700"
+			fi
+			if [ "${showhiddenfiles}" = "1" ]; then
+				echo "hide dot files = no"
+			fi
+			if [ -n "${hostsallow}" ]; then
+				echo "hosts allow = ${hostsallow}"
+			fi
+			if [ -n "${hostsdeny}" ]; then
+				echo "hosts deny = ${hostsdeny}"
+			fi
+			if [ "${guestok}" = "1" -o "${guestonly}" = "1" ]; then
+				echo "guest account = ${guest}"
+			fi
+			if [ "${guestok}" = "1" ]; then
+				echo "guest ok = yes"
+			fi
+			if [ "${guestonly}" = "1" ]; then
+				echo "guest only = yes"
+			fi
+			if [ -n "${auxsmbconf}" ]; then
+				echo ${auxsmbconf}
+			fi
 		fi
 	done
 	echo

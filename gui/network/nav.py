@@ -5,26 +5,10 @@ import models
 
 ICON = u'NetworkIcon'
 
-class InterfaceSummary(NavOption):
+class NetSummary(NavOption):
 
-        name = _(u'Interface Summary')
-        type = 'network_intsummary'
-        icon = u'SettingsIcon'
-        app_name = 'network'
-        options = []
-
-class RouteTable(NavOption):
-
-        name = _(u'Routing Tables')
-        type = 'network_routetable'
-        icon = u'SettingsIcon'
-        app_name = 'network'
-        options = []
-
-class ResolvConf(NavOption):
-
-        name = _(u'resolv.conf')
-        type = 'network_resolv'
+        name = _(u'Network Summary')
+        type = 'network_summary'
         icon = u'SettingsIcon'
         app_name = 'network'
         options = []

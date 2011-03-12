@@ -99,7 +99,7 @@ class NavTree(object):
             nav.options = opts
     
             inserts = 0
-            for opt in nav.options:
+            for opt in list(nav.options):
                 if len(opt.options) == 0:
                     nav.options.remove(opt)
                     nav.options.insert(inserts, opt)
@@ -251,6 +251,8 @@ class NavTree(object):
                                 navopt.order_child = False
                                 navopt.app = app
                                 navopt.options = []
+                            for key in model._admin.nav_extra.keys():
+                                navopt.__setattr__(key, model._admin.nav_extra.get(key))
                             if model._admin.icon_model is not None:
                                 navopt.icon = model._admin.icon_model
     

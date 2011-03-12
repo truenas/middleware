@@ -5,6 +5,7 @@
             <td>{% trans "Target" %}</td>
             <td>{% trans "Extent" %}</td>
             <td>{% trans "LUN" %}</td>
+            <td></td>
    	</tr>
            </thead>
     {% for tte in asctarget_list %}
@@ -29,7 +30,7 @@
     </tr>
     {% empty %}
     <tr>
-        <td colspan="9">{% trans "No targets defined" %}</td>
+        <td colspan="4">{% trans "No targets defined" %}</td>
     </tr>
     {% endfor %}
     </table>

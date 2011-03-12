@@ -23,7 +23,8 @@ generate_istgt_config()
 	local IFS=\|
 
 	# Generate [Global] section
-        local fields="iscsi_basename iscsi_mediadirectory iscsi_discoveryauthmethod iscsi_discoveryauthgroup iscsi_iotimeout iscsi_nopinint iscsi_maxsesh iscsi_maxconnect iscsi_r2t iscsi_maxoutstandingr2t iscsi_firstburst iscsi_maxburst iscsi_maxrecdata iscsi_defaultt2w iscsi_defaultt2r iscsi_toggleluc iscsi_lucip iscsi_lucport iscsi_luc_authnetwork iscsi_luc_authmethod iscsi_luc_authgroup"
+        local iscsi_mediadirectory="/mnt"
+        local fields="iscsi_basename iscsi_discoveryauthmethod iscsi_discoveryauthgroup iscsi_iotimeout iscsi_nopinint iscsi_maxsesh iscsi_maxconnect iscsi_r2t iscsi_maxoutstandingr2t iscsi_firstburst iscsi_maxburst iscsi_maxrecdata iscsi_defaultt2w iscsi_defaultt2r iscsi_toggleluc iscsi_lucip iscsi_lucport iscsi_luc_authnetwork iscsi_luc_authmethod iscsi_luc_authgroup"
 	eval local ${fields}
 	local csfields
 	csfields=`echo ${fields} | sed -e 's/ /, /g'`
@@ -34,12 +35,14 @@ generate_istgt_config()
 		echo "  NodeBase \"${iscsi_basename}\""
 		echo "  PidFile \"${pidfile}\""
 		echo "  AuthFile \"${ISTGT_AUTHFILE}\""
-		echo "  MediaDirectory \"${iscsi_mediadirectory}\""
+		echo "  MediaDirectory /mnt"
 		echo "  Timeout ${iscsi_iotimeout}"
 		echo "  NopInInterval ${iscsi_nopinint}"
 		echo "  MaxR2T ${iscsi_r2t}"
 		echo "  DiscoveryAuthMethod ${iscsi_discoveryauthmethod}"
-		echo "  DiscoveryAuthGroup ${iscsi_discoveryauthgroup}"
+		if [ -n "${iscsi_discoveryauthgroup}" -a "${iscsi_discoveryauthmethod}" != "None" ]; then
+			echo "  DiscoveryAuthGroup AuthGroup${iscsi_discoveryauthgroup}"
+		fi
 		echo "  MaxSessions ${iscsi_maxsesh}"
 		echo "  MaxConnections ${iscsi_maxconnect}"
 		echo "  FirstBurstLength ${iscsi_firstburst}"
@@ -53,12 +56,11 @@ generate_istgt_config()
 		echo "[UnitControl]"
                 if [ ${iscsi_toggleluc} = "1" ]; then
 			echo "  AuthMethod ${iscsi_luc_authmethod}"
-			echo "  AuthGroup AuthGroup${iscsi_luc_authgroup}"
+			if [ -n "${iscsi_luc_authgroup}" -a "${iscsi_luc_authmethod}" != "None" ]; then
+				echo "  AuthGroup AuthGroup${iscsi_luc_authgroup}"
+			fi
 			echo "  Portal UC1 ${iscsi_lucip}:${iscsi_lucport}"
 			echo "  Netmask ${iscsi_luc_authnetwork}"
-		else
-			echo "  AuthMethod CHAP Mutual"
-			echo "  AuthGroup AuthGroup10000"
 		fi
 		echo
         done
@@ -92,9 +94,10 @@ generate_istgt_config()
 
 	# Generate [LogicalUnitNN] sections
 	echo "# LogicalUnit section"
-	local fields="iscsi_target_logical_blocksize iscsi_target_portalgroup iscsi_target_queue_depth iscsi_target_name iscsi_target_initiatorgroup iscsi_target_alias iscsi_target_type iscsi_target_authgroup iscsi_target_authtype iscsi_target_initialdigest iscsi_target_flags id"
+	local fields="iscsi_target_logical_blocksize iscsi_target_portalgroup_id iscsi_target_queue_depth iscsi_target_name iscsi_target_initiatorgroup_id iscsi_target_alias iscsi_target_type iscsi_target_authgroup iscsi_target_authtype iscsi_target_initialdigest iscsi_target_flags id"
 	eval local ${fields}
 	local csfields
+	iscsi_target_lun=0
 	csfields=`echo ${fields} | sed -e 's/ /, /g'`
         ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${csfields} FROM services_iscsitarget ORDER BY id" | \
         while eval read ${fields}; do
@@ -103,10 +106,12 @@ generate_istgt_config()
 		if [ -n "${iscsi_target_alias}" ]; then
 			echo "  TargetAlias \"${iscsi_target_alias}\""
 		fi
-		echo "  Mapping PortalGroup${iscsi_target_portalgroup} InitiatorGroup${iscsi_target_initiatorgroup}"
+		echo "  Mapping PortalGroup${iscsi_target_portalgroup_id} InitiatorGroup${iscsi_target_initiatorgroup_id}"
 		echo "  AuthMethod ${iscsi_target_authtype}"
-		echo "  AuthGroup AuthGroup${iscsi_target_authgroup}"
-		echo "  UseDigest ${iscsi_target_initialdigest}"
+		if [ -n "${iscsi_target_authgroup}" -a "${iscsi_target_authtype}" != "None" ]; then
+			echo "  AuthGroup AuthGroup${iscsi_target_authgroup}"
+		fi
+		echo "  UseDigest Auto"
 		if [ "${iscsi_target_flags}" = "rw" ]; then
 			echo "  ReadOnly No"
 		else
@@ -117,16 +122,18 @@ generate_istgt_config()
 		echo "  BlockLength ${iscsi_target_logical_blocksize}"
 		echo "  QueueDepth ${iscsi_target_queue_depth}"
 		local iscsi_target_extent_path iscsi_target_extent_filesize iscsi_target_lun
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT e.iscsi_target_extent_path, e.iscsi_target_extent_filesize, t.iscsi_target_lun FROM services_iscsitargetextent AS e LEFT OUTER JOIN services_iscsitargettoextent AS t ON e.id = t.iscsi_extent_id WHERE t.iscsi_target_id = ${id}" | \
-		while read iscsi_target_extent_path iscsi_target_extent_filesize iscsi_target_lun; do
+		iscsi_target_lun=0
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT e.iscsi_target_extent_path, e.iscsi_target_extent_filesize FROM services_iscsitargetextent AS e LEFT OUTER JOIN services_iscsitargettoextent AS t ON e.id = t.iscsi_extent_id WHERE t.iscsi_target_id = ${id}" | \
+		while read iscsi_target_extent_path iscsi_target_extent_filesize; do
 			echo -n "  LUN${iscsi_target_lun} Storage ${iscsi_target_extent_path}"
 			if [ -c "${iscsi_target_extent_path}" ]; then
 				echo " auto"
-			elif [ "${iscsi_target_extent_filesize}" -gt 0 ]; then
-				echo " ${iscsi_target_extent_filesize}"
-			else
+			elif [ "${iscsi_target_extent_filesize}" = "0" ]; then
 				echo " auto"
+			else
+				echo " ${iscsi_target_extent_filesize}"
 			fi
+			iscsi_target_lun=$((${iscsi_target_lun}+1))
 		done
 	done
 }
@@ -154,25 +161,29 @@ generate_istgt_ctlfile()
 	local user pass peeruser peerpass
 
 	# Generate [Global] section
-        local fields="iscsi_basename iscsi_iotimeout iscsi_lucip iscsi_lucport iscsi_luc_authnetwork iscsi_luc_authmethod iscsi_luc_authgroup"
+        local fields="iscsi_basename iscsi_iotimeout iscsi_lucip iscsi_lucport iscsi_luc_authnetwork iscsi_luc_authmethod iscsi_luc_authgroup iscsi_toggleluc"
 	eval local ${fields}
 	local csfields
 	csfields=`echo ${fields} | sed -e 's/ /, /g'`
         ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${csfields} FROM services_iscsitargetglobalconfiguration ORDER BY -id LIMIT 1" | \
         while eval read ${fields}; do
-		echo "# Global section"
-		echo "[Global]"
-		echo "  Timeout ${iscsi_iotimeout}"
-		echo "  AuthMethod ${iscsi_luc_authmethod}"
-		echo "  Host ${iscsi_lucip}"
-		echo "  Port ${iscsi_lucport}"
-		echo "  Lun 0"
-		echo "  Flags ro"
-		echo "  Size auto"
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT iscsi_target_auth_user, iscsi_target_auth_secret, iscsi_target_auth_peeruser, iscsi_target_auth_peersecret FROM services_iscsitargetauthcredential WHERE iscsi_target_auth_tag=${iscsi_luc_authgroup} ORDER BY id" | \
-		while read user pass peeruser peerpass; do
-			echo "  Auth \"${user}\" \"${pass}\" \"${peeruser}\" \"${peerpass}\""
-		done
+		if [ "${iscsi_toggleluc}" = "1" ]; then
+			echo "# Global section"
+			echo "[Global]"
+			echo "  Timeout ${iscsi_iotimeout}"
+			echo "  AuthMethod ${iscsi_luc_authmethod}"
+			echo "  Host ${iscsi_lucip}"
+			echo "  Port ${iscsi_lucport}"
+			echo "  Lun 0"
+			echo "  Flags ro"
+			echo "  Size auto"
+			if [ -n "${iscsi_luc_authgroup}" -a "${iscsi_luc_authmethod}" != "None" ]; then
+				${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT iscsi_target_auth_user, iscsi_target_auth_secret, iscsi_target_auth_peeruser, iscsi_target_auth_peersecret FROM services_iscsitargetauthcredential WHERE iscsi_target_auth_tag=${iscsi_luc_authgroup} ORDER BY id" | \
+				while read user pass peeruser peerpass; do
+					echo "  Auth \"${user}\" \"${pass}\" \"${peeruser}\" \"${peerpass}\""
+				done
+			fi
+		fi
 		echo
 	done
 }

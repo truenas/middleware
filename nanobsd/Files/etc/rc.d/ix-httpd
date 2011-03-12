@@ -7,18 +7,162 @@
 # REQUIRE: FILESYSTEMS
 # BEFORE: lighttpd
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
-: ${HTTPD_DIR:="/usr/local/etc/lighttpd"}
-: ${HTTPD_CONF:="${HTTPD_DIR}/lighttpd.conf"}
+mount_w()
+{
+	mount -uw /
+	return $?
+}
+
+mount_r()
+{
+	mount -ur /
+	return $?
+}
+
 
 generate_httpd_conf()
 {
-	# Stub!
+	local res=1
+	local ssl_enable="${1}"
+	local tmp="/var/tmp/lighttpd.conf"
+
+	awk -v ssl_enable="${ssl_enable}" \
+		-v ssl_cert="${HTTPDCERT}" \
+		-v httpd_port="${HTTPDPORT}" \
+		-v httpd_ssl_port="${HTTPDSSLPORT}" '
+		BEGIN {
+			ssl_engine = 0;
+			ssl_pemfile = 0;
+		}
+
+		{
+			if (/^(( |\t)*)?server.port/) {
+				if (ssl_enable) {
+					sub(httpd_port, httpd_ssl_port, $0);
+				} else {
+					sub(httpd_ssl_port, httpd_port, $0);
+				}
+				print $0;
+
+			} else if (/^(( |\t)*)?ssl\.engine/) {
+				next;
+
+			} else if (/^(( |\t)*)?ssl\.pemfile/) {
+				next;
+
+			} else {
+				print $0;
+			}
+		}
+
+		END {
+			if (ssl_enable) {
+				printf("ssl.engine = \"enable\"\n");
+				printf("ssl.pemfile = \"%s\"\n", ssl_cert);
+			}
+		}
+	' < "${HTTPDCONF}" > "${tmp}"
+	
+	${HTTPD} -t -f "${tmp}" >/dev/null 2>&1
+	if [ "$?" = "0" ]
+	then
+		mount_w
+		mv "${tmp}" "${HTTPDCONF}"
+		res=0
+		mount_r
+	fi
+
+	return ${res}
+}
+
+test_httpd_config()
+{
+	local ssl_enable="${1}"
+	local proto="http"
+	local res=1
+
+	if [ "${ssl_enable}" = "1" ]
+	then
+		proto="https"
+	fi
+
+	${HTTPDSCRIPT} onestop >/dev/null 2>&1
+	${HTTPDSCRIPT} onestart >/dev/null 2>&1
+	if [ "$?" = "0" ]
+	then
+		sleep 5
+		fetch -q -o /var/tmp/.fetch.txt "${proto}://localhost"
+		res="$?"
+
+		rm -f /var/tmp/.fetch.txt
+	fi
+
+	return ${res}
+}
+
+set_stg_guiprotocol()
+{
+	local res=1
+	local proto="${1}"
+
+	if [ "${proto}" = "http" -o "${proto}" = "https" ]
+	then
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		UPDATE
+			system_settings
+		SET
+			stg_guiprotocol = '${proto}'
+		"
+		res=$?
+	fi
+
+	return ${res}
+}
+
+do_httpd_config()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		stg_guiprotocol
+	FROM
+		system_settings
+	" | \
+	while read proto
+	do
+		local ssl_enable=0
+
+		proto=$(echo "${proto}"|tr a-z A-Z)
+		case "${proto}" in
+			HTTP) ssl_enable=0; ;;
+			HTTPS) ssl_enable=1; ;;
+		esac
+
+		if [ "${ssl_enable}" = "1" -a ! -f "${SSLCONF}" ]
+		then
+			set_stg_guiprotocol "http"
+			ssl_enable=0
+		fi
+
+		generate_httpd_conf "${ssl_enable}"
+		if ! test_httpd_config "${ssl_enable}"
+		then
+
+			if [ "${ssl_enable}" = "1" ]
+			then
+				ssl_enable=0
+				set_stg_guiprotocol "http"
+			fi
+
+			generate_httpd_conf "${ssl_enable}"
+			${HTTPDSCRIPT} start
+		fi
+	done
 }
 
 name="ix-httpd"
-start_cmd='generate_httpd_conf'
+start_cmd='do_httpd_config'
 stop_cmd=':'
             
 load_rc_config $name
