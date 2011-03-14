@@ -655,11 +655,16 @@ def shutdown():
 
 def show_ip():
     from os import system
+    ret = system("sockstat -4p 443 | grep lighttpd")
+    if not ret:
+        proto = "https"
+    else:
+        proto = "http"
     print """
 You may try the following URLs to access the web user interface:
 """
     system('ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
-           'sed -e s,^,http://,g -e s,$,/,g')
+           'sed -e s,^,%s://,g -e s,$,/,g' % proto)
 
 def main_menu():
     handler = { 1: configure_interface,
