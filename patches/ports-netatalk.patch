@@ -1,6 +1,5 @@
-Index: net/netatalk/files/netatalk.in
---- net/netatalk/files/netatalk.in.orig	2010-09-28 21:31:50.000000000 -0600
-+++ net/netatalk/files/netatalk.in	2010-09-28 21:32:49.000000000 -0600
+--- net/netatalk/files/netatalk.in.orig	2010-03-26 19:13:49.000000000 -0500
++++ net/netatalk/files/netatalk.in	2011-03-16 13:58:05.473751692 -0500
 @@ -11,16 +11,6 @@
  # other processes.
  #
@@ -18,7 +17,15 @@ Index: net/netatalk/files/netatalk.in
  netatalk_enable=${netatalk_enable-"NO"}
  atalkd_enable=${atalkd_enable-"NO"}
  papd_enable=${papd_enable-"NO"}
-@@ -46,13 +36,7 @@
+@@ -33,6 +23,7 @@
+ name=netatalk
+ rcvar=`set_rcvar`
+ hostname=`hostname -s`
++pidfile="/var/run/afpd.pid"
+ 
+ start_cmd=netatalk_start
+ stop_cmd=netatalk_stop
+@@ -46,19 +37,20 @@
      checkyesno papd_enable && %%PREFIX%%/sbin/papd
      checkyesno cnid_metad_enable && %%PREFIX%%/sbin/cnid_metad
      checkyesno timelord_enable && %%PREFIX%%/sbin/timelord
@@ -29,7 +36,23 @@ Index: net/netatalk/files/netatalk.in
 -		-g ${AFPD_GUEST} \
 -		-c ${AFPD_MAX_CLIENTS} \
 -		${AFPD_UAMLIST}
-+    checkyesno afpd_enable && %%PREFIX%%/sbin/afpd -F /etc/afpd.conf
++    checkyesno afpd_enable && %%PREFIX%%/sbin/afpd -P ${pidfile} -F /etc/afpd.conf
  }
  
  netatalk_stop() {
+-    checkyesno timelord_enable && killall timelord
+-    checkyesno afpd_enable && killall afpd
+-    checkyesno cnid_metad_enable && killall cnid_metad
++    checkyesno timeloard_enable && killall timelord
++    if [ -f ${pidfile} ]; then
++        kill `cat ${pidfile}`
++        if [ $? -ne 0 ]; then
++            kill -9 `cat ${pidfile}`
++        fi
++    else
++        killall afpd
++    fi
++    killall cnid_metad
+     checkyesno papd_enable && killall papd
+     checkyesno atalkd_enable && killall atalkd
+ }
