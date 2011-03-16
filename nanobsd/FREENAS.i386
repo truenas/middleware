@@ -107,6 +107,11 @@ device		atapifd		# ATAPI floppy drives
 device		atapist		# ATAPI tape drives
 options 	ATA_STATIC_ID	# Static device numbering
 
+# SATA controllers
+device          ahci            # CAM-based SATA controllers
+device          ada             # SATA drives
+device          siis
+
 # SCSI Controllers
 device		ahb		# EISA AHA1742 family
 device		ahc		# AHA2940 and onboard AIC7xxx devices
