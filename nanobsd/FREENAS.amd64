@@ -105,6 +105,7 @@ options 	ATA_STATIC_ID	# Static device numbering
 device		ahci		# CAM-based SATA controllers
 device		ada		# SATA drives
 device		siis
+device		mvs
 
 # SCSI Controllers
 device		ahc		# AHA2940 and onboard AIC7xxx devices

@@ -111,6 +111,7 @@ options 	ATA_STATIC_ID	# Static device numbering
 device          ahci            # CAM-based SATA controllers
 device          ada             # SATA drives
 device          siis
+device		mvs
 
 # SCSI Controllers
 device		ahb		# EISA AHA1742 family
