@@ -41,7 +41,7 @@ from django.conf import settings
 from datetime import datetime
 from freenasUI.choices import *
 from freeadmin.models import Model
-from storage.models import MountPoint as MountPoint
+from storage.models import MountPoint, Volume
    
 mountpoint_limiter = { 'mp_path__startswith': '/mnt/' }
 
@@ -185,6 +185,13 @@ class AFP(Model):
     afp_srv_guest = models.BooleanField(
             verbose_name=_("Guess Access"),
             help_text=_("Allows guest access to all apple shares on this box.")
+            )
+    afp_srv_guest_user = models.CharField(
+            max_length=120, 
+            choices=whoChoices(), 
+            default = "www", 
+            verbose_name=_("Guest account"), 
+            help_text=_("Use this option to override the username ('www' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login.")
             )
     afp_srv_local = models.BooleanField(
             verbose_name=_("Local Access"),
@@ -394,6 +401,12 @@ class iSCSITargetExtent(Model):
         icon_view = u"ViewAllExtentsIcon"
     def __unicode__(self):
         return unicode(self.iscsi_target_extent_name)
+    def delete(self):
+        if self.iscsi_target_extent_path[:5] == '/dev/':
+            expected_iscsi_volume_name = 'iscsi:' + self.iscsi_target_extent_path[5:]
+            vol = Volume.objects.get(vol_name = expected_iscsi_volume_name)
+            vol.delete()
+        super(iSCSITargetExtent, self).delete()
 
 class iSCSITargetPortal(Model):
     iscsi_target_portal_tag = models.IntegerField(
@@ -989,8 +1002,8 @@ class ActiveDirectory(Model):
             )
     ad_netbiosname = models.CharField(
             max_length=120,
-            verbose_name = _("Domain Name (NetBIOS-Name)"),
-            help_text = _("Domain Name in old format, eg EXAMPLE")
+            verbose_name = _("Host Name (NetBIOS-Name)"),
+            help_text = _("Host Name in old format, eg EXAMPLE")
             )
     ad_workgroup = models.CharField(
             max_length=120,

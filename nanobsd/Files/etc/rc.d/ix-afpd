@@ -43,7 +43,7 @@ on_off()
 generate_afpd_config()
 {
     local IFS=\|
-    local f="afp_srv_name afp_srv_guest afp_srv_local afp_srv_ddp"
+    local f="afp_srv_name afp_srv_guest afp_srv_local afp_srv_ddp afp_srv_guest_user"
     eval local $f
     local sf=$(echo $f | sed -e 's/ /, /g')
 
@@ -54,7 +54,8 @@ generate_afpd_config()
 	cat <<EOF
 "${afp_srv_name}" $(bool_off ${afp_srv_ddp} "-noddp") -nosavepassword \\
 -defaultvol ${afpd_avdefault} -systemvol ${afpd_avsystem} \\
--uservol -uampath /usr/local/libexec/netatalk-uams -guestname "ftp" \\
+-uservol -uampath /usr/local/libexec/netatalk-uams \\
+-guestname ${afp_srv_guest_user} \\
 EOF
 	if [ ${afp_srv_guest} -eq 1 -a ${afp_srv_local} -eq 0 ]; then
 	    echo "-uamlist uams_guest.so"
