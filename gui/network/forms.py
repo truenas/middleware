@@ -114,7 +114,7 @@ class VLANForm(ModelForm):
                                         "XX is a integer")
         return name
 
-    del clean_vlan_tag(self):
+    def clean_vlan_tag(self):
         tag = self.cleaned_data['vlan_tag']
         if  tag > 4095:
             raise forms.ValidationError("VLAN Tags are 1 - 4095 inclusive")
