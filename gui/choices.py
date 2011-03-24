@@ -29,6 +29,8 @@
 from os import popen
 from django.utils.translation import ugettext as _
 import re
+import sqlite3
+import freenasUI.settings
 
 RSYNCJob_Choices = (
         ('local', 'local'),
@@ -159,27 +161,27 @@ temp = [str(x) for x in xrange(25, 32)]
 DAYS3_CHOICES = tuple(zip(temp, temp))
 
 MONTHS_CHOICES = (
-        ('January',   _('January')),
-        ('February',  _('February')),
-        ('March',     _('March')),
-        ('April',     _('April')),
-        ('May',       _('May')),
-        ('June',      _('June')),
-        ('July',      _('July')),
-        ('August',    _('August')),
-        ('September', _('September')),
-        ('October',   _('October')),
-        ('November',  _('November')),
-        ('December',  _('December')),
+        ('1', _('January')),
+        ('2', _('February')),
+        ('3', _('March')),
+        ('4', _('April')),
+        ('5', _('May')),
+        ('6', _('June')),
+        ('7', _('July')),
+        ('8', _('August')),
+        ('9', _('September')),
+        ('a', _('October')),
+        ('b', _('November')),
+        ('c', _('December')),
         )
 WEEKDAYS_CHOICES = (
-        ('Monday',    _('Monday')),
-        ('Tuesday',   _('Tuseday')),
-        ('Wednesday', _('Wednesday')),
-        ('Thursday',  _('Thursday')),
-        ('Friday',    _('Friday')),
-        ('Saturday',  _('Saturday')),
-        ('Sunday',    _('Sunday')),
+        ('1', _('Monday')),
+        ('2', _('Tuseday')),
+        ('3', _('Wednesday')),
+        ('4', _('Thursday')),
+        ('5', _('Friday')),
+        ('6', _('Saturday')),
+        ('7', _('Sunday')),
         )
 
 VolumeType_Choices = (
@@ -335,18 +337,63 @@ class whoChoices:
 ## Network|Interface Management
 class NICChoices:
     """Populate a list of NIC choices"""
-    def __init__(self, nolagg=False):
+    def __init__(self, nolagg=False, novlan=False):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
+        # Remove lo0 from choices
+        if 'lo0' in self._NIClist:
+            self._NIClist.remove('lo0')
+        conn = sqlite3.connect(freenasUI.settings.DATABASE_NAME)
+        c = conn.cursor()
+        # Remove interfaces that are parent devices of a lagg
+        # Database queries are wrapped in try/except as this is run
+        # before the database is created during syncdb and the queries
+        # will fail
+        try:
+            c.execute("SELECT lagg_physnic FROM network_lagginterfacemembers")
+        except sqlite3.OperationalError:
+            pass
+        else:
+            for interface in c:
+                if interface[0] in self._NIClist:
+                     self._NIClist.remove(interface[0])
 
-        # Remove lo0 and plip0 from choices
-        for nic in ('lo0', 'plip0'):
-            if nic in self._NIClist:
-                self._NIClist.remove(nic)
         if nolagg:
+            # vlan devices are not valid parents of laggs
             for nic in self._NIClist:
-                if nic[0:4]=='lagg':
+                if nic.startswith('lagg'):
                     self._NIClist.remove(nic)
+            for nic in self._NIClist:
+                if nic.startswith('vlan'):
+                    self._NIClist.remove(nic)
+        if novlan:
+            for nic in self._NIClist:
+                if nic.startswith('vlan'):
+                    self._NIClist.remove(nic)
+        else:
+            # This removes devices that are parents of vlans.  We don't
+            # remove these devices if we are adding a vlan since multiple
+            # vlan devices may share the same parent.
+            try:
+                 c.execute("SELECT vlan_pint FROM network_vlan")
+            except sqlite3.OperationalError:
+                pass
+            else:
+                for interface in c:
+                    if interface[0] in self._NIClist:
+                        self._NIClist.remove(interface[0])
+
+        try:
+            # Exclude any configured interfaces
+            c.execute("SELECT int_interface FROM network_interfaces "
+                      "WHERE int_ipv4address != '' OR int_dhcp != '0' "
+                      "OR int_ipv6auto != '0' OR int_ipv6address != ''")
+        except sqlite3.OperationalError:
+            pass
+        else:
+            for interface in c:
+                if interface[0] in self._NIClist:
+                    self._NIClist.remove(interface[0])
 
         self.max_choices = len(self._NIClist)
 

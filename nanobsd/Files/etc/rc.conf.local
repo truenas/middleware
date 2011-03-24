@@ -38,6 +38,7 @@ _interface_config()
 	local IFS=\|
 	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options
 	local lagg_id laggproto lagg_physnic lagg_deviceoptions
+	local vlan_vint vlan_pint vlan_tag
 
 	ipv6_interfaces=""
 
@@ -54,10 +55,10 @@ _interface_config()
 		echo -n ifconfig_${interface}=\"
 		if [ "${dodhcp}" = "1" ]; then
 			echo -n "DHCP"
+		elif [ -n "${ipv4addr}" ]; then
+			echo -n "inet ${ipv4addr}/${ipv4netmask} "
 		else
-			if [ -n "${ipv4addr}" ]; then
-				echo -n "inet ${ipv4addr}/${ipv4netmask} "
-			fi
+			echo -n "UP"
 		fi
 		if [ -n "${options}" ]; then
 			echo -n " ${options}"
@@ -82,7 +83,7 @@ _interface_config()
 			ipv6_interfaces="${ipv6_interfaces} ${interface}"
 		fi
 		if [ -n "${lagg_id}" ]; then
-			echo cloned_interfaces=\"${interface} \${cloned_interfaces}\"
+			echo cloned_interfaces=\"${interface}\ ${cloned_interfaces}\"
 		fi
 		# TODO: Since the variable exists only in the subshell, we 
 		# have to make a workaround.
@@ -96,6 +97,26 @@ _interface_config()
 	while read lagg_physnic lagg_deviceoptions; do
 		echo "ifconfig_${lagg_physnic}=\"${lagg_deviceoptions}\""
 	done
+		# Hook to support vlan interfaces
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_ipv4address, int_v4netmaskbit, int_dhcp, int_ipv6address, int_v6netmaskbit, int_ipv6auto, network_vlan.vlan_vint, network_vlan.vlan_pint, network_vlan.vlan_tag FROM network_interfaces INNER JOIN network_vlan ON network_interfaces.int_interface=network_vlan.vlan_vint" | \
+		while read ipv4addr ipv4netmask dodhcp ipv6addr ipv6netmask doipv6auto vlan_vint vlan_pint vlan_tag; do
+			echo vlans_${vlan_pint}=\"${vlan_vint}\" 
+			echo create_args_${vlan_vint}=\"vlan\ ${vlan_tag}\"
+			echo -n ifconfig_${vlan_vint}=\"
+				if [ "${dodhcp}" = "1" ]; then
+					echo  DHCP\"
+				elif [ -n "${ipv4addr}" ]; then
+					echo  "inet ${ipv4addr}/${ipv4netmask}\""
+				else
+					echo UP\"
+				fi
+		done
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint, vlan_pint, vlan_tag from network_vlan WHERE vlan_vint NOT IN (SELECT int_interface from network_interfaces);" | \
+		while read vlan_vint vlan_pint vlan_tag; do
+			echo vlans_${vlan_pint}=\"${vlan_vint}\" 
+			echo create_args_${vlan_vint}=\"vlan\ ${vlan_tag}\"
+		done
+			
 }
 
 _host_config()

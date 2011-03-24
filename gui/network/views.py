@@ -52,29 +52,44 @@ import commands
 
 def _lagg_performadd(lagg):
     # Search for a available slot for laggX interface
-    interface_names = [v[0] for v in Interfaces.objects.all().values_list('int_interface')]
+    interface_names = [v[0] for v in 
+                       Interfaces.objects.all().values_list('int_interface')]
     candidate_index = 0
     while ("lagg%d" % (candidate_index)) in interface_names:
-        candidate_index = candidate_index + 1
-    lagg_name = "lagg%d" % (candidate_index)
+        candidate_index += 1
+    lagg_name = "lagg%d" % candidate_index
     lagg_protocol = lagg.cleaned_data['lagg_protocol']
     lagg_member_list = lagg.cleaned_data['lagg_interfaces']
-    # Step 1: Create an entry in interface table that represents the lagg interface
-    lagg_interface = Interfaces(int_interface = lagg_name, int_name = lagg_name, int_dhcp = True, int_ipv6auto = False)
+    # Step 1: Create an entry in interface table that
+    # represents the lagg interface
+    lagg_interface = Interfaces(int_interface = lagg_name,
+                                int_name = lagg_name,
+                                int_dhcp = False,
+                                int_ipv6auto = False
+                                )
     lagg_interface.save()
     # Step 2: Write associated lagg attributes
-    lagg_interfacegroup = LAGGInterface(lagg_interface = lagg_interface, lagg_protocol = lagg_protocol)
+    lagg_interfacegroup = LAGGInterface(lagg_interface = lagg_interface,
+                                        lagg_protocol = lagg_protocol
+                                        )
     lagg_interfacegroup.save()
     # Step 3: Write lagg's members in the right order
     order = 0
     for interface in lagg_member_list:
-        lagg_member_entry = LAGGInterfaceMembers(lagg_interfacegroup = lagg_interfacegroup, lagg_ordernum = order, lagg_physnic = interface, lagg_deviceoptions = 'up')
+        lagg_member_entry = LAGGInterfaceMembers(
+                                      lagg_interfacegroup = lagg_interfacegroup,
+                                      lagg_ordernum = order,
+                                      lagg_physnic = interface,
+                                      lagg_deviceoptions = 'up'
+                                      )
         lagg_member_entry.save()
         order = order + 1
 
 @login_required
 def network(request, objtype = None):
-    gc = GlobalConfigurationForm(data = GlobalConfiguration.objects.order_by("-id").values()[0])
+    gc = GlobalConfigurationForm(
+            data = GlobalConfiguration.objects.order_by("-id").values()[0]
+            )
     if objtype != None:
         focus_form = objtype
     else:
@@ -161,8 +176,6 @@ def summary(request):
 
     if 'lo0' in int_list:
         int_list.remove('lo0')
-    if 'plip0' in int_list:
-        int_list.remove('plip0')
 
     ifaces = []
     for iface in int_list:
@@ -265,7 +278,11 @@ def lagg_add(request):
         lagg = LAGGInterfaceForm(request.POST)
         if lagg.is_valid():
             _lagg_performadd(lagg)
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully added") % "LAGG"}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps(
+                       { "error": False,
+                         "message": _("%s successfully added") % "LAGG" }),
+                       mimetype="application/json"
+                       )
             #return render_to_response('network/lagg_add_ok.html')
             #return HttpResponseRedirect('/network/global/lagg/')
 
@@ -278,7 +295,10 @@ def lagg_add(request):
 def globalconf(request):
 
     extra_context = {}
-    gc = GlobalConfigurationForm(data = GlobalConfiguration.objects.order_by("-id").values()[0], auto_id=False)
+    gc = GlobalConfigurationForm(
+            data = GlobalConfiguration.objects.order_by("-id").values()[0],
+            auto_id=False
+            )
     if request.method == 'POST':
         gc = GlobalConfigurationForm(request.POST,auto_id=False)
         if gc.is_valid():
@@ -294,7 +314,9 @@ def globalconf(request):
 
 @login_required
 def lagg_members(request, object_id):
-    laggmembers = LAGGInterfaceMembers.objects.filter(lagg_interfacegroup = object_id) 
+    laggmembers = LAGGInterfaceMembers.objects.filter(
+                      lagg_interfacegroup = object_id
+                      )
     variables = RequestContext(request, {
         'focused_tab' : 'account',
         'laggmembers': laggmembers,
@@ -303,7 +325,9 @@ def lagg_members(request, object_id):
 
 @login_required
 def lagg_members2(request, object_id):
-    laggmembers = LAGGInterfaceMembers.objects.filter(lagg_interfacegroup = object_id) 
+    laggmembers = LAGGInterfaceMembers.objects.filter(
+                      lagg_interfacegroup = object_id
+                      ) 
     variables = RequestContext(request, {
         'laggmembers': laggmembers,
     })
@@ -326,10 +350,10 @@ def generic_delete(request, object_id, objtype):
 @login_required
 def generic_update(request, object_id, objtype):
     objtype2form = {
-            'int':   ( Interfaces, InterfaceEditForm ),
-            'vlan':   ( VLAN, None ),
-            'laggint':   ( LAGGInterfaceMembers, LAGGInterfaceMemberForm ),
-            'sr':   ( StaticRoute, None ),
+            'int':     (Interfaces, InterfaceEditForm),
+            'vlan':    (VLAN, None),
+            'laggint': (LAGGInterfaceMembers, LAGGInterfaceMemberForm),
+            'sr':      (StaticRoute, None),
             } 
     model, form_class = objtype2form[objtype]
     return update_object(
@@ -338,4 +362,3 @@ def generic_update(request, object_id, objtype):
         object_id = object_id, 
         post_save_redirect = '/network/' + objtype + '/view/',
         )
-

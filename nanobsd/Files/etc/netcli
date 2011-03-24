@@ -49,7 +49,7 @@ from django.db import models
 from freenasUI.choices import NICChoices, LAGGType
 from freenasUI.network import models
 from freenasUI.network.models import GlobalConfiguration, Interfaces, \
-	LAGGInterface, LAGGInterfaceMembers, StaticRoute
+	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
 from freenasUI.middleware.notifier import notifier
 
 
@@ -429,6 +429,71 @@ def configure_lagg_interface():
     print "The system must be rebooted for these changes to take effect."
     return True
 
+def create_vlan():
+
+    vlan = VLAN()
+
+    # Select parent interface
+    while True:
+        i = 0
+        nics = {}
+        choices = NICChoices(novlan=True)
+        for c in choices:
+            nics[i] = c[0]
+            print "%d) %s" % (i + 1, nics[i])
+            i += 1
+	
+        regex = "^[1-%d]$" % i
+
+        i = raw_input("Select a parent interface (q to quit): ")
+        if re.match(regex, i):
+            vlan_pint = nics[int(i) - 1]
+            break
+        elif i.lower().startswith("q"):
+            return True
+        else:
+            continue
+    # Get interface name
+    while True:
+        vlan_vint = raw_input("Enter an interface name "
+                              "(vlanXX) or a to abort: ")
+        if vlan_vint == "a":
+            return
+        if not re.match(r'vlan\d+', vlan_vint):
+            print "Interface name must be vlanXX where XX is a number"
+            continue
+        break
+    # Get vlan tag
+    while True:
+        vlan_tag = raw_input("Enter a VLAN Tag or a to abort: ")
+        if vlan_tag == "a":
+            return
+        if not re.match(r'\d+', vlan_tag):
+            print "VLAN Tag must be an integer"
+            continue
+        break
+    # Get VLAN description
+    vlan_description = raw_input("Enter VLAN description: ")
+
+    vlan.vlan_pint = vlan_pint
+    vlan.vlan_vint = vlan_vint
+    vlan.vlan_tag = vlan_tag
+    vlan.vlan_description = vlan_description
+    print "Saving VLAN interface:",
+    try:
+        vlan.save()
+    except:
+        print "Failed"
+        return False
+    print "Ok"
+    print "Restarting network:",
+    try:
+        notifier().start("network")
+    except:
+        print "Failed"
+        return False
+    print "ok"
+    return True
 
 def configure_ipv4_default_route(gc):
     gwprompt = prompt("IPv4 Default Route", gc.gc_ipv4gateway)
@@ -669,12 +734,13 @@ You may try the following URLs to access the web user interface:
 def main_menu():
     handler = { 1: configure_interface,
                 2: configure_lagg_interface,
-                3: configure_default_route,
-                4: configure_static_routes,
-                5: configure_dns,
-                6: shell,
-                7: reboot,
-                8: shutdown
+                3: create_vlan,
+                4: configure_default_route,
+                5: configure_static_routes,
+                6: configure_dns,
+                7: shell,
+                8: reboot,
+                9: shutdown
               }
 
     while True:
@@ -683,17 +749,18 @@ Console setup
 -------------
 1) Configure Network Interfaces
 2) Configure Link Aggregation
-3) Configure Default Route
-4) Configure Static Routes
-5) Configure DNS
-6) Shell
-7) Reboot
-8) Shutdown
+3) Create VLAN Interface
+4) Configure Default Route
+5) Configure Static Routes
+6) Configure DNS
+7) Shell
+8) Reboot
+9) Shutdown
         """
         show_ip()
 
-        ch = raw_input("Enter an option from 1-8: ")
-        if re.match("^[1-8]$", ch):
+        ch = raw_input("Enter an option from 1-9: ")
+        if re.match("^[1-9]$", ch):
             handler[int(ch)]()
             continue
         else:

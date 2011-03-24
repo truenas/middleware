@@ -40,10 +40,18 @@ from freenasUI.common.forms import Form
 from freenasUI.middleware.notifier import notifier
 #TODO: do not import *
 from freenasUI.network.models import *                         
+import re
 
 class InterfacesForm(ModelForm):
     class Meta:
         model = Interfaces 
+
+    int_interface = forms.ChoiceField(label = "NIC")
+
+    def __init__(self, *args, **kwargs):
+        super(InterfacesForm, self).__init__(*args, **kwargs)
+        self.fields['int_interface'].choices = NICChoices()
+
     def save(self):
         # TODO: new IP address should be added in a side-by-side manner
 	    # or the interface wouldn't appear once IP was changed.
@@ -61,13 +69,15 @@ class GlobalConfigurationForm(ModelForm):
         nameserver3 = cleaned_data.get("gc_nameserver3")
         if nameserver3 != "":
             if nameserver2 == "":
-                msg = _(u"Must fill out nameserver 2 before filling out nameserver 3")
+                msg = _(u"Must fill out nameserver 2 before "
+                         "filling out nameserver 3")
                 self._errors["gc_nameserver3"] = self.error_class([msg])
                 msg = _(u"Required when using nameserver 3")
                 self._errors["gc_nameserver2"] = self.error_class([msg])
                 del cleaned_data["gc_nameserver2"]
             if nameserver1 == "":
-                msg = _(u"Must fill out nameserver 1 before filling out nameserver 3")
+                msg = _(u"Must fill out nameserver 1 before "
+                         "filling out nameserver 3")
                 self._errors["gc_nameserver3"] = self.error_class([msg])
                 msg = _(u"Required when using nameserver 3")
                 self._errors["gc_nameserver1"] = self.error_class([msg])
@@ -77,7 +87,8 @@ class GlobalConfigurationForm(ModelForm):
         elif nameserver2 != "":
             if nameserver1 == "":
                 del cleaned_data["gc_nameserver2"]
-                msg = _(u"Must fill out nameserver 1 before filling out nameserver 2")
+                msg = _(u"Must fill out nameserver 1 before "
+                         "filling out nameserver 2")
                 self._errors["gc_nameserver2"] = self.error_class([msg])
                 msg = _(u"Required when using nameserver 3")
                 self._errors["gc_nameserver1"] = self.error_class([msg])
@@ -90,39 +101,46 @@ class GlobalConfigurationForm(ModelForm):
         notifier().reload("networkgeneral")
 
 class VLANForm(ModelForm):
+    vlan_pint = forms.ChoiceField(label = "Parent Interface")
+
+    def __init__(self, *args, **kwargs):
+        super(VLANForm, self).__init__(*args, **kwargs)
+        self.fields['vlan_pint'].choices = list(NICChoices(novlan = True))
+
+    def clean_vlan_vint(self):
+        name = self.cleaned_data['vlan_vint']
+        if not re.match(r'vlan\d+', name):
+            raise forms.ValidationError("The name must be vlanXX where "
+                                        "XX is a integer")
+        return name
+
+    del clean_vlan_tag(self):
+        tag = self.cleaned_data['vlan_tag']
+        if  tag > 4095:
+            raise forms.ValidationError("VLAN Tags are 1 - 4095 inclusive")
+        return tag
+
     class Meta:
         model = VLAN 
+
+    def save(self):
+        super(VLANForm, self).save()
+        notifier().start("network")
 
 attrs_dict = { 'class': 'required' }
 
 class LAGGInterfaceForm(forms.Form):
-    lagg_protocol = forms.ChoiceField(choices=LAGGType, \
-            widget=forms.RadioSelect(attrs=attrs_dict))
-    lagg_interfaces = forms.MultipleChoiceField(choices=list(NICChoices(nolagg=True)), \
-            widget=forms.SelectMultiple(attrs=attrs_dict), \
-            label = _('Physical NICs in the LAGG'))
+    lagg_protocol = forms.ChoiceField(choices=LAGGType,
+                          widget=forms.RadioSelect(attrs=attrs_dict))
+    lagg_interfaces = forms.MultipleChoiceField(
+                            widget=forms.SelectMultiple(attrs=attrs_dict),
+                            label = _('Physical NICs in the LAGG')
+                            )
 
     def __init__(self, *args, **kwargs):
         super(LAGGInterfaceForm, self).__init__(*args, **kwargs)
-        choices = self.fields['lagg_interfaces'].choices
-        nics = [value for value, label in choices]
+        self.fields['lagg_interfaces'].choices = list(NICChoices(nolagg = True))
 
-        physnics = LAGGInterfaceMembers.objects.filter(lagg_physnic__in=nics).values('lagg_physnic')
-        for each in physnics:
-            choices.remove( (each['lagg_physnic'], each['lagg_physnic']) )
-
-        self.fields['lagg_interfaces'].choices = choices
-
-    def clean_lagg_interfaces(self):
-
-        ifaces = self.cleaned_data['lagg_interfaces']
-        physnics = LAGGInterfaceMembers.objects.filter(lagg_physnic__in=ifaces).values_list('lagg_physnic')
-        if len(physnics) > 0:
-            if len(physnics) == 1:
-                raise forms.ValidationError(_("The interfaces %s is already registered for another LAGG Interface") % ( physnics[0] ) )
-            else:
-                raise forms.ValidationError(_("The interfaces (%s) are already registered for another LAGG Interface") % ( ','.join([v[0] for v in physnics]) ) )
-        return self.cleaned_data['lagg_interfaces']
 
 class LAGGInterfaceMemberForm(ModelForm):
     class Meta:
@@ -143,7 +161,10 @@ class InterfaceEditForm(InterfacesForm):
         super(InterfaceEditForm, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
         if instance and instance.id:
-            self.fields['int_interface'] = forms.CharField(initial = instance.int_interface, widget = forms.TextInput(attrs = { 'readonly' : True }))
+            self.fields['int_interface'] = (
+                forms.CharField(initial = instance.int_interface,
+                                widget = forms.TextInput(
+                                attrs = { 'readonly' : True })))
     def clean(self):
         super(InterfaceEditForm, self).clean()
         if 'int_interface' in self._errors:

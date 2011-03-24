@@ -99,7 +99,6 @@ class Interfaces(Model):
 
     int_interface = models.CharField(
             max_length=300, 
-            choices=list(NICChoices()), 
             blank=False, 
             verbose_name=_("NIC"),
             help_text=_("Pick your NIC")
@@ -175,16 +174,15 @@ class Interfaces(Model):
 class VLAN(Model):
     vlan_vint = models.CharField(
             max_length=120, 
-            verbose_name=_("Virtual Interface")
+            verbose_name=_("Virtual Interface"),
+            help_text=_("Interface names must be vlanXX where XX is a number")
             )
     vlan_pint = models.CharField(
             max_length=300, 
-            choices=NICChoices(), 
             blank=False, 
             verbose_name=_("Physical Interface")
             )
-    vlan_tag = models.CharField(
-            max_length=120, 
+    vlan_tag = models.PositiveIntegerField(
             verbose_name=_("VLAN Tag")
             )
     vlan_description = models.CharField(
