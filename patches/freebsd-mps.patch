@@ -1,8 +1,37 @@
-diff -x .svn -urN sys/dev/mps/mpi/mpi2.h sys/dev/mps/mpi/mpi2.h
---- sys/dev/mps/mpi/mpi2.h	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mpi/mpi2.h	2010-12-07 19:16:16.000000000 -0700
+Index: sys/amd64/conf/GENERIC
+===================================================================
+--- sys/amd64/conf/GENERIC	(revision 219973)
++++ sys/amd64/conf/GENERIC	(working copy)
+@@ -114,6 +114,7 @@
+ device		isp		# Qlogic family
+ #device		ispfw		# Firmware for QLogic HBAs- normally a module
+ device		mpt		# LSI-Logic MPT-Fusion
++device		mps		# LSI-Logic MPT-Fusion 2
+ #device		ncr		# NCR/Symbios Logic
+ device		sym		# NCR/Symbios Logic (newer chipsets + those of `ncr')
+ device		trm		# Tekram DC395U/UW/F DC315U adapters
+Index: sys/conf/files
+===================================================================
+--- sys/conf/files	(revision 219973)
++++ sys/conf/files	(working copy)
+@@ -1302,6 +1302,11 @@
+ dev/mmc/mmcbus_if.m		standard
+ dev/mmc/mmcsd.c			optional mmcsd
+ dev/mn/if_mn.c			optional mn pci
++dev/mps/mps.c			optional mps
++dev/mps/mps_pci.c		optional mps pci
++dev/mps/mps_sas.c		optional mps
++dev/mps/mps_table.c		optional mps
++dev/mps/mps_user.c		optional mps
+ dev/mpt/mpt.c			optional mpt
+ dev/mpt/mpt_cam.c		optional mpt
+ dev/mpt/mpt_debug.c		optional mpt
+Index: sys/dev/mps/mpi/mpi2.h
+===================================================================
+--- sys/dev/mps/mpi/mpi2.h	(revision 0)
++++ sys/dev/mps/mpi/mpi2.h	(revision 0)
 @@ -0,0 +1,1121 @@
-+/* $FreeBSD: stable/8/sys/dev/mps/mpi/mpi2.h 212420 2010-09-10 15:03:56Z ken $ */
++/* $FreeBSD$ */
 +/*
 + *  Copyright (c) 2000-2009 LSI Corporation.
 + *
@@ -1123,11 +1152,22 @@ diff -x .svn -urN sys/dev/mps/mpi/mpi2.h sys/dev/mps/mpi/mpi2.h
 +
 +#endif
 +
-diff -x .svn -urN sys/dev/mps/mpi/mpi2_cnfg.h sys/dev/mps/mpi/mpi2_cnfg.h
---- sys/dev/mps/mpi/mpi2_cnfg.h	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mpi/mpi2_cnfg.h	2010-12-07 19:16:16.000000000 -0700
+
+Property changes on: sys/dev/mps/mpi/mpi2.h
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mpi/mpi2_cnfg.h
+===================================================================
+--- sys/dev/mps/mpi/mpi2_cnfg.h	(revision 0)
++++ sys/dev/mps/mpi/mpi2_cnfg.h	(revision 0)
 @@ -0,0 +1,2646 @@
-+/* $FreeBSD: stable/8/sys/dev/mps/mpi/mpi2_cnfg.h 212420 2010-09-10 15:03:56Z ken $ */
++/* $FreeBSD$ */
 +/*
 + *  Copyright (c) 2000-2009 LSI Corporation.
 + *
@@ -3773,11 +3813,22 @@ diff -x .svn -urN sys/dev/mps/mpi/mpi2_cnfg.h sys/dev/mps/mpi/mpi2_cnfg.h
 +
 +#endif
 +
-diff -x .svn -urN sys/dev/mps/mpi/mpi2_hbd.h sys/dev/mps/mpi/mpi2_hbd.h
---- sys/dev/mps/mpi/mpi2_hbd.h	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mpi/mpi2_hbd.h	2010-12-07 19:16:16.000000000 -0700
+
+Property changes on: sys/dev/mps/mpi/mpi2_cnfg.h
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mpi/mpi2_hbd.h
+===================================================================
+--- sys/dev/mps/mpi/mpi2_hbd.h	(revision 0)
++++ sys/dev/mps/mpi/mpi2_hbd.h	(revision 0)
 @@ -0,0 +1,114 @@
-+/* $FreeBSD: stable/8/sys/dev/mps/mpi/mpi2_hbd.h 212420 2010-09-10 15:03:56Z ken $ */
++/* $FreeBSD$ */
 +/*
 + *  Copyright (c) 2009 LSI Corporation.
 + *
@@ -3891,11 +3942,22 @@ diff -x .svn -urN sys/dev/mps/mpi/mpi2_hbd.h sys/dev/mps/mpi/mpi2_hbd.h
 +#endif
 +
 +
-diff -x .svn -urN sys/dev/mps/mpi/mpi2_history.txt sys/dev/mps/mpi/mpi2_history.txt
---- sys/dev/mps/mpi/mpi2_history.txt	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mpi/mpi2_history.txt	2010-12-07 19:16:16.000000000 -0700
+
+Property changes on: sys/dev/mps/mpi/mpi2_hbd.h
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mpi/mpi2_history.txt
+===================================================================
+--- sys/dev/mps/mpi/mpi2_history.txt	(revision 0)
++++ sys/dev/mps/mpi/mpi2_history.txt	(revision 0)
 @@ -0,0 +1,382 @@
-+/* $FreeBSD: stable/8/sys/dev/mps/mpi/mpi2_history.txt 212420 2010-09-10 15:03:56Z ken $ */
++/* $FreeBSD$ */
 + ==============================
 + Fusion-MPT MPI 2.0 Header File Change History
 + ==============================
@@ -4277,11 +4339,22 @@ diff -x .svn -urN sys/dev/mps/mpi/mpi2_history.txt sys/dev/mps/mpi/mpi2_history.
 +mpi2_tool.h  02.00.01  02.00.00  02.00.00  02.00.00  02.00.00  02.00.00
 +mpi2_type.h  02.00.00  02.00.00  02.00.00  02.00.00  02.00.00  02.00.00
 +
-diff -x .svn -urN sys/dev/mps/mpi/mpi2_init.h sys/dev/mps/mpi/mpi2_init.h
---- sys/dev/mps/mpi/mpi2_init.h	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mpi/mpi2_init.h	2010-12-07 19:16:16.000000000 -0700
+
+Property changes on: sys/dev/mps/mpi/mpi2_history.txt
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mpi/mpi2_init.h
+===================================================================
+--- sys/dev/mps/mpi/mpi2_init.h	(revision 0)
++++ sys/dev/mps/mpi/mpi2_init.h	(revision 0)
 @@ -0,0 +1,454 @@
-+/* $FreeBSD: stable/8/sys/dev/mps/mpi/mpi2_init.h 212420 2010-09-10 15:03:56Z ken $ */
++/* $FreeBSD$ */
 +/*
 + *  Copyright (c) 2000-2009 LSI Corporation.
 + *
@@ -4735,11 +4808,22 @@ diff -x .svn -urN sys/dev/mps/mpi/mpi2_init.h sys/dev/mps/mpi/mpi2_init.h
 +#endif
 +
 +
-diff -x .svn -urN sys/dev/mps/mpi/mpi2_ioc.h sys/dev/mps/mpi/mpi2_ioc.h
---- sys/dev/mps/mpi/mpi2_ioc.h	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mpi/mpi2_ioc.h	2010-12-07 19:16:16.000000000 -0700
+
+Property changes on: sys/dev/mps/mpi/mpi2_init.h
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mpi/mpi2_ioc.h
+===================================================================
+--- sys/dev/mps/mpi/mpi2_ioc.h	(revision 0)
++++ sys/dev/mps/mpi/mpi2_ioc.h	(revision 0)
 @@ -0,0 +1,1414 @@
-+/* $FreeBSD: stable/8/sys/dev/mps/mpi/mpi2_ioc.h 212420 2010-09-10 15:03:56Z ken $ */
++/* $FreeBSD$ */
 +/*
 + *  Copyright (c) 2000-2009 LSI Corporation.
 + *
@@ -6153,11 +6237,22 @@ diff -x .svn -urN sys/dev/mps/mpi/mpi2_ioc.h sys/dev/mps/mpi/mpi2_ioc.h
 +
 +#endif
 +
-diff -x .svn -urN sys/dev/mps/mpi/mpi2_ra.h sys/dev/mps/mpi/mpi2_ra.h
---- sys/dev/mps/mpi/mpi2_ra.h	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mpi/mpi2_ra.h	2010-12-07 19:16:16.000000000 -0700
+
+Property changes on: sys/dev/mps/mpi/mpi2_ioc.h
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mpi/mpi2_ra.h
+===================================================================
+--- sys/dev/mps/mpi/mpi2_ra.h	(revision 0)
++++ sys/dev/mps/mpi/mpi2_ra.h	(revision 0)
 @@ -0,0 +1,86 @@
-+/* $FreeBSD: stable/8/sys/dev/mps/mpi/mpi2_ra.h 212420 2010-09-10 15:03:56Z ken $ */
++/* $FreeBSD$ */
 +/*
 + *  Copyright (c) 2009 LSI Corporation.
 + *
@@ -6243,11 +6338,22 @@ diff -x .svn -urN sys/dev/mps/mpi/mpi2_ra.h sys/dev/mps/mpi/mpi2_ra.h
 +#endif
 +
 +
-diff -x .svn -urN sys/dev/mps/mpi/mpi2_raid.h sys/dev/mps/mpi/mpi2_raid.h
---- sys/dev/mps/mpi/mpi2_raid.h	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mpi/mpi2_raid.h	2010-12-07 19:16:16.000000000 -0700
+
+Property changes on: sys/dev/mps/mpi/mpi2_ra.h
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mpi/mpi2_raid.h
+===================================================================
+--- sys/dev/mps/mpi/mpi2_raid.h	(revision 0)
++++ sys/dev/mps/mpi/mpi2_raid.h	(revision 0)
 @@ -0,0 +1,302 @@
-+/* $FreeBSD: stable/8/sys/dev/mps/mpi/mpi2_raid.h 212420 2010-09-10 15:03:56Z ken $ */
++/* $FreeBSD$ */
 +/*
 + *  Copyright (c) 2000-2008 LSI Corporation.
 + *
@@ -6549,11 +6655,22 @@ diff -x .svn -urN sys/dev/mps/mpi/mpi2_raid.h sys/dev/mps/mpi/mpi2_raid.h
 +
 +#endif
 +
-diff -x .svn -urN sys/dev/mps/mpi/mpi2_sas.h sys/dev/mps/mpi/mpi2_sas.h
---- sys/dev/mps/mpi/mpi2_sas.h	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mpi/mpi2_sas.h	2010-12-07 19:16:16.000000000 -0700
+
+Property changes on: sys/dev/mps/mpi/mpi2_raid.h
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mpi/mpi2_sas.h
+===================================================================
+--- sys/dev/mps/mpi/mpi2_sas.h	(revision 0)
++++ sys/dev/mps/mpi/mpi2_sas.h	(revision 0)
 @@ -0,0 +1,285 @@
-+/* $FreeBSD: stable/8/sys/dev/mps/mpi/mpi2_sas.h 212420 2010-09-10 15:03:56Z ken $ */
++/* $FreeBSD$ */
 +/*
 + *  Copyright (c) 2000-2007 LSI Corporation.
 + *
@@ -6838,11 +6955,22 @@ diff -x .svn -urN sys/dev/mps/mpi/mpi2_sas.h sys/dev/mps/mpi/mpi2_sas.h
 +#endif
 +
 +
-diff -x .svn -urN sys/dev/mps/mpi/mpi2_targ.h sys/dev/mps/mpi/mpi2_targ.h
---- sys/dev/mps/mpi/mpi2_targ.h	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mpi/mpi2_targ.h	2010-12-07 19:16:16.000000000 -0700
+
+Property changes on: sys/dev/mps/mpi/mpi2_sas.h
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mpi/mpi2_targ.h
+===================================================================
+--- sys/dev/mps/mpi/mpi2_targ.h	(revision 0)
++++ sys/dev/mps/mpi/mpi2_targ.h	(revision 0)
 @@ -0,0 +1,441 @@
-+/* $FreeBSD: stable/8/sys/dev/mps/mpi/mpi2_targ.h 212420 2010-09-10 15:03:56Z ken $ */
++/* $FreeBSD$ */
 +/*
 + *  Copyright (c) 2000-2008 LSI Corporation.
 + *
@@ -7283,11 +7411,22 @@ diff -x .svn -urN sys/dev/mps/mpi/mpi2_targ.h sys/dev/mps/mpi/mpi2_targ.h
 +
 +#endif
 +
-diff -x .svn -urN sys/dev/mps/mpi/mpi2_tool.h sys/dev/mps/mpi/mpi2_tool.h
---- sys/dev/mps/mpi/mpi2_tool.h	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mpi/mpi2_tool.h	2010-12-07 19:16:16.000000000 -0700
+
+Property changes on: sys/dev/mps/mpi/mpi2_targ.h
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mpi/mpi2_tool.h
+===================================================================
+--- sys/dev/mps/mpi/mpi2_tool.h	(revision 0)
++++ sys/dev/mps/mpi/mpi2_tool.h	(revision 0)
 @@ -0,0 +1,391 @@
-+/* $FreeBSD: stable/8/sys/dev/mps/mpi/mpi2_tool.h 212420 2010-09-10 15:03:56Z ken $ */
++/* $FreeBSD$ */
 +/*
 + *  Copyright (c) 2000-2009 LSI Corporation.
 + *
@@ -7678,11 +7817,22 @@ diff -x .svn -urN sys/dev/mps/mpi/mpi2_tool.h sys/dev/mps/mpi/mpi2_tool.h
 +
 +#endif
 +
-diff -x .svn -urN sys/dev/mps/mpi/mpi2_type.h sys/dev/mps/mpi/mpi2_type.h
---- sys/dev/mps/mpi/mpi2_type.h	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mpi/mpi2_type.h	2010-12-07 19:16:16.000000000 -0700
+
+Property changes on: sys/dev/mps/mpi/mpi2_tool.h
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mpi/mpi2_type.h
+===================================================================
+--- sys/dev/mps/mpi/mpi2_type.h	(revision 0)
++++ sys/dev/mps/mpi/mpi2_type.h	(revision 0)
 @@ -0,0 +1,99 @@
-+/* $FreeBSD: stable/8/sys/dev/mps/mpi/mpi2_type.h 212420 2010-09-10 15:03:56Z ken $ */
++/* $FreeBSD$ */
 +/*
 + *  Copyright (c) 2000-2007 LSI Corporation.
 + *
@@ -7781,10 +7931,21 @@ diff -x .svn -urN sys/dev/mps/mpi/mpi2_type.h sys/dev/mps/mpi/mpi2_type.h
 +
 +#endif
 +
-diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
---- sys/dev/mps/mps.c	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mps.c	2010-12-07 19:18:52.000000000 -0700
-@@ -0,0 +1,1734 @@
+
+Property changes on: sys/dev/mps/mpi/mpi2_type.h
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mps.c
+===================================================================
+--- sys/dev/mps/mps.c	(revision 0)
++++ sys/dev/mps/mps.c	(revision 0)
+@@ -0,0 +1,1878 @@
 +/*-
 + * Copyright (c) 2009 Yahoo! Inc.
 + * All rights reserved.
@@ -7812,7 +7973,7 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 + */
 +
 +#include <sys/cdefs.h>
-+__FBSDID("$FreeBSD: stable/8/sys/dev/mps/mps.c 212420 2010-09-10 15:03:56Z ken $");
++__FBSDID("$FreeBSD$");
 +
 +/* Communications core for LSI MPT2 */
 +
@@ -7830,6 +7991,7 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +#include <sys/malloc.h>
 +#include <sys/uio.h>
 +#include <sys/sysctl.h>
++#include <sys/endian.h>
 +
 +#include <machine/bus.h>
 +#include <machine/resource.h>
@@ -7848,6 +8010,7 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +static void mps_startup_complete(struct mps_softc *sc, struct mps_command *cm);
 +static int mps_send_iocinit(struct mps_softc *sc);
 +static int mps_attach_log(struct mps_softc *sc);
++static __inline void mps_complete_command(struct mps_command *cm);
 +static void mps_dispatch_event(struct mps_softc *sc, uintptr_t data, MPI2_EVENT_NOTIFICATION_REPLY *reply);
 +static void mps_config_complete(struct mps_softc *sc, struct mps_command *cm);
 +static void mps_periodic(void *);
@@ -8173,6 +8336,15 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +
 +	mps_dprint(sc, MPS_TRACE, "%s\n", __func__);
 +
++	if (sc->mps_flags & MPS_FLAGS_ATTACH_DONE)
++		mtx_assert(&sc->mps_mtx, MA_OWNED);
++
++	if ((cm->cm_desc.Default.SMID < 1)
++	 || (cm->cm_desc.Default.SMID >= sc->num_reqs)) {
++		mps_printf(sc, "%s: invalid SMID %d, desc %#x %#x\n",
++			   __func__, cm->cm_desc.Default.SMID,
++			   cm->cm_desc.Words.High, cm->cm_desc.Words.Low);
++	}
 +	mps_regwrite(sc, MPI2_REQUEST_DESCRIPTOR_POST_LOW_OFFSET,
 +	    cm->cm_desc.Words.Low);
 +	mps_regwrite(sc, MPI2_REQUEST_DESCRIPTOR_POST_HIGH_OFFSET,
@@ -8394,9 +8566,16 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +static int
 +mps_alloc_replies(struct mps_softc *sc)
 +{
-+	int rsize;
++	int rsize, num_replies;
 +
-+	rsize = sc->facts->ReplyFrameSize * sc->num_replies * 4; 
++	/*
++	 * sc->num_replies should be one less than sc->fqdepth.  We need to
++	 * allocate space for sc->fqdepth replies, but only sc->num_replies
++	 * replies can be used at once.
++	 */
++	num_replies = max(sc->fqdepth, sc->num_replies);
++
++	rsize = sc->facts->ReplyFrameSize * num_replies * 4; 
 +        if (bus_dma_tag_create( sc->mps_parent_dmat,    /* parent */
 +				4, 0,			/* algnmnt, boundary */
 +				BUS_SPACE_MAXADDR_32BIT,/* lowaddr */
@@ -8511,6 +8690,7 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +		chain->chain_busaddr = sc->chain_busaddr +
 +		    i * sc->facts->IOCRequestFrameSize * 4;
 +		mps_free_chain(sc, chain);
++		sc->chain_free_lowwater++;
 +	}
 +
 +	/* XXX Need to pick a more precise value */
@@ -8569,11 +8749,19 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +
 +	memset((uint8_t *)sc->post_queue, 0xff, sc->pqdepth * 8);
 +
++	/*
++	 * According to the spec, we need to use one less reply than we
++	 * have space for on the queue.  So sc->num_replies (the number we
++	 * use) should be less than sc->fqdepth (allocated size).
++	 */
 +	if (sc->num_replies >= sc->fqdepth)
 +		return (EINVAL);
 +
-+	for (i = 0; i < sc->num_replies; i++)
-+		sc->free_queue[i] = sc->reply_busaddr + i * sc->facts->ReplyFrameSize * 4;
++	/*
++	 * Initialize all of the free queue entries.
++	 */
++	for (i = 0; i < sc->fqdepth; i++)
++		sc->free_queue[i] = sc->reply_busaddr + (i * sc->facts->ReplyFrameSize * 4);
 +	sc->replyfreeindex = sc->num_replies;
 +
 +	return (0);
@@ -8626,6 +8814,26 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +	    &sc->allow_multiple_tm_cmds, 0,
 +	    "allow multiple simultaneous task management cmds");
 +
++	SYSCTL_ADD_INT(&sc->sysctl_ctx, SYSCTL_CHILDREN(sc->sysctl_tree),
++	    OID_AUTO, "io_cmds_active", CTLFLAG_RD,
++	    &sc->io_cmds_active, 0, "number of currently active commands");
++
++	SYSCTL_ADD_INT(&sc->sysctl_ctx, SYSCTL_CHILDREN(sc->sysctl_tree),
++	    OID_AUTO, "io_cmds_highwater", CTLFLAG_RD,
++	    &sc->io_cmds_highwater, 0, "maximum active commands seen");
++
++	SYSCTL_ADD_INT(&sc->sysctl_ctx, SYSCTL_CHILDREN(sc->sysctl_tree),
++	    OID_AUTO, "chain_free", CTLFLAG_RD,
++	    &sc->chain_free, 0, "number of free chain elements");
++
++	SYSCTL_ADD_INT(&sc->sysctl_ctx, SYSCTL_CHILDREN(sc->sysctl_tree),
++	    OID_AUTO, "chain_free_lowwater", CTLFLAG_RD,
++	    &sc->chain_free_lowwater, 0,"lowest number of free chain elements");
++
++	SYSCTL_ADD_QUAD(&sc->sysctl_ctx, SYSCTL_CHILDREN(sc->sysctl_tree),
++	    OID_AUTO, "chain_alloc_fail", CTLFLAG_RD,
++	    &sc->chain_alloc_fail, "chain allocation failures");
++
 +	if ((error = mps_transition_ready(sc)) != 0)
 +		return (error);
 +
@@ -8666,9 +8874,12 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +	sc->num_reqs = MIN(MPS_REQ_FRAMES, sc->facts->RequestCredit);
 +	sc->num_replies = MIN(MPS_REPLY_FRAMES + MPS_EVT_REPLY_FRAMES,
 +	    sc->facts->MaxReplyDescriptorPostQueueDepth) - 1;
++	mps_dprint(sc, MPS_INFO, "num_reqs %d, num_replies %d\n", sc->num_reqs,
++		   sc->num_replies);
 +	TAILQ_INIT(&sc->req_list);
 +	TAILQ_INIT(&sc->chain_list);
 +	TAILQ_INIT(&sc->tm_list);
++	TAILQ_INIT(&sc->io_list);
 +
 +	if (((error = mps_alloc_queues(sc)) != 0) ||
 +	    ((error = mps_alloc_replies(sc)) != 0) ||
@@ -8694,7 +8905,6 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +	 * replies.
 +	 */
 +	sc->replypostindex = 0;
-+	sc->replycurindex = 0;
 +	mps_regwrite(sc, MPI2_REPLY_FREE_HOST_INDEX_OFFSET, sc->replyfreeindex);
 +	mps_regwrite(sc, MPI2_REPLY_POST_HOST_INDEX_OFFSET, 0);
 +
@@ -8738,6 +8948,8 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +		mps_dprint(sc, MPS_FAULT, "Cannot establish MPS config hook\n");
 +		error = EINVAL;
 +	}
++
++	sc->mps_flags |= MPS_FLAGS_ATTACH_DONE;
 +
 +	return (error);
 +}
@@ -8938,6 +9150,22 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +	return (0);
 +}
 +
++static __inline void
++mps_complete_command(struct mps_command *cm)
++{
++	if (cm->cm_flags & MPS_CM_FLAGS_POLLED)
++		cm->cm_flags |= MPS_CM_FLAGS_COMPLETE;
++
++	if (cm->cm_complete != NULL)
++		cm->cm_complete(cm->cm_sc, cm);
++
++	if (cm->cm_flags & MPS_CM_FLAGS_WAKEUP) {
++		mps_dprint(cm->cm_sc, MPS_TRACE, "%s: waking up %p\n",
++			   __func__, cm);
++		wakeup(cm);
++	}
++}
++
 +void
 +mps_intr(void *data)
 +{
@@ -8998,7 +9226,8 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +		desc = &sc->post_queue[pq];
 +		flags = desc->Default.ReplyFlags &
 +		    MPI2_RPY_DESCRIPT_FLAGS_TYPE_MASK;
-+		if (flags == MPI2_RPY_DESCRIPT_FLAGS_UNUSED)
++		if ((flags == MPI2_RPY_DESCRIPT_FLAGS_UNUSED)
++		 || (desc->Words.High == 0xffffffff))
 +			break;
 +
 +		switch (flags) {
@@ -9011,9 +9240,36 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +			uint32_t baddr;
 +			uint8_t *reply;
 +
++			/*
++			 * Re-compose the reply address from the address
++			 * sent back from the chip.  The ReplyFrameAddress
++			 * is the lower 32 bits of the physical address of
++			 * particular reply frame.  Convert that address to
++			 * host format, and then use that to provide the
++			 * offset against the virtual address base
++			 * (sc->reply_frames).
++			 */
++			baddr = le32toh(desc->AddressReply.ReplyFrameAddress);
 +			reply = sc->reply_frames +
-+			    sc->replycurindex * sc->facts->ReplyFrameSize * 4;
-+			baddr = desc->AddressReply.ReplyFrameAddress;
++				(baddr - ((uint32_t)sc->reply_busaddr));
++			/*
++			 * Make sure the reply we got back is in a valid
++			 * range.  If not, go ahead and panic here, since
++			 * we'll probably panic as soon as we deference the
++			 * reply pointer anyway.
++			 */
++			if ((reply < sc->reply_frames)
++			 || (reply > (sc->reply_frames +
++			     (sc->fqdepth * sc->facts->ReplyFrameSize * 4)))) {
++				printf("%s: WARNING: reply %p out of range!\n",
++				       __func__, reply);
++				printf("%s: reply_frames %p, fqdepth %d, "
++				       "frame size %d\n", __func__,
++				       sc->reply_frames, sc->fqdepth,
++				       sc->facts->ReplyFrameSize * 4);
++				printf("%s: baddr %#x,\n", __func__, baddr);
++				panic("Reply address out of range");
++			}
 +			if (desc->AddressReply.SMID == 0) {
 +				mps_dispatch_event(sc, baddr,
 +				   (MPI2_EVENT_NOTIFICATION_REPLY *) reply);
@@ -9023,8 +9279,6 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +				cm->cm_reply_data =
 +				    desc->AddressReply.ReplyFrameAddress;
 +			}
-+			if (++sc->replycurindex >= sc->fqdepth)
-+				sc->replycurindex = 0;
 +			break;
 +		}
 +		case MPI2_RPY_DESCRIPT_FLAGS_TARGETASSIST_SUCCESS:
@@ -9038,16 +9292,8 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +			break;
 +		}
 +
-+		if (cm != NULL) {
-+			if (cm->cm_flags & MPS_CM_FLAGS_POLLED)
-+				cm->cm_flags |= MPS_CM_FLAGS_COMPLETE;
-+
-+			if (cm->cm_complete != NULL)
-+				cm->cm_complete(sc, cm);
-+
-+			if (cm->cm_flags & MPS_CM_FLAGS_WAKEUP)
-+				wakeup(cm);
-+		}
++		if (cm != NULL)
++			mps_complete_command(cm);
 +
 +		desc->Words.Low = 0xffffffff;
 +		desc->Words.High = 0xffffffff;
@@ -9069,7 +9315,7 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +    MPI2_EVENT_NOTIFICATION_REPLY *reply)
 +{
 +	struct mps_event_handle *eh;
-+	int event, handled = 0;;
++	int event, handled = 0;
 +
 +	event = reply->Event;
 +	TAILQ_FOREACH(eh, &sc->event_list, eh_list) {
@@ -9356,22 +9602,60 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +	sc = cm->cm_sc;
 +
 +	/*
-+	 * Set up DMA direction flags.  Note no support for
-+	 * bi-directional transactions.
++	 * In this case, just print out a warning and let the chip tell the
++	 * user they did the wrong thing.
++	 */
++	if ((cm->cm_max_segs != 0) && (nsegs > cm->cm_max_segs)) {
++		mps_printf(sc, "%s: warning: busdma returned %d segments, "
++			   "more than the %d allowed\n", __func__, nsegs,
++			   cm->cm_max_segs);
++	}
++
++	/*
++	 * Set up DMA direction flags.  Note that we don't support
++	 * bi-directional transfers, with the exception of SMP passthrough.
 +	 */
 +	sflags = 0;
-+	if (cm->cm_flags & MPS_CM_FLAGS_DATAOUT) {
++	if (cm->cm_flags & MPS_CM_FLAGS_SMP_PASS) {
++		/*
++		 * We have to add a special case for SMP passthrough, there
++		 * is no easy way to generically handle it.  The first
++		 * S/G element is used for the command (therefore the
++		 * direction bit needs to be set).  The second one is used
++		 * for the reply.  We'll leave it to the caller to make
++		 * sure we only have two buffers.
++		 */
++		/*
++		 * Even though the busdma man page says it doesn't make
++		 * sense to have both direction flags, it does in this case.
++		 * We have one s/g element being accessed in each direction.
++		 */
++		dir = BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD;
++
++		/*
++		 * Set the direction flag on the first buffer in the SMP
++		 * passthrough request.  We'll clear it for the second one.
++		 */
++		sflags |= MPI2_SGE_FLAGS_DIRECTION |
++			  MPI2_SGE_FLAGS_END_OF_BUFFER;
++	} else if (cm->cm_flags & MPS_CM_FLAGS_DATAOUT) {
 +		sflags |= MPI2_SGE_FLAGS_DIRECTION;
 +		dir = BUS_DMASYNC_PREWRITE;
 +	} else
 +		dir = BUS_DMASYNC_PREREAD;
 +
 +	for (i = 0; i < nsegs; i++) {
++		if ((cm->cm_flags & MPS_CM_FLAGS_SMP_PASS)
++		 && (i != 0)) {
++			sflags &= ~MPI2_SGE_FLAGS_DIRECTION;
++		}
 +		error = mps_add_dmaseg(cm, segs[i].ds_addr, segs[i].ds_len,
 +		    sflags, nsegs - i);
 +		if (error != 0) {
 +			/* Resource shortage, roll back! */
-+			mps_printf(sc, "out of chain frames\n");
++			mps_dprint(sc, MPS_INFO, "out of chain frames\n");
++			cm->cm_flags |= MPS_CM_FLAGS_CHAIN_FAILED;
++			mps_complete_command(cm);
 +			return;
 +		}
 +	}
@@ -9380,6 +9664,13 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +	mps_enqueue_request(sc, cm);
 +
 +	return;
++}
++
++static void
++mps_data_cb2(void *arg, bus_dma_segment_t *segs, int nsegs, bus_size_t mapsize,
++	     int error)
++{
++	mps_data_cb(arg, segs, nsegs, error);
 +}
 +
 +/*
@@ -9392,7 +9683,10 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +	MPI2_SGE_SIMPLE32 *sge;
 +	int error = 0;
 +
-+	if ((cm->cm_data != NULL) && (cm->cm_length != 0)) {
++	if (cm->cm_flags & MPS_CM_FLAGS_USE_UIO) {
++		error = bus_dmamap_load_uio(sc->buffer_dmat, cm->cm_dmamap,
++		    &cm->cm_uio, mps_data_cb2, cm, 0);
++	} else if ((cm->cm_data != NULL) && (cm->cm_length != 0)) {
 +		error = bus_dmamap_load(sc->buffer_dmat, cm->cm_dmamap,
 +		    cm->cm_data, cm->cm_length, mps_data_cb, cm, 0);
 +	} else {
@@ -9406,7 +9700,7 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +			    MPI2_SGE_FLAGS_SHIFT;
 +			sge->Address = 0;
 +		}
-+		mps_enqueue_request(sc, cm);	
++		mps_enqueue_request(sc, cm);
 +	}
 +
 +	return (error);
@@ -9501,6 +9795,15 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +		bus_dmamap_unload(sc->buffer_dmat, cm->cm_dmamap);
 +	}
 +
++	/*
++	 * XXX KDM need to do more error recovery?  This results in the
++	 * device in question not getting probed.
++	 */
++	if ((cm->cm_flags & MPS_CM_FLAGS_ERROR_MASK) != 0) {
++		params->status = MPI2_IOCSTATUS_BUSY;
++		goto bailout;
++	}
++
 +	reply = (MPI2_CONFIG_REPLY *)cm->cm_reply;
 +	params->status = reply->IOCStatus;
 +	if (params->hdr.Ext.ExtPageType != 0) {
@@ -9513,15 +9816,28 @@ diff -x .svn -urN sys/dev/mps/mps.c sys/dev/mps/mps.c
 +		params->hdr.Struct.PageVersion = reply->Header.PageVersion;
 +	}
 +
++bailout:
++
 +	mps_free_command(sc, cm);
 +	if (params->callback != NULL)
 +		params->callback(sc, params);
 +
 +	return;
 +}
-diff -x .svn -urN sys/dev/mps/mps_ioctl.h sys/dev/mps/mps_ioctl.h
---- sys/dev/mps/mps_ioctl.h	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mps_ioctl.h	2010-12-07 19:17:20.000000000 -0700
+
+Property changes on: sys/dev/mps/mps.c
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mps_ioctl.h
+===================================================================
+--- sys/dev/mps/mps_ioctl.h	(revision 0)
++++ sys/dev/mps/mps_ioctl.h	(revision 0)
 @@ -0,0 +1,106 @@
 +/*-
 + * Copyright (c) 2008 Yahoo!, Inc.
@@ -9554,7 +9870,7 @@ diff -x .svn -urN sys/dev/mps/mps_ioctl.h sys/dev/mps/mps_ioctl.h
 + *
 + * LSI MPT-Fusion Host Adapter FreeBSD userland interface
 + *
-+ * $FreeBSD: stable/8/sys/dev/mps/mps_ioctl.h 212420 2010-09-10 15:03:56Z ken $
++ * $FreeBSD$
 + */
 +
 +#ifndef _MPS_IOCTL_H_
@@ -9629,10 +9945,21 @@ diff -x .svn -urN sys/dev/mps/mps_ioctl.h sys/dev/mps/mps_ioctl.h
 +#define	MPSIO_MPS_COMMAND	_IOWR('M', 210, struct mps_usr_command)
 +
 +#endif /* !_MPS_IOCTL_H_ */
-diff -x .svn -urN sys/dev/mps/mps_pci.c sys/dev/mps/mps_pci.c
---- sys/dev/mps/mps_pci.c	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mps_pci.c	2010-12-07 19:16:16.000000000 -0700
-@@ -0,0 +1,364 @@
+
+Property changes on: sys/dev/mps/mps_ioctl.h
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mps_pci.c
+===================================================================
+--- sys/dev/mps/mps_pci.c	(revision 0)
++++ sys/dev/mps/mps_pci.c	(revision 0)
+@@ -0,0 +1,365 @@
 +/*-
 + * Copyright (c) 2009 Yahoo! Inc.
 + * All rights reserved.
@@ -9660,7 +9987,7 @@ diff -x .svn -urN sys/dev/mps/mps_pci.c sys/dev/mps/mps_pci.c
 + */
 +
 +#include <sys/cdefs.h>
-+__FBSDID("$FreeBSD: stable/8/sys/dev/mps/mps_pci.c 212420 2010-09-10 15:03:56Z ken $");
++__FBSDID("$FreeBSD$");
 +
 +/* PCI/PCI-X/PCIe bus interface for the LSI MPT2 controllers */
 +
@@ -9673,6 +10000,7 @@ diff -x .svn -urN sys/dev/mps/mps_pci.c sys/dev/mps/mps_pci.c
 +#include <sys/conf.h>
 +#include <sys/malloc.h>
 +#include <sys/sysctl.h>
++#include <sys/uio.h>
 +
 +#include <machine/bus.h>
 +#include <machine/resource.h>
@@ -9997,10 +10325,21 @@ diff -x .svn -urN sys/dev/mps/mps_pci.c sys/dev/mps/mps_pci.c
 +	return (error);
 +}
 +
-diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
---- sys/dev/mps/mps_sas.c	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mps_sas.c	2010-12-07 19:17:09.000000000 -0700
-@@ -0,0 +1,1625 @@
+
+Property changes on: sys/dev/mps/mps_pci.c
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mps_sas.c
+===================================================================
+--- sys/dev/mps/mps_sas.c	(revision 0)
++++ sys/dev/mps/mps_sas.c	(revision 0)
+@@ -0,0 +1,2144 @@
 +/*-
 + * Copyright (c) 2009 Yahoo! Inc.
 + * All rights reserved.
@@ -10028,7 +10367,7 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 + */
 +
 +#include <sys/cdefs.h>
-+__FBSDID("$FreeBSD: stable/8/sys/dev/mps/mps_sas.c 212420 2010-09-10 15:03:56Z ken $");
++__FBSDID("$FreeBSD$");
 +
 +/* Communications core for LSI MPT2 */
 +
@@ -10044,6 +10383,8 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +#include <sys/malloc.h>
 +#include <sys/uio.h>
 +#include <sys/sysctl.h>
++#include <sys/sglist.h>
++#include <sys/endian.h>
 +
 +#include <machine/bus.h>
 +#include <machine/resource.h>
@@ -10058,6 +10399,9 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +#include <cam/cam_periph.h>
 +#include <cam/scsi/scsi_all.h>
 +#include <cam/scsi/scsi_message.h>
++#if __FreeBSD_version >= 900026
++#include <cam/scsi/smp_all.h>
++#endif
 +
 +#include <dev/mps/mpi/mpi2_type.h>
 +#include <dev/mps/mpi/mpi2.h>
@@ -10072,9 +10416,11 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +	uint16_t	handle;
 +	uint8_t		linkrate;
 +	uint64_t	devname;
++	uint64_t	sasaddr;
 +	uint32_t	devinfo;
 +	uint16_t	encl_handle;
 +	uint16_t	encl_slot;
++	uint16_t	parent_handle;
 +	int		flags;
 +#define MPSSAS_TARGET_INABORT	(1 << 0)
 +#define MPSSAS_TARGET_INRESET	(1 << 1)
@@ -10117,6 +10463,7 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +
 +MALLOC_DEFINE(M_MPSSAS, "MPSSAS", "MPS SAS memory");
 +
++static __inline int mpssas_set_lun(uint8_t *lun, u_int ccblun);
 +static struct mpssas_target * mpssas_alloc_target(struct mpssas_softc *,
 +    struct mpssas_target *);
 +static struct mpssas_target * mpssas_find_target(struct mpssas_softc *, int,
@@ -10147,11 +10494,54 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +				      struct mps_command *cm, int free_cm);
 +static void mpssas_action_scsiio(struct mpssas_softc *, union ccb *);
 +static void mpssas_scsiio_complete(struct mps_softc *, struct mps_command *);
++#if __FreeBSD_version >= 900026
++static void mpssas_smpio_complete(struct mps_softc *sc, struct mps_command *cm);
++static void mpssas_send_smpcmd(struct mpssas_softc *sassc, union ccb *ccb,
++			       uint64_t sasaddr);
++static void mpssas_action_smpio(struct mpssas_softc *sassc, union ccb *ccb);
++#endif /* __FreeBSD_version >= 900026 */
 +static void mpssas_resetdev(struct mpssas_softc *, struct mps_command *);
 +static void mpssas_action_resetdev(struct mpssas_softc *, union ccb *);
 +static void mpssas_resetdev_complete(struct mps_softc *, struct mps_command *);
 +static void mpssas_freeze_device(struct mpssas_softc *, struct mpssas_target *);
 +static void mpssas_unfreeze_device(struct mpssas_softc *, struct mpssas_target *) __unused;
++
++/*
++ * Abstracted so that the driver can be backwards and forwards compatible
++ * with future versions of CAM that will provide this functionality.
++ */
++#define MPS_SET_LUN(lun, ccblun)	\
++	mpssas_set_lun(lun, ccblun)
++
++static __inline int
++mpssas_set_lun(uint8_t *lun, u_int ccblun)
++{
++	uint64_t *newlun;
++
++	newlun = (uint64_t *)lun;
++	*newlun = 0;
++	if (ccblun <= 0xff) {
++		/* Peripheral device address method, LUN is 0 to 255 */
++		lun[1] = ccblun;
++	} else if (ccblun <= 0x3fff) {
++		/* Flat space address method, LUN is <= 16383 */
++		scsi_ulto2b(ccblun, lun);
++		lun[0] |= 0x40;
++	} else if (ccblun <= 0xffffff) {
++		/* Extended flat space address method, LUN is <= 16777215 */
++		scsi_ulto3b(ccblun, &lun[1]);
++		/* Extended Flat space address method */
++		lun[0] = 0xc0;
++		/* Length = 1, i.e. LUN is 3 bytes long */
++		lun[0] |= 0x10;
++		/* Extended Address Method */
++		lun[0] |= 0x02;
++	} else {
++		return (EINVAL);
++	}
++
++	return (0);
++}
 +
 +static struct mpssas_target *
 +mpssas_alloc_target(struct mpssas_softc *sassc, struct mpssas_target *probe)
@@ -10315,6 +10705,8 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +		probe->target.devinfo = buf->DeviceInfo;
 +		probe->target.encl_handle = buf->EnclosureHandle;
 +		probe->target.encl_slot = buf->Slot;
++		probe->target.sasaddr = mps_to_u64(&buf->SASAddress);
++		probe->target.parent_handle = buf->ParentDevHandle;
 +
 +		if (buf->DeviceInfo & MPI2_SAS_DEVICE_INFO_DIRECT_ATTACH) {
 +			params->page_address =
@@ -10436,7 +10828,10 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +		return;
 +	}
 +
++	mps_dprint(sc, MPS_INFO, "Preparing to remove target %d\n", targ->tid);
++
 +	req = (MPI2_SCSI_TASK_MANAGE_REQUEST *)cm->cm_req;
++	memset(req, 0, sizeof(*req));
 +	req->DevHandle = targ->handle;
 +	req->Function = MPI2_FUNCTION_SCSI_TASK_MGMT;
 +	req->TaskType = MPI2_SCSITASKMGMT_TASKTYPE_TARGET_RESET;
@@ -10457,6 +10852,7 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +	MPI2_SCSI_TASK_MANAGE_REPLY *reply;
 +	MPI2_SAS_IOUNIT_CONTROL_REQUEST *req;
 +	struct mpssas_target *targ;
++	struct mps_command *next_cm;
 +	uint16_t handle;
 +
 +	mps_dprint(sc, MPS_TRACE, "%s\n", __func__);
@@ -10466,6 +10862,18 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +
 +	mpssas_complete_tm_request(sc, cm, /*free_cm*/ 0);
 +
++	/*
++	 * Currently there should be no way we can hit this case.  It only
++	 * happens when we have a failure to allocate chain frames, and
++	 * task management commands don't have S/G lists.
++	 */
++	if ((cm->cm_flags & MPS_CM_FLAGS_ERROR_MASK) != 0) {
++		mps_printf(sc, "%s: cm_flags = %#x for remove of handle %#04x! "
++			   "This should not happen!\n", __func__, cm->cm_flags,
++			   handle);
++		return;
++	}
++
 +	if (reply->IOCStatus != MPI2_IOCSTATUS_SUCCESS) {
 +		mps_printf(sc, "Failure 0x%x reseting device 0x%04x\n", 
 +		   reply->IOCStatus, handle);
@@ -10473,11 +10881,13 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +		return;
 +	}
 +
-+	mps_printf(sc, "Reset aborted %d commands\n", reply->TerminationCount);
++	mps_dprint(sc, MPS_INFO, "Reset aborted %u commands\n",
++	    reply->TerminationCount);
 +	mps_free_reply(sc, cm->cm_reply_data);
 +
 +	/* Reuse the existing command */
 +	req = (MPI2_SAS_IOUNIT_CONTROL_REQUEST *)cm->cm_req;
++	memset(req, 0, sizeof(*req));
 +	req->Function = MPI2_FUNCTION_SAS_IO_UNIT_CONTROL;
 +	req->Operation = MPI2_SAS_OP_REMOVE_DEVICE;
 +	req->DevHandle = handle;
@@ -10489,6 +10899,17 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +	mps_map_command(sc, cm);
 +
 +	mps_dprint(sc, MPS_INFO, "clearing target handle 0x%04x\n", handle);
++	TAILQ_FOREACH_SAFE(cm, &sc->io_list, cm_link, next_cm) {
++		union ccb *ccb;
++
++		if (cm->cm_targ->handle != handle)
++			continue;
++
++		mps_dprint(sc, MPS_INFO, "Completing missed command %p\n", cm);
++		ccb = cm->cm_complete_data;
++		ccb->ccb_h.status = CAM_DEV_NOT_THERE;
++		mpssas_scsiio_complete(sc, cm);
++	}
 +	targ = mpssas_find_target(sc->sassc, 0, handle);
 +	if (targ != NULL) {
 +		targ->handle = 0x0;
@@ -10919,6 +11340,11 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +	case XPT_SCSI_IO:
 +		mpssas_action_scsiio(sassc, ccb);
 +		return;
++#if __FreeBSD_version >= 900026
++	case XPT_SMP_IO:
++		mpssas_action_smpio(sassc, ccb);
++		return;
++#endif /* __FreeBSD_version >= 900026 */
 +	default:
 +		ccb->ccb_h.status = CAM_FUNC_NOTAVAIL;
 +		break;
@@ -11027,6 +11453,17 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +	MPI2_SCSI_TASK_MANAGE_REQUEST *req;
 +
 +	req = (MPI2_SCSI_TASK_MANAGE_REQUEST *)cm->cm_req;
++
++	/*
++	 * Currently there should be no way we can hit this case.  It only
++	 * happens when we have a failure to allocate chain frames, and
++	 * task management commands don't have S/G lists.
++	 */
++	if ((cm->cm_flags & MPS_CM_FLAGS_ERROR_MASK) != 0) {
++		mps_printf(sc, "%s: cm_flags = %#x for abort on handle %#04x! "
++			   "This should not happen!\n", __func__, cm->cm_flags,
++			   req->DevHandle);
++	}
 +
 +	mps_printf(sc, "%s: abort request on handle %#04x SMID %d "
 +		   "complete\n", __func__, req->DevHandle, req->TaskMID);
@@ -11144,7 +11581,8 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +
 +	resp = (MPI2_SCSI_TASK_MANAGE_REPLY *)cm->cm_reply;
 +
-+	resp->ResponseCode = error;
++	if (resp != NULL)
++		resp->ResponseCode = error;
 +
 +	/*
 +	 * Call the callback for this command, it will be
@@ -11294,6 +11732,7 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +	}
 +
 +	req = (MPI2_SCSI_IO_REQUEST *)cm->cm_req;
++	bzero(req, sizeof(*req));
 +	req->DevHandle = targ->handle;
 +	req->Function = MPI2_FUNCTION_SCSI_IO_REQUEST;
 +	req->MsgFlags = 0;
@@ -11349,14 +11788,12 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +		break;
 +	}
 +
-+	/* XXX Need to handle multi-level LUNs */
-+	if (csio->ccb_h.target_lun > 255) {
++	if (MPS_SET_LUN(req->LUN, csio->ccb_h.target_lun) != 0) {
 +		mps_free_command(sc, cm);
 +		ccb->ccb_h.status = CAM_LUN_INVALID;
 +		xpt_done(ccb);
 +		return;
 +	}
-+	req->LUN[1] = csio->ccb_h.target_lun;
 +
 +	if (csio->ccb_h.flags & CAM_CDB_POINTER)
 +		bcopy(csio->cdb_io.cdb_ptr, &req->CDB.CDB32[0], csio->cdb_len);
@@ -11364,6 +11801,9 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +		bcopy(csio->cdb_io.cdb_bytes, &req->CDB.CDB32[0],csio->cdb_len);
 +	req->IoFlags = csio->cdb_len;
 +
++	/*
++	 * XXX need to handle S/G lists and physical addresses here.
++	 */
 +	cm->cm_data = csio->data_ptr;
 +	cm->cm_length = csio->dxfer_len;
 +	cm->cm_sge = &req->SGL;
@@ -11374,6 +11814,11 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +	cm->cm_complete_data = ccb;
 +	cm->cm_targ = targ;
 +
++	sc->io_cmds_active++;
++	if (sc->io_cmds_active > sc->io_cmds_highwater)
++		sc->io_cmds_highwater = sc->io_cmds_active;
++
++	TAILQ_INSERT_TAIL(&sc->io_list, cm, cm_link);
 +	callout_reset(&cm->cm_callout, (ccb->ccb_h.timeout * hz) / 1000,
 +	   mpssas_scsiio_timeout, cm);
 +
@@ -11393,11 +11838,18 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +	mps_dprint(sc, MPS_TRACE, "%s\n", __func__);
 +
 +	callout_stop(&cm->cm_callout);
++	TAILQ_REMOVE(&sc->io_list, cm, cm_link);
++	sc->io_cmds_active--;
 +
 +	sassc = sc->sassc;
 +	ccb = cm->cm_complete_data;
 +	rep = (MPI2_SCSI_IO_REPLY *)cm->cm_reply;
 +
++	/*
++	 * XXX KDM if the chain allocation fails, does it matter if we do
++	 * the sync and unload here?  It is simpler to do it in every case,
++	 * assuming it doesn't cause problems.
++	 */
 +	if (cm->cm_data != NULL) {
 +		if (cm->cm_flags & MPS_CM_FLAGS_DATAIN)
 +			dir = BUS_DMASYNC_POSTREAD;
@@ -11407,15 +11859,52 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +		bus_dmamap_unload(sc->buffer_dmat, cm->cm_dmamap);
 +	}
 +
-+	if (sassc->flags & MPSSAS_QUEUE_FROZEN) {
-+		ccb->ccb_h.flags |= CAM_RELEASE_SIMQ;
-+		sassc->flags &= ~MPSSAS_QUEUE_FROZEN;
++	if ((cm->cm_flags & MPS_CM_FLAGS_ERROR_MASK) != 0) {
++		/*
++		 * We ran into an error after we tried to map the command,
++		 * so we're getting a callback without queueing the command
++		 * to the hardware.  So we set the status here, and it will
++		 * be retained below.  We'll go through the "fast path",
++		 * because there can be no reply when we haven't actually
++		 * gone out to the hardware.
++		 */
++		ccb->ccb_h.status |= CAM_REQUEUE_REQ;
++
++		/*
++		 * Currently the only error included in the mask is
++		 * MPS_CM_FLAGS_CHAIN_FAILED, which means we're out of
++		 * chain frames.  We need to freeze the queue until we get
++		 * a command that completed without this error, which will
++		 * hopefully have some chain frames attached that we can
++		 * use.  If we wanted to get smarter about it, we would
++		 * only unfreeze the queue in this condition when we're
++		 * sure that we're getting some chain frames back.  That's
++		 * probably unnecessary.
++		 */
++		if ((sassc->flags & MPSSAS_QUEUE_FROZEN) == 0) {
++			xpt_freeze_simq(sassc->sim, 1);
++			sassc->flags |= MPSSAS_QUEUE_FROZEN;
++			mps_dprint(sc, MPS_INFO, "Error sending command, "
++				   "freezing SIM queue\n");
++		}
 +	}
 +
 +	/* Take the fast path to completion */
 +	if (cm->cm_reply == NULL) {
-+		ccb->ccb_h.status = CAM_REQ_CMP;
-+		ccb->csio.scsi_status = SCSI_STATUS_OK;
++		if ((ccb->ccb_h.status & CAM_STATUS_MASK) == CAM_REQ_INPROG) {
++			ccb->ccb_h.status = CAM_REQ_CMP;
++			ccb->csio.scsi_status = SCSI_STATUS_OK;
++
++			if (sassc->flags & MPSSAS_QUEUE_FROZEN) {
++				ccb->ccb_h.status |= CAM_RELEASE_SIMQ;
++				sassc->flags &= ~MPSSAS_QUEUE_FROZEN;
++				mps_dprint(sc, MPS_INFO,
++					   "Unfreezing SIM queue\n");
++			}
++		} else {
++			ccb->ccb_h.status |= CAM_DEV_QFRZN;
++			xpt_freeze_devq(ccb->ccb_h.path, /*count*/ 1);
++		}
 +		mps_free_command(sc, cm);
 +		xpt_done(ccb);
 +		return;
@@ -11470,7 +11959,16 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +		break;
 +	case MPI2_IOCSTATUS_SCSI_IOC_TERMINATED:
 +	case MPI2_IOCSTATUS_SCSI_EXT_TERMINATED:
++#if 0
 +		ccb->ccb_h.status = CAM_REQ_ABORTED;
++#endif
++		mps_printf(sc, "(%d:%d:%d) terminated ioc %x scsi %x state %x "
++			   "xfer %u\n", xpt_path_path_id(ccb->ccb_h.path),
++			   xpt_path_target_id(ccb->ccb_h.path),
++			   xpt_path_lun_id(ccb->ccb_h.path),
++			   rep->IOCStatus, rep->SCSIStatus, rep->SCSIState,
++			   rep->TransferCount);
++		ccb->ccb_h.status = CAM_REQUEUE_REQ;
 +		break;
 +	case MPI2_IOCSTATUS_INVALID_SGL:
 +		mps_print_scsiio_cmd(sc, cm);
@@ -11524,9 +12022,355 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +	if (rep->SCSIState & MPI2_SCSI_STATE_RESPONSE_INFO_VALID)
 +		ccb->ccb_h.status = CAM_REQ_CMP_ERR;
 +
++	if (sassc->flags & MPSSAS_QUEUE_FROZEN) {
++		ccb->ccb_h.status |= CAM_RELEASE_SIMQ;
++		sassc->flags &= ~MPSSAS_QUEUE_FROZEN;
++		mps_printf(sc, "Command completed, unfreezing SIM queue\n");
++	}
++	if ((ccb->ccb_h.status & CAM_STATUS_MASK) != CAM_REQ_CMP) {
++		ccb->ccb_h.status |= CAM_DEV_QFRZN;
++		xpt_freeze_devq(ccb->ccb_h.path, /*count*/ 1);
++	}
 +	mps_free_command(sc, cm);
 +	xpt_done(ccb);
 +}
++
++#if __FreeBSD_version >= 900026
++static void
++mpssas_smpio_complete(struct mps_softc *sc, struct mps_command *cm)
++{
++	MPI2_SMP_PASSTHROUGH_REPLY *rpl;
++	MPI2_SMP_PASSTHROUGH_REQUEST *req;
++	uint64_t sasaddr;
++	union ccb *ccb;
++
++	ccb = cm->cm_complete_data;
++
++	/*
++	 * Currently there should be no way we can hit this case.  It only
++	 * happens when we have a failure to allocate chain frames, and SMP
++	 * commands require two S/G elements only.  That should be handled
++	 * in the standard request size.
++	 */
++	if ((cm->cm_flags & MPS_CM_FLAGS_ERROR_MASK) != 0) {
++		mps_printf(sc, "%s: cm_flags = %#x on SMP request!\n",
++			   __func__, cm->cm_flags);
++		ccb->ccb_h.status = CAM_REQ_CMP_ERR;
++		goto bailout;
++	}
++
++	rpl = (MPI2_SMP_PASSTHROUGH_REPLY *)cm->cm_reply;
++	if (rpl == NULL) {
++		mps_dprint(sc, MPS_INFO, "%s: NULL cm_reply!\n", __func__);
++		ccb->ccb_h.status = CAM_REQ_CMP_ERR;
++		goto bailout;
++	}
++
++	req = (MPI2_SMP_PASSTHROUGH_REQUEST *)cm->cm_req;
++	sasaddr = le32toh(req->SASAddress.Low);
++	sasaddr |= ((uint64_t)(le32toh(req->SASAddress.High))) << 32;
++
++	if ((rpl->IOCStatus & MPI2_IOCSTATUS_MASK) != MPI2_IOCSTATUS_SUCCESS ||
++	    rpl->SASStatus != MPI2_SASSTATUS_SUCCESS) {
++		mps_dprint(sc, MPS_INFO, "%s: IOCStatus %04x SASStatus %02x\n",
++		    __func__, rpl->IOCStatus, rpl->SASStatus);
++		ccb->ccb_h.status = CAM_REQ_CMP_ERR;
++		goto bailout;
++	}
++
++	mps_dprint(sc, MPS_INFO, "%s: SMP request to SAS address "
++		   "%#jx completed successfully\n", __func__,
++		   (uintmax_t)sasaddr);
++
++	if (ccb->smpio.smp_response[2] == SMP_FR_ACCEPTED)
++		ccb->ccb_h.status = CAM_REQ_CMP;
++	else
++		ccb->ccb_h.status = CAM_SMP_STATUS_ERROR;
++
++bailout:
++	/*
++	 * We sync in both directions because we had DMAs in the S/G list
++	 * in both directions.
++	 */
++	bus_dmamap_sync(sc->buffer_dmat, cm->cm_dmamap,
++			BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
++	bus_dmamap_unload(sc->buffer_dmat, cm->cm_dmamap);
++	mps_free_command(sc, cm);
++	xpt_done(ccb);
++}
++
++static void
++mpssas_send_smpcmd(struct mpssas_softc *sassc, union ccb *ccb, uint64_t sasaddr)
++{
++	struct mps_command *cm;
++	uint8_t *request, *response;
++	MPI2_SMP_PASSTHROUGH_REQUEST *req;
++	struct mps_softc *sc;
++	struct sglist *sg;
++	int error;
++
++	sc = sassc->sc;
++	sg = NULL;
++	error = 0;
++
++	/*
++	 * XXX We don't yet support physical addresses here.
++	 */
++	if (ccb->ccb_h.flags & (CAM_DATA_PHYS|CAM_SG_LIST_PHYS)) {
++		mps_printf(sc, "%s: physical addresses not supported\n",
++			   __func__);
++		ccb->ccb_h.status = CAM_REQ_INVALID;
++		xpt_done(ccb);
++		return;
++	}
++
++	/*
++	 * If the user wants to send an S/G list, check to make sure they
++	 * have single buffers.
++	 */
++	if (ccb->ccb_h.flags & CAM_SCATTER_VALID) {
++		/*
++		 * The chip does not support more than one buffer for the
++		 * request or response.
++		 */
++	 	if ((ccb->smpio.smp_request_sglist_cnt > 1)
++		  || (ccb->smpio.smp_response_sglist_cnt > 1)) {
++			mps_printf(sc, "%s: multiple request or response "
++				   "buffer segments not supported for SMP\n",
++				   __func__);
++			ccb->ccb_h.status = CAM_REQ_INVALID;
++			xpt_done(ccb);
++			return;
++		}
++
++		/*
++		 * The CAM_SCATTER_VALID flag was originally implemented
++		 * for the XPT_SCSI_IO CCB, which only has one data pointer.
++		 * We have two.  So, just take that flag to mean that we
++		 * might have S/G lists, and look at the S/G segment count
++		 * to figure out whether that is the case for each individual
++		 * buffer.
++		 */
++		if (ccb->smpio.smp_request_sglist_cnt != 0) {
++			bus_dma_segment_t *req_sg;
++
++			req_sg = (bus_dma_segment_t *)ccb->smpio.smp_request;
++			request = (uint8_t *)req_sg[0].ds_addr;
++		} else
++			request = ccb->smpio.smp_request;
++
++		if (ccb->smpio.smp_response_sglist_cnt != 0) {
++			bus_dma_segment_t *rsp_sg;
++
++			rsp_sg = (bus_dma_segment_t *)ccb->smpio.smp_response;
++			response = (uint8_t *)rsp_sg[0].ds_addr;
++		} else
++			response = ccb->smpio.smp_response;
++	} else {
++		request = ccb->smpio.smp_request;
++		response = ccb->smpio.smp_response;
++	}
++
++	cm = mps_alloc_command(sc);
++	if (cm == NULL) {
++		mps_printf(sc, "%s: cannot allocate command\n", __func__);
++		ccb->ccb_h.status = CAM_RESRC_UNAVAIL;
++		xpt_done(ccb);
++		return;
++	}
++
++	req = (MPI2_SMP_PASSTHROUGH_REQUEST *)cm->cm_req;
++	bzero(req, sizeof(*req));
++	req->Function = MPI2_FUNCTION_SMP_PASSTHROUGH;
++
++	/* Allow the chip to use any route to this SAS address. */
++	req->PhysicalPort = 0xff;
++
++	req->RequestDataLength = ccb->smpio.smp_request_len;
++	req->SGLFlags = 
++	    MPI2_SGLFLAGS_SYSTEM_ADDRESS_SPACE | MPI2_SGLFLAGS_SGL_TYPE_MPI;
++
++	mps_dprint(sc, MPS_INFO, "%s: sending SMP request to SAS "
++		   "address %#jx\n", __func__, (uintmax_t)sasaddr);
++
++	mpi_init_sge(cm, req, &req->SGL);
++
++	/*
++	 * Set up a uio to pass into mps_map_command().  This allows us to
++	 * do one map command, and one busdma call in there.
++	 */
++	cm->cm_uio.uio_iov = cm->cm_iovec;
++	cm->cm_uio.uio_iovcnt = 2;
++	cm->cm_uio.uio_segflg = UIO_SYSSPACE;
++
++	/*
++	 * The read/write flag isn't used by busdma, but set it just in
++	 * case.  This isn't exactly accurate, either, since we're going in
++	 * both directions.
++	 */
++	cm->cm_uio.uio_rw = UIO_WRITE;
++
++	cm->cm_iovec[0].iov_base = request;
++	cm->cm_iovec[0].iov_len = req->RequestDataLength;
++	cm->cm_iovec[1].iov_base = response;
++	cm->cm_iovec[1].iov_len = ccb->smpio.smp_response_len;
++
++	cm->cm_uio.uio_resid = cm->cm_iovec[0].iov_len +
++			       cm->cm_iovec[1].iov_len;
++
++	/*
++	 * Trigger a warning message in mps_data_cb() for the user if we
++	 * wind up exceeding two S/G segments.  The chip expects one
++	 * segment for the request and another for the response.
++	 */
++	cm->cm_max_segs = 2;
++
++	cm->cm_desc.Default.RequestFlags = MPI2_REQ_DESCRIPT_FLAGS_DEFAULT_TYPE;
++	cm->cm_complete = mpssas_smpio_complete;
++	cm->cm_complete_data = ccb;
++
++	/*
++	 * Tell the mapping code that we're using a uio, and that this is
++	 * an SMP passthrough request.  There is a little special-case
++	 * logic there (in mps_data_cb()) to handle the bidirectional
++	 * transfer.  
++	 */
++	cm->cm_flags |= MPS_CM_FLAGS_USE_UIO | MPS_CM_FLAGS_SMP_PASS |
++			MPS_CM_FLAGS_DATAIN | MPS_CM_FLAGS_DATAOUT;
++
++	/* The chip data format is little endian. */
++	req->SASAddress.High = htole32(sasaddr >> 32);
++	req->SASAddress.Low = htole32(sasaddr);
++
++	/*
++	 * XXX Note that we don't have a timeout/abort mechanism here.
++	 * From the manual, it looks like task management requests only
++	 * work for SCSI IO and SATA passthrough requests.  We may need to
++	 * have a mechanism to retry requests in the event of a chip reset
++	 * at least.  Hopefully the chip will insure that any errors short
++	 * of that are relayed back to the driver.
++	 */
++	error = mps_map_command(sc, cm);
++	if ((error != 0) && (error != EINPROGRESS)) {
++		mps_printf(sc, "%s: error %d returned from mps_map_command()\n",
++			   __func__, error);
++		goto bailout_error;
++	}
++
++	return;
++
++bailout_error:
++	mps_free_command(sc, cm);
++	ccb->ccb_h.status = CAM_RESRC_UNAVAIL;
++	xpt_done(ccb);
++	return;
++
++}
++
++static void
++mpssas_action_smpio(struct mpssas_softc *sassc, union ccb *ccb)
++{
++	struct mps_softc *sc;
++	struct mpssas_target *targ;
++	uint64_t sasaddr = 0;
++
++	sc = sassc->sc;
++
++	/*
++	 * Make sure the target exists.
++	 */
++	targ = &sassc->targets[ccb->ccb_h.target_id];
++	if (targ->handle == 0x0) {
++		mps_printf(sc, "%s: target %d does not exist!\n", __func__,
++			   ccb->ccb_h.target_id);
++		ccb->ccb_h.status = CAM_SEL_TIMEOUT;
++		xpt_done(ccb);
++		return;
++	}
++
++	/*
++	 * If this device has an embedded SMP target, we'll talk to it
++	 * directly.
++	 * figure out what the expander's address is.
++	 */
++	if ((targ->devinfo & MPI2_SAS_DEVICE_INFO_SMP_TARGET) != 0)
++		sasaddr = targ->sasaddr;
++
++	/*
++	 * If we don't have a SAS address for the expander yet, try
++	 * grabbing it from the page 0x83 information cached in the
++	 * transport layer for this target.  LSI expanders report the
++	 * expander SAS address as the port-associated SAS address in
++	 * Inquiry VPD page 0x83.  Maxim expanders don't report it in page
++	 * 0x83.
++	 *
++	 * XXX KDM disable this for now, but leave it commented out so that
++	 * it is obvious that this is another possible way to get the SAS
++	 * address.
++	 *
++	 * The parent handle method below is a little more reliable, and
++	 * the other benefit is that it works for devices other than SES
++	 * devices.  So you can send a SMP request to a da(4) device and it
++	 * will get routed to the expander that device is attached to.
++	 * (Assuming the da(4) device doesn't contain an SMP target...)
++	 */
++#if 0
++	if (sasaddr == 0)
++		sasaddr = xpt_path_sas_addr(ccb->ccb_h.path);
++#endif
++
++	/*
++	 * If we still don't have a SAS address for the expander, look for
++	 * the parent device of this device, which is probably the expander.
++	 */
++	if (sasaddr == 0) {
++		struct mpssas_target *parent_target;
++
++		if (targ->parent_handle == 0x0) {
++			mps_printf(sc, "%s: handle %d does not have a valid "
++				   "parent handle!\n", __func__, targ->handle);
++			ccb->ccb_h.status = CAM_REQ_INVALID;
++			goto bailout;
++		}
++		parent_target = mpssas_find_target(sassc, 0,
++						   targ->parent_handle);
++
++		if (parent_target == NULL) {
++			mps_printf(sc, "%s: handle %d does not have a valid "
++				   "parent target!\n", __func__, targ->handle);
++			ccb->ccb_h.status = CAM_REQ_INVALID;
++			goto bailout;
++		}
++
++		if ((parent_target->devinfo &
++		     MPI2_SAS_DEVICE_INFO_SMP_TARGET) == 0) {
++			mps_printf(sc, "%s: handle %d parent %d does not "
++				   "have an SMP target!\n", __func__,
++				   targ->handle, parent_target->handle);
++			ccb->ccb_h.status = CAM_REQ_INVALID;
++			goto bailout;
++
++		}
++
++		sasaddr = parent_target->sasaddr;
++	}
++
++	if (sasaddr == 0) {
++		mps_printf(sc, "%s: unable to find SAS address for handle %d\n",
++			   __func__, targ->handle);
++		ccb->ccb_h.status = CAM_REQ_INVALID;
++		goto bailout;
++	}
++	mpssas_send_smpcmd(sassc, ccb, sasaddr);
++
++	return;
++
++bailout:
++	xpt_done(ccb);
++
++}
++
++#endif /* __FreeBSD_version >= 900026 */
 +
 +static void
 +mpssas_action_resetdev(struct mpssas_softc *sassc, union ccb *ccb)
@@ -11594,6 +12438,19 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +	resp = (MPI2_SCSI_TASK_MANAGE_REPLY *)cm->cm_reply;
 +	ccb = cm->cm_complete_data;
 +
++	if ((cm->cm_flags & MPS_CM_FLAGS_ERROR_MASK) != 0) {
++		MPI2_SCSI_TASK_MANAGE_REQUEST *req;
++
++		req = (MPI2_SCSI_TASK_MANAGE_REQUEST *)cm->cm_req;
++
++		mps_printf(sc, "%s: cm_flags = %#x for reset of handle %#04x! "
++			   "This should not happen!\n", __func__, cm->cm_flags,
++			   req->DevHandle);
++
++		ccb->ccb_h.status = CAM_REQ_CMP_ERR;
++		goto bailout;
++	}
++
 +	printf("resetdev complete IOCStatus= 0x%x ResponseCode= 0x%x\n",
 +	    resp->IOCStatus, resp->ResponseCode);
 +
@@ -11602,6 +12459,7 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +	else
 +		ccb->ccb_h.status = CAM_REQ_CMP_ERR;
 +
++bailout:
 +	mpssas_complete_tm_request(sc, cm, /*free_cm*/ 1);
 +
 +	xpt_done(ccb);
@@ -11626,9 +12484,20 @@ diff -x .svn -urN sys/dev/mps/mps_sas.c sys/dev/mps/mps_sas.c
 +{
 +}
 +
-diff -x .svn -urN sys/dev/mps/mps_table.c sys/dev/mps/mps_table.c
---- sys/dev/mps/mps_table.c	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mps_table.c	2010-12-07 19:16:16.000000000 -0700
+
+Property changes on: sys/dev/mps/mps_sas.c
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mps_table.c
+===================================================================
+--- sys/dev/mps/mps_table.c	(revision 0)
++++ sys/dev/mps/mps_table.c	(revision 0)
 @@ -0,0 +1,493 @@
 +/*-
 + * Copyright (c) 2009 Yahoo! Inc.
@@ -11657,7 +12526,7 @@ diff -x .svn -urN sys/dev/mps/mps_table.c sys/dev/mps/mps_table.c
 + */
 +
 +#include <sys/cdefs.h>
-+__FBSDID("$FreeBSD: stable/8/sys/dev/mps/mps_table.c 212420 2010-09-10 15:03:56Z ken $");
++__FBSDID("$FreeBSD$");
 +
 +/* Debugging tables for MPT2 */
 +
@@ -12123,9 +12992,20 @@ diff -x .svn -urN sys/dev/mps/mps_table.c sys/dev/mps/mps_table.c
 +	mps_print_sgl(sc, cm, req->SGLOffset0);
 +}
 +
-diff -x .svn -urN sys/dev/mps/mps_table.h sys/dev/mps/mps_table.h
---- sys/dev/mps/mps_table.h	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mps_table.h	2010-12-07 19:16:16.000000000 -0700
+
+Property changes on: sys/dev/mps/mps_table.c
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mps_table.h
+===================================================================
+--- sys/dev/mps/mps_table.h	(revision 0)
++++ sys/dev/mps/mps_table.h	(revision 0)
 @@ -0,0 +1,53 @@
 +/*-
 + * Copyright (c) 2009 Yahoo! Inc.
@@ -12152,7 +13032,7 @@ diff -x .svn -urN sys/dev/mps/mps_table.h sys/dev/mps/mps_table.h
 + * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 + * SUCH DAMAGE.
 + *
-+ * $FreeBSD: stable/8/sys/dev/mps/mps_table.h 212420 2010-09-10 15:03:56Z ken $
++ * $FreeBSD$
 + */
 +
 +#ifndef _MPS_TABLE_H
@@ -12180,9 +13060,20 @@ diff -x .svn -urN sys/dev/mps/mps_table.h sys/dev/mps/mps_table.h
 +void mps_print_sgl(struct mps_softc *, struct mps_command *, int);
 +void mps_print_scsiio_cmd(struct mps_softc *, struct mps_command *);
 +#endif
-diff -x .svn -urN sys/dev/mps/mps_user.c sys/dev/mps/mps_user.c
---- sys/dev/mps/mps_user.c	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mps_user.c	2010-12-07 19:18:41.000000000 -0700
+
+Property changes on: sys/dev/mps/mps_table.h
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mps_user.c
+===================================================================
+--- sys/dev/mps/mps_user.c	(revision 0)
++++ sys/dev/mps/mps_user.c	(revision 0)
 @@ -0,0 +1,944 @@
 +/*-
 + * Copyright (c) 2008 Yahoo!, Inc.
@@ -12217,7 +13108,7 @@ diff -x .svn -urN sys/dev/mps/mps_user.c sys/dev/mps/mps_user.c
 + */
 +
 +#include <sys/cdefs.h>
-+__FBSDID("$FreeBSD: stable/8/sys/dev/mps/mps_user.c 212420 2010-09-10 15:03:56Z ken $");
++__FBSDID("$FreeBSD$");
 +
 +#include "opt_compat.h"
 +
@@ -12508,7 +13399,7 @@ diff -x .svn -urN sys/dev/mps/mps_user.c sys/dev/mps/mps_user.c
 +	return (0);
 +}
 +
-+static void
++void
 +mpi_init_sge(struct mps_command *cm, void *req, void *sge)
 +{
 +	int off, space;
@@ -13128,10 +14019,21 @@ diff -x .svn -urN sys/dev/mps/mps_user.c sys/dev/mps/mps_user.c
 +#endif
 +	return (mps_ioctl(dev, com, arg, flag, td));
 +}
-diff -x .svn -urN sys/dev/mps/mpsvar.h sys/dev/mps/mpsvar.h
---- sys/dev/mps/mpsvar.h	1969-12-31 17:00:00.000000000 -0700
-+++ sys/dev/mps/mpsvar.h	2010-12-07 19:18:18.000000000 -0700
-@@ -0,0 +1,377 @@
+
+Property changes on: sys/dev/mps/mps_user.c
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/dev/mps/mpsvar.h
+===================================================================
+--- sys/dev/mps/mpsvar.h	(revision 0)
++++ sys/dev/mps/mpsvar.h	(revision 0)
+@@ -0,0 +1,405 @@
 +/*-
 + * Copyright (c) 2009 Yahoo! Inc.
 + * All rights reserved.
@@ -13157,7 +14059,7 @@ diff -x .svn -urN sys/dev/mps/mpsvar.h sys/dev/mps/mpsvar.h
 + * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 + * SUCH DAMAGE.
 + * 
-+ * $FreeBSD: stable/8/sys/dev/mps/mpsvar.h 212420 2010-09-10 15:03:56Z ken $
++ * $FreeBSD$
 + */
 +
 +#ifndef _MPSVAR_H
@@ -13168,7 +14070,7 @@ diff -x .svn -urN sys/dev/mps/mpsvar.h sys/dev/mps/mpsvar.h
 +#define MPS_REQ_FRAMES		1024
 +#define MPS_EVT_REPLY_FRAMES	32
 +#define MPS_REPLY_FRAMES	MPS_REQ_FRAMES
-+#define MPS_CHAIN_FRAMES	1024
++#define MPS_CHAIN_FRAMES	2048
 +#define MPS_SENSE_LEN		SSD_FULL_SIZE
 +#define MPS_MSI_COUNT		1
 +#define MPS_SGE64_SIZE		12
@@ -13194,11 +14096,19 @@ diff -x .svn -urN sys/dev/mps/mpsvar.h sys/dev/mps/mpsvar.h
 +	uint32_t			chain_busaddr;
 +};
 +
++/*
++ * This needs to be at least 2 to support SMP passthrough.
++ */
++#define	MPS_IOVEC_COUNT	2
++
 +struct mps_command {
 +	TAILQ_ENTRY(mps_command)	cm_link;
 +	struct mps_softc		*cm_sc;
 +	void				*cm_data;
 +	u_int				cm_length;
++	struct uio			cm_uio;
++	struct iovec			cm_iovec[MPS_IOVEC_COUNT];
++	u_int				cm_max_segs;
 +	u_int				cm_sglsize;
 +	MPI2_SGE_IO_UNION		*cm_sge;
 +	uint8_t				*cm_req;
@@ -13216,6 +14126,10 @@ diff -x .svn -urN sys/dev/mps/mpsvar.h sys/dev/mps/mpsvar.h
 +#define MPS_CM_FLAGS_DATAIN		(1 << 4)
 +#define MPS_CM_FLAGS_WAKEUP		(1 << 5)
 +#define MPS_CM_FLAGS_ACTIVE		(1 << 6)
++#define MPS_CM_FLAGS_USE_UIO		(1 << 7)
++#define MPS_CM_FLAGS_SMP_PASS		(1 << 8)
++#define	MPS_CM_FLAGS_CHAIN_FAILED	(1 << 9)
++#define	MPS_CM_FLAGS_ERROR_MASK		MPS_CM_FLAGS_CHAIN_FAILED
 +	u_int				cm_state;
 +#define MPS_CM_STATE_FREE		0
 +#define MPS_CM_STATE_BUSY		1
@@ -13243,9 +14157,15 @@ diff -x .svn -urN sys/dev/mps/mpsvar.h sys/dev/mps/mpsvar.h
 +#define MPS_FLAGS_MSI		(1 << 1)
 +#define MPS_FLAGS_BUSY		(1 << 2)
 +#define MPS_FLAGS_SHUTDOWN	(1 << 3)
++#define	MPS_FLAGS_ATTACH_DONE	(1 << 4)
 +	u_int				mps_debug;
 +	u_int				allow_multiple_tm_cmds;
 +	int				tm_cmds_active;
++	int				io_cmds_active;
++	int				io_cmds_highwater;
++	int				chain_free;
++	int				chain_free_lowwater;
++	uint64_t			chain_alloc_fail;
 +	struct sysctl_ctx_list		sysctl_ctx;
 +	struct sysctl_oid		*sysctl_tree;
 +	struct mps_command		*commands;
@@ -13257,9 +14177,9 @@ diff -x .svn -urN sys/dev/mps/mpsvar.h sys/dev/mps/mpsvar.h
 +	TAILQ_HEAD(, mps_command)	req_list;
 +	TAILQ_HEAD(, mps_chain)		chain_list;
 +	TAILQ_HEAD(, mps_command)	tm_list;
++	TAILQ_HEAD(, mps_command)	io_list;
 +	int				replypostindex;
 +	int				replyfreeindex;
-+	int				replycurindex;
 +
 +	struct resource			*mps_regs_resource;
 +	bus_space_handle_t		mps_bhandle;
@@ -13353,8 +14273,13 @@ diff -x .svn -urN sys/dev/mps/mpsvar.h sys/dev/mps/mpsvar.h
 +{
 +	struct mps_chain *chain;
 +
-+	if ((chain = TAILQ_FIRST(&sc->chain_list)) != NULL)
++	if ((chain = TAILQ_FIRST(&sc->chain_list)) != NULL) {
 +		TAILQ_REMOVE(&sc->chain_list, chain, chain_link);
++		sc->chain_free--;
++		if (sc->chain_free < sc->chain_free_lowwater)
++			sc->chain_free_lowwater = sc->chain_free;
++	} else
++		sc->chain_alloc_fail++;
 +	return (chain);
 +}
 +
@@ -13364,6 +14289,7 @@ diff -x .svn -urN sys/dev/mps/mpsvar.h sys/dev/mps/mpsvar.h
 +#if 0
 +	bzero(chain->chain, 128);
 +#endif
++	sc->chain_free++;
 +	TAILQ_INSERT_TAIL(&sc->chain_list, chain, chain_link);
 +}
 +
@@ -13372,12 +14298,15 @@ diff -x .svn -urN sys/dev/mps/mpsvar.h sys/dev/mps/mpsvar.h
 +{
 +	struct mps_chain *chain, *chain_temp;
 +
-+	if (cm->cm_reply != NULL)
++	if (cm->cm_reply != NULL) {
 +		mps_free_reply(sc, cm->cm_reply_data);
++		cm->cm_reply = NULL;
++	}
 +	cm->cm_flags = 0;
 +	cm->cm_complete = NULL;
 +	cm->cm_complete_data = NULL;
 +	cm->cm_targ = 0;
++	cm->cm_max_segs = 0;
 +	cm->cm_state = MPS_CM_STATE_FREE;
 +	TAILQ_FOREACH_SAFE(chain, &cm->cm_chain_list, chain_link, chain_temp) {
 +		TAILQ_REMOVE(&cm->cm_chain_list, chain, chain_link);
@@ -13502,6 +14431,7 @@ diff -x .svn -urN sys/dev/mps/mpsvar.h sys/dev/mps/mpsvar.h
 +int mps_read_config_page(struct mps_softc *, struct mps_config_params *);
 +int mps_write_config_page(struct mps_softc *, struct mps_config_params *);
 +void mps_memaddr_cb(void *, bus_dma_segment_t *, int , int );
++void mpi_init_sge(struct mps_command *cm, void *req, void *sge);
 +int mps_attach_user(struct mps_softc *);
 +void mps_detach_user(struct mps_softc *);
 +
@@ -13509,62 +14439,54 @@ diff -x .svn -urN sys/dev/mps/mpsvar.h sys/dev/mps/mpsvar.h
 +
 +#endif
 +
-diff -x .svn -urN sys/modules/mps/Makefile sys/modules/mps/Makefile
---- sys/modules/mps/Makefile	1969-12-31 17:00:00.000000000 -0700
-+++ sys/modules/mps/Makefile	2010-12-07 19:19:02.000000000 -0700
-@@ -0,0 +1,13 @@
-+# $FreeBSD: stable/8/sys/modules/mps/Makefile 212420 2010-09-10 15:03:56Z ken $
+
+Property changes on: sys/dev/mps/mpsvar.h
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
+Index: sys/modules/Makefile
+===================================================================
+--- sys/modules/Makefile	(revision 219973)
++++ sys/modules/Makefile	(working copy)
+@@ -186,6 +186,7 @@
+ 	mmc \
+ 	mmcsd \
+ 	${_mpt} \
++	mps \
+ 	mqueue \
+ 	msdosfs \
+ 	msdosfs_iconv \
+Index: sys/modules/mps/Makefile
+===================================================================
+--- sys/modules/mps/Makefile	(revision 0)
++++ sys/modules/mps/Makefile	(revision 0)
+@@ -0,0 +1,14 @@
++# $FreeBSD$
 +
 +.PATH: ${.CURDIR}/../../dev/mps
 +
 +KMOD=	mps
 +SRCS=	mps_pci.c mps.c mps_sas.c mps_table.c mps_user.c
-+SRCS+=	opt_mps.h opt_cam.h opt_compat.h
++SRCS+=	opt_compat.h
++SRCS+=	opt_cam.h
 +SRCS+=	device_if.h bus_if.h pci_if.h
 +
 +#CFLAGS += -DMPS_DEBUG
 +DEBUG += -g
 +
 +.include <bsd.kmod.mk>
-diff -x .svn -urN sys/modules/Makefile sys/modules/Makefile
---- sys/modules/Makefile	(revision 216285)
-+++ sys/modules/Makefile	(working copy)
-@@ -185,6 +185,7 @@
- 	${_mly} \
- 	mmc \
- 	mmcsd \
-+	${_mps} \
- 	${_mpt} \
- 	mqueue \
- 	msdosfs \
-@@ -412,6 +413,7 @@
- _linprocfs=	linprocfs
- _linsysfs=	linsysfs
- _linux=		linux
-+_mps=		mps
- _mse=		mse
- .if ${MK_NCP} != "no"
- _ncp=		ncp
-@@ -562,6 +564,7 @@
- _linsysfs=	linsysfs
- _linux=		linux
- _mly=		mly
-+_mps=		mps
- _ndis=		ndis
- _nfe=		nfe
- _nve=		nve
-diff -x .svn -urN sys/conf/files sys/conf/files
---- sys/conf/files	(revision 216285)
-+++ sys/conf/files	(working copy)
-@@ -1302,6 +1302,11 @@
- dev/mmc/mmcbus_if.m		standard
- dev/mmc/mmcsd.c			optional mmcsd
- dev/mn/if_mn.c			optional mn pci
-+dev/mps/mps.c			optional mps
-+dev/mps/mps_pci.c		optional mps pci
-+dev/mps/mps_sas.c		optional mps
-+dev/mps/mps_table.c		optional mps
-+dev/mps/mps_user.c		optional mps
- dev/mpt/mpt.c			optional mpt
- dev/mpt/mpt_cam.c		optional mpt
- dev/mpt/mpt_debug.c		optional mpt
+
+Property changes on: sys/modules/mps/Makefile
+___________________________________________________________________
+Added: svn:mime-type
+   + text/plain
+Added: svn:keywords
+   + FreeBSD=%H
+Added: svn:eol-style
+   + native
+
