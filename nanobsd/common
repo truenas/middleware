@@ -314,12 +314,13 @@ freenas_custom()
 
 	# Last second tweaks
 	chown -R root:wheel ${NANO_WORLDDIR}/root
-	chmod 0755 ${NANO_WORLDDIR}/root
+	chmod 0755 ${NANO_WORLDDIR}/root/*
 	chmod 0755 ${NANO_WORLDDIR}/*
 	chown -R root:wheel ${NANO_WORLDDIR}/etc
 	chown -R root:wheel ${NANO_WORLDDIR}/boot
 	chown root:wheel ${NANO_WORLDDIR}/
 	chown root:wheel ${NANO_WORLDDIR}/usr
+        find ${NANO_WORLDDIR} -type f -name "*~" -delete
 }
 late_customize_cmd freenas_custom
 
