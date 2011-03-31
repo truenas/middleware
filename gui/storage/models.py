@@ -232,7 +232,7 @@ class Task(Model):
             )
     task_interval = models.PositiveIntegerField(
             default = 60,
-            choices = [(x,x) for x in (15, 30, 60, 120, 180, 240)],
+            choices = [(x,"%s minutes" % x) for x in (15, 30, 60, 120, 180, 240)],
             max_length = 120,
             verbose_name = _("Interval"),
             help_text = _("How many minutes passed before a new snapshot is made after the last one."),
