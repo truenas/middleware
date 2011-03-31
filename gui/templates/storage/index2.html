@@ -91,7 +91,12 @@
 
 {% if m.mp_ischild %}
     <button dojoType="dijit.form.Button" type="button"
-        onClick="editObject('{% trans "Destroy Dataset" %}', '{% url storage_dataset_delete object_id=m.id %}', [this,]);">{% trans "Destroy dataset" %}
+        onClick="editObject('{% trans "Destroy Dataset" %}', '{% url storage_dataset_delete object_id=m.id %}', [this,]);">
+        <img src="/freenas/media/images/ui/buttons/remove_dataset.png">
+        <br />
+        <script type="dojo/method" event="onClick" args="evt">
+            addObject('{% trans "Destroy ZFS Dataset" %}', '{% url storage_dataset %}', [this,]);
+        </script>
     </button>
     <button dojoType="dijit.form.Button" type="button" connectId="editDataBtn{{ m.id }}"
         onClick="editObject('{% trans "Edit" %}', '{% url storage_dataset_edit object_id=m.id %}', [this,]);">
@@ -172,15 +177,15 @@
 	    <td>{{ snap.used }}</td>
 	    <td>{{ snap.refer }}</td>
 	    <td>
-	    <button id="cloneSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Clone snapshot" %}', '{% url storage_clonesnap snapshot=snap.fullname %}', [this,]);"><img src="/freenas/media/images/ui/buttons/clone_snapshot.png">{% trans "Clone snapshot" %}</button>
+	    <button id="cloneSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Clone snapshot" %}', '{% url storage_clonesnap snapshot=snap.fullname %}', [this,]);"><img src="/freenas/media/images/ui/buttons/clone_snapshot.png"></button>
 <div dojoType="dijit.Tooltip" connectId="cloneSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
     <strong>{% trans "Clone snapshot" %}</strong>
 </div>
-	    <button id="delSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Destroy snapshot" %}', '{% url storage_snapshot_delete dataset=fsname snapname=snap.name %}', [this,]);"><img src="/freenas/media/images/ui/buttons/remove_snapshot.png">{% trans "Destroy snapshot" %}</button>
+	    <button id="delSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Destroy snapshot" %}', '{% url storage_snapshot_delete dataset=fsname snapname=snap.name %}', [this,]);"><img src="/freenas/media/images/ui/buttons/remove_snapshot.png"></button>
 <div dojoType="dijit.Tooltip" connectId="delSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
     <strong>{% trans "Destroy snapshot" %}</strong>
 </div>
-	    <button id="rollbackSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Rollback to this snapshot" %}', '{% url storage_snapshot_rollback dataset=fsname snapname=snap.name %}', [this,]);"><img src="/freenas/media/images/ui/buttons/rollback_snapshot.png">{% trans "Rollback to this snapshot" %}</button>
+	    <button id="rollbackSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Rollback to this snapshot" %}', '{% url storage_snapshot_rollback dataset=fsname snapname=snap.name %}', [this,]);"><img src="/freenas/media/images/ui/buttons/rollback_snapshot.png"></button>
 <div dojoType="dijit.Tooltip" connectId="rollbackSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
     <strong>{% trans "Rollback to this snapshot" %}</strong>
 </div>
