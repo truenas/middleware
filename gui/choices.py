@@ -459,15 +459,17 @@ v6NetmaskBitList = (
         ('96', '/96'),
         )
 
-UserShell = (
-        ('sh', 'sh'),
-        ('csh', 'csh'),
-        ('ksh', 'ksh'),
-        ('bash', 'bash'),
-        )
 RetentionUnit_Choices = (
-        ('day', 'Day'),
-        ('week', 'Week'),
-        ('month', 'Month'),
-        ('year', 'Year'),
+        ('hour', _('Hour(s)')),
+        ('day', _('Day(s)')),
+        ('week', _('Week(s)')),
+        ('month', _('Month(s)')),
+        ('year', _('Year(s)')),
+        )
+
+RepeatUnit_Choices = (
+        ('daily', _('Everyday')),
+        ('weekly', _('Every selected weekday')),
+        #('monthly', _('Every these days of month')),
+        #('yearly', _('Every these days of specified months')),
         )

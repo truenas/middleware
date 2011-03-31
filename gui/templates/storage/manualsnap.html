@@ -1,0 +1,21 @@
+{% load i18n %}
+<form dojoType="dijit.form.Form">
+    <script type="dojo/event" event="onSubmit" args="e">
+        formSubmit(this, e,  '{% url storage_manualsnap path=path %}');
+    </script>
+    <table>
+        {{ form.errors }}
+        {{ form }}
+    </table>
+        <button dojoType="dijit.form.Button" type="submit" class="submitform">
+    <script type="dojo/method">
+    </script>
+    {% trans "Manually Create Snapshot" %}<br />
+        </button>
+        <button dojoType="dijit.form.Button" type="button" class="cancelform">
+            {% trans "Cancel" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                cancelDialog(this);
+            </script>
+        </button>
+</form>

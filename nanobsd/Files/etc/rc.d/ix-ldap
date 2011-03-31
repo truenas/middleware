@@ -101,8 +101,19 @@ EOF
 		then
 			save_certificate "${id}"
 
-			echo "ssl ${ssl}" >> "${nssconf}"
-			echo "tls_cacert ${CERT_FILE}" >> "${nssconf}"
+			cat<<-EOF>>"${nssconf}"
+			ssl ${ssl}
+			tls_cacertfile ${CERT_FILE}
+EOF
+		elif [ "${ssl}" = "on" ]
+		then
+			save_certificate "${id}"
+
+			cat<<-EOF>>"${nssconf}"
+			uri ldaps://${hostname}
+			ssl ${ssl}
+			tls_cacertfile ${CERT_FILE}
+EOF
 		fi
 
 		for opt in ${options}
@@ -120,8 +131,17 @@ EOF
 		echo "BASE ${basedn}" >> "${ldapconf}"
 		if [ "${ssl}" = "start_tls" ]
 		then
-			echo "SSL ${ssl}" >> "${ldapconf}"
-			echo "TLS_CACERT ${CERT_FILE}" >> "${ldapconf}"
+			cat<<-EOF>>"${ldapconf}"
+			TLS_CACERT ${CERT_FILE}
+			TLS_REQCERT allow
+EOF
+		elif [ "${ssl}" = "on" ]
+		then
+			cat<<-EOF>>"${ldapconf}"
+			URI ldaps://${hostname}
+			TLS_CACERT ${CERT_FILE}
+			TLS_REQCERT allow
+EOF
 		fi
 
 		if [ -n "${hdsrc}" -a -n "${hddst}" ]

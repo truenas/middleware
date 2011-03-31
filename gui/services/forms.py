@@ -42,11 +42,14 @@ from freenasUI.services.models import *
 from freenasUI.storage.models import *
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.forms import Form
+from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups
 from storage.forms import UnixPermissionField
 from dojango import forms
 import re
 
 """ Services """
+
+attrs_dict = { 'class': 'required' }
 
 class servicesForm(ModelForm):
     class Meta:
@@ -55,6 +58,26 @@ class servicesForm(ModelForm):
 class CIFSForm(ModelForm):
     class Meta:
         model = CIFS
+    cifs_srv_guest = forms.ChoiceField(choices=(),
+                                       widget=forms.Select(attrs=attrs_dict),
+                                       label=_('Guest Account')
+                                       )
+    def __init__(self, *args, **kwargs):
+        super(CIFSForm, self).__init__(*args, **kwargs)
+        self.fields['cifs_srv_guest'].choices = ((x.bsdusr_username,
+                                                  x.bsdusr_username)
+                                                  for x in FreeNAS_Users()
+                                                 )
+
+    def clean(self):
+        home = self.cleaned_data['cifs_srv_homedir_enable']
+        browse = self.cleaned_data['cifs_srv_homedir_browseable_enable']
+        cleaned_data = self.cleaned_data
+        if browse and not home:
+            self._errors['cifs_srv_homedir_enable'] = self.error_class([_("This field is required for \"Enable home directories browsing\"."),])
+            del cleaned_data['cifs_srv_homedir_enable']
+        return cleaned_data
+
     def save(self):
         super(CIFSForm, self).save()
         notifier().reload("cifs")
@@ -62,6 +85,15 @@ class CIFSForm(ModelForm):
 class AFPForm(ModelForm):
     class Meta:
         model = AFP
+    afp_srv_guest_user = forms.ChoiceField(choices=(),
+                                           widget=forms.Select(attrs=attrs_dict),
+                                           label = _("Guest Account")
+                                           )
+    def __init__(self, *args, **kwargs):
+        super(AFPForm, self).__init__(*args, **kwargs)
+        self.fields['afp_srv_guest_user'].choices = ((x.bsdusr_username,
+                                                      x.bsdusr_username)
+                                                     for x in FreeNAS_Users())
     def save(self):
         super(AFPForm, self).save()
         notifier().restart("afp")
@@ -159,6 +191,14 @@ class FTPForm(ModelForm):
         notifier().reload("ftp")
 
 class TFTPForm(ModelForm):
+    tftp_username = forms.ChoiceField(choices=(),
+                                      widget=forms.Select(attrs=attrs_dict),
+                                      label = _("Username")
+                                      )
+    def __init__(self, *args, **kwargs):
+        super(TFTPForm, self).__init__(*args, **kwargs)
+        self.fields['tftp_username'].choices = ((x.bsdusr_username, x.bsdusr_username)
+                                                for x in FreeNAS_Users())
     def save(self):
         super(TFTPForm, self).save()
         notifier().reload("tftp")
@@ -217,7 +257,7 @@ class iSCSITargetAuthCredentialForm(ModelForm):
             help_text=_("Enter the same secret above for verification."))
     iscsi_target_auth_peersecret1 = forms.CharField(label=_("Initiator Secret"),
             widget=forms.PasswordInput, help_text=
-            _("Initiator side secret. (for mutual CHAP autentication)"),
+            _("Initiator side secret. (for mutual CHAP authentication)"),
             required=False)
     iscsi_target_auth_peersecret2 = forms.CharField(
             label=_("Initiator Secret (Confirm)"), 
@@ -444,7 +484,6 @@ class iSCSITargetFileExtentForm(ModelForm):
         notifier().reload("iscsitarget")
         return oExtent
 
-attrs_dict = { 'class': 'required' }
 class iSCSITargetDeviceExtentForm(ModelForm):
     iscsi_extent_disk = forms.ChoiceField(choices=(), 
             widget=forms.Select(attrs=attrs_dict), label = _('Disk device'))

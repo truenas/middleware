@@ -32,7 +32,7 @@ ident		FREENAS32
 # env		"GENERIC.env"
 
 #makeoptions	DEBUG=-g		# Build kernel with gdb(1) debug symbols
-makeoptions	MODULES_OVERRIDE="zfs opensolaris acpi geom mps cxgb ntfs"
+makeoptions	MODULES_OVERRIDE="zfs opensolaris acpi geom mps cxgb ntfs smbfs libiconv libmchain"
 
 options 	SCHED_ULE		# ULE scheduler
 options 	PREEMPTION		# Enable kernel thread preemption
@@ -352,3 +352,5 @@ device		dcons		# Dumb console driver
 device		dcons_crom	# Configuration ROM for dcons
 
 device		lagg
+device		coretemp
+device		amdtemp

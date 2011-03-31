@@ -54,7 +54,7 @@ section_header()
 			name = name " "
 		}
 
-		barlen = 60;
+		barlen = 80;
 		bar = makeline("-", barlen);
 
 		tmp = barlen - namelen;
@@ -173,6 +173,27 @@ __EOF__
 	section_footer
 
 	#
+	#	Dump resolver configuration
+	#
+	section_header "/etc/resolv.conf"
+	cat "/etc/resolv.conf"
+	section_footer
+
+	#
+	#	Dump hosts configuration
+	#
+	section_header "/etc/hosts"
+	cat "/etc/hosts"
+	section_footer
+
+	#
+	#	List interfaces
+	#
+	section_header "ifconfig -a"
+	ifconfig -a
+	section_footer
+
+	#
 	#	Dump samba configuration
 	#
 	section_header "${SMB_CONF}"
@@ -201,14 +222,25 @@ __EOF__
 	section_footer
 
 	#
+	#	Check Active Directory trust secret
+	#
+	section_header "Active Directory Trust Secret"
+	wbinfo -t
+	section_footer
+
+	#
 	#	Dump Active Directory users and groups
 	#
 	section_header "Active Directory Users and Groups"
 	section_header "Using wbinfo"
+	section_header "Users"
 	wbinfo -u
+	section_header "Groups"
 	wbinfo -g
 	section_header "Using getent"
+	section_header "Users"
 	getent passwd
+	section_header "Groups"
 	getent group
 	section_footer
 }
@@ -305,6 +337,27 @@ __EOF__
 	section_footer
 
 	#
+	#	Dump resolver configuration
+	#
+	section_header "/etc/resolv.conf"
+	cat "/etc/resolv.conf"
+	section_footer
+
+	#
+	#	Dump hosts configuration
+	#
+	section_header "/etc/hosts"
+	cat "/etc/hosts"
+	section_footer
+
+	#
+	#	List interfaces
+	#
+	section_header "ifconfig -a"
+	ifconfig -a
+	section_footer
+
+	#
 	#	Dump samba configuration
 	#
 	section_header "${SMB_CONF}"
@@ -329,7 +382,9 @@ __EOF__
 	#	Dump LDAP users and groups
 	#
 	section_header "LDAP Users and Groups"
+	section_header "Users"
 	getent passwd
+	section_header "Groups"
 	getent group
 	section_footer
 }
@@ -346,7 +401,7 @@ usage()
 	Where options is:
 	    -a                Debug Active Directory
 	    -l                Debug LDAP
-		-s                Debug SSL
+	    -s                Debug SSL
 __EOF__
 }
 
@@ -358,16 +413,18 @@ main()
 		exit 2
 	fi
 
+	debug_func=""
 	: > ${FREENAS_DEBUG_FILE}
 	while getopts ":al" OPTION
 	do
 		case "${OPTION}" in
-			a) debug_active_directory > "${FREENAS_DEBUG_FILE}" 2>&1 ;;
-			l) debug_ldap > "${FREENAS_DEBUG_FILE}" 2>&1 ;;
-			s) debug_ssl > "${FREENAS_DEBUG_FILE}" 2>&1 ;;
+			a) debug_func="debug_active_directory" ;;
+			l) debug_func="debug_ldap" ;;
+			s) debug_func="debug_ssl" ;;
 			:|\?) usage ;;
 		esac
 	done
+	eval ${debug_func} > "${FREENAS_DEBUG_FILE}" 2>&1
 }
 
 main $*

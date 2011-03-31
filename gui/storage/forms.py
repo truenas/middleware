@@ -27,7 +27,7 @@
 #####################################################################
 import re
 from django.shortcuts import render_to_response
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, QueryDict
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
 from dojango.forms import fields, widgets
@@ -42,6 +42,9 @@ from freenasUI.common.forms import ModelForm
 from freenasUI.common.forms import Form
 from freenasUI.storage.models import *
 from dojango import forms
+from dojango.forms import CheckboxSelectMultiple
+from datetime import datetime, time
+from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups
 
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 
@@ -745,15 +748,121 @@ class ZFSDataset_CreateForm(Form):
     dataset_refreserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset'), help_text=_('0=None; example: 1g'))
     dataset_reserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset and all children'), help_text=_('0=None; example: 1g'))
 
+class ZFSDataset_EditForm(Form):
+    dataset_compression = forms.ChoiceField(choices=ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
+    dataset_atime = forms.ChoiceField(choices=ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label=_('Enable atime'))
+    dataset_refquota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset'), help_text=_('0=Unlimited; example: 1g'))
+    dataset_quota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset and all children'), help_text=_('0=Unlimited; example: 1g'))
+    dataset_refreserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset'), help_text=_('0=None; example: 1g'))
+    dataset_reserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset and all children'), help_text=_('0=None; example: 1g'))
+
+    def __init__(self, *args, **kwargs):
+        self._mp = kwargs.pop("mp", None)
+        dataset = self._mp.mp_path.replace("/mnt/","")
+        super(ZFSDataset_EditForm, self).__init__(*args, **kwargs)
+        data = notifier().zfs_get_options(dataset)
+        self.fields['dataset_compression'].initial = data['compression']
+        self.fields['dataset_atime'].initial = data['atime']
+        if data['refquota'] == 'none':
+            self.fields['dataset_refquota'].initial = 0
+        else:
+            self.fields['dataset_refquota'].initial = data['refquota']
+        if data['quota'] == 'none':
+            self.fields['dataset_quota'].initial = 0
+        else:
+            self.fields['dataset_quota'].initial = data['quota']
+        if data['reservation'] == 'none':
+            self.fields['dataset_reserv'].initial = 0
+        else:
+            self.fields['dataset_reserv'].initial = data['reservation']
+        if data['refreservation'] == 'none':
+            self.fields['dataset_refreserv'].initial = 0
+        else:
+            self.fields['dataset_refreserv'].initial = data['refreservation']
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        r = re.compile('^(0|[1-9]\d*[mMgGtT]?)$')
+        msg = _(u"Enter positive number (optionally suffixed by M, G, T), or, 0")
+        if r.match(cleaned_data['dataset_refquota'].__str__())==None:
+            self._errors['dataset_refquota'] = self.error_class([msg])
+            del cleaned_data['dataset_refquota']
+        if r.match(cleaned_data['dataset_quota'].__str__())==None:
+            self._errors['dataset_quota'] = self.error_class([msg])
+            del cleaned_data['dataset_quota']
+        if r.match(cleaned_data['dataset_refreserv'].__str__())==None:
+            self._errors['dataset_refreserv'] = self.error_class([msg])
+            del cleaned_data['dataset_refreserv']
+        if r.match(cleaned_data['dataset_reserv'].__str__())==None:
+            self._errors['dataset_reserv'] = self.error_class([msg])
+            del cleaned_data['dataset_reserv']
+        return cleaned_data
+    def set_error(self, msg):
+        msg = u"%s" % msg
+        self._errors['__all__'] = self.error_class([msg])
+        del self.cleaned_data
+
+class ZFSVolume_EditForm(Form):
+    volume_compression = forms.ChoiceField(choices=ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
+    volume_atime = forms.ChoiceField(choices=ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label=_('Enable atime'))
+    volume_refquota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset'), help_text=_('0=Unlimited; example: 1g'))
+    volume_refreserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset'), help_text=_('0=None; example: 1g'))
+
+    def __init__(self, *args, **kwargs):
+        self._mp = kwargs.pop("mp", None)
+        name = self._mp.mp_path.replace("/mnt/","")
+        super(ZFSVolume_EditForm, self).__init__(*args, **kwargs)
+        data = notifier().zfs_get_options(name)
+        self.fields['volume_compression'].initial = data['compression']
+        self.fields['volume_atime'].initial = data['atime']
+        if data['refquota'] == 'none':
+            self.fields['volume_refquota'].initial = 0
+        else:
+            self.fields['volume_refquota'].initial = data['refquota']
+        if data['refreservation'] == 'none':
+            self.fields['volume_refreserv'].initial = 0
+        else:
+            self.fields['volume_refreserv'].initial = data['refreservation']
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        r = re.compile('^(0|[1-9]\d*[mMgGtT]?)$')
+        msg = _(u"Enter positive number (optionally suffixed by M, G, T), or, 0")
+        if r.match(cleaned_data['volume_refquota'].__str__())==None:
+            self._errors['volume_refquota'] = self.error_class([msg])
+            del cleaned_data['volume_refquota']
+        if r.match(cleaned_data['volume_refreserv'].__str__())==None:
+            self._errors['volume_refreserv'] = self.error_class([msg])
+            del cleaned_data['volume_refreserv']
+        return cleaned_data
+    def set_error(self, msg):
+        msg = u"%s" % msg
+        self._errors['__all__'] = self.error_class([msg])
+        del self.cleaned_data
+
 class MountPointAccessForm(Form):
-    mp_user = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label=_('Owner (user)'))
-    mp_group = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label=_('Owner (group)'))
+    mp_user = forms.ChoiceField(choices=(),
+                                widget=forms.Select(attrs=attrs_dict),
+                                label=_('Owner (user)')
+                                )
+    mp_group = forms.ChoiceField(choices=(),
+                                 widget=forms.Select(attrs=attrs_dict),
+                                 label=_('Owner (group)')
+                                 )
     mp_mode = UnixPermissionField(label=_('Mode'))
-    mp_recursive = forms.BooleanField(initial=False,required=False,label=_('Set permission recursively'))
+    mp_recursive = forms.BooleanField(initial=False,
+                                      required=False,
+                                      label=_('Set permission recursively')
+                                      )
     def __init__(self, *args, **kwargs):
         super(MountPointAccessForm, self).__init__(*args, **kwargs)
-        self.fields['mp_user'].choices = [(x.bsdusr_username, x.bsdusr_username) for x in bsdUsers.objects.all()]
-        self.fields['mp_group'].choices = [(x.bsdgrp_group, x.bsdgrp_group) for x in bsdGroups.objects.all()]
+
+        self.fields['mp_user'].choices = ((x.bsdusr_username, x.bsdusr_username)
+                                          for x in FreeNAS_Users()
+                                          )
+        self.fields['mp_group'].choices = ((x.bsdgrp_group, x.bsdgrp_group)
+                                           for x in FreeNAS_Groups()
+                                           )
 
         path = kwargs.get('initial', {}).get('path', None)
         if path:
@@ -761,6 +870,7 @@ class MountPointAccessForm(Form):
             self.fields['mp_mode'].initial = "%.3o" % notifier().mp_get_permission(path)
             self.fields['mp_user'].initial = user
             self.fields['mp_group'].initial = group
+
     def commit(self, path='/mnt/'):
 
         notifier().mp_change_permission(
@@ -769,3 +879,88 @@ class MountPointAccessForm(Form):
             group=self.cleaned_data['mp_group'].__str__(),
             mode=self.cleaned_data['mp_mode'].__str__(),
             recursive=self.cleaned_data['mp_recursive'])
+
+class PeriodicSnapForm(ModelForm):
+    class Meta:
+        model = Task 
+        widgets = {
+            'task_byweekday': CheckboxSelectMultiple(choices=WEEKDAYS_CHOICES)
+            #'task_bymonth': CheckboxSelectMultiple(choices=MONTHS_CHOICES)
+        }
+    def __init__(self, *args, **kwargs):
+        if len(args) > 0 and isinstance(args[0], QueryDict):
+            new = args[0].copy()
+            HOUR = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})')
+            if new.has_key("task_begin"):
+                search = HOUR.search(new['task_begin'])
+                new['task_begin'] = time(hour=int(search.group("hour")),
+                                           minute=int(search.group("min")),
+                                           second=int(search.group("sec")))
+            if new.has_key("task_end"):
+                search = HOUR.search(new['task_end'])
+                new['task_end'] = time(hour=int(search.group("hour")),
+                                           minute=int(search.group("min")),
+                                           second=int(search.group("sec")))
+            args = (new,) + args[1:]
+        super(PeriodicSnapForm, self).__init__(*args, **kwargs)
+        #self.fields['task_repeat_unit'].widget = forms.Select(choices=RepeatUnit_Choices, attrs={'onChange': 'taskrepeat_checkings();'})
+        self.fields['task_repeat_unit'].widget = forms.HiddenInput()
+
+    def clean(self):
+        cdata = self.cleaned_data
+        if cdata['task_repeat_unit'] == 'weekly' and len(cdata['task_byweekday']) == 0:
+            self._errors['task_byweekday'] = self.error_class([_("At least one day must be chosen"),])
+            del cdata['task_byweekday']
+        return cdata
+
+class ManualSnapshotForm(Form):
+    ms_recursively = forms.BooleanField(initial=False,required=False,label=_('Do snapshotting recursively'))
+    ms_name = forms.CharField(label=_('Snapshot Name'))
+    def __init__(self, *args, **kwargs):
+        super(ManualSnapshotForm, self).__init__(*args, **kwargs)
+        self.fields['ms_name'].initial = datetime.today().strftime('manual-%Y%m%d')
+    def clean_ms_name(self):
+        regex = re.compile('^[-a-zA-Z0-9_.]+$')
+        if regex.match(self.cleaned_data['ms_name'].__str__()) is None:
+            raise forms.ValidationError(_("Only [-a-zA-Z0-9_.] permitted as snapshot name"))
+        return self.cleaned_data['ms_name']
+    def commit(self, path):
+        dataset = path.__str__()[5:]
+        notifier().zfs_mksnap(dataset, self.cleaned_data['ms_name'].__str__(), self.cleaned_data['ms_recursively'])
+
+class CloneSnapshotForm(Form):
+    cs_snapshot = forms.CharField(label=_('Snapshot'))
+    cs_name = forms.CharField(label=_('Clone Name (must be on same volume)'))
+    def __init__(self, *args, **kwargs):
+        super(CloneSnapshotForm, self).__init__(*args, **kwargs)
+        self.fields['cs_snapshot'].widget.attrs['readonly'] = True
+        self.fields['cs_snapshot'].initial = kwargs['initial']['cs_snapshot']
+        self.fields['cs_snapshot'].value = kwargs['initial']['cs_snapshot']
+        dataset, snapname = kwargs['initial']['cs_snapshot'].split('@')
+        self.fields['cs_name'].initial = '%s/clone-%s' % (dataset, snapname)
+    def clean_cs_snapshot(self):
+        return self.fields['cs_snapshot'].initial
+    def clean_cs_name(self):
+        regex = re.compile('^[-a-zA-Z0-9_./]+$')
+        if regex.match(self.cleaned_data['cs_name'].__str__()) is None:
+            raise forms.ValidationError(_("Only [-a-zA-Z0-9_./] permitted as clone name"))
+        if '/' in self.fields['cs_snapshot'].initial:
+            volname = self.fields['cs_snapshot'].initial.split('/')[0]
+        else:
+            volname = self.fields['cs_snapshot'].initial.split('@')[0]
+        if not self.cleaned_data['cs_name'].startswith('%s/' % (volname)):
+            raise forms.ValidationError(_("Clone must be within the same volume"))
+        return self.cleaned_data['cs_name']
+    def commit(self):
+        snapshot = self.cleaned_data['cs_snapshot'].__str__()
+        retval = notifier().zfs_clonesnap(snapshot, self.cleaned_data['cs_name'].__str__())
+        if retval == '':
+            if '/' in self.fields['cs_snapshot'].initial:
+                zfs = self.fields['cs_snapshot'].initial.split('/')[0]
+            else:
+                zfs = self.fields['cs_snapshot'].initial.split('@')[0]
+            volume = Volume.objects.get(vol_name=zfs)
+            mp = MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (self.cleaned_data['cs_name']), mp_options='noauto', mp_ischild=True)
+            mp.save()
+        return retval
+

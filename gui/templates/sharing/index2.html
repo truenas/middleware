@@ -1,5 +1,5 @@
 {% load i18n %}
-<div dojoType="dijit.layout.TabContainer" title="{% trans "Shares" %}" nested="true" style="width:100%;" doLayout="false">
+<div dojoType="dijit.layout.TabContainer" nested="true" doLayout="true">
     <div dojoType="dijit.layout.ContentPane" title="{% trans "Apple" %}" {% if focus_form == "afp" %} selected="true"{% endif %} href="{% url sharing_apple %}" refreshOnShow="true" class="objrefresh data_sharing_AFP_Share"> 
         </div>
         <div dojoType="dijit.layout.ContentPane" title="{% trans "UNIX" %}" {% if focus_form == "nfs" %} selected="true"{% endif %} href="{% url sharing_unix %}" refreshOnShow="true" class="objrefresh data_sharing_NFS_Share">

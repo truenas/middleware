@@ -1,0 +1,21 @@
+{% load i18n %}
+<form dojoType="dijit.form.Form">
+    <script type="dojo/event" event="onSubmit" args="e">
+        formSubmit(this, e,  '{% url storage_periodicsnap %}');
+    </script>
+    <table>
+        {{ form }}
+    </table>
+        <button dojoType="dijit.form.Button" type="submit" class="submitform">
+    <script type="dojo/method">
+       {{ extra_js }}
+    </script>
+    {% trans "Create Snapshot" %}<br />
+        </button>
+        <button dojoType="dijit.form.Button" type="button" class="cancelform">
+            {% trans "Cancel" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                cancelDialog(this);
+            </script>
+        </button>
+</form>

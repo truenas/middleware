@@ -43,6 +43,7 @@ import re
 import glob
 import grp
 import pwd
+import signal
 from shlex import split as shlex_split
 from subprocess import Popen, PIPE
 
@@ -98,6 +99,8 @@ class notifier:
         except AttributeError:
             """ Provide generic start/stop/restart verbs for rc.d scripts """
             if action in ("start", "stop", "restart", "reload"):
+                if action == 'restart':
+                    self.__system("/usr/sbin/service forcestop " + action)
                 self.__system("/usr/sbin/service " + what + " " + action)
                 f = self._do_nada
             else:
@@ -195,10 +198,12 @@ class notifier:
 
     def _restart_iscsitarget(self):
         self.__system("/usr/sbin/service ix-istgt quietstart")
+        self.__system("/usr/sbin/service istgt forcestop")
         self.__system("/usr/sbin/service istgt restart")
 
     def _reload_iscsitarget(self):
         self.__system("/usr/sbin/service ix-istgt quietstart")
+        self.__system("/usr/sbin/service istgt forcestop")
         self.__system("/usr/sbin/service istgt restart")
 
     def _start_network(self):
@@ -258,11 +263,22 @@ class notifier:
 
     def _reload_tftp(self):
         self.__system("/usr/sbin/service ix-inetd quietstart")
+        self.__system("/usr/sbin/service inetd forcestop")
         self.__system("/usr/sbin/service inetd restart")
 
     def _restart_tftp(self):
         self.__system("/usr/sbin/service ix-inetd quietstart")
+        self.__system("/usr/sbin/service inetd forcestop")
         self.__system("/usr/sbin/service inetd restart")
+
+    def _restart_powerd(self):
+        self.__system("/usr/sbin/service ix-powerd quietstart")
+
+    def _start_motd(self):
+        self.__system("/usr/sbin/service ix-motd quietstart")
+
+    def _start_ttys(self):
+        self.__system("/usr/sbin/service ix-ttys quietstart")
 
     def _reload_ftp(self):
         self.__system("/usr/sbin/service ix-proftpd quietstart")
@@ -270,6 +286,7 @@ class notifier:
 
     def _restart_ftp(self):
         self.__system("/usr/sbin/service ix-proftpd quietstart")
+        self.__system("/usr/sbin/service proftpd forcestop")
         self.__system("/usr/sbin/service proftpd restart")
 
     def _start_ftp(self):
@@ -282,7 +299,18 @@ class notifier:
 
     def _restart_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
+        self.__system("/usr/sbin/service netatalk forcestop")
         self.__system("/usr/sbin/service netatalk restart")
+
+    def _reload_afp(self):
+        self.__system("/usr/sbin/service ix-afpd quietstart")
+        if os.path.isfile("/var/run/afpd.pid"):
+            pid = open("/var/run/afpd.pid", "r").read().strip()
+            try:
+                os.kill(int(pid), signal.SIGHUP)
+            except:
+                pass
+            pid.close()
 
     def _reload_nfs(self):
         self.__system("/usr/sbin/service ix-nfsd quietstart")
@@ -463,7 +491,9 @@ class notifier:
         self.__system("zfs set %s=%s %s" % (attr, value, name))
 
     def destroy_zfs_dataset(self, path):
-        self.__system("zfs destroy %s" % (path))
+        zfsproc = self.__pipeopen("zfs destroy %s" % (path))
+        retval = zfsproc.communicate()[1]
+        return retval
 
     def __destroy_zfs_volume(self, c, z_id, z_name):
         """Internal procedure to destroy a ZFS volume identified by volume id"""
@@ -683,10 +713,19 @@ class notifier:
         else:
             smb_command = "/usr/local/bin/pdbedit -w %s" % username
             smb_cmd = self.__pipeopen(smb_command)
-            smb_hash = smb_cmd.communicate()
-            smb_hash = smb_hash[0]
+            smb_hash = smb_cmd.communicate()[0].split('\n')[0]
         user = self.___getpwnam(username)
         return (user.pw_uid, user.pw_gid, user.pw_passwd, smb_hash)
+
+    def user_lock(self, username):
+        self.__system('/usr/sbin/pw lock "%s"' % (username))
+        user = self.___getpwnam(username)
+        return user.pw_passwd
+
+    def user_unlock(self, username):
+        self.__system('/usr/sbin/pw unlock "%s"' % (username))
+        user = self.___getpwnam(username)
+        return user.pw_passwd
 
     def user_changepassword(self, username, password):
         """Changes user password"""
@@ -694,8 +733,7 @@ class notifier:
         self.__issue_pwdchange(username, command, password)
         smb_command = "/usr/local/bin/pdbedit -w %s" % username
         smb_cmd = self.__pipeopen(smb_command)
-        smb_hash = smb_cmd.communicate()
-        smb_hash = smb_hash[0]
+        smb_hash = smb_cmd.communicate()[0].split('\n')[0]
         user = self.___getpwnam(username)
         return (user.pw_passwd, smb_hash)
 
@@ -729,7 +767,7 @@ class notifier:
             flags='-R '
         else:
             flags=''
-        self.__system("/usr/sbin/chown %s%s:%s %s" % (flags, user, group, path))
+        self.__system("/usr/sbin/chown %s'%s':'%s' %s" % (flags, user, group, path))
         self.__system("/bin/chmod %s%s %s" % (flags, mode, path))
 
     def mp_get_permission(self, path):
@@ -950,7 +988,7 @@ class notifier:
                 elif status.find("raidz2"):
                     group_type = 'raidz2'
                 else:
-                    group_type = 'strype'
+                    group_type = 'stripe'
 
                 disks = []
                 logs = []
@@ -1010,6 +1048,91 @@ class notifier:
         imp = self.__pipeopen('zpool import %s' % name)
         imp.wait()
         if imp.returncode == 0:
+            return True
+        return False
+
+    def zfs_snapshot_list(self):
+        fsinfo = dict()
+
+        zfsproc = self.__pipeopen("/sbin/zfs list -t snapshot -H")
+        lines = zfsproc.communicate()[0].split('\n')
+        for line in lines:
+            if line != '':
+                list = line.split('\t')
+                snapname = list[0]
+                used = list[1]
+                refer = list[3]
+                fs, name = snapname.split('@')
+                try:
+                    snaplist = fsinfo[fs]
+                except:
+                    snaplist = []
+                snaplist.append(dict([('fullname', snapname), ('name', name), ('used', used), ('refer', refer)]))
+                fsinfo[fs] = snaplist
+        return fsinfo
+
+    def zfs_mksnap(self, path, name, recursive):
+        if recursive:
+            retval = self.__system_nolog("/sbin/zfs snapshot -r %s@%s" % (path, name))
+        else:
+            retval = self.__system_nolog("/sbin/zfs snapshot %s@%s" % (path, name))
+        return retval
+
+    def zfs_clonesnap(self, snapshot, dataset):
+        zfsproc = self.__pipeopen('zfs clone %s %s' % (snapshot, dataset))
+        retval = zfsproc.communicate()[1]
+        return retval
+
+    def rollback_zfs_snapshot(self, snapshot):
+        zfsproc = self.__pipeopen('zfs rollback %s' % (snapshot))
+        retval = zfsproc.communicate()[1]
+        return retval
+
+    def config_restore(self):
+        self.__system("cp /data/factory-v1.db /data/freenas-v1.db")
+
+    def zfs_get_options(self, name):
+        data = {}
+        name = str(name)
+        zfsproc = self.__pipeopen('zfs get -H -o value,source compression "%s"' % (name))
+        fields = zfsproc.communicate()[0].split('\n')[0].split("\t")
+        if fields[1] == "default":
+            data['compression'] = "inherit"
+        else:
+            data['compression'] = fields[0]
+        zfsproc = self.__pipeopen('zfs get -H -o value,source atime %s' % (name))
+        fields = zfsproc.communicate()[0].split('\n')[0].split("\t")
+        if fields[1] == "default":
+            data['atime'] = "inherit"
+        else:
+            data['atime'] = fields[0]
+        zfsproc = self.__pipeopen('zfs get -H -o value refquota %s' % (name))
+        data['refquota'] = zfsproc.communicate()[0].split('\n')[0]
+        zfsproc = self.__pipeopen('zfs get -H -o value quota %s' % (name))
+        data['quota'] = zfsproc.communicate()[0].split('\n')[0]
+        zfsproc = self.__pipeopen('zfs get -H -o value refreservation %s' % (name))
+        data['refreservation'] = zfsproc.communicate()[0].split('\n')[0]
+        zfsproc = self.__pipeopen('zfs get -H -o value reservation %s' % (name))
+        data['reservation'] = zfsproc.communicate()[0].split('\n')[0]
+        return data
+
+    def zfs_set_option(self, name, item, value):
+        name = str(name)
+        item = str(item)
+        value = str(value)
+        zfsproc = self.__pipeopen('zfs set %s=%s "%s"' % (item, value, name))
+        zfsproc.wait()
+        if zfsproc.returncode == 0:
+            return True
+        return False
+
+    def zfs_inherit_option(self, name, item):
+        name = str(name)
+        item = str(item)
+        zfsproc = self.__pipeopen('zfs inherit %s "%s"' % (item, name))
+        zfsproc.wait()
+        print zfsproc.returncode
+        if zfsproc.returncode == 0:
             return True
         return False
 

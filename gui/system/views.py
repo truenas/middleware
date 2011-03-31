@@ -26,6 +26,7 @@
 # $FreeBSD$
 #####################################################################
 
+import datetime
 import os, commands
 from django.forms.models import modelformset_factory
 from django.contrib.auth.decorators import permission_required
@@ -41,6 +42,7 @@ from django.views.generic.list_detail import object_detail, object_list
 from freenasUI.system.forms import * 
 from freenasUI.system.models import * 
 from freenasUI.middleware.notifier import notifier
+from freenasUI.common.system import get_freenas_version
 
 def _system_info():
     hostname = commands.getoutput("hostname")
@@ -223,6 +225,65 @@ def firmware_location(request):
     return render_to_response('system/firmware_location.html', variables)
 
 @login_required
+def config(request):
+
+    variables = RequestContext(request, {
+
+    })
+
+    return render_to_response('system/config.html', variables)
+
+@login_required
+def config_restore(request):
+
+    variables = RequestContext(request)
+
+    if request.method == "POST":
+        notifier().config_restore()
+        return render_to_response('system/config_ok2.html', variables)
+
+    return render_to_response('system/config_restore.html', variables)
+
+@login_required
+def config_upload(request):
+
+    if request.method == "POST":
+        form = ConfigUploadForm(request.POST, request.FILES)
+
+        variables = RequestContext(request, {
+            'form': form,
+        })
+        
+        if form.is_valid():
+            f = request.FILES['config'].read()
+            db = open('/data/freenas-v1.db', 'w')
+            db.write(f)
+            db.close()
+            return render_to_response('system/config_ok.html', variables)
+
+
+        return render_to_response('system/config_upload2.html', variables)
+    else:
+        form = ConfigUploadForm()
+
+        variables = RequestContext(request, {
+            'form': form,
+        })
+
+        return render_to_response('system/config_upload.html', variables)
+
+@login_required
+def config_save(request):
+
+    from django.core.servers.basehttp import FileWrapper
+    filename = '/data/freenas-v1.db'
+    wrapper = FileWrapper(file(filename))
+    response = HttpResponse(wrapper, content_type='application/octet-stream')
+    response['Content-Length'] = os.path.getsize(filename)
+    response['Content-Disposition'] = 'attachment; filename=freenas-%s.db' % datetime.datetime.now().strftime("%Y-%m-%d")
+    return response
+
+@login_required
 def reporting(request):
 
     graphs = {}
@@ -367,11 +428,17 @@ def top(request):
 def reboot(request):
     """ reboots the system """
     notifier().restart("system")
-    return render_to_response('system/reboot.html')
+    variables = RequestContext(request, {
+        'freenas_version': get_freenas_version(),
+    })
+    return render_to_response('system/reboot.html', variables)
 
 @login_required
 def shutdown(request):
     """ shuts down the system and powers off the system """
     notifier().stop("system")
-    return render_to_response('system/shutdown.html')
+    variables = RequestContext(request, {
+        'freenas_version': get_freenas_version(),
+    })
+    return render_to_response('system/shutdown.html', variables)
 

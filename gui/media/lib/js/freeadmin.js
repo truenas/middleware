@@ -235,7 +235,7 @@
 
         },
 
-        openStorage: function() {
+        openStorage: function(tab) {
             var opened = false;
             var p = dijit.byId("content");
 
@@ -244,19 +244,32 @@
                 if(c[i].title == 'Storage'){
                     p.selectChild(c[i]);
                     opened = true;
+                    if(tab) {
+                        var tabnet = dijit.byId("tab_storage");
+                        if(tabnet) {
+                            var c2 = tabnet.getChildren();
+                            for(var j=0; j<c2.length; j++){
+                                if(c2[j].title == tab)
+                                    tabnet.selectChild(c2[j]);
+                            }
+                        }
+                    }
                 }
             }
             if(opened != true) {
+                openurl = this.urlStorage;
+                if(tab) {
+                    openurl += '?tab='+tab;
+                }
                 var pane = new dijit.layout.ContentPane({ 
-                    id: 'topmenu_storage',
                     title: 'Storage',
                     closable: true,
-                    refreshOnShow: true,
-                    href: this.urlStorage,
+                    href:openurl,
                 });
                 p.addChild(pane);
-                dojo.addClass(pane.domNode,["objrefresh", "data_storage_Volumes"]);
                 p.selectChild(pane);
+                dojo.addClass(pane.domNode,["objrefresh", "data_storage_Volumes"]);
+
             }
 
         },
@@ -527,6 +540,18 @@
         } else {
             dojo.style("lowlog", "display", "none");
         }
+    }
+
+    taskrepeat_checkings = function() {
+
+        var repeat = dijit.byId("id_task_repeat_unit");
+        wk = dojo.query(dijit.byId('id_task_byweekday_0').domNode).parents("tr").first()[0];
+        if(repeat.get('value') != 'weekly') {
+            dojo.style(wk, "display", "none");
+        } else {
+            dojo.style(wk, "display", "");
+        }
+
     }
 
     wizardcheckings = function(vol_change) {
@@ -883,23 +908,9 @@
             } else if(item.action && item.action == 'shutdown') {
                     dijit.byId("shutdownDialog").show();
             } else if(item.type && item.type == 'openstorage') {
-                //  get the children and make sure we haven't opened this yet.
-                var c = p.getChildren();
-                for(var i=0; i<c.length; i++){
-                    if(c[i].title == 'Storage'){
-                        p.selectChild(c[i]);
-                        return;
-                    }
-                }
-                var pane = new dijit.layout.ContentPane({ 
-                    href: item.view, 
-                    title: 'Storage', 
-                    closable: true,
-                    parseOnLoad: true,
-                });
-                dojo.addClass(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
-                p.addChild(pane);
-                p.selectChild(pane);
+                Menu.openStorage();
+            } else if(item.type && item.type == 'openperiodic') {
+                Menu.openStorage('Periodic Snapshots');
             } else if(item.type && item.type == 'viewmodel') {
                 //  get the children and make sure we haven't opened this yet.
                 var c = p.getChildren();

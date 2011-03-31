@@ -110,8 +110,7 @@ class CIFS(Model):
             verbose_name=_("Time Server for Domain"))
     cifs_srv_guest = models.CharField(
             max_length=120, 
-            choices=whoChoices(), 
-            default = "www", 
+            default = "", 
             verbose_name=_("Guest account"), 
             help_text=_("Use this option to override the username ('ftp' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login.")
             )
@@ -151,6 +150,11 @@ class CIFS(Model):
             verbose_name=_("Enable home directories"), 
             help_text=_("This enables\disables home directories for samba user.")
             )
+    cifs_srv_homedir_browseable_enable = models.BooleanField(
+            verbose_name=_("Enable home directories browsing"), 
+            help_text=_("This enables\disables home directories browsing for samba user."),
+            default=False,
+            )
     cifs_srv_aio_enable = models.BooleanField(
             verbose_name=_("Enable AIO"), 
             help_text=_("This enables\disables AIO support.")
@@ -188,8 +192,7 @@ class AFP(Model):
             )
     afp_srv_guest_user = models.CharField(
             max_length=120, 
-            choices=whoChoices(), 
-            default = "www", 
+            default = "", 
             verbose_name=_("Guest account"), 
             help_text=_("Use this option to override the username ('www' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login.")
             )
@@ -215,6 +218,12 @@ class NFS(Model):
             max_length=120, 
             verbose_name=_("Number of servers"),
             help_text=_("Specifies how many servers to create. There should be enough to handle the maximum level of concurrency from its clients, typically four to six.")
+            )
+    nfs_srv_async = models.BooleanField(
+            default = False,
+            verbose_name = _("Asynchronous mode"),
+            help_text = _("Enable asynchronous mode, which will help "
+                          "performance beyond gigabit network speed.")
             )
 
     class Meta:
@@ -493,12 +502,12 @@ class iSCSITargetAuthCredential(Model):
             max_length=120,
             blank=True,
             verbose_name = _("Peer User"),
-            help_text = _("Initiator side secret. (for mutual CHAP autentication)"),
+            help_text = _("Initiator side secret. (for mutual CHAP authentication)"),
             )
     iscsi_target_auth_peersecret = models.CharField(
             max_length=120,
             verbose_name = _("Peer Secret"),
-            help_text = _("Initiator side secret. (for mutual CHAP autentication)"),
+            help_text = _("Initiator side secret. (for mutual CHAP authentication)"),
             )
     class Meta:
         verbose_name = _("Authorized Access")
@@ -891,8 +900,7 @@ class TFTP(Model):
             )
     tftp_username = models.CharField(
             max_length=120, 
-            choices=whoChoices(), 
-            default = "nobody", 
+            default = "", 
             verbose_name = _("Username"), 
             help_text = _("Specifies the username which the service will run as.")
             )

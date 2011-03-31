@@ -26,6 +26,7 @@
 # $FreeBSD$
 #####################################################################
 
+from datetime import time
 from django.db import models
 from django.utils.translation import ugettext as _
 from freenasUI.choices import *
@@ -200,3 +201,76 @@ class MountPoint(Model):
     used_pct = property(_get_used_pct)
     used_si = property(_get_used_si)
     status = property(_get_status)
+
+class Task(Model):
+    task_mountpoint = models.ForeignKey(MountPoint,
+            limit_choices_to = {'mp_volume__vol_fstype__exact' : 'ZFS'},
+            verbose_name = _("Mount Point"))
+    task_recursive = models.BooleanField(
+            default = False,
+            verbose_name = _("Recursive"),
+            )
+    task_ret_count = models.PositiveIntegerField(
+            default = 2,
+            verbose_name = _("Snapshot lifetime value"),
+            )
+    task_ret_unit = models.CharField(
+            default = 'week',
+            max_length = 120,
+            choices=RetentionUnit_Choices,
+            verbose_name = _("Snapshot lifetime unit"),
+            )
+    task_begin = models.TimeField(
+            default=time(hour=9),
+            verbose_name = _("Begin"),
+            help_text = _("When in a day should we start making snapshots, e.g. 8:00"),
+            )
+    task_end = models.TimeField(
+            default=time(hour=18),
+            verbose_name = _("End"),
+            help_text = _("When in a day should we stop making snapshots, e.g. 17:00"),
+            )
+    task_interval = models.PositiveIntegerField(
+            default = 60,
+            choices = [(x,x) for x in (15, 30, 60, 120, 180, 240)],
+            max_length = 120,
+            verbose_name = _("Interval"),
+            help_text = _("How many minutes passed before a new snapshot is made after the last one."),
+            )
+    task_repeat_unit = models.CharField(
+            default = 'weekly',
+            max_length = 120,
+            choices=RepeatUnit_Choices,
+            verbose_name = _("Occurrence"),
+            help_text = _("How the task is repeated"),
+            )
+    task_byweekday = models.CharField(
+            max_length = 120,
+            default = "1,2,3,4,5",
+            verbose_name = _("Weekday"),
+            blank = True,
+            )
+#    task_bymonth = models.CharField(
+#            max_length = 120,
+#            default = "1,2,3,4,5,6,7,8,9,a,b,c",
+#            verbose_name = _("Month"),
+#            blank = True,
+#            )
+#    task_bymonthday = models.CharField(
+#            max_length = 120,
+#            verbose_name = _("Day"),
+#            blank = True,
+#            )
+    def __unicode__(self):
+        return '%s_%s_%d%s' % (self.task_mountpoint.mp_path[5:], self.task_repeat_unit, self.task_ret_count, self.task_ret_unit)
+
+    class Meta:
+        verbose_name = _(u"Periodic Snapshot")
+        verbose_name_plural = _(u"Periodic Snapshots")
+
+    class FreeAdmin:
+        icon_model = u"SnapIcon"
+        icon_add = u"CreatePeriodicSnapIcon"
+        icon_view = u"ViewAllPeriodicSnapIcon"
+        icon_object = u"SnapIcon"
+        extra_js = u"taskrepeat_checkings();"

@@ -5,9 +5,20 @@ import models
 BLACKLIST = ['Disk',]
 ICON = u'StorageIcon'
 
+class ViewPeriodic(NavOption):
+
+        name = _(u'View All Periodic Snapshots')
+        view = u'storage_home'
+        type = 'openperiodic'
+        icon = u'ViewAllPeriodicSnapIcon'
+        app_name = 'storage'
+        model = 'Task'
+        append_app = False
+        options = []
+
 class AddVolume(NavOption):
 
-        name = _(u'Add Volume')
+        name = _(u'Create Volume')
         view = 'storage_wizard'
         type = 'volumewizard'
         icon = u'AddVolumeIcon'
@@ -21,7 +32,7 @@ class ImportVolume(NavOption):
         name = _(u'Import Volume')
         view = 'storage_import'
         type = 'volumewizard'
-        icon = u'AddVolumeIcon'
+        icon = u'ImportVolumeIcon'
         app_name = 'storage'
         model = 'Volumes'
         append_app = False
@@ -40,12 +51,24 @@ class ViewVolumes(NavOption):
 
 class AddDataset(NavOption):
 
-        name = _(u'Add ZFS Dataset')
+        name = _(u'Create ZFS Dataset')
         view = 'storage_dataset'
         icon = u'AddDatasetIcon'
         type = 'object'
         app_name = 'storage'
         model = 'Volumes'
+        append_app = False
+        options = []
+
+class CreatePeriodicSnap(NavOption):
+
+        name = _(u'Add Periodic Snapshot')
+        rename = _(u'Create Periodic Snapshot')
+        view = 'storage_periodicsnap'
+        icon = u'CreatePeriodicSnapIcon'
+        type = 'object'
+        app_name = 'storage'
+        model = 'Task'
         append_app = False
         options = []
 
@@ -62,7 +85,7 @@ class Volumes(NavOption):
             if en_dataset:
                 self.options.append(AddDataset)
 
-            mp = models.MountPoint.objects.filter(mp_ischild=False).select_related().order_by('-id')
+            mp = models.MountPoint.objects.filter(mp_ischild=False).exclude(mp_volume__vol_fstype__exact='iscsi').select_related().order_by('-id')
             for i in mp:
                 nav = NavOption()
                 nav.name = i.mp_path

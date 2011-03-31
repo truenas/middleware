@@ -213,7 +213,7 @@ class AFP_Share(Model):
             )
     
     def __unicode__(self):
-        return unicode(self.afp_path)
+        return unicode(self.afp_name)
 
     class Meta:
         verbose_name = _("Apple Share")
@@ -230,10 +230,6 @@ class NFS_Share(Model):
             blank=True,
             )
     nfs_path = models.ForeignKey(MountPoint, limit_choices_to=mountpoint_limiter, verbose_name = _("Volume Path"))
-    nfs_allroot = models.BooleanField(
-            verbose_name = _("Map All Remote Users As Local Root"),
-            help_text = _("When enabled, map all remote access to local root.  THIS SETTING IS NOT RECOMMENDED FOR SECURITY REASONS.")
-            )
     nfs_network = models.CharField(
             max_length=120, 
             verbose_name = _("Authorized network"),
@@ -252,7 +248,39 @@ class NFS_Share(Model):
             verbose_name = _("Quiet"),
             help_text = _("Inibit syslog warnings if there are problems with exporting this share.")
             )
+
+    nfs_maproot_user = models.CharField(
+            verbose_name = _("Maproot User"),
+            max_length = 120,
+            blank = True,
+            default = '',
+            help_text = _("User to map root to")
+            )
+
+    nfs_maproot_group = models.CharField(
+            verbose_name = _("Maproot Group"),
+            max_length = 120,
+            blank = True,
+            default = '',
+            help_text = _("Group to map root to")
+            )
+
+    nfs_mapall_user = models.CharField(
+            verbose_name = _("Mapall User"),
+            max_length = 120,
+            blank = True,
+            default = '',
+            help_text = _("User to map all users to")
+            )
     
+    nfs_mapall_group = models.CharField(
+            verbose_name = _("Mapall Group"),
+            max_length = 120,
+            blank = True,
+            default = '',
+            help_text = _("Group to map all users to")
+            )
+
     def __unicode__(self):
         return unicode(self.nfs_path)
 

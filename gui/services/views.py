@@ -279,19 +279,30 @@ def servicesToggleView(request, formname):
     changing_service = form2namemap[formname]
     if changing_service == "":
         raise "Unknown service - Invalid request?"
+    # Do not allow LDAP and AD to be enabled simultaniously
+    opposing_service = None
+    opp_svc_entry = None
+    if changing_service == "ldap":
+        opposing_service = "activedirectory"
+    if changing_service == "activedirectory":
+        opposing_service = "ldap"
     svc_entry = Services.objects.get(srv_service=changing_service)
+    if opposing_service:
+        opp_svc_entry = Services.objects.get(srv_service=opposing_service)
+    # Turning things off is always ok
     if svc_entry.srv_enable:
 	svc_entry.srv_enable = 0
     else:
-	svc_entry.srv_enable = 1
+        if opposing_service and not opp_svc_entry.srv_enable == 1 or not opposing_service:
+	    svc_entry.srv_enable = 1
     svc_entry.save()
     # forcestop then start to make sure the service is of the same
     # status.
     notifier().restart(changing_service)
     if svc_entry.srv_enable == 1:
-        return HttpResponseRedirect('/freenas/media/images/ui/on.png')
+        return HttpResponseRedirect('/freenas/media/images/ui/buttons/on.png')
     else:
-        return HttpResponseRedirect('/freenas/media/images/ui/off.png')
+        return HttpResponseRedirect('/freenas/media/images/ui/buttons/off.png')
 
 @login_required
 def generic_delete(request, object_id, objtype):

@@ -237,3 +237,5 @@ al.230400:\
 #
 FreeNAS|freenas|FreeNAS Menu:\
 	:ht:np:sp#15200:lo=/etc/netcli.sh:al=root:
+freenas_serial:\
+	:ht:np:sp#9600:lo=/etc/netcli.sh:al=root:

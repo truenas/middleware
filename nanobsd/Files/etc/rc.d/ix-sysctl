@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-sysctl
+# BEFORE: sysctl
+
+. /etc/rc.subr
+
+generate_sysctl_conf()
+{
+	local async
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_async FROM services_nfs ORDER BY id DESC LIMIT 1" | \
+	while read async; do
+		echo "vfs.nfsrv.async=${async}" > /etc/sysctl.conf
+	done
+	cat >> /etc/sysctl.conf << EOF
+kern.metadelay=3
+kern.dirdelay=4
+kern.filedelay=5
+EOF
+
+}
+
+name="ix-sysctl"
+start_cmd='generate_sysctl_conf'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

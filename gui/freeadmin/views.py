@@ -43,6 +43,7 @@ from django.template.loader import get_template
 from django.utils.translation import ugettext as _
 
 from freenasUI.middleware.notifier import notifier
+from freenasUI.common.system import get_freenas_version
 from freeadmin import navtree
 from system.models import Advanced
 
@@ -51,7 +52,8 @@ def adminInterface(request, objtype = None):
 
     adv = Advanced.objects.all().order_by('-id')[0]
     context = RequestContext(request, {
-        'consolemsg': adv.adv_consolemsg
+        'consolemsg': adv.adv_consolemsg,
+        'freenas_version': get_freenas_version(),
     })
 
     return render_to_response('freeadmin/index.html', context)
@@ -90,6 +92,7 @@ def generic_model_add(request, app, model, mf=None):
         'model': model,
         'mf': mf,
         'verbose_name': m._meta.verbose_name,
+        'extra_js': m._admin.extra_js,
     })
     if not isinstance(navtree._modelforms[m], dict):
         mf = navtree._modelforms[m]
@@ -248,6 +251,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
         'mf': mf,
         'oid': oid,
         'inline': inline,
+        'extra_js': m._admin.extra_js,
         'verbose_name': m._meta.verbose_name,
     })
 

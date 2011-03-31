@@ -28,7 +28,6 @@
 from django.db import models
 from freeadmin.models import Model
 from django import forms
-from freenasUI.choices import UserShell
 from django.contrib.auth.models import get_hexdigest
 from django.utils.translation import ugettext as _
 from freenasUI.middleware.notifier import notifier

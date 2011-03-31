@@ -305,7 +305,7 @@ class bsdUserChangeForm(ModelForm):
         if instance:
             if instance.id:
                 self.fields['bsdusr_username'].widget.attrs['readonly'] = True
-            if instance.bsdusr_unixhash == '*' and instance.bsdusr_smbhash == '':
+            if instance.bsdusr_unixhash == '*' or instance.bsdusr_unixhash[0:8] == '*LOCKED*':
                 self.fields['bsdusr_login_disabled'].initial = True
 
     def clean_bsdusr_username(self):
@@ -317,12 +317,11 @@ class bsdUserChangeForm(ModelForm):
     def save(self):
         
         bsduser = super(bsdUserChangeForm, self).save(commit=False)
-        if self.cleaned_data["bsdusr_login_disabled"] == True and \
-                self.instance.bsdusr_unixhash != '*' and self.instance.bsdusr_smbhash != '':
-            bsduser.bsdusr_unixhash = '*'
-            bsduser.bsdusr_smbhash = ''
-        elif self.cleaned_data["bsdusr_login_disabled"] == False:
-            bsduser.bsdusr_unixhash = ''
+        bsduser_locked = (bsduser.bsdusr_unixhash[0:8] == '*LOCKED*')
+        if self.cleaned_data["bsdusr_login_disabled"] == True and bsduser_locked == False:
+            bsduser.bsdusr_unixhash = notifier().user_lock(bsduser.bsdusr_username.__str__())
+        elif self.cleaned_data["bsdusr_login_disabled"] == False and bsduser_locked == True:
+            bsduser.bsdusr_unixhash = notifier().user_unlock(bsduser.bsdusr_username.__str__())
         bsduser.save()
         notifier().reload("user")
         return bsduser

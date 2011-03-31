@@ -34,10 +34,13 @@ from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode 
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.forms import Form
-from django import forms
+from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups
+from dojango import forms
 from dojango.forms import fields, widgets 
 from dojango.forms.fields import BooleanField 
 from django.utils.translation import ugettext as _
+
+attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 
 """ Shares """
 class MountPointForm(ModelForm):
@@ -63,9 +66,76 @@ class AFP_ShareForm(ModelForm):
 class NFS_ShareForm(ModelForm):
     class Meta:
         model = NFS_Share 
-    def save(self):
-        ret = super(NFS_ShareForm, self).save()
+    nfs_maproot_user = forms.ChoiceField(choices=(),
+                                         widget = forms.Select(attrs=attrs_dict),
+                                         label = _("Maproot User"),
+                                         required = False,
+                                         )
+    nfs_maproot_group = forms.ChoiceField(choices=(),
+                                         widget = forms.Select(attrs=attrs_dict),
+                                         label = _("Maproot Group"),
+                                         required = False,
+                                         )
+    nfs_mapall_user = forms.ChoiceField(choices=(),
+                                         widget = forms.Select(attrs=attrs_dict),
+                                         label = _("Mapall User"),
+                                         required = False,
+                                         )
+    nfs_mapall_group = forms.ChoiceField(choices=(),
+                                         widget = forms.Select(attrs=attrs_dict),
+                                         label = _("Mapall Group"),
+                                         required = False,
+                                         )
+
+    def __init__(self, *args, **kwargs):
+        super(NFS_ShareForm, self).__init__(*args, **kwargs)
+
+        self.userlist = []
+        self.userlist.append(('-----', 'N/A'))
+        for a in list((x.bsdusr_username, x.bsdusr_username)
+                      for x in FreeNAS_Users()):
+             self.userlist.append(a)
+
+        self.grouplist = []
+        self.grouplist.append(('-----', 'N/A'))
+        for a in list((x.bsdusr_group, x.bsdusr_group)
+                      for x in FreeNAS_Users()):
+             self.grouplist.append(a)
+
+        self.fields['nfs_maproot_user'].choices = self.userlist
+        self.fields['nfs_maproot_group'].choices = self.grouplist
+        self.fields['nfs_mapall_user'].choices = self.userlist
+        self.fields['nfs_mapall_group'].choices = self.grouplist
+
+    def clean(self):
+
+        cdata = self.cleaned_data
+        for field in ('nfs_maproot_user', 'nfs_maproot_group', 
+                        'nfs_mapall_user', 'nfs_mapall_group'):
+            if cdata.get(field, None) == '-----':
+                cdata[field] = None
+
+        if cdata.get('nfs_maproot_group', None) != None and cdata.get('nfs_maproot_user', None) == None:
+            self._errors['nfs_maproot_group'] = self.error_class([_("Maproot group requires Maproot user"),])
+        if cdata.get('nfs_mapall_group', None) != None and cdata.get('nfs_mapall_user', None) == None:
+            self._errors['nfs_mapall_group'] = self.error_class([_("Mapall group requires Mapall user"),])
+        if cdata.get('nfs_maproot_user', None) != None or cdata.get('nfs_maproot_group', None) != None:
+            if cdata.get('nfs_mapall_user', None) != None:
+                self._errors['nfs_mapall_user'] = self.error_class([_("Maproot user/group disqualifies Mapall"),])
+                del cdata['nfs_mapall_user']
+            if cdata.get('nfs_mapall_group', None) != None:
+                self._errors['nfs_mapall_group'] = self.error_class([_("Maproot user/group disqualifies Mapall"),])
+                del cdata['nfs_mapall_group']
+        #elif cdata.get('nfs_mapall_user', False) or cdata.get('nfs_mapall_group', False):
+        #    if cdata.get('nfs_maproot_user', False) != False:
+        #        self._errors['nfs_maproot_user'] = self.error_class([_("Mapall user/group disqualifies Maproot"),])
+        #        del cdata['nfs_maproot_user']
+        #    if cdata.get('nfs_maproot_group', False) != False:
+        #        self._errors['nfs_maproot_group'] = self.error_class([_("Mapall user/group disqualifies Maproot"),])
+        #        del cdata['nfs_maproot_group']
+
+        return cdata
+
+    def save(self, *args, **kwargs):
+        super(NFS_ShareForm, self).save(*args, **kwargs)
         notifier().reload("nfs")
-        return ret
-
-

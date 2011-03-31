@@ -56,7 +56,25 @@ class SettingsForm(ModelForm):
 
 class AdvancedForm(ModelForm):
     class Meta:
+        exclude = ('adv_zeroconfbonjour', 'adv_tuning', 'adv_firmwarevc')
         model = Advanced
+    def __init__(self, *args, **kwargs):
+        super(AdvancedForm, self).__init__(*args, **kwargs) 
+        self.instance._original_adv_motd = self.instance.adv_motd
+        self.instance._original_adv_consolemenu = self.instance.adv_consolemenu
+        self.instance._original_adv_powerdaemon = self.instance.adv_powerdaemon
+        self.instance._original_adv_serialconsole = self.instance.adv_serialconsole
+    def save(self):
+        super(AdvancedForm, self).save()
+        if self.instance._original_adv_motd != self.instance.adv_motd:
+            notifier().start("motd")
+        if self.instance._original_adv_consolemenu != self.instance.adv_consolemenu:
+            notifier().start("ttys")
+        if self.instance._original_adv_powerdaemon != self.instance.adv_powerdaemon:
+            notifier().restart("powerd")
+        if self.instance._original_adv_serialconsole != self.instance.adv_serialconsole:
+            notifier().start("ttys")
+
 
 class EmailForm(ModelForm):
     em_pass1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput, required=False)
@@ -150,3 +168,5 @@ class FirmwareUploadForm(Form):
     def done(self):
         notifier().update_firmware('/var/tmp/firmware/firmware.xz')
 
+class ConfigUploadForm(Form):
+    config = django.forms.FileField(label=_("New config to be installed"))

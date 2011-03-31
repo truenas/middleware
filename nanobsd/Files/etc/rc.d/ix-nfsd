@@ -17,9 +17,10 @@ generate_exports()
 {
 	local IFS=\|
 
-	local mountpoint allroot network alldirs nfsro quiet
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT mp_path, nfs_allroot, nfs_network, nfs_alldirs, nfs_ro, nfs_quiet FROM sharing_nfs_share AS us LEFT OUTER JOIN storage_mountpoint AS mp ON us.nfs_path_id = mp.id ORDER BY us.id DESC" | \
-	while read mountpoint allroot network alldirs nfsro quiet; do
+	local mountpoint network alldirs nfsro quiet
+        local maproot_user maproot_group mapall_user mapall_group
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT mp_path, nfs_network, nfs_alldirs, nfs_ro, nfs_quiet, nfs_maproot_user, nfs_maproot_group, nfs_mapall_user, nfs_mapall_group FROM sharing_nfs_share AS us LEFT OUTER JOIN storage_mountpoint AS mp ON us.nfs_path_id = mp.id ORDER BY us.id DESC" | \
+	while read mountpoint network alldirs nfsro quiet maproot_user maproot_group mapall_user mapall_group ; do
 		if [ -d "${mountpoint}" ]; then
 			echo -n ${mountpoint}
 			if [ "${alldirs}" = "1" ]; then
@@ -31,9 +32,12 @@ generate_exports()
 			if [ "${quiet}" = "1" ]; then
 				echo -n " -quiet"
 			fi
-			# Current schema can only do ON and OFF.
-			if [ "${allroot}" = "1" ]; then
-				echo -n " -mapall=root"
+                        if [ -n "${mapall_user}" -o -n "${mapall_group}" ]; then
+				echo -n " -mapall=${mapall_user}:${mapall_group}"
+                        else
+                                if [ -n "${maproot_user}" -o -n "${maproot_group}" ]; then
+				        echo -n " -maproot=${maproot_user}:${maproot_group}"
+                                fi
 			fi
 			if [ -n "${network}" ]; then
 				echo -n " -network ${network}"

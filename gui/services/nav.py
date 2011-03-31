@@ -22,6 +22,8 @@ class ISCSIDeviceView(NavOption):
     kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
     icon = u'ViewAllExtentsIcon'
     append_app = False
+    app_name = 'services'
+    model = 'DExtents'
     options = []
 
 class ISCSIDevice(NavOption):
@@ -63,6 +65,8 @@ class ISCSIExtView(NavOption):
     kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
     icon = u'ViewAllExtentsIcon'
     append_app = False
+    app_name = 'services'
+    model = 'Extents'
     options = []
 
 class ISCSIExt(NavOption):

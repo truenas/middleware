@@ -1,0 +1,18 @@
+{% load i18n %}
+<html>
+    <head>
+        <script>isLoaded = true;</script>
+    </head>
+    <body>
+<textarea>
+{% filter force_escape %}
+<div dojoType="dijit.layout.ContentPane">
+    <script type="dojo/method">
+window.location='{% url system_reboot %}';
+    </script>
+    {% trans "Restarting..." %}
+         </div>
+{% endfilter %}
+</textarea>
+</body>
+</html>

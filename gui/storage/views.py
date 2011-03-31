@@ -49,6 +49,7 @@ from freenasUI.storage.models import *
 from freenasUI.services.models import services, CIFS, AFP, NFS 
 from freenasUI.services.forms import CIFSForm, AFPForm, NFSForm 
 from freenasUI.middleware.notifier import notifier
+from freenasUI.common.system import get_freenas_version
 import commands
 
 ## Disk section
@@ -66,9 +67,14 @@ def storage(request):
 def home(request):
     mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     en_dataset = MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
+    zfsnap_list = notifier().zfs_snapshot_list()
+    task_list = Task.objects.order_by("-id").all()
     variables = RequestContext(request, {
+        'focused_tab': request.GET.get("tab", None),
         'en_dataset' : en_dataset,
         'mp_list': mp_list,
+        'task_list': task_list,
+        'zfsnap_list': zfsnap_list,
     })
     return render_to_response('storage/index2.html', variables)
 
@@ -306,7 +312,8 @@ def dataset_create(request):
     variables = RequestContext(request, {
         'focused_tab' : 'storage',
         'mp_list': mp_list,
-        'form': dataset_form
+        'form': dataset_form,
+        'freenas_version' : get_freenas_version(),
     })
     return render_to_response('storage/datasets.html', variables)
 
@@ -357,6 +364,82 @@ def dataset_create2(request):
     return render_to_response('storage/datasets2.html', variables)
 
 @login_required
+def dataset_edit(request, object_id):
+    mp = MountPoint.objects.get(pk=object_id)
+    dataset_form = ZFSDataset_EditForm(mp=mp)
+    if request.method == 'POST':
+        dataset_form = ZFSDataset_EditForm(request.POST, mp=mp)
+        if dataset_form.is_valid():
+            volume = mp.mp_volume
+            volume_name = volume.vol_name
+            dataset_name = mp.mp_path.replace("/mnt/","")
+
+            if dataset_form.cleaned_data["dataset_quota"] == "0":
+                dataset_form.cleaned_data["dataset_quota"] = "none"
+            if dataset_form.cleaned_data["dataset_refquota"] == "0":
+                dataset_form.cleaned_data["dataset_refquota"] = "none"
+
+            error = False
+            if dataset_form.cleaned_data["dataset_compression"] == "inherit":
+                error |= not notifier().zfs_inherit_option(dataset_name, "compression")
+            else:
+                error |= not notifier().zfs_set_option(dataset_name, "compression", dataset_form.cleaned_data["dataset_compression"])
+            if dataset_form.cleaned_data["dataset_atime"] == "inherit":
+                error |= not notifier().zfs_inherit_option(dataset_name, "atime")
+            else:
+                error |= not notifier().zfs_set_option(dataset_name, "atime", dataset_form.cleaned_data["dataset_atime"])
+            error |= not notifier().zfs_set_option(dataset_name, "reservation", dataset_form.cleaned_data["dataset_reserv"])
+            error |= not notifier().zfs_set_option(dataset_name, "refreservation", dataset_form.cleaned_data["dataset_refreserv"])
+            error |= not notifier().zfs_set_option(dataset_name, "quota", dataset_form.cleaned_data["dataset_quota"])
+            error |= not notifier().zfs_set_option(dataset_name, "refquota", dataset_form.cleaned_data["dataset_refquota"])
+
+            if not error:
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset") + " " + _("successfully edited") + "."}), mimetype="application/json")
+            else:
+                dataset_form.set_error(_("Some error ocurried while setting the options"))
+    variables = RequestContext(request, {
+        'mp': mp,
+        'form': dataset_form
+    })
+    return render_to_response('storage/dataset_edit.html', variables)
+
+@login_required
+def zfsvolume_edit(request, object_id):
+    mp = MountPoint.objects.get(pk=object_id)
+    volume_form = ZFSVolume_EditForm(mp=mp)
+    if request.method == 'POST':
+        volume_form = ZFSVolume_EditForm(request.POST, mp=mp)
+        if volume_form.is_valid():
+            volume = mp.mp_volume
+            volume_name = volume.vol_name
+            volume_name = mp.mp_path.replace("/mnt/","")
+
+            if volume_form.cleaned_data["volume_refquota"] == "0":
+                volume_form.cleaned_data["volume_refquota"] = "none"
+
+            error = False
+            if volume_form.cleaned_data["volume_compression"] == "inherit":
+                error |= not notifier().zfs_inherit_option(volume_name, "compression")
+            else:
+                error |= not notifier().zfs_set_option(volume_name, "compression", volume_form.cleaned_data["volume_compression"])
+            if volume_form.cleaned_data["volume_atime"] == "inherit":
+                error |= not notifier().zfs_inherit_option(volume_name, "atime")
+            else:
+                error |= not notifier().zfs_set_option(volume_name, "atime", volume_form.cleaned_data["volume_atime"])
+            error |= not notifier().zfs_set_option(volume_name, "refreservation", volume_form.cleaned_data["volume_refreserv"])
+            error |= not notifier().zfs_set_option(volume_name, "refquota", volume_form.cleaned_data["volume_refquota"])
+
+            if not error:
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("Native dataset") + " " + _("successfully edited") + "."}), mimetype="application/json")
+            else:
+                volume_form.set_error(_("Some error ocurried while setting the options"))
+    variables = RequestContext(request, {
+        'mp': mp,
+        'form': volume_form
+    })
+    return render_to_response('storage/volume_edit.html', variables)
+
+@login_required
 def mp_permission(request, object_id):
     mp = MountPoint.objects.get(id = object_id)
     mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
@@ -373,6 +456,7 @@ def mp_permission(request, object_id):
         'mp': mp,
         'mp_list': mp_list,
         'form': form,
+        'freenas_version' : get_freenas_version(),
     })
     return render_to_response('storage/permission.html', variables)
 
@@ -414,15 +498,47 @@ def dataset_delete(request, object_id):
 def dataset_delete2(request, object_id):
     obj = MountPoint.objects.get(id=object_id)
     if request.method == 'POST':
-        notifier().destroy_zfs_dataset(path = obj.mp_path[5:].__str__())
-        obj.delete()
-        return HttpResponse(simplejson.dumps({"error": False, "message": "Dataset successfully deleted."}), mimetype="application/json")
+        retval = notifier().destroy_zfs_dataset(path = obj.mp_path[5:].__str__())
+        if retval == '':
+            obj.delete()
+            return HttpResponse(simplejson.dumps({"error": False, "message": "Dataset successfully destroyed."}), mimetype="application/json")
+        else:
+            return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
     else:
         c = RequestContext(request, {
             'focused_tab' : 'storage',
             'object': obj,
         })
         return render_to_response('storage/dataset_confirm_delete2.html', c)
+
+@login_required
+def snapshot_delete2(request, dataset, snapname):
+    snapshot = '%s@%s' % (dataset, snapname)
+    if request.method == 'POST':
+        notifier().destroy_zfs_dataset(path = snapshot.__str__())
+        return HttpResponse(simplejson.dumps({"error": False, "message": "Snapshot successfully deleted."}), mimetype="application/json")
+    else:
+        c = RequestContext(request, {
+            'snapname' : snapname,
+            'dataset' : dataset,
+        })
+        return render_to_response('storage/snapshot_confirm_delete2.html', c)
+
+@login_required
+def snapshot_rollback2(request, dataset, snapname):
+    snapshot = '%s@%s' % (dataset, snapname)
+    if request.method == "POST":
+        ret = notifier().rollback_zfs_snapshot(snapshot = snapshot.__str__())
+        if ret == '':
+            return HttpResponse(simplejson.dumps({"error": False, "message": "Rollback successful."}), mimetype="application/json")
+        else:
+            return HttpResponse(simplejson.dumps({"error": True, "message": ret}), mimetype="application/json")
+    else:
+        c = RequestContext(request, {
+            'snapname' : snapname,
+            'dataset' : dataset,
+        })
+        return render_to_response('storage/snapshot_confirm_rollback2.html', c)
 
 @login_required
 def generic_detail(request, object_id, model_name):
@@ -466,3 +582,55 @@ def generic_update(request, object_id, model_name):
 		model = model, form_class = form_class,
 		post_save_redirect = '/storage/',
 		object_id = object_id, )
+
+@login_required
+def periodicsnap(request):
+
+    if request.method == "POST":
+
+        form = PeriodicSnapForm(request.POST)
+        if form.is_valid():
+            form.save()
+
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot") + " " + _("successfully added") + "."}), mimetype="application/json")
+    else:
+        form = PeriodicSnapForm()
+    variables = RequestContext(request, {
+        'form': form,
+        'extra_js': Task._admin.extra_js,
+    })
+    return render_to_response('storage/periodicsnap.html', variables)
+
+@login_required
+def manualsnap(request, path):
+    if request.method == "POST":
+        form = ManualSnapshotForm(request.POST)
+        if form.is_valid():
+            form.commit(path)
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully taken")}), mimetype="application/json")
+    else:
+        form = ManualSnapshotForm()
+    variables = RequestContext(request, {
+        'form': form,
+        'path': path,
+    })
+    return render_to_response('storage/manualsnap.html', variables)
+
+@login_required
+def clonesnap(request, snapshot):
+    initial = { 'cs_snapshot' : snapshot }
+    if request.method == "POST":
+        form = CloneSnapshotForm(request.POST, initial=initial)
+        if form.is_valid():
+            retval = form.commit()
+            if retval == '':
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully cloned")}), mimetype="application/json")
+            else:
+                return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
+    else:
+        form = CloneSnapshotForm(initial=initial)
+    variables = RequestContext(request, {
+        'form': form,
+        'snapshot': snapshot,
+    })
+    return render_to_response('storage/clonesnap.html', variables)

@@ -1,0 +1,7 @@
+{% load i18n %}
+<div dojoType="dijit.layout.ContentPane">
+    <script type="dojo/method">
+window.location='{% url system_reboot %}';
+    </script>
+    {% trans "Restarting..." %}
+         </div>

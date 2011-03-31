@@ -31,7 +31,7 @@ ident		FREENAS64
 # env		"GENERIC.env"
 
 #makeoptions	DEBUG=-g		# Build kernel with gdb(1) debug symbols
-makeoptions	MODULES_OVERRIDE="zfs opensolaris acpi geom mps cxgb ntfs"
+makeoptions	MODULES_OVERRIDE="zfs opensolaris acpi geom mps cxgb ntfs smbfs libiconv libmchain"
 
 options 	SCHED_ULE		# ULE scheduler
 options 	PREEMPTION		# Enable kernel thread preemption
@@ -143,12 +143,12 @@ device		amr		# AMI MegaRAID
 device		arcmsr		# Areca SATA II RAID
 #XXX it is not 64-bit clean, -scottl
 #device		asr		# DPT SmartRAID V, VI and Adaptec SCSI RAID
-#device		ciss		# Compaq Smart RAID 5*
+device		ciss		# Compaq Smart RAID 5*
 device		dpt		# DPT Smartcache III, IV - See NOTES for options
 device		hptmv		# Highpoint RocketRAID 182x
 device		hptrr		# Highpoint RocketRAID 17xx, 22xx, 23xx, 25xx
-#device		iir		# Intel Integrated RAID
-#device		ips		# IBM (Adaptec) ServeRAID
+device		iir		# Intel Integrated RAID
+device		ips		# IBM (Adaptec) ServeRAID
 device		mly		# Mylex AcceleRAID/eXtremeRAID
 device		twa		# 3ware 9000 series PATA/SATA RAID
 device		tws		# LSI 3ware 9750 SATA+SAS 6Gb/s RAID controller
@@ -304,3 +304,5 @@ device		ums		# Mouse
 #device		urio		# Diamond Rio 500 MP3 player
 
 device		lagg
+device		coretemp
+device		amdtemp

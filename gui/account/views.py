@@ -44,6 +44,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm, PasswordChangeForm
 from django.utils.translation import ugettext as _
 from freenasUI.middleware.notifier import notifier
+from freenasUI.common.system import get_freenas_version
 from forms import SetPasswordForm, PasswordChangeForm
 import commands
 
@@ -252,6 +253,7 @@ def password_update(request, object_id):
         'focused_tab' : 'account',
         'form' : f,
         'object' : obj,
+        'freenas_version' : get_freenas_version(),
     })
     return render_to_response('account/bsdaccount_form.html', variables)
 
@@ -267,6 +269,7 @@ def group2user_update(request, object_id):
     variables = RequestContext(request, {
         'focused_tab' : 'account',
         'form' : f,
+        'freenas_version' : get_freenas_version(),
     })
     return render_to_response('account/bsdgroup2user_form.html', variables)
 
@@ -298,6 +301,7 @@ def user2group_update(request, object_id):
     variables = RequestContext(request, {
         'focused_tab' : 'account',
         'form' : f,
+        'freenas_version' : get_freenas_version(),
     })
     return render_to_response('account/bsdgroup2user_form.html', variables)
 

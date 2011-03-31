@@ -19,6 +19,8 @@ class FreeAdminWrapper(object):
     icon_add = None
     icon_view = None
 
+    extra_js = ''
+
     def __init__(self, c=None):
 
         if c is None:

@@ -1,13 +1,63 @@
 {% load i18n %}
-<h5>
-    {% if mp_list %}
-    {% trans "Active Volumes" %}: <strong>{{ mp_list|length }}</strong>
-    {% else %}
-    {% trans "There are no active volumes." %}
-    {% endif %}
-</h5>
-<table class="grid">
-    <thead class="ghead">
+    <div dojoType="dijit.layout.TabContainer" nested="true" doLayout="true" id="tab_storage">
+    <div dojoType="dijit.layout.ContentPane" nested="true" title="{% trans "Active Volumes" %}">
+        <button id="addVolumeBtn" dojoType="dijit.form.Button" type="button">
+        <img src="/freenas/media/images/ui/buttons/add_volumes.png">
+        <br />
+        <script type="dojo/method" event="onClick" args="evt">
+            volumeWizard('{% trans "Create Volume" %}', '{% url storage_wizard %}', [this,]);
+        </script>
+        </button>
+
+    <div dojoType="dijit.Tooltip" connectId="addVolumeBtn" position="above">
+        <strong>{% trans "Create Volume" %}</strong>
+    </div>
+
+{% if en_dataset %}
+    <button id="datasetBtn" dojoType="dijit.form.Button" type="button">
+        <img src="/freenas/media/images/ui/buttons/add_dataset.png">
+        <br />
+        <script type="dojo/method" event="onClick" args="evt">
+            addObject('{% trans "Create ZFS Dataset" %}', '{% url storage_dataset %}', [this,]);
+        </script>
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="datasetBtn" position="above">
+        <strong>{% trans "Create ZFS Dataset" %}</strong>
+    </div>
+{% endif %}
+
+    <button id="importVolBtn" dojoType="dijit.form.Button" type="button">
+        <img src="/freenas/media/images/ui/buttons/import_volume.png">
+        <br />
+        <script type="dojo/method" event="onClick" args="evt">
+            volumeWizard('{% trans "Import Volume" %}', '{% url storage_import %}', [this,]);
+        </script>
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="importVolBtn" position="above">
+        <strong>{% trans "Import Volume" %}</strong>
+    </div>
+
+    <button id="autoImportVolBtn" dojoType="dijit.form.Button" type="button">
+        <img src="/freenas/media/images/ui/buttons/auto_import_volume.png">
+        <br />
+        <script type="dojo/method" event="onClick" args="evt">
+            volumeWizard('{% trans "Auto Import Volume" %}', '{% url storage_autoimport %}', [this,]);
+        </script>
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="autoImportVolBtn" position="above">
+        <strong>{% trans "Auto Import Volume" %}</strong>
+    </div>
+
+    <h5>
+        {% if mp_list %}
+            {% trans "Active Volumes" %}: <strong>{{ mp_list|length }}</strong>
+        {% else %}
+            {% trans "There are no active volumes." %}
+        {% endif %}
+    </h5>
+
+    <table class="grid">
+        <thead class="ghead">
         <td>{% trans "Volume" %}</td>
         <td>{% trans "Path" %}</td>
         <td>{% trans "Used" %}</td>
@@ -15,7 +65,7 @@
         <td>{% trans "Size" %}</td>
         <td>{% trans "Status" %}</td>
         <td>{% trans "Available actions" %}</td>
-    </thead>
+        </thead>
     <tbody>
 	{% for m in mp_list %}
 	<tr class="{% cycle 'odd' 'even' %}" id="{{ m.id }}">
@@ -38,21 +88,57 @@
 		{{ m.status }}
 	    </td>
 	    <td>
-		{% if m.mp_ischild %}
+
+{% if m.mp_ischild %}
     <button dojoType="dijit.form.Button" type="button"
-        onClick="editObject('{% trans "Remove Dataset" %}', '{% url storage_dataset_delete object_id=m.id %}', [this,]);">{% trans "Remove dataset" %}</button>
-		{% else %}
-    <button dojoType="dijit.form.Button" type="button"
-        onClick="editObject('{% trans "Delete Volume" %}', '{% url freeadmin_model_delete app="storage",model="Volume",oid=m.mp_volume.id %}', [this,]);">{% trans "Delete Volume" %}</button>
-    <button dojoType="dijit.form.Button" type="button">
-        {% trans "View Disks" %}
+        onClick="editObject('{% trans "Destroy Dataset" %}', '{% url storage_dataset_delete object_id=m.id %}', [this,]);">{% trans "Destroy dataset" %}
+    </button>
+    <button dojoType="dijit.form.Button" type="button" connectId="editDataBtn{{ m.id }}"
+        onClick="editObject('{% trans "Edit" %}', '{% url storage_dataset_edit object_id=m.id %}', [this,]);">
+        <img src="/freenas/media/images/ui/buttons/settings.png" />
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="editDataBtn{{ m.id }}" position="above">
+        <strong>{% trans "Edit" %}</strong>
+    </div>
+{% else %}
+    {% if m.mp_volume.vol_fstype == 'ZFS' %}
+    <button dojoType="dijit.form.Button" type="button" id="editVolBtn{{ m.id }}"
+        onClick="editObject('{% trans "Edit ZFS Options" %}', '{% url storage_volume_edit object_id=m.id %}', [this,]);">
+        <img src="/freenas/media/images/ui/buttons/settings.png" />
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="editVolBtn{{ m.id }}" position="above">
+        <strong>{% trans "Edit ZFS Options" %}</strong>
+    </div>
+    {% endif %}
+        <button id="delVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button"       onClick="editObject('{% trans "Destroy Volume" %}', '{% url freeadmin_model_delete app="storage",model="Volume",oid=m.mp_volume.id %}', [this,]);"><img src="/freenas/media/images/ui/buttons/remove_volume.png" width="18px" height="18px"></button>
+    <div dojoType="dijit.Tooltip" connectId="delVolBtn{{ m.id }}" position="above">
+        <strong>{% trans "Destroy Volume" %}</strong>
+    </div>
+
+    <button id="viewDisksBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
+        <img src="/freenas/media/images/ui/buttons/view_all_disks.png" width="18px" height="18px">
         <script type="dojo/method" event="onClick" args="evt">
             viewModel('{% trans "View Disks" %}', '{% url storage_datagrid_disks vid=m.mp_volume.id %}');
         </script>
     </button>
+    <div dojoType="dijit.Tooltip" connectId="viewDisksBtn{{ m.id }}" position="above">
+        <strong>{% trans "View Disks" %}</strong>
+    </div>
 		{% endif %}
-    <button dojoType="dijit.form.Button" type="button"
-        onClick="editObject('{% trans "Change Permissions" %}', '{% url storage_mp_permission object_id=m.id %}', [this,]);">{% trans "Change Permissions" %}</button>
+    <button id="permBtn{{ m.id }}" dojoType="dijit.form.Button" type="button" 
+        onClick="editObject('{% trans "Change Permissions" %}', '{% url storage_mp_permission object_id=m.id %}', [this,]);">
+        <img src="/freenas/media/images/ui/buttons/permissions.png" width="18px" height="18px"></button>
+    <div dojoType="dijit.Tooltip" connectId="permBtn{{ m.id }}" position="above">
+        <strong>{% trans "Change Permissions" %}</strong>
+    </div>
+		{% if m.mp_volume.vol_fstype == 'ZFS' %}
+        <button id="snapBtn{{ m.id }}" dojoType="dijit.form.Button" type="button" 
+            onClick="editObject('{% trans "Create Snapshot" %}', '{% url storage_manualsnap path=m.mp_path %}', [this,]);">
+        <img src="/freenas/media/images/ui/buttons/create_snapshot.png" width="18px" height="18px"></button>
+<div dojoType="dijit.Tooltip" connectId="snapBtn{{ m.id }}" position="above">
+    <strong>{% trans "Create Snapshot" %}</strong>
+</div>
+		{% endif %}
 	    </td>
 	</tr>
 	{% empty %}
@@ -62,33 +148,201 @@
 	{% endfor %}
     </tbody>
 </table>
+</div>
 
-<div style="padding:12px;">
-<button dojoType="dijit.form.Button" type="button" >
-    {% trans "Add Volume" %}
-    <script type="dojo/method" event="onClick" args="evt">
-        volumeWizard('{% trans "Add Volume" %}', '{% url storage_wizard %}', [this,]);
-    </script>
-</button>
-{% if en_dataset %}
-<button dojoType="dijit.form.Button" type="button" >
-    {% trans "Add ZFS Dataset" %}
-    <script type="dojo/method" event="onClick" args="evt">
-        addObject('{% trans "Add ZFS Dataset" %}', '{% url storage_dataset %}', [this,]);
-    </script>
-</button>
+{% if zfsnap_list %}
+<div dojoType="dijit.layout.ContentPane" title="{% trans "ZFS Snapshots" %}" doLayout="false">
+
+<table class="grid">
+    <thead class="ghead">
+	<td>{% trans "Dataset name" %}</td>
+	<td>{% trans "Snapshot name" %}</td>
+	<td>{% trans "Used space" %}</td>
+	<td>{% trans "Referenced space" %}</td>
+	<td>{% trans "Available actions" %}</td>
+    </thead>
+    <tbody>
+	{% for fsname, snapinfo in zfsnap_list.items %}
+        {% for snap in snapinfo %}
+	<tr class="{% cycle 'odd' 'even' %}">
+            {% if forloop.first %}
+	    <td rowspan="{{ snapinfo|length }}">{{ fsname }}</td>
+            {% endif %}
+	    <td>{{ snap.name }}</td>
+	    <td>{{ snap.used }}</td>
+	    <td>{{ snap.refer }}</td>
+	    <td>
+	    <button id="cloneSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Clone snapshot" %}', '{% url storage_clonesnap snapshot=snap.fullname %}', [this,]);"><img src="/freenas/media/images/ui/buttons/clone_snapshot.png">{% trans "Clone snapshot" %}</button>
+<div dojoType="dijit.Tooltip" connectId="cloneSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
+    <strong>{% trans "Clone snapshot" %}</strong>
+</div>
+	    <button id="delSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Destroy snapshot" %}', '{% url storage_snapshot_delete dataset=fsname snapname=snap.name %}', [this,]);"><img src="/freenas/media/images/ui/buttons/remove_snapshot.png">{% trans "Destroy snapshot" %}</button>
+<div dojoType="dijit.Tooltip" connectId="delSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
+    <strong>{% trans "Destroy snapshot" %}</strong>
+</div>
+	    <button id="rollbackSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Rollback to this snapshot" %}', '{% url storage_snapshot_rollback dataset=fsname snapname=snap.name %}', [this,]);"><img src="/freenas/media/images/ui/buttons/rollback_snapshot.png">{% trans "Rollback to this snapshot" %}</button>
+<div dojoType="dijit.Tooltip" connectId="rollbackSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
+    <strong>{% trans "Rollback to this snapshot" %}</strong>
+</div>
+	    </td>
+	</tr>
+        {% endfor %}
+        {% empty %}
+	<tr>
+	    <td colspan="5">{% trans "No ZFS snapshot available" %}</td>
+	</tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
 {% endif %}
-<button dojoType="dijit.form.Button" type="button" >
-    {% trans "Import Volume" %}
-    <script type="dojo/method" event="onClick" args="evt">
-        volumeWizard('{% trans "Import Volume" %}', '{% url storage_import %}', [this,]);
-    </script>
-</button>
 
-<button dojoType="dijit.form.Button" type="button" >
-    {% trans "Auto Import Volume" %}
+<div dojoType="dijit.layout.ContentPane" title="{% trans "Periodic Snapshots" %}" {% if focused_tab == "Periodic Snapshots" %}selected="true"{% endif %} doLayout="false">
+<button id="periodicSnapBtn" dojoType="dijit.form.Button" type="button">
+        <img src="/freenas/media/images/ui/buttons/create_periodic_snapshot.png">
+        <br />
     <script type="dojo/method" event="onClick" args="evt">
-        volumeWizard('{% trans "Auto Import Volume" %}', '{% url storage_autoimport %}', [this,]);
+        addObject('{% trans "Periodic Snapshots" %}', '{% url storage_periodicsnap %}', [this,]);
     </script>
 </button>
+<div dojoType="dijit.Tooltip" connectId="periodicSnapBtn" position="above">
+    <strong>{% trans "Create Periodic Snapshot" %}</strong>
+</div>
+<h5>
+    {% if psnap_list %}
+    {% trans "Periodic Snapshot Schedule" %}: <strong>{{ psnap_list|length }}</strong>
+    {% else %}
+
+    {% trans "There are no scheduled snapshots." %}
+    {% endif %}
+</h5>
+<table class="grid">
+    <thead class="ghead">
+        <td>{% trans "Mount Point" %}</td>
+        <td>{% trans "Recursive" %}</td>
+        <td>{% trans "How" %}</td>
+        <td>{% trans "Keep snapshot for" %}</td>
+        <td>{% trans "Available actions" %}</td>
+    </thead>
+    <tbody>
+	{% for p in task_list %}
+	<tr class="{% cycle 'odd' 'even' %}" id="task{{ p.id }}">
+	    <td>
+		{{ p.task_mountpoint.mp_volume.vol_name }}
+	    </td>
+	    <td>
+		{% if p.task_recursive %}
+			{% trans "Yes" %}
+		{% else %}
+			{% trans "No" %}
+		{% endif %}
+	    </td>
+	    <td>
+		{% trans "From" %}
+		{{ p.task_begin }}
+		{% trans "thru" %}
+		{{ p.task_end }}
+		{% trans ", every" %}
+		{{ p.task_interval }}
+		{% trans "minutes," %}
+		{% if p.task_repeat_unit == "daily" %}
+			{% trans "everyday" %}
+		{% else %}
+			{% if p.task_repeat_unit == "weekly" %}
+				{% trans "on every" %}
+				<ul>
+				{% for day in p.task_byweekday %}
+					{% if day == "1" %}
+						<li>{% trans "Monday" %}</li>
+					{% endif %} 
+					{% if day == "2" %}
+						<li>{% trans "Tuesday" %}</li>
+					{% endif %} 
+					{% if day == "3" %}
+						<li>{% trans "Wednesday" %}</li>
+					{% endif %} 
+					{% if day == "4" %}
+						<li>{% trans "Thursday" %}</li>
+					{% endif %} 
+					{% if day == "5" %}
+						<li>{% trans "Friday" %}</li>
+					{% endif %} 
+					{% if day == "6" %}
+						<li>{% trans "Saturday" %}</li>
+					{% endif %} 
+					{% if day == "7" %}
+						<li>{% trans "Sunday" %}</li>
+					{% endif %} 
+				{% endfor %}
+				</ul>
+			{% endif %} 
+		{% endif %} 
+<!--
+	    <td>
+        <ul>
+        {% for month in p.task_bymonth %}
+            {% if month == "1" %}
+            <li>{% trans "January" %}</li>
+            {% endif %} 
+            {% if month == "2" %}
+            <li>{% trans "February" %}</li>
+            {% endif %} 
+            {% if month == "3" %}
+            <li>{% trans "March" %}</li>
+            {% endif %} 
+            {% if month == "4" %}
+            <li>{% trans "April" %}</li>
+            {% endif %} 
+            {% if month == "5" %}
+            <li>{% trans "May" %}</li>
+            {% endif %} 
+            {% if month == "6" %}
+            <li>{% trans "June" %}</li>
+            {% endif %} 
+            {% if month == "7" %}
+            <li>{% trans "July" %}</li>
+            {% endif %} 
+            {% if month == "8" %}
+            <li>{% trans "August" %}</li>
+            {% endif %} 
+            {% if month == "9" %}
+            <li>{% trans "September" %}</li>
+            {% endif %} 
+            {% if month == "a" %}
+            <li>{% trans "October" %}</li>
+            {% endif %} 
+            {% if month == "b" %}
+            <li>{% trans "November" %}</li>
+            {% endif %} 
+            {% if month == "c" %}
+            <li>{% trans "December" %}</li>
+            {% endif %} 
+        {% endfor %}
+        </ul>
+	    </td>
+	    <td>
+		{{ p.task_bymonthday }}
+	    </td>
+-->
+	    <td>
+		{{ p.task_ret_count }}
+		{{ p.task_ret_unit }}
+	    </td>
+        <td>
+        <button dojoType="dijit.form.Button" type="button"
+            onClick="editObject('{% trans "Modify" %}', '{% url freeadmin_model_edit app="storage",model="Task",oid=p.id %}', [this,]);">{% trans "Modify" %}
+        </button>
+        <button dojoType="dijit.form.Button" type="button"
+            onClick="editObject('{% trans "Delete" %}', '{% url freeadmin_model_delete app="storage",model="Task",oid=p.id %}', [this,]);">{% trans "Delete" %}
+        </button>
+        </td>
+	</tr>
+	{% empty %}
+	<tr>
+            <td colspan="7">{% trans "No periodic snapshots scheduled" %}</td>
+	</tr>
+	{% endfor %}
+    </tbody>
+</table>
+</div>
 </div>

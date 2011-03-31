@@ -59,13 +59,17 @@ NANO_LABEL=FreeNAS
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 NANO_RAM_TMPVARSIZE=$((160*1024))
 
-DEBUG="0"
+DEBUG="1"
 
 # Tmp hack for transition to lighttpd
 use_lighttpd=1
 
 NANO_IMAGES=2
-FlashDevice generic 1g
+if [ "${DEBUG}" -eq "1" ]; then 
+    FlashDevice generic 2g
+else
+    FlashDevice generic 1g
+fi
 
 . ${NANO_CFG_BASE}/common
 
@@ -196,6 +200,7 @@ add_port converters/base64
 add_port emulators/mtools -DWITHOUT_X11
 add_port sysutils/arcconf
 add_port sysutils/tw_cli
+add_port net/py-ldap2
 
 if [ "${DEBUG}" -eq "1" ]; then 
 	add_port databases/db42
@@ -204,6 +209,8 @@ if [ "${DEBUG}" -eq "1" ]; then
 	add_port www/neon29
 	add_port devel/subversion
 	add_port editors/vim-lite
+        add_port misc/py-pexpect
+        add_port devel/ipython
 fi
 	 
 

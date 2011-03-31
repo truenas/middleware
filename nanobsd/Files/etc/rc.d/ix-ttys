@@ -1,0 +1,150 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-ttys
+# REQUIRE: root
+# BEFORE: LOGIN
+
+. /etc/rc.subr
+
+netcli_enable()
+{
+	local tmp=/var/tmp/.tmp.ttys
+
+	awk '
+	/^ttyv0/ { sub("Pc", "freenas"); print $0; } 
+	!/^ttyv0/ {print $0; }
+	' < /etc/ttys > "${tmp}"
+
+	if [ -s "${tmp}" ]
+	then
+		mv "${tmp}" /etc/ttys
+	fi
+
+	kill -HUP 1
+}
+
+netcli_disable()
+{
+	local tmp=/var/tmp/.tmp.ttys
+
+	awk '
+	/^ttyv0/ { sub("freenas", "Pc"); print $0; } 
+	!/^ttyv0/ {print $0; }
+	' < /etc/ttys > "${tmp}"
+
+	if [ -s "${tmp}" ]
+	then
+		mv "${tmp}" /etc/ttys
+	fi
+
+	kill -HUP 1
+}
+
+netcli_serial_enable()
+{
+	local tmp=/var/tmp/.tmp.ttys
+
+	awk '
+	/^ttyu0/ { sub("std.9600", "freenas_serial"); print $0; } 
+	!/^ttyu0/ {print $0; }
+	' < /etc/ttys > "${tmp}"
+
+	if [ -s "${tmp}" ]
+	then
+		mv "${tmp}" /etc/ttys
+	fi
+
+	kill -HUP 1
+}
+
+netcli_serial_disable()
+{
+	local tmp=/var/tmp/.tmp.ttys
+
+	awk '
+	/^ttyu0/ { sub("freenas_serial", "std.9600"); print $0; } 
+	!/^ttyu0/ {print $0; }
+	' < /etc/ttys > "${tmp}"
+
+	if [ -s "${tmp}" ]
+	then
+		mv "${tmp}" /etc/ttys
+	fi
+
+	kill -HUP 1
+}
+
+serial_enable()
+{
+	local tmp=/var/tmp/.tmp.ttys
+
+	awk '
+	/^ttyu0/ { sub("off", "on"); print $0; } 
+	!/^ttyu0/ {print $0; }
+	' < /etc/ttys > "${tmp}"
+
+	if [ -s "${tmp}" ]
+	then
+		mv "${tmp}" /etc/ttys
+	fi
+
+	kill -HUP 1
+}
+
+serial_disable()
+{
+	local tmp=/var/tmp/.tmp.ttys
+
+	awk '
+	/^ttyu0/ { sub("on", "off"); print $0; } 
+	!/^ttyu0/ {print $0; }
+	' < /etc/ttys > "${tmp}"
+
+	if [ -s "${tmp}" ]
+	then
+		mv "${tmp}" /etc/ttys
+	fi
+
+	kill -HUP 1
+}
+
+update_ttys()
+{
+	local IFS="|"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		adv_consolemenu,
+		adv_serialconsole
+
+	FROM
+		system_advanced
+	
+	ORDER BY
+		-id
+	LIMIT 1
+	" | \
+	while read console_menu serial
+	do
+		case "${serial}" in 
+			0) serial_disable ;;
+			1) serial_enable ;;
+		esac
+
+		case "${console_menu}" in
+			0) netcli_disable; netcli_serial_disable ;;
+			1) netcli_enable; netcli_serial_enable ;;
+		esac
+		break
+	done
+}
+
+name="ix-ttys"
+start_cmd='update_ttys'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

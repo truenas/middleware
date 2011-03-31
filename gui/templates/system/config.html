@@ -1,0 +1,6 @@
+{% load i18n %}
+<button dojoType="dijit.form.Button" onClick="addObject('Restore Config', '{% url system_configrestore %}');">{% trans "Restore to Factory Defaults" %}</button>
+<br />
+<button dojoType="dijit.form.Button" onClick="javascript:window.location='{% url system_configsave %}';">{% trans "Save Config" %}</button>
+<br />
+<button dojoType="dijit.form.Button" onClick="addObject('Upload Config', '{% url system_configupload %}');">{% trans "Upload Config" %}</button>
