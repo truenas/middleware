@@ -90,18 +90,27 @@
 	    <td>
 
 {% if m.mp_ischild %}
-    <button dojoType="dijit.form.Button" type="button"
+    <button dojoType="dijit.form.Button" type="button" id="delDSBtn{{ m.id }}"
         onClick="editObject('{% trans "Destroy Dataset" %}', '{% url storage_dataset_delete object_id=m.id %}', [this,]);">
         <img src="/freenas/media/images/ui/buttons/remove_dataset.png">
     </button>
-    <button dojoType="dijit.form.Button" type="button" connectId="editDataBtn{{ m.id }}"
-        onClick="editObject('{% trans "Edit" %}', '{% url storage_dataset_edit object_id=m.id %}', [this,]);">
+    <div dojoType="dijit.Tooltip" connectId="delDSBtn{{ m.id }}" position="above">
+        <strong>{% trans "Destroy Dataset" %}</strong>
+    </div>
+    <button dojoType="dijit.form.Button" type="button" id="editDataBtn{{ m.id }}"
+        onClick="editObject('{% trans "Edit ZFS Options" %}', '{% url storage_dataset_edit object_id=m.id %}', [this,]);">
         <img src="/freenas/media/images/ui/buttons/settings.png" />
     </button>
     <div dojoType="dijit.Tooltip" connectId="editDataBtn{{ m.id }}" position="above">
-        <strong>{% trans "Edit" %}</strong>
+        <strong>{% trans "Edit ZFS Options" %}</strong>
     </div>
 {% else %}
+    <button id="delVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button"
+	onClick="editObject('{% trans "Destroy Volume" %}', '{% url freeadmin_model_delete app="storage",model="Volume",oid=m.mp_volume.id %}', [this,]);">
+	<img src="/freenas/media/images/ui/buttons/remove_volume.png" width="18px" height="18px"></button>
+    <div dojoType="dijit.Tooltip" connectId="delVolBtn{{ m.id }}" position="above">
+        <strong>{% trans "Destroy Volume" %}</strong>
+    </div>
     {% if m.mp_volume.vol_fstype == 'ZFS' %}
     <button dojoType="dijit.form.Button" type="button" id="editVolBtn{{ m.id }}"
         onClick="editObject('{% trans "Edit ZFS Options" %}', '{% url storage_volume_edit object_id=m.id %}', [this,]);">
@@ -111,11 +120,22 @@
         <strong>{% trans "Edit ZFS Options" %}</strong>
     </div>
     {% endif %}
-        <button id="delVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button"       onClick="editObject('{% trans "Destroy Volume" %}', '{% url freeadmin_model_delete app="storage",model="Volume",oid=m.mp_volume.id %}', [this,]);"><img src="/freenas/media/images/ui/buttons/remove_volume.png" width="18px" height="18px"></button>
-    <div dojoType="dijit.Tooltip" connectId="delVolBtn{{ m.id }}" position="above">
-        <strong>{% trans "Destroy Volume" %}</strong>
+{% endif %}
+    <button id="permBtn{{ m.id }}" dojoType="dijit.form.Button" type="button" 
+        onClick="editObject('{% trans "Change Permissions" %}', '{% url storage_mp_permission object_id=m.id %}', [this,]);">
+        <img src="/freenas/media/images/ui/buttons/permissions.png" width="18px" height="18px"></button>
+    <div dojoType="dijit.Tooltip" connectId="permBtn{{ m.id }}" position="above">
+        <strong>{% trans "Change Permissions" %}</strong>
     </div>
-
+{% if m.mp_volume.vol_fstype == 'ZFS' %}
+        <button id="snapBtn{{ m.id }}" dojoType="dijit.form.Button" type="button" 
+            onClick="editObject('{% trans "Create Snapshot" %}', '{% url storage_manualsnap path=m.mp_path %}', [this,]);">
+        <img src="/freenas/media/images/ui/buttons/create_snapshot.png" width="18px" height="18px"></button>
+<div dojoType="dijit.Tooltip" connectId="snapBtn{{ m.id }}" position="above">
+    <strong>{% trans "Create Snapshot" %}</strong>
+</div>
+{% endif %}
+{% if not m.mp_ischild %}
     <button id="viewDisksBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         <img src="/freenas/media/images/ui/buttons/view_all_disks.png" width="18px" height="18px">
         <script type="dojo/method" event="onClick" args="evt">
@@ -125,21 +145,7 @@
     <div dojoType="dijit.Tooltip" connectId="viewDisksBtn{{ m.id }}" position="above">
         <strong>{% trans "View Disks" %}</strong>
     </div>
-		{% endif %}
-    <button id="permBtn{{ m.id }}" dojoType="dijit.form.Button" type="button" 
-        onClick="editObject('{% trans "Change Permissions" %}', '{% url storage_mp_permission object_id=m.id %}', [this,]);">
-        <img src="/freenas/media/images/ui/buttons/permissions.png" width="18px" height="18px"></button>
-    <div dojoType="dijit.Tooltip" connectId="permBtn{{ m.id }}" position="above">
-        <strong>{% trans "Change Permissions" %}</strong>
-    </div>
-		{% if m.mp_volume.vol_fstype == 'ZFS' %}
-        <button id="snapBtn{{ m.id }}" dojoType="dijit.form.Button" type="button" 
-            onClick="editObject('{% trans "Create Snapshot" %}', '{% url storage_manualsnap path=m.mp_path %}', [this,]);">
-        <img src="/freenas/media/images/ui/buttons/create_snapshot.png" width="18px" height="18px"></button>
-<div dojoType="dijit.Tooltip" connectId="snapBtn{{ m.id }}" position="above">
-    <strong>{% trans "Create Snapshot" %}</strong>
-</div>
-		{% endif %}
+{% endif %}
 	    </td>
 	</tr>
 	{% empty %}
