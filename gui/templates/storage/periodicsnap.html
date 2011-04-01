@@ -1,10 +1,10 @@
-{% load i18n %}
+{% load i18n freeadmin %}
 <form dojoType="dijit.form.Form">
     <script type="dojo/event" event="onSubmit" args="e">
         formSubmit(this, e,  '{% url storage_periodicsnap %}');
     </script>
     <table>
-        {{ form }}
+        {% admin_form form %}
     </table>
         <button dojoType="dijit.form.Button" type="submit" class="submitform">
     <script type="dojo/method">

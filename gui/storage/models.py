@@ -274,3 +274,6 @@ class Task(Model):
         icon_view = u"ViewAllPeriodicSnapIcon"
         icon_object = u"SnapIcon"
         extra_js = u"taskrepeat_checkings();"
+        composed_fields = (
+                            ('Lifetime', ('task_ret_count','task_ret_unit')),
+                        )

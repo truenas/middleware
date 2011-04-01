@@ -19,6 +19,8 @@ class FreeAdminWrapper(object):
     icon_add = None
     icon_view = None
 
+    composed_fields = []
+
     extra_js = ''
 
     def __init__(self, c=None):
