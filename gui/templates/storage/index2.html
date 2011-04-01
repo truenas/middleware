@@ -95,7 +95,7 @@
         <img src="/freenas/media/images/ui/buttons/remove_dataset.png">
         <br />
         <script type="dojo/method" event="onClick" args="evt">
-            addObject('{% trans "Destroy ZFS Dataset" %}', '{% url storage_dataset %}', [this,]);
+            addObject('{% trans "Destroy ZFS Dataset" %}', '{% url storage_dataset_delete object_id=m.id %}', [this,]);
         </script>
     </button>
     <button dojoType="dijit.form.Button" type="button" connectId="editDataBtn{{ m.id }}"
