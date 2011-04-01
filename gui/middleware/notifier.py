@@ -203,8 +203,13 @@ class notifier:
 
     def _reload_iscsitarget(self):
         self.__system("/usr/sbin/service ix-istgt quietstart")
-        self.__system("/usr/sbin/service istgt forcestop")
-        self.__system("/usr/sbin/service istgt restart")
+        if os.path.isfile("/var/run/istgt.pid"):
+            pid = open("/var/run/istgt.pid", "r").read().strip()
+            try:
+                os.kill(int(pid), signal.SIGHUP)
+            except:
+                pass
+            pid.close()
 
     def _start_network(self):
         # TODO: Skip this step when IPv6 is already enabled
