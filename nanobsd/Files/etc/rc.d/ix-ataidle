@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-ataidle
+# REQUIRE: DAEMON
+# BEFORE: LOGIN
+# KEYWORD: nojail shutdown
+
+. /etc/rc.subr
+
+ataidle_start()
+{
+	local IFS=\|
+
+	local f="disk_disks disk_hddstandby disk_advpowermgmt disk_acousticlevel"
+	eval local $f
+	local cmd sf
+	sf=$(echo $f | sed -e 's/ /, /g')
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+		"SELECT $sf FROM storage_disk WHERE disk_disks LIKE 'ad%' OR disk_disks LIKE 'ada%'" | \
+	while eval read $f; do
+		ataidle_args=""
+		if [ "${disk_advpowermgmt}" != "Disabled" ]; then
+			ataidle_args="-P ${disk_advpowermgmt}"
+		fi
+		if [ "${disk_acousticlevel}" != "Disabled" ]; then
+			if [ "${disk_acousticlevel}" = "Minimum" ]; then
+				disk_acousticlevel=1
+			elif [ "${disk_acousticlevel}" = "Medium" ]; then
+				disk_acousticlevel=64
+			elif [ "${disk_acousticlevel}" = "Maximum" ]; then
+				disk_acousticlevel=127
+			fi
+			ataidle_args="${ataidle_args} -A ${disk_acousticlevel}"
+		fi
+		if [ -n "${ataidle_args}" ]; then
+			/usr/local/sbin/ataidle ${ataidle_args} ${disk_disks}
+		fi
+		if [ "${disk_hddstandby}" != "Always On" ]; then
+			(sleep 60; /usr/local/sbin/ataidle ${disk_hddstandby} ${disk_disks}) > /dev/null 2>&1 &
+		fi
+	done
+}
+
+name="ix-ataidle"
+start_cmd="ataidle_start"
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
