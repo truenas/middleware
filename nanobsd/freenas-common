@@ -190,6 +190,7 @@ add_port emulators/mtools -DWITHOUT_X11
 add_port sysutils/arcconf
 add_port sysutils/tw_cli
 add_port net/py-ldap2
+add_port sysutils/ataidle
 
 if [ "${DEBUG}" -eq "1" ]; then 
 	add_port databases/db42
