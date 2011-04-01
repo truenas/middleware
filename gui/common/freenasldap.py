@@ -477,7 +477,8 @@ class FreeNAS_Users:
             bu = bsdUsers()
             bu.bsdusr_username = unicode(pw.pw_name)
             bu.bsdusr_uid = pw.pw_uid
-            bu.bsdusr_group = ldap_groups[str(pw.pw_gid)]
+            if str(pw.pw_gid) in ldap_groups:
+                bu.bsdusr_group = ldap_groups[str(pw.pw_gid)]
             bu.bsdusr_full_name = unicode(pw.pw_gecos)
             bu.bsdusr_home = unicode(pw.pw_dir)
             bu.bsdusr_shell = unicode(pw.pw_shell)
@@ -532,7 +533,8 @@ class FreeNAS_Users:
             bu = bsdUsers()
             bu.bsdusr_username = unicode(pw.pw_name)
             bu.bsdusr_uid = pw.pw_uid
-            bu.bsdusr_group = ad_groups[str(pw.pw_gid)]
+            if str(pw.pw_gid) in ad_groups:
+                bu.bsdusr_group = ad_groups[str(pw.pw_gid)]
             bu.bsdusr_full_name = unicode(pw.pw_gecos)
             bu.bsdusr_home = unicode(pw.pw_dir)
             bu.bsdusr_shell = unicode(pw.pw_shell)
