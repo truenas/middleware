@@ -11,6 +11,13 @@
 
          </script>
         <table class="config">
+            {% if form.non_field_errors %}
+                <tr>
+                    <td colspan="2">
+                        {{  form.non_field_errors }}
+                    </td>
+                </tr>
+            {% endif %}
             {% for field in form %}
                 <tr>
                     <td>

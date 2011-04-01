@@ -27,10 +27,11 @@
 #####################################################################
 
 import datetime
+import tempfile
+from subprocess import Popen
 import os, commands
-from django.forms.models import modelformset_factory
-from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.decorators import login_required
+
+from django.contrib.auth.decorators import permission_required, login_required
 from django.contrib.auth import authenticate, login, logout
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
@@ -38,6 +39,9 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils import simplejson
 from django.views.generic.list_detail import object_detail, object_list
+from django.utils.translation import ugettext as _
+from django.contrib.auth import login, get_backends
+from django.contrib.auth.models import User
 
 from freenasUI.system.forms import * 
 from freenasUI.system.models import * 
@@ -240,6 +244,10 @@ def config_restore(request):
 
     if request.method == "POST":
         notifier().config_restore()
+        user = User.objects.all()[0]
+        backend = get_backends()[0]
+        user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
+        login(request, user)
         return render_to_response('system/config_ok2.html', variables)
 
     return render_to_response('system/config_restore.html', variables)
@@ -255,12 +263,30 @@ def config_upload(request):
         })
         
         if form.is_valid():
-            f = request.FILES['config'].read()
-            db = open('/data/freenas-v1.db', 'w')
-            db.write(f)
-            db.close()
-            return render_to_response('system/config_ok.html', variables)
-
+            import sqlite3
+            sqlite = request.FILES['config'].read()
+            f = tempfile.NamedTemporaryFile()
+            f.write(sqlite)
+            f.flush()
+            try:
+                conn = sqlite3.connect(f.name)
+                cur = conn.cursor()
+                cur.execute("""SELECT name FROM sqlite_master
+                WHERE type='table'
+                ORDER BY name;""")
+            except sqlite3.DatabaseError:
+                f.close()
+                form._errors['__all__'] = form.error_class([_("The uploaded file is not valid."),])
+            else:
+                db = open('/data/freenas-v1.db', 'w')
+                db.write(sqlite)
+                db.close()
+                f.close()
+                user = User.objects.all()[0]
+                backend = get_backends()[0]
+                user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
+                login(request, user)
+                return render_to_response('system/config_ok.html', variables)
 
         return render_to_response('system/config_upload2.html', variables)
     else:
