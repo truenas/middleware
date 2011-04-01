@@ -295,11 +295,14 @@ class notifier:
 
     def _load_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
+        self.__system("/usr/sbin/service mdnsd quietstart")
         self.__system("/usr/sbin/service netatalk quietstart")
 
     def _restart_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
         self.__system("/usr/sbin/service netatalk forcestop")
+        self.__system("/usr/sbin/service mdnsd forcestop")
+        self.__system("/usr/sbin/service mdnsd restart")
         self.__system("/usr/sbin/service netatalk restart")
 
     def _reload_afp(self):
@@ -314,7 +317,13 @@ class notifier:
 
     def _reload_nfs(self):
         self.__system("/usr/sbin/service ix-nfsd quietstart")
-        self.__system("/usr/sbin/service mountd forcerestart")
+        if os.path.isfile("/var/run/mountd.pid"):
+            pid = open("/var/run/mountd.pid", "r").read().strip()
+            try:
+                os.kill(int(pid), signal.SIGHUP)
+            except:
+                pass
+            pid.close()
 
     def _restart_nfs(self):
         self.__system("/usr/sbin/service mountd forcestop")
