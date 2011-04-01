@@ -59,10 +59,7 @@ NANO_LABEL=FreeNAS
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 NANO_RAM_TMPVARSIZE=$((160*1024))
 
-DEBUG="0"
-
-# Tmp hack for transition to lighttpd
-use_lighttpd=1
+DEBUG="1"
 
 NANO_IMAGES=2
 if [ "${DEBUG}" -eq "1" ]; then 
@@ -143,21 +140,13 @@ add_port www/py-dojango
 add_port devel/py-setuptools
 #-databases/py-south
 add_port databases/py-south
-if [ $use_lighttpd -eq 0 ]; then
-    #+www/apache22
-    add_port devel/apr1
-    #-www/apache22
-    add_port www/apache22
-    add_port www/mod_wsgi3
-else
-    #+add_port www/lighttpd
-    add_port www/spawn-fcgi
-    #-add_port www/lighttpd
-    add_port www/lighttpd
-    #+add_port www/py-flup
-    #-add_port www/py-flup
-    add_port www/py-flup
-fi
+#+add_port www/lighttpd
+add_port www/spawn-fcgi
+#-add_port www/lighttpd
+add_port www/lighttpd
+#+add_port www/py-flup
+#-add_port www/py-flup
+add_port www/py-flup
 
 add_port x11/xproto -DWITHOUT_X11 # run dep of collectd
 add_port devel/libstatgrab -DWITHOUT_X11 # run dep of collectd
@@ -305,11 +294,7 @@ fix_mt_daapd ( )
 
 select_httpd ( )
 {
-	if [ $use_lighttpd -eq 0 ]; then
-		echo "apache22_enable=YES" >> ${NANO_WORLDDIR}/etc/rc.conf
-	else
-		echo "lighttpd_enable=YES" >> ${NANO_WORLDDIR}/etc/rc.conf
-	fi
+	echo "lighttpd_enable=YES" >> ${NANO_WORLDDIR}/etc/rc.conf
 }
 customize_cmd select_httpd
 
