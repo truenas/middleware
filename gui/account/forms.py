@@ -36,6 +36,19 @@ from dojango import forms
 from django.conf import settings
 from django.utils.safestring import mark_safe
 
+class SharedFunc():
+    def _populate_shell_choices(self):
+        from os import popen
+        from os.path import basename
+        import re
+        
+        shell_dict = {}
+        shells = popen("grep ^/ /etc/shells").read().split('\n')
+        for shell in shells:
+            shell_dict[shell] = basename(shell)
+        shell_dict['/sbin/nologin'] = 'nologin'
+        return shell_dict.items()
+    
 class FilteredSelectMultiple(forms.widgets.SelectMultiple):
 
     def __init__(self, attrs=None, choices=()):
@@ -149,7 +162,7 @@ class UserChangeForm(ModelForm):
         notifier().start('ix-msmtp')
         return self.instance
 
-class bsdUserCreationForm(ModelForm):
+class bsdUserCreationForm(ModelForm, SharedFunc):
     """
     # Yanked from django/contrib/auth/
     A form that creates a user, with no privileges, from the given username and password.
@@ -172,18 +185,6 @@ class bsdUserCreationForm(ModelForm):
         self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
         self.fields['bsdusr_shell'].choices.sort()
         self.initial['bsdusr_uid'] = notifier().user_getnextuid()
-
-    def _populate_shell_choices(self):
-        from os import popen
-        from os.path import basename
-        import re
-    
-        shell_dict = {}
-        shells = popen("grep ^/ /etc/shells").read().split('\n')
-        for shell in shells:
-            shell_dict[shell] = basename(shell)
-        shell_dict['/sbin/nologin'] = 'nologin'
-        return shell_dict.items()
 
     def clean_bsdusr_username(self):
         if self.instance.id is None:
@@ -292,9 +293,13 @@ class bsdUserPasswordForm(ModelForm):
             notifier().reload("user")
         return self.instance
 
-class bsdUserChangeForm(ModelForm):
+class bsdUserChangeForm(ModelForm, SharedFunc):
     bsdusr_login_disabled = forms.BooleanField(label=_("Disable logins"), required=False)
-
+    bsdusr_shell = forms.ChoiceField(label=_("Shell"),
+                                     initial=u'/bin/csh',
+                                     choices=()
+                                     )
+  
     class Meta:
         model = bsdUsers
         exclude = ('bsdusr_unixhash', 'bsdusr_smbhash', 'bsdusr_builtin',)
@@ -307,6 +312,9 @@ class bsdUserChangeForm(ModelForm):
                 self.fields['bsdusr_username'].widget.attrs['readonly'] = True
             if instance.bsdusr_unixhash == '*' or instance.bsdusr_unixhash[0:8] == '*LOCKED*':
                 self.fields['bsdusr_login_disabled'].initial = True
+
+        self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
+        self.fields['bsdusr_shell'].choices.sort()
 
     def clean_bsdusr_username(self):
         return self.instance.bsdusr_username
@@ -322,6 +330,7 @@ class bsdUserChangeForm(ModelForm):
             bsduser.bsdusr_unixhash = notifier().user_lock(bsduser.bsdusr_username.__str__())
         elif self.cleaned_data["bsdusr_login_disabled"] == False and bsduser_locked == True:
             bsduser.bsdusr_unixhash = notifier().user_unlock(bsduser.bsdusr_username.__str__())
+        bsduser.bsduser_shell = self.cleaned_data['bsdusr_shell']
         bsduser.save()
         notifier().reload("user")
         return bsduser
