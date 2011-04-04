@@ -27,13 +27,15 @@
 #####################################################################
 
 from datetime import time
+from os import statvfs
+
 from django.db import models
 from django.utils.translation import ugettext as _
+
 from freenasUI.choices import *
 from freenasUI.middleware.notifier import notifier
-from freeadmin.models import Model
-from os import statvfs
 from freenasUI.common import humanize_number_si
+from freeadmin.models import Model
 
 class Volume(Model):
     vol_name = models.CharField(

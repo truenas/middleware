@@ -324,12 +324,18 @@
         var json = dojo.fromJson(v);
         dojo.parser.parse(dojo.byId(this.id));
 
+        var content = new dijit.layout.ContentPane({});
         var b = new dijit.form.Button({label: "Edit"});
+        var b2 = new dijit.form.Button({label: "Replace"});
 
         var gridhtml = dijit.getEnclosingWidget(dojo.byId(this.id));
         dojo.connect(b.domNode, 'onclick', function(){ editObject('Edit Disk', json.edit_url, [gridhtml,]); });
+        dojo.connect(b2.domNode, 'onclick', function(){ editObject('Disk Replacement', json.replace_url, [gridhtml,]); });
+        //content.set('content', b.domNode);
+        content.domNode.appendChild(b.domNode);
+        content.domNode.appendChild(b2.domNode);
 
-        return b;
+        return content;
     }
 
 

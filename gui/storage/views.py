@@ -201,10 +201,11 @@ def disks_datagrid_json(request, vid):
     for data in disks:
         ret = {}
         ret['edit'] = simplejson.dumps({
-            'edit_url': reverse('freeadmin_model_edit', kwargs={'app':'storage', 'model': 'Disk', 'oid': data.id})+'?deletable=false'
+            'edit_url': reverse('freeadmin_model_edit', kwargs={'app':'storage', 'model': 'Disk', 'oid': data.id})+'?deletable=false',
+            'replace_url': reverse('storage_disk_replacement', kwargs={'vid': vid, 'object_id': data.id})
             })
         for f in data._meta.fields:
-            if isinstance(f, models.ImageField) or isinstance(f, models.           FileField): # filefields can't be json serialized
+            if isinstance(f, models.ImageField) or isinstance(f, models.FileField): # filefields can't be json serialized
                 ret[f.attname] = unicode(getattr(data, f.attname))
             else:
                 ret[f.attname] = getattr(data, f.attname) #json_encode() this?
@@ -634,3 +635,29 @@ def clonesnap(request, snapshot):
         'snapshot': snapshot,
     })
     return render_to_response('storage/clonesnap.html', variables)
+
+@login_required
+def disk_replacement(request, vid, object_id):
+
+    volume = Volume.objects.get(pk=vid)
+    fromdisk = Disk.objects.get(pk=object_id)
+
+    if request.method == "POST":
+        form = DiskReplacementForm(request.POST)
+        if form.is_valid():
+            devname = form.cleaned_data['volume_disks']
+            disk = Disk()
+            disk.disk_name = devname
+            disk.disk_group = fromdisk.disk_group
+            disk.save()
+            notifier().zfs_replace_disk(vid, object_id, unicode(disk.id))
+            fromdisk.delete()
+    else:
+        form = DiskReplacementForm()
+    variables = RequestContext(request, {
+        'form': form,
+        'vid': vid,
+        'object_id': object_id,
+        'fromdisk': fromdisk,
+    })
+    return render_to_response('storage/disk_replacement.html', variables)
