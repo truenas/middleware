@@ -601,19 +601,27 @@ class notifier:
         """Replace disk in volume_id from from_diskid to to_diskid"""
         """Gather information"""
         c = self.__open_db()
+        c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
+        swapsize=c.fetchone()[0]
 
         c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
                  (volume_id,))
         volume = c.fetchone()
         assert volume[0] == 'ZFS' or volume[0] == 'UFS'
 
-        # TODO: Handle with 4khack aftermath
+        # TODO: Test on real hardware to see if ashift would persist across replace
         volume = volume[1]
         c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", from_diskid)
         fromdev = 'gpt/' + c.fetchone()[0]
-        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", to_diskid)
-        todev = 'gpt/' + c.fetchone()[0]
-        
+        c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE id = ?", to_diskid)
+        disk = c.fetchone()
+        devname = disk[0]
+        label = disk[1]
+        todev = 'gpt/' + label
+
+        self.__gpt_labeldisk(type = "freebsd-zfs", devname = devname,
+                             label = label, swapsize=swapsize)
+
         ret = self.__system_nolog('/sbin/zpool replace %s %s %s' % (volume, fromdev, todev))
         return ret
 
