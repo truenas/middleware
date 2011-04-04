@@ -207,6 +207,12 @@ class VolumeWizardForm(forms.Form):
                 pass
         return diskchoices.items()
 
+    def clean_volume_name(self):
+        vname = self.cleaned_data['volume_name']
+        if not re.search(r'^[a-z0-9][a-z0-9_-]*$', vname, re.I):
+            raise forms.ValidationError(_("The volume name must start with letters or numbers and may include \"-\", \"_\"."))
+        return vname
+
     def clean(self):
         cleaned_data = self.cleaned_data
         volume_name = cleaned_data.get("volume_name")
@@ -964,3 +970,47 @@ class CloneSnapshotForm(Form):
             mp.save()
         return retval
 
+class DiskReplacementForm(forms.Form):
+
+    volume_disks = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label = _('Member disk'))
+
+    def __init__(self, *args, **kwargs):
+        super(VolumeImportForm, self).__init__(*args, **kwargs)
+        self.fields['volume_disks'].choices = self._populate_disk_choices()
+        self.fields['volume_disks'].choices.sort()
+
+    def _populate_disk_choices(self):
+    
+        diskchoices = dict()
+        used_disks = [i[0] for i in Disk.objects.all().values_list('disk_name').distinct()]
+    
+        # Grab partition list
+        # NOTE: This approach may fail if device nodes are not accessible.
+        disks = notifier().get_disks()
+
+        for disk in disks.keys():
+            if len([i for i in used_disks if disks[disk]['devname'].startswith(i)]) > 0:
+                del disks[disk]
+
+        for disk in disks:
+            devname, capacity = disks[disk]['devname'], disks[disk]['capacity']
+
+            capacity = int(capacity)
+            if capacity >= 1099511627776:
+                    capacity = "%.1f TiB" % (capacity / 1099511627776.0)
+            elif capacity >= 1073741824:
+                    capacity = "%.1f GiB" % (capacity / 1073741824.0)
+            elif capacity >= 1048576:
+                    capacity = "%.1f MiB" % (capacity / 1048576.0)
+            else:
+                    capacity = "%d Bytes" % (capacity)
+            diskchoices[devname] = "%s (%s)" % (devname, capacity)
+        # Exclude the root device
+        rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
+        rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
+        if rootdev_base != None:
+            for disk in diskchoices.keys():
+                if disk.startswith(rootdev_base.group(0)):
+                    del diskchoices[disk]
+
+        return diskchoices.items()
