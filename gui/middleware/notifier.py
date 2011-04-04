@@ -316,13 +316,7 @@ class notifier:
 
     def _reload_nfs(self):
         self.__system("/usr/sbin/service ix-nfsd quietstart")
-        if os.path.isfile("/var/run/mountd.pid"):
-            pid = open("/var/run/mountd.pid", "r").read().strip()
-            try:
-                os.kill(int(pid), signal.SIGHUP)
-            except:
-                pass
-            pid.close()
+        self.__system("/usr/sbin/service mountd reload")
 
     def _restart_nfs(self):
         self.__system("/usr/sbin/service mountd forcestop")
