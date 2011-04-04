@@ -652,9 +652,12 @@ def disk_replacement(request, vid, object_id):
             disk.disk_group = fromdisk.disk_group
             disk.disk_description = fromdisk.disk_description
             disk.save()
-            notifier().zfs_replace_disk(vid, object_id, unicode(disk.id))
-            fromdisk.delete()
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk replacement has been successfully done.")}), mimetype="application/json")
+            rv = notifier().zfs_replace_disk(vid, object_id, unicode(disk.id))
+            if rv == 0:
+                fromdisk.delete()
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk replacement has been successfully done.")}), mimetype="application/json")
+            else:
+                return HttpResponse(simplejson.dumps({"error": True, "message": _("Some error ocurried.")}), mimetype="application/json")
 
     else:
         form = DiskReplacementForm()
