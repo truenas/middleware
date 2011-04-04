@@ -274,9 +274,12 @@ class VolumeWizardForm(forms.Form):
                 grp.save()
 
                 for diskname in grouped[grp_type]:
-                    diskobj = Disk(disk_name = diskname, disk_disks = diskname,
-                              disk_description = ("Member of %s %s" %
-                                (volume.vol_name, request.POST[key])), disk_group = grp)
+                    diskobj = Disk(disk_name = diskname,
+                                   disk_disks = diskname,
+                                   disk_description = ("Member of %s %s" %
+                                                      (volume.vol_name, group_type)),
+                                   disk_group = grp
+                                   )
                     diskobj.save()
 
         notifier().init("volume", volume.id)
