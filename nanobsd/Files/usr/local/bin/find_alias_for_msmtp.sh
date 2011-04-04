@@ -39,7 +39,7 @@ if [ -n "${v_recipient}" ] ; then
 
         if [ -z "$v_domain"  ]; then
             # grep alias file
-            v_find_alias=`grep -E ^$(v_recipient}: /etc/aliases | awk '{print $2}'`
+            v_find_alias=`grep -E ^${v_recipient}: /etc/aliases | awk '{print $2}'`
             v_alias_domain=`echo ${v_find_alias} | grep -o "@[[:alnum:][:graph:]]"`
                 if [ -z "$v_alias_domain" ]; then
                     # we didn't find an @, grep alias again
