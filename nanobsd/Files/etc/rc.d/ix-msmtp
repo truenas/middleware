@@ -56,7 +56,7 @@ __EOF__
                     echo user ${em_user}
                     echo password ${em_pass}
 		else
-		    echo auth none
+		    echo auth off
                 fi
 	    done
 }
