@@ -27,14 +27,6 @@
 #####################################################################
 
 from django.conf.urls.defaults import *
-from django.contrib import admin
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import password_change, password_change_done
-from django.views.generic.simple import direct_to_template
-from django.views.generic import list_detail
-from freenasUI.sharing.views import *
-from freenasUI.sharing.models import *
-import os, commands
 
 urlpatterns = patterns('sharing.views',
     (r'^$', 'sharing'), 
@@ -45,6 +37,4 @@ urlpatterns = patterns('sharing.views',
     (r'^global/(?P<sharetype>\w+)/$', 'sharing'),
     (r'(?P<sharetype>\w+)/view/$', 'sharing'),
     (r'^save/(?P<sharetype>\w+)/$', 'sharing'), 
-    (r'(?P<sharetype>\w+)/edit/(?P<object_id>\d+)/$', 'generic_update'),
-    (r'^(?P<sharetype>\w+)/delete/(?P<object_id>\d+)/$', 'generic_delete'),
     )

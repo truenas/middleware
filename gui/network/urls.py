@@ -27,7 +27,6 @@
 #####################################################################
 
 from django.conf.urls.defaults import *
-from django.views.generic import list_detail
 
 urlpatterns = patterns('network.views',
     (r'^$', 'network'),
@@ -43,6 +42,4 @@ urlpatterns = patterns('network.views',
     (r'laggmembers/view/(?P<object_id>\d+)/$', 'lagg_members'),
     url(r'^global-configuration/$', 'globalconf', name='network_globalconf'),
     (r'(?P<objtype>\w+)/view/$', 'network'),
-    (r'(?P<objtype>\w+)/edit/(?P<object_id>\d+)/$', 'generic_update'),
-    (r'(?P<objtype>\w+)/delete/(?P<object_id>\d+)/$', 'generic_delete'),
     )

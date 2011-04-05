@@ -28,16 +28,12 @@
 
 import os
 from subprocess import *
-from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.contrib.auth import authenticate, login, logout
 from django.template import RequestContext
-from django.http import Http404, HttpResponse
-from django.views.generic.list_detail import object_detail, object_list
-from django.views.generic.create_update import update_object, delete_object
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
@@ -332,33 +328,3 @@ def lagg_members2(request, object_id):
         'laggmembers': laggmembers,
     })
     return render_to_response('network/lagg_members2.html', variables)
-
-@login_required
-def generic_delete(request, object_id, objtype):
-    network_model_map = {
-        'int':    Interfaces,
-        'vlan':   VLAN,
-        'lagg':   LAGGInterface,
-        'sr':   StaticRoute,
-    }
-    return delete_object(
-        request = request,
-        model = network_model_map[objtype],
-        post_delete_redirect = '/network/' + objtype + '/view/',
-        object_id = object_id, )
-
-@login_required
-def generic_update(request, object_id, objtype):
-    objtype2form = {
-            'int':     (Interfaces, InterfaceEditForm),
-            'vlan':    (VLAN, None),
-            'laggint': (LAGGInterfaceMembers, LAGGInterfaceMemberForm),
-            'sr':      (StaticRoute, None),
-            } 
-    model, form_class = objtype2form[objtype]
-    return update_object(
-        request = request,
-        model = model, form_class = form_class,
-        object_id = object_id, 
-        post_save_redirect = '/network/' + objtype + '/view/',
-        )

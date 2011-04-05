@@ -28,14 +28,12 @@
 
 import os
 
-from django.forms.models import modelformset_factory
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import Http404, HttpResponseRedirect
-from django.views.generic.create_update import update_object, delete_object
 
 from freenasUI.services.forms import * 
 from freenasUI.services.models import services as Services 

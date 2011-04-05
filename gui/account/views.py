@@ -27,28 +27,25 @@
 #####################################################################
 
 import os
-from freenasUI.account.forms import * 
-from freenasUI.account.models import * 
-from django.forms.models import modelformset_factory
-from django.contrib.auth.decorators import permission_required, login_required
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import password_change_done
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm, PasswordChangeForm
+from django.contrib.auth import authenticate, login, logout
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render_to_response
-from django.contrib.auth import authenticate, login, logout
 from django.template import RequestContext
-from django.views.generic.list_detail import object_detail, object_list
-from django.views.generic.create_update import update_object, delete_object
 from django.utils import simplejson
-from django.views.decorators.csrf import csrf_protect
-from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm, PasswordChangeForm
 from django.utils.translation import ugettext as _
+
+#TODO: do not import *
+from freenasUI.account.forms import * 
+from freenasUI.account.models import * 
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.system import get_freenas_version
 from forms import SetPasswordForm, PasswordChangeForm
 import commands
 
-@csrf_protect
 @login_required
 def bsdUsersView(request, objtype = None, post_change_redirect=None, password_change_form=PasswordChangeForm):
     if objtype != None and objtype != 'bsdgroup':
@@ -187,20 +184,6 @@ def usergroup_delete(request, object_id, objtype):
             'object': obj,
         })
         return render_to_response(('account/%ss_confirm_delete.html' % objtype), c)
-
-@login_required
-def generic_update(request, object_id, objtype):
-    objtype2form = {
-            'bsduser':   ( bsdUsers, bsdUserChangeForm ),
-            'bsdgroup':   ( bsdGroups, bsdGroupsForm ),
-            } 
-    model, form_class = objtype2form[objtype]
-    return update_object(
-        request = request,
-        model = model, form_class = form_class,
-        object_id = object_id, 
-        post_save_redirect = '/account/',
-        )
 
 @login_required
 def password_change2(request):

@@ -26,21 +26,18 @@
 # $FreeBSD$
 #####################################################################
 
-from freenasUI.sharing.forms import * 
-from django.forms.models import modelformset_factory
-from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.decorators import login_required
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
-from django.contrib.auth import authenticate, login, logout
-from django.template import RequestContext
-from django.http import Http404
-from django.views.generic.list_detail import object_detail, object_list
-from django.views.generic.create_update import update_object, delete_object
-from freenasUI.middleware.notifier import notifier
-import os, commands
+import os
 
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
+from django.core.urlresolvers import reverse
+from django.shortcuts import render_to_response
+from django.template import RequestContext
+from django.http import Http404, HttpResponseRedirect
+
+from freenasUI.sharing.forms import * 
+from freenasUI.middleware.notifier import notifier
+import commands
 
 @login_required
 def sharing(request, sharetype = None):
@@ -123,35 +120,3 @@ def unix(request):
     'nfs_share_list': nfs_share_list,
     })
     return render_to_response('sharing/unix.html', variables)
-
-@login_required
-def generic_delete(request, object_id, sharetype):
-    sharing_model_map = {
-        'cifs':   CIFS_Share,
-        'afp':   AFP_Share,
-        'nfs':   NFS_Share,
-    }
-    return delete_object(
-        request = request,
-        model = sharing_model_map[sharetype],
-        post_delete_redirect = '/sharing/' + sharetype + '/view/',
-        object_id = object_id, )
-    notifier().reload(sharetype)
-    return retval
-
-@login_required
-def generic_update(request, object_id, sharetype):
-    sharetype2form = {
-            'cifs':   ( CIFS_Share, CIFS_ShareForm ),
-            'afp':   ( AFP_Share, AFP_ShareForm ),
-            'nfs':   ( NFS_Share, NFS_ShareForm ),
-            } 
-    model, form_class = sharetype2form[sharetype]
-    return update_object(
-        request = request,
-        model = model, form_class = form_class,
-        object_id = object_id, 
-        post_save_redirect = '/sharing/' + sharetype + '/view/',
-        )
-    notifier().reload(sharetype)
-    return retval

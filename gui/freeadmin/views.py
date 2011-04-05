@@ -27,10 +27,7 @@
 #####################################################################
 
 import os
-import commands
 
-from django.forms.models import modelformset_factory
-from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.core.urlresolvers import reverse
@@ -38,7 +35,6 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils import simplejson
-from django.views.generic.list_detail import object_detail, object_list
 from django.template.loader import get_template
 from django.utils.translation import ugettext as _
 
@@ -46,6 +42,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.common.system import get_freenas_version
 from freeadmin import navtree
 from system.models import Advanced
+import commands
 
 @login_required
 def adminInterface(request, objtype = None):

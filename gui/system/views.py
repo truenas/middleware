@@ -32,16 +32,14 @@ from subprocess import Popen
 import os, commands
 
 from django.contrib.auth.decorators import permission_required, login_required
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, get_backends
+from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils import simplejson
-from django.views.generic.list_detail import object_detail, object_list
 from django.utils.translation import ugettext as _
-from django.contrib.auth import login, get_backends
-from django.contrib.auth.models import User
 
 from freenasUI.system.forms import * 
 from freenasUI.system.models import * 
