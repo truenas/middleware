@@ -241,7 +241,7 @@ _gen_conf()
 	fi
 
 	_count_config zfs_enable storage_volume vol_fstype =\'ZFS\'
-
+	_count_config powerd_enable system_advanced adv_powerdaemon =1
 }
 
 # If we're running really early, then mount /data read-only

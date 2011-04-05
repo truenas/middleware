@@ -270,9 +270,6 @@ class notifier:
         self.__system("/usr/sbin/service inetd forcestop")
         self.__system("/usr/sbin/service inetd restart")
 
-    def _restart_powerd(self):
-        self.__system("/usr/sbin/service ix-powerd quietstart")
-
     def _start_motd(self):
         self.__system("/usr/sbin/service ix-motd quietstart")
 
