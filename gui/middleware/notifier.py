@@ -997,11 +997,11 @@ class notifier:
             if RE_POOL_NAME.search(res):
                 label = RE_POOL_NAME.search(res).group("name")
                 status = res.split('pool: %s' % label)[1].split('config:')[1].split('pool:')[0]
-                if status.find("mirror"):
+                if status.find("mirror") >= 0:
                     group_type = 'mirror'
-                elif status.find("raidz1"):
+                elif status.find("raidz1") >= 0:
                     group_type = 'raidz1'
-                elif status.find("raidz2"):
+                elif status.find("raidz2") >= 0:
                     group_type = 'raidz2'
                 else:
                     group_type = 'stripe'
