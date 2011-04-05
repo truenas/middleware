@@ -616,10 +616,19 @@ class notifier:
         label = disk[1]
         todev = 'gpt/' + label
 
+        if from_diskid == to_diskid:
+            self.__system('/sbin/zpool offline %s %s' % (volume, fromdev))
+
         self.__gpt_labeldisk(type = "freebsd-zfs", devname = devname,
                              label = label, swapsize=swapsize)
 
-        ret = self.__system_nolog('/sbin/zpool replace %s %s %s' % (volume, fromdev, todev))
+        if from_diskid == to_diskid:
+            self.__system('/sbin/zpool online %s %s' % (volume, fromdev))
+            ret = self.__system_nolog('/sbin/zpool replace %s %s' % (volume, fromdev))
+            if ret == 256:
+                ret = self.__system_nolog('/sbin/zpool scrub %s' % (volume))
+        else:
+            ret = self.__system_nolog('/sbin/zpool replace %s %s %s' % (volume, fromdev, todev))
         return ret
 
     def zfs_detach_disk(self, volume_id, disk_id):
