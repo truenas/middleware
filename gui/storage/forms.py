@@ -831,6 +831,7 @@ class DiskReplacementForm(forms.Form):
     volume_disks = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label = _('Member disk'))
 
     def __init__(self, *args, **kwargs):
+        self.disk = kwargs.pop('disk')
         super(DiskReplacementForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
         self.fields['volume_disks'].choices.sort()
@@ -838,7 +839,7 @@ class DiskReplacementForm(forms.Form):
     def _populate_disk_choices(self):
     
         diskchoices = dict()
-        used_disks = [i[0] for i in Disk.objects.all().values_list('disk_name').distinct()]
+        used_disks = [i[0] for i in Disk.objects.exclude(disk_name=self.disk.disk_name).values_list('disk_name').distinct()]
     
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
@@ -860,7 +861,10 @@ class DiskReplacementForm(forms.Form):
                     capacity = "%.1f MiB" % (capacity / 1048576.0)
             else:
                     capacity = "%d Bytes" % (capacity)
-            diskchoices[devname] = "%s (%s)" % (devname, capacity)
+            if devname == self.disk.disk_name:
+                diskchoices[devname] = "In-place [%s (%s)]" % (devname, capacity)
+            else:
+                diskchoices[devname] = "%s (%s)" % (devname, capacity)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
         rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)

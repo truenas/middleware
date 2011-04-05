@@ -601,7 +601,7 @@ def disk_replacement(request, vid, object_id):
     fromdisk = Disk.objects.get(pk=object_id)
 
     if request.method == "POST":
-        form = DiskReplacementForm(request.POST)
+        form = DiskReplacementForm(request.POST, disk=fromdisk)
         if form.is_valid():
             devname = form.cleaned_data['volume_disks']
             disk = Disk()
@@ -618,7 +618,7 @@ def disk_replacement(request, vid, object_id):
                 return HttpResponse(simplejson.dumps({"error": True, "message": _("Some error ocurried.")}), mimetype="application/json")
 
     else:
-        form = DiskReplacementForm()
+        form = DiskReplacementForm(disk=fromdisk)
     variables = RequestContext(request, {
         'form': form,
         'vid': vid,
