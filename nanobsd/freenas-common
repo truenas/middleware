@@ -135,7 +135,7 @@ add_port net/libdnet
 add_port emulators/open-vm-tools-nox11
 add_port databases/sqlite3
 add_port databases/py-sqlite3
-add_port www/py-django -DWITHOUT_MYSQL
+add_port www/py-django12 -DWITHOUT_MYSQL
 add_port www/py-dojango
 #+databases/py-south
 add_port devel/py-setuptools
