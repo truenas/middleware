@@ -604,15 +604,19 @@ def disk_replacement(request, vid, object_id):
         form = DiskReplacementForm(request.POST, disk=fromdisk)
         if form.is_valid():
             devname = form.cleaned_data['volume_disks']
-            disk = Disk()
-            disk.disk_disks = devname
-            disk.disk_name = devname
-            disk.disk_group = fromdisk.disk_group
-            disk.disk_description = fromdisk.disk_description
-            disk.save()
-            rv = notifier().zfs_replace_disk(vid, object_id, unicode(disk.id))
+            if devname != fromdisk.disk_name:
+                disk = Disk()
+                disk.disk_disks = devname
+                disk.disk_name = devname
+                disk.disk_group = fromdisk.disk_group
+                disk.disk_description = fromdisk.disk_description
+                disk.save()
+                rv = notifier().zfs_replace_disk(vid, object_id, unicode(disk.id))
+            else: 
+                rv = notifier().zfs_replace_disk(vid, object_id, object_id)
             if rv == 0:
-                fromdisk.delete()
+                if devname != fromdisk.disk_name:
+                    fromdisk.delete()
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk replacement has been successfully done.")}), mimetype="application/json")
             else:
                 return HttpResponse(simplejson.dumps({"error": True, "message": _("Some error ocurried.")}), mimetype="application/json")
