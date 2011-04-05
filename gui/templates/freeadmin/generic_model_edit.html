@@ -20,11 +20,13 @@
             {% if deletable == False %}
             <button dojoType="dijit.form.Button" > 
                 <script type="dojo/event" event="onClick" args="e">
-                        dojo.xhrGet( {
-                            url: '{% url freeadmin_model_delete app=app,model=model,oid=oid %}',
-                            handleAs: 'text',
-                            load: function(data) { dijit.byId('edit_dialog').set('content', data); },
-                         });
+                    var rnode = getDialog(this);
+                    if(!rnode) rnode = dijit.byId("edit_dialog");
+                    dojo.xhrGet( {
+                        url: '{% url freeadmin_model_delete app=app,model=model,oid=oid %}',
+                        handleAs: 'text',
+                        load: function(data) { rnode.set('content', data); },
+                     });
                 </script>{% trans "Delete" %}</button>
             {% endif %}
         </td>
