@@ -640,7 +640,7 @@ class notifier:
 
         ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume, devname))
         # TODO: This operation will cause damage to disk data which should be limited
-        self.__gpt_unlabeldisk(self, devname)
+        self.__gpt_unlabeldisk(devname)
         return ret
 
     def zfs_add_spare(self, volume_id, disk_id):
