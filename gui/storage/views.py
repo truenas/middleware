@@ -36,8 +36,7 @@ from django.shortcuts import render_to_response
 from django.contrib.auth import authenticate, login, logout
 from django.template import RequestContext
 from django.http import Http404, HttpResponse
-from django.views.generic.list_detail import object_detail, object_list
-from django.views.generic.create_update import update_object, delete_object
+from django.views.generic.list_detail import object_list
 from django.utils import simplejson
 from django.core import serializers
 from django.utils.translation import ugettext as _
@@ -540,49 +539,6 @@ def snapshot_rollback2(request, dataset, snapname):
             'dataset' : dataset,
         })
         return render_to_response('storage/snapshot_confirm_rollback2.html', c)
-
-@login_required
-def generic_detail(request, object_id, model_name):
-    storage_name_model_map = {
-        'disk':		Disk,
-        'diskgroup':	DiskGroup,
-        'volume':	Volume,
-    }
-    model = storage_name_model_map[model_name]
-    return object_detail(request, queryset=model.objects.all(), object_id=object_id)
-
-@login_required
-def generic_delete(request, object_id, model_name):
-	storage_name_model_map = {
-		'disk':	Disk,
-		'group':	DiskGroup,
-		'volume':	Volume,
-	}
-        # TODO: Extend delete_object to add a callback to do this
-        # TODO: Recursively delete file extents as well
-        if request.method == 'POST' and model_name == 'volume':
-            vol = Volume.objects.get(id = object_id)
-            if vol.vol_fstype == 'iscsi':
-                diskdev = u'/dev/' + vol.vol_name[6:]
-                ist = iSCSITargetExtent.objects.get(iscsi_target_extent_path = diskdev)
-                ist.delete()
-	return delete_object(
-		request = request,
-		model = storage_name_model_map[model_name],
-		post_delete_redirect = '/storage/',
-		object_id = object_id, )
-
-@login_required
-def generic_update(request, object_id, model_name):
-        model_name_to_model_and_form_map = {
-		'disk':	( Disk, DiskFormPartial ),
-	}
-	model, form_class = model_name_to_model_and_form_map[model_name]
-	return update_object(
-		request = request,
-		model = model, form_class = form_class,
-		post_save_redirect = '/storage/',
-		object_id = object_id, )
 
 @login_required
 def periodicsnap(request):

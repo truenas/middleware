@@ -27,39 +27,34 @@
 #####################################################################
 
 from django.conf.urls.defaults import patterns, url
-from freenasUI.storage.forms import *
-from freenasUI.storage.views import *
 from freenasUI.services.views import servicesToggleView as servicesToggleView
 
 # Active FreeNAS URLs
 
-urlpatterns = patterns('',
-    (r'^$', storage),
-    url(r'^home/$', home, name="storage_home"),
-    url(r'^datagrid/volume-(?P<vid>\d+)/disks/$', disks_datagrid, name="storage_datagrid_disks"),
-    url(r'^datagrid/volume-(?P<vid>\d+)/disks/json$', disks_datagrid_json, name="storage_datagrid_disks_json"),
-    url(r'dataset/$', dataset_create),
-    url(r'dataset2/$', dataset_create2, name="storage_dataset"),
-    url(r'dataset/delete/(?P<object_id>\d+)/$', dataset_delete),
-    url(r'dataset2/delete/(?P<object_id>\d+)/$', dataset_delete2, name="storage_dataset_delete"),
-    url(r'dataset/edit/(?P<object_id>\d+)/$', dataset_edit, name="storage_dataset_edit"),
-    url(r'snapshot2/delete/(?P<dataset>[-a-zA-Z0-9_/.]+)@(?P<snapname>[-a-zA-Z0-9_.]+)/$', snapshot_delete2, name="storage_snapshot_delete"),
-    url(r'snapshot2/rollback/(?P<dataset>[-a-zA-Z0-9_/.]+)@(?P<snapname>[-a-zA-Z0-9_.]+)/$', snapshot_rollback2, name="storage_snapshot_rollback"),
-    url(r'snapshot2/create/(?P<path>[-a-zA-Z0-9_/.]+)/$', manualsnap, name="storage_manualsnap"),
-    url(r'snapshot2/clone/(?P<snapshot>[-a-zA-Z0-9_/.]+@[-a-zA-Z0-9_.]+)/$', clonesnap, name="storage_clonesnap"),
-    url(r'mountpoint2/permission/(?P<object_id>\d+)/$', mp_permission2, name="storage_mp_permission"),
+urlpatterns = patterns('storage.views',
+    (r'^$', 'storage'),
+    url(r'^home/$', 'home', name="storage_home"),
+    url(r'^datagrid/volume-(?P<vid>\d+)/disks/$', 'disks_datagrid', name="storage_datagrid_disks"),
+    url(r'^datagrid/volume-(?P<vid>\d+)/disks/json$', 'disks_datagrid_json', name="storage_datagrid_disks_json"),
+    url(r'dataset/$', 'dataset_create'),
+    url(r'dataset2/$', 'dataset_create2', name="storage_dataset"),
+    url(r'dataset/delete/(?P<object_id>\d+)/$', 'dataset_delete'),
+    url(r'dataset2/delete/(?P<object_id>\d+)/$', 'dataset_delete2', name="storage_dataset_delete"),
+    url(r'dataset/edit/(?P<object_id>\d+)/$', 'dataset_edit', name="storage_dataset_edit"),
+    url(r'snapshot2/delete/(?P<dataset>[-a-zA-Z0-9_/.]+)@(?P<snapname>[-a-zA-Z0-9_.]+)/$', 'snapshot_delete2', name="storage_snapshot_delete"),
+    url(r'snapshot2/rollback/(?P<dataset>[-a-zA-Z0-9_/.]+)@(?P<snapname>[-a-zA-Z0-9_.]+)/$', 'snapshot_rollback2', name="storage_snapshot_rollback"),
+    url(r'snapshot2/create/(?P<path>[-a-zA-Z0-9_/.]+)/$', 'manualsnap', name="storage_manualsnap"),
+    url(r'snapshot2/clone/(?P<snapshot>[-a-zA-Z0-9_/.]+@[-a-zA-Z0-9_.]+)/$', 'clonesnap', name="storage_clonesnap"),
+    url(r'mountpoint2/permission/(?P<object_id>\d+)/$', 'mp_permission2', name="storage_mp_permission"),
     (r'toggle/(?P<formname>\w+)/$', servicesToggleView),
-    url(r'^wizard2/$', wizard, name="storage_wizard"),
-    url(r'^import/$', volimport, name="storage_import"),
-    url(r'^auto-import/$', volautoimport, name="storage_autoimport"),
-    url(r'^periodic-snapshot/$', periodicsnap, name="storage_periodicsnap"),
-    (r'save/(?P<objtype>\w+)/$', storage),
-    (r'volume/(?P<volume_id>\d+)/$', volume_disks),
-    url(r'volume/zfs-edit/(?P<object_id>\d+)/$', zfsvolume_edit, name="storage_volume_edit"),
-    url(r'volume/(?P<vid>\d+)/disk-replacement/(?P<object_id>\d+)/$', disk_replacement, name="storage_disk_replacement"),
-    (r'mountpoint/permission/(?P<object_id>\d+)/$', mp_permission),
-    (r'(?P<model_name>\w+)/delete/(?P<object_id>\d+)/$', generic_delete),
-    (r'(?P<model_name>\w+)/edit/(?P<object_id>\d+)/$', generic_update),
-    (r'(?P<model_name>\w+)/(?P<object_id>\d+)/$', generic_detail), # detail based on URL
+    url(r'^wizard2/$', 'wizard', name="storage_wizard"),
+    url(r'^import/$', 'volimport', name="storage_import"),
+    url(r'^auto-import/$', 'volautoimport', name="storage_autoimport"),
+    url(r'^periodic-snapshot/$', 'periodicsnap', name="storage_periodicsnap"),
+    (r'save/(?P<objtype>\w+)/$', 'storage'),
+    (r'volume/(?P<volume_id>\d+)/$', 'volume_disks'),
+    url(r'volume/zfs-edit/(?P<object_id>\d+)/$', 'zfsvolume_edit', name="storage_volume_edit"),
+    url(r'volume/(?P<vid>\d+)/disk-replacement/(?P<object_id>\d+)/$', 'disk_replacement', name="storage_disk_replacement"),
+    (r'mountpoint/permission/(?P<object_id>\d+)/$', 'mp_permission'),
     )
 
