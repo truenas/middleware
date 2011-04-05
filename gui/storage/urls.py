@@ -55,6 +55,7 @@ urlpatterns = patterns('storage.views',
     (r'volume/(?P<volume_id>\d+)/$', 'volume_disks'),
     url(r'volume/zfs-edit/(?P<object_id>\d+)/$', 'zfsvolume_edit', name="storage_volume_edit"),
     url(r'volume/(?P<vid>\d+)/disk-replacement/(?P<object_id>\d+)/$', 'disk_replacement', name="storage_disk_replacement"),
+    url(r'volume/(?P<vid>\d+)/disk-detach/(?P<object_id>\d+)/$', 'disk_detach', name="storage_disk_detach"),
     (r'mountpoint/permission/(?P<object_id>\d+)/$', 'mp_permission'),
     )
 

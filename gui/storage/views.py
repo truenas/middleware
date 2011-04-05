@@ -201,6 +201,8 @@ def disks_datagrid_json(request, vid):
             }
         if volume.vol_fstype in ('ZFS',):
             ret['edit']['replace_url'] = reverse('storage_disk_replacement', kwargs={'vid': vid, 'object_id': data.id})
+        if volume.vol_fstype in ('ZFS',):
+            ret['edit']['detach_url'] = reverse('storage_disk_detach', kwargs={'vid': vid, 'object_id': data.id})
         ret['edit'] = simplejson.dumps(ret['edit'])
 
         for f in data._meta.fields:
@@ -624,3 +626,34 @@ def disk_replacement(request, vid, object_id):
         'fromdisk': fromdisk,
     })
     return render_to_response('storage/disk_replacement.html', variables)
+
+@login_required
+def disk_detach(request, vid, object_id):
+
+    volume = Volume.objects.get(pk=vid)
+    disk = Disk.objects.get(pk=object_id)
+
+    if request.method == "POST":
+        dg = DiskGroup.objects.filter(group_volume=volume,group_type='detached')
+        if dg.count() == 0:
+            dg = DiskGroup()
+            dg.group_volume = volume
+            dg.group_name = "%sdetached" % volume.vol_name
+            dg.group_type = 'detached'
+            dg.save()
+        else:
+            dg = dg[0]
+        rv = notifier().zfs_detach_disk(vid, object_id)
+        if rv == 0:
+            disk.disk_group = dg
+            disk.save()
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk detach has been successfully done.")}), mimetype="application/json")
+        else:
+            return HttpResponse(simplejson.dumps({"error": True, "message": _("Some error ocurried.")}), mimetype="application/json")
+
+    variables = RequestContext(request, {
+        'vid': vid,
+        'object_id': object_id,
+        'disk': disk,
+    })
+    return render_to_response('storage/disk_detach.html', variables)

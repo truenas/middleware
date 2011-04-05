@@ -323,11 +323,11 @@
     function buttongrid(v) {
         var json = dojo.fromJson(v);
         dojo.parser.parse(dojo.byId(this.id));
+        var gridhtml = dijit.getEnclosingWidget(dojo.byId(this.id));
 
         var content = new dijit.layout.ContentPane({});
         var b = new dijit.form.Button({label: "Edit"});
 
-        var gridhtml = dijit.getEnclosingWidget(dojo.byId(this.id));
         dojo.connect(b.domNode, 'onclick', function(){ editObject('Edit Disk', json.edit_url, [gridhtml,]); });
         content.domNode.appendChild(b.domNode);
 
@@ -335,6 +335,11 @@
             var b2 = new dijit.form.Button({label: "Replace"});
             dojo.connect(b2.domNode, 'onclick', function(){ editObject('Disk Replacement', json.replace_url, [gridhtml,]); });
             content.domNode.appendChild(b2.domNode);
+        }
+        if(json.detach_url) {
+            var b3 = new dijit.form.Button({label: "Detach"});
+            dojo.connect(b3.domNode, 'onclick', function(){ editObject('Disk Detach', json.detach_url, [gridhtml,]); });
+            content.domNode.appendChild(b3.domNode);
         }
 
         return content;
