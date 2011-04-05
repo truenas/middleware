@@ -26,23 +26,22 @@
 # $FreeBSD$
 #####################################################################
 
+import os
+
+from django.forms.models import modelformset_factory
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
+from django.core.urlresolvers import reverse
+from django.shortcuts import render_to_response
+from django.template import RequestContext
+from django.http import Http404, HttpResponseRedirect
+from django.views.generic.create_update import update_object, delete_object
+
 from freenasUI.services.forms import * 
 from freenasUI.services.models import services as Services 
-from django.forms.models import modelformset_factory
-from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.decorators import login_required
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
-from django.contrib.auth import authenticate, login, logout
-from django.template import RequestContext
-from django.http import Http404
-from django.views.generic.list_detail import object_detail, object_list
-from django.views.generic.create_update import update_object, delete_object
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.helperview import helperViewEx, helperViewEmpty
-import os, commands
-
+import commands
 
 @login_required
 def home(request):
@@ -303,41 +302,3 @@ def servicesToggleView(request, formname):
         return HttpResponseRedirect('/freenas/media/images/ui/buttons/on.png')
     else:
         return HttpResponseRedirect('/freenas/media/images/ui/buttons/off.png')
-
-@login_required
-def generic_delete(request, object_id, objtype):
-    services_model_map = {
-            'iscsitarget':    iSCSITarget,
-            'iscsiextent':   iSCSITargetExtent,
-            'asctarget':   iSCSITargetToExtent,
-            'target_auth':   iSCSITargetAuthCredential,
-            'iscsiportal':   iSCSITargetPortal,
-            'auth_initiator':  iSCSITargetAuthorizedInitiator,
-            'iscsiportal':   iSCSITargetPortal,
-    }
-    return delete_object(
-        request = request,
-        model = services_model_map[objtype],
-        post_delete_redirect = '/services/', 
-        object_id = object_id, 
-        )
-
-@login_required
-def generic_update(request, object_id, objtype):
-    objtype2form = {
-            'iscsitarget':   ( iSCSITarget, iSCSITargetForm ),
-            'iscsiextent':   ( iSCSITargetExtent, iSCSITargeExtentEditForm),
-            'asctarget':   ( iSCSITargetToExtent, iSCSITargetToExtentForm ),
-            'target_auth':   ( iSCSITargetAuthCredential, iSCSITargetAuthCredentialForm ),
-            'iscsiportal':   ( iSCSITargetPortal, iSCSITargetPortalForm ),
-            'auth_initiator':   ( iSCSITargetAuthorizedInitiator, iSCSITargetAuthorizedInitiatorForm ),
-            'iscsiportal':   ( iSCSITargetPortal, iSCSITargetPortalForm ),
-            } 
-    model, form_class = objtype2form[objtype]
-    return update_object(
-        request = request,
-        model = model, form_class = form_class,
-        object_id = object_id, 
-        post_save_redirect = '/services/' + objtype + '/view/',
-        )
-
