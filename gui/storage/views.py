@@ -28,20 +28,19 @@
 import os
 
 from django.forms.models import modelformset_factory
-from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.decorators import login_required
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
 from django.contrib.auth import authenticate, login, logout
+from django.core.urlresolvers import reverse
+from django.core import serializers
+from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.views.generic.list_detail import object_list
 from django.utils import simplejson
-from django.core import serializers
 from django.utils.translation import ugettext as _
 
 #TODO remove import *
+from dojango.util import to_dojo_data, json_encode
 from freenasUI.services.models import *
 from freenasUI.storage.forms import * 
 from freenasUI.storage.models import * 
@@ -188,8 +187,6 @@ def disks_datagrid(request, vid):
 
 def disks_datagrid_json(request, vid):
 
-    from dojango.util import to_dojo_data, json_encode
-
     volume = Volume.objects.get(pk=vid)
     disks = []
     for dg in volume.diskgroup_set.all():
@@ -199,10 +196,13 @@ def disks_datagrid_json(request, vid):
     complete = []
     for data in disks:
         ret = {}
-        ret['edit'] = simplejson.dumps({
+        ret['edit'] = {
             'edit_url': reverse('freeadmin_model_edit', kwargs={'app':'storage', 'model': 'Disk', 'oid': data.id})+'?deletable=false',
-            'replace_url': reverse('storage_disk_replacement', kwargs={'vid': vid, 'object_id': data.id})
-            })
+            }
+        if volume.vol_fstype in ('ZFS',):
+            ret['edit']['replace_url'] = reverse('storage_disk_replacement', kwargs={'vid': vid, 'object_id': data.id})
+        ret['edit'] = simplejson.dumps(ret['edit'])
+
         for f in data._meta.fields:
             if isinstance(f, models.ImageField) or isinstance(f, models.FileField): # filefields can't be json serialized
                 ret[f.attname] = unicode(getattr(data, f.attname))
