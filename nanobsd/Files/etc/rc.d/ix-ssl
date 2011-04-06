@@ -5,6 +5,7 @@
 
 # PROVIDE: ix-ssl
 # REQUIRE: FILESYSTEMS
+# BEFORE: ix-httpd
 
 . /etc/rc.freenas
 
@@ -211,6 +212,74 @@ import_certificate()
 	return $?
 }
 
+write_key()
+{
+	if [ ! -s "${HTTPDCERT}" ]
+	then
+		return 1
+	fi
+
+	awk -v key="${SSLCAKEY}" '
+	BEGIN {
+		inkeyfile = 0
+		keyfile[0] = null;
+		keyfile_size = 0;
+	}
+	/-----BEGIN RSA PRIVATE KEY-----/ {
+		inkeyfile = 1;
+	}
+
+	/-----END RSA PRIVATE KEY-----/ {
+		keyfile[keyfile_size++] = $0;
+		inkeyfile = 0;
+	}
+	/.+/ {
+		if (inkeyfile)
+			keyfile[keyfile_size++] = $0;
+	}
+	END {
+		for (i = 0;i < keyfile_size;i++)
+			print keyfile[i] > key
+	}
+	' < "${HTTPDCERT}"
+
+	return 0
+}
+
+write_cert()
+{
+	if [ ! -s "${HTTPDCERT}" ]
+	then
+		return 1
+	fi
+
+	awk -v cert="${SSLCACERT}" '
+	BEGIN {
+		incertfile = 0
+		certfile[0] = null;
+		certfile_size = 0;
+	}
+	/-----BEGIN CERTIFICATE-----/ {
+		incertfile = 1;
+	}
+	
+	/-----END CERTIFICATE-----/ {
+		certfile[certfile_size++] = $0;
+		incertfile = 0;
+	}
+	/.+/ {
+		if (incertfile)
+			certfile[certfile_size++] = $0;
+	}
+	END {
+		for (i = 0;i < certfile_size;i++)
+			print certfile[i] > cert
+	}
+	' < "${HTTPDCERT}"
+
+	return 0
+}
+
 generate_certificate()
 {
 	local certfile
@@ -236,7 +305,6 @@ generate_certificate()
 		diff "${HTTPDCERT}" /tmp/.cert >/dev/null
 		if [ "$?" != "0" ]
 		then
-			echo "THEY DIFFER"
 			mv /tmp/.cert "${HTTPDCERT}"
 		fi
 
@@ -247,9 +315,26 @@ generate_certificate()
 	then
 		echo "${certfile}" > "${HTTPDCERT}"
 		chmod 400 "${HTTPDCERT}"
+	fi
 
-	else
-		create_CA
+	if [ ! -f "${SSLCAKEY}" ]
+	then
+		write_key
+	fi
+
+	if [ ! -f "${SSLCACERT}" ]
+	then
+		write_cert
+	fi
+
+	if [ ! -f "${SSLCAKEY}" -a ! -f "${SSLCACERT}" ]
+	then
+		if [ -s "${HTTPDCERT}" ]
+		then
+			write_key_cert
+		else
+			create_CA
+		fi
 	fi
 
 	if [ -s "${SSLCAKEY}" -a -s "${SSLCACERT}" ]
