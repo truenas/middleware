@@ -201,8 +201,8 @@ def disks_datagrid_json(request, vid):
             }
         if volume.vol_fstype in ('ZFS',):
             ret['edit']['replace_url'] = reverse('storage_disk_replacement', kwargs={'vid': vid, 'object_id': data.id})
-        if volume.vol_fstype in ('ZFS',):
-            ret['edit']['detach_url'] = reverse('storage_disk_detach', kwargs={'vid': vid, 'object_id': data.id})
+        #if volume.vol_fstype in ('ZFS',):
+        #    ret['edit']['detach_url'] = reverse('storage_disk_detach', kwargs={'vid': vid, 'object_id': data.id})
         ret['edit'] = simplejson.dumps(ret['edit'])
 
         for f in data._meta.fields:
