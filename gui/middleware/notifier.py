@@ -652,7 +652,13 @@ class notifier:
         # TODO: Handle with 4khack aftermath
         volume = volume[1]
         c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", disk_id)
-        devname = 'gpt/' + c.fetchone()[0]
+        label = c.fetchone()[0]
+        devname = 'gpt/' + label
+
+        # Remove the swap partition for another time to be sure.
+        # TODO: swap partition should be trashed instead.
+        devname_swap = '/dev/gpt/swap-' + label
+        self.__system('/sbin/swapoff %s' % (devname_swap))
 
         ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume, devname))
         # TODO: This operation will cause damage to disk data which should be limited
