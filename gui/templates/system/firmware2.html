@@ -1,10 +1,3 @@
-<html>
-    <head>
-        <script>isLoaded = true;</script>
-    </head>
-    <body>
-<textarea>
-{% filter force_escape %}
 <form dojoType="dijit.form.Form" enctype="multipart/form-data" id="firmwareform", name="firmwareform" method="post">
     <script type="dojo/event" event="onSubmit" args="e">
         formSubmit(this, e, '{% url system_firmwareupload %}');
@@ -12,6 +5,7 @@
         <table class="config">
             {{ firmware.errors }}
             {% for field in firmware %}
+            <input dojoType="dijit.form.TextBox" type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
                 <tr>
                     <td>
                         <label for="{{ field.auto_id }}">
@@ -33,7 +27,3 @@
 		<button class="submitform" dojoType="dijit.form.Button" type="submit" onClick="this.set('label', 'Please wait...');"> Update </button>
         </p>
     </form>
-{% endfilter %}
-</textarea>
-</body>
-</html>

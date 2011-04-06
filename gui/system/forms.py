@@ -33,8 +33,7 @@ from freenasUI.middleware.notifier import notifier
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode 
-from freenasUI.common.forms import ModelForm
-from freenasUI.common.forms import Form
+from freenasUI.common.forms import ModelForm, Form
 from dojango.forms import fields, widgets 
 from dojango.forms.fields import BooleanField 
 from dojango import forms

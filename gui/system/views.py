@@ -37,6 +37,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import render_to_response, get_object_or_404
+from django.template.loader import render_to_string
 from django.template import RequestContext
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
@@ -190,7 +191,10 @@ def firmware_upload(request):
         variables.update({
             'firmware': firmware,
         })
-        return render_to_response('system/firmware2.html', variables)
+        if request.GET.has_key("iframe"):
+            return HttpResponse("<html><body><textarea>"+render_to_string('system/firmware2.html', variables)+"</textarea></boby></html>")
+        else:
+            return render_to_response('system/firmware2.html', variables)
 
     variables.update({
         'firmware': firmware,
