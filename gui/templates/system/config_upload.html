@@ -3,7 +3,15 @@
 	formSubmit(this, e, '{% url system_configupload %}');
          </script>
         <table class="config">
+            {% if form.non_field_errors %}
+                <tr>
+                    <td colspan="2">
+                        {{  form.non_field_errors }}
+                    </td>
+                </tr>
+            {% endif %}
             {% for field in form %}
+            <input dojoType="dijit.form.TextBox" type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
                 <tr>
                     <td>
                         <label for="{{ field.auto_id }}">

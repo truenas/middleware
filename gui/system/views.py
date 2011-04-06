@@ -291,7 +291,10 @@ def config_upload(request):
                 login(request, user)
                 return render_to_response('system/config_ok.html', variables)
 
-        return render_to_response('system/config_upload2.html', variables)
+        if request.GET.has_key("iframe"):
+            return HttpResponse("<html><body><textarea>"+render_to_string('system/config_upload.html', variables)+"</textarea></boby></html>")
+        else:
+            return render_to_response('system/config_upload.html', variables)
     else:
         form = ConfigUploadForm()
 
