@@ -609,18 +609,25 @@ class notifier:
         # TODO: Test on real hardware to see if ashift would persist across replace
         volume = volume[1]
         c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", from_diskid)
-        fromdev = 'gpt/' + c.fetchone()[0]
+        fromdev_label = c.fetchone()[0]
+        fromdev = 'gpt/' + fromdev_label
+        fromdev_swap = '/dev/gpt/swap-' + fromdev_label
         c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE id = ?", to_diskid)
         disk = c.fetchone()
         devname = disk[0]
         label = disk[1]
         todev = 'gpt/' + label
+        todev_swap = '/dev/gpt/swap-' + label
+
+        self.__system('/sbin/swapoff %s' % (fromdev_swap))
 
         if from_diskid == to_diskid:
             self.__system('/sbin/zpool offline %s %s' % (volume, fromdev))
 
         self.__gpt_labeldisk(type = "freebsd-zfs", devname = devname,
                              label = label, swapsize=swapsize)
+
+        self.__system('/sbin/swapon %s' % (todev_swap))
 
         if from_diskid == to_diskid:
             self.__system('/sbin/zpool online %s %s' % (volume, fromdev))
