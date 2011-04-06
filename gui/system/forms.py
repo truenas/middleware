@@ -154,15 +154,18 @@ class FirmwareUploadForm(Form):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/firmware.xz'
         fw = open(filename, 'wb+')
-        for c in self.files['firmware'].chunks():
-            fw.write(c)
-        fw.close()
-        checksum = notifier().checksum(filename)
-        retval = notifier().validate_xz(filename)
-        if checksum != cleaned_data['sha256'].__str__() or retval == False:
-            msg = u"Invalid firmware or checksum"
-            self._errors["firmware"] = self.error_class([msg])
-            del cleaned_data["firmware"]
+        if self.files.has_key('firmware'):
+            for c in self.files['firmware'].chunks():
+                fw.write(c)
+            fw.close()
+            checksum = notifier().checksum(filename)
+            retval = notifier().validate_xz(filename)
+            if checksum != cleaned_data['sha256'].__str__() or retval == False:
+                msg = u"Invalid firmware or checksum"
+                self._errors["firmware"] = self.error_class([msg])
+                del cleaned_data["firmware"]
+        else:
+            self._errors["firmware"] = self.error_class(["This field is required."])
         return cleaned_data
     def done(self):
         notifier().update_firmware('/var/tmp/firmware/firmware.xz')

@@ -3,7 +3,7 @@
         formSubmit(this, e, '{% url system_firmwareupload %}');
     </script>
         <table class="config">
-            {{ firmware.errors }}
+            {{ firmware.non_field_errors }}
             {% for field in firmware %}
             <input dojoType="dijit.form.TextBox" type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
                 <tr>

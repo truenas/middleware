@@ -181,13 +181,14 @@ def firmware_upload(request):
     firmware = FirmwareUploadForm()
     variables = RequestContext(request)
     if request.method == 'POST':
+        firmware = FirmwareUploadForm(request.POST, request.FILES)
+        valid = firmware.is_valid()
         try:
-            firmware = FirmwareUploadForm(request.POST, request.FILES)
-            if firmware.is_valid():
+            if valid:
                 firmware.done()
                 return render_to_response('system/firmware_ok.html')
         except:
-            firmware = FirmwareUploadForm()
+            pass
         variables.update({
             'firmware': firmware,
         })
