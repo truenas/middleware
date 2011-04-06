@@ -39,6 +39,7 @@
     dojo.require("dijit.layout.ContentPane");
     dojo.require("dijit.layout.TabContainer");
     dojo.require("dojox.form.FileInput");
+    dojo.require("dojo._base.xhr");
 
     dojo._contentHandlers.text = (function(old){
       return function(xhr){
@@ -50,6 +51,13 @@
         return text;
       }
     })(dojo._contentHandlers.text);
+
+    var originalXHR = dojo.xhr;
+    dojo.xhr = function(httpVerb, xhrArgs, hasHTTPBody) {
+      if(!xhrArgs.headers) xhrArgs.headers = {};
+      xhrArgs.headers["X-CSRFToken"] = dojo.cookie('csrftoken');
+      return originalXHR(httpVerb, xhrArgs, hasHTTPBody);
+    }
 
     /*
      * Menu Object
@@ -410,6 +418,7 @@
                 method: 'POST',
                 form: item.domNode,
                 handleAs: 'text',
+                //headers: {"X-CSRFToken": dojo.cookie('csrftoken')},
                 load: function(data, ioArgs) { 
 
                     try {
@@ -768,6 +777,7 @@
         var c = p.getChildren();
         for(var i=0; i<c.length; i++){
             if(c[i].title == name){
+                c[i].href = url;
                 p.selectChild(c[i]);
                 return;
             }
