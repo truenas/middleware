@@ -27,15 +27,12 @@
 #####################################################################
 import os
 
-from django.forms.models import modelformset_factory
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.core.urlresolvers import reverse
-from django.core import serializers
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
-from django.views.generic.list_detail import object_list
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
@@ -200,9 +197,10 @@ def disks_datagrid_json(request, vid):
             'edit_url': reverse('freeadmin_model_edit', kwargs={'app':'storage', 'model': 'Disk', 'oid': data.id})+'?deletable=false',
             }
         if volume.vol_fstype in ('ZFS',):
-            ret['edit']['replace_url'] = reverse('storage_disk_replacement', kwargs={'vid': vid, 'object_id': data.id})
-        #if volume.vol_fstype in ('ZFS',):
-        #    ret['edit']['detach_url'] = reverse('storage_disk_detach', kwargs={'vid': vid, 'object_id': data.id})
+            if data.disk_group.group_type == 'detached':
+                ret['edit']['detach_url'] = reverse('storage_disk_detach', kwargs={'vid': vid, 'object_id': data.id})
+            elif data.disk_group.group_type != 'cache':
+                ret['edit']['replace_url'] = reverse('storage_disk_replacement', kwargs={'vid': vid, 'object_id': data.id})
         ret['edit'] = simplejson.dumps(ret['edit'])
 
         for f in data._meta.fields:
@@ -248,30 +246,9 @@ def diskgroup_add_wrapper(request, *args, **kwargs):
     return wiz(request, *args, **kwargs)
 
 @login_required
-def diskgroup_list(request, template_name='freenas/disks/groups/diskgroup_list.html'):
-    query_set = DiskGroup.objects.values().order_by('name')
-    return object_list(
-        request,
-        template_name = template_name,
-        queryset = query_set
-    )
-
-
-@login_required
 def volume_create_wrapper(request, *args, **kwargs):
     wiz = VolumeWizard([VolumeForm])
     return wiz(request, *args, **kwargs)
-
-@login_required
-def volume_list(request, template_name='freenas/disks/volumes/volume_list.html'):
-    query_set = Volume.objects.values().order_by('groups')
-    #if len(query_set) == 0:
-    #    raise Http404()
-    return object_list(
-        request,
-        template_name = template_name,
-        queryset = query_set
-    )
 
 @login_required
 def dataset_create(request):
@@ -616,7 +593,17 @@ def disk_replacement(request, vid, object_id):
                 rv = notifier().zfs_replace_disk(vid, object_id, object_id)
             if rv == 0:
                 if devname != fromdisk.disk_name:
-                    fromdisk.delete()
+                    dg = DiskGroup.objects.filter(group_volume=volume,group_type='detached')
+                    if dg.count() == 0:
+                        dg = DiskGroup()
+                        dg.group_volume = volume
+                        dg.group_name = "%sdetached" % volume.vol_name
+                        dg.group_type = 'detached'
+                        dg.save()
+                    else:
+                        dg = dg[0]
+                    fromdisk.disk_group = dg
+                    fromdisk.save()
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk replacement has been successfully done.")}), mimetype="application/json")
             else:
                 return HttpResponse(simplejson.dumps({"error": True, "message": _("Some error ocurried.")}), mimetype="application/json")
