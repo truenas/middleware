@@ -205,7 +205,9 @@ class VolumeWizardForm(forms.Form):
                 del diskchoices[devname]
             except:
                 pass
-        return diskchoices.items()
+        choices = diskchoices.items()
+        choices.sort()
+        return choices
 
     def clean_volume_name(self):
         vname = self.cleaned_data['volume_name']
@@ -340,7 +342,9 @@ class VolumeImportForm(forms.Form):
                 if part.startswith(rootdev_base.group(0)):
                     del diskchoices[part]
 
-        return diskchoices.items()
+        choices = diskchoices.items()
+        choices.sort()
+        return choices
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -440,7 +444,9 @@ class VolumeAutoImportForm(forms.Form):
                 if part.startswith(rootdev_base.group(0)):
                     del diskchoices[part]
 
-        return diskchoices.items()
+        choices = diskchoices.items()
+        choices.sort()
+        return choices
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -873,4 +879,6 @@ class DiskReplacementForm(forms.Form):
                 if disk.startswith(rootdev_base.group(0)):
                     del diskchoices[disk]
 
-        return diskchoices.items()
+        choices = diskchoices.items()
+        choices.sort()
+        return choices
