@@ -196,10 +196,14 @@ def disks_datagrid_json(request, vid):
         ret['edit'] = {
             'edit_url': reverse('freeadmin_model_edit', kwargs={'app':'storage', 'model': 'Disk', 'oid': data.id})+'?deletable=false',
             }
-        if volume.vol_fstype in ('ZFS',):
+        if volume.vol_fstype == 'ZFS':
             if data.disk_group.group_type == 'detached':
                 ret['edit']['detach_url'] = reverse('storage_disk_detach', kwargs={'vid': vid, 'object_id': data.id})
             elif data.disk_group.group_type != 'cache':
+                ret['edit']['replace_url'] = reverse('storage_disk_replacement', kwargs={'vid': vid, 'object_id': data.id})
+
+        elif volume.vol_fstype == 'UFS':
+            if data.disk_group.group_type in ('mirror', 'raid3'):
                 ret['edit']['replace_url'] = reverse('storage_disk_replacement', kwargs={'vid': vid, 'object_id': data.id})
         ret['edit'] = simplejson.dumps(ret['edit'])
 
@@ -241,63 +245,7 @@ def volume_disks(request, volume_id):
     return render_to_response('storage/volume_detail.html', variables)
 
 @login_required
-def diskgroup_add_wrapper(request, *args, **kwargs):
-    wiz = DiskGroupWizard([DiskGroupForm])
-    return wiz(request, *args, **kwargs)
-
-@login_required
-def volume_create_wrapper(request, *args, **kwargs):
-    wiz = VolumeWizard([VolumeForm])
-    return wiz(request, *args, **kwargs)
-
-@login_required
 def dataset_create(request):
-    mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
-    defaults = { 'dataset_compression' : 'inherit', 'dataset_atime' : 'inherit', }
-    dataset_form = ZFSDataset_CreateForm(initial=defaults)
-    if request.method == 'POST':
-        dataset_form = ZFSDataset_CreateForm(request.POST)
-        if dataset_form.is_valid():
-            props = {}
-            cleaned_data = dataset_form.cleaned_data
-            volume = Volume.objects.get(id=cleaned_data.get('dataset_volid'))
-            volume_name = volume.vol_name
-            dataset_name = "%s/%s" % (volume_name, cleaned_data.get('dataset_name'))
-            dataset_compression = cleaned_data.get('dataset_compression')
-            if dataset_compression != 'inherit':
-                props['compression']=dataset_compression.__str__()
-            dataset_atime = cleaned_data.get('dataset_atime')
-            if dataset_atime != 'inherit':
-                props['atime']=dataset_atime.__str__()
-            refquota = cleaned_data.get('dataset_refquota')
-            if refquota != '0':
-                props['refquota']=refquota.__str__()
-            quota = cleaned_data.get('dataset_quota')
-            if quota != '0':
-                props['quota']=quota.__str__()
-            refreservation = cleaned_data.get('dataset_refreserv')
-            if refreservation != '0':
-                props['refreservation']=refreservation.__str__()
-            refreservation = cleaned_data.get('dataset_reserv')
-            if refreservation != '0':
-                props['refreservation']=refreservation.__str__()
-            errno, errmsg = notifier().create_zfs_dataset(path=dataset_name.__str__(), props=props)
-            if errno == 0:
-                mp = MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (dataset_name), mp_options='noauto', mp_ischild=True)
-                mp.save()
-                return HttpResponseRedirect('/storage/')
-            else:
-                dataset_form.set_error(errmsg)
-    variables = RequestContext(request, {
-        'focused_tab' : 'storage',
-        'mp_list': mp_list,
-        'form': dataset_form,
-        'freenas_version' : get_freenas_version(),
-    })
-    return render_to_response('storage/datasets.html', variables)
-
-@login_required
-def dataset_create2(request):
     mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     defaults = { 'dataset_compression' : 'inherit', 'dataset_atime' : 'inherit', }
     dataset_form = ZFSDataset_CreateForm(initial=defaults)
@@ -427,27 +375,6 @@ def mp_permission(request, object_id):
         if form.is_valid():
             mp_path=mp.mp_path.__str__()
             form.commit(path=mp_path)
-            return HttpResponseRedirect('/storage/')
-    else:
-        form = MountPointAccessForm()
-    variables = RequestContext(request, {
-        'focused_tab' : 'storage',
-        'mp': mp,
-        'mp_list': mp_list,
-        'form': form,
-        'freenas_version' : get_freenas_version(),
-    })
-    return render_to_response('storage/permission.html', variables)
-
-@login_required
-def mp_permission2(request, object_id):
-    mp = MountPoint.objects.get(id = object_id)
-    mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
-    if request.method == 'POST':
-        form = MountPointAccessForm(request.POST)
-        if form.is_valid():
-            mp_path=mp.mp_path.__str__()
-            form.commit(path=mp_path)
             return HttpResponse(simplejson.dumps({"error": False, "message": "Mount Point permissions successfully updated."}), mimetype="application/json")
             #return HttpResponseRedirect('/storage/')
     else:
@@ -461,20 +388,6 @@ def mp_permission2(request, object_id):
 
 @login_required
 def dataset_delete(request, object_id):
-    obj = MountPoint.objects.get(id=object_id)
-    if request.method == 'POST':
-        notifier().destroy_zfs_dataset(path = obj.mp_path[5:].__str__())
-        obj.delete()
-        return HttpResponseRedirect('/storage/')
-    else:
-        c = RequestContext(request, {
-            'focused_tab' : 'storage',
-            'object': obj,
-        })
-        return render_to_response('storage/dataset_confirm_delete.html', c)
-
-@login_required
-def dataset_delete2(request, object_id):
     obj = MountPoint.objects.get(id=object_id)
     if request.method == 'POST':
         retval = notifier().destroy_zfs_dataset(path = obj.mp_path[5:].__str__())
@@ -491,7 +404,7 @@ def dataset_delete2(request, object_id):
         return render_to_response('storage/dataset_confirm_delete2.html', c)
 
 @login_required
-def snapshot_delete2(request, dataset, snapname):
+def snapshot_delete(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == 'POST':
         notifier().destroy_zfs_dataset(path = snapshot.__str__())
@@ -504,7 +417,7 @@ def snapshot_delete2(request, dataset, snapname):
         return render_to_response('storage/snapshot_confirm_delete2.html', c)
 
 @login_required
-def snapshot_rollback2(request, dataset, snapname):
+def snapshot_rollback(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == "POST":
         ret = notifier().rollback_zfs_snapshot(snapshot = snapshot.__str__())
