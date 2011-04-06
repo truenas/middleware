@@ -393,10 +393,8 @@ class notifier:
 
     def __gpt_unlabeldisk(self, devname):
         """Unlabel the disk"""
-        self.__system("swapoff -a && gpart delete -i 1 /dev/%s && gpart destroy /dev/%s" %
-                     (devname, devname))
-        self.__system("gpart delete -i 2 /dev/%s && gpart destroy /dev/%s" %
-                     (devname, devname))
+        self.__system("swapoff -a && gpart destroy -F /dev/%s" % (devname))
+
         # To be safe, wipe out the disk, both ends...
         # TODO: This should be fixed, it's an overkill to overwrite that much
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=10" % (devname))
