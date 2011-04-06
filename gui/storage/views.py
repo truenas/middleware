@@ -625,22 +625,12 @@ def disk_detach(request, vid, object_id):
     disk = Disk.objects.get(pk=object_id)
 
     if request.method == "POST":
-        dg = DiskGroup.objects.filter(group_volume=volume,group_type='detached')
-        if dg.count() == 0:
-            dg = DiskGroup()
-            dg.group_volume = volume
-            dg.group_name = "%sdetached" % volume.vol_name
-            dg.group_type = 'detached'
-            dg.save()
-        else:
-            dg = dg[0]
-        rv = notifier().zfs_detach_disk(vid, object_id)
-        if rv == 0:
-            disk.disk_group = dg
-            disk.save()
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk detach has been successfully done.")}), mimetype="application/json")
-        else:
-            return HttpResponse(simplejson.dumps({"error": True, "message": _("Some error ocurried.")}), mimetype="application/json")
+        notifier().zfs_detach_disk(vid, object_id)
+        dg = disk.disk_group
+        disk.delete()
+        if Disk.objects.filter(disk_group=dg).count() == 0:
+            dg.delete()
+        return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk detach has been successfully done.")}), mimetype="application/json")
 
     variables = RequestContext(request, {
         'vid': vid,
