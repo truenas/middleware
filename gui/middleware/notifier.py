@@ -251,13 +251,11 @@ class notifier:
         self.__system("/usr/sbin/service ix-pam quietstart")
         self.__system("/usr/sbin/service ix-samba quietstart")
         self.__system("/usr/sbin/service ix-kinit quietstart")
-        self.__system("/bin/sleep 5")
         self.__system("/usr/sbin/service ix-activedirectory quietstart")
         self.__system("/usr/sbin/service samba forcestop")
         self.__system("/usr/bin/killall nmbd")
         self.__system("/usr/bin/killall smbd")
         self.__system("/usr/bin/killall winbindd")
-        self.__system("/bin/sleep 5")
         self.__system("/usr/sbin/service samba quietstart")
 
     def _reload_tftp(self):
