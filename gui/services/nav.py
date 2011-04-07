@@ -90,7 +90,6 @@ class ISCSIExt(NavOption):
             nav.icon = u'ExtentIcon'
             self.options.append(nav)
         self.options += [ISCSIExtAdd,ISCSIExtView]
-        print self.options
 
 class ISCSI(NavOption):
 

@@ -391,13 +391,14 @@ class notifier:
 
     def __gpt_unlabeldisk(self, devname):
         """Unlabel the disk"""
-        self.__system("swapoff -a && gpart destroy -F /dev/%s" % (devname))
+        self.__system("swapoff /dev/%s" % devname)
+        self.__system("gpart destroy -F /dev/%s" % devname)
 
         # To be safe, wipe out the disk, both ends...
         # TODO: This should be fixed, it's an overkill to overwrite that much
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=10" % (devname))
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print ($3 / (1024*1024)) - 3;}'`" % (devname, devname))
+                      "| awk '{print int($3 / (1024*1024)) - 3;}'`" % (devname, devname))
 
     def __create_zfs_volume(self, c, z_id, z_name, swapsize):
         """Internal procedure to create a ZFS volume identified by volume id"""
@@ -658,7 +659,7 @@ class notifier:
 
         ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume, devname))
         # TODO: This operation will cause damage to disk data which should be limited
-        self.__gpt_unlabeldisk(devname)
+        self.__gpt_unlabeldisk(label)
         return ret
 
     def zfs_add_spare(self, volume_id, disk_id):
