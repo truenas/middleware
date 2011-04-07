@@ -74,8 +74,9 @@ class ISCSIExt(NavOption):
     name = u'Extents'
     type = u'iscsi'
     icon = u'ExtentIcon'
+    order_child = False
     append_app = False
-    options = [NavOption,]
+    options = []
 
     def __init__(self, *args, **kwargs):
 
@@ -85,10 +86,11 @@ class ISCSIExt(NavOption):
             nav.name = unicode(ext)
             nav.view = u'freeadmin_model_edit'
             nav.type = 'object'
-            nav.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'oid': ext.id, 'mf': 'iSCSITargetDeviceExtentForm'}
+            nav.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'oid': ext.id}
             nav.icon = u'ExtentIcon'
             self.options.append(nav)
         self.options += [ISCSIExtAdd,ISCSIExtView]
+        print self.options
 
 class ISCSI(NavOption):
 
