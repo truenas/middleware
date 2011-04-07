@@ -529,7 +529,7 @@ def disk_replacement(request, vid, object_id):
                         fromdisk.save()
                     elif volume.vol_fstype == 'UFS':
                         fromdisk.delete()
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk replacement has been successfully done.")}), mimetype="application/json")
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk replacement has been initiated.")}), mimetype="application/json")
             else:
                 if devname != fromdisk.disk_name:
                     disk.delete()
