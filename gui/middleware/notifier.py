@@ -391,7 +391,7 @@ class notifier:
 
     def __gpt_unlabeldisk(self, devname):
         """Unlabel the disk"""
-        self.__system("swapoff /dev/%s" % devname)
+        self.__system("swapoff /dev/gpt/swap-%s" % devname)
         self.__system("gpart destroy -F /dev/%s" % devname)
 
         # To be safe, wipe out the disk, both ends...
@@ -601,7 +601,7 @@ class notifier:
         c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
                  (volume_id,))
         volume = c.fetchone()
-        assert volume[0] == 'ZFS' or volume[0] == 'UFS'
+        assert volume[0] == 'ZFS'
 
         # TODO: Test on real hardware to see if ashift would persist across replace
         volume = volume[1]
@@ -644,7 +644,7 @@ class notifier:
         c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
                  (volume_id,))
         volume = c.fetchone()
-        assert volume[0] == 'ZFS' or volume[0] == 'UFS'
+        assert volume[0] == 'ZFS'
 
         # TODO: Handle with 4khack aftermath
         volume = volume[1]
