@@ -208,7 +208,7 @@ class notifier:
     def _start_network(self):
         # TODO: Skip this step when IPv6 is already enabled
         self.__system("/sbin/sysctl net.inet6.ip6.auto_linklocal=1")
-        self.__system("/usr/sbin/service autolink auto_linklocal quietsatrt")
+        self.__system("/usr/sbin/service autolink auto_linklocal quietstart")
         self.__system("/usr/sbin/service netif stop")
         self.__system("/etc/netstart")
 

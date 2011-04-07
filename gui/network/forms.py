@@ -26,6 +26,8 @@
 # $FreeBSD$
 #####################################################################
 
+import re
+
 from django.shortcuts import render_to_response                
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
@@ -33,14 +35,13 @@ from django.utils.encoding import force_unicode
 from dojango.forms import fields, widgets 
 from dojango.forms.fields import BooleanField 
 from django.utils.translation import ugettext as _
-from dojango import forms
 
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.forms import Form
 from freenasUI.middleware.notifier import notifier
 #TODO: do not import *
 from freenasUI.network.models import *                         
-import re
+from dojango import forms
 
 class InterfacesForm(ModelForm):
     class Meta:
@@ -97,8 +98,9 @@ class GlobalConfigurationForm(ModelForm):
     def save(self):
         # TODO: new IP address should be added in a side-by-side manner
 	    # or the interface wouldn't appear once IP was changed.
-        super(GlobalConfigurationForm, self).save()
+        retval = super(GlobalConfigurationForm, self).save()
         notifier().reload("networkgeneral")
+        return retval
 
 class VLANForm(ModelForm):
     vlan_pint = forms.ChoiceField(label = "Parent Interface")
@@ -124,8 +126,9 @@ class VLANForm(ModelForm):
         model = VLAN 
 
     def save(self):
-        super(VLANForm, self).save()
+        retval = super(VLANForm, self).save()
         notifier().start("network")
+        return retval
 
 attrs_dict = { 'class': 'required' }
 
@@ -178,5 +181,6 @@ class StaticRouteForm(ModelForm):
     class Meta:
         model = StaticRoute
     def save(self):
-        super(StaticRouteForm, self).save()
+        retval = super(StaticRouteForm, self).save()
         notifier().start("routing")
+        return retval
