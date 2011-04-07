@@ -58,7 +58,7 @@ _interface_config()
 		elif [ -n "${ipv4addr}" ]; then
 			echo -n "inet ${ipv4addr}/${ipv4netmask} "
 		else
-			echo -n "UP"
+			pass
 		fi
 		if [ -n "${options}" ]; then
 			echo -n " ${options}"
@@ -115,7 +115,7 @@ _interface_config()
 				elif [ -n "${ipv4addr}" ]; then
 					echo  "inet ${ipv4addr}/${ipv4netmask}\""
 				else
-					echo UP\"
+					echo \"
 				fi
 		done
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint, vlan_tag from network_vlan WHERE vlan_vint NOT IN (SELECT int_interface from network_interfaces);" | \
