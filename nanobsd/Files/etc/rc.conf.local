@@ -95,32 +95,32 @@ _interface_config()
 	while read lagg_physnic lagg_deviceoptions; do
 		echo "ifconfig_${lagg_physnic}=\"${lagg_deviceoptions}\""
 	done
-		# Hook to support vlan interfaces
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_pint from network_vlan" | \
-		while read vlan_pint; do
-			${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint from network_vlan WHERE vlan_pint = \"${vlan_pint}\"" | \
-			while read vlan_vint; do
-				sum="${vlan_vint} ${sum}"
-				echo vlans_${vlan_pint}=\"${sum}\"
-			done
+
+	# Hook to support vlan interfaces
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_pint from network_vlan" | \
+	while read vlan_pint; do
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint from network_vlan WHERE vlan_pint = \"${vlan_pint}\"" | \
+		while read vlan_vint; do
+			sum="${vlan_vint} ${sum}"
+			echo vlans_${vlan_pint}=\"${sum}\"
 		done
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_ipv4address, int_v4netmaskbit, int_dhcp, int_ipv6address, int_v6netmaskbit, int_ipv6auto, network_vlan.vlan_vint, network_vlan.vlan_tag FROM network_interfaces INNER JOIN network_vlan ON network_interfaces.int_interface=network_vlan.vlan_vint" | \
-		while read ipv4addr ipv4netmask dodhcp ipv6addr ipv6netmask doipv6auto vlan_vint vlan_tag; do
-			echo create_args_${vlan_vint}=\"vlan\ ${vlan_tag}\"
-			echo -n ifconfig_${vlan_vint}=\"
-				if [ "${dodhcp}" = "1" ]; then
-					echo  DHCP\"
-				elif [ -n "${ipv4addr}" ]; then
-					echo  "inet ${ipv4addr}/${ipv4netmask}\""
-				else
-					echo \"
-				fi
-		done
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint, vlan_tag from network_vlan WHERE vlan_vint NOT IN (SELECT int_interface from network_interfaces);" | \
-		while read vlan_vint vlan_tag; do
-			echo create_args_${vlan_vint}=\"vlan\ ${vlan_tag}\"
-		done
-			
+	done
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_ipv4address, int_v4netmaskbit, int_dhcp, int_ipv6address, int_v6netmaskbit, int_ipv6auto, network_vlan.vlan_vint, network_vlan.vlan_tag FROM network_interfaces INNER JOIN network_vlan ON network_interfaces.int_interface=network_vlan.vlan_vint" | \
+	while read ipv4addr ipv4netmask dodhcp ipv6addr ipv6netmask doipv6auto vlan_vint vlan_tag; do
+		echo create_args_${vlan_vint}=\"vlan\ ${vlan_tag}\"
+		echo -n ifconfig_${vlan_vint}=\"
+			if [ "${dodhcp}" = "1" ]; then
+				echo  DHCP\"
+			elif [ -n "${ipv4addr}" ]; then
+				echo  "inet ${ipv4addr}/${ipv4netmask}\""
+			else
+				echo \"
+			fi
+	done
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint, vlan_tag from network_vlan WHERE vlan_vint NOT IN (SELECT int_interface from network_interfaces);" | \
+	while read vlan_vint vlan_tag; do
+		echo create_args_${vlan_vint}=\"vlan\ ${vlan_tag}\"
+	done
 }
 
 _host_config()
