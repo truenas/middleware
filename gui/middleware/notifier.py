@@ -1196,10 +1196,19 @@ class notifier:
         if group_type == "mirror":
             rv = self.__system_nolog("geom mirror forget %s" % (str(group_name),))
             if rv != 0:
-                print "hm", rv
                 return rv
             rv = self.__system_nolog("geom mirror insert %s /dev/%s" % (str(group_name), str(todev),))
-            print rv
+            return rv
+
+        elif group_type == "raid3":
+            p1 = self.__pipeopen("geom raid3 list %s" % str(group_name))
+            p1.wait()
+            output = p1.communicate()[0]
+            components = range(int(re.search(r'Components: (?P<num>\d+)', output).group("num")))
+            filled = [int(i) for i in re.findall(r'Number: (?P<number>\d+)', output)]
+            lacking = [x for x in components if x not in filled][0]
+            rv = self.__system_nolog("geom raid3 insert -n %d %s %s" % \
+                                        (lacking, str(group_name), str(todev),))
             return rv
 
         return 1
