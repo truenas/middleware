@@ -26,6 +26,9 @@
 # $FreeBSD$
 #####################################################################
 
+import os
+from os import popen
+
 
 def get_freenas_version():
     version = "FreeNAS"
@@ -39,3 +42,20 @@ def get_freenas_version():
         fd.close()
 
     return version
+
+
+def get_freenas_var_by_file(file, var):
+    if not file or not var:
+        return None
+
+    pipe = popen(". '%s' && echo ${%s}" % (file, var))
+    val = pipe.read().strip().split('\n')
+    pipe.close()
+
+    if val:
+        val = val[0]
+    return val
+
+
+def get_freenas_var(var):
+    return get_freenas_var_by_file("/etc/rc.freenas", var)
