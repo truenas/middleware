@@ -203,7 +203,10 @@ def disks_datagrid_json(request, vid):
                 ret['edit']['replace_url'] = reverse('storage_disk_replacement', kwargs={'vid': vid, 'object_id': data.id})
 
         elif volume.vol_fstype == 'UFS':
-            if data.disk_group.group_type in ('mirror', 'raid3'):
+            state = notifier().geom_disk_state(data.disk_group.group_name, \
+                                data.disk_group.group_type, data.disk_name)
+            if data.disk_group.group_type in ('mirror', 'raid3') and \
+                                        state not in ("ACTIVE", "SYNCHRONIZING"):
                 ret['edit']['replace_url'] = reverse('storage_disk_replacement', kwargs={'vid': vid, 'object_id': data.id})
         ret['edit'] = simplejson.dumps(ret['edit'])
 
@@ -501,24 +504,35 @@ def disk_replacement(request, vid, object_id):
                 disk.disk_group = fromdisk.disk_group
                 disk.disk_description = fromdisk.disk_description
                 disk.save()
-                rv = notifier().zfs_replace_disk(vid, object_id, unicode(disk.id))
+                if volume.vol_fstype == 'ZFS':
+                    rv = notifier().zfs_replace_disk(vid, object_id, unicode(disk.id))
+                elif volume.vol_fstype == 'UFS':
+                    rv = notifier().geom_disk_replace(vid, object_id, unicode(disk.id))
             else: 
-                rv = notifier().zfs_replace_disk(vid, object_id, object_id)
+                if volume.vol_fstype == 'ZFS':
+                    rv = notifier().zfs_replace_disk(vid, object_id, object_id)
+                elif volume.vol_fstype == 'UFS':
+                    rv = notifier().geom_disk_replace(vid, object_id, object_id)
             if rv == 0:
                 if devname != fromdisk.disk_name:
-                    dg = DiskGroup.objects.filter(group_volume=volume,group_type='detached')
-                    if dg.count() == 0:
-                        dg = DiskGroup()
-                        dg.group_volume = volume
-                        dg.group_name = "%sdetached" % volume.vol_name
-                        dg.group_type = 'detached'
-                        dg.save()
-                    else:
-                        dg = dg[0]
-                    fromdisk.disk_group = dg
-                    fromdisk.save()
+                    if volume.vol_fstype == 'ZFS':
+                        dg = DiskGroup.objects.filter(group_volume=volume,group_type='detached')
+                        if dg.count() == 0:
+                            dg = DiskGroup()
+                            dg.group_volume = volume
+                            dg.group_name = "%sdetached" % volume.vol_name
+                            dg.group_type = 'detached'
+                            dg.save()
+                        else:
+                            dg = dg[0]
+                        fromdisk.disk_group = dg
+                        fromdisk.save()
+                    elif volume.vol_fstype == 'UFS':
+                        fromdisk.delete()
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk replacement has been successfully done.")}), mimetype="application/json")
             else:
+                if devname != fromdisk.disk_name:
+                    disk.delete()
                 return HttpResponse(simplejson.dumps({"error": True, "message": _("Some error ocurried.")}), mimetype="application/json")
 
     else:

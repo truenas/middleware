@@ -1163,6 +1163,47 @@ class notifier:
             return True
         return False
 
+    def geom_disk_state(self, geom, group_type, devname):
+        p1 = self.__pipeopen("geom %s list %s" % (str(group_type), str(geom)))
+        output = p1.communicate()[0]
+        reg = re.search(r'^\d\. Name: %s.*?State: (?P<state>\w+)' % devname, output, re.S|re.I|re.M)
+        if reg:
+            return reg.group("state")
+        else:
+            return "FAILED"
+
+    def geom_disk_replace(self, volume_id, from_diskid, to_diskid):
+        """Replace disk in volume_id from from_diskid to to_diskid"""
+        """Gather information"""
+
+        c = self.__open_db()
+        c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
+                 (volume_id,))
+        volume = c.fetchone()
+        assert volume[0] == 'UFS'
+        volume = volume[1]
+        c.execute("SELECT disk_group_id FROM storage_disk WHERE id = ?", from_diskid)
+        dg_id = c.fetchone()[0]
+
+        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", to_diskid)
+        todev = c.fetchone()[0]
+
+        c.execute("SELECT group_name, group_type FROM storage_diskgroup WHERE id = ?", str(dg_id))
+        dg = c.fetchone()
+        group_name = dg[0]
+        group_type = dg[1]
+
+        if group_type == "mirror":
+            rv = self.__system_nolog("geom mirror forget %s" % (str(group_name),))
+            if rv != 0:
+                print "hm", rv
+                return rv
+            rv = self.__system_nolog("geom mirror insert %s /dev/%s" % (str(group_name), str(todev),))
+            print rv
+            return rv
+
+        return 1
+
 def usage():
     print ("Usage: %s action command" % argv[0])
     print """\
