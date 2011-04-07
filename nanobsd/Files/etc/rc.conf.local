@@ -97,13 +97,11 @@ _interface_config()
 	done
 
 	# Hook to support vlan interfaces
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_pint from network_vlan" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT DISTINCT vlan_pint from network_vlan" | \
 	while read vlan_pint; do
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint from network_vlan WHERE vlan_pint = \"${vlan_pint}\"" | \
-		while read vlan_vint; do
-			sum="${vlan_vint} ${sum}"
-			echo vlans_${vlan_pint}=\"${sum}\"
-		done
+		echo -n vlans_${vlan_pint}=\"
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint from network_vlan WHERE vlan_pint = \"${vlan_pint}\"" | xargs echo -n
+		echo \"
 	done
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_ipv4address, int_v4netmaskbit, int_dhcp, int_ipv6address, int_v6netmaskbit, int_ipv6auto, network_vlan.vlan_vint, network_vlan.vlan_tag FROM network_interfaces INNER JOIN network_vlan ON network_interfaces.int_interface=network_vlan.vlan_vint" | \
 	while read ipv4addr ipv4netmask dodhcp ipv6addr ipv6netmask doipv6auto vlan_vint vlan_tag; do
