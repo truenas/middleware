@@ -4,7 +4,8 @@
 #
 
 # PROVIDE: ix-samba
-# REQUIRE: FILESYSTEMS ix-ldap ix-nsswitch ix-pam
+# REQUIRE: FILESYSTEMS
+# REQUIRE: ix-pam
 # BEFORE: smbd
 
 . /etc/rc.subr

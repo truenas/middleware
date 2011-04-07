@@ -5,6 +5,7 @@
 
 # PROVIDE: ix-pam
 # REQUIRE: root
+# REQUIRE: ix-nsswitch
 # BEFORE: NETWORK
 
 . /etc/rc.subr

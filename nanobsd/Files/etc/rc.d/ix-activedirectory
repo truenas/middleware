@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-activedirectory
-# REQUIRE: ix-kinit
+# REQUIRE: winbindd
 
 . /etc/rc.subr
 
@@ -143,6 +143,8 @@ do_activedirectory_stuff()
 {
 	join_activedirectory_domain
 	setup_homedirs
+	sleep 10
+	/usr/sbin/service samba restart
 }
 
 name="ix-activedirectory"

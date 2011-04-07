@@ -5,6 +5,7 @@
 
 # PROVIDE: ix-nsswitch
 # REQUIRE: root
+# REQUIRE: ix-kerberos
 # BEFORE: nsswitch
 
 . /etc/rc.freenas

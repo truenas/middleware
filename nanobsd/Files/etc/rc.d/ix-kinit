@@ -5,6 +5,7 @@
 
 # PROVIDE: ix-kinit
 # REQUIRE: kerberos
+# REQUIRE: ix-samba
 
 . /etc/rc.subr
 
@@ -52,6 +53,7 @@ kerberos_init()
 			kinit --password-file="${pwfile}" "${admin}@${domain}"
 
 			rm "${pwfile}"
+			sleep 10
 		fi
 	done
 }
