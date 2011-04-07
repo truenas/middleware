@@ -26,21 +26,24 @@
 # $FreeBSD$
 #####################################################################
 
-from django.db import models
-from django import forms
-from django.contrib.auth.models import User
 import datetime
 import time
 from os import popen
+from datetime import datetime
+
 from django.utils.text import capfirst
 from django.forms.widgets import RadioFieldRenderer
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext as _
-from datetime import datetime
+from django.contrib.auth.models import User
+from django.db import models
+from django import forms
+
 from freenasUI.choices import *
 from freenasUI.contrib.IPAddressField import *
 from freeadmin.models import Model
+from freenasUI.middleware.notifier import notifier
 
 ## Network|Global Configuration
 class GlobalConfiguration(Model):
@@ -193,6 +196,12 @@ class VLAN(Model):
     
     def __unicode__(self):
         return self.vlan_vint
+
+    def delete(self):
+        vint = self.vlan_vint
+        super(VLAN, self).delete()
+        Interfaces.objects.filter(int_interface=vint).delete()
+        notifier().vlan_delete(vint)
 
     class Meta:
         verbose_name = _("VLAN")

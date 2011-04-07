@@ -1212,6 +1212,9 @@ class notifier:
 
         return 1
 
+    def vlan_delete(self, vint):
+        self.__system("ifconfig %s destroy" % vint)
+
 def usage():
     print ("Usage: %s action command" % argv[0])
     print """\

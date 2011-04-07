@@ -59,7 +59,6 @@ def do_admin_form(parser, token):
     try:
         # Splitting by None == splitting by spaces.
         tag_name, arg = token.contents.split(None, 1)
-        print tag_name, arg
     except ValueError:
         raise template.TemplateSyntaxError("%r tag requires arguments" % token.contents.split()[0])
 
