@@ -57,8 +57,6 @@ _interface_config()
 			echo -n "DHCP"
 		elif [ -n "${ipv4addr}" ]; then
 			echo -n "inet ${ipv4addr}/${ipv4netmask} "
-		else
-			pass
 		fi
 		if [ -n "${options}" ]; then
 			echo -n " ${options}"
