@@ -26,25 +26,19 @@
 # $FreeBSD$
 #####################################################################
 import re
-from django.shortcuts import render_to_response
-from django.http import HttpResponseRedirect, QueryDict
-from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode
-from dojango.forms import fields, widgets
-from dojango import forms
-from dojango.forms.fields import BooleanField
+from datetime import datetime, time
+
+from django.http import QueryDict
 from django.utils.translation import ugettext as _
-from freenasUI.contrib.ext_formwizard import FormWizard
-from freenasUI.common.widgets import RadioFieldRendererBulletless
+
 from freenasUI.account.models import bsdUsers, bsdGroups
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.forms import Form
 from freenasUI.storage.models import *
-from dojango import forms
-from dojango.forms import CheckboxSelectMultiple
-from datetime import datetime, time
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups
+from dojango.forms import fields, widgets, CheckboxSelectMultiple
+from dojango import forms
 
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 
@@ -215,14 +209,14 @@ class VolumeWizardForm(forms.Form):
             raise forms.ValidationError(_("The volume name must start with letters or numbers and may include \"-\", \"_\"."))
         return vname
 
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        volume_name = cleaned_data.get("volume_name")
-        if Volume.objects.filter(vol_name = volume_name).count() > 0:
-            msg = _(u"You already have a volume with same name")
-            self._errors["volume_name"] = self.error_class([msg])
-            del cleaned_data["volume_name"]
-        return cleaned_data
+    #def clean(self):
+    #    cleaned_data = self.cleaned_data
+    #    volume_name = cleaned_data.get("volume_name")
+    #    if Volume.objects.filter(vol_name = volume_name).count() > 0:
+    #        msg = _(u"You already have a volume with same name")
+    #        self._errors["volume_name"] = self.error_class([msg])
+    #        del cleaned_data["volume_name"]
+    #    return cleaned_data
 
     def done(self, request):
         # Construct and fill forms into database.
@@ -235,8 +229,14 @@ class VolumeWizardForm(forms.Form):
         else:
             group_type = self.cleaned_data['group_type']
 
-        volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
-        volume.save()
+        vols = Volume.objects.filter(vol_name = volume_name)
+        if vols.count() == 1:
+            volume = vols[0]
+            add = True
+        else:
+            add = False
+            volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
+            volume.save()
         self.volume = volume
 
         mp = MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
@@ -725,6 +725,8 @@ class MountPointAccessForm(Form):
     def __init__(self, *args, **kwargs):
         super(MountPointAccessForm, self).__init__(*args, **kwargs)
 
+        self.fields['mp_user'].widget = widgets.ComboBox()
+        self.fields['mp_group'].widget = widgets.ComboBox()
         self.fields['mp_user'].choices = ((x.bsdusr_username, x.bsdusr_username)
                                           for x in FreeNAS_Users()
                                           )

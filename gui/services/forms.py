@@ -27,14 +27,11 @@
 #####################################################################
 
 import base64
+import re
 
 from django.shortcuts import render_to_response                
 from django.core.exceptions import ObjectDoesNotExist
-from freenasUI.middleware.notifier import notifier
 from django.http import HttpResponseRedirect
-from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode 
-from dojango.forms import fields, widgets
 from django.utils.translation import ugettext as _
 
 #TODO do not import *
@@ -43,9 +40,10 @@ from freenasUI.storage.models import *
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.forms import Form
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups
+from freenasUI.middleware.notifier import notifier
 from storage.forms import UnixPermissionField
 from dojango import forms
-import re
+from dojango.forms import fields, widgets
 
 """ Services """
 
@@ -64,6 +62,7 @@ class CIFSForm(ModelForm):
                                        )
     def __init__(self, *args, **kwargs):
         super(CIFSForm, self).__init__(*args, **kwargs)
+        self.fields['cifs_srv_guest'].widget = widgets.ComboBox()
         self.fields['cifs_srv_guest'].choices = ((x.bsdusr_username,
                                                   x.bsdusr_username)
                                                   for x in FreeNAS_Users()
@@ -91,6 +90,7 @@ class AFPForm(ModelForm):
                                            )
     def __init__(self, *args, **kwargs):
         super(AFPForm, self).__init__(*args, **kwargs)
+        self.fields['afp_srv_guest_user'].widget = widgets.ComboBox()
         self.fields['afp_srv_guest_user'].choices = ((x.bsdusr_username,
                                                       x.bsdusr_username)
                                                      for x in FreeNAS_Users())
@@ -197,6 +197,7 @@ class TFTPForm(ModelForm):
                                       )
     def __init__(self, *args, **kwargs):
         super(TFTPForm, self).__init__(*args, **kwargs)
+        self.fields['tftp_username'].widget = widgets.ComboBox()
         self.fields['tftp_username'].choices = ((x.bsdusr_username, x.bsdusr_username)
                                                 for x in FreeNAS_Users())
     def save(self):

@@ -26,19 +26,16 @@
 # $FreeBSD$
 #####################################################################
 
-from django.shortcuts import render_to_response                
-from freenasUI.sharing.models import *                         
-from freenasUI.middleware.notifier import notifier
-from django.http import HttpResponseRedirect
-from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode 
-from freenasUI.common.forms import ModelForm
-from freenasUI.common.forms import Form
-from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups
+from django.utils.translation import ugettext as _
+
 from dojango import forms
 from dojango.forms import fields, widgets 
 from dojango.forms.fields import BooleanField 
-from django.utils.translation import ugettext as _
+from freenasUI.sharing.models import *                         
+from freenasUI.middleware.notifier import notifier
+from freenasUI.common.forms import ModelForm
+from freenasUI.common.forms import Form
+from freenasUI.common.freenasldap import FreeNAS_Users
 
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 
@@ -102,6 +99,10 @@ class NFS_ShareForm(ModelForm):
                       for x in FreeNAS_Users()):
              self.grouplist.append(a)
 
+        self.fields['nfs_maproot_user'].widget = widgets.ComboBox()
+        self.fields['nfs_maproot_group'].widget = widgets.ComboBox()
+        self.fields['nfs_mapall_user'].widget = widgets.ComboBox()
+        self.fields['nfs_mapall_group'].widget = widgets.ComboBox()
         self.fields['nfs_maproot_user'].choices = self.userlist
         self.fields['nfs_maproot_group'].choices = self.grouplist
         self.fields['nfs_mapall_user'].choices = self.userlist
