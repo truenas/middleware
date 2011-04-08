@@ -209,14 +209,15 @@ class VolumeWizardForm(forms.Form):
             raise forms.ValidationError(_("The volume name must start with letters or numbers and may include \"-\", \"_\"."))
         return vname
 
-    #def clean(self):
-    #    cleaned_data = self.cleaned_data
-    #    volume_name = cleaned_data.get("volume_name")
-    #    if Volume.objects.filter(vol_name = volume_name).count() > 0:
-    #        msg = _(u"You already have a volume with same name")
-    #        self._errors["volume_name"] = self.error_class([msg])
-    #        del cleaned_data["volume_name"]
-    #    return cleaned_data
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        volume_name = cleaned_data.get("volume_name")
+        if cleaned_data["volume_fstype"] == 'UFS' and \
+                Volume.objects.filter(vol_name = volume_name).count() > 0:
+            msg = _(u"You already have a volume with same name")
+            self._errors["volume_name"] = self.error_class([msg])
+            del cleaned_data["volume_name"]
+        return cleaned_data
 
     def done(self, request):
         # Construct and fill forms into database.
@@ -284,7 +285,7 @@ class VolumeWizardForm(forms.Form):
                                    )
                     diskobj.save()
 
-        notifier().init("volume", volume.id)
+        notifier().init("volume", volume.id, **{'add': add})
 
     volume_name = forms.CharField(max_length = 30, label = _('Volume name') )
     volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
