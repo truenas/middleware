@@ -99,7 +99,6 @@
                 var pane2 = new dijit.layout.ContentPane({ 
                     id: 'settingstab',
                     title: 'Settings',
-                    refreshOnShow: true,
                     closable: true,
                     href: this.urlSettings,
                 });
