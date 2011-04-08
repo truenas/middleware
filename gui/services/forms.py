@@ -60,7 +60,7 @@ class CIFSForm(ModelForm):
                                        )
     def __init__(self, *args, **kwargs):
         super(CIFSForm, self).__init__(*args, **kwargs)
-        self.fields['cifs_srv_guest'].widget = widgets.ComboBox()
+        self.fields['cifs_srv_guest'].widget = widgets.FilteringSelect()
         self.fields['cifs_srv_guest'].choices = ((x.bsdusr_username,
                                                   x.bsdusr_username)
                                                   for x in FreeNAS_Users()
@@ -88,7 +88,7 @@ class AFPForm(ModelForm):
                                            )
     def __init__(self, *args, **kwargs):
         super(AFPForm, self).__init__(*args, **kwargs)
-        self.fields['afp_srv_guest_user'].widget = widgets.ComboBox()
+        self.fields['afp_srv_guest_user'].widget = widgets.FilteringSelect()
         self.fields['afp_srv_guest_user'].choices = ((x.bsdusr_username,
                                                       x.bsdusr_username)
                                                      for x in FreeNAS_Users())
@@ -195,7 +195,7 @@ class TFTPForm(ModelForm):
                                       )
     def __init__(self, *args, **kwargs):
         super(TFTPForm, self).__init__(*args, **kwargs)
-        self.fields['tftp_username'].widget = widgets.ComboBox()
+        self.fields['tftp_username'].widget = widgets.FilteringSelect()
         self.fields['tftp_username'].choices = ((x.bsdusr_username, x.bsdusr_username)
                                                 for x in FreeNAS_Users())
     def save(self):

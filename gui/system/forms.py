@@ -27,19 +27,14 @@
 #####################################################################
 
 from django.utils.translation import ugettext_lazy as _
-from django.shortcuts import render_to_response                
+from django.forms import FileField
+
+from freenasUI.common.forms import ModelForm, Form
 from freenasUI.system.models import *                         
 from freenasUI.middleware.notifier import notifier
-from django.http import HttpResponseRedirect
-from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode 
-from freenasUI.common.forms import ModelForm, Form
 from dojango.forms import fields, widgets 
 from dojango.forms.fields import BooleanField 
 from dojango import forms
-# TODO: dojango.forms.FileField seems to have some bug that mangles the interface
-# so we use django.forms.FileField for this release.
-import django.forms
 
 class SettingsForm(ModelForm):
     class Meta:
@@ -148,7 +143,7 @@ class FirmwareTemporaryLocationForm(Form):
         notifier().change_upload_location(self.cleaned_data["mountpoint"].__str__())
 
 class FirmwareUploadForm(Form):
-    firmware = django.forms.FileField(label=_("New image to be installed"))
+    firmware = FileField(label=_("New image to be installed"))
     sha256 = forms.CharField(label=_("SHA256 sum for the image"))
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -171,4 +166,4 @@ class FirmwareUploadForm(Form):
         notifier().update_firmware('/var/tmp/firmware/firmware.xz')
 
 class ConfigUploadForm(Form):
-    config = django.forms.FileField(label=_("New config to be installed"))
+    config = FileField(label=_("New config to be installed"))

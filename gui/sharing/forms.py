@@ -99,10 +99,10 @@ class NFS_ShareForm(ModelForm):
                       for x in FreeNAS_Users()):
              self.grouplist.append(a)
 
-        self.fields['nfs_maproot_user'].widget = widgets.ComboBox()
-        self.fields['nfs_maproot_group'].widget = widgets.ComboBox()
-        self.fields['nfs_mapall_user'].widget = widgets.ComboBox()
-        self.fields['nfs_mapall_group'].widget = widgets.ComboBox()
+        self.fields['nfs_maproot_user'].widget = widgets.FilteringSelect()
+        self.fields['nfs_maproot_group'].widget = widgets.FilteringSelect()
+        self.fields['nfs_mapall_user'].widget = widgets.FilteringSelect()
+        self.fields['nfs_mapall_group'].widget = widgets.FilteringSelect()
         self.fields['nfs_maproot_user'].choices = self.userlist
         self.fields['nfs_maproot_group'].choices = self.grouplist
         self.fields['nfs_mapall_user'].choices = self.userlist

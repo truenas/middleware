@@ -731,8 +731,8 @@ class MountPointAccessForm(Form):
     def __init__(self, *args, **kwargs):
         super(MountPointAccessForm, self).__init__(*args, **kwargs)
 
-        self.fields['mp_user'].widget = widgets.ComboBox()
-        self.fields['mp_group'].widget = widgets.ComboBox()
+        self.fields['mp_user'].widget = widgets.FilteringSelect()
+        self.fields['mp_group'].widget = widgets.FilteringSelect()
         self.fields['mp_user'].choices = ((x.bsdusr_username, x.bsdusr_username)
                                           for x in FreeNAS_Users()
                                           )
