@@ -223,7 +223,8 @@ _gen_conf()
 	_bool_svcconfig netatalk_enable afp
 	_bool_svcconfig afpd_enable afp
 	_bool_svcconfig cnid_metad_enable afp
-	_bool_svcconfig mdnsd_enable afp
+	_bool_svcconfig dbus_enable afp
+	_bool_svcconfig avahi_daemon_enable afp
 	_bool_svcconfig proftpd_enable ftp
 	_bool_svcconfig nfs_server_enable nfs
 	_bool_svcconfig rpc_lockd_enable nfs
