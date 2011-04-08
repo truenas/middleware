@@ -169,7 +169,7 @@ def configure_interface():
     while True:
         i = 0
         nics = {}
-        choices = NICChoices()
+        choices = NICChoices(exclude_configured=False)
         for c in choices:
             nics[i] = c[0]
             print "%d) %s" % (i + 1, nics[i])
@@ -191,6 +191,31 @@ def configure_interface():
         iface = iface[0]
     else:
         iface = Interfaces()
+
+    while True:
+        input = raw_input("Delete existing config? (y/n) ")
+        if input.lower().startswith("y"):
+            print "Deleting interface configuration:",
+            try:
+                iface.delete()
+                os.system("/sbin/ifconfig %s inet delete" % nic)
+            except Exception, err:
+                print "Failed %s" % str(err)
+                return False
+            print "Ok"
+            print "Restarting network:",
+            try:
+                notifier().start("network")
+            except:
+                print "Failed"
+            print "ok"
+            print "Restarting routing:",
+            try:
+                notifier().restart("routing")
+            except:
+                print "Failed"
+            print "ok"
+            return True
 
     need_restart = False
     while True:
