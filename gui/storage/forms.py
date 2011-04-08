@@ -27,6 +27,7 @@
 #####################################################################
 import re
 from datetime import datetime, time
+from os import popen
 
 from django.http import QueryDict
 from django.utils.translation import ugettext as _
@@ -134,6 +135,10 @@ class UnixPermissionField(forms.MultiValueField):
         return None
 
 class VolumeWizardForm(forms.Form):
+    volume_name = forms.CharField(max_length = 30, label = _('Volume name') )
+    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
+    volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks')
+    group_type = forms.ChoiceField(choices=(), widget=forms.RadioSelect(attrs=attrs_dict), required=False)
     def __init__(self, *args, **kwargs):
         super(VolumeWizardForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
@@ -164,8 +169,6 @@ class VolumeWizardForm(forms.Form):
         self.fields['group_type'].choices = grouptype_choices
 
     def _populate_disk_choices(self):
-        from os import popen
-        import re
     
         diskchoices = dict()
     
@@ -209,6 +212,12 @@ class VolumeWizardForm(forms.Form):
             raise forms.ValidationError(_("The volume name must start with letters or numbers and may include \"-\", \"_\"."))
         return vname
 
+    def clean_group_type(self):
+        if not self.cleaned_data.has_key('volume_disks') or \
+                len(self.cleaned_data['volume_disks']) > 1 and self.cleaned_data['group_type'] in (None, ''):
+            raise forms.ValidationError(_("This field is required."))
+        return self.cleaned_data['group_type']
+
     def clean(self):
         cleaned_data = self.cleaned_data
         volume_name = cleaned_data.get("volume_name")
@@ -238,12 +247,16 @@ class VolumeWizardForm(forms.Form):
             add = False
             volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
             volume.save()
+
+            mp = MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
+            mp.save()
         self.volume = volume
 
-        mp = MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
-        mp.save()
-
-        grp = DiskGroup(group_name= volume_name + group_type, group_type = group_type, group_volume = volume)
+        grpnum = DiskGroup.objects.filter(group_type = group_type, group_volume = volume).count()
+        if grpnum > 0:
+            grp = DiskGroup(group_name=volume_name + group_type + str(grpnum), group_type = group_type, group_volume = volume)
+        else:
+            grp = DiskGroup(group_name=volume_name + group_type, group_type = group_type, group_volume = volume)
         grp.save()
 
         for diskname in disk_list:
@@ -285,18 +298,10 @@ class VolumeWizardForm(forms.Form):
                                    )
                     diskobj.save()
 
-        notifier().init("volume", volume.id, **{'add': add})
-
-    volume_name = forms.CharField(max_length = 30, label = _('Volume name') )
-    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
-    volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks')
-    group_type = forms.ChoiceField(choices=(), widget=forms.RadioSelect(attrs=attrs_dict), required=False)
-
-    def clean_group_type(self):
-        if not self.cleaned_data.has_key('volume_disks') or \
-                len(self.cleaned_data['volume_disks']) > 1 and self.cleaned_data['group_type'] in (None, ''):
-            raise forms.ValidationError(_("This field is required."))
-        return self.cleaned_data['group_type']
+        if add:
+            notifier().zfs_volume_attach_group(str(grp.id))
+        else:
+            notifier().init("volume", volume.id)
 
 class VolumeImportForm(forms.Form):
 

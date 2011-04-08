@@ -29,9 +29,7 @@
 import base64
 import re
 
-from django.shortcuts import render_to_response                
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext as _
 
 #TODO do not import *

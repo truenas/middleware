@@ -25,16 +25,15 @@
 #
 # $FreeBSD$
 #####################################################################
-from freenasUI.common.forms import ModelForm, Form
-from dojango import forms
-from freenasUI.account.models import *
-from freenasUI.middleware.notifier import notifier
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User as django_User
 from django.contrib.auth.forms import UserChangeForm as django_UCF
-from dojango import forms
-from django.conf import settings
 from django.utils.safestring import mark_safe
+
+from freenasUI.common.forms import ModelForm, Form
+from freenasUI.account.models import *
+from freenasUI.middleware.notifier import notifier
+from dojango import forms
 
 class SharedFunc():
     def _populate_shell_choices(self):

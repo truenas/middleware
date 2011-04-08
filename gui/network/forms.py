@@ -28,12 +28,6 @@
 
 import re
 
-from django.shortcuts import render_to_response                
-from django.http import HttpResponseRedirect
-from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode 
-from dojango.forms import fields, widgets 
-from dojango.forms.fields import BooleanField 
 from django.utils.translation import ugettext as _
 
 from freenasUI.common.forms import ModelForm
@@ -42,6 +36,7 @@ from freenasUI.middleware.notifier import notifier
 #TODO: do not import *
 from freenasUI.network.models import *                         
 from dojango import forms
+from dojango.forms import fields, widgets 
 
 class InterfacesForm(ModelForm):
     class Meta:
