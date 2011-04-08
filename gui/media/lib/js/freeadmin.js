@@ -920,6 +920,8 @@
                 Menu.openNetwork('Global Configuration');
             } else if(item.type && item.type == 'network_summary') {
                 Menu.openNetwork('Network Summary');
+            } else if(item.type && item.type == 'en_dis_services') {
+                Menu.openServices();
             } else if(item.type && item.type == 'changepass') {
                 Menu.openAccount('Change Password');
             } else if(item.type && item.type == 'changeadmin') {

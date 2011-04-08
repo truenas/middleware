@@ -1,8 +1,17 @@
 from django_nav import Nav, NavOption
+from django.utils.translation import ugettext as _
 import models
 
 BLACKLIST = ['services','UPS']
 ICON = u'ServicesIcon'
+
+class EnDisServices(NavOption):
+
+    name = _(u'Enable/Disable Services')
+    type = u'en_dis_services'
+    icon = u'ServicesIcon'
+    order = -1
+    options = []
 
 class ISCSIDeviceAdd(NavOption):
 
