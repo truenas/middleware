@@ -91,7 +91,6 @@ add_port net-mgmt/bsnmptools
 add_port net-mgmt/clog
 add_port net-mgmt/sipcalc
 add_port net/istgt
-add_port net/mDNSResponder
 #+net/netatalk
 add_port security/libgcrypt
 add_port security/libgpg-error
@@ -192,10 +191,19 @@ add_port sysutils/arcconf
 add_port sysutils/tw_cli
 add_port net/py-ldap2
 add_port sysutils/ataidle
+add_port devel/xorg-macros
+add_port x11/kbproto
+add_port sysutils/gnome_subr
+add_port x11/libX11
+add_port devel/dbus
+add_port devel/dbus-glib
+add_port devel/libdaemon
+add_port databases/gdbm
+add_port net/avahi-app
+add_port net/avahi-libdns
 
 if [ "${DEBUG}" -eq "1" ]; then 
 	add_port databases/db42
-	add_port databases/gdbm
 	add_port devel/apr1
 	add_port www/neon29
 	add_port devel/subversion
