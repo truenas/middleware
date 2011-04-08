@@ -42,6 +42,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.common.system import get_freenas_version
 from freeadmin import navtree
 from system.models import Advanced
+from dojango.views import datagrid_list
 import commands
 
 @login_required
@@ -121,7 +122,13 @@ def generic_model_add(request, app, model, mf=None):
         'form': mf,
     })
 
-    return render_to_response('freeadmin/generic_model_add.html', context)
+    template = "%s/%s_add.html" % (m._meta.app_label, m._meta.object_name.lower())
+    try:
+        get_template(template)
+    except:
+        template = 'freeadmin/generic_model_add.html'
+
+    return render_to_response(template, context)
 
 @login_required
 def generic_model_view(request, app, model):
@@ -225,7 +232,6 @@ def generic_model_datagrid_json(request, app, model):
 
         return True
 
-    from dojango.views import datagrid_list
     return datagrid_list(request, app, model, access_field_callback=mycallback)
 
 @login_required
@@ -287,19 +293,19 @@ def generic_model_edit(request, app, model, oid, mf=None):
         'form': mf,
     })
 
-    template = "%s/%s_form.html" % (m._meta.app_label, m._meta.object_name.lower())
+    template = "%s/%s_edit.html" % (m._meta.app_label, m._meta.object_name.lower())
     try:
         get_template(template)
     except:
         template = 'freeadmin/generic_model_edit.html'
 
     if request.GET.has_key("iframe"):
-    	resp = render_to_response('freeadmin/generic_model_edit.html', context, \
+    	resp = render_to_response(template, context, \
                 mimetype='text/html')
         resp.content = "<html><body><textarea>"+resp.content+"</textarea></boby></html>"
         return resp
     else:
-    	return render_to_response('freeadmin/generic_model_edit.html', context, \
+    	return render_to_response(template, context, \
                 mimetype='text/html')
 
 
