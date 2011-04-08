@@ -43,7 +43,6 @@ from freenasUI.common.system import get_freenas_version
 from freeadmin import navtree
 from system.models import Advanced
 from dojango.views import datagrid_list
-import commands
 
 @login_required
 def adminInterface(request, objtype = None):

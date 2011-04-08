@@ -26,10 +26,11 @@
 # $FreeBSD$
 #####################################################################
 
-import datetime
+from datetime import datetime
 import tempfile
 from subprocess import Popen
-import os, commands
+import os
+import commands
 
 from django.contrib.auth.decorators import permission_required, login_required
 from django.contrib.auth import authenticate, login, logout, get_backends
@@ -312,7 +313,7 @@ def config_save(request):
     wrapper = FileWrapper(file(filename))
     response = HttpResponse(wrapper, content_type='application/octet-stream')
     response['Content-Length'] = os.path.getsize(filename)
-    response['Content-Disposition'] = 'attachment; filename=freenas-%s.db' % datetime.datetime.now().strftime("%Y-%m-%d")
+    response['Content-Disposition'] = 'attachment; filename=freenas-%s.db' % datetime.now().strftime("%Y-%m-%d")
     return response
 
 @login_required
@@ -381,61 +382,6 @@ def advanced(request):
     variables = RequestContext(request, extra_context)
 
     return render_to_response('system/advanced.html', variables)
-
-@login_required
-def test(request, objtype = None):
-    context = RequestContext(request)
-
-    return render_to_response('system/test.html', context)
-
-@login_required
-def test1(request, objtype = None):
-    if objtype != None:
-        focus_form = objtype
-    else:
-        focus_form = 'system'
-    hostname = commands.getoutput("hostname")
-    uname1 = os.uname()[0]
-    uname2 = os.uname()[2]
-    platform = os.popen("sysctl -n hw.model").read()
-    date = os.popen('env -u TZ date').read()
-    uptime = commands.getoutput("uptime | awk -F', load averages:' '{    print $1 }'")
-    loadavg = commands.getoutput("uptime | awk -F'load averages:' '{     print $2 }'")
-    settings = SettingsForm(data = Settings.objects.order_by("-id").values()[0])
-    advanced = AdvancedForm(data = Advanced.objects.order_by("-id").values()[0])
-    if request.method == 'POST':
-        if objtype == 'settings':
-            settings = SettingsForm(request.POST)
-            if settings.is_valid():
-                settings.save()
-        elif objtype == 'advanced':
-            advanced = AdvancedForm(request.POST)
-            if advanced.is_valid():
-                advanced.save()
-        else: 
-            raise Http404()
-        return HttpResponseRedirect('/system/' + objtype)
-    try:
-        d = open('/etc/version.freenas', 'r')
-        freenas_build = d.read()
-        d.close()
-    except:
-        freenas_build = "Unrecognized build (/etc/version.freenas        missing?)"
-    variables = RequestContext(request, {
-        'focused_tab' : 'system',
-        'settings': settings,
-        'advanced': advanced,
-        'hostname': hostname,
-        'uname1': uname1,
-        'uname2': uname2,
-        'platform': platform,
-        'date': date,
-        'uptime': uptime,
-        'loadavg': loadavg,
-        'freenas_build': freenas_build,
-        'focus_form': focus_form,
-    })
-    return render_to_response('system/test1.html', variables)
 
 @login_required
 def varlogmessages(request, lines):
