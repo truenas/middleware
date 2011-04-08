@@ -122,7 +122,7 @@ class notifier:
             else:
                 return False
 
-    def init(self, what, objectid = None):
+    def init(self, what, objectid = None, *args, **kwargs):
         """ Dedicated command to create "what" designated by an optional objectid.
 
         The helper will use method self._init_[what]() to create the object"""
@@ -131,7 +131,7 @@ class notifier:
         else:
             try:
                 f = getattr(self, '_init_' + what)
-                f(objectid)
+                f(objectid, *args, **kwargs)
             except:
                 raise
 
@@ -564,7 +564,7 @@ class notifier:
                       "| awk '{print ($3 / (1024*1024)) - 4;}'`" % (disk[0], disk[0]))
         self._reload_disk()
 
-    def _init_volume(self, volume_id):
+    def _init_volume(self, volume_id, *args, **kwargs):
         """Initialize a volume designated by volume_id"""
         c = self.__open_db()
         c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
@@ -575,7 +575,12 @@ class notifier:
 
         assert volume[0] == 'ZFS' or volume[0] == 'UFS'
         if volume[0] == 'ZFS':
-            self.__create_zfs_volume(c, volume_id, volume[1], swapsize)
+            if kwargs.pop('add', False) == True:
+                #TODO __add_zfs_volume
+                #self.__add_zfs_volume(c, volume_id, volume[1], swapsize)
+                pass
+            else:
+                self.__create_zfs_volume(c, volume_id, volume[1], swapsize)
         elif volume[0] == 'UFS':
             self.__create_ufs_volume(c, volume_id, volume[1], swapsize)
         self._reload_disk()
