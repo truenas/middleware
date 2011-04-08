@@ -5,15 +5,18 @@
                 <script type="dojo/event" event="onClick" args="e">
                     var sendbtn = this;
                     this.set('disabled', true);
+                    form = getForm(this);
+                    data = form.get('value');
                     dojo.xhrPost( {
                         url: '{% url system_testmail %}',
                         handleAs: 'json',
+                        content: data,
                         load: function(data) { 
                             sendbtn.set('disabled', false);
-                            if(data) {
+                            if(!data.error) {
                                 setMessage("Your test email has been sent!");
                             } else {
-                                setMessage("Your test email could not be sent!", "error");
+                                setMessage("Your test email could not be sent: "+data.errmsg, "error");
                             }
                         },
                      });

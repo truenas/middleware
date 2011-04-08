@@ -688,6 +688,17 @@
     
     };
 
+    getForm = function(from) {
+
+        var turn = from;
+        while(1) {
+            turn = dijit.getEnclosingWidget(turn.domNode.parentNode);
+            if(turn.isInstanceOf(dijit.form.Form)) break;
+        }
+        return turn;
+    
+    };
+
     cancelDialog = function(from) {
     
         var dialog = getDialog(from);
