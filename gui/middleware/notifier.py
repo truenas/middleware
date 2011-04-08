@@ -445,6 +445,55 @@ class notifier:
                 self.__system("gnop destroy /dev/gpt/" + disk + ".nop")
             self.__system("zpool import %s" % (z_name))
 
+    # TODO: This is a rather ugly hack and duplicates some code, need to
+    # TODO: cleanup this with the __create_zfs_volume.
+    def zfs_volume_attach_group(self, group_id):
+        """Attach a disk group to a zfs volume"""
+        c = self.__open_db()
+        c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
+        swapsize=c.fetchone()[0]
+
+
+        c.execute("SELECT id, group_type, group_volume_id FROM storage_diskgroup WHERE "
+                  "id = ?", (group_id))
+        vgroup_list = c.fetchall()
+        volume_id = vgroup_list[0][2]
+
+        c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
+                 (volume_id,))
+        volume = c.fetchone()
+        assert volume[0] == 'ZFS'
+        z_name = volume[1]
+
+        z_vdev = ""
+        need4khack = False
+        # Grab all disk groups' id matching the volume ID
+        self.__system("swapoff -a")
+        for vgrp_row in vgroup_list:
+            hack_vdevs = []
+            vgrp = (vgrp_row[0],)
+            vgrp_type = vgrp_row[1]
+            if vgrp_type != 'stripe':
+                z_vdev += " " + vgrp_type
+            # Grab all member disks from the current vdev group
+            c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE "
+                      "disk_group_id = ?", vgrp)
+            vdev_member_list = c.fetchall()
+            for disk in vdev_member_list:
+                need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
+                                                  devname = disk[0],
+                                                  label = disk[1],
+                                                  swapsize=swapsize)
+                if need4khack:
+                    hack_vdevs.append(disk[1])
+                    self.__system("gnop create -S 4096 /dev/gpt/" + disk[1])
+                    z_vdev += " /dev/gpt/" + disk[1] + ".nop"
+                else:
+                    z_vdev += " /dev/gpt/" + disk[1]
+        self._reload_disk()
+        # Finally, attach new groups to the zpool.
+        self.__system("zpool add %s %s" % (z_name, z_vdev))
+
     def create_zfs_dataset(self, path, props=None):
         """Internal procedure to create ZFS volume"""
         options = " "
