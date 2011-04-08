@@ -319,6 +319,7 @@ def shutdown(request):
 def testmail(request):
 
     email = Email.objects.all().order_by('-id')[0]
+    admin = User.objects.all()[0]
     error = False
     errmsg = ''
     if request.is_ajax():
@@ -327,7 +328,7 @@ def testmail(request):
         msg = MIMEText("""This is a message test from FreeNAS""")
         msg['Subject'] = "Test message from FreeNAS"
         msg['From'] = email.em_fromemail
-        msg['To'] = email.em_fromemail
+        msg['To'] = admin.email
         try:
             if email.em_security == 'ssl':
                 server = smtplib.SMTP_SSL(email.em_outgoingserver, email.em_port)
