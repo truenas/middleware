@@ -316,3 +316,9 @@ def shutdown(request):
     })
     return render_to_response('system/shutdown.html', variables)
 
+def testmail(request):
+
+    if request.is_ajax():
+        pass
+
+    return HttpResponse(simplejson.dumps(True))

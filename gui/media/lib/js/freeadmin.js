@@ -395,6 +395,29 @@
 
     }
 
+    setMessage = function(msg, css) {
+
+        if(!css) css = "success";
+        var footer = dojo.byId("messages");
+        dojo.empty(footer);
+        var suc = dojo.create("div");
+        dojo.connect(suc, 'onclick', function() {
+            dojo.fadeOut({ node: suc }).play();
+        });
+        footer.appendChild(suc);
+        dojo.addClass(suc, css);
+        dojo.html.set(suc, "<p>"+msg+"</p>");
+        setTimeout(function() { if(suc) dojo.fadeOut({node: suc}).play();}, 7000);
+        //var footer = dojo.byId("messages");
+        //dojo.empty(footer);
+        //var suc = dojo.create("div");
+        //footer.appendChild(suc);
+        //dojo.addClass(suc, "success");
+        //dojo.html.set(suc, msg);
+        //setTimeout(function() { if(suc) dojo.fadeOut({node: suc}).play();}, 7000);
+
+    };
+
     formSubmit = function(item, e, url, callback) {
         dojo.stopEvent(e); // prevent the default submit
         var qry = dojo.query('.saved', item.domNode)[0];
@@ -443,13 +466,7 @@
                             dojo.query('ul[class=errorlist]', rnode.domNode).forEach(function(i) { i.parentNode.removeChild(i); });
                         }
 
-                        var footer = dojo.byId("messages");
-                        dojo.empty(footer);
-                        var suc = dojo.create("div");
-                        footer.appendChild(suc);
-                        dojo.addClass(suc, "success");
-                        dojo.html.set(suc, json.message);
-                        setTimeout(function() { if(suc) dojo.fadeOut({node: suc}).play();}, 7000);
+                        setMessage(json.message);
 
                         //dojo.style(suc, "opacity", "0");
                         //dojo.fadeIn({ node: suc }).play();
@@ -495,16 +512,7 @@
                             dojo.query('ul[class=errorlist]', rnode.domNode).forEach(function(i) { i.parentNode.removeChild(i); });
                         }
 
-                        var footer = dojo.byId("messages");
-                        dojo.empty(footer);
-                        var suc = dojo.create("div");
-                        dojo.connect(suc, 'onclick', function() {
-                            dojo.fadeOut({ node: suc }).play();
-                        });
-                        footer.appendChild(suc);
-                        dojo.addClass(suc, "success");
-                        dojo.html.set(suc, "<p>"+json.message+"</p>");
-                        setTimeout(function() { if(suc) dojo.fadeOut({node: suc}).play();}, 7000);
+                        setMessage(json.message);
                         //dojo.style(suc, "opacity", "0");
                         //dojo.fadeIn({ node: suc }).play();
                     } catch(err) {
@@ -518,16 +526,7 @@
                 },
                 error: function(data) { 
 
-                        var footer = dojo.byId("messages");
-                        dojo.empty(footer);
-                        var suc = dojo.create("div");
-                        dojo.connect(suc, 'onClick', function() {
-                            dojo.fadeOut({ node: suc }).play();
-                        });
-                        footer.appendChild(suc);
-                        dojo.addClass(suc, "error");
-                        dojo.html.set(suc, '<p>Some error ocurried!</p>');
-                        setTimeout(function() { if(suc) dojo.fadeOut({node: suc}).play();}, 7000);
+                        setMessage('<p>Some error ocurried!</p>', "error");
 
                         try {
                            rnode.hide();
