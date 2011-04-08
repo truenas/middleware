@@ -32,7 +32,6 @@ from freenasUI.services.views import servicesToggleView as servicesToggleView
 # Active FreeNAS URLs
 
 urlpatterns = patterns('storage.views',
-    (r'^$', 'storage'),
     url(r'^home/$', 'home', name="storage_home"),
     url(r'^datagrid/volume-(?P<vid>\d+)/disks/$', 'disks_datagrid', name="storage_datagrid_disks"),
     url(r'^datagrid/volume-(?P<vid>\d+)/disks/json$', 'disks_datagrid_json', name="storage_datagrid_disks_json"),
@@ -49,7 +48,6 @@ urlpatterns = patterns('storage.views',
     url(r'^import/$', 'volimport', name="storage_import"),
     url(r'^auto-import/$', 'volautoimport', name="storage_autoimport"),
     url(r'^periodic-snapshot/$', 'periodicsnap', name="storage_periodicsnap"),
-    (r'save/(?P<objtype>\w+)/$', 'storage'),
     (r'volume/(?P<volume_id>\d+)/$', 'volume_disks'),
     url(r'volume/zfs-edit/(?P<object_id>\d+)/$', 'zfsvolume_edit', name="storage_volume_edit"),
     url(r'volume/(?P<vid>\d+)/disk-replacement/(?P<object_id>\d+)/$', 'disk_replacement', name="storage_disk_replacement"),

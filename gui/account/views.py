@@ -27,6 +27,7 @@
 #####################################################################
 
 import os
+import commands
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import password_change_done
 from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm, PasswordChangeForm
@@ -44,9 +45,7 @@ from freenasUI.account.models import *
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.system import get_freenas_version
 from forms import SetPasswordForm, PasswordChangeForm
-import commands
 
-@login_required
 def bsdUsersView(request, objtype = None, post_change_redirect=None, password_change_form=PasswordChangeForm):
     if objtype != None and objtype != 'bsdgroup':
         focus_form = objtype
@@ -97,7 +96,6 @@ def bsdUsersView(request, objtype = None, post_change_redirect=None, password_ch
     })
     return render_to_response('account/index.html', variables)
 
-@login_required
 def home(request):
     focus_form = request.GET.get('tab', 'passform')
     password_change_form=PasswordChangeForm
@@ -150,7 +148,6 @@ def bsduser(request):
     })
     return render_to_response('account/bsdusers.html', variables)
 
-@login_required
 def bsdgroup(request):
 
     bsdgroup_list = bsdGroups.objects.order_by("id").filter(bsdgrp_builtin=False)
@@ -162,7 +159,6 @@ def bsdgroup(request):
     })
     return render_to_response('account/bsdgroups.html', variables)
 
-@login_required
 def usergroup_delete(request, object_id, objtype):
     account_model_map = {
         'bsduser':   bsdUsers,
@@ -185,7 +181,6 @@ def usergroup_delete(request, object_id, objtype):
         })
         return render_to_response(('account/%ss_confirm_delete.html' % objtype), c)
 
-@login_required
 def password_change2(request):
 
     extra_context = {}
@@ -205,7 +200,6 @@ def password_change2(request):
     variables = RequestContext(request, extra_context)
     return render_to_response('account/passform.html', variables)
 
-@login_required
 def user_change(request):
 
     extra_context = {}
@@ -222,7 +216,6 @@ def user_change(request):
     variables = RequestContext(request, extra_context)
     return render_to_response('account/changeform.html', variables)
 
-@login_required
 def password_update(request, object_id):
     obj = bsdUsers.objects.get(id=object_id)
     if request.method == 'POST':
@@ -240,7 +233,6 @@ def password_update(request, object_id):
     })
     return render_to_response('account/bsdaccount_form.html', variables)
 
-@login_required
 def group2user_update(request, object_id):
     if request.method == 'POST':
         f = bsdGroupToUserForm(object_id, request.POST)
@@ -256,7 +248,6 @@ def group2user_update(request, object_id):
     })
     return render_to_response('account/bsdgroup2user_form.html', variables)
 
-@login_required
 def group2user_update2(request, object_id):
     if request.method == 'POST':
         f = bsdGroupToUserForm(object_id, request.POST)
@@ -272,7 +263,6 @@ def group2user_update2(request, object_id):
     })
     return render_to_response('account/bsdgroup2user_form2.html', variables)
 
-@login_required
 def user2group_update(request, object_id):
     if request.method == 'POST':
         f = bsdUserToGroupForm(object_id, request.POST)
@@ -288,7 +278,6 @@ def user2group_update(request, object_id):
     })
     return render_to_response('account/bsdgroup2user_form.html', variables)
 
-@login_required
 def user2group_update2(request, object_id):
     if request.method == 'POST':
         f = bsdUserToGroupForm(object_id, request.POST)

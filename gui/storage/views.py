@@ -26,6 +26,7 @@
 # $FreeBSD$
 #####################################################################
 import os
+import commands
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
@@ -45,20 +46,9 @@ from freenasUI.services.models import services, CIFS, AFP, NFS
 from freenasUI.services.forms import CIFSForm, AFPForm, NFSForm 
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.system import get_freenas_version
-import commands
 
 ## Disk section
 
-@login_required
-def storage(request):
-    mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
-    variables = RequestContext(request, {
-        'focused_tab' : 'storage',
-        'mp_list': mp_list,
-    })
-    return render_to_response('storage/index.html', variables)
-
-@login_required
 def home(request):
     mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     en_dataset = MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
@@ -73,7 +63,6 @@ def home(request):
     })
     return render_to_response('storage/index2.html', variables)
 
-@login_required
 def wizard(request):
 
     if request.method == "POST":
@@ -99,7 +88,6 @@ def wizard(request):
     })
     return render_to_response('storage/wizard2.html', variables)
 
-@login_required
 def volimport(request):
 
     if request.method == "POST":
@@ -125,7 +113,6 @@ def volimport(request):
     })
     return render_to_response('storage/import.html', variables)
 
-@login_required
 def volautoimport(request):
 
     if request.method == "POST":
@@ -151,7 +138,6 @@ def volautoimport(request):
     })
     return render_to_response('storage/autoimport.html', variables)
 
-@login_required
 def disks_datagrid(request, vid):
 
     names = [x.verbose_name for x in Disk._meta.fields]
@@ -235,7 +221,6 @@ def disks_datagrid_json(request, vid):
         to_dojo_data(complete, identifier=Disk._meta.pk.name, num_rows=len(disks))
     ))
 
-@login_required
 def volume_disks(request, volume_id):
     # mp = MountPoint.objects.get(mp_volume = volume_id)
     volume = Volume.objects.get(id = volume_id)
@@ -247,7 +232,6 @@ def volume_disks(request, volume_id):
     })
     return render_to_response('storage/volume_detail.html', variables)
 
-@login_required
 def dataset_create(request):
     mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     defaults = { 'dataset_compression' : 'inherit', 'dataset_atime' : 'inherit', }
@@ -293,7 +277,6 @@ def dataset_create(request):
     })
     return render_to_response('storage/datasets2.html', variables)
 
-@login_required
 def dataset_edit(request, object_id):
     mp = MountPoint.objects.get(pk=object_id)
     dataset_form = ZFSDataset_EditForm(mp=mp)
@@ -333,7 +316,6 @@ def dataset_edit(request, object_id):
     })
     return render_to_response('storage/dataset_edit.html', variables)
 
-@login_required
 def zfsvolume_edit(request, object_id):
     mp = MountPoint.objects.get(pk=object_id)
     volume_form = ZFSVolume_EditForm(mp=mp)
@@ -369,7 +351,6 @@ def zfsvolume_edit(request, object_id):
     })
     return render_to_response('storage/volume_edit.html', variables)
 
-@login_required
 def mp_permission(request, object_id):
     mp = MountPoint.objects.get(id = object_id)
     mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
@@ -389,7 +370,6 @@ def mp_permission(request, object_id):
     })
     return render_to_response('storage/permission2.html', variables)
 
-@login_required
 def dataset_delete(request, object_id):
     obj = MountPoint.objects.get(id=object_id)
     if request.method == 'POST':
@@ -406,7 +386,6 @@ def dataset_delete(request, object_id):
         })
         return render_to_response('storage/dataset_confirm_delete2.html', c)
 
-@login_required
 def snapshot_delete(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == 'POST':
@@ -419,7 +398,6 @@ def snapshot_delete(request, dataset, snapname):
         })
         return render_to_response('storage/snapshot_confirm_delete2.html', c)
 
-@login_required
 def snapshot_rollback(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == "POST":
@@ -435,7 +413,6 @@ def snapshot_rollback(request, dataset, snapname):
         })
         return render_to_response('storage/snapshot_confirm_rollback2.html', c)
 
-@login_required
 def periodicsnap(request):
 
     if request.method == "POST":
@@ -453,7 +430,6 @@ def periodicsnap(request):
     })
     return render_to_response('storage/periodicsnap.html', variables)
 
-@login_required
 def manualsnap(request, path):
     if request.method == "POST":
         form = ManualSnapshotForm(request.POST)
@@ -468,7 +444,6 @@ def manualsnap(request, path):
     })
     return render_to_response('storage/manualsnap.html', variables)
 
-@login_required
 def clonesnap(request, snapshot):
     initial = { 'cs_snapshot' : snapshot }
     if request.method == "POST":
@@ -487,7 +462,6 @@ def clonesnap(request, snapshot):
     })
     return render_to_response('storage/clonesnap.html', variables)
 
-@login_required
 def disk_replacement(request, vid, object_id):
 
     volume = Volume.objects.get(pk=vid)
@@ -545,7 +519,6 @@ def disk_replacement(request, vid, object_id):
     })
     return render_to_response('storage/disk_replacement.html', variables)
 
-@login_required
 def disk_detach(request, vid, object_id):
 
     volume = Volume.objects.get(pk=vid)

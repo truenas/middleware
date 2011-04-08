@@ -75,97 +75,6 @@ def _system_info():
         'freenas_build': freenas_build,
     }
 
-@login_required
-def index(request, objtype = None):
-    if objtype != None:
-        focus_form = objtype
-    else:
-        focus_form = 'system'
-    sysinfo = _system_info()
-    settings = SettingsForm(data = Settings.objects.order_by("-id").values()[0])
-    advanced = AdvancedForm(data = Advanced.objects.order_by("-id").values()[0])
-    try:
-        email = EmailForm(instance = Email.objects.order_by("-id")[0])
-    except:
-        email = EmailForm()
-    try:
-         ssl = SSLForm(instance = SSL.objects.order_by("-id")[0])
-    except:
-         ssl = SSLForm()
-    firmloc = FirmwareTemporaryLocationForm()
-    firmware = FirmwareUploadForm()
-    if request.method == 'POST':
-        if objtype == 'settings':
-            settings = SettingsForm(request.POST)
-            if settings.is_valid():
-                settings.save()
-                return HttpResponseRedirect('/system/' + objtype)
-        elif objtype == 'advanced':
-            advanced = AdvancedForm(request.POST)
-            if advanced.is_valid():
-                advanced.save()
-                return HttpResponseRedirect('/system/' + objtype)
-        elif objtype == 'email':
-            email = EmailForm(request.POST)
-            if email.is_valid():
-                email.save()
-                return HttpResponseRedirect('/system/' + objtype)
-        elif objtype == 'ssl':
-            ssl = SSLForm(request.POST)
-            if ssl.is_valid():
-                ssl.save()
-                return HttpResponseRedirect('/system/' + objtype)
-        elif objtype == 'firmloc':
-            firmloc = FirmwareTemporaryLocationForm(request.POST)
-            if firmloc.is_valid():
-                firmloc.done()
-                return HttpResponseRedirect('/system/firmware/')
-        elif objtype == 'firmware':
-            firmware = FirmwareUploadForm(request.POST, request.FILES)
-            if firmware.is_valid():
-                firmware.done()
-                return HttpResponseRedirect('/system/' + objtype)
-        else: 
-            raise Http404()
-
-    graphs = {}
-    try:
-        graphs['hourly']  = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'hourly/') )],
-    except OSError:
-        pass
-    try:
-        graphs['daily']   = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'daily/') )],
-    except OSError:
-        pass
-    try:
-        graphs['weekly']  = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'weekly/') )],
-    except OSError:
-        pass
-    try:
-        graphs['monthly'] = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'monthly/') )],
-    except OSError:
-        pass
-    try:
-        graphs['yearly']  = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'yearly/') )],
-    except OSError:
-        pass
-    
-
-    variables = RequestContext(request, {
-        'focused_tab' : 'system',
-        'settings': settings,
-        'email': email,
-        'ssl': ssl,
-        'advanced': advanced,
-        'firmloc': firmloc,
-        'firmware': firmware,
-        'focus_form': focus_form,
-        'graphs': graphs,
-    })
-    variables.update(sysinfo)
-    return render_to_response('system/index.html', variables)
-
-@login_required
 def system_info(request):
 
     sysinfo = _system_info()
@@ -176,7 +85,6 @@ def system_info(request):
     variables.update(sysinfo)
     return render_to_response('system/system_info.html', variables)
 
-@login_required
 def firmware_upload(request):
 
     firmware = FirmwareUploadForm()
@@ -204,7 +112,6 @@ def firmware_upload(request):
     
     return render_to_response('system/firmware.html', variables)
 
-@login_required
 def firmware_location(request):
 
     firmloc = FirmwareTemporaryLocationForm()
@@ -232,7 +139,6 @@ def firmware_location(request):
     
     return render_to_response('system/firmware_location.html', variables)
 
-@login_required
 def config(request):
 
     variables = RequestContext(request, {
@@ -241,7 +147,6 @@ def config(request):
 
     return render_to_response('system/config.html', variables)
 
-@login_required
 def config_restore(request):
 
     variables = RequestContext(request)
@@ -256,7 +161,6 @@ def config_restore(request):
 
     return render_to_response('system/config_restore.html', variables)
 
-@login_required
 def config_upload(request):
 
     if request.method == "POST":
@@ -305,7 +209,6 @@ def config_upload(request):
 
         return render_to_response('system/config_upload.html', variables)
 
-@login_required
 def config_save(request):
 
     from django.core.servers.basehttp import FileWrapper
@@ -316,7 +219,6 @@ def config_save(request):
     response['Content-Disposition'] = 'attachment; filename=freenas-%s.db' % datetime.now().strftime("%Y-%m-%d")
     return response
 
-@login_required
 def reporting(request):
 
     graphs = {}
@@ -348,7 +250,6 @@ def reporting(request):
 
     return render_to_response('system/reporting.html', variables)
 
-@login_required
 def settings(request):
 
     settings = Settings.objects.order_by("-id")[0].id
@@ -365,7 +266,6 @@ def settings(request):
 
     return render_to_response('system/settings.html', variables)
 
-@login_required
 def advanced(request):
 
     extra_context = {}
@@ -383,7 +283,6 @@ def advanced(request):
 
     return render_to_response('system/advanced.html', variables)
 
-@login_required
 def varlogmessages(request, lines):
     if lines == None:
         lines = 3
@@ -393,7 +292,6 @@ def varlogmessages(request, lines):
     })
     return render_to_response('system/status/msg.xml', variables, mimetype='text/xml')
 
-@login_required
 def top(request):
     top = os.popen('top').read()
     variables = RequestContext(request, {
@@ -402,7 +300,6 @@ def top(request):
     })
     return render_to_response('system/status/top.xml', variables, mimetype='text/xml')
 
-@login_required
 def reboot(request):
     """ reboots the system """
     notifier().restart("system")
@@ -411,7 +308,6 @@ def reboot(request):
     })
     return render_to_response('system/reboot.html', variables)
 
-@login_required
 def shutdown(request):
     """ shuts down the system and powers off the system """
     notifier().stop("system")

@@ -27,6 +27,7 @@
 #####################################################################
 
 import os
+import commands
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
@@ -39,9 +40,7 @@ from freenasUI.services.forms import *
 from freenasUI.services.models import services as Services 
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.helperview import helperViewEx, helperViewEmpty
-import commands
 
-@login_required
 def home(request):
 
     try:
@@ -115,76 +114,6 @@ def home(request):
         })
     return render_to_response('services/index2.html', variables)
 
-@login_required
-def services(request, objtype=None):
-
-    if objtype != None:
-        focus_form = objtype
-    else:
-        focus_form = None 
-    srv = Services.objects.all()
-    target_list = iSCSITarget.objects.all()
-    extent_device_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-    extent_file_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='File')
-    asctarget_list = iSCSITargetToExtent.objects.all()
-    target_auth_list = iSCSITargetAuthCredential.objects.all()
-    auth_initiator_list = iSCSITargetAuthorizedInitiator.objects.all()
-    iscsiportal_list = iSCSITargetPortal.objects.all()
-
-    cifs = helperViewEx(request, CIFSForm, CIFS, objtype, 'cifs')
-    afp = helperViewEx(request, AFPForm, AFP, objtype, 'afp')
-    nfs = helperViewEx(request, NFSForm, NFS, objtype, 'nfs')
-    istgtglobal = helperViewEx(request, iSCSITargetGlobalConfigurationForm, iSCSITargetGlobalConfiguration, objtype, 'istgtglobal')
-    snmp = helperViewEx(request, SNMPForm, SNMP, objtype, 'snmp')
-    ftp = helperViewEx(request, FTPForm, FTP, objtype, 'ftp')
-    tftp = helperViewEx(request, TFTPForm, TFTP, objtype, 'tftp')
-    ssh = helperViewEx(request, SSHForm, SSH, objtype, 'ssh')
-    activedirectory = helperViewEx(request, ActiveDirectoryForm, ActiveDirectory, objtype, 'activedirectory')
-    dynamicdns = helperViewEx(request, DynamicDNSForm, DynamicDNS, objtype, 'dynamicdns')
-    ldap = helperViewEx(request, LDAPForm, LDAP, objtype, 'ldap')
-    iscsitarget = helperViewEmpty(request, iSCSITargetForm, objtype, 'iscsitarget')
-    iscsiextentfile = helperViewEmpty(request, iSCSITargetFileExtentForm, objtype, 'iscsiextentfile', prefix="fe")
-    iscsiextentdevice = helperViewEmpty(request, iSCSITargetDeviceExtentForm, objtype, 'iscsiextentdevice', prefix="de")
-    asctarget = helperViewEmpty(request, iSCSITargetToExtentForm, objtype, 'asctarget')
-    target_auth = helperViewEmpty(request, iSCSITargetAuthCredentialForm, objtype, 'target_auth')
-    auth_initiator = helperViewEmpty(request, iSCSITargetAuthorizedInitiatorForm, objtype, 'auth_initiator')
-    iscsiportal = helperViewEmpty(request, iSCSITargetPortalForm, objtype, 'iscsiportal')
-
-    variables = RequestContext(request, {
-        'focused_tab' : 'services',
-        'srv': srv,
-        'cifs': cifs,
-        'dynamicdns': dynamicdns,
-        'afp': afp,
-        'nfs': nfs,
-        'istgtglobal': istgtglobal,
-        'snmp': snmp,
-        'ftp': ftp,
-        'tftp': tftp,
-        'ssh': ssh,
-        'activedirectory': activedirectory,
-        'ldap': ldap,
-        'iscsitarget': iscsitarget,
-        'target_list': target_list,
-        'iscsiextentfile': iscsiextentfile,
-        'iscsiextentdevice': iscsiextentdevice,
-        'extent_file_list': extent_file_list,
-        'extent_device_list': extent_device_list,
-        'extent_file_list': extent_file_list,
-        'asctarget': asctarget,
-        'asctarget_list': asctarget_list,
-        'target_auth': target_auth,
-        'target_auth_list': target_auth_list,
-        'auth_initiator': auth_initiator,
-        'auth_initiator_list': auth_initiator_list,
-        'iscsiportal': iscsiportal,
-        'iscsiportal_list': iscsiportal_list,
-        'focus_form': focus_form,
-        })
-    return render_to_response('services/index.html', variables)
-
-
-@login_required
 def iscsi(request):
     gconfid = iSCSITargetGlobalConfiguration.objects.all().order_by("-id")[0].id
     variables = RequestContext(request, {
@@ -193,7 +122,6 @@ def iscsi(request):
         })
     return render_to_response('services/iscsi.html', variables)
 
-@login_required
 def iscsi_targets(request):
     target_list = iSCSITarget.objects.all()
 
@@ -202,7 +130,6 @@ def iscsi_targets(request):
     })
     return render_to_response('services/iscsi_targets.html', variables)
 
-@login_required
 def iscsi_assoctargets(request, objtype=None):
     asctarget_list = iSCSITargetToExtent.objects.all()
 
@@ -211,7 +138,6 @@ def iscsi_assoctargets(request, objtype=None):
     })
     return render_to_response('services/iscsi_assoctargets.html', variables)
 
-@login_required
 def iscsi_extents(request, objtype=None):
     extent_file_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='File')
 
@@ -220,7 +146,6 @@ def iscsi_extents(request, objtype=None):
     })
     return render_to_response('services/iscsi_extents.html', variables)
 
-@login_required
 def iscsi_dextents(request):
     extent_device_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
 
@@ -229,7 +154,6 @@ def iscsi_dextents(request):
     })
     return render_to_response('services/iscsi_dextents.html', variables)
 
-@login_required
 def iscsi_auth(request):
     target_auth_list = iSCSITargetAuthCredential.objects.all()
 
@@ -238,7 +162,6 @@ def iscsi_auth(request):
     })
     return render_to_response('services/iscsi_auth.html', variables)
 
-@login_required
 def iscsi_authini(request):
     auth_initiator_list = iSCSITargetAuthorizedInitiator.objects.all()
 
@@ -247,7 +170,6 @@ def iscsi_authini(request):
     })
     return render_to_response('services/iscsi_authini.html', variables)
 
-@login_required
 def iscsi_portals(request):
     iscsiportal_list = iSCSITargetPortal.objects.all()
 
@@ -257,7 +179,6 @@ def iscsi_portals(request):
     return render_to_response('services/iscsi_portals.html', variables)
 
 """TODO: This should be rewritten in a better way."""
-@login_required
 def servicesToggleView(request, formname):
     form2namemap = {
 	'cifs_toggle' : 'cifs',

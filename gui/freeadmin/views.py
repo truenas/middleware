@@ -44,7 +44,6 @@ from freeadmin import navtree
 from system.models import Advanced
 from dojango.views import datagrid_list
 
-@login_required
 def adminInterface(request, objtype = None):
 
     adv = Advanced.objects.all().order_by('-id')[0]
@@ -55,7 +54,6 @@ def adminInterface(request, objtype = None):
 
     return render_to_response('freeadmin/index.html', context)
 
-@login_required
 def menu(request, objtype = None):
     context = RequestContext(request)
 
@@ -75,7 +73,6 @@ passed as view argument
 From there we retrieve the ModelForm associated (which was discovered
 previously on the auto_generate process)
 """
-@login_required
 def generic_model_add(request, app, model, mf=None):
 
     try:
@@ -129,7 +126,6 @@ def generic_model_add(request, app, model, mf=None):
 
     return render_to_response(template, context)
 
-@login_required
 def generic_model_view(request, app, model):
 
     try:
@@ -155,7 +151,6 @@ def generic_model_view(request, app, model):
 
     return render_to_response('freeadmin/generic_model_view.html', context)
 
-@login_required
 def generic_model_datagrid(request, app, model):
 
     try:
@@ -207,7 +202,6 @@ def generic_model_datagrid(request, app, model):
     })
     return render_to_response('freeadmin/generic_model_datagrid.html', context)
 
-@login_required
 def generic_model_datagrid_json(request, app, model):
 
     def mycallback(app_name, model_name, attname, request, data):
@@ -233,7 +227,6 @@ def generic_model_datagrid_json(request, app, model):
 
     return datagrid_list(request, app, model, access_field_callback=mycallback)
 
-@login_required
 def generic_model_edit(request, app, model, oid, mf=None):
 
     try:
@@ -307,8 +300,6 @@ def generic_model_edit(request, app, model, oid, mf=None):
     	return render_to_response(template, context, \
                 mimetype='text/html')
 
-
-@login_required
 def generic_model_delete(request, app, model, oid):
 
     try:

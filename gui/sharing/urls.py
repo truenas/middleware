@@ -29,12 +29,8 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('sharing.views',
-    (r'^$', 'sharing'), 
     url(r'^home/$', 'home', name="sharing_home"), 
     url(r'^windows/$', 'windows', name="sharing_windows"), 
     url(r'^apple/$', 'apple', name="sharing_apple"), 
     url(r'^unix/$', 'unix', name="sharing_unix"), 
-    (r'^global/(?P<sharetype>\w+)/$', 'sharing'),
-    (r'(?P<sharetype>\w+)/view/$', 'sharing'),
-    (r'^save/(?P<sharetype>\w+)/$', 'sharing'), 
     )

@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 
 def public(f):
     f.__is_public = True
-        return f
+    return f
 
 class RequireLoginMiddleware(object):
     """

@@ -44,5 +44,4 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^config/upload/$', 'config_upload', name='system_configupload'),
     (r'^varlogmessages/(?P<lines>\d+)?/?$', 'varlogmessages'),
     (r'^top/', 'top'),
-    (r'^(?P<objtype>\w+)/$', 'index'),
     )

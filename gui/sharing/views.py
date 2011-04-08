@@ -27,6 +27,7 @@
 #####################################################################
 
 import os
+import commands
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
@@ -37,53 +38,7 @@ from django.http import Http404, HttpResponseRedirect
 
 from freenasUI.sharing.forms import * 
 from freenasUI.middleware.notifier import notifier
-import commands
 
-@login_required
-def sharing(request, sharetype = None):
-    if sharetype != None:
-        focus_form = sharetype
-    else:
-        focus_form = 'cifs'
-    cifs = CIFS_ShareForm(request.POST)
-    afp = AFP_ShareForm(request.POST)
-    nfs = NFS_ShareForm(request.POST)
-    if request.method == 'POST':
-        if sharetype == 'cifs':
-            cifs = CIFS_ShareForm(request.POST)
-            if cifs.is_valid():
-                cifs.save()
-        elif sharetype == 'afp':
-            afp = AFP_ShareForm(request.POST)
-            if afp.is_valid():
-                afp.save()
-        elif sharetype == 'nfs':
-            nfs = NFS_ShareForm(request.POST)
-            if nfs.is_valid():
-                nfs.save()
-        else:
-            raise Http404() # TODO: Should be something better
-        return HttpResponseRedirect('/sharing' + '/global/' + sharetype)
-    else:
-        cifs_share_list = CIFS_Share.objects.select_related().all()
-        afp_share_list = AFP_Share.objects.order_by("-id").values()
-        nfs_share_list = NFS_Share.objects.select_related().all()
-        cifs = CIFS_ShareForm()
-        afp = AFP_ShareForm()
-        nfs = NFS_ShareForm()
-    variables = RequestContext(request, {
-        'focused_tab' : 'sharing',
-        'cifs_share_list': cifs_share_list,
-        'afp_share_list': afp_share_list,
-        'nfs_share_list': nfs_share_list,
-        'cifs': cifs,
-        'afp': afp,
-        'nfs': nfs,
-        'focus_form': focus_form,
-        })
-    return render_to_response('sharing/index.html', variables)
-
-@login_required
 def home(request):
 
     variables = RequestContext(request, {
@@ -91,7 +46,6 @@ def home(request):
     })
     return render_to_response('sharing/index2.html', variables)
 
-@login_required
 def windows(request):
 
     cifs_share_list = CIFS_Share.objects.select_related().all()
@@ -101,7 +55,6 @@ def windows(request):
     })
     return render_to_response('sharing/windows.html', variables)
 
-@login_required
 def apple(request):
 
     afp_share_list = AFP_Share.objects.order_by("-id").values()
@@ -111,7 +64,6 @@ def apple(request):
     })
     return render_to_response('sharing/apple.html', variables)
 
-@login_required
 def unix(request):
 
     nfs_share_list = NFS_Share.objects.select_related().all()

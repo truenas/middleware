@@ -27,7 +27,9 @@
 #####################################################################
 
 import os
+import commands
 from subprocess import *
+
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
@@ -42,7 +44,6 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.network.forms import * 
 from freenasUI.network.models import * 
 from freenasUI.network.views import * 
-import commands
 
 ## Network Section
 
@@ -81,74 +82,7 @@ def _lagg_performadd(lagg):
         lagg_member_entry.save()
         order = order + 1
 
-@login_required
 def network(request, objtype = None):
-    gc = GlobalConfigurationForm(
-            data = GlobalConfiguration.objects.order_by("-id").values()[0]
-            )
-    if objtype != None:
-        focus_form = objtype
-    else:
-        focus_form = 'gc'
-    interfaces = InterfacesForm()
-    vlan = VLANForm()
-    lagg = LAGGInterfaceForm()
-    staticroute = StaticRouteForm()
-    int_list = Interfaces.objects.order_by("-id").values()
-    vlan_list = VLAN.objects.order_by("-id").values()
-    lagg_list = LAGGInterface.objects.order_by("-id").all()
-    sr_list = StaticRoute.objects.order_by("-id").values()
-    errform = ""
-    if request.method == 'POST':
-        if objtype == 'configuration':
-            gc = GlobalConfigurationForm(request.POST)
-            if gc.is_valid():
-                gc.save()
-        elif objtype == 'int':
-            interfaces = InterfacesForm(request.POST)
-            if interfaces.is_valid():
-                interfaces.save()
-            else:
-                errform = 'int'
-        elif objtype == 'vlan':
-            vlan = VLANForm(request.POST)
-            if vlan.is_valid():
-                vlan.save()
-            else:
-                errform = 'vlan'
-        elif objtype == 'lagg':
-            lagg = LAGGInterfaceForm(request.POST)
-            if lagg.is_valid():
-                _lagg_performadd(lagg)
-                return HttpResponseRedirect('/network/global/lagg/')
-            else:
-                errform = 'lagg'
-        elif objtype == 'sr':
-            staticroute = StaticRouteForm(request.POST)
-            if staticroute.is_valid():
-                staticroute.save()
-            else:
-                errform = 'sr'
-        else:
-            raise Http404() 
-    variables = RequestContext(request, {
-        'focused_tab' : 'network',
-        'gc': gc,
-        'interfaces': interfaces,
-        'vlan': vlan,
-        'lagg': lagg,
-        'staticroute': staticroute,
-        'int_list': int_list,
-        'vlan_list': vlan_list,
-        'lagg_list': lagg_list,
-        'sr_list': sr_list,
-        'errform': errform,
-        'focus_form': focus_form,
-    })
-    return render_to_response('network/index.html', variables)
-
-@login_required
-def network2(request, objtype = None):
 
     if objtype != None:
         focus_form = objtype
@@ -163,7 +97,6 @@ def network2(request, objtype = None):
     })
     return render_to_response('network/index2.html', variables)
 
-@login_required
 def summary(request):
 
     p1 = Popen(["ifconfig", "-lu"], stdin=PIPE, stdout=PIPE)
@@ -226,7 +159,6 @@ def summary(request):
     })
     return render_to_response('network/summary.html', variables)
 
-@login_required
 def interface(request):
 
     int_list = Interfaces.objects.order_by("-id").values()
@@ -236,7 +168,6 @@ def interface(request):
     })
     return render_to_response('network/interface.html', variables)
 
-@login_required
 def vlan(request):
 
     vlan_list = VLAN.objects.order_by("-id").values()
@@ -246,7 +177,6 @@ def vlan(request):
     })
     return render_to_response('network/vlan.html', variables)
 
-@login_required
 def staticroute(request):
 
     sr_list = StaticRoute.objects.order_by("-id").values()
@@ -256,7 +186,6 @@ def staticroute(request):
     })
     return render_to_response('network/staticroute.html', variables)
 
-@login_required
 def lagg(request):
 
     lagg_list = LAGGInterface.objects.order_by("-id").all()
@@ -266,7 +195,6 @@ def lagg(request):
     })
     return render_to_response('network/lagg.html', variables)
 
-@login_required
 def lagg_add(request):
 
     lagg = LAGGInterfaceForm()
@@ -287,7 +215,6 @@ def lagg_add(request):
     })
     return render_to_response('network/lagg_add.html', variables)
 
-@login_required
 def globalconf(request):
 
     extra_context = {}
@@ -308,7 +235,6 @@ def globalconf(request):
 
     return render_to_response('network/globalconf.html', variables)
 
-@login_required
 def lagg_members(request, object_id):
     laggmembers = LAGGInterfaceMembers.objects.filter(
                       lagg_interfacegroup = object_id
@@ -319,7 +245,6 @@ def lagg_members(request, object_id):
     })
     return render_to_response('network/lagg_members.html', variables)
 
-@login_required
 def lagg_members2(request, object_id):
     laggmembers = LAGGInterfaceMembers.objects.filter(
                       lagg_interfacegroup = object_id
