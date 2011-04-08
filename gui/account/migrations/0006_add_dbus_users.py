@@ -10,18 +10,18 @@ class Migration(DataMigration):
         group = orm.bsdgroups()
         group.bsdgrp_builtin = True
         group.bsdgrp_gid = "200"
-        group.bsdgrp_group = "dbus"
+        group.bsdgrp_group = "avahi"
         group.save()
         user = orm.bsdusers()
         user.bsdusr_builtin = True
-        user.bsdusr_full_name = "dbus user"
+        user.bsdusr_full_name = "avahi user"
         user.bsdusr_group = group
         user.bsdusr_home = "/nonexistant"
         user.bsdusr_shell = "/usr/sbin/nologin"
         user.bsdusr_smbhash = "*"
         user.bsdusr_unixhash = "*"
         user.bsdusr_uid = "200"
-        user.bsdusr_username = "dbus"
+        user.bsdusr_username = "avahi"
         user.save()
         group = orm.bsdgroups()
         group.bsdgrp_builtin = True
