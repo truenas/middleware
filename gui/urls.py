@@ -30,26 +30,28 @@ from django.conf.urls.defaults import *
 from django.contrib import admin
 #from freenasUI.system.views import index 
 from freenasUI.freeadmin.views import adminInterface
+from django.views.static import serve
 from django.conf import settings
 
 from freeadmin import navtree
+from freeadmin.middleware import public
 navtree.auto_generate()
 
 urlpatterns = patterns('',
     #('^$', index),
     ('^$', adminInterface),
     (r'^reporting/graphs/(?P<path>.*)',
-        'django.views.static.serve',
+        public(serve),
         {'document_root': '/var/db/graphs/'}),
     (r'^media/(?P<path>.*)',
-        'django.views.static.serve',
+        public(serve),
         {'document_root': settings.MEDIA_ROOT}),
     (r'^freenas/media/(?P<path>.*)$',
-        'django.views.static.serve',
+        public(serve),
         {'document_root': settings.MEDIA_ROOT}),
 # Not sure why I need the this entry, but the last one works for James..
     (r'^dojango/(?P<path>.*)$',
-        'django.views.static.serve',
+        public(serve),
         {'document_root': settings.MEDIA_ROOT+'/../dojango/'}),
     (r'^dojangogrid/', include('dojango.urls')),
     (r'^admin/', include('freeadmin.urls')),
