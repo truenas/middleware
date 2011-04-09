@@ -197,8 +197,9 @@ def configure_interface():
         if input.lower().startswith("y"):
             print "Deleting interface configuration:",
             try:
-                iface.delete()
-                os.system("/sbin/ifconfig %s inet delete" % nic)
+                if iface.id != None:
+                    iface.delete()
+                os.system("/sbin/ifconfig %s inet delete 2> /dev/null" % nic)
             except Exception, err:
                 print "Failed %s" % str(err)
                 return False
@@ -216,6 +217,10 @@ def configure_interface():
                 print "Failed"
             print "ok"
             return True
+        elif input.lower().startswith("n"):
+            break
+        else:
+            continue
 
     need_restart = False
     while True:
