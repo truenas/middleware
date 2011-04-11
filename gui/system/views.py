@@ -43,8 +43,8 @@ from django.template import RequestContext
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
-from freenasUI.system.forms import * 
-from freenasUI.system.models import * 
+from freenasUI.system import forms
+from freenasUI.system import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.system import get_freenas_version
 
@@ -87,10 +87,10 @@ def system_info(request):
 
 def firmware_upload(request):
 
-    firmware = FirmwareUploadForm()
+    firmware = forms.FirmwareUploadForm()
     variables = RequestContext(request)
     if request.method == 'POST':
-        firmware = FirmwareUploadForm(request.POST, request.FILES)
+        firmware = forms.FirmwareUploadForm(request.POST, request.FILES)
         valid = firmware.is_valid()
         try:
             if valid:
@@ -114,14 +114,14 @@ def firmware_upload(request):
 
 def firmware_location(request):
 
-    firmloc = FirmwareTemporaryLocationForm()
+    firmloc = forms.FirmwareTemporaryLocationForm()
     variables = RequestContext(request)
     if request.method == 'POST':
         try:
-            firmloc = FirmwareTemporaryLocationForm(request.POST)
+            firmloc = forms.FirmwareTemporaryLocationForm(request.POST)
             if firmloc.is_valid():
                 firmloc.done()
-                firmware = FirmwareUploadForm()
+                firmware = forms.FirmwareUploadForm()
                 variables.update({
                     'firmware': firmware,
                 })
@@ -164,7 +164,7 @@ def config_restore(request):
 def config_upload(request):
 
     if request.method == "POST":
-        form = ConfigUploadForm(request.POST, request.FILES)
+        form = forms.ConfigUploadForm(request.POST, request.FILES)
 
         variables = RequestContext(request, {
             'form': form,
@@ -201,7 +201,7 @@ def config_upload(request):
         else:
             return render_to_response('system/config_upload.html', variables)
     else:
-        form = ConfigUploadForm()
+        form = forms.ConfigUploadForm()
 
         variables = RequestContext(request, {
             'form': form,
@@ -243,7 +243,6 @@ def reporting(request):
     except OSError:
         pass
     
-
     variables = RequestContext(request, {
         'graphs': graphs,
     })
@@ -252,10 +251,10 @@ def reporting(request):
 
 def settings(request):
 
-    settings = Settings.objects.order_by("-id")[0].id
-    email = Email.objects.order_by("-id")[0].id
-    ssl = SSL.objects.order_by("-id")[0].id
-    advanced = Advanced.objects.order_by("-id")[0].id
+    settings = models.Settings.objects.order_by("-id")[0].id
+    email = models.Email.objects.order_by("-id")[0].id
+    ssl = models.SSL.objects.order_by("-id")[0].id
+    advanced = models.Advanced.objects.order_by("-id")[0].id
 
     variables = RequestContext(request, {
         'settings': settings,
@@ -269,9 +268,9 @@ def settings(request):
 def advanced(request):
 
     extra_context = {}
-    advanced = AdvancedForm(data = Advanced.objects.order_by("-id").values()[0], auto_id=False)
+    advanced = forms.AdvancedForm(data = models.Advanced.objects.order_by("-id").values()[0], auto_id=False)
     if request.method == 'POST':
-        advanced = AdvancedForm(request.POST, auto_id=False)
+        advanced = forms.AdvancedForm(request.POST, auto_id=False)
         if advanced.is_valid():
             advanced.save()
             extra_context['saved'] = True
@@ -318,7 +317,7 @@ def shutdown(request):
 
 def testmail(request):
 
-    email = Email.objects.all().order_by('-id')[0]
+    email = models.Email.objects.all().order_by('-id')[0]
     admin = User.objects.all()[0]
     error = False
     errmsg = ''
