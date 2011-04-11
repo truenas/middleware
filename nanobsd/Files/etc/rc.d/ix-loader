@@ -1,0 +1,136 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-loader
+
+. /etc/rc.subr
+
+
+loader_serial_enable()
+{
+	local conf=/boot/loader.conf
+	local tmp=/var/tmp/.tmp.loader.conf
+
+	mount -uw /
+	grep -Ev '^(boot_multicons|console)' < "${conf}" > "${tmp}"
+	if [ -s "${tmp}" ]
+	then
+		mv "${tmp}" "${conf}"
+	fi
+
+	echo 'boot_multicons="YES"' > "${tmp}"
+	echo 'console="vidconsole,comconsole"' >> "${tmp}"
+	cat "${conf}" >> "${tmp}"
+
+	if [ -s "${tmp}" ]
+	then
+		mv "${tmp}" "${conf}"
+	fi
+	mount -ur /
+}
+
+loader_serial_disable()
+{
+	local conf=/boot/loader.conf
+	local tmp=/var/tmp/.tmp.loader.conf
+
+	mount -uw /
+	grep -Ev '^(boot_multicons|console)' < "${conf}" > "${tmp}"
+	if [ -s "${tmp}" ]
+	then
+		mv "${tmp}" "${conf}"
+	fi
+	mount -ur /
+}
+
+loader_serial()
+{
+	local serial_enable=0
+
+	serial_enable=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		adv_serialconsole
+
+	FROM
+		system_advanced
+	
+	ORDER BY
+		-id
+	LIMIT 1")
+
+	case "${serial_enable}" in
+		0) loader_serial_disable ;;
+		1) loader_serial_enable ;;
+	esac
+}
+
+loader_saver_enable()
+{
+	local conf=/boot/loader.conf
+	local tmp=/var/tmp/.tmp.loader.conf
+
+	mount -uw /
+
+	grep -Ev '^screensave_(load|name)' < "${conf}" > "${tmp}"
+	echo 'screensave_load="YES"' >> "${tmp}"
+	echo 'screensave_name="daemon_saver"' >> "${tmp}"
+
+	if [ -s "${tmp}" ]
+	then
+		mv "${tmp}" "${conf}"
+	fi
+	mount -ur /
+}
+
+loader_saver_disable()
+{
+	local conf=/boot/loader.conf
+	local tmp=/var/tmp/.tmp.loader.conf
+
+	mount -uw /
+	grep -Ev '^screensave_(load|name)' < "${conf}" > "${tmp}"
+	if [ -s "${tmp}" ]
+	then
+		mv "${tmp}" "${conf}"
+	fi
+	mount -ur /
+}
+
+loader_saver()
+{
+	local saver_enable=0
+
+	saver_enable=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		adv_consolescreensaver
+
+	FROM
+		system_advanced
+	
+	ORDER BY
+		-id
+	LIMIT 1")
+
+	case "${saver_enable}" in
+		0) loader_saver_disable ;;
+		1) loader_saver_enable ;;
+	esac
+}
+
+update_loader_conf()
+{
+	settings="serial saver"
+	for s in ${settings}
+	do
+		eval "loader_${s}"
+	done
+}
+
+name="ix-loader"
+start_cmd='update_loader_conf'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

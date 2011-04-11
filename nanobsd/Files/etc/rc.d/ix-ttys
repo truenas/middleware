@@ -83,46 +83,6 @@ netcli_serial_disable()
 	kill -HUP 1
 }
 
-#
-# Yeah, this is ix-ttys, yet, we h4x0r /boot/loader.conf, deceiving, muahahaha.
-#
-loader_serial_enable()
-{
-	local conf=/boot/loader.conf
-	local tmp=/var/tmp/.tmp.loader.conf
-
-	mount -uw /
-	grep -Ev '^(boot_multicons|console)' < "${conf}" > "${tmp}"
-	if [ -s "${tmp}" ]
-	then
-		mv "${tmp}" "${conf}"
-	fi
-
-	echo 'boot_multicons="YES"' > "${tmp}"
-	echo 'console="vidconsole,comconsole"' >> "${tmp}"
-	cat "${conf}" >> "${tmp}"
-
-	if [ -s "${tmp}" ]
-	then
-		mv "${tmp}" "${conf}"
-	fi
-	mount -ur /
-}
-
-loader_serial_disable()
-{
-	local conf=/boot/loader.conf
-	local tmp=/var/tmp/.tmp.loader.conf
-
-	mount -uw /
-	grep -Ev '^(boot_multicons|console)' < "${conf}" > "${tmp}"
-	if [ -s "${tmp}" ]
-	then
-		mv "${tmp}" "${conf}"
-	fi
-	mount -ur /
-}
-
 serial_enable()
 {
 	local tmp=/var/tmp/.tmp.ttys
@@ -184,8 +144,8 @@ update_ttys()
 	while read console_menu serial
 	do
 		case "${serial}" in 
-			0) serial_disable; loader_serial_disable ;;
-			1) serial_enable; loader_serial_enable ;;
+			0) serial_disable ;;
+			1) serial_enable ;;
 		esac
 
 		case "${console_menu}" in
