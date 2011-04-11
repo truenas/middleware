@@ -26,34 +26,29 @@
 # $FreeBSD$
 #####################################################################
 
-from django.db import models
-from django import forms
-import datetime
-import time
-#from django.utils.text import capfirst
-from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
-from django.core.validators import *
-from freenasUI.choices import *
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db import models
+
+from freenasUI import choices
 from freeadmin.models import Model
 
 class Settings(Model):
     stg_guiprotocol = models.CharField(
             max_length=120, 
-            choices=PROTOCOL_CHOICES, 
+            choices=choices.PROTOCOL_CHOICES, 
             default="http", 
             verbose_name = _("Protocol")
             )
     stg_language = models.CharField(
             max_length=120, 
-            choices=LANG_CHOICES, 
+            choices=choices.LANG_CHOICES, 
             default="english", 
             verbose_name = _("Language")
             )
     stg_timezone = models.CharField(
             max_length=120, 
-            choices=TimeZoneChoices(),
+            choices=choices.TimeZoneChoices(),
             default="America/Los_Angeles", 
             verbose_name = _("Timezone")
             )
@@ -142,7 +137,7 @@ class Email(Model):
             )
     em_security = models.CharField(
             max_length=120, 
-            choices=SMTPAUTH_CHOICES,
+            choices=choices.SMTPAUTH_CHOICES,
             default="plain", 
             help_text = _("encryption of the connection"),
             verbose_name = _("TLS/SSL")

@@ -30,15 +30,15 @@ from django.utils.translation import ugettext_lazy as _
 from django.forms import FileField
 
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.system.models import *                         
+from freenasUI.system import models
 from freenasUI.middleware.notifier import notifier
-from dojango.forms import fields, widgets 
-from dojango.forms.fields import BooleanField 
+from dojango.forms import fields, widgets
+from dojango.forms.fields import BooleanField
 from dojango import forms
 
 class SettingsForm(ModelForm):
     class Meta:
-        model = Settings
+        model = models.Settings
     def __init__(self, *args, **kwargs):
         super(SettingsForm, self).__init__( *args, **kwargs)
         self.instance._original_stg_guiprotocol = self.instance.stg_guiprotocol
@@ -51,7 +51,7 @@ class SettingsForm(ModelForm):
 class AdvancedForm(ModelForm):
     class Meta:
         exclude = ('adv_zeroconfbonjour', 'adv_tuning', 'adv_firmwarevc', 'adv_systembeep')
-        model = Advanced
+        model = models.Advanced
     def __init__(self, *args, **kwargs):
         super(AdvancedForm, self).__init__(*args, **kwargs) 
         self.instance._original_adv_motd = self.instance.adv_motd
@@ -83,7 +83,7 @@ class EmailForm(ModelForm):
     em_pass2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput,
         help_text = _("Enter the same password as above, for verification."), required=False)
     class Meta:
-        model = Email
+        model = models.Email
         exclude = ('em_pass',)
     def __init__(self, *args, **kwargs):
         super(EmailForm, self).__init__( *args, **kwargs)
@@ -139,7 +139,7 @@ class SSLForm(ModelForm):
         super(SSLForm, self).save()
         notifier().start("ix-ssl")
     class Meta:
-        model = SSL
+        model = models.SSL
 
 class FirmwareTemporaryLocationForm(Form):
     mountpoint = forms.ChoiceField(label="Place to temporarily place firmware file", help_text = _("The system will use this place to temporarily store the firmware file before it's being applied."),choices=(), widget=forms.Select(attrs={ 'class': 'required' }),)
