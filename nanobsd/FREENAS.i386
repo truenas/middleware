@@ -32,7 +32,7 @@ ident		FREENAS32
 # env		"GENERIC.env"
 
 #makeoptions	DEBUG=-g		# Build kernel with gdb(1) debug symbols
-makeoptions	MODULES_OVERRIDE="zfs opensolaris acpi geom mps cxgb ntfs smbfs libiconv libmchain"
+makeoptions	MODULES_OVERRIDE="zfs opensolaris acpi geom mps cxgb ntfs smbfs libiconv libmchain daemon_saver"
 
 options 	SCHED_ULE		# ULE scheduler
 options 	PREEMPTION		# Enable kernel thread preemption
