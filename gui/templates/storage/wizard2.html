@@ -5,6 +5,13 @@
         function(){wizardcheckings();}); 
     </script>
     <table>
+        {% if form.non_field_errors %}
+        <tr>
+            <td colspan="2">
+                {{ form.non_field_errors }}
+            </td>
+        </tr>
+        {% endif %}
         <tr>
             <td style="width:150px;">
                 {% trans "Volume name" %}
@@ -19,11 +26,11 @@
                 {% trans "Member disks" %}
             </td>
             <td>
-            <select dojoType="dijit.form.MultiSelect" id="wizarddisks" name="volume_disks" size="4" multiple="true">
+            {{ form.volume_disks.errors }}
+            <select dojoType="dojox.form.CheckedMultiSelect" id="wizarddisks" name="volume_disks" size="4" multiple="true">
                 <script type="dojo/method" event="onClick" args="evt">
                     wizardcheckings(true);
                 </script>
-                {{ form.volume_disks.errors }}
                 {% for e in form.volume_disks.field.choices %}
                 <option value="{{ e.0 }}" {% if e.0 in disks %}selected="selected"{% endif %}>{{ e.1 }}</option>
                 {% empty %}

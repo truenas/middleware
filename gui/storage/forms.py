@@ -137,7 +137,7 @@ class UnixPermissionField(forms.MultiValueField):
 class VolumeWizardForm(forms.Form):
     volume_name = forms.CharField(max_length = 30, label = _('Volume name') )
     volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
-    volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks')
+    volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks', required=False)
     group_type = forms.ChoiceField(choices=(), widget=forms.RadioSelect(attrs=attrs_dict), required=False)
     def __init__(self, *args, **kwargs):
         super(VolumeWizardForm, self).__init__(*args, **kwargs)
@@ -221,11 +221,17 @@ class VolumeWizardForm(forms.Form):
     def clean(self):
         cleaned_data = self.cleaned_data
         volume_name = cleaned_data.get("volume_name")
+        disks =  cleaned_data.get("volume_disks")
+        if len(disks) == 0 and Volume.objects.filter(vol_name = volume_name).count() == 0:
+            msg = _(u"This field is required")
+            self._errors["volume_disks"] = self.error_class([msg])
+            del cleaned_data["volume_disks"]
         if cleaned_data["volume_fstype"] == 'UFS' and \
                 Volume.objects.filter(vol_name = volume_name).count() > 0:
             msg = _(u"You already have a volume with same name")
             self._errors["volume_name"] = self.error_class([msg])
             del cleaned_data["volume_name"]
+            
         return cleaned_data
 
     def done(self, request):
