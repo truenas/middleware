@@ -354,6 +354,24 @@ class notifier:
     def _start_loader(self):
         self.__system("/usr/sbin/service ix-loader quietstart")
 
+    def __saver_loaded(self):
+        pipe = os.popen("kldstat|grep daemon_saver")
+        out = pipe.read().strip('\n')
+        pipe.close()
+        return (len(out) > 0)
+
+    def _start_saver(self):
+        if not self.__saver_loaded():
+            self.__system("kldload daemon_saver")
+
+    def _stop_saver(self):
+        if self.__saver_loaded():
+            self.__system("kldunload daemon_saver")
+
+    def _restart_saver(self):
+        self._stop_saver()
+        self._start_saver()
+
     def __open_db(self):
         """Open and return a cursor object for database access."""
         dbname = ""
