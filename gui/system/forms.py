@@ -50,7 +50,7 @@ class SettingsForm(ModelForm):
 
 class AdvancedForm(ModelForm):
     class Meta:
-        exclude = ('adv_zeroconfbonjour', 'adv_tuning', 'adv_firmwarevc')
+        exclude = ('adv_zeroconfbonjour', 'adv_tuning', 'adv_firmwarevc', 'adv_systembeep')
         model = Advanced
     def __init__(self, *args, **kwargs):
         super(AdvancedForm, self).__init__(*args, **kwargs) 
