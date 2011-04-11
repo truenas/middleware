@@ -289,14 +289,17 @@ class notifier:
 
     def _load_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
-        self.__system("/usr/sbin/service mdnsd quietstart")
+        self.__system("/usr/sbin/service dbus quietstart")
+        self.__system("/usr/sbin/service avahi-daemon quietstart")
         self.__system("/usr/sbin/service netatalk quietstart")
 
     def _restart_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
         self.__system("/usr/sbin/service netatalk forcestop")
-        self.__system("/usr/sbin/service mdnsd forcestop")
-        self.__system("/usr/sbin/service mdnsd restart")
+        self.__system("/usr/sbin/service dbus forcestop")
+        self.__system("/usr/sbin/service dbus restart")
+        self.__system("/usr/sbin/service avahi-daemon forcestop")
+        self.__system("/usr/sbin/service avahi-daemon restart")
         self.__system("/usr/sbin/service netatalk restart")
 
     def _reload_afp(self):
