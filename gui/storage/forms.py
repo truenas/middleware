@@ -208,8 +208,8 @@ class VolumeWizardForm(forms.Form):
 
     def clean_volume_name(self):
         vname = self.cleaned_data['volume_name']
-        if not re.search(r'^[a-z0-9][a-z0-9_-]*$', vname, re.I):
-            raise forms.ValidationError(_("The volume name must start with letters or numbers and may include \"-\", \"_\"."))
+        if not re.search(r'^[a-z][a-z0-9_-]*$', vname, re.I):
+            raise forms.ValidationError(_("The volume name must start with letters and may include numbers, \"-\", \"_\"."))
         return vname
 
     def clean_group_type(self):
@@ -231,6 +231,12 @@ class VolumeWizardForm(forms.Form):
             msg = _(u"You already have a volume with same name")
             self._errors["volume_name"] = self.error_class([msg])
             del cleaned_data["volume_name"]
+
+        if cleaned_data["volume_fstype"] == 'ZFS':
+            if volume_name in ('mirror', 'raidz', 'raidz2'):
+                msg = _(u"This volume name is a reserved word and thus cannot be used")
+                self._errors["volume_name"] = self.error_class([msg])
+                cleaned_data.pop("volume_name", None)
             
         return cleaned_data
 
