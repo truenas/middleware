@@ -40,6 +40,8 @@
     dojo.require("dijit.layout.TabContainer");
     dojo.require("dojox.form.FileInput");
     dojo.require("dojo._base.xhr");
+    dojo.require("dojox.form.CheckedMultiSelect");
+    dojo.require("dijit.form.MultiSelect");
 
     dojo._contentHandlers.text = (function(old){
       return function(xhr){
@@ -577,22 +579,24 @@
 
         if(!dijit.byId("wizarddisks")) return;
         var disks = dijit.byId("wizarddisks");
-        var d = disks.getSelected();
+        //var d = disks.getSelected();
+        var d = disks.get('value');
 
         var zfs = dojo.query("input[name=volume_fstype]")[1].checked;
 
         if(vol_change == true) {
             var unselected = [];
-            for(var i=0;i<disks.domNode.length;i++) {
+            var opts = disks.getOptions();
+            for(var i=0;i<opts.length;i++) {
 
                 var selected = false;
                 for(var j=0;j<d.length;j++) {
-                    if (disks.domNode.options[i].value == d[j].value) {
+                    if (opts[i].value == d[j]) {
                         selected = true;
                     }
                 }
                 if(selected == false) {
-                    unselected.push(disks.domNode.options[i].value);
+                    unselected.push(opts[i].value);
                 }
 
             }
