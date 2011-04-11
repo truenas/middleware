@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-activedirectory
-# REQUIRE: winbindd
+# REQUIRE: smbd
 
 . /etc/rc.subr
 

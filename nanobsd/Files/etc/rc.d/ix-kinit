@@ -6,6 +6,7 @@
 # PROVIDE: ix-kinit
 # REQUIRE: kerberos
 # REQUIRE: ix-samba
+# REQUIRE: ntpd
 
 . /etc/rc.subr
 

@@ -48,7 +48,10 @@ netcli_serial_enable()
 	local tmp=/var/tmp/.tmp.ttys
 
 	awk '
-	/^ttyu0/ { sub("std.9600", "freenas_serial"); print $0; } 
+	/^ttyu0/ {
+		sub("std.9600", "freenas_serial");
+		print $0;
+	} 
 	!/^ttyu0/ {print $0; }
 	' < /etc/ttys > "${tmp}"
 
@@ -65,7 +68,10 @@ netcli_serial_disable()
 	local tmp=/var/tmp/.tmp.ttys
 
 	awk '
-	/^ttyu0/ { sub("freenas_serial", "std.9600"); print $0; } 
+	/^ttyu0/ {
+		sub("freenas_serial", "std.9600");
+		print $0;
+	} 
 	!/^ttyu0/ {print $0; }
 	' < /etc/ttys > "${tmp}"
 
@@ -82,7 +88,11 @@ serial_enable()
 	local tmp=/var/tmp/.tmp.ttys
 
 	awk '
-	/^ttyu0/ { sub("off", "on"); print $0; } 
+	/^ttyu0/ {
+		sub("off", "on");
+		sub("dialup", "vt100");
+		print $0;
+	} 
 	!/^ttyu0/ {print $0; }
 	' < /etc/ttys > "${tmp}"
 
@@ -99,7 +109,11 @@ serial_disable()
 	local tmp=/var/tmp/.tmp.ttys
 
 	awk '
-	/^ttyu0/ { sub("on", "off"); print $0; } 
+	/^ttyu0/ {
+		sub("on", "off");
+		sub("vt100", "dialup");
+		print $0;
+	} 
 	!/^ttyu0/ {print $0; }
 	' < /etc/ttys > "${tmp}"
 
