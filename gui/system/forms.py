@@ -58,6 +58,7 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_consolemenu = self.instance.adv_consolemenu
         self.instance._original_adv_powerdaemon = self.instance.adv_powerdaemon
         self.instance._original_adv_serialconsole = self.instance.adv_serialconsole
+        self.instance._original_adv_consolescreensaver = self.instance.adv_consolescreensaver
     def save(self):
         super(AdvancedForm, self).save()
         if self.instance._original_adv_motd != self.instance.adv_motd:
@@ -68,6 +69,13 @@ class AdvancedForm(ModelForm):
             notifier().restart("powerd")
         if self.instance._original_adv_serialconsole != self.instance.adv_serialconsole:
             notifier().start("ttys")
+            notifier().start("loader")
+        if self.instance._original_adv_consolescreensaver != self.instance.adv_consolescreensaver:
+            if self.instance.adv_consolescreensaver == 0:
+                notifier().stop("saver")
+            else:
+                notifier().start("saver")
+            notifier().start("loader")
 
 
 class EmailForm(ModelForm):
