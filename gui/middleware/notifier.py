@@ -351,6 +351,9 @@ class notifier:
         self.__system("/usr/sbin/service ix-httpd quietstart")
         self.__system("/usr/sbin/service lighttpd restart")
 
+    def _start_loader(self):
+        self.__system("/usr/sbin/service ix-loader quietstart")
+
     def __open_db(self):
         """Open and return a cursor object for database access."""
         dbname = ""
