@@ -160,7 +160,8 @@ class InterfaceEditForm(InterfacesForm):
         instance = getattr(self, 'instance', None)
         if instance and instance.id:
             self.fields['int_interface'] = (
-                forms.CharField(initial = instance.int_interface,
+                forms.CharField(label=self.fields['int_interface'].label,
+                                initial = instance.int_interface,
                                 widget = forms.TextInput(
                                 attrs = { 'readonly' : True })))
     def clean(self):
