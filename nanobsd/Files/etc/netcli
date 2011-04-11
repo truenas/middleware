@@ -198,8 +198,10 @@ def configure_interface():
             print "Deleting interface configuration:",
             try:
                 if iface.id != None:
-                    iface.delete()
-                os.system("/sbin/ifconfig %s inet delete 2> /dev/null" % nic)
+                    iface.int_ipv4address = ''
+                    iface.int_v4netmaskbit = ''
+                    iface.int_dhcp = False
+                    iface.save()
             except Exception, err:
                 print "Failed %s" % str(err)
                 return False
