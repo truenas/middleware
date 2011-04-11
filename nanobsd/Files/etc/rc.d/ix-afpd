@@ -14,6 +14,7 @@ afpd_enable=${afpd_enable:-"NO"}
 afpd_config=${afpd_config:-"/usr/local/etc/afpd.conf"}
 afpd_avdefault=${afpd_avdefault:-"/usr/local/etc/AppleVolumes.default"}
 afpd_avsystem=${afpd_avsystem:-"/usr/local/etc/AppleVolumes.system"}
+avahi_daemon_config=${avahi_daemon_config:-"/usr/local/etc/avahi/avahi-daemon.conf"}
 
 # If $1 == 1, return $2, otherwise return nothing
 bool_on()
@@ -104,11 +105,47 @@ generate_av_default()
     done
 }
 
+generate_avahi_daemon_config()
+{
+    local IFS=\|
+    local afp_srv_name
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+        "SELECT afp_srv_name FROM services_afp ORDER BY -id LIMIT 1" | \
+    while read afp_srv_name; do
+	cat << EOF
+[server]
+host-name=${afp_srv_name}
+domain-name=local
+use-ipv4=yes
+use-ipv6=yes
+ratelimit-interval-usec=1000000
+ratelimit-burst=1000
+
+[wide-area]
+enable-wide-area=yes
+
+[publish]
+#disable-publishing=no
+#disable-user-service-publishing=no
+#add-service-cookie=no
+#publish-addresses=yes
+#publish-hinfo=yes
+#publish-workstation=yes
+#publish-domain=yes
+#publish-dns-servers=192.168.50.1, 192.168.50.2
+#publish-resolv-conf-dns-servers=yes
+#publish-aaaa-on-ipv4=yes
+#publish-a-on-ipv6=no
+EOF
+	done
+}
+
 generate_afpd()
 {
     generate_afpd_config > ${afpd_config}
     generate_av_system > ${afpd_avsystem}
     generate_av_default > ${afpd_avdefault}
+    generate_avahi_daemon_config > ${avahi_daemon_config}
 }
 
 name="ix-afpd"
