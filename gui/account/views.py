@@ -28,7 +28,7 @@
 
 import os
 import commands
-from django.contrib.auth.decorators import login_required
+
 from django.contrib.auth.views import password_change_done
 from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm, PasswordChangeForm
 from django.contrib.auth import authenticate, login, logout
@@ -39,71 +39,18 @@ from django.template import RequestContext
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
-#TODO: do not import *
-from freenasUI.account.forms import * 
-from freenasUI.account.models import * 
+from freenasUI.account import forms
+from freenasUI.account import models
 from freenasUI.middleware.notifier import notifier
-from freenasUI.common.system import get_freenas_version
-from forms import SetPasswordForm, PasswordChangeForm
-
-def bsdUsersView(request, objtype = None, post_change_redirect=None, password_change_form=PasswordChangeForm):
-    if objtype != None and objtype != 'bsdgroup':
-        focus_form = objtype
-    else:
-        focus_form = 'bsduser'
-
-    bsduser = bsdUserCreationForm()
-    passform = password_change_form(user=request.user, data=request.GET)
-    changeform = UserChangeForm(instance=request.user)
-    bsdgroup = bsdGroupsForm()
-    bsduser_list = bsdUsers.objects.order_by("id").select_related().filter(bsdusr_builtin=False)
-    bsduser_list_builtin = bsdUsers.objects.order_by("id").select_related().filter(bsdusr_builtin=True)
-    bsdgroup_list = bsdGroups.objects.order_by("id").filter(bsdgrp_builtin=False)
-    bsdgroup_list_builtin = bsdGroups.objects.order_by("id").filter(bsdgrp_builtin=True)
-
-    #if post_change_redirect is None:
-     #   post_change_redirect = reverse('django.contrib.auth.views.password_change_done')
-    if request.method == 'POST':
-        if objtype == 'passform':
-            passform = password_change_form(user=request.user, data=request.POST)
-            if passform.is_valid():
-                passform.save()
-        elif objtype == 'changeform':
-            changeform = UserChangeForm(instance=request.user, data=request.POST)
-            if changeform.is_valid():
-                changeform.save()
-        elif objtype == 'bsduser':
-            bsduser = bsdUserCreationForm(request.POST)
-            if bsduser.is_valid():
-                bsduser.save()
-        elif objtype == 'bsdgroup':
-            bsdgroup = bsdGroupsForm(request.POST)
-            if bsdgroup.is_valid():
-                bsdgroup.save()
-        else: 
-            raise Http404()
-    variables = RequestContext(request, {
-        'focused_tab' : 'account',
-        'passform': passform,
-        'changeform': changeform,
-        'bsduser': bsduser,
-        'bsdgroup': bsdgroup,
-        'bsduser_list': bsduser_list,
-        'bsduser_list_builtin': bsduser_list_builtin,
-        'bsdgroup_list': bsdgroup_list,
-        'bsdgroup_list_builtin': bsdgroup_list_builtin,
-        'focus_form': focus_form,
-    })
-    return render_to_response('account/index.html', variables)
 
 def home(request):
     focus_form = request.GET.get('tab', 'passform')
-    password_change_form=PasswordChangeForm
+    password_change_form=forms.PasswordChangeForm
 
-    bsduser = bsdUserCreationForm()
+    bsduser = forms.bsdUserCreationForm()
     passform = password_change_form(user=request.user, data=request.GET)
-    changeform = UserChangeForm(instance=request.user)
-    bsdgroup = bsdGroupsForm()
+    changeform = forms.UserChangeForm(instance=request.user)
+    bsdgroup = forms.bsdGroupsForm()
 
     #if post_change_redirect is None:
     #   post_change_redirect = reverse('django.contrib.auth.views.password_change_done')
@@ -113,15 +60,15 @@ def home(request):
             if passform.is_valid():
                 passform.save()
         elif objtype == 'changeform':
-            changeform = UserChangeForm(instance=request.user, data=request.POST)
+            changeform = forms.UserChangeForm(instance=request.user, data=request.POST)
             if changeform.is_valid():
                 changeform.save()
         elif objtype == 'bsduser':
-            bsduser = bsdUserCreationForm(request.POST)
+            bsduser = forms.bsdUserCreationForm(request.POST)
             if bsduser.is_valid():
                 bsduser.save()
         elif objtype == 'bsdgroup':
-            bsdgroup = bsdGroupsForm(request.POST)
+            bsdgroup = forms.bsdGroupsForm(request.POST)
             if bsdgroup.is_valid():
                 bsdgroup.save()
         else: 
@@ -136,11 +83,10 @@ def home(request):
     })
     return render_to_response('account/index2.html', variables)
 
-@login_required
 def bsduser(request):
 
-    bsduser_list = bsdUsers.objects.order_by("id").select_related().filter(bsdusr_builtin=False)
-    bsduser_list_builtin = bsdUsers.objects.order_by("id").select_related().filter(bsdusr_builtin=True)
+    bsduser_list = models.bsdUsers.objects.order_by("id").select_related().filter(bsdusr_builtin=False)
+    bsduser_list_builtin = models.bsdUsers.objects.order_by("id").select_related().filter(bsdusr_builtin=True)
 
     variables = RequestContext(request, {
         'bsduser_list': bsduser_list,
@@ -150,8 +96,8 @@ def bsduser(request):
 
 def bsdgroup(request):
 
-    bsdgroup_list = bsdGroups.objects.order_by("id").filter(bsdgrp_builtin=False)
-    bsdgroup_list_builtin = bsdGroups.objects.order_by("id").filter(bsdgrp_builtin=True)
+    bsdgroup_list = models.bsdGroups.objects.order_by("id").filter(bsdgrp_builtin=False)
+    bsdgroup_list_builtin = models.bsdGroups.objects.order_by("id").filter(bsdgrp_builtin=True)
 
     variables = RequestContext(request, {
         'bsdgroup_list': bsdgroup_list,
@@ -159,42 +105,19 @@ def bsdgroup(request):
     })
     return render_to_response('account/bsdgroups.html', variables)
 
-def usergroup_delete(request, object_id, objtype):
-    account_model_map = {
-        'bsduser':   bsdUsers,
-        'bsdgroup':   bsdGroups,
-    }
-    obj = account_model_map[objtype].objects.get(id=object_id)
-    if objtype == 'bsduser':
-        if obj.bsdusr_builtin == True:
-            raise ValueError(_("User %s is built-in and can not be deleted!") % (obj.bsdusr_username))
-    else:
-        if obj.bsdgrp_builtin == True:
-            raise ValueError(_("Group %s is built-in and can not be deleted!") % (obj.bsdgrp_group))
-    if request.method == 'POST':
-        obj.delete()
-        return HttpResponseRedirect('/account/')
-    else:
-        c = RequestContext(request, {
-            'focused_tab' : 'account',
-            'object': obj,
-        })
-        return render_to_response(('account/%ss_confirm_delete.html' % objtype), c)
-
-def password_change2(request):
+def password_change(request):
 
     extra_context = {}
-    password_change_form=PasswordChangeForm
+    password_change_form=forms.PasswordChangeForm
     passform = password_change_form(user=request.user)
-    changeform = UserChangeForm(instance=request.user)
+    changeform = forms.UserChangeForm(instance=request.user)
 
     if request.method == 'POST':
         passform = password_change_form(user=request.user, data=request.POST)
         if passform.is_valid():
             passform.save()
-            extra_context.update({ 'saved' : True, })
             passform = password_change_form(user=request.user)
-
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Password")}), mimetype="application/json")
 
     extra_context.update({ 'passform' : passform, })
     variables = RequestContext(request, extra_context)
@@ -203,60 +126,27 @@ def password_change2(request):
 def user_change(request):
 
     extra_context = {}
-    changeform = UserChangeForm(instance=request.user)
+    changeform = forms.UserChangeForm(instance=request.user)
 
     if request.method == 'POST':
-        changeform = UserChangeForm(instance=request.user, data=request.POST)
+        changeform = forms.UserChangeForm(instance=request.user, data=request.POST)
         if changeform.is_valid():
             changeform.save()
-            extra_context.update({ 'saved' : True, })
-
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Admin user")}), mimetype="application/json")
 
     extra_context.update({ 'changeform' : changeform, })
     variables = RequestContext(request, extra_context)
     return render_to_response('account/changeform.html', variables)
 
-def password_update(request, object_id):
-    obj = bsdUsers.objects.get(id=object_id)
-    if request.method == 'POST':
-        f = bsdUserPasswordForm(request.POST, instance=obj)
-        if f.is_valid():
-            f.save()
-            return HttpResponseRedirect('/account/')
-    else:
-        f = bsdUserPasswordForm(instance=obj)
-    variables = RequestContext(request, {
-        'focused_tab' : 'account',
-        'form' : f,
-        'object' : obj,
-        'freenas_version' : get_freenas_version(),
-    })
-    return render_to_response('account/bsdaccount_form.html', variables)
-
 def group2user_update(request, object_id):
     if request.method == 'POST':
-        f = bsdGroupToUserForm(object_id, request.POST)
-        if f.is_valid():
-            f.save()
-            return HttpResponseRedirect('/account/')
-    else:
-        f = bsdGroupToUserForm(groupid=object_id)
-    variables = RequestContext(request, {
-        'focused_tab' : 'account',
-        'form' : f,
-        'freenas_version' : get_freenas_version(),
-    })
-    return render_to_response('account/bsdgroup2user_form.html', variables)
-
-def group2user_update2(request, object_id):
-    if request.method == 'POST':
-        f = bsdGroupToUserForm(object_id, request.POST)
+        f = forms.bsdGroupToUserForm(object_id, request.POST)
         if f.is_valid():
             f.save()
             return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Users")}), mimetype="application/json")
             #return render_to_response('account/bsdgroup2user_form_ok.html')
     else:
-        f = bsdGroupToUserForm(groupid=object_id)
+        f = forms.bsdGroupToUserForm(groupid=object_id)
     variables = RequestContext(request, {
         'url': reverse('account_bsdgroup_members', kwargs={'object_id':object_id}),
         'form' : f,
@@ -265,28 +155,13 @@ def group2user_update2(request, object_id):
 
 def user2group_update(request, object_id):
     if request.method == 'POST':
-        f = bsdUserToGroupForm(object_id, request.POST)
-        if f.is_valid():
-            f.save()
-            return HttpResponseRedirect('/account/')
-    else:
-        f = bsdUserToGroupForm(userid=object_id)
-    variables = RequestContext(request, {
-        'focused_tab' : 'account',
-        'form' : f,
-        'freenas_version' : get_freenas_version(),
-    })
-    return render_to_response('account/bsdgroup2user_form.html', variables)
-
-def user2group_update2(request, object_id):
-    if request.method == 'POST':
-        f = bsdUserToGroupForm(object_id, request.POST)
+        f = forms.bsdUserToGroupForm(object_id, request.POST)
         if f.is_valid():
             f.save()
             return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Groups")}), mimetype="application/json")
             #return render_to_response('account/bsdgroup2user_form_ok.html')
     else:
-        f = bsdUserToGroupForm(userid=object_id)
+        f = forms.bsdUserToGroupForm(userid=object_id)
     variables = RequestContext(request, {
         'url': reverse('account_bsduser_groups', kwargs={'object_id':object_id}),
         'form' : f,

@@ -31,7 +31,7 @@ from django.contrib.auth.forms import UserChangeForm as django_UCF
 from django.utils.safestring import mark_safe
 
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.account.models import *
+from freenasUI.account import models
 from freenasUI.middleware.notifier import notifier
 from dojango import forms
 
@@ -176,7 +176,7 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
     bsdusr_login_disabled = forms.BooleanField(label=_("Disable logins"), required=False)
 
     class Meta:
-        model = bsdUsers
+        model = models.bsdUsers
         exclude = ('bsdusr_unixhash','bsdusr_smbhash','bsdusr_group','bsdusr_builtin',)
 
     def __init__(self, *args, **kwargs):
@@ -189,8 +189,8 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
         if self.instance.id is None:
             bsdusr_username = self.cleaned_data["bsdusr_username"]
             try:
-                bsdUsers.objects.get(bsdusr_username=bsdusr_username)
-            except bsdUsers.DoesNotExist:
+                models.bsdUsers.objects.get(bsdusr_username=bsdusr_username)
+            except models.bsdUsers.DoesNotExist:
                 return bsdusr_username
             raise forms.ValidationError(_("A user with that username already exists."))
         else:
@@ -241,9 +241,9 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
             )
             bsduser = super(bsdUserCreationForm, self).save(commit=False)
             try:
-                grp = bsdGroups.objects.get(bsdgrp_gid=gid)
-            except bsdGroups.DoesNotExist:
-                grp = bsdGroups(bsdgrp_gid=gid, bsdgrp_group=self.cleaned_data['bsdusr_username'], bsdgrp_builtin=False)
+                grp = models.bsdGroups.objects.get(bsdgrp_gid=gid)
+            except models.bsdGroups.DoesNotExist:
+                grp = models.bsdGroups(bsdgrp_gid=gid, bsdgrp_group=self.cleaned_data['bsdusr_username'], bsdgrp_builtin=False)
                 grp.save()
             bsduser.bsdusr_group=grp
             bsduser.bsdusr_uid=uid
@@ -261,7 +261,7 @@ class bsdUserPasswordForm(ModelForm):
         help_text = _("Enter the same password as above, for verification."))
 
     class Meta:
-        model = bsdUsers
+        model = models.bsdUsers
         fields = ('bsdusr_username',)
 
     def __init__(self, *args, **kwargs):
@@ -300,7 +300,7 @@ class bsdUserChangeForm(ModelForm, SharedFunc):
                                      )
   
     class Meta:
-        model = bsdUsers
+        model = models.bsdUsers
         exclude = ('bsdusr_unixhash', 'bsdusr_smbhash', 'bsdusr_builtin',)
 
     def __init__(self, *args, **kwargs):
@@ -336,7 +336,7 @@ class bsdUserChangeForm(ModelForm, SharedFunc):
 
 class bsdGroupsForm(ModelForm):
     class Meta:
-        model = bsdGroups
+        model = models.bsdGroups
         exclude = ('bsdgrp_builtin',)
     def __init__(self, *args, **kwargs):
         super(bsdGroupsForm, self).__init__(*args, **kwargs)
@@ -365,16 +365,16 @@ class bsdGroupToUserForm(Form):
     def __init__(self, groupid, *args, **kwargs):
         super(bsdGroupToUserForm, self).__init__(*args, **kwargs)
         self.groupid = groupid
-        group = bsdGroups.objects.get(id=self.groupid)
-        self.fields['bsdgroup_to_user'].choices = [(x.id, x.bsdusr_username) for x in bsdUsers.objects.all()]
-        self.fields['bsdgroup_to_user'].initial = [(x.bsdgrpmember_user.id) for x in bsdGroupMembership.objects.filter(bsdgrpmember_group=group)]
+        group = models.bsdGroups.objects.get(id=self.groupid)
+        self.fields['bsdgroup_to_user'].choices = [(x.id, x.bsdusr_username) for x in models.bsdUsers.objects.all()]
+        self.fields['bsdgroup_to_user'].initial = [(x.bsdgrpmember_user.id) for x in models.bsdGroupMembership.objects.filter(bsdgrpmember_group=group)]
     def save(self):
-        group = bsdGroups.objects.get(id=self.groupid)
-        bsdGroupMembership.objects.filter(bsdgrpmember_group=group).delete()
+        group = models.bsdGroups.objects.get(id=self.groupid)
+        models.bsdGroupMembership.objects.filter(bsdgrpmember_group=group).delete()
         userid_list = self.cleaned_data['bsdgroup_to_user']
         for userid in userid_list:
-            user = bsdUsers.objects.get(id=userid)
-            m = bsdGroupMembership(bsdgrpmember_group=group, bsdgrpmember_user=user)
+            user = models.bsdUsers.objects.get(id=userid)
+            m = models.bsdGroupMembership(bsdgrpmember_group=group, bsdgrpmember_user=user)
             m.save()
         notifier().reload("user")
 
@@ -383,16 +383,16 @@ class bsdUserToGroupForm(Form):
     def __init__(self, userid, *args, **kwargs):
         super(bsdUserToGroupForm, self).__init__(*args, **kwargs)
         self.userid = userid
-        user = bsdUsers.objects.get(id=self.userid)
-        self.fields['bsduser_to_group'].choices = [(x.id, x.bsdgrp_group) for x in bsdGroups.objects.all()]
-        self.fields['bsduser_to_group'].initial = [(x.bsdgrpmember_group.id) for x in bsdGroupMembership.objects.filter(bsdgrpmember_user=user)]
+        user = models.bsdUsers.objects.get(id=self.userid)
+        self.fields['bsduser_to_group'].choices = [(x.id, x.bsdgrp_group) for x in models.bsdGroups.objects.all()]
+        self.fields['bsduser_to_group'].initial = [(x.bsdgrpmember_group.id) for x in models.bsdGroupMembership.objects.filter(bsdgrpmember_user=user)]
     def save(self):
-        user = bsdUsers.objects.get(id=self.userid)
-        bsdGroupMembership.objects.filter(bsdgrpmember_user=user).delete()
+        user = models.bsdUsers.objects.get(id=self.userid)
+        models.bsdGroupMembership.objects.filter(bsdgrpmember_user=user).delete()
         groupid_list = self.cleaned_data['bsduser_to_group']
         for groupid in groupid_list:
-            group = bsdGroups.objects.get(id=groupid)
-            m = bsdGroupMembership(bsdgrpmember_group=group, bsdgrpmember_user=user)
+            group = models.bsdGroups.objects.get(id=groupid)
+            m = models.bsdGroupMembership(bsdgrpmember_group=group, bsdgrpmember_user=user)
             m.save()
         notifier().reload("user")
 

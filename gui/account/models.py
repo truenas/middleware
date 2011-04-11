@@ -26,11 +26,10 @@
 # $FreeBSD$
 #####################################################################
 from django.db import models
-from freeadmin.models import Model
-from django import forms
-from django.contrib.auth.models import get_hexdigest
 from django.utils.translation import ugettext as _
+
 from freenasUI.middleware.notifier import notifier
+from freeadmin.models import Model
 
 class bsdGroups(Model):
     bsdgrp_gid = models.IntegerField(

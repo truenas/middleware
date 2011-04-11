@@ -3,9 +3,6 @@
 <script type="dojo/event" event="onSubmit" args="e">
     formSubmit(this, e, '{% url account_changeform %}');
 </script>
-{% if saved %}
-{% trans "User Successfully saved!" %}
-{% endif %}
      <table class="config">
          {% for field in changeform %}
          <tr>
