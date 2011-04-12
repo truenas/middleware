@@ -36,7 +36,7 @@ setup_environ(settings)
 
 import re
 import syslog
-from freenasUI.storage.models import Task
+from freenasUI.storage.models import Task, Replication
 from datetime import datetime, time, timedelta
 from shlex import split as shlex_split
 from subprocess import Popen, PIPE
@@ -171,6 +171,7 @@ for mpkey in list_mp:
             del mp_to_task_map[mpkey]
 
 snaptime_str = snaptime.strftime('%Y%m%d.%H%M')
+sshcmd = '/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes -o StrictHostKeyChecking=yes -q'
 
 for mpkey in mp_to_task_map:
     mp_path, expire = mpkey
@@ -183,8 +184,25 @@ for mpkey in mp_to_task_map:
     else:
         recursive = ''
 
-    snapcmd = '/sbin/zfs snapshot%s %s@auto-%s-%s' % (recursive, mp_path[5:], snaptime_str, expire)
+    snapname = '%s@auto-%s-%s' % (mp_path[5:], snaptime_str, expire)
+
+    snapcmd = '/sbin/zfs snapshot%s %s' % (recursive, snapname)
     system(snapcmd)
+    """Replicate snapshot to remote system"""
+    replication_tasks = Replication.objects.filter(repl_mountpoint__mp_path = mp_path)
+    for replication in replication_tasks:
+        remote = replication.repl_remote.ssh_remote_hostname.__str__()
+        fs = replication.repl_zfs.__str__()
+        last_snapshot = replication.repl_lastsnapshot.__str__()
+        if last_snapshot == '':
+             replcmd = '%s %s /sbin/zfs create -p %s' % (sshcmd, remote, fs)
+             system(replcmd)
+             replcmd = '/sbin/zfs send %s | %s %s /sbin/zfs receive -F -d %s' % (snapname, sshcmd, remote, fs)
+        else:
+             replcmd = '/sbin/zfs send -i %s %s | %s %s /sbin/zfs receive -F -d %s' % (last_snapshot, snapname, sshcmd, remote, fs)
+        system(replcmd)
+        replication.repl_lastsnapshot = snapname
+        replication.save()
 
 for snapshot in snapshots_pending_delete:
     snapcmd = '/sbin/zfs destroy %s' % (snapshot)

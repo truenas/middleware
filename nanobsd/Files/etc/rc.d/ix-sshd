@@ -64,6 +64,7 @@ EOF
     if [ ! -e /data/ssh/replication ]; then
 	/usr/bin/ssh-keygen -qt rsa -N "" -C "Key for replication" -b 2048 -f /data/ssh/replication
     fi
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ssh_remote_hostkey FROM storage_replremote" > /etc/ssh/ssh_known_hosts
 }
 
 name="ix-sshd"

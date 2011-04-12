@@ -204,6 +204,46 @@ class MountPoint(Model):
     used_si = property(_get_used_si)
     status = property(_get_status)
 
+# TODO: Refactor replication out from the storage model to its
+# own application
+class ReplRemote(Model):
+    ssh_remote_hostname = models.CharField(
+            max_length=120,
+            verbose_name=_("Remote hostname"),
+            )
+    ssh_remote_hostkey = models.CharField(
+            max_length=2048,
+            verbose_name=_("Remote hostkey"),
+            )
+    class Meta:
+        verbose_name = _(u"Remote Replication Host")
+        verbose_name_plural = _(u"Remote Replication Hosts")
+    def __unicode__(self):
+        return self.ssh_remote_hostname
+
+class Replication(Model):
+    repl_mountpoint = models.ForeignKey(MountPoint,
+            limit_choices_to = {'mp_volume__vol_fstype__exact' : 'ZFS'},
+            verbose_name = _("Mount Point"),
+            )
+    repl_lastsnapshot = models.CharField(max_length=120,
+            blank = True,
+            verbose_name = _("Last snapshot sent to remote side (leave blank for full replication)"),
+            )
+    repl_remote = models.ForeignKey(ReplRemote,
+            verbose_name = _("Remote Host"),
+            )
+    repl_mountpoint = models.ForeignKey(MountPoint,
+            limit_choices_to = {'mp_volume__vol_fstype__exact' : 'ZFS'},
+            verbose_name = _("Mount Point"),
+            )
+    repl_zfs = models.CharField(max_length=120,
+            verbose_name = _("Remote ZFS filesystem"),
+            )
+    class Meta:
+        verbose_name = _(u"Replication Task")
+        verbose_name_plural = _(u"Replication Tasks")
+
 class Task(Model):
     task_mountpoint = models.ForeignKey(MountPoint,
             limit_choices_to = {'mp_volume__vol_fstype__exact' : 'ZFS'},
