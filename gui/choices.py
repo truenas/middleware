@@ -176,7 +176,7 @@ MONTHS_CHOICES = (
         )
 WEEKDAYS_CHOICES = (
         ('1', _('Monday')),
-        ('2', _('Tuseday')),
+        ('2', _('Tuesday')),
         ('3', _('Wednesday')),
         ('4', _('Thursday')),
         ('5', _('Friday')),
