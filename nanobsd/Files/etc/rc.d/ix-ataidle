@@ -25,6 +25,8 @@ ataidle_start()
 		ataidle_args=""
 		if [ "${disk_advpowermgmt}" != "Disabled" ]; then
 			ataidle_args="-P ${disk_advpowermgmt}"
+		else
+			ataidle_args="-P 0"
 		fi
 		if [ "${disk_acousticlevel}" != "Disabled" ]; then
 			if [ "${disk_acousticlevel}" = "Minimum" ]; then
@@ -34,8 +36,10 @@ ataidle_start()
 			elif [ "${disk_acousticlevel}" = "Maximum" ]; then
 				disk_acousticlevel=127
 			fi
-			ataidle_args="${ataidle_args} -A ${disk_acousticlevel}"
+		else
+			disk_acousticlevel=0
 		fi
+		ataidle_args="${ataidle_args} -A ${disk_acousticlevel}"
 		if [ -n "${ataidle_args}" ]; then
 			/usr/local/sbin/ataidle ${ataidle_args} ${disk_disks}
 		fi
