@@ -813,7 +813,14 @@ class ManualSnapshotForm(Form):
             raise forms.ValidationError(_("Only [-a-zA-Z0-9_.] permitted as snapshot name"))
         return self.cleaned_data['ms_name']
     def commit(self, path):
-        dataset = path.__str__()[5:]
+        # TODO: Better handling of the path parameter, ideally change it to supply
+        # dataset instead.
+        if path.startswith('/mnt/'):
+            dataset = path.__str__()[5:]
+        elif path.startswith('mnt/'):
+            dataset = path.__str__()[4:]
+        else:
+            raise(ValueError(_('Invalid prefix')))
         notifier().zfs_mksnap(dataset, self.cleaned_data['ms_name'].__str__(), self.cleaned_data['ms_recursively'])
 
 class CloneSnapshotForm(Form):
