@@ -233,10 +233,6 @@ class Replication(Model):
     repl_remote = models.ForeignKey(ReplRemote,
             verbose_name = _("Remote Host"),
             )
-    repl_mountpoint = models.ForeignKey(MountPoint,
-            limit_choices_to = {'mp_volume__vol_fstype__exact' : 'ZFS'},
-            verbose_name = _("Mount Point"),
-            )
     repl_zfs = models.CharField(max_length=120,
             verbose_name = _("Remote ZFS filesystem"),
             )
