@@ -243,6 +243,8 @@ class Replication(Model):
     class Meta:
         verbose_name = _(u"Replication Task")
         verbose_name_plural = _(u"Replication Tasks")
+    def __unicode__(self):
+        return '%s -> %s' % (self.repl_mountpoint, self.repl_remote.ssh_remote_hostname)
 
 class Task(Model):
     task_mountpoint = models.ForeignKey(MountPoint,
