@@ -50,7 +50,7 @@ begemotSnmpdCommunityString.0.1 = ${snmp_community}
 begemotSnmpdCommunityDisable = 1
 
 # open standard SNMP ports
-begemotSnmpdPortStatus.[${hostname}].161 = 1" -n \
+begemotSnmpdPortStatus.[${hostname}].161 = 1
 begemotSnmpdPortStatus.127.0.0.1.161 = 1
 
 # open a unix domain socket
