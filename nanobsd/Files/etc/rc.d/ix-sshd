@@ -57,6 +57,13 @@ EOF
 	    fi
     done
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ssh_options FROM services_ssh ORDER BY -id LIMIT 1" >> $cfg
+    # Generate a passwordless key-pair for automatic replication
+    if [ ! -d /data/ssh ]; then
+	mkdir -m 755 /data/ssh
+    fi
+    if [ ! -e /data/ssh/replication ]; then
+	/usr/bin/ssh-keygen -qt rsa -N "" -C "Key for replication" -b 2048 -f /data/ssh/replication
+    fi
 }
 
 name="ix-sshd"
