@@ -111,7 +111,8 @@ add_port databases/tdb
 add_port sysutils/libsunacl
 #-net/samba
 add_port net/samba35		-DWITHOUT_CUPS -DWITH_LDAP -DWITH_ADS \
-	-DWITH_WINBIND -DWITH_ACL_SUPPORT -DWITH_PAM_SMBPASS -DWITH_AIO_SUPPORT
+	-DWITH_WINBIND -DWITH_ACL_SUPPORT -DWITH_PAM_SMBPASS -DWITH_AIO_SUPPORT \
+	-DWITH_EXP_MODULES 
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
 add_port shells/bash
