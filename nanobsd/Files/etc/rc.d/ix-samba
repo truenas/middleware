@@ -187,11 +187,6 @@ EOF
 			local ad_workgroup="${ad_workgroup}"
 
 			# wins server ?
-			# domain master ?
-			# preferred master ?
-
-			# idmap settings?
-			# winbind settings?
 			# template??
 			# admin users??
 			# valid users??
@@ -217,8 +212,10 @@ EOF
 			    acl map full control = true
 			    dos filemode = yes
 
-			    idmap uid = 10000-20000000
-			    idmap gid = 10000-20000000
+			    idmap uid = 10000-19999
+			    idmap gid = 10000-19999
+			    idmap config ${ad_workgroup}: backend = rid
+			    idmap config ${ad_workgroup}: range = 20000-20000000
 
 			    winbind cache time = 10
 			    winbind offline logon = yes
@@ -227,6 +224,7 @@ EOF
 			    winbind nested groups = yes
 			    winbind use default domain = yes
 			    winbind refresh tickets = yes
+			    winbind separator = +
 			    allow trusted domains = no
 
 			    template shell = /bin/sh
