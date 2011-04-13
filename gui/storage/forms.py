@@ -525,13 +525,16 @@ class VolumeAutoImportForm(forms.Form):
 
             if not notifier().zfs_import(vol['label']):
                 assert False, "Could not run zfs import"
-
+            
         volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
         volume.save()
         self.volume = volume
 
         mp = MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
         mp.save()
+
+        if vol['type'] == 'zfs':
+            notifier().zfs_sync_datasets(volume.id)
 
         grp = DiskGroup(group_name= volume_name, group_type = group_type, group_volume = volume)
         grp.save()

@@ -372,7 +372,7 @@ class notifier:
         self._stop_saver()
         self._start_saver()
 
-    def __open_db(self):
+    def __open_db(self, ret_conn=False):
         """Open and return a cursor object for database access."""
         dbname = ""
         try:
@@ -383,6 +383,8 @@ class notifier:
 
         conn = sqlite3.connect(dbname)
         c = conn.cursor()
+        if ret_conn:
+            return c, conn
         return c
 
     def __gpt_labeldisk(self, type, devname, label = "", swapsize=2):
@@ -1292,6 +1294,24 @@ class notifier:
 
     def vlan_delete(self, vint):
         self.__system("ifconfig %s destroy" % vint)
+
+    def zfs_sync_datasets(self, vol_id):
+        c, conn = self.__open_db(True)
+        c.execute("SELECT vol_name FROM storage_volume WHERE id = ?", (vol_id,))
+        vol_name = c.fetchone()[0]
+        c.execute("SELECT mp_path FROM storage_mountpoint WHERE mp_volume_id = ?", (vol_id,))
+        mp_path = c.fetchone()[0]
+
+        c.execute("DELETE FROM storage_mountpoint WHERE mp_ischild = 1 AND mp_volume_id = %s" % str(vol_id))
+
+        p1 = self.__pipeopen("zfs list -t filesystem -o name -H -r %s" % str(vol_name))
+        p1.wait()
+        ret = p1.communicate()[0].split('\n')[1:-1]
+        for dataset in ret:
+            name = "".join(dataset.split('/')[1:])
+            c.execute("INSERT INTO storage_mountpoint (mp_volume_id, mp_path, mp_options, mp_ischild) VALUES (?, ?, ?, ?)", (vol_id, os.path.join(mp_path, name),"noauto","1"), )
+        conn.commit()
+        c.close()
 
 def usage():
     print ("Usage: %s action command" % argv[0])
