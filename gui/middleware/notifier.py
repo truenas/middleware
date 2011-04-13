@@ -1309,7 +1309,9 @@ class notifier:
         ret = p1.communicate()[0].split('\n')[1:-1]
         for dataset in ret:
             name = "".join(dataset.split('/')[1:])
-            c.execute("INSERT INTO storage_mountpoint (mp_volume_id, mp_path, mp_options, mp_ischild) VALUES (?, ?, ?, ?)", (vol_id, os.path.join(mp_path, name),"noauto","1"), )
+            mp = os.path.join(mp_path, name)
+            c.execute("INSERT INTO storage_mountpoint (mp_volume_id, mp_path, mp_options, mp_ischild) VALUES (?, ?, ?, ?)", (vol_id, mp,"noauto","1"), )
+            self.__system_nolog("zfs set mountpoint=%s %s" % (str(mp), str(dataset)) )
         conn.commit()
         c.close()
 
