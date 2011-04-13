@@ -1,13 +1,13 @@
 {% load i18n %}
-    <div dojoType="dijit.layout.TabContainer" nested="true" doLayout="true" id="tab_storage">
-    <div dojoType="dijit.layout.ContentPane" nested="true" title="{% trans "Active Volumes" %}">
-        <button id="addVolumeBtn" dojoType="dijit.form.Button" type="button">
-        <img src="/freenas/media/images/ui/buttons/add_volumes.png">
-        <br />
-        <script type="dojo/method" event="onClick" args="evt">
-            volumeWizard('{% trans "Create Volume" %}', '{% url storage_wizard %}', [this,]);
-        </script>
-        </button>
+<div dojoType="dijit.layout.TabContainer" nested="true" doLayout="true" id="tab_storage">
+<div dojoType="dijit.layout.ContentPane" nested="true" title="{% trans "Active Volumes" %}">
+    <button id="addVolumeBtn" dojoType="dijit.form.Button" type="button">
+    <img src="/freenas/media/images/ui/buttons/add_volumes.png">
+    <br />
+    <script type="dojo/method" event="onClick" args="evt">
+        volumeWizard('{% trans "Create Volume" %}', '{% url storage_wizard %}', [this,]);
+    </script>
+    </button>
 
     <div dojoType="dijit.Tooltip" connectId="addVolumeBtn" position="above">
         <strong>{% trans "Create Volume" %}</strong>
@@ -157,6 +157,46 @@
 </table>
 </div>
 
+<div dojoType="dijit.layout.ContentPane" nested="true" title="{% trans "ZFS Replication" %}">
+
+<table class="grid">
+    <thead class="ghead">
+	    <td>{% trans "Mount point" %}</td>
+	    <td>{% trans "Last snapshot" %}</td>
+	    <td>{% trans "Remote Host" %}</td>
+	    <td>{% trans "Remote ZFS filesystem" %}</td>
+	<td>{% trans "Available actions" %}</td>
+    </thead>
+    <tbody>
+	{% for repl in zfsrepl_list %}
+	<tr class="{% cycle 'odd' 'even' %}">
+	    <td>{{ repl.repl_mountpoint }}</td>
+	    <td>{{ repl.repl_lastsnpashot }}</td>
+	    <td>{{ repl.repl_remote }}</td>
+	    <td>{{ repl.repl_zfs }}</td>
+	    <td>
+	    <button id="editRepl{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Edit Replication" %}', '{% url freeadmin_model_edit app='storage' model='Replication' oid=repl.id %}', [this,]);">
+            {% trans "Edit replication" %}
+        </button>
+	    <button id="delRepl{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Delete Replication" %}', '{% url freeadmin_model_delete app='storage' model='Replication' oid=repl.id %}', [this,]);">
+            {% trans "Delete replication" %}
+        </button>
+	    </td>
+    </tr>
+    {% empty %}
+	<tr>
+	    <td colspan="5">{% trans "No ZFS replication available" %}</td>
+	</tr>
+    {% endfor %}
+    </tbody>
+</table>
+    <button id="addReplBtn" dojoType="dijit.form.Button" type="button">
+    {% trans "Add Replication" %}
+    <script type="dojo/method" event="onClick" args="evt">
+        volumeWizard('{% trans "Create Volume" %}', '{% url freeadmin_model_add app='storage',model='Replication' %}', [this,]);
+    </script>
+    </button>
+</div>
 {% if zfsnap_list %}
 <div dojoType="dijit.layout.ContentPane" title="{% trans "ZFS Snapshots" %}" doLayout="false">
 

@@ -36,7 +36,8 @@ from freenasUI.account.models import bsdUsers, bsdGroups
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.forms import Form
-from freenasUI.storage.models import *
+from freenasUI.storage import models
+from freenasUI import choices
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups
 from dojango.forms import fields, widgets, CheckboxSelectMultiple
 from dojango import forms
@@ -197,7 +198,7 @@ class VolumeWizardForm(forms.Form):
             except:
                 pass
         # Exclude what's already added
-        for devname in [ x['disk_disks'] for x in Disk.objects.all().values('disk_disks')]:
+        for devname in [ x['disk_disks'] for x in models.Disk.objects.all().values('disk_disks')]:
             try:
                 del diskchoices[devname]
             except:
@@ -222,12 +223,12 @@ class VolumeWizardForm(forms.Form):
         cleaned_data = self.cleaned_data
         volume_name = cleaned_data.get("volume_name")
         disks =  cleaned_data.get("volume_disks")
-        if len(disks) == 0 and Volume.objects.filter(vol_name = volume_name).count() == 0:
+        if len(disks) == 0 and models.Volume.objects.filter(vol_name = volume_name).count() == 0:
             msg = _(u"This field is required")
             self._errors["volume_disks"] = self.error_class([msg])
             del cleaned_data["volume_disks"]
         if cleaned_data["volume_fstype"] == 'UFS' and \
-                Volume.objects.filter(vol_name = volume_name).count() > 0:
+                models.Volume.objects.filter(vol_name = volume_name).count() > 0:
             msg = _(u"You already have a volume with same name")
             self._errors["volume_name"] = self.error_class([msg])
             del cleaned_data["volume_name"]
@@ -251,28 +252,28 @@ class VolumeWizardForm(forms.Form):
         else:
             group_type = self.cleaned_data['group_type']
 
-        vols = Volume.objects.filter(vol_name = volume_name)
+        vols = models.Volume.objects.filter(vol_name = volume_name)
         if vols.count() == 1:
             volume = vols[0]
             add = True
         else:
             add = False
-            volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
+            volume = models.Volume(vol_name = volume_name, vol_fstype = volume_fstype)
             volume.save()
 
-            mp = MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
+            mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
             mp.save()
         self.volume = volume
 
-        grpnum = DiskGroup.objects.filter(group_type = group_type, group_volume = volume).count()
+        grpnum = models.DiskGroup.objects.filter(group_type = group_type, group_volume = volume).count()
         if grpnum > 0:
-            grp = DiskGroup(group_name=volume_name + group_type + str(grpnum), group_type = group_type, group_volume = volume)
+            grp = models.DiskGroup(group_name=volume_name + group_type + str(grpnum), group_type = group_type, group_volume = volume)
         else:
-            grp = DiskGroup(group_name=volume_name + group_type, group_type = group_type, group_volume = volume)
+            grp = models.DiskGroup(group_name=volume_name + group_type, group_type = group_type, group_volume = volume)
         grp.save()
 
         for diskname in disk_list:
-            diskobj = Disk(disk_name = diskname, disk_disks = diskname,
+            diskobj = models.Disk(disk_name = diskname, disk_disks = diskname,
                            disk_description = ("Member of %s %s" %
                                               (volume_name, group_type)),
                            disk_group = grp)
@@ -297,12 +298,12 @@ class VolumeWizardForm(forms.Form):
                     group_type='log mirror'
                 else:
                     group_type=grp_type
-                grp = DiskGroup(group_name=volume.vol_name+grp_type, \
+                grp = models.DiskGroup(group_name=volume.vol_name+grp_type, \
                         group_type=group_type , group_volume = volume)
                 grp.save()
 
                 for diskname in grouped[grp_type]:
-                    diskobj = Disk(disk_name = diskname,
+                    diskobj = models.Disk(disk_name = diskname,
                                    disk_disks = diskname,
                                    disk_description = ("Member of %s %s" %
                                                       (volume.vol_name, group_type)),
@@ -329,7 +330,7 @@ class VolumeImportForm(forms.Form):
     def _populate_disk_choices(self):
     
         diskchoices = dict()
-        used_disks = [i[0] for i in Disk.objects.all().values_list('disk_name').distinct()]
+        used_disks = [i[0] for i in models.Disk.objects.all().values_list('disk_name').distinct()]
     
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
@@ -367,7 +368,7 @@ class VolumeImportForm(forms.Form):
     def clean(self):
         cleaned_data = self.cleaned_data
         volume_name = cleaned_data.get("volume_name")
-        if Volume.objects.filter(vol_name = volume_name).count() > 0:
+        if models.Volume.objects.filter(vol_name = volume_name).count() > 0:
             msg = _(u"You already have a volume with same name")
             self._errors["volume_name"] = self.error_class([msg])
             del cleaned_data["volume_name"]
@@ -395,18 +396,18 @@ class VolumeImportForm(forms.Form):
         volume_fstype = self.cleaned_data['volume_fstype']
         disk_list = self.cleaned_data['volume_disks']
 
-        volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
+        volume = models.Volume(vol_name = volume_name, vol_fstype = volume_fstype)
         volume.save()
         self.volume = volume
 
-        mp = MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
+        mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
         mp.save()
 
-        grp = DiskGroup(group_name= volume_name, group_type = '', group_volume = volume)
+        grp = models.DiskGroup(group_name= volume_name, group_type = '', group_volume = volume)
         grp.save()
 
         diskname = disk_list
-        diskobj = Disk(disk_name = diskname, disk_disks = diskname,
+        diskobj = models.Disk(disk_name = diskname, disk_disks = diskname,
                        disk_description = ("Member of %s" %
                                           (volume_name)),
                        disk_group = grp)
@@ -427,7 +428,7 @@ class VolumeAutoImportForm(forms.Form):
     def _populate_disk_choices(self):
     
         diskchoices = dict()
-        used_disks = [i[0] for i in Disk.objects.all().values_list('disk_name').distinct()]
+        used_disks = [i[0] for i in models.Disk.objects.all().values_list('disk_name').distinct()]
     
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
@@ -469,7 +470,7 @@ class VolumeAutoImportForm(forms.Form):
     def clean(self):
         cleaned_data = self.cleaned_data
         volume_name = cleaned_data.get("volume_name")
-        if Volume.objects.filter(vol_name = volume_name).count() > 0:
+        if models.Volume.objects.filter(vol_name = volume_name).count() > 0:
             msg = _(u"You already have a volume with same name")
             self._errors["volume_disks"] = self.error_class([msg])
             del cleaned_data["volume_disks"]
@@ -526,21 +527,21 @@ class VolumeAutoImportForm(forms.Form):
             if not notifier().zfs_import(vol['label']):
                 assert False, "Could not run zfs import"
             
-        volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
+        volume = models.Volume(vol_name = volume_name, vol_fstype = volume_fstype)
         volume.save()
         self.volume = volume
 
-        mp = MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
+        mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
         mp.save()
 
         if vol['type'] == 'zfs':
             notifier().zfs_sync_datasets(volume.id)
 
-        grp = DiskGroup(group_name= volume_name, group_type = group_type, group_volume = volume)
+        grp = models.DiskGroup(group_name= volume_name, group_type = group_type, group_volume = volume)
         grp.save()
 
         for diskname in vol['disks']:
-            diskobj = Disk(disk_name = diskname, disk_disks = diskname,
+            diskobj = models.Disk(disk_name = diskname, disk_disks = diskname,
                            disk_description = ("Member of %s %s" %
                                               (volume_name, group_type)),
                            disk_group = grp)
@@ -555,12 +556,12 @@ class VolumeAutoImportForm(forms.Form):
                     group_type='log mirror'
                 else:
                     group_type=grp_type
-                grp = DiskGroup(group_name=volume.vol_name+grp_type, \
+                grp = models.DiskGroup(group_name=volume.vol_name+grp_type, \
                         group_type=group_type , group_volume = volume)
                 grp.save()
 
                 for diskname in grouped[grp_type]:
-                    diskobj = Disk(disk_name = diskname, disk_disks = diskname,
+                    diskobj = models.Disk(disk_name = diskname, disk_disks = diskname,
                               disk_description = ("Member of %s %s" %
                                 (volume.vol_name, grp_type)), disk_group = grp)
                     diskobj.save()
@@ -575,7 +576,7 @@ class VolumeAutoImportForm(forms.Form):
 # to), but don't allow editing.
 class DiskFormPartial(ModelForm):
     class Meta:
-        model = Disk
+        model = models.Disk
     def __init__(self, *args, **kwargs):
         super(DiskFormPartial, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
@@ -597,13 +598,13 @@ class ZFSDataset_CreateForm(Form):
         self.fields['dataset_volid'].choices = self._populate_volume_choices()
     def _populate_volume_choices(self):
         volumechoices = dict()
-        volumes = Volume.objects.filter(vol_fstype='ZFS')
+        volumes = models.Volume.objects.filter(vol_fstype='ZFS')
         for volume in volumes:
             volumechoices[volume.id] = volume.vol_name
         return volumechoices.items()
     def clean(self):
         cleaned_data = self.cleaned_data
-        volume_name = Volume.objects.get(id=cleaned_data.get("dataset_volid")).vol_name.__str__()
+        volume_name = models.Volume.objects.get(id=cleaned_data.get("dataset_volid")).vol_name.__str__()
         full_dataset_name = "%s/%s" % (volume_name, cleaned_data.get("dataset_name").__str__())
         if len(notifier().list_zfs_datasets(path=full_dataset_name)) > 0:
             msg = _(u"You already have a dataset with the same name")
@@ -630,16 +631,16 @@ class ZFSDataset_CreateForm(Form):
         del self.cleaned_data
     dataset_volid = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict),  label=_('Volume from which this dataset will be created on'))
     dataset_name = forms.CharField(max_length = 128, label = _('Dataset Name'))
-    dataset_compression = forms.ChoiceField(choices=ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
-    dataset_atime = forms.ChoiceField(choices=ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label=_('Enable atime'))
+    dataset_compression = forms.ChoiceField(choices=choices.ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
+    dataset_atime = forms.ChoiceField(choices=choices.ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label=_('Enable atime'))
     dataset_refquota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset'), help_text=_('0=Unlimited; example: 1g'))
     dataset_quota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset and all children'), help_text=_('0=Unlimited; example: 1g'))
     dataset_refreserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset'), help_text=_('0=None; example: 1g'))
     dataset_reserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset and all children'), help_text=_('0=None; example: 1g'))
 
 class ZFSDataset_EditForm(Form):
-    dataset_compression = forms.ChoiceField(choices=ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
-    dataset_atime = forms.ChoiceField(choices=ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label=_('Enable atime'))
+    dataset_compression = forms.ChoiceField(choices=choices.ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
+    dataset_atime = forms.ChoiceField(choices=choices.ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label=_('Enable atime'))
     dataset_refquota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset'), help_text=_('0=Unlimited; example: 1g'))
     dataset_quota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset and all children'), help_text=_('0=Unlimited; example: 1g'))
     dataset_refreserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset'), help_text=_('0=None; example: 1g'))
@@ -692,8 +693,8 @@ class ZFSDataset_EditForm(Form):
         del self.cleaned_data
 
 class ZFSVolume_EditForm(Form):
-    volume_compression = forms.ChoiceField(choices=ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
-    volume_atime = forms.ChoiceField(choices=ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label=_('Enable atime'))
+    volume_compression = forms.ChoiceField(choices=choices.ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
+    volume_atime = forms.ChoiceField(choices=choices.ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label=_('Enable atime'))
     volume_refquota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset'), help_text=_('0=Unlimited; example: 1g'))
     volume_refreserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset'), help_text=_('0=None; example: 1g'))
 
@@ -773,10 +774,10 @@ class MountPointAccessForm(Form):
 
 class PeriodicSnapForm(ModelForm):
     class Meta:
-        model = Task 
+        model = models.Task 
         widgets = {
-            'task_byweekday': CheckboxSelectMultiple(choices=WEEKDAYS_CHOICES)
-            #'task_bymonth': CheckboxSelectMultiple(choices=MONTHS_CHOICES)
+            'task_byweekday': CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES)
+            #'task_bymonth': CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES)
         }
     def __init__(self, *args, **kwargs):
         if len(args) > 0 and isinstance(args[0], QueryDict):
@@ -794,7 +795,7 @@ class PeriodicSnapForm(ModelForm):
                                            second=int(search.group("sec")))
             args = (new,) + args[1:]
         super(PeriodicSnapForm, self).__init__(*args, **kwargs)
-        #self.fields['task_repeat_unit'].widget = forms.Select(choices=RepeatUnit_Choices, attrs={'onChange': 'taskrepeat_checkings();'})
+        #self.fields['task_repeat_unit'].widget = forms.Select(choices=choices.RepeatUnit_Choices, attrs={'onChange': 'taskrepeat_checkings();'})
         self.fields['task_repeat_unit'].widget = forms.HiddenInput()
 
     def clean(self):
@@ -857,8 +858,8 @@ class CloneSnapshotForm(Form):
                 zfs = self.fields['cs_snapshot'].initial.split('/')[0]
             else:
                 zfs = self.fields['cs_snapshot'].initial.split('@')[0]
-            volume = Volume.objects.get(vol_name=zfs)
-            mp = MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (self.cleaned_data['cs_name']), mp_options='noauto', mp_ischild=True)
+            volume = models.Volume.objects.get(vol_name=zfs)
+            mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (self.cleaned_data['cs_name']), mp_options='noauto', mp_ischild=True)
             mp.save()
         return retval
 
@@ -875,7 +876,7 @@ class DiskReplacementForm(forms.Form):
     def _populate_disk_choices(self):
     
         diskchoices = dict()
-        used_disks = [i[0] for i in Disk.objects.exclude(disk_name=self.disk.disk_name).values_list('disk_name').distinct()]
+        used_disks = [i[0] for i in models.Disk.objects.exclude(disk_name=self.disk.disk_name).values_list('disk_name').distinct()]
     
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
@@ -912,3 +913,31 @@ class DiskReplacementForm(forms.Form):
         choices = diskchoices.items()
         choices.sort()
         return choices
+
+class ReplicationForm(ModelForm):
+    remote_hostname = forms.CharField(_("Remote hostname"),)
+    remote_hostkey = forms.CharField(_("Remote hostkey"),widget=forms.Textarea())
+    class Meta:
+        model = models.Replication
+        exclude = ('repl_lastsnapshot','repl_remote')
+    def __init__(self, *args, **kwargs):
+        repl = kwargs.get('instance', None)
+        super(ReplicationForm, self).__init__(*args, **kwargs)
+        if repl != None and repl.id != None:
+            self.fields['remote_hostname'].initial = repl.repl_remote.ssh_remote_hostname
+            self.fields['remote_hostkey'].initial = repl.repl_remote.ssh_remote_hostkey
+    def save(self):
+        if self.instance.id == None:
+            r = models.ReplRemote()
+        else:
+            r = self.instance.repl_remote
+        r.ssh_remote_hostname = self.cleaned_data.get("remote_hostname")
+        r.ssh_remote_hostkey = self.cleaned_data.get("remote_hostkey")
+        r.save()
+        self.instance.repl_remote = r
+        rv = super(ReplicationForm, self).save()
+        return rv
+
+class ReplRemoteForm(ModelForm):
+    class Meta:
+        model = models.ReplRemote

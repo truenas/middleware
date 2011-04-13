@@ -53,6 +53,7 @@ def home(request):
     mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     en_dataset = MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
     zfsnap_list = notifier().zfs_snapshot_list()
+    zfsrepl_list = Replication.objects.select_related().all()
     task_list = Task.objects.order_by("-id").all()
     variables = RequestContext(request, {
         'focused_tab': request.GET.get("tab", None),
@@ -60,6 +61,7 @@ def home(request):
         'mp_list': mp_list,
         'task_list': task_list,
         'zfsnap_list': zfsnap_list,
+        'zfsrepl_list': zfsrepl_list,
     })
     return render_to_response('storage/index2.html', variables)
 
