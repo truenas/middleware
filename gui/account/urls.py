@@ -26,7 +26,7 @@
 # $FreeBSD$
 #####################################################################
 
-from django.conf.urls.defaults import *
+from django.conf.urls.defaults import patterns, url
 from django.contrib.auth.views import login, logout
 
 # Active FreeNAS URLs
