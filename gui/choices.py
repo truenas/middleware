@@ -28,7 +28,6 @@
 
 from os import popen
 from django.utils.translation import ugettext as _
-import re
 import sqlite3
 import freenasUI.settings
 
