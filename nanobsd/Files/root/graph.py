@@ -7,7 +7,11 @@ rrds = []
 for file in os.listdir(rrd_dir):
     if file.startswith("."):
         continue
-    octets = re.search(r'^(?<=octets-)[a-z0-9]+', file)
+    try:
+        octets = re.search(r'^(?<=octets-)[a-z0-9]+', file)
+    except AttributeError:
+        os.remove(os.path.join(rrd_dir, file))
+        continue
     if octets:
         filename_md5 = "." + file
         old_md5 = None
@@ -384,7 +388,11 @@ if os.path.isdir(rrd_dir):
     for file in os.listdir(rrd_dir):
         if file.startswith("."):
             continue
-        volname = re.search(r'(?<=df-mnt-)(.*)\.rrd', file).group(1)
+        try:
+            volname = re.search(r'(?<=df-mnt-)(.*)\.rrd', file).group(1)
+        except AttributeError:
+            os.remove(os.path.join(rrd_dir, file))
+            continue
         filename_md5 = "." + file
         old_md5 = None
         if os.path.exists(os.path.join(rrd_dir, filename_md5)):
