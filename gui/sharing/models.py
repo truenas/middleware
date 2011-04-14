@@ -30,7 +30,7 @@ from django.db import models
 from django.utils.translation import ugettext as _
 
 from storage.models import MountPoint as MountPoint 
-from freenasUI.choices import *
+from freenasUI import choices
 from freeadmin.models import Model
 
 mountpoint_limiter = { 'mp_path__startswith': '/mnt/' }
@@ -59,7 +59,7 @@ class CIFS_Share(Model):
             verbose_name = _("Show Hidden Files"))
     cifs_guest = models.CharField(
             max_length=120, 
-            choices=whoChoices(), 
+            choices=choices.whoChoices(), 
             default="www", 
             verbose_name = _("Guest Account"), 
             help_text = _("Use this option to override the username ('ftp' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login.")
@@ -151,7 +151,7 @@ class AFP_Share(Model):
             )
     afp_discoverymode = models.CharField(
             max_length=120, 
-            choices=DISKDISCOVERY_CHOICES, 
+            choices=choices.DISKDISCOVERY_CHOICES, 
             default='Default', 
             verbose_name = _("Disk discovery mode"),
             help_text = _("Note! Selecting 'Time Machine' on multiple shares will may cause unpredictable behavior in MacOS.  Default mode exports the volume as a data volume for users.")

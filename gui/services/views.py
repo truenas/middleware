@@ -30,63 +30,62 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect
 
-from freenasUI.services.forms import * 
-from freenasUI.services.models import services as Services 
+from freenasUI.services import models
 from freenasUI.middleware.notifier import notifier
 
 def home(request):
 
     try:
-        cifs = CIFS.objects.order_by("-id")[0]
+        cifs = models.CIFS.objects.order_by("-id")[0]
     except IndexError:
         cifs = None
 
     try:
-        afp = AFP.objects.order_by("-id")[0]
+        afp = models.AFP.objects.order_by("-id")[0]
     except IndexError:
         afp = None
 
     try:
-        nfs = NFS.objects.order_by("-id")[0]
+        nfs = models.NFS.objects.order_by("-id")[0]
     except IndexError:
         nfs = None
 
     try:
-        dynamicdns = DynamicDNS.objects.order_by("-id")[0]
+        dynamicdns = models.DynamicDNS.objects.order_by("-id")[0]
     except IndexError:
         dynamicdns = None
 
     try:
-        snmp = SNMP.objects.order_by("-id")[0]
+        snmp = models.SNMP.objects.order_by("-id")[0]
     except IndexError:
         snmp = None
 
     try:
-        ftp = FTP.objects.order_by("-id")[0]
+        ftp = models.FTP.objects.order_by("-id")[0]
     except IndexError:
         ftp = None
 
     try:
-        tftp = TFTP.objects.order_by("-id")[0]
+        tftp = models.TFTP.objects.order_by("-id")[0]
     except IndexError:
         tftp = None
 
     try:
-        ssh = SSH.objects.order_by("-id")[0]
+        ssh = models.SSH.objects.order_by("-id")[0]
     except IndexError:
         ssh = None
 
     try:
-        activedirectory = ActiveDirectory.objects.order_by("-id")[0]
+        activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
     except IndexError:
         activedirectory = None
 
     try:
-        ldap = LDAP.objects.order_by("-id")[0]
+        ldap = models.LDAP.objects.order_by("-id")[0]
     except IndexError:
         ldap = None
 
-    srv = Services.objects.all()
+    srv = models.services.objects.all()
     variables = RequestContext(request, {
         'srv': srv,
         'cifs': cifs,
@@ -108,7 +107,7 @@ def home(request):
     return render_to_response('services/index2.html', variables)
 
 def iscsi(request):
-    gconfid = iSCSITargetGlobalConfiguration.objects.all().order_by("-id")[0].id
+    gconfid = models.iSCSITargetGlobalConfiguration.objects.all().order_by("-id")[0].id
     variables = RequestContext(request, {
         'focus_tab' : request.GET.get('tab',''),
         'gconfid': gconfid,
@@ -116,7 +115,7 @@ def iscsi(request):
     return render_to_response('services/iscsi.html', variables)
 
 def iscsi_targets(request):
-    target_list = iSCSITarget.objects.all()
+    target_list = models.iSCSITarget.objects.all()
 
     variables = RequestContext(request, {
         'target_list': target_list,
@@ -124,7 +123,7 @@ def iscsi_targets(request):
     return render_to_response('services/iscsi_targets.html', variables)
 
 def iscsi_assoctargets(request, objtype=None):
-    asctarget_list = iSCSITargetToExtent.objects.all()
+    asctarget_list = models.iSCSITargetToExtent.objects.all()
 
     variables = RequestContext(request, {
         'asctarget_list': asctarget_list,
@@ -132,7 +131,7 @@ def iscsi_assoctargets(request, objtype=None):
     return render_to_response('services/iscsi_assoctargets.html', variables)
 
 def iscsi_extents(request, objtype=None):
-    extent_file_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='File')
+    extent_file_list = models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='File')
 
     variables = RequestContext(request, {
         'extent_file_list': extent_file_list,
@@ -140,7 +139,7 @@ def iscsi_extents(request, objtype=None):
     return render_to_response('services/iscsi_extents.html', variables)
 
 def iscsi_dextents(request):
-    extent_device_list = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
+    extent_device_list = models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
 
     variables = RequestContext(request, {
         'extent_device_list': extent_device_list,
@@ -148,7 +147,7 @@ def iscsi_dextents(request):
     return render_to_response('services/iscsi_dextents.html', variables)
 
 def iscsi_auth(request):
-    target_auth_list = iSCSITargetAuthCredential.objects.all()
+    target_auth_list = models.iSCSITargetAuthCredential.objects.all()
 
     variables = RequestContext(request, {
         'target_auth_list': target_auth_list,
@@ -156,7 +155,7 @@ def iscsi_auth(request):
     return render_to_response('services/iscsi_auth.html', variables)
 
 def iscsi_authini(request):
-    auth_initiator_list = iSCSITargetAuthorizedInitiator.objects.all()
+    auth_initiator_list = models.iSCSITargetAuthorizedInitiator.objects.all()
 
     variables = RequestContext(request, {
         'auth_initiator_list': auth_initiator_list,
@@ -164,7 +163,7 @@ def iscsi_authini(request):
     return render_to_response('services/iscsi_authini.html', variables)
 
 def iscsi_portals(request):
-    iscsiportal_list = iSCSITargetPortal.objects.all()
+    iscsiportal_list = models.iSCSITargetPortal.objects.all()
 
     variables = RequestContext(request, {
         'iscsiportal_list': iscsiportal_list,
@@ -197,9 +196,9 @@ def servicesToggleView(request, formname):
         opposing_service = "activedirectory"
     if changing_service == "activedirectory":
         opposing_service = "ldap"
-    svc_entry = Services.objects.get(srv_service=changing_service)
+    svc_entry = models.services.objects.get(srv_service=changing_service)
     if opposing_service:
-        opp_svc_entry = Services.objects.get(srv_service=opposing_service)
+        opp_svc_entry = models.services.objects.get(srv_service=opposing_service)
     # Turning things off is always ok
     if svc_entry.srv_enable:
         svc_entry.srv_enable = 0

@@ -31,22 +31,22 @@ from django.template import RequestContext
 from django.http import HttpResponse
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
+from django.db import models as dmodels
 
 #TODO remove import *
 from dojango.util import to_dojo_data
-from freenasUI.services.models import *
-from freenasUI.storage.forms import * 
-from freenasUI.storage.models import * 
+from freenasUI.storage import forms
+from freenasUI.storage import models
 from freenasUI.middleware.notifier import notifier
 
 ## Disk section
 
 def home(request):
-    mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
-    en_dataset = MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
+    mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
+    en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
     zfsnap_list = notifier().zfs_snapshot_list()
-    zfsrepl_list = Replication.objects.select_related().all()
-    task_list = Task.objects.order_by("-id").all()
+    zfsrepl_list = models.Replication.objects.select_related().all()
+    task_list = models.Task.objects.order_by("-id").all()
     variables = RequestContext(request, {
         'focused_tab': request.GET.get("tab", None),
         'en_dataset' : en_dataset,
@@ -61,12 +61,10 @@ def wizard(request):
 
     if request.method == "POST":
 
-        form = VolumeWizardForm(request.POST)
+        form = forms.VolumeWizardForm(request.POST)
         if form.is_valid():
             form.done(request)
-
             return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume") + " " + _("successfully added") + "."}), mimetype="application/json")
-            #return render_to_response('storage/wizard_ok.html')
         else:
 
             if 'volume_disks' in request.POST:
@@ -74,7 +72,7 @@ def wizard(request):
             else:
                 disks = None
     else:
-        form = VolumeWizardForm()
+        form = forms.VolumeWizardForm()
         disks = []
     variables = RequestContext(request, {
         'form': form,
@@ -86,12 +84,10 @@ def volimport(request):
 
     if request.method == "POST":
 
-        form = VolumeImportForm(request.POST)
+        form = forms.VolumeImportForm(request.POST)
         if form.is_valid():
             form.done(request)
-
             return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume") + " " + _("successfully added") + "."}), mimetype="application/json")
-            #return render_to_response('storage/wizard_ok.html')
         else:
 
             if 'volume_disks' in request.POST:
@@ -99,7 +95,7 @@ def volimport(request):
             else:
                 disks = None
     else:
-        form = VolumeImportForm()
+        form = forms.VolumeImportForm()
         disks = []
     variables = RequestContext(request, {
         'form': form,
@@ -111,12 +107,10 @@ def volautoimport(request):
 
     if request.method == "POST":
 
-        form = VolumeAutoImportForm(request.POST)
+        form = forms.VolumeAutoImportForm(request.POST)
         if form.is_valid():
             form.done(request)
-
             return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume") + " " + _("successfully added") + "."}), mimetype="application/json")
-            #return render_to_response('storage/wizard_ok.html')
         else:
 
             if 'volume_disks' in request.POST:
@@ -124,7 +118,7 @@ def volautoimport(request):
             else:
                 disks = None
     else:
-        form = VolumeAutoImportForm()
+        form = forms.VolumeAutoImportForm()
         disks = []
     variables = RequestContext(request, {
         'form': form,
@@ -134,15 +128,15 @@ def volautoimport(request):
 
 def disks_datagrid(request, vid):
 
-    names = [x.verbose_name for x in Disk._meta.fields]
-    _n = [x.name for x in Disk._meta.fields]
+    names = [x.verbose_name for x in models.Disk._meta.fields]
+    _n = [x.name for x in models.Disk._meta.fields]
     """
     Nasty hack to calculate the width of the datagrid column
     dojo DataGrid width="auto" doesnt work correctly and dont allow
          column resize with mouse
     """
     width = []
-    for x in Disk._meta.fields:
+    for x in models.Disk._meta.fields:
         val = 8
         for letter in x.verbose_name:
             if letter.isupper():
@@ -164,7 +158,7 @@ def disks_datagrid(request, vid):
 
 def disks_datagrid_json(request, vid):
 
-    volume = Volume.objects.get(pk=vid)
+    volume = models.Volume.objects.get(pk=vid)
     disks = []
     for dg in volume.diskgroup_set.all():
         for d in dg.disk_set.all():
@@ -191,7 +185,7 @@ def disks_datagrid_json(request, vid):
         ret['edit'] = simplejson.dumps(ret['edit'])
 
         for f in data._meta.fields:
-            if isinstance(f, models.ImageField) or isinstance(f, models.FileField): # filefields can't be json serialized
+            if isinstance(f, dmodels.ImageField) or isinstance(f, dmodels.FileField): # filefields can't be json serialized
                 ret[f.attname] = unicode(getattr(data, f.attname))
             else:
                 ret[f.attname] = getattr(data, f.attname) #json_encode() this?
@@ -212,13 +206,13 @@ def disks_datagrid_json(request, vid):
         complete.append(ret)
 
     return HttpResponse(simplejson.dumps(
-        to_dojo_data(complete, identifier=Disk._meta.pk.name, num_rows=len(disks))
+        to_dojo_data(complete, identifier=models.Disk._meta.pk.name, num_rows=len(disks))
     ))
 
 def volume_disks(request, volume_id):
     # mp = MountPoint.objects.get(mp_volume = volume_id)
-    volume = Volume.objects.get(id = volume_id)
-    disk_list = Disk.objects.filter(disk_group__group_volume = volume_id)
+    volume = models.Volume.objects.get(id = volume_id)
+    disk_list = models.Disk.objects.filter(disk_group__group_volume = volume_id)
     variables = RequestContext(request, {
         'focused_tab' : 'storage',
         'volume': volume,
@@ -227,15 +221,15 @@ def volume_disks(request, volume_id):
     return render_to_response('storage/volume_detail.html', variables)
 
 def dataset_create(request):
-    mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
+    mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     defaults = { 'dataset_compression' : 'inherit', 'dataset_atime' : 'inherit', }
-    dataset_form = ZFSDataset_CreateForm(initial=defaults)
+    dataset_form = forms.ZFSDataset_CreateForm(initial=defaults)
     if request.method == 'POST':
-        dataset_form = ZFSDataset_CreateForm(request.POST)
+        dataset_form = forms.ZFSDataset_CreateForm(request.POST)
         if dataset_form.is_valid():
             props = {}
             cleaned_data = dataset_form.cleaned_data
-            volume = Volume.objects.get(id=cleaned_data.get('dataset_volid'))
+            volume = models.Volume.objects.get(id=cleaned_data.get('dataset_volid'))
             volume_name = volume.vol_name
             dataset_name = "%s/%s" % (volume_name, cleaned_data.get('dataset_name'))
             dataset_compression = cleaned_data.get('dataset_compression')
@@ -258,10 +252,9 @@ def dataset_create(request):
                 props['refreservation']=refreservation.__str__()
             errno, errmsg = notifier().create_zfs_dataset(path=dataset_name.__str__(), props=props)
             if errno == 0:
-                mp = MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (dataset_name), mp_options='noauto', mp_ischild=True)
+                mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (dataset_name), mp_options='noauto', mp_ischild=True)
                 mp.save()
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset") + " " + _("successfully added") + "."}), mimetype="application/json")
-                #return render_to_response('storage/dataset_ok.html')
             else:
                 dataset_form.set_error(errmsg)
     variables = RequestContext(request, {
@@ -272,13 +265,12 @@ def dataset_create(request):
     return render_to_response('storage/datasets2.html', variables)
 
 def dataset_edit(request, object_id):
-    mp = MountPoint.objects.get(pk=object_id)
-    dataset_form = ZFSDataset_EditForm(mp=mp)
+    mp = models.MountPoint.objects.get(pk=object_id)
+    dataset_form = forms.ZFSDataset_EditForm(mp=mp)
     if request.method == 'POST':
-        dataset_form = ZFSDataset_EditForm(request.POST, mp=mp)
+        dataset_form = forms.ZFSDataset_EditForm(request.POST, mp=mp)
         if dataset_form.is_valid():
             dataset_name = mp.mp_path.replace("/mnt/","")
-
             if dataset_form.cleaned_data["dataset_quota"] == "0":
                 dataset_form.cleaned_data["dataset_quota"] = "none"
             if dataset_form.cleaned_data["dataset_refquota"] == "0":
@@ -309,10 +301,10 @@ def dataset_edit(request, object_id):
     return render_to_response('storage/dataset_edit.html', variables)
 
 def zfsvolume_edit(request, object_id):
-    mp = MountPoint.objects.get(pk=object_id)
-    volume_form = ZFSVolume_EditForm(mp=mp)
+    mp = models.MountPoint.objects.get(pk=object_id)
+    volume_form = forms.ZFSVolume_EditForm(mp=mp)
     if request.method == 'POST':
-        volume_form = ZFSVolume_EditForm(request.POST, mp=mp)
+        volume_form = forms.ZFSVolume_EditForm(request.POST, mp=mp)
         if volume_form.is_valid():
             volume = mp.mp_volume
             volume_name = volume.vol_name
@@ -344,17 +336,16 @@ def zfsvolume_edit(request, object_id):
     return render_to_response('storage/volume_edit.html', variables)
 
 def mp_permission(request, object_id):
-    mp = MountPoint.objects.get(id = object_id)
-    mp_list = MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
+    mp = models.MountPoint.objects.get(id = object_id)
+    mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     if request.method == 'POST':
-        form = MountPointAccessForm(request.POST)
+        form = forms.MountPointAccessForm(request.POST)
         if form.is_valid():
             mp_path=mp.mp_path.__str__()
             form.commit(path=mp_path)
             return HttpResponse(simplejson.dumps({"error": False, "message": "Mount Point permissions successfully updated."}), mimetype="application/json")
-            #return HttpResponseRedirect('/storage/')
     else:
-        form = MountPointAccessForm(initial={'path':mp.mp_path})
+        form = forms.MountPointAccessForm(initial={'path':mp.mp_path})
     variables = RequestContext(request, {
         'mp': mp,
         'mp_list': mp_list,
@@ -363,7 +354,7 @@ def mp_permission(request, object_id):
     return render_to_response('storage/permission2.html', variables)
 
 def dataset_delete(request, object_id):
-    obj = MountPoint.objects.get(id=object_id)
+    obj = models.MountPoint.objects.get(id=object_id)
     if request.method == 'POST':
         retval = notifier().destroy_zfs_dataset(path = obj.mp_path[5:].__str__())
         if retval == '':
@@ -409,27 +400,27 @@ def periodicsnap(request):
 
     if request.method == "POST":
 
-        form = PeriodicSnapForm(request.POST)
+        form = forms.PeriodicSnapForm(request.POST)
         if form.is_valid():
             form.save()
 
             return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot") + " " + _("successfully added") + "."}), mimetype="application/json")
     else:
-        form = PeriodicSnapForm()
+        form = forms.PeriodicSnapForm()
     variables = RequestContext(request, {
         'form': form,
-        'extra_js': Task._admin.extra_js,
+        'extra_js': models.Task._admin.extra_js,
     })
     return render_to_response('storage/periodicsnap.html', variables)
 
 def manualsnap(request, path):
     if request.method == "POST":
-        form = ManualSnapshotForm(request.POST)
+        form = forms.ManualSnapshotForm(request.POST)
         if form.is_valid():
             form.commit(path)
             return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully taken")}), mimetype="application/json")
     else:
-        form = ManualSnapshotForm()
+        form = forms.ManualSnapshotForm()
     variables = RequestContext(request, {
         'form': form,
         'path': path,
@@ -439,7 +430,7 @@ def manualsnap(request, path):
 def clonesnap(request, snapshot):
     initial = { 'cs_snapshot' : snapshot }
     if request.method == "POST":
-        form = CloneSnapshotForm(request.POST, initial=initial)
+        form = forms.CloneSnapshotForm(request.POST, initial=initial)
         if form.is_valid():
             retval = form.commit()
             if retval == '':
@@ -447,7 +438,7 @@ def clonesnap(request, snapshot):
             else:
                 return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
     else:
-        form = CloneSnapshotForm(initial=initial)
+        form = forms.CloneSnapshotForm(initial=initial)
     variables = RequestContext(request, {
         'form': form,
         'snapshot': snapshot,
@@ -456,15 +447,15 @@ def clonesnap(request, snapshot):
 
 def disk_replacement(request, vid, object_id):
 
-    volume = Volume.objects.get(pk=vid)
-    fromdisk = Disk.objects.get(pk=object_id)
+    volume = models.Volume.objects.get(pk=vid)
+    fromdisk = models.Disk.objects.get(pk=object_id)
 
     if request.method == "POST":
-        form = DiskReplacementForm(request.POST, disk=fromdisk)
+        form = forms.DiskReplacementForm(request.POST, disk=fromdisk)
         if form.is_valid():
             devname = form.cleaned_data['volume_disks']
             if devname != fromdisk.disk_name:
-                disk = Disk()
+                disk = models.Disk()
                 disk.disk_disks = devname
                 disk.disk_name = devname
                 disk.disk_group = fromdisk.disk_group
@@ -482,9 +473,9 @@ def disk_replacement(request, vid, object_id):
             if rv == 0:
                 if devname != fromdisk.disk_name:
                     if volume.vol_fstype == 'ZFS':
-                        dg = DiskGroup.objects.filter(group_volume=volume,group_type='detached')
+                        dg = models.DiskGroup.objects.filter(group_volume=volume,group_type='detached')
                         if dg.count() == 0:
-                            dg = DiskGroup()
+                            dg = models.DiskGroup()
                             dg.group_volume = volume
                             dg.group_name = "%sdetached" % volume.vol_name
                             dg.group_type = 'detached'
@@ -502,7 +493,7 @@ def disk_replacement(request, vid, object_id):
                 return HttpResponse(simplejson.dumps({"error": True, "message": _("Some error ocurried.")}), mimetype="application/json")
 
     else:
-        form = DiskReplacementForm(disk=fromdisk)
+        form = forms.DiskReplacementForm(disk=fromdisk)
     variables = RequestContext(request, {
         'form': form,
         'vid': vid,
@@ -513,13 +504,13 @@ def disk_replacement(request, vid, object_id):
 
 def disk_detach(request, vid, object_id):
 
-    disk = Disk.objects.get(pk=object_id)
+    disk = models.Disk.objects.get(pk=object_id)
 
     if request.method == "POST":
         notifier().zfs_detach_disk(vid, object_id)
         dg = disk.disk_group
         disk.delete()
-        if Disk.objects.filter(disk_group=dg).count() == 0:
+        if models.Disk.objects.filter(disk_group=dg).count() == 0:
             dg.delete()
         return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk detach has been successfully done.")}), mimetype="application/json")
 

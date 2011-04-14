@@ -256,8 +256,8 @@
     <strong>{% trans "Create Periodic Snapshot" %}</strong>
 </div>
 <h5>
-    {% if psnap_list %}
-    {% trans "Periodic Snapshot Schedule" %}: <strong>{{ psnap_list|length }}</strong>
+    {% if task_list %}
+    {% trans "Periodic Snapshot Schedule" %}: <strong>{{ task_list|length }}</strong>
     {% else %}
 
     {% trans "There are no scheduled snapshots." %}

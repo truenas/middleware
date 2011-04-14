@@ -29,7 +29,7 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from freenasUI.choices import *
+from freenasUI import choices
 from freeadmin.models import Model
 from storage.models import MountPoint, Volume
    
@@ -57,7 +57,7 @@ class services(Model):
 class CIFS(Model):
     cifs_srv_authmodel = models.CharField(
             max_length=10,
-            choices=CIFSAUTH_CHOICES,
+            choices=choices.CIFSAUTH_CHOICES,
             verbose_name=_("Authentication Model"),
             help_text=_("Using Active Directory or LDAP authentication will supersede this option"),
             )
@@ -78,19 +78,19 @@ class CIFS(Model):
             )
     cifs_srv_doscharset = models.CharField(
             max_length=120, 
-            choices=DOSCHARSET_CHOICES, 
+            choices=choices.DOSCHARSET_CHOICES, 
             default = "CP437", 
             verbose_name=_("DOS charset")
             )
     cifs_srv_unixcharset = models.CharField(
             max_length=120, 
-            choices=UNIXCHARSET_CHOICES, 
+            choices=choices.UNIXCHARSET_CHOICES, 
             default = "UTF-8", 
             verbose_name=_("UNIX charset")
             )
     cifs_srv_loglevel = models.CharField(
             max_length=120, 
-            choices=LOGLEVEL_CHOICES, 
+            choices=choices.LOGLEVEL_CHOICES, 
             default = "Minimum", 
             verbose_name=_("Log level")
             )
@@ -232,7 +232,7 @@ class iSCSITargetGlobalConfiguration(Model):
             )
     iscsi_discoveryauthmethod = models.CharField(
             max_length=120,
-            choices=AUTHMETHOD_CHOICES,
+            choices=choices.AUTHMETHOD_CHOICES,
             default='Auto',
             verbose_name=_("Discovery Auth Method")
             )
@@ -337,7 +337,7 @@ class iSCSITargetGlobalConfiguration(Model):
             )
     iscsi_luc_authmethod = models.CharField(
             max_length=120,
-            choices=AUTHMETHOD_CHOICES,
+            choices=choices.AUTHMETHOD_CHOICES,
             default = "chap",
             verbose_name=_("Controller Auth Method"),
             help_text=_("The method can be accepted in the controller."),
@@ -371,7 +371,7 @@ class iSCSITargetExtent(Model):
             max_length=120,
             verbose_name = _("Extent Type"),
             help_text = _("Type used as extent."),
-            choices=ISCSI_TARGET_EXTENT_TYPE_CHOICES,
+            choices=choices.ISCSI_TARGET_EXTENT_TYPE_CHOICES,
             )
     iscsi_target_extent_path = models.CharField(
             max_length=120,
@@ -529,13 +529,13 @@ class iSCSITarget(Model):
             )
     iscsi_target_type = models.CharField(
             max_length=120,
-            choices=ISCSI_TARGET_TYPE_CHOICES,
+            choices=choices.ISCSI_TARGET_TYPE_CHOICES,
             verbose_name = _("Type"),
             help_text = _("Logical Unit Type mapped to LUN."),
             )
     iscsi_target_flags = models.CharField(
             max_length=120,
-            choices=ISCSI_TARGET_FLAGS_CHOICES,
+            choices=choices.ISCSI_TARGET_FLAGS_CHOICES,
             default='rw',
             verbose_name = _("Target Flags"),
             )
@@ -549,7 +549,7 @@ class iSCSITarget(Model):
             )
     iscsi_target_authtype = models.CharField(
             max_length=120,
-            choices = AUTHMETHOD_CHOICES,
+            choices = choices.AUTHMETHOD_CHOICES,
             default = "Auto",
             verbose_name = _("Auth Method"),
             help_text = _("The method can be accepted by the target. Auto means both none and authentication."),
@@ -616,7 +616,7 @@ class iSCSITargetToExtent(Model):
 class DynamicDNS(Model):
     ddns_provider = models.CharField(
             max_length=120, 
-            choices=DYNDNSPROVIDER_CHOICES, 
+            choices=choices.DYNDNSPROVIDER_CHOICES, 
             default='dyndns', 
             verbose_name = _("Provider")
             )
@@ -724,7 +724,7 @@ class UPS(Model):
             )
     ups_shutdown = models.CharField(
             max_length=120, 
-            choices=UPS_CHOICES, 
+            choices=choices.UPS_CHOICES, 
             default='batt', 
             verbose_name = _("Shutdown mode")
             )
@@ -1018,8 +1018,8 @@ class ActiveDirectory(Model):
             )
     ad_windows_version = models.CharField(
             max_length=120,
-            choices=WindowsVersions,
-            default=WindowsVersions[0][0],
+            choices=choices.WindowsVersions,
+            default=choices.WindowsVersions[0][0],
             verbose_name = _("Windows Version"),
             help_text = _("The version of Microsoft Windows that Active Directory is running.")
             )
@@ -1075,7 +1075,7 @@ class LDAP(Model):
             )
     ldap_pwencryption = models.CharField(
             max_length=120, 
-            choices=PWEncryptionChoices, 
+            choices=choices.PWEncryptionChoices, 
             verbose_name = _("Password Encryption"),
             help_text = _("The password change protocol to use.")
             )

@@ -30,7 +30,7 @@ from django.utils.translation import ugettext as _
 
 from dojango import forms
 from dojango.forms import widgets 
-from freenasUI.sharing.models import *                         
+from freenasUI.sharing import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.freenasldap import FreeNAS_Users
@@ -40,11 +40,11 @@ attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 """ Shares """
 class MountPointForm(ModelForm):
     class Meta:
-        model = MountPoint
+        model = models.MountPoint
 
 class CIFS_ShareForm(ModelForm):
     class Meta:
-        model = CIFS_Share 
+        model = models.CIFS_Share 
     def save(self):
         ret = super(CIFS_ShareForm, self).save()
         notifier().reload("cifs")
@@ -52,7 +52,7 @@ class CIFS_ShareForm(ModelForm):
 
 class AFP_ShareForm(ModelForm):
     class Meta:
-        model = AFP_Share 
+        model = models.AFP_Share 
     def save(self):
         ret = super(AFP_ShareForm, self).save()
         notifier().reload("afp")
@@ -60,7 +60,7 @@ class AFP_ShareForm(ModelForm):
 
 class NFS_ShareForm(ModelForm):
     class Meta:
-        model = NFS_Share 
+        model = models.NFS_Share 
     nfs_maproot_user = forms.ChoiceField(choices=(),
                                          widget = forms.Select(attrs=attrs_dict),
                                          label = _("Maproot User"),

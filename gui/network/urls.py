@@ -26,7 +26,7 @@
 # $FreeBSD$
 #####################################################################
 
-from django.conf.urls.defaults import *
+from django.conf.urls.defaults import patterns, url
 
 urlpatterns = patterns('network.views',
     url(r'^home/$', 'network', name='network_home'),

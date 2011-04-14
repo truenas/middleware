@@ -2,7 +2,7 @@ from django_nav import NavOption
 from django.utils.translation import ugettext as _
 import models
 
-BLACKLIST = ['Disk',]
+BLACKLIST = ['Disk','ReplRemote']
 ICON = u'StorageIcon'
 
 class ViewPeriodic(NavOption):

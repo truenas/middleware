@@ -29,8 +29,8 @@
 from django.utils.translation import ugettext as _
 from django.db import models
 
-from freenasUI.choices import *
-from freenasUI.contrib.IPAddressField import *
+from freenasUI import choices
+from freenasUI.contrib.IPAddressField import IPAddressField, IP4AddressField, IP6AddressField
 from freeadmin.models import Model
 from freenasUI.middleware.notifier import notifier
 
@@ -115,7 +115,7 @@ class Interfaces(Model):
 
     int_v4netmaskbit = models.CharField(
             max_length=3, 
-            choices=v4NetmaskBitList, 
+            choices=choices.v4NetmaskBitList, 
             blank=True, 
             default='',
             verbose_name=_("IPv4 Netmask"),
@@ -135,7 +135,7 @@ class Interfaces(Model):
 
     int_v6netmaskbit = models.CharField(
             max_length=4, 
-            choices=v6NetmaskBitList, 
+            choices=choices.v6NetmaskBitList, 
             blank=True,
             default='',
             verbose_name=_("IPv6 Netmask"),
@@ -214,7 +214,7 @@ class LAGGInterface(Model):
     lagg_protocol = models.CharField(
             max_length=120, 
             verbose_name=_("Protocol Type"),
-            choices=LAGGType,
+            choices=choices.LAGGType,
             )
     def __unicode__(self):
         interface_list = LAGGInterfaceMembers.objects.filter(lagg_interfacegroup = self.id)
@@ -241,7 +241,7 @@ class LAGGInterfaceMembers(Model):
             )
     lagg_physnic = models.CharField(
             max_length=120, 
-            choices=NICChoices(), 
+            choices=choices.NICChoices(), 
             unique = True,
             verbose_name=_("Physical NIC")
             )

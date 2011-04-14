@@ -26,7 +26,7 @@
 # $FreeBSD$
 #####################################################################
 
-from django.conf.urls.defaults import *
+from django.conf.urls.defaults import patterns, url
 
 urlpatterns = patterns('freenasUI.freeadmin.views',
     url(r'^app-(?P<app>\w+)/(?P<model>\w+)/add/(?P<mf>.+?)?$', 'generic_model_add', name="freeadmin_model_add"),

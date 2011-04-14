@@ -32,19 +32,19 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.common.forms import ModelForm
 from freenasUI.middleware.notifier import notifier
-#TODO: do not import *
-from freenasUI.network.models import *                         
+from freenasUI.network import models
+from freenasUI import choices
 from dojango import forms
 
 class InterfacesForm(ModelForm):
     class Meta:
-        model = Interfaces 
+        model = models.Interfaces 
 
     int_interface = forms.ChoiceField(label = "NIC")
 
     def __init__(self, *args, **kwargs):
         super(InterfacesForm, self).__init__(*args, **kwargs)
-        self.fields['int_interface'].choices = NICChoices()
+        self.fields['int_interface'].choices = choices.NICChoices()
 
     def save(self):
         # TODO: new IP address should be added in a side-by-side manner
@@ -55,7 +55,7 @@ class InterfacesForm(ModelForm):
 
 class GlobalConfigurationForm(ModelForm):
     class Meta:
-        model = GlobalConfiguration
+        model = models.GlobalConfiguration
     def clean(self):
         cleaned_data = self.cleaned_data
         nameserver1 = cleaned_data.get("gc_nameserver1")
@@ -100,7 +100,7 @@ class VLANForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(VLANForm, self).__init__(*args, **kwargs)
-        self.fields['vlan_pint'].choices = list(NICChoices(novlan = True))
+        self.fields['vlan_pint'].choices = list(choices.NICChoices(novlan = True))
 
     def clean_vlan_vint(self):
         name = self.cleaned_data['vlan_vint']
@@ -116,7 +116,7 @@ class VLANForm(ModelForm):
         return tag
 
     class Meta:
-        model = VLAN 
+        model = models.VLAN 
 
     def save(self):
         retval = super(VLANForm, self).save()
@@ -126,7 +126,7 @@ class VLANForm(ModelForm):
 attrs_dict = { 'class': 'required' }
 
 class LAGGInterfaceForm(forms.Form):
-    lagg_protocol = forms.ChoiceField(choices=LAGGType,
+    lagg_protocol = forms.ChoiceField(choices=choices.LAGGType,
                           widget=forms.RadioSelect(attrs=attrs_dict))
     lagg_interfaces = forms.MultipleChoiceField(
                             widget=forms.SelectMultiple(attrs=attrs_dict),
@@ -135,12 +135,12 @@ class LAGGInterfaceForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(LAGGInterfaceForm, self).__init__(*args, **kwargs)
-        self.fields['lagg_interfaces'].choices = list(NICChoices(nolagg = True))
+        self.fields['lagg_interfaces'].choices = list(choices.NICChoices(nolagg = True))
 
 
 class LAGGInterfaceMemberForm(ModelForm):
     class Meta:
-        model = LAGGInterfaceMembers
+        model = models.LAGGInterfaceMembers
     def __init__(self, *args, **kwargs):
         super(LAGGInterfaceMemberForm, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
@@ -173,7 +173,7 @@ class InterfaceEditForm(InterfacesForm):
 
 class StaticRouteForm(ModelForm):
     class Meta:
-        model = StaticRoute
+        model = models.StaticRoute
     def save(self):
         retval = super(StaticRouteForm, self).save()
         notifier().start("routing")

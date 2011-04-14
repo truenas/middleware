@@ -24,7 +24,7 @@ from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.utils.hashcompat import md5_constructor
 from django.utils.translation import ugettext_lazy as _
-from django.utils.encoding import smart_str, force_unicode
+from django.utils.encoding import force_unicode
 
 class FormWizard(object):
     # Dictionary of extra template context variables.

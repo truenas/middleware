@@ -32,7 +32,7 @@ from os import statvfs
 from django.db import models
 from django.utils.translation import ugettext as _
 
-from freenasUI.choices import *
+from freenasUI import choices
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common import humanize_number_si
 from freeadmin.models import Model
@@ -45,7 +45,7 @@ class Volume(Model):
             )
     vol_fstype = models.CharField(
             max_length=120, 
-            choices=VolumeType_Choices, 
+            choices=choices.VolumeType_Choices, 
             verbose_name = _("File System Type"), 
             )
     class Meta:
@@ -97,25 +97,25 @@ class Disk(Model):
             )
     disk_transfermode = models.CharField(
             max_length=120, 
-            choices=TRANSFERMODE_CHOICES, 
+            choices=choices.TRANSFERMODE_CHOICES, 
             default="Auto", 
             verbose_name = _("Transfer Mode")
             )
     disk_hddstandby = models.CharField(
             max_length=120, 
-            choices=HDDSTANDBY_CHOICES, 
+            choices=choices.HDDSTANDBY_CHOICES, 
             default="Always On", 
             verbose_name = _("HDD Standby")
             )
     disk_advpowermgmt = models.CharField(
             max_length=120, 
-            choices=ADVPOWERMGMT_CHOICES, 
+            choices=choices.ADVPOWERMGMT_CHOICES, 
             default="Disabled", 
             verbose_name = _("Advanced Power Management")
             )
     disk_acousticlevel = models.CharField(
             max_length=120, 
-            choices=ACOUSTICLVL_CHOICES, 
+            choices=choices.ACOUSTICLVL_CHOICES, 
             default="Disabled", 
             verbose_name = _("Acoustic Level")
             )
@@ -257,7 +257,7 @@ class Task(Model):
     task_ret_unit = models.CharField(
             default = 'week',
             max_length = 120,
-            choices=RetentionUnit_Choices,
+            choices=choices.RetentionUnit_Choices,
             verbose_name = _("Snapshot lifetime unit"),
             )
     task_begin = models.TimeField(
@@ -280,7 +280,7 @@ class Task(Model):
     task_repeat_unit = models.CharField(
             default = 'weekly',
             max_length = 120,
-            choices=RepeatUnit_Choices,
+            choices=choices.RepeatUnit_Choices,
             verbose_name = _("Occurrence"),
             help_text = _("How the task is repeated"),
             )

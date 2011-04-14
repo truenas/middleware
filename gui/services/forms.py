@@ -32,9 +32,8 @@ import re
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext as _
 
-#TODO do not import *
-from freenasUI.services.models import *                         
-from freenasUI.storage.models import *
+from storage import models
+from services.models import Volume, MountPoint, DiskGroup, Disk
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.freenasldap import FreeNAS_Users
 from freenasUI.middleware.notifier import notifier
@@ -48,11 +47,11 @@ attrs_dict = { 'class': 'required' }
 
 class servicesForm(ModelForm):
     class Meta:
-        model = services
+        model = models.services
 
 class CIFSForm(ModelForm):
     class Meta:
-        model = CIFS
+        model = models.CIFS
     cifs_srv_guest = forms.ChoiceField(choices=(),
                                        widget=forms.Select(attrs=attrs_dict),
                                        label=_('Guest Account')
@@ -80,7 +79,7 @@ class CIFSForm(ModelForm):
 
 class AFPForm(ModelForm):
     class Meta:
-        model = AFP
+        model = models.AFP
     afp_srv_guest_user = forms.ChoiceField(choices=(),
                                            widget=forms.Select(attrs=attrs_dict),
                                            label = _("Guest Account")
@@ -97,7 +96,7 @@ class AFPForm(ModelForm):
 
 class NFSForm(ModelForm):
     class Meta:
-        model = NFS
+        model = models.NFS
     def save(self):
         super(NFSForm, self).save()
         notifier().restart("nfs")
@@ -107,7 +106,7 @@ class FTPForm(ModelForm):
     ftp_filemask = UnixPermissionField(label=_('File Permission'))
     ftp_dirmask = UnixPermissionField(label=_('Directory Permission'))
     class Meta:
-        model = FTP 
+        model = models.FTP 
 
     def __init__(self, *args, **kwargs):
 
@@ -201,26 +200,26 @@ class TFTPForm(ModelForm):
         super(TFTPForm, self).save()
         notifier().reload("tftp")
     class Meta:
-        model = TFTP 
+        model = models.TFTP 
 
 class SSHForm(ModelForm):
     def save(self):
         super(SSHForm, self).save()
         notifier().reload("ssh")
     class Meta:
-        model = SSH 
+        model = models.SSH 
 
 class DynamicDNSForm(ModelForm):
     class Meta:
-        model = DynamicDNS
+        model = models.DynamicDNS
 
 class SNMPForm(ModelForm):
     class Meta:
-        model = SNMP
+        model = models.SNMP
 
 class UPSForm(ModelForm):
     class Meta:
-        model = UPS
+        model = models.UPS
 
 class ActiveDirectoryForm(ModelForm):
     #file = forms.FileField(label="Kerberos Keytab File", required=False)
@@ -230,7 +229,7 @@ class ActiveDirectoryForm(ModelForm):
         super(ActiveDirectoryForm, self).save()
         notifier().restart("activedirectory")
     class Meta:
-        model = ActiveDirectory
+        model = models.ActiveDirectory
         exclude = ('ad_keytab','ad_spn','ad_spnpw')
         widgets = {'ad_adminpw': forms.widgets.PasswordInput(render_value=True), } 
 
@@ -239,7 +238,7 @@ class LDAPForm(ModelForm):
         super(LDAPForm, self).save()
         notifier().restart("ldap")
     class Meta:
-        model = LDAP
+        model = models.LDAP
         widgets = {'ldap_rootbindpw': forms.widgets.PasswordInput(render_value=True), } 
 
 class iSCSITargetAuthCredentialForm(ModelForm):
@@ -286,7 +285,7 @@ class iSCSITargetAuthCredentialForm(ModelForm):
         return cdata
 
     class Meta:
-        model = iSCSITargetAuthCredential
+        model = models.iSCSITargetAuthCredential
         exclude = ('iscsi_target_auth_secret', 'iscsi_target_auth_peersecret',)
 
     def save(self, commit=True):
@@ -319,10 +318,10 @@ class iSCSITargetAuthCredentialForm(ModelForm):
 
 class iSCSITargetToExtentForm(ModelForm):
     class Meta:
-        model = iSCSITargetToExtent
+        model = models.iSCSITargetToExtent
     def clean_iscsi_target_lun(self):
         try:
-            iSCSITargetToExtent.objects.get(iscsi_target=self.cleaned_data.get('iscsi_target'),
+            models.iSCSITargetToExtent.objects.get(iscsi_target=self.cleaned_data.get('iscsi_target'),
                                                   iscsi_target_lun=self.cleaned_data.get('iscsi_target_lun'))
             raise forms.ValidationError(_("LUN already exists in the same target."))
         except ObjectDoesNotExist:
@@ -337,13 +336,13 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
             help_text=_("The istgtcontrol can access the targets with correct user and secret in specific Auth Group."))
     iscsi_discoveryauthgroup = forms.ChoiceField(label=_("Discovery Auth Group"))
     class Meta:
-        model = iSCSITargetGlobalConfiguration
+        model = models.iSCSITargetGlobalConfiguration
     def __init__(self, *args, **kwargs):
         super(iSCSITargetGlobalConfigurationForm, self).__init__(*args, **kwargs)
         self.fields['iscsi_luc_authgroup'].required = False
-        self.fields['iscsi_luc_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
+        self.fields['iscsi_luc_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
         self.fields['iscsi_discoveryauthgroup'].required = False
-        self.fields['iscsi_discoveryauthgroup'].choices = [('-1', _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
+        self.fields['iscsi_discoveryauthgroup'].choices = [('-1', _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
         self.fields['iscsi_toggleluc'].widget.attrs['onChange'] = 'javascript:toggleLuc(this);'
         ro = True
         if len(self.data) > 0:
@@ -446,7 +445,7 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
 class iSCSITargetExtentEditForm(ModelForm):
     class Meta:
-        model = iSCSITargetExtent
+        model = models.iSCSITargetExtent
         exclude = ('iscsi_target_extent_type', 'iscsi_target_extent_path',)
     def save(self):
         super(iSCSITargetExtentEditForm, self).save()
@@ -454,7 +453,7 @@ class iSCSITargetExtentEditForm(ModelForm):
 
 class iSCSITargetFileExtentForm(ModelForm):
     class Meta:
-        model = iSCSITargetExtent
+        model = models.iSCSITargetExtent
         exclude = ('iscsi_target_extent_type')
     def clean_iscsi_target_extent_filesize(self):
         size = self.cleaned_data['iscsi_target_extent_filesize']
@@ -516,14 +515,14 @@ class iSCSITargetDeviceExtentForm(ModelForm):
             except:
                 pass
         # Exclude what's already added
-        for devname in [ x['disk_disks'] for x in Disk.objects.all().values('disk_disks')]:
+        for devname in [ x['disk_disks'] for x in models.Disk.objects.all().values('disk_disks')]:
             try:
                 del diskchoices[devname]
             except:
                 pass
         return diskchoices.items()
     class Meta:
-        model = iSCSITargetExtent
+        model = models.iSCSITargetExtent
         exclude = ('iscsi_target_extent_type', 'iscsi_target_extent_path', 'iscsi_target_extent_filesize')
     def save(self, commit=True):
         oExtent = super(iSCSITargetDeviceExtentForm, self).save(commit=False)
@@ -555,14 +554,14 @@ class iSCSITargetDeviceExtentForm(ModelForm):
 
 class iSCSITargetPortalForm(ModelForm):
     class Meta:
-        model = iSCSITargetPortal
+        model = models.iSCSITargetPortal
     def save(self):
         super(iSCSITargetPortalForm, self).save()
         notifier().reload("iscsitarget")
 
 class iSCSITargetAuthorizedInitiatorForm(ModelForm):
     class Meta:
-        model = iSCSITargetAuthorizedInitiator
+        model = models.iSCSITargetAuthorizedInitiator
     def save(self):
         super(iSCSITargetAuthorizedInitiatorForm, self).save()
         notifier().reload("iscsitarget")
@@ -570,12 +569,12 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
 class iSCSITargetForm(ModelForm):
     iscsi_target_authgroup = forms.ChoiceField(label=_("Authentication Group number"))
     class Meta:
-        model = iSCSITarget
+        model = models.iSCSITarget
         exclude = ('iscsi_target_initialdigest',)
     def __init__(self, *args, **kwargs):
         super(iSCSITargetForm, self).__init__(*args, **kwargs)
         self.fields['iscsi_target_authgroup'].required = False
-        self.fields['iscsi_target_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
+        self.fields['iscsi_target_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
 
     def clean_iscsi_target_authgroup(self):
         method = self.cleaned_data['iscsi_target_authtype']

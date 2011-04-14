@@ -29,7 +29,7 @@
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-from freenasUI.sharing.forms import * 
+from freenasUI.sharing import models
 
 def home(request):
 
@@ -40,7 +40,7 @@ def home(request):
 
 def windows(request):
 
-    cifs_share_list = CIFS_Share.objects.select_related().all()
+    cifs_share_list = models.CIFS_Share.objects.select_related().all()
 
     variables = RequestContext(request, {
         'cifs_share_list': cifs_share_list,
@@ -49,7 +49,7 @@ def windows(request):
 
 def apple(request):
 
-    afp_share_list = AFP_Share.objects.order_by("-id").values()
+    afp_share_list = models.AFP_Share.objects.order_by("-id").values()
 
     variables = RequestContext(request, {
     'afp_share_list': afp_share_list,
@@ -58,7 +58,7 @@ def apple(request):
 
 def unix(request):
 
-    nfs_share_list = NFS_Share.objects.select_related().all()
+    nfs_share_list = models.NFS_Share.objects.select_related().all()
 
     variables = RequestContext(request, {
     'nfs_share_list': nfs_share_list,
