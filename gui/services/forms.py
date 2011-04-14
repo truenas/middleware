@@ -540,8 +540,6 @@ class iSCSITargetDeviceExtentForm(ModelForm):
             volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
             volume.save()
 
-            disk_list = [ self.cleaned_data["iscsi_extent_disk"] ]
-
             mp = MountPoint(mp_volume=volume, mp_path=volume_name, mp_options='noauto')
             mp.save()
 

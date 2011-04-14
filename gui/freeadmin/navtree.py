@@ -348,7 +348,7 @@ class NavTree(object):
 
             nav.option_list = self.build_options(nav.options)
             nav.active = True
-            url = nav.get_absolute_url()
+            nav.get_absolute_url()
             navs.append(nav)
 
         return navs
@@ -360,7 +360,7 @@ class NavTree(object):
                 option = option()
             except:
                 pass
-            url = option.get_absolute_url()
+            option.get_absolute_url()
             #option.active = option.active_if(url, request.path)
             option.option_list = self.build_options(option.options)
             options.append(option)

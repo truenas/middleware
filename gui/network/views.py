@@ -78,13 +78,7 @@ def _lagg_performadd(lagg):
 
 def network(request, objtype = None):
 
-    if objtype != None:
-        focus_form = objtype
-    else:
-        focus_form = 'gc'
-
     globalconf = GlobalConfiguration.objects.order_by("-id")[0].id
-
     variables = RequestContext(request, {
         'focus_form' : request.GET.get('tab','network'),
         'globalconf': globalconf,

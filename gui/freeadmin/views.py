@@ -49,7 +49,6 @@ def adminInterface(request, objtype = None):
     return render_to_response('freeadmin/index.html', context)
 
 def menu(request, objtype = None):
-    context = RequestContext(request)
 
     final = navtree.dijitTree()
     json = simplejson.dumps(final, indent=3)
@@ -205,12 +204,7 @@ def generic_model_datagrid_json(request, app, model):
         except ImportError, e:
             return True
 
-        context = RequestContext(request, {
-            'app': app,
-            'model': model,
-        })
         m = getattr(_temp, model)
-
         if attname in ('detele', '_state'):
             return False
 
