@@ -1,6 +1,4 @@
-import re
 from django import template
-from django import forms
 from django.forms.forms import BoundField
 from django.utils.html import conditional_escape
 from django.utils.encoding import force_unicode

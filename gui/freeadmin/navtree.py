@@ -1,4 +1,3 @@
-import os
 import re
 
 from django.conf import settings
@@ -523,7 +522,7 @@ def on_model_save(**kwargs):
     if not navtree.isGenerated():
         return None
     model = kwargs['sender']
-    instance = kwargs['instance']
+    #instance = kwargs['instance']
     if model._meta.app_label in [app.split('.')[-1] for app in settings.BLACKLIST_NAV]:
         return None
     navtree.auto_generate()

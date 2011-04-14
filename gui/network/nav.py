@@ -1,4 +1,4 @@
-from django_nav import Nav, NavOption
+from django_nav import NavOption
 from freenasUI.choices import LAGGType
 from django.utils.translation import ugettext as _
 import models

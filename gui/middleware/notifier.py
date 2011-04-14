@@ -374,7 +374,6 @@ class notifier:
 
     def __open_db(self, ret_conn=False):
         """Open and return a cursor object for database access."""
-        dbname = ""
         try:
             from freenasUI.settings import DATABASE_NAME as dbname
         except:

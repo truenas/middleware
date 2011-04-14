@@ -25,15 +25,11 @@
 #
 # $FreeBSD$
 #####################################################################
-from django.db import models
 from freenasUI.services.models import services, LDAP, ActiveDirectory
 from freenasUI.account.models import bsdUsers, bsdGroups
-from freenasUI.middleware.notifier import notifier
 
-import os
 import grp
 import pwd
-import sys
 import types
 import ldap
 

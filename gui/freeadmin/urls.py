@@ -27,7 +27,6 @@
 #####################################################################
 
 from django.conf.urls.defaults import *
-from django.contrib.auth.decorators import login_required
 
 urlpatterns = patterns('freenasUI.freeadmin.views',
     url(r'^app-(?P<app>\w+)/(?P<model>\w+)/add/(?P<mf>.+?)?$', 'generic_model_add', name="freeadmin_model_add"),

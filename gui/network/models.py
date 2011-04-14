@@ -26,8 +26,6 @@
 # $FreeBSD$
 #####################################################################
 
-from datetime import datetime
-
 from django.utils.translation import ugettext as _
 from django.db import models
 

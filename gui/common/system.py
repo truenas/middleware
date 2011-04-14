@@ -26,9 +26,7 @@
 # $FreeBSD$
 #####################################################################
 
-import os
 from os import popen
-
 
 def get_freenas_version():
     version = "FreeNAS"

@@ -70,7 +70,7 @@ def generic_model_add(request, app, model, mf=None):
 
     try:
         _temp = __import__('%s.models' % app, globals(), locals(), [model], -1)
-    except ImportError, e:
+    except ImportError:
         raise
 
     m = getattr(_temp, model)
@@ -100,7 +100,7 @@ def generic_model_add(request, app, model, mf=None):
         instance = m()
         mf = mf(request.POST, request.FILES, instance=instance)
         if mf.is_valid():
-            obj = mf.save()
+            mf.save()
             return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully added.") % m._meta.verbose_name}))
             #return render_to_response('freeadmin/generic_model_add_ok.html', context)
 
@@ -123,7 +123,7 @@ def generic_model_view(request, app, model):
 
     try:
         _temp = __import__('%s.models' % app, globals(), locals(), [model], -1)
-    except ImportError, e:
+    except ImportError:
         raise
 
     context = RequestContext(request, {
@@ -148,7 +148,7 @@ def generic_model_datagrid(request, app, model):
 
     try:
         _temp = __import__('%s.models' % app, globals(), locals(), [model], -1)
-    except ImportError, e:
+    except ImportError:
         raise
 
     context = RequestContext(request, {
@@ -201,7 +201,7 @@ def generic_model_datagrid_json(request, app, model):
 
         try:
             _temp = __import__('%s.models' % app_name, globals(), locals(), [model_name], -1)
-        except ImportError, e:
+        except ImportError:
             return True
 
         m = getattr(_temp, model)
@@ -219,7 +219,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
 
     try:
         _temp = __import__('%s.models' % app, globals(), locals(), [model], -1)
-    except ImportError, e:
+    except ImportError:
         raise
     m = getattr(_temp, model)
 
@@ -258,8 +258,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
     if request.method == "POST":
         mf = mf(request.POST, request.FILES, instance=instance)
         if mf.is_valid():
-            obj = mf.save()
-            #instance.save()
+            mf.save()
             if request.GET.has_key("iframe"):
                 return HttpResponse("<html><body><textarea>"+simplejson.dumps({"error": False, "message": _("%s successfully updated.") % m._meta.verbose_name})+"</textarea></boby></html>")
             else:
@@ -292,7 +291,7 @@ def generic_model_delete(request, app, model, oid):
 
     try:
         _temp = __import__('%s.models' % app, globals(), locals(), [model], -1)
-    except ImportError, e:
+    except ImportError:
         raise
 
     m = getattr(_temp, model)

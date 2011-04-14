@@ -26,13 +26,7 @@
 # $FreeBSD$
 #####################################################################
 
-from datetime import datetime
-
 from django.db import models
-from django.contrib.auth.models import User
-from django.utils.text import capfirst
-from django.forms.widgets import RadioFieldRenderer
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
 from storage.models import MountPoint as MountPoint 

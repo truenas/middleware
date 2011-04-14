@@ -118,7 +118,6 @@ class IPAddressFormFieldBase(forms.CharField):
 class IPAddressFormField(IPAddressFormFieldBase):
     def validate(self, value):
         super(IPAddressFormField, self).validate(value)
-        r = self.to_python(value)
 
 class IP4AddressFormField(IPAddressFormFieldBase):
     def to_python(self, value):
@@ -137,7 +136,6 @@ class IP4AddressFormField(IPAddressFormFieldBase):
                 raise ValidationError("Invalid IPv4 address: %s" % e)
     def validate(self, value):
         super(IP4AddressFormField, self).validate(value)
-        r = self.to_python(value)
 
 class IP6AddressFormField(IPAddressFormFieldBase):
     def to_python(self, value):
@@ -156,7 +154,6 @@ class IP6AddressFormField(IPAddressFormFieldBase):
                 raise ValidationError("Invalid IPv6 address: %s" % e)
     def validate(self, value):
         super(IP6AddressFormField, self).validate(value)
-        r = self.to_python(value)
 
 class IPAddressFieldBase(models.Field):
     description = "IP Address Field with IPv6 support"

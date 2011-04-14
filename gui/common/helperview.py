@@ -24,9 +24,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from django.template import RequestContext
-from django.shortcuts import render_to_response
-import collections
 
 def helperViewEx(request, formClass, model, variable, key, data=None, prefix=""):
     if request.method == 'POST' and variable == key:

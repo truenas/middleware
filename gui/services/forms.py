@@ -36,12 +36,11 @@ from django.utils.translation import ugettext as _
 from freenasUI.services.models import *                         
 from freenasUI.storage.models import *
 from freenasUI.common.forms import ModelForm
-from freenasUI.common.forms import Form
-from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups
+from freenasUI.common.freenasldap import FreeNAS_Users
 from freenasUI.middleware.notifier import notifier
 from storage.forms import UnixPermissionField
 from dojango import forms
-from dojango.forms import fields, widgets
+from dojango.forms import widgets
 
 """ Services """
 
@@ -323,7 +322,7 @@ class iSCSITargetToExtentForm(ModelForm):
         model = iSCSITargetToExtent
     def clean_iscsi_target_lun(self):
         try:
-            obj = iSCSITargetToExtent.objects.get(iscsi_target=self.cleaned_data.get('iscsi_target'),
+            iSCSITargetToExtent.objects.get(iscsi_target=self.cleaned_data.get('iscsi_target'),
                                                   iscsi_target_lun=self.cleaned_data.get('iscsi_target_lun'))
             raise forms.ValidationError(_("LUN already exists in the same target."))
         except ObjectDoesNotExist:
