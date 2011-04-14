@@ -26,9 +26,7 @@
 # $FreeBSD$
 #####################################################################
 
-from django.conf.urls.defaults import *
-from django.contrib import admin
-#from freenasUI.system.views import index 
+from django.conf.urls.defaults import include, patterns
 from freenasUI.freeadmin.views import adminInterface
 from django.views.static import serve
 from django.conf import settings
@@ -38,7 +36,6 @@ from freeadmin.middleware import public
 navtree.auto_generate()
 
 urlpatterns = patterns('',
-    #('^$', index),
     ('^$', adminInterface),
     (r'^reporting/graphs/(?P<path>.*)',
         public(serve),
@@ -49,7 +46,6 @@ urlpatterns = patterns('',
     (r'^freenas/media/(?P<path>.*)$',
         public(serve),
         {'document_root': settings.MEDIA_ROOT}),
-# Not sure why I need the this entry, but the last one works for James..
     (r'^dojango/(?P<path>.*)$',
         public(serve),
         {'document_root': settings.MEDIA_ROOT+'/../dojango/'}),
