@@ -38,7 +38,6 @@ class SharedFunc():
     def _populate_shell_choices(self):
         from os import popen
         from os.path import basename
-        import re
         
         shell_dict = {}
         shells = popen("grep ^/ /etc/shells").read().split('\n')
