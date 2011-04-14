@@ -32,8 +32,6 @@ from django.forms import FileField
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.system import models
 from freenasUI.middleware.notifier import notifier
-from dojango.forms import fields, widgets
-from dojango.forms.fields import BooleanField
 from dojango import forms
 
 class SettingsForm(ModelForm):

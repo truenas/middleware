@@ -1,4 +1,4 @@
-from django_nav import Nav, NavOption
+from django_nav import NavOption
 from django.utils.translation import ugettext as _
 
 BLACKLIST = ['Email', 'Advanced', 'Settings', 'SSL']

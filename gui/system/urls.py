@@ -26,7 +26,7 @@
 # $FreeBSD$
 #####################################################################
 
-from django.conf.urls.defaults import *
+from django.conf.urls.defaults import patterns, url
 
 urlpatterns = patterns('freenasUI.system.views',
     url(r'^reboot/$', 'reboot', name="system_reboot"),
