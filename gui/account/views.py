@@ -26,14 +26,8 @@
 # $FreeBSD$
 #####################################################################
 
-import os
-import commands
-
-from django.contrib.auth.views import password_change_done
-from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm, PasswordChangeForm
-from django.contrib.auth import authenticate, login, logout
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponse
+from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import simplejson
@@ -41,7 +35,6 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.account import forms
 from freenasUI.account import models
-from freenasUI.middleware.notifier import notifier
 
 def home(request):
     focus_form = request.GET.get('tab', 'passform')
@@ -77,7 +70,6 @@ def password_change(request):
     extra_context = {}
     password_change_form=forms.PasswordChangeForm
     passform = password_change_form(user=request.user)
-    changeform = forms.UserChangeForm(instance=request.user)
 
     if request.method == 'POST':
         passform = password_change_form(user=request.user, data=request.POST)

@@ -195,7 +195,7 @@ class MountPoint(Model):
                         self.mp_volume).values_list('group_type')
                 self._status = notifier().get_volume_status(name, fs, group_type)
             return self._status
-        except Exception, e:
+        except Exception:
             return _(u"Error")
     _vfs = property(_get__vfs)
     total_si = property(_get_total_si)

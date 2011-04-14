@@ -32,14 +32,13 @@ from os import popen
 from django.http import QueryDict
 from django.utils.translation import ugettext as _
 
-from freenasUI.account.models import bsdUsers, bsdGroups
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.forms import Form
 from freenasUI.storage import models
 from freenasUI import choices
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups
-from dojango.forms import fields, widgets, CheckboxSelectMultiple
+from dojango.forms import widgets, CheckboxSelectMultiple
 from dojango import forms
 
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }

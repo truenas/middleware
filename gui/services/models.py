@@ -29,16 +29,8 @@
 from django.db import models
 from django import forms
 from django.contrib.auth.models import User
-import datetime
-import time
-from os import popen
-from django.utils.text import capfirst
-from django.forms.widgets import RadioFieldRenderer
-from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
-from django.conf import settings
-from datetime import datetime
+
 from freenasUI.choices import *
 from freeadmin.models import Model
 from storage.models import MountPoint, Volume

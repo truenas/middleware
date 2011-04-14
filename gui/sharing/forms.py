@@ -29,12 +29,10 @@
 from django.utils.translation import ugettext as _
 
 from dojango import forms
-from dojango.forms import fields, widgets 
-from dojango.forms.fields import BooleanField 
+from dojango.forms import widgets 
 from freenasUI.sharing.models import *                         
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
-from freenasUI.common.forms import Form
 from freenasUI.common.freenasldap import FreeNAS_Users
 
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }

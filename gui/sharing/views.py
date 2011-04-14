@@ -26,18 +26,10 @@
 # $FreeBSD$
 #####################################################################
 
-import os
-import commands
-
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate, login, logout
-from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.http import Http404, HttpResponseRedirect
 
 from freenasUI.sharing.forms import * 
-from freenasUI.middleware.notifier import notifier
 
 def home(request):
 

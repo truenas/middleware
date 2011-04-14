@@ -26,20 +26,14 @@
 # $FreeBSD$
 #####################################################################
 
-import os
-import commands
 from subprocess import *
 
-from django.contrib.auth.decorators import login_required
-from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
-from django.contrib.auth import authenticate, login, logout
 from django.template import RequestContext
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
-from freenasUI.middleware.notifier import notifier
 #TODO: do not import *
 from freenasUI.network.forms import * 
 from freenasUI.network.models import * 

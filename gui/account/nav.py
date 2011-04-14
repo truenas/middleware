@@ -46,7 +46,7 @@ class ViewUsers(NavOption):
 
         def __init__(self, *args, **kwargs):
             if models.bsdUsers._admin.icon_view is not None:
-                icon = models.bsdUsers._admin.icon_view
+                self.icon = models.bsdUsers._admin.icon_view
             super(ViewUsers, self).__init__(*args, **kwargs)
 
 class ViewGroups(NavOption):
@@ -59,5 +59,5 @@ class ViewGroups(NavOption):
 
         def __init__(self, *args, **kwargs):
             if models.bsdGroups._admin.icon_view is not None:
-                icon = models.bsdGroups._admin.icon_view
+                self.icon = models.bsdGroups._admin.icon_view
             super(ViewGroups, self).__init__(*args, **kwargs)

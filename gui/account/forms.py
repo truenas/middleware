@@ -27,7 +27,6 @@
 #####################################################################
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User as django_User
-from django.contrib.auth.forms import UserChangeForm as django_UCF
 from django.utils.safestring import mark_safe
 
 from freenasUI.common.forms import ModelForm, Form

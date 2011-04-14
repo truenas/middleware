@@ -28,16 +28,13 @@
 
 from datetime import datetime
 import tempfile
-from subprocess import Popen
 import os
 import commands
 
-from django.contrib.auth.decorators import permission_required, login_required
-from django.contrib.auth import authenticate, login, logout, get_backends
+from django.contrib.auth import login, get_backends
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.shortcuts import render_to_response, get_object_or_404
+from django.http import HttpResponse
+from django.shortcuts import render_to_response
 from django.template.loader import render_to_string
 from django.template import RequestContext
 from django.utils import simplejson
@@ -337,7 +334,7 @@ def testmail(request):
                     server.starttls()
             if email.em_smtp:
                 server.login(email.em_user, email.em_pass)
-            ret = server.sendmail(email.em_fromemail, [email.em_fromemail], msg.as_string())
+            server.sendmail(email.em_fromemail, [email.em_fromemail], msg.as_string())
             server.quit()
         except Exception, e:
             errmsg = str(e)

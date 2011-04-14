@@ -25,27 +25,20 @@
 #
 # $FreeBSD$
 #####################################################################
-import os
-import commands
-
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate, login, logout
 from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
 #TODO remove import *
-from dojango.util import to_dojo_data, json_encode
+from dojango.util import to_dojo_data
 from freenasUI.services.models import *
 from freenasUI.storage.forms import * 
 from freenasUI.storage.models import * 
-from freenasUI.services.models import services, CIFS, AFP, NFS 
-from freenasUI.services.forms import CIFSForm, AFPForm, NFSForm 
 from freenasUI.middleware.notifier import notifier
-from freenasUI.common.system import get_freenas_version
 
 ## Disk section
 
@@ -203,8 +196,8 @@ def disks_datagrid_json(request, vid):
                 ret[f.attname] = unicode(getattr(data, f.attname))
             else:
                 ret[f.attname] = getattr(data, f.attname) #json_encode() this?
-        fields = dir(data.__class__) + ret.keys()
-        add_ons = [k for k in dir(data) if k not in fields]
+        #fields = dir(data.__class__) + ret.keys()
+        #add_ons = [k for k in dir(data) if k not in fields]
         #for k in add_ons:
         #    ret[k] = getattr(data, k)
         if request.GET.has_key('inclusions'):
@@ -285,8 +278,6 @@ def dataset_edit(request, object_id):
     if request.method == 'POST':
         dataset_form = ZFSDataset_EditForm(request.POST, mp=mp)
         if dataset_form.is_valid():
-            volume = mp.mp_volume
-            volume_name = volume.vol_name
             dataset_name = mp.mp_path.replace("/mnt/","")
 
             if dataset_form.cleaned_data["dataset_quota"] == "0":
@@ -523,7 +514,6 @@ def disk_replacement(request, vid, object_id):
 
 def disk_detach(request, vid, object_id):
 
-    volume = Volume.objects.get(pk=vid)
     disk = Disk.objects.get(pk=object_id)
 
     if request.method == "POST":

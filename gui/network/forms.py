@@ -31,12 +31,10 @@ import re
 from django.utils.translation import ugettext as _
 
 from freenasUI.common.forms import ModelForm
-from freenasUI.common.forms import Form
 from freenasUI.middleware.notifier import notifier
 #TODO: do not import *
 from freenasUI.network.models import *                         
 from dojango import forms
-from dojango.forms import fields, widgets 
 
 class InterfacesForm(ModelForm):
     class Meta:
