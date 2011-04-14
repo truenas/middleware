@@ -56,7 +56,7 @@ class Volume(Model):
         # The framework would cascade delete all database items
         # referencing this volume.
         super(Volume, self).delete()
-	# Refresh the fstab
+        # Refresh the fstab
         notifier().reload("disk")
     def __unicode__(self):
         return "%s (%s)" % (self.vol_name, self.vol_fstype)

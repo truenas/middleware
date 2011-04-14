@@ -172,7 +172,7 @@ class FreeNAS_LDAP:
         if isopen == 0:
             self.close()
 
-	return results
+        return results
 
     def get_ldap_user(self, user):
         isopen = self.__isopen
@@ -266,11 +266,11 @@ class FreeNAS_LDAP:
         isopen = self.__isopen
         self.open()
 
-	results = self.__search("", ldap.SCOPE_BASE, "(objectclass=*)")
+        results = self.__search("", ldap.SCOPE_BASE, "(objectclass=*)")
         if isopen == 0:
             self.close()
 
-	return results
+        return results
 
     def get_active_directory_baseDN(self):
         results = self.get_active_directory_rootDSE()
@@ -389,7 +389,7 @@ class FreeNAS_LDAP:
 
 class FreeNAS_Users:
     def __init__(self):
-	self.__users = []
+        self.__users = []
         self.__index = 0
 
         ldap_enable = ad_enable = 0
@@ -546,7 +546,7 @@ class FreeNAS_Users:
 
 class FreeNAS_Groups:
     def __init__(self):
-	self.__groups = []
+        self.__groups = []
         self.__index = 0
 
         ldap_enable = ad_enable = 0

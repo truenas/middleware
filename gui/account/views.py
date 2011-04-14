@@ -45,40 +45,7 @@ from freenasUI.middleware.notifier import notifier
 
 def home(request):
     focus_form = request.GET.get('tab', 'passform')
-    password_change_form=forms.PasswordChangeForm
-
-    bsduser = forms.bsdUserCreationForm()
-    passform = password_change_form(user=request.user, data=request.GET)
-    changeform = forms.UserChangeForm(instance=request.user)
-    bsdgroup = forms.bsdGroupsForm()
-
-    #if post_change_redirect is None:
-    #   post_change_redirect = reverse('django.contrib.auth.views.password_change_done')
-    if request.method == 'POST':
-        if objtype == 'passform':
-            passform = password_change_form(user=request.user, data=request.POST)
-            if passform.is_valid():
-                passform.save()
-        elif objtype == 'changeform':
-            changeform = forms.UserChangeForm(instance=request.user, data=request.POST)
-            if changeform.is_valid():
-                changeform.save()
-        elif objtype == 'bsduser':
-            bsduser = forms.bsdUserCreationForm(request.POST)
-            if bsduser.is_valid():
-                bsduser.save()
-        elif objtype == 'bsdgroup':
-            bsdgroup = forms.bsdGroupsForm(request.POST)
-            if bsdgroup.is_valid():
-                bsdgroup.save()
-        else: 
-            raise Http404()
     variables = RequestContext(request, {
-        'focused_tab' : 'account',
-        'passform': passform,
-        'changeform': changeform,
-        'bsduser': bsduser,
-        'bsdgroup': bsdgroup,
         'focus_form': focus_form,
     })
     return render_to_response('account/index2.html', variables)

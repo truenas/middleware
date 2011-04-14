@@ -555,8 +555,8 @@ class notifier:
         retval = {}
         for line in zfs_output:
             if line != "":
-               data = line.split('\t')
-               retval[data[1]] = data[2]
+                data = line.split('\t')
+                retval[data[1]] = data[2]
         return retval
     def set_zfs_attribute(self, name, attr, value):
         self.__system("zfs set %s=%s %s" % (attr, value, name))

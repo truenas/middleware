@@ -355,7 +355,7 @@ class NICChoices:
         else:
             for interface in c:
                 if interface[0] in self._NIClist:
-                     self._NIClist.remove(interface[0])
+                    self._NIClist.remove(interface[0])
 
         if nolagg:
             # vlan devices are not valid parents of laggs

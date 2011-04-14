@@ -292,12 +292,12 @@ def generic_model_edit(request, app, model, oid, mf=None):
         template = 'freeadmin/generic_model_edit.html'
 
     if request.GET.has_key("iframe"):
-    	resp = render_to_response(template, context, \
+        resp = render_to_response(template, context, \
                 mimetype='text/html')
         resp.content = "<html><body><textarea>"+resp.content+"</textarea></boby></html>"
         return resp
     else:
-    	return render_to_response(template, context, \
+        return render_to_response(template, context, \
                 mimetype='text/html')
 
 def generic_model_delete(request, app, model, oid):

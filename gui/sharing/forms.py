@@ -91,13 +91,13 @@ class NFS_ShareForm(ModelForm):
         self.userlist.append(('-----', 'N/A'))
         for a in list((x.bsdusr_username, x.bsdusr_username)
                       for x in FreeNAS_Users()):
-             self.userlist.append(a)
+            self.userlist.append(a)
 
         self.grouplist = []
         self.grouplist.append(('-----', 'N/A'))
         for a in list((x.bsdusr_group, x.bsdusr_group)
                       for x in FreeNAS_Users()):
-             self.grouplist.append(a)
+            self.grouplist.append(a)
 
         self.fields['nfs_maproot_user'].widget = widgets.FilteringSelect()
         self.fields['nfs_maproot_group'].widget = widgets.FilteringSelect()

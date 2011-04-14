@@ -50,7 +50,7 @@ class InterfacesForm(ModelForm):
 
     def save(self):
         # TODO: new IP address should be added in a side-by-side manner
-	    # or the interface wouldn't appear once IP was changed.
+        # or the interface wouldn't appear once IP was changed.
         retval = super(InterfacesForm, self).save()
         notifier().start("network")
         return retval
@@ -92,7 +92,7 @@ class GlobalConfigurationForm(ModelForm):
         return cleaned_data
     def save(self):
         # TODO: new IP address should be added in a side-by-side manner
-	    # or the interface wouldn't appear once IP was changed.
+        # or the interface wouldn't appear once IP was changed.
         retval = super(GlobalConfigurationForm, self).save()
         notifier().reload("networkgeneral")
         return retval

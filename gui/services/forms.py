@@ -211,10 +211,6 @@ class SSHForm(ModelForm):
     class Meta:
         model = SSH 
 
-class iSCSITargetForm(ModelForm):
-    class Meta:
-        model = iSCSITarget
-
 class DynamicDNSForm(ModelForm):
     class Meta:
         model = DynamicDNS
@@ -226,7 +222,6 @@ class SNMPForm(ModelForm):
 class UPSForm(ModelForm):
     class Meta:
         model = UPS
-
 
 class ActiveDirectoryForm(ModelForm):
     #file = forms.FileField(label="Kerberos Keytab File", required=False)
@@ -450,7 +445,7 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         super(iSCSITargetGlobalConfigurationForm, self).save()
         notifier().reload("iscsitarget")
 
-class iSCSITargeExtentEditForm(ModelForm):
+class iSCSITargetExtentEditForm(ModelForm):
     class Meta:
         model = iSCSITargetExtent
         exclude = ('iscsi_target_extent_type', 'iscsi_target_extent_path',)

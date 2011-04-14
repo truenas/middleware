@@ -181,18 +181,18 @@ def iscsi_portals(request):
 """TODO: This should be rewritten in a better way."""
 def servicesToggleView(request, formname):
     form2namemap = {
-	'cifs_toggle' : 'cifs',
-	'afp_toggle' : 'afp',
-	'nfs_toggle' : 'nfs',
-	'iscsitarget_toggle' : 'iscsitarget',
-	'dynamicdns_toggle' : 'dynamicdns',
-	'snmp_toggle' : 'snmp',
-	'httpd_toggle' : 'httpd',
-	'ftp_toggle' : 'ftp',
-	'tftp_toggle' : 'tftp',
-	'ssh_toggle' : 'ssh',
-	'ad_toggle' : 'activedirectory',
-	'ldap_toggle' : 'ldap',
+        'cifs_toggle' : 'cifs',
+        'afp_toggle' : 'afp',
+        'nfs_toggle' : 'nfs',
+        'iscsitarget_toggle' : 'iscsitarget',
+        'dynamicdns_toggle' : 'dynamicdns',
+        'snmp_toggle' : 'snmp',
+        'httpd_toggle' : 'httpd',
+        'ftp_toggle' : 'ftp',
+        'tftp_toggle' : 'tftp',
+        'ssh_toggle' : 'ssh',
+        'ad_toggle' : 'activedirectory',
+        'ldap_toggle' : 'ldap',
     }
     changing_service = form2namemap[formname]
     if changing_service == "":
@@ -209,10 +209,10 @@ def servicesToggleView(request, formname):
         opp_svc_entry = Services.objects.get(srv_service=opposing_service)
     # Turning things off is always ok
     if svc_entry.srv_enable:
-	svc_entry.srv_enable = 0
+        svc_entry.srv_enable = 0
     else:
         if opposing_service and not opp_svc_entry.srv_enable == 1 or not opposing_service:
-	    svc_entry.srv_enable = 1
+            svc_entry.srv_enable = 1
     svc_entry.save()
     # forcestop then start to make sure the service is of the same
     # status.

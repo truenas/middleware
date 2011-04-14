@@ -614,8 +614,6 @@ class iSCSITargetToExtent(Model):
             )
     class Meta:
         verbose_name = _("Target / Extent")
-    class FreeAdmin:
-        menu_child_of = "ISCSI"
     def __unicode__(self):
         return unicode(self.iscsi_target) + u' / ' + unicode(self.iscsi_extent)
     class FreeAdmin:
