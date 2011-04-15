@@ -5,6 +5,16 @@ import models
 BLACKLIST = ['Disk','ReplRemote']
 ICON = u'StorageIcon'
 
+class ViewRemote(NavOption):
+
+        name = _(u'View All Replication Tasks')
+        view = u'storage_home'
+        type = 'openreplication'
+        icon = u'ViewAllPeriodicSnapIcon'
+        app_name = 'storage'
+        append_app = False
+        options = []
+
 class ViewPeriodic(NavOption):
 
         name = _(u'View All Periodic Snapshots')

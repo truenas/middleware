@@ -945,9 +945,11 @@
             } else if(item.action && item.action == 'shutdown') {
                     dijit.byId("shutdownDialog").show();
             } else if(item.type && item.type == 'openstorage') {
-                Menu.openStorage();
+                Menu.openStorage('Active Volumes');
             } else if(item.type && item.type == 'openperiodic') {
                 Menu.openStorage('Periodic Snapshots');
+            } else if(item.type && item.type == 'openreplication') {
+                Menu.openStorage('ZFS Replication');
             } else if(item.type && item.type == 'viewmodel') {
                 //  get the children and make sure we haven't opened this yet.
                 var c = p.getChildren();
