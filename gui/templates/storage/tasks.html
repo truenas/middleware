@@ -1,0 +1,147 @@
+{% load i18n %}
+<button id="periodicSnapBtn" dojoType="dijit.form.Button" type="button">
+        <img src="/freenas/media/images/ui/buttons/create_periodic_snapshot.png">
+        <br />
+    <script type="dojo/method" event="onClick" args="evt">
+        addObject('{% trans "Periodic Snapshots" %}', '{% url storage_periodicsnap %}', [this,]);
+    </script>
+</button>
+<div dojoType="dijit.Tooltip" connectId="periodicSnapBtn" position="above">
+    <strong>{% trans "Create Periodic Snapshot" %}</strong>
+</div>
+<h5>
+    {% if task_list %}
+    {% trans "Periodic Snapshot Schedule" %}: <strong>{{ task_list|length }}</strong>
+    {% else %}
+
+    {% trans "There are no scheduled snapshots." %}
+    {% endif %}
+</h5>
+<table class="grid">
+    <thead class="ghead">
+        <td>{% trans "Mount Point" %}</td>
+        <td>{% trans "Recursive" %}</td>
+        <td>{% trans "How" %}</td>
+        <td>{% trans "Keep snapshot for" %}</td>
+        <td>{% trans "Available actions" %}</td>
+    </thead>
+    <tbody>
+	{% for p in task_list %}
+	<tr class="{% cycle 'odd' 'even' %}" id="task{{ p.id }}">
+	    <td>
+		{{ p.task_mountpoint.mp_volume.vol_name }}
+	    </td>
+	    <td>
+		{% if p.task_recursive %}
+			{% trans "Yes" %}
+		{% else %}
+			{% trans "No" %}
+		{% endif %}
+	    </td>
+	    <td>
+		{% trans "From" %}
+		{{ p.task_begin }}
+		{% trans "through" %}
+		{{ p.task_end }}
+		{% trans ", every" %}
+		{{ p.task_interval }}
+		{% trans "minutes," %}
+		{% if p.task_repeat_unit == "daily" %}
+			{% trans "everyday" %}
+		{% else %}
+			{% if p.task_repeat_unit == "weekly" %}
+				{% trans "on every" %}
+				<ul>
+				{% for day in p.task_byweekday %}
+					{% if day == "1" %}
+						<li>{% trans "Monday" %}</li>
+					{% endif %} 
+					{% if day == "2" %}
+						<li>{% trans "Tuesday" %}</li>
+					{% endif %} 
+					{% if day == "3" %}
+						<li>{% trans "Wednesday" %}</li>
+					{% endif %} 
+					{% if day == "4" %}
+						<li>{% trans "Thursday" %}</li>
+					{% endif %} 
+					{% if day == "5" %}
+						<li>{% trans "Friday" %}</li>
+					{% endif %} 
+					{% if day == "6" %}
+						<li>{% trans "Saturday" %}</li>
+					{% endif %} 
+					{% if day == "7" %}
+						<li>{% trans "Sunday" %}</li>
+					{% endif %} 
+				{% endfor %}
+				</ul>
+			{% endif %} 
+		{% endif %} 
+<!--
+	    <td>
+        <ul>
+        {% for month in p.task_bymonth %}
+            {% if month == "1" %}
+            <li>{% trans "January" %}</li>
+            {% endif %} 
+            {% if month == "2" %}
+            <li>{% trans "February" %}</li>
+            {% endif %} 
+            {% if month == "3" %}
+            <li>{% trans "March" %}</li>
+            {% endif %} 
+            {% if month == "4" %}
+            <li>{% trans "April" %}</li>
+            {% endif %} 
+            {% if month == "5" %}
+            <li>{% trans "May" %}</li>
+            {% endif %} 
+            {% if month == "6" %}
+            <li>{% trans "June" %}</li>
+            {% endif %} 
+            {% if month == "7" %}
+            <li>{% trans "July" %}</li>
+            {% endif %} 
+            {% if month == "8" %}
+            <li>{% trans "August" %}</li>
+            {% endif %} 
+            {% if month == "9" %}
+            <li>{% trans "September" %}</li>
+            {% endif %} 
+            {% if month == "a" %}
+            <li>{% trans "October" %}</li>
+            {% endif %} 
+            {% if month == "b" %}
+            <li>{% trans "November" %}</li>
+            {% endif %} 
+            {% if month == "c" %}
+            <li>{% trans "December" %}</li>
+            {% endif %} 
+        {% endfor %}
+        </ul>
+	    </td>
+	    <td>
+		{{ p.task_bymonthday }}
+	    </td>
+-->
+	    <td>
+		{{ p.task_ret_count }}
+		{{ p.task_ret_unit }}
+	    </td>
+        <td>
+        <button dojoType="dijit.form.Button" type="button"
+            onClick="editObject('{% trans "Modify" %}', '{% url freeadmin_model_edit app="storage",model="Task",oid=p.id %}', [this,]);">{% trans "Modify" %}
+        </button>
+        <button dojoType="dijit.form.Button" type="button"
+            onClick="editObject('{% trans "Delete" %}', '{% url freeadmin_model_delete app="storage",model="Task",oid=p.id %}', [this,]);">{% trans "Delete" %}
+        </button>
+        </td>
+	</tr>
+	{% empty %}
+	<tr>
+            <td colspan="7">{% trans "No periodic snapshots scheduled" %}</td>
+	</tr>
+	{% endfor %}
+    </tbody>
+</table>

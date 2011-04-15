@@ -1,0 +1,42 @@
+{% load i18n %}
+<table class="grid">
+    <thead class="ghead">
+	<td>{% trans "Dataset name" %}</td>
+	<td>{% trans "Snapshot name" %}</td>
+	<td>{% trans "Used space" %}</td>
+	<td>{% trans "Referenced space" %}</td>
+	<td>{% trans "Available actions" %}</td>
+    </thead>
+    <tbody>
+	{% for fsname, snapinfo in zfsnap_list.items %}
+        {% for snap in snapinfo %}
+	<tr class="{% cycle 'odd' 'even' %}">
+            {% if forloop.first %}
+	    <td rowspan="{{ snapinfo|length }}">{{ fsname }}</td>
+            {% endif %}
+	    <td>{{ snap.name }}</td>
+	    <td>{{ snap.used }}</td>
+	    <td>{{ snap.refer }}</td>
+	    <td>
+	    <button id="cloneSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Clone snapshot" %}', '{% url storage_clonesnap snapshot=snap.fullname %}', [this,]);"><img src="/freenas/media/images/ui/buttons/clone_snapshot.png"></button>
+<div dojoType="dijit.Tooltip" connectId="cloneSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
+    <strong>{% trans "Clone snapshot" %}</strong>
+</div>
+	    <button id="delSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Destroy snapshot" %}', '{% url storage_snapshot_delete dataset=fsname snapname=snap.name %}', [this,]);"><img src="/freenas/media/images/ui/buttons/remove_snapshot.png"></button>
+<div dojoType="dijit.Tooltip" connectId="delSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
+    <strong>{% trans "Destroy snapshot" %}</strong>
+</div>
+	    <button id="rollbackSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Rollback to this snapshot" %}', '{% url storage_snapshot_rollback dataset=fsname snapname=snap.name %}', [this,]);"><img src="/freenas/media/images/ui/buttons/rollback_snapshot.png"></button>
+<div dojoType="dijit.Tooltip" connectId="rollbackSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
+    <strong>{% trans "Rollback to this snapshot" %}</strong>
+</div>
+	    </td>
+	</tr>
+        {% endfor %}
+        {% empty %}
+	<tr>
+	    <td colspan="5">{% trans "No ZFS snapshot available" %}</td>
+	</tr>
+        {% endfor %}
+    </tbody>
+</table>

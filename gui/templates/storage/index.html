@@ -1,0 +1,13 @@
+{% load i18n %}
+<div dojoType="dijit.layout.TabContainer" nested="true" doLayout="true" id="tab_storage">
+    <div dojoType="dijit.layout.ContentPane" title="{% trans "Active Volumes" %}" {% if focused_tab == "Active Volumes" %}selected="true"{% endif %} doLayout="false" href="{% url storage_volumes %}" class="objrefresh" refreshOnShow="true">
+    </div>
+    <div dojoType="dijit.layout.ContentPane" title="{% trans "ZFS Replication" %}" {% if focused_tab == "Replication" %}selected="true"{% endif %} doLayout="false" href="{% url storage_replications %}" class="objrefresh data_storage_Replication" refreshOnShow="true">
+    </div>
+    <div dojoType="dijit.layout.ContentPane" title="{% trans "ZFS Snapshots" %}" {% if focused_tab == "Snapshots" %}selected="true"{% endif %} doLayout="false" href="{% url storage_snapshots %}" class="objrefresh data_storage_Task" refreshOnShow="true">
+    </div>
+    <div dojoType="dijit.layout.ContentPane" title="{% trans "ZFS Snapshots" %}" doLayout="false" {% if focused_tab == "Snapshots" %}selected="true"{% endif %} doLayout="false" href="{% url storage_snapshots %}" class="objrefresh data_storage_Task" refreshOnShow="true">
+    </div>
+    <div dojoType="dijit.layout.ContentPane" title="{% trans "Periodic Snapshots" %}" {% if focused_tab == "Periodic Snapshots" %}selected="true"{% endif %} doLayout="false" href="{% url storage_tasks %}" class="objrefresh data_storage_Task" refreshOnShow="true">
+    </div>
+</div>

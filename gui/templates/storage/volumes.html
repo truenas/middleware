@@ -1,0 +1,155 @@
+{% load i18n %}
+    <button id="addVolumeBtn" dojoType="dijit.form.Button" type="button">
+    <img src="/freenas/media/images/ui/buttons/add_volumes.png">
+    <br />
+    <script type="dojo/method" event="onClick" args="evt">
+        volumeWizard('{% trans "Create Volume" %}', '{% url storage_wizard %}', [this,]);
+    </script>
+    </button>
+
+    <div dojoType="dijit.Tooltip" connectId="addVolumeBtn" position="above">
+        <strong>{% trans "Create Volume" %}</strong>
+    </div>
+
+{% if en_dataset %}
+    <button id="datasetBtn" dojoType="dijit.form.Button" type="button">
+        <img src="/freenas/media/images/ui/buttons/add_dataset.png">
+        <br />
+        <script type="dojo/method" event="onClick" args="evt">
+            addObject('{% trans "Create ZFS Dataset" %}', '{% url storage_dataset %}', [this,]);
+        </script>
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="datasetBtn" position="above">
+        <strong>{% trans "Create ZFS Dataset" %}</strong>
+    </div>
+{% endif %}
+
+    <button id="importVolBtn" dojoType="dijit.form.Button" type="button">
+        <img src="/freenas/media/images/ui/buttons/import_volume.png">
+        <br />
+        <script type="dojo/method" event="onClick" args="evt">
+            volumeWizard('{% trans "Import Volume" %}', '{% url storage_import %}', [this,]);
+        </script>
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="importVolBtn" position="above">
+        <strong>{% trans "Import Volume" %}</strong>
+    </div>
+
+    <button id="autoImportVolBtn" dojoType="dijit.form.Button" type="button">
+        <img src="/freenas/media/images/ui/buttons/auto_import_volume.png">
+        <br />
+        <script type="dojo/method" event="onClick" args="evt">
+            volumeWizard('{% trans "Auto Import Volume" %}', '{% url storage_autoimport %}', [this,]);
+        </script>
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="autoImportVolBtn" position="above">
+        <strong>{% trans "Auto Import Volume" %}</strong>
+    </div>
+
+    <h5>
+        {% if mp_list %}
+            {% trans "Active Volumes" %}: <strong>{{ mp_list|length }}</strong>
+        {% else %}
+            {% trans "There are no active volumes." %}
+        {% endif %}
+    </h5>
+
+    <table class="grid">
+        <thead class="ghead">
+        <td>{% trans "Volume" %}</td>
+        <td>{% trans "Path" %}</td>
+        <td>{% trans "Used" %}</td>
+        <td>{% trans "Available" %}</td>
+        <td>{% trans "Size" %}</td>
+        <td>{% trans "Status" %}</td>
+        <td>{% trans "Available actions" %}</td>
+        </thead>
+    <tbody>
+	{% for m in mp_list %}
+	<tr class="{% cycle 'odd' 'even' %}" id="{{ m.id }}">
+	    <td>
+		{{ m.mp_volume.vol_name }}
+	    </td>
+	    <td>
+		{{ m.mp_path }}
+	    </td>
+	    <td>
+		{{ m.used_si }} ({{ m.used_pct }})
+	    </td>
+	    <td>
+		{{ m.avail_si }}
+	    </td>
+	    <td>
+		{{ m.total_si }}
+	    </td>
+	    <td>
+		{{ m.status }}
+	    </td>
+	    <td>
+
+{% if m.mp_ischild %}
+    <button dojoType="dijit.form.Button" type="button" id="delDSBtn{{ m.id }}"
+        onClick="editObject('{% trans "Destroy Dataset" %}', '{% url storage_dataset_delete object_id=m.id %}', [this,]);">
+        <img src="/freenas/media/images/ui/buttons/remove_dataset.png">
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="delDSBtn{{ m.id }}" position="above">
+        <strong>{% trans "Destroy Dataset" %}</strong>
+    </div>
+    <button dojoType="dijit.form.Button" type="button" id="editDataBtn{{ m.id }}"
+        onClick="editObject('{% trans "Edit ZFS Options" %}', '{% url storage_dataset_edit object_id=m.id %}', [this,]);">
+        <img src="/freenas/media/images/ui/buttons/settings.png" />
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="editDataBtn{{ m.id }}" position="above">
+        <strong>{% trans "Edit ZFS Options" %}</strong>
+    </div>
+{% else %}
+    <button id="delVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button"
+	onClick="editObject('{% trans "Destroy Volume" %}', '{% url freeadmin_model_delete app="storage",model="Volume",oid=m.mp_volume.id %}', [this,]);">
+	<img src="/freenas/media/images/ui/buttons/remove_volume.png" width="18px" height="18px"></button>
+    <div dojoType="dijit.Tooltip" connectId="delVolBtn{{ m.id }}" position="above">
+        <strong>{% trans "Destroy Volume" %}</strong>
+    </div>
+    {% if m.mp_volume.vol_fstype == 'ZFS' %}
+    <button dojoType="dijit.form.Button" type="button" id="editVolBtn{{ m.id }}"
+        onClick="editObject('{% trans "Edit ZFS Options" %}', '{% url storage_volume_edit object_id=m.id %}', [this,]);">
+        <img src="/freenas/media/images/ui/buttons/settings.png" />
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="editVolBtn{{ m.id }}" position="above">
+        <strong>{% trans "Edit ZFS Options" %}</strong>
+    </div>
+    {% endif %}
+{% endif %}
+    <button id="permBtn{{ m.id }}" dojoType="dijit.form.Button" type="button" 
+        onClick="editObject('{% trans "Change Permissions" %}', '{% url storage_mp_permission object_id=m.id %}', [this,]);">
+        <img src="/freenas/media/images/ui/buttons/permissions.png" width="18px" height="18px"></button>
+    <div dojoType="dijit.Tooltip" connectId="permBtn{{ m.id }}" position="above">
+        <strong>{% trans "Change Permissions" %}</strong>
+    </div>
+{% if m.mp_volume.vol_fstype == 'ZFS' %}
+        <button id="snapBtn{{ m.id }}" dojoType="dijit.form.Button" type="button" 
+            onClick="editObject('{% trans "Create Snapshot" %}', '{% url storage_manualsnap path=m.mp_path %}', [this,]);">
+        <img src="/freenas/media/images/ui/buttons/create_snapshot.png" width="18px" height="18px"></button>
+<div dojoType="dijit.Tooltip" connectId="snapBtn{{ m.id }}" position="above">
+    <strong>{% trans "Create Snapshot" %}</strong>
+</div>
+{% endif %}
+{% if not m.mp_ischild %}
+    <button id="viewDisksBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
+        <img src="/freenas/media/images/ui/buttons/view_all_disks.png" width="18px" height="18px">
+        <script type="dojo/method" event="onClick" args="evt">
+            viewModel('{% trans "View Disks" %}', '{% url storage_datagrid_disks vid=m.mp_volume.id %}');
+        </script>
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="viewDisksBtn{{ m.id }}" position="above">
+        <strong>{% trans "View Disks" %}</strong>
+    </div>
+{% endif %}
+	    </td>
+	</tr>
+	{% empty %}
+	<tr>
+            <td colspan="7">{% trans "No volumes defined" %}</td>
+	</tr>
+	{% endfor %}
+    </tbody>
+</table>

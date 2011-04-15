@@ -42,20 +42,42 @@ from freenasUI.middleware.notifier import notifier
 ## Disk section
 
 def home(request):
-    mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
-    en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
-    zfsnap_list = notifier().zfs_snapshot_list()
-    zfsrepl_list = models.Replication.objects.select_related().all()
-    task_list = models.Task.objects.order_by("-id").all()
+    #zfsnap_list = notifier().zfs_snapshot_list()
     variables = RequestContext(request, {
         'focused_tab': request.GET.get("tab", None),
-        'en_dataset' : en_dataset,
-        'mp_list': mp_list,
-        'task_list': task_list,
-        'zfsnap_list': zfsnap_list,
-        'zfsrepl_list': zfsrepl_list,
+        #'zfssnap_list': zfsnap_list,
     })
-    return render_to_response('storage/index2.html', variables)
+    return render_to_response('storage/index.html', variables)
+
+def tasks(request):
+    task_list = models.Task.objects.order_by("-id").all()
+    variables = RequestContext(request, {
+        'task_list': task_list,
+        })
+    return render_to_response('storage/tasks.html', variables)
+
+def volumes(request):
+    en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
+    mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
+    variables = RequestContext(request, {
+        'mp_list': mp_list,
+        'en_dataset' : en_dataset,
+        })
+    return render_to_response('storage/volumes.html', variables)
+
+def replications(request):
+    zfsrepl_list = models.Replication.objects.select_related().all()
+    variables = RequestContext(request, {
+        'zfsrepl_list': zfsrepl_list,
+        })
+    return render_to_response('storage/replications.html', variables)
+
+def snapshots(request):
+    zfsnap_list = notifier().zfs_snapshot_list()
+    variables = RequestContext(request, {
+        'zfsnap_list': zfsnap_list,
+        })
+    return render_to_response('storage/snapshots.html', variables)
 
 def wizard(request):
 
@@ -351,7 +373,7 @@ def mp_permission(request, object_id):
         'mp_list': mp_list,
         'form': form,
     })
-    return render_to_response('storage/permission2.html', variables)
+    return render_to_response('storage/permission.html', variables)
 
 def dataset_delete(request, object_id):
     obj = models.MountPoint.objects.get(id=object_id)

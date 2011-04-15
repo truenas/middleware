@@ -33,6 +33,10 @@ from freenasUI.services.views import servicesToggleView as servicesToggleView
 
 urlpatterns = patterns('storage.views',
     url(r'^home/$', 'home', name="storage_home"),
+    url(r'^tasks/$', 'tasks', name="storage_tasks"),
+    url(r'^volumes/$', 'volumes', name="storage_volumes"),
+    url(r'^replications/$', 'replications', name="storage_replications"),
+    url(r'^snapshots/$', 'snapshots', name="storage_snapshots"),
     url(r'^datagrid/volume-(?P<vid>\d+)/disks/$', 'disks_datagrid', name="storage_datagrid_disks"),
     url(r'^datagrid/volume-(?P<vid>\d+)/disks/json$', 'disks_datagrid_json', name="storage_datagrid_disks_json"),
     url(r'dataset/$', 'dataset_create', name="storage_dataset"),
