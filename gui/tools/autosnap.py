@@ -199,7 +199,7 @@ for mpkey in mp_to_task_map:
             system(replcmd)
             replcmd = '/sbin/zfs send %s | %s %s /sbin/zfs receive -F -d %s' % (snapname, sshcmd, remote, fs)
         else:
-            replcmd = '/sbin/zfs send -i %s %s | %s %s /sbin/zfs receive -F -d %s' % (last_snapshot, snapname, sshcmd, remote, fs)
+            replcmd = '/sbin/zfs send -I %s %s | %s %s /sbin/zfs receive -F -d %s' % (last_snapshot, snapname, sshcmd, remote, fs)
         system(replcmd)
         replication.repl_lastsnapshot = snapname
         replication.save()
