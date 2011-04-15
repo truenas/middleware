@@ -233,8 +233,13 @@ class VolumeWizardForm(forms.Form):
             del cleaned_data["volume_name"]
 
         if cleaned_data["volume_fstype"] == 'ZFS':
-            if volume_name in ('mirror', 'raidz', 'raidz2'):
-                msg = _(u"This volume name is a reserved word and thus cannot be used")
+            if volume_name in ('log',):
+                msg = _(u"\"log\" is a reserved word and thus cannot be used")
+                self._errors["volume_name"] = self.error_class([msg])
+                cleaned_data.pop("volume_name", None)
+            elif re.search(r'^c[0-9].*', volume_name) or re.search(r'^mirror.*', volume_name) or \
+                re.search(r'^spare.*', volume_name) or re.search(r'^raidz.*', volume_name):
+                msg = _(u"The volume name may NOT start with c[0-9], mirror, raidz or spare")
                 self._errors["volume_name"] = self.error_class([msg])
                 cleaned_data.pop("volume_name", None)
             
@@ -592,6 +597,14 @@ class DiskFormPartial(ModelForm):
 
 
 class ZFSDataset_CreateForm(Form):
+    dataset_volid = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict),  label=_('Volume from which this dataset will be created on'))
+    dataset_name = forms.CharField(max_length = 128, label = _('Dataset Name'))
+    dataset_compression = forms.ChoiceField(choices=choices.ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
+    dataset_atime = forms.ChoiceField(choices=choices.ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label=_('Enable atime'))
+    dataset_refquota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset'), help_text=_('0=Unlimited; example: 1g'))
+    dataset_quota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset and all children'), help_text=_('0=Unlimited; example: 1g'))
+    dataset_refreserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset'), help_text=_('0=None; example: 1g'))
+    dataset_reserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset and all children'), help_text=_('0=None; example: 1g'))
     def __init__(self, *args, **kwargs):
         super(ZFSDataset_CreateForm, self).__init__(*args, **kwargs)
         self.fields['dataset_volid'].choices = self._populate_volume_choices()
@@ -601,6 +614,10 @@ class ZFSDataset_CreateForm(Form):
         for volume in volumes:
             volumechoices[volume.id] = volume.vol_name
         return volumechoices.items()
+    def clean_dataset_name(self):
+        name = self.cleaned_data["dataset_name"]
+        if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*$', name):
+            raise forms.ValidationError(_("Dataset names must begin with an alphanumeric character and may only contain (-), (_), (:) and (.)."))
     def clean(self):
         cleaned_data = self.cleaned_data
         volume_name = models.Volume.objects.get(id=cleaned_data.get("dataset_volid")).vol_name.__str__()
@@ -628,14 +645,6 @@ class ZFSDataset_CreateForm(Form):
         msg = u"%s" % msg
         self._errors['__all__'] = self.error_class([msg])
         del self.cleaned_data
-    dataset_volid = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict),  label=_('Volume from which this dataset will be created on'))
-    dataset_name = forms.CharField(max_length = 128, label = _('Dataset Name'))
-    dataset_compression = forms.ChoiceField(choices=choices.ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
-    dataset_atime = forms.ChoiceField(choices=choices.ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label=_('Enable atime'))
-    dataset_refquota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset'), help_text=_('0=Unlimited; example: 1g'))
-    dataset_quota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset and all children'), help_text=_('0=Unlimited; example: 1g'))
-    dataset_refreserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset'), help_text=_('0=None; example: 1g'))
-    dataset_reserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset and all children'), help_text=_('0=None; example: 1g'))
 
 class ZFSDataset_EditForm(Form):
     dataset_compression = forms.ChoiceField(choices=choices.ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
