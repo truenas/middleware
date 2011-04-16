@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems
 # All rights reserved
 #
@@ -30,10 +29,11 @@ import base64
 import re
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import QueryDict
 from django.utils.translation import ugettext as _
 
-from storage import models
-from services.models import Volume, MountPoint, DiskGroup, Disk
+from services import models
+from storage.models import Volume, MountPoint, DiskGroup, Disk
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.freenasldap import FreeNAS_Users
 from freenasUI.middleware.notifier import notifier
@@ -57,20 +57,34 @@ class CIFSForm(ModelForm):
                                        label=_('Guest Account')
                                        )
     def __init__(self, *args, **kwargs):
+        #FIXME: Workaround for DOJO not showing select options with blank values
+        if len(args) > 0 and isinstance(args[0], QueryDict):
+            new = args[0].copy()
+            if new.get('cifs_srv_homedir', None) == '-----':
+                new['cifs_srv_homedir'] = ''
+            args = (new,) + args[1:]
         super(CIFSForm, self).__init__(*args, **kwargs)
         self.fields['cifs_srv_guest'].widget = widgets.FilteringSelect()
         self.fields['cifs_srv_guest'].choices = ((x.bsdusr_username,
                                                   x.bsdusr_username)
                                                   for x in FreeNAS_Users()
                                                  )
+        #FIXME: Workaround for DOJO not showing select options with blank values
+        self.fields['cifs_srv_homedir'].choices = (('-----', 'N/A'),) + tuple([x for x in self.fields['cifs_srv_homedir'].choices][1:])
 
     def clean(self):
-        home = self.cleaned_data['cifs_srv_homedir_enable']
-        browse = self.cleaned_data['cifs_srv_homedir_browseable_enable']
         cleaned_data = self.cleaned_data
-        if browse and not home:
-            self._errors['cifs_srv_homedir_enable'] = self.error_class([_("This field is required for \"Enable home directories browsing\"."),])
-            del cleaned_data['cifs_srv_homedir_enable']
+        home = cleaned_data['cifs_srv_homedir_enable']
+        browse = cleaned_data['cifs_srv_homedir_browseable_enable']
+        hdir = cleaned_data['cifs_srv_homedir']
+        if (browse or hdir) and not home:
+            self._errors['cifs_srv_homedir_enable'] = self.error_class()
+            if browse:
+                self._errors['cifs_srv_homedir_enable'] += self.error_class([_("This field is required for \"Enable home directories browsing\"."),])
+                cleaned_data.pop('cifs_srv_homedir_enable', None)
+            if hdir:
+                self._errors['cifs_srv_homedir_enable'] += self.error_class([_("This field is required for \"Home directories\"."),])
+                cleaned_data.pop('cifs_srv_homedir_enable', None)
         return cleaned_data
 
     def save(self):

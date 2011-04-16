@@ -145,6 +145,12 @@ class CIFS(Model):
             help_text=_("This enables\disables home directories browsing for samba user."),
             default=False,
             )
+    cifs_srv_homedir = models.ForeignKey(MountPoint, 
+            verbose_name=_("Home directories"),
+            null=True, 
+            blank=True,
+            default=None,
+            )
     cifs_srv_aio_enable = models.BooleanField(
             verbose_name=_("Enable AIO"), 
             help_text=_("This enables\disables AIO support.")
