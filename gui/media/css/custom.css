@@ -364,3 +364,6 @@ tr.ix, td.ix{
 .CreatePeriodicSnapIcon { background-image: url('/media/images/ui/tree/create_periodic_snapshot.png'); width:16px;        height:16px; }
 .ViewAllPeriodicSnapIcon { background-image: url('/media/images/ui/tree/view_all_periodic_snapshots.png'); width:16px;        height:16px; }
 .SnapIcon { background-image: url('/media/images/ui/tree/snapshots.png'); width:16px;        height:16px; }
+.AddReplIcon { background-image: url('/media/images/ui/tree/add_replication.png'); width:16px;        height:16px; }
+.ReplIcon { background-image: url('/media/images/ui/tree/replication.png'); width:16px;        height:16px; }
+.ViewAllReplIcon { background-image: url('/media/images/ui/tree/view_all_replication.png'); width:16px;        height:16px; }

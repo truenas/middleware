@@ -239,6 +239,11 @@ class Replication(Model):
     class Meta:
         verbose_name = _(u"Replication Task")
         verbose_name_plural = _(u"Replication Tasks")
+    class FreeAdmin:
+        icon_model = u"ReplIcon"
+        icon_add = u"AddReplIcon"
+        icon_view = u"ViewAllReplIcon"
+        icon_object = u"ReplIcon"
     def __unicode__(self):
         return '%s -> %s' % (self.repl_mountpoint, self.repl_remote.ssh_remote_hostname)
 

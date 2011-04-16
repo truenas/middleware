@@ -8,9 +8,8 @@ ICON = u'StorageIcon'
 class ViewRemote(NavOption):
 
         name = _(u'View All Replication Tasks')
-        view = u'storage_home'
         type = 'openreplication'
-        icon = u'ViewAllPeriodicSnapIcon'
+        icon = u'ViewAllReplIcon'
         app_name = 'storage'
         append_app = False
         options = []
