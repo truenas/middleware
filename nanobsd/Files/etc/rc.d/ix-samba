@@ -80,13 +80,15 @@ generate_smbconf()
 		ldap_usersuffix,
 		ldap_groupsuffix,
 		ldap_passwordsuffix,
-		ldap_machinesuffix
+		ldap_machinesuffix,
+		mp_path as cifs_srv_homedir
 
 	FROM
 		services_cifs
 
 	JOIN services_ldap ON (1 = 1)
 	JOIN services_activedirectory ON (1 = 1 )
+    LEFT JOIN storage_mountpoint mp ON (cifs_srv_homedir_id = mp.id)
 
 	ORDER BY
 		-services_cifs.id,
@@ -104,7 +106,7 @@ generate_smbconf()
 		ad_domainname ad_netbiosname ad_workgroup ad_adminname ad_adminpw \
 		ldap_hostname ldap_basedn ldap_anonbind ldap_rootbasedn \
 		ldap_rootbindpw ldap_pwencryption ldap_ssl ldap_usersuffix \
-		ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix;
+		ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix cifs_homedir_mp;
 	do
 		# Default user and group is ftp:ftp
 		if [ -z "${guest}" ]; then
@@ -283,6 +285,9 @@ EOF
                                 echo "    browseable = yes"
                         else
                                 echo "    browseable = no"
+                        fi
+                        if [ "${cifs_homedir_mp}" != "" ]; then
+                                echo "    path = ${cifs_homedir_mp}/%S"
                         fi
 		fi
 
