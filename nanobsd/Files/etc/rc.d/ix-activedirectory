@@ -167,13 +167,46 @@ create_cache_filesystem()
 	return ${res}
 }
 
+activedirectory_enabled()
+{
+	local res=1
+	local enabled
+
+	enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		count(*)
+
+	FROM
+		services_services
+
+	WHERE (
+		srv_service = 'activedirectory' and
+		srv_enable = 1
+	)
+
+	ORDER BY
+		-services_services.id
+
+	LIMIT 1")
+
+	if [ "${enabled}" = "1" ]
+	then
+		res=0
+	fi
+
+	return ${res}
+}
+
 do_activedirectory_stuff()
 {
-	join_activedirectory_domain
-	setup_homedirs
-	create_cache_filesystem
-	sleep 10
-	/usr/sbin/service samba restart
+	if activedirectory_enabled
+	then
+		join_activedirectory_domain
+		setup_homedirs
+		create_cache_filesystem
+		sleep 10
+		/usr/sbin/service samba restart
+	fi
 }
 
 name="ix-activedirectory"
