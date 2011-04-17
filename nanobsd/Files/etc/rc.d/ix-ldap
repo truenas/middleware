@@ -14,6 +14,9 @@
 : ${LDAP_CONF:="/usr/local/etc/openldap/ldap.conf"}
 : ${CERT_FILE:="/usr/local/etc/certs/cacert.crt"}
 
+: ${FREENAS_CACHEDIR:="/var/tmp/.cache"}
+: ${FREENAS_CACHESIZE:="100m"}
+
 save_certificate()
 {
 	local ldap_id="${1}"
@@ -42,8 +45,6 @@ generate_ldapconf()
 	local nssconf="${NSS_LDAP_CONF}"
 	local ldapconf="${LDAP_CONF}"
 	local secret="${NSS_LDAP_SECRET}"
-	local hdsrc="/var/home"
-	local hddst="/home"
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
@@ -143,27 +144,51 @@ EOF
 			TLS_REQCERT allow
 EOF
 		fi
-
-		if [ -n "${hdsrc}" -a -n "${hddst}" ]
-		then
-			local dst=$(dirname "${hddst}")
-
-			mount -uw /	
-
-			mkdir -p "${hdsrc}"
-			mkdir -p "${dst}"
-			ln -s "${hdsrc}" "${dst}" 2>/dev/null
-
-			mount -ur /
-		fi
 	done
 
 	return 0
 }
 
+setup_homedirs()
+{
+	local hdsrc="/var/home"
+	local hddst="/home"
+
+	local dst=$(dirname "${hddst}")
+
+	mount -uw /	
+
+	mkdir -p "${hdsrc}"
+	mkdir -p "${dst}"
+	ln -s "${hdsrc}" "${dst}" 2>/dev/null
+
+	mount -ur /
+}
+
+create_cache_filesystem()
+{
+	res=1
+	if mount | egrep -q "^/dev/md[0-9]+.*${FREENAS_CACHEDIR}" 2>/dev/null
+	then
+		mddev=$(mount|egrep "^/dev/md[0-9]+.*${FREENAS_CACHEDIR}"|\
+			sed -E "s#^/dev/(md[0-9]+).+#\1#"|awk '{ print $1 }')
+		umount "${FREENAS_CACHEDIR}"
+		mdconfig -d -u "${mddev}"
+	fi
+
+	if mdmfs -s "${FREENAS_CACHESIZE}" md "${FREENAS_CACHEDIR}"
+	then
+		res=0
+	fi
+
+	return ${res}
+}
+
 generate_ldap_config()
 {
 	generate_ldapconf
+	setup_homedirs
+	create_cache_filesystem
 }
 
 name="ix-ldap"

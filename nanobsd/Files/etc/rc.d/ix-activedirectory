@@ -10,6 +10,9 @@
 
 : ${NSS_LDAP_CONF:="/usr/local/etc/nss_ldap.conf"}
 
+: ${FREENAS_CACHEDIR:="/var/tmp/.cache"}
+: ${FREENAS_CACHESIZE:="100m"}
+
 is_win2k8()
 {
 	local res=0
@@ -139,10 +142,30 @@ setup_homedirs()
 	mount -ur /
 }
 
+create_cache_filesystem()
+{
+	res=1
+	if mount | egrep -q "^/dev/md[0-9]+.*${FREENAS_CACHEDIR}" 2>/dev/null
+	then
+		mddev=$(mount|egrep "^/dev/md[0-9]+.*${FREENAS_CACHEDIR}"|\
+			sed -E "s#^/dev/(md[0-9]+).+#\1#"|awk '{ print $1 }')
+		umount "${FREENAS_CACHEDIR}"
+		mdconfig -d -u "${mddev}"
+	fi
+
+	if mdmfs -s "${FREENAS_CACHESIZE}" md "${FREENAS_CACHEDIR}"
+	then
+		res=0
+	fi
+
+	return ${res}
+}
+
 do_activedirectory_stuff()
 {
 	join_activedirectory_domain
 	setup_homedirs
+	create_cache_filesystem
 	sleep 10
 	/usr/sbin/service samba restart
 }

@@ -50,6 +50,13 @@
 : ${HTTPDPORT:="80"}
 
 #
+#	Misc settings
+#
+: ${FREENAS_CACHEDIR:="/var/tmp/.cache"}
+: ${FREENAS_CACHESIZE:="300m"}
+: ${FREENAS_CACHEEXPIRE:="60"}
+
+#
 #	LDAP settings
 #
 : ${NSS_LDAP_CONF:="/usr/local/etc/nss_ldap.conf"}
@@ -79,3 +86,4 @@
 #	Samba settings
 #
 : ${SMB_CONF:="/usr/local/etc/smb.conf"}
+
