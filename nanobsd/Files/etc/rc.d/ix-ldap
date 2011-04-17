@@ -176,6 +176,7 @@ create_cache_filesystem()
 		mdconfig -d -u "${mddev}"
 	fi
 
+	mkdir -p "${FREENAS_CACHEDIR}"
 	if mdmfs -s "${FREENAS_CACHESIZE}" md "${FREENAS_CACHEDIR}"
 	then
 		res=0
