@@ -149,7 +149,12 @@ create_cache_filesystem()
 	then
 		mddev=$(mount|egrep "^/dev/md[0-9]+.*${FREENAS_CACHEDIR}"|\
 			sed -E "s#^/dev/(md[0-9]+).+#\1#"|awk '{ print $1 }')
-		umount "${FREENAS_CACHEDIR}"
+
+		if ! umount "${FREENAS_CACHEDIR}" >/dev/null 2>&1
+		then
+			return ${res}
+		fi
+
 		mdconfig -d -u "${mddev}"
 	fi
 
