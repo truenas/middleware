@@ -6,7 +6,7 @@
 # PROVIDE: ix-activedirectory
 # REQUIRE: smbd
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 : ${NSS_LDAP_CONF:="/usr/local/etc/nss_ldap.conf"}
 
