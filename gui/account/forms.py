@@ -28,6 +28,7 @@
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User as django_User
 from django.utils.safestring import mark_safe
+from django.http import QueryDict
 
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.account import models
@@ -172,16 +173,27 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
         help_text = _("Enter the same password as above, for verification."), required=False)
     bsdusr_shell = forms.ChoiceField(label=_("Shell"), initial=u'/bin/csh', choices=())
     bsdusr_login_disabled = forms.BooleanField(label=_("Disable logins"), required=False)
+    bsdusr_group2 = forms.ModelChoiceField(label=_("Primary Group"), queryset=models.bsdGroups.objects.all(), required=False)
 
     class Meta:
         model = models.bsdUsers
-        exclude = ('bsdusr_unixhash','bsdusr_smbhash','bsdusr_group','bsdusr_builtin',)
+        exclude = ('bsdusr_unixhash','bsdusr_smbhash','bsdusr_builtin','bsdusr_group')
+        fields = ('bsdusr_uid', 'bsdusr_username', 'bsdusr_group2', 'bsdusr_home', 'bsdusr_shell', 'bsdusr_full_name')
 
     def __init__(self, *args, **kwargs):
+        #FIXME: Workaround for DOJO not showing select options with blank values
+        if len(args) > 0 and isinstance(args[0], QueryDict):
+            new = args[0].copy()
+            if new.get('bsdusr_group2', None) == '-----':
+                new['bsdusr_group2'] = ''
+            args = (new,) + args[1:]
         super(bsdUserCreationForm, self).__init__(*args, **kwargs)
         self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
         self.fields['bsdusr_shell'].choices.sort()
         self.initial['bsdusr_uid'] = notifier().user_getnextuid()
+        self.fields['bsdusr_group2'].widget.attrs['maxHeight'] = 200
+        self.fields['bsdusr_group2'].choices = (('-----', '-----'),) + tuple([x for x in self.fields['bsdusr_group2'].choices][1:])
+        self.fields['bsdusr_group2'].required = False
 
     def clean_bsdusr_username(self):
         if self.instance.id is None:
@@ -228,11 +240,17 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
 
     def save(self, commit=True):
         if commit:
+            group = self.cleaned_data['bsdusr_group2']
+            if group == None:
+                gid = -1
+            else:
+                gid = group.bsdgrp_gid
             uid, gid, unixhash, smbhash = notifier().user_create(
                 username = self.cleaned_data['bsdusr_username'].__str__(),
                 fullname = self.cleaned_data['bsdusr_full_name'].__str__(),
                 password = self.cleaned_data['bsdusr_password2'].__str__(),
                 uid = self.cleaned_data['bsdusr_uid'],
+                gid = gid,
                 shell = self.cleaned_data['bsdusr_shell'].__str__(),
                 homedir = self.cleaned_data['bsdusr_home'].__str__(),
                 password_disabled = self.cleaned_data['bsdusr_login_disabled']
