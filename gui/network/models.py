@@ -150,6 +150,9 @@ class Interfaces(Model):
 
     def __unicode__(self):
             return u'%s' % self.int_name 
+    def delete(self):
+        super(Interfaces, self).delete()
+        notifier().start("network")
     class Meta:
         verbose_name = _("Interfaces")
         verbose_name_plural = _("Interfaces")
