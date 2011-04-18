@@ -312,6 +312,7 @@ class bsdUserChangeForm(ModelForm, SharedFunc):
 
         self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
         self.fields['bsdusr_shell'].choices.sort()
+        self.fields['bsdusr_group'].widget.attrs['maxHeight'] = 200
 
     def clean_bsdusr_username(self):
         return self.instance.bsdusr_username
