@@ -440,7 +440,10 @@ class iSCSITargetPortal(Model):
         icon_add = u"AddPortalIcon"
         icon_view = u"ViewAllPortalsIcon"
     def __unicode__(self):
-        return unicode(self.iscsi_target_portal_tag)
+        if self.iscsi_target_portal_comment != "":
+            return u"%s (%s)" % (self.iscsi_target_portal_tag, self.iscsi_target_portal_comment)
+        else:
+            return unicode(self.iscsi_target_portal_tag)
     def delete(self):
         super(iSCSITargetPortal, self).delete()
         portals = iSCSITargetPortal.objects.all().order_by('iscsi_target_portal_tag')
@@ -483,8 +486,18 @@ class iSCSITargetAuthorizedInitiator(Model):
         icon_add = u"AddInitiatorIcon"
         icon_view = u"ViewAllInitiatorsIcon"
     def __unicode__(self):
-        return unicode(self.iscsi_target_initiator_tag)
-
+        if self.iscsi_target_initiator_comment != "":
+            return u"%s (%s)" % (self.iscsi_target_initiator_tag, self.iscsi_target_initiator_comment)
+        else:
+            return unicode(self.iscsi_target_initiator_tag)
+    def delete(self):
+        super(iSCSITargetAuthorizedInitiator, self).delete()
+        portals = iSCSITargetAuthorizedInitiator.objects.all().order_by('iscsi_target_initiator_tag')
+        idx = 1
+        for portal in portals:
+            portal.iscsi_target_initiator_tag = idx
+            portal.save()
+            idx += 1
 
 class iSCSITargetAuthCredential(Model):
     iscsi_target_auth_tag = models.IntegerField(

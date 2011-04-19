@@ -586,8 +586,20 @@ class iSCSITargetPortalForm(ModelForm):
         notifier().reload("iscsitarget")
 
 class iSCSITargetAuthorizedInitiatorForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetAuthorizedInitiatorForm, self).__init__(*args, **kwargs)
+        self.fields["iscsi_target_initiator_tag"].initial = models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
     class Meta:
         model = models.iSCSITargetAuthorizedInitiator
+        widgets = {
+            'iscsi_target_initiator_tag': forms.widgets.HiddenInput(),
+        }
+    def clean_iscsi_target_initiator_tag(self):
+        tag = self.cleaned_data["iscsi_target_initiator_tag"]
+        higher = models.iSCSITargetPortal.objects.all().count() + 1
+        if tag > higher:
+            raise forms.ValidationError(_("Your Group ID cannot be higher than %d") % higher)
+        return tag
     def save(self):
         super(iSCSITargetAuthorizedInitiatorForm, self).save()
         notifier().reload("iscsitarget")
