@@ -334,7 +334,7 @@ def testmail(request):
                     server.starttls()
             if email.em_smtp:
                 server.login(email.em_user, email.em_pass)
-            server.sendmail(email.em_fromemail, [email.em_fromemail], msg.as_string())
+            server.sendmail(email.em_fromemail, [admin.email], msg.as_string())
             server.quit()
         except Exception, e:
             errmsg = str(e)
