@@ -184,6 +184,52 @@ EOF
 		if [ "${ldap_enable}" = "1" ]; then
 			echo "    security = user"
 
+			if [ -n "${ldap_hostname}" ]; then
+				echo "    passdb backend = ldapsam:ldap://${ldap_hostname}"
+			fi
+
+			if [ -n "${ldap_rootbasedn}" ]; then
+			    echo "    ldap admin dn = ${ldap_rootbasedn}"
+			fi
+
+			if [ -n "${ldap_rootbindpw}" ]; then
+				mount -u /
+				/usr/local/bin/smbpasswd -w "${ldap_rootbindpw}" >/dev/null 2>&1
+				mount -ur /
+			fi
+
+			if [ -n "${ldap_basedn}" ]; then
+			    echo "    ldap suffix = ${ldap_basedn}"
+			fi
+
+			if [ -n "${ldap_usersuffix}" ]; then
+			    echo "    ldap user suffix = ${ldap_usersuffix}"
+			fi
+
+			if [ -n "${ldap_groupsuffix}" ]; then
+			    echo "    ldap group suffix = ${ldap_groupsuffix}"
+			fi
+
+			if [ -n "${ldap_machinesuffix}" ]; then
+			    echo "    ldap machine suffix = ${ldap_machinesuffix}"
+			fi
+
+			if [ "${ldap_ssl}" = "start_tls" ]; then
+				echo "    ldap ssl = start tls"
+			else
+				echo "    ldap ssl = off"
+			fi
+
+			cat<<-EOF
+			    ldap replication sleep = 1000
+			    ldap passwd sync = yes
+			    #ldap debug level = 1
+			    #ldap debug threshold = 1
+			    ldapsam:trusted = yes
+			    idmap uid = 10000-39999
+			    idmap gid = 10000-39999
+EOF
+
 		elif [ "${ad_enable}" = "1" ]; then
 			local domain=$(echo "${ad_domainname}"|tr a-z A-Z)
 			local ad_workgroup="${ad_workgroup}"
@@ -291,58 +337,6 @@ EOF
                         fi
 		fi
 
-		# XXX TODO XXX
-		if [ "${ad_enable}" = "1" ]; then
-			:
-		fi
-
-		if [ "${ldap_enable}" = "1" ]; then
-			if [ -n "${ldap_hostname}" ]; then
-				echo "    passdb backend = ldapsam:ldap://${ldap_hostname}"
-			fi
-
-			if [ -n "${ldap_rootbasedn}" ]; then
-			    echo "    ldap admin dn = ${ldap_rootbasedn}"
-			fi
-
-			if [ -n "${ldap_rootbindpw}" ]; then
-				mount -u /
-				/usr/local/bin/smbpasswd -w "${ldap_rootbindpw}" >/dev/null 2>&1
-				mount -ur /
-			fi
-
-			if [ -n "${ldap_basedn}" ]; then
-			    echo "    ldap suffix = ${ldap_basedn}"
-			fi
-
-			if [ -n "${ldap_usersuffix}" ]; then
-			    echo "    ldap user suffix = ${ldap_usersuffix}"
-			fi
-
-			if [ -n "${ldap_groupsuffix}" ]; then
-			    echo "    ldap group suffix = ${ldap_groupsuffix}"
-			fi
-
-			if [ -n "${ldap_machinesuffix}" ]; then
-			    echo "    ldap machine suffix = ${ldap_machinesuffix}"
-			fi
-
-			if [ "${ldap_ssl}" = "start_tls" ]; then
-				echo "    ldap ssl = start tls"
-			else
-				echo "    ldap ssl = off"
-			fi
-
-			cat<<-EOF
-			    ldap replication sleep = 1000
-			    ldap passwd sync = yes
-			    #ldap debug level = 1
-			    #ldap debug threshold = 1
-			    ldapsam:trusted = yes
-			    idmap uid = 10000-39999
-			    idmap gid = 10000-39999
-EOF
-		fi
 
 	done
 
