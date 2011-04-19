@@ -622,6 +622,9 @@ class FreeNAS_LDAP_Users:
 
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__init__: leave")
 
+    def __len__(self):
+        return len(self.__users)
+
     def __iter__(self):
         for user in self.__users:
             yield user
@@ -759,6 +762,9 @@ class FreeNAS_ActiveDirectory_Users:
 
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__init__: leave")
 
+    def __len__(self):
+        return len(self.__users)
+
     def __iter__(self):
         for user in self.__users:
             yield user
@@ -893,6 +899,9 @@ class FreeNAS_Users:
 
         syslog(LOG_DEBUG, "FreeNAS_Users.__init__: leave")
 
+    def __len__(self):
+        return len(self.__bsd_users) + len(self.__users)
+
     def __iter__(self):
         for user in self.__bsd_users:
             yield user
@@ -911,6 +920,9 @@ class FreeNAS_LDAP_Groups:
         self.__get_groups()
 
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Groups.__init__: leave")
+
+    def __len__(self):
+        return len(self.__groups)
 
     def __iter__(self):
         for group in self.__groups:
@@ -980,6 +992,9 @@ class FreeNAS_ActiveDirectory_Groups:
 
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Groups.__init__: leave")
 
+    def __len__(self):
+        return len(self.__groups)
+
     def __iter__(self):
         for group in self.__groups:
             yield group
@@ -1047,6 +1062,9 @@ class FreeNAS_Groups:
             self.__groups = FreeNAS_ActiveDirectory_Groups()
 
         syslog(LOG_DEBUG, "FreeNAS_Groups.__init__: leave")
+
+    def __len__(self):
+        return len(self.__bsd_groups) + len(self.__groups)
 
     def __iter__(self):
         for group in self.__bsd_groups:
