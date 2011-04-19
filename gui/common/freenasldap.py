@@ -861,7 +861,6 @@ class FreeNAS_ActiveDirectory_Users:
                 pw = pwd.getpwnam(sAMAccountName)
 
             except Exception, e:
-                print e
                 continue
 
             bu = bsdUsers()
