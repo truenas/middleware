@@ -566,9 +566,22 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         return oExtent
 
 class iSCSITargetPortalForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetPortalForm, self).__init__(*args, **kwargs)
+        self.fields["iscsi_target_portal_tag"].initial = models.iSCSITargetPortal.objects.all().count() + 1
     class Meta:
         model = models.iSCSITargetPortal
+        widgets = {
+            'iscsi_target_portal_tag': forms.widgets.HiddenInput(),
+        }
+    def clean_iscsi_target_portal_tag(self):
+        tag = self.cleaned_data["iscsi_target_portal_tag"]
+        higher = models.iSCSITargetPortal.objects.all().count() + 1
+        if tag > higher:
+            raise forms.ValidationError(_("Your Portal Group ID cannot be higher than %d") % higher)
+        return tag
     def save(self):
+        
         super(iSCSITargetPortalForm, self).save()
         notifier().reload("iscsitarget")
 

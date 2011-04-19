@@ -441,7 +441,14 @@ class iSCSITargetPortal(Model):
         icon_view = u"ViewAllPortalsIcon"
     def __unicode__(self):
         return unicode(self.iscsi_target_portal_tag)
-
+    def delete(self):
+        super(iSCSITargetPortal, self).delete()
+        portals = iSCSITargetPortal.objects.all().order_by('iscsi_target_portal_tag')
+        idx = 1
+        for portal in portals:
+            portal.iscsi_target_portal_tag = idx
+            portal.save()
+            idx += 1
 
 class iSCSITargetAuthorizedInitiator(Model):
     iscsi_target_initiator_tag = models.IntegerField(
