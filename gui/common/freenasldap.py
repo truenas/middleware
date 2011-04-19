@@ -1272,7 +1272,7 @@ class FreeNAS_Group(bsdGroups):
                 except:
                     gr = None
 
-        self._gr = gr
+        self.__gr = gr
         syslog(LOG_DEBUG, "FreeNAS_Group.__get_ldap_group: leave")
 
 
@@ -1309,5 +1309,5 @@ class FreeNAS_Group(bsdGroups):
                 except:
                     gr = None
 
-        self._gr = gr
+        self.__gr = gr
         syslog(LOG_DEBUG, "FreeNAS_Group.__get_active_directory_group: leave")
