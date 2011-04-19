@@ -55,5 +55,8 @@ def get_freenas_var_by_file(file, var):
     return val
 
 
-def get_freenas_var(var):
-    return get_freenas_var_by_file("/etc/rc.freenas", var)
+def get_freenas_var(var, default = None):
+    val = get_freenas_var_by_file("/etc/rc.freenas", var)
+    if not val:
+        val = default
+    return val

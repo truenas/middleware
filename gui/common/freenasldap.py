@@ -27,24 +27,190 @@
 #####################################################################
 from freenasUI.services.models import services, LDAP, ActiveDirectory
 from freenasUI.account.models import bsdUsers, bsdGroups
+from freenasUI.common.freenascache import FreeNAS_BaseCache, FREENAS_CACHEDIR
+from freenasUI.common.system import get_freenas_var
 
+import os
 import grp
 import pwd
 import types
 import ldap
+import syslog
+import time
+import hashlib
+
+from syslog import syslog, LOG_DEBUG
+
+
+FREENAS_LDAP_NOSSL = 0
+FREENAS_LDAP_USESSL = 1
+FREENAS_LDAP_USETLS = 2
+
+FREENAS_USERCACHE = os.path.join(FREENAS_CACHEDIR, ".users")
+FREENAS_GROUPCACHE = os.path.join(FREENAS_CACHEDIR, ".groups")
+
+FREENAS_LDAP_CACHEROOT = os.path.join(FREENAS_CACHEDIR, ".ldap")
+FREENAS_LDAP_QUERYCACHE	= os.path.join(FREENAS_CACHEDIR, ".query")
+
+FREENAS_LDAP_CACHEDIR = os.path.join(FREENAS_LDAP_CACHEROOT, ".ldap")
+FREENAS_LDAP_USERCACHE = os.path.join(FREENAS_LDAP_CACHEDIR, ".users")
+FREENAS_LDAP_GROUPCACHE = os.path.join(FREENAS_LDAP_CACHEDIR, ".groups")
+FREENAS_LDAP_LOCALDIR = os.path.join(FREENAS_LDAP_CACHEDIR, ".local")
+FREENAS_LDAP_LOCAL_USERCACHE = os.path.join(FREENAS_LDAP_LOCALDIR, ".users")
+FREENAS_LDAP_LOCAL_GROUPCACHE = os.path.join(FREENAS_LDAP_LOCALDIR, "groups")
+
+FREENAS_AD_CACHEDIR = os.path.join(FREENAS_LDAP_CACHEROOT, ".activedirectory")
+FREENAS_AD_USERCACHE = os.path.join(FREENAS_AD_CACHEDIR, ".users")
+FREENAS_AD_GROUPCACHE = os.path.join(FREENAS_AD_CACHEDIR, ".groups")
+FREENAS_AD_LOCALDIR = os.path.join(FREENAS_AD_CACHEDIR, ".local")
+FREENAS_AD_LOCAL_USERCACHE = os.path.join(FREENAS_AD_LOCALDIR, ".users")
+FREENAS_AD_LOCAL_GROUPCACHE = os.path.join(FREENAS_AD_LOCALDIR, ".groups")
+
+FREENAS_LDAP_CACHE_EXPIRE = get_freenas_var("FREENAS_LDAP_CACHE_EXPIRE", 60)
+FREENAS_LDAP_CACHE_ENABLE = get_freenas_var("FREENAS_LDAP_CACHE_ENABLE", 1)
+
+FREENAS_LDAP_VERSION = ldap.VERSION3
+FREENAS_LDAP_REFERRALS = get_freenas_var("FREENAS_LDAP_REFERRALS", 0)
+FREENAS_LDAP_CACERTFILE = get_freenas_var("CERT_FILE")
+
+ldap.protocol_version = FREENAS_LDAP_VERSION
+ldap.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
+
+class DirectoryEnabled:
+    __ldap_enabled = False
+    __ad_enabled = False
+
+    svcs = services.objects.filter(srv_service__in=['activedirectory', 'ldap'])
+    for s in svcs:
+        if s.srv_service == 'ldap':
+            __ldap_enabled = (True if s.srv_enable != 0 else False)
+        if s.srv_service == 'activedirectory':
+            __ad_enabled = (True if s.srv_enable != 0 else False)
+    svcs = None
+
+    @staticmethod
+    def LDAP():
+        return DirectoryEnabled.__ldap_enabled
+
+    @staticmethod
+    def ActiveDirectory():
+        return DirectoryEnabled.__ad_enabled
+
+
+class FreeNAS_LDAP_UserCache(FreeNAS_BaseCache):
+    def __init__(self, cachedir = FREENAS_LDAP_USERCACHE):
+        FreeNAS_BaseCache.__init__(self, cachedir)
+
+
+class FreeNAS_LDAP_GroupCache(FreeNAS_BaseCache):
+    def __init__(self, cachedir = FREENAS_LDAP_GROUPCACHE):
+        FreeNAS_BaseCache.__init__(self, cachedir)
+
+
+class FreeNAS_LDAP_LocalUserCache(FreeNAS_BaseCache):
+    def __init__(self, cachedir = FREENAS_LDAP_LOCAL_USERCACHE):
+        FreeNAS_BaseCache.__init__(self, cachedir)
+
+
+class FreeNAS_LDAP_LocalGroupCache(FreeNAS_BaseCache):
+    def __init__(self, cachedir = FREENAS_LDAP_LOCAL_GROUPCACHE):
+        FreeNAS_BaseCache.__init__(self, cachedir)
+
+
+class FreeNAS_ActiveDirectory_UserCache(FreeNAS_BaseCache):
+    def __init__(self, cachedir = FREENAS_AD_USERCACHE):
+        FreeNAS_BaseCache.__init__(self, cachedir)
+
+
+class FreeNAS_ActiveDirectory_GroupCache(FreeNAS_BaseCache):
+    def __init__(self, cachedir = FREENAS_AD_GROUPCACHE):
+        FreeNAS_BaseCache.__init__(self, cachedir)
+
+
+class FreeNAS_ActiveDirectory_LocalUserCache(FreeNAS_BaseCache):
+    def __init__(self, cachedir = FREENAS_AD_LOCAL_USERCACHE):
+        FreeNAS_BaseCache.__init__(self, cachedir)
+
+
+class FreeNAS_ActiveDirectory_LocalGroupCache(FreeNAS_BaseCache):
+    def __init__(self, cachedir = FREENAS_AD_LOCAL_GROUPCACHE):
+        FreeNAS_BaseCache.__init__(self, cachedir)
+
+
+class FreeNAS_LDAP_QueryCache(FreeNAS_BaseCache):
+    def __init__(self, cachedir = FREENAS_LDAP_QUERYCACHE):
+        FreeNAS_BaseCache.__init__(self, cachedir)
+
+
+class FreeNAS_Directory_UserCache(FreeNAS_BaseCache):
+    def __init__(self):
+        if DirectoryEnabled.LDAP():
+            self.__class__ = FreeNAS_LDAP_UserCache
+            FreeNAS_LDAP_UserCache.__init__(self)
+ 
+        elif DirectoryEnabled.ActiveDirectory():
+            self.__class__ = FreeNAS_ActiveDirectory_UserCache
+            FreeNAS_ActiveDirectory_UserCache.__init__(self)
+
+
+class FreeNAS_Directory_GroupCache(FreeNAS_BaseCache):
+    def __init__(self):
+        if DirectoryEnabled.LDAP():
+            self.__class__ = FreeNAS_LDAP_GroupCache
+            FreeNAS_LDAP_GroupCache.__init__(self)
+
+        elif DirectoryEnabled.ActiveDirectory():
+            self.__class__ = FreeNAS_ActiveDirectory_GroupCache
+            FreeNAS_ActiveDirectory_GroupCache.__init__(self)
+
+
+class FreeNAS_Directory_LocalUserCache(FreeNAS_BaseCache):
+    def __init__(self):
+        if DirectoryEnabled.LDAP():
+            self.__class__ = FreeNAS_LDAP_LocalUserCache
+            FreeNAS_LDAP_LocalUserCache.__init__(self)
+ 
+        elif DirectoryEnabled.ActiveDirectory():
+            self.__class__ = FreeNAS_ActiveDirectory_LocalUserCache
+            FreeNAS_ActiveDirectory_LocalUserCache.__init__(self)
+
+
+class FreeNAS_Directory_LocalGroupCache(FreeNAS_BaseCache):
+    def __init__(self):
+        if DirectoryEnabled.LDAP():
+            self.__class__ = FreeNAS_LDAP_LocalGroupCache
+            FreeNAS_LDAP_LocalGroupCache.__init__(self)
+
+        elif DirectoryEnabled.ActiveDirectory():
+            self.__class__ = FreeNAS_ActiveDirectory_LocalGroupCache
+            FreeNAS_ActiveDirectory_LocalGroupCache.__init__(self)
+
+
+class FreeNAS_UserCache(FreeNAS_BaseCache):
+    def __init__(self, cachedir = FREENAS_USERCACHE):
+        if DirectoryEnabled.LDAP() or DirectoryEnabled.ActiveDirectory():
+            self.__class__ = FreeNAS_Directory_LocalUserCache 
+            FreeNAS_Directory_LocalUserCache.__init__(self)
+
+        else:
+            FreeNAS_BaseCache.__init__(self, cachedir)
+
+
+class FreeNAS_GroupCache(FreeNAS_BaseCache):
+    def __init__(self, cachedir = FREENAS_GROUPCACHE):
+        if DirectoryEnabled.LDAP() or DirectoryEnabled.ActiveDirectory():
+            self.__class__ = FreeNAS_Directory_LocalGroupCache 
+            FreeNAS_Directory_LocalGroupCache.__init__(self)
+
+        else:
+            FreeNAS_BaseCache.__init__(self, cachedir)
 
 
 class FreeNAS_LDAP:
-
-    FREENAS_LDAP_NOSSL = 0
-    FREENAS_LDAP_USESSL = 1 
-    FREENAS_LDAP_USETLS = 2
-
-    FREENAS_CACERTFILE = "/usr/local/etc/certs/cacert.crt"
-
     def __init__(self, host = None, binddn = None, bindpw = None,
         basedn = None, ssl = FREENAS_LDAP_NOSSL, scope = None,
         filter = None, attributes = None):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.__init__: enter")
 
         self.host = host
         self.binddn = binddn
@@ -56,34 +222,38 @@ class FreeNAS_LDAP:
         self.attributes = attributes
         self.__handle = None
         self.__isopen = 0
+        self.__cache = FreeNAS_LDAP_QueryCache()
+
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.__init__: "
+            "host = %s, binddn = %s, bindpw = %s, basedn = %s, ssl = %d" %
+            (self.host, self.binddn, self.bindpw, self.basedn, self.ssl))
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.__init__: leave")
 
     def __setssl(self, ssl):
-        tok = FreeNAS_LDAP.FREENAS_LDAP_NOSSL
+        tok = FREENAS_LDAP_NOSSL
 
         if type(ssl) in (types.IntType, types.LongType) or ssl.isdigit():
             ssl = int(ssl)
-            if ssl not in (FreeNAS_LDAP.FREENAS_LDAP_NOSSL,
-                FreeNAS_LDAP.FREENAS_LDAP_USESSL,
-                FreeNAS_LDAP.FREENAS_LDAP_USETLS):
-                tok = FreeNAS_LDAP.FREENAS_LDAP_NOSSL
+            if ssl not in (FREENAS_LDAP_NOSSL,
+                FREENAS_LDAP_USESSL, FREENAS_LDAP_USETLS):
+                tok = FREENAS_LDAP_NOSSL
 
         else:
             if ssl == "start_tls":
-                tok = FreeNAS_LDAP.FREENAS_LDAP_USETLS
+                tok = FREENAS_LDAP_USETLS
             elif ssl == "on":
-                tok = FreeNAS_LDAP.FREENAS_LDAP_USESSL
+                tok = FREENAS_LDAP_USESSL
 
         return tok
-
 
     def __geturi(self):
         if self.host is None:
             return None
 
         uri = None
-        if self.ssl in (FreeNAS_LDAP.FREENAS_LDAP_NOSSL, FreeNAS_LDAP.FREENAS_LDAP_USETLS):
+        if self.ssl in (FREENAS_LDAP_NOSSL, FREENAS_LDAP_USETLS):
             uri = "ldap://%s" % self.host
-        elif self.ssl == FreeNAS_LDAP.FREENAS_LDAP_USESSL:
+        elif self.ssl == FREENAS_LDAP_USESSL:
             uri = "ldaps://%s" % self.host
         else:
             uri = "ldap://%s" % self.host
@@ -96,50 +266,71 @@ class FreeNAS_LDAP:
 
         if self.host:
             self.__handle = ldap.initialize(self.__geturi())
+            syslog(LOG_DEBUG, "FreeNAS_LDAP.open: initialized")
        
         if self.__handle:
             res = None
-            self.__handle.protocol_version = ldap.VERSION3
-            self.__handle.set_option(ldap.OPT_REFERRALS, 0)
+            self.__handle.protocol_version = FREENAS_LDAP_VERSION
+            self.__handle.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
 
-            if self.ssl in (FreeNAS_LDAP.FREENAS_LDAP_USESSL, FreeNAS_LDAP.FREENAS_LDAP_USETLS):
+            if self.ssl in (FREENAS_LDAP_USESSL, FREENAS_LDAP_USETLS):
                 self.__handle.set_option(ldap.OPT_X_TLS_ALLOW, 1)
-                self.__handle.set_option(ldap.OPT_X_TLS_CACERTFILE, FreeNAS_LDAP.FREENAS_CACERTFILE)
+                self.__handle.set_option(ldap.OPT_X_TLS_CACERTFILE, FREENAS_CACERTFILE)
                 self.__handle.set_option(ldap.OPT_X_TLS_NEWCTX, ldap.OPT_X_TLS_DEMAND)
 
-            if self.ssl == FreeNAS_LDAP.FREENAS_LDAP_USETLS:
+            if self.ssl == FREENAS_LDAP_USETLS:
                 try:
                     self.__handle.start_tls_s() 
+                    syslog(LOG_DEBUG, "FreeNAS_LDAP.open: started TLS")
+
                 except:
                     pass
 
             if self.binddn and self.bindpw:
                 try:
                     res = self.__handle.simple_bind_s(self.binddn, self.bindpw)
+                    syslog(LOG_DEBUG, "FreeNAS_LDAP.open: binded")
+
                 except:
                     res = None
             else:
                 try:
                     res = self.__handle.simple_bind_s()
+                    syslog(LOG_DEBUG, "FreeNAS_LDAP.open: binded")
+
                 except:
                     res = None
 
             if res:
                 self.__isopen = 1
+                syslog(LOG_DEBUG, "FreeNAS_LDAP.open: connection open")
 
     def unbind(self):
         if self.__handle:
             self.__handle.unbind()
+            syslog(LOG_DEBUG, "FreeNAS_LDAP.unbind: unbind")
 
     def close(self):
         if self.__isopen == 1:
             self.unbind()
             self.__handle = None
             self.__isopen = 0
+            syslog(LOG_DEBUG, "FreeNAS_LDAP.close: connection closed")
 
     def __search(self, basedn, scope = ldap.SCOPE_SUBTREE, filter = None, attributes = None):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: enter")
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: basedn = '%s', filter = '%s'" % (basedn, filter))
         if self.__isopen == 0:
             return None
+
+        m = hashlib.sha256()
+        m.update(filter)
+        key = m.hexdigest()
+        m = None
+
+        if filter is not None and self.__cache.has_key(key):
+            syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: query in cache")
+            return self.__cache[key]
 
         result = []
         results = []
@@ -158,9 +349,14 @@ class FreeNAS_LDAP:
             for entry in results[i]:
                 result.append(entry)
 
+        self.__cache[key] = result
+
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: %d results" % len(results))
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: leave")
         return result
 
     def search(self):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.search: enter")
         isopen = self.__isopen
         self.open()
 
@@ -171,6 +367,8 @@ class FreeNAS_LDAP:
         return results
 
     def get_ldap_user(self, user):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_ldap_user: enter")
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_ldap_user: user = %s" % user)
         isopen = self.__isopen
         self.open()
 
@@ -194,15 +392,18 @@ class FreeNAS_LDAP:
         if isopen == 0:
             self.close()
 
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_ldap_user: leave")
         return ldap_user
 
     def get_ldap_users(self):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_ldap_users: enter")
         isopen = self.__isopen
         self.open()
 
         users = []
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(objectclass=person)(uid=*))'
+
         results = self.__search(self.basedn, scope, filter, self.attributes)
         if results:
             for r in results:
@@ -212,9 +413,12 @@ class FreeNAS_LDAP:
         if isopen == 0:
             self.close()
 
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_ldap_users: leave")
         return users
 
     def get_ldap_group(self, group):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_ldap_group: enter")
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_ldap_group: group = %s" % group)
         isopen = self.__isopen
         self.open()
 
@@ -238,15 +442,18 @@ class FreeNAS_LDAP:
         if isopen == 0:
             self.close()
 
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_ldap_group: leave")
         return ldap_group
 
     def get_ldap_groups(self):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_ldap_groups: enter")
         isopen = self.__isopen
         self.open()
 
         groups = []
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(objectclass=posixgroup)(gidnumber=*))'
+
         results = self.__search(self.basedn, scope, filter, self.attributes)
         if results:
             for r in results:
@@ -256,9 +463,11 @@ class FreeNAS_LDAP:
         if isopen == 0:
             self.close()
 
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_ldap_groups: leave")
         return groups
 
     def get_active_directory_rootDSE(self):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_rootDSE: enter")
         isopen = self.__isopen
         self.open()
 
@@ -269,15 +478,19 @@ class FreeNAS_LDAP:
         return results
 
     def get_active_directory_baseDN(self):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_baseDN: enter")
         results = self.get_active_directory_rootDSE()
         try:
             results = results[0][1]['defaultNamingContext'][0]
         except:
             results = None
 
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_baseDN: leave")
         return results
 
     def get_active_directory_userDN(self, user):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_userDN: enter")
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_userDN: user = %s" % user)
         if not self.binddn or not self.bindpw or not self.basedn:
             return None
 
@@ -296,9 +509,12 @@ class FreeNAS_LDAP:
         if isopen == 0:
             self.close()
 
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_userDN: leave")
         return results
 
     def get_active_directory_user(self, user):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_user: enter")
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_user: user = %s" % user)
         isopen = self.__isopen
         self.open()
 
@@ -315,9 +531,11 @@ class FreeNAS_LDAP:
         if isopen == 0:
             self.close()
 
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_user: leave")
         return ad_user
 
     def get_active_directory_users(self):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_users: enter")
         isopen = self.__isopen
         self.open()
 
@@ -338,9 +556,12 @@ class FreeNAS_LDAP:
         if isopen == 0:
             self.close()
 
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_users: leave")
         return users
 
     def get_active_directory_group(self, group):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_group: enter")
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_group: group = %s" % group)
         isopen = self.__isopen
         self.open()
 
@@ -357,9 +578,11 @@ class FreeNAS_LDAP:
         if isopen == 0:
             self.close()
 
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_group: leave")
         return ad_group
 
     def get_active_directory_groups(self):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_groups: enter")
         isopen = self.__isopen
         self.open()
 
@@ -380,315 +603,516 @@ class FreeNAS_LDAP:
         if isopen == 0:
             self.close()
 
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.get_active_directory_groups: leave")
         return groups
-  
 
-class FreeNAS_Users:
+
+class FreeNAS_LDAP_Users:
     def __init__(self):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__init__: enter")
+
         self.__users = []
+        self.__groups = {}
         self.__index = 0
+        self.__ucache = FreeNAS_UserCache()
+        self.__gcache = FreeNAS_GroupCache()
+        self.__ducache = FreeNAS_Directory_UserCache()
+        self.__dgcache = FreeNAS_Directory_GroupCache()
+        self.__get_users()
 
-        ldap_enable = ad_enable = 0
-        bsd_users = bsdUsers.objects.all()
-        for bu in bsd_users:
-            self.__users.append(bu)
-        bsd_users = None
-
-        svcs = services.objects.filter(srv_service__in=['activedirectory', 'ldap'])
-        for s in svcs:
-            if s.srv_service == 'ldap':
-                ldap_enable = s.srv_enable
-            if s.srv_service == 'activedirectory':
-                ad_enable = s.srv_enable
-        svcs = None
-
-        if ldap_enable == 1:
-            ldap_users = self.__get_ldap_users()
-            for lu in ldap_users:
-                self.__users.append(lu)
-            ldap_users = None
-
-        elif ad_enable == 1:
-            ad_users = self.__get_active_directory_users()
-            for au in ad_users:
-                self.__users.append(au)
-            ad_users = None
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__init__: leave")
 
     def __iter__(self):
-        return self
+        for user in self.__users:
+            yield user
 
-    def next(self):
-        if self.__index >= len(self.__users):
-            self.__index = 0
-            raise StopIteration
+    def __get_groups(self, l = LDAP.objects.all()[0], f = None):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_groups: enter")
 
-        user = self.__users[self.__index]
-        self.__index += 1
-        return user
+        if not self.__gcache.empty():
+            syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_groups: groups in cache")
+            syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_groups: leave")
+            self.__groups = self.__gcache
+            return
 
-    def __get_ldap_groups(self, l = LDAP.objects.all()[0], f = None):
         if not f:
             f = FreeNAS_LDAP(l.ldap_hostname, l.ldap_rootbasedn,
                 l.ldap_rootbindpw, l.ldap_basedn, l.ldap_ssl)
 
         f.basedn = l.ldap_groupsuffix + "," + l.ldap_basedn;
         f.attributes = ['cn']
-        
-        groups = {}
-        ldap_groups = f.get_ldap_groups()
+
+        write_cache = False
+        if not self.__dgcache.empty():
+            syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_groups: LDAP groups in cache")
+            ldap_groups = self.__lgcache
+
+        else:
+            syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_groups: LDAP groups not in cache")
+            ldap_groups = f.get_ldap_groups()
+            write_cache = True
+
+        self.__groups = {}
         for g in ldap_groups:
+            CN = g[0]
+            if write_cache:
+                self.__dgcache[CN] = g
+
             g = g[1]
+            cn = g['cn'][0]
             try:
-                gr = grp.getgrnam(g['cn'][0])
+                gr = grp.getgrnam(cn)
+
             except:
                 continue
 
-            gu = bsdGroups()
-            gu.bsdgrp_gid = gr.gr_gid
-            gu.bsdgrp_group = unicode(gr.gr_name)
-            groups[str(gr.gr_gid)] = gu
+            bg = bsdGroups()
+            bg.bsdgrp_gid = gr.gr_gid
+            bg.bsdgrp_group = unicode(gr.gr_name)
+
+            self.__groups[gr.gr_name] = bg
+            if write_cache:
+                self.__gcache[cn] = bg
+
             gr = None
 
-        return groups
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_groups: leave")
 
-    def __get_ldap_users(self, l = LDAP.objects.all()[0], f = None):
+    def __get_users(self, l = LDAP.objects.all()[0], f = None):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_users: enter")
+
+        if not self.__ucache.empty():
+            syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_users: users in cache")
+            syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_users: leave")
+            self.__users = self.__ucache
+            return
+
         if not f:
             f = FreeNAS_LDAP(l.ldap_hostname, l.ldap_rootbasedn,
                 l.ldap_rootbindpw, l.ldap_basedn, l.ldap_ssl)
-        ldap_groups = self.__get_ldap_groups(l, f)
+
+        self.__get_groups(l, f)
 
         f.basedn = l.ldap_usersuffix + "," + l.ldap_basedn;
         f.attributes = ['uid']
-        ldap_users = f.get_ldap_users()
-        f = l = None
 
-        users = [] 
+        write_cache = False 
+        if not self.__ducache.empty():
+            syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_users: LDAP users in cache")
+            ldap_users = self.__lucache
+
+        else:
+            syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_users: LDAP users not in cache")
+            ldap_users = f.get_ldap_users()
+            write_cache = True
+
+        f = l = None
+        self.__users = [] 
         for u in ldap_users:
+            CN = u[0]
+            if write_cache:
+                self.__ducache[CN] = u
+
             u = u[1]
+            uid = u['uid'][0]
             try:
-                pw = pwd.getpwnam(u['uid'][0])
+                pw = pwd.getpwnam(uid)
+
             except:
                 continue
 
             bu = bsdUsers()
             bu.bsdusr_username = unicode(pw.pw_name)
             bu.bsdusr_uid = pw.pw_uid
-            if str(pw.pw_gid) in ldap_groups:
-                bu.bsdusr_group = ldap_groups[str(pw.pw_gid)]
+            try:
+                gr = grp.getgrgid(pw.pw_gid)
+                bu.bsdusr_group = self.__groups[gr.gr_name]
+
+            except:
+                pass
             bu.bsdusr_full_name = unicode(pw.pw_gecos)
             bu.bsdusr_home = unicode(pw.pw_dir)
             bu.bsdusr_shell = unicode(pw.pw_shell)
-            users.append(bu)
             pw = None
-          
-        return users
 
-    def __get_active_directory_groups(self, ad = ActiveDirectory.objects.all()[0], f = None):
+            self.__users.append(bu)
+            if write_cache:
+                self.__ucache[uid] = bu
+
+            pw = None
+
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_users: leave")
+
+
+class FreeNAS_ActiveDirectory_Users:
+    def __init__(self):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__init__: enter")
+
+        self.__users = []
+        self.__groups = {}
+        self.__index = 0
+        self.__ucache = FreeNAS_UserCache()
+        self.__gcache = FreeNAS_GroupCache()
+        self.__ducache = FreeNAS_Directory_UserCache()
+        self.__dgcache = FreeNAS_Directory_GroupCache()
+        self.__get_users()
+
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__init__: leave")
+
+    def __iter__(self):
+        for user in self.__users:
+            yield user
+
+    def __get_groups(self, ad = ActiveDirectory.objects.all()[0], f = None):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_groups: enter")
+
+        if not self.__gcache.empty():
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_groups: groups in cache")
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_groups: leave")
+            self.__groups = self.__gcache
+            return
+
         if not f:
             f = FreeNAS_LDAP(ad.ad_dcname, ad.ad_adminname + "@" + ad.ad_domainname, ad.ad_adminpw)
 
         f.host = ad.ad_dcname
         f.basedn = f.get_active_directory_baseDN()
         f.attributes = ['sAMAccountName']
+
+        write_cache = False
+        if not self.__dgcache.empty():
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_groups: AD groups in cache")
+            ad_groups = self.__dgcache
+
+        else:
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_groups: AD groups not in cache")
+            ad_groups = f.get_active_directory_groups()
+            write_cache = True
  
-        groups = {}
-        ad_groups = f.get_active_directory_groups()
+        self.__groups = {}
         for g in ad_groups:
+            CN = g[0]
+            if write_cache:
+                self.__dgcache[CN] = g
+         
             g = g[1]
+            sAMAccountName = g['sAMAccountName'][0]
             try:
-                gr = grp.getgrnam(g['sAMAccountName'][0])
+                gr = grp.getgrnam(sAMAccountName)
+
             except:
                 continue
 
-            gu = bsdGroups()
-            gu.bsdgrp_gid = gr.gr_gid
-            gu.bsdgrp_group = unicode(gr.gr_name)
-            groups[str(gr.gr_gid)] = gu
+            bg = bsdGroups()
+            bg.bsdgrp_gid = gr.gr_gid
+            bg.bsdgrp_group = unicode(gr.gr_name)
+
+            self.__groups[gr.gr_name] = bg
+            if write_cache:
+                self.__gcache[sAMAccountName] = bg
+
             gr = None
 
-        return groups
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_groups: leave")
 
-    def __get_active_directory_users(self, ad = ActiveDirectory.objects.all()[0], f = None):  
+    def __get_users(self, ad = ActiveDirectory.objects.all()[0], f = None):  
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_users: enter")
+
+        if not self.__ucache.empty():
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_users: users in cache")
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_users: leave")
+            self.__users = self.__ucache
+            return
+       
         if not f:
             f = FreeNAS_LDAP(ad.ad_dcname, ad.ad_adminname + "@" + ad.ad_domainname, ad.ad_adminpw)
-        ad_groups = self.__get_active_directory_groups(ad, f)
+
+        self.__get_groups(ad, f)
 
         f.host = ad.ad_dcname
         f.basedn = f.get_active_directory_baseDN()
         f.attributes = ['sAMAccountName']
-        ad_users = f.get_active_directory_users()
 
-        users = []
+        write_cache = False
+        if not self.__ducache.empty():
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_users: AD users in cache")
+            ad_users = self.__ducache
+
+        else:
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_users: AD users not in cache")
+            ad_users = f.get_active_directory_users()
+            write_cache = True
+
+        self.__users = []
         for u in ad_users:
+            CN =  u[0]
+            if write_cache:
+                self.__ducache[CN] = u
+
             u = u[1]
+            sAMAccountName = u['sAMAccountName'][0]
             try:
-                pw = pwd.getpwnam(u['sAMAccountName'][0])
-            except:
+                pw = pwd.getpwnam(sAMAccountName)
+
+            except Exception, e:
+                print e
                 continue
 
             bu = bsdUsers()
             bu.bsdusr_username = unicode(pw.pw_name)
             bu.bsdusr_uid = pw.pw_uid
-            if str(pw.pw_gid) in ad_groups:
-                bu.bsdusr_group = ad_groups[str(pw.pw_gid)]
+            try:
+                gr = grp.getgrgid(pw.pw_gid)
+                bu.bsdusr_group = self.__groups[gr.gr_name]
+
+            except:
+                pass
             bu.bsdusr_full_name = unicode(pw.pw_gecos)
             bu.bsdusr_home = unicode(pw.pw_dir)
             bu.bsdusr_shell = unicode(pw.pw_shell)
-            users.append(bu)
             pw = None
+
+            self.__users.append(bu)
+            if write_cache:
+                self.__ucache[sAMAccountName] = bu
           
-        return users
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_users: leave")
+
+
+class FreeNAS_Users:
+    def __init__(self):
+        syslog(LOG_DEBUG, "FreeNAS_Users.__init__: enter")
+        self.__users = []
+
+        self.__bsd_users = bsdUsers.objects.all()
+        if DirectoryEnabled.LDAP():
+            self.__users = FreeNAS_LDAP_Users()
+
+        elif DirectoryEnabled.ActiveDirectory():
+            self.__users = FreeNAS_ActiveDirectory_Users()
+
+        syslog(LOG_DEBUG, "FreeNAS_Users.__init__: leave")
+
+    def __iter__(self):
+        for user in self.__bsd_users:
+            yield user
+        for user in self.__users:
+            yield user
+
+
+class FreeNAS_LDAP_Groups:
+    def __init__(self):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Groups.__init__: enter")
+
+        self.__groups = []
+        self.__index = 0
+        self.__gcache = FreeNAS_GroupCache()
+        self.__dgcache = FreeNAS_Directory_GroupCache()
+        self.__get_groups()
+
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Groups.__init__: leave")
+
+    def __iter__(self):
+        for group in self.__groups:
+            yield group
+
+    def __get_groups(self, l = LDAP.objects.all()[0], f = None):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Groups.__get_groups: enter")
+
+        if not self.__gcache.empty():
+            syslog(LOG_DEBUG, "FreeNAS_LDAP_Groups.__get_groups: groups in cache")
+            syslog(LOG_DEBUG, "FreeNAS_LDAP_Groups.__get_groups: leave")
+            self.__groups = self.__gcache
+            return
+
+        if not f:
+            f = FreeNAS_LDAP(l.ldap_hostname, l.ldap_rootbasedn,
+                l.ldap_rootbindpw, l.ldap_basedn, l.ldap_ssl)
+
+        f.basedn = l.ldap_groupsuffix + "," + l.ldap_basedn;
+        f.attributes = ['cn']
+
+        write_cache = False
+        if not self.__dgcache.empty():
+            syslog(LOG_DEBUG, "FreeNAS_LDAP_Groups.__get_groups: LDAP groups in cache")
+            ldap_groups = self.__dgcache
+
+        else:
+            syslog(LOG_DEBUG, "FreeNAS_LDAP_Groups.__get_groups: LDAP groups not in cache")
+            ldap_groups = f.get_ldap_groups()
+            write_cache = True
+        
+        groups = []
+        for g in ldap_groups:
+            CN = g[0]
+            if write_cache:
+                self.__dgcache[CN] = g
+
+            g = g[1]
+            cn = g['cn'][0]
+            try:
+                gr = grp.getgrnam(cn)
+
+            except:
+                continue
+
+            bg = bsdGroups()
+            bg.bsdgrp_gid = gr.gr_gid
+            bg.bsdgrp_group = unicode(gr.gr_name)
+            self.__groups.append(bg)
+            if write_cache:
+                self.__gcache[cn] = bg
+
+            gr = None
+
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Groups.__get_groups: leave")
+
+
+class FreeNAS_ActiveDirectory_Groups:
+    def __init__(self):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Groups.__init__: enter")
+
+        self.__groups = []
+        self.__index = 0
+        self.__gcache = FreeNAS_GroupCache()
+        self.__dgcache = FreeNAS_Directory_GroupCache()
+        self.__get_groups()
+
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Groups.__init__: leave")
+
+    def __iter__(self):
+        for group in self.__groups:
+            yield group
+
+    def __get_groups(self, ad = ActiveDirectory.objects.all()[0], f = None):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Groups.__get_groups: enter")
+
+        if not self.__gcache.empty():
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Groups.__get_groups: groups in cache")
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Groups.__get_groups: leave")
+            self.__groups = self.__gcache
+            return
+
+        if not f:
+            f = FreeNAS_LDAP(ad.ad_dcname, ad.ad_adminname + "@" + ad.ad_domainname, ad.ad_adminpw)
+
+        f.basedn = f.get_active_directory_baseDN()
+        f.attributes = ['sAMAccountName']
+
+        write_cache = False
+        if not self.__dgcache.empty():
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Groups.__get_groups: AD groups in cache")
+            ad_groups = self.__dgcache
+
+        else:
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Groups.__get_groups: AD groups not in cache")
+            ad_groups = f.get_active_directory_groups()
+            write_cache = True
+ 
+        self.__groups = []
+        for g in ad_groups:
+            g = g[1]
+            sAMAccountName = g['sAMAccountName'][0]
+            if write_cache:
+                self.__dgcache[sAMAccountName] = g
+
+            try:
+                gr = grp.getgrnam(sAMAccountName)
+
+            except:
+                continue
+
+            bg = bsdGroups()
+            bg.bsdgrp_gid = gr.gr_gid
+            bg.bsdgrp_group = unicode(gr.gr_name)
+            self.__groups.append(bg)
+            if write_cache:
+                self.__gcache[sAMAccountName] = bg
+
+            gr = None
+
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Groups.__get_groups: leave")
 
 
 class FreeNAS_Groups:
     def __init__(self):
+        syslog(LOG_DEBUG, "FreeNAS_Groups.__init__: enter")
         self.__groups = []
-        self.__index = 0
 
-        ldap_enable = ad_enable = 0
-        bsd_groups = bsdGroups.objects.all()
-        for bg in bsd_groups:
-            self.__groups.append(bg)
-        bsd_groups = None
+        self.__bsd_groups = bsdGroups.objects.all()
+        if DirectoryEnabled.LDAP():
+            self.__groups = FreeNAS_LDAP_Groups()
 
-        svcs = services.objects.filter(srv_service__in=['activedirectory', 'ldap'])
-        for s in svcs:
-            if s.srv_service == 'ldap':
-                ldap_enable = s.srv_enable
-            if s.srv_service == 'activedirectory':
-                ad_enable = s.srv_enable
-        svcs = None
+        elif DirectoryEnabled.ActiveDirectory():
+            self.__groups = FreeNAS_ActiveDirectory_Groups()
 
-        if ldap_enable == 1:
-            ldap_groups = self.__get_ldap_groups()
-            for lg in ldap_groups:
-                self.__groups.append(lg)
-            ldap_groups = None
-
-        elif ad_enable == 1:
-            ad_groups = self.__get_active_directory_groups()
-            for ag in ad_groups:
-                self.__groups.append(ag)
-            ad_groups = None
+        syslog(LOG_DEBUG, "FreeNAS_Groups.__init__: leave")
 
     def __iter__(self):
-        return self
-
-    def next(self):
-        if self.__index >= len(self.__groups):
-            self.__index = 0
-            raise StopIteration
-
-        group = self.__groups[self.__index]
-        self.__index += 1
-        return group
-
-    def __get_ldap_groups(self, l = LDAP.objects.all()[0], f = None):
-        if not f:
-            f = FreeNAS_LDAP(l.ldap_hostname, l.ldap_rootbasedn,
-                l.ldap_rootbindpw, l.ldap_basedn, l.ldap_ssl)
-
-        f.basedn = l.ldap_groupsuffix + "," + l.ldap_basedn;
-        f.attributes = ['cn']
-        
-        groups = []
-        ldap_groups = f.get_ldap_groups()
-        for g in ldap_groups:
-            g = g[1]
-            try:
-                gr = grp.getgrnam(g['cn'][0])
-            except:
-                continue
-
-            bg = bsdGroups()
-            bg.bsdgrp_gid = gr.gr_gid
-            bg.bsdgrp_group = unicode(gr.gr_name)
-            groups.append(bg)
-            gr = None
-
-        return groups
-
-    def __get_active_directory_groups(self, ad = ActiveDirectory.objects.all()[0], f = None):
-        if not f:
-            f = FreeNAS_LDAP(ad.ad_dcname, ad.ad_adminname + "@" + ad.ad_domainname, ad.ad_adminpw)
-
-        f.basedn = f.get_active_directory_baseDN()
-        f.attributes = ['sAMAccountName']
- 
-        groups = []
-        ad_groups = f.get_active_directory_groups()
-        for g in ad_groups:
-            g = g[1]
-            try:
-                gr = grp.getgrnam(g['sAMAccountName'][0])
-            except:
-                continue
-
-            bg = bsdGroups()
-            bg.bsdgrp_gid = gr.gr_gid
-            bg.bsdgrp_group = unicode(gr.gr_name)
-            groups.append(bg)
-            gr = None
-
-        return groups
+        for group in self.__bsd_groups:
+            yield group
+        for group in self.__groups:
+            yield group
 
 
 class FreeNAS_User(bsdUsers):
-
     def __init__(self, user):
-        super(FreeNAS_User, self).__init__()
+        syslog(LOG_DEBUG, "FreeNAS_User.__init__: enter")
+        syslog(LOG_DEBUG, "FreeNAS_User.__init__: user = %s" % user)
 
-        ldap_enable = ad_enable = 0
+        super(FreeNAS_User, self).__init__()
+        self.__pw = None
+        self.__CN = None
+
         if type(user) in (types.IntType, types.LongType):
             bsdUser = bsdUsers.objects.filter(bsdusr_uid = user)
+
         elif user.isdigit():
             user = int(user)
             bsdUser = bsdUsers.objects.filter(bsdusr_uid = user)
+
         else:
             bsdUser = bsdUsers.objects.filter(bsdusr_username = user)
 
-        pw = None
         if bsdUser:
             try:
-                pw = pwd.getpwnam(bsdUser[0])
-            except:
-                pw = None
+                self.__pw = pwd.getpwnam(bsdUser[0])
 
-        if pw:
-            self.bsdusr_uid = pw.pw_uid
-            self.bsdusr_username = unicode(pw.pw_name)
-            self.bsdusr_group = FreeNAS_Group(pw.pw_gid)
-            self.bsdusr_home = unicode(pw.pw_dir)
-            self.bsdusr_shell = unicode(pw.pw_shell)
-            self.bsdusr_full_name = unicode(pw.pw_gecos)
-            pw = None
+            except:
+                self.__pw = None
+
+        if self.__pw:
+            syslog(LOG_DEBUG, "FreeNAS_User.__init__: local user")
+            syslog(LOG_DEBUG, "FreeNAS_User.__init__: leave")
+            self.__pw_to_self()
             return
 
-        svcs = services.objects.filter(srv_service__in=['activedirectory', 'ldap'])
-        for s in svcs:
-            if s.srv_service == 'ldap':
-                ldap_enable = s.srv_enable
-            if s.srv_service == 'activedirectory':
-                ad_enable = s.srv_enable
-        svcs = None
-
         pw = None
-        if ldap_enable == 1:
-            pw = self.__get_ldap_user(user)
+        if DirectoryEnabled.LDAP():
+            self.__get_ldap_user(user)
 
-        elif ad_enable == 1:
-            pw = self.__get_active_directory_user(user)
+        elif DirectoryEnabled.ActiveDirectory():
+            self.__get_active_directory_user(user)
 
-        if pw:
-            self.bsdusr_uid = pw.pw_uid
-            self.bsdusr_username = unicode(pw.pw_name)
-            self.bsdusr_group = FreeNAS_Group(pw.pw_gid)
-            self.bsdusr_home = unicode(pw.pw_dir)
-            self.bsdusr_shell = unicode(pw.pw_shell)
-            self.bsdusr_full_name = unicode(pw.pw_gecos)
-            pw = None
+        if self.__pw:
+            syslog(LOG_DEBUG, "FreeNAS_User.__init__: directory user")
+            self.__pw_to_self()
+
+        syslog(LOG_DEBUG, "FreeNAS_User.__init__: leave")
+
+    def __pw_to_self(self):
+        if self.__pw:
+            self.bsdusr_uid = self.__pw.pw_uid
+            self.bsdusr_username = unicode(self.__pw.pw_name)
+            self.bsdusr_group = FreeNAS_Group(self.__pw.pw_gid)
+            self.bsdusr_home = unicode(self.__pw.pw_dir)
+            self.bsdusr_shell = unicode(self.__pw.pw_shell)
+            self.bsdusr_full_name = unicode(self.__pw.pw_gecos)
 
     def __get_ldap_user(self, user):
+        syslog(LOG_DEBUG, "FreeNAS_User.__get_ldap_user: enter")
+        syslog(LOG_DEBUG, "FreeNAS_User.__get_ldap_user: user = %s" % user)
+
         l = LDAP.objects.all()[0]
         f = FreeNAS_LDAP(l.ldap_hostname, l.ldap_rootbasedn,
             l.ldap_rootbindpw, l.ldap_basedn, l.ldap_ssl)
@@ -699,8 +1123,11 @@ class FreeNAS_User(bsdUsers):
         pw = None
         ldap_user = f.get_ldap_user(user)
         if ldap_user:
+            self.__CN = ldap_user[0]
+            uid = ldap_user[1]['uid'][0]
             try:
-                pw = pwd.getpwnam(ldap_user[1]['uid'][0])
+                pw = pwd.getpwnam(uid)
+
             except:
                 pw = None
 
@@ -708,18 +1135,24 @@ class FreeNAS_User(bsdUsers):
             if type(user) in (types.IntType, types.LongType) or user.isdigit():
                 try:
                     pw = pw.getpwuid(user)
+
                 except:
                     pw = None
 
             else:
                 try:
                     pw = pw.getpwnam(user)
+
                 except:
                     pw = None
 
-        return pw
+        self.__pw = pw
+        syslog(LOG_DEBUG, "FreeNAS_User.__get_ldap_user: leave")
 
     def __get_active_directory_user(self, user):
+        syslog(LOG_DEBUG, "FreeNAS_User.__get_active_directory_user: enter")
+        syslog(LOG_DEBUG, "FreeNAS_User.__get_active_directory_user: user = %s" % user)
+
         ad = ActiveDirectory.objects.all()[0]
         f = FreeNAS_LDAP(ad.ad_dcname, ad.ad_adminname + "@" + ad.ad_domainname, ad.ad_adminpw)
         f.basedn = f.get_active_directory_baseDN()
@@ -728,8 +1161,11 @@ class FreeNAS_User(bsdUsers):
         pw = None
         ad_user = f.get_active_directory_user(user)
         if ad_user:
+            self.__CN = ad_user[0]
+            sAMAccountName = ad_user[1]['sAMAccountName'][0]
             try: 
-                pw = pwd.getpwnam(ad_user[1]['sAMAccountName'][0])
+                pw = pwd.getpwnam(sAMAccountName)
+
             except:
                 pw = None
 
@@ -737,67 +1173,74 @@ class FreeNAS_User(bsdUsers):
             if type(user) in (types.IntType, types.LongType) or user.isdigit():
                 try:
                     pw = pw.getpwuid(user)
+
                 except:
                     pw = None
 
             else:
                 try:
                     pw = pw.getpwnam(user)
+
                 except:
                     pw = None
 
-        return pw
+        self.__pw = pw
+        syslog(LOG_DEBUG, "FreeNAS_User.__get_active_directory_user: leave")
 
 
 class FreeNAS_Group(bsdGroups):
-
     def __init__(self, group):
-        super(FreeNAS_Group, self).__init__()
+        syslog(LOG_DEBUG, "FreeNAS_Group.__init__: enter")
+        syslog(LOG_DEBUG, "FreeNAS_Group.__init__: group = %s" % group)
 
-        ldap_enable = ad_enable = 0
+        super(FreeNAS_Group, self).__init__()
+        self.__gr = None
+        self.__CN = None
+
         if type(group) in (types.IntType, types.LongType):
             bsdGroup = bsdGroups.objects.filter(bsdgrp_gid = group)
+
         elif group.isdigit():
             group = int(group)
             bsdGroup = bsdGroups.objects.filter(bsdgrp_gid = group)
+
         else:
             bsdGroup = bsdGroups.objects.filter(bsdgrp_group = group)
 
-        gr = None
         if bsdGroup:
             try:
-                gr = grp.getgrnam(bsdGroup[0])
+                self.__gr = grp.getgrnam(bsdGroup[0])
+
             except:
-                gr = None
+                self.__gr = None
 
-        if gr:
-            self.bsdgrp_gid = gr.gr_gid
-            self.bsdgrp_group = unicode(gr.gr_name)
-            gr = None 
-
+        if self.__gr:
+            syslog(LOG_DEBUG, "FreeNAS_Group.__init__: local group")
+            syslog(LOG_DEBUG, "FreeNAS_Group.__init__: leave")
+            self.__gr_to_self()
             return
 
-        svcs = services.objects.filter(srv_service__in=['activedirectory', 'ldap'])
-        for s in svcs:
-            if s.srv_service == 'ldap':
-                ldap_enable = s.srv_enable
-            if s.srv_service == 'activedirectory':
-                ad_enable = s.srv_enable
-        svcs = None
+        if DirectoryEnabled.LDAP():
+            self.__get_ldap_group(group)
 
-        gr = None
-        if ldap_enable == 1:
-            gr = self.__get_ldap_group(group)
+        elif DirectoryEnabled.ActiveDirectory():
+            self.__get_active_directory_group(group)
 
-        elif ad_enable == 1:
-            gr = self.__get_active_directory_group(group)
+        if self.__gr:
+            syslog(LOG_DEBUG, "FreeNAS_Group.__init__: directory group")
+            self.__gr_to_self()
 
-        if gr:
-            self.bsdgrp_gid = gr.gr_gid
-            self.bsdgrp_group = unicode(gr.gr_name)
-            gr = None
+        syslog(LOG_DEBUG, "FreeNAS_Group.__init__: leave")
+
+    def __gr_to_self(self):
+        if self.__gr:
+            self.bsdgrp_gid = self.__gr.gr_gid
+            self.bsdgrp_group = unicode(self.__gr.gr_name)
 
     def __get_ldap_group(self, group):
+        syslog(LOG_DEBUG, "FreeNAS_Group.__get_ldap_group: enter")
+        syslog(LOG_DEBUG, "FreeNAS_Group.__get_ldap_group: group = %s" % group)
+
         l = LDAP.objects.all()[0]
         f = FreeNAS_LDAP(l.ldap_hostname, l.ldap_rootbasedn,
             l.ldap_rootbindpw, l.ldap_basedn, l.ldap_ssl)
@@ -810,6 +1253,7 @@ class FreeNAS_Group(bsdGroups):
         if ldap_group:
             try:
                 gr = grp.getgrnam(ldap_group[1]['cn'][0])
+
             except:
                 gr = None
 
@@ -817,18 +1261,25 @@ class FreeNAS_Group(bsdGroups):
             if type(group) in (types.IntType, types.LongType) or group.isdigit():
                 try:
                     gr = grp.getgrgid(group)
+
                 except:
                     gr = None
 
             else:
                 try:
                     gr = grp.getgrnam(group)
+
                 except:
                     gr = None
 
-        return gr
+        self._gr = gr
+        syslog(LOG_DEBUG, "FreeNAS_Group.__get_ldap_group: leave")
+
 
     def __get_active_directory_group(self, group):
+        syslog(LOG_DEBUG, "FreeNAS_Group.__get_active_directory_group: enter")
+        syslog(LOG_DEBUG, "FreeNAS_Group.__get_active_directory_group: user = %s" % group)
+
         ad = ActiveDirectory.objects.all()[0]
         f = FreeNAS_LDAP(ad.ad_dcname, ad.ad_adminname + "@" + ad.ad_domainname, ad.ad_adminpw)
         f.basedn = f.get_active_directory_baseDN()
@@ -839,6 +1290,7 @@ class FreeNAS_Group(bsdGroups):
         if ad_group:
             try: 
                 gr = grp.getgrnam(ad_group[1]['sAMAccountName'][0])
+
             except:
                 gr = None
 
@@ -846,18 +1298,16 @@ class FreeNAS_Group(bsdGroups):
             if type(group) in (types.IntType, types.LongType) or group.isdigit():
                 try:
                     gr = grp.getgrgid(group)
+
                 except:
                     gr = None
 
             else:
                 try:
                     gr = grp.getgrnam(group)
+
                 except:
                     gr = None
 
-        return gr
-
-
-
-USER_CHOICES = ((x.bsdusr_username, x.bsdusr_username) for x in FreeNAS_Users())
-GROUP_CHOICES = ((x.bsdgrp_group, x.bsdgrp_group) for x in FreeNAS_Groups())
+        self._gr = gr
+        syslog(LOG_DEBUG, "FreeNAS_Group.__get_active_directory_group: leave")
