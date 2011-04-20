@@ -16,9 +16,20 @@ class ViewRemote(NavOption):
 
 class ViewPeriodic(NavOption):
 
-        name = _(u'View All Periodic Snapshots')
+        name = _(u'View All Periodic Snapshot Tasks')
         view = u'storage_home'
         type = 'openperiodic'
+        icon = u'ViewAllPeriodicSnapIcon'
+        app_name = 'storage'
+        model = 'Task'
+        append_app = False
+        options = []
+
+class ViewSnap(NavOption):
+
+        name = _(u'View All Snapshots')
+        view = u'storage_home'
+        type = 'opensnaps'
         icon = u'ViewAllPeriodicSnapIcon'
         app_name = 'storage'
         model = 'Task'

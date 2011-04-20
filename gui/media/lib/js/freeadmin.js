@@ -947,7 +947,9 @@
             } else if(item.type && item.type == 'openstorage') {
                 Menu.openStorage('Active Volumes');
             } else if(item.type && item.type == 'openperiodic') {
-                Menu.openStorage('Periodic Snapshots');
+                Menu.openStorage('Periodic Snapshot Tasks');
+            } else if(item.type && item.type == 'opensnaps') {
+                Menu.openStorage('ZFS Snapshots');
             } else if(item.type && item.type == 'openreplication') {
                 Menu.openStorage('ZFS Replication');
             } else if(item.type && item.type == 'viewmodel') {
