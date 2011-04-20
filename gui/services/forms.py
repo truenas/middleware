@@ -36,7 +36,7 @@ from django.core.urlresolvers import reverse
 from services import models
 from storage.models import Volume, MountPoint, DiskGroup, Disk
 from freenasUI.common.forms import ModelForm
-from freenasUI.common.freenasldap import FreeNAS_Users
+from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_User
 from freenasUI.middleware.notifier import notifier
 from storage.forms import UnixPermissionField
 from dojango import forms
@@ -82,8 +82,7 @@ class CIFSForm(ModelForm):
     def clean_cifs_srv_guest(self):
         user = self.cleaned_data['cifs_srv_guest']
         #FIXME: terrible way to check if user exists
-        find = [u for u in FreeNAS_Users() if u.bsdusr_username == user]
-        if len(find) == 0:
+        if FreeNAS_User(user) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user
     def clean(self):
@@ -128,8 +127,7 @@ class AFPForm(ModelForm):
     def clean_afp_srv_guest_user(self):
         user = self.cleaned_data['afp_srv_guest_user']
         #FIXME: terrible way to check if user exists
-        find = [u for u in FreeNAS_Users() if u.bsdusr_username == user]
-        if len(find) == 0:
+        if FreeNAS_User(user) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user
     def save(self):
@@ -246,8 +244,7 @@ class TFTPForm(ModelForm):
     def clean_tftp_username(self):
         user = self.cleaned_data['tftp_username']
         #FIXME: terrible way to check if user exists
-        find = [u for u in FreeNAS_Users() if u.bsdusr_username == user]
-        if len(find) == 0:
+        if FreeNAS_User(user) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user
     def save(self):

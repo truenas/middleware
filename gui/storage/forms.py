@@ -38,7 +38,8 @@ from freenasUI.common.forms import ModelForm
 from freenasUI.common.forms import Form
 from freenasUI.storage import models
 from freenasUI import choices
-from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups
+from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups, \
+                                         FreeNAS_User, FreeNAS_Group
 from dojango.forms import widgets, CheckboxSelectMultiple
 from dojango import forms
 
@@ -785,17 +786,13 @@ class MountPointAccessForm(Form):
 
     def clean_mp_user(self):
         user = self.cleaned_data['mp_user']
-        #FIXME: terrible way to check if user exists
-        find = [u for u in FreeNAS_Users() if u.bsdusr_username == user]
-        if len(find) == 0:
+        if FreeNAS_User(user) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user
 
     def clean_mp_group(self):
         group = self.cleaned_data['mp_group']
-        #FIXME: terrible way to check if user exists
-        find = [g for g in FreeNAS_Groups() if g.bsdgrp_group == group]
-        if len(find) == 0:
+        if FreeNAS_Group(group) == None:
             raise forms.ValidationError(_("The group %s is not valid.") % group)
         return group
 

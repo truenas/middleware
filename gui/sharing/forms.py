@@ -35,7 +35,9 @@ from dojango.forms import widgets
 from freenasUI.sharing import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
-from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups
+from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups, \
+                                         FreeNAS_User, FreeNAS_Group
+
 
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 
@@ -132,8 +134,7 @@ class NFS_ShareForm(ModelForm):
         if user in ('','-----'):
             return None
         #FIXME: terrible way to check if user exists
-        find = [u for u in FreeNAS_Users() if u.bsdusr_username == user]
-        if len(find) == 0:
+        if FreeNAS_User(user) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user
 
@@ -142,8 +143,7 @@ class NFS_ShareForm(ModelForm):
         if user in ('','-----'):
             return None
         #FIXME: terrible way to check if user exists
-        find = [u for u in FreeNAS_Users() if u.bsdusr_username == user]
-        if len(find) == 0:
+        if FreeNAS_User(user) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user
 
@@ -152,8 +152,7 @@ class NFS_ShareForm(ModelForm):
         if group in ('','-----'):
             return None
         #FIXME: terrible way to check if group exists
-        find = [g for g in FreeNAS_Groups() if g.bsdgrp_group == group]
-        if len(find) == 0:
+        if FreeNAS_Group(group) == None:
             raise forms.ValidationError(_("The group %s is not valid.") % group)
         return group
 
@@ -162,8 +161,7 @@ class NFS_ShareForm(ModelForm):
         if group in ('','-----'):
             return None
         #FIXME: terrible way to check if group exists
-        find = [g for g in FreeNAS_Groups() if g.bsdgrp_group == group]
-        if len(find) == 0:
+        if FreeNAS_Group(group) == None:
             raise forms.ValidationError(_("The group %s is not valid.") % group)
         return group
 
