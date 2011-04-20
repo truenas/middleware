@@ -320,8 +320,8 @@ class Migration(SchemaMigration):
         ftp.ftp_rootlogin=False
         ftp.ftp_onlyanonymous=False
         ftp.ftp_onlylocal=False
-        ftp.ftp_filemask=077
-        ftp.ftp_dirmask=022
+        ftp.ftp_filemask='077'
+        ftp.ftp_dirmask='022'
         ftp.ftp_fxp=0
         ftp.ftp_resume=0
         ftp.ftp_defaultroot=1
