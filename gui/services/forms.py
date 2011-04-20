@@ -500,7 +500,7 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 class iSCSITargetExtentEditForm(ModelForm):
     class Meta:
         model = models.iSCSITargetExtent
-        exclude = ('iscsi_target_extent_type', 'iscsi_target_extent_path',)
+        exclude = ('iscsi_target_extent_type',)
     def save(self):
         super(iSCSITargetExtentEditForm, self).save()
         notifier().reload("iscsitarget")
