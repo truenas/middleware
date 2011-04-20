@@ -27,13 +27,15 @@
 #####################################################################
 
 from django.utils.translation import ugettext as _
+from django.core.urlresolvers import reverse
+from django.http import QueryDict
 
 from dojango import forms
 from dojango.forms import widgets 
 from freenasUI.sharing import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
-from freenasUI.common.freenasldap import FreeNAS_Users
+from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups
 
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 
@@ -85,33 +87,92 @@ class NFS_ShareForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(NFS_ShareForm, self).__init__(*args, **kwargs)
 
-        self.userlist = []
-        self.userlist.append(('-----', 'N/A'))
-        for a in list((x.bsdusr_username, x.bsdusr_username)
-                      for x in FreeNAS_Users()):
-            self.userlist.append(a)
+        from account.forms import FilteredSelectJSON
+        if len(FreeNAS_Users()) > 500:
+            if len(args) > 0 and isinstance(args[0], QueryDict):
+                self.fields['nfs_maproot_user'].choices = ((args[0]['nfs_maproot_user'],args[0]['nfs_maproot_user']),)
+                self.fields['nfs_maproot_user'].initial = args[0]['nfs_maproot_user']
+                self.fields['nfs_mapall_user'].choices = ((args[0]['nfs_mapall_user'],args[0]['nfs_mapall_user']),)
+                self.fields['nfs_mapall_user'].initial = args[0]['nfs_mapall_user']
+            self.fields['nfs_maproot_user'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
+            self.fields['nfs_mapall_user'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
+        else:
+            self.userlist = []
+            self.userlist.append(('-----', 'N/A'))
+            for a in list((x.bsdusr_username, x.bsdusr_username)
+                          for x in FreeNAS_Users()):
+                self.userlist.append(a)
+            self.fields['nfs_maproot_user'].widget = widgets.FilteringSelect()
+            self.fields['nfs_mapall_user'].widget = widgets.FilteringSelect()
+            self.fields['nfs_maproot_user'].choices = self.userlist
+            self.fields['nfs_mapall_user'].choices = self.userlist
 
-        self.grouplist = []
-        self.grouplist.append(('-----', 'N/A'))
-        for a in list((x.bsdusr_group, x.bsdusr_group)
-                      for x in FreeNAS_Users()):
-            self.grouplist.append(a)
+        if len(FreeNAS_Groups()) > 500:
+            if len(args) > 0 and isinstance(args[0], QueryDict):
+                self.fields['nfs_maproot_group'].choices = ((args[0]['nfs_maproot_group'],args[0]['nfs_maproot_group']),)
+                self.fields['nfs_maproot_group'].initial = args[0]['nfs_maproot_group']
+                self.fields['nfs_mapall_group'].choices = ((args[0]['nfs_mapall_group'],args[0]['nfs_mapall_group']),)
+                self.fields['nfs_mapall_group'].initial = args[0]['nfs_mapall_group']
+            self.fields['nfs_maproot_group'].widget = FilteredSelectJSON(url=reverse("account_bsdgroup_json"))
+            self.fields['nfs_mapall_group'].widget = FilteredSelectJSON(url=reverse("account_bsdgroup_json"))
+        else:
+            self.grouplist = []
+            self.grouplist.append(('-----', 'N/A'))
+            for a in list((x.bsdusr_group, x.bsdusr_group)
+                          for x in FreeNAS_Groups()):
+                self.grouplist.append(a)
 
-        self.fields['nfs_maproot_user'].widget = widgets.FilteringSelect()
-        self.fields['nfs_maproot_group'].widget = widgets.FilteringSelect()
-        self.fields['nfs_mapall_user'].widget = widgets.FilteringSelect()
-        self.fields['nfs_mapall_group'].widget = widgets.FilteringSelect()
-        self.fields['nfs_maproot_user'].choices = self.userlist
-        self.fields['nfs_maproot_group'].choices = self.grouplist
-        self.fields['nfs_mapall_user'].choices = self.userlist
-        self.fields['nfs_mapall_group'].choices = self.grouplist
+            self.fields['nfs_maproot_group'].widget = widgets.FilteringSelect()
+            self.fields['nfs_mapall_group'].widget = widgets.FilteringSelect()
+            self.fields['nfs_maproot_group'].choices = self.grouplist
+            self.fields['nfs_mapall_group'].choices = self.grouplist
+
+    def clean_nfs_mapall_user(self):
+        user = self.cleaned_data['nfs_mapall_user']
+        if user == '':
+            return None
+        #FIXME: terrible way to check if user exists
+        find = [u for u in FreeNAS_Users() if u.bsdusr_username == user]
+        if len(find) == 0:
+            raise forms.ValidationError(_("The user %s is not valid.") % user)
+        return user
+
+    def clean_nfs_maproot_user(self):
+        user = self.cleaned_data['nfs_maproot_user']
+        if user == '':
+            return None
+        #FIXME: terrible way to check if user exists
+        find = [u for u in FreeNAS_Users() if u.bsdusr_username == user]
+        if len(find) == 0:
+            raise forms.ValidationError(_("The user %s is not valid.") % user)
+        return user
+
+    def clean_nfs_mapall_group(self):
+        group = self.cleaned_data['nfs_mapall_group']
+        if group == '':
+            return None
+        #FIXME: terrible way to check if group exists
+        find = [g for g in FreeNAS_Groups() if g.bsdgrp_group == group]
+        if len(find) == 0:
+            raise forms.ValidationError(_("The group %s is not valid.") % group)
+        return group
+
+    def clean_nfs_maproot_group(self):
+        group = self.cleaned_data['nfs_maproot_group']
+        if group == '':
+            return None
+        #FIXME: terrible way to check if group exists
+        find = [g for g in FreeNAS_Groups() if g.bsdgrp_group == group]
+        if len(find) == 0:
+            raise forms.ValidationError(_("The group %s is not valid.") % group)
+        return group
 
     def clean(self):
 
         cdata = self.cleaned_data
         for field in ('nfs_maproot_user', 'nfs_maproot_group', 
                         'nfs_mapall_user', 'nfs_mapall_group'):
-            if cdata.get(field, None) == '-----':
+            if cdata.get(field, None) in ('', '-----'):
                 cdata[field] = None
 
         if cdata.get('nfs_maproot_group', None) != None and cdata.get('nfs_maproot_user', None) == None:

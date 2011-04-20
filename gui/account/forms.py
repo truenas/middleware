@@ -46,6 +46,35 @@ class SharedFunc():
             shell_dict[shell] = basename(shell)
         shell_dict['/sbin/nologin'] = 'nologin'
         return shell_dict.items()
+
+class FilteredSelectJSON(forms.widgets.ComboBox):
+#class FilteredSelectJSON(forms.widgets.FilteringSelect):
+
+    def __init__(self, attrs=None, choices=(), url=''):
+        self.url = url
+        super(FilteredSelectJSON, self).__init__(attrs, choices)
+
+    def render(self, name, value, attrs={}, choices=()):
+        store = 'state'+attrs['id']
+        attrs.update({
+            'store': store,
+            'searchAttr': 'name',
+            'autoComplete': 'false',
+            'intermediateChanges': 'true',
+            'displayedValue': value or '',
+            })
+        ret = super(FilteredSelectJSON, self).render(name, value, attrs, choices)
+        ret = ret.split("</select>")
+        ret = "".join(ret[:-1]) + """ <script type="dojo/method" event="onChange" args="e">
+        var sel = dijit.byId("%s");
+        var t = sel.get('displayedValue');
+        var store = sel.store;
+        store.url = store.url.split('?')[0] + '?q='+t;
+        store.close();
+        store.fetch();
+        </script>""" % (attrs['id'] ) + "</select>" + ret[-1]
+        ret = """<div dojoType="dojo.data.ItemFileReadStore" jsId="%s" clearOnClose="true" url="%s"></div>""" % (store, self.url) + ret
+        return ret
     
 class FilteredSelectMultiple(forms.widgets.SelectMultiple):
 

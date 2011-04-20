@@ -31,6 +31,7 @@ import re
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
 from django.utils.translation import ugettext as _
+from django.core.urlresolvers import reverse
 
 from services import models
 from storage.models import Volume, MountPoint, DiskGroup, Disk
@@ -64,14 +65,27 @@ class CIFSForm(ModelForm):
                 new['cifs_srv_homedir'] = ''
             args = (new,) + args[1:]
         super(CIFSForm, self).__init__(*args, **kwargs)
-        self.fields['cifs_srv_guest'].widget = widgets.FilteringSelect()
-        self.fields['cifs_srv_guest'].choices = ((x.bsdusr_username,
-                                                  x.bsdusr_username)
-                                                  for x in FreeNAS_Users()
-                                                 )
+        from account.forms import FilteredSelectJSON
+        if len(FreeNAS_Users()) > 500:
+            if len(args) > 0 and isinstance(args[0], QueryDict):
+                self.fields['cifs_srv_guest'].choices = ((args[0]['cifs_srv_guest'],args[0]['cifs_srv_guest']),)
+                self.fields['cifs_srv_guest'].initial= args[0]['cifs_srv_guest']
+            self.fields['cifs_srv_guest'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
+        else:
+            self.fields['cifs_srv_guest'].widget = widgets.FilteringSelect()
+            self.fields['cifs_srv_guest'].choices = ((x.bsdusr_username,
+                                                      x.bsdusr_username)
+                                                      for x in FreeNAS_Users()
+                                                     )
         #FIXME: Workaround for DOJO not showing select options with blank values
         self.fields['cifs_srv_homedir'].choices = (('-----', 'N/A'),) + tuple([x for x in self.fields['cifs_srv_homedir'].choices][1:])
-
+    def clean_cifs_srv_guest(self):
+        user = self.cleaned_data['cifs_srv_guest']
+        #FIXME: terrible way to check if user exists
+        find = [u for u in FreeNAS_Users() if u.bsdusr_username == user]
+        if len(find) == 0:
+            raise forms.ValidationError(_("The user %s is not valid.") % user)
+        return user
     def clean(self):
         cleaned_data = self.cleaned_data
         home = cleaned_data['cifs_srv_homedir_enable']
@@ -100,10 +114,24 @@ class AFPForm(ModelForm):
                                            )
     def __init__(self, *args, **kwargs):
         super(AFPForm, self).__init__(*args, **kwargs)
-        self.fields['afp_srv_guest_user'].widget = widgets.FilteringSelect()
-        self.fields['afp_srv_guest_user'].choices = ((x.bsdusr_username,
-                                                      x.bsdusr_username)
-                                                     for x in FreeNAS_Users())
+        from account.forms import FilteredSelectJSON
+        if len(FreeNAS_Users()) > 500:
+            if len(args) > 0 and isinstance(args[0], QueryDict):
+                self.fields['afp_srv_guest_user'].choices = ((args[0]['afp_srv_guest_user'],args[0]['afp_srv_guest_user']),)
+                self.fields['afp_srv_guest_user'].initial= args[0]['afp_srv_guest_user']
+            self.fields['afp_srv_guest_user'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
+        else:
+            self.fields['afp_srv_guest_user'].widget = widgets.FilteringSelect()
+            self.fields['afp_srv_guest_user'].choices = ((x.bsdusr_username,
+                                                          x.bsdusr_username)
+                                                         for x in FreeNAS_Users())
+    def clean_afp_srv_guest_user(self):
+        user = self.cleaned_data['afp_srv_guest_user']
+        #FIXME: terrible way to check if user exists
+        find = [u for u in FreeNAS_Users() if u.bsdusr_username == user]
+        if len(find) == 0:
+            raise forms.ValidationError(_("The user %s is not valid.") % user)
+        return user
     def save(self):
         super(AFPForm, self).save()
         notifier().restart("afp")
@@ -200,15 +228,28 @@ class FTPForm(ModelForm):
         notifier().reload("ftp")
 
 class TFTPForm(ModelForm):
-    tftp_username = forms.ChoiceField(choices=(),
-                                      widget=forms.Select(attrs=attrs_dict),
+    tftp_username = forms.ChoiceField(widget=forms.Select(attrs=attrs_dict),
                                       label = _("Username")
                                       )
     def __init__(self, *args, **kwargs):
         super(TFTPForm, self).__init__(*args, **kwargs)
-        self.fields['tftp_username'].widget = widgets.FilteringSelect()
-        self.fields['tftp_username'].choices = ((x.bsdusr_username, x.bsdusr_username)
-                                                for x in FreeNAS_Users())
+        from account.forms import FilteredSelectJSON
+        if len(FreeNAS_Users()) > 500:
+            if len(args) > 0 and isinstance(args[0], QueryDict):
+                self.fields['tftp_username'].choices = ((args[0]['tftp_username'],args[0]['tftp_username']),)
+                self.fields['tftp_username'].initial= args[0]['tftp_username']
+            self.fields['tftp_username'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
+        else:
+            self.fields['tftp_username'].widget = widgets.FilteringSelect()
+            self.fields['tftp_username'].choices = ((x.bsdusr_username, x.bsdusr_username)
+                                                    for x in FreeNAS_Users())
+    def clean_tftp_username(self):
+        user = self.cleaned_data['tftp_username']
+        #FIXME: terrible way to check if user exists
+        find = [u for u in FreeNAS_Users() if u.bsdusr_username == user]
+        if len(find) == 0:
+            raise forms.ValidationError(_("The user %s is not valid.") % user)
+        return user
     def save(self):
         super(TFTPForm, self).save()
         notifier().reload("tftp")
