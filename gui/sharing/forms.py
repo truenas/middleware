@@ -118,7 +118,7 @@ class NFS_ShareForm(ModelForm):
         else:
             self.grouplist = []
             self.grouplist.append(('-----', 'N/A'))
-            for a in list((x.bsdusr_group, x.bsdusr_group)
+            for a in list((x.bsdgrp_group, x.bsdgrp_group)
                           for x in FreeNAS_Groups()):
                 self.grouplist.append(a)
 
@@ -129,7 +129,7 @@ class NFS_ShareForm(ModelForm):
 
     def clean_nfs_mapall_user(self):
         user = self.cleaned_data['nfs_mapall_user']
-        if user == '':
+        if user in ('','-----'):
             return None
         #FIXME: terrible way to check if user exists
         find = [u for u in FreeNAS_Users() if u.bsdusr_username == user]
@@ -139,7 +139,7 @@ class NFS_ShareForm(ModelForm):
 
     def clean_nfs_maproot_user(self):
         user = self.cleaned_data['nfs_maproot_user']
-        if user == '':
+        if user in ('','-----'):
             return None
         #FIXME: terrible way to check if user exists
         find = [u for u in FreeNAS_Users() if u.bsdusr_username == user]
@@ -149,7 +149,7 @@ class NFS_ShareForm(ModelForm):
 
     def clean_nfs_mapall_group(self):
         group = self.cleaned_data['nfs_mapall_group']
-        if group == '':
+        if group in ('','-----'):
             return None
         #FIXME: terrible way to check if group exists
         find = [g for g in FreeNAS_Groups() if g.bsdgrp_group == group]
@@ -159,7 +159,7 @@ class NFS_ShareForm(ModelForm):
 
     def clean_nfs_maproot_group(self):
         group = self.cleaned_data['nfs_maproot_group']
-        if group == '':
+        if group in ('','-----'):
             return None
         #FIXME: terrible way to check if group exists
         find = [g for g in FreeNAS_Groups() if g.bsdgrp_group == group]
