@@ -227,6 +227,8 @@ generate_ldap_config()
 		generate_ldapconf
 		setup_homedirs
 		create_cache_filesystem
+                sleep 5
+		/usr/local/www/freenasUI/tools/cachetool.py fill
 	fi
 }
 
