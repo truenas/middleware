@@ -618,6 +618,7 @@ class ZFSDataset_CreateForm(Form):
         name = self.cleaned_data["dataset_name"]
         if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*$', name):
             raise forms.ValidationError(_("Dataset names must begin with an alphanumeric character and may only contain (-), (_), (:) and (.)."))
+        return name
     def clean(self):
         cleaned_data = self.cleaned_data
         volume_name = models.Volume.objects.get(id=cleaned_data.get("dataset_volid")).vol_name.__str__()
