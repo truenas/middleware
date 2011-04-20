@@ -794,7 +794,7 @@ class MountPointAccessForm(Form):
     def clean_mp_group(self):
         group = self.cleaned_data['mp_group']
         #FIXME: terrible way to check if user exists
-        find = [g for g in FreeNAS_Users() if g.bsdgrp_group == group]
+        find = [g for g in FreeNAS_Groups() if g.bsdgrp_group == group]
         if len(find) == 0:
             raise forms.ValidationError(_("The group %s is not valid.") % group)
         return group
