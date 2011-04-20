@@ -38,7 +38,7 @@
         <button id="de_button" dojoType="dijit.form.Button" type="button">
             {% trans "Add Extent" %}
             <script type="dojo/method" event="onClick" args="evt">
-                addObject('{% trans "Add Extent" %}', '{% url freeadmin_model_add app="services",model="iSCSITargetExtent" %}', [this,]);
+                addObject('{% trans "Add Extent" %}', '{% url freeadmin_model_add app="services",model="iSCSITargetExtent",mf="iSCSITargetFileExtentForm" %}', [this,]);
         </script>
         </button>
         </p>
