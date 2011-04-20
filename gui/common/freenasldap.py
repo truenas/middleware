@@ -380,7 +380,7 @@ class FreeNAS_LDAP:
         elif user.isdigit():
             filter = '(&(objectclass=person)(uidnumber=%s))' % user
         else:
-            filter = '(&(objectclass=person)(!(uid=%s)(cn=%s)))' % (user, user)
+            filter = '(&(objectclass=person)(|(uid=%s)(cn=%s)))' % (user, user)
 
         results = self.__search(self.basedn, scope, filter, self.attributes)
         if results:
@@ -1134,7 +1134,7 @@ class FreeNAS_User(bsdUsers):
         f = FreeNAS_LDAP(l.ldap_hostname, l.ldap_rootbasedn,
             l.ldap_rootbindpw, l.ldap_basedn, l.ldap_ssl)
 
-        f.basedn = l.ldap_groupsuffix + "," + l.ldap_basedn;
+        f.basedn = l.ldap_usersuffix + "," + l.ldap_basedn;
         f.attributes = ['uid']
         
         pw = None
