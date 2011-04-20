@@ -1,0 +1,88 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-cache
+# REQUIRE: django
+
+. /etc/rc.freenas
+
+ldap_enabled()
+{
+	local res=1
+	local enabled
+
+	enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		count(*)
+
+	FROM
+		services_services
+
+	WHERE (
+		srv_service = 'ldap' and
+		srv_enable = 1
+	)
+
+	ORDER BY
+		-services_services.id
+
+	LIMIT 1")
+
+	if [ "${enabled}" = "1" ]
+	then
+		res=0
+	fi
+
+	return ${res}
+}
+
+activedirectory_enabled()
+{
+	local res=1
+	local enabled
+
+	enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		count(*)
+
+	FROM
+		services_services
+
+	WHERE (
+		srv_service = 'activedirectory' and
+		srv_enable = 1
+	)
+
+	ORDER BY
+		-services_services.id
+
+	LIMIT 1")
+
+	if [ "${enabled}" = "1" ]
+	then
+		res=0
+	fi
+
+	return ${res}
+}
+
+populate_cache()
+{
+	if ldap_enabled
+	then
+		/usr/local/www/freenasUI/tools/cachetool.py fill
+
+	elif activedirectory_enabled
+	then
+		/usr/local/www/freenasUI/tools/cachetool.py fill
+	fi
+}
+
+name="ix-cache"
+start_cmd='populate_cache'
+stop_cmd=':'
+            
+load_rc_config $name
+run_rc_command "$1"
