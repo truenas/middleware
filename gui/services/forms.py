@@ -569,7 +569,7 @@ class iSCSITargetDeviceExtentForm(ModelForm):
             except:
                 pass
         # Exclude what's already added
-        for devname in [ x['disk_disks'] for x in models.Disk.objects.all().values('disk_disks')]:
+        for devname in [ x['disk_disks'] for x in Disk.objects.all().values('disk_disks')]:
             try:
                 del diskchoices[devname]
             except:
