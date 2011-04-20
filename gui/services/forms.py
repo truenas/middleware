@@ -81,7 +81,6 @@ class CIFSForm(ModelForm):
         self.fields['cifs_srv_homedir'].choices = (('-----', 'N/A'),) + tuple([x for x in self.fields['cifs_srv_homedir'].choices][1:])
     def clean_cifs_srv_guest(self):
         user = self.cleaned_data['cifs_srv_guest']
-        #FIXME: terrible way to check if user exists
         if FreeNAS_User(user) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user
@@ -126,7 +125,6 @@ class AFPForm(ModelForm):
                                                          for x in FreeNAS_Users())
     def clean_afp_srv_guest_user(self):
         user = self.cleaned_data['afp_srv_guest_user']
-        #FIXME: terrible way to check if user exists
         if FreeNAS_User(user) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user
@@ -243,7 +241,6 @@ class TFTPForm(ModelForm):
                                                     for x in FreeNAS_Users())
     def clean_tftp_username(self):
         user = self.cleaned_data['tftp_username']
-        #FIXME: terrible way to check if user exists
         if FreeNAS_User(user) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user

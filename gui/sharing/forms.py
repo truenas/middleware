@@ -133,7 +133,6 @@ class NFS_ShareForm(ModelForm):
         user = self.cleaned_data['nfs_mapall_user']
         if user in ('','-----'):
             return None
-        #FIXME: terrible way to check if user exists
         if FreeNAS_User(user) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user
@@ -142,7 +141,6 @@ class NFS_ShareForm(ModelForm):
         user = self.cleaned_data['nfs_maproot_user']
         if user in ('','-----'):
             return None
-        #FIXME: terrible way to check if user exists
         if FreeNAS_User(user) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user
@@ -151,7 +149,6 @@ class NFS_ShareForm(ModelForm):
         group = self.cleaned_data['nfs_mapall_group']
         if group in ('','-----'):
             return None
-        #FIXME: terrible way to check if group exists
         if FreeNAS_Group(group) == None:
             raise forms.ValidationError(_("The group %s is not valid.") % group)
         return group
@@ -160,7 +157,6 @@ class NFS_ShareForm(ModelForm):
         group = self.cleaned_data['nfs_maproot_group']
         if group in ('','-----'):
             return None
-        #FIXME: terrible way to check if group exists
         if FreeNAS_Group(group) == None:
             raise forms.ValidationError(_("The group %s is not valid.") % group)
         return group
