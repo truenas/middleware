@@ -28,7 +28,6 @@ class ViewPeriodic(NavOption):
 class ViewSnap(NavOption):
 
         name = _(u'View All Snapshots')
-        view = u'storage_home'
         type = 'opensnaps'
         icon = u'ViewAllPeriodicSnapIcon'
         app_name = 'storage'

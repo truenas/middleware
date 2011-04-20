@@ -344,3 +344,15 @@ def testmail(request):
         'error': error,
         'errmsg': errmsg,
         }))
+
+def clearcache(request):
+
+    error = False
+    errmsg = ''
+
+    os.system("(/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py expire >/dev/null 2>&1 && /usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py fill >/dev/null 2>&1) &")
+
+    return HttpResponse(simplejson.dumps({
+        'error': error,
+        'errmsg': errmsg,
+        }))
