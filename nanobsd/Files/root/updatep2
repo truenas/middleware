@@ -55,6 +55,13 @@ dd of=/dev/${TARGET_DRIVE}s2 obs=128k
 fsck_ffs -n /dev/${TARGET_DRIVE}s2a
 tunefs -L ${LABELNAME}s2a /dev/${TARGET_DRIVE}s2a
 
+# Save root ssh keys
+if [ -d /root/.ssh ]; then
+    mkdir /tmp/upgrade && mount /dev/${TARGET_DRIVE}s1a /tmp/upgrade && \
+        cp -R /root/.ssh /tmp/upgrade/root/ && chmod 700 /tmp/upgrade/root/.ssh
+    umount /dev/${TARGET_DRIVE}s1a && rmdir /tmp/upgrade
+fi
+
 # Update the /etc/fstab
 trap "umount /mnt" 1 2 15 EXIT
 mount /dev/${NANO_DRIVE}s2a /mnt

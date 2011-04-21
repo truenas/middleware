@@ -54,4 +54,11 @@ dd of=/dev/${TARGET_DRIVE}s1 obs=128k
 # Check that it worked
 fsck_ffs -n /dev/${TARGET_DRIVE}s1a
 
+# Save root ssh keys
+if [ -d /root/.ssh ]; then
+    mkdir /tmp/upgrade && mount /dev/${TARGET_DRIVE}s1a /tmp/upgrade && \
+        cp -R /root/.ssh /tmp/upgrade/root/ && chmod 700 /tmp/upgrade/root/.ssh
+    umount /dev/${TARGET_DRIVE}s1a && rmdir /tmp/upgrade
+fi
+
 gpart set -a active -i 1 ${TARGET_DRIVE}
