@@ -42,6 +42,11 @@ function _cbStateChange() {
 			var topOutput = xmlTree.childNodes[0].childNodes[0].wholeText;
 			var pageElement = document.getElementById('top_output');
 
+            var top_dialog = dijit.byId("top_dialog");
+            if(!top_dialog.open) {
+                _StopTopOutput();
+            }
+
 			pageElement.innerHTML = topOutput;
 		}
 	}
