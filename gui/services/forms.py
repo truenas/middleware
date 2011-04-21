@@ -27,6 +27,7 @@
 
 import base64
 import re
+import os
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
@@ -495,14 +496,48 @@ class iSCSITargetExtentEditForm(ModelForm):
     class Meta:
         model = models.iSCSITargetExtent
         exclude = ('iscsi_target_extent_type',)
+    def clean_iscsi_target_extent_path(self):
+        path = self.cleaned_data["iscsi_target_extent_path"]
+        if path[-1] == '/':
+            raise forms.ValidationError(_("You need to specify a filepath, not a directory."))
+        valid = False
+        for mp in MountPoint.objects.all():
+            if path == mp.mp_path:
+                raise forms.ValidationError(_("You need to specify a file inside your volume/dataset."))
+            if path.startswith(mp.mp_path):
+                valid = True
+        if not valid:
+            raise forms.ValidationError(_("Your path to the extent must reside inside a volume/dataset mount point."))
+        return path
     def save(self):
         super(iSCSITargetExtentEditForm, self).save()
+        path = self.cleaned_data["iscsi_target_extent_path"]
+        dirs = "/".join(path.split("/")[:-1])
+        if not os.path.exists(dirs):
+            try:
+                os.makedirs(dirs)
+            except Exception, e:
+                pass
         notifier().reload("iscsitarget")
 
 class iSCSITargetFileExtentForm(ModelForm):
     class Meta:
         model = models.iSCSITargetExtent
         exclude = ('iscsi_target_extent_type')
+    def clean_iscsi_target_extent_path(self):
+        path = self.cleaned_data["iscsi_target_extent_path"]
+        if path[-1] == '/':
+            raise forms.ValidationError(_("You need to specify a filepath, not a directory."))
+        valid = False
+        for mp in MountPoint.objects.all():
+            if path == mp.mp_path:
+                raise forms.ValidationError(_("You need to specify a file inside your volume/dataset."))
+            if path.startswith(mp.mp_path):
+                valid = True
+        if not valid:
+            raise forms.ValidationError(_("Your path to the extent must reside inside a volume/dataset mount point."))
+        return path
+        
     def clean_iscsi_target_extent_filesize(self):
         size = self.cleaned_data['iscsi_target_extent_filesize']
         try:
@@ -521,6 +556,13 @@ class iSCSITargetFileExtentForm(ModelForm):
         oExtent.iscsi_target_extent_type = 'File'
         if commit:
             oExtent.save()
+        path = self.cleaned_data["iscsi_target_extent_path"]
+        dirs = "/".join(path.split("/")[:-1])
+        if not os.path.exists(dirs):
+            try:
+                os.makedirs(dirs)
+            except Exception, e:
+                pass
         notifier().reload("iscsitarget")
         return oExtent
 
