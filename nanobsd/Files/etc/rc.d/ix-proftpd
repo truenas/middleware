@@ -93,7 +93,7 @@ generate_proftp()
     local IFS=\|
 #XXX missing: ftp_chrooteveryone ftp_tlsrequired ftp_mod_ban
     local ftp_chrooteveryone=0 ftp_mod_ban=0
-#XXX unused: ftp_defaultroot ftp_ssltls
+#XXX unused: ftp_chrooteveryone ftp_ssltls
     local f="ftp_port ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_banner ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_ssltls ftp_anondir"
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
         "SELECT ftp_port, ftp_clients, ftp_ipconnections, ftp_loginattempt, ftp_timeout, ftp_rootlogin, ftp_onlyanonymous, ftp_onlylocal, ftp_banner, ftp_filemask, ftp_dirmask, ftp_fxp, ftp_resume, ftp_defaultroot, ftp_ident, ftp_reversedns, ftp_masqaddress, ftp_passiveportsmin, ftp_passiveportsmax, ftp_localuserbw, ftp_localuserdlbw, ftp_anonuserbw, ftp_anonuserdlbw, ftp_ssltls, storage_mountpoint.mp_path FROM services_ftp LEFT OUTER JOIN storage_mountpoint ON services_ftp.ftp_anonpath_id=storage_mountpoint.id ORDER BY -services_ftp.id LIMIT 1" | \
@@ -203,7 +203,7 @@ EOF
 	cat <<EOF >> ${proftpd_config}
 <Global>
   RequireValidShell ${proftpd_requirevalidshell}
-$(bool_on ${ftp_chrooteveryone} "  DefaultRoot ${proftpd_defaultrootdir} ${proftpd_defaultrootgroupexpr}")
+$(bool_on ${ftp_defaultroot} "  DefaultRoot ~ ${proftpd_defaultrootgroupexpr}")
 $(bool_on ${ftp_rootlogin} "  RootLogin on")
   AllowOverwrite on
 $(bool_on ${ftp_resume} "  AllowRetrieveRestart on")
