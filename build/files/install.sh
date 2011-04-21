@@ -174,6 +174,9 @@ disk_is_freenas()
         # bug
         ls /tmp/junk > /dev/null
         cp /tmp/junk/conf/base/etc/hostid /tmp/
+        if [ -d /tmp/junk/root/.ssh ]; then
+            cp -R /tmp/junk/root/.ssh /tmp/
+        fi
         umount /tmp/junk
     fi
     rmdir /tmp/junk
@@ -267,6 +270,9 @@ menu_install()
         mount /dev/${_disk}s1a /tmp/junk
         ls /tmp/junk > /dev/null
         cp /tmp/hostid /tmp/junk/conf/base/etc
+        if [ -d /tmp/.ssh ]; then
+            cp -R /tmp/.ssh /tmp/junk/root/
+        fi
         umount /tmp/junk
         rmdir /tmp/junk
 	dialog --msgbox 'The installer has preserved your database file.
