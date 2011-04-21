@@ -201,8 +201,11 @@ for mpkey in mp_to_task_map:
         else:
             replcmd = '/sbin/zfs send -I %s %s | %s %s /sbin/zfs receive -F -d %s' % (last_snapshot, snapname, sshcmd, remote, fs)
         p1 = Popen(replcmd, shell=True, stdout=PIPE, stderr=STDOUT)
-        p1.wait()
         output = p1.communicate()[0]
+        try:
+            p1.terminate()
+        except OSError:
+            pass
         logger = Popen("logger -p daemon.notice -t autosnap".split(" "), stdin=PIPE, stdout=PIPE, stderr=PIPE)
         logger.communicate(input=output)
         if p1.returncode != 0 and False:
