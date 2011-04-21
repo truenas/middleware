@@ -39,7 +39,7 @@ import syslog
 from freenasUI.storage.models import Task, Replication
 from datetime import datetime, time, timedelta
 from shlex import split as shlex_split
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 from os import system as __system
 
 def pipeopen(command):
@@ -200,7 +200,25 @@ for mpkey in mp_to_task_map:
             replcmd = '/sbin/zfs send %s | %s %s /sbin/zfs receive -F -d %s' % (snapname, sshcmd, remote, fs)
         else:
             replcmd = '/sbin/zfs send -I %s %s | %s %s /sbin/zfs receive -F -d %s' % (last_snapshot, snapname, sshcmd, remote, fs)
-        system(replcmd)
+        p1 = Popen(replcmd, shell=True, stdout=PIPE, stderr=STDOUT)
+        p1.wait()
+        output = p1.communicate()[0]
+        logger = Popen("logger -p daemon.notice -t autosnap".split(" "), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        logger.communicate(input=output)
+        if p1.returncode != 0 and False:
+            from common.system import send_mail
+            error, errmsg = send_mail(subject="Replication failed!", text=\
+                """
+                Hello,
+
+                The replication failed for the snapshot %s.
+
+                The following text block was captured from the replicator command:
+                %s
+                """ % (snapname, output)
+            )
+        syslog.syslog(syslog.LOG_INFO, "Executed: " + replcmd)
+        
         replication.repl_lastsnapshot = snapname
         replication.save()
 
