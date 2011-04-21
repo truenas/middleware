@@ -27,14 +27,19 @@
 
 dojo.require('dojox.timing');
 t = new dojox.timing.Timer(1000);
+var _msgstarted = false;
 
 loadlog = function(load) {
+    if(_msgstarted == true)
+        return;
+    _msgstarted = true;
     var msgfull = dijit.byId('log_dialog');
     url = msgfull.open? '/system/varlogmessages/500/' : '/system/varlogmessages/';
     dojo.xhrGet({
     url: url,
     handleAs: "xml",
     load: function(data) {
+        _msgstarted = false;
         var msgOutput = data.childNodes[0].childNodes[0].wholeText;
         var pageElement = document.getElementById(msgfull.open? 'msgfull_output' : 'msg_output');
         var newinterval = 1000;
@@ -55,10 +60,10 @@ loadlog = function(load) {
             if (msgfull.open && (saved_delta < 32))
                 pageElement.scrollTop = pageElement.scrollHeight;
         } else if (t.interval < 7500) {
-            Newinterval = t.interval * 5 / 3;
-            If (newinterval > 7500)
+            newinterval = t.interval * 5 / 3;
+            if (newinterval > 7500)
                 newinterval = 7500;
-            T.setInterval(newinterval);
+            t.setInterval(newinterval);
         }
         if (load && msgfull.open)
             pageElement.scrollTop = pageElement.scrollHeight;
