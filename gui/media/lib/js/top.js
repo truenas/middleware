@@ -2,7 +2,7 @@
  * Copyright (c) 2011 iXsystems, Inc.
  * All rights reserved.
  *
- * Written by:	Xin LI
+ * Written by:  Xin LI
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,68 +27,45 @@
  *
  */
 
-var oReq = false; // XMLHttpRequest Object
-var hInterval = -1;
-var resURL = '/system/top/';
+dojo.require('dojox.timing');
+ttop = new dojox.timing.Timer(2500);
 
-/*
- * Callback handler for readystatechange
- */
-function _cbStateChange() {
-	if (oReq.readyState==4) {
-		if (oReq.responseText.toLowerCase() != 'invalid') {
-			var xmlTree = oReq.responseXML;
-			//var topOutput = xmlTree.documentElement.getElementsByTagName('top').item(0).firstChild.data;
-			var topOutput = xmlTree.childNodes[0].childNodes[0].wholeText;
-			var pageElement = document.getElementById('top_output');
-
-            var top_dialog = dijit.byId("top_dialog");
-            if(!top_dialog.open) {
-                _StopTopOutput();
-            }
-
-			pageElement.innerHTML = topOutput;
-		}
-	}
+ttop.onTick = function() {
+    loadtop();
+}
+ttop.onStart = function() {
+    loadtop();
 }
 
-/*
- * Callout to request top output from server
- */
-function _cbSyncTopOutput() {
-	try {
-		oReq.open("GET", resURL, true);
-		oReq.onreadystatechange = _cbStateChange;
-		oReq.send(null);
-	} catch (e) {
-		;
-	}
+var topstarted = false;
+
+function loadtop() {
+
+    if(topstarted == true)
+        return;
+    topstarted = true;
+    dojo.xhrGet({
+    url: '/system/top/',
+    handleAs: "xml",
+    load: function(data) {
+
+        topstarted = false;
+        var topOutput = data.childNodes[0].childNodes[0].wholeText;
+        var pageElement = document.getElementById('top_output');
+
+        var top_dialog = dijit.byId("top_dialog");
+        if(!top_dialog.open) {
+            ttop.stop();
+        }
+
+        pageElement.innerHTML = topOutput;
+    },
+    });
 }
 
-/*
- * Initialize the refresher
- */
-function _InitTopOutput() {
-	if (window.XMLHttpRequest) {
-		oReq = new XMLHttpRequest();
-	} else if (window.ActiveXObject) {
-		oReq = new ActiveXObject("Microsoft.XMLHTTP");
-	}
-
-	/* Load output immediately */
-	_cbSyncTopOutput();
-
-	/* Setup future updates at 2.5s rate */
-	if (hInterval == -1)
-		hInterval = window.setInterval("_cbSyncTopOutput()", 2500);
-}
-
-/*
- * Stop the refresher
- */
 function _StopTopOutput() {
-	if (hInterval != -1) {
-		window.clearInterval(hInterval);
-		hInterval = -1;
-	}
+    if (hInterval != -1) {
+        window.clearInterval(hInterval);
+        hInterval = -1;
+    }
 }

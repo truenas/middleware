@@ -938,7 +938,6 @@
             } else if(item.type && item.type == 'logout') {
                 window.location='/account/logout/';
             } else if(item.action && item.action == 'displayprocs') {
-                    _InitTopOutput();
                     dijit.byId("top_dialog").show();
             } else if(item.action && item.action == 'reboot') {
                     dijit.byId("rebootDialog").show();
