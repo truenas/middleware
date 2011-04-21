@@ -37,19 +37,19 @@ ttop.onStart = function() {
     loadtop();
 }
 
-var topstarted = false;
+var _topstarted = false;
 
 function loadtop() {
 
-    if(topstarted == true)
+    if(_topstarted == true)
         return;
-    topstarted = true;
+    _topstarted = true;
     dojo.xhrGet({
     url: '/system/top/',
     handleAs: "xml",
     load: function(data) {
 
-        topstarted = false;
+        _topstarted = false;
         var topOutput = data.childNodes[0].childNodes[0].wholeText;
         var pageElement = document.getElementById('top_output');
 
@@ -61,11 +61,4 @@ function loadtop() {
         pageElement.innerHTML = topOutput;
     },
     });
-}
-
-function _StopTopOutput() {
-    if (hInterval != -1) {
-        window.clearInterval(hInterval);
-        hInterval = -1;
-    }
 }
