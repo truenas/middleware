@@ -7,7 +7,7 @@
 # REQUIRE: FILESYSTEMS
 # BEFORE: proftpd
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 # Defaults
 proftpd_enable=${proftpd_enable:-"NO"}
@@ -15,8 +15,8 @@ proftpd_flags=${proftpd_flags:-""}
 proftpd_config=${proftpd_config:-"/usr/local/etc/proftpd.conf"}
 proftpd_delaytable=${proftpd_delaytable:-"/var/run/proftpd/proftpd.delay"}
 proftpd_displaylogin=${proftpd_displaylogin:-"/var/run/proftpd/proftpd.motd"}
-proftpd_tlsrsacertfile=${proftpd_tlsrsacertfile:-"/etc/ssl/private/proftpd.cert"}
-proftpd_tlsrsakeyfile=${proftpd_tlsrsakeyfile:-"/etc/ssl/private/proftpd.key"}
+proftpd_tlsrsacertfile=${SSLCACERT}
+proftpd_tlsrsakeyfile=${SSLCAKEY}
 proftpd_tcpaccessfilesallow=${proftpd_tcpaccessfilesallow:-"/etc/hosts.allow"}
 proftpd_tcpaccessfilesdeny=${proftpd_tcpaccessfilesdeny:-"/etc/hosts.allow"}
 proftpd_umaskfile=${proftpd_umaskfile:-"077"}
