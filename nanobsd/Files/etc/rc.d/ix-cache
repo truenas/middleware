@@ -80,9 +80,14 @@ populate_cache()
 	fi
 }
 
+expire_cache()
+{
+        /usr/local/www/freenasUI/tools/cachetool.py expire
+}
+
 name="ix-cache"
 start_cmd='populate_cache'
-stop_cmd=':'
+stop_cmd='expire_cache'
             
 load_rc_config $name
 run_rc_command "$1"

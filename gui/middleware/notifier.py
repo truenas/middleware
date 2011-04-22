@@ -234,8 +234,7 @@ class notifier:
         self.__system("/usr/sbin/service sshd restart")
 
     def _restart_ldap(self):
-        self.__system("/usr/sbin/service ix-ldap quietstart")
-        self.__system("/usr/sbin/service ix-cache quietstart")
+        self.__system("/usr/sbin/service ix-ldap quietrestart")
         self.__system("/usr/sbin/service ix-nsswitch quietstart")
         self.__system("/usr/sbin/service ix-pam quietstart")
         self.__system("/usr/sbin/service ix-samba quietstart")
@@ -252,8 +251,7 @@ class notifier:
         self.__system("/usr/sbin/service ix-pam quietstart")
         self.__system("/usr/sbin/service ix-samba quietstart")
         self.__system("/usr/sbin/service ix-kinit quietstart")
-        self.__system("/usr/sbin/service ix-activedirectory quietstart")
-        self.__system("/usr/sbin/service ix-cache quietstart")
+        self.__system("/usr/sbin/service ix-activedirectory quietrestart")
         self.__system("/usr/sbin/service samba forcestop")
         self.__system("/usr/bin/killall nmbd")
         self.__system("/usr/bin/killall smbd")
