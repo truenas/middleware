@@ -54,11 +54,29 @@ dd of=/dev/${TARGET_DRIVE}s1 obs=128k
 # Check that it worked
 fsck_ffs -n /dev/${TARGET_DRIVE}s1a
 
-# Save root ssh keys
+# Save root ssh keys, /boot/modules/* and fusionio utilities if present
+mkdir /tmp/upgrade
+mount /dev/${TARGET_DRIVE}s1a /tmp/upgrade
+
 if [ -d /root/.ssh ]; then
-    mkdir /tmp/upgrade && mount /dev/${TARGET_DRIVE}s1a /tmp/upgrade && \
-        cp -R /root/.ssh /tmp/upgrade/root/ && chmod 700 /tmp/upgrade/root/.ssh
-    umount /dev/${TARGET_DRIVE}s1a && rmdir /tmp/upgrade
+    cp -R /root/.ssh /tmp/upgrade/root/ && chmod 700 /tmp/upgrade/root/.ssh
 fi
+
+if [ -d /usr/local/fusionio ]; then
+    cp -R /usr/local/fusionio /tmp/upgrade/usr/local/
+fi
+
+if [ -d /boot/modules ]; then
+    if ! [ -d /tmp/upgrade/boot/modules ]; then
+        mkdir /tmp/upgrade/boot/modules
+    fi
+    for i in `ls /boot/modules/`
+    do
+        cp /boot/modules/$i /tmp/upgrade/boot/modules/
+    done
+fi
+
+umount /dev/${TARGET_DRIVE}s1a
+rmdir /tmp/upgrade
 
 gpart set -a active -i 1 ${TARGET_DRIVE}

@@ -177,6 +177,16 @@ disk_is_freenas()
         if [ -d /tmp/junk/root/.ssh ]; then
             cp -R /tmp/junk/root/.ssh /tmp/
         fi
+        if [ -d /tmp/junk/boot/modules ]; then
+            mkdir /tmp/modules
+            for i in `ls /tmp/junk/boot/modules`
+            do
+                cp /tmp/junk/boot/modules/$i /tmp/modules/
+            done
+        fi
+        if [ -d /tmp/junk/usr/local/fusionio ]; then
+            cp -R /tmp/junk/usr/local/fusionio /tmp/junk/
+        fi
         umount /tmp/junk
     fi
     rmdir /tmp/junk
@@ -272,6 +282,15 @@ menu_install()
         cp /tmp/hostid /tmp/junk/conf/base/etc
         if [ -d /tmp/.ssh ]; then
             cp -R /tmp/.ssh /tmp/junk/root/
+        fi
+        if [ -d /tmp/modules ]; then
+            for i in `ls /tmp/modules`
+            do
+                cp /tmp/modules/$i /tmp/junk/boot/modules
+            done
+        fi
+        if [ -d /tmp/fusionio ]; then
+            cp -R /tmp/fusionio /tmp/junk/usr/local/
         fi
         umount /tmp/junk
         rmdir /tmp/junk
