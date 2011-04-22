@@ -1225,7 +1225,7 @@ class FreeNAS_Local_User(bsdUsers):
 
         if bsdUser:
             try:
-                self.__pw = pwd.getpwnam(bsdUser[0])
+                self.__pw = pwd.getpwnam(bsdUser[0].bsdusr_username)
 
             except:
                 self.__pw = None
@@ -1380,7 +1380,7 @@ class FreeNAS_Local_Group(bsdGroups):
         syslog(LOG_DEBUG, "FreeNAS_Local_Group.__init__: enter")
         syslog(LOG_DEBUG, "FreeNAS_Local_Group.__init__: group = %s" % group)
 
-        super(FreeNAS_LDAP_Group, self).__init__()
+        super(FreeNAS_Local_Group, self).__init__()
 
         self.__gr = None
         self.__get_group(group)
@@ -1402,7 +1402,7 @@ class FreeNAS_Local_Group(bsdGroups):
 
         if bsdGroup:
             try:
-                self.__gr = grp.getgrnam(bsdGroup[0])
+                self.__gr = grp.getgrnam(bsdGroup[0].bsdgrp_group)
 
             except:
                 self.__gr = None
