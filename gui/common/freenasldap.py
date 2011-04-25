@@ -1245,18 +1245,13 @@ class FreeNAS_User(object):
         syslog(LOG_DEBUG, "FreeNAS_User.__new__: enter")
         syslog(LOG_DEBUG, "FreeNAS_User.__new__: user = %s" % user)
 
-        local = False
+        obj = None
         if DirectoryEnabled.LDAP():
             obj = FreeNAS_LDAP_User(user)
-
         elif DirectoryEnabled.ActiveDirectory():
             obj = FreeNAS_ActiveDirectory_User(user)
 
-        else:
-            local = True
-            obj = FreeNAS_Local_User(user)
-
-        if local is False and not obj.bsdusr_uid:
+        if obj is None or not obj.bsdusr_uid:
             obj = FreeNAS_Local_User(user)
 
         if not obj.bsdusr_uid:
@@ -1423,18 +1418,13 @@ class FreeNAS_Group(object):
         syslog(LOG_DEBUG, "FreeNAS_Group.__new__: enter")
         syslog(LOG_DEBUG, "FreeNAS_Group.__new__: group = %s" % group)
 
-        local = False
+        obj = None
         if DirectoryEnabled.LDAP():
             obj = FreeNAS_LDAP_Group(group)
-
         elif DirectoryEnabled.ActiveDirectory():
             obj = FreeNAS_ActiveDirectory_Group(group)
 
-        else:
-            local = True
-            obj = FreeNAS_Local_Group(group)
-
-        if local is False and not obj.bsdgrp_gid:
+        if obj is None or not obj.bsdgrp_gid:
             obj = FreeNAS_Local_Group(group)
 
         if not obj.bsdgrp_gid:
