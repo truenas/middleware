@@ -320,6 +320,16 @@ EOF
 			echo "    aio write size = ${cifs_aio_ws}"
 		fi
 
+	    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	    SELECT
+	    	cifs_srv_smb_options
+	    FROM
+	    	services_cifs
+	    ORDER BY
+	    	-id
+	    LIMIT 1
+	    "
+
 		if [ "${cifs_homedir}" = "1" ]; then
 			cat<<-EOF
 			[homes]
@@ -340,15 +350,6 @@ EOF
 
 	done
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		cifs_srv_smb_options
-	FROM
-		services_cifs
-	ORDER BY
-		-id
-	LIMIT 1
-	"
 	echo
 }
 
