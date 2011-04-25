@@ -25,6 +25,8 @@
 #
 # $FreeBSD$
 #####################################################################
+import re
+
 from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -33,7 +35,6 @@ from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.db import models as dmodels
 
-#TODO remove import *
 from dojango.util import to_dojo_data
 from freenasUI.storage import forms
 from freenasUI.storage import models
@@ -42,10 +43,8 @@ from freenasUI.middleware.notifier import notifier
 ## Disk section
 
 def home(request):
-    #zfsnap_list = notifier().zfs_snapshot_list()
     variables = RequestContext(request, {
         'focused_tab': request.GET.get("tab", None),
-        #'zfssnap_list': zfsnap_list,
     })
     return render_to_response('storage/index.html', variables)
 
@@ -88,19 +87,24 @@ def wizard(request):
             form.done(request)
             return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume") + " " + _("successfully added") + "."}), mimetype="application/json")
         else:
-
             if 'volume_disks' in request.POST:
                 disks = request.POST.getlist('volume_disks')
             else:
                 disks = None
+            zpoolfields = re.compile(r'zpool_(.+)')
+            zfsextra = [(zpoolfields.search(i).group(1), i, request.POST.get(i)) for i in request.POST.keys() \
+                        if zpoolfields.match(i)]
+
     else:
         form = forms.VolumeWizardForm()
         disks = []
+        zfsextra = None
     variables = RequestContext(request, {
         'form': form,
-        'disks': disks
+        'disks': disks,
+        'zfsextra': zfsextra,
     })
-    return render_to_response('storage/wizard2.html', variables)
+    return render_to_response('storage/wizard.html', variables)
 
 def volimport(request):
 

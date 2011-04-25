@@ -575,7 +575,7 @@
 
     }
 
-    wizardcheckings = function(vol_change) {
+    wizardcheckings = function(vol_change, first_load) {
 
         if(!dijit.byId("wizarddisks")) return;
         var disks = dijit.byId("wizarddisks");
@@ -601,7 +601,7 @@
 
             }
 
-            if(unselected.length > 0 && zfs == true) {
+            if(unselected.length > 0 && zfs == true && first_load != true) {
 
                 var tab = dojo.byId("disks_unselected");
                 dojo.query("#disks_unselected tbody tr").orphan();
@@ -646,8 +646,12 @@
                dojo.style("zfsextra", "display", "");
 
             } else {
-               dojo.query("#disks_unselected tbody tr").orphan();
-               dojo.style("zfsextra", "display", "none");
+                if(zfs == true && first_load == true) {
+                    dojo.style("zfsextra", "display", "");
+                } else {
+                    dojo.query("#disks_unselected tbody tr").orphan();
+                    dojo.style("zfsextra", "display", "none");
+                }
             }
         } else if(zfs == false) {
                dojo.style("zfsextra", "display", "none");

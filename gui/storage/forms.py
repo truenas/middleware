@@ -222,7 +222,7 @@ class VolumeWizardForm(forms.Form):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        volume_name = cleaned_data.get("volume_name")
+        volume_name = cleaned_data.get("volume_name", "")
         disks =  cleaned_data.get("volume_disks")
         if len(disks) == 0 and models.Volume.objects.filter(vol_name = volume_name).count() == 0:
             msg = _(u"This field is required")
