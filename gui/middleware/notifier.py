@@ -233,9 +233,9 @@ class notifier:
         self.__system("/usr/sbin/service ix-sshd quietstart")
         self.__system("/usr/sbin/service sshd restart")
 
-    def _restart_ldap(self):
-        self.__system("/usr/sbin/service ix-ldap quietrestart")
-        self.___system("(/usr/sbin/service ix-cache quietrestart) &")
+    def _start_ldap(self):
+        self.__system("/usr/sbin/service ix-ldap quietstart")
+        self.___system("(/usr/sbin/service ix-cache quietstart) &")
         self.__system("/usr/sbin/service ix-nsswitch quietstart")
         self.__system("/usr/sbin/service ix-pam quietstart")
         self.__system("/usr/sbin/service ix-samba quietstart")
@@ -246,14 +246,41 @@ class notifier:
         self.__system("/bin/sleep 5")
         self.__system("/usr/sbin/service samba quietstart")
 
-    def _restart_activedirectory(self):
+    def _stop_ldap(self):
+        self.__system("/usr/sbin/service ix-ldap quietstart")
+        self.___system("(/usr/sbin/service ix-cache quietstop) &")
+        self.__system("/usr/sbin/service ix-nsswitch quietstart")
+        self.__system("/usr/sbin/service ix-pam quietstart")
+        self.__system("/usr/sbin/service ix-samba quietstart")
+        self.__system("/usr/sbin/service samba forcestop")
+        self.__system("/usr/bin/killall nmbd")
+        self.__system("/usr/bin/killall smbd")
+        self.__system("/usr/bin/killall winbindd")
+        self.__system("/bin/sleep 5")
+        self.__system("/usr/sbin/service samba quietstart")
+
+    def _start_activedirectory(self):
+        self.__system("/usr/sbin/service ix-kerberos quietstart")
+        self.__system("/usr/sbin/service ix-nsswitch quietstart")
+        self.__system("/usr/sbin/service ix-pam quietstart")
+        self.__system("/usr/sbin/service ix-samba quietstart")
+        self.__system("/usr/sbin/service ix-kinit quietstart")
+        self.__system("/usr/sbin/service ix-activedirectory quietstart")
+        self.___system("(/usr/sbin/service ix-cache quietstart) &")
+        self.__system("/usr/sbin/service samba forcestop")
+        self.__system("/usr/bin/killall nmbd")
+        self.__system("/usr/bin/killall smbd")
+        self.__system("/usr/bin/killall winbindd")
+        self.__system("/usr/sbin/service samba quietstart")
+
+    def _stop_activedirectory(self):
         self.__system("/usr/sbin/service ix-kerberos quietstart")
         self.__system("/usr/sbin/service ix-nsswitch quietstart")
         self.__system("/usr/sbin/service ix-pam quietstart")
         self.__system("/usr/sbin/service ix-samba quietstart")
         self.__system("/usr/sbin/service ix-kinit quietstart")
         self.__system("/usr/sbin/service ix-activedirectory quietrestart")
-        self.___system("(/usr/sbin/service ix-cache quietrestart) &")
+        self.___system("(/usr/sbin/service ix-cache quietstop) &")
         self.__system("/usr/sbin/service samba forcestop")
         self.__system("/usr/bin/killall nmbd")
         self.__system("/usr/bin/killall smbd")
