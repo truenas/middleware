@@ -1245,6 +1245,7 @@ class FreeNAS_User(object):
         syslog(LOG_DEBUG, "FreeNAS_User.__new__: enter")
         syslog(LOG_DEBUG, "FreeNAS_User.__new__: user = %s" % user)
 
+        local = False
         if DirectoryEnabled.LDAP():
             obj = FreeNAS_LDAP_User(user)
 
@@ -1252,6 +1253,10 @@ class FreeNAS_User(object):
             obj = FreeNAS_ActiveDirectory_User(user)
 
         else:
+            local = True
+            obj = FreeNAS_Local_User(user)
+
+        if local is False and not obj.bsdusr_uid:
             obj = FreeNAS_Local_User(user)
 
         if not obj.bsdusr_uid:
