@@ -358,7 +358,7 @@ class Migration(SchemaMigration):
         tftp.tftp_newfiles=False
         tftp.tftp_port=69
         tftp.tftp_username='nobody'
-        tftp.tftp_umask=022
+        tftp.tftp_umask='022'
         tftp.save()
 
         ups = orm.UPS()
