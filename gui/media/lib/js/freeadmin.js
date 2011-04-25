@@ -938,7 +938,6 @@
             } else if(item.type && item.type == 'logout') {
                 window.location='/account/logout/';
             } else if(item.action && item.action == 'displayprocs') {
-                    _InitTopOutput();
                     dijit.byId("top_dialog").show();
             } else if(item.action && item.action == 'reboot') {
                     dijit.byId("rebootDialog").show();
@@ -947,7 +946,9 @@
             } else if(item.type && item.type == 'openstorage') {
                 Menu.openStorage('Active Volumes');
             } else if(item.type && item.type == 'openperiodic') {
-                Menu.openStorage('Periodic Snapshots');
+                Menu.openStorage('Periodic Snapshot Tasks');
+            } else if(item.type && item.type == 'opensnaps') {
+                Menu.openStorage('ZFS Snapshots');
             } else if(item.type && item.type == 'openreplication') {
                 Menu.openStorage('ZFS Replication');
             } else if(item.type && item.type == 'viewmodel') {

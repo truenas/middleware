@@ -380,7 +380,7 @@ class FreeNAS_LDAP:
         elif user.isdigit():
             filter = '(&(objectclass=person)(uidnumber=%s))' % user
         else:
-            filter = '(&(objectclass=person)(!(uid=%s)(cn=%s)))' % (user, user)
+            filter = '(&(objectclass=person)(|(uid=%s)(cn=%s)))' % (user, user)
 
         results = self.__search(self.basedn, scope, filter, self.attributes)
         if results:
@@ -622,6 +622,9 @@ class FreeNAS_LDAP_Users:
 
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__init__: leave")
 
+    def __len__(self):
+        return len(self.__users)
+
     def __iter__(self):
         for user in self.__users:
             yield user
@@ -759,6 +762,9 @@ class FreeNAS_ActiveDirectory_Users:
 
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__init__: leave")
 
+    def __len__(self):
+        return len(self.__users)
+
     def __iter__(self):
         for user in self.__users:
             yield user
@@ -855,7 +861,6 @@ class FreeNAS_ActiveDirectory_Users:
                 pw = pwd.getpwnam(sAMAccountName)
 
             except Exception, e:
-                print e
                 continue
 
             bu = bsdUsers()
@@ -893,6 +898,9 @@ class FreeNAS_Users:
 
         syslog(LOG_DEBUG, "FreeNAS_Users.__init__: leave")
 
+    def __len__(self):
+        return len(self.__bsd_users) + len(self.__users)
+
     def __iter__(self):
         for user in self.__bsd_users:
             yield user
@@ -911,6 +919,9 @@ class FreeNAS_LDAP_Groups:
         self.__get_groups()
 
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Groups.__init__: leave")
+
+    def __len__(self):
+        return len(self.__groups)
 
     def __iter__(self):
         for group in self.__groups:
@@ -980,6 +991,9 @@ class FreeNAS_ActiveDirectory_Groups:
 
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Groups.__init__: leave")
 
+    def __len__(self):
+        return len(self.__groups)
+
     def __iter__(self):
         for group in self.__groups:
             yield group
@@ -1048,6 +1062,9 @@ class FreeNAS_Groups:
 
         syslog(LOG_DEBUG, "FreeNAS_Groups.__init__: leave")
 
+    def __len__(self):
+        return len(self.__bsd_groups) + len(self.__groups)
+
     def __iter__(self):
         for group in self.__bsd_groups:
             yield group
@@ -1055,69 +1072,29 @@ class FreeNAS_Groups:
             yield group
 
 
-class FreeNAS_User(bsdUsers):
+class FreeNAS_LDAP_User(bsdUsers):
     def __init__(self, user):
-        syslog(LOG_DEBUG, "FreeNAS_User.__init__: enter")
-        syslog(LOG_DEBUG, "FreeNAS_User.__init__: user = %s" % user)
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_User.__init__: enter")
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_User.__init__: user = %s" % user)
 
-        super(FreeNAS_User, self).__init__()
+        super(FreeNAS_LDAP_User, self).__init__()
+
         self.__pw = None
-        self.__CN = None
-
-        if type(user) in (types.IntType, types.LongType):
-            bsdUser = bsdUsers.objects.filter(bsdusr_uid = user)
-
-        elif user.isdigit():
-            user = int(user)
-            bsdUser = bsdUsers.objects.filter(bsdusr_uid = user)
-
-        else:
-            bsdUser = bsdUsers.objects.filter(bsdusr_username = user)
-
-        if bsdUser:
-            try:
-                self.__pw = pwd.getpwnam(bsdUser[0])
-
-            except:
-                self.__pw = None
-
+        self.__get_user(user)
         if self.__pw:
-            syslog(LOG_DEBUG, "FreeNAS_User.__init__: local user")
-            syslog(LOG_DEBUG, "FreeNAS_User.__init__: leave")
-            self.__pw_to_self()
-            return
-
-        pw = None
-        if DirectoryEnabled.LDAP():
-            self.__get_ldap_user(user)
-
-        elif DirectoryEnabled.ActiveDirectory():
-            self.__get_active_directory_user(user)
-
-        if self.__pw:
-            syslog(LOG_DEBUG, "FreeNAS_User.__init__: directory user")
             self.__pw_to_self()
 
-        syslog(LOG_DEBUG, "FreeNAS_User.__init__: leave")
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_User.__init__: leave")
 
-    def __pw_to_self(self):
-        if self.__pw:
-            self.bsdusr_uid = self.__pw.pw_uid
-            self.bsdusr_username = unicode(self.__pw.pw_name)
-            self.bsdusr_group = FreeNAS_Group(self.__pw.pw_gid)
-            self.bsdusr_home = unicode(self.__pw.pw_dir)
-            self.bsdusr_shell = unicode(self.__pw.pw_shell)
-            self.bsdusr_full_name = unicode(self.__pw.pw_gecos)
-
-    def __get_ldap_user(self, user):
-        syslog(LOG_DEBUG, "FreeNAS_User.__get_ldap_user: enter")
-        syslog(LOG_DEBUG, "FreeNAS_User.__get_ldap_user: user = %s" % user)
+    def __get_user(self, user):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_User.__get_user: enter")
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_User.__get_user: user = %s" % user)
 
         l = LDAP.objects.all()[0]
         f = FreeNAS_LDAP(l.ldap_hostname, l.ldap_rootbasedn,
             l.ldap_rootbindpw, l.ldap_basedn, l.ldap_ssl)
 
-        f.basedn = l.ldap_groupsuffix + "," + l.ldap_basedn;
+        f.basedn = l.ldap_usersuffix + "," + l.ldap_basedn;
         f.attributes = ['uid']
         
         pw = None
@@ -1147,11 +1124,35 @@ class FreeNAS_User(bsdUsers):
                     pw = None
 
         self.__pw = pw
-        syslog(LOG_DEBUG, "FreeNAS_User.__get_ldap_user: leave")
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_User.__get_user: leave")
 
-    def __get_active_directory_user(self, user):
-        syslog(LOG_DEBUG, "FreeNAS_User.__get_active_directory_user: enter")
-        syslog(LOG_DEBUG, "FreeNAS_User.__get_active_directory_user: user = %s" % user)
+    def __pw_to_self(self):
+        if self.__pw:
+            self.bsdusr_uid = self.__pw.pw_uid
+            self.bsdusr_username = unicode(self.__pw.pw_name)
+            self.bsdusr_group = FreeNAS_Group(self.__pw.pw_gid)
+            self.bsdusr_home = unicode(self.__pw.pw_dir)
+            self.bsdusr_shell = unicode(self.__pw.pw_shell)
+            self.bsdusr_full_name = unicode(self.__pw.pw_gecos)
+
+
+class FreeNAS_ActiveDirectory_User(bsdUsers):
+    def __init__(self, user):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_User.__init__: enter")
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_User.__init__: user = %s" % user)
+
+        super(FreeNAS_ActiveDirectory_User, self).__init__()
+
+        self.__pw = None
+        self.__get_user(user)
+        if self.__pw:
+            self.__pw_to_self()
+
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_User.__init__: leave")
+
+    def __get_user(self, user):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_User.__get_user: enter")
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_User.__get_user: user = %s" % user)
 
         ad = ActiveDirectory.objects.all()[0]
         f = FreeNAS_LDAP(ad.ad_dcname, ad.ad_adminname + "@" + ad.ad_domainname, ad.ad_adminpw)
@@ -1185,61 +1186,98 @@ class FreeNAS_User(bsdUsers):
                     pw = None
 
         self.__pw = pw
-        syslog(LOG_DEBUG, "FreeNAS_User.__get_active_directory_user: leave")
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_User.__get_user: leave")
+
+    def __pw_to_self(self):
+        if self.__pw:
+            self.bsdusr_uid = self.__pw.pw_uid
+            self.bsdusr_username = unicode(self.__pw.pw_name)
+            self.bsdusr_group = FreeNAS_Group(self.__pw.pw_gid)
+            self.bsdusr_home = unicode(self.__pw.pw_dir)
+            self.bsdusr_shell = unicode(self.__pw.pw_shell)
+            self.bsdusr_full_name = unicode(self.__pw.pw_gecos)
 
 
-class FreeNAS_Group(bsdGroups):
-    def __init__(self, group):
-        syslog(LOG_DEBUG, "FreeNAS_Group.__init__: enter")
-        syslog(LOG_DEBUG, "FreeNAS_Group.__init__: group = %s" % group)
+class FreeNAS_Local_User(bsdUsers):
+    def __init__(self, user):
+        syslog(LOG_DEBUG, "FreeNAS_Local_User.__init__: enter")
+        syslog(LOG_DEBUG, "FreeNAS_Local_User.__init__: user = %s" % user)
 
-        super(FreeNAS_Group, self).__init__()
-        self.__gr = None
-        self.__CN = None
+        super(FreeNAS_Local_User, self).__init__()
 
-        if type(group) in (types.IntType, types.LongType):
-            bsdGroup = bsdGroups.objects.filter(bsdgrp_gid = group)
+        self.__pw = None
+        self.__get_user(user)
+        if self.__pw:
+            self.__pw_to_self()
 
-        elif group.isdigit():
-            group = int(group)
-            bsdGroup = bsdGroups.objects.filter(bsdgrp_gid = group)
+        syslog(LOG_DEBUG, "FreeNAS_Local_User.__init__: leave")
+
+    def __get_user(self, user):
+        if type(user) in (types.IntType, types.LongType):
+            bsdUser = bsdUsers.objects.filter(bsdusr_uid = user)
+
+        elif user.isdigit():
+            user = int(user)
+            bsdUser = bsdUsers.objects.filter(bsdusr_uid = user)
 
         else:
-            bsdGroup = bsdGroups.objects.filter(bsdgrp_group = group)
+            bsdUser = bsdUsers.objects.filter(bsdusr_username = user)
 
-        if bsdGroup:
+        if bsdUser:
             try:
-                self.__gr = grp.getgrnam(bsdGroup[0])
+                self.__pw = pwd.getpwnam(bsdUser[0].bsdusr_username)
 
             except:
-                self.__gr = None
+                self.__pw = None
 
-        if self.__gr:
-            syslog(LOG_DEBUG, "FreeNAS_Group.__init__: local group")
-            syslog(LOG_DEBUG, "FreeNAS_Group.__init__: leave")
-            self.__gr_to_self()
-            return
+    def __pw_to_self(self):
+        if self.__pw:
+            self.bsdusr_uid = self.__pw.pw_uid
+            self.bsdusr_username = unicode(self.__pw.pw_name)
+            self.bsdusr_group = FreeNAS_Group(self.__pw.pw_gid)
+            self.bsdusr_home = unicode(self.__pw.pw_dir)
+            self.bsdusr_shell = unicode(self.__pw.pw_shell)
+            self.bsdusr_full_name = unicode(self.__pw.pw_gecos)
+
+
+class FreeNAS_User(object):
+    def __new__(cls, user):
+        syslog(LOG_DEBUG, "FreeNAS_User.__new__: enter")
+        syslog(LOG_DEBUG, "FreeNAS_User.__new__: user = %s" % user)
 
         if DirectoryEnabled.LDAP():
-            self.__get_ldap_group(group)
+            obj = FreeNAS_LDAP_User(user)
 
         elif DirectoryEnabled.ActiveDirectory():
-            self.__get_active_directory_group(group)
+            obj = FreeNAS_ActiveDirectory_User(user)
 
+        else:
+            obj = FreeNAS_Local_User(user)
+
+        if not obj.bsdusr_uid:
+            return None
+
+        syslog(LOG_DEBUG, "FreeNAS_User.__new__: leave")
+        return obj
+
+
+class FreeNAS_LDAP_Group(bsdGroups):
+    def __init__(self, group):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Group.__init__: enter")
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Group.__init__: group = %s" % group)
+
+        super(FreeNAS_LDAP_Group, self).__init__()
+
+        self.__gr = None
+        self.__get_group(group)
         if self.__gr:
-            syslog(LOG_DEBUG, "FreeNAS_Group.__init__: directory group")
             self.__gr_to_self()
 
-        syslog(LOG_DEBUG, "FreeNAS_Group.__init__: leave")
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Group.__init__: leave")
 
-    def __gr_to_self(self):
-        if self.__gr:
-            self.bsdgrp_gid = self.__gr.gr_gid
-            self.bsdgrp_group = unicode(self.__gr.gr_name)
-
-    def __get_ldap_group(self, group):
-        syslog(LOG_DEBUG, "FreeNAS_Group.__get_ldap_group: enter")
-        syslog(LOG_DEBUG, "FreeNAS_Group.__get_ldap_group: group = %s" % group)
+    def __get_group(self, group):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Group.__get_group: enter")
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Group.__get_group: group = %s" % group)
 
         l = LDAP.objects.all()[0]
         f = FreeNAS_LDAP(l.ldap_hostname, l.ldap_rootbasedn,
@@ -1272,13 +1310,32 @@ class FreeNAS_Group(bsdGroups):
                 except:
                     gr = None
 
-        self._gr = gr
-        syslog(LOG_DEBUG, "FreeNAS_Group.__get_ldap_group: leave")
+        self.__gr = gr
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_Group.__get_group: leave")
+
+    def __gr_to_self(self):
+        if self.__gr:
+            self.bsdgrp_gid = self.__gr.gr_gid
+            self.bsdgrp_group = unicode(self.__gr.gr_name)
 
 
-    def __get_active_directory_group(self, group):
-        syslog(LOG_DEBUG, "FreeNAS_Group.__get_active_directory_group: enter")
-        syslog(LOG_DEBUG, "FreeNAS_Group.__get_active_directory_group: user = %s" % group)
+class FreeNAS_ActiveDirectory_Group(bsdGroups):
+    def __init__(self, group):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Group.__init__: enter")
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Group.__init__: group = %s" % group)
+
+        super(FreeNAS_LDAP_Group, self).__init__()
+
+        self.__gr = None
+        self.__get_group(group)
+        if self.__gr:
+            self.__gr_to_self()
+
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Group.__init__: leave")
+
+    def __get_group(self, group):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Group.__get_group: enter")
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Group.__get_group: user = %s" % group)
 
         ad = ActiveDirectory.objects.all()[0]
         f = FreeNAS_LDAP(ad.ad_dcname, ad.ad_adminname + "@" + ad.ad_domainname, ad.ad_adminpw)
@@ -1309,5 +1366,69 @@ class FreeNAS_Group(bsdGroups):
                 except:
                     gr = None
 
-        self._gr = gr
-        syslog(LOG_DEBUG, "FreeNAS_Group.__get_active_directory_group: leave")
+        self.__gr = gr
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Group.__get_group: leave")
+
+    def __gr_to_self(self):
+        if self.__gr:
+            self.bsdgrp_gid = self.__gr.gr_gid
+            self.bsdgrp_group = unicode(self.__gr.gr_name)
+
+
+class FreeNAS_Local_Group(bsdGroups):
+    def __init__(self, group):
+        syslog(LOG_DEBUG, "FreeNAS_Local_Group.__init__: enter")
+        syslog(LOG_DEBUG, "FreeNAS_Local_Group.__init__: group = %s" % group)
+
+        super(FreeNAS_Local_Group, self).__init__()
+
+        self.__gr = None
+        self.__get_group(group)
+        if self.__gr:
+            self.__gr_to_self()
+
+        syslog(LOG_DEBUG, "FreeNAS_Local_Group.__init__: leave")
+
+    def __get_group(self, group):
+        if type(group) in (types.IntType, types.LongType):
+            bsdGroup = bsdGroups.objects.filter(bsdgrp_gid = group)
+
+        elif group.isdigit():
+            group = int(group)
+            bsdGroup = bsdGroups.objects.filter(bsdgrp_gid = group)
+
+        else:
+            bsdGroup = bsdGroups.objects.filter(bsdgrp_group = group)
+
+        if bsdGroup:
+            try:
+                self.__gr = grp.getgrnam(bsdGroup[0].bsdgrp_group)
+
+            except:
+                self.__gr = None
+
+    def __gr_to_self(self):
+        if self.__gr:
+            self.bsdgrp_gid = self.__gr.gr_gid
+            self.bsdgrp_group = unicode(self.__gr.gr_name)
+
+
+class FreeNAS_Group(object):
+    def __new__(cls, group):
+        syslog(LOG_DEBUG, "FreeNAS_Group.__new__: enter")
+        syslog(LOG_DEBUG, "FreeNAS_Group.__new__: group = %s" % group)
+
+        if DirectoryEnabled.LDAP():
+            obj = FreeNAS_LDAP_Group(group)
+
+        elif DirectoryEnabled.ActiveDirectory():
+            obj = FreeNAS_ActiveDirectory_Group(group)
+
+        else:
+            obj = FreeNAS_Local_Group(group)
+
+        if not obj.bsdgrp_gid:
+            return None
+
+        syslog(LOG_DEBUG, "FreeNAS_Group.__new__: leave")
+        return obj

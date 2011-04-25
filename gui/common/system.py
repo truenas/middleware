@@ -27,6 +27,12 @@
 #####################################################################
 
 from os import popen
+import smtplib
+from email.mime.text import MIMEText
+
+from django.contrib.auth.models import User
+
+from freenasUI.system.models import Email
 
 def get_freenas_version():
     version = "FreeNAS"
@@ -60,3 +66,28 @@ def get_freenas_var(var, default = None):
     if not val:
         val = default
     return val
+
+def send_mail(subject, text):
+    error = False
+    errmsg = ''
+    email = Email.objects.all().order_by('-id')[0]
+    admin = User.objects.all()[0]
+    msg = MIMEText(text)
+    msg['Subject'] = subject
+    msg['From'] = email.em_fromemail
+    msg['To'] = admin.email
+    try:
+        if email.em_security == 'ssl':
+            server = smtplib.SMTP_SSL(email.em_outgoingserver, email.em_port)
+        else:
+            server = smtplib.SMTP(email.em_outgoingserver, email.em_port)
+            if email.em_security == 'tls':
+                server.starttls()
+        if email.em_smtp:
+            server.login(email.em_user, email.em_pass)
+        server.sendmail(email.em_fromemail, [admin.email], msg.as_string())
+        server.quit()
+    except Exception, e:
+        errmsg = str(e)
+        error = True
+    return error, errmsg

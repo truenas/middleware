@@ -286,7 +286,7 @@ class NavTree(object):
                                 reg = self.register_option_byname(navopt, model._admin.menu_child_of)
                             else:
                                 reg = self.register_option(navopt, nav)
-    
+
                             if reg and not hasattr(navopt, 'type'):
     
                                 qs = model.objects.filter(**model._admin.object_filters).order_by('-id')
@@ -332,6 +332,11 @@ class NavTree(object):
                                 subopt.type = 'viewmodel'
                                 #navopt.options.append(subopt)
                                 self.register_option(subopt, navopt)
+
+                                for child in model._admin.menu_children:
+                                    if self._navs.has_key(child):
+                                        self.register_option(self._navs[child], navopt)
+    
     
                         else:
                             pass

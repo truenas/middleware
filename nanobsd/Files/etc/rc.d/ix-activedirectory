@@ -209,9 +209,14 @@ do_activedirectory_stuff()
 	fi
 }
 
+expire_cache()
+{
+        /usr/local/www/freenasUI/tools/cachetool.py expire
+}
+
 name="ix-activedirectory"
 start_cmd='do_activedirectory_stuff'
-stop_cmd=':'
+stop_cmd='expire_cache'
             
 load_rc_config $name
 run_rc_command "$1"

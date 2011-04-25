@@ -367,3 +367,7 @@ tr.ix, td.ix{
 .AddReplIcon { background-image: url('/media/images/ui/tree/add_replication.png'); width:16px;        height:16px; }
 .ReplIcon { background-image: url('/media/images/ui/tree/replication.png'); width:16px;        height:16px; }
 .ViewAllReplIcon { background-image: url('/media/images/ui/tree/view_all_replication.png'); width:16px;        height:16px; }
+
+.dijitTextArea {
+min-height:60px;
+}

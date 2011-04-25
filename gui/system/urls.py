@@ -46,4 +46,5 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^varlogmessages/(?P<lines>\d+)?/?$', 'varlogmessages', name="system_messages"),
     url(r'^top/', 'top', name="system_top"),
     url(r'^test-mail/$', 'testmail', name="system_testmail"),
+    url(r'^clear-cache/$', 'clearcache', name="system_clearcache"),
     )

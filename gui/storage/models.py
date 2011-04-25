@@ -310,8 +310,8 @@ class Task(Model):
         return '%s_%s_%d%s' % (self.task_mountpoint.mp_path[5:], self.task_repeat_unit, self.task_ret_count, self.task_ret_unit)
 
     class Meta:
-        verbose_name = _(u"Periodic Snapshot")
-        verbose_name_plural = _(u"Periodic Snapshots")
+        verbose_name = _(u"Periodic Snapshot Task")
+        verbose_name_plural = _(u"Periodic Snapshot Tasks")
 
     class FreeAdmin:
         icon_model = u"SnapIcon"
@@ -319,6 +319,7 @@ class Task(Model):
         icon_view = u"ViewAllPeriodicSnapIcon"
         icon_object = u"SnapIcon"
         extra_js = u"taskrepeat_checkings();"
+        menu_children = ["View All Snapshots",]
         composed_fields = (
                             ('Lifetime', ('task_ret_count','task_ret_unit')),
                         )

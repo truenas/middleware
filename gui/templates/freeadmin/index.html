@@ -25,13 +25,17 @@ dojo.addOnLoad(function(){
 
 {% block dojango_content %}
 <div id="top_dialog" dojoType="dijit.Dialog" title="{% trans "Running Processes" %}" style="min-height:400px;">
+    <script type="dojo/method" event="onShow">
+        ttop.stop();
+        ttop.start();
+    </script>
     <pre class="ix" id="top_output">{% trans "Loading" %}...</pre>
 </div>
 <div id="log_dialog" dojoType="dijit.Dialog" title="{% trans "/var/log/messages" %}" style="min-height:400px;background-color:black;">
     <script type="dojo/method" event="onShow">
         document.getElementById('msgfull_output').innerHTML = '{% trans "Loading" %}...';
-	t.stop();
-	t.start();
+    t.stop();
+    t.start();
         loadlog(true);
     </script>
     <pre class="ix" id="msgfull_output" style="max-height:400px;overflow-y:auto;border:none;word-wrap: break-word;">{% trans "Loading" %}...</pre>

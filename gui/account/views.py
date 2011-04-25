@@ -126,3 +126,51 @@ def user2group_update(request, object_id):
         'form' : f,
     })
     return render_to_response('account/bsdgroup2user_form2.html', variables)
+
+def json_users(request):
+
+    from common.freenasldap import FreeNAS_Users
+    query = request.GET.get("q", None)
+
+    json = {
+        'identifier': 'id',
+        'label': 'name',
+        'items': [],
+    }
+
+    idx = 1
+    for user in FreeNAS_Users():
+        if idx > 50:
+            break
+        if query == None or user.bsdusr_username.startswith(query):
+            json['items'].append({
+                'id': user.bsdusr_username,
+                'name': user.bsdusr_username,
+                'label': user.bsdusr_username,
+            })
+            idx += 1
+    return HttpResponse(simplejson.dumps(json, indent=3))
+
+def json_groups(request):
+
+    from common.freenasldap import FreeNAS_Groups
+    query = request.GET.get("q", None)
+
+    json = {
+        'identifier': 'id',
+        'label': 'name',
+        'items': [],
+    }
+
+    idx = 1
+    for grp in FreeNAS_Groups():
+        if idx > 50:
+            break
+        if query == None or grp.bsdgrp_group.startswith(query):
+            json['items'].append({
+                'id': grp.bsdgrp_group,
+                'name': grp.bsdgrp_group,
+                'label': grp.bsdgrp_group,
+            })
+            idx += 1
+    return HttpResponse(simplejson.dumps(json, indent=3))

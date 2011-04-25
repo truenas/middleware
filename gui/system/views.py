@@ -314,31 +314,24 @@ def shutdown(request):
 
 def testmail(request):
 
-    email = models.Email.objects.all().order_by('-id')[0]
-    admin = User.objects.all()[0]
     error = False
     errmsg = ''
     if request.is_ajax():
-        import smtplib
-        from email.mime.text import MIMEText
-        msg = MIMEText("""This is a message test from FreeNAS""")
-        msg['Subject'] = "Test message from FreeNAS"
-        msg['From'] = email.em_fromemail
-        msg['To'] = admin.email
-        try:
-            if email.em_security == 'ssl':
-                server = smtplib.SMTP_SSL(email.em_outgoingserver, email.em_port)
-            else:
-                server = smtplib.SMTP(email.em_outgoingserver, email.em_port)
-                if email.em_security == 'tls':
-                    server.starttls()
-            if email.em_smtp:
-                server.login(email.em_user, email.em_pass)
-            server.sendmail(email.em_fromemail, [admin.email], msg.as_string())
-            server.quit()
-        except Exception, e:
-            errmsg = str(e)
-            error = True
+        from common.system import send_mail
+        error, errmsg = send_mail(subject="Test message from FreeNAS", 
+                                  text="This is a message test from FreeNAS")
+
+    return HttpResponse(simplejson.dumps({
+        'error': error,
+        'errmsg': errmsg,
+        }))
+
+def clearcache(request):
+
+    error = False
+    errmsg = ''
+
+    os.system("(/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py expire >/dev/null 2>&1 && /usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py fill >/dev/null 2>&1) &")
 
     return HttpResponse(simplejson.dumps({
         'error': error,

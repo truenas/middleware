@@ -6,6 +6,6 @@
     </div>
     <div dojoType="dijit.layout.ContentPane" title="{% trans "ZFS Snapshots" %}" {% if focused_tab == "ZFS Snapshots" %}selected="true"{% endif %} doLayout="false" href="{% url storage_snapshots %}" class="objrefresh data_storage_Task" refreshOnShow="true">
     </div>
-    <div dojoType="dijit.layout.ContentPane" title="{% trans "Periodic Snapshots" %}" {% if focused_tab == "Periodic Snapshots" %}selected="true"{% endif %} doLayout="false" href="{% url storage_tasks %}" class="objrefresh data_storage_Task" refreshOnShow="true">
+    <div dojoType="dijit.layout.ContentPane" title="{% trans "Periodic Snapshot Tasks" %}" {% if focused_tab == "Periodic Snapshot Tasks" %}selected="true"{% endif %} doLayout="false" href="{% url storage_tasks %}" class="objrefresh data_storage_Task" refreshOnShow="true">
     </div>
 </div>
