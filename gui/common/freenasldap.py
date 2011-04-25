@@ -702,7 +702,7 @@ class FreeNAS_LDAP_Users:
         write_cache = False 
         if not self.__ducache.empty():
             syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_users: LDAP users in cache")
-            ldap_users = self.__lucache
+            ldap_users = self.__ducache
 
         else:
             syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_users: LDAP users not in cache")
