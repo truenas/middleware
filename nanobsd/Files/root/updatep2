@@ -57,7 +57,7 @@ tunefs -L ${LABELNAME}s2a /dev/${TARGET_DRIVE}s2a
 
 # Save root ssh keys, /boot/modules/* and fusionio utilities if present
 mkdir /tmp/upgrade
-mount /dev/${TARGET_DRIVE}s1a /tmp/upgrade
+mount /dev/${TARGET_DRIVE}s2a /tmp/upgrade
 
 if [ -d /root/.ssh ]; then
     cp -R /root/.ssh /tmp/upgrade/root/ && chmod 700 /tmp/upgrade/root/.ssh
@@ -77,7 +77,7 @@ if [ -d /boot/modules ]; then
     done
 fi  
 
-umount /dev/${TARGET_DRIVE}s1a
+umount /dev/${TARGET_DRIVE}s2a
 rmdir /tmp/upgrade
 
 # Update the /etc/fstab
