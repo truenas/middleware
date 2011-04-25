@@ -118,6 +118,8 @@ class FreeNAS_BaseCache:
     def expire(self):
         for key in self.__shelve.keys():
             del self.__shelve[key]
+        self.__shelve.close()
+        os.unlink(self.__index + ".db")
 
     def read(self, key):
         if not key:
