@@ -1423,6 +1423,7 @@ class FreeNAS_Group(object):
         syslog(LOG_DEBUG, "FreeNAS_Group.__new__: enter")
         syslog(LOG_DEBUG, "FreeNAS_Group.__new__: group = %s" % group)
 
+        local = False
         if DirectoryEnabled.LDAP():
             obj = FreeNAS_LDAP_Group(group)
 
@@ -1430,6 +1431,10 @@ class FreeNAS_Group(object):
             obj = FreeNAS_ActiveDirectory_Group(group)
 
         else:
+            local = True
+            obj = FreeNAS_Local_Group(group)
+
+        if local is False and not obj.bsdgrp_gid:
             obj = FreeNAS_Local_Group(group)
 
         if not obj.bsdgrp_gid:
