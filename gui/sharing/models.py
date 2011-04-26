@@ -223,8 +223,8 @@ class NFS_Share(Model):
     nfs_path = models.ForeignKey(MountPoint, limit_choices_to=mountpoint_limiter, verbose_name = _("Volume Path"))
     nfs_network = models.CharField(
             max_length=120, 
-            verbose_name = _("Authorized network"),
-            help_text = _("Network that is authorized to access the NFS share.  Specify network numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."),
+            verbose_name = _("Authorized network or IP addresses"),
+            help_text = _("Network that is authorized to access the NFS share or a list of IP addresses.  Specify network numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."),
             blank=True,
             )
     nfs_alldirs = models.BooleanField(
