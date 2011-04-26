@@ -14,13 +14,13 @@
                         load: function(data) { 
                             sendbtn.set('disabled', false);
                             if(!data.error) {
-                                setMessage("{% trans "The cache is being cleared." %}");
+                                setMessage("{% trans "The cache is being rebuilt." %}");
                             } else {
-                                setMessage("{% trans "The cache could not be cleared" %}: "+data.errmsg, "error");
+                                setMessage("{% trans "The cache could not be rebuilt" %}: "+data.errmsg, "error");
                             }
                         },
                      });
                 </script>
-            {% trans "Clear LDAP Cache" %}
+            {% trans "Rebuild LDAP/AD Cache" %}
             </button>
 {% endblock %}
