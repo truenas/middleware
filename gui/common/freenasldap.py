@@ -76,25 +76,14 @@ FREENAS_LDAP_CACERTFILE = get_freenas_var("CERT_FILE")
 ldap.protocol_version = FREENAS_LDAP_VERSION
 ldap.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
 
-class DirectoryEnabled:
-    __ldap_enabled = False
-    __ad_enabled = False
 
-    svcs = services.objects.filter(srv_service__in=['activedirectory', 'ldap'])
-    for s in svcs:
-        if s.srv_service == 'ldap':
-            __ldap_enabled = (True if s.srv_enable != 0 else False)
-        if s.srv_service == 'activedirectory':
-            __ad_enabled = (True if s.srv_enable != 0 else False)
-    svcs = None
+def LDAPEnabled():
+    s = services.objects.filter(srv_service = 'ldap')[0]
+    return (True if s.srv_enable != 0 else False)
 
-    @staticmethod
-    def LDAP():
-        return DirectoryEnabled.__ldap_enabled
-
-    @staticmethod
-    def ActiveDirectory():
-        return DirectoryEnabled.__ad_enabled
+def ActiveDirectoryEnabled():
+    s = services.objects.filter(srv_service = 'activedirectory')[0]
+    return (True if s.srv_enable != 0 else False)
 
 
 class FreeNAS_LDAP_UserCache(FreeNAS_BaseCache):
@@ -144,51 +133,51 @@ class FreeNAS_LDAP_QueryCache(FreeNAS_BaseCache):
 
 class FreeNAS_Directory_UserCache(FreeNAS_BaseCache):
     def __init__(self):
-        if DirectoryEnabled.LDAP():
+        if LDAPEnabled():
             self.__class__ = FreeNAS_LDAP_UserCache
             FreeNAS_LDAP_UserCache.__init__(self)
  
-        elif DirectoryEnabled.ActiveDirectory():
+        elif ActiveDirectoryEnabled():
             self.__class__ = FreeNAS_ActiveDirectory_UserCache
             FreeNAS_ActiveDirectory_UserCache.__init__(self)
 
 
 class FreeNAS_Directory_GroupCache(FreeNAS_BaseCache):
     def __init__(self):
-        if DirectoryEnabled.LDAP():
+        if LDAPEnabled():
             self.__class__ = FreeNAS_LDAP_GroupCache
             FreeNAS_LDAP_GroupCache.__init__(self)
 
-        elif DirectoryEnabled.ActiveDirectory():
+        elif ActiveDirectoryEnabled():
             self.__class__ = FreeNAS_ActiveDirectory_GroupCache
             FreeNAS_ActiveDirectory_GroupCache.__init__(self)
 
 
 class FreeNAS_Directory_LocalUserCache(FreeNAS_BaseCache):
     def __init__(self):
-        if DirectoryEnabled.LDAP():
+        if LDAPEnabled():
             self.__class__ = FreeNAS_LDAP_LocalUserCache
             FreeNAS_LDAP_LocalUserCache.__init__(self)
  
-        elif DirectoryEnabled.ActiveDirectory():
+        elif ActiveDirectoryEnabled():
             self.__class__ = FreeNAS_ActiveDirectory_LocalUserCache
             FreeNAS_ActiveDirectory_LocalUserCache.__init__(self)
 
 
 class FreeNAS_Directory_LocalGroupCache(FreeNAS_BaseCache):
     def __init__(self):
-        if DirectoryEnabled.LDAP():
+        if LDAPEnabled():
             self.__class__ = FreeNAS_LDAP_LocalGroupCache
             FreeNAS_LDAP_LocalGroupCache.__init__(self)
 
-        elif DirectoryEnabled.ActiveDirectory():
+        elif ActiveDirectoryEnabled():
             self.__class__ = FreeNAS_ActiveDirectory_LocalGroupCache
             FreeNAS_ActiveDirectory_LocalGroupCache.__init__(self)
 
 
 class FreeNAS_UserCache(FreeNAS_BaseCache):
     def __init__(self, cachedir = FREENAS_USERCACHE):
-        if DirectoryEnabled.LDAP() or DirectoryEnabled.ActiveDirectory():
+        if LDAPEnabled() or ActiveDirectoryEnabled():
             self.__class__ = FreeNAS_Directory_LocalUserCache 
             FreeNAS_Directory_LocalUserCache.__init__(self)
 
@@ -198,7 +187,7 @@ class FreeNAS_UserCache(FreeNAS_BaseCache):
 
 class FreeNAS_GroupCache(FreeNAS_BaseCache):
     def __init__(self, cachedir = FREENAS_GROUPCACHE):
-        if DirectoryEnabled.LDAP() or DirectoryEnabled.ActiveDirectory():
+        if LDAPEnabled() or ActiveDirectoryEnabled():
             self.__class__ = FreeNAS_Directory_LocalGroupCache 
             FreeNAS_Directory_LocalGroupCache.__init__(self)
 
@@ -890,10 +879,10 @@ class FreeNAS_Users:
         self.__users = []
 
         self.__bsd_users = bsdUsers.objects.all()
-        if DirectoryEnabled.LDAP():
+        if LDAPEnabled():
             self.__users = FreeNAS_LDAP_Users()
 
-        elif DirectoryEnabled.ActiveDirectory():
+        elif ActiveDirectoryEnabled():
             self.__users = FreeNAS_ActiveDirectory_Users()
 
         syslog(LOG_DEBUG, "FreeNAS_Users.__init__: leave")
@@ -1054,10 +1043,10 @@ class FreeNAS_Groups:
         self.__groups = []
 
         self.__bsd_groups = bsdGroups.objects.all()
-        if DirectoryEnabled.LDAP():
+        if LDAPEnabled():
             self.__groups = FreeNAS_LDAP_Groups()
 
-        elif DirectoryEnabled.ActiveDirectory():
+        elif ActiveDirectoryEnabled():
             self.__groups = FreeNAS_ActiveDirectory_Groups()
 
         syslog(LOG_DEBUG, "FreeNAS_Groups.__init__: leave")
@@ -1246,9 +1235,9 @@ class FreeNAS_User(object):
         syslog(LOG_DEBUG, "FreeNAS_User.__new__: user = %s" % user)
 
         obj = None
-        if DirectoryEnabled.LDAP():
+        if LDAPEnabled():
             obj = FreeNAS_LDAP_User(user)
-        elif DirectoryEnabled.ActiveDirectory():
+        elif ActiveDirectoryEnabled():
             obj = FreeNAS_ActiveDirectory_User(user)
 
         if obj is None or not obj.bsdusr_uid:
@@ -1419,9 +1408,9 @@ class FreeNAS_Group(object):
         syslog(LOG_DEBUG, "FreeNAS_Group.__new__: group = %s" % group)
 
         obj = None
-        if DirectoryEnabled.LDAP():
+        if LDAPEnabled():
             obj = FreeNAS_LDAP_Group(group)
-        elif DirectoryEnabled.ActiveDirectory():
+        elif ActiveDirectoryEnabled():
             obj = FreeNAS_ActiveDirectory_Group(group)
 
         if obj is None or not obj.bsdgrp_gid:
