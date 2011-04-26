@@ -40,7 +40,8 @@ generate_exports()
                                 fi
 			fi
 			if [ -n "${network}" ]; then
-				echo -n " -network ${network}"
+                echo -n " "
+				echo -n "${network}" | awk -F" " '{ if ($0 !~ /\//) print $0; else printf "-network %s",$0 }'
 			fi
 			echo
 		fi
