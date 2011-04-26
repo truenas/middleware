@@ -433,8 +433,9 @@ class notifier:
         swapsize = ((swapsize+127)/128)*128
         # To be safe, wipe out the disk, both ends... before we start
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname))
-        self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print ($3 / (1024*1024)) - 4;}'`" % (devname, devname))
+        self.__system("""dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s """
+                      """| awk '{printf "%d\n", ($3 / (1024*1024)) - 4;}'`""" \
+                      % (devname, devname))
         if label != "":
             self.__system("gpart create -s gpt /dev/%s && gpart add -b 128 -t freebsd-swap -l swap-%s -s %d %s && gpart add -t %s -l %s %s" %
                          (devname, label, swapsize, devname, type, label, devname))
