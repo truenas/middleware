@@ -49,6 +49,32 @@ class MountPointForm(ModelForm):
 class CIFS_ShareForm(ModelForm):
     class Meta:
         model = models.CIFS_Share 
+
+    def __init__(self, *args, **kwargs):
+        #FIXME: Workaround for DOJO not showing select options with blank values
+        if len(args) > 0 and isinstance(args[0], QueryDict):
+            new = args[0].copy()
+            if new.get('cifs_guest', None) == '-----':
+                new['cifs_guest'] = ''
+            args = (new,) + args[1:]
+        super(CIFS_ShareForm, self).__init__(*args, **kwargs)
+        from account.forms import FilteredSelectJSON
+        if len(FreeNAS_Users()) > 500:
+            if len(args) > 0 and isinstance(args[0], QueryDict):
+                self.fields['cifs_guest'].choices = ((args[0]['cifs_guest'],args[0]['cifs_guest']),)
+                self.fields['cifs_guest'].initial= args[0]['cifs_guest']
+            self.fields['cifs_guest'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
+        else:
+            self.fields['cifs_guest'].widget = widgets.FilteringSelect()
+            self.fields['cifs_guest'].choices = (
+                                                 (x.bsdusr_username, x.bsdusr_username)
+                                                      for x in FreeNAS_Users()
+                                                )
+    def clean_cifs_guest(self):
+        user = self.cleaned_data['cifs_guest']
+        if FreeNAS_User(user) == None:
+            raise forms.ValidationError(_("The user %s is not valid.") % user)
+        return user
     def save(self):
         ret = super(CIFS_ShareForm, self).save()
         notifier().reload("cifs")

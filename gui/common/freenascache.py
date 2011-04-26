@@ -115,6 +115,12 @@ class FreeNAS_BaseCache:
     def empty(self):
         return (len(self.__shelve) == 0)
 
+    def expire(self):
+        for key in self.__shelve.keys():
+            del self.__shelve[key]
+        self.__shelve.close()
+        os.unlink(self.__index + ".db")
+
     def read(self, key):
         if not key:
             return None
@@ -127,6 +133,13 @@ class FreeNAS_BaseCache:
             return False
 
         self.__shelve[key] = pickle.dumps(entry)
+        return True
+
+    def delete(self, key):
+        if not key:
+            return False
+
+        del self.__shelve[key]
         return True
 
     def close(self):

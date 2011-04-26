@@ -208,6 +208,14 @@ def servicesToggleView(request, formname):
     svc_entry.save()
     # forcestop then start to make sure the service is of the same
     # status.
+    if changing_service == "ldap" or changing_service == "activedirectory":
+        if svc_entry.srv_enable == 1:
+            notifier().start(changing_service)
+            return HttpResponseRedirect('/freenas/media/images/ui/buttons/on.png')
+        else:
+            notifier().stop(changing_service)
+            return HttpResponseRedirect('/freenas/media/images/ui/buttons/off.png')
+
     notifier().restart(changing_service)
     if svc_entry.srv_enable == 1:
         return HttpResponseRedirect('/freenas/media/images/ui/buttons/on.png')
