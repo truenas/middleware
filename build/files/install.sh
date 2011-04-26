@@ -331,7 +331,7 @@ main()
 
     while :; do
 
-        dialog --clear --title "FreeNAS 8.0 Beta Console Setup" --menu "" 12 73 6 \
+        dialog --clear --title "FreeNAS 8.0 Release Console Setup" --menu "" 12 73 6 \
             "1" "Install/Upgrade to hard drive/flash device, etc." \
             "2" "Shell" \
             "3" "Reboot System" \
