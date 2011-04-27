@@ -409,8 +409,8 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
     def _clean_number_range(self, field, start, end):
         f = self.cleaned_data[field]
-        if f < start  or f > end:
-            raise forms.ValidationError(_("This value must be between %d and %d, inclusive.") % (start, end))
+        if f < start or f > end:
+            raise forms.ValidationError(_("This value must be between %(start)d and %(end)d, inclusive.") % { 'start': start, 'end': end })
         return f
 
     def clean_iscsi_discoveryauthgroup(self):
