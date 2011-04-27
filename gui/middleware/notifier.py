@@ -509,7 +509,7 @@ class notifier:
 
 
         c.execute("SELECT id, group_type, group_volume_id FROM storage_diskgroup WHERE "
-                  "id = ?", (group_id))
+                  "id = ?", group_id)
         vgroup_list = c.fetchall()
         volume_id = vgroup_list[0][2]
 
