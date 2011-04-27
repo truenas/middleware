@@ -838,7 +838,7 @@ class PeriodicSnapForm(ModelForm):
         return cdata
 
 class ManualSnapshotForm(Form):
-    ms_recursively = forms.BooleanField(initial=False,required=False,label=_('Do snapshotting recursively'))
+    ms_recursively = forms.BooleanField(initial=False,required=False,label=_('Recursive snapshot'))
     ms_name = forms.CharField(label=_('Snapshot Name'))
     def __init__(self, *args, **kwargs):
         super(ManualSnapshotForm, self).__init__(*args, **kwargs)

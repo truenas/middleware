@@ -7,7 +7,7 @@ ICON = u'ServicesIcon'
 
 class EnDisServices(NavOption):
 
-    name = _(u'Enable/Disable Services')
+    name = _(u'Control Services')
     type = u'en_dis_services'
     icon = u'ServicesIcon'
     order = -1

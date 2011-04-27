@@ -26,6 +26,7 @@
 # $FreeBSD$
 #####################################################################
 import socket
+import re
 
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
@@ -157,7 +158,8 @@ class NFS_ShareForm(ModelForm):
             self.fields['nfs_mapall_group'].choices = self.grouplist
 
     def clean_nfs_network(self):
-        net = self.cleaned_data['nfs_network'].strip()
+        net = self.cleaned_data['nfs_network']
+        net = re.sub(r'\s{2,}', ' ', net).strip()
         if not net:
             return net
         #only one address = netmask CIDR
