@@ -663,6 +663,7 @@
             dojo.style("grpopt", "display", "");
         } else {
             dojo.style("grpopt", "display", "none");
+            dojo.query("input[name=group_type]:checked").forEach(function(tag) { dijit.getEnclosingWidget(tag).set('checked', false);  });
         }
 
         if(d.length >= 3 && zfs) {
