@@ -49,6 +49,10 @@ class MountPointForm(ModelForm):
         model = models.MountPoint
 
 class CIFS_ShareForm(ModelForm):
+    cifs_guest = forms.ChoiceField(choices=(),
+                                       widget=forms.Select(attrs=attrs_dict),
+                                       label=_('Guest Account')
+                                       )
     class Meta:
         model = models.CIFS_Share 
 
