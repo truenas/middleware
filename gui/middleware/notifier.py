@@ -1107,7 +1107,7 @@ class notifier:
                                 'disks': disks,
                                 })
 
-        RE_POOL_NAME = re.compile(r'pool: (?P<name>\w+)', re.I)
+        RE_POOL_NAME = re.compile(r'pool: (?P<name>[a-z][a-z0-9_-]+)', re.I)
         RE_DISK = re.compile(r'(?P<disk>[a-d]{2}\d+)[a-fsp]')
         p1 = Popen(["zpool", "import"], stdin=PIPE, stdout=PIPE)
         p1.wait()
