@@ -31,73 +31,43 @@ from django.utils.translation import ugettext as _
 import sqlite3
 import freenasUI.settings
 
-RSYNCJob_Choices = (
-        ('local', 'local'),
-        ('client', 'client'),
-        )
-YESNO_CHOICES = (
-        ('DO NOTHING', _('DO NOTHING')),
-        ('YES', _('YES')),
-        ('NO', _('NO')),
-        )
 SMTPAUTH_CHOICES = (
-        ('plain', 'Plain'),
-        ('ssl', 'SSL'),
-        ('tls', 'TLS'),
+        ('plain', _('Plain')),
+        ('ssl', _('SSL')),
+        ('tls', _('TLS')),
         )
+
 # GUI protocol choice
 PROTOCOL_CHOICES = (
-        ('http', 'HTTP'),
-        ('https', 'HTTPS'),
+        ('http', _('HTTP')),
+        ('https', _('HTTPS')),
         )
+
 # Language for the GUI
 LANG_CHOICES = (
-        ('english', 'English'),
-        )
-ZPOOL_CHOICES = (
-        ('Basic', 'Basic'),
-        ('Mirror', 'Mirror'),
-        ('RAID-Z', 'RAID-Z'),
-        ('RAID-Z2', 'RAID-Z2'),
-        )
-SWAPTYPE_CHOICES = (
-        ('File', _('File')),
-        ('Device', _('Device')),
-        )
-# need to pull in mountpoints here
-MOUNTPOINT_CHOICES = (
-        ('FAKE', _('FAKE')),
-        )
-COMMANDSCRIPT_CHOICES = (
-        ('PreInit', _('PreInit')),
-        ('PostInit', _('PostInit')),
-        ('Shutdown', _('Shutdown')),
-        )
-TOGGLECRON_CHOICES = (
-        ('All', _('All')),
-        ('Selected', _('Selected')),
-        ('Deselected', _('Deselected')),
+        ('english', _('English')),
         )
 
 ## Disks|Management
 TRANSFERMODE_CHOICES = (
-        ('Auto', 'Auto'),
-        ('PIO0', 'PIO0'),
-        ('PIO1', 'PIO1'),
-        ('PIO2', 'PIO2'),
-        ('PIO3', 'PIO3'),
-        ('PIO4', 'PIO4'),
-        ('WDMA0', 'WDMA0'),
-        ('WDMA1', 'WDMA1'),
-        ('WDMA2', 'WDMA2'),
-        ('UDMA16', 'UDMA-16'),
-        ('UDMA33', 'UDMA-33'),
-        ('UDMA66', 'UDMA-66'),
-        ('UDMA100', 'UDMA-100'),
-        ('UDMA133', 'UDMA-133'),
-        ('SATA150', 'SATA 1.5Gbit/s'),
-        ('SATA300', 'SATA 3.0Gbit/s'),
+        ('Auto', _('Auto')),
+        ('PIO0', _('PIO0')),
+        ('PIO1', _('PIO1')),
+        ('PIO2', _('PIO2')),
+        ('PIO3', _('PIO3')),
+        ('PIO4', _('PIO4')),
+        ('WDMA0', _('WDMA0')),
+        ('WDMA1', _('WDMA1')),
+        ('WDMA2', _('WDMA2')),
+        ('UDMA16', _('UDMA-16')),
+        ('UDMA33', _('UDMA-33')),
+        ('UDMA66', _('UDMA-66')),
+        ('UDMA100', _('UDMA-100')),
+        ('UDMA133', _('UDMA-133')),
+        ('SATA150', _('SATA 1.5Gbit/s')),
+        ('SATA300', _('SATA 3.0Gbit/s')),
         )
+
 HDDSTANDBY_CHOICES = (
         ('Always On', _('Always On')),
         ('5', '5'),
@@ -111,7 +81,6 @@ HDDSTANDBY_CHOICES = (
         ('300', '300'),
         ('360', '360'),
         )
-
 
 ADVPOWERMGMT_CHOICES = (
         ('Disabled', _('Disabled')),
