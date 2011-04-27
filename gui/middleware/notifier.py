@@ -1188,7 +1188,7 @@ class notifier:
     def zfs_snapshot_list(self):
         fsinfo = dict()
 
-        zfsproc = self.__pipeopen("/sbin/zfs list -t snapshot -H")
+        zfsproc = self.__pipeopen("/sbin/zfs list -t snapshot -H -S creation")
         lines = zfsproc.communicate()[0].split('\n')
         for line in lines:
             if line != '':
@@ -1199,9 +1199,11 @@ class notifier:
                 fs, name = snapname.split('@')
                 try:
                     snaplist = fsinfo[fs]
+                    mostrecent = False
                 except:
                     snaplist = []
-                snaplist.append(dict([('fullname', snapname), ('name', name), ('used', used), ('refer', refer)]))
+                    mostrecent = True
+                snaplist.append(dict([('fullname', snapname), ('name', name), ('used', used), ('refer', refer), ('mostrecent', mostrecent)]))
                 fsinfo[fs] = snaplist
         return fsinfo
 
