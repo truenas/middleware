@@ -343,7 +343,6 @@ class iSCSITargetAuthCredentialForm(ModelForm):
         oAuthCredential.iscsi_target_auth_peersecret = self.cleaned_data["iscsi_target_auth_peersecret1"]
         if commit:
             oAuthCredential.save()
-        notifier().reload("iscsitarget")
         return oAuthCredential
 
     def __init__(self, *args, **kwargs):
@@ -378,7 +377,7 @@ class iSCSITargetToExtentForm(ModelForm):
 
     def save(self):
         super(iSCSITargetToExtentForm, self).save()
-        notifier().reload("iscsitarget")
+        notifier().restart("iscsitarget")
 
 class iSCSITargetGlobalConfigurationForm(ModelForm):
     iscsi_luc_authgroup = forms.ChoiceField(label=_("Controller Auth Group"),
@@ -490,7 +489,7 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
     def save(self):
         super(iSCSITargetGlobalConfigurationForm, self).save()
-        notifier().reload("iscsitarget")
+        notifier().restart("iscsitarget")
 
 class iSCSITargetExtentEditForm(ModelForm):
     class Meta:
@@ -518,7 +517,7 @@ class iSCSITargetExtentEditForm(ModelForm):
                 os.makedirs(dirs)
             except Exception, e:
                 pass
-        notifier().reload("iscsitarget")
+        notifier().restart("iscsitarget")
 
 class iSCSITargetFileExtentForm(ModelForm):
     class Meta:
@@ -563,7 +562,7 @@ class iSCSITargetFileExtentForm(ModelForm):
                 os.makedirs(dirs)
             except Exception, e:
                 pass
-        notifier().reload("iscsitarget")
+        notifier().restart("iscsitarget")
         return oExtent
 
 class iSCSITargetDeviceExtentForm(ModelForm):
@@ -639,7 +638,7 @@ class iSCSITargetDeviceExtentForm(ModelForm):
                            disk_description = 'iSCSI exported disk',
                            disk_group = grp)
             diskobj.save()
-        notifier().reload("iscsitarget")
+        notifier().restart("iscsitarget")
         return oExtent
 
 class iSCSITargetPortalForm(ModelForm):
@@ -660,7 +659,7 @@ class iSCSITargetPortalForm(ModelForm):
     def save(self):
         
         super(iSCSITargetPortalForm, self).save()
-        notifier().reload("iscsitarget")
+        notifier().restart("iscsitarget")
 
 class iSCSITargetAuthorizedInitiatorForm(ModelForm):
     def __init__(self, *args, **kwargs):
@@ -679,7 +678,7 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
         return tag
     def save(self):
         super(iSCSITargetAuthorizedInitiatorForm, self).save()
-        notifier().reload("iscsitarget")
+        notifier().restart("iscsitarget")
 
 class iSCSITargetForm(ModelForm):
     iscsi_target_authgroup = forms.ChoiceField(label=_("Authentication Group number"))
@@ -709,4 +708,4 @@ class iSCSITargetForm(ModelForm):
 
     def save(self):
         super(iSCSITargetForm, self).save()
-        notifier().reload("iscsitarget")
+        notifier().restart("iscsitarget")
