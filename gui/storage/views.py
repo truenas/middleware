@@ -398,8 +398,11 @@ def dataset_delete(request, object_id):
 def snapshot_delete(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == 'POST':
-        notifier().destroy_zfs_dataset(path = snapshot.__str__())
-        return HttpResponse(simplejson.dumps({"error": False, "message": "Snapshot successfully deleted."}), mimetype="application/json")
+        retval = notifier().destroy_zfs_dataset(path = snapshot.__str__())
+        if retval == '':
+            return HttpResponse(simplejson.dumps({"error": False, "message": "Snapshot successfully deleted."}), mimetype="application/json")
+        else:
+            return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
     else:
         c = RequestContext(request, {
             'snapname' : snapname,
