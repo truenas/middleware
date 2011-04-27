@@ -158,6 +158,8 @@ class NFS_ShareForm(ModelForm):
 
     def clean_nfs_network(self):
         net = self.cleaned_data['nfs_network'].strip()
+        if not net:
+            return net
         #only one address = netmask CIDR
         if net.find(" ") == -1:
             if net.find("/") == -1:
