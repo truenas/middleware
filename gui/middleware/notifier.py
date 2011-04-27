@@ -433,9 +433,8 @@ class notifier:
         swapsize = ((swapsize+127)/128)*128
         # To be safe, wipe out the disk, both ends... before we start
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname))
-        self.__system("""dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s """
-                      """| awk '{printf "%%d", ($3 / (1024*1024)) - 4;}'`""" \
-                      % (devname, devname))
+        self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
+                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (devname, devname))
         if label != "":
             self.__system("gpart create -s gpt /dev/%s && gpart add -b 128 -t freebsd-swap -l swap-%s -s %d %s && gpart add -t %s -l %s %s" %
                          (devname, label, swapsize, devname, type, label, devname))
@@ -665,7 +664,7 @@ class notifier:
                 self.__system("geom %s clear %s" % (geom_type, disk_name))
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (disk[0]))
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print ($3 / (1024*1024)) - 4;}'`" % (disk[0], disk[0]))
+                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (disk[0], disk[0]))
         self._reload_disk()
 
     def _init_volume(self, volume_id, *args, **kwargs):
