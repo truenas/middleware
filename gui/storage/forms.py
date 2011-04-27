@@ -780,7 +780,6 @@ class MountPointAccessForm(Form):
         if path:
             user, group = notifier().mp_get_owner(path)
             self.fields['mp_mode'].initial = "%.3o" % notifier().mp_get_permission(path)
-            self.fields['mp_user'].choices = ( (user, user), )
             self.fields['mp_user'].initial = user
             self.fields['mp_group'].initial = group
 
