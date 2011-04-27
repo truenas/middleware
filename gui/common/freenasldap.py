@@ -1240,10 +1240,10 @@ class FreeNAS_User(object):
         elif ActiveDirectoryEnabled():
             obj = FreeNAS_ActiveDirectory_User(user)
 
-        if obj is None or not obj.bsdusr_uid:
+        if obj is None or obj.bsdusr_uid is None:
             obj = FreeNAS_Local_User(user)
 
-        if not obj.bsdusr_uid:
+        if obj.bsdusr_uid is None:
             return None
 
         syslog(LOG_DEBUG, "FreeNAS_User.__new__: leave")
@@ -1413,10 +1413,10 @@ class FreeNAS_Group(object):
         elif ActiveDirectoryEnabled():
             obj = FreeNAS_ActiveDirectory_Group(group)
 
-        if obj is None or not obj.bsdgrp_gid:
+        if obj is None or obj.bsdgrp_gid is None:
             obj = FreeNAS_Local_Group(group)
 
-        if not obj.bsdgrp_gid:
+        if obj.bsdgrp_gid is None:
             return None
 
         syslog(LOG_DEBUG, "FreeNAS_Group.__new__: leave")
