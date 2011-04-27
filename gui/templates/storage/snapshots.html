@@ -26,10 +26,12 @@
 <div dojoType="dijit.Tooltip" connectId="delSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
     <strong>{% trans "Destroy snapshot" %}</strong>
 </div>
+	    {% if snap.mostrecent %}
 	    <button id="rollbackSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Rollback to this snapshot" %}', '{% url storage_snapshot_rollback dataset=fsname snapname=snap.name %}', [this,]);"><img src="/freenas/media/images/ui/buttons/rollback_snapshot.png"></button>
 <div dojoType="dijit.Tooltip" connectId="rollbackSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
     <strong>{% trans "Rollback to this snapshot" %}</strong>
 </div>
+	    {% endif %}
 	    </td>
 	</tr>
         {% endfor %}
