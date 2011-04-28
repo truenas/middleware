@@ -663,15 +663,14 @@ class DynamicDNS(Model):
     ddns_updateperiod = models.CharField(
             max_length=120, 
             verbose_name = _("Update period"), 
-            blank=True
+            blank=True,
+            help_text = _("Time in milliseconds")
             )
     ddns_fupdateperiod = models.CharField(
             max_length=120, 
             verbose_name = _("Forced update period"), 
             blank=True
             )
-    ddns_wildcard = models.BooleanField(
-            verbose_name = _("Enable Wildcard Records"))
     ddns_options = models.TextField(
             verbose_name = _("Auxiliary parameters"), 
             blank=True,
