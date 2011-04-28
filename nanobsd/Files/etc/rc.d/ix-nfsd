@@ -80,8 +80,7 @@ generate_exports()
 			fi
 			echo
 		fi
-	#done > /etc/exports
-	done
+	done > /etc/exports
 }
 
 name="ix-nfsd"
