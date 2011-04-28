@@ -12,7 +12,7 @@ generate_inadyn_real()
 {
 	local IFS=\|
 
-	local f="ddns_provider ddns_domain ddns_username ddns_password ddns_updateperiod ddns_fupdateperiod ddns_wildcard ddns_options"
+	local f="ddns_provider ddns_domain ddns_username ddns_password ddns_updateperiod ddns_fupdateperiod ddns_options"
 	eval local $f
 	local cmd sf
 	sf=$(echo $f | sed -e 's/ /, /g')
@@ -32,9 +32,6 @@ E*O*F
 		fi
 		if [ -n "${ddns_fupdateperiod}" ]; then
 			echo "forced_update_period ${ddns_fupdateperiod}"
-		fi
-		if [ "${ddns_wildcard}" = "1" ]; then
-			echo "wildcard"
 		fi
 		if [ -n "${ddns_options}" ]; then
 			echo "${ddns_options}"

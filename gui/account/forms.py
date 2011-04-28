@@ -260,8 +260,8 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
                 (self.instance.id is None and cleaned_data["bsdusr_password1"] == "")):
                 self._errors['bsdusr_password1'] = self.error_class([_("This field is required.")])
                 del cleaned_data['bsdusr_password1']
-            if ((self.instance.id is not None and cleaned_data["bsdusr_password2"] != "") or \
-                (self.instance.id is None and cleaned_data["bsdusr_password2"] == "")):
+            if ((self.instance.id is not None and cleaned_data.get("bsdusr_password2", None) != "") or \
+                (self.instance.id is None and cleaned_data.get("bsdusr_password2", None) == "")):
                 self._errors['bsdusr_password2'] = self.error_class([_("This field is required.")])
                 del cleaned_data['bsdusr_password2']
 
