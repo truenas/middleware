@@ -227,6 +227,8 @@ generate_ldap_config()
 		generate_ldapconf
 		setup_homedirs
 		create_cache_filesystem
+		/etc/rc.d/ix-nfsd start
+		ps -ax|grep mountd|grep -v grep|awk '{ print $1 }'|xargs kill -HUP
 	fi
 }
 

@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-activedirectory
-# BEFORE: smbd
+# REQUIRE: smbd
 
 . /etc/rc.freenas
 
@@ -206,6 +206,8 @@ do_activedirectory_stuff()
 		create_cache_filesystem
 		sleep 10
 		/usr/sbin/service samba restart
+		/etc/rc.d/ix-nfsd start
+		ps -ax|grep mountd|grep -v grep|awk '{ print $1 }'|xargs kill -HUP
 	fi
 }
 
