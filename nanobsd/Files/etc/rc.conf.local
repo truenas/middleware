@@ -235,7 +235,7 @@ _gen_conf()
 	_bool_svcconfig sshd_enable ssh
 	_bool_svcconfig inetd_enable tftp
 	_bool_svcconfig istgt_enable iscsitarget
-	_bool_svcconfig inadyn_enable dyndns
+	_bool_svcconfig inadyn_enable dynamicdns
 
 	# Workaround: we don't enable ZFS by default but still want /etc/zfs/exports
 	# be exist for mountd(8)
