@@ -1,17 +1,18 @@
+{% load i18n %}
             <table class="grid">
                 <tbody>
                     <tr>
                         {% if nfs_share_list %}
-                        <h5>Active Shares: <strong>{{ nfs_share_list|length }}</strong></h5>
+                        <h5>{% trans "Active Shares" %}: <strong>{{ nfs_share_list|length }}</strong></h5>
                         {% else %}
-                        There are no active UNIX Shares.
+                        {% trans "There are no active UNIX Shares." %}
                         {% endif %}
                     </tr>
                 </tbody>
 	            <thead class="ghead">
-		            <td>Mountpoint</td>
-		            <td>Comment</td>
-		            <td>Action</td>
+		            <td>{% trans "Mountpoint" %}</td>
+		            <td>{% trans "Comment" %}</td>
+		            <td>{% trans "Action" %}</td>
 		        </thead>
                 <tbody>
                 {% for n in nfs_share_list %}
@@ -24,31 +25,31 @@
                     </td>
                     <td>
                         <button dojoType="dijit.form.Button" type="button">
-                            Edit
+                            {% trans "Edit" %}
                         <script type="dojo/method" event="onClick" args="evt">
-                        editObject('Edit NFS Share', '{% url freeadmin_model_edit app="sharing",model="NFS_Share",oid=n.id %}', [this,]);
+                        editObject('{% trans "Edit NFS Share" %}', '{% url freeadmin_model_edit app="sharing",model="NFS_Share",oid=n.id %}', [this,]);
                         </script>
                         </button>
                         <button dojoType="dijit.form.Button" type="button">
-                            Delete
+                            {% trans "Delete" %}
                         <script type="dojo/method" event="onClick" args="evt">
-                        editObject('Delete NFS Share', '{% url freeadmin_model_delete app="sharing",model="NFS_Share",oid=n.id %}', [this,]);
+                        editObject('{% trans "Delete NFS Share" %}', '{% url freeadmin_model_delete app="sharing",model="NFS_Share",oid=n.id %}', [this,]);
                         </script>
                         </button>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="3">No shares defined</td>
+                    <td colspan="3">{% trans "No shares defined" %}</td>
                 </tr>
                 {% endfor %}
             </tbody>
                 </table>
                 <p class="btn">
                     <button dojoType="dijit.form.Button" type="button">
-                        Add UNIX Share
+                        {% trans "Add UNIX Share" %}
                         <script type="dojo/method" event="onClick" args="evt">
-                        addObject('Add UNIX Share (NFS)', '{% url freeadmin_model_add app="sharing",model="NFS_Share" %}', [this,]);
+                        addObject('{% trans "Add UNIX Share (NFS)" %}', '{% url freeadmin_model_add app="sharing",model="NFS_Share" %}', [this,]);
                     </script>
                     </button>
                 </p>
