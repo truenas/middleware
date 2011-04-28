@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-nfsd
-# REQUIRE: FILESYSTEMS
+# REQUIRE: ix-activedirectory
 # BEFORE: nfsd mountd
 
 . /etc/rc.subr
