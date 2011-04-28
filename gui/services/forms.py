@@ -418,7 +418,7 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         discoverygroup = self.cleaned_data['iscsi_discoveryauthgroup']
         if discoverymethod in ('CHAP', 'CHAP Mutual'):
             if int(discoverygroup) == -1:
-                raise forms.ValidationError(_("This field is required."))
+                raise forms.ValidationError(_("This field is required if discovery method is set to CHAP or CHAP Mutal."))
         elif int(discoverygroup) == -1:
             return None
         return discoverygroup
