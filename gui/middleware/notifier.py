@@ -471,7 +471,7 @@ class notifier:
                 z_vdev += " " + vgrp_type
             # Grab all member disks from the current vdev group
             c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE "
-                      "disk_group_id = ?", (vgrp,))
+                      "disk_group_id = ?", (str(vgrp[0]),))
             vdev_member_list = c.fetchall()
             for disk in vdev_member_list:
                 need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
@@ -531,7 +531,7 @@ class notifier:
                 z_vdev += " " + vgrp_type
             # Grab all member disks from the current vdev group
             c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE "
-                      "disk_group_id = ?", (vgrp,))
+                      "disk_group_id = ?", (str(vgrp[0]),))
             vdev_member_list = c.fetchall()
             for disk in vdev_member_list:
                 need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
@@ -604,7 +604,7 @@ class notifier:
         vgroup_list = c.fetchall()
         for vgrp in vgroup_list:
             c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE "
-                      "disk_group_id = ?", (vgrp,))
+                      "disk_group_id = ?", (str(vgrp[0]),))
             vdev_member_list = c.fetchall()
             for disk in vdev_member_list:
                 self.__gpt_unlabeldisk(devname = disk[0])
