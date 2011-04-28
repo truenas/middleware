@@ -59,7 +59,7 @@ class Migration(SchemaMigration):
             ('iscsi_toggleluc', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('iscsi_lucip', self.gf('django.db.models.fields.CharField')(default='127.0.0.1', max_length=120)),
             ('iscsi_lucport', self.gf('django.db.models.fields.IntegerField')(default=3261, max_length=120)),
-            ('iscsi_luc_authnetwork', self.gf('django.db.models.fields.CharField')(default='127.0.0.1/8', max_length=120)),
+            ('iscsi_luc_authnetwork', self.gf('django.db.models.fields.CharField')(default='255.0.0.0', max_length=120)),
             ('iscsi_luc_authmethod', self.gf('django.db.models.fields.CharField')(default='CHAP', max_length=120)),
             ('iscsi_luc_authgroup', self.gf('django.db.models.fields.IntegerField')(default=1, max_length=120)),
         ))
@@ -311,7 +311,7 @@ class Migration(SchemaMigration):
             'iscsi_iotimeout': ('django.db.models.fields.IntegerField', [], {'default': '30', 'max_length': '120'}),
             'iscsi_luc_authgroup': ('django.db.models.fields.IntegerField', [], {'default': '1', 'max_length': '120'}),
             'iscsi_luc_authmethod': ('django.db.models.fields.CharField', [], {'default': "'CHAP'", 'max_length': '120'}),
-            'iscsi_luc_authnetwork': ('django.db.models.fields.CharField', [], {'default': "'127.0.0.1/8'", 'max_length': '120'}),
+            'iscsi_luc_authnetwork': ('django.db.models.fields.CharField', [], {'default': "'255.0.0.0'", 'max_length': '120'}),
             'iscsi_lucip': ('django.db.models.fields.CharField', [], {'default': "'127.0.0.1'", 'max_length': '120'}),
             'iscsi_lucport': ('django.db.models.fields.IntegerField', [], {'default': '3261', 'max_length': '120'}),
             'iscsi_maxburst': ('django.db.models.fields.IntegerField', [], {'default': '262144', 'max_length': '120'}),
