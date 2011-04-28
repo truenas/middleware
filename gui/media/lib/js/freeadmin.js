@@ -159,7 +159,7 @@
             }
 
         },
-        openSharing: function() {
+        openSharing: function(tab) {
             var opened = false;
             var p = dijit.byId("content");
 
@@ -168,14 +168,28 @@
                 if(c[i].title == 'Shares'){
                     p.selectChild(c[i]);
                     opened = true;
+                    if(tab) {
+                        var tabnet = dijit.byId("tab_sharing");
+                        if(tabnet) {
+                            var c2 = tabnet.getChildren();
+                            for(var j=0; j<c2.length; j++){
+                                if(c2[j].title == tab)
+                                    tabnet.selectChild(c2[j]);
+                            }
+                        }
+                    }
                 }
             }
             if(opened != true) {
+                openurl = this.urlSharing;
+                if(tab) {
+                    openurl += '?tab='+tab;
+                }
                 var pane = new dijit.layout.ContentPane({ 
                     title: 'Shares',
                     closable: true,
                     //refreshOnShow: true,
-                    href: this.urlSharing,
+                    href: openurl,
                 });
                 p.addChild(pane);
                 p.selectChild(pane);
@@ -201,6 +215,7 @@
                 });
                 p.addChild(pane);
                 p.selectChild(pane);
+                dojo.addClass(pane.domNode,["objrefresh", "data_sharing_UNIX"]);
             }
 
         },
@@ -950,6 +965,12 @@
                     dijit.byId("shutdownDialog").show();
             } else if(item.type && item.type == 'openstorage') {
                 Menu.openStorage('Active Volumes');
+            } else if(item.type && item.type == 'openunixshares') {
+                Menu.openSharing('UNIX');
+            } else if(item.type && item.type == 'openwinshares') {
+                Menu.openSharing('Windows');
+            } else if(item.type && item.type == 'openappleshares') {
+                Menu.openSharing('Apple');
             } else if(item.type && item.type == 'openperiodic') {
                 Menu.openStorage('Periodic Snapshot Tasks');
             } else if(item.type && item.type == 'opensnaps') {
