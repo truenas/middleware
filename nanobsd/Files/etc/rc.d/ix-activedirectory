@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-activedirectory
-# REQUIRE: smbd
+# BEFORE: smbd
 
 . /etc/rc.freenas
 
