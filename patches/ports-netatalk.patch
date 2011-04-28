@@ -43,7 +43,7 @@
 -    checkyesno timelord_enable && killall timelord
 -    checkyesno afpd_enable && killall afpd
 -    checkyesno cnid_metad_enable && killall cnid_metad
-+    checkyesno timeloard_enable && killall timelord
++    checkyesno timelord_enable && killall timelord
 +    if [ -f ${pidfile} ]; then
 +        kill `cat ${pidfile}`
 +        if [ $? -ne 0 ]; then
