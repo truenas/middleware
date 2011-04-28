@@ -100,7 +100,7 @@ class notifier:
             """ Provide generic start/stop/restart verbs for rc.d scripts """
             if action in ("start", "stop", "restart", "reload"):
                 if action == 'restart':
-                    self.__system("/usr/sbin/service forcestop " + action)
+                    self.__system("/usr/sbin/service " + what + " forcestop ")
                 self.__system("/usr/sbin/service " + what + " " + action)
                 f = self._do_nada
             else:

@@ -264,7 +264,7 @@ class FreeNAS_LDAP:
 
             if self.ssl in (FREENAS_LDAP_USESSL, FREENAS_LDAP_USETLS):
                 self.__handle.set_option(ldap.OPT_X_TLS_ALLOW, 1)
-                self.__handle.set_option(ldap.OPT_X_TLS_CACERTFILE, FREENAS_CACERTFILE)
+                self.__handle.set_option(ldap.OPT_X_TLS_CACERTFILE, FREENAS_LDAP_CACERTFILE)
                 self.__handle.set_option(ldap.OPT_X_TLS_NEWCTX, ldap.OPT_X_TLS_DEMAND)
 
             if self.ssl == FREENAS_LDAP_USETLS:
