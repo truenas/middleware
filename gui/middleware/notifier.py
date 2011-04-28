@@ -617,7 +617,7 @@ class notifier:
                   "WHERE group_volume_id = ?", (u_id,))
         # TODO: We do not support multiple GEOM levels for now.
         vgrp_row = c.fetchone()
-        ufs_volume_id = (vgrp_row[0],)
+        ufs_volume_id = vgrp_row[0]
         geom_type = vgrp_row[1]
         geom_name = vgrp_row[2]
         # Grab all disks from the group
@@ -644,7 +644,7 @@ class notifier:
         c.execute("SELECT id, group_type, group_name FROM storage_diskgroup WHERE "
                   "group_volume_id = ?", (u_id,))
         vgrp_row = c.fetchone()
-        ufs_volume_id = (vgrp_row[0],)
+        ufs_volume_id = vgrp_row[0]
         geom_type = vgrp_row[1]
         geom_name = vgrp_row[2]
         # Grab all disks from the group
