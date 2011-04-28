@@ -9,6 +9,37 @@
 
 . /etc/rc.subr
 
+hasspace()
+{
+	res=1
+	if echo "${1}" | grep -qE ' +' 2>/dev/null; then
+		res=$?
+	fi
+
+	return ${res}
+}
+
+setuser()
+{
+	local user="${1}"
+	if hasspace "${user}"; then
+		user=$(getent passwd "${user}"|cut -f3 -d:)
+	fi
+
+	echo "${user}"
+}
+
+setgroup()
+{
+	local group="${1}"
+	if hasspace "${group}"; then
+		group=$(getent group "${group}"|cut -f3 -d:)
+	fi
+
+	echo "${group}"
+}
+
+
 #
 # TODO: For now we overwrite /etc/exports, it's desirable to teach mountd about another
 # place so user can write their own entry.
@@ -33,9 +64,13 @@ generate_exports()
 				echo -n " -quiet"
 			fi
                         if [ -n "${mapall_user}" -o -n "${mapall_group}" ]; then
+				mapall_user=$(setuser "${mapall_user}")
+				mapall_group=$(setgroup "${mapall_group}")
 				echo -n " -mapall=${mapall_user}:${mapall_group}"
                         else
                                 if [ -n "${maproot_user}" -o -n "${maproot_group}" ]; then
+					maproot_user=$(setuser "${maproot_user}")
+					maproot_group=$(setgroup "${maproot_group}")
 				        echo -n " -maproot=${maproot_user}:${maproot_group}"
                                 fi
 			fi
@@ -45,7 +80,8 @@ generate_exports()
 			fi
 			echo
 		fi
-	done > /etc/exports
+	#done > /etc/exports
+	done
 }
 
 name="ix-nfsd"
