@@ -80,7 +80,7 @@ generate_exports()
 			echo
 		fi
 	done > /etc/exports
-	ps -ax|grep mountd|grep -v grep|awk '{ print $1 }'|xargs kill -HUP >/dev/null 2>&1
+	/usr/sbin/service mountd onereload
 }
 
 name="ix-nfsd"
