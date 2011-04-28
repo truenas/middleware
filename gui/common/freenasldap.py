@@ -1313,7 +1313,7 @@ class FreeNAS_ActiveDirectory_Group(bsdGroups):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Group.__init__: enter")
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Group.__init__: group = %s" % group)
 
-        super(FreeNAS_LDAP_Group, self).__init__()
+        super(FreeNAS_ActiveDirectory_Group, self).__init__()
 
         self.__gr = None
         self.__get_group(group)
