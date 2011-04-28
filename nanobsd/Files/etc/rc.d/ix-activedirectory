@@ -205,9 +205,7 @@ do_activedirectory_stuff()
 		setup_homedirs
 		create_cache_filesystem
 		sleep 10
-		/usr/sbin/service samba restart
-		/etc/rc.d/ix-nfsd start
-		ps -ax|grep mountd|grep -v grep|awk '{ print $1 }'|xargs kill -HUP
+		/usr/sbin/service samba restart >/dev/null 2>&1
 	fi
 }
 
