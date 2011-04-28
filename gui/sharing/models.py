@@ -59,7 +59,6 @@ class CIFS_Share(Model):
             verbose_name = _("Show Hidden Files"))
     cifs_guest = models.CharField(
             max_length=120, 
-            choices=choices.whoChoices(), 
             default="www", 
             verbose_name = _("Guest Account"), 
             help_text = _("Use this option to override the username ('ftp' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login.")
