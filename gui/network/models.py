@@ -267,7 +267,7 @@ class StaticRoute(Model):
             max_length=120, 
             verbose_name=_("Destination network")
             )
-    sr_gateway = models.CharField(
+    sr_gateway = IP4AddressField(
             max_length=120, 
             verbose_name=_("Gateway")
             )
