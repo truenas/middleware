@@ -94,16 +94,13 @@ EOF
 	
 	cat<<-EOF>"${conf}"
 	group: ${g}
-	group_compat: nis
 	hosts: files dns
 	networks: files
 	passwd: ${p}
-	passwd_compat: nis
 	shells: files
-	services: compat
-	services_compat: nis
-	protocols: files
-	rpc: files
+	services: cache files
+	protocols: cache files
+	rpc: cache files
 EOF
 	
 	/etc/rc.d/nsswitch start
