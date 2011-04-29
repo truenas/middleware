@@ -827,8 +827,17 @@
         p.selectChild(pane);
     }
 
+    refreshImgs = function() {
+
+        dojo.query(".chart > img").forEach(function(e) { 
+            e.src = new String(e.src).split('?')[0] + '?' + new Date().getTime();
+        });
+        setTimeout(refreshImgs, 300000);
+    }
+
     dojo.addOnLoad(function() {
 
+        setTimeout(refreshImgs, 300000);
         dojo.declare("my.Tree", dijit.Tree, {  
            
             _expandNode: function( node, recursive){
