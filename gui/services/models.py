@@ -132,7 +132,7 @@ class CIFS(Model):
             verbose_name=_("Allow Empty Password"))
     cifs_srv_smb_options = models.TextField(
             max_length=120, 
-            verbose_name=_("Auxiliary paramters"), 
+            verbose_name=_("Auxiliary parameters"), 
             blank=True,
             help_text=_("These parameters are added to [Global] section of smb.conf")
             )
