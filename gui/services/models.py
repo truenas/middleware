@@ -183,7 +183,7 @@ class AFP(Model):
             help_text=_("Name of the server. If this field is left empty the default server is specified.")
             )
     afp_srv_guest = models.BooleanField(
-            verbose_name=_("Guess Access"),
+            verbose_name=_("Guest Access"),
             help_text=_("Allows guest access to all apple shares on this box.")
             )
     afp_srv_guest_user = models.CharField(
