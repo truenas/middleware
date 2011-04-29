@@ -8,32 +8,14 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         
-        # Deleting field 'iSCSITargetGlobalConfiguration.iscsi_mediadirectory'
-        db.delete_column('services_iscsitargetglobalconfiguration', 'iscsi_mediadirectory')
-
-        # Changing field 'iSCSITargetGlobalConfiguration.iscsi_lucip'
-        db.alter_column('services_iscsitargetglobalconfiguration', 'iscsi_lucip', self.gf('django.db.models.fields.IPAddressField')(max_length=15))
-
-        # Changing field 'iSCSITargetGlobalConfiguration.iscsi_lucport'
-        db.alter_column('services_iscsitargetglobalconfiguration', 'iscsi_lucport', self.gf('django.db.models.fields.IntegerField')(max_length=120, null=True))
-
-        # Changing field 'iSCSITargetGlobalConfiguration.iscsi_luc_authgroup'
-        db.alter_column('services_iscsitargetglobalconfiguration', 'iscsi_luc_authgroup', self.gf('django.db.models.fields.IntegerField')(max_length=120, null=True))
+        # Deleting field 'DynamicDNS.ddns_wildcard'
+        db.delete_column('services_dynamicdns', 'ddns_wildcard')
 
 
     def backwards(self, orm):
         
-        # Adding field 'iSCSITargetGlobalConfiguration.iscsi_mediadirectory'
-        db.add_column('services_iscsitargetglobalconfiguration', 'iscsi_mediadirectory', self.gf('django.db.models.fields.CharField')(default='/mnt', max_length=120), keep_default=False)
-
-        # Changing field 'iSCSITargetGlobalConfiguration.iscsi_lucip'
-        db.alter_column('services_iscsitargetglobalconfiguration', 'iscsi_lucip', self.gf('django.db.models.fields.CharField')(max_length=120))
-
-        # Changing field 'iSCSITargetGlobalConfiguration.iscsi_lucport'
-        db.alter_column('services_iscsitargetglobalconfiguration', 'iscsi_lucport', self.gf('django.db.models.fields.IntegerField')(max_length=120))
-
-        # Changing field 'iSCSITargetGlobalConfiguration.iscsi_luc_authgroup'
-        db.alter_column('services_iscsitargetglobalconfiguration', 'iscsi_luc_authgroup', self.gf('django.db.models.fields.IntegerField')(max_length=120))
+        # Adding field 'DynamicDNS.ddns_wildcard'
+        db.add_column('services_dynamicdns', 'ddns_wildcard', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
 
 
     models = {
@@ -55,6 +37,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'AFP'},
             'afp_srv_ddp': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_guest': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'afp_srv_guest_user': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '120'}),
             'afp_srv_local': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
@@ -71,9 +54,11 @@ class Migration(SchemaMigration):
             'cifs_srv_doscharset': ('django.db.models.fields.CharField', [], {'default': "'CP437'", 'max_length': '120'}),
             'cifs_srv_easupport': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_filemask': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'cifs_srv_guest': ('django.db.models.fields.CharField', [], {'default': "'www'", 'max_length': '120'}),
+            'cifs_srv_guest': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '120'}),
             'cifs_srv_guestok': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_guestonly': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'cifs_srv_homedir': ('django.db.models.fields.related.ForeignKey', [], {'default': 'None', 'to': "orm['storage.MountPoint']", 'null': 'True', 'blank': 'True'}),
+            'cifs_srv_homedir_browseable_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_homedir_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_largerw': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_localmaster': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -96,7 +81,6 @@ class Migration(SchemaMigration):
             'ddns_provider': ('django.db.models.fields.CharField', [], {'default': "'dyndns'", 'max_length': '120'}),
             'ddns_updateperiod': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ddns_username': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'ddns_wildcard': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         'services.ftp': {
@@ -132,15 +116,15 @@ class Migration(SchemaMigration):
         'services.iscsitarget': {
             'Meta': {'object_name': 'iSCSITarget'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'iscsi_target_alias': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '120', 'blank': 'True'}),
-            'iscsi_target_authgroup': ('django.db.models.fields.IntegerField', [], {'default': '1', 'max_length': '120'}),
+            'iscsi_target_alias': ('django.db.models.fields.CharField', [], {'max_length': '120', 'unique': 'True', 'null': 'True', 'blank': 'True'}),
+            'iscsi_target_authgroup': ('django.db.models.fields.IntegerField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
             'iscsi_target_authtype': ('django.db.models.fields.CharField', [], {'default': "'Auto'", 'max_length': '120'}),
             'iscsi_target_flags': ('django.db.models.fields.CharField', [], {'default': "'rw'", 'max_length': '120'}),
             'iscsi_target_initialdigest': ('django.db.models.fields.CharField', [], {'default': "'Auto'", 'max_length': '120'}),
-            'iscsi_target_initiatorgroup': ('django.db.models.fields.IntegerField', [], {'default': '1', 'max_length': '120'}),
+            'iscsi_target_initiatorgroup': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['services.iSCSITargetAuthorizedInitiator']"}),
             'iscsi_target_logical_blocksize': ('django.db.models.fields.IntegerField', [], {'default': '512', 'max_length': '3'}),
             'iscsi_target_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '120'}),
-            'iscsi_target_portalgroup': ('django.db.models.fields.IntegerField', [], {'default': '1', 'max_length': '120'}),
+            'iscsi_target_portalgroup': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['services.iSCSITargetPortal']"}),
             'iscsi_target_queue_depth': ('django.db.models.fields.IntegerField', [], {'default': '32', 'max_length': '3'}),
             'iscsi_target_type': ('django.db.models.fields.CharField', [], {'max_length': '120'})
         },
@@ -150,7 +134,7 @@ class Migration(SchemaMigration):
             'iscsi_target_auth_peersecret': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'iscsi_target_auth_peeruser': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'iscsi_target_auth_secret': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'iscsi_target_auth_tag': ('django.db.models.fields.IntegerField', [], {'default': '1', 'max_length': '120'}),
+            'iscsi_target_auth_tag': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
             'iscsi_target_auth_user': ('django.db.models.fields.CharField', [], {'max_length': '120'})
         },
         'services.iscsitargetauthorizedinitiator': {
@@ -159,13 +143,13 @@ class Migration(SchemaMigration):
             'iscsi_target_initiator_auth_network': ('django.db.models.fields.TextField', [], {'default': "'ALL'", 'max_length': '2048'}),
             'iscsi_target_initiator_comment': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'iscsi_target_initiator_initiators': ('django.db.models.fields.TextField', [], {'default': "'ALL'", 'max_length': '2048'}),
-            'iscsi_target_initiator_tag': ('django.db.models.fields.IntegerField', [], {'unique': 'True', 'max_length': '120'})
+            'iscsi_target_initiator_tag': ('django.db.models.fields.IntegerField', [], {'default': '1', 'unique': 'True'})
         },
         'services.iscsitargetextent': {
             'Meta': {'object_name': 'iSCSITargetExtent'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'iscsi_target_extent_comment': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'iscsi_target_extent_filesize': ('django.db.models.fields.IntegerField', [], {'default': '0', 'max_length': '120'}),
+            'iscsi_target_extent_filesize': ('django.db.models.fields.CharField', [], {'default': '0', 'max_length': '120'}),
             'iscsi_target_extent_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'iscsi_target_extent_path': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'iscsi_target_extent_type': ('django.db.models.fields.CharField', [], {'max_length': '120'})
@@ -176,13 +160,13 @@ class Migration(SchemaMigration):
             'iscsi_basename': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'iscsi_defaultt2r': ('django.db.models.fields.IntegerField', [], {'default': '60', 'max_length': '120'}),
             'iscsi_defaultt2w': ('django.db.models.fields.IntegerField', [], {'default': '2', 'max_length': '120'}),
-            'iscsi_discoveryauthgroup': ('django.db.models.fields.CharField', [], {'default': "'none'", 'max_length': '120'}),
-            'iscsi_discoveryauthmethod': ('django.db.models.fields.CharField', [], {'default': "'auto'", 'max_length': '120'}),
+            'iscsi_discoveryauthgroup': ('django.db.models.fields.IntegerField', [], {'default': "'None'", 'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'iscsi_discoveryauthmethod': ('django.db.models.fields.CharField', [], {'default': "'Auto'", 'max_length': '120'}),
             'iscsi_firstburst': ('django.db.models.fields.IntegerField', [], {'default': '65536', 'max_length': '120'}),
             'iscsi_iotimeout': ('django.db.models.fields.IntegerField', [], {'default': '30', 'max_length': '120'}),
-            'iscsi_luc_authgroup': ('django.db.models.fields.IntegerField', [], {'default': '1', 'max_length': '120', 'null': 'True', 'blank': 'True'}),
-            'iscsi_luc_authmethod': ('django.db.models.fields.CharField', [], {'default': "'CHAP'", 'max_length': '120', 'blank': 'True'}),
-            'iscsi_luc_authnetwork': ('django.db.models.fields.CharField', [], {'default': "'255.0.0.0'", 'max_length': '120', 'blank': 'True'}),
+            'iscsi_luc_authgroup': ('django.db.models.fields.IntegerField', [], {'max_length': '120', 'null': 'True', 'blank': 'True'}),
+            'iscsi_luc_authmethod': ('django.db.models.fields.CharField', [], {'default': "'chap'", 'max_length': '120', 'blank': 'True'}),
+            'iscsi_luc_authnetwork': ('django.db.models.fields.IPAddressField', [], {'default': "'255.255.255.0'", 'max_length': '15', 'blank': 'True'}),
             'iscsi_lucip': ('django.db.models.fields.IPAddressField', [], {'default': "'127.0.0.1'", 'max_length': '15', 'blank': 'True'}),
             'iscsi_lucport': ('django.db.models.fields.IntegerField', [], {'default': '3261', 'max_length': '120', 'null': 'True', 'blank': 'True'}),
             'iscsi_maxburst': ('django.db.models.fields.IntegerField', [], {'default': '262144', 'max_length': '120'}),
@@ -205,8 +189,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'iSCSITargetToExtent'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'iscsi_extent': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['services.iSCSITargetExtent']", 'unique': 'True'}),
-            'iscsi_target': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['services.iSCSITarget']"}),
-            'iscsi_target_lun': ('django.db.models.fields.IntegerField', [], {'default': '0', 'max_length': '120'})
+            'iscsi_target': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['services.iSCSITarget']"})
         },
         'services.ldap': {
             'Meta': {'object_name': 'LDAP'},
@@ -228,6 +211,7 @@ class Migration(SchemaMigration):
         'services.nfs': {
             'Meta': {'object_name': 'NFS'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'nfs_srv_async': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'nfs_srv_servers': ('django.db.models.fields.CharField', [], {'max_length': '120'})
         },
         'services.services': {
@@ -270,7 +254,7 @@ class Migration(SchemaMigration):
             'tftp_options': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'tftp_port': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'tftp_umask': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'tftp_username': ('django.db.models.fields.CharField', [], {'default': "'nobody'", 'max_length': '120'})
+            'tftp_username': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '120'})
         },
         'services.ups': {
             'Meta': {'object_name': 'UPS'},

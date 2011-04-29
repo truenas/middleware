@@ -264,7 +264,7 @@ class FreeNAS_LDAP:
 
             if self.ssl in (FREENAS_LDAP_USESSL, FREENAS_LDAP_USETLS):
                 self.__handle.set_option(ldap.OPT_X_TLS_ALLOW, 1)
-                self.__handle.set_option(ldap.OPT_X_TLS_CACERTFILE, FREENAS_CACERTFILE)
+                self.__handle.set_option(ldap.OPT_X_TLS_CACERTFILE, FREENAS_LDAP_CACERTFILE)
                 self.__handle.set_option(ldap.OPT_X_TLS_NEWCTX, ldap.OPT_X_TLS_DEMAND)
 
             if self.ssl == FREENAS_LDAP_USETLS:
@@ -1240,10 +1240,10 @@ class FreeNAS_User(object):
         elif ActiveDirectoryEnabled():
             obj = FreeNAS_ActiveDirectory_User(user)
 
-        if obj is None or not obj.bsdusr_uid:
+        if obj is None or obj.bsdusr_uid is None:
             obj = FreeNAS_Local_User(user)
 
-        if not obj.bsdusr_uid:
+        if obj.bsdusr_uid is None:
             return None
 
         syslog(LOG_DEBUG, "FreeNAS_User.__new__: leave")
@@ -1313,7 +1313,7 @@ class FreeNAS_ActiveDirectory_Group(bsdGroups):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Group.__init__: enter")
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Group.__init__: group = %s" % group)
 
-        super(FreeNAS_LDAP_Group, self).__init__()
+        super(FreeNAS_ActiveDirectory_Group, self).__init__()
 
         self.__gr = None
         self.__get_group(group)
@@ -1413,10 +1413,10 @@ class FreeNAS_Group(object):
         elif ActiveDirectoryEnabled():
             obj = FreeNAS_ActiveDirectory_Group(group)
 
-        if obj is None or not obj.bsdgrp_gid:
+        if obj is None or obj.bsdgrp_gid is None:
             obj = FreeNAS_Local_Group(group)
 
-        if not obj.bsdgrp_gid:
+        if obj.bsdgrp_gid is None:
             return None
 
         syslog(LOG_DEBUG, "FreeNAS_Group.__new__: leave")

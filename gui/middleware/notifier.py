@@ -100,7 +100,7 @@ class notifier:
             """ Provide generic start/stop/restart verbs for rc.d scripts """
             if action in ("start", "stop", "restart", "reload"):
                 if action == 'restart':
-                    self.__system("/usr/sbin/service forcestop " + action)
+                    self.__system("/usr/sbin/service " + what + " forcestop ")
                 self.__system("/usr/sbin/service " + what + " " + action)
                 f = self._do_nada
             else:
@@ -434,7 +434,7 @@ class notifier:
         # To be safe, wipe out the disk, both ends... before we start
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname))
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print ($3 / (1024*1024)) - 4;}'`" % (devname, devname))
+                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (devname, devname))
         if label != "":
             self.__system("gpart create -s gpt /dev/%s && gpart add -b 128 -t freebsd-swap -l swap-%s -s %d %s && gpart add -t %s -l %s %s" %
                          (devname, label, swapsize, devname, type, label, devname))
@@ -471,7 +471,7 @@ class notifier:
                 z_vdev += " " + vgrp_type
             # Grab all member disks from the current vdev group
             c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE "
-                      "disk_group_id = ?", vgrp)
+                      "disk_group_id = ?", (str(vgrp[0]),))
             vdev_member_list = c.fetchall()
             for disk in vdev_member_list:
                 need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
@@ -509,7 +509,7 @@ class notifier:
 
 
         c.execute("SELECT id, group_type, group_volume_id FROM storage_diskgroup WHERE "
-                  "id = ?", (group_id))
+                  "id = ?", (group_id,))
         vgroup_list = c.fetchall()
         volume_id = vgroup_list[0][2]
 
@@ -531,7 +531,7 @@ class notifier:
                 z_vdev += " " + vgrp_type
             # Grab all member disks from the current vdev group
             c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE "
-                      "disk_group_id = ?", vgrp)
+                      "disk_group_id = ?", (str(vgrp[0]),))
             vdev_member_list = c.fetchall()
             for disk in vdev_member_list:
                 need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
@@ -636,7 +636,7 @@ class notifier:
         vgroup_list = c.fetchall()
         for vgrp in vgroup_list:
             c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE "
-                      "disk_group_id = ?", vgrp)
+                      "disk_group_id = ?", (str(vgrp[0]),))
             vdev_member_list = c.fetchall()
             for disk in vdev_member_list:
                 self.__gpt_unlabeldisk(devname = disk[0])
@@ -649,12 +649,12 @@ class notifier:
                   "WHERE group_volume_id = ?", (u_id,))
         # TODO: We do not support multiple GEOM levels for now.
         vgrp_row = c.fetchone()
-        ufs_volume_id = (vgrp_row[0],)
+        ufs_volume_id = vgrp_row[0]
         geom_type = vgrp_row[1]
         geom_name = vgrp_row[2]
         # Grab all disks from the group
         c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE "
-                  "disk_group_id = ?", ufs_volume_id)
+                  "disk_group_id = ?", (ufs_volume_id,))
         if geom_type == '':
             disk = c.fetchone()
             self.__gpt_labeldisk(type = "freebsd-ufs", devname = disk[0], swapsize=swapsize)
@@ -676,12 +676,12 @@ class notifier:
         c.execute("SELECT id, group_type, group_name FROM storage_diskgroup WHERE "
                   "group_volume_id = ?", (u_id,))
         vgrp_row = c.fetchone()
-        ufs_volume_id = (vgrp_row[0],)
+        ufs_volume_id = vgrp_row[0]
         geom_type = vgrp_row[1]
         geom_name = vgrp_row[2]
         # Grab all disks from the group
         c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE "
-                  "disk_group_id = ?", ufs_volume_id)
+                  "disk_group_id = ?", (ufs_volume_id,))
         if geom_type == '':
             disk = c.fetchone()
             self.__system("umount -f /dev/ufs/" + u_name)
@@ -696,7 +696,7 @@ class notifier:
                 self.__system("geom %s clear %s" % (geom_type, disk_name))
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (disk[0]))
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print ($3 / (1024*1024)) - 4;}'`" % (disk[0], disk[0]))
+                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (disk[0], disk[0]))
         self._reload_disk()
 
     def _init_volume(self, volume_id, *args, **kwargs):
@@ -726,7 +726,7 @@ class notifier:
         c = self.__open_db()
         c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
         swapsize=c.fetchone()[0]
-        c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE id = ?", disk_id)
+        c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE id = ?", (disk_id,))
         disk = c.fetchone()
         self.__gpt_labeldisk(type = "freebsd-zfs", devname = disk[0],
                              label = disk[1], swapsize=swapsize)
@@ -745,11 +745,11 @@ class notifier:
 
         # TODO: Test on real hardware to see if ashift would persist across replace
         volume = volume[1]
-        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", from_diskid)
+        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", (from_diskid,))
         fromdev_label = c.fetchone()[0]
         fromdev = 'gpt/' + fromdev_label
         fromdev_swap = '/dev/gpt/swap-' + fromdev_label
-        c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE id = ?", to_diskid)
+        c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE id = ?", (to_diskid,))
         disk = c.fetchone()
         devname = disk[0]
         label = disk[1]
@@ -788,7 +788,7 @@ class notifier:
 
         # TODO: Handle with 4khack aftermath
         volume = volume[1]
-        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", disk_id)
+        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", (disk_id,))
         label = c.fetchone()[0]
         devname = 'gpt/' + label
 
@@ -812,7 +812,7 @@ class notifier:
 
         # TODO: Handle with 4khack aftermath
         volume = volume[1]
-        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", disk_id)
+        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", (disk_id,))
         devname = 'gpt/' + c.fetchone()[0]
 
         ret = self.__system_nolog('/sbin/zpool add %s spare %s' % (volume, devname))
@@ -1138,7 +1138,7 @@ class notifier:
                                 'disks': disks,
                                 })
 
-        RE_POOL_NAME = re.compile(r'pool: (?P<name>\w+)', re.I)
+        RE_POOL_NAME = re.compile(r'pool: (?P<name>[a-z][a-z0-9_-]+)', re.I)
         RE_DISK = re.compile(r'(?P<disk>[a-d]{2}\d+)[a-fsp]')
         p1 = Popen(["zpool", "import"], stdin=PIPE, stdout=PIPE)
         p1.wait()
@@ -1220,7 +1220,7 @@ class notifier:
     def zfs_snapshot_list(self):
         fsinfo = dict()
 
-        zfsproc = self.__pipeopen("/sbin/zfs list -t snapshot -H")
+        zfsproc = self.__pipeopen("/sbin/zfs list -t snapshot -H -S creation")
         lines = zfsproc.communicate()[0].split('\n')
         for line in lines:
             if line != '':
@@ -1231,9 +1231,11 @@ class notifier:
                 fs, name = snapname.split('@')
                 try:
                     snaplist = fsinfo[fs]
+                    mostrecent = False
                 except:
                     snaplist = []
-                snaplist.append(dict([('fullname', snapname), ('name', name), ('used', used), ('refer', refer)]))
+                    mostrecent = True
+                snaplist.append(dict([('fullname', snapname), ('name', name), ('used', used), ('refer', refer), ('mostrecent', mostrecent)]))
                 fsinfo[fs] = snaplist
         return fsinfo
 
@@ -1321,13 +1323,13 @@ class notifier:
         volume = c.fetchone()
         assert volume[0] == 'UFS'
         volume = volume[1]
-        c.execute("SELECT disk_group_id FROM storage_disk WHERE id = ?", from_diskid)
+        c.execute("SELECT disk_group_id FROM storage_disk WHERE id = ?", (from_diskid,))
         dg_id = c.fetchone()[0]
 
-        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", to_diskid)
+        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", (to_diskid,))
         todev = c.fetchone()[0]
 
-        c.execute("SELECT group_name, group_type FROM storage_diskgroup WHERE id = ?", str(dg_id))
+        c.execute("SELECT group_name, group_type FROM storage_diskgroup WHERE id = ?", (str(dg_id),))
         dg = c.fetchone()
         group_name = dg[0]
         group_type = dg[1]

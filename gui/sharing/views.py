@@ -34,9 +34,9 @@ from freenasUI.sharing import models
 def home(request):
 
     variables = RequestContext(request, {
-    'focused_tab' : 'sharing',
+        'focus_form' : request.GET.get('tab', ''),
     })
-    return render_to_response('sharing/index2.html', variables)
+    return render_to_response('sharing/index.html', variables)
 
 def windows(request):
 

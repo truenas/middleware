@@ -1,21 +1,4 @@
 {% load i18n %}
-{% block dojango_header_extra %}
-<script type="text/javascript">
-    refreshImgs = function() {
-
-        dojo.query(".chart > img").forEach(function(e) { 
-            e.src = new String(e.src).split('?')[0] + '?' + new Date().getTime();
-        });
-        setTimeout(refreshImgs, 300000);
-    }
-    dojo.addOnLoad(function() {
-            setTimeout(refreshImgs, 300000);
-
-            });
-</script>
-{% endblock %}
-
-{% block dojango_content %}
     <div dojoType="dijit.layout.TabContainer" nested="true" style="width:100%;" title="{% trans "Reporting" %}" {% if focus_form == "system" %} selected="true"{% endif %} doLayout="true">
         {% if graphs.hourly %}
         <div dojoType="dijit.layout.ContentPane" nested="true" title="{% trans "Hourly" %}" {% if focus_form == "system" %} selected="true"{% endif %} style="overflow-y:scroll;">
@@ -88,4 +71,3 @@
         </div>
         {% endif %}
     </div>
-{% endblock %}

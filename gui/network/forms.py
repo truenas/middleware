@@ -27,6 +27,7 @@
 #####################################################################
 
 import re
+import socket
 
 from django.utils.translation import ugettext as _
 
@@ -172,6 +173,19 @@ class InterfaceEditForm(InterfacesForm):
         return self.instance.int_interface
 
 class StaticRouteForm(ModelForm):
+    def clean_sr_destination(self):
+        sr = self.cleaned_data['sr_destination']
+        sr = re.sub(r'\s{2,}', ' ', sr).strip()
+        try:
+            if sr.find("/") != -1:
+                socket.inet_aton(sr.split("/")[0])
+                if int(sr.split("/")[1]) > 32 or int(sr.split("/")[1]) < 0:
+                    raise
+            else:
+                raise
+        except:
+            raise forms.ValidationError(_("The network '%s' is not valid, CIDR expected.") % sr)
+        return sr
     class Meta:
         model = models.StaticRoute
     def save(self):

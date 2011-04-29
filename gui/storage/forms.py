@@ -629,6 +629,9 @@ class ZFSDataset_CreateForm(Form):
             msg = _(u"You already have a dataset with the same name")
             self._errors["dataset_name"] = self.error_class([msg])
             del cleaned_data["dataset_name"]
+        for field in ('dataset_refquota', 'dataset_quota', 'dataset_reserv', 'dataset_refreserv'):
+            if not cleaned_data.has_key(field):
+                cleaned_data[field] = ''
         r = re.compile('^(0|[1-9]\d*[mMgGtT]?)$')
         msg = _(u"Enter positive number (optionally suffixed by M, G, T), or, 0")
         if r.match(cleaned_data['dataset_refquota'].__str__())==None:
@@ -683,6 +686,9 @@ class ZFSDataset_EditForm(Form):
 
     def clean(self):
         cleaned_data = self.cleaned_data
+        for field in ('dataset_refquota', 'dataset_quota', 'dataset_reserv', 'dataset_refreserv'):
+            if not cleaned_data.has_key(field):
+                cleaned_data[field] = ''
         r = re.compile('^(0|[1-9]\d*[mMgGtT]?)$')
         msg = _(u"Enter positive number (optionally suffixed by M, G, T), or, 0")
         if r.match(cleaned_data['dataset_refquota'].__str__())==None:
@@ -818,7 +824,6 @@ class MountPointAccessForm(Form):
         if path:
             user, group = notifier().mp_get_owner(path)
             self.fields['mp_mode'].initial = "%.3o" % notifier().mp_get_permission(path)
-            self.fields['mp_user'].choices = ( (user, user), )
             self.fields['mp_user'].initial = user
             self.fields['mp_group'].initial = group
 
@@ -877,7 +882,7 @@ class PeriodicSnapForm(ModelForm):
         return cdata
 
 class ManualSnapshotForm(Form):
-    ms_recursively = forms.BooleanField(initial=False,required=False,label=_('Do snapshotting recursively'))
+    ms_recursively = forms.BooleanField(initial=False,required=False,label=_('Recursive snapshot'))
     ms_name = forms.CharField(label=_('Snapshot Name'))
     def __init__(self, *args, **kwargs):
         super(ManualSnapshotForm, self).__init__(*args, **kwargs)

@@ -25,6 +25,8 @@
 #
 # $FreeBSD$
 #####################################################################
+import socket
+import re
 
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
@@ -47,6 +49,10 @@ class MountPointForm(ModelForm):
         model = models.MountPoint
 
 class CIFS_ShareForm(ModelForm):
+    cifs_guest = forms.ChoiceField(choices=(),
+                                       widget=forms.Select(attrs=attrs_dict),
+                                       label=_('Guest Account')
+                                       )
     class Meta:
         model = models.CIFS_Share 
 
@@ -154,6 +160,33 @@ class NFS_ShareForm(ModelForm):
             self.fields['nfs_mapall_group'].widget = widgets.FilteringSelect()
             self.fields['nfs_maproot_group'].choices = self.grouplist
             self.fields['nfs_mapall_group'].choices = self.grouplist
+
+    def clean_nfs_network(self):
+        net = self.cleaned_data['nfs_network']
+        net = re.sub(r'\s{2,}', ' ', net).strip()
+        if not net:
+            return net
+        #only one address = netmask CIDR
+        if net.find(" ") == -1:
+            if net.find("/") == -1:
+                try:
+                    socket.inet_aton(net)
+                except socket.error:
+                    raise forms.ValidationError(_("The IP '%s' is not valid.") % net)
+            else:
+                try:
+                    socket.inet_aton(net.split("/")[0])
+                    if int(net.split("/")[1]) > 32 or int(net.split("/")[1]) < 0:
+                        raise
+                except:
+                    raise forms.ValidationError(_("The netmask '%s' is not valid.") % net)
+        else:
+            for ip in net.split(' '):
+                try:
+                    socket.inet_aton(ip)
+                except socket.error:
+                    raise forms.ValidationError(_("The IP '%s' is not valid.") % ip)
+        return net
 
     def clean_nfs_mapall_user(self):
         user = self.cleaned_data['nfs_mapall_user']

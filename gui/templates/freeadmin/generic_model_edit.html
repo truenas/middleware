@@ -20,6 +20,15 @@
             {% if deletable == False %}
             <button dojoType="dijit.form.Button" > 
                 <script type="dojo/event" event="onClick" args="e">
+                    try {
+                        var form = getForm(this);
+                        dojo.query('input[type=button],input[type=submit]', form.domNode).forEach(
+                            function(inputElem){
+                                 dijit.getEnclosingWidget(inputElem).set('disabled',true);
+                             }
+                          );
+                    } catch(err) {}
+
                     var rnode = getDialog(this);
                     if(!rnode) rnode = dijit.byId("edit_dialog");
                     dojo.xhrGet( {

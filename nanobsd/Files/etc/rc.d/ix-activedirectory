@@ -205,7 +205,7 @@ do_activedirectory_stuff()
 		setup_homedirs
 		create_cache_filesystem
 		sleep 10
-		/usr/sbin/service samba restart
+		/usr/sbin/service samba restart >/dev/null 2>&1
 	fi
 }
 
