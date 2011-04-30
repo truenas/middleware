@@ -132,7 +132,7 @@ class CIFS(Model):
             verbose_name=_("Allow Empty Password"))
     cifs_srv_smb_options = models.TextField(
             max_length=120, 
-            verbose_name=_("Auxiliary paramters"), 
+            verbose_name=_("Auxiliary parameters"), 
             blank=True,
             help_text=_("These parameters are added to [Global] section of smb.conf")
             )
@@ -183,7 +183,7 @@ class AFP(Model):
             help_text=_("Name of the server. If this field is left empty the default server is specified.")
             )
     afp_srv_guest = models.BooleanField(
-            verbose_name=_("Guess Access"),
+            verbose_name=_("Guest Access"),
             help_text=_("Allows guest access to all apple shares on this box.")
             )
     afp_srv_guest_user = models.CharField(
