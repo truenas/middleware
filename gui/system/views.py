@@ -51,7 +51,10 @@ def _system_info():
     uname2 = os.uname()[2]
     platform = os.popen("sysctl -n hw.model").read()
     date = os.popen('env -u TZ date').read()
+    tz = os.environ.pop('TZ', None)
     uptime = commands.getoutput("uptime | awk -F', load averages:' '{    print $1 }'")
+    if tz:
+        os.environ['TZ'] = tz
     loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
 
     try:
