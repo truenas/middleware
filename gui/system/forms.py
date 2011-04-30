@@ -29,6 +29,7 @@
 from django.utils.translation import ugettext_lazy as _
 from django.forms import FileField
 
+from freenasUI.storage.models import MountPoint
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.system import models
 from freenasUI.middleware.notifier import notifier
@@ -142,7 +143,6 @@ class SSLForm(ModelForm):
 class FirmwareTemporaryLocationForm(Form):
     mountpoint = forms.ChoiceField(label="Place to temporarily place firmware file", help_text = _("The system will use this place to temporarily store the firmware file before it's being applied."),choices=(), widget=forms.Select(attrs={ 'class': 'required' }),)
     def __init__(self, *args, **kwargs):
-        from freenasUI.storage.models import MountPoint
         super(FirmwareTemporaryLocationForm, self).__init__(*args, **kwargs)
         self.fields['mountpoint'].choices = [(x.mp_path, x.mp_path) for x in MountPoint.objects.all()]
     def done(self):

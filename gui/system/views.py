@@ -198,6 +198,8 @@ def config_upload(request):
         else:
             return render_to_response('system/config_upload.html', variables)
     else:
+        os.system("rm -rf /var/tmp/firmware")
+        os.system("/bin/ln -s /var/tmp/ /var/tmp/firmware")
         form = forms.ConfigUploadForm()
 
         variables = RequestContext(request, {
