@@ -499,6 +499,10 @@ class notifier:
                 self.__system("gnop destroy /dev/gpt/" + disk + ".nop")
             self.__system("zpool import %s" % (z_name))
 
+        # These should probably be options that are configurable from the GUI
+        self.__system("zfs aclmode=passthrough %s" % z_name)
+        self.__system("zfs aclinherit=passthrough %s" % z_name)
+
     # TODO: This is a rather ugly hack and duplicates some code, need to
     # TODO: cleanup this with the __create_zfs_volume.
     def zfs_volume_attach_group(self, group_id):
@@ -1182,6 +1186,9 @@ class notifier:
         imp = self.__pipeopen('zpool import %s' % name)
         imp.wait()
         if imp.returncode == 0:
+            # These should probably be options that are configurable from the GUI
+            self.__system("zfs aclmode=passthrough %s" % name)
+            self.__system("zfs aclinherit=passthrough %s" % name)
             return True
         return False
 
