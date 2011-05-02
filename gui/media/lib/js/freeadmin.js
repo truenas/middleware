@@ -355,7 +355,7 @@
                     obj.src = '/freenas/media/images/ui/buttons/off.png';
                 }
                 if(data.error) {
-                    alert(data.message);
+                    setMessage(data.message, "error");
                 }
                 dojo.destroy(n);
             },

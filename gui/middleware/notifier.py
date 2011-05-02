@@ -342,6 +342,7 @@ class notifier:
         self.__system("/usr/sbin/service ix-proftpd quietstart")
         self.__system("/usr/sbin/service proftpd forcestop")
         self.__system("/usr/sbin/service proftpd restart")
+        self.__system("sleep 1")
 
     def _start_ftp(self):
         self.__system("/usr/sbin/service ix-proftpd quietstart")
