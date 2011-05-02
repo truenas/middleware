@@ -42,6 +42,7 @@
     dojo.require("dojo._base.xhr");
     dojo.require("dojox.form.CheckedMultiSelect");
     dojo.require("dijit.form.MultiSelect");
+    dojo.require("dijit.ProgressBar");
 
     dojo._contentHandlers.text = (function(old){
       return function(xhr){
@@ -457,8 +458,11 @@
 
     };
 
-    formSubmit = function(item, e, url, callback) {
+    formSubmit = function(item, e, url, callback, attrs) {
         dojo.stopEvent(e); // prevent the default submit
+        if(!attrs) {
+            attrs = {};
+        }
         var qry = dojo.query('.saved', item.domNode)[0];
         if(qry) dojo.style(qry, 'display', 'none');
 
@@ -524,6 +528,9 @@
         } else {
 
             var newData = item.get("value");
+            if (attrs.progressbar == true) {
+                rnode.set('content', '<div style="width:300px" indeterminate="true" dojoType="dijit.ProgressBar"></div>');
+            }
             dojo.xhrPost( {
                 url: url,
                 content: newData,

@@ -2,7 +2,7 @@
 <form dojoType="dijit.form.Form">
     <script type="dojo/event" event="onSubmit" args="e">
         formSubmit(this, e,  '{% url storage_wizard %}',
-        function(){wizardcheckings();}); 
+        function(){wizardcheckings();}, {progressbar: true});
     </script>
     <table>
         {% if form.non_field_errors %}
