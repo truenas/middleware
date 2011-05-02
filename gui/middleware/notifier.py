@@ -262,7 +262,12 @@ class notifier:
         self.__system("/usr/sbin/service samba quietstart")
 
     def _started_ldap(self):
-        return True
+        c = self.__open_db()
+        c.execute("SELECT srv_enable FROM services_services WHERE srv_service='ldap' ORDER BY -id LIMIT 1")
+        enabled = c.fetchone()[0]
+        if enabled == 1:
+            return True
+        return False
 
     def _stop_ldap(self):
         self.__system("/usr/sbin/service ix-ldap quietstart")
@@ -278,7 +283,12 @@ class notifier:
         self.__system("/usr/sbin/service samba quietstart")
 
     def _started_activedirectory(self):
-        return True
+        c = self.__open_db()
+        c.execute("SELECT srv_enable FROM services_services WHERE srv_service='activedirectory' ORDER BY -id LIMIT 1")
+        enabled = c.fetchone()[0]
+        if enabled == 1:
+            return True
+        return False
 
     def _start_activedirectory(self):
         self.__system("/usr/sbin/service ix-kerberos quietstart")

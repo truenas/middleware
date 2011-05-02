@@ -209,7 +209,7 @@ def servicesToggleView(request, formname):
     svc_entry.save()
     # forcestop then start to make sure the service is of the same
     # status.
-    if changing_service == "ldap" or changing_service == "activedirectory":
+    if changing_service in ("ldap", "activedirectory"):
         if svc_entry.srv_enable == 1:
             started = notifier().start(changing_service)
         else:
