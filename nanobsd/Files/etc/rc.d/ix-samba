@@ -302,6 +302,7 @@ EOF
 
 		echo "    create mask = ${cifs_filemask}"
 		echo "    directory mask = ${cifs_dirmask}"
+		echo "    client ntlmv2 auth = yes"
 
 		if [ -n "${doscharset}" ]; then
 			echo "    dos charset = ${doscharset}"
@@ -387,54 +388,73 @@ generate_exports()
 	do
 		if [ -d "${mountpoint}" ]; then
 			echo "[${name}]"
-			echo "path = ${mountpoint}"
-			echo "printable = no"
-			echo "veto files = /.snap/"
+			echo "    path = ${mountpoint}"
+			echo "    printable = no"
+			echo "    veto files = /.snap/"
 			if [ -n "${comment}" ]; then
-				echo "comment = ${comment}"
+				echo "    comment = ${comment}"
 			fi
 			if [ "${cifsro}" = "0" ]; then
-				echo "writeable = yes"
+				echo "    writeable = yes"
 			else
-				echo "writeable = no"
+				echo "    writeable = no"
 			fi
 			if [ "${browsable}" = "0" ]; then
-				echo "browseable = no"
+				echo "    browseable = no"
 			else
-				echo "browseable = yes"
+				echo "    browseable = yes"
 			fi
+
+			#
+			#    This should always be set to "yes" if permission changes
+			#    on windows are desired.
+			#
 			if [ "${inheritperms}" = "1" ]; then
-				echo "inherit permissions = yes"
+				echo "    inherit permissions = yes"
 			else
-				echo "inherit permissions = no"
+				echo "    inherit permissions = no"
 			fi
 			if [ "${recyclebin}" = "1" ]; then
-				echo "vfs objects = recycle"
-				echo "recycle:repository = .recycle/%U"
-				echo "recycle:keeptree = yes"
-				echo "recycle:versions = yes"
-				echo "recycle:touch = yes"
-				echo "recycle:directory_mode = 0777"
-				echo "recycle:subdir_mode = 0700"
+			cat<<-EOF
+			    vfs objects = zfsacl recycle
+			    recycle:repository = .recycle/%U
+			    recycle:keeptree = yes
+			    recycle:versions = yes
+			    recycle:touch = yes
+			    recycle:directory_mode = 0777
+			    recycle:subdir_mode = 0700
+EOF
+			else
+				echo "    vfs objects = zfsacl"
 			fi
 			if [ "${showhiddenfiles}" = "1" ]; then
-				echo "hide dot files = no"
+				echo "    hide dot files = no"
 			fi
 			if [ -n "${hostsallow}" ]; then
-				echo "hosts allow = ${hostsallow}"
+				echo "    hosts allow = ${hostsallow}"
 			fi
 			if [ -n "${hostsdeny}" ]; then
-				echo "hosts deny = ${hostsdeny}"
+				echo "    hosts deny = ${hostsdeny}"
 			fi
 			if [ "${guestok}" = "1" -o "${guestonly}" = "1" ]; then
-				echo "guest account = ${guest}"
+				echo "    guest account = ${guest}"
 			fi
 			if [ "${guestok}" = "1" ]; then
-				echo "guest ok = yes"
+				echo "    guest ok = yes"
 			fi
 			if [ "${guestonly}" = "1" ]; then
-				echo "guest only = yes"
+				echo "    guest only = yes"
 			fi
+			cat<<-EOF
+			    inherit acls = Yes
+			    inherit owner = Yes
+			    map archive = No
+			    map readonly = no
+			    nfs4:mode = special
+			    nfs4:acedup = merge
+			    nfs4:chown = yes
+EOF
+
 			${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_auxsmbconf FROM sharing_cifs_share WHERE cifs_name=\"${name}\" ORDER BY -id LIMIT 1"
 			echo
 		fi
