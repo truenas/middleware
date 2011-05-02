@@ -224,17 +224,22 @@ class VolumeWizardForm(forms.Form):
         cleaned_data = self.cleaned_data
         volume_name = cleaned_data.get("volume_name", "")
         disks =  cleaned_data.get("volume_disks")
+        print cleaned_data
+        if cleaned_data.get("volume_fstype", None) not in ('ZFS', 'UFS'):
+            msg = _(u"You must select a filesystem")
+            self._errors["volume_fstype"] = self.error_class([msg])
+            cleaned_data.pop("volume_fstype", None)
         if len(disks) == 0 and models.Volume.objects.filter(vol_name = volume_name).count() == 0:
             msg = _(u"This field is required")
             self._errors["volume_disks"] = self.error_class([msg])
             del cleaned_data["volume_disks"]
-        if cleaned_data["volume_fstype"] == 'UFS' and \
+        if cleaned_data.get("volume_fstype", None) == 'UFS' and \
                 models.Volume.objects.filter(vol_name = volume_name).count() > 0:
             msg = _(u"You already have a volume with same name")
             self._errors["volume_name"] = self.error_class([msg])
             del cleaned_data["volume_name"]
 
-        if cleaned_data["volume_fstype"] == 'ZFS':
+        if cleaned_data.get("volume_fstype", None) == 'ZFS':
             if volume_name in ('log',):
                 msg = _(u"\"log\" is a reserved word and thus cannot be used")
                 self._errors["volume_name"] = self.error_class([msg])
