@@ -35,6 +35,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.common.system import get_freenas_version
 from freeadmin import navtree
 from system.models import Advanced
+from services.exceptions import ServiceFailed
 from dojango.views import datagrid_list
 
 def adminInterface(request, objtype = None):
@@ -257,12 +258,14 @@ def generic_model_edit(request, app, model, oid, mf=None):
     if request.method == "POST":
         mf = mf(request.POST, request.FILES, instance=instance)
         if mf.is_valid():
-            mf.save()
-            if request.GET.has_key("iframe"):
-                return HttpResponse("<html><body><textarea>"+simplejson.dumps({"error": False, "message": _("%s successfully updated.") % m._meta.verbose_name})+"</textarea></boby></html>")
-            else:
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully updated.") % m._meta.verbose_name}))
-            #return render_to_response('freeadmin/generic_model_edit_ok.html', context, mimetype='text/html')
+            try:
+                mf.save()
+                if request.GET.has_key("iframe"):
+                    return HttpResponse("<html><body><textarea>"+simplejson.dumps({"error": False, "message": _("%s successfully updated.") % m._meta.verbose_name})+"</textarea></boby></html>")
+                else:
+                    return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully updated.") % m._meta.verbose_name}))
+            except ServiceFailed, e:
+                return HttpResponse(simplejson.dumps({"error": True, "message": _("The service failed to restart.") % m._meta.verbose_name}))
 
     else:
         mf = mf(instance=instance)

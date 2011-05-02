@@ -199,6 +199,7 @@ class notifier:
             self._simplecmd("reload", what)
         except:
             self.restart(what)
+        return self.started(what)
 
     def change(self, what):
         """ Notify the service specified by "what" about a change.

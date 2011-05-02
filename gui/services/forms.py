@@ -42,6 +42,7 @@ from freenasUI.middleware.notifier import notifier
 from storage.forms import UnixPermissionField
 from dojango import forms
 from dojango.forms import widgets
+from services.exceptions import ServiceFailed
 
 """ Services """
 
@@ -102,7 +103,9 @@ class CIFSForm(ModelForm):
 
     def save(self):
         super(CIFSForm, self).save()
-        notifier().reload("cifs")
+        started = notifier().reload("cifs")
+        if started is False and models.services.objects.get(srv_service='cifs').srv_enable:
+            raise ServiceFailed("cifs", "The CIFS service failed to reload.")
 
 class AFPForm(ModelForm):
     class Meta:
@@ -131,14 +134,18 @@ class AFPForm(ModelForm):
         return user
     def save(self):
         super(AFPForm, self).save()
-        notifier().restart("afp")
+        started = notifier().restart("afp")
+        if started is False and models.services.objects.get(srv_service='afp').srv_enable:
+            raise ServiceFailed("afp", "The AFP service failed to reload.")
 
 class NFSForm(ModelForm):
     class Meta:
         model = models.NFS
     def save(self):
         super(NFSForm, self).save()
-        notifier().restart("nfs")
+        started = notifier().restart("nfs")
+        if started is False and models.services.objects.get(srv_service='nfs').srv_enable:
+            raise ServiceFailed("nfs", "The NFS service failed to reload.")
 
 class FTPForm(ModelForm):
 
@@ -222,7 +229,9 @@ class FTPForm(ModelForm):
 
     def save(self):
         super(FTPForm, self).save()
-        notifier().reload("ftp")
+        started = notifier().reload("ftp")
+        if started is False and models.services.objects.get(srv_service='ftp').srv_enable:
+            raise ServiceFailed("ftp", "The ftp service failed to start.")
 
 class TFTPForm(ModelForm):
     tftp_username = forms.ChoiceField(widget=forms.Select(attrs=attrs_dict),
@@ -247,24 +256,38 @@ class TFTPForm(ModelForm):
         return user
     def save(self):
         super(TFTPForm, self).save()
-        notifier().reload("tftp")
+        started = notifier().reload("tftp")
+        if started is False and models.services.objects.get(srv_service='tftp').srv_enable:
+            raise ServiceFailed("tftp", "The tftp service failed to reload.")
     class Meta:
         model = models.TFTP 
 
 class SSHForm(ModelForm):
     def save(self):
         super(SSHForm, self).save()
-        notifier().reload("ssh")
+        started = notifier().reload("ssh")
+        if started is False and models.services.objects.get(srv_service='ssh').srv_enable:
+            raise ServiceFailed("ssh", "The SSH service failed to reload.")
     class Meta:
         model = models.SSH 
 
 class DynamicDNSForm(ModelForm):
     class Meta:
         model = models.DynamicDNS
+    def save(self):
+        super(DynamicDNSForm, self).save()
+        started = notifier().restart("dynamicdns")
+        if started is False and models.services.objects.get(srv_service='dynamicdns').srv_enable:
+            raise ServiceFailed("dynamicdns", "The DynamicDNS service failed to reload.")
 
 class SNMPForm(ModelForm):
     class Meta:
         model = models.SNMP
+    def save(self):
+        super(SNMPForm, self).save()
+        started = notifier().restart("snmp")
+        if started is False and models.services.objects.get(srv_service='snmp').srv_enable:
+            raise ServiceFailed("snmp", "The DynamicDNS service failed to reload.")
 
 class UPSForm(ModelForm):
     class Meta:
@@ -276,7 +299,9 @@ class ActiveDirectoryForm(ModelForm):
         if self.files.has_key('file'):
             self.instance.ad_keytab = base64.encodestring(self.files['file'].read())
         super(ActiveDirectoryForm, self).save()
-        notifier().restart("activedirectory")
+        started = notifier().restart("activedirectory")
+        if started is False and models.services.objects.get(srv_service='activedirectory').srv_enable:
+            raise ServiceFailed("activedirectory", "The activedirectory service failed to reload.")
     class Meta:
         model = models.ActiveDirectory
         exclude = ('ad_keytab','ad_spn','ad_spnpw')
@@ -285,7 +310,9 @@ class ActiveDirectoryForm(ModelForm):
 class LDAPForm(ModelForm):
     def save(self):
         super(LDAPForm, self).save()
-        notifier().restart("ldap")
+        started = notifier().restart("ldap")
+        if started is False and models.services.objects.get(srv_service='ldap').srv_enable:
+            raise ServiceFailed("ldap", "The ldap service failed to reload.")
     class Meta:
         model = models.LDAP
         widgets = {'ldap_rootbindpw': forms.widgets.PasswordInput(render_value=True), } 
@@ -343,7 +370,9 @@ class iSCSITargetAuthCredentialForm(ModelForm):
         oAuthCredential.iscsi_target_auth_peersecret = self.cleaned_data["iscsi_target_auth_peersecret1"]
         if commit:
             oAuthCredential.save()
-        notifier().reload("iscsitarget")
+        started = notifier().reload("iscsitarget")
+        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
+            raise ServiceFailed("iscsitarget", "The iSCSI service failed to reload.")
         return oAuthCredential
 
     def __init__(self, *args, **kwargs):
@@ -378,7 +407,9 @@ class iSCSITargetToExtentForm(ModelForm):
 
     def save(self):
         super(iSCSITargetToExtentForm, self).save()
-        notifier().reload("iscsitarget")
+        started = notifier().reload("iscsitarget")
+        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
+            raise ServiceFailed("iscsitarget", "The iSCSI service failed to reload.")
 
 class iSCSITargetGlobalConfigurationForm(ModelForm):
     iscsi_luc_authgroup = forms.ChoiceField(label=_("Controller Auth Group"),
@@ -490,7 +521,9 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
     def save(self):
         super(iSCSITargetGlobalConfigurationForm, self).save()
-        notifier().reload("iscsitarget")
+        started = notifier().reload("iscsitarget")
+        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
+            raise ServiceFailed("iscsitarget", "The iSCSI service failed to reload.")
 
 class iSCSITargetExtentEditForm(ModelForm):
     class Meta:
@@ -518,7 +551,9 @@ class iSCSITargetExtentEditForm(ModelForm):
                 os.makedirs(dirs)
             except Exception, e:
                 pass
-        notifier().reload("iscsitarget")
+        started = notifier().reload("iscsitarget")
+        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
+            raise ServiceFailed("iscsitarget", "The iSCSI service failed to reload.")
 
 class iSCSITargetFileExtentForm(ModelForm):
     class Meta:
@@ -563,7 +598,9 @@ class iSCSITargetFileExtentForm(ModelForm):
                 os.makedirs(dirs)
             except Exception, e:
                 pass
-        notifier().reload("iscsitarget")
+        started = notifier().reload("iscsitarget")
+        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
+            raise ServiceFailed("iscsitarget", "The iSCSI service failed to reload.")
         return oExtent
 
 class iSCSITargetDeviceExtentForm(ModelForm):
@@ -639,7 +676,9 @@ class iSCSITargetDeviceExtentForm(ModelForm):
                            disk_description = 'iSCSI exported disk',
                            disk_group = grp)
             diskobj.save()
-        notifier().reload("iscsitarget")
+        started = notifier().reload("iscsitarget")
+        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
+            raise ServiceFailed("iscsitarget", "The iSCSI service failed to reload.")
         return oExtent
 
 class iSCSITargetPortalForm(ModelForm):
@@ -658,9 +697,10 @@ class iSCSITargetPortalForm(ModelForm):
             raise forms.ValidationError(_("Your Portal Group ID cannot be higher than %d") % higher)
         return tag
     def save(self):
-        
         super(iSCSITargetPortalForm, self).save()
-        notifier().reload("iscsitarget")
+        started = notifier().reload("iscsitarget")
+        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
+            raise ServiceFailed("iscsitarget", "The iSCSI service failed to reload.")
 
 class iSCSITargetAuthorizedInitiatorForm(ModelForm):
     def __init__(self, *args, **kwargs):
@@ -679,7 +719,9 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
         return tag
     def save(self):
         super(iSCSITargetAuthorizedInitiatorForm, self).save()
-        notifier().reload("iscsitarget")
+        started = notifier().reload("iscsitarget")
+        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
+            raise ServiceFailed("iscsitarget", "The iSCSI service failed to reload.")
 
 class iSCSITargetForm(ModelForm):
     iscsi_target_authgroup = forms.ChoiceField(label=_("Authentication Group number"))
@@ -709,4 +751,6 @@ class iSCSITargetForm(ModelForm):
 
     def save(self):
         super(iSCSITargetForm, self).save()
-        notifier().reload("iscsitarget")
+        started = notifier().reload("iscsitarget")
+        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
+            raise ServiceFailed("iscsitarget", "The iSCSI service failed to reload.")
