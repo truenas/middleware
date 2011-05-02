@@ -287,7 +287,7 @@ class SNMPForm(ModelForm):
         super(SNMPForm, self).save()
         started = notifier().restart("snmp")
         if started is False and models.services.objects.get(srv_service='snmp').srv_enable:
-            raise ServiceFailed("snmp", "The DynamicDNS service failed to reload.")
+            raise ServiceFailed("snmp", "The SNMP service failed to reload.")
 
 class UPSForm(ModelForm):
     class Meta:

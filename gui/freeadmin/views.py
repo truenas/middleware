@@ -40,12 +40,7 @@ from dojango.views import datagrid_list
 
 def adminInterface(request, objtype = None):
 
-    adv = Advanced.objects.all().order_by('-id')[0]
-    context = RequestContext(request, {
-        'consolemsg': adv.adv_consolemsg,
-        'freenas_version': get_freenas_version(),
-    })
-
+    context = RequestContext(request)
     return render_to_response('freeadmin/index.html', context)
 
 def menu(request, objtype = None):
