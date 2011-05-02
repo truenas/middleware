@@ -25,7 +25,6 @@
 #
 # $FreeBSD$
 #####################################################################
-import socket
 import re
 
 from django.utils.translation import ugettext as _
@@ -39,7 +38,8 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups, \
                                          FreeNAS_User, FreeNAS_Group
-
+from ipaddr import IPAddress, IPNetwork, \
+                   AddressValueError, NetmaskValueError
 
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 
@@ -166,25 +166,19 @@ class NFS_ShareForm(ModelForm):
         net = re.sub(r'\s{2,}', ' ', net).strip()
         if not net:
             return net
-        #only one address = netmask CIDR
+        #only one address = CIDR or IP
         if net.find(" ") == -1:
-            if net.find("/") == -1:
-                try:
-                    socket.inet_aton(net)
-                except socket.error:
-                    raise forms.ValidationError(_("The IP '%s' is not valid.") % net)
-            else:
-                try:
-                    socket.inet_aton(net.split("/")[0])
-                    if int(net.split("/")[1]) > 32 or int(net.split("/")[1]) < 0:
-                        raise
-                except:
-                    raise forms.ValidationError(_("The netmask '%s' is not valid.") % net)
+            try:
+                IPNetwork(net.encode('utf-8'))
+            except NetmaskValueError:
+                IPAddress(net.encode('utf-8'))
+            except (AddressValueError, ValueError):
+                raise forms.ValidationError(_("The field is a not a valid IP address or network"))
         else:
             for ip in net.split(' '):
                 try:
-                    socket.inet_aton(ip)
-                except socket.error:
+                    IPAddress(ip.encode('utf-8'))
+                except (AddressValueError, ValueError):
                     raise forms.ValidationError(_("The IP '%s' is not valid.") % ip)
         return net
 
@@ -239,13 +233,6 @@ class NFS_ShareForm(ModelForm):
             if cdata.get('nfs_mapall_group', None) != None:
                 self._errors['nfs_mapall_group'] = self.error_class([_("Maproot user/group disqualifies Mapall"),])
                 del cdata['nfs_mapall_group']
-        #elif cdata.get('nfs_mapall_user', False) or cdata.get('nfs_mapall_group', False):
-        #    if cdata.get('nfs_maproot_user', False) != False:
-        #        self._errors['nfs_maproot_user'] = self.error_class([_("Mapall user/group disqualifies Maproot"),])
-        #        del cdata['nfs_maproot_user']
-        #    if cdata.get('nfs_maproot_group', False) != False:
-        #        self._errors['nfs_maproot_group'] = self.error_class([_("Mapall user/group disqualifies Maproot"),])
-        #        del cdata['nfs_maproot_group']
 
         return cdata
 
