@@ -341,7 +341,30 @@
     /* end Menu */
 
     function toggle_service(obj) {
-         obj.src = '/services/toggle/' + obj.name + '/' + Date();
+        var td = obj.parentNode;
+        var n = dojo.create("div", { innerHTML: "loading..." }, td);
+
+        var xhrArgs = {
+            url: "/services/toggle/"+obj.name+"/",
+            postData: "Some random text",
+            handleAs: "json",
+            load: function(data) {
+                if(data.status == 'on') {
+                    obj.src = '/freenas/media/images/ui/buttons/on.png';
+                } else if(data.status == 'off') {
+                    obj.src = '/freenas/media/images/ui/buttons/off.png';
+                }
+                if(data.error) {
+                    alert(data.message);
+                }
+                dojo.destroy(n);
+            },
+            error: function(error) {
+                //alert
+            }
+        }
+        var deferred = dojo.xhrPost(xhrArgs);
+
     }
 
     function buttongrid(v) {
