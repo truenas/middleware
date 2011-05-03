@@ -62,3 +62,39 @@ class UrlsTest(TestCase):
     def test_advanced(self):
         response = self.client.get(reverse('system_advanced'))
         self.assertEqual(response.status_code, 200)
+
+    def test_info(self):
+        response = self.client.get(reverse('system_info'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_config(self):
+        response = self.client.get(reverse('system_config'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_configsave(self):
+        response = self.client.get(reverse('system_configsave'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_varlog(self):
+        response = self.client.get(reverse('system_messages', kwargs={'lines': 200}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_top(self):
+        response = self.client.get(reverse('system_top'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_testmail(self):
+        response = self.client.get(reverse('system_testmail'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_clearcache(self):
+        response = self.client.get(reverse('system_clearcache'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_clearcache(self):
+        response = self.client.get(reverse('system_clearcache'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_firmware(self):
+        response = self.client.get(reverse('system_firmwizard'))
+        self.assertEqual(response.status_code, 200)
