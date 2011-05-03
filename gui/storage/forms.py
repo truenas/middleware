@@ -224,7 +224,6 @@ class VolumeWizardForm(forms.Form):
         cleaned_data = self.cleaned_data
         volume_name = cleaned_data.get("volume_name", "")
         disks =  cleaned_data.get("volume_disks")
-        print cleaned_data
         if cleaned_data.get("volume_fstype", None) not in ('ZFS', 'UFS'):
             msg = _(u"You must select a filesystem")
             self._errors["volume_fstype"] = self.error_class([msg])
