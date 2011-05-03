@@ -152,9 +152,13 @@ class ExceptionReporter(debug.ExceptionReporter):
         return t.render(c)
 
 def server_error(request, *args, **kwargs):
-    reporter = ExceptionReporter(request, *sys.exc_info())
-    html = reporter.get_traceback_html()
-    return HttpResponse(html, mimetype='text/html')
+    adv = Advanced.objects.all().order_by('-id')[0]
+    if adv.adv_traceback:
+        reporter = ExceptionReporter(request, *sys.exc_info())
+        html = reporter.get_traceback_html()
+        return HttpResponse(html, mimetype='text/html')
+    else:
+        return debug.technical_500_response(request, *sys.exc_info())
 
 """
 Magic happens here

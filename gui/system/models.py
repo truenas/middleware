@@ -100,6 +100,9 @@ class Advanced(Model):
     adv_consolemsg = models.BooleanField(
             verbose_name = _("Show console messages in the footer (Requires UI reload)"),
             default=True)
+    adv_traceback = models.BooleanField(
+            verbose_name = _("Show tracebacks in case of fatal errors"),
+            default=False)
     # TODO: need geom_eli in kernel
     #adv_encswap = models.BooleanField(
     #        verbose_name = _("Encrypt swap space"),
