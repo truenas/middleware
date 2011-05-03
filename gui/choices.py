@@ -310,7 +310,7 @@ class NICChoices:
         # Remove lo0 from choices
         if 'lo0' in self._NIClist:
             self._NIClist.remove('lo0')
-        conn = sqlite3.connect(freenasUI.settings.DATABASE_NAME)
+        conn = sqlite3.connect(freenasUI.settings.DATABASES['default']['NAME'])
         c = conn.cursor()
         # Remove interfaces that are parent devices of a lagg
         # Database queries are wrapped in try/except as this is run

@@ -618,7 +618,7 @@ class FreeNAS_LDAP_Users:
         for user in self.__users:
             yield user
 
-    def __get_groups(self, l = LDAP.objects.all()[0], f = None):
+    def __get_groups(self, l = LDAP.objects.all().order_by('-id')[0], f = None):
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_groups: enter")
 
         if not self.__gcache.empty():
