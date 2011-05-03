@@ -26,26 +26,16 @@
 # $FreeBSD$
 #####################################################################
 
-from django.test import TestCase
-from django.test.client import Client
 from django.core.urlresolvers import reverse
-from django.contrib.auth.models import User
 from django.conf import settings
 
 from system import models
+from freeadmin.tests import TestCase
 
 class UrlsTest(TestCase):
 
     def setUp(self):
-        try:
-            user = User.objects.get(username='admin')
-        except:
-            user = User.objects.create_user('admin', 'freenas@local.domain', 'freenas')
-        self.client = Client()
-        login = self.client.login(username='admin', password='freenas')
-
-        self.assertEqual(login, True)
-
+        super(UrlsTest, self).setUp()
         models.Settings.objects.create()
         models.Email.objects.create()
         models.Advanced.objects.create()
