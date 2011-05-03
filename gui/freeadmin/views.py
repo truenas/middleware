@@ -73,7 +73,13 @@ class ExceptionReporter(debug.ExceptionReporter):
 
     is_email = False
     def get_traceback_html(self):
-        "Return HTML code for traceback."
+        """
+        Copied from debug.ExceptionReporter
+        The Template was replaced to use 500_freenas.html instead 
+        of the hard-coded one
+
+        Return HTML code for traceback."
+        """
 
         if self.exc_type and issubclass(self.exc_type, TemplateDoesNotExist):
             from django.template.loader import template_source_loaders
