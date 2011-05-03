@@ -31,8 +31,8 @@ import os
     
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-DEBUG = True
-
+DEBUG = False
+#DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/account/login/'

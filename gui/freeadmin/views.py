@@ -25,18 +25,28 @@
 #
 # $FreeBSD$
 #####################################################################
+import sys
+import re
+import datetime
+
 from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils import simplejson
 from django.template.loader import get_template
 from django.utils.translation import ugettext as _
+from django.views import debug
+from django.template import (Context, TemplateDoesNotExist, TemplateSyntaxError)
+from django.conf import settings
+from django.template.defaultfilters import force_escape, pprint
+from django.utils.encoding import smart_unicode, smart_str
 
 from freenasUI.common.system import get_freenas_version
 from freeadmin import navtree
 from system.models import Advanced
 from services.exceptions import ServiceFailed
 from dojango.views import datagrid_list
+from django.views.defaults import server_error
 
 def adminInterface(request, objtype = None):
 
@@ -51,6 +61,94 @@ def menu(request, objtype = None):
     #json2nav(json)['main']
 
     return HttpResponse( json , mimetype="application/json")
+
+"""
+We use the django debug 500 classes to show the traceback to the user
+instead of the useless "An error ocurried" used by dojo in case of 
+HTTP 500 responses.
+
+As this is not a public API of django we need to duplicate some code
+"""
+class ExceptionReporter(debug.ExceptionReporter):
+
+    is_email = False
+    def get_traceback_html(self):
+        "Return HTML code for traceback."
+
+        if self.exc_type and issubclass(self.exc_type, TemplateDoesNotExist):
+            from django.template.loader import template_source_loaders
+            self.template_does_not_exist = True
+            self.loader_debug_info = []
+            for loader in template_source_loaders:
+                try:
+                    module = import_module(loader.__module__)
+                    if hasattr(loader, '__class__'):
+                        source_list_func = loader.get_template_sources
+                    else: # NOTE: Remember to remove this branch when we deprecate old template loaders in 1.4
+                        source_list_func = module.get_template_sources
+                    # NOTE: This assumes exc_value is the name of the template that
+                    # the loader attempted to load.
+                    template_list = [{'name': t, 'exists': os.path.exists(t)} \
+                        for t in source_list_func(str(self.exc_value))]
+                except (ImportError, AttributeError):
+                    template_list = []
+                if hasattr(loader, '__class__'):
+                    loader_name = loader.__module__ + '.' + loader.__class__.__name__
+                else: # NOTE: Remember to remove this branch when we deprecate old template loaders in 1.4
+                    loader_name = loader.__module__ + '.' + loader.__name__
+                self.loader_debug_info.append({
+                    'loader': loader_name,
+                    'templates': template_list,
+                })
+        if (settings.TEMPLATE_DEBUG and hasattr(self.exc_value, 'source') and
+            isinstance(self.exc_value, TemplateSyntaxError)):
+            self.get_template_exception_info()
+
+        frames = self.get_traceback_frames()
+        for i, frame in enumerate(frames):
+            if 'vars' in frame:
+                frame['vars'] = [(k, force_escape(pprint(v))) for k, v in frame['vars']]
+            frames[i] = frame
+
+        unicode_hint = ''
+        if self.exc_type and issubclass(self.exc_type, UnicodeError):
+            start = getattr(self.exc_value, 'start', None)
+            end = getattr(self.exc_value, 'end', None)
+            if start is not None and end is not None:
+                unicode_str = self.exc_value.args[1]
+                unicode_hint = smart_unicode(unicode_str[max(start-5, 0):min(end+5, len(unicode_str))], 'ascii', errors='replace')
+        from django import get_version
+        from django.template.loader import get_template
+        t = get_template("500_freenas.html")
+        #t = Template(TECHNICAL_500_TEMPLATE, name='Technical 500 template')
+        c = Context({
+            'is_email': self.is_email,
+            'unicode_hint': unicode_hint,
+            'frames': frames,
+            'request': self.request,
+            'settings': debug.get_safe_settings(),
+            'sys_executable': sys.executable,
+            'sys_version_info': '%d.%d.%d' % sys.version_info[0:3],
+            'server_time': datetime.datetime.now(),
+            'django_version_info': get_version(),
+            'sys_path' : sys.path,
+            'template_info': self.template_info,
+            'template_does_not_exist': self.template_does_not_exist,
+            'loader_debug_info': self.loader_debug_info,
+        })
+        # Check whether exception info is available
+        if self.exc_type:
+            c['exception_type'] = self.exc_type.__name__
+        if self.exc_value:
+            c['exception_value'] = smart_unicode(self.exc_value, errors='replace')
+        if frames:
+            c['lastframe'] = frames[-1]
+        return t.render(c)
+
+def server_error(request, *args, **kwargs):
+    reporter = ExceptionReporter(request, *sys.exc_info())
+    html = reporter.get_traceback_html()
+    return HttpResponse(html, mimetype='text/html')
 
 """
 Magic happens here

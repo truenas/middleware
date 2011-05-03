@@ -35,6 +35,8 @@ from freeadmin import navtree
 from freeadmin.middleware import public
 navtree.auto_generate()
 
+handler500 = 'freeadmin.views.server_error'
+
 urlpatterns = patterns('',
     ('^$', adminInterface),
     (r'^reporting/graphs/(?P<path>.*)',
