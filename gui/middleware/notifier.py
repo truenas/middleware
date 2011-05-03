@@ -1210,7 +1210,7 @@ class notifier:
                 except:
                     snaplist = []
                     mostrecent = True
-                snaplist.append(dict([('fullname', snapname), ('name', name), ('used', used), ('refer', refer), ('mostrecent', mostrecent)]))
+                snaplist.insert(0, dict([('fullname', snapname), ('name', name), ('used', used), ('refer', refer), ('mostrecent', mostrecent)]))
                 fsinfo[fs] = snaplist
         return fsinfo
 
