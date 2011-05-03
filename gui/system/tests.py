@@ -26,26 +26,39 @@
 # $FreeBSD$
 #####################################################################
 
-"""
-This file demonstrates two different styles of tests (one doctest and one
-unittest). These will both pass when you run "manage.py test".
-
-Replace these with more appropriate tests for your application.
-"""
-
 from django.test import TestCase
+from django.test.client import Client
+from django.core.urlresolvers import reverse
+from django.contrib.auth.models import User
+from django.conf import settings
 
-class SimpleTest(TestCase):
-    def test_basic_addition(self):
-        """
-        Tests that 1 + 1 always equals 2.
-        """
-        self.failUnlessEqual(1 + 1, 2)
+from system import models
 
-__test__ = {"doctest": """
-Another way to test that 1 + 1 is equal to 2.
+class UrlsTest(TestCase):
 
->>> 1 + 1 == 2
-True
-"""}
+    def setUp(self):
+        try:
+            user = User.objects.get(username='admin')
+        except:
+            user = User.objects.create_user('admin', 'freenas@local.domain', 'freenas')
+        self.client = Client()
+        login = self.client.login(username='admin', password='freenas')
 
+        self.assertEqual(login, True)
+
+        models.Settings.objects.create()
+        models.Email.objects.create()
+        models.Advanced.objects.create()
+        models.SSL.objects.create()
+
+    def test_reporting(self):
+        response = self.client.get(reverse('system_reporting'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_settings(self):
+        response = self.client.get(reverse('system_settings'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_advanced(self):
+        response = self.client.get(reverse('system_advanced'))
+        self.assertEqual(response.status_code, 200)
