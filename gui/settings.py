@@ -48,6 +48,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': '/data/freenas-v1.db',
+        'TEST_NAME': os.path.join(HERE, "test.db"),
     }
 }
 
