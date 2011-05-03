@@ -36,6 +36,7 @@ from freeadmin.middleware import public
 navtree.auto_generate()
 
 handler500 = 'freeadmin.views.server_error'
+handler404 = 'django.views.defaults.page_not_found'
 
 urlpatterns = patterns('',
     ('^$', adminInterface),
