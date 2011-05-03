@@ -479,42 +479,46 @@ class VolumeAutoImportForm(forms.Form):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        volume_name = cleaned_data.get("volume_name")
-        if models.Volume.objects.filter(vol_name = volume_name).count() > 0:
-            msg = _(u"You already have a volume with same name")
-            self._errors["volume_disks"] = self.error_class([msg])
-            del cleaned_data["volume_disks"]
-
         vols = notifier().detect_volumes()
         for vol in vols:
             if vol['label'] == cleaned_data['volume_disks']:
                 cleaned_data['volume'] = vol
                 break
 
-        if cleaned_data['volume']['type'] == 'geom':
-            if cleaned_data['volume']['group_type'] == 'mirror':
-                dev = "/dev/mirror/%s%s" % (cleaned_data['volume']['label'],
-                        cleaned_data['volume']['group_type'])
-            elif cleaned_data['volume']['group_type'] == 'stripe':
-                dev = "/dev/stripe/%s%s" % (cleaned_data['volume']['label'],
-                        cleaned_data['volume']['group_type'])
-            elif cleaned_data['volume']['group_type'] == 'raid3':
-                dev = "/dev/raid3/%s%s" % (cleaned_data['volume']['label'],
-                        cleaned_data['volume']['group_type'])
+        if cleaned_data.get('volume', None) == None:
+            self._errors['__all__'] = self.error_class([_("You must select a volume.")])
+
+        else:
+            if models.Volume.objects.filter(vol_name = \
+                        cleaned_data['volume']['label']).count() > 0:
+                msg = _(u"You already have a volume with same name")
+                self._errors["volume_disks"] = self.error_class([msg])
+                del cleaned_data["volume_disks"]
+
+            if cleaned_data['volume']['type'] == 'geom':
+                if cleaned_data['volume']['group_type'] == 'mirror':
+                    dev = "/dev/mirror/%s%s" % (cleaned_data['volume']['label'],
+                            cleaned_data['volume']['group_type'])
+                elif cleaned_data['volume']['group_type'] == 'stripe':
+                    dev = "/dev/stripe/%s%s" % (cleaned_data['volume']['label'],
+                            cleaned_data['volume']['group_type'])
+                elif cleaned_data['volume']['group_type'] == 'raid3':
+                    dev = "/dev/raid3/%s%s" % (cleaned_data['volume']['label'],
+                            cleaned_data['volume']['group_type'])
+                else:
+                    #TODO
+                    raise NotImplementedError
+                isvalid = notifier().precheck_partition(dev, 'UFS')
+                if not isvalid:
+                    msg = _(u"The selected disks were not verified for this import rules.")
+                    self._errors["volume_disks"] = self.error_class([msg])
+                    if cleaned_data.has_key("volume_disks"):
+                        del cleaned_data["volume_disks"]
+            elif cleaned_data['volume']['type'] == 'zfs':
+                pass
             else:
                 #TODO
                 raise NotImplementedError
-            isvalid = notifier().precheck_partition(dev, 'UFS')
-            if not isvalid:
-                msg = _(u"The selected disks were not verified for this import rules.")
-                self._errors["volume_disks"] = self.error_class([msg])
-                if cleaned_data.has_key("volume_disks"):
-                    del cleaned_data["volume_disks"]
-        elif cleaned_data['volume']['type'] == 'zfs':
-            pass
-        else:
-            #TODO
-            raise NotImplementedError
 
         return cleaned_data
 
