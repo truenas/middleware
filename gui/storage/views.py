@@ -288,7 +288,7 @@ def dataset_create(request):
         'mp_list': mp_list,
         'form': dataset_form
     })
-    return render_to_response('storage/datasets2.html', variables)
+    return render_to_response('storage/datasets.html', variables)
 
 def dataset_edit(request, object_id):
     mp = models.MountPoint.objects.get(pk=object_id)
@@ -393,7 +393,7 @@ def dataset_delete(request, object_id):
             'focused_tab' : 'storage',
             'object': obj,
         })
-        return render_to_response('storage/dataset_confirm_delete2.html', c)
+        return render_to_response('storage/dataset_confirm_delete.html', c)
 
 def snapshot_delete(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
@@ -408,7 +408,7 @@ def snapshot_delete(request, dataset, snapname):
             'snapname' : snapname,
             'dataset' : dataset,
         })
-        return render_to_response('storage/snapshot_confirm_delete2.html', c)
+        return render_to_response('storage/snapshot_confirm_delete.html', c)
 
 def snapshot_rollback(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
@@ -423,7 +423,7 @@ def snapshot_rollback(request, dataset, snapname):
             'snapname' : snapname,
             'dataset' : dataset,
         })
-        return render_to_response('storage/snapshot_confirm_rollback2.html', c)
+        return render_to_response('storage/snapshot_confirm_rollback.html', c)
 
 def periodicsnap(request):
 
