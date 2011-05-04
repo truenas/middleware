@@ -276,7 +276,7 @@ class ActiveDirectoryForm(ModelForm):
         if self.files.has_key('file'):
             self.instance.ad_keytab = base64.encodestring(self.files['file'].read())
         super(ActiveDirectoryForm, self).save()
-        notifier().restart("activedirectory")
+        notifier().restart("ix-activedirectory")
     class Meta:
         model = models.ActiveDirectory
         exclude = ('ad_keytab','ad_spn','ad_spnpw')
