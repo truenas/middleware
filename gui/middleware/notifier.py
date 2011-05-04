@@ -945,6 +945,28 @@ class notifier:
         self.__system("/usr/bin/xz -cd %s | sh /root/update && touch /data/need-update" % (path))
         self.__system("/bin/rm -fr /var/tmp/firmware/firmware.xz")
 
+    def apply_servicepack(self):
+        self.__system("/usr/bin/xz -cd /var/tmp/firmware/servicepack.txz | /usr/bin/tar xf - -C /var/tmp/firmware/ etc/servicepack/version.expected")
+        try:
+            f = open('/etc/version.freenas', 'r')
+            freenas_build = f.read()
+            f.close()
+        except:
+            return "Current FreeNAS version can not be recognized"
+        try:
+            f = open('/var/tmp/firmware/etc/servicepack/version.expected', 'r')
+            expected_build = f.read()
+            f.close()
+        except:
+            return "Expected FreeNAS version can not be recognized"
+        if freenas_build != expected_build:
+            return "Can not apply service pack because version mismatch"
+        self.__system("/sbin/mount -uw /")
+        self.__system("/usr/bin/xz -cd /var/tmp/firmware/servicepack.txz | /usr/bin/tar xf - -C /")
+        self.__system("/bin/sh /etc/servicepack/post-install")
+        self.__system("/bin/rm -fr /var/tmp/firmware/servicepack.xz")
+        self.__system("/bin/rm -fr /var/tmp/firmware/etc")
+
     def get_volume_status(self, name, fs, group_type):
         if fs == 'ZFS':
             result = self.__pipeopen('zpool list -H -o health %s' % name.__str__()).communicate()[0].strip('\n')
