@@ -86,7 +86,7 @@ STATIC_ROOT = os.path.join(HERE, "static")
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
-STATIC_URL = '/static/'
+STATIC_URL = MEDIA_URL
 
 STATICFILES_DIRS = (
     os.path.join(HERE, "media"),
