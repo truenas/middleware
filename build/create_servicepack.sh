@@ -97,7 +97,7 @@ echo '#!/bin/sh' > ${POSTINSTALL}
 echo 'mount -uw /' >> ${POSTINSTALL}
 echo 'rm -f /etc/servicepack/version.expected' >> ${POSTINSTALL}
 
-sed -e 's/^/rm -fr /' ${PREFIX}/changed.list >> ${POSTINSTALL}
+sed -e 's/^/rm -fr /' ${PREFIX}/removed.list >> ${POSTINSTALL}
 
 echo '# All changes to firmware volume must be done before this line'
 echo 'mount -ur /' >> ${POSTINSTALL}
