@@ -36,11 +36,12 @@ if [ $# != 2 ]; then
 	exit 1
 fi
 
-echo -n "Clearing out and recreating working directory at ${PREFIX}"
+echo -n "Clearing out and recreating working directory at ${PREFIX}... "
 rm -fr ${PREFIX}
 mkdir -p ${PREFIX}
+echo "Done!"
 
-echo -n "Creating vnode-based mds..."
+echo -n "Creating vnode-based mds... "
 
 # Original image
 MD1=`mdconfig -a -t vnode -f $1`
@@ -50,7 +51,7 @@ MD2=`mdconfig -a -t vnode -f $2`
 
 echo "Done!"
 
-echo -n "Mounting mds..."
+echo -n "Mounting mds... "
 
 # Trees to mount
 rm -fr ${PREFIX}/release ${PREFIX}/patched ${PREFIX}/servicepack
@@ -63,7 +64,7 @@ mount -o rdonly /dev/${MD2}a ${PREFIX}/patched
 
 echo "Done!"
 
-echo -n "Computing SHA256 checksums..."
+echo -n "Computing SHA256 checksums... "
 
 # Generate sha256 checksums
 cd ${PREFIX}/release
@@ -79,13 +80,13 @@ comm -13 ${PREFIX}/release.sha256 ${PREFIX}/patched.sha256 | cut -c9- | rev | cu
 
 echo "Done!"
 
-echo -n "Copying changed files..."
+echo -n "Copying changed files... "
 
 tar cf - -T ${PREFIX}/changed.list | tar xf - -C ${PREFIX}/servicepack
 
 echo "Done!"
 
-echo -n "Generating post-install files..."
+echo -n "Generating post-install files... "
 
 mkdir -p ${PREFIX}/servicepack/etc/servicepack
 cp ${PREFIX}/release/etc/version.freenas ${PREFIX}/servicepack/etc/servicepack/version.expected
@@ -105,18 +106,18 @@ chmod +x ${POSTINSTALL}
 
 echo "Done!"
 
-echo "Packing the service pack..."
+echo "Packing the service pack... "
 
-rm ${PREFIX}/servicepack.tar.xz
+rm -f ${PREFIX}/servicepack.tar.xz
 cd ${PREFIX}
 tar cf servicepack.tar -C ${PREFIX}/servicepack .
 xz -9ve servicepack.tar
 
-echo -n "Unmounting and destroying md devices..."
+echo -n "Unmounting and destroying md devices... "
 
-umount ${PREFIX}/release
-umount ${PREFIX}/patched
+umount -f ${PREFIX}/release
 mdconfig -d -u `echo ${MD1} | cut -c3-`
+umount -f ${PREFIX}/patched
 mdconfig -d -u `echo ${MD2} | cut -c3-`
 
 echo "Done!"
