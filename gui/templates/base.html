@@ -7,7 +7,7 @@
     {% include "dojango/include.html" %}
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/form/resources/FileInput.css" />
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/form/resources/CheckedMultiSelect.css" />
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/template2.css" type="text/css" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/template.css" type="text/css" />
 <link href="{{ STATIC_URL }}favicon.ico" rel="shortcut icon" type="image/x-icon" />
 {% block dojango_header_extra %}{% endblock %}
 </head>
@@ -27,6 +27,8 @@
             region="left" splitter="true">
         </div>
         <div dojoType="dijit.layout.TabContainer" region="center" id="content">
+{% block dojango_content %}
+{% endblock %}
         </div>
         <div dojoType="dijit.layout.ContentPane" style="height:80px;width:100%;padding-bottom:0px;" region="bottom">
              {% block footer %}
@@ -34,6 +36,5 @@
              {% endblock %}
         </div>
     </div>
-{% block dojango_content %}{% endblock %}
 </body>
 </html>
