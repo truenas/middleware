@@ -1,5 +1,5 @@
---- src/sys/dev/re/if_re.c.orig	2011-01-20 09:41:24.000000000 -0800
-+++ src/sys/dev/re/if_re.c	2011-05-04 14:41:48.000000000 -0700
+--- sys/dev/re/if_re.c.orig	2011-01-20 09:41:24.000000000 -0800
++++ sys/dev/re/if_re.c	2011-05-04 14:41:48.000000000 -0700
 @@ -31,7 +31,7 @@
   */
  
@@ -1400,8 +1400,8 @@
 +	return (sysctl_int_range(oidp, arg1, arg2, req, RL_TIMER_MIN,
 +	    RL_TIMER_MAX));
 +}
---- src/sys/pci/if_rl.c.orig	2011-05-04 14:44:46.000000000 -0700
-+++ src/sys/pci/if_rl.c	2011-05-04 14:42:11.000000000 -0700
+--- sys/pci/if_rl.c.orig	2011-05-04 14:44:46.000000000 -0700
++++ sys/pci/if_rl.c	2011-05-04 14:42:11.000000000 -0700
 @@ -31,7 +31,7 @@
   */
  
@@ -1411,8 +1411,8 @@
  
  /*
   * RealTek 8129/8139 PCI NIC driver
---- src/sys/pci/if_rlreg.h.orig	2010-12-21 09:09:25.000000000 -0800
-+++ src/sys/pci/if_rlreg.h	2011-05-04 14:42:11.000000000 -0700
+--- sys/pci/if_rlreg.h.orig	2010-12-21 09:09:25.000000000 -0800
++++ sys/pci/if_rlreg.h	2011-05-04 14:42:11.000000000 -0700
 @@ -29,7 +29,7 @@
   * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
   * THE POSSIBILITY OF SUCH DAMAGE.
