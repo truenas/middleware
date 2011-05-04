@@ -43,6 +43,17 @@
     dojo.require("dojox.form.CheckedMultiSelect");
     dojo.require("dijit.form.MultiSelect");
     dojo.require("dijit.ProgressBar");
+    dojo.require("dijit.MenuBar");
+    dojo.require("dijit.MenuBarItem");
+    dojo.require("dijit.Dialog");
+    dojo.require("dijit.form.Form");
+    dojo.require("dijit.form.Select");
+    dojo.require("dijit.form.ValidationTextBox");
+    dojo.require("dijit.form.NumberTextBox");
+    dojo.require("dijit.form.Textarea");
+    dojo.require("dijit.form.TimeTextBox");
+    dojo.require("dijit.form.ComboBox");
+    dojo.require("dijit.form.FilteringSelect");
 
     dojo._contentHandlers.text = (function(old){
       return function(xhr){
@@ -351,9 +362,9 @@
             handleAs: "json",
             load: function(data) {
                 if(data.status == 'on') {
-                    obj.src = '/freenas/media/images/ui/buttons/on.png';
+                    obj.src = '/media/images/ui/buttons/on.png';
                 } else if(data.status == 'off') {
-                    obj.src = '/freenas/media/images/ui/buttons/off.png';
+                    obj.src = '/media/images/ui/buttons/off.png';
                 }
                 if(data.error) {
                     setMessage(data.message, "error");
