@@ -76,7 +76,10 @@ find . | sort > ${PREFIX}/patched.files
 find . -type f | sort | xargs sha256 > ${PREFIX}/patched.sha256
 
 comm -23 ${PREFIX}/release.files ${PREFIX}/patched.files > ${PREFIX}/removed.list
-comm -13 ${PREFIX}/release.sha256 ${PREFIX}/patched.sha256 | cut -c9- | rev | cut -c69- | rev > ${PREFIX}/changed.list
+comm -13 ${PREFIX}/release.sha256 ${PREFIX}/patched.sha256 | cut -c9- | rev | cut -c69- | rev > ${PREFIX}/changed.list.tmp
+grep ^\./conf/base/ ${PREFIX}/changed.list.tmp | cut -c12- | sed -e s/^/./ > ${PREFIX}/changed.list.exclude
+comm -23 ${PREFIX}/changed.list.tmp ${PREFIX}/changed.list.exclude > ${PREFIX}/changed.list
+rm -f ${PREFIX}/changed.list.tmp ${PREFIX}/changed.list.exclude
 
 echo "Done!"
 
