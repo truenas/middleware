@@ -1,0 +1,16 @@
+{% load i18n %}
+<div dojoType="dijit.layout.ContentPane" class="objrefresh">
+<p>Step {{ step }} of {{ step_count }}</p>
+<form dojoType="dijit.form.Form" action="." enctype="multipart/form-data" method="post">{% csrf_token %}
+<script type="dojo/event" event="onSubmit" args="e">
+    formSubmit(this, e, '{{ postpath }}', [this, ]);
+</script>
+<table>
+{{ form }}
+</table>
+<input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
+{{ previous_fields|safe }}
+<button class="submitform" dojoType="dijit.form.Button" type="submit" onClick="this.set('label', '{% trans "Please wait..." %}');">
+    {% trans "OK" %}</button>
+</form>
+</div>
