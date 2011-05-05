@@ -24,6 +24,7 @@ dojo.addOnLoad(function(){
 {% endblock %}
 
 {% block dojango_content %}
+{{ block.super }}
 <div id="top_dialog" dojoType="dijit.Dialog" title="{% trans "Running Processes" %}" style="min-height:400px;">
     <script type="dojo/method" event="onShow">
         ttop.stop();

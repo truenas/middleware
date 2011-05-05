@@ -4,7 +4,20 @@
 {% block title %}{% trans "Logged Out" %}{% endblock %}
 
 {% block dojango_content %}
-<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false">
+<script type="text/javascript">
+    dojo.require("dojo.data.ItemFileReadStore");
+    dojo.require("dojo.data.ItemFileWriteStore");
+    dojo.require("dijit.layout.BorderContainer");
+    dojo.require("dijit.layout.ContentPane");
+    dojo.require("dijit.layout.TabContainer");
+    dojo.require("dojo._base.xhr");
+    dojo.require("dijit.MenuBar");
+    dojo.require("dijit.MenuBarItem");
+    dojo.require("dijit.Dialog");
+    dojo.require("dijit.form.Form");
+
+</script>
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false" region="center">
     <p><span class="alert">{% trans "You are now logged out." %} <a href="/account/login/">{% trans "Log back in" %}</a>.</span></p>
 </div>
 {% endblock %}

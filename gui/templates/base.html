@@ -25,18 +25,18 @@
             {% include "menubar.html" %}
             {% endblock %}
         </div>
+{% block dojango_content %}
         <div dojoType="dijit.layout.ContentPane" id="menupane"
             region="left" splitter="true">
         </div>
         <div dojoType="dijit.layout.TabContainer" region="center" id="content">
         </div>
+{% endblock %}
         <div dojoType="dijit.layout.ContentPane" style="height:80px;width:100%;padding-bottom:0px;" region="bottom">
              {% block footer %}
              {% include "footer.html" %}
              {% endblock %}
         </div>
     </div>
-{% block dojango_content %}
-{% endblock %}
 </body>
 </html>
