@@ -28,12 +28,98 @@
 
 from django.utils.translation import ugettext_lazy as _
 from django.forms import FileField
+from django.contrib.formtools.wizard import FormWizard
+from django.shortcuts import render_to_response
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect
 
 from freenasUI.storage.models import MountPoint
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.system import models
 from freenasUI.middleware.notifier import notifier
 from dojango import forms
+
+class FileWizard(FormWizard):
+    @method_decorator(csrf_protect)
+    def __call__(self, request, *args, **kwargs):
+        """
+        IMPORTANT
+        This method was stolen from FormWizard.__call__
+
+        This was necessary because the original code doesn't accept File Upload
+        The reason of this is because there is no clean way to hold the information
+        of an uploaded file across steps
+
+        Also, an extra context is used to set the ajax post path/url
+        """
+        if 'extra_context' in kwargs:
+            self.extra_context.update(kwargs['extra_context'])
+        self.extra_context.update({'postpath': request.path})
+        current_step = self.determine_step(request, *args, **kwargs)
+        self.parse_params(request, *args, **kwargs)
+        previous_form_list = []
+        for i in range(current_step):
+            f = self.get_form(i, request.POST, request.FILES)
+            if not self._check_security_hash(request.POST.get("hash_%d" % i, ''),
+                                             request, f):
+                return self.render_hash_failure(request, i)
+
+            if not f.is_valid():
+                return self.render_revalidation_failure(request, i, f)
+            else:
+                self.process_step(request, f, i)
+                previous_form_list.append(f)
+        if request.method == 'POST':
+            form = self.get_form(current_step, request.POST, request.FILES)
+        else:
+            form = self.get_form(current_step)
+        if form.is_valid():
+            self.process_step(request, form, current_step)
+            next_step = current_step + 1
+
+            if next_step == self.num_steps():
+                return self.done(request, previous_form_list + [form])
+            else:
+                form = self.get_form(next_step)
+                self.step = current_step = next_step
+
+        return self.render(form, request, current_step)
+    def get_form(self, step, data=None, files=None):
+        """
+        This is also required to pass request.FILES to the form
+        """
+        if files is not None:
+            if step >= self.num_steps():
+                raise Http404('Step %s does not exist' % step)
+            return self.form_list[step](data, files, prefix=self.prefix_for_step(step), initial=self.initial.get(step, None))
+        else:
+            return super(FileWizard, self).get_form(step, data)
+    def done(self, request, form_list):
+        response = render_to_response('system/done.html', {
+            'form_data': [form.cleaned_data for form in form_list],
+        })
+        if not request.is_ajax():
+            response.content = "<html><body><textarea>"+response.content+"</textarea></boby></html>"
+        return response
+    def get_template(self, step):
+        """
+        TODO: templates as parameter
+        """
+        return ['system/wizard_%s.html' % step, 'system/wizard.html']
+    def process_step(self, request, form, step):
+        super(FileWizard, self).process_step(request, form, step)
+        """
+        We execute the form done method if there is one, for each step
+        """
+        if hasattr(form, 'done'):
+            form.done()
+
+    def render_template(self, request, *args, **kwargs):
+        response = super(FileWizard, self).render_template(request, *args, **kwargs)
+        # This is required for the workaround dojo.io.frame for file upload
+        if not request.is_ajax():
+            response.content = "<html><body><textarea>"+response.content+"</textarea></boby></html>"
+        return response
 
 class SettingsForm(ModelForm):
     class Meta:
@@ -155,18 +241,18 @@ class FirmwareUploadForm(Form):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/firmware.xz'
         fw = open(filename, 'wb+')
-        if self.files.has_key('firmware'):
-            for c in self.files['firmware'].chunks():
+        if cleaned_data.get('firmware'):
+            for c in cleaned_data['firmware'].chunks():
                 fw.write(c)
             fw.close()
             checksum = notifier().checksum(filename)
             retval = notifier().validate_xz(filename)
             if checksum != cleaned_data['sha256'].__str__() or retval == False:
-                msg = u"Invalid firmware or checksum"
+                msg = _(u"Invalid firmware or checksum")
                 self._errors["firmware"] = self.error_class([msg])
                 del cleaned_data["firmware"]
         else:
-            self._errors["firmware"] = self.error_class(["This field is required."])
+            self._errors["firmware"] = self.error_class([_("This field is required.")])
         return cleaned_data
     def done(self):
         notifier().update_firmware('/var/tmp/firmware/firmware.xz')

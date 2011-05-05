@@ -82,60 +82,6 @@ def system_info(request):
     variables.update(sysinfo)
     return render_to_response('system/system_info.html', variables)
 
-def firmware_upload(request):
-
-    firmware = forms.FirmwareUploadForm()
-    variables = RequestContext(request)
-    if request.method == 'POST':
-        firmware = forms.FirmwareUploadForm(request.POST, request.FILES)
-        valid = firmware.is_valid()
-        try:
-            if valid:
-                firmware.done()
-                return render_to_response('system/firmware_ok.html')
-        except:
-            pass
-        variables.update({
-            'firmware': firmware,
-        })
-        if request.GET.has_key("iframe"):
-            return HttpResponse("<html><body><textarea>"+render_to_string('system/firmware2.html', variables)+"</textarea></boby></html>")
-        else:
-            return render_to_response('system/firmware2.html', variables)
-
-    variables.update({
-        'firmware': firmware,
-    })
-    
-    return render_to_response('system/firmware.html', variables)
-
-def firmware_location(request):
-
-    firmloc = forms.FirmwareTemporaryLocationForm()
-    variables = RequestContext(request)
-    if request.method == 'POST':
-        try:
-            firmloc = forms.FirmwareTemporaryLocationForm(request.POST)
-            if firmloc.is_valid():
-                firmloc.done()
-                firmware = forms.FirmwareUploadForm()
-                variables.update({
-                    'firmware': firmware,
-                })
-                return render_to_response('system/firmware2.html', variables)
-        except:
-            pass
-        variables.update({
-            'firmloc': firmloc,
-        })
-        return render_to_response('system/firmware_location2.html', variables)
-
-    variables.update({
-        'firmloc': firmloc,
-    })
-    
-    return render_to_response('system/firmware_location.html', variables)
-
 def config(request):
 
     variables = RequestContext(request, {
