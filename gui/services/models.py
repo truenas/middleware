@@ -244,7 +244,6 @@ class iSCSITargetGlobalConfiguration(Model):
             )
     iscsi_discoveryauthgroup = models.IntegerField(
             max_length=120,
-            default='None',
             verbose_name=_("Discovery Auth Group"),
             blank=True,
             null=True,
