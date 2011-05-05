@@ -354,7 +354,10 @@
 
     function toggle_service(obj) {
         var td = obj.parentNode;
-        var n = dojo.create("div", { innerHTML: "loading..." }, td);
+        var n = dojo.create("div", {  }, td);
+        dojo.addClass(n, "dijitContentPaneLoading");
+        dojo.style(n, "height", "25px");
+        dojo.style(n, "float", "left");
 
         var xhrArgs = {
             url: "/services/toggle/"+obj.name+"/",
