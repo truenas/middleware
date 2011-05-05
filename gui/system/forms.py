@@ -100,7 +100,8 @@ class FileWizard(FormWizard):
             return super(FileWizard, self).get_form(step, data)
     def done(self, request, form_list):
         response = render_to_response('system/done.html', {
-            'form_data': [form.cleaned_data for form in form_list],
+            #'form_list': form_list,
+            'retval': getattr(self, 'retval', None),
         })
         if not request.is_ajax():
             response.content = "<html><body><textarea>"+response.content+"</textarea></boby></html>"
@@ -116,7 +117,9 @@ class FileWizard(FormWizard):
         We execute the form done method if there is one, for each step
         """
         if hasattr(form, 'done'):
-            form.done()
+            retval = form.done()
+            if step == self.num_steps()-1:
+                self.retval = retval
 
     def render_template(self, request, *args, **kwargs):
         response = super(FileWizard, self).render_template(request, *args, **kwargs)
@@ -288,7 +291,7 @@ class ServicePackUploadForm(Form):
             self._errors["servicepack"] = self.error_class([_("This field is required.")])
         return cleaned_data
     def done(self):
-        notifier().apply_servicepack()
+        return notifier().apply_servicepack()
 
 class ConfigUploadForm(Form):
     config = FileField(label=_("New config to be installed"))
