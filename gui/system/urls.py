@@ -27,7 +27,7 @@
 #####################################################################
 
 from django.conf.urls.defaults import patterns, url
-from system.forms import FileWizard, FirmwareTemporaryLocationForm, FirmwareUploadForm
+from system.forms import FileWizard, FirmwareTemporaryLocationForm, FirmwareUploadForm, ServicePackUploadForm
 
 urlpatterns = patterns('freenasUI.system.views',
     url(r'^reboot/$', 'reboot', name="system_reboot"),
@@ -36,7 +36,8 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^settings2/$', 'settings', name="system_settings"),
     url(r'^advanced2/$', 'advanced', name="system_advanced"),
     url(r'^info/$', 'system_info', name="system_info"),
-    url(r'^firmwizard/$', FileWizard([FirmwareTemporaryLocationForm,FirmwareUploadForm]), name='system_firmwizard'),
+    url(r'^firmwizard/$', FileWizard([FirmwareTemporaryLocationForm,FirmwareUploadForm], prefix="fw"), name='system_firmwizard'),
+    url(r'^spwizard/$', FileWizard([FirmwareTemporaryLocationForm, ServicePackUploadForm], prefix="sf"), name='system_spwizard'),
     url(r'^config/$', 'config', name='system_config'),
     url(r'^config/restore/$', 'config_restore', name='system_configrestore'),
     url(r'^config/save/$', 'config_save', name='system_configsave'),

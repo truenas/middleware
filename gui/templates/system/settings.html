@@ -10,6 +10,8 @@
     </div>
     <div dojoType="dijit.layout.ContentPane" title="{% trans "Firmware Update" %}" {% if focus_form == "firmware" %} selected="true"{% endif %} href="{% url system_firmwizard %}" id=" firmwareup" class="objrefresh" refreshOnShow="true">
     </div>
+    <div dojoType="dijit.layout.ContentPane" title="{% trans "Apply Service Pack" %}" href="{% url system_spwizard %}" id="applysp" class="objrefresh" refreshOnShow="true">
+    </div>
     <div dojoType="dijit.layout.ContentPane" title="{% trans "Config" %}" {% if focus_form == "config" %} selected="true"{% endif %} href="{% url system_config %}" id="settingsconfig" class="objrefresh" refreshOnShow="true">
     </div>
 </div>
