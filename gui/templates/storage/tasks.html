@@ -29,7 +29,7 @@
 	{% for p in task_list %}
 	<tr class="{% cycle 'odd' 'even' %}" id="task{{ p.id }}">
 	    <td>
-		{{ p.task_mountpoint.mp_volume.vol_name }}
+		{{ p.task_mountpoint.mp_path }}
 	    </td>
 	    <td>
 		{% if p.task_recursive %}
