@@ -50,11 +50,10 @@ class UrlsTest(TestCase):
         models.LDAP.objects.create()
         models.iSCSITargetGlobalConfiguration.objects.create()
 
-    def test_home(self):
+    def test_status(self):
         response = self.client.get(reverse('services_home'))
         self.assertEqual(response.status_code, 200)
 
-    def test_services(self):
         response = self.client.get(reverse('freeadmin_model_edit', kwargs={'app':'services','model': 'CIFS', 'oid': models.CIFS.objects.all().order_by('-id')[0].id}))
         self.assertEqual(response.status_code, 200)
 
