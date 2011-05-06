@@ -78,12 +78,18 @@ ldap.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
 
 
 def LDAPEnabled():
-    s = services.objects.filter(srv_service = 'ldap')[0]
-    return (True if s.srv_enable != 0 else False)
+    try:
+        s = services.objects.get(srv_service = 'ldap')
+        return (True if s.srv_enable != 0 else False)
+    except services.DoesNotExist:
+        return False
 
 def ActiveDirectoryEnabled():
-    s = services.objects.filter(srv_service = 'activedirectory')[0]
-    return (True if s.srv_enable != 0 else False)
+    try:
+        s = services.objects.get(srv_service = 'activedirectory')
+        return (True if s.srv_enable != 0 else False)
+    except services.DoesNotExist:
+        return False
 
 
 class FreeNAS_LDAP_UserCache(FreeNAS_BaseCache):
