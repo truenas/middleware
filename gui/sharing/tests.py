@@ -26,26 +26,26 @@
 # $FreeBSD$
 #####################################################################
 
-"""
-This file demonstrates two different styles of tests (one doctest and one
-unittest). These will both pass when you run "manage.py test".
+from django.core.urlresolvers import reverse
+from django.conf import settings
 
-Replace these with more appropriate tests for your application.
-"""
+from sharing import models
+from freeadmin.tests import TestCase
 
-from django.test import TestCase
+class UrlsTest(TestCase):
 
-class SimpleTest(TestCase):
-    def test_basic_addition(self):
-        """
-        Tests that 1 + 1 always equals 2.
-        """
-        self.failUnlessEqual(1 + 1, 2)
+    def setUp(self):
+        super(UrlsTest, self).setUp()
 
-__test__ = {"doctest": """
-Another way to test that 1 + 1 is equal to 2.
+    def test_status(self):
+        response = self.client.get(reverse('sharing_home'))
+        self.assertEqual(response.status_code, 200)
 
->>> 1 + 1 == 2
-True
-"""}
+        response = self.client.get(reverse('sharing_windows'))
+        self.assertEqual(response.status_code, 200)
 
+        response = self.client.get(reverse('sharing_apple'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('sharing_unix'))
+        self.assertEqual(response.status_code, 200)
