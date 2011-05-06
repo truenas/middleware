@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-hostname
+# REQUIRE: NETWORKING
+# BEFORE: hostname
+
+. /etc/rc.subr
+
+generate_hostname()
+{
+    local IFS=\|
+    local hostname domain
+    mount -uw /
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT gc_hostname,gc_domain FROM network_globalconfiguration ORDER BY -id LIMIT 1" | \
+	while read hostname domain; do
+        cp /conf/base/etc/hosts /etc/hosts
+        echo -e "127.0.0.1\t${hostname}.${domain}" >> /etc/hosts
+    done
+    mount -ur /
+}
+
+name="ix-hostname"
+start_cmd='generate_hostname'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
