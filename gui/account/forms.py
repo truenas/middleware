@@ -407,7 +407,7 @@ class bsdGroupsForm(ModelForm):
 attrs_dict = { 'class': 'required' }
 
 class bsdGroupToUserForm(Form):
-    bsdgroup_to_user = FilteredSelectField(label = _('Auxiliary groups'), choices=(), required=False)
+    bsdgroup_to_user = FilteredSelectField(label = _('Member users'), choices=(), required=False)
     def __init__(self, groupid, *args, **kwargs):
         super(bsdGroupToUserForm, self).__init__(*args, **kwargs)
         self.groupid = groupid
