@@ -54,6 +54,7 @@
     dojo.require("dijit.form.TimeTextBox");
     dojo.require("dijit.form.ComboBox");
     dojo.require("dijit.form.FilteringSelect");
+    dojo.require("dijit.form.NumberTextBox");
 
     dojo._contentHandlers.text = (function(old){
       return function(xhr){
