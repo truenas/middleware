@@ -40,52 +40,52 @@ def home(request):
     try:
         cifs = models.CIFS.objects.order_by("-id")[0]
     except IndexError:
-        cifs = None
+        cifs = models.CIFS.objects.create()
 
     try:
         afp = models.AFP.objects.order_by("-id")[0]
     except IndexError:
-        afp = None
+        afp = models.AFP.objects.create()
 
     try:
         nfs = models.NFS.objects.order_by("-id")[0]
     except IndexError:
-        nfs = None
+        nfs = models.NFS.objects.create()
 
     try:
         dynamicdns = models.DynamicDNS.objects.order_by("-id")[0]
     except IndexError:
-        dynamicdns = None
+        dynamicdns = models.DynamicDNS.objects.create()
 
     try:
         snmp = models.SNMP.objects.order_by("-id")[0]
     except IndexError:
-        snmp = None
+        snmp = models.SNMP.objects.create()
 
     try:
         ftp = models.FTP.objects.order_by("-id")[0]
     except IndexError:
-        ftp = None
+        ftp = models.FTP.objects.create()
 
     try:
         tftp = models.TFTP.objects.order_by("-id")[0]
     except IndexError:
-        tftp = None
+        tftp = models.TFTP.objects.create()
 
     try:
         ssh = models.SSH.objects.order_by("-id")[0]
     except IndexError:
-        ssh = None
+        ssh = models.SSH.objects.create()
 
     try:
         activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
     except IndexError:
-        activedirectory = None
+        activedirectory = models.ActiveDirectory.objects.create()
 
     try:
         ldap = models.LDAP.objects.order_by("-id")[0]
     except IndexError:
-        ldap = None
+        ldap = models.LDAP.objects.create()
 
     srv = models.services.objects.all()
     variables = RequestContext(request, {
