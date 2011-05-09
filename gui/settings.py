@@ -165,7 +165,6 @@ BLACKLIST_NAV = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.staticfiles',
-    'django_nav',
     'south',
     'dojango',
     'freeadmin',
