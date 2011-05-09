@@ -141,14 +141,17 @@ class VolumeWizardForm(forms.Form):
     volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
     volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks', required=False)
     group_type = forms.ChoiceField(choices=(), widget=forms.RadioSelect(attrs=attrs_dict), required=False)
+    force4khack = forms.BooleanField(required=False, initial=False, help_text=_('Force 4096 bytes sector size'))
     def __init__(self, *args, **kwargs):
         super(VolumeWizardForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
         self.fields['volume_disks'].choices.sort()
         self.fields['volume_fstype'].widget.attrs['onClick'] = 'wizardcheckings();'
 
-        grouptype_choices = ( ('mirror', 'mirror'), )
-        grouptype_choices += ( ('stripe', 'stripe'),)
+        grouptype_choices = ( 
+            ('mirror', 'mirror'), 
+            ('stripe', 'stripe'),
+            )
         fstype = self.data.get("volume_fstype", None)
         if self.data.has_key("volume_disks"):
             disks = self.data.getlist("volume_disks")
@@ -252,6 +255,7 @@ class VolumeWizardForm(forms.Form):
         volume_name = self.cleaned_data['volume_name']
         volume_fstype = self.cleaned_data['volume_fstype']
         disk_list = self.cleaned_data['volume_disks']
+        force4khack = self.cleaned_data.get("force4khack", False)
 
         if (len(disk_list) < 2):
             group_type = ''
@@ -318,9 +322,9 @@ class VolumeWizardForm(forms.Form):
                     diskobj.save()
 
         if add:
-            notifier().zfs_volume_attach_group(str(grp.id))
+            notifier().zfs_volume_attach_group(str(grp.id), force4khack=force4khack)
         else:
-            notifier().init("volume", volume.id)
+            notifier().init("volume", volume.id, force4khack=force4khack)
 
 class VolumeImportForm(forms.Form):
 

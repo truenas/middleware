@@ -683,6 +683,12 @@
             dojo.query("input[name=group_type]:checked").forEach(function(tag) { dijit.getEnclosingWidget(tag).set('checked', false);  });
         }
 
+        if(zfs) {
+            dojo.style('zfssectorsize', 'display', 'table-row');
+        } else {
+            dojo.style('zfssectorsize', 'display', 'none');
+        }
+
         if(d.length >= 3 && zfs) {
                 dojo.style("grpraidz", "display", "block");
         } else {

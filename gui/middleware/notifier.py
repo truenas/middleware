@@ -455,7 +455,7 @@ class notifier:
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
                       "| awk '{print int($3 / (1024*1024)) - 3;}'`" % (devname, devname))
 
-    def __create_zfs_volume(self, c, z_id, z_name, swapsize):
+    def __create_zfs_volume(self, c, z_id, z_name, swapsize, force4khack=False):
         """Internal procedure to create a ZFS volume identified by volume id"""
         z_vdev = ""
         need4khack = False
@@ -479,7 +479,7 @@ class notifier:
                                                   devname = disk[0],
                                                   label = disk[1],
                                                   swapsize=swapsize)
-                if need4khack:
+                if need4khack or force4khack:
                     hack_vdevs.append(disk[1])
                     self.__system("gnop create -S 4096 /dev/gpt/" + disk[1])
                     z_vdev += " /dev/gpt/" + disk[1] + ".nop"
@@ -494,7 +494,7 @@ class notifier:
         self.__system("zpool create -o cachefile=/data/zfs/zpool.cache "
                       "-fm /mnt/%s %s %s" % (z_name, z_name, z_vdev))
         # If we have 4k hack then restore system to whatever it should be
-        if need4khack:
+        if need4khack or force4khack:
             self.__system("zpool export %s" % (z_name))
             for disk in hack_vdevs:
                 self.__system("gnop destroy /dev/gpt/" + disk + ".nop")
@@ -506,7 +506,7 @@ class notifier:
 
     # TODO: This is a rather ugly hack and duplicates some code, need to
     # TODO: cleanup this with the __create_zfs_volume.
-    def zfs_volume_attach_group(self, group_id):
+    def zfs_volume_attach_group(self, group_id, force4khack=False):
         """Attach a disk group to a zfs volume"""
         c = self.__open_db()
         c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
@@ -543,7 +543,7 @@ class notifier:
                                                   devname = disk[0],
                                                   label = disk[1],
                                                   swapsize=swapsize)
-                if need4khack:
+                if need4khack or force4khack:
                     hack_vdevs.append(disk[1])
                     self.__system("gnop create -S 4096 /dev/gpt/" + disk[1])
                     z_vdev += " /dev/gpt/" + disk[1] + ".nop"
@@ -683,12 +683,7 @@ class notifier:
 
         assert volume[0] == 'ZFS' or volume[0] == 'UFS'
         if volume[0] == 'ZFS':
-            if kwargs.pop('add', False) == True:
-                #TODO __add_zfs_volume
-                #self.__add_zfs_volume(c, volume_id, volume[1], swapsize)
-                pass
-            else:
-                self.__create_zfs_volume(c, volume_id, volume[1], swapsize)
+            self.__create_zfs_volume(c, volume_id, volume[1], swapsize, kwargs.pop('force4khack', False))
         elif volume[0] == 'UFS':
             self.__create_ufs_volume(c, volume_id, volume[1], swapsize)
         self._reload_disk()
@@ -1297,7 +1292,6 @@ class notifier:
         item = str(item)
         zfsproc = self.__pipeopen('zfs inherit %s "%s"' % (item, name))
         zfsproc.wait()
-        print zfsproc.returncode
         if zfsproc.returncode == 0:
             return True
         return False
