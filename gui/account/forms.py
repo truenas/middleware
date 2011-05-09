@@ -243,7 +243,7 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
         return bsdusr_password2
 
     def clean_bsdusr_home(self):
-        if self.cleaned_data['bsdusr_home'][0:5] != u'/mnt/' and self.cleaned_data['bsdusr_home'] != u'/nonexistent':
+        if self.cleaned_data['bsdusr_home'][0:5] != u'/mnt/' and self.cleaned_data['bsdusr_home'] not in (u'/nonexistent',u'/mnt'):
             raise forms.ValidationError(_("Home directory has to start with /mnt/"))
         return self.cleaned_data['bsdusr_home']
 
@@ -366,6 +366,11 @@ class bsdUserChangeForm(ModelForm, SharedFunc):
 
     def clean_bsdusr_username(self):
         return self.instance.bsdusr_username
+
+    def clean_bsdusr_home(self):
+        if self.cleaned_data['bsdusr_home'][0:5] != u'/mnt/' and self.cleaned_data['bsdusr_home'] not in (u'/nonexistent',u'/mnt'):
+            raise forms.ValidationError(_("Home directory has to start with /mnt/"))
+        return self.cleaned_data['bsdusr_home']
 
     def clean_bsdusr_login_disabled(self):
         return self.cleaned_data.get("bsdusr_login_disabled", False)
