@@ -271,7 +271,10 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
         if commit:
             group = self.cleaned_data['bsdusr_group2']
             if group == None:
-                gid = -1
+                try:
+                    gid = models.bsdGroups.objects.get(bsdgrp_group = self.cleaned_data['bsdusr_username']).bsdgrp_gid
+                except:
+                    gid = -1
             else:
                 gid = group.bsdgrp_gid
             uid, gid, unixhash, smbhash = notifier().user_create(

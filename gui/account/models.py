@@ -130,8 +130,10 @@ class bsdUsers(Model):
             raise ValueError(_("User %s is built-in and can not be deleted!") % (self.bsdusr_username))
         notifier().user_deleteuser(self.bsdusr_username.__str__())
         try:
-            gobj = bsdGroups.objects.get(bsdgrp_group = self.bsdusr_username)
-            if not gobj.bsdgrp_builtin:
+            gobj = self.bsdusr_group
+            count = bsdGroupMembership.objects.filter(bsdgrpmember_group = gobj).count()
+            count2 = bsdUsers.objects.filter(bsdusr_group = gobj).exclude(id=self.id).count()
+            if not gobj.bsdgrp_builtin and count == 0 and count2 == 0:
                 gobj.delete(reload=False)
         except:
             pass
