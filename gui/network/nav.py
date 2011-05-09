@@ -1,11 +1,11 @@
-from django_nav import NavOption
+from freeadmin.tree import TreeNode
 from freenasUI.choices import LAGGType
 from django.utils.translation import ugettext as _
 import models
 
 ICON = u'NetworkIcon'
 
-class NetSummary(NavOption):
+class NetSummary(TreeNode):
 
         name = _(u'Network Summary')
         type = 'network_summary'
@@ -13,7 +13,7 @@ class NetSummary(NavOption):
         app_name = 'network'
         options = []
 
-class GlobalConf(NavOption):
+class GlobalConf(TreeNode):
 
         name = _(u'Global Configuration')
         type = 'network_global'
@@ -22,7 +22,7 @@ class GlobalConf(NavOption):
         app_name = 'network'
         options = []
 
-class AddLagg(NavOption):
+class AddLagg(TreeNode):
 
         name = _(u'Add Link Aggregation')
         rename = _(u'Create Link Aggregation')
@@ -34,7 +34,7 @@ class AddLagg(NavOption):
         append_app = False
         options = []
 
-class ViewLagg(NavOption):
+class ViewLagg(TreeNode):
 
         name = _(u'View All Link Aggregations')
         type = 'viewlagg'
@@ -44,7 +44,7 @@ class ViewLagg(NavOption):
         append_app = False
         options = []
 
-class Linkss(NavOption):
+class Linkss(TreeNode):
 
     model = 'LAGGInterface'
     app_name = 'network'
@@ -60,7 +60,7 @@ class Linkss(NavOption):
 
             laggs = models.LAGGInterface.objects.filter(lagg_protocol__exact=value)
             if laggs.count() > 0:
-                nav = NavOption()
+                nav = TreeNode()
                 nav.name = name
                 nav.icon = u'LAGGIcon'
                 nav.options = []
@@ -68,7 +68,7 @@ class Linkss(NavOption):
 
             for lagg in laggs:
 
-                subnav = NavOption()
+                subnav = TreeNode()
                 subnav.name = lagg.lagg_interface.int_name
                 subnav.icon = u'LAGGIcon'
                 subnav.options = []
@@ -77,7 +77,7 @@ class Linkss(NavOption):
                 laggm = models.LAGGInterfaceMembers.objects.filter(\
                         lagg_interfacegroup__exact=lagg.id).order_by('lagg_ordernum')
                 for member in laggm:
-                    subsubnav = NavOption()
+                    subsubnav = TreeNode()
                     subsubnav.name = member.lagg_physnic
                     subsubnav.type = 'editobject'
                     subsubnav.icon = u'LAGGIcon'
@@ -92,7 +92,7 @@ class Linkss(NavOption):
 
         laggs = models.LAGGInterface
 
-class ViewInterfaces(NavOption):
+class ViewInterfaces(TreeNode):
 
         name = _(u'View All Interfaces')
         type = 'viewinterfaces'
@@ -104,7 +104,7 @@ class ViewInterfaces(NavOption):
                 self.icon = models.Interfaces._admin.icon_view
             super(ViewInterfaces, self).__init__(*args, **kwargs)
 
-class ViewVLAN(NavOption):
+class ViewVLAN(TreeNode):
 
         name = _(u'View All VLANs')
         type = 'viewvlans'
@@ -116,7 +116,7 @@ class ViewVLAN(NavOption):
                 self.icon = models.VLAN._admin.icon_view
             super(ViewVLAN, self).__init__(*args, **kwargs)
 
-class ViewSR(NavOption):
+class ViewSR(TreeNode):
 
         name = _(u'View All Static Routes')
         type = 'viewsr'

@@ -1,11 +1,11 @@
-from django_nav import NavOption
+from freeadmin.tree import TreeNode
 from django.utils.translation import ugettext as _
 import models
 
 BLACKLIST = ['services','UPS']
 ICON = u'ServicesIcon'
 
-class EnDisServices(NavOption):
+class EnDisServices(TreeNode):
 
     name = _(u'Control Services')
     type = u'en_dis_services'
@@ -13,7 +13,7 @@ class EnDisServices(NavOption):
     order = -1
     options = []
 
-class ISCSIDeviceAdd(NavOption):
+class ISCSIDeviceAdd(TreeNode):
 
     name = u'Add Device Extent'
     type = u'object'
@@ -23,7 +23,7 @@ class ISCSIDeviceAdd(NavOption):
     append_app = False
     options = []
 
-class ISCSIDeviceView(NavOption):
+class ISCSIDeviceView(TreeNode):
 
     name = u'View All Device Extents'
     type = u'viewmodel'
@@ -35,19 +35,19 @@ class ISCSIDeviceView(NavOption):
     model = 'DExtents'
     options = []
 
-class ISCSIDevice(NavOption):
+class ISCSIDevice(TreeNode):
 
     name = u'Device Extents'
     type = u'iscsi'
     icon = u'ExtentIcon'
     append_app = False
-    options = [NavOption,]
+    options = [TreeNode,]
 
     def __init__(self, *args, **kwargs):
 
         self.options = []
         for ext in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__exact='Disk').order_by('-id'):
-            nav = NavOption()
+            nav = TreeNode()
             nav.name = unicode(ext)
             nav.view = u'freeadmin_model_edit'
             nav.type = 'object'
@@ -56,7 +56,7 @@ class ISCSIDevice(NavOption):
             self.options.append(nav)
         self.options += [ISCSIDeviceAdd,ISCSIDeviceView]
 
-class ISCSIExtAdd(NavOption):
+class ISCSIExtAdd(TreeNode):
 
     name = u'Add Extent'
     type = u'object'
@@ -66,7 +66,7 @@ class ISCSIExtAdd(NavOption):
     append_app = False
     options = []
 
-class ISCSIExtView(NavOption):
+class ISCSIExtView(TreeNode):
 
     name = u'View All Extents'
     type = u'viewmodel'
@@ -78,7 +78,7 @@ class ISCSIExtView(NavOption):
     model = 'Extents'
     options = []
 
-class ISCSIExt(NavOption):
+class ISCSIExt(TreeNode):
 
     name = u'Extents'
     type = u'iscsi'
@@ -91,7 +91,7 @@ class ISCSIExt(NavOption):
 
         self.options = []
         for ext in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__exact='File').order_by('-id'):
-            nav = NavOption()
+            nav = TreeNode()
             nav.name = unicode(ext)
             nav.view = u'freeadmin_model_edit'
             nav.type = 'object'
@@ -100,7 +100,7 @@ class ISCSIExt(NavOption):
             self.options.append(nav)
         self.options += [ISCSIExtAdd,ISCSIExtView]
 
-class ISCSI(NavOption):
+class ISCSI(TreeNode):
 
     name = u'ISCSI'
     type = u'iscsi'

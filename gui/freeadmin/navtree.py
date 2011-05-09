@@ -28,7 +28,7 @@
 import re
 
 from django.conf import settings
-from django_nav import nav_groups, Nav, NavOption, NavGroups
+from freeadmin.tree import tree_roots, TreeRoot, TreeNode, TreeRoots
 from django.db import models
 from django.forms import ModelForm
 from django.core.urlresolvers import resolve
@@ -147,7 +147,7 @@ class NavTree(object):
     Every app listed at INSTALLED_APPS is scanned
     1st - app_name.forms is imported. All its objects/classes are scanned
         looking for ModelForm classes
-    2nd - app_name.nav is imported. NavOption classes are scanned for hard-coded
+    2nd - app_name.nav is imported. TreeNode classes are scanned for hard-coded
         menu entries or overwriting
     3rd - app_name.models is imported. models.Model classes are scanned, 
         if a related ModelForm is found several entries are Added to the Menu 
@@ -160,7 +160,7 @@ class NavTree(object):
         self._generated = True
         self._modelforms.clear()
         self._options.clear()
-        nav_groups._groups = {}
+        tree_roots._groups = {}
         for app in settings.INSTALLED_APPS:
     
             # If the app is listed at settings.BLACKLIST_NAV, skip it!
@@ -168,11 +168,11 @@ class NavTree(object):
                 continue
     
             # Thats the root node for the app tree menu
-            nav = Nav()
+            nav = TreeRoot()
             nav.name = self.titlecase(app)
             nav.nav_group = 'main'
             nav.options = []
-            nav_groups.register(nav) # We register it to the tree root
+            tree_roots.register(nav) # We register it to the tree root
     
             modnav = self._get_module(app, 'nav')
             if hasattr(modnav, 'BLACKLIST'):
@@ -223,7 +223,7 @@ class NavTree(object):
                 for c in dir(modnav):
                     navc = getattr(modnav, c)
                     try:
-                        subclass = issubclass(navc, NavOption)
+                        subclass = issubclass(navc, TreeNode)
                     except TypeError:
                         continue
                     if navc.__module__ == modname and subclass:
@@ -253,7 +253,7 @@ class NavTree(object):
                         if _models.has_key(model):
     
                             if model._admin.deletable is False:
-                                navopt = NavOption()
+                                navopt = TreeNode()
                                 navopt.name = self.titlecase(unicode(model._meta.verbose_name))
                                 navopt.model = c
                                 navopt.app_name = app
@@ -270,7 +270,7 @@ class NavTree(object):
                                 navopt.app = app
                                 navopt.options = []
                             else:
-                                navopt = NavOption()
+                                navopt = TreeNode()
                                 navopt.name = self.titlecase(unicode(model._meta.verbose_name_plural))
                                 navopt.model = c
                                 navopt.app_name = app
@@ -294,7 +294,7 @@ class NavTree(object):
                                     if model._admin.object_num > 0:
                                         qs = qs[:model._admin.object_num]
                                     for e in qs:
-                                        subopt = NavOption()
+                                        subopt = TreeNode()
                                         subopt.type = 'editobject'
                                         subopt.view = u'freeadmin_model_edit'
                                         if model._admin.icon_object is not None:
@@ -309,7 +309,7 @@ class NavTree(object):
                                         navopt.options.append(subopt)
                                         #register_option(subopt, navopt)
     
-                                subopt = NavOption()
+                                subopt = TreeNode()
                                 subopt.name = 'Add %s' % self.titlecase(unicode(model._meta.verbose_name))
                                 subopt.view = u'freeadmin_model_add'
                                 subopt.kwargs = {'app': app, 'model': c}
@@ -321,7 +321,7 @@ class NavTree(object):
                                 #navopt.options.append(subopt)
                                 self.register_option(subopt, navopt)
     
-                                subopt = NavOption()
+                                subopt = TreeNode()
                                 subopt.name = 'View All %s' % self.titlecase(unicode(model._meta.verbose_name_plural))
                                 subopt.view = u'freeadmin_model_datagrid'
                                 if model._admin.icon_view is not None:
@@ -345,29 +345,29 @@ class NavTree(object):
             self.replace_navs(nav)
             self.sort_navoption(nav)
     
-        nav = Nav()
+        nav = TreeRoot()
         nav.name = _('Display System Processes')
         nav.nav_group = 'main'
         nav.action = 'displayprocs'
         nav.icon = 'TopIcon'
         nav.options = []
-        nav_groups.register(nav)
+        tree_roots.register(nav)
     
-        nav = Nav()
+        nav = TreeRoot()
         nav.name = _('Reboot')
         nav.nav_group = 'main'
         nav.action = 'reboot'
         nav.icon = u'RebootIcon'
         nav.options = []
-        nav_groups.register(nav)
+        tree_roots.register(nav)
     
-        nav = Nav()
+        nav = TreeRoot()
         nav.name = _('Shutdown')
         nav.nav_group = 'main'
         nav.icon = 'ShutdownIcon'
         nav.action = 'shutdown'
         nav.options = []
-        nav_groups.register(nav)
+        tree_roots.register(nav)
 
     def getmfs(self):
         print self._modelforms
@@ -375,7 +375,7 @@ class NavTree(object):
     def _build_nav(self):
 
         navs = []
-        for nav in nav_groups['main']:
+        for nav in tree_roots['main']:
 
             nav.option_list = self.build_options(nav.options)
             nav.active = True
@@ -478,7 +478,7 @@ def _get_or_create(name, groups):
         if nav.name == name:
             return nav
 
-    nav = Nav()
+    nav = TreeRoot()
     nav.name = name
     nav.nav_group = 'main'
     nav.options = []
@@ -490,12 +490,12 @@ def json2nav(jdata):
     data = json.loads(jdata)
 
     group = NavGroups()
-    #group = nav_groups
+    #group = tree_roots
 
     navs = {}
     for item in data['items']:
         
-        navopt = NavOption()
+        navopt = TreeNode()
         for attr in item:
             
             if attr in ['children', 'app']:
@@ -538,7 +538,7 @@ def on_model_delete(**kwargs):
     if model._meta.app_label in [app.split('.')[-1] for app in settings.BLACKLIST_NAV]:
         return None
 
-    for nav in nav_groups['main']:
+    for nav in tree_roots['main']:
         handle_delete(nav, model, instance)
 
 def handle_delete(nav, model, instance):

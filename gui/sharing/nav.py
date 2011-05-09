@@ -1,9 +1,9 @@
-from django_nav import Nav, NavOption
+from freeadmin.tree import TreeNode
 from django.utils.translation import ugettext as _
 
 ICON = u'SharingIcon'
 
-class ViewUNIX(NavOption):
+class ViewUNIX(TreeNode):
 
         name = _(u'View All UNIX Shares')
         type = 'openunixshares'
@@ -13,7 +13,7 @@ class ViewUNIX(NavOption):
         append_app = False
         options = []
 
-class ViewApple(NavOption):
+class ViewApple(TreeNode):
 
         name = _(u'View All Apple Shares')
         type = 'openappleshares'
@@ -23,7 +23,7 @@ class ViewApple(NavOption):
         append_app = False
         options = []
 
-class ViewWin(NavOption):
+class ViewWin(TreeNode):
 
         name = _(u'View All Windows Shares')
         type = 'openwinshares'

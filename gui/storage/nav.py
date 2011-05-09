@@ -1,11 +1,11 @@
-from django_nav import NavOption
+from freeadmin.tree import TreeNode
 from django.utils.translation import ugettext as _
 import models
 
 BLACKLIST = ['Disk','ReplRemote']
 ICON = u'StorageIcon'
 
-class ViewRemote(NavOption):
+class ViewRemote(TreeNode):
 
         name = _(u'View All Replication Tasks')
         type = 'openreplication'
@@ -14,7 +14,7 @@ class ViewRemote(NavOption):
         append_app = False
         options = []
 
-class ViewPeriodic(NavOption):
+class ViewPeriodic(TreeNode):
 
         name = _(u'View All Periodic Snapshot Tasks')
         view = u'storage_home'
@@ -25,7 +25,7 @@ class ViewPeriodic(NavOption):
         append_app = False
         options = []
 
-class ViewSnap(NavOption):
+class ViewSnap(TreeNode):
 
         name = _(u'View All Snapshots')
         type = 'opensnaps'
@@ -35,7 +35,7 @@ class ViewSnap(NavOption):
         append_app = False
         options = []
 
-class AddVolume(NavOption):
+class AddVolume(TreeNode):
 
         name = _(u'Create Volume')
         view = 'storage_wizard'
@@ -46,7 +46,7 @@ class AddVolume(NavOption):
         append_app = False
         options = []
 
-class ImportVolume(NavOption):
+class ImportVolume(TreeNode):
 
         name = _(u'Import Volume')
         view = 'storage_import'
@@ -57,7 +57,7 @@ class ImportVolume(NavOption):
         append_app = False
         options = []
 
-class ViewVolumes(NavOption):
+class ViewVolumes(TreeNode):
 
         name = _(u'View All Volumes')
         view = u'storage_home'
@@ -68,7 +68,7 @@ class ViewVolumes(NavOption):
         append_app = False
         options = []
 
-class AddDataset(NavOption):
+class AddDataset(TreeNode):
 
         name = _(u'Create ZFS Dataset')
         view = 'storage_dataset'
@@ -79,7 +79,7 @@ class AddDataset(NavOption):
         append_app = False
         options = []
 
-class CreatePeriodicSnap(NavOption):
+class CreatePeriodicSnap(TreeNode):
 
         name = _(u'Add Periodic Snapshot')
         rename = _(u'Create Periodic Snapshot')
@@ -91,7 +91,7 @@ class CreatePeriodicSnap(NavOption):
         append_app = False
         options = []
 
-class Volumes(NavOption):
+class Volumes(TreeNode):
 
         name = _(u'Volumes')
         icon = u'VolumesIcon'
@@ -106,7 +106,7 @@ class Volumes(NavOption):
 
             mp = models.MountPoint.objects.filter(mp_ischild=False).exclude(mp_volume__vol_fstype__exact='iscsi').select_related().order_by('-id')
             for i in mp:
-                nav = NavOption()
+                nav = TreeNode()
                 nav.name = i.mp_path
                 nav.order = -i.id
                 nav.model = 'Volume'
@@ -114,7 +114,7 @@ class Volumes(NavOption):
                 nav.icon = u'VolumesIcon'
                 nav.options = []
 
-                subnav = NavOption()
+                subnav = TreeNode()
                 subnav.name = _('Change Permissions')
                 subnav.type = 'editobject'
                 subnav.view = 'storage_mp_permission'
@@ -127,14 +127,14 @@ class Volumes(NavOption):
                 datasets = models.MountPoint.objects.filter(mp_path__startswith=i.mp_path,mp_ischild=True)
                 for d in datasets:
 
-                    nav2 = NavOption()
+                    nav2 = TreeNode()
                     nav2.name = d.mp_path
                     nav2.icon = u'VolumesIcon'
                     nav2.model = 'MountPoint'
                     nav2.kwargs = {'oid': d.id, 'model': 'MountPoint'}
                     nav2.options = []
 
-                    subnav2 = NavOption()
+                    subnav2 = TreeNode()
                     subnav2.name = _(u'Change Permissions')
                     subnav2.type = 'editobject'
                     subnav2.view = 'storage_mp_permission'
