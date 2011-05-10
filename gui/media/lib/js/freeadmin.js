@@ -995,13 +995,13 @@
                 } else
                     editObject(item.name, item.view);
             } else if(item.type && item.type == 'viewlagg') {
-                Menu.openNetwork('Link Aggregation');
+                Menu.openNetwork(item.gname);
             } else if(item.type && item.type == 'viewinterfaces') {
-                Menu.openNetwork('Interfaces');
+                Menu.openNetwork(item.gname);
             } else if(item.type && item.type == 'viewvlans') {
-                Menu.openNetwork('VLAN');
+                Menu.openNetwork(item.gname);
             } else if(item.type && item.type == 'viewsr') {
-                Menu.openNetwork('Static Routes');
+                Menu.openNetwork(item.gname);
             } else if(item.type && item.type == 'network_global') {
                 Menu.openNetwork(item.gname);
             } else if(item.type && item.type == 'network_summary') {

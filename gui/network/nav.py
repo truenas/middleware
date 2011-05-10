@@ -35,6 +35,7 @@ class AddLagg(TreeNode):
 
 class ViewLagg(TreeNode):
 
+        gname = 'network.LAGGInterfaceMembers.View'
         name = _(u'View All Link Aggregations')
         type = 'viewlagg'
         icon = u'ViewAllLAGGsIcon'
@@ -92,6 +93,7 @@ class Linkss(TreeNode):
 
 class ViewInterfaces(TreeNode):
 
+        gname = 'network.Interfaces.View'
         name = _(u'View All Interfaces')
         type = 'viewinterfaces'
         append_app = False
