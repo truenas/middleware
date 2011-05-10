@@ -14,7 +14,7 @@ class EnDisServices(TreeNode):
 
 class ISCSIDeviceAdd(TreeNode):
 
-    name = u'Add Device Extent'
+    name = _(u'Add Device Extent')
     type = u'object'
     view = u'freeadmin_model_add'
     kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'mf': 'iSCSITargetDeviceExtentForm'}
@@ -23,7 +23,7 @@ class ISCSIDeviceAdd(TreeNode):
 
 class ISCSIDeviceView(TreeNode):
 
-    name = u'View All Device Extents'
+    name = _(u'View All Device Extents')
     type = u'viewmodel'
     view = u'freeadmin_model_datagrid'
     kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
@@ -34,7 +34,7 @@ class ISCSIDeviceView(TreeNode):
 
 class ISCSIDevice(TreeNode):
 
-    name = u'Device Extents'
+    name = _(u'Device Extents')
     type = u'iscsi'
     icon = u'ExtentIcon'
     append_app = False
@@ -54,7 +54,7 @@ class ISCSIDevice(TreeNode):
 
 class ISCSIExtAdd(TreeNode):
 
-    name = u'Add Extent'
+    name = _(u'Add Extent')
     type = u'object'
     view = u'freeadmin_model_add'
     kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'mf': 'iSCSITargetFileExtentForm'}
@@ -63,7 +63,8 @@ class ISCSIExtAdd(TreeNode):
 
 class ISCSIExtView(TreeNode):
 
-    name = u'View All Extents'
+    gname = 'services.iSCSITargetExtent.View'
+    name = _(u'View All Extents')
     type = u'viewmodel'
     view = u'freeadmin_model_datagrid'
     kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
@@ -74,7 +75,8 @@ class ISCSIExtView(TreeNode):
 
 class ISCSIExt(TreeNode):
 
-    name = u'Extents'
+    gname = 'services.iSCSITargetExtent'
+    name = _(u'Extents')
     type = u'iscsi'
     icon = u'ExtentIcon'
     order_child = False
@@ -95,7 +97,8 @@ class ISCSIExt(TreeNode):
 
 class ISCSI(TreeNode):
 
-    name = u'ISCSI'
+    gname = 'ISCSI'
+    name = _(u'ISCSI')
     type = u'iscsi'
     icon = u'iSCSIIcon'
 

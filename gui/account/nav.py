@@ -6,6 +6,7 @@ ICON = u'AccountIcon'
 
 class ChangePass(TreeNode):
 
+        gname = 'account.ChangePass'
         name = _('Change Password')
         type = 'changepass'
         icon = u'ChangePasswordIcon'
@@ -28,6 +29,7 @@ class MyAccount(TreeNode):
 
 class ViewUsers(TreeNode):
 
+        gname = 'account.bsdUsers.View'
         name = _('View All Users')
         type = 'viewusers'
         icon = u'ViewAllUsersIcon'
@@ -40,6 +42,7 @@ class ViewUsers(TreeNode):
 
 class ViewGroups(TreeNode):
 
+        gname = 'account.bsdGroups.View'
         name = _('View All Groups')
         type = 'viewgroups'
         icon = u'ViewAllGroupsIcon'

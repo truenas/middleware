@@ -31,6 +31,7 @@ from django.utils.translation import ugettext as _
 class TreeType(object):
     parent = None
 
+    gname = None
     name = None
     view = None
     args = ()
@@ -42,8 +43,12 @@ class TreeType(object):
 
     _children = []
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, gname=None, *args, **kwargs):
         self._children = []
+        if gname is not None:
+            self.gname = gname
+        elif self.gname is None:
+            self.gname = self.name
         #if self.name is None:
         #    raise ValueError(_("You must define a name"))
 
@@ -138,5 +143,8 @@ class TreeRoots(object):
 
     def __setitem__(self, *args):
         raise AttributeError
+
+    def clear(self):
+        self._roots.clear()
 
 tree_roots = TreeRoots()

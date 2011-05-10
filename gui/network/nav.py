@@ -4,6 +4,7 @@ from django.utils.translation import ugettext as _
 import models
 
 ICON = u'NetworkIcon'
+BLACKLIST = ['LAGGInterfaceMembers',]
 
 class NetSummary(TreeNode):
 
@@ -14,6 +15,7 @@ class NetSummary(TreeNode):
 
 class GlobalConf(TreeNode):
 
+        gname = u'network.GlobalConfiguration'
         name = _(u'Global Configuration')
         type = 'network_global'
         model = 'GlobalConfiguration'
@@ -22,8 +24,7 @@ class GlobalConf(TreeNode):
 
 class AddLagg(TreeNode):
 
-        name = _(u'Add Link Aggregation')
-        rename = _(u'Create Link Aggregation')
+        name = _(u'Create Link Aggregation')
         view = 'network_lagg_add'
         type = 'object'
         icon = u'AddLAGGIcon'
@@ -42,6 +43,7 @@ class ViewLagg(TreeNode):
 
 class Linkss(TreeNode):
 
+    gname = 'network.LAGGInterfaceMembers'
     model = 'LAGGInterface'
     app_name = 'network'
     name = _(u'Link Aggregations')
@@ -49,7 +51,6 @@ class Linkss(TreeNode):
 
     def __init__(self, *args, **kwargs):
 
-        #self.name = models.LAGGInterface._meta.verbose_name
         self._children = [AddLagg(),ViewLagg()]
 
         for value, name in LAGGType:
@@ -101,6 +102,7 @@ class ViewInterfaces(TreeNode):
 
 class ViewVLAN(TreeNode):
 
+        gname = 'network.VLAN.View'
         name = _(u'View All VLANs')
         type = 'viewvlans'
         append_app = False
@@ -112,6 +114,7 @@ class ViewVLAN(TreeNode):
 
 class ViewSR(TreeNode):
 
+        gname = 'network.StaticRoute.View'
         name = _(u'View All Static Routes')
         type = 'viewsr'
         append_app = False
