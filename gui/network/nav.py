@@ -8,6 +8,7 @@ BLACKLIST = ['LAGGInterfaceMembers',]
 
 class NetSummary(TreeNode):
 
+        gname = 'network.NetworkSummary'
         name = _(u'Network Summary')
         type = 'network_summary'
         icon = u'SettingsIcon'

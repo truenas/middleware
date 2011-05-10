@@ -89,13 +89,13 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].title == 'Reporting'){
+                if(c[i].tab == 'reporting'){
                     p.selectChild(c[i]);
                     opened = true;
-                } else if(c[i].title == 'Settings'){
+                } else if(c[i].tab == 'settings'){
                     p.selectChild(c[i]);
                     opened2 = true;
-                } else if(c[i].title == 'System Information'){
+                } else if(c[i].tab == 'sysinfo'){
                     p.selectChild(c[i]);
                     opened3 = true;
                 }
@@ -107,6 +107,7 @@
                     closable: true,
                     href: this.urlReporting,
                 });
+                pane.tab = 'reporting';
                 p.addChild(pane);
             }
 
@@ -117,6 +118,7 @@
                     closable: true,
                     href: this.urlSettings,
                 });
+                pane2.tab = 'settings';
                 p.addChild(pane2);
             }
 
@@ -128,6 +130,7 @@
                     closable: true,
                     href: this.urlInfo,
                 });
+                pane3.tab = 'sysinfo';
                 p.addChild(pane3);
                 p.selectChild(pane3);
             }
@@ -139,7 +142,7 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].title == 'Network Settings'){
+                if(c[i].tab == 'network'){
                     p.selectChild(c[i]);
                     opened = true;
                     if(tab) {
@@ -147,7 +150,7 @@
                         if(tabnet) {
                             var c2 = tabnet.getChildren();
                             for(var j=0; j<c2.length; j++){
-                                if(c2[j].title == tab)
+                                if(c2[j].domNode.getAttribute("tab") == tab)
                                     tabnet.selectChild(c2[j]);
                             }
                         }
@@ -167,6 +170,7 @@
                     //refreshOnShow: true,
                     href: openurl,
                 });
+                pane.tab = 'network';
                 p.addChild(pane);
                 p.selectChild(pane);
             }
@@ -178,7 +182,7 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].title == 'Shares'){
+                if(c[i].tab == 'shares'){
                     p.selectChild(c[i]);
                     opened = true;
                     if(tab) {
@@ -186,7 +190,7 @@
                         if(tabnet) {
                             var c2 = tabnet.getChildren();
                             for(var j=0; j<c2.length; j++){
-                                if(c2[j].title == tab)
+                                if(c2[j].domNode.getAttribute("tab") == tab)
                                     tabnet.selectChild(c2[j]);
                             }
                         }
@@ -204,6 +208,7 @@
                     //refreshOnShow: true,
                     href: openurl,
                 });
+                pane.tab = 'shares';
                 p.addChild(pane);
                 p.selectChild(pane);
             }
@@ -215,7 +220,7 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].title == 'Services'){
+                if(c[i].tab == 'services'){
                     p.selectChild(c[i]);
                     opened = true;
                 }
@@ -226,6 +231,7 @@
                     closable: true,
                     href: this.urlServices,
                 });
+                pane.tab = 'services';
                 p.addChild(pane);
                 p.selectChild(pane);
                 dojo.addClass(pane.domNode,["objrefresh", "data_sharing_UNIX"]);
@@ -239,7 +245,7 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].title == 'Account'){
+                if(c[i].tab == 'account'){
                     p.selectChild(c[i]);
                     opened = true;
                     if(tab) {
@@ -247,7 +253,7 @@
                         if(tabnet) {
                             var c2 = tabnet.getChildren();
                             for(var j=0; j<c2.length; j++){
-                                if(c2[j].title == tab)
+                                if(c2[j].domNode.getAttribute("tab") == tab)
                                     tabnet.selectChild(c2[j]);
                             }
                         }
@@ -265,6 +271,7 @@
                     closable: true,
                     href:openurl,
                 });
+                pane.tab = 'accoubt';
                 p.addChild(pane);
                 p.selectChild(pane);
 
@@ -278,7 +285,7 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].title == 'Storage'){
+                if(c[i].tab == 'storage'){
                     p.selectChild(c[i]);
                     opened = true;
                     if(tab) {
@@ -286,7 +293,7 @@
                         if(tabnet) {
                             var c2 = tabnet.getChildren();
                             for(var j=0; j<c2.length; j++){
-                                if(c2[j].title == tab)
+                                if(c2[j].domNode.getAttribute("tab") == tab)
                                     tabnet.selectChild(c2[j]);
                             }
                         }
@@ -303,6 +310,7 @@
                     closable: true,
                     href:openurl,
                 });
+                pane.tab = 'storage';
                 p.addChild(pane);
                 p.selectChild(pane);
                 dojo.addClass(pane.domNode,["objrefresh", "data_storage_Volumes"]);
@@ -316,7 +324,7 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].title == 'iSCSI'){
+                if(c[i].tab == 'iscsi'){
                     p.selectChild(c[i]);
                     opened = true;
                     if(tab) {
@@ -324,7 +332,7 @@
                         if(tabnet) {
                             var c2 = tabnet.getChildren();
                             for(var j=0; j<c2.length; j++){
-                                if(c2[j].title == tab)
+                                if(c2[j].domNode.getAttribute("tab") == tab)
                                     tabnet.selectChild(c2[j]);
                             }
                         }
@@ -344,6 +352,7 @@
                     //refreshOnShow: true,
                     href: openurl,
                 });
+                pane.tab = 'iscsi';
                 p.addChild(pane);
                 p.selectChild(pane);
             }
@@ -994,9 +1003,9 @@
             } else if(item.type && item.type == 'viewsr') {
                 Menu.openNetwork('Static Routes');
             } else if(item.type && item.type == 'network_global') {
-                Menu.openNetwork('Global Configuration');
+                Menu.openNetwork(item.gname);
             } else if(item.type && item.type == 'network_summary') {
-                Menu.openNetwork('Network Summary');
+                Menu.openNetwork(item.gname);
             } else if(item.type && item.type == 'en_dis_services') {
                 Menu.openServices();
             } else if(item.type && item.type == 'changepass') {

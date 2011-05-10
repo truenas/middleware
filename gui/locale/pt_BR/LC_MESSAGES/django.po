@@ -820,7 +820,7 @@ msgstr ""
 
 #: network/nav.py:11 templates/network/index.html:13
 msgid "Network Summary"
-msgstr ""
+msgstr "Sumário de rede"
 
 #: network/nav.py:27
 msgid "Create Link Aggregation"
