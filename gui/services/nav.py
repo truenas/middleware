@@ -11,7 +11,6 @@ class EnDisServices(TreeNode):
     type = u'en_dis_services'
     icon = u'ServicesIcon'
     order = -1
-    _children = []
 
 class ISCSIDeviceAdd(TreeNode):
 
@@ -21,7 +20,6 @@ class ISCSIDeviceAdd(TreeNode):
     kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'mf': 'iSCSITargetDeviceExtentForm'}
     icon = u'AddExtentIcon'
     append_app = False
-    _children = []
 
 class ISCSIDeviceView(TreeNode):
 
@@ -33,7 +31,6 @@ class ISCSIDeviceView(TreeNode):
     append_app = False
     app_name = 'services'
     model = 'DExtents'
-    _children = []
 
 class ISCSIDevice(TreeNode):
 
@@ -41,7 +38,6 @@ class ISCSIDevice(TreeNode):
     type = u'iscsi'
     icon = u'ExtentIcon'
     append_app = False
-    _children = []
 
     def __init__(self, *args, **kwargs):
 
@@ -64,7 +60,6 @@ class ISCSIExtAdd(TreeNode):
     kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'mf': 'iSCSITargetFileExtentForm'}
     icon = u'AddExtentIcon'
     append_app = False
-    _children = []
 
 class ISCSIExtView(TreeNode):
 
@@ -76,7 +71,6 @@ class ISCSIExtView(TreeNode):
     append_app = False
     app_name = 'services'
     model = 'Extents'
-    _children = []
 
 class ISCSIExt(TreeNode):
 
@@ -85,7 +79,6 @@ class ISCSIExt(TreeNode):
     icon = u'ExtentIcon'
     order_child = False
     append_app = False
-    _children = []
 
     def __init__(self, *args, **kwargs):
 
@@ -105,8 +98,6 @@ class ISCSI(TreeNode):
     name = u'ISCSI'
     type = u'iscsi'
     icon = u'iSCSIIcon'
-    _children = [ISCSIDevice()]
 
-    #def __init__(self, *args, **kwargs):
-
-    #    self._children = []
+    def __init__(self, *args, **kwargs):
+        self._children = [ISCSIDevice()]

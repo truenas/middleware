@@ -44,7 +44,6 @@ class TreeType(object):
 
     def __init__(self, *args, **kwargs):
         self._children = []
-        pass
         #if self.name is None:
         #    raise ValueError(_("You must define a name"))
 
@@ -77,12 +76,20 @@ class TreeType(object):
     def append_child(self, tnode):
         if self is tnode:
             raise Exception("Recursive tree")
+        try:
+            tnode = tnode()
+        except:
+            pass
         tnode.parent = self
         self._children.append(tnode)
 
     def insert_child(self, pos, tnode):
         if self is tnode:
             raise Exception("Recursive tree")
+        try:
+            tnode = tnode()
+        except:
+            pass
         tnode.parent = self
         self._children.insert(pos, tnode)
 

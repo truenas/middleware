@@ -11,7 +11,6 @@ class ViewUNIX(TreeNode):
         app_name = 'sharing'
         model = 'NFS_Share'
         append_app = False
-        _children = []
 
 class ViewApple(TreeNode):
 
@@ -21,7 +20,6 @@ class ViewApple(TreeNode):
         app_name = 'sharing'
         model = 'AFP_Share'
         append_app = False
-        _children = []
 
 class ViewWin(TreeNode):
 
@@ -31,4 +29,3 @@ class ViewWin(TreeNode):
         app_name = 'sharing'
         model = 'CIFS_Share'
         append_app = False
-        _children = []

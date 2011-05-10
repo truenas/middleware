@@ -10,7 +10,6 @@ class ChangePass(TreeNode):
         type = 'changepass'
         icon = u'ChangePasswordIcon'
         append_app = False
-        _children = []
 
 class ChangeAdmin(TreeNode):
 
@@ -18,23 +17,14 @@ class ChangeAdmin(TreeNode):
         type = 'changeadmin'
         icon = u'ChangeAdminIcon'
         append_app = False
-        _children = []
-
-#class Logout(TreeNode):
-#
-#        name = _('Logout')
-#        type = 'logout'
-#        icon = u'LogOutIcon'
-#        append_app = False
-#        _children = []
 
 class MyAccount(TreeNode):
 
         name = _('My Account')
         icon = u'MyAccountIcon'
         order = -1
-        #_children = [ChangePass, ChangeAdmin, Logout]
-        #_children = [ChangePass, ChangeAdmin]
+        def __init__(self, *args, **kwargs):
+            self._children = [ChangePass(), ChangeAdmin()]
 
 class ViewUsers(TreeNode):
 
@@ -42,7 +32,6 @@ class ViewUsers(TreeNode):
         type = 'viewusers'
         icon = u'ViewAllUsersIcon'
         append_app = False
-        _children = []
 
         def __init__(self, *args, **kwargs):
             if models.bsdUsers._admin.icon_view is not None:
@@ -55,7 +44,6 @@ class ViewGroups(TreeNode):
         type = 'viewgroups'
         icon = u'ViewAllGroupsIcon'
         append_app = False
-        _children = []
 
         def __init__(self, *args, **kwargs):
             if models.bsdGroups._admin.icon_view is not None:

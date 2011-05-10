@@ -89,7 +89,7 @@ class NavTree(object):
                 old, parent = self._options[nav.name]
                 self.register_option(self._navs[nav.name], parent, True) 
     
-        for subnav in list(nav._children):
+        for subnav in nav:
             self.replace_navs(subnav)
     
     def register_option_byname(self, opt, name, replace=False):
@@ -111,7 +111,7 @@ class NavTree(object):
             new = {}
             order = {}
             opts = []
-            for opt in nav._children:
+            for opt in nav:
                 if hasattr(opt, 'order'):
                     order[opt.order] = opt
                 else:
@@ -125,8 +125,8 @@ class NavTree(object):
             nav._children = opts
     
             inserts = 0
-            for opt in list(nav._children):
-                if len(opt._children) == 0:
+            for opt in nav:
+                if len(opt) == 0:
                     nav.remove_child(opt)
                     nav.insert_child(inserts, opt)
                     inserts += 1
@@ -138,7 +138,7 @@ class NavTree(object):
                 nav.insert_child(0, order[key])
     
     
-        for opt in nav._children:
+        for opt in nav:
             self.sort_navoption(opt)
     
     """
@@ -242,7 +242,6 @@ class NavTree(object):
                     if c in BLACKLIST:
                         continue
                     model = getattr(modmodels, c)
-                    print model
                     try:
                         subclass = issubclass(model, models.Model) 
                     except TypeError:
@@ -364,32 +363,27 @@ class NavTree(object):
         nav.action = 'shutdown'
         tree_roots.register(nav)
 
-    def getmfs(self):
-        print self._modelforms
-
     def _build_nav(self):
 
         navs = []
-        print tree_roots['main']
         for nav in tree_roots['main']:
 
-            print nav, "-", nav._children
-            nav.option_list = self.build_options(nav._children)
+            nav.option_list = self.build_options(nav)
             nav.get_absolute_url()
             navs.append(nav)
 
         return navs
 
-    def build_options(self, nav_options):
+    def build_options(self, nav):
         options = []
-        for option in nav_options:
+        for option in nav:
             try:
                 option = option()
             except:
                 pass
             option.get_absolute_url()
             #option.active = option.active_if(url, request.path)
-            option.option_list = self.build_options(option._children)
+            option.option_list = self.build_options(option)
             options.append(option)
         return options
 
@@ -477,7 +471,6 @@ def _get_or_create(name, groups):
     nav = TreeRoot()
     nav.name = name
     nav.nav_group = 'main'
-    nav._children = []
     groups.register(nav)
     return nav
 

@@ -11,7 +11,6 @@ class NetSummary(TreeNode):
         type = 'network_summary'
         icon = u'SettingsIcon'
         app_name = 'network'
-        _children = []
 
 class GlobalConf(TreeNode):
 
@@ -20,7 +19,6 @@ class GlobalConf(TreeNode):
         model = 'GlobalConfiguration'
         icon = u'SettingsIcon'
         app_name = 'network'
-        _children = []
 
 class AddLagg(TreeNode):
 
@@ -32,7 +30,6 @@ class AddLagg(TreeNode):
         model = 'LAGGInterface'
         app_name = 'network'
         append_app = False
-        _children = []
 
 class ViewLagg(TreeNode):
 
@@ -42,7 +39,6 @@ class ViewLagg(TreeNode):
         model = 'LAGGInterface'
         app_name = 'network'
         append_app = False
-        _children = []
 
 class Linkss(TreeNode):
 
@@ -97,7 +93,6 @@ class ViewInterfaces(TreeNode):
         name = _(u'View All Interfaces')
         type = 'viewinterfaces'
         append_app = False
-        _children = []
 
         def __init__(self, *args, **kwargs):
             if models.Interfaces._admin.icon_view is not None:
@@ -109,7 +104,6 @@ class ViewVLAN(TreeNode):
         name = _(u'View All VLANs')
         type = 'viewvlans'
         append_app = False
-        _children = []
 
         def __init__(self, *args, **kwargs):
             if models.Interfaces._admin.icon_view is not None:
@@ -121,7 +115,6 @@ class ViewSR(TreeNode):
         name = _(u'View All Static Routes')
         type = 'viewsr'
         append_app = False
-        _children = []
 
         def __init__(self, *args, **kwargs):
             if models.Interfaces._admin.icon_view is not None:

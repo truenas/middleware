@@ -12,7 +12,6 @@ class ViewRemote(TreeNode):
         icon = u'ViewAllReplIcon'
         app_name = 'storage'
         append_app = False
-        _children = []
 
 class ViewPeriodic(TreeNode):
 
@@ -23,7 +22,6 @@ class ViewPeriodic(TreeNode):
         app_name = 'storage'
         model = 'Task'
         append_app = False
-        _children = []
 
 class ViewSnap(TreeNode):
 
@@ -33,7 +31,6 @@ class ViewSnap(TreeNode):
         app_name = 'storage'
         model = 'Task'
         append_app = False
-        _children = []
 
 class AddVolume(TreeNode):
 
@@ -44,7 +41,6 @@ class AddVolume(TreeNode):
         app_name = 'storage'
         model = 'Volumes'
         append_app = False
-        _children = []
 
 class ImportVolume(TreeNode):
 
@@ -55,7 +51,6 @@ class ImportVolume(TreeNode):
         app_name = 'storage'
         model = 'Volumes'
         append_app = False
-        _children = []
 
 class ViewVolumes(TreeNode):
 
@@ -66,7 +61,6 @@ class ViewVolumes(TreeNode):
         app_name = 'storage'
         model = 'Volumes'
         append_app = False
-        _children = []
 
 class AddDataset(TreeNode):
 
@@ -77,7 +71,6 @@ class AddDataset(TreeNode):
         app_name = 'storage'
         model = 'Volumes'
         append_app = False
-        _children = []
 
 class CreatePeriodicSnap(TreeNode):
 
@@ -89,7 +82,6 @@ class CreatePeriodicSnap(TreeNode):
         app_name = 'storage'
         model = 'Task'
         append_app = False
-        _children = []
 
 class Volumes(TreeNode):
 
