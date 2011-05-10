@@ -11,7 +11,7 @@ class NetSummary(TreeNode):
         type = 'network_summary'
         icon = u'SettingsIcon'
         app_name = 'network'
-        options = []
+        _children = []
 
 class GlobalConf(TreeNode):
 
@@ -20,7 +20,7 @@ class GlobalConf(TreeNode):
         model = 'GlobalConfiguration'
         icon = u'SettingsIcon'
         app_name = 'network'
-        options = []
+        _children = []
 
 class AddLagg(TreeNode):
 
@@ -32,7 +32,7 @@ class AddLagg(TreeNode):
         model = 'LAGGInterface'
         app_name = 'network'
         append_app = False
-        options = []
+        _children = []
 
 class ViewLagg(TreeNode):
 
@@ -42,7 +42,7 @@ class ViewLagg(TreeNode):
         model = 'LAGGInterface'
         app_name = 'network'
         append_app = False
-        options = []
+        _children = []
 
 class Linkss(TreeNode):
 
@@ -54,7 +54,7 @@ class Linkss(TreeNode):
     def __init__(self, *args, **kwargs):
 
         #self.name = models.LAGGInterface._meta.verbose_name
-        self.options = [AddLagg(),ViewLagg()]
+        self._children = [AddLagg(),ViewLagg()]
 
         for value, name in LAGGType:
 
@@ -63,7 +63,7 @@ class Linkss(TreeNode):
                 nav = TreeNode()
                 nav.name = name
                 nav.icon = u'LAGGIcon'
-                nav.options = []
+                nav._children = []
                 self.append_child(nav)
 
             for lagg in laggs:
@@ -71,7 +71,7 @@ class Linkss(TreeNode):
                 subnav = TreeNode()
                 subnav.name = lagg.lagg_interface.int_name
                 subnav.icon = u'LAGGIcon'
-                subnav.options = []
+                subnav._children = []
                 nav.append_child(subnav)
 
                 laggm = models.LAGGInterfaceMembers.objects.filter(\
@@ -87,7 +87,7 @@ class Linkss(TreeNode):
                     subsubnav.kwargs = {'app': 'network', 'model': 'LAGGInterfaceMembers', \
                             'oid': member.id}
                     subsubnav.append_url = '?deletable=false'
-                    subsubnav.options = []
+                    subsubnav._children = []
                     subnav.append_child(subsubnav)
 
         laggs = models.LAGGInterface
@@ -97,7 +97,7 @@ class ViewInterfaces(TreeNode):
         name = _(u'View All Interfaces')
         type = 'viewinterfaces'
         append_app = False
-        options = []
+        _children = []
 
         def __init__(self, *args, **kwargs):
             if models.Interfaces._admin.icon_view is not None:
@@ -109,7 +109,7 @@ class ViewVLAN(TreeNode):
         name = _(u'View All VLANs')
         type = 'viewvlans'
         append_app = False
-        options = []
+        _children = []
 
         def __init__(self, *args, **kwargs):
             if models.Interfaces._admin.icon_view is not None:
@@ -121,7 +121,7 @@ class ViewSR(TreeNode):
         name = _(u'View All Static Routes')
         type = 'viewsr'
         append_app = False
-        options = []
+        _children = []
 
         def __init__(self, *args, **kwargs):
             if models.Interfaces._admin.icon_view is not None:

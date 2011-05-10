@@ -35,12 +35,18 @@ class TreeType(object):
     view = None
     args = ()
     kwargs ={}
-    options = []
 
-    #def __init__(self, *args, **kwargs):
-    #    pass
-    #    #if self.name is None:
-    #    #    raise ValueError(_("You must define a name"))
+    @property
+    def options(self):
+        raise
+
+    _children = []
+
+    def __init__(self, *args, **kwargs):
+        self._children = []
+        pass
+        #if self.name is None:
+        #    raise ValueError(_("You must define a name"))
 
     def get_absolute_url(self):
         if self.view:
@@ -49,24 +55,42 @@ class TreeType(object):
 
         return '#'
 
+    def __iter__(self):
+        #print self, self._children
+        for c in list(self._children):
+            yield c
+
+    def __len__(self):
+        return len(self._children)
+
+    def __unicode__(self):
+        return self.name
+
+    def __repr__(self):
+        return u"<TreeType '%s'>" % self.name
+
     """
     Helper method to append a child to a node
      - Register the parent of the child node
      - Append child node to parent children array
     """
     def append_child(self, tnode):
+        if self is tnode:
+            raise Exception("Recursive tree")
         tnode.parent = self
-        self.options.append(tnode)
+        self._children.append(tnode)
 
     def insert_child(self, pos, tnode):
+        if self is tnode:
+            raise Exception("Recursive tree")
         tnode.parent = self
-        self.options.insert(pos, tnode)
+        self._children.insert(pos, tnode)
 
     """
     Orphan a child
     """
     def remove_child(self, tnode):
-        self.options.remove(tnode)
+        self._children.remove(tnode)
         tnode.parent = None
 
 class TreeNode(TreeType):

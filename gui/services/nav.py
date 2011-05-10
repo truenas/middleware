@@ -11,7 +11,7 @@ class EnDisServices(TreeNode):
     type = u'en_dis_services'
     icon = u'ServicesIcon'
     order = -1
-    options = []
+    _children = []
 
 class ISCSIDeviceAdd(TreeNode):
 
@@ -21,7 +21,7 @@ class ISCSIDeviceAdd(TreeNode):
     kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'mf': 'iSCSITargetDeviceExtentForm'}
     icon = u'AddExtentIcon'
     append_app = False
-    options = []
+    _children = []
 
 class ISCSIDeviceView(TreeNode):
 
@@ -33,7 +33,7 @@ class ISCSIDeviceView(TreeNode):
     append_app = False
     app_name = 'services'
     model = 'DExtents'
-    options = []
+    _children = []
 
 class ISCSIDevice(TreeNode):
 
@@ -41,11 +41,11 @@ class ISCSIDevice(TreeNode):
     type = u'iscsi'
     icon = u'ExtentIcon'
     append_app = False
-    options = []
+    _children = []
 
     def __init__(self, *args, **kwargs):
 
-        self.options = []
+        self._children = []
         for ext in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__exact='Disk').order_by('-id'):
             nav = TreeNode()
             nav.name = unicode(ext)
@@ -54,7 +54,7 @@ class ISCSIDevice(TreeNode):
             nav.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'oid': ext.id, 'mf': 'iSCSITargetDeviceExtentForm'}
             nav.icon = u'ExtentIcon'
             self.append_child(nav)
-        self.options += [ISCSIDeviceAdd(),ISCSIDeviceView()]
+        self._children += [ISCSIDeviceAdd(),ISCSIDeviceView()]
 
 class ISCSIExtAdd(TreeNode):
 
@@ -64,7 +64,7 @@ class ISCSIExtAdd(TreeNode):
     kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'mf': 'iSCSITargetFileExtentForm'}
     icon = u'AddExtentIcon'
     append_app = False
-    options = []
+    _children = []
 
 class ISCSIExtView(TreeNode):
 
@@ -76,7 +76,7 @@ class ISCSIExtView(TreeNode):
     append_app = False
     app_name = 'services'
     model = 'Extents'
-    options = []
+    _children = []
 
 class ISCSIExt(TreeNode):
 
@@ -85,11 +85,11 @@ class ISCSIExt(TreeNode):
     icon = u'ExtentIcon'
     order_child = False
     append_app = False
-    options = []
+    _children = []
 
     def __init__(self, *args, **kwargs):
 
-        self.options = []
+        self._children = []
         for ext in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__exact='File').order_by('-id'):
             nav = TreeNode()
             nav.name = unicode(ext)
@@ -98,15 +98,15 @@ class ISCSIExt(TreeNode):
             nav.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'oid': ext.id}
             nav.icon = u'ExtentIcon'
             self.append_child(nav)
-        self.options += [ISCSIExtAdd(),ISCSIExtView()]
+        self._children += [ISCSIExtAdd(),ISCSIExtView()]
 
 class ISCSI(TreeNode):
 
     name = u'ISCSI'
     type = u'iscsi'
     icon = u'iSCSIIcon'
-    options = [ISCSIDevice()]
+    _children = [ISCSIDevice()]
 
     #def __init__(self, *args, **kwargs):
 
-    #    self.options = []
+    #    self._children = []

@@ -89,7 +89,7 @@ class NavTree(object):
                 old, parent = self._options[nav.name]
                 self.register_option(self._navs[nav.name], parent, True) 
     
-        for subnav in list(nav.options):
+        for subnav in list(nav._children):
             self.replace_navs(subnav)
     
     def register_option_byname(self, opt, name, replace=False):
@@ -111,7 +111,7 @@ class NavTree(object):
             new = {}
             order = {}
             opts = []
-            for opt in nav.options:
+            for opt in nav._children:
                 if hasattr(opt, 'order'):
                     order[opt.order] = opt
                 else:
@@ -122,11 +122,11 @@ class NavTree(object):
     
             for opt in sort:
                 opts.append(new[opt])
-            nav.options = opts
+            nav._children = opts
     
             inserts = 0
-            for opt in list(nav.options):
-                if len(opt.options) == 0:
+            for opt in list(nav._children):
+                if len(opt._children) == 0:
                     nav.remove_child(opt)
                     nav.insert_child(inserts, opt)
                     inserts += 1
@@ -135,10 +135,10 @@ class NavTree(object):
             sort = order.keys()
             sort.sort()
             for key in sort:
-                nav.options.insert(0, order[key])
+                nav.insert_child(0, order[key])
     
     
-        for opt in nav.options:
+        for opt in nav._children:
             self.sort_navoption(opt)
     
     """
@@ -171,7 +171,6 @@ class NavTree(object):
             nav = TreeRoot()
             nav.name = self.titlecase(app)
             nav.nav_group = 'main'
-            nav.options = []
             tree_roots.register(nav) # We register it to the tree root
     
             modnav = self._get_module(app, 'nav')
@@ -243,6 +242,7 @@ class NavTree(object):
                     if c in BLACKLIST:
                         continue
                     model = getattr(modmodels, c)
+                    print model
                     try:
                         subclass = issubclass(model, models.Model) 
                     except TypeError:
@@ -268,7 +268,6 @@ class NavTree(object):
                                     navopt.kwargs = {'app': app, 'model': c}
     
                                 navopt.app = app
-                                navopt.options = []
                             else:
                                 navopt = TreeNode()
                                 navopt.name = self.titlecase(unicode(model._meta.verbose_name_plural))
@@ -276,7 +275,6 @@ class NavTree(object):
                                 navopt.app_name = app
                                 navopt.order_child = False
                                 navopt.app = app
-                                navopt.options = []
                             for key in model._admin.nav_extra.keys():
                                 navopt.__setattr__(key, model._admin.nav_extra.get(key))
                             if model._admin.icon_model is not None:
@@ -350,7 +348,6 @@ class NavTree(object):
         nav.nav_group = 'main'
         nav.action = 'displayprocs'
         nav.icon = 'TopIcon'
-        nav.options = []
         tree_roots.register(nav)
     
         nav = TreeRoot()
@@ -358,7 +355,6 @@ class NavTree(object):
         nav.nav_group = 'main'
         nav.action = 'reboot'
         nav.icon = u'RebootIcon'
-        nav.options = []
         tree_roots.register(nav)
     
         nav = TreeRoot()
@@ -366,7 +362,6 @@ class NavTree(object):
         nav.nav_group = 'main'
         nav.icon = 'ShutdownIcon'
         nav.action = 'shutdown'
-        nav.options = []
         tree_roots.register(nav)
 
     def getmfs(self):
@@ -375,10 +370,11 @@ class NavTree(object):
     def _build_nav(self):
 
         navs = []
+        print tree_roots['main']
         for nav in tree_roots['main']:
 
-            nav.option_list = self.build_options(nav.options)
-            nav.active = True
+            print nav, "-", nav._children
+            nav.option_list = self.build_options(nav._children)
             nav.get_absolute_url()
             navs.append(nav)
 
@@ -393,7 +389,7 @@ class NavTree(object):
                 pass
             option.get_absolute_url()
             #option.active = option.active_if(url, request.path)
-            option.option_list = self.build_options(option.options)
+            option.option_list = self.build_options(option._children)
             options.append(option)
         return options
 
@@ -481,7 +477,7 @@ def _get_or_create(name, groups):
     nav = TreeRoot()
     nav.name = name
     nav.nav_group = 'main'
-    nav.options = []
+    nav._children = []
     groups.register(nav)
     return nav
 
