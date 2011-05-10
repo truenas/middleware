@@ -99,10 +99,10 @@ class Volumes(TreeNode):
         def __init__(self, *args, **kwargs):
 
             #super(Volumes, self).__init__(*args, **kwargs)
-            self.options = [AddVolume,ImportVolume,ViewVolumes]
+            self.options = [AddVolume(),ImportVolume(),ViewVolumes()]
             en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
             if en_dataset:
-                self.options.append(AddDataset)
+                self.append_child(AddDataset)
 
             mp = models.MountPoint.objects.filter(mp_ischild=False).exclude(mp_volume__vol_fstype__exact='iscsi').select_related().order_by('-id')
             for i in mp:
@@ -144,10 +144,10 @@ class Volumes(TreeNode):
                     subnav2.app_name = 'storage'
                     subnav2.options = []
 
-                    nav.options.append(nav2)
-                    nav2.options.append(subnav2)
+                    nav.append_child(nav2)
+                    nav2.append_child(subnav2)
 
                 #if i.mp_volume.vol_fstype == 'ZFS':
                 
-                nav.options.append(subnav)
-                self.options.insert(0, nav)
+                nav.append_child(subnav)
+                self.insert_child(0, nav)

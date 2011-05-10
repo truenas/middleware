@@ -41,7 +41,7 @@ class ISCSIDevice(TreeNode):
     type = u'iscsi'
     icon = u'ExtentIcon'
     append_app = False
-    options = [TreeNode,]
+    options = []
 
     def __init__(self, *args, **kwargs):
 
@@ -53,8 +53,8 @@ class ISCSIDevice(TreeNode):
             nav.type = 'object'
             nav.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'oid': ext.id, 'mf': 'iSCSITargetDeviceExtentForm'}
             nav.icon = u'ExtentIcon'
-            self.options.append(nav)
-        self.options += [ISCSIDeviceAdd,ISCSIDeviceView]
+            self.append_child(nav)
+        self.options += [ISCSIDeviceAdd(),ISCSIDeviceView()]
 
 class ISCSIExtAdd(TreeNode):
 
@@ -97,15 +97,15 @@ class ISCSIExt(TreeNode):
             nav.type = 'object'
             nav.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'oid': ext.id}
             nav.icon = u'ExtentIcon'
-            self.options.append(nav)
-        self.options += [ISCSIExtAdd,ISCSIExtView]
+            self.append_child(nav)
+        self.options += [ISCSIExtAdd(),ISCSIExtView()]
 
 class ISCSI(TreeNode):
 
     name = u'ISCSI'
     type = u'iscsi'
     icon = u'iSCSIIcon'
-    options = [ISCSIDevice]
+    options = [ISCSIDevice()]
 
     #def __init__(self, *args, **kwargs):
 

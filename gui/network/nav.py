@@ -54,7 +54,7 @@ class Linkss(TreeNode):
     def __init__(self, *args, **kwargs):
 
         #self.name = models.LAGGInterface._meta.verbose_name
-        self.options = [AddLagg,ViewLagg]
+        self.options = [AddLagg(),ViewLagg()]
 
         for value, name in LAGGType:
 
@@ -64,7 +64,7 @@ class Linkss(TreeNode):
                 nav.name = name
                 nav.icon = u'LAGGIcon'
                 nav.options = []
-                self.options.append(nav)
+                self.append_child(nav)
 
             for lagg in laggs:
 
@@ -72,7 +72,7 @@ class Linkss(TreeNode):
                 subnav.name = lagg.lagg_interface.int_name
                 subnav.icon = u'LAGGIcon'
                 subnav.options = []
-                nav.options.append(subnav)
+                nav.append_child(subnav)
 
                 laggm = models.LAGGInterfaceMembers.objects.filter(\
                         lagg_interfacegroup__exact=lagg.id).order_by('lagg_ordernum')
@@ -88,7 +88,7 @@ class Linkss(TreeNode):
                             'oid': member.id}
                     subsubnav.append_url = '?deletable=false'
                     subsubnav.options = []
-                    subnav.options.append(subsubnav)
+                    subnav.append_child(subsubnav)
 
         laggs = models.LAGGInterface
 
