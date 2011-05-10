@@ -49,7 +49,6 @@ class NavTree(object):
     def _get_module(self, where, name):
         try:
             mod = __import__('%s.%s' % (where,name), globals(), locals(), [name], -1)
-            #return getattr(mod, name)
             return mod
         except ImportError:
             return None
@@ -151,9 +150,9 @@ class NavTree(object):
         menu entries or overwriting
     3rd - app_name.models is imported. models.Model classes are scanned, 
         if a related ModelForm is found several entries are Added to the Menu 
+            - Objects
             - Add (Model)
             - View All (Model)
-            - First 2 entries
     """
     def auto_generate(self):
     
