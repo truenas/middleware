@@ -49,6 +49,26 @@ class TreeType(object):
 
         return '#'
 
+    """
+    Helper method to append a child to a node
+     - Register the parent of the child node
+     - Append child node to parent children array
+    """
+    def append_child(self, tnode):
+        tnode.parent = self
+        self.options.append(tnode)
+
+    def insert_child(self, pos, tnode):
+        tnode.parent = self
+        self.options.insert(pos, tnode)
+
+    """
+    Orphan a child
+    """
+    def remove_child(self, tnode):
+        self.options.remove(tnode)
+        tnode.parent = None
+
 class TreeNode(TreeType):
     pass
 
