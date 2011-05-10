@@ -67,14 +67,14 @@ class NavTree(object):
         if self._options.has_key(opt.name):
             if replace is True:
                 _opt, _parent = self._options[opt.name]
-                _parent.options.remove(_opt)
+                _parent.remove_child(_opt)
     
-                parent.options.append(opt)
+                parent.append_child(opt)
                 self._options[opt.name] = opt, parent
                 return True
     
         else:
-            parent.options.append(opt)
+            parent.append_child(opt)
             self._options[opt.name] = opt, parent
             return True
     
@@ -127,8 +127,8 @@ class NavTree(object):
             inserts = 0
             for opt in list(nav.options):
                 if len(opt.options) == 0:
-                    nav.options.remove(opt)
-                    nav.options.insert(inserts, opt)
+                    nav.remove_child(opt)
+                    nav.insert_child(inserts, opt)
                     inserts += 1
     
             # TODO better order based on number attribute
@@ -232,7 +232,7 @@ class NavTree(object):
     
                         if not( hasattr(navc, 'append_app') and navc.append_app is False ):
                             self.register_option(obj, nav, True)
-                            #nav.options.append( navc() )
+                            #nav.append_child( navc() )
                             #continue
     
             modmodels = self._get_module(app, 'models')
@@ -306,7 +306,7 @@ class NavTree(object):
                                             subopt.name = unicode(e)
                                         except:
                                             subopt.name = 'Object'
-                                        navopt.options.append(subopt)
+                                        navopt.append_child(subopt)
                                         #register_option(subopt, navopt)
     
                                 subopt = TreeNode()
@@ -318,7 +318,7 @@ class NavTree(object):
                                     subopt.icon = model._admin.icon_add
                                 subopt.model = c
                                 subopt.app_name = app
-                                #navopt.options.append(subopt)
+                                #navopt.append_child(subopt)
                                 self.register_option(subopt, navopt)
     
                                 subopt = TreeNode()
@@ -330,7 +330,7 @@ class NavTree(object):
                                 subopt.app_name = app
                                 subopt.kwargs = {'app': app, 'model': c}
                                 subopt.type = 'viewmodel'
-                                #navopt.options.append(subopt)
+                                #navopt.append_child(subopt)
                                 self.register_option(subopt, navopt)
 
                                 for child in model._admin.menu_children:
@@ -518,10 +518,10 @@ def json2nav(jdata):
         if item.has_key('children'):
             for dic in item['children']:
                 id = dic["_reference"]
-                navopt.options.append( navs[id] )
+                navopt.append_child( navs[id] )
         if item.has_key('app'):
             app = _get_or_create(item['app'], group)
-            app.options.append(navopt)
+            app.append_child(navopt)
 
     return group
 
