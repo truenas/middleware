@@ -9,7 +9,7 @@ class ViewRemote(TreeNode):
 
         gname = 'storage.Replication.View'
         name = _(u'View All Replication Tasks')
-        type = 'openreplication'
+        type = 'openstorage'
         icon = u'ViewAllReplIcon'
         app_name = 'storage'
         append_app = False
@@ -19,7 +19,7 @@ class ViewPeriodic(TreeNode):
         gname = 'storage.Task.View'
         name = _(u'View All Periodic Snapshot Tasks')
         view = u'storage_home'
-        type = 'openperiodic'
+        type = 'openstorage'
         icon = u'ViewAllPeriodicSnapIcon'
         app_name = 'storage'
         model = 'Task'
@@ -29,7 +29,7 @@ class ViewSnap(TreeNode):
 
         gname = 'storage.Snapshots.View'
         name = _(u'View All Snapshots')
-        type = 'opensnaps'
+        type = 'openstorage'
         icon = u'ViewAllPeriodicSnapIcon'
         app_name = 'storage'
         model = 'Task'
@@ -147,7 +147,5 @@ class Volumes(TreeNode):
                     nav.append_child(nav2)
                     nav2.append_child(subnav2)
 
-                #if i.mp_volume.vol_fstype == 'ZFS':
-                
                 nav.append_child(subnav)
                 self.insert_child(0, nav)

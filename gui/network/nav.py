@@ -10,7 +10,7 @@ class NetSummary(TreeNode):
 
         gname = 'network.NetworkSummary'
         name = _(u'Network Summary')
-        type = 'network_summary'
+        type = 'opennetwork'
         icon = u'SettingsIcon'
         app_name = 'network'
 
@@ -18,7 +18,7 @@ class GlobalConf(TreeNode):
 
         gname = u'network.GlobalConfiguration'
         name = _(u'Global Configuration')
-        type = 'network_global'
+        type = 'opennetwork'
         model = 'GlobalConfiguration'
         icon = u'SettingsIcon'
         app_name = 'network'
@@ -37,7 +37,7 @@ class ViewLagg(TreeNode):
 
         gname = 'network.LAGGInterfaceMembers.View'
         name = _(u'View All Link Aggregations')
-        type = 'viewlagg'
+        type = 'opennetwork'
         icon = u'ViewAllLAGGsIcon'
         model = 'LAGGInterface'
         app_name = 'network'
@@ -95,7 +95,7 @@ class ViewInterfaces(TreeNode):
 
         gname = 'network.Interfaces.View'
         name = _(u'View All Interfaces')
-        type = 'viewinterfaces'
+        type = 'opennetwork'
         append_app = False
 
         def __init__(self, *args, **kwargs):
@@ -107,7 +107,7 @@ class ViewVLAN(TreeNode):
 
         gname = 'network.VLAN.View'
         name = _(u'View All VLANs')
-        type = 'viewvlans'
+        type = 'opennetwork'
         append_app = False
 
         def __init__(self, *args, **kwargs):
@@ -119,7 +119,7 @@ class ViewSR(TreeNode):
 
         gname = 'network.StaticRoute.View'
         name = _(u'View All Static Routes')
-        type = 'viewsr'
+        type = 'opennetwork'
         append_app = False
 
         def __init__(self, *args, **kwargs):

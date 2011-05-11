@@ -1,5 +1,4 @@
 {% load i18n %}
-{% block dojango_content %}
 <div dojoType="dijit.layout.TabContainer" nested="true" style="width:100%;" title="{% trans "iSCSI Management" %}" selected="true" id="tab_iscsi" doLayout="true">
     <div dojoType="dijit.layout.ContentPane" title="{% trans "Target Global Configuration" %}" doLayout="False" tab="services.iSCSITargetGlobalConfiguration" {% if focus_tab == "services.iSCSITargetGlobalConfiguration" %}selected="true" {% endif %}href="{% url freeadmin_model_edit app="services",model="iSCSITargetGlobalConfiguration",oid=gconfid %}?inline=true" class="objrefresh data_services_iSCSITarget" refreshOnShow="true">
     </div>
@@ -18,4 +17,3 @@
   <div dojoType="dijit.layout.ContentPane" title="{% trans "Portals" %}" doLayout="False" href="{% url services_iscsi_portals %}" tab="services.iSCSITargetPortal.View" {% if focus_tab == "services.iSCSITargetPortal.View" %}selected="true" {% endif %}class="objrefresh data_services_iSCSITargetPortal" refreshOnShow="true">
         </div>
 </div>
-{% endblock %}

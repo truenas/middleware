@@ -364,7 +364,7 @@ class iSCSITargetGlobalConfiguration(Model):
         deletable = False
         menu_child_of = "ISCSI"
         icon_model = u"SettingsIcon"
-        nav_extra = {'type': 'openiscsiconf'}
+        nav_extra = {'type': 'iscsi'}
 
 class iSCSITargetExtent(Model):
     iscsi_target_extent_name = models.CharField(

@@ -8,7 +8,7 @@ class ChangePass(TreeNode):
 
         gname = 'account.ChangePass'
         name = _('Change Password')
-        type = 'changepass'
+        type = 'openaccount'
         icon = u'ChangePasswordIcon'
         append_app = False
 
@@ -16,7 +16,7 @@ class ChangeAdmin(TreeNode):
 
         gname = 'account.ChangeAdmin'
         name = _('Change Admin User')
-        type = 'changeadmin'
+        type = 'openaccount'
         icon = u'ChangeAdminIcon'
         append_app = False
 
@@ -32,7 +32,7 @@ class ViewUsers(TreeNode):
 
         gname = 'account.bsdUsers.View'
         name = _('View All Users')
-        type = 'viewusers'
+        type = 'openaccount'
         icon = u'ViewAllUsersIcon'
         append_app = False
 
@@ -45,7 +45,7 @@ class ViewGroups(TreeNode):
 
         gname = 'account.bsdGroups.View'
         name = _('View All Groups')
-        type = 'viewgroups'
+        type = 'openaccount'
         icon = u'ViewAllGroupsIcon'
         append_app = False
 

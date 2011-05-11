@@ -994,30 +994,12 @@
                     editObject(item.name, item.view, widgets);
                 } else
                     editObject(item.name, item.view);
-            } else if(item.type && item.type == 'viewlagg') {
-                Menu.openNetwork(item.gname);
-            } else if(item.type && item.type == 'viewinterfaces') {
-                Menu.openNetwork(item.gname);
-            } else if(item.type && item.type == 'viewvlans') {
-                Menu.openNetwork(item.gname);
-            } else if(item.type && item.type == 'viewsr') {
-                Menu.openNetwork(item.gname);
-            } else if(item.type && item.type == 'network_global') {
-                Menu.openNetwork(item.gname);
-            } else if(item.type && item.type == 'network_summary') {
+            } else if(item.type && item.type == 'opennetwork') {
                 Menu.openNetwork(item.gname);
             } else if(item.type && item.type == 'en_dis_services') {
                 Menu.openServices();
-            } else if(item.type && item.type == 'changepass') {
+            } else if(item.type && item.type == 'openaccount') {
                 Menu.openAccount(item.gname);
-            } else if(item.type && item.type == 'changeadmin') {
-                Menu.openAccount(item.gname);
-            } else if(item.type && item.type == 'viewusers') {
-                Menu.openAccount(item.gname);
-            } else if(item.type && item.type == 'viewgroups') {
-                Menu.openAccount(item.gname);
-            } else if(item.type && item.type == 'openiscsiconf') {
-                Menu.openISCSI(item.gname);
             } else if(item.type && item.type == 'iscsi') {
                 Menu.openISCSI(item.gname);
             } else if(item.type && item.type == 'logout') {
@@ -1028,18 +1010,8 @@
                     dijit.byId("rebootDialog").show();
             } else if(item.action && item.action == 'shutdown') {
                     dijit.byId("shutdownDialog").show();
-            } else if(item.type && item.type == 'openunixshares') {
+            } else if(item.type && item.type == 'opensharing') {
                 Menu.openSharing(item.gname);
-            } else if(item.type && item.type == 'openwinshares') {
-                Menu.openSharing(item.gname);
-            } else if(item.type && item.type == 'openappleshares') {
-                Menu.openSharing(item.gname);
-            } else if(item.type && item.type == 'openperiodic') {
-                Menu.openStorage(item.gname);
-            } else if(item.type && item.type == 'opensnaps') {
-                Menu.openStorage(item.gname);
-            } else if(item.type && item.type == 'openreplication') {
-                Menu.openStorage(item.gname);
             } else if(item.type && item.type == 'openstorage') {
                 Menu.openStorage(item.gname);
             } else if(item.type && item.type == 'viewmodel') {
