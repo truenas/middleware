@@ -88,6 +88,10 @@ class TreeType(object):
         tnode.parent = self
         self._children.append(tnode)
 
+    def append_children(self, children):
+        for child in children:
+            self.append_child(child)
+
     def insert_child(self, pos, tnode):
         if self is tnode:
             raise Exception("Recursive tree")

@@ -99,7 +99,7 @@ class Volumes(TreeNode):
         def __init__(self, *args, **kwargs):
 
             super(Volumes, self).__init__(*args, **kwargs)
-            self._children = [AddVolume(),ImportVolume(),ViewVolumes()]
+            self.append_children([AddVolume(),ImportVolume(),ViewVolumes()])
             en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
             if en_dataset:
                 self.append_child(AddDataset)
@@ -112,7 +112,6 @@ class Volumes(TreeNode):
                 nav.model = 'Volume'
                 nav.kwargs = {'oid': i.mp_volume.id, 'model': 'Volume'}
                 nav.icon = u'VolumesIcon'
-                nav._children = []
 
                 subnav = TreeNode()
                 subnav.name = _('Change Permissions')
@@ -122,7 +121,6 @@ class Volumes(TreeNode):
                 subnav.model = 'Volume'
                 subnav.icon = u'ChangePasswordIcon'
                 subnav.app_name = 'storage'
-                subnav._children = []
 
                 datasets = models.MountPoint.objects.filter(mp_path__startswith=i.mp_path,mp_ischild=True)
                 for d in datasets:
@@ -132,7 +130,6 @@ class Volumes(TreeNode):
                     nav2.icon = u'VolumesIcon'
                     nav2.model = 'MountPoint'
                     nav2.kwargs = {'oid': d.id, 'model': 'MountPoint'}
-                    nav2._children = []
 
                     subnav2 = TreeNode()
                     subnav2.name = _(u'Change Permissions')
@@ -142,7 +139,6 @@ class Volumes(TreeNode):
                     subnav2.model = 'Volumes'
                     subnav2.icon = u'ChangePasswordIcon'
                     subnav2.app_name = 'storage'
-                    subnav2._children = []
 
                     nav.append_child(nav2)
                     nav2.append_child(subnav2)

@@ -48,7 +48,7 @@ class ISCSITargetToExtentView(TreeNode):
     gname = 'services.iSCSITargetToExtent.View'
     name = _(u'View All Target / Extents')
     type = u'iscsi'
-    icon = u'ViewAllTargetExtentssIcon'
+    icon = u'ViewAllTargetExtentsIcon'
     append_app = False
     app_name = 'services'
     model = 'iSCSITargetToExtent'
@@ -89,11 +89,12 @@ class ISCSIDevice(TreeNode):
     name = _(u'Device Extents')
     type = u'iscsi'
     icon = u'ExtentIcon'
+    order_child = False
     append_app = False
 
     def __init__(self, *args, **kwargs):
 
-        self._children = []
+        super(ISCSIDevice, self).__init__(*args, **kwargs)
         for ext in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__exact='Disk').order_by('-id'):
             nav = TreeNode()
             nav.name = unicode(ext)
@@ -101,8 +102,8 @@ class ISCSIDevice(TreeNode):
             nav.type = 'object'
             nav.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'oid': ext.id, 'mf': 'iSCSITargetDeviceExtentForm'}
             nav.icon = u'ExtentIcon'
-            self.append_child(nav)
-        self._children += [ISCSIDeviceAdd(),ISCSIDeviceView()]
+            self.insert_child(0, nav)
+        self.append_children([ISCSIDeviceAdd(), ISCSIDeviceView()])
 
 class ISCSIExtAdd(TreeNode):
 
@@ -137,7 +138,7 @@ class ISCSIExt(TreeNode):
 
     def __init__(self, *args, **kwargs):
 
-        self._children = []
+        super(ISCSIExt, self).__init__(*args, **kwargs)
         for ext in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__exact='File').order_by('-id'):
             nav = TreeNode()
             nav.name = unicode(ext)
@@ -146,7 +147,7 @@ class ISCSIExt(TreeNode):
             nav.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'oid': ext.id}
             nav.icon = u'ExtentIcon'
             self.append_child(nav)
-        self._children += [ISCSIExtAdd(),ISCSIExtView()]
+        self.append_children([ISCSIExtAdd(),ISCSIExtView()])
 
 class ISCSI(TreeNode):
 
@@ -156,4 +157,5 @@ class ISCSI(TreeNode):
     icon = u'iSCSIIcon'
 
     def __init__(self, *args, **kwargs):
-        self._children = [ISCSIDevice()]
+        super(ISCSI, self).__init__(*args, **kwargs)
+        self.append_children([ISCSIDevice()])

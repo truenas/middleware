@@ -53,7 +53,8 @@ class Linkss(TreeNode):
 
     def __init__(self, *args, **kwargs):
 
-        self._children = [AddLagg(),ViewLagg()]
+        super(Linkss, self).__init__(*args, **kwargs)
+        self.append_children([AddLagg(),ViewLagg()])
 
         for value, name in LAGGType:
 

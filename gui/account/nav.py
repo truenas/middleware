@@ -26,7 +26,8 @@ class MyAccount(TreeNode):
         icon = u'MyAccountIcon'
         order = -1
         def __init__(self, *args, **kwargs):
-            self._children = [ChangePass(), ChangeAdmin()]
+            super(MyAccount, self).__init__(*args, **kwargs)
+            self.append_children([ChangePass(), ChangeAdmin()])
 
 class ViewUsers(TreeNode):
 
@@ -36,11 +37,6 @@ class ViewUsers(TreeNode):
         icon = u'ViewAllUsersIcon'
         append_app = False
 
-        def __init__(self, *args, **kwargs):
-            if models.bsdUsers._admin.icon_view is not None:
-                self.icon = models.bsdUsers._admin.icon_view
-            super(ViewUsers, self).__init__(*args, **kwargs)
-
 class ViewGroups(TreeNode):
 
         gname = 'account.bsdGroups.View'
@@ -48,8 +44,3 @@ class ViewGroups(TreeNode):
         type = 'openaccount'
         icon = u'ViewAllGroupsIcon'
         append_app = False
-
-        def __init__(self, *args, **kwargs):
-            if models.bsdGroups._admin.icon_view is not None:
-                self.icon = models.bsdGroups._admin.icon_view
-            super(ViewGroups, self).__init__(*args, **kwargs)
