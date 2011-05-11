@@ -25,6 +25,7 @@ class GlobalConf(TreeNode):
 
 class AddLagg(TreeNode):
 
+        gname = 'network.LAGGInterfaceMembers.Add'
         name = _(u'Create Link Aggregation')
         view = 'network_lagg_add'
         type = 'object'
@@ -95,35 +96,17 @@ class Linkss(TreeNode):
 class ViewInterfaces(TreeNode):
 
         gname = 'network.Interfaces.View'
-        name = _(u'View All Interfaces')
         type = 'opennetwork'
         append_app = False
-
-        def __init__(self, *args, **kwargs):
-            if models.Interfaces._admin.icon_view is not None:
-                self.icon = models.Interfaces._admin.icon_view
-            super(ViewInterfaces, self).__init__(*args, **kwargs)
 
 class ViewVLAN(TreeNode):
 
         gname = 'network.VLAN.View'
-        name = _(u'View All VLANs')
         type = 'opennetwork'
         append_app = False
-
-        def __init__(self, *args, **kwargs):
-            if models.Interfaces._admin.icon_view is not None:
-                self.icon = models.VLAN._admin.icon_view
-            super(ViewVLAN, self).__init__(*args, **kwargs)
 
 class ViewSR(TreeNode):
 
         gname = 'network.StaticRoute.View'
-        name = _(u'View All Static Routes')
         type = 'opennetwork'
         append_app = False
-
-        def __init__(self, *args, **kwargs):
-            if models.Interfaces._admin.icon_view is not None:
-                self.icon = models.StaticRoute._admin.icon_view
-            super(ViewSR, self).__init__(*args, **kwargs)

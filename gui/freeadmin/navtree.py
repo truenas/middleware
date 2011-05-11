@@ -68,6 +68,7 @@ class NavTree(object):
                 _opt = self._options[opt.gname]
                 _opt.parent.remove_child(_opt)
     
+                opt.attrFrom(_opt)
                 parent.append_child(opt)
                 self._options[opt.gname] = opt
                 return True

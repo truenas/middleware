@@ -36,6 +36,9 @@ class TreeType(object):
     view = None
     args = ()
     kwargs ={}
+    icon = None
+    model = None
+    app_name = None
 
     @property
     def options(self):
@@ -108,6 +111,18 @@ class TreeType(object):
     def remove_child(self, tnode):
         self._children.remove(tnode)
         tnode.parent = None
+
+    def _setIfNone(self, attr, nfrom, nto):
+        if getattr(nto, attr) is None:
+            setattr(nto, attr, getattr(nfrom, attr))
+
+    def attrFrom(self, tnode):
+        if not isinstance(tnode, TreeType):
+            raise
+        self._setIfNone("icon", tnode, self)
+        self._setIfNone("model", tnode, self)
+        self._setIfNone("app_name", tnode, self)
+        self._setIfNone("name", tnode, self)
 
 class TreeNode(TreeType):
     pass

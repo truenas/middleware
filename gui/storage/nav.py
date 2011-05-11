@@ -8,21 +8,13 @@ ICON = u'StorageIcon'
 class ViewRemote(TreeNode):
 
         gname = 'storage.Replication.View'
-        name = _(u'View All Replication Tasks')
         type = 'openstorage'
-        icon = u'ViewAllReplIcon'
-        app_name = 'storage'
         append_app = False
 
 class ViewPeriodic(TreeNode):
 
         gname = 'storage.Task.View'
-        name = _(u'View All Periodic Snapshot Tasks')
-        view = u'storage_home'
         type = 'openstorage'
-        icon = u'ViewAllPeriodicSnapIcon'
-        app_name = 'storage'
-        model = 'Task'
         append_app = False
 
 class ViewSnap(TreeNode):

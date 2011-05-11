@@ -16,52 +16,32 @@ class EnDisServices(TreeNode):
 class ISCSITargetAuthorizedInitiatorView(TreeNode):
 
     gname = 'services.iSCSITargetAuthorizedInitiator.View'
-    name = _(u'View All Initiators')
     type = u'iscsi'
-    icon = u'ViewAllInitiatorsIcon'
     append_app = False
-    app_name = 'services'
-    model = 'iSCSITargetAuthorizedInitiator'
 
 class ISCSITargetAuthCredentialView(TreeNode):
 
     gname = 'services.iSCSITargetAuthCredential.View'
-    name = _(u'View All Authorized Accesses')
     type = u'iscsi'
-    icon = u'ViewAllAuthorizedAccessIcon'
     append_app = False
-    app_name = 'services'
-    model = 'iSCSITargetAuthCredential'
 
 class ISCSITargetPortalView(TreeNode):
 
     gname = 'services.iSCSITargetPortal.View'
-    name = _(u'View All Portals')
     type = u'iscsi'
-    icon = u'ViewAllPortalsIcon'
     append_app = False
-    app_name = 'services'
-    model = 'iSCSITargetPortal'
 
 class ISCSITargetToExtentView(TreeNode):
 
     gname = 'services.iSCSITargetToExtent.View'
-    name = _(u'View All Target / Extents')
     type = u'iscsi'
-    icon = u'ViewAllTargetExtentsIcon'
     append_app = False
-    app_name = 'services'
-    model = 'iSCSITargetToExtent'
 
 class ISCSITargetView(TreeNode):
 
     gname = 'services.iSCSITarget.View'
-    name = _(u'View All Targets')
     type = u'iscsi'
-    icon = u'ViewAllTargetsIcon'
     append_app = False
-    app_name = 'services'
-    model = 'iSCSITarget'
 
 class ISCSIDeviceAdd(TreeNode):
 

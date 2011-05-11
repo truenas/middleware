@@ -34,7 +34,6 @@ class ViewUsers(TreeNode):
         gname = 'account.bsdUsers.View'
         name = _('View All Users')
         type = 'openaccount'
-        icon = u'ViewAllUsersIcon'
         append_app = False
 
 class ViewGroups(TreeNode):
@@ -42,5 +41,4 @@ class ViewGroups(TreeNode):
         gname = 'account.bsdGroups.View'
         name = _('View All Groups')
         type = 'openaccount'
-        icon = u'ViewAllGroupsIcon'
         append_app = False
