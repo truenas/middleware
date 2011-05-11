@@ -5,6 +5,7 @@ ICON = u'SharingIcon'
 
 class ViewUNIX(TreeNode):
 
+        gname = 'sharing.NFS_Share.View'
         name = _(u'View All UNIX Shares')
         type = 'openunixshares'
         icon = u'ViewAllUNIXSharesIcon'
@@ -14,6 +15,7 @@ class ViewUNIX(TreeNode):
 
 class ViewApple(TreeNode):
 
+        gname = 'sharing.AFP_Share.View'
         name = _(u'View All Apple Shares')
         type = 'openappleshares'
         icon = u'ViewAllAppleSharesIcon'
@@ -23,6 +25,7 @@ class ViewApple(TreeNode):
 
 class ViewWin(TreeNode):
 
+        gname = 'sharing.CIFS_Share.View'
         name = _(u'View All Windows Shares')
         type = 'openwinshares'
         icon = u'ViewAllWindowsSharesIcon'

@@ -14,6 +14,7 @@ class ChangePass(TreeNode):
 
 class ChangeAdmin(TreeNode):
 
+        gname = 'account.ChangeAdmin'
         name = _('Change Admin User')
         type = 'changeadmin'
         icon = u'ChangeAdminIcon'

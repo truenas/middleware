@@ -7,6 +7,7 @@ ICON = u'StorageIcon'
 
 class ViewRemote(TreeNode):
 
+        gname = 'storage.Replication.View'
         name = _(u'View All Replication Tasks')
         type = 'openreplication'
         icon = u'ViewAllReplIcon'
@@ -15,6 +16,7 @@ class ViewRemote(TreeNode):
 
 class ViewPeriodic(TreeNode):
 
+        gname = 'storage.Task.View'
         name = _(u'View All Periodic Snapshot Tasks')
         view = u'storage_home'
         type = 'openperiodic'
@@ -25,6 +27,7 @@ class ViewPeriodic(TreeNode):
 
 class ViewSnap(TreeNode):
 
+        gname = 'storage.Snapshots.View'
         name = _(u'View All Snapshots')
         type = 'opensnaps'
         icon = u'ViewAllPeriodicSnapIcon'
@@ -34,6 +37,7 @@ class ViewSnap(TreeNode):
 
 class AddVolume(TreeNode):
 
+        gname = 'storage.Volume.Add'
         name = _(u'Create Volume')
         view = 'storage_wizard'
         type = 'volumewizard'
@@ -44,6 +48,7 @@ class AddVolume(TreeNode):
 
 class ImportVolume(TreeNode):
 
+        gname = 'storage.Volume.Import'
         name = _(u'Import Volume')
         view = 'storage_import'
         type = 'volumewizard'
@@ -54,6 +59,7 @@ class ImportVolume(TreeNode):
 
 class ViewVolumes(TreeNode):
 
+        gname = 'storage.Volume.View'
         name = _(u'View All Volumes')
         view = u'storage_home'
         type = 'openstorage'
@@ -64,6 +70,7 @@ class ViewVolumes(TreeNode):
 
 class AddDataset(TreeNode):
 
+        gname = 'storage.Dataset.Add'
         name = _(u'Create ZFS Dataset')
         view = 'storage_dataset'
         icon = u'AddDatasetIcon'
@@ -74,8 +81,8 @@ class AddDataset(TreeNode):
 
 class CreatePeriodicSnap(TreeNode):
 
+        gname = 'storage.Task.Add'
         name = _(u'Add Periodic Snapshot')
-        rename = _(u'Create Periodic Snapshot')
         view = 'storage_periodicsnap'
         icon = u'CreatePeriodicSnapIcon'
         type = 'object'
@@ -85,12 +92,13 @@ class CreatePeriodicSnap(TreeNode):
 
 class Volumes(TreeNode):
 
+        gname = 'storage.Volume'
         name = _(u'Volumes')
         icon = u'VolumesIcon'
 
         def __init__(self, *args, **kwargs):
 
-            #super(Volumes, self).__init__(*args, **kwargs)
+            super(Volumes, self).__init__(*args, **kwargs)
             self._children = [AddVolume(),ImportVolume(),ViewVolumes()]
             en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
             if en_dataset:

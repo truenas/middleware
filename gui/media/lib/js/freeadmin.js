@@ -271,7 +271,7 @@
                     closable: true,
                     href:openurl,
                 });
-                pane.tab = 'accoubt';
+                pane.tab = 'account';
                 p.addChild(pane);
                 p.selectChild(pane);
 
@@ -1009,15 +1009,17 @@
             } else if(item.type && item.type == 'en_dis_services') {
                 Menu.openServices();
             } else if(item.type && item.type == 'changepass') {
-                Menu.openAccount('Change Password');
+                Menu.openAccount(item.gname);
             } else if(item.type && item.type == 'changeadmin') {
-                Menu.openAccount('Change Admin User');
+                Menu.openAccount(item.gname);
             } else if(item.type && item.type == 'viewusers') {
-                Menu.openAccount('Users');
+                Menu.openAccount(item.gname);
             } else if(item.type && item.type == 'viewgroups') {
-                Menu.openAccount('Groups');
+                Menu.openAccount(item.gname);
             } else if(item.type && item.type == 'openiscsiconf') {
-                Menu.openISCSI('Target Global Configuration');
+                Menu.openISCSI(item.gname);
+            } else if(item.type && item.type == 'iscsi') {
+                Menu.openISCSI(item.gname);
             } else if(item.type && item.type == 'logout') {
                 window.location='/account/logout/';
             } else if(item.action && item.action == 'displayprocs') {
@@ -1026,20 +1028,20 @@
                     dijit.byId("rebootDialog").show();
             } else if(item.action && item.action == 'shutdown') {
                     dijit.byId("shutdownDialog").show();
-            } else if(item.type && item.type == 'openstorage') {
-                Menu.openStorage('Active Volumes');
             } else if(item.type && item.type == 'openunixshares') {
-                Menu.openSharing('UNIX');
+                Menu.openSharing(item.gname);
             } else if(item.type && item.type == 'openwinshares') {
-                Menu.openSharing('Windows');
+                Menu.openSharing(item.gname);
             } else if(item.type && item.type == 'openappleshares') {
-                Menu.openSharing('Apple');
+                Menu.openSharing(item.gname);
             } else if(item.type && item.type == 'openperiodic') {
-                Menu.openStorage('Periodic Snapshot Tasks');
+                Menu.openStorage(item.gname);
             } else if(item.type && item.type == 'opensnaps') {
-                Menu.openStorage('ZFS Snapshots');
+                Menu.openStorage(item.gname);
             } else if(item.type && item.type == 'openreplication') {
-                Menu.openStorage('ZFS Replication');
+                Menu.openStorage(item.gname);
+            } else if(item.type && item.type == 'openstorage') {
+                Menu.openStorage(item.gname);
             } else if(item.type && item.type == 'viewmodel') {
                 //  get the children and make sure we haven't opened this yet.
                 var c = p.getChildren();

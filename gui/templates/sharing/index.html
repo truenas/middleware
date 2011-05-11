@@ -1,9 +1,9 @@
 {% load i18n %}
 <div dojoType="dijit.layout.TabContainer" id="tab_sharing" nested="true" doLayout="true">
-    <div dojoType="dijit.layout.ContentPane" title="{% trans "Apple" %}" {% if focus_form == "Apple" %} selected="true"{% endif %} href="{% url sharing_apple %}" refreshOnShow="true" class="objrefresh data_sharing_AFP_Share"> 
+    <div dojoType="dijit.layout.ContentPane" title="{% trans "Apple" %}" tab="sharing.AFP_Share.View" {% if focus_form == "sharing.AFP_Share.View" %} selected="true"{% endif %} href="{% url sharing_apple %}" refreshOnShow="true" class="objrefresh data_sharing_AFP_Share"> 
         </div>
-        <div dojoType="dijit.layout.ContentPane" title="{% trans "UNIX" %}" {% if focus_form == "UNIX" %} selected="true"{% endif %} href="{% url sharing_unix %}" refreshOnShow="true" class="objrefresh data_sharing_NFS_Share">
+        <div dojoType="dijit.layout.ContentPane" title="{% trans "UNIX" %}" tab="sharing.NFS_Share.View" {% if focus_form == "sharing.NFS_Share.View" %} selected="true"{% endif %} href="{% url sharing_unix %}" refreshOnShow="true" class="objrefresh data_sharing_NFS_Share">
         </div>
-        <div dojoType="dijit.layout.ContentPane" title="{% trans "Windows" %}" {% if focus_form == "Windows" %} selected="true"{% endif %} href="{% url sharing_windows %}" refreshOnShow="true" class="objrefresh data_sharing_CIFS_Share">
+        <div dojoType="dijit.layout.ContentPane" title="{% trans "Windows" %}" tab="sharing.CIFS_Share.View" {% if focus_form == "sharing.CIFS_Share.View" %} selected="true"{% endif %} href="{% url sharing_windows %}" refreshOnShow="true" class="objrefresh data_sharing_CIFS_Share">
         </div>
     </div>

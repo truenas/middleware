@@ -7,13 +7,65 @@ ICON = u'ServicesIcon'
 
 class EnDisServices(TreeNode):
 
+    gname = 'services.ControlServices'
     name = _(u'Control Services')
     type = u'en_dis_services'
     icon = u'ServicesIcon'
     order = -1
 
+class ISCSITargetAuthorizedInitiatorView(TreeNode):
+
+    gname = 'services.iSCSITargetAuthorizedInitiator.View'
+    name = _(u'View All Initiators')
+    type = u'iscsi'
+    icon = u'ViewAllInitiatorsIcon'
+    append_app = False
+    app_name = 'services'
+    model = 'iSCSITargetAuthorizedInitiator'
+
+class ISCSITargetAuthCredentialView(TreeNode):
+
+    gname = 'services.iSCSITargetAuthCredential.View'
+    name = _(u'View All Authorized Accesses')
+    type = u'iscsi'
+    icon = u'ViewAllAuthorizedAccessIcon'
+    append_app = False
+    app_name = 'services'
+    model = 'iSCSITargetAuthCredential'
+
+class ISCSITargetPortalView(TreeNode):
+
+    gname = 'services.iSCSITargetPortal.View'
+    name = _(u'View All Portals')
+    type = u'iscsi'
+    icon = u'ViewAllPortalsIcon'
+    append_app = False
+    app_name = 'services'
+    model = 'iSCSITargetPortal'
+
+class ISCSITargetToExtentView(TreeNode):
+
+    gname = 'services.iSCSITargetToExtent.View'
+    name = _(u'View All Target / Extents')
+    type = u'iscsi'
+    icon = u'ViewAllTargetExtentssIcon'
+    append_app = False
+    app_name = 'services'
+    model = 'iSCSITargetToExtent'
+
+class ISCSITargetView(TreeNode):
+
+    gname = 'services.iSCSITarget.View'
+    name = _(u'View All Targets')
+    type = u'iscsi'
+    icon = u'ViewAllTargetsIcon'
+    append_app = False
+    app_name = 'services'
+    model = 'iSCSITarget'
+
 class ISCSIDeviceAdd(TreeNode):
 
+    gname = 'services.iSCSITargetDeviceExtent.Add'
     name = _(u'Add Device Extent')
     type = u'object'
     view = u'freeadmin_model_add'
@@ -23,10 +75,9 @@ class ISCSIDeviceAdd(TreeNode):
 
 class ISCSIDeviceView(TreeNode):
 
+    gname = 'services.iSCSITargetDeviceExtent.View'
     name = _(u'View All Device Extents')
-    type = u'viewmodel'
-    view = u'freeadmin_model_datagrid'
-    kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
+    type = u'iscsi'
     icon = u'ViewAllExtentsIcon'
     append_app = False
     app_name = 'services'
@@ -34,6 +85,7 @@ class ISCSIDeviceView(TreeNode):
 
 class ISCSIDevice(TreeNode):
 
+    gname = 'services.iSCSITargetDeviceExtent'
     name = _(u'Device Extents')
     type = u'iscsi'
     icon = u'ExtentIcon'
@@ -54,6 +106,7 @@ class ISCSIDevice(TreeNode):
 
 class ISCSIExtAdd(TreeNode):
 
+    gname = 'services.iSCSITargetExtent.Add'
     name = _(u'Add Extent')
     type = u'object'
     view = u'freeadmin_model_add'
@@ -65,7 +118,7 @@ class ISCSIExtView(TreeNode):
 
     gname = 'services.iSCSITargetExtent.View'
     name = _(u'View All Extents')
-    type = u'viewmodel'
+    type = u'iscsi'
     view = u'freeadmin_model_datagrid'
     kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
     icon = u'ViewAllExtentsIcon'
