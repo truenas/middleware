@@ -3,20 +3,20 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-10 13:11-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-05-11 14:17+0200\n"
+"Last-Translator: william <william88@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
 msgid "Plain"
@@ -112,7 +112,7 @@ msgstr ""
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr ""
+msgstr "Desabilitado"
 
 #: choices.py:87 choices.py:88 choices.py:89 choices.py:90 choices.py:91
 #: choices.py:92
@@ -165,19 +165,19 @@ msgstr ""
 
 #: choices.py:135 templates/storage/tasks.html:95
 msgid "April"
-msgstr ""
+msgstr "Abril"
 
 #: choices.py:136 templates/storage/tasks.html:98
 msgid "May"
-msgstr ""
+msgstr "Maio"
 
 #: choices.py:137 templates/storage/tasks.html:101
 msgid "June"
-msgstr ""
+msgstr "Junho"
 
 #: choices.py:138 templates/storage/tasks.html:104
 msgid "July"
-msgstr ""
+msgstr "Julho"
 
 #: choices.py:139 templates/storage/tasks.html:107
 msgid "August"
@@ -229,15 +229,15 @@ msgstr ""
 
 #: choices.py:163
 msgid "Anonymous"
-msgstr ""
+msgstr "Anônimo"
 
 #: choices.py:164
 msgid "Local User"
-msgstr ""
+msgstr "Usuário Local"
 
 #: choices.py:185
 msgid "Normal"
-msgstr ""
+msgstr "Normal"
 
 #: choices.py:186
 msgid "Full"
@@ -245,11 +245,11 @@ msgstr ""
 
 #: choices.py:187
 msgid "Debug"
-msgstr ""
+msgstr "Depurar"
 
 #: choices.py:191
 msgid "Default"
-msgstr ""
+msgstr "Padrão"
 
 #: choices.py:192
 msgid "Time Machine"
@@ -261,11 +261,11 @@ msgstr ""
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "Nomes em caixa baixa em ambas as direções"
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "Cliente vê em caixa baixa, servidor vê em caixa alta"
 
 #: choices.py:199
 msgid "Client sees uppercase, server sees lowercase"
@@ -273,11 +273,11 @@ msgstr ""
 
 #: choices.py:203
 msgid "File"
-msgstr ""
+msgstr "Arquivo"
 
 #: choices.py:204
 msgid "Device"
-msgstr ""
+msgstr "Dispositivo"
 
 #: choices.py:205
 msgid "ZFS Volume"
@@ -286,11 +286,11 @@ msgstr ""
 #: choices.py:209 storage/models.py:137 templates/storage/autoimport.html:9
 #: templates/storage/import.html:18 templates/storage/wizard.html:84
 msgid "Disk"
-msgstr ""
+msgstr "Disco"
 
 #: choices.py:210
 msgid "DVD"
-msgstr ""
+msgstr "DVD"
 
 #: choices.py:211
 msgid "Tape"
