@@ -65,16 +65,16 @@ class NavTree(object):
     
         if self._options.has_key(opt.gname) and opt.gname is not None:
             if replace is True:
-                _opt, _parent = self._options[opt.gname]
-                _parent.remove_child(_opt)
+                _opt = self._options[opt.gname]
+                _opt.parent.remove_child(_opt)
     
                 parent.append_child(opt)
-                self._options[opt.gname] = opt, parent
+                self._options[opt.gname] = opt
                 return True
     
         else:
             parent.append_child(opt)
-            self._options[opt.gname] = opt, parent
+            self._options[opt.gname] = opt
             return True
     
         return False
@@ -85,15 +85,15 @@ class NavTree(object):
                 hasattr(self._navs[nav.gname], 'append_app') and \
                 self._navs[nav.gname].append_app is False:
             if self._options.has_key(nav.gname):
-                old, parent = self._options[nav.gname]
-                self.register_option(self._navs[nav.gname], parent, True) 
+                old  = self._options[nav.gname]
+                self.register_option(self._navs[nav.gname], old.parent, True) 
     
         for subnav in nav:
             self.replace_navs(subnav)
     
     def register_option_byname(self, opt, name, replace=False):
         if self._options.has_key(name):
-            nav, par = self._options[name]
+            nav = self._options[name]
             return self.register_option(opt, nav, replace)
         return False
     
