@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-10 13:11-0700\n"
-"PO-Revision-Date: 2011-05-11 14:17+0200\n"
+"PO-Revision-Date: 2011-05-11 14:30+0200\n"
 "Last-Translator: william <william88@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
@@ -351,59 +351,59 @@ msgstr ""
 
 #: choices.py:281 choices.py:286
 msgid "Off"
-msgstr ""
+msgstr "Desligado"
 
 #: choices.py:287
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (recomendado)"
 
 #: choices.py:288
 msgid "default level"
-msgstr ""
+msgstr "nível padrão"
 
 #: choices.py:289
 msgid "fastest"
-msgstr ""
+msgstr "mais rápido"
 
 #: choices.py:290
 msgid "maximum, slow"
-msgstr ""
+msgstr "máximo, devagar"
 
 #: choices.py:431
 msgid "Hour(s)"
-msgstr ""
+msgstr "Hora(s)"
 
 #: choices.py:432
 msgid "Day(s)"
-msgstr ""
+msgstr "Dia(s)"
 
 #: choices.py:433
 msgid "Week(s)"
-msgstr ""
+msgstr "Semana(s)"
 
 #: choices.py:434
 msgid "Month(s)"
-msgstr ""
+msgstr "Mês(es)"
 
 #: choices.py:435
 msgid "Year(s)"
-msgstr ""
+msgstr "Ano(s)"
 
 #: choices.py:439
 msgid "Everyday"
-msgstr ""
+msgstr "Todo dia"
 
 #: choices.py:440
 msgid "Every selected weekday"
-msgstr ""
+msgstr "Todo dia selecionado"
 
 #: account/forms.py:93 templates/storage/volumes.html:62
 msgid "Available"
-msgstr ""
+msgstr "Disponível"
 
 #: account/forms.py:144
 msgid "Selected"
-msgstr ""
+msgstr "Selecionado"
 
 #: account/forms.py:172 account/forms.py:197 account/models.py:77
 #: services/forms.py:244 services/models.py:656 services/models.py:916
