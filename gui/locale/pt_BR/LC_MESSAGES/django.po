@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-05-11 09:51-0700\n"
+"POT-Creation-Date: 2011-05-10 13:11-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -554,20 +554,20 @@ msgstr ""
 msgid "Change Password"
 msgstr ""
 
-#: account/nav.py:18 templates/account/changeform.html:25
+#: account/nav.py:17 templates/account/changeform.html:25
 #: templates/account/index2.html:4
 msgid "Change Admin User"
 msgstr ""
 
-#: account/nav.py:25 templates/account/index2.html:2
+#: account/nav.py:24 templates/account/index2.html:2
 msgid "My Account"
 msgstr ""
 
-#: account/nav.py:34
+#: account/nav.py:33
 msgid "View All Users"
 msgstr ""
 
-#: account/nav.py:47
+#: account/nav.py:46
 msgid "View All Groups"
 msgstr ""
 
@@ -690,7 +690,7 @@ msgstr ""
 msgid "Nameserver 3"
 msgstr ""
 
-#: network/models.py:83 network/models.py:84 network/nav.py:20
+#: network/models.py:83 network/models.py:84 network/nav.py:19
 #: templates/network/index.html:3
 msgid "Global Configuration"
 msgstr ""
@@ -818,31 +818,31 @@ msgstr ""
 msgid "Static Route"
 msgstr ""
 
-#: network/nav.py:12 templates/network/index.html:13
+#: network/nav.py:11 templates/network/index.html:13
 msgid "Network Summary"
 msgstr "Sumário de rede"
 
-#: network/nav.py:28
+#: network/nav.py:27
 msgid "Create Link Aggregation"
 msgstr ""
 
-#: network/nav.py:39
+#: network/nav.py:37
 msgid "View All Link Aggregations"
 msgstr ""
 
-#: network/nav.py:51
+#: network/nav.py:49
 msgid "Link Aggregations"
 msgstr ""
 
-#: network/nav.py:97
+#: network/nav.py:94
 msgid "View All Interfaces"
 msgstr ""
 
-#: network/nav.py:109
+#: network/nav.py:106
 msgid "View All VLANs"
 msgstr ""
 
-#: network/nav.py:121
+#: network/nav.py:118
 msgid "View All Static Routes"
 msgstr ""
 
@@ -1402,7 +1402,7 @@ msgid "The method can be accepted in the controller."
 msgstr ""
 
 #: services/models.py:360 services/models.py:361
-#: templates/services/iscsi.html:4
+#: templates/services/iscsi.html:5
 msgid "Target Global Configuration"
 msgstr ""
 
@@ -2200,58 +2200,38 @@ msgstr ""
 msgid "LDAP"
 msgstr ""
 
-#: services/nav.py:11
+#: services/nav.py:10
 msgid "Control Services"
 msgstr ""
 
-#: services/nav.py:19
-msgid "View All Initiators"
-msgstr ""
-
-#: services/nav.py:29
-msgid "View All Authorized Accesses"
-msgstr ""
-
-#: services/nav.py:39
-msgid "View All Portals"
-msgstr ""
-
-#: services/nav.py:49
-msgid "View All Target / Extents"
-msgstr ""
-
-#: services/nav.py:59
-msgid "View All Targets"
-msgstr ""
-
-#: services/nav.py:69
+#: services/nav.py:17
 msgid "Add Device Extent"
 msgstr ""
 
-#: services/nav.py:79
+#: services/nav.py:26
 msgid "View All Device Extents"
 msgstr ""
 
-#: services/nav.py:89 templates/services/iscsi.html:8
+#: services/nav.py:37 templates/services/iscsi.html:9
 msgid "Device Extents"
 msgstr ""
 
-#: services/nav.py:110 templates/services/iscsi_dextents.html:39
+#: services/nav.py:57 templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
 #: templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 msgid "Add Extent"
 msgstr ""
 
-#: services/nav.py:120
+#: services/nav.py:67
 msgid "View All Extents"
 msgstr ""
 
-#: services/nav.py:132 templates/services/iscsi.html:10
+#: services/nav.py:79 templates/services/iscsi.html:11
 msgid "Extents"
 msgstr ""
 
-#: services/nav.py:154
+#: services/nav.py:101
 msgid "ISCSI"
 msgstr ""
 
@@ -2649,15 +2629,15 @@ msgstr ""
 msgid "UNIX Share"
 msgstr ""
 
-#: sharing/nav.py:9
+#: sharing/nav.py:8
 msgid "View All UNIX Shares"
 msgstr ""
 
-#: sharing/nav.py:19
+#: sharing/nav.py:17
 msgid "View All Apple Shares"
 msgstr ""
 
-#: sharing/nav.py:29
+#: sharing/nav.py:26
 msgid "View All Windows Shares"
 msgstr ""
 
@@ -3012,47 +2992,51 @@ msgstr ""
 msgid "Periodic Snapshot Tasks"
 msgstr ""
 
-#: storage/nav.py:11
+#: storage/nav.py:10
 msgid "View All Replication Tasks"
 msgstr ""
 
-#: storage/nav.py:20
+#: storage/nav.py:18
 msgid "View All Periodic Snapshot Tasks"
 msgstr ""
 
-#: storage/nav.py:31
+#: storage/nav.py:28
 msgid "View All Snapshots"
 msgstr ""
 
-#: storage/nav.py:41 templates/storage/replications.html:5
+#: storage/nav.py:37 templates/storage/replications.html:5
 #: templates/storage/volumes.html:6 templates/storage/volumes.html.py:11
 msgid "Create Volume"
 msgstr ""
 
-#: storage/nav.py:52 templates/storage/autoimport.html:25
+#: storage/nav.py:47 templates/storage/autoimport.html:25
 #: templates/storage/import.html:43 templates/storage/volumes.html:31
 #: templates/storage/volumes.html.py:35
 msgid "Import Volume"
 msgstr ""
 
-#: storage/nav.py:63
+#: storage/nav.py:57
 msgid "View All Volumes"
 msgstr ""
 
-#: storage/nav.py:74 templates/storage/volumes.html:19
+#: storage/nav.py:67 templates/storage/volumes.html:19
 #: templates/storage/volumes.html.py:23
 msgid "Create ZFS Dataset"
 msgstr ""
 
-#: storage/nav.py:85
+#: storage/nav.py:77
 msgid "Add Periodic Snapshot"
 msgstr ""
 
-#: storage/nav.py:96
+#: storage/nav.py:78 templates/storage/tasks.html:10
+msgid "Create Periodic Snapshot"
+msgstr ""
+
+#: storage/nav.py:88
 msgid "Volumes"
 msgstr ""
 
-#: storage/nav.py:118 storage/nav.py:138 templates/storage/volumes.html:123
+#: storage/nav.py:110 storage/nav.py:130 templates/storage/volumes.html:123
 #: templates/storage/volumes.html.py:126
 msgid "Change Permissions"
 msgstr ""
@@ -3842,23 +3826,23 @@ msgstr ""
 msgid "iSCSI Management"
 msgstr ""
 
-#: templates/services/iscsi.html:6
+#: templates/services/iscsi.html:7
 msgid "Targets"
 msgstr ""
 
-#: templates/services/iscsi.html:12
+#: templates/services/iscsi.html:13
 msgid "Associated Targets"
 msgstr ""
 
-#: templates/services/iscsi.html:14
+#: templates/services/iscsi.html:15
 msgid "Authentication"
 msgstr ""
 
-#: templates/services/iscsi.html:16
+#: templates/services/iscsi.html:17
 msgid "Authorized Initiator"
 msgstr ""
 
-#: templates/services/iscsi.html:18
+#: templates/services/iscsi.html:19
 msgid "Portals"
 msgstr ""
 
@@ -4142,10 +4126,6 @@ msgstr ""
 
 #: templates/storage/tasks.html:6
 msgid "Periodic Snapshots"
-msgstr ""
-
-#: templates/storage/tasks.html:10
-msgid "Create Periodic Snapshot"
 msgstr ""
 
 #: templates/storage/tasks.html:14
