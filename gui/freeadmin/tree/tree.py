@@ -51,7 +51,7 @@ class TreeType(object):
         if gname is not None:
             self.gname = gname
         elif self.gname is None:
-            self.gname = self.name
+            self.gname = unicode(self.name)
         #if self.name is None:
         #    raise ValueError(_("You must define a name"))
 
