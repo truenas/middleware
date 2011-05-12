@@ -29,6 +29,7 @@
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from django.conf import settings
 
 from freenasUI import choices
 from freeadmin.models import Model
@@ -42,6 +43,8 @@ class Settings(Model):
             )
     stg_language = models.CharField(
             max_length=120, 
+            choices=settings.LANGUAGES,
+            default="en",
             verbose_name = _("Language")
             )
     stg_timezone = models.CharField(

@@ -28,6 +28,8 @@
 
 from django.utils.translation import ugettext_lazy as _
 from django.forms import FileField
+from django.conf import settings
+from django.utils import translation
 
 from freenasUI.storage.models import MountPoint
 from freenasUI.common.forms import ModelForm, Form
@@ -36,13 +38,16 @@ from freenasUI.middleware.notifier import notifier
 from dojango import forms
 
 class SettingsForm(ModelForm):
+    stg_language = forms.ChoiceField(label=_("Language (Require UI reload)"), widget=forms.Select())
     class Meta:
         model = models.Settings
     def __init__(self, *args, **kwargs):
         super(SettingsForm, self).__init__( *args, **kwargs)
         self.instance._original_stg_guiprotocol = self.instance.stg_guiprotocol
+        self.fields['stg_language'].choices=settings.LANGUAGES
     def save(self):
         super(SettingsForm, self).save()
+        translation.activate(self.cleaned_data['stg_language'])
         if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol:
             notifier().restart("http")
         notifier().reload("timeservices")
