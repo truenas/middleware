@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:32-0700\n"
-"PO-Revision-Date: 2011-05-11 21:45+0200\n"
+"PO-Revision-Date: 2011-05-12 16:48+0200\n"
 "Last-Translator: admin <admin@ixsystems.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
@@ -40,11 +40,11 @@ msgstr ""
 
 #: choices.py:48
 msgid "English"
-msgstr ""
+msgstr "Inglês"
 
 #: choices.py:53 choices.py:222
 msgid "Auto"
-msgstr ""
+msgstr "Auto"
 
 #: choices.py:54
 msgid "PIO0"
@@ -108,7 +108,7 @@ msgstr ""
 
 #: choices.py:72
 msgid "Always On"
-msgstr ""
+msgstr "Sempre Ligado"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
@@ -141,15 +141,15 @@ msgstr ""
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr ""
+msgstr "Mínimo"
 
 #: choices.py:97
 msgid "Medium"
-msgstr ""
+msgstr "Médio"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr ""
+msgstr "Máximo"
 
 #: choices.py:132 templates/storage/tasks.html:86
 msgid "January"
@@ -410,11 +410,12 @@ msgstr "Selecionado"
 #: system/models.py:153 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:60
 msgid "Username"
-msgstr ""
+msgstr "Usuário"
 
 #: account/forms.py:173 account/forms.py:198
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
 msgstr ""
+"Obrigatório. 30 caracteres ou menos. Apenas letras, dígitos e @/./+/-/_."
 
 #: account/forms.py:174 account/forms.py:199
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
@@ -542,7 +543,7 @@ msgstr ""
 
 #: account/models.py:107
 msgid "Full Name"
-msgstr ""
+msgstr "Nome Completo"
 
 #: account/models.py:114 account/models.py:151 services/models.py:509
 #: templates/services/iscsi_auth.html:6
@@ -566,21 +567,21 @@ msgstr ""
 
 #: account/nav.py:33 templates/account/index2.html:2
 msgid "My Account"
-msgstr ""
+msgstr "Minha Conta"
 
 #: account/nav.py:41
 msgid "View All Users"
-msgstr ""
+msgstr "Ver Todos os Usuários"
 
 #: account/nav.py:54
 msgid "View All Groups"
-msgstr ""
+msgstr "Ver Todos os Grupos"
 
 #: account/views.py:79 account/views.py:94 account/views.py:105
 #: account/views.py:120
 #, python-format
 msgid "%s successfully update."
-msgstr ""
+msgstr "%s atualizado com sucesso."
 
 #: account/views.py:94
 msgid "Admin user"
@@ -588,11 +589,11 @@ msgstr ""
 
 #: account/views.py:105 templates/account/index2.html:13
 msgid "Users"
-msgstr ""
+msgstr "Usuários"
 
 #: account/views.py:120 templates/account/index2.html:10
 msgid "Groups"
-msgstr ""
+msgstr "Grupos"
 
 #: contrib/ext_formwizard.py:170
 msgid ""
@@ -602,15 +603,15 @@ msgstr ""
 
 #: freeadmin/navtree.py:349
 msgid "Display System Processes"
-msgstr ""
+msgstr "Mostrar Processos do Sistema"
 
 #: freeadmin/navtree.py:357 templates/freeadmin/index.html:50
 msgid "Reboot"
-msgstr ""
+msgstr "Reiniciar"
 
 #: freeadmin/navtree.py:365 templates/freeadmin/index.html:62
 msgid "Shutdown"
-msgstr ""
+msgstr "Desligar"
 
 #: freeadmin/views.py:103
 #, python-format
@@ -663,7 +664,7 @@ msgstr ""
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "Gateway IPv4 Padrão"
 
 #: network/models.py:59
 msgid "IPv6 Default Gateway"
@@ -684,7 +685,7 @@ msgstr ""
 #: network/models.py:83 network/models.py:84 network/nav.py:18
 #: templates/network/index2.html:3
 msgid "Global Configuration"
-msgstr ""
+msgstr "Configuração Geral"
 
 #: network/models.py:95
 msgid "NIC"
@@ -1128,7 +1129,7 @@ msgstr ""
 #: services/models.py:135 services/models.py:675 services/models.py:709
 #: services/models.py:741 services/models.py:888
 msgid "Auxiliary parameters"
-msgstr ""
+msgstr "Parâmetros auxiliares"
 
 #: services/models.py:137
 msgid "These parameters are added to [Global] section of smb.conf"
@@ -1300,7 +1301,7 @@ msgstr ""
 
 #: services/models.py:273
 msgid "Max. connections"
-msgstr ""
+msgstr "Máx. de Conexões"
 
 #: services/models.py:274
 msgid "Maximum number of connections in each session (8 by default)."
@@ -1362,7 +1363,7 @@ msgstr ""
 
 #: services/models.py:321
 msgid "Enable LUC"
-msgstr ""
+msgstr "Habilitar LUC"
 
 #: services/models.py:325
 msgid "Controller IP address"
@@ -1950,7 +1951,7 @@ msgstr ""
 
 #: services/models.py:943
 msgid "TCP Port"
-msgstr ""
+msgstr "Porta TCP"
 
 #: services/models.py:944
 msgid "Alternate TCP port. Default is 22"
