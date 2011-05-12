@@ -30,7 +30,7 @@ from datetime import datetime, time
 from os import popen
 
 from django.http import QueryDict
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
 from freenasUI.middleware.notifier import notifier

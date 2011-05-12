@@ -369,7 +369,7 @@ def mp_permission(request, object_id):
         if form.is_valid():
             mp_path=mp.mp_path.__str__()
             form.commit(path=mp_path)
-            return HttpResponse(simplejson.dumps({"error": False, "message": "Mount Point permissions successfully updated."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Mount Point permissions successfully updated.")}), mimetype="application/json")
     else:
         form = forms.MountPointAccessForm(initial={'path':mp.mp_path})
     variables = RequestContext(request, {
@@ -385,7 +385,7 @@ def dataset_delete(request, object_id):
         retval = notifier().destroy_zfs_dataset(path = obj.mp_path[5:].__str__())
         if retval == '':
             obj.delete()
-            return HttpResponse(simplejson.dumps({"error": False, "message": "Dataset successfully destroyed."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset successfully destroyed.")}), mimetype="application/json")
         else:
             return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
     else:
@@ -400,7 +400,7 @@ def snapshot_delete(request, dataset, snapname):
     if request.method == 'POST':
         retval = notifier().destroy_zfs_dataset(path = snapshot.__str__())
         if retval == '':
-            return HttpResponse(simplejson.dumps({"error": False, "message": "Snapshot successfully deleted."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully deleted.")}), mimetype="application/json")
         else:
             return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
     else:
@@ -415,7 +415,7 @@ def snapshot_rollback(request, dataset, snapname):
     if request.method == "POST":
         ret = notifier().rollback_zfs_snapshot(snapshot = snapshot.__str__())
         if ret == '':
-            return HttpResponse(simplejson.dumps({"error": False, "message": "Rollback successful."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Rollback successful."_}), mimetype="application/json")
         else:
             return HttpResponse(simplejson.dumps({"error": True, "message": ret}), mimetype="application/json")
     else:

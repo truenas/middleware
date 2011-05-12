@@ -145,7 +145,7 @@ class SSLForm(ModelForm):
         model = models.SSL
 
 class FirmwareTemporaryLocationForm(Form):
-    mountpoint = forms.ChoiceField(label="Place to temporarily place firmware file", help_text = _("The system will use this place to temporarily store the firmware file before it's being applied."),choices=(), widget=forms.Select(attrs={ 'class': 'required' }),)
+    mountpoint = forms.ChoiceField(label=_("Place to temporarily place firmware file"), help_text = _("The system will use this place to temporarily store the firmware file before it's being applied."),choices=(), widget=forms.Select(attrs={ 'class': 'required' }),)
     def __init__(self, *args, **kwargs):
         super(FirmwareTemporaryLocationForm, self).__init__(*args, **kwargs)
         self.fields['mountpoint'].choices = [(x.mp_path, x.mp_path) for x in MountPoint.objects.all()]
@@ -166,11 +166,11 @@ class FirmwareUploadForm(Form):
             checksum = notifier().checksum(filename)
             retval = notifier().validate_xz(filename)
             if checksum != cleaned_data['sha256'].__str__() or retval == False:
-                msg = u"Invalid firmware or checksum"
+                msg = _(u"Invalid firmware or checksum")
                 self._errors["firmware"] = self.error_class([msg])
                 del cleaned_data["firmware"]
         else:
-            self._errors["firmware"] = self.error_class(["This field is required."])
+            self._errors["firmware"] = self.error_class([_("This field is required.")])
         return cleaned_data
     def done(self):
         notifier().update_firmware('/var/tmp/firmware/firmware.xz')
