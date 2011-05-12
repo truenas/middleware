@@ -65,6 +65,10 @@ float:left;color:#f5f5f5;
     max-height:200px;
     overflow:auto !important;
 }
+#id_stg_language_menu {
+    max-height:200px;
+    overflow:auto !important;
+}
 
 #id_int_v4netmaskbit_menu {
     max-height:200px;
