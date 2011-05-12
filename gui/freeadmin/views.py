@@ -408,6 +408,16 @@ def generic_model_delete(request, app, model, oid):
     m = getattr(_temp, model)
     instance = get_object_or_404(m, pk=oid)
 
+    try:
+        if m._admin.delete_form_filter:
+            find = m.objects.filter(id=instance.id, **m._admin.delete_form_filter)
+            if find.count() == 0:
+                raise
+        _temp = __import__('%s.forms' % app, globals(), locals(), [m._admin.delete_form], -1)
+        form = getattr(_temp, m._admin.delete_form)
+    except:
+        form = None
+
     context = RequestContext(request, {
         'app': app,
         'model': model,
@@ -416,10 +426,23 @@ def generic_model_delete(request, app, model, oid):
         'verbose_name': instance._meta.verbose_name,
     })
 
+    form_i = None
     if request.method == "POST":
-        instance.delete()
-        return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully deleted.") % m._meta.verbose_name}), mimetype="application/json")
+        if form:
+            form_i = form(request.POST, instance=instance)
+            if form_i.is_valid():
+                if hasattr(form_i, "done"):
+                    form_i.done()
+                instance.delete()
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully deleted.") % m._meta.verbose_name}), mimetype="application/json")
+
+        else:
+            instance.delete()
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully deleted.") % m._meta.verbose_name}), mimetype="application/json")
         #return render_to_response('freeadmin/generic_model_delete_ok.html', context)
+    if form and form_i is None:
+        form_i = form(instance=instance)
+        context.update({'form': form})
     template = "%s/%s_delete.html" % (m._meta.app_label, m._meta.object_name.lower())
     try:
         get_template(template)

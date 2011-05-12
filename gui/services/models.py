@@ -398,6 +398,8 @@ class iSCSITargetExtent(Model):
     class Meta:
         verbose_name = _("Extent")
     class FreeAdmin:
+        delete_form = "ExtentDelete"
+        delete_form_filter = {'iscsi_target_extent_type__exact': 'File'} #FIXME hack for DevExtent
         menu_child_of = "ISCSI"
         icon_object = u"ExtentIcon"
         icon_model = u"ExtentIcon"

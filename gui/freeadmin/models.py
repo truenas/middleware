@@ -32,6 +32,8 @@ class FreeAdminWrapper(object):
 
     create_modelform = None
     edit_modelform = None
+    delete_form = None
+    delete_form_filter = {} # Ugly workaround for Extent/DeviceExtent
     exclude_fields = []
     deletable = True
     menu_child_of = None

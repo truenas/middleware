@@ -36,7 +36,7 @@ from django.core.urlresolvers import reverse
 
 from services import models
 from storage.models import Volume, MountPoint, DiskGroup, Disk
-from freenasUI.common.forms import ModelForm
+from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_User
 from freenasUI.middleware.notifier import notifier
 from storage.forms import UnixPermissionField
@@ -760,3 +760,16 @@ class iSCSITargetForm(ModelForm):
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
+
+class ExtentDelete(Form):
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)
+        super(ExtentDelete, self).__init__(*args, **kwargs)
+
+    delete = forms.BooleanField(label=_("Delete underlying file"), initial=False)
+
+    def done(self):
+        if self.cleaned_data['delete'] and \
+            self.instance.iscsi_target_extent_type == 'File':
+            os.system("rm \"%s\"" % self.instance.iscsi_target_extent_path)
