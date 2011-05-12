@@ -29,6 +29,7 @@ import os
 from django.conf.urls.defaults import include, patterns
 from django.views.static import serve
 from django.conf import settings
+from django.views.generic import TemplateView
 
 from freeadmin import navtree
 from freeadmin.middleware import public
@@ -37,6 +38,10 @@ navtree.auto_generate()
 
 handler500 = 'freeadmin.views.server_error'
 handler404 = 'django.views.defaults.page_not_found'
+
+js_info_dict = {
+    'packages': ('freenasUI',),
+}
 
 urlpatterns = patterns('',
     ('^$', adminInterface),
@@ -49,6 +54,7 @@ urlpatterns = patterns('',
     (r'^dojango/(?P<path>.*)$',
         public(serve),
         {'document_root': os.path.abspath(os.path.dirname(__file__)+'/dojango/')}),
+    (r'^jsi18n/', 'django.views.i18n.javascript_catalog'),
     (r'^dojangogrid/', include('dojango.urls')),
     (r'^admin/', include('freeadmin.urls')),
     (r'^account/', include('account.urls')),
