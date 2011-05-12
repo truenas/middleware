@@ -1,5 +1,5 @@
 from freeadmin.tree import TreeNode
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 BLACKLIST = ['Email', 'Advanced', 'Settings', 'SSL']
 ICON = u'SystemIcon'

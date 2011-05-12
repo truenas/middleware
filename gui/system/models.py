@@ -42,8 +42,6 @@ class Settings(Model):
             )
     stg_language = models.CharField(
             max_length=120, 
-            choices=choices.LANG_CHOICES, 
-            default="english", 
             verbose_name = _("Language")
             )
     stg_timezone = models.CharField(

@@ -33,7 +33,7 @@ from django.db import models
 from django.forms import ModelForm
 from django.core.urlresolvers import resolve
 from django.http import Http404
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 class NavTree(object):
 
@@ -394,9 +394,9 @@ class NavTree(object):
         if hasattr(o, 'append_url'):
             my['view'] += o.append_url
         if hasattr(o, 'rename'):
-            my['name'] = o.rename
+            my['name'] = unicode(o.rename)
         else:
-            my['name'] = o.name
+            my['name'] = unicode(o.name)
         if hasattr(o, 'gname'):
             my['gname'] = o.gname
         else:
