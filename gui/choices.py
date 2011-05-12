@@ -43,11 +43,6 @@ PROTOCOL_CHOICES = (
         ('https', _('HTTPS')),
         )
 
-# Language for the GUI
-LANG_CHOICES = (
-        ('english', _('English')),
-        )
-
 ## Disks|Management
 TRANSFERMODE_CHOICES = (
         ('Auto', _('Auto')),
