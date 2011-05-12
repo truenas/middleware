@@ -145,6 +145,10 @@ TEMPLATE_CONTEXT_PROCESSORS = (
         'dojango.context_processors.config',
         )
 
+LOCALE_PATHS = (
+    os.path.join(HERE, "locale"),
+)
+
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
