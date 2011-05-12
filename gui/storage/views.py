@@ -415,7 +415,7 @@ def snapshot_rollback(request, dataset, snapname):
     if request.method == "POST":
         ret = notifier().rollback_zfs_snapshot(snapshot = snapshot.__str__())
         if ret == '':
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Rollback successful."_}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Rollback successful.")}), mimetype="application/json")
         else:
             return HttpResponse(simplejson.dumps({"error": True, "message": ret}), mimetype="application/json")
     else:

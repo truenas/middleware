@@ -56,7 +56,10 @@ def adminInterface(request, objtype = None):
 def menu(request, objtype = None):
 
     final = navtree.dijitTree()
-    json = simplejson.dumps(final, indent=3)
+    try:
+        json = simplejson.dumps(final, indent=3)
+    except:
+        json = ""
     #from freenasUI.nav import json2nav
     #json2nav(json)['main']
 
