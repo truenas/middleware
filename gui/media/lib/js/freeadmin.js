@@ -102,7 +102,7 @@
             }
             if(opened != true) {
                 var pane = new dijit.layout.ContentPane({ 
-                    title: 'Reporting',
+                    title: gettext('Reporting'),
                     refreshOnShow: true,
                     closable: true,
                     href: this.urlReporting,
@@ -114,7 +114,7 @@
             if(opened2 != true) {
                 var pane2 = new dijit.layout.ContentPane({ 
                     id: 'settingstab',
-                    title: 'Settings',
+                    title: gettext('Settings'),
                     closable: true,
                     href: this.urlSettings,
                 });
@@ -125,7 +125,7 @@
             if(opened3 != true) {
                 var pane3 = new dijit.layout.ContentPane({ 
                     id: 'sysinfotab',
-                    title: 'System Information',
+                    title: gettext('System Information'),
                     refreshOnShow: true,
                     closable: true,
                     href: this.urlInfo,
@@ -165,7 +165,7 @@
                 }
 
                 var pane = new dijit.layout.ContentPane({ 
-                    title: 'Network Settings',
+                    title: gettext('Network Settings'),
                     closable: true,
                     //refreshOnShow: true,
                     href: openurl,
@@ -227,7 +227,7 @@
             }
             if(opened != true) {
                 var pane = new dijit.layout.ContentPane({ 
-                    title: 'Services',
+                    title: gettext('Services'),
                     closable: true,
                     href: this.urlServices,
                 });
@@ -267,7 +267,7 @@
                     openurl += '?tab='+tab;
                 }
                 var pane = new dijit.layout.ContentPane({ 
-                    title: 'Account',
+                    title: gettext('Account'),
                     closable: true,
                     href:openurl,
                 });
@@ -306,7 +306,7 @@
                     openurl += '?tab='+tab;
                 }
                 var pane = new dijit.layout.ContentPane({ 
-                    title: 'Storage',
+                    title: gettext('Storage'),
                     closable: true,
                     href:openurl,
                 });
@@ -347,7 +347,7 @@
                 }
 
                 var pane = new dijit.layout.ContentPane({ 
-                    title: 'iSCSI',
+                    title: gettext('iSCSI'),
                     closable: true,
                     //refreshOnShow: true,
                     href: openurl,
@@ -400,17 +400,17 @@
         var content = new dijit.layout.ContentPane({});
         var b = new dijit.form.Button({label: "Edit"});
 
-        dojo.connect(b.domNode, 'onclick', function(){ editObject('Edit Disk', json.edit_url, [gridhtml,]); });
+        dojo.connect(b.domNode, 'onclick', function(){ editObject(gettext('Edit Disk'), json.edit_url, [gridhtml,]); });
         content.domNode.appendChild(b.domNode);
 
         if(json.replace_url) {
-            var b2 = new dijit.form.Button({label: "Replace"});
-            dojo.connect(b2.domNode, 'onclick', function(){ editObject('Disk Replacement', json.replace_url, [gridhtml,]); });
+            var b2 = new dijit.form.Button({label: gettext("Replace")});
+            dojo.connect(b2.domNode, 'onclick', function(){ editObject(gettext('Disk Replacement'), json.replace_url, [gridhtml,]); });
             content.domNode.appendChild(b2.domNode);
         }
         if(json.detach_url) {
-            var b3 = new dijit.form.Button({label: "Detach"});
-            dojo.connect(b3.domNode, 'onclick', function(){ editObject('Disk Detach', json.detach_url, [gridhtml,]); });
+            var b3 = new dijit.form.Button({label: gettext("Detach")});
+            dojo.connect(b3.domNode, 'onclick', function(){ editObject(gettext('Disk Detach'), json.detach_url, [gridhtml,]); });
             content.domNode.appendChild(b3.domNode);
         }
 
@@ -596,7 +596,7 @@
                 },
                 error: function(data) { 
 
-                        setMessage('<p>Some error ocurried!</p>', "error");
+                        setMessage(gettext('Some error ocurried!'), "error");
 
                         try {
                            rnode.hide();
