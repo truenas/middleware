@@ -263,11 +263,18 @@ class notifier:
         self.__system("/usr/sbin/service samba quietstart")
 
     def _started_ldap(self):
+        from freenasUI.common.freenasldap import FreeNAS_LDAP
         c = self.__open_db()
         c.execute("SELECT srv_enable FROM services_services WHERE srv_service='ldap' ORDER BY -id LIMIT 1")
         enabled = c.fetchone()[0]
         if enabled == 1:
-            return True
+            c.execute("SELECT ldap_hostname,ldap_rootbasedn,ldap_rootbindpw,ldap_basedn,ldap_ssl FROM services_ldap ORDER BY -id LIMIT 1")
+            host, rootbasedn, pw, basedn, ssl = c.fetchone()
+            f = FreeNAS_LDAP(host, rootbasedn, pw, basedn, ssl)
+            if f.isOpen():
+                return True
+            else:
+                return False
         return False
 
     def _stop_ldap(self):

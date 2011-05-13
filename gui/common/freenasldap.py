@@ -201,7 +201,7 @@ class FreeNAS_GroupCache(FreeNAS_BaseCache):
             FreeNAS_BaseCache.__init__(self, cachedir)
 
 
-class FreeNAS_LDAP:
+class FreeNAS_LDAP(object):
     def __init__(self, host = None, binddn = None, bindpw = None,
         basedn = None, ssl = FREENAS_LDAP_NOSSL, scope = None,
         filter = None, attributes = None):
@@ -223,6 +223,9 @@ class FreeNAS_LDAP:
             "host = %s, binddn = %s, bindpw = %s, basedn = %s, ssl = %d" %
             (self.host, self.binddn, self.bindpw, self.basedn, self.ssl))
         syslog(LOG_DEBUG, "FreeNAS_LDAP.__init__: leave")
+
+    def isOpen(self):
+        return self.__isopen == 1
 
     def __setssl(self, ssl):
         tok = FREENAS_LDAP_NOSSL
