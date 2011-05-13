@@ -233,6 +233,7 @@ def servicesToggleView(request, formname):
             message = _("The service could not be started.")
             svc_entry.srv_enable = 0
             svc_entry.save()
+            notifier().stop(changing_service)
     else:
         status = 'unknown'
 
