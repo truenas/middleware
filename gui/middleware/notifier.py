@@ -291,11 +291,21 @@ class notifier:
         self.__system("/usr/sbin/service samba quietstart")
 
     def _started_activedirectory(self):
+        from freenasUI.common.freenasldap import FreeNAS_LDAP
         c = self.__open_db()
         c.execute("SELECT srv_enable FROM services_services WHERE srv_service='activedirectory' ORDER BY -id LIMIT 1")
         enabled = c.fetchone()[0]
         if enabled == 1:
-            return True
+            c.execute("SELECT ad_dcname,ad_domainname,ad_adminname,ad_adminpw FROM services_activedirectory ORDER BY -id LIMIT 1")
+            ad_dcname,ad_domainname,ad_adminname,ad_adminpw = c.fetchone()
+            #base = ','.join(["dc=%s" % part for part in ad_domainname.split(".")])
+            f = FreeNAS_LDAP(ad_dcname, ad_adminname+"@"+ad_domainname, ad_adminpw)
+            f.basedn = f.get_active_directory_baseDN()
+            f.open()
+            if f.isOpen():
+                return True
+            else:
+                return False
         return False
 
     def _start_activedirectory(self):

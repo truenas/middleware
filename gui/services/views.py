@@ -235,7 +235,10 @@ def servicesToggleView(request, formname):
             svc_entry.save()
             notifier().stop(changing_service)
     else:
-        status = 'unknown'
+        if svc_entry.srv_enable == 1:
+            status ='on'
+        else:
+            status = 'off'
 
     data = {
         'service': changing_service,
