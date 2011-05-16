@@ -50,7 +50,13 @@ from django.views.defaults import server_error
 
 def adminInterface(request, objtype = None):
 
-    context = RequestContext(request)
+    try:
+        console = Advanced.objects.all().order_by('-id')[0].adv_consolemsg
+    except:
+        console = False
+    context = RequestContext(request, {
+        'consolemsg': console,
+    })
     return render_to_response('freeadmin/index.html', context)
 
 def menu(request, objtype = None):
