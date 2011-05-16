@@ -88,7 +88,7 @@ ADVPOWERMGMT_CHOICES = (
         ('64',  _('Level') + ' 64 - ' + _('Intermediate power usage with Standby')),
         ('127', _('Level') + ' 127 - ' + _('Intermediate power usage with Standby')),
         ('128', _('Level') + ' 128 - ' + _('Minimum power usage without Standby (no spindown)')),
-        ('192', _('Level') + ' 192 - ' + _('Intermediate power usage withot Standby')),
+        ('192', _('Level') + ' 192 - ' + _('Intermediate power usage without Standby')),
         ('254', _('Level') + ' 254 - ' + _('Maximum performance, maximum power usage')),
         )
 ACOUSTICLVL_CHOICES = (
