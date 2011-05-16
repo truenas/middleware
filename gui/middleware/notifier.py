@@ -346,6 +346,10 @@ class notifier:
         self.__system("/usr/sbin/service inetd forcestop")
         self.__system("/usr/sbin/service inetd restart")
 
+    def _restart_cron(self):
+        self.__system("/usr/sbin/service ix-crontab quietstart")
+        self.__system("/usr/sbin/service cron restart")
+
     def _start_motd(self):
         self.__system("/usr/sbin/service ix-motd quietstart")
 

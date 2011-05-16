@@ -1196,3 +1196,10 @@ class CronJob(Model):
 
     class FreeAdmin:
         pass
+
+    def delete(self):
+        super(CronJob, self).delete()
+        try:
+            notifier().restart("cron")
+        except:
+            pass
