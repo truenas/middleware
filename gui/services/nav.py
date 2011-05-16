@@ -139,3 +139,9 @@ class ISCSI(TreeNode):
     def __init__(self, *args, **kwargs):
         super(ISCSI, self).__init__(*args, **kwargs)
         self.append_children([ISCSIDevice()])
+
+class ViewCron(TreeNode):
+
+        gname = 'services.CronJob.View'
+        type = 'opencron'
+        append_app = False

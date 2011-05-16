@@ -318,43 +318,30 @@
             }
 
         },
-        openISCSI: function(tab) {
+        openCron: function() {
             var opened = false;
             var p = dijit.byId("content");
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].tab == 'iscsi'){
+                if(c[i].tab == 'cron'){
                     p.selectChild(c[i]);
                     opened = true;
-                    if(tab) {
-                        var tabnet = dijit.byId("tab_iscsi");
-                        if(tabnet) {
-                            var c2 = tabnet.getChildren();
-                            for(var j=0; j<c2.length; j++){
-                                if(c2[j].domNode.getAttribute("tab") == tab)
-                                    tabnet.selectChild(c2[j]);
-                            }
-                        }
-                    }
-
                 }
             }
             if(opened != true) {
-                openurl = this.urlISCSI;
-                if(tab) {
-                    openurl += '?tab='+tab;
-                }
+                openurl = this.urlCron;
 
                 var pane = new dijit.layout.ContentPane({ 
-                    title: gettext('iSCSI'),
+                    title: gettext('CronJobs'),
                     closable: true,
-                    //refreshOnShow: true,
+                    refreshOnShow: true,
                     href: openurl,
                 });
-                pane.tab = 'iscsi';
+                pane.tab = 'cron';
                 p.addChild(pane);
                 p.selectChild(pane);
+                dojo.addClass(pane.domNode,["objrefresh", "data_services_CronJob"]);
             }
 
         }
@@ -1014,6 +1001,8 @@
                 Menu.openSharing(item.gname);
             } else if(item.type && item.type == 'openstorage') {
                 Menu.openStorage(item.gname);
+            } else if(item.type && item.type == 'opencron') {
+                Menu.openCron();
             } else if(item.type && item.type == 'viewmodel') {
                 //  get the children and make sure we haven't opened this yet.
                 var c = p.getChildren();

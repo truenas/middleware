@@ -800,7 +800,6 @@ class CronJobForm(ModelForm):
                                                  (x.bsdusr_username, x.bsdusr_username)
                                                       for x in FreeNAS_Users()
                                                       )
-            print list(self.fields['cron_user'].choices)
     def save(self):
         super(CronJobForm, self).save()
         started = notifier().restart("cron")
