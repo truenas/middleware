@@ -3,20 +3,20 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-05-16 05:21+0200\n"
+"Last-Translator: admin <admin@ixsystems.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
 msgid "Plain"
@@ -164,68 +164,84 @@ msgid "March"
 msgstr ""
 
 #: choices.py:135 templates/storage/tasks.html:95
+#, fuzzy
 msgid "April"
-msgstr ""
+msgstr "April"
 
 #: choices.py:136 templates/storage/tasks.html:98
+#, fuzzy
 msgid "May"
-msgstr ""
+msgstr "Mai"
 
 #: choices.py:137 templates/storage/tasks.html:101
+#, fuzzy
 msgid "June"
-msgstr ""
+msgstr "Juni"
 
 #: choices.py:138 templates/storage/tasks.html:104
+#, fuzzy
 msgid "July"
-msgstr ""
+msgstr "Juli"
 
 #: choices.py:139 templates/storage/tasks.html:107
+#, fuzzy
 msgid "August"
-msgstr ""
+msgstr "August"
 
 #: choices.py:140 templates/storage/tasks.html:110
+#, fuzzy
 msgid "September"
-msgstr ""
+msgstr "September"
 
 #: choices.py:141 templates/storage/tasks.html:113
+#, fuzzy
 msgid "October"
-msgstr ""
+msgstr "Oktober"
 
 #: choices.py:142 templates/storage/tasks.html:116
+#, fuzzy
 msgid "November"
-msgstr ""
+msgstr "November"
 
 #: choices.py:143 templates/storage/tasks.html:119
+#, fuzzy
 msgid "December"
-msgstr ""
+msgstr "Dezember"
 
 #: choices.py:146 templates/storage/tasks.html:57
+#, fuzzy
 msgid "Monday"
-msgstr ""
+msgstr "Montag"
 
 #: choices.py:147 templates/storage/tasks.html:60
+#, fuzzy
 msgid "Tuesday"
-msgstr ""
+msgstr "Dienstag"
 
 #: choices.py:148 templates/storage/tasks.html:63
+#, fuzzy
 msgid "Wednesday"
-msgstr ""
+msgstr "Mittwoch"
 
 #: choices.py:149 templates/storage/tasks.html:66
+#, fuzzy
 msgid "Thursday"
-msgstr ""
+msgstr "Donnerstag"
 
 #: choices.py:150 templates/storage/tasks.html:69
+#, fuzzy
 msgid "Friday"
-msgstr ""
+msgstr "Freitag"
 
 #: choices.py:151 templates/storage/tasks.html:72
+#, fuzzy
 msgid "Saturday"
-msgstr ""
+msgstr "Samstag"
 
 #: choices.py:152 templates/storage/tasks.html:75
+#, fuzzy
 msgid "Sunday"
-msgstr ""
+msgstr "Sonntag"
 
 #: choices.py:163
 msgid "Anonymous"
