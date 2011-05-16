@@ -18,14 +18,14 @@ generate_crontab()
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT cron_minute,cron_hour,cron_daymonth,cron_month,cron_dayweek,cron_user,cron_command FROM services_cronjob ORDER BY id" | \
 	while read minute hour daymonth month dayweek user command; do
-        months=$(python<<-_EOF_
+        months=$(/usr/local/bin/python<<-_EOF_
 m = ${month}
 m = ','.join(m)
 m = m.replace('a','10').replace('b', '11').replace('c','12')
 print m
 _EOF_
 )
-        daysweek=$(python<<-_EOF_
+        daysweek=$(/usr/local/bin/python<<-_EOF_
 w = ${dayweek}
 w = ','.join(w)
 print w
