@@ -776,14 +776,33 @@ class ExtentDelete(Form):
             os.system("rm \"%s\"" % self.instance.iscsi_target_extent_path)
 
 class CronJobForm(ModelForm):
+    cron_user = forms.ChoiceField(choices=(),
+                                       widget=forms.Select(attrs=attrs_dict),
+                                       label=_('User')
+                                       )
     class Meta:
         model = models.CronJob
         widgets = {
             'cron_dayweek': forms.CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES),
             'cron_month': forms.CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES),
         }
+    def __init__(self, *args, **kwargs):
+        super(CronJobForm, self).__init__(*args, **kwargs)
+        from account.forms import FilteredSelectJSON
+        if len(FreeNAS_Users()) > 500:
+            if len(args) > 0 and isinstance(args[0], QueryDict):
+                self.fields['cron_user'].choices = ((args[0]['cron_user'],args[0]['cron_user']),)
+                self.fields['cron_user'].initial= args[0]['cron_user']
+            self.fields['cron_user'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
+        else:
+            self.fields['cron_user'].widget = widgets.FilteringSelect()
+            self.fields['cron_user'].choices = (
+                                                 (x.bsdusr_username, x.bsdusr_username)
+                                                      for x in FreeNAS_Users()
+                                                      )
+            print list(self.fields['cron_user'].choices)
     def save(self):
         super(CronJobForm, self).save()
-        #started = notifier().restart("cronjob")
+        started = notifier().restart("cron")
         #if started is False and models.services.objects.get(srv_service='nfs').srv_enable:
         #    raise ServiceFailed("nfs", _("The NFS service failed to reload."))
