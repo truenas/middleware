@@ -34,6 +34,7 @@ from django.http import QueryDict
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 
+import choices
 from services import models
 from storage.models import Volume, MountPoint, DiskGroup, Disk
 from freenasUI.common.forms import ModelForm, Form
@@ -773,3 +774,16 @@ class ExtentDelete(Form):
         if self.cleaned_data['delete'] and \
             self.instance.iscsi_target_extent_type == 'File':
             os.system("rm \"%s\"" % self.instance.iscsi_target_extent_path)
+
+class CronJobForm(ModelForm):
+    class Meta:
+        model = models.CronJob
+        widgets = {
+            'cron_dayweek': forms.CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES),
+            'cron_month': forms.CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES),
+        }
+    def save(self):
+        super(CronJobForm, self).save()
+        #started = notifier().restart("cronjob")
+        #if started is False and models.services.objects.get(srv_service='nfs').srv_enable:
+        #    raise ServiceFailed("nfs", _("The NFS service failed to reload."))

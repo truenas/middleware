@@ -1154,3 +1154,45 @@ class LDAP(Model):
     class FreeAdmin:
         deletable = False
         icon_model = "LDAPIcon"
+
+class CronJob(Model):
+    cron_minute = models.CharField(
+            max_length=100,
+            verbose_name=_("Minute"),
+            help_text=_("Values 0-59 allowed."),
+            )
+    cron_hour = models.CharField(
+            max_length=100,
+            verbose_name=_("Hour"),
+            help_text=_("Values 0-23 allowed."),
+            )
+    cron_daymonth = models.CharField(
+            max_length=100,
+            verbose_name=_("Day of month"),
+            help_text=_("Values 1-31 allowed."),
+            )
+    cron_month = models.CharField(
+            max_length=100,
+            default=",".join([str(i) for i in range(1,10)])+',a,b,c',
+            verbose_name=_("Month"),
+            )
+    cron_dayweek = models.CharField(
+            max_length=100,
+            default=",".join([str(i) for i in range(1,8)]),
+            verbose_name=_("Day of week"),
+            )
+    cron_user = models.CharField(
+            max_length=60,
+            verbose_name=_("User"),
+            help_text=_("The user to run the command")
+            )
+    cron_command = models.CharField(
+            max_length=120,
+            verbose_name=_("Command"),
+            )
+    class Meta:
+        verbose_name = _("CronJob")
+        verbose_name_plural = _("CronJobs")
+
+    class FreeAdmin:
+        pass
