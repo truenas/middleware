@@ -50,6 +50,7 @@ def _system_info():
     uname1 = os.uname()[0]
     uname2 = os.uname()[2]
     platform = os.popen("sysctl -n hw.model").read()
+    physmem = str(int(int(os.popen("sysctl -n hw.physmem").read()) / 1048576)) + "MB"
     date = os.popen('env -u TZ date').read()
     uptime = commands.getoutput("env -u TZ uptime | awk -F', load averages:' '{    print $1 }'")
     loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
@@ -66,6 +67,7 @@ def _system_info():
         'uname1': uname1,
         'uname2': uname2,
         'platform': platform,
+        'physmem': physmem,
         'date': date,
         'uptime': uptime,
         'loadavg': loadavg,
