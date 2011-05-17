@@ -775,6 +775,7 @@ class ExtentDelete(Form):
             self.instance.iscsi_target_extent_type == 'File':
             os.system("rm \"%s\"" % self.instance.iscsi_target_extent_path)
 
+from freeadmin.forms import CronMultiple
 class CronJobForm(ModelForm):
     cron_user = forms.ChoiceField(choices=(),
                                        widget=forms.Select(attrs=attrs_dict),
@@ -783,6 +784,9 @@ class CronJobForm(ModelForm):
     class Meta:
         model = models.CronJob
         widgets = {
+            'cron_minute': CronMultiple(attrs={'numChoices': 60,'label':_("minute")}),
+            'cron_hour': CronMultiple(attrs={'numChoices': 24,'label':_("hour")}),
+            'cron_daymonth': CronMultiple(attrs={'numChoices': 31,'start':1,'label':_("day of month")}),
             'cron_dayweek': forms.CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES),
             'cron_month': forms.CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES),
         }

@@ -1216,6 +1216,8 @@ class CronJob(Model):
     def get_human_daymonth(self):
         if self.cron_daymonth == '*':
             return _(u'Everyday')
+        elif self.cron_daymonth.startswith('*/'):
+            return _(u'Every %s days') % self.cron_daymonth.split('*/')[1]
         else:
             return self.cron_daymonth
 

@@ -27,26 +27,28 @@
 
     dojo.require("dojo.data.ItemFileReadStore");
     dojo.require("dojo.data.ItemFileWriteStore");
-    dojo.require("dijit.Tree");
     dojo.require("dojo.dnd.Moveable");
     //dojo.require("dijit.tree.dndSource");
-    dojo.require("dojox.grid.DataGrid");
-    dojo.require("dojox.data.JsonRestStore");
     dojo.require("dojo.NodeList-traverse");
     dojo.require("dojo.io.iframe");
+    dojo.require("dojo._base.xhr");
     dojo.require("dojox.validate.regexp");
+    dojo.require("dojox.form.FileInput");
+    dojo.require("dojox.form.CheckedMultiSelect");
+    dojo.require("dojox.grid.DataGrid");
+    dojo.require("dojox.data.JsonRestStore");
+    dojo.require("dojox.string.sprintf");
+    dojo.require("dijit.Tree");
     dojo.require("dijit.layout.BorderContainer");
     dojo.require("dijit.layout.ContentPane");
     dojo.require("dijit.layout.TabContainer");
-    dojo.require("dojox.form.FileInput");
-    dojo.require("dojo._base.xhr");
-    dojo.require("dojox.form.CheckedMultiSelect");
     dojo.require("dijit.form.MultiSelect");
     dojo.require("dijit.ProgressBar");
     dojo.require("dijit.MenuBar");
     dojo.require("dijit.MenuBarItem");
     dojo.require("dijit.Dialog");
     dojo.require("dijit.form.Form");
+    dojo.require("dijit.form.Button");
     dojo.require("dijit.form.Select");
     dojo.require("dijit.form.ValidationTextBox");
     dojo.require("dijit.form.NumberTextBox");
@@ -55,6 +57,12 @@
     dojo.require("dijit.form.ComboBox");
     dojo.require("dijit.form.FilteringSelect");
     dojo.require("dijit.form.NumberTextBox");
+    dojo.require("dijit.form.HorizontalSlider");
+    dojo.require("dijit.form.HorizontalRule");
+    dojo.require("dijit.form.HorizontalRuleLabels");
+
+    dojo.registerModulePath("freeadmin", "../../../../../media/lib/js/freeadmin");
+    dojo.require("freeadmin.form.Cron");
 
     dojo._contentHandlers.text = (function(old){
       return function(xhr){

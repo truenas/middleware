@@ -16,7 +16,7 @@
            "dojox.timing._base",
            "dojox.form.CheckedMultiSelect",
            "dojox.form.FileInput",
-           "dijit.Button",
+           "dojox.string.sprintf",
            "dijit.Tree",
            "dijit.layout.BorderContainer",
            "dijit.layout.ContentPane",
@@ -26,6 +26,7 @@
            "dijit.MenuBarItem",
            "dijit.Dialog",
            "dijit.form.Form",
+           "dijit.form.Button",
            "dijit.form.MultiSelect",
            "dijit.form.Select",
            "dijit.form.ValidationTextBox",
@@ -35,6 +36,9 @@
            "dijit.form.ComboBox",
            "dijit.form.FilteringSelect",
            "dijit.form.NumberTextBox",
+           "dijit.form.HorizontalSlider",
+           "dijit.form.HorizontalRule",
+           "dijit.form.HorizontalRuleLabels",
        ]
        }
    ],
