@@ -13,11 +13,11 @@
     	</tr>
             </thead>
     {% for c in cronjobs %}
-        <td>{{ c.cron_minute }}</td>
-        <td>{{ c.cron_hour }}</td>
-        <td>{{ c.cron_daymonth }}</td>
-        <td>{{ c.cron_month }}</td>
-        <td>{{ c.cron_dayweek }}</td>
+        <td>{{ c.get_human_minute }}</td>
+        <td>{{ c.get_human_hour }}</td>
+        <td>{{ c.get_human_daymonth }}</td>
+        <td>{{ c.get_human_month }}</td>
+        <td>{{ c.get_human_dayweek }}</td>
         <td>{{ c.cron_user }}</td>
         <td>{{ c.cron_command }}</td>
         <td>

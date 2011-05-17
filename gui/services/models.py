@@ -1173,7 +1173,7 @@ class CronJob(Model):
             )
     cron_month = models.CharField(
             max_length=100,
-            default=",".join([str(i) for i in range(1,10)])+',a,b,c',
+            default='1,2,3,4,5,6,7,8,9,10,a,b,c',
             verbose_name=_("Month"),
             )
     cron_dayweek = models.CharField(
@@ -1196,6 +1196,48 @@ class CronJob(Model):
 
     class FreeAdmin:
         pass
+
+    def get_human_minute(self):
+        if self.cron_minute == '*':
+            return _(u'Every minute')
+        elif self.cron_minute.startswith('*/'):
+            return _(u'Every %s minute(s)') % self.cron_minute.split('*/')[1]
+        else:
+            return self.cron_minute
+
+    def get_human_hour(self):
+        if self.cron_hour == '*':
+            return _(u'Every hour')
+        elif self.cron_hour.startswith('*/'):
+            return _(u'Every %s hour(s)') % self.cron_hour.split('*/')[1]
+        else:
+            return self.cron_hour
+
+    def get_human_daymonth(self):
+        if self.cron_daymonth == '*':
+            return _(u'Everyday')
+        else:
+            return self.cron_daymonth
+
+    def get_human_month(self):
+        months = eval(self.cron_month)
+        if len(months) == 12:
+            return _("Every month")
+        mchoices = dict(choices.MONTHS_CHOICES)
+        labels = []
+        for m in months:
+            labels.append(unicode(mchoices[m]))
+        return ",".join(labels)
+
+    def get_human_dayweek(self):
+        weeks = eval(self.cron_dayweek)
+        if len(weeks) == 7:
+            return _("Everyday")
+        wchoices = dict(choices.WEEK_CHOICES)
+        labels = []
+        for w in weeks:
+            labels.append(unicode(wchoices[w]))
+        return ",".join(labels)
 
     def delete(self):
         super(CronJob, self).delete()
