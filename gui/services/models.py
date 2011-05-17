@@ -244,7 +244,6 @@ class iSCSITargetGlobalConfiguration(Model):
             )
     iscsi_discoveryauthgroup = models.IntegerField(
             max_length=120,
-            default='None',
             verbose_name=_("Discovery Auth Group"),
             blank=True,
             null=True,
@@ -365,7 +364,7 @@ class iSCSITargetGlobalConfiguration(Model):
         deletable = False
         menu_child_of = "ISCSI"
         icon_model = u"SettingsIcon"
-        nav_extra = {'type': 'openiscsiconf'}
+        nav_extra = {'type': 'iscsi'}
 
 class iSCSITargetExtent(Model):
     iscsi_target_extent_name = models.CharField(
@@ -399,6 +398,8 @@ class iSCSITargetExtent(Model):
     class Meta:
         verbose_name = _("Extent")
     class FreeAdmin:
+        delete_form = "ExtentDelete"
+        delete_form_filter = {'iscsi_target_extent_type__exact': 'File'} #FIXME hack for DevExtent
         menu_child_of = "ISCSI"
         icon_object = u"ExtentIcon"
         icon_model = u"ExtentIcon"
@@ -1131,3 +1132,99 @@ class LDAP(Model):
     class FreeAdmin:
         deletable = False
         icon_model = "LDAPIcon"
+
+class CronJob(Model):
+    cron_minute = models.CharField(
+            max_length=100,
+            verbose_name=_("Minute"),
+            help_text=_("Values 0-59 allowed."),
+            )
+    cron_hour = models.CharField(
+            max_length=100,
+            verbose_name=_("Hour"),
+            help_text=_("Values 0-23 allowed."),
+            )
+    cron_daymonth = models.CharField(
+            max_length=100,
+            verbose_name=_("Day of month"),
+            help_text=_("Values 1-31 allowed."),
+            )
+    cron_month = models.CharField(
+            max_length=100,
+            default='1,2,3,4,5,6,7,8,9,10,a,b,c',
+            verbose_name=_("Month"),
+            )
+    cron_dayweek = models.CharField(
+            max_length=100,
+            default=",".join([str(i) for i in range(1,8)]),
+            verbose_name=_("Day of week"),
+            )
+    cron_user = models.CharField(
+            max_length=60,
+            verbose_name=_("User"),
+            help_text=_("The user to run the command")
+            )
+    cron_command = models.CharField(
+            max_length=120,
+            verbose_name=_("Command"),
+            )
+    class Meta:
+        verbose_name = _("CronJob")
+        verbose_name_plural = _("CronJobs")
+
+    class FreeAdmin:
+        pass
+
+    def __unicode__(self):
+        return u"%d (%s)" % (self.id, self.cron_user)
+
+    def get_human_minute(self):
+        if self.cron_minute == '*':
+            return _(u'Every minute')
+        elif self.cron_minute.startswith('*/'):
+            return _(u'Every %s minute(s)') % self.cron_minute.split('*/')[1]
+        else:
+            return self.cron_minute
+
+    def get_human_hour(self):
+        if self.cron_hour == '*':
+            return _(u'Every hour')
+        elif self.cron_hour.startswith('*/'):
+            return _(u'Every %s hour(s)') % self.cron_hour.split('*/')[1]
+        else:
+            return self.cron_hour
+
+    def get_human_daymonth(self):
+        if self.cron_daymonth == '*':
+            return _(u'Everyday')
+        elif self.cron_daymonth.startswith('*/'):
+            return _(u'Every %s days') % self.cron_daymonth.split('*/')[1]
+        else:
+            return self.cron_daymonth
+
+    def get_human_month(self):
+        months = eval(self.cron_month)
+        if len(months) == 12:
+            return _("Every month")
+        mchoices = dict(choices.MONTHS_CHOICES)
+        labels = []
+        for m in months:
+            labels.append(unicode(mchoices[m]))
+        return ",".join(labels)
+
+    def get_human_dayweek(self):
+        weeks = eval(self.cron_dayweek)
+        if len(weeks) == 7:
+            return _("Everyday")
+        wchoices = dict(choices.WEEK_CHOICES)
+        labels = []
+        for w in weeks:
+            labels.append(unicode(wchoices[w]))
+        return ",".join(labels)
+
+    def delete(self):
+        super(CronJob, self).delete()
+        try:
+            notifier().restart("cron")
+        except:
+            pass

@@ -28,6 +28,7 @@
 
 from django.utils.translation import ugettext_lazy as _
 from django.forms import FileField
+from django.conf import settings
 from django.contrib.formtools.wizard import FormWizard
 from django.shortcuts import render_to_response
 from django.utils.decorators import method_decorator
@@ -140,6 +141,8 @@ class SettingsForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(SettingsForm, self).__init__( *args, **kwargs)
         self.instance._original_stg_guiprotocol = self.instance.stg_guiprotocol
+        self.fields['stg_language'].choices=settings.LANGUAGES
+        self.fields['stg_language'].label = _("Language (Require UI reload)")
     def save(self):
         super(SettingsForm, self).save()
         if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol:
@@ -240,7 +243,7 @@ class SSLForm(ModelForm):
         model = models.SSL
 
 class FirmwareTemporaryLocationForm(Form):
-    mountpoint = forms.ChoiceField(label="Place to temporarily place firmware file", help_text = _("The system will use this place to temporarily store the firmware file before it's being applied."),choices=(), widget=forms.Select(attrs={ 'class': 'required' }),)
+    mountpoint = forms.ChoiceField(label=_("Place to temporarily place firmware file"), help_text = _("The system will use this place to temporarily store the firmware file before it's being applied."),choices=(), widget=forms.Select(attrs={ 'class': 'required' }),)
     def __init__(self, *args, **kwargs):
         super(FirmwareTemporaryLocationForm, self).__init__(*args, **kwargs)
         self.fields['mountpoint'].choices = [(x.mp_path, x.mp_path) for x in MountPoint.objects.all()]

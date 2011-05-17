@@ -65,6 +65,10 @@ float:left;color:#f5f5f5;
     max-height:200px;
     overflow:auto !important;
 }
+#id_stg_language_menu {
+    max-height:200px;
+    overflow:auto !important;
+}
 
 #id_int_v4netmaskbit_menu {
     max-height:200px;
@@ -370,4 +374,46 @@ tr.ix, td.ix{
 
 .dijitTextArea {
 min-height:60px;
+}
+.claro .dijitDialogTitleBar {
+    -moz-border-bottom-colors: none;
+    -moz-border-image: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    background-color: #242424;
+    background-image: url("../images/titlebar.png");
+    background-position: -100px 100%;
+    background-repeat: repeat-x;
+    border-color: -moz-use-text-color #373535 #373535;
+    border-right: 1px solid #373535;
+    border-style: none solid solid;
+    border-width: medium 1px 1px;
+    padding: 5px 7px 4px;
+}
+.claro .dijitDialogTitle {
+    font-size: 1.091em;
+    padding: 0 1px;
+}
+.claro .dijitDialogTitle {
+     color: #FAFAFA;
+     font-size: 1.091em;
+     font-weight: bold;
+     padding: 0 2px;
+     text-shadow: 0 -1px 1px #000000;
+ }
+.claro .dijitDialog {
+    border: 1px solid #373535;
+    box-shadow: 0 1px 5px #383838;
+}
+.claro .dijitDialogUnderlay { background: none repeat scroll 0 0 #1D1D1D; }
+.mytoggle {
+
+margin:2px;
+padding:2px;
+
+}
+
+.mytoggleChecked {
+background-color: #ddd;
 }

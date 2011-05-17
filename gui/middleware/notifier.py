@@ -113,10 +113,22 @@ class notifier:
     def _started(self, what):
         service2daemon = {
             'ssh': ('sshd', '/var/run/sshd.pid'),
+            'nfs': ('nfsd', None),
+            'afp': ('afpd', '/var/run/afpd.pid'),
+            'cifs': ('smbd', '/var/run/samba/smbd.pid'),
+            'dynamicdns': ('inadyn', None),
+            'snmp': ('bsnmpd', '/var/run/snmpd.pid'),
+            'ftp': ('proftpd', '/var/run/proftpd.pid'),
+            'tftp': ('inetd', '/var/run/inetd.pid'),
+            'iscsitarget': ('istgt', '/var/run/istgt.pid'),
         }
         if what in service2daemon:
             procname, pidfile = service2daemon[what]
-            retval = self.__system_nolog("/bin/pgrep -F %s %s" % (pidfile, procname))
+            if pidfile:
+                retval = self.__system_nolog("/bin/pgrep -F %s %s" % (pidfile, procname))
+            else:
+                retval = self.__system_nolog("/bin/pgrep %s" % (procname,))
+
             if retval == 0:
                 return True
             else:
@@ -151,6 +163,7 @@ class notifier:
         The helper will use method self._start_[what]() to start the service.
         If the method does not exist, it would fallback using service(8)."""
         self._simplecmd("start", what)
+        return self.started(what)
 
     def started(self, what):
         """ Test if service specified by "what" has been started. """
@@ -166,6 +179,7 @@ class notifier:
         The helper will use method self._stop_[what]() to stop the service.
         If the method does not exist, it would fallback using service(8)."""
         self._simplecmd("stop", what)
+        return self.started(what)
 
     def restart(self, what):
         """ Restart the service specified by "what".
@@ -173,6 +187,7 @@ class notifier:
         The helper will use method self._restart_[what]() to restart the service.
         If the method does not exist, it would fallback using service(8)."""
         self._simplecmd("restart", what)
+        return self.started(what)
 
     def reload(self, what):
         """ Reload the service specified by "what".
@@ -184,6 +199,7 @@ class notifier:
             self._simplecmd("reload", what)
         except:
             self.restart(what)
+        return self.started(what)
 
     def change(self, what):
         """ Notify the service specified by "what" about a change.
@@ -247,6 +263,21 @@ class notifier:
         self.__system("/bin/sleep 5")
         self.__system("/usr/sbin/service samba quietstart")
 
+    def _started_ldap(self):
+        from freenasUI.common.freenasldap import FreeNAS_LDAP
+        c = self.__open_db()
+        c.execute("SELECT srv_enable FROM services_services WHERE srv_service='ldap' ORDER BY -id LIMIT 1")
+        enabled = c.fetchone()[0]
+        if enabled == 1:
+            c.execute("SELECT ldap_hostname,ldap_rootbasedn,ldap_rootbindpw,ldap_basedn,ldap_ssl FROM services_ldap ORDER BY -id LIMIT 1")
+            host, rootbasedn, pw, basedn, ssl = c.fetchone()
+            f = FreeNAS_LDAP(host, rootbasedn, pw, basedn, ssl)
+            if f.isOpen():
+                return True
+            else:
+                return False
+        return False
+
     def _stop_ldap(self):
         self.__system("/usr/sbin/service ix-ldap quietstart")
         self.___system("(/usr/sbin/service ix-cache quietstop) &")
@@ -259,6 +290,24 @@ class notifier:
         self.__system("/usr/bin/killall winbindd")
         self.__system("/bin/sleep 5")
         self.__system("/usr/sbin/service samba quietstart")
+
+    def _started_activedirectory(self):
+        from freenasUI.common.freenasldap import FreeNAS_LDAP
+        c = self.__open_db()
+        c.execute("SELECT srv_enable FROM services_services WHERE srv_service='activedirectory' ORDER BY -id LIMIT 1")
+        enabled = c.fetchone()[0]
+        if enabled == 1:
+            c.execute("SELECT ad_dcname,ad_domainname,ad_adminname,ad_adminpw FROM services_activedirectory ORDER BY -id LIMIT 1")
+            ad_dcname,ad_domainname,ad_adminname,ad_adminpw = c.fetchone()
+            #base = ','.join(["dc=%s" % part for part in ad_domainname.split(".")])
+            f = FreeNAS_LDAP(ad_dcname, ad_adminname+"@"+ad_domainname, ad_adminpw)
+            f.basedn = f.get_active_directory_baseDN()
+            f.open()
+            if f.isOpen():
+                return True
+            else:
+                return False
+        return False
 
     def _start_activedirectory(self):
         self.__system("/usr/sbin/service ix-kerberos quietstart")
@@ -298,6 +347,10 @@ class notifier:
         self.__system("/usr/sbin/service inetd forcestop")
         self.__system("/usr/sbin/service inetd restart")
 
+    def _restart_cron(self):
+        self.__system("/usr/sbin/service ix-crontab quietstart")
+        self.__system("/usr/sbin/service cron restart")
+
     def _start_motd(self):
         self.__system("/usr/sbin/service ix-motd quietstart")
 
@@ -312,6 +365,7 @@ class notifier:
         self.__system("/usr/sbin/service ix-proftpd quietstart")
         self.__system("/usr/sbin/service proftpd forcestop")
         self.__system("/usr/sbin/service proftpd restart")
+        self.__system("sleep 1")
 
     def _start_ftp(self):
         self.__system("/usr/sbin/service ix-proftpd quietstart")
@@ -405,7 +459,8 @@ class notifier:
     def __open_db(self, ret_conn=False):
         """Open and return a cursor object for database access."""
         try:
-            from freenasUI.settings import DATABASE_NAME as dbname
+            from freenasUI.settings import DATABASES
+            dbname = DATABASES['default']['NAME']
         except:
             dbname = '/data/freenas-v1.db'
         import sqlite3

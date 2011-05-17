@@ -41,4 +41,5 @@ urlpatterns = patterns('services.views',
     url(r'^iscsi/auth-ini/$', 'iscsi_authini', name="services_iscsi_authini"),
     url(r'^iscsi/portals/$', 'iscsi_portals', name="services_iscsi_portals"),
     url(r'toggle/(?P<formname>\w+)/.*$', 'servicesToggleView', name="services_toggle"),
+    url(r'^cronjobs/$', 'cronjobs', name="services_cronjobs"),
     )

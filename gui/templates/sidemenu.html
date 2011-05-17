@@ -1,4 +1,4 @@
-<div dojoType="dojo.data.ItemFileReadStore" jsId="appStore" url="/freenas/media/lib/js/treeMenu.json">
+<div dojoType="dojo.data.ItemFileReadStore" jsId="appStore" url="{{ STATIC_URL }}lib/js/treeMenu.json">
 </div>
 <div dojoType="dijit.tree.ForestStoreModel" jsId="appModel" store="appStore"
     query="{type:'app'}" rootId="appRoot" rootLabel="Applications"

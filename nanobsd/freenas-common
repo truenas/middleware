@@ -135,7 +135,7 @@ add_port net/libdnet
 add_port emulators/open-vm-tools-nox11
 add_port databases/sqlite3
 add_port databases/py-sqlite3
-add_port www/py-django12 -DWITHOUT_MYSQL
+add_port www/py-django -DWITHOUT_MYSQL
 add_port www/py-dojango
 #+databases/py-south
 add_port devel/py-setuptools
@@ -261,8 +261,6 @@ freenas
 __EOF__
 	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
 	CR "chown -R www:www ${dstCR} data"
-# KLUDGE: copy over dojango settings
-	CR "cp /usr/local/www/freenasUI/dojango/conf/settings.py /usr/local/lib/python2.7/site-packages/dojango/conf"
     else
         pprint 2 "GUI OMITTED from image"
     fi

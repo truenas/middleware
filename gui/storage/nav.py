@@ -1,42 +1,35 @@
-from django_nav import NavOption
-from django.utils.translation import ugettext as _
+from freeadmin.tree import TreeNode
+from django.utils.translation import ugettext_lazy as _
 import models
 
 BLACKLIST = ['Disk','ReplRemote']
 ICON = u'StorageIcon'
 
-class ViewRemote(NavOption):
+class ViewRemote(TreeNode):
 
-        name = _(u'View All Replication Tasks')
-        type = 'openreplication'
-        icon = u'ViewAllReplIcon'
-        app_name = 'storage'
+        gname = 'storage.Replication.View'
+        type = 'openstorage'
         append_app = False
-        options = []
 
-class ViewPeriodic(NavOption):
+class ViewPeriodic(TreeNode):
 
-        name = _(u'View All Periodic Snapshot Tasks')
-        view = u'storage_home'
-        type = 'openperiodic'
-        icon = u'ViewAllPeriodicSnapIcon'
-        app_name = 'storage'
-        model = 'Task'
+        gname = 'storage.Task.View'
+        type = 'openstorage'
         append_app = False
-        options = []
 
-class ViewSnap(NavOption):
+class ViewSnap(TreeNode):
 
+        gname = 'storage.Snapshots.View'
         name = _(u'View All Snapshots')
-        type = 'opensnaps'
+        type = 'openstorage'
         icon = u'ViewAllPeriodicSnapIcon'
         app_name = 'storage'
         model = 'Task'
         append_app = False
-        options = []
 
-class AddVolume(NavOption):
+class AddVolume(TreeNode):
 
+        gname = 'storage.Volume.Add'
         name = _(u'Create Volume')
         view = 'storage_wizard'
         type = 'volumewizard'
@@ -44,10 +37,10 @@ class AddVolume(NavOption):
         app_name = 'storage'
         model = 'Volumes'
         append_app = False
-        options = []
 
-class ImportVolume(NavOption):
+class ImportVolume(TreeNode):
 
+        gname = 'storage.Volume.Import'
         name = _(u'Import Volume')
         view = 'storage_import'
         type = 'volumewizard'
@@ -55,10 +48,10 @@ class ImportVolume(NavOption):
         app_name = 'storage'
         model = 'Volumes'
         append_app = False
-        options = []
 
-class ViewVolumes(NavOption):
+class ViewVolumes(TreeNode):
 
+        gname = 'storage.Volume.View'
         name = _(u'View All Volumes')
         view = u'storage_home'
         type = 'openstorage'
@@ -66,10 +59,10 @@ class ViewVolumes(NavOption):
         app_name = 'storage'
         model = 'Volumes'
         append_app = False
-        options = []
 
-class AddDataset(NavOption):
+class AddDataset(TreeNode):
 
+        gname = 'storage.Dataset.Add'
         name = _(u'Create ZFS Dataset')
         view = 'storage_dataset'
         icon = u'AddDatasetIcon'
@@ -77,44 +70,42 @@ class AddDataset(NavOption):
         app_name = 'storage'
         model = 'Volumes'
         append_app = False
-        options = []
 
-class CreatePeriodicSnap(NavOption):
+class CreatePeriodicSnap(TreeNode):
 
+        gname = 'storage.Task.Add'
         name = _(u'Add Periodic Snapshot')
-        rename = _(u'Create Periodic Snapshot')
         view = 'storage_periodicsnap'
         icon = u'CreatePeriodicSnapIcon'
         type = 'object'
         app_name = 'storage'
         model = 'Task'
         append_app = False
-        options = []
 
-class Volumes(NavOption):
+class Volumes(TreeNode):
 
+        gname = 'storage.Volume'
         name = _(u'Volumes')
         icon = u'VolumesIcon'
 
         def __init__(self, *args, **kwargs):
 
-            #super(Volumes, self).__init__(*args, **kwargs)
-            self.options = [AddVolume,ImportVolume,ViewVolumes]
+            super(Volumes, self).__init__(*args, **kwargs)
+            self.append_children([AddVolume(),ImportVolume(),ViewVolumes()])
             en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
             if en_dataset:
-                self.options.append(AddDataset)
+                self.append_child(AddDataset)
 
             mp = models.MountPoint.objects.filter(mp_ischild=False).exclude(mp_volume__vol_fstype__exact='iscsi').select_related().order_by('-id')
             for i in mp:
-                nav = NavOption()
+                nav = TreeNode()
                 nav.name = i.mp_path
                 nav.order = -i.id
                 nav.model = 'Volume'
                 nav.kwargs = {'oid': i.mp_volume.id, 'model': 'Volume'}
                 nav.icon = u'VolumesIcon'
-                nav.options = []
 
-                subnav = NavOption()
+                subnav = TreeNode()
                 subnav.name = _('Change Permissions')
                 subnav.type = 'editobject'
                 subnav.view = 'storage_mp_permission'
@@ -122,19 +113,17 @@ class Volumes(NavOption):
                 subnav.model = 'Volume'
                 subnav.icon = u'ChangePasswordIcon'
                 subnav.app_name = 'storage'
-                subnav.options = []
 
                 datasets = models.MountPoint.objects.filter(mp_path__startswith=i.mp_path,mp_ischild=True)
                 for d in datasets:
 
-                    nav2 = NavOption()
+                    nav2 = TreeNode()
                     nav2.name = d.mp_path
                     nav2.icon = u'VolumesIcon'
                     nav2.model = 'MountPoint'
                     nav2.kwargs = {'oid': d.id, 'model': 'MountPoint'}
-                    nav2.options = []
 
-                    subnav2 = NavOption()
+                    subnav2 = TreeNode()
                     subnav2.name = _(u'Change Permissions')
                     subnav2.type = 'editobject'
                     subnav2.view = 'storage_mp_permission'
@@ -142,12 +131,9 @@ class Volumes(NavOption):
                     subnav2.model = 'Volumes'
                     subnav2.icon = u'ChangePasswordIcon'
                     subnav2.app_name = 'storage'
-                    subnav2.options = []
 
-                    nav.options.append(nav2)
-                    nav2.options.append(subnav2)
+                    nav.append_child(nav2)
+                    nav2.append_child(subnav2)
 
-                #if i.mp_volume.vol_fstype == 'ZFS':
-                
-                nav.options.append(subnav)
-                self.options.insert(0, nav)
+                nav.append_child(subnav)
+                self.insert_child(0, nav)

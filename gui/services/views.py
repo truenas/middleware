@@ -28,62 +28,65 @@
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
+from django.utils import simplejson
+from django.utils.translation import ugettext as _
 
 from freenasUI.services import models
 from freenasUI.middleware.notifier import notifier
+from django.shortcuts import render
 
 def home(request):
 
     try:
         cifs = models.CIFS.objects.order_by("-id")[0]
     except IndexError:
-        cifs = None
+        cifs = models.CIFS.objects.create()
 
     try:
         afp = models.AFP.objects.order_by("-id")[0]
     except IndexError:
-        afp = None
+        afp = models.AFP.objects.create()
 
     try:
         nfs = models.NFS.objects.order_by("-id")[0]
     except IndexError:
-        nfs = None
+        nfs = models.NFS.objects.create()
 
     try:
         dynamicdns = models.DynamicDNS.objects.order_by("-id")[0]
     except IndexError:
-        dynamicdns = None
+        dynamicdns = models.DynamicDNS.objects.create()
 
     try:
         snmp = models.SNMP.objects.order_by("-id")[0]
     except IndexError:
-        snmp = None
+        snmp = models.SNMP.objects.create()
 
     try:
         ftp = models.FTP.objects.order_by("-id")[0]
     except IndexError:
-        ftp = None
+        ftp = models.FTP.objects.create()
 
     try:
         tftp = models.TFTP.objects.order_by("-id")[0]
     except IndexError:
-        tftp = None
+        tftp = models.TFTP.objects.create()
 
     try:
         ssh = models.SSH.objects.order_by("-id")[0]
     except IndexError:
-        ssh = None
+        ssh = models.SSH.objects.create()
 
     try:
         activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
     except IndexError:
-        activedirectory = None
+        activedirectory = models.ActiveDirectory.objects.create()
 
     try:
         ldap = models.LDAP.objects.order_by("-id")[0]
     except IndexError:
-        ldap = None
+        ldap = models.LDAP.objects.create()
 
     srv = models.services.objects.all()
     variables = RequestContext(request, {
@@ -104,7 +107,7 @@ def home(request):
         'activedirectory': activedirectory,
         'ldap': ldap,
         })
-    return render_to_response('services/index2.html', variables)
+    return render_to_response('services/index.html', variables)
 
 def iscsi(request):
     gconfid = models.iSCSITargetGlobalConfiguration.objects.all().order_by("-id")[0].id
@@ -170,7 +173,6 @@ def iscsi_portals(request):
     })
     return render_to_response('services/iscsi_portals.html', variables)
 
-"""TODO: This should be rewritten in a better way."""
 def servicesToggleView(request, formname):
     form2namemap = {
         'cifs_toggle' : 'cifs',
@@ -208,16 +210,49 @@ def servicesToggleView(request, formname):
     svc_entry.save()
     # forcestop then start to make sure the service is of the same
     # status.
-    if changing_service == "ldap" or changing_service == "activedirectory":
+    if changing_service in ("ldap", "activedirectory"):
         if svc_entry.srv_enable == 1:
-            notifier().start(changing_service)
-            return HttpResponseRedirect('/freenas/media/images/ui/buttons/on.png')
+            started = notifier().start(changing_service)
         else:
-            notifier().stop(changing_service)
-            return HttpResponseRedirect('/freenas/media/images/ui/buttons/off.png')
-
-    notifier().restart(changing_service)
-    if svc_entry.srv_enable == 1:
-        return HttpResponseRedirect('/freenas/media/images/ui/buttons/on.png')
+            started = notifier().stop(changing_service)
     else:
-        return HttpResponseRedirect('/freenas/media/images/ui/buttons/off.png')
+        started = notifier().restart(changing_service)
+
+    error = False
+    message = False
+    if started is True:
+        status = 'on'
+        if svc_entry.srv_enable == 0:
+            error = True
+            message = _("The service could not be stopped.")
+            svc_entry.srv_enable = 1
+            svc_entry.save()
+    elif started is False:
+        status = 'off'
+        if svc_entry.srv_enable == 1:
+            error = True
+            message = _("The service could not be started.")
+            svc_entry.srv_enable = 0
+            svc_entry.save()
+            if changing_service in ('ldap','activedirectory'):
+                notifier().stop(changing_service)
+    else:
+        if svc_entry.srv_enable == 1:
+            status ='on'
+        else:
+            status = 'off'
+
+    data = {
+        'service': changing_service,
+        'status': status,
+        'error': error,
+        'message': message,
+    }
+
+    return HttpResponse(simplejson.dumps(data), mimetype="application/json")
+
+def cronjobs(request):
+    crons = models.CronJob.objects.all().order_by('id')
+    return render(request, "services/cronjob.html", {
+        'cronjobs': crons,
+        })

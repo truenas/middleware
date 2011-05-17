@@ -1,63 +1,44 @@
-from django_nav import NavOption
-from django.utils.translation import ugettext as _
+from freeadmin.tree import TreeNode
+from django.utils.translation import ugettext_lazy as _
 import models
 
 ICON = u'AccountIcon'
 
-class ChangePass(NavOption):
+class ChangePass(TreeNode):
 
+        gname = 'account.ChangePass'
         name = _('Change Password')
-        type = 'changepass'
+        type = 'openaccount'
         icon = u'ChangePasswordIcon'
         append_app = False
-        options = []
 
-class ChangeAdmin(NavOption):
+class ChangeAdmin(TreeNode):
 
+        gname = 'account.ChangeAdmin'
         name = _('Change Admin User')
-        type = 'changeadmin'
+        type = 'openaccount'
         icon = u'ChangeAdminIcon'
         append_app = False
-        options = []
 
-#class Logout(NavOption):
-#
-#        name = _('Logout')
-#        type = 'logout'
-#        icon = u'LogOutIcon'
-#        append_app = False
-#        options = []
-
-class MyAccount(NavOption):
+class MyAccount(TreeNode):
 
         name = _('My Account')
         icon = u'MyAccountIcon'
         order = -1
-        #options = [ChangePass, ChangeAdmin, Logout]
-        options = [ChangePass, ChangeAdmin]
+        def __init__(self, *args, **kwargs):
+            super(MyAccount, self).__init__(*args, **kwargs)
+            self.append_children([ChangePass(), ChangeAdmin()])
 
-class ViewUsers(NavOption):
+class ViewUsers(TreeNode):
 
+        gname = 'account.bsdUsers.View'
         name = _('View All Users')
-        type = 'viewusers'
-        icon = u'ViewAllUsersIcon'
+        type = 'openaccount'
         append_app = False
-        options = []
 
-        def __init__(self, *args, **kwargs):
-            if models.bsdUsers._admin.icon_view is not None:
-                self.icon = models.bsdUsers._admin.icon_view
-            super(ViewUsers, self).__init__(*args, **kwargs)
+class ViewGroups(TreeNode):
 
-class ViewGroups(NavOption):
-
+        gname = 'account.bsdGroups.View'
         name = _('View All Groups')
-        type = 'viewgroups'
-        icon = u'ViewAllGroupsIcon'
+        type = 'openaccount'
         append_app = False
-        options = []
-
-        def __init__(self, *args, **kwargs):
-            if models.bsdGroups._admin.icon_view is not None:
-                self.icon = models.bsdGroups._admin.icon_view
-            super(ViewGroups, self).__init__(*args, **kwargs)

@@ -27,7 +27,7 @@
 #####################################################################
 
 from os import popen
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 import sqlite3
 import freenasUI.settings
 
@@ -41,11 +41,6 @@ SMTPAUTH_CHOICES = (
 PROTOCOL_CHOICES = (
         ('http', _('HTTP')),
         ('https', _('HTTPS')),
-        )
-
-# Language for the GUI
-LANG_CHOICES = (
-        ('english', _('English')),
         )
 
 ## Disks|Management
@@ -84,12 +79,12 @@ HDDSTANDBY_CHOICES = (
 
 ADVPOWERMGMT_CHOICES = (
         ('Disabled', _('Disabled')),
-        ('1',   _('Level') + ' 1 - ' + _('Minimum power usage with Standby (spindown)')),
-        ('64',  _('Level') + ' 64 - ' + _('Intermediate power usage with Standby')),
-        ('127', _('Level') + ' 127 - ' + _('Intermediate power usage with Standby')),
-        ('128', _('Level') + ' 128 - ' + _('Minimum power usage without Standby (no spindown)')),
-        ('192', _('Level') + ' 192 - ' + _('Intermediate power usage without Standby')),
-        ('254', _('Level') + ' 254 - ' + _('Maximum performance, maximum power usage')),
+        ('1',   _('Level 1 - Minimum power usage with Standby (spindown)')),
+        ('64',  _('Level 64 - Intermediate power usage with Standby')),
+        ('127', _('Level 127 - Intermediate power usage with Standby')),
+        ('128', _('Level 128 - Minimum power usgae without Standby (no spindown)')),
+        ('192', _('Level 192 - Intermediate power usage withot Standby')),
+        ('254', _('Level 254 - Maximum performance, maximum power usage')),
         )
 ACOUSTICLVL_CHOICES = (
         ('Disabled', _('Disabled')),
@@ -285,9 +280,9 @@ ZFS_CompressionChoices = (
         ('inherit', _('Inherit')),
         ('off',     _('Off')),
         ('lzjb',    _('lzjb (recommended)')),
-        ('gzip',    'gzip (' + _('default level') + ', 6)'),
-        ('gzip-1',  'gzip (' + _('fastest') +')'),
-        ('gzip-9',  'gzip (' + _('maximum, slow') + ')'),
+        ('gzip',    _('gzip (default level, 6)')),
+        ('gzip-1',  _('gzip (fastest)')),
+        ('gzip-9',  _('gzip (maximum, slow)')),
         )
 
 class whoChoices:
@@ -310,7 +305,7 @@ class NICChoices:
         # Remove lo0 from choices
         if 'lo0' in self._NIClist:
             self._NIClist.remove('lo0')
-        conn = sqlite3.connect(freenasUI.settings.DATABASE_NAME)
+        conn = sqlite3.connect(freenasUI.settings.DATABASES['default']['NAME'])
         c = conn.cursor()
         # Remove interfaces that are parent devices of a lagg
         # Database queries are wrapped in try/except as this is run

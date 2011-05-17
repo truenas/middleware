@@ -9,8 +9,8 @@
     <title>{{ freenas_version }}</title>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
     {% include "dojango/include.html" %}
-<link href="/freenas/media/favicon.ico" rel="shortcut icon" type="image/x-icon" />
-<link rel="stylesheet" href="/freenas/media/css/template.css" type="text/css" />
+<link href="{{ STATIC_URL }}favicon.ico" rel="shortcut icon" type="image/x-icon" />
+<link rel="stylesheet" href="{{ STATIC_URL }}css/template.css" type="text/css" />
 {% block dojango_header_extra %}{% endblock %}
 </head>
 <body  class="{{ DOJANGO.THEME }}" onLoad="bsdgroupShow();">
@@ -26,7 +26,7 @@
 		<div data-dojo-type="dijit.layout.ContentPane" region:"top", style:"height: 100px;"' gutters="false">
                 <div id="page-header">
                     <div>
-                        <a href="/" title="FreeNAS"><img src="/freenas/media/images/ui/freenas-logo.png" alt="FreeNAS" /></a>
+                        <a href="/" title="FreeNAS"><img src="{{ STATIC_URL }}images/ui/freenas-logo.png" alt="FreeNAS" /></a>
                     </div>
                 </div>
         {% block content %}

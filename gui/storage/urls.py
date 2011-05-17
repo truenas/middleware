@@ -27,7 +27,6 @@
 #####################################################################
 
 from django.conf.urls.defaults import patterns, url
-from freenasUI.services.views import servicesToggleView as servicesToggleView
 
 # Active FreeNAS URLs
 
@@ -47,7 +46,6 @@ urlpatterns = patterns('storage.views',
     url(r'snapshot/create/(?P<path>[-a-zA-Z0-9_/.]+)/$', 'manualsnap', name="storage_manualsnap"),
     url(r'snapshot/clone/(?P<snapshot>[-a-zA-Z0-9_/.]+@[-a-zA-Z0-9_.]+)/$', 'clonesnap', name="storage_clonesnap"),
     url(r'mountpoint/permission/(?P<object_id>\d+)/$', 'mp_permission', name="storage_mp_permission"),
-    (r'toggle/(?P<formname>\w+)/$', servicesToggleView),
     url(r'^wizard/$', 'wizard', name="storage_wizard"),
     url(r'^import/$', 'volimport', name="storage_import"),
     url(r'^auto-import/$', 'volautoimport', name="storage_autoimport"),
@@ -56,6 +54,5 @@ urlpatterns = patterns('storage.views',
     url(r'volume/zfs-edit/(?P<object_id>\d+)/$', 'zfsvolume_edit', name="storage_volume_edit"),
     url(r'volume/(?P<vid>\d+)/disk-replacement/(?P<object_id>\d+)/$', 'disk_replacement', name="storage_disk_replacement"),
     url(r'volume/(?P<vid>\d+)/disk-detach/(?P<object_id>\d+)/$', 'disk_detach', name="storage_disk_detach"),
-    (r'mountpoint/permission/(?P<object_id>\d+)/$', 'mp_permission'),
     )
 

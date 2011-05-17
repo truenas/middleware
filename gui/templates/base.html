@@ -1,45 +1,42 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-gb" lang="en-gb" dir="ltr">
 <head>
-<script type="text/javascript">
-      var err  = function () {
-          dijit.byId("{{ errform }}").show();
-      }
-</script>
     <title>{{ freenas_version }}</title>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
     <style type="text/css">html, body.{{ DOJANGO.THEME }} { width: 100%; height: 100%; }</style>
     {% include "dojango/include.html" %}
-<link href="/freenas/media/favicon.ico" rel="shortcut icon" type="image/x-icon" />
-<link rel="stylesheet" href="/freenas/media/css/template.css" type="text/css" />
+    <script type="text/javascript" src="{{ DOJANGO.DOJO_URL }}/freenasdojo.js"></script>
+    <link rel="stylesheet" href="{{ DOJANGO.DIJIT_URL }}/themes/claro/document.css" />
+    <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/form/resources/FileInput.css" />
+    <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/form/resources/CheckedMultiSelect.css" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/template.css" type="text/css" />
+    <link href="{{ STATIC_URL }}favicon.ico" rel="shortcut icon" type="image/x-icon" />
 {% block dojango_header_extra %}{% endblock %}
-{% if errform %}
-{% endif %}
-
 </head>
-<body class="{{ DOJANGO.THEME }}" {% if errform %}onLoad="err()")"{% else %}{% endif %}>
-    <div id="wrap">
-    <div id="main" data-dojo-type="dijit.layout.BorderContainer"> 
-		<div data-dojo-type="dijit.layout.ContentPane" region:"top", style:"height: 100px;"' gutters="false">
-                <div id="page-header">
-                    <div>
-                        <a href="/" title="FreeNAS"><img src="/freenas/media/images/ui/freenas-logo.png" alt="FreeNAS" /></a>
-                    </div>
-                </div>
-		{% block menubar %}
-		{% include "common/menubar.html" %}
-                {% endblock %}
-	</div>
-		<div data-dojo-type="dijit.layout.ContentPane" region:"center", style:"padding: 10px;"'>
-            {% block dojango_content %}
+<body class="{{ DOJANGO.THEME }}">
+    <div dojoType="dijit.layout.BorderContainer" id="outer" style="width:100%; height:100%" gutters="false">
+        <div dojoType="dijit.layout.ContentPane" style="height:125px;overflow:hidden;" region="top">
+            <div id="page-header">
+                 <div>
+                     <a href="/" title="FreeNAS"><img src="{{ STATIC_URL }}images/ui/freenas-logo.png" alt="FreeNAS" /></a>
+                 </div>
+            </div>
+            {% block menubar %}
+            {% include "menubar.html" %}
             {% endblock %}
-		</div>
-	</div>
-</div>
-	<div id="footer" data-dojo-type="dijit.layout.ContentPane" region:"bottom", style:"height: 100px;background: #464C53 !important; ", splitter:true'>
-        {% block footer %}
-        {% include "footer.html" %}
-        {% endblock %}
-	</div>
+        </div>
+{% block dojango_content %}
+        <div dojoType="dijit.layout.ContentPane" id="menupane"
+            region="left" splitter="true">
+        </div>
+        <div dojoType="dijit.layout.TabContainer" region="center" id="content">
+        </div>
+{% endblock %}
+        <div dojoType="dijit.layout.ContentPane" style="height:80px;width:100%;padding-bottom:0px;" region="bottom">
+             {% block footer %}
+             {% include "footer.html" %}
+             {% endblock %}
+        </div>
+    </div>
 </body>
 </html>

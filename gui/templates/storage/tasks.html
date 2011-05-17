@@ -1,6 +1,6 @@
 {% load i18n %}
 <button id="periodicSnapBtn" dojoType="dijit.form.Button" type="button">
-        <img src="/freenas/media/images/ui/buttons/create_periodic_snapshot.png">
+        <img src="{{ STATIC_URL }}images/ui/buttons/create_periodic_snapshot.png">
         <br />
     <script type="dojo/method" event="onClick" args="evt">
         addObject('{% trans "Periodic Snapshots" %}', '{% url storage_periodicsnap %}', [this,]);

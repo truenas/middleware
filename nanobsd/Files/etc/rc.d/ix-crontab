@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-crontab
+# REQUIRE: LOGIN
+# BEFORE: cron
+
+. /etc/rc.subr
+
+generate_crontab()
+{
+    local IFS=\|
+    local minute hour daymonth month dayweek user command
+    mount -uw /
+    cp /conf/base/etc/crontab /etc/crontab
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT cron_minute,cron_hour,cron_daymonth,cron_month,cron_dayweek,cron_user,cron_command FROM services_cronjob ORDER BY id" | \
+	while read minute hour daymonth month dayweek user command; do
+        months=$(/usr/local/bin/python<<-_EOF_
+m = ${month}
+m = ','.join(m)
+m = m.replace('a','10').replace('b', '11').replace('c','12')
+print m
+_EOF_
+)
+        daysweek=$(/usr/local/bin/python<<-_EOF_
+w = ${dayweek}
+w = ','.join(w)
+print w
+_EOF_
+)
+
+        echo -e "${minute}\t${hour}\t${daymonth}\t${months}\t${daysweek}\t${user}\t${command} >/dev/null 2>&1" >> /etc/crontab
+    done
+    mount -ur /
+}
+
+original_crontab()
+{
+    mount -uw /
+    cp /conf/base/etc/crontab /etc/crontab
+    mount -ur /
+
+}
+
+name="ix-crontab"
+start_cmd='generate_crontab'
+stop_cmd='original_crontab'
+
+load_rc_config $name
+run_rc_command "$1"

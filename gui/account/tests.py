@@ -26,26 +26,57 @@
 # $FreeBSD$
 #####################################################################
 
-"""
-This file demonstrates two different styles of tests (one doctest and one
-unittest). These will both pass when you run "manage.py test".
+from django.core.urlresolvers import reverse
+from django.conf import settings
+from django.utils import simplejson
 
-Replace these with more appropriate tests for your application.
-"""
+from account import models, forms
+from freeadmin.tests import TestCase
 
-from django.test import TestCase
+class UrlsTest(TestCase):
 
-class SimpleTest(TestCase):
-    def test_basic_addition(self):
-        """
-        Tests that 1 + 1 always equals 2.
-        """
-        self.failUnlessEqual(1 + 1, 2)
+    def setUp(self):
+        super(UrlsTest, self).setUp()
+        #models.SSL.objects.create()
 
-__test__ = {"doctest": """
-Another way to test that 1 + 1 is equal to 2.
+    def test_urls(self):
+        response = self.client.get(reverse('account_home'))
+        self.assertEqual(response.status_code, 200)
 
->>> 1 + 1 == 2
-True
-"""}
+        response = self.client.get(reverse('account_bsduser'))
+        self.assertEqual(response.status_code, 200)
 
+        response = self.client.get(reverse('account_bsduser_json'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('account_bsdgroup'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('account_bsdgroup_json'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_logout(self):
+        response = self.client.get(settings.LOGOUT_URL)
+        self.assertContains(response, "You are now logged out", status_code=200)
+
+        response = self.client.get('/') # test logged in status
+        self.assertRedirects(response, settings.LOGIN_URL+'?next=/',
+            status_code=302, target_status_code=200)
+
+    def test_createuser(self):
+        response = self.client.post(reverse('freeadmin_model_add', kwargs={'app':'account', 'model':'bsdUsers', 'mf': 'bsdUserCreationForm'}), {
+            'bsdusr_uid': '2000',
+            'bsdusr_username': 'djangotest',
+            'bsdusr_password1': 'mytest',
+            'bsdusr_password2': 'mytest',
+            'bsdusr_builtin': 'mytest',
+            'bsdusr_shell': '/bin/csh',
+            'bsdusr_home': '/nonexistent',
+            'bsdusr_full_name': 'Django Test',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+        json = simplejson.loads(response.content)
+        self.assertEqual(json['error'], False)
+
+        models.bsdUsers.objects.get(bsdusr_username='djangotest')

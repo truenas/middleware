@@ -1,10 +1,11 @@
-{% extends "base3.html" %}
+{% extends "base.html" %}
 {% load i18n %}
 
 {% block dojango_header_extra %}
-<link rel="stylesheet" href="/dojango/dojo-media/release/freenas-dojo-1.5.0/dojox/grid/resources/claroGrid.css" type="text/css" /> 
-<script type="text/javascript" src="/media/lib/js/freeadmin.js"></script>
-<script type="text/javascript" src="/media/lib/js/top.js"></script>
+<link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/grid/resources/claroGrid.css" type="text/css" /> 
+<script type="text/javascript" src="{% url django.views.i18n.javascript_catalog %}"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lib/js/freeadmin.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lib/js/top.js"></script>
 <script type="text/javascript">
 var STORAGE_URL = '{% url storage_wizard %}';
 dojo.addOnLoad(function(){
@@ -17,6 +18,7 @@ dojo.addOnLoad(function(){
     Menu.urlAccount = '{% url account_home %}';
     Menu.urlStorage = '{% url storage_home %}';
     Menu.urlISCSI = '{% url services_iscsi %}';
+    Menu.urlCron = '{% url services_cronjobs %}';
 
     Menu.openSystem();
 });
@@ -24,6 +26,7 @@ dojo.addOnLoad(function(){
 {% endblock %}
 
 {% block dojango_content %}
+{{ block.super }}
 <div id="top_dialog" dojoType="dijit.Dialog" title="{% trans "Running Processes" %}" style="min-height:400px;">
     <script type="dojo/method" event="onShow">
         ttop.stop();
@@ -46,7 +49,7 @@ dojo.addOnLoad(function(){
                 <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('rebootDialog').hide();">
                     {% trans "Cancel" %}
                 </button>
-                <button dojoType="dijit.form.Button" type="submit" onClick="window.location='/system/reboot/'">
+                <button dojoType="dijit.form.Button" type="submit" onClick="window.location='{% url system_reboot %}'">
                     {% trans "Reboot" %}
                 </button>
 </div>
@@ -58,13 +61,13 @@ dojo.addOnLoad(function(){
                     onClick="dijit.byId('shutdownDialog').hide();">
                     {% trans "Cancel" %}
                 </button>
-                <button dojoType="dijit.form.Button" type="button" onClick="window.location='/system/shutdown/'">
+                <button dojoType="dijit.form.Button" type="button" onClick="window.location='{% url system_shutdown %}'">
                     {% trans "Shutdown" %}
                 </button>
 </div>
 
 <div dojoType="dijit.Dialog" id="helpDialog" title="{% trans "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support" %}"  style="background:#fff;width:400px;">
-    <img src="/freenas/media/images/ui/menu/help.png" style="float:left;position:relative;top:-36px;right:5px;">
+    <img src="{{ STATIC_URL }}images/ui/menu/help.png" style="float:left;position:relative;top:-36px;right:5px;">
     <div style="float:left;">
     <h3>{% trans "Forum" %}</h3>
     <ul>

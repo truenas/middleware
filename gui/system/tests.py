@@ -26,26 +26,54 @@
 # $FreeBSD$
 #####################################################################
 
-"""
-This file demonstrates two different styles of tests (one doctest and one
-unittest). These will both pass when you run "manage.py test".
+from django.core.urlresolvers import reverse
+from django.conf import settings
 
-Replace these with more appropriate tests for your application.
-"""
+from system import models
+from freeadmin.tests import TestCase
 
-from django.test import TestCase
+class UrlsTest(TestCase):
 
-class SimpleTest(TestCase):
-    def test_basic_addition(self):
-        """
-        Tests that 1 + 1 always equals 2.
-        """
-        self.failUnlessEqual(1 + 1, 2)
+    def setUp(self):
+        super(UrlsTest, self).setUp()
+        models.Settings.objects.create()
+        models.Email.objects.create()
+        models.Advanced.objects.create()
+        models.SSL.objects.create()
 
-__test__ = {"doctest": """
-Another way to test that 1 + 1 is equal to 2.
+    def test_status(self):
+        response = self.client.get(reverse('system_reporting'))
+        self.assertEqual(response.status_code, 200)
 
->>> 1 + 1 == 2
-True
-"""}
+        response = self.client.get(reverse('system_settings'))
+        self.assertEqual(response.status_code, 200)
 
+        response = self.client.get(reverse('system_advanced'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('system_info'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('system_config'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('system_configsave'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('system_messages', kwargs={'lines': 200}))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('system_top'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('system_testmail'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('system_clearcache'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('system_clearcache'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('system_firmwizard'))
+        self.assertEqual(response.status_code, 200)

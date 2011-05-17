@@ -1,6 +1,6 @@
 {% load i18n %}
     <button id="addReplBtn" dojoType="dijit.form.Button" type="button">
-    <img src="/freenas/media/images/ui/buttons/add_replication.png" />
+    <img src="{{ STATIC_URL }}images/ui/buttons/add_replication.png" />
     <script type="dojo/method" event="onClick" args="evt">
         volumeWizard('{% trans "Create Volume" %}', '{% url freeadmin_model_add app='storage',model='Replication' %}', [this,]);
     </script>
@@ -25,13 +25,13 @@
 	    <td>{{ repl.repl_zfs }}</td>
 	    <td>
 	    <button id="delRepl{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Delete Replication" %}', '{% url freeadmin_model_delete app='storage' model='Replication' oid=repl.id %}', [this,]);">
-            <img src="/freenas/media/images/ui/buttons/delete_replication.png" />
+            <img src="{{ STATIC_URL }}images/ui/buttons/delete_replication.png" />
         </button>
         <div dojoType="dijit.Tooltip" connectId="delRepl{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
             <strong>{% trans "Delete Replication" %}</strong>
         </div>
 	    <button id="editRepl{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Edit Replication" %}', '{% url freeadmin_model_edit app='storage' model='Replication' oid=repl.id %}', [this,]);">
-            <img src="/freenas/media/images/ui/buttons/edit_replication.png" />
+            <img src="{{ STATIC_URL }}images/ui/buttons/edit_replication.png" />
         </button>
         <div dojoType="dijit.Tooltip" connectId="editRepl{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
             <strong>{% trans "Edit Replication" %}</strong>
