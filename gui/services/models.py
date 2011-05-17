@@ -1041,28 +1041,6 @@ class ActiveDirectory(Model):
             verbose_name = _("Administrator Password"),
             help_text = _("Password of Domain Administrator account.")
             )
-    ad_windows_version = models.CharField(
-            max_length=120,
-            choices=choices.WindowsVersions,
-            default=choices.WindowsVersions[0][0],
-            verbose_name = _("Windows Version"),
-            help_text = _("The version of Microsoft Windows that Active Directory is running.")
-            )
-    ad_spn = models.CharField(
-            max_length=120,
-            verbose_name = _("Service Principal Name"),
-            help_text = _("Service Principal Name, eg service/account.")
-            )
-    ad_spnpw = models.CharField(
-            max_length=120,
-            verbose_name = _("Service Principal Name Password"),
-            help_text = _("Password of the Service Principal Name account.")
-            )
-    ad_keytab = models.TextField(
-            blank = True,
-            verbose_name = _("Kerberos Keytab File"),
-            help_text = _("The kerberos keytab file that was generated on the Active Directory server.")
-            )
 
     class Meta:
         verbose_name_plural = _("Active Directory")
