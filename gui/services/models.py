@@ -1197,6 +1197,9 @@ class CronJob(Model):
     class FreeAdmin:
         pass
 
+    def __unicode__(self):
+        return u"%d (%s)" % (self.id, self.cron_user)
+
     def get_human_minute(self):
         if self.cron_minute == '*':
             return _(u'Every minute')

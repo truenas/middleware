@@ -58,33 +58,24 @@ dojo.declare("freeadmin.form.Cron", [ dijit._Widget, dijit._Templated ], {
              },
         }, this.selectedNode);
 
-
-
-                var rulesNode = document.createElement('div'); 
-                var rulesNodeLabels = document.createElement('ol'); 
-                              
-            var sliderRule= new dijit.form.HorizontalRule( 
-                                 { 
-                                            count: 5, 
-                                            style: "height:1em;font-size:75%;color:gray;" 
-                                         }, 
-                                 rulesNode); 
-                
-                 var sliderLabels= new dijit.form.HorizontalRuleLabels( 
-                                 { 
-                                            container: "bottomDecoration", 
-                                            count: 5, 
-                                            labels: [0,15,30,45,59], 
-                                            style: "height:2em;font-size:75%;color:gray;" 
-                                         }, 
-                                 rulesNodeLabels); 
+        //var rulesNode = document.createElement('div'); 
+        //var rulesNodeLabels = document.createElement('ol'); 
+        //var sliderRule= new dijit.form.HorizontalRule( { 
+        //       count: 5, 
+        //       style: "height:1em;font-size:75%;color:gray;" 
+        //    }, rulesNode); 
+        //var sliderLabels= new dijit.form.HorizontalRuleLabels( { 
+        //       container: "bottomDecoration", 
+        //       count: 5, 
+        //       labels: [0,15,30,45,59], 
+        //       style: "height:2em;font-size:75%;color:gray;" 
+        //    }, rulesNodeLabels); 
 
         if(this.typeChoice == 'every'){
             this.sliderValue.innerHTML = this.value.split('/')[1];
         } else {
             this.sliderValue.innerHTML = Math.floor((this.numChoices+this.start)/4).toString();
         }
-
         var slider = new dijit.form.HorizontalSlider({
             name: "slider",
             value: parseInt(this.sliderValue.innerHTML),
