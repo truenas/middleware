@@ -145,7 +145,7 @@ class VolumeWizardForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(VolumeWizardForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        self.fields['volume_disks'].choices.sort()
+        self.fields['volume_disks'].choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
         self.fields['volume_fstype'].widget.attrs['onClick'] = 'wizardcheckings();'
 
         grouptype_choices = ( 
@@ -208,7 +208,7 @@ class VolumeWizardForm(forms.Form):
             except:
                 pass
         choices = diskchoices.items()
-        choices.sort()
+        choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
         return choices
 
     def clean_volume_name(self):
@@ -335,7 +335,7 @@ class VolumeImportForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(VolumeImportForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        self.fields['volume_disks'].choices.sort()
+        self.fields['volume_disks'].choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
 
     def _populate_disk_choices(self):
     
@@ -372,7 +372,7 @@ class VolumeImportForm(forms.Form):
                     del diskchoices[part]
 
         choices = diskchoices.items()
-        choices.sort()
+        choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
         return choices
 
     def clean(self):
@@ -433,7 +433,7 @@ class VolumeAutoImportForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(VolumeAutoImportForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        self.fields['volume_disks'].choices.sort()
+        self.fields['volume_disks'].choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
 
     def _populate_disk_choices(self):
     
@@ -474,7 +474,7 @@ class VolumeAutoImportForm(forms.Form):
                     del diskchoices[part]
 
         choices = diskchoices.items()
-        choices.sort()
+        choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
         return choices
 
     def clean(self):
@@ -913,7 +913,7 @@ class DiskReplacementForm(forms.Form):
         self.disk = kwargs.pop('disk')
         super(DiskReplacementForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        self.fields['volume_disks'].choices.sort()
+        self.fields['volume_disks'].choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
 
     def _populate_disk_choices(self):
     
@@ -953,7 +953,7 @@ class DiskReplacementForm(forms.Form):
                     del diskchoices[disk]
 
         choices = diskchoices.items()
-        choices.sort()
+        choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
         return choices
 
 class ReplicationForm(ModelForm):
