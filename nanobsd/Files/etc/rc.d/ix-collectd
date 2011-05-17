@@ -44,6 +44,7 @@ LoadPlugin uptime
     Mountpoint "/var"
     Mountpoint "/mnt"
     Mountpoint "/data"
+    Mountpoint "/var/tmp/.cache"
     IgnoreSelected true
 </Plugin>
 

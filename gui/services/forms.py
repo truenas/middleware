@@ -306,7 +306,7 @@ class ActiveDirectoryForm(ModelForm):
         if self.files.has_key('file'):
             self.instance.ad_keytab = base64.encodestring(self.files['file'].read())
         super(ActiveDirectoryForm, self).save()
-        started = notifier().restart("activedirectory")
+        started = notifier().start("activedirectory")
         if started is False and models.services.objects.get(srv_service='activedirectory').srv_enable:
             raise ServiceFailed("activedirectory", _("The activedirectory service failed to reload."))
     class Meta:

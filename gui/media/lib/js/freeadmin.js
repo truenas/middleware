@@ -541,7 +541,7 @@
                     }
 
                 },
-	        error: function(response, ioArgs) {alert("error"); },
+	        error: function(response, ioArgs) { },
              });
 
         } else {
@@ -583,10 +583,12 @@
                     } catch(err) {
 
                         rnode.set('content', data); 
-                        if(callback) callback();
-                        var qry = dojo.query('#success', rnode.domNode);
-                        if(qry.length>0)
-                            dojo.fadeOut({node: rnode, onEnd: function() { rnode.hide(); }}).play();
+                        try {
+                            if(callback) callback();
+                            var qry = dojo.query('#success', rnode.domNode);
+                            if(qry.length>0)
+                                dojo.fadeOut({node: rnode, onEnd: function() { rnode.hide(); }}).play();
+                        } catch(err) {}
                     }
                 },
                 error: function(data) { 
@@ -728,6 +730,12 @@
         } else {
             dojo.style("grpopt", "display", "none");
             dojo.query("input[name=group_type]:checked").forEach(function(tag) { dijit.getEnclosingWidget(tag).set('checked', false);  });
+        }
+
+        if(zfs) {
+            dojo.style('zfssectorsize', 'display', 'table-row');
+        } else {
+            dojo.style('zfssectorsize', 'display', 'none');
         }
 
         if(d.length >= 3 && zfs) {

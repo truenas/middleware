@@ -243,7 +243,7 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
         return bsdusr_password2
 
     def clean_bsdusr_home(self):
-        if self.cleaned_data['bsdusr_home'][0:5] != u'/mnt/' and self.cleaned_data['bsdusr_home'] != u'/nonexistent':
+        if self.cleaned_data['bsdusr_home'][0:5] != u'/mnt/' and self.cleaned_data['bsdusr_home'] not in (u'/nonexistent',u'/mnt'):
             raise forms.ValidationError(_("Home directory has to start with /mnt/"))
         return self.cleaned_data['bsdusr_home']
 
@@ -271,7 +271,10 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
         if commit:
             group = self.cleaned_data['bsdusr_group2']
             if group == None:
-                gid = -1
+                try:
+                    gid = models.bsdGroups.objects.get(bsdgrp_group = self.cleaned_data['bsdusr_username']).bsdgrp_gid
+                except:
+                    gid = -1
             else:
                 gid = group.bsdgrp_gid
             uid, gid, unixhash, smbhash = notifier().user_create(
@@ -364,6 +367,11 @@ class bsdUserChangeForm(ModelForm, SharedFunc):
     def clean_bsdusr_username(self):
         return self.instance.bsdusr_username
 
+    def clean_bsdusr_home(self):
+        if self.cleaned_data['bsdusr_home'][0:5] != u'/mnt/' and self.cleaned_data['bsdusr_home'] not in (u'/nonexistent',u'/mnt'):
+            raise forms.ValidationError(_("Home directory has to start with /mnt/"))
+        return self.cleaned_data['bsdusr_home']
+
     def clean_bsdusr_login_disabled(self):
         return self.cleaned_data.get("bsdusr_login_disabled", False)
 
@@ -407,7 +415,7 @@ class bsdGroupsForm(ModelForm):
 attrs_dict = { 'class': 'required' }
 
 class bsdGroupToUserForm(Form):
-    bsdgroup_to_user = FilteredSelectField(label = _('Auxiliary groups'), choices=(), required=False)
+    bsdgroup_to_user = FilteredSelectField(label = _('Member users'), choices=(), required=False)
     def __init__(self, groupid, *args, **kwargs):
         super(bsdGroupToUserForm, self).__init__(*args, **kwargs)
         self.groupid = groupid

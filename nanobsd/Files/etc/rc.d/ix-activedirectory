@@ -13,30 +13,6 @@
 : ${FREENAS_CACHEDIR:="/var/tmp/.cache"}
 : ${FREENAS_CACHESIZE:="100m"}
 
-is_win2k8()
-{
-	local res=0
-
-	while read version
-	do
-		if [ "${version}" = "windows2008" ]
-		then
-			res=1
-			break
-		fi
-
-	done <<EOF
-	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		ad_windows_version
-	FROM
-		services_activedirectory
-	")
-EOF
-
-	return ${res}
-}
-    
 join_activedirectory_domain()
 {
 	local IFS="|"
@@ -76,9 +52,8 @@ generate_nss_ldap_conf()
 		ad_dcname,
 		ad_domainname,
 		ad_adminname,
-		ad_adminpw,
-		ad_spn,
-		ad_spnpw
+		ad_adminpw
+
 	FROM
 		services_services,
 		services_activedirectory
@@ -86,7 +61,7 @@ generate_nss_ldap_conf()
 	WHERE
 		(srv_service = 'activedirectory' and srv_enable = 1)
 	" | \
-	while read dcname domainname adminname adminpw spn spnpw
+	while read dcname domainname adminname adminpw 
 	do
 		base=$(echo "${domainname}" | awk '{
 			n = split($0, parts, ".");

@@ -141,14 +141,17 @@ class VolumeWizardForm(forms.Form):
     volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'ZFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
     volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks', required=False)
     group_type = forms.ChoiceField(choices=(), widget=forms.RadioSelect(attrs=attrs_dict), required=False)
+    force4khack = forms.BooleanField(required=False, initial=False, help_text=_('Force 4096 bytes sector size'))
     def __init__(self, *args, **kwargs):
         super(VolumeWizardForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        self.fields['volume_disks'].choices.sort()
+        self.fields['volume_disks'].choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
         self.fields['volume_fstype'].widget.attrs['onClick'] = 'wizardcheckings();'
 
-        grouptype_choices = ( ('mirror', 'mirror'), )
-        grouptype_choices += ( ('stripe', 'stripe'),)
+        grouptype_choices = ( 
+            ('mirror', 'mirror'), 
+            ('stripe', 'stripe'),
+            )
         fstype = self.data.get("volume_fstype", None)
         if self.data.has_key("volume_disks"):
             disks = self.data.getlist("volume_disks")
@@ -205,7 +208,7 @@ class VolumeWizardForm(forms.Form):
             except:
                 pass
         choices = diskchoices.items()
-        choices.sort()
+        choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
         return choices
 
     def clean_volume_name(self):
@@ -256,6 +259,7 @@ class VolumeWizardForm(forms.Form):
         volume_name = self.cleaned_data['volume_name']
         volume_fstype = self.cleaned_data['volume_fstype']
         disk_list = self.cleaned_data['volume_disks']
+        force4khack = self.cleaned_data.get("force4khack", False)
 
         if (len(disk_list) < 2):
             group_type = ''
@@ -322,9 +326,9 @@ class VolumeWizardForm(forms.Form):
                     diskobj.save()
 
         if add:
-            notifier().zfs_volume_attach_group(str(grp.id))
+            notifier().zfs_volume_attach_group(str(grp.id), force4khack=force4khack)
         else:
-            notifier().init("volume", volume.id)
+            notifier().init("volume", volume.id, force4khack=force4khack)
 
 class VolumeImportForm(forms.Form):
 
@@ -335,7 +339,7 @@ class VolumeImportForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(VolumeImportForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        self.fields['volume_disks'].choices.sort()
+        self.fields['volume_disks'].choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
 
     def _populate_disk_choices(self):
     
@@ -372,7 +376,7 @@ class VolumeImportForm(forms.Form):
                     del diskchoices[part]
 
         choices = diskchoices.items()
-        choices.sort()
+        choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
         return choices
 
     def clean(self):
@@ -433,7 +437,7 @@ class VolumeAutoImportForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(VolumeAutoImportForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        self.fields['volume_disks'].choices.sort()
+        self.fields['volume_disks'].choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
 
     def _populate_disk_choices(self):
     
@@ -474,7 +478,7 @@ class VolumeAutoImportForm(forms.Form):
                     del diskchoices[part]
 
         choices = diskchoices.items()
-        choices.sort()
+        choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
         return choices
 
     def clean(self):
@@ -626,7 +630,7 @@ class ZFSDataset_CreateForm(Form):
         return volumechoices.items()
     def clean_dataset_name(self):
         name = self.cleaned_data["dataset_name"]
-        if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*$', name):
+        if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*(?:/[a-zA-Z0-9][a-zA-Z0-9_\-:.])*$', name):
             raise forms.ValidationError(_("Dataset names must begin with an alphanumeric character and may only contain (-), (_), (:) and (.)."))
         return name
     def clean(self):
@@ -917,7 +921,7 @@ class DiskReplacementForm(forms.Form):
         self.disk = kwargs.pop('disk')
         super(DiskReplacementForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        self.fields['volume_disks'].choices.sort()
+        self.fields['volume_disks'].choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
 
     def _populate_disk_choices(self):
     
@@ -957,7 +961,7 @@ class DiskReplacementForm(forms.Form):
                     del diskchoices[disk]
 
         choices = diskchoices.items()
-        choices.sort()
+        choices.sort(key = lambda a : int(re.match(r'.*?([0-9]+)$', a).group(1)))
         return choices
 
 class ReplicationForm(ModelForm):

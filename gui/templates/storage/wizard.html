@@ -49,6 +49,13 @@
                 ZFS
             </td>
         </tr>
+        <tr id="zfssectorsize" style="display: none">
+            <td>{% trans "Force 4096 bytes sector size" %}</td>
+            <td>
+                {{ form.force4khack.errors }}
+                {{ form.force4khack }}
+            </td>
+        </tr>
         <tr id="grpopt" {% if disks and disks|length >= 2 %}{% else %}style="display:none;"{% endif %}>
             <td style="width:200px;">
                 {% trans "Group type" %}

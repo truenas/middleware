@@ -10,7 +10,6 @@
 
 . /etc/rc.subr
 
-: ${PATH_AD_KEYTAB:="/etc/AD.keytab"}
 
 kerberos_init()
 {
@@ -22,10 +21,7 @@ kerberos_init()
 		ad_domainname,
 		ad_netbiosname,
 		ad_adminname,
-		ad_adminpw,
-		ad_windows_version,
-		ad_spn,
-		ad_spnpw
+		ad_adminpw
 
 	FROM
 		services_services,
@@ -41,7 +37,7 @@ kerberos_init()
 
 	LIMIT 1
 	" | \
-	while read dc domain netbios admin pw version spn spnpw
+	while read dc domain netbios admin pw
 	do
 		if [ -n "${admin}" -a -n "${domain}" -a -n "${pw}" ]
 		then

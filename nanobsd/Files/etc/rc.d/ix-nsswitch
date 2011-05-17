@@ -12,30 +12,6 @@
 
 : ${PATH_NS_CONF:="/etc/nsswitch.conf"}
 
-is_win2k8()
-{
-	local res=0
-
-	while read version
-	do
-		if [ "${version}" = "windows2008" ]
-		then
-			res=1
-			break
-		fi
-
-	done <<EOF
-	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		ad_windows_version
-	FROM
-		services_activedirectory
-	")
-EOF
-
-	return ${res}
-}
-
 generate_nsswitch_conf()
 {
 	local ldap=0
@@ -71,21 +47,17 @@ EOF
 	local p="compat"
 	local g="compat"
 
-	is_win2k8;
-	local win2k8=$?
-
 	if [ "${ldap}" = "1" -o "${ad}" = "1" ]
 	then
 		p="files"
 		g="files"
 
-		if [ "${ad}" = "1" -a "${win2k8}" = "0" ]
+		if [ "${ad}" = "1" ]
 		then
 			p="${p} winbind"
 			g="${g} winbind"
-		fi
 
-		if [ "${ldap}" = "1" -o "${win2k8}" = "1" ]
+		elif [ "${ldap}" = "1" ]
 		then
 			p="${p} ldap"
 			g="${g} ldap"
