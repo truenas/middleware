@@ -13,7 +13,7 @@
            "dojox.grid.DataGrid",
            "dojox.data.JsonRestStore",
            "dojox.validate.regexp",
-           "dojox.timing._base",
+           "dojox.timing",
            "dojox.form.CheckedMultiSelect",
            "dojox.form.FileInput",
            "dojox.string.sprintf",
