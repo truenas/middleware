@@ -70,9 +70,9 @@ EOF
 	networks: files
 	passwd: ${p}
 	shells: files
-	services: cache files
-	protocols: cache files
-	rpc: cache files
+	services: files
+	protocols: files
+	rpc: files
 EOF
 	
 	/etc/rc.d/nsswitch start
