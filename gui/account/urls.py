@@ -27,7 +27,7 @@
 #####################################################################
 
 from django.conf.urls.defaults import patterns, url
-from django.contrib.auth.views import login, logout
+from django.contrib.auth.views import logout
 
 # Active FreeNAS URLs
 
@@ -41,6 +41,6 @@ urlpatterns = patterns('account.views',
     url(r'^bsdgroup/(?P<object_id>\d+)/members/$', 'group2user_update', name="account_bsdgroup_members"), 
     url(r'^password_change/$', 'password_change', name="account_passform"),
     url(r'^user_change/$', 'user_change', name="account_changeform"),
-    url(r'^login/$', login, {'template_name': 'registration/login.html'}, name="account_login"),
+    url(r'^login/$', 'login_wrapper', {'template_name': 'registration/login.html'}, name="account_login"),
     url(r'^logout/$', logout, {'template_name': 'registration/logout.html'}, name="account_logout"),
     )
