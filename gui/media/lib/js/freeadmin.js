@@ -797,7 +797,7 @@
             closable: true, 
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
             onHide: function() { 
-                this.destroyRecursive();
+                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
                 refreshTabs(nodes);
             },
         });
@@ -839,7 +839,7 @@
             closable: true, 
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
             onHide: function() { 
-                this.destroyRecursive();
+                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
                 refreshTabs(nodes);
             },
         });
@@ -855,7 +855,7 @@
              closable: true, 
              style: "max-width: 650px;min-height:200px;max-height:500px;background-color:white;overflow:auto;",
              onHide: function() { 
-                this.destroyRecursive() 
+                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
                 refreshTabs(nodes);
              },
          });
