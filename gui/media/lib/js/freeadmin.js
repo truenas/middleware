@@ -326,6 +326,46 @@
             }
 
         },
+        openISCSI: function(tab) {
+            var opened = false;
+            var p = dijit.byId("content");
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+                if(c[i].tab == 'iscsi'){
+                    p.selectChild(c[i]);
+                    opened = true;
+                    if(tab) {
+                        var tabnet = dijit.byId("tab_iscsi");
+                        if(tabnet) {
+                            var c2 = tabnet.getChildren();
+                            for(var j=0; j<c2.length; j++){
+                                if(c2[j].domNode.getAttribute("tab") == tab)
+                                    tabnet.selectChild(c2[j]);
+                            }
+                        }
+                    }
+
+                }
+            }
+            if(opened != true) {
+                openurl = this.urlISCSI;
+                if(tab) {
+                    openurl += '?tab='+tab;
+                }
+
+                var pane = new dijit.layout.ContentPane({ 
+                    title: 'iSCSI',
+                    closable: true,
+                    //refreshOnShow: true,
+                    href: openurl,
+                });
+                pane.tab = 'iscsi';
+                p.addChild(pane);
+                p.selectChild(pane);
+            }
+
+        },
         openCron: function() {
             var opened = false;
             var p = dijit.byId("content");
