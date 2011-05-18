@@ -81,7 +81,7 @@ dojo.declare("freeadmin.form.Cron", [ dijit._Widget, dijit._Templated ], {
             value: parseInt(this.sliderValue.innerHTML),
             minimum: this.start,
             maximum: Math.floor((this.numChoices+this.start)/2),
-            discreteValues: Math.floor((this.numChoices+this.start)/2)-this.start,
+            discreteValues: Math.floor((this.numChoices+this.start)/2)-this.start+1,
             intermediateChanges: true,
             style: "width:300px;",
             onChange: function(value) {
