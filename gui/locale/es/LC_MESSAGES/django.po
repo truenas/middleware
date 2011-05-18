@@ -3,20 +3,20 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-05-18 06:26+0200\n"
+"Last-Translator: mario <mljother@live.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
 msgid "Plain"
@@ -24,23 +24,23 @@ msgstr ""
 
 #: choices.py:36 system/models.py:227 templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:37
 msgid "TLS"
-msgstr ""
+msgstr "TLS"
 
 #: choices.py:42
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: choices.py:43
 msgid "HTTPS"
-msgstr ""
+msgstr "HTTPS"
 
 #: choices.py:48
 msgid "English"
-msgstr ""
+msgstr "Inglés"
 
 #: choices.py:53 choices.py:222
 msgid "Auto"
@@ -153,95 +153,95 @@ msgstr ""
 
 #: choices.py:132 templates/storage/tasks.html:86
 msgid "January"
-msgstr ""
+msgstr "Enero"
 
 #: choices.py:133 templates/storage/tasks.html:89
 msgid "February"
-msgstr ""
+msgstr "Febrero"
 
 #: choices.py:134 templates/storage/tasks.html:92
 msgid "March"
-msgstr ""
+msgstr "Marzo"
 
 #: choices.py:135 templates/storage/tasks.html:95
 msgid "April"
-msgstr ""
+msgstr "Abril"
 
 #: choices.py:136 templates/storage/tasks.html:98
 msgid "May"
-msgstr ""
+msgstr "Mayo"
 
 #: choices.py:137 templates/storage/tasks.html:101
 msgid "June"
-msgstr ""
+msgstr "Junio"
 
 #: choices.py:138 templates/storage/tasks.html:104
 msgid "July"
-msgstr ""
+msgstr "Julio"
 
 #: choices.py:139 templates/storage/tasks.html:107
 msgid "August"
-msgstr ""
+msgstr "Agosto"
 
 #: choices.py:140 templates/storage/tasks.html:110
 msgid "September"
-msgstr ""
+msgstr "Septiembre"
 
 #: choices.py:141 templates/storage/tasks.html:113
 msgid "October"
-msgstr ""
+msgstr "Octubre"
 
 #: choices.py:142 templates/storage/tasks.html:116
 msgid "November"
-msgstr ""
+msgstr "Noviembre"
 
 #: choices.py:143 templates/storage/tasks.html:119
 msgid "December"
-msgstr ""
+msgstr "Diciembre"
 
 #: choices.py:146 templates/storage/tasks.html:57
 msgid "Monday"
-msgstr ""
+msgstr "Lunes"
 
 #: choices.py:147 templates/storage/tasks.html:60
 msgid "Tuesday"
-msgstr ""
+msgstr "Martes"
 
 #: choices.py:148 templates/storage/tasks.html:63
 msgid "Wednesday"
-msgstr ""
+msgstr "MIércoles"
 
 #: choices.py:149 templates/storage/tasks.html:66
 msgid "Thursday"
-msgstr ""
+msgstr "Jueves"
 
 #: choices.py:150 templates/storage/tasks.html:69
 msgid "Friday"
-msgstr ""
+msgstr "Viernes"
 
 #: choices.py:151 templates/storage/tasks.html:72
 msgid "Saturday"
-msgstr ""
+msgstr "Sábado"
 
 #: choices.py:152 templates/storage/tasks.html:75
 msgid "Sunday"
-msgstr ""
+msgstr "Domingo"
 
 #: choices.py:163
 msgid "Anonymous"
-msgstr ""
+msgstr "Anónimo"
 
 #: choices.py:164
 msgid "Local User"
-msgstr ""
+msgstr "Usuario Local"
 
 #: choices.py:185
 msgid "Normal"
-msgstr ""
+msgstr "Normal"
 
 #: choices.py:186
 msgid "Full"
-msgstr ""
+msgstr "Lleno"
 
 #: choices.py:187
 msgid "Debug"
@@ -253,7 +253,7 @@ msgstr ""
 
 #: choices.py:192
 msgid "Time Machine"
-msgstr ""
+msgstr "Máquina de Tiempo"
 
 #: choices.py:195
 msgid "No case folding"
@@ -290,11 +290,11 @@ msgstr ""
 
 #: choices.py:210
 msgid "DVD"
-msgstr ""
+msgstr "DVD"
 
 #: choices.py:211
 msgid "Tape"
-msgstr ""
+msgstr "Cinta"
 
 #: choices.py:212
 msgid "Pass"
@@ -302,16 +302,16 @@ msgstr ""
 
 #: choices.py:216
 msgid "read-write"
-msgstr ""
+msgstr "lleer-escribir"
 
 #: choices.py:217
 msgid "read-only"
-msgstr ""
+msgstr "solo-leer"
 
 #: choices.py:221 choices.py:227 services/forms.py:392 services/forms.py:394
 #: services/forms.py:692 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "Nada"
 
 #: choices.py:223
 msgid "CHAP"
@@ -327,15 +327,15 @@ msgstr ""
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS esta en batería"
 
 #: choices.py:250
 msgid "Preferred"
-msgstr ""
+msgstr "Preferido"
 
 #: choices.py:251
 msgid "Tolerated"
-msgstr ""
+msgstr "Permitido"
 
 #: choices.py:252
 msgid "Required"
@@ -347,15 +347,15 @@ msgstr ""
 
 #: choices.py:280
 msgid "On"
-msgstr ""
+msgstr "Prendido"
 
 #: choices.py:281 choices.py:286
 msgid "Off"
-msgstr ""
+msgstr "Apagado"
 
 #: choices.py:287
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (recomendido)"
 
 #: choices.py:288
 msgid "default level"
@@ -371,27 +371,27 @@ msgstr ""
 
 #: choices.py:431
 msgid "Hour(s)"
-msgstr ""
+msgstr "Hora(s)"
 
 #: choices.py:432
 msgid "Day(s)"
-msgstr ""
+msgstr "Día(s)"
 
 #: choices.py:433
 msgid "Week(s)"
-msgstr ""
+msgstr "Semana(s)"
 
 #: choices.py:434
 msgid "Month(s)"
-msgstr ""
+msgstr "Mes(es)"
 
 #: choices.py:435
 msgid "Year(s)"
-msgstr ""
+msgstr "Año(s)"
 
 #: choices.py:439
 msgid "Everyday"
-msgstr ""
+msgstr "Diaria"
 
 #: choices.py:440
 msgid "Every selected weekday"
@@ -422,17 +422,17 @@ msgstr ""
 
 #: account/forms.py:175
 msgid "E-mail"
-msgstr ""
+msgstr "E-mail"
 
 #: account/forms.py:200 account/forms.py:307 account/views.py:79
 #: services/models.py:661 system/forms.py:180 system/models.py:160
 #: templates/account/bsdusers.html:9 templates/account/bsdusers.html.py:64
 msgid "Password"
-msgstr ""
+msgstr "Contraseña"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
 msgid "Password confirmation"
-msgstr ""
+msgstr "Confirmación de contraseña"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
@@ -3921,15 +3921,15 @@ msgstr ""
 
 #: templates/sharing/index.html:3
 msgid "Apple"
-msgstr ""
+msgstr "Apple"
 
 #: templates/sharing/index.html:5
 msgid "UNIX"
-msgstr ""
+msgstr "UNIX"
 
 #: templates/sharing/index.html:7
 msgid "Windows"
-msgstr ""
+msgstr "Windows"
 
 #: templates/sharing/unix.html:8
 msgid "There are no active UNIX Shares."
@@ -4109,7 +4109,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:24
 msgid "How"
-msgstr ""
+msgstr "Cómo"
 
 #: templates/storage/tasks.html:25
 msgid "Keep snapshot for"
@@ -4117,7 +4117,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:38
 msgid "No"
-msgstr ""
+msgstr "No"
 
 #: templates/storage/tasks.html:42
 msgid "From"
@@ -4282,11 +4282,11 @@ msgstr ""
 
 #: templates/system/reporting.html:18
 msgid "Daily"
-msgstr ""
+msgstr "Diaria"
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
-msgstr ""
+msgstr "Gráficos Diarios"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
@@ -4314,31 +4314,31 @@ msgstr ""
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr ""
+msgstr "General"
 
 #: templates/system/settings.html:11
 msgid "Firmware Update"
-msgstr ""
+msgstr "Actualización de Firmware"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
-msgstr ""
+msgstr "Aplicar Service Pack"
 
 #: templates/system/settings.html:15
 msgid "Config"
-msgstr ""
+msgstr "Configuración"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
-msgstr ""
+msgstr "Versión del Sistema Operativo"
 
 #: templates/system/system_info.html:12
 msgid "Platform"
-msgstr ""
+msgstr "Plataforma"
 
 #: templates/system/system_info.html:16
 msgid "System Time"
-msgstr ""
+msgstr "Tiempo del Sistema"
 
 #: templates/system/system_info.html:20
 msgid "Uptime"

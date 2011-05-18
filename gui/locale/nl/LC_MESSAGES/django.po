@@ -3,257 +3,257 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:34-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-05-18 10:00+0200\n"
+"Last-Translator: jeroenoostendorp <jeroen@oostendorp-ict.nl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
 msgid "Plain"
-msgstr ""
+msgstr "Standaard"
 
 #: choices.py:36 system/models.py:227 templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:37
 msgid "TLS"
-msgstr ""
+msgstr "TLS"
 
 #: choices.py:42
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: choices.py:43
 msgid "HTTPS"
-msgstr ""
+msgstr "HTTPS"
 
 #: choices.py:48
 msgid "English"
-msgstr ""
+msgstr "Engels"
 
 #: choices.py:53 choices.py:222
 msgid "Auto"
-msgstr ""
+msgstr "Automatisch"
 
 #: choices.py:54
 msgid "PIO0"
-msgstr ""
+msgstr "PIO0"
 
 #: choices.py:55
 msgid "PIO1"
-msgstr ""
+msgstr "PIO1"
 
 #: choices.py:56
 msgid "PIO2"
-msgstr ""
+msgstr "PIO2"
 
 #: choices.py:57
 msgid "PIO3"
-msgstr ""
+msgstr "PIO3"
 
 #: choices.py:58
 msgid "PIO4"
-msgstr ""
+msgstr "PIO4"
 
 #: choices.py:59
 msgid "WDMA0"
-msgstr ""
+msgstr "WDMA0"
 
 #: choices.py:60
 msgid "WDMA1"
-msgstr ""
+msgstr "WDMA1"
 
 #: choices.py:61
 msgid "WDMA2"
-msgstr ""
+msgstr "WDMA2"
 
 #: choices.py:62
 msgid "UDMA-16"
-msgstr ""
+msgstr "UDMA-16"
 
 #: choices.py:63
 msgid "UDMA-33"
-msgstr ""
+msgstr "UDMA-33"
 
 #: choices.py:64
 msgid "UDMA-66"
-msgstr ""
+msgstr "UDMA-66"
 
 #: choices.py:65
 msgid "UDMA-100"
-msgstr ""
+msgstr "UDMA-100"
 
 #: choices.py:66
 msgid "UDMA-133"
-msgstr ""
+msgstr "UDMA-133"
 
 #: choices.py:67
 msgid "SATA 1.5Gbit/s"
-msgstr ""
+msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
-msgstr ""
+msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr ""
+msgstr "Altijd aan"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr ""
+msgstr "Geblokkeerd"
 
 #: choices.py:87 choices.py:88 choices.py:89 choices.py:90 choices.py:91
 #: choices.py:92
 msgid "Level"
-msgstr ""
+msgstr "Level"
 
 #: choices.py:87
 msgid "Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "Minimum energieverbruik met Standby (spindown)"
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
-msgstr ""
+msgstr "Gemiddeld energieverbruik met Standby"
 
 #: choices.py:90
 msgid "Minimum power usgae without Standby (no spindown)"
-msgstr ""
+msgstr "Minimum energieverbruik zonder Standby (zonder spindown)"
 
 #: choices.py:91
 msgid "Intermediate power usage withot Standby"
-msgstr ""
+msgstr "Gemiddeld energieverbruik zonder Standby"
 
 #: choices.py:92
 msgid "Maximum performance, maximum power usage"
-msgstr ""
+msgstr "Maximum prestaties, maximum energieverbruik"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr ""
+msgstr "Minimum"
 
 #: choices.py:97
 msgid "Medium"
-msgstr ""
+msgstr "Gemiddeld"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr ""
+msgstr "Maximum"
 
 #: choices.py:132 templates/storage/tasks.html:86
 msgid "January"
-msgstr ""
+msgstr "januari"
 
 #: choices.py:133 templates/storage/tasks.html:89
 msgid "February"
-msgstr ""
+msgstr "februari"
 
 #: choices.py:134 templates/storage/tasks.html:92
 msgid "March"
-msgstr ""
+msgstr "maart"
 
 #: choices.py:135 templates/storage/tasks.html:95
 msgid "April"
-msgstr ""
+msgstr "april"
 
 #: choices.py:136 templates/storage/tasks.html:98
 msgid "May"
-msgstr ""
+msgstr "mei"
 
 #: choices.py:137 templates/storage/tasks.html:101
 msgid "June"
-msgstr ""
+msgstr "juni"
 
 #: choices.py:138 templates/storage/tasks.html:104
 msgid "July"
-msgstr ""
+msgstr "juli"
 
 #: choices.py:139 templates/storage/tasks.html:107
 msgid "August"
-msgstr ""
+msgstr "augustus"
 
 #: choices.py:140 templates/storage/tasks.html:110
 msgid "September"
-msgstr ""
+msgstr "september"
 
 #: choices.py:141 templates/storage/tasks.html:113
 msgid "October"
-msgstr ""
+msgstr "oktober"
 
 #: choices.py:142 templates/storage/tasks.html:116
 msgid "November"
-msgstr ""
+msgstr "november"
 
 #: choices.py:143 templates/storage/tasks.html:119
 msgid "December"
-msgstr ""
+msgstr "december"
 
 #: choices.py:146 templates/storage/tasks.html:57
 msgid "Monday"
-msgstr ""
+msgstr "maandag"
 
 #: choices.py:147 templates/storage/tasks.html:60
 msgid "Tuesday"
-msgstr ""
+msgstr "dinsdag"
 
 #: choices.py:148 templates/storage/tasks.html:63
 msgid "Wednesday"
-msgstr ""
+msgstr "woensdag"
 
 #: choices.py:149 templates/storage/tasks.html:66
 msgid "Thursday"
-msgstr ""
+msgstr "donderdag"
 
 #: choices.py:150 templates/storage/tasks.html:69
 msgid "Friday"
-msgstr ""
+msgstr "vrijdag"
 
 #: choices.py:151 templates/storage/tasks.html:72
 msgid "Saturday"
-msgstr ""
+msgstr "zaterdag"
 
 #: choices.py:152 templates/storage/tasks.html:75
 msgid "Sunday"
-msgstr ""
+msgstr "zondag"
 
 #: choices.py:163
 msgid "Anonymous"
-msgstr ""
+msgstr "anoniem"
 
 #: choices.py:164
 msgid "Local User"
-msgstr ""
+msgstr "Lokale gebruiker"
 
 #: choices.py:185
 msgid "Normal"
-msgstr ""
+msgstr "Normaal"
 
 #: choices.py:186
 msgid "Full"
-msgstr ""
+msgstr "Volledig"
 
 #: choices.py:187
 msgid "Debug"
-msgstr ""
+msgstr "Debug"
 
 #: choices.py:191
 msgid "Default"
-msgstr ""
+msgstr "Standaard"
 
 #: choices.py:192
 msgid "Time Machine"
-msgstr ""
+msgstr "Tijd Machine"
 
 #: choices.py:195
 msgid "No case folding"
@@ -265,36 +265,36 @@ msgstr ""
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "Client ziet kleine letters, server ziet hoofdletters"
 
 #: choices.py:199
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "Client ziet hoofdletters, server ziet kleine lettters"
 
 #: choices.py:203
 msgid "File"
-msgstr ""
+msgstr "Bestand"
 
 #: choices.py:204
 msgid "Device"
-msgstr ""
+msgstr "Apparaat"
 
 #: choices.py:205
 msgid "ZFS Volume"
-msgstr ""
+msgstr "ZFS Volume"
 
 #: choices.py:209 storage/models.py:137 templates/storage/autoimport.html:9
 #: templates/storage/import.html:18 templates/storage/wizard.html:91
 msgid "Disk"
-msgstr ""
+msgstr "Schijf"
 
 #: choices.py:210
 msgid "DVD"
-msgstr ""
+msgstr "DVD"
 
 #: choices.py:211
 msgid "Tape"
-msgstr ""
+msgstr "Casette"
 
 #: choices.py:212
 msgid "Pass"
@@ -302,119 +302,136 @@ msgstr ""
 
 #: choices.py:216
 msgid "read-write"
-msgstr ""
+msgstr "lees-schrijf"
 
 #: choices.py:217
 msgid "read-only"
-msgstr ""
+msgstr "alleen-lezen"
 
 #: choices.py:221 choices.py:227 services/forms.py:392 services/forms.py:394
 #: services/forms.py:692 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "Geen"
 
 #: choices.py:223
 msgid "CHAP"
-msgstr ""
+msgstr "CHAP"
 
 #: choices.py:224
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "Wederzijdse CHAP"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "UPS bereikt lage batterij"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS schakelt over op batterij"
 
 #: choices.py:250
+#, fuzzy
 msgid "Preferred"
-msgstr ""
+msgstr "Aanbevolen"
 
 #: choices.py:251
+#, fuzzy
 msgid "Tolerated"
-msgstr ""
+msgstr "Getolereerd"
 
 #: choices.py:252
+#, fuzzy
 msgid "Required"
-msgstr ""
+msgstr "Vereist"
 
 #: choices.py:279 choices.py:285
+#, fuzzy
 msgid "Inherit"
-msgstr ""
+msgstr "Erf"
 
 #: choices.py:280
+#, fuzzy
 msgid "On"
-msgstr ""
+msgstr "Aan"
 
 #: choices.py:281 choices.py:286
 msgid "Off"
-msgstr ""
+msgstr "Uit"
 
 #: choices.py:287
+#, fuzzy
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (aanbevolen)"
 
 #: choices.py:288
+#, fuzzy
 msgid "default level"
-msgstr ""
+msgstr "standaardniveau"
 
 #: choices.py:289
+#, fuzzy
 msgid "fastest"
-msgstr ""
+msgstr "snelst"
 
 #: choices.py:290
+#, fuzzy
 msgid "maximum, slow"
-msgstr ""
+msgstr "maximum, traag"
 
 #: choices.py:431
+#, fuzzy
 msgid "Hour(s)"
-msgstr ""
+msgstr "Uur (uren)"
 
 #: choices.py:432
+#, fuzzy
 msgid "Day(s)"
-msgstr ""
+msgstr "Dag (en)"
 
 #: choices.py:433
+#, fuzzy
 msgid "Week(s)"
-msgstr ""
+msgstr "Week (weken)"
 
 #: choices.py:434
+#, fuzzy
 msgid "Month(s)"
-msgstr ""
+msgstr "Maand (en)"
 
 #: choices.py:435
+#, fuzzy
 msgid "Year(s)"
-msgstr ""
+msgstr "Jaar (jaren)"
 
 #: choices.py:439
 msgid "Everyday"
-msgstr ""
+msgstr "Dagelijks"
 
 #: choices.py:440
 msgid "Every selected weekday"
-msgstr ""
+msgstr "Elke geselecteerde weekdag"
 
 #: account/forms.py:93 templates/storage/volumes.html:62
+#, fuzzy
 msgid "Available"
-msgstr ""
+msgstr "Beschikbaar"
 
 #: account/forms.py:144
+#, fuzzy
 msgid "Selected"
-msgstr ""
+msgstr "Geselecteerd"
 
 #: account/forms.py:172 account/forms.py:197 account/models.py:77
 #: services/forms.py:229 services/models.py:657 services/models.py:917
 #: system/models.py:153 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:60
+#, fuzzy
 msgid "Username"
-msgstr ""
+msgstr "Gebruikersnaam"
 
 #: account/forms.py:173 account/forms.py:198
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr ""
+msgstr "Vereist. 30 tekens of minder. Enkel letters, cijfers en @/./+/-/_."
 
 #: account/forms.py:174 account/forms.py:199
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
@@ -428,11 +445,11 @@ msgstr ""
 #: services/models.py:661 system/forms.py:180 system/models.py:160
 #: templates/account/bsdusers.html:9 templates/account/bsdusers.html.py:64
 msgid "Password"
-msgstr ""
+msgstr "Wachtwoord"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
 msgid "Password confirmation"
-msgstr ""
+msgstr "Bevestig wachtwoord"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
@@ -468,7 +485,7 @@ msgstr ""
 #: services/forms.py:482 services/forms.py:699 storage/forms.py:223
 #: system/forms.py:268 system/forms.py:291
 msgid "This field is required."
-msgstr ""
+msgstr "Dit veld is verplicht."
 
 #: account/forms.py:418
 msgid "Member users"
@@ -480,15 +497,15 @@ msgstr ""
 
 #: account/forms.py:458 templates/registration/password_change_form.html:39
 msgid "New password"
-msgstr ""
+msgstr "Nieuwe wachtwoord"
 
 #: account/forms.py:459
 msgid "New password confirmation"
-msgstr ""
+msgstr "Nieuwe wachtwoord bevestiging"
 
 #: account/forms.py:484 templates/registration/password_change_form.html:31
 msgid "Old password"
-msgstr ""
+msgstr "Oude wachtwoord"
 
 #: account/forms.py:492
 msgid "Your old password was entered incorrectly. Please enter it again."
@@ -499,17 +516,17 @@ msgstr ""
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr ""
+msgstr "Groep ID"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "Groep naam"
 
 #: account/models.py:47 account/models.py:147 storage/forms.py:92
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:49
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:61
 msgid "Group"
-msgstr ""
+msgstr "Groep"
 
 #: account/models.py:61
 #, python-format
@@ -518,11 +535,11 @@ msgstr ""
 
 #: account/models.py:71
 msgid "User ID"
-msgstr ""
+msgstr "Gebruiker ID"
 
 #: account/models.py:76
 msgid "User &"
-msgstr ""
+msgstr "Gebruiker %"
 
 #: account/models.py:83
 msgid "Hashed UNIX password"
@@ -542,39 +559,39 @@ msgstr ""
 
 #: account/models.py:107
 msgid "Full Name"
-msgstr ""
+msgstr "Volledige naam"
 
 #: account/models.py:114 account/models.py:151 services/models.py:509
 #: templates/services/iscsi_auth.html:6
 msgid "User"
-msgstr ""
+msgstr "Gebruiker"
 
 #: account/models.py:130
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Gebruiker %s in ingebouwd en kan niet worden verwijderd!"
 
 #: account/nav.py:9 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:85 templates/account/index2.html:7
 msgid "Change Password"
-msgstr ""
+msgstr "Wachtwoord wijzigen"
 
 #: account/nav.py:17 templates/account/changeform.html:25
 #: templates/account/index2.html:4
 msgid "Change Admin User"
-msgstr ""
+msgstr "Wijzig administrator gebruiker"
 
 #: account/nav.py:33 templates/account/index2.html:2
 msgid "My Account"
-msgstr ""
+msgstr "Mijn account"
 
 #: account/nav.py:41
 msgid "View All Users"
-msgstr ""
+msgstr "Alle gebruikers bekijken"
 
 #: account/nav.py:54
 msgid "View All Groups"
-msgstr ""
+msgstr "Alle groepen bekijken"
 
 #: account/views.py:79 account/views.py:94 account/views.py:105
 #: account/views.py:120
@@ -584,15 +601,15 @@ msgstr ""
 
 #: account/views.py:94
 msgid "Admin user"
-msgstr ""
+msgstr "Administrator gebruiker"
 
 #: account/views.py:105 templates/account/index2.html:13
 msgid "Users"
-msgstr ""
+msgstr "Gebruikers"
 
 #: account/views.py:120 templates/account/index2.html:10
 msgid "Groups"
-msgstr ""
+msgstr "Groepen"
 
 #: contrib/ext_formwizard.py:170
 msgid ""
@@ -606,26 +623,26 @@ msgstr ""
 
 #: freeadmin/navtree.py:357 templates/freeadmin/index.html:50
 msgid "Reboot"
-msgstr ""
+msgstr "Opnieuw starten"
 
 #: freeadmin/navtree.py:365 templates/freeadmin/index.html:62
 msgid "Shutdown"
-msgstr ""
+msgstr "Uitschakelen"
 
 #: freeadmin/views.py:103
 #, python-format
 msgid "%s successfully added."
-msgstr ""
+msgstr "%s succesvol toegevoegd."
 
 #: freeadmin/views.py:262 freeadmin/views.py:264
 #, python-format
 msgid "%s successfully updated."
-msgstr ""
+msgstr "%s succesvol aangepast."
 
 #: freeadmin/views.py:309
 #, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "%s succesvol gewist."
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -714,7 +731,7 @@ msgstr ""
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "IPv4 adres"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
@@ -730,7 +747,7 @@ msgstr ""
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr ""
+msgstr "IPv6 adres"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
@@ -739,7 +756,7 @@ msgstr ""
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "Opties"
 
 #: network/models.py:157 network/models.py:158 templates/network/index2.html:5
 msgid "Interfaces"
@@ -1069,7 +1086,7 @@ msgstr ""
 
 #: services/models.py:104 services/models.py:192
 msgid "Guest account"
-msgstr ""
+msgstr "Gast account"
 
 #: services/models.py:105 sharing/models.py:64
 msgid ""
@@ -1292,7 +1309,7 @@ msgstr ""
 
 #: services/models.py:267
 msgid "Max. sessions"
-msgstr ""
+msgstr "Max. sessies"
 
 #: services/models.py:268
 msgid "Maximum number of sessions holding at same time (16 by default)."
@@ -1300,7 +1317,7 @@ msgstr ""
 
 #: services/models.py:273
 msgid "Max. connections"
-msgstr ""
+msgstr "Max. connecties"
 
 #: services/models.py:274
 msgid "Maximum number of connections in each session (8 by default)."
@@ -1666,7 +1683,7 @@ msgstr ""
 #: services/models.py:715 services/models.py:716
 #: templates/services/index2.html:86
 msgid "SNMP"
-msgstr ""
+msgstr "SNMP"
 
 #: services/models.py:725
 msgid "Identifier"
@@ -4262,11 +4279,11 @@ msgstr ""
 
 #: templates/system/config_upload.html:34
 msgid "Update"
-msgstr ""
+msgstr "Updaten"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr ""
+msgstr "Opnieuw aan het opstarten..."
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
@@ -4326,11 +4343,11 @@ msgstr ""
 
 #: templates/system/settings.html:15
 msgid "Config"
-msgstr ""
+msgstr "Configuratie"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
-msgstr ""
+msgstr "OS Versie"
 
 #: templates/system/system_info.html:12
 msgid "Platform"
@@ -4338,7 +4355,7 @@ msgstr ""
 
 #: templates/system/system_info.html:16
 msgid "System Time"
-msgstr ""
+msgstr "Systeem tijd"
 
 #: templates/system/system_info.html:20
 msgid "Uptime"
