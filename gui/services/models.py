@@ -1203,7 +1203,7 @@ class CronJob(Model):
             return self.cron_daymonth
 
     def get_human_month(self):
-        months = eval(self.cron_month)
+        months = self.cron_month.split(",")
         if len(months) == 12:
             return _("Every month")
         mchoices = dict(choices.MONTHS_CHOICES)

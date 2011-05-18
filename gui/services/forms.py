@@ -791,6 +791,9 @@ class CronJobForm(ModelForm):
             'cron_month': forms.CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES),
         }
     def __init__(self, *args, **kwargs):
+        if kwargs.has_key('instance'):
+            ins = kwargs.get('instance')
+            ins.cron_month = ins.cron_month.replace("10", "a").replace("11", "b").replace("12", "c")
         super(CronJobForm, self).__init__(*args, **kwargs)
         from account.forms import FilteredSelectJSON
         if len(FreeNAS_Users()) > 500:
@@ -804,6 +807,15 @@ class CronJobForm(ModelForm):
                                                  (x.bsdusr_username, x.bsdusr_username)
                                                       for x in FreeNAS_Users()
                                                       )
+    def clean_cron_month(self):
+        m = eval(self.cleaned_data.get("cron_month"))
+        m = ",".join(m)
+        m = m.replace("a", "10").replace("b", "11").replace("c", "12")
+        return m
+    def clean_cron_dayweek(self):
+        w = eval(self.cleaned_data.get("cron_dayweek"))
+        w = ",".join(w)
+        return w
     def save(self):
         super(CronJobForm, self).save()
         started = notifier().restart("cron")
