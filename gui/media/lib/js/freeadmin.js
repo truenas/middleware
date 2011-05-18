@@ -37,6 +37,7 @@
     dojo.require("dojox.form.CheckedMultiSelect");
     dojo.require("dojox.grid.DataGrid");
     dojo.require("dojox.data.JsonRestStore");
+    dojo.require("dojox.data.FileStore");
     dojo.require("dojox.string.sprintf");
     dojo.require("dijit.Tree");
     dojo.require("dijit.layout.BorderContainer");

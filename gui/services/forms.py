@@ -822,6 +822,7 @@ class CronJobForm(ModelForm):
         #if started is False and models.services.objects.get(srv_service='nfs').srv_enable:
         #    raise ServiceFailed("nfs", _("The NFS service failed to reload."))
 
+from freeadmin.forms import DirectoryBrowser
 class RsyncForm(ModelForm):
     rsync_user = forms.ChoiceField(choices=(),
                                        widget=forms.Select(attrs=attrs_dict),
@@ -830,6 +831,7 @@ class RsyncForm(ModelForm):
     class Meta:
         model = models.Rsync
         widgets = {
+            'rsync_path': DirectoryBrowser(),
             'rsync_minute': CronMultiple(attrs={'numChoices': 60,'label':_("minute")}),
             'rsync_hour': CronMultiple(attrs={'numChoices': 24,'label':_("hour")}),
             'rsync_daymonth': CronMultiple(attrs={'numChoices': 31,'start':1,'label':_("day of month")}),

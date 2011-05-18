@@ -39,6 +39,7 @@ from django.template.loader import render_to_string
 from django.template import RequestContext
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
+from django.core.urlresolvers import reverse
 
 from freenasUI.system import forms
 from freenasUI.system import models
@@ -287,3 +288,46 @@ def clearcache(request):
         'error': error,
         'errmsg': errmsg,
         }))
+
+class DojoFileStore(object):
+    def __init__(self, path, dirsonly=False):
+        self.path = path
+        self.dirsonly = dirsonly
+    
+    def items(self):
+        if self.path == '/':
+            return self.children(self.path)
+          
+        node = self._item(self.path, self.path)
+        if node['directory']:
+            node['children'] = self.children(self.path)
+        return node
+    
+    def children(self, entry):
+        children = [ self._item(self.path, entry) for entry in os.listdir(entry) ]
+        if self.dirsonly:
+            children = [ child for child in children if child['directory']]
+        return children
+    
+    def _item(self, path, entry):
+        full_path = os.path.join(path, entry)
+        isdir = os.path.isdir(full_path)
+        item = dict(name=os.path.basename(entry), 
+                    directory=isdir,
+                    path=full_path)
+        if isdir:
+            item['children'] = True
+        
+        item['$ref'] = (reverse('system_dirbrowser', kwargs={'path':"/"})[:-1] + full_path)
+        item['id'] = item['$ref']
+        return item
+
+def directory_browser(request, path='/'):
+    """ This view provides the ajax driven directory browser callback """
+    if not path.startswith('/'):
+        path = '/%s' % path 
+
+    directories = DojoFileStore(path, dirsonly=True).items()
+    context = directories
+    content = simplejson.dumps(context)
+    return HttpResponse(content, mimetype='application/json')
