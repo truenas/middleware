@@ -49,6 +49,17 @@ class ImportVolume(TreeNode):
         model = 'Volumes'
         append_app = False
 
+class AutoImportVolume(TreeNode):
+
+        gname = 'storage.Volume.AutoImport'
+        name = _(u'Auto Import Volume')
+        view = 'storage_autoimport'
+        type = 'volumewizard'
+        icon = u'ImportVolumeIcon'
+        app_name = 'storage'
+        model = 'Volumes'
+        append_app = False
+
 class ViewVolumes(TreeNode):
 
         gname = 'storage.Volume.View'
@@ -91,7 +102,7 @@ class Volumes(TreeNode):
         def __init__(self, *args, **kwargs):
 
             super(Volumes, self).__init__(*args, **kwargs)
-            self.append_children([AddVolume(),ImportVolume(),ViewVolumes()])
+            self.append_children([AddVolume(),ImportVolume(),AutoImportVolume(),ViewVolumes()])
             en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
             if en_dataset:
                 self.append_child(AddDataset)
