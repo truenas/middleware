@@ -14,7 +14,7 @@ dojo.declare("freeadmin.form.Cron", [ dijit._Widget, dijit._Templated ], {
     name : "",
     numChoices: "",
     label: "minute",
-    typeChoice: "all",
+    typeChoice: "every",
     value: "",
     start: "0",
     postCreate : function() {
@@ -22,7 +22,9 @@ dojo.declare("freeadmin.form.Cron", [ dijit._Widget, dijit._Templated ], {
         if(!gettext) {
             gettext = function(s) { return s; }
         }
-        this.unitNode.innerHTML = this.label;
+        if(!this.value || this.value=="") {
+            this.value = "*/1";
+        }
         this.numChoices = parseInt(this.numChoices);
         this.start = parseInt(this.start);
         var field = new dijit.form.TextBox({
@@ -38,14 +40,6 @@ dojo.declare("freeadmin.form.Cron", [ dijit._Widget, dijit._Templated ], {
              });
              field.set('value', varr.join(','));
         }
-
-        var all = new dijit.layout.ContentPane({
-             title: gettext('Every') + ' '+ this.label,
-             onShow: function(ev) {
-                field.set('value', '*');
-             },
-        }, this.allNode);
-
 
         var sel = new dijit.layout.ContentPane({
              title: gettext('Each selected') + ' ' + this.label,
@@ -79,9 +73,9 @@ dojo.declare("freeadmin.form.Cron", [ dijit._Widget, dijit._Templated ], {
         var slider = new dijit.form.HorizontalSlider({
             name: "slider",
             value: parseInt(this.sliderValue.innerHTML),
-            minimum: this.start,
-            maximum: Math.floor((this.numChoices+this.start)/2),
-            discreteValues: Math.floor((this.numChoices+this.start)/2)-this.start+1,
+            minimum: 1,
+            maximum: Math.floor((this.numChoices)/2),
+            discreteValues: Math.floor((this.numChoices+this.start)/2)-this.start,
             intermediateChanges: true,
             style: "width:300px;",
             onChange: function(value) {
@@ -129,9 +123,7 @@ dojo.declare("freeadmin.form.Cron", [ dijit._Widget, dijit._Templated ], {
         }, this.tab);
         tc.startup();
 
-        if(this.typeChoice=='all') {
-            tc.selectChild(all);
-        } else if(this.typeChoice=='every') {
+        if(this.typeChoice=='every') {
             tc.selectChild(every);
         } else if(this.typeChoice=='selected') {
             tc.selectChild(sel);

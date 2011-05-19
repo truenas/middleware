@@ -24,6 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import re
+
 from django.forms import widgets
 from django.forms.util import flatatt
 from django.utils.safestring import mark_safe
@@ -38,11 +40,9 @@ class CronMultiple(DojoWidgetMixin, widgets.Widget):
         if value is None: value = ''
         final_attrs = self.build_attrs(attrs, name=name)
         final_attrs['value'] = force_unicode(value)
-        if value in ('*',''):
-            final_attrs['typeChoice'] = "all"
-        elif value.startswith('*/'):
+        if value.startswith('*/'):
             final_attrs['typeChoice'] = "every"
-        else:
+        elif re.search(r'^[0-9].*',value):
             final_attrs['typeChoice'] = "selected"
         return mark_safe(u'<div%s></div>' % (flatatt(final_attrs),))
 
