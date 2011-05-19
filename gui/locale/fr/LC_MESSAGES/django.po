@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:34-0700\n"
-"PO-Revision-Date: 2011-05-18 11:53+0200\n"
+"PO-Revision-Date: 2011-05-19 13:42+0200\n"
 "Last-Translator: CsMAr51 <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -465,8 +465,9 @@ msgid "The two password fields didn't match."
 msgstr "Les deux mots de passe sont différents."
 
 #: account/forms.py:247 account/forms.py:372
+#, fuzzy
 msgid "Home directory has to start with /mnt/"
-msgstr ""
+msgstr "Le répertoire personnel doit commencer par /mnt/"
 
 #: account/forms.py:261 account/forms.py:265 services/forms.py:469
 #: services/forms.py:482 services/forms.py:699 storage/forms.py:223
@@ -529,12 +530,14 @@ msgid "User &"
 msgstr "Utilisateur &"
 
 #: account/models.py:83
+#, fuzzy
 msgid "Hashed UNIX password"
-msgstr ""
+msgstr "Condensat du mot de passe UNIX"
 
 #: account/models.py:89
+#, fuzzy
 msgid "Hashed SMB password"
-msgstr ""
+msgstr "Condensat du mot de passe SMB"
 
 #: account/models.py:93
 msgid "Primary Group ID"
@@ -961,8 +964,9 @@ msgid "LUN already exists in the same target."
 msgstr "Le LUN existe déjà sur la cible."
 
 #: services/forms.py:384 services/models.py:354
+#, fuzzy
 msgid "Controller Auth Group"
-msgstr ""
+msgstr "Groupe d'Authentification de Contrôleur"
 
 #: services/forms.py:385 services/models.py:355
 msgid ""
@@ -971,8 +975,9 @@ msgid ""
 msgstr ""
 
 #: services/forms.py:386 services/models.py:248
+#, fuzzy
 msgid "Discovery Auth Group"
-msgstr ""
+msgstr "Groupe d'Authentification pour la Découverte"
 
 #: services/forms.py:413
 #, python-format
@@ -995,34 +1000,38 @@ msgid "You need to specify a file inside your volume/dataset."
 msgstr "Vous devez spécifier un fichier dans votre volume/dataset."
 
 #: services/forms.py:510 services/forms.py:538
+#, fuzzy
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
 msgstr ""
+"Le chemin de l'extension doit se trouver dans un point de montage d'un "
+"volume/dataset."
 
 #: services/forms.py:552
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr ""
-"La valeur peut être une taille en octet ou une valeur préfixée avec "
-"KB,MB,GB,TB"
+"La valeur peut être une taille en octet ou une valeur préfixée avec KB, MB, "
+"GB, TB"
 
 #: services/forms.py:571
 msgid "Disk device"
 msgstr "Périphérique disque"
 
 #: services/forms.py:658
-#, python-format
+#, fuzzy, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr ""
+msgstr "L'ID de Groupe Portail ne peut être supérieur à %d"
 
 #: services/forms.py:678
-#, python-format
+#, fuzzy, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr ""
+msgstr "L'ID de Groupe ne peut être supérieur à %d"
 
 #: services/forms.py:685
+#, fuzzy
 msgid "Authentication Group number"
-msgstr ""
+msgstr "Numéro de Groupe d'Authentification"
 
 #: services/models.py:41
 msgid "Service"
@@ -1096,6 +1105,7 @@ msgid "Guest account"
 msgstr "Compte Invité"
 
 #: services/models.py:105 sharing/models.py:64
+#, fuzzy
 msgid ""
 "Use this option to override the username ('ftp' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
@@ -1103,6 +1113,11 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
+"Utilisez cette option pour forcer le nom d'utilisateur ('ftp' par défaut) "
+"qui sera utilisé pour l'accès aux services en tant qu'invité. Quel que soit "
+"les privilèges de cet utilisateur, ils seront disponibles à tout client se "
+"connectant au service. Cet utilisateur doit exister dans le fichier de mot "
+"de passe, mais ne nécessite pas une connexion valide."
 
 #: services/models.py:108
 msgid "Allow guest access"
@@ -1135,15 +1150,16 @@ msgstr ""
 
 #: services/models.py:124
 msgid "Large RW support"
-msgstr ""
+msgstr "Support des Lectures/Écritures élargies"
 
 #: services/models.py:126
 msgid "Send files with sendfile(2)"
 msgstr "Envoi les fichiers avec sendfile(2)"
 
 #: services/models.py:128
+#, fuzzy
 msgid "EA Support"
-msgstr ""
+msgstr "Support des Attributs Etendus"
 
 #: services/models.py:130
 msgid "Support DOS File Attributes"
@@ -1168,19 +1184,21 @@ msgstr "Activer les répertoires utilisateurs"
 
 #: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
-msgstr ""
+msgstr "Active/Désactive les répertoires personnels des utilisateurs samba."
 
 #: services/models.py:144
 msgid "Enable home directories browsing"
-msgstr ""
+msgstr "Activer la navigation dans les répertoires personnels"
 
 #: services/models.py:145
 msgid "This enables\\disables home directories browsing for samba user."
 msgstr ""
+"Active/Désactive la navigation dans les répertoires personnels des "
+"utilisateurs samba."
 
 #: services/models.py:149
 msgid "Home directories"
-msgstr "Répertoires utilisateurs"
+msgstr "Répertoires personnels"
 
 #: services/models.py:155
 msgid "Enable AIO"
@@ -1191,24 +1209,32 @@ msgid "This enables\\disables AIO support."
 msgstr "Active/Désactive le support des AIO."
 
 #: services/models.py:160
+#, fuzzy
 msgid "Minimal AIO read size"
-msgstr ""
+msgstr "Taille minimale en lecture AIO"
 
 #: services/models.py:161
+#, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value.  "
 "The default read size is 1."
 msgstr ""
+"Samba lira de façon asynchrone si la taille de la requête est supérieure à "
+"cette valeur. La valeur par défaut est 1."
 
 #: services/models.py:166
+#, fuzzy
 msgid "Minimal AIO write size"
-msgstr ""
+msgstr "Taille minimale en lecture AIO"
 
 #: services/models.py:167
+#, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value.  "
 "The default write size is 1."
 msgstr ""
+"Samba écrira de façon asynchrone si la taille de la requête est supérieure à "
+"cette valeur. La valeur par défaut est 1."
 
 #: services/models.py:172 services/models.py:173
 #: templates/services/index2.html:29
@@ -1244,12 +1270,11 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
-"Utilisez cette option pour remplacer le nom d'utilisateur (\"www\" par défaut) "
-"qui sera utilisé pour l'accès aux services qui sont spécifiées en tant "
-"qu'invité. Quel que soit les privilèges de cet utilisateur, ils seront "
-"disponibles à tout client se connectant au service. Cet utilisateur doit "
-"exister dans le fichier de mot de passe, mais ne nécessite pas une connexion "
-"valide."
+"Utilisez cette option pour forcer le nom d'utilisateur (\"www\" par défaut) "
+"qui sera utilisé pour l'accès aux services en tant qu'invité. Quel que soit "
+"les privilèges de cet utilisateur, ils seront disponibles à tout client se "
+"connectant au service. Cet utilisateur doit exister dans le fichier de mot "
+"de passe, mais ne nécessite pas une connexion valide."
 
 #: services/models.py:196
 msgid "Local Access"
@@ -1292,10 +1317,13 @@ msgid "Asynchronous mode"
 msgstr "Mode asynchrone"
 
 #: services/models.py:221
+#, fuzzy
 msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
+"Activer le mode asynchrone, ce qui aidera les performances des réseaux "
+"supérieurs au gigabit."
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/index2.html:75
@@ -1304,59 +1332,67 @@ msgstr "NFS"
 
 #: services/models.py:236
 msgid "Base Name"
-msgstr ""
+msgstr "Nom de base"
 
 #: services/models.py:237
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"Le nom de base (e.g. iqn.2007-09.jp.ne.peach.istgt, voir les RFC 3720 et "
+"3721 pour plus de détails) sera ajouté au nom de cible qui ne commence pas "
+"par 'iqn.'"
 
 #: services/models.py:243
+#, fuzzy
 msgid "Discovery Auth Method"
-msgstr ""
+msgstr "Méthode d'authentification pour la découverte"
 
 #: services/models.py:255
 msgid "I/O Timeout"
-msgstr ""
+msgstr "Délais des E/S"
 
 #: services/models.py:256
 msgid "I/O timeout in seconds (30 by default)."
-msgstr ""
+msgstr "Délais avant expiration des E/S en secondes (30 par défaut)."
 
 #: services/models.py:261
 msgid "NOPIN Interval"
-msgstr ""
+msgstr "Intervalle NOPIN"
 
 #: services/models.py:262
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr ""
+msgstr "Intervalle d'émission NOPIN en secondes (20 par défaut)."
 
 #: services/models.py:267
 msgid "Max. sessions"
-msgstr ""
+msgstr "Nombre maximum de sessions"
 
 #: services/models.py:268
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr ""
+msgstr "Nombre maximum de sessions simultanées (16 par défaut)."
 
 #: services/models.py:273
 msgid "Max. connections"
-msgstr ""
+msgstr "Nombre maximum de connexions"
 
 #: services/models.py:274
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "Nombre maximum de connexions par session (8 par défaut)."
 
 #: services/models.py:279
+#, fuzzy
 msgid "Max. pre-send R2T"
-msgstr ""
+msgstr "Nombre maximum de pré-envoi R2T"
 
 #: services/models.py:280
+#, fuzzy
 msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
 msgstr ""
+"Nombre maximum de pré-envoi R2T par connexion (32 par défaut). Ce nombre est "
+"en réalité limité par la profondeur de queue de la cible."
 
 #: services/models.py:285
 msgid "MaxOutstandingR2T"
@@ -1364,27 +1400,30 @@ msgstr ""
 
 #: services/models.py:286
 msgid "iSCSI initial parameter (16 by default)."
-msgstr ""
+msgstr "Paramètre initial iSCSI (16 par défaut)."
 
 #: services/models.py:291
+#, fuzzy
 msgid "First burst length"
-msgstr ""
+msgstr "Longueur de la première rafale"
 
 #: services/models.py:292
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr ""
+msgstr "Paramètre initial iSCSI (65536 par défaut)."
 
 #: services/models.py:297
+#, fuzzy
 msgid "Max burst length"
-msgstr ""
+msgstr "Longueur maximale de la rafale"
 
 #: services/models.py:298 services/models.py:304
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr ""
+msgstr "Paramètre initial iSCSI (262144 par défaut)."
 
 #: services/models.py:303
+#, fuzzy
 msgid "Max receive data segment length"
-msgstr ""
+msgstr "Longueur maximal du segment de données en réception"
 
 #: services/models.py:309
 msgid "DefaultTime2Wait"
@@ -1392,7 +1431,7 @@ msgstr ""
 
 #: services/models.py:310
 msgid "iSCSI initial parameter (2 by default)."
-msgstr ""
+msgstr "Paramètre initial iSCSI (2 par défaut)."
 
 #: services/models.py:315
 msgid "DefaultTime2Retain"
@@ -1400,82 +1439,92 @@ msgstr ""
 
 #: services/models.py:316
 msgid "iSCSI initial parameter (60 by default)."
-msgstr ""
+msgstr "Paramètre initial iSCSI (60 par défaut)."
 
 #: services/models.py:321
+#, fuzzy
 msgid "Enable LUC"
-msgstr ""
+msgstr "Activer LUC"
 
 #: services/models.py:325
 msgid "Controller IP address"
-msgstr ""
+msgstr "Adresse IP du contrôleur"
 
 #: services/models.py:326
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
 msgstr ""
+"Adresse IP du contrôleur d'unités logiques (127.0.0.1 (localhost) par "
+"défaut)"
 
 #: services/models.py:332
 msgid "Controller TCP port"
-msgstr ""
+msgstr "Port TCP du contrôleur"
 
 #: services/models.py:333
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr ""
+msgstr "Port TCP du contrôleur d'unités logiques (3261 par défaut)"
 
 #: services/models.py:339
 msgid "Controller Authorised netmask"
-msgstr ""
+msgstr "Réseau autorisé du contrôleur"
 
 #: services/models.py:341
 msgid "Logical Unit Controller Authorised netmask (255.255.255.0 by default)"
 msgstr ""
+"Réseau autorisé pour le contrôleur d'unités logiques (255.255.255.0 par "
+"défaut)"
 
 #: services/models.py:348
 msgid "Controller Auth Method"
-msgstr ""
+msgstr "Méthode d'authentification du contrôleur"
 
 #: services/models.py:349
 msgid "The method can be accepted in the controller."
-msgstr ""
+msgstr "La méthode peut être acceptée dans le contrôleur."
 
 #: services/models.py:361 services/models.py:362
 #: templates/services/iscsi.html:5
 msgid "Target Global Configuration"
-msgstr ""
+msgstr "Configuration générale de la cible"
 
 #: services/models.py:373
 msgid "Extent Name"
-msgstr ""
+msgstr "Nom de l'extension"
 
 #: services/models.py:374
 msgid "String identifier of the extent."
-msgstr ""
+msgstr "Chaîne de caractères identifiant l'extension."
 
 #: services/models.py:378
 msgid "Extent Type"
-msgstr ""
+msgstr "Type d'extension"
 
 #: services/models.py:379
 msgid "Type used as extent."
-msgstr ""
+msgstr "Type utilisé comme extension."
 
 #: services/models.py:384
 msgid "Path to the extent"
-msgstr ""
+msgstr "Chemin de l'extension"
 
 #: services/models.py:385
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
 msgstr ""
+"Chemin du fichier (e.g. /mnt/sharename/extent/extent0) utilisé comme "
+"extension."
 
 #: services/models.py:390
 msgid "Extent size"
-msgstr ""
+msgstr "Taille de l'extension"
 
 #: services/models.py:391
+#, fuzzy
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
+"Taille de l'extension: 0 pour automatique, un nombre en octets ou suffixé "
+"par KB, MB, BG, TB pour plus de facilité."
 
 #: services/models.py:396 services/models.py:431 services/models.py:477
 #: sharing/models.py:45 sharing/models.py:219
@@ -1487,140 +1536,165 @@ msgstr "Commentaire"
 
 #: services/models.py:397 services/models.py:432 services/models.py:478
 msgid "You may enter a description here for your reference."
-msgstr ""
+msgstr "Vous pouvez saisir ici une description pour votre référence."
 
 #: services/models.py:400 services/models.py:629
 #: templates/services/iscsi_assoctargets.html:6
 msgid "Extent"
-msgstr ""
+msgstr "Extension"
 
 #: services/models.py:420 services/models.py:570
 msgid "Portal Group ID"
-msgstr ""
+msgstr "Identifiant du Groupe Portail"
 
 #: services/models.py:425 services/models.py:435
 msgid "Portal"
-msgstr ""
+msgstr "Portal"
 
 #: services/models.py:426
+#, fuzzy
 msgid ""
 "The portal takes the form of 'address:port'. for example '192.168.1.1:3260' "
 "for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port 3260 is standard iSCSI "
 "port number. For any IPs (wildcard address), use '0.0.0.0:3260' and/or "
 "'[::]:3260'. Do not mix wildcard and other IPs at same address family."
 msgstr ""
+"Le portail prend la forme 'adresse:port'. Par exemple, '192.168.1.1:3260' "
+"pour IPv4, '[2001:db8:1:1::1]:3260' pour IPv6. Le port 3260 est le port "
+"standard pour iSCSI. Pour un ensemble d'adresses IP (wildcard), utiliser "
+"'0.0.0.0:3260' et/ou '[::]:3260'. Ne pas mélanger de wildcard avec d'autres "
+"IP dans une même famille d'adresses."
 
 #: services/models.py:464 templates/services/iscsi_authini.html:6
 msgid "Initiators"
-msgstr ""
+msgstr "Initiateurs"
 
 #: services/models.py:466
+#, fuzzy
 msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr ""
+"Initiateur autorisé à accéder à la cible iSCSI. Donner un nom ou 'ALL' pour "
+"tous les initiateurs."
 
 #: services/models.py:470
 msgid "Authorized network"
-msgstr ""
+msgstr "Réseau autorisé"
 
 #: services/models.py:472
+#, fuzzy
 msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
+"Réseau autorisé à accéser à la cible iSCSI. Donner des adresses IP ou CIDR, "
+"ou 'ALL' pour toutes les IP."
 
 #: services/models.py:481
 msgid "Initiator"
-msgstr ""
+msgstr "Initiateur"
 
 #: services/models.py:510
+#, fuzzy
 msgid "Target side user name. It is usually the initiator name by default."
 msgstr ""
+"Nom d'utilisateur côté cible. C'est habituellement le nom de l'initiateur "
+"par défaut."
 
 #: services/models.py:520
 msgid "Peer User"
-msgstr ""
+msgstr "Utilisateur pair"
 
 #: services/models.py:525 templates/services/iscsi_auth.html:9
 msgid "Peer Secret"
-msgstr ""
+msgstr "Secret du pair"
 
 #: services/models.py:529
 msgid "Authorized Access"
-msgstr ""
+msgstr "Accès autorisé"
 
 #: services/models.py:530
 msgid "Authorized Accesses"
-msgstr ""
+msgstr "Accès autorisés"
 
 #: services/models.py:545
 msgid "Target Name"
-msgstr ""
+msgstr "Nom de la cible"
 
 #: services/models.py:546
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
 msgstr ""
+"Le nom de base sera ajouté automatiquement s'il ne commence pas par 'iqn.'."
 
 #: services/models.py:553
 msgid "Target Alias"
-msgstr ""
+msgstr "Alias de la cible"
 
 #: services/models.py:554
+#, fuzzy
 msgid "Optional user-friendly string of the target."
-msgstr ""
+msgstr "Un nom optionnel identifiant facilement la cible."
 
 #: services/models.py:559 storage/models.py:73
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7
 msgid "Type"
-msgstr ""
+msgstr "Type"
 
 #: services/models.py:560
+#, fuzzy
 msgid "Logical Unit Type mapped to LUN."
-msgstr ""
+msgstr "Type d'unité logique attaché au LUN"
 
 #: services/models.py:566
 msgid "Target Flags"
-msgstr ""
+msgstr "Drapeaux de la cible"
 
 #: services/models.py:574
 msgid "Initiator Group ID"
-msgstr ""
+msgstr "Identifiant du Groupe Initiateur"
 
 #: services/models.py:580 services/models.py:592
 msgid "Auth Method"
-msgstr ""
+msgstr "Méthode d'Authentification"
 
 #: services/models.py:581 services/models.py:593
+#, fuzzy
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
 msgstr ""
+"La méthode peut être acceptée par la cible. Auto signifie à la fois Aucune "
+"et Authentification."
 
 #: services/models.py:585
 msgid "Authentication Group ID"
-msgstr ""
+msgstr "Identifiant du Groupe d'Authentification"
 
 #: services/models.py:598
 msgid "Queue Depth"
-msgstr ""
+msgstr "Profondeur de queue"
 
 #: services/models.py:599
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
 msgstr ""
+"0=désactivée, 1-255=active la mise en queue des commandes cette valeur pour "
+"profondeur. La profondeur recommandée est 32."
 
 #: services/models.py:604
 msgid "Logical Block Size"
-msgstr ""
+msgstr "Taille du bloc logique"
 
 #: services/models.py:605
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
 msgstr ""
+"Vus pouvez spécifier la taille du bloc logique (512 par défaut). La valeur "
+"recommandée pour compatibilité est 512."
 
 #: services/models.py:608 services/models.py:623
 #: templates/services/iscsi_assoctargets.html:5
@@ -1628,19 +1702,19 @@ msgstr ""
 #: templates/services/iscsi_extents.html:5
 #: templates/services/iscsi_targets.html:5
 msgid "Target"
-msgstr ""
+msgstr "Cible"
 
 #: services/models.py:624
 msgid "Target this extent belongs to"
-msgstr ""
+msgstr "Cible à laquelle appartient cette extension"
 
 #: services/models.py:632
 msgid "Target / Extent"
-msgstr ""
+msgstr "Cible / Extension"
 
 #: services/models.py:647
 msgid "Provider"
-msgstr ""
+msgstr "Fournisseur"
 
 #: services/models.py:651
 msgid "Domain name"
@@ -1651,10 +1725,13 @@ msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
 msgstr ""
+"Un alias de nom de serveur. Cette option peut apparaître plusieurs fois, "
+"pour chaque domaine ayant la même IP. Utiliser un espace pour séparer les "
+"alias multiples."
 
 #: services/models.py:665
 msgid "Update period"
-msgstr ""
+msgstr "Période de mise à jour"
 
 #: services/models.py:667
 msgid "Time in milliseconds"
@@ -1662,11 +1739,12 @@ msgstr "Temps en millisecondes"
 
 #: services/models.py:671
 msgid "Forced update period"
-msgstr ""
+msgstr "Période de mise à jour forcée"
 
 #: services/models.py:677 services/models.py:711 services/models.py:743
 msgid "These parameters will be added to global settings in inadyn.conf."
 msgstr ""
+"Ces paramètres seront ajoutés à la configuration globale dans inadyn.conf."
 
 #: services/models.py:681 services/models.py:682
 #: templates/services/index2.html:40
@@ -1675,35 +1753,39 @@ msgstr "DNS Dynamique"
 
 #: services/models.py:691
 msgid "Location"
-msgstr ""
+msgstr "Emplacement"
 
 #: services/models.py:693
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
+"Informations de localisation, e.g. emplacement physique de ce système: "
+"'Etage du bâtiment, Pièce xyz'."
 
 #: services/models.py:697
 msgid "Contact"
-msgstr ""
+msgstr "Contact"
 
 #: services/models.py:699
 msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
+"Information de contact, e.g. nom ou email de la personne responsable de ce "
+"système: 'admin@email.address'"
 
 #: services/models.py:703
 msgid "Community"
-msgstr ""
+msgstr "Communauté"
 
 #: services/models.py:704
 msgid "In most cases, 'public' is used here."
-msgstr ""
+msgstr "Dans la plupart des cas, 'public' est utilisé."
 
 #: services/models.py:707
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "Envoyer des traps SNMP"
 
 #: services/models.py:715 services/models.py:716
 #: templates/services/index2.html:86
@@ -1712,45 +1794,49 @@ msgstr "SNMP"
 
 #: services/models.py:725
 msgid "Identifier"
-msgstr ""
+msgstr "Identifiant"
 
 #: services/models.py:726
 msgid "This name is used to uniquely identify your UPS on this system."
 msgstr ""
+"Ce nom est utilisé pour identifier de manière unique votre onduleur sur ce "
+"système."
 
 #: services/models.py:730
 msgid "Driver"
-msgstr ""
+msgstr "Pilote"
 
 #: services/models.py:732
 msgid "The driver used to communicate with your UPS."
-msgstr ""
+msgstr "Le pilote utilisé pour communiquer avec votre onduleur."
 
 #: services/models.py:736 services/models.py:788 services/models.py:911
 msgid "Port"
-msgstr ""
+msgstr "Port"
 
 #: services/models.py:738
 msgid "The serial or USB port where your UPS is connected."
-msgstr ""
+msgstr "Le port série ou USB où votre onduleur est connecté."
 
 #: services/models.py:754
 msgid "Shutdown mode"
-msgstr ""
+msgstr "Mode d'arrêt"
 
 #: services/models.py:758
 msgid "Shutdown timer"
-msgstr ""
+msgstr "Délai avant arrêt"
 
 #: services/models.py:759
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
 msgstr ""
+"Le temps en secondes avant d'initier l'arrêt du système. Si l'onduleur est "
+"réalimenté avant ce délai, l'arrêt sera annulé."
 
 #: services/models.py:762
 msgid "Remote Monitor"
-msgstr ""
+msgstr "Contrôle à distance"
 
 #: services/models.py:764
 msgid "Send Email Status Updates"
@@ -1758,104 +1844,122 @@ msgstr ""
 
 #: services/models.py:767 services/models.py:773
 msgid "To email"
-msgstr ""
+msgstr "Destinataire de l'e-mail"
 
 #: services/models.py:769
 msgid "Destination email address. Separate email addresses by semi-colon."
 msgstr ""
+"Adresses e-mail de destination. Séparer les adresses par des points-"
+"virgules."
 
 #: services/models.py:774
+#, fuzzy
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
+"Le sujet de l'e-mail. Vous pouvez utiliser les paramètres suivants pour "
+"substitution:<br /><ul><li>%d - Date</li><li>%h - Nom d'hôte</li></ul>"
 
 #: services/models.py:778 services/models.py:779
 msgid "UPS"
-msgstr ""
+msgstr "Onduleur"
 
 #: services/models.py:789
+#, fuzzy
 msgid "Port to bind FTP server."
-msgstr ""
+msgstr "Port d'écoute du serveur FTP."
 
 #: services/models.py:793
 msgid "Clients"
-msgstr ""
+msgstr "Clients"
 
 #: services/models.py:794
 msgid "Maximum number of simultaneous clients."
-msgstr ""
+msgstr "Nombre maximum de clients simultanés."
 
 #: services/models.py:798
 msgid "Connections"
-msgstr ""
+msgstr "Connexions"
 
 #: services/models.py:799
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
+msgstr "Nombre maximum de connexions par adresse IP (0 = illimité)."
 
 #: services/models.py:803
 msgid "Login Attempts"
-msgstr ""
+msgstr "Tentatives de login"
 
 #: services/models.py:804
+#, fuzzy
 msgid "Maximum number of allowed password attempts before disconnection."
-msgstr ""
+msgstr "Nombre maximum autorisé d'essais de mots de passe avant déconnexion."
 
 #: services/models.py:808
+#, fuzzy
 msgid "Timeout"
-msgstr ""
+msgstr "Délai"
 
 #: services/models.py:809
 msgid "Maximum idle time in seconds."
-msgstr ""
+msgstr "Temps d'inactivité maximum en secondes."
 
 #: services/models.py:812
+#, fuzzy
 msgid "Allow Root Login"
-msgstr ""
+msgstr "Autoriser la connexion de root"
 
 #: services/models.py:814
+#, fuzzy
 msgid "Allow Anonymous Login"
-msgstr ""
+msgstr "Autoriser les connexions anonymes"
 
 #: services/models.py:818 sharing/models.py:49
 #: templates/services/iscsi_dextents.html:7
 #: templates/services/iscsi_extents.html:7 templates/sharing/windows.html:15
 #: templates/storage/volumes.html:60
 msgid "Path"
-msgstr ""
+msgstr "Chemin"
 
 #: services/models.py:820
+#, fuzzy
 msgid "Allow Local User Login"
-msgstr ""
+msgstr "Autoriser la connexion des utilisateurs locaux"
 
 #: services/models.py:823
+#, fuzzy
 msgid "Banner"
-msgstr ""
+msgstr "Bannière"
 
 #: services/models.py:825
+#, fuzzy
 msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr ""
+msgstr "Bannière d'accueil affichée lors d'une connexion FTP."
 
 #: services/models.py:831 services/models.py:837
+#, fuzzy
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr ""
+"Utiliser cette option pour forcer le masque de création des fichiers (077 "
+"par défaut)."
 
 #: services/models.py:840
 msgid "Enable FXP"
-msgstr ""
+msgstr "Activer le FXP"
 
 #: services/models.py:842
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "Autoriser la reprise des transferts"
 
 #: services/models.py:844
+#, fuzzy
 msgid "Always Chroot"
-msgstr ""
+msgstr "Toujours emprisonner (chroot)"
 
 #: services/models.py:846
+#, fuzzy
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "Exiger l'authentification par IDENT"
 
 #: services/models.py:848
 msgid "Require Reverse DNS for IP"
@@ -1866,27 +1970,35 @@ msgid "Masquerade address"
 msgstr ""
 
 #: services/models.py:852
+#, fuzzy
 msgid ""
 "Causes the server to display the network information for the specified IP "
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
+"Permet au serveur d'afficher au client les informations réseau pour "
+"l'adresse IP spécifiée, en assumant que cette adresse IP ou hôte DNS joue le "
+"rôle de passerelle NAT ou relai de port pour le serveur."
 
 #: services/models.py:856
 msgid "Minimum passive port"
-msgstr ""
+msgstr "Port passif minimum"
 
 #: services/models.py:857
+#, fuzzy
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
 msgstr ""
+"Le port minimum à allouer pour les connexions passives (0 = n'importe quel "
+"port)."
 
 #: services/models.py:861
 msgid "Maximum passive port"
-msgstr ""
+msgstr "Port passif maximum"
 
 #: services/models.py:862
+#, fuzzy
 msgid ""
 "The maximum port to allocate for PASV style data connections (0 = use any "
 "port). Passive ports restricts the range of ports from which the server will "
@@ -1897,203 +2009,255 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
+"Le port maximum à allouer pour les connexions passives (0 = n'importe quel "
+"port). L'utilisation des ports passifs restreint la plage de ports utilisée "
+"par le serveur en réponse à une commande PASV envoyée par un client. Le "
+"serveur sélectionne aléatoirement un port de cette plage jusqu'à en trouver "
+"un libre. La plage de port sélectionnée doit se trouver dans la plage des "
+"ports non-privilégiés (i.e. supérieur ou égal à 1024). Il est fortement "
+"recommandé que la plage choisie soit suffisamment grande pour pouvoir gérer "
+"beaucoup de connexions passives simultanées (e.g. 49152-65534, la plage des "
+"ports éphémères agréée par l'IANA)."
 
 #: services/models.py:866
+#, fuzzy
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "Bande passante montante de l'utilisateur local"
 
 #: services/models.py:867
+#, fuzzy
 msgid "Local user upload bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Bande passante montante de l'utilisateur local en Ko/s. 0 équivaut à "
+"illimité."
 
 #: services/models.py:871
+#, fuzzy
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Bande passante descendante de l'utilisateur local"
 
 #: services/models.py:872
+#, fuzzy
 msgid "Local user download bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Bande passante descendante de l'utilisateur local en Ko/s. 0 équivaut à "
+"illimité."
 
 #: services/models.py:876
+#, fuzzy
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Bande passante montante de l'utilisateur anonyme"
 
 #: services/models.py:877
+#, fuzzy
 msgid "Anonymous user upload bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Bande passante montante de l'utilisateur anonyme en Ko/s. 0 équivaut à "
+"illimité."
 
 #: services/models.py:881
+#, fuzzy
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "Bande passante descendante de l'utilisateur anonyme."
 
 #: services/models.py:882
+#, fuzzy
 msgid "Anonymous user download bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Bande passante descendante de l'utilisateur anonyme en Ko/s. 0 équivaut à "
+"illimité."
 
 #: services/models.py:885
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "Activer SSL/TLS"
 
 #: services/models.py:890
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "Ces paramètres sont ajoutés à proftpd.conf."
 
 #: services/models.py:894 services/models.py:895
 #: templates/services/index2.html:53
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:904
 msgid "Directory"
-msgstr ""
+msgstr "Répertoire"
 
 #: services/models.py:905
+#, fuzzy
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
+"Le répertoire contenant les fichiers que vous voulez publier. L'hôte distant "
+"n'a pas besoin de transmettre le nom du répertoire dans le cadre du "
+"transfert."
 
 #: services/models.py:908
+#, fuzzy
 msgid "Allow New Files"
-msgstr ""
+msgstr "Autoriser les nouveaux fichiers"
 
 #: services/models.py:912
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"Le port sur lequel écouter. Par défaut, l'écoute se fait sur le port tftp "
+"spécifié dans /etc/services."
 
 #: services/models.py:918
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "Indique le nom d'utilisateur sous lequel fonctionnera le service."
 
 #: services/models.py:922
+#, fuzzy
 msgid "umask"
-msgstr ""
+msgstr "umask"
 
 #: services/models.py:923
+#, fuzzy
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
 msgstr ""
+"Configure le umask pour la création de fichiers à la valeur spécifiée. La "
+"valeur par défaut est 022 (tout le monde peut lire, personne ne peut "
+"écrire)."
 
 #: services/models.py:927 services/models.py:964
 msgid "Extra options"
-msgstr ""
+msgstr "Options supplémentaires"
 
 #: services/models.py:929
+#, fuzzy
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "Options de ligne de commande supplémentaires (normalement vide)."
 
 #: services/models.py:933 services/models.py:934
 #: templates/services/index2.html:108
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:943
 msgid "TCP Port"
-msgstr ""
+msgstr "Port TCP"
 
 #: services/models.py:944
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "Port TCP alternatif. 22 par défaut"
 
 #: services/models.py:947
+#, fuzzy
 msgid "Login as Root with password"
-msgstr ""
+msgstr "Connexion en tant que root avec mot de passe"
 
 #: services/models.py:948
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
 msgstr ""
+"Désactivé: Root ne peut se connecter qu'avec une authentification par clé "
+"publique; Activé: Root peut se connecter avec un mot de passe"
 
 #: services/models.py:951
 msgid "Allow Password Authentication"
-msgstr ""
+msgstr "Autoriser l'authentification par mot de passe"
 
 #: services/models.py:953
+#, fuzzy
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "Autoriser la redirection de ports TCP"
 
 #: services/models.py:955
 msgid "Compress Connections"
-msgstr ""
+msgstr "Compresser les connexions"
 
 #: services/models.py:958
 msgid "Host Private Key"
-msgstr ""
+msgstr "Clé privée de l'hôte"
 
 #: services/models.py:960
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr ""
+msgstr "Coller ici une clé privée RSA au format PEM."
 
 #: services/models.py:966
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
 msgstr ""
+"Options supplémentaires à /etc/ssh/sshd_config (normalement vide). N.B.: la "
+"saisie d'options incorrectes empêche le démarrage du service SSH."
 
 #: services/models.py:1006 services/models.py:1007
 #: templates/services/index2.html:97
 msgid "SSH"
-msgstr ""
+msgstr "SSH"
 
 #: services/models.py:1016
 msgid "Domain Controller Name"
-msgstr ""
+msgstr "Nom du contrôleur de domaine"
 
 #: services/models.py:1017
+#, fuzzy
 msgid "AD or PDC name."
-msgstr ""
+msgstr "Nom de l'AD ou du PDC."
 
 #: services/models.py:1021
+#, fuzzy
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr ""
+msgstr "Nom de domaine (DNS/Realm-Name)"
 
 #: services/models.py:1022
 msgid "Domain Name, eg example.com"
-msgstr ""
+msgstr "Nom de domaine, e.g. example.com"
 
 #: services/models.py:1026
+#, fuzzy
 msgid "Host Name (NetBIOS-Name)"
-msgstr ""
+msgstr "Nom d'hôte (NetBIOS-Name)"
 
 #: services/models.py:1027
 msgid "Host Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Nom d'hôte dans l'ancien format, e.g. EXAMPLE"
 
+# Préciser WORKGROUP ?
 #: services/models.py:1031
+#, fuzzy
 msgid "Workgroup Name"
-msgstr ""
+msgstr "Nom du groupe de travail"
 
+# Préciser WORKGROUP?
 #: services/models.py:1032
+#, fuzzy
 msgid "Workgroup Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Nom du groupe de travail dans l'ancien format, e.g. EXAMPLE"
 
 #: services/models.py:1036
 msgid "Administrator Name"
-msgstr ""
+msgstr "Nom de l'administrateur"
 
 #: services/models.py:1037
 msgid "Username of Domain Administrator Account"
-msgstr ""
+msgstr "Nom d'utilisateur du compte administrateur du domaine"
 
 #: services/models.py:1041
 msgid "Administrator Password"
-msgstr ""
+msgstr "Mot de passe de l'administrateur"
 
 #: services/models.py:1042
 msgid "Password of Domain Administrator account."
-msgstr ""
+msgstr "Mot de passe du compte administrateur du domaine."
 
 #: services/models.py:1048
 msgid "Windows Version"
-msgstr ""
+msgstr "Version de Windows"
 
 #: services/models.py:1049
+#, fuzzy
 msgid "The version of Microsoft Windows that Active Directory is running."
-msgstr ""
+msgstr "La version de Microsoft Windows utilisé par Active Directory."
 
 #: services/models.py:1053
 msgid "Service Principal Name"
@@ -2112,31 +2276,37 @@ msgid "Password of the Service Principal Name account."
 msgstr ""
 
 #: services/models.py:1063
+#, fuzzy
 msgid "Kerberos Keytab File"
-msgstr ""
+msgstr "Fichier Kerberos Keytab"
 
 #: services/models.py:1064
+#, fuzzy
 msgid ""
 "The kerberos keytab file that was generated on the Active Directory server."
-msgstr ""
+msgstr "Le fichier kerberos keytab généré par le serveur Active Directory."
 
 #: services/models.py:1068 templates/services/index2.html:18
 msgid "Active Directory"
-msgstr ""
+msgstr "Active Directory"
 
 #: services/models.py:1079
 msgid "The name or IP address of the LDAP server"
-msgstr ""
+msgstr "Le nom ou l'adresse IP du serveur LDAP"
 
 #: services/models.py:1083
+#, fuzzy
 msgid "Base DN"
-msgstr ""
+msgstr "DN de base"
 
 #: services/models.py:1085
+#, fuzzy
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr ""
+"Le Distinguished Name (DN) de base par défaut utilisé pour les recherches, "
+"e.g. dc=test,dc=org"
 
 #: services/models.py:1088
 msgid "Allow Anonymous Binding"
@@ -2162,84 +2332,96 @@ msgstr ""
 
 #: services/models.py:1104
 msgid "Password Encryption"
-msgstr ""
+msgstr "Chiffrement du mot de passe"
 
 #: services/models.py:1105
+#, fuzzy
 msgid "The password change protocol to use."
-msgstr ""
+msgstr "Le protocole à utiliser pour le changement de mot de passe."
 
 #: services/models.py:1109
 msgid "User Suffix"
-msgstr ""
+msgstr "Suffixe utilisateur"
 
 #: services/models.py:1111
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
 msgstr ""
+"Ce paramètre spécifie le suffixe utilisé lors de l'ajout d'utilisateurs à "
+"l'annuaire LDAP, e.g. ou=Utilisateurs"
 
 #: services/models.py:1115
 msgid "Group Suffix"
-msgstr ""
+msgstr "Suffixe de groupe"
 
 #: services/models.py:1117
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
+"Ce paramètre spécifie le suffixe utilisé lors de l'ajout de groupes à "
+"l'annuaire LDAP, e.g. ou=Groupes"
 
 #: services/models.py:1121
 msgid "Password Suffix"
-msgstr ""
+msgstr "Suffixe de mot de passe"
 
 #: services/models.py:1123
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
+"Ce paramètre spécifie le suffixe utilisé lors de l'ajout de mots de passe à "
+"l'annuaire LDAP, e.g. ou=MotsDePasse"
 
 #: services/models.py:1127
 msgid "Machine Suffix"
-msgstr ""
+msgstr "Suffixe de machine"
 
 #: services/models.py:1129
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
+"Ce paramètre spécifie le suffixe utilisé lors de l'ajout de machines à "
+"l'annuaire LDAP, e.g. ou=Mahcines"
 
 #: services/models.py:1133
 msgid "Turn on/off TLS"
-msgstr ""
+msgstr "Activer/Désactiver TLS"
 
+# on/off/start_tls est peut-être a traduire suivant le contexte
 #: services/models.py:1135
+#, fuzzy
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
-msgstr ""
+msgstr "Ce paramètre spécifie l'utilisation de SSL/TLS, e.g. on/off/start_tls"
 
 #: services/models.py:1138
 msgid "Self signed certificate"
-msgstr ""
+msgstr "Certificat auto-signé"
 
 #: services/models.py:1140
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "Placez ici le contenu de cotre certificat auto-signé."
 
 #: services/models.py:1144
+#, fuzzy
 msgid "Auxillary Parameters"
-msgstr ""
+msgstr "Paramètres supplémentaires"
 
 #: services/models.py:1146
 msgid "These parameters are added to ldap.conf."
-msgstr ""
+msgstr "Ces paramètres sont ajoutés à ldap.conf."
 
 #: services/models.py:1150 services/models.py:1151
 #: templates/services/index2.html:64
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/nav.py:10
 msgid "Control Services"
-msgstr ""
+msgstr "Contrôle des services"
 
 #: sharing/forms.py:102 sharing/models.py:243
 msgid "Maproot User"
@@ -2258,18 +2440,19 @@ msgid "Mapall Group"
 msgstr ""
 
 #: sharing/forms.py:176
+#, fuzzy
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "Ce champ n'est pas une adresse IP ou un réseau valide"
 
 #: sharing/forms.py:182
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr "L'IP \"%s\" n'est pas valide."
 
 #: sharing/forms.py:206 sharing/forms.py:214 storage/forms.py:805
 #, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr "Le groupe \"%s\" n'est pas valide."
 
 #: sharing/forms.py:226
 msgid "Maproot group requires Maproot user"
@@ -2291,36 +2474,38 @@ msgid "Name"
 msgstr ""
 
 #: sharing/models.py:51
+#, fuzzy
 msgid "Export Read Only"
-msgstr ""
+msgstr "Exporter en lecture seule"
 
 #: sharing/models.py:53
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "Navigable par les clients du réseau"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
-msgstr ""
+msgstr "Hériter des permissions"
 
 #: sharing/models.py:57
+#, fuzzy
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "Exporter la corbeille"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr ""
+msgstr "Montrer les fichiers cachés"
 
 #: sharing/models.py:67
 msgid "Allow Guest Access"
-msgstr ""
+msgstr "Autoriser les accès invité"
 
 #: sharing/models.py:69
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Autoriser les accès invité seulement"
 
 #: sharing/models.py:73
 msgid "Hosts Allow"
-msgstr ""
+msgstr "Hôtes autorisés"
 
 #: sharing/models.py:74
 msgid ""
@@ -2328,10 +2513,14 @@ msgid ""
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
 msgstr ""
+"Cette option est une liste délimitée par des virgules, espaces ou "
+"tabulations d'hôtes autorisés à accéder à ce partage. Les hôtes peuvent être "
+"définis par leur nom ou adresse IP. Laissez le champ vide pour utiliser la "
+"configuration par défaut."
 
 #: sharing/models.py:79
 msgid "Hosts Deny"
-msgstr ""
+msgstr "Hôtes refusés"
 
 #: sharing/models.py:80
 msgid ""
@@ -2342,20 +2531,29 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
 msgstr ""
+"Cette option est une liste délimitée par des virgules, espaces ou "
+"tabulations d'hôtes NON autorisés à accéder à ce partage. Lors de conflits "
+"dans les listes, la liste des autorisations est prioritaire. Dans le cas où "
+"il est nécessaire de tout interdire par défaut, utilisez le mot-clé 'ALL' "
+"(ou le masque réseau 0.0.0.0/0) et spécifiez ensuite les hôtes dont l'accès "
+"doit être autorisé dans le paramètre \"Hôtes autorisés\". Laissez vide pour "
+"utiliser la configuration par défaut."
 
 #: sharing/models.py:84
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "Paramètres supplémentaires"
 
 #: sharing/models.py:86
 msgid "These parameters are added to [Share] section of smb.conf"
-msgstr ""
+msgstr "Ces paramètres sont ajoutés à la section [Share] de smb.conf"
 
 #: sharing/models.py:92
 msgid "Windows Share"
-msgstr ""
+msgstr "Partage Windows"
 
+# Les termes sont à vérifier avec ceux réellement utilisés sur Macintosh
 #: sharing/models.py:103
+#, fuzzy
 msgid ""
 "The volume name is the name that appears in the Chooser ot the 'connect to "
 "server' dialog on Macintoshes to represent the appropriate share. If "
@@ -2365,90 +2563,123 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
+"Le nom de volume est le nom qui apparaît dans le Sélectionneur de la fenêtre "
+"\"Se connecter au serveur\" pour symboliser le partage. Si le nom de volume "
+"n'est pas saisie, la dernière composante du chemin est utilisée. Deux "
+"volumes ne peuvent avoir le même nom. Le nom de volume ne peut contenir le "
+"caractère ':'. Le nom de volume est tronqué s'il est trop long. L'encodage "
+"de caractères Mac limite le nom de volume à 27 caractères, avec UTF8-MAC il "
+"est limité par le paramètre \"Longueur du nom de volume\" dans Services: "
+"Partages Apple"
 
 #: sharing/models.py:107
+#, fuzzy
 msgid "Share Comment"
-msgstr ""
+msgstr "Commentaire du partage"
 
 #: sharing/models.py:110 sharing/models.py:222
 msgid "Volume Path"
-msgstr ""
+msgstr "Chemin du volume"
 
 #: sharing/models.py:113
 msgid "Share password"
-msgstr ""
+msgstr "Mot de passe du partage"
 
 #: sharing/models.py:115
+#, fuzzy
 msgid ""
 "This option allows you to set a volume password, which can be a maximum of 8 "
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
+"Cette option vous permet mettre un mot de passe au volume, il peut être long "
+"de 8 caractères maximum (l'utilisation de l'ASCII est fortement recommandée "
+"pour le moment)."
 
 #: sharing/models.py:119
 msgid "Share Character Set"
-msgstr ""
+msgstr "Encodage de caractères du partage"
 
 #: sharing/models.py:121
 msgid ""
 "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
 "etc."
 msgstr ""
+"Spécifie l'encodage de caractères du partage. Par exemple UTF8, UTF8-MAC, "
+"ISO-8859-1, etc."
 
 #: sharing/models.py:125
+#, fuzzy
 msgid "Allow List"
-msgstr ""
+msgstr "Autoriser"
 
 #: sharing/models.py:127
+#, fuzzy
 msgid ""
 "This option allows the users and groups that access a share to be specified. "
 "Users and groups are specified, delimited by commas. Groups are designated "
 "by a @ prefix."
 msgstr ""
+"Cette option permet de spécifier les utilisateurs et groupes qui ont accès à "
+"un partage, ils sont par des virgules. Le préfixe @ désigne les groupes."
 
 #: sharing/models.py:131
+#, fuzzy
 msgid "Deny List"
-msgstr ""
+msgstr "Interdire"
 
 #: sharing/models.py:133
+#, fuzzy
 msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
 msgstr ""
+"L'option Interdire spécifie les utilisateurs et les groupes dont l'accès au "
+"partage n'est pas autorisé. Elle suit le même format que l'option Autoriser."
 
 #: sharing/models.py:137
 msgid "Read-only Access"
-msgstr ""
+msgstr "Accès en lecture seule"
 
 #: sharing/models.py:139
+#, fuzzy
 msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Permet à certains utilisateurs et groupes d'accéder en lecture seule à un "
+"partage. Suit le même format que l'option Autoriser."
 
 #: sharing/models.py:143
 msgid "Read-write Access"
-msgstr ""
+msgstr "Accès en Lecture/Écriture"
 
 #: sharing/models.py:145
+#, fuzzy
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format. "
 msgstr ""
+"Permet à certains utilisateurs et groupes d'accéder en lecture/écriture à un "
+"partage. Suit le même format que l'option Autoriser."
 
 #: sharing/models.py:148
+#, fuzzy
 msgid "Disk Discovery"
-msgstr ""
+msgstr "Découverte de disque"
 
 #: sharing/models.py:149
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
+"Permet à d'autres systèmes de découvrir ce partage en tant que volume de "
+"données, volume de sauvegarde Time Machine ou pas du tout."
 
 #: sharing/models.py:155
+#, fuzzy
 msgid "Disk discovery mode"
-msgstr ""
+msgstr "Mode de découverte de disque"
 
 #: sharing/models.py:156
 msgid ""
@@ -2456,20 +2687,26 @@ msgid ""
 "unpredictable behavior in MacOS.  Default mode exports the volume as a data "
 "volume for users."
 msgstr ""
+"Note ! Sélectionner \"Time Machine\" sur plusieurs partages peut causer un "
+"comportement aléatoire dans MacOS. Le mode par défaut exporte le volume en "
+"tant que volume de données pour les utilisateurs."
 
 #: sharing/models.py:160
 msgid "Database Path"
-msgstr ""
+msgstr "Chemin de la base de données"
 
 #: sharing/models.py:162
 msgid ""
 "Sets the database information to be stored in path. You have to specifiy a "
 "writable location, even if the volume is read only."
 msgstr ""
+"Défini le chemin où stocker la base de données. Vous devez spécifier un "
+"emplacement inscriptible, même si le volume est en lecture seule."
 
 #: sharing/models.py:165
+#, fuzzy
 msgid "Cache CNID"
-msgstr ""
+msgstr "Cache CNID"
 
 #: sharing/models.py:166
 msgid ""
@@ -2477,10 +2714,14 @@ msgid ""
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
+"Si activé, afpd utilise l'ID stocké dans les entêtes des fichiers "
+"AppleDouble V2 pour réduire la charge de la base de données. Ne pas activer "
+"cette option si le volume est modifié par des clients non AFP "
+"(NFS/CIFS/Local)."
 
 #: sharing/models.py:169
 msgid "Translate CR/LF"
-msgstr ""
+msgstr "Traduction des CR/LF"
 
 #: sharing/models.py:170
 msgid ""
@@ -2490,89 +2731,121 @@ msgid ""
 "the filetype in a second step. Afpd will potentially destroy such files when "
 "'erroneously' changing bytes in order to do line break translation."
 msgstr ""
+"Active la traduction des CR/LF pour les fichiers TEXT, converti "
+"automatiquement les fins de ligne Macintosh en fins de ligne UNIX. "
+"L'utilisation de cette option peut être risquée du fait que d'anciens "
+"programmes enregistrent des fichiers de données binaires sous le type TEXT "
+"au moment de la sauvegarde et substituent le type du fichier après coup. Ces "
+"fichiers risquent donc d'être détruis par afpd en changeant à tort des "
+"octets lors de la traduction des fins de ligne."
 
 #: sharing/models.py:173
+#, fuzzy
 msgid "Windows File Names"
-msgstr ""
+msgstr "Noms de fichiers Windows"
 
 #: sharing/models.py:174
+#, fuzzy
 msgid ""
 "This forces filenames to be restricted to the character set used by Windows. "
 "This is not recommended for shares used principally by Mac computers."
 msgstr ""
+"Restreint les noms de fichiers au jeu de caractères utilisé par Windows. "
+"Ceci n'est pas recommandé pour les partages utilisés principalement par des "
+"ordinateurs Macintosh."
 
 #: sharing/models.py:177
+#, fuzzy
 msgid "No .AppleDouble"
-msgstr ""
+msgstr "Pas de .AppleDouble"
 
 #: sharing/models.py:178
+#, fuzzy
 msgid ""
 "This controls whether the .AppleDouble directory gets created unless "
 "absolutely needed. This option should not be used if files are access mostly "
 "by Mac computers.  Clicking this option disables their creation."
 msgstr ""
+"Contrôle si le répertoire .AppleDouble ne doit être créé qu'en cas de "
+"nécessité absolue. Cette option ne devrait pas être utilisée si les fichiers "
+"sont accédés principalement par des ordinateurs Macintosh. Activer cette "
+"option empêche leur création."
 
 #: sharing/models.py:181
+#, fuzzy
 msgid "Zero Device Numbers"
-msgstr ""
+msgstr "Numéros de périphérique à 0"
 
 #: sharing/models.py:182
 msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
 msgstr ""
+"Toujours utiliser 0 comme numéro de périphérique, cela peut aider quand le "
+"numéro de périphérique n'est pas constant au travers des redémarrages, "
+"cluster, ..."
 
 #: sharing/models.py:185
+#, fuzzy
 msgid "Disable File ID"
-msgstr ""
+msgstr "Désactiver l'ID de fichier"
 
 #: sharing/models.py:186
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr ""
+msgstr "Ne pas annoncer les appels à createfileid, resolveid, deleteid."
 
 #: sharing/models.py:189
+#, fuzzy
 msgid "Disable :hex Names"
-msgstr ""
+msgstr "Désactiver les noms hexadécimaux"
 
 #: sharing/models.py:190
 msgid ""
 "Disable :hex translations for anything except dot files. This option makes "
 "the '/' character illegal."
 msgstr ""
+"Désactiver les traductions hexadécimales pour autre chose que les fichiers "
+"dot. Cette option rend le caractère '/' illicite."
 
 #: sharing/models.py:193
 msgid "ProDOS"
-msgstr ""
+msgstr "ProDOS"
 
 #: sharing/models.py:194
 msgid "Provide compatibility with Apple II clients."
-msgstr ""
+msgstr "Assure la compatibilité avec les clients Apple II."
 
 #: sharing/models.py:197
+#, fuzzy
 msgid "No Stat"
-msgstr ""
+msgstr "Ne pas utiliser stat"
 
 #: sharing/models.py:198
+#, fuzzy
 msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
 msgstr ""
+"Ne pas utiliser stat lors de l'énumérant de la liste des volumes, utile pour "
+"le montage automatique ou les volumes créés par un script pré-exécuté."
 
 #: sharing/models.py:201
+#, fuzzy
 msgid "AFP3 Unix Privs"
-msgstr ""
+msgstr "Privilèges Unix d'AFP3"
 
 #: sharing/models.py:202
+#, fuzzy
 msgid "Use AFP3 unix privileges."
-msgstr ""
+msgstr "Utiliser les privilèges unix d'AFP3."
 
 #: sharing/models.py:209
 msgid "Apple Share"
-msgstr ""
+msgstr "Partage Apple"
 
 #: sharing/models.py:225
 msgid "Authorized network or IP addresses"
-msgstr ""
+msgstr "Réseau ou adresses IP autorisés"
 
 #: sharing/models.py:226
 msgid ""
@@ -2580,378 +2853,417 @@ msgid ""
 "addresses.  Specify network numbers of the form 1.2.3.4/xx where xx is the "
 "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 msgstr ""
+"Réseau ou liste d'adresses IP autorisés à accéder au partage NFS. Spécifier "
+"le réseau sous la forme 1.2.3.4/xx où xx est le nombre de bits du masque "
+"réseau ou une liste d'adresses IP 1.2.3.4 1.2.3.5 1.2.3.6."
 
 #: sharing/models.py:230
 msgid "All Directories"
-msgstr ""
+msgstr "Tous les répertoires"
 
+# Vérifier à quoi s'applique le "s'il est sélectionné"
 #: sharing/models.py:231
+#, fuzzy
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected.  "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
+"Permettre le montage d'un sous-répertoire sous ce point de montage s'il est "
+"sélectionné. Sinon, seul le répertoire de haut niveau peut être monté."
 
 #: sharing/models.py:234
 msgid "Read Only"
-msgstr ""
+msgstr "Lecture seule"
 
 #: sharing/models.py:235
 msgid "Export the share read only.  Writes are not permitted."
-msgstr ""
+msgstr "Exporter le partage en lecture seule. L'écriture n'est pas permise."
 
 #: sharing/models.py:238
 msgid "Quiet"
-msgstr ""
+msgstr "Silencieux"
 
+# Inhibit = supprimer ou limiter ?
 #: sharing/models.py:239
+#, fuzzy
 msgid "Inibit syslog warnings if there are problems with exporting this share."
 msgstr ""
+"Supprimer les alertes syslog s'il y a des problèmes en exportant ce partage."
 
 #: sharing/models.py:247
+#, fuzzy
 msgid "User to map root to"
-msgstr ""
+msgstr "Utilisateur auquel rattacher root"
 
 #: sharing/models.py:255
+#, fuzzy
 msgid "Group to map root to"
-msgstr ""
+msgstr "Groupe auquel rattacher root"
 
 #: sharing/models.py:263
+#, fuzzy
 msgid "User to map all users to"
-msgstr ""
+msgstr "Utilisateur auquel rattacher tous les utilisateurs"
 
 #: sharing/models.py:271
+#, fuzzy
 msgid "Group to map all users to"
-msgstr ""
+msgstr "Groupe auquel rattacher tous les utilisateurs"
 
 #: sharing/models.py:278
 msgid "UNIX Share"
-msgstr ""
+msgstr "Partage UNIX"
 
 #: sharing/nav.py:8
 msgid "View All UNIX Shares"
-msgstr ""
+msgstr "Voir Tous Les Partages UNIX"
 
 #: sharing/nav.py:18
 msgid "View All Apple Shares"
-msgstr ""
+msgstr "Voir Tous Les Partages Apple"
 
 #: sharing/nav.py:28
 msgid "View All Windows Shares"
-msgstr ""
+msgstr "Voir Tous Les Partages Windows"
 
 #: storage/forms.py:77
 msgid "Read"
-msgstr ""
+msgstr "Lecture"
 
 #: storage/forms.py:78
 msgid "Write"
-msgstr ""
+msgstr "Écriture"
 
 #: storage/forms.py:79
 msgid "Execute"
-msgstr ""
+msgstr "Exécuter"
 
 #: storage/forms.py:92
 msgid "Owner"
-msgstr ""
+msgstr "Propriétaire"
 
 #: storage/forms.py:92
 msgid "Other"
-msgstr ""
+msgstr "Autre"
 
 #: storage/forms.py:140 storage/forms.py:331 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr ""
+msgstr "Nom du volume"
 
 #: storage/forms.py:144 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
-msgstr ""
+msgstr "Forcer la taille des secteurs à 4096 octets"
 
 #: storage/forms.py:217
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\"."
 msgstr ""
+"Le nom de volume doit commencer par une lettre et peut inclure des nombres, "
+"\"-\", \"_\"."
 
 #: storage/forms.py:231 system/forms.py:210 system/forms.py:216
 #: system/forms.py:221
 msgid "This field is required"
-msgstr ""
+msgstr "Ce champ est obligatoire"
 
 #: storage/forms.py:236 storage/forms.py:382 storage/forms.py:484
 msgid "You already have a volume with same name"
-msgstr ""
+msgstr "Vous avez déjà un volume avec le même nom"
 
 #: storage/forms.py:242
 msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr ""
+msgstr "\"log\" est un mot réservé et ne peut donc être utilisé"
 
 #: storage/forms.py:247
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr ""
+"Le nom de volume ne peut PAS commencer par c[0-9], mirror, raidz ou sparse"
 
 #: storage/forms.py:332 storage/forms.py:431 storage/forms.py:910
 msgid "Member disk"
-msgstr ""
+msgstr "Disque membre"
 
 #: storage/forms.py:388 storage/forms.py:509
+#, fuzzy
 msgid "The selected disks were not verified for this import rules."
 msgstr ""
+"Les disques sélectionnés n'ont pas été vérifiés pour cette règle "
+"d'importation."
 
 #: storage/forms.py:396
+#, fuzzy
 msgid "Some error ocurried while labelling the disk."
-msgstr ""
+msgstr "Une erreur est survenue pendant l'étiquetage du disque."
 
 #: storage/forms.py:606
 msgid "Volume from which this dataset will be created on"
-msgstr ""
+msgstr "Volume à partir duquel ce dataset sera créé"
 
 #: storage/forms.py:607
 msgid "Dataset Name"
-msgstr ""
+msgstr "Nom du dataset"
 
 #: storage/forms.py:608 storage/forms.py:660 storage/forms.py:717
 msgid "Compression level"
-msgstr ""
+msgstr "Niveau de compression"
 
 #: storage/forms.py:609 storage/forms.py:661 storage/forms.py:718
+#, fuzzy
 msgid "Enable atime"
-msgstr ""
+msgstr "Activer atime"
 
 #: storage/forms.py:610 storage/forms.py:662 storage/forms.py:719
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "Quota pour ce dataset"
 
 #: storage/forms.py:610 storage/forms.py:611 storage/forms.py:662
 #: storage/forms.py:663 storage/forms.py:719
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0=illimité; exemple: 1g"
 
 #: storage/forms.py:611 storage/forms.py:663
 msgid "Quota for this dataset and all children"
-msgstr ""
+msgstr "Quota pour ce dataset et ses descendants"
 
 #: storage/forms.py:612 storage/forms.py:664 storage/forms.py:720
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "Espace réservé pour ce dataset"
 
 #: storage/forms.py:612 storage/forms.py:613 storage/forms.py:664
 #: storage/forms.py:665 storage/forms.py:720
+#, fuzzy
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0=Aucun; exemple: 1g"
 
 #: storage/forms.py:613 storage/forms.py:665
 msgid "Reserved space for this dataset and all children"
-msgstr ""
+msgstr "Espace réservé pour ce dataset et ses descendants"
 
 #: storage/forms.py:626
+#, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
 msgstr ""
+"Les noms des dataset doivent commencer par un caractère alphanumérique et "
+"peuvent contenir les caractères \"-\", \"_\", \":\" et \".\"."
 
 #: storage/forms.py:633
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "Vous avez déjà un dataset avec le même nom"
 
+# Entrer ? Entrez ?
 #: storage/forms.py:640 storage/forms.py:697 storage/forms.py:741
+#, fuzzy
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
-msgstr ""
+msgstr "Entrer un nombre positif (optionnellement suffixé par M, G, T) ou 0"
 
 #: storage/forms.py:756
 msgid "Owner (user)"
-msgstr ""
+msgstr "Propriétaire (utilisateur)"
 
 #: storage/forms.py:759
 msgid "Owner (group)"
-msgstr ""
+msgstr "Propriétaire (groupe)"
 
 #: storage/forms.py:761
 msgid "Mode"
-msgstr ""
+msgstr "Mode"
 
 #: storage/forms.py:764
 msgid "Set permission recursively"
-msgstr ""
+msgstr "Appliquer les permissions de manière récursive"
 
 #: storage/forms.py:846
+#, fuzzy
 msgid "At least one day must be chosen"
-msgstr ""
+msgstr "Au moins un jour doit être choisi"
 
 #: storage/forms.py:851
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "Snapshot récursif"
 
 #: storage/forms.py:852
 msgid "Snapshot Name"
-msgstr ""
+msgstr "Nom du snapshot"
 
 #: storage/forms.py:859
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr ""
+msgstr "Seuls les caractères [-a-zA-Z0-9_.] sont autorisés en nom de snapshot"
 
 #: storage/forms.py:869
 msgid "Invalid prefix"
-msgstr ""
+msgstr "Préfixe invalide"
 
 #: storage/forms.py:873 storage/views.py:436
 msgid "Snapshot"
-msgstr ""
+msgstr "Snapshot"
 
 #: storage/forms.py:874
 msgid "Clone Name (must be on same volume)"
-msgstr ""
+msgstr "Nom du clone (doit être sur le même volume)"
 
 #: storage/forms.py:887
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr ""
+msgstr "Seuls les caractères [-a-zA-Z0-9_./] sont autorisés en nom de clone"
 
 #: storage/forms.py:893
 msgid "Clone must be within the same volume"
-msgstr ""
+msgstr "Le clone doit être dans le même volume"
 
 #: storage/forms.py:960 storage/models.py:212
 msgid "Remote hostname"
-msgstr ""
+msgstr "Nom d'hôte distant"
 
 #: storage/forms.py:961 storage/models.py:216
 msgid "Remote hostkey"
 msgstr ""
 
 #: storage/models.py:49
+#, fuzzy
 msgid "File System Type"
-msgstr ""
+msgstr "Type de système de fichiers"
 
 #: storage/models.py:52 storage/models.py:77 storage/views.py:88
 #: storage/views.py:116 storage/views.py:139 templates/storage/volumes.html:59
 msgid "Volume"
-msgstr ""
+msgstr "Volume"
 
 #: storage/models.py:78
 msgid "Volume this group belongs to"
-msgstr ""
+msgstr "Volume auquel appartient ce groupe"
 
 #: storage/models.py:91
 msgid "Disks"
-msgstr ""
+msgstr "Disques"
 
 #: storage/models.py:102
 msgid "Transfer Mode"
-msgstr ""
+msgstr "Mode de transfert"
 
 #: storage/models.py:108
+#, fuzzy
 msgid "HDD Standby"
-msgstr ""
+msgstr "Mise en veille"
 
 #: storage/models.py:114
 msgid "Advanced Power Management"
-msgstr ""
+msgstr "Gestion d'énergie avancée"
 
 #: storage/models.py:120
 msgid "Acoustic Level"
-msgstr ""
+msgstr "Niveau sonore"
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
-msgstr ""
+msgstr "Activer S.M.A.R.T."
 
 #: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
-msgstr ""
+msgstr "Options S.M.A.R.T. suplémentaires"
 
 #: storage/models.py:133
+#, fuzzy
 msgid "Group Membership"
-msgstr ""
+msgstr "Groupe d’appartenance"
 
 #: storage/models.py:134
+#, fuzzy
 msgid "The disk group containing this disk"
-msgstr ""
+msgstr "Ce groupe de disques contient ce disque"
 
 #: storage/models.py:146 storage/models.py:227 storage/models.py:253
 #: templates/storage/tasks.html:22
 msgid "Mount Point"
-msgstr ""
+msgstr "Point de montage"
 
 #: storage/models.py:147
 msgid "Path to mount point"
-msgstr ""
+msgstr "Chemin du point de montage"
 
 #: storage/models.py:151
 msgid "Mount options"
-msgstr ""
+msgstr "Options de montage"
 
 #: storage/models.py:152
+#, fuzzy
 msgid "Enter Mount Point options here"
-msgstr ""
+msgstr "Entrez ici les options du point de montage"
 
 #: storage/models.py:169
 msgid "Error getting total space"
-msgstr ""
+msgstr "Erreur en récupérant l'espace total"
 
 #: storage/models.py:175
 msgid "Error getting available space"
-msgstr ""
+msgstr "Erreur en récupérant l'espace disponible"
 
 #: storage/models.py:181
 msgid "Error getting used space"
-msgstr ""
+msgstr "Erreur en récupérant l'espace utilisé"
 
 #: storage/models.py:187 storage/models.py:199
 msgid "Error"
-msgstr ""
+msgstr "Erreur"
 
 #: storage/models.py:219
 msgid "Remote Replication Host"
-msgstr ""
+msgstr "Hôte de réplication à distance"
 
 #: storage/models.py:220
 msgid "Remote Replication Hosts"
-msgstr ""
+msgstr "Hôtes de réplication à distance"
 
 #: storage/models.py:231
+#, fuzzy
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
+"Dernier instantané envoyé du côté distant (laisser vide pour une réplication "
+"complète)"
 
 #: storage/models.py:234 templates/storage/replications.html:15
 msgid "Remote Host"
-msgstr ""
+msgstr "Hôte distant"
 
 #: storage/models.py:237 templates/storage/replications.html:16
 msgid "Remote ZFS filesystem"
-msgstr ""
+msgstr "Système de fichiers ZFS distant"
 
 #: storage/models.py:240
 msgid "Replication Task"
-msgstr ""
+msgstr "Tâche de réplication"
 
 #: storage/models.py:241
 msgid "Replication Tasks"
-msgstr ""
+msgstr "Tâches de réplication"
 
 #: storage/models.py:256 templates/storage/tasks.html:23
 msgid "Recursive"
-msgstr ""
+msgstr "Récursif"
 
 #: storage/models.py:260
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "Durée de vie de l'instantané"
 
 #: storage/models.py:266
 msgid "Snapshot lifetime unit"
-msgstr ""
+msgstr "Unité de durée de vie de l'instantané"
 
 #: storage/models.py:270
 msgid "Begin"
-msgstr ""
+msgstr "Début"
 
 #: storage/models.py:271
 msgid "When in a day should we start making snapshots, e.g. 8:00"
 msgstr ""
+"A partir de quel moment dans la journée commencer à faire des instantanés, "
+"e.g. 8:00"
 
 #: storage/models.py:275
 msgid "End"
-msgstr ""
+msgstr "Fin"
 
 #: storage/models.py:276
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
@@ -3810,15 +4122,15 @@ msgstr ""
 
 #: templates/services/index2.html:114
 msgid "TFTP Settings"
-msgstr ""
+msgstr "Paramètres TFTP"
 
 #: templates/services/index2.html:119
 msgid "iSCSI"
-msgstr ""
+msgstr "iSCSI"
 
 #: templates/services/index2.html:127
 msgid "ISCSI Settings"
-msgstr ""
+msgstr "Paramètres iSCSI"
 
 #: templates/services/iscsi.html:3
 msgid "iSCSI Management"
@@ -3967,11 +4279,11 @@ msgstr "Apple"
 
 #: templates/sharing/index.html:5
 msgid "UNIX"
-msgstr ""
+msgstr "UNIX"
 
 #: templates/sharing/index.html:7
 msgid "Windows"
-msgstr ""
+msgstr "Windows"
 
 #: templates/sharing/unix.html:8
 msgid "There are no active UNIX Shares."
@@ -4269,7 +4581,7 @@ msgstr "Ajouter un volume"
 
 #: templates/storage/wizard.html:120
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "Les données exitantes vont être supprimées"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
@@ -4281,11 +4593,11 @@ msgstr ""
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
-msgstr ""
+msgstr "Régénérer le cache LDAP/AD"
 
 #: templates/system/config.html:2
 msgid "Restore to Factory Defaults"
-msgstr ""
+msgstr "Restaurer les paramètres par défaut"
 
 #: templates/system/config.html:4
 msgid "Save Config"
@@ -4353,7 +4665,7 @@ msgstr "Annuels"
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"
-msgstr "Graphiques Manuels"
+msgstr "Graphiques Annuels"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -4365,11 +4677,11 @@ msgstr "Mise-à-jour du Firmware"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
-msgstr ""
+msgstr "Appliquer le Service Pack"
 
 #: templates/system/settings.html:15
 msgid "Config"
-msgstr "Config"
+msgstr "Configuration"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"

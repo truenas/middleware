@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-18 04:27+0200\n"
+"PO-Revision-Date: 2011-05-19 13:37+0200\n"
 "Last-Translator: OrderFoots <forestdoor@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
@@ -19,8 +19,9 @@ msgstr ""
 "X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
+#, fuzzy
 msgid "Plain"
-msgstr ""
+msgstr "Plain"
 
 #: choices.py:36 system/models.py:227 templates/system/settings.html:9
 msgid "SSL"
@@ -43,11 +44,11 @@ msgstr "HTTPS"
 
 #: choices.py:48
 msgid "English"
-msgstr ""
+msgstr "英語"
 
 #: choices.py:53 choices.py:222
 msgid "Auto"
-msgstr ""
+msgstr "自動"
 
 #: choices.py:54
 #, fuzzy
@@ -126,148 +127,155 @@ msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr ""
+msgstr "常にオン"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr ""
+msgstr "無効"
 
 #: choices.py:87 choices.py:88 choices.py:89 choices.py:90 choices.py:91
 #: choices.py:92
 msgid "Level"
-msgstr ""
+msgstr "レベル"
 
 #: choices.py:87
 msgid "Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "スタンバイ（スピンダウン）を使った最小の消費電力"
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
-msgstr ""
+msgstr "スタンバイを使った中間的な消費電力"
 
 #: choices.py:90
 msgid "Minimum power usgae without Standby (no spindown)"
-msgstr ""
+msgstr "スタンバイ（スピンダウン）を使わない最小の消費電力"
 
 #: choices.py:91
 msgid "Intermediate power usage withot Standby"
-msgstr ""
+msgstr "スタンバイを使わない中間的な消費電力"
 
 #: choices.py:92
 msgid "Maximum performance, maximum power usage"
-msgstr ""
+msgstr "最大のパフォーマンス 最大の消費電力"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr ""
+msgstr "最小"
 
 #: choices.py:97
 msgid "Medium"
-msgstr ""
+msgstr "中間"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr ""
+msgstr "最大"
 
+# 月はつけない方がいいのかな？
 #: choices.py:132 templates/storage/tasks.html:86
 msgid "January"
-msgstr "??"
+msgstr "1月"
 
 #: choices.py:133 templates/storage/tasks.html:89
 msgid "February"
-msgstr "??"
+msgstr "2月"
 
 #: choices.py:134 templates/storage/tasks.html:92
 msgid "March"
-msgstr "??"
+msgstr "3月"
 
 #: choices.py:135 templates/storage/tasks.html:95
 msgid "April"
-msgstr ""
+msgstr "4月"
 
 #: choices.py:136 templates/storage/tasks.html:98
 msgid "May"
-msgstr ""
+msgstr "5月"
 
 #: choices.py:137 templates/storage/tasks.html:101
 msgid "June"
-msgstr ""
+msgstr "6月"
 
 #: choices.py:138 templates/storage/tasks.html:104
 msgid "July"
-msgstr ""
+msgstr "7月"
 
 #: choices.py:139 templates/storage/tasks.html:107
 msgid "August"
-msgstr ""
+msgstr "8月"
 
 #: choices.py:140 templates/storage/tasks.html:110
 msgid "September"
-msgstr ""
+msgstr "9月"
 
 #: choices.py:141 templates/storage/tasks.html:113
 msgid "October"
-msgstr ""
+msgstr "10月"
 
 #: choices.py:142 templates/storage/tasks.html:116
 msgid "November"
-msgstr ""
+msgstr "11月"
 
 #: choices.py:143 templates/storage/tasks.html:119
 msgid "December"
-msgstr ""
+msgstr "12月"
 
 #: choices.py:146 templates/storage/tasks.html:57
 msgid "Monday"
-msgstr ""
+msgstr "月曜"
 
 #: choices.py:147 templates/storage/tasks.html:60
 msgid "Tuesday"
-msgstr ""
+msgstr "火曜"
 
 #: choices.py:148 templates/storage/tasks.html:63
 msgid "Wednesday"
-msgstr ""
+msgstr "水曜"
 
 #: choices.py:149 templates/storage/tasks.html:66
 msgid "Thursday"
-msgstr ""
+msgstr "木曜"
 
 #: choices.py:150 templates/storage/tasks.html:69
 msgid "Friday"
-msgstr ""
+msgstr "金曜"
 
 #: choices.py:151 templates/storage/tasks.html:72
 msgid "Saturday"
-msgstr ""
+msgstr "土曜"
 
 #: choices.py:152 templates/storage/tasks.html:75
 msgid "Sunday"
-msgstr ""
+msgstr "日曜"
 
 #: choices.py:163
+#, fuzzy
 msgid "Anonymous"
-msgstr ""
+msgstr "Anonymous"
 
 #: choices.py:164
+#, fuzzy
 msgid "Local User"
-msgstr ""
+msgstr "Local User"
 
 #: choices.py:185
+#, fuzzy
 msgid "Normal"
-msgstr ""
+msgstr "Normal"
 
 #: choices.py:186
+#, fuzzy
 msgid "Full"
-msgstr ""
+msgstr "Full"
 
 #: choices.py:187
+#, fuzzy
 msgid "Debug"
-msgstr ""
+msgstr "Debug"
 
 #: choices.py:191
+#, fuzzy
 msgid "Default"
-msgstr ""
+msgstr "Default"
 
 #: choices.py:192
 #, fuzzy
@@ -275,37 +283,40 @@ msgid "Time Machine"
 msgstr "Time Machine"
 
 #: choices.py:195
+#, fuzzy
 msgid "No case folding"
-msgstr ""
+msgstr "大文字に変換されません"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
 msgstr ""
 
 #: choices.py:198
+#, fuzzy
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "クライアントからは小文字、サーバからは大文字に見えます"
 
 #: choices.py:199
+#, fuzzy
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "クライアントからは大文字、サーバからは小文字に見えます"
 
 #: choices.py:203
 msgid "File"
-msgstr ""
+msgstr "ファイル"
 
 #: choices.py:204
 msgid "Device"
-msgstr ""
+msgstr "デバイス"
 
 #: choices.py:205
 msgid "ZFS Volume"
-msgstr ""
+msgstr "ZFSボリューム"
 
 #: choices.py:209 storage/models.py:137 templates/storage/autoimport.html:9
 #: templates/storage/import.html:18 templates/storage/wizard.html:91
 msgid "Disk"
-msgstr ""
+msgstr "ディスク"
 
 #: choices.py:210
 #, fuzzy
@@ -313,25 +324,30 @@ msgid "DVD"
 msgstr "DVD"
 
 #: choices.py:211
+#, fuzzy
 msgid "Tape"
-msgstr ""
+msgstr "テープドライブ"
 
 #: choices.py:212
+#, fuzzy
 msgid "Pass"
-msgstr ""
+msgstr "パス"
 
 #: choices.py:216
+#, fuzzy
 msgid "read-write"
-msgstr ""
+msgstr "read-write"
 
 #: choices.py:217
+#, fuzzy
 msgid "read-only"
-msgstr ""
+msgstr "read-only"
 
 #: choices.py:221 choices.py:227 services/forms.py:392 services/forms.py:394
 #: services/forms.py:692 templates/storage/wizard.html:92
+#, fuzzy
 msgid "None"
-msgstr ""
+msgstr "指定無し"
 
 #: choices.py:223
 #, fuzzy
@@ -340,7 +356,7 @@ msgstr "CHAP"
 
 #: choices.py:224
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "相互CHAP"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
@@ -364,173 +380,190 @@ msgstr ""
 
 #: choices.py:279 choices.py:285
 msgid "Inherit"
-msgstr ""
+msgstr "継承"
 
 #: choices.py:280
 msgid "On"
-msgstr ""
+msgstr "オン"
 
 #: choices.py:281 choices.py:286
 msgid "Off"
-msgstr ""
+msgstr "オフ"
 
 #: choices.py:287
+#, fuzzy
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb（推奨）"
 
 #: choices.py:288
+#, fuzzy
 msgid "default level"
-msgstr ""
+msgstr "デフォルト"
 
 #: choices.py:289
+#, fuzzy
 msgid "fastest"
-msgstr ""
+msgstr "最も高速"
 
 #: choices.py:290
+#, fuzzy
 msgid "maximum, slow"
-msgstr ""
+msgstr "最大（低速）"
 
 #: choices.py:431
 msgid "Hour(s)"
-msgstr ""
+msgstr "時間"
 
 #: choices.py:432
 msgid "Day(s)"
-msgstr ""
+msgstr "日"
 
 #: choices.py:433
 msgid "Week(s)"
-msgstr ""
+msgstr "週間"
 
 #: choices.py:434
 msgid "Month(s)"
-msgstr ""
+msgstr "ヶ月"
 
 #: choices.py:435
 msgid "Year(s)"
-msgstr ""
+msgstr "年"
 
 #: choices.py:439
 msgid "Everyday"
-msgstr ""
+msgstr "毎日"
 
 #: choices.py:440
 msgid "Every selected weekday"
 msgstr ""
 
 #: account/forms.py:93 templates/storage/volumes.html:62
+#, fuzzy
 msgid "Available"
-msgstr ""
+msgstr "利用可能"
 
 #: account/forms.py:144
+#, fuzzy
 msgid "Selected"
-msgstr ""
+msgstr "選択済み"
 
 #: account/forms.py:172 account/forms.py:197 account/models.py:77
 #: services/forms.py:229 services/models.py:657 services/models.py:917
 #: system/models.py:153 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:60
 msgid "Username"
-msgstr ""
+msgstr "ユーザ名"
 
 #: account/forms.py:173 account/forms.py:198
+#, fuzzy
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr ""
+msgstr "30字以下の文字が必要です（アルファベット、数字、\"@\"、\".\"、\"+\"、\"-\"、\"_\"が使用可能です）"
 
 #: account/forms.py:174 account/forms.py:199
+#, fuzzy
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr ""
+msgstr "この値には、アルファベット、数字、\"@\"、\".\"、\"+\"、\"-\"、\"_\"が使用可能です"
 
 #: account/forms.py:175
+#, fuzzy
 msgid "E-mail"
-msgstr ""
+msgstr "E-mail"
 
 #: account/forms.py:200 account/forms.py:307 account/views.py:79
 #: services/models.py:661 system/forms.py:180 system/models.py:160
 #: templates/account/bsdusers.html:9 templates/account/bsdusers.html.py:64
 msgid "Password"
-msgstr ""
+msgstr "パスワード"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
+#, fuzzy
 msgid "Password confirmation"
-msgstr ""
+msgstr "パスワードの確認"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
+#, fuzzy
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "確認のため、上の項目と同じパスワードを入力してください"
 
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
+#, fuzzy
 msgid "Shell"
-msgstr ""
+msgstr "Shell"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
-msgstr ""
+msgstr "ログイン不可"
 
 #: account/forms.py:205
 msgid "Primary Group"
-msgstr ""
+msgstr "プライマリグループ"
 
 #: account/forms.py:234
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "同じユーザ名が存在します"
 
 #: account/forms.py:242 account/forms.py:328 account/forms.py:470
 #: system/forms.py:225
+#, fuzzy
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "二つのパスワード項目が一致していません"
 
 #: account/forms.py:247 account/forms.py:372
+#, fuzzy
 msgid "Home directory has to start with /mnt/"
-msgstr ""
+msgstr "ホームディレクトリは /mnt/ から始まる必要があります"
 
 #: account/forms.py:261 account/forms.py:265 services/forms.py:469
 #: services/forms.py:482 services/forms.py:699 storage/forms.py:223
 #: system/forms.py:268 system/forms.py:291
+#, fuzzy
 msgid "This field is required."
-msgstr ""
+msgstr "この項目は必須です"
 
 #: account/forms.py:418
+#, fuzzy
 msgid "Member users"
-msgstr ""
+msgstr "メンバユーザ"
 
 #: account/forms.py:436
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "補助グループ"
 
 #: account/forms.py:458 templates/registration/password_change_form.html:39
 msgid "New password"
-msgstr ""
+msgstr "新しいパスワード"
 
 #: account/forms.py:459
 msgid "New password confirmation"
-msgstr ""
+msgstr "新しいパスワードの確認"
 
 #: account/forms.py:484 templates/registration/password_change_form.html:31
 msgid "Old password"
-msgstr ""
+msgstr "古いパスワード"
 
 #: account/forms.py:492
+#, fuzzy
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr ""
+msgstr "古いパスワードが正しくありません 再度入力してください"
 
 #: account/models.py:36 services/models.py:460 services/models.py:505
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr ""
+msgstr "グループID"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "グループ名"
 
 #: account/models.py:47 account/models.py:147 storage/forms.py:92
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:49
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:61
 msgid "Group"
-msgstr ""
+msgstr "グループ"
 
 #: account/models.py:61
 #, python-format
@@ -555,20 +588,20 @@ msgstr ""
 
 #: account/models.py:93
 msgid "Primary Group ID"
-msgstr ""
+msgstr "プライマリグループID"
 
 #: account/models.py:98
 msgid "Home Directory"
-msgstr ""
+msgstr "ホームディレクトリ"
 
 #: account/models.py:107
 msgid "Full Name"
-msgstr ""
+msgstr "フルネーム"
 
 #: account/models.py:114 account/models.py:151 services/models.py:509
 #: templates/services/iscsi_auth.html:6
 msgid "User"
-msgstr ""
+msgstr "ユーザ"
 
 #: account/models.py:130
 #, python-format
@@ -578,24 +611,26 @@ msgstr ""
 #: account/nav.py:9 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:85 templates/account/index2.html:7
 msgid "Change Password"
-msgstr ""
+msgstr "パスワードの変更"
 
 #: account/nav.py:17 templates/account/changeform.html:25
 #: templates/account/index2.html:4
 msgid "Change Admin User"
-msgstr ""
+msgstr "Adminユーザの変更"
 
 #: account/nav.py:33 templates/account/index2.html:2
 msgid "My Account"
-msgstr ""
+msgstr "マイアカウント"
 
 #: account/nav.py:41
+#, fuzzy
 msgid "View All Users"
-msgstr ""
+msgstr "全てのユーザを表示"
 
 #: account/nav.py:54
+#, fuzzy
 msgid "View All Groups"
-msgstr ""
+msgstr "全てグループを表示"
 
 #: account/views.py:79 account/views.py:94 account/views.py:105
 #: account/views.py:120
@@ -605,15 +640,15 @@ msgstr ""
 
 #: account/views.py:94
 msgid "Admin user"
-msgstr ""
+msgstr "管理ユーザ"
 
 #: account/views.py:105 templates/account/index2.html:13
 msgid "Users"
-msgstr ""
+msgstr "ユーザ"
 
 #: account/views.py:120 templates/account/index2.html:10
 msgid "Groups"
-msgstr ""
+msgstr "グループ"
 
 #: contrib/ext_formwizard.py:170
 msgid ""
@@ -622,16 +657,17 @@ msgid ""
 msgstr ""
 
 #: freeadmin/navtree.py:349
+#, fuzzy
 msgid "Display System Processes"
-msgstr ""
+msgstr "システムのプロセスを表示"
 
 #: freeadmin/navtree.py:357 templates/freeadmin/index.html:50
 msgid "Reboot"
-msgstr ""
+msgstr "再起動"
 
 #: freeadmin/navtree.py:365 templates/freeadmin/index.html:62
 msgid "Shutdown"
-msgstr ""
+msgstr "シャットダウン"
 
 #: freeadmin/views.py:103
 #, python-format
@@ -649,24 +685,28 @@ msgid "%s successfully deleted."
 msgstr ""
 
 #: network/forms.py:67
+#, fuzzy
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
+msgstr "ネームサーバ3を指定する前に、ネームサーバ2を指定する必要があります"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
 msgstr ""
 
 #: network/forms.py:74
+#, fuzzy
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr ""
+msgstr "ネームサーバ3を指定する前に、ネームサーバ1を指定する必要があります"
 
 #: network/forms.py:85
+#, fuzzy
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr ""
+msgstr "ネームサーバ2を指定する前に、ネームサーバ1を指定する必要があります"
 
 #: network/forms.py:134
+#, fuzzy
 msgid "Physical NICs in the LAGG"
-msgstr ""
+msgstr "LAGGを構成する物理NIC"
 
 #: network/forms.py:187
 #, python-format
@@ -676,52 +716,54 @@ msgstr ""
 #: network/models.py:42 services/models.py:1077
 #: templates/system/system_info.html:4
 msgid "Hostname"
-msgstr ""
+msgstr "ホスト名"
 
 #: network/models.py:47
 msgid "Domain"
-msgstr ""
+msgstr "ドメイン名"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "IPv4 デフォルトゲートウェイ"
 
 #: network/models.py:59
 msgid "IPv6 Default Gateway"
-msgstr ""
+msgstr "IPv6 デフォルトゲートウェイ"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "ネームサーバ1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "ネームサーバ2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "ネームサーバ3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:18
 #: templates/network/index2.html:3
 msgid "Global Configuration"
-msgstr ""
+msgstr "全体的な設定"
 
 #: network/models.py:95
+#, fuzzy
 msgid "NIC"
-msgstr ""
+msgstr "NIC"
 
 #: network/models.py:96
+#, fuzzy
 msgid "Pick your NIC"
-msgstr ""
+msgstr "NICを指定してください"
 
 #: network/models.py:101
 msgid "Interface Name"
-msgstr ""
+msgstr "インターフェース名"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "NIC名"
 
 #: network/models.py:106 templates/network/interface.html:7
 #, fuzzy
@@ -729,67 +771,71 @@ msgid "DHCP"
 msgstr "DHCP"
 
 #: network/models.py:107
+#, fuzzy
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
-msgstr ""
+msgstr "有効にすると、DHCPを使ってデフォルトルータなどからIPv4アドレスを取得します"
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "IPv4アドレス"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr ""
+msgstr "IPv4ネットマスク"
 
 #: network/models.py:126
+#, fuzzy
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "IPv6自動構成"
 
 #: network/models.py:127
+#, fuzzy
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr ""
+msgstr "有効にすると、rtsol(8)を経由してIPv6アドレスを自動構成します"
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr ""
+msgstr "IPv6アドレス"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr ""
+msgstr "IPv6ネットマスク"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "オプション"
 
 #: network/models.py:157 network/models.py:158 templates/network/index2.html:5
 msgid "Interfaces"
-msgstr ""
+msgstr "インターフェース"
 
 #: network/models.py:172 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr ""
+msgstr "仮想インターフェース"
 
 #: network/models.py:173
+#, fuzzy
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr ""
+msgstr "インターフェース名は、vlanXX（XXは数字）である必要があります"
 
 #: network/models.py:178 templates/network/lagg_members2.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr ""
+msgstr "物理インターフェース"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
-msgstr ""
+msgstr "VLANタグ"
 
 #: network/models.py:185 network/models.py:276 services/models.py:75
 #: services/models.py:747 storage/models.py:95
 #: templates/network/staticroute.html:7 templates/network/vlan.html:8
 msgid "Description"
-msgstr ""
+msgstr "説明"
 
 #: network/models.py:199 templates/network/index2.html:11
 #, fuzzy
@@ -798,71 +844,73 @@ msgstr "VLAN"
 
 #: network/models.py:215 templates/network/interface.html:5
 msgid "Interface"
-msgstr ""
+msgstr "インターフェース"
 
 #: network/models.py:219
 msgid "Protocol Type"
-msgstr ""
+msgstr "プロトコルタイプ"
 
 #: network/models.py:240
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "LAGGインターフェースグループ"
 
 #: network/models.py:243
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "LAGGプライオリティナンバ"
 
 #: network/models.py:249
 msgid "Physical NIC"
-msgstr ""
+msgstr "物理NIC"
 
 #: network/models.py:259 templates/network/index2.html:7
 msgid "Link Aggregation"
-msgstr ""
+msgstr "リンクアグリゲーション"
 
 #: network/models.py:268
+#, fuzzy
 msgid "Destination network"
-msgstr ""
+msgstr "Destinationネットワーク"
 
 #: network/models.py:272 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr ""
+msgstr "ゲートウェイ"
 
 #: network/models.py:281
 msgid "Static Route"
-msgstr ""
+msgstr "静的ルート"
 
 #: network/nav.py:10 templates/network/index2.html:13
+#, fuzzy
 msgid "Network Summary"
-msgstr ""
+msgstr "ネットワークサマリ"
 
 #: network/nav.py:27
 msgid "Add Link Aggregation"
-msgstr ""
+msgstr "リンクアグリゲーションの追加"
 
 #: network/nav.py:28
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "リンクアグリゲーションの作成"
 
 #: network/nav.py:39
 msgid "View All Link Aggregations"
-msgstr ""
+msgstr "全てのリングアグリゲーションを表示"
 
 #: network/nav.py:51
 msgid "Link Aggregations"
-msgstr ""
+msgstr "リンクアグリゲーション"
 
 #: network/nav.py:97
 msgid "View All Interfaces"
-msgstr ""
+msgstr "全てのインターフェースを表示"
 
 #: network/nav.py:109
 msgid "View All VLANs"
-msgstr ""
+msgstr "全てのVLANを表示"
 
 #: network/nav.py:121
 msgid "View All Static Routes"
-msgstr ""
+msgstr "全ての静的ルートを表示"
 
 #: network/views.py:192
 #, python-format
@@ -872,7 +920,7 @@ msgstr ""
 #: services/forms.py:59 services/forms.py:112 sharing/forms.py:54
 #: sharing/models.py:63
 msgid "Guest Account"
-msgstr ""
+msgstr "ゲストアカウント"
 
 #: services/forms.py:86 services/forms.py:130 services/forms.py:246
 #: sharing/forms.py:82 sharing/forms.py:190 sharing/forms.py:198
@@ -882,103 +930,120 @@ msgid "The user %s is not valid."
 msgstr ""
 
 #: services/forms.py:96
+#, fuzzy
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr ""
+msgstr "この項目は、\"ホームディレクトリの閲覧を有効にする\" のために必要です"
 
 #: services/forms.py:99
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "この項目は、\"ホームディレクトリ\" のために必要です"
 
 #: services/forms.py:145
 msgid "File Permission"
-msgstr ""
+msgstr "ファイルパーミッション"
 
 #: services/forms.py:146
 msgid "Directory Permission"
-msgstr ""
+msgstr "ディレクトリパーミッション"
 
 #: services/forms.py:165
+#, fuzzy
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr ""
+msgstr "この値は、0以上、65535以下である必要があります"
 
 #: services/forms.py:171 services/forms.py:189
+#, fuzzy
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
+msgstr "この値は、0以上、10000以下である必要があります"
 
 #: services/forms.py:177 services/forms.py:183
+#, fuzzy
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
+msgstr "この値は、0以上、1000以下である必要があります"
 
+# 「0は初期値です」の方がよい？
 #: services/forms.py:195
+#, fuzzy
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
+msgstr "この値は、1024以上、65535以下である必要があります 0が初期値です"
 
+# 「0は初期値です」のほうがよい？
 #: services/forms.py:201
+#, fuzzy
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr ""
+msgstr "この値は、1024以上、65535以下である必要があります 0が初期値です"
 
 #: services/forms.py:220
+#, fuzzy
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "この項目は、anonymousログインのために必要です"
 
 #: services/forms.py:294 services/models.py:514
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
-msgstr ""
+msgstr "シークレット"
 
 #: services/forms.py:295 services/models.py:515
 msgid "Target side secret."
-msgstr ""
+msgstr "ターゲット側のシークレット"
 
 #: services/forms.py:296
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "シークレットの確認"
 
 #: services/forms.py:298 services/forms.py:306
+#, fuzzy
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "確認のため、上の項目と同じシークレットを入力してください"
 
 #: services/forms.py:299
 msgid "Initiator Secret"
-msgstr ""
+msgstr "イニシエータシークレット"
 
 #: services/forms.py:301 services/models.py:521 services/models.py:526
+#, fuzzy
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr ""
+msgstr "イニシエータ側のシークレット（相互CHAP認証に使われます）"
 
 #: services/forms.py:304
 msgid "Initiator Secret (Confirm)"
-msgstr ""
+msgstr "イニシエータシークレットの確認"
 
 #: services/forms.py:313
 msgid "Secret does not match"
-msgstr ""
+msgstr "シークレットが一致しません"
 
 #: services/forms.py:328 services/forms.py:329
 msgid "The peer secret is required if you set a peer user."
 msgstr ""
 
 #: services/forms.py:332
+#, fuzzy
 msgid "The peer secret cannot be the same as user secret."
-msgstr ""
+msgstr "ピアシークレットは、ユーザシークレットと異なる必要があります"
 
 #: services/forms.py:375
+#, fuzzy
 msgid "LUN already exists in the same target."
-msgstr ""
+msgstr "同じターゲット内にLUNが存在します"
 
 #: services/forms.py:384 services/models.py:354
+#, fuzzy
 msgid "Controller Auth Group"
-msgstr ""
+msgstr "コントローラ認証グループ"
 
+# ちょいと日本語が硬い
 #: services/forms.py:385 services/models.py:355
+#, fuzzy
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
-msgstr ""
+msgstr "istgtcontrolは、特定の認証グループ内の正しいユーザとシークレットが指定されたターゲットにアクセスすることができます"
 
 #: services/forms.py:386 services/models.py:248
+#, fuzzy
 msgid "Discovery Auth Group"
-msgstr ""
+msgstr "認証グループの探索"
 
 #: services/forms.py:413
 #, python-format
@@ -986,31 +1051,40 @@ msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr ""
 
 #: services/forms.py:421
+#, fuzzy
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutal."
-msgstr ""
+msgstr "この項目は、探索方法としてCHAP、相互CHAPを指定した場合に必要です"
 
+# 「明示」ではなくて「指定」かも
 #: services/forms.py:502 services/forms.py:530
+#, fuzzy
 msgid "You need to specify a filepath, not a directory."
-msgstr ""
+msgstr "ディレクトリではなく、ファイルパスを明示する必要があります"
 
+# 「明示」ではなくて「指定」かも
 #: services/forms.py:506 services/forms.py:534
+#, fuzzy
 msgid "You need to specify a file inside your volume/dataset."
-msgstr ""
+msgstr "ボリューム内かデータセット内のファイルを明示する必要があります"
 
+# 日本語が硬い
 #: services/forms.py:510 services/forms.py:538
+#, fuzzy
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
-msgstr ""
+msgstr "エクステントのパスは、ボリュームやデータセットのマウントポイントの内側に属している必要があります"
 
+# 意訳
 #: services/forms.py:552
+#, fuzzy
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
-msgstr ""
+msgstr "この値はバイト単位で指定します もしくは、単位としてKB、MB、GB、TBを使って指定します"
 
 #: services/forms.py:571
 msgid "Disk device"
-msgstr ""
+msgstr "ディスクデバイス"
 
 #: services/forms.py:658
 #, python-format
@@ -1024,28 +1098,30 @@ msgstr ""
 
 #: services/forms.py:685
 msgid "Authentication Group number"
-msgstr ""
+msgstr "認証グループナンバ"
 
 #: services/models.py:41
 msgid "Service"
-msgstr ""
+msgstr "サービス"
 
+# shouldの訳が怪しい
 #: services/models.py:42
+#, fuzzy
 msgid "Name of Service, should be auto-generated at build time"
-msgstr ""
+msgstr "サービスの名称は、ビルドされたときに自動的に生成されるべきです"
 
 #: services/models.py:45
 msgid "Enable Service"
-msgstr ""
+msgstr "サービスの有効化"
 
 #: services/models.py:48 services/models.py:49
 #: templates/common/menubar2.html:28 templates/services/index2.html:3
 msgid "Services"
-msgstr ""
+msgstr "サービス"
 
 #: services/models.py:61
 msgid "Authentication Model"
-msgstr ""
+msgstr "認証モデル"
 
 #: services/models.py:62
 msgid ""
@@ -1054,11 +1130,11 @@ msgstr ""
 
 #: services/models.py:66
 msgid "NetBIOS name"
-msgstr ""
+msgstr "NetBIOS名"
 
 #: services/models.py:70
 msgid "Workgroup"
-msgstr ""
+msgstr "ワークグループ"
 
 #: services/models.py:71
 msgid ""
@@ -1080,11 +1156,11 @@ msgstr ""
 
 #: services/models.py:95
 msgid "Log level"
-msgstr ""
+msgstr "ログレベル"
 
 #: services/models.py:98
 msgid "Local Master"
-msgstr ""
+msgstr "ローカルマスタ"
 
 #: services/models.py:100
 msgid "Time Server for Domain"
@@ -1092,7 +1168,7 @@ msgstr ""
 
 #: services/models.py:104 services/models.py:192
 msgid "Guest account"
-msgstr ""
+msgstr "ゲストアカウント"
 
 #: services/models.py:105 sharing/models.py:64
 msgid ""
@@ -1105,105 +1181,117 @@ msgstr ""
 
 #: services/models.py:108
 msgid "Allow guest access"
-msgstr ""
+msgstr "ゲストアクセスの許可"
 
 #: services/models.py:110
 msgid "Only allow guest access"
-msgstr ""
+msgstr "ゲストアクセスのみを許可"
 
 #: services/models.py:113 services/models.py:830
 msgid "File mask"
-msgstr ""
+msgstr "ファイルマスク"
 
 #: services/models.py:115
 msgid "Use this option to override the file creation mask (0666 by default)."
-msgstr ""
+msgstr "このオプションはファイル作成時のマスクを上書きします(デフォルトは0666）"
 
 #: services/models.py:119 services/models.py:836
 msgid "Directory mask"
-msgstr ""
+msgstr "ディレクトリマスク"
 
 #: services/models.py:121
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
-msgstr ""
+msgstr "このオプションはディレクトリ作成時のマスクを上書きします(デフォルトは0777）"
 
 #: services/models.py:124
+#, fuzzy
 msgid "Large RW support"
-msgstr ""
+msgstr "Large RW サポート"
 
 #: services/models.py:126
+#, fuzzy
 msgid "Send files with sendfile(2)"
-msgstr ""
+msgstr "sendfile(2)を用いて送信"
 
 #: services/models.py:128
+#, fuzzy
 msgid "EA Support"
-msgstr ""
+msgstr "EA サポート"
 
 #: services/models.py:130
+#, fuzzy
 msgid "Support DOS File Attributes"
-msgstr ""
+msgstr "DOSファイル属性のサポート"
 
 #: services/models.py:132
 msgid "Allow Empty Password"
-msgstr ""
+msgstr "空のパスワードを許可"
 
 #: services/models.py:135 services/models.py:675 services/models.py:709
 #: services/models.py:741 services/models.py:888
 msgid "Auxiliary parameters"
-msgstr ""
+msgstr "補助パラメータ"
 
 #: services/models.py:137
+#, fuzzy
 msgid "These parameters are added to [Global] section of smb.conf"
-msgstr ""
+msgstr "このパラメータは、smb.confの[Global]セクションに追加されます"
 
 #: services/models.py:140
 msgid "Enable home directories"
-msgstr ""
+msgstr "ホームディレクトリの有効化"
 
 #: services/models.py:141
+#, fuzzy
 msgid "This enables\\disables home directories for samba user."
-msgstr ""
+msgstr "この設定は、sambaユーザのホームディレクトリを有効、または無効にします"
 
 #: services/models.py:144
+#, fuzzy
 msgid "Enable home directories browsing"
-msgstr ""
+msgstr "ホームディレクトリの閲覧を有効化"
 
+# 日本語が硬い
 #: services/models.py:145
+#, fuzzy
 msgid "This enables\\disables home directories browsing for samba user."
-msgstr ""
+msgstr "この設定は、sambaユーザのホームディレクトリの閲覧を有効、または無効にします"
 
 #: services/models.py:149
 msgid "Home directories"
-msgstr ""
+msgstr "ホームディレクトリ"
 
 #: services/models.py:155
 msgid "Enable AIO"
-msgstr ""
+msgstr "AIOの有効化"
 
 #: services/models.py:156
+#, fuzzy
 msgid "This enables\\disables AIO support."
-msgstr ""
+msgstr "この設定は、AIO サポートを有効、もしくは無効にします"
 
 #: services/models.py:160
+#, fuzzy
 msgid "Minimal AIO read size"
-msgstr ""
+msgstr "AIOリードサイズの最小値"
 
 #: services/models.py:161
 msgid ""
 "Samba will read asynchronously if request size is larger than this value.  "
 "The default read size is 1."
-msgstr ""
+msgstr "リクエストサイズがこの値よりも大きい場合Sambaは非同期でデータを読み込みます。　デフォルトの読み込みサイズは１です"
 
 #: services/models.py:166
+#, fuzzy
 msgid "Minimal AIO write size"
-msgstr ""
+msgstr "AIOライトサイズの最小値"
 
 #: services/models.py:167
 msgid ""
 "Samba will write asynchronously if request size is larger than this value.  "
 "The default write size is 1."
-msgstr ""
+msgstr "リクエストサイズがこの値よりも大きい場合Sambaは非同期でデータを書き込みます。　デフォルトの書き込みサイズは１です"
 
 #: services/models.py:172 services/models.py:173
 #: templates/services/index2.html:29
@@ -1213,7 +1301,7 @@ msgstr "CIFS"
 
 #: services/models.py:182
 msgid "Server Name"
-msgstr ""
+msgstr "サーバ名"
 
 #: services/models.py:183
 msgid ""
@@ -1223,7 +1311,7 @@ msgstr ""
 
 #: services/models.py:186
 msgid "Guest Access"
-msgstr ""
+msgstr "ゲストアクセス"
 
 #: services/models.py:187
 msgid "Allows guest access to all apple shares on this box."
@@ -1240,7 +1328,7 @@ msgstr ""
 
 #: services/models.py:196
 msgid "Local Access"
-msgstr ""
+msgstr "ローカルアクセス"
 
 #: services/models.py:197
 msgid "Allow users with local accounts to access apple shares on this box."
@@ -1248,7 +1336,7 @@ msgstr ""
 
 #: services/models.py:200
 msgid "Enable DDP"
-msgstr ""
+msgstr "DDPの有効化"
 
 #: services/models.py:201
 msgid "Enables DDP support for low-level appletalk access."
@@ -1262,7 +1350,7 @@ msgstr "AFP"
 
 #: services/models.py:215
 msgid "Number of servers"
-msgstr ""
+msgstr "サーバーの数"
 
 #: services/models.py:216
 msgid ""
@@ -1272,13 +1360,13 @@ msgstr ""
 
 #: services/models.py:220
 msgid "Asynchronous mode"
-msgstr ""
+msgstr "非同期モード"
 
 #: services/models.py:221
 msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
-msgstr ""
+msgstr "非同期モードを有効化すると、ギガビット以上のパフォーマンスが期待できます"
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/index2.html:75
@@ -1287,179 +1375,221 @@ msgid "NFS"
 msgstr "NFS"
 
 #: services/models.py:236
+#, fuzzy
 msgid "Base Name"
-msgstr ""
+msgstr "ベースネーム"
 
 #: services/models.py:237
+#, fuzzy
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"ベースネーム（例:iqn.2007-09.jp.ne.peach.istgt, 詳細はRFC 3720 and 3721 "
+"を見よ）は、ターゲットネームが'iqn'で始まらない場合に付加されます"
 
+# 怪しい
 #: services/models.py:243
+#, fuzzy
 msgid "Discovery Auth Method"
-msgstr ""
+msgstr "探索認証方法"
 
 #: services/models.py:255
 msgid "I/O Timeout"
-msgstr ""
+msgstr "I/Oタイムアウト"
 
 #: services/models.py:256
+#, fuzzy
 msgid "I/O timeout in seconds (30 by default)."
-msgstr ""
+msgstr "I/Oタイムアウトを秒単位で指定します（初期値は30です）"
 
 #: services/models.py:261
 msgid "NOPIN Interval"
-msgstr ""
+msgstr "NOPIN間隔"
 
 #: services/models.py:262
+#, fuzzy
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr ""
+msgstr "NOPINを送信する間隔を秒単位で指定します（初期値は20です）"
 
 #: services/models.py:267
+#, fuzzy
 msgid "Max. sessions"
-msgstr ""
+msgstr "セッションの最大値"
 
 #: services/models.py:268
+#, fuzzy
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr ""
+msgstr "同時に保持するセッションの最大値を指定します（初期値は16です）"
 
 #: services/models.py:273
+#, fuzzy
 msgid "Max. connections"
-msgstr ""
+msgstr "コネクションの最大値"
 
 #: services/models.py:274
+#, fuzzy
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "それぞれのセッションにおけるコネクションの最大値を指定します（初期値は8です）"
 
 #: services/models.py:279
+#, fuzzy
 msgid "Max. pre-send R2T"
-msgstr ""
+msgstr "pre-send R2Tの最大値"
 
 #: services/models.py:280
+#, fuzzy
 msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
 msgstr ""
+"それぞれのコネクションにおけるpre-send "
+"R2Tの最大値を指定します（初期値は32です）実際の値は、ターゲットのQueueDepthによって制限されます"
 
+# Outstandingの訳が微妙
 #: services/models.py:285
+#, fuzzy
 msgid "MaxOutstandingR2T"
-msgstr ""
+msgstr "未解決R2Tの最大値"
 
 #: services/models.py:286
+#, fuzzy
 msgid "iSCSI initial parameter (16 by default)."
-msgstr ""
+msgstr "iSCSIの初期パラメータを指定します（初期値は16です）"
 
 #: services/models.py:291
 msgid "First burst length"
 msgstr ""
 
 #: services/models.py:292
+#, fuzzy
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr ""
+msgstr "iSCSIの初期パラメータを指定します（初期値は65536です）"
 
 #: services/models.py:297
+#, fuzzy
 msgid "Max burst length"
-msgstr ""
+msgstr "バースト長の最大値"
 
 #: services/models.py:298 services/models.py:304
+#, fuzzy
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr ""
+msgstr "iSCSIの初期パラメータを指定します（初期値は262144です）"
 
 #: services/models.py:303
+#, fuzzy
 msgid "Max receive data segment length"
-msgstr ""
+msgstr "受信データセグメント長の最大値"
 
 #: services/models.py:309
+#, fuzzy
 msgid "DefaultTime2Wait"
-msgstr ""
+msgstr "Time2Waitの初期値"
 
 #: services/models.py:310
+#, fuzzy
 msgid "iSCSI initial parameter (2 by default)."
-msgstr ""
+msgstr "iSCSIの初期パラメータを指定します（初期値は2です）"
 
 #: services/models.py:315
+#, fuzzy
 msgid "DefaultTime2Retain"
-msgstr ""
+msgstr "Time2Retainの初期値"
 
 #: services/models.py:316
+#, fuzzy
 msgid "iSCSI initial parameter (60 by default)."
-msgstr ""
+msgstr "iSCSIの初期パラメータを指定します（初期値は60です）"
 
 #: services/models.py:321
 msgid "Enable LUC"
-msgstr ""
+msgstr "LUCの有効化"
 
 #: services/models.py:325
 msgid "Controller IP address"
-msgstr ""
+msgstr "コントローラのIPアドレス"
 
 #: services/models.py:326
+#, fuzzy
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
-msgstr ""
+msgstr "論理ユニットコントローラのIPアドレスを指定します（初期値は127.0.0.1（localhost）です）"
 
 #: services/models.py:332
+#, fuzzy
 msgid "Controller TCP port"
-msgstr ""
+msgstr "コントローラのTCPポート"
 
 #: services/models.py:333
+#, fuzzy
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr ""
+msgstr "論理ユニットコントローラのTCPポートを指定します（初期値は3261です）"
 
+# 表現が正確でないかも
 #: services/models.py:339
+#, fuzzy
 msgid "Controller Authorised netmask"
-msgstr ""
+msgstr "コントローラの認証されたネットマスク"
 
 #: services/models.py:341
+#, fuzzy
 msgid "Logical Unit Controller Authorised netmask (255.255.255.0 by default)"
-msgstr ""
+msgstr "コントローラの認証されたネットマスクを指定します（初期値は255.255.255.0です）"
 
 #: services/models.py:348
+#, fuzzy
 msgid "Controller Auth Method"
-msgstr ""
+msgstr "コントローラの認証方法"
 
 #: services/models.py:349
+#, fuzzy
 msgid "The method can be accepted in the controller."
-msgstr ""
+msgstr "コントローラの受け付ける認証方法を指定します"
 
 #: services/models.py:361 services/models.py:362
 #: templates/services/iscsi.html:5
+#, fuzzy
 msgid "Target Global Configuration"
-msgstr ""
+msgstr "ターゲットの全体的な設定"
 
 #: services/models.py:373
+#, fuzzy
 msgid "Extent Name"
-msgstr ""
+msgstr "エクステント名"
 
 #: services/models.py:374
+#, fuzzy
 msgid "String identifier of the extent."
-msgstr ""
+msgstr "エクステントを識別する文字列を指定します"
 
 #: services/models.py:378
 msgid "Extent Type"
-msgstr ""
+msgstr "エクステントタイプ"
 
 #: services/models.py:379
 msgid "Type used as extent."
 msgstr ""
 
 #: services/models.py:384
+#, fuzzy
 msgid "Path to the extent"
-msgstr ""
+msgstr "エクステントへのパス"
 
 #: services/models.py:385
+#, fuzzy
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
-msgstr ""
+msgstr "エクステントのファイルパス（例:/mnt/sharename/extent/extent0）を指定します"
 
 #: services/models.py:390
 msgid "Extent size"
-msgstr ""
+msgstr "エクステントサイズ"
 
+# かなりの意訳
 #: services/models.py:391
+#, fuzzy
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
-msgstr ""
+msgstr "エクステントのサイズをbyte単位で指定します 0を指定すると自動になります また単位として、KB、MB、TBを使用することができます"
 
 #: services/models.py:396 services/models.py:431 services/models.py:477
 #: sharing/models.py:45 sharing/models.py:219
@@ -1467,24 +1597,25 @@ msgstr ""
 #: templates/services/iscsi_portals.html:7 templates/sharing/apple.html:14
 #: templates/sharing/unix.html:14 templates/sharing/windows.html:14
 msgid "Comment"
-msgstr ""
+msgstr "コメント"
 
 #: services/models.py:397 services/models.py:432 services/models.py:478
+#, fuzzy
 msgid "You may enter a description here for your reference."
-msgstr ""
+msgstr "のちに参照するための記述を入力できます"
 
 #: services/models.py:400 services/models.py:629
 #: templates/services/iscsi_assoctargets.html:6
 msgid "Extent"
-msgstr ""
+msgstr "エクステント"
 
 #: services/models.py:420 services/models.py:570
 msgid "Portal Group ID"
-msgstr ""
+msgstr "ポータルグループID"
 
 #: services/models.py:425 services/models.py:435
 msgid "Portal"
-msgstr ""
+msgstr "ポータル"
 
 #: services/models.py:426
 msgid ""
@@ -1496,27 +1627,27 @@ msgstr ""
 
 #: services/models.py:464 templates/services/iscsi_authini.html:6
 msgid "Initiators"
-msgstr ""
+msgstr "イニシエーター（複数）"
 
 #: services/models.py:466
 msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
-msgstr ""
+msgstr "iSCSIターゲットにアクセスできるイニシエーター　「ALL」はすべてのイニシエーターを意味します。"
 
 #: services/models.py:470
 msgid "Authorized network"
-msgstr ""
+msgstr "認証されたネットワーク"
 
 #: services/models.py:472
 msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
-msgstr ""
+msgstr "iSCSIターゲットにアクセスできるネットワーク　IPもしくはCIDRで指定してください　ただし「ALL」はすべてのネットワークを意味します"
 
 #: services/models.py:481
 msgid "Initiator"
-msgstr ""
+msgstr "イニシエーター"
 
 #: services/models.py:510
 msgid "Target side user name. It is usually the initiator name by default."
@@ -1903,27 +2034,27 @@ msgstr ""
 
 #: services/models.py:876
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "匿名ユーザーのアップロード帯域（スピード）"
 
 #: services/models.py:877
 msgid "Anonymous user upload bandwith in KB/s. Zero means infinity."
-msgstr ""
+msgstr "匿名ユーザーのアップロード帯域（スピード）KB/s　0は無制限を意味します。"
 
 #: services/models.py:881
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "匿名ユーザーのダウンロード帯域（スピード）"
 
 #: services/models.py:882
 msgid "Anonymous user download bandwith in KB/s. Zero means infinity."
-msgstr ""
+msgstr "匿名ユーザーのダウンロード帯域（スピード）KB/s　0は無制限を意味します。"
 
 #: services/models.py:885
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "SSL/TLSを有効化"
 
 #: services/models.py:890
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "このパラメーターはproftpd.confに追加されます"
 
 #: services/models.py:894 services/models.py:895
 #: templates/services/index2.html:53
@@ -1933,7 +2064,7 @@ msgstr "FTP"
 
 #: services/models.py:904
 msgid "Directory"
-msgstr ""
+msgstr "ディレクトリ"
 
 #: services/models.py:905
 msgid ""
@@ -2632,59 +2763,61 @@ msgstr ""
 
 #: storage/forms.py:77
 msgid "Read"
-msgstr ""
+msgstr "リード"
 
 #: storage/forms.py:78
 msgid "Write"
-msgstr ""
+msgstr "ライト"
 
 #: storage/forms.py:79
 msgid "Execute"
-msgstr ""
+msgstr "実行"
 
 #: storage/forms.py:92
 msgid "Owner"
-msgstr ""
+msgstr "所有者"
 
 #: storage/forms.py:92
 msgid "Other"
-msgstr ""
+msgstr "その他のユーザ"
 
 #: storage/forms.py:140 storage/forms.py:331 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr ""
+msgstr "ボリューム名"
 
 #: storage/forms.py:144 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
 msgstr ""
 
 #: storage/forms.py:217
+#, fuzzy
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\"."
-msgstr ""
+msgstr "ボリューム名は、アルファベット、数字、\"-\"、\"_\"のいずれかで始まる必要があります"
 
 #: storage/forms.py:231 system/forms.py:210 system/forms.py:216
 #: system/forms.py:221
 msgid "This field is required"
-msgstr ""
+msgstr "この項目は必須です"
 
 #: storage/forms.py:236 storage/forms.py:382 storage/forms.py:484
 msgid "You already have a volume with same name"
-msgstr ""
+msgstr "すでに同じ名前のボリュームがあります"
 
 #: storage/forms.py:242
 msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr ""
+msgstr "\"log\"は予約語のため、使用できません"
 
 #: storage/forms.py:247
+#, fuzzy
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr ""
+msgstr "数字、mirror、raidz、spareで始まるボリューム名は指定できません"
 
 #: storage/forms.py:332 storage/forms.py:431 storage/forms.py:910
 msgid "Member disk"
-msgstr ""
+msgstr "メンバディスク"
 
 #: storage/forms.py:388 storage/forms.py:509
 msgid "The selected disks were not verified for this import rules."
@@ -2692,7 +2825,7 @@ msgstr ""
 
 #: storage/forms.py:396
 msgid "Some error ocurried while labelling the disk."
-msgstr ""
+msgstr "ディスクのラベリング中にエラーが発生しました"
 
 #: storage/forms.py:606
 msgid "Volume from which this dataset will be created on"
@@ -2704,20 +2837,21 @@ msgstr ""
 
 #: storage/forms.py:608 storage/forms.py:660 storage/forms.py:717
 msgid "Compression level"
-msgstr ""
+msgstr "圧縮レベル"
 
 #: storage/forms.py:609 storage/forms.py:661 storage/forms.py:718
 msgid "Enable atime"
-msgstr ""
+msgstr "atimeの有効化"
 
 #: storage/forms.py:610 storage/forms.py:662 storage/forms.py:719
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "データセットのクォータ"
 
 #: storage/forms.py:610 storage/forms.py:611 storage/forms.py:662
 #: storage/forms.py:663 storage/forms.py:719
+#, fuzzy
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0を指定すると無制限になります 1g のように指定できます"
 
 #: storage/forms.py:611 storage/forms.py:663
 msgid "Quota for this dataset and all children"
@@ -2725,7 +2859,7 @@ msgstr ""
 
 #: storage/forms.py:612 storage/forms.py:664 storage/forms.py:720
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "データセットの予約領域"
 
 #: storage/forms.py:612 storage/forms.py:613 storage/forms.py:664
 #: storage/forms.py:665 storage/forms.py:720
@@ -2737,132 +2871,149 @@ msgid "Reserved space for this dataset and all children"
 msgstr ""
 
 #: storage/forms.py:626
+#, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
-msgstr ""
+msgstr "データセット名は、アルファベット、\"-\"、\"_\"、\":\"、\".\"のいずれかで始まる必要があります"
 
 #: storage/forms.py:633
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "すでに同じ名前のデータセットがあります"
 
+# 意訳
 #: storage/forms.py:640 storage/forms.py:697 storage/forms.py:741
+#, fuzzy
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
-msgstr ""
+msgstr "正の値もしくは0を指定してください（単位として、M、G、Tが使用できます）"
 
 #: storage/forms.py:756
 msgid "Owner (user)"
-msgstr ""
+msgstr "所有者（ユーザ）"
 
 #: storage/forms.py:759
 msgid "Owner (group)"
-msgstr ""
+msgstr "所有者（グループ）"
 
 #: storage/forms.py:761
 msgid "Mode"
-msgstr ""
+msgstr "モード"
 
 #: storage/forms.py:764
+#, fuzzy
 msgid "Set permission recursively"
-msgstr ""
+msgstr "パーミッションを再帰的に設定"
 
 #: storage/forms.py:846
 msgid "At least one day must be chosen"
-msgstr ""
+msgstr "少なくとも一つの曜日を選択する必要があります"
 
 #: storage/forms.py:851
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "再帰的なスナップショット"
 
 #: storage/forms.py:852
 msgid "Snapshot Name"
-msgstr ""
+msgstr "スナップショット名"
 
+# [-a-zA-Z0-9_.]を展開したい
 #: storage/forms.py:859
+#, fuzzy
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr ""
+msgstr "スナップショット名に使用できるのは[-a-zA-Z0-9_.]のみです"
 
 #: storage/forms.py:869
 msgid "Invalid prefix"
-msgstr ""
+msgstr "無効なプリフィクス"
 
 #: storage/forms.py:873 storage/views.py:436
 msgid "Snapshot"
-msgstr ""
+msgstr "スナップショット"
 
 #: storage/forms.py:874
+#, fuzzy
 msgid "Clone Name (must be on same volume)"
-msgstr ""
+msgstr "クローン名（クローンは同じボリューム上である必要があります）"
 
+# [-a-zA-Z0-9_.]を展開したい
 #: storage/forms.py:887
+#, fuzzy
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr ""
+msgstr "クローン名に使用できるのは[-a-zA-Z0-9_.]のみです"
 
 #: storage/forms.py:893
+#, fuzzy
 msgid "Clone must be within the same volume"
-msgstr ""
+msgstr "クローンは同じボリューム上である必要があります"
 
 #: storage/forms.py:960 storage/models.py:212
 msgid "Remote hostname"
-msgstr ""
+msgstr "リモートホスト名"
 
 #: storage/forms.py:961 storage/models.py:216
+#, fuzzy
 msgid "Remote hostkey"
-msgstr ""
+msgstr "リモートホストキー"
 
 #: storage/models.py:49
 msgid "File System Type"
-msgstr ""
+msgstr "ファイルシステムタイプ"
 
 #: storage/models.py:52 storage/models.py:77 storage/views.py:88
 #: storage/views.py:116 storage/views.py:139 templates/storage/volumes.html:59
 msgid "Volume"
-msgstr ""
+msgstr "ボリューム"
 
 #: storage/models.py:78
+#, fuzzy
 msgid "Volume this group belongs to"
-msgstr ""
+msgstr "このグループに属するボリューム"
 
+# ディスク（複数）の方がよいでしょうか？
 #: storage/models.py:91
+#, fuzzy
 msgid "Disks"
-msgstr ""
+msgstr "ディスク"
 
 #: storage/models.py:102
 msgid "Transfer Mode"
-msgstr ""
+msgstr "転送モード"
 
 #: storage/models.py:108
 msgid "HDD Standby"
-msgstr ""
+msgstr "HDDスタンバイ"
 
 #: storage/models.py:114
+#, fuzzy
 msgid "Advanced Power Management"
-msgstr ""
+msgstr "APM（Advanced Power Management）"
 
 #: storage/models.py:120
+#, fuzzy
 msgid "Acoustic Level"
-msgstr ""
+msgstr "Acoustic Level"
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
-msgstr ""
+msgstr "S.M.A.R.T.の有効化"
 
 #: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
-msgstr ""
+msgstr "S.M.A.R.T.オプション"
 
 #: storage/models.py:133
+#, fuzzy
 msgid "Group Membership"
-msgstr ""
+msgstr "グループメンバーシップ"
 
 #: storage/models.py:134
 msgid "The disk group containing this disk"
-msgstr ""
+msgstr "このディスクを含むディスクグループ"
 
 #: storage/models.py:146 storage/models.py:227 storage/models.py:253
 #: templates/storage/tasks.html:22
 msgid "Mount Point"
-msgstr ""
+msgstr "マウントポイント"
 
 #: storage/models.py:147
 msgid "Path to mount point"
@@ -2870,35 +3021,44 @@ msgstr ""
 
 #: storage/models.py:151
 msgid "Mount options"
-msgstr ""
+msgstr "マウントオプション"
 
 #: storage/models.py:152
 msgid "Enter Mount Point options here"
-msgstr ""
+msgstr "マウントオプションを入力してください"
 
+# よく見かけるエラーだが訳が難しい
+# 本当はzpool statusあたりの出力をparseできなかったときに表示されていると思う
 #: storage/models.py:169
+#, fuzzy
 msgid "Error getting total space"
-msgstr ""
+msgstr "全体容量取得エラー"
 
+# とりあえず空き容量としたが、厳密には間違っているはず。。compとかde-dupeとか使うと。提案求む。
 #: storage/models.py:175
+#, fuzzy
 msgid "Error getting available space"
-msgstr ""
+msgstr "空き容量取得エラー"
 
 #: storage/models.py:181
+#, fuzzy
 msgid "Error getting used space"
-msgstr ""
+msgstr "使用容量取得エラー"
 
 #: storage/models.py:187 storage/models.py:199
 msgid "Error"
-msgstr ""
+msgstr "エラー"
 
 #: storage/models.py:219
+#, fuzzy
 msgid "Remote Replication Host"
-msgstr ""
+msgstr "リモートリプリケーションホスト"
 
+# リモートリプリケーションホスト（複数）の方がよい？
 #: storage/models.py:220
+#, fuzzy
 msgid "Remote Replication Hosts"
-msgstr ""
+msgstr "リモートリプリケーションホスト"
 
 #: storage/models.py:231
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -2906,148 +3066,176 @@ msgstr ""
 
 #: storage/models.py:234 templates/storage/replications.html:15
 msgid "Remote Host"
-msgstr ""
+msgstr "リモートホスト"
 
 #: storage/models.py:237 templates/storage/replications.html:16
 msgid "Remote ZFS filesystem"
-msgstr ""
+msgstr "リモートZFSファイルシステム"
 
 #: storage/models.py:240
 msgid "Replication Task"
-msgstr ""
+msgstr "リプリケーションタスク"
 
+# リプリケーションタスク（複数）の方がよい？
 #: storage/models.py:241
+#, fuzzy
 msgid "Replication Tasks"
-msgstr ""
+msgstr "リプリケーションタスク"
 
 #: storage/models.py:256 templates/storage/tasks.html:23
 msgid "Recursive"
-msgstr ""
+msgstr "再帰的"
 
 #: storage/models.py:260
+#, fuzzy
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "スナップショットの存続時間"
 
 #: storage/models.py:266
+#, fuzzy
 msgid "Snapshot lifetime unit"
-msgstr ""
+msgstr "スナップショットの存続時間の単位"
 
+# 意訳
 #: storage/models.py:270
+#, fuzzy
 msgid "Begin"
-msgstr ""
+msgstr "開始時刻"
 
+# 日本語が硬い
 #: storage/models.py:271
+#, fuzzy
 msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr ""
+msgstr "何時からスナップショットを作成するのか指定します 例: 8:00"
 
+# 意訳
 #: storage/models.py:275
+#, fuzzy
 msgid "End"
-msgstr ""
+msgstr "終了時刻"
 
+# 日本語が硬い
 #: storage/models.py:276
+#, fuzzy
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr ""
+msgstr "何時までスナップショットを作成するのか指定します 例: 17:00"
 
+# 意訳
 #: storage/models.py:282
+#, fuzzy
 msgid "Interval"
-msgstr ""
+msgstr "作成間隔"
 
+# 日本語が硬い
 #: storage/models.py:283
+#, fuzzy
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
-msgstr ""
+msgstr "最後にスナップショットを作成してから何分後に新しいスナップショットを作成するのか指定します"
 
 #: storage/models.py:289
+#, fuzzy
 msgid "Occurrence"
-msgstr ""
+msgstr "発生"
 
 #: storage/models.py:290
 msgid "How the task is repeated"
 msgstr ""
 
 #: storage/models.py:295
+#, fuzzy
 msgid "Weekday"
-msgstr ""
+msgstr "曜日"
 
 #: storage/models.py:313
+#, fuzzy
 msgid "Periodic Snapshot Task"
-msgstr ""
+msgstr "定期的なスナップショットタスク"
 
+# 定期的なスナップショットタスク（複数）の方がよい？
 #: storage/models.py:314 templates/storage/index.html:9
+#, fuzzy
 msgid "Periodic Snapshot Tasks"
-msgstr ""
+msgstr "定期的なスナップショットタスク"
 
 #: storage/nav.py:10
 msgid "View All Replication Tasks"
-msgstr ""
+msgstr "全てのリプリケーションタスクを表示"
 
 #: storage/nav.py:19
+#, fuzzy
 msgid "View All Periodic Snapshot Tasks"
-msgstr ""
+msgstr "全ての定期的なスナップショットタスクを表示"
 
 #: storage/nav.py:30
 msgid "View All Snapshots"
-msgstr ""
+msgstr "全てのスナップショットを表示"
 
 #: storage/nav.py:40 templates/storage/replications.html:5
 #: templates/storage/volumes.html:6 templates/storage/volumes.html.py:11
 msgid "Create Volume"
-msgstr ""
+msgstr "ボリュームの作成"
 
 #: storage/nav.py:51 templates/storage/autoimport.html:25
 #: templates/storage/import.html:43 templates/storage/volumes.html:31
 #: templates/storage/volumes.html.py:35
 msgid "Import Volume"
-msgstr ""
+msgstr "ボリュームのインポート"
 
 #: storage/nav.py:62
 msgid "View All Volumes"
-msgstr ""
+msgstr "全てのボリュームを表示"
 
 #: storage/nav.py:73 templates/storage/volumes.html:19
 #: templates/storage/volumes.html.py:23
 msgid "Create ZFS Dataset"
-msgstr ""
+msgstr "ZFSデータセットの作成"
 
 #: storage/nav.py:84
 msgid "Add Periodic Snapshot"
-msgstr ""
+msgstr "定期的なスナップショットの追加"
 
 #: storage/nav.py:85 templates/storage/tasks.html:10
 msgid "Create Periodic Snapshot"
-msgstr ""
+msgstr "定期的なスナップショットの作成"
 
+# ボリューム（複数）の方がよい？
 #: storage/nav.py:96
+#, fuzzy
 msgid "Volumes"
-msgstr ""
+msgstr "ボリューム"
 
 #: storage/nav.py:118 storage/nav.py:138 templates/storage/volumes.html:123
 #: templates/storage/volumes.html.py:126
 msgid "Change Permissions"
-msgstr ""
+msgstr "パーミッションの変更"
 
+# 意訳
 #: storage/views.py:88 storage/views.py:116 storage/views.py:139
 #: storage/views.py:283 storage/views.py:436
 #: templates/freeadmin/generic_model_add_ok.html:1
+#, fuzzy
 msgid "successfully added"
-msgstr ""
+msgstr "追加が成功しました"
 
 #: storage/views.py:283 storage/views.py:320
 #: templates/storage/dataset_confirm_delete_ok.html:1
 msgid "Dataset"
-msgstr ""
+msgstr "データセット"
 
 #: storage/views.py:320 storage/views.py:355
+#, fuzzy
 msgid "successfully edited"
-msgstr ""
+msgstr "編集が成功しました"
 
 #: storage/views.py:322 storage/views.py:357
 msgid "Some error ocurried while setting the options"
-msgstr ""
+msgstr "オプションの設定中にエラーが発生しました"
 
 #: storage/views.py:355
+#, fuzzy
 msgid "Native dataset"
-msgstr ""
+msgstr "ネイティブデータセット"
 
 #: storage/views.py:450
 msgid "Snapshot successfully taken"
@@ -3058,16 +3246,18 @@ msgid "Snapshot successfully cloned"
 msgstr ""
 
 #: storage/views.py:518
+#, fuzzy
 msgid "Disk replacement has been initiated."
-msgstr ""
+msgstr "ディスクのリプレイスが開始されました"
 
 #: storage/views.py:522
 msgid "Some error ocurried."
-msgstr ""
+msgstr "エラーが発生しました"
 
 #: storage/views.py:544
+#, fuzzy
 msgid "Disk detach has been successfully done."
-msgstr ""
+msgstr "ディスクのデタッチが成功しました"
 
 #: system/forms.py:243
 msgid ""
@@ -3077,23 +3267,27 @@ msgstr ""
 
 #: system/forms.py:251
 msgid "New image to be installed"
-msgstr ""
+msgstr "新しいイメージがインストールされました"
 
+# 意訳
 #: system/forms.py:252 system/forms.py:275
+#, fuzzy
 msgid "SHA256 sum for the image"
-msgstr ""
+msgstr "イメージのSHA256ハッシュ値"
 
 #: system/forms.py:264
+#, fuzzy
 msgid "Invalid firmware or checksum"
-msgstr ""
+msgstr "無効なファームウェアかチェックサム"
 
 #: system/forms.py:274
 msgid "Service Pack image to be installed"
 msgstr ""
 
 #: system/forms.py:287
+#, fuzzy
 msgid "Invalid service pack or checksum"
-msgstr ""
+msgstr "無効なサービスパックかチェックサム"
 
 #: system/forms.py:297
 msgid "New config to be installed"
@@ -3101,63 +3295,67 @@ msgstr ""
 
 #: system/models.py:41
 msgid "Protocol"
-msgstr ""
+msgstr "プロトコル"
 
 #: system/models.py:47
 msgid "Language"
-msgstr ""
+msgstr "言語"
 
 #: system/models.py:53
 msgid "Timezone"
-msgstr ""
+msgstr "タイムゾーン"
 
 #: system/models.py:58
 msgid "NTP server 1"
-msgstr ""
+msgstr "NTPサーバ1"
 
 #: system/models.py:63
 msgid "NTP server 2"
-msgstr ""
+msgstr "NTPサーバ2"
 
 #: system/models.py:69
 msgid "NTP server 3"
-msgstr ""
+msgstr "NTPサーバ3"
 
 #: system/models.py:74 system/nav.py:23 templates/system/settings.html:2
 msgid "Settings"
-msgstr ""
+msgstr "設定"
 
 #: system/models.py:81
 msgid "Enable Console Menu"
-msgstr ""
+msgstr "コンソールメニューの有効化"
 
 #: system/models.py:83
+#, fuzzy
 msgid "Use Serial Console"
-msgstr ""
+msgstr "シリアルコンソールの使用"
 
 #: system/models.py:85
 msgid "Enable screen saver"
-msgstr ""
+msgstr "スクリーンセーバの有効化"
 
 #: system/models.py:87
 msgid "Automatically Check for New Firmware"
 msgstr ""
 
 #: system/models.py:89
+#, fuzzy
 msgid "Beep on boot"
-msgstr ""
+msgstr "起動時のビープ音"
 
 #: system/models.py:91
+#, fuzzy
 msgid "Enable Special System Tuning"
-msgstr ""
+msgstr "特殊なシステムチューニングの有効化"
 
 #: system/models.py:93
+#, fuzzy
 msgid "Enable powerd (Power Saving Daemon)"
-msgstr ""
+msgstr "powerdの有効化（省電力化デーモン）"
 
 #: system/models.py:95
 msgid "Enable Zeroconf/Bonjour"
-msgstr ""
+msgstr "Zeroconf/Bonjourの有効化"
 
 #: system/models.py:98
 msgid ""
@@ -3165,30 +3363,35 @@ msgid ""
 msgstr ""
 
 #: system/models.py:101
+#, fuzzy
 msgid "Show console messages in the footer (Requires UI reload)"
-msgstr ""
+msgstr "フッタへのコンソールメッセージの表示（UIのリロードが必要）"
 
 #: system/models.py:109
 msgid "MOTD banner"
-msgstr ""
+msgstr "MOTDバナー"
 
 #: system/models.py:113 templates/system/settings.html:5
+#, fuzzy
 msgid "Advanced"
-msgstr ""
+msgstr "高度な設定"
 
 #: system/models.py:122
+#, fuzzy
 msgid "From email"
-msgstr ""
+msgstr "From email"
 
 #: system/models.py:123
+#, fuzzy
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@mydomain.com"
-msgstr ""
+msgstr "システムがメールを送信するときに使用するメールアドレスを指定します 例:freenas@mydomain.com"
 
 #: system/models.py:128
+#, fuzzy
 msgid "Outgoing mail server"
-msgstr ""
+msgstr "送信メールサーバ"
 
 #: system/models.py:129
 msgid ""
@@ -3215,7 +3418,7 @@ msgstr "TLS/SSL"
 
 #: system/models.py:146
 msgid "Use SMTP Authentication"
-msgstr ""
+msgstr "SMTP認証の使用"
 
 #: system/models.py:154
 msgid "A username to authenticate to the remote server"
@@ -3226,28 +3429,31 @@ msgid "A password to authenticate to the remote server"
 msgstr ""
 
 #: system/models.py:164 templates/system/settings.html:7
+#, fuzzy
 msgid "Email"
-msgstr ""
+msgstr "Email"
 
 #: system/models.py:174
 msgid "Organization"
-msgstr ""
+msgstr "組織名"
 
 #: system/models.py:175
+#, fuzzy
 msgid "Organization Name (eg, company)"
-msgstr ""
+msgstr "組織名（例: 所属会社）"
 
 #: system/models.py:181
 msgid "Organizational Unit"
-msgstr ""
+msgstr "部門名"
 
 #: system/models.py:182
+#, fuzzy
 msgid "Organizational Unit Name (eg, section)"
-msgstr ""
+msgstr "部門名（例: 所属部門）"
 
 #: system/models.py:188 system/models.py:189
 msgid "Email Address"
-msgstr ""
+msgstr "メールアドレス"
 
 #: system/models.py:195
 msgid "Locality"
@@ -3291,12 +3497,14 @@ msgid ""
 msgstr ""
 
 #: system/nav.py:9 templates/system/reporting.html:2
+#, fuzzy
 msgid "Reporting"
-msgstr ""
+msgstr "リポート"
 
 #: system/nav.py:16
+#, fuzzy
 msgid "System Information"
-msgstr ""
+msgstr "システム情報"
 
 #: system/views.py:130
 msgid "The uploaded file is not valid."
@@ -3306,8 +3514,9 @@ msgstr ""
 #: templates/freeadmin/generic_model_add.html:13
 #: templates/freeadmin/generic_model_edit.html:14
 #: templates/network/lagg_add.html:9 templates/system/wizard.html:14
+#, fuzzy
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: templates/account/bsdgroup2user_form2.html:10
 #: templates/freeadmin/generic_model_add.html:14
@@ -3328,26 +3537,29 @@ msgstr ""
 #: templates/system/config_restore.html:11
 #: templates/system/config_upload.html:35
 msgid "Cancel"
-msgstr ""
+msgstr "キャンセル"
 
 #: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:48
 #: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:59
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
+# メンバ（複数）の方がよい？
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:50 templates/account/bsdgroups.html:62
+#, fuzzy
 msgid "Members"
-msgstr ""
+msgstr "メンバ"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/storage/tasks.html:134
 msgid "Modify"
-msgstr ""
+msgstr "変更"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
+#, fuzzy
 msgid "Remove"
-msgstr ""
+msgstr "削除"
 
 #: templates/account/bsdgroups.html:25 templates/account/bsdgroups.html:66
 msgid "Modify Group"
@@ -3355,7 +3567,7 @@ msgstr ""
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:71
 msgid "Delete Group"
-msgstr ""
+msgstr "グループの削除"
 
 #: templates/account/bsdgroups.html:37
 msgid "There are no user defined groups."
@@ -3363,32 +3575,34 @@ msgstr ""
 
 #: templates/account/bsdgroups.html:43
 msgid "Add New Group"
-msgstr ""
+msgstr "新しいグループの追加"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:62
 msgid "Home"
-msgstr ""
+msgstr "ホーム"
 
 #: templates/account/bsdusers.html:37 templates/account/bsdusers.html.py:38
 #: templates/account/bsdusers.html:89 templates/account/bsdusers.html.py:90
 msgid "Modify User"
-msgstr ""
+msgstr "ユーザの変更"
 
 #: templates/account/bsdusers.html:38 templates/account/bsdusers.html.py:90
 msgid "Auxiliary Groups"
-msgstr ""
+msgstr "補助グループ"
 
 #: templates/account/bsdusers.html:43
+#, fuzzy
 msgid "Delete User"
-msgstr ""
+msgstr "ユーザの削除"
 
 #: templates/account/bsdusers.html:43 templates/account/bsdusers.html.py:95
+#, fuzzy
 msgid "Remove User"
-msgstr ""
+msgstr "ユーザの削除"
 
 #: templates/account/bsdusers.html:54
 msgid "Add New User"
-msgstr ""
+msgstr "新しいユーザの追加"
 
 #: templates/account/bsdusers.html:101
 msgid "No users defined"
@@ -3396,39 +3610,39 @@ msgstr ""
 
 #: templates/account/passform.html:26
 msgid "Change Admin Password"
-msgstr ""
+msgstr "管理パスワードの変更"
 
 #: templates/common/menubar2.html:8
 msgid "System"
-msgstr ""
+msgstr "システム"
 
 #: templates/common/menubar2.html:13
 msgid "Network"
-msgstr ""
+msgstr "ネットワーク"
 
 #: templates/common/menubar2.html:18
 msgid "Storage"
-msgstr ""
+msgstr "ストレージ"
 
 #: templates/common/menubar2.html:23
 msgid "Sharing"
-msgstr ""
+msgstr "共有"
 
 #: templates/common/menubar2.html:33
 msgid "Log Out"
-msgstr ""
+msgstr "ログアウト"
 
 #: templates/common/menubar2.html:38
 msgid "Help"
-msgstr ""
+msgstr "ヘルプ"
 
 #: templates/common/menubar2.html:43
 msgid "Account"
-msgstr ""
+msgstr "アカウント"
 
 #: templates/common/menubar2.html:49 templates/registration/login.html:49
 msgid "Log In"
-msgstr ""
+msgstr "ログイン"
 
 #: templates/freeadmin/generic_model_add.html:9
 #: templates/freeadmin/generic_model_delete.html:10
@@ -3439,14 +3653,17 @@ msgstr ""
 #: templates/storage/snapshot_confirm_delete2.html:10
 #: templates/storage/snapshot_confirm_rollback2.html:10
 #: templates/system/config_restore.html:10 templates/system/wizard.html:13
+#, fuzzy
 msgid "Please wait..."
-msgstr ""
+msgstr "しばらくお待ちください..."
 
+# あえて敬語にしてみた
 #: templates/freeadmin/generic_model_delete.html:7
 #: templates/storage/dataset_confirm_delete2.html:7
 #: templates/storage/snapshot_confirm_delete2.html:7
+#, fuzzy
 msgid "Are you sure you want to delete?"
-msgstr ""
+msgstr "本当に削除してもよろしいですか？"
 
 #: templates/freeadmin/generic_model_delete.html:10
 #: templates/storage/dataset_confirm_delete2.html:10
@@ -3455,12 +3672,12 @@ msgstr ""
 #: templates/storage/snapshot_confirm_rollback2.html:10
 #: templates/storage/tasks.html:36 templates/system/config_restore.html:10
 msgid "Yes"
-msgstr ""
+msgstr "はい"
 
 #: templates/freeadmin/generic_model_delete_ok.html:1
 #: templates/storage/dataset_confirm_delete_ok.html:1
 msgid "sucessfully deleted"
-msgstr ""
+msgstr "削除が成功しました"
 
 #: templates/freeadmin/generic_model_edit.html:5
 msgid "Your changes have been successfully updated!"
@@ -3484,32 +3701,35 @@ msgstr ""
 #: templates/sharing/unix.html:34 templates/sharing/windows.html:38
 #: templates/storage/tasks.html:137
 msgid "Delete"
-msgstr ""
+msgstr "削除"
 
 #: templates/freeadmin/generic_model_edit_ok.html:1
 msgid "sucessfully edited"
-msgstr ""
+msgstr "編集が成功しました"
 
 #: templates/freeadmin/index.html:27
 msgid "Running Processes"
-msgstr ""
+msgstr "実行中のプロセス"
 
 #: templates/freeadmin/index.html:32 templates/freeadmin/index.html.py:36
 #: templates/freeadmin/index.html:41
+#, fuzzy
 msgid "Loading"
-msgstr ""
+msgstr "読み込み中"
 
 #: templates/freeadmin/index.html:34
+#, fuzzy
 msgid "/var/log/messages"
-msgstr ""
+msgstr "/var/log/messages"
 
 #: templates/freeadmin/index.html:43
 msgid "Reboot the System"
-msgstr ""
+msgstr "システムの再起動"
 
 #: templates/freeadmin/index.html:44 templates/freeadmin/index.html.py:55
+#, fuzzy
 msgid "Warning!"
-msgstr ""
+msgstr "注意！"
 
 #: templates/freeadmin/index.html:45
 msgid ""
@@ -3519,7 +3739,7 @@ msgstr ""
 
 #: templates/freeadmin/index.html:54
 msgid "Shutdown the System"
-msgstr ""
+msgstr "システムのシャットダウン"
 
 #: templates/freeadmin/index.html:56
 msgid ""
@@ -3533,15 +3753,15 @@ msgstr ""
 
 #: templates/freeadmin/index.html:69
 msgid "Forum"
-msgstr ""
+msgstr "フォーラム"
 
 #: templates/freeadmin/index.html:71
 msgid "Community Forum"
-msgstr ""
+msgstr "コミュニティフォーラム"
 
 #: templates/freeadmin/index.html:75
 msgid "IRC (Chat)"
-msgstr ""
+msgstr "IRC（チャット）"
 
 #: templates/freeadmin/index.html:77
 msgid "#freenas on freenode"
@@ -3549,7 +3769,7 @@ msgstr ""
 
 #: templates/freeadmin/index.html:82
 msgid "Mailing Lists"
-msgstr ""
+msgstr "メーリングリスト"
 
 #: templates/freeadmin/index.html:84
 #, fuzzy
@@ -3581,7 +3801,7 @@ msgstr ""
 
 #: templates/network/index2.html:9
 msgid "Static Routes"
-msgstr ""
+msgstr "静的ルート"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -3604,7 +3824,7 @@ msgstr ""
 #: templates/sharing/unix.html:28 templates/sharing/windows.html:32
 #: templates/storage/datagrid_disks.html:13
 msgid "Edit"
-msgstr ""
+msgstr "編集"
 
 #: templates/network/interface.html:35 templates/network/lagg.html:14
 #: templates/network/lagg.html.py:16 templates/network/lagg_members2.html:17
@@ -3613,7 +3833,7 @@ msgstr ""
 
 #: templates/network/interface.html:41 templates/network/lagg.html:46
 msgid "Delete Interface"
-msgstr ""
+msgstr "インターフェースの削除"
 
 #: templates/network/interface.html:48 templates/network/summary.html:16
 msgid "No interfaces defined"
@@ -3621,7 +3841,7 @@ msgstr ""
 
 #: templates/network/interface.html:54 templates/network/interface.html:56
 msgid "Add Interface"
-msgstr ""
+msgstr "インターフェースの追加"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 msgid "Actions"
@@ -3629,11 +3849,11 @@ msgstr ""
 
 #: templates/network/lagg.html:20
 msgid "Edit Members"
-msgstr ""
+msgstr "メンバの編集"
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
-msgstr ""
+msgstr "LAGGメンバ"
 
 #: templates/network/lagg.html:53 templates/network/lagg_members2.html:23
 msgid "No LAGG interface defined"
@@ -3645,7 +3865,7 @@ msgstr ""
 
 #: templates/network/lagg.html:62
 msgid "Add LAGG"
-msgstr ""
+msgstr "LAGGの追加"
 
 #: templates/network/lagg_add_ok.html:1
 msgid "Lagg Interface was successfully added"
@@ -3669,11 +3889,11 @@ msgstr ""
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
-msgstr ""
+msgstr "静的ルートの編集"
 
 #: templates/network/staticroute.html:26
 msgid "Delete Static Route"
-msgstr ""
+msgstr "静的ルートの削除"
 
 #: templates/network/staticroute.html:33
 msgid "No static route defined"
@@ -3681,11 +3901,11 @@ msgstr ""
 
 #: templates/network/staticroute.html:39 templates/network/staticroute.html:41
 msgid "Add Static Route"
-msgstr ""
+msgstr "静的ルートの追加"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
-msgstr ""
+msgstr "ネームサーバ"
 
 #: templates/network/summary.html:31
 msgid "No nameserver defined"
@@ -3701,11 +3921,11 @@ msgstr ""
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
-msgstr ""
+msgstr "VLANの編集"
 
 #: templates/network/vlan.html:27
 msgid "Delete VLAN"
-msgstr ""
+msgstr "VLANの削除"
 
 #: templates/network/vlan.html:34
 msgid "No VLAN defined"
@@ -3713,7 +3933,7 @@ msgstr ""
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
-msgstr ""
+msgstr "VLANインターフェースの追加"
 
 #: templates/registration/login.html:30
 msgid "Your username and password didn't match. Please try again."
@@ -3730,7 +3950,7 @@ msgstr ""
 
 #: templates/registration/logout.html:8
 msgid "You are now logged out."
-msgstr ""
+msgstr "ログアウトしました"
 
 #: templates/registration/logout.html:8
 msgid "Log back in"
@@ -3738,15 +3958,15 @@ msgstr ""
 
 #: templates/registration/password_change_done.html:20
 msgid "Success!"
-msgstr ""
+msgstr "成功！"
 
 #: templates/registration/password_change_done.html:21
 msgid "Your password was changed."
-msgstr ""
+msgstr "パスワードは変更されました"
 
 #: templates/registration/password_change_form.html:4
 msgid "Password change"
-msgstr ""
+msgstr "パスワードの変更"
 
 #: templates/registration/password_change_form.html:13
 msgid "Please correct the error below."
@@ -3761,51 +3981,51 @@ msgstr ""
 
 #: templates/registration/password_change_form.html:48
 msgid "Password (again)"
-msgstr ""
+msgstr "パスワード（確認）"
 
 #: templates/services/index2.html:13
 msgid "AFP Settings"
-msgstr ""
+msgstr "AFPの設定"
 
 #: templates/services/index2.html:24
 msgid "ActiveDirectory Settings"
-msgstr ""
+msgstr "ActiveDirectoryの設定"
 
 #: templates/services/index2.html:24
 msgid "Active Directory Settings"
-msgstr ""
+msgstr "Active Directoryの設定"
 
 #: templates/services/index2.html:35
 msgid "CIFS Settings"
-msgstr ""
+msgstr "CIFSの設定"
 
 #: templates/services/index2.html:48
 msgid "Dynamic DNS Settings"
-msgstr ""
+msgstr "Dynamic DNSの設定"
 
 #: templates/services/index2.html:59
 msgid "FTP Settings"
-msgstr ""
+msgstr "FTPの設定"
 
 #: templates/services/index2.html:70
 msgid "LDAP Settings"
-msgstr ""
+msgstr "LDAPの設定"
 
 #: templates/services/index2.html:81
 msgid "NFS Settings"
-msgstr ""
+msgstr "NFSの設定"
 
 #: templates/services/index2.html:92
 msgid "SNMP Settings"
-msgstr ""
+msgstr "SNMPの設定"
 
 #: templates/services/index2.html:103
 msgid "SSH Settings"
-msgstr ""
+msgstr "SSHの設定"
 
 #: templates/services/index2.html:114
 msgid "TFTP Settings"
-msgstr ""
+msgstr "TFTPの設定"
 
 #: templates/services/index2.html:119
 #, fuzzy
@@ -3814,11 +4034,11 @@ msgstr "iSCSI"
 
 #: templates/services/index2.html:127
 msgid "ISCSI Settings"
-msgstr ""
+msgstr "iSCSIの設定"
 
 #: templates/services/iscsi.html:3
 msgid "iSCSI Management"
-msgstr ""
+msgstr "iSCSIの管理"
 
 #: templates/services/iscsi.html:7
 msgid "Targets"
@@ -3877,7 +4097,7 @@ msgstr ""
 
 #: templates/services/iscsi_auth.html:44 templates/services/iscsi_auth.html:46
 msgid "Add iSCSI User"
-msgstr ""
+msgstr "iSCSIユーザの追加"
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
@@ -3891,14 +4111,14 @@ msgstr ""
 #: templates/services/iscsi_dextents.html:6
 #: templates/services/iscsi_targets.html:6
 msgid "Alias"
-msgstr ""
+msgstr "エイリアス"
 
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
 #: templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 msgid "Add Extent"
-msgstr ""
+msgstr "エクステントの追加"
 
 #: templates/services/iscsi_portals.html:6
 msgid "Listen"
@@ -3979,23 +4199,26 @@ msgstr ""
 
 #: templates/sharing/unix.html:13
 msgid "Mountpoint"
-msgstr ""
+msgstr "マウントポイント"
 
 #: templates/sharing/unix.html:30
+#, fuzzy
 msgid "Edit NFS Share"
-msgstr ""
+msgstr "NFS共有の設定"
 
 #: templates/sharing/unix.html:36
+#, fuzzy
 msgid "Delete NFS Share"
-msgstr ""
+msgstr "NFS共有の削除"
 
 #: templates/sharing/unix.html:50
+#, fuzzy
 msgid "Add UNIX Share"
-msgstr ""
+msgstr "UNIX共有の追加"
 
 #: templates/sharing/unix.html:52
 msgid "Add UNIX Share (NFS)"
-msgstr ""
+msgstr "UNIX共有の追加（NFS）"
 
 #: templates/sharing/windows.html:8
 msgid "There are no active Windows Shares."
@@ -4003,19 +4226,19 @@ msgstr ""
 
 #: templates/sharing/windows.html:34
 msgid "Edit Windows Share"
-msgstr ""
+msgstr "Windows共有の編集"
 
 #: templates/sharing/windows.html:40
 msgid "Delete Windows Share"
-msgstr ""
+msgstr "Windows共有の削除"
 
 #: templates/sharing/windows.html:54
 msgid "Add Windows Share"
-msgstr ""
+msgstr "Windows共有の追加"
 
 #: templates/sharing/windows.html:56
 msgid "Add Windows Share (CIFS)"
-msgstr ""
+msgstr "Windows共有の追加（CIFS）"
 
 #: templates/storage/clonesnap.html:12
 msgid "Clone Snapshot"
@@ -4023,15 +4246,17 @@ msgstr ""
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
-msgstr ""
+msgstr "データセットの編集"
 
 #: templates/storage/datasets2.html:9
 msgid "Add Dataset"
-msgstr ""
+msgstr "データセットの追加"
 
+# あえて敬語にしてみた
 #: templates/storage/disk_detach.html:7
+#, fuzzy
 msgid "Are you sure you want to detach?"
-msgstr ""
+msgstr "本当にデタッチしてよろしいですか？"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
@@ -4039,7 +4264,7 @@ msgstr ""
 
 #: templates/storage/import.html:32 templates/storage/wizard.html:43
 msgid "Filesystem type"
-msgstr ""
+msgstr "ファイルシステムタイプ"
 
 #: templates/storage/index.html:3 templates/storage/volumes.html:51
 msgid "Active Volumes"
@@ -4047,15 +4272,15 @@ msgstr ""
 
 #: templates/storage/index.html:5
 msgid "ZFS Replication"
-msgstr ""
+msgstr "ZFSリプリケーション"
 
 #: templates/storage/index.html:7
 msgid "ZFS Snapshots"
-msgstr ""
+msgstr "ZFSスナップショット"
 
 #: templates/storage/manualsnap.html:13
 msgid "Manually Create Snapshot"
-msgstr ""
+msgstr "スナップショットの手動作成"
 
 #: templates/storage/periodicsnap.html:13 templates/storage/volumes.html:130
 #: templates/storage/volumes.html.py:133
@@ -4064,7 +4289,7 @@ msgstr ""
 
 #: templates/storage/permission.html:6
 msgid "Change permission"
-msgstr ""
+msgstr "パーミッションの変更"
 
 #: templates/storage/permission.html:7
 #, python-format
@@ -4073,29 +4298,29 @@ msgstr ""
 
 #: templates/storage/permission.html:11
 msgid "Change"
-msgstr ""
+msgstr "変更"
 
 #: templates/storage/replications.html:9
 msgid "Add Replication"
-msgstr ""
+msgstr "リプリケーションの追加"
 
 #: templates/storage/replications.html:13
 msgid "Mount point"
-msgstr ""
+msgstr "マウントポイント"
 
 #: templates/storage/replications.html:14
 msgid "Last snapshot"
-msgstr ""
+msgstr "最終スナップショット"
 
 #: templates/storage/replications.html:27
 #: templates/storage/replications.html:31
 msgid "Delete Replication"
-msgstr ""
+msgstr "リプリケーションの削除"
 
 #: templates/storage/replications.html:33
 #: templates/storage/replications.html:37
 msgid "Edit Replication"
-msgstr ""
+msgstr "リプリケーションの編集"
 
 #: templates/storage/replications.html:43
 msgid "No ZFS replication available"
@@ -4107,11 +4332,11 @@ msgstr ""
 
 #: templates/storage/snapshots.html:4
 msgid "Dataset name"
-msgstr ""
+msgstr "データセット名"
 
 #: templates/storage/snapshots.html:5
 msgid "Snapshot name"
-msgstr ""
+msgstr "スナップショット名"
 
 #: templates/storage/snapshots.html:6
 msgid "Used space"
@@ -4127,7 +4352,7 @@ msgstr ""
 
 #: templates/storage/snapshots.html:25 templates/storage/snapshots.html:27
 msgid "Destroy snapshot"
-msgstr ""
+msgstr "スナップショットの破棄"
 
 #: templates/storage/snapshots.html:30 templates/storage/snapshots.html:32
 msgid "Rollback to this snapshot"
@@ -4139,7 +4364,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:6
 msgid "Periodic Snapshots"
-msgstr ""
+msgstr "定期的なスナップショット"
 
 #: templates/storage/tasks.html:14
 msgid "Periodic Snapshot Schedule"
@@ -4161,29 +4386,37 @@ msgstr ""
 msgid "No"
 msgstr ""
 
+# このあたり思いっきり言語依存っぽい
+# 無理矢理回避する書き方をしてみます
 #: templates/storage/tasks.html:42
+#, fuzzy
 msgid "From"
-msgstr ""
+msgstr "何時から："
 
 #: templates/storage/tasks.html:44
+#, fuzzy
 msgid "through"
-msgstr ""
+msgstr "何時まで："
 
 #: templates/storage/tasks.html:46
+#, fuzzy
 msgid ", every"
-msgstr ""
+msgstr "、間隔は："
 
 #: templates/storage/tasks.html:48
+#, fuzzy
 msgid "minutes,"
-msgstr ""
+msgstr "分、"
 
 #: templates/storage/tasks.html:50
+#, fuzzy
 msgid "everyday"
-msgstr ""
+msgstr "毎日"
 
 #: templates/storage/tasks.html:53
+#, fuzzy
 msgid "on every"
-msgstr ""
+msgstr "曜日は："
 
 #: templates/storage/tasks.html:143
 msgid "No periodic snapshots scheduled"
@@ -4191,19 +4424,20 @@ msgstr ""
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
-msgstr ""
+msgstr "ZFSボリュームの編集"
 
 #: templates/storage/volumes.html:42 templates/storage/volumes.html.py:46
 msgid "Auto Import Volume"
-msgstr ""
+msgstr "ボリュームの自動インポート"
 
 #: templates/storage/volumes.html:53
 msgid "There are no active volumes."
-msgstr ""
+msgstr "アクティブなボリュームがありません"
 
 #: templates/storage/volumes.html:61
+#, fuzzy
 msgid "Used"
-msgstr ""
+msgstr "使用中"
 
 #: templates/storage/volumes.html:63
 msgid "Size"
@@ -4211,28 +4445,30 @@ msgstr ""
 
 #: templates/storage/volumes.html:64
 msgid "Status"
-msgstr ""
+msgstr "ステータス"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Destroy Dataset"
-msgstr ""
+msgstr "データセットの破棄"
 
 #: templates/storage/volumes.html:99 templates/storage/volumes.html.py:103
 #: templates/storage/volumes.html:114 templates/storage/volumes.html.py:118
 msgid "Edit ZFS Options"
-msgstr ""
+msgstr "ZFSオプションの編集"
 
 #: templates/storage/volumes.html:107 templates/storage/volumes.html.py:110
 msgid "Destroy Volume"
-msgstr ""
+msgstr "ボリュームの破棄"
 
 #: templates/storage/volumes.html:140 templates/storage/volumes.html.py:144
 msgid "View Disks"
-msgstr ""
+msgstr "ディスクの表示"
 
+# 単に「ボリュームがありません」でもいいかも
 #: templates/storage/volumes.html:151
+#, fuzzy
 msgid "No volumes defined"
-msgstr ""
+msgstr "ボリュームが定義されていません"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
@@ -4240,35 +4476,41 @@ msgstr ""
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
-msgstr ""
+msgstr "グループタイプ"
 
 #: templates/storage/wizard.html:84
+#, fuzzy
 msgid "ZFS Extra"
-msgstr ""
+msgstr "ZFS Extra"
 
 #: templates/storage/wizard.html:87
+#, fuzzy
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr ""
+msgstr "logに単一のディスクを割り当てることは、非推奨です"
 
 #: templates/storage/wizard.html:93
+#, fuzzy
 msgid "Log"
-msgstr ""
+msgstr "Log"
 
 #: templates/storage/wizard.html:94
+#, fuzzy
 msgid "Cache"
-msgstr ""
+msgstr "Cache"
 
 #: templates/storage/wizard.html:95
+#, fuzzy
 msgid "Spare"
-msgstr ""
+msgstr "Spare"
 
 #: templates/storage/wizard.html:119
 msgid "Add Volume"
-msgstr ""
+msgstr "ボリュームの追加"
 
 #: templates/storage/wizard.html:120
+#, fuzzy
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "既存のデータは消去されます"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:34-0700\n"
-"PO-Revision-Date: 2011-05-18 10:00+0200\n"
-"Last-Translator: jeroenoostendorp <jeroen@oostendorp-ict.nl>\n"
+"PO-Revision-Date: 2011-05-19 13:26+0200\n"
+"Last-Translator: tommyke <thomasdevry@telenet.be>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -257,11 +257,12 @@ msgstr "Tijd Machine"
 
 #: choices.py:195
 msgid "No case folding"
-msgstr ""
+msgstr "Geen hoofd/kleine letter verandering"
 
 #: choices.py:196 choices.py:197
+#, fuzzy
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "Namen zonder hoofdletters in beide richtingen"
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
@@ -298,7 +299,7 @@ msgstr "Casette"
 
 #: choices.py:212
 msgid "Pass"
-msgstr ""
+msgstr "Geslaagd"
 
 #: choices.py:216
 msgid "read-write"
@@ -330,27 +331,23 @@ msgid "UPS goes on battery"
 msgstr "UPS schakelt over op batterij"
 
 #: choices.py:250
-#, fuzzy
 msgid "Preferred"
 msgstr "Aanbevolen"
 
 #: choices.py:251
-#, fuzzy
 msgid "Tolerated"
-msgstr "Getolereerd"
+msgstr "Toegestaan"
 
 #: choices.py:252
-#, fuzzy
 msgid "Required"
 msgstr "Vereist"
 
 #: choices.py:279 choices.py:285
 #, fuzzy
 msgid "Inherit"
-msgstr "Erf"
+msgstr "Erft"
 
 #: choices.py:280
-#, fuzzy
 msgid "On"
 msgstr "Aan"
 
@@ -359,19 +356,16 @@ msgid "Off"
 msgstr "Uit"
 
 #: choices.py:287
-#, fuzzy
 msgid "lzjb (recommended)"
 msgstr "lzjb (aanbevolen)"
 
 #: choices.py:288
-#, fuzzy
 msgid "default level"
 msgstr "standaardniveau"
 
 #: choices.py:289
-#, fuzzy
 msgid "fastest"
-msgstr "snelst"
+msgstr "snelste"
 
 #: choices.py:290
 #, fuzzy
@@ -384,24 +378,20 @@ msgid "Hour(s)"
 msgstr "Uur (uren)"
 
 #: choices.py:432
-#, fuzzy
 msgid "Day(s)"
-msgstr "Dag (en)"
+msgstr "Dag(en)"
 
 #: choices.py:433
-#, fuzzy
 msgid "Week(s)"
-msgstr "Week (weken)"
+msgstr "Week(weken)"
 
 #: choices.py:434
-#, fuzzy
 msgid "Month(s)"
-msgstr "Maand (en)"
+msgstr "Maand(en)"
 
 #: choices.py:435
-#, fuzzy
 msgid "Year(s)"
-msgstr "Jaar (jaren)"
+msgstr "Jaar(jaren)"
 
 #: choices.py:439
 msgid "Everyday"
@@ -412,12 +402,10 @@ msgid "Every selected weekday"
 msgstr "Elke geselecteerde weekdag"
 
 #: account/forms.py:93 templates/storage/volumes.html:62
-#, fuzzy
 msgid "Available"
 msgstr "Beschikbaar"
 
 #: account/forms.py:144
-#, fuzzy
 msgid "Selected"
 msgstr "Geselecteerd"
 
@@ -435,11 +423,11 @@ msgstr "Vereist. 30 tekens of minder. Enkel letters, cijfers en @/./+/-/_."
 
 #: account/forms.py:174 account/forms.py:199
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr ""
+msgstr "Deze waarde mag enkel letters, cijfers en @/./+/-/_ bevatten"
 
 #: account/forms.py:175
 msgid "E-mail"
-msgstr ""
+msgstr "E-mail"
 
 #: account/forms.py:200 account/forms.py:307 account/views.py:79
 #: services/models.py:661 system/forms.py:180 system/models.py:160
@@ -458,28 +446,28 @@ msgstr ""
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
 msgid "Shell"
-msgstr ""
+msgstr "Shell"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
-msgstr ""
+msgstr "Logins uitschakelen"
 
 #: account/forms.py:205
 msgid "Primary Group"
-msgstr ""
+msgstr "Hoofdgroep"
 
 #: account/forms.py:234
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "Er bestaat reeds een gebruiker met deze naam."
 
 #: account/forms.py:242 account/forms.py:328 account/forms.py:470
 #: system/forms.py:225
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "De wachtwoorden komen niet overeen."
 
 #: account/forms.py:247 account/forms.py:372
 msgid "Home directory has to start with /mnt/"
-msgstr ""
+msgstr "Home folder moet beginnen met /mnt/"
 
 #: account/forms.py:261 account/forms.py:265 services/forms.py:469
 #: services/forms.py:482 services/forms.py:699 storage/forms.py:223
@@ -492,8 +480,9 @@ msgid "Member users"
 msgstr ""
 
 #: account/forms.py:436
+#, fuzzy
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "hulp groepen"
 
 #: account/forms.py:458 templates/registration/password_change_form.html:39
 msgid "New password"
@@ -508,8 +497,9 @@ msgid "Old password"
 msgstr "Oude wachtwoord"
 
 #: account/forms.py:492
+#, fuzzy
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr ""
+msgstr "Uw oud wachtwoord is verkeerd. Probeer opnieuw."
 
 #: account/models.py:36 services/models.py:460 services/models.py:505
 #: templates/services/iscsi_auth.html:5
@@ -531,7 +521,7 @@ msgstr "Groep"
 #: account/models.py:61
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Groep %s is ingebouwd en kan niet worden verwijderd!"
 
 #: account/models.py:71
 msgid "User ID"
@@ -543,19 +533,19 @@ msgstr "Gebruiker %"
 
 #: account/models.py:83
 msgid "Hashed UNIX password"
-msgstr ""
+msgstr "Hashed UNIX wachtwoord"
 
 #: account/models.py:89
 msgid "Hashed SMB password"
-msgstr ""
+msgstr "Hashed SMB password"
 
 #: account/models.py:93
 msgid "Primary Group ID"
-msgstr ""
+msgstr "Primair Groep ID"
 
 #: account/models.py:98
 msgid "Home Directory"
-msgstr ""
+msgstr "Home Folder"
 
 #: account/models.py:107
 msgid "Full Name"
@@ -597,7 +587,7 @@ msgstr "Alle groepen bekijken"
 #: account/views.py:120
 #, python-format
 msgid "%s successfully update."
-msgstr ""
+msgstr "%s succesvol geupdate."
 
 #: account/views.py:94
 msgid "Admin user"
@@ -616,10 +606,12 @@ msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
 msgstr ""
+"Sorry, maar uw formulier is verlopen. Ga a.u.b. verder met het invullen van "
+"het formulier op deze pagina."
 
 #: freeadmin/navtree.py:349
 msgid "Display System Processes"
-msgstr ""
+msgstr "Toon Systeem processen"
 
 #: freeadmin/navtree.py:357 templates/freeadmin/index.html:50
 msgid "Reboot"
@@ -647,81 +639,82 @@ msgstr "%s succesvol gewist."
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
 msgstr ""
+"Nameserver 2 moet ingevuld worden voordat nameserver 3 ingevuld kan worden"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
-msgstr ""
+msgstr "Verplicht wanneer nameserver 3 wordt gebruikt"
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr ""
+msgstr "Verplicht om nameserver 1 in te vullen voor nameserver 3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr ""
+msgstr "Verplicht om nameserver 1 in te vullen voor nameserver 2"
 
 #: network/forms.py:134
 msgid "Physical NICs in the LAGG"
-msgstr ""
+msgstr "Fysieke NIC's in de LAGG"
 
 #: network/forms.py:187
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "Het netwerk '%s' is ongeldig, CIDR verwacht."
 
 #: network/models.py:42 services/models.py:1077
 #: templates/system/system_info.html:4
 msgid "Hostname"
-msgstr ""
+msgstr "Hostnaam"
 
 #: network/models.py:47
 msgid "Domain"
-msgstr ""
+msgstr "Domein"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "IPv4 standaardgateway"
 
 #: network/models.py:59
 msgid "IPv6 Default Gateway"
-msgstr ""
+msgstr "IPv6 standaardgateway"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "Naamserver 1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "Naamserver 2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "Naamserver 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:18
 #: templates/network/index2.html:3
 msgid "Global Configuration"
-msgstr ""
+msgstr "Globale instellingen"
 
 #: network/models.py:95
 msgid "NIC"
-msgstr ""
+msgstr "NIC"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Kies uw NIC"
 
 #: network/models.py:101
 msgid "Interface Name"
-msgstr ""
+msgstr "Poortnaam"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "Geef een naam aan uw NIC"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
-msgstr ""
+msgstr "DHCP"
 
 #: network/models.py:107
 msgid ""
@@ -769,12 +762,12 @@ msgstr ""
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr ""
+msgstr "Poort namen moeten vlanXX, zijn waar XX een nummer is"
 
 #: network/models.py:178 templates/network/lagg_members2.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr ""
+msgstr "fysieke poort"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
@@ -784,19 +777,19 @@ msgstr ""
 #: services/models.py:747 storage/models.py:95
 #: templates/network/staticroute.html:7 templates/network/vlan.html:8
 msgid "Description"
-msgstr ""
+msgstr "Beschrijving"
 
 #: network/models.py:199 templates/network/index2.html:11
 msgid "VLAN"
-msgstr ""
+msgstr "VLAN"
 
 #: network/models.py:215 templates/network/interface.html:5
 msgid "Interface"
-msgstr ""
+msgstr "poort"
 
 #: network/models.py:219
 msgid "Protocol Type"
-msgstr ""
+msgstr "Protocol Type"
 
 #: network/models.py:240
 msgid "LAGG Interface group"
@@ -884,32 +877,33 @@ msgid "This field is required for \"Home directories\"."
 msgstr ""
 
 #: services/forms.py:145
+#, fuzzy
 msgid "File Permission"
-msgstr ""
+msgstr "Bestand rechten"
 
 #: services/forms.py:146
 msgid "Directory Permission"
-msgstr ""
+msgstr "Folder rechten"
 
 #: services/forms.py:165
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr ""
+msgstr "Deze waarde moet tussen 0 en 65535 liggen."
 
 #: services/forms.py:171 services/forms.py:189
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
+msgstr "Deze waarde moet tussen 0 en 10000 liggen."
 
 #: services/forms.py:177 services/forms.py:183
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
+msgstr "Deze waarde moet tussen 0 en 1000 liggen."
 
 #: services/forms.py:195
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
+msgstr "Deze waarde moet tussen 1024 en 65535 liggen. 0 als standaard"
 
 #: services/forms.py:201
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr ""
+msgstr "Deze waarde moet tussen 1024 en 65535 liggen. 0 als standaard"
 
 #: services/forms.py:220
 msgid "This field is required for anonymous login"
@@ -4182,7 +4176,7 @@ msgstr ""
 
 #: templates/storage/volumes.html:63
 msgid "Size"
-msgstr ""
+msgstr "grootte"
 
 #: templates/storage/volumes.html:64
 msgid "Status"
@@ -4219,11 +4213,11 @@ msgstr ""
 
 #: templates/storage/wizard.html:84
 msgid "ZFS Extra"
-msgstr ""
+msgstr "ZFS Extra"
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr ""
+msgstr "Het gebruik van 1 log schijf is af te raden"
 
 #: templates/storage/wizard.html:93
 msgid "Log"
@@ -4234,8 +4228,9 @@ msgid "Cache"
 msgstr ""
 
 #: templates/storage/wizard.html:95
+#, fuzzy
 msgid "Spare"
-msgstr ""
+msgstr "reserve"
 
 #: templates/storage/wizard.html:119
 msgid "Add Volume"
@@ -4263,7 +4258,7 @@ msgstr ""
 
 #: templates/system/config.html:4
 msgid "Save Config"
-msgstr ""
+msgstr "Config Opslaan"
 
 #: templates/system/config.html:6
 msgid "Upload Config"
@@ -4271,7 +4266,7 @@ msgstr ""
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr ""
+msgstr "herstarten..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
@@ -4287,11 +4282,11 @@ msgstr "Opnieuw aan het opstarten..."
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr ""
+msgstr "Verzend test mail"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr ""
+msgstr "om het uur"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
@@ -4299,39 +4294,39 @@ msgstr ""
 
 #: templates/system/reporting.html:18
 msgid "Daily"
-msgstr ""
+msgstr "dagelijks"
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
-msgstr ""
+msgstr "dagelijkse grafieken"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr ""
+msgstr "wekelijks"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"
-msgstr ""
+msgstr "wekelijkse grafieken"
 
 #: templates/system/reporting.html:46
 msgid "Monthly"
-msgstr ""
+msgstr "maandelijks"
 
 #: templates/system/reporting.html:47
 msgid "Monthly Graphs"
-msgstr ""
+msgstr "maandelijkse grafieken"
 
 #: templates/system/reporting.html:60
 msgid "Yearly"
-msgstr ""
+msgstr "jaarlijks"
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"
-msgstr ""
+msgstr "jaarlijkse grafieken"
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr ""
+msgstr "Algemeen"
 
 #: templates/system/settings.html:11
 msgid "Firmware Update"
@@ -4347,7 +4342,7 @@ msgstr "Configuratie"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
-msgstr "OS Versie"
+msgstr "Versie Besturingssysteem"
 
 #: templates/system/system_info.html:12
 msgid "Platform"
