@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-19 13:37+0200\n"
+"PO-Revision-Date: 2011-05-19 13:52+0200\n"
 "Last-Translator: Frank <fw@moov.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
@@ -2038,7 +2038,9 @@ msgstr ""
 msgid "Maximum passive port"
 msgstr "Größter Passiv-Port"
 
+# bitte um Gegenprüfung :) besonders der letzte Satz...
 #: services/models.py:862
+#, fuzzy
 msgid ""
 "The maximum port to allocate for PASV style data connections (0 = use any "
 "port). Passive ports restricts the range of ports from which the server will "
@@ -2049,6 +2051,16 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
+"Die größte verwendbare Portnummer für PASV-Datenverbindungen (0 = beliebiger "
+"Port). Die Angabe von Passiv-Ports schränkt die Anzahl der möglichen "
+"Portnummer ein, die der Server für PASV-Kommandos an den Client übermitteln "
+"kann. Der Server wird eine zufällige Portnummer aus der Liste der "
+"verfügbaren Ports auswählen. Dies geschieht solange, bis ein freier Port "
+"gefunden wurde.  Die Ports müssen sich im Bereich der nicht-privilegierten "
+"Portnummern befinden (d.h. Portnummern ab 1024).Wir empfehlen Ihnen "
+"dringend, einen Bereich auszuwählen, der groß genug ist, um viele simultane "
+"PASV-Verbindungen zu ermöglichen (zum Beispiel 49152-65534, der von IANA "
+"vorgegebene Bereich für kurzlebige Portnummern)."
 
 #: services/models.py:866
 msgid "Local user upload bandwidth"
@@ -2096,7 +2108,8 @@ msgstr "SSL/TLS einschalten"
 
 #: services/models.py:890
 msgid "These parameters are added to proftpd.conf."
-msgstr "Diese Parameter werden proftpd.conf hinzugefügt."
+msgstr ""
+"Diese Parameter werden der Konfigurationsdatei proftpd.conf hinzugefügt."
 
 #: services/models.py:894 services/models.py:895
 #: templates/services/index2.html:53
@@ -2112,20 +2125,28 @@ msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
+"Das Verzeichnis, in welchem sich die Dateien befinden, die Sie zugänglich "
+"machen möchten. Darauf zugreifende Rechner müssen nicht erst in das "
+"Verzeichnis wechseln, um einen Datentransfer zu beginnen."
 
 #: services/models.py:908
 msgid "Allow New Files"
-msgstr ""
+msgstr "Neue Dateien zulassen"
 
 #: services/models.py:912
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"Diese Portnummer für Verbindungen verwenden. In der Standardeinstellung wird "
+"die Portnummer des \"tftpd\"-Dienstes verwendet, die in /etc/services "
+"definiert ist."
 
 #: services/models.py:918
 msgid "Specifies the username which the service will run as."
 msgstr ""
+"Geben Sie den Benutzernamen an, unter welchem der Dienst ausgeführt werden "
+"soll."
 
 #: services/models.py:922
 msgid "umask"

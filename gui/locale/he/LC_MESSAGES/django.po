@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-19 13:42+0200\n"
+"PO-Revision-Date: 2011-05-19 13:47+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -1936,40 +1936,42 @@ msgstr "אפשר SSL\\TLS"
 
 #: services/models.py:890
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "המאפיינים האלו מוספים לproftpd.conf."
 
 #: services/models.py:894 services/models.py:895
 #: templates/services/index2.html:53
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:904
 msgid "Directory"
-msgstr ""
+msgstr "תיקייה"
 
 #: services/models.py:905
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
+"התיקייה מכילה קבצים שאתה רוצה לפרסם. הפונדקאי המרוחק אינו צריך לעבור עם "
+"התיקייה כחלק מהעברה."
 
 #: services/models.py:908
 msgid "Allow New Files"
-msgstr ""
+msgstr "אפשר קבצים חדשים"
 
 #: services/models.py:912
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
-msgstr ""
+msgstr "הפורט להקשיב לו. הפורט ברירת מחדל להקשבה לTFTP מצוין ב/etc/services."
 
 #: services/models.py:918
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "מציין את השם משתמש שהשרות ירוץ כ."
 
 #: services/models.py:922
 msgid "umask"
-msgstr ""
+msgstr "הורד מסכה(Unmask)"
 
 #: services/models.py:923
 msgid ""

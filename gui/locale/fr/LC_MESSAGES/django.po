@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:34-0700\n"
-"PO-Revision-Date: 2011-05-19 13:42+0200\n"
+"PO-Revision-Date: 2011-05-19 13:43+0200\n"
 "Last-Translator: CsMAr51 <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -3268,10 +3268,12 @@ msgstr "Fin"
 #: storage/models.py:276
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
 msgstr ""
+"A partir de quel moment dans la journée arrêter de faire des instantanés, "
+"e.g. 17:00"
 
 #: storage/models.py:282
 msgid "Interval"
-msgstr ""
+msgstr "Intervalle"
 
 #: storage/models.py:283
 msgid ""
