@@ -1,34 +1,22 @@
-from django_nav import Nav, NavOption
-from django.utils.translation import ugettext as _
+from freeadmin.tree import TreeNode
+from django.utils.translation import ugettext_lazy as _
 
 ICON = u'SharingIcon'
 
-class ViewUNIX(NavOption):
+class ViewUNIX(TreeNode):
 
-        name = _(u'View All UNIX Shares')
-        type = 'openunixshares'
-        icon = u'ViewAllUNIXSharesIcon'
-        app_name = 'sharing'
-        model = 'NFS_Share'
+        gname = 'sharing.NFS_Share.View'
+        type = 'opensharing'
         append_app = False
-        options = []
 
-class ViewApple(NavOption):
+class ViewApple(TreeNode):
 
-        name = _(u'View All Apple Shares')
-        type = 'openappleshares'
-        icon = u'ViewAllAppleSharesIcon'
-        app_name = 'sharing'
-        model = 'AFP_Share'
+        gname = 'sharing.AFP_Share.View'
+        type = 'opensharing'
         append_app = False
-        options = []
 
-class ViewWin(NavOption):
+class ViewWin(TreeNode):
 
-        name = _(u'View All Windows Shares')
-        type = 'openwinshares'
-        icon = u'ViewAllWindowsSharesIcon'
-        app_name = 'sharing'
-        model = 'CIFS_Share'
+        gname = 'sharing.CIFS_Share.View'
+        type = 'opensharing'
         append_app = False
-        options = []

@@ -10,7 +10,7 @@ div.module p.readmore {	margin-bottom: 0px; }
 	display: block;
 	width: 100px;
 	height: 20px;
-	background: transparent url(/freenas/media/images/readmore.png) 0 0
+	background: transparent url(../images/readmore.png) 0 0
 no-repeat;
 	float: left;
 	line-height: 20px;
@@ -24,7 +24,7 @@ no-repeat;
 #page a.readmore:visited { color: #505050; }
 
 #page a.readmore:hover {
-	background: transparent url(/freenas/media/images/readmore.png) 0 -25px
+	background: transparent url(../images/readmore.png) 0 -25px
 no-repeat;
 	color: #000000;
 	text-shadow: 0px 1px 1px #ffffff, 0px 2px 2px #969696;

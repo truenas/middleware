@@ -32,6 +32,9 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
+from django.contrib.auth.views import login
+from django.contrib.auth import REDIRECT_FIELD_NAME
+from django.contrib.auth.forms import AuthenticationForm
 
 from freenasUI.account import forms
 from freenasUI.account import models
@@ -174,3 +177,22 @@ def json_groups(request):
             })
             idx += 1
     return HttpResponse(simplejson.dumps(json, indent=3))
+
+"""
+Wrapper to login to do not allow login and redirect to
+shutdown, reboot or logout pages,
+instead redirect to /
+"""
+def login_wrapper(request, template_name='registration/login.html',
+          redirect_field_name=REDIRECT_FIELD_NAME,
+          authentication_form=AuthenticationForm,
+          current_app=None, extra_context=None):
+    response = login(request, template_name='registration/login.html',
+          redirect_field_name=redirect_field_name,
+          authentication_form=authentication_form,
+          current_app=current_app, extra_context=extra_context)
+    if response.status_code in (301, 302) and response._headers.get('location', ('',''))[1] in (
+            reverse('system_reboot'), reverse('system_shutdown'), reverse('account_logout')
+            ):
+        response._headers['location'] = ('Location', '/')
+    return response

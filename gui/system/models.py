@@ -29,6 +29,7 @@
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from django.conf import settings
 
 from freenasUI import choices
 from freeadmin.models import Model
@@ -42,8 +43,8 @@ class Settings(Model):
             )
     stg_language = models.CharField(
             max_length=120, 
-            choices=choices.LANG_CHOICES, 
-            default="english", 
+            choices=settings.LANGUAGES,
+            default="en",
             verbose_name = _("Language")
             )
     stg_timezone = models.CharField(
@@ -100,6 +101,9 @@ class Advanced(Model):
     adv_consolemsg = models.BooleanField(
             verbose_name = _("Show console messages in the footer (Requires UI reload)"),
             default=True)
+    adv_traceback = models.BooleanField(
+            verbose_name = _("Show tracebacks in case of fatal errors"),
+            default=False)
     # TODO: need geom_eli in kernel
     #adv_encswap = models.BooleanField(
     #        verbose_name = _("Encrypt swap space"),

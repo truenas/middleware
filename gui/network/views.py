@@ -73,14 +73,17 @@ def _lagg_performadd(lagg):
         lagg_member_entry.save()
         order = order + 1
 
-def network(request, objtype = None):
+def network(request):
 
-    globalconf = models.GlobalConfiguration.objects.order_by("-id")[0].id
+    try:
+        globalconf = models.GlobalConfiguration.objects.order_by("-id")[0].id
+    except IndexError:
+        globalconf = models.GlobalConfiguration.objects.create().id
     variables = RequestContext(request, {
         'focus_form' : request.GET.get('tab','network'),
         'globalconf': globalconf,
     })
-    return render_to_response('network/index2.html', variables)
+    return render_to_response('network/index.html', variables)
 
 def summary(request):
 

@@ -1,0 +1,17 @@
+{% load i18n %}
+<form dojoType="dijit.form.Form">
+<script type="dojo/event" event="onSubmit" args="e">
+    formSubmit(this, e, '{% url freeadmin_model_delete app=app,model=model,oid=oid %}', 
+    null, {progressbar: true});
+</script>
+<table> 
+    <tr><td>{% trans "Are you sure you want to delete?" %}</td></tr>
+    <tr>
+        <td>
+            <button class="submitform" dojoType="dijit.form.Button" type="submit" onClick="this.set('label', '{% trans "Please wait..." %}');">{% trans "Yes" %}</button>
+
+            <button dojoType="dijit.form.Button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
+        </td>
+    </tr>
+</table>
+</form>

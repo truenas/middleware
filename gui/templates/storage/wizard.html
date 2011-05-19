@@ -2,7 +2,7 @@
 <form dojoType="dijit.form.Form">
     <script type="dojo/event" event="onSubmit" args="e">
         formSubmit(this, e,  '{% url storage_wizard %}',
-        function(){wizardcheckings();}); 
+        function(){wizardcheckings();}, {progressbar: true});
     </script>
     <table>
         {% if form.non_field_errors %}
@@ -47,6 +47,13 @@
                 <input type="radio" dojoType="dijit.form.RadioButton" name="volume_fstype" value="UFS" onClick="wizardcheckings(true);" {% if form.data.volume_fstype == "UFS" %}checked{%endif%}/> UFS<br />
                 <input type="radio" dojoType="dijit.form.RadioButton" name="volume_fstype" value="ZFS" onClick="wizardcheckings(true);" {% if form.data.volume_fstype == "ZFS" %}checked{%endif%}/>
                 ZFS
+            </td>
+        </tr>
+        <tr id="zfssectorsize" style="display: none">
+            <td>{% trans "Force 4096 bytes sector size" %}</td>
+            <td>
+                {{ form.force4khack.errors }}
+                {{ form.force4khack }}
             </td>
         </tr>
         <tr id="grpopt" {% if disks and disks|length >= 2 %}{% else %}style="display:none;"{% endif %}>

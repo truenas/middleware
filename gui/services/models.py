@@ -244,7 +244,6 @@ class iSCSITargetGlobalConfiguration(Model):
             )
     iscsi_discoveryauthgroup = models.IntegerField(
             max_length=120,
-            default='None',
             verbose_name=_("Discovery Auth Group"),
             blank=True,
             null=True,
@@ -365,7 +364,7 @@ class iSCSITargetGlobalConfiguration(Model):
         deletable = False
         menu_child_of = "ISCSI"
         icon_model = u"SettingsIcon"
-        nav_extra = {'type': 'openiscsiconf'}
+        nav_extra = {'type': 'iscsi'}
 
 class iSCSITargetExtent(Model):
     iscsi_target_extent_name = models.CharField(
@@ -399,6 +398,8 @@ class iSCSITargetExtent(Model):
     class Meta:
         verbose_name = _("Extent")
     class FreeAdmin:
+        delete_form = "ExtentDelete"
+        delete_form_filter = {'iscsi_target_extent_type__exact': 'File'} #FIXME hack for DevExtent
         menu_child_of = "ISCSI"
         icon_object = u"ExtentIcon"
         icon_model = u"ExtentIcon"
@@ -1041,28 +1042,6 @@ class ActiveDirectory(Model):
             verbose_name = _("Administrator Password"),
             help_text = _("Password of Domain Administrator account.")
             )
-    ad_windows_version = models.CharField(
-            max_length=120,
-            choices=choices.WindowsVersions,
-            default=choices.WindowsVersions[0][0],
-            verbose_name = _("Windows Version"),
-            help_text = _("The version of Microsoft Windows that Active Directory is running.")
-            )
-    ad_spn = models.CharField(
-            max_length=120,
-            verbose_name = _("Service Principal Name"),
-            help_text = _("Service Principal Name, eg service/account.")
-            )
-    ad_spnpw = models.CharField(
-            max_length=120,
-            verbose_name = _("Service Principal Name Password"),
-            help_text = _("Password of the Service Principal Name account.")
-            )
-    ad_keytab = models.TextField(
-            blank = True,
-            verbose_name = _("Kerberos Keytab File"),
-            help_text = _("The kerberos keytab file that was generated on the Active Directory server.")
-            )
 
     class Meta:
         verbose_name_plural = _("Active Directory")
@@ -1153,3 +1132,256 @@ class LDAP(Model):
     class FreeAdmin:
         deletable = False
         icon_model = "LDAPIcon"
+
+class CronJob(Model):
+    cron_minute = models.CharField(
+            max_length=100,
+            verbose_name=_("Minute"),
+            help_text=_("Values 0-59 allowed."),
+            )
+    cron_hour = models.CharField(
+            max_length=100,
+            verbose_name=_("Hour"),
+            help_text=_("Values 0-23 allowed."),
+            )
+    cron_daymonth = models.CharField(
+            max_length=100,
+            verbose_name=_("Day of month"),
+            help_text=_("Values 1-31 allowed."),
+            )
+    cron_month = models.CharField(
+            max_length=100,
+            default='1,2,3,4,5,6,7,8,9,10,a,b,c',
+            verbose_name=_("Month"),
+            )
+    cron_dayweek = models.CharField(
+            max_length=100,
+            default="1,2,3,4,5,6,7",
+            verbose_name=_("Day of week"),
+            )
+    cron_user = models.CharField(
+            max_length=60,
+            verbose_name=_("User"),
+            help_text=_("The user to run the command")
+            )
+    cron_command = models.CharField(
+            max_length=120,
+            verbose_name=_("Command"),
+            )
+    class Meta:
+        verbose_name = _("CronJob")
+        verbose_name_plural = _("CronJobs")
+
+    class FreeAdmin:
+        pass
+
+    def __unicode__(self):
+        return u"%d (%s)" % (self.id, self.cron_user)
+
+    def get_human_minute(self):
+        if self.cron_minute == '*':
+            return _(u'Every minute')
+        elif self.cron_minute.startswith('*/'):
+            return _(u'Every %s minute(s)') % self.cron_minute.split('*/')[1]
+        else:
+            return self.cron_minute
+
+    def get_human_hour(self):
+        if self.cron_hour == '*':
+            return _(u'Every hour')
+        elif self.cron_hour.startswith('*/'):
+            return _(u'Every %s hour(s)') % self.cron_hour.split('*/')[1]
+        else:
+            return self.cron_hour
+
+    def get_human_daymonth(self):
+        if self.cron_daymonth == '*':
+            return _(u'Everyday')
+        elif self.cron_daymonth.startswith('*/'):
+            return _(u'Every %s days') % self.cron_daymonth.split('*/')[1]
+        else:
+            return self.cron_daymonth
+
+    def get_human_month(self):
+        months = self.cron_month.split(",")
+        if len(months) == 12:
+            return _("Every month")
+        mchoices = dict(choices.MONTHS_CHOICES)
+        labels = []
+        for m in months:
+            labels.append(unicode(mchoices[m]))
+        return ",".join(labels)
+
+    def get_human_dayweek(self):
+        weeks = eval(self.cron_dayweek)
+        if len(weeks) == 7:
+            return _("Everyday")
+        wchoices = dict(choices.WEEK_CHOICES)
+        labels = []
+        for w in weeks:
+            labels.append(unicode(wchoices[w]))
+        return ",".join(labels)
+
+    def delete(self):
+        super(CronJob, self).delete()
+        try:
+            notifier().restart("cron")
+        except:
+            pass
+
+class Rsync(Model):
+    rsync_path = models.CharField(
+        max_length=255,
+        verbose_name=_("Path"),
+        )
+    rsync_remotehost = models.CharField(
+            max_length=120,
+            verbose_name=_("Remote Host"),
+            help_text=_("IP Address or hostname"),
+            )
+    rsync_remotedir = models.CharField(
+            max_length=120,
+            verbose_name=_("Remote Directory"),
+            help_text=_("Remote directory to sync with"),
+            )
+    rsync_desc = models.CharField(
+            max_length=120,
+            verbose_name=_("Short description"),
+            blank=True,
+            )
+    rsync_minute = models.CharField(
+            max_length=100,
+            verbose_name=_("Minute"),
+            help_text=_("Values 0-59 allowed."),
+            )
+    rsync_hour = models.CharField(
+            max_length=100,
+            verbose_name=_("Hour"),
+            help_text=_("Values 0-23 allowed."),
+            )
+    rsync_daymonth = models.CharField(
+            max_length=100,
+            verbose_name=_("Day of month"),
+            help_text=_("Values 1-31 allowed."),
+            )
+    rsync_month = models.CharField(
+            max_length=100,
+            default='1,2,3,4,5,6,7,8,9,10,a,b,c',
+            verbose_name=_("Month"),
+            )
+    rsync_dayweek = models.CharField(
+            max_length=100,
+            default="1,2,3,4,5,6,7",
+            verbose_name=_("Day of week"),
+            )
+    rsync_user = models.CharField(
+            max_length=60,
+            verbose_name=_("User"),
+            help_text=_("The user to run the command"),
+            )
+    rsync_recursive = models.BooleanField(
+            verbose_name=_("Recursive"),
+            help_text=_("Recurse into directories"),
+            default=True,
+            )
+    rsync_times = models.BooleanField(
+            verbose_name=_("Times"),
+            help_text=_("Preserve modification times"),
+            default=True,
+            )
+    rsync_compress = models.BooleanField(
+            verbose_name=_("Compress"),
+            help_text=_("Compress data during the transfer"),
+            default=True,
+            )
+    rsync_archive = models.BooleanField(
+            verbose_name=_("Archive"),
+            help_text=_("Archive mode"),
+            default=False,
+            )
+    rsync_delete = models.BooleanField(
+            verbose_name=_("Delete"),
+            help_text=_("Delete files on the receiving side that don't exist on sender"),
+            default=False,
+            )
+    rsync_quiet = models.BooleanField(
+            verbose_name=_("Quiet"),
+            help_text=_("Suppress non-error messages"),
+            default=False,
+            )
+    rsync_preserveperm = models.BooleanField(
+            verbose_name=_("Preserve permissions"),
+            help_text=_("This option causes the receiving rsync to set the destination permissions to be the same as the source permissions"),
+            default=False,
+            )
+    rsync_preserveattr = models.BooleanField(
+            verbose_name=_("Preserve extended attributes"),
+            help_text=_("This option causes rsync to update the remote extended attributes to be the same as the local ones"),
+            default=False,
+            )
+    rsync_extra = models.CharField(
+            max_length=120,
+            verbose_name=_("Extra options"),
+            help_text=_("Extra options to rsync command line (usually empty)"),
+            blank=True
+            )
+    class Meta:
+        verbose_name = _("Rsync")
+        verbose_name_plural = _("Rsyncs")
+
+    class FreeAdmin:
+        pass
+
+    def __unicode__(self):
+        return u"%d (%s)" % (self.id, self.rsync_user)
+
+    def get_human_minute(self):
+        if self.rsync_minute == '*':
+            return _(u'Every minute')
+        elif self.rsync_minute.startswith('*/'):
+            return _(u'Every %s minute(s)') % self.rsync_minute.split('*/')[1]
+        else:
+            return self.rsync_minute
+
+    def get_human_hour(self):
+        if self.rsync_hour == '*':
+            return _(u'Every hour')
+        elif self.rsync_hour.startswith('*/'):
+            return _(u'Every %s hour(s)') % self.rsync_hour.split('*/')[1]
+        else:
+            return self.rsync_hour
+
+    def get_human_daymonth(self):
+        if self.rsync_daymonth == '*':
+            return _(u'Everyday')
+        elif self.rsync_daymonth.startswith('*/'):
+            return _(u'Every %s days') % self.rsync_daymonth.split('*/')[1]
+        else:
+            return self.rsync_daymonth
+
+    def get_human_month(self):
+        months = self.rsync_month.split(",")
+        if len(months) == 12:
+            return _("Every month")
+        mchoices = dict(choices.MONTHS_CHOICES)
+        labels = []
+        for m in months:
+            labels.append(unicode(mchoices[m]))
+        return ",".join(labels)
+
+    def get_human_dayweek(self):
+        weeks = eval(self.rsync_dayweek)
+        if len(weeks) == 7:
+            return _("Everyday")
+        wchoices = dict(choices.WEEK_CHOICES)
+        labels = []
+        for w in weeks:
+            labels.append(unicode(wchoices[w]))
+        return ",".join(labels)
+
+    def delete(self):
+        super(CronJob, self).delete()
+        try:
+            notifier().restart("cron")
+        except:
+            pass

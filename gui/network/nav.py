@@ -1,51 +1,52 @@
-from django_nav import NavOption
+from freeadmin.tree import TreeNode
 from freenasUI.choices import LAGGType
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 import models
 
 ICON = u'NetworkIcon'
+BLACKLIST = ['LAGGInterfaceMembers',]
 
-class NetSummary(NavOption):
+class NetSummary(TreeNode):
 
+        gname = 'network.NetworkSummary'
         name = _(u'Network Summary')
-        type = 'network_summary'
+        type = 'opennetwork'
         icon = u'SettingsIcon'
         app_name = 'network'
-        options = []
 
-class GlobalConf(NavOption):
+class GlobalConf(TreeNode):
 
+        gname = u'network.GlobalConfiguration'
         name = _(u'Global Configuration')
-        type = 'network_global'
+        type = 'opennetwork'
         model = 'GlobalConfiguration'
         icon = u'SettingsIcon'
         app_name = 'network'
-        options = []
 
-class AddLagg(NavOption):
+class AddLagg(TreeNode):
 
-        name = _(u'Add Link Aggregation')
-        rename = _(u'Create Link Aggregation')
+        gname = 'network.LAGGInterfaceMembers.Add'
+        name = _(u'Create Link Aggregation')
         view = 'network_lagg_add'
         type = 'object'
         icon = u'AddLAGGIcon'
         model = 'LAGGInterface'
         app_name = 'network'
         append_app = False
-        options = []
 
-class ViewLagg(NavOption):
+class ViewLagg(TreeNode):
 
+        gname = 'network.LAGGInterfaceMembers.View'
         name = _(u'View All Link Aggregations')
-        type = 'viewlagg'
+        type = 'opennetwork'
         icon = u'ViewAllLAGGsIcon'
         model = 'LAGGInterface'
         app_name = 'network'
         append_app = False
-        options = []
 
-class Linkss(NavOption):
+class Linkss(TreeNode):
 
+    gname = 'network.LAGGInterfaceMembers'
     model = 'LAGGInterface'
     app_name = 'network'
     name = _(u'Link Aggregations')
@@ -53,31 +54,31 @@ class Linkss(NavOption):
 
     def __init__(self, *args, **kwargs):
 
-        #self.name = models.LAGGInterface._meta.verbose_name
-        self.options = [AddLagg,ViewLagg]
+        super(Linkss, self).__init__(*args, **kwargs)
+        self.append_children([AddLagg(),ViewLagg()])
 
         for value, name in LAGGType:
 
             laggs = models.LAGGInterface.objects.filter(lagg_protocol__exact=value)
             if laggs.count() > 0:
-                nav = NavOption()
+                nav = TreeNode()
                 nav.name = name
                 nav.icon = u'LAGGIcon'
-                nav.options = []
-                self.options.append(nav)
+                nav._children = []
+                self.append_child(nav)
 
             for lagg in laggs:
 
-                subnav = NavOption()
+                subnav = TreeNode()
                 subnav.name = lagg.lagg_interface.int_name
                 subnav.icon = u'LAGGIcon'
-                subnav.options = []
-                nav.options.append(subnav)
+                subnav._children = []
+                nav.append_child(subnav)
 
                 laggm = models.LAGGInterfaceMembers.objects.filter(\
                         lagg_interfacegroup__exact=lagg.id).order_by('lagg_ordernum')
                 for member in laggm:
-                    subsubnav = NavOption()
+                    subsubnav = TreeNode()
                     subsubnav.name = member.lagg_physnic
                     subsubnav.type = 'editobject'
                     subsubnav.icon = u'LAGGIcon'
@@ -87,43 +88,25 @@ class Linkss(NavOption):
                     subsubnav.kwargs = {'app': 'network', 'model': 'LAGGInterfaceMembers', \
                             'oid': member.id}
                     subsubnav.append_url = '?deletable=false'
-                    subsubnav.options = []
-                    subnav.options.append(subsubnav)
+                    subsubnav._children = []
+                    subnav.append_child(subsubnav)
 
         laggs = models.LAGGInterface
 
-class ViewInterfaces(NavOption):
+class ViewInterfaces(TreeNode):
 
-        name = _(u'View All Interfaces')
-        type = 'viewinterfaces'
+        gname = 'network.Interfaces.View'
+        type = 'opennetwork'
         append_app = False
-        options = []
 
-        def __init__(self, *args, **kwargs):
-            if models.Interfaces._admin.icon_view is not None:
-                self.icon = models.Interfaces._admin.icon_view
-            super(ViewInterfaces, self).__init__(*args, **kwargs)
+class ViewVLAN(TreeNode):
 
-class ViewVLAN(NavOption):
-
-        name = _(u'View All VLANs')
-        type = 'viewvlans'
+        gname = 'network.VLAN.View'
+        type = 'opennetwork'
         append_app = False
-        options = []
 
-        def __init__(self, *args, **kwargs):
-            if models.Interfaces._admin.icon_view is not None:
-                self.icon = models.VLAN._admin.icon_view
-            super(ViewVLAN, self).__init__(*args, **kwargs)
+class ViewSR(TreeNode):
 
-class ViewSR(NavOption):
-
-        name = _(u'View All Static Routes')
-        type = 'viewsr'
+        gname = 'network.StaticRoute.View'
+        type = 'opennetwork'
         append_app = False
-        options = []
-
-        def __init__(self, *args, **kwargs):
-            if models.Interfaces._admin.icon_view is not None:
-                self.icon = models.StaticRoute._admin.icon_view
-            super(ViewSR, self).__init__(*args, **kwargs)

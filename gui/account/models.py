@@ -26,7 +26,7 @@
 # $FreeBSD$
 #####################################################################
 from django.db import models
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.middleware.notifier import notifier
 from freeadmin.models import Model
@@ -53,6 +53,7 @@ class bsdGroups(Model):
         icon_object = u"GroupIcon"
         icon_model = u"GroupsIcon"
         icon_add = u"AddGroupIcon"
+        icon_view = u"ViewAllGroupsIcon"
 
     def __unicode__(self):
         return self.bsdgrp_group
@@ -122,6 +123,7 @@ class bsdUsers(Model):
         icon_object = u"UserIcon"
         icon_model = u"UsersIcon"
         icon_add = u"AddUserIcon"
+        icon_view = u"ViewAllUsersIcon"
 
     def __unicode__(self):
         return self.bsdusr_username
@@ -130,8 +132,10 @@ class bsdUsers(Model):
             raise ValueError(_("User %s is built-in and can not be deleted!") % (self.bsdusr_username))
         notifier().user_deleteuser(self.bsdusr_username.__str__())
         try:
-            gobj = bsdGroups.objects.get(bsdgrp_group = self.bsdusr_username)
-            if not gobj.bsdgrp_builtin:
+            gobj = self.bsdusr_group
+            count = bsdGroupMembership.objects.filter(bsdgrpmember_group = gobj).count()
+            count2 = bsdUsers.objects.filter(bsdusr_group = gobj).exclude(id=self.id).count()
+            if not gobj.bsdgrp_builtin and count == 0 and count2 == 0:
                 gobj.delete(reload=False)
         except:
             pass

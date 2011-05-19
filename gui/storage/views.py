@@ -292,7 +292,7 @@ def dataset_create(request):
         'focused_tab' : 'storage',
         'form': dataset_form
     })
-    return render_to_response('storage/datasets2.html', variables)
+    return render_to_response('storage/datasets.html', variables)
 
 def dataset_edit(request, object_id):
     mp = models.MountPoint.objects.get(pk=object_id)
@@ -417,7 +417,7 @@ def mp_permission(request, object_id):
         if form.is_valid():
             mp_path=mp.mp_path.__str__()
             form.commit(path=mp_path)
-            return HttpResponse(simplejson.dumps({"error": False, "message": "Mount Point permissions successfully updated."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Mount Point permissions successfully updated.")}), mimetype="application/json")
     else:
         form = forms.MountPointAccessForm(initial={'path':mp.mp_path})
     variables = RequestContext(request, {
@@ -433,7 +433,7 @@ def dataset_delete(request, object_id):
         retval = notifier().destroy_zfs_dataset(path = obj.mp_path[5:].__str__())
         if retval == '':
             obj.delete()
-            return HttpResponse(simplejson.dumps({"error": False, "message": "Dataset successfully destroyed."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset successfully destroyed.")}), mimetype="application/json")
         else:
             return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
     else:
@@ -441,14 +441,14 @@ def dataset_delete(request, object_id):
             'focused_tab' : 'storage',
             'object': obj,
         })
-        return render_to_response('storage/dataset_confirm_delete2.html', c)
+        return render_to_response('storage/dataset_confirm_delete.html', c)
 
 def snapshot_delete(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == 'POST':
         retval = notifier().destroy_zfs_dataset(path = snapshot.__str__())
         if retval == '':
-            return HttpResponse(simplejson.dumps({"error": False, "message": "Snapshot successfully deleted."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully deleted.")}), mimetype="application/json")
         else:
             return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
     else:
@@ -456,14 +456,14 @@ def snapshot_delete(request, dataset, snapname):
             'snapname' : snapname,
             'dataset' : dataset,
         })
-        return render_to_response('storage/snapshot_confirm_delete2.html', c)
+        return render_to_response('storage/snapshot_confirm_delete.html', c)
 
 def snapshot_rollback(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == "POST":
         ret = notifier().rollback_zfs_snapshot(snapshot = snapshot.__str__())
         if ret == '':
-            return HttpResponse(simplejson.dumps({"error": False, "message": "Rollback successful."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Rollback successful.")}), mimetype="application/json")
         else:
             return HttpResponse(simplejson.dumps({"error": True, "message": ret}), mimetype="application/json")
     else:
@@ -471,7 +471,7 @@ def snapshot_rollback(request, dataset, snapname):
             'snapname' : snapname,
             'dataset' : dataset,
         })
-        return render_to_response('storage/snapshot_confirm_rollback2.html', c)
+        return render_to_response('storage/snapshot_confirm_rollback.html', c)
 
 def periodicsnap(request):
 

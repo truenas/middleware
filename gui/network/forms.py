@@ -29,7 +29,7 @@
 import re
 import socket
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.common.forms import ModelForm
 from freenasUI.middleware.notifier import notifier
@@ -41,7 +41,7 @@ class InterfacesForm(ModelForm):
     class Meta:
         model = models.Interfaces 
 
-    int_interface = forms.ChoiceField(label = "NIC")
+    int_interface = forms.ChoiceField(label = _("NIC"))
 
     def __init__(self, *args, **kwargs):
         super(InterfacesForm, self).__init__(*args, **kwargs)
@@ -97,7 +97,7 @@ class GlobalConfigurationForm(ModelForm):
         return retval
 
 class VLANForm(ModelForm):
-    vlan_pint = forms.ChoiceField(label = "Parent Interface")
+    vlan_pint = forms.ChoiceField(label = _("Parent Interface"))
 
     def __init__(self, *args, **kwargs):
         super(VLANForm, self).__init__(*args, **kwargs)
@@ -106,14 +106,13 @@ class VLANForm(ModelForm):
     def clean_vlan_vint(self):
         name = self.cleaned_data['vlan_vint']
         if not re.match(r'vlan\d+', name):
-            raise forms.ValidationError("The name must be vlanXX where "
-                                        "XX is a integer")
+            raise forms.ValidationError(_("The name must be vlanXX where XX is a integer"))
         return name
 
     def clean_vlan_tag(self):
         tag = self.cleaned_data['vlan_tag']
         if  tag > 4095:
-            raise forms.ValidationError("VLAN Tags are 1 - 4095 inclusive")
+            raise forms.ValidationError(_("VLAN Tags are 1 - 4095 inclusive"))
         return tag
 
     class Meta:

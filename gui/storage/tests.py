@@ -26,26 +26,46 @@
 # $FreeBSD$
 #####################################################################
 
-"""
-This file demonstrates two different styles of tests (one doctest and one
-unittest). These will both pass when you run "manage.py test".
+from django.core.urlresolvers import reverse
+from django.conf import settings
 
-Replace these with more appropriate tests for your application.
-"""
+from storage import models
+from freeadmin.tests import TestCase
 
-from django.test import TestCase
+class UrlsTest(TestCase):
 
-class SimpleTest(TestCase):
-    def test_basic_addition(self):
-        """
-        Tests that 1 + 1 always equals 2.
-        """
-        self.failUnlessEqual(1 + 1, 2)
+    def setUp(self):
+        super(UrlsTest, self).setUp()
+        #models.Volume.objects.create(
+        #    vol_name="myzpool",
+        #    )
+        #models.DiskGroup.objects.create(
+        #    )
 
-__test__ = {"doctest": """
-Another way to test that 1 + 1 is equal to 2.
+    def test_status(self):
+        response = self.client.get(reverse('storage_home'))
+        self.assertEqual(response.status_code, 200)
 
->>> 1 + 1 == 2
-True
-"""}
+        response = self.client.get(reverse('storage_tasks'))
+        self.assertEqual(response.status_code, 200)
 
+        response = self.client.get(reverse('storage_volumes'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('storage_replications'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('storage_snapshots'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('storage_dataset'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('storage_wizard'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('storage_import'))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('storage_autoimport'))
+        self.assertEqual(response.status_code, 200)

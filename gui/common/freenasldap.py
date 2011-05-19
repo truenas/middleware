@@ -78,12 +78,18 @@ ldap.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
 
 
 def LDAPEnabled():
-    s = services.objects.filter(srv_service = 'ldap')[0]
-    return (True if s.srv_enable != 0 else False)
+    try:
+        s = services.objects.get(srv_service = 'ldap')
+        return (True if s.srv_enable != 0 else False)
+    except services.DoesNotExist:
+        return False
 
 def ActiveDirectoryEnabled():
-    s = services.objects.filter(srv_service = 'activedirectory')[0]
-    return (True if s.srv_enable != 0 else False)
+    try:
+        s = services.objects.get(srv_service = 'activedirectory')
+        return (True if s.srv_enable != 0 else False)
+    except services.DoesNotExist:
+        return False
 
 
 class FreeNAS_LDAP_UserCache(FreeNAS_BaseCache):
@@ -195,7 +201,7 @@ class FreeNAS_GroupCache(FreeNAS_BaseCache):
             FreeNAS_BaseCache.__init__(self, cachedir)
 
 
-class FreeNAS_LDAP:
+class FreeNAS_LDAP(object):
     def __init__(self, host = None, binddn = None, bindpw = None,
         basedn = None, ssl = FREENAS_LDAP_NOSSL, scope = None,
         filter = None, attributes = None):
@@ -217,6 +223,9 @@ class FreeNAS_LDAP:
             "host = %s, binddn = %s, bindpw = %s, basedn = %s, ssl = %d" %
             (self.host, self.binddn, self.bindpw, self.basedn, self.ssl))
         syslog(LOG_DEBUG, "FreeNAS_LDAP.__init__: leave")
+
+    def isOpen(self):
+        return self.__isopen == 1
 
     def __setssl(self, ssl):
         tok = FREENAS_LDAP_NOSSL
@@ -618,8 +627,10 @@ class FreeNAS_LDAP_Users:
         for user in self.__users:
             yield user
 
-    def __get_groups(self, l = LDAP.objects.all()[0], f = None):
+    def __get_groups(self, l = None, f = None):
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_groups: enter")
+        if l is None:
+            l = LDAP.objects.all().order_by('-id')[0]
 
         if not self.__gcache.empty():
             syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_groups: groups in cache")
@@ -670,8 +681,10 @@ class FreeNAS_LDAP_Users:
 
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_groups: leave")
 
-    def __get_users(self, l = LDAP.objects.all()[0], f = None):
+    def __get_users(self, l = None, f = None):
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_users: enter")
+        if l is None:
+            l = LDAP.objects.all().order_by('-id')[0]
 
         if not self.__ucache.empty():
             syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_users: users in cache")
@@ -758,8 +771,10 @@ class FreeNAS_ActiveDirectory_Users:
         for user in self.__users:
             yield user
 
-    def __get_groups(self, ad = ActiveDirectory.objects.all()[0], f = None):
+    def __get_groups(self, ad = None, f = None):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_groups: enter")
+        if ad is None:
+            ad = ActiveDirectory.objects.all().order_by('-id')[0]
 
         if not self.__gcache.empty():
             syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_groups: groups in cache")
@@ -810,8 +825,10 @@ class FreeNAS_ActiveDirectory_Users:
 
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_groups: leave")
 
-    def __get_users(self, ad = ActiveDirectory.objects.all()[0], f = None):  
+    def __get_users(self, ad = None, f = None):  
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_users: enter")
+        if ad is None:
+            ad = ActiveDirectory.objects.all().order_by('-id')[0]
 
         if not self.__ucache.empty():
             syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_users: users in cache")
@@ -916,8 +933,10 @@ class FreeNAS_LDAP_Groups:
         for group in self.__groups:
             yield group
 
-    def __get_groups(self, l = LDAP.objects.all()[0], f = None):
+    def __get_groups(self, l = None, f = None):
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Groups.__get_groups: enter")
+        if l is None:
+            l = LDAP.objects.all().order_by('-id')[0]
 
         if not self.__gcache.empty():
             syslog(LOG_DEBUG, "FreeNAS_LDAP_Groups.__get_groups: groups in cache")
@@ -987,8 +1006,10 @@ class FreeNAS_ActiveDirectory_Groups:
         for group in self.__groups:
             yield group
 
-    def __get_groups(self, ad = ActiveDirectory.objects.all()[0], f = None):
+    def __get_groups(self, ad = None, f = None):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Groups.__get_groups: enter")
+        if ad is None:
+            ad = ActiveDirectory.objects.all().order_by('-id')[0]
 
         if not self.__gcache.empty():
             syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Groups.__get_groups: groups in cache")

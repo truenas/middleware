@@ -27,21 +27,43 @@
 
     dojo.require("dojo.data.ItemFileReadStore");
     dojo.require("dojo.data.ItemFileWriteStore");
-    dojo.require("dijit.Tree");
     dojo.require("dojo.dnd.Moveable");
     //dojo.require("dijit.tree.dndSource");
-    dojo.require("dojox.grid.DataGrid");
-    dojo.require("dojox.data.JsonRestStore");
     dojo.require("dojo.NodeList-traverse");
     dojo.require("dojo.io.iframe");
+    dojo.require("dojo._base.xhr");
     dojo.require("dojox.validate.regexp");
+    dojo.require("dojox.form.FileInput");
+    dojo.require("dojox.form.CheckedMultiSelect");
+    dojo.require("dojox.grid.DataGrid");
+    dojo.require("dojox.data.JsonRestStore");
+    dojo.require("dojox.data.FileStore");
+    dojo.require("dojox.string.sprintf");
+    dojo.require("dijit.Tree");
     dojo.require("dijit.layout.BorderContainer");
     dojo.require("dijit.layout.ContentPane");
     dojo.require("dijit.layout.TabContainer");
-    dojo.require("dojox.form.FileInput");
-    dojo.require("dojo._base.xhr");
-    dojo.require("dojox.form.CheckedMultiSelect");
     dojo.require("dijit.form.MultiSelect");
+    dojo.require("dijit.ProgressBar");
+    dojo.require("dijit.MenuBar");
+    dojo.require("dijit.MenuBarItem");
+    dojo.require("dijit.Dialog");
+    dojo.require("dijit.form.Form");
+    dojo.require("dijit.form.Button");
+    dojo.require("dijit.form.Select");
+    dojo.require("dijit.form.ValidationTextBox");
+    dojo.require("dijit.form.NumberTextBox");
+    dojo.require("dijit.form.Textarea");
+    dojo.require("dijit.form.TimeTextBox");
+    dojo.require("dijit.form.ComboBox");
+    dojo.require("dijit.form.FilteringSelect");
+    dojo.require("dijit.form.NumberTextBox");
+    dojo.require("dijit.form.HorizontalSlider");
+    dojo.require("dijit.form.HorizontalRule");
+    dojo.require("dijit.form.HorizontalRuleLabels");
+
+    dojo.registerModulePath("freeadmin", "../../../../../media/lib/js/freeadmin");
+    dojo.require("freeadmin.form.Cron");
 
     dojo._contentHandlers.text = (function(old){
       return function(xhr){
@@ -76,45 +98,48 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].title == 'Reporting'){
+                if(c[i].tab == 'reporting'){
                     p.selectChild(c[i]);
                     opened = true;
-                } else if(c[i].title == 'Settings'){
+                } else if(c[i].tab == 'settings'){
                     p.selectChild(c[i]);
                     opened2 = true;
-                } else if(c[i].title == 'System Information'){
+                } else if(c[i].tab == 'sysinfo'){
                     p.selectChild(c[i]);
                     opened3 = true;
                 }
             }
             if(opened != true) {
                 var pane = new dijit.layout.ContentPane({ 
-                    title: 'Reporting',
+                    title: gettext('Reporting'),
                     refreshOnShow: true,
                     closable: true,
                     href: this.urlReporting,
                 });
+                pane.tab = 'reporting';
                 p.addChild(pane);
             }
 
             if(opened2 != true) {
                 var pane2 = new dijit.layout.ContentPane({ 
                     id: 'settingstab',
-                    title: 'Settings',
+                    title: gettext('Settings'),
                     closable: true,
                     href: this.urlSettings,
                 });
+                pane2.tab = 'settings';
                 p.addChild(pane2);
             }
 
             if(opened3 != true) {
                 var pane3 = new dijit.layout.ContentPane({ 
                     id: 'sysinfotab',
-                    title: 'System Information',
+                    title: gettext('System Information'),
                     refreshOnShow: true,
                     closable: true,
                     href: this.urlInfo,
                 });
+                pane3.tab = 'sysinfo';
                 p.addChild(pane3);
                 p.selectChild(pane3);
             }
@@ -126,7 +151,7 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].title == 'Network Settings'){
+                if(c[i].tab == 'network'){
                     p.selectChild(c[i]);
                     opened = true;
                     if(tab) {
@@ -134,7 +159,7 @@
                         if(tabnet) {
                             var c2 = tabnet.getChildren();
                             for(var j=0; j<c2.length; j++){
-                                if(c2[j].title == tab)
+                                if(c2[j].domNode.getAttribute("tab") == tab)
                                     tabnet.selectChild(c2[j]);
                             }
                         }
@@ -149,11 +174,12 @@
                 }
 
                 var pane = new dijit.layout.ContentPane({ 
-                    title: 'Network Settings',
+                    title: gettext('Network Settings'),
                     closable: true,
                     //refreshOnShow: true,
                     href: openurl,
                 });
+                pane.tab = 'network';
                 p.addChild(pane);
                 p.selectChild(pane);
             }
@@ -165,7 +191,7 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].title == 'Shares'){
+                if(c[i].tab == 'shares'){
                     p.selectChild(c[i]);
                     opened = true;
                     if(tab) {
@@ -173,7 +199,7 @@
                         if(tabnet) {
                             var c2 = tabnet.getChildren();
                             for(var j=0; j<c2.length; j++){
-                                if(c2[j].title == tab)
+                                if(c2[j].domNode.getAttribute("tab") == tab)
                                     tabnet.selectChild(c2[j]);
                             }
                         }
@@ -191,6 +217,7 @@
                     //refreshOnShow: true,
                     href: openurl,
                 });
+                pane.tab = 'shares';
                 p.addChild(pane);
                 p.selectChild(pane);
             }
@@ -202,17 +229,18 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].title == 'Services'){
+                if(c[i].tab == 'services'){
                     p.selectChild(c[i]);
                     opened = true;
                 }
             }
             if(opened != true) {
                 var pane = new dijit.layout.ContentPane({ 
-                    title: 'Services',
+                    title: gettext('Services'),
                     closable: true,
                     href: this.urlServices,
                 });
+                pane.tab = 'services';
                 p.addChild(pane);
                 p.selectChild(pane);
                 dojo.addClass(pane.domNode,["objrefresh", "data_sharing_UNIX"]);
@@ -226,7 +254,7 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].title == 'Account'){
+                if(c[i].tab == 'account'){
                     p.selectChild(c[i]);
                     opened = true;
                     if(tab) {
@@ -234,7 +262,7 @@
                         if(tabnet) {
                             var c2 = tabnet.getChildren();
                             for(var j=0; j<c2.length; j++){
-                                if(c2[j].title == tab)
+                                if(c2[j].domNode.getAttribute("tab") == tab)
                                     tabnet.selectChild(c2[j]);
                             }
                         }
@@ -248,10 +276,11 @@
                     openurl += '?tab='+tab;
                 }
                 var pane = new dijit.layout.ContentPane({ 
-                    title: 'Account',
+                    title: gettext('Account'),
                     closable: true,
                     href:openurl,
                 });
+                pane.tab = 'account';
                 p.addChild(pane);
                 p.selectChild(pane);
 
@@ -265,7 +294,7 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].title == 'Storage'){
+                if(c[i].tab == 'storage'){
                     p.selectChild(c[i]);
                     opened = true;
                     if(tab) {
@@ -273,7 +302,7 @@
                         if(tabnet) {
                             var c2 = tabnet.getChildren();
                             for(var j=0; j<c2.length; j++){
-                                if(c2[j].title == tab)
+                                if(c2[j].domNode.getAttribute("tab") == tab)
                                     tabnet.selectChild(c2[j]);
                             }
                         }
@@ -286,10 +315,11 @@
                     openurl += '?tab='+tab;
                 }
                 var pane = new dijit.layout.ContentPane({ 
-                    title: 'Storage',
+                    title: gettext('Storage'),
                     closable: true,
                     href:openurl,
                 });
+                pane.tab = 'storage';
                 p.addChild(pane);
                 p.selectChild(pane);
                 dojo.addClass(pane.domNode,["objrefresh", "data_storage_Volumes"]);
@@ -303,7 +333,7 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].title == 'iSCSI'){
+                if(c[i].tab == 'iscsi'){
                     p.selectChild(c[i]);
                     opened = true;
                     if(tab) {
@@ -311,7 +341,7 @@
                         if(tabnet) {
                             var c2 = tabnet.getChildren();
                             for(var j=0; j<c2.length; j++){
-                                if(c2[j].title == tab)
+                                if(c2[j].domNode.getAttribute("tab") == tab)
                                     tabnet.selectChild(c2[j]);
                             }
                         }
@@ -331,8 +361,36 @@
                     //refreshOnShow: true,
                     href: openurl,
                 });
+                pane.tab = 'iscsi';
                 p.addChild(pane);
                 p.selectChild(pane);
+            }
+
+        },
+        openCron: function() {
+            var opened = false;
+            var p = dijit.byId("content");
+
+            var c = p.getChildren();
+            for(var i=0; i<c.length; i++){
+                if(c[i].tab == 'cron'){
+                    p.selectChild(c[i]);
+                    opened = true;
+                }
+            }
+            if(opened != true) {
+                openurl = this.urlCron;
+
+                var pane = new dijit.layout.ContentPane({ 
+                    title: gettext('CronJobs'),
+                    closable: true,
+                    refreshOnShow: true,
+                    href: openurl,
+                });
+                pane.tab = 'cron';
+                p.addChild(pane);
+                p.selectChild(pane);
+                dojo.addClass(pane.domNode,["objrefresh", "data_services_CronJob"]);
             }
 
         }
@@ -341,7 +399,33 @@
     /* end Menu */
 
     function toggle_service(obj) {
-         obj.src = '/services/toggle/' + obj.name + '/' + Date();
+        var td = obj.parentNode;
+        var n = dojo.create("div", {  }, td);
+        dojo.addClass(n, "dijitContentPaneLoading");
+        dojo.style(n, "height", "25px");
+        dojo.style(n, "float", "left");
+
+        var xhrArgs = {
+            url: "/services/toggle/"+obj.name+"/",
+            postData: "Some random text",
+            handleAs: "json",
+            load: function(data) {
+                if(data.status == 'on') {
+                    obj.src = '/media/images/ui/buttons/on.png';
+                } else if(data.status == 'off') {
+                    obj.src = '/media/images/ui/buttons/off.png';
+                }
+                if(data.error) {
+                    setMessage(data.message, "error");
+                }
+                dojo.destroy(n);
+            },
+            error: function(error) {
+                //alert
+            }
+        }
+        var deferred = dojo.xhrPost(xhrArgs);
+
     }
 
     function buttongrid(v) {
@@ -352,17 +436,17 @@
         var content = new dijit.layout.ContentPane({});
         var b = new dijit.form.Button({label: "Edit"});
 
-        dojo.connect(b.domNode, 'onclick', function(){ editObject('Edit Disk', json.edit_url, [gridhtml,]); });
+        dojo.connect(b.domNode, 'onclick', function(){ editObject(gettext('Edit Disk'), json.edit_url, [gridhtml,]); });
         content.domNode.appendChild(b.domNode);
 
         if(json.replace_url) {
-            var b2 = new dijit.form.Button({label: "Replace"});
-            dojo.connect(b2.domNode, 'onclick', function(){ editObject('Disk Replacement', json.replace_url, [gridhtml,]); });
+            var b2 = new dijit.form.Button({label: gettext("Replace")});
+            dojo.connect(b2.domNode, 'onclick', function(){ editObject(gettext('Disk Replacement'), json.replace_url, [gridhtml,]); });
             content.domNode.appendChild(b2.domNode);
         }
         if(json.detach_url) {
-            var b3 = new dijit.form.Button({label: "Detach"});
-            dojo.connect(b3.domNode, 'onclick', function(){ editObject('Disk Detach', json.detach_url, [gridhtml,]); });
+            var b3 = new dijit.form.Button({label: gettext("Detach")});
+            dojo.connect(b3.domNode, 'onclick', function(){ editObject(gettext('Disk Detach'), json.detach_url, [gridhtml,]); });
             content.domNode.appendChild(b3.domNode);
         }
 
@@ -434,8 +518,11 @@
 
     };
 
-    formSubmit = function(item, e, url, callback) {
+    formSubmit = function(item, e, url, callback, attrs) {
         dojo.stopEvent(e); // prevent the default submit
+        if(!attrs) {
+            attrs = {};
+        }
         var qry = dojo.query('.saved', item.domNode)[0];
         if(qry) dojo.style(qry, 'display', 'none');
 
@@ -495,12 +582,15 @@
                     }
 
                 },
-	        error: function(response, ioArgs) {alert("error"); },
+	        error: function(response, ioArgs) { },
              });
 
         } else {
 
             var newData = item.get("value");
+            if (attrs.progressbar == true) {
+                rnode.set('content', '<div style="width:300px" indeterminate="true" dojoType="dijit.ProgressBar"></div>');
+            }
             dojo.xhrPost( {
                 url: url,
                 content: newData,
@@ -534,15 +624,17 @@
                     } catch(err) {
 
                         rnode.set('content', data); 
-                        if(callback) callback();
-                        var qry = dojo.query('#success', rnode.domNode);
-                        if(qry.length>0)
-                            dojo.fadeOut({node: rnode, onEnd: function() { rnode.hide(); }}).play();
+                        try {
+                            if(callback) callback();
+                            var qry = dojo.query('#success', rnode.domNode);
+                            if(qry.length>0)
+                                dojo.fadeOut({node: rnode, onEnd: function() { rnode.hide(); }}).play();
+                        } catch(err) {}
                     }
                 },
                 error: function(data) { 
 
-                        setMessage('<p>Some error ocurried!</p>', "error");
+                        setMessage(gettext('Some error ocurried!'), "error");
 
                         try {
                            rnode.hide();
@@ -681,6 +773,12 @@
             dojo.query("input[name=group_type]:checked").forEach(function(tag) { dijit.getEnclosingWidget(tag).set('checked', false);  });
         }
 
+        if(zfs) {
+            dojo.style('zfssectorsize', 'display', 'table-row');
+        } else {
+            dojo.style('zfssectorsize', 'display', 'none');
+        }
+
         if(d.length >= 3 && zfs) {
                 dojo.style("grpraidz", "display", "block");
         } else {
@@ -740,7 +838,7 @@
             closable: true, 
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
             onHide: function() { 
-                this.destroyRecursive();
+                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
                 refreshTabs(nodes);
             },
         });
@@ -782,7 +880,7 @@
             closable: true, 
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
             onHide: function() { 
-                this.destroyRecursive();
+                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
                 refreshTabs(nodes);
             },
         });
@@ -798,7 +896,7 @@
              closable: true, 
              style: "max-width: 650px;min-height:200px;max-height:500px;background-color:white;overflow:auto;",
              onHide: function() { 
-                this.destroyRecursive() 
+                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
                 refreshTabs(nodes);
              },
          });
@@ -940,30 +1038,14 @@
                     editObject(item.name, item.view, widgets);
                 } else
                     editObject(item.name, item.view);
-            } else if(item.type && item.type == 'viewlagg') {
-                Menu.openNetwork('Link Aggregation');
-            } else if(item.type && item.type == 'viewinterfaces') {
-                Menu.openNetwork('Interfaces');
-            } else if(item.type && item.type == 'viewvlans') {
-                Menu.openNetwork('VLAN');
-            } else if(item.type && item.type == 'viewsr') {
-                Menu.openNetwork('Static Routes');
-            } else if(item.type && item.type == 'network_global') {
-                Menu.openNetwork('Global Configuration');
-            } else if(item.type && item.type == 'network_summary') {
-                Menu.openNetwork('Network Summary');
+            } else if(item.type && item.type == 'opennetwork') {
+                Menu.openNetwork(item.gname);
             } else if(item.type && item.type == 'en_dis_services') {
                 Menu.openServices();
-            } else if(item.type && item.type == 'changepass') {
-                Menu.openAccount('Change Password');
-            } else if(item.type && item.type == 'changeadmin') {
-                Menu.openAccount('Change Admin User');
-            } else if(item.type && item.type == 'viewusers') {
-                Menu.openAccount('Users');
-            } else if(item.type && item.type == 'viewgroups') {
-                Menu.openAccount('Groups');
-            } else if(item.type && item.type == 'openiscsiconf') {
-                Menu.openISCSI('Target Global Configuration');
+            } else if(item.type && item.type == 'openaccount') {
+                Menu.openAccount(item.gname);
+            } else if(item.type && item.type == 'iscsi') {
+                Menu.openISCSI(item.gname);
             } else if(item.type && item.type == 'logout') {
                 window.location='/account/logout/';
             } else if(item.action && item.action == 'displayprocs') {
@@ -972,20 +1054,12 @@
                     dijit.byId("rebootDialog").show();
             } else if(item.action && item.action == 'shutdown') {
                     dijit.byId("shutdownDialog").show();
+            } else if(item.type && item.type == 'opensharing') {
+                Menu.openSharing(item.gname);
             } else if(item.type && item.type == 'openstorage') {
-                Menu.openStorage('Active Volumes');
-            } else if(item.type && item.type == 'openunixshares') {
-                Menu.openSharing('UNIX');
-            } else if(item.type && item.type == 'openwinshares') {
-                Menu.openSharing('Windows');
-            } else if(item.type && item.type == 'openappleshares') {
-                Menu.openSharing('Apple');
-            } else if(item.type && item.type == 'openperiodic') {
-                Menu.openStorage('Periodic Snapshot Tasks');
-            } else if(item.type && item.type == 'opensnaps') {
-                Menu.openStorage('ZFS Snapshots');
-            } else if(item.type && item.type == 'openreplication') {
-                Menu.openStorage('ZFS Replication');
+                Menu.openStorage(item.gname);
+            } else if(item.type && item.type == 'opencron') {
+                Menu.openCron();
             } else if(item.type && item.type == 'viewmodel') {
                 //  get the children and make sure we haven't opened this yet.
                 var c = p.getChildren();

@@ -39,6 +39,7 @@ from django.template.loader import render_to_string
 from django.template import RequestContext
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
+from django.core.urlresolvers import reverse
 
 from freenasUI.system import forms
 from freenasUI.system import models
@@ -50,11 +51,9 @@ def _system_info():
     uname1 = os.uname()[0]
     uname2 = os.uname()[2]
     platform = os.popen("sysctl -n hw.model").read()
+    physmem = str(int(int(os.popen("sysctl -n hw.physmem").read()) / 1048576)) + "MB"
     date = os.popen('env -u TZ date').read()
-    tz = os.environ.pop('TZ', None)
-    uptime = commands.getoutput("uptime | awk -F', load averages:' '{    print $1 }'")
-    if tz:
-        os.environ['TZ'] = tz
+    uptime = commands.getoutput("env -u TZ uptime | awk -F', load averages:' '{    print $1 }'")
     loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
 
     try:
@@ -69,6 +68,7 @@ def _system_info():
         'uname1': uname1,
         'uname2': uname2,
         'platform': platform,
+        'physmem': physmem,
         'date': date,
         'uptime': uptime,
         'loadavg': loadavg,
@@ -84,60 +84,6 @@ def system_info(request):
     })
     variables.update(sysinfo)
     return render_to_response('system/system_info.html', variables)
-
-def firmware_upload(request):
-
-    firmware = forms.FirmwareUploadForm()
-    variables = RequestContext(request)
-    if request.method == 'POST':
-        firmware = forms.FirmwareUploadForm(request.POST, request.FILES)
-        valid = firmware.is_valid()
-        try:
-            if valid:
-                firmware.done()
-                return render_to_response('system/firmware_ok.html')
-        except:
-            pass
-        variables.update({
-            'firmware': firmware,
-        })
-        if request.GET.has_key("iframe"):
-            return HttpResponse("<html><body><textarea>"+render_to_string('system/firmware2.html', variables)+"</textarea></boby></html>")
-        else:
-            return render_to_response('system/firmware2.html', variables)
-
-    variables.update({
-        'firmware': firmware,
-    })
-    
-    return render_to_response('system/firmware.html', variables)
-
-def firmware_location(request):
-
-    firmloc = forms.FirmwareTemporaryLocationForm()
-    variables = RequestContext(request)
-    if request.method == 'POST':
-        try:
-            firmloc = forms.FirmwareTemporaryLocationForm(request.POST)
-            if firmloc.is_valid():
-                firmloc.done()
-                firmware = forms.FirmwareUploadForm()
-                variables.update({
-                    'firmware': firmware,
-                })
-                return render_to_response('system/firmware2.html', variables)
-        except:
-            pass
-        variables.update({
-            'firmloc': firmloc,
-        })
-        return render_to_response('system/firmware_location2.html', variables)
-
-    variables.update({
-        'firmloc': firmloc,
-    })
-    
-    return render_to_response('system/firmware_location.html', variables)
 
 def config(request):
 
@@ -342,3 +288,46 @@ def clearcache(request):
         'error': error,
         'errmsg': errmsg,
         }))
+
+class DojoFileStore(object):
+    def __init__(self, path, dirsonly=False):
+        self.path = path
+        self.dirsonly = dirsonly
+    
+    def items(self):
+        if self.path == '/':
+            return self.children(self.path)
+          
+        node = self._item(self.path, self.path)
+        if node['directory']:
+            node['children'] = self.children(self.path)
+        return node
+    
+    def children(self, entry):
+        children = [ self._item(self.path, entry) for entry in os.listdir(entry) ]
+        if self.dirsonly:
+            children = [ child for child in children if child['directory']]
+        return children
+    
+    def _item(self, path, entry):
+        full_path = os.path.join(path, entry)
+        isdir = os.path.isdir(full_path)
+        item = dict(name=os.path.basename(entry), 
+                    directory=isdir,
+                    path=full_path)
+        if isdir:
+            item['children'] = True
+        
+        item['$ref'] = (reverse('system_dirbrowser', kwargs={'path':"/"})[:-1] + full_path)
+        item['id'] = item['$ref']
+        return item
+
+def directory_browser(request, path='/'):
+    """ This view provides the ajax driven directory browser callback """
+    if not path.startswith('/'):
+        path = '/%s' % path 
+
+    directories = DojoFileStore(path, dirsonly=True).items()
+    context = directories
+    content = simplejson.dumps(context)
+    return HttpResponse(content, mimetype='application/json')

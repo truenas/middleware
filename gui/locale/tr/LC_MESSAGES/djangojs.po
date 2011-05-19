@@ -1,0 +1,87 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-05-18 04:22-0700\n"
+"PO-Revision-Date: 2011-05-19 13:47+0200\n"
+"Last-Translator: Simor <batio3pzt@aol.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"X-Generator: Pootle 2.1.6\n"
+
+#: media/lib/js/freeadmin.js:113
+msgid "Reporting"
+msgstr "Raporlama"
+
+#: media/lib/js/freeadmin.js:125
+msgid "Settings"
+msgstr "Ayarlar"
+
+#: media/lib/js/freeadmin.js:136
+msgid "System Information"
+msgstr "Sistem Bilgisi"
+
+#: media/lib/js/freeadmin.js:176
+msgid "Network Settings"
+msgstr "Ağ Ayarları"
+
+#: media/lib/js/freeadmin.js:238
+msgid "Services"
+msgstr "Hizmetler"
+
+#: media/lib/js/freeadmin.js:278
+msgid "Account"
+msgstr "Hesap"
+
+#: media/lib/js/freeadmin.js:317
+msgid "Storage"
+msgstr "Depolama"
+
+#: media/lib/js/freeadmin.js:344
+msgid "CronJobs"
+msgstr "CronJobs"
+
+#: media/lib/js/freeadmin.js:398
+msgid "Edit Disk"
+msgstr "Disk Düzenleme"
+
+#: media/lib/js/freeadmin.js:402
+msgid "Replace"
+msgstr "Yer değiştir"
+
+#: media/lib/js/freeadmin.js:403
+msgid "Disk Replacement"
+msgstr "Disk Değiştirme"
+
+#: media/lib/js/freeadmin.js:407
+msgid "Detach"
+msgstr "Ayırmak"
+
+#: media/lib/js/freeadmin.js:408
+msgid "Disk Detach"
+msgstr "Disk Ayirmak"
+
+#: media/lib/js/freeadmin.js:594
+msgid "Some error ocurried!"
+msgstr "Bazı hatalar olustu!"
+
+#: media/lib/js/freeadmin/form/Cron.js:43
+msgid "Every"
+msgstr "Her"
+
+#: media/lib/js/freeadmin/form/Cron.js:51
+msgid "Each selected"
+msgstr "Seçilen her"
+
+#: media/lib/js/freeadmin/form/Cron.js:96
+msgid "Every N"
+msgstr "Her N"

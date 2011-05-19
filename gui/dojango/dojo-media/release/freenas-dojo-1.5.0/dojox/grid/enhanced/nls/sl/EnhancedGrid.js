@@ -1,1 +1,0 @@
-({"descending":"Padajoče","ascending":"Naraščajoče","nestedSort":"Ugnezdena razvrstitev","unsorted":"Ne razvrsti tega stolpca","singleSort":"Razvrsti po vrsti","sortingState":"${0} - ${1}"})

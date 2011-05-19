@@ -1,112 +1,147 @@
-from django_nav import NavOption
-from django.utils.translation import ugettext as _
+from freeadmin.tree import TreeNode
+from django.utils.translation import ugettext_lazy as _
 import models
 
 BLACKLIST = ['services','UPS']
 ICON = u'ServicesIcon'
 
-class EnDisServices(NavOption):
+class EnDisServices(TreeNode):
 
+    gname = 'services.ControlServices'
     name = _(u'Control Services')
     type = u'en_dis_services'
     icon = u'ServicesIcon'
     order = -1
-    options = []
 
-class ISCSIDeviceAdd(NavOption):
+class ISCSITargetAuthorizedInitiatorView(TreeNode):
 
-    name = u'Add Device Extent'
+    gname = 'services.iSCSITargetAuthorizedInitiator.View'
+    type = u'iscsi'
+    append_app = False
+
+class ISCSITargetAuthCredentialView(TreeNode):
+
+    gname = 'services.iSCSITargetAuthCredential.View'
+    type = u'iscsi'
+    append_app = False
+
+class ISCSITargetPortalView(TreeNode):
+
+    gname = 'services.iSCSITargetPortal.View'
+    type = u'iscsi'
+    append_app = False
+
+class ISCSITargetToExtentView(TreeNode):
+
+    gname = 'services.iSCSITargetToExtent.View'
+    type = u'iscsi'
+    append_app = False
+
+class ISCSITargetView(TreeNode):
+
+    gname = 'services.iSCSITarget.View'
+    type = u'iscsi'
+    append_app = False
+
+class ISCSIDeviceAdd(TreeNode):
+
+    gname = 'services.iSCSITargetDeviceExtent.Add'
+    name = _(u'Add Device Extent')
     type = u'object'
     view = u'freeadmin_model_add'
     kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'mf': 'iSCSITargetDeviceExtentForm'}
     icon = u'AddExtentIcon'
     append_app = False
-    options = []
 
-class ISCSIDeviceView(NavOption):
+class ISCSIDeviceView(TreeNode):
 
-    name = u'View All Device Extents'
-    type = u'viewmodel'
-    view = u'freeadmin_model_datagrid'
-    kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
+    gname = 'services.iSCSITargetDeviceExtent.View'
+    name = _(u'View All Device Extents')
+    type = u'iscsi'
     icon = u'ViewAllExtentsIcon'
     append_app = False
     app_name = 'services'
     model = 'DExtents'
-    options = []
 
-class ISCSIDevice(NavOption):
+class ISCSIDevice(TreeNode):
 
-    name = u'Device Extents'
+    gname = 'services.iSCSITargetDeviceExtent'
+    name = _(u'Device Extents')
     type = u'iscsi'
     icon = u'ExtentIcon'
+    order_child = False
     append_app = False
-    options = [NavOption,]
 
     def __init__(self, *args, **kwargs):
 
-        self.options = []
+        super(ISCSIDevice, self).__init__(*args, **kwargs)
         for ext in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__exact='Disk').order_by('-id'):
-            nav = NavOption()
+            nav = TreeNode()
             nav.name = unicode(ext)
             nav.view = u'freeadmin_model_edit'
             nav.type = 'object'
             nav.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'oid': ext.id, 'mf': 'iSCSITargetDeviceExtentForm'}
             nav.icon = u'ExtentIcon'
-            self.options.append(nav)
-        self.options += [ISCSIDeviceAdd,ISCSIDeviceView]
+            self.insert_child(0, nav)
+        self.append_children([ISCSIDeviceAdd(), ISCSIDeviceView()])
 
-class ISCSIExtAdd(NavOption):
+class ISCSIExtAdd(TreeNode):
 
-    name = u'Add Extent'
+    gname = 'services.iSCSITargetExtent.Add'
+    name = _(u'Add Extent')
     type = u'object'
     view = u'freeadmin_model_add'
     kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'mf': 'iSCSITargetFileExtentForm'}
     icon = u'AddExtentIcon'
     append_app = False
-    options = []
 
-class ISCSIExtView(NavOption):
+class ISCSIExtView(TreeNode):
 
-    name = u'View All Extents'
-    type = u'viewmodel'
+    gname = 'services.iSCSITargetExtent.View'
+    name = _(u'View All Extents')
+    type = u'iscsi'
     view = u'freeadmin_model_datagrid'
     kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
     icon = u'ViewAllExtentsIcon'
     append_app = False
     app_name = 'services'
     model = 'Extents'
-    options = []
 
-class ISCSIExt(NavOption):
+class ISCSIExt(TreeNode):
 
-    name = u'Extents'
+    gname = 'services.iSCSITargetExtent'
+    name = _(u'Extents')
     type = u'iscsi'
     icon = u'ExtentIcon'
     order_child = False
     append_app = False
-    options = []
 
     def __init__(self, *args, **kwargs):
 
-        self.options = []
+        super(ISCSIExt, self).__init__(*args, **kwargs)
         for ext in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__exact='File').order_by('-id'):
-            nav = NavOption()
+            nav = TreeNode()
             nav.name = unicode(ext)
             nav.view = u'freeadmin_model_edit'
             nav.type = 'object'
             nav.kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'oid': ext.id}
             nav.icon = u'ExtentIcon'
-            self.options.append(nav)
-        self.options += [ISCSIExtAdd,ISCSIExtView]
+            self.append_child(nav)
+        self.append_children([ISCSIExtAdd(),ISCSIExtView()])
 
-class ISCSI(NavOption):
+class ISCSI(TreeNode):
 
-    name = u'ISCSI'
+    gname = 'ISCSI'
+    name = _(u'ISCSI')
     type = u'iscsi'
     icon = u'iSCSIIcon'
-    options = [ISCSIDevice]
 
-    #def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        super(ISCSI, self).__init__(*args, **kwargs)
+        self.append_children([ISCSIDevice()])
 
-    #    self.options = []
+class ViewCron(TreeNode):
+
+        gname = 'services.CronJob.View'
+        type = 'opencron'
+        append_app = False

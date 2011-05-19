@@ -4,6 +4,9 @@
     formSubmit(this, e, '{% url freeadmin_model_delete app=app,model=model,oid=oid %}');
 </script>
 <table> 
+{% if form %}
+    {{ form }}
+{% endif %}
     <tr><td>{% trans "Are you sure you want to delete?" %}</td></tr>
     <tr>
         <td>

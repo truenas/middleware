@@ -26,26 +26,63 @@
 # $FreeBSD$
 #####################################################################
 
-"""
-This file demonstrates two different styles of tests (one doctest and one
-unittest). These will both pass when you run "manage.py test".
+from django.core.urlresolvers import reverse
+from django.conf import settings
 
-Replace these with more appropriate tests for your application.
-"""
+from services import models
+from freeadmin.tests import TestCase
 
-from django.test import TestCase
+class UrlsTest(TestCase):
 
-class SimpleTest(TestCase):
-    def test_basic_addition(self):
-        """
-        Tests that 1 + 1 always equals 2.
-        """
-        self.failUnlessEqual(1 + 1, 2)
+    def setUp(self):
+        super(UrlsTest, self).setUp()
+        models.services.objects.create(srv_service='ldap',srv_enable=False)
+        models.services.objects.create(srv_service='activedirectory',srv_enable=False)
+        models.CIFS.objects.create()
+        models.FTP.objects.create()
+        models.TFTP.objects.create()
+        models.NFS.objects.create()
+        models.DynamicDNS.objects.create()
+        models.AFP.objects.create()
+        models.SNMP.objects.create()
+        models.SSH.objects.create()
+        models.ActiveDirectory.objects.create()
+        models.LDAP.objects.create()
+        models.iSCSITargetGlobalConfiguration.objects.create()
 
-__test__ = {"doctest": """
-Another way to test that 1 + 1 is equal to 2.
+    def test_status(self):
+        response = self.client.get(reverse('services_home'))
+        self.assertEqual(response.status_code, 200)
 
->>> 1 + 1 == 2
-True
-"""}
+        response = self.client.get(reverse('freeadmin_model_edit', kwargs={'app':'services','model': 'CIFS', 'oid': models.CIFS.objects.all().order_by('-id')[0].id}))
+        self.assertEqual(response.status_code, 200)
 
+        response = self.client.get(reverse('freeadmin_model_edit', kwargs={'app':'services','model': 'FTP', 'oid': models.FTP.objects.all().order_by('-id')[0].id}))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('freeadmin_model_edit', kwargs={'app':'services','model': 'TFTP', 'oid': models.TFTP.objects.all().order_by('-id')[0].id}))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('freeadmin_model_edit', kwargs={'app':'services','model': 'NFS', 'oid': models.NFS.objects.all().order_by('-id')[0].id}))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('freeadmin_model_edit', kwargs={'app':'services','model': 'DynamicDNS', 'oid': models.DynamicDNS.objects.all().order_by('-id')[0].id}))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('freeadmin_model_edit', kwargs={'app':'services','model': 'AFP', 'oid': models.AFP.objects.all().order_by('-id')[0].id}))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('freeadmin_model_edit', kwargs={'app':'services','model': 'SNMP', 'oid': models.SNMP.objects.all().order_by('-id')[0].id}))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('freeadmin_model_edit', kwargs={'app':'services','model': 'SSH', 'oid': models.SSH.objects.all().order_by('-id')[0].id}))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('freeadmin_model_edit', kwargs={'app':'services','model': 'LDAP', 'oid': models.LDAP.objects.all().order_by('-id')[0].id}))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('freeadmin_model_edit', kwargs={'app':'services','model': 'ActiveDirectory', 'oid': models.ActiveDirectory.objects.all().order_by('-id')[0].id}))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('freeadmin_model_edit', kwargs={'app':'services','model': 'iSCSITargetGlobalConfiguration', 'oid': models.iSCSITargetGlobalConfiguration.objects.all().order_by('-id')[0].id}))
+        self.assertEqual(response.status_code, 200)

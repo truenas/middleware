@@ -1,6 +1,6 @@
 {% load i18n %}
 <button id="periodicSnapBtn" dojoType="dijit.form.Button" type="button">
-        <img src="/freenas/media/images/ui/buttons/create_periodic_snapshot.png">
+        <img src="{{ STATIC_URL }}images/ui/buttons/create_periodic_snapshot.png">
         <br />
     <script type="dojo/method" event="onClick" args="evt">
         addObject('{% trans "Periodic Snapshots" %}', '{% url storage_periodicsnap %}', [this,]);
@@ -29,7 +29,7 @@
 	{% for p in task_list %}
 	<tr class="{% cycle 'odd' 'even' %}" id="task{{ p.id }}">
 	    <td>
-		{{ p.task_mountpoint.mp_volume.vol_name }}
+		{{ p.task_mountpoint.mp_path }}
 	    </td>
 	    <td>
 		{% if p.task_recursive %}

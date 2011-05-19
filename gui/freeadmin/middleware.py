@@ -27,6 +27,10 @@
 #####################################################################
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.utils.cache import patch_vary_headers
+from django.utils import translation
+
+from system.models import Settings
 
 def public(f):
     f.__is_public = True
@@ -43,3 +47,24 @@ class RequireLoginMiddleware(object):
         if hasattr(view_func, '__is_public'):
             return None
         return login_required(view_func)(request,*view_args,**view_kwargs)
+
+class LocaleMiddleware(object):
+
+    def process_request(self, request):
+        if request.method == 'GET' and 'lang' in request.GET:
+                language = request.GET['lang']
+        else:
+            #FIXME we could avoid this db hit using a cache, 
+            # invalidated when settings are edited
+            language = Settings.objects.order_by('-id')[0].stg_language
+        
+        for lang in settings.LANGUAGES:
+            if lang[0] == language:
+                translation.activate(language)
+                
+    def process_response(self, request, response):
+        patch_vary_headers(response, ('Accept-Language',))
+        if 'Content-Language' not in response:
+            response['Content-Language'] = translation.get_language()
+        translation.deactivate()
+        return response

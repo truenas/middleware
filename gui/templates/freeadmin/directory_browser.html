@@ -1,0 +1,42 @@
+{% load i18n %}
+<input dojoType="dijit.form.TextBox" name="{{ name }}" value="{{ value|default_if_none:"" }}" id="{{ attrs.id }}" />
+<button dojoType="dijit.form.Button" label="{% trans "Browse" %}">
+    <script type="dojo/connect" event="onClick">
+    if(this.get('label') == '{% trans "Close" %}') {
+        dojo.style('{{ attrs.id }}_container', 'display', 'none');
+        this.set('label', '{% trans "Browse" %}');
+     } else {
+        dojo.style('{{ attrs.id }}_container', 'display', 'block');
+        this.set('label', '{% trans "Close" %}');
+     }
+     </script>
+</button>
+
+<div id="{{ attrs.id }}_container" style="display: none">
+
+<div id="{{ attrs.id }}_browser"></div>
+    <div 
+        dojoType="dojox.data.JsonRestStore" 
+        target="{% url system_dirbrowser path="/" %}"
+        labelAttribute="name" 
+        jsId="{{ attrs.id }}_store">
+    </div>
+    <div dojoType="dijit.tree.ForestStoreModel" 
+         jsId="{{ attrs.id }}_model" 
+         store="{{ attrs.id }}_store"
+         query="{}" 
+         rootId="items" 
+         rootLabel="/" 
+         childrenAttrs="children" 
+         deferItemLoadingUntilExpand="true">
+    </div>
+    <div id="{{ attrs.id }}_tree" 
+        dojoType="dijit.Tree" 
+        model="{{ attrs.id }}_model" 
+        persist="false"
+        style="height: 300px; overflow: auto">
+        <script type="dojo/connect" event="onClick" args="obj, node, ev">
+            dojo.attr('{{ attrs.id }}', 'value', node.item.path);
+        </script>
+    </div>
+</div>

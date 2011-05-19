@@ -45,6 +45,7 @@ sys.path.append(NETWORK_PATH)
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
 from django.db import models
+from django.contrib.auth.models import User
 
 from freenasUI.choices import NICChoices, LAGGType
 from freenasUI.network import models
@@ -402,6 +403,22 @@ def configure_interface():
             print "Failed"
         print "ok"
         return True
+
+def reset_gui_login():
+    User.objects.all().delete()
+    admin = User.objects.create(username="admin", email="freenas@local.domain", is_superuser=True, is_staff=True)
+    admin.set_password("freenas")
+    admin.save()
+    print """
+    The login information for the WebGUI has been reseted:
+
+    login: admin
+    passwird: freenas
+
+
+    Press any key to continue
+    """
+    raw_input("")
 
 def configure_lagg_interface():
     lagg_index = 0
@@ -770,9 +787,10 @@ def main_menu():
                 4: configure_default_route,
                 5: configure_static_routes,
                 6: configure_dns,
-                7: shell,
-                8: reboot,
-                9: shutdown
+                7: reset_gui_login,
+                8: shell,
+                9: reboot,
+                10: shutdown
               }
 
     while True:
@@ -785,15 +803,19 @@ Console setup
 4) Configure Default Route
 5) Configure Static Routes
 6) Configure DNS
-7) Shell
-8) Reboot
-9) Shutdown
+7) Reset WebGUI login credentials
+8) Shell
+9) Reboot
+10) Shutdown
         """
         show_ip()
 
-        ch = raw_input("Enter an option from 1-9: ")
-        if re.match("^[1-9]$", ch):
-            handler[int(ch)]()
+        try:
+            ch = int(raw_input("Enter an option from 1-10: "))
+        except ValueError:
+            ch = None
+        if ch >= 1 and ch <= 10:
+            handler[ch]()
             continue
         else:
             continue
