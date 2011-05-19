@@ -13,7 +13,7 @@ class Migration(SchemaMigration):
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('rsync_path', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('rsync_remotehost', self.gf('django.db.models.fields.CharField')(max_length=120)),
-            ('rsync_remotedir', self.gf('django.db.models.fields.CharField')(max_length=120)),
+            ('rsync_remotemodule', self.gf('django.db.models.fields.CharField')(max_length=120)),
             ('rsync_desc', self.gf('django.db.models.fields.CharField')(max_length=120, blank=True)),
             ('rsync_minute', self.gf('django.db.models.fields.CharField')(max_length=100)),
             ('rsync_hour', self.gf('django.db.models.fields.CharField')(max_length=100)),
@@ -261,8 +261,8 @@ class Migration(SchemaMigration):
             'rsync_preserveperm': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'rsync_quiet': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'rsync_recursive': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'rsync_remotedir': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'rsync_remotehost': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
+            'rsync_remotemodule': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'rsync_times': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'rsync_user': ('django.db.models.fields.CharField', [], {'max_length': '60'})
         },
