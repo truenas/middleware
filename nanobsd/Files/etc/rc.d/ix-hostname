@@ -4,7 +4,6 @@
 #
 
 # PROVIDE: ix-hostname
-# REQUIRE: NETWORKING
 # BEFORE: hostname
 
 . /etc/rc.subr
