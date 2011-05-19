@@ -291,6 +291,8 @@ def clearcache(request):
 
 class DojoFileStore(object):
     def __init__(self, path, dirsonly=False):
+        from storage.models import MountPoint
+        self.mp = [os.path.abspath(mp.mp_path) for mp in MountPoint.objects.filter(mp_volume__vol_fstype__in=('ZFS','UFS'))]
         self.path = path.replace("..", "")
         if not self.path.startswith('/mnt/'):
             self.path = '/mnt/'+self.path
@@ -307,7 +309,7 @@ class DojoFileStore(object):
         return node
     
     def children(self, entry):
-        children = [ self._item(self.path, entry) for entry in os.listdir(entry) ]
+        children = [ self._item(self.path, entry) for entry in os.listdir(entry) if len([f for f in self.mp if os.path.join(self.path,entry).startswith(f)]) > 0]
         if self.dirsonly:
             children = [ child for child in children if child['directory']]
         return children
