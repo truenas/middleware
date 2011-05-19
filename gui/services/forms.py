@@ -819,8 +819,6 @@ class CronJobForm(ModelForm):
     def save(self):
         super(CronJobForm, self).save()
         started = notifier().restart("cron")
-        #if started is False and models.services.objects.get(srv_service='nfs').srv_enable:
-        #    raise ServiceFailed("nfs", _("The NFS service failed to reload."))
 
 from freeadmin.forms import DirectoryBrowser
 class RsyncForm(ModelForm):
@@ -866,6 +864,4 @@ class RsyncForm(ModelForm):
         return w
     def save(self):
         super(RsyncForm, self).save()
-        #started = notifier().restart("cron")
-        #if started is False and models.services.objects.get(srv_service='nfs').srv_enable:
-        #    raise ServiceFailed("nfs", _("The NFS service failed to reload."))
+        started = notifier().restart("cron")
