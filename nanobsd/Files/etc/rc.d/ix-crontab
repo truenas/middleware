@@ -22,10 +22,11 @@ generate_crontab()
         echo -e "${minute}\t${hour}\t${daymonth}\t${month}\t${dayweek}\t${user}\t${command} >/dev/null 2>&1" >> /etc/crontab
     done
 
+    local user host module recursive times compress archive delete quiet preserveperm preserveattr extra
     # Gnerate rsync
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-	"SELECT rsync_path,rsync_minute,rsync_hour,rsync_daymonth,rsync_month,rsync_dayweek,rsync_user,rsync_remotehost,rsync_remotedir,rsync_recursive,rsync_times,rsync_compress,rsync_archive,rsync_delete,rsync_quiet,rsync_preserveperm,rsync_preserveattr,rsync_extra FROM services_rsync ORDER BY id" | \
-	while read path minute hour daymonth month dayweek user host dir recursive times compress archive delete quiet preserveperm preserveattr extra; do
+	"SELECT rsync_path,rsync_minute,rsync_hour,rsync_daymonth,rsync_month,rsync_dayweek,rsync_user,rsync_remotehost,rsync_remotemodule,rsync_recursive,rsync_times,rsync_compress,rsync_archive,rsync_delete,rsync_quiet,rsync_preserveperm,rsync_preserveattr,rsync_extra FROM services_rsync ORDER BY id" | \
+	while read path minute hour daymonth month dayweek user host module recursive times compress archive delete quiet preserveperm preserveattr extra; do
         command=$(
 
             echo -n "lockf -s -t 0 -k /mnt rsync "
@@ -60,7 +61,7 @@ generate_crontab()
 
             echo -n "${extra} "
 
-            echo -n "${path} ${host}:${dir}"
+            echo -n "${path} ${host}::${module}"
 
             if [ ${quiet} -gt 0 ]; then
                 echo -n " >/dev/null 2>&1"
