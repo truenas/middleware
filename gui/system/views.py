@@ -291,11 +291,14 @@ def clearcache(request):
 
 class DojoFileStore(object):
     def __init__(self, path, dirsonly=False):
-        self.path = path
+        self.path = path.replace("..", "")
+        if not self.path.startswith('/mnt/'):
+            self.path = '/mnt/'+self.path
+        self.path = os.path.abspath(self.path)
         self.dirsonly = dirsonly
     
     def items(self):
-        if self.path == '/':
+        if self.path == '/mnt':
             return self.children(self.path)
           
         node = self._item(self.path, self.path)
@@ -318,7 +321,7 @@ class DojoFileStore(object):
         if isdir:
             item['children'] = True
         
-        item['$ref'] = (reverse('system_dirbrowser', kwargs={'path':"/"})[:-1] + full_path)
+        item['$ref'] = os.path.abspath(reverse('system_dirbrowser', kwargs={'path':full_path}))
         item['id'] = item['$ref']
         return item
 

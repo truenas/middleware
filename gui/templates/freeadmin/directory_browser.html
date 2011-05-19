@@ -12,9 +12,7 @@
      </script>
 </button>
 
-<div id="{{ attrs.id }}_container" style="display: none">
-
-<div id="{{ attrs.id }}_browser"></div>
+<div id="{{ attrs.id }}_container" class="treecontainer" style="display: none">
     <div 
         dojoType="dojox.data.JsonRestStore" 
         target="{% url system_dirbrowser path="/" %}"
@@ -26,7 +24,7 @@
          store="{{ attrs.id }}_store"
          query="{}" 
          rootId="items" 
-         rootLabel="/" 
+         rootLabel="/mnt" 
          childrenAttrs="children" 
          deferItemLoadingUntilExpand="true">
     </div>
@@ -34,9 +32,13 @@
         dojoType="dijit.Tree" 
         model="{{ attrs.id }}_model" 
         persist="false"
-        style="height: 300px; overflow: auto">
+        style="height: 250px;">
         <script type="dojo/connect" event="onClick" args="obj, node, ev">
-            dojo.attr('{{ attrs.id }}', 'value', node.item.path);
+            if(node.item.path) {
+                dojo.attr('{{ attrs.id }}', 'value', node.item.path);
+            } else {
+                dojo.attr('{{ attrs.id }}', 'value', node.get('label'));
+            }
         </script>
     </div>
 </div>

@@ -408,12 +408,18 @@ min-height:60px;
 }
 .claro .dijitDialogUnderlay { background: none repeat scroll 0 0 #1D1D1D; }
 .mytoggle {
-
 margin:2px;
 padding:2px;
-
 }
 
 .mytoggleChecked {
 background-color: #ddd;
+}
+
+.treecontainer:hover {
+background:white;
+}
+
+.treecontainer div {
+padding-left:5px;
 }
