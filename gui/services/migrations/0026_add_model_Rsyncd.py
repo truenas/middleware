@@ -19,6 +19,8 @@ class Migration(SchemaMigration):
         srv = orm.services.objects.create(srv_service='rsync', srv_enable=False)
         srv.save()
 
+        rsyncd = orm.Rsyncd.objects.create()
+        rsyncd.save()
 
     def backwards(self, orm):
         
