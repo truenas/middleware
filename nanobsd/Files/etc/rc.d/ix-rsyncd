@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-rsyncd
+# REQUIRE: FILESYSTEMS
+# BEFORE: rsyncd
+
+. /etc/rc.subr
+
+#
+# TODO: this is really just a place holder for the moment....
+#
+generate_rsyncd()
+{
+    local IFS=\|
+    local f="rsyncd_port rsyncd_auxiliary"
+    eval local $f
+    local cmd sf cfg
+    sf=$(echo $f | sed -e 's/ /, /g')
+    cfg=/usr/local/etc/rsyncd.conf
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT $sf FROM services_rsyncd ORDER BY -id LIMIT 1" | \
+	while eval read $f; do
+	    cat > $cfg <<EOF
+use chroot = yes
+max connections = 4
+pid file = /var/run/rsyncd.pid
+EOF
+	    if [ "$rsyncd_port" -ne 873 ]; then
+		echo "port  = $rsyncd_port" >> $cfg
+	    fi
+        echo "${rsyncd_auxiliary}" >> $cfg
+    done
+}
+
+name="ix-rsyncd"
+start_cmd='generate_rsyncd'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
