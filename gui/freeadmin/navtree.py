@@ -258,7 +258,7 @@ class NavTree(object):
     
                     if model._admin.deletable is False:
                         navopt = TreeNode(u'%s.%s' % (app, str(model._meta.object_name)))
-                        navopt.name = self.titlecase(unicode(model._meta.verbose_name))
+                        navopt.name = model._meta.verbose_name
                         navopt.model = c
                         navopt.app_name = app
                         try:
@@ -274,7 +274,7 @@ class NavTree(object):
                         navopt.app = app
                     else:
                         navopt = TreeNode(u'%s.%s' % (app, str(model._meta.object_name)))
-                        navopt.name = self.titlecase(unicode(model._meta.verbose_name_plural))
+                        navopt.name = model._meta.verbose_name_plural
                         navopt.model = c
                         navopt.app_name = app
                         navopt.order_child = False
@@ -312,7 +312,7 @@ class NavTree(object):
     
                         # Node to add an instance of model
                         subopt = TreeNode('%s.%s.Add' % (app, str(model._meta.object_name)))
-                        subopt.name = _(u'Add %s') % self.titlecase(unicode(model._meta.verbose_name))
+                        subopt.name = _(u'Add %s') % model._meta.verbose_name
                         subopt.view = u'freeadmin_model_add'
                         subopt.kwargs = {'app': app, 'model': c}
                         subopt.type = 'object'
@@ -324,7 +324,7 @@ class NavTree(object):
     
                         # Node to view all instances of model
                         subopt = TreeNode('%s.%s.View' % (app, str(model._meta.object_name)))
-                        subopt.name = _(u'View All %s') % self.titlecase(unicode(model._meta.verbose_name_plural))
+                        subopt.name = _(u'View All %s') % model._meta.verbose_name_plural
                         subopt.view = u'freeadmin_model_datagrid'
                         if model._admin.icon_view is not None:
                             subopt.icon = model._admin.icon_view
