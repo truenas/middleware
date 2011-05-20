@@ -8,7 +8,7 @@ for file in os.listdir(rrd_dir):
     if file.startswith("."):
         continue
     try:
-        octets = re.search(r'^(?<=octets-)[a-z0-9]+', file)
+        octets = re.search(r'(?<=octets-)[a-z0-9]+', file)
     except AttributeError:
         os.remove(os.path.join(rrd_dir, file))
         continue
@@ -452,14 +452,14 @@ for period in graphdir:
 os.system("find /var/db/graphs -type f -delete")
 for file in os.listdir("/tmp/"):
     if "1h.png" in file:
-        os.system("mv /tmp/%s /var/db/graphs/hourly/" % file)
+        os.system("cp /tmp/%s /var/db/graphs/hourly/" % file)
     elif "1d.png" in file:
-        os.system("mv /tmp/%s /var/db/graphs/daily/" % file)
+        os.system("cp /tmp/%s /var/db/graphs/daily/" % file)
     elif "1w.png" in file:
-        os.system("mv /tmp/%s /var/db/graphs/weekly/" % file)
+        os.system("cp /tmp/%s /var/db/graphs/weekly/" % file)
     elif "1m.png" in file:
-        os.system("mv /tmp/%s /var/db/graphs/monthly/" % file)
+        os.system("cp /tmp/%s /var/db/graphs/monthly/" % file)
     elif "1y.png" in file:
-        os.system("mv /tmp/%s /var/db/graphs/yearly/" % file)
+        os.system("cp /tmp/%s /var/db/graphs/yearly/" % file)
     else:
         pass
