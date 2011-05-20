@@ -74,6 +74,11 @@ def home(request):
         tftp = models.TFTP.objects.create()
 
     try:
+        rsyncd = models.Rsyncd.objects.order_by("-id")[0]
+    except IndexError:
+        rsyncd = models.Rsyncd.objects.create()
+
+    try:
         ssh = models.SSH.objects.order_by("-id")[0]
     except IndexError:
         ssh = models.SSH.objects.create()
@@ -94,7 +99,7 @@ def home(request):
         'cifs': cifs,
         'afp': afp,
         'nfs': nfs,
-        #'rsync': rsync,
+        'rsyncd': rsyncd,
         #'unison': unison,
         'dynamicdns': dynamicdns,
         'snmp': snmp,
@@ -187,6 +192,7 @@ def servicesToggleView(request, formname):
         'ssh_toggle' : 'ssh',
         'ad_toggle' : 'activedirectory',
         'ldap_toggle' : 'ldap',
+        'rsync_toggle' : 'rsync',
     }
     changing_service = form2namemap[formname]
     if changing_service == "":

@@ -83,6 +83,17 @@
        </tr>
       <tr>
            <td>
+               <strong>{% trans "Rsync" %}</strong>
+           </td>
+           <td>
+   	    <img id="rsync_toggle" name="rsync_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "rsync" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+           </td>
+           <td>
+               <img id="rsync_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Rsync Settings" %}', '{% url freeadmin_model_edit app="services",model="Rsyncd",oid=rsyncd.id %}');" title="{% trans "Rsync Settings" %}">
+           </td>
+       </tr> 
+      <tr>
+           <td>
                <strong>{% trans "SNMP" %}</strong>
            </td>
            <td>

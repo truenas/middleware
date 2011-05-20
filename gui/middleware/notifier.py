@@ -133,6 +133,8 @@ class notifier:
                 return True
             else:
                 return False
+        else:
+            return False
 
     def init(self, what, objectid = None, *args, **kwargs):
         """ Dedicated command to create "what" designated by an optional objectid.
