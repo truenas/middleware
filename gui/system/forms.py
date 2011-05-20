@@ -26,12 +26,12 @@
 # $FreeBSD$
 #####################################################################
 
-from django.utils.translation import ugettext_lazy as _
 from django.forms import FileField
 from django.conf import settings
 from django.contrib.formtools.wizard import FormWizard
 from django.shortcuts import render_to_response
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import csrf_protect
 
 from freeadmin.forms import DirectoryBrowser, CronMultiple

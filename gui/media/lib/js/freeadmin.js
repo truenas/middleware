@@ -116,7 +116,7 @@
                     closable: true,
                     href: this.urlReporting,
                 });
-                pane.tab = 'reporting';
+                pane.tab = 'system.Reporting';
                 p.addChild(pane);
             }
 
@@ -127,7 +127,7 @@
                     closable: true,
                     href: this.urlSettings,
                 });
-                pane2.tab = 'settings';
+                pane2.tab = 'system.Settings';
                 p.addChild(pane2);
             }
 
@@ -139,7 +139,7 @@
                     closable: true,
                     href: this.urlInfo,
                 });
-                pane3.tab = 'sysinfo';
+                pane3.tab = 'system.SysInfo';
                 p.addChild(pane3);
                 p.selectChild(pane3);
             }
@@ -1084,7 +1084,7 @@
                 //  get the children and make sure we haven't opened this yet.
                 var c = p.getChildren();
                 for(var i=0; i<c.length; i++){
-                    if(c[i].title == item.name){
+                    if(c[i].tab == item.gname){
                         p.selectChild(c[i]);
                         return;
                     }
@@ -1095,6 +1095,7 @@
                     closable: true,
                     parseOnLoad: true,
                 });
+                pane.tab = item.gname;
                 p.addChild(pane);
                 p.selectChild(pane);
             }

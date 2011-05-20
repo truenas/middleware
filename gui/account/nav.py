@@ -2,6 +2,7 @@ from freeadmin.tree import TreeNode
 from django.utils.translation import ugettext_lazy as _
 import models
 
+NAME = _('Account')
 ICON = u'AccountIcon'
 
 class ChangePass(TreeNode):

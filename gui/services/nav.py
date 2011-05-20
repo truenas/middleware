@@ -2,6 +2,7 @@ from freeadmin.tree import TreeNode
 from django.utils.translation import ugettext_lazy as _
 import models
 
+NAME = _('Services')
 BLACKLIST = ['services','UPS']
 ICON = u'ServicesIcon'
 

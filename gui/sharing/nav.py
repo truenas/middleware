@@ -1,6 +1,7 @@
 from freeadmin.tree import TreeNode
 from django.utils.translation import ugettext_lazy as _
 
+NAME = _('Sharing')
 ICON = u'SharingIcon'
 
 class ViewUNIX(TreeNode):

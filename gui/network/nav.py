@@ -3,6 +3,7 @@ from freenasUI.choices import LAGGType
 from django.utils.translation import ugettext_lazy as _
 import models
 
+NAME = _('Network')
 ICON = u'NetworkIcon'
 BLACKLIST = ['LAGGInterfaceMembers',]
 

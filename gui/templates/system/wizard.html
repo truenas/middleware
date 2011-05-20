@@ -1,6 +1,6 @@
 {% load i18n %}
 <div dojoType="dijit.layout.ContentPane" class="objrefresh">
-<p>Step {{ step }} of {{ step_count }}</p>
+<p>{% blocktrans %}Step {{ step }} of {{ step_count }}{% endblocktrans %}</p>
 <form dojoType="dijit.form.Form" action="." enctype="multipart/form-data" method="post">{% csrf_token %}
 <script type="dojo/event" event="onSubmit" args="e">
     formSubmit(this, e, '{{ postpath }}', [this, ]);

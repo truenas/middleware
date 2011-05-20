@@ -169,7 +169,6 @@ class NavTree(object):
     
             # Thats the root node for the app tree menu
             nav = TreeRoot(app)
-            nav.name = self.titlecase(app)
             nav.nav_group = 'main'
             tree_roots.register(nav) # We register it to the tree root
     
@@ -181,6 +180,11 @@ class NavTree(object):
 
             if hasattr(modnav, 'ICON'):
                 nav.icon = modnav.ICON
+
+            if hasattr(modnav, 'NAME'):
+                nav.name = modnav.NAME
+            else:
+                nav.name = self.titlecase(app)
     
             """
             BEGIN
