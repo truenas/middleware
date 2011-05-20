@@ -8,36 +8,19 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         
-        # Adding model 'Rsync'
-        db.create_table('services_rsync', (
+        # Adding model 'Rsyncd'
+        db.create_table('services_rsyncd', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('rsync_path', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('rsync_remotehost', self.gf('django.db.models.fields.CharField')(max_length=120)),
-            ('rsync_remotemodule', self.gf('django.db.models.fields.CharField')(max_length=120)),
-            ('rsync_desc', self.gf('django.db.models.fields.CharField')(max_length=120, blank=True)),
-            ('rsync_minute', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('rsync_hour', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('rsync_daymonth', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('rsync_month', self.gf('django.db.models.fields.CharField')(default='1,2,3,4,5,6,7,8,9,10,a,b,c', max_length=100)),
-            ('rsync_dayweek', self.gf('django.db.models.fields.CharField')(default='1,2,3,4,5,6,7', max_length=100)),
-            ('rsync_user', self.gf('django.db.models.fields.CharField')(max_length=60)),
-            ('rsync_recursive', self.gf('django.db.models.fields.BooleanField')(default=True)),
-            ('rsync_times', self.gf('django.db.models.fields.BooleanField')(default=True)),
-            ('rsync_compress', self.gf('django.db.models.fields.BooleanField')(default=True)),
-            ('rsync_archive', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('rsync_delete', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('rsync_quiet', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('rsync_preserveperm', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('rsync_preserveattr', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('rsync_extra', self.gf('django.db.models.fields.CharField')(max_length=120, blank=True)),
+            ('rsyncd_port', self.gf('django.db.models.fields.IntegerField')(default=873)),
+            ('rsyncd_auxiliary', self.gf('django.db.models.fields.TextField')()),
         ))
-        db.send_create_signal('services', ['Rsync'])
+        db.send_create_signal('services', ['Rsyncd'])
 
 
     def backwards(self, orm):
         
-        # Deleting model 'Rsync'
-        db.delete_table('services_rsync')
+        # Deleting model 'Rsyncd'
+        db.delete_table('services_rsyncd')
 
 
     models = {
@@ -88,17 +71,6 @@ class Migration(SchemaMigration):
             'cifs_srv_timeserver': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_unixcharset': ('django.db.models.fields.CharField', [], {'default': "'UTF-8'", 'max_length': '120'}),
             'cifs_srv_workgroup': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
-        },
-        'services.cronjob': {
-            'Meta': {'object_name': 'CronJob'},
-            'cron_command': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'cron_daymonth': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'cron_dayweek': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7'", 'max_length': '100'}),
-            'cron_hour': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'cron_minute': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'cron_month': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7,8,9,10,a,b,c'", 'max_length': '100'}),
-            'cron_user': ('django.db.models.fields.CharField', [], {'max_length': '60'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         'services.dynamicdns': {
@@ -243,28 +215,25 @@ class Migration(SchemaMigration):
             'nfs_srv_async': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'nfs_srv_servers': ('django.db.models.fields.CharField', [], {'max_length': '120'})
         },
-        'services.rsync': {
-            'Meta': {'object_name': 'Rsync'},
+        'services.rsyncd': {
+            'Meta': {'object_name': 'Rsyncd'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'rsync_archive': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'rsync_compress': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'rsync_daymonth': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'rsync_dayweek': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7'", 'max_length': '100'}),
-            'rsync_delete': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'rsync_desc': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'rsync_extra': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'rsync_hour': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'rsync_minute': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'rsync_month': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7,8,9,10,a,b,c'", 'max_length': '100'}),
-            'rsync_path': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'rsync_preserveattr': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'rsync_preserveperm': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'rsync_quiet': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'rsync_recursive': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'rsync_remotehost': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'rsync_remotemodule': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'rsync_times': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'rsync_user': ('django.db.models.fields.CharField', [], {'max_length': '60'})
+            'rsyncd_auxiliary': ('django.db.models.fields.TextField', [], {}),
+            'rsyncd_port': ('django.db.models.fields.IntegerField', [], {'default': '873'})
+        },
+        'services.rsyncmodule': {
+            'Meta': {'object_name': 'RsyncModule'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'rsyncmod_auxiliary': ('django.db.models.fields.TextField', [], {}),
+            'rsyncmod_comment': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
+            'rsyncmod_group': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
+            'rsyncmod_hostsallow': ('django.db.models.fields.TextField', [], {}),
+            'rsyncmod_hostsdeny': ('django.db.models.fields.TextField', [], {}),
+            'rsyncmod_maxconn': ('django.db.models.fields.IntegerField', [], {}),
+            'rsyncmod_mode': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
+            'rsyncmod_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
+            'rsyncmod_path': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'rsyncmod_user': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'})
         },
         'services.services': {
             'Meta': {'object_name': 'services'},

@@ -44,7 +44,6 @@ from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_User
 from freenasUI.middleware.notifier import notifier
 from dojango import forms
 from dojango.forms import widgets
-from freeadmin.forms import CronMultiple
 
 """ Services """
 
@@ -278,6 +277,15 @@ class SSHForm(ModelForm):
             raise ServiceFailed("ssh", _("The SSH service failed to reload."))
     class Meta:
         model = models.SSH 
+
+class RsyncdForm(ModelForm):
+    def save(self):
+        super(RsyncdForm, self).save()
+        started = notifier().reload("rsync")
+        if started is False and models.services.objects.get(srv_service='rsync').srv_enable:
+            raise ServiceFailed("rsync", _("The Rsync service failed to reload."))
+    class Meta:
+        model = models.Rsyncd
 
 class DynamicDNSForm(ModelForm):
     class Meta:
@@ -781,93 +789,3 @@ class ExtentDelete(Form):
         if self.cleaned_data['delete'] and \
             self.instance.iscsi_target_extent_type == 'File':
             os.system("rm \"%s\"" % self.instance.iscsi_target_extent_path)
-
-class CronJobForm(ModelForm):
-    cron_user = forms.ChoiceField(choices=(),
-                                       widget=forms.Select(attrs=attrs_dict),
-                                       label=_('User')
-                                       )
-    class Meta:
-        model = models.CronJob
-        widgets = {
-            'cron_minute': CronMultiple(attrs={'numChoices': 60,'label':_("minute")}),
-            'cron_hour': CronMultiple(attrs={'numChoices': 24,'label':_("hour")}),
-            'cron_daymonth': CronMultiple(attrs={'numChoices': 31,'start':1,'label':_("day of month")}),
-            'cron_dayweek': forms.CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES),
-            'cron_month': forms.CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES),
-        }
-    def __init__(self, *args, **kwargs):
-        if kwargs.has_key('instance'):
-            ins = kwargs.get('instance')
-            ins.cron_month = ins.cron_month.replace("10", "a").replace("11", "b").replace("12", "c")
-        super(CronJobForm, self).__init__(*args, **kwargs)
-        from account.forms import FilteredSelectJSON
-        if len(FreeNAS_Users()) > 500:
-            if len(args) > 0 and isinstance(args[0], QueryDict):
-                self.fields['cron_user'].choices = ((args[0]['cron_user'],args[0]['cron_user']),)
-                self.fields['cron_user'].initial= args[0]['cron_user']
-            self.fields['cron_user'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
-        else:
-            self.fields['cron_user'].widget = widgets.FilteringSelect()
-            self.fields['cron_user'].choices = (
-                                                 (x.bsdusr_username, x.bsdusr_username)
-                                                      for x in FreeNAS_Users()
-                                                      )
-    def clean_cron_month(self):
-        m = eval(self.cleaned_data.get("cron_month"))
-        m = ",".join(m)
-        m = m.replace("a", "10").replace("b", "11").replace("c", "12")
-        return m
-    def clean_cron_dayweek(self):
-        w = eval(self.cleaned_data.get("cron_dayweek"))
-        w = ",".join(w)
-        return w
-    def save(self):
-        super(CronJobForm, self).save()
-        started = notifier().restart("cron")
-
-from freeadmin.forms import DirectoryBrowser
-class RsyncForm(ModelForm):
-    rsync_user = forms.ChoiceField(choices=(),
-                                       widget=forms.Select(attrs=attrs_dict),
-                                       label=_('User')
-                                       )
-    class Meta:
-        model = models.Rsync
-        widgets = {
-            'rsync_path': DirectoryBrowser(),
-            'rsync_minute': CronMultiple(attrs={'numChoices': 60,'label':_("minute")}),
-            'rsync_hour': CronMultiple(attrs={'numChoices': 24,'label':_("hour")}),
-            'rsync_daymonth': CronMultiple(attrs={'numChoices': 31,'start':1,'label':_("day of month")}),
-            'rsync_dayweek': forms.CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES),
-            'rsync_month': forms.CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES),
-        }
-    def __init__(self, *args, **kwargs):
-        if kwargs.has_key('instance'):
-            ins = kwargs.get('instance')
-            ins.rsync_month = ins.rsync_month.replace("10", "a").replace("11", "b").replace("12", "c")
-        super(RsyncForm, self).__init__(*args, **kwargs)
-        from account.forms import FilteredSelectJSON
-        if len(FreeNAS_Users()) > 500:
-            if len(args) > 0 and isinstance(args[0], QueryDict):
-                self.fields['rsync_user'].choices = ((args[0]['rsync_user'],args[0]['rsync_user']),)
-                self.fields['rsync_user'].initial= args[0]['rsync_user']
-            self.fields['rsync_user'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
-        else:
-            self.fields['rsync_user'].widget = widgets.FilteringSelect()
-            self.fields['rsync_user'].choices = (
-                                                 (x.bsdusr_username, x.bsdusr_username)
-                                                      for x in FreeNAS_Users()
-                                                      )
-    def clean_rsync_month(self):
-        m = eval(self.cleaned_data.get("rsync_month"))
-        m = ",".join(m)
-        m = m.replace("a", "10").replace("b", "11").replace("c", "12")
-        return m
-    def clean_rsync_dayweek(self):
-        w = eval(self.cleaned_data.get("rsync_dayweek"))
-        w = ",".join(w)
-        return w
-    def save(self):
-        super(RsyncForm, self).save()
-        started = notifier().restart("cron")

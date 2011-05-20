@@ -1133,254 +1133,77 @@ class LDAP(Model):
         deletable = False
         icon_model = "LDAPIcon"
 
-class CronJob(Model):
-    cron_minute = models.CharField(
-            max_length=100,
-            verbose_name=_("Minute"),
-            help_text=_("Values 0-59 allowed."),
+class Rsyncd(Model):            
+    rsyncd_port = models.IntegerField(
+            default=873,
+            verbose_name=_("TCP Port"),
+            help_text=_("Alternate TCP port. Default is 873"),
             )
-    cron_hour = models.CharField(
-            max_length=100,
-            verbose_name=_("Hour"),
-            help_text=_("Values 0-23 allowed."),
+    rsyncd_auxiliary = models.TextField(
+            verbose_name = _("Auxiliary parameters"),
+            help_text = _("These parameters will be added to [global] settings in rsyncd.conf"),
             )
-    cron_daymonth = models.CharField(
-            max_length=100,
-            verbose_name=_("Day of month"),
-            help_text=_("Values 1-31 allowed."),
-            )
-    cron_month = models.CharField(
-            max_length=100,
-            default='1,2,3,4,5,6,7,8,9,10,a,b,c',
-            verbose_name=_("Month"),
-            )
-    cron_dayweek = models.CharField(
-            max_length=100,
-            default="1,2,3,4,5,6,7",
-            verbose_name=_("Day of week"),
-            )
-    cron_user = models.CharField(
-            max_length=60,
-            verbose_name=_("User"),
-            help_text=_("The user to run the command")
-            )
-    cron_command = models.CharField(
-            max_length=120,
-            verbose_name=_("Command"),
-            )
+
     class Meta:
-        verbose_name = _("CronJob")
-        verbose_name_plural = _("CronJobs")
+        verbose_name = _("Rsyncd")
+        verbose_name_plural = _("Rsyncd")
 
     class FreeAdmin:
-        pass
+        deletable = False
+        #icon_model = u"Icon"
 
-    def __unicode__(self):
-        return u"%d (%s)" % (self.id, self.cron_user)
-
-    def get_human_minute(self):
-        if self.cron_minute == '*':
-            return _(u'Every minute')
-        elif self.cron_minute.startswith('*/'):
-            return _(u'Every %s minute(s)') % self.cron_minute.split('*/')[1]
-        else:
-            return self.cron_minute
-
-    def get_human_hour(self):
-        if self.cron_hour == '*':
-            return _(u'Every hour')
-        elif self.cron_hour.startswith('*/'):
-            return _(u'Every %s hour(s)') % self.cron_hour.split('*/')[1]
-        else:
-            return self.cron_hour
-
-    def get_human_daymonth(self):
-        if self.cron_daymonth == '*':
-            return _(u'Everyday')
-        elif self.cron_daymonth.startswith('*/'):
-            return _(u'Every %s days') % self.cron_daymonth.split('*/')[1]
-        else:
-            return self.cron_daymonth
-
-    def get_human_month(self):
-        months = self.cron_month.split(",")
-        if len(months) == 12:
-            return _("Every month")
-        mchoices = dict(choices.MONTHS_CHOICES)
-        labels = []
-        for m in months:
-            labels.append(unicode(mchoices[m]))
-        return ",".join(labels)
-
-    def get_human_dayweek(self):
-        weeks = eval(self.cron_dayweek)
-        if len(weeks) == 7:
-            return _("Everyday")
-        wchoices = dict(choices.WEEK_CHOICES)
-        labels = []
-        for w in weeks:
-            labels.append(unicode(wchoices[w]))
-        return ",".join(labels)
-
-    def delete(self):
-        super(CronJob, self).delete()
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
-class Rsync(Model):
-    rsync_path = models.CharField(
+class RsyncMod(Model):            
+    rsyncmod_name = models.CharField(
+            max_length=120,
+            verbose_name=_("Module name"),
+            )
+    rsyncmod_comment = models.CharField(
+            max_length=120,
+            verbose_name=_("Comment"),
+            )
+    rsyncmod_path = models.CharField(
         max_length=255,
         verbose_name=_("Path"),
+        help_text=_("Path to be shared"),
         )
-    rsync_remotehost = models.CharField(
-            max_length=120,
-            verbose_name=_("Remote Host"),
-            help_text=_("IP Address or hostname"),
+    rsyncmod_mode = models.CharField(
+        max_length=120,
+        verbose_name=_("Access Mode"),
+        help_text=_("This controls the access a remote host has to this module"),
+        )
+    rsyncmod_maxconn = models.IntegerField(
+        verbose_name=_("Maximum connections"),
+        help_text=_("Maximum number of simultaneous connections. Default is 0 (unlimited)"),
+        )
+    rsyncmod_user = models.CharField(
+        max_length=120,
+        verbose_name=_("User"),
+        help_text=_("This option specifies the user name that file transfers to and from that module should take place. In combination with the 'Group' option this determines what file permissions are available. Leave this field empty to use default settings"),
+        blank=True,
+        )
+    rsyncmod_group = models.CharField(
+        max_length=120,
+        verbose_name=_("Group"),
+        help_text=_("This option specifies the group name that file transfers to and from that module should take place. Leave this field empty to use default settings"),
+        blank=True,
+        )
+    rsyncmod_hostsallow = models.TextField(
+            verbose_name = _("Hosts allow"),
+            help_text = _("This option is a comma, space, or tab delimited set of hosts which are permitted to access this module. You can specify the hosts by name or IP number. Leave this field empty to use default settings"),
             )
-    rsync_remotemodule = models.CharField(
-            max_length=120,
-            verbose_name=_("Remote Module Name"),
+    rsyncmod_hostsdeny = models.TextField(
+            verbose_name = _("Hosts deny"),
+            help_text = _("This option is a comma, space, or tab delimited set of host which are NOT permitted to access this module. Where the lists conflict, the allow list takes precedence. In the event that it is necessary to deny all by default, use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify to the hosts allow parameter those hosts that should be permitted access. Leave this field empty to use default settings"),
             )
-    rsync_desc = models.CharField(
-            max_length=120,
-            verbose_name=_("Short description"),
-            blank=True,
+    rsyncmod_auxiliary = models.TextField(
+            verbose_name = _("Auxiliary parameters"),
+            help_text = _("These parameters will be added to the module configuration in rsyncd.conf"),
             )
-    rsync_minute = models.CharField(
-            max_length=100,
-            verbose_name=_("Minute"),
-            help_text=_("Values 0-59 allowed."),
-            )
-    rsync_hour = models.CharField(
-            max_length=100,
-            verbose_name=_("Hour"),
-            help_text=_("Values 0-23 allowed."),
-            )
-    rsync_daymonth = models.CharField(
-            max_length=100,
-            verbose_name=_("Day of month"),
-            help_text=_("Values 1-31 allowed."),
-            )
-    rsync_month = models.CharField(
-            max_length=100,
-            default='1,2,3,4,5,6,7,8,9,10,a,b,c',
-            verbose_name=_("Month"),
-            )
-    rsync_dayweek = models.CharField(
-            max_length=100,
-            default="1,2,3,4,5,6,7",
-            verbose_name=_("Day of week"),
-            )
-    rsync_user = models.CharField(
-            max_length=60,
-            verbose_name=_("User"),
-            help_text=_("The user to run the command"),
-            )
-    rsync_recursive = models.BooleanField(
-            verbose_name=_("Recursive"),
-            help_text=_("Recurse into directories"),
-            default=True,
-            )
-    rsync_times = models.BooleanField(
-            verbose_name=_("Times"),
-            help_text=_("Preserve modification times"),
-            default=True,
-            )
-    rsync_compress = models.BooleanField(
-            verbose_name=_("Compress"),
-            help_text=_("Compress data during the transfer"),
-            default=True,
-            )
-    rsync_archive = models.BooleanField(
-            verbose_name=_("Archive"),
-            help_text=_("Archive mode"),
-            default=False,
-            )
-    rsync_delete = models.BooleanField(
-            verbose_name=_("Delete"),
-            help_text=_("Delete files on the receiving side that don't exist on sender"),
-            default=False,
-            )
-    rsync_quiet = models.BooleanField(
-            verbose_name=_("Quiet"),
-            help_text=_("Suppress non-error messages"),
-            default=False,
-            )
-    rsync_preserveperm = models.BooleanField(
-            verbose_name=_("Preserve permissions"),
-            help_text=_("This option causes the receiving rsync to set the destination permissions to be the same as the source permissions"),
-            default=False,
-            )
-    rsync_preserveattr = models.BooleanField(
-            verbose_name=_("Preserve extended attributes"),
-            help_text=_("This option causes rsync to update the remote extended attributes to be the same as the local ones"),
-            default=False,
-            )
-    rsync_extra = models.CharField(
-            max_length=120,
-            verbose_name=_("Extra options"),
-            help_text=_("Extra options to rsync command line (usually empty)"),
-            blank=True
-            )
+
     class Meta:
-        verbose_name = _("Rsync")
-        verbose_name_plural = _("Rsyncs")
+        verbose_name = _("Rsync Module")
+        verbose_name_plural = _("Rsync Modules")
 
     class FreeAdmin:
+        #icon_model = u"Icon"
         pass
-
-    def __unicode__(self):
-        return u"%d (%s)" % (self.id, self.rsync_user)
-
-    def get_human_minute(self):
-        if self.rsync_minute == '*':
-            return _(u'Every minute')
-        elif self.rsync_minute.startswith('*/'):
-            return _(u'Every %s minute(s)') % self.rsync_minute.split('*/')[1]
-        else:
-            return self.rsync_minute
-
-    def get_human_hour(self):
-        if self.rsync_hour == '*':
-            return _(u'Every hour')
-        elif self.rsync_hour.startswith('*/'):
-            return _(u'Every %s hour(s)') % self.rsync_hour.split('*/')[1]
-        else:
-            return self.rsync_hour
-
-    def get_human_daymonth(self):
-        if self.rsync_daymonth == '*':
-            return _(u'Everyday')
-        elif self.rsync_daymonth.startswith('*/'):
-            return _(u'Every %s days') % self.rsync_daymonth.split('*/')[1]
-        else:
-            return self.rsync_daymonth
-
-    def get_human_month(self):
-        months = self.rsync_month.split(",")
-        if len(months) == 12:
-            return _("Every month")
-        mchoices = dict(choices.MONTHS_CHOICES)
-        labels = []
-        for m in months:
-            labels.append(unicode(mchoices[m]))
-        return ",".join(labels)
-
-    def get_human_dayweek(self):
-        weeks = eval(self.rsync_dayweek)
-        if len(weeks) == 7:
-            return _("Everyday")
-        wchoices = dict(choices.WEEK_CHOICES)
-        labels = []
-        for w in weeks:
-            labels.append(unicode(wchoices[w]))
-        return ",".join(labels)
-
-    def delete(self):
-        super(CronJob, self).delete()
-        try:
-            notifier().restart("cron")
-        except:
-            pass

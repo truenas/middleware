@@ -8,24 +8,27 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         
-        # Adding model 'CronJob'
-        db.create_table('services_cronjob', (
+        # Adding model 'RsyncMod'
+        db.create_table('services_rsyncmod', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('cron_minute', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('cron_hour', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('cron_daymonth', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('cron_month', self.gf('django.db.models.fields.CharField')(default='1,2,3,4,5,6,7,8,9,a,b,c', max_length=100)),
-            ('cron_dayweek', self.gf('django.db.models.fields.CharField')(default='1,2,3,4,5,6,7', max_length=100)),
-            ('cron_user', self.gf('django.db.models.fields.CharField')(max_length=60)),
-            ('cron_command', self.gf('django.db.models.fields.CharField')(max_length=120)),
+            ('rsyncmod_name', self.gf('django.db.models.fields.CharField')(max_length=120)),
+            ('rsyncmod_comment', self.gf('django.db.models.fields.CharField')(max_length=120)),
+            ('rsyncmod_path', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('rsyncmod_mode', self.gf('django.db.models.fields.CharField')(max_length=120)),
+            ('rsyncmod_maxconn', self.gf('django.db.models.fields.IntegerField')()),
+            ('rsyncmod_user', self.gf('django.db.models.fields.CharField')(max_length=120, blank=True)),
+            ('rsyncmod_group', self.gf('django.db.models.fields.CharField')(max_length=120, blank=True)),
+            ('rsyncmod_hostsallow', self.gf('django.db.models.fields.TextField')()),
+            ('rsyncmod_hostsdeny', self.gf('django.db.models.fields.TextField')()),
+            ('rsyncmod_auxiliary', self.gf('django.db.models.fields.TextField')()),
         ))
-        db.send_create_signal('services', ['CronJob'])
+        db.send_create_signal('services', ['RsyncMod'])
 
 
     def backwards(self, orm):
         
-        # Deleting model 'CronJob'
-        db.delete_table('services_cronjob')
+        # Deleting model 'RsyncMod'
+        db.delete_table('services_rsyncmod')
 
 
     models = {
@@ -35,11 +38,7 @@ class Migration(SchemaMigration):
             'ad_adminpw': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'ad_dcname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'ad_domainname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'ad_keytab': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'ad_netbiosname': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'ad_spn': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'ad_spnpw': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'ad_windows_version': ('django.db.models.fields.CharField', [], {'default': "'windows2000'", 'max_length': '120'}),
             'ad_workgroup': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
@@ -80,17 +79,6 @@ class Migration(SchemaMigration):
             'cifs_srv_timeserver': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_unixcharset': ('django.db.models.fields.CharField', [], {'default': "'UTF-8'", 'max_length': '120'}),
             'cifs_srv_workgroup': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
-        },
-        'services.cronjob': {
-            'Meta': {'object_name': 'CronJob'},
-            'cron_command': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'cron_daymonth': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'cron_dayweek': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7'", 'max_length': '100'}),
-            'cron_hour': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'cron_minute': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'cron_month': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7,8,9,a,b,c'", 'max_length': '100'}),
-            'cron_user': ('django.db.models.fields.CharField', [], {'max_length': '60'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         'services.dynamicdns': {
@@ -234,6 +222,26 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'nfs_srv_async': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'nfs_srv_servers': ('django.db.models.fields.CharField', [], {'max_length': '120'})
+        },
+        'services.rsyncd': {
+            'Meta': {'object_name': 'Rsyncd'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'rsyncd_auxiliary': ('django.db.models.fields.TextField', [], {}),
+            'rsyncd_port': ('django.db.models.fields.IntegerField', [], {'default': '873'})
+        },
+        'services.rsyncmod': {
+            'Meta': {'object_name': 'RsyncMod'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'rsyncmod_auxiliary': ('django.db.models.fields.TextField', [], {}),
+            'rsyncmod_comment': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
+            'rsyncmod_group': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
+            'rsyncmod_hostsallow': ('django.db.models.fields.TextField', [], {}),
+            'rsyncmod_hostsdeny': ('django.db.models.fields.TextField', [], {}),
+            'rsyncmod_maxconn': ('django.db.models.fields.IntegerField', [], {}),
+            'rsyncmod_mode': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
+            'rsyncmod_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
+            'rsyncmod_path': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'rsyncmod_user': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'})
         },
         'services.services': {
             'Meta': {'object_name': 'services'},
