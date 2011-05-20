@@ -12,7 +12,7 @@ class Migration(SchemaMigration):
         db.create_table('services_rsyncd', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('rsyncd_port', self.gf('django.db.models.fields.IntegerField')(default=873)),
-            ('rsyncd_auxiliary', self.gf('django.db.models.fields.TextField')()),
+            ('rsyncd_auxiliary', self.gf('django.db.models.fields.TextField')(blank=True)),
         ))
         db.send_create_signal('services', ['Rsyncd'])
 

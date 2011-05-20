@@ -1140,6 +1140,7 @@ class Rsyncd(Model):
             help_text=_("Alternate TCP port. Default is 873"),
             )
     rsyncd_auxiliary = models.TextField(
+            blank=True,
             verbose_name = _("Auxiliary parameters"),
             help_text = _("These parameters will be added to [global] settings in rsyncd.conf"),
             )

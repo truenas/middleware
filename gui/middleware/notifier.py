@@ -113,6 +113,7 @@ class notifier:
     def _started(self, what):
         service2daemon = {
             'ssh': ('sshd', '/var/run/sshd.pid'),
+            'rsync': ('rsync', '/var/run/rsyncd.pid'),
             'nfs': ('nfsd', None),
             'afp': ('afpd', '/var/run/afpd.pid'),
             'cifs': ('smbd', '/var/run/samba/smbd.pid'),
@@ -251,6 +252,14 @@ class notifier:
     def _restart_ssh(self):
         self.__system("/usr/sbin/service ix-sshd quietstart")
         self.__system("/usr/sbin/service sshd restart")
+
+    def _reload_rsync(self):
+        self.__system("/usr/sbin/service ix-rsyncd quietstart")
+        self.__system("/usr/sbin/service rsyncd restart")
+
+    def _restart_rsync(self):
+        self.__system("/usr/sbin/service ix-rsyncd quietstart")
+        self.__system("/usr/sbin/service rsyncd restart")
 
     def _start_ldap(self):
         self.__system("/usr/sbin/service ix-ldap quietstart")
