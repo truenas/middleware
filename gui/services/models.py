@@ -1044,6 +1044,7 @@ class ActiveDirectory(Model):
             )
 
     class Meta:
+        verbose_name = _("Active Directory")
         verbose_name_plural = _("Active Directory")
 
     class FreeAdmin:
