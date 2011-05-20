@@ -336,3 +336,9 @@ def directory_browser(request, path='/'):
     context = directories
     content = simplejson.dumps(context)
     return HttpResponse(content, mimetype='application/json')
+
+def cronjobs(request):
+    crons = models.CronJob.objects.all().order_by('id')
+    return render(request, "services/cronjob.html", {
+        'cronjobs': crons,
+        })

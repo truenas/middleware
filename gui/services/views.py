@@ -250,9 +250,3 @@ def servicesToggleView(request, formname):
     }
 
     return HttpResponse(simplejson.dumps(data), mimetype="application/json")
-
-def cronjobs(request):
-    crons = models.CronJob.objects.all().order_by('id')
-    return render(request, "services/cronjob.html", {
-        'cronjobs': crons,
-        })

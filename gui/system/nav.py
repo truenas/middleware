@@ -21,3 +21,9 @@ class Settings(TreeNode):
         name = _(u'Settings')
         view = 'system_settings'
         icon = u"SettingsIcon"
+
+class ViewCron(TreeNode):
+
+        gname = 'system.CronJob.View'
+        type = 'opencron'
+        append_app = False

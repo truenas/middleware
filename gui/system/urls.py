@@ -47,4 +47,5 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^test-mail/$', 'testmail', name="system_testmail"),
     url(r'^clear-cache/$', 'clearcache', name="system_clearcache"),
     url(r'^lsdir/(?P<path>.*)$', 'directory_browser', name="system_dirbrowser"),
+    url(r'^cronjobs/$', 'cronjobs', name="system_cronjobs"),
     )
