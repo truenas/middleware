@@ -40,8 +40,10 @@ from services.exceptions import ServiceFailed
 from storage.models import Volume, MountPoint, DiskGroup, Disk
 from storage.forms import UnixPermissionField
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_User
+from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_User, \
+                                         FreeNAS_Groups, FreeNAS_Group
 from freenasUI.middleware.notifier import notifier
+from freeadmin.forms import DirectoryBrowser
 from dojango import forms
 from dojango.forms import widgets
 
@@ -286,6 +288,56 @@ class RsyncdForm(ModelForm):
             raise ServiceFailed("rsync", _("The Rsync service failed to reload."))
     class Meta:
         model = models.Rsyncd
+
+class RsyncModForm(ModelForm):
+    rsyncmod_user = forms.ChoiceField(choices=(),
+                                         widget = forms.Select(attrs=attrs_dict),
+                                         label = _("User"),
+                                         required = False,
+                                         )
+    rsyncmod_group = forms.ChoiceField(choices=(),
+                                         widget = forms.Select(attrs=attrs_dict),
+                                         label = _("Group"),
+                                         required = False,
+                                         )
+    def __init__(self, *args, **kwargs):
+        super(RsyncModForm, self).__init__(*args, **kwargs)
+        from account.forms import FilteredSelectJSON
+        if len(FreeNAS_Users()) > 500:
+            if len(args) > 0 and isinstance(args[0], QueryDict):
+                self.fields['rsyncmod_user'].choices = ((args[0]['rsyncmod_user'],args[0]['rsyncmod_user']),)
+                self.fields['rsyncmod_user'].initial= args[0]['rsyncmod_user']
+            self.fields['rsyncmod_user'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
+        else:
+            self.fields['rsyncmod_user'].widget = widgets.FilteringSelect()
+            self.fields['rsyncmod_user'].choices = ((x.bsdusr_username,
+                                                      x.bsdusr_username)
+                                                      for x in FreeNAS_Users()
+                                                     )
+        if len(FreeNAS_Groups()) > 500:
+            if len(args) > 0 and isinstance(args[0], QueryDict):
+                self.fields['rsyncmod_group'].choices = ((args[0]['rsyncmod_group'],args[0]['rsyncmod_group']),)
+                self.fields['rsyncmod_group'].initial = args[0]['rsyncmod_group']
+            self.fields['rsyncmod_group'].widget = FilteredSelectJSON(url=reverse("account_bsdgroup_json"))
+        else:
+            self.grouplist = []
+            #self.grouplist.append(('-----', 'N/A'))
+            for a in list((x.bsdgrp_group, x.bsdgrp_group)
+                          for x in FreeNAS_Groups()):
+                self.grouplist.append(a)
+            self.fields['rsyncmod_group'].widget = widgets.FilteringSelect()
+            self.fields['rsyncmod_group'].choices = self.grouplist
+
+    def save(self):
+        super(RsyncModForm, self).save()
+        started = notifier().reload("rsync")
+        if started is False and models.services.objects.get(srv_service='rsync').srv_enable:
+            raise ServiceFailed("rsync", _("The Rsync service failed to reload."))
+    class Meta:
+        model = models.RsyncMod
+        widgets = {
+            'rsyncmod_path': DirectoryBrowser(),
+        }
 
 class DynamicDNSForm(ModelForm):
     class Meta:
@@ -778,12 +830,10 @@ class iSCSITargetForm(ModelForm):
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
 class ExtentDelete(Form):
-
+    delete = forms.BooleanField(label=_("Delete underlying file"), initial=False)
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
         super(ExtentDelete, self).__init__(*args, **kwargs)
-
-    delete = forms.BooleanField(label=_("Delete underlying file"), initial=False)
 
     def done(self):
         if self.cleaned_data['delete'] and \

@@ -15,7 +15,7 @@ class Migration(SchemaMigration):
             ('rsyncmod_comment', self.gf('django.db.models.fields.CharField')(max_length=120)),
             ('rsyncmod_path', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('rsyncmod_mode', self.gf('django.db.models.fields.CharField')(max_length=120)),
-            ('rsyncmod_maxconn', self.gf('django.db.models.fields.IntegerField')()),
+            ('rsyncmod_maxconn', self.gf('django.db.models.fields.IntegerField')(default=0)),
             ('rsyncmod_user', self.gf('django.db.models.fields.CharField')(max_length=120, blank=True)),
             ('rsyncmod_group', self.gf('django.db.models.fields.CharField')(max_length=120, blank=True)),
             ('rsyncmod_hostsallow', self.gf('django.db.models.fields.TextField')()),

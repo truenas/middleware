@@ -1174,6 +1174,7 @@ class RsyncMod(Model):
         help_text=_("This controls the access a remote host has to this module"),
         )
     rsyncmod_maxconn = models.IntegerField(
+        default=0,
         verbose_name=_("Maximum connections"),
         help_text=_("Maximum number of simultaneous connections. Default is 0 (unlimited)"),
         )
