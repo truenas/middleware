@@ -25,5 +25,6 @@ class Settings(TreeNode):
 class ViewCron(TreeNode):
 
         gname = 'system.CronJob.View'
+        name = _('Cron Scheduler')
         type = 'opencron'
         append_app = False
