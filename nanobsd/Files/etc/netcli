@@ -32,11 +32,16 @@ import sys
 from signal import signal, SIGINT, SIG_IGN
 import re
 import ipaddr
+import shutil
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
 NETWORK_PATH = os.path.join(FREENAS_PATH, "network")
 NOTIFIER_PATH = os.path.join(FREENAS_PATH, "middleware/notifier.py")
+
+FREENAS_DATA_PATH = "/data"
+FREENAS_DB = os.path.join(FREENAS_DATA_PATH, "freenas-v1.db")
+FREENAS_FACTORY_DB = os.path.join(FREENAS_DATA_PATH, "factory-v1.db")
 
 sys.path.append(WWW_PATH)
 sys.path.append(FREENAS_PATH)
@@ -420,6 +425,16 @@ def reset_gui_login():
     """
     raw_input("")
 
+def reset_factory_defaults():
+    a = raw_input("Are you sure you want to reset to factory defaults? (yes/no): ")
+    if a.startswith('y') or a.startswith('Y'):
+        if not os.stat(FREENAS_FACTORY_DB):
+            print >> sys.stderr, "Unable to reset to factory defaults, %s doesn't exist!" % FREENAS_FACTORY_DB
+
+        else:
+            os.unlink(FREENAS_DB)
+            shutil.copyfile(FREENAS_FACTORY_DB, FREENAS_DB)
+
 def configure_lagg_interface():
     lagg_index = 0
     lagg_interfaces = LAGGInterface.objects.all()
@@ -788,10 +803,14 @@ def main_menu():
                 5: configure_static_routes,
                 6: configure_dns,
                 7: reset_gui_login,
-                8: shell,
-                9: reboot,
-                10: shutdown
+                8: reset_factory_defaults,
+                9: shell,
+                10: reboot,
+                11: shutdown
               }
+
+    menu_min = 1
+    menu_max = 11
 
     while True:
         print """
@@ -804,9 +823,10 @@ Console setup
 5) Configure Static Routes
 6) Configure DNS
 7) Reset WebGUI login credentials
-8) Shell
-9) Reboot
-10) Shutdown
+8) Reset to factory defaults
+9) Shell
+10) Reboot
+11) Shutdown
         """
         show_ip()
 
@@ -814,7 +834,7 @@ Console setup
             ch = int(raw_input("Enter an option from 1-10: "))
         except ValueError:
             ch = None
-        if ch >= 1 and ch <= 10:
+        if ch >= menu_min and ch <= menu_max:
             handler[ch]()
             continue
         else:
