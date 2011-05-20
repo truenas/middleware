@@ -24,7 +24,7 @@
     </div>
 
     <button id="zvolBtn" dojoType="dijit.form.Button" type="button">
-        <img src="/freenas/media/images/ui/buttons/add_dataset.png">
+        <img src="{{ STATIC_URL }}images/ui/buttons/add_dataset.png">
         <br />
         <script type="dojo/method" event="onClick" args="evt">
             addObject('{% trans "Create ZFS Volume" %}', '{% url storage_zvol %}', [this,]);
@@ -88,7 +88,7 @@
             <td>
                 <button id="delZVolBtn{{ forloop.counter }}" dojoType="dijit.form.Button" type="button"
 	            onClick="editObject('{% trans "Destroy ZFS Volume" %}', '{% url storage_zvol_delete name=zvol %}', [this,]);">
-	            <img src="/freenas/media/images/ui/buttons/remove_volume.png" width="18px" height="18px"></button>
+	            <img src="{{ STATIC_URL }}images/ui/buttons/remove_volume.png" width="18px" height="18px"></button>
                 <div dojoType="dijit.Tooltip" connectId="delZVolBtn{{ forloop.counter }}" position="above">
                     <strong>{% trans "Destroy ZFS Volume" %}</strong>
                 </div>
