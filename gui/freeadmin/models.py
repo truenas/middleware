@@ -79,3 +79,26 @@ class Model(models.Model):
 
     class Meta:
         abstract = True
+
+    @models.permalink
+    def get_add_url(self):
+        return ('freeadmin_model_add', (), {
+            'app':self._meta.app_label,
+            'model': self._meta.object_name,
+            })
+
+    @models.permalink
+    def get_edit_url(self):
+        return ('freeadmin_model_edit', (), {
+            'app':self._meta.app_label,
+            'model': self._meta.object_name,
+            'oid': self.id,
+            })
+
+    @models.permalink
+    def get_delete_url(self):
+        return ('freeadmin_model_delete', (), {
+            'app':self._meta.app_label,
+            'model': self._meta.object_name,
+            'oid': self.id,
+            })

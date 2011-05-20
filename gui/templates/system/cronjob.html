@@ -24,13 +24,13 @@
             <button dojoType="dijit.form.Button" type="button">
                 {% trans "Edit" %}
             <script type="dojo/method" event="onClick" args="evt">
-                editObject('{% trans "Edit" %}', '{% url freeadmin_model_edit app="services",model="CronJob",oid=c.id %}', [this,]);
+                editObject('{% trans "Edit" %}', '{{ c.get_edit_url }}', [this,]);
             </script>
             </button>
             <button dojoType="dijit.form.Button" type="button">
                 {% trans "Delete" %}
             <script type="dojo/method" event="onClick" args="evt">
-                editObject('{% trans "Delete" %}', '{% url freeadmin_model_delete app="services",model="CronJob",oid=c.id %}', [this,]);
+                editObject('{% trans "Delete" %}', '{{ c.get_delete_url }}', [this,]);
             </script>
             </button>
         </td>
@@ -45,7 +45,7 @@
         <button id="de_button" dojoType="dijit.form.Button" type="button">
             {% trans "Add CronJob" %}
             <script type="dojo/method" event="onClick" args="evt">
-                addObject('{% trans "Add CronJob" %}', '{% url freeadmin_model_add app="services",model="CronJob" %}', [this,]);
+                addObject('{% trans "Add CronJob" %}', '{% url freeadmin_model_add app="system",model="CronJob" %}', [this,]);
         </script>
         </button>
         </p>

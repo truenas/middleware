@@ -339,6 +339,6 @@ def directory_browser(request, path='/'):
 
 def cronjobs(request):
     crons = models.CronJob.objects.all().order_by('id')
-    return render(request, "services/cronjob.html", {
+    return render(request, "system/cronjob.html", {
         'cronjobs': crons,
         })
