@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-19 13:28+0200\n"
-"Last-Translator: glich <tomas.mas@ericsson.com>\n"
+"PO-Revision-Date: 2011-05-20 04:30+0200\n"
+"Last-Translator: agustingoya <agustingoya@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -125,19 +125,21 @@ msgstr "Uso mínimo de energia en modo espera (detención de disco)"
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
-msgstr ""
+msgstr "Uso de energía intermedio utilizando el modo \"En espera\""
 
 #: choices.py:90
 msgid "Minimum power usgae without Standby (no spindown)"
 msgstr ""
+"Uso de energía intermedio sin utilizar el modo \"En espera\" (sin detención de "
+"disco)"
 
 #: choices.py:91
 msgid "Intermediate power usage withot Standby"
-msgstr ""
+msgstr "Uso de energía intermedio sin utilizar el modo \"En espera\""
 
 #: choices.py:92
 msgid "Maximum performance, maximum power usage"
-msgstr ""
+msgstr "Máxima eficiencia, máximo consumo de energía"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
@@ -692,11 +694,11 @@ msgstr "Configuración Global"
 
 #: network/models.py:95
 msgid "NIC"
-msgstr "Placa de Red"
+msgstr "Tarjeta de Red"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr "Elija su Placa de Red"
+msgstr "Elija su Tarjeta de Red"
 
 #: network/models.py:101
 msgid "Interface Name"
@@ -704,7 +706,7 @@ msgstr "Nombre de la Interfaz"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr "Nombre su Placa de Red"
+msgstr "Nombre de la Tarjeta de Red"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
@@ -836,7 +838,7 @@ msgstr "Ver Todas las Agregaciones de Enlaces"
 
 #: network/nav.py:51
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Link Aggregations"
 
 #: network/nav.py:97
 msgid "View All Interfaces"
@@ -909,12 +911,12 @@ msgstr ""
 
 #: services/forms.py:220
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "Este campo es requerido para registro anónimo"
 
 #: services/forms.py:294 services/models.py:514
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
-msgstr ""
+msgstr "Secreto"
 
 #: services/forms.py:295 services/models.py:515
 msgid "Target side secret."
@@ -922,7 +924,7 @@ msgstr ""
 
 #: services/forms.py:296
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "Secreto (Confirmar)"
 
 #: services/forms.py:298 services/forms.py:306
 msgid "Enter the same secret above for verification."
@@ -954,7 +956,7 @@ msgstr ""
 
 #: services/forms.py:375
 msgid "LUN already exists in the same target."
-msgstr ""
+msgstr "LUN ya existe en el mismo destino."
 
 #: services/forms.py:384 services/models.py:354
 msgid "Controller Auth Group"
@@ -1018,7 +1020,7 @@ msgstr ""
 
 #: services/models.py:41
 msgid "Service"
-msgstr ""
+msgstr "Servicio"
 
 #: services/models.py:42
 msgid "Name of Service, should be auto-generated at build time"
@@ -1026,16 +1028,16 @@ msgstr ""
 
 #: services/models.py:45
 msgid "Enable Service"
-msgstr ""
+msgstr "Activar Servicio"
 
 #: services/models.py:48 services/models.py:49
 #: templates/common/menubar2.html:28 templates/services/index2.html:3
 msgid "Services"
-msgstr ""
+msgstr "Servicios"
 
 #: services/models.py:61
 msgid "Authentication Model"
-msgstr ""
+msgstr "Modo de Autenticación"
 
 #: services/models.py:62
 msgid ""
@@ -1044,11 +1046,11 @@ msgstr ""
 
 #: services/models.py:66
 msgid "NetBIOS name"
-msgstr ""
+msgstr "Nombre de NetBIOS"
 
 #: services/models.py:70
 msgid "Workgroup"
-msgstr ""
+msgstr "Grupo de trabajo"
 
 #: services/models.py:71
 msgid ""
@@ -1058,19 +1060,19 @@ msgstr ""
 
 #: services/models.py:77
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "Descipción del servidor. Se suele dejar en blanco."
 
 #: services/models.py:83
 msgid "DOS charset"
-msgstr ""
+msgstr "Juego de caracteres DOS"
 
 #: services/models.py:89
 msgid "UNIX charset"
-msgstr ""
+msgstr "Juego de caracteres UNIX"
 
 #: services/models.py:95
 msgid "Log level"
-msgstr ""
+msgstr "Nivel de registro"
 
 #: services/models.py:98
 msgid "Local Master"
@@ -1078,11 +1080,11 @@ msgstr ""
 
 #: services/models.py:100
 msgid "Time Server for Domain"
-msgstr ""
+msgstr "Servidor de tiempo para el Dominio"
 
 #: services/models.py:104 services/models.py:192
 msgid "Guest account"
-msgstr ""
+msgstr "Cuenta de invitado"
 
 #: services/models.py:105 sharing/models.py:64
 msgid ""
@@ -1095,15 +1097,15 @@ msgstr ""
 
 #: services/models.py:108
 msgid "Allow guest access"
-msgstr ""
+msgstr "Permitir acceso invitado"
 
 #: services/models.py:110
 msgid "Only allow guest access"
-msgstr ""
+msgstr "Solo permitir acceso invitado"
 
 #: services/models.py:113 services/models.py:830
 msgid "File mask"
-msgstr ""
+msgstr "Máscara de Archivo"
 
 #: services/models.py:115
 msgid "Use this option to override the file creation mask (0666 by default)."
@@ -1124,11 +1126,11 @@ msgstr ""
 
 #: services/models.py:126
 msgid "Send files with sendfile(2)"
-msgstr ""
+msgstr "Enviar archivos con sendfile(2)"
 
 #: services/models.py:128
 msgid "EA Support"
-msgstr ""
+msgstr "Soporte EA"
 
 #: services/models.py:130
 msgid "Support DOS File Attributes"

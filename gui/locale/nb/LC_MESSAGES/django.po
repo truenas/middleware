@@ -3,257 +3,257 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-05-19 14:04+0200\n"
+"Last-Translator: erlbon <erlend.bonderud@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: nb\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
 msgid "Plain"
-msgstr ""
+msgstr "Vanlig"
 
 #: choices.py:36 system/models.py:227 templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:37
 msgid "TLS"
-msgstr ""
+msgstr "TLS"
 
 #: choices.py:42
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: choices.py:43
 msgid "HTTPS"
-msgstr ""
+msgstr "HTTPS"
 
 #: choices.py:48
 msgid "English"
-msgstr ""
+msgstr "Engelsk"
 
 #: choices.py:53 choices.py:222
 msgid "Auto"
-msgstr ""
+msgstr "Automatisk"
 
 #: choices.py:54
 msgid "PIO0"
-msgstr ""
+msgstr "PIO0"
 
 #: choices.py:55
 msgid "PIO1"
-msgstr ""
+msgstr "PIO1"
 
 #: choices.py:56
 msgid "PIO2"
-msgstr ""
+msgstr "PIO2"
 
 #: choices.py:57
 msgid "PIO3"
-msgstr ""
+msgstr "PIO3"
 
 #: choices.py:58
 msgid "PIO4"
-msgstr ""
+msgstr "PIO4"
 
 #: choices.py:59
 msgid "WDMA0"
-msgstr ""
+msgstr "WDMA0"
 
 #: choices.py:60
 msgid "WDMA1"
-msgstr ""
+msgstr "WDMA1"
 
 #: choices.py:61
 msgid "WDMA2"
-msgstr ""
+msgstr "WDMA2"
 
 #: choices.py:62
 msgid "UDMA-16"
-msgstr ""
+msgstr "UDMA-16"
 
 #: choices.py:63
 msgid "UDMA-33"
-msgstr ""
+msgstr "UDMA.33"
 
 #: choices.py:64
 msgid "UDMA-66"
-msgstr ""
+msgstr "UDMA-66"
 
 #: choices.py:65
 msgid "UDMA-100"
-msgstr ""
+msgstr "UDMA-100"
 
 #: choices.py:66
 msgid "UDMA-133"
-msgstr ""
+msgstr "UDMA-133"
 
 #: choices.py:67
 msgid "SATA 1.5Gbit/s"
-msgstr ""
+msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
-msgstr ""
+msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr ""
+msgstr "Alltid på"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr ""
+msgstr "Deaktivert"
 
 #: choices.py:87 choices.py:88 choices.py:89 choices.py:90 choices.py:91
 #: choices.py:92
 msgid "Level"
-msgstr ""
+msgstr "Nivå"
 
 #: choices.py:87
 msgid "Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "Lavt strømforbruk med ventemodus (spindown)"
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
-msgstr ""
+msgstr "Normalt strømforbruk med hvilemodus"
 
 #: choices.py:90
 msgid "Minimum power usgae without Standby (no spindown)"
-msgstr ""
+msgstr "Lavt strømforbruk uten hvilemodus (ingen spindown)"
 
 #: choices.py:91
 msgid "Intermediate power usage withot Standby"
-msgstr ""
+msgstr "Normalt strømforbruk uten hvilemodus"
 
 #: choices.py:92
 msgid "Maximum performance, maximum power usage"
-msgstr ""
+msgstr "Høyeste ytelse og strømforbruk"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr ""
+msgstr "Minimalt"
 
 #: choices.py:97
 msgid "Medium"
-msgstr ""
+msgstr "Gjennomsnittlig"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr ""
+msgstr "Høyeste"
 
 #: choices.py:132 templates/storage/tasks.html:86
 msgid "January"
-msgstr ""
+msgstr "Januar"
 
 #: choices.py:133 templates/storage/tasks.html:89
 msgid "February"
-msgstr ""
+msgstr "Februar"
 
 #: choices.py:134 templates/storage/tasks.html:92
 msgid "March"
-msgstr ""
+msgstr "Mars"
 
 #: choices.py:135 templates/storage/tasks.html:95
 msgid "April"
-msgstr ""
+msgstr "April"
 
 #: choices.py:136 templates/storage/tasks.html:98
 msgid "May"
-msgstr ""
+msgstr "Mai"
 
 #: choices.py:137 templates/storage/tasks.html:101
 msgid "June"
-msgstr ""
+msgstr "Juni"
 
 #: choices.py:138 templates/storage/tasks.html:104
 msgid "July"
-msgstr ""
+msgstr "Juli"
 
 #: choices.py:139 templates/storage/tasks.html:107
 msgid "August"
-msgstr ""
+msgstr "August"
 
 #: choices.py:140 templates/storage/tasks.html:110
 msgid "September"
-msgstr ""
+msgstr "September"
 
 #: choices.py:141 templates/storage/tasks.html:113
 msgid "October"
-msgstr ""
+msgstr "Oktober"
 
 #: choices.py:142 templates/storage/tasks.html:116
 msgid "November"
-msgstr ""
+msgstr "November"
 
 #: choices.py:143 templates/storage/tasks.html:119
 msgid "December"
-msgstr ""
+msgstr "Desember"
 
 #: choices.py:146 templates/storage/tasks.html:57
 msgid "Monday"
-msgstr ""
+msgstr "Mandag"
 
 #: choices.py:147 templates/storage/tasks.html:60
 msgid "Tuesday"
-msgstr ""
+msgstr "Tirsdag"
 
 #: choices.py:148 templates/storage/tasks.html:63
 msgid "Wednesday"
-msgstr ""
+msgstr "Onsdag"
 
 #: choices.py:149 templates/storage/tasks.html:66
 msgid "Thursday"
-msgstr ""
+msgstr "Torsdag"
 
 #: choices.py:150 templates/storage/tasks.html:69
 msgid "Friday"
-msgstr ""
+msgstr "Fredag"
 
 #: choices.py:151 templates/storage/tasks.html:72
 msgid "Saturday"
-msgstr ""
+msgstr "Lørdag"
 
 #: choices.py:152 templates/storage/tasks.html:75
 msgid "Sunday"
-msgstr ""
+msgstr "Søndag"
 
 #: choices.py:163
 msgid "Anonymous"
-msgstr ""
+msgstr "Anonym"
 
 #: choices.py:164
 msgid "Local User"
-msgstr ""
+msgstr "Lokalbruker"
 
 #: choices.py:185
 msgid "Normal"
-msgstr ""
+msgstr "Vanlig"
 
 #: choices.py:186
 msgid "Full"
-msgstr ""
+msgstr "Full"
 
 #: choices.py:187
 msgid "Debug"
-msgstr ""
+msgstr "Feilsøk"
 
 #: choices.py:191
 msgid "Default"
-msgstr ""
+msgstr "Standard"
 
 #: choices.py:192
 msgid "Time Machine"
-msgstr ""
+msgstr "Tidsmaskin"
 
 #: choices.py:195
 msgid "No case folding"
@@ -261,425 +261,429 @@ msgstr ""
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "Navn med små bokstaver i begge retninger"
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "Klienten ser små bokstaver, serveren ser store bokstaver"
 
 #: choices.py:199
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "Klienten ser store bokstaver, serveren ser små bokstaver"
 
 #: choices.py:203
 msgid "File"
-msgstr ""
+msgstr "Fil"
 
 #: choices.py:204
 msgid "Device"
-msgstr ""
+msgstr "Enhet"
 
 #: choices.py:205
 msgid "ZFS Volume"
-msgstr ""
+msgstr "ZFS-Partisjon"
 
 #: choices.py:209 storage/models.py:137 templates/storage/autoimport.html:9
 #: templates/storage/import.html:18 templates/storage/wizard.html:91
 msgid "Disk"
-msgstr ""
+msgstr "Disk"
 
 #: choices.py:210
 msgid "DVD"
-msgstr ""
+msgstr "DVD"
 
 #: choices.py:211
 msgid "Tape"
-msgstr ""
+msgstr "Tape"
 
 #: choices.py:212
 msgid "Pass"
-msgstr ""
+msgstr "Godkjent"
 
 #: choices.py:216
 msgid "read-write"
-msgstr ""
+msgstr "lese-skriv"
 
 #: choices.py:217
 msgid "read-only"
-msgstr ""
+msgstr "kun lese"
 
 #: choices.py:221 choices.py:227 services/forms.py:392 services/forms.py:394
 #: services/forms.py:692 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "Ingen"
 
 #: choices.py:223
 msgid "CHAP"
-msgstr ""
+msgstr "CHAP"
 
 #: choices.py:224
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "Felles CHAP"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "UPS når lavt batteristand"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS starter batteridrift"
 
 #: choices.py:250
 msgid "Preferred"
-msgstr ""
+msgstr "Foretrukne"
 
 #: choices.py:251
 msgid "Tolerated"
-msgstr ""
+msgstr "Akseptert"
 
 #: choices.py:252
 msgid "Required"
-msgstr ""
+msgstr "Nødvendig"
 
 #: choices.py:279 choices.py:285
 msgid "Inherit"
-msgstr ""
+msgstr "Arvet"
 
 #: choices.py:280
 msgid "On"
-msgstr ""
+msgstr "På"
 
 #: choices.py:281 choices.py:286
 msgid "Off"
-msgstr ""
+msgstr "Av"
 
 #: choices.py:287
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (anbefalt)"
 
 #: choices.py:288
 msgid "default level"
-msgstr ""
+msgstr "standardnivå"
 
 #: choices.py:289
 msgid "fastest"
-msgstr ""
+msgstr "raskeste"
 
 #: choices.py:290
 msgid "maximum, slow"
-msgstr ""
+msgstr "maksimalt, sakte"
 
 #: choices.py:431
 msgid "Hour(s)"
-msgstr ""
+msgstr "Tim(er)"
 
 #: choices.py:432
 msgid "Day(s)"
-msgstr ""
+msgstr "Dag(er)"
 
 #: choices.py:433
 msgid "Week(s)"
-msgstr ""
+msgstr "Uke(r)"
 
 #: choices.py:434
 msgid "Month(s)"
-msgstr ""
+msgstr "Måned(er)"
 
 #: choices.py:435
 msgid "Year(s)"
-msgstr ""
+msgstr "År"
 
 #: choices.py:439
 msgid "Everyday"
-msgstr ""
+msgstr "Hver eneste dag"
 
 #: choices.py:440
 msgid "Every selected weekday"
-msgstr ""
+msgstr "Alle utvalgte ukedager"
 
 #: account/forms.py:93 templates/storage/volumes.html:62
 msgid "Available"
-msgstr ""
+msgstr "Tilgjengelig"
 
 #: account/forms.py:144
 msgid "Selected"
-msgstr ""
+msgstr "Valgt"
 
 #: account/forms.py:172 account/forms.py:197 account/models.py:77
 #: services/forms.py:229 services/models.py:657 services/models.py:917
 #: system/models.py:153 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:60
 msgid "Username"
-msgstr ""
+msgstr "Brukernavn"
 
 #: account/forms.py:173 account/forms.py:198
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
 msgstr ""
+"Påkrevd. 30 karakterer eller færre. Kun bokstaver, tall og symbolene "
+"@/./+/-/_."
 
 #: account/forms.py:174 account/forms.py:199
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr ""
+msgstr "Dette feltet kan kun inneholde bokstaver, tall og symbolene @/./+/-/_."
 
 #: account/forms.py:175
 msgid "E-mail"
-msgstr ""
+msgstr "E-post"
 
 #: account/forms.py:200 account/forms.py:307 account/views.py:79
 #: services/models.py:661 system/forms.py:180 system/models.py:160
 #: templates/account/bsdusers.html:9 templates/account/bsdusers.html.py:64
 msgid "Password"
-msgstr ""
+msgstr "Passord"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
 msgid "Password confirmation"
-msgstr ""
+msgstr "Bekreft passord"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "Skriv inn samme passord som over for å bekrefte"
 
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
 msgid "Shell"
-msgstr ""
+msgstr "Shell"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
-msgstr ""
+msgstr "Deaktiver innlogging"
 
 #: account/forms.py:205
 msgid "Primary Group"
-msgstr ""
+msgstr "Hovedgruppe"
 
 #: account/forms.py:234
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "En bruker med det brukernavnet finnes allerede"
 
 #: account/forms.py:242 account/forms.py:328 account/forms.py:470
 #: system/forms.py:225
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "De to passordfeltene er ikke identiske"
 
 #: account/forms.py:247 account/forms.py:372
 msgid "Home directory has to start with /mnt/"
-msgstr ""
+msgstr "Hjemmemappen må begynne med /mnt/"
 
 #: account/forms.py:261 account/forms.py:265 services/forms.py:469
 #: services/forms.py:482 services/forms.py:699 storage/forms.py:223
 #: system/forms.py:268 system/forms.py:291
 msgid "This field is required."
-msgstr ""
+msgstr "Dette feltet er obligatorisk."
 
 #: account/forms.py:418
 msgid "Member users"
-msgstr ""
+msgstr "Brukermedlemmer"
 
 #: account/forms.py:436
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "Tilleggsgrupper"
 
 #: account/forms.py:458 templates/registration/password_change_form.html:39
 msgid "New password"
-msgstr ""
+msgstr "Nytt passord"
 
 #: account/forms.py:459
 msgid "New password confirmation"
-msgstr ""
+msgstr "Bekreft nytt passord"
 
 #: account/forms.py:484 templates/registration/password_change_form.html:31
 msgid "Old password"
-msgstr ""
+msgstr "Gammelt passord"
 
 #: account/forms.py:492
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr ""
+msgstr "Det gamle passordet er ikke korrekt. Vennligst prøv igjen."
 
 #: account/models.py:36 services/models.py:460 services/models.py:505
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr ""
+msgstr "Gruppe-ID"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "Gruppenavn"
 
 #: account/models.py:47 account/models.py:147 storage/forms.py:92
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:49
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:61
 msgid "Group"
-msgstr ""
+msgstr "Gruppe"
 
 #: account/models.py:61
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Gruppen % er innebygget og kan ikke slettes!"
 
 #: account/models.py:71
 msgid "User ID"
-msgstr ""
+msgstr "Bruker-ID"
 
 #: account/models.py:76
 msgid "User &"
-msgstr ""
+msgstr "Bruker &"
 
 #: account/models.py:83
 msgid "Hashed UNIX password"
-msgstr ""
+msgstr "Kryptert UNIX passord"
 
 #: account/models.py:89
 msgid "Hashed SMB password"
-msgstr ""
+msgstr "Kryptert SMB passord"
 
 #: account/models.py:93
 msgid "Primary Group ID"
-msgstr ""
+msgstr "Primær Gruppe-ID"
 
 #: account/models.py:98
 msgid "Home Directory"
-msgstr ""
+msgstr "Hjemmemappe"
 
 #: account/models.py:107
 msgid "Full Name"
-msgstr ""
+msgstr "Fullt navn"
 
 #: account/models.py:114 account/models.py:151 services/models.py:509
 #: templates/services/iscsi_auth.html:6
 msgid "User"
-msgstr ""
+msgstr "Bruker"
 
 #: account/models.py:130
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Brukeren % er innebygget og kan ikke slettes!"
 
 #: account/nav.py:9 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:85 templates/account/index2.html:7
 msgid "Change Password"
-msgstr ""
+msgstr "Skift passord"
 
 #: account/nav.py:17 templates/account/changeform.html:25
 #: templates/account/index2.html:4
 msgid "Change Admin User"
-msgstr ""
+msgstr "Skift administatorbruker"
 
 #: account/nav.py:33 templates/account/index2.html:2
 msgid "My Account"
-msgstr ""
+msgstr "Min konto"
 
 #: account/nav.py:41
 msgid "View All Users"
-msgstr ""
+msgstr "Vis alle brukere"
 
 #: account/nav.py:54
 msgid "View All Groups"
-msgstr ""
+msgstr "Vis alle grupper"
 
 #: account/views.py:79 account/views.py:94 account/views.py:105
 #: account/views.py:120
 #, python-format
 msgid "%s successfully update."
-msgstr ""
+msgstr "% oppdaterte seg korrekt."
 
 #: account/views.py:94
 msgid "Admin user"
-msgstr ""
+msgstr "Administratorbruker"
 
 #: account/views.py:105 templates/account/index2.html:13
 msgid "Users"
-msgstr ""
+msgstr "Brukere"
 
 #: account/views.py:120 templates/account/index2.html:10
 msgid "Groups"
-msgstr ""
+msgstr "Grupper"
 
 #: contrib/ext_formwizard.py:170
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
 msgstr ""
+"Vi beklager, men siden har blitt utdatert. Vennligst fortsett å fylle ut "
+"feltene fra denne siden."
 
 #: freeadmin/navtree.py:349
 msgid "Display System Processes"
-msgstr ""
+msgstr "Vis systemprosesser"
 
 #: freeadmin/navtree.py:357 templates/freeadmin/index.html:50
 msgid "Reboot"
-msgstr ""
+msgstr "Omstart"
 
 #: freeadmin/navtree.py:365 templates/freeadmin/index.html:62
 msgid "Shutdown"
-msgstr ""
+msgstr "Steng ned"
 
 #: freeadmin/views.py:103
 #, python-format
 msgid "%s successfully added."
-msgstr ""
+msgstr "% er lagt til korrekt."
 
 #: freeadmin/views.py:262 freeadmin/views.py:264
 #, python-format
 msgid "%s successfully updated."
-msgstr ""
+msgstr "% er korrekt oppdatert."
 
 #: freeadmin/views.py:309
 #, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "% er korrekt slettet."
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
+msgstr "Må fylle ut navneserver 2 før man fyller ut navneserver 3"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
-msgstr ""
+msgstr "Nødvendig når man bruker navneserver 3"
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr ""
+msgstr "Må fylle ut navneserver 1 før man fyller ut navneserver 3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr ""
+msgstr "Må fylle ut navneserver 1 før man fyller ut navneserver 2"
 
 #: network/forms.py:134
 msgid "Physical NICs in the LAGG"
-msgstr ""
+msgstr "Fysiske NIC i LAGG"
 
 #: network/forms.py:187
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "Nettverket '%' er ikke gyldig, forventet CIDR. "
 
 #: network/models.py:42 services/models.py:1077
 #: templates/system/system_info.html:4
 msgid "Hostname"
-msgstr ""
+msgstr "Hostnavn"
 
 #: network/models.py:47
 msgid "Domain"
-msgstr ""
+msgstr "Domene"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "IPv4 standard Gateway"
 
 #: network/models.py:59
 msgid "IPv6 Default Gateway"
-msgstr ""
+msgstr "IPv6 standard Gateway"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "Navneserver 1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "Navneserver 2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "Navneserver 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:18
 #: templates/network/index2.html:3
@@ -688,11 +692,11 @@ msgstr ""
 
 #: network/models.py:95
 msgid "NIC"
-msgstr ""
+msgstr "NIC"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Velg din NIC"
 
 #: network/models.py:101
 msgid "Interface Name"
@@ -700,46 +704,49 @@ msgstr ""
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "Navngi din NIC"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
-msgstr ""
+msgstr "DHCP"
 
 #: network/models.py:107
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
+"Når den er aktivert, bruk DHCP for å motta IPv4 adresser og standardrouter, "
+"etc."
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "IPv4 Adresse"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr ""
+msgstr "IPv4 Nettmaske"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "Automatisk konfigurer IPv6"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
 msgstr ""
+"Når den er aktivert, automatisk konfigurer IPv6 adresser igjennom rtsol(8)."
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr ""
+msgstr "IPv6 Adresse"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr ""
+msgstr "IPv6 Nettmaske"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "Innstillinger"
 
 #: network/models.py:157 network/models.py:158 templates/network/index2.html:5
 msgid "Interfaces"
@@ -767,11 +774,11 @@ msgstr ""
 #: services/models.py:747 storage/models.py:95
 #: templates/network/staticroute.html:7 templates/network/vlan.html:8
 msgid "Description"
-msgstr ""
+msgstr "Beskrivelse"
 
 #: network/models.py:199 templates/network/index2.html:11
 msgid "VLAN"
-msgstr ""
+msgstr "VLAN"
 
 #: network/models.py:215 templates/network/interface.html:5
 msgid "Interface"
@@ -779,7 +786,7 @@ msgstr ""
 
 #: network/models.py:219
 msgid "Protocol Type"
-msgstr ""
+msgstr "Protokolltype"
 
 #: network/models.py:240
 msgid "LAGG Interface group"
@@ -791,7 +798,7 @@ msgstr ""
 
 #: network/models.py:249
 msgid "Physical NIC"
-msgstr ""
+msgstr "Fysisk NIC"
 
 #: network/models.py:259 templates/network/index2.html:7
 msgid "Link Aggregation"
@@ -856,7 +863,7 @@ msgstr ""
 #: storage/forms.py:799
 #, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "Brukeren % er ikke gyldig."
 
 #: services/forms.py:96
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -868,40 +875,40 @@ msgstr ""
 
 #: services/forms.py:145
 msgid "File Permission"
-msgstr ""
+msgstr "Filrettigheter"
 
 #: services/forms.py:146
 msgid "Directory Permission"
-msgstr ""
+msgstr "Mapperettigheter"
 
 #: services/forms.py:165
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr ""
+msgstr "Denne verdien må være mellom 0 og 65535, inkludert."
 
 #: services/forms.py:171 services/forms.py:189
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
+msgstr "Denne verdien må være mellom 0 og 10000, inkludert."
 
 #: services/forms.py:177 services/forms.py:183
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
+msgstr "Denne verdien må være mellom 0 og 1000, inkludert."
 
 #: services/forms.py:195
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
+msgstr "Denne verdien må være mellom 1024 og 65535, inkludert. 0 for standard."
 
 #: services/forms.py:201
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr ""
+msgstr "Denne verdien må være mellom 1024 og 65535, inkludert. 0 for standard."
 
 #: services/forms.py:220
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "Dette feltet er nødvendig for anonym innlogging."
 
 #: services/forms.py:294 services/models.py:514
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
-msgstr ""
+msgstr "Hemmelighet"
 
 #: services/forms.py:295 services/models.py:515
 msgid "Target side secret."
@@ -941,7 +948,7 @@ msgstr ""
 
 #: services/forms.py:375
 msgid "LUN already exists in the same target."
-msgstr ""
+msgstr "LUN finnes allerede i det samme målet."
 
 #: services/forms.py:384 services/models.py:354
 msgid "Controller Auth Group"
@@ -1010,66 +1017,71 @@ msgstr ""
 #: services/models.py:42
 msgid "Name of Service, should be auto-generated at build time"
 msgstr ""
+"Tjenestenavn, normalt sett automatisk generert når systemet ble kompilert."
 
 #: services/models.py:45
 msgid "Enable Service"
-msgstr ""
+msgstr "Aktiver tjeneste"
 
 #: services/models.py:48 services/models.py:49
 #: templates/common/menubar2.html:28 templates/services/index2.html:3
 msgid "Services"
-msgstr ""
+msgstr "Tjenester"
 
 #: services/models.py:61
 msgid "Authentication Model"
-msgstr ""
+msgstr "Autentiseringsmodell"
 
 #: services/models.py:62
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
+"Bruk av Active Directory eller LDAP autentifisering vil overstyre dette "
+"valget"
 
 #: services/models.py:66
 msgid "NetBIOS name"
-msgstr ""
+msgstr "NetBIOS navn"
 
 #: services/models.py:70
 msgid "Workgroup"
-msgstr ""
+msgstr "Arbeidsgruppe"
 
 #: services/models.py:71
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
+"Arbeidsgruppe serveren vil oppgi når den mottar forespørsler fra klienter "
+"(maks. 15 tegn)."
 
 #: services/models.py:77
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "Serverbeskrivelse. Denne kan normalt sett være blank."
 
 #: services/models.py:83
 msgid "DOS charset"
-msgstr ""
+msgstr "DOS tegnsett"
 
 #: services/models.py:89
 msgid "UNIX charset"
-msgstr ""
+msgstr "UNIX tegnsett"
 
 #: services/models.py:95
 msgid "Log level"
-msgstr ""
+msgstr "Loggnivå"
 
 #: services/models.py:98
 msgid "Local Master"
-msgstr ""
+msgstr "Lokal hovedmaskin"
 
 #: services/models.py:100
 msgid "Time Server for Domain"
-msgstr ""
+msgstr "Tidsserver for domenet"
 
 #: services/models.py:104 services/models.py:192
 msgid "Guest account"
-msgstr ""
+msgstr "Gjestekonto"
 
 #: services/models.py:105 sharing/models.py:64
 msgid ""
@@ -1079,31 +1091,39 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
+"Bruk dette valget for å overstyre brukernavnet ('ftp' som standard) som blir "
+"brukt for tilgang til gjestetjenester. De privilegiene som denne brukeren "
+"har være tilgjengelige til alle klienter som kobler seg til gjestetjenesten. "
+"Denne brukeren må være opprettet i passordfilen, men trenger ikke en gyldig "
+"pålogging."
 
 #: services/models.py:108
 msgid "Allow guest access"
-msgstr ""
+msgstr "Tillat gjestetilgang"
 
 #: services/models.py:110
 msgid "Only allow guest access"
-msgstr ""
+msgstr "Tillat kun gjestetilgang"
 
 #: services/models.py:113 services/models.py:830
 msgid "File mask"
-msgstr ""
+msgstr "Filmaske"
 
 #: services/models.py:115
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
+"Bruk dette valget for å overstyre filopprettelsesmasken (0666 som standard)."
 
 #: services/models.py:119 services/models.py:836
 msgid "Directory mask"
-msgstr ""
+msgstr "Mappemaske"
 
 #: services/models.py:121
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
+"Bruk dette valget for å overstyre mappeopprettelsesmasken (0777 som "
+"standard)."
 
 #: services/models.py:124
 msgid "Large RW support"
@@ -1111,24 +1131,24 @@ msgstr ""
 
 #: services/models.py:126
 msgid "Send files with sendfile(2)"
-msgstr ""
+msgstr "Send filer med sendfile(2)"
 
 #: services/models.py:128
 msgid "EA Support"
-msgstr ""
+msgstr "Støtte for EA"
 
 #: services/models.py:130
 msgid "Support DOS File Attributes"
-msgstr ""
+msgstr "Støtte av DOS filattributter"
 
 #: services/models.py:132
 msgid "Allow Empty Password"
-msgstr ""
+msgstr "Tillat tomme passord"
 
 #: services/models.py:135 services/models.py:675 services/models.py:709
 #: services/models.py:741 services/models.py:888
 msgid "Auxiliary parameters"
-msgstr ""
+msgstr "Tilleggsparameter"
 
 #: services/models.py:137
 msgid "These parameters are added to [Global] section of smb.conf"
@@ -1136,15 +1156,15 @@ msgstr ""
 
 #: services/models.py:140
 msgid "Enable home directories"
-msgstr ""
+msgstr "Aktiver hjemmemapper"
 
 #: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
-msgstr ""
+msgstr "Dette aktiverer\\deaktiverer hjemmemapper for sambabrukeren."
 
 #: services/models.py:144
 msgid "Enable home directories browsing"
-msgstr ""
+msgstr "Tillat lesing av hjemmemapper"
 
 #: services/models.py:145
 msgid "This enables\\disables home directories browsing for samba user."
@@ -1152,19 +1172,19 @@ msgstr ""
 
 #: services/models.py:149
 msgid "Home directories"
-msgstr ""
+msgstr "Hjemmemapper"
 
 #: services/models.py:155
 msgid "Enable AIO"
-msgstr ""
+msgstr "Aktiver AIO"
 
 #: services/models.py:156
 msgid "This enables\\disables AIO support."
-msgstr ""
+msgstr "Dette aktiverer\\deaktiverer støtte for AIO"
 
 #: services/models.py:160
 msgid "Minimal AIO read size"
-msgstr ""
+msgstr "Minimum AIO lesestørrelse"
 
 #: services/models.py:161
 msgid ""
@@ -1174,7 +1194,7 @@ msgstr ""
 
 #: services/models.py:166
 msgid "Minimal AIO write size"
-msgstr ""
+msgstr "Minimum AIO skrivestørrelse"
 
 #: services/models.py:167
 msgid ""
@@ -1185,25 +1205,25 @@ msgstr ""
 #: services/models.py:172 services/models.py:173
 #: templates/services/index2.html:29
 msgid "CIFS"
-msgstr ""
+msgstr "CIFS"
 
 #: services/models.py:182
 msgid "Server Name"
-msgstr ""
+msgstr "Servernavn"
 
 #: services/models.py:183
 msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
-msgstr ""
+msgstr "Servernavn. Om dette feltet er tomt, vil standardserveren bli valgt."
 
 #: services/models.py:186
 msgid "Guest Access"
-msgstr ""
+msgstr "Gjestetilgang"
 
 #: services/models.py:187
 msgid "Allows guest access to all apple shares on this box."
-msgstr ""
+msgstr "Tillat gjestetilgang til alle delte appleressurser på denne maskinen."
 
 #: services/models.py:193
 msgid ""
@@ -1216,15 +1236,17 @@ msgstr ""
 
 #: services/models.py:196
 msgid "Local Access"
-msgstr ""
+msgstr "Lokal tilgang"
 
 #: services/models.py:197
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
+"Tillat brukere med lokale brukerkontoer å få tilgang til delte apple-"
+"ressurser på denne maskinen."
 
 #: services/models.py:200
 msgid "Enable DDP"
-msgstr ""
+msgstr "Aktiver DDP"
 
 #: services/models.py:201
 msgid "Enables DDP support for low-level appletalk access."
@@ -1247,7 +1269,7 @@ msgstr ""
 
 #: services/models.py:220
 msgid "Asynchronous mode"
-msgstr ""
+msgstr "Asynkron tilstand"
 
 #: services/models.py:221
 msgid ""
@@ -1258,7 +1280,7 @@ msgstr ""
 #: services/models.py:226 services/models.py:227
 #: templates/services/index2.html:75
 msgid "NFS"
-msgstr ""
+msgstr "NFS"
 
 #: services/models.py:236
 msgid "Base Name"
@@ -1362,7 +1384,7 @@ msgstr ""
 
 #: services/models.py:321
 msgid "Enable LUC"
-msgstr ""
+msgstr "Aktiver LUC"
 
 #: services/models.py:325
 msgid "Controller IP address"
@@ -1514,7 +1536,7 @@ msgstr ""
 
 #: services/models.py:545
 msgid "Target Name"
-msgstr ""
+msgstr "Målnavn"
 
 #: services/models.py:546
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
@@ -1532,7 +1554,7 @@ msgstr ""
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7
 msgid "Type"
-msgstr ""
+msgstr "Type"
 
 #: services/models.py:560
 msgid "Logical Unit Type mapped to LUN."
@@ -1633,17 +1655,19 @@ msgstr ""
 
 #: services/models.py:691
 msgid "Location"
-msgstr ""
+msgstr "Plassering"
 
 #: services/models.py:693
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
+"Plasseringsinformasjon, f.eks. fysisk adresse for dette systemet: 'Etasje "
+"xx, Rom xyzzy'."
 
 #: services/models.py:697
 msgid "Contact"
-msgstr ""
+msgstr "Kontakt"
 
 #: services/models.py:699
 msgid ""
@@ -1653,11 +1677,11 @@ msgstr ""
 
 #: services/models.py:703
 msgid "Community"
-msgstr ""
+msgstr "Fellesskapet"
 
 #: services/models.py:704
 msgid "In most cases, 'public' is used here."
-msgstr ""
+msgstr "I de fleste tilfellene er 'offentlig' korrekt verdi."
 
 #: services/models.py:707
 msgid "Send SNMP Traps"
@@ -1666,39 +1690,40 @@ msgstr ""
 #: services/models.py:715 services/models.py:716
 #: templates/services/index2.html:86
 msgid "SNMP"
-msgstr ""
+msgstr "SNMP"
 
 #: services/models.py:725
 msgid "Identifier"
-msgstr ""
+msgstr "Identifikator"
 
 #: services/models.py:726
 msgid "This name is used to uniquely identify your UPS on this system."
 msgstr ""
+"Dette navnet blir  brukt til å identifisere din unike UPS på dette systemet."
 
 #: services/models.py:730
 msgid "Driver"
-msgstr ""
+msgstr "Driver"
 
 #: services/models.py:732
 msgid "The driver used to communicate with your UPS."
-msgstr ""
+msgstr "Driveren som blir brukt til å kommunisere med din UPS"
 
 #: services/models.py:736 services/models.py:788 services/models.py:911
 msgid "Port"
-msgstr ""
+msgstr "Port"
 
 #: services/models.py:738
 msgid "The serial or USB port where your UPS is connected."
-msgstr ""
+msgstr "Serieporten eller USBporten hvor din UPS er tilkoblet."
 
 #: services/models.py:754
 msgid "Shutdown mode"
-msgstr ""
+msgstr "Lukkemodus"
 
 #: services/models.py:758
 msgid "Shutdown timer"
-msgstr ""
+msgstr "Lukketimer"
 
 #: services/models.py:759
 msgid ""
@@ -1716,7 +1741,7 @@ msgstr ""
 
 #: services/models.py:767 services/models.py:773
 msgid "To email"
-msgstr ""
+msgstr "Til e-post"
 
 #: services/models.py:769
 msgid "Destination email address. Separate email addresses by semi-colon."
@@ -1730,35 +1755,38 @@ msgstr ""
 
 #: services/models.py:778 services/models.py:779
 msgid "UPS"
-msgstr ""
+msgstr "UPS"
 
 #: services/models.py:789
 msgid "Port to bind FTP server."
-msgstr ""
+msgstr "Port for å binde FTP server."
 
 #: services/models.py:793
 msgid "Clients"
-msgstr ""
+msgstr "Klienter"
 
 #: services/models.py:794
 msgid "Maximum number of simultaneous clients."
-msgstr ""
+msgstr "Høyeste tillatte nummer av samtidig påloggede klienter."
 
 #: services/models.py:798
 msgid "Connections"
-msgstr ""
+msgstr "Forbindelser"
 
 #: services/models.py:799
 msgid "Maximum number of connections per IP address (0 = unlimited)."
 msgstr ""
+"Høyeste tillatte nummer av forbindelser per IP adresse (0 = ubeskrenket)"
 
 #: services/models.py:803
 msgid "Login Attempts"
-msgstr ""
+msgstr "Antall forsøk på innlogging"
 
 #: services/models.py:804
 msgid "Maximum number of allowed password attempts before disconnection."
 msgstr ""
+"Høyeste tillatte nummer av forsøk på pålogging med galt passord før "
+"avkobling."
 
 #: services/models.py:808
 msgid "Timeout"
@@ -1770,22 +1798,22 @@ msgstr ""
 
 #: services/models.py:812
 msgid "Allow Root Login"
-msgstr ""
+msgstr "Tillat pålogging som Root"
 
 #: services/models.py:814
 msgid "Allow Anonymous Login"
-msgstr ""
+msgstr "Tillat anonym pålogging"
 
 #: services/models.py:818 sharing/models.py:49
 #: templates/services/iscsi_dextents.html:7
 #: templates/services/iscsi_extents.html:7 templates/sharing/windows.html:15
 #: templates/storage/volumes.html:60
 msgid "Path"
-msgstr ""
+msgstr "Sti"
 
 #: services/models.py:820
 msgid "Allow Local User Login"
-msgstr ""
+msgstr "tillat pålogging for lokale brukere"
 
 #: services/models.py:823
 msgid "Banner"
@@ -1801,7 +1829,7 @@ msgstr ""
 
 #: services/models.py:840
 msgid "Enable FXP"
-msgstr ""
+msgstr "Aktiver FXP"
 
 #: services/models.py:842
 msgid "Allow Transfer Resumption"
@@ -1809,7 +1837,7 @@ msgstr ""
 
 #: services/models.py:844
 msgid "Always Chroot"
-msgstr ""
+msgstr "Alltid bruk Chroot"
 
 #: services/models.py:846
 msgid "Require IDENT Authentication"
@@ -1821,7 +1849,7 @@ msgstr ""
 
 #: services/models.py:850
 msgid "Masquerade address"
-msgstr ""
+msgstr "Masker adresse"
 
 #: services/models.py:852
 msgid ""
@@ -1976,7 +2004,7 @@ msgstr ""
 
 #: services/models.py:955
 msgid "Compress Connections"
-msgstr ""
+msgstr "Komprimer forbindelser"
 
 #: services/models.py:958
 msgid "Host Private Key"
@@ -1995,7 +2023,7 @@ msgstr ""
 #: services/models.py:1006 services/models.py:1007
 #: templates/services/index2.html:97
 msgid "SSH"
-msgstr ""
+msgstr "SSH"
 
 #: services/models.py:1016
 msgid "Domain Controller Name"
@@ -2015,7 +2043,7 @@ msgstr ""
 
 #: services/models.py:1026
 msgid "Host Name (NetBIOS-Name)"
-msgstr ""
+msgstr "Vertsnavn (NetBIOS-navn)"
 
 #: services/models.py:1027
 msgid "Host Name in old format, eg EXAMPLE"
@@ -2023,15 +2051,15 @@ msgstr ""
 
 #: services/models.py:1031
 msgid "Workgroup Name"
-msgstr ""
+msgstr "Arbeidsgruppenavn"
 
 #: services/models.py:1032
 msgid "Workgroup Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Arbeidsgruppenavn i gammelt format, f.eks EKSEMPEL"
 
 #: services/models.py:1036
 msgid "Administrator Name"
-msgstr ""
+msgstr "Administratornavn"
 
 #: services/models.py:1037
 msgid "Username of Domain Administrator Account"
@@ -2047,11 +2075,11 @@ msgstr ""
 
 #: services/models.py:1048
 msgid "Windows Version"
-msgstr ""
+msgstr "Windowsversjon"
 
 #: services/models.py:1049
 msgid "The version of Microsoft Windows that Active Directory is running."
-msgstr ""
+msgstr "Versjonen av Microsoft Windows som Active Directory bruker"
 
 #: services/models.py:1053
 msgid "Service Principal Name"
@@ -2193,7 +2221,7 @@ msgstr ""
 #: services/models.py:1150 services/models.py:1151
 #: templates/services/index2.html:64
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/nav.py:10
 msgid "Control Services"
@@ -2541,7 +2569,7 @@ msgstr ""
 
 #: sharing/models.py:230
 msgid "All Directories"
-msgstr ""
+msgstr "Alle mapper"
 
 #: sharing/models.py:231
 msgid ""
@@ -2551,7 +2579,7 @@ msgstr ""
 
 #: sharing/models.py:234
 msgid "Read Only"
-msgstr ""
+msgstr "Kun lesetilgang"
 
 #: sharing/models.py:235
 msgid "Export the share read only.  Writes are not permitted."
@@ -2559,7 +2587,7 @@ msgstr ""
 
 #: sharing/models.py:238
 msgid "Quiet"
-msgstr ""
+msgstr "Stille"
 
 #: sharing/models.py:239
 msgid "Inibit syslog warnings if there are problems with exporting this share."
@@ -2615,7 +2643,7 @@ msgstr ""
 
 #: storage/forms.py:92
 msgid "Other"
-msgstr ""
+msgstr "Annet"
 
 #: storage/forms.py:140 storage/forms.py:331 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
@@ -2635,11 +2663,11 @@ msgstr ""
 #: storage/forms.py:231 system/forms.py:210 system/forms.py:216
 #: system/forms.py:221
 msgid "This field is required"
-msgstr ""
+msgstr "Dette feltet er obligatorisk"
 
 #: storage/forms.py:236 storage/forms.py:382 storage/forms.py:484
 msgid "You already have a volume with same name"
-msgstr ""
+msgstr "Du har allerede et annet diskvolum med dette navnet"
 
 #: storage/forms.py:242
 msgid "\"log\" is a reserved word and thus cannot be used"

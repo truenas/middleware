@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:34-0700\n"
-"PO-Revision-Date: 2011-05-19 13:26+0200\n"
-"Last-Translator: tommyke <thomasdevry@telenet.be>\n"
+"PO-Revision-Date: 2011-05-20 07:55+0200\n"
+"Last-Translator: FredVL <frederik@vanleeckwyck.be>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -482,7 +482,7 @@ msgstr ""
 #: account/forms.py:436
 #, fuzzy
 msgid "Auxiliary groups"
-msgstr "hulp groepen"
+msgstr "Ondersteunende groepen"
 
 #: account/forms.py:458 templates/registration/password_change_form.html:39
 msgid "New password"

@@ -3,21 +3,21 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-05-20 10:59+0200\n"
+"Last-Translator: bogdan_marcu <bogdan_marcu@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: ro\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1?0:(((n%100>19)||((n%100==0)&&(n!=0)))?"
-"2:1))\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
+"20)) ? 1 : 2);;\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
 msgid "Plain"
@@ -25,224 +25,224 @@ msgstr ""
 
 #: choices.py:36 system/models.py:227 templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:37
 msgid "TLS"
-msgstr ""
+msgstr "TLS"
 
 #: choices.py:42
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: choices.py:43
 msgid "HTTPS"
-msgstr ""
+msgstr "HTTPS"
 
 #: choices.py:48
 msgid "English"
-msgstr ""
+msgstr "Engleză"
 
 #: choices.py:53 choices.py:222
 msgid "Auto"
-msgstr ""
+msgstr "Auto"
 
 #: choices.py:54
 msgid "PIO0"
-msgstr ""
+msgstr "PIO0"
 
 #: choices.py:55
 msgid "PIO1"
-msgstr ""
+msgstr "PIO1"
 
 #: choices.py:56
 msgid "PIO2"
-msgstr ""
+msgstr "PIO2"
 
 #: choices.py:57
 msgid "PIO3"
-msgstr ""
+msgstr "PIO3"
 
 #: choices.py:58
 msgid "PIO4"
-msgstr ""
+msgstr "PIO4"
 
 #: choices.py:59
 msgid "WDMA0"
-msgstr ""
+msgstr "WDMA0"
 
 #: choices.py:60
 msgid "WDMA1"
-msgstr ""
+msgstr "WDMA1"
 
 #: choices.py:61
 msgid "WDMA2"
-msgstr ""
+msgstr "WDMA2"
 
 #: choices.py:62
 msgid "UDMA-16"
-msgstr ""
+msgstr "UDMA-16"
 
 #: choices.py:63
 msgid "UDMA-33"
-msgstr ""
+msgstr "UDMA-33"
 
 #: choices.py:64
 msgid "UDMA-66"
-msgstr ""
+msgstr "UDMA-66"
 
 #: choices.py:65
 msgid "UDMA-100"
-msgstr ""
+msgstr "UDMA-100"
 
 #: choices.py:66
 msgid "UDMA-133"
-msgstr ""
+msgstr "UDMA-133"
 
 #: choices.py:67
 msgid "SATA 1.5Gbit/s"
-msgstr ""
+msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
-msgstr ""
+msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr ""
+msgstr "Întotdeauna pornit"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr ""
+msgstr "Dezactivat"
 
 #: choices.py:87 choices.py:88 choices.py:89 choices.py:90 choices.py:91
 #: choices.py:92
 msgid "Level"
-msgstr ""
+msgstr "Nivel"
 
 #: choices.py:87
 msgid "Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "Utilizare minimă cu oprire (discurile se opresc)"
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
-msgstr ""
+msgstr "Utilizare intermediară cu oprire"
 
 #: choices.py:90
 msgid "Minimum power usgae without Standby (no spindown)"
-msgstr ""
+msgstr "Utilizare minimă fără oprire (discurile nu se opresc)"
 
 #: choices.py:91
 msgid "Intermediate power usage withot Standby"
-msgstr ""
+msgstr "Utilizare itermediară fără oprire"
 
 #: choices.py:92
 msgid "Maximum performance, maximum power usage"
-msgstr ""
+msgstr "Utilizare intensivă, perfprmanță maximă"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr ""
+msgstr "Minimum"
 
 #: choices.py:97
 msgid "Medium"
-msgstr ""
+msgstr "Mediu"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr ""
+msgstr "Maximum"
 
 #: choices.py:132 templates/storage/tasks.html:86
 msgid "January"
-msgstr ""
+msgstr "Ianuarie"
 
 #: choices.py:133 templates/storage/tasks.html:89
 msgid "February"
-msgstr ""
+msgstr "Februarie"
 
 #: choices.py:134 templates/storage/tasks.html:92
 msgid "March"
-msgstr ""
+msgstr "Martie"
 
 #: choices.py:135 templates/storage/tasks.html:95
 msgid "April"
-msgstr ""
+msgstr "Aprilie"
 
 #: choices.py:136 templates/storage/tasks.html:98
 msgid "May"
-msgstr ""
+msgstr "Mai"
 
 #: choices.py:137 templates/storage/tasks.html:101
 msgid "June"
-msgstr ""
+msgstr "Iunie"
 
 #: choices.py:138 templates/storage/tasks.html:104
 msgid "July"
-msgstr ""
+msgstr "Iulie"
 
 #: choices.py:139 templates/storage/tasks.html:107
 msgid "August"
-msgstr ""
+msgstr "August"
 
 #: choices.py:140 templates/storage/tasks.html:110
 msgid "September"
-msgstr ""
+msgstr "Septembrie"
 
 #: choices.py:141 templates/storage/tasks.html:113
 msgid "October"
-msgstr ""
+msgstr "Octombrie"
 
 #: choices.py:142 templates/storage/tasks.html:116
 msgid "November"
-msgstr ""
+msgstr "Noiembrie"
 
 #: choices.py:143 templates/storage/tasks.html:119
 msgid "December"
-msgstr ""
+msgstr "Decembrie"
 
 #: choices.py:146 templates/storage/tasks.html:57
 msgid "Monday"
-msgstr ""
+msgstr "Luni"
 
 #: choices.py:147 templates/storage/tasks.html:60
 msgid "Tuesday"
-msgstr ""
+msgstr "Marți"
 
 #: choices.py:148 templates/storage/tasks.html:63
 msgid "Wednesday"
-msgstr ""
+msgstr "Miercuri"
 
 #: choices.py:149 templates/storage/tasks.html:66
 msgid "Thursday"
-msgstr ""
+msgstr "Joi"
 
 #: choices.py:150 templates/storage/tasks.html:69
 msgid "Friday"
-msgstr ""
+msgstr "Vineri"
 
 #: choices.py:151 templates/storage/tasks.html:72
 msgid "Saturday"
-msgstr ""
+msgstr "Sâmbătă"
 
 #: choices.py:152 templates/storage/tasks.html:75
 msgid "Sunday"
-msgstr ""
+msgstr "Duminică"
 
 #: choices.py:163
 msgid "Anonymous"
-msgstr ""
+msgstr "Anonim"
 
 #: choices.py:164
 msgid "Local User"
-msgstr ""
+msgstr "User local"
 
 #: choices.py:185
 msgid "Normal"
-msgstr ""
+msgstr "Normal"
 
 #: choices.py:186
 msgid "Full"
-msgstr ""
+msgstr "Complet"
 
 #: choices.py:187
 msgid "Debug"
@@ -250,11 +250,11 @@ msgstr ""
 
 #: choices.py:191
 msgid "Default"
-msgstr ""
+msgstr "Implicit"
 
 #: choices.py:192
 msgid "Time Machine"
-msgstr ""
+msgstr "Time Machine"
 
 #: choices.py:195
 msgid "No case folding"
@@ -262,40 +262,40 @@ msgstr ""
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "Denumiri cu minuscule în ambele direcţii"
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "Clientul vede minuscule, serverul vede majuscule"
 
 #: choices.py:199
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "Clientul vede majuscule, serverul vede minuscule"
 
 #: choices.py:203
 msgid "File"
-msgstr ""
+msgstr "Fișier"
 
 #: choices.py:204
 msgid "Device"
-msgstr ""
+msgstr "Dispozitiv"
 
 #: choices.py:205
 msgid "ZFS Volume"
-msgstr ""
+msgstr "Volum ZFS"
 
 #: choices.py:209 storage/models.py:137 templates/storage/autoimport.html:9
 #: templates/storage/import.html:18 templates/storage/wizard.html:91
 msgid "Disk"
-msgstr ""
+msgstr "Disc"
 
 #: choices.py:210
 msgid "DVD"
-msgstr ""
+msgstr "DVD"
 
 #: choices.py:211
 msgid "Tape"
-msgstr ""
+msgstr "Bandă"
 
 #: choices.py:212
 msgid "Pass"
@@ -303,40 +303,40 @@ msgstr ""
 
 #: choices.py:216
 msgid "read-write"
-msgstr ""
+msgstr "citire-scriere"
 
 #: choices.py:217
 msgid "read-only"
-msgstr ""
+msgstr "doar-citire"
 
 #: choices.py:221 choices.py:227 services/forms.py:392 services/forms.py:394
 #: services/forms.py:692 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "Nimic"
 
 #: choices.py:223
 msgid "CHAP"
-msgstr ""
+msgstr "CHAP"
 
 #: choices.py:224
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "CHAP reciproc"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "UPS-ul este descărcat"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS-ul funcționează pe baterie"
 
 #: choices.py:250
 msgid "Preferred"
-msgstr ""
+msgstr "Preferat"
 
 #: choices.py:251
 msgid "Tolerated"
-msgstr ""
+msgstr "Tolerat"
 
 #: choices.py:252
 msgid "Required"
@@ -348,96 +348,97 @@ msgstr ""
 
 #: choices.py:280
 msgid "On"
-msgstr ""
+msgstr "Pornit"
 
 #: choices.py:281 choices.py:286
 msgid "Off"
-msgstr ""
+msgstr "Oprit"
 
 #: choices.py:287
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (recomandat)"
 
 #: choices.py:288
 msgid "default level"
-msgstr ""
+msgstr "nivel implicit"
 
 #: choices.py:289
 msgid "fastest"
-msgstr ""
+msgstr "cel mai rapid"
 
 #: choices.py:290
 msgid "maximum, slow"
-msgstr ""
+msgstr "maximum, încet"
 
 #: choices.py:431
 msgid "Hour(s)"
-msgstr ""
+msgstr "Oră(e)"
 
 #: choices.py:432
 msgid "Day(s)"
-msgstr ""
+msgstr "Zi(le)"
 
 #: choices.py:433
 msgid "Week(s)"
-msgstr ""
+msgstr "Saptămână(i)"
 
 #: choices.py:434
 msgid "Month(s)"
-msgstr ""
+msgstr "Lună(i)"
 
 #: choices.py:435
 msgid "Year(s)"
-msgstr ""
+msgstr "An(i)"
 
 #: choices.py:439
 msgid "Everyday"
-msgstr ""
+msgstr "Zilnic"
 
 #: choices.py:440
 msgid "Every selected weekday"
-msgstr ""
+msgstr "Fiecare zi din săptămână selectată"
 
 #: account/forms.py:93 templates/storage/volumes.html:62
 msgid "Available"
-msgstr ""
+msgstr "Disponibil"
 
 #: account/forms.py:144
 msgid "Selected"
-msgstr ""
+msgstr "Selectat"
 
 #: account/forms.py:172 account/forms.py:197 account/models.py:77
 #: services/forms.py:229 services/models.py:657 services/models.py:917
 #: system/models.py:153 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:60
 msgid "Username"
-msgstr ""
+msgstr "Nume utilizator"
 
 #: account/forms.py:173 account/forms.py:198
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
 msgstr ""
+"Obligatoriu. 30 caractere sau mai puţin. Doar litere, cifre şi @/./+/-/_ ."
 
 #: account/forms.py:174 account/forms.py:199
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr ""
+msgstr "Valoarea poate conţine numai litere, numere și caracterele @/./+/-/_ ."
 
 #: account/forms.py:175
 msgid "E-mail"
-msgstr ""
+msgstr "E-mail"
 
 #: account/forms.py:200 account/forms.py:307 account/views.py:79
 #: services/models.py:661 system/forms.py:180 system/models.py:160
 #: templates/account/bsdusers.html:9 templates/account/bsdusers.html.py:64
 msgid "Password"
-msgstr ""
+msgstr "Parolă"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
 msgid "Password confirmation"
-msgstr ""
+msgstr "Confirmare parolă"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "Introduceţi parola încă o data, pentru verificare."
 
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
@@ -446,20 +447,20 @@ msgstr ""
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
-msgstr ""
+msgstr "Dezactivează logarea"
 
 #: account/forms.py:205
 msgid "Primary Group"
-msgstr ""
+msgstr "Grup primar"
 
 #: account/forms.py:234
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "Există deja un utilizator cu acelaşi nume."
 
 #: account/forms.py:242 account/forms.py:328 account/forms.py:470
 #: system/forms.py:225
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "Cele două parole nu sunt identice."
 
 #: account/forms.py:247 account/forms.py:372
 msgid "Home directory has to start with /mnt/"
@@ -469,7 +470,7 @@ msgstr ""
 #: services/forms.py:482 services/forms.py:699 storage/forms.py:223
 #: system/forms.py:268 system/forms.py:291
 msgid "This field is required."
-msgstr ""
+msgstr "Câmpul este obligatoriu."
 
 #: account/forms.py:418
 msgid "Member users"
@@ -481,49 +482,49 @@ msgstr ""
 
 #: account/forms.py:458 templates/registration/password_change_form.html:39
 msgid "New password"
-msgstr ""
+msgstr "Parolă nouă"
 
 #: account/forms.py:459
 msgid "New password confirmation"
-msgstr ""
+msgstr "Confirmare parolă nouă"
 
 #: account/forms.py:484 templates/registration/password_change_form.html:31
 msgid "Old password"
-msgstr ""
+msgstr "Parola veche"
 
 #: account/forms.py:492
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr ""
+msgstr "Vechea parolă a fost tastată greşit. Încercaţi din nou."
 
 #: account/models.py:36 services/models.py:460 services/models.py:505
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr ""
+msgstr "ID grup"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "Nume grup"
 
 #: account/models.py:47 account/models.py:147 storage/forms.py:92
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:49
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:61
 msgid "Group"
-msgstr ""
+msgstr "Grup"
 
 #: account/models.py:61
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Grupul %s este implicit şi nu poate fi şters!"
 
 #: account/models.py:71
 msgid "User ID"
-msgstr ""
+msgstr "ID utilizator"
 
 #: account/models.py:76
 msgid "User &"
-msgstr ""
+msgstr "Utilizator &"
 
 #: account/models.py:83
 msgid "Hashed UNIX password"
@@ -535,7 +536,7 @@ msgstr ""
 
 #: account/models.py:93
 msgid "Primary Group ID"
-msgstr ""
+msgstr "ID grup primar"
 
 #: account/models.py:98
 msgid "Home Directory"
@@ -543,12 +544,12 @@ msgstr ""
 
 #: account/models.py:107
 msgid "Full Name"
-msgstr ""
+msgstr "Nume complet"
 
 #: account/models.py:114 account/models.py:151 services/models.py:509
 #: templates/services/iscsi_auth.html:6
 msgid "User"
-msgstr ""
+msgstr "Utilizator"
 
 #: account/models.py:130
 #, python-format
@@ -567,15 +568,15 @@ msgstr ""
 
 #: account/nav.py:33 templates/account/index2.html:2
 msgid "My Account"
-msgstr ""
+msgstr "Contul meu"
 
 #: account/nav.py:41
 msgid "View All Users"
-msgstr ""
+msgstr "Vizualizare toţi utilizatorii"
 
 #: account/nav.py:54
 msgid "View All Groups"
-msgstr ""
+msgstr "Vizualizare toate grupurile"
 
 #: account/views.py:79 account/views.py:94 account/views.py:105
 #: account/views.py:120
@@ -585,38 +586,40 @@ msgstr ""
 
 #: account/views.py:94
 msgid "Admin user"
-msgstr ""
+msgstr "Utilizator administrator"
 
 #: account/views.py:105 templates/account/index2.html:13
 msgid "Users"
-msgstr ""
+msgstr "Utilizatori"
 
 #: account/views.py:120 templates/account/index2.html:10
 msgid "Groups"
-msgstr ""
+msgstr "Grupuri"
 
 #: contrib/ext_formwizard.py:170
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
 msgstr ""
+"Ne pare rău, dar formularul a expirat. Continuaţi completarea formularului "
+"de pe această pagină."
 
 #: freeadmin/navtree.py:349
 msgid "Display System Processes"
-msgstr ""
+msgstr "Afişare procese sistem"
 
 #: freeadmin/navtree.py:357 templates/freeadmin/index.html:50
 msgid "Reboot"
-msgstr ""
+msgstr "Restart"
 
 #: freeadmin/navtree.py:365 templates/freeadmin/index.html:62
 msgid "Shutdown"
-msgstr ""
+msgstr "Oprire"
 
 #: freeadmin/views.py:103
 #, python-format
 msgid "%s successfully added."
-msgstr ""
+msgstr "%s adăugat cu succes."
 
 #: freeadmin/views.py:262 freeadmin/views.py:264
 #, python-format
@@ -626,32 +629,32 @@ msgstr ""
 #: freeadmin/views.py:309
 #, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "%s a fost şters."
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
+msgstr "Câmpul nameserver 2 trebuie completat înaintea câmpului nameserver 3"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
-msgstr ""
+msgstr "Obligatoriu atunci când se utilizează nameserver 3"
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr ""
+msgstr "Câmpul nameserver 1 trebuie completat înaintea câmpului nameserver 3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr ""
+msgstr "Câmpul nameserver 1 trebuie completat înaintea câmpului nameserver 2"
 
 #: network/forms.py:134
 msgid "Physical NICs in the LAGG"
-msgstr ""
+msgstr "Adresa fizică a plăci de reţea în LAGG"
 
 #: network/forms.py:187
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "Reţeaua '%s' nu e validă, este necesar CIDR."
 
 #: network/models.py:42 services/models.py:1077
 #: templates/system/system_info.html:4
@@ -660,139 +663,141 @@ msgstr ""
 
 #: network/models.py:47
 msgid "Domain"
-msgstr ""
+msgstr "Domeniu"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "Gateway IPv4 implicit"
 
 #: network/models.py:59
 msgid "IPv6 Default Gateway"
-msgstr ""
+msgstr "Gateway IPv6 implicit "
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "Nameserver 1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "Nameserver 2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "Nameserver 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:18
 #: templates/network/index2.html:3
 msgid "Global Configuration"
-msgstr ""
+msgstr "Configuraţie globală"
 
 #: network/models.py:95
 msgid "NIC"
-msgstr ""
+msgstr "Interfaţă reţea (NIC)"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Alegeţi interfaţa reţea (NIC)"
 
 #: network/models.py:101
 msgid "Interface Name"
-msgstr ""
+msgstr "Denumire interfaţă"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "Denumiţi interfaţa de reţea (NIC)"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
-msgstr ""
+msgstr "DHCP"
 
 #: network/models.py:107
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
+"Când este activat, se va utiliza DHCP pentru obţinerea adresei IPv4 cât şi a "
+"router-ului implicit etc."
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "Adresa IPv4"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr ""
+msgstr "Mască reţea (Netmask) IPv4"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "Configurare automată IPv6"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr ""
+msgstr "Când este activat, se va configura automat adresa IPv6 via rtsol(8)"
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr ""
+msgstr "Adresa IPv6"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr ""
+msgstr "Mască reţea (Netmask) IPv6"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "Opţiuni"
 
 #: network/models.py:157 network/models.py:158 templates/network/index2.html:5
 msgid "Interfaces"
-msgstr ""
+msgstr "Interfeţe"
 
 #: network/models.py:172 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr ""
+msgstr "Interfeţe virtuale"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr ""
+msgstr "Interfeţe virtuale trebuie să fie vlanXX unde XX este un număr"
 
 #: network/models.py:178 templates/network/lagg_members2.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr ""
+msgstr "Interfaţa fizică"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
-msgstr ""
+msgstr "Eticheta VLAN"
 
 #: network/models.py:185 network/models.py:276 services/models.py:75
 #: services/models.py:747 storage/models.py:95
 #: templates/network/staticroute.html:7 templates/network/vlan.html:8
 msgid "Description"
-msgstr ""
+msgstr "Descriere"
 
 #: network/models.py:199 templates/network/index2.html:11
 msgid "VLAN"
-msgstr ""
+msgstr "VLAN"
 
 #: network/models.py:215 templates/network/interface.html:5
 msgid "Interface"
-msgstr ""
+msgstr "Interfaţă"
 
 #: network/models.py:219
 msgid "Protocol Type"
-msgstr ""
+msgstr "Tip protocol"
 
 #: network/models.py:240
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "Interfaţă grup LAGG"
 
 #: network/models.py:243
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "Număr prioritate LAGG"
 
 #: network/models.py:249
 msgid "Physical NIC"
-msgstr ""
+msgstr "Interfaţă reţea (NIC) fizică"
 
 #: network/models.py:259 templates/network/index2.html:7
 msgid "Link Aggregation"
@@ -800,11 +805,11 @@ msgstr ""
 
 #: network/models.py:268
 msgid "Destination network"
-msgstr ""
+msgstr "Reţea de destinaţie"
 
 #: network/models.py:272 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr ""
+msgstr "Gateway"
 
 #: network/models.py:281
 msgid "Static Route"
@@ -812,7 +817,7 @@ msgstr ""
 
 #: network/nav.py:10 templates/network/index2.html:13
 msgid "Network Summary"
-msgstr ""
+msgstr "Sumar reţea"
 
 #: network/nav.py:27
 msgid "Add Link Aggregation"
@@ -832,32 +837,32 @@ msgstr ""
 
 #: network/nav.py:97
 msgid "View All Interfaces"
-msgstr ""
+msgstr "Vizualizare toate intefeţele"
 
 #: network/nav.py:109
 msgid "View All VLANs"
-msgstr ""
+msgstr "Vizualizare toate reţelele VLAN"
 
 #: network/nav.py:121
 msgid "View All Static Routes"
-msgstr ""
+msgstr "Vizualizare toate rutele statice"
 
 #: network/views.py:192
 #, python-format
 msgid "%s successfully added"
-msgstr ""
+msgstr "%s adăugat cu succes"
 
 #: services/forms.py:59 services/forms.py:112 sharing/forms.py:54
 #: sharing/models.py:63
 msgid "Guest Account"
-msgstr ""
+msgstr "Cont vizitator"
 
 #: services/forms.py:86 services/forms.py:130 services/forms.py:246
 #: sharing/forms.py:82 sharing/forms.py:190 sharing/forms.py:198
 #: storage/forms.py:799
 #, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "Utilizatorul %s este invalid"
 
 #: services/forms.py:96
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -869,40 +874,44 @@ msgstr ""
 
 #: services/forms.py:145
 msgid "File Permission"
-msgstr ""
+msgstr "Permisiuni fişier"
 
 #: services/forms.py:146
 msgid "Directory Permission"
-msgstr ""
+msgstr "Permisiuni director"
 
 #: services/forms.py:165
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr ""
+msgstr "Valaorea trebuie să fie cuprinsă între 0 şi 65535, inclusiv."
 
 #: services/forms.py:171 services/forms.py:189
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
+msgstr "Valaorea trebuie să fie cuprinsă între 0 şi 10000, inclusiv."
 
 #: services/forms.py:177 services/forms.py:183
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
+msgstr "Valaorea trebuie să fie cuprinsă între 0 şi 1000, inclusiv."
 
 #: services/forms.py:195
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
 msgstr ""
+"Valaorea trebuie să fie cuprinsă între 1024 şi 65535, inclusiv. Implicit "
+"este 0."
 
 #: services/forms.py:201
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
 msgstr ""
+"Valaorea trebuie să fie cuprinsă între 1024 şi 65535, inclusiv. Implicit "
+"este 0."
 
 #: services/forms.py:220
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "Câmp obligatoriu în cazul logării anonime"
 
 #: services/forms.py:294 services/models.py:514
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
-msgstr ""
+msgstr "Secret"
 
 #: services/forms.py:295 services/models.py:515
 msgid "Target side secret."
@@ -970,25 +979,29 @@ msgstr ""
 
 #: services/forms.py:502 services/forms.py:530
 msgid "You need to specify a filepath, not a directory."
-msgstr ""
+msgstr "Trebuie specificată calea către fişier, nu un director."
 
 #: services/forms.py:506 services/forms.py:534
 msgid "You need to specify a file inside your volume/dataset."
-msgstr ""
+msgstr "Trebuie specificat un fişier din volumul/setul de date"
 
 #: services/forms.py:510 services/forms.py:538
+#, fuzzy
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
 msgstr ""
+"Calea către conţinut trebuie să rezide în interiorul volumului/setului de "
+"date"
 
 #: services/forms.py:552
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr ""
+"Această valoare poate fi o mărime în biti sau cu un sufix în KB, MB, GB, TB"
 
 #: services/forms.py:571
 msgid "Disk device"
-msgstr ""
+msgstr "Dispozitiv disc"
 
 #: services/forms.py:658
 #, python-format
@@ -1014,39 +1027,42 @@ msgstr ""
 
 #: services/models.py:45
 msgid "Enable Service"
-msgstr ""
+msgstr "Activare serviciu"
 
 #: services/models.py:48 services/models.py:49
 #: templates/common/menubar2.html:28 templates/services/index2.html:3
 msgid "Services"
-msgstr ""
+msgstr "Servicii"
 
 #: services/models.py:61
 msgid "Authentication Model"
-msgstr ""
+msgstr "Model autentificare"
 
 #: services/models.py:62
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
+"Utilizare autentificării Active Directory sau LDAP va înlocui acestă opțiune"
 
 #: services/models.py:66
 msgid "NetBIOS name"
-msgstr ""
+msgstr "Nume NetBIOS"
 
 #: services/models.py:70
 msgid "Workgroup"
-msgstr ""
+msgstr "Nume Workgroup"
 
 #: services/models.py:71
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
+"Numele Workgroup-ului din care va face parte serverul atunci când este "
+"interogat de clienți (max. 15 caractere)."
 
 #: services/models.py:77
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "Descriere server. De obicei, nu se completează."
 
 #: services/models.py:83
 msgid "DOS charset"
@@ -1080,6 +1096,11 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
+"Această opţiune se utilizează pentru a trece peste numele de utilizator "
+"(implicit 'ftp') folosit pentru a accesa serviciile specifice vizitatorului. "
+"Indiferent de privilegiile avute, ele vor fi disponibile oricărui client ce "
+"se conectează la serviciul de tip vizitator. Acest utilizator trebuie să "
+"existe în fişierul de parole, dar nu este necesară o logare validă."
 
 #: services/models.py:108
 msgid "Allow guest access"
@@ -1129,11 +1150,12 @@ msgstr ""
 #: services/models.py:135 services/models.py:675 services/models.py:709
 #: services/models.py:741 services/models.py:888
 msgid "Auxiliary parameters"
-msgstr ""
+msgstr "Parametri auxiliari"
 
 #: services/models.py:137
 msgid "These parameters are added to [Global] section of smb.conf"
 msgstr ""
+"Aceşti parametrii sunt adăugaţi în secţiunea [Global] a fişierului smb.conf"
 
 #: services/models.py:140
 msgid "Enable home directories"
@@ -1182,29 +1204,35 @@ msgid ""
 "Samba will write asynchronously if request size is larger than this value.  "
 "The default write size is 1."
 msgstr ""
+"Samba va efectua citiri nesincronizat dacă mărimea cerută este mai mare "
+"decât această valoare. Mărimea implicită este 1."
 
 #: services/models.py:172 services/models.py:173
 #: templates/services/index2.html:29
 msgid "CIFS"
-msgstr ""
+msgstr "CIFS"
 
 #: services/models.py:182
 msgid "Server Name"
-msgstr ""
+msgstr "Nume server"
 
 #: services/models.py:183
 msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
 msgstr ""
+"Denumirea server-ului. Dacă câmpul este lăsat gol, este specificat un server "
+"implicit."
 
 #: services/models.py:186
 msgid "Guest Access"
-msgstr ""
+msgstr "Acces de tip vizitator"
 
 #: services/models.py:187
 msgid "Allows guest access to all apple shares on this box."
 msgstr ""
+"Permite accesul de tip vizitator pentru toate partajările apple de pe "
+"server."
 
 #: services/models.py:193
 msgid ""
@@ -1214,10 +1242,15 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
+"Această opţiune se utilizează pentru a trece peste numele de utilizator "
+"(implicit 'www') folosit pentru a accesa serviciile specifice vizitatorului. "
+"Indiferent de privilegiile avute, ele vor fi disponibile oricărui client ce "
+"se conectează la serviciul de tip vizitator. Acest utilizator trebuie să "
+"existe în fişierul de parole, dar nu este necesară o logare validă."
 
 #: services/models.py:196
 msgid "Local Access"
-msgstr ""
+msgstr "Acces local"
 
 #: services/models.py:197
 msgid "Allow users with local accounts to access apple shares on this box."
@@ -1255,11 +1288,13 @@ msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
+"Activare mod asincron, pentru a îmbunătăţi performanţele peste viteza "
+"reţelei gigabit."
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/index2.html:75
 msgid "NFS"
-msgstr ""
+msgstr "NFS"
 
 #: services/models.py:236
 msgid "Base Name"
@@ -1293,19 +1328,19 @@ msgstr ""
 
 #: services/models.py:267
 msgid "Max. sessions"
-msgstr ""
+msgstr "Nr. max de sesiuni"
 
 #: services/models.py:268
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr ""
+msgstr "Număr maxim de sesiuni concomitente (implicit: 16)"
 
 #: services/models.py:273
 msgid "Max. connections"
-msgstr ""
+msgstr "Nr. max. de conxiuni"
 
 #: services/models.py:274
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "Număr maxim de conexiuni pe fiecare sesiune (implicit: 8)"
 
 #: services/models.py:279
 msgid "Max. pre-send R2T"
@@ -1617,7 +1652,7 @@ msgstr ""
 
 #: services/models.py:667
 msgid "Time in milliseconds"
-msgstr ""
+msgstr "Timp în milisecunde"
 
 #: services/models.py:671
 msgid "Forced update period"
@@ -1630,7 +1665,7 @@ msgstr ""
 #: services/models.py:681 services/models.py:682
 #: templates/services/index2.html:40
 msgid "Dynamic DNS"
-msgstr ""
+msgstr "DNS dinamic"
 
 #: services/models.py:691
 msgid "Location"
@@ -1675,37 +1710,39 @@ msgstr ""
 
 #: services/models.py:726
 msgid "This name is used to uniquely identify your UPS on this system."
-msgstr ""
+msgstr "Acest nume este folosit pentru a identifica UPS-ul de pe acest sistem."
 
 #: services/models.py:730
 msgid "Driver"
-msgstr ""
+msgstr "Driver"
 
 #: services/models.py:732
 msgid "The driver used to communicate with your UPS."
-msgstr ""
+msgstr "Driver-ul utilizat pentru comunicarea cu UPS-ul."
 
 #: services/models.py:736 services/models.py:788 services/models.py:911
 msgid "Port"
-msgstr ""
+msgstr "Port"
 
 #: services/models.py:738
 msgid "The serial or USB port where your UPS is connected."
-msgstr ""
+msgstr "Portul serial sau USB unde este conectat UPS-ul."
 
 #: services/models.py:754
 msgid "Shutdown mode"
-msgstr ""
+msgstr "Mod oprire"
 
 #: services/models.py:758
 msgid "Shutdown timer"
-msgstr ""
+msgstr "Temporizare oprire"
 
 #: services/models.py:759
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
 msgstr ""
+"Timpul în secunde până când se iniţiază oprirea. Dacă UPS-ul îşi revine "
+"înainte de a expira acest interval, oprirea este anulată."
 
 #: services/models.py:762
 msgid "Remote Monitor"
@@ -1743,27 +1780,29 @@ msgstr ""
 
 #: services/models.py:794
 msgid "Maximum number of simultaneous clients."
-msgstr ""
+msgstr "Numărul maxim de clienţi simultani"
 
 #: services/models.py:798
 msgid "Connections"
-msgstr ""
+msgstr "Conexiuni"
 
 #: services/models.py:799
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
+msgstr "Numărul maxim de conexiuni per adresă IP (0 = nelimitate)"
 
 #: services/models.py:803
 msgid "Login Attempts"
-msgstr ""
+msgstr "Tentative de autentificare"
 
 #: services/models.py:804
 msgid "Maximum number of allowed password attempts before disconnection."
 msgstr ""
+"Numărul maxim de tentative permise de autentificare înainte de a fi "
+"deconectat."
 
 #: services/models.py:808
 msgid "Timeout"
-msgstr ""
+msgstr "Perioadă de grație"
 
 #: services/models.py:809
 msgid "Maximum idle time in seconds."
@@ -1771,30 +1810,30 @@ msgstr ""
 
 #: services/models.py:812
 msgid "Allow Root Login"
-msgstr ""
+msgstr "Permite autentificare cu cont Root"
 
 #: services/models.py:814
 msgid "Allow Anonymous Login"
-msgstr ""
+msgstr "Permite autentificare cu cont Anonim"
 
 #: services/models.py:818 sharing/models.py:49
 #: templates/services/iscsi_dextents.html:7
 #: templates/services/iscsi_extents.html:7 templates/sharing/windows.html:15
 #: templates/storage/volumes.html:60
 msgid "Path"
-msgstr ""
+msgstr "Cale"
 
 #: services/models.py:820
 msgid "Allow Local User Login"
-msgstr ""
+msgstr "Permite autentificare cu cont de utilizator local"
 
 #: services/models.py:823
 msgid "Banner"
-msgstr ""
+msgstr "Mesaj"
 
 #: services/models.py:825
 msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr ""
+msgstr "Mesaj de întâmpinare afişat de FTP la prima conectare."
 
 #: services/models.py:831 services/models.py:837
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -1802,11 +1841,11 @@ msgstr ""
 
 #: services/models.py:840
 msgid "Enable FXP"
-msgstr ""
+msgstr "Activare FXP"
 
 #: services/models.py:842
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "Permite reluarea transferului"
 
 #: services/models.py:844
 msgid "Always Chroot"
@@ -1814,7 +1853,7 @@ msgstr ""
 
 #: services/models.py:846
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "Autentificare IDENT necesară"
 
 #: services/models.py:848
 msgid "Require Reverse DNS for IP"
@@ -1830,20 +1869,23 @@ msgid ""
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
+"Serverul va afişa date despre reţeaua specifică adresei IP,  plecând de la "
+"premiza că adresa IP sau DNS acţionează ca gateway NAT sau port forwarder "
+"pentru server"
 
 #: services/models.py:856
 msgid "Minimum passive port"
-msgstr ""
+msgstr "Port pasiv minim"
 
 #: services/models.py:857
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
-msgstr ""
+msgstr "Port minim alocat pentru conexiuni date de tip PASV (0 = orice port)"
 
 #: services/models.py:861
 msgid "Maximum passive port"
-msgstr ""
+msgstr "Port pasiv maxim "
 
 #: services/models.py:862
 msgid ""
@@ -1856,79 +1898,90 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
+"Port maxim alocat conexiunilor de date de tip PASV (0 = orice port). "
+"Porturile pasive restricţionează plaja de porturi din care serverul va "
+"selecta când va trimite comanda PASV clientului. Serverul va alege la "
+"întâmplare un număr din plaja alocată până va găsi un port deschis. Plaja "
+"selectată trebuie să se încadreze într-o plajă de porturi neprivilegiate (de "
+"ex. mai mari sau egale cu 1024). Se recomandă că plaja aleasă să fie destul "
+"de largă pentru a face faţă la numeroase conexiuni pasive simultane (de ex. "
+"49152-65534, plaja de porturi dedicată IANA)."
 
 #: services/models.py:866
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "Bandă upload utilizator local"
 
 #: services/models.py:867
 msgid "Local user upload bandwith in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Bandă upload utilizator local în KB/s. Zero înseamnă infinit."
 
 #: services/models.py:871
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Bandă download utilizator local"
 
 #: services/models.py:872
 msgid "Local user download bandwith in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Bandă download utilizator local în KB/s. Zero înseamnă infinit."
 
 #: services/models.py:876
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Bandă upload utilizator Anonim"
 
 #: services/models.py:877
 msgid "Anonymous user upload bandwith in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Bandă upload utilizator Anonim în KB/s. Zero înseamnă infinit."
 
 #: services/models.py:881
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "Bandă download utilizator Anonim"
 
 #: services/models.py:882
 msgid "Anonymous user download bandwith in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Bandă download utilizator Anonim în KB/s. Zero înseamnă infinit."
 
 #: services/models.py:885
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "Activează SSL/TSL"
 
 #: services/models.py:890
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "Aceşti parametrii sunt adaugaţi în fişierul proftpd.conf."
 
 #: services/models.py:894 services/models.py:895
 #: templates/services/index2.html:53
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:904
 msgid "Directory"
-msgstr ""
+msgstr "Director"
 
 #: services/models.py:905
+#, fuzzy
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
-msgstr ""
+msgstr "Directorul care conţine fişierele pentru a fi publicate. "
 
 #: services/models.py:908
 msgid "Allow New Files"
-msgstr ""
+msgstr "Permite adăugarea de fişiere noi"
 
 #: services/models.py:912
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"Portul monitorizat. Implicit este monitorizat portul tftp specificat în "
+"/etc/services."
 
 #: services/models.py:918
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "Specificaţi utilizatorul sub care va rula serviciul."
 
 #: services/models.py:922
 msgid "umask"
-msgstr ""
+msgstr "umask"
 
 #: services/models.py:923
 msgid ""
@@ -2992,30 +3045,30 @@ msgstr ""
 #: storage/nav.py:118 storage/nav.py:138 templates/storage/volumes.html:123
 #: templates/storage/volumes.html.py:126
 msgid "Change Permissions"
-msgstr ""
+msgstr "Modificare permisiuni"
 
 #: storage/views.py:88 storage/views.py:116 storage/views.py:139
 #: storage/views.py:283 storage/views.py:436
 #: templates/freeadmin/generic_model_add_ok.html:1
 msgid "successfully added"
-msgstr ""
+msgstr "adăugat cu succes"
 
 #: storage/views.py:283 storage/views.py:320
 #: templates/storage/dataset_confirm_delete_ok.html:1
 msgid "Dataset"
-msgstr ""
+msgstr "Set date"
 
 #: storage/views.py:320 storage/views.py:355
 msgid "successfully edited"
-msgstr ""
+msgstr "adăugat cu succes"
 
 #: storage/views.py:322 storage/views.py:357
 msgid "Some error ocurried while setting the options"
-msgstr ""
+msgstr "Au apărut erori la setarea opţiunilor"
 
 #: storage/views.py:355
 msgid "Native dataset"
-msgstr ""
+msgstr "Set date nativ"
 
 #: storage/views.py:450
 msgid "Snapshot successfully taken"
@@ -3027,105 +3080,107 @@ msgstr ""
 
 #: storage/views.py:518
 msgid "Disk replacement has been initiated."
-msgstr ""
+msgstr "Înlocuirea discului a fost iniţiată."
 
 #: storage/views.py:522
 msgid "Some error ocurried."
-msgstr ""
+msgstr "Au apărut erori."
 
 #: storage/views.py:544
 msgid "Disk detach has been successfully done."
-msgstr ""
+msgstr "Detaşarea discului s-a efectuat cu succes."
 
 #: system/forms.py:243
 msgid ""
 "The system will use this place to temporarily store the firmware file before "
 "it's being applied."
 msgstr ""
+"Sistemul va folosi această locaţie pentru a salva fişierul firmware-ul "
+"înainte a fi aplicat/executat."
 
 #: system/forms.py:251
 msgid "New image to be installed"
-msgstr ""
+msgstr "Noua imagine de instalat"
 
 #: system/forms.py:252 system/forms.py:275
 msgid "SHA256 sum for the image"
-msgstr ""
+msgstr "Suma SHA256 a imaginii"
 
 #: system/forms.py:264
 msgid "Invalid firmware or checksum"
-msgstr ""
+msgstr "Firmware sau verificare invalidă"
 
 #: system/forms.py:274
 msgid "Service Pack image to be installed"
-msgstr ""
+msgstr "Imaginea service pack-ului de instalat"
 
 #: system/forms.py:287
 msgid "Invalid service pack or checksum"
-msgstr ""
+msgstr "Service pack sau verificare invalide"
 
 #: system/forms.py:297
 msgid "New config to be installed"
-msgstr ""
+msgstr "Noua configuraţie de instalat"
 
 #: system/models.py:41
 msgid "Protocol"
-msgstr ""
+msgstr "Protocol"
 
 #: system/models.py:47
 msgid "Language"
-msgstr ""
+msgstr "Limbă"
 
 #: system/models.py:53
 msgid "Timezone"
-msgstr ""
+msgstr "Fus orar"
 
 #: system/models.py:58
 msgid "NTP server 1"
-msgstr ""
+msgstr "Server NTP 1"
 
 #: system/models.py:63
 msgid "NTP server 2"
-msgstr ""
+msgstr "Server NTP 2"
 
 #: system/models.py:69
 msgid "NTP server 3"
-msgstr ""
+msgstr "Server NTP 3"
 
 #: system/models.py:74 system/nav.py:23 templates/system/settings.html:2
 msgid "Settings"
-msgstr ""
+msgstr "Setări"
 
 #: system/models.py:81
 msgid "Enable Console Menu"
-msgstr ""
+msgstr "Activare meniu consolă"
 
 #: system/models.py:83
 msgid "Use Serial Console"
-msgstr ""
+msgstr "Utilizare consolă pe port serial"
 
 #: system/models.py:85
 msgid "Enable screen saver"
-msgstr ""
+msgstr "Activare screen saver"
 
 #: system/models.py:87
 msgid "Automatically Check for New Firmware"
-msgstr ""
+msgstr "Verificare firmaware nou automată"
 
 #: system/models.py:89
 msgid "Beep on boot"
-msgstr ""
+msgstr "Beep la restartare"
 
 #: system/models.py:91
 msgid "Enable Special System Tuning"
-msgstr ""
+msgstr "Activare setări speciale sistem"
 
 #: system/models.py:93
 msgid "Enable powerd (Power Saving Daemon)"
-msgstr ""
+msgstr "Activare powerd (daemon economisire energie)"
 
 #: system/models.py:95
 msgid "Enable Zeroconf/Bonjour"
-msgstr ""
+msgstr "Activare Zeroconf/Bonjour"
 
 #: system/models.py:98
 msgid ""
@@ -3620,31 +3675,31 @@ msgstr ""
 
 #: templates/network/lagg_members2.html:7
 msgid "Startup option"
-msgstr ""
+msgstr "Opţiune pornire"
 
 #: templates/network/lagg_members2.html:8 templates/sharing/unix.html:15
 msgid "Action"
-msgstr ""
+msgstr "Acţiune"
 
 #: templates/network/staticroute.html:5
 msgid "Destination"
-msgstr ""
+msgstr "Destinaţie"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
-msgstr ""
+msgstr "Modificare rută statică"
 
 #: templates/network/staticroute.html:26
 msgid "Delete Static Route"
-msgstr ""
+msgstr "Şterge rută statică"
 
 #: templates/network/staticroute.html:33
 msgid "No static route defined"
-msgstr ""
+msgstr "Nu există rute statice"
 
 #: templates/network/staticroute.html:39 templates/network/staticroute.html:41
 msgid "Add Static Route"
-msgstr ""
+msgstr "Adăugă rută statică"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
@@ -3656,132 +3711,135 @@ msgstr ""
 
 #: templates/network/summary.html:37
 msgid "Default route"
-msgstr ""
+msgstr "Rută implicită"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr ""
+msgstr "Nu există nici o rută implicită"
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
-msgstr ""
+msgstr "Modificare VLAN"
 
 #: templates/network/vlan.html:27
 msgid "Delete VLAN"
-msgstr ""
+msgstr "Ştergere VLAN"
 
 #: templates/network/vlan.html:34
 msgid "No VLAN defined"
-msgstr ""
+msgstr "Nu există nici un VLAN"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
-msgstr ""
+msgstr "Adăugare interfaţă VLAN"
 
 #: templates/registration/login.html:30
 msgid "Your username and password didn't match. Please try again."
-msgstr ""
+msgstr "Nume de utilizator şi parolă incorecte. Încercaţi din nou."
 
 #: templates/registration/login.html:34
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr ""
+msgstr "Bine ai venit, %(username)s. Acum eşti conectat."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
-msgstr ""
+msgstr "Deconectat"
 
 #: templates/registration/logout.html:8
 msgid "You are now logged out."
-msgstr ""
+msgstr "Te-ai deconectat."
 
 #: templates/registration/logout.html:8
 msgid "Log back in"
-msgstr ""
+msgstr "Re-conectare"
 
 #: templates/registration/password_change_done.html:20
 msgid "Success!"
-msgstr ""
+msgstr "Succes!"
 
 #: templates/registration/password_change_done.html:21
 msgid "Your password was changed."
-msgstr ""
+msgstr "Parola a fost modificată."
 
 #: templates/registration/password_change_form.html:4
 msgid "Password change"
-msgstr ""
+msgstr "Modificare parolă"
 
 #: templates/registration/password_change_form.html:13
 msgid "Please correct the error below."
 msgid_plural "Please correct the errors below."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Corectaţi eroarea de mai jos."
+msgstr[1] "Corectaţi erorile de mai jos."
+msgstr[2] ""
 
 #: templates/registration/password_change_form.html:18
 msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
 msgstr ""
+"Introduceţi vechea parolă, apoi introduceţi o nouă parolă de două ori pentru "
+"verificare."
 
 #: templates/registration/password_change_form.html:48
 msgid "Password (again)"
-msgstr ""
+msgstr "Parola (din nou)"
 
 #: templates/services/index2.html:13
 msgid "AFP Settings"
-msgstr ""
+msgstr "Setări AFP"
 
 #: templates/services/index2.html:24
 msgid "ActiveDirectory Settings"
-msgstr ""
+msgstr "Setări ActiveDirectory"
 
 #: templates/services/index2.html:24
 msgid "Active Directory Settings"
-msgstr ""
+msgstr "Setări Active Directory"
 
 #: templates/services/index2.html:35
 msgid "CIFS Settings"
-msgstr ""
+msgstr "Setări CIFS"
 
 #: templates/services/index2.html:48
 msgid "Dynamic DNS Settings"
-msgstr ""
+msgstr "Setări DNS dinamic"
 
 #: templates/services/index2.html:59
 msgid "FTP Settings"
-msgstr ""
+msgstr "Setări FPT"
 
 #: templates/services/index2.html:70
 msgid "LDAP Settings"
-msgstr ""
+msgstr "Setări LDAP"
 
 #: templates/services/index2.html:81
 msgid "NFS Settings"
-msgstr ""
+msgstr "Setări NFS"
 
 #: templates/services/index2.html:92
 msgid "SNMP Settings"
-msgstr ""
+msgstr "Setări SNMP"
 
 #: templates/services/index2.html:103
 msgid "SSH Settings"
-msgstr ""
+msgstr "Setări SSH"
 
 #: templates/services/index2.html:114
 msgid "TFTP Settings"
-msgstr ""
+msgstr "Setări TFTP"
 
 #: templates/services/index2.html:119
 msgid "iSCSI"
-msgstr ""
+msgstr "iSCSI"
 
 #: templates/services/index2.html:127
 msgid "ISCSI Settings"
-msgstr ""
+msgstr "Setări ISCSI"
 
 #: templates/services/iscsi.html:3
 msgid "iSCSI Management"
-msgstr ""
+msgstr "Management iSCSI"
 
 #: templates/services/iscsi.html:7
 msgid "Targets"
@@ -3801,11 +3859,11 @@ msgstr ""
 
 #: templates/services/iscsi.html:15
 msgid "Authentication"
-msgstr ""
+msgstr "Autentificare"
 
 #: templates/services/iscsi.html:17
 msgid "Authorized Initiator"
-msgstr ""
+msgstr "Iniţiator autorizat"
 
 #: templates/services/iscsi.html:19
 msgid "Portals"
@@ -3843,7 +3901,7 @@ msgstr ""
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
-msgstr ""
+msgstr "Reţea autorizată"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
@@ -3982,27 +4040,27 @@ msgstr ""
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
-msgstr ""
+msgstr "Modificare set date"
 
 #: templates/storage/datasets2.html:9
 msgid "Add Dataset"
-msgstr ""
+msgstr "Adăugare set date"
 
 #: templates/storage/disk_detach.html:7
 msgid "Are you sure you want to detach?"
-msgstr ""
+msgstr "Sigur doriţi să scoateţi discul?"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
-msgstr ""
+msgstr "Înlocuire disc"
 
 #: templates/storage/import.html:32 templates/storage/wizard.html:43
 msgid "Filesystem type"
-msgstr ""
+msgstr "Tip sistem fişiere"
 
 #: templates/storage/index.html:3 templates/storage/volumes.html:51
 msgid "Active Volumes"
-msgstr ""
+msgstr "Volume active"
 
 #: templates/storage/index.html:5
 msgid "ZFS Replication"
@@ -4010,29 +4068,30 @@ msgstr ""
 
 #: templates/storage/index.html:7
 msgid "ZFS Snapshots"
-msgstr ""
+msgstr "Instantanee ZFS"
 
 #: templates/storage/manualsnap.html:13
+#, fuzzy
 msgid "Manually Create Snapshot"
-msgstr ""
+msgstr "Creare instantaneu manuală"
 
 #: templates/storage/periodicsnap.html:13 templates/storage/volumes.html:130
 #: templates/storage/volumes.html.py:133
 msgid "Create Snapshot"
-msgstr ""
+msgstr "Creare instantaneu"
 
 #: templates/storage/permission.html:6
 msgid "Change permission"
-msgstr ""
+msgstr "Modificare permisiune"
 
 #: templates/storage/permission.html:7
-#, python-format
+#, fuzzy, python-format
 msgid "Change permission on %(path)s to"
-msgstr ""
+msgstr "Modificare permisiune %(path)s"
 
 #: templates/storage/permission.html:11
 msgid "Change"
-msgstr ""
+msgstr "Modificare"
 
 #: templates/storage/replications.html:9
 msgid "Add Replication"
@@ -4066,7 +4125,7 @@ msgstr ""
 
 #: templates/storage/snapshots.html:4
 msgid "Dataset name"
-msgstr ""
+msgstr "Nume set date"
 
 #: templates/storage/snapshots.html:5
 msgid "Snapshot name"
@@ -4074,7 +4133,7 @@ msgstr ""
 
 #: templates/storage/snapshots.html:6
 msgid "Used space"
-msgstr ""
+msgstr "Spaţiu utilizat"
 
 #: templates/storage/snapshots.html:7
 msgid "Referenced space"
@@ -4166,184 +4225,187 @@ msgstr ""
 
 #: templates/storage/volumes.html:63
 msgid "Size"
-msgstr ""
+msgstr "Mărime"
 
 #: templates/storage/volumes.html:64
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Destroy Dataset"
-msgstr ""
+msgstr "Ştergere set de date"
 
 #: templates/storage/volumes.html:99 templates/storage/volumes.html.py:103
 #: templates/storage/volumes.html:114 templates/storage/volumes.html.py:118
 msgid "Edit ZFS Options"
-msgstr ""
+msgstr "Modifică opţiuni ZFS"
 
 #: templates/storage/volumes.html:107 templates/storage/volumes.html.py:110
 msgid "Destroy Volume"
-msgstr ""
+msgstr "Ştergere volum"
 
 #: templates/storage/volumes.html:140 templates/storage/volumes.html.py:144
 msgid "View Disks"
-msgstr ""
+msgstr "Vizualizare discuri"
 
 #: templates/storage/volumes.html:151
 msgid "No volumes defined"
-msgstr ""
+msgstr "Nu există volume create"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
-msgstr ""
+msgstr "Discuri membre"
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
-msgstr ""
+msgstr "Tip grup"
 
 #: templates/storage/wizard.html:84
 msgid "ZFS Extra"
-msgstr ""
+msgstr "ZFS Extra"
 
 #: templates/storage/wizard.html:87
+#, fuzzy
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr ""
+msgstr "Utilizarea unui singur disc pt. loguri nu este deloc recomandată"
 
 #: templates/storage/wizard.html:93
+#, fuzzy
 msgid "Log"
-msgstr ""
+msgstr "Log"
 
 #: templates/storage/wizard.html:94
+#, fuzzy
 msgid "Cache"
-msgstr ""
+msgstr "Cache"
 
 #: templates/storage/wizard.html:95
 msgid "Spare"
-msgstr ""
+msgstr "Rezervă"
 
 #: templates/storage/wizard.html:119
 msgid "Add Volume"
-msgstr ""
+msgstr "Adăugare volum"
 
 #: templates/storage/wizard.html:120
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "Datele existente vor fi șterse"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
-msgstr ""
+msgstr "Se reface cache-ul."
 
 #: templates/system/advanced_edit.html:19
 msgid "The cache could not be rebuilt"
-msgstr ""
+msgstr "Cache-ul nu poate fi refăcut"
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
-msgstr ""
+msgstr "Refacere cache LDA/AD"
 
 #: templates/system/config.html:2
 msgid "Restore to Factory Defaults"
-msgstr ""
+msgstr "Revenire la setările din iniţiale"
 
 #: templates/system/config.html:4
 msgid "Save Config"
-msgstr ""
+msgstr "Salvare configurație"
 
 #: templates/system/config.html:6
 msgid "Upload Config"
-msgstr ""
+msgstr "Încarcă configuraţie"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr ""
+msgstr "Restartare..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
-msgstr ""
+msgstr "Sigur doriţi să reveniţi la setările iniţiale?"
 
 #: templates/system/config_upload.html:34
 msgid "Update"
-msgstr ""
+msgstr "Actualizare"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr ""
+msgstr "Repornire..."
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr ""
+msgstr "Trimite mail test"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr ""
+msgstr "Din oră în oră"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
-msgstr ""
+msgstr "Grafice din oră în oră"
 
 #: templates/system/reporting.html:18
 msgid "Daily"
-msgstr ""
+msgstr "Zilnic"
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
-msgstr ""
+msgstr "Grafice zilnice"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr ""
+msgstr "Săptămânal"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"
-msgstr ""
+msgstr "Grafice săptămânale"
 
 #: templates/system/reporting.html:46
 msgid "Monthly"
-msgstr ""
+msgstr "Lunar"
 
 #: templates/system/reporting.html:47
 msgid "Monthly Graphs"
-msgstr ""
+msgstr "Grafice lunare"
 
 #: templates/system/reporting.html:60
 msgid "Yearly"
-msgstr ""
+msgstr "Anual"
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"
-msgstr ""
+msgstr "Grafice anuale"
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr ""
+msgstr "General"
 
 #: templates/system/settings.html:11
 msgid "Firmware Update"
-msgstr ""
+msgstr "Actualizare firmware"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
-msgstr ""
+msgstr "Aplicare service pack"
 
 #: templates/system/settings.html:15
 msgid "Config"
-msgstr ""
+msgstr "Configurare"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
-msgstr ""
+msgstr "Versiune sist. operare"
 
 #: templates/system/system_info.html:12
 msgid "Platform"
-msgstr ""
+msgstr "Platformă"
 
 #: templates/system/system_info.html:16
 msgid "System Time"
-msgstr ""
+msgstr "Oră sistem"
 
 #: templates/system/system_info.html:20
 msgid "Uptime"
-msgstr ""
+msgstr "Durată funcţionare"
 
 #: templates/system/system_info.html:24
 msgid "Load Average"

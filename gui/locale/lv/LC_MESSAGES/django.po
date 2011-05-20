@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-18 01:48+0200\n"
-"Last-Translator: Anonymous Pootle User\n"
+"PO-Revision-Date: 2011-05-19 20:00+0200\n"
+"Last-Translator: ok1 <ok1@trups.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lv\n"
 "MIME-Version: 1.0\n"
@@ -21,240 +21,240 @@ msgstr ""
 
 #: choices.py:35
 msgid "Plain"
-msgstr ""
+msgstr "Vienkāršs"
 
 #: choices.py:36 system/models.py:227 templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:37
 msgid "TLS"
-msgstr ""
+msgstr "TLS"
 
 #: choices.py:42
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: choices.py:43
 msgid "HTTPS"
-msgstr ""
+msgstr "HTTPS"
 
 #: choices.py:48
 msgid "English"
-msgstr ""
+msgstr "Angļu"
 
 #: choices.py:53 choices.py:222
 msgid "Auto"
-msgstr ""
+msgstr "Automātiski"
 
 #: choices.py:54
 msgid "PIO0"
-msgstr ""
+msgstr "PIO0"
 
 #: choices.py:55
 msgid "PIO1"
-msgstr ""
+msgstr "PIO1"
 
 #: choices.py:56
 msgid "PIO2"
-msgstr ""
+msgstr "PIO2"
 
 #: choices.py:57
 msgid "PIO3"
-msgstr ""
+msgstr "PIO3"
 
 #: choices.py:58
 msgid "PIO4"
-msgstr ""
+msgstr "PIO4"
 
 #: choices.py:59
 msgid "WDMA0"
-msgstr ""
+msgstr "WDMA0"
 
 #: choices.py:60
 msgid "WDMA1"
-msgstr ""
+msgstr "WDMA1"
 
 #: choices.py:61
 msgid "WDMA2"
-msgstr ""
+msgstr "WDMA2"
 
 #: choices.py:62
 msgid "UDMA-16"
-msgstr ""
+msgstr "UDMA-16"
 
 #: choices.py:63
 msgid "UDMA-33"
-msgstr ""
+msgstr "UDMA-33"
 
 #: choices.py:64
 msgid "UDMA-66"
-msgstr ""
+msgstr "UDMA-66"
 
 #: choices.py:65
 msgid "UDMA-100"
-msgstr ""
+msgstr "UDMA-100"
 
 #: choices.py:66
 msgid "UDMA-133"
-msgstr ""
+msgstr "UDMA-133"
 
 #: choices.py:67
 msgid "SATA 1.5Gbit/s"
-msgstr ""
+msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
-msgstr ""
+msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr ""
+msgstr "Vienmēr ieslēgts"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr ""
+msgstr "Izslēgts"
 
 #: choices.py:87 choices.py:88 choices.py:89 choices.py:90 choices.py:91
 #: choices.py:92
 msgid "Level"
-msgstr ""
+msgstr "Līmenis"
 
 #: choices.py:87
 msgid "Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "Minimāla strāvas izmantošana gaidstāvē (spindown)"
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
-msgstr ""
+msgstr "Vidēja strāvas izmantošana gaidstāvē"
 
 #: choices.py:90
 msgid "Minimum power usgae without Standby (no spindown)"
-msgstr ""
+msgstr "Minimāla strāvas izmantošana bez gaidstāves (no spindown)"
 
 #: choices.py:91
 msgid "Intermediate power usage withot Standby"
-msgstr ""
+msgstr "Vidēja strāvas izmantošana bez gaidstāves"
 
 #: choices.py:92
 msgid "Maximum performance, maximum power usage"
-msgstr ""
+msgstr "Maksimāla veiktspēja, maksimāla jaudas izmantošana"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr ""
+msgstr "Minimālais"
 
 #: choices.py:97
 msgid "Medium"
-msgstr ""
+msgstr "Vidējais"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr ""
+msgstr "Maksimālais"
 
 #: choices.py:132 templates/storage/tasks.html:86
 msgid "January"
-msgstr ""
+msgstr "Janvāris"
 
 #: choices.py:133 templates/storage/tasks.html:89
 msgid "February"
-msgstr ""
+msgstr "Februāris"
 
 #: choices.py:134 templates/storage/tasks.html:92
 msgid "March"
-msgstr ""
+msgstr "Marts"
 
 #: choices.py:135 templates/storage/tasks.html:95
 msgid "April"
-msgstr ""
+msgstr "Aprīlis"
 
 #: choices.py:136 templates/storage/tasks.html:98
 msgid "May"
-msgstr ""
+msgstr "Maijs"
 
 #: choices.py:137 templates/storage/tasks.html:101
 msgid "June"
-msgstr ""
+msgstr "Jūnijs"
 
 #: choices.py:138 templates/storage/tasks.html:104
 msgid "July"
-msgstr ""
+msgstr "Jūlijs"
 
 #: choices.py:139 templates/storage/tasks.html:107
 msgid "August"
-msgstr ""
+msgstr "Augusts"
 
 #: choices.py:140 templates/storage/tasks.html:110
 msgid "September"
-msgstr ""
+msgstr "Septembris"
 
 #: choices.py:141 templates/storage/tasks.html:113
 msgid "October"
-msgstr ""
+msgstr "Oktobris"
 
 #: choices.py:142 templates/storage/tasks.html:116
 msgid "November"
-msgstr ""
+msgstr "Novembris"
 
 #: choices.py:143 templates/storage/tasks.html:119
 msgid "December"
-msgstr ""
+msgstr "Decembris"
 
 #: choices.py:146 templates/storage/tasks.html:57
 msgid "Monday"
-msgstr ""
+msgstr "Pirmdiena"
 
 #: choices.py:147 templates/storage/tasks.html:60
 msgid "Tuesday"
-msgstr ""
+msgstr "Otrdiena"
 
 #: choices.py:148 templates/storage/tasks.html:63
 msgid "Wednesday"
-msgstr ""
+msgstr "Trešdiena"
 
 #: choices.py:149 templates/storage/tasks.html:66
 msgid "Thursday"
-msgstr ""
+msgstr "Ceturtdiena"
 
 #: choices.py:150 templates/storage/tasks.html:69
 msgid "Friday"
-msgstr ""
+msgstr "Piektdiena"
 
 #: choices.py:151 templates/storage/tasks.html:72
 msgid "Saturday"
-msgstr ""
+msgstr "Sestdiena"
 
 #: choices.py:152 templates/storage/tasks.html:75
 msgid "Sunday"
-msgstr ""
+msgstr "Svētdiena"
 
 #: choices.py:163
 msgid "Anonymous"
-msgstr ""
+msgstr "Anonīms"
 
 #: choices.py:164
 msgid "Local User"
-msgstr ""
+msgstr "Vietējais lietotājs"
 
 #: choices.py:185
 msgid "Normal"
-msgstr ""
+msgstr "Normāls"
 
 #: choices.py:186
 msgid "Full"
-msgstr ""
+msgstr "Pilns"
 
 #: choices.py:187
 msgid "Debug"
-msgstr ""
+msgstr "Atkļūdošana"
 
 #: choices.py:191
 msgid "Default"
-msgstr ""
+msgstr "Noklusēti"
 
 #: choices.py:192
 msgid "Time Machine"
-msgstr ""
+msgstr "Laika mašīna"
 
 #: choices.py:195
 msgid "No case folding"
@@ -262,697 +262,707 @@ msgstr ""
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "Mazo burtu vārdi abos virzienos"
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "Klients redz mazos burtus, serveris redz lielos"
 
 #: choices.py:199
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "Klients redz lielos burtus, serveris redz mazos"
 
 #: choices.py:203
 msgid "File"
-msgstr ""
+msgstr "Fails"
 
 #: choices.py:204
 msgid "Device"
-msgstr ""
+msgstr "Ierīce"
 
 #: choices.py:205
 msgid "ZFS Volume"
-msgstr ""
+msgstr "ZFS sējums"
 
 #: choices.py:209 storage/models.py:137 templates/storage/autoimport.html:9
 #: templates/storage/import.html:18 templates/storage/wizard.html:91
 msgid "Disk"
-msgstr ""
+msgstr "Disks"
 
 #: choices.py:210
 msgid "DVD"
-msgstr ""
+msgstr "DVD"
 
 #: choices.py:211
 msgid "Tape"
-msgstr ""
+msgstr "Lente"
 
 #: choices.py:212
 msgid "Pass"
-msgstr ""
+msgstr "Parole"
 
 #: choices.py:216
 msgid "read-write"
-msgstr ""
+msgstr "lasīt-rakstīt"
 
 #: choices.py:217
 msgid "read-only"
-msgstr ""
+msgstr "tikai lasīt"
 
 #: choices.py:221 choices.py:227 services/forms.py:392 services/forms.py:394
 #: services/forms.py:692 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "Neviens"
 
 #: choices.py:223
 msgid "CHAP"
-msgstr ""
+msgstr "CHAP"
 
 #: choices.py:224
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "Savstarpējs CHAP"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "UPS sasniedz zemu akumulātora uzlādes līmeni"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS strādā uz akumulatora"
 
 #: choices.py:250
 msgid "Preferred"
-msgstr ""
+msgstr "Vēlamais"
 
 #: choices.py:251
 msgid "Tolerated"
-msgstr ""
+msgstr "Pieļaujamais"
 
 #: choices.py:252
 msgid "Required"
-msgstr ""
+msgstr "Nepieciešams"
 
 #: choices.py:279 choices.py:285
 msgid "Inherit"
-msgstr ""
+msgstr "Mantot"
 
 #: choices.py:280
 msgid "On"
-msgstr ""
+msgstr "Ieslēgts"
 
 #: choices.py:281 choices.py:286
 msgid "Off"
-msgstr ""
+msgstr "Izslēgts"
 
 #: choices.py:287
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (ieteicams)"
 
 #: choices.py:288
 msgid "default level"
-msgstr ""
+msgstr "sākotnējais līmenis"
 
 #: choices.py:289
 msgid "fastest"
-msgstr ""
+msgstr "ātrākais"
 
 #: choices.py:290
 msgid "maximum, slow"
-msgstr ""
+msgstr "maksimālais, lēns"
 
 #: choices.py:431
 msgid "Hour(s)"
-msgstr ""
+msgstr "Stunda(s)"
 
 #: choices.py:432
 msgid "Day(s)"
-msgstr ""
+msgstr "Diena(s)"
 
 #: choices.py:433
 msgid "Week(s)"
-msgstr ""
+msgstr "Nedēļa(s)"
 
 #: choices.py:434
 msgid "Month(s)"
-msgstr ""
+msgstr "Mēnesis(ši)"
 
 #: choices.py:435
 msgid "Year(s)"
-msgstr ""
+msgstr "Gads(i)"
 
 #: choices.py:439
 msgid "Everyday"
-msgstr ""
+msgstr "Ikdienas"
 
 #: choices.py:440
 msgid "Every selected weekday"
-msgstr ""
+msgstr "Katru izvēlēto darba dienu"
 
 #: account/forms.py:93 templates/storage/volumes.html:62
 msgid "Available"
-msgstr ""
+msgstr "Pieejams"
 
 #: account/forms.py:144
 msgid "Selected"
-msgstr ""
+msgstr "Izvēlēts"
 
 #: account/forms.py:172 account/forms.py:197 account/models.py:77
 #: services/forms.py:229 services/models.py:657 services/models.py:917
 #: system/models.py:153 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:60
 msgid "Username"
-msgstr ""
+msgstr "Lietotājvārds"
 
 #: account/forms.py:173 account/forms.py:198
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
 msgstr ""
+"Nepieciešams. 30 rakstzīmes vai mazāk. Tikai burti, cipari un @/./+/-/_ ."
 
 #: account/forms.py:174 account/forms.py:199
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr ""
+msgstr "Šī vērtība var saturēt tikai burtus, skaitļus un @/./+/-/_ rakstzīmes."
 
 #: account/forms.py:175
 msgid "E-mail"
-msgstr ""
+msgstr "E-pasts"
 
 #: account/forms.py:200 account/forms.py:307 account/views.py:79
 #: services/models.py:661 system/forms.py:180 system/models.py:160
 #: templates/account/bsdusers.html:9 templates/account/bsdusers.html.py:64
 msgid "Password"
-msgstr ""
+msgstr "Parole"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
 msgid "Password confirmation"
-msgstr ""
+msgstr "Paroles apstiprinājums"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "Ievadiet to pašu paroli kā iepriekš, lai veiktu pārbaudi."
 
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
 msgid "Shell"
-msgstr ""
+msgstr "Apvalks"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
-msgstr ""
+msgstr "Izslēgt autorizācijas"
 
 #: account/forms.py:205
 msgid "Primary Group"
-msgstr ""
+msgstr "Primārā grupa"
 
 #: account/forms.py:234
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "Ar šo lietotājvārdu lietotājs jau eksistē."
 
 #: account/forms.py:242 account/forms.py:328 account/forms.py:470
 #: system/forms.py:225
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "Paroles lauki nesakrita."
 
 #: account/forms.py:247 account/forms.py:372
 msgid "Home directory has to start with /mnt/"
-msgstr ""
+msgstr "Mājas direktorijai ir jāsākas ar  /mnt/"
 
 #: account/forms.py:261 account/forms.py:265 services/forms.py:469
 #: services/forms.py:482 services/forms.py:699 storage/forms.py:223
 #: system/forms.py:268 system/forms.py:291
 msgid "This field is required."
-msgstr ""
+msgstr "Šis lauks ir nepieciešams."
 
 #: account/forms.py:418
 msgid "Member users"
-msgstr ""
+msgstr "Lietotāja lietotāji"
 
 #: account/forms.py:436
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "Palīg-grupas"
 
 #: account/forms.py:458 templates/registration/password_change_form.html:39
 msgid "New password"
-msgstr ""
+msgstr "Jaunā parole"
 
 #: account/forms.py:459
 msgid "New password confirmation"
-msgstr ""
+msgstr "Jaunās paroles apstiprinājums"
 
 #: account/forms.py:484 templates/registration/password_change_form.html:31
 msgid "Old password"
-msgstr ""
+msgstr "Vecā parole"
 
 #: account/forms.py:492
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr ""
+msgstr "Vecā parole tika ievadīta nepareizi. Lūdzu, ievadiet to vēlreiz."
 
 #: account/models.py:36 services/models.py:460 services/models.py:505
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr ""
+msgstr "Grupas ID"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "Grupas nosaukums"
 
 #: account/models.py:47 account/models.py:147 storage/forms.py:92
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:49
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:61
 msgid "Group"
-msgstr ""
+msgstr "Grupa"
 
 #: account/models.py:61
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Grupas %s ir iebūvēts un nevar tikt izdzēsts!"
 
 #: account/models.py:71
 msgid "User ID"
-msgstr ""
+msgstr "Lietotāja ID"
 
 #: account/models.py:76
 msgid "User &"
-msgstr ""
+msgstr "Lietotāja &"
 
 #: account/models.py:83
 msgid "Hashed UNIX password"
-msgstr ""
+msgstr "Sajauktā UNIX parole"
 
 #: account/models.py:89
 msgid "Hashed SMB password"
-msgstr ""
+msgstr "Sajauktā SMB parole"
 
 #: account/models.py:93
 msgid "Primary Group ID"
-msgstr ""
+msgstr "Primārās grupas ID"
 
 #: account/models.py:98
 msgid "Home Directory"
-msgstr ""
+msgstr "Sākuma katalogs"
 
 #: account/models.py:107
 msgid "Full Name"
-msgstr ""
+msgstr "Pilns vārds"
 
 #: account/models.py:114 account/models.py:151 services/models.py:509
 #: templates/services/iscsi_auth.html:6
 msgid "User"
-msgstr ""
+msgstr "Lietotājs"
 
 #: account/models.py:130
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Lietotāja %s ir iebūvēts un nevar tikt izdzēsts!"
 
 #: account/nav.py:9 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:85 templates/account/index2.html:7
 msgid "Change Password"
-msgstr ""
+msgstr "Mainīt paroli"
 
 #: account/nav.py:17 templates/account/changeform.html:25
 #: templates/account/index2.html:4
 msgid "Change Admin User"
-msgstr ""
+msgstr "Mainīt administrātora lietotāju"
 
 #: account/nav.py:33 templates/account/index2.html:2
 msgid "My Account"
-msgstr ""
+msgstr "Mans konts"
 
 #: account/nav.py:41
 msgid "View All Users"
-msgstr ""
+msgstr "Skatīt visus lietotājus"
 
 #: account/nav.py:54
 msgid "View All Groups"
-msgstr ""
+msgstr "Skatīt visus grupas"
 
 #: account/views.py:79 account/views.py:94 account/views.py:105
 #: account/views.py:120
 #, python-format
 msgid "%s successfully update."
-msgstr ""
+msgstr "%s veiksmīgi atjaunināts."
 
 #: account/views.py:94
 msgid "Admin user"
-msgstr ""
+msgstr "Administrātora lietotājs"
 
 #: account/views.py:105 templates/account/index2.html:13
 msgid "Users"
-msgstr ""
+msgstr "Lietotāji"
 
 #: account/views.py:120 templates/account/index2.html:10
 msgid "Groups"
-msgstr ""
+msgstr "Grupas"
 
 #: contrib/ext_formwizard.py:170
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
 msgstr ""
+"Mēs atvainojamies, bet jūsu formai ir beidzies derīguma termiņš. Lūdzu, "
+"turpiniet aizpildīt formu no šīs lapas."
 
 #: freeadmin/navtree.py:349
 msgid "Display System Processes"
-msgstr ""
+msgstr "Attēlot sistēmas procesus"
 
 #: freeadmin/navtree.py:357 templates/freeadmin/index.html:50
 msgid "Reboot"
-msgstr ""
+msgstr "Pārstartēt"
 
 #: freeadmin/navtree.py:365 templates/freeadmin/index.html:62
 msgid "Shutdown"
-msgstr ""
+msgstr "Izslēgt"
 
 #: freeadmin/views.py:103
 #, python-format
 msgid "%s successfully added."
-msgstr ""
+msgstr "%s veiksmīgi pievienots."
 
 #: freeadmin/views.py:262 freeadmin/views.py:264
 #, python-format
 msgid "%s successfully updated."
-msgstr ""
+msgstr "%s veiksmīgi atjaunināts."
 
 #: freeadmin/views.py:309
 #, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "%s veiksmīgi izdzēsts."
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
+msgstr "Jāaizpilda vārdu serveri 2 pirms aizpildot vārdu serveri 3"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
-msgstr ""
+msgstr "Nepieciešams, ja lietojat vārdu serveri 3"
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr ""
+msgstr "Jāaizpilda vārdu serveri 1 pirms aizpildot vārdu serveri 3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr ""
+msgstr "Jāaizpilda vārdu serveri 1 pirms aizpildot vārdu serveri 2"
 
 #: network/forms.py:134
 msgid "Physical NICs in the LAGG"
-msgstr ""
+msgstr "Fiziskās NICs iekš LAGG"
 
 #: network/forms.py:187
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "tīkla '%s' nav derīgs, CIDR nepieciešams."
 
 #: network/models.py:42 services/models.py:1077
 #: templates/system/system_info.html:4
 msgid "Hostname"
-msgstr ""
+msgstr "Resursdatora nosaukums"
 
 #: network/models.py:47
 msgid "Domain"
-msgstr ""
+msgstr "Domēns"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "IPv4 noklusētā vārteja"
 
 #: network/models.py:59
 msgid "IPv6 Default Gateway"
-msgstr ""
+msgstr "IPv6 noklusētā vārteja"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "Vārdu serveris 1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "Vārdu serveris 2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "Vārdu serveris 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:18
 #: templates/network/index2.html:3
 msgid "Global Configuration"
-msgstr ""
+msgstr "Galvenie uzstādījumi"
 
 #: network/models.py:95
 msgid "NIC"
-msgstr ""
+msgstr "NIC"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Izvēlieties savu NIC"
 
 #: network/models.py:101
 msgid "Interface Name"
-msgstr ""
+msgstr "Interfeisa nosaukums"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "Nosauciet savu NIC."
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
-msgstr ""
+msgstr "DHCP"
 
 #: network/models.py:107
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
+"Ja aktivizēts, lietot DHCP, lai iegūtu IPv4 adresi, kā arī noklusējuma "
+"maršrutētāju, uc"
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "IPv4 adrese"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr ""
+msgstr "IPv4 Tīkla maska"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "Automātiski konfigurēt IPv6"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
 msgstr ""
+"Kad aktivizēts, automātiski konfigurēt IPv6 adresi, izmantojot rtsol (8)."
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr ""
+msgstr "IPv6 adrese"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr ""
+msgstr "IPv6 Tīkla maska"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "Iespējas"
 
 #: network/models.py:157 network/models.py:158 templates/network/index2.html:5
 msgid "Interfaces"
-msgstr ""
+msgstr "Saskarnes"
 
 #: network/models.py:172 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr ""
+msgstr "Virtuālais interfeiss"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr ""
+msgstr "Saskarnes nosaukumiem jābūt vlanXX kur XX ir skaitlis"
 
 #: network/models.py:178 templates/network/lagg_members2.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr ""
+msgstr "Fiziskā saskarne"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
-msgstr ""
+msgstr "VLAN Tags"
 
 #: network/models.py:185 network/models.py:276 services/models.py:75
 #: services/models.py:747 storage/models.py:95
 #: templates/network/staticroute.html:7 templates/network/vlan.html:8
 msgid "Description"
-msgstr ""
+msgstr "Apraksts"
 
 #: network/models.py:199 templates/network/index2.html:11
 msgid "VLAN"
-msgstr ""
+msgstr "VLAN"
 
 #: network/models.py:215 templates/network/interface.html:5
 msgid "Interface"
-msgstr ""
+msgstr "Interfeiss"
 
 #: network/models.py:219
 msgid "Protocol Type"
-msgstr ""
+msgstr "Protokola tips"
 
 #: network/models.py:240
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "LAGG interfeisa grupa"
 
 #: network/models.py:243
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "LAGG prioritārais skaits"
 
 #: network/models.py:249
 msgid "Physical NIC"
-msgstr ""
+msgstr "Fiziskās NIC"
 
 #: network/models.py:259 templates/network/index2.html:7
 msgid "Link Aggregation"
-msgstr ""
+msgstr "Link summēšana"
 
 #: network/models.py:268
 msgid "Destination network"
-msgstr ""
+msgstr "Gala tīkls"
 
 #: network/models.py:272 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr ""
+msgstr "Vārteja"
 
 #: network/models.py:281
 msgid "Static Route"
-msgstr ""
+msgstr "Statiskais maršruts"
 
 #: network/nav.py:10 templates/network/index2.html:13
 msgid "Network Summary"
-msgstr ""
+msgstr "Tīkla kopsavilkums"
 
 #: network/nav.py:27
 msgid "Add Link Aggregation"
-msgstr ""
+msgstr "Pievienot saišu savākšanu"
 
 #: network/nav.py:28
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "Izveidot saišu savākšanu"
 
 #: network/nav.py:39
 msgid "View All Link Aggregations"
-msgstr ""
+msgstr "Skatīt visas saišu savākšanas"
 
 #: network/nav.py:51
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Saišu savākšanas"
 
 #: network/nav.py:97
 msgid "View All Interfaces"
-msgstr ""
+msgstr "Skatīt visus saskarnes"
 
 #: network/nav.py:109
 msgid "View All VLANs"
-msgstr ""
+msgstr "Skatīt visus VLAN"
 
 #: network/nav.py:121
 msgid "View All Static Routes"
-msgstr ""
+msgstr "Skatīt visus statiskos ceļus"
 
 #: network/views.py:192
 #, python-format
 msgid "%s successfully added"
-msgstr ""
+msgstr "%s veiksmīgi pievienots"
 
 #: services/forms.py:59 services/forms.py:112 sharing/forms.py:54
 #: sharing/models.py:63
 msgid "Guest Account"
-msgstr ""
+msgstr "Viesu konts"
 
 #: services/forms.py:86 services/forms.py:130 services/forms.py:246
 #: sharing/forms.py:82 sharing/forms.py:190 sharing/forms.py:198
 #: storage/forms.py:799
 #, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "Lietotājs %s nav derīgs."
 
 #: services/forms.py:96
 msgid "This field is required for \"Enable home directories browsing\"."
 msgstr ""
+"Šis lauks ir obligāts attiecībā uz \"Aktivizēt mājas direktoriju "
+"pārlūkošanai."
 
 #: services/forms.py:99
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "Šis lauks ir nepieciešams priekš \"Mājas direktorijas\"."
 
 #: services/forms.py:145
 msgid "File Permission"
-msgstr ""
+msgstr "Failu atļaujas"
 
 #: services/forms.py:146
 msgid "Directory Permission"
-msgstr ""
+msgstr "Direktoriju atļaujas"
 
 #: services/forms.py:165
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr ""
+msgstr "Šai vērtībai jābūt no 0 līdz 65535, ieskaitot."
 
 #: services/forms.py:171 services/forms.py:189
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
+msgstr "Šai vērtībai jābūt no 0 līdz 10000, ieskaitot."
 
 #: services/forms.py:177 services/forms.py:183
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
+msgstr "Šai vērtībai jābūt no 0 līdz 1000 ieskaitot."
 
 #: services/forms.py:195
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
+msgstr "Šai vērtībai jābūt starp 1024 un 65535 ieskaitot. Noklusēti 0."
 
 #: services/forms.py:201
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr ""
+msgstr "Šai vērtībai jābūt starp 1024 un 65535 ieskaitot. Noklusēti 0."
 
 #: services/forms.py:220
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "Šis lauks ir nepieciešams anonīmai piekļuvei"
 
 #: services/forms.py:294 services/models.py:514
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
-msgstr ""
+msgstr "Noslēpums"
 
 #: services/forms.py:295 services/models.py:515
 msgid "Target side secret."
-msgstr ""
+msgstr "Mērķa puses noslēpums."
 
 #: services/forms.py:296
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "Noslēpums (Apstiprināt)"
 
 #: services/forms.py:298 services/forms.py:306
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "Ievadiet to pašu noslēpumu priekš pārbaudes."
 
 #: services/forms.py:299
 msgid "Initiator Secret"
-msgstr ""
+msgstr "Ierosinātais noslēpums"
 
 #: services/forms.py:301 services/models.py:521 services/models.py:526
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr ""
+msgstr "Ierosinātāja puses noslēpums. (savstarpējām CHAP autentifikācijām)"
 
 #: services/forms.py:304
 msgid "Initiator Secret (Confirm)"
-msgstr ""
+msgstr "Ierosinātāja noslēpums (apstiprināt)"
 
 #: services/forms.py:313
 msgid "Secret does not match"
-msgstr ""
+msgstr "Noslēpumi nesakrīt"
 
 #: services/forms.py:328 services/forms.py:329
 msgid "The peer secret is required if you set a peer user."
-msgstr ""
+msgstr "\"Peer\" noslēpums ir nepieciešams, ja iestatāt \"peer\" lietotāju."
 
 #: services/forms.py:332
 msgid "The peer secret cannot be the same as user secret."
-msgstr ""
+msgstr "\"Peer\" noslēpums nevar būt tāds pats kā lietotāja noslēpums."
 
 #: services/forms.py:375
 msgid "LUN already exists in the same target."
-msgstr ""
+msgstr "LUN jau pastāv šajā mērķī."
 
 #: services/forms.py:384 services/models.py:354
 msgid "Controller Auth Group"
-msgstr ""
+msgstr "Kontrolieris Auth Group"
 
 #: services/forms.py:385 services/models.py:355
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
 msgstr ""
+"Istgtcontrol var piekļūt mērķiem, izmantojot pareizu lietotāju un noslēpumu "
+"konkrētajai Auth Group."
 
 #: services/forms.py:386 services/models.py:248
 msgid "Discovery Auth Group"
@@ -961,20 +971,20 @@ msgstr ""
 #: services/forms.py:413
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr ""
+msgstr "Vērtībai jābūt starp %(start)d un %(end)d, ieskaitot."
 
 #: services/forms.py:421
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutal."
-msgstr ""
+msgstr "Šis lauks ir nepieciešams, ja atklāšanas metode ir CHAP vai CHAP Mutal."
 
 #: services/forms.py:502 services/forms.py:530
 msgid "You need to specify a filepath, not a directory."
-msgstr ""
+msgstr "Tev vajag norādīt saiti uz failu, ne mapi."
 
 #: services/forms.py:506 services/forms.py:534
 msgid "You need to specify a file inside your volume/dataset."
-msgstr ""
+msgstr "Tev jānorāda datne iekš sējuma."
 
 #: services/forms.py:510 services/forms.py:538
 msgid ""
@@ -984,93 +994,98 @@ msgstr ""
 #: services/forms.py:552
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
-msgstr ""
+msgstr "Šī vērtība var būt bitos, vai tai pievieno KB, MB, GB, TB"
 
 #: services/forms.py:571
 msgid "Disk device"
-msgstr ""
+msgstr "Diska ierīce"
 
 #: services/forms.py:658
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr ""
+msgstr "Tava Portāla Grupas ID nevar būt augstāks kā %d"
 
 #: services/forms.py:678
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr ""
+msgstr "Tavas Grupas ID nevar būt augstāks kā %d"
 
 #: services/forms.py:685
 msgid "Authentication Group number"
-msgstr ""
+msgstr "Autorizācijas Grupas numurs"
 
 #: services/models.py:41
 msgid "Service"
-msgstr ""
+msgstr "Serviss"
 
 #: services/models.py:42
 msgid "Name of Service, should be auto-generated at build time"
-msgstr ""
+msgstr "Servisa nosaukums, vajadzētu tikt ģenerētam būvēšanas laikā"
 
 #: services/models.py:45
 msgid "Enable Service"
-msgstr ""
+msgstr "Iespējot Servisu"
 
 #: services/models.py:48 services/models.py:49
 #: templates/common/menubar2.html:28 templates/services/index2.html:3
 msgid "Services"
-msgstr ""
+msgstr "Servisi"
 
 #: services/models.py:61
 msgid "Authentication Model"
-msgstr ""
+msgstr "Autentifikācijas Modelis"
 
 #: services/models.py:62
+#, fuzzy
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
+"Izmantojot Active Directory vai LDAP autentifikāciju, šo iespēju pārņems"
 
 #: services/models.py:66
 msgid "NetBIOS name"
-msgstr ""
+msgstr "NetBIOS nosuakums"
 
 #: services/models.py:70
 msgid "Workgroup"
-msgstr ""
+msgstr "Darba grupa"
 
 #: services/models.py:71
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
+"Darba grupas serveris parādīsies, kad to meklēs klienti (maksimāli 15 "
+"simboli)"
 
 #: services/models.py:77
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "Servera apraksts. Šo parasti var atstāt tukšu."
 
 #: services/models.py:83
 msgid "DOS charset"
-msgstr ""
+msgstr "DOS zīmjukopa"
 
 #: services/models.py:89
+#, fuzzy
 msgid "UNIX charset"
-msgstr ""
+msgstr "UNIX zīmjukopa"
 
 #: services/models.py:95
 msgid "Log level"
-msgstr ""
+msgstr "Žurnalēšanas līmenis"
 
 #: services/models.py:98
 msgid "Local Master"
-msgstr ""
+msgstr "Lokālais Galvenais"
 
 #: services/models.py:100
 msgid "Time Server for Domain"
-msgstr ""
+msgstr "Laika Serveris domēnam"
 
 #: services/models.py:104 services/models.py:192
 msgid "Guest account"
-msgstr ""
+msgstr "Viesa lietotājs"
 
 #: services/models.py:105 sharing/models.py:64
 msgid ""
@@ -1083,15 +1098,15 @@ msgstr ""
 
 #: services/models.py:108
 msgid "Allow guest access"
-msgstr ""
+msgstr "Atļaut viesa piekļuvi"
 
 #: services/models.py:110
 msgid "Only allow guest access"
-msgstr ""
+msgstr "Atļaut tikai viesa piekļuvi"
 
 #: services/models.py:113 services/models.py:830
 msgid "File mask"
-msgstr ""
+msgstr "Datnes maska"
 
 #: services/models.py:115
 msgid "Use this option to override the file creation mask (0666 by default)."
@@ -1099,7 +1114,7 @@ msgstr ""
 
 #: services/models.py:119 services/models.py:836
 msgid "Directory mask"
-msgstr ""
+msgstr "Mapes maska"
 
 #: services/models.py:121
 msgid ""
@@ -1108,64 +1123,64 @@ msgstr ""
 
 #: services/models.py:124
 msgid "Large RW support"
-msgstr ""
+msgstr "Liela RW atbalsts"
 
 #: services/models.py:126
 msgid "Send files with sendfile(2)"
-msgstr ""
+msgstr "Sūtīt datnes ar sendfile(2)"
 
 #: services/models.py:128
 msgid "EA Support"
-msgstr ""
+msgstr "EA atbalsts"
 
 #: services/models.py:130
 msgid "Support DOS File Attributes"
-msgstr ""
+msgstr "Atbalsta DOS Datņu atribūtus"
 
 #: services/models.py:132
 msgid "Allow Empty Password"
-msgstr ""
+msgstr "Atļaut tukšu paroli"
 
 #: services/models.py:135 services/models.py:675 services/models.py:709
 #: services/models.py:741 services/models.py:888
 msgid "Auxiliary parameters"
-msgstr ""
+msgstr "Palīgparametri"
 
 #: services/models.py:137
 msgid "These parameters are added to [Global] section of smb.conf"
-msgstr ""
+msgstr "Šos parametrus pievieno [Global] sekcijai iekš smb.conf"
 
 #: services/models.py:140
 msgid "Enable home directories"
-msgstr ""
+msgstr "Iespējot mājas mapes"
 
 #: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
-msgstr ""
+msgstr "Šis iespējo\\atspējo mājas mapes smabas lietotājam."
 
 #: services/models.py:144
 msgid "Enable home directories browsing"
-msgstr ""
+msgstr "Iespējot mājas mapes pārlūkošanai"
 
 #: services/models.py:145
 msgid "This enables\\disables home directories browsing for samba user."
-msgstr ""
+msgstr "Šis iespējo\\atspējo mājas mapes pārlūkošanu smabas lietotājam."
 
 #: services/models.py:149
 msgid "Home directories"
-msgstr ""
+msgstr "Mājas mapes"
 
 #: services/models.py:155
 msgid "Enable AIO"
-msgstr ""
+msgstr "Iespējot AIO"
 
 #: services/models.py:156
 msgid "This enables\\disables AIO support."
-msgstr ""
+msgstr "Šis iespējo\\atspējo AIO atbalstu."
 
 #: services/models.py:160
 msgid "Minimal AIO read size"
-msgstr ""
+msgstr "Minimālais AIO lasīšanas lielums"
 
 #: services/models.py:161
 msgid ""
@@ -1175,7 +1190,7 @@ msgstr ""
 
 #: services/models.py:166
 msgid "Minimal AIO write size"
-msgstr ""
+msgstr "Minimālais AIO rakstīšanas lielums"
 
 #: services/models.py:167
 msgid ""
@@ -1185,12 +1200,13 @@ msgstr ""
 
 #: services/models.py:172 services/models.py:173
 #: templates/services/index2.html:29
+#, fuzzy
 msgid "CIFS"
-msgstr ""
+msgstr "CIFS"
 
 #: services/models.py:182
 msgid "Server Name"
-msgstr ""
+msgstr "Servera nosaukums"
 
 #: services/models.py:183
 msgid ""
@@ -1200,7 +1216,7 @@ msgstr ""
 
 #: services/models.py:186
 msgid "Guest Access"
-msgstr ""
+msgstr "Viesa piekļuve"
 
 #: services/models.py:187
 msgid "Allows guest access to all apple shares on this box."
@@ -1217,15 +1233,16 @@ msgstr ""
 
 #: services/models.py:196
 msgid "Local Access"
-msgstr ""
+msgstr "Vietējā piekļuve"
 
 #: services/models.py:197
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
 
 #: services/models.py:200
+#, fuzzy
 msgid "Enable DDP"
-msgstr ""
+msgstr "Iespējot DDP"
 
 #: services/models.py:201
 msgid "Enables DDP support for low-level appletalk access."
@@ -1233,12 +1250,13 @@ msgstr ""
 
 #: services/models.py:205 services/models.py:206
 #: templates/services/index2.html:7
+#, fuzzy
 msgid "AFP"
-msgstr ""
+msgstr "AFP"
 
 #: services/models.py:215
 msgid "Number of servers"
-msgstr ""
+msgstr "Serveru skaits"
 
 #: services/models.py:216
 msgid ""
@@ -1248,7 +1266,7 @@ msgstr ""
 
 #: services/models.py:220
 msgid "Asynchronous mode"
-msgstr ""
+msgstr "Asinhronais režīms"
 
 #: services/models.py:221
 msgid ""
@@ -1258,12 +1276,13 @@ msgstr ""
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/index2.html:75
+#, fuzzy
 msgid "NFS"
-msgstr ""
+msgstr "NFS"
 
 #: services/models.py:236
 msgid "Base Name"
-msgstr ""
+msgstr "Bāzes nosaukums"
 
 #: services/models.py:237
 msgid ""
@@ -1273,19 +1292,21 @@ msgstr ""
 
 #: services/models.py:243
 msgid "Discovery Auth Method"
-msgstr ""
+msgstr "Atklāšanas Autentifikācijas metode"
 
 #: services/models.py:255
+#, fuzzy
 msgid "I/O Timeout"
-msgstr ""
+msgstr "I/O Noildze"
 
 #: services/models.py:256
+#, fuzzy
 msgid "I/O timeout in seconds (30 by default)."
-msgstr ""
+msgstr "I/O noildze sekundēs (30 pēc noklusējuma)."
 
 #: services/models.py:261
 msgid "NOPIN Interval"
-msgstr ""
+msgstr "NOPIN Intervāls"
 
 #: services/models.py:262
 msgid "NOPIN sending interval in seconds (20 by default)."
@@ -1293,7 +1314,7 @@ msgstr ""
 
 #: services/models.py:267
 msgid "Max. sessions"
-msgstr ""
+msgstr "Max. sesijas"
 
 #: services/models.py:268
 msgid "Maximum number of sessions holding at same time (16 by default)."
@@ -1301,7 +1322,7 @@ msgstr ""
 
 #: services/models.py:273
 msgid "Max. connections"
-msgstr ""
+msgstr "Max. pieslēgumi"
 
 #: services/models.py:274
 msgid "Maximum number of connections in each session (8 by default)."
@@ -1363,11 +1384,11 @@ msgstr ""
 
 #: services/models.py:321
 msgid "Enable LUC"
-msgstr ""
+msgstr "Iespējot LUC"
 
 #: services/models.py:325
 msgid "Controller IP address"
-msgstr ""
+msgstr "Kontroliera IP adrese"
 
 #: services/models.py:326
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
@@ -1375,7 +1396,7 @@ msgstr ""
 
 #: services/models.py:332
 msgid "Controller TCP port"
-msgstr ""
+msgstr "Kontroliera TCP ports"
 
 #: services/models.py:333
 msgid "Logical Unit Controller TCP port (3261 by default)"
@@ -1442,11 +1463,11 @@ msgstr ""
 #: templates/services/iscsi_portals.html:7 templates/sharing/apple.html:14
 #: templates/sharing/unix.html:14 templates/sharing/windows.html:14
 msgid "Comment"
-msgstr ""
+msgstr "Komentārs"
 
 #: services/models.py:397 services/models.py:432 services/models.py:478
 msgid "You may enter a description here for your reference."
-msgstr ""
+msgstr "Tu vari ievadīt parakstu priekš sevis."
 
 #: services/models.py:400 services/models.py:629
 #: templates/services/iscsi_assoctargets.html:6
@@ -1455,11 +1476,11 @@ msgstr ""
 
 #: services/models.py:420 services/models.py:570
 msgid "Portal Group ID"
-msgstr ""
+msgstr "Portāla Grupas ID"
 
 #: services/models.py:425 services/models.py:435
 msgid "Portal"
-msgstr ""
+msgstr "Portāls"
 
 #: services/models.py:426
 msgid ""
@@ -1471,7 +1492,7 @@ msgstr ""
 
 #: services/models.py:464 templates/services/iscsi_authini.html:6
 msgid "Initiators"
-msgstr ""
+msgstr "Iniciatori"
 
 #: services/models.py:466
 msgid ""
@@ -1491,11 +1512,13 @@ msgstr ""
 
 #: services/models.py:481
 msgid "Initiator"
-msgstr ""
+msgstr "Iniciators"
 
 #: services/models.py:510
 msgid "Target side user name. It is usually the initiator name by default."
 msgstr ""
+"Mērķa puses lietotāja vārds. Tas parasti pēc noklusējuma ir iniciatora "
+"nosaukums."
 
 #: services/models.py:520
 msgid "Peer User"
@@ -2012,7 +2035,7 @@ msgstr ""
 
 #: services/models.py:1022
 msgid "Domain Name, eg example.com"
-msgstr ""
+msgstr "Domēna vārds, piemēram, example.com"
 
 #: services/models.py:1026
 msgid "Host Name (NetBIOS-Name)"
@@ -4276,80 +4299,80 @@ msgstr ""
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr ""
+msgstr "Ik stundu"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
-msgstr ""
+msgstr "Stundu grafiki"
 
 #: templates/system/reporting.html:18
 msgid "Daily"
-msgstr ""
+msgstr "Ik dienu"
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
-msgstr ""
+msgstr "Ikdienas grafiki"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr ""
+msgstr "Ik nedēļu"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"
-msgstr ""
+msgstr "Nedēļas grafiki"
 
 #: templates/system/reporting.html:46
 msgid "Monthly"
-msgstr ""
+msgstr "Ik mēnesi"
 
 #: templates/system/reporting.html:47
 msgid "Monthly Graphs"
-msgstr ""
+msgstr "Ikmēneša grafiki"
 
 #: templates/system/reporting.html:60
 msgid "Yearly"
-msgstr ""
+msgstr "Katru gadu"
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"
-msgstr ""
+msgstr "Gada grafiki"
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr ""
+msgstr "Vispārīgi"
 
 #: templates/system/settings.html:11
 msgid "Firmware Update"
-msgstr ""
+msgstr "Programmatūras atjaunošana"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
-msgstr ""
+msgstr "Uzstādīt servisa pakotni"
 
 #: templates/system/settings.html:15
 msgid "Config"
-msgstr ""
+msgstr "Konfigurācija"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
-msgstr ""
+msgstr "OS versija"
 
 #: templates/system/system_info.html:12
 msgid "Platform"
-msgstr ""
+msgstr "Platforma"
 
 #: templates/system/system_info.html:16
 msgid "System Time"
-msgstr ""
+msgstr "Sistēmas laiks"
 
 #: templates/system/system_info.html:20
 msgid "Uptime"
-msgstr ""
+msgstr "Darbības laiks"
 
 #: templates/system/system_info.html:24
 msgid "Load Average"
-msgstr ""
+msgstr "Vidējā slodze"
 
 #: templates/system/system_info.html:28
 msgid "FreeNAS Build"
-msgstr ""
+msgstr "FreeNAS versija"

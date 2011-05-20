@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:32-0700\n"
-"PO-Revision-Date: 2011-05-16 11:36+0200\n"
+"PO-Revision-Date: 2011-05-19 17:18+0200\n"
 "Last-Translator: yurkis <yurkis@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -40,13 +40,12 @@ msgid "HTTPS"
 msgstr "HTTPS"
 
 #: choices.py:48
-#, fuzzy
 msgid "English"
-msgstr "??????????"
+msgstr "Англійська"
 
 #: choices.py:53 choices.py:222
 msgid "Auto"
-msgstr "????"
+msgstr "Авто"
 
 #: choices.py:54
 msgid "PIO0"
@@ -62,200 +61,204 @@ msgstr "PIO2"
 
 #: choices.py:57
 msgid "PIO3"
-msgstr ""
+msgstr "PIO3"
 
 #: choices.py:58
 msgid "PIO4"
-msgstr ""
+msgstr "PIO4"
 
 #: choices.py:59
 msgid "WDMA0"
-msgstr ""
+msgstr "WDMA0"
 
 #: choices.py:60
 msgid "WDMA1"
-msgstr ""
+msgstr "WDMA1"
 
 #: choices.py:61
 msgid "WDMA2"
-msgstr ""
+msgstr "WDMA2"
 
 #: choices.py:62
 msgid "UDMA-16"
-msgstr ""
+msgstr "UDMA-16"
 
 #: choices.py:63
 msgid "UDMA-33"
-msgstr ""
+msgstr "UDMA-33"
 
 #: choices.py:64
 msgid "UDMA-66"
-msgstr ""
+msgstr "UDMA-66"
 
 #: choices.py:65
 msgid "UDMA-100"
-msgstr ""
+msgstr "UDMA-100"
 
 #: choices.py:66
 msgid "UDMA-133"
-msgstr ""
+msgstr "UDMA-133"
 
 #: choices.py:67
 msgid "SATA 1.5Gbit/s"
-msgstr ""
+msgstr "SATA 1.5 Гб/с"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
-msgstr ""
+msgstr "SATA 3 Гб/с"
 
 #: choices.py:72
+#, fuzzy
 msgid "Always On"
-msgstr ""
+msgstr "Завжди вкл."
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr ""
+msgstr "Вимкнено"
 
 #: choices.py:87 choices.py:88 choices.py:89 choices.py:90 choices.py:91
 #: choices.py:92
+#, fuzzy
 msgid "Level"
-msgstr ""
+msgstr "Рівень"
 
 #: choices.py:87
 msgid "Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "Мінімальне енергоспоживання в режимі очікування (зупинка HDD)"
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
-msgstr ""
+msgstr "Середнє енергоспоживання в режимі очікування"
 
 #: choices.py:90
 msgid "Minimum power usgae without Standby (no spindown)"
-msgstr ""
+msgstr "Мінімальне енергоспоживання без режиму очікування (без зупинки HDD)"
 
 #: choices.py:91
 msgid "Intermediate power usage withot Standby"
-msgstr ""
+msgstr "Середнє енергоспоживання без режиму очікування"
 
 #: choices.py:92
 msgid "Maximum performance, maximum power usage"
-msgstr ""
+msgstr "Максимальна швидкодія, максимальне енергоспоживання"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr ""
+msgstr "Мінімальний"
 
 #: choices.py:97
 msgid "Medium"
-msgstr ""
+msgstr "Середній"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr ""
+msgstr "Максимальний"
 
 #: choices.py:132 templates/storage/tasks.html:86
 msgid "January"
-msgstr ""
+msgstr "Січень"
 
 #: choices.py:133 templates/storage/tasks.html:89
 msgid "February"
-msgstr ""
+msgstr "Лютий"
 
 #: choices.py:134 templates/storage/tasks.html:92
 msgid "March"
-msgstr ""
+msgstr "Березень"
 
 #: choices.py:135 templates/storage/tasks.html:95
 msgid "April"
-msgstr ""
+msgstr "Квітень"
 
 #: choices.py:136 templates/storage/tasks.html:98
 msgid "May"
-msgstr ""
+msgstr "Травень"
 
 #: choices.py:137 templates/storage/tasks.html:101
 msgid "June"
-msgstr ""
+msgstr "Червень"
 
 #: choices.py:138 templates/storage/tasks.html:104
 msgid "July"
-msgstr ""
+msgstr "Липень"
 
 #: choices.py:139 templates/storage/tasks.html:107
 msgid "August"
-msgstr ""
+msgstr "Серпень"
 
 #: choices.py:140 templates/storage/tasks.html:110
 msgid "September"
-msgstr ""
+msgstr "Вересень"
 
 #: choices.py:141 templates/storage/tasks.html:113
 msgid "October"
-msgstr ""
+msgstr "Жовтень"
 
 #: choices.py:142 templates/storage/tasks.html:116
 msgid "November"
-msgstr ""
+msgstr "Листопад"
 
 #: choices.py:143 templates/storage/tasks.html:119
 msgid "December"
-msgstr ""
+msgstr "Грудень"
 
 #: choices.py:146 templates/storage/tasks.html:57
 msgid "Monday"
-msgstr ""
+msgstr "Понеділок"
 
 #: choices.py:147 templates/storage/tasks.html:60
 msgid "Tuesday"
-msgstr ""
+msgstr "Вівторок"
 
 #: choices.py:148 templates/storage/tasks.html:63
 msgid "Wednesday"
-msgstr ""
+msgstr "Середа"
 
 #: choices.py:149 templates/storage/tasks.html:66
 msgid "Thursday"
-msgstr ""
+msgstr "Четвер"
 
 #: choices.py:150 templates/storage/tasks.html:69
 msgid "Friday"
-msgstr ""
+msgstr "П'ятниця"
 
 #: choices.py:151 templates/storage/tasks.html:72
 msgid "Saturday"
-msgstr ""
+msgstr "Субота"
 
 #: choices.py:152 templates/storage/tasks.html:75
 msgid "Sunday"
-msgstr ""
+msgstr "Неділя"
 
 #: choices.py:163
+#, fuzzy
 msgid "Anonymous"
-msgstr ""
+msgstr "Анонімний"
 
 #: choices.py:164
 msgid "Local User"
-msgstr ""
+msgstr "Локальний користувач"
 
 #: choices.py:185
 msgid "Normal"
-msgstr ""
+msgstr "Нормальний"
 
 #: choices.py:186
 msgid "Full"
-msgstr ""
+msgstr "Повний"
 
 #: choices.py:187
 msgid "Debug"
-msgstr ""
+msgstr "Налагодження"
 
 #: choices.py:191
 msgid "Default"
-msgstr ""
+msgstr "За замовчуванням"
 
 #: choices.py:192
+#, fuzzy
 msgid "Time Machine"
-msgstr ""
+msgstr "Машина часу"
 
 #: choices.py:195
 msgid "No case folding"

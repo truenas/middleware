@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-18 09:08+0200\n"
+"PO-Revision-Date: 2011-05-19 09:16+0200\n"
 "Last-Translator: realhuh <real_huh@yahoo.com.sg>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: id\n"
@@ -240,20 +240,21 @@ msgid "Normal"
 msgstr "Normal"
 
 #: choices.py:186
+#, fuzzy
 msgid "Full"
-msgstr ""
+msgstr "Penuh"
 
 #: choices.py:187
 msgid "Debug"
-msgstr ""
+msgstr "Debug"
 
 #: choices.py:191
 msgid "Default"
-msgstr ""
+msgstr "Kondisi Awal"
 
 #: choices.py:192
 msgid "Time Machine"
-msgstr ""
+msgstr "Mesin Waktu"
 
 #: choices.py:195
 msgid "No case folding"
@@ -273,192 +274,194 @@ msgstr ""
 
 #: choices.py:203
 msgid "File"
-msgstr ""
+msgstr "Berkas"
 
 #: choices.py:204
 msgid "Device"
-msgstr ""
+msgstr "Alat"
 
 #: choices.py:205
 msgid "ZFS Volume"
-msgstr ""
+msgstr "ZFS Volume"
 
 #: choices.py:209 storage/models.py:137 templates/storage/autoimport.html:9
 #: templates/storage/import.html:18 templates/storage/wizard.html:91
 msgid "Disk"
-msgstr ""
+msgstr "Cakram"
 
 #: choices.py:210
 msgid "DVD"
-msgstr ""
+msgstr "DVD"
 
 #: choices.py:211
 msgid "Tape"
-msgstr ""
+msgstr "Tape"
 
 #: choices.py:212
+#, fuzzy
 msgid "Pass"
-msgstr ""
+msgstr "Lewati"
 
 #: choices.py:216
 msgid "read-write"
-msgstr ""
+msgstr "baca-tulis"
 
 #: choices.py:217
 msgid "read-only"
-msgstr ""
+msgstr "baca-saja"
 
 #: choices.py:221 choices.py:227 services/forms.py:392 services/forms.py:394
 #: services/forms.py:692 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "Kosong"
 
 #: choices.py:223
 msgid "CHAP"
-msgstr ""
+msgstr "CHAP"
 
 #: choices.py:224
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "Mutual CHAP"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "Batre UPS lemah"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS beralih ke batre"
 
 #: choices.py:250
 msgid "Preferred"
-msgstr ""
+msgstr "Disarankan"
 
 #: choices.py:251
 msgid "Tolerated"
-msgstr ""
+msgstr "Ditolerir"
 
 #: choices.py:252
 msgid "Required"
-msgstr ""
+msgstr "Diperlukan"
 
 #: choices.py:279 choices.py:285
+#, fuzzy
 msgid "Inherit"
-msgstr ""
+msgstr "Diwariskan"
 
 #: choices.py:280
 msgid "On"
-msgstr ""
+msgstr "Menyala"
 
 #: choices.py:281 choices.py:286
 msgid "Off"
-msgstr ""
+msgstr "Padam"
 
 #: choices.py:287
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (disarankan)"
 
 #: choices.py:288
 msgid "default level"
-msgstr ""
+msgstr "tingkat standar"
 
 #: choices.py:289
 msgid "fastest"
-msgstr ""
+msgstr "tercepat"
 
 #: choices.py:290
 msgid "maximum, slow"
-msgstr ""
+msgstr "maksimal, lambat"
 
 #: choices.py:431
 msgid "Hour(s)"
-msgstr ""
+msgstr "Jam"
 
 #: choices.py:432
 msgid "Day(s)"
-msgstr ""
+msgstr "Hari"
 
 #: choices.py:433
 msgid "Week(s)"
-msgstr ""
+msgstr "Minggu"
 
 #: choices.py:434
 msgid "Month(s)"
-msgstr ""
+msgstr "Bulan"
 
 #: choices.py:435
 msgid "Year(s)"
-msgstr ""
+msgstr "Tahun"
 
 #: choices.py:439
 msgid "Everyday"
-msgstr ""
+msgstr "Setiap hari"
 
 #: choices.py:440
 msgid "Every selected weekday"
-msgstr ""
+msgstr "Setiap hari yg dipilih"
 
 #: account/forms.py:93 templates/storage/volumes.html:62
 msgid "Available"
-msgstr ""
+msgstr "Tersedia"
 
 #: account/forms.py:144
 msgid "Selected"
-msgstr ""
+msgstr "Terpilih"
 
 #: account/forms.py:172 account/forms.py:197 account/models.py:77
 #: services/forms.py:229 services/models.py:657 services/models.py:917
 #: system/models.py:153 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:60
 msgid "Username"
-msgstr ""
+msgstr "Username"
 
 #: account/forms.py:173 account/forms.py:198
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr ""
+msgstr "Maksimal 30 huruf, angka dan hanya lambang @/./+/-/_"
 
 #: account/forms.py:174 account/forms.py:199
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr ""
+msgstr "Hanya boleh huruf, angka dan lambang @/./+/-/_"
 
 #: account/forms.py:175
 msgid "E-mail"
-msgstr ""
+msgstr "E-mail"
 
 #: account/forms.py:200 account/forms.py:307 account/views.py:79
 #: services/models.py:661 system/forms.py:180 system/models.py:160
 #: templates/account/bsdusers.html:9 templates/account/bsdusers.html.py:64
 msgid "Password"
-msgstr ""
+msgstr "Password"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
 msgid "Password confirmation"
-msgstr ""
+msgstr "Konfirmasi password"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "Ulangi password diatas. Untuk verifikasi"
 
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
 msgid "Shell"
-msgstr ""
+msgstr "Shell"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
-msgstr ""
+msgstr "Matikan login"
 
 #: account/forms.py:205
 msgid "Primary Group"
-msgstr ""
+msgstr "Primary Group"
 
 #: account/forms.py:234
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "Username telah terdaftar. Cari yg lain."
 
 #: account/forms.py:242 account/forms.py:328 account/forms.py:470
 #: system/forms.py:225
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "Password tidak sama"
 
 #: account/forms.py:247 account/forms.py:372
 msgid "Home directory has to start with /mnt/"

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-17 23:29+0200\n"
-"Last-Translator: Anonymous Pootle User\n"
+"PO-Revision-Date: 2011-05-19 22:41+0200\n"
+"Last-Translator: Ayot <aj@ayot.pl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
@@ -21,281 +21,281 @@ msgstr ""
 
 #: choices.py:35
 msgid "Plain"
-msgstr ""
+msgstr "Prosty"
 
 #: choices.py:36 system/models.py:227 templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:37
 msgid "TLS"
-msgstr ""
+msgstr "TLS"
 
 #: choices.py:42
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: choices.py:43
 msgid "HTTPS"
-msgstr ""
+msgstr "HTTPS"
 
 #: choices.py:48
 msgid "English"
-msgstr ""
+msgstr "Angielski"
 
 #: choices.py:53 choices.py:222
 msgid "Auto"
-msgstr ""
+msgstr "Auto"
 
 #: choices.py:54
 msgid "PIO0"
-msgstr ""
+msgstr "PIO0"
 
 #: choices.py:55
 msgid "PIO1"
-msgstr ""
+msgstr "PIO1"
 
 #: choices.py:56
 msgid "PIO2"
-msgstr ""
+msgstr "PIO2"
 
 #: choices.py:57
 msgid "PIO3"
-msgstr ""
+msgstr "PIO3"
 
 #: choices.py:58
 msgid "PIO4"
-msgstr ""
+msgstr "PIO4"
 
 #: choices.py:59
 msgid "WDMA0"
-msgstr ""
+msgstr "WDMA0"
 
 #: choices.py:60
 msgid "WDMA1"
-msgstr ""
+msgstr "WDMA1"
 
 #: choices.py:61
 msgid "WDMA2"
-msgstr ""
+msgstr "WDMA2"
 
 #: choices.py:62
 msgid "UDMA-16"
-msgstr ""
+msgstr "UDMA-16"
 
 #: choices.py:63
 msgid "UDMA-33"
-msgstr ""
+msgstr "UDMA-33"
 
 #: choices.py:64
 msgid "UDMA-66"
-msgstr ""
+msgstr "UDMA-66"
 
 #: choices.py:65
 msgid "UDMA-100"
-msgstr ""
+msgstr "UDMA-100"
 
 #: choices.py:66
 msgid "UDMA-133"
-msgstr ""
+msgstr "UDMA-133"
 
 #: choices.py:67
 msgid "SATA 1.5Gbit/s"
-msgstr ""
+msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
-msgstr ""
+msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr ""
+msgstr "Zawsze Włączony"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr ""
+msgstr "Wyłączony"
 
 #: choices.py:87 choices.py:88 choices.py:89 choices.py:90 choices.py:91
 #: choices.py:92
 msgid "Level"
-msgstr ""
+msgstr "Poziom"
 
 #: choices.py:87
 msgid "Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "Minimalne zużycie prądu z czuwaniem (spindown)"
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
-msgstr ""
+msgstr "Średnie zużycie prądu z czuwaniem"
 
 #: choices.py:90
 msgid "Minimum power usgae without Standby (no spindown)"
-msgstr ""
+msgstr "Minimalny pobór prądu bez czuwania (no spindown)"
 
 #: choices.py:91
 msgid "Intermediate power usage withot Standby"
-msgstr ""
+msgstr "Średni pobór prądu bez czuwania"
 
 #: choices.py:92
 msgid "Maximum performance, maximum power usage"
-msgstr ""
+msgstr "Maksymalna wydajność, maksymalny pobór prądu"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr ""
+msgstr "Minimalny"
 
 #: choices.py:97
 msgid "Medium"
-msgstr ""
+msgstr "Średni"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr ""
+msgstr "Maksymalny"
 
 #: choices.py:132 templates/storage/tasks.html:86
 msgid "January"
-msgstr ""
+msgstr "Styczeń"
 
 #: choices.py:133 templates/storage/tasks.html:89
 msgid "February"
-msgstr ""
+msgstr "Luty"
 
 #: choices.py:134 templates/storage/tasks.html:92
 msgid "March"
-msgstr ""
+msgstr "Marzec"
 
 #: choices.py:135 templates/storage/tasks.html:95
 msgid "April"
-msgstr ""
+msgstr "Kwiecień"
 
 #: choices.py:136 templates/storage/tasks.html:98
 msgid "May"
-msgstr ""
+msgstr "Maj"
 
 #: choices.py:137 templates/storage/tasks.html:101
 msgid "June"
-msgstr ""
+msgstr "Czerwiec"
 
 #: choices.py:138 templates/storage/tasks.html:104
 msgid "July"
-msgstr ""
+msgstr "Lipiec"
 
 #: choices.py:139 templates/storage/tasks.html:107
 msgid "August"
-msgstr ""
+msgstr "Sierpień"
 
 #: choices.py:140 templates/storage/tasks.html:110
 msgid "September"
-msgstr ""
+msgstr "Wrzesień"
 
 #: choices.py:141 templates/storage/tasks.html:113
 msgid "October"
-msgstr ""
+msgstr "Październik"
 
 #: choices.py:142 templates/storage/tasks.html:116
 msgid "November"
-msgstr ""
+msgstr "Listopad"
 
 #: choices.py:143 templates/storage/tasks.html:119
 msgid "December"
-msgstr ""
+msgstr "Grudzień"
 
 #: choices.py:146 templates/storage/tasks.html:57
 msgid "Monday"
-msgstr ""
+msgstr "Poniedziałek"
 
 #: choices.py:147 templates/storage/tasks.html:60
 msgid "Tuesday"
-msgstr ""
+msgstr "Wtorek"
 
 #: choices.py:148 templates/storage/tasks.html:63
 msgid "Wednesday"
-msgstr ""
+msgstr "Środa"
 
 #: choices.py:149 templates/storage/tasks.html:66
 msgid "Thursday"
-msgstr ""
+msgstr "Czwartek"
 
 #: choices.py:150 templates/storage/tasks.html:69
 msgid "Friday"
-msgstr ""
+msgstr "Piątek"
 
 #: choices.py:151 templates/storage/tasks.html:72
 msgid "Saturday"
-msgstr ""
+msgstr "Sobota"
 
 #: choices.py:152 templates/storage/tasks.html:75
 msgid "Sunday"
-msgstr ""
+msgstr "Niedziela"
 
 #: choices.py:163
 msgid "Anonymous"
-msgstr ""
+msgstr "Anonimowy"
 
 #: choices.py:164
 msgid "Local User"
-msgstr ""
+msgstr "Użytkownik lokalny"
 
 #: choices.py:185
 msgid "Normal"
-msgstr ""
+msgstr "Normalny"
 
 #: choices.py:186
 msgid "Full"
-msgstr ""
+msgstr "Pełen"
 
 #: choices.py:187
 msgid "Debug"
-msgstr ""
+msgstr "Debugowanie"
 
 #: choices.py:191
 msgid "Default"
-msgstr ""
+msgstr "Domyślny"
 
 #: choices.py:192
 msgid "Time Machine"
-msgstr ""
+msgstr "Time Machine"
 
 #: choices.py:195
 msgid "No case folding"
-msgstr ""
+msgstr "Bez wielkich liter"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "Tolower (małe litery w obu kierunkach)"
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "Xlatelower (Klient widzi małe litery, serwer wielkie)"
 
 #: choices.py:199
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "Xlateupper (Klient widzi wielkie litery, serwer małe)"
 
 #: choices.py:203
 msgid "File"
-msgstr ""
+msgstr "Plik"
 
 #: choices.py:204
 msgid "Device"
-msgstr ""
+msgstr "Urządzenie"
 
 #: choices.py:205
 msgid "ZFS Volume"
-msgstr ""
+msgstr "Wolumen ZFS"
 
 #: choices.py:209 storage/models.py:137 templates/storage/autoimport.html:9
 #: templates/storage/import.html:18 templates/storage/wizard.html:91
 msgid "Disk"
-msgstr ""
+msgstr "Dysk"
 
 #: choices.py:210
 msgid "DVD"
-msgstr ""
+msgstr "DVD"
 
 #: choices.py:211
 msgid "Tape"
-msgstr ""
+msgstr "Taśma"
 
 #: choices.py:212
 msgid "Pass"
@@ -303,146 +303,147 @@ msgstr ""
 
 #: choices.py:216
 msgid "read-write"
-msgstr ""
+msgstr "odczyt-zapis"
 
 #: choices.py:217
 msgid "read-only"
-msgstr ""
+msgstr "wyłącznie odczyt"
 
 #: choices.py:221 choices.py:227 services/forms.py:392 services/forms.py:394
 #: services/forms.py:692 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "Żaden"
 
 #: choices.py:223
 msgid "CHAP"
-msgstr ""
+msgstr "CHAP"
 
 #: choices.py:224
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "Uzgodniony CHAP"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "Niski poziom energii UPS"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS działa z baterii"
 
 #: choices.py:250
 msgid "Preferred"
-msgstr ""
+msgstr "Preferowany"
 
 #: choices.py:251
 msgid "Tolerated"
-msgstr ""
+msgstr "Tolerowany"
 
 #: choices.py:252
 msgid "Required"
-msgstr ""
+msgstr "Wymagany"
 
 #: choices.py:279 choices.py:285
 msgid "Inherit"
-msgstr ""
+msgstr "Dziedzicz"
 
 #: choices.py:280
 msgid "On"
-msgstr ""
+msgstr "Włączony"
 
 #: choices.py:281 choices.py:286
 msgid "Off"
-msgstr ""
+msgstr "Wyłączony"
 
 #: choices.py:287
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (zalecany)"
 
 #: choices.py:288
 msgid "default level"
-msgstr ""
+msgstr "poziom domyślny"
 
 #: choices.py:289
 msgid "fastest"
-msgstr ""
+msgstr "najszybszy"
 
 #: choices.py:290
 msgid "maximum, slow"
-msgstr ""
+msgstr "maksimum, wolny"
 
 #: choices.py:431
 msgid "Hour(s)"
-msgstr ""
+msgstr "godzina/y"
 
 #: choices.py:432
 msgid "Day(s)"
-msgstr ""
+msgstr "Dzien/Dni"
 
 #: choices.py:433
 msgid "Week(s)"
-msgstr ""
+msgstr "Tydzien/Tygodnie"
 
 #: choices.py:434
 msgid "Month(s)"
-msgstr ""
+msgstr "Miesiąc/Miesięcy"
 
 #: choices.py:435
 msgid "Year(s)"
-msgstr ""
+msgstr "Rok/Lat"
 
 #: choices.py:439
 msgid "Everyday"
-msgstr ""
+msgstr "Codziennie"
 
 #: choices.py:440
 msgid "Every selected weekday"
-msgstr ""
+msgstr "W wybrane dni"
 
 #: account/forms.py:93 templates/storage/volumes.html:62
 msgid "Available"
-msgstr ""
+msgstr "Dostępny"
 
 #: account/forms.py:144
 msgid "Selected"
-msgstr ""
+msgstr "Wybrany"
 
 #: account/forms.py:172 account/forms.py:197 account/models.py:77
 #: services/forms.py:229 services/models.py:657 services/models.py:917
 #: system/models.py:153 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:60
 msgid "Username"
-msgstr ""
+msgstr "Nazwa użytkownika"
 
 #: account/forms.py:173 account/forms.py:198
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
 msgstr ""
+"Wymagane.Nie więcej niż 30 znaków. Wyłącznie litery, cyfry i @/./+/-/_ ."
 
 #: account/forms.py:174 account/forms.py:199
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr ""
+msgstr "Ta wartość może zawierać wyłącznie litery, cyfry i @/./+/-/_."
 
 #: account/forms.py:175
 msgid "E-mail"
-msgstr ""
+msgstr "Poczta elektroniczna"
 
 #: account/forms.py:200 account/forms.py:307 account/views.py:79
 #: services/models.py:661 system/forms.py:180 system/models.py:160
 #: templates/account/bsdusers.html:9 templates/account/bsdusers.html.py:64
 msgid "Password"
-msgstr ""
+msgstr "Hasło"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
 msgid "Password confirmation"
-msgstr ""
+msgstr "Potwierdzenie hasła"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "Wpisz jeszcze raz hasło w celu potwierdzenia."
 
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
 msgid "Shell"
-msgstr ""
+msgstr "Powłoka"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
