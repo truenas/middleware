@@ -759,6 +759,44 @@ class ZFSVolume_EditForm(Form):
         self._errors['__all__'] = self.error_class([msg])
         del self.cleaned_data
 
+class ZVol_CreateForm(Form):
+    zvol_volid = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict),  label=_('Volume from which this zvol will be created on'))
+    zvol_name = forms.CharField(max_length = 128, label = _('ZVol Name'))
+    zvol_size = forms.CharField(max_length = 128, initial=0, label=_('Size for this zvol'), help_text=_('0=Unlimited; example: 1g'))
+    zvol_compression = forms.ChoiceField(choices=choices.ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
+    def __init__(self, *args, **kwargs):
+        super(ZVol_CreateForm, self).__init__(*args, **kwargs)
+        self.fields['zvol_volid'].choices = self._populate_volume_choices()
+    def _populate_volume_choices(self):
+        volumechoices = dict()
+        volumes = models.Volume.objects.filter(vol_fstype='ZFS')
+        for volume in volumes:
+            volumechoices[volume.id] = volume.vol_name
+        return volumechoices.items()
+    def clean_dataset_name(self):
+        name = self.cleaned_data["zvol_name"]
+        if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*$', name):
+            raise forms.ValidationError(_("ZVol names must begin with an alphanumeric character and may only contain (-), (_), (:) and (.)."))
+        return name
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        volume_name = models.Volume.objects.get(id=cleaned_data.get("zvol_volid")).vol_name.__str__()
+        full_zvol_name = "%s/%s" % (volume_name, cleaned_data.get("zvol_name").__str__())
+        if len(notifier().list_zfs_datasets(path=full_zvol_name)) > 0:
+            msg = _(u"You already have a dataset with the same name")
+            self._errors["zvol_name"] = self.error_class([msg])
+            del cleaned_data["zvol_name"]
+        #r = re.compile('^(0|[1-9]\d*[mMgGtT]?)$')
+        #msg = _(u"Enter positive number (optionally suffixed by M, G, T), or, 0")
+        #if r.match(cleaned_data['dataset_refquota'].__str__())==None:
+        #    self._errors['dataset_refquota'] = self.error_class([msg])
+        #    del cleaned_data['dataset_refquota']
+        return cleaned_data
+    def set_error(self, msg):
+        msg = u"%s" % msg
+        self._errors['__all__'] = self.error_class([msg])
+        del self.cleaned_data
+
 class MountPointAccessForm(Form):
     mp_user = forms.ChoiceField(widget=forms.Select(attrs=attrs_dict),
                                 label=_('Owner (user)')

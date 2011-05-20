@@ -625,6 +625,12 @@ class iSCSITargetDeviceExtentForm(ModelForm):
     
         diskchoices = dict()
     
+        extents = [i[0] for i in models.iSCSITargetExtent.objects.values_list('iscsi_target_extent_path')]
+        for volume in Volume.objects.filter(vol_fstype__exact='ZFS'):
+            zvols = notifier().list_zfs_vols(volume.vol_name)
+            for zvol, attrs in zvols.items():
+                if "/dev/zvol/"+zvol not in extents:
+                    diskchoices["zvol/"+zvol] = "%s (%s)" % (zvol, attrs['available'])
         # Grab disk list
         # NOTE: This approach may fail if device nodes are not accessible.
         pipe = popen("/usr/sbin/diskinfo ` /sbin/sysctl -n kern.disks` | /usr/bin/cut -f1,3")

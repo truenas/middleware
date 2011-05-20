@@ -36,6 +36,7 @@ from django.utils.translation import ugettext as _
 from django.db import models as dmodels
 
 from dojango.util import to_dojo_data
+from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms
 from freenasUI.storage import models
 from freenasUI.middleware.notifier import notifier
@@ -58,9 +59,14 @@ def tasks(request):
 def volumes(request):
     en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
     mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
+    zvols = {}
+    for volume in models.Volume.objects.filter(vol_fstype__exact='ZFS'):
+        zvol = notifier().list_zfs_vols(volume.vol_name)
+        zvols[volume.vol_name] = zvol
     variables = RequestContext(request, {
         'mp_list': mp_list,
         'en_dataset' : en_dataset,
+        'zvols': zvols,
         })
     return render_to_response('storage/volumes.html', variables)
 
@@ -247,7 +253,6 @@ def volume_disks(request, volume_id):
     return render_to_response('storage/volume_detail.html', variables)
 
 def dataset_create(request):
-    mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     defaults = { 'dataset_compression' : 'inherit', 'dataset_atime' : 'inherit', }
     dataset_form = forms.ZFSDataset_CreateForm(initial=defaults)
     if request.method == 'POST':
@@ -285,7 +290,6 @@ def dataset_create(request):
                 dataset_form.set_error(errmsg)
     variables = RequestContext(request, {
         'focused_tab' : 'storage',
-        'mp_list': mp_list,
         'form': dataset_form
     })
     return render_to_response('storage/datasets.html', variables)
@@ -325,6 +329,50 @@ def dataset_edit(request, object_id):
         'form': dataset_form
     })
     return render_to_response('storage/dataset_edit.html', variables)
+
+def zvol_create(request):
+    defaults = { 'zvol_compression' : 'inherit', }
+    if request.method == 'POST':
+        zvol_form = forms.ZVol_CreateForm(request.POST)
+        if zvol_form.is_valid():
+            props = {}
+            cleaned_data = zvol_form.cleaned_data
+            volume = models.Volume.objects.get(id=cleaned_data.get('zvol_volid'))
+            volume_name = volume.vol_name
+            zvol_size = cleaned_data.get('zvol_size')
+            zvol_name = "%s/%s" % (volume_name, cleaned_data.get('zvol_name'))
+            zvol_compression = cleaned_data.get('zvol_compression')
+            if zvol_compression != 'inherit':
+                props['compression']=zvol_compression.__str__()
+            errno, errmsg = notifier().create_zfs_vol(name=zvol_name.__str__(), size=zvol_size.__str__(), props=props)
+            if errno == 0:
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("ZVol") + " " + _("successfully added") + "."}), mimetype="application/json")
+            else:
+                zvol_form.set_error(errmsg)
+    else:
+        zvol_form = forms.ZVol_CreateForm(initial=defaults)
+    variables = RequestContext(request, {
+        'form': zvol_form,
+    })
+    return render_to_response('storage/zvols.html', variables)
+
+def zvol_delete(request, name):
+
+    if request.method == 'POST':
+        extents = iSCSITargetExtent.objects.filter(iscsi_target_extent_path='/dev/zvol/'+name)
+        if extents.count() > 0:
+            return HttpResponse(simplejson.dumps({"error": True, "message": _("This is in use by the iscsi target, please remove it there first")}), mimetype="application/json")
+        else:
+            retval = notifier().destroy_zfs_vol(name)
+            if retval == '':
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("ZFS Volume successfully destroyed.")}), mimetype="application/json")
+            else:
+                return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
+    else:
+        c = RequestContext(request, {
+            'name': name,
+        })
+        return render_to_response('storage/zvol_confirm_delete.html', c)
 
 def zfsvolume_edit(request, object_id):
     mp = models.MountPoint.objects.get(pk=object_id)

@@ -608,6 +608,18 @@ class notifier:
         # Finally, attach new groups to the zpool.
         self.__system("zpool add %s %s" % (z_name, z_vdev))
 
+    def create_zfs_vol(self, name, size, props=None):
+        """Internal procedure to create ZFS volume"""
+        options = " "
+        if props:
+            assert type(props) is types.DictType
+            for k in props.keys():
+                options += "-o %s=%s " % (k, props[k])
+        zfsproc = self.__pipeopen("/sbin/zfs create %s -V %s %s" % (options, size, name))
+        zfs_output, zfs_err = zfsproc.communicate()
+        zfs_error = zfsproc.wait()
+        return zfs_error, zfs_err
+
     def create_zfs_dataset(self, path, props=None):
         """Internal procedure to create ZFS volume"""
         options = " "
@@ -635,6 +647,21 @@ class notifier:
                    retval[data[0]] = data[4]
             return retval
 
+    def list_zfs_vols(self, volname):
+        """Return a dictionary that contains all ZFS volumes list"""
+        zfsproc = self.__pipeopen("/sbin/zfs list -H -o name,used,avail -t volume -r %s" % (str(volname),))
+        zfs_output, zfs_err = zfsproc.communicate()
+        zfs_output = zfs_output.split('\n')
+        retval = {}
+        for line in zfs_output:
+            if line != "":
+               data = line.split('\t')
+               retval[data[0]] = {
+                'used': data[1],
+                'available': data[2],
+                }
+        return retval
+
     def get_zfs_attributes(self, zfsname):
         """Return a dictionary that contains all ZFS attributes"""
         zfsproc = self.__pipeopen("/sbin/zfs get -H all %s" % (zfsname))
@@ -651,6 +678,11 @@ class notifier:
 
     def destroy_zfs_dataset(self, path):
         zfsproc = self.__pipeopen("zfs destroy %s" % (path))
+        retval = zfsproc.communicate()[1]
+        return retval
+
+    def destroy_zfs_vol(self, name):
+        zfsproc = self.__pipeopen("zfs destroy %s" % (str(name),))
         retval = zfsproc.communicate()[1]
         return retval
 

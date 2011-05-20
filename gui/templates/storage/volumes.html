@@ -22,6 +22,17 @@
     <div dojoType="dijit.Tooltip" connectId="datasetBtn" position="above">
         <strong>{% trans "Create ZFS Dataset" %}</strong>
     </div>
+
+    <button id="zvolBtn" dojoType="dijit.form.Button" type="button">
+        <img src="/freenas/media/images/ui/buttons/add_dataset.png">
+        <br />
+        <script type="dojo/method" event="onClick" args="evt">
+            addObject('{% trans "Create ZFS Volume" %}', '{% url storage_zvol %}', [this,]);
+        </script>
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="zvolBtn" position="above">
+        <strong>{% trans "Create ZFS Volume" %}</strong>
+    </div>
 {% endif %}
 
     <button id="importVolBtn" dojoType="dijit.form.Button" type="button">
@@ -65,6 +76,26 @@
         <td>{% trans "Available actions" %}</td>
         </thead>
     <tbody>
+    {% for volname, zvols in zvols.items %}
+        {% for zvol, attrs in zvols.items %}
+        <tr class="{% cycle 'odd' 'even' %}">
+            <td>{{ volname }}</td>
+            <td>/dev/zvol/{{ zvol }}</td>
+            <td>{{ attrs.used }}</td>
+            <td>{{ attrs.available }}</td>
+            <td>-</td>
+            <td>-</td>
+            <td>
+                <button id="delZVolBtn{{ forloop.counter }}" dojoType="dijit.form.Button" type="button"
+	            onClick="editObject('{% trans "Destroy ZFS Volume" %}', '{% url storage_zvol_delete name=zvol %}', [this,]);">
+	            <img src="/freenas/media/images/ui/buttons/remove_volume.png" width="18px" height="18px"></button>
+                <div dojoType="dijit.Tooltip" connectId="delZVolBtn{{ forloop.counter }}" position="above">
+                    <strong>{% trans "Destroy ZFS Volume" %}</strong>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    {% endfor %}
 	{% for m in mp_list %}
 	<tr class="{% cycle 'odd' 'even' %}" id="{{ m.id }}">
 	    <td>
