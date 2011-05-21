@@ -37,7 +37,7 @@ FREENAS_SYSCTLCONF = os.path.join(FREENAS_ETC_BASE, "sysctl.conf")
 FREENAS_HOSTSALLOW = os.path.join(FREENAS_ETC_BASE, "hosts.allow")
 
 #FREENAS_DBPATH = "/data/freenas-v1.db"
-FREENAS_DBPATH = "freenas-v1.db"
+FREENAS_DBPATH = "/home/john/freenas-v1.db"
 FREENAS_DEBUG = 1
 
 
@@ -246,7 +246,31 @@ class ConfigParser:
         pass
 
     def _handle_cron(self, __parent, __level):
-        pass
+        __nodemap = {'enable':None, 'desc':None, 'all_mins':None,
+            'all_hours':None, 'all_days':None, 'all_months':None,
+            'all_weekdays':None, 'minute':'cron_minute', 'hour':'cron_hour',
+            'day':'cron_daymonth', 'month':'cron_month', 'weekday':'cron_dayweek',
+            'who':'cron_user', 'command':'cron_command'}
+
+        __table = "services_cronjob"
+        __job_nodes = self.__getChildNodes(__parent, "job")
+        for __job_node in __job_nodes:
+
+            __pairs = {}
+            for __key in __nodemap:
+                __node = self.__getChildNode(__job_node, __key)
+                if not __node:
+                    continue 
+
+                __value = self.__getChildNodeValue(__node)
+                if not __value:
+                    continue 
+
+                if __nodemap[__key]:
+                    __pairs[__nodemap[__key]] = __value
+
+            if __pairs:
+                self.__sql.do(__table, __pairs)
 
     #
     # XXX Not implemented XXX
@@ -584,13 +608,13 @@ class ConfigParser:
 
         __pairs = {}
         __table = "services_ssh"
-        __for key in __nodemap:
+        for __key in __nodemap:
             __node = self.__getChildNode(__parent, __key)
             if not __node:
                 continue
 
             __value = self.__getChildNodeValue(__node)
-            if node __value:
+            if not __value:
                 continue
 
             if __nodemap[__key]:
