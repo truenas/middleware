@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:32-0700\n"
-"PO-Revision-Date: 2011-05-20 04:40+0200\n"
+"PO-Revision-Date: 2011-05-20 20:14+0200\n"
 "Last-Translator: mauriciommagalhaes <mauriciommagalhaes@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
@@ -306,7 +306,7 @@ msgstr "leitura-escrita"
 
 #: choices.py:217
 msgid "read-only"
-msgstr "apenas-leitura"
+msgstr "somente leitura"
 
 #: choices.py:221 choices.py:227 services/forms.py:392 services/forms.py:394
 #: services/forms.py:692 templates/storage/wizard.html:92
@@ -319,7 +319,7 @@ msgstr "CHAP"
 
 #: choices.py:224
 msgid "Mutual CHAP"
-msgstr "Mutual CHAP"
+msgstr "CHAP Mútuo"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
@@ -327,7 +327,7 @@ msgstr "Nível de bateria baixa no UPS"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr "UPS utilizando apenas a bateria"
+msgstr "UPS utilizando a bateria"
 
 #: choices.py:250
 msgid "Preferred"
@@ -395,7 +395,7 @@ msgstr "Todo dia"
 
 #: choices.py:440
 msgid "Every selected weekday"
-msgstr "Todo dia selecionado"
+msgstr "Todos os dias da semana selecionados"
 
 #: account/forms.py:93 templates/storage/volumes.html:62
 msgid "Available"
@@ -415,12 +415,12 @@ msgstr "Usuário"
 #: account/forms.py:173 account/forms.py:198
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
 msgstr ""
-"Obrigatório. 30 caracteres ou menos. Letras, dígitos e @/./+/-/_ somente."
+"Obrigatório. 30 caracteres ou menos. Letras, dígitos e @/./+/-/_ apenas."
 
 # Não entendi porquê está com falha de checagem no endpunc
 #: account/forms.py:174 account/forms.py:199
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr "Este campo só pode conter letras, números e @/./+/-/_ caracteres."
+msgstr "Este valor pode conter letras, números e caracteres @/./+/-/_ apenas."
 
 #: account/forms.py:175
 msgid "E-mail"
@@ -464,7 +464,7 @@ msgstr "Os dois campos de senha não correspondem."
 
 #: account/forms.py:247 account/forms.py:372
 msgid "Home directory has to start with /mnt/"
-msgstr "O diretório home deve começar com /mnt/"
+msgstr "O diretório home deve iniciar com /mnt/"
 
 #: account/forms.py:261 account/forms.py:265 services/forms.py:469
 #: services/forms.py:482 services/forms.py:699 storage/forms.py:223
@@ -516,7 +516,7 @@ msgstr "Grupo"
 #: account/models.py:61
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr "O grupo %s é do sistema e não pode ser deletado!"
+msgstr "O grupo %s pertence ao sistema e não pode ser excluído!"
 
 #: account/models.py:71
 msgid "User ID"
@@ -554,7 +554,7 @@ msgstr "Usuário"
 #: account/models.py:130
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr "O usuário %s é do sistema e não pode ser deletado!"
+msgstr "O usuário %s pertence ao sistema e não pode ser excluído!"
 
 #: account/nav.py:9 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:85 templates/account/index2.html:7
@@ -606,7 +606,7 @@ msgstr ""
 
 #: freeadmin/navtree.py:349
 msgid "Display System Processes"
-msgstr "Mostrar Processos do Sistema"
+msgstr "Visualizar Processos do Sistema"
 
 #: freeadmin/navtree.py:357 templates/freeadmin/index.html:50
 msgid "Reboot"
@@ -696,7 +696,7 @@ msgstr "NIC"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr "Seleciona sua NIC"
+msgstr "Selecione sua NIC"
 
 #: network/models.py:101
 msgid "Interface Name"
@@ -739,7 +739,7 @@ msgstr "Endereço IPv6"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr "Mascara de Rede IPv6"
+msgstr "Máscara de Rede IPv6"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11

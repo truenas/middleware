@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-20 10:59+0200\n"
+"PO-Revision-Date: 2011-05-20 16:05+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -972,7 +972,7 @@ msgstr "השדה הזה דרוש אם שיטת הגילוי היא CHAP או CHA
 
 #: services/forms.py:502 services/forms.py:530
 msgid "You need to specify a filepath, not a directory."
-msgstr "אתה צריך להגדיר דרך קובץ, לא תיקייה."
+msgstr "אתה צריך להגדיר נתיב קובץ, לא תיקייה."
 
 #: services/forms.py:506 services/forms.py:534
 msgid "You need to specify a file inside your volume/dataset."
@@ -2775,15 +2775,15 @@ msgstr "הכוננים שנבחרו לא אומתו לחוקי היבוא האל
 
 #: storage/forms.py:396
 msgid "Some error ocurried while labelling the disk."
-msgstr ""
+msgstr "קרתה תקלה בזמן נתינת שם לכונן."
 
 #: storage/forms.py:606
 msgid "Volume from which this dataset will be created on"
-msgstr ""
+msgstr "נפח מסט המידע ייצר ב-"
 
 #: storage/forms.py:607
 msgid "Dataset Name"
-msgstr ""
+msgstr "שם סט המידע"
 
 #: storage/forms.py:608 storage/forms.py:660 storage/forms.py:717
 msgid "Compression level"
@@ -2791,47 +2791,49 @@ msgstr "רמת דחיסה"
 
 #: storage/forms.py:609 storage/forms.py:661 storage/forms.py:718
 msgid "Enable atime"
-msgstr ""
+msgstr "אפשר זמן "
 
 #: storage/forms.py:610 storage/forms.py:662 storage/forms.py:719
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "מכסה בשביל סט המידע"
 
 #: storage/forms.py:610 storage/forms.py:611 storage/forms.py:662
 #: storage/forms.py:663 storage/forms.py:719
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0=בלתי מוגבל, דוגמא: 1g"
 
 #: storage/forms.py:611 storage/forms.py:663
 msgid "Quota for this dataset and all children"
-msgstr ""
+msgstr "מכסה בשביל סט המידע וכל הילדים"
 
 #: storage/forms.py:612 storage/forms.py:664 storage/forms.py:720
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "נפח שמור בשביל סט המידע הזה"
 
 #: storage/forms.py:612 storage/forms.py:613 storage/forms.py:664
 #: storage/forms.py:665 storage/forms.py:720
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0= כלום; דוגמא: 1g"
 
 #: storage/forms.py:613 storage/forms.py:665
 msgid "Reserved space for this dataset and all children"
-msgstr ""
+msgstr "נפח שמור בשביל סט המידע הזה וכל הילדים"
 
 #: storage/forms.py:626
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
 msgstr ""
+"שמות של סטי מידע חייבים להתחיל בתווין אלפא נומרים ויכולים להכיל (-), (_), "
+"(:) ו (.)."
 
 #: storage/forms.py:633
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "כבר יש סט מידע עם אותו השם"
 
 #: storage/forms.py:640 storage/forms.py:697 storage/forms.py:741
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
-msgstr ""
+msgstr "הקש מספר חיובי (סיומת אוציונלית של M,G,T), or', 0"
 
 #: storage/forms.py:756
 msgid "Owner (user)"
@@ -2847,230 +2849,230 @@ msgstr "מצב"
 
 #: storage/forms.py:764
 msgid "Set permission recursively"
-msgstr ""
+msgstr "קבע רשויות רקורסיבית"
 
 #: storage/forms.py:846
 msgid "At least one day must be chosen"
-msgstr ""
+msgstr "לפחות יום אחת חייב להיבחר"
 
 #: storage/forms.py:851
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "צילום רקורסיבי"
 
 #: storage/forms.py:852
 msgid "Snapshot Name"
-msgstr ""
+msgstr "שם הצילום"
 
 #: storage/forms.py:859
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr ""
+msgstr "רק [-a-zA-Z0-9_.]  מורשים לשם הצילום"
 
 #: storage/forms.py:869
 msgid "Invalid prefix"
-msgstr ""
+msgstr "תחילית בלתי חוקית"
 
 #: storage/forms.py:873 storage/views.py:436
 msgid "Snapshot"
-msgstr ""
+msgstr "צילום"
 
 #: storage/forms.py:874
 msgid "Clone Name (must be on same volume)"
-msgstr ""
+msgstr "שם שיכפול (חייב להיות באותו נפח)"
 
 #: storage/forms.py:887
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr ""
+msgstr "רק [-a-zA-Z0-9_./] מורשים שם השכפול"
 
 #: storage/forms.py:893
 msgid "Clone must be within the same volume"
-msgstr ""
+msgstr "השכפול חייב להיות באותו ערך"
 
 #: storage/forms.py:960 storage/models.py:212
 msgid "Remote hostname"
-msgstr ""
+msgstr "שם מארח מרוחק"
 
 #: storage/forms.py:961 storage/models.py:216
 msgid "Remote hostkey"
-msgstr ""
+msgstr "מארח מפתח מרוחק"
 
 #: storage/models.py:49
 msgid "File System Type"
-msgstr ""
+msgstr "סוג מערכת הקבצים"
 
 #: storage/models.py:52 storage/models.py:77 storage/views.py:88
 #: storage/views.py:116 storage/views.py:139 templates/storage/volumes.html:59
 msgid "Volume"
-msgstr ""
+msgstr "נפח"
 
 #: storage/models.py:78
 msgid "Volume this group belongs to"
-msgstr ""
+msgstr "הנפח שייך לקבוצה"
 
 #: storage/models.py:91
 msgid "Disks"
-msgstr ""
+msgstr "כוננים"
 
 #: storage/models.py:102
 msgid "Transfer Mode"
-msgstr ""
+msgstr "מצב העברה"
 
 #: storage/models.py:108
 msgid "HDD Standby"
-msgstr ""
+msgstr "שינת כונן"
 
 #: storage/models.py:114
 msgid "Advanced Power Management"
-msgstr ""
+msgstr "ניהול חשמל מתקדם"
 
 #: storage/models.py:120
 msgid "Acoustic Level"
-msgstr ""
+msgstr "רמה אקוסטית"
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
-msgstr ""
+msgstr "אפשר S.M.A.R.T."
 
 #: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
-msgstr ""
+msgstr " אפרויות יתר של S.M.A.R.T."
 
 #: storage/models.py:133
 msgid "Group Membership"
-msgstr ""
+msgstr "חברות הקבוצה"
 
 #: storage/models.py:134
 msgid "The disk group containing this disk"
-msgstr ""
+msgstr "קבוצת הכונן מכילה את הכונן הזה"
 
 #: storage/models.py:146 storage/models.py:227 storage/models.py:253
 #: templates/storage/tasks.html:22
 msgid "Mount Point"
-msgstr ""
+msgstr "נקודת כינון"
 
 #: storage/models.py:147
 msgid "Path to mount point"
-msgstr ""
+msgstr "נתיב לנקודת כינון"
 
 #: storage/models.py:151
 msgid "Mount options"
-msgstr ""
+msgstr "אפשרויות כינון"
 
 #: storage/models.py:152
 msgid "Enter Mount Point options here"
-msgstr ""
+msgstr "הקש אפשרויות כינון כאן"
 
 #: storage/models.py:169
 msgid "Error getting total space"
-msgstr ""
+msgstr "תקלה בקבלת הנפח הכללי"
 
 #: storage/models.py:175
 msgid "Error getting available space"
-msgstr ""
+msgstr "תקלה בקבלת הנפח הזמין"
 
 #: storage/models.py:181
 msgid "Error getting used space"
-msgstr ""
+msgstr "תקלה בקבלת הנפח המשומש"
 
 #: storage/models.py:187 storage/models.py:199
 msgid "Error"
-msgstr ""
+msgstr "תקלה"
 
 #: storage/models.py:219
 msgid "Remote Replication Host"
-msgstr ""
+msgstr "מארח שיכפול מרוחק"
 
 #: storage/models.py:220
 msgid "Remote Replication Hosts"
-msgstr ""
+msgstr "מארחי שיכפול מרוחקים"
 
 #: storage/models.py:231
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
-msgstr ""
+msgstr "תצלום אחרון שנשלח לצד המרוחק (השאר ריק לשיכפול מלא)"
 
 #: storage/models.py:234 templates/storage/replications.html:15
 msgid "Remote Host"
-msgstr ""
+msgstr "מאחר מרוחק"
 
 #: storage/models.py:237 templates/storage/replications.html:16
 msgid "Remote ZFS filesystem"
-msgstr ""
+msgstr "מערכת ZFS מרוחקת"
 
 #: storage/models.py:240
 msgid "Replication Task"
-msgstr ""
+msgstr "מטלת שיכפול"
 
 #: storage/models.py:241
 msgid "Replication Tasks"
-msgstr ""
+msgstr "מטלות שיכפול"
 
 #: storage/models.py:256 templates/storage/tasks.html:23
 msgid "Recursive"
-msgstr ""
+msgstr "רקורסיבי"
 
 #: storage/models.py:260
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "ערך זמן החיים של התצלום"
 
 #: storage/models.py:266
 msgid "Snapshot lifetime unit"
-msgstr ""
+msgstr "יחידת זמן החיים של התצלום"
 
 #: storage/models.py:270
 msgid "Begin"
-msgstr ""
+msgstr "התחלה"
 
 #: storage/models.py:271
 msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr ""
+msgstr "מתי ביום נתחיל להכין תצלומים, דוג' 8:00"
 
 #: storage/models.py:275
 msgid "End"
-msgstr ""
+msgstr "סוף"
 
 #: storage/models.py:276
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr ""
+msgstr "מתי ביום נפסיק להכין תצלומים, דוג' 17:00"
 
 #: storage/models.py:282
 msgid "Interval"
-msgstr ""
+msgstr "רווח"
 
 #: storage/models.py:283
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
-msgstr ""
+msgstr "כמה דקות עברו לפני הכנת התצלום החדש ואחרי התלום האחרון."
 
 #: storage/models.py:289
 msgid "Occurrence"
-msgstr ""
+msgstr "התרחשות"
 
 #: storage/models.py:290
 msgid "How the task is repeated"
-msgstr ""
+msgstr "איך המטלה חוזרת על עצמה"
 
 #: storage/models.py:295
 msgid "Weekday"
-msgstr ""
+msgstr "יום בשבוע"
 
 #: storage/models.py:313
 msgid "Periodic Snapshot Task"
-msgstr ""
+msgstr "מטלת תצלום תקופתית"
 
 #: storage/models.py:314 templates/storage/index.html:9
 msgid "Periodic Snapshot Tasks"
-msgstr ""
+msgstr "מטלות תצלום תקופתיות"
 
 #: storage/nav.py:10
 msgid "View All Replication Tasks"
-msgstr ""
+msgstr "ראה את מטלות השכפול"
 
 #: storage/nav.py:19
 msgid "View All Periodic Snapshot Tasks"
-msgstr ""
+msgstr "ראה את מטלות התצלום התקופתיות"
 
 #: storage/nav.py:30
 msgid "View All Snapshots"
-msgstr ""
+msgstr "ראה את התצלומים"
 
 #: storage/nav.py:40 templates/storage/replications.html:5
 #: templates/storage/volumes.html:6 templates/storage/volumes.html.py:11
@@ -3085,102 +3087,103 @@ msgstr "יבא נפח"
 
 #: storage/nav.py:62
 msgid "View All Volumes"
-msgstr ""
+msgstr "ראה את כל הנפחים"
 
 #: storage/nav.py:73 templates/storage/volumes.html:19
 #: templates/storage/volumes.html.py:23
 msgid "Create ZFS Dataset"
-msgstr ""
+msgstr "יצור סט מידע ZFS"
 
 #: storage/nav.py:84
 msgid "Add Periodic Snapshot"
-msgstr ""
+msgstr "הוסף תצלום תקופתי"
 
 #: storage/nav.py:85 templates/storage/tasks.html:10
 msgid "Create Periodic Snapshot"
-msgstr ""
+msgstr "יצור תצלום תקופתי"
 
 #: storage/nav.py:96
 msgid "Volumes"
-msgstr ""
+msgstr "נפחים"
 
 #: storage/nav.py:118 storage/nav.py:138 templates/storage/volumes.html:123
 #: templates/storage/volumes.html.py:126
 msgid "Change Permissions"
-msgstr ""
+msgstr "שנה רשויות"
 
 #: storage/views.py:88 storage/views.py:116 storage/views.py:139
 #: storage/views.py:283 storage/views.py:436
 #: templates/freeadmin/generic_model_add_ok.html:1
 msgid "successfully added"
-msgstr ""
+msgstr "הוסף בהצלחה"
 
 #: storage/views.py:283 storage/views.py:320
 #: templates/storage/dataset_confirm_delete_ok.html:1
 msgid "Dataset"
-msgstr ""
+msgstr "סט מידע"
 
 #: storage/views.py:320 storage/views.py:355
 msgid "successfully edited"
-msgstr ""
+msgstr "נערך בהצלחה"
 
 #: storage/views.py:322 storage/views.py:357
 msgid "Some error ocurried while setting the options"
-msgstr ""
+msgstr "תקלה כלשהי קרתה בזמן קביעת האפשרות"
 
 #: storage/views.py:355
 msgid "Native dataset"
-msgstr ""
+msgstr "סט מידע טבעי"
 
 #: storage/views.py:450
 msgid "Snapshot successfully taken"
-msgstr ""
+msgstr "תצלום נלקח בהצלחה"
 
 #: storage/views.py:466
 msgid "Snapshot successfully cloned"
-msgstr ""
+msgstr "תצלום שוכפל בהצלחה"
 
 #: storage/views.py:518
 msgid "Disk replacement has been initiated."
-msgstr ""
+msgstr "החלפת הכונן התחיל"
 
 #: storage/views.py:522
 msgid "Some error ocurried."
-msgstr ""
+msgstr "קרתה תקלה כלשהי."
 
 #: storage/views.py:544
 msgid "Disk detach has been successfully done."
-msgstr ""
+msgstr "ניתוק הכונן נעשה בהצלחה"
 
 #: system/forms.py:243
 msgid ""
 "The system will use this place to temporarily store the firmware file before "
 "it's being applied."
 msgstr ""
+"המערכת תמתמש במקום הזה לאחסן זמנית את קובץ הקושחה לפני שהוא מחיל את הקובץ."
 
 #: system/forms.py:251
 msgid "New image to be installed"
-msgstr ""
+msgstr "תמונה חדשה להתקנה"
 
 #: system/forms.py:252 system/forms.py:275
 msgid "SHA256 sum for the image"
-msgstr ""
+msgstr "סכום בשביל התמונה SHA256"
 
 #: system/forms.py:264
 msgid "Invalid firmware or checksum"
-msgstr ""
+msgstr "קושחה או בדיקת סכום לא חוקית"
 
 #: system/forms.py:274
 msgid "Service Pack image to be installed"
-msgstr ""
+msgstr "תמונת חבילת שרות להתקנה"
 
 #: system/forms.py:287
 msgid "Invalid service pack or checksum"
-msgstr ""
+msgstr "חבילת שרות אאו בדיקת סכום לא חוקית"
 
 #: system/forms.py:297
 msgid "New config to be installed"
-msgstr ""
+msgstr "הגדרה חדשה להתקנה"
 
 #: system/models.py:41
 msgid "Protocol"
@@ -3212,11 +3215,11 @@ msgstr "הגדרות"
 
 #: system/models.py:81
 msgid "Enable Console Menu"
-msgstr ""
+msgstr "אפשר תפריט מסוף בקרה"
 
 #: system/models.py:83
 msgid "Use Serial Console"
-msgstr ""
+msgstr "השתמש במסוף בקרה סריאלי"
 
 #: system/models.py:85
 msgid "Enable screen saver"
@@ -3232,80 +3235,85 @@ msgstr "צפצוף בהדלקה"
 
 #: system/models.py:91
 msgid "Enable Special System Tuning"
-msgstr ""
+msgstr "אפשר כיוונן מערכת מיוחד"
 
 #: system/models.py:93
 msgid "Enable powerd (Power Saving Daemon)"
-msgstr ""
+msgstr "אפשר דלוק(Daemon חסיכה בחשמל)"
 
 #: system/models.py:95
 msgid "Enable Zeroconf/Bonjour"
-msgstr ""
+msgstr "אפשר Zeroconf/Bonjour"
 
 #: system/models.py:98
 msgid ""
 "Swap size on each drive in GiB, affects new disks only.  Must be non-zero"
 msgstr ""
+"גודל החלפה(SWAP) בכל כונן בג'יגהבייט, משפיע על כוננים חדשים בלבד. חייב להיות "
+"לא אפס."
 
 #: system/models.py:101
 msgid "Show console messages in the footer (Requires UI reload)"
-msgstr ""
+msgstr "הראה הודעות מסוף בקרה בסיומת עמוד (דורש רענון מחדש של מנשק המשתמש)"
 
 #: system/models.py:109
 msgid "MOTD banner"
-msgstr ""
+msgstr "כרזת MOTD"
 
 #: system/models.py:113 templates/system/settings.html:5
 msgid "Advanced"
-msgstr ""
+msgstr "מתקדם"
 
 #: system/models.py:122
 msgid "From email"
-msgstr ""
+msgstr "מאימייל"
 
 #: system/models.py:123
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@mydomain.com"
 msgstr ""
+"כתובת אימייל שמערכת תשתמש לצורך שליחת אימיילים, דוג' freenas@mydomain.com"
 
 #: system/models.py:128
 msgid "Outgoing mail server"
-msgstr ""
+msgstr "שרת דואר יוצא"
 
 #: system/models.py:129
 msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
 msgstr ""
+"שם מארח או כתובת IP שתקבל את האימייל שלנו, לדוגמא mail.example.org או "
+"192.168.1.1"
 
 #: system/models.py:135
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
-msgstr ""
+msgstr "מספר שלם מ1-65535, בדרך כל 25, 465, 587"
 
 #: system/models.py:136
 msgid "Port to connect to"
-msgstr ""
+msgstr "פורט להתחבר אליו"
 
 #: system/models.py:142
 msgid "encryption of the connection"
-msgstr ""
+msgstr "ההצפנה של החיבור"
 
 #: system/models.py:143
 msgid "TLS/SSL"
-msgstr ""
+msgstr "TLS/SSL"
 
 #: system/models.py:146
 msgid "Use SMTP Authentication"
-msgstr ""
+msgstr "השתמש באימות SMTP"
 
 #: system/models.py:154
 msgid "A username to authenticate to the remote server"
-msgstr ""
+msgstr "שם משתמש לאימות בשרת המרוחק"
 
 #: system/models.py:161
 msgid "A password to authenticate to the remote server"
-msgstr ""
+msgstr "סיסמה לאימות בשרת המרוחק"
 
 #: system/models.py:164 templates/system/settings.html:7
 msgid "Email"
@@ -3325,19 +3333,19 @@ msgstr "יחידת הארגון"
 
 #: system/models.py:182
 msgid "Organizational Unit Name (eg, section)"
-msgstr ""
+msgstr "יחידת שם הארגון (דוג' section)"
 
 #: system/models.py:188 system/models.py:189
 msgid "Email Address"
-msgstr ""
+msgstr "כתובת אימייל"
 
 #: system/models.py:195
 msgid "Locality"
-msgstr ""
+msgstr "מיקום"
 
 #: system/models.py:196
 msgid "Locality Name (eg, city)"
-msgstr ""
+msgstr "מיקום (דוג' תל-אביב)"
 
 #: system/models.py:202
 msgid "State"
@@ -3583,7 +3591,7 @@ msgstr "טוען"
 
 #: templates/freeadmin/index.html:34
 msgid "/var/log/messages"
-msgstr ""
+msgstr "/var/log/messages"
 
 #: templates/freeadmin/index.html:43
 msgid "Reboot the System"
@@ -3731,7 +3739,7 @@ msgstr "מנשק LAGG הוסף בהצלחה"
 
 #: templates/network/lagg_members2.html:6
 msgid "Ordering Priority"
-msgstr ""
+msgstr "עדיפות הזמנות"
 
 #: templates/network/lagg_members2.html:7
 msgid "Startup option"
@@ -3800,7 +3808,7 @@ msgstr "שם המתשמש שלך והסיסמה לא התאימו. אנא נסה
 #: templates/registration/login.html:34
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr ""
+msgstr "ברוך הבא %(username)s. תודה שהתחברת."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -3944,11 +3952,11 @@ msgstr "אין שום מטרות מוגדרות"
 
 #: templates/services/iscsi_assoctargets.html:39
 msgid "Add Extent to Target"
-msgstr ""
+msgstr "הוסף הקף למטרה"
 
 #: templates/services/iscsi_assoctargets.html:41
 msgid "Add Extent To Target"
-msgstr ""
+msgstr "הוסף הקף למטרה"
 
 #: templates/services/iscsi_auth.html:8
 msgid "Peer"
@@ -4179,11 +4187,11 @@ msgstr "שום העתק ZFS זמין"
 
 #: templates/storage/snapshot_confirm_rollback2.html:7
 msgid "Are you sure you want to rollback the snapshot to previous state?"
-msgstr ""
+msgstr "האם אתה בטוח שאתה רוצה להחזיר את התצלום למצבו הקודם?"
 
 #: templates/storage/snapshots.html:4
 msgid "Dataset name"
-msgstr ""
+msgstr "שם הסט מידע"
 
 #: templates/storage/snapshots.html:5
 msgid "Snapshot name"
@@ -4195,35 +4203,35 @@ msgstr "נפח משומש"
 
 #: templates/storage/snapshots.html:7
 msgid "Referenced space"
-msgstr ""
+msgstr "שטח מיוחס"
 
 #: templates/storage/snapshots.html:21 templates/storage/snapshots.html:23
 msgid "Clone snapshot"
-msgstr ""
+msgstr "שכפל תצלום"
 
 #: templates/storage/snapshots.html:25 templates/storage/snapshots.html:27
 msgid "Destroy snapshot"
-msgstr ""
+msgstr "השמד תצלום"
 
 #: templates/storage/snapshots.html:30 templates/storage/snapshots.html:32
 msgid "Rollback to this snapshot"
-msgstr ""
+msgstr "חזור לתצלום הזה"
 
 #: templates/storage/snapshots.html:40
 msgid "No ZFS snapshot available"
-msgstr ""
+msgstr "שום תצלום ZFS זמין"
 
 #: templates/storage/tasks.html:6
 msgid "Periodic Snapshots"
-msgstr ""
+msgstr "תצלומים תקופתיים"
 
 #: templates/storage/tasks.html:14
 msgid "Periodic Snapshot Schedule"
-msgstr ""
+msgstr "לוח זמנים לתצלומים התקופתיים"
 
 #: templates/storage/tasks.html:17
 msgid "There are no scheduled snapshots."
-msgstr ""
+msgstr "אין תצלומים מתוכננים"
 
 #: templates/storage/tasks.html:24
 msgid "How"
@@ -4263,7 +4271,7 @@ msgstr "על כל אחד"
 
 #: templates/storage/tasks.html:143
 msgid "No periodic snapshots scheduled"
-msgstr ""
+msgstr "אין תצלומיים תקופתיים מתוכננים"
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
@@ -4324,7 +4332,7 @@ msgstr "ZFS נוסף(extra)"
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr ""
+msgstr "שימוש בכונן אחד ליומן לא מומלץ ביותר"
 
 #: templates/storage/wizard.html:93
 msgid "Log"

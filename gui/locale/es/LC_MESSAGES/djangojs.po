@@ -3,20 +3,20 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:22-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-05-21 03:33+0200\n"
+"Last-Translator: nomentero <toni7@telecable.es>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: media/lib/js/freeadmin.js:113
 msgid "Reporting"
@@ -44,11 +44,11 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:317
 msgid "Storage"
-msgstr ""
+msgstr "Almacenamiento"
 
 #: media/lib/js/freeadmin.js:344
 msgid "CronJobs"
-msgstr ""
+msgstr "Tareas Programadas"
 
 #: media/lib/js/freeadmin.js:398
 msgid "Edit Disk"

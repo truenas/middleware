@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:22-0700\n"
-"PO-Revision-Date: 2011-05-20 08:46+0200\n"
+"PO-Revision-Date: 2011-05-21 09:21+0200\n"
 "Last-Translator: bogdan_marcu <bogdan_marcu@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:113
 msgid "Reporting"
-msgstr "Raportare"
+msgstr "Rapoarte"
 
 #: media/lib/js/freeadmin.js:125
 msgid "Settings"
@@ -77,7 +77,7 @@ msgstr "Au apărut unele erori!"
 
 #: media/lib/js/freeadmin/form/Cron.js:43
 msgid "Every"
-msgstr ""
+msgstr "Fiecare"
 
 #: media/lib/js/freeadmin/form/Cron.js:51
 msgid "Each selected"

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-20 08:52+0200\n"
-"Last-Translator: xderam <xderam@gmail.com>\n"
+"PO-Revision-Date: 2011-05-21 08:04+0200\n"
+"Last-Translator: xiangzhou <xiangzhou@cloudshinee.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -117,11 +117,11 @@ msgstr "停用"
 #: choices.py:87 choices.py:88 choices.py:89 choices.py:90 choices.py:91
 #: choices.py:92
 msgid "Level"
-msgstr ""
+msgstr "层级"
 
 #: choices.py:87
 msgid "Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "待机模式（停转）下的最低功耗"
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
@@ -141,7 +141,7 @@ msgstr ""
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr ""
+msgstr "最低"
 
 #: choices.py:97
 msgid "Medium"
@@ -149,7 +149,7 @@ msgstr ""
 
 #: choices.py:98
 msgid "Maximum"
-msgstr ""
+msgstr "最高"
 
 #: choices.py:132 templates/storage/tasks.html:86
 msgid "January"
@@ -257,7 +257,7 @@ msgstr "时间胶囊"
 
 #: choices.py:195
 msgid "No case folding"
-msgstr ""
+msgstr "不改变大小写"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
@@ -265,11 +265,11 @@ msgstr ""
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "客户端显示小写，服务器显示大写"
 
 #: choices.py:199
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "客户端显示大写，服务器显示小写"
 
 #: choices.py:203
 msgid "File"
@@ -317,19 +317,19 @@ msgstr ""
 
 #: choices.py:223
 msgid "CHAP"
-msgstr ""
+msgstr "握手验证协议（CHAP）"
 
 #: choices.py:224
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "双向握手验证协议（CHAP）"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "不间断电源（UPS）电池电量不足"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr "首选"
+msgstr "不间断电源（UPS）改由电池供电"
 
 #: choices.py:250
 msgid "Preferred"
@@ -349,15 +349,15 @@ msgstr "集成"
 
 #: choices.py:280
 msgid "On"
-msgstr ""
+msgstr "打开"
 
 #: choices.py:281 choices.py:286
 msgid "Off"
-msgstr ""
+msgstr "关闭"
 
 #: choices.py:287
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb压缩法（推荐）"
 
 #: choices.py:288
 msgid "default level"
@@ -365,80 +365,80 @@ msgstr "默认级别"
 
 #: choices.py:289
 msgid "fastest"
-msgstr ""
+msgstr "最快"
 
 #: choices.py:290
 msgid "maximum, slow"
-msgstr ""
+msgstr "最大压缩率，速度慢"
 
 #: choices.py:431
 msgid "Hour(s)"
-msgstr ""
+msgstr "小时"
 
 #: choices.py:432
 msgid "Day(s)"
-msgstr ""
+msgstr "日"
 
 #: choices.py:433
 msgid "Week(s)"
-msgstr ""
+msgstr "周"
 
 #: choices.py:434
 msgid "Month(s)"
-msgstr ""
+msgstr "月"
 
 #: choices.py:435
 msgid "Year(s)"
-msgstr ""
+msgstr "年"
 
 #: choices.py:439
 msgid "Everyday"
-msgstr ""
+msgstr "每日"
 
 #: choices.py:440
 msgid "Every selected weekday"
-msgstr ""
+msgstr "每个已选的工作日"
 
 #: account/forms.py:93 templates/storage/volumes.html:62
 msgid "Available"
-msgstr ""
+msgstr "可用"
 
 #: account/forms.py:144
 msgid "Selected"
-msgstr ""
+msgstr "选择"
 
 #: account/forms.py:172 account/forms.py:197 account/models.py:77
 #: services/forms.py:229 services/models.py:657 services/models.py:917
 #: system/models.py:153 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:60
 msgid "Username"
-msgstr ""
+msgstr "用户名"
 
 #: account/forms.py:173 account/forms.py:198
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr ""
+msgstr "必填。不超过30个字符，只能使用英文字母、数字和@ . + - _特殊符号。"
 
 #: account/forms.py:174 account/forms.py:199
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr ""
+msgstr "只能使用英文字母、数字和@ . + - _特殊符号。"
 
 #: account/forms.py:175
 msgid "E-mail"
-msgstr ""
+msgstr "电子邮箱"
 
 #: account/forms.py:200 account/forms.py:307 account/views.py:79
 #: services/models.py:661 system/forms.py:180 system/models.py:160
 #: templates/account/bsdusers.html:9 templates/account/bsdusers.html.py:64
 msgid "Password"
-msgstr ""
+msgstr "密码"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
 msgid "Password confirmation"
-msgstr ""
+msgstr "密码确认"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "请再次输入密码以供验证。"
 
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
@@ -447,30 +447,30 @@ msgstr ""
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
-msgstr ""
+msgstr "禁止登陆"
 
 #: account/forms.py:205
 msgid "Primary Group"
-msgstr ""
+msgstr "主要群组"
 
 #: account/forms.py:234
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "帐号名已经被占用。"
 
 #: account/forms.py:242 account/forms.py:328 account/forms.py:470
 #: system/forms.py:225
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "两次输入的密码不一致。"
 
 #: account/forms.py:247 account/forms.py:372
 msgid "Home directory has to start with /mnt/"
-msgstr ""
+msgstr "主目录必须以/mnt/开头"
 
 #: account/forms.py:261 account/forms.py:265 services/forms.py:469
 #: services/forms.py:482 services/forms.py:699 storage/forms.py:223
 #: system/forms.py:268 system/forms.py:291
 msgid "This field is required."
-msgstr ""
+msgstr "此栏目必填"
 
 #: account/forms.py:418
 msgid "Member users"
@@ -478,65 +478,65 @@ msgstr ""
 
 #: account/forms.py:436
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "次要群组"
 
 #: account/forms.py:458 templates/registration/password_change_form.html:39
 msgid "New password"
-msgstr ""
+msgstr "请输入新密码"
 
 #: account/forms.py:459
 msgid "New password confirmation"
-msgstr ""
+msgstr "请确认新密码"
 
 #: account/forms.py:484 templates/registration/password_change_form.html:31
 msgid "Old password"
-msgstr ""
+msgstr "请输入旧密码"
 
 #: account/forms.py:492
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr ""
+msgstr "您输入的旧密码不对，请重新输入。"
 
 #: account/models.py:36 services/models.py:460 services/models.py:505
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr ""
+msgstr "用户组编号"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "用户组名称"
 
 #: account/models.py:47 account/models.py:147 storage/forms.py:92
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:49
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:61
 msgid "Group"
-msgstr ""
+msgstr "用户组"
 
 #: account/models.py:61
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "用户组 %s 是系统默认组不可以删除！"
 
 #: account/models.py:71
 msgid "User ID"
-msgstr ""
+msgstr "用户编号"
 
 #: account/models.py:76
 msgid "User &"
-msgstr ""
+msgstr "用户 &"
 
 #: account/models.py:83
 msgid "Hashed UNIX password"
-msgstr ""
+msgstr "UNIX密码的哈希值（Hash）"
 
 #: account/models.py:89
 msgid "Hashed SMB password"
-msgstr ""
+msgstr "SMB密码的哈希值（Hash）"
 
 #: account/models.py:93
 msgid "Primary Group ID"
-msgstr ""
+msgstr "首要的用户组编号"
 
 #: account/models.py:98
 msgid "Home Directory"
@@ -4010,20 +4010,20 @@ msgstr ""
 
 #: templates/storage/index.html:7
 msgid "ZFS Snapshots"
-msgstr ""
+msgstr "ZFS 快照"
 
 #: templates/storage/manualsnap.html:13
 msgid "Manually Create Snapshot"
-msgstr ""
+msgstr "手动创建快照"
 
 #: templates/storage/periodicsnap.html:13 templates/storage/volumes.html:130
 #: templates/storage/volumes.html.py:133
 msgid "Create Snapshot"
-msgstr ""
+msgstr "创建快照"
 
 #: templates/storage/permission.html:6
 msgid "Change permission"
-msgstr ""
+msgstr "权限变更"
 
 #: templates/storage/permission.html:7
 #, python-format
@@ -4032,7 +4032,7 @@ msgstr ""
 
 #: templates/storage/permission.html:11
 msgid "Change"
-msgstr ""
+msgstr "更改"
 
 #: templates/storage/replications.html:9
 msgid "Add Replication"
@@ -4040,25 +4040,25 @@ msgstr ""
 
 #: templates/storage/replications.html:13
 msgid "Mount point"
-msgstr ""
+msgstr "挂载点"
 
 #: templates/storage/replications.html:14
 msgid "Last snapshot"
-msgstr ""
+msgstr "最近的快照"
 
 #: templates/storage/replications.html:27
 #: templates/storage/replications.html:31
 msgid "Delete Replication"
-msgstr ""
+msgstr "删除复制"
 
 #: templates/storage/replications.html:33
 #: templates/storage/replications.html:37
 msgid "Edit Replication"
-msgstr ""
+msgstr "修改复制"
 
 #: templates/storage/replications.html:43
 msgid "No ZFS replication available"
-msgstr ""
+msgstr "ZFS 复制不存在"
 
 #: templates/storage/snapshot_confirm_rollback2.html:7
 msgid "Are you sure you want to rollback the snapshot to previous state?"
@@ -4066,15 +4066,15 @@ msgstr ""
 
 #: templates/storage/snapshots.html:4
 msgid "Dataset name"
-msgstr ""
+msgstr "数据集名称"
 
 #: templates/storage/snapshots.html:5
 msgid "Snapshot name"
-msgstr ""
+msgstr "快照名称"
 
 #: templates/storage/snapshots.html:6
 msgid "Used space"
-msgstr ""
+msgstr "已用空间"
 
 #: templates/storage/snapshots.html:7
 msgid "Referenced space"
@@ -4082,11 +4082,11 @@ msgstr ""
 
 #: templates/storage/snapshots.html:21 templates/storage/snapshots.html:23
 msgid "Clone snapshot"
-msgstr ""
+msgstr "克隆快照"
 
 #: templates/storage/snapshots.html:25 templates/storage/snapshots.html:27
 msgid "Destroy snapshot"
-msgstr ""
+msgstr "销毁快照"
 
 #: templates/storage/snapshots.html:30 templates/storage/snapshots.html:32
 msgid "Rollback to this snapshot"
@@ -4098,11 +4098,11 @@ msgstr ""
 
 #: templates/storage/tasks.html:6
 msgid "Periodic Snapshots"
-msgstr ""
+msgstr "定期快照"
 
 #: templates/storage/tasks.html:14
 msgid "Periodic Snapshot Schedule"
-msgstr ""
+msgstr "定期快照的时间表"
 
 #: templates/storage/tasks.html:17
 msgid "There are no scheduled snapshots."
@@ -4227,19 +4227,19 @@ msgstr ""
 
 #: templates/storage/wizard.html:120
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "已有的数据会被清除"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
-msgstr ""
+msgstr "正在重建缓存。"
 
 #: templates/system/advanced_edit.html:19
 msgid "The cache could not be rebuilt"
-msgstr ""
+msgstr "无法重建缓存"
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
-msgstr ""
+msgstr "重建 LDAP/AD 缓存"
 
 #: templates/system/config.html:2
 msgid "Restore to Factory Defaults"

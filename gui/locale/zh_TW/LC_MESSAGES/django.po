@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-20 10:48+0200\n"
+"PO-Revision-Date: 2011-05-20 12:06+0200\n"
 "Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -3140,7 +3140,7 @@ msgstr ""
 
 #: system/models.py:95
 msgid "Enable Zeroconf/Bonjour"
-msgstr ""
+msgstr "啟用 Bonjour（Zeroconf ）服務"
 
 #: system/models.py:98
 msgid ""
@@ -3201,51 +3201,51 @@ msgstr "使用 SMTP 驗證"
 
 #: system/models.py:154
 msgid "A username to authenticate to the remote server"
-msgstr ""
+msgstr "遠端主機驗證的使用者名稱"
 
 #: system/models.py:161
 msgid "A password to authenticate to the remote server"
-msgstr ""
+msgstr "遠端主機驗證的使用者密碼"
 
 #: system/models.py:164 templates/system/settings.html:7
 msgid "Email"
-msgstr "Email"
+msgstr "電子信箱"
 
 #: system/models.py:174
 msgid "Organization"
-msgstr ""
+msgstr "組織"
 
 #: system/models.py:175
 msgid "Organization Name (eg, company)"
-msgstr ""
+msgstr "組織名稱(例如：公司寶號)"
 
 #: system/models.py:181
 msgid "Organizational Unit"
-msgstr ""
+msgstr "組織單位"
 
 #: system/models.py:182
 msgid "Organizational Unit Name (eg, section)"
-msgstr ""
+msgstr "組織單位名稱(例如：部門 )"
 
 #: system/models.py:188 system/models.py:189
 msgid "Email Address"
-msgstr "Email 地址"
+msgstr "電子郵件地址"
 
 #: system/models.py:195
 msgid "Locality"
-msgstr ""
+msgstr "地區"
 
 #: system/models.py:196
 msgid "Locality Name (eg, city)"
-msgstr ""
+msgstr "地區名稱(例如：城市)"
 
 #: system/models.py:202
 msgid "State"
-msgstr ""
+msgstr "州（省）"
 
 #: system/models.py:203
 msgid "State or Province Name (full name)"
-msgstr ""
+msgstr "州或省的名稱（全名）"
 
 #: system/models.py:209
 msgid "Country"
@@ -3253,7 +3253,7 @@ msgstr "國家"
 
 #: system/models.py:210
 msgid "Country Name (2 letter code)"
-msgstr "國家代碼"
+msgstr "國家代碼（2個字母）"
 
 #: system/models.py:216
 msgid "Common Name"
@@ -3261,7 +3261,7 @@ msgstr "通用名稱"
 
 #: system/models.py:217
 msgid "Common Name (eg, YOUR name)"
-msgstr ""
+msgstr "通用名稱（例如：您的大名）"
 
 #: system/models.py:222
 msgid "SSL Certificate"

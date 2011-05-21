@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-20 10:59+0200\n"
+"PO-Revision-Date: 2011-05-21 10:52+0200\n"
 "Last-Translator: Bth <oti_nane@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
@@ -51,163 +51,131 @@ msgid "PIO0"
 msgstr "PIO0"
 
 #: choices.py:55
-#, fuzzy
 msgid "PIO1"
 msgstr "PIO1"
 
 #: choices.py:56
-#, fuzzy
 msgid "PIO2"
 msgstr "PIO2"
 
 #: choices.py:57
-#, fuzzy
 msgid "PIO3"
 msgstr "PIO3"
 
 #: choices.py:58
-#, fuzzy
 msgid "PIO4"
 msgstr "PIO4"
 
 #: choices.py:59
-#, fuzzy
 msgid "WDMA0"
 msgstr "WDMA0"
 
 #: choices.py:60
-#, fuzzy
 msgid "WDMA1"
 msgstr "WDMA1"
 
 #: choices.py:61
-#, fuzzy
 msgid "WDMA2"
 msgstr "WDMA2"
 
 #: choices.py:62
-#, fuzzy
 msgid "UDMA-16"
 msgstr "UDMA-16"
 
 #: choices.py:63
-#, fuzzy
 msgid "UDMA-33"
 msgstr "UDMA-33"
 
 #: choices.py:64
-#, fuzzy
 msgid "UDMA-66"
 msgstr "UDMA-66"
 
 #: choices.py:65
-#, fuzzy
 msgid "UDMA-100"
 msgstr "UDMA-100"
 
 #: choices.py:66
-#, fuzzy
 msgid "UDMA-133"
 msgstr "UDMA-133"
 
 #: choices.py:67
-#, fuzzy
 msgid "SATA 1.5Gbit/s"
 msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:68
-#, fuzzy
 msgid "SATA 3.0Gbit/s"
 msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
-#, fuzzy
 msgid "Always On"
 msgstr "Πάντα ανοιχτό"
 
 #: choices.py:86 choices.py:95
-#, fuzzy
 msgid "Disabled"
-msgstr "Άτομα με ειδικές ανάγκες"
+msgstr "Ανενεργό"
 
 #: choices.py:87 choices.py:88 choices.py:89 choices.py:90 choices.py:91
 #: choices.py:92
-#, fuzzy
 msgid "Level"
 msgstr "Επίπεδο"
 
 #: choices.py:87
-#, fuzzy
 msgid "Minimum power usage with Standby (spindown)"
 msgstr "Ελάχιστη κατανάλωση ενέργειας με την κατάσταση ετοιμότητας (spindown)"
 
 #: choices.py:88 choices.py:89
-#, fuzzy
 msgid "Intermediate power usage with Standby"
 msgstr "Ενδιάμεσα χρήση ενέργειας με την κατάσταση ετοιμότητας"
 
 #: choices.py:90
-#, fuzzy
 msgid "Minimum power usgae without Standby (no spindown)"
 msgstr "Ελάχιστη usgae εξουσία χωρίς την αναμονή (δεν spindown)"
 
 #: choices.py:91
-#, fuzzy
 msgid "Intermediate power usage withot Standby"
 msgstr "Ενδιάμεσα withot χρήση ισχύος ετοιμότητας"
 
 #: choices.py:92
-#, fuzzy
 msgid "Maximum performance, maximum power usage"
 msgstr "Μέγιστη απόδοση, μέγιστη χρήση ενέργειας"
 
 #: choices.py:96 choices.py:184
-#, fuzzy
 msgid "Minimum"
 msgstr "Ελάχιστη"
 
 #: choices.py:97
-#, fuzzy
 msgid "Medium"
 msgstr "Μεσαίο"
 
 #: choices.py:98
-#, fuzzy
 msgid "Maximum"
 msgstr "Μέγιστη"
 
 #: choices.py:132 templates/storage/tasks.html:86
-#, fuzzy
 msgid "January"
 msgstr "Ιανουάριος"
 
 #: choices.py:133 templates/storage/tasks.html:89
-#, fuzzy
 msgid "February"
 msgstr "Φεβρουάριος"
 
 #: choices.py:134 templates/storage/tasks.html:92
-#, fuzzy
 msgid "March"
 msgstr "Μαρτίου"
 
 #: choices.py:135 templates/storage/tasks.html:95
-#, fuzzy
 msgid "April"
 msgstr "Απριλίου"
 
 #: choices.py:136 templates/storage/tasks.html:98
-#, fuzzy
 msgid "May"
 msgstr "Μάιος"
 
 #: choices.py:137 templates/storage/tasks.html:101
-#, fuzzy
 msgid "June"
 msgstr "Ιουνίου"
 
 #: choices.py:138 templates/storage/tasks.html:104
-#, fuzzy
 msgid "July"
 msgstr "Ιουλίου"
 
@@ -1646,95 +1614,101 @@ msgstr ""
 
 #: services/models.py:481
 msgid "Initiator"
-msgstr ""
+msgstr "εισαγωγή στα μυστήρια"
 
 #: services/models.py:510
 msgid "Target side user name. It is usually the initiator name by default."
-msgstr ""
+msgstr "Στόχος όνομα χρήστη . Συνήθως είναι το όνομα του ιδρυτή από προεπιλογή."
 
 #: services/models.py:520
 msgid "Peer User"
-msgstr ""
+msgstr "Peer χρήστη"
 
 #: services/models.py:525 templates/services/iscsi_auth.html:9
 msgid "Peer Secret"
-msgstr ""
+msgstr "Peer Μυστικό"
 
 #: services/models.py:529
 msgid "Authorized Access"
-msgstr ""
+msgstr "Εξουσιοδοτημένη πρόσβαση"
 
 #: services/models.py:530
 msgid "Authorized Accesses"
-msgstr ""
+msgstr "Εξουσιοδοτημένος Επισκέψεις"
 
 #: services/models.py:545
 msgid "Target Name"
-msgstr ""
+msgstr "Στόχος Όνομα"
 
 #: services/models.py:546
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr ""
+msgstr "Βάση Όνομα θα επισυναφθεί αυτόματα κατά την εκκίνηση χωρίς «iqn.»."
 
 #: services/models.py:553
 msgid "Target Alias"
-msgstr ""
+msgstr "Στόχος Alias"
 
 #: services/models.py:554
 msgid "Optional user-friendly string of the target."
-msgstr ""
+msgstr "Προαιρετική φιλική προς τον χρήστη σειρά του στόχου."
 
 #: services/models.py:559 storage/models.py:73
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7
 msgid "Type"
-msgstr ""
+msgstr "Τύπος"
 
 #: services/models.py:560
 msgid "Logical Unit Type mapped to LUN."
-msgstr ""
+msgstr "Logical Unit Type αντιστοιχίζονται με LUN."
 
 #: services/models.py:566
 msgid "Target Flags"
-msgstr ""
+msgstr "Στόχος Σημαίες"
 
 #: services/models.py:574
 msgid "Initiator Group ID"
-msgstr ""
+msgstr "Initiator Group ID"
 
 #: services/models.py:580 services/models.py:592
 msgid "Auth Method"
-msgstr ""
+msgstr "Auth Μέθοδος"
 
 #: services/models.py:581 services/models.py:593
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
 msgstr ""
+"Η μέθοδος μπορεί να γίνει αποδεκτή από το στόχο. Αυτόματη σημαίνει τόσο "
+"κανένας και πιστοποίησης της γνησιότητας."
 
 #: services/models.py:585
 msgid "Authentication Group ID"
-msgstr ""
+msgstr "Authentication Group ID"
 
 #: services/models.py:598
 msgid "Queue Depth"
-msgstr ""
+msgstr "Βάθος ουράς"
 
 #: services/models.py:599
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
 msgstr ""
+"0 = άτομα με ειδικές ανάγκες, 1-255 = ενεργοποιημένη Command Queuing με "
+"καθορισμένο βάθος. Η συνιστώμενη βάθος ουράς είναι 32."
 
 #: services/models.py:604
 msgid "Logical Block Size"
-msgstr ""
+msgstr "Λογικό μέγεθος Block"
 
 #: services/models.py:605
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
 msgstr ""
+"Μπορείτε να καθορίσετε το μήκος λογικό μπλοκ (512 από προεπιλογή). Η "
+"συνιστώμενη διάρκεια για τη συμβατότητα είναι 512."
 
 #: services/models.py:608 services/models.py:623
 #: templates/services/iscsi_assoctargets.html:5
@@ -1742,242 +1716,264 @@ msgstr ""
 #: templates/services/iscsi_extents.html:5
 #: templates/services/iscsi_targets.html:5
 msgid "Target"
-msgstr ""
+msgstr "Στόχος"
 
 #: services/models.py:624
 msgid "Target this extent belongs to"
-msgstr ""
+msgstr "Στόχος βαθμό αυτό ανήκει στην"
 
 #: services/models.py:632
 msgid "Target / Extent"
-msgstr ""
+msgstr "Στόχος / Έκταση"
 
 #: services/models.py:647
 msgid "Provider"
-msgstr ""
+msgstr "Πάροχος"
 
 #: services/models.py:651
 msgid "Domain name"
-msgstr ""
+msgstr "Domain name"
 
 #: services/models.py:653
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
 msgstr ""
+"Ένα ψευδώνυμο όνομα του κεντρικού υπολογιστή. Αυτή η επιλογή μπορεί να "
+"εμφανίζεται πολλές φορές, για κάθε τομέα που έχει την ίδια IP. "
+"Χρησιμοποιήστε ένα χώρο για να διαχωρίσετε πολλαπλές ονόματα ψευδώνυμο."
 
 #: services/models.py:665
 msgid "Update period"
-msgstr ""
+msgstr "Περίοδος Ενημέρωσης"
 
 #: services/models.py:667
 msgid "Time in milliseconds"
-msgstr ""
+msgstr "Χρόνος σε χιλιοστά του δευτερολέπτου"
 
 #: services/models.py:671
 msgid "Forced update period"
-msgstr ""
+msgstr "Αναγκαστική περίοδος ενημέρωση"
 
 #: services/models.py:677 services/models.py:711 services/models.py:743
 msgid "These parameters will be added to global settings in inadyn.conf."
 msgstr ""
+"Οι παράμετροι αυτοι θα προστεθούν στις γενικές ρυθμίσεις στη inadyn.conf."
 
 #: services/models.py:681 services/models.py:682
 #: templates/services/index2.html:40
 msgid "Dynamic DNS"
-msgstr ""
+msgstr "Δυναμική DNS"
 
 #: services/models.py:691
 msgid "Location"
-msgstr ""
+msgstr "Τοποθεσία"
 
 #: services/models.py:693
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
+"πληροφορίες τοποθεσία, π.χ. 'Όροφος του κτιρίου, Αίθουσα XYZZY »: φυσική "
+"θέση αυτού του συστήματος."
 
 #: services/models.py:697
 msgid "Contact"
-msgstr ""
+msgstr "Επικοινωνία"
 
 #: services/models.py:699
 msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
+"Πληροφορίες επικοινωνίας, π.χ. το όνομα ή e-mail του υπεύθυνου για αυτό το "
+"σύστημα: «admin@email.address»."
 
 #: services/models.py:703
 msgid "Community"
-msgstr ""
+msgstr "Κοινότητα"
 
 #: services/models.py:704
 msgid "In most cases, 'public' is used here."
-msgstr ""
+msgstr "Στις περισσότερες περιπτώσεις, «δημόσια», χρησιμοποιείται εδώ."
 
 #: services/models.py:707
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "Αποστολή Παγίδες SNMP"
 
 #: services/models.py:715 services/models.py:716
 #: templates/services/index2.html:86
 msgid "SNMP"
-msgstr ""
+msgstr "SNMP"
 
 #: services/models.py:725
 msgid "Identifier"
-msgstr ""
+msgstr "Αναγνωριστικό"
 
 #: services/models.py:726
 msgid "This name is used to uniquely identify your UPS on this system."
 msgstr ""
+"Αυτό το όνομα χρησιμοποιείται για να προσδιορίσει επακριβώς το UPS σας σε "
+"αυτό το σύστημα."
 
 #: services/models.py:730
 msgid "Driver"
-msgstr ""
+msgstr "Οδηγός"
 
 #: services/models.py:732
 msgid "The driver used to communicate with your UPS."
-msgstr ""
+msgstr "Ο οδηγός που χρησιμοποιείται για την επικοινωνία με το UPS σας."
 
 #: services/models.py:736 services/models.py:788 services/models.py:911
 msgid "Port"
-msgstr ""
+msgstr "Λιμάνι"
 
 #: services/models.py:738
 msgid "The serial or USB port where your UPS is connected."
-msgstr ""
+msgstr "Η σειριακή ή USB θύρα, όπου το UPS σας είναι συνδεδεμένο."
 
 #: services/models.py:754
 msgid "Shutdown mode"
-msgstr ""
+msgstr "Τερματισμός λειτουργίας"
 
 #: services/models.py:758
 msgid "Shutdown timer"
-msgstr ""
+msgstr "Κλείσιμο χρονομετρητή"
 
 #: services/models.py:759
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
 msgstr ""
+"Ο χρόνος σε δευτερόλεπτα μέχρι την διακοπή. Αν το UPS συμβαίνει να επανέλθει "
+"πριν από την ώρα το κλείσιμο ακυρώνεται."
 
 #: services/models.py:762
 msgid "Remote Monitor"
-msgstr ""
+msgstr "Απομακρυσμένη οθόνη"
 
 #: services/models.py:764
 msgid "Send Email Status Updates"
-msgstr ""
+msgstr "Αποστολή Email ενημερώσεις κατάστασης"
 
 #: services/models.py:767 services/models.py:773
 msgid "To email"
-msgstr ""
+msgstr "Στο e-mail"
 
 #: services/models.py:769
 msgid "Destination email address. Separate email addresses by semi-colon."
 msgstr ""
+"Προορισμός διεύθυνσης ηλεκτρονικού ταχυδρομείου. Διαχωρισμός διευθύνσεων "
+"ηλεκτρονικού ταχυδρομείου από την άνω τελεία."
 
 #: services/models.py:774
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
+"Το θέμα του email. Μπορείτε να χρησιμοποιήσετε τις ακόλουθες παραμέτρους για "
+"υποκατάσταση: <br /> <ul> <li>% d - Ημερομηνία </ li> h% <li> - Hostname </ "
+"li> </ ul>"
 
 #: services/models.py:778 services/models.py:779
 msgid "UPS"
-msgstr ""
+msgstr "UPS"
 
 #: services/models.py:789
 msgid "Port to bind FTP server."
-msgstr ""
+msgstr "Θύρα να δεσμεύσει FTP server."
 
 #: services/models.py:793
 msgid "Clients"
-msgstr ""
+msgstr "Πελάτες"
 
 #: services/models.py:794
 msgid "Maximum number of simultaneous clients."
-msgstr ""
+msgstr "Μέγιστος αριθμός ταυτόχρονων πελατών."
 
 #: services/models.py:798
 msgid "Connections"
-msgstr ""
+msgstr "Συνδέσεις"
 
 #: services/models.py:799
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
+msgstr "Μέγιστος αριθμός των συνδέσεων ανά IP διεύθυνση (0 = απεριόριστη)."
 
 #: services/models.py:803
 msgid "Login Attempts"
-msgstr ""
+msgstr "Προσπάθειες Σύνδεση "
 
 #: services/models.py:804
 msgid "Maximum number of allowed password attempts before disconnection."
 msgstr ""
+"Μέγιστος αριθμός επιτρεπόμενων προσπαθειών κωδικού πρόσβασης πριν την "
+"αποσύνδεση."
 
 #: services/models.py:808
 msgid "Timeout"
-msgstr ""
+msgstr "Τέλος χρόνου"
 
 #: services/models.py:809
 msgid "Maximum idle time in seconds."
-msgstr ""
+msgstr "Μέγιστος χρόνος αδράνειας σε δευτερόλεπτα."
 
 #: services/models.py:812
 msgid "Allow Root Login"
-msgstr ""
+msgstr "Επιτρέψτε Root Login"
 
 #: services/models.py:814
 msgid "Allow Anonymous Login"
-msgstr ""
+msgstr "Επιτρέψτε Ανώνυμη είσοδο"
 
 #: services/models.py:818 sharing/models.py:49
 #: templates/services/iscsi_dextents.html:7
 #: templates/services/iscsi_extents.html:7 templates/sharing/windows.html:15
 #: templates/storage/volumes.html:60
 msgid "Path"
-msgstr ""
+msgstr "Μονοπάτι"
 
 #: services/models.py:820
 msgid "Allow Local User Login"
-msgstr ""
+msgstr "Επιτρέψτε Τοπική Σύνδεση Χρήστη"
 
 #: services/models.py:823
 msgid "Banner"
-msgstr ""
+msgstr "Λάβαρο"
 
 #: services/models.py:825
 msgid "Greeting banner displayed by FTP when a connection first comes in."
 msgstr ""
+"Χαιρετισμός banner που εμφανίζονται από FTP όταν η σύνδεση θα προηγηθεί."
 
 #: services/models.py:831 services/models.py:837
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr ""
+"Χρησιμοποιήστε αυτή την επιλογή για να παρακάμψετε την μάσκα δημιουργίας "
+"αρχείου (077 από προεπιλογή)."
 
 #: services/models.py:840
 msgid "Enable FXP"
-msgstr ""
+msgstr "Ενεργοποίηση FXP"
 
 #: services/models.py:842
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "Να επιτραπεί η Επανάληψη μεταφοράς"
 
 #: services/models.py:844
 msgid "Always Chroot"
-msgstr ""
+msgstr "Πάντα Chroot"
 
 #: services/models.py:846
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "Απαίτηση διαμόρφωσης της διαδικασίας επικύρωσης"
 
 #: services/models.py:848
 msgid "Require Reverse DNS for IP"
-msgstr ""
+msgstr "Απαίτηση DNS Αντίστροφη για IP"
 
 #: services/models.py:850
 msgid "Masquerade address"
-msgstr ""
+msgstr "Masquerade address"
 
 #: services/models.py:852
 msgid ""
@@ -1985,20 +1981,26 @@ msgid ""
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
+"Αιτίες του διακομιστή για να εμφανίσετε τις πληροφορίες του δικτύου για τη "
+"συγκεκριμένη διεύθυνση IP στον πελάτη, με βάση την υπόθεση ότι η διεύθυνση "
+"IP ή DNS κεντρικός υπολογιστής που ενεργεί ως πύλη NAT ή διαβιβαστής για το "
+"διακομιστή."
 
 #: services/models.py:856
 msgid "Minimum passive port"
-msgstr ""
+msgstr "Ελάχιστη παθητική θύρα"
 
 #: services/models.py:857
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
 msgstr ""
+"Η ελάχιστη θύρα για να κατανείμει για PASV συνδέσεις δεδομένων στυλ (0 = "
+"χρησιμοποιήσετε οποιαδήποτε θύρα)."
 
 #: services/models.py:861
 msgid "Maximum passive port"
-msgstr ""
+msgstr "Μέγιστη παθητική θύρα"
 
 #: services/models.py:862
 msgid ""
@@ -2011,430 +2013,469 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
+"Η μέγιστη θύρα να κατανείμει για PASV συνδέσεις δεδομένων στυλ (0 = "
+"χρησιμοποιήσετε οποιοδήποτε λιμάνι). Παθητική θύρα περιορίζει το εύρος των "
+"θυρών από την οποία ο διακομιστής θα επιλέξει, όταν έστειλε την εντολή PASV "
+"από έναν πελάτη. Ο διακομιστής θα επιλέξει τυχαία έναν αριθμό από μέσα στα "
+"καθορισμένα όρια μέχρι μια ανοιχτή θύρα να βρεθεί.Το φάσμα επιλεγμένη θύρα "
+"πρέπει να είναι σε μη προνομιούχα περιοχή (π.χ. μεγαλύτερη ή ίση με 1024). "
+"Συνιστάται ανεπιφύλακτα ότι η επιλεγείσα περιοχή να είναι αρκετά μεγάλος για "
+"να χειριστεί πολλές ταυτόχρονες παθητική συνδέσεις (για παράδειγμα, "
+"49152-65534, η IANA-εγγεγραμμένων περιοχή προσωρινών θυρών)."
 
 #: services/models.py:866
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "upload bandwidth Τοπικού χρήστη "
 
 #: services/models.py:867
 msgid "Local user upload bandwith in KB/s. Zero means infinity."
-msgstr ""
+msgstr "upload bandwidth Τοπικού χρήστη σε KB / s. Μηδέν σημαίνει άπειρο."
 
 #: services/models.py:871
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "download bandwidth Τοπικού χρήστη "
 
 #: services/models.py:872
 msgid "Local user download bandwith in KB/s. Zero means infinity."
-msgstr ""
+msgstr "download bandwidth Τοπικού χρήστη σε KB / s. Μηδέν σημαίνει άπειρο."
 
 #: services/models.py:876
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Ανώνυμος χρήστης upload bandwidth"
 
 #: services/models.py:877
 msgid "Anonymous user upload bandwith in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Ανώνυμος χρήστης upload bandwidth σε KB / s. Μηδέν σημαίνει άπειρο."
 
 #: services/models.py:881
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "download bandwidth Ανώνυμου χρήστη"
 
 #: services/models.py:882
 msgid "Anonymous user download bandwith in KB/s. Zero means infinity."
-msgstr ""
+msgstr "download bandwidth Ανώνυμου χρήστη σε KB / s. Μηδέν σημαίνει άπειρο."
 
 #: services/models.py:885
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "Ενεργοποίηση SSL / TLS"
 
 #: services/models.py:890
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "Οι παράμετροι αυτοί προστίθενται στο proftpd.conf."
 
 #: services/models.py:894 services/models.py:895
 #: templates/services/index2.html:53
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:904
 msgid "Directory"
-msgstr ""
+msgstr "Κατάλογος"
 
 #: services/models.py:905
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
+"Ο κατάλογος που περιέχει τα αρχεία που θέλετε να δημοσιεύσετε. Το "
+"απομακρυσμένο υπολογιστή δεν χρειάζεται να περάσουν μαζί στον κατάλογο, ως "
+"μέρος της μεταβίβασης."
 
 #: services/models.py:908
 msgid "Allow New Files"
-msgstr ""
+msgstr "Επιτρέψτε Νέα αρχεία"
 
 #: services/models.py:912
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"Η Θύρα για να ακούσετε. Η προεπιλογή είναι να ακούσουμε τις θύρες TFTP που "
+"ορίζονται στο / etc / services."
 
 #: services/models.py:918
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "Καθορίζει το όνομα χρήστη που η υπηρεσία θα λειτουργήσει ως."
 
 #: services/models.py:922
 msgid "umask"
-msgstr ""
+msgstr "umask"
 
 #: services/models.py:923
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
 msgstr ""
+"Ρύθμιση της umask για αρχεία που δημιουργήσατε πρόσφατα στην καθορισμένη "
+"τιμή. Η προεπιλογή είναι 022 (ο καθένας μπορεί να διαβάσει, κανείς δεν "
+"μπορεί να γράψει)."
 
 #: services/models.py:927 services/models.py:964
 msgid "Extra options"
-msgstr ""
+msgstr "Extra επιλογές"
 
 #: services/models.py:929
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "Έξτρα επιλογές της γραμμής εντολών (συνήθως άδειο)."
 
 #: services/models.py:933 services/models.py:934
 #: templates/services/index2.html:108
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:943
 msgid "TCP Port"
-msgstr ""
+msgstr "TCP Port"
 
 #: services/models.py:944
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "Αναπληρωματικό θύρα TCP. Η προεπιλογή είναι 22"
 
 #: services/models.py:947
 msgid "Login as Root with password"
-msgstr ""
+msgstr "Σύνδεση ως root με κωδικό πρόσβασης"
 
 #: services/models.py:948
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
 msgstr ""
+"Άτομα με ειδικές ανάγκες: Root μπορεί μόνο να συνδεθείτε μέσω του δημοσίου "
+"κλειδιού ταυτότητας? Enabled: Root login επιτρέπεται με τον κωδικό πρόσβασης"
 
 #: services/models.py:951
 msgid "Allow Password Authentication"
-msgstr ""
+msgstr "Επιτρέψτε ταυτότητας μέσω κωδικού πρόσβασης"
 
 #: services/models.py:953
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "Επιτρέψτε TCP Port Forwarding"
 
 #: services/models.py:955
 msgid "Compress Connections"
-msgstr ""
+msgstr "Συμπιεσμένες Συνδέσεις"
 
 #: services/models.py:958
 msgid "Host Private Key"
-msgstr ""
+msgstr "Υποδοχής ιδιωτικού κλειδιού"
 
 #: services/models.py:960
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr ""
+msgstr "Επικολλήστε ένα ιδιωτικό RSA κλειδί σε μορφή PEM εδώ."
 
 #: services/models.py:966
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
 msgstr ""
+"Επιπλέον επιλογές στο / etc / ssh / sshd_config (συνήθως άδειο). Σημειώστε, "
+"εσφαλμένες επιλογές που εγγράφονται πρόληψη SSH υπηρεσία που θα ξεκινήσει."
 
 #: services/models.py:1006 services/models.py:1007
 #: templates/services/index2.html:97
 msgid "SSH"
-msgstr ""
+msgstr "SSH"
 
 #: services/models.py:1016
 msgid "Domain Controller Name"
-msgstr ""
+msgstr "Domain Name ελεγκτή"
 
 #: services/models.py:1017
 msgid "AD or PDC name."
-msgstr ""
+msgstr "AD or PDC name."
 
 #: services/models.py:1021
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr ""
+msgstr "Domain Name (DNS / Realm-Επωνυμία)"
 
 #: services/models.py:1022
 msgid "Domain Name, eg example.com"
-msgstr ""
+msgstr "Domain Name, π.χ. example.com"
 
 #: services/models.py:1026
 msgid "Host Name (NetBIOS-Name)"
-msgstr ""
+msgstr "Όνομα κεντρικού υπολογιστή (NetBIOS-Name)"
 
 #: services/models.py:1027
 msgid "Host Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Όνομα κεντρικού υπολογιστή στην παλιά μορφή, π.χ. ΠΑΡΑΔΕΙΓΜΑ"
 
 #: services/models.py:1031
 msgid "Workgroup Name"
-msgstr ""
+msgstr "Όνομα ομάδας εργασίας"
 
 #: services/models.py:1032
 msgid "Workgroup Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Όνομα ομάδας εργασίας στην παλιά μορφή, π.χ. ΠΑΡΑΔΕΙΓΜΑ"
 
 #: services/models.py:1036
 msgid "Administrator Name"
-msgstr ""
+msgstr "Administrator Name"
 
 #: services/models.py:1037
 msgid "Username of Domain Administrator Account"
-msgstr ""
+msgstr "Όνομα Χρήστη του λογαριασμό διαχειριστή τομέα"
 
 #: services/models.py:1041
 msgid "Administrator Password"
-msgstr ""
+msgstr "Administrator Password"
 
 #: services/models.py:1042
 msgid "Password of Domain Administrator account."
-msgstr ""
+msgstr "Κωδικό του λογαριασμού διαχειριστή τομέα."
 
 #: services/models.py:1048
 msgid "Windows Version"
-msgstr ""
+msgstr "Έκδοση των Windows"
 
 #: services/models.py:1049
 msgid "The version of Microsoft Windows that Active Directory is running."
-msgstr ""
+msgstr "Η έκδοση των Microsoft Windows που Active Directory εκτελείται."
 
 #: services/models.py:1053
 msgid "Service Principal Name"
-msgstr ""
+msgstr "Το κύριο όνομα υπηρεσίας"
 
 #: services/models.py:1054
 msgid "Service Principal Name, eg service/account."
-msgstr ""
+msgstr "κύριο όνομα Υπηρεσίας , π.χ. υπηρεσία / λογαριασμού."
 
 #: services/models.py:1058
 msgid "Service Principal Name Password"
-msgstr ""
+msgstr "Service Principal Name Password"
 
 #: services/models.py:1059
 msgid "Password of the Service Principal Name account."
-msgstr ""
+msgstr "Password of the Service Principal Name account."
 
 #: services/models.py:1063
 msgid "Kerberos Keytab File"
-msgstr ""
+msgstr "Kerberos Αρχείο Keytab"
 
 #: services/models.py:1064
 msgid ""
 "The kerberos keytab file that was generated on the Active Directory server."
 msgstr ""
+"Το αρχείο keytab Kerberos που δημιουργήθηκε στο διακομιστή Active Directory."
 
 #: services/models.py:1068 templates/services/index2.html:18
 msgid "Active Directory"
-msgstr ""
+msgstr "Active Directory"
 
 #: services/models.py:1079
 msgid "The name or IP address of the LDAP server"
-msgstr ""
+msgstr "Το όνομα ή τη διεύθυνση IP του διακομιστή LDAP"
 
 #: services/models.py:1083
 msgid "Base DN"
-msgstr ""
+msgstr "Βάση DN"
 
 #: services/models.py:1085
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr ""
+"Η βάση προεπιλεγμένο όνομα Διακεκριμένο (DN) που θα χρησιμοποιηθεί για "
+"έρευνες, π.χ. dc = test, dc = org"
 
 #: services/models.py:1088
 msgid "Allow Anonymous Binding"
-msgstr ""
+msgstr "Επιτρέψτε Ανώνυμος Βιβλιοδεσία"
 
 #: services/models.py:1091
 msgid "Root bind DN"
-msgstr ""
+msgstr "Root DN δεσμεύοντας"
 
 #: services/models.py:1093
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
+"Το αποκλειστικό όνομα με το οποίο να συνδεθούν με το διακομιστή καταλόγου, "
+"π.χ. cn = admin, dc = test, dc = org"
 
 #: services/models.py:1097
 msgid "Root bind password"
-msgstr ""
+msgstr "Root password δεσμεύοντας"
 
 #: services/models.py:1099
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "Τα διαπιστευτήρια με τα οποία να δεσμεύει."
 
 #: services/models.py:1104
 msgid "Password Encryption"
-msgstr ""
+msgstr "Κωδικός πρόσβασης Κρυπτογράφηση"
 
 #: services/models.py:1105
 msgid "The password change protocol to use."
-msgstr ""
+msgstr "Το πρωτόκολλο αλλάξετε τον κωδικό πρόσβασης για χρήση."
 
 #: services/models.py:1109
 msgid "User Suffix"
-msgstr ""
+msgstr "Χρήστης Suffix"
 
 #: services/models.py:1111
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
 msgstr ""
+"Αυτή η παράμετρος καθορίζει την κατάληξη που χρησιμοποιείται για τους "
+"χρήστες, όταν αυτές προστίθενται στον κατάλογο του, π.χ. ou Χρήστες ="
 
 #: services/models.py:1115
 msgid "Group Suffix"
-msgstr ""
+msgstr "Ομάδα Suffix"
 
 #: services/models.py:1117
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
+"Αυτή η παράμετρος καθορίζει την κατάληξη που χρησιμοποιείται για τις ομάδες, "
+"όταν αυτές προστίθενται στον κατάλογο του, π.χ. ou Ομάδες ="
 
 #: services/models.py:1121
 msgid "Password Suffix"
-msgstr ""
+msgstr "Κωδικός πρόσβασης Suffix"
 
 #: services/models.py:1123
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
+"Αυτή η παράμετρος καθορίζει την κατάληξη που χρησιμοποιείται για τους "
+"κωδικούς πρόσβασης, όταν αυτές προστίθενται στον κατάλογο του, π.χ. ou "
+"Κωδικοί πρόσβασης ="
 
 #: services/models.py:1127
 msgid "Machine Suffix"
-msgstr ""
+msgstr "Μηχάνημα Suffix"
 
 #: services/models.py:1129
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
+"Αυτή η παράμετρος καθορίζει την κατάληξη που χρησιμοποιείται για τις "
+"μηχανές, όταν αυτές προστίθενται στον κατάλογο του, π.χ. ou = Computers"
 
 #: services/models.py:1133
 msgid "Turn on/off TLS"
-msgstr ""
+msgstr "Ενεργοποίηση / απενεργοποίηση TLS"
 
 #: services/models.py:1135
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
 msgstr ""
+"Αυτή η παράμετρος καθορίζει το αν η χρήση SSL / TLS, π.χ. on / off / "
+"start_tls"
 
 #: services/models.py:1138
 msgid "Self signed certificate"
-msgstr ""
+msgstr "Αυτο υπογεγραμμένο πιστοποιητικό"
 
 #: services/models.py:1140
 msgid "Place the contents of your self signed certificate file here."
 msgstr ""
+"Τοποθετήστε το περιεχόμενο του εαυτού υπογεγραμμένο αρχείο πιστοποιητικό σας "
+"εδώ."
 
 #: services/models.py:1144
 msgid "Auxillary Parameters"
-msgstr ""
+msgstr "Βοηθητικές Παράμετροι"
 
 #: services/models.py:1146
 msgid "These parameters are added to ldap.conf."
-msgstr ""
+msgstr "Οι παράμετροι αυτοί προστίθενται στο ldap.conf."
 
 #: services/models.py:1150 services/models.py:1151
 #: templates/services/index2.html:64
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/nav.py:10
 msgid "Control Services"
-msgstr ""
+msgstr "Έλεγχος Υπηρεσίες"
 
 #: sharing/forms.py:102 sharing/models.py:243
 msgid "Maproot User"
-msgstr ""
+msgstr "Maproot χρήστη"
 
 #: sharing/forms.py:107 sharing/models.py:251
 msgid "Maproot Group"
-msgstr ""
+msgstr "Maproot Group"
 
 #: sharing/forms.py:112 sharing/models.py:259
 msgid "Mapall User"
-msgstr ""
+msgstr "Mapall χρήστη"
 
 #: sharing/forms.py:117 sharing/models.py:267
 msgid "Mapall Group"
-msgstr ""
+msgstr "Mapall Group"
 
 #: sharing/forms.py:176
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "Το πεδίο είναι μια μη έγκυρη διεύθυνση IP ή δίκτυο "
 
 #: sharing/forms.py:182
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr "'% S' Η IP δεν είναι έγκυρη."
 
 #: sharing/forms.py:206 sharing/forms.py:214 storage/forms.py:805
 #, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr "Η ομάδα% s δεν είναι έγκυρη."
 
 #: sharing/forms.py:226
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "Maproot ομάδα απαιτεί Maproot χρηστών"
 
 #: sharing/forms.py:228
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr "Mapall ομάδα απαιτεί Mapall χρηστών"
 
 #: sharing/forms.py:231 sharing/forms.py:234
 msgid "Maproot user/group disqualifies Mapall"
-msgstr ""
+msgstr "Maproot χρήστη / ομάδα αποκλείει Mapall"
 
 #: sharing/models.py:41 sharing/models.py:102 storage/models.py:44
 #: storage/models.py:68 storage/models.py:87
 #: templates/network/interface.html:6 templates/network/summary.html:5
 #: templates/sharing/apple.html:13 templates/sharing/windows.html:13
 msgid "Name"
-msgstr ""
+msgstr "Όνομα"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
-msgstr ""
+msgstr "Εξαγωγή Μόνο για ανάγνωση"
 
 #: sharing/models.py:53
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "Δυνατότητα περιήγησης στους πελάτες Δικτύου"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
-msgstr ""
+msgstr "Κληρονόμηση Δικαιωμάτων"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "Εξαγωγή Recycle Bin"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr ""
+msgstr "Εμφάνιση κρυμμένων αρχείων"
 
 #: sharing/models.py:67
 msgid "Allow Guest Access"
-msgstr ""
+msgstr "Να επιτρέπουν πρόσβαση επισκεπτών"
 
 #: sharing/models.py:69
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Μόνο να επιτρέπουν πρόσβαση επισκεπτών"
 
 #: sharing/models.py:73
 msgid "Hosts Allow"
-msgstr ""
+msgstr "Φιλοξενεί Επιτρέψτε"
 
 #: sharing/models.py:74
 msgid ""
@@ -2442,10 +2483,14 @@ msgid ""
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
 msgstr ""
+"Η επιλογή αυτή είναι ένα κόμμα, το διάστημα, ή την καρτέλα οριοθετημένο "
+"σύνολο των δυνάμεων που επιτρέπεται να έχουν πρόσβαση το μερίδιο αυτό. "
+"Μπορείτε να καθορίσετε τους φιλοξενούμενους με το όνομα ή αριθμός IP. Αφήστε "
+"αυτό το πεδίο κενό για να χρησιμοποιήσετε τις προεπιλεγμένες ρυθμίσεις."
 
 #: sharing/models.py:79
 msgid "Hosts Deny"
-msgstr ""
+msgstr "Hosts Deny"
 
 #: sharing/models.py:80
 msgid ""
@@ -2456,18 +2501,26 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
 msgstr ""
+"Η επιλογή αυτή είναι ένα κόμμα, το διάστημα, ή την καρτέλα οριοθετημένο "
+"σύνολο της υποδοχής, το οποίο δεν επιτρέπεται η πρόσβαση σε αυτή τη μετοχή. "
+"Σε περίπτωση που η σύγκρουση καταλόγους, η λίστα αποδοχής υπερισχύει. Σε "
+"περίπτωση που είναι αναγκαίο να αρνηθεί όλες τις από προεπιλογή, "
+"χρησιμοποιούν την λέξη ALL (ή το netmask 0.0.0.0 / 0) και στη συνέχεια να "
+"αναφέρονται ρητώς στους οικοδεσπότες επιτρέπουν παράμετρος αυτών "
+"οικοδεσπότες που θα πρέπει να επιτρέπεται η πρόσβαση. Αφήστε αυτό το πεδίο "
+"κενό για να χρησιμοποιήσετε τις προεπιλεγμένες ρυθμίσεις."
 
 #: sharing/models.py:84
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "Βοηθητικές Παράμετροι"
 
 #: sharing/models.py:86
 msgid "These parameters are added to [Share] section of smb.conf"
-msgstr ""
+msgstr "Οι παράμετροι αυτοί προστίθενται στο [Share] του smb.conf"
 
 #: sharing/models.py:92
 msgid "Windows Share"
-msgstr ""
+msgstr "Windows Share"
 
 #: sharing/models.py:103
 msgid ""
@@ -2479,18 +2532,27 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
+"Το όνομα του τόμου είναι το όνομα που εμφανίζεται στο ot Chooser η «σύνδεση "
+"με τον διακομιστή\" διαλόγου για Macintosh που να εκπροσωπεί το ανάλογο "
+"τμήμα. Αν volumename είναι απροσδιόριστη, την τελευταία ημερομηνία "
+"κατασκευής του διαδρομή χρησιμοποιείται. Δεν υπάρχουν δύο όγκοι μπορούν να "
+"έχουν το ίδιο όνομα. Το όνομα του όγκου δεν μπορούν να περιέχουν τους: "
+"χαρακτήρα ». Το όνομα του τόμου είναι παραμορφωμένα αν είναι πολύ μεγάλο. "
+"Mac κωδικοσελίδα όνομα όγκος περιορίζεται σε 27 χαρακτήρες. UTF8-MAC όνομα "
+"του τόμου είναι περιορισμένη παράμετρος για να «τόμος Όνομα μήκος» στις "
+"Υπηρεσίες: Apple Share"
 
 #: sharing/models.py:107
 msgid "Share Comment"
-msgstr ""
+msgstr "Σχόλιο Share"
 
 #: sharing/models.py:110 sharing/models.py:222
 msgid "Volume Path"
-msgstr ""
+msgstr "Διαδρομή τόμος"
 
 #: sharing/models.py:113
 msgid "Share password"
-msgstr ""
+msgstr "κωδικό Share"
 
 #: sharing/models.py:115
 msgid ""
@@ -2498,20 +2560,25 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
+"Αυτή η επιλογή σας επιτρέπει να ορίσετε έναν κωδικό πρόσβασης όγκου, που "
+"μπορεί να είναι το πολύ 8 χαρακτήρες (με τη χρήση ASCII συνιστάται κατά τη "
+"διάρκεια αυτού του γραψίματος)."
 
 #: sharing/models.py:119
 msgid "Share Character Set"
-msgstr ""
+msgstr "Χαρακτήρας Μοιραστείτε Σετ"
 
 #: sharing/models.py:121
 msgid ""
 "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
 "etc."
 msgstr ""
+"Καθορίζει το χαρακτήρα μερίδιο σύνολο. Για UTF8 παράδειγμα, UTF8-MAC, "
+"ISO-8859-15, κ.α."
 
 #: sharing/models.py:125
 msgid "Allow List"
-msgstr ""
+msgstr "Επιτρέψτε Κατάλογο"
 
 #: sharing/models.py:127
 msgid ""
@@ -2519,50 +2586,62 @@ msgid ""
 "Users and groups are specified, delimited by commas. Groups are designated "
 "by a @ prefix."
 msgstr ""
+"Αυτή η επιλογή επιτρέπει στους χρήστες και τις ομάδες που έχουν πρόσβαση σε "
+"ποσοστό που θα καθοριστεί. Οι χρήστες και οι ομάδες που αναφέρονται, η οποία "
+"οριοθετείται με κόμμα. Οι ομάδες που ορίζεται από το @ πρόθεμα."
 
 #: sharing/models.py:131
 msgid "Deny List"
-msgstr ""
+msgstr "Deny List"
 
 #: sharing/models.py:133
 msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
 msgstr ""
+"Η αρνούνται επιλογή καθορίζει τους χρήστες και τις ομάδες που δεν έχουν "
+"πρόσβαση στο κοινόχρηστο στοιχείο. Επομένως, η ίδια μορφή όπως το επιτρέπουν "
+"επιλογή."
 
 #: sharing/models.py:137
 msgid "Read-only Access"
-msgstr ""
+msgstr "Read-only Access"
 
 #: sharing/models.py:139
 msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Επιτρέπει στους συγκεκριμένους χρήστες και ομάδες να έχουν πρόσβαση μόνο για "
+"ανάγνωση σε μια μετοχή. Αυτό ακολουθεί τη μορφή που επιτρέπει την επιλογή."
 
 #: sharing/models.py:143
 msgid "Read-write Access"
-msgstr ""
+msgstr "Read-write Access"
 
 #: sharing/models.py:145
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format. "
 msgstr ""
+"Επιτρέπει στους συγκεκριμένους χρήστες και ομάδες να έχουν read / write "
+"πρόσβαση σε μια μετοχή. Αυτό ακολουθεί τη μορφή που επιτρέπει την επιλογή."
 
 #: sharing/models.py:148
 msgid "Disk Discovery"
-msgstr ""
+msgstr "Disk Discovery"
 
 #: sharing/models.py:149
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
+"Αφήστε τα άλλα συστήματα για να ανακαλύψετε το ποσοστό αυτό ως ένα δίσκο για "
+"τα δεδομένα, όπως έναν τόμο backup του Time Machine ή καθόλου."
 
 #: sharing/models.py:155
 msgid "Disk discovery mode"
-msgstr ""
+msgstr "Disk discovery mode"
 
 #: sharing/models.py:156
 msgid ""
@@ -2570,20 +2649,26 @@ msgid ""
 "unpredictable behavior in MacOS.  Default mode exports the volume as a data "
 "volume for users."
 msgstr ""
+"Σημείωση! Επιλέγοντας «Μηχανή του Χρόνου» σε πολλές μετοχές θα μπορεί να "
+"προκαλέσει απρόβλεπτη συμπεριφορά στο MacOS. Default εξαγωγές λειτουργία του "
+"όγκου σε όγκο δεδομένων για τους χρήστες."
 
 #: sharing/models.py:160
 msgid "Database Path"
-msgstr ""
+msgstr "διαδρομής Βάσης δεδομένων "
 
 #: sharing/models.py:162
 msgid ""
 "Sets the database information to be stored in path. You have to specifiy a "
 "writable location, even if the volume is read only."
 msgstr ""
+"Ορίζει την πληροφορίες της βάσης δεδομένων πρέπει να αποθηκεύονται στο "
+"δρόμο. Θα πρέπει να καθορίσετε ένα εγγράψιμο θέση, έστω και αν ο όγκος είναι "
+"μόνο για ανάγνωση."
 
 #: sharing/models.py:165
 msgid "Cache CNID"
-msgstr ""
+msgstr "Cache CNID"
 
 #: sharing/models.py:166
 msgid ""
@@ -2591,10 +2676,14 @@ msgid ""
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
+"Αν οριστεί afpd χρησιμοποιεί τις πληροφορίες ταυτότητας αποθηκεύονται σε "
+"AppleDouble V2 αρχεία κεφαλίδας για μείωση του φορτίου βάσης δεδομένων. Μην "
+"ορίσετε αυτή την επιλογή αν ο όγκος έχει τροποποιηθεί από μη πελάτες AFP "
+"(NFS / SMB / τοπικό)."
 
 #: sharing/models.py:169
 msgid "Translate CR/LF"
-msgstr ""
+msgstr "Μεταφράστε CR / LF"
 
 #: sharing/models.py:170
 msgid ""
@@ -2604,20 +2693,30 @@ msgid ""
 "the filetype in a second step. Afpd will potentially destroy such files when "
 "'erroneously' changing bytes in order to do line break translation."
 msgstr ""
+"Ενεργοποιεί μετάφραση CRLF για ΚΕΙΜΕΝΟ αρχεία, μετατρέποντας αυτόματα "
+"Macintosh αλλαγών γραμμής σε Unix σταθμούς. Η χρήση αυτής της επιλογής "
+"ενδέχεται να είναι επικίνδυνη, δεδομένου ότι ορισμένα παλαιότερα προγράμματα "
+"αποθηκεύουν δυαδικά αρχεία δεδομένων ως «κείμενο» τύπου κατά την αποθήκευση "
+"και τη στροφή τον τύπο αρχείου σε ένα δεύτερο βήμα. Afpd θα καταστρέψει τα "
+"εν λόγω αρχεία «λανθασμένα», αλλάζοντας bytes, όταν για να γίνει γραμμή "
+"μετάφρασης διάλειμμα."
 
 #: sharing/models.py:173
 msgid "Windows File Names"
-msgstr ""
+msgstr "Windows ονόματα αρχείων"
 
 #: sharing/models.py:174
 msgid ""
 "This forces filenames to be restricted to the character set used by Windows. "
 "This is not recommended for shares used principally by Mac computers."
 msgstr ""
+"Αυτό ονόματα αρχείων δυνάμεις να περιορίζεται στο σύνολο χαρακτήρων που "
+"χρησιμοποιείται από τα Windows. Αυτό δεν συνιστάται για τις μετοχές που "
+"χρησιμοποιείται κυρίως από υπολογιστές Mac."
 
 #: sharing/models.py:177
 msgid "No .AppleDouble"
-msgstr ""
+msgstr "Αριθ. AppleDouble"
 
 #: sharing/models.py:178
 msgid ""
@@ -2625,68 +2724,78 @@ msgid ""
 "absolutely needed. This option should not be used if files are access mostly "
 "by Mac computers.  Clicking this option disables their creation."
 msgstr ""
+"Αυτό ελέγχει εάν η. Κατάλογο AppleDouble παίρνει δημιουργούνται εκτός "
+"απολύτως αναγκαία. Αυτή η επιλογή δεν πρέπει να χρησιμοποιείται εάν οι "
+"φάκελοι έχουν πρόσβαση κυρίως με υπολογιστές Mac. Κάνοντας κλικ σε αυτή την "
+"επιλογή απενεργοποιεί τη δημιουργία τους."
 
 #: sharing/models.py:181
 msgid "Zero Device Numbers"
-msgstr ""
+msgstr "Μηδέν αριθμοί συσκευών"
 
 #: sharing/models.py:182
 msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
 msgstr ""
+"Χρησιμοποιείτε πάντα 0 για τον αριθμό της συσκευής, βοηθάει όταν ο αριθμός "
+"της συσκευής δεν είναι σταθερή σε μια επανεκκίνηση, συλλογή ..."
 
 #: sharing/models.py:185
 msgid "Disable File ID"
-msgstr ""
+msgstr "Απενεργοποίηση ID αρχείου"
 
 #: sharing/models.py:186
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr ""
+msgstr "Μην διαφημίζετε createfileid, resolveid, deleteid calls."
 
 #: sharing/models.py:189
 msgid "Disable :hex Names"
-msgstr ""
+msgstr "Απενεργοποίηση: Ονόματα hex"
 
 #: sharing/models.py:190
 msgid ""
 "Disable :hex translations for anything except dot files. This option makes "
 "the '/' character illegal."
 msgstr ""
+"Απενεργοποίηση: hex μεταφράσεις για τίποτα εκτός dot αρχεία. Η επιλογή αυτή "
+"καθιστά την χαρακτήρα '/' παράνομη."
 
 #: sharing/models.py:193
 msgid "ProDOS"
-msgstr ""
+msgstr "ProDOS"
 
 #: sharing/models.py:194
 msgid "Provide compatibility with Apple II clients."
-msgstr ""
+msgstr "Δώστε τη συμβατότητα με το Apple II πελάτες."
 
 #: sharing/models.py:197
 msgid "No Stat"
-msgstr ""
+msgstr "No Stat"
 
 #: sharing/models.py:198
 msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
 msgstr ""
+"Μην stat διαδρομή του ήχου όταν απαριθμεί όγκοι λίστα, χρήσιμο για "
+"προσάρτηση ή των όγκων που δημιουργήθηκε από μια preexec σενάριο."
 
 #: sharing/models.py:201
 msgid "AFP3 Unix Privs"
-msgstr ""
+msgstr "AFP3 Unix Privs"
 
 #: sharing/models.py:202
 msgid "Use AFP3 unix privileges."
-msgstr ""
+msgstr "Χρησιμοποιήστε AFP3 προνόμια unix."
 
 #: sharing/models.py:209
 msgid "Apple Share"
-msgstr ""
+msgstr "Apple Share"
 
 #: sharing/models.py:225
 msgid "Authorized network or IP addresses"
-msgstr ""
+msgstr "Εξουσιοδοτημένο δίκτυο ή τις διευθύνσεις IP"
 
 #: sharing/models.py:226
 msgid ""
@@ -2694,99 +2803,110 @@ msgid ""
 "addresses.  Specify network numbers of the form 1.2.3.4/xx where xx is the "
 "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 msgstr ""
+"Δίκτυο που είναι εξουσιοδοτημένα για πρόσβαση στο μερίδιο NFS ή μια λίστα "
+"διευθύνσεων IP. Καθορίστε τον αριθμό του δικτύου της 1.2.3.4/xx εντύπου όπου "
+"xx είναι ο αριθμός των bits του netmask ή μια λίστα διευθύνσεων IP 1.2.3.4 "
+"1.2.3.5 1.2.3.6."
 
 #: sharing/models.py:230
 msgid "All Directories"
-msgstr ""
+msgstr "Όλοι οι κατάλογοι"
 
 #: sharing/models.py:231
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected.  "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
+"Επιτρέπει την τοποθέτηση κάθε υποκατάλογο κάτω από αυτό το σημείο "
+"προσάρτησης, αν επιλεγεί. Διαφορετικά, μόνο το πρώτο επίπεδο καταλόγου "
+"μπορούν να τοποθετηθούν."
 
 #: sharing/models.py:234
 msgid "Read Only"
-msgstr ""
+msgstr "Μόνο για ανάγνωση"
 
 #: sharing/models.py:235
 msgid "Export the share read only.  Writes are not permitted."
-msgstr ""
+msgstr "Εξαγωγή της μετοχής μόνο για ανάγνωση. Γράφει δεν επιτρέπονται."
 
 #: sharing/models.py:238
 msgid "Quiet"
-msgstr ""
+msgstr "Ήσυχα"
 
 #: sharing/models.py:239
 msgid "Inibit syslog warnings if there are problems with exporting this share."
 msgstr ""
+"Inibit προειδοποιήσεις syslog αν υπάρχουν προβλήματα με την εξαγωγή αυτό το "
+"μερίδιο."
 
 #: sharing/models.py:247
 msgid "User to map root to"
-msgstr ""
+msgstr "User to map root to"
 
 #: sharing/models.py:255
 msgid "Group to map root to"
-msgstr ""
+msgstr "Group to map root to"
 
 #: sharing/models.py:263
 msgid "User to map all users to"
-msgstr ""
+msgstr "User to map all users to"
 
 #: sharing/models.py:271
 msgid "Group to map all users to"
-msgstr ""
+msgstr "Group to map all users to"
 
 #: sharing/models.py:278
 msgid "UNIX Share"
-msgstr ""
+msgstr "UNIX Share"
 
 #: sharing/nav.py:8
 msgid "View All UNIX Shares"
-msgstr ""
+msgstr "Δείτε όλα τα UNIX shares"
 
 #: sharing/nav.py:18
 msgid "View All Apple Shares"
-msgstr ""
+msgstr "Δείτε Όλες τις Apple shares"
 
 #: sharing/nav.py:28
 msgid "View All Windows Shares"
-msgstr ""
+msgstr "Δείτε Όλες τις Windows shares"
 
 #: storage/forms.py:77
 msgid "Read"
-msgstr ""
+msgstr "Διαβάστε"
 
 #: storage/forms.py:78
 msgid "Write"
-msgstr ""
+msgstr "Γράψτε"
 
 #: storage/forms.py:79
 msgid "Execute"
-msgstr ""
+msgstr "Εκτέλεση"
 
 #: storage/forms.py:92
 msgid "Owner"
-msgstr ""
+msgstr "Ιδιοκτήτη"
 
 #: storage/forms.py:92
 msgid "Other"
-msgstr ""
+msgstr "Άλλoi"
 
 #: storage/forms.py:140 storage/forms.py:331 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr ""
+msgstr "όνομα τόμου"
 
 #: storage/forms.py:144 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
-msgstr ""
+msgstr "Δύναμη 4096 bytes μέγεθος τομέα"
 
 #: storage/forms.py:217
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\"."
 msgstr ""
+"Το όνομα του όγκου πρέπει να αρχίζει με γράμματα και μπορεί να περιλαμβάνει "
+"αριθμούς, \"-\", \"_\"."
 
 #: storage/forms.py:231 system/forms.py:210 system/forms.py:216
 #: system/forms.py:221

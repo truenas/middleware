@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-19 20:00+0200\n"
-"Last-Translator: ok1 <ok1@trups.org>\n"
+"PO-Revision-Date: 2011-05-21 00:11+0200\n"
+"Last-Translator: brachux <brachux@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lv\n"
 "MIME-Version: 1.0\n"
@@ -1200,7 +1200,6 @@ msgstr ""
 
 #: services/models.py:172 services/models.py:173
 #: templates/services/index2.html:29
-#, fuzzy
 msgid "CIFS"
 msgstr "CIFS"
 
@@ -1213,14 +1212,16 @@ msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
 msgstr ""
+"Servera nosaukums. Ja šis lauks ir atstāts tukšs, norāda noklusēto serveri."
 
 #: services/models.py:186
 msgid "Guest Access"
 msgstr "Viesa piekļuve"
 
 #: services/models.py:187
+#, fuzzy
 msgid "Allows guest access to all apple shares on this box."
-msgstr ""
+msgstr "Ļauj viesu piekļuvi visām apple koplietošanas mapēm šajā lodziņā."
 
 #: services/models.py:193
 msgid ""

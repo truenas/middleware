@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:22-0700\n"
-"PO-Revision-Date: 2011-05-20 00:26+0200\n"
-"Last-Translator: Frank <fw@moov.de>\n"
+"PO-Revision-Date: 2011-05-20 13:13+0200\n"
+"Last-Translator: spookey <spookey@cccmz.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -72,7 +72,7 @@ msgstr "Festplatte trennen"
 
 #: media/lib/js/freeadmin.js:594
 msgid "Some error ocurried!"
-msgstr "Einige Fehler sind aufgetreten!"
+msgstr "Ein Fehler ist aufgetreten!"
 
 #: media/lib/js/freeadmin/form/Cron.js:43
 msgid "Every"

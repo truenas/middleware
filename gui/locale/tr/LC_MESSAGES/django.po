@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-19 00:26+0200\n"
-"Last-Translator: fatihsuzer <fatihsuzer@gmail.com>\n"
+"PO-Revision-Date: 2011-05-21 10:54+0200\n"
+"Last-Translator: xenitu <cenk@panelelektrik.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -124,11 +124,11 @@ msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr "Herzaman Acik"
+msgstr "Herzaman Açık"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr "Devredısi"
+msgstr "Devredışı"
 
 #: choices.py:87 choices.py:88 choices.py:89 choices.py:90 choices.py:91
 #: choices.py:92
@@ -141,7 +141,7 @@ msgstr "Bekleme konumlu en az güç tüketimi (disk dönüsü durur) "
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
-msgstr "Bekleme konumlu orta derece guc tuketimi"
+msgstr "Bekleme konumlu orta derece güç tüketimi"
 
 #: choices.py:90
 msgid "Minimum power usgae without Standby (no spindown)"
@@ -173,7 +173,7 @@ msgstr "Ocak"
 
 #: choices.py:133 templates/storage/tasks.html:89
 msgid "February"
-msgstr "Subat"
+msgstr "Şubat"
 
 #: choices.py:134 templates/storage/tasks.html:92
 msgid "March"
@@ -185,7 +185,7 @@ msgstr "Nisan"
 
 #: choices.py:136 templates/storage/tasks.html:98
 msgid "May"
-msgstr "Mayis"
+msgstr "Mayıs"
 
 #: choices.py:137 templates/storage/tasks.html:101
 msgid "June"
@@ -197,7 +197,7 @@ msgstr "Temmuz"
 
 #: choices.py:139 templates/storage/tasks.html:107
 msgid "August"
-msgstr "Agustos"
+msgstr "Ağustos"
 
 #: choices.py:140 templates/storage/tasks.html:110
 msgid "September"
@@ -209,11 +209,11 @@ msgstr "Ekim"
 
 #: choices.py:142 templates/storage/tasks.html:116
 msgid "November"
-msgstr "Kasim"
+msgstr "Kasım"
 
 #: choices.py:143 templates/storage/tasks.html:119
 msgid "December"
-msgstr "Aralik"
+msgstr "Aralık"
 
 #: choices.py:146 templates/storage/tasks.html:57
 msgid "Monday"
@@ -221,15 +221,15 @@ msgstr "Pazartesi"
 
 #: choices.py:147 templates/storage/tasks.html:60
 msgid "Tuesday"
-msgstr "Sali"
+msgstr "Salı"
 
 #: choices.py:148 templates/storage/tasks.html:63
 msgid "Wednesday"
-msgstr "Carsamba"
+msgstr "Çarşamba"
 
 #: choices.py:149 templates/storage/tasks.html:66
 msgid "Thursday"
-msgstr "Persembe"
+msgstr "Perşembe"
 
 #: choices.py:150 templates/storage/tasks.html:69
 msgid "Friday"
@@ -245,11 +245,11 @@ msgstr "Pazar"
 
 #: choices.py:163
 msgid "Anonymous"
-msgstr "Isımsiz"
+msgstr "İsimsiz"
 
 #: choices.py:164
 msgid "Local User"
-msgstr "Yerel kullanici"
+msgstr "Yerel Kullanıcı"
 
 #: choices.py:185
 msgid "Normal"
@@ -261,15 +261,15 @@ msgstr "Tam"
 
 #: choices.py:187
 msgid "Debug"
-msgstr "Hata ayiklama"
+msgstr "Hata Ayıklama"
 
 #: choices.py:191
 msgid "Default"
-msgstr "Varsayilan"
+msgstr "Varsayılan"
 
 #: choices.py:192
 msgid "Time Machine"
-msgstr "Zaman Makinasi"
+msgstr "Zaman Makinesi"
 
 #: choices.py:195
 #, fuzzy

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:34-0700\n"
-"PO-Revision-Date: 2011-05-20 07:55+0200\n"
-"Last-Translator: FredVL <frederik@vanleeckwyck.be>\n"
+"PO-Revision-Date: 2011-05-20 19:29+0200\n"
+"Last-Translator: Tbronl <tombrou@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -1924,13 +1924,15 @@ msgstr ""
 
 #: services/models.py:908
 msgid "Allow New Files"
-msgstr ""
+msgstr "Nieuwe Bestanden Toestaan"
 
 #: services/models.py:912
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"De Poort waarop geluisterd moet worden. Het is standaard om te luisteren "
+"naar de tftp poort gespecificeerd in /etc/services"
 
 #: services/models.py:918
 msgid "Specifies the username which the service will run as."
@@ -1948,65 +1950,74 @@ msgstr ""
 
 #: services/models.py:927 services/models.py:964
 msgid "Extra options"
-msgstr ""
+msgstr "Extra opties"
 
 #: services/models.py:929
+#, fuzzy
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "Extra command line opties (gebruikelijk leeg)"
 
 #: services/models.py:933 services/models.py:934
 #: templates/services/index2.html:108
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:943
 msgid "TCP Port"
-msgstr ""
+msgstr "TCP Poort"
 
 #: services/models.py:944
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "Alternatieve TCP poort. Standaardwaarde is 22"
 
 #: services/models.py:947
 msgid "Login as Root with password"
-msgstr ""
+msgstr "Aanmelden als Root met wachtwoord"
 
 #: services/models.py:948
+#, fuzzy
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
 msgstr ""
+"Uitgeschakeld: Root kan alleen aanmelden via openbare sleutel "
+"authentificatie; Ingeschakeld: Aanmelden van Root met wachtwoord is "
+"toegestaan "
 
 #: services/models.py:951
 msgid "Allow Password Authentication"
-msgstr ""
+msgstr "Wachtwoord Authentificatie Toestaan"
 
 #: services/models.py:953
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "TCP Port Forwarding Toestaan"
 
 #: services/models.py:955
+#, fuzzy
 msgid "Compress Connections"
-msgstr ""
+msgstr "Verbindingen Comprimeren"
 
 #: services/models.py:958
+#, fuzzy
 msgid "Host Private Key"
-msgstr ""
+msgstr "Privé sleutel van Host"
 
 #: services/models.py:960
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr ""
+msgstr "Plak een RSA PRIVATE KEY hier in het PEM formaat"
 
 #: services/models.py:966
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
 msgstr ""
+"Extra opties naar /etc/ssh/sshd_config (gebruikelijk leeg). Opmerking: "
+"verkeerd ingevoerde opties weerhouden de SSH service ervan op te starten."
 
 #: services/models.py:1006 services/models.py:1007
 #: templates/services/index2.html:97
 msgid "SSH"
-msgstr ""
+msgstr "SSH"
 
 #: services/models.py:1016
 msgid "Domain Controller Name"
@@ -2018,51 +2029,56 @@ msgstr ""
 
 #: services/models.py:1021
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr ""
+msgstr "Domein Naam (DNS/Realm-Naam)"
 
 #: services/models.py:1022
 msgid "Domain Name, eg example.com"
-msgstr ""
+msgstr "Domein Naam, bijv. voorbeeld.com"
 
 #: services/models.py:1026
 msgid "Host Name (NetBIOS-Name)"
-msgstr ""
+msgstr "Host Naam (NetBIOS-Naam)"
 
 #: services/models.py:1027
 msgid "Host Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Host Naam in het oude formaat, bijv. VOORBEELD"
 
 #: services/models.py:1031
 msgid "Workgroup Name"
-msgstr ""
+msgstr "Werkgroep Naam"
 
 #: services/models.py:1032
 msgid "Workgroup Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Werkgroep Naam in het oude formaat, bijv. VOORBEELD"
 
 #: services/models.py:1036
+#, fuzzy
 msgid "Administrator Name"
-msgstr ""
+msgstr "Administrator Naam"
 
 #: services/models.py:1037
+#, fuzzy
 msgid "Username of Domain Administrator Account"
-msgstr ""
+msgstr "Gebruikersnaam van het Domein Administrator Account"
 
 #: services/models.py:1041
 msgid "Administrator Password"
-msgstr ""
+msgstr "Administrator Wachtwoord"
 
 #: services/models.py:1042
+#, fuzzy
 msgid "Password of Domain Administrator account."
-msgstr ""
+msgstr "Wachtwoord van het Domein Administrator account"
 
 #: services/models.py:1048
 msgid "Windows Version"
-msgstr ""
+msgstr "Windows Versie"
 
 #: services/models.py:1049
+#, fuzzy
 msgid "The version of Microsoft Windows that Active Directory is running."
 msgstr ""
+"De versie van Microsoft Windows waarop Active Directory wordt uitgevoerd."
 
 #: services/models.py:1053
 msgid "Service Principal Name"
@@ -2131,11 +2147,12 @@ msgstr ""
 
 #: services/models.py:1104
 msgid "Password Encryption"
-msgstr ""
+msgstr "Wachtwoord Encryptie"
 
 #: services/models.py:1105
+#, fuzzy
 msgid "The password change protocol to use."
-msgstr ""
+msgstr "Het wachtwoord veranderings protocol om te gebruiken."
 
 #: services/models.py:1109
 msgid "User Suffix"
@@ -2179,7 +2196,7 @@ msgstr ""
 
 #: services/models.py:1133
 msgid "Turn on/off TLS"
-msgstr ""
+msgstr "TSL in/uitschakelen"
 
 #: services/models.py:1135
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
@@ -2204,7 +2221,7 @@ msgstr ""
 #: services/models.py:1150 services/models.py:1151
 #: templates/services/index2.html:64
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/nav.py:10
 msgid "Control Services"
@@ -2257,11 +2274,11 @@ msgstr ""
 #: templates/network/interface.html:6 templates/network/summary.html:5
 #: templates/sharing/apple.html:13 templates/sharing/windows.html:13
 msgid "Name"
-msgstr ""
+msgstr "Naam"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
-msgstr ""
+msgstr "Exporteer Alleen Lezen"
 
 #: sharing/models.py:53
 msgid "Browsable to Network Clients"
@@ -2273,19 +2290,19 @@ msgstr ""
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "Prullenbak exporteren"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr ""
+msgstr "Toon Verborgen Bestanden"
 
 #: sharing/models.py:67
 msgid "Allow Guest Access"
-msgstr ""
+msgstr "Sta Gast Toegang toe"
 
 #: sharing/models.py:69
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Alleen Gast Toegang Toestaan"
 
 #: sharing/models.py:73
 msgid "Hosts Allow"
@@ -2337,15 +2354,16 @@ msgstr ""
 
 #: sharing/models.py:107
 msgid "Share Comment"
-msgstr ""
+msgstr "Opmerking Delen"
 
 #: sharing/models.py:110 sharing/models.py:222
+#, fuzzy
 msgid "Volume Path"
-msgstr ""
+msgstr "Volume Pad"
 
 #: sharing/models.py:113
 msgid "Share password"
-msgstr ""
+msgstr "Wachtwoord delen"
 
 #: sharing/models.py:115
 msgid ""
@@ -2353,6 +2371,9 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
+"Deze optie geeft u de mogelijkheid om een volume wachtwoord in te stellen, "
+"die maximaal 8 tekens lang kan zijn (het gebruik van ASCII streng aanbevolen "
+"toen dit geschreven werd)."
 
 #: sharing/models.py:119
 msgid "Share Character Set"
@@ -2366,7 +2387,7 @@ msgstr ""
 
 #: sharing/models.py:125
 msgid "Allow List"
-msgstr ""
+msgstr "Lijst Toestaan"
 
 #: sharing/models.py:127
 msgid ""
@@ -2377,7 +2398,7 @@ msgstr ""
 
 #: sharing/models.py:131
 msgid "Deny List"
-msgstr ""
+msgstr "Lijst Weigeren"
 
 #: sharing/models.py:133
 msgid ""
@@ -2387,23 +2408,28 @@ msgstr ""
 
 #: sharing/models.py:137
 msgid "Read-only Access"
-msgstr ""
+msgstr "Alleen Lezen Toegang"
 
 #: sharing/models.py:139
+#, fuzzy
 msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Bepaalde gebruikers en groepen toestaan om alleen lezen toegang te hebben "
+"tot een share. Dit volgt na het 'allow option format'."
 
 #: sharing/models.py:143
 msgid "Read-write Access"
-msgstr ""
+msgstr "Lees/Schrijf Toegang"
 
 #: sharing/models.py:145
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format. "
 msgstr ""
+"Bepaalde gebruikers en groepen toestaan om Lees/Schrijf toegang te hebben "
+"tot een share. Dit volgt na het 'allow option format'."
 
 #: sharing/models.py:148
 msgid "Disk Discovery"
@@ -2428,7 +2454,7 @@ msgstr ""
 
 #: sharing/models.py:160
 msgid "Database Path"
-msgstr ""
+msgstr "Database Pad"
 
 #: sharing/models.py:162
 msgid ""
@@ -2462,7 +2488,7 @@ msgstr ""
 
 #: sharing/models.py:173
 msgid "Windows File Names"
-msgstr ""
+msgstr "Windows Bestandsnamen"
 
 #: sharing/models.py:174
 msgid ""
@@ -2562,15 +2588,16 @@ msgstr ""
 
 #: sharing/models.py:234
 msgid "Read Only"
-msgstr ""
+msgstr "Alleen Lezen"
 
 #: sharing/models.py:235
 msgid "Export the share read only.  Writes are not permitted."
 msgstr ""
 
 #: sharing/models.py:238
+#, fuzzy
 msgid "Quiet"
-msgstr ""
+msgstr "Stil"
 
 #: sharing/models.py:239
 msgid "Inibit syslog warnings if there are problems with exporting this share."
@@ -2598,44 +2625,45 @@ msgstr ""
 
 #: sharing/nav.py:8
 msgid "View All UNIX Shares"
-msgstr ""
+msgstr "Toon alle UNIX Shares"
 
 #: sharing/nav.py:18
 msgid "View All Apple Shares"
-msgstr ""
+msgstr "Toon alle Apple Shares"
 
 #: sharing/nav.py:28
 msgid "View All Windows Shares"
-msgstr ""
+msgstr "Toon alle Windows Shares"
 
 #: storage/forms.py:77
 msgid "Read"
-msgstr ""
+msgstr "Lees"
 
 #: storage/forms.py:78
 msgid "Write"
-msgstr ""
+msgstr "Schrijf"
 
 #: storage/forms.py:79
 msgid "Execute"
-msgstr ""
+msgstr "Uitvoeren"
 
 #: storage/forms.py:92
 msgid "Owner"
-msgstr ""
+msgstr "Eigenaar"
 
 #: storage/forms.py:92
 msgid "Other"
-msgstr ""
+msgstr "Andere"
 
 #: storage/forms.py:140 storage/forms.py:331 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
+#, fuzzy
 msgid "Volume name"
-msgstr ""
+msgstr "Volume naam"
 
 #: storage/forms.py:144 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
-msgstr ""
+msgstr "Forceer 4096 bytes sector grootte"
 
 #: storage/forms.py:217
 msgid ""
@@ -2646,19 +2674,20 @@ msgstr ""
 #: storage/forms.py:231 system/forms.py:210 system/forms.py:216
 #: system/forms.py:221
 msgid "This field is required"
-msgstr ""
+msgstr "Dit veld is vereist"
 
 #: storage/forms.py:236 storage/forms.py:382 storage/forms.py:484
 msgid "You already have a volume with same name"
-msgstr ""
+msgstr "U heeft al een volume met dezelfde naam"
 
 #: storage/forms.py:242
 msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr ""
+msgstr "\"log\" is een gereserveerd woord, en kan dus niet gebruikt worden"
 
 #: storage/forms.py:247
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr ""
+"The volume naam mag niet begonnen worden met c[0-9], mirror, raidz of spare"
 
 #: storage/forms.py:332 storage/forms.py:431 storage/forms.py:910
 msgid "Member disk"
@@ -2670,7 +2699,7 @@ msgstr ""
 
 #: storage/forms.py:396
 msgid "Some error ocurried while labelling the disk."
-msgstr ""
+msgstr "Er is een fout opgetreden tijdens het labelen van de schijf."
 
 #: storage/forms.py:606
 msgid "Volume from which this dataset will be created on"
@@ -2695,7 +2724,7 @@ msgstr ""
 #: storage/forms.py:610 storage/forms.py:611 storage/forms.py:662
 #: storage/forms.py:663 storage/forms.py:719
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0=Oneindig; voorbeeld: 1g"
 
 #: storage/forms.py:611 storage/forms.py:663
 msgid "Quota for this dataset and all children"
@@ -2708,7 +2737,7 @@ msgstr ""
 #: storage/forms.py:612 storage/forms.py:613 storage/forms.py:664
 #: storage/forms.py:665 storage/forms.py:720
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0=Geen; Voorbeeld: 1g"
 
 #: storage/forms.py:613 storage/forms.py:665
 msgid "Reserved space for this dataset and all children"
@@ -2730,11 +2759,11 @@ msgstr ""
 
 #: storage/forms.py:756
 msgid "Owner (user)"
-msgstr ""
+msgstr "Eigenaar (gebruiker)"
 
 #: storage/forms.py:759
 msgid "Owner (group)"
-msgstr ""
+msgstr "Eigenaar (Groep)"
 
 #: storage/forms.py:761
 msgid "Mode"
@@ -2790,20 +2819,21 @@ msgstr ""
 
 #: storage/models.py:49
 msgid "File System Type"
-msgstr ""
+msgstr "Type Bestandssysteem"
 
 #: storage/models.py:52 storage/models.py:77 storage/views.py:88
 #: storage/views.py:116 storage/views.py:139 templates/storage/volumes.html:59
 msgid "Volume"
-msgstr ""
+msgstr "Volume"
 
 #: storage/models.py:78
+#, fuzzy
 msgid "Volume this group belongs to"
-msgstr ""
+msgstr "Volume in deze groep behoort tot"
 
 #: storage/models.py:91
 msgid "Disks"
-msgstr ""
+msgstr "Schijven"
 
 #: storage/models.py:102
 msgid "Transfer Mode"
@@ -2819,19 +2849,19 @@ msgstr ""
 
 #: storage/models.py:120
 msgid "Acoustic Level"
-msgstr ""
+msgstr "Geluidsnivea"
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
-msgstr ""
+msgstr "S.M.A.R.T. Inschakelen"
 
 #: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
-msgstr ""
+msgstr "S.M.A.R.T. extra opties"
 
 #: storage/models.py:133
 msgid "Group Membership"
-msgstr ""
+msgstr "Groep Lidmaatschap"
 
 #: storage/models.py:134
 msgid "The disk group containing this disk"
@@ -2856,19 +2886,19 @@ msgstr ""
 
 #: storage/models.py:169
 msgid "Error getting total space"
-msgstr ""
+msgstr "Fout bij verkrijgen totale ruimte"
 
 #: storage/models.py:175
 msgid "Error getting available space"
-msgstr ""
+msgstr "Fout bij verkrijgen verkrijgbare ruimte"
 
 #: storage/models.py:181
 msgid "Error getting used space"
-msgstr ""
+msgstr "Fout bij verkrijgen gebruikte ruimte"
 
 #: storage/models.py:187 storage/models.py:199
 msgid "Error"
-msgstr ""
+msgstr "Fout"
 
 #: storage/models.py:219
 msgid "Remote Replication Host"
@@ -2912,7 +2942,7 @@ msgstr ""
 
 #: storage/models.py:270
 msgid "Begin"
-msgstr ""
+msgstr "Begin"
 
 #: storage/models.py:271
 msgid "When in a day should we start making snapshots, e.g. 8:00"
@@ -2920,7 +2950,7 @@ msgstr ""
 
 #: storage/models.py:275
 msgid "End"
-msgstr ""
+msgstr "Einde"
 
 #: storage/models.py:276
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
@@ -2928,7 +2958,7 @@ msgstr ""
 
 #: storage/models.py:282
 msgid "Interval"
-msgstr ""
+msgstr "Interval"
 
 #: storage/models.py:283
 msgid ""
@@ -2945,7 +2975,7 @@ msgstr ""
 
 #: storage/models.py:295
 msgid "Weekday"
-msgstr ""
+msgstr "Doordeweekse dag"
 
 #: storage/models.py:313
 msgid "Periodic Snapshot Task"
@@ -2970,17 +3000,17 @@ msgstr ""
 #: storage/nav.py:40 templates/storage/replications.html:5
 #: templates/storage/volumes.html:6 templates/storage/volumes.html.py:11
 msgid "Create Volume"
-msgstr ""
+msgstr "Creëer Volume"
 
 #: storage/nav.py:51 templates/storage/autoimport.html:25
 #: templates/storage/import.html:43 templates/storage/volumes.html:31
 #: templates/storage/volumes.html.py:35
 msgid "Import Volume"
-msgstr ""
+msgstr "Importeer Volume"
 
 #: storage/nav.py:62
 msgid "View All Volumes"
-msgstr ""
+msgstr "Toon alle Volumes"
 
 #: storage/nav.py:73 templates/storage/volumes.html:19
 #: templates/storage/volumes.html.py:23
@@ -2997,18 +3027,18 @@ msgstr ""
 
 #: storage/nav.py:96
 msgid "Volumes"
-msgstr ""
+msgstr "Volumes"
 
 #: storage/nav.py:118 storage/nav.py:138 templates/storage/volumes.html:123
 #: templates/storage/volumes.html.py:126
 msgid "Change Permissions"
-msgstr ""
+msgstr "Verander Permissies"
 
 #: storage/views.py:88 storage/views.py:116 storage/views.py:139
 #: storage/views.py:283 storage/views.py:436
 #: templates/freeadmin/generic_model_add_ok.html:1
 msgid "successfully added"
-msgstr ""
+msgstr "succesvol toegevoegd"
 
 #: storage/views.py:283 storage/views.py:320
 #: templates/storage/dataset_confirm_delete_ok.html:1
@@ -3062,8 +3092,9 @@ msgid "SHA256 sum for the image"
 msgstr ""
 
 #: system/forms.py:264
+#, fuzzy
 msgid "Invalid firmware or checksum"
-msgstr ""
+msgstr "Ongeldige firmware of controlesom"
 
 #: system/forms.py:274
 msgid "Service Pack image to be installed"
@@ -3079,35 +3110,35 @@ msgstr ""
 
 #: system/models.py:41
 msgid "Protocol"
-msgstr ""
+msgstr "Protocol"
 
 #: system/models.py:47
 msgid "Language"
-msgstr ""
+msgstr "Taal"
 
 #: system/models.py:53
 msgid "Timezone"
-msgstr ""
+msgstr "Tijdzone"
 
 #: system/models.py:58
 msgid "NTP server 1"
-msgstr ""
+msgstr "NTP server 1"
 
 #: system/models.py:63
 msgid "NTP server 2"
-msgstr ""
+msgstr "NTP server 2"
 
 #: system/models.py:69
 msgid "NTP server 3"
-msgstr ""
+msgstr "NTP server 3"
 
 #: system/models.py:74 system/nav.py:23 templates/system/settings.html:2
 msgid "Settings"
-msgstr ""
+msgstr "Instellingen"
 
 #: system/models.py:81
 msgid "Enable Console Menu"
-msgstr ""
+msgstr "Schakel Console Menu in"
 
 #: system/models.py:83
 msgid "Use Serial Console"
@@ -3115,36 +3146,41 @@ msgstr ""
 
 #: system/models.py:85
 msgid "Enable screen saver"
-msgstr ""
+msgstr "Schermbeveiliging inschakelen"
 
 #: system/models.py:87
 msgid "Automatically Check for New Firmware"
-msgstr ""
+msgstr "Automatisch Controleren op Nieuwe Firmware"
 
 #: system/models.py:89
 msgid "Beep on boot"
 msgstr ""
 
 #: system/models.py:91
+#, fuzzy
 msgid "Enable Special System Tuning"
-msgstr ""
+msgstr "Special System Tuning Inschakelen"
 
 #: system/models.py:93
 msgid "Enable powerd (Power Saving Daemon)"
-msgstr ""
+msgstr "Powerd inschakelen (Power Saving Deamon)"
 
 #: system/models.py:95
 msgid "Enable Zeroconf/Bonjour"
-msgstr ""
+msgstr "Zeroconf/Bonjour Inschakelen"
 
 #: system/models.py:98
+#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only.  Must be non-zero"
 msgstr ""
+"Grote van Wisselbestand op iedere schijf in GiB, heeft alleen effect op "
+"nieuwe schijfen. Mag niet nul zijn"
 
 #: system/models.py:101
+#, fuzzy
 msgid "Show console messages in the footer (Requires UI reload)"
-msgstr ""
+msgstr "Weergeef console berichten onderaan de pagina (UI herladen is vereist)"
 
 #: system/models.py:109
 msgid "MOTD banner"
@@ -3152,139 +3188,146 @@ msgstr ""
 
 #: system/models.py:113 templates/system/settings.html:5
 msgid "Advanced"
-msgstr ""
+msgstr "Geadvanceerd"
 
 #: system/models.py:122
 msgid "From email"
-msgstr ""
+msgstr "Van email"
 
 #: system/models.py:123
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@mydomain.com"
 msgstr ""
+"Het email adres dat het systeem zal gebruiken als zend adres voor de email "
+"die het verzend, bijv. freenas@mijndomein.nl"
 
 #: system/models.py:128
 msgid "Outgoing mail server"
-msgstr ""
+msgstr "Uitgaande mail server"
 
 #: system/models.py:129
 msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
 msgstr ""
+"Een Hostnaam of ip dat onze mail zal accepteren, bijvoorbeeld "
+"mail.voorbeeld.nl, of 192.168.1.1"
 
 #: system/models.py:135
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
-msgstr ""
+msgstr "Een geheel getal van 1-65535, over het algemeen 25, 465 of 587"
 
 #: system/models.py:136
 msgid "Port to connect to"
-msgstr ""
+msgstr "Poort om verbinden mee te maken"
 
 #: system/models.py:142
 msgid "encryption of the connection"
-msgstr ""
+msgstr "Encryptie van de verbinding"
 
 #: system/models.py:143
 msgid "TLS/SSL"
-msgstr ""
+msgstr "TLS/SSL"
 
 #: system/models.py:146
 msgid "Use SMTP Authentication"
-msgstr ""
+msgstr "Gebruik SMTP Authentificatie"
 
 #: system/models.py:154
 msgid "A username to authenticate to the remote server"
-msgstr ""
+msgstr "Een Gebruikersnaam om te authentificeren aan de remote server"
 
 #: system/models.py:161
 msgid "A password to authenticate to the remote server"
-msgstr ""
+msgstr "Een wachtwoord om te authentificeren aan de remote server"
 
 #: system/models.py:164 templates/system/settings.html:7
 msgid "Email"
-msgstr ""
+msgstr "Email"
 
 #: system/models.py:174
 msgid "Organization"
-msgstr ""
+msgstr "Organisatie"
 
 #: system/models.py:175
 msgid "Organization Name (eg, company)"
-msgstr ""
+msgstr "Naam van Organisatie (bijv. bedrijf)"
 
 #: system/models.py:181
+#, fuzzy
 msgid "Organizational Unit"
-msgstr ""
+msgstr "Organisatie Afdeling"
 
 #: system/models.py:182
 msgid "Organizational Unit Name (eg, section)"
-msgstr ""
+msgstr "Naam van Organisatie afdeling (bijv. deel)"
 
 #: system/models.py:188 system/models.py:189
 msgid "Email Address"
-msgstr ""
+msgstr "Email Adres"
 
 #: system/models.py:195
 msgid "Locality"
-msgstr ""
+msgstr "Plaats"
 
 #: system/models.py:196
 msgid "Locality Name (eg, city)"
-msgstr ""
+msgstr "Plaatsnaam (bijv. stad)"
 
 #: system/models.py:202
 msgid "State"
-msgstr ""
+msgstr "Staat"
 
 #: system/models.py:203
 msgid "State or Province Name (full name)"
-msgstr ""
+msgstr "Staat of Naam van Provincie (volledige naam)"
 
 #: system/models.py:209
 msgid "Country"
-msgstr ""
+msgstr "Land"
 
 #: system/models.py:210
 msgid "Country Name (2 letter code)"
-msgstr ""
+msgstr "Land naam (2 letterige code)"
 
 #: system/models.py:216
 msgid "Common Name"
-msgstr ""
+msgstr "Algemene Naam"
 
 #: system/models.py:217
 msgid "Common Name (eg, YOUR name)"
-msgstr ""
+msgstr "Algemene Naam (bijv. UW naam)"
 
 #: system/models.py:222
 msgid "SSL Certificate"
-msgstr ""
+msgstr "SSL Certificaat"
 
 #: system/models.py:223
 msgid ""
 "Cut and paste the contents of your private and public certificate files here."
 msgstr ""
+"Knip en plak de inhoud van je privé en openbare certificaat bestanden hier."
 
 #: system/nav.py:9 templates/system/reporting.html:2
+#, fuzzy
 msgid "Reporting"
-msgstr ""
+msgstr "Bezig met melden"
 
 #: system/nav.py:16
 msgid "System Information"
-msgstr ""
+msgstr "Systeem Informatie"
 
 #: system/views.py:130
 msgid "The uploaded file is not valid."
-msgstr ""
+msgstr "Het geüploade bestand is niet geldig."
 
 #: templates/account/bsdgroup2user_form2.html:9
 #: templates/freeadmin/generic_model_add.html:13
 #: templates/freeadmin/generic_model_edit.html:14
 #: templates/network/lagg_add.html:9 templates/system/wizard.html:14
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: templates/account/bsdgroup2user_form2.html:10
 #: templates/freeadmin/generic_model_add.html:14
@@ -3305,107 +3348,112 @@ msgstr ""
 #: templates/system/config_restore.html:11
 #: templates/system/config_upload.html:35
 msgid "Cancel"
-msgstr ""
+msgstr "Annuleren"
 
 #: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:48
 #: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:59
+#, fuzzy
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:50 templates/account/bsdgroups.html:62
 msgid "Members"
-msgstr ""
+msgstr "Leden"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/storage/tasks.html:134
 msgid "Modify"
-msgstr ""
+msgstr "Wijzigen"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
-msgstr ""
+msgstr "Verwijderen"
 
 #: templates/account/bsdgroups.html:25 templates/account/bsdgroups.html:66
 msgid "Modify Group"
-msgstr ""
+msgstr "Wijzig Groep"
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:71
 msgid "Delete Group"
-msgstr ""
+msgstr "Verwijder Groep"
 
 #: templates/account/bsdgroups.html:37
 msgid "There are no user defined groups."
-msgstr ""
+msgstr "Er zijn geen door de gebruiker gedefinieerde groepen."
 
 #: templates/account/bsdgroups.html:43
 msgid "Add New Group"
-msgstr ""
+msgstr "Nieuwe Groep Toevoegen"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:62
 msgid "Home"
-msgstr ""
+msgstr "Thuis"
 
 #: templates/account/bsdusers.html:37 templates/account/bsdusers.html.py:38
 #: templates/account/bsdusers.html:89 templates/account/bsdusers.html.py:90
 msgid "Modify User"
-msgstr ""
+msgstr "Wijzig Gebruiker"
 
 #: templates/account/bsdusers.html:38 templates/account/bsdusers.html.py:90
+#, fuzzy
 msgid "Auxiliary Groups"
-msgstr ""
+msgstr "Aanvullende Groepen"
 
 #: templates/account/bsdusers.html:43
+#, fuzzy
 msgid "Delete User"
-msgstr ""
+msgstr "Verwijder Gebruiker"
 
+# Verschil tussen Delete User en Remove User?
 #: templates/account/bsdusers.html:43 templates/account/bsdusers.html.py:95
+#, fuzzy
 msgid "Remove User"
-msgstr ""
+msgstr "Verwijder Gebruiker"
 
 #: templates/account/bsdusers.html:54
 msgid "Add New User"
-msgstr ""
+msgstr "Nieuwe Gebruiker Toevoegen"
 
 #: templates/account/bsdusers.html:101
 msgid "No users defined"
-msgstr ""
+msgstr "Geen gebruikers gedefinieerd"
 
 #: templates/account/passform.html:26
 msgid "Change Admin Password"
-msgstr ""
+msgstr "Verander Admin Wachtwoord"
 
 #: templates/common/menubar2.html:8
 msgid "System"
-msgstr ""
+msgstr "Systeem"
 
 #: templates/common/menubar2.html:13
 msgid "Network"
-msgstr ""
+msgstr "Netwerk"
 
 #: templates/common/menubar2.html:18
 msgid "Storage"
-msgstr ""
+msgstr "Opslag"
 
 #: templates/common/menubar2.html:23
 msgid "Sharing"
-msgstr ""
+msgstr "Delen"
 
 #: templates/common/menubar2.html:33
 msgid "Log Out"
-msgstr ""
+msgstr "Afmelden"
 
 #: templates/common/menubar2.html:38
 msgid "Help"
-msgstr ""
+msgstr "Help"
 
 #: templates/common/menubar2.html:43
 msgid "Account"
-msgstr ""
+msgstr "Account"
 
 #: templates/common/menubar2.html:49 templates/registration/login.html:49
 msgid "Log In"
-msgstr ""
+msgstr "Aanmelden"
 
 #: templates/freeadmin/generic_model_add.html:9
 #: templates/freeadmin/generic_model_delete.html:10
@@ -3417,13 +3465,13 @@ msgstr ""
 #: templates/storage/snapshot_confirm_rollback2.html:10
 #: templates/system/config_restore.html:10 templates/system/wizard.html:13
 msgid "Please wait..."
-msgstr ""
+msgstr "Even geduld..."
 
 #: templates/freeadmin/generic_model_delete.html:7
 #: templates/storage/dataset_confirm_delete2.html:7
 #: templates/storage/snapshot_confirm_delete2.html:7
 msgid "Are you sure you want to delete?"
-msgstr ""
+msgstr "Weet u zeker dat u wilt verwijderen?"
 
 #: templates/freeadmin/generic_model_delete.html:10
 #: templates/storage/dataset_confirm_delete2.html:10
@@ -3432,16 +3480,16 @@ msgstr ""
 #: templates/storage/snapshot_confirm_rollback2.html:10
 #: templates/storage/tasks.html:36 templates/system/config_restore.html:10
 msgid "Yes"
-msgstr ""
+msgstr "Ja"
 
 #: templates/freeadmin/generic_model_delete_ok.html:1
 #: templates/storage/dataset_confirm_delete_ok.html:1
 msgid "sucessfully deleted"
-msgstr ""
+msgstr "Succesvol verwijderd"
 
 #: templates/freeadmin/generic_model_edit.html:5
 msgid "Your changes have been successfully updated!"
-msgstr ""
+msgstr "Je veranderingen zijn succesvol doorgevoerd!"
 
 #: templates/freeadmin/generic_model_edit.html:39
 #: templates/network/interface.html:39 templates/network/lagg.html:44
@@ -3461,72 +3509,72 @@ msgstr ""
 #: templates/sharing/unix.html:34 templates/sharing/windows.html:38
 #: templates/storage/tasks.html:137
 msgid "Delete"
-msgstr ""
+msgstr "Verwijder"
 
 #: templates/freeadmin/generic_model_edit_ok.html:1
 msgid "sucessfully edited"
-msgstr ""
+msgstr "Succesvol gewijzigd"
 
 #: templates/freeadmin/index.html:27
 msgid "Running Processes"
-msgstr ""
+msgstr "Lopende Processen"
 
 #: templates/freeadmin/index.html:32 templates/freeadmin/index.html.py:36
 #: templates/freeadmin/index.html:41
 msgid "Loading"
-msgstr ""
+msgstr "Bezig met Laden"
 
 #: templates/freeadmin/index.html:34
 msgid "/var/log/messages"
-msgstr ""
+msgstr "/var/log/messages"
 
 #: templates/freeadmin/index.html:43
 msgid "Reboot the System"
-msgstr ""
+msgstr "Herstart het Systeem"
 
 #: templates/freeadmin/index.html:44 templates/freeadmin/index.html.py:55
 msgid "Warning!"
-msgstr ""
+msgstr "Waarschuwing!"
 
 #: templates/freeadmin/index.html:45
 msgid ""
 "You are about to <strong>REBOOT</strong> the system, what would you like to "
 "do?"
-msgstr ""
+msgstr "U staat op het punt het systeem te HERSTARTEN, wat wil u doen?"
 
 #: templates/freeadmin/index.html:54
 msgid "Shutdown the System"
-msgstr ""
+msgstr "Sluit het Systeem af"
 
 #: templates/freeadmin/index.html:56
 msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
-msgstr ""
+msgstr "U staat op het punt het systeem AF TE SLUITEN, wat wil u doen?"
 
 #: templates/freeadmin/index.html:66
 msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-msgstr ""
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Ondersteuning"
 
 #: templates/freeadmin/index.html:69
 msgid "Forum"
-msgstr ""
+msgstr "Forum"
 
 #: templates/freeadmin/index.html:71
 msgid "Community Forum"
-msgstr ""
+msgstr "Community Forum"
 
 #: templates/freeadmin/index.html:75
 msgid "IRC (Chat)"
-msgstr ""
+msgstr "IRC (Chat)"
 
 #: templates/freeadmin/index.html:77
 msgid "#freenas on freenode"
-msgstr ""
+msgstr "#freenas op freenode"
 
 #: templates/freeadmin/index.html:82
 msgid "Mailing Lists"
-msgstr ""
+msgstr "Mailing Lijsten"
 
 #: templates/freeadmin/index.html:84
 msgid "FreeNAS Announce"
@@ -3545,20 +3593,21 @@ msgid "FreeNAS Testing"
 msgstr ""
 
 #: templates/freeadmin/index.html:91
+#, fuzzy
 msgid "Support Issues"
-msgstr ""
+msgstr "Ondersteuning kwesties"
 
 #: templates/freeadmin/index.html:93
 msgid "Bug Tracker"
-msgstr ""
+msgstr "Bug Tracker"
 
 #: templates/network/index2.html:9
 msgid "Static Routes"
-msgstr ""
+msgstr "Static Routes"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
-msgstr ""
+msgstr "IPv6 Auto"
 
 #: templates/network/interface.html:33 templates/network/lagg_members2.html:17
 #: templates/network/staticroute.html:18 templates/network/vlan.html:19
@@ -3577,52 +3626,53 @@ msgstr ""
 #: templates/sharing/unix.html:28 templates/sharing/windows.html:32
 #: templates/storage/datagrid_disks.html:13
 msgid "Edit"
-msgstr ""
+msgstr "Wijzig"
 
 #: templates/network/interface.html:35 templates/network/lagg.html:14
 #: templates/network/lagg.html.py:16 templates/network/lagg_members2.html:17
 msgid "Edit Interface"
-msgstr ""
+msgstr "Wijzig Interface"
 
 #: templates/network/interface.html:41 templates/network/lagg.html:46
 msgid "Delete Interface"
-msgstr ""
+msgstr "Verwijder Interface"
 
 #: templates/network/interface.html:48 templates/network/summary.html:16
 msgid "No interfaces defined"
-msgstr ""
+msgstr "Geen interfaces gedefineerd"
 
 #: templates/network/interface.html:54 templates/network/interface.html:56
 msgid "Add Interface"
-msgstr ""
+msgstr "Interface Toevoegen"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
+#, fuzzy
 msgid "Actions"
-msgstr ""
+msgstr "Acties"
 
 #: templates/network/lagg.html:20
 msgid "Edit Members"
-msgstr ""
+msgstr "Leden Wijzigen"
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
-msgstr ""
+msgstr "LAGG Leden"
 
 #: templates/network/lagg.html:53 templates/network/lagg_members2.html:23
 msgid "No LAGG interface defined"
-msgstr ""
+msgstr "Geen LAGG interface gedefinieerd"
 
 #: templates/network/lagg.html:60
 msgid "Add LAGG Interface "
-msgstr ""
+msgstr "LAGG Interface Toevoegen"
 
 #: templates/network/lagg.html:62
 msgid "Add LAGG"
-msgstr ""
+msgstr "LAGG Toevoegen"
 
 #: templates/network/lagg_add_ok.html:1
 msgid "Lagg Interface was successfully added"
-msgstr ""
+msgstr "LAGG Interface is succesvol toegevoegd"
 
 #: templates/network/lagg_members2.html:6
 msgid "Ordering Priority"
@@ -3630,192 +3680,203 @@ msgstr ""
 
 #: templates/network/lagg_members2.html:7
 msgid "Startup option"
-msgstr ""
+msgstr "Opstart optie"
 
 #: templates/network/lagg_members2.html:8 templates/sharing/unix.html:15
+#, fuzzy
 msgid "Action"
-msgstr ""
+msgstr "Actie"
 
 #: templates/network/staticroute.html:5
 msgid "Destination"
-msgstr ""
+msgstr "Bestemming"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
-msgstr ""
+msgstr "Static Route Wijzigen"
 
 #: templates/network/staticroute.html:26
 msgid "Delete Static Route"
-msgstr ""
+msgstr "Static Route Verwijderen"
 
 #: templates/network/staticroute.html:33
 msgid "No static route defined"
-msgstr ""
+msgstr "Geen static route gedefinieerd"
 
 #: templates/network/staticroute.html:39 templates/network/staticroute.html:41
 msgid "Add Static Route"
-msgstr ""
+msgstr "Static Route Toevoegen"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
-msgstr ""
+msgstr "Naamserver"
 
 #: templates/network/summary.html:31
 msgid "No nameserver defined"
-msgstr ""
+msgstr "Geen naamserver gedefinieerd"
 
 #: templates/network/summary.html:37
 msgid "Default route"
-msgstr ""
+msgstr "Standaard route"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr ""
+msgstr "Geen Standaard route gedefinieerd"
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
-msgstr ""
+msgstr "VLAN Wijzigen"
 
 #: templates/network/vlan.html:27
 msgid "Delete VLAN"
-msgstr ""
+msgstr "VLAN Verwijderen"
 
 #: templates/network/vlan.html:34
 msgid "No VLAN defined"
-msgstr ""
+msgstr "Geen VLAN gedefinieerd"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
-msgstr ""
+msgstr "Voeg VLAN Interface toe"
 
 #: templates/registration/login.html:30
 msgid "Your username and password didn't match. Please try again."
 msgstr ""
+"Uw gebruikersnaam en wachtwoord kwamen niet overeen. Probeer het opnieuw."
 
+# %(username)s laten staan of vervangen door %(Gebruikersnaam)en?
 #: templates/registration/login.html:34
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr ""
+msgstr "Welkom, %(username)s. Bedankt voor het aanmelden."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
-msgstr ""
+msgstr "Afgemeld"
 
 #: templates/registration/logout.html:8
 msgid "You are now logged out."
-msgstr ""
+msgstr "U bent nu afgemeld"
 
 #: templates/registration/logout.html:8
 msgid "Log back in"
-msgstr ""
+msgstr "Meld opnieuw aan"
 
 #: templates/registration/password_change_done.html:20
 msgid "Success!"
-msgstr ""
+msgstr "Succes!"
 
 #: templates/registration/password_change_done.html:21
 msgid "Your password was changed."
-msgstr ""
+msgstr "Uw wachtwoord is veranderd"
 
 #: templates/registration/password_change_form.html:4
 msgid "Password change"
-msgstr ""
+msgstr "Wachtwoord verandering"
 
+# Meervoudsvorm 0=Enkelvoud?
 #: templates/registration/password_change_form.html:13
+#, fuzzy
 msgid "Please correct the error below."
 msgid_plural "Please correct the errors below."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Pas a.u.b. de fout hieronder aan"
+msgstr[1] "Pas a.u.b. de fouten hieronder aan"
 
 #: templates/registration/password_change_form.html:18
 msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
 msgstr ""
+"Vul a.u.b. uw oude wachtwoord in, en vul daarna 2 keer uw nieuwe wachtwoord "
+"in om te verifiëren of het correct getypt is. "
 
 #: templates/registration/password_change_form.html:48
 msgid "Password (again)"
-msgstr ""
+msgstr "Wachtwoord (opnieuw)"
 
 #: templates/services/index2.html:13
 msgid "AFP Settings"
-msgstr ""
+msgstr "AFP Instellingen"
 
 #: templates/services/index2.html:24
 msgid "ActiveDirectory Settings"
-msgstr ""
+msgstr "ActiveDirectory Instellingen"
 
 #: templates/services/index2.html:24
 msgid "Active Directory Settings"
-msgstr ""
+msgstr "Active Directory Instellingen"
 
 #: templates/services/index2.html:35
 msgid "CIFS Settings"
-msgstr ""
+msgstr "CIFS Instellingen"
 
 #: templates/services/index2.html:48
+#, fuzzy
 msgid "Dynamic DNS Settings"
-msgstr ""
+msgstr "Dynamic DNS Instellingen"
 
 #: templates/services/index2.html:59
 msgid "FTP Settings"
-msgstr ""
+msgstr "FTP Instellingen"
 
 #: templates/services/index2.html:70
 msgid "LDAP Settings"
-msgstr ""
+msgstr "LDAP Instellingen"
 
 #: templates/services/index2.html:81
 msgid "NFS Settings"
-msgstr ""
+msgstr "NFS Instellingen"
 
 #: templates/services/index2.html:92
 msgid "SNMP Settings"
-msgstr ""
+msgstr "SNMP Instellingen"
 
 #: templates/services/index2.html:103
 msgid "SSH Settings"
-msgstr ""
+msgstr "SSH Instellingen"
 
 #: templates/services/index2.html:114
 msgid "TFTP Settings"
-msgstr ""
+msgstr "TFTP Instellingen"
 
 #: templates/services/index2.html:119
 msgid "iSCSI"
-msgstr ""
+msgstr "iSCSI"
 
 #: templates/services/index2.html:127
 msgid "ISCSI Settings"
-msgstr ""
+msgstr "iSCSI Instellingen"
 
 #: templates/services/iscsi.html:3
 msgid "iSCSI Management"
-msgstr ""
+msgstr "iSCSI Beheer"
 
 #: templates/services/iscsi.html:7
 msgid "Targets"
-msgstr ""
+msgstr "Doelen"
 
 #: templates/services/iscsi.html:9
+#, fuzzy
 msgid "Device Extents"
-msgstr ""
+msgstr "Apparaat Grootte"
 
 #: templates/services/iscsi.html:11
+#, fuzzy
 msgid "Extents"
-msgstr ""
+msgstr "Omvang"
 
 #: templates/services/iscsi.html:13
 msgid "Associated Targets"
-msgstr ""
+msgstr "Geassocieerde Doelen "
 
 #: templates/services/iscsi.html:15
 msgid "Authentication"
-msgstr ""
+msgstr "Authentificatie"
 
 #: templates/services/iscsi.html:17
+#, fuzzy
 msgid "Authorized Initiator"
-msgstr ""
+msgstr "Geautoriseerde Initiatiefnemer"
 
 #: templates/services/iscsi.html:19
 msgid "Portals"
@@ -3833,7 +3894,7 @@ msgstr ""
 #: templates/services/iscsi_portals.html:33
 #: templates/services/iscsi_targets.html:34
 msgid "No targets defined"
-msgstr ""
+msgstr "Geen doelen gedefinieerd"
 
 #: templates/services/iscsi_assoctargets.html:39
 msgid "Add Extent to Target"
@@ -3853,7 +3914,7 @@ msgstr ""
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
-msgstr ""
+msgstr "Geautoriseerd Netwerk"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
@@ -3863,7 +3924,7 @@ msgstr ""
 #: templates/services/iscsi_dextents.html:6
 #: templates/services/iscsi_targets.html:6
 msgid "Alias"
-msgstr ""
+msgstr "Alias"
 
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
@@ -3874,7 +3935,7 @@ msgstr ""
 
 #: templates/services/iscsi_portals.html:6
 msgid "Listen"
-msgstr ""
+msgstr "Luister"
 
 #: templates/services/iscsi_portals.html:20
 msgid "Edit Portal"
@@ -3892,127 +3953,132 @@ msgstr ""
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
 msgid "Add Target"
-msgstr ""
+msgstr "Doel Toevoegen"
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
 msgid "Active Shares"
-msgstr ""
+msgstr "Actieve Shares"
 
 #: templates/sharing/apple.html:8
 msgid "There are no active Apple Shares."
-msgstr ""
+msgstr "Er zijn geen actieve Apple Shares."
 
 #: templates/sharing/apple.html:15 templates/sharing/windows.html:16
 #: templates/storage/replications.html:17 templates/storage/snapshots.html:8
 #: templates/storage/tasks.html:26 templates/storage/volumes.html:65
 msgid "Available actions"
-msgstr ""
+msgstr "Beschikbare Acties"
 
 #: templates/sharing/apple.html:30
 msgid "Edit Apple Share"
-msgstr ""
+msgstr "Wijzig Apple Share"
 
 #: templates/sharing/apple.html:36
 msgid "Delete Apple Share"
-msgstr ""
+msgstr "Verwijder Apple Share"
 
 #: templates/sharing/apple.html:43 templates/sharing/unix.html:43
 #: templates/sharing/windows.html:47
 msgid "No shares defined"
-msgstr ""
+msgstr "Geen Shares gedefinieerd"
 
 #: templates/sharing/apple.html:50
 msgid "Add Apple Share"
-msgstr ""
+msgstr "Apple Share Toevoegen"
 
 #: templates/sharing/apple.html:52
 msgid "Add Apple Share (AFP)"
-msgstr ""
+msgstr "Apple Share Toevoegen (AFP)"
 
 #: templates/sharing/index.html:3
 msgid "Apple"
-msgstr ""
+msgstr "Apple"
 
 #: templates/sharing/index.html:5
 msgid "UNIX"
-msgstr ""
+msgstr "UNIX"
 
 #: templates/sharing/index.html:7
 msgid "Windows"
-msgstr ""
+msgstr "Windows"
 
 #: templates/sharing/unix.html:8
 msgid "There are no active UNIX Shares."
-msgstr ""
+msgstr "Er zijn geen actieve UNIX Shares."
 
 #: templates/sharing/unix.html:13
+#, fuzzy
 msgid "Mountpoint"
-msgstr ""
+msgstr "Mountpoint"
 
 #: templates/sharing/unix.html:30
 msgid "Edit NFS Share"
-msgstr ""
+msgstr "NFS Share Wijzigen"
 
 #: templates/sharing/unix.html:36
 msgid "Delete NFS Share"
-msgstr ""
+msgstr "NFS Share Verwijderen"
 
 #: templates/sharing/unix.html:50
 msgid "Add UNIX Share"
-msgstr ""
+msgstr "UNIX Share Toevoegen"
 
 #: templates/sharing/unix.html:52
 msgid "Add UNIX Share (NFS)"
-msgstr ""
+msgstr "UNIX Share Toevoegen (NFS)"
 
 #: templates/sharing/windows.html:8
 msgid "There are no active Windows Shares."
-msgstr ""
+msgstr "Er zijn geen actieve Windows Shares"
 
 #: templates/sharing/windows.html:34
 msgid "Edit Windows Share"
-msgstr ""
+msgstr "Windows Share Wijzigen"
 
 #: templates/sharing/windows.html:40
 msgid "Delete Windows Share"
-msgstr ""
+msgstr "Windows Share Verwijderen"
 
 #: templates/sharing/windows.html:54
 msgid "Add Windows Share"
-msgstr ""
+msgstr "Windows Share Toevoegen"
 
 #: templates/sharing/windows.html:56
 msgid "Add Windows Share (CIFS)"
-msgstr ""
+msgstr "Windows Share Toevoegen (CIFS)"
 
 #: templates/storage/clonesnap.html:12
+#, fuzzy
 msgid "Clone Snapshot"
-msgstr ""
+msgstr "Snapshot klonen"
 
 #: templates/storage/dataset_edit.html:9
+#, fuzzy
 msgid "Edit Dataset"
-msgstr ""
+msgstr "Dataset Bewerken"
 
 #: templates/storage/datasets2.html:9
+#, fuzzy
 msgid "Add Dataset"
-msgstr ""
+msgstr "Dataset Toevoegen"
 
 #: templates/storage/disk_detach.html:7
 msgid "Are you sure you want to detach?"
-msgstr ""
+msgstr "Weet u zeker dat u wilt loskoppelen?"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
-msgstr ""
+msgstr "Schijf vervangen"
 
 #: templates/storage/import.html:32 templates/storage/wizard.html:43
 msgid "Filesystem type"
-msgstr ""
+msgstr "Type bestandssysteem"
 
 #: templates/storage/index.html:3 templates/storage/volumes.html:51
+#, fuzzy
 msgid "Active Volumes"
-msgstr ""
+msgstr "Actieve Volumes"
 
 #: templates/storage/index.html:5
 msgid "ZFS Replication"
@@ -4032,8 +4098,9 @@ msgid "Create Snapshot"
 msgstr ""
 
 #: templates/storage/permission.html:6
+#, fuzzy
 msgid "Change permission"
-msgstr ""
+msgstr "Toestemming veranderen"
 
 #: templates/storage/permission.html:7
 #, python-format
@@ -4042,11 +4109,12 @@ msgstr ""
 
 #: templates/storage/permission.html:11
 msgid "Change"
-msgstr ""
+msgstr "Verander"
 
 #: templates/storage/replications.html:9
+#, fuzzy
 msgid "Add Replication"
-msgstr ""
+msgstr "Voeg Replicatie Toe"
 
 #: templates/storage/replications.html:13
 msgid "Mount point"
@@ -4084,7 +4152,7 @@ msgstr ""
 
 #: templates/storage/snapshots.html:6
 msgid "Used space"
-msgstr ""
+msgstr "Gebruikte ruimte"
 
 #: templates/storage/snapshots.html:7
 msgid "Referenced space"
@@ -4238,15 +4306,15 @@ msgstr ""
 
 #: templates/storage/wizard.html:120
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "Bestaande data zal worden gewist"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
-msgstr ""
+msgstr "Het cache wordt opnieuw opgebouwd"
 
 #: templates/system/advanced_edit.html:19
 msgid "The cache could not be rebuilt"
-msgstr ""
+msgstr "Het cache kon niet herbouwd worden"
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
@@ -4254,23 +4322,23 @@ msgstr ""
 
 #: templates/system/config.html:2
 msgid "Restore to Factory Defaults"
-msgstr ""
+msgstr "Fabrieksinstellingen terugzetten"
 
 #: templates/system/config.html:4
 msgid "Save Config"
-msgstr "Config Opslaan"
+msgstr "Configuratie Opslaan"
 
 #: templates/system/config.html:6
 msgid "Upload Config"
-msgstr ""
+msgstr "Configuratie Uploaden"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr "herstarten..."
+msgstr "Bezig met herstarten..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
-msgstr ""
+msgstr "Weet u zeker dat u de fabrieksconfiguratie terug wil zetten?"
 
 #: templates/system/config_upload.html:34
 msgid "Update"
@@ -4290,7 +4358,7 @@ msgstr "om het uur"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
-msgstr ""
+msgstr "Uurlijke grafieken"
 
 #: templates/system/reporting.html:18
 msgid "Daily"
@@ -4330,11 +4398,11 @@ msgstr "Algemeen"
 
 #: templates/system/settings.html:11
 msgid "Firmware Update"
-msgstr ""
+msgstr "Firmware Update"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
-msgstr ""
+msgstr "Service Pack toepassen"
 
 #: templates/system/settings.html:15
 msgid "Config"
@@ -4346,20 +4414,22 @@ msgstr "Versie Besturingssysteem"
 
 #: templates/system/system_info.html:12
 msgid "Platform"
-msgstr ""
+msgstr "Platform"
 
 #: templates/system/system_info.html:16
 msgid "System Time"
 msgstr "Systeem tijd"
 
 #: templates/system/system_info.html:20
+#, fuzzy
 msgid "Uptime"
-msgstr ""
+msgstr "Online tijd"
 
 #: templates/system/system_info.html:24
 msgid "Load Average"
-msgstr ""
+msgstr "Gemiddelde belasting"
 
 #: templates/system/system_info.html:28
+#, fuzzy
 msgid "FreeNAS Build"
-msgstr ""
+msgstr "Freenas Build"

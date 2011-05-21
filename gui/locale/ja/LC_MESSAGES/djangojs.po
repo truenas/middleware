@@ -3,85 +3,88 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:22-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-05-20 18:56+0200\n"
+"Last-Translator: Kimimasa <ham@cer110.orz.ne.jp>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: media/lib/js/freeadmin.js:113
 msgid "Reporting"
-msgstr ""
+msgstr "報告"
 
 #: media/lib/js/freeadmin.js:125
 msgid "Settings"
-msgstr ""
+msgstr "設定"
 
 #: media/lib/js/freeadmin.js:136
 msgid "System Information"
-msgstr ""
+msgstr "システム情報"
 
 #: media/lib/js/freeadmin.js:176
 msgid "Network Settings"
-msgstr ""
+msgstr "ネットワーク設定"
 
 #: media/lib/js/freeadmin.js:238
 msgid "Services"
-msgstr ""
+msgstr "サービス"
 
 #: media/lib/js/freeadmin.js:278
 msgid "Account"
-msgstr ""
+msgstr "アカウント"
 
 #: media/lib/js/freeadmin.js:317
 msgid "Storage"
-msgstr ""
+msgstr "ストレージ"
 
 #: media/lib/js/freeadmin.js:344
+#, fuzzy
 msgid "CronJobs"
-msgstr ""
+msgstr "CronJobs(定期的な作業の実行)"
 
 #: media/lib/js/freeadmin.js:398
 msgid "Edit Disk"
-msgstr ""
+msgstr "ディスクの編集"
 
 #: media/lib/js/freeadmin.js:402
 msgid "Replace"
-msgstr ""
+msgstr "置換"
 
 #: media/lib/js/freeadmin.js:403
 msgid "Disk Replacement"
-msgstr ""
+msgstr "ディスクの入替え"
 
 #: media/lib/js/freeadmin.js:407
 msgid "Detach"
-msgstr ""
+msgstr "取り外し"
 
 #: media/lib/js/freeadmin.js:408
 msgid "Disk Detach"
-msgstr ""
+msgstr "ディスクの取り外し"
 
 #: media/lib/js/freeadmin.js:594
 msgid "Some error ocurried!"
-msgstr ""
+msgstr "エラーが発生しました。"
 
 #: media/lib/js/freeadmin/form/Cron.js:43
 msgid "Every"
-msgstr ""
+msgstr "全て"
 
 #: media/lib/js/freeadmin/form/Cron.js:51
+#, fuzzy
 msgid "Each selected"
-msgstr ""
+msgstr "選択したものそれぞれ"
 
 #: media/lib/js/freeadmin/form/Cron.js:96
+#, fuzzy
 msgid "Every N"
-msgstr ""
+msgstr "全N"
