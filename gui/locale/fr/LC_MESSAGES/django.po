@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:34-0700\n"
-"PO-Revision-Date: 2011-05-20 19:05+0200\n"
+"PO-Revision-Date: 2011-05-21 15:12+0200\n"
 "Last-Translator: Marion <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -121,19 +121,20 @@ msgstr "Niveau"
 
 #: choices.py:87
 msgid "Minimum power usage with Standby (spindown)"
-msgstr "Alimentation minimum avec mise en attente (arrêt des disques)"
+msgstr "Consommation d'énergie minimale avec mise en veille (arrêt du disque)"
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
-msgstr "Alimentation intermédiaire avec mise en attente"
+msgstr "Consommation d'énergie intermédiaire avec mise en veille"
 
 #: choices.py:90
 msgid "Minimum power usgae without Standby (no spindown)"
-msgstr "Alimentation minimum sans mise en attente (pas d'arrêt des disques)"
+msgstr ""
+"Consommation d'énergie minimale sans mise en veille (pas d'arrêt du disque)"
 
 #: choices.py:91
 msgid "Intermediate power usage withot Standby"
-msgstr "Alimentation intermédiaire sans mise en attente"
+msgstr "Consommation d'énergie intermédiaire sans mise en veille"
 
 #: choices.py:92
 msgid "Maximum performance, maximum power usage"
@@ -241,11 +242,11 @@ msgstr "Normal"
 
 #: choices.py:186
 msgid "Full"
-msgstr "Plein"
+msgstr "Complet"
 
 #: choices.py:187
 msgid "Debug"
-msgstr "Débugger"
+msgstr "Débogage"
 
 #: choices.py:191
 msgid "Default"
@@ -261,7 +262,7 @@ msgstr "Pas de changement de casse"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
-msgstr "Noms en minuscule dans les deux directions"
+msgstr "Noms en minuscule dans les deux côtés"
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
@@ -277,7 +278,7 @@ msgstr "Fichier"
 
 #: choices.py:204
 msgid "Device"
-msgstr "Appareil"
+msgstr "Périphérique"
 
 #: choices.py:205
 msgid "ZFS Volume"
@@ -323,11 +324,11 @@ msgstr "CHAP mutualisé"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr "UPS arrive à niveau bas de batterie"
+msgstr "Le niveau de batterie de l'onduleur est bas"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr "UPS est sur batterie"
+msgstr "L'onduleur est sur batterie"
 
 # Chiffrement bittorrent
 #: choices.py:250
@@ -2202,21 +2203,24 @@ msgstr "Version de Windows"
 msgid "The version of Microsoft Windows that Active Directory is running."
 msgstr "La version de Microsoft Windows utilisé par Active Directory."
 
+# Traduction "officielle" microsoft
 #: services/models.py:1053
 msgid "Service Principal Name"
-msgstr ""
+msgstr "Nom principal de service"
 
 #: services/models.py:1054
 msgid "Service Principal Name, eg service/account."
-msgstr ""
+msgstr "Nom principal de service, e.g. service/compte."
 
 #: services/models.py:1058
+#, fuzzy
 msgid "Service Principal Name Password"
-msgstr ""
+msgstr "Mot de passe du nom principal de service"
 
 #: services/models.py:1059
+#, fuzzy
 msgid "Password of the Service Principal Name account."
-msgstr ""
+msgstr "Mot de passe du compte nom principal de service."
 
 #: services/models.py:1063
 msgid "Kerberos Keytab File"
@@ -2248,26 +2252,35 @@ msgstr ""
 "e.g. dc=test,dc=org"
 
 #: services/models.py:1088
+#, fuzzy
 msgid "Allow Anonymous Binding"
-msgstr ""
+msgstr "Autoriser les liaisons anonymes"
 
+# A quoi correspond Root dans ce cas ?
 #: services/models.py:1091
+#, fuzzy
 msgid "Root bind DN"
-msgstr ""
+msgstr "DN de le liaison principale"
 
 #: services/models.py:1093
+#, fuzzy
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
+"Le Distinguished Name avec lequel se lier au serveur d'annuaire, e.g. "
+"cn=admin,dc=test,dc=org"
 
+# A quoi correspond Root dans ce cas ?
 #: services/models.py:1097
+#, fuzzy
 msgid "Root bind password"
-msgstr ""
+msgstr "Mot de passe de la liaison principale"
 
 #: services/models.py:1099
+#, fuzzy
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "Mot de passe utilisé pour faire la liaison."
 
 #: services/models.py:1104
 msgid "Password Encryption"

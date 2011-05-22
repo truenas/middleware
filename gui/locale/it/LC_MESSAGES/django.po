@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:37-0700\n"
-"PO-Revision-Date: 2011-05-21 10:59+0200\n"
+"PO-Revision-Date: 2011-05-21 11:43+0200\n"
 "Last-Translator: qwerty1965 <c.coppola@inwind.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
@@ -323,7 +323,7 @@ msgstr "Mutual CHAP"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr "batteria UPS scarica"
+msgstr "UPS batteria scarica"
 
 #: choices.py:247
 msgid "UPS goes on battery"
@@ -432,7 +432,7 @@ msgstr "Password"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
 msgid "Password confirmation"
-msgstr "Conferma Password "
+msgstr "Conferma Password"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
@@ -453,7 +453,7 @@ msgstr "Gruppo primario"
 
 #: account/forms.py:234
 msgid "A user with that username already exists."
-msgstr "Un utente con questo nome utente esiste già."
+msgstr "Un utente con questo nome utente già esiste."
 
 #: account/forms.py:242 account/forms.py:328 account/forms.py:470
 #: system/forms.py:225
@@ -471,6 +471,7 @@ msgid "This field is required."
 msgstr "Campo richiesto."
 
 #: account/forms.py:418
+#, fuzzy
 msgid "Member users"
 msgstr "utente iscritto"
 
@@ -514,7 +515,7 @@ msgstr "Gruppo"
 #: account/models.py:61
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr "Gruppo %s è stato creato e non può essere eliminato"
+msgstr "Gruppo %s è parte del sistema e non può essere eliminato"
 
 #: account/models.py:71
 msgid "User ID"
@@ -2239,51 +2240,56 @@ msgid "Allow Anonymous Binding"
 msgstr "Consente associazione anonima (Anonymous Binding)"
 
 #: services/models.py:1091
-#, fuzzy
 msgid "Root bind DN"
-msgstr "DN associato a Root"
+msgstr "Root bind DN"
 
 #: services/models.py:1093
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
+"Il nome distinto con cui eseguire il binding al direcory server, es. "
+"CN=admin,dc=test,dc=org"
 
 #: services/models.py:1097
 msgid "Root bind password"
-msgstr ""
+msgstr "Root bind password"
 
 #: services/models.py:1099
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "Credenziali per eseguire il bind."
 
 #: services/models.py:1104
 msgid "Password Encryption"
-msgstr ""
+msgstr "Password Encryption"
 
 #: services/models.py:1105
 msgid "The password change protocol to use."
-msgstr ""
+msgstr "La password cambia il protocollo da utilizzare."
 
 #: services/models.py:1109
 msgid "User Suffix"
-msgstr ""
+msgstr "User Suffix"
 
 #: services/models.py:1111
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
 msgstr ""
+"Questo parametro specifica il suffisso che viene utilizzato per gli utenti, "
+"quando questi vengono aggiunti alla Directory LDAP, es. ou=Users"
 
 #: services/models.py:1115
 msgid "Group Suffix"
-msgstr ""
+msgstr "Group Suffix"
 
 #: services/models.py:1117
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
+"Questo parametro specifica il suffisso che viene utilizzato per i gruppi, "
+"quando questi vengono aggiunti alla Directory LDAP, es. ou=Groups"
 
 #: services/models.py:1121
 msgid "Password Suffix"
@@ -4485,8 +4491,8 @@ msgstr ""
 
 #: templates/system/system_info.html:24
 msgid "Load Average"
-msgstr ""
+msgstr "Carico Medio"
 
 #: templates/system/system_info.html:28
 msgid "FreeNAS Build"
-msgstr ""
+msgstr "Versione FreeNAS"

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-21 10:55+0200\n"
-"Last-Translator: Kimimasa <ham@cer110.orz.ne.jp>\n"
+"PO-Revision-Date: 2011-05-22 10:59+0200\n"
+"Last-Translator: OrderFoots <forestdoor@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -229,56 +229,52 @@ msgid "Sunday"
 msgstr "日曜"
 
 #: choices.py:163
-#, fuzzy
 msgid "Anonymous"
-msgstr "Anonymous"
+msgstr "Anonymous（匿名ユーザ）"
 
 #: choices.py:164
-#, fuzzy
 msgid "Local User"
-msgstr "Local User"
+msgstr "Local User（ローカルユーザ）"
 
+# log levelの設定だと思われます。
+# カタカナだけだと、致命的な設定ミスを誘発しかねないので、元の単語を併記します。
 #: choices.py:185
-#, fuzzy
 msgid "Normal"
-msgstr "Normal"
+msgstr "ノーマル（Normal）"
 
+# log levelの設定だと思われます。
+# カタカナだけだと、致命的な設定ミスを誘発しかねないので、元の単語を併記します。
 #: choices.py:186
-#, fuzzy
 msgid "Full"
-msgstr "Full"
+msgstr "フル（Full）"
 
+# log levelの設定だと思われます。
+# カタカナだけだと、致命的な設定ミスを誘発しかねないので、元の単語を併記します。
 #: choices.py:187
-#, fuzzy
 msgid "Debug"
-msgstr "Debug"
+msgstr "デバッグ（Debug）"
 
 #: choices.py:191
-#, fuzzy
 msgid "Default"
-msgstr "Default"
+msgstr "デフォルト"
 
 #: choices.py:192
 msgid "Time Machine"
 msgstr "Time Machine"
 
 #: choices.py:195
-#, fuzzy
 msgid "No case folding"
 msgstr "大文字/小文字をそのまま表示"
 
 #: choices.py:196 choices.py:197
-#, fuzzy
 msgid "Lowercase names in both directions"
 msgstr "クライアント/サーバとも小文字で表示"
 
 #: choices.py:198
-#, fuzzy
 msgid "Client sees lowercase, server sees uppercase"
 msgstr "クライアントは小文字、サーバは大文字で表示"
 
 #: choices.py:199
-#, fuzzy
 msgid "Client sees uppercase, server sees lowercase"
 msgstr "クライアントは大文字、サーバは小文字で表示"
 
@@ -292,7 +288,7 @@ msgstr "デバイス"
 
 #: choices.py:205
 msgid "ZFS Volume"
-msgstr "ZFSボリューム"
+msgstr "ZFS ボリューム"
 
 #: choices.py:209 storage/models.py:137 templates/storage/autoimport.html:9
 #: templates/storage/import.html:18 templates/storage/wizard.html:91
@@ -304,12 +300,10 @@ msgid "DVD"
 msgstr "DVD"
 
 #: choices.py:211
-#, fuzzy
 msgid "Tape"
 msgstr "テープドライブ"
 
 #: choices.py:212
-#, fuzzy
 msgid "Pass"
 msgstr "パススルー"
 
@@ -328,21 +322,20 @@ msgid "None"
 msgstr "指定無し"
 
 #: choices.py:223
-#, fuzzy
 msgid "CHAP"
-msgstr "CHAP"
+msgstr "CHAP 認証"
 
 #: choices.py:224
 msgid "Mutual CHAP"
-msgstr "相互CHAP"
+msgstr "相互 CHAP 認証"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr "UPS のバッテリ残量が少なくなりました"
+msgstr "UPS のバッテリ残量が少なくなりました。"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr "UPSはバッテリ駆動になりました"
+msgstr "UPS はバッテリ駆動になりました。"
 
 #: choices.py:250
 msgid "Preferred"
@@ -373,17 +366,14 @@ msgid "lzjb (recommended)"
 msgstr "lzjb（推奨）"
 
 #: choices.py:288
-#, fuzzy
 msgid "default level"
 msgstr "デフォルト"
 
 #: choices.py:289
-#, fuzzy
 msgid "fastest"
-msgstr "最も高速"
+msgstr "最も高速な圧縮"
 
 #: choices.py:290
-#, fuzzy
 msgid "maximum, slow"
 msgstr "最大の圧縮率（低速）"
 
@@ -399,9 +389,8 @@ msgstr "日間"
 msgid "Week(s)"
 msgstr "週間"
 
-# 箇月/ヶ月/か月 など どれでも 統一した方がいい？
+# 箇月/ヶ月/か月 など どれでも 統一した方がいい？＞ヶ月間に統一します
 #: choices.py:434
-#, fuzzy
 msgid "Month(s)"
 msgstr "ヶ月間"
 
@@ -422,7 +411,6 @@ msgid "Available"
 msgstr "利用可能"
 
 #: account/forms.py:144
-#, fuzzy
 msgid "Selected"
 msgstr "選択済み"
 
@@ -435,16 +423,16 @@ msgstr "ユーザ名"
 
 # ちょっと前半の日本語がおかしい
 #: account/forms.py:173 account/forms.py:198
-#, fuzzy
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr "30字より少ない文字数が必要です（アルファベット、数字、\"@\"、\".\"、\"+\"、\"-\"、\"_\"が使用可能です）"
+msgstr "この項目は必須です。半角英数と、\"@\"、\".\"、\"+\"、\"-\"、\"_\"を用いて、30文字以下で指定してください。"
 
 #: account/forms.py:174 account/forms.py:199
-#, fuzzy
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr "この値には、アルファベット、数字、\"@\"、\".\"、\"+\"、\"-\"、\"_\"が使用可能です"
+msgstr "この値には、半角英数、\"@\"、\".\"、\"+\"、\"-\"、\"_\"が使用可能です。"
 
+# 表記の揺れ。
 #: account/forms.py:175
+#, fuzzy
 msgid "E-mail"
 msgstr "E-mail"
 
@@ -465,7 +453,7 @@ msgstr "確認のため、上の項目と同じパスワードを入力してく
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
 msgid "Shell"
-msgstr "Shell"
+msgstr "シェル"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
@@ -477,27 +465,24 @@ msgstr "プライマリグループ"
 
 #: account/forms.py:234
 msgid "A user with that username already exists."
-msgstr "同じユーザ名が存在します"
+msgstr "同じユーザ名が存在します。"
 
 #: account/forms.py:242 account/forms.py:328 account/forms.py:470
 #: system/forms.py:225
 msgid "The two password fields didn't match."
-msgstr "二つのパスワードが一致していません"
+msgstr "二つのパスワードが一致していません。"
 
 #: account/forms.py:247 account/forms.py:372
-#, fuzzy
 msgid "Home directory has to start with /mnt/"
-msgstr "ホームディレクトリは /mnt/ から始まる必要があります"
+msgstr "ホームディレクトリは /mnt/ から始まる必要があります。"
 
 #: account/forms.py:261 account/forms.py:265 services/forms.py:469
 #: services/forms.py:482 services/forms.py:699 storage/forms.py:223
 #: system/forms.py:268 system/forms.py:291
-#, fuzzy
 msgid "This field is required."
-msgstr "この項目は必須です"
+msgstr "この項目は必須です。"
 
 #: account/forms.py:418
-#, fuzzy
 msgid "Member users"
 msgstr "メンバユーザ"
 
@@ -518,9 +503,8 @@ msgid "Old password"
 msgstr "古いパスワード"
 
 #: account/forms.py:492
-#, fuzzy
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr "古いパスワードが正しくありません 再度入力してください"
+msgstr "古いパスワードが正しくありません 再度入力してください。"
 
 #: account/models.py:36 services/models.py:460 services/models.py:505
 #: templates/services/iscsi_auth.html:5
@@ -546,18 +530,17 @@ msgstr "%s は組み込みグループのため削除できません！"
 
 #: account/models.py:71
 msgid "User ID"
-msgstr "ユーザID"
+msgstr "ユーザ ID"
 
 #: account/models.py:76
 msgid "User &"
-msgstr ""
+msgstr "ユーザ &"
 
 #: account/models.py:83
 msgid "Hashed UNIX password"
-msgstr "UNIX パスワードのハッシュ"
+msgstr "Unix パスワードのハッシュ"
 
 #: account/models.py:89
-#, fuzzy
 msgid "Hashed SMB password"
 msgstr "SMB パスワードのハッシュ"
 
@@ -598,14 +581,12 @@ msgid "My Account"
 msgstr "マイアカウント"
 
 #: account/nav.py:41
-#, fuzzy
 msgid "View All Users"
-msgstr "全てのユーザを表示"
+msgstr "すべてのユーザを表示"
 
 #: account/nav.py:54
-#, fuzzy
 msgid "View All Groups"
-msgstr "全てグループを表示"
+msgstr "すべてグループを表示"
 
 #: account/views.py:79 account/views.py:94 account/views.py:105
 #: account/views.py:120
@@ -632,7 +613,6 @@ msgid ""
 msgstr "入力内容が失効しました。このページから入力し直して下さい。"
 
 #: freeadmin/navtree.py:349
-#, fuzzy
 msgid "Display System Processes"
 msgstr "システムのプロセスを表示"
 
@@ -662,32 +642,31 @@ msgstr "%s を削除しました。"
 #: network/forms.py:67
 #, fuzzy
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "ネームサーバ3を指定する前に、ネームサーバ2を指定する必要があります"
+msgstr "ネームサーバ 3 を指定する前に、ネームサーバ 2 を指定する必要があります。"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
-#, fuzzy
 msgid "Required when using nameserver 3"
-msgstr "ネームサーバ3を使用する場合必要です。"
+msgstr "ネームサーバ 3 を使用する場合、必要です。"
 
 #: network/forms.py:74
 #, fuzzy
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr "ネームサーバ3を指定する前に、ネームサーバ1を指定する必要があります"
+msgstr "ネームサーバ 3 を指定する前に、ネームサーバ 1 を指定する必要があります。"
 
 #: network/forms.py:85
 #, fuzzy
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr "ネームサーバ2を指定する前に、ネームサーバ1を指定する必要があります"
+msgstr "ネームサーバ 2 を指定する前に、ネームサーバ 1 を指定する必要があります。"
 
 #: network/forms.py:134
-#, fuzzy
 msgid "Physical NICs in the LAGG"
-msgstr "LAGGを構成する物理NIC"
+msgstr "LAGG を構成する物理 NIC"
 
+# 自信がないので、ヘルプをお願いします。
 #: network/forms.py:187
-#, python-format
+#, fuzzy, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "'%s' は無効なネットワーク名です。CIDR 記法で指定してください。"
 
 #: network/models.py:42 services/models.py:1077
 #: templates/system/system_info.html:4
@@ -724,14 +703,12 @@ msgid "Global Configuration"
 msgstr "全体的な設定"
 
 #: network/models.py:95
-#, fuzzy
 msgid "NIC"
 msgstr "NIC"
 
 #: network/models.py:96
-#, fuzzy
 msgid "Pick your NIC"
-msgstr "NICを指定してください"
+msgstr "NIC を指定してください。"
 
 #: network/models.py:101
 msgid "Interface Name"
@@ -739,44 +716,41 @@ msgstr "インターフェース名"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr "NIC名"
+msgstr "NIC 名"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
 msgstr "DHCP"
 
 #: network/models.py:107
-#, fuzzy
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
-msgstr "有効にすると、DHCPを使ってデフォルトルータなどからIPv4アドレスを取得します"
+msgstr "有効にすると、DHCP を使ってデフォルトルータなどからIPv4 アドレスを取得します。"
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr "IPv4アドレス"
+msgstr "IPv4 アドレス"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr "IPv4ネットマスク"
+msgstr "IPv4 ネットマスク"
 
 #: network/models.py:126
-#, fuzzy
 msgid "Auto configure IPv6"
-msgstr "IPv6自動構成"
+msgstr "IPv6 自動構成"
 
 #: network/models.py:127
-#, fuzzy
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr "有効にすると、rtsol(8)を経由してIPv6アドレスを自動構成します"
+msgstr "有効にすると、rtsol(8) を経由して IPv6 アドレスを自動構成します。"
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr "IPv6アドレス"
+msgstr "IPv6 アドレス"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr "IPv6ネットマスク"
+msgstr "IPv6 ネットマスク"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
@@ -793,9 +767,8 @@ msgid "Virtual Interface"
 msgstr "仮想インターフェース"
 
 #: network/models.py:173
-#, fuzzy
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr "インターフェース名は、vlanXX（XXは数字）である必要があります"
+msgstr "インターフェース名は、vlanXX（XXは数字）である必要があります。"
 
 #: network/models.py:178 templates/network/lagg_members2.html:5
 #: templates/network/vlan.html:6
@@ -843,7 +816,7 @@ msgstr "リンクアグリゲーション"
 #: network/models.py:268
 #, fuzzy
 msgid "Destination network"
-msgstr "Destinationネットワーク"
+msgstr "Destination ネットワーク"
 
 #: network/models.py:272 templates/network/staticroute.html:6
 msgid "Gateway"
@@ -854,7 +827,6 @@ msgid "Static Route"
 msgstr "静的ルート"
 
 #: network/nav.py:10 templates/network/index2.html:13
-#, fuzzy
 msgid "Network Summary"
 msgstr "ネットワークサマリ"
 
@@ -899,14 +871,13 @@ msgstr "ゲストアカウント"
 #: services/forms.py:86 services/forms.py:130 services/forms.py:246
 #: sharing/forms.py:82 sharing/forms.py:190 sharing/forms.py:198
 #: storage/forms.py:799
-#, fuzzy, python-format
+#, python-format
 msgid "The user %s is not valid."
 msgstr "%s は無効なユーザ名です。"
 
 #: services/forms.py:96
-#, fuzzy
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr "この項目は、\"ホームディレクトリの閲覧を有効にする\" のために必要です"
+msgstr "この項目は、\"ホームディレクトリの閲覧を有効にする\" のために必要です。"
 
 #: services/forms.py:99
 msgid "This field is required for \"Home directories\"."
@@ -923,34 +894,34 @@ msgstr "ディレクトリパーミッション"
 #: services/forms.py:165
 #, fuzzy
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr "この値は、0以上、65535以下である必要があります"
+msgstr "この値は、0 以上、65535 以下である必要があります。"
 
 #: services/forms.py:171 services/forms.py:189
 #, fuzzy
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr "この値は、0以上、10000以下である必要があります"
+msgstr "この値は、0 以上、10000 以下である必要があります。"
 
 #: services/forms.py:177 services/forms.py:183
 #, fuzzy
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr "この値は、0以上、1000以下である必要があります"
+msgstr "この値は、0 以上、1000 以下である必要があります。"
 
 # 「0は初期値です」の方がよい？
 #: services/forms.py:195
 #, fuzzy
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr "この値は、1024以上、65535以下である必要があります 0が初期値です"
+msgstr "この値は、1024 以上、65535 以下である必要があります。 0 が初期値です。"
 
 # 「0は初期値です」のほうがよい？
 #: services/forms.py:201
 #, fuzzy
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr "この値は、1024以上、65535以下である必要があります 0が初期値です"
+msgstr "この値は、1024 以上、65535 以下である必要があります。 0 が初期値です。"
 
 #: services/forms.py:220
 #, fuzzy
 msgid "This field is required for anonymous login"
-msgstr "この項目は、anonymousログインのために必要です"
+msgstr "この項目は、匿名ログインのために必要です。"
 
 #: services/forms.py:294 services/models.py:514
 #: templates/services/iscsi_auth.html:7
@@ -966,9 +937,8 @@ msgid "Secret (Confirm)"
 msgstr "シークレット（確認）"
 
 #: services/forms.py:298 services/forms.py:306
-#, fuzzy
 msgid "Enter the same secret above for verification."
-msgstr "確認のため、上の項目と同じシークレットを入力してください"
+msgstr "確認のため、上の項目と同じシークレットを入力してください。"
 
 #: services/forms.py:299
 msgid "Initiator Secret"
@@ -977,7 +947,7 @@ msgstr "イニシエータシークレット"
 #: services/forms.py:301 services/models.py:521 services/models.py:526
 #, fuzzy
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr "イニシエータ側のシークレット（相互CHAP認証に使われます）"
+msgstr "イニシエータ側のシークレット（相互 CHAP 認証に使われます。）"
 
 #: services/forms.py:304
 msgid "Initiator Secret (Confirm)"
@@ -988,35 +958,29 @@ msgid "Secret does not match"
 msgstr "シークレットが一致しません"
 
 #: services/forms.py:328 services/forms.py:329
-#, fuzzy
 msgid "The peer secret is required if you set a peer user."
-msgstr "この項目は、ピアユーザを設定する場合必須です。"
+msgstr "この項目は、ピアユーザを設定する場合、必須です。"
 
 #: services/forms.py:332
-#, fuzzy
 msgid "The peer secret cannot be the same as user secret."
-msgstr "ピアシークレットは、ユーザシークレットと異なる必要があります"
+msgstr "ピアシークレットは、ユーザシークレットと異なる必要があります。"
 
 #: services/forms.py:375
-#, fuzzy
 msgid "LUN already exists in the same target."
-msgstr "同じターゲット内にLUNが存在します"
+msgstr "同じターゲット内に LUN が存在します。"
 
 #: services/forms.py:384 services/models.py:354
-#, fuzzy
 msgid "Controller Auth Group"
 msgstr "コントローラ認証グループ"
 
 # ちょいと日本語が硬い
 #: services/forms.py:385 services/models.py:355
-#, fuzzy
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
-msgstr "istgtcontrolは、特定の認証グループ内の正しいユーザとシークレットが指定されたターゲットにアクセスすることができます"
+msgstr "istgtcontrolは、特定の認証グループ内の正しいユーザとシークレットが指定されたターゲットにアクセスすることができます。"
 
 #: services/forms.py:386 services/models.py:248
-#, fuzzy
 msgid "Discovery Auth Group"
 msgstr "認証グループの探索"
 
@@ -1026,36 +990,34 @@ msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr "この値は%(start)dから%(end)dまでで指定して下さい。"
 
 #: services/forms.py:421
-#, fuzzy
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutal."
-msgstr "この項目は、探索方法としてCHAP、相互CHAPを指定した場合に必要です"
+msgstr "この項目は、探索方法として CHAP、相互 CHAP を指定した場合に必要です。"
 
 # 「明示」ではなくて「指定」かも
 #: services/forms.py:502 services/forms.py:530
 #, fuzzy
 msgid "You need to specify a filepath, not a directory."
-msgstr "ディレクトリではなく、ファイルパスを明示する必要があります"
+msgstr "ディレクトリではなく、ファイルパスを明示する必要があります。"
 
 # 「明示」ではなくて「指定」かも
 #: services/forms.py:506 services/forms.py:534
 #, fuzzy
 msgid "You need to specify a file inside your volume/dataset."
-msgstr "ボリューム内かデータセット内のファイルを明示する必要があります"
+msgstr "ボリューム内かデータセット内のファイルを明示する必要があります。"
 
 # 日本語が硬い
 #: services/forms.py:510 services/forms.py:538
 #, fuzzy
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
-msgstr "エクステントのパスは、ボリュームやデータセットのマウントポイントの内側に属している必要があります"
+msgstr "エクステントのパスは、ボリュームやデータセットのマウントポイントの内側に属している必要があります。"
 
 # 意訳
 #: services/forms.py:552
-#, fuzzy
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
-msgstr "この値はバイト単位で指定します もしくは、単位としてKB、MB、GB、TBを使って指定します"
+msgstr "この値は、バイト単位で指定します。もしくは、単位としてKB、MB、GB、TBを使って指定します。"
 
 #: services/forms.py:571
 msgid "Disk device"
@@ -1064,12 +1026,12 @@ msgstr "ディスクデバイス"
 #: services/forms.py:658
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr "Portal Group IDは%d以下にして下さい。"
+msgstr "Portal Group IDは %d 以下にして下さい。"
 
 #: services/forms.py:678
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr "Group IDは%d以下にして下さい。"
+msgstr "Group ID は %d 以下にして下さい。"
 
 #: services/forms.py:685
 msgid "Authentication Group number"
@@ -1120,9 +1082,8 @@ msgid ""
 msgstr "サーバのワークグループ名（最大15文字）"
 
 #: services/models.py:77
-#, fuzzy
 msgid "Server description. This can usually be left blank."
-msgstr "サーバの説明。通常は空白のままで構いません。"
+msgstr "サーバの説明を記述します。通常は空白のままで構いません。"
 
 #: services/models.py:83
 msgid "DOS charset"
@@ -1187,14 +1148,12 @@ msgid ""
 msgstr "このオプションはディレクトリ作成時のマスクを上書きします(デフォルトは0777）"
 
 #: services/models.py:124
-#, fuzzy
 msgid "Large RW support"
 msgstr "Large RW サポート"
 
 #: services/models.py:126
-#, fuzzy
 msgid "Send files with sendfile(2)"
-msgstr "sendfile(2)を用いて送信"
+msgstr "sendfile(2) を用いて送信"
 
 #: services/models.py:128
 msgid "EA Support"
@@ -1214,18 +1173,16 @@ msgid "Auxiliary parameters"
 msgstr "補助パラメータ"
 
 #: services/models.py:137
-#, fuzzy
 msgid "These parameters are added to [Global] section of smb.conf"
-msgstr "このパラメータは、smb.confの[Global]セクションに追加されます"
+msgstr "このパラメータは、smb.conf の [Global] セクションに追加されます。"
 
 #: services/models.py:140
 msgid "Enable home directories"
 msgstr "ホームディレクトリの有効化"
 
 #: services/models.py:141
-#, fuzzy
 msgid "This enables\\disables home directories for samba user."
-msgstr "この設定は、sambaユーザのホームディレクトリを有効、または無効にします"
+msgstr "この設定は、samba ユーザのホームディレクトリを有効、または無効にします"
 
 #: services/models.py:144
 #, fuzzy
@@ -1236,7 +1193,7 @@ msgstr "ホームディレクトリの閲覧を有効化"
 #: services/models.py:145
 #, fuzzy
 msgid "This enables\\disables home directories browsing for samba user."
-msgstr "この設定は、sambaユーザのホームディレクトリの閲覧を有効、または無効にします"
+msgstr "この設定は、samba ユーザによるホームディレクトリの閲覧を有効、または無効にします。"
 
 #: services/models.py:149
 msgid "Home directories"
@@ -1247,14 +1204,13 @@ msgid "Enable AIO"
 msgstr "AIOの有効化"
 
 #: services/models.py:156
-#, fuzzy
 msgid "This enables\\disables AIO support."
-msgstr "この設定は、AIO サポートを有効、もしくは無効にします"
+msgstr "この設定は、AIO サポートを有効、もしくは無効にします。"
 
 #: services/models.py:160
 #, fuzzy
 msgid "Minimal AIO read size"
-msgstr "AIOリードサイズの最小値"
+msgstr "AIO リードサイズの最小値"
 
 #: services/models.py:161
 msgid ""
@@ -1263,9 +1219,8 @@ msgid ""
 msgstr "リクエストサイズがこの値よりも大きい場合Sambaは非同期でデータを読み込みます。　デフォルトの読み込みサイズは１です"
 
 #: services/models.py:166
-#, fuzzy
 msgid "Minimal AIO write size"
-msgstr "AIOライトサイズの最小値"
+msgstr "AIO ライトサイズの最小値"
 
 #: services/models.py:167
 msgid ""
@@ -1320,7 +1275,7 @@ msgstr "全ての Apple 共有でローカルアカウントによるアクセ�
 
 #: services/models.py:200
 msgid "Enable DDP"
-msgstr "DDPの有効化"
+msgstr "DDP の有効化"
 
 #: services/models.py:201
 msgid "Enables DDP support for low-level appletalk access."
@@ -1336,10 +1291,11 @@ msgid "Number of servers"
 msgstr "サーバーの数"
 
 #: services/models.py:216
+#, fuzzy
 msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
-msgstr ""
+msgstr "サーバの作成数を設定します。クライアントから問題なく同時実行できる範囲で指定して下さい。一般に4-6程度です。"
 
 #: services/models.py:220
 msgid "Asynchronous mode"
@@ -1386,36 +1342,34 @@ msgstr "I/Oタイムアウトを秒単位で指定します（初期値は30で�
 
 #: services/models.py:261
 msgid "NOPIN Interval"
-msgstr "NOPIN間隔"
+msgstr "NOPIN 間隔"
 
 #: services/models.py:262
 msgid "NOPIN sending interval in seconds (20 by default)."
 msgstr "NOPINを送信する間隔を秒単位で指定します（初期値は20です）"
 
 #: services/models.py:267
-#, fuzzy
 msgid "Max. sessions"
 msgstr "セッションの最大値"
 
 #: services/models.py:268
 #, fuzzy
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr "同時に保持するセッションの最大値を指定します（初期値は16です）"
+msgstr "同時に保持するセッションの最大値を指定します。（初期値は 16 です。）"
 
 #: services/models.py:273
-#, fuzzy
 msgid "Max. connections"
 msgstr "コネクションの最大値"
 
 #: services/models.py:274
 #, fuzzy
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr "それぞれのセッションにおけるコネクションの最大値を指定します（初期値は8です）"
+msgstr "それぞれのセッションにおけるコネクションの最大値を指定します。（初期値は 8 です。）"
 
 #: services/models.py:279
 #, fuzzy
 msgid "Max. pre-send R2T"
-msgstr "pre-send R2Tの最大値"
+msgstr "pre-send R2T の最大値"
 
 #: services/models.py:280
 #, fuzzy
@@ -1423,19 +1377,19 @@ msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
 msgstr ""
-"それぞれのコネクションにおけるpre-send "
-"R2Tの最大値を指定します（初期値は32です）実際の値は、ターゲットのQueueDepthによって制限されます"
+"それぞれのコネクションにおける pre-send R2T の最大値を指定します。（初期値は 32 です。）実際の値は、ターゲットの QueueDepth "
+"によって制限されます。"
 
 # Outstandingの訳が微妙
 #: services/models.py:285
 #, fuzzy
 msgid "MaxOutstandingR2T"
-msgstr "未解決R2Tの最大値"
+msgstr "未解決 R2T の最大値"
 
 #: services/models.py:286
 #, fuzzy
 msgid "iSCSI initial parameter (16 by default)."
-msgstr "iSCSIの初期パラメータを指定します（初期値は16です）"
+msgstr "iSCSI の初期パラメータを指定します。（初期値は 16 です）"
 
 #: services/models.py:291
 msgid "First burst length"
@@ -1444,7 +1398,7 @@ msgstr "バースト長の初期値"
 #: services/models.py:292
 #, fuzzy
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr "iSCSIの初期パラメータを指定します（初期値は65536です）"
+msgstr "iSCSIの初期パラメータを指定します。（初期値は 65536 です。）"
 
 #: services/models.py:297
 #, fuzzy
@@ -1454,7 +1408,7 @@ msgstr "バースト長の最大値"
 #: services/models.py:298 services/models.py:304
 #, fuzzy
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr "iSCSIの初期パラメータを指定します（初期値は262144です）"
+msgstr "iSCS Iの初期パラメータを指定します。（初期値は 262144 です。）"
 
 #: services/models.py:303
 #, fuzzy
@@ -1462,24 +1416,22 @@ msgid "Max receive data segment length"
 msgstr "受信データセグメント長の最大値"
 
 #: services/models.py:309
-#, fuzzy
 msgid "DefaultTime2Wait"
-msgstr "Time2Waitの初期値"
+msgstr "Time2Wait の初期値"
 
 #: services/models.py:310
 #, fuzzy
 msgid "iSCSI initial parameter (2 by default)."
-msgstr "iSCSIの初期パラメータを指定します（初期値は2です）"
+msgstr "iSCSI の初期パラメータを指定します。（初期値は 2 です。）"
 
 #: services/models.py:315
-#, fuzzy
 msgid "DefaultTime2Retain"
-msgstr "Time2Retainの初期値"
+msgstr "Time2Retain の初期値"
 
 #: services/models.py:316
 #, fuzzy
 msgid "iSCSI initial parameter (60 by default)."
-msgstr "iSCSIの初期パラメータを指定します（初期値は60です）"
+msgstr "iSCSI の初期パラメータを指定します。（初期値は 60 です。）"
 
 #: services/models.py:321
 msgid "Enable LUC"
@@ -1492,17 +1444,16 @@ msgstr "コントローラのIPアドレス"
 #: services/models.py:326
 #, fuzzy
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
-msgstr "論理ユニットコントローラのIPアドレスを指定します（初期値は127.0.0.1（localhost）です）"
+msgstr "論理ユニットコントローラのIPアドレスを指定します。（初期値は 127.0.0.1（localhost）です。）"
 
 #: services/models.py:332
-#, fuzzy
 msgid "Controller TCP port"
-msgstr "コントローラのTCPポート"
+msgstr "コントローラの TCP ポート"
 
 #: services/models.py:333
 #, fuzzy
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr "論理ユニットコントローラのTCPポートを指定します（初期値は3261です）"
+msgstr "論理ユニットコントローラの TCP ポートを指定します。（初期値は 3261 です。）"
 
 # 表現が正確でないかも
 #: services/models.py:339
@@ -1513,7 +1464,7 @@ msgstr "コントローラの認証されたネットマスク"
 #: services/models.py:341
 #, fuzzy
 msgid "Logical Unit Controller Authorised netmask (255.255.255.0 by default)"
-msgstr "コントローラの認証されたネットマスクを指定します（初期値は255.255.255.0です）"
+msgstr "コントローラの認証されたネットマスクを指定します。（初期値は 255.255.255.0 です。）"
 
 #: services/models.py:348
 #, fuzzy
@@ -1523,7 +1474,7 @@ msgstr "コントローラの認証方法"
 #: services/models.py:349
 #, fuzzy
 msgid "The method can be accepted in the controller."
-msgstr "コントローラの受け付ける認証方法を指定します"
+msgstr "コントローラの受け付ける認証方法を指定します。"
 
 #: services/models.py:361 services/models.py:362
 #: templates/services/iscsi.html:5
@@ -1532,14 +1483,13 @@ msgid "Target Global Configuration"
 msgstr "ターゲットの全体的な設定"
 
 #: services/models.py:373
-#, fuzzy
 msgid "Extent Name"
 msgstr "エクステント名"
 
 #: services/models.py:374
 #, fuzzy
 msgid "String identifier of the extent."
-msgstr "エクステントを識別する文字列を指定します"
+msgstr "エクステントを識別する文字列を指定します。"
 
 #: services/models.py:378
 msgid "Extent Type"
@@ -1548,7 +1498,7 @@ msgstr "エクステントタイプ"
 #: services/models.py:379
 #, fuzzy
 msgid "Type used as extent."
-msgstr "エクステントのタイプを指定します"
+msgstr "エクステントのタイプを指定します。"
 
 #: services/models.py:384
 #, fuzzy
@@ -1558,7 +1508,7 @@ msgstr "エクステントへのパス"
 #: services/models.py:385
 #, fuzzy
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
-msgstr "エクステントのファイルパス（例:/mnt/sharename/extent/extent0）を指定します"
+msgstr "エクステントのファイルパス（例: /mnt/sharename/extent/extent0 ）を指定します。"
 
 #: services/models.py:390
 msgid "Extent size"
@@ -1570,7 +1520,8 @@ msgstr "エクステントサイズ"
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
-msgstr "エクステントのサイズをbyte単位で指定します 0を指定すると自動になります また単位として、KB、MB、TBを使用することができます"
+msgstr ""
+"エクステントのサイズを byte 単位で指定します。0 を指定すると自動になります。また単位として、KB、MB、TB を使用することができます。"
 
 #: services/models.py:396 services/models.py:431 services/models.py:477
 #: sharing/models.py:45 sharing/models.py:219
@@ -1583,7 +1534,7 @@ msgstr "コメント"
 #: services/models.py:397 services/models.py:432 services/models.py:478
 #, fuzzy
 msgid "You may enter a description here for your reference."
-msgstr "のちに参照するための記述を入力できます"
+msgstr "コメントを記入できます。自由に使うことができます。"
 
 #: services/models.py:400 services/models.py:629
 #: templates/services/iscsi_assoctargets.html:6
@@ -1599,12 +1550,17 @@ msgid "Portal"
 msgstr "ポータル"
 
 #: services/models.py:426
+#, fuzzy
 msgid ""
 "The portal takes the form of 'address:port'. for example '192.168.1.1:3260' "
 "for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port 3260 is standard iSCSI "
 "port number. For any IPs (wildcard address), use '0.0.0.0:3260' and/or "
 "'[::]:3260'. Do not mix wildcard and other IPs at same address family."
 msgstr ""
+"portalの記述方法は'adress:port'。例) IPv4用 '192.168.1.1:3260'、IPv6用 "
+"'[2001:db8:1:1::1]:3260'、「3260」はiSCSIで一般的なポート番号。IPを特に指定しない場合(wildcard "
+"address)は、IPv4用 '0.0.0.0:3260'、IPv6用 "
+"'[::]:3260'。wildcardを使う場合は、同じアドレスファミリ(IPv4やIPv6)には他のportalを設定しないこと。"
 
 #: services/models.py:464 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -1658,8 +1614,9 @@ msgid "Target Name"
 msgstr "ターゲット名"
 
 #: services/models.py:546
+#, fuzzy
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr ""
+msgstr "ベースネームが'iqn'で始まらない場合は、自動的に追加されます。"
 
 #: services/models.py:553
 msgid "Target Alias"
@@ -1697,7 +1654,7 @@ msgstr "認証方法"
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
-msgstr "ターゲットを許可する認証方法。オートは、認証無しと認証有りの両方を意味します。"
+msgstr "ターゲットを許可する認証方法を指定します。オートは、認証無しと認証有りの両方を意味します。"
 
 #: services/models.py:585
 msgid "Authentication Group ID"
@@ -1722,7 +1679,7 @@ msgstr "論理ブロックサイズ"
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
-msgstr "論理ブロックの大きさ を指定できます。（デフォルト: 512を推奨） 互換性があるのは512です。"
+msgstr "論理ブロックの大きさを指定できます。（デフォルト: 512 を推奨） 互換性があるのは 512 です。"
 
 #: services/models.py:608 services/models.py:623
 #: templates/services/iscsi_assoctargets.html:5
@@ -1737,9 +1694,8 @@ msgid "Target this extent belongs to"
 msgstr ""
 
 #: services/models.py:632
-#, fuzzy
 msgid "Target / Extent"
-msgstr "ターゲット / エクステント"
+msgstr "ターゲット/エクステント"
 
 #: services/models.py:647
 msgid "Provider"
@@ -1776,7 +1732,6 @@ msgstr "ここで指定したパラメータは、inadyn.conf のグローバル
 
 #: services/models.py:681 services/models.py:682
 #: templates/services/index2.html:40
-#, fuzzy
 msgid "Dynamic DNS"
 msgstr "Dynamic DNS"
 
@@ -1902,9 +1857,8 @@ msgid "Connections"
 msgstr "最大接続数"
 
 #: services/models.py:799
-#, fuzzy
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr "1つの IP アドレスあたりの最大接続数を指定します。（0は無制限を意味します。）"
+msgstr "1つの IP アドレスあたりの最大接続数を指定します。（0 は、無制限を意味します。）"
 
 #: services/models.py:803
 msgid "Login Attempts"
@@ -1983,11 +1937,14 @@ msgid "Masquerade address"
 msgstr "マスカレードアドレス"
 
 #: services/models.py:852
+#, fuzzy
 msgid ""
 "Causes the server to display the network information for the specified IP "
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
+"この IP アドレスまたは DNS ホストがサーバの先の NAT ゲートウェイもしくはポートとして動作している想定の元、クライアントに対して指定した "
+"IP アドレスまたは DNS ホスト名のネットワーク情報を表示させます。"
 
 #: services/models.py:856
 msgid "Minimum passive port"
@@ -2015,13 +1972,12 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
-"パッシブモードで使用するポート番号の最大値を指定します。（0を指定すると、いずれかのポートを使用します。）パッシブポートは、サーバがクライアントからPA"
-"SVコマンドを受け取った際に選ぶポートの範囲を制限します。使用されていないポートが見つかるまで、サーバは指定された範囲内から無作為にポートを選びます。ポ"
-"ートの範囲は、一般的なポート番号以外の範囲（例: 1024以上）でなければなりません。ポートの範囲は、多くの PASV "
-"による同時接続を処理する場合、多く使用する必要があります。（例: IANAによって登録されている短命ポートの範囲は、49152-65534です。）"
+"パッシブモードで使用するポート番号の最大値を指定します。（0を指定すると、いずれかのポートを使用します。）パッシブポートは、サーバがクライアントから "
+"PASV コマンドを受け取った際に選ぶポートの範囲を制限します。使用されていないポートが見つかるまで、サーバは指定された範囲内から無作為にポートを選びま"
+"す。ポートの範囲は、一般的なポート番号以外の範囲（例: 1024 以上）でなければなりません。ポートの範囲は、多くの PASV "
+"による同時接続を処理する場合、多く使用する必要があります。（例: IANA によって登録されている短命ポートの範囲は、49152-65534 です。）"
 
 #: services/models.py:866
-#, fuzzy
 msgid "Local user upload bandwidth"
 msgstr "ローカルユーザのアップロード帯域制限値"
 
@@ -2031,7 +1987,6 @@ msgid "Local user upload bandwith in KB/s. Zero means infinity."
 msgstr "ローカルユーザのアップロード帯域を KB/s に制限します。0 の場合は、無制限となります。"
 
 #: services/models.py:871
-#, fuzzy
 msgid "Local user download bandwidth"
 msgstr "ローカルユーザのダウンロード帯域制限値"
 
@@ -2096,7 +2051,6 @@ msgid "Specifies the username which the service will run as."
 msgstr "サービスを動作させるためのユーザ名を指定します。"
 
 #: services/models.py:922
-#, fuzzy
 msgid "umask"
 msgstr "umask"
 
@@ -2239,6 +2193,7 @@ msgstr "サービスプリンシパル名を指定します。（例: service/ac
 msgid "Service Principal Name Password"
 msgstr "サービスプリンシパル名のパスワード"
 
+# ActiveDirectoryに詳しい方、フォローお願いします。
 #: services/models.py:1059
 #, fuzzy
 msgid "Password of the Service Principal Name account."
@@ -2296,8 +2251,9 @@ msgid "Root bind password"
 msgstr "root バインドパスワード"
 
 #: services/models.py:1099
+#, fuzzy
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "バインドする際に使用するパスワードを入力して下さい。"
 
 #: services/models.py:1104
 msgid "Password Encryption"
@@ -2313,40 +2269,44 @@ msgid "User Suffix"
 msgstr "ユーザサフィックス"
 
 #: services/models.py:1111
+#, fuzzy
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
-msgstr ""
+msgstr "LDAP ディレクトリに追加されるとき、ユーザで使用されるサフィックスを指定します。（例: ou=Users）"
 
 #: services/models.py:1115
 msgid "Group Suffix"
 msgstr "グループサフィックス"
 
 #: services/models.py:1117
+#, fuzzy
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
-msgstr ""
+msgstr "LDAP ディレクトリに追加されるとき、グループで使用されるサフィックスを指定します。（例: ou=Groups）"
 
 #: services/models.py:1121
 msgid "Password Suffix"
 msgstr "パスワードサフィックス"
 
 #: services/models.py:1123
+#, fuzzy
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
-msgstr ""
+msgstr "LDAP ディレクトリに追加されるとき、パスワードで使用されるサフィックスを指定します。（例: ou=Passwords）"
 
 #: services/models.py:1127
 msgid "Machine Suffix"
 msgstr "Machine サフィックス"
 
 #: services/models.py:1129
+#, fuzzy
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
-msgstr ""
+msgstr "LDAP ディレクトリに追加されるとき、マシンで使用されるサフィックスを指定します。（例: ou=Computers）"
 
 #: services/models.py:1133
 msgid "Turn on/off TLS"
@@ -2385,12 +2345,10 @@ msgid "Control Services"
 msgstr "サービスの制御"
 
 #: sharing/forms.py:102 sharing/models.py:243
-#, fuzzy
 msgid "Maproot User"
 msgstr "Maproot ユーザ"
 
 #: sharing/forms.py:107 sharing/models.py:251
-#, fuzzy
 msgid "Maproot Group"
 msgstr "Maproot グループ"
 
@@ -2417,16 +2375,19 @@ msgid "The group %s is not valid."
 msgstr "'%s' は無効なグループです。"
 
 #: sharing/forms.py:226
+#, fuzzy
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "Maproot グループは、Maproot ユーザが必要です。"
 
 #: sharing/forms.py:228
+#, fuzzy
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr "Mapall グループは、Mapall ユーザが必要です。"
 
 #: sharing/forms.py:231 sharing/forms.py:234
+#, fuzzy
 msgid "Maproot user/group disqualifies Mapall"
-msgstr ""
+msgstr "Maproot ユーザ/グループは、Mapall を不適格とします。"
 
 #: sharing/models.py:41 sharing/models.py:102 storage/models.py:44
 #: storage/models.py:68 storage/models.py:87
@@ -2522,7 +2483,6 @@ msgid "Share Comment"
 msgstr "コメント"
 
 #: sharing/models.py:110 sharing/models.py:222
-#, fuzzy
 msgid "Volume Path"
 msgstr "ボリュームパス"
 

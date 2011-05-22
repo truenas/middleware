@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:22-0700\n"
-"PO-Revision-Date: 2011-05-20 01:28+0200\n"
+"PO-Revision-Date: 2011-05-21 11:43+0200\n"
 "Last-Translator: qwerty1965 <c.coppola@inwind.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:113
 msgid "Reporting"
-msgstr ""
+msgstr "Reporting"
 
 #: media/lib/js/freeadmin.js:125
 msgid "Settings"
@@ -48,7 +48,7 @@ msgstr "Dischi"
 
 #: media/lib/js/freeadmin.js:344
 msgid "CronJobs"
-msgstr ""
+msgstr "CronJobs"
 
 #: media/lib/js/freeadmin.js:398
 msgid "Edit Disk"
@@ -64,24 +64,24 @@ msgstr "Sostituzione Dischi"
 
 #: media/lib/js/freeadmin.js:407
 msgid "Detach"
-msgstr ""
+msgstr "Scollegare"
 
 #: media/lib/js/freeadmin.js:408
 msgid "Disk Detach"
-msgstr ""
+msgstr "Disco Scollegato"
 
 #: media/lib/js/freeadmin.js:594
 msgid "Some error ocurried!"
-msgstr ""
+msgstr "Si è verificato qualche errore!"
 
 #: media/lib/js/freeadmin/form/Cron.js:43
 msgid "Every"
-msgstr ""
+msgstr "Tutti"
 
 #: media/lib/js/freeadmin/form/Cron.js:51
 msgid "Each selected"
-msgstr ""
+msgstr "Ciascuno selezionato"
 
 #: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
-msgstr ""
+msgstr "Ogni N"
