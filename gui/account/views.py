@@ -40,7 +40,7 @@ from freenasUI.account import models
 
 def home(request):
     focus_form = request.GET.get('tab', 'passform')
-    return render(request, 'account/index2.html', {
+    return render(request, 'account/index.html', {
         'focus_form': focus_form,
     })
 
@@ -102,7 +102,7 @@ def group2user_update(request, object_id):
             return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Users")}), mimetype="application/json")
     else:
         f = forms.bsdGroupToUserForm(groupid=object_id)
-    return render(request, 'account/bsdgroup2user_form2.html', {
+    return render(request, 'account/bsdgroup2user_form.html', {
         'url': reverse('account_bsdgroup_members', kwargs={'object_id':object_id}),
         'form' : f,
     })
@@ -115,7 +115,7 @@ def user2group_update(request, object_id):
             return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Groups")}), mimetype="application/json")
     else:
         f = forms.bsdUserToGroupForm(userid=object_id)
-    return render(request, 'account/bsdgroup2user_form2.html', {
+    return render(request, 'account/bsdgroup2user_form.html', {
         'url': reverse('account_bsduser_groups', kwargs={'object_id':object_id}),
         'form' : f,
     })
