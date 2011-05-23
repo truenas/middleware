@@ -1217,4 +1217,4 @@ class RsyncMod(Model):
         pass
 
     def __unicode__(self):
-        return u"%d (%s)" % (self.id, self.rsyncmod_comment)
+        return unicode(self.rsyncmod_name)
