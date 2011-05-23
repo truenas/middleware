@@ -327,7 +327,11 @@ class RsyncModForm(ModelForm):
                 self.grouplist.append(a)
             self.fields['rsyncmod_group'].widget = widgets.FilteringSelect()
             self.fields['rsyncmod_group'].choices = self.grouplist
-
+    def clean_rsyncmod_name(self):
+        name = self.cleaned_data['rsyncmod_name']
+        if re.search(r'[/\]]', name):
+            raise forms.ValidationError(_(u"The name cannot contain slash or a closing square backet."))
+        return name
     def save(self):
         super(RsyncModForm, self).save()
         started = notifier().reload("rsync")
