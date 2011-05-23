@@ -39,10 +39,6 @@ navtree.auto_generate()
 handler500 = 'freeadmin.views.server_error'
 handler404 = 'django.views.defaults.page_not_found'
 
-js_info_dict = {
-    'packages': ('freenasUI',),
-}
-
 urlpatterns = patterns('',
     ('^$', adminInterface),
     (r'^reporting/graphs/(?P<path>.*)',
