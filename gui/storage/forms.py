@@ -31,6 +31,7 @@ from os import popen
 
 from django.http import QueryDict
 from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as __
 from django.core.urlresolvers import reverse
 
 from freenasUI.middleware.notifier import notifier
@@ -74,11 +75,12 @@ class UnixPermissionWidget(widgets.MultiWidget):
     def format_output(self, rendered_widgets):
 
         maprow = {
-                1: _('Read'),
-                2: _('Write'),
-                3: _('Execute'),
+                1: __('Read'),
+                2: __('Write'),
+                3: __('Execute'),
             }
 
+        print "hm"
         html = """<table>
         <thead>
         <tr>
@@ -89,7 +91,7 @@ class UnixPermissionWidget(widgets.MultiWidget):
         </tr>
         </thead>
         <tbody>
-        """ % ( _('Owner'), _('Group'), _('Other') )
+        """ % ( __('Owner'), __('Group'), __('Other') )
         for i in range(1,4):
             html += "<tr>"
             html += "<td>%s</td>" % maprow[i]
