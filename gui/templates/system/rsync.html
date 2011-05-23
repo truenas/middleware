@@ -1,0 +1,49 @@
+{% load i18n %}
+<table class="grid">
+        <thead class="header">
+    	<tr>
+            <td>{% trans "Minute" %}</td>
+            <td>{% trans "Hour" %}</td>
+            <td>{% trans "Day of month" %}</td>
+            <td>{% trans "Month" %}</td>
+            <td>{% trans "Day of week" %}</td>
+            <td>{% trans "User" %}</td>
+            <td>{% trans "Available actions" %}</td>
+    	</tr>
+            </thead>
+    {% for c in rsyncs %}
+        <td>{{ c.get_human_minute }}</td>
+        <td>{{ c.get_human_hour }}</td>
+        <td>{{ c.get_human_daymonth }}</td>
+        <td>{{ c.get_human_month }}</td>
+        <td>{{ c.get_human_dayweek }}</td>
+        <td>{{ c.rsync_user }}</td>
+        <td>
+            <button dojoType="dijit.form.Button" type="button">
+                {% trans "Edit" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                editObject('{% trans "Edit" %}', '{{ c.get_edit_url }}', [this,]);
+            </script>
+            </button>
+            <button dojoType="dijit.form.Button" type="button">
+                {% trans "Delete" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                editObject('{% trans "Delete" %}', '{{ c.get_delete_url }}', [this,]);
+            </script>
+            </button>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="8">{% trans "No rsyncs defined" %}</td>
+    </tr>
+    {% endfor %}
+    </table>
+              <p class="btn">
+        <button id="de_button" dojoType="dijit.form.Button" type="button">
+            {% trans "Add Rsync" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                addObject('{% trans "Add Rsync" %}', '{% url freeadmin_model_add app="system",model="Rsync" %}', [this,]);
+        </script>
+        </button>
+        </p>

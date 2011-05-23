@@ -27,7 +27,8 @@
 #####################################################################
 
 from django.conf.urls.defaults import patterns, url
-from system.forms import FileWizard, FirmwareTemporaryLocationForm, FirmwareUploadForm, ServicePackUploadForm
+from system.forms import FileWizard, FirmwareTemporaryLocationForm, \
+                         FirmwareUploadForm, ServicePackUploadForm
 
 urlpatterns = patterns('freenasUI.system.views',
     url(r'^reboot/$', 'reboot', name="system_reboot"),
@@ -48,4 +49,5 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^clear-cache/$', 'clearcache', name="system_clearcache"),
     url(r'^lsdir/(?P<path>.*)$', 'directory_browser', name="system_dirbrowser"),
     url(r'^cronjobs/$', 'cronjobs', name="system_cronjobs"),
+    url(r'^rsyncs/$', 'rsyncs', name="system_rsyncs"),
     )

@@ -342,3 +342,9 @@ def cronjobs(request):
     return render(request, "system/cronjob.html", {
         'cronjobs': crons,
         })
+
+def rsyncs(request):
+    rsyncs = models.Rsync.objects.all().order_by('id')
+    return render(request, "system/rsync.html", {
+        'rsyncs': rsyncs,
+        })

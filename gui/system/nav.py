@@ -32,3 +32,9 @@ class ViewCron(TreeNode):
         name = _('Cron Scheduler')
         type = 'opencron'
         append_app = False
+
+class ViewRsync(TreeNode):
+
+        gname = 'system.Rsync.View'
+        view = 'system_rsyncs'
+        append_app = False
