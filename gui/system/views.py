@@ -76,9 +76,7 @@ def _system_info():
 
 def system_info(request):
     sysinfo = _system_info()
-    return render(request, 'system/system_info.html', {
-        'sysinfo': sysinfo,
-        })
+    return render(request, 'system/system_info.html', sysinfo)
 
 def config(request):
     return render(request, 'system/config.html')

@@ -1152,6 +1152,7 @@ class Rsyncd(Model):
 
     class FreeAdmin:
         deletable = False
+        menu_child_of = 'Rsync'
         #icon_model = u"Icon"
 
 class RsyncMod(Model):            
@@ -1213,8 +1214,7 @@ class RsyncMod(Model):
         verbose_name_plural = _("Rsync Modules")
 
     class FreeAdmin:
-        #icon_model = u"Icon"
-        pass
+        menu_child_of = 'Rsync'
 
     def __unicode__(self):
         return unicode(self.rsyncmod_name)
