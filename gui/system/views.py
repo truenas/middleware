@@ -211,14 +211,14 @@ def varlogmessages(request, lines):
     msg = os.popen('tail -n %s /var/log/messages' % int(lines)).read().strip()
     return render(request, 'system/status/msg.xml', {
         'msg': msg,
-    }, mimetype='text/xml')
+    }, content_type='text/xml')
 
 def top(request):
     top = os.popen('top').read()
     return render(request, 'system/status/top.xml', {
         'focused_tab' : 'system',
         'top': top,
-    }, mimetype='text/xml')
+    }, content_type='text/xml')
 
 def reboot(request):
     """ reboots the system """
