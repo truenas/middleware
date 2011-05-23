@@ -33,6 +33,40 @@ EOF
 	    fi
         echo "${rsyncd_auxiliary}" >> $cfg
     done
+
+    local f="rsyncmod_name rsyncmod_comment rsyncmod_path rsyncmod_mode rsyncmod_maxconn rsyncmod_user rsyncmod_group rsyncmod_hostsallow rsyncmod_hostsdeny rsyncmod_auxiliary"
+    eval local $f
+    local cmd sf cfg
+    sf=$(echo $f | sed -e 's/ /, /g')
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT $sf FROM services_rsyncmod ORDER BY id" | \
+	while eval read $f; do
+	    cat >> $cfg <<EOF
+[${rsyncmod_name}]
+    comment = ${rsyncmod_comment}
+    path = ${rsyncmod_path}
+    max connections = ${rsyncmod_maxconn}
+    uid = ${rsyncmod_user}
+    gid = ${rsyncmod_group}
+EOF
+	    if [ "${rsyncmod_mode}" = "ro" ]; then
+		    echo "    read only = true" >> $cfg
+	    elif [ "${rsyncmod_mode}" = "wo" ]; then
+		    echo "    write only = true" >> $cfg
+	    elif [ "${rsyncmod_mode}" = "rw" ]; then
+		    echo "    read only = false" >> $cfg
+		    echo "    write only = false" >> $cfg
+	    fi
+
+	    if [ -n "${rsyncd_hostsallow}" ]; then
+            echo "    hosts allow = ${rsyncmod_hostsallow}" >> $cfg
+        fi
+
+	    if [ -n "${rsyncd_hostsdeny}" ]; then
+            echo "    hosts deny = ${rsyncmod_hostsdeny}" >> $cfg
+        fi
+        echo "${rsyncmod_auxiliary}" >> $cfg
+    done
 }
 
 name="ix-rsyncd"
