@@ -98,13 +98,13 @@
 
             var c = p.getChildren();
             for(var i=0; i<c.length; i++){
-                if(c[i].tab == 'reporting'){
+                if(c[i].tab == 'system.Reporting'){
                     p.selectChild(c[i]);
                     opened = true;
-                } else if(c[i].tab == 'settings'){
+                } else if(c[i].tab == 'system.Settings'){
                     p.selectChild(c[i]);
                     opened2 = true;
-                } else if(c[i].tab == 'sysinfo'){
+                } else if(c[i].tab == 'system.SysInfo'){
                     p.selectChild(c[i]);
                     opened3 = true;
                 }
