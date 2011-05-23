@@ -399,7 +399,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
         return resp
     else:
         return render(request, template, context, \
-                mimetype='text/html')
+                content_type='text/html')
 
 def generic_model_delete(request, app, model, oid):
 
