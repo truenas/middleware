@@ -14,13 +14,13 @@ class Migration(SchemaMigration):
             ('rsyncmod_name', self.gf('django.db.models.fields.CharField')(max_length=120)),
             ('rsyncmod_comment', self.gf('django.db.models.fields.CharField')(max_length=120)),
             ('rsyncmod_path', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('rsyncmod_mode', self.gf('django.db.models.fields.CharField')(max_length=120)),
+            ('rsyncmod_mode', self.gf('django.db.models.fields.CharField')(max_length=120, default="rw")),
             ('rsyncmod_maxconn', self.gf('django.db.models.fields.IntegerField')(default=0)),
             ('rsyncmod_user', self.gf('django.db.models.fields.CharField')(max_length=120, blank=True)),
             ('rsyncmod_group', self.gf('django.db.models.fields.CharField')(max_length=120, blank=True)),
-            ('rsyncmod_hostsallow', self.gf('django.db.models.fields.TextField')()),
-            ('rsyncmod_hostsdeny', self.gf('django.db.models.fields.TextField')()),
-            ('rsyncmod_auxiliary', self.gf('django.db.models.fields.TextField')()),
+            ('rsyncmod_hostsallow', self.gf('django.db.models.fields.TextField')(blank=True)),
+            ('rsyncmod_hostsdeny', self.gf('django.db.models.fields.TextField')(blank=True)),
+            ('rsyncmod_auxiliary', self.gf('django.db.models.fields.TextField')(blank=True)),
         ))
         db.send_create_signal('services', ['RsyncMod'])
 
@@ -232,13 +232,13 @@ class Migration(SchemaMigration):
         'services.rsyncmod': {
             'Meta': {'object_name': 'RsyncMod'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'rsyncmod_auxiliary': ('django.db.models.fields.TextField', [], {}),
+            'rsyncmod_auxiliary': ('django.db.models.fields.TextField', [], {'default': 'True'}),
             'rsyncmod_comment': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'rsyncmod_group': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'rsyncmod_hostsallow': ('django.db.models.fields.TextField', [], {}),
-            'rsyncmod_hostsdeny': ('django.db.models.fields.TextField', [], {}),
+            'rsyncmod_hostsallow': ('django.db.models.fields.TextField', [], {'default': 'True'}),
+            'rsyncmod_hostsdeny': ('django.db.models.fields.TextField', [], {'default': 'True'}),
             'rsyncmod_maxconn': ('django.db.models.fields.IntegerField', [], {}),
-            'rsyncmod_mode': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
+            'rsyncmod_mode': ('django.db.models.fields.CharField', [], {'max_length': '120', 'default': 'rw'}),
             'rsyncmod_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'rsyncmod_path': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'rsyncmod_user': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'})

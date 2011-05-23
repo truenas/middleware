@@ -1170,6 +1170,8 @@ class RsyncMod(Model):
         )
     rsyncmod_mode = models.CharField(
         max_length=120,
+        choices=choices.ACCESS_MODE,
+        default="rw",
         verbose_name=_("Access Mode"),
         help_text=_("This controls the access a remote host has to this module"),
         )
@@ -1193,14 +1195,17 @@ class RsyncMod(Model):
     rsyncmod_hostsallow = models.TextField(
             verbose_name = _("Hosts allow"),
             help_text = _("This option is a comma, space, or tab delimited set of hosts which are permitted to access this module. You can specify the hosts by name or IP number. Leave this field empty to use default settings"),
+            blank=True,
             )
     rsyncmod_hostsdeny = models.TextField(
             verbose_name = _("Hosts deny"),
             help_text = _("This option is a comma, space, or tab delimited set of host which are NOT permitted to access this module. Where the lists conflict, the allow list takes precedence. In the event that it is necessary to deny all by default, use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify to the hosts allow parameter those hosts that should be permitted access. Leave this field empty to use default settings"),
+            blank=True,
             )
     rsyncmod_auxiliary = models.TextField(
             verbose_name = _("Auxiliary parameters"),
             help_text = _("These parameters will be added to the module configuration in rsyncd.conf"),
+            blank=True,
             )
 
     class Meta:
@@ -1210,3 +1215,6 @@ class RsyncMod(Model):
     class FreeAdmin:
         #icon_model = u"Icon"
         pass
+
+    def __unicode__(self):
+        return u"%d (%s)" % (self.id, self.rsyncmod_comment)

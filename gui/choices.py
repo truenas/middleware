@@ -436,3 +436,9 @@ RepeatUnit_Choices = (
         #('monthly', _('Every these days of month')),
         #('yearly', _('Every these days of specified months')),
         )
+
+ACCESS_MODE = (
+    ('ro', _('Read-only')),
+    ('wo', _('Write-only')),
+    ('rw', _('Read and Write')),
+    )
