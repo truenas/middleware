@@ -30,6 +30,8 @@ from django.test import TestCase as TC
 from django.contrib.auth.models import User
 from django.test.client import Client
 
+from system.models import Settings
+
 class TestCase(TC):
 
     def setUp(self):
@@ -37,6 +39,8 @@ class TestCase(TC):
             user = User.objects.get(username='admin')
         except:
             user = User.objects.create_user('admin', 'freenas@local.domain', 'freenas')
+        stg = Settings.objects.create()
+        stg.save()
         self.client = Client()
         login = self.client.login(username='admin', password='freenas')
 
