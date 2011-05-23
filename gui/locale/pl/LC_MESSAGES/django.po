@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-21 10:46+0200\n"
+"PO-Revision-Date: 2011-05-22 21:57+0200\n"
 "Last-Translator: rc_dt <rafal.ciszynski@d-tech.com.pl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
@@ -1210,7 +1210,7 @@ msgstr "Dostęp dla gościa"
 
 #: services/models.py:187
 msgid "Allows guest access to all apple shares on this box."
-msgstr ""
+msgstr "Włącz dostęp dla gościa do udziałów Apple na tym serwerze."
 
 #: services/models.py:193
 msgid ""
@@ -1228,19 +1228,23 @@ msgstr "Dostęp lokalny"
 #: services/models.py:197
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
+"Zezwala użytkownikom z kontami lokalnymi na dostęp do udziałów Apple na tym "
+"serwerze."
 
 #: services/models.py:200
 msgid "Enable DDP"
-msgstr ""
+msgstr "Włącz DDP"
 
 #: services/models.py:201
 msgid "Enables DDP support for low-level appletalk access."
 msgstr ""
+"Włącza wsparcie dla DDP aby umożliwić niskopoziomowy dostęp przy pomocy "
+"appletalk."
 
 #: services/models.py:205 services/models.py:206
 #: templates/services/index2.html:7
 msgid "AFP"
-msgstr ""
+msgstr "AFP"
 
 #: services/models.py:215
 msgid "Number of servers"
@@ -1251,16 +1255,21 @@ msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
 msgstr ""
+"Określa ilość tworzonych serwerów. Musi być wystarczająca aby obsłużyć "
+"maksymalny poziom jednoczesnych połączeń od klientów; przeważnie od czterech "
+"do sześciu."
 
 #: services/models.py:220
 msgid "Asynchronous mode"
-msgstr ""
+msgstr "Tryb asynchroniczny"
 
 #: services/models.py:221
 msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
+"Włącza tryb asynchroniczny, co może zwiększyć wydajność przy połączeniu "
+"sieciowym 1Gbit."
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/index2.html:75
@@ -1283,11 +1292,11 @@ msgstr ""
 
 #: services/models.py:255
 msgid "I/O Timeout"
-msgstr ""
+msgstr "Limit czasu wej./wyj."
 
 #: services/models.py:256
 msgid "I/O timeout in seconds (30 by default)."
-msgstr ""
+msgstr "Limit czasu wej./wyj. w sekundach (domyślnie 30)."
 
 #: services/models.py:261
 msgid "NOPIN Interval"
@@ -1299,19 +1308,19 @@ msgstr ""
 
 #: services/models.py:267
 msgid "Max. sessions"
-msgstr ""
+msgstr "Maksymalna ilość sesji"
 
 #: services/models.py:268
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr ""
+msgstr "Maksymalna ilość sesji w tym samym czasie (domyślnie 16)."
 
 #: services/models.py:273
 msgid "Max. connections"
-msgstr ""
+msgstr "Maksymalna ilość połączeń"
 
 #: services/models.py:274
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "Maksymalna ilość połączeń w każdej sesji (domyślnie 8)."
 
 #: services/models.py:279
 msgid "Max. pre-send R2T"
@@ -1369,11 +1378,11 @@ msgstr ""
 
 #: services/models.py:321
 msgid "Enable LUC"
-msgstr ""
+msgstr "Włącz LUC"
 
 #: services/models.py:325
 msgid "Controller IP address"
-msgstr ""
+msgstr "Adres IP kontrolera"
 
 #: services/models.py:326
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
@@ -1381,7 +1390,7 @@ msgstr ""
 
 #: services/models.py:332
 msgid "Controller TCP port"
-msgstr ""
+msgstr "Port TCP kontrolera"
 
 #: services/models.py:333
 msgid "Logical Unit Controller TCP port (3261 by default)"
@@ -1477,7 +1486,7 @@ msgstr ""
 
 #: services/models.py:464 templates/services/iscsi_authini.html:6
 msgid "Initiators"
-msgstr ""
+msgstr "Inicjatory"
 
 #: services/models.py:466
 msgid ""
@@ -1487,17 +1496,19 @@ msgstr ""
 
 #: services/models.py:470
 msgid "Authorized network"
-msgstr ""
+msgstr "Autoryzowana sieć"
 
 #: services/models.py:472
 msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
+"Sieć autoryzowana do dostępu do celu iSCSI. Oznacza to adresy IP lub CIDR "
+"albo 'ALL' dla dowolnego IP."
 
 #: services/models.py:481
 msgid "Initiator"
-msgstr ""
+msgstr "Inicjator"
 
 #: services/models.py:510
 msgid "Target side user name. It is usually the initiator name by default."
@@ -1521,7 +1532,7 @@ msgstr ""
 
 #: services/models.py:545
 msgid "Target Name"
-msgstr ""
+msgstr "Nazwa celu"
 
 #: services/models.py:546
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
@@ -1539,7 +1550,7 @@ msgstr ""
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7
 msgid "Type"
-msgstr ""
+msgstr "Typ"
 
 #: services/models.py:560
 msgid "Logical Unit Type mapped to LUN."
@@ -1579,13 +1590,15 @@ msgstr ""
 
 #: services/models.py:604
 msgid "Logical Block Size"
-msgstr ""
+msgstr "Wielkość bloku logicznego"
 
 #: services/models.py:605
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
 msgstr ""
+"Możesz określić wielkość bloku logicznego (domyślnie 512). Zalecana jest "
+"wielkość 512 dla zachowania kompatybilności."
 
 #: services/models.py:608 services/models.py:623
 #: templates/services/iscsi_assoctargets.html:5
@@ -1593,7 +1606,7 @@ msgstr ""
 #: templates/services/iscsi_extents.html:5
 #: templates/services/iscsi_targets.html:5
 msgid "Target"
-msgstr ""
+msgstr "Cel"
 
 #: services/models.py:624
 msgid "Target this extent belongs to"
@@ -1609,7 +1622,7 @@ msgstr ""
 
 #: services/models.py:651
 msgid "Domain name"
-msgstr ""
+msgstr "Nazwa domeny"
 
 #: services/models.py:653
 msgid ""
@@ -1660,11 +1673,11 @@ msgstr ""
 
 #: services/models.py:703
 msgid "Community"
-msgstr ""
+msgstr "Społeczność"
 
 #: services/models.py:704
 msgid "In most cases, 'public' is used here."
-msgstr ""
+msgstr "W wiekszości przypadków używa się tutaj 'public'/"
 
 #: services/models.py:707
 msgid "Send SNMP Traps"
@@ -1673,31 +1686,33 @@ msgstr ""
 #: services/models.py:715 services/models.py:716
 #: templates/services/index2.html:86
 msgid "SNMP"
-msgstr ""
+msgstr "SNMP"
 
 #: services/models.py:725
 msgid "Identifier"
-msgstr ""
+msgstr "Identyfikator"
 
 #: services/models.py:726
 msgid "This name is used to uniquely identify your UPS on this system."
 msgstr ""
+"Ta nazwa jest używana do unikalnego identyfikowania Twego zasilacza UPS w "
+"tym systemie."
 
 #: services/models.py:730
 msgid "Driver"
-msgstr ""
+msgstr "Sterownik"
 
 #: services/models.py:732
 msgid "The driver used to communicate with your UPS."
-msgstr ""
+msgstr "Sterownik używany do komunikacji z Twoim zasilaczem UPS."
 
 #: services/models.py:736 services/models.py:788 services/models.py:911
 msgid "Port"
-msgstr ""
+msgstr "Port"
 
 #: services/models.py:738
 msgid "The serial or USB port where your UPS is connected."
-msgstr ""
+msgstr "Port szeregowy lub USB do którego jest podłączony Twój zasilacz UPS."
 
 #: services/models.py:754
 msgid "Shutdown mode"
@@ -1719,116 +1734,122 @@ msgstr ""
 
 #: services/models.py:764
 msgid "Send Email Status Updates"
-msgstr ""
+msgstr "Wysyłanie email-a o zmianie statusu"
 
 #: services/models.py:767 services/models.py:773
 msgid "To email"
-msgstr ""
+msgstr "Na email"
 
 #: services/models.py:769
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr ""
+msgstr "Docelowy adres email. Adresy email oddziel średnikiem."
 
 #: services/models.py:774
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
+"Temat email-a. Możesz użyć takich parametrów jak: <br/><ul><li>%d - "
+"Data</li><li>%h - Nazwa hosta</li></ul>"
 
 #: services/models.py:778 services/models.py:779
 msgid "UPS"
-msgstr ""
+msgstr "UPS"
 
 #: services/models.py:789
 msgid "Port to bind FTP server."
-msgstr ""
+msgstr "Port przypisany do serwera FTP."
 
 #: services/models.py:793
 msgid "Clients"
-msgstr ""
+msgstr "Klienci"
 
 #: services/models.py:794
 msgid "Maximum number of simultaneous clients."
-msgstr ""
+msgstr "Maksymalna liczba klientów połączonych jednocześnie."
 
 #: services/models.py:798
 msgid "Connections"
-msgstr ""
+msgstr "Połączenia"
 
 #: services/models.py:799
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
+msgstr "Maksymalna ilość połączeń na adres IP (0 = nieograniczona)."
 
 #: services/models.py:803
 msgid "Login Attempts"
-msgstr ""
+msgstr "Próby logowania"
 
 #: services/models.py:804
 msgid "Maximum number of allowed password attempts before disconnection."
-msgstr ""
+msgstr "Maksymalna liczba prób logowania przed rozłączeniem."
 
 #: services/models.py:808
 msgid "Timeout"
-msgstr ""
+msgstr "Limit czasu"
 
 #: services/models.py:809
 msgid "Maximum idle time in seconds."
-msgstr ""
+msgstr "Maksymalny czas bezczynności w sekundach."
 
 #: services/models.py:812
 msgid "Allow Root Login"
-msgstr ""
+msgstr "Zezwól na logowanie jako root"
 
 #: services/models.py:814
 msgid "Allow Anonymous Login"
-msgstr ""
+msgstr "Zezwól na anonimowe logowanie"
 
 #: services/models.py:818 sharing/models.py:49
 #: templates/services/iscsi_dextents.html:7
 #: templates/services/iscsi_extents.html:7 templates/sharing/windows.html:15
 #: templates/storage/volumes.html:60
 msgid "Path"
-msgstr ""
+msgstr "Ścieżka"
 
 #: services/models.py:820
 msgid "Allow Local User Login"
-msgstr ""
+msgstr "Zezwól na logowanie lokalnych użytkowników"
 
 #: services/models.py:823
 msgid "Banner"
-msgstr ""
+msgstr "Komunikat"
 
 #: services/models.py:825
 msgid "Greeting banner displayed by FTP when a connection first comes in."
 msgstr ""
+"Komunikat powitalny wyświetlany przez serwer FTP przy pierwszym nawiązaniu "
+"połączeniu."
 
 #: services/models.py:831 services/models.py:837
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr ""
+"Użyj tej opcji aby nadpisać maskę dla tworzonych katalogów (domyślnie 077)."
 
 #: services/models.py:840
 msgid "Enable FXP"
-msgstr ""
+msgstr "Włącz FXP"
 
 #: services/models.py:842
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "Zezwól na wznawianie transferu"
 
 #: services/models.py:844
 msgid "Always Chroot"
-msgstr ""
+msgstr "Zawsze zmieniaj na katalog użytkownika"
 
 #: services/models.py:846
+#, fuzzy
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "Wymagaj autentykacji IDENT"
 
 #: services/models.py:848
 msgid "Require Reverse DNS for IP"
-msgstr ""
+msgstr "Wymagaj revDNS dla adresu IP"
 
 #: services/models.py:850
 msgid "Masquerade address"
-msgstr ""
+msgstr "Adres maskarady"
 
 #: services/models.py:852
 msgid ""
@@ -1901,54 +1922,61 @@ msgstr ""
 
 #: services/models.py:890
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "Te parametry zostaną dodane do proftpd.conf."
 
 #: services/models.py:894 services/models.py:895
 #: templates/services/index2.html:53
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:904
 msgid "Directory"
-msgstr ""
+msgstr "Katalog"
 
 #: services/models.py:905
+#, fuzzy
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
+"Katalog zawierający pliki które chcesz publikować. Komputer zdalny nie "
+"potrzebuje przechodzić przez katalog podczas transferu."
 
 #: services/models.py:908
 msgid "Allow New Files"
-msgstr ""
+msgstr "Zezwól na nowe pliki"
 
 #: services/models.py:912
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"Port użyty do nasłuchiwania. Domyślnie nasłuchiwany jest port określony w "
+"/etc/services."
 
 #: services/models.py:918
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "Określa użytkownika na którego uprawnieniach działa usługa."
 
 #: services/models.py:922
 msgid "umask"
-msgstr ""
+msgstr "Maska"
 
 #: services/models.py:923
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
 msgstr ""
+"Ustawia maskę dla nowo tworzonych plików na określoną wartość. Domyślnie "
+"jest 022 (odczyt dla wszystkich, nikt nie może zapisywać)."
 
 #: services/models.py:927 services/models.py:964
 msgid "Extra options"
-msgstr ""
+msgstr "Opcje dodatkowe"
 
 #: services/models.py:929
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "Opcje dodatkowe dla wiersza polecenia (domyślnie puste)."
 
 #: services/models.py:933 services/models.py:934
 #: templates/services/index2.html:108
@@ -1983,7 +2011,7 @@ msgstr "Zezwalaj na przekierowywanie portów TCP"
 
 #: services/models.py:955
 msgid "Compress Connections"
-msgstr ""
+msgstr "Kompresuj połączenia"
 
 #: services/models.py:958
 msgid "Host Private Key"
@@ -2010,7 +2038,7 @@ msgstr "Nazwa kontrolera domeny"
 
 #: services/models.py:1017
 msgid "AD or PDC name."
-msgstr ""
+msgstr "Nazwa domeny AD lub podstawowego kontrolera domeny."
 
 #: services/models.py:1021
 msgid "Domain Name (DNS/Realm-Name)"

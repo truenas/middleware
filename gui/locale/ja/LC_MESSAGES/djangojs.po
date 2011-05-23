@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:22-0700\n"
-"PO-Revision-Date: 2011-05-20 18:56+0200\n"
+"PO-Revision-Date: 2011-05-22 16:56+0200\n"
 "Last-Translator: Kimimasa <ham@cer110.orz.ne.jp>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:113
 msgid "Reporting"
-msgstr "報告"
+msgstr "リポート"
 
 #: media/lib/js/freeadmin.js:125
 msgid "Settings"
@@ -47,9 +47,8 @@ msgid "Storage"
 msgstr "ストレージ"
 
 #: media/lib/js/freeadmin.js:344
-#, fuzzy
 msgid "CronJobs"
-msgstr "CronJobs(定期的な作業の実行)"
+msgstr "CronJobs（定期的なコマンドの実行）"
 
 #: media/lib/js/freeadmin.js:398
 msgid "Edit Disk"
@@ -57,27 +56,27 @@ msgstr "ディスクの編集"
 
 #: media/lib/js/freeadmin.js:402
 msgid "Replace"
-msgstr "置換"
+msgstr "リプレイス"
 
 #: media/lib/js/freeadmin.js:403
 msgid "Disk Replacement"
-msgstr "ディスクの入替え"
+msgstr "ディスクのリプレイス"
 
 #: media/lib/js/freeadmin.js:407
 msgid "Detach"
-msgstr "取り外し"
+msgstr "デタッチ"
 
 #: media/lib/js/freeadmin.js:408
 msgid "Disk Detach"
-msgstr "ディスクの取り外し"
+msgstr "ディスクのデタッチ"
 
 #: media/lib/js/freeadmin.js:594
 msgid "Some error ocurried!"
-msgstr "エラーが発生しました。"
+msgstr "エラーが発生しました！"
 
 #: media/lib/js/freeadmin/form/Cron.js:43
 msgid "Every"
-msgstr "全て"
+msgstr "すべて"
 
 #: media/lib/js/freeadmin/form/Cron.js:51
 #, fuzzy
@@ -87,4 +86,4 @@ msgstr "選択したものそれぞれ"
 #: media/lib/js/freeadmin/form/Cron.js:96
 #, fuzzy
 msgid "Every N"
-msgstr "全N"
+msgstr "各 N"

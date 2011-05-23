@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-19 14:04+0200\n"
-"Last-Translator: erlbon <erlend.bonderud@gmail.com>\n"
+"PO-Revision-Date: 2011-05-22 14:39+0200\n"
+"Last-Translator: Tamahay <figgen63@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nb\n"
 "MIME-Version: 1.0\n"
@@ -688,7 +688,7 @@ msgstr "Navneserver 3"
 #: network/models.py:83 network/models.py:84 network/nav.py:18
 #: templates/network/index2.html:3
 msgid "Global Configuration"
-msgstr ""
+msgstr "Global konfigurasjon"
 
 #: network/models.py:95
 msgid "NIC"
@@ -700,7 +700,7 @@ msgstr "Velg din NIC"
 
 #: network/models.py:101
 msgid "Interface Name"
-msgstr ""
+msgstr "Navn på grensesnitt"
 
 #: network/models.py:102
 msgid "Name your NIC."
@@ -750,25 +750,25 @@ msgstr "Innstillinger"
 
 #: network/models.py:157 network/models.py:158 templates/network/index2.html:5
 msgid "Interfaces"
-msgstr ""
+msgstr "Grensesnitt"
 
 #: network/models.py:172 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr ""
+msgstr "Virtuelt grensesnitt"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr ""
+msgstr "Navn på grensesnitt må være vlanXX, hvor XX er et tall"
 
 #: network/models.py:178 templates/network/lagg_members2.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr ""
+msgstr "Fysisk grensesnitt"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
-msgstr ""
+msgstr "VLAN merke"
 
 #: network/models.py:185 network/models.py:276 services/models.py:75
 #: services/models.py:747 storage/models.py:95
@@ -782,7 +782,7 @@ msgstr "VLAN"
 
 #: network/models.py:215 templates/network/interface.html:5
 msgid "Interface"
-msgstr ""
+msgstr "Grensesnitt"
 
 #: network/models.py:219
 msgid "Protocol Type"
@@ -790,11 +790,11 @@ msgstr "Protokolltype"
 
 #: network/models.py:240
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "LAGG grensesnittgruppe"
 
 #: network/models.py:243
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "LAGG Prioritetsnummer"
 
 #: network/models.py:249
 msgid "Physical NIC"
@@ -802,11 +802,11 @@ msgstr "Fysisk NIC"
 
 #: network/models.py:259 templates/network/index2.html:7
 msgid "Link Aggregation"
-msgstr ""
+msgstr "Lenkesamling"
 
 #: network/models.py:268
 msgid "Destination network"
-msgstr ""
+msgstr "Bestemmelsesnettverk"
 
 #: network/models.py:272 templates/network/staticroute.html:6
 msgid "Gateway"
@@ -818,7 +818,7 @@ msgstr ""
 
 #: network/nav.py:10 templates/network/index2.html:13
 msgid "Network Summary"
-msgstr ""
+msgstr "Nettverksammendrag"
 
 #: network/nav.py:27
 msgid "Add Link Aggregation"

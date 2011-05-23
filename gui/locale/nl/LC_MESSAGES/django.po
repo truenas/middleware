@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:34-0700\n"
-"PO-Revision-Date: 2011-05-20 19:29+0200\n"
-"Last-Translator: Tbronl <tombrou@gmail.com>\n"
+"PO-Revision-Date: 2011-05-23 04:26+0200\n"
+"Last-Translator: phutruong <freenas@phutruong.nl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -413,7 +413,6 @@ msgstr "Geselecteerd"
 #: services/forms.py:229 services/models.py:657 services/models.py:917
 #: system/models.py:153 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:60
-#, fuzzy
 msgid "Username"
 msgstr "Gebruikersnaam"
 
@@ -441,7 +440,7 @@ msgstr "Bevestig wachtwoord"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "Voer hetzelfde wachtwoord in als hierboven, ter verificatie."
 
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
@@ -477,10 +476,9 @@ msgstr "Dit veld is verplicht."
 
 #: account/forms.py:418
 msgid "Member users"
-msgstr ""
+msgstr "Lid gebruikers"
 
 #: account/forms.py:436
-#, fuzzy
 msgid "Auxiliary groups"
 msgstr "Ondersteunende groepen"
 
@@ -497,9 +495,8 @@ msgid "Old password"
 msgstr "Oude wachtwoord"
 
 #: account/forms.py:492
-#, fuzzy
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr "Uw oud wachtwoord is verkeerd. Probeer opnieuw."
+msgstr "Uw oude wachtwoord is verkeerd getypt. Probeer opnieuw."
 
 #: account/models.py:36 services/models.py:460 services/models.py:505
 #: templates/services/iscsi_auth.html:5
@@ -720,6 +717,8 @@ msgstr "DHCP"
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
+"Gebruik DHCP, wanneer deze is geactiveerd om een IPv4 adres te verkrijgen "
+"als ook de default router, etc."
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
@@ -728,15 +727,15 @@ msgstr "IPv4 adres"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr ""
+msgstr "IPv4 Netmask"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "Automatische configuratie IPv6"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr ""
+msgstr "Indien ingeschakeld, automatische configuratie IPv6 adres via RTSOL(8)"
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
@@ -744,7 +743,7 @@ msgstr "IPv6 adres"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr ""
+msgstr "IPv6 Netmask"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
@@ -753,12 +752,12 @@ msgstr "Opties"
 
 #: network/models.py:157 network/models.py:158 templates/network/index2.html:5
 msgid "Interfaces"
-msgstr ""
+msgstr "Interfaces"
 
 #: network/models.py:172 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr ""
+msgstr "Virtuele interface"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
@@ -771,7 +770,7 @@ msgstr "fysieke poort"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
-msgstr ""
+msgstr "VLAN Tag"
 
 #: network/models.py:185 network/models.py:276 services/models.py:75
 #: services/models.py:747 storage/models.py:95
@@ -793,91 +792,90 @@ msgstr "Protocol Type"
 
 #: network/models.py:240
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "LAGG interface groep"
 
 #: network/models.py:243
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "LAGG Prioriteit Nummer"
 
 #: network/models.py:249
 msgid "Physical NIC"
-msgstr ""
+msgstr "Fysieke NIC"
 
 #: network/models.py:259 templates/network/index2.html:7
 msgid "Link Aggregation"
-msgstr ""
+msgstr "Link Aggregatie"
 
 #: network/models.py:268
 msgid "Destination network"
-msgstr ""
+msgstr "Bestemmings netwerk"
 
 #: network/models.py:272 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr ""
+msgstr "Gateway"
 
 #: network/models.py:281
 msgid "Static Route"
-msgstr ""
+msgstr "Statische route"
 
 #: network/nav.py:10 templates/network/index2.html:13
 msgid "Network Summary"
-msgstr ""
+msgstr "Netwerk Samenvatting"
 
 #: network/nav.py:27
 msgid "Add Link Aggregation"
-msgstr ""
+msgstr "Toevoegen Link Aggregation"
 
 #: network/nav.py:28
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "Aanmaken Link Aggregation"
 
 #: network/nav.py:39
 msgid "View All Link Aggregations"
-msgstr ""
+msgstr "Bekijk Alle Link Aggregaties"
 
 #: network/nav.py:51
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Link Aggregaties"
 
 #: network/nav.py:97
 msgid "View All Interfaces"
-msgstr ""
+msgstr "Bekijke alle Interfaces"
 
 #: network/nav.py:109
 msgid "View All VLANs"
-msgstr ""
+msgstr "Bekijk Alle VLANs"
 
 #: network/nav.py:121
 msgid "View All Static Routes"
-msgstr ""
+msgstr "Bekijk alle Statische Routes"
 
 #: network/views.py:192
 #, python-format
 msgid "%s successfully added"
-msgstr ""
+msgstr "% succesvol toegevoegd"
 
 #: services/forms.py:59 services/forms.py:112 sharing/forms.py:54
 #: sharing/models.py:63
 msgid "Guest Account"
-msgstr ""
+msgstr "Gast Account"
 
 #: services/forms.py:86 services/forms.py:130 services/forms.py:246
 #: sharing/forms.py:82 sharing/forms.py:190 sharing/forms.py:198
 #: storage/forms.py:799
 #, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "De gebruiker %s is niet geldig"
 
 #: services/forms.py:96
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr ""
+msgstr "Dit veld is verplicht voor \"Inschakelen thuis lokaties browsen\""
 
 #: services/forms.py:99
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "Dit veld is verplicht voor \"Thuis mappen\"."
 
 #: services/forms.py:145
-#, fuzzy
 msgid "File Permission"
 msgstr "Bestand rechten"
 
@@ -907,20 +905,20 @@ msgstr "Deze waarde moet tussen 1024 en 65535 liggen. 0 als standaard"
 
 #: services/forms.py:220
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "Dit veld is vereist voor anonieme login"
 
 #: services/forms.py:294 services/models.py:514
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
-msgstr ""
+msgstr "Geheim"
 
 #: services/forms.py:295 services/models.py:515
 msgid "Target side secret."
-msgstr ""
+msgstr "Geheime Doel kant"
 
 #: services/forms.py:296
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "Geheim (bevestig)"
 
 #: services/forms.py:298 services/forms.py:306
 msgid "Enter the same secret above for verification."
@@ -952,7 +950,7 @@ msgstr ""
 
 #: services/forms.py:375
 msgid "LUN already exists in the same target."
-msgstr ""
+msgstr "LUN bestaat reeds in hetzelfde doel"
 
 #: services/forms.py:384 services/models.py:354
 msgid "Controller Auth Group"
@@ -980,11 +978,11 @@ msgstr ""
 
 #: services/forms.py:502 services/forms.py:530
 msgid "You need to specify a filepath, not a directory."
-msgstr ""
+msgstr "U dient een bestandspad te specificeren, geen map"
 
 #: services/forms.py:506 services/forms.py:534
 msgid "You need to specify a file inside your volume/dataset."
-msgstr ""
+msgstr "U dient een bestand binnen uw volume/dataset te specificeren"
 
 #: services/forms.py:510 services/forms.py:538
 msgid ""
@@ -994,89 +992,92 @@ msgstr ""
 #: services/forms.py:552
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
-msgstr ""
+msgstr "Dit kunnen waardes zijn in bytes of afgekort in KB, MB, GB, TB"
 
 #: services/forms.py:571
 msgid "Disk device"
-msgstr ""
+msgstr "Schijf station"
 
 #: services/forms.py:658
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr ""
+msgstr "Uw portal Groep ID kan niet hoger zijn dan %d"
 
 #: services/forms.py:678
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr ""
+msgstr "Uw Groep ID kan niet hoger zijn dan %d"
 
 #: services/forms.py:685
 msgid "Authentication Group number"
-msgstr ""
+msgstr "Authenticatie Groep nummer"
 
 #: services/models.py:41
 msgid "Service"
-msgstr ""
+msgstr "Dienst"
 
 #: services/models.py:42
 msgid "Name of Service, should be auto-generated at build time"
-msgstr ""
+msgstr "Naam van de Dienst , kan ook auto-gegenereerd zijn bij het aanmaken"
 
 #: services/models.py:45
 msgid "Enable Service"
-msgstr ""
+msgstr "Zet dienst aan"
 
 #: services/models.py:48 services/models.py:49
 #: templates/common/menubar2.html:28 templates/services/index2.html:3
 msgid "Services"
-msgstr ""
+msgstr "Diensten"
 
 #: services/models.py:61
 msgid "Authentication Model"
-msgstr ""
+msgstr "Authenticatie Model"
 
 #: services/models.py:62
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
+"Gebruik van Active Directory of LDAP authenticatie zal deze optie vervangen"
 
 #: services/models.py:66
 msgid "NetBIOS name"
-msgstr ""
+msgstr "NetBIOS naam"
 
 #: services/models.py:70
 msgid "Workgroup"
-msgstr ""
+msgstr "Werkgroep"
 
 #: services/models.py:71
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
+"Werkgroep van de server zal zichtbaar zijn wanneer clients zoeken ernaar "
+"(maximaal 15 karakters)"
 
 #: services/models.py:77
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "Server beschrijving. Deze kan leeg gelaten worden"
 
 #: services/models.py:83
 msgid "DOS charset"
-msgstr ""
+msgstr "DOS karakterset"
 
 #: services/models.py:89
 msgid "UNIX charset"
-msgstr ""
+msgstr "Unix karakterset"
 
 #: services/models.py:95
 msgid "Log level"
-msgstr ""
+msgstr "Log level"
 
 #: services/models.py:98
 msgid "Local Master"
-msgstr ""
+msgstr "Lokale Master"
 
 #: services/models.py:100
 msgid "Time Server for Domain"
-msgstr ""
+msgstr "Tijd Server voor Domein"
 
 #: services/models.py:104 services/models.py:192
 msgid "Guest account"
@@ -1139,15 +1140,15 @@ msgstr ""
 #: services/models.py:135 services/models.py:675 services/models.py:709
 #: services/models.py:741 services/models.py:888
 msgid "Auxiliary parameters"
-msgstr ""
+msgstr "Hulp Parameters"
 
 #: services/models.py:137
 msgid "These parameters are added to [Global] section of smb.conf"
-msgstr ""
+msgstr "Deze parameters zijn toegevoegd aan [Global] gedeelte van smb.conf"
 
 #: services/models.py:140
 msgid "Enable home directories"
-msgstr ""
+msgstr "Home mappen aanzetten"
 
 #: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
@@ -1664,15 +1665,15 @@ msgstr ""
 
 #: services/models.py:703
 msgid "Community"
-msgstr ""
+msgstr "Groep"
 
 #: services/models.py:704
 msgid "In most cases, 'public' is used here."
-msgstr ""
+msgstr "In de meeste gevallen word  'public' gebruikt hier"
 
 #: services/models.py:707
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "verstuur SNMP traps"
 
 #: services/models.py:715 services/models.py:716
 #: templates/services/index2.html:86
@@ -1685,31 +1686,31 @@ msgstr ""
 
 #: services/models.py:726
 msgid "This name is used to uniquely identify your UPS on this system."
-msgstr ""
+msgstr "Deze naam word gebruikt om uw UPS systeem te identificeren"
 
 #: services/models.py:730
 msgid "Driver"
-msgstr ""
+msgstr "Besturing driver software"
 
 #: services/models.py:732
 msgid "The driver used to communicate with your UPS."
-msgstr ""
+msgstr "Deze aansturing software word gebruikt om te communiceren met uw UPS"
 
 #: services/models.py:736 services/models.py:788 services/models.py:911
 msgid "Port"
-msgstr ""
+msgstr "Poort"
 
 #: services/models.py:738
 msgid "The serial or USB port where your UPS is connected."
-msgstr ""
+msgstr "De serieele of USB poort van uw UPS is aangesloten"
 
 #: services/models.py:754
 msgid "Shutdown mode"
-msgstr ""
+msgstr "Afsluit mode"
 
 #: services/models.py:758
 msgid "Shutdown timer"
-msgstr ""
+msgstr "Afsluit timer"
 
 #: services/models.py:759
 msgid ""
@@ -1719,37 +1720,39 @@ msgstr ""
 
 #: services/models.py:762
 msgid "Remote Monitor"
-msgstr ""
+msgstr "Externe Monitor"
 
 #: services/models.py:764
 msgid "Send Email Status Updates"
-msgstr ""
+msgstr "Verstuur Email Status Updates"
 
 #: services/models.py:767 services/models.py:773
 msgid "To email"
-msgstr ""
+msgstr "Naar email"
 
 #: services/models.py:769
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr ""
+msgstr "Ontvangende email adres. Gescheiden email adressen met comma."
 
 #: services/models.py:774
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
+"Het onderwerp van de email. U kunt gebruik maken van de volgende parameters "
+":<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 
 #: services/models.py:778 services/models.py:779
 msgid "UPS"
-msgstr ""
+msgstr "UPS"
 
 #: services/models.py:789
 msgid "Port to bind FTP server."
-msgstr ""
+msgstr "Poort om te verbinden met uw FTP server"
 
 #: services/models.py:793
 msgid "Clients"
-msgstr ""
+msgstr "Client"
 
 #: services/models.py:794
 msgid "Maximum number of simultaneous clients."
@@ -4095,7 +4098,7 @@ msgstr ""
 #: templates/storage/periodicsnap.html:13 templates/storage/volumes.html:130
 #: templates/storage/volumes.html.py:133
 msgid "Create Snapshot"
-msgstr ""
+msgstr "Maak Snapshot"
 
 #: templates/storage/permission.html:6
 #, fuzzy
@@ -4105,7 +4108,7 @@ msgstr "Toestemming veranderen"
 #: templates/storage/permission.html:7
 #, python-format
 msgid "Change permission on %(path)s to"
-msgstr ""
+msgstr "Verander toestemming op %(path)s naar"
 
 #: templates/storage/permission.html:11
 msgid "Change"
@@ -4208,39 +4211,39 @@ msgstr ""
 
 #: templates/storage/tasks.html:46
 msgid ", every"
-msgstr ""
+msgstr ", elke"
 
 #: templates/storage/tasks.html:48
 msgid "minutes,"
-msgstr ""
+msgstr "minuten"
 
 #: templates/storage/tasks.html:50
 msgid "everyday"
-msgstr ""
+msgstr "elke dag"
 
 #: templates/storage/tasks.html:53
 msgid "on every"
-msgstr ""
+msgstr "bij elke"
 
 #: templates/storage/tasks.html:143
 msgid "No periodic snapshots scheduled"
-msgstr ""
+msgstr "Geen periodieke snapshots gepland"
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
-msgstr ""
+msgstr "Wijzig ZFS volume"
 
 #: templates/storage/volumes.html:42 templates/storage/volumes.html.py:46
 msgid "Auto Import Volume"
-msgstr ""
+msgstr "Auto Importeer Volume"
 
 #: templates/storage/volumes.html:53
 msgid "There are no active volumes."
-msgstr ""
+msgstr "Er zijn geen actieve volumes"
 
 #: templates/storage/volumes.html:61
 msgid "Used"
-msgstr ""
+msgstr "Gebruikt"
 
 #: templates/storage/volumes.html:63
 msgid "Size"
@@ -4248,28 +4251,28 @@ msgstr "grootte"
 
 #: templates/storage/volumes.html:64
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Destroy Dataset"
-msgstr ""
+msgstr "Verwijder Dataset"
 
 #: templates/storage/volumes.html:99 templates/storage/volumes.html.py:103
 #: templates/storage/volumes.html:114 templates/storage/volumes.html.py:118
 msgid "Edit ZFS Options"
-msgstr ""
+msgstr "Wijzig ZFS Opties"
 
 #: templates/storage/volumes.html:107 templates/storage/volumes.html.py:110
 msgid "Destroy Volume"
-msgstr ""
+msgstr "Verwijder Volume"
 
 #: templates/storage/volumes.html:140 templates/storage/volumes.html.py:144
 msgid "View Disks"
-msgstr ""
+msgstr "Bekijk Schijven"
 
 #: templates/storage/volumes.html:151
 msgid "No volumes defined"
-msgstr ""
+msgstr "Geen volumes gedefineerd"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
@@ -4277,7 +4280,7 @@ msgstr ""
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
-msgstr ""
+msgstr "Groep type"
 
 #: templates/storage/wizard.html:84
 msgid "ZFS Extra"
@@ -4289,11 +4292,11 @@ msgstr "Het gebruik van 1 log schijf is af te raden"
 
 #: templates/storage/wizard.html:93
 msgid "Log"
-msgstr ""
+msgstr "Log bestand"
 
 #: templates/storage/wizard.html:94
 msgid "Cache"
-msgstr ""
+msgstr "Cache"
 
 #: templates/storage/wizard.html:95
 #, fuzzy
@@ -4302,7 +4305,7 @@ msgstr "reserve"
 
 #: templates/storage/wizard.html:119
 msgid "Add Volume"
-msgstr ""
+msgstr "Voeg Volume Toe"
 
 #: templates/storage/wizard.html:120
 msgid "Existing data will be cleared"
@@ -4318,7 +4321,7 @@ msgstr "Het cache kon niet herbouwd worden"
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
-msgstr ""
+msgstr "Herstel LDAP/AD Cache"
 
 #: templates/system/config.html:2
 msgid "Restore to Factory Defaults"

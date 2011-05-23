@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-22 10:56+0200\n"
+"PO-Revision-Date: 2011-05-22 22:59+0200\n"
 "Last-Translator: bogdan_marcu <bogdan_marcu@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -1326,7 +1326,7 @@ msgstr ""
 
 #: services/models.py:243
 msgid "Discovery Auth Method"
-msgstr ""
+msgstr "Metodă descoperire"
 
 #: services/models.py:255
 msgid "I/O Timeout"
@@ -2649,13 +2649,13 @@ msgid ""
 "absolutely needed. This option should not be used if files are access mostly "
 "by Mac computers.  Clicking this option disables their creation."
 msgstr ""
-"Permite ca directorul .AppleDouble să fie creat decât dacă este absolut "
-"necesar. Această opţiune nu trebuie folosită dacă fişiere sunt accesate în "
+"Permite ca directorul .AppleDouble să fie creat doar dacă este absolut "
+"necesar. Această opţiune nu trebuie folosită dacă fişierele sunt accesate în "
 "principal de computere Mac. Bifarea acestei opţiuni opreşte crearea lor."
 
 #: sharing/models.py:181
 msgid "Zero Device Numbers"
-msgstr ""
+msgstr "Numere dispozitiv zero"
 
 #: sharing/models.py:182
 msgid ""
@@ -2665,7 +2665,7 @@ msgstr ""
 
 #: sharing/models.py:185
 msgid "Disable File ID"
-msgstr ""
+msgstr "Dezactivare ID fişier"
 
 #: sharing/models.py:186
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
@@ -2705,7 +2705,7 @@ msgstr ""
 
 #: sharing/models.py:202
 msgid "Use AFP3 unix privileges."
-msgstr ""
+msgstr "Utilizare privilegiile unix AFP3"
 
 #: sharing/models.py:209
 msgid "Apple Share"
@@ -2852,7 +2852,7 @@ msgstr ""
 
 #: storage/forms.py:396
 msgid "Some error ocurried while labelling the disk."
-msgstr ""
+msgstr "Au apărut erori la etichetarea discului"
 
 #: storage/forms.py:606
 msgid "Volume from which this dataset will be created on"
@@ -2894,73 +2894,75 @@ msgstr "0=Nimic; de ex. 1g"
 
 #: storage/forms.py:613 storage/forms.py:665
 msgid "Reserved space for this dataset and all children"
-msgstr ""
+msgstr "Spaţiu rezervat pentru acest set de date şi descendenţilor săi"
 
 #: storage/forms.py:626
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
 msgstr ""
+"Numele setului de date trebuie să înceapă cu caractere alfanumerice şi poate "
+"conţine doar (-), (_), (:) şi (.)."
 
 #: storage/forms.py:633
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "Există deja un set de date cu acelaşi nume"
 
 #: storage/forms.py:640 storage/forms.py:697 storage/forms.py:741
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
-msgstr ""
+msgstr "Introduceţi un număr pozitiv (opţional cu terminaţia M, G, T) sau 0"
 
 #: storage/forms.py:756
 msgid "Owner (user)"
-msgstr ""
+msgstr "Proprietar (utilizator)"
 
 #: storage/forms.py:759
 msgid "Owner (group)"
-msgstr ""
+msgstr "Proprietar (grup)"
 
 #: storage/forms.py:761
 msgid "Mode"
-msgstr ""
+msgstr "Mod"
 
 #: storage/forms.py:764
 msgid "Set permission recursively"
-msgstr ""
+msgstr "Setare permisiuni recursiv"
 
 #: storage/forms.py:846
 msgid "At least one day must be chosen"
-msgstr ""
+msgstr "Cel puţin o zi trebuie aleasă"
 
 #: storage/forms.py:851
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "Punct de restaurare recursiv"
 
 #: storage/forms.py:852
 msgid "Snapshot Name"
-msgstr ""
+msgstr "Nume punct de restaurare"
 
 #: storage/forms.py:859
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr ""
+msgstr "Doar [-a-zA-Z0-9_.] sunt permise în denumirea punctului de restaurare"
 
 #: storage/forms.py:869
 msgid "Invalid prefix"
-msgstr ""
+msgstr "Terminaţie invalidă"
 
 #: storage/forms.py:873 storage/views.py:436
 msgid "Snapshot"
-msgstr ""
+msgstr "Punct de restaurare"
 
 #: storage/forms.py:874
 msgid "Clone Name (must be on same volume)"
-msgstr ""
+msgstr "Nume clonă (trebuie să fie pe acelaşi volum)"
 
 #: storage/forms.py:887
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr ""
+msgstr "Doar [-a-zA-Z0-9_./] sunt permise în denumirea clonei"
 
 #: storage/forms.py:893
 msgid "Clone must be within the same volume"
-msgstr ""
+msgstr "Clona trebuie să fie în acelaşi volum"
 
 #: storage/forms.py:960 storage/models.py:212
 msgid "Remote hostname"
@@ -2972,85 +2974,85 @@ msgstr ""
 
 #: storage/models.py:49
 msgid "File System Type"
-msgstr ""
+msgstr "Tip sistem fișiere"
 
 #: storage/models.py:52 storage/models.py:77 storage/views.py:88
 #: storage/views.py:116 storage/views.py:139 templates/storage/volumes.html:59
 msgid "Volume"
-msgstr ""
+msgstr "Volum"
 
 #: storage/models.py:78
 msgid "Volume this group belongs to"
-msgstr ""
+msgstr "Volumul de care aparţine acest grup"
 
 #: storage/models.py:91
 msgid "Disks"
-msgstr ""
+msgstr "Discuri"
 
 #: storage/models.py:102
 msgid "Transfer Mode"
-msgstr ""
+msgstr "Mod transfer"
 
 #: storage/models.py:108
 msgid "HDD Standby"
-msgstr ""
+msgstr "Intrare disc (HDD) în stare de veghe"
 
 #: storage/models.py:114
 msgid "Advanced Power Management"
-msgstr ""
+msgstr "Management energie avansat"
 
 #: storage/models.py:120
 msgid "Acoustic Level"
-msgstr ""
+msgstr "Nivel sonor"
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
-msgstr ""
+msgstr "Activare S.M.A.R.T."
 
 #: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
-msgstr ""
+msgstr "Opţiuni suplimentare S.M.A.R.T"
 
 #: storage/models.py:133
 msgid "Group Membership"
-msgstr ""
+msgstr "Apartenenţă grup"
 
 #: storage/models.py:134
 msgid "The disk group containing this disk"
-msgstr ""
+msgstr "Grupul de discuri ce conţine acest disc"
 
 #: storage/models.py:146 storage/models.py:227 storage/models.py:253
 #: templates/storage/tasks.html:22
 msgid "Mount Point"
-msgstr ""
+msgstr "Punct de montare"
 
 #: storage/models.py:147
 msgid "Path to mount point"
-msgstr ""
+msgstr "Calea către punctul de montare"
 
 #: storage/models.py:151
 msgid "Mount options"
-msgstr ""
+msgstr "Opţiuni montare"
 
 #: storage/models.py:152
 msgid "Enter Mount Point options here"
-msgstr ""
+msgstr "Introduceţi aici opţiunile punctului de montare"
 
 #: storage/models.py:169
 msgid "Error getting total space"
-msgstr ""
+msgstr "Eroare la calcularea spaţiului total"
 
 #: storage/models.py:175
 msgid "Error getting available space"
-msgstr ""
+msgstr "Eroare la calcularea spaţiului disponibil"
 
 #: storage/models.py:181
 msgid "Error getting used space"
-msgstr ""
+msgstr "Eroare la calcularea spaţiului folosit"
 
 #: storage/models.py:187 storage/models.py:199
 msgid "Error"
-msgstr ""
+msgstr "Eroare"
 
 #: storage/models.py:219
 msgid "Remote Replication Host"
@@ -3086,56 +3088,58 @@ msgstr ""
 
 #: storage/models.py:260
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "Valoare durată punct de restaurare"
 
 #: storage/models.py:266
 msgid "Snapshot lifetime unit"
-msgstr ""
+msgstr "Unitate durată punct de restaurare"
 
 #: storage/models.py:270
 msgid "Begin"
-msgstr ""
+msgstr "Început"
 
 #: storage/models.py:271
 msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr ""
+msgstr "Când începe crearea punctelor de restaurare, de ex. ora 8:00"
 
 #: storage/models.py:275
 msgid "End"
-msgstr ""
+msgstr "Sfârşit"
 
 #: storage/models.py:276
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr ""
+msgstr "Când încetează crearea punctelor de restaurare, de ex. ora 17:00"
 
 #: storage/models.py:282
 msgid "Interval"
-msgstr ""
+msgstr "Interval"
 
 #: storage/models.py:283
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
 msgstr ""
+"Câte minute trec între efectuării unui nou punct de restaurare şi ultimul "
+"punct de restaurare."
 
 #: storage/models.py:289
 msgid "Occurrence"
-msgstr ""
+msgstr "Apariţie"
 
 #: storage/models.py:290
 msgid "How the task is repeated"
-msgstr ""
+msgstr "Modalitate de repetare a sarcinii"
 
 #: storage/models.py:295
 msgid "Weekday"
-msgstr ""
+msgstr "Zi din săptămână"
 
 #: storage/models.py:313
 msgid "Periodic Snapshot Task"
-msgstr ""
+msgstr "Sarcină periodică punct de restaurare"
 
 #: storage/models.py:314 templates/storage/index.html:9
 msgid "Periodic Snapshot Tasks"
-msgstr ""
+msgstr "Sarcini periodice puncte de restaurare"
 
 #: storage/nav.py:10
 msgid "View All Replication Tasks"
@@ -3144,42 +3148,43 @@ msgstr ""
 #: storage/nav.py:19
 msgid "View All Periodic Snapshot Tasks"
 msgstr ""
+"Vizualizare toate sarcinile periodice de creare a punctelor de restaurare"
 
 #: storage/nav.py:30
 msgid "View All Snapshots"
-msgstr ""
+msgstr "Vizualizare tuturor punctelor de restaurare"
 
 #: storage/nav.py:40 templates/storage/replications.html:5
 #: templates/storage/volumes.html:6 templates/storage/volumes.html.py:11
 msgid "Create Volume"
-msgstr ""
+msgstr "Creare volum"
 
 #: storage/nav.py:51 templates/storage/autoimport.html:25
 #: templates/storage/import.html:43 templates/storage/volumes.html:31
 #: templates/storage/volumes.html.py:35
 msgid "Import Volume"
-msgstr ""
+msgstr "Import volum"
 
 #: storage/nav.py:62
 msgid "View All Volumes"
-msgstr ""
+msgstr "Vizualizare toate volumele"
 
 #: storage/nav.py:73 templates/storage/volumes.html:19
 #: templates/storage/volumes.html.py:23
 msgid "Create ZFS Dataset"
-msgstr ""
+msgstr "Creare set de date ZFS"
 
 #: storage/nav.py:84
 msgid "Add Periodic Snapshot"
-msgstr ""
+msgstr "Adăugare punct de restaurare periodic"
 
 #: storage/nav.py:85 templates/storage/tasks.html:10
 msgid "Create Periodic Snapshot"
-msgstr ""
+msgstr "Creare punct de restaurare periodic"
 
 #: storage/nav.py:96
 msgid "Volumes"
-msgstr ""
+msgstr "Volume"
 
 #: storage/nav.py:118 storage/nav.py:138 templates/storage/volumes.html:123
 #: templates/storage/volumes.html.py:126
@@ -3211,11 +3216,11 @@ msgstr "Set date nativ"
 
 #: storage/views.py:450
 msgid "Snapshot successfully taken"
-msgstr ""
+msgstr "Punct de restaurare creat cu succes"
 
 #: storage/views.py:466
 msgid "Snapshot successfully cloned"
-msgstr ""
+msgstr "Punct de restaurare clonat cu succes"
 
 #: storage/views.py:518
 msgid "Disk replacement has been initiated."
@@ -3325,14 +3330,18 @@ msgstr "Activare Zeroconf/Bonjour"
 msgid ""
 "Swap size on each drive in GiB, affects new disks only.  Must be non-zero"
 msgstr ""
+"Mărime fişier swap pentru fiecare disc în GB, aplicabil noilor discuri.   Nu "
+"se acceptă o valoare nulă"
 
 #: system/models.py:101
 msgid "Show console messages in the footer (Requires UI reload)"
 msgstr ""
+"Afişează mesajele consolă în subsol (necesită reîncărcarea interfeţei "
+"grafice)"
 
 #: system/models.py:109
 msgid "MOTD banner"
-msgstr ""
+msgstr "Banner MOTD"
 
 #: system/models.py:113 templates/system/settings.html:5
 msgid "Advanced"
@@ -3366,92 +3375,94 @@ msgstr ""
 
 #: system/models.py:136
 msgid "Port to connect to"
-msgstr ""
+msgstr "Port conectare"
 
 #: system/models.py:142
 msgid "encryption of the connection"
-msgstr ""
+msgstr "criptare a conexiune"
 
 #: system/models.py:143
 msgid "TLS/SSL"
-msgstr ""
+msgstr "TLS/SSL"
 
 #: system/models.py:146
 msgid "Use SMTP Authentication"
-msgstr ""
+msgstr "Utilizare autentificare SMTP"
 
 #: system/models.py:154
 msgid "A username to authenticate to the remote server"
-msgstr ""
+msgstr "Nume de utilizator pentru autentificarea pe serverul de la distanţă"
 
 #: system/models.py:161
 msgid "A password to authenticate to the remote server"
-msgstr ""
+msgstr "Parolă pentru autentificarea pe serverul de la distanţă"
 
 #: system/models.py:164 templates/system/settings.html:7
 msgid "Email"
-msgstr ""
+msgstr "Email"
 
 #: system/models.py:174
 msgid "Organization"
-msgstr ""
+msgstr "Organizaţie"
 
 #: system/models.py:175
 msgid "Organization Name (eg, company)"
-msgstr ""
+msgstr "Nume organizaţie (de ex. companie)"
 
 #: system/models.py:181
 msgid "Organizational Unit"
-msgstr ""
+msgstr "Unitate organizaţională"
 
 #: system/models.py:182
 msgid "Organizational Unit Name (eg, section)"
-msgstr ""
+msgstr "Nume unitate organizaţională (de ex. secţiune)"
 
 #: system/models.py:188 system/models.py:189
 msgid "Email Address"
-msgstr ""
+msgstr "Adresă email"
 
 #: system/models.py:195
 msgid "Locality"
-msgstr ""
+msgstr "Localitate"
 
 #: system/models.py:196
 msgid "Locality Name (eg, city)"
-msgstr ""
+msgstr "Numele localităţii"
 
 #: system/models.py:202
 msgid "State"
-msgstr ""
+msgstr "Stat"
 
 #: system/models.py:203
 msgid "State or Province Name (full name)"
-msgstr ""
+msgstr "Nume stat sau provincie (nume complet)"
 
 #: system/models.py:209
 msgid "Country"
-msgstr ""
+msgstr "Țara"
 
 #: system/models.py:210
 msgid "Country Name (2 letter code)"
-msgstr ""
+msgstr "Nume ţară (cod 2 litere)"
 
 #: system/models.py:216
 msgid "Common Name"
-msgstr ""
+msgstr "Nume"
 
 #: system/models.py:217
 msgid "Common Name (eg, YOUR name)"
-msgstr ""
+msgstr "Nume (de ex. numele d-voastră)"
 
 #: system/models.py:222
 msgid "SSL Certificate"
-msgstr ""
+msgstr "Certificat SSL"
 
 #: system/models.py:223
 msgid ""
 "Cut and paste the contents of your private and public certificate files here."
 msgstr ""
+"Aici copiaţi şi lipiţi conţinutul fişierului cu certificatul privat şi "
+"public."
 
 #: system/nav.py:9 templates/system/reporting.html:2
 msgid "Reporting"
@@ -3459,11 +3470,11 @@ msgstr "Rapoarte"
 
 #: system/nav.py:16
 msgid "System Information"
-msgstr ""
+msgstr "Informaţii sistem"
 
 #: system/views.py:130
 msgid "The uploaded file is not valid."
-msgstr ""
+msgstr "Fişierul încărcat nu este valid."
 
 #: templates/account/bsdgroup2user_form2.html:9
 #: templates/freeadmin/generic_model_add.html:13
@@ -3491,107 +3502,107 @@ msgstr "OK"
 #: templates/system/config_restore.html:11
 #: templates/system/config_upload.html:35
 msgid "Cancel"
-msgstr ""
+msgstr "Anulare"
 
 #: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:48
 #: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:59
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:50 templates/account/bsdgroups.html:62
 msgid "Members"
-msgstr ""
+msgstr "Membri"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/storage/tasks.html:134
 msgid "Modify"
-msgstr ""
+msgstr "Modificare"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
-msgstr ""
+msgstr "Eliminare"
 
 #: templates/account/bsdgroups.html:25 templates/account/bsdgroups.html:66
 msgid "Modify Group"
-msgstr ""
+msgstr "Modificare grup"
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:71
 msgid "Delete Group"
-msgstr ""
+msgstr "Ştergere grup"
 
 #: templates/account/bsdgroups.html:37
 msgid "There are no user defined groups."
-msgstr ""
+msgstr "Nu există grupuri cu utilizatori definiţi."
 
 #: templates/account/bsdgroups.html:43
 msgid "Add New Group"
-msgstr ""
+msgstr "Adăugare grup nou"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:62
 msgid "Home"
-msgstr ""
+msgstr "Acasă"
 
 #: templates/account/bsdusers.html:37 templates/account/bsdusers.html.py:38
 #: templates/account/bsdusers.html:89 templates/account/bsdusers.html.py:90
 msgid "Modify User"
-msgstr ""
+msgstr "Modificare utilizator"
 
 #: templates/account/bsdusers.html:38 templates/account/bsdusers.html.py:90
 msgid "Auxiliary Groups"
-msgstr ""
+msgstr "Grupuri auxiliare"
 
 #: templates/account/bsdusers.html:43
 msgid "Delete User"
-msgstr ""
+msgstr "Ştergere utilizator"
 
 #: templates/account/bsdusers.html:43 templates/account/bsdusers.html.py:95
 msgid "Remove User"
-msgstr ""
+msgstr "Eliminare utilizator"
 
 #: templates/account/bsdusers.html:54
 msgid "Add New User"
-msgstr ""
+msgstr "Adăugare utilizator nou"
 
 #: templates/account/bsdusers.html:101
 msgid "No users defined"
-msgstr ""
+msgstr "Nu există utilizatori definiţi"
 
 #: templates/account/passform.html:26
 msgid "Change Admin Password"
-msgstr ""
+msgstr "Modificare parola administrator"
 
 #: templates/common/menubar2.html:8
 msgid "System"
-msgstr ""
+msgstr "Sistem"
 
 #: templates/common/menubar2.html:13
 msgid "Network"
-msgstr ""
+msgstr "Reţea"
 
 #: templates/common/menubar2.html:18
 msgid "Storage"
-msgstr ""
+msgstr "Stocare"
 
 #: templates/common/menubar2.html:23
 msgid "Sharing"
-msgstr ""
+msgstr "Partajare"
 
 #: templates/common/menubar2.html:33
 msgid "Log Out"
-msgstr ""
+msgstr "Deconectare"
 
 #: templates/common/menubar2.html:38
 msgid "Help"
-msgstr ""
+msgstr "Ajutor"
 
 #: templates/common/menubar2.html:43
 msgid "Account"
-msgstr ""
+msgstr "Cont"
 
 #: templates/common/menubar2.html:49 templates/registration/login.html:49
 msgid "Log In"
-msgstr ""
+msgstr "Conectare"
 
 #: templates/freeadmin/generic_model_add.html:9
 #: templates/freeadmin/generic_model_delete.html:10
@@ -3603,7 +3614,7 @@ msgstr ""
 #: templates/storage/snapshot_confirm_rollback2.html:10
 #: templates/system/config_restore.html:10 templates/system/wizard.html:13
 msgid "Please wait..."
-msgstr ""
+msgstr "Aşteptaţi..."
 
 #: templates/freeadmin/generic_model_delete.html:7
 #: templates/storage/dataset_confirm_delete2.html:7
@@ -3712,7 +3723,7 @@ msgstr "#freenas on freenode"
 
 #: templates/freeadmin/index.html:82
 msgid "Mailing Lists"
-msgstr "Listă de corespondenţă"
+msgstr "Liste de corespondenţă"
 
 #: templates/freeadmin/index.html:84
 msgid "FreeNAS Announce"
@@ -4038,7 +4049,7 @@ msgstr ""
 
 #: templates/services/iscsi_auth.html:44 templates/services/iscsi_auth.html:46
 msgid "Add iSCSI User"
-msgstr ""
+msgstr "Adăugare utilizator iSCSI"
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
@@ -4052,7 +4063,7 @@ msgstr ""
 #: templates/services/iscsi_dextents.html:6
 #: templates/services/iscsi_targets.html:6
 msgid "Alias"
-msgstr ""
+msgstr "Alias"
 
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
@@ -4145,7 +4156,7 @@ msgstr "Modificare partajare NFS"
 
 #: templates/sharing/unix.html:36
 msgid "Delete NFS Share"
-msgstr "Ștergere partajare UNIX"
+msgstr "Ştergere partajare UNIX"
 
 #: templates/sharing/unix.html:50
 msgid "Add UNIX Share"
@@ -4225,9 +4236,9 @@ msgid "Change permission"
 msgstr "Modificare permisiune"
 
 #: templates/storage/permission.html:7
-#, fuzzy, python-format
+#, python-format
 msgid "Change permission on %(path)s to"
-msgstr "Modificare permisiune %(path)s"
+msgstr "Modificare permisiunii %(path)s către"
 
 #: templates/storage/permission.html:11
 msgid "Change"
@@ -4445,11 +4456,11 @@ msgstr "Refacere cache LDA/AD"
 
 #: templates/system/config.html:2
 msgid "Restore to Factory Defaults"
-msgstr "Revenire la setările din iniţiale"
+msgstr "Revenire la setările iniţiale"
 
 #: templates/system/config.html:4
 msgid "Save Config"
-msgstr "Salvare configurație"
+msgstr "Salvare configuraţie"
 
 #: templates/system/config.html:6
 msgid "Upload Config"

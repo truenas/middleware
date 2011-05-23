@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-22 10:19+0200\n"
-"Last-Translator: BEM <vl_bem@bk.ru>\n"
+"PO-Revision-Date: 2011-05-23 10:17+0200\n"
+"Last-Translator: SkyNet <Kuzminvik@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -19,6 +19,7 @@ msgstr ""
 "10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.1.6\n"
 
+# Альтернатива SSL/TLS
 #: choices.py:35
 msgid "Plain"
 msgstr ""
@@ -260,12 +261,13 @@ msgstr "Машина времени"
 
 #: choices.py:195
 msgid "No case folding"
-msgstr ""
+msgstr "Без учета регистра"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
 msgstr ""
 
+# Капс?
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
 msgstr "Клиент видит строчные буквы, сервер видит ЗАГЛАВНЫЕ"
@@ -638,7 +640,7 @@ msgstr "%s успешно удален."
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
+msgstr "Необходимо вначале заполнить DNS 2 для заполнения DNS 3"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
@@ -646,11 +648,11 @@ msgstr ""
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr ""
+msgstr "Необходимо вначале заполнить DNS 1 для заполнения DNS 3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr ""
+msgstr "Необходимо вначале заполнить DNS 1 для заполнения DNS 2"
 
 #: network/forms.py:134
 msgid "Physical NICs in the LAGG"
@@ -680,28 +682,29 @@ msgstr "Шлюз IPv6 по умолчанию"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "DNS 1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "DNS 2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "DNS 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:18
 #: templates/network/index2.html:3
 msgid "Global Configuration"
-msgstr ""
+msgstr "Общая конфигурация"
 
+# не "сетевая карта" во избежание путанцы, к примеру, с двухголовыми платами
 #: network/models.py:95
 msgid "NIC"
-msgstr ""
+msgstr "Сетевой интерфейс"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Выберите сетевой интерфейс"
 
 #: network/models.py:101
 msgid "Interface Name"
@@ -719,8 +722,8 @@ msgstr "DHCP"
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
-"Когда разрешен, для получения адреса IPv4, маршрутизатора по умолчанию, и т. "
-"д., используется DHCP"
+"Если включено, использовать DHCP маршрутизатора по умолчанию, для получения "
+"адреса IPv4, и т.д."
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
@@ -807,7 +810,7 @@ msgstr "Физический сетевой интерфейс"
 
 #: network/models.py:259 templates/network/index2.html:7
 msgid "Link Aggregation"
-msgstr "Объединение интерфейсов"
+msgstr "Объединение интерфейса"
 
 #: network/models.py:268
 msgid "Destination network"
@@ -839,7 +842,7 @@ msgstr "Просмотреть все объединения интерфейс�
 
 #: network/nav.py:51
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Объединение интерфейсов"
 
 #: network/nav.py:97
 msgid "View All Interfaces"
@@ -856,7 +859,7 @@ msgstr "Просмотреть все статические маршруты"
 #: network/views.py:192
 #, python-format
 msgid "%s successfully added"
-msgstr ""
+msgstr "%s успешно добавлен"
 
 #: services/forms.py:59 services/forms.py:112 sharing/forms.py:54
 #: sharing/models.py:63
@@ -868,15 +871,16 @@ msgstr "Гостевая учетная запись"
 #: storage/forms.py:799
 #, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "Пользователь %s не правильный."
 
 #: services/forms.py:96
 msgid "This field is required for \"Enable home directories browsing\"."
 msgstr ""
+"Это поле является обязательным для \"Включения просмотра домашних каталогов\"."
 
 #: services/forms.py:99
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "Это поле является обязательным для \"Домашние каталоги\"."
 
 #: services/forms.py:145
 msgid "File Permission"
@@ -910,7 +914,7 @@ msgstr ""
 
 #: services/forms.py:220
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "Это поле является обязательным для анонимного входа."
 
 #: services/forms.py:294 services/models.py:514
 #: templates/services/iscsi_auth.html:7
@@ -1019,7 +1023,7 @@ msgstr ""
 
 #: services/models.py:41
 msgid "Service"
-msgstr ""
+msgstr "Сервис"
 
 #: services/models.py:42
 msgid "Name of Service, should be auto-generated at build time"
@@ -1027,16 +1031,16 @@ msgstr ""
 
 #: services/models.py:45
 msgid "Enable Service"
-msgstr ""
+msgstr "Включить сервис"
 
 #: services/models.py:48 services/models.py:49
 #: templates/common/menubar2.html:28 templates/services/index2.html:3
 msgid "Services"
-msgstr ""
+msgstr "Сервисы"
 
 #: services/models.py:61
 msgid "Authentication Model"
-msgstr ""
+msgstr "Модель аутентификации"
 
 #: services/models.py:62
 msgid ""
@@ -1045,11 +1049,11 @@ msgstr ""
 
 #: services/models.py:66
 msgid "NetBIOS name"
-msgstr ""
+msgstr "Имя NetBIOS"
 
 #: services/models.py:70
 msgid "Workgroup"
-msgstr ""
+msgstr "Рабочая группа"
 
 #: services/models.py:71
 msgid ""
@@ -1059,19 +1063,19 @@ msgstr ""
 
 #: services/models.py:77
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "Описание сервера. Можно оставить пустым."
 
 #: services/models.py:83
 msgid "DOS charset"
-msgstr ""
+msgstr "DOS кодировка"
 
 #: services/models.py:89
 msgid "UNIX charset"
-msgstr ""
+msgstr "UNIX кодировка"
 
 #: services/models.py:95
 msgid "Log level"
-msgstr ""
+msgstr "Уровень журналирования"
 
 #: services/models.py:98
 msgid "Local Master"
@@ -1079,7 +1083,7 @@ msgstr ""
 
 #: services/models.py:100
 msgid "Time Server for Domain"
-msgstr ""
+msgstr "Сервер времени для домена"
 
 #: services/models.py:104 services/models.py:192
 msgid "Guest account"
@@ -1096,11 +1100,11 @@ msgstr ""
 
 #: services/models.py:108
 msgid "Allow guest access"
-msgstr ""
+msgstr "Разрешить гостевой доступ"
 
 #: services/models.py:110
 msgid "Only allow guest access"
-msgstr ""
+msgstr "Разрешить только гостевой доступ"
 
 #: services/models.py:113 services/models.py:830
 msgid "File mask"
@@ -1667,7 +1671,7 @@ msgstr ""
 
 #: services/models.py:703
 msgid "Community"
-msgstr ""
+msgstr "Сообщество"
 
 #: services/models.py:704
 msgid "In most cases, 'public' is used here."
@@ -2013,7 +2017,7 @@ msgstr "SSH"
 
 #: services/models.py:1016
 msgid "Domain Controller Name"
-msgstr ""
+msgstr "Имя контролера домена"
 
 #: services/models.py:1017
 msgid "AD or PDC name."
@@ -2037,7 +2041,7 @@ msgstr ""
 
 #: services/models.py:1031
 msgid "Workgroup Name"
-msgstr ""
+msgstr "Имя рабочей группы"
 
 #: services/models.py:1032
 msgid "Workgroup Name in old format, eg EXAMPLE"

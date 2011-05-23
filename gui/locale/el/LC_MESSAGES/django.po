@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-21 10:52+0200\n"
+"PO-Revision-Date: 2011-05-22 14:19+0200\n"
 "Last-Translator: Bth <oti_nane@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
@@ -2911,83 +2911,88 @@ msgstr ""
 #: storage/forms.py:231 system/forms.py:210 system/forms.py:216
 #: system/forms.py:221
 msgid "This field is required"
-msgstr ""
+msgstr "Αυτό το πεδίο είναι υποχρεωτικό"
 
 #: storage/forms.py:236 storage/forms.py:382 storage/forms.py:484
 msgid "You already have a volume with same name"
-msgstr ""
+msgstr "Έχετε ήδη έναν τόμο με το ίδιο όνομα"
 
 #: storage/forms.py:242
 msgid "\"log\" is a reserved word and thus cannot be used"
 msgstr ""
+"\"Log\" είναι δεσμευμένη λέξη και, επομένως, δεν μπορούν να χρησιμοποιηθούν"
 
 #: storage/forms.py:247
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr ""
+"Το όνομα του όγκου ενδέχεται να μην ξεκινήσει με το γ [0-9], καθρέφτη, raidz "
+"ή ανταλλακτικά"
 
 #: storage/forms.py:332 storage/forms.py:431 storage/forms.py:910
 msgid "Member disk"
-msgstr ""
+msgstr "Member disk"
 
 #: storage/forms.py:388 storage/forms.py:509
 msgid "The selected disks were not verified for this import rules."
-msgstr ""
+msgstr "Τα επιλεγμένα δίσκοι δεν επαληθεύονται για το καθεστώς εισαγωγής."
 
 #: storage/forms.py:396
 msgid "Some error ocurried while labelling the disk."
-msgstr ""
+msgstr "Μερικές σφάλμα ocurried ενώ η σήμανση του δίσκου."
 
 #: storage/forms.py:606
 msgid "Volume from which this dataset will be created on"
-msgstr ""
+msgstr "Όγκος από την οποία το σύνολο δεδομένων θα δημιουργηθεί"
 
 #: storage/forms.py:607
 msgid "Dataset Name"
-msgstr ""
+msgstr "Σύνολο δεδομένων Όνομα"
 
 #: storage/forms.py:608 storage/forms.py:660 storage/forms.py:717
 msgid "Compression level"
-msgstr ""
+msgstr "Συμπίεση επίπεδο"
 
 #: storage/forms.py:609 storage/forms.py:661 storage/forms.py:718
 msgid "Enable atime"
-msgstr ""
+msgstr "Ενεργοποίηση atime"
 
 #: storage/forms.py:610 storage/forms.py:662 storage/forms.py:719
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "Ποσόστωση για αυτό το σύνολο δεδομένων"
 
 #: storage/forms.py:610 storage/forms.py:611 storage/forms.py:662
 #: storage/forms.py:663 storage/forms.py:719
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0 = Απεριόριστα? Παράδειγμα: 1g"
 
 #: storage/forms.py:611 storage/forms.py:663
 msgid "Quota for this dataset and all children"
-msgstr ""
+msgstr "Ποσόστωση για το σύνολο δεδομένων και όλα τα παιδιά"
 
 #: storage/forms.py:612 storage/forms.py:664 storage/forms.py:720
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "Αποκλειστικός χώρος γι 'αυτό το σύνολο δεδομένων"
 
 #: storage/forms.py:612 storage/forms.py:613 storage/forms.py:664
 #: storage/forms.py:665 storage/forms.py:720
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0 = Δεν υφίσταται? Παράδειγμα: 1g"
 
 #: storage/forms.py:613 storage/forms.py:665
 msgid "Reserved space for this dataset and all children"
-msgstr ""
+msgstr "Αποκλειστικός χώρος γι 'αυτό το σύνολο δεδομένων και όλα τα παιδιά"
 
 #: storage/forms.py:626
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
 msgstr ""
+"Σύνολο δεδομένων ονόματα πρέπει να αρχίζουν με έναν αλφαριθμητικό χαρακτήρα "
+"και μπορεί να περιέχει μόνο (-), (_), (:) και (.)."
 
 #: storage/forms.py:633
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "Έχετε ήδη ένα σύνολο δεδομένων με το ίδιο όνομα"
 
 #: storage/forms.py:640 storage/forms.py:697 storage/forms.py:741
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"

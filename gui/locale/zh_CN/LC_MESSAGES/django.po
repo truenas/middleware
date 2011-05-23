@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-22 08:40+0200\n"
-"Last-Translator: xiangzhou <xiangzhou@cloudshinee.com>\n"
+"PO-Revision-Date: 2011-05-23 11:00+0200\n"
+"Last-Translator: wyrich <wyrich@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -125,19 +125,19 @@ msgstr "待机模式（停转）下的最低功耗"
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
-msgstr ""
+msgstr "平衡功耗和性能的待机模式"
 
 #: choices.py:90
 msgid "Minimum power usgae without Standby (no spindown)"
-msgstr ""
+msgstr "非待机模式最低功耗（不停转硬盘）"
 
 #: choices.py:91
 msgid "Intermediate power usage withot Standby"
-msgstr ""
+msgstr "非待机模式平衡电源功耗"
 
 #: choices.py:92
 msgid "Maximum performance, maximum power usage"
-msgstr ""
+msgstr "最高性能，最大电源消耗"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
@@ -145,7 +145,7 @@ msgstr "最低"
 
 #: choices.py:97
 msgid "Medium"
-msgstr ""
+msgstr "平衡"
 
 #: choices.py:98
 msgid "Maximum"
@@ -253,7 +253,7 @@ msgstr "默认"
 
 #: choices.py:192
 msgid "Time Machine"
-msgstr "时间胶囊"
+msgstr "时间机器"
 
 #: choices.py:195
 msgid "No case folding"
@@ -261,7 +261,7 @@ msgstr "不改变大小写"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "所有名称小写"
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
@@ -313,23 +313,23 @@ msgstr "只读"
 #: choices.py:221 choices.py:227 services/forms.py:392 services/forms.py:394
 #: services/forms.py:692 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "无"
 
 #: choices.py:223
 msgid "CHAP"
-msgstr "握手验证协议（CHAP）"
+msgstr "CHAP"
 
 #: choices.py:224
 msgid "Mutual CHAP"
-msgstr "双向握手验证协议（CHAP）"
+msgstr "双向 CHAP"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr "不间断电源（UPS）电池电量不足"
+msgstr "UPS 电池电量不足"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr "不间断电源（UPS）改由电池供电"
+msgstr "UPS 改由电池供电"
 
 #: choices.py:250
 msgid "Preferred"
@@ -706,7 +706,7 @@ msgstr "为网卡命名"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
-msgstr "动态地址分配（DHCP）"
+msgstr "使用DHCP获得"
 
 #: network/models.py:107
 msgid ""
@@ -813,7 +813,7 @@ msgstr "静态路由"
 
 #: network/nav.py:10 templates/network/index2.html:13
 msgid "Network Summary"
-msgstr "网络总结"
+msgstr "网络概况"
 
 #: network/nav.py:27
 msgid "Add Link Aggregation"
@@ -837,7 +837,7 @@ msgstr "查看所有接口"
 
 #: network/nav.py:109
 msgid "View All VLANs"
-msgstr "查看所有VLANs"
+msgstr "查看所有VLAN"
 
 #: network/nav.py:121
 msgid "View All Static Routes"
@@ -846,7 +846,7 @@ msgstr "查看所有的静态路由"
 #: network/views.py:192
 #, python-format
 msgid "%s successfully added"
-msgstr ""
+msgstr "%s 添加成功"
 
 #: services/forms.py:59 services/forms.py:112 sharing/forms.py:54
 #: sharing/models.py:63
@@ -870,31 +870,36 @@ msgstr ""
 
 #: services/forms.py:145
 msgid "File Permission"
-msgstr ""
+msgstr "文件权限"
 
 #: services/forms.py:146
 msgid "Directory Permission"
-msgstr ""
+msgstr "目录权限"
 
 #: services/forms.py:165
+#, fuzzy
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr ""
+msgstr "此值应为 0 到 65535 之间（含）。"
 
 #: services/forms.py:171 services/forms.py:189
+#, fuzzy
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
+msgstr "此值应为 0 到 10000 之间（含）。"
 
 #: services/forms.py:177 services/forms.py:183
+#, fuzzy
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
+msgstr "此值应为 0 到 1000 之间（含）。"
 
 #: services/forms.py:195
+#, fuzzy
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
+msgstr "此值应为 1024 到 65535 之间（含）。0表示使用默认值。"
 
 #: services/forms.py:201
+#, fuzzy
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr ""
+msgstr "此值应为 1024 到 65535 之间（含）。0表示使用默认值。"
 
 #: services/forms.py:220
 msgid "This field is required for anonymous login"
@@ -1051,15 +1056,15 @@ msgstr ""
 
 #: services/models.py:83
 msgid "DOS charset"
-msgstr ""
+msgstr "DOS字符集"
 
 #: services/models.py:89
 msgid "UNIX charset"
-msgstr ""
+msgstr "UNIX字符集"
 
 #: services/models.py:95
 msgid "Log level"
-msgstr ""
+msgstr "日志详细程度"
 
 #: services/models.py:98
 msgid "Local Master"
@@ -1482,41 +1487,41 @@ msgstr ""
 
 #: services/models.py:470
 msgid "Authorized network"
-msgstr ""
+msgstr "授权的网络"
 
 #: services/models.py:472
 msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
-msgstr ""
+msgstr "授权访问本 iSCSI 服务的网络。此处填写 IP 或 CIDR 地址，此外也可用 ‘ALL’ 表示任意 IP 地址。"
 
 #: services/models.py:481
 msgid "Initiator"
-msgstr ""
+msgstr "发起端"
 
 #: services/models.py:510
 msgid "Target side user name. It is usually the initiator name by default."
-msgstr ""
+msgstr "服务器一端的用户名。通常应与发起端的名字相同。"
 
 #: services/models.py:520
 msgid "Peer User"
-msgstr ""
+msgstr "对端用户"
 
 #: services/models.py:525 templates/services/iscsi_auth.html:9
 msgid "Peer Secret"
-msgstr ""
+msgstr "对端用户密码"
 
 #: services/models.py:529
 msgid "Authorized Access"
-msgstr ""
+msgstr "授权访问"
 
 #: services/models.py:530
 msgid "Authorized Accesses"
-msgstr ""
+msgstr "授权访问"
 
 #: services/models.py:545
 msgid "Target Name"
-msgstr ""
+msgstr "服务名"
 
 #: services/models.py:546
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
@@ -3998,7 +4003,7 @@ msgstr ""
 
 #: templates/storage/import.html:32 templates/storage/wizard.html:43
 msgid "Filesystem type"
-msgstr ""
+msgstr "文件系统类型"
 
 #: templates/storage/index.html:3 templates/storage/volumes.html:51
 msgid "Active Volumes"
@@ -4006,7 +4011,7 @@ msgstr ""
 
 #: templates/storage/index.html:5
 msgid "ZFS Replication"
-msgstr ""
+msgstr "ZFS 复制"
 
 #: templates/storage/index.html:7
 msgid "ZFS Snapshots"
@@ -4090,11 +4095,11 @@ msgstr "销毁快照"
 
 #: templates/storage/snapshots.html:30 templates/storage/snapshots.html:32
 msgid "Rollback to this snapshot"
-msgstr ""
+msgstr "回退至此快照"
 
 #: templates/storage/snapshots.html:40
 msgid "No ZFS snapshot available"
-msgstr ""
+msgstr "目前尚无ZFS快照"
 
 #: templates/storage/tasks.html:6
 msgid "Periodic Snapshots"
@@ -4102,11 +4107,11 @@ msgstr "定期快照"
 
 #: templates/storage/tasks.html:14
 msgid "Periodic Snapshot Schedule"
-msgstr "定期快照的时间表"
+msgstr "定期快照计划"
 
 #: templates/storage/tasks.html:17
 msgid "There are no scheduled snapshots."
-msgstr ""
+msgstr "目前尚无快照计划。"
 
 #: templates/storage/tasks.html:24
 msgid "How"
@@ -4114,7 +4119,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:25
 msgid "Keep snapshot for"
-msgstr ""
+msgstr "保存快照"
 
 #: templates/storage/tasks.html:38
 msgid "No"
@@ -4122,84 +4127,85 @@ msgstr ""
 
 #: templates/storage/tasks.html:42
 msgid "From"
-msgstr ""
+msgstr "从"
 
 #: templates/storage/tasks.html:44
 msgid "through"
-msgstr ""
+msgstr "到"
 
 #: templates/storage/tasks.html:46
 msgid ", every"
-msgstr ""
+msgstr "，每"
 
 #: templates/storage/tasks.html:48
 msgid "minutes,"
-msgstr ""
+msgstr "分钟，"
 
 #: templates/storage/tasks.html:50
 msgid "everyday"
-msgstr ""
+msgstr "每天"
 
 #: templates/storage/tasks.html:53
 msgid "on every"
-msgstr ""
+msgstr "每逢"
 
 #: templates/storage/tasks.html:143
 msgid "No periodic snapshots scheduled"
-msgstr ""
+msgstr "目前尚无快照计划"
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
-msgstr ""
+msgstr "编辑 ZFS 卷"
 
 #: templates/storage/volumes.html:42 templates/storage/volumes.html.py:46
 msgid "Auto Import Volume"
-msgstr ""
+msgstr "自动导入卷"
 
 #: templates/storage/volumes.html:53
 msgid "There are no active volumes."
-msgstr ""
+msgstr "目前尚无已定义的卷"
 
 #: templates/storage/volumes.html:61
 msgid "Used"
-msgstr ""
+msgstr "已用"
 
 #: templates/storage/volumes.html:63
+#, fuzzy
 msgid "Size"
-msgstr ""
+msgstr "大小"
 
 #: templates/storage/volumes.html:64
 msgid "Status"
-msgstr ""
+msgstr "状态"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Destroy Dataset"
-msgstr ""
+msgstr "撤销数据集"
 
 #: templates/storage/volumes.html:99 templates/storage/volumes.html.py:103
 #: templates/storage/volumes.html:114 templates/storage/volumes.html.py:118
 msgid "Edit ZFS Options"
-msgstr ""
+msgstr "编辑 ZFS 选项"
 
 #: templates/storage/volumes.html:107 templates/storage/volumes.html.py:110
 msgid "Destroy Volume"
-msgstr ""
+msgstr "销毁卷"
 
 #: templates/storage/volumes.html:140 templates/storage/volumes.html.py:144
 msgid "View Disks"
-msgstr ""
+msgstr "查看磁盘"
 
 #: templates/storage/volumes.html:151
 msgid "No volumes defined"
-msgstr ""
+msgstr "未定义任何卷"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
-msgstr ""
+msgstr "成员盘"
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
-msgstr ""
+msgstr "磁盘组类型"
 
 #: templates/storage/wizard.html:84
 msgid "ZFS Extra"
@@ -4207,23 +4213,23 @@ msgstr ""
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr ""
+msgstr "强烈建议不要只使用一个设备来保存ZIL"
 
 #: templates/storage/wizard.html:93
 msgid "Log"
-msgstr ""
+msgstr "ZIL设备"
 
 #: templates/storage/wizard.html:94
 msgid "Cache"
-msgstr ""
+msgstr "L2ARC设备"
 
 #: templates/storage/wizard.html:95
 msgid "Spare"
-msgstr ""
+msgstr "备用盘"
 
 #: templates/storage/wizard.html:119
 msgid "Add Volume"
-msgstr ""
+msgstr "添加卷"
 
 #: templates/storage/wizard.html:120
 msgid "Existing data will be cleared"

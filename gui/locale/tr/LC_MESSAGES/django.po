@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-21 10:54+0200\n"
-"Last-Translator: xenitu <cenk@panelelektrik.com>\n"
+"PO-Revision-Date: 2011-05-22 22:43+0200\n"
+"Last-Translator: Simor <batio3pzt@aol.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -3211,7 +3211,7 @@ msgstr ""
 
 #: system/models.py:143
 msgid "TLS/SSL"
-msgstr ""
+msgstr "TLS/SSL"
 
 #: system/models.py:146
 msgid "Use SMTP Authentication"

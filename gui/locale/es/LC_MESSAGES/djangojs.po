@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:22-0700\n"
-"PO-Revision-Date: 2011-05-21 23:57+0200\n"
+"PO-Revision-Date: 2011-05-22 12:19+0200\n"
 "Last-Translator: raulfg <raulfg3@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
@@ -80,8 +80,8 @@ msgstr "Cada"
 
 #: media/lib/js/freeadmin/form/Cron.js:51
 msgid "Each selected"
-msgstr ""
+msgstr "Cada uno selecionado"
 
 #: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
-msgstr ""
+msgstr "Cada 'N'"

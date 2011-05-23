@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-22 10:59+0200\n"
-"Last-Translator: OrderFoots <forestdoor@gmail.com>\n"
+"PO-Revision-Date: 2011-05-22 18:34+0200\n"
+"Last-Translator: Kimimasa <ham@cer110.orz.ne.jp>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -985,9 +985,9 @@ msgid "Discovery Auth Group"
 msgstr "認証グループの探索"
 
 #: services/forms.py:413
-#, fuzzy, python-format
+#, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr "この値は%(start)dから%(end)dまでで指定して下さい。"
+msgstr "この値は、%(start)dから%(end)dまでの範囲で指定して下さい。"
 
 #: services/forms.py:421
 msgid ""
@@ -1045,7 +1045,7 @@ msgstr "サービス"
 #: services/models.py:42
 #, fuzzy
 msgid "Name of Service, should be auto-generated at build time"
-msgstr "サービスの名称は、ビルドされたときに自動的に生成されるべきです"
+msgstr "サービスの名称は、ビルドされたときに自動的に生成されるべきです。"
 
 #: services/models.py:45
 msgid "Enable Service"
@@ -1252,8 +1252,8 @@ msgstr "ゲストアクセス"
 msgid "Allows guest access to all apple shares on this box."
 msgstr "全ての Apple 共有でゲストアクセスを有効にします。"
 
+# password fileがファイル名と想定してそのままにしています。
 #: services/models.py:193
-#, fuzzy
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
@@ -1261,9 +1261,9 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
-"このオプションはguestユーザ名を特に指定する場合に利用します(デフォルトは'www')。このユーザにどのような権限を設定しても構いませんが、gues"
-"tサービスに接続する全てのクライアントに適用されます。但し、このユーザをpassword "
-"file内に必ず記述して下さい。尚、有効なログインでなくても構いません。"
+"このオプションは、サービスにアクセスする際のゲストユーザ名を変更する場合に利用します（デフォルトは "
+"'www'）。このユーザにどのような権限を設定しても構いませんが、ゲストサービスに接続するすべてのクライアントに適用されます。このユーザは "
+"password file 内に必ず記述して下さい。なお、ログイン可能である必要はありません。"
 
 #: services/models.py:196
 msgid "Local Access"
@@ -1291,11 +1291,10 @@ msgid "Number of servers"
 msgstr "サーバーの数"
 
 #: services/models.py:216
-#, fuzzy
 msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
-msgstr "サーバの作成数を設定します。クライアントから問題なく同時実行できる範囲で指定して下さい。一般に4-6程度です。"
+msgstr "サーバの作成数を設定します。クライアントから問題なく同時実行できる範囲で指定して下さい。一般に 4-6 程度です。"
 
 #: services/models.py:220
 msgid "Asynchronous mode"
@@ -1389,7 +1388,7 @@ msgstr "未解決 R2T の最大値"
 #: services/models.py:286
 #, fuzzy
 msgid "iSCSI initial parameter (16 by default)."
-msgstr "iSCSI の初期パラメータを指定します。（初期値は 16 です）"
+msgstr "iSCSI の初期パラメータを指定します。（初期値は 16 です。）"
 
 #: services/models.py:291
 msgid "First burst length"
@@ -1408,7 +1407,7 @@ msgstr "バースト長の最大値"
 #: services/models.py:298 services/models.py:304
 #, fuzzy
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr "iSCS Iの初期パラメータを指定します。（初期値は 262144 です。）"
+msgstr "iSCSI の初期パラメータを指定します。（初期値は 262144 です。）"
 
 #: services/models.py:303
 #, fuzzy
@@ -1550,17 +1549,16 @@ msgid "Portal"
 msgstr "ポータル"
 
 #: services/models.py:426
-#, fuzzy
 msgid ""
 "The portal takes the form of 'address:port'. for example '192.168.1.1:3260' "
 "for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port 3260 is standard iSCSI "
 "port number. For any IPs (wildcard address), use '0.0.0.0:3260' and/or "
 "'[::]:3260'. Do not mix wildcard and other IPs at same address family."
 msgstr ""
-"portalの記述方法は'adress:port'。例) IPv4用 '192.168.1.1:3260'、IPv6用 "
-"'[2001:db8:1:1::1]:3260'、「3260」はiSCSIで一般的なポート番号。IPを特に指定しない場合(wildcard "
-"address)は、IPv4用 '0.0.0.0:3260'、IPv6用 "
-"'[::]:3260'。wildcardを使う場合は、同じアドレスファミリ(IPv4やIPv6)には他のportalを設定しないこと。"
+"ポータルの記述方法は 'adress:port' 。 （例: IPv4用 '192.168.1.1:3260' 、IPv6用 "
+"'[2001:db8:1:1::1]:3260' 、 「3260」はiSCSIで一般的なポート番号です。IPを特に限定しない場合(wildcard "
+"address)は、IPv4用 '0.0.0.0:3260' 、IPv6用 '[::]:3260' "
+"。wildcardを使う場合は、同じアドレスファミリ(IPv4やIPv6)には他のポータルを設定しないで下さい。）"
 
 #: services/models.py:464 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -1602,12 +1600,12 @@ msgstr "ピアシークレット"
 #: services/models.py:529
 #, fuzzy
 msgid "Authorized Access"
-msgstr "認証されたアクセス"
+msgstr "許可されたアクセス"
 
 #: services/models.py:530
 #, fuzzy
 msgid "Authorized Accesses"
-msgstr "認証されたアクセス"
+msgstr "許可されたアクセス"
 
 #: services/models.py:545
 msgid "Target Name"
@@ -1654,7 +1652,7 @@ msgstr "認証方法"
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
-msgstr "ターゲットを許可する認証方法を指定します。オートは、認証無しと認証有りの両方を意味します。"
+msgstr "ターゲットを許可する認証方法を指定します。自動は、認証無しと認証有りの両方を意味します。"
 
 #: services/models.py:585
 msgid "Authentication Group ID"
@@ -1903,7 +1901,7 @@ msgstr "バナー"
 #: services/models.py:825
 #, fuzzy
 msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr "FTPで接続された際、最初に表示される挨拶のバナーを記述します。"
+msgstr "FTP で接続された際、最初に表示される挨拶のバナーを記述します。"
 
 #: services/models.py:831 services/models.py:837
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -1924,12 +1922,11 @@ msgstr "常にchroot"
 #: services/models.py:846
 #, fuzzy
 msgid "Require IDENT Authentication"
-msgstr "IDENT認証を要求"
+msgstr "IDENT 認証を要求"
 
 #: services/models.py:848
-#, fuzzy
 msgid "Require Reverse DNS for IP"
-msgstr "DNS逆引きをする"
+msgstr "DNS 逆引きをする"
 
 #: services/models.py:850
 #, fuzzy
@@ -2310,12 +2307,11 @@ msgstr "LDAP ディレクトリに追加されるとき、マシンで使用さ�
 
 #: services/models.py:1133
 msgid "Turn on/off TLS"
-msgstr "TLSのon/off"
+msgstr "TLS の on/off"
 
 #: services/models.py:1135
-#, fuzzy
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
-msgstr "このパラメータでSSL/TLSを利用するかを指定します。(on/off/TLS開始)"
+msgstr "このパラメータでSSL/TLSを利用するかを指定します。（on/off/start_tls）"
 
 #: services/models.py:1138
 msgid "Self signed certificate"
@@ -2467,7 +2463,9 @@ msgstr "ここで指定したパラメータは smb.conf の [Share] セクシ�
 msgid "Windows Share"
 msgstr "Windowsファイル共有"
 
+# 「Chooser ot」が何のことやら…。その他ほぼ直訳。
 #: sharing/models.py:103
+#, fuzzy
 msgid ""
 "The volume name is the name that appears in the Chooser ot the 'connect to "
 "server' dialog on Macintoshes to represent the appropriate share. If "
@@ -2477,6 +2475,10 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
+"ボリューム名は、 適切な共有を表すため、 Mac の 'connect to server' ダイアログの Chooser "
+"に表示されています。もしボリューム名が指定されない場合、パス名の最後の部分が使われます。ボリューム名の重複はできません。ボリューム名に ':' "
+"を使えません。ボリューム名が長過ぎると名前が壊れます。 Mac ではボリューム名は 27 文字までとなっています。 UTF8-MAC "
+"ボリューム名は、アップル共有サービスの「ボリューム名の長さ」パラメータに制限されます。"
 
 #: sharing/models.py:107
 msgid "Share Comment"
@@ -2512,11 +2514,14 @@ msgid "Allow List"
 msgstr "許可リスト"
 
 #: sharing/models.py:127
+#, fuzzy
 msgid ""
 "This option allows the users and groups that access a share to be specified. "
 "Users and groups are specified, delimited by commas. Groups are designated "
 "by a @ prefix."
 msgstr ""
+"共有にアクセスするユーザとグループを指定する事が可能です。カンマで区切ってユーザとグループを指定出来ます。グループはその名前の前に @ "
+"を付けて明示します。"
 
 #: sharing/models.py:131
 msgid "Deny List"
@@ -2526,27 +2531,29 @@ msgstr "拒否リスト"
 msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
-msgstr ""
+msgstr "共有へのアクセスを与えないユーザとグループを指定します。このオプションは許可リストと同じフォーマットです。"
 
 #: sharing/models.py:137
 msgid "Read-only Access"
 msgstr "読み込み専用アクセス"
 
 #: sharing/models.py:139
+#, fuzzy
 msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
-msgstr ""
+msgstr "特定のユーザ、グループが共有への読み込み専用アクセス権を持つ事を許可します。これは許可リストのフォーマットに従います。"
 
 #: sharing/models.py:143
 msgid "Read-write Access"
 msgstr "読み込み/書き込み可能アクセス"
 
 #: sharing/models.py:145
+#, fuzzy
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format. "
-msgstr ""
+msgstr "特定のユーザ、グループが共有への読み込み/書き込みアクセス権を持つ事を許可します。これは許可リストのフォーマットに従います。"
 
 #: sharing/models.py:148
 #, fuzzy
@@ -2558,8 +2565,7 @@ msgstr "ディスクの自動検出"
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
-msgstr ""
-"外部からTime Machineバックアップボリューム(Mac OS X)用のデータディスクとしてこのshareを認識させるか否かを設定します。"
+msgstr "外部からTime Machineバックアップボリューム（Mac OS X）用のデータディスクとしてこの共有を認識させるかどうかを設定します。"
 
 #: sharing/models.py:155
 #, fuzzy
@@ -2567,39 +2573,47 @@ msgid "Disk discovery mode"
 msgstr "ディスクの自動検出モード"
 
 #: sharing/models.py:156
+#, fuzzy
 msgid ""
 "Note! Selecting 'Time Machine' on multiple shares will may cause "
 "unpredictable behavior in MacOS.  Default mode exports the volume as a data "
 "volume for users."
-msgstr ""
+msgstr "注意！！ 複数の共有上で 'Time Machine' を選択すると MacOS の中で予測不可能な事象が発生するかもしれません。"
 
 #: sharing/models.py:160
-#, fuzzy
 msgid "Database Path"
 msgstr "データベースパス"
 
+# readは「読み込み」で統一しようとしています。
+# もちろん、よい訳があればそれに変更します。
 #: sharing/models.py:162
+#, fuzzy
 msgid ""
 "Sets the database information to be stored in path. You have to specifiy a "
 "writable location, even if the volume is read only."
-msgstr ""
+msgstr "データベース情報を指定したパスに保存するように設定します。ボリュームが読み込み専用の場合、書き込み可能な場所を選択して下さい。"
 
 #: sharing/models.py:165
 msgid "Cache CNID"
 msgstr "キャッシュ CNID"
 
 #: sharing/models.py:166
+#, fuzzy
 msgid ""
 "If set afpd uses the ID information stored in AppleDouble V2 header files to "
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
+"有効にした場合、afpd はデータベース負荷を減らすために AppleDouble V2 ヘッダファイル内で記憶された ID "
+"情報を使用します。ボリュームが AFP "
+"クライアント以外（NFS/SMB/ローカル）によって修正される事がある場合は、このオプションを有効にしないで下さい。"
 
 #: sharing/models.py:169
 msgid "Translate CR/LF"
 msgstr "CR/LF を変換"
 
 #: sharing/models.py:170
+#, fuzzy
 msgid ""
 "Enables crlf translation for TEXT files, automatically converting macintosh "
 "line breaks into Unix ones. Use of this option might be dangerous since some "
@@ -2607,81 +2621,104 @@ msgid ""
 "the filetype in a second step. Afpd will potentially destroy such files when "
 "'erroneously' changing bytes in order to do line break translation."
 msgstr ""
+"テキストファイルの CRLF 変換を有効にすると、Macintosh の改行コードが Unix "
+"形式に自動的に変換されます。いくつかの古いプログラムはバイナリデータを 'テキスト' として保存した後、ファイルタイプを変更する "
+"2段階のステップを踏むものがありますので、このオプションを使用することは危険かもしれません。Afpd は、改行コード変換の際に '誤った' "
+"バイト変換を行うプログラムによって、ファイルを破壊してしまいます。"
 
 #: sharing/models.py:173
+#, fuzzy
 msgid "Windows File Names"
-msgstr ""
+msgstr "Windows 文字セット"
 
 #: sharing/models.py:174
+#, fuzzy
 msgid ""
 "This forces filenames to be restricted to the character set used by Windows. "
 "This is not recommended for shares used principally by Mac computers."
 msgstr ""
+"ファイル名を Windows で使用される文字セットに限定する事を強制します。主に Mac コンピュータで使用される共有への適用は推奨しません。"
 
 #: sharing/models.py:177
 msgid "No .AppleDouble"
-msgstr ""
+msgstr "AppleDouble を作成しない"
 
 #: sharing/models.py:178
+#, fuzzy
 msgid ""
 "This controls whether the .AppleDouble directory gets created unless "
 "absolutely needed. This option should not be used if files are access mostly "
 "by Mac computers.  Clicking this option disables their creation."
 msgstr ""
+"絶対に必要でない場合にも AppleDouble ディレクトリを作成するかどうかを制御します。このオプションは Mac "
+"からのアクセスが主であれば使うべきではありません。"
 
 #: sharing/models.py:181
+#, fuzzy
 msgid "Zero Device Numbers"
-msgstr ""
+msgstr "デバイス番号を 0 に"
 
 #: sharing/models.py:182
+#, fuzzy
 msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
-msgstr ""
+msgstr "デバイス番号として常に 0 を使います。リブートやクラスタを経て、デバイスが特定の値をもたない場合に役に立ちます"
 
 #: sharing/models.py:185
 msgid "Disable File ID"
-msgstr ""
+msgstr "ファイル ID の無効化"
 
+# 動詞の訳は間違ってると思う。Macユーザに期待。
 #: sharing/models.py:186
+#, fuzzy
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr ""
+msgstr "createfileid, resoleveid 及び deleteid コールの広告を行いません"
 
 #: sharing/models.py:189
+#, fuzzy
 msgid "Disable :hex Names"
-msgstr ""
+msgstr "hex 変換の無効化"
 
 #: sharing/models.py:190
+#, fuzzy
 msgid ""
 "Disable :hex translations for anything except dot files. This option makes "
 "the '/' character illegal."
-msgstr ""
+msgstr "ドットファイル以外の hex 変換を禁止します。このオプションによって '/' を無効な文字と認識するようになります。"
 
 #: sharing/models.py:193
 msgid "ProDOS"
-msgstr ""
+msgstr "ProDOS"
 
 #: sharing/models.py:194
+#, fuzzy
 msgid "Provide compatibility with Apple II clients."
-msgstr ""
+msgstr "Apple II クライアントの互換性を提供します。"
 
 #: sharing/models.py:197
+#, fuzzy
 msgid "No Stat"
-msgstr ""
+msgstr "Stat しない"
 
 #: sharing/models.py:198
+#, fuzzy
 msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
 msgstr ""
+"ボリュームリスト作成時にボリュームパスに対して stat を行わないません。自動マウントや preexec "
+"スクリプトが作成するボリュームの場合に有用です。"
 
 #: sharing/models.py:201
+#, fuzzy
 msgid "AFP3 Unix Privs"
-msgstr ""
+msgstr "AFP3 Unix 権限"
 
 #: sharing/models.py:202
+#, fuzzy
 msgid "Use AFP3 unix privileges."
-msgstr ""
+msgstr "AFP3 Unix 権限を使用します。"
 
 #: sharing/models.py:209
 msgid "Apple Share"
@@ -2692,29 +2729,35 @@ msgid "Authorized network or IP addresses"
 msgstr "許可するネットワークまたは IP アドレス"
 
 #: sharing/models.py:226
+#, fuzzy
 msgid ""
 "Network that is authorized to access the NFS share or a list of IP "
 "addresses.  Specify network numbers of the form 1.2.3.4/xx where xx is the "
 "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 msgstr ""
+"NFS共有へのアクセスを許可されたネットワーク、もしくはIPアドレスのリスト。指定方法は、ネットワーク：「1.2.3.4/xx」（'xx' "
+"はネットマスクのビット数）、IPアドレスのリスト：「1.2.3.4 1.2.3.5 1.2.3.6」。"
 
 #: sharing/models.py:230
 msgid "All Directories"
 msgstr "すべてのディレクトリ"
 
 #: sharing/models.py:231
+#, fuzzy
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected.  "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
+"選択すると、このマウントポイントの下にあるすべてのサブディレクトリのマウントを許可します。選択しない場合は、一番上のディレクトリのみマウントできます。"
 
 #: sharing/models.py:234
 msgid "Read Only"
 msgstr "読み込み専用"
 
 #: sharing/models.py:235
+#, fuzzy
 msgid "Export the share read only.  Writes are not permitted."
-msgstr ""
+msgstr "読み込み専用で共有します。書き込むことはできません。"
 
 #: sharing/models.py:238
 #, fuzzy
@@ -2722,24 +2765,29 @@ msgid "Quiet"
 msgstr "静音"
 
 #: sharing/models.py:239
+#, fuzzy
 msgid "Inibit syslog warnings if there are problems with exporting this share."
-msgstr ""
+msgstr "この共有のエクスポート時に問題がある場合の、syslog警告を抑制します。"
 
 #: sharing/models.py:247
+#, fuzzy
 msgid "User to map root to"
-msgstr ""
+msgstr "すべてのユーザを root にマッピングします。"
 
 #: sharing/models.py:255
+#, fuzzy
 msgid "Group to map root to"
-msgstr ""
+msgstr "すべてのグループを root にマッピングします。"
 
 #: sharing/models.py:263
+#, fuzzy
 msgid "User to map all users to"
-msgstr ""
+msgstr "すべてのユーザを指定したユーザにマッピングします。"
 
 #: sharing/models.py:271
+#, fuzzy
 msgid "Group to map all users to"
-msgstr ""
+msgstr "すべてのグループを指定したグループにマッピングします。"
 
 #: sharing/models.py:278
 msgid "UNIX Share"
@@ -2791,7 +2839,7 @@ msgstr "セクタサイズを 4096 バイトに強制"
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\"."
-msgstr "ボリューム名は、アルファベット、数字、\"-\"、\"_\"のいずれかで始まる必要があります。"
+msgstr "ボリューム名は、必ず半角のアルファベットから始めて下さい。また、数字、 \"-\" 、 \"_\" を含めることができます。"
 
 #: storage/forms.py:231 system/forms.py:210 system/forms.py:216
 #: system/forms.py:221
@@ -2815,8 +2863,9 @@ msgid "Member disk"
 msgstr "メンバディスク"
 
 #: storage/forms.py:388 storage/forms.py:509
+#, fuzzy
 msgid "The selected disks were not verified for this import rules."
-msgstr ""
+msgstr "選択されたディスクの組はインポートのルールに適応していません。"
 
 #: storage/forms.py:396
 msgid "Some error ocurried while labelling the disk."
@@ -2824,7 +2873,7 @@ msgstr "ディスクのラベリング中にエラーが発生しました。"
 
 #: storage/forms.py:606
 msgid "Volume from which this dataset will be created on"
-msgstr ""
+msgstr "データセットを作成したボリューム"
 
 #: storage/forms.py:607
 msgid "Dataset Name"
@@ -2869,7 +2918,7 @@ msgstr "子ディレクトリを含めた予約領域"
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
-msgstr "データセット名は、アルファベット、\"-\"、\"_\"、\":\"、\".\"のいずれかで始まる必要があります"
+msgstr "データセット名は、半角英字、\"-\"、\"_\"、\":\"、\".\"のいずれかで始まる必要があります。"
 
 #: storage/forms.py:633
 msgid "You already have a dataset with the same name"
@@ -2939,7 +2988,6 @@ msgid "Remote hostname"
 msgstr "リモートホスト名"
 
 #: storage/forms.py:961 storage/models.py:216
-#, fuzzy
 msgid "Remote hostkey"
 msgstr "リモートホストキー"
 
@@ -3017,7 +3065,7 @@ msgstr "マウントオプションを入力してください。"
 msgid "Error getting total space"
 msgstr "総容量取得エラー"
 
-# とりあえず空き容量としたが、厳密には間違っているはず。。compとかde-dupeとか使うと。提案求む。
+# とりあえず空き容量としたが、厳密には間違っているはず。。zfsのcompとかde-dupeとか使うと。。。提案求む。
 #: storage/models.py:175
 #, fuzzy
 msgid "Error getting available space"
@@ -3100,12 +3148,12 @@ msgstr "何時までスナップショットを作成するのか指定します
 msgid "Interval"
 msgstr "作成間隔"
 
-# 日本語が硬い
+# 日本語が硬いです。
 #: storage/models.py:283
 #, fuzzy
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
-msgstr "最後にスナップショットを作成してから何分後に新しいスナップショットを作成するのか指定します。"
+msgstr "最後にスナップショットを作成してから何分後に新しいスナップショットを作成するのかを指定します。"
 
 #: storage/models.py:289
 #, fuzzy
@@ -3113,21 +3161,20 @@ msgid "Occurrence"
 msgstr "発生"
 
 #: storage/models.py:290
+#, fuzzy
 msgid "How the task is repeated"
-msgstr ""
+msgstr "タスクの繰り返し回数"
 
 #: storage/models.py:295
 msgid "Weekday"
 msgstr "曜日"
 
 #: storage/models.py:313
-#, fuzzy
 msgid "Periodic Snapshot Task"
 msgstr "定期的なスナップショットタスク"
 
 # 定期的なスナップショットタスク（複数）の方がよい？
 #: storage/models.py:314 templates/storage/index.html:9
-#, fuzzy
 msgid "Periodic Snapshot Tasks"
 msgstr "定期的なスナップショットタスク"
 
@@ -3173,7 +3220,6 @@ msgstr "定期的なスナップショットの作成"
 
 # ボリューム（複数）の方がよい？
 #: storage/nav.py:96
-#, fuzzy
 msgid "Volumes"
 msgstr "ボリューム"
 
@@ -3214,6 +3260,8 @@ msgstr "スナップショットを取得しました。"
 msgid "Snapshot successfully cloned"
 msgstr "クローンを作成しました。"
 
+# replacement はZFSのreplace(zpool replaceとか)を差していると思われます。
+# そのため固有名詞的な扱いとして、カタカナで表しています。
 #: storage/views.py:518
 #, fuzzy
 msgid "Disk replacement has been initiated."
@@ -3223,21 +3271,24 @@ msgstr "ディスクのリプレイスが開始されました。"
 msgid "Some error ocurried."
 msgstr "エラーが発生しました。"
 
+# detach はZFSのdetach(zpool detachとか)を差していると思われます。
+# そのため固有名詞的な扱いとして、カタカナで表しています。
 #: storage/views.py:544
 #, fuzzy
 msgid "Disk detach has been successfully done."
 msgstr "ディスクのデタッチが成功しました。"
 
 #: system/forms.py:243
+#, fuzzy
 msgid ""
 "The system will use this place to temporarily store the firmware file before "
 "it's being applied."
-msgstr ""
+msgstr "アップデートファイルを適用前に一時保存する場所"
 
 #: system/forms.py:251
 #, fuzzy
 msgid "New image to be installed"
-msgstr "新しイメージ"
+msgstr "新しいイメージ"
 
 # 意訳
 #: system/forms.py:252 system/forms.py:275
@@ -3252,7 +3303,7 @@ msgstr "無効なファームウェアかチェックサム"
 #: system/forms.py:274
 #, fuzzy
 msgid "Service Pack image to be installed"
-msgstr "Service Packイメージ"
+msgstr "Service Pack イメージ"
 
 #: system/forms.py:287
 #, fuzzy
@@ -3345,7 +3396,7 @@ msgstr "高度な設定"
 #: system/models.py:122
 #, fuzzy
 msgid "From email"
-msgstr "From email"
+msgstr "From E-mail"
 
 #: system/models.py:123
 msgid ""
@@ -3359,14 +3410,16 @@ msgid "Outgoing mail server"
 msgstr "送信メールサーバ"
 
 #: system/models.py:129
+#, fuzzy
 msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
-msgstr ""
+msgstr "システムメールの送信先のホスト名や IP アドレスを指定します。 （例: 'mail.example.org'、'192.168.1.1'）"
 
 #: system/models.py:135
+#, fuzzy
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
-msgstr ""
+msgstr "1-65535 の間の数値を入力してください。一般的には 25, 465, 587 のいずれかです。"
 
 #: system/models.py:136
 msgid "Port to connect to"
@@ -3393,16 +3446,14 @@ msgid "A password to authenticate to the remote server"
 msgstr "認証に使用するパスワード"
 
 #: system/models.py:164 templates/system/settings.html:7
-#, fuzzy
 msgid "Email"
-msgstr "Email"
+msgstr "E-mail"
 
 #: system/models.py:174
 msgid "Organization"
 msgstr "組織名"
 
 #: system/models.py:175
-#, fuzzy
 msgid "Organization Name (eg, company)"
 msgstr "組織名（例: 所属会社）"
 
@@ -3411,7 +3462,6 @@ msgid "Organizational Unit"
 msgstr "部門名"
 
 #: system/models.py:182
-#, fuzzy
 msgid "Organizational Unit Name (eg, section)"
 msgstr "部門名（例: 所属部門）"
 
@@ -3479,7 +3529,6 @@ msgstr "アップロードされたファイルは正しくありません。"
 #: templates/freeadmin/generic_model_add.html:13
 #: templates/freeadmin/generic_model_edit.html:14
 #: templates/network/lagg_add.html:9 templates/system/wizard.html:14
-#, fuzzy
 msgid "OK"
 msgstr "OK"
 
@@ -3674,7 +3723,6 @@ msgstr "実行中のプロセス"
 
 #: templates/freeadmin/index.html:32 templates/freeadmin/index.html.py:36
 #: templates/freeadmin/index.html:41
-#, fuzzy
 msgid "Loading"
 msgstr "読み込み中"
 
@@ -3723,6 +3771,7 @@ msgstr "コミュニティフォーラム"
 msgid "IRC (Chat)"
 msgstr "IRC（チャット）"
 
+# IRCのチャンネル名なのでそのままにします。
 #: templates/freeadmin/index.html:77
 msgid "#freenas on freenode"
 msgstr "#freenas on freenode"
@@ -3731,30 +3780,37 @@ msgstr "#freenas on freenode"
 msgid "Mailing Lists"
 msgstr "メーリングリスト"
 
+# メーリングリストへのリンクなので、原文のままがよいと思います。
 #: templates/freeadmin/index.html:84
 #, fuzzy
 msgid "FreeNAS Announce"
 msgstr "FreeNAS Announce"
 
+# メーリングリストへのリンクなので、原文のままがよいと思います。
 #: templates/freeadmin/index.html:85
 #, fuzzy
 msgid "FreeNAS Commit"
 msgstr "FreeNAS Commit"
 
+# メーリングリストへのリンクなので、原文のままがよいと思います。
 #: templates/freeadmin/index.html:86
 #, fuzzy
 msgid "FreeNAS Devel"
 msgstr "FreeNAS Devel"
 
+# メーリングリストへのリンクなので、原文のままがよいと思います。
 #: templates/freeadmin/index.html:87
 #, fuzzy
 msgid "FreeNAS Testing"
 msgstr "FreeNAS Testing"
 
+# 前後の単語から、なんらかのリンクと思われるので、原文のままがよいと思います。
 #: templates/freeadmin/index.html:91
+#, fuzzy
 msgid "Support Issues"
-msgstr ""
+msgstr "Support Issues"
 
+# Bug Trackerへのリンクなので、原文のままがよいと思います。（"バグの報告ができる人にとっては、原文のままの方がよい"＆"Bug Trackerの意味が分からない人にとっては、意味が分からないままの方がよい" のではないかと考えています）
 #: templates/freeadmin/index.html:93
 #, fuzzy
 msgid "Bug Tracker"
@@ -3936,11 +3992,10 @@ msgid_plural "Please correct the errors below."
 msgstr[0] "以下のエラーを修正してください。"
 
 #: templates/registration/password_change_form.html:18
-#, fuzzy
 msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
-msgstr "現行パスワードと新パスワードを入力して下さい。新パスワードは確認の為2回入力します。"
+msgstr "現在のパスワードと新しいパスワードを入力して下さい。新しいパスワードは確認のため、2 回入力します。"
 
 #: templates/registration/password_change_form.html:48
 msgid "Password (again)"
@@ -4045,14 +4100,12 @@ msgid "No targets defined"
 msgstr "定義されたターゲットはありません。"
 
 #: templates/services/iscsi_assoctargets.html:39
-#, fuzzy
 msgid "Add Extent to Target"
-msgstr "TargetにExtentを追加する。"
+msgstr "ターゲットにエクステントを追加"
 
 #: templates/services/iscsi_assoctargets.html:41
-#, fuzzy
 msgid "Add Extent To Target"
-msgstr "TargetにExtentを追加する。"
+msgstr "ターゲットにエクステントを追加"
 
 #: templates/services/iscsi_auth.html:8
 msgid "Peer"
@@ -4084,8 +4137,9 @@ msgid "Add Extent"
 msgstr "エクステントの追加"
 
 #: templates/services/iscsi_portals.html:6
+#, fuzzy
 msgid "Listen"
-msgstr ""
+msgstr "待ち受け"
 
 #: templates/services/iscsi_portals.html:20
 msgid "Edit Portal"
@@ -4210,7 +4264,9 @@ msgstr "データセットの編集"
 msgid "Add Dataset"
 msgstr "データセットの追加"
 
-# あえて敬語にしてみた
+# あえて敬語にしてみた。
+# デタッチはzfsにおけるdetach（zpool detach とか）と思われます。
+# そのため固有名詞的な扱いとして、カタカナで表しています。
 #: templates/storage/disk_detach.html:7
 #, fuzzy
 msgid "Are you sure you want to detach?"
@@ -4341,7 +4397,6 @@ msgid "Keep snapshot for"
 msgstr "スナップショットの保持期間"
 
 #: templates/storage/tasks.html:38
-#, fuzzy
 msgid "No"
 msgstr "No"
 
@@ -4528,7 +4583,7 @@ msgstr "1日"
 #: templates/system/reporting.html:19
 #, fuzzy
 msgid "Daily Graphs"
-msgstr "最近1日のグラフ"
+msgstr "最近1日間のグラフ"
 
 #: templates/system/reporting.html:32
 #, fuzzy

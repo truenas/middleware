@@ -3,20 +3,20 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-05-19 05:06+0200\n"
+"Last-Translator: psisci <psisci@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: th\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
 msgid "Plain"
@@ -44,7 +44,7 @@ msgstr ""
 
 #: choices.py:53 choices.py:222
 msgid "Auto"
-msgstr ""
+msgstr "อัตโนมัติ"
 
 #: choices.py:54
 msgid "PIO0"
@@ -107,141 +107,164 @@ msgid "SATA 3.0Gbit/s"
 msgstr ""
 
 #: choices.py:72
+#, fuzzy
 msgid "Always On"
-msgstr ""
+msgstr "เปิดตลอดเวลา"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr ""
+msgstr "ปิดการใช้งาน"
 
 #: choices.py:87 choices.py:88 choices.py:89 choices.py:90 choices.py:91
 #: choices.py:92
 msgid "Level"
-msgstr ""
+msgstr "ระดับ"
 
 #: choices.py:87
 msgid "Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "ใช้พลังงานน้อยที่สุดโดยการพักการทำงาน"
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
-msgstr ""
+msgstr "ใช้พลังงานปานกลางโดยมีการพักการทำงาน"
 
 #: choices.py:90
 msgid "Minimum power usgae without Standby (no spindown)"
-msgstr ""
+msgstr "ใช้พลังงานน้อยที่สุดโดยไม่มีการพักการทำงาน"
 
 #: choices.py:91
 msgid "Intermediate power usage withot Standby"
-msgstr ""
+msgstr "ใช้พลังงานปานกลางโดยไม่มีการพักการทำงาน"
 
 #: choices.py:92
 msgid "Maximum performance, maximum power usage"
-msgstr ""
+msgstr "ประสิทธิภาพสูงสุด, ใช้พลังงานมากที่สุด"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr ""
+msgstr "น้อยที่สุด"
 
 #: choices.py:97
 msgid "Medium"
-msgstr ""
+msgstr "ปานกลาง"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr ""
+msgstr "สูงสุด"
 
 #: choices.py:132 templates/storage/tasks.html:86
+#, fuzzy
 msgid "January"
-msgstr ""
+msgstr "มกราคม"
 
 #: choices.py:133 templates/storage/tasks.html:89
+#, fuzzy
 msgid "February"
-msgstr ""
+msgstr "กุมภาพันธ์"
 
 #: choices.py:134 templates/storage/tasks.html:92
+#, fuzzy
 msgid "March"
-msgstr ""
+msgstr "มีนาคม"
 
 #: choices.py:135 templates/storage/tasks.html:95
+#, fuzzy
 msgid "April"
-msgstr ""
+msgstr "เมษายน"
 
 #: choices.py:136 templates/storage/tasks.html:98
+#, fuzzy
 msgid "May"
-msgstr ""
+msgstr "พฤษภาคม"
 
 #: choices.py:137 templates/storage/tasks.html:101
+#, fuzzy
 msgid "June"
-msgstr ""
+msgstr "มิถุนายน"
 
 #: choices.py:138 templates/storage/tasks.html:104
+#, fuzzy
 msgid "July"
-msgstr ""
+msgstr "กรกฎาคม"
 
 #: choices.py:139 templates/storage/tasks.html:107
+#, fuzzy
 msgid "August"
-msgstr ""
+msgstr "สิงหาคม"
 
 #: choices.py:140 templates/storage/tasks.html:110
+#, fuzzy
 msgid "September"
-msgstr ""
+msgstr "กันยายน"
 
 #: choices.py:141 templates/storage/tasks.html:113
+#, fuzzy
 msgid "October"
-msgstr ""
+msgstr "ตุลาคม"
 
 #: choices.py:142 templates/storage/tasks.html:116
+#, fuzzy
 msgid "November"
-msgstr ""
+msgstr "พฤศจิกายน"
 
 #: choices.py:143 templates/storage/tasks.html:119
+#, fuzzy
 msgid "December"
-msgstr ""
+msgstr "ธันวาคม"
 
 #: choices.py:146 templates/storage/tasks.html:57
+#, fuzzy
 msgid "Monday"
-msgstr ""
+msgstr "วันจันทร์"
 
 #: choices.py:147 templates/storage/tasks.html:60
+#, fuzzy
 msgid "Tuesday"
-msgstr ""
+msgstr "วันอังคาร"
 
 #: choices.py:148 templates/storage/tasks.html:63
+#, fuzzy
 msgid "Wednesday"
-msgstr ""
+msgstr "วันพุธ"
 
 #: choices.py:149 templates/storage/tasks.html:66
+#, fuzzy
 msgid "Thursday"
-msgstr ""
+msgstr "วันพฤหัสบดี"
 
 #: choices.py:150 templates/storage/tasks.html:69
+#, fuzzy
 msgid "Friday"
-msgstr ""
+msgstr "วันศุกร์"
 
 #: choices.py:151 templates/storage/tasks.html:72
+#, fuzzy
 msgid "Saturday"
-msgstr ""
+msgstr "วันเสาร์"
 
 #: choices.py:152 templates/storage/tasks.html:75
+#, fuzzy
 msgid "Sunday"
-msgstr ""
+msgstr "วันอาทิตย์"
 
 #: choices.py:163
+#, fuzzy
 msgid "Anonymous"
-msgstr ""
+msgstr "ไม่ระบุชื่อ"
 
 #: choices.py:164
 msgid "Local User"
-msgstr ""
+msgstr "ผู้ใช้ท้องถิ่น"
 
 #: choices.py:185
+#, fuzzy
 msgid "Normal"
-msgstr ""
+msgstr "ปกติ"
 
 #: choices.py:186
+#, fuzzy
 msgid "Full"
-msgstr ""
+msgstr "เต็ม"
 
 #: choices.py:187
 msgid "Debug"
@@ -297,16 +320,19 @@ msgid "Tape"
 msgstr ""
 
 #: choices.py:212
+#, fuzzy
 msgid "Pass"
-msgstr ""
+msgstr "ผ่าน"
 
 #: choices.py:216
+#, fuzzy
 msgid "read-write"
-msgstr ""
+msgstr "อ่านเขียน"
 
 #: choices.py:217
+#, fuzzy
 msgid "read-only"
-msgstr ""
+msgstr "อ่านอย่างเดียว"
 
 #: choices.py:221 choices.py:227 services/forms.py:392 services/forms.py:394
 #: services/forms.py:692 templates/storage/wizard.html:92
@@ -323,11 +349,11 @@ msgstr ""
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "UPS แบตเตอรี่ใกล้หมดแล้ว"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS ใช้พลังงานจากแบตเตอรี่"
 
 #: choices.py:250
 msgid "Preferred"
@@ -347,74 +373,89 @@ msgstr ""
 
 #: choices.py:280
 msgid "On"
-msgstr ""
+msgstr "เปิด"
 
 #: choices.py:281 choices.py:286
 msgid "Off"
-msgstr ""
+msgstr "ปิด"
 
 #: choices.py:287
+#, fuzzy
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (แนะนำ)"
 
 #: choices.py:288
+#, fuzzy
 msgid "default level"
-msgstr ""
+msgstr "ค่าปริยาย"
 
 #: choices.py:289
+#, fuzzy
 msgid "fastest"
-msgstr ""
+msgstr "เร็วที่สุด"
 
 #: choices.py:290
+#, fuzzy
 msgid "maximum, slow"
-msgstr ""
+msgstr "สูงสุด, ช้า"
 
 #: choices.py:431
+#, fuzzy
 msgid "Hour(s)"
-msgstr ""
+msgstr "ชั่วโมง"
 
 #: choices.py:432
+#, fuzzy
 msgid "Day(s)"
-msgstr ""
+msgstr "วัน"
 
 #: choices.py:433
+#, fuzzy
 msgid "Week(s)"
-msgstr ""
+msgstr "สัปดาห์"
 
 #: choices.py:434
+#, fuzzy
 msgid "Month(s)"
-msgstr ""
+msgstr "เดือน"
 
 #: choices.py:435
+#, fuzzy
 msgid "Year(s)"
-msgstr ""
+msgstr "ปี"
 
 #: choices.py:439
+#, fuzzy
 msgid "Everyday"
-msgstr ""
+msgstr "ทุกวัน"
 
 #: choices.py:440
+#, fuzzy
 msgid "Every selected weekday"
-msgstr ""
+msgstr "ทุกวันที่กำหนดของสัปดาห์"
 
 #: account/forms.py:93 templates/storage/volumes.html:62
+#, fuzzy
 msgid "Available"
-msgstr ""
+msgstr "มีอยู่"
 
 #: account/forms.py:144
+#, fuzzy
 msgid "Selected"
-msgstr ""
+msgstr "ที่เลือกไว้"
 
 #: account/forms.py:172 account/forms.py:197 account/models.py:77
 #: services/forms.py:229 services/models.py:657 services/models.py:917
 #: system/models.py:153 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:60
+#, fuzzy
 msgid "Username"
-msgstr ""
+msgstr "ชื่อผู้ใช้"
 
 #: account/forms.py:173 account/forms.py:198
+#, fuzzy
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr ""
+msgstr "ต้องการ 30 อักขระหรือน้อยกว่า ตัวอักษร, ตัวเลข, @, ., +, -, _ เท่านั้น"
 
 #: account/forms.py:174 account/forms.py:199
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
@@ -427,16 +468,19 @@ msgstr ""
 #: account/forms.py:200 account/forms.py:307 account/views.py:79
 #: services/models.py:661 system/forms.py:180 system/models.py:160
 #: templates/account/bsdusers.html:9 templates/account/bsdusers.html.py:64
+#, fuzzy
 msgid "Password"
-msgstr ""
+msgstr "รหัสผ่าน"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
+#, fuzzy
 msgid "Password confirmation"
-msgstr ""
+msgstr "ยืนยันรหัสผ่าน"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
+#, fuzzy
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "ใส่รหัสผ่านเดียวกับข้างต้นสำหรับการตรวจสอบ"
 
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
@@ -444,25 +488,29 @@ msgid "Shell"
 msgstr ""
 
 #: account/forms.py:204 account/forms.py:344
+#, fuzzy
 msgid "Disable logins"
-msgstr ""
+msgstr "ปิดการใช้งานการเข้าสู่ระบบ"
 
 #: account/forms.py:205
+#, fuzzy
 msgid "Primary Group"
-msgstr ""
+msgstr "กลุ่มหลัก"
 
 #: account/forms.py:234
+#, fuzzy
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "ชื่อผู้ใช้มีอยู่แล้ว"
 
 #: account/forms.py:242 account/forms.py:328 account/forms.py:470
 #: system/forms.py:225
+#, fuzzy
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "รหัสผ่านทั้งสองช่องไม่ตรงกัน"
 
 #: account/forms.py:247 account/forms.py:372
 msgid "Home directory has to start with /mnt/"
-msgstr ""
+msgstr "ไดเรกทอรีบ้านอยู่ใน /mnt/"
 
 #: account/forms.py:261 account/forms.py:265 services/forms.py:469
 #: services/forms.py:482 services/forms.py:699 storage/forms.py:223
@@ -3714,7 +3762,6 @@ msgstr ""
 msgid "Please correct the error below."
 msgid_plural "Please correct the errors below."
 msgstr[0] ""
-msgstr[1] ""
 
 #: templates/registration/password_change_form.html:18
 msgid ""

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-22 07:45+0200\n"
+"PO-Revision-Date: 2011-05-22 12:21+0200\n"
 "Last-Translator: raulfg <raulfg3@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
@@ -518,7 +518,7 @@ msgstr "Grupo"
 #: account/models.py:61
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr "Grupo %s es de sistema y no puede ser eliminado!"
+msgstr "El Grupo %s es del sistema y no puede ser eliminado!"
 
 #: account/models.py:71
 msgid "User ID"
@@ -556,7 +556,7 @@ msgstr "Usuario"
 #: account/models.py:130
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr "El Usuario %s es de sistema y no puede ser eliminado!"
+msgstr "El Usuario %s es del sistema y no puede ser eliminado!"
 
 #: account/nav.py:9 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:85 templates/account/index2.html:7
@@ -969,10 +969,12 @@ msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
 msgstr ""
+"istgtcontrol puede acceder al destino si se especifica un usuario y secreto "
+"correcto en el grupo autorizado"
 
 #: services/forms.py:386 services/models.py:248
 msgid "Discovery Auth Group"
-msgstr ""
+msgstr "Descubrir Grupo Autorizador"
 
 #: services/forms.py:413
 #, python-format
@@ -1325,7 +1327,7 @@ msgstr "NFS"
 
 #: services/models.py:236
 msgid "Base Name"
-msgstr ""
+msgstr "Nombre Base"
 
 #: services/models.py:237
 msgid ""
@@ -1373,13 +1375,15 @@ msgstr "Máximo número de conexiones en cada sesión (8 por defecto)."
 
 #: services/models.py:279
 msgid "Max. pre-send R2T"
-msgstr ""
+msgstr "Envíos Maximos de R2T"
 
 #: services/models.py:280
 msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
 msgstr ""
+"Número Max. de envios R2T por cada conexión (32 por defecto). El número está "
+"limitado por el destino."
 
 #: services/models.py:285
 msgid "MaxOutstandingR2T"
@@ -1594,7 +1598,7 @@ msgstr "Nombre del destino"
 
 #: services/models.py:546
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr ""
+msgstr "El Nombre Base se añadirá automaticamente cuando comience sin 'iqn.'"
 
 #: services/models.py:553
 msgid "Target Alias"
@@ -1631,10 +1635,12 @@ msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
 msgstr ""
+"El metodo puede ser aceptado por el destino. AUTO significa ambos y NONE que "
+"se desea autentificación."
 
 #: services/models.py:585
 msgid "Authentication Group ID"
-msgstr ""
+msgstr "ID del Grupo de Autentificación"
 
 #: services/models.py:598
 msgid "Queue Depth"
@@ -1685,6 +1691,8 @@ msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
 msgstr ""
+"Nombre o Alias del destino. Esta opción puede aparecer multiples veces, por "
+"cada dominio que tenga la misma IP. Usar el espacio (SPACE) como separador"
 
 #: services/models.py:665
 msgid "Update period"
@@ -1808,6 +1816,8 @@ msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
+"El objeto del e-mail. Se pueden usar los siguientes comodines: :<br "
+"/><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 
 #: services/models.py:778 services/models.py:779
 msgid "UPS"
@@ -1847,7 +1857,7 @@ msgstr ""
 
 #: services/models.py:809
 msgid "Maximum idle time in seconds."
-msgstr ""
+msgstr "Tiempo Maximo de espera en segundos"
 
 #: services/models.py:812
 msgid "Allow Root Login"
@@ -1896,7 +1906,7 @@ msgstr "Permitir Chroot"
 
 #: services/models.py:846
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "Requiere Autentificación IDENT"
 
 #: services/models.py:848
 msgid "Require Reverse DNS for IP"
@@ -1912,6 +1922,9 @@ msgid ""
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
+"Hace que el Servidor muestre la información de red de la IP especificada por "
+"el cliente. Se asume que esa IP o el DNS actuan como una pasarela NAT o "
+"simplemente redirigiendo los puertos del servidor"
 
 #: services/models.py:856
 msgid "Minimum passive port"
@@ -1922,6 +1935,8 @@ msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
 msgstr ""
+"El puerto minimo para permitir conexiones tipo PASV (0=Usar cualquier "
+"puerto)"
 
 #: services/models.py:861
 msgid "Maximum passive port"
@@ -2029,7 +2044,7 @@ msgstr "Opciones extras"
 
 #: services/models.py:929
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "Opciones Extras de la CLI (Normalmente Vacío)"
 
 #: services/models.py:933 services/models.py:934
 #: templates/services/index2.html:108
@@ -2099,7 +2114,7 @@ msgstr "Nombre AD o PDC"
 
 #: services/models.py:1021
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr ""
+msgstr "Nombre de Dominio (DNS/Nombre Real)"
 
 #: services/models.py:1022
 msgid "Domain Name, eg example.com"
@@ -2189,8 +2204,9 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1088
+#, fuzzy
 msgid "Allow Anonymous Binding"
-msgstr ""
+msgstr "Permitir enlaces anónimos"
 
 #: services/models.py:1091
 msgid "Root bind DN"
@@ -2220,7 +2236,7 @@ msgstr "Protocolo de cambio de contraseña"
 
 #: services/models.py:1109
 msgid "User Suffix"
-msgstr ""
+msgstr "Sufijo de Usuario"
 
 #: services/models.py:1111
 msgid ""
@@ -3567,7 +3583,7 @@ msgstr ""
 
 #: templates/freeadmin/generic_model_edit.html:5
 msgid "Your changes have been successfully updated!"
-msgstr "Los cambios han sido realizados con exito"
+msgstr "Los cambios han sido realizados con exito!"
 
 #: templates/freeadmin/generic_model_edit.html:39
 #: templates/network/interface.html:39 templates/network/lagg.html:44
@@ -3612,7 +3628,7 @@ msgstr "Reiniciar el Sistema"
 
 #: templates/freeadmin/index.html:44 templates/freeadmin/index.html.py:55
 msgid "Warning!"
-msgstr "Precaución !"
+msgstr "Precaución!"
 
 #: templates/freeadmin/index.html:45
 msgid ""

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-20 12:06+0200\n"
+"PO-Revision-Date: 2011-05-23 03:16+0200\n"
 "Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -1562,7 +1562,7 @@ msgstr ""
 
 #: services/models.py:580 services/models.py:592
 msgid "Auth Method"
-msgstr ""
+msgstr "認證方式"
 
 #: services/models.py:581 services/models.py:593
 msgid ""
@@ -1572,7 +1572,7 @@ msgstr ""
 
 #: services/models.py:585
 msgid "Authentication Group ID"
-msgstr ""
+msgstr "認證群組編號"
 
 #: services/models.py:598
 msgid "Queue Depth"
