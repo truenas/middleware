@@ -1,75 +1,11 @@
-{% extends "bsdgroup_base.html" %}
-{% block dojango_content %}
-{% if user.is_authenticated %}
-
-<div id="bsdgroupDlg" dojoType="dijit.Dialog" title="Modify Group"  dolayout="false">
-	    <form action="." method="post">{% csrf_token %}
-            <table>
-                {{ form }}
-            </table>
-                <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit">
-                        Modify Group<br />
-                </button>
-            <button style="margin-top:16px;" dojoType="dijit.form.Button" type="button" onClick="window.location='/account/'">Back</button>
-        </form>
-        </form>
-</div>
-
-
-<div dojoType="dijit.layout.TabContainer" style="width:100%;float:left;" doLayout="false">
-    <div dojoType="dijit.layout.ContentPane" title="User Management">
-                  <table class="grid">
-                <tbody>
-                    <tr>
-            {% if bsduser_list %}
-                        <h5>Active Users: <strong>{{ bsduser_list|length }}</strong></h5>
-                        {% else %}
-                        <p>There are no active users.</p>
-                        {% endif %}
-                    </tr>
-                </tbody>
-	            <thead class="ghead">
-                <td>ID</td>
-                <td>Username</td>
-	            <td>Group</td>
-	            <td>Home</td>
-	            <td>Shell</td>
-	            <td>Modify</td>
-	            <td>Remove</td>
-	        </thead>
-                <tbody>
-                {% for g in bsdgroup_list %}
-                <tr class="{% cycle 'odd' 'even' %}" id="{{ g.id }}">
-                    <td>
-                        {{ g.bsdgrp_gid }}
-                    </td>
-                    <td>
-                        {{ g.bsdgrp_group }}
-                    </td>
-                    <td>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsduser/{{ u.id  }}/view/'">Modify Group</button>
-                    </td>
-                    <td>
-                        <button dojoType="dijit.form.Button" type="button" onClick="window.location='/account/bsduser/delete/{{ u.id }}/'">Remove Group</button>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="3">No groups defined</td>
-                </tr>
-                {% endfor %}
-                </tbody>
-                </table>
-                <div style="padding:12px;"><button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('bsdgroupDlg').show();">Add New Group</button>
-                </div>
-                    </td>
-                </tr>
-        </div>
-    </div>
-</div>
-{% else %}
-    <p>Welcome. Please <a href="/freenas/login/">log in</a>.</p>
-{% endif %}
-
-{% endblock %}
-
+{% load i18n %}
+<form dojoType="dijit.form.Form">
+<script type="dojo/event" event="onSubmit" args="e">
+    formSubmit(this, e, '{{ url }}');
+</script>
+     <table>
+         {{ form }}
+     </table>
+     <button class="submitform" dojoType="dijit.form.Button" type="submit" onClick="this.set('label', 'Please wait...');">{% trans "OK" %}</button>
+     <button dojoType="dijit.form.Button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
+</form>
