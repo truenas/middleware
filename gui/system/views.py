@@ -34,9 +34,8 @@ import commands
 from django.contrib.auth import login, get_backends
 from django.contrib.auth.models import User
 from django.http import HttpResponse
-from django.shortcuts import render_to_response, render
+from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.template import RequestContext
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
@@ -76,43 +75,30 @@ def _system_info():
     }
 
 def system_info(request):
-
     sysinfo = _system_info()
-
-    variables = RequestContext(request, {
-
-    })
-    variables.update(sysinfo)
-    return render_to_response('system/system_info.html', variables)
+    return render(request, 'system/system_info.html', {
+        'sysinfo': sysinfo,
+        })
 
 def config(request):
-
-    variables = RequestContext(request, {
-
-    })
-
-    return render_to_response('system/config.html', variables)
+    return render(request, 'system/config.html')
 
 def config_restore(request):
-
-    variables = RequestContext(request)
-
     if request.method == "POST":
         notifier().config_restore()
         user = User.objects.all()[0]
         backend = get_backends()[0]
         user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
         login(request, user)
-        return render_to_response('system/config_ok2.html', variables)
-
-    return render_to_response('system/config_restore.html', variables)
+        return render(request, 'system/config_ok2.html')
+    return render(request, 'system/config_restore.html')
 
 def config_upload(request):
 
     if request.method == "POST":
         form = forms.ConfigUploadForm(request.POST, request.FILES)
 
-        variables = RequestContext(request, {
+        variables = {
             'form': form,
         })
         
@@ -140,22 +126,20 @@ def config_upload(request):
                 backend = get_backends()[0]
                 user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
                 login(request, user)
-                return render_to_response('system/config_ok.html', variables)
+                return render(request, 'system/config_ok.html', variables)
 
         if request.GET.has_key("iframe"):
             return HttpResponse("<html><body><textarea>"+render_to_string('system/config_upload.html', variables)+"</textarea></boby></html>")
         else:
-            return render_to_response('system/config_upload.html', variables)
+            return render(request, 'system/config_upload.html', variables)
     else:
         os.system("rm -rf /var/tmp/firmware")
         os.system("/bin/ln -s /var/tmp/ /var/tmp/firmware")
         form = forms.ConfigUploadForm()
 
-        variables = RequestContext(request, {
+        return render(request, 'system/config_upload.html', {
             'form': form,
         })
-
-        return render_to_response('system/config_upload.html', variables)
 
 def config_save(request):
 
@@ -191,27 +175,22 @@ def reporting(request):
     except OSError:
         pass
     
-    variables = RequestContext(request, {
+    return render(request, 'system/reporting.html', {
         'graphs': graphs,
     })
 
-    return render_to_response('system/reporting.html', variables)
-
 def settings(request):
-
     settings = models.Settings.objects.order_by("-id")[0].id
     email = models.Email.objects.order_by("-id")[0].id
     ssl = models.SSL.objects.order_by("-id")[0].id
     advanced = models.Advanced.objects.order_by("-id")[0].id
 
-    variables = RequestContext(request, {
+    return render(request, 'system/settings.html', {
         'settings': settings,
         'email': email,
         'ssl': ssl,
         'advanced': advanced,
     })
-
-    return render_to_response('system/settings.html', variables)
 
 def advanced(request):
 
@@ -226,42 +205,36 @@ def advanced(request):
     extra_context.update({
         'advanced': advanced,
     })
-    variables = RequestContext(request, extra_context)
-
-    return render_to_response('system/advanced.html', variables)
+    return render(request, 'system/advanced.html', extra_context)
 
 def varlogmessages(request, lines):
     if lines == None:
         lines = 3
     msg = os.popen('tail -n %s /var/log/messages' % int(lines)).read().strip()
-    variables = RequestContext(request, {
+    return render(request, 'system/status/msg.xml', {
         'msg': msg,
-    })
-    return render_to_response('system/status/msg.xml', variables, mimetype='text/xml')
+    }, mimetype='text/xml')
 
 def top(request):
     top = os.popen('top').read()
-    variables = RequestContext(request, {
+    return render(request, 'system/status/top.xml', {
         'focused_tab' : 'system',
         'top': top,
-    })
-    return render_to_response('system/status/top.xml', variables, mimetype='text/xml')
+    }, mimetype='text/xml')
 
 def reboot(request):
     """ reboots the system """
     notifier().restart("system")
-    variables = RequestContext(request, {
+    return render(request, 'system/reboot.html', {
         'freenas_version': get_freenas_version(),
     })
-    return render_to_response('system/reboot.html', variables)
 
 def shutdown(request):
     """ shuts down the system and powers off the system """
     notifier().stop("system")
-    variables = RequestContext(request, {
+    return render(request, 'system/shutdown.html', {
         'freenas_version': get_freenas_version(),
     })
-    return render_to_response('system/shutdown.html', variables)
 
 def testmail(request):
 

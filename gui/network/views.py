@@ -28,8 +28,7 @@
 
 from subprocess import Popen, PIPE
 
-from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.shortcuts import render_to_response, render
 from django.http import HttpResponse
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
@@ -79,11 +78,10 @@ def network(request):
         globalconf = models.GlobalConfiguration.objects.order_by("-id")[0].id
     except IndexError:
         globalconf = models.GlobalConfiguration.objects.create().id
-    variables = RequestContext(request, {
+    return render(request, 'network/index.html', {
         'focus_form' : request.GET.get('tab','network'),
         'globalconf': globalconf,
     })
-    return render_to_response('network/index.html', variables)
 
 def summary(request):
 
@@ -140,48 +138,35 @@ def summary(request):
         output = p3.communicate()[0]
         default = output.replace('\n','')
 
-    variables = RequestContext(request, {
+    return render(request, 'network/summary.html', {
         'ifaces': ifaces,
         'nss': nss,
         'default': default,
     })
-    return render_to_response('network/summary.html', variables)
 
 def interface(request):
-
     int_list = models.Interfaces.objects.order_by("-id").values()
-
-    variables = RequestContext(request, {
+    return render(request, 'network/interface.html', {
         'int_list': int_list,
     })
-    return render_to_response('network/interface.html', variables)
 
 def vlan(request):
-
     vlan_list = models.VLAN.objects.order_by("-id").values()
-
-    variables = RequestContext(request, {
+    return render(request, 'network/vlan.html', {
         'vlan_list': vlan_list,
     })
-    return render_to_response('network/vlan.html', variables)
 
 def staticroute(request):
-
     sr_list = models.StaticRoute.objects.order_by("-id").values()
-
-    variables = RequestContext(request, {
+    return render(request, 'network/staticroute.html', {
         'sr_list': sr_list,
     })
-    return render_to_response('network/staticroute.html', variables)
 
 def lagg(request):
-
     lagg_list = models.LAGGInterface.objects.order_by("-id").all()
-
-    variables = RequestContext(request, {
+    return render(request, 'network/lagg.html', {
         'lagg_list': lagg_list,
     })
-    return render_to_response('network/lagg.html', variables)
 
 def lagg_add(request):
 
@@ -195,13 +180,10 @@ def lagg_add(request):
                          "message": _("%s successfully added") % "LAGG" }),
                        mimetype="application/json"
                        )
-            #return render_to_response('network/lagg_add_ok.html')
-            #return HttpResponseRedirect('/network/global/lagg/')
 
-    variables = RequestContext(request, {
+    return render(request, 'network/lagg_add.html', {
         'lagg': lagg,
     })
-    return render_to_response('network/lagg_add.html', variables)
 
 def globalconf(request):
 
@@ -219,25 +201,12 @@ def globalconf(request):
     extra_context.update({
         'gc': gc,
     })
-    variables = RequestContext(request, extra_context)
-
-    return render_to_response('network/globalconf.html', variables)
+    return render(request, 'network/globalconf.html', extra_context)
 
 def lagg_members(request, object_id):
     laggmembers = models.LAGGInterfaceMembers.objects.filter(
                       lagg_interfacegroup = object_id
-                      )
-    variables = RequestContext(request, {
-        'focused_tab' : 'account',
-        'laggmembers': laggmembers,
-    })
-    return render_to_response('network/lagg_members.html', variables)
-
-def lagg_members2(request, object_id):
-    laggmembers = models.LAGGInterfaceMembers.objects.filter(
-                      lagg_interfacegroup = object_id
                       ) 
-    variables = RequestContext(request, {
+    return render(request, 'network/lagg_members.html', {
         'laggmembers': laggmembers,
     })
-    return render_to_response('network/lagg_members2.html', variables)

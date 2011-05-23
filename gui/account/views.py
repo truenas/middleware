@@ -28,8 +28,7 @@
 
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
-from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.shortcuts import render_to_response, render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.contrib.auth.views import login
@@ -41,32 +40,29 @@ from freenasUI.account import models
 
 def home(request):
     focus_form = request.GET.get('tab', 'passform')
-    variables = RequestContext(request, {
+    return render(request, 'account/index2.html', {
         'focus_form': focus_form,
     })
-    return render_to_response('account/index2.html', variables)
 
 def bsduser(request):
 
     bsduser_list = models.bsdUsers.objects.order_by("id").select_related().filter(bsdusr_builtin=False)
     bsduser_list_builtin = models.bsdUsers.objects.order_by("id").select_related().filter(bsdusr_builtin=True)
 
-    variables = RequestContext(request, {
+    return render(request, 'account/bsdusers.html', {
         'bsduser_list': bsduser_list,
         'bsduser_list_builtin': bsduser_list_builtin,
     })
-    return render_to_response('account/bsdusers.html', variables)
 
 def bsdgroup(request):
 
     bsdgroup_list = models.bsdGroups.objects.order_by("id").filter(bsdgrp_builtin=False)
     bsdgroup_list_builtin = models.bsdGroups.objects.order_by("id").filter(bsdgrp_builtin=True)
 
-    variables = RequestContext(request, {
+    return render_to_response('account/bsdgroups.html', {
         'bsdgroup_list': bsdgroup_list,
         'bsdgroup_list_builtin': bsdgroup_list_builtin,
     })
-    return render_to_response('account/bsdgroups.html', variables)
 
 def password_change(request):
 
@@ -82,8 +78,7 @@ def password_change(request):
             return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Password")}), mimetype="application/json")
 
     extra_context.update({ 'passform' : passform, })
-    variables = RequestContext(request, extra_context)
-    return render_to_response('account/passform.html', variables)
+    return render(request, 'account/passform.html', extra_context)
 
 def user_change(request):
 
@@ -97,8 +92,7 @@ def user_change(request):
             return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Admin user")}), mimetype="application/json")
 
     extra_context.update({ 'changeform' : changeform, })
-    variables = RequestContext(request, extra_context)
-    return render_to_response('account/changeform.html', variables)
+    return render('account/changeform.html', extra_context)
 
 def group2user_update(request, object_id):
     if request.method == 'POST':
@@ -106,14 +100,12 @@ def group2user_update(request, object_id):
         if f.is_valid():
             f.save()
             return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Users")}), mimetype="application/json")
-            #return render_to_response('account/bsdgroup2user_form_ok.html')
     else:
         f = forms.bsdGroupToUserForm(groupid=object_id)
-    variables = RequestContext(request, {
+    return render(request, 'account/bsdgroup2user_form2.html', {
         'url': reverse('account_bsdgroup_members', kwargs={'object_id':object_id}),
         'form' : f,
     })
-    return render_to_response('account/bsdgroup2user_form2.html', variables)
 
 def user2group_update(request, object_id):
     if request.method == 'POST':
@@ -121,14 +113,12 @@ def user2group_update(request, object_id):
         if f.is_valid():
             f.save()
             return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Groups")}), mimetype="application/json")
-            #return render_to_response('account/bsdgroup2user_form_ok.html')
     else:
         f = forms.bsdUserToGroupForm(userid=object_id)
-    variables = RequestContext(request, {
+    return render(request, 'account/bsdgroup2user_form2.html', {
         'url': reverse('account_bsduser_groups', kwargs={'object_id':object_id}),
         'form' : f,
     })
-    return render_to_response('account/bsdgroup2user_form2.html', variables)
 
 def json_users(request):
 

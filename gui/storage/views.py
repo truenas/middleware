@@ -28,8 +28,7 @@
 import re
 
 from django.core.urlresolvers import reverse
-from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.shortcuts import render
 from django.http import HttpResponse
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
@@ -44,17 +43,15 @@ from freenasUI.middleware.notifier import notifier
 ## Disk section
 
 def home(request):
-    variables = RequestContext(request, {
+    return render(request, 'storage/index.html', {
         'focused_tab': request.GET.get("tab", None),
     })
-    return render_to_response('storage/index.html', variables)
 
 def tasks(request):
     task_list = models.Task.objects.order_by("-id").all()
-    variables = RequestContext(request, {
+    return render(request, 'storage/tasks.html', {
         'task_list': task_list,
         })
-    return render_to_response('storage/tasks.html', variables)
 
 def volumes(request):
     en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
@@ -63,26 +60,23 @@ def volumes(request):
     for volume in models.Volume.objects.filter(vol_fstype__exact='ZFS'):
         zvol = notifier().list_zfs_vols(volume.vol_name)
         zvols[volume.vol_name] = zvol
-    variables = RequestContext(request, {
+    return render(request, 'storage/volumes.html', {
         'mp_list': mp_list,
         'en_dataset' : en_dataset,
         'zvols': zvols,
         })
-    return render_to_response('storage/volumes.html', variables)
 
 def replications(request):
     zfsrepl_list = models.Replication.objects.select_related().all()
-    variables = RequestContext(request, {
+    return render(request, 'storage/replications.html', {
         'zfsrepl_list': zfsrepl_list,
         })
-    return render_to_response('storage/replications.html', variables)
 
 def snapshots(request):
     zfsnap_list = notifier().zfs_snapshot_list()
-    variables = RequestContext(request, {
+    return render(request, 'storage/snapshots.html', {
         'zfsnap_list': zfsnap_list,
         })
-    return render_to_response('storage/snapshots.html', variables)
 
 def wizard(request):
 
@@ -105,12 +99,11 @@ def wizard(request):
         form = forms.VolumeWizardForm()
         disks = []
         zfsextra = None
-    variables = RequestContext(request, {
+    return render(request, 'storage/wizard.html', {
         'form': form,
         'disks': disks,
         'zfsextra': zfsextra,
     })
-    return render_to_response('storage/wizard.html', variables)
 
 def volimport(request):
 
@@ -129,11 +122,10 @@ def volimport(request):
     else:
         form = forms.VolumeImportForm()
         disks = []
-    variables = RequestContext(request, {
+    return render(request, 'storage/import.html', {
         'form': form,
         'disks': disks
     })
-    return render_to_response('storage/import.html', variables)
 
 def volautoimport(request):
 
@@ -152,11 +144,10 @@ def volautoimport(request):
     else:
         form = forms.VolumeAutoImportForm()
         disks = []
-    variables = RequestContext(request, {
+    return render(request, 'storage/autoimport.html', {
         'form': form,
         'disks': disks
     })
-    return render_to_response('storage/autoimport.html', variables)
 
 def disks_datagrid(request, vid):
 
@@ -180,13 +171,12 @@ def disks_datagrid(request, vid):
         width.append(val)
     fields = zip(names, _n, width)
 
-    variables = RequestContext(request, {
+    return render(request, 'storage/datagrid_disks.html', {
         'vid': vid,
         'app': 'storage',
         'model': 'Disk',
         'fields': fields,
     })
-    return render_to_response('storage/datagrid_disks.html', variables)
 
 def disks_datagrid_json(request, vid):
 
@@ -245,12 +235,11 @@ def volume_disks(request, volume_id):
     # mp = MountPoint.objects.get(mp_volume = volume_id)
     volume = models.Volume.objects.get(id = volume_id)
     disk_list = models.Disk.objects.filter(disk_group__group_volume = volume_id)
-    variables = RequestContext(request, {
+    return render(request, 'storage/volume_detail.html', {
         'focused_tab' : 'storage',
         'volume': volume,
         'disk_list': disk_list,
     })
-    return render_to_response('storage/volume_detail.html', variables)
 
 def dataset_create(request):
     defaults = { 'dataset_compression' : 'inherit', 'dataset_atime' : 'inherit', }
@@ -288,11 +277,10 @@ def dataset_create(request):
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset") + " " + _("successfully added") + "."}), mimetype="application/json")
             else:
                 dataset_form.set_error(errmsg)
-    variables = RequestContext(request, {
+    return render(request, 'storage/datasets.html', {
         'focused_tab' : 'storage',
         'form': dataset_form
     })
-    return render_to_response('storage/datasets.html', variables)
 
 def dataset_edit(request, object_id):
     mp = models.MountPoint.objects.get(pk=object_id)
@@ -324,11 +312,10 @@ def dataset_edit(request, object_id):
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset") + " " + _("successfully edited") + "."}), mimetype="application/json")
             else:
                 dataset_form.set_error(_("Some error ocurried while setting the options"))
-    variables = RequestContext(request, {
+    return render(request, 'storage/dataset_edit.html', {
         'mp': mp,
         'form': dataset_form
     })
-    return render_to_response('storage/dataset_edit.html', variables)
 
 def zvol_create(request):
     defaults = { 'zvol_compression' : 'inherit', }
@@ -351,10 +338,9 @@ def zvol_create(request):
                 zvol_form.set_error(errmsg)
     else:
         zvol_form = forms.ZVol_CreateForm(initial=defaults)
-    variables = RequestContext(request, {
+    return render(request, 'storage/zvols.html', {
         'form': zvol_form,
     })
-    return render_to_response('storage/zvols.html', variables)
 
 def zvol_delete(request, name):
 
@@ -369,10 +355,9 @@ def zvol_delete(request, name):
             else:
                 return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
     else:
-        c = RequestContext(request, {
+        return render(request, 'storage/zvol_confirm_delete.html', {
             'name': name,
         })
-        return render_to_response('storage/zvol_confirm_delete.html', c)
 
 def zfsvolume_edit(request, object_id):
     mp = models.MountPoint.objects.get(pk=object_id)
@@ -403,11 +388,10 @@ def zfsvolume_edit(request, object_id):
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("Native dataset") + " " + _("successfully edited") + "."}), mimetype="application/json")
             else:
                 volume_form.set_error(_("Some error ocurried while setting the options"))
-    variables = RequestContext(request, {
+    return render(request, 'storage/volume_edit.html', {
         'mp': mp,
         'form': volume_form
     })
-    return render_to_response('storage/volume_edit.html', variables)
 
 def mp_permission(request, object_id):
     mp = models.MountPoint.objects.get(id = object_id)
@@ -420,12 +404,11 @@ def mp_permission(request, object_id):
             return HttpResponse(simplejson.dumps({"error": False, "message": _("Mount Point permissions successfully updated.")}), mimetype="application/json")
     else:
         form = forms.MountPointAccessForm(initial={'path':mp.mp_path})
-    variables = RequestContext(request, {
+    return render(request, 'storage/permission.html', {
         'mp': mp,
         'mp_list': mp_list,
         'form': form,
     })
-    return render_to_response('storage/permission.html', variables)
 
 def dataset_delete(request, object_id):
     obj = models.MountPoint.objects.get(id=object_id)
@@ -437,11 +420,10 @@ def dataset_delete(request, object_id):
         else:
             return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
     else:
-        c = RequestContext(request, {
+        return render(request, 'storage/dataset_confirm_delete.html', {
             'focused_tab' : 'storage',
             'object': obj,
         })
-        return render_to_response('storage/dataset_confirm_delete.html', c)
 
 def snapshot_delete(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
@@ -452,11 +434,10 @@ def snapshot_delete(request, dataset, snapname):
         else:
             return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
     else:
-        c = RequestContext(request, {
+        return render(request, 'storage/snapshot_confirm_delete.html', {
             'snapname' : snapname,
             'dataset' : dataset,
         })
-        return render_to_response('storage/snapshot_confirm_delete.html', c)
 
 def snapshot_rollback(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
@@ -467,11 +448,10 @@ def snapshot_rollback(request, dataset, snapname):
         else:
             return HttpResponse(simplejson.dumps({"error": True, "message": ret}), mimetype="application/json")
     else:
-        c = RequestContext(request, {
+        return render(request, 'storage/snapshot_confirm_rollback.html', {
             'snapname' : snapname,
             'dataset' : dataset,
         })
-        return render_to_response('storage/snapshot_confirm_rollback.html', c)
 
 def periodicsnap(request):
 
@@ -484,11 +464,10 @@ def periodicsnap(request):
             return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot") + " " + _("successfully added") + "."}), mimetype="application/json")
     else:
         form = forms.PeriodicSnapForm()
-    variables = RequestContext(request, {
+    return render(request, 'storage/periodicsnap.html', {
         'form': form,
         'extra_js': models.Task._admin.extra_js,
     })
-    return render_to_response('storage/periodicsnap.html', variables)
 
 def manualsnap(request, path):
     if request.method == "POST":
@@ -498,11 +477,10 @@ def manualsnap(request, path):
             return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully taken")}), mimetype="application/json")
     else:
         form = forms.ManualSnapshotForm()
-    variables = RequestContext(request, {
+    return render(request, 'storage/manualsnap.html', {
         'form': form,
         'path': path,
     })
-    return render_to_response('storage/manualsnap.html', variables)
 
 def clonesnap(request, snapshot):
     initial = { 'cs_snapshot' : snapshot }
@@ -516,11 +494,10 @@ def clonesnap(request, snapshot):
                 return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
     else:
         form = forms.CloneSnapshotForm(initial=initial)
-    variables = RequestContext(request, {
+    return render(request, 'storage/clonesnap.html', {
         'form': form,
         'snapshot': snapshot,
     })
-    return render_to_response('storage/clonesnap.html', variables)
 
 def disk_replacement(request, vid, object_id):
 
@@ -571,13 +548,12 @@ def disk_replacement(request, vid, object_id):
 
     else:
         form = forms.DiskReplacementForm(disk=fromdisk)
-    variables = RequestContext(request, {
+    return render(request, 'storage/disk_replacement.html', {
         'form': form,
         'vid': vid,
         'object_id': object_id,
         'fromdisk': fromdisk,
     })
-    return render_to_response('storage/disk_replacement.html', variables)
 
 def disk_detach(request, vid, object_id):
 
@@ -591,9 +567,8 @@ def disk_detach(request, vid, object_id):
             dg.delete()
         return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk detach has been successfully done.")}), mimetype="application/json")
 
-    variables = RequestContext(request, {
+    return render(request, 'storage/disk_detach.html', {
         'vid': vid,
         'object_id': object_id,
         'disk': disk,
     })
-    return render_to_response('storage/disk_detach.html', variables)

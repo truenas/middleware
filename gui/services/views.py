@@ -26,8 +26,7 @@
 # $FreeBSD$
 #####################################################################
 
-from django.shortcuts import render_to_response, render
-from django.template import RequestContext
+from django.shortcuts import render
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils import simplejson
 from django.utils.translation import ugettext as _

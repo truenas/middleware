@@ -26,41 +26,29 @@
 # $FreeBSD$
 #####################################################################
 
-from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.shortcuts import render
 
 from freenasUI.sharing import models
 
 def home(request):
-
-    variables = RequestContext(request, {
+    return render(request, 'sharing/index.html', {
         'focus_form' : request.GET.get('tab', ''),
     })
-    return render_to_response('sharing/index.html', variables)
 
 def windows(request):
-
     cifs_share_list = models.CIFS_Share.objects.select_related().all()
-
-    variables = RequestContext(request, {
+    return render(request, 'sharing/windows.html', {
         'cifs_share_list': cifs_share_list,
     })
-    return render_to_response('sharing/windows.html', variables)
 
 def apple(request):
-
     afp_share_list = models.AFP_Share.objects.order_by("-id").values()
-
-    variables = RequestContext(request, {
-    'afp_share_list': afp_share_list,
+    return render(request, 'sharing/apple.html', {
+        'afp_share_list': afp_share_list,
     })
-    return render_to_response('sharing/apple.html', variables)
 
 def unix(request):
-
     nfs_share_list = models.NFS_Share.objects.select_related().all()
-
-    variables = RequestContext(request, {
-    'nfs_share_list': nfs_share_list,
+    return render(request, 'sharing/unix.html', {
+        'nfs_share_list': nfs_share_list,
     })
-    return render_to_response('sharing/unix.html', variables)

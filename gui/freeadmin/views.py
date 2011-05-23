@@ -30,8 +30,7 @@ import re
 import datetime
 
 from django.http import HttpResponse
-from django.shortcuts import render_to_response, get_object_or_404
-from django.template import RequestContext
+from django.shortcuts import get_object_or_404, render
 from django.utils import simplejson
 from django.template.loader import get_template
 from django.utils.translation import ugettext as _
@@ -54,22 +53,21 @@ def adminInterface(request, objtype = None):
         console = Advanced.objects.all().order_by('-id')[0].adv_consolemsg
     except:
         console = False
-    context = RequestContext(request, {
+    return render(request, 'freeadmin/index.html', {
         'consolemsg': console,
     })
-    return render_to_response('freeadmin/index.html', context)
 
 def menu(request, objtype = None):
 
-    final = navtree.dijitTree()
     try:
+        final = navtree.dijitTree()
         json = simplejson.dumps(final, indent=3)
     except:
         json = ""
     #from freenasUI.nav import json2nav
     #json2nav(json)['main']
 
-    return HttpResponse( json , mimetype="application/json")
+    return HttpResponse(json, mimetype="application/json")
 
 """
 We use the django debug 500 classes to show the traceback to the user
@@ -189,13 +187,13 @@ def generic_model_add(request, app, model, mf=None):
         raise
 
     m = getattr(_temp, model)
-    context = RequestContext(request, {
+    context = {
         'app': app,
         'model': model,
         'mf': mf,
         'verbose_name': m._meta.verbose_name,
         'extra_js': m._admin.extra_js,
-    })
+    }
     if not isinstance(navtree._modelforms[m], dict):
         mf = navtree._modelforms[m]
     else:
@@ -217,7 +215,6 @@ def generic_model_add(request, app, model, mf=None):
         if mf.is_valid():
             mf.save()
             return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully added.") % m._meta.verbose_name}))
-            #return render_to_response('freeadmin/generic_model_add_ok.html', context)
 
     else:
         mf = mf()
@@ -232,7 +229,7 @@ def generic_model_add(request, app, model, mf=None):
     except:
         template = 'freeadmin/generic_model_add.html'
 
-    return render_to_response(template, context)
+    return render(request, template, context)
 
 def generic_model_view(request, app, model):
 
@@ -241,10 +238,10 @@ def generic_model_view(request, app, model):
     except ImportError:
         raise
 
-    context = RequestContext(request, {
+    context = {
         'app': app,
         'model': model,
-    })
+    }
     m = getattr(_temp, model)
 
     names = [x.verbose_name for x in m._meta.fields]
@@ -257,7 +254,7 @@ def generic_model_view(request, app, model):
         'fields': _n,
     })
 
-    return render_to_response('freeadmin/generic_model_view.html', context)
+    return render(request, 'freeadmin/generic_model_view.html', context)
 
 def generic_model_datagrid(request, app, model):
 
@@ -266,10 +263,10 @@ def generic_model_datagrid(request, app, model):
     except ImportError:
         raise
 
-    context = RequestContext(request, {
+    context = {
         'app': app,
         'model': model,
-    })
+    }
     m = getattr(_temp, model)
 
     exclude = m._admin.exclude_fields
@@ -308,7 +305,7 @@ def generic_model_datagrid(request, app, model):
     context.update({
         'fields': fields,
     })
-    return render_to_response('freeadmin/generic_model_datagrid.html', context)
+    return render(request, 'freeadmin/generic_model_datagrid.html', context)
 
 def generic_model_datagrid_json(request, app, model):
 
@@ -343,7 +340,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
     else:
         inline = False
 
-    context = RequestContext(request, {
+    context = {
         'app': app,
         'model': model,
         'mf': mf,
@@ -351,7 +348,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
         'inline': inline,
         'extra_js': m._admin.extra_js,
         'verbose_name': m._meta.verbose_name,
-    })
+    }
 
     if m._admin.deletable is False:
         context.update({'deletable': False})
@@ -396,12 +393,12 @@ def generic_model_edit(request, app, model, oid, mf=None):
         template = 'freeadmin/generic_model_edit.html'
 
     if request.GET.has_key("iframe"):
-        resp = render_to_response(template, context, \
+        resp = render(request, template, context, \
                 mimetype='text/html')
         resp.content = "<html><body><textarea>"+resp.content+"</textarea></boby></html>"
         return resp
     else:
-        return render_to_response(template, context, \
+        return render(request, template, context, \
                 mimetype='text/html')
 
 def generic_model_delete(request, app, model, oid):
@@ -424,13 +421,13 @@ def generic_model_delete(request, app, model, oid):
     except:
         form = None
 
-    context = RequestContext(request, {
+    context = {
         'app': app,
         'model': model,
         'oid': oid,
         'object': instance,
         'verbose_name': instance._meta.verbose_name,
-    })
+    }
 
     form_i = None
     if request.method == "POST":
@@ -445,7 +442,6 @@ def generic_model_delete(request, app, model, oid):
         else:
             instance.delete()
             return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully deleted.") % m._meta.verbose_name}), mimetype="application/json")
-        #return render_to_response('freeadmin/generic_model_delete_ok.html', context)
     if form and form_i is None:
         form_i = form(instance=instance)
         context.update({'form': form})
@@ -455,4 +451,4 @@ def generic_model_delete(request, app, model, oid):
     except:
         template = 'freeadmin/generic_model_delete.html'
 
-    return render_to_response(template, context)
+    return render(request, template, context)

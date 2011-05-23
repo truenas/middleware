@@ -1,40 +1,26 @@
-{% extends "base.html" %}
-{% block dojango_header_extra %}
-{% endblock %} 
-{% block dojango_content %}
-{% if user.is_authenticated %}
-<div dojoType="dijit.layout.TabContainer" style="width:100%;" dolayout="false">
-    <div dojoType="dijit.layout.ContentPane" title="Edit LAGG Member">
-	<table class="grid">
-	    <thead class="header">
-	            <td>Physical Interface</td>
-	            <td>Ordering Priority</td>
-		    <td>Startup option</td>
-		    <td>Action</td>
-	    </thead>
-	    {% for nic in laggmembers %}
-	    <tr class="{% cycle 'odd' 'even' %}" id="{{ nic.id }}">
-		<td>{{ nic.lagg_physnic }}</td>
-		<td>{{ nic.lagg_ordernum }}</td>
-		<td>{{ nic.lagg_deviceoptions }}</td>
-		<td>
-		    <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/laggint/edit/{{ nic.id }}/'">Edit</button>
-		    <!-- <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/laggint/delete/{{ nic.id }}/'">Delete</button> -->
-		</td>
-	    </tr>
-            {% empty %}
-	    <tr>
-		<td colspan="4">No LAGG interface defined</td>
-	    </tr>
-	    {% endfor %}
-        </table>
-
-	<!-- (TODO: Show a list of interfaces that can be added, a button to add them through the form) -->
-    </div>
-</div>
-{% else %}
-    <p>Welcome. Please <a href="/account/login/">log in</a>.</p>
-{% endif %}
-
-{% endblock %}
-
+{% load i18n %}
+<table class="grid">
+    <thead class="header">
+        <tr>
+            <td>{% trans "Physical Interface" %}</td>
+            <td>{% trans "Ordering Priority" %}</td>
+            <td>{% trans "Startup option" %}</td>
+            <td>{% trans "Action" %}</td>
+        </tr>
+    </thead>
+    {% for nic in laggmembers %}
+    <tr class="{% cycle 'odd' 'even' %}" id="{{ nic.id }}">
+	<td>{{ nic.lagg_physnic }}</td>
+	<td>{{ nic.lagg_ordernum }}</td>
+	<td>{{ nic.lagg_deviceoptions }}</td>
+	<td>
+            <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Edit Interface" %}', '{% url freeadmin_model_edit app='network',model='LAGGInterfaceMembers',oid=nic.id %}?deletable=false', [this,]);">{% trans "Edit" %}</button>
+	    <!-- <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/laggint/delete/{{ nic.id }}/'">Delete</button> -->
+	</td>
+    </tr>
+        {% empty %}
+    <tr>
+        <td colspan="4">{% trans "No LAGG interface defined" %}</td>
+    </tr>
+    {% endfor %}
+</table>
