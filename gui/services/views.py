@@ -94,7 +94,7 @@ def home(request):
         ldap = models.LDAP.objects.create()
 
     srv = models.services.objects.all()
-    variables = RequestContext(request, {
+    return render(request, 'services/index.html', {
         'srv': srv,
         'cifs': cifs,
         'afp': afp,
@@ -112,71 +112,55 @@ def home(request):
         'activedirectory': activedirectory,
         'ldap': ldap,
         })
-    return render_to_response('services/index.html', variables)
 
 def iscsi(request):
     gconfid = models.iSCSITargetGlobalConfiguration.objects.all().order_by("-id")[0].id
-    variables = RequestContext(request, {
+    return render(request, 'services/iscsi.html', {
         'focus_tab' : request.GET.get('tab',''),
         'gconfid': gconfid,
         })
-    return render_to_response('services/iscsi.html', variables)
 
 def iscsi_targets(request):
     target_list = models.iSCSITarget.objects.all()
-
-    variables = RequestContext(request, {
+    return render(request, 'services/iscsi_targets.html', {
         'target_list': target_list,
     })
-    return render_to_response('services/iscsi_targets.html', variables)
 
 def iscsi_assoctargets(request, objtype=None):
     asctarget_list = models.iSCSITargetToExtent.objects.all()
-
-    variables = RequestContext(request, {
+    return render(request, 'services/iscsi_assoctargets.html', {
         'asctarget_list': asctarget_list,
     })
-    return render_to_response('services/iscsi_assoctargets.html', variables)
 
 def iscsi_extents(request, objtype=None):
     extent_file_list = models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='File')
-
-    variables = RequestContext(request, {
+    return render(request, 'services/iscsi_extents.html', {
         'extent_file_list': extent_file_list,
     })
-    return render_to_response('services/iscsi_extents.html', variables)
 
 def iscsi_dextents(request):
     extent_device_list = models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-
-    variables = RequestContext(request, {
+    return render(request, 'services/iscsi_dextents.html', {
         'extent_device_list': extent_device_list,
     })
-    return render_to_response('services/iscsi_dextents.html', variables)
 
 def iscsi_auth(request):
     target_auth_list = models.iSCSITargetAuthCredential.objects.all()
-
-    variables = RequestContext(request, {
+    return render(request, 'services/iscsi_auth.html', {
         'target_auth_list': target_auth_list,
     })
-    return render_to_response('services/iscsi_auth.html', variables)
 
 def iscsi_authini(request):
     auth_initiator_list = models.iSCSITargetAuthorizedInitiator.objects.all()
-
-    variables = RequestContext(request, {
+    return render(request, 'services/iscsi_authini.html', {
         'auth_initiator_list': auth_initiator_list,
     })
-    return render_to_response('services/iscsi_authini.html', variables)
 
 def iscsi_portals(request):
     iscsiportal_list = models.iSCSITargetPortal.objects.all()
-
-    variables = RequestContext(request, {
+    return render(request, 'services/iscsi_portals.html', {
         'iscsiportal_list': iscsiportal_list,
     })
-    return render_to_response('services/iscsi_portals.html', variables)
 
 def servicesToggleView(request, formname):
     form2namemap = {
