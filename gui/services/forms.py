@@ -331,7 +331,16 @@ class RsyncModForm(ModelForm):
         name = self.cleaned_data['rsyncmod_name']
         if re.search(r'[/\]]', name):
             raise forms.ValidationError(_(u"The name cannot contain slash or a closing square backet."))
+        name = name.strip()
         return name
+    def clean_rsyncmod_hostsallow(self):
+        hosts = self.cleaned_data['rsyncmod_hostsallow']
+        hosts = hosts.replace("\n", " ").strip()
+        return hosts
+    def clean_rsyncmod_hostsdeny(self):
+        hosts = self.cleaned_data['rsyncmod_hostsdeny']
+        hosts = hosts.replace("\n", " ").strip()
+        return hosts
     def save(self):
         super(RsyncModForm, self).save()
         started = notifier().reload("rsync")
