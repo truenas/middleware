@@ -100,7 +100,7 @@ def config_upload(request):
 
         variables = {
             'form': form,
-        })
+        }
         
         if form.is_valid():
             import sqlite3

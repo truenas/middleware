@@ -238,7 +238,7 @@ class Migration(SchemaMigration):
             'rsyncmod_hostsallow': ('django.db.models.fields.TextField', [], {'default': 'True'}),
             'rsyncmod_hostsdeny': ('django.db.models.fields.TextField', [], {'default': 'True'}),
             'rsyncmod_maxconn': ('django.db.models.fields.IntegerField', [], {}),
-            'rsyncmod_mode': ('django.db.models.fields.CharField', [], {'max_length': '120', 'default': 'rw'}),
+            'rsyncmod_mode': ('django.db.models.fields.CharField', [], {'max_length': '120', 'default': '"rw"' }),
             'rsyncmod_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'rsyncmod_path': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'rsyncmod_user': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'})
