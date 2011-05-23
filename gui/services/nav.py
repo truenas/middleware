@@ -140,3 +140,9 @@ class ISCSI(TreeNode):
     def __init__(self, *args, **kwargs):
         super(ISCSI, self).__init__(*args, **kwargs)
         self.append_children([ISCSIDevice()])
+
+class RsyncModView(TreeNode):
+
+    gname = 'services.RsyncMod.View'
+    view = u'services_rsyncmod'
+    append_app = False

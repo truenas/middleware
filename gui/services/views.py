@@ -26,7 +26,7 @@
 # $FreeBSD$
 #####################################################################
 
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, render
 from django.template import RequestContext
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils import simplejson
@@ -256,3 +256,8 @@ def servicesToggleView(request, formname):
     }
 
     return HttpResponse(simplejson.dumps(data), mimetype="application/json")
+
+def rsyncmod(request):
+    return render(request, "services/rsyncmod.html", {
+        'rsyncmod_list': models.RsyncMod.objects.all(),
+        })

@@ -1096,6 +1096,7 @@
                     parseOnLoad: true,
                 });
                 pane.tab = item.gname;
+                dojo.addClass(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
                 p.addChild(pane);
                 p.selectChild(pane);
             }
