@@ -92,7 +92,7 @@ def user_change(request):
             return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Admin user")}), mimetype="application/json")
 
     extra_context.update({ 'changeform' : changeform, })
-    return render('account/changeform.html', extra_context)
+    return render(request, 'account/changeform.html', extra_context)
 
 def group2user_update(request, object_id):
     if request.method == 'POST':

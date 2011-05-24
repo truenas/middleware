@@ -81,7 +81,6 @@ class UnixPermissionWidget(widgets.MultiWidget):
                 3: __('Execute'),
             }
 
-        print "hm"
         html = """<table>
         <thead>
         <tr>
