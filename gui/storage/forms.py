@@ -799,13 +799,10 @@ class ZVol_CreateForm(Form):
         self._errors['__all__'] = self.error_class([msg])
         del self.cleaned_data
 
+from freeadmin.forms import UserField, GroupField
 class MountPointAccessForm(Form):
-    mp_user = forms.ChoiceField(widget=forms.Select(attrs=attrs_dict),
-                                label=_('Owner (user)')
-                                )
-    mp_group = forms.ChoiceField(widget=forms.Select(attrs=attrs_dict),
-                                 label=_('Owner (group)')
-                                 )
+    mp_user = UserField(label=_('Owner (user)'))
+    mp_group = GroupField(label=_('Owner (group)'))
     mp_mode = UnixPermissionField(label=_('Mode'))
     mp_recursive = forms.BooleanField(initial=False,
                                       required=False,
@@ -814,44 +811,12 @@ class MountPointAccessForm(Form):
     def __init__(self, *args, **kwargs):
         super(MountPointAccessForm, self).__init__(*args, **kwargs)
 
-        from account.forms import FilteredSelectJSON
-        if len(FreeNAS_Users()) > 500:
-            if len(args) > 0 and isinstance(args[0], QueryDict):
-                self.fields['mp_user'].choices = ((args[0]['mp_user'],args[0]['mp_user']),)
-                self.fields['mp_user'].initial= args[0]['mp_user']
-            self.fields['mp_user'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
-        else:
-            self.fields['mp_user'].choices = ((x.bsdusr_username, x.bsdusr_username)
-                                              for x in FreeNAS_Users()
-                                              )
-        if len(FreeNAS_Groups()) > 500:
-            if len(args) > 0 and isinstance(args[0], QueryDict):
-                self.fields['mp_group'].choices = ((args[0]['mp_group'],args[0]['mp_group']),)
-                self.fields['mp_group'].initial= args[0]['mp_group']
-            self.fields['mp_group'].widget = FilteredSelectJSON(url=reverse("account_bsdgroup_json"))
-        else:
-            self.fields['mp_group'].choices = ((x.bsdgrp_group, x.bsdgrp_group)
-                                               for x in FreeNAS_Groups()
-                                               )
-
         path = kwargs.get('initial', {}).get('path', None)
         if path:
             user, group = notifier().mp_get_owner(path)
             self.fields['mp_mode'].initial = "%.3o" % notifier().mp_get_permission(path)
             self.fields['mp_user'].initial = user
             self.fields['mp_group'].initial = group
-
-    def clean_mp_user(self):
-        user = self.cleaned_data['mp_user']
-        if FreeNAS_User(user) == None:
-            raise forms.ValidationError(_("The user %s is not valid.") % user)
-        return user
-
-    def clean_mp_group(self):
-        group = self.cleaned_data['mp_group']
-        if FreeNAS_Group(group) == None:
-            raise forms.ValidationError(_("The group %s is not valid.") % group)
-        return group
 
     def commit(self, path='/mnt/'):
 
