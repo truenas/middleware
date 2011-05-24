@@ -41,6 +41,7 @@ from freenasUI.storage import models
 from freenasUI import choices
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups, \
                                          FreeNAS_User, FreeNAS_Group
+from freeadmin.forms import UserField, GroupField
 from dojango.forms import widgets, CheckboxSelectMultiple
 from dojango import forms
 
@@ -799,7 +800,6 @@ class ZVol_CreateForm(Form):
         self._errors['__all__'] = self.error_class([msg])
         del self.cleaned_data
 
-from freeadmin.forms import UserField, GroupField
 class MountPointAccessForm(Form):
     mp_user = UserField(label=_('Owner (user)'))
     mp_group = GroupField(label=_('Owner (group)'))

@@ -303,10 +303,6 @@ class ConfigUploadForm(Form):
     config = FileField(label=_("New config to be installed"))
 
 class CronJobForm(ModelForm):
-    cron_user = forms.ChoiceField(choices=(),
-                                       widget=forms.Select(),
-                                       label=_('User')
-                                       )
     class Meta:
         model = models.CronJob
         widgets = {
@@ -321,18 +317,6 @@ class CronJobForm(ModelForm):
             ins = kwargs.get('instance')
             ins.cron_month = ins.cron_month.replace("10", "a").replace("11", "b").replace("12", "c")
         super(CronJobForm, self).__init__(*args, **kwargs)
-        from account.forms import FilteredSelectJSON
-        if len(FreeNAS_Users()) > 500:
-            if len(args) > 0 and isinstance(args[0], QueryDict):
-                self.fields['cron_user'].choices = ((args[0]['cron_user'],args[0]['cron_user']),)
-                self.fields['cron_user'].initial= args[0]['cron_user']
-            self.fields['cron_user'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
-        else:
-            self.fields['cron_user'].widget = forms.widgets.FilteringSelect()
-            self.fields['cron_user'].choices = (
-                                                 (x.bsdusr_username, x.bsdusr_username)
-                                                      for x in FreeNAS_Users()
-                                                      )
     def clean_cron_month(self):
         m = eval(self.cleaned_data.get("cron_month"))
         m = ",".join(m)
@@ -347,10 +331,6 @@ class CronJobForm(ModelForm):
         started = notifier().restart("cron")
 
 class RsyncForm(ModelForm):
-    rsync_user = forms.ChoiceField(choices=(),
-                                       widget=forms.Select(),
-                                       label=_('User')
-                                       )
     class Meta:
         model = models.Rsync
         widgets = {
@@ -366,18 +346,6 @@ class RsyncForm(ModelForm):
             ins = kwargs.get('instance')
             ins.rsync_month = ins.rsync_month.replace("10", "a").replace("11", "b").replace("12", "c")
         super(RsyncForm, self).__init__(*args, **kwargs)
-        from account.forms import FilteredSelectJSON
-        if len(FreeNAS_Users()) > 500:
-            if len(args) > 0 and isinstance(args[0], QueryDict):
-                self.fields['rsync_user'].choices = ((args[0]['rsync_user'],args[0]['rsync_user']),)
-                self.fields['rsync_user'].initial= args[0]['rsync_user']
-            self.fields['rsync_user'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
-        else:
-            self.fields['rsync_user'].widget = forms.widgets.FilteringSelect()
-            self.fields['rsync_user'].choices = (
-                                                 (x.bsdusr_username, x.bsdusr_username)
-                                                      for x in FreeNAS_Users()
-                                                      )
     def clean_rsync_month(self):
         m = eval(self.cleaned_data.get("rsync_month"))
         m = ",".join(m)

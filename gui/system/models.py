@@ -32,7 +32,7 @@ from django.db import models
 from django.conf import settings
 
 from freenasUI import choices
-from freeadmin.models import Model
+from freeadmin.models import Model, UserField, GroupField
 
 class Settings(Model):
     stg_guiprotocol = models.CharField(
@@ -234,7 +234,7 @@ class SSL(Model):
         deletable = False
 
 class CronJob(Model):
-    cron_user = models.CharField(
+    cron_user = UserField(
             max_length=60,
             verbose_name=_("User"),
             help_text=_("The user to run the command")
@@ -373,7 +373,7 @@ class Rsync(Model):
             default="1,2,3,4,5,6,7",
             verbose_name=_("Day of week"),
             )
-    rsync_user = models.CharField(
+    rsync_user = UserField(
             max_length=60,
             verbose_name=_("User"),
             help_text=_("The user to run the command"),
