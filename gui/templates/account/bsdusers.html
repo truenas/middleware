@@ -61,7 +61,8 @@
         <td>{% trans "Group" %}</td>
         <td>{% trans "Home" %}</td>
         <td>{% trans "Shell" %}</td>
-        <td colspan="3">{% trans "Password" %}</td>
+        <td>{% trans "Password" %}</td>
+        <td colspan="2">{% trans "E-mail" %}</td>
     </thead>
     <tbody>
 	{% for u in bsduser_list_builtin %}
@@ -83,6 +84,9 @@
 	    </td>
 	    <td>
                 <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Change Password" %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserPasswordForm" %}?deletable=false', [this,]);">{% trans "Change Password" %}</button>
+	    </td>
+	    <td>
+                <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Change E-mail" %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserEmailForm" %}?deletable=false', [this,]);">{% trans "Change E-mail" %}</button>
 	    </td>
 	    <td>
 		{% if not u.bsdusr_builtin %}

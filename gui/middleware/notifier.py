@@ -991,6 +991,7 @@ class notifier:
 
     def _reload_user(self):
         self.__system("/usr/sbin/service ix-passwd quietstart")
+        self.__system("/usr/sbin/service ix-aliases quietstart")
         self.reload("cifs")
 
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',

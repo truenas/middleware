@@ -389,6 +389,15 @@ class bsdUserChangeForm(ModelForm, SharedFunc):
         notifier().reload("user")
         return bsduser
 
+class bsdUserEmailForm(ModelForm, SharedFunc):
+    class Meta:
+        model = models.bsdUsers
+        fields = ('bsdusr_email',)
+    def save(self):
+        bsduser = super(bsdUserEmailForm, self).save(commit=True)
+        notifier().reload("user")
+        return bsduser
+
 class bsdGroupsForm(ModelForm):
     class Meta:
         model = models.bsdGroups
