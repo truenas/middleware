@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:34-0700\n"
-"PO-Revision-Date: 2011-05-23 19:47+0200\n"
-"Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
+"PO-Revision-Date: 2011-05-24 12:10+0200\n"
+"Last-Translator: Nihilman <enfroy.eric@numeo.fr>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -256,9 +256,10 @@ msgstr "Par défaut"
 msgid "Time Machine"
 msgstr "Temps Machine"
 
+# voir : http://php.net/manual/fr/xml.case-folding.php
 #: choices.py:195
 msgid "No case folding"
-msgstr "Pas de changement de casse"
+msgstr "Pas de problème de casse"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
@@ -421,7 +422,7 @@ msgstr "Nom d'utilisateur"
 #: account/forms.py:173 account/forms.py:198
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
 msgstr ""
-"Requis. 30 caractères ou mois. Lettres, chiffres et '@', '.', '+', '-', '_' "
+"Requis. 30 caractères ou moins. Lettres, chiffres et '@', '.', '+', '-', '_' "
 "seulement."
 
 #: account/forms.py:174 account/forms.py:199
@@ -455,7 +456,7 @@ msgstr "Interpréteur"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
-msgstr "Identifiants désactivés"
+msgstr "désactiver les identifiants"
 
 #: account/forms.py:205
 msgid "Primary Group"

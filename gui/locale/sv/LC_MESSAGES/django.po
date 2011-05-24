@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-19 21:56+0200\n"
+"PO-Revision-Date: 2011-05-24 13:24+0200\n"
 "Last-Translator: Jonas <mossemansson@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
@@ -474,7 +474,7 @@ msgstr "Detta fält är obligatoriskt."
 
 #: account/forms.py:418
 msgid "Member users"
-msgstr ""
+msgstr "Grupp medlemmar"
 
 #: account/forms.py:436
 msgid "Auxiliary groups"
@@ -572,11 +572,11 @@ msgstr ""
 
 #: account/nav.py:41
 msgid "View All Users"
-msgstr ""
+msgstr "Visa samtliga användare"
 
 #: account/nav.py:54
 msgid "View All Groups"
-msgstr ""
+msgstr "Visa alla grupper"
 
 #: account/views.py:79 account/views.py:94 account/views.py:105
 #: account/views.py:120
@@ -586,33 +586,35 @@ msgstr "%s uppdatering lyckades"
 
 #: account/views.py:94
 msgid "Admin user"
-msgstr ""
+msgstr "Administratörsanvändare"
 
 #: account/views.py:105 templates/account/index2.html:13
 msgid "Users"
-msgstr ""
+msgstr "Användare"
 
 #: account/views.py:120 templates/account/index2.html:10
 msgid "Groups"
-msgstr ""
+msgstr "Grupper"
 
 #: contrib/ext_formwizard.py:170
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
 msgstr ""
+"Vi ber om ursäkt, men ditt formulär har gått ut. Du kan fortsätta att fylla "
+"i formuläret från denna sida."
 
 #: freeadmin/navtree.py:349
 msgid "Display System Processes"
-msgstr ""
+msgstr "Visa systemprocesser"
 
 #: freeadmin/navtree.py:357 templates/freeadmin/index.html:50
 msgid "Reboot"
-msgstr ""
+msgstr "Starta om"
 
 #: freeadmin/navtree.py:365 templates/freeadmin/index.html:62
 msgid "Shutdown"
-msgstr ""
+msgstr "Stäng av"
 
 #: freeadmin/views.py:103
 #, python-format
@@ -657,7 +659,7 @@ msgstr "Nätverk %s är inte rätt, CIDR förväntas."
 #: network/models.py:42 services/models.py:1077
 #: templates/system/system_info.html:4
 msgid "Hostname"
-msgstr ""
+msgstr "Värdnamn"
 
 #: network/models.py:47
 msgid "Domain"
@@ -761,7 +763,7 @@ msgstr "Gränssnittsnamnet måste vara ett vlanXX där XX är ett nummer"
 #: network/models.py:178 templates/network/lagg_members2.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr ""
+msgstr "Fysiskt gränssnitt"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
@@ -771,19 +773,19 @@ msgstr ""
 #: services/models.py:747 storage/models.py:95
 #: templates/network/staticroute.html:7 templates/network/vlan.html:8
 msgid "Description"
-msgstr ""
+msgstr "Beskrivning"
 
 #: network/models.py:199 templates/network/index2.html:11
 msgid "VLAN"
-msgstr ""
+msgstr "VLAN"
 
 #: network/models.py:215 templates/network/interface.html:5
 msgid "Interface"
-msgstr ""
+msgstr "Gränssnitt"
 
 #: network/models.py:219
 msgid "Protocol Type"
-msgstr ""
+msgstr "Protokolltyp"
 
 #: network/models.py:240
 msgid "LAGG Interface group"
@@ -799,7 +801,7 @@ msgstr "Fysiskt NIC"
 
 #: network/models.py:259 templates/network/index2.html:7
 msgid "Link Aggregation"
-msgstr ""
+msgstr "Länk sammanslagning"
 
 #: network/models.py:268
 msgid "Destination network"
@@ -807,11 +809,11 @@ msgstr "Destinations Nätverk"
 
 #: network/models.py:272 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr ""
+msgstr "Gateway"
 
 #: network/models.py:281
 msgid "Static Route"
-msgstr ""
+msgstr "Statisk rutt"
 
 #: network/nav.py:10 templates/network/index2.html:13
 msgid "Network Summary"
@@ -909,7 +911,7 @@ msgstr "Hemlig"
 
 #: services/forms.py:295 services/models.py:515
 msgid "Target side secret."
-msgstr ""
+msgstr "Dold för målsidan."
 
 #: services/forms.py:296
 msgid "Secret (Confirm)"
@@ -949,7 +951,7 @@ msgstr "LUN finns redan på denna plats."
 
 #: services/forms.py:384 services/models.py:354
 msgid "Controller Auth Group"
-msgstr ""
+msgstr "Styrenhetens veriferingsgrupp"
 
 #: services/forms.py:385 services/models.py:355
 msgid ""
@@ -959,7 +961,7 @@ msgstr ""
 
 #: services/forms.py:386 services/models.py:248
 msgid "Discovery Auth Group"
-msgstr ""
+msgstr "Lista veriferingsgrupper"
 
 #: services/forms.py:413
 #, python-format
@@ -987,29 +989,29 @@ msgstr "Din sökväg måste finnas inom en Volym's monteringspunkt."
 #: services/forms.py:552
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
-msgstr ""
+msgstr "Detta värde kan vara storleken i byte eller i Kb, Mb, Gb, Tb"
 
 #: services/forms.py:571
 msgid "Disk device"
-msgstr ""
+msgstr "Diskenhet"
 
 #: services/forms.py:658
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr ""
+msgstr "Ditt Portalgrupps ID kan inte vara högre än %d"
 
 #: services/forms.py:678
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr ""
+msgstr "Ditt Group ID kan inte vara högre än %d"
 
 #: services/forms.py:685
 msgid "Authentication Group number"
-msgstr ""
+msgstr "Veriferingsgrupps nummer"
 
 #: services/models.py:41
 msgid "Service"
-msgstr ""
+msgstr "Tjänst"
 
 #: services/models.py:42
 msgid "Name of Service, should be auto-generated at build time"
@@ -1017,63 +1019,67 @@ msgstr ""
 
 #: services/models.py:45
 msgid "Enable Service"
-msgstr ""
+msgstr "Aktivera tjänst"
 
 #: services/models.py:48 services/models.py:49
 #: templates/common/menubar2.html:28 templates/services/index2.html:3
 msgid "Services"
-msgstr ""
+msgstr "Tjänster"
 
 #: services/models.py:61
 msgid "Authentication Model"
-msgstr ""
+msgstr "Autentiseringstyp"
 
 #: services/models.py:62
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
+"Användandet av Active Directory eller LDAP autentisering inaktiverar detta "
+"alternativ"
 
 #: services/models.py:66
 msgid "NetBIOS name"
-msgstr ""
+msgstr "NetBIOS-namn"
 
 #: services/models.py:70
 msgid "Workgroup"
-msgstr ""
+msgstr "Arbetsgrupp"
 
 #: services/models.py:71
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
+"Arbetsgruppen som servern ser ut att vara i när klienter efterfrågar den "
+"(max 15 tecken)."
 
 #: services/models.py:77
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "Server beskrivning. Detta kan oftas lämnas tom."
 
 #: services/models.py:83
 msgid "DOS charset"
-msgstr ""
+msgstr "DOS teckenuppsättning"
 
 #: services/models.py:89
 msgid "UNIX charset"
-msgstr ""
+msgstr "UNIX teckenuppsättning"
 
 #: services/models.py:95
 msgid "Log level"
-msgstr ""
+msgstr "Logg nivå"
 
 #: services/models.py:98
 msgid "Local Master"
-msgstr ""
+msgstr "lokalt överornad"
 
 #: services/models.py:100
 msgid "Time Server for Domain"
-msgstr ""
+msgstr "Tidsserver för domän"
 
 #: services/models.py:104 services/models.py:192
 msgid "Guest account"
-msgstr ""
+msgstr "Gästkonto"
 
 #: services/models.py:105 sharing/models.py:64
 msgid ""
@@ -1083,14 +1089,18 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
+"Använd detta val för att överrida användarnamnet(´ftp´by default) som "
+"används för tillgång till tjänster för gästkontot. Alla rättigheter som "
+"användaren har blir tillgängliga för alla som använder gästkontot. Denna "
+"användare måste finnas i lösenordsfilen, men behöver inget giltigt lösenord."
 
 #: services/models.py:108
 msgid "Allow guest access"
-msgstr ""
+msgstr "Tillåt gäståtkomst"
 
 #: services/models.py:110
 msgid "Only allow guest access"
-msgstr ""
+msgstr "Tillåt bara gäståtkomst"
 
 #: services/models.py:113 services/models.py:830
 msgid "File mask"

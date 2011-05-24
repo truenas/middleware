@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-24 10:36+0200\n"
+"PO-Revision-Date: 2011-05-24 16:37+0200\n"
 "Last-Translator: xRaider <xraiderus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -1931,20 +1931,25 @@ msgid ""
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
+"Основание для сервера отображать сетевую информацию для заданного IP адреса "
+"клиенту, предполагая, что этот IP адрес или DNS хост выступает в качестве "
+"NAT-а или на нем проброшены необходимые порты"
 
 #: services/models.py:856
 msgid "Minimum passive port"
-msgstr "Минимальный пассивный порт"
+msgstr "Минимальный номер пассивного порта"
 
 #: services/models.py:857
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
 msgstr ""
+"Минимальный номер порта выделяемый для соединения а пассивном режиме (0 = "
+"использовать любой порт)."
 
 #: services/models.py:861
 msgid "Maximum passive port"
-msgstr ""
+msgstr "Максимальный номер пассивного порта"
 
 #: services/models.py:862
 msgid ""
@@ -1957,38 +1962,55 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
+"Максимальный номер порта выделяемый для соединения а пассивном режиме (0 = "
+"использовать любой порт). Это ограничивает диапазон портов, из которых "
+"сервер будет выбирать при отправке команды PASV от клиента. Сервер будет "
+"случайным образом выбирать внутри указанного диапазона пока не будет найден "
+"открытый порт. Диапазоны портов, должны быть выбраны в непривилегированных "
+"диапазонах (например, больше или равно 1024). Настоятельно рекомендуется, "
+"что выбранный диапазон быть достаточно большим, чтобы обрабатывать большое "
+"количество одновременных пассивных соединений (например, 49152-65534, "
+"IANA-зарегистрированных диапазонов временных портов)."
 
 #: services/models.py:866
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "Пропускная способность загрузки для локальных пользователей"
 
 #: services/models.py:867
 msgid "Local user upload bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Пропускная способность загрузки для локальных пользователей в Кб/с. Ноль - "
+"без ограничений."
 
 #: services/models.py:871
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Пропускная способность скачки для локальных пользователей"
 
 #: services/models.py:872
 msgid "Local user download bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Пропускная способность скачки для локальных пользователей в Кб/с. Ноль - без "
+"ограничений."
 
 #: services/models.py:876
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Пропускная способность загрузки для анонимных пользователей"
 
 #: services/models.py:877
 msgid "Anonymous user upload bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Пропускная способность загрузки для анонимных пользователей в Кб/с. Ноль - "
+"без ограничений."
 
 #: services/models.py:881
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "Пропускная способность скачки для анонимных пользователей"
 
 #: services/models.py:882
 msgid "Anonymous user download bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Пропускная способность скачки для анонимных пользователей в Кб/с. Ноль - без "
+"ограничений."
 
 #: services/models.py:885
 msgid "Enable SSL/TLS"
@@ -2012,38 +2034,43 @@ msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
+"Директория, содержащая файлы, которые Вы бы хотели опубликовать, Удаленный "
+"хост не обязан передавать отдельно имя директории при передачи"
 
 #: services/models.py:908
 msgid "Allow New Files"
-msgstr ""
+msgstr "Разрешить новые файлы"
 
 #: services/models.py:912
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"Порт для прослушивания. По умолчанию TFTP порт указывается в /etc/services."
 
 #: services/models.py:918
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "Указывает имя пользователя под которым будет выполняться служба."
 
 #: services/models.py:922
 msgid "umask"
-msgstr ""
+msgstr "Umask (маска режима создания пользовательских файлов)"
 
 #: services/models.py:923
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
 msgstr ""
+"Установить Umask для вновь созданных файлов в заданное значение. По "
+"умолчанию 022 (все могут читать, никто не может писать)."
 
 #: services/models.py:927 services/models.py:964
 msgid "Extra options"
-msgstr ""
+msgstr "Дополнительные параметры"
 
 #: services/models.py:929
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "Дополнительные параметры командной строки (обычно пусто)."
 
 #: services/models.py:933 services/models.py:934
 #: templates/services/index2.html:108
@@ -2056,43 +2083,47 @@ msgstr "Порт TCP"
 
 #: services/models.py:944
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "Альтернативный порт TCP. По умолчанию 22"
 
 #: services/models.py:947
 msgid "Login as Root with password"
-msgstr ""
+msgstr "Войти как Суперпользователь с паролем"
 
 #: services/models.py:948
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
 msgstr ""
+"Запрещено: Суперпользователь может войти только с открытым ключом "
+"аутентификации; Разрешено: Суперпользователь может войти с паролем"
 
 #: services/models.py:951
 msgid "Allow Password Authentication"
-msgstr ""
+msgstr "Разрешить проверку пароля"
 
 #: services/models.py:953
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "Разрешить перенаправление порта TCP"
 
 #: services/models.py:955
 msgid "Compress Connections"
-msgstr ""
+msgstr "Сжимать передаваемые данные"
 
 #: services/models.py:958
 msgid "Host Private Key"
-msgstr ""
+msgstr "Закрытый ключ хоста"
 
 #: services/models.py:960
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr ""
+msgstr "Вставить здесь закрытый ключ RSA в формате PEM."
 
 #: services/models.py:966
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
 msgstr ""
+"Дополнительные опции /etc/ssh/sshd_config (обычно пусто). Обратите внимание, "
+"неправильно введенные значения останавливают запуск службы SSH."
 
 #: services/models.py:1006 services/models.py:1007
 #: templates/services/index2.html:97
@@ -2105,23 +2136,23 @@ msgstr "Имя контролера домена"
 
 #: services/models.py:1017
 msgid "AD or PDC name."
-msgstr ""
+msgstr "Имена AD или PDC."
 
 #: services/models.py:1021
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr ""
+msgstr "Доменное имя (DNS/Realm)"
 
 #: services/models.py:1022
 msgid "Domain Name, eg example.com"
-msgstr ""
+msgstr "Доменное имя, например \"example.com\""
 
 #: services/models.py:1026
 msgid "Host Name (NetBIOS-Name)"
-msgstr ""
+msgstr "Имя компьютера (NetBIOS)"
 
 #: services/models.py:1027
 msgid "Host Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Имя компьютера в старом формате, например \"EXAMPLE\""
 
 #: services/models.py:1031
 msgid "Workgroup Name"
@@ -2129,23 +2160,23 @@ msgstr "Имя рабочей группы"
 
 #: services/models.py:1032
 msgid "Workgroup Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Имя рабочей группы в старом формате, например \"EXAMPLE\""
 
 #: services/models.py:1036
 msgid "Administrator Name"
-msgstr ""
+msgstr "Имя администратора"
 
 #: services/models.py:1037
 msgid "Username of Domain Administrator Account"
-msgstr ""
+msgstr "Имя пользователя администратора домена"
 
 #: services/models.py:1041
 msgid "Administrator Password"
-msgstr ""
+msgstr "Пароль администратора"
 
 #: services/models.py:1042
 msgid "Password of Domain Administrator account."
-msgstr ""
+msgstr "Пароль учетной записи администратора домена."
 
 #: services/models.py:1048
 msgid "Windows Version"
@@ -2153,40 +2184,40 @@ msgstr "Версия Windows"
 
 #: services/models.py:1049
 msgid "The version of Microsoft Windows that Active Directory is running."
-msgstr ""
+msgstr "Active Directory работает в этой версии Microsoft Windows."
 
 #: services/models.py:1053
 msgid "Service Principal Name"
-msgstr ""
+msgstr "Служба поддержка имён"
 
 #: services/models.py:1054
 msgid "Service Principal Name, eg service/account."
-msgstr ""
+msgstr "Служба поддержка имён, например service/account."
 
 #: services/models.py:1058
 msgid "Service Principal Name Password"
-msgstr ""
+msgstr "Пароль службы поддержка имён"
 
 #: services/models.py:1059
 msgid "Password of the Service Principal Name account."
-msgstr ""
+msgstr "Пароль учетной записи службы поддержка имён"
 
 #: services/models.py:1063
 msgid "Kerberos Keytab File"
-msgstr ""
+msgstr "Файл Kerberos Keytab"
 
 #: services/models.py:1064
 msgid ""
 "The kerberos keytab file that was generated on the Active Directory server."
-msgstr ""
+msgstr "Файл Kerberos Keytab, созданный на сервере Active Directory."
 
 #: services/models.py:1068 templates/services/index2.html:18
 msgid "Active Directory"
-msgstr ""
+msgstr "Active Directory"
 
 #: services/models.py:1079
 msgid "The name or IP address of the LDAP server"
-msgstr ""
+msgstr "Имя или IP-адрес сервера LDAP."
 
 #: services/models.py:1083
 msgid "Base DN"
@@ -2200,7 +2231,7 @@ msgstr ""
 
 #: services/models.py:1088
 msgid "Allow Anonymous Binding"
-msgstr ""
+msgstr "Разрешить анонимную связь"
 
 #: services/models.py:1091
 msgid "Root bind DN"
@@ -2222,7 +2253,7 @@ msgstr ""
 
 #: services/models.py:1104
 msgid "Password Encryption"
-msgstr ""
+msgstr "Шифрование пароля"
 
 #: services/models.py:1105
 msgid "The password change protocol to use."
@@ -2275,6 +2306,7 @@ msgstr "Включить/выключить TLS"
 #: services/models.py:1135
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
 msgstr ""
+"Этот параметр определяет, использовать ли SSL/TLS, например on/off/start_tls"
 
 #: services/models.py:1138
 msgid "Self signed certificate"
@@ -2282,15 +2314,15 @@ msgstr "Самоподписанный сертификат"
 
 #: services/models.py:1140
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "Поместите сюда содержимое файла Вашего самоподписанного сертификата."
 
 #: services/models.py:1144
 msgid "Auxillary Parameters"
-msgstr ""
+msgstr "Дополнительные параметры"
 
 #: services/models.py:1146
 msgid "These parameters are added to ldap.conf."
-msgstr ""
+msgstr "Эти параметры добавляются к ldap.conf."
 
 #: services/models.py:1150 services/models.py:1151
 #: templates/services/index2.html:64
@@ -2299,7 +2331,7 @@ msgstr "LDAP"
 
 #: services/nav.py:10
 msgid "Control Services"
-msgstr ""
+msgstr "Управление службами"
 
 #: sharing/forms.py:102 sharing/models.py:243
 msgid "Maproot User"
@@ -2319,17 +2351,17 @@ msgstr ""
 
 #: sharing/forms.py:176
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "Недопустимый IP-адрес или сеть"
 
 #: sharing/forms.py:182
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr "IP-адрес '%s' является недопустимым."
 
 #: sharing/forms.py:206 sharing/forms.py:214 storage/forms.py:805
 #, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr "Группа %s является недопустимой."
 
 #: sharing/forms.py:226
 msgid "Maproot group requires Maproot user"
@@ -2348,11 +2380,11 @@ msgstr ""
 #: templates/network/interface.html:6 templates/network/summary.html:5
 #: templates/sharing/apple.html:13 templates/sharing/windows.html:13
 msgid "Name"
-msgstr ""
+msgstr "Имя"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
-msgstr ""
+msgstr "Экспортировать только для чтения"
 
 #: sharing/models.py:53
 msgid "Browsable to Network Clients"
@@ -2364,7 +2396,7 @@ msgstr "Наследовать разрешения"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "Экспортировать Корзину"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
@@ -2372,15 +2404,15 @@ msgstr "Показывать скрытые файлы"
 
 #: sharing/models.py:67
 msgid "Allow Guest Access"
-msgstr ""
+msgstr "Разрешить гостевой доступ"
 
 #: sharing/models.py:69
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Разрешить только гостевой доступ"
 
 #: sharing/models.py:73
 msgid "Hosts Allow"
-msgstr ""
+msgstr "Разрешённые хосты"
 
 #: sharing/models.py:74
 msgid ""
@@ -2388,10 +2420,13 @@ msgid ""
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
 msgstr ""
+"Набор хостов разделённых запятой, пробелом или табуляцией, которым разрешен "
+"доступ к этому ресурсу. Вы можете указать хосты по имени или по IP-адресу. "
+"Оставьте это поле пустым, чтобы использовать настройки по умолчанию."
 
 #: sharing/models.py:79
 msgid "Hosts Deny"
-msgstr ""
+msgstr "Запрещённые хосты"
 
 #: sharing/models.py:80
 msgid ""
@@ -2402,18 +2437,24 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
 msgstr ""
+"Набор хостов разделённых запятой, пробелом или табуляцией, которым НЕ "
+"разрешен доступ к этому ресурсу. При этом конфликт-лист позволяет расставить "
+"приоритеты. В случае, если по умолчанию необходимо запретить все, "
+"используйте парамтр ALL (или маску 0.0.0.0/0), а затем явно укажите хосты, "
+"доступ которым разрешен. Оставьте это поле пустым, чтобы использовать "
+"настройки по умолчанию."
 
 #: sharing/models.py:84
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "Дополнительные параметры"
 
 #: sharing/models.py:86
 msgid "These parameters are added to [Share] section of smb.conf"
-msgstr ""
+msgstr "Эти параметры добавляются в раздел [Share] smb.conf"
 
 #: sharing/models.py:92
 msgid "Windows Share"
-msgstr ""
+msgstr "Общий ресурс Windows"
 
 #: sharing/models.py:103
 msgid ""
@@ -2425,18 +2466,25 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
+"Имя тома, которое появляется в списке \"Подключиться к серверу\" "
+"соответственно отображается на Macintosh как общий ресурс. Если имя тома не "
+"определено, используется последняя часть пути. Два тома не могут иметь "
+"одинаковое имя. Имя тома не может содержать символ \":\". Имя тома искажается, "
+"если оно очень длинное. Mac кодировка ограничена 27 символами. Длина имени "
+"тома UTF8-MAC не должно превышать параметр \"Длина имени тома\" в службе "
+"\"Общие ресурсы Apple\"."
 
 #: sharing/models.py:107
 msgid "Share Comment"
-msgstr ""
+msgstr "Комментарии общего доступа"
 
 #: sharing/models.py:110 sharing/models.py:222
 msgid "Volume Path"
-msgstr ""
+msgstr "Путь к тому"
 
 #: sharing/models.py:113
 msgid "Share password"
-msgstr ""
+msgstr "Пароль для общего доступа"
 
 #: sharing/models.py:115
 msgid ""
@@ -2444,20 +2492,22 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
+"Эта опция позволяет установить пароль к тому, который может быть не более 8 "
+"символов (использование кодировки ASCII настоятельно рекомендуется)."
 
 #: sharing/models.py:119
 msgid "Share Character Set"
-msgstr ""
+msgstr "Кодировка для общего ресурса"
 
 #: sharing/models.py:121
 msgid ""
 "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
 "etc."
-msgstr ""
+msgstr "Определяет кодировку ресурса. Например UTF8, CP1251, CP866 и т.д."
 
 #: sharing/models.py:125
 msgid "Allow List"
-msgstr ""
+msgstr "Список разрешений"
 
 #: sharing/models.py:127
 msgid ""
@@ -2468,7 +2518,7 @@ msgstr ""
 
 #: sharing/models.py:131
 msgid "Deny List"
-msgstr ""
+msgstr "Список запретов"
 
 #: sharing/models.py:133
 msgid ""
@@ -2478,7 +2528,7 @@ msgstr ""
 
 #: sharing/models.py:137
 msgid "Read-only Access"
-msgstr ""
+msgstr "Доступ только для чтения"
 
 #: sharing/models.py:139
 msgid ""
@@ -2488,7 +2538,7 @@ msgstr ""
 
 #: sharing/models.py:143
 msgid "Read-write Access"
-msgstr ""
+msgstr "Доступ для чтения-записи"
 
 #: sharing/models.py:145
 msgid ""
@@ -2519,7 +2569,7 @@ msgstr ""
 
 #: sharing/models.py:160
 msgid "Database Path"
-msgstr ""
+msgstr "Пути к базе данных"
 
 #: sharing/models.py:162
 msgid ""
@@ -2529,7 +2579,7 @@ msgstr ""
 
 #: sharing/models.py:165
 msgid "Cache CNID"
-msgstr ""
+msgstr "Кэш CNID"
 
 #: sharing/models.py:166
 msgid ""
@@ -2540,7 +2590,7 @@ msgstr ""
 
 #: sharing/models.py:169
 msgid "Translate CR/LF"
-msgstr ""
+msgstr "Преобразовывать CR/LF"
 
 #: sharing/models.py:170
 msgid ""
@@ -2553,13 +2603,15 @@ msgstr ""
 
 #: sharing/models.py:173
 msgid "Windows File Names"
-msgstr ""
+msgstr "Имена файлов в стиле Windows"
 
 #: sharing/models.py:174
 msgid ""
 "This forces filenames to be restricted to the character set used by Windows. "
 "This is not recommended for shares used principally by Mac computers."
 msgstr ""
+"Преобразует имена файлов в ограниченный набор символов Windows. Не "
+"рекомендуется для общих ресурсов, используемых в основном компьютерами Mac."
 
 #: sharing/models.py:177
 msgid "No .AppleDouble"
@@ -2584,7 +2636,7 @@ msgstr ""
 
 #: sharing/models.py:185
 msgid "Disable File ID"
-msgstr ""
+msgstr "Отключить ID файла"
 
 #: sharing/models.py:186
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
@@ -2602,11 +2654,11 @@ msgstr ""
 
 #: sharing/models.py:193
 msgid "ProDOS"
-msgstr ""
+msgstr "ProDOS"
 
 #: sharing/models.py:194
 msgid "Provide compatibility with Apple II clients."
-msgstr ""
+msgstr "Обеспечение совместимости с Apple II клиентов."
 
 #: sharing/models.py:197
 msgid "No Stat"
@@ -2628,7 +2680,7 @@ msgstr ""
 
 #: sharing/models.py:209
 msgid "Apple Share"
-msgstr ""
+msgstr "Общий ресурс Apple"
 
 #: sharing/models.py:225
 msgid "Authorized network or IP addresses"
@@ -2643,7 +2695,7 @@ msgstr ""
 
 #: sharing/models.py:230
 msgid "All Directories"
-msgstr ""
+msgstr "Все каталоги"
 
 #: sharing/models.py:231
 msgid ""
@@ -2653,15 +2705,15 @@ msgstr ""
 
 #: sharing/models.py:234
 msgid "Read Only"
-msgstr "Только чтение"
+msgstr "Только для чтения"
 
 #: sharing/models.py:235
 msgid "Export the share read only.  Writes are not permitted."
-msgstr ""
+msgstr "Экспорт общего ресурса только для чтения. Запись не допускаются."
 
 #: sharing/models.py:238
 msgid "Quiet"
-msgstr ""
+msgstr "Тихий"
 
 #: sharing/models.py:239
 msgid "Inibit syslog warnings if there are problems with exporting this share."
@@ -2685,19 +2737,19 @@ msgstr ""
 
 #: sharing/models.py:278
 msgid "UNIX Share"
-msgstr ""
+msgstr "Общий ресурс UNIX"
 
 #: sharing/nav.py:8
 msgid "View All UNIX Shares"
-msgstr ""
+msgstr "Просмотр всех общих ресурсов UNIX"
 
 #: sharing/nav.py:18
 msgid "View All Apple Shares"
-msgstr ""
+msgstr "Просмотр всех общих ресурсов Apple"
 
 #: sharing/nav.py:28
 msgid "View All Windows Shares"
-msgstr ""
+msgstr "Просмотр всех общих ресурсов Windows"
 
 #: storage/forms.py:77
 msgid "Read"
@@ -2722,17 +2774,18 @@ msgstr "Другие"
 #: storage/forms.py:140 storage/forms.py:331 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr ""
+msgstr "Имя тома"
 
 #: storage/forms.py:144 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
-msgstr ""
+msgstr "Увеличить размер сектора до 4096 байт"
 
 #: storage/forms.py:217
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\"."
 msgstr ""
+"Имя тома должно начинаться с буквы и может включать в себя цифры, \" -\", \"_\"."
 
 #: storage/forms.py:231 system/forms.py:210 system/forms.py:216
 #: system/forms.py:221
@@ -2741,7 +2794,7 @@ msgstr "Это обязательное поле"
 
 #: storage/forms.py:236 storage/forms.py:382 storage/forms.py:484
 msgid "You already have a volume with same name"
-msgstr ""
+msgstr "У вас уже есть том с таким же именем"
 
 #: storage/forms.py:242
 msgid "\"log\" is a reserved word and thus cannot be used"
@@ -2749,7 +2802,7 @@ msgstr "\"log\" зарезервированое слово и не может �
 
 #: storage/forms.py:247
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr ""
+msgstr "Имя тома НЕ может начаться с [0-9], \"mirror\", \"raidz\" или \"spare\""
 
 #: storage/forms.py:332 storage/forms.py:431 storage/forms.py:910
 msgid "Member disk"
@@ -2786,7 +2839,7 @@ msgstr ""
 #: storage/forms.py:610 storage/forms.py:611 storage/forms.py:662
 #: storage/forms.py:663 storage/forms.py:719
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0 = без ограничений; например 1g"
 
 #: storage/forms.py:611 storage/forms.py:663
 msgid "Quota for this dataset and all children"
@@ -2799,7 +2852,7 @@ msgstr ""
 #: storage/forms.py:612 storage/forms.py:613 storage/forms.py:664
 #: storage/forms.py:665 storage/forms.py:720
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0 = Нет, например 1g"
 
 #: storage/forms.py:613 storage/forms.py:665
 msgid "Reserved space for this dataset and all children"
@@ -2821,43 +2874,43 @@ msgstr ""
 
 #: storage/forms.py:756
 msgid "Owner (user)"
-msgstr ""
+msgstr "Владелец (пользователь)"
 
 #: storage/forms.py:759
 msgid "Owner (group)"
-msgstr ""
+msgstr "Владелец (группа)"
 
 #: storage/forms.py:761
 msgid "Mode"
-msgstr ""
+msgstr "Режим"
 
 #: storage/forms.py:764
 msgid "Set permission recursively"
-msgstr ""
+msgstr "Установить права рекурсивно"
 
 #: storage/forms.py:846
 msgid "At least one day must be chosen"
-msgstr ""
+msgstr "По крайней мере один день должен быть выбран"
 
 #: storage/forms.py:851
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "Рекурсивный снимок"
 
 #: storage/forms.py:852
 msgid "Snapshot Name"
-msgstr ""
+msgstr "Имя снимка"
 
 #: storage/forms.py:859
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr ""
+msgstr "Только [A-Z], [a-z], [0-9], \"_\", \".\" допускаются для имени снимка"
 
 #: storage/forms.py:869
 msgid "Invalid prefix"
-msgstr ""
+msgstr "Неверный префикс"
 
 #: storage/forms.py:873 storage/views.py:436
 msgid "Snapshot"
-msgstr ""
+msgstr "Снимок"
 
 #: storage/forms.py:874
 msgid "Clone Name (must be on same volume)"
@@ -2865,7 +2918,7 @@ msgstr ""
 
 #: storage/forms.py:887
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr ""
+msgstr "Только [A-Z], [a-z], [0-9], \"_\", \"/\", \".\"] допускаются для имени клона"
 
 #: storage/forms.py:893
 msgid "Clone must be within the same volume"
@@ -2873,7 +2926,7 @@ msgstr ""
 
 #: storage/forms.py:960 storage/models.py:212
 msgid "Remote hostname"
-msgstr ""
+msgstr "Удаленный хост"
 
 #: storage/forms.py:961 storage/models.py:216
 msgid "Remote hostkey"

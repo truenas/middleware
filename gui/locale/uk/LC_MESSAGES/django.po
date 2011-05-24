@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:32-0700\n"
-"PO-Revision-Date: 2011-05-23 12:53+0200\n"
+"PO-Revision-Date: 2011-05-24 17:13+0200\n"
 "Last-Translator: yurkis <yurkis@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -435,7 +435,7 @@ msgstr "Обов'язково. До 30 символів. Лише латинсь
 
 #: account/forms.py:174 account/forms.py:199
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr "Це поле може містити лише літинські літери, цифри та символи @/./+/-/_."
+msgstr "Це поле може містити лише латинські літери, цифри та символи @/./+/-/_."
 
 #: account/forms.py:175
 msgid "E-mail"
@@ -807,138 +807,153 @@ msgid "Protocol Type"
 msgstr "Тип протоколу"
 
 #: network/models.py:240
+#, fuzzy
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "Група інтерфейсів LAGG"
 
 #: network/models.py:243
+#, fuzzy
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "Пріоритетний номер LAGG"
 
 #: network/models.py:249
 msgid "Physical NIC"
-msgstr ""
+msgstr "Фізичний мережевий інтерфейс"
 
 #: network/models.py:259 templates/network/index2.html:7
+#, fuzzy
 msgid "Link Aggregation"
-msgstr ""
+msgstr "Агрегація каналів (Link Aggregation)"
 
 #: network/models.py:268
 msgid "Destination network"
-msgstr ""
+msgstr "Мережа призначення"
 
 #: network/models.py:272 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr ""
+msgstr "Шлюз"
 
 #: network/models.py:281
 msgid "Static Route"
-msgstr ""
+msgstr "Статичний маршрут"
 
 #: network/nav.py:10 templates/network/index2.html:13
+#, fuzzy
 msgid "Network Summary"
-msgstr ""
+msgstr "Відомості про мережу"
 
 #: network/nav.py:27
+#, fuzzy
 msgid "Add Link Aggregation"
-msgstr ""
+msgstr "Додати агрегацію каналів"
 
 #: network/nav.py:28
+#, fuzzy
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "Створити агрегацію каналів"
 
 #: network/nav.py:39
+#, fuzzy
 msgid "View All Link Aggregations"
-msgstr ""
+msgstr "Переглянути віс агрегації каналів"
 
 #: network/nav.py:51
+#, fuzzy
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Агрегації каналів (Link Aggregations)"
 
 #: network/nav.py:97
 msgid "View All Interfaces"
-msgstr ""
+msgstr "Переглянути всі інтерфеси"
 
 #: network/nav.py:109
 msgid "View All VLANs"
-msgstr ""
+msgstr "Переглянути всі VLAN"
 
 #: network/nav.py:121
 msgid "View All Static Routes"
-msgstr ""
+msgstr "Переглянути всі статичні маршрути"
 
 #: network/views.py:192
 #, python-format
 msgid "%s successfully added"
-msgstr ""
+msgstr "%s вдало додано"
 
 #: services/forms.py:59 services/forms.py:112 sharing/forms.py:54
 #: sharing/models.py:63
+#, fuzzy
 msgid "Guest Account"
-msgstr ""
+msgstr "Гостьовий рахунок користувача"
 
 #: services/forms.py:86 services/forms.py:130 services/forms.py:246
 #: sharing/forms.py:82 sharing/forms.py:190 sharing/forms.py:198
 #: storage/forms.py:799
-#, python-format
+#, fuzzy, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "Користувач %s не вірний."
 
 #: services/forms.py:96
 msgid "This field is required for \"Enable home directories browsing\"."
 msgstr ""
+"Це поле є обов'язковим при включенні функції перегляду домашніх каталогів."
 
 #: services/forms.py:99
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "Це поле є обов'язковим для \"Домашні каталоги\""
 
 #: services/forms.py:145
+#, fuzzy
 msgid "File Permission"
-msgstr ""
+msgstr "Права доступу до файлів"
 
 #: services/forms.py:146
 msgid "Directory Permission"
-msgstr ""
+msgstr "Права доступу до каталогу"
 
 #: services/forms.py:165
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr ""
+msgstr "Значення має бути між 0 та 65535 включно."
 
 #: services/forms.py:171 services/forms.py:189
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
+msgstr "Значення має бути між 0 та 10000 включно."
 
 #: services/forms.py:177 services/forms.py:183
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
+msgstr "Значення має бути між 0 та 1000 включно."
 
 #: services/forms.py:195
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
+msgstr "Значення має бути між 1024 та 65535 включно. 0 - за замовчуванням."
 
 #: services/forms.py:201
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr ""
+msgstr "Значення має бути між 1024 та 65535 включно. 0 - за замовчуванням."
 
 #: services/forms.py:220
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "Це поле є обов'язковим для забезпечення анонімного входу."
 
 #: services/forms.py:294 services/models.py:514
 #: templates/services/iscsi_auth.html:7
+#, fuzzy
 msgid "Secret"
-msgstr ""
+msgstr "Секрет"
 
 #: services/forms.py:295 services/models.py:515
+#, fuzzy
 msgid "Target side secret."
-msgstr ""
+msgstr "Секрет цільової сторони"
 
 #: services/forms.py:296
+#, fuzzy
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "Секрет (Підтвердження)"
 
 #: services/forms.py:298 services/forms.py:306
+#, fuzzy
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "Введіть той самий секрет що і вище для перевірки."
 
 #: services/forms.py:299
 msgid "Initiator Secret"
@@ -1030,7 +1045,7 @@ msgstr ""
 
 #: services/models.py:41
 msgid "Service"
-msgstr ""
+msgstr "Служба"
 
 #: services/models.py:42
 msgid "Name of Service, should be auto-generated at build time"

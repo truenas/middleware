@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-23 12:37+0200\n"
+"PO-Revision-Date: 2011-05-24 13:23+0200\n"
 "Last-Translator: Pere <pedro.cerdan@uab.cat>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ca\n"
@@ -2325,97 +2325,97 @@ msgstr "Paràmetres Auxiliars"
 
 #: services/models.py:1146
 msgid "These parameters are added to ldap.conf."
-msgstr ""
+msgstr "Aquests paràmetres son afegits al ldap.conf"
 
 #: services/models.py:1150 services/models.py:1151
 #: templates/services/index2.html:64
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/nav.py:10
 msgid "Control Services"
-msgstr ""
+msgstr "Serveis de Control"
 
 #: sharing/forms.py:102 sharing/models.py:243
 msgid "Maproot User"
-msgstr ""
+msgstr "Usuari Maproot"
 
 #: sharing/forms.py:107 sharing/models.py:251
 msgid "Maproot Group"
-msgstr ""
+msgstr "Grup Maproot"
 
 #: sharing/forms.py:112 sharing/models.py:259
 msgid "Mapall User"
-msgstr ""
+msgstr "Usuari Mapall"
 
 #: sharing/forms.py:117 sharing/models.py:267
 msgid "Mapall Group"
-msgstr ""
+msgstr "Grup Mapall"
 
 #: sharing/forms.py:176
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "Al camp no té una adreça IP o xarxa vàlides"
 
 #: sharing/forms.py:182
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr "La IP '%s' no és vàlida."
 
 #: sharing/forms.py:206 sharing/forms.py:214 storage/forms.py:805
 #, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr "El grup %s no és vàlid"
 
 #: sharing/forms.py:226
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "El grup Maproot requereix un usuari Maproot"
 
 #: sharing/forms.py:228
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr "El grup Mapall requereix un usuari Mapall"
 
 #: sharing/forms.py:231 sharing/forms.py:234
 msgid "Maproot user/group disqualifies Mapall"
-msgstr ""
+msgstr "L'usuari/grup Maproot descalifica Mapall"
 
 #: sharing/models.py:41 sharing/models.py:102 storage/models.py:44
 #: storage/models.py:68 storage/models.py:87
 #: templates/network/interface.html:6 templates/network/summary.html:5
 #: templates/sharing/apple.html:13 templates/sharing/windows.html:13
 msgid "Name"
-msgstr ""
+msgstr "Nom"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
-msgstr ""
+msgstr "Exportar Només Lectura (Read Only)"
 
 #: sharing/models.py:53
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "Navegable per clients de Xarxa"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
-msgstr ""
+msgstr "Heredar Permissos"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "Exportar la paperera de reciclatge"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr ""
+msgstr "Mostra els fitxers ocults"
 
 #: sharing/models.py:67
 msgid "Allow Guest Access"
-msgstr ""
+msgstr "Permetre accés de convidat (Guest Access)"
 
 #: sharing/models.py:69
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Només permetre accés de convidat"
 
 #: sharing/models.py:73
 msgid "Hosts Allow"
-msgstr ""
+msgstr "Servidors Permesos"
 
 #: sharing/models.py:74
 msgid ""
@@ -2423,10 +2423,14 @@ msgid ""
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
 msgstr ""
+"Aquesta opció és per posar un conjunt de servidors separats per coma, espai, "
+"o tabulador, per que tinguin accés a aquesta compartició. Pots especificar "
+"els servidors per nom, o número IP. Deixa aquest camp buit per usar els "
+"ajustos per defecte."
 
 #: sharing/models.py:79
 msgid "Hosts Deny"
-msgstr ""
+msgstr "Servidors Denegats"
 
 #: sharing/models.py:80
 msgid ""
@@ -2437,18 +2441,25 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
 msgstr ""
+"Aquesta opció és per posar un conjunt de servidors separats per coma, espai, "
+"o tabulador, per que NO tinguin accés a aquesta compartició. On hi hagi "
+"conflicte la llista de permesos té precedencia. Si es dona el cas de voler "
+"denegar los tots, utilitza la paraula ALL (o be la màscara de xarxa "
+"0.0.0.0/0) i després especifica a la llista de Servidors Permesos aquells "
+"servidors als que vols donar accés. Deixa aquest camp buit per usar ajustos "
+"per defecte."
 
 #: sharing/models.py:84
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "Paràmetres Auxiliars"
 
 #: sharing/models.py:86
 msgid "These parameters are added to [Share] section of smb.conf"
-msgstr ""
+msgstr "Aquests paràmetres s'afegiran a la secció [Share] de smb.conf"
 
 #: sharing/models.py:92
 msgid "Windows Share"
-msgstr ""
+msgstr "Compartició de Windows"
 
 #: sharing/models.py:103
 msgid ""
@@ -2460,18 +2471,25 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
+"El nom de volum és el nom que surt al diàleg de selecció 'connect to server' "
+"dels Macintoshs per representar la compartició apropiada. Si el nom de "
+"volum no s'especifica, l'últim component de la ruta serà utilitzat. No hi "
+"pot haver dos volums amb el mateix nom. El nom de volum no pot contenir el "
+"caràcter ':' El nom de volum serà retallat si és massa llarg. Per Macintosh "
+"el nom de volum està limitat a 27 caràcters. El nom de volum UTF8-MAC és "
+"limitat al parametre 'Volume Name Length' a Services:Apple Share"
 
 #: sharing/models.py:107
 msgid "Share Comment"
-msgstr ""
+msgstr "Comentari de la compartició"
 
 #: sharing/models.py:110 sharing/models.py:222
 msgid "Volume Path"
-msgstr ""
+msgstr "Ruta del volum"
 
 #: sharing/models.py:113
 msgid "Share password"
-msgstr ""
+msgstr "Contrasenya de la compartició"
 
 #: sharing/models.py:115
 msgid ""
@@ -2479,20 +2497,24 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
+"Aquesta opció et permet introduir una contrasenya de volum, que ha de ser de "
+"màxim 8 caràcters de llarg (Ara per ara és molt recomanat utilitzar ASCII)"
 
 #: sharing/models.py:119
 msgid "Share Character Set"
-msgstr ""
+msgstr "Conjunt de caràcters de la compartició"
 
 #: sharing/models.py:121
 msgid ""
 "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
 "etc."
 msgstr ""
+"Especifica el conjunt de caràcters de la compartició. Per exemple UTF8, "
+"UTF8-MAC, ISO-8859-15, etc."
 
 #: sharing/models.py:125
 msgid "Allow List"
-msgstr ""
+msgstr "Llista de Permesos"
 
 #: sharing/models.py:127
 msgid ""
@@ -2500,50 +2522,61 @@ msgid ""
 "Users and groups are specified, delimited by commas. Groups are designated "
 "by a @ prefix."
 msgstr ""
+"Aquesta opció permet especificar quins usuaris i grups podran accedir la "
+"compartició. Els usuaris i grups son especificats separats per comes. Els "
+"grups son designats com a tal amb el prefix @."
 
 #: sharing/models.py:131
 msgid "Deny List"
-msgstr ""
+msgstr "Llista de Denegats"
 
 #: sharing/models.py:133
 msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
 msgstr ""
+"La opció de Denegats especifica a quins usuaris i grups no s'els permet "
+"accedir a la compartició. Té el mateix format que la opció de Permesos."
 
 #: sharing/models.py:137
 msgid "Read-only Access"
-msgstr ""
+msgstr "Accés només de lectura (Read-only)"
 
 #: sharing/models.py:139
 msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Permet a determinats usuaris i grups accedir a la compartició només amb "
+"permis de lectura. Es segueix el mateix format que a la opció de Permesos."
 
 #: sharing/models.py:143
 msgid "Read-write Access"
-msgstr ""
+msgstr "Accés Lectura-escriptura"
 
 #: sharing/models.py:145
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format. "
 msgstr ""
+"Permet als usuaris i grups definits tenir accés de lectura/escriptura al "
+"recurs. Segueix les mateixes opcions de format que la opció de permesos."
 
 #: sharing/models.py:148
 msgid "Disk Discovery"
-msgstr ""
+msgstr "Descobriment de disc"
 
 #: sharing/models.py:149
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
+"Permet a altres sistemes descobrir la compartició com un disc per dades, com "
+"un volum de backup de Time Machine,  o que no el descobreixin."
 
 #: sharing/models.py:155
 msgid "Disk discovery mode"
-msgstr ""
+msgstr "Mode de descobriment del disc"
 
 #: sharing/models.py:156
 msgid ""
@@ -2551,20 +2584,26 @@ msgid ""
 "unpredictable behavior in MacOS.  Default mode exports the volume as a data "
 "volume for users."
 msgstr ""
+"Nota! Seleccionant 'Time Machine' a múltiples comparticions pot produir "
+"comportament imprevisible a MacOS. El mode per defecte exporta el volum com "
+"a volum de dades pels usuaris "
 
 #: sharing/models.py:160
 msgid "Database Path"
-msgstr ""
+msgstr "Ruta al Database"
 
 #: sharing/models.py:162
 msgid ""
 "Sets the database information to be stored in path. You have to specifiy a "
 "writable location, even if the volume is read only."
 msgstr ""
+"Indica que l'informació del database sigui emmagatzemada a la ruta. S'ha "
+"d'especificar una ruta d'escriptura, encara que sigui un volum de només "
+"lectura"
 
 #: sharing/models.py:165
 msgid "Cache CNID"
-msgstr ""
+msgstr "Cache CNID"
 
 #: sharing/models.py:166
 msgid ""
@@ -2572,10 +2611,14 @@ msgid ""
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
+"Si s'omple el camp l'AFPD utilitza la informació del ID amagatzemada a la "
+"capçalera dels fitxers AppleDouble V2 per reduir la càrrega a la base de "
+"dades. No posis res en aquesta opció si el volum el modifican clients no AFP "
+"(NFS/SMB/local)."
 
 #: sharing/models.py:169
 msgid "Translate CR/LF"
-msgstr ""
+msgstr "Traducció de CR/LF"
 
 #: sharing/models.py:170
 msgid ""
@@ -2585,20 +2628,29 @@ msgid ""
 "the filetype in a second step. Afpd will potentially destroy such files when "
 "'erroneously' changing bytes in order to do line break translation."
 msgstr ""
+"Activa la traducció crlf per fitxers TEXT, convertint de manera automàtica "
+"salts de línea de macintosh als d'UNIX. Utilitzar aquesta opció pot ser "
+"perillòs ja que programes antics guardant fitxers de tipus binari com de "
+"tipus TEXT quan el guardant i després fan el canvi de tipus en un pas "
+"posterior. Afpd potencialment pot destruir aquests fitxers quan de manera "
+"'erronea' canvia els bytes per fer la traducció de salt de línea."
 
 #: sharing/models.py:173
 msgid "Windows File Names"
-msgstr ""
+msgstr "Noms de fitxers de Windows"
 
 #: sharing/models.py:174
 msgid ""
 "This forces filenames to be restricted to the character set used by Windows. "
 "This is not recommended for shares used principally by Mac computers."
 msgstr ""
+"Això força que els noms dels fitxres sigui restringit al conjunt de "
+"caràcters usat per Windows. No es recomana per a comparticions utilitzades "
+"bàsicament per ordinadors Mac."
 
 #: sharing/models.py:177
 msgid "No .AppleDouble"
-msgstr ""
+msgstr "Sense .AppleDouble"
 
 #: sharing/models.py:178
 msgid ""
@@ -2606,68 +2658,78 @@ msgid ""
 "absolutely needed. This option should not be used if files are access mostly "
 "by Mac computers.  Clicking this option disables their creation."
 msgstr ""
+"Això controla que el directori .AppleDouble només sigui creat només si és "
+"totalment necessari. Aquesta opció no ha d'esser utilitzada si els fitxers "
+"son accedits principalment per ordinadors Mac. Clicant aquesta opció "
+"desactiva la seva creació."
 
 #: sharing/models.py:181
 msgid "Zero Device Numbers"
-msgstr ""
+msgstr "Nombres Zero pels perifèrics"
 
 #: sharing/models.py:182
 msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
 msgstr ""
+"Sempre s'utilitza el 0 pel número del perifèric. Això ajuda quan el número "
+"del perifèric no és constant al llard del reinici, cluster, etc."
 
 #: sharing/models.py:185
 msgid "Disable File ID"
-msgstr ""
+msgstr "Desactivar la ID de fitxers"
 
 #: sharing/models.py:186
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr ""
+msgstr "No publicar crides a createfileid, resolveid, deleteid."
 
 #: sharing/models.py:189
 msgid "Disable :hex Names"
-msgstr ""
+msgstr "Desactivar noms :hex"
 
 #: sharing/models.py:190
 msgid ""
 "Disable :hex translations for anything except dot files. This option makes "
 "the '/' character illegal."
 msgstr ""
+"Desactiva les traduccions :hex per qualsevol fitxer exceptuant els que tenen "
+"punt. Aquesta opció fa el caràcter '/' ilegal."
 
 #: sharing/models.py:193
 msgid "ProDOS"
-msgstr ""
+msgstr "ProDOS"
 
 #: sharing/models.py:194
 msgid "Provide compatibility with Apple II clients."
-msgstr ""
+msgstr "Dona compatibilitat a client amb Apple II."
 
 #: sharing/models.py:197
 msgid "No Stat"
-msgstr ""
+msgstr "Sense Stat"
 
 #: sharing/models.py:198
 msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
 msgstr ""
+"No mostrar la ruta del volum quan s'enumerin llistes de volums, útil oer "
+"auto muntar o per volums creats amb un script preexec"
 
 #: sharing/models.py:201
 msgid "AFP3 Unix Privs"
-msgstr ""
+msgstr "AFP3 Unix Privs"
 
 #: sharing/models.py:202
 msgid "Use AFP3 unix privileges."
-msgstr ""
+msgstr "Utilitzar privilegis unix AFP3"
 
 #: sharing/models.py:209
 msgid "Apple Share"
-msgstr ""
+msgstr "Compartició d'Apple"
 
 #: sharing/models.py:225
 msgid "Authorized network or IP addresses"
-msgstr ""
+msgstr "Adreces IP o xarxa autoritzada"
 
 #: sharing/models.py:226
 msgid ""
@@ -2675,395 +2737,413 @@ msgid ""
 "addresses.  Specify network numbers of the form 1.2.3.4/xx where xx is the "
 "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 msgstr ""
+"La xarxa que està autoritzada a accedir una compartició NFS o be una llista "
+"d'IPs. Especifica els números de xarxa amb la forma 1.2.3.4/xx on xx és el "
+"número de bits de la màscara, o be una llista d'adreces 1.2.3.4 1.2.3.5 "
+"1.2.3.6."
 
 #: sharing/models.py:230
 msgid "All Directories"
-msgstr ""
+msgstr "Tos els directoris"
 
 #: sharing/models.py:231
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected.  "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
+"Permetre muntar qualsevol subdirectori per sota d'aquest punt de muntatge si "
+"es selecciona. D'altra manera només el directori de nivell més alt pot ser "
+"muntat."
 
 #: sharing/models.py:234
 msgid "Read Only"
-msgstr ""
+msgstr "Només de lectura"
 
 #: sharing/models.py:235
 msgid "Export the share read only.  Writes are not permitted."
 msgstr ""
+"Exporta la compartició com només de lectura. Escriptures no seran permeses."
 
 #: sharing/models.py:238
 msgid "Quiet"
-msgstr ""
+msgstr "Silenciós"
 
 #: sharing/models.py:239
 msgid "Inibit syslog warnings if there are problems with exporting this share."
 msgstr ""
+"Anul·la els avisos de syslog si hi ha problemes exportant aquesta "
+"compartició."
 
 #: sharing/models.py:247
 msgid "User to map root to"
-msgstr ""
+msgstr "Usuari al que se li assigna el root"
 
 #: sharing/models.py:255
 msgid "Group to map root to"
-msgstr ""
+msgstr "Grup al que se li assigna el root"
 
 #: sharing/models.py:263
 msgid "User to map all users to"
-msgstr ""
+msgstr "Usuari per assignar a tots els usuaris"
 
 #: sharing/models.py:271
 msgid "Group to map all users to"
-msgstr ""
+msgstr "Grup per assignar a tots els usuaris"
 
 #: sharing/models.py:278
 msgid "UNIX Share"
-msgstr ""
+msgstr "UNIX Share"
 
 #: sharing/nav.py:8
 msgid "View All UNIX Shares"
-msgstr ""
+msgstr "Veure tots els UNIX Shares"
 
 #: sharing/nav.py:18
 msgid "View All Apple Shares"
-msgstr ""
+msgstr "Veure tots els Apple Shares"
 
 #: sharing/nav.py:28
 msgid "View All Windows Shares"
-msgstr ""
+msgstr "Veure tots els Windows Shares"
 
 #: storage/forms.py:77
 msgid "Read"
-msgstr ""
+msgstr "Lectura"
 
 #: storage/forms.py:78
 msgid "Write"
-msgstr ""
+msgstr "Escriptura"
 
 #: storage/forms.py:79
 msgid "Execute"
-msgstr ""
+msgstr "Executar"
 
 #: storage/forms.py:92
 msgid "Owner"
-msgstr ""
+msgstr "Propietari"
 
 #: storage/forms.py:92
 msgid "Other"
-msgstr ""
+msgstr "Altres"
 
 #: storage/forms.py:140 storage/forms.py:331 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr ""
+msgstr "Nom del volum"
 
 #: storage/forms.py:144 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
-msgstr ""
+msgstr "Forçar la mida del sector a 4096 bytes"
 
 #: storage/forms.py:217
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\"."
 msgstr ""
+"El nom del volum ha de començar amb una lletra i pot incloure nombres, \"-\", "
+"\"_\"."
 
 #: storage/forms.py:231 system/forms.py:210 system/forms.py:216
 #: system/forms.py:221
 msgid "This field is required"
-msgstr ""
+msgstr "El camp és obligatori"
 
 #: storage/forms.py:236 storage/forms.py:382 storage/forms.py:484
 msgid "You already have a volume with same name"
-msgstr ""
+msgstr "Ja tens un volum amb el mateix nom"
 
 #: storage/forms.py:242
 msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr ""
+msgstr "\"log\" és una paraula reservada i no pot ser usada"
 
 #: storage/forms.py:247
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr ""
+msgstr "El nom del volum NO pot començar amb c[0-9], mirror, raidz o spare"
 
 #: storage/forms.py:332 storage/forms.py:431 storage/forms.py:910
 msgid "Member disk"
-msgstr ""
+msgstr "Disc membre"
 
 #: storage/forms.py:388 storage/forms.py:509
 msgid "The selected disks were not verified for this import rules."
 msgstr ""
+"Els discs seleccionats no han estat verificats per aquesta regla "
+"d'importació"
 
 #: storage/forms.py:396
 msgid "Some error ocurried while labelling the disk."
-msgstr ""
+msgstr "Algun error ha succeït mentre s'etiquetaba el disc"
 
 #: storage/forms.py:606
 msgid "Volume from which this dataset will be created on"
-msgstr ""
+msgstr "Volum a partir del qual es crearà el dataset"
 
 #: storage/forms.py:607
 msgid "Dataset Name"
-msgstr ""
+msgstr "Nom del Dataset"
 
 #: storage/forms.py:608 storage/forms.py:660 storage/forms.py:717
 msgid "Compression level"
-msgstr ""
+msgstr "Nivell de compressió"
 
 #: storage/forms.py:609 storage/forms.py:661 storage/forms.py:718
 msgid "Enable atime"
-msgstr ""
+msgstr "Habilitar atime"
 
 #: storage/forms.py:610 storage/forms.py:662 storage/forms.py:719
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "Quota per aquest dataset"
 
 #: storage/forms.py:610 storage/forms.py:611 storage/forms.py:662
 #: storage/forms.py:663 storage/forms.py:719
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0=ilimitat; exemple: 1g"
 
 #: storage/forms.py:611 storage/forms.py:663
 msgid "Quota for this dataset and all children"
-msgstr ""
+msgstr "Quota per aquest dataset i tots els seus fills"
 
 #: storage/forms.py:612 storage/forms.py:664 storage/forms.py:720
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "Espai reservat per aquest dataset"
 
 #: storage/forms.py:612 storage/forms.py:613 storage/forms.py:664
 #: storage/forms.py:665 storage/forms.py:720
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0=Cap; exemple: 1g"
 
 #: storage/forms.py:613 storage/forms.py:665
 msgid "Reserved space for this dataset and all children"
-msgstr ""
+msgstr "Espai reservat per aquest dataset i els seus fills"
 
 #: storage/forms.py:626
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
 msgstr ""
+"El nom del dataset ha de començar amb un caràcter alfanuméric i pot contenir "
+"només (-),(_) i (.)."
 
 #: storage/forms.py:633
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "Ja tens un dataset amb el mateix nom"
 
 #: storage/forms.py:640 storage/forms.py:697 storage/forms.py:741
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
-msgstr ""
+msgstr "Introdueix un numero positiu (sufix opcional M, G, T) o, 0"
 
 #: storage/forms.py:756
 msgid "Owner (user)"
-msgstr ""
+msgstr "Propietari (usuari)"
 
 #: storage/forms.py:759
 msgid "Owner (group)"
-msgstr ""
+msgstr "Propietari (grup)"
 
 #: storage/forms.py:761
 msgid "Mode"
-msgstr ""
+msgstr "Mode"
 
 #: storage/forms.py:764
 msgid "Set permission recursively"
-msgstr ""
+msgstr "Possa els permissos recursivament"
 
 #: storage/forms.py:846
 msgid "At least one day must be chosen"
-msgstr ""
+msgstr "Al menys un dia ha de ser escollit"
 
 #: storage/forms.py:851
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "Snapshot recorsiu"
 
 #: storage/forms.py:852
 msgid "Snapshot Name"
-msgstr ""
+msgstr "Nom del Sanpshot"
 
 #: storage/forms.py:859
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr ""
+msgstr "Només [-a-zA-Z0-9_.] permessos pel nom de l'Snapshot"
 
 #: storage/forms.py:869
 msgid "Invalid prefix"
-msgstr ""
+msgstr "Prefixe invalid"
 
 #: storage/forms.py:873 storage/views.py:436
 msgid "Snapshot"
-msgstr ""
+msgstr "Snapshot"
 
 #: storage/forms.py:874
 msgid "Clone Name (must be on same volume)"
-msgstr ""
+msgstr "Nom del clon (ha de estar al mateix volum)"
 
 #: storage/forms.py:887
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr ""
+msgstr "Només [-a-zA-Z0-9_./] permessos com a nom del clon"
 
 #: storage/forms.py:893
 msgid "Clone must be within the same volume"
-msgstr ""
+msgstr "El clon ha d'estar al mateix volum"
 
 #: storage/forms.py:960 storage/models.py:212
 msgid "Remote hostname"
-msgstr ""
+msgstr "Hostname remot"
 
 #: storage/forms.py:961 storage/models.py:216
 msgid "Remote hostkey"
-msgstr ""
+msgstr "Hostkey remot"
 
 #: storage/models.py:49
 msgid "File System Type"
-msgstr ""
+msgstr "Tipus de sistema de fitxers"
 
 #: storage/models.py:52 storage/models.py:77 storage/views.py:88
 #: storage/views.py:116 storage/views.py:139 templates/storage/volumes.html:59
 msgid "Volume"
-msgstr ""
+msgstr "Volum"
 
 #: storage/models.py:78
 msgid "Volume this group belongs to"
-msgstr ""
+msgstr "Aquest volum pertany a"
 
 #: storage/models.py:91
 msgid "Disks"
-msgstr ""
+msgstr "Discs"
 
 #: storage/models.py:102
 msgid "Transfer Mode"
-msgstr ""
+msgstr "Mode de transferencia"
 
 #: storage/models.py:108
 msgid "HDD Standby"
-msgstr ""
+msgstr "HDD Standby"
 
 #: storage/models.py:114
 msgid "Advanced Power Management"
-msgstr ""
+msgstr "Control avançat d'energia"
 
 #: storage/models.py:120
 msgid "Acoustic Level"
-msgstr ""
+msgstr "Nivell acústic"
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
-msgstr ""
+msgstr "Habilita S.M.A.R.T."
 
 #: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
-msgstr ""
+msgstr "Opcions extra de S.M.A.R.T."
 
 #: storage/models.py:133
 msgid "Group Membership"
-msgstr ""
+msgstr "Membres del grup"
 
 #: storage/models.py:134
 msgid "The disk group containing this disk"
-msgstr ""
+msgstr "El grup de disc conté aquest disc"
 
 #: storage/models.py:146 storage/models.py:227 storage/models.py:253
 #: templates/storage/tasks.html:22
 msgid "Mount Point"
-msgstr ""
+msgstr "Punt de muntatge"
 
 #: storage/models.py:147
 msgid "Path to mount point"
-msgstr ""
+msgstr "Ruta al punt de muntatge"
 
 #: storage/models.py:151
 msgid "Mount options"
-msgstr ""
+msgstr "Opcions de muntatge"
 
 #: storage/models.py:152
 msgid "Enter Mount Point options here"
-msgstr ""
+msgstr "Introdueix les opcions del punt de muntatge aquí"
 
 #: storage/models.py:169
 msgid "Error getting total space"
-msgstr ""
+msgstr "Error al obtenir l'epai total"
 
 #: storage/models.py:175
 msgid "Error getting available space"
-msgstr ""
+msgstr "Error al obtenir l'espai disponible"
 
 #: storage/models.py:181
 msgid "Error getting used space"
-msgstr ""
+msgstr "Error al obtenir l'espai utilitzat"
 
 #: storage/models.py:187 storage/models.py:199
 msgid "Error"
-msgstr ""
+msgstr "Error"
 
 #: storage/models.py:219
 msgid "Remote Replication Host"
-msgstr ""
+msgstr "Host de replicació remota"
 
 #: storage/models.py:220
 msgid "Remote Replication Hosts"
-msgstr ""
+msgstr "Hosts de replicació remota"
 
 #: storage/models.py:231
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
+"ÚItim snapshot enviat al costat remot (deixar en blanc per una replicació "
+"completa)"
 
 #: storage/models.py:234 templates/storage/replications.html:15
 msgid "Remote Host"
-msgstr ""
+msgstr "Host remot"
 
 #: storage/models.py:237 templates/storage/replications.html:16
 msgid "Remote ZFS filesystem"
-msgstr ""
+msgstr "sistema de fitxers ZFS remot"
 
 #: storage/models.py:240
 msgid "Replication Task"
-msgstr ""
+msgstr "Tasca de replicació"
 
 #: storage/models.py:241
 msgid "Replication Tasks"
-msgstr ""
+msgstr "Tasques de replicació"
 
 #: storage/models.py:256 templates/storage/tasks.html:23
 msgid "Recursive"
-msgstr ""
+msgstr "Recursiu"
 
 #: storage/models.py:260
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "Valor del temps de vida de l'Snapshot"
 
 #: storage/models.py:266
 msgid "Snapshot lifetime unit"
-msgstr ""
+msgstr "Unitat del temps de vida de l'Snapshot"
 
 #: storage/models.py:270
 msgid "Begin"
-msgstr ""
+msgstr "Inici"
 
 #: storage/models.py:271
 msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr ""
+msgstr "Quant hem de començar a fer snapshots en el dia, ex: 8:00"
 
 #: storage/models.py:275
 msgid "End"
-msgstr ""
+msgstr "Final"
 
 #: storage/models.py:276
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr ""
+msgstr "Quant hem de parar de fer snapshots en un dia, ex: 17:00"
 
 #: storage/models.py:282
 msgid "Interval"
-msgstr ""
+msgstr "Interval"
 
 #: storage/models.py:283
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
-msgstr ""
+msgstr "Quants minuts passan entre la creació d'Snapshots."
 
 #: storage/models.py:289
 msgid "Occurrence"
-msgstr ""
+msgstr "Ocurrència"
 
 #: storage/models.py:290
 msgid "How the task is repeated"
@@ -3672,15 +3752,15 @@ msgstr "Anunci FreeNAS"
 
 #: templates/freeadmin/index.html:85
 msgid "FreeNAS Commit"
-msgstr ""
+msgstr "FreeNAS Commit"
 
 #: templates/freeadmin/index.html:86
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS Devel"
 
 #: templates/freeadmin/index.html:87
 msgid "FreeNAS Testing"
-msgstr ""
+msgstr "FreeNAS Testing"
 
 #: templates/freeadmin/index.html:91
 msgid "Support Issues"
@@ -3988,7 +4068,7 @@ msgstr "Afegir Extent al target"
 
 #: templates/services/iscsi_auth.html:8
 msgid "Peer"
-msgstr ""
+msgstr "Peer"
 
 #: templates/services/iscsi_auth.html:44 templates/services/iscsi_auth.html:46
 msgid "Add iSCSI User"
