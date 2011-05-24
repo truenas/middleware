@@ -290,45 +290,11 @@ class RsyncdForm(ModelForm):
         model = models.Rsyncd
 
 class RsyncModForm(ModelForm):
-    rsyncmod_user = forms.ChoiceField(choices=(),
-                                         widget = forms.Select(attrs=attrs_dict),
-                                         label = _("User"),
-                                         required = False,
-                                         initial = "nobody",
-                                         )
-    rsyncmod_group = forms.ChoiceField(choices=(),
-                                         widget = forms.Select(attrs=attrs_dict),
-                                         label = _("Group"),
-                                         required = False,
-                                         initial = "nobody",
-                                         )
-    def __init__(self, *args, **kwargs):
-        super(RsyncModForm, self).__init__(*args, **kwargs)
-        from account.forms import FilteredSelectJSON
-        if len(FreeNAS_Users()) > 500:
-            if len(args) > 0 and isinstance(args[0], QueryDict):
-                self.fields['rsyncmod_user'].choices = ((args[0]['rsyncmod_user'],args[0]['rsyncmod_user']),)
-                self.fields['rsyncmod_user'].initial = args[0]['rsyncmod_user']
-            self.fields['rsyncmod_user'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
-        else:
-            self.fields['rsyncmod_user'].widget = widgets.FilteringSelect()
-            self.fields['rsyncmod_user'].choices = ((x.bsdusr_username,
-                                                      x.bsdusr_username)
-                                                      for x in FreeNAS_Users()
-                                                     )
-        if len(FreeNAS_Groups()) > 500:
-            if len(args) > 0 and isinstance(args[0], QueryDict):
-                self.fields['rsyncmod_group'].choices = ((args[0]['rsyncmod_group'],args[0]['rsyncmod_group']),)
-                self.fields['rsyncmod_group'].initial = args[0]['rsyncmod_group']
-            self.fields['rsyncmod_group'].widget = FilteredSelectJSON(url=reverse("account_bsdgroup_json"))
-        else:
-            self.grouplist = []
-            #self.grouplist.append(('-----', 'N/A'))
-            for a in list((x.bsdgrp_group, x.bsdgrp_group)
-                          for x in FreeNAS_Groups()):
-                self.grouplist.append(a)
-            self.fields['rsyncmod_group'].widget = widgets.FilteringSelect()
-            self.fields['rsyncmod_group'].choices = self.grouplist
+    class Meta:
+        model = models.RsyncMod
+        widgets = {
+            'rsyncmod_path': DirectoryBrowser(),
+        }
     def clean_rsyncmod_name(self):
         name = self.cleaned_data['rsyncmod_name']
         if re.search(r'[/\]]', name):
@@ -348,11 +314,6 @@ class RsyncModForm(ModelForm):
         started = notifier().reload("rsync")
         if started is False and models.services.objects.get(srv_service='rsync').srv_enable:
             raise ServiceFailed("rsync", _("The Rsync service failed to reload."))
-    class Meta:
-        model = models.RsyncMod
-        widgets = {
-            'rsyncmod_path': DirectoryBrowser(),
-        }
 
 class DynamicDNSForm(ModelForm):
     class Meta:

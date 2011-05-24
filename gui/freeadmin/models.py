@@ -27,6 +27,25 @@
 #####################################################################
 from django.db import models
 from django.db.models.base import ModelBase
+from south.modelsinspector import add_introspection_rules
+
+add_introspection_rules([], ["^freeadmin\.models\.UserField"])
+add_introspection_rules([], ["^freeadmin\.models\.GroupField"])
+class UserField(models.Field):
+    def formfield(self, **kwargs):
+        #FIXME: Move to top (causes cycle-dependency)
+        from freeadmin.forms import UserField as UF
+        defaults = {'form_class': UF}
+        defaults.update(kwargs)
+        return super(UserField, self).formfield(**defaults)
+
+class GroupField(models.Field):
+    def formfield(self, **kwargs):
+        #FIXME: Move to top (causes cycle-dependency)
+        from freeadmin.forms import GroupField as GF
+        defaults = {'form_class': GF}
+        defaults.update(kwargs)
+        return super(GroupField, self).formfield(**defaults)
 
 class FreeAdminWrapper(object):
 
@@ -102,3 +121,4 @@ class Model(models.Model):
             'model': self._meta.object_name,
             'oid': self.id,
             })
+

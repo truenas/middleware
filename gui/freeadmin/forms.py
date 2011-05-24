@@ -26,15 +26,19 @@
 #####################################################################
 import re
 
-from django.forms import widgets
+from django.forms.widgets import Widget
 from django.forms.util import flatatt
 from django.utils.safestring import mark_safe
 from django.utils.encoding import StrAndUnicode, force_unicode
 from django.template.loader import render_to_string
 
 from dojango.forms.widgets import DojoWidgetMixin
+from dojango import forms
+from dojango.forms import widgets
+from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups
+from account.forms import FilteredSelectJSON
 
-class CronMultiple(DojoWidgetMixin, widgets.Widget):
+class CronMultiple(DojoWidgetMixin, Widget):
     dojo_type = 'freeadmin.form.Cron'
     def render(self, name, value, attrs=None):
         if value is None: value = ''
@@ -50,3 +54,31 @@ class DirectoryBrowser(widgets.Widget):
     def render(self, name, value, attrs=None):
         context = dict(name=name, value=value, attrs=attrs)
         return mark_safe(render_to_string('freeadmin/directory_browser.html', context))
+
+class UserField(forms.CharField):
+    def __init__(self, *args, **kwargs):
+        kwargs.update({'widget': widgets.Select()})
+        super(UserField, self).__init__(*args, **kwargs)
+        if not len(FreeNAS_Users()) > 500:
+            if self.initial:
+                self.choices = ((self.initial, self.initial),)
+            self.widget = FilteredSelectJSON(url=("account_bsduser_json",))
+        else:
+            self.widget = widgets.FilteringSelect()
+            self.choices = ((x.bsdusr_username, x.bsdusr_username)
+                                                      for x in FreeNAS_Users()
+                                                     )
+
+class GroupField(forms.CharField):
+    def __init__(self, *args, **kwargs):
+        kwargs.update({'widget': widgets.Select()})
+        super(GroupField, self).__init__(*args, **kwargs)
+        if not len(FreeNAS_Groups()) > 500:
+            if self.initial:
+                self.choices = ((self.initial, self.initial),)
+            self.widget = FilteredSelectJSON(url=("account_bsdgroup_json",))
+        else:
+            self.widget = widgets.FilteringSelect()
+            self.choices = ((x.bsdusr_username, x.bsdusr_username)
+                                                      for x in FreeNAS_Groups()
+                                                     )

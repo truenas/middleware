@@ -25,6 +25,7 @@
 #
 # $FreeBSD$
 #####################################################################
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User as django_User
 from django.utils.safestring import mark_safe
@@ -50,11 +51,12 @@ class SharedFunc():
 class FilteredSelectJSON(forms.widgets.ComboBox):
 #class FilteredSelectJSON(forms.widgets.FilteringSelect):
 
-    def __init__(self, attrs=None, choices=(), url=''):
+    def __init__(self, attrs=None, choices=(), url=[]):
         self.url = url
         super(FilteredSelectJSON, self).__init__(attrs, choices)
 
     def render(self, name, value, attrs={}, choices=()):
+        self.url = reverse(self.url[0])
         store = 'state'+attrs['id']
         attrs.update({
             'store': store,

@@ -30,7 +30,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
-from freeadmin.models import Model
+from freeadmin.models import Model, UserField, GroupField
 from storage.models import MountPoint, Volume
    
 mountpoint_limiter = { 'mp_path__startswith': '/mnt/' }
@@ -1181,14 +1181,14 @@ class RsyncMod(Model):
         verbose_name=_("Maximum connections"),
         help_text=_("Maximum number of simultaneous connections. Default is 0 (unlimited)"),
         )
-    rsyncmod_user = models.CharField(
+    rsyncmod_user = UserField(
         max_length=120,
         default="nobody",
         verbose_name=_("User"),
         help_text=_("This option specifies the user name that file transfers to and from that module should take place. In combination with the 'Group' option this determines what file permissions are available. Leave this field empty to use default settings"),
         blank=True,
         )
-    rsyncmod_group = models.CharField(
+    rsyncmod_group = GroupField(
         max_length=120,
         default="nobody",
         verbose_name=_("Group"),
