@@ -13,7 +13,6 @@ generate_crontab()
 {
     local IFS=\|
     local minute hour daymonth month dayweek user command
-    mount -uw /
     cp /conf/base/etc/crontab /etc/crontab
     # Generate cronjobs
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
@@ -70,14 +69,11 @@ generate_crontab()
         )
         echo -e "${minute}\t${hour}\t${daymonth}\t${month}\t${dayweek}\t${user}\t${command}" >> /etc/crontab
     done
-    mount -ur /
 }
 
 original_crontab()
 {
-    mount -uw /
     cp /conf/base/etc/crontab /etc/crontab
-    mount -ur /
 
 }
 
