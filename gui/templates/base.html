@@ -26,8 +26,15 @@
             {% endblock %}
         </div>
 {% block dojango_content %}
-        <div dojoType="dijit.layout.ContentPane" id="menupane"
-            region="left" splitter="true">
+        <div dojoType="dijit.layout.BorderContainer" id="inter" style="width:300px; height:100%" region="left">
+            <div dojoType="dijit.layout.ContentPane" id="colexpand"
+                region="top" style="height:30px;">
+                <a href="javascript:void(0);" onClick="dijit.byId('mytree').expandAll()">expand all</a>
+                <a href="javascript:void(0);" onClick="dijit.byId('mytree').collapseAll()">collaper all</a>
+            </div>
+            <div dojoType="dijit.layout.ContentPane" id="menupane"
+                region="center">
+            </div>
         </div>
         <div dojoType="dijit.layout.TabContainer" region="center" id="content">
         </div>
