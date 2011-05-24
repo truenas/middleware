@@ -950,6 +950,49 @@
                 //}
                 return this.inherited(arguments);
             }, 
+            expandAll: function() {
+                // summary:
+                //     Expand all nodes in the tree
+                // returns:
+                //     Deferred that fires when all nodes have expanded
+
+                var _this = this;
+
+                function expand(node) {
+                    _this._expandNode(node);
+
+                    var childBranches = dojo.filter(node.getChildren() || [], function(node) {
+                        return node.isExpandable;
+                    });
+
+                    var def = new dojo.Deferred();
+                    defs = dojo.map(childBranches, expand);
+                }
+                return expand(this.rootNode);
+            },
+            collapseAll: function() {
+                // summary:
+                //     Expand all nodes in the tree
+                // returns:
+                //     Deferred that fires when all nodes have expanded
+
+                var _this = this;
+
+                function collapse(node) {
+                    // never collapse root node, otherwise hides whole tree !
+                    if ( _this.showRoot == false && node != _this.rootNode ) {
+                     _this._collapseNode(node);
+                    }
+
+                    var childBranches = dojo.filter(node.getChildren() || [], function(node) {
+                        return node.isExpandable;
+                    });
+
+                    var def = new dojo.Deferred();
+                    defs = dojo.map(childBranches, collapse);
+                }
+                return collapse(this.rootNode);
+            },
             reload: function () {
 
                 this.model.store.close();
