@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-23 10:59+0200\n"
+"PO-Revision-Date: 2011-05-23 12:37+0200\n"
 "Last-Translator: Pere <pedro.cerdan@uab.cat>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ca\n"
@@ -1857,62 +1857,65 @@ msgstr "Intèrval de temps fins que es finalitza el procés (Timeout) "
 
 #: services/models.py:809
 msgid "Maximum idle time in seconds."
-msgstr ""
+msgstr "Temps màxim inactiu en segons"
 
 #: services/models.py:812
 msgid "Allow Root Login"
-msgstr ""
+msgstr "Permetre Login de Root"
 
 #: services/models.py:814
 msgid "Allow Anonymous Login"
-msgstr ""
+msgstr "Pemetre Login anònim"
 
 #: services/models.py:818 sharing/models.py:49
 #: templates/services/iscsi_dextents.html:7
 #: templates/services/iscsi_extents.html:7 templates/sharing/windows.html:15
 #: templates/storage/volumes.html:60
 msgid "Path"
-msgstr ""
+msgstr "Ruta"
 
 #: services/models.py:820
 msgid "Allow Local User Login"
-msgstr ""
+msgstr "Permetre Login d'Usuari Local"
 
 #: services/models.py:823
 msgid "Banner"
-msgstr ""
+msgstr "Capçalera"
 
 #: services/models.py:825
 msgid "Greeting banner displayed by FTP when a connection first comes in."
 msgstr ""
+"Capçalera de salutació mostrada pel FTP quan hi ha una primera connexió."
 
 #: services/models.py:831 services/models.py:837
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr ""
+"Utilitza aquesta opció per reescriure la màscara de creació de fitxers (077 "
+"per defecte)."
 
 #: services/models.py:840
 msgid "Enable FXP"
-msgstr ""
+msgstr "Activa FXP"
 
 #: services/models.py:842
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "Permet la represa de la Transferència"
 
 #: services/models.py:844
 msgid "Always Chroot"
-msgstr ""
+msgstr "Fer sempre Chroot"
 
 #: services/models.py:846
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "Autenticació IDENT requerida"
 
 #: services/models.py:848
 msgid "Require Reverse DNS for IP"
-msgstr ""
+msgstr "Inversió de DNS per IP requerida"
 
 #: services/models.py:850
 msgid "Masquerade address"
-msgstr ""
+msgstr "Enmascarament de direcció"
 
 #: services/models.py:852
 msgid ""
@@ -1920,20 +1923,25 @@ msgid ""
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
+"Causa que el servidor mostri al client la informació de xarxa per la IP "
+"especificada fent suposició que aquella adreça IP o el servidor DNS està "
+"actuant com a pasarel.la NAT o 'port forwarder' pel servidor."
 
 #: services/models.py:856
 msgid "Minimum passive port"
-msgstr ""
+msgstr "Port passiu mínim"
 
 #: services/models.py:857
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
 msgstr ""
+"El port mínim per assignar connexions de dades de tipus PASV  (0=utilitza "
+"qualsevol port)"
 
 #: services/models.py:861
 msgid "Maximum passive port"
-msgstr ""
+msgstr "Port passiu màxim"
 
 #: services/models.py:862
 msgid ""
@@ -1946,336 +1954,374 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
+"El port màxim per assignar connexions de dades de tipus PASV (0=utilitza "
+"qualsevol port). Els ports passius restringeixen el rang de ports a escollir "
+"pel servidor quan se li envia una comanda PASV des del client. El servidor "
+"escullirà aleatoramient un número de port del rang especificat fins que en "
+"trobi un d'obert. El rang de ports escullit ha d'estar dins el rang de no "
+"privilegiats (p.e. igua o més gran que 1024) Es molt recomanat que el rang "
+"escollit sigui prou gran per manegar varies connexions pasives simultanies "
+"(p.e. 49152-65534, que és el rang efímer  registrat a la IANA)."
 
 #: services/models.py:866
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "Amplada de banda de pujada d'usuari local"
 
 #: services/models.py:867
 msgid "Local user upload bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Ample de banda de pujada de l'usuari local en KB/s. Un zero vol dir infinit."
 
 #: services/models.py:871
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Ample de banda de baixada de l'usuari local"
 
 #: services/models.py:872
 msgid "Local user download bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Ampla de banda de baixada de l'usuari local en KB/s. Un zero vol dir "
+"infinit."
 
 #: services/models.py:876
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Amplada de banda de pujada de l'usuari anònim"
 
 #: services/models.py:877
 msgid "Anonymous user upload bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Amplada de banda de pujada de l'usuari anònim en KB/s. Un zero vol dir "
+"infinit."
 
 #: services/models.py:881
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "Ample de banda de baixada de l'usuari anònim"
 
 #: services/models.py:882
 msgid "Anonymous user download bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Ampla de banda de baixada de l'usuari anònim en KB/s. Un zero vol dir "
+"infinit."
 
 #: services/models.py:885
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "Activar SSL/TLS"
 
 #: services/models.py:890
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "Aquests paràmetres son afegits a la configuració de proftpd.conf."
 
 #: services/models.py:894 services/models.py:895
 #: templates/services/index2.html:53
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:904
 msgid "Directory"
-msgstr ""
+msgstr "Directori"
 
 #: services/models.py:905
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
+"El directori que conté els fitxers que vols publicar. Al client remot no li "
+"cal passar el directori com a part de la transferència."
 
 #: services/models.py:908
 msgid "Allow New Files"
-msgstr ""
+msgstr "Permetre nous fitxers"
 
 #: services/models.py:912
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"El port a escoltar. Per defecte s'escolta al port TFTP especificat a "
+"/etc/services."
 
 #: services/models.py:918
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "S'especifica el nom d'usuari amb el que correrà el servei."
 
 #: services/models.py:922
 msgid "umask"
-msgstr ""
+msgstr "umask"
 
 #: services/models.py:923
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
 msgstr ""
+"Especifica el valor de la umask per fitxers de nova creació. per defecte és "
+"022 (tothom pot llegir, ningú pot escriure)."
 
 #: services/models.py:927 services/models.py:964
 msgid "Extra options"
-msgstr ""
+msgstr "Opcions extra"
 
 #: services/models.py:929
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "Opcions extra de comandaments de línia (normalment buit)."
 
 #: services/models.py:933 services/models.py:934
 #: templates/services/index2.html:108
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:943
 msgid "TCP Port"
-msgstr ""
+msgstr "Port TCP"
 
 #: services/models.py:944
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "Port TCP alternatiu. 22 per defecte"
 
 #: services/models.py:947
 msgid "Login as Root with password"
-msgstr ""
+msgstr "Fer Login com a Root amb contrasenya"
 
 #: services/models.py:948
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
 msgstr ""
+"Desactivat: El Root només es pot validar via autenticació per clau pública; "
+"Activat: Es permet fer Login com a Root amb contrasenya."
 
 #: services/models.py:951
 msgid "Allow Password Authentication"
-msgstr ""
+msgstr "Permetre autenticació amb contrasenya"
 
 #: services/models.py:953
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "Permetre TCP 'Port Forwarding'"
 
 #: services/models.py:955
 msgid "Compress Connections"
-msgstr ""
+msgstr "Compresió de connexions"
 
 #: services/models.py:958
 msgid "Host Private Key"
-msgstr ""
+msgstr "Clau Privada de Servidor"
 
 #: services/models.py:960
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr ""
+msgstr "Enganxar aquí una clau privada RSA en format PEM"
 
 #: services/models.py:966
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
 msgstr ""
+"Opcions extra per a /etc/ssh/sshd_config (normalment buit). Nota: Les "
+"opcions incorrectes impedeixen l'inici del servei SSH. "
 
 #: services/models.py:1006 services/models.py:1007
 #: templates/services/index2.html:97
 msgid "SSH"
-msgstr ""
+msgstr "SSH"
 
 #: services/models.py:1016
 msgid "Domain Controller Name"
-msgstr ""
+msgstr "Nom del Controlador de Domini"
 
 #: services/models.py:1017
 msgid "AD or PDC name."
-msgstr ""
+msgstr "Nom del PDC o del AD"
 
 #: services/models.py:1021
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr ""
+msgstr "Nom de Domini (DNS/Realm-Name)"
 
 #: services/models.py:1022
 msgid "Domain Name, eg example.com"
-msgstr ""
+msgstr "Nom de Domini, p.e. exemple.com"
 
 #: services/models.py:1026
 msgid "Host Name (NetBIOS-Name)"
-msgstr ""
+msgstr "Nom del Servidor (NetBIOS-Name)"
 
 #: services/models.py:1027
 msgid "Host Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Nom de Servidor en format antic, p.e. EXEMPLE"
 
 #: services/models.py:1031
 msgid "Workgroup Name"
-msgstr ""
+msgstr "Nom de Grup de Treball (Workgroup)"
 
 #: services/models.py:1032
 msgid "Workgroup Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Nom del Grup de Treball en format antic, p.e. EXEMPLE"
 
 #: services/models.py:1036
 msgid "Administrator Name"
-msgstr ""
+msgstr "Nom de l'Administrador"
 
 #: services/models.py:1037
 msgid "Username of Domain Administrator Account"
-msgstr ""
+msgstr "Nom d'usuari del compte del Administrador de Domini"
 
 #: services/models.py:1041
 msgid "Administrator Password"
-msgstr ""
+msgstr "Contrasenya de l'Administrador"
 
 #: services/models.py:1042
 msgid "Password of Domain Administrator account."
-msgstr ""
+msgstr "Contrasenya de l'Administrador de Domini."
 
 #: services/models.py:1048
 msgid "Windows Version"
-msgstr ""
+msgstr "Versió de Windows"
 
 #: services/models.py:1049
 msgid "The version of Microsoft Windows that Active Directory is running."
-msgstr ""
+msgstr "Versió de Windows on corre el Directori Actiu (Active Directory) "
 
 #: services/models.py:1053
 msgid "Service Principal Name"
-msgstr ""
+msgstr "Nom Principal del Servei"
 
 #: services/models.py:1054
 msgid "Service Principal Name, eg service/account."
-msgstr ""
+msgstr "Nom Principal del Servei, p.e. service/account."
 
 #: services/models.py:1058
 msgid "Service Principal Name Password"
-msgstr ""
+msgstr "Contrasenya del Nom Principal del Servei"
 
 #: services/models.py:1059
 msgid "Password of the Service Principal Name account."
-msgstr ""
+msgstr "Contrasenya del compte Nom Principal del Servei"
 
 #: services/models.py:1063
 msgid "Kerberos Keytab File"
-msgstr ""
+msgstr "Fitxer Keytab de kerberos"
 
 #: services/models.py:1064
 msgid ""
 "The kerberos keytab file that was generated on the Active Directory server."
 msgstr ""
+"El fitxer Keytab de kerberos que fou generat al servidor d'Active Directory"
 
 #: services/models.py:1068 templates/services/index2.html:18
 msgid "Active Directory"
-msgstr ""
+msgstr "Active Directory"
 
 #: services/models.py:1079
 msgid "The name or IP address of the LDAP server"
-msgstr ""
+msgstr "L'adreça IP o el nom  del servidor LDAP"
 
 #: services/models.py:1083
 msgid "Base DN"
-msgstr ""
+msgstr "DN base"
 
 #: services/models.py:1085
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr ""
+"El Nom Distinguit (DN) base per defecte per utilitzar a les recerques, p.e. "
+"dc=test, dc=org"
 
 #: services/models.py:1088
 msgid "Allow Anonymous Binding"
-msgstr ""
+msgstr "Permetre la vinculació anònima"
 
 #: services/models.py:1091
 msgid "Root bind DN"
-msgstr ""
+msgstr "DN de vinculaió Root"
 
 #: services/models.py:1093
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
+"El nom distingit amb el cual vincular el servidor de directory, p.e. "
+"cn=admin,dc=test,dc=org"
 
 #: services/models.py:1097
 msgid "Root bind password"
-msgstr ""
+msgstr "Contrasenya vinculada a Root"
 
 #: services/models.py:1099
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "Els credencials amb els qual es vincula."
 
 #: services/models.py:1104
 msgid "Password Encryption"
-msgstr ""
+msgstr "Encriptar la Contrasenya"
 
 #: services/models.py:1105
 msgid "The password change protocol to use."
-msgstr ""
+msgstr "La contrasenya canvia el protocal a utilitzar"
 
 #: services/models.py:1109
 msgid "User Suffix"
-msgstr ""
+msgstr "Sufix d'usuari"
 
 #: services/models.py:1111
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
 msgstr ""
+"Aquest paràmetre especifica el sufix que s'utilitzarà pels usuaris quan "
+"siguin afegits al directori LDAP. p.e. ou=Users"
 
 #: services/models.py:1115
 msgid "Group Suffix"
-msgstr ""
+msgstr "Sufix de Grup"
 
 #: services/models.py:1117
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
+"Aquest paràmetre especifica el sufix que s'utilitzarà pels grups quan siguin "
+"afegits al directori LDAP. p.e. ou=Groups"
 
 #: services/models.py:1121
 msgid "Password Suffix"
-msgstr ""
+msgstr "Sufix de la Contrasenya"
 
 #: services/models.py:1123
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
+"Aquest paràmetre especifica el sufix que s'utilitzarà per les contrasenyes "
+"quan siguin afegits al directori LDAP. p.e. ou=Passwords"
 
 #: services/models.py:1127
 msgid "Machine Suffix"
-msgstr ""
+msgstr "Sufix de Màqiuna"
 
 #: services/models.py:1129
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
+"Aquest paràmetre especifica el sufix que s'utilitzarà per les màquines quan "
+"siguin afegits al directori LDAP. p.e. ou=Computers"
 
 #: services/models.py:1133
 msgid "Turn on/off TLS"
-msgstr ""
+msgstr "Activa o Desactiva TLS"
 
 #: services/models.py:1135
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
-msgstr ""
+msgstr "Aquest paràmetre especifica si utilitzar SSL/TLS, p.e. on/off/start_tls"
 
 #: services/models.py:1138
 msgid "Self signed certificate"
-msgstr ""
+msgstr "Certificat auto signat"
 
 #: services/models.py:1140
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "Col.loca aquí els continguts del teu fitxer de certificat auto signat."
 
 #: services/models.py:1144
 msgid "Auxillary Parameters"
-msgstr ""
+msgstr "Paràmetres Auxiliars"
 
 #: services/models.py:1146
 msgid "These parameters are added to ldap.conf."

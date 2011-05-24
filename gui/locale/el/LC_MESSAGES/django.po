@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-22 14:19+0200\n"
+"PO-Revision-Date: 2011-05-24 09:36+0200\n"
 "Last-Translator: Bth <oti_nane@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
@@ -2996,226 +2996,230 @@ msgstr "Έχετε ήδη ένα σύνολο δεδομένων με το ίδ�
 
 #: storage/forms.py:640 storage/forms.py:697 storage/forms.py:741
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
-msgstr ""
+msgstr "Εισάγετε θετικός αριθμός (προαιρετικά επίθεμα από M, G, T), ή, 0"
 
 #: storage/forms.py:756
 msgid "Owner (user)"
-msgstr ""
+msgstr "Ιδιοκτήτης (χρήστη)"
 
 #: storage/forms.py:759
 msgid "Owner (group)"
-msgstr ""
+msgstr "Ιδιοκτήτης (ομάδα)"
 
 #: storage/forms.py:761
 msgid "Mode"
-msgstr ""
+msgstr "Λειτουργία"
 
 #: storage/forms.py:764
 msgid "Set permission recursively"
-msgstr ""
+msgstr "Ορισμός άδεια αναδρομικών"
 
 #: storage/forms.py:846
 msgid "At least one day must be chosen"
-msgstr ""
+msgstr "Τουλάχιστον μία ημέρα, πρέπει να επιλέγονται"
 
 #: storage/forms.py:851
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "Αναδρομικά στιγμιότυπα"
 
 #: storage/forms.py:852
 msgid "Snapshot Name"
-msgstr ""
+msgstr "Όνομα Στιγμιότυπου"
 
 #: storage/forms.py:859
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr ""
+msgstr "Μόνο το [-a-zA-Z0-9_.] Επιτρέπονται ως όνομα κλισέ"
 
 #: storage/forms.py:869
 msgid "Invalid prefix"
-msgstr ""
+msgstr "Άκυρο πρόθεμα"
 
 #: storage/forms.py:873 storage/views.py:436
 msgid "Snapshot"
-msgstr ""
+msgstr "Στιγμιότυπο"
 
 #: storage/forms.py:874
 msgid "Clone Name (must be on same volume)"
-msgstr ""
+msgstr "Κλώνος Όνομα (πρέπει να είναι στην ίδια ένταση)"
 
 #: storage/forms.py:887
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr ""
+msgstr "Μόνο το [-a-zA-Z0-9_. /] Επιτρέπονται ως κλώνος όνομα"
 
 #: storage/forms.py:893
 msgid "Clone must be within the same volume"
-msgstr ""
+msgstr "Κλώνος πρέπει να βρίσκεται εντός του ίδιου όγκου"
 
 #: storage/forms.py:960 storage/models.py:212
 msgid "Remote hostname"
-msgstr ""
+msgstr "Απομακρυσμένο hostname"
 
 #: storage/forms.py:961 storage/models.py:216
 msgid "Remote hostkey"
-msgstr ""
+msgstr "Απομακρυσμένη hostkey"
 
 #: storage/models.py:49
 msgid "File System Type"
-msgstr ""
+msgstr "Τύπος Αρχείου Συστήματος"
 
 #: storage/models.py:52 storage/models.py:77 storage/views.py:88
 #: storage/views.py:116 storage/views.py:139 templates/storage/volumes.html:59
 msgid "Volume"
-msgstr ""
+msgstr "Τόμος"
 
 #: storage/models.py:78
 msgid "Volume this group belongs to"
-msgstr ""
+msgstr "Όγκος αυτή την ομάδα ανήκει"
 
 #: storage/models.py:91
 msgid "Disks"
-msgstr ""
+msgstr "Δίσκοι"
 
 #: storage/models.py:102
 msgid "Transfer Mode"
-msgstr ""
+msgstr "Transfer Mode"
 
 #: storage/models.py:108
 msgid "HDD Standby"
-msgstr ""
+msgstr "HDD αναμονή"
 
 #: storage/models.py:114
 msgid "Advanced Power Management"
-msgstr ""
+msgstr "Προηγμένης Διαχείρισης Ενέργειας"
 
 #: storage/models.py:120
 msgid "Acoustic Level"
-msgstr ""
+msgstr "Ακουστική Επίπεδο"
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
-msgstr ""
+msgstr "Ενεργοποίηση S.M.A.R.T."
 
 #: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
-msgstr ""
+msgstr "S.M.A.R.T. επιπλέον επιλογές"
 
 #: storage/models.py:133
 msgid "Group Membership"
-msgstr ""
+msgstr "Ομάδα Σύνθεση"
 
 #: storage/models.py:134
 msgid "The disk group containing this disk"
-msgstr ""
+msgstr "Η ομάδα δίσκου που περιέχει το δίσκο"
 
 #: storage/models.py:146 storage/models.py:227 storage/models.py:253
 #: templates/storage/tasks.html:22
 msgid "Mount Point"
-msgstr ""
+msgstr "Mount Point"
 
 #: storage/models.py:147
 msgid "Path to mount point"
-msgstr ""
+msgstr "Η διαδρομή προς το σημείο προσάρτησης"
 
 #: storage/models.py:151
 msgid "Mount options"
-msgstr ""
+msgstr "Mount επιλογές"
 
 #: storage/models.py:152
 msgid "Enter Mount Point options here"
-msgstr ""
+msgstr "Εισάγετε Όρος επιλογές σημείο εδώ"
 
 #: storage/models.py:169
 msgid "Error getting total space"
-msgstr ""
+msgstr "Σφάλμα κατά τη λήψη συνολικό χώρο"
 
 #: storage/models.py:175
 msgid "Error getting available space"
-msgstr ""
+msgstr "Σφάλμα κατά τη λήψη διαθέσιμου χώρου"
 
 #: storage/models.py:181
 msgid "Error getting used space"
-msgstr ""
+msgstr "Σφάλμα κατά τη λήψη χώρο που χρησιμοποιείται"
 
 #: storage/models.py:187 storage/models.py:199
 msgid "Error"
-msgstr ""
+msgstr "Σφάλμα"
 
 #: storage/models.py:219
 msgid "Remote Replication Host"
-msgstr ""
+msgstr "Remote Host Replication"
 
 #: storage/models.py:220
 msgid "Remote Replication Hosts"
-msgstr ""
+msgstr "Απομακρυσμένους Υπολογιστές Replication"
 
 #: storage/models.py:231
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
+"Τελευταία στιγμιότυπο αποστέλλονται στην απομακρυσμένη πλευρά (αφήστε κενό "
+"για την πλήρη αντιγραφή)"
 
 #: storage/models.py:234 templates/storage/replications.html:15
 msgid "Remote Host"
-msgstr ""
+msgstr "Remote Host"
 
 #: storage/models.py:237 templates/storage/replications.html:16
 msgid "Remote ZFS filesystem"
-msgstr ""
+msgstr "Απομακρυσμένη ZFS filesystem"
 
 #: storage/models.py:240
 msgid "Replication Task"
-msgstr ""
+msgstr "Αναπαραγωγή Task"
 
 #: storage/models.py:241
 msgid "Replication Tasks"
-msgstr ""
+msgstr "Αναπαραγωγή Καθηκόντων"
 
 #: storage/models.py:256 templates/storage/tasks.html:23
 msgid "Recursive"
-msgstr ""
+msgstr "Αναδρομικές"
 
 #: storage/models.py:260
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "Στιγμιότυπο αξίας διάρκειας ζωής"
 
 #: storage/models.py:266
 msgid "Snapshot lifetime unit"
-msgstr ""
+msgstr "Στιγμιότυπο μονάδα ζωής"
 
 #: storage/models.py:270
 msgid "Begin"
-msgstr ""
+msgstr "Ξεκινήστε"
 
 #: storage/models.py:271
 msgid "When in a day should we start making snapshots, e.g. 8:00"
 msgstr ""
+"Πότε σε μια μέρα θα πρέπει να αρχίσουμε να κάνουμε στιγμιότυπα, π.χ. 8:00"
 
 #: storage/models.py:275
 msgid "End"
-msgstr ""
+msgstr "Τέλος"
 
 #: storage/models.py:276
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr ""
+msgstr "Πότε σε μια μέρα θα έπρεπε να σταματήσει να στιγμιότυπα, π.χ. 17:00"
 
 #: storage/models.py:282
 msgid "Interval"
-msgstr ""
+msgstr "Διάστημα"
 
 #: storage/models.py:283
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
 msgstr ""
+"Πόσα λεπτά πέρασαν πριν από ένα νέο στοιγμιότηπο γίνει μετά το τελευταία."
 
 #: storage/models.py:289
 msgid "Occurrence"
-msgstr ""
+msgstr "Περιστατικό"
 
 #: storage/models.py:290
 msgid "How the task is repeated"
-msgstr ""
+msgstr "Πώς το έργο επαναλαμβάνεται"
 
 #: storage/models.py:295
 msgid "Weekday"
-msgstr ""
+msgstr "Καθημερινή"
 
 #: storage/models.py:313
 msgid "Periodic Snapshot Task"

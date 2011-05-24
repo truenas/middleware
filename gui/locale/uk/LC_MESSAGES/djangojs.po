@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:23-0700\n"
-"PO-Revision-Date: 2011-05-19 17:16+0200\n"
+"PO-Revision-Date: 2011-05-23 12:47+0200\n"
 "Last-Translator: yurkis <yurkis@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -75,7 +75,6 @@ msgid "Disk Detach"
 msgstr "Від'єднати диск"
 
 #: media/lib/js/freeadmin.js:594
-#, fuzzy
 msgid "Some error ocurried!"
 msgstr "Сталася помилка!"
 

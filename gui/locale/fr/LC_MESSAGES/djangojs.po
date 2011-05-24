@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:22-0700\n"
-"PO-Revision-Date: 2011-05-22 22:38+0200\n"
-"Last-Translator: Marion <freenas@csmar51.dyndns.org>\n"
+"PO-Revision-Date: 2011-05-23 19:53+0200\n"
+"Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -18,10 +18,10 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.1.6\n"
 
+# Pour la fonction actuelle, "Graphiques" correspond plus.
 #: media/lib/js/freeadmin.js:113
-#, fuzzy
 msgid "Reporting"
-msgstr "Rapports"
+msgstr "Graphiques"
 
 #: media/lib/js/freeadmin.js:125
 msgid "Settings"
@@ -49,7 +49,7 @@ msgstr "Stockage"
 
 #: media/lib/js/freeadmin.js:344
 msgid "CronJobs"
-msgstr "Tâches Cron"
+msgstr "Tâches planifiées"
 
 #: media/lib/js/freeadmin.js:398
 msgid "Edit Disk"
@@ -75,14 +75,17 @@ msgstr "Détacher le Disque"
 msgid "Some error ocurried!"
 msgstr "Des erreurs sont survenues !"
 
+# Utilisé dans "Every minute", "Every hour", "Every day of month"
 #: media/lib/js/freeadmin/form/Cron.js:43
 msgid "Every"
-msgstr ""
+msgstr "Tou(te)s les"
 
+# Utilisé dans "Every selected minute", "Every selected Hour", "Every selected day of month"
 #: media/lib/js/freeadmin/form/Cron.js:51
 msgid "Each selected"
-msgstr ""
+msgstr "Chaque sélection"
 
+# Utilisé dans "Every N minute", "Every N hour", "Every N day of month"
 #: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
-msgstr ""
+msgstr "Tou(te)s les N"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:32-0700\n"
-"PO-Revision-Date: 2011-05-22 17:38+0200\n"
+"PO-Revision-Date: 2011-05-23 16:46+0200\n"
 "Last-Translator: rcapion <richard@capion.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
@@ -323,14 +323,12 @@ msgid "Mutual CHAP"
 msgstr "Gensidig CHAP"
 
 #: choices.py:246
-#, fuzzy
 msgid "UPS reaches low battery"
-msgstr "UPS er nået lavt batteriniveau"
+msgstr "UPS når lavt batteriniveau"
 
 #: choices.py:247
-#, fuzzy
 msgid "UPS goes on battery"
-msgstr "UPS kører nu på batteri"
+msgstr "UPS kører på batteri"
 
 #: choices.py:250
 msgid "Preferred"
@@ -346,15 +344,15 @@ msgstr "Påkrævet"
 
 #: choices.py:279 choices.py:285
 msgid "Inherit"
-msgstr ""
+msgstr "Overtag"
 
 #: choices.py:280
 msgid "On"
-msgstr ""
+msgstr "Til"
 
 #: choices.py:281 choices.py:286
 msgid "Off"
-msgstr ""
+msgstr "Fra"
 
 #: choices.py:287
 msgid "lzjb (recommended)"
@@ -435,7 +433,7 @@ msgstr "Adgangskode"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
 msgid "Password confirmation"
-msgstr ""
+msgstr "Adgangskode bekræftelse"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
@@ -452,7 +450,7 @@ msgstr "Deaktiver logins"
 
 #: account/forms.py:205
 msgid "Primary Group"
-msgstr ""
+msgstr "Primær gruppe"
 
 #: account/forms.py:234
 msgid "A user with that username already exists."
@@ -507,149 +505,151 @@ msgstr "Gruppe-id"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "Gruppenavn"
 
 #: account/models.py:47 account/models.py:147 storage/forms.py:92
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:49
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:61
 msgid "Group"
-msgstr ""
+msgstr "Gruppe"
 
 #: account/models.py:61
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Gruppen %s er indbygget og kan ikke slettes!"
 
 #: account/models.py:71
 msgid "User ID"
-msgstr ""
+msgstr "Bruger-id"
 
 #: account/models.py:76
 msgid "User &"
-msgstr ""
+msgstr "Bruger &"
 
 #: account/models.py:83
 msgid "Hashed UNIX password"
-msgstr ""
+msgstr "Hashed UNIX-adgangskode"
 
 #: account/models.py:89
 msgid "Hashed SMB password"
-msgstr ""
+msgstr "Hashed SMB-adgangskode"
 
 #: account/models.py:93
 msgid "Primary Group ID"
-msgstr ""
+msgstr "Primær gruppe-id"
 
 #: account/models.py:98
 msgid "Home Directory"
-msgstr ""
+msgstr "Hjemmemappe"
 
 #: account/models.py:107
 msgid "Full Name"
-msgstr ""
+msgstr "Fuldt navn"
 
 #: account/models.py:114 account/models.py:151 services/models.py:509
 #: templates/services/iscsi_auth.html:6
 msgid "User"
-msgstr ""
+msgstr "Bruger"
 
 #: account/models.py:130
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Brugeren %s er indbygget og kan ikke slettes!"
 
 #: account/nav.py:9 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:85 templates/account/index2.html:7
 msgid "Change Password"
-msgstr ""
+msgstr "Skift adgangskode"
 
 #: account/nav.py:17 templates/account/changeform.html:25
 #: templates/account/index2.html:4
 msgid "Change Admin User"
-msgstr ""
+msgstr "Skift administrator"
 
 #: account/nav.py:33 templates/account/index2.html:2
 msgid "My Account"
-msgstr ""
+msgstr "Min konto"
 
 #: account/nav.py:41
 msgid "View All Users"
-msgstr ""
+msgstr "Vis alle brugere"
 
 #: account/nav.py:54
 msgid "View All Groups"
-msgstr ""
+msgstr "Vis alle grupper"
 
 #: account/views.py:79 account/views.py:94 account/views.py:105
 #: account/views.py:120
 #, python-format
 msgid "%s successfully update."
-msgstr ""
+msgstr "%s blev succesfuldt opdateret."
 
 #: account/views.py:94
 msgid "Admin user"
-msgstr ""
+msgstr "Administrator"
 
 #: account/views.py:105 templates/account/index2.html:13
 msgid "Users"
-msgstr ""
+msgstr "Brugere"
 
 #: account/views.py:120 templates/account/index2.html:10
 msgid "Groups"
-msgstr ""
+msgstr "Grupper"
 
 #: contrib/ext_formwizard.py:170
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
 msgstr ""
+"Vi undskylder, men din formular er udløbet. Fortsæt venligst med at udfylde "
+"formularen på denne side."
 
 #: freeadmin/navtree.py:349
 msgid "Display System Processes"
-msgstr ""
+msgstr "Vis systemprocesser"
 
 #: freeadmin/navtree.py:357 templates/freeadmin/index.html:50
 msgid "Reboot"
-msgstr ""
+msgstr "Start igen"
 
 #: freeadmin/navtree.py:365 templates/freeadmin/index.html:62
 msgid "Shutdown"
-msgstr ""
+msgstr "Luk ned"
 
 #: freeadmin/views.py:103
-#, python-format
+#, fuzzy, python-format
 msgid "%s successfully added."
-msgstr ""
+msgstr "%s blev tilføjet."
 
 #: freeadmin/views.py:262 freeadmin/views.py:264
-#, python-format
+#, fuzzy, python-format
 msgid "%s successfully updated."
-msgstr ""
+msgstr "%s blev opdateret."
 
 #: freeadmin/views.py:309
-#, python-format
+#, fuzzy, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "%s blev slettet."
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
+msgstr "Navneserver 2 skal udfyldes før navneserver 3"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
-msgstr ""
+msgstr "Påkrævet når navneserver 3 benyttes"
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr ""
+msgstr "Navneserver 1 skal udfyldes før navneserver 3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr ""
+msgstr "Navneserver 1 skal udfyldes før navneserver 2"
 
 #: network/forms.py:134
 msgid "Physical NICs in the LAGG"
-msgstr ""
+msgstr "Fysiske netkort i LAGG"
 
 #: network/forms.py:187
 #, python-format
@@ -659,44 +659,44 @@ msgstr ""
 #: network/models.py:42 services/models.py:1077
 #: templates/system/system_info.html:4
 msgid "Hostname"
-msgstr ""
+msgstr "Værtsnavn"
 
 #: network/models.py:47
 msgid "Domain"
-msgstr ""
+msgstr "Domæne"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "IPv4 standard gateway"
 
 #: network/models.py:59
 msgid "IPv6 Default Gateway"
-msgstr ""
+msgstr "IPv6 standard gateway"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "Navneserver 1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "Navneserver 2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "Navneserver 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:18
 #: templates/network/index2.html:3
 msgid "Global Configuration"
-msgstr ""
+msgstr "Globale indstillinger"
 
 #: network/models.py:95
 msgid "NIC"
-msgstr ""
+msgstr "Netkort"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Vælg dit netkort"
 
 #: network/models.py:101
 msgid "Interface Name"
@@ -704,7 +704,7 @@ msgstr ""
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "Navngiv dit netkort"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
@@ -795,7 +795,7 @@ msgstr ""
 
 #: network/models.py:249
 msgid "Physical NIC"
-msgstr ""
+msgstr "Fysisk netkort"
 
 #: network/models.py:259 templates/network/index2.html:7
 msgid "Link Aggregation"

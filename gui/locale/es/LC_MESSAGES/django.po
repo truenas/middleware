@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-22 12:21+0200\n"
-"Last-Translator: raulfg <raulfg3@gmail.com>\n"
+"PO-Revision-Date: 2011-05-23 23:17+0200\n"
+"Last-Translator: nomentero <toni7@telecable.es>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -1387,7 +1387,7 @@ msgstr ""
 
 #: services/models.py:285
 msgid "MaxOutstandingR2T"
-msgstr ""
+msgstr "Máximos R2T Pendientes"
 
 #: services/models.py:286
 msgid "iSCSI initial parameter (16 by default)."
@@ -1451,7 +1451,7 @@ msgstr "LUC puerto TCP (3261 por defecto)"
 
 #: services/models.py:339
 msgid "Controller Authorised netmask"
-msgstr "Mascara del Controlador Autorizado"
+msgstr "Mascara de red del Controlador Autorizado"
 
 #: services/models.py:341
 msgid "Logical Unit Controller Authorised netmask (255.255.255.0 by default)"
@@ -1523,7 +1523,7 @@ msgstr ""
 
 #: services/models.py:420 services/models.py:570
 msgid "Portal Group ID"
-msgstr ""
+msgstr "ID del Portal del Grupo"
 
 #: services/models.py:425 services/models.py:435
 msgid "Portal"
@@ -1644,7 +1644,7 @@ msgstr "ID del Grupo de Autentificación"
 
 #: services/models.py:598
 msgid "Queue Depth"
-msgstr ""
+msgstr "Profundidad de Cola "
 
 #: services/models.py:599
 msgid ""
@@ -1672,7 +1672,7 @@ msgstr "Destino"
 
 #: services/models.py:624
 msgid "Target this extent belongs to"
-msgstr ""
+msgstr "el objetivo para esta medida es de"
 
 #: services/models.py:632
 msgid "Target / Extent"
@@ -1680,7 +1680,7 @@ msgstr ""
 
 #: services/models.py:647
 msgid "Provider"
-msgstr "Preveedor"
+msgstr "Proveedor"
 
 #: services/models.py:651
 msgid "Domain name"
@@ -1696,7 +1696,7 @@ msgstr ""
 
 #: services/models.py:665
 msgid "Update period"
-msgstr ""
+msgstr "Período de actualizacion"
 
 #: services/models.py:667
 msgid "Time in milliseconds"
@@ -1704,7 +1704,7 @@ msgstr "Tiempo en milisegundos"
 
 #: services/models.py:671
 msgid "Forced update period"
-msgstr ""
+msgstr "Forzar período de actualización"
 
 #: services/models.py:677 services/models.py:711 services/models.py:743
 msgid "These parameters will be added to global settings in inadyn.conf."
@@ -2162,11 +2162,11 @@ msgstr "Version del windows donde Active Directory (AD) esta corriendo"
 
 #: services/models.py:1053
 msgid "Service Principal Name"
-msgstr ""
+msgstr "Nombre principal de servicio"
 
 #: services/models.py:1054
 msgid "Service Principal Name, eg service/account."
-msgstr ""
+msgstr "Nombre principal de servicio,por ejemplo,servicio/cuenta."
 
 #: services/models.py:1058
 msgid "Service Principal Name Password"
@@ -2217,14 +2217,16 @@ msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
+"El nombre completo con el que enlazar con el servidor de directorio, por "
+"ejemplo, cn=admin,dc=prueba, dc =org"
 
 #: services/models.py:1097
 msgid "Root bind password"
-msgstr ""
+msgstr "Contraseña de root obligatoria"
 
 #: services/models.py:1099
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "Las credenciales con las que se unen"
 
 #: services/models.py:1104
 msgid "Password Encryption"
@@ -2292,11 +2294,11 @@ msgstr "Este parametro especifica como usar SSL/TLS; Ej: on / off / start_tls"
 
 #: services/models.py:1138
 msgid "Self signed certificate"
-msgstr ""
+msgstr "Certificado autofirmado"
 
 #: services/models.py:1140
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "Coloque el contenido de su archivo Certificado autofirmado aquí "
 
 #: services/models.py:1144
 msgid "Auxillary Parameters"
@@ -2313,7 +2315,7 @@ msgstr "LDAP"
 
 #: services/nav.py:10
 msgid "Control Services"
-msgstr ""
+msgstr "Control de Servicios"
 
 #: sharing/forms.py:102 sharing/models.py:243
 msgid "Maproot User"
@@ -2333,7 +2335,7 @@ msgstr ""
 
 #: sharing/forms.py:176
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "El campo no es una dirección IP válida o de la red"
 
 #: sharing/forms.py:182
 #, python-format
@@ -2366,15 +2368,15 @@ msgstr "Nombre"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
-msgstr ""
+msgstr "Exportación de sólo lectura"
 
 #: sharing/models.py:53
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "Navegable para clientes de red"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
-msgstr ""
+msgstr "Permisos Heredados"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
@@ -2445,7 +2447,7 @@ msgstr ""
 
 #: sharing/models.py:107
 msgid "Share Comment"
-msgstr ""
+msgstr "Comentario del recurso compartido"
 
 #: sharing/models.py:110 sharing/models.py:222
 msgid "Volume Path"
@@ -2587,7 +2589,7 @@ msgstr ""
 
 #: sharing/models.py:173
 msgid "Windows File Names"
-msgstr ""
+msgstr "Nombres de archivo Windows "
 
 #: sharing/models.py:174
 msgid ""
@@ -2610,17 +2612,19 @@ msgstr ""
 
 #: sharing/models.py:181
 msgid "Zero Device Numbers"
-msgstr ""
+msgstr "Cero números de dispositivo"
 
 #: sharing/models.py:182
 msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
 msgstr ""
+"Utilice siempre 0 para el número de dispositivo, ayuda cuando el número de "
+"dispositivo no es constante a través de un reinicio, cluster, ..."
 
 #: sharing/models.py:185
 msgid "Disable File ID"
-msgstr ""
+msgstr "Deshabilitar ID de Archivo"
 
 #: sharing/models.py:186
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
@@ -2628,7 +2632,7 @@ msgstr ""
 
 #: sharing/models.py:189
 msgid "Disable :hex Names"
-msgstr ""
+msgstr "Desactivar: Nombres:hex"
 
 #: sharing/models.py:190
 msgid ""
@@ -2824,11 +2828,11 @@ msgstr "Nivel de compresion"
 
 #: storage/forms.py:609 storage/forms.py:661 storage/forms.py:718
 msgid "Enable atime"
-msgstr ""
+msgstr "Habilitar un tiempo"
 
 #: storage/forms.py:610 storage/forms.py:662 storage/forms.py:719
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "Cuota para este conjunto de datos"
 
 #: storage/forms.py:610 storage/forms.py:611 storage/forms.py:662
 #: storage/forms.py:663 storage/forms.py:719
@@ -2841,7 +2845,7 @@ msgstr ""
 
 #: storage/forms.py:612 storage/forms.py:664 storage/forms.py:720
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "Espacio reservado para este conjunto de datos"
 
 #: storage/forms.py:612 storage/forms.py:613 storage/forms.py:664
 #: storage/forms.py:665 storage/forms.py:720
@@ -2857,22 +2861,26 @@ msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
 msgstr ""
+"Nombres de conjunto de datos debe comenzar con un carácter alfanumérico y "
+"sólo podrán contener (-), (_), (:) y (.)."
 
 #: storage/forms.py:633
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "Usted ya tiene un conjunto de datos con el mismo nombre"
 
 #: storage/forms.py:640 storage/forms.py:697 storage/forms.py:741
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
 msgstr ""
+"Introduzca el número de positivos (opcionalmente con el sufijo M, G, T), o, "
+"0"
 
 #: storage/forms.py:756
 msgid "Owner (user)"
-msgstr "Propietario (Usuario)"
+msgstr "Propietario (usuario)"
 
 #: storage/forms.py:759
 msgid "Owner (group)"
-msgstr "Propietario (Grupo)"
+msgstr "Propietario (grupo)"
 
 #: storage/forms.py:761
 msgid "Mode"
@@ -2884,15 +2892,15 @@ msgstr "Establecer los permisos recursivamente"
 
 #: storage/forms.py:846
 msgid "At least one day must be chosen"
-msgstr "Almenos un dia debe ser elegido"
+msgstr "Almenos debe ser elegido un dia"
 
 #: storage/forms.py:851
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "Instantánea recursiva"
 
 #: storage/forms.py:852
 msgid "Snapshot Name"
-msgstr ""
+msgstr "Nombre de instantáneas"
 
 #: storage/forms.py:859
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
@@ -2900,35 +2908,35 @@ msgstr ""
 
 #: storage/forms.py:869
 msgid "Invalid prefix"
-msgstr ""
+msgstr "Prefijo inválido"
 
 #: storage/forms.py:873 storage/views.py:436
 msgid "Snapshot"
-msgstr ""
+msgstr "Instantánea"
 
 #: storage/forms.py:874
 msgid "Clone Name (must be on same volume)"
-msgstr ""
+msgstr "Nombre Clon (debe estar en el mismo volumen)"
 
 #: storage/forms.py:887
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr ""
+msgstr "Sólo [a-zA-Z0-9_ /.] autorizada como nombre clon"
 
 #: storage/forms.py:893
 msgid "Clone must be within the same volume"
-msgstr ""
+msgstr "Clon debe estar dentro del mismo volumen"
 
 #: storage/forms.py:960 storage/models.py:212
 msgid "Remote hostname"
-msgstr ""
+msgstr "Nombre de host remoto"
 
 #: storage/forms.py:961 storage/models.py:216
 msgid "Remote hostkey"
-msgstr ""
+msgstr "Clave del servidor remoto"
 
 #: storage/models.py:49
 msgid "File System Type"
-msgstr ""
+msgstr "Tipo de archivo del sistema"
 
 #: storage/models.py:52 storage/models.py:77 storage/views.py:88
 #: storage/views.py:116 storage/views.py:139 templates/storage/volumes.html:59
@@ -2969,7 +2977,7 @@ msgstr "Opciones extra de S.M.A.R.T."
 
 #: storage/models.py:133
 msgid "Group Membership"
-msgstr ""
+msgstr "Pertenencia a grupos"
 
 #: storage/models.py:134
 msgid "The disk group containing this disk"

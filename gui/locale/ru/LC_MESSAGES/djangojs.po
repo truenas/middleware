@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:22-0700\n"
-"PO-Revision-Date: 2011-05-21 11:40+0200\n"
-"Last-Translator: BEM <vl_bem@bk.ru>\n"
+"PO-Revision-Date: 2011-05-23 12:02+0200\n"
+"Last-Translator: xRaider <xraiderus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -53,11 +53,11 @@ msgstr "Планировщик Cron"
 
 #: media/lib/js/freeadmin.js:398
 msgid "Edit Disk"
-msgstr ""
+msgstr "Редактирование диска"
 
 #: media/lib/js/freeadmin.js:402
 msgid "Replace"
-msgstr ""
+msgstr "Заменить"
 
 #: media/lib/js/freeadmin.js:403
 msgid "Disk Replacement"
@@ -69,11 +69,11 @@ msgstr "Отсоединить"
 
 #: media/lib/js/freeadmin.js:408
 msgid "Disk Detach"
-msgstr ""
+msgstr "Отсоединить диск"
 
 #: media/lib/js/freeadmin.js:594
 msgid "Some error ocurried!"
-msgstr ""
+msgstr "Произошла ошибка!"
 
 #: media/lib/js/freeadmin/form/Cron.js:43
 msgid "Every"
@@ -81,8 +81,8 @@ msgstr "Каждый"
 
 #: media/lib/js/freeadmin/form/Cron.js:51
 msgid "Each selected"
-msgstr ""
+msgstr "Каждый выбранный"
 
 #: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
-msgstr ""
+msgstr "Каждый номер"

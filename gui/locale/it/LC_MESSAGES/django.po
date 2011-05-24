@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:37-0700\n"
-"PO-Revision-Date: 2011-05-23 11:00+0200\n"
-"Last-Translator: bedoz <bedoz@email.it>\n"
+"PO-Revision-Date: 2011-05-23 11:48+0200\n"
+"Last-Translator: dannyb78 <dannyb78@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -2109,13 +2109,12 @@ msgid "Allow TCP Port Forwarding"
 msgstr "Consente l'inoltro della Porta TCP (TCP Port Forwarding)"
 
 #: services/models.py:955
-#, fuzzy
 msgid "Compress Connections"
 msgstr "Connessioni compresse"
 
 #: services/models.py:958
 msgid "Host Private Key"
-msgstr ""
+msgstr "Chiave Privata Host"
 
 #: services/models.py:960
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
@@ -2192,28 +2191,29 @@ msgstr "La versione di Microsoft Windows su cui è attivo Active Directory."
 
 #: services/models.py:1053
 msgid "Service Principal Name"
-msgstr ""
+msgstr "Nome Principale del Servizio"
 
 #: services/models.py:1054
 msgid "Service Principal Name, eg service/account."
-msgstr ""
+msgstr "Nome Principale del Servizio, Es. servizio/account."
 
 #: services/models.py:1058
 msgid "Service Principal Name Password"
-msgstr ""
+msgstr "Password Nome principale del servizio"
 
 #: services/models.py:1059
 msgid "Password of the Service Principal Name account."
-msgstr ""
+msgstr "Password dell'account nome principale di servizio."
 
 #: services/models.py:1063
 msgid "Kerberos Keytab File"
-msgstr ""
+msgstr "Kerberos keytab file"
 
 #: services/models.py:1064
 msgid ""
 "The kerberos keytab file that was generated on the Active Directory server."
 msgstr ""
+"Il Kerberos keytab file che è stato generato sul server Active Directory."
 
 #: services/models.py:1068 templates/services/index2.html:18
 msgid "Active Directory"
@@ -2293,86 +2293,94 @@ msgstr ""
 
 #: services/models.py:1121
 msgid "Password Suffix"
-msgstr ""
+msgstr "Password Suffisso"
 
 #: services/models.py:1123
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
+"Questo parametro indica il suffisso che viene utilizzato per le password, "
+"quando questi vengono aggiunti alla directory LDAP, ad esempio, ou = "
+"password"
 
 #: services/models.py:1127
 msgid "Machine Suffix"
-msgstr ""
+msgstr "Macchina Suffisso"
 
 #: services/models.py:1129
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
+"Questo parametro indica il suffisso che viene utilizzato per le macchine, "
+"quando questi vengono aggiunti alla directory LDAP, ad esempio, ou = "
+"Computers"
 
 #: services/models.py:1133
 msgid "Turn on/off TLS"
-msgstr ""
+msgstr "Accendere / spegnere TLS"
 
 #: services/models.py:1135
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
 msgstr ""
+"Questo parametro specifica se utilizzare SSL / TLS, ad esempio, on / off / "
+"start_tls"
 
 #: services/models.py:1138
 msgid "Self signed certificate"
-msgstr ""
+msgstr "Certificato autofirmato"
 
 #: services/models.py:1140
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "Inserire il contenuto del certificato autofirmato qui."
 
 #: services/models.py:1144
 msgid "Auxillary Parameters"
-msgstr ""
+msgstr "Parametri ausiliari"
 
 #: services/models.py:1146
 msgid "These parameters are added to ldap.conf."
-msgstr ""
+msgstr "Questi parametri vengono aggiunti a ldap.conf."
 
 #: services/models.py:1150 services/models.py:1151
 #: templates/services/index2.html:64
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/nav.py:10
 msgid "Control Services"
-msgstr ""
+msgstr "Servizi di controllo"
 
 #: sharing/forms.py:102 sharing/models.py:243
 msgid "Maproot User"
-msgstr ""
+msgstr "Utente Maproot"
 
 #: sharing/forms.py:107 sharing/models.py:251
 msgid "Maproot Group"
-msgstr ""
+msgstr "Gruppo Maproot"
 
 #: sharing/forms.py:112 sharing/models.py:259
 msgid "Mapall User"
-msgstr ""
+msgstr "Utente Mapall"
 
 #: sharing/forms.py:117 sharing/models.py:267
 msgid "Mapall Group"
-msgstr ""
+msgstr "Gruppo Mapall"
 
 #: sharing/forms.py:176
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "Il campo non è un indirizzo IP valido o rete valida"
 
 #: sharing/forms.py:182
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr "L'IP '%s' non è valido."
 
 #: sharing/forms.py:206 sharing/forms.py:214 storage/forms.py:805
 #, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr "Il gruppo %s non è valido."
 
 #: sharing/forms.py:226
 msgid "Maproot group requires Maproot user"
@@ -2391,7 +2399,7 @@ msgstr ""
 #: templates/network/interface.html:6 templates/network/summary.html:5
 #: templates/sharing/apple.html:13 templates/sharing/windows.html:13
 msgid "Name"
-msgstr ""
+msgstr "Nome"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
@@ -2399,31 +2407,31 @@ msgstr ""
 
 #: sharing/models.py:53
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "Navigabile dai client di rete"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
-msgstr ""
+msgstr "Eredita Permessi"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "Esporta Cestino"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr ""
+msgstr "Mostra files nascosti"
 
 #: sharing/models.py:67
 msgid "Allow Guest Access"
-msgstr ""
+msgstr "Abilita Accesso Ospite"
 
 #: sharing/models.py:69
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Abilita solo accesso Ospite"
 
 #: sharing/models.py:73
 msgid "Hosts Allow"
-msgstr ""
+msgstr "Hosts Abilitati"
 
 #: sharing/models.py:74
 msgid ""
@@ -2431,10 +2439,14 @@ msgid ""
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
 msgstr ""
+"Questa opzione è una lista di Hosts, separati da una virgola, uno spazio o "
+"una tablatura, ai quali è permesso accedere alla risorsa condivisa. E' "
+"possibile specificare gli Hosts per nome o indirizzo IP. Lasciare il campo "
+"vuoto per utilizzare le impostazioni di default"
 
 #: sharing/models.py:79
 msgid "Hosts Deny"
-msgstr ""
+msgstr "Hosts Bloccati"
 
 #: sharing/models.py:80
 msgid ""
@@ -2445,18 +2457,26 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
 msgstr ""
+"Questa opzione è una lista di Hosts, separati da una virgola, uno spazio o "
+"una tablatura, ai quali NON è permesso accedere alla risorsa condivisa. In "
+"caso di conflitto la lista Hosts Abilitati ha precedenza. Per disabilitare "
+"per dafault tutti gli Host utilizzare la keyword ALL (o la netmask "
+"0.0.0.0/0) quindi specificare gli Hosts Abilitati nell'apposita lista. E' "
+"possibile specificare gli Hosts per nome o indirizzo IP. Lasciare il campo "
+"vuoto per utilizzare le impostazioni di default"
 
 #: sharing/models.py:84
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "Parametri ausiliari"
 
 #: sharing/models.py:86
 msgid "These parameters are added to [Share] section of smb.conf"
 msgstr ""
+"Questi parametri saranno aggiunti alla sezione [share] del file smb.conf"
 
 #: sharing/models.py:92
 msgid "Windows Share"
-msgstr ""
+msgstr "Condivisione Windows"
 
 #: sharing/models.py:103
 msgid ""

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-23 11:00+0200\n"
+"PO-Revision-Date: 2011-05-23 11:33+0200\n"
 "Last-Translator: wyrich <wyrich@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -349,11 +349,11 @@ msgstr "继承"
 
 #: choices.py:280
 msgid "On"
-msgstr "打开"
+msgstr "开"
 
 #: choices.py:281 choices.py:286
 msgid "Off"
-msgstr "关闭"
+msgstr "关"
 
 #: choices.py:287
 msgid "lzjb (recommended)"
@@ -434,7 +434,7 @@ msgstr "密码"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
 msgid "Password confirmation"
-msgstr "密码确认"
+msgstr "确认密码"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
@@ -443,7 +443,7 @@ msgstr "请再次输入密码以供验证。"
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
 msgid "Shell"
-msgstr ""
+msgstr "Shell"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
@@ -474,7 +474,7 @@ msgstr "此栏目必填"
 
 #: account/forms.py:418
 msgid "Member users"
-msgstr ""
+msgstr "群组成员"
 
 #: account/forms.py:436
 msgid "Auxiliary groups"
@@ -501,7 +501,7 @@ msgstr "您输入的旧密码不对，请重新输入。"
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr "用户组编号"
+msgstr "用户组ID"
 
 #: account/models.py:41
 msgid "Group Name"
@@ -520,7 +520,7 @@ msgstr "用户组 %s 是系统默认组不可以删除！"
 
 #: account/models.py:71
 msgid "User ID"
-msgstr "用户编号"
+msgstr "用户ID"
 
 #: account/models.py:76
 msgid "User &"
@@ -528,19 +528,19 @@ msgstr "用户 &"
 
 #: account/models.py:83
 msgid "Hashed UNIX password"
-msgstr "UNIX密码的哈希值（Hash）"
+msgstr "UNIX 密码的 Hash值"
 
 #: account/models.py:89
 msgid "Hashed SMB password"
-msgstr "SMB密码的哈希值（Hash）"
+msgstr "SMB密码的Hash值"
 
 #: account/models.py:93
 msgid "Primary Group ID"
-msgstr "首要的用户组编号"
+msgstr "首要的用户组ID"
 
 #: account/models.py:98
 msgid "Home Directory"
-msgstr ""
+msgstr "主文件夹"
 
 #: account/models.py:107
 msgid "Full Name"
@@ -706,7 +706,7 @@ msgstr "为网卡命名"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
-msgstr "使用DHCP获得"
+msgstr "DHCP"
 
 #: network/models.py:107
 msgid ""
@@ -754,7 +754,7 @@ msgstr "虚拟接口"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr "接口名称必须是vlanXX（其中XX是数字）"
+msgstr "接口名称必须是vlanXX 其中XX是数字"
 
 #: network/models.py:178 templates/network/lagg_members2.html:5
 #: templates/network/vlan.html:6
@@ -841,7 +841,7 @@ msgstr "查看所有VLAN"
 
 #: network/nav.py:121
 msgid "View All Static Routes"
-msgstr "查看所有的静态路由"
+msgstr "查看所有静态路由"
 
 #: network/views.py:192
 #, python-format
@@ -851,22 +851,22 @@ msgstr "%s 添加成功"
 #: services/forms.py:59 services/forms.py:112 sharing/forms.py:54
 #: sharing/models.py:63
 msgid "Guest Account"
-msgstr ""
+msgstr "访客帐号"
 
 #: services/forms.py:86 services/forms.py:130 services/forms.py:246
 #: sharing/forms.py:82 sharing/forms.py:190 sharing/forms.py:198
 #: storage/forms.py:799
 #, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "用户 %s 无效"
 
 #: services/forms.py:96
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr ""
+msgstr "此字段必需“启用主文件夹浏览”。"
 
 #: services/forms.py:99
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "此字段必需“主目录”。"
 
 #: services/forms.py:145
 msgid "File Permission"
@@ -877,66 +877,61 @@ msgid "Directory Permission"
 msgstr "目录权限"
 
 #: services/forms.py:165
-#, fuzzy
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr "此值应为 0 到 65535 之间（含）。"
+msgstr "此值应为 0 到 65535 之间，包含。"
 
 #: services/forms.py:171 services/forms.py:189
-#, fuzzy
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr "此值应为 0 到 10000 之间（含）。"
+msgstr "此值应为 0 到 10000 之间，包含。"
 
 #: services/forms.py:177 services/forms.py:183
-#, fuzzy
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr "此值应为 0 到 1000 之间（含）。"
+msgstr "此值应为 0 到 1000 之间，包含。"
 
 #: services/forms.py:195
-#, fuzzy
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr "此值应为 1024 到 65535 之间（含）。0表示使用默认值。"
+msgstr "此值应为 1024 到 65535 之间，包含。0表示使用默认值。"
 
 #: services/forms.py:201
-#, fuzzy
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr "此值应为 1024 到 65535 之间（含）。0表示使用默认值。"
+msgstr "此值应为 1024 到 65535 之间，包含。0表示使用默认值。"
 
 #: services/forms.py:220
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "此字段必需匿名登录"
 
 #: services/forms.py:294 services/models.py:514
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
-msgstr ""
+msgstr "加密"
 
 #: services/forms.py:295 services/models.py:515
 msgid "Target side secret."
-msgstr ""
+msgstr "目标端的加密。"
 
 #: services/forms.py:296
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "加密（确认）"
 
 #: services/forms.py:298 services/forms.py:306
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "输入相同的验证码。"
 
 #: services/forms.py:299
 msgid "Initiator Secret"
-msgstr ""
+msgstr "启动器加密"
 
 #: services/forms.py:301 services/models.py:521 services/models.py:526
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr ""
+msgstr "启动器端加密。（相互CHAP身份验证）"
 
 #: services/forms.py:304
 msgid "Initiator Secret (Confirm)"
-msgstr ""
+msgstr "启动器加密（确认）"
 
 #: services/forms.py:313
 msgid "Secret does not match"
-msgstr ""
+msgstr "密码不匹配"
 
 #: services/forms.py:328 services/forms.py:329
 msgid "The peer secret is required if you set a peer user."
@@ -948,39 +943,39 @@ msgstr ""
 
 #: services/forms.py:375
 msgid "LUN already exists in the same target."
-msgstr ""
+msgstr "LUN已经存在于同一个目标。"
 
 #: services/forms.py:384 services/models.py:354
 msgid "Controller Auth Group"
-msgstr ""
+msgstr "控制器认证群组"
 
 #: services/forms.py:385 services/models.py:355
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
-msgstr ""
+msgstr "istgtcontrol正确的用户可以访问特定的认证和加密群组目标。"
 
 #: services/forms.py:386 services/models.py:248
 msgid "Discovery Auth Group"
-msgstr ""
+msgstr "发现认证群组"
 
 #: services/forms.py:413
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr ""
+msgstr "该值必须介于 %(start)d 和 %(end)d 之间，包含。"
 
 #: services/forms.py:421
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutal."
-msgstr ""
+msgstr "此字段必需，如果发现方法设置为CHAP或相互CHAP。"
 
 #: services/forms.py:502 services/forms.py:530
 msgid "You need to specify a filepath, not a directory."
-msgstr ""
+msgstr "您需要指定一个文件路径，而不是一个文件夹。"
 
 #: services/forms.py:506 services/forms.py:534
 msgid "You need to specify a file inside your volume/dataset."
-msgstr ""
+msgstr "你需要指定一个卷/数据集。"
 
 #: services/forms.py:510 services/forms.py:538
 msgid ""
@@ -990,29 +985,29 @@ msgstr ""
 #: services/forms.py:552
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
-msgstr ""
+msgstr "这个值可以是一个字节大小，也可以以KB, MB, GB, TB后缀"
 
 #: services/forms.py:571
 msgid "Disk device"
-msgstr ""
+msgstr "磁盘设备"
 
 #: services/forms.py:658
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr ""
+msgstr "您的门户群组ID不能大于 %d"
 
 #: services/forms.py:678
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr ""
+msgstr "您的群组ID不能大于 %d"
 
 #: services/forms.py:685
 msgid "Authentication Group number"
-msgstr ""
+msgstr "认证群组号"
 
 #: services/models.py:41
 msgid "Service"
-msgstr ""
+msgstr "服务"
 
 #: services/models.py:42
 msgid "Name of Service, should be auto-generated at build time"

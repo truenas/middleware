@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-22 22:43+0200\n"
-"Last-Translator: Simor <batio3pzt@aol.com>\n"
+"PO-Revision-Date: 2011-05-23 23:13+0200\n"
+"Last-Translator: yenigul <ismail.yenigul@endersys.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,6 @@ msgstr ""
 "X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
-#, fuzzy
 msgid "Plain"
 msgstr "Düz"
 
@@ -48,77 +47,62 @@ msgid "Auto"
 msgstr "Otomatik"
 
 #: choices.py:54
-#, fuzzy
 msgid "PIO0"
 msgstr "PIO0"
 
 #: choices.py:55
-#, fuzzy
 msgid "PIO1"
 msgstr "PIO1"
 
 #: choices.py:56
-#, fuzzy
 msgid "PIO2"
 msgstr "PIO2"
 
 #: choices.py:57
-#, fuzzy
 msgid "PIO3"
 msgstr "PIO3"
 
 #: choices.py:58
-#, fuzzy
 msgid "PIO4"
 msgstr "PIO4"
 
 #: choices.py:59
-#, fuzzy
 msgid "WDMA0"
 msgstr "WDMA0"
 
 #: choices.py:60
-#, fuzzy
 msgid "WDMA1"
 msgstr "WDMA1"
 
 #: choices.py:61
-#, fuzzy
 msgid "WDMA2"
 msgstr "WDMA2"
 
 #: choices.py:62
-#, fuzzy
 msgid "UDMA-16"
 msgstr "UDMA-16"
 
 #: choices.py:63
-#, fuzzy
 msgid "UDMA-33"
 msgstr "UDMA-33"
 
 #: choices.py:64
-#, fuzzy
 msgid "UDMA-66"
 msgstr "UDMA-66"
 
 #: choices.py:65
-#, fuzzy
 msgid "UDMA-100"
 msgstr "UDMA-100"
 
 #: choices.py:66
-#, fuzzy
 msgid "UDMA-133"
-msgstr "UDMA-133"
+msgstr "UDMA-133-------------"
 
 #: choices.py:67
-#, fuzzy
 msgid "SATA 1.5Gbit/s"
-msgstr "SATA 1.5Gbit/s"
+msgstr "SATA 1.5Gbit/s`"
 
 #: choices.py:68
-#, fuzzy
 msgid "SATA 3.0Gbit/s"
 msgstr "SATA 3.0Gbit/s"
 
@@ -137,7 +121,7 @@ msgstr "Seviye"
 
 #: choices.py:87
 msgid "Minimum power usage with Standby (spindown)"
-msgstr "Bekleme konumlu en az güç tüketimi (disk dönüsü durur) "
+msgstr "Bekleme konumlu en az güç tüketimi (disk dönüşü durur) "
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
@@ -145,19 +129,19 @@ msgstr "Bekleme konumlu orta derece güç tüketimi"
 
 #: choices.py:90
 msgid "Minimum power usgae without Standby (no spindown)"
-msgstr "Bekleme konumsuz en az guc tuketimi (disk donusu durmaz)"
+msgstr "Beklemede olmadan en az güç tuketimi (disk dönüşü durmaz)"
 
 #: choices.py:91
 msgid "Intermediate power usage withot Standby"
-msgstr "Bekleme konumsuz orta derece guc tuketimi"
+msgstr "Bekleme olmadan orta derece güc tüketimi"
 
 #: choices.py:92
 msgid "Maximum performance, maximum power usage"
-msgstr "En yuksek guc tuketimi, en yuksek performans"
+msgstr "En yüksek güç tüketimi, en yüksek performans"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr "En dusuk"
+msgstr "En düşük"
 
 #: choices.py:97
 msgid "Medium"
@@ -165,7 +149,7 @@ msgstr "Orta derece"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr "En yuksek"
+msgstr "En yüksek"
 
 #: choices.py:132 templates/storage/tasks.html:86
 msgid "January"
@@ -319,30 +303,25 @@ msgid "Pass"
 msgstr "Geçiş"
 
 #: choices.py:216
-#, fuzzy
 msgid "read-write"
 msgstr "okuma-yazma"
 
 #: choices.py:217
-#, fuzzy
 msgid "read-only"
 msgstr "salt okunur"
 
 #: choices.py:221 choices.py:227 services/forms.py:392 services/forms.py:394
 #: services/forms.py:692 templates/storage/wizard.html:92
-#, fuzzy
 msgid "None"
 msgstr "Hiçbiri"
 
 #: choices.py:223
-#, fuzzy
 msgid "CHAP"
 msgstr "CHAP"
 
 #: choices.py:224
-#, fuzzy
 msgid "Mutual CHAP"
-msgstr "Karşılıklı CHAP"
+msgstr "Mutual CHAP"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
@@ -365,7 +344,6 @@ msgid "Required"
 msgstr "Mecburi"
 
 #: choices.py:279 choices.py:285
-#, fuzzy
 msgid "Inherit"
 msgstr "Miras"
 
@@ -458,27 +436,23 @@ msgid "Password"
 msgstr "Sifre"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
-#, fuzzy
 msgid "Password confirmation"
 msgstr "Parola doğrulama"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
-#, fuzzy
 msgid "Enter the same password as above, for verification."
-msgstr "Doğrulama için, yukarıda aynı şifreyi girin."
+msgstr "Doğrulama için yukarıdaki parolayı tekrar girin."
 
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
-#, fuzzy
 msgid "Shell"
-msgstr "Shell"
+msgstr "Kabuk"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
 msgstr "Girişleri devre dışı bırak"
 
 #: account/forms.py:205
-#, fuzzy
 msgid "Primary Group"
 msgstr "Birincil Grup"
 
@@ -600,9 +574,8 @@ msgid "My Account"
 msgstr "Hesap"
 
 #: account/nav.py:41
-#, fuzzy
 msgid "View All Users"
-msgstr "Bütün kullanıcıları gor"
+msgstr "Bütün kullanıcıları göster"
 
 #: account/nav.py:54
 msgid "View All Groups"
@@ -635,26 +608,25 @@ msgstr ""
 
 #: freeadmin/navtree.py:349
 msgid "Display System Processes"
-msgstr ""
+msgstr "Sistem Süreçlerini Göster"
 
 #: freeadmin/navtree.py:357 templates/freeadmin/index.html:50
 msgid "Reboot"
 msgstr "Yeniden başlat"
 
 #: freeadmin/navtree.py:365 templates/freeadmin/index.html:62
-#, fuzzy
 msgid "Shutdown"
-msgstr "Kapanma"
+msgstr "Kapat"
 
 #: freeadmin/views.py:103
 #, python-format
 msgid "%s successfully added."
-msgstr ""
+msgstr "%s başarıyla eklendi"
 
 #: freeadmin/views.py:262 freeadmin/views.py:264
 #, python-format
 msgid "%s successfully updated."
-msgstr ""
+msgstr "%s başarıyla yüklendi"
 
 #: freeadmin/views.py:309
 #, python-format

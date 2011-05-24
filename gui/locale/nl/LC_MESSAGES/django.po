@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:34-0700\n"
-"PO-Revision-Date: 2011-05-23 04:26+0200\n"
+"PO-Revision-Date: 2011-05-24 01:20+0200\n"
 "Last-Translator: phutruong <freenas@phutruong.nl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -260,7 +260,6 @@ msgid "No case folding"
 msgstr "Geen hoofd/kleine letter verandering"
 
 #: choices.py:196 choices.py:197
-#, fuzzy
 msgid "Lowercase names in both directions"
 msgstr "Namen zonder hoofdletters in beide richtingen"
 
@@ -343,7 +342,6 @@ msgid "Required"
 msgstr "Vereist"
 
 #: choices.py:279 choices.py:285
-#, fuzzy
 msgid "Inherit"
 msgstr "Erft"
 
@@ -368,12 +366,10 @@ msgid "fastest"
 msgstr "snelste"
 
 #: choices.py:290
-#, fuzzy
 msgid "maximum, slow"
 msgstr "maximum, traag"
 
 #: choices.py:431
-#, fuzzy
 msgid "Hour(s)"
 msgstr "Uur (uren)"
 
@@ -922,7 +918,7 @@ msgstr "Geheim (bevestig)"
 
 #: services/forms.py:298 services/forms.py:306
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "Typ het geheim zoals bovenstaand ter controle"
 
 #: services/forms.py:299
 msgid "Initiator Secret"
@@ -978,7 +974,7 @@ msgstr ""
 
 #: services/forms.py:502 services/forms.py:530
 msgid "You need to specify a filepath, not a directory."
-msgstr "U dient een bestandspad te specificeren, geen map"
+msgstr "U dient een bestandpad te specificeren, geen map"
 
 #: services/forms.py:506 services/forms.py:534
 msgid "You need to specify a file inside your volume/dataset."
@@ -1148,7 +1144,7 @@ msgstr "Deze parameters zijn toegevoegd aan [Global] gedeelte van smb.conf"
 
 #: services/models.py:140
 msgid "Enable home directories"
-msgstr "Home mappen aanzetten"
+msgstr "Thuis mappen aanzetten"
 
 #: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
@@ -1176,7 +1172,7 @@ msgstr ""
 
 #: services/models.py:160
 msgid "Minimal AIO read size"
-msgstr ""
+msgstr "Minimale AIO lees grootte"
 
 #: services/models.py:161
 msgid ""
@@ -1186,7 +1182,7 @@ msgstr ""
 
 #: services/models.py:166
 msgid "Minimal AIO write size"
-msgstr ""
+msgstr "Minimale AIO schijf grootte"
 
 #: services/models.py:167
 msgid ""
@@ -1197,25 +1193,27 @@ msgstr ""
 #: services/models.py:172 services/models.py:173
 #: templates/services/index2.html:29
 msgid "CIFS"
-msgstr ""
+msgstr "CIFS"
 
 #: services/models.py:182
 msgid "Server Name"
-msgstr ""
+msgstr "Server Naam"
 
 #: services/models.py:183
 msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
 msgstr ""
+"Naam van de server. indien dit veld leeg gelaten is zal de standaard "
+"servernaam worden gebruikt"
 
 #: services/models.py:186
 msgid "Guest Access"
-msgstr ""
+msgstr "Gast toegang"
 
 #: services/models.py:187
 msgid "Allows guest access to all apple shares on this box."
-msgstr ""
+msgstr "Sta gasten toegang toe tot alle apple shares op deze Machine"
 
 #: services/models.py:193
 msgid ""
@@ -1228,28 +1226,30 @@ msgstr ""
 
 #: services/models.py:196
 msgid "Local Access"
-msgstr ""
+msgstr "Lokale toegang"
 
 #: services/models.py:197
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
+"Sta gebruikers met lokale accounts toegang tot Apple shares te geven op deze "
+"machine"
 
 #: services/models.py:200
 msgid "Enable DDP"
-msgstr ""
+msgstr "DDP aanzetten"
 
 #: services/models.py:201
 msgid "Enables DDP support for low-level appletalk access."
-msgstr ""
+msgstr "Zet DDP support aan voor low-level appletalk toegang"
 
 #: services/models.py:205 services/models.py:206
 #: templates/services/index2.html:7
 msgid "AFP"
-msgstr ""
+msgstr "AFP"
 
 #: services/models.py:215
 msgid "Number of servers"
-msgstr ""
+msgstr "Aantal servers"
 
 #: services/models.py:216
 msgid ""
@@ -1259,48 +1259,53 @@ msgstr ""
 
 #: services/models.py:220
 msgid "Asynchronous mode"
-msgstr ""
+msgstr "Asynchrone modus"
 
 #: services/models.py:221
 msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
+"Zet Asynchrone modus aan, welke zal helpen om bij snelheden boven gigabit "
+"netwerk snelheid."
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/index2.html:75
 msgid "NFS"
-msgstr ""
+msgstr "NFS"
 
 #: services/models.py:236
 msgid "Base Name"
-msgstr ""
+msgstr "Basis Naam"
 
 #: services/models.py:237
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"De basis naam (voorbeeld. iqn.2007-09.jp.ne.peach.istgt, zie RFC 3720 en "
+"3721 voor meer informatie) dit zal worden toegevoegd aan het doel naam wat "
+"niet start met 'iqn'"
 
 #: services/models.py:243
 msgid "Discovery Auth Method"
-msgstr ""
+msgstr "Onderzoek authenticatie methode"
 
 #: services/models.py:255
 msgid "I/O Timeout"
-msgstr ""
+msgstr "I/O wachttijd verlopen"
 
 #: services/models.py:256
 msgid "I/O timeout in seconds (30 by default)."
-msgstr ""
+msgstr "I/O wachttijd verlopen verlopen (30 standaard)"
 
 #: services/models.py:261
 msgid "NOPIN Interval"
-msgstr ""
+msgstr "NOPIN Interval"
 
 #: services/models.py:262
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr ""
+msgstr "NOPIN Interval sturen in seconden (20 standaard)"
 
 #: services/models.py:267
 msgid "Max. sessions"
@@ -1342,7 +1347,7 @@ msgstr ""
 
 #: services/models.py:292
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr ""
+msgstr "iSCSI initialisatie parameter (65536 als standaard)."
 
 #: services/models.py:297
 msgid "Max burst length"
@@ -1358,7 +1363,7 @@ msgstr ""
 
 #: services/models.py:309
 msgid "DefaultTime2Wait"
-msgstr ""
+msgstr "Standard wachttijd"
 
 #: services/models.py:310
 msgid "iSCSI initial parameter (2 by default)."
@@ -1904,20 +1909,20 @@ msgstr ""
 
 #: services/models.py:885
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "SSL/TLS aanzetten"
 
 #: services/models.py:890
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "Deze parameters zijn toegevoegd aan proftpd.conf"
 
 #: services/models.py:894 services/models.py:895
 #: templates/services/index2.html:53
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:904
 msgid "Directory"
-msgstr ""
+msgstr "Map"
 
 #: services/models.py:905
 msgid ""
@@ -2114,11 +2119,11 @@ msgstr ""
 
 #: services/models.py:1079
 msgid "The name or IP address of the LDAP server"
-msgstr ""
+msgstr "De naam of IP adres van de LDAP server"
 
 #: services/models.py:1083
 msgid "Base DN"
-msgstr ""
+msgstr "Basis DN"
 
 #: services/models.py:1085
 msgid ""
@@ -3942,16 +3947,16 @@ msgstr "Luister"
 
 #: templates/services/iscsi_portals.html:20
 msgid "Edit Portal"
-msgstr ""
+msgstr "Wijzig Portaal"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Delete Portal"
-msgstr ""
+msgstr "Verwijder Portaal"
 
 #: templates/services/iscsi_portals.html:39
 #: templates/services/iscsi_portals.html:41
 msgid "Add Portal"
-msgstr ""
+msgstr "Voeg Portaal toe"
 
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
@@ -4139,7 +4144,7 @@ msgstr ""
 
 #: templates/storage/replications.html:43
 msgid "No ZFS replication available"
-msgstr ""
+msgstr "Geen ZFS replicatie beschikbaar"
 
 #: templates/storage/snapshot_confirm_rollback2.html:7
 msgid "Are you sure you want to rollback the snapshot to previous state?"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:34-0700\n"
-"PO-Revision-Date: 2011-05-23 00:57+0200\n"
+"PO-Revision-Date: 2011-05-23 20:01+0200\n"
 "Last-Translator: lovro <lovro@oreskovic.me>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hr\n"
@@ -274,11 +274,11 @@ msgstr ""
 
 #: choices.py:203
 msgid "File"
-msgstr ""
+msgstr "Datoteka"
 
 #: choices.py:204
 msgid "Device"
-msgstr ""
+msgstr "Uređaj"
 
 #: choices.py:205
 msgid "ZFS Volume"
@@ -585,15 +585,15 @@ msgstr ""
 
 #: account/views.py:94
 msgid "Admin user"
-msgstr ""
+msgstr "Administrator"
 
 #: account/views.py:105 templates/account/index2.html:13
 msgid "Users"
-msgstr ""
+msgstr "Korisnik"
 
 #: account/views.py:120 templates/account/index2.html:10
 msgid "Groups"
-msgstr ""
+msgstr "Grupe"
 
 #: contrib/ext_formwizard.py:170
 msgid ""
@@ -740,7 +740,7 @@ msgstr ""
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "Postavke"
 
 #: network/models.py:157 network/models.py:158 templates/network/index2.html:5
 msgid "Interfaces"
@@ -1006,7 +1006,7 @@ msgstr ""
 
 #: services/models.py:41
 msgid "Service"
-msgstr ""
+msgstr "Servis"
 
 #: services/models.py:42
 msgid "Name of Service, should be auto-generated at build time"
@@ -1014,7 +1014,7 @@ msgstr ""
 
 #: services/models.py:45
 msgid "Enable Service"
-msgstr ""
+msgstr "Omogući servis"
 
 #: services/models.py:48 services/models.py:49
 #: templates/common/menubar2.html:28 templates/services/index2.html:3
