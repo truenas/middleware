@@ -31,7 +31,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from storage.models import MountPoint as MountPoint 
 from freenasUI import choices
-from freeadmin.models import Model
+from freeadmin.models import Model, UserField, GroupField
 
 mountpoint_limiter = { 'mp_path__startswith': '/mnt/' }
 
@@ -57,7 +57,7 @@ class CIFS_Share(Model):
             verbose_name = _("Export Recycle Bin"))
     cifs_showhiddenfiles = models.BooleanField(
             verbose_name = _("Show Hidden Files"))
-    cifs_guest = models.CharField(
+    cifs_guest = UserField(
             max_length=120, 
             default="www", 
             verbose_name = _("Guest Account"), 
@@ -239,7 +239,7 @@ class NFS_Share(Model):
             help_text = _("Inibit syslog warnings if there are problems with exporting this share.")
             )
 
-    nfs_maproot_user = models.CharField(
+    nfs_maproot_user = UserField(
             verbose_name = _("Maproot User"),
             max_length = 120,
             blank = True,
@@ -247,7 +247,7 @@ class NFS_Share(Model):
             help_text = _("User to map root to")
             )
 
-    nfs_maproot_group = models.CharField(
+    nfs_maproot_group = GroupField(
             verbose_name = _("Maproot Group"),
             max_length = 120,
             blank = True,
@@ -255,7 +255,7 @@ class NFS_Share(Model):
             help_text = _("Group to map root to")
             )
 
-    nfs_mapall_user = models.CharField(
+    nfs_mapall_user = UserField(
             verbose_name = _("Mapall User"),
             max_length = 120,
             blank = True,
@@ -263,7 +263,7 @@ class NFS_Share(Model):
             help_text = _("User to map all users to")
             )
     
-    nfs_mapall_group = models.CharField(
+    nfs_mapall_group = GroupField(
             verbose_name = _("Mapall Group"),
             max_length = 120,
             blank = True,

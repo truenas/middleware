@@ -49,38 +49,8 @@ class MountPointForm(ModelForm):
         model = models.MountPoint
 
 class CIFS_ShareForm(ModelForm):
-    cifs_guest = forms.ChoiceField(choices=(),
-                                       widget=forms.Select(attrs=attrs_dict),
-                                       label=_('Guest Account')
-                                       )
     class Meta:
         model = models.CIFS_Share 
-
-    def __init__(self, *args, **kwargs):
-        #FIXME: Workaround for DOJO not showing select options with blank values
-        if len(args) > 0 and isinstance(args[0], QueryDict):
-            new = args[0].copy()
-            if new.get('cifs_guest', None) == '-----':
-                new['cifs_guest'] = ''
-            args = (new,) + args[1:]
-        super(CIFS_ShareForm, self).__init__(*args, **kwargs)
-        from account.forms import FilteredSelectJSON
-        if len(FreeNAS_Users()) > 500:
-            if len(args) > 0 and isinstance(args[0], QueryDict):
-                self.fields['cifs_guest'].choices = ((args[0]['cifs_guest'],args[0]['cifs_guest']),)
-                self.fields['cifs_guest'].initial= args[0]['cifs_guest']
-            self.fields['cifs_guest'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
-        else:
-            self.fields['cifs_guest'].widget = widgets.FilteringSelect()
-            self.fields['cifs_guest'].choices = (
-                                                 (x.bsdusr_username, x.bsdusr_username)
-                                                      for x in FreeNAS_Users()
-                                                )
-    def clean_cifs_guest(self):
-        user = self.cleaned_data['cifs_guest']
-        if FreeNAS_User(user) == None:
-            raise forms.ValidationError(_("The user %s is not valid.") % user)
-        return user
     def save(self):
         ret = super(CIFS_ShareForm, self).save()
         notifier().reload("cifs")
@@ -97,70 +67,6 @@ class AFP_ShareForm(ModelForm):
 class NFS_ShareForm(ModelForm):
     class Meta:
         model = models.NFS_Share 
-    nfs_maproot_user = forms.ChoiceField(choices=(),
-                                         widget = forms.Select(attrs=attrs_dict),
-                                         label = _("Maproot User"),
-                                         required = False,
-                                         )
-    nfs_maproot_group = forms.ChoiceField(choices=(),
-                                         widget = forms.Select(attrs=attrs_dict),
-                                         label = _("Maproot Group"),
-                                         required = False,
-                                         )
-    nfs_mapall_user = forms.ChoiceField(choices=(),
-                                         widget = forms.Select(attrs=attrs_dict),
-                                         label = _("Mapall User"),
-                                         required = False,
-                                         )
-    nfs_mapall_group = forms.ChoiceField(choices=(),
-                                         widget = forms.Select(attrs=attrs_dict),
-                                         label = _("Mapall Group"),
-                                         required = False,
-                                         )
-
-    def __init__(self, *args, **kwargs):
-        super(NFS_ShareForm, self).__init__(*args, **kwargs)
-
-        from account.forms import FilteredSelectJSON
-        if len(FreeNAS_Users()) > 500:
-            if len(args) > 0 and isinstance(args[0], QueryDict):
-                self.fields['nfs_maproot_user'].choices = ((args[0]['nfs_maproot_user'],args[0]['nfs_maproot_user']),)
-                self.fields['nfs_maproot_user'].initial = args[0]['nfs_maproot_user']
-                self.fields['nfs_mapall_user'].choices = ((args[0]['nfs_mapall_user'],args[0]['nfs_mapall_user']),)
-                self.fields['nfs_mapall_user'].initial = args[0]['nfs_mapall_user']
-            self.fields['nfs_maproot_user'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
-            self.fields['nfs_mapall_user'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
-        else:
-            self.userlist = []
-            self.userlist.append(('-----', 'N/A'))
-            for a in list((x.bsdusr_username, x.bsdusr_username)
-                          for x in FreeNAS_Users()):
-                self.userlist.append(a)
-            self.fields['nfs_maproot_user'].widget = widgets.FilteringSelect()
-            self.fields['nfs_mapall_user'].widget = widgets.FilteringSelect()
-            self.fields['nfs_maproot_user'].choices = self.userlist
-            self.fields['nfs_mapall_user'].choices = self.userlist
-
-        if len(FreeNAS_Groups()) > 500:
-            if len(args) > 0 and isinstance(args[0], QueryDict):
-                self.fields['nfs_maproot_group'].choices = ((args[0]['nfs_maproot_group'],args[0]['nfs_maproot_group']),)
-                self.fields['nfs_maproot_group'].initial = args[0]['nfs_maproot_group']
-                self.fields['nfs_mapall_group'].choices = ((args[0]['nfs_mapall_group'],args[0]['nfs_mapall_group']),)
-                self.fields['nfs_mapall_group'].initial = args[0]['nfs_mapall_group']
-            self.fields['nfs_maproot_group'].widget = FilteredSelectJSON(url=reverse("account_bsdgroup_json"))
-            self.fields['nfs_mapall_group'].widget = FilteredSelectJSON(url=reverse("account_bsdgroup_json"))
-        else:
-            self.grouplist = []
-            self.grouplist.append(('-----', 'N/A'))
-            for a in list((x.bsdgrp_group, x.bsdgrp_group)
-                          for x in FreeNAS_Groups()):
-                self.grouplist.append(a)
-
-            self.fields['nfs_maproot_group'].widget = widgets.FilteringSelect()
-            self.fields['nfs_mapall_group'].widget = widgets.FilteringSelect()
-            self.fields['nfs_maproot_group'].choices = self.grouplist
-            self.fields['nfs_mapall_group'].choices = self.grouplist
-
     def clean_nfs_network(self):
         net = self.cleaned_data['nfs_network']
         net = re.sub(r'\s{2,}', ' ', net).strip()
@@ -182,40 +88,7 @@ class NFS_ShareForm(ModelForm):
                     raise forms.ValidationError(_("The IP '%s' is not valid.") % ip)
         return net
 
-    def clean_nfs_mapall_user(self):
-        user = self.cleaned_data['nfs_mapall_user']
-        if user in ('','-----'):
-            return None
-        if FreeNAS_User(user) == None:
-            raise forms.ValidationError(_("The user %s is not valid.") % user)
-        return user
-
-    def clean_nfs_maproot_user(self):
-        user = self.cleaned_data['nfs_maproot_user']
-        if user in ('','-----'):
-            return None
-        if FreeNAS_User(user) == None:
-            raise forms.ValidationError(_("The user %s is not valid.") % user)
-        return user
-
-    def clean_nfs_mapall_group(self):
-        group = self.cleaned_data['nfs_mapall_group']
-        if group in ('','-----'):
-            return None
-        if FreeNAS_Group(group) == None:
-            raise forms.ValidationError(_("The group %s is not valid.") % group)
-        return group
-
-    def clean_nfs_maproot_group(self):
-        group = self.cleaned_data['nfs_maproot_group']
-        if group in ('','-----'):
-            return None
-        if FreeNAS_Group(group) == None:
-            raise forms.ValidationError(_("The group %s is not valid.") % group)
-        return group
-
     def clean(self):
-
         cdata = self.cleaned_data
         for field in ('nfs_maproot_user', 'nfs_maproot_group', 
                         'nfs_mapall_user', 'nfs_mapall_group'):
