@@ -57,39 +57,53 @@ class DirectoryBrowser(widgets.Widget):
         context = dict(name=name, value=value, attrs=attrs)
         return mark_safe(render_to_string('freeadmin/directory_browser.html', context))
 
-class UserField(forms.CharField):
+class UserField(forms.ChoiceField):
     def __init__(self, *args, **kwargs):
         kwargs.update({'widget': widgets.Select()})
         super(UserField, self).__init__(*args, **kwargs)
-        if not len(FreeNAS_Users()) > 500:
+        if len(FreeNAS_Users()) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
             self.widget = FilteredSelectJSON(url=("account_bsduser_json",))
         else:
-            self.widget = widgets.FilteringSelect()
-            self.choices = ((x.bsdusr_username, x.bsdusr_username)
+            ulist = []
+            if not self.required:
+                ulist.append(('-----', 'N/A'))
+            [ulist.append((x.bsdusr_username, x.bsdusr_username))
                                                       for x in FreeNAS_Users()
-                                                     )
+                                                     ]
+                
+            self.widget = widgets.FilteringSelect()
+            self.choices = ulist
+
     def clean(self, user):
+        if not self.required and user in ('-----',''):
+            return None
         if FreeNAS_User(user) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user
 
-class GroupField(forms.CharField):
+class GroupField(forms.ChoiceField):
     def __init__(self, *args, **kwargs):
         kwargs.update({'widget': widgets.Select()})
         super(GroupField, self).__init__(*args, **kwargs)
-        if not len(FreeNAS_Groups()) > 500:
+        if len(FreeNAS_Groups()) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
             self.widget = FilteredSelectJSON(url=("account_bsdgroup_json",))
         else:
-            self.widget = widgets.FilteringSelect()
-            self.choices = ((x.bsdusr_username, x.bsdusr_username)
+            glist = []
+            if not self.required:
+                glist.append(('-----', 'N/A'))
+            [glist.append((x.bsdgrp_group, x.bsdgrp_group))
                                                       for x in FreeNAS_Groups()
-                                                     )
+                                                     ]
+            self.widget = widgets.FilteringSelect()
+            self.choices = glist
 
     def clean(self, group):
+        if not self.required and group in ('-----',''):
+            return None
         if FreeNAS_Group(group) == None:
             raise forms.ValidationError(_("The group %s is not valid.") % group)
         return group
