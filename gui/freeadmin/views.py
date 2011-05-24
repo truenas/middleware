@@ -41,13 +41,14 @@ from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.utils.encoding import smart_unicode, smart_str
 from django.utils.importlib import import_module
+from django.views.defaults import server_error
 
 from freenasUI.common.system import get_freenas_version
 from freeadmin import navtree
 from system.models import Advanced
+from network.models import GlobalConfiguration
 from services.exceptions import ServiceFailed
 from dojango.views import datagrid_list
-from django.views.defaults import server_error
 
 def adminInterface(request, objtype = None):
 
@@ -55,8 +56,14 @@ def adminInterface(request, objtype = None):
         console = Advanced.objects.all().order_by('-id')[0].adv_consolemsg
     except:
         console = False
+    try:
+        hostname = GlobalConfiguration.objects.order_by('-id')[0].gc_hostname
+    except:
+        hostname = None
     return render(request, 'freeadmin/index.html', {
         'consolemsg': console,
+        'hostname': hostname,
+        'freenas_version': get_freenas_version(),
     })
 
 def menu(request, objtype = None):
