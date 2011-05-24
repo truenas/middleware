@@ -31,11 +31,13 @@ from django.forms.util import flatatt
 from django.utils.safestring import mark_safe
 from django.utils.encoding import StrAndUnicode, force_unicode
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext_lazy as _
 
 from dojango.forms.widgets import DojoWidgetMixin
 from dojango import forms
 from dojango.forms import widgets
-from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups
+from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_User, \
+                                         FreeNAS_Groups, FreeNAS_Group
 from account.forms import FilteredSelectJSON
 
 class CronMultiple(DojoWidgetMixin, Widget):
@@ -68,6 +70,10 @@ class UserField(forms.CharField):
             self.choices = ((x.bsdusr_username, x.bsdusr_username)
                                                       for x in FreeNAS_Users()
                                                      )
+    def clean(self, user):
+        if FreeNAS_User(user) == None:
+            raise forms.ValidationError(_("The user %s is not valid.") % user)
+        return user
 
 class GroupField(forms.CharField):
     def __init__(self, *args, **kwargs):
@@ -82,3 +88,8 @@ class GroupField(forms.CharField):
             self.choices = ((x.bsdusr_username, x.bsdusr_username)
                                                       for x in FreeNAS_Groups()
                                                      )
+
+    def clean(self, group):
+        if FreeNAS_Group(group) == None:
+            raise forms.ValidationError(_("The group %s is not valid.") % group)
+        return group
