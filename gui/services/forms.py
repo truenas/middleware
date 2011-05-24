@@ -294,11 +294,13 @@ class RsyncModForm(ModelForm):
                                          widget = forms.Select(attrs=attrs_dict),
                                          label = _("User"),
                                          required = False,
+                                         initial = "nobody",
                                          )
     rsyncmod_group = forms.ChoiceField(choices=(),
                                          widget = forms.Select(attrs=attrs_dict),
                                          label = _("Group"),
                                          required = False,
+                                         initial = "nobody",
                                          )
     def __init__(self, *args, **kwargs):
         super(RsyncModForm, self).__init__(*args, **kwargs)
@@ -306,7 +308,7 @@ class RsyncModForm(ModelForm):
         if len(FreeNAS_Users()) > 500:
             if len(args) > 0 and isinstance(args[0], QueryDict):
                 self.fields['rsyncmod_user'].choices = ((args[0]['rsyncmod_user'],args[0]['rsyncmod_user']),)
-                self.fields['rsyncmod_user'].initial= args[0]['rsyncmod_user']
+                self.fields['rsyncmod_user'].initial = args[0]['rsyncmod_user']
             self.fields['rsyncmod_user'].widget = FilteredSelectJSON(url=reverse("account_bsduser_json"))
         else:
             self.fields['rsyncmod_user'].widget = widgets.FilteringSelect()

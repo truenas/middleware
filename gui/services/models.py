@@ -1183,12 +1183,14 @@ class RsyncMod(Model):
         )
     rsyncmod_user = models.CharField(
         max_length=120,
+        default="nobody",
         verbose_name=_("User"),
         help_text=_("This option specifies the user name that file transfers to and from that module should take place. In combination with the 'Group' option this determines what file permissions are available. Leave this field empty to use default settings"),
         blank=True,
         )
     rsyncmod_group = models.CharField(
         max_length=120,
+        default="nobody",
         verbose_name=_("Group"),
         help_text=_("This option specifies the group name that file transfers to and from that module should take place. Leave this field empty to use default settings"),
         blank=True,
