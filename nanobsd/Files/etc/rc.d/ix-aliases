@@ -1,0 +1,32 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-aliases
+# REQUIRE: FILESYSTEMS
+# BEFORE: mountlate
+
+. /etc/rc.subr
+
+generate_aliases()
+{
+	local IFS=\|
+	local user email
+	cp /conf/base/etc/aliases /etc/aliases
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT bsdusr_username,bsdusr_email FROM account_bsdusers WHERE bsdusr_email != ''" | \
+    while read user email; do
+	    if [ ! -z `egrep "^${user}" /etc/aliases` ]; then
+            sed -E "s/^${user}:.*/${user}: ${email}/" /etc/aliases >> /etc/aliases
+        else
+            echo "${user}: ${email}" >> /etc/aliases
+        fi
+    done
+}
+
+name="ix-aliases"
+start_cmd='generate_aliases'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
