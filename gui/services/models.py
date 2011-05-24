@@ -98,7 +98,7 @@ class CIFS(Model):
             verbose_name=_("Local Master"))
     cifs_srv_timeserver = models.BooleanField(
             verbose_name=_("Time Server for Domain"))
-    cifs_srv_guest = models.CharField(
+    cifs_srv_guest = UserField(
             max_length=120, 
             default = "", 
             verbose_name=_("Guest account"), 
@@ -186,9 +186,9 @@ class AFP(Model):
             verbose_name=_("Guest Access"),
             help_text=_("Allows guest access to all apple shares on this box.")
             )
-    afp_srv_guest_user = models.CharField(
+    afp_srv_guest_user = UserField(
             max_length=120, 
-            default = "", 
+            default = "www", 
             verbose_name=_("Guest account"), 
             help_text=_("Use this option to override the username ('www' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login.")
             )
@@ -912,7 +912,7 @@ class TFTP(Model):
             verbose_name = _("Port"),
             help_text = _("The port to listen to. The default is to listen to the tftp port specified in /etc/services.")
             )
-    tftp_username = models.CharField(
+    tftp_username = UserField(
             max_length=120, 
             default = "", 
             verbose_name = _("Username"), 
