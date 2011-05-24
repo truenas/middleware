@@ -174,10 +174,9 @@ class UserChangeForm(ModelForm):
     username = forms.RegexField(label=_("Username"), max_length=30, regex=r'^[\w.@+-]+$',
         help_text = _("Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."),
         error_messages = {'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
-    email = forms.EmailField(_('E-mail'), required=False)
 
     class Meta:
-        fields = ('username', 'first_name', 'last_name', 'email',)
+        fields = ('username', 'first_name', 'last_name',)
         model = django_User
 
     def __init__(self, *args, **kwargs):

@@ -110,6 +110,10 @@ class bsdUsers(Model):
     bsdusr_builtin = models.BooleanField(
             default=False,
             )
+    bsdusr_email = models.EmailField(
+            verbose_name=_("E-mail"),
+            blank=True
+            )
 
     class Meta:
         verbose_name = _("User")
