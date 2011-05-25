@@ -13,9 +13,9 @@ generate_sysctl_conf()
 	local async
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_async FROM services_nfs ORDER BY id DESC LIMIT 1" | \
 	while read async; do
-		echo "vfs.nfsrv.async=${async}" > /etc/sysctl.conf
+		/sbin/sysctl vfs.nfsrv.async=${async}
 	done
-	cat >> /etc/sysctl.conf << EOF
+	cat | /usr/bin/xargs /sbin/sysctl << EOF
 kern.metadelay=3
 kern.dirdelay=4
 kern.filedelay=5
