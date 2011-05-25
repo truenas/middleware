@@ -1475,6 +1475,16 @@ class notifier:
         conn.commit()
         c.close()
 
+        def uuid_to_name(self, uuid):
+            p1 = self.__pipeopen("gpart list")
+            p1.wait()
+            output = p1.communicate()[0]
+            reg = re.search(r'^Geom name: (?P<name>[a-z0-9]+).*?rawuuid: %s' % uuid, output, re.S|re.I|re.M)
+            if reg:
+                return reg.group("name")
+            else:
+                return None
+
 def usage():
     print ("Usage: %s action command" % argv[0])
     print """\

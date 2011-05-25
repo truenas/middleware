@@ -33,6 +33,7 @@ from django.shortcuts import render_to_response
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import csrf_protect
+from django.http import Http404
 
 from freeadmin.forms import DirectoryBrowser, CronMultiple
 from freenasUI.storage.models import MountPoint

@@ -86,6 +86,10 @@ class Disk(Model):
             max_length=120, 
             verbose_name = _("Name")
             )
+    disk_uuid = models.CharField(
+            max_length=36,
+            verbose_name = _("UUID")
+            )
     disk_disks = models.CharField(
             max_length=120, 
             verbose_name = _("Disks")
