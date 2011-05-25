@@ -208,7 +208,7 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
     class Meta:
         model = models.bsdUsers
         exclude = ('bsdusr_unixhash','bsdusr_smbhash','bsdusr_builtin','bsdusr_group')
-        fields = ('bsdusr_uid', 'bsdusr_username', 'bsdusr_group2', 'bsdusr_home', 'bsdusr_shell', 'bsdusr_full_name')
+        fields = ('bsdusr_uid', 'bsdusr_username', 'bsdusr_group2', 'bsdusr_home', 'bsdusr_shell', 'bsdusr_full_name', 'bsdusr_email', 'bsdusr_password1', 'bsdusr_password2', 'bsdusr_login_disabled')
 
     def __init__(self, *args, **kwargs):
         #FIXME: Workaround for DOJO not showing select options with blank values
