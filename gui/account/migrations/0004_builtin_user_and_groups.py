@@ -19,9 +19,10 @@ class Migration(DataMigration):
         for entry in users:
             user = orm.bsdUsers.objects.create(pk=entry['pk'])
             for field in entry['fields']:
-                if field == 'bsdusr_group':
-                    grp = orm.bsdGroups.objects.get(pk=entry['fields'].get(field))
-                    setattr(user, field, grp)
+                mfield = orm.bsdUsers._meta.get_field(field)
+                if mfield.rel != None:
+                    inst = mfield.rel.to.objects.get(pk=entry['fields'].get(field))
+                    setattr(user, field, inst)
                 else:
                     setattr(user, field, entry['fields'].get(field))
             user.save()
