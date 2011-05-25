@@ -35,6 +35,7 @@ FREENAS_ETC_BASE = "/conf/base/etc"
 FREENAS_RCCONF = os.path.join(FREENAS_ETC_BASE, "rc.conf")
 FREENAS_SYSCTLCONF = os.path.join(FREENAS_ETC_BASE, "sysctl.conf")
 FREENAS_HOSTSALLOW = os.path.join(FREENAS_ETC_BASE, "hosts.allow")
+FREENAS_HOSTS = os.path.join(FREENAS_ETC_BASE, "hosts")
 
 #FREENAS_DBPATH = "/data/freenas-v1.db"
 FREENAS_DBPATH = "/home/john/freenas-v1.db"
@@ -188,6 +189,19 @@ class ConfigParser:
         self.__do_probe(__parent, 1, __d)
         return __d['levels']
 
+    def __set_pairs(self, __parent, __nodemap, __pairs):
+        for __key in __nodemap:
+            __node = self.__getChildNode(__parent, __key)
+            if not __node:
+                continue 
+
+            __value = self.__getChildNodeValue(__node)
+            if not __value:
+                continue
+
+            if __nodemap[__key]:
+                __pairs[__nodemap[__key]] = __value
+
     #
     # XXX WTF??? XXX
     #
@@ -201,20 +215,11 @@ class ConfigParser:
 
         __pairs = {}
         __table = "services_activedirectory"
-        for __key in __nodemap:
-            __node = self.__getChildNode(__parent, __key)
-            if not __node:
-                continue
 
-            __value = self.__getChildNodeValue(__node)
-            if not __value:
-                continue
-
-            if __nodemap[__key]:
-                __pairs[__nodemap[__key]] = __value
+        self.__set_pairs(__parent, __nodemap, __pairs)
 
         if __pairs:
-            self.__sql.do(__table, __pairs) 
+            self.__sql.insert(__table, __pairs) 
 
     #
     # XXX Not sure I got this one right... XXX
@@ -224,20 +229,10 @@ class ConfigParser:
 
         __pairs = {}
         __table = "services_afp"
-        for __key in __nodemap:
-            __node = self.__getChildNode(__parent, __key)
-            if not __node:
-                continue
 
-            __value = self.__getChildNodeValue(__node)
-            if not __value:
-                continue
-
-            if __nodemap[__key]:
-                __pairs[__nodemap[__key]] = __value
-
+        self.__set_pairs(__parent, __nodemap, __pairs)
         if __pairs:
-            self.__sql.do(__table, __pairs) 
+            self.__sql.insert(__table, __pairs) 
 
     #
     # XXX Not implemented XXX
@@ -255,22 +250,11 @@ class ConfigParser:
         __table = "services_cronjob"
         __job_nodes = self.__getChildNodes(__parent, "job")
         for __job_node in __job_nodes:
-
             __pairs = {}
-            for __key in __nodemap:
-                __node = self.__getChildNode(__job_node, __key)
-                if not __node:
-                    continue 
 
-                __value = self.__getChildNodeValue(__node)
-                if not __value:
-                    continue 
-
-                if __nodemap[__key]:
-                    __pairs[__nodemap[__key]] = __value
-
+            self.__set_pairs(__job_node, __nodemap, __pairs)
             if __pairs:
-                self.__sql.do(__table, __pairs)
+                self.__sql.insert(__table, __pairs)
 
     #
     # XXX Not implemented XXX
@@ -298,27 +282,27 @@ class ConfigParser:
 
             __pairs = {}
             __table = "storage_disk"
-            for __key in __nodemap:
-                __node = self.__getChildNode(__disk_node, __key)
-                if not __node:
-                    continue
 
-                __value = self.__getChildNodeValue(__node)
-                if not __value:
-                    continue
-
-                if __nodemap[__key]:
-                    __pairs[__nodemap[__key]] = __value
-           
-            self.__sql.do(__table, __pairs)
+            self.__set_pairs(__disk_node, __nodemap, __pairs)
+            if __pairs:
+                self.__sql.insert(__table, __pairs)
 
     #
     # XXX This needs to be implemented XXX
     #
     def _handle_dynamicdns(self, __parent, __level):
-        __nodemap = {}
+        __nodemap = {'enable':None, 'provider':'ddns_provider',
+            'domainname':'ddns_domain', 'username':'ddns_username',
+            'password':'ddns_password', 'updateperiod':'ddns_updateperiod',
+            'forcedupdateperiod':'ddns_fupdateperiod', 'wildcard':None, 'auxparam':None}
+
         __pairs = {} 
         __table = "services_dynamicdns"
+
+        self.__set_pairs(__parent, __nodemap, __pairs)
+        if __pairs:
+            self.__sql.insert(__table, __pairs)
+             
 
     #
     # XXX Hopefully this is correct XXX
@@ -376,7 +360,7 @@ class ConfigParser:
                     __pairs[__nodemap[__key]] = __value
 
         if __pairs:
-            self.__sql.do(__table, __pairs) 
+            self.__sql.insert(__table, __pairs) 
 
     #
     # XXX This needs to be looked at XXX
@@ -456,7 +440,115 @@ class ConfigParser:
         pass
 
     def _handle_iscsitarget(self, __parent, __level):
-        pass
+
+
+        #
+        # iSCSI tables:
+        #
+        # services_iscsitarget
+        # services_iscsitargetauthcredential
+        # services_iscsitargetauthorizedinitiator
+        # X services_iscsitargetextent
+        # X services_iscsitargetglobalconfiguration
+        # X services_iscsitargetportal
+        # services_iscsitargettoextent
+        #
+
+
+        __table = "services_iscsitargetglobalconfiguration"
+        __iscsi_nodemap = {'enable':None, 'nodebase':'iscsi_basename',
+            'discoveryauthmethod':'iscsi_discoveryauthmethod', 
+            'discoveryauthgroup':'iscsi_discoveryauthgroup', 'timeout':'iscsi_iotimeout',
+            'nopininterval':'iscsi_nopinint', 'maxsessions':'iscsi_maxsesh',
+            'maxconnections':'iscsi_maxconnect', 'firstburstlength':'iscsi_firstburst',
+            'maxburstlength':'iscsi_maxburst', 'maxrecvdatasegmentlength':'iscsi_maxrecdata'}
+        __pairs = {}
+
+        self.__set_pairs(__parent, __iscsi_nodemap, __pairs)
+        if __pairs:
+            self.__sql.insert(__table, __pairs)
+
+
+        __table = "services_iscsitargetportal"
+        __portalgroup_nodemap = {'tag':'iscsi_target_portal_tag',
+            'comment':'iscsi_target_portal_comment', 'portal':'iscsi_target_portal_listen' }
+        __portalgroup_nodes = self.__getChildNodes(__parent, "portalgroup")
+        for __portalgroup_node in __portalgroup_nodes:
+            __pairs = {}
+
+            self.__set_pairs(__portalgroup_node, __portalgroup_nodemap, __pairs)
+            if __pairs:
+                self.__sql.insert(__table, __pairs)
+            
+
+        #__table = "services_iscsitargetauthorizedinitiator"
+        #__initialgroup_nodemap = {'tag':'iscsi_target_initiator_tag',
+        #    'comment':'iscsi_target_initiator_comment', 'iginitiatorname':'', 'ignetmask':''}
+        #__initialgroup_nodes = self.__getChildNodes(__parent, "initiatorgroup")
+        #for __initialgroup_node in __initialgroup_nodes:
+        #    for __key in __initialgroup_nodemap:
+        #        pass
+
+
+        __table = "services_iscsitargetauthcredential"
+        __authgroup_nodemap = {'tag':'iscsi_target_auth_tag', 'comment':None }
+        __agauth_nodemap = { 'authuser':'iscsi_target_auth_user',
+            'authsecret':'iscsi_target_auth_secret', 'authmuser':'iscsi_target_auth_peeruser',
+            'authmsecret':'iscsi_target_auth_peersecret' }
+
+        __authgroup_nodes = self.__getChildNodes(__parent, "authgroup")
+        for __authgroup_node in __authgroup_nodes:
+            __pairs = {}
+            self.__set_pairs(__authgroup_node, __authgroup_nodemap, __pairs)
+
+            __agauth_nodes = self.__getChildNodes(__authgroup_node, "agauth")
+            for __agauth_node in __agauth_nodes:
+                self.__set_pairs(__agauth_node, __agauth_nodemap, __pairs) 
+
+        if __pairs:
+            self.__sql.insert(__table, __pairs)
+
+
+        __table = "services_iscsitargetextent"
+        __extent_nodemap = {'name':'iscsi_target_extent_name', 'path':'iscsi_target_extent_path',
+            'size':'iscsi_target_extent_filesize', 'type':'iscsi_target_extent_type',
+            'comment':'iscsi_target_extent_comment' }
+        __extent_nodes  = self.__getChildNodes(__parent, "extent")
+        for __extent_node in __extent_nodes:
+            for __key in __extent_nodemap: 
+                __node = self.__getChildNode(__extent_node, __key)
+                if not __node:
+                    continue
+
+                __value = self.__getChildNodeValue(__node)
+                if not __value:
+                    continue
+
+                if __key == 'size':
+                    __sizeunit_node = self.__getChildNode(__extent_node, "sizeunit")
+                    __sizeunit_value = None
+                    if __sizeunit_node:
+                        __sizeunit_value = self.__getChildNodeValue(__sizeunit_node)
+                    if __sizeunit_value:
+                        __value = __value + __sizeunit_value
+
+                if __extent_nodemap[__key]:
+                    __pairs[__extent_nodemap[__key]] = __value
+
+        if __pairs:
+            self.__sql.insert(__table, __pairs)
+
+
+        #__table = ""
+        #__target_nodemap = {'name':'', 'alias':'', 'type':'', 'flags':'', 'comment':'',
+        #    'authmethod':'', 'digest':'', 'queuedepth':'', 'inqvendor':'', 'inqproduct':'',
+        #    'inqrevision':'', 'inqserial':'', 'pgigmap':'', 'agmap':'', 'lunmap':''}
+        #__target_nodes = self.__getChildNodes(__parent, "target")
+        #for __target_node in __target_nodes:
+        #    pass
+
+        sys.exit(0)
+
 
     #
     # XXX don't care about this XXX
@@ -472,20 +564,10 @@ class ConfigParser:
 
         __pairs = {}
         __table = "services_ldap"
-        for __key in __nodemap:
-            __node = self.__getChildNode(__parent, __key)
-            if not __node:
-                continue
 
-            __value = self.__getChildNodeValue(__node)
-            if not __value:
-                continue
-
-            if __nodemap[__key]:
-                __pairs[__nodemap[__key]] = __value
-
+        self.__set_pairs(__parent, __nodemap, __pairs)
         if __pairs:
-            self.__sql.do(__table, __pairs)
+            self.__sql.insert(__table, __pairs)
 
     #
     # XXX WTF??? XXX
@@ -493,11 +575,29 @@ class ConfigParser:
     def _handle_mounts(self, __parent, __level):
         pass
 
+
     #
     # XXX need data XXX
     #
     def _handle_nfsd(self, __parent, __level):
-        pass
+        __nodemap = { 'enable':None, 'numproc':'nfs_srv_servers' }
+
+        __pairs = {}
+        __table = "services_nfs"
+
+        self.__set_pairs(__parent, __nodemap, __pairs)
+        if __pairs:
+            self.__sql.inert(__table, __pairs)
+
+
+        __share_nodemap = { 'path':'', 'mapall':'', 'network':'', 'comment':'' }
+        __options_nodemap = { 'alldirs':'', 'ro':'', 'quiet':'' }
+        __share_nodes = self.__getChildNodes(__parent, "share")
+        for __share_node in __share_nodes:
+
+            self.__set_pairs(__share_node, __share_nodemap, __pairs)
+
+            __options_node = self.__getChildNode(__share_node, "options")
 
     #
     # XXX need data XXX
@@ -550,7 +650,7 @@ class ConfigParser:
                 __pairs[__settingsmap[__key]] = __value
 
         if __pairs:
-            self.__sql.do(__table, __pairs)
+            self.__sql.insert(__table, __pairs)
 
         __share_pairs = {}
         __share_table = "sharing_cifs_share"
@@ -583,7 +683,7 @@ class ConfigParser:
                     __share_pairs[__sharemap[__key]] = __value
 
             if __share_pairs:
-                self.__sql.do(__share_table, __share_pairs)
+                self.__sql.insert(__share_table, __share_pairs)
             
 
     #
@@ -608,26 +708,24 @@ class ConfigParser:
 
         __pairs = {}
         __table = "services_ssh"
-        for __key in __nodemap:
-            __node = self.__getChildNode(__parent, __key)
-            if not __node:
-                continue
 
-            __value = self.__getChildNodeValue(__node)
-            if not __value:
-                continue
-
-            if __nodemap[__key]:
-                __pairs[__nodemap[__key]] = __value
-
+        self.__set_pairs(__parent, __nodemap, __pairs)
         if __pairs:
-            self.__sql.do(__table, __pairs) 
+            self.__sql.insert(__table, __pairs) 
 
-    #
-    # XXX need to look at code XXX
-    #
     def _handle_staticroutes(self, __parent, __level):
-        pass
+        __nodemap = { 'interface':None, 'network':'sr_destination',
+            'gateway':'sr_gateway', 'descr':'sr_description' }
+
+        __table = "network_staticroute"
+        __route_nodes = self.__getChildNodes(__parent, "route")
+        for __route_node in __route_nodes:
+            __pairs = {}
+
+            self.__set_pairs(__route_node, __nodemap, __pairs)
+            if __pairs:
+                self.__sql.insert(__table, __pairs)
+        
 
     #
     # XXX can this be migrated? XXX
@@ -816,23 +914,12 @@ class ConfigParser:
         __nodemap = {'server':'em_outgoingserver', 'port':'em_port', 'security':'em_security',
             'username':'em_user', 'password':'em_pass', 'from':'em_fromemail'}
 
+        __pairs = {}
         __table = "system_email"
 
-        __pairs = {}
-        for __key in __nodemap:
-            __node = self.__getChildNode(__parent, __key)
-            if not __node:
-                continue
-
-            __value = self.__getChildNodeValue(__node)
-            if not __value:
-                continue
-
-            if __nodemap[__key]:
-                __pairs[__nodemap[__key]] = __value
-
+        self.__set_pairs(__parent, __nodemap, __pairs)
         if __pairs:
-            self.__sql.do(__table, __pairs) 
+            self.__sql.insert(__table, __pairs) 
 
     #
     # XXX This needs to be implemented XXX
@@ -905,10 +992,44 @@ class ConfigParser:
         #f.close()
 
     #
-    # XXX This needs to be implemented XXX
+    # XXX Uncomment for real use XXX
     #
     def _handle_system_hosts(self, __parent, __level):
-        pass
+        __host_nodes = self.__getChildNodes(__parent, "hosts")
+
+        #f = open(FREENAS_HOSTS, "a")
+
+        for __host_node in __host_nodes:
+            __name_node = self.__getChildNode(__host_node, "name")
+            if not __name_node:
+                continue
+
+            __name = self.__getChildNodeValue(__name_node)
+            if not __name:
+                continue
+
+            __address_node = self.__getChildNode(__host_node, "address")
+            if not __address_node:
+                continue
+
+            __address = self.__getChildNodeValue(__address_node)
+            if not __address:
+                continue
+
+            __descr_node = self.__getChildNode(__host_node, "descr")
+            __descr = None
+            if __descr_node:
+                __descr = self.__getChildNodeValue(__descr_node)
+            
+
+            __buf = "%s\t%s" % (__address, __name)
+            if __descr: 
+                __buf += " # %s\n" % __descr
+
+            #f.write(__buf)
+            os.write(0, __buf)
+
+        #f.close()
 
     #
     # XXX This needs to be implemented, just printing out values currently XXX
@@ -1032,20 +1153,10 @@ class ConfigParser:
 
         __pairs = {}
         __table = "services_tftp"
-        for __key in __nodemap:
-            __node = self.__getChildNode(__parent, __key)
-            if not __node:
-                continue
 
-            __value = self.__getChildNodeValue(__node)
-            if not __value:
-                continue
-
-            if __nodemap[__key]:
-                __pairs[__nodemap[__key]] = __value
-
+        self.__set_pairs(__parent, __nodemap, __pairs)
         if __pairs:
-            self.__sql.do(__table, __pairs) 
+            self.__sql.insert(__table, __pairs) 
 
     #
     # XXX WTF??? XXX
@@ -1093,7 +1204,7 @@ class ConfigParser:
                     __pairs[__nodemap[__key]] = __value
 
         if __pairs:
-            self.__sql.do(__table, __pairs) 
+            self.__sql.insert(__table, __pairs) 
 
     #
     # XXX Do we care about this? XXX
@@ -1111,7 +1222,34 @@ class ConfigParser:
     # XXX this needs to be implemented XXX
     #
     def _handle_zfs(self, __parent, __level):
-        pass
+        __vdevices_node = self.__getChildNode(__parent, "vdevices")
+        if __vdevices_node:
+            __vdevice_nodemap = { 'name':'', 'type':'', 'device':'', 'desc':'' }
+            __vdevice_nodes = self.__getChildNodes(__vdevices_node, "vdevice")
+            for __vdevice_node in __vdevice_nodes:
+                __pairs = {}
+
+                self.__set_pairs(__vdevice_node, __vdevice_nodemap, __pairs)
+
+        __pools_node = self.__getChildNode(__parent, "pools")
+        if __pools_node:
+            __pool_nodemap = { 'name':'', 'vdevice':'', 'root':'', 'mountpoint':'', 'desc':'' }
+            __pool_nodes = self.__getChildNodes(__pools_node, "pool")
+            for __pool_node in __pool_nodes:
+                __pairs = {}
+
+                self.__set_pairs(__pool_node, __pool_nodemap, __pairs)
+
+        __datasets_node = self.__getChildNode(__parent, "datasets")
+        if __datasets_node:
+            __dataset_nodemap = { 'name':'', 'pool':'', 'quota':'', 'readonly':'',
+                'compression':'', 'canmount':'', 'xattr':'', 'desc':'' }
+            __dataset_nodes = self.__getChildNodes(__datasets_node, "dataset")
+            for __dataset_node in __dataset_nodes:
+                __pairs = {}
+
+                self.__set_pairs(__dataset_node, __dataset_nodemap, __pairs)
+
 
     def __parse(self, __parent, __level):
         for __node in __parent.childNodes:
