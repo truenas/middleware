@@ -1,15 +1,30 @@
 # encoding: utf-8
+import os
 import datetime
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
+from django.utils import simplejson
 
 class Migration(DataMigration):
 
     def forwards(self, orm):
         from django.core.management import call_command
+
         call_command("loaddata", "bsdGroups.json")
-        call_command("loaddata", "bsdUsers.json")
+        #call_command("loaddata", "bsdUsers.json")
+        jf = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "fixtures", "bsdUsers.json")
+        json = open(jf, 'r').read()
+        users = simplejson.loads(json)
+        for entry in users:
+            user = orm.bsdUsers.objects.create(pk=entry['pk'])
+            for field in entry['fields']:
+                if field == 'bsdusr_group':
+                    grp = orm.bsdGroups.objects.get(pk=entry['fields'].get(field))
+                    setattr(user, field, grp)
+                else:
+                    setattr(user, field, entry['fields'].get(field))
+            user.save()
 
     def backwards(self, orm):
         "Write your backwards methods here."
