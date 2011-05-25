@@ -33,7 +33,6 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.services import models
 from freenasUI.middleware.notifier import notifier
-from django.shortcuts import render
 
 def home(request):
 

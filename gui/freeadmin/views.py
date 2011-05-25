@@ -140,7 +140,6 @@ class ExceptionReporter(debug.ExceptionReporter):
                 unicode_str = self.exc_value.args[1]
                 unicode_hint = smart_unicode(unicode_str[max(start-5, 0):min(end+5, len(unicode_str))], 'ascii', errors='replace')
         from django import get_version
-        from django.template.loader import get_template
         t = get_template("500_freenas.html")
         #t = Template(TECHNICAL_500_TEMPLATE, name='Technical 500 template')
         c = Context({

@@ -33,6 +33,7 @@ from django.conf import settings
 
 from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField
+from freenasUI.middleware.notifier import notifier
 
 class Settings(Model):
     stg_guiprotocol = models.CharField(
