@@ -38,6 +38,14 @@ setgroup()
 	echo "${group}"
 }
 
+set_sysctl()
+{
+	local async
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_async FROM services_nfs ORDER BY id DESC LIMIT 1" | \
+	while read async; do
+		/sbin/sysctl vfs.nfsrv.async=${async}
+	done
+}
 
 #
 # TODO: For now we overwrite /etc/exports, it's desirable to teach mountd about another
@@ -80,6 +88,9 @@ generate_exports()
 			echo
 		fi
 	done > /etc/exports
+
+	set_sysctl
+
 	/usr/sbin/service mountd onereload
 }
 
