@@ -44,6 +44,7 @@ import glob
 import grp
 import pwd
 import signal
+import time
 from shlex import split as shlex_split
 from subprocess import Popen, PIPE
 
@@ -123,6 +124,12 @@ class notifier:
             'tftp': ('inetd', '/var/run/inetd.pid'),
             'iscsitarget': ('istgt', '/var/run/istgt.pid'),
         }
+        """
+        We need to wait a little bit so pgrep works
+        My guess here is that the processes need some time to
+        write the PID files before we can use them
+        """
+        time.sleep(0.5)
         if what in service2daemon:
             procname, pidfile = service2daemon[what]
             if pidfile:
