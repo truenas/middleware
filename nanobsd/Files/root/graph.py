@@ -410,39 +410,40 @@ def GenerateSwapGraph():
 
 def GenerateDiskspaceGraph():
     ds = '/var/db/collectd/rrd/localhost/df'
-    for file in filter(filterDisk, os.listdir(ds)):
-        volname = re.search(r'(?<=df-mnt-)(.*)\.rrd', file).group(1)
-        path = os.path.join(ds, file)
+    if os.path.isdir(ds):
+        for file in filter(filterDisk, os.listdir(ds)):
+            volname = re.search(r'(?<=df-mnt-)(.*)\.rrd', file).group(1)
+            path = os.path.join(ds, file)
 
-        if not Cache.IsValid(path):
-           for time in times:
-               rrdtool.graph("/tmp/df-%s-%s.png" % (volname, time),
-               '--imgformat', 'PNG',
-               '--vertical-label', 'Bytes',
-               '--title', 'Diskspace (%s)' % volname,
-               '--lower-limit', '0',
-               '--end', 'now',
-               '--start', 'end-%s' % time,
-               'DEF:free_min=%s:free:MIN' % path,
-               'DEF:free_avg=%s:free:AVERAGE' % path,
-               'DEF:free_max=%s:free:MAX' % path,
-               'DEF:used_min=%s:used:MIN' % path,
-               'DEF:used_avg=%s:used:AVERAGE' % path,
-               'DEF:used_max=%s:used:MAX' % path,
-               'CDEF:both_avg=free_avg,used_avg,+',
-               'AREA:both_avg#bfffbf',
-               'AREA:used_avg#ffbfbf',
-               'LINE1:both_avg#00ff00:Free',
-               'GPRINT:free_min:MIN:%5.1lf%sB Min,',
-               'GPRINT:free_avg:AVERAGE:%5.1lf%sB Avg,',
-               'GPRINT:free_max:MAX:%5.1lf%sB Max,',
-               'GPRINT:free_avg:LAST:%5.1lf%sB Last\l',
-               'LINE1:used_avg#ff0000:Used',
-               'GPRINT:used_min:MIN:%5.1lf%sB Min,',
-               'GPRINT:used_avg:AVERAGE:%5.1lf%sB Avg,',
-               'GPRINT:used_max:MAX:%5.1lf%sB Max,',
-               'GPRINT:used_avg:LAST:%5.1lf%sB Last\l'
-               )
+            if not Cache.IsValid(path):
+                for time in times:
+                    rrdtool.graph("/tmp/df-%s-%s.png" % (volname, time),
+                    '--imgformat', 'PNG',
+                    '--vertical-label', 'Bytes',
+                    '--title', 'Diskspace (%s)' % volname,
+                    '--lower-limit', '0',
+                    '--end', 'now',
+                    '--start', 'end-%s' % time,
+                    'DEF:free_min=%s:free:MIN' % path,
+                    'DEF:free_avg=%s:free:AVERAGE' % path,
+                    'DEF:free_max=%s:free:MAX' % path,
+                    'DEF:used_min=%s:used:MIN' % path,
+                    'DEF:used_avg=%s:used:AVERAGE' % path,
+                    'DEF:used_max=%s:used:MAX' % path,
+                    'CDEF:both_avg=free_avg,used_avg,+',
+                    'AREA:both_avg#bfffbf',
+                    'AREA:used_avg#ffbfbf',
+                    'LINE1:both_avg#00ff00:Free',
+                    'GPRINT:free_min:MIN:%5.1lf%sB Min,',
+                    'GPRINT:free_avg:AVERAGE:%5.1lf%sB Avg,',
+                    'GPRINT:free_max:MAX:%5.1lf%sB Max,',
+                    'GPRINT:free_avg:LAST:%5.1lf%sB Last\l',
+                    'LINE1:used_avg#ff0000:Used',
+                    'GPRINT:used_min:MIN:%5.1lf%sB Min,',
+                    'GPRINT:used_avg:AVERAGE:%5.1lf%sB Avg,',
+                    'GPRINT:used_max:MAX:%5.1lf%sB Max,',
+                    'GPRINT:used_avg:LAST:%5.1lf%sB Last\l'
+                    )
 
 GenerateInterfaceGraph()
 GenerateCpuGraph()
