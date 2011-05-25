@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-24 16:37+0200\n"
+"PO-Revision-Date: 2011-05-25 11:00+0200\n"
 "Last-Translator: xRaider <xraiderus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -539,7 +539,7 @@ msgstr "Хеш пароля UNIX"
 
 #: account/models.py:89
 msgid "Hashed SMB password"
-msgstr "Хеш SMB-пароля "
+msgstr "Хеш SMB-пароля"
 
 #: account/models.py:93
 msgid "Primary Group ID"
@@ -710,9 +710,10 @@ msgstr "Выберите сетевой интерфейс"
 msgid "Interface Name"
 msgstr "Имя интерфейса"
 
+# глагол повелительного наклонения
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr "Имя Вашего сетевого интерфейса."
+msgstr "Задайте имя для Вашего сетевого интерфейса."
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
@@ -1065,10 +1066,13 @@ msgid "Workgroup"
 msgstr "Рабочая группа"
 
 #: services/models.py:71
+#, fuzzy
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
+"Предложение сервера рабочей группы при получении запроса от клиента "
+"(максимум 15 символов)."
 
 #: services/models.py:77
 msgid "Server description. This can usually be left blank."
@@ -2219,85 +2223,113 @@ msgstr "Active Directory"
 msgid "The name or IP address of the LDAP server"
 msgstr "Имя или IP-адрес сервера LDAP."
 
+# DN - не совсем понятно что
 #: services/models.py:1083
+#, fuzzy
 msgid "Base DN"
-msgstr ""
+msgstr "Базовое DN (выделенное имя)"
 
 #: services/models.py:1085
+#, fuzzy
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr ""
+"Базовое DN по умолчанию, для сопоставления имён, например dc=test,dc=org"
 
 #: services/models.py:1088
 msgid "Allow Anonymous Binding"
 msgstr "Разрешить анонимную связь"
 
 #: services/models.py:1091
+#, fuzzy
 msgid "Root bind DN"
-msgstr ""
+msgstr "Корневая связь DN"
 
 #: services/models.py:1093
+#, fuzzy
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
+"Отличительное имя связанное с сервером каталогов, например, cn=admin, "
+"dc=test, dc=org"
 
+# корневая связь - тупой перевод))
 #: services/models.py:1097
+#, fuzzy
 msgid "Root bind password"
-msgstr ""
+msgstr "Пароль корневой связи"
 
 #: services/models.py:1099
+#, fuzzy
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "Права для связи."
 
 #: services/models.py:1104
 msgid "Password Encryption"
 msgstr "Шифрование пароля"
 
+# не понимаю смысла
 #: services/models.py:1105
+#, fuzzy
 msgid "The password change protocol to use."
-msgstr ""
+msgstr "Пароль изменения протокола."
 
 #: services/models.py:1109
+#, fuzzy
 msgid "User Suffix"
-msgstr ""
+msgstr "Суффикс пользователя"
 
 #: services/models.py:1111
+#, fuzzy
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
 msgstr ""
+"Этот параметр указывает суффикс, который используется для пользователей, "
+"если они добавлены в каталог LDAP, например ou=Users"
 
 #: services/models.py:1115
 msgid "Group Suffix"
-msgstr ""
+msgstr "Суффикс группы"
 
 #: services/models.py:1117
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
+"Этот параметр указывает суффикс, который используется для групп, если они "
+"добавлены в каталог LDAP, например ou=Groups"
 
+# какое может быть окончание у пароля?...
 #: services/models.py:1121
+#, fuzzy
 msgid "Password Suffix"
-msgstr ""
+msgstr "Суффикс пароля"
 
 #: services/models.py:1123
+#, fuzzy
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
+"Этот параметр указывает суффикс, который используется для паролей, если они "
+"добавлены в каталог LDAP, например ou=Passwords"
 
 #: services/models.py:1127
+#, fuzzy
 msgid "Machine Suffix"
-msgstr ""
+msgstr "Суффикс машины"
 
 #: services/models.py:1129
+#, fuzzy
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
+"Этот параметр указывает суффикс, который используется для машин, если они "
+"добавлены в каталог LDAP, например ou=Computers"
 
 #: services/models.py:1133
 msgid "Turn on/off TLS"
@@ -2333,6 +2365,7 @@ msgstr "LDAP"
 msgid "Control Services"
 msgstr "Управление службами"
 
+# что такое maproot и mapall, вообще хз
 #: sharing/forms.py:102 sharing/models.py:243
 msgid "Maproot User"
 msgstr ""
@@ -2387,8 +2420,9 @@ msgid "Export Read Only"
 msgstr "Экспортировать только для чтения"
 
 #: sharing/models.py:53
+#, fuzzy
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "Просмотр для клиентов сети"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
@@ -2411,6 +2445,7 @@ msgid "Only Allow Guest Access"
 msgstr "Разрешить только гостевой доступ"
 
 #: sharing/models.py:73
+#, fuzzy
 msgid "Hosts Allow"
 msgstr "Разрешённые хосты"
 
@@ -2425,6 +2460,7 @@ msgstr ""
 "Оставьте это поле пустым, чтобы использовать настройки по умолчанию."
 
 #: sharing/models.py:79
+#, fuzzy
 msgid "Hosts Deny"
 msgstr "Запрещённые хосты"
 
@@ -2515,6 +2551,9 @@ msgid ""
 "Users and groups are specified, delimited by commas. Groups are designated "
 "by a @ prefix."
 msgstr ""
+"Это опция разрешает выбранным пользователям и группам доступ к общему "
+"ресурсу. Пользователи и группы должны быть разделены запятыми. Группы "
+"обозначаются префиксом \"@\"."
 
 #: sharing/models.py:131
 msgid "Deny List"
@@ -2525,6 +2564,8 @@ msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
 msgstr ""
+"Это опция запрещает выбранным пользователям и группам доступ к общему "
+"ресурсу. Формат записи такой же, как и для опции разрешений."
 
 #: sharing/models.py:137
 msgid "Read-only Access"
@@ -2535,6 +2576,8 @@ msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Разрешает выбранным пользователям и группам доступ только для чтения к "
+"общему ресурсу. Формат записи такой же."
 
 #: sharing/models.py:143
 msgid "Read-write Access"
@@ -2545,32 +2588,44 @@ msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format. "
 msgstr ""
+"Разрешает выбранным пользователям и группам доступ для чтения-записи к "
+"общему ресурсу. Формат записи такой же."
 
 #: sharing/models.py:148
+#, fuzzy
 msgid "Disk Discovery"
-msgstr ""
+msgstr "Обзор диска"
 
 #: sharing/models.py:149
+#, fuzzy
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
+"Разрешить другим системам открыть для этот ресурс в качестве диска данных, "
+"резервного хранилища, машины времени или нет."
 
 #: sharing/models.py:155
+#, fuzzy
 msgid "Disk discovery mode"
-msgstr ""
+msgstr "Режим обзора диска"
 
 #: sharing/models.py:156
+#, fuzzy
 msgid ""
 "Note! Selecting 'Time Machine' on multiple shares will may cause "
 "unpredictable behavior in MacOS.  Default mode exports the volume as a data "
 "volume for users."
 msgstr ""
+"Обратите внимание! Выбор \"Машина времени\" на нескольких общих ресурсах может "
+"привести к непредсказуемому поведению в MacOS. По умолчанию используется "
+"режим экспорта тома как тома данных."
 
 #: sharing/models.py:160
 msgid "Database Path"
 msgstr "Пути к базе данных"
 
+# смысл непонятен
 #: sharing/models.py:162
 msgid ""
 "Sets the database information to be stored in path. You have to specifiy a "
@@ -2582,17 +2637,22 @@ msgid "Cache CNID"
 msgstr "Кэш CNID"
 
 #: sharing/models.py:166
+#, fuzzy
 msgid ""
 "If set afpd uses the ID information stored in AppleDouble V2 header files to "
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
+"AFPD использует ID информацию, хранящейся в файлах заголовков AppleDouble V2 "
+"для сокращению загрузки базы данных. Не устанавливайте эту опцию, если том "
+"изменяется не клиентами AFP (NFS/SMB/local)."
 
 #: sharing/models.py:169
 msgid "Translate CR/LF"
 msgstr "Преобразовывать CR/LF"
 
 #: sharing/models.py:170
+#, fuzzy
 msgid ""
 "Enables crlf translation for TEXT files, automatically converting macintosh "
 "line breaks into Unix ones. Use of this option might be dangerous since some "
@@ -2600,6 +2660,11 @@ msgid ""
 "the filetype in a second step. Afpd will potentially destroy such files when "
 "'erroneously' changing bytes in order to do line break translation."
 msgstr ""
+"Разрешает использование CR/LF в текстовых файлах, автоматически "
+"преобразовывыя разрывы строк Macintosh в Unix. Использование этой опции "
+"может быть опасным, так как некоторые старые программы хранят бинарные файлы "
+"как текстовые. AFPD может потенциально уничтожить такие файлы, когда "
+"\"ошибочно\" Изменит байт для того, чтобы сделать перевод строки."
 
 #: sharing/models.py:173
 msgid "Windows File Names"
@@ -2614,43 +2679,59 @@ msgstr ""
 "рекомендуется для общих ресурсов, используемых в основном компьютерами Mac."
 
 #: sharing/models.py:177
+#, fuzzy
 msgid "No .AppleDouble"
-msgstr ""
+msgstr "Не .AppleDouble"
 
 #: sharing/models.py:178
+#, fuzzy
 msgid ""
 "This controls whether the .AppleDouble directory gets created unless "
 "absolutely needed. This option should not be used if files are access mostly "
 "by Mac computers.  Clicking this option disables their creation."
 msgstr ""
+"Определяет, будет ли каталог .AppleDouble создаваться только в случае "
+"крайней необходимости. Этот параметр не следует использовать, если файлы "
+"доступны основном компьютере Mac. Если опция активна, отключается их "
+"создание."
 
 #: sharing/models.py:181
+#, fuzzy
 msgid "Zero Device Numbers"
-msgstr ""
+msgstr "Номера нулевых устройств"
 
+# не совсем понятно, что они имели в виду
 #: sharing/models.py:182
+#, fuzzy
 msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
 msgstr ""
+"Всегда используйте 0 для номера устройства, помогает, когда номер устройства "
+"не является постоянной при перезагрузке, кластер, ..."
 
 #: sharing/models.py:185
 msgid "Disable File ID"
 msgstr "Отключить ID файла"
 
+# совсем не понятно
 #: sharing/models.py:186
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
 msgstr ""
 
 #: sharing/models.py:189
+#, fuzzy
 msgid "Disable :hex Names"
-msgstr ""
+msgstr "Отключить :hex имена"
 
 #: sharing/models.py:190
+#, fuzzy
 msgid ""
 "Disable :hex translations for anything except dot files. This option makes "
 "the '/' character illegal."
 msgstr ""
+"Отключить :hex трансляцию всего, кроме точки файлов. Эта опция делает символ "
+"\"/\" недопустимым."
 
 #: sharing/models.py:193
 msgid "ProDOS"
@@ -2671,37 +2752,47 @@ msgid ""
 msgstr ""
 
 #: sharing/models.py:201
+#, fuzzy
 msgid "AFP3 Unix Privs"
-msgstr ""
+msgstr "AFP3 привилегии UNIX."
 
 #: sharing/models.py:202
+#, fuzzy
 msgid "Use AFP3 unix privileges."
-msgstr ""
+msgstr "Использовать AFP3 привилегии UNIX."
 
 #: sharing/models.py:209
 msgid "Apple Share"
 msgstr "Общий ресурс Apple"
 
 #: sharing/models.py:225
+#, fuzzy
 msgid "Authorized network or IP addresses"
-msgstr ""
+msgstr "Авторизованная сеть или IP-адреса"
 
 #: sharing/models.py:226
+#, fuzzy
 msgid ""
 "Network that is authorized to access the NFS share or a list of IP "
 "addresses.  Specify network numbers of the form 1.2.3.4/xx where xx is the "
 "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 msgstr ""
+"Сети, которые имеют право доступа на общий ресурс или список IP-адресов. "
+"Укажите номера сетей вида 1.2.3.4/xx, где XX - маска сети или список "
+"IP-адресов 1.2.3.4 1.2.3.5 1.2.3.6."
 
 #: sharing/models.py:230
 msgid "All Directories"
 msgstr "Все каталоги"
 
 #: sharing/models.py:231
+#, fuzzy
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected.  "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
+"Разрешить монтирование любого подкаталога глубже этой точки. В противном "
+"случае, только каталог верхнего уровня может быть смонтирован."
 
 #: sharing/models.py:234
 msgid "Read Only"
@@ -2716,9 +2807,13 @@ msgid "Quiet"
 msgstr "Тихий"
 
 #: sharing/models.py:239
+#, fuzzy
 msgid "Inibit syslog warnings if there are problems with exporting this share."
 msgstr ""
+"Предупреждения блокировки журнала, если есть проблемы с экспортом этого "
+"общего ресурса."
 
+# опять про maproot ))
 #: sharing/models.py:247
 msgid "User to map root to"
 msgstr ""
@@ -2804,37 +2899,45 @@ msgstr "\"log\" зарезервированое слово и не может �
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr "Имя тома НЕ может начаться с [0-9], \"mirror\", \"raidz\" или \"spare\""
 
+# может быть имеется в виду raid-массивы?
 #: storage/forms.py:332 storage/forms.py:431 storage/forms.py:910
+#, fuzzy
 msgid "Member disk"
-msgstr ""
+msgstr "Член массива"
 
 #: storage/forms.py:388 storage/forms.py:509
+#, fuzzy
 msgid "The selected disks were not verified for this import rules."
-msgstr ""
+msgstr "Выбранные диски не были проверены для этих правил импорта."
 
 #: storage/forms.py:396
+#, fuzzy
 msgid "Some error ocurried while labelling the disk."
-msgstr ""
+msgstr "Есть ошибки при маркировке диска."
 
 #: storage/forms.py:606
+#, fuzzy
 msgid "Volume from which this dataset will be created on"
-msgstr ""
+msgstr "Том будет создан из этих наборов данных"
 
 #: storage/forms.py:607
+#, fuzzy
 msgid "Dataset Name"
-msgstr ""
+msgstr "Имя набора данных"
 
 #: storage/forms.py:608 storage/forms.py:660 storage/forms.py:717
 msgid "Compression level"
 msgstr "Степень сжатия"
 
 #: storage/forms.py:609 storage/forms.py:661 storage/forms.py:718
+#, fuzzy
 msgid "Enable atime"
-msgstr ""
+msgstr "Включить время"
 
 #: storage/forms.py:610 storage/forms.py:662 storage/forms.py:719
+#, fuzzy
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "Квота для этого набора данных"
 
 #: storage/forms.py:610 storage/forms.py:611 storage/forms.py:662
 #: storage/forms.py:663 storage/forms.py:719
@@ -2842,12 +2945,14 @@ msgid "0=Unlimited; example: 1g"
 msgstr "0 = без ограничений; например 1g"
 
 #: storage/forms.py:611 storage/forms.py:663
+#, fuzzy
 msgid "Quota for this dataset and all children"
-msgstr ""
+msgstr "Квота для этого набора данных и всех его производных"
 
 #: storage/forms.py:612 storage/forms.py:664 storage/forms.py:720
+#, fuzzy
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "Свободное пространство для этого набора данных"
 
 #: storage/forms.py:612 storage/forms.py:613 storage/forms.py:664
 #: storage/forms.py:665 storage/forms.py:720
@@ -2855,22 +2960,27 @@ msgid "0=None; example: 1g"
 msgstr "0 = Нет, например 1g"
 
 #: storage/forms.py:613 storage/forms.py:665
+#, fuzzy
 msgid "Reserved space for this dataset and all children"
-msgstr ""
+msgstr "Свободное пространство для этого набора данных и всех его производных"
 
 #: storage/forms.py:626
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
 msgstr ""
+"Имена наборов данных должны начинаться с алфавитно-цифрового символа и могут "
+"содержать \"-\", \"_\", \":\", \".\"."
 
 #: storage/forms.py:633
+#, fuzzy
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "У вас уже есть набор данных с тем же именем"
 
 #: storage/forms.py:640 storage/forms.py:697 storage/forms.py:741
+#, fuzzy
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
-msgstr ""
+msgstr "Введите положительное число (опционально с суффиксом М, G, T), или, 0"
 
 #: storage/forms.py:756
 msgid "Owner (user)"
@@ -2913,16 +3023,18 @@ msgid "Snapshot"
 msgstr "Снимок"
 
 #: storage/forms.py:874
+#, fuzzy
 msgid "Clone Name (must be on same volume)"
-msgstr ""
+msgstr "Имя клона (должен быть на том же томе)"
 
 #: storage/forms.py:887
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
 msgstr "Только [A-Z], [a-z], [0-9], \"_\", \"/\", \".\"] допускаются для имени клона"
 
 #: storage/forms.py:893
+#, fuzzy
 msgid "Clone must be within the same volume"
-msgstr ""
+msgstr "Клон должен находиться в том же томе"
 
 #: storage/forms.py:960 storage/models.py:212
 msgid "Remote hostname"
@@ -2939,7 +3051,7 @@ msgstr "Тип файловой системы"
 #: storage/models.py:52 storage/models.py:77 storage/views.py:88
 #: storage/views.py:116 storage/views.py:139 templates/storage/volumes.html:59
 msgid "Volume"
-msgstr ""
+msgstr "Том"
 
 #: storage/models.py:78
 msgid "Volume this group belongs to"
@@ -2951,7 +3063,7 @@ msgstr "Диски"
 
 #: storage/models.py:102
 msgid "Transfer Mode"
-msgstr ""
+msgstr "Режим передачи"
 
 #: storage/models.py:108
 msgid "HDD Standby"
@@ -2996,7 +3108,7 @@ msgstr "Параметры монтирования"
 
 #: storage/models.py:152
 msgid "Enter Mount Point options here"
-msgstr ""
+msgstr "Укажите здесь параметры монтирования"
 
 #: storage/models.py:169
 msgid "Error getting total space"
@@ -3012,7 +3124,7 @@ msgstr ""
 
 #: storage/models.py:187 storage/models.py:199
 msgid "Error"
-msgstr ""
+msgstr "Ошибка"
 
 #: storage/models.py:219
 msgid "Remote Replication Host"
@@ -3028,7 +3140,7 @@ msgstr ""
 
 #: storage/models.py:234 templates/storage/replications.html:15
 msgid "Remote Host"
-msgstr ""
+msgstr "Удаленный хост"
 
 #: storage/models.py:237 templates/storage/replications.html:16
 msgid "Remote ZFS filesystem"
@@ -3044,7 +3156,7 @@ msgstr ""
 
 #: storage/models.py:256 templates/storage/tasks.html:23
 msgid "Recursive"
-msgstr ""
+msgstr "Рекурсивно"
 
 #: storage/models.py:260
 msgid "Snapshot lifetime value"
@@ -3056,23 +3168,23 @@ msgstr ""
 
 #: storage/models.py:270
 msgid "Begin"
-msgstr ""
+msgstr "Начать"
 
 #: storage/models.py:271
 msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr ""
+msgstr "Когда начинать делать снимки, например 8:00"
 
 #: storage/models.py:275
 msgid "End"
-msgstr ""
+msgstr "Конец"
 
 #: storage/models.py:276
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr ""
+msgstr "Когда прекращать делать снимки, например 17:00"
 
 #: storage/models.py:282
 msgid "Interval"
-msgstr ""
+msgstr "Интервал"
 
 #: storage/models.py:283
 msgid ""
@@ -3081,7 +3193,7 @@ msgstr ""
 
 #: storage/models.py:289
 msgid "Occurrence"
-msgstr ""
+msgstr "Вхождение"
 
 #: storage/models.py:290
 msgid "How the task is repeated"
@@ -3089,7 +3201,7 @@ msgstr ""
 
 #: storage/models.py:295
 msgid "Weekday"
-msgstr ""
+msgstr "Будний день"
 
 #: storage/models.py:313
 msgid "Periodic Snapshot Task"
@@ -3109,22 +3221,22 @@ msgstr ""
 
 #: storage/nav.py:30
 msgid "View All Snapshots"
-msgstr ""
+msgstr "Посмотреть все снимки"
 
 #: storage/nav.py:40 templates/storage/replications.html:5
 #: templates/storage/volumes.html:6 templates/storage/volumes.html.py:11
 msgid "Create Volume"
-msgstr ""
+msgstr "Создать том"
 
 #: storage/nav.py:51 templates/storage/autoimport.html:25
 #: templates/storage/import.html:43 templates/storage/volumes.html:31
 #: templates/storage/volumes.html.py:35
 msgid "Import Volume"
-msgstr ""
+msgstr "Импортировать том"
 
 #: storage/nav.py:62
 msgid "View All Volumes"
-msgstr ""
+msgstr "Просмотр всех томов"
 
 #: storage/nav.py:73 templates/storage/volumes.html:19
 #: templates/storage/volumes.html.py:23
@@ -3141,7 +3253,7 @@ msgstr ""
 
 #: storage/nav.py:96
 msgid "Volumes"
-msgstr ""
+msgstr "Тома"
 
 #: storage/nav.py:118 storage/nav.py:138 templates/storage/volumes.html:123
 #: templates/storage/volumes.html.py:126
@@ -3152,7 +3264,7 @@ msgstr ""
 #: storage/views.py:283 storage/views.py:436
 #: templates/freeadmin/generic_model_add_ok.html:1
 msgid "successfully added"
-msgstr ""
+msgstr "успешно добавлен"
 
 #: storage/views.py:283 storage/views.py:320
 #: templates/storage/dataset_confirm_delete_ok.html:1
@@ -3161,7 +3273,7 @@ msgstr ""
 
 #: storage/views.py:320 storage/views.py:355
 msgid "successfully edited"
-msgstr ""
+msgstr "успешно изменен"
 
 #: storage/views.py:322 storage/views.py:357
 msgid "Some error ocurried while setting the options"
@@ -3189,7 +3301,7 @@ msgstr ""
 
 #: storage/views.py:544
 msgid "Disk detach has been successfully done."
-msgstr ""
+msgstr "Отсоединение диска было успешно произведено."
 
 #: system/forms.py:243
 msgid ""
@@ -3199,23 +3311,23 @@ msgstr ""
 
 #: system/forms.py:251
 msgid "New image to be installed"
-msgstr ""
+msgstr "Новый образ для установки"
 
 #: system/forms.py:252 system/forms.py:275
 msgid "SHA256 sum for the image"
-msgstr ""
+msgstr "SHA256 сумма для образа"
 
 #: system/forms.py:264
 msgid "Invalid firmware or checksum"
-msgstr ""
+msgstr "Неправильная прошивка или её контрольная сумма"
 
 #: system/forms.py:274
 msgid "Service Pack image to be installed"
-msgstr ""
+msgstr "Образ пакета обновлений, который будет установлен"
 
 #: system/forms.py:287
 msgid "Invalid service pack or checksum"
-msgstr ""
+msgstr "Неправильный пакет обновлений или его контрольная сумма"
 
 #: system/forms.py:297
 msgid "New config to be installed"
@@ -3235,23 +3347,23 @@ msgstr "Часовой пояс"
 
 #: system/models.py:58
 msgid "NTP server 1"
-msgstr ""
+msgstr "NTP-сервер 1 (сервер синхронизации времени)"
 
 #: system/models.py:63
 msgid "NTP server 2"
-msgstr ""
+msgstr "NTP-сервер 2"
 
 #: system/models.py:69
 msgid "NTP server 3"
-msgstr ""
+msgstr "NTP-сервер 3"
 
 #: system/models.py:74 system/nav.py:23 templates/system/settings.html:2
 msgid "Settings"
-msgstr ""
+msgstr "Настройки"
 
 #: system/models.py:81
 msgid "Enable Console Menu"
-msgstr ""
+msgstr "Включить консольное меню"
 
 #: system/models.py:83
 msgid "Use Serial Console"
@@ -3259,19 +3371,19 @@ msgstr ""
 
 #: system/models.py:85
 msgid "Enable screen saver"
-msgstr ""
+msgstr "Включить экранную заставку"
 
 #: system/models.py:87
 msgid "Automatically Check for New Firmware"
-msgstr ""
+msgstr "Автоматически проверять наличие новых прошивок"
 
 #: system/models.py:89
 msgid "Beep on boot"
-msgstr ""
+msgstr "Звуковой сигнал при загрузке"
 
 #: system/models.py:91
 msgid "Enable Special System Tuning"
-msgstr ""
+msgstr "Включить специальные настройки системы"
 
 #: system/models.py:93
 msgid "Enable powerd (Power Saving Daemon)"
@@ -3279,7 +3391,7 @@ msgstr ""
 
 #: system/models.py:95
 msgid "Enable Zeroconf/Bonjour"
-msgstr ""
+msgstr "Включить Zeroconf / Bonjour"
 
 #: system/models.py:98
 msgid ""
@@ -3288,7 +3400,7 @@ msgstr ""
 
 #: system/models.py:101
 msgid "Show console messages in the footer (Requires UI reload)"
-msgstr ""
+msgstr "Показывать сообщения в нижней части консоли (требуется перезагрузка UI)"
 
 #: system/models.py:109
 msgid "MOTD banner"
@@ -3296,7 +3408,7 @@ msgstr ""
 
 #: system/models.py:113 templates/system/settings.html:5
 msgid "Advanced"
-msgstr ""
+msgstr "Расширенный"
 
 #: system/models.py:122
 msgid "From email"
@@ -3307,20 +3419,24 @@ msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@mydomain.com"
 msgstr ""
+"Адрес электронной почты, который система будет использовать для отправки, "
+"например freenas@mydomain.com"
 
 #: system/models.py:128
 msgid "Outgoing mail server"
-msgstr ""
+msgstr "Сервер исходящей почты"
 
 #: system/models.py:129
 msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
 msgstr ""
+"Хост или IP-адрес, который будет принимать почту, например mail.example.org "
+"или 192.168.1.1"
 
 #: system/models.py:135
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
-msgstr ""
+msgstr "Целое число от 1 до 65535, обычно, 25, 465 или 587"
 
 #: system/models.py:136
 msgid "Port to connect to"
@@ -3328,7 +3444,7 @@ msgstr ""
 
 #: system/models.py:142
 msgid "encryption of the connection"
-msgstr ""
+msgstr "шифрование соединения"
 
 #: system/models.py:143
 msgid "TLS/SSL"
@@ -3336,92 +3452,94 @@ msgstr "TLS/SSL"
 
 #: system/models.py:146
 msgid "Use SMTP Authentication"
-msgstr ""
+msgstr "Используется SMTP-аутентификация"
 
 #: system/models.py:154
 msgid "A username to authenticate to the remote server"
-msgstr ""
+msgstr "Имя пользователя для аутентификации на удаленном сервере"
 
 #: system/models.py:161
 msgid "A password to authenticate to the remote server"
-msgstr ""
+msgstr "Пароль для аутентификации на удаленном сервере"
 
 #: system/models.py:164 templates/system/settings.html:7
 msgid "Email"
-msgstr ""
+msgstr "Электронная почта"
 
 #: system/models.py:174
 msgid "Organization"
-msgstr ""
+msgstr "Организация"
 
 #: system/models.py:175
 msgid "Organization Name (eg, company)"
-msgstr ""
+msgstr "Название организации (например \"компания\")"
 
 #: system/models.py:181
 msgid "Organizational Unit"
-msgstr ""
+msgstr "Подразделение"
 
 #: system/models.py:182
 msgid "Organizational Unit Name (eg, section)"
-msgstr ""
+msgstr "Название подразделения (например \"отдел\")"
 
 #: system/models.py:188 system/models.py:189
 msgid "Email Address"
-msgstr ""
+msgstr "Адрес электронной почты"
 
 #: system/models.py:195
 msgid "Locality"
-msgstr ""
+msgstr "Местоположение"
 
 #: system/models.py:196
 msgid "Locality Name (eg, city)"
-msgstr ""
+msgstr "Название местности (например \"город\")"
 
 #: system/models.py:202
 msgid "State"
-msgstr ""
+msgstr "Область"
 
 #: system/models.py:203
 msgid "State or Province Name (full name)"
-msgstr ""
+msgstr "Область или район (полное название)"
 
 #: system/models.py:209
 msgid "Country"
-msgstr ""
+msgstr "Страна"
 
 #: system/models.py:210
 msgid "Country Name (2 letter code)"
-msgstr ""
+msgstr "Название страны (двухбуквенный код)"
 
 #: system/models.py:216
 msgid "Common Name"
-msgstr ""
+msgstr "Общее имя"
 
 #: system/models.py:217
 msgid "Common Name (eg, YOUR name)"
-msgstr ""
+msgstr "Общее имя (например ваше имя)"
 
 #: system/models.py:222
 msgid "SSL Certificate"
-msgstr ""
+msgstr "Сертификат SSL"
 
 #: system/models.py:223
 msgid ""
 "Cut and paste the contents of your private and public certificate files here."
 msgstr ""
+"Скопируйте и вставьте сюда содержимое файлов Ваших сертификатов секретного и "
+"открытого ключей."
 
 #: system/nav.py:9 templates/system/reporting.html:2
 msgid "Reporting"
-msgstr ""
+msgstr "Отчёт"
 
 #: system/nav.py:16
 msgid "System Information"
-msgstr ""
+msgstr "Информация о системе"
 
 #: system/views.py:130
 msgid "The uploaded file is not valid."
-msgstr ""
+msgstr "Загруженный файл неправильный."
 
 #: templates/account/bsdgroup2user_form2.html:9
 #: templates/freeadmin/generic_model_add.html:13
@@ -3454,21 +3572,21 @@ msgstr "Отмена"
 #: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:48
 #: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:59
 msgid "ID"
-msgstr ""
+msgstr "идентификатор"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:50 templates/account/bsdgroups.html:62
 msgid "Members"
-msgstr ""
+msgstr "Члены"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/storage/tasks.html:134
 msgid "Modify"
-msgstr ""
+msgstr "Изменить"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
-msgstr ""
+msgstr "Удалить"
 
 #: templates/account/bsdgroups.html:25 templates/account/bsdgroups.html:66
 msgid "Modify Group"
@@ -3484,7 +3602,7 @@ msgstr ""
 
 #: templates/account/bsdgroups.html:43
 msgid "Add New Group"
-msgstr ""
+msgstr "Добавить новую группу"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:62
 msgid "Home"
@@ -3505,19 +3623,19 @@ msgstr "Удалить пользователя"
 
 #: templates/account/bsdusers.html:43 templates/account/bsdusers.html.py:95
 msgid "Remove User"
-msgstr ""
+msgstr "Удалить пользователя"
 
 #: templates/account/bsdusers.html:54
 msgid "Add New User"
-msgstr ""
+msgstr "Добавить нового пользователя"
 
 #: templates/account/bsdusers.html:101
 msgid "No users defined"
-msgstr ""
+msgstr "Пользователи не определены"
 
 #: templates/account/passform.html:26
 msgid "Change Admin Password"
-msgstr ""
+msgstr "Изменение пароля администратора"
 
 #: templates/common/menubar2.html:8
 msgid "System"
@@ -3537,19 +3655,19 @@ msgstr ""
 
 #: templates/common/menubar2.html:33
 msgid "Log Out"
-msgstr ""
+msgstr "Выйти"
 
 #: templates/common/menubar2.html:38
 msgid "Help"
-msgstr ""
+msgstr "Помощь"
 
 #: templates/common/menubar2.html:43
 msgid "Account"
-msgstr ""
+msgstr "Учётная запись"
 
 #: templates/common/menubar2.html:49 templates/registration/login.html:49
 msgid "Log In"
-msgstr ""
+msgstr "Войти"
 
 #: templates/freeadmin/generic_model_add.html:9
 #: templates/freeadmin/generic_model_delete.html:10
@@ -3561,13 +3679,13 @@ msgstr ""
 #: templates/storage/snapshot_confirm_rollback2.html:10
 #: templates/system/config_restore.html:10 templates/system/wizard.html:13
 msgid "Please wait..."
-msgstr ""
+msgstr "Пожалуйста, подождите..."
 
 #: templates/freeadmin/generic_model_delete.html:7
 #: templates/storage/dataset_confirm_delete2.html:7
 #: templates/storage/snapshot_confirm_delete2.html:7
 msgid "Are you sure you want to delete?"
-msgstr ""
+msgstr "Вы уверены, что хотите удалить?"
 
 #: templates/freeadmin/generic_model_delete.html:10
 #: templates/storage/dataset_confirm_delete2.html:10
@@ -3581,11 +3699,11 @@ msgstr "Да"
 #: templates/freeadmin/generic_model_delete_ok.html:1
 #: templates/storage/dataset_confirm_delete_ok.html:1
 msgid "sucessfully deleted"
-msgstr ""
+msgstr "успешно удален"
 
 #: templates/freeadmin/generic_model_edit.html:5
 msgid "Your changes have been successfully updated!"
-msgstr ""
+msgstr "Ваши изменения были успешно обновлены!"
 
 #: templates/freeadmin/generic_model_edit.html:39
 #: templates/network/interface.html:39 templates/network/lagg.html:44
@@ -3605,20 +3723,20 @@ msgstr ""
 #: templates/sharing/unix.html:34 templates/sharing/windows.html:38
 #: templates/storage/tasks.html:137
 msgid "Delete"
-msgstr ""
+msgstr "Удалить"
 
 #: templates/freeadmin/generic_model_edit_ok.html:1
 msgid "sucessfully edited"
-msgstr ""
+msgstr "успешно изменен"
 
 #: templates/freeadmin/index.html:27
 msgid "Running Processes"
-msgstr ""
+msgstr "Запущенные процессы"
 
 #: templates/freeadmin/index.html:32 templates/freeadmin/index.html.py:36
 #: templates/freeadmin/index.html:41
 msgid "Loading"
-msgstr ""
+msgstr "Загрузка"
 
 #: templates/freeadmin/index.html:34
 msgid "/var/log/messages"
@@ -3626,39 +3744,39 @@ msgstr "/var/log/messages"
 
 #: templates/freeadmin/index.html:43
 msgid "Reboot the System"
-msgstr ""
+msgstr "Перезагрузить систему"
 
 #: templates/freeadmin/index.html:44 templates/freeadmin/index.html.py:55
 msgid "Warning!"
-msgstr ""
+msgstr "Внимание!"
 
 #: templates/freeadmin/index.html:45
 msgid ""
 "You are about to <strong>REBOOT</strong> the system, what would you like to "
 "do?"
-msgstr ""
+msgstr "Вы собираетесь <strong>ПЕРЕЗАГРУЗИТЬ</strong> систему?"
 
 #: templates/freeadmin/index.html:54
 msgid "Shutdown the System"
-msgstr ""
+msgstr "Выключить систему"
 
 #: templates/freeadmin/index.html:56
 msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
-msgstr ""
+msgstr "Вы собираетесь <strong>ВЫКЛЮЧИТЬ</strong> систему?"
 
 #: templates/freeadmin/index.html:66
 msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-msgstr ""
+msgstr "Справка и поддержка"
 
 #: templates/freeadmin/index.html:69
 msgid "Forum"
-msgstr ""
+msgstr "Форум"
 
 #: templates/freeadmin/index.html:71
 msgid "Community Forum"
-msgstr ""
+msgstr "Форум сообщества"
 
 #: templates/freeadmin/index.html:75
 msgid "IRC (Chat)"
@@ -3666,7 +3784,7 @@ msgstr "IRC (чат)"
 
 #: templates/freeadmin/index.html:77
 msgid "#freenas on freenode"
-msgstr ""
+msgstr "#freenas на freenode"
 
 #: templates/freeadmin/index.html:82
 msgid "Mailing Lists"
@@ -3674,7 +3792,7 @@ msgstr "Списки рассылки"
 
 #: templates/freeadmin/index.html:84
 msgid "FreeNAS Announce"
-msgstr ""
+msgstr "Анонсы FreeNAS"
 
 #: templates/freeadmin/index.html:85
 msgid "FreeNAS Commit"
@@ -3686,11 +3804,11 @@ msgstr ""
 
 #: templates/freeadmin/index.html:87
 msgid "FreeNAS Testing"
-msgstr ""
+msgstr "Тестирование FreeNAS"
 
 #: templates/freeadmin/index.html:91
 msgid "Support Issues"
-msgstr ""
+msgstr "Вопросы поддержки"
 
 #: templates/freeadmin/index.html:93
 msgid "Bug Tracker"
@@ -3702,7 +3820,7 @@ msgstr "Статические маршруты"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
-msgstr ""
+msgstr "Авто IPv6"
 
 #: templates/network/interface.html:33 templates/network/lagg_members2.html:17
 #: templates/network/staticroute.html:18 templates/network/vlan.html:19
@@ -3721,24 +3839,24 @@ msgstr ""
 #: templates/sharing/unix.html:28 templates/sharing/windows.html:32
 #: templates/storage/datagrid_disks.html:13
 msgid "Edit"
-msgstr ""
+msgstr "Изменить"
 
 #: templates/network/interface.html:35 templates/network/lagg.html:14
 #: templates/network/lagg.html.py:16 templates/network/lagg_members2.html:17
 msgid "Edit Interface"
-msgstr ""
+msgstr "Редактировать интерфейс"
 
 #: templates/network/interface.html:41 templates/network/lagg.html:46
 msgid "Delete Interface"
-msgstr ""
+msgstr "Удалить интерфейс"
 
 #: templates/network/interface.html:48 templates/network/summary.html:16
 msgid "No interfaces defined"
-msgstr ""
+msgstr "Интерфейсы не определены"
 
 #: templates/network/interface.html:54 templates/network/interface.html:56
 msgid "Add Interface"
-msgstr ""
+msgstr "Добавить интерфейс"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 msgid "Actions"
@@ -3750,23 +3868,23 @@ msgstr ""
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
-msgstr ""
+msgstr "Члены LAGG"
 
 #: templates/network/lagg.html:53 templates/network/lagg_members2.html:23
 msgid "No LAGG interface defined"
-msgstr ""
+msgstr "Не определены LAGG интерфейсы"
 
 #: templates/network/lagg.html:60
 msgid "Add LAGG Interface "
-msgstr ""
+msgstr "Добавить LAGG интерфейс"
 
 #: templates/network/lagg.html:62
 msgid "Add LAGG"
-msgstr ""
+msgstr "Добавить LAGG"
 
 #: templates/network/lagg_add_ok.html:1
 msgid "Lagg Interface was successfully added"
-msgstr ""
+msgstr "Интерфейс LAGG успешно добавлен"
 
 #: templates/network/lagg_members2.html:6
 msgid "Ordering Priority"
@@ -3774,7 +3892,7 @@ msgstr ""
 
 #: templates/network/lagg_members2.html:7
 msgid "Startup option"
-msgstr ""
+msgstr "Опции запуска"
 
 #: templates/network/lagg_members2.html:8 templates/sharing/unix.html:15
 msgid "Action"
@@ -3782,47 +3900,47 @@ msgstr ""
 
 #: templates/network/staticroute.html:5
 msgid "Destination"
-msgstr ""
+msgstr "Направление"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
-msgstr ""
+msgstr "Изменить статическую маршрутизацию"
 
 #: templates/network/staticroute.html:26
 msgid "Delete Static Route"
-msgstr ""
+msgstr "Удаление статического маршрута"
 
 #: templates/network/staticroute.html:33
 msgid "No static route defined"
-msgstr ""
+msgstr "Не определен статический маршрут"
 
 #: templates/network/staticroute.html:39 templates/network/staticroute.html:41
 msgid "Add Static Route"
-msgstr ""
+msgstr "Добавить статический маршрут"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
-msgstr ""
+msgstr "DNS"
 
 #: templates/network/summary.html:31
 msgid "No nameserver defined"
-msgstr ""
+msgstr "DNS не определён"
 
 #: templates/network/summary.html:37
 msgid "Default route"
-msgstr ""
+msgstr "Маршрут по умолчанию"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr ""
+msgstr "Не определён маршрут по умолчанию"
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
-msgstr ""
+msgstr "Изменить VLAN"
 
 #: templates/network/vlan.html:27
 msgid "Delete VLAN"
-msgstr ""
+msgstr "Удалить VLAN"
 
 #: templates/network/vlan.html:34
 msgid "No VLAN defined"
@@ -3830,11 +3948,13 @@ msgstr ""
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
-msgstr ""
+msgstr "Добавить VLAN интерфейс"
 
 #: templates/registration/login.html:30
 msgid "Your username and password didn't match. Please try again."
 msgstr ""
+"Ваше имя пользователя или пароль не совпадают. Пожалуйста, попробуйте еще "
+"раз."
 
 #: templates/registration/login.html:34
 #, python-format
@@ -3843,27 +3963,27 @@ msgstr ""
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
-msgstr ""
+msgstr "Выход"
 
 #: templates/registration/logout.html:8
 msgid "You are now logged out."
-msgstr ""
+msgstr "Вы вышли из системы."
 
 #: templates/registration/logout.html:8
 msgid "Log back in"
-msgstr ""
+msgstr "Войти обратно в"
 
 #: templates/registration/password_change_done.html:20
 msgid "Success!"
-msgstr ""
+msgstr "Успешно!"
 
 #: templates/registration/password_change_done.html:21
 msgid "Your password was changed."
-msgstr ""
+msgstr "Ваш пароль был изменен."
 
 #: templates/registration/password_change_form.html:4
 msgid "Password change"
-msgstr ""
+msgstr "Изменить пароль"
 
 #: templates/registration/password_change_form.html:13
 msgid "Please correct the error below."
@@ -3877,54 +3997,56 @@ msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
 msgstr ""
+"Пожалуйста, введите Ваш старый пароль, а затем введите Ваш новый пароль "
+"дважды, чтобы удостостоверится, что он набран верно."
 
 #: templates/registration/password_change_form.html:48
 msgid "Password (again)"
-msgstr ""
+msgstr "Пароль (ещё раз)"
 
 #: templates/services/index2.html:13
 msgid "AFP Settings"
-msgstr ""
+msgstr "Настройки AFP"
 
 #: templates/services/index2.html:24
 msgid "ActiveDirectory Settings"
-msgstr ""
+msgstr "Настройки ActiveDirectory"
 
 #: templates/services/index2.html:24
 msgid "Active Directory Settings"
-msgstr ""
+msgstr "Настройки Active Directory"
 
 #: templates/services/index2.html:35
 msgid "CIFS Settings"
-msgstr ""
+msgstr "Настройки CIFS"
 
 #: templates/services/index2.html:48
 msgid "Dynamic DNS Settings"
-msgstr ""
+msgstr "Настройки Dynamic DNS"
 
 #: templates/services/index2.html:59
 msgid "FTP Settings"
-msgstr ""
+msgstr "Настройки FTP"
 
 #: templates/services/index2.html:70
 msgid "LDAP Settings"
-msgstr ""
+msgstr "Настройки LDAP"
 
 #: templates/services/index2.html:81
 msgid "NFS Settings"
-msgstr ""
+msgstr "Настройки NFS"
 
 #: templates/services/index2.html:92
 msgid "SNMP Settings"
-msgstr ""
+msgstr "Настройки SNMP"
 
 #: templates/services/index2.html:103
 msgid "SSH Settings"
-msgstr ""
+msgstr "Настройки SSH"
 
 #: templates/services/index2.html:114
 msgid "TFTP Settings"
-msgstr ""
+msgstr "Настройки TFTP"
 
 #: templates/services/index2.html:119
 msgid "iSCSI"
@@ -3932,15 +4054,15 @@ msgstr "iSCSI"
 
 #: templates/services/index2.html:127
 msgid "ISCSI Settings"
-msgstr ""
+msgstr "Настройки iSCSI"
 
 #: templates/services/iscsi.html:3
 msgid "iSCSI Management"
-msgstr ""
+msgstr "Управление iSCSI"
 
 #: templates/services/iscsi.html:7
 msgid "Targets"
-msgstr ""
+msgstr "Цели"
 
 #: templates/services/iscsi.html:9
 msgid "Device Extents"
@@ -3956,7 +4078,7 @@ msgstr ""
 
 #: templates/services/iscsi.html:15
 msgid "Authentication"
-msgstr ""
+msgstr "Аутентификация"
 
 #: templates/services/iscsi.html:17
 msgid "Authorized Initiator"
@@ -3964,7 +4086,7 @@ msgstr ""
 
 #: templates/services/iscsi.html:19
 msgid "Portals"
-msgstr ""
+msgstr "Порталы"
 
 #: templates/services/iscsi_assoctargets.html:7
 msgid "LUN"
@@ -3978,7 +4100,7 @@ msgstr "LUN"
 #: templates/services/iscsi_portals.html:33
 #: templates/services/iscsi_targets.html:34
 msgid "No targets defined"
-msgstr ""
+msgstr "Цели не определенны"
 
 #: templates/services/iscsi_assoctargets.html:39
 msgid "Add Extent to Target"
@@ -3990,15 +4112,15 @@ msgstr ""
 
 #: templates/services/iscsi_auth.html:8
 msgid "Peer"
-msgstr ""
+msgstr "Пир"
 
 #: templates/services/iscsi_auth.html:44 templates/services/iscsi_auth.html:46
 msgid "Add iSCSI User"
-msgstr ""
+msgstr "Добавить пользователя iSCSI"
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
-msgstr ""
+msgstr "Авторизованные сети"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
@@ -4008,7 +4130,7 @@ msgstr ""
 #: templates/services/iscsi_dextents.html:6
 #: templates/services/iscsi_targets.html:6
 msgid "Alias"
-msgstr ""
+msgstr "Синоним"
 
 #: templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
@@ -4019,61 +4141,61 @@ msgstr ""
 
 #: templates/services/iscsi_portals.html:6
 msgid "Listen"
-msgstr ""
+msgstr "Прослушивание"
 
 #: templates/services/iscsi_portals.html:20
 msgid "Edit Portal"
-msgstr ""
+msgstr "Изменить портал"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Delete Portal"
-msgstr ""
+msgstr "Удалить портал"
 
 #: templates/services/iscsi_portals.html:39
 #: templates/services/iscsi_portals.html:41
 msgid "Add Portal"
-msgstr ""
+msgstr "Добавить портал"
 
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
 msgid "Add Target"
-msgstr ""
+msgstr "Добавить Цель"
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
 msgid "Active Shares"
-msgstr ""
+msgstr "Активные общие ресурсы"
 
 #: templates/sharing/apple.html:8
 msgid "There are no active Apple Shares."
-msgstr ""
+msgstr "Нет активных общих ресурсов Apple."
 
 #: templates/sharing/apple.html:15 templates/sharing/windows.html:16
 #: templates/storage/replications.html:17 templates/storage/snapshots.html:8
 #: templates/storage/tasks.html:26 templates/storage/volumes.html:65
 msgid "Available actions"
-msgstr ""
+msgstr "Доступные действия"
 
 #: templates/sharing/apple.html:30
 msgid "Edit Apple Share"
-msgstr ""
+msgstr "Изменить общие ресурсы Apple"
 
 #: templates/sharing/apple.html:36
 msgid "Delete Apple Share"
-msgstr ""
+msgstr "Удалить общие ресурсы Apple"
 
 #: templates/sharing/apple.html:43 templates/sharing/unix.html:43
 #: templates/sharing/windows.html:47
 msgid "No shares defined"
-msgstr ""
+msgstr "Общие ресурсы не определены"
 
 #: templates/sharing/apple.html:50
 msgid "Add Apple Share"
-msgstr ""
+msgstr "Добавить общие ресурсы Apple"
 
 #: templates/sharing/apple.html:52
 msgid "Add Apple Share (AFP)"
-msgstr ""
+msgstr "Добавить общие ресурсы Apple (AFP)"
 
 #: templates/sharing/index.html:3
 msgid "Apple"
@@ -4089,7 +4211,7 @@ msgstr "Windows"
 
 #: templates/sharing/unix.html:8
 msgid "There are no active UNIX Shares."
-msgstr ""
+msgstr "Нет активных общих ресурсов UNIX."
 
 #: templates/sharing/unix.html:13
 msgid "Mountpoint"
@@ -4097,39 +4219,39 @@ msgstr "Точка монтирования"
 
 #: templates/sharing/unix.html:30
 msgid "Edit NFS Share"
-msgstr ""
+msgstr "Изменить общие ресурсы NFS"
 
 #: templates/sharing/unix.html:36
 msgid "Delete NFS Share"
-msgstr ""
+msgstr "Удалить общие ресурсы NFS"
 
 #: templates/sharing/unix.html:50
 msgid "Add UNIX Share"
-msgstr ""
+msgstr "Добавить общие ресурсы UNIX"
 
 #: templates/sharing/unix.html:52
 msgid "Add UNIX Share (NFS)"
-msgstr ""
+msgstr "Добавить общие ресурсы UNIX (NFS)"
 
 #: templates/sharing/windows.html:8
 msgid "There are no active Windows Shares."
-msgstr ""
+msgstr "Нет активных общих ресурсов Windows."
 
 #: templates/sharing/windows.html:34
 msgid "Edit Windows Share"
-msgstr ""
+msgstr "Изменить общие ресурсы Windows"
 
 #: templates/sharing/windows.html:40
 msgid "Delete Windows Share"
-msgstr ""
+msgstr "Удалить общие ресурсы Windows"
 
 #: templates/sharing/windows.html:54
 msgid "Add Windows Share"
-msgstr ""
+msgstr "Добавить общие ресурсы Windows"
 
 #: templates/sharing/windows.html:56
 msgid "Add Windows Share (CIFS)"
-msgstr ""
+msgstr "Добавить общие ресурсы Windows (CIFS)"
 
 #: templates/storage/clonesnap.html:12
 msgid "Clone Snapshot"
@@ -4145,7 +4267,7 @@ msgstr ""
 
 #: templates/storage/disk_detach.html:7
 msgid "Are you sure you want to detach?"
-msgstr ""
+msgstr "Вы уверены, что хотите отсоединить?"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
@@ -4157,7 +4279,7 @@ msgstr "Тип файловой системы"
 
 #: templates/storage/index.html:3 templates/storage/volumes.html:51
 msgid "Active Volumes"
-msgstr ""
+msgstr "Активные тома"
 
 #: templates/storage/index.html:5
 msgid "ZFS Replication"
@@ -4165,11 +4287,11 @@ msgstr ""
 
 #: templates/storage/index.html:7
 msgid "ZFS Snapshots"
-msgstr ""
+msgstr "Снимки ZFS"
 
 #: templates/storage/manualsnap.html:13
 msgid "Manually Create Snapshot"
-msgstr ""
+msgstr "Создать снимок вручную"
 
 #: templates/storage/periodicsnap.html:13 templates/storage/volumes.html:130
 #: templates/storage/volumes.html.py:133
@@ -4187,33 +4309,33 @@ msgstr ""
 
 #: templates/storage/permission.html:11
 msgid "Change"
-msgstr ""
+msgstr "Изменить"
 
 #: templates/storage/replications.html:9
 msgid "Add Replication"
-msgstr ""
+msgstr "Добавить репликацию"
 
 #: templates/storage/replications.html:13
 msgid "Mount point"
-msgstr ""
+msgstr "Точка монитрования"
 
 #: templates/storage/replications.html:14
 msgid "Last snapshot"
-msgstr ""
+msgstr "Последний снимок"
 
 #: templates/storage/replications.html:27
 #: templates/storage/replications.html:31
 msgid "Delete Replication"
-msgstr ""
+msgstr "Удалить репликацию"
 
 #: templates/storage/replications.html:33
 #: templates/storage/replications.html:37
 msgid "Edit Replication"
-msgstr ""
+msgstr "Изменить репликацию"
 
 #: templates/storage/replications.html:43
 msgid "No ZFS replication available"
-msgstr ""
+msgstr "Не доступны ZFS репликации"
 
 #: templates/storage/snapshot_confirm_rollback2.html:7
 msgid "Are you sure you want to rollback the snapshot to previous state?"
@@ -4221,11 +4343,11 @@ msgstr ""
 
 #: templates/storage/snapshots.html:4
 msgid "Dataset name"
-msgstr ""
+msgstr "Имя набора данных"
 
 #: templates/storage/snapshots.html:5
 msgid "Snapshot name"
-msgstr ""
+msgstr "Имя снимка"
 
 #: templates/storage/snapshots.html:6
 msgid "Used space"
@@ -4241,15 +4363,15 @@ msgstr ""
 
 #: templates/storage/snapshots.html:25 templates/storage/snapshots.html:27
 msgid "Destroy snapshot"
-msgstr ""
+msgstr "Уничтожить снимок"
 
 #: templates/storage/snapshots.html:30 templates/storage/snapshots.html:32
 msgid "Rollback to this snapshot"
-msgstr ""
+msgstr "Откат на этот снимок"
 
 #: templates/storage/snapshots.html:40
 msgid "No ZFS snapshot available"
-msgstr ""
+msgstr "Нет доступных ZFS снимков"
 
 #: templates/storage/tasks.html:6
 msgid "Periodic Snapshots"
@@ -4257,15 +4379,15 @@ msgstr ""
 
 #: templates/storage/tasks.html:14
 msgid "Periodic Snapshot Schedule"
-msgstr ""
+msgstr "Расписание периодических снимков"
 
 #: templates/storage/tasks.html:17
 msgid "There are no scheduled snapshots."
-msgstr ""
+msgstr "Нет запланированных снимков."
 
 #: templates/storage/tasks.html:24
 msgid "How"
-msgstr ""
+msgstr "Как"
 
 #: templates/storage/tasks.html:25
 msgid "Keep snapshot for"
@@ -4273,80 +4395,80 @@ msgstr ""
 
 #: templates/storage/tasks.html:38
 msgid "No"
-msgstr ""
+msgstr "Нет"
 
 #: templates/storage/tasks.html:42
 msgid "From"
-msgstr ""
+msgstr "С"
 
 #: templates/storage/tasks.html:44
 msgid "through"
-msgstr ""
+msgstr "по"
 
 #: templates/storage/tasks.html:46
 msgid ", every"
-msgstr ""
+msgstr ", каждые"
 
 #: templates/storage/tasks.html:48
 msgid "minutes,"
-msgstr ""
+msgstr "минут,"
 
 #: templates/storage/tasks.html:50
 msgid "everyday"
-msgstr ""
+msgstr "ежедневно"
 
 #: templates/storage/tasks.html:53
 msgid "on every"
-msgstr ""
+msgstr "каждый"
 
 #: templates/storage/tasks.html:143
 msgid "No periodic snapshots scheduled"
-msgstr ""
+msgstr "Не запланировано периодических снимков"
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
-msgstr ""
+msgstr "Изменить том ZFS"
 
 #: templates/storage/volumes.html:42 templates/storage/volumes.html.py:46
 msgid "Auto Import Volume"
-msgstr ""
+msgstr "Авто импорт тома"
 
 #: templates/storage/volumes.html:53
 msgid "There are no active volumes."
-msgstr ""
+msgstr "Нет активных томов."
 
 #: templates/storage/volumes.html:61
 msgid "Used"
-msgstr ""
+msgstr "Использовано"
 
 #: templates/storage/volumes.html:63
 msgid "Size"
-msgstr ""
+msgstr "Размер"
 
 #: templates/storage/volumes.html:64
 msgid "Status"
-msgstr ""
+msgstr "Состояние"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Destroy Dataset"
-msgstr ""
+msgstr "Уничтожить набор данных"
 
 #: templates/storage/volumes.html:99 templates/storage/volumes.html.py:103
 #: templates/storage/volumes.html:114 templates/storage/volumes.html.py:118
 msgid "Edit ZFS Options"
-msgstr ""
+msgstr "Изменить опции ZFS"
 
 #: templates/storage/volumes.html:107 templates/storage/volumes.html.py:110
 msgid "Destroy Volume"
-msgstr ""
+msgstr "Уничтожить Том"
 
 #: templates/storage/volumes.html:140 templates/storage/volumes.html.py:144
 msgid "View Disks"
-msgstr ""
+msgstr "Просмотр дисков"
 
 #: templates/storage/volumes.html:151
 msgid "No volumes defined"
-msgstr ""
+msgstr "Тома не определены"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
@@ -4354,7 +4476,7 @@ msgstr ""
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
-msgstr ""
+msgstr "Тип группы"
 
 #: templates/storage/wizard.html:84
 msgid "ZFS Extra"
@@ -4362,75 +4484,75 @@ msgstr ""
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr ""
+msgstr "Использование только 1 журнала диска не рекомендуется"
 
 #: templates/storage/wizard.html:93
 msgid "Log"
-msgstr ""
+msgstr "Журнал"
 
 #: templates/storage/wizard.html:94
 msgid "Cache"
-msgstr ""
+msgstr "Кэш"
 
 #: templates/storage/wizard.html:95
 msgid "Spare"
-msgstr ""
+msgstr "Запасной"
 
 #: templates/storage/wizard.html:119
 msgid "Add Volume"
-msgstr ""
+msgstr "Добавить том"
 
 #: templates/storage/wizard.html:120
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "Существующие данные будут стёрты"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
-msgstr ""
+msgstr "Кэш восстанавливается."
 
 #: templates/system/advanced_edit.html:19
 msgid "The cache could not be rebuilt"
-msgstr ""
+msgstr "Кэш не может быть восстановлен"
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
-msgstr ""
+msgstr "Перестроить кэш LDAP/AD"
 
 #: templates/system/config.html:2
 msgid "Restore to Factory Defaults"
-msgstr ""
+msgstr "Восстановить настройки по умолчанию"
 
 #: templates/system/config.html:4
 msgid "Save Config"
-msgstr ""
+msgstr "Сохранить конфигурацию"
 
 #: templates/system/config.html:6
 msgid "Upload Config"
-msgstr ""
+msgstr "Загрузить конфигурацию"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr ""
+msgstr "Перезапуск..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
-msgstr ""
+msgstr "Вы уверены, что хотите восстановить начальную конфигурацию?"
 
 #: templates/system/config_upload.html:34
 msgid "Update"
-msgstr ""
+msgstr "Обновить"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr ""
+msgstr "Перезагрузка..."
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr ""
+msgstr "Отправить тестовое письмо"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr "Часы"
+msgstr "Ежечасно"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
@@ -4438,7 +4560,7 @@ msgstr "Почасовой график"
 
 #: templates/system/reporting.html:18
 msgid "Daily"
-msgstr "Дни"
+msgstr "Ежедневно"
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
@@ -4446,7 +4568,7 @@ msgstr "Дневной график"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr "Неделя"
+msgstr "Еженедельно"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"
@@ -4454,7 +4576,7 @@ msgstr "Недельный график"
 
 #: templates/system/reporting.html:46
 msgid "Monthly"
-msgstr "Месяцы"
+msgstr "Ежемесячно"
 
 #: templates/system/reporting.html:47
 msgid "Monthly Graphs"
@@ -4462,7 +4584,7 @@ msgstr "Помесячный график"
 
 #: templates/system/reporting.html:60
 msgid "Yearly"
-msgstr "Год"
+msgstr "Ежегодно"
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"
@@ -4470,7 +4592,7 @@ msgstr "Годовой график"
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr ""
+msgstr "Общие"
 
 #: templates/system/settings.html:11
 msgid "Firmware Update"
@@ -4478,11 +4600,11 @@ msgstr "Обновление прошивки"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
-msgstr ""
+msgstr "Принять обновление"
 
 #: templates/system/settings.html:15
 msgid "Config"
-msgstr ""
+msgstr "Конфигурация"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"

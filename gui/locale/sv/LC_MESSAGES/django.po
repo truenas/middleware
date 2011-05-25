@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-24 13:24+0200\n"
+"PO-Revision-Date: 2011-05-24 22:05+0200\n"
 "Last-Translator: Jonas <mossemansson@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
@@ -1109,31 +1109,34 @@ msgstr ""
 #: services/models.py:115
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
+"Använd detta alternativ för att överrida skapande av fil masken (0666 är "
+"standard)"
 
 #: services/models.py:119 services/models.py:836
 msgid "Directory mask"
-msgstr ""
+msgstr "Katalog mask"
 
 #: services/models.py:121
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
+"Använd detta för att överrida skapande av katalog mask (0777 är standard)"
 
 #: services/models.py:124
 msgid "Large RW support"
-msgstr ""
+msgstr "Stöd för stora RW"
 
 #: services/models.py:126
 msgid "Send files with sendfile(2)"
-msgstr ""
+msgstr "Skicka filer med sendfile(2)"
 
 #: services/models.py:128
 msgid "EA Support"
-msgstr ""
+msgstr "Stöd för EA"
 
 #: services/models.py:130
 msgid "Support DOS File Attributes"
-msgstr ""
+msgstr "Stöd för Dos Fil attribut"
 
 #: services/models.py:132
 msgid "Allow Empty Password"
@@ -1146,7 +1149,7 @@ msgstr ""
 
 #: services/models.py:137
 msgid "These parameters are added to [Global] section of smb.conf"
-msgstr ""
+msgstr "Dessa parametrar har skapats i [Global] delen av smb.conf"
 
 #: services/models.py:140
 msgid "Enable home directories"
@@ -1154,56 +1157,60 @@ msgstr ""
 
 #: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
-msgstr ""
+msgstr "Detta aktiverar\\inaktiverar hemma kataloger för samba användare.  "
 
 #: services/models.py:144
 msgid "Enable home directories browsing"
-msgstr ""
+msgstr "Aktivera hemma katalog sökning"
 
 #: services/models.py:145
 msgid "This enables\\disables home directories browsing for samba user."
-msgstr ""
+msgstr "Detta aktiverar\\inaktiverar hemma katalog sökning för samba användare."
 
 #: services/models.py:149
 msgid "Home directories"
-msgstr ""
+msgstr "Hemma kataloger"
 
 #: services/models.py:155
 msgid "Enable AIO"
-msgstr ""
+msgstr "Aktivera AIO"
 
 #: services/models.py:156
 msgid "This enables\\disables AIO support."
-msgstr ""
+msgstr "Detta aktiverar\\inaktiverar stöd för AIO"
 
 #: services/models.py:160
 msgid "Minimal AIO read size"
-msgstr ""
+msgstr "Minsta AIO lässtorlek"
 
 #: services/models.py:161
 msgid ""
 "Samba will read asynchronously if request size is larger than this value.  "
 "The default read size is 1."
 msgstr ""
+"Samba kommer att läsa asynkront om den begärda storleken är större än detta "
+"värde.   Standard värdet är 1."
 
 #: services/models.py:166
 msgid "Minimal AIO write size"
-msgstr ""
+msgstr "Minsta AIO skrivstorlek"
 
 #: services/models.py:167
 msgid ""
 "Samba will write asynchronously if request size is larger than this value.  "
 "The default write size is 1."
 msgstr ""
+"Samba kommer att skriva asynkront om den begärda storleken är större än "
+"detta värde. Standard värdet är 1."
 
 #: services/models.py:172 services/models.py:173
 #: templates/services/index2.html:29
 msgid "CIFS"
-msgstr ""
+msgstr "CIFS"
 
 #: services/models.py:182
 msgid "Server Name"
-msgstr ""
+msgstr "Server namn"
 
 #: services/models.py:183
 msgid ""
@@ -1217,7 +1224,7 @@ msgstr ""
 
 #: services/models.py:187
 msgid "Allows guest access to all apple shares on this box."
-msgstr ""
+msgstr "Tillåt gäst tillgång till alla apple utdelningar i denna ruta."
 
 #: services/models.py:193
 msgid ""
@@ -1227,6 +1234,10 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
+"Använd detta val för att överrida användarnamnet(´www´by default) som "
+"används för tillgång till tjänster för gästkontot. Alla rättigheter som "
+"användaren har blir tillgängliga för alla som använder gästkontot. Denna "
+"användare måste finnas i lösenordsfilen, men behöver inget giltigt lösenord."
 
 #: services/models.py:196
 msgid "Local Access"
@@ -1235,6 +1246,8 @@ msgstr ""
 #: services/models.py:197
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
+"Tillåt användare med lokala konton att ta del av apple utdelningar i denna "
+"ruta."
 
 #: services/models.py:200
 msgid "Enable DDP"
@@ -1268,6 +1281,8 @@ msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
+"'aktivera asynkront läge, för att hjälpa till med nätverkshastigheter över "
+"gigabit prestanda."
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/index2.html:75

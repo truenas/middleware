@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-23 03:16+0200\n"
+"PO-Revision-Date: 2011-05-25 10:58+0200\n"
 "Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -1251,13 +1251,13 @@ msgstr "AFP"
 
 #: services/models.py:215
 msgid "Number of servers"
-msgstr ""
+msgstr "伺服器數量"
 
 #: services/models.py:216
 msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
-msgstr ""
+msgstr "輸入預建立伺服器的數量。從客戶端必需有足夠的最高處理層級，通常是 4～6 個"
 
 #: services/models.py:220
 msgid "Asynchronous mode"
@@ -1276,17 +1276,19 @@ msgstr "NFS"
 
 #: services/models.py:236
 msgid "Base Name"
-msgstr ""
+msgstr "基本名稱(Base Name)"
 
 #: services/models.py:237
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"基本名稱。例如 iqn.2007-09.jp.ne.peach.istgt，會自動附加目標名稱，不需要一開始「iqn.」（請參閱 "
+"RFC3720和3721的詳細資料）"
 
 #: services/models.py:243
 msgid "Discovery Auth Method"
-msgstr ""
+msgstr "探索認證方式"
 
 #: services/models.py:255
 msgid "I/O Timeout"
@@ -1298,11 +1300,11 @@ msgstr "I/O 逾時，單位為秒(預設為 30 )"
 
 #: services/models.py:261
 msgid "NOPIN Interval"
-msgstr ""
+msgstr "NOPIN 間隔"
 
 #: services/models.py:262
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr ""
+msgstr "NOPIN 發送間隔 ，單位為秒(預設為 20 )"
 
 #: services/models.py:267
 msgid "Max. sessions"
@@ -1322,132 +1324,134 @@ msgstr "每次最多能有幾個connections連線(預設為8)."
 
 #: services/models.py:279
 msgid "Max. pre-send R2T"
-msgstr ""
+msgstr "最大 pre-send R2T 參數"
 
 #: services/models.py:280
 msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
 msgstr ""
+"最大 pre-send R2T 參數，每次連線最多使用pre-send R2T 數量(預設為32).實際的數量限制為對方的佇列深度( Queue "
+"Depth )"
 
 #: services/models.py:285
 msgid "MaxOutstandingR2T"
-msgstr ""
+msgstr "最佳預先傳輸參數(MaxOutstandingR2T)"
 
 #: services/models.py:286
 msgid "iSCSI initial parameter (16 by default)."
-msgstr ""
+msgstr "iSCSI的初始參數 (預設為16)"
 
 #: services/models.py:291
 msgid "First burst length"
-msgstr ""
+msgstr "初次脈衝時間長度"
 
 #: services/models.py:292
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr ""
+msgstr "iSCSI的初始參數 (預設為65536)"
 
 #: services/models.py:297
 msgid "Max burst length"
-msgstr ""
+msgstr "最大脈衝時間長度"
 
 #: services/models.py:298 services/models.py:304
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr ""
+msgstr "iSCSI的初始參數 (預設為262144)"
 
 #: services/models.py:303
 msgid "Max receive data segment length"
-msgstr ""
+msgstr "接收資料區段的最大長度"
 
 #: services/models.py:309
 msgid "DefaultTime2Wait"
-msgstr ""
+msgstr "預設等待時間"
 
 #: services/models.py:310
 msgid "iSCSI initial parameter (2 by default)."
-msgstr ""
+msgstr "iSCSI的初始參數 (預設為2)"
 
 #: services/models.py:315
 msgid "DefaultTime2Retain"
-msgstr ""
+msgstr "預設保存時間"
 
 #: services/models.py:316
 msgid "iSCSI initial parameter (60 by default)."
-msgstr ""
+msgstr "iSCSI的初始參數 (預設為60)"
 
 #: services/models.py:321
 msgid "Enable LUC"
-msgstr ""
+msgstr "啟用邏輯單元數(LUN)"
 
 #: services/models.py:325
 msgid "Controller IP address"
-msgstr ""
+msgstr "控制器的IP位址"
 
 #: services/models.py:326
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
-msgstr ""
+msgstr "邏輯單元控制器的IP位址(預設為127.0.0.1(localhost))"
 
 #: services/models.py:332
 msgid "Controller TCP port"
-msgstr ""
+msgstr "控制器的TCP埠"
 
 #: services/models.py:333
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr ""
+msgstr "邏輯單元控制器的TCP埠(預設為3261)"
 
 #: services/models.py:339
 msgid "Controller Authorised netmask"
-msgstr ""
+msgstr "控制器授權的網路遮罩"
 
 #: services/models.py:341
 msgid "Logical Unit Controller Authorised netmask (255.255.255.0 by default)"
-msgstr ""
+msgstr "邏輯單元控制器授權的網路遮罩(預設為255.255.255.0)"
 
 #: services/models.py:348
 msgid "Controller Auth Method"
-msgstr ""
+msgstr "控制器授權方式"
 
 #: services/models.py:349
 msgid "The method can be accepted in the controller."
-msgstr ""
+msgstr "控制器可被接受的方式。"
 
 #: services/models.py:361 services/models.py:362
 #: templates/services/iscsi.html:5
 msgid "Target Global Configuration"
-msgstr ""
+msgstr "目標全區組態"
 
 #: services/models.py:373
 msgid "Extent Name"
-msgstr ""
+msgstr "擴充(Extent)名稱"
 
 #: services/models.py:374
 msgid "String identifier of the extent."
-msgstr ""
+msgstr "擴充(Extent)名稱的字串識別碼"
 
 #: services/models.py:378
 msgid "Extent Type"
-msgstr ""
+msgstr "擴充(Extent)類型"
 
 #: services/models.py:379
 msgid "Type used as extent."
-msgstr ""
+msgstr "作為類別擴充"
 
 #: services/models.py:384
 msgid "Path to the extent"
-msgstr ""
+msgstr "擴充(Extent)的路徑"
 
 #: services/models.py:385
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
-msgstr ""
+msgstr "作為擴充的檔案路徑(例如： /mnt/sharename/extent/extent0)"
 
 #: services/models.py:390
 msgid "Extent size"
-msgstr ""
+msgstr "擴充(Extent)的容量"
 
 #: services/models.py:391
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
-msgstr ""
+msgstr "擴充(Extent)的容量，填 0 為自動判斷。原始單位格式是bytes，亦可用 KB, MB, TB 為單位。"
 
 #: services/models.py:396 services/models.py:431 services/models.py:477
 #: sharing/models.py:45 sharing/models.py:219
@@ -1464,15 +1468,15 @@ msgstr "請輸入說明供參考"
 #: services/models.py:400 services/models.py:629
 #: templates/services/iscsi_assoctargets.html:6
 msgid "Extent"
-msgstr ""
+msgstr "擴充(Extent)"
 
 #: services/models.py:420 services/models.py:570
 msgid "Portal Group ID"
-msgstr ""
+msgstr "首頁群組 ID"
 
 #: services/models.py:425 services/models.py:435
 msgid "Portal"
-msgstr ""
+msgstr "首頁"
 
 #: services/models.py:426
 msgid ""
@@ -1481,16 +1485,19 @@ msgid ""
 "port number. For any IPs (wildcard address), use '0.0.0.0:3260' and/or "
 "'[::]:3260'. Do not mix wildcard and other IPs at same address family."
 msgstr ""
+"首頁採用的格式為「IP位址：埠」。例如：IPv4格式為「192.168.1.1:3260」 "
+"，IPv6格式「[2001：db8：1:1：：1]：3260」。標準的iSCSI埠為3260。對於任何IP位址(萬用字元位址wildcard "
+"address)，請使用「0.0.0.0:3260」和「/」或「[::]:3260」。請不要在相同的位址混合萬用字元和其他IP位址。"
 
 #: services/models.py:464 templates/services/iscsi_authini.html:6
 msgid "Initiators"
-msgstr ""
+msgstr "建立者"
 
 #: services/models.py:466
 msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
-msgstr ""
+msgstr "授權連接 iSCSI設備的建立者。必須填入名稱或使用「ALL」讓所有的人使用。"
 
 #: services/models.py:470
 msgid "Authorized network"
@@ -1500,23 +1507,23 @@ msgstr "已授權的網路"
 msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
-msgstr ""
+msgstr "網路授權存取的iSCSI設備。須使用IP位址或CIDR 位址，或使用「ALL」不對IP位址設限。"
 
 #: services/models.py:481
 msgid "Initiator"
-msgstr ""
+msgstr "建立者"
 
 #: services/models.py:510
 msgid "Target side user name. It is usually the initiator name by default."
-msgstr ""
+msgstr "目標端的使用者。在預設的情況下通常是建立者的名稱。"
 
 #: services/models.py:520
 msgid "Peer User"
-msgstr ""
+msgstr "對等使用者"
 
 #: services/models.py:525 templates/services/iscsi_auth.html:9
 msgid "Peer Secret"
-msgstr ""
+msgstr "對等機密"
 
 #: services/models.py:529
 msgid "Authorized Access"
@@ -1532,7 +1539,7 @@ msgstr "目標名稱"
 
 #: services/models.py:546
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr ""
+msgstr "開頭沒有「iqn」時，基本名稱(Base Name)將會自動附加。"
 
 #: services/models.py:553
 msgid "Target Alias"
@@ -1540,7 +1547,7 @@ msgstr "目標別名"
 
 #: services/models.py:554
 msgid "Optional user-friendly string of the target."
-msgstr ""
+msgstr "人性化選用文字設備"
 
 #: services/models.py:559 storage/models.py:73
 #: templates/services/iscsi_extents.html:6
@@ -1550,15 +1557,15 @@ msgstr "型態"
 
 #: services/models.py:560
 msgid "Logical Unit Type mapped to LUN."
-msgstr ""
+msgstr "對應到 LUN(logical unit number)的邏輯單位類型"
 
 #: services/models.py:566
 msgid "Target Flags"
-msgstr ""
+msgstr "設備旗標"
 
 #: services/models.py:574
 msgid "Initiator Group ID"
-msgstr ""
+msgstr "建立者群組 ID"
 
 #: services/models.py:580 services/models.py:592
 msgid "Auth Method"
@@ -1568,7 +1575,7 @@ msgstr "認證方式"
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
-msgstr ""
+msgstr "可以被設備接受的方式。「Auto」代表無須或是可認證。"
 
 #: services/models.py:585
 msgid "Authentication Group ID"
@@ -1576,23 +1583,23 @@ msgstr "認證群組編號"
 
 #: services/models.py:598
 msgid "Queue Depth"
-msgstr ""
+msgstr "佇列深度"
 
 #: services/models.py:599
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
-msgstr ""
+msgstr "0=停用，1-255=啟用佇列深度。建議為 32。"
 
 #: services/models.py:604
 msgid "Logical Block Size"
-msgstr ""
+msgstr "邏輯區塊大小"
 
 #: services/models.py:605
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
-msgstr ""
+msgstr "指定邏輯區塊的長度（預設為512）。建議的長度是512。"
 
 #: services/models.py:608 services/models.py:623
 #: templates/services/iscsi_assoctargets.html:5
@@ -1604,15 +1611,15 @@ msgstr "目標"
 
 #: services/models.py:624
 msgid "Target this extent belongs to"
-msgstr ""
+msgstr "擴充設備屬於"
 
 #: services/models.py:632
 msgid "Target / Extent"
-msgstr ""
+msgstr "設備 / 擴充"
 
 #: services/models.py:647
 msgid "Provider"
-msgstr ""
+msgstr "提供者"
 
 #: services/models.py:651
 msgid "Domain name"
@@ -1630,15 +1637,15 @@ msgstr ""
 
 #: services/models.py:667
 msgid "Time in milliseconds"
-msgstr ""
+msgstr "時間，以毫秒為單位"
 
 #: services/models.py:671
 msgid "Forced update period"
-msgstr ""
+msgstr "強制更新週期"
 
 #: services/models.py:677 services/models.py:711 services/models.py:743
 msgid "These parameters will be added to global settings in inadyn.conf."
-msgstr ""
+msgstr "這些參數將被加入到全域設定 inadyn.conf 內"
 
 #: services/models.py:681 services/models.py:682
 #: templates/services/index2.html:40
@@ -1653,17 +1660,17 @@ msgstr "地點"
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
-msgstr ""
+msgstr "實體位置。例如：本系統建置在大樓的第幾層，xxx室"
 
 #: services/models.py:697
 msgid "Contact"
-msgstr ""
+msgstr "聯絡"
 
 #: services/models.py:699
 msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
-msgstr ""
+msgstr "聯絡資訊。例如：本系統負責人大名或電子郵件。"
 
 #: services/models.py:703
 msgid "Community"
@@ -1671,7 +1678,7 @@ msgstr "社群"
 
 #: services/models.py:704
 msgid "In most cases, 'public' is used here."
-msgstr ""
+msgstr "大部分情況下，請使用「public」。"
 
 #: services/models.py:707
 msgid "Send SNMP Traps"
@@ -1692,11 +1699,11 @@ msgstr "在系統上必須是不能重複的 UPS 名稱"
 
 #: services/models.py:730
 msgid "Driver"
-msgstr ""
+msgstr "驅動程式"
 
 #: services/models.py:732
 msgid "The driver used to communicate with your UPS."
-msgstr ""
+msgstr "和 UPS 溝通的驅動程式"
 
 #: services/models.py:736 services/models.py:788 services/models.py:911
 msgid "Port"
@@ -1718,15 +1725,15 @@ msgstr "關機定時器"
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
-msgstr ""
+msgstr "啟動關機時間。以秒為單位。如果UPS在恢復前，時間到期，就取消關機。"
 
 #: services/models.py:762
 msgid "Remote Monitor"
-msgstr ""
+msgstr "遠端監控"
 
 #: services/models.py:764
 msgid "Send Email Status Updates"
-msgstr ""
+msgstr "發送電子郵件更新狀態"
 
 #: services/models.py:767 services/models.py:773
 msgid "To email"
@@ -1734,13 +1741,14 @@ msgstr "寄信"
 
 #: services/models.py:769
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr ""
+msgstr "對方的電子郵件地址。電子郵件地址請用分號隔開。"
 
 #: services/models.py:774
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
+"電子郵件的主旨。您可以使用下列變數替代。<br /><ul><li>%d - 表示日期</li><li>%h - 表示主機名稱</li></ul>"
 
 #: services/models.py:778 services/models.py:779
 msgid "UPS"
@@ -1748,31 +1756,31 @@ msgstr "UPS不斷電系統"
 
 #: services/models.py:789
 msgid "Port to bind FTP server."
-msgstr ""
+msgstr "設定 FTP 伺服器埠"
 
 #: services/models.py:793
 msgid "Clients"
-msgstr ""
+msgstr "客戶端"
 
 #: services/models.py:794
 msgid "Maximum number of simultaneous clients."
-msgstr ""
+msgstr "客戶端同時連線數上限"
 
 #: services/models.py:798
 msgid "Connections"
-msgstr ""
+msgstr "連接"
 
 #: services/models.py:799
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
+msgstr "相同IP的連線數上限（0=不限制）"
 
 #: services/models.py:803
 msgid "Login Attempts"
-msgstr ""
+msgstr "登入嘗試"
 
 #: services/models.py:804
 msgid "Maximum number of allowed password attempts before disconnection."
-msgstr ""
+msgstr "設定密碼嘗試次數上限，超過就斷線"
 
 #: services/models.py:808
 msgid "Timeout"
@@ -1780,7 +1788,7 @@ msgstr "逾時"
 
 #: services/models.py:809
 msgid "Maximum idle time in seconds."
-msgstr ""
+msgstr "閒置時間上限，以秒為時間單位。"
 
 #: services/models.py:812
 msgid "Allow Root Login"
@@ -1811,7 +1819,7 @@ msgstr "第一次連線顯示歡迎看板"
 
 #: services/models.py:831 services/models.py:837
 msgid "Use this option to override the file creation mask (077 by default)."
-msgstr ""
+msgstr "設定檔案新增遮罩（預設為077）"
 
 #: services/models.py:840
 msgid "Enable FXP"
@@ -1819,15 +1827,15 @@ msgstr "啟用FXP"
 
 #: services/models.py:842
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "允許傳輸恢復"
 
 #: services/models.py:844
 msgid "Always Chroot"
-msgstr ""
+msgstr "永遠執行 Chroot"
 
 #: services/models.py:846
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "要求身份認證"
 
 #: services/models.py:848
 msgid "Require Reverse DNS for IP"
@@ -1835,14 +1843,14 @@ msgstr "必須DNS反查 IP"
 
 #: services/models.py:850
 msgid "Masquerade address"
-msgstr ""
+msgstr "偽裝位址"
 
 #: services/models.py:852
 msgid ""
 "Causes the server to display the network information for the specified IP "
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
-msgstr ""
+msgstr "如果伺服器顯示給客戶端的資訊是特定的IP位址，可能是該位址或是 DNS主機是作為NAT閘道或埠轉送的伺服器。"
 
 #: services/models.py:856
 msgid "Minimum passive port"

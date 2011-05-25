@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-24 10:10+0200\n"
+"PO-Revision-Date: 2011-05-24 20:00+0200\n"
 "Last-Translator: Rafal <rafal.ciszynski@d-tech.com.pl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
@@ -447,7 +447,7 @@ msgstr "Powłoka"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
-msgstr ""
+msgstr "Wyłączeni użytkownicy"
 
 #: account/forms.py:205
 msgid "Primary Group"
@@ -676,15 +676,15 @@ msgstr "Domyślna brama IPv6"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "Pierwszy serwer DNS"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "Drugi serwer DNS"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "Trzeci serwer DNS"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:18
 #: templates/network/index2.html:3
@@ -693,11 +693,11 @@ msgstr "Konfiguracja globalna"
 
 #: network/models.py:95
 msgid "NIC"
-msgstr ""
+msgstr "Interfejs sieciowy"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Wybierz swój interfejs sieciowy"
 
 #: network/models.py:101
 msgid "Interface Name"
@@ -705,7 +705,7 @@ msgstr "Nazwa interfejsu"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "Nazwa Twego interfejsu sieciowego"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
@@ -715,6 +715,7 @@ msgstr "DHCP"
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
+"Gdy włączone, DHCP jest używane aby otrzymać adres IPv4, adres routera, itd."
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
@@ -727,11 +728,13 @@ msgstr "Maska IPv4"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "Automatycznie konfiguruj IPv6"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
 msgstr ""
+"Gdy włączone, adres IPv6 jest konfigurowany automatycznie za pomocą "
+"rtsol(8)."
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
@@ -788,19 +791,19 @@ msgstr "Typ protokołu"
 
 #: network/models.py:240
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "Grupa interfejsu LAGG"
 
 #: network/models.py:243
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "Priorytet LAGG"
 
 #: network/models.py:249
 msgid "Physical NIC"
-msgstr ""
+msgstr "Fizyczny interfejs sieciowy"
 
 #: network/models.py:259 templates/network/index2.html:7
 msgid "Link Aggregation"
-msgstr ""
+msgstr "Agregacja połączeń"
 
 #: network/models.py:268
 msgid "Destination network"
@@ -820,19 +823,19 @@ msgstr "Podsumowanie sieci"
 
 #: network/nav.py:27
 msgid "Add Link Aggregation"
-msgstr ""
+msgstr "Dodaj agregację połączeń"
 
 #: network/nav.py:28
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "Utwórz agregację połączeń"
 
 #: network/nav.py:39
 msgid "View All Link Aggregations"
-msgstr ""
+msgstr "Pokaż wszystkie agregacje połączeń"
 
 #: network/nav.py:51
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Agregacje połączeń"
 
 #: network/nav.py:97
 msgid "View All Interfaces"
@@ -865,11 +868,11 @@ msgstr "Użytkownik %s nie jest prawidłowy."
 
 #: services/forms.py:96
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr ""
+msgstr "To pole jest wymagane dla opcji \"Włącz widoczność katalogów domowych\"."
 
 #: services/forms.py:99
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "To pole jest wymagane dla opcji \"Katalogi domowe\"."
 
 #: services/forms.py:145
 msgid "File Permission"
@@ -881,76 +884,78 @@ msgstr "Uprawnienia do katalogu"
 
 #: services/forms.py:165
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr ""
+msgstr "Ta wartość musi być pomiędzy 0 i 65535 włącznie."
 
 #: services/forms.py:171 services/forms.py:189
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
+msgstr "Ta wartość musi być pomiędzy 0 i 10000 włącznie."
 
 #: services/forms.py:177 services/forms.py:183
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
+msgstr "Ta wartość musi być pomiędzy 0 i 1000 włącznie."
 
 #: services/forms.py:195
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
+msgstr "Ta wartość musi być pomiędzy 1024 i 65535 włącznie."
 
 #: services/forms.py:201
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
 msgstr ""
+"Ta wartość musi być pomiędzy 1024 i 65535 włącznie. 0 dla ustawień "
+"domyślnych."
 
 #: services/forms.py:220
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "To pole jest wymagane dla logowania anonimowego"
 
 #: services/forms.py:294 services/models.py:514
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
-msgstr ""
+msgstr "Hasło"
 
 #: services/forms.py:295 services/models.py:515
 msgid "Target side secret."
-msgstr ""
+msgstr "Hasło od strony celu."
 
 #: services/forms.py:296
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "Hasło (potwierdzenie)"
 
 #: services/forms.py:298 services/forms.py:306
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "Wpisz to samo hasło powyżej dla weryfikacji."
 
 #: services/forms.py:299
 msgid "Initiator Secret"
-msgstr ""
+msgstr "Hasło inicjatora"
 
 #: services/forms.py:301 services/models.py:521 services/models.py:526
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr ""
+msgstr "Hasło od strony inicjatora (dla wzajemnej autentykacji CHAP)"
 
 #: services/forms.py:304
 msgid "Initiator Secret (Confirm)"
-msgstr ""
+msgstr "Hasło inicjatora potwierdzenie)"
 
 #: services/forms.py:313
 msgid "Secret does not match"
-msgstr ""
+msgstr "Hasło nie pasuje"
 
 #: services/forms.py:328 services/forms.py:329
 msgid "The peer secret is required if you set a peer user."
-msgstr ""
+msgstr "Hasło klienta jest wymagane jeśli określisz użytkownika klienckiego."
 
 #: services/forms.py:332
 msgid "The peer secret cannot be the same as user secret."
-msgstr ""
+msgstr "Hasło klienta nie może być takie samo jak hasło użytkownika."
 
 #: services/forms.py:375
 msgid "LUN already exists in the same target."
-msgstr ""
+msgstr "LUN już istnieje w tym celu."
 
 #: services/forms.py:384 services/models.py:354
 msgid "Controller Auth Group"
-msgstr ""
+msgstr "Grupa autentykacji kontrolera"
 
 #: services/forms.py:385 services/models.py:355
 msgid ""

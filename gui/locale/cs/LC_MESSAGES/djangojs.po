@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:22-0700\n"
-"PO-Revision-Date: 2011-05-19 18:58+0200\n"
-"Last-Translator: Velociraptor <hrspam@gmail.com>\n"
+"PO-Revision-Date: 2011-05-25 09:36+0200\n"
+"Last-Translator: aida <tomas.sepek@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -27,12 +27,13 @@ msgid "Settings"
 msgstr "Nastavení"
 
 #: media/lib/js/freeadmin.js:136
+#, fuzzy
 msgid "System Information"
-msgstr ""
+msgstr "Systémové informace"
 
 #: media/lib/js/freeadmin.js:176
 msgid "Network Settings"
-msgstr ""
+msgstr "Nastavení sítě"
 
 #: media/lib/js/freeadmin.js:238
 msgid "Services"
@@ -40,7 +41,7 @@ msgstr "Služby"
 
 #: media/lib/js/freeadmin.js:278
 msgid "Account"
-msgstr ""
+msgstr "Účet"
 
 #: media/lib/js/freeadmin.js:317
 msgid "Storage"
@@ -55,20 +56,23 @@ msgid "Edit Disk"
 msgstr ""
 
 #: media/lib/js/freeadmin.js:402
+#, fuzzy
 msgid "Replace"
-msgstr ""
+msgstr "Nahradit"
 
 #: media/lib/js/freeadmin.js:403
 msgid "Disk Replacement"
 msgstr ""
 
 #: media/lib/js/freeadmin.js:407
+#, fuzzy
 msgid "Detach"
-msgstr ""
+msgstr "Odpojit"
 
 #: media/lib/js/freeadmin.js:408
+#, fuzzy
 msgid "Disk Detach"
-msgstr ""
+msgstr "Odpojit disk"
 
 #: media/lib/js/freeadmin.js:594
 msgid "Some error ocurried!"

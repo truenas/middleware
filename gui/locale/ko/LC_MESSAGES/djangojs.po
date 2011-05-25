@@ -3,85 +3,85 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:22-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-05-25 06:54+0200\n"
+"Last-Translator: DEOK WON <gf4724@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: media/lib/js/freeadmin.js:113
 msgid "Reporting"
-msgstr ""
+msgstr "보고서"
 
 #: media/lib/js/freeadmin.js:125
 msgid "Settings"
-msgstr ""
+msgstr "설정"
 
 #: media/lib/js/freeadmin.js:136
 msgid "System Information"
-msgstr ""
+msgstr "시스템 정보"
 
 #: media/lib/js/freeadmin.js:176
 msgid "Network Settings"
-msgstr ""
+msgstr "네트워크 설정"
 
 #: media/lib/js/freeadmin.js:238
 msgid "Services"
-msgstr ""
+msgstr "서비스"
 
 #: media/lib/js/freeadmin.js:278
 msgid "Account"
-msgstr ""
+msgstr "계정"
 
 #: media/lib/js/freeadmin.js:317
 msgid "Storage"
-msgstr ""
+msgstr "스토리지"
 
 #: media/lib/js/freeadmin.js:344
 msgid "CronJobs"
-msgstr ""
+msgstr "클론작업"
 
 #: media/lib/js/freeadmin.js:398
 msgid "Edit Disk"
-msgstr ""
+msgstr "디스크 수정"
 
 #: media/lib/js/freeadmin.js:402
 msgid "Replace"
-msgstr ""
+msgstr "교체"
 
 #: media/lib/js/freeadmin.js:403
 msgid "Disk Replacement"
-msgstr ""
+msgstr "디스크 교체"
 
 #: media/lib/js/freeadmin.js:407
 msgid "Detach"
-msgstr ""
+msgstr "제거"
 
 #: media/lib/js/freeadmin.js:408
 msgid "Disk Detach"
-msgstr ""
+msgstr "디스크 제거"
 
 #: media/lib/js/freeadmin.js:594
 msgid "Some error ocurried!"
-msgstr ""
+msgstr "에러 발생!"
 
 #: media/lib/js/freeadmin/form/Cron.js:43
 msgid "Every"
-msgstr ""
+msgstr "매일"
 
 #: media/lib/js/freeadmin/form/Cron.js:51
 msgid "Each selected"
-msgstr ""
+msgstr "개별 선택"
 
 #: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
-msgstr ""
+msgstr "매일 N"

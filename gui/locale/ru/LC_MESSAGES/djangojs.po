@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:22-0700\n"
-"PO-Revision-Date: 2011-05-23 12:02+0200\n"
+"PO-Revision-Date: 2011-05-25 10:47+0200\n"
 "Last-Translator: xRaider <xraiderus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -37,7 +37,7 @@ msgstr "Настройки сети"
 
 #: media/lib/js/freeadmin.js:238
 msgid "Services"
-msgstr "Сервисы"
+msgstr "Службы"
 
 #: media/lib/js/freeadmin.js:278
 msgid "Account"

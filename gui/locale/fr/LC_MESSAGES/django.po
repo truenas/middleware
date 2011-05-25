@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:34-0700\n"
-"PO-Revision-Date: 2011-05-24 12:10+0200\n"
-"Last-Translator: Nihilman <enfroy.eric@numeo.fr>\n"
+"PO-Revision-Date: 2011-05-24 20:33+0200\n"
+"Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -259,7 +259,7 @@ msgstr "Temps Machine"
 # voir : http://php.net/manual/fr/xml.case-folding.php
 #: choices.py:195
 msgid "No case folding"
-msgstr "Pas de problème de casse"
+msgstr "Pas de changement de casse"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
@@ -456,7 +456,7 @@ msgstr "Interpréteur"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
-msgstr "désactiver les identifiants"
+msgstr "Désactiver les connexions"
 
 #: account/forms.py:205
 msgid "Primary Group"

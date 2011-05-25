@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:37-0700\n"
-"PO-Revision-Date: 2011-05-24 14:49+0200\n"
-"Last-Translator: gf4724 <gf4724@gmail.com>\n"
+"PO-Revision-Date: 2011-05-25 08:14+0200\n"
+"Last-Translator: DEOK WON <gf4724@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -24,47 +24,47 @@ msgstr ""
 
 #: choices.py:36 system/models.py:227 templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:37
 msgid "TLS"
-msgstr ""
+msgstr "TLS"
 
 #: choices.py:42
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: choices.py:43
 msgid "HTTPS"
-msgstr ""
+msgstr "HTTPS"
 
 #: choices.py:48
 msgid "English"
-msgstr ""
+msgstr "영문"
 
 #: choices.py:53 choices.py:222
 msgid "Auto"
-msgstr ""
+msgstr "자동"
 
 #: choices.py:54
 msgid "PIO0"
-msgstr ""
+msgstr "PIO 모드 0"
 
 #: choices.py:55
 msgid "PIO1"
-msgstr ""
+msgstr "PIO 모드 1"
 
 #: choices.py:56
 msgid "PIO2"
-msgstr ""
+msgstr "PIO 모드 2"
 
 #: choices.py:57
 msgid "PIO3"
-msgstr ""
+msgstr "PIO 모드3"
 
 #: choices.py:58
 msgid "PIO4"
-msgstr ""
+msgstr "PIO 모드 4"
 
 #: choices.py:59
 msgid "WDMA0"
@@ -108,48 +108,48 @@ msgstr ""
 
 #: choices.py:72
 msgid "Always On"
-msgstr ""
+msgstr "항상 켜기"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr ""
+msgstr "해제"
 
 #: choices.py:87 choices.py:88 choices.py:89 choices.py:90 choices.py:91
 #: choices.py:92
 msgid "Level"
-msgstr ""
+msgstr "레벨"
 
 #: choices.py:87
 msgid "Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "대기모드 시 최소 전력 사용 (spindown)"
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
-msgstr ""
+msgstr "대기모드 시 보통 전력 사용"
 
 #: choices.py:90
 msgid "Minimum power usgae without Standby (no spindown)"
-msgstr ""
+msgstr "최소 전력 사용 (spindown 사용 안함) "
 
 #: choices.py:91
 msgid "Intermediate power usage withot Standby"
-msgstr ""
+msgstr "보통 전력 사용"
 
 #: choices.py:92
 msgid "Maximum performance, maximum power usage"
-msgstr ""
+msgstr "최대 성능, 최대 전원 사용"
 
 #: choices.py:96 choices.py:184
 msgid "Minimum"
-msgstr ""
+msgstr "최소"
 
 #: choices.py:97
 msgid "Medium"
-msgstr ""
+msgstr "중간"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr ""
+msgstr "최대"
 
 #: choices.py:132 templates/storage/tasks.html:86
 msgid "January"
@@ -274,20 +274,20 @@ msgstr ""
 
 #: choices.py:203
 msgid "File"
-msgstr ""
+msgstr "파일"
 
 #: choices.py:204
 msgid "Device"
-msgstr ""
+msgstr "장치"
 
 #: choices.py:205
 msgid "ZFS Volume"
-msgstr ""
+msgstr "ZFS 볼륨"
 
 #: choices.py:209 storage/models.py:137 templates/storage/autoimport.html:9
 #: templates/storage/import.html:18 templates/storage/wizard.html:91
 msgid "Disk"
-msgstr ""
+msgstr "디스크"
 
 #: choices.py:210
 msgid "DVD"
@@ -295,28 +295,28 @@ msgstr ""
 
 #: choices.py:211
 msgid "Tape"
-msgstr ""
+msgstr "백업 테이프"
 
 #: choices.py:212
 msgid "Pass"
-msgstr ""
+msgstr "통과"
 
 #: choices.py:216
 msgid "read-write"
-msgstr ""
+msgstr "읽기/쓰기"
 
 #: choices.py:217
 msgid "read-only"
-msgstr ""
+msgstr "읽기전용"
 
 #: choices.py:221 choices.py:227 services/forms.py:392 services/forms.py:394
 #: services/forms.py:692 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "선택 없음"
 
 #: choices.py:223
 msgid "CHAP"
-msgstr ""
+msgstr "CHAP"
 
 #: choices.py:224
 msgid "Mutual CHAP"
@@ -348,11 +348,11 @@ msgstr ""
 
 #: choices.py:280
 msgid "On"
-msgstr ""
+msgstr "켜기"
 
 #: choices.py:281 choices.py:286
 msgid "Off"
-msgstr ""
+msgstr "끄기"
 
 #: choices.py:287
 msgid "lzjb (recommended)"
@@ -360,39 +360,39 @@ msgstr ""
 
 #: choices.py:288
 msgid "default level"
-msgstr ""
+msgstr "기본 레벨"
 
 #: choices.py:289
 msgid "fastest"
-msgstr ""
+msgstr "가장 빠르게"
 
 #: choices.py:290
 msgid "maximum, slow"
-msgstr ""
+msgstr "최대, 느리게"
 
 #: choices.py:431
 msgid "Hour(s)"
-msgstr ""
+msgstr "시간"
 
 #: choices.py:432
 msgid "Day(s)"
-msgstr ""
+msgstr "일"
 
 #: choices.py:433
 msgid "Week(s)"
-msgstr ""
+msgstr "주"
 
 #: choices.py:434
 msgid "Month(s)"
-msgstr ""
+msgstr "월"
 
 #: choices.py:435
 msgid "Year(s)"
-msgstr ""
+msgstr "년"
 
 #: choices.py:439
 msgid "Everyday"
-msgstr ""
+msgstr "매일"
 
 #: choices.py:440
 msgid "Every selected weekday"
@@ -400,26 +400,26 @@ msgstr ""
 
 #: account/forms.py:93 templates/storage/volumes.html:62
 msgid "Available"
-msgstr ""
+msgstr "가능한"
 
 #: account/forms.py:144
 msgid "Selected"
-msgstr ""
+msgstr "선택된"
 
 #: account/forms.py:172 account/forms.py:197 account/models.py:77
 #: services/forms.py:229 services/models.py:657 services/models.py:917
 #: system/models.py:153 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:60
 msgid "Username"
-msgstr ""
+msgstr "사용자명"
 
 #: account/forms.py:173 account/forms.py:198
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr ""
+msgstr "필수사항. 30 자 이하. 문자, 숫자와 @/./+/-/_ 만 허용"
 
 #: account/forms.py:174 account/forms.py:199
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr ""
+msgstr "이 값은 문자, 숫자 및 @/./+/-/_ 문자만 포함될 수 있습니다."
 
 #: account/forms.py:175
 msgid "E-mail"
@@ -437,29 +437,29 @@ msgstr "비밀번호 확인 "
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
-msgstr "확인을 위해 상기와 같은 비밀번호를 입력하시오. "
+msgstr "확인을 위해 상기와 동일한 비밀번호를 입력하시오."
 
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
 msgid "Shell"
-msgstr ""
+msgstr "쉘"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
-msgstr ""
+msgstr "로그인 불가"
 
 #: account/forms.py:205
 msgid "Primary Group"
-msgstr ""
+msgstr "주 그룹"
 
 #: account/forms.py:234
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "해당 사용자 이름으로 사용자가 이미 존재합니다."
 
 #: account/forms.py:242 account/forms.py:328 account/forms.py:470
 #: system/forms.py:225
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "두 암호 입력란이 일치하지 않습니다. "
 
 #: account/forms.py:247 account/forms.py:372
 msgid "Home directory has to start with /mnt/"
@@ -469,180 +469,180 @@ msgstr ""
 #: services/forms.py:482 services/forms.py:699 storage/forms.py:223
 #: system/forms.py:268 system/forms.py:291
 msgid "This field is required."
-msgstr ""
+msgstr "이 입력란은 필수입니다. "
 
 #: account/forms.py:418
 msgid "Member users"
-msgstr ""
+msgstr "구성원"
 
 #: account/forms.py:436
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "보조 그룹"
 
 #: account/forms.py:458 templates/registration/password_change_form.html:39
 msgid "New password"
-msgstr ""
+msgstr "새 비밀번호"
 
 #: account/forms.py:459
 msgid "New password confirmation"
-msgstr ""
+msgstr "새 비밀번호 확인"
 
 #: account/forms.py:484 templates/registration/password_change_form.html:31
 msgid "Old password"
-msgstr ""
+msgstr "기존 비밀번호"
 
 #: account/forms.py:492
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr ""
+msgstr "기존의 비밀 번호를 잘못 입력했습니다. 다시 입력하십시오."
 
 #: account/models.py:36 services/models.py:460 services/models.py:505
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr ""
+msgstr "그룹 아이디"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "그룹명"
 
 #: account/models.py:47 account/models.py:147 storage/forms.py:92
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:49
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:61
 msgid "Group"
-msgstr ""
+msgstr "그룹"
 
 #: account/models.py:61
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "내장된 %s 그룹은 삭제 할 수 없습니다."
 
 #: account/models.py:71
 msgid "User ID"
-msgstr ""
+msgstr "사용자 아이디"
 
 #: account/models.py:76
 msgid "User &"
-msgstr ""
+msgstr "사용자 &"
 
 #: account/models.py:83
 msgid "Hashed UNIX password"
-msgstr ""
+msgstr "Hashed UNIX 비밀번호"
 
 #: account/models.py:89
 msgid "Hashed SMB password"
-msgstr ""
+msgstr "Hashed SMB 비밀번호"
 
 #: account/models.py:93
 msgid "Primary Group ID"
-msgstr ""
+msgstr "주 그룹 아이디"
 
 #: account/models.py:98
 msgid "Home Directory"
-msgstr ""
+msgstr "홈 디렉토리"
 
 #: account/models.py:107
 msgid "Full Name"
-msgstr ""
+msgstr "전체 이름"
 
 #: account/models.py:114 account/models.py:151 services/models.py:509
 #: templates/services/iscsi_auth.html:6
 msgid "User"
-msgstr ""
+msgstr "사용자"
 
 #: account/models.py:130
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "내장된 %s 사용자는 삭제 할 수 없습니다. "
 
 #: account/nav.py:9 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:85 templates/account/index2.html:7
 msgid "Change Password"
-msgstr ""
+msgstr "비밀번호 변경"
 
 #: account/nav.py:17 templates/account/changeform.html:25
 #: templates/account/index2.html:4
 msgid "Change Admin User"
-msgstr ""
+msgstr "관리자 변경"
 
 #: account/nav.py:33 templates/account/index2.html:2
 msgid "My Account"
-msgstr ""
+msgstr "내 계정"
 
 #: account/nav.py:41
 msgid "View All Users"
-msgstr ""
+msgstr "모든 사용자 보기"
 
 #: account/nav.py:54
 msgid "View All Groups"
-msgstr ""
+msgstr "모든 그룹 보기"
 
 #: account/views.py:79 account/views.py:94 account/views.py:105
 #: account/views.py:120
 #, python-format
 msgid "%s successfully update."
-msgstr ""
+msgstr "%s 가 갱신되었습니다. "
 
 #: account/views.py:94
 msgid "Admin user"
-msgstr ""
+msgstr "관리자"
 
 #: account/views.py:105 templates/account/index2.html:13
 msgid "Users"
-msgstr ""
+msgstr "사용자"
 
 #: account/views.py:120 templates/account/index2.html:10
 msgid "Groups"
-msgstr ""
+msgstr "그룹"
 
 #: contrib/ext_formwizard.py:170
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
-msgstr ""
+msgstr "죄송합니다, 입력 양식이 만료되었습니다. 이페이지에서 양식을 계속 작성하십시오. "
 
 #: freeadmin/navtree.py:349
 msgid "Display System Processes"
-msgstr ""
+msgstr "시스템 프로세서 보기"
 
 #: freeadmin/navtree.py:357 templates/freeadmin/index.html:50
 msgid "Reboot"
-msgstr ""
+msgstr "재기동"
 
 #: freeadmin/navtree.py:365 templates/freeadmin/index.html:62
 msgid "Shutdown"
-msgstr ""
+msgstr "종료"
 
 #: freeadmin/views.py:103
 #, python-format
 msgid "%s successfully added."
-msgstr ""
+msgstr "%s가 추가 되었습니다. "
 
 #: freeadmin/views.py:262 freeadmin/views.py:264
 #, python-format
 msgid "%s successfully updated."
-msgstr ""
+msgstr "%s가 갱신 되었습니다. "
 
 #: freeadmin/views.py:309
 #, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "%s가 삭제 되었습니다. "
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
+msgstr "3차 네임서버를 입력하기 전에 2차 네임서버를 입력하세요 "
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
-msgstr ""
+msgstr "필요하다면 3차 네임서버를 사용하세요."
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr ""
+msgstr "3차 네임서버를 입력하기 전에 1차 네임서버를 입력하세요"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr ""
+msgstr "2차 네임서버를 입력하기 전에 1차 네임서버를 입력하세요"
 
 #: network/forms.py:134
 msgid "Physical NICs in the LAGG"
@@ -656,40 +656,40 @@ msgstr ""
 #: network/models.py:42 services/models.py:1077
 #: templates/system/system_info.html:4
 msgid "Hostname"
-msgstr ""
+msgstr "호스트명"
 
 #: network/models.py:47
 msgid "Domain"
-msgstr ""
+msgstr "도메인"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "IPv4 기본 게이트웨이"
 
 #: network/models.py:59
 msgid "IPv6 Default Gateway"
-msgstr ""
+msgstr "IPv6 기본 게이트웨이"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "1차 네임서버"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "3차 네임서버"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "3차 네임서버"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:18
 #: templates/network/index2.html:3
 msgid "Global Configuration"
-msgstr ""
+msgstr "전역 설정"
 
 #: network/models.py:95
 msgid "NIC"
-msgstr ""
+msgstr "네트워크 인터페이스"
 
 #: network/models.py:96
 msgid "Pick your NIC"
@@ -697,7 +697,7 @@ msgstr ""
 
 #: network/models.py:101
 msgid "Interface Name"
-msgstr ""
+msgstr "인터페이스 명"
 
 #: network/models.py:102
 msgid "Name your NIC."
@@ -705,7 +705,7 @@ msgstr ""
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
-msgstr ""
+msgstr "DHCP"
 
 #: network/models.py:107
 msgid ""
@@ -715,15 +715,15 @@ msgstr ""
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "IPv4 주소"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr ""
+msgstr "IPv4 서브넷 마스크"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "IPv6 자동 구성"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
@@ -731,56 +731,56 @@ msgstr ""
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr ""
+msgstr "IPv6 주소"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr ""
+msgstr "IPv6 서브넷 마스크"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "옵션"
 
 #: network/models.py:157 network/models.py:158 templates/network/index2.html:5
 msgid "Interfaces"
-msgstr ""
+msgstr "인터페이스"
 
 #: network/models.py:172 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr ""
+msgstr "가상 인터페이스"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr ""
+msgstr "인터페이스 명은 vlanXX의 형식이어야 하며 XX는 숫자입니다. "
 
 #: network/models.py:178 templates/network/lagg_members2.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr ""
+msgstr "물리적 인터페이스"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
-msgstr ""
+msgstr "VLAN 태그"
 
 #: network/models.py:185 network/models.py:276 services/models.py:75
 #: services/models.py:747 storage/models.py:95
 #: templates/network/staticroute.html:7 templates/network/vlan.html:8
 msgid "Description"
-msgstr ""
+msgstr "설명"
 
 #: network/models.py:199 templates/network/index2.html:11
 msgid "VLAN"
-msgstr ""
+msgstr "가상랜"
 
 #: network/models.py:215 templates/network/interface.html:5
 msgid "Interface"
-msgstr ""
+msgstr "인터페이스"
 
 #: network/models.py:219
 msgid "Protocol Type"
-msgstr ""
+msgstr "프로토콜 형식"
 
 #: network/models.py:240
 msgid "LAGG Interface group"
@@ -792,112 +792,112 @@ msgstr ""
 
 #: network/models.py:249
 msgid "Physical NIC"
-msgstr ""
+msgstr "물리적 네트워크 인터페이스 "
 
 #: network/models.py:259 templates/network/index2.html:7
 msgid "Link Aggregation"
-msgstr ""
+msgstr "링크 어그리게이션"
 
 #: network/models.py:268
 msgid "Destination network"
-msgstr ""
+msgstr "목적지 네트워크"
 
 #: network/models.py:272 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr ""
+msgstr "게이트웨이"
 
 #: network/models.py:281
 msgid "Static Route"
-msgstr ""
+msgstr "정적 라우트"
 
 #: network/nav.py:10 templates/network/index2.html:13
 msgid "Network Summary"
-msgstr ""
+msgstr "네트워크 정보 요약"
 
 #: network/nav.py:27
 msgid "Add Link Aggregation"
-msgstr ""
+msgstr "링크어그리게이션 추가"
 
 #: network/nav.py:28
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "링크어그리게이션 생성"
 
 #: network/nav.py:39
 msgid "View All Link Aggregations"
-msgstr ""
+msgstr "모든 링크어그리게이션 보기"
 
 #: network/nav.py:51
 msgid "Link Aggregations"
-msgstr ""
+msgstr "링크어그리게이션 목록"
 
 #: network/nav.py:97
 msgid "View All Interfaces"
-msgstr ""
+msgstr "모든 인터페이스 목록 보기"
 
 #: network/nav.py:109
 msgid "View All VLANs"
-msgstr ""
+msgstr "모든 VLAN 목록 보기"
 
 #: network/nav.py:121
 msgid "View All Static Routes"
-msgstr ""
+msgstr "모든 정적 라우트 목록 보기"
 
 #: network/views.py:192
 #, python-format
 msgid "%s successfully added"
-msgstr ""
+msgstr "%s가 추가 되었습니다. "
 
 #: services/forms.py:59 services/forms.py:112 sharing/forms.py:54
 #: sharing/models.py:63
 msgid "Guest Account"
-msgstr ""
+msgstr "게스트 계정"
 
 #: services/forms.py:86 services/forms.py:130 services/forms.py:246
 #: sharing/forms.py:82 sharing/forms.py:190 sharing/forms.py:198
 #: storage/forms.py:799
 #, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "사용자 계정 %s 는 유효하지 않습니다. "
 
 #: services/forms.py:96
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr ""
+msgstr "\"홈 디렉토리 브라우징 활성\"을 위해 필요한 입력란입니다. "
 
 #: services/forms.py:99
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "\"홈 디렉토리\"를 위해 필요한 입력란입니다. "
 
 #: services/forms.py:145
 msgid "File Permission"
-msgstr ""
+msgstr "파일 사용권한"
 
 #: services/forms.py:146
 msgid "Directory Permission"
-msgstr ""
+msgstr "디렉토리 사용권한"
 
 #: services/forms.py:165
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr ""
+msgstr "이 값은 0부터 65535 까지만 포함되야 합니다."
 
 #: services/forms.py:171 services/forms.py:189
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
+msgstr "이 값은 0부터 10000까지만 포함되어야 합니다. "
 
 #: services/forms.py:177 services/forms.py:183
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
+msgstr "이 값은 0부터 1000까지만 포함되어야 합니다."
 
 #: services/forms.py:195
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
+msgstr "이 값은 1024부터 65535까지만 포함되어야 합니다. 기본값 0"
 
 #: services/forms.py:201
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr ""
+msgstr "이 값은 1024부터 65535까지만 포함되어야 합니다. 기본값 0"
 
 #: services/forms.py:220
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "이 입력란는 익명사용자 로그인을 위해 필요합니다."
 
 #: services/forms.py:294 services/models.py:514
 #: templates/services/iscsi_auth.html:7
@@ -1006,7 +1006,7 @@ msgstr ""
 
 #: services/models.py:41
 msgid "Service"
-msgstr ""
+msgstr "서비스"
 
 #: services/models.py:42
 msgid "Name of Service, should be auto-generated at build time"
@@ -1014,29 +1014,29 @@ msgstr ""
 
 #: services/models.py:45
 msgid "Enable Service"
-msgstr ""
+msgstr "서비스 활성"
 
 #: services/models.py:48 services/models.py:49
 #: templates/common/menubar2.html:28 templates/services/index2.html:3
 msgid "Services"
-msgstr ""
+msgstr "서비스"
 
 #: services/models.py:61
 msgid "Authentication Model"
-msgstr ""
+msgstr "인증 모델"
 
 #: services/models.py:62
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
-msgstr ""
+msgstr "Active Directory 또는 LDAP 인증을 사용하여 이 옵션을 대체합니다."
 
 #: services/models.py:66
 msgid "NetBIOS name"
-msgstr ""
+msgstr "넷바이오스 명"
 
 #: services/models.py:70
 msgid "Workgroup"
-msgstr ""
+msgstr "워크그룹"
 
 #: services/models.py:71
 msgid ""
@@ -1046,19 +1046,19 @@ msgstr ""
 
 #: services/models.py:77
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "서버 설명은 공란으로 비워 둘 수 있습니다. "
 
 #: services/models.py:83
 msgid "DOS charset"
-msgstr ""
+msgstr "DOS 문자인코딩"
 
 #: services/models.py:89
 msgid "UNIX charset"
-msgstr ""
+msgstr "UNIX 문자인코딩"
 
 #: services/models.py:95
 msgid "Log level"
-msgstr ""
+msgstr "로그 레벨"
 
 #: services/models.py:98
 msgid "Local Master"
@@ -1066,11 +1066,11 @@ msgstr ""
 
 #: services/models.py:100
 msgid "Time Server for Domain"
-msgstr ""
+msgstr "시간서버 도메인명"
 
 #: services/models.py:104 services/models.py:192
 msgid "Guest account"
-msgstr ""
+msgstr "게스트 계정"
 
 #: services/models.py:105 sharing/models.py:64
 msgid ""
@@ -1083,11 +1083,11 @@ msgstr ""
 
 #: services/models.py:108
 msgid "Allow guest access"
-msgstr ""
+msgstr "게스트 접속 허용"
 
 #: services/models.py:110
 msgid "Only allow guest access"
-msgstr ""
+msgstr "게스트 접속만 허용"
 
 #: services/models.py:113 services/models.py:830
 msgid "File mask"
@@ -1120,11 +1120,11 @@ msgstr ""
 
 #: services/models.py:130
 msgid "Support DOS File Attributes"
-msgstr ""
+msgstr "DOS 파일속성 지원"
 
 #: services/models.py:132
 msgid "Allow Empty Password"
-msgstr ""
+msgstr "빈 암호 허용"
 
 #: services/models.py:135 services/models.py:675 services/models.py:709
 #: services/models.py:741 services/models.py:888
@@ -1137,23 +1137,23 @@ msgstr ""
 
 #: services/models.py:140
 msgid "Enable home directories"
-msgstr ""
+msgstr "홈 디렉토리 활성"
 
 #: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
-msgstr ""
+msgstr "삼바 사용자용 홈 디렉토리 활성\\비활성"
 
 #: services/models.py:144
 msgid "Enable home directories browsing"
-msgstr ""
+msgstr "홈 디렉토리 브라우징 활성"
 
 #: services/models.py:145
 msgid "This enables\\disables home directories browsing for samba user."
-msgstr ""
+msgstr "삼바 사용자용 홈 디렉토리 브라우징 활성\\비활성"
 
 #: services/models.py:149
 msgid "Home directories"
-msgstr ""
+msgstr "홈 디렉토리"
 
 #: services/models.py:155
 msgid "Enable AIO"
@@ -1259,7 +1259,7 @@ msgstr ""
 #: services/models.py:226 services/models.py:227
 #: templates/services/index2.html:75
 msgid "NFS"
-msgstr ""
+msgstr "NFS"
 
 #: services/models.py:236
 msgid "Base Name"
@@ -1658,16 +1658,16 @@ msgstr ""
 
 #: services/models.py:704
 msgid "In most cases, 'public' is used here."
-msgstr ""
+msgstr "대부분 \"public\"으로 사용합니다. "
 
 #: services/models.py:707
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "SNMP 트랩 전송"
 
 #: services/models.py:715 services/models.py:716
 #: templates/services/index2.html:86
 msgid "SNMP"
-msgstr ""
+msgstr "SNMP"
 
 #: services/models.py:725
 msgid "Identifier"
@@ -1687,7 +1687,7 @@ msgstr ""
 
 #: services/models.py:736 services/models.py:788 services/models.py:911
 msgid "Port"
-msgstr ""
+msgstr "포트"
 
 #: services/models.py:738
 msgid "The serial or USB port where your UPS is connected."
@@ -1695,11 +1695,11 @@ msgstr ""
 
 #: services/models.py:754
 msgid "Shutdown mode"
-msgstr ""
+msgstr "종료 모드"
 
 #: services/models.py:758
 msgid "Shutdown timer"
-msgstr ""
+msgstr "종료 타이머"
 
 #: services/models.py:759
 msgid ""
@@ -1709,7 +1709,7 @@ msgstr ""
 
 #: services/models.py:762
 msgid "Remote Monitor"
-msgstr ""
+msgstr "원격 모니터"
 
 #: services/models.py:764
 msgid "Send Email Status Updates"
@@ -1755,7 +1755,7 @@ msgstr ""
 
 #: services/models.py:803
 msgid "Login Attempts"
-msgstr ""
+msgstr "로그인 시도"
 
 #: services/models.py:804
 msgid "Maximum number of allowed password attempts before disconnection."
@@ -1859,7 +1859,7 @@ msgstr ""
 
 #: services/models.py:866
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "내부 사용자 업로드 대역폭"
 
 #: services/models.py:867
 msgid "Local user upload bandwith in KB/s. Zero means infinity."
@@ -1867,7 +1867,7 @@ msgstr ""
 
 #: services/models.py:871
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "내부 사용자 다운로드 대역폭"
 
 #: services/models.py:872
 msgid "Local user download bandwith in KB/s. Zero means infinity."
@@ -1875,7 +1875,7 @@ msgstr ""
 
 #: services/models.py:876
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "익명사용자 업로드 대역폭"
 
 #: services/models.py:877
 msgid "Anonymous user upload bandwith in KB/s. Zero means infinity."
@@ -1883,7 +1883,7 @@ msgstr ""
 
 #: services/models.py:881
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "익명사용자 다운로드 대역폭"
 
 #: services/models.py:882
 msgid "Anonymous user download bandwith in KB/s. Zero means infinity."
@@ -1891,7 +1891,7 @@ msgstr ""
 
 #: services/models.py:885
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "SSL/TLS 활성"
 
 #: services/models.py:890
 msgid "These parameters are added to proftpd.conf."
@@ -1955,7 +1955,7 @@ msgstr ""
 
 #: services/models.py:944
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "TCP 포트를 변경합니다. 기본값은 22 입니다. "
 
 #: services/models.py:947
 msgid "Login as Root with password"
@@ -1973,7 +1973,7 @@ msgstr ""
 
 #: services/models.py:953
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "TCP 포트 포워딩 허용"
 
 #: services/models.py:955
 msgid "Compress Connections"
@@ -2785,27 +2785,27 @@ msgstr ""
 #: storage/models.py:52 storage/models.py:77 storage/views.py:88
 #: storage/views.py:116 storage/views.py:139 templates/storage/volumes.html:59
 msgid "Volume"
-msgstr ""
+msgstr "볼륨"
 
 #: storage/models.py:78
 msgid "Volume this group belongs to"
-msgstr ""
+msgstr "이 그룹이 속해 있는 볼륨 "
 
 #: storage/models.py:91
 msgid "Disks"
-msgstr ""
+msgstr "디스크"
 
 #: storage/models.py:102
 msgid "Transfer Mode"
-msgstr ""
+msgstr "전송 모드"
 
 #: storage/models.py:108
 msgid "HDD Standby"
-msgstr ""
+msgstr "하드디스크 대기모드 "
 
 #: storage/models.py:114
 msgid "Advanced Power Management"
-msgstr ""
+msgstr "향상된 전원 관리 "
 
 #: storage/models.py:120
 msgid "Acoustic Level"
@@ -3198,51 +3198,51 @@ msgstr ""
 
 #: system/models.py:174
 msgid "Organization"
-msgstr ""
+msgstr "조직"
 
 #: system/models.py:175
 msgid "Organization Name (eg, company)"
-msgstr ""
+msgstr "조직명 (예, company)"
 
 #: system/models.py:181
 msgid "Organizational Unit"
-msgstr ""
+msgstr "조직 단위"
 
 #: system/models.py:182
 msgid "Organizational Unit Name (eg, section)"
-msgstr ""
+msgstr "조직 단위 명 (예, section) "
 
 #: system/models.py:188 system/models.py:189
 msgid "Email Address"
-msgstr ""
+msgstr "전자우편 주소"
 
 #: system/models.py:195
 msgid "Locality"
-msgstr ""
+msgstr "장소"
 
 #: system/models.py:196
 msgid "Locality Name (eg, city)"
-msgstr ""
+msgstr "장소 명 (예, city)"
 
 #: system/models.py:202
 msgid "State"
-msgstr ""
+msgstr "주"
 
 #: system/models.py:203
 msgid "State or Province Name (full name)"
-msgstr ""
+msgstr "주 또는 지방 이름 (전체 이름)"
 
 #: system/models.py:209
 msgid "Country"
-msgstr ""
+msgstr "국가"
 
 #: system/models.py:210
 msgid "Country Name (2 letter code)"
-msgstr ""
+msgstr "국가명 (2 글자 코드명)"
 
 #: system/models.py:216
 msgid "Common Name"
-msgstr ""
+msgstr "일반 이름 (예, 귀하의 이름)"
 
 #: system/models.py:217
 msgid "Common Name (eg, YOUR name)"
@@ -3259,22 +3259,22 @@ msgstr ""
 
 #: system/nav.py:9 templates/system/reporting.html:2
 msgid "Reporting"
-msgstr ""
+msgstr "보고서"
 
 #: system/nav.py:16
 msgid "System Information"
-msgstr ""
+msgstr "시스템 정보"
 
 #: system/views.py:130
 msgid "The uploaded file is not valid."
-msgstr ""
+msgstr "업로드 파일이 유효하지 않습니다."
 
 #: templates/account/bsdgroup2user_form2.html:9
 #: templates/freeadmin/generic_model_add.html:13
 #: templates/freeadmin/generic_model_edit.html:14
 #: templates/network/lagg_add.html:9 templates/system/wizard.html:14
 msgid "OK"
-msgstr ""
+msgstr "확인"
 
 #: templates/account/bsdgroup2user_form2.html:10
 #: templates/freeadmin/generic_model_add.html:14
@@ -3295,7 +3295,7 @@ msgstr ""
 #: templates/system/config_restore.html:11
 #: templates/system/config_upload.html:35
 msgid "Cancel"
-msgstr ""
+msgstr "취소"
 
 #: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:48
 #: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:59
@@ -3310,7 +3310,7 @@ msgstr ""
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/storage/tasks.html:134
 msgid "Modify"
-msgstr ""
+msgstr "수정"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
@@ -3367,35 +3367,35 @@ msgstr ""
 
 #: templates/common/menubar2.html:8
 msgid "System"
-msgstr ""
+msgstr "시스템"
 
 #: templates/common/menubar2.html:13
 msgid "Network"
-msgstr ""
+msgstr "네트워크"
 
 #: templates/common/menubar2.html:18
 msgid "Storage"
-msgstr ""
+msgstr "스토리지"
 
 #: templates/common/menubar2.html:23
 msgid "Sharing"
-msgstr ""
+msgstr "공유"
 
 #: templates/common/menubar2.html:33
 msgid "Log Out"
-msgstr ""
+msgstr "로그아웃"
 
 #: templates/common/menubar2.html:38
 msgid "Help"
-msgstr ""
+msgstr "도움말"
 
 #: templates/common/menubar2.html:43
 msgid "Account"
-msgstr ""
+msgstr "계정"
 
 #: templates/common/menubar2.html:49 templates/registration/login.html:49
 msgid "Log In"
-msgstr ""
+msgstr "로그인"
 
 #: templates/freeadmin/generic_model_add.html:9
 #: templates/freeadmin/generic_model_delete.html:10
@@ -3407,13 +3407,13 @@ msgstr ""
 #: templates/storage/snapshot_confirm_rollback2.html:10
 #: templates/system/config_restore.html:10 templates/system/wizard.html:13
 msgid "Please wait..."
-msgstr ""
+msgstr "잠시 기다리세요..."
 
 #: templates/freeadmin/generic_model_delete.html:7
 #: templates/storage/dataset_confirm_delete2.html:7
 #: templates/storage/snapshot_confirm_delete2.html:7
 msgid "Are you sure you want to delete?"
-msgstr ""
+msgstr "삭제 하시겠습니까?"
 
 #: templates/freeadmin/generic_model_delete.html:10
 #: templates/storage/dataset_confirm_delete2.html:10
@@ -3422,16 +3422,16 @@ msgstr ""
 #: templates/storage/snapshot_confirm_rollback2.html:10
 #: templates/storage/tasks.html:36 templates/system/config_restore.html:10
 msgid "Yes"
-msgstr ""
+msgstr "예"
 
 #: templates/freeadmin/generic_model_delete_ok.html:1
 #: templates/storage/dataset_confirm_delete_ok.html:1
 msgid "sucessfully deleted"
-msgstr ""
+msgstr "삭제 되었습니다."
 
 #: templates/freeadmin/generic_model_edit.html:5
 msgid "Your changes have been successfully updated!"
-msgstr ""
+msgstr "변경 사항이 반영되었습니다. "
 
 #: templates/freeadmin/generic_model_edit.html:39
 #: templates/network/interface.html:39 templates/network/lagg.html:44
@@ -3451,20 +3451,20 @@ msgstr ""
 #: templates/sharing/unix.html:34 templates/sharing/windows.html:38
 #: templates/storage/tasks.html:137
 msgid "Delete"
-msgstr ""
+msgstr "삭제"
 
 #: templates/freeadmin/generic_model_edit_ok.html:1
 msgid "sucessfully edited"
-msgstr ""
+msgstr "수정 되었습니다"
 
 #: templates/freeadmin/index.html:27
 msgid "Running Processes"
-msgstr ""
+msgstr "프로세서 작동중"
 
 #: templates/freeadmin/index.html:32 templates/freeadmin/index.html.py:36
 #: templates/freeadmin/index.html:41
 msgid "Loading"
-msgstr ""
+msgstr "로딩중"
 
 #: templates/freeadmin/index.html:34
 msgid "/var/log/messages"
@@ -3472,43 +3472,43 @@ msgstr ""
 
 #: templates/freeadmin/index.html:43
 msgid "Reboot the System"
-msgstr ""
+msgstr "시스템 재기동"
 
 #: templates/freeadmin/index.html:44 templates/freeadmin/index.html.py:55
 msgid "Warning!"
-msgstr ""
+msgstr "경고!"
 
 #: templates/freeadmin/index.html:45
 msgid ""
 "You are about to <strong>REBOOT</strong> the system, what would you like to "
 "do?"
-msgstr ""
+msgstr "시스템을 <strong>재기동</strong> 하려고 합니다. 계속 진행하겠습니까?"
 
 #: templates/freeadmin/index.html:54
 msgid "Shutdown the System"
-msgstr ""
+msgstr "시스템을 종료합니다."
 
 #: templates/freeadmin/index.html:56
 msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
-msgstr ""
+msgstr "시스템을 <strong>종료</strong> 하려고 합니다. 계속 진행하겠습니까?"
 
 #: templates/freeadmin/index.html:66
 msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-msgstr ""
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;도움말 & 지원"
 
 #: templates/freeadmin/index.html:69
 msgid "Forum"
-msgstr ""
+msgstr "포럼"
 
 #: templates/freeadmin/index.html:71
 msgid "Community Forum"
-msgstr ""
+msgstr "커뮤니티 포럼"
 
 #: templates/freeadmin/index.html:75
 msgid "IRC (Chat)"
-msgstr ""
+msgstr "IRC (채팅)"
 
 #: templates/freeadmin/index.html:77
 msgid "#freenas on freenode"
@@ -3516,11 +3516,11 @@ msgstr ""
 
 #: templates/freeadmin/index.html:82
 msgid "Mailing Lists"
-msgstr ""
+msgstr "메일링 리스트"
 
 #: templates/freeadmin/index.html:84
 msgid "FreeNAS Announce"
-msgstr ""
+msgstr "FreeNAS 공지사항"
 
 #: templates/freeadmin/index.html:85
 msgid "FreeNAS Commit"
@@ -3567,16 +3567,16 @@ msgstr ""
 #: templates/sharing/unix.html:28 templates/sharing/windows.html:32
 #: templates/storage/datagrid_disks.html:13
 msgid "Edit"
-msgstr ""
+msgstr "수정"
 
 #: templates/network/interface.html:35 templates/network/lagg.html:14
 #: templates/network/lagg.html.py:16 templates/network/lagg_members2.html:17
 msgid "Edit Interface"
-msgstr ""
+msgstr "인터페이스 수정"
 
 #: templates/network/interface.html:41 templates/network/lagg.html:46
 msgid "Delete Interface"
-msgstr ""
+msgstr "인터페이스 삭제"
 
 #: templates/network/interface.html:48 templates/network/summary.html:16
 msgid "No interfaces defined"
@@ -3748,11 +3748,11 @@ msgstr ""
 
 #: templates/services/index2.html:59
 msgid "FTP Settings"
-msgstr ""
+msgstr "FTP 설정"
 
 #: templates/services/index2.html:70
 msgid "LDAP Settings"
-msgstr ""
+msgstr "LDAP 설정"
 
 #: templates/services/index2.html:81
 msgid "NFS Settings"
@@ -3760,15 +3760,15 @@ msgstr ""
 
 #: templates/services/index2.html:92
 msgid "SNMP Settings"
-msgstr ""
+msgstr "SNMP 설정"
 
 #: templates/services/index2.html:103
 msgid "SSH Settings"
-msgstr ""
+msgstr "SSH 설정"
 
 #: templates/services/index2.html:114
 msgid "TFTP Settings"
-msgstr ""
+msgstr "TFTP 설정"
 
 #: templates/services/index2.html:119
 msgid "iSCSI"
@@ -3904,12 +3904,12 @@ msgstr ""
 
 #: templates/sharing/apple.html:36
 msgid "Delete Apple Share"
-msgstr ""
+msgstr "Apple Share 삭제"
 
 #: templates/sharing/apple.html:43 templates/sharing/unix.html:43
 #: templates/sharing/windows.html:47
 msgid "No shares defined"
-msgstr ""
+msgstr "설정된 공유목록이 없음"
 
 #: templates/sharing/apple.html:50
 msgid "Add Apple Share"
@@ -3917,67 +3917,67 @@ msgstr ""
 
 #: templates/sharing/apple.html:52
 msgid "Add Apple Share (AFP)"
-msgstr ""
+msgstr "Apple Share (AFP) 추가"
 
 #: templates/sharing/index.html:3
 msgid "Apple"
-msgstr ""
+msgstr "Apple"
 
 #: templates/sharing/index.html:5
 msgid "UNIX"
-msgstr ""
+msgstr "UNIX"
 
 #: templates/sharing/index.html:7
 msgid "Windows"
-msgstr ""
+msgstr "윈도우"
 
 #: templates/sharing/unix.html:8
 msgid "There are no active UNIX Shares."
-msgstr ""
+msgstr "활성중인 UNIX 공유가 없습니다. "
 
 #: templates/sharing/unix.html:13
 msgid "Mountpoint"
-msgstr ""
+msgstr "마운트포인트"
 
 #: templates/sharing/unix.html:30
 msgid "Edit NFS Share"
-msgstr ""
+msgstr "NFS 공유 수정"
 
 #: templates/sharing/unix.html:36
 msgid "Delete NFS Share"
-msgstr ""
+msgstr "NFS 공유 삭제"
 
 #: templates/sharing/unix.html:50
 msgid "Add UNIX Share"
-msgstr ""
+msgstr "UNIX 공유 추가"
 
 #: templates/sharing/unix.html:52
 msgid "Add UNIX Share (NFS)"
-msgstr ""
+msgstr "유닉스 공유(NFS) 추가 "
 
 #: templates/sharing/windows.html:8
 msgid "There are no active Windows Shares."
-msgstr ""
+msgstr "활성된 윈도우 공유가 없습니다. "
 
 #: templates/sharing/windows.html:34
 msgid "Edit Windows Share"
-msgstr ""
+msgstr "윈도우 공유 수정"
 
 #: templates/sharing/windows.html:40
 msgid "Delete Windows Share"
-msgstr ""
+msgstr "윈도우 공유 삭제"
 
 #: templates/sharing/windows.html:54
 msgid "Add Windows Share"
-msgstr ""
+msgstr "윈도우 공유 추가"
 
 #: templates/sharing/windows.html:56
 msgid "Add Windows Share (CIFS)"
-msgstr ""
+msgstr "윈도우 공유(CIFS) 추가"
 
 #: templates/storage/clonesnap.html:12
 msgid "Clone Snapshot"
-msgstr ""
+msgstr "스냅샷 복제"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
@@ -3989,15 +3989,15 @@ msgstr ""
 
 #: templates/storage/disk_detach.html:7
 msgid "Are you sure you want to detach?"
-msgstr ""
+msgstr "제거 하시겠습니까?"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
-msgstr ""
+msgstr "디스크 교체"
 
 #: templates/storage/import.html:32 templates/storage/wizard.html:43
 msgid "Filesystem type"
-msgstr ""
+msgstr "파일시스템 타입"
 
 #: templates/storage/index.html:3 templates/storage/volumes.html:51
 msgid "Active Volumes"
@@ -4013,147 +4013,147 @@ msgstr ""
 
 #: templates/storage/manualsnap.html:13
 msgid "Manually Create Snapshot"
-msgstr ""
+msgstr "수동으로 스냅샷 생성"
 
 #: templates/storage/periodicsnap.html:13 templates/storage/volumes.html:130
 #: templates/storage/volumes.html.py:133
 msgid "Create Snapshot"
-msgstr ""
+msgstr "스냅샷 생성"
 
 #: templates/storage/permission.html:6
 msgid "Change permission"
-msgstr ""
+msgstr "사용권한 변경"
 
 #: templates/storage/permission.html:7
 #, python-format
 msgid "Change permission on %(path)s to"
-msgstr ""
+msgstr "%(path)에 대한 사용 권한 변경"
 
 #: templates/storage/permission.html:11
 msgid "Change"
-msgstr ""
+msgstr "변경"
 
 #: templates/storage/replications.html:9
 msgid "Add Replication"
-msgstr ""
+msgstr "복제 추가"
 
 #: templates/storage/replications.html:13
 msgid "Mount point"
-msgstr ""
+msgstr "마운트 포인트"
 
 #: templates/storage/replications.html:14
 msgid "Last snapshot"
-msgstr ""
+msgstr "최근 스냅샷"
 
 #: templates/storage/replications.html:27
 #: templates/storage/replications.html:31
 msgid "Delete Replication"
-msgstr ""
+msgstr "복제 삭제"
 
 #: templates/storage/replications.html:33
 #: templates/storage/replications.html:37
 msgid "Edit Replication"
-msgstr ""
+msgstr "복제 수정"
 
 #: templates/storage/replications.html:43
 msgid "No ZFS replication available"
-msgstr ""
+msgstr "사용가능한 ZFS 복제 없음"
 
 #: templates/storage/snapshot_confirm_rollback2.html:7
 msgid "Are you sure you want to rollback the snapshot to previous state?"
-msgstr ""
+msgstr "이전 상태의 스냅샷으로 복원 하시겠습니까?"
 
 #: templates/storage/snapshots.html:4
 msgid "Dataset name"
-msgstr ""
+msgstr "데이타셋 명"
 
 #: templates/storage/snapshots.html:5
 msgid "Snapshot name"
-msgstr ""
+msgstr "스냅샷 명"
 
 #: templates/storage/snapshots.html:6
 msgid "Used space"
-msgstr ""
+msgstr "사용한 공간"
 
 #: templates/storage/snapshots.html:7
 msgid "Referenced space"
-msgstr ""
+msgstr "참조 공간"
 
 #: templates/storage/snapshots.html:21 templates/storage/snapshots.html:23
 msgid "Clone snapshot"
-msgstr ""
+msgstr "스냅샷 복제"
 
 #: templates/storage/snapshots.html:25 templates/storage/snapshots.html:27
 msgid "Destroy snapshot"
-msgstr ""
+msgstr "스냅샷 삭제"
 
 #: templates/storage/snapshots.html:30 templates/storage/snapshots.html:32
 msgid "Rollback to this snapshot"
-msgstr ""
+msgstr "이 스냅샷으로 복원"
 
 #: templates/storage/snapshots.html:40
 msgid "No ZFS snapshot available"
-msgstr ""
+msgstr "사용가능한 ZFS 스냅샷이 없음"
 
 #: templates/storage/tasks.html:6
 msgid "Periodic Snapshots"
-msgstr ""
+msgstr "주기적인 스냅샷"
 
 #: templates/storage/tasks.html:14
 msgid "Periodic Snapshot Schedule"
-msgstr ""
+msgstr "주기적인 스냅샷 일정"
 
 #: templates/storage/tasks.html:17
 msgid "There are no scheduled snapshots."
-msgstr ""
+msgstr "스냅샷 일정이 없습니다. "
 
 #: templates/storage/tasks.html:24
 msgid "How"
-msgstr ""
+msgstr "어떻게"
 
 #: templates/storage/tasks.html:25
 msgid "Keep snapshot for"
-msgstr ""
+msgstr "동안 스냅샷 보관"
 
 #: templates/storage/tasks.html:38
 msgid "No"
-msgstr ""
+msgstr "아니오"
 
 #: templates/storage/tasks.html:42
 msgid "From"
-msgstr ""
+msgstr "부터"
 
 #: templates/storage/tasks.html:44
 msgid "through"
-msgstr ""
+msgstr "까지"
 
 #: templates/storage/tasks.html:46
 msgid ", every"
-msgstr ""
+msgstr ", 매번"
 
 #: templates/storage/tasks.html:48
 msgid "minutes,"
-msgstr ""
+msgstr "분"
 
 #: templates/storage/tasks.html:50
 msgid "everyday"
-msgstr ""
+msgstr "매일"
 
 #: templates/storage/tasks.html:53
 msgid "on every"
-msgstr ""
+msgstr "항상 "
 
 #: templates/storage/tasks.html:143
 msgid "No periodic snapshots scheduled"
-msgstr ""
+msgstr "예약된 스냅샷 일정 없음"
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
-msgstr ""
+msgstr "ZFS 볼륨 수정"
 
 #: templates/storage/volumes.html:42 templates/storage/volumes.html.py:46
 msgid "Auto Import Volume"
-msgstr ""
+msgstr "자동으로 볼륨 가져오기"
 
 #: templates/storage/volumes.html:53
 msgid "There are no active volumes."
@@ -4161,48 +4161,48 @@ msgstr ""
 
 #: templates/storage/volumes.html:61
 msgid "Used"
-msgstr ""
+msgstr "사용한"
 
 #: templates/storage/volumes.html:63
 msgid "Size"
-msgstr ""
+msgstr "크기"
 
 #: templates/storage/volumes.html:64
 msgid "Status"
-msgstr ""
+msgstr "상태"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Destroy Dataset"
-msgstr ""
+msgstr "데이타셋 삭제"
 
 #: templates/storage/volumes.html:99 templates/storage/volumes.html.py:103
 #: templates/storage/volumes.html:114 templates/storage/volumes.html.py:118
 msgid "Edit ZFS Options"
-msgstr ""
+msgstr "ZFS 옵션 수정"
 
 #: templates/storage/volumes.html:107 templates/storage/volumes.html.py:110
 msgid "Destroy Volume"
-msgstr ""
+msgstr "볼륨 삭제"
 
 #: templates/storage/volumes.html:140 templates/storage/volumes.html.py:144
 msgid "View Disks"
-msgstr ""
+msgstr "디스크 보기"
 
 #: templates/storage/volumes.html:151
 msgid "No volumes defined"
-msgstr ""
+msgstr "설정된 볼륨 없음"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
-msgstr ""
+msgstr "구성 디스크"
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
-msgstr ""
+msgstr "그룹 타입"
 
 #: templates/storage/wizard.html:84
 msgid "ZFS Extra"
-msgstr ""
+msgstr "ZFS Extra"
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
@@ -4210,139 +4210,139 @@ msgstr ""
 
 #: templates/storage/wizard.html:93
 msgid "Log"
-msgstr ""
+msgstr "로그"
 
 #: templates/storage/wizard.html:94
 msgid "Cache"
-msgstr ""
+msgstr "캐쉬"
 
 #: templates/storage/wizard.html:95
 msgid "Spare"
-msgstr ""
+msgstr "예비품"
 
 #: templates/storage/wizard.html:119
 msgid "Add Volume"
-msgstr ""
+msgstr "볼륨 추가"
 
 #: templates/storage/wizard.html:120
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "기존 데이타는 초기화 됩니다. "
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
-msgstr ""
+msgstr "캐쉬가 재생성 되고 있습니다. "
 
 #: templates/system/advanced_edit.html:19
 msgid "The cache could not be rebuilt"
-msgstr ""
+msgstr "캐쉬를 재생성 할 수 없습니다. "
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
-msgstr ""
+msgstr "LDAP/AD 캐쉬 재생성"
 
 #: templates/system/config.html:2
 msgid "Restore to Factory Defaults"
-msgstr ""
+msgstr "공장초기값으로 초기화"
 
 #: templates/system/config.html:4
 msgid "Save Config"
-msgstr ""
+msgstr "설정값 저장"
 
 #: templates/system/config.html:6
 msgid "Upload Config"
-msgstr ""
+msgstr "설정값 업로드"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr ""
+msgstr "재시작 하는 중...."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
-msgstr ""
+msgstr "공장초기값으로 복원 하시겠습니까?"
 
 #: templates/system/config_upload.html:34
 msgid "Update"
-msgstr ""
+msgstr "갱신"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr ""
+msgstr "재기동 중..."
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr ""
+msgstr "테스트 전자우편 보내기"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr ""
+msgstr "시간별"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
-msgstr ""
+msgstr "시간별 그래프"
 
 #: templates/system/reporting.html:18
 msgid "Daily"
-msgstr ""
+msgstr "일별"
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
-msgstr ""
+msgstr "일별 그래프"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr ""
+msgstr "주별"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"
-msgstr ""
+msgstr "주별 그래프"
 
 #: templates/system/reporting.html:46
 msgid "Monthly"
-msgstr ""
+msgstr "월별"
 
 #: templates/system/reporting.html:47
 msgid "Monthly Graphs"
-msgstr ""
+msgstr "월별 그래프 "
 
 #: templates/system/reporting.html:60
 msgid "Yearly"
-msgstr ""
+msgstr "년별"
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"
-msgstr ""
+msgstr "년별 그래프"
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr ""
+msgstr "일반사항"
 
 #: templates/system/settings.html:11
 msgid "Firmware Update"
-msgstr ""
+msgstr "펌웨어 업데이트"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
-msgstr ""
+msgstr "서비스팩 적용"
 
 #: templates/system/settings.html:15
 msgid "Config"
-msgstr ""
+msgstr "환경설정"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
-msgstr ""
+msgstr "운영체제 버전"
 
 #: templates/system/system_info.html:12
 msgid "Platform"
-msgstr ""
+msgstr "플랫폼"
 
 #: templates/system/system_info.html:16
 msgid "System Time"
-msgstr ""
+msgstr "시스템 시각"
 
 #: templates/system/system_info.html:20
 msgid "Uptime"
-msgstr ""
+msgstr "업타임"
 
 #: templates/system/system_info.html:24
 msgid "Load Average"
@@ -4350,4 +4350,4 @@ msgstr ""
 
 #: templates/system/system_info.html:28
 msgid "FreeNAS Build"
-msgstr ""
+msgstr "FreeNAS 빌드"
