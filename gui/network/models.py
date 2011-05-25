@@ -244,7 +244,6 @@ class LAGGInterfaceMembers(Model):
             )
     lagg_physnic = models.CharField(
             max_length=120, 
-            choices=choices.NICChoices(), 
             unique = True,
             verbose_name=_("Physical NIC")
             )
@@ -254,6 +253,11 @@ class LAGGInterfaceMembers(Model):
             )
     def __unicode__(self):
         return self.lagg_physnic
+
+    def delete(self):
+        import os
+        os.system("ifconfig %s -laggport %s" % (self.lagg_interfacegroup.lagg_interface.int_interface, self.lagg_physnic))
+        super(LAGGInterfaceMembers, self).delete()
 
     class Meta:
         verbose_name = _("Link Aggregation")

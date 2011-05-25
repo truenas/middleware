@@ -139,6 +139,7 @@ class LAGGInterfaceForm(forms.Form):
 
 
 class LAGGInterfaceMemberForm(ModelForm):
+    lagg_physnic = forms.ChoiceField()
     class Meta:
         model = models.LAGGInterfaceMembers
     def __init__(self, *args, **kwargs):
@@ -147,10 +148,13 @@ class LAGGInterfaceMemberForm(ModelForm):
         if instance and instance.id:
             self.fields['lagg_interfacegroup'].widget.attrs['readonly'] = True
             self.fields['lagg_physnic'].widget.attrs['readonly'] = True
-    def clean_lagg_interfacegroup(self):
-        return self.instance.lagg_interfacegroup
-    def clean_lagg_physnic(self):
-        return self.instance.lagg_physnic
+            self.fields['lagg_physnic'].choices = ( (self.instance.lagg_physnic, self.instance.lagg_physnic), )
+        else:
+            self.fields['lagg_physnic'].choices = list(choices.NICChoices(nolagg=True, novlan=True))
+    #def clean_lagg_interfacegroup(self):
+    #    return self.instance.lagg_interfacegroup
+    #def clean_lagg_physnic(self):
+    #    return self.instance.lagg_physnic
 
 class InterfaceEditForm(InterfacesForm):
     def __init__(self, *args, **kwargs):

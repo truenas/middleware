@@ -14,8 +14,8 @@
 	<td>{{ nic.lagg_ordernum }}</td>
 	<td>{{ nic.lagg_deviceoptions }}</td>
 	<td>
-            <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Edit Interface" %}', '{% url freeadmin_model_edit app='network',model='LAGGInterfaceMembers',oid=nic.id %}?deletable=false', [this,]);">{% trans "Edit" %}</button>
-	    <!-- <button dojoType="dijit.form.Button" type="button" onClick="window.location='/network/laggint/delete/{{ nic.id }}/'">Delete</button> -->
+        <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Edit" %}', '{{ nic.get_edit_url }}', [this,]);">{% trans "Edit" %}</button>
+	    <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Delete" %}', '{{ nic.get_delete_url }}', [this,]);">Delete</button>
 	</td>
     </tr>
         {% empty %}
@@ -24,3 +24,11 @@
     </tr>
     {% endfor %}
 </table>
+          <p class="btn">
+              <button dojoType="dijit.form.Button" type="button">
+                  {% trans "Add LAGG Member" %}
+                  <script type="dojo/method" event="onClick" args="evt">
+                      addObject('{% trans "Add LAGG Member" %}', '{% url freeadmin_model_add app="network",model="LAGGInterfaceMembers" %}', [this,]);
+              </script>
+              </button>
+              </p>
