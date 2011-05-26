@@ -1534,7 +1534,7 @@ class notifier:
             if len(search) > 0:
                 return search[0].content
 
-        elif tp == 'serial'
+        elif tp == 'serial':
             raise NotImplementedError
             p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE, stdin=PIPE)
             p1.wait()
