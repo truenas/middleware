@@ -87,7 +87,10 @@ generate_istgt_config()
         ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${csfields} FROM services_iscsitargetauthorizedinitiator ORDER BY id" | \
         while eval read ${fields}; do
 		echo "[InitiatorGroup${iscsi_target_initiator_tag}]"
-		echo "  InitiatorName \"${iscsi_target_initiator_initiators}\""
+		echo ${iscsi_target_initiator_initiators} | tr "," "\n" | \
+		while eval read initiator; do
+			echo "  InitiatorName \"${initiator}\""
+		done
 		echo "  Netmask ${iscsi_target_initiator_auth_network}"
 		echo
 	done
