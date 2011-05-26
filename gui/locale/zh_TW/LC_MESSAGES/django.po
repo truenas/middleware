@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-25 10:58+0200\n"
+"PO-Revision-Date: 2011-05-25 21:27+0200\n"
 "Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -1472,11 +1472,11 @@ msgstr "擴充(Extent)"
 
 #: services/models.py:420 services/models.py:570
 msgid "Portal Group ID"
-msgstr "首頁群組 ID"
+msgstr "入口群組 ID"
 
 #: services/models.py:425 services/models.py:435
 msgid "Portal"
-msgstr "首頁"
+msgstr "入口"
 
 #: services/models.py:426
 msgid ""
@@ -1485,7 +1485,7 @@ msgid ""
 "port number. For any IPs (wildcard address), use '0.0.0.0:3260' and/or "
 "'[::]:3260'. Do not mix wildcard and other IPs at same address family."
 msgstr ""
-"首頁採用的格式為「IP位址：埠」。例如：IPv4格式為「192.168.1.1:3260」 "
+"入口採用的格式為「IP位址：埠」。例如：IPv4格式為「192.168.1.1:3260」 "
 "，IPv6格式「[2001：db8：1:1：：1]：3260」。標準的iSCSI埠為3260。對於任何IP位址(萬用字元位址wildcard "
 "address)，請使用「0.0.0.0:3260」和「/」或「[::]:3260」。請不要在相同的位址混合萬用字元和其他IP位址。"
 
@@ -1633,7 +1633,7 @@ msgstr "主機別名。可重複讓每個網域用相同的IP。請使用空白�
 
 #: services/models.py:665
 msgid "Update period"
-msgstr ""
+msgstr "更新週期"
 
 #: services/models.py:667
 msgid "Time in milliseconds"
@@ -1854,17 +1854,17 @@ msgstr "如果伺服器顯示給客戶端的資訊是特定的IP位址，可能�
 
 #: services/models.py:856
 msgid "Minimum passive port"
-msgstr ""
+msgstr "PASV被動模式埠的開始值"
 
 #: services/models.py:857
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
-msgstr ""
+msgstr "允許在PASV被動模式傳輸資料使用埠的起始範圍 (0 = 使用任何埠)"
 
 #: services/models.py:861
 msgid "Maximum passive port"
-msgstr ""
+msgstr "PASV被動模式埠的結束值"
 
 #: services/models.py:862
 msgid ""
@@ -1877,6 +1877,9 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
+"允許在PASV被動模式傳輸資料使用埠的結束範圍 (0 = 使用任何埠)。當客戶端發送 PASV模式時，將從伺服器選擇被動模式埠的限制範圍。伺服器將從指定"
+"的範圍內隨機挑選一個可用的埠。選定的埠範圍必須在非保留範圍（如>=1024）。強烈建議選擇的範圍需夠大，才能同時處理大量連線（例如：在IANA註冊的臨時"
+"埠範圍 49152-65534）"
 
 #: services/models.py:866
 msgid "Local user upload bandwidth"
@@ -1916,7 +1919,7 @@ msgstr "啟用 SSL/TLS"
 
 #: services/models.py:890
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "這些參數將新增到 proftpd.conf 內"
 
 #: services/models.py:894 services/models.py:895
 #: templates/services/index2.html:53
@@ -1931,88 +1934,88 @@ msgstr "目錄"
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
-msgstr ""
+msgstr "目錄包含要發佈的文件。遠端主機並不需要傳遞部分的目錄"
 
 #: services/models.py:908
 msgid "Allow New Files"
-msgstr ""
+msgstr "允許新的檔案"
 
 #: services/models.py:912
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
-msgstr ""
+msgstr "要使用的埠。TFTP 預設使用的埠，指定在 /etc/services 內"
 
 #: services/models.py:918
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "指定服務執行時所使用的帳號"
 
 #: services/models.py:922
 msgid "umask"
-msgstr ""
+msgstr "預設權限"
 
 #: services/models.py:923
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
-msgstr ""
+msgstr "新建的檔案設定預設權限。預設值為022（任何人都可讀取，但無法寫入）"
 
 #: services/models.py:927 services/models.py:964
 msgid "Extra options"
-msgstr ""
+msgstr "額外選項"
 
 #: services/models.py:929
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "額外選項的命令列(通常為空白)"
 
 #: services/models.py:933 services/models.py:934
 #: templates/services/index2.html:108
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:943
 msgid "TCP Port"
-msgstr ""
+msgstr "TCP 連接埠"
 
 #: services/models.py:944
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "替代的TCP連接埠，預設為22"
 
 #: services/models.py:947
 msgid "Login as Root with password"
-msgstr ""
+msgstr "用 Root 的帳號和密碼登入"
 
 #: services/models.py:948
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
-msgstr ""
+msgstr "停用：root 只能透過公開金鑰認證登入;啟用：用 Root 的帳號和密碼登入"
 
 #: services/models.py:951
 msgid "Allow Password Authentication"
-msgstr ""
+msgstr "允許使用密碼認證"
 
 #: services/models.py:953
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "允許 TCP 連接埠轉送"
 
 #: services/models.py:955
 msgid "Compress Connections"
-msgstr ""
+msgstr "壓縮傳輸"
 
 #: services/models.py:958
 msgid "Host Private Key"
-msgstr ""
+msgstr "主機私鑰"
 
 #: services/models.py:960
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr ""
+msgstr "在此貼上PEM格式的RSA私鑰。"
 
 #: services/models.py:966
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
-msgstr ""
+msgstr "用於 /etc/ssh/sshd_config 的額外選項(通常為空白)。注意，輸入錯誤的選項會導致 SSH 服務無法啟動。"
 
 #: services/models.py:1006 services/models.py:1007
 #: templates/services/index2.html:97
@@ -2077,28 +2080,28 @@ msgstr "該版本的Microsoft Windows Active Directory 正在執行中"
 
 #: services/models.py:1053
 msgid "Service Principal Name"
-msgstr ""
+msgstr "服務主體名稱"
 
 #: services/models.py:1054
 msgid "Service Principal Name, eg service/account."
-msgstr ""
+msgstr "服務主體名稱，例如：service/account"
 
 #: services/models.py:1058
 msgid "Service Principal Name Password"
-msgstr ""
+msgstr "服務主體名稱的密碼"
 
 #: services/models.py:1059
 msgid "Password of the Service Principal Name account."
-msgstr ""
+msgstr "服務主體名稱的密碼"
 
 #: services/models.py:1063
 msgid "Kerberos Keytab File"
-msgstr ""
+msgstr "Kerberos Keytab 檔"
 
 #: services/models.py:1064
 msgid ""
 "The kerberos keytab file that was generated on the Active Directory server."
-msgstr ""
+msgstr "Kerberos Keytab 檔產生在 Active Directory 伺服器上"
 
 #: services/models.py:1068 templates/services/index2.html:18
 msgid "Active Directory"
@@ -2116,77 +2119,77 @@ msgstr "Base DN"
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
-msgstr ""
+msgstr "搜尋預設基本辨識名稱( DN ) 如：dc=test,dc=org"
 
 #: services/models.py:1088
 msgid "Allow Anonymous Binding"
-msgstr ""
+msgstr "允許匿名連接"
 
 #: services/models.py:1091
 msgid "Root bind DN"
-msgstr ""
+msgstr "root 連接 DN"
 
 #: services/models.py:1093
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
-msgstr ""
+msgstr "可辨識的名稱，用以連接到目錄服務器，例如： cn=admin,dc=test,dc=org"
 
 #: services/models.py:1097
 msgid "Root bind password"
-msgstr ""
+msgstr "Root 連結密碼"
 
 #: services/models.py:1099
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "連接憑證"
 
 #: services/models.py:1104
 msgid "Password Encryption"
-msgstr ""
+msgstr "密碼加密"
 
 #: services/models.py:1105
 msgid "The password change protocol to use."
-msgstr ""
+msgstr "使用密碼變更協定"
 
 #: services/models.py:1109
 msgid "User Suffix"
-msgstr ""
+msgstr "使用者後置字元"
 
 #: services/models.py:1111
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
-msgstr ""
+msgstr "當用戶加入到LDAP目錄時，此參數指定附加的後置字元，，例如：ou=Users"
 
 #: services/models.py:1115
 msgid "Group Suffix"
-msgstr ""
+msgstr "群組後置字元"
 
 #: services/models.py:1117
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
-msgstr ""
+msgstr "當群組加入到LDAP目錄時，此參數指定附加的後置字元，，例如：ou=Groups"
 
 #: services/models.py:1121
 msgid "Password Suffix"
-msgstr ""
+msgstr "密碼後置字元"
 
 #: services/models.py:1123
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
-msgstr ""
+msgstr "當密碼加入到LDAP目錄時，此參數指定附加的後置字元，，例如：ou=Passwords"
 
 #: services/models.py:1127
 msgid "Machine Suffix"
-msgstr ""
+msgstr "資訊設備後置字元"
 
 #: services/models.py:1129
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
-msgstr ""
+msgstr "當資訊設備加入到LDAP目錄時，此參數指定附加的後置字元，例如：ou=Computers"
 
 #: services/models.py:1133
 msgid "Turn on/off TLS"
@@ -2194,23 +2197,23 @@ msgstr "啟用或停用 TLS"
 
 #: services/models.py:1135
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
-msgstr ""
+msgstr "此參數指定是否要使用SSL / TLS，例如：on/off/start_tls"
 
 #: services/models.py:1138
 msgid "Self signed certificate"
-msgstr ""
+msgstr "自行簽署建立憑證"
 
 #: services/models.py:1140
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "請把自行簽署建立憑證的內容放置在這裡"
 
 #: services/models.py:1144
 msgid "Auxillary Parameters"
-msgstr ""
+msgstr "附屬參數"
 
 #: services/models.py:1146
 msgid "These parameters are added to ldap.conf."
-msgstr ""
+msgstr "這些參數都被增加到 ldap.conf 內"
 
 #: services/models.py:1150 services/models.py:1151
 #: templates/services/index2.html:64
@@ -2219,49 +2222,49 @@ msgstr "LDAP"
 
 #: services/nav.py:10
 msgid "Control Services"
-msgstr ""
+msgstr "服務控制"
 
 #: sharing/forms.py:102 sharing/models.py:243
 msgid "Maproot User"
-msgstr ""
+msgstr "root對映權限帳號"
 
 #: sharing/forms.py:107 sharing/models.py:251
 msgid "Maproot Group"
-msgstr ""
+msgstr "root對映權限群組"
 
 #: sharing/forms.py:112 sharing/models.py:259
 msgid "Mapall User"
-msgstr ""
+msgstr "all對映權限帳號"
 
 #: sharing/forms.py:117 sharing/models.py:267
 msgid "Mapall Group"
-msgstr ""
+msgstr "all對映權限群組"
 
 #: sharing/forms.py:176
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "這不是有效的 IP 位址"
 
 #: sharing/forms.py:182
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr " '%s' 不是有效的 IP 位址"
 
 #: sharing/forms.py:206 sharing/forms.py:214 storage/forms.py:805
 #, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr "%s' 不是有效的群組"
 
 #: sharing/forms.py:226
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "使用root對映權限群組必須先輸入root對映權限帳號"
 
 #: sharing/forms.py:228
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr "使用all對映權限群組必須先輸入all對映權限帳號"
 
 #: sharing/forms.py:231 sharing/forms.py:234
 msgid "Maproot user/group disqualifies Mapall"
-msgstr ""
+msgstr "使用root權限對映(Maproot) 會取消all權限對映(Mapall)的資格"
 
 #: sharing/models.py:41 sharing/models.py:102 storage/models.py:44
 #: storage/models.py:68 storage/models.py:87
@@ -2272,11 +2275,11 @@ msgstr "名稱"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
-msgstr ""
+msgstr "唯讀匯出"
 
 #: sharing/models.py:53
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "瀏覽用戶端網路"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
@@ -2284,7 +2287,7 @@ msgstr "繼承權限"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "匯出資源回收筒"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
@@ -2327,11 +2330,11 @@ msgstr ""
 
 #: sharing/models.py:84
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "附屬參數"
 
 #: sharing/models.py:86
 msgid "These parameters are added to [Share] section of smb.conf"
-msgstr ""
+msgstr "這些參數被新增到 smb.conf 的 [Share] 段落"
 
 #: sharing/models.py:92
 msgid "Windows Share"
@@ -2350,15 +2353,15 @@ msgstr ""
 
 #: sharing/models.py:107
 msgid "Share Comment"
-msgstr ""
+msgstr "共享區的註解"
 
 #: sharing/models.py:110 sharing/models.py:222
 msgid "Volume Path"
-msgstr ""
+msgstr "磁碟路徑"
 
 #: sharing/models.py:113
 msgid "Share password"
-msgstr ""
+msgstr "共享區的密碼"
 
 #: sharing/models.py:115
 msgid ""
@@ -2369,17 +2372,17 @@ msgstr ""
 
 #: sharing/models.py:119
 msgid "Share Character Set"
-msgstr ""
+msgstr "共享區的檔名編碼方式"
 
 #: sharing/models.py:121
 msgid ""
 "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
 "etc."
-msgstr ""
+msgstr "指定這個共享區的檔名編碼方式，例如：UTF8、UTF8-MAC、ISO-8859-15等等"
 
 #: sharing/models.py:125
 msgid "Allow List"
-msgstr ""
+msgstr "允許列出"
 
 #: sharing/models.py:127
 msgid ""
@@ -2390,7 +2393,7 @@ msgstr ""
 
 #: sharing/models.py:131
 msgid "Deny List"
-msgstr ""
+msgstr "拒絕列出"
 
 #: sharing/models.py:133
 msgid ""
@@ -2400,7 +2403,7 @@ msgstr ""
 
 #: sharing/models.py:137
 msgid "Read-only Access"
-msgstr ""
+msgstr "唯讀存取"
 
 #: sharing/models.py:139
 msgid ""
@@ -2410,7 +2413,7 @@ msgstr ""
 
 #: sharing/models.py:143
 msgid "Read-write Access"
-msgstr ""
+msgstr "可讀寫存取"
 
 #: sharing/models.py:145
 msgid ""
@@ -2420,7 +2423,7 @@ msgstr ""
 
 #: sharing/models.py:148
 msgid "Disk Discovery"
-msgstr ""
+msgstr "探索硬碟"
 
 #: sharing/models.py:149
 msgid ""
@@ -2430,7 +2433,7 @@ msgstr ""
 
 #: sharing/models.py:155
 msgid "Disk discovery mode"
-msgstr ""
+msgstr "探索硬碟模式"
 
 #: sharing/models.py:156
 msgid ""
@@ -2462,7 +2465,7 @@ msgstr ""
 
 #: sharing/models.py:169
 msgid "Translate CR/LF"
-msgstr ""
+msgstr "轉換 CR/LF"
 
 #: sharing/models.py:170
 msgid ""
@@ -2475,7 +2478,7 @@ msgstr ""
 
 #: sharing/models.py:173
 msgid "Windows File Names"
-msgstr ""
+msgstr "Windows 的檔案名稱"
 
 #: sharing/models.py:174
 msgid ""
@@ -2485,7 +2488,7 @@ msgstr ""
 
 #: sharing/models.py:177
 msgid "No .AppleDouble"
-msgstr ""
+msgstr "找不到 .AppleDouble格式"
 
 #: sharing/models.py:178
 msgid ""
@@ -2735,7 +2738,7 @@ msgstr ""
 
 #: storage/forms.py:633
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "已經有相同名稱的資料集"
 
 #: storage/forms.py:640 storage/forms.py:697 storage/forms.py:741
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
@@ -2751,7 +2754,7 @@ msgstr ""
 
 #: storage/forms.py:761
 msgid "Mode"
-msgstr ""
+msgstr "模式"
 
 #: storage/forms.py:764
 msgid "Set permission recursively"
@@ -2767,31 +2770,31 @@ msgstr ""
 
 #: storage/forms.py:852
 msgid "Snapshot Name"
-msgstr ""
+msgstr "快照名稱"
 
 #: storage/forms.py:859
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr ""
+msgstr "快照名稱只可以由下列的字元組成 a-z, A-Z, 0-9, _, - "
 
 #: storage/forms.py:869
 msgid "Invalid prefix"
-msgstr ""
+msgstr "無效的前置字元"
 
 #: storage/forms.py:873 storage/views.py:436
 msgid "Snapshot"
-msgstr ""
+msgstr "快照"
 
 #: storage/forms.py:874
 msgid "Clone Name (must be on same volume)"
-msgstr ""
+msgstr "複製的名稱(必須在同一個磁碟)"
 
 #: storage/forms.py:887
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr ""
+msgstr "複製的名稱只可以由下列的字元組成 a-z, A-Z, 0-9, _, -"
 
 #: storage/forms.py:893
 msgid "Clone must be within the same volume"
-msgstr ""
+msgstr "複製必須在同一個磁碟"
 
 #: storage/forms.py:960 storage/models.py:212
 msgid "Remote hostname"
@@ -2808,7 +2811,7 @@ msgstr "檔案系統類型"
 #: storage/models.py:52 storage/models.py:77 storage/views.py:88
 #: storage/views.py:116 storage/views.py:139 templates/storage/volumes.html:59
 msgid "Volume"
-msgstr ""
+msgstr "磁碟"
 
 #: storage/models.py:78
 msgid "Volume this group belongs to"

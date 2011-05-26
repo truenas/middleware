@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:32-0700\n"
-"PO-Revision-Date: 2011-05-23 16:46+0200\n"
+"PO-Revision-Date: 2011-05-25 23:04+0200\n"
 "Last-Translator: rcapion <richard@capion.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
@@ -700,7 +700,7 @@ msgstr "Vælg dit netkort"
 
 #: network/models.py:101
 msgid "Interface Name"
-msgstr ""
+msgstr "Enhedsnavn"
 
 #: network/models.py:102
 msgid "Name your NIC."
@@ -708,25 +708,27 @@ msgstr "Navngiv dit netkort"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
-msgstr ""
+msgstr "DHCP"
 
 #: network/models.py:107
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
+"Når aktiveret, bruges DHCP til at hente IPv4 adresse såvel som standard "
+"router osv."
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "IPv4-adresse"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr ""
+msgstr "IPv4-netmaske"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "Autokonfigurer IPv6"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."

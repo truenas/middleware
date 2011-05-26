@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-24 22:05+0200\n"
-"Last-Translator: Jonas <mossemansson@gmail.com>\n"
+"PO-Revision-Date: 2011-05-26 10:49+0200\n"
+"Last-Translator: denlun <dennis.lundkvist@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -253,11 +253,11 @@ msgstr "Standard"
 
 #: choices.py:192
 msgid "Time Machine"
-msgstr "Tidsmaskin"
+msgstr "Time Machine"
 
 #: choices.py:195
 msgid "No case folding"
-msgstr ""
+msgstr "Ändra inte versaler/gemener"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
@@ -1281,7 +1281,7 @@ msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
-"'aktivera asynkront läge, för att hjälpa till med nätverkshastigheter över "
+"Aktivera asynkront läge, för att hjälpa till med nätverkshastigheter över "
 "gigabit prestanda."
 
 #: services/models.py:226 services/models.py:227
@@ -1298,6 +1298,8 @@ msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"Basnamnet (t.ex. iqn.2007-09.jp.ne.peach.istgt, se RFC 3720 och 3721 för "
+"detaljer) kommer att läggas till målnamn som inte börjar med \"iqn.\""
 
 #: services/models.py:243
 msgid "Discovery Auth Method"
@@ -1305,19 +1307,20 @@ msgstr ""
 
 #: services/models.py:255
 msgid "I/O Timeout"
-msgstr ""
+msgstr " Tidsgräns för I/O"
 
 #: services/models.py:256
 msgid "I/O timeout in seconds (30 by default)."
-msgstr ""
+msgstr "Tidsgräns för I/O i sekunder (30 är standard)"
 
 #: services/models.py:261
+#, fuzzy
 msgid "NOPIN Interval"
-msgstr ""
+msgstr "NOPIN Intervall"
 
 #: services/models.py:262
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr ""
+msgstr "NOPIN sänd intervall i sekunder (20 är standard)"
 
 #: services/models.py:267
 msgid "Max. sessions"
@@ -1391,7 +1394,7 @@ msgstr ""
 
 #: services/models.py:321
 msgid "Enable LUC"
-msgstr ""
+msgstr "Aktivera LUC"
 
 #: services/models.py:325
 msgid "Controller IP address"

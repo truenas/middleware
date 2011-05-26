@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:37-0700\n"
-"PO-Revision-Date: 2011-05-23 11:48+0200\n"
-"Last-Translator: dannyb78 <dannyb78@gmail.com>\n"
+"PO-Revision-Date: 2011-05-26 00:07+0200\n"
+"Last-Translator: qwerty1965 <c.coppola@inwind.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -2384,15 +2384,15 @@ msgstr "Il gruppo %s non è valido."
 
 #: sharing/forms.py:226
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "Il gruppo Maproot richiede un utente Maproot"
 
 #: sharing/forms.py:228
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr " Il gruppo Mapall richiede un utente Mapall"
 
 #: sharing/forms.py:231 sharing/forms.py:234
 msgid "Maproot user/group disqualifies Mapall"
-msgstr ""
+msgstr "Maproot user/group esclude Mapall"
 
 #: sharing/models.py:41 sharing/models.py:102 storage/models.py:44
 #: storage/models.py:68 storage/models.py:87
@@ -2403,7 +2403,7 @@ msgstr "Nome"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
-msgstr ""
+msgstr "Esporta in Sola Lettura"
 
 #: sharing/models.py:53
 msgid "Browsable to Network Clients"
@@ -2411,7 +2411,7 @@ msgstr "Navigabile dai client di rete"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
-msgstr "Eredita Permessi"
+msgstr "Permessi Ereditati"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
@@ -2419,7 +2419,7 @@ msgstr "Esporta Cestino"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr "Mostra files nascosti"
+msgstr "Mostra Files Nascosti"
 
 #: sharing/models.py:67
 msgid "Allow Guest Access"
@@ -2427,7 +2427,7 @@ msgstr "Abilita Accesso Ospite"
 
 #: sharing/models.py:69
 msgid "Only Allow Guest Access"
-msgstr "Abilita solo accesso Ospite"
+msgstr "Abilita Solo Accesso Ospite"
 
 #: sharing/models.py:73
 msgid "Hosts Allow"
@@ -2472,7 +2472,7 @@ msgstr "Parametri ausiliari"
 #: sharing/models.py:86
 msgid "These parameters are added to [Share] section of smb.conf"
 msgstr ""
-"Questi parametri saranno aggiunti alla sezione [share] del file smb.conf"
+"Questi parametri saranno aggiunti alla sezione [Share] del file smb.conf"
 
 #: sharing/models.py:92
 msgid "Windows Share"
@@ -2488,18 +2488,26 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
+"Il nome del Volume è il nome che appare nel campo Chooser nella finestra "
+"'Connect to Server' dei Macintoshes che presenta le condivisioni "
+"appropriate. Se il nome del volume non è specificato, viene utilizzata "
+"l'ultima parte del percorso. Il nome del volume non può contenere il "
+"carettere ':'. Il nome del volume è alterato se è molto lungo. Nome della "
+"tabella codici Mac del volume è limitata a 27 caratteri. Nome del volume "
+"UTF8-MAC è limitata al parametro 'Volume Name Length' in Services:Apple "
+"Share"
 
 #: sharing/models.py:107
 msgid "Share Comment"
-msgstr ""
+msgstr "Commento della Condivisione"
 
 #: sharing/models.py:110 sharing/models.py:222
 msgid "Volume Path"
-msgstr ""
+msgstr "Path del volume"
 
 #: sharing/models.py:113
 msgid "Share password"
-msgstr ""
+msgstr "Password Condivisione"
 
 #: sharing/models.py:115
 msgid ""
@@ -2507,20 +2515,25 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
+"Questa opzione consente di impostare una password di volume, che può essere "
+"un massimo di 8 caratteri (al momento è  fortemente raccomandato l'uso di "
+"ASCII)."
 
 #: sharing/models.py:119
 msgid "Share Character Set"
-msgstr ""
+msgstr "Set di Caratteri della Condivisione"
 
 #: sharing/models.py:121
 msgid ""
 "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
 "etc."
 msgstr ""
+"Specifica il set di caratteri della condivisione. Per esempio UTF8, "
+"UTF8-MAC, ISO-8859-15, etc."
 
 #: sharing/models.py:125
 msgid "Allow List"
-msgstr ""
+msgstr "Lista Autorizzati"
 
 #: sharing/models.py:127
 msgid ""
@@ -2528,50 +2541,64 @@ msgid ""
 "Users and groups are specified, delimited by commas. Groups are designated "
 "by a @ prefix."
 msgstr ""
+"Questa opzione consente di specificare gli utenti ed i gruppi autorizzati ad "
+"accedere alla condivisione. Gli utenti e i gruppi sono specificati separati "
+"da virgola. I gruppi sono indicati con il prefisso @."
 
 #: sharing/models.py:131
 msgid "Deny List"
-msgstr ""
+msgstr "Lista NON Autorizzati"
 
 #: sharing/models.py:133
 msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
 msgstr ""
+"Questa opzione consente di specificare gli utenti ed i gruppi NON "
+"autorizzati ad accedere alla condivisione. Usa lo stesso formato della Lista "
+"Autorizzati."
 
 #: sharing/models.py:137
 msgid "Read-only Access"
-msgstr ""
+msgstr "Accesso in Sola lettura"
 
 #: sharing/models.py:139
 msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Questa opzione consente di specificare gli utenti ed i gruppi autorizzati ad "
+"accedere alla condivisione in Sola Lettura. Usa lo stesso formato della "
+"Lista Autorizzati."
 
 #: sharing/models.py:143
 msgid "Read-write Access"
-msgstr ""
+msgstr "Accesso in Lettura e Scrittura"
 
 #: sharing/models.py:145
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format. "
 msgstr ""
+"Questa opzione consente di specificare gli utenti ed i gruppi autorizzati ad "
+"accedere alla condivisione in Lettura e Scrittura. Usa lo stesso formato "
+"della Lista Autorizzati."
 
 #: sharing/models.py:148
 msgid "Disk Discovery"
-msgstr ""
+msgstr "Scopri Disco"
 
 #: sharing/models.py:149
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
+"Consente agli altri sistemi di Scoprire questa condivisione come un disco "
+"per i dati, quale un volume di backup di Time Machine."
 
 #: sharing/models.py:155
 msgid "Disk discovery mode"
-msgstr ""
+msgstr "Modo di scoperta disco"
 
 #: sharing/models.py:156
 msgid ""
@@ -2579,20 +2606,26 @@ msgid ""
 "unpredictable behavior in MacOS.  Default mode exports the volume as a data "
 "volume for users."
 msgstr ""
+"Nota!. Selezionando 'Time Machine' su molte condivisioni potrebbe causare "
+"comportamenti imprevisti in Mac OS. La modalità predefinita esporta il "
+"volume come un volume di dati per gli utenti."
 
 #: sharing/models.py:160
 msgid "Database Path"
-msgstr ""
+msgstr "Percorso Database"
 
 #: sharing/models.py:162
 msgid ""
 "Sets the database information to be stored in path. You have to specifiy a "
 "writable location, even if the volume is read only."
 msgstr ""
+"Imposta le informazioni del database per memorizzare nel percorso. È "
+"necessario specificare una posizione scrivibile, anche se il volume è di "
+"sola lettura."
 
 #: sharing/models.py:165
 msgid "Cache CNID"
-msgstr ""
+msgstr "Cache CNID"
 
 #: sharing/models.py:166
 msgid ""
@@ -2600,10 +2633,14 @@ msgid ""
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
+"Se si imposta afpd utilizza le informazioni sull'ID memorizzate nei file di "
+"intestazione AppleDouble V2 in modo da ridurre il carico del database. Non "
+"impostare questa opzione se il volume viene modificato dai client non AFP "
+"(NFS/SMB/local)."
 
 #: sharing/models.py:169
 msgid "Translate CR/LF"
-msgstr ""
+msgstr "Converti CR/LF"
 
 #: sharing/models.py:170
 msgid ""
@@ -2613,20 +2650,29 @@ msgid ""
 "the filetype in a second step. Afpd will potentially destroy such files when "
 "'erroneously' changing bytes in order to do line break translation."
 msgstr ""
+"Consente la conversione crlf per file di testo, convertendo automaticamente "
+"interruzioni di riga macintosh in Unix. L'utilizzo di questa opzione "
+"potrebbe essere pericoloso poiché alcuni vecchi programmi archiviano il file "
+"di dati binari come tipo 'Testo' per il salvataggio prima di passareil file "
+"nel tipo corretto. Il processo afpd potrebbe potenzialmente distruggere "
+"questi file nel tentativo 'errato' di effetture la conversione CR/LF."
 
 #: sharing/models.py:173
 msgid "Windows File Names"
-msgstr ""
+msgstr "Nomi File Windows"
 
 #: sharing/models.py:174
 msgid ""
 "This forces filenames to be restricted to the character set used by Windows. "
 "This is not recommended for shares used principally by Mac computers."
 msgstr ""
+"Questo obbliga i nomi dei file ad essere limitato al set di caratteri "
+"utilizzato da Windows. Non è raccomandato l'utilizzo per condivisioni "
+"utilizzate principalmente da computer Mac."
 
 #: sharing/models.py:177
 msgid "No .AppleDouble"
-msgstr ""
+msgstr "No .AppleDouble"
 
 #: sharing/models.py:178
 msgid ""
@@ -2634,68 +2680,78 @@ msgid ""
 "absolutely needed. This option should not be used if files are access mostly "
 "by Mac computers.  Clicking this option disables their creation."
 msgstr ""
+"Controlla se la directory .AppleDouble venga creata solo assolutamente "
+"necessario. Questa opzione non dovrebbe essere utilizzata se i file sono "
+"l'accesso in gran parte da computer Mac. Selezionando questa opzione viene "
+"disabilita la loro creazione."
 
 #: sharing/models.py:181
 msgid "Zero Device Numbers"
-msgstr ""
+msgstr " Device Numero Zero"
 
 #: sharing/models.py:182
 msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
 msgstr ""
+"Utilizzare sempre 0 per numero del dispositivo: serve quando il numero del "
+"dispositivo cambia a seguito di un riavvio, cluster,..."
 
 #: sharing/models.py:185
 msgid "Disable File ID"
-msgstr ""
+msgstr "Disabilita File ID"
 
 #: sharing/models.py:186
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr ""
+msgstr "Non avvisare delle chiamate createfileid, resolveid e deleteid."
 
 #: sharing/models.py:189
 msgid "Disable :hex Names"
-msgstr ""
+msgstr "Disabilita Nomi :hex"
 
 #: sharing/models.py:190
 msgid ""
 "Disable :hex translations for anything except dot files. This option makes "
 "the '/' character illegal."
 msgstr ""
+"Disabilia la traduzioni :hex, tranne i file dot (punto). Questa opzione "
+"rende il carattere '/' illegali."
 
 #: sharing/models.py:193
 msgid "ProDOS"
-msgstr ""
+msgstr "ProDOS"
 
 #: sharing/models.py:194
 msgid "Provide compatibility with Apple II clients."
-msgstr ""
+msgstr "Consente la compatibilità con i client Apple II"
 
 #: sharing/models.py:197
 msgid "No Stat"
-msgstr ""
+msgstr "No Stat"
 
 #: sharing/models.py:198
 msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
 msgstr ""
+"Non esegue stat sul percorso del volume quando si enumerano elenco dei "
+"volumi, utile per automounting o volumi creati da uno script preexec."
 
 #: sharing/models.py:201
 msgid "AFP3 Unix Privs"
-msgstr ""
+msgstr "AFP3 Unix Privs"
 
 #: sharing/models.py:202
 msgid "Use AFP3 unix privileges."
-msgstr ""
+msgstr "Utilizza i privilegi unix AFP3."
 
 #: sharing/models.py:209
 msgid "Apple Share"
-msgstr ""
+msgstr "Condivisioni Apple"
 
 #: sharing/models.py:225
 msgid "Authorized network or IP addresses"
-msgstr ""
+msgstr "Reti autorizzate o indirizzi IP"
 
 #: sharing/models.py:226
 msgid ""
@@ -2703,32 +2759,40 @@ msgid ""
 "addresses.  Specify network numbers of the form 1.2.3.4/xx where xx is the "
 "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 msgstr ""
+"La rete IP che è autorizzata ad accedere la condivisione NFS o un elenco di "
+"indirizzi IP. Specificare le reti della forma 1.2.3.4/xx dove xx è il numero "
+"di bit di netmask o una lista di IP indirizzi 1.2.3.4 1.2.3.5 1.2.3.6."
 
 #: sharing/models.py:230
 msgid "All Directories"
-msgstr ""
+msgstr "Tutte la Cartelle"
 
 #: sharing/models.py:231
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected.  "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
+"Se selezionato consente il mount di qualsiasi sottocartella sotto punto di "
+"mount. In caso contrario, può essere montata solo nella directory di livello "
+"superiore."
 
 #: sharing/models.py:234
 msgid "Read Only"
-msgstr ""
+msgstr "Sola Lettura"
 
 #: sharing/models.py:235
 msgid "Export the share read only.  Writes are not permitted."
-msgstr ""
+msgstr "La condivisione è il sola lettura. Le scritture non sono consentite."
 
 #: sharing/models.py:238
 msgid "Quiet"
-msgstr ""
+msgstr "Silenzioso"
 
 #: sharing/models.py:239
 msgid "Inibit syslog warnings if there are problems with exporting this share."
 msgstr ""
+"Inibisce gli avvisi in syslog nel caso ci siano problemi con l'esportazione "
+"di questa condivisione. "
 
 #: sharing/models.py:247
 msgid "User to map root to"
@@ -2748,179 +2812,186 @@ msgstr ""
 
 #: sharing/models.py:278
 msgid "UNIX Share"
-msgstr ""
+msgstr "Condivisioni UNIX"
 
 #: sharing/nav.py:8
 msgid "View All UNIX Shares"
-msgstr ""
+msgstr "Vedi Tutte le Condivisioni UNIX"
 
 #: sharing/nav.py:18
 msgid "View All Apple Shares"
-msgstr ""
+msgstr "Vedi Tutte le Condivisioni Apple"
 
 #: sharing/nav.py:28
 msgid "View All Windows Shares"
-msgstr ""
+msgstr "Vedi Tutte le Condivisioni Windows"
 
 #: storage/forms.py:77
 msgid "Read"
-msgstr ""
+msgstr "Leggi"
 
 #: storage/forms.py:78
 msgid "Write"
-msgstr ""
+msgstr "Scrivi"
 
 #: storage/forms.py:79
 msgid "Execute"
-msgstr ""
+msgstr "Esegui"
 
 #: storage/forms.py:92
 msgid "Owner"
-msgstr ""
+msgstr "Proprietario"
 
 #: storage/forms.py:92
 msgid "Other"
-msgstr ""
+msgstr "Altro"
 
 #: storage/forms.py:140 storage/forms.py:331 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr ""
+msgstr "Nome Volume"
 
 #: storage/forms.py:144 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
-msgstr ""
+msgstr "Forza la dimensione del settore a 4096 bytes"
 
 #: storage/forms.py:217
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\"."
 msgstr ""
+"il nome del volume deve in cominciare con una lettera e puo includere "
+"numeri, '-' e '_'."
 
 #: storage/forms.py:231 system/forms.py:210 system/forms.py:216
 #: system/forms.py:221
 msgid "This field is required"
-msgstr ""
+msgstr "Questo campo è obbligatorio"
 
 #: storage/forms.py:236 storage/forms.py:382 storage/forms.py:484
 msgid "You already have a volume with same name"
-msgstr ""
+msgstr "Esiste già un volume con lo stesso nome"
 
 #: storage/forms.py:242
 msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr ""
+msgstr "La parola 'log' è riservata per cui non può essere utilizzata"
 
 #: storage/forms.py:247
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr ""
+msgstr "Il nome volume NON può iniziare con c[0-9], mirror, raidz o spare."
 
 #: storage/forms.py:332 storage/forms.py:431 storage/forms.py:910
 msgid "Member disk"
-msgstr ""
+msgstr "Disco Membro"
 
 #: storage/forms.py:388 storage/forms.py:509
 msgid "The selected disks were not verified for this import rules."
 msgstr ""
+"I dischi selezionati non sono stati verificati per queste regole "
+"d'importazione."
 
 #: storage/forms.py:396
 msgid "Some error ocurried while labelling the disk."
-msgstr ""
+msgstr "Si è verificato qualche errore durante l'etichettature del disco."
 
 #: storage/forms.py:606
 msgid "Volume from which this dataset will be created on"
-msgstr ""
+msgstr "Volume su cui questo dataset sarà creato"
 
 #: storage/forms.py:607
 msgid "Dataset Name"
-msgstr ""
+msgstr "Nome Dataset"
 
 #: storage/forms.py:608 storage/forms.py:660 storage/forms.py:717
 msgid "Compression level"
-msgstr ""
+msgstr "Livello compressione"
 
 #: storage/forms.py:609 storage/forms.py:661 storage/forms.py:718
 msgid "Enable atime"
-msgstr ""
+msgstr "Abilita atime"
 
 #: storage/forms.py:610 storage/forms.py:662 storage/forms.py:719
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "Quota per questo dataset"
 
 #: storage/forms.py:610 storage/forms.py:611 storage/forms.py:662
 #: storage/forms.py:663 storage/forms.py:719
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0=Illimitato; es. 1g"
 
 #: storage/forms.py:611 storage/forms.py:663
 msgid "Quota for this dataset and all children"
-msgstr ""
+msgstr "Quota per questo dataset e tutti i figli"
 
 #: storage/forms.py:612 storage/forms.py:664 storage/forms.py:720
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "Spazio riservato per questo dataset"
 
 #: storage/forms.py:612 storage/forms.py:613 storage/forms.py:664
 #: storage/forms.py:665 storage/forms.py:720
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0=Nessuno; es. 1g"
 
 #: storage/forms.py:613 storage/forms.py:665
 msgid "Reserved space for this dataset and all children"
-msgstr ""
+msgstr "Spazio riservato per questo dataset e tutti i suoi figli"
 
 #: storage/forms.py:626
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
 msgstr ""
+"Il nome del Dataset deve iniziare con un carattere alfanumerioco e può "
+"contenete solo (-), (_), (:) e (.)."
 
 #: storage/forms.py:633
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "Hai già un dataset con lo stesso nome"
 
 #: storage/forms.py:640 storage/forms.py:697 storage/forms.py:741
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
 msgstr ""
+"Immettere un numero positivo (opzionalmente preceduto da M, G, T), oppure 0"
 
 #: storage/forms.py:756
 msgid "Owner (user)"
-msgstr ""
+msgstr "Proprietario (utente)"
 
 #: storage/forms.py:759
 msgid "Owner (group)"
-msgstr ""
+msgstr "Proprietario (gruppo)"
 
 #: storage/forms.py:761
 msgid "Mode"
-msgstr ""
+msgstr "Modalità"
 
 #: storage/forms.py:764
 msgid "Set permission recursively"
-msgstr ""
+msgstr "Imposta i permessi in modo ricorsivo"
 
 #: storage/forms.py:846
 msgid "At least one day must be chosen"
-msgstr ""
+msgstr "Devi sceglier almeno un giorno"
 
 #: storage/forms.py:851
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "Istantanea ricorsiva"
 
 #: storage/forms.py:852
 msgid "Snapshot Name"
-msgstr ""
+msgstr "Nome Istantanea"
 
 #: storage/forms.py:859
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr ""
+msgstr "Nel nome istantanea sono permessi solo [-a-zA-Z0-9_.]"
 
 #: storage/forms.py:869
 msgid "Invalid prefix"
-msgstr ""
+msgstr "Prefisso non valido"
 
 #: storage/forms.py:873 storage/views.py:436
 msgid "Snapshot"
-msgstr ""
+msgstr "Istantanea"
 
 #: storage/forms.py:874
 msgid "Clone Name (must be on same volume)"
@@ -2944,12 +3015,12 @@ msgstr ""
 
 #: storage/models.py:49
 msgid "File System Type"
-msgstr ""
+msgstr "Tipo File System"
 
 #: storage/models.py:52 storage/models.py:77 storage/views.py:88
 #: storage/views.py:116 storage/views.py:139 templates/storage/volumes.html:59
 msgid "Volume"
-msgstr ""
+msgstr "Volume"
 
 #: storage/models.py:78
 msgid "Volume this group belongs to"
@@ -2957,15 +3028,15 @@ msgstr ""
 
 #: storage/models.py:91
 msgid "Disks"
-msgstr ""
+msgstr "Dischi"
 
 #: storage/models.py:102
 msgid "Transfer Mode"
-msgstr ""
+msgstr "Modalità di Trasferimento"
 
 #: storage/models.py:108
 msgid "HDD Standby"
-msgstr ""
+msgstr "Standby HDD"
 
 #: storage/models.py:114
 msgid "Advanced Power Management"
@@ -2977,11 +3048,11 @@ msgstr ""
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
-msgstr ""
+msgstr "Abilita S.M.A.R.T."
 
 #: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
-msgstr ""
+msgstr "Opzioni S.M.A.R.T. extra"
 
 #: storage/models.py:133
 msgid "Group Membership"
@@ -2989,24 +3060,24 @@ msgstr ""
 
 #: storage/models.py:134
 msgid "The disk group containing this disk"
-msgstr ""
+msgstr "Il gruppo disco contiene questo disco"
 
 #: storage/models.py:146 storage/models.py:227 storage/models.py:253
 #: templates/storage/tasks.html:22
 msgid "Mount Point"
-msgstr ""
+msgstr "Punto di Mount"
 
 #: storage/models.py:147
 msgid "Path to mount point"
-msgstr ""
+msgstr "Percorso del punto di mount"
 
 #: storage/models.py:151
 msgid "Mount options"
-msgstr ""
+msgstr "Opzioni di mount"
 
 #: storage/models.py:152
 msgid "Enter Mount Point options here"
-msgstr ""
+msgstr "Inserisci qui le opzioni di Mount"
 
 #: storage/models.py:169
 msgid "Error getting total space"
@@ -3022,7 +3093,7 @@ msgstr ""
 
 #: storage/models.py:187 storage/models.py:199
 msgid "Error"
-msgstr ""
+msgstr "Error"
 
 #: storage/models.py:219
 msgid "Remote Replication Host"
@@ -3066,7 +3137,7 @@ msgstr ""
 
 #: storage/models.py:270
 msgid "Begin"
-msgstr ""
+msgstr "Inizio"
 
 #: storage/models.py:271
 msgid "When in a day should we start making snapshots, e.g. 8:00"
@@ -3074,7 +3145,7 @@ msgstr ""
 
 #: storage/models.py:275
 msgid "End"
-msgstr ""
+msgstr "Fine"
 
 #: storage/models.py:276
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
@@ -3134,12 +3205,12 @@ msgstr ""
 
 #: storage/nav.py:62
 msgid "View All Volumes"
-msgstr ""
+msgstr "Visualizza Tutti i Volumi"
 
 #: storage/nav.py:73 templates/storage/volumes.html:19
 #: templates/storage/volumes.html.py:23
 msgid "Create ZFS Dataset"
-msgstr ""
+msgstr "Crea un Dataset ZFS"
 
 #: storage/nav.py:84
 msgid "Add Periodic Snapshot"
@@ -3151,7 +3222,7 @@ msgstr ""
 
 #: storage/nav.py:96
 msgid "Volumes"
-msgstr ""
+msgstr "Volumi"
 
 #: storage/nav.py:118 storage/nav.py:138 templates/storage/volumes.html:123
 #: templates/storage/volumes.html.py:126
@@ -3167,7 +3238,7 @@ msgstr ""
 #: storage/views.py:283 storage/views.py:320
 #: templates/storage/dataset_confirm_delete_ok.html:1
 msgid "Dataset"
-msgstr ""
+msgstr "Dataset"
 
 #: storage/views.py:320 storage/views.py:355
 msgid "successfully edited"
@@ -3233,47 +3304,47 @@ msgstr ""
 
 #: system/models.py:41
 msgid "Protocol"
-msgstr ""
+msgstr "Protocollo"
 
 #: system/models.py:47
 msgid "Language"
-msgstr ""
+msgstr "Lingua"
 
 #: system/models.py:53
 msgid "Timezone"
-msgstr ""
+msgstr "Fuso Orario"
 
 #: system/models.py:58
 msgid "NTP server 1"
-msgstr ""
+msgstr "NTP server 1"
 
 #: system/models.py:63
 msgid "NTP server 2"
-msgstr ""
+msgstr "NTP server 2"
 
 #: system/models.py:69
 msgid "NTP server 3"
-msgstr ""
+msgstr "NTP server 3"
 
 #: system/models.py:74 system/nav.py:23 templates/system/settings.html:2
 msgid "Settings"
-msgstr ""
+msgstr "Impostazioni"
 
 #: system/models.py:81
 msgid "Enable Console Menu"
-msgstr ""
+msgstr "Abilita Console Menu"
 
 #: system/models.py:83
 msgid "Use Serial Console"
-msgstr ""
+msgstr "Usa Console Seriale"
 
 #: system/models.py:85
 msgid "Enable screen saver"
-msgstr ""
+msgstr "Abilita salvaschermo"
 
 #: system/models.py:87
 msgid "Automatically Check for New Firmware"
-msgstr ""
+msgstr "Controllo Automatico di un Nuovo Firmware"
 
 #: system/models.py:89
 msgid "Beep on boot"
@@ -4278,236 +4349,237 @@ msgstr ""
 
 #: templates/storage/tasks.html:25
 msgid "Keep snapshot for"
-msgstr ""
+msgstr "Prendi Istantantanea per"
 
 #: templates/storage/tasks.html:38
 msgid "No"
-msgstr ""
+msgstr "No"
 
 #: templates/storage/tasks.html:42
 msgid "From"
-msgstr ""
+msgstr "Da"
 
 #: templates/storage/tasks.html:44
 msgid "through"
-msgstr ""
+msgstr "attraverso"
 
 #: templates/storage/tasks.html:46
 msgid ", every"
-msgstr ""
+msgstr ", ogni"
 
 #: templates/storage/tasks.html:48
 msgid "minutes,"
-msgstr ""
+msgstr "minuti,"
 
 #: templates/storage/tasks.html:50
 msgid "everyday"
-msgstr ""
+msgstr "tutti i giorni"
 
 #: templates/storage/tasks.html:53
 msgid "on every"
-msgstr ""
+msgstr "in ogni"
 
 #: templates/storage/tasks.html:143
 msgid "No periodic snapshots scheduled"
-msgstr ""
+msgstr "Non sono schedulate istantanee periodiche"
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
-msgstr ""
+msgstr "Modifica Volume ZFS"
 
 #: templates/storage/volumes.html:42 templates/storage/volumes.html.py:46
 msgid "Auto Import Volume"
-msgstr ""
+msgstr "Import Automatico Volume"
 
 #: templates/storage/volumes.html:53
 msgid "There are no active volumes."
-msgstr ""
+msgstr "Non ci sono volumi attivi."
 
 #: templates/storage/volumes.html:61
 msgid "Used"
-msgstr ""
+msgstr "Usato"
 
 #: templates/storage/volumes.html:63
 msgid "Size"
-msgstr ""
+msgstr "Dimensione"
 
 #: templates/storage/volumes.html:64
 msgid "Status"
-msgstr ""
+msgstr "Stato"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Destroy Dataset"
-msgstr ""
+msgstr "Distruggi Dataset"
 
 #: templates/storage/volumes.html:99 templates/storage/volumes.html.py:103
 #: templates/storage/volumes.html:114 templates/storage/volumes.html.py:118
 msgid "Edit ZFS Options"
-msgstr ""
+msgstr "Modifica Opzioni ZFS"
 
 #: templates/storage/volumes.html:107 templates/storage/volumes.html.py:110
 msgid "Destroy Volume"
-msgstr ""
+msgstr "Distruggi Volume"
 
 #: templates/storage/volumes.html:140 templates/storage/volumes.html.py:144
 msgid "View Disks"
-msgstr ""
+msgstr "Visualizza Dischi "
 
 #: templates/storage/volumes.html:151
 msgid "No volumes defined"
-msgstr ""
+msgstr "Nessun volume definito"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
-msgstr ""
+msgstr "Dischi membri"
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
-msgstr ""
+msgstr "Tipo gruppo"
 
 #: templates/storage/wizard.html:84
 msgid "ZFS Extra"
-msgstr ""
+msgstr "Extra ZFS"
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr ""
+msgstr "L'utilizzo di solo 1 disco log è altamente sconsigliato"
 
 #: templates/storage/wizard.html:93
 msgid "Log"
-msgstr ""
+msgstr "Log"
 
 #: templates/storage/wizard.html:94
 msgid "Cache"
-msgstr ""
+msgstr "Cache"
 
 #: templates/storage/wizard.html:95
 msgid "Spare"
-msgstr ""
+msgstr "Spare"
 
 #: templates/storage/wizard.html:119
 msgid "Add Volume"
-msgstr ""
+msgstr "Aggiungi Volume"
 
 #: templates/storage/wizard.html:120
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "I dati esistenti saranno cancellati"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
-msgstr ""
+msgstr "La cache è ricostruita."
 
 #: templates/system/advanced_edit.html:19
 msgid "The cache could not be rebuilt"
-msgstr ""
+msgstr "La cache non potrebbe essere ricostruita"
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
-msgstr ""
+msgstr "Ricostruisci la Cache LDAP/AD"
 
 #: templates/system/config.html:2
 msgid "Restore to Factory Defaults"
-msgstr ""
+msgstr "Ripristina le Impostazioni Predefinite di Fabbrica"
 
 #: templates/system/config.html:4
 msgid "Save Config"
-msgstr ""
+msgstr "Salva Configurazione"
 
 #: templates/system/config.html:6
 msgid "Upload Config"
-msgstr ""
+msgstr "Carica Configurazione"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr ""
+msgstr "Ripartenza..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
 msgstr ""
+"Sei sicuro di voler ripristinare le Impostazioni Predefinite di Fabbrica?"
 
 #: templates/system/config_upload.html:34
 msgid "Update"
-msgstr ""
+msgstr "Aggiorna"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr ""
+msgstr "Riavvio..."
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr ""
+msgstr "Invia Mail di Prova"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr ""
+msgstr "Orario"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
-msgstr ""
+msgstr "Grafico Orario"
 
 #: templates/system/reporting.html:18
 msgid "Daily"
-msgstr ""
+msgstr "Giornaliero"
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
-msgstr ""
+msgstr "Grafico Giornaliero"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr ""
+msgstr "Settimanale"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"
-msgstr ""
+msgstr "Grafico Settimanale"
 
 #: templates/system/reporting.html:46
 msgid "Monthly"
-msgstr ""
+msgstr "Mensile"
 
 #: templates/system/reporting.html:47
 msgid "Monthly Graphs"
-msgstr ""
+msgstr "Grafico Mensile"
 
 #: templates/system/reporting.html:60
 msgid "Yearly"
-msgstr ""
+msgstr "Annuale"
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"
-msgstr ""
+msgstr "Grafico Annuale"
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr ""
+msgstr "Generale"
 
 #: templates/system/settings.html:11
 msgid "Firmware Update"
-msgstr ""
+msgstr "Aggiornamento Firmware"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
-msgstr ""
+msgstr "Appilca Service Pack"
 
 #: templates/system/settings.html:15
 msgid "Config"
-msgstr ""
+msgstr "Configurazione"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
-msgstr ""
+msgstr "Versione SO"
 
 #: templates/system/system_info.html:12
 msgid "Platform"
-msgstr ""
+msgstr "Piattaforma"
 
 #: templates/system/system_info.html:16
 msgid "System Time"
-msgstr ""
+msgstr "Ora di Sistema"
 
 #: templates/system/system_info.html:20
 msgid "Uptime"
-msgstr ""
+msgstr "Tempo di accensione"
 
 #: templates/system/system_info.html:24
 msgid "Load Average"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-24 20:00+0200\n"
+"PO-Revision-Date: 2011-05-25 14:46+0200\n"
 "Last-Translator: Rafal <rafal.ciszynski@d-tech.com.pl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
@@ -997,7 +997,7 @@ msgstr ""
 
 #: services/forms.py:571
 msgid "Disk device"
-msgstr ""
+msgstr "Urządzenie dyskowe"
 
 #: services/forms.py:658
 #, python-format
@@ -1037,7 +1037,7 @@ msgstr "Model autentykacji"
 #: services/models.py:62
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
-msgstr ""
+msgstr "Użycie autentykacji AD lub LDAP nadpisuje tą opcję"
 
 #: services/models.py:66
 msgid "NetBIOS name"
@@ -1105,6 +1105,8 @@ msgstr "Maska tworzenia pliku"
 #: services/models.py:115
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
+"Użyj tej opcji aby nadpisać maskę dla nowo tworzonych plików (domyślnie "
+"0666)."
 
 #: services/models.py:119 services/models.py:836
 msgid "Directory mask"
@@ -1114,6 +1116,8 @@ msgstr "Maska tworzenia katalogu"
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
+"Użyj tej opcji aby nadpisać maskę dla nowo tworzonych katalogów (domyślnie "
+"0777)."
 
 #: services/models.py:124
 msgid "Large RW support"
@@ -1121,7 +1125,7 @@ msgstr ""
 
 #: services/models.py:126
 msgid "Send files with sendfile(2)"
-msgstr ""
+msgstr "Wysyłaj pliki przy użyciu sendfile(2)"
 
 #: services/models.py:128
 msgid "EA Support"
@@ -1129,7 +1133,7 @@ msgstr ""
 
 #: services/models.py:130
 msgid "Support DOS File Attributes"
-msgstr ""
+msgstr "Wspieraj DOS-owe atrybuty plików"
 
 #: services/models.py:132
 msgid "Allow Empty Password"
@@ -1154,11 +1158,12 @@ msgstr "Włącza\\wyłącza katalogi domowe dla użytkowników Samby."
 
 #: services/models.py:144
 msgid "Enable home directories browsing"
-msgstr ""
+msgstr "Włącz widoczność katalogów domowych"
 
 #: services/models.py:145
 msgid "This enables\\disables home directories browsing for samba user."
 msgstr ""
+"Ta opcja włącza\\wyłącza widoczność katalogów domowych użytkowników Samby."
 
 #: services/models.py:149
 msgid "Home directories"

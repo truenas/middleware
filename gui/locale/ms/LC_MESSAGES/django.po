@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-19 04:30-0700\n"
-"PO-Revision-Date: 2011-05-17 08:45+0200\n"
+"PO-Revision-Date: 2011-05-26 03:59+0200\n"
 "Last-Translator: hamzul <zulkiflih@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ms\n"
@@ -24,307 +24,305 @@ msgstr ""
 
 #: choices.py:36 system/models.py:231 templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:37
 msgid "TLS"
-msgstr ""
+msgstr "TLS"
 
 #: choices.py:42
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: choices.py:43
 msgid "HTTPS"
-msgstr ""
+msgstr "HTTPS"
 
 #: choices.py:48 choices.py:217
 msgid "Auto"
-msgstr ""
+msgstr "Auto"
 
 #: choices.py:49
 msgid "PIO0"
-msgstr ""
+msgstr "PIO0"
 
 #: choices.py:50
 msgid "PIO1"
-msgstr ""
+msgstr "PIO1"
 
 #: choices.py:51
 msgid "PIO2"
-msgstr ""
+msgstr "PIO2"
 
 #: choices.py:52
 msgid "PIO3"
-msgstr ""
+msgstr "PIO3"
 
 #: choices.py:53
 msgid "PIO4"
-msgstr ""
+msgstr "PIO4"
 
 #: choices.py:54
 msgid "WDMA0"
-msgstr ""
+msgstr "WDMA0"
 
 #: choices.py:55
 msgid "WDMA1"
-msgstr ""
+msgstr "WDMA1"
 
 #: choices.py:56
 msgid "WDMA2"
-msgstr ""
+msgstr "WDMA2"
 
 #: choices.py:57
 msgid "UDMA-16"
-msgstr ""
+msgstr "UDMA-16"
 
 #: choices.py:58
 msgid "UDMA-33"
-msgstr ""
+msgstr "UDMA-33"
 
 #: choices.py:59
 msgid "UDMA-66"
-msgstr ""
+msgstr "UDMA-66"
 
 #: choices.py:60
 msgid "UDMA-100"
-msgstr ""
+msgstr "UDMA-100"
 
 #: choices.py:61
 msgid "UDMA-133"
-msgstr ""
+msgstr "UDMA-133"
 
 #: choices.py:62
 msgid "SATA 1.5Gbit/s"
-msgstr ""
+msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:63
 msgid "SATA 3.0Gbit/s"
-msgstr ""
+msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:67
 msgid "Always On"
-msgstr ""
+msgstr "Sentiasa Hidup"
 
 #: choices.py:81 choices.py:90
 msgid "Disabled"
-msgstr ""
+msgstr "Tidak aktif"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "penjimatan tenaga tidak dalam mode sedia"
+msgstr "Level 1 - penjimatan kuasa dalam mode sedia (spindown)"
 
 #: choices.py:83
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "Level 64 - penjimatan kuasa sederhana dalam mode sedia"
 
 #: choices.py:84
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "Level 127 - penjimatan kuasa sederhana dalam mode sedia"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usgae without Standby (no spindown)"
-msgstr "penjimatan tenaga tidak dalam mode sedia"
+msgstr "Level 128 - penjimatan kuasa diluar mode sedia (no spindown)"
 
 #: choices.py:86
 msgid "Level 192 - Intermediate power usage withot Standby"
-msgstr ""
+msgstr "Level 192 - penjimatan kuasa sederhana di luar mode sedia"
 
 #: choices.py:87
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr ""
+msgstr "Level 254 -pengunaan kuasa penuh pc, kuasa penuh tenaga elektrik"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
-msgstr ""
+msgstr "Sedikit"
 
 #: choices.py:92
 msgid "Medium"
-msgstr ""
+msgstr "Sederhana"
 
 #: choices.py:93
 msgid "Maximum"
-msgstr ""
+msgstr "Tertinggi"
 
 #: choices.py:127 templates/storage/tasks.html:86
 msgid "January"
-msgstr ""
+msgstr "Januari"
 
 #: choices.py:128 templates/storage/tasks.html:89
 msgid "February"
-msgstr ""
+msgstr "Februari"
 
 #: choices.py:129 templates/storage/tasks.html:92
 msgid "March"
-msgstr ""
+msgstr "Mac"
 
 #: choices.py:130 templates/storage/tasks.html:95
 msgid "April"
-msgstr ""
+msgstr "April"
 
 #: choices.py:131 templates/storage/tasks.html:98
 msgid "May"
-msgstr ""
+msgstr "Mei"
 
 #: choices.py:132 templates/storage/tasks.html:101
 msgid "June"
-msgstr ""
+msgstr "Jun"
 
 #: choices.py:133 templates/storage/tasks.html:104
 msgid "July"
-msgstr ""
+msgstr "Julai"
 
 #: choices.py:134 templates/storage/tasks.html:107
 msgid "August"
-msgstr ""
+msgstr "Ogos"
 
 #: choices.py:135 templates/storage/tasks.html:110
 msgid "September"
-msgstr ""
+msgstr "September"
 
 #: choices.py:136 templates/storage/tasks.html:113
 msgid "October"
-msgstr ""
+msgstr "Oktober"
 
 #: choices.py:137 templates/storage/tasks.html:116
 msgid "November"
-msgstr ""
+msgstr "November"
 
 #: choices.py:138 templates/storage/tasks.html:119
 msgid "December"
-msgstr ""
+msgstr "Desember"
 
 #: choices.py:141 templates/storage/tasks.html:57
 msgid "Monday"
-msgstr ""
+msgstr "Isnin"
 
 #: choices.py:142 templates/storage/tasks.html:60
 msgid "Tuesday"
-msgstr ""
+msgstr "Selasa"
 
 #: choices.py:143 templates/storage/tasks.html:63
 msgid "Wednesday"
-msgstr ""
+msgstr "Rabu"
 
 #: choices.py:144 templates/storage/tasks.html:66
 msgid "Thursday"
-msgstr ""
+msgstr "Khamis"
 
 #: choices.py:145 templates/storage/tasks.html:69
 msgid "Friday"
-msgstr ""
+msgstr "Jumaat"
 
 #: choices.py:146 templates/storage/tasks.html:72
 msgid "Saturday"
-msgstr ""
+msgstr "Sabtu"
 
 #: choices.py:147 templates/storage/tasks.html:75
 msgid "Sunday"
-msgstr ""
+msgstr "Ahad"
 
 #: choices.py:158
 msgid "Anonymous"
-msgstr ""
+msgstr "Tak bernama"
 
 #: choices.py:159
 msgid "Local User"
-msgstr ""
+msgstr "Penguna dalaman"
 
 #: choices.py:180
 msgid "Normal"
-msgstr ""
+msgstr "Biasa"
 
 #: choices.py:181
 msgid "Full"
-msgstr ""
+msgstr "Penuh"
 
 #: choices.py:182
 msgid "Debug"
-msgstr ""
+msgstr "Ralat"
 
 #: choices.py:186
 msgid "Default"
-msgstr ""
+msgstr "Setting Asal"
 
 #: choices.py:187
 msgid "Time Machine"
-msgstr ""
+msgstr "Masa PC"
 
 #: choices.py:190
 msgid "No case folding"
-msgstr ""
+msgstr "Tidak berganda"
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "huruf kecil di kedua-dua arah"
 
 #: choices.py:193
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "huruf kecil oleh PC akan di baca sebagai huruf besar oleh SERVER"
 
 #: choices.py:194
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "huruf besar oleh PC akan di baca sebagai huruf kecil oleh SERVER"
 
 #: choices.py:198
 msgid "File"
-msgstr ""
+msgstr "File"
 
 #: choices.py:199
 msgid "Device"
-msgstr ""
+msgstr "Alatan"
 
 #: choices.py:200
 msgid "ZFS Volume"
-msgstr ""
+msgstr "ZFS Saiz"
 
 #: choices.py:204 storage/models.py:137 templates/storage/autoimport.html:9
 #: templates/storage/import.html:18 templates/storage/wizard.html:91
 msgid "Disk"
-msgstr ""
+msgstr "Disk"
 
 #: choices.py:205
 msgid "DVD"
-msgstr ""
+msgstr "DVD"
 
 #: choices.py:206
 msgid "Tape"
-msgstr ""
+msgstr "Tape"
 
 #: choices.py:207
 msgid "Pass"
-msgstr ""
+msgstr "Pass"
 
 #: choices.py:211
 msgid "read-write"
-msgstr "baca sahaja"
+msgstr "baca-tulis"
 
 #: choices.py:212
 msgid "read-only"
-msgstr ""
+msgstr "baca sahaja"
 
 #: choices.py:216 choices.py:222 services/forms.py:431 services/forms.py:433
 #: services/forms.py:742 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "tak ada apa2"
 
 #: choices.py:218
 msgid "CHAP"
-msgstr ""
+msgstr "CHAP"
 
 #: choices.py:219
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "Mutual CHAP"
 
 #: choices.py:241
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "UPS - kuasa bateri rendah"
 
 #: choices.py:242
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS - mengunakan bateri"
 
 #: choices.py:245
 msgid "Preferred"
@@ -332,95 +330,96 @@ msgstr ""
 
 #: choices.py:246
 msgid "Tolerated"
-msgstr ""
+msgstr "Ditoleransi"
 
 #: choices.py:247
 msgid "Required"
-msgstr ""
+msgstr "Diperlukan"
 
 #: choices.py:274 choices.py:280
 msgid "Inherit"
-msgstr ""
+msgstr "Mewarisi"
 
 #: choices.py:275
 msgid "On"
-msgstr ""
+msgstr "Hidup"
 
 #: choices.py:276 choices.py:281
 msgid "Off"
-msgstr ""
+msgstr "Tutup"
 
 #: choices.py:282
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (cadangan)"
 
 #: choices.py:283
 msgid "gzip (default level, 6)"
-msgstr ""
+msgstr "gzip (setting asal level, 6)"
 
 #: choices.py:284
 msgid "gzip (fastest)"
-msgstr ""
+msgstr "gzip (pantas)"
 
 #: choices.py:285
 msgid "gzip (maximum, slow)"
-msgstr ""
+msgstr "gzip (had maksimum, perlahan)"
 
 #: choices.py:426
 msgid "Hour(s)"
-msgstr ""
+msgstr "Jam"
 
 #: choices.py:427
 msgid "Day(s)"
-msgstr ""
+msgstr "Hari"
 
 #: choices.py:428
 msgid "Week(s)"
-msgstr ""
+msgstr "Minggu"
 
 #: choices.py:429
 msgid "Month(s)"
-msgstr ""
+msgstr "Bulan"
 
 #: choices.py:430
 msgid "Year(s)"
-msgstr ""
+msgstr "Tahun"
 
 #: choices.py:434 services/models.py:1199 services/models.py:1218
 #: services/models.py:1356 services/models.py:1375
 msgid "Everyday"
-msgstr ""
+msgstr "Setiap hari"
 
 #: choices.py:435
 msgid "Every selected weekday"
-msgstr ""
+msgstr "Setiap hari pilihan"
 
 #: account/forms.py:93 templates/storage/volumes.html:62
 msgid "Available"
-msgstr ""
+msgstr "Sedia ada"
 
 #: account/forms.py:144
 msgid "Selected"
-msgstr ""
+msgstr "Dipilih"
 
 #: account/forms.py:172 account/forms.py:197 account/models.py:78
 #: services/forms.py:246 services/models.py:658 services/models.py:918
 #: system/models.py:157 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:60
 msgid "Username"
-msgstr ""
+msgstr "Nama pengguna"
 
 #: account/forms.py:173 account/forms.py:198
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
 msgstr ""
+"Perlukan 30 askara atau kurang -sila guna huruf, angka dan @/./+/-/_ sahaja."
 
 #: account/forms.py:174 account/forms.py:199
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr ""
+msgstr "askara boleh mengandungi hanya huruf, nombor dan @ /./+/-/_."
 
 #: account/forms.py:175
 msgid "E-mail"
-msgstr ""
+msgstr "E-mail"
 
 #: account/forms.py:200 account/forms.py:307 account/views.py:82
 #: services/models.py:662 system/forms.py:183 system/models.py:164
@@ -430,11 +429,11 @@ msgstr "katalaluan"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:184
 msgid "Password confirmation"
-msgstr ""
+msgstr "Katalaluan Sah"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:185
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "Sila taip sekali lagi katalaluan untuk pengesahan"
 
 #: account/forms.py:203 account/forms.py:345 account/models.py:104
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
@@ -443,24 +442,24 @@ msgstr ""
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
-msgstr ""
+msgstr "Login dibekukan"
 
 #: account/forms.py:205
 msgid "Primary Group"
-msgstr ""
+msgstr "Kumpulan utama"
 
 #: account/forms.py:234
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "Nama penguna sudah wujud"
 
 #: account/forms.py:242 account/forms.py:328 account/forms.py:470
 #: system/forms.py:228
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "katalaluan tidak sama ditaip"
 
 #: account/forms.py:247 account/forms.py:372
 msgid "Home directory has to start with /mnt/"
-msgstr ""
+msgstr "folder utama harus bermula dengan /mnt/"
 
 #: account/forms.py:261 account/forms.py:265 services/forms.py:508
 #: services/forms.py:521 services/forms.py:749 storage/forms.py:223

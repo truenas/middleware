@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:34-0700\n"
-"PO-Revision-Date: 2011-05-24 20:33+0200\n"
+"PO-Revision-Date: 2011-05-25 19:18+0200\n"
 "Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -296,12 +296,12 @@ msgstr "DVD"
 
 #: choices.py:211
 msgid "Tape"
-msgstr "Cassette"
+msgstr "Bande"
 
 # Pass-thru Device
 #: choices.py:212
 msgid "Pass"
-msgstr "Passer"
+msgstr "Accès direct"
 
 #: choices.py:216
 msgid "read-write"
@@ -1356,7 +1356,7 @@ msgstr "Intervalle d'émission NOPIN en secondes (20 par défaut)."
 
 #: services/models.py:267
 msgid "Max. sessions"
-msgstr "Nombre maximum de sessions"
+msgstr "Sessions maximum"
 
 #: services/models.py:268
 msgid "Maximum number of sessions holding at same time (16 by default)."
@@ -1364,7 +1364,7 @@ msgstr "Nombre maximum de sessions simultanées (16 par défaut)."
 
 #: services/models.py:273
 msgid "Max. connections"
-msgstr "Nombre maximum de connexions"
+msgstr "Connexions maximum"
 
 #: services/models.py:274
 msgid "Maximum number of connections in each session (8 by default)."
@@ -1372,7 +1372,7 @@ msgstr "Nombre maximum de connexions par session (8 par défaut)."
 
 #: services/models.py:279
 msgid "Max. pre-send R2T"
-msgstr "Nombre maximum de pré-envois R2T"
+msgstr "Pré-envois R2T maximum"
 
 #: services/models.py:280
 msgid ""
@@ -2265,7 +2265,7 @@ msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
-"Le Nom unique avec lequel se lier au serveur d'annuaire, e.g. "
+"Le nom unique avec lequel se lier au serveur d'annuaire, e.g. "
 "cn=admin,dc=test,dc=org"
 
 # A quoi correspond Root dans ce cas ?
@@ -2478,8 +2478,8 @@ msgstr ""
 "dans les listes, la liste des autorisations est prioritaire. Dans le cas où "
 "il est nécessaire de tout interdire par défaut, utilisez le mot-clé ALL (ou "
 "le masque réseau 0.0.0.0/0) et spécifiez ensuite les hôtes dont l'accès doit "
-"être autorisé dans le paramètre Hôtes autorisés. Laissez vide pour utiliser "
-"la configuration par défaut."
+"être autorisé dans le paramètre Hôtes autorisés. Laissez le champ vide pour "
+"utiliser la configuration par défaut."
 
 #: sharing/models.py:84
 msgid "Auxiliary Parameters"

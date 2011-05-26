@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-25 11:00+0200\n"
+"PO-Revision-Date: 2011-05-25 17:37+0200\n"
 "Last-Translator: xRaider <xraiderus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -2365,7 +2365,8 @@ msgstr "LDAP"
 msgid "Control Services"
 msgstr "Управление службами"
 
-# что такое maproot и mapall, вообще хз
+# не уверен насчёт maproot и mapall
+# http://www.lissyara.su/articles/freebsd/trivia/win2003+nfs/
 #: sharing/forms.py:102 sharing/models.py:243
 msgid "Maproot User"
 msgstr ""
@@ -2813,7 +2814,7 @@ msgstr ""
 "Предупреждения блокировки журнала, если есть проблемы с экспортом этого "
 "общего ресурса."
 
-# опять про maproot ))
+# опять про maproot и mapall ))
 #: sharing/models.py:247
 msgid "User to map root to"
 msgstr ""
@@ -3041,8 +3042,9 @@ msgid "Remote hostname"
 msgstr "Удаленный хост"
 
 #: storage/forms.py:961 storage/models.py:216
+#, fuzzy
 msgid "Remote hostkey"
-msgstr ""
+msgstr "Ключ удаленного хоста"
 
 #: storage/models.py:49
 msgid "File System Type"
@@ -3054,8 +3056,9 @@ msgid "Volume"
 msgstr "Том"
 
 #: storage/models.py:78
+#, fuzzy
 msgid "Volume this group belongs to"
-msgstr ""
+msgstr "Том этой группы принадлежит"
 
 #: storage/models.py:91
 msgid "Disks"
@@ -3066,16 +3069,19 @@ msgid "Transfer Mode"
 msgstr "Режим передачи"
 
 #: storage/models.py:108
+#, fuzzy
 msgid "HDD Standby"
-msgstr ""
+msgstr "Отключение диска"
 
 #: storage/models.py:114
+#, fuzzy
 msgid "Advanced Power Management"
-msgstr ""
+msgstr "Расширенное управление режимом энергопотребления"
 
 #: storage/models.py:120
+#, fuzzy
 msgid "Acoustic Level"
-msgstr ""
+msgstr "Уровень шума"
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
@@ -3086,12 +3092,14 @@ msgid "S.M.A.R.T. extra options"
 msgstr "Дополнительные параметры S.M.A.R.T."
 
 #: storage/models.py:133
+#, fuzzy
 msgid "Group Membership"
-msgstr ""
+msgstr "Членство в группах"
 
 #: storage/models.py:134
+#, fuzzy
 msgid "The disk group containing this disk"
-msgstr ""
+msgstr "Группа, содержащая этот диск"
 
 #: storage/models.py:146 storage/models.py:227 storage/models.py:253
 #: templates/storage/tasks.html:22
@@ -3111,60 +3119,73 @@ msgid "Enter Mount Point options here"
 msgstr "Укажите здесь параметры монтирования"
 
 #: storage/models.py:169
+#, fuzzy
 msgid "Error getting total space"
-msgstr ""
+msgstr "Ошибка при получении общего объёма"
 
 #: storage/models.py:175
+#, fuzzy
 msgid "Error getting available space"
-msgstr ""
+msgstr "Ошибка при получении свободного пространства"
 
 #: storage/models.py:181
+#, fuzzy
 msgid "Error getting used space"
-msgstr ""
+msgstr "Ошибка при получении используемого дискового пространства"
 
 #: storage/models.py:187 storage/models.py:199
 msgid "Error"
 msgstr "Ошибка"
 
 #: storage/models.py:219
+#, fuzzy
 msgid "Remote Replication Host"
-msgstr ""
+msgstr "Удаленная репликация хоста"
 
 #: storage/models.py:220
+#, fuzzy
 msgid "Remote Replication Hosts"
-msgstr ""
+msgstr "Удаленная репликация хостов"
 
 #: storage/models.py:231
+#, fuzzy
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
+"Послать последний снимок удаленной машине (оставьте пустым для полной "
+"репликации)"
 
 #: storage/models.py:234 templates/storage/replications.html:15
 msgid "Remote Host"
 msgstr "Удаленный хост"
 
 #: storage/models.py:237 templates/storage/replications.html:16
+#, fuzzy
 msgid "Remote ZFS filesystem"
-msgstr ""
+msgstr "Удаленная файловая система ZFS"
 
 #: storage/models.py:240
+#, fuzzy
 msgid "Replication Task"
-msgstr ""
+msgstr "Задание репликации"
 
 #: storage/models.py:241
+#, fuzzy
 msgid "Replication Tasks"
-msgstr ""
+msgstr "Задания репликации"
 
 #: storage/models.py:256 templates/storage/tasks.html:23
 msgid "Recursive"
 msgstr "Рекурсивно"
 
 #: storage/models.py:260
+#, fuzzy
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "Время жизни снимка"
 
 #: storage/models.py:266
+#, fuzzy
 msgid "Snapshot lifetime unit"
-msgstr ""
+msgstr "Время жизни снимка устройства"
 
 #: storage/models.py:270
 msgid "Begin"
@@ -3187,22 +3208,25 @@ msgid "Interval"
 msgstr "Интервал"
 
 #: storage/models.py:283
+#, fuzzy
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
-msgstr ""
+msgstr "Интервал между снимками в минутах."
 
 #: storage/models.py:289
 msgid "Occurrence"
 msgstr "Вхождение"
 
 #: storage/models.py:290
+#, fuzzy
 msgid "How the task is repeated"
-msgstr ""
+msgstr "Как задача повторяется"
 
 #: storage/models.py:295
 msgid "Weekday"
 msgstr "Будний день"
 
+# не знаю, как это перевести
 #: storage/models.py:313
 msgid "Periodic Snapshot Task"
 msgstr ""
@@ -3240,8 +3264,9 @@ msgstr "Просмотр всех томов"
 
 #: storage/nav.py:73 templates/storage/volumes.html:19
 #: templates/storage/volumes.html.py:23
+#, fuzzy
 msgid "Create ZFS Dataset"
-msgstr ""
+msgstr "Создание набора данных ZFS"
 
 #: storage/nav.py:84
 msgid "Add Periodic Snapshot"
@@ -3257,8 +3282,9 @@ msgstr "Тома"
 
 #: storage/nav.py:118 storage/nav.py:138 templates/storage/volumes.html:123
 #: templates/storage/volumes.html.py:126
+#, fuzzy
 msgid "Change Permissions"
-msgstr ""
+msgstr "Изменение разрешений"
 
 #: storage/views.py:88 storage/views.py:116 storage/views.py:139
 #: storage/views.py:283 storage/views.py:436
@@ -3268,46 +3294,53 @@ msgstr "успешно добавлен"
 
 #: storage/views.py:283 storage/views.py:320
 #: templates/storage/dataset_confirm_delete_ok.html:1
+#, fuzzy
 msgid "Dataset"
-msgstr ""
+msgstr "Набор данных"
 
 #: storage/views.py:320 storage/views.py:355
 msgid "successfully edited"
 msgstr "успешно изменен"
 
 #: storage/views.py:322 storage/views.py:357
+#, fuzzy
 msgid "Some error ocurried while setting the options"
-msgstr ""
+msgstr "Ошибки при установке опции"
 
 #: storage/views.py:355
+#, fuzzy
 msgid "Native dataset"
-msgstr ""
+msgstr "Нативный набор данных"
 
 #: storage/views.py:450
 msgid "Snapshot successfully taken"
-msgstr ""
+msgstr "Снимок успешно принят"
 
 #: storage/views.py:466
 msgid "Snapshot successfully cloned"
-msgstr ""
+msgstr "Снимок успешно клонирован"
 
 #: storage/views.py:518
+#, fuzzy
 msgid "Disk replacement has been initiated."
-msgstr ""
+msgstr "Инициирована процедура замены диска."
 
 #: storage/views.py:522
+#, fuzzy
 msgid "Some error ocurried."
-msgstr ""
+msgstr "Обнаружены ошибки."
 
 #: storage/views.py:544
 msgid "Disk detach has been successfully done."
 msgstr "Отсоединение диска было успешно произведено."
 
 #: system/forms.py:243
+#, fuzzy
 msgid ""
 "The system will use this place to temporarily store the firmware file before "
 "it's being applied."
 msgstr ""
+"Система будет использовать это место для временного хранения файла прошивки."
 
 #: system/forms.py:251
 msgid "New image to be installed"
@@ -3330,8 +3363,9 @@ msgid "Invalid service pack or checksum"
 msgstr "Неправильный пакет обновлений или его контрольная сумма"
 
 #: system/forms.py:297
+#, fuzzy
 msgid "New config to be installed"
-msgstr ""
+msgstr "Новый файл конфигурации для установки"
 
 #: system/models.py:41
 msgid "Protocol"
@@ -3365,9 +3399,11 @@ msgstr "Настройки"
 msgid "Enable Console Menu"
 msgstr "Включить консольное меню"
 
+# не ясно с этим
 #: system/models.py:83
+#, fuzzy
 msgid "Use Serial Console"
-msgstr ""
+msgstr "Использовать последовательную консоль"
 
 #: system/models.py:85
 msgid "Enable screen saver"
@@ -3386,33 +3422,39 @@ msgid "Enable Special System Tuning"
 msgstr "Включить специальные настройки системы"
 
 #: system/models.py:93
+#, fuzzy
 msgid "Enable powerd (Power Saving Daemon)"
-msgstr ""
+msgstr "Включить Powerd (энергосберегающий демон)"
 
 #: system/models.py:95
 msgid "Enable Zeroconf/Bonjour"
 msgstr "Включить Zeroconf / Bonjour"
 
 #: system/models.py:98
+#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only.  Must be non-zero"
 msgstr ""
+"Файл подкачки на каждом диске в ГБ, только для новых дисков. Должно быть не "
+"ноль"
 
 #: system/models.py:101
 msgid "Show console messages in the footer (Requires UI reload)"
 msgstr "Показывать сообщения в нижней части консоли (требуется перезагрузка UI)"
 
 #: system/models.py:109
+#, fuzzy
 msgid "MOTD banner"
-msgstr ""
+msgstr "Сообщение дня"
 
 #: system/models.py:113 templates/system/settings.html:5
 msgid "Advanced"
 msgstr "Расширенный"
 
 #: system/models.py:122
+#, fuzzy
 msgid "From email"
-msgstr ""
+msgstr "От адресата"
 
 #: system/models.py:123
 msgid ""
@@ -3439,8 +3481,9 @@ msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
 msgstr "Целое число от 1 до 65535, обычно, 25, 465 или 587"
 
 #: system/models.py:136
+#, fuzzy
 msgid "Port to connect to"
-msgstr ""
+msgstr "Порт для подключения к"
 
 #: system/models.py:142
 msgid "encryption of the connection"
@@ -3597,16 +3640,18 @@ msgid "Delete Group"
 msgstr "Удалить группу"
 
 #: templates/account/bsdgroups.html:37
+#, fuzzy
 msgid "There are no user defined groups."
-msgstr ""
+msgstr "Нет пользователей в выбранных группах."
 
 #: templates/account/bsdgroups.html:43
 msgid "Add New Group"
 msgstr "Добавить новую группу"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:62
+#, fuzzy
 msgid "Home"
-msgstr ""
+msgstr "Домой"
 
 #: templates/account/bsdusers.html:37 templates/account/bsdusers.html.py:38
 #: templates/account/bsdusers.html:89 templates/account/bsdusers.html.py:90
@@ -3650,8 +3695,9 @@ msgid "Storage"
 msgstr "Хранилище"
 
 #: templates/common/menubar2.html:23
+#, fuzzy
 msgid "Sharing"
-msgstr ""
+msgstr "Совместное использование"
 
 #: templates/common/menubar2.html:33
 msgid "Log Out"
@@ -3795,12 +3841,15 @@ msgid "FreeNAS Announce"
 msgstr "Анонсы FreeNAS"
 
 #: templates/freeadmin/index.html:85
+#, fuzzy
 msgid "FreeNAS Commit"
-msgstr ""
+msgstr "Уточнения FreeNAS"
 
+# имя собственное?
 #: templates/freeadmin/index.html:86
+#, fuzzy
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS Devel"
 
 #: templates/freeadmin/index.html:87
 msgid "FreeNAS Testing"
@@ -3811,8 +3860,9 @@ msgid "Support Issues"
 msgstr "Вопросы поддержки"
 
 #: templates/freeadmin/index.html:93
+#, fuzzy
 msgid "Bug Tracker"
-msgstr ""
+msgstr "Сборщик ошибок"
 
 #: templates/network/index2.html:9
 msgid "Static Routes"
@@ -3859,12 +3909,14 @@ msgid "Add Interface"
 msgstr "Добавить интерфейс"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
+#, fuzzy
 msgid "Actions"
-msgstr ""
+msgstr "Действия"
 
 #: templates/network/lagg.html:20
+#, fuzzy
 msgid "Edit Members"
-msgstr ""
+msgstr "Изменить членов"
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
@@ -3887,16 +3939,18 @@ msgid "Lagg Interface was successfully added"
 msgstr "Интерфейс LAGG успешно добавлен"
 
 #: templates/network/lagg_members2.html:6
+#, fuzzy
 msgid "Ordering Priority"
-msgstr ""
+msgstr "Очерёдность приоритетов"
 
 #: templates/network/lagg_members2.html:7
 msgid "Startup option"
 msgstr "Опции запуска"
 
 #: templates/network/lagg_members2.html:8 templates/sharing/unix.html:15
+#, fuzzy
 msgid "Action"
-msgstr ""
+msgstr "Действие"
 
 #: templates/network/staticroute.html:5
 msgid "Destination"
@@ -3943,8 +3997,9 @@ msgid "Delete VLAN"
 msgstr "Удалить VLAN"
 
 #: templates/network/vlan.html:34
+#, fuzzy
 msgid "No VLAN defined"
-msgstr ""
+msgstr "VLAN не определена"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
@@ -3957,9 +4012,9 @@ msgstr ""
 "раз."
 
 #: templates/registration/login.html:34
-#, python-format
+#, fuzzy, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr ""
+msgstr "Добро пожаловать,%(username). Спасибо за вход."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -4064,25 +4119,30 @@ msgstr "Управление iSCSI"
 msgid "Targets"
 msgstr "Цели"
 
+# http://ru.wikipedia.org/wiki/Extent
 #: templates/services/iscsi.html:9
+#, fuzzy
 msgid "Device Extents"
-msgstr ""
+msgstr "Экстенты устройства"
 
 #: templates/services/iscsi.html:11
+#, fuzzy
 msgid "Extents"
-msgstr ""
+msgstr "Экстенты"
 
 #: templates/services/iscsi.html:13
+#, fuzzy
 msgid "Associated Targets"
-msgstr ""
+msgstr "Связанные цели"
 
 #: templates/services/iscsi.html:15
 msgid "Authentication"
 msgstr "Аутентификация"
 
 #: templates/services/iscsi.html:17
+#, fuzzy
 msgid "Authorized Initiator"
-msgstr ""
+msgstr "Авторизованный инициатор"
 
 #: templates/services/iscsi.html:19
 msgid "Portals"
@@ -4103,12 +4163,14 @@ msgid "No targets defined"
 msgstr "Цели не определенны"
 
 #: templates/services/iscsi_assoctargets.html:39
+#, fuzzy
 msgid "Add Extent to Target"
-msgstr ""
+msgstr "Добавить экстент для цели"
 
 #: templates/services/iscsi_assoctargets.html:41
+#, fuzzy
 msgid "Add Extent To Target"
-msgstr ""
+msgstr "Добавить экстент для цели"
 
 #: templates/services/iscsi_auth.html:8
 msgid "Peer"
@@ -4124,8 +4186,9 @@ msgstr "Авторизованные сети"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
+#, fuzzy
 msgid "Add Authorized Initiator"
-msgstr ""
+msgstr "Добавить авторизованный инициатор"
 
 #: templates/services/iscsi_dextents.html:6
 #: templates/services/iscsi_targets.html:6
@@ -4136,8 +4199,9 @@ msgstr "Синоним"
 #: templates/services/iscsi_dextents.html:41
 #: templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
+#, fuzzy
 msgid "Add Extent"
-msgstr ""
+msgstr "Добавить экстент"
 
 #: templates/services/iscsi_portals.html:6
 msgid "Listen"
@@ -4255,15 +4319,17 @@ msgstr "Добавить общие ресурсы Windows (CIFS)"
 
 #: templates/storage/clonesnap.html:12
 msgid "Clone Snapshot"
-msgstr ""
+msgstr "Клонировать снимок"
 
 #: templates/storage/dataset_edit.html:9
+#, fuzzy
 msgid "Edit Dataset"
-msgstr ""
+msgstr "Изменить набор данных"
 
 #: templates/storage/datasets2.html:9
+#, fuzzy
 msgid "Add Dataset"
-msgstr ""
+msgstr "Добавить набор данных"
 
 #: templates/storage/disk_detach.html:7
 msgid "Are you sure you want to detach?"
@@ -4282,8 +4348,9 @@ msgid "Active Volumes"
 msgstr "Активные тома"
 
 #: templates/storage/index.html:5
+#, fuzzy
 msgid "ZFS Replication"
-msgstr ""
+msgstr "ZFS репликация"
 
 #: templates/storage/index.html:7
 msgid "ZFS Snapshots"
@@ -4296,16 +4363,17 @@ msgstr "Создать снимок вручную"
 #: templates/storage/periodicsnap.html:13 templates/storage/volumes.html:130
 #: templates/storage/volumes.html.py:133
 msgid "Create Snapshot"
-msgstr ""
+msgstr "Создать снимок"
 
 #: templates/storage/permission.html:6
+#, fuzzy
 msgid "Change permission"
-msgstr ""
+msgstr "Изменение разрешения"
 
 #: templates/storage/permission.html:7
-#, python-format
+#, fuzzy, python-format
 msgid "Change permission on %(path)s to"
-msgstr ""
+msgstr "Изменение разрешения на %(path) к"
 
 #: templates/storage/permission.html:11
 msgid "Change"
@@ -4338,8 +4406,9 @@ msgid "No ZFS replication available"
 msgstr "Не доступны ZFS репликации"
 
 #: templates/storage/snapshot_confirm_rollback2.html:7
+#, fuzzy
 msgid "Are you sure you want to rollback the snapshot to previous state?"
-msgstr ""
+msgstr "Вы уверены, что хотите откатить снимок в предыдущее состояние?"
 
 #: templates/storage/snapshots.html:4
 msgid "Dataset name"
@@ -4351,15 +4420,15 @@ msgstr "Имя снимка"
 
 #: templates/storage/snapshots.html:6
 msgid "Used space"
-msgstr ""
+msgstr "Занято места"
 
 #: templates/storage/snapshots.html:7
 msgid "Referenced space"
-msgstr ""
+msgstr "Используется места"
 
 #: templates/storage/snapshots.html:21 templates/storage/snapshots.html:23
 msgid "Clone snapshot"
-msgstr ""
+msgstr "Клонировать снимок"
 
 #: templates/storage/snapshots.html:25 templates/storage/snapshots.html:27
 msgid "Destroy snapshot"
@@ -4375,7 +4444,7 @@ msgstr "Нет доступных ZFS снимков"
 
 #: templates/storage/tasks.html:6
 msgid "Periodic Snapshots"
-msgstr ""
+msgstr "Периодические снимки"
 
 #: templates/storage/tasks.html:14
 msgid "Periodic Snapshot Schedule"
@@ -4390,8 +4459,9 @@ msgid "How"
 msgstr "Как"
 
 #: templates/storage/tasks.html:25
+#, fuzzy
 msgid "Keep snapshot for"
-msgstr ""
+msgstr "Держать снимок для"
 
 #: templates/storage/tasks.html:38
 msgid "No"
@@ -4471,16 +4541,18 @@ msgid "No volumes defined"
 msgstr "Тома не определены"
 
 #: templates/storage/wizard.html:26
+#, fuzzy
 msgid "Member disks"
-msgstr ""
+msgstr "Члены массива"
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
 msgstr "Тип группы"
 
 #: templates/storage/wizard.html:84
+#, fuzzy
 msgid "ZFS Extra"
-msgstr ""
+msgstr "Дополнительная ZFS"
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"

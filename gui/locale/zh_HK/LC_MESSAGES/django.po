@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:34-0700\n"
-"PO-Revision-Date: 2011-05-20 06:02+0200\n"
-"Last-Translator: haufranco <mysun20022001@gmail.com>\n"
+"PO-Revision-Date: 2011-05-26 07:32+0200\n"
+"Last-Translator: burnduck <burnduck@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_HK\n"
 "MIME-Version: 1.0\n"
@@ -820,19 +820,19 @@ msgstr "網絡摘要"
 
 #: network/nav.py:27
 msgid "Add Link Aggregation"
-msgstr ""
+msgstr "加入 Link Aggregation"
 
 #: network/nav.py:28
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "新增 Link Aggregation"
 
 #: network/nav.py:39
 msgid "View All Link Aggregations"
-msgstr ""
+msgstr "監視所有 Link Aggregations"
 
 #: network/nav.py:51
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Link Aggregations"
 
 #: network/nav.py:97
 msgid "View All Interfaces"
@@ -840,7 +840,7 @@ msgstr "檢視所有介面"
 
 #: network/nav.py:109
 msgid "View All VLANs"
-msgstr ""
+msgstr "檢視所有 VLAN"
 
 #: network/nav.py:121
 msgid "View All Static Routes"
@@ -849,7 +849,7 @@ msgstr "檢視所有靜態路由"
 #: network/views.py:192
 #, python-format
 msgid "%s successfully added"
-msgstr ""
+msgstr "成功加入 %s"
 
 #: services/forms.py:59 services/forms.py:112 sharing/forms.py:54
 #: sharing/models.py:63
@@ -861,7 +861,7 @@ msgstr "訪客帳戶"
 #: storage/forms.py:799
 #, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "用戶 %s 無效"
 
 #: services/forms.py:96
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -4326,36 +4326,36 @@ msgstr ""
 
 #: templates/system/settings.html:11
 msgid "Firmware Update"
-msgstr ""
+msgstr "Firmware 更新"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
-msgstr ""
+msgstr "使用 Service Pack"
 
 #: templates/system/settings.html:15
 msgid "Config"
-msgstr ""
+msgstr "設置"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
-msgstr ""
+msgstr "操作系統版本"
 
 #: templates/system/system_info.html:12
 msgid "Platform"
-msgstr ""
+msgstr "平台"
 
 #: templates/system/system_info.html:16
 msgid "System Time"
-msgstr ""
+msgstr "系統時間"
 
 #: templates/system/system_info.html:20
 msgid "Uptime"
-msgstr ""
+msgstr "運作時間"
 
 #: templates/system/system_info.html:24
 msgid "Load Average"
-msgstr ""
+msgstr "平均運作負荷"
 
 #: templates/system/system_info.html:28
 msgid "FreeNAS Build"
-msgstr ""
+msgstr "FreeNAS 版本"

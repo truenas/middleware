@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-22 13:06+0200\n"
+"PO-Revision-Date: 2011-05-25 13:02+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -311,7 +311,7 @@ msgstr "קריאה-בלבד"
 #: choices.py:221 choices.py:227 services/forms.py:392 services/forms.py:394
 #: services/forms.py:692 templates/storage/wizard.html:92
 msgid "None"
-msgstr "בכלל לא"
+msgstr "לא קיים"
 
 #: choices.py:223
 msgid "CHAP"
@@ -327,7 +327,7 @@ msgstr "UPS הגיע לסוללה נמוכה"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr "UPS על סוללה"
+msgstr "UPS פועל על סוללה"
 
 #: choices.py:250
 msgid "Preferred"

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-23 04:33+0200\n"
-"Last-Translator: phutruong <freenas@phutruong.nl>\n"
+"PO-Revision-Date: 2011-05-25 12:22+0200\n"
+"Last-Translator: hungdn <hung.dnc@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: vi\n"
 "MIME-Version: 1.0\n"
@@ -422,17 +422,17 @@ msgstr ""
 
 #: account/forms.py:175
 msgid "E-mail"
-msgstr ""
+msgstr "Email"
 
 #: account/forms.py:200 account/forms.py:307 account/views.py:79
 #: services/models.py:661 system/forms.py:180 system/models.py:160
 #: templates/account/bsdusers.html:9 templates/account/bsdusers.html.py:64
 msgid "Password"
-msgstr ""
+msgstr "Mật khẩu"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
 msgid "Password confirmation"
-msgstr ""
+msgstr "Gõ lại mật khẩu"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
