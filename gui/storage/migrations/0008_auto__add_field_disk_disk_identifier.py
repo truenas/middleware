@@ -3,29 +3,19 @@ import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
-from middleware.notifier import notifier
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        
+        # Adding field 'Disk.disk_identifier'
+        db.add_column('storage_disk', 'disk_identifier', self.gf('django.db.models.fields.CharField')(default='', max_length=42), keep_default=False)
 
-        # Adding field 'Disk.disk_uuid'
-        db.add_column('storage_disk', 'disk_uuid', self.gf('django.db.models.fields.CharField')(default='', max_length=36), keep_default=False)
-
-        """
-        Migrate data
-        Set the uuid for all disks
-        """
-        for disk in orm.Disk.objects.all():
-            uuid = notifier().name_to_uuid(disk.disk_name)
-            if uuid:
-                disk.disk_uuid = uuid
-                disk.save()
 
     def backwards(self, orm):
         
-        # Deleting field 'Disk.disk_uuid'
-        db.delete_column('storage_disk', 'disk_uuid')
+        # Deleting field 'Disk.disk_identifier'
+        db.delete_column('storage_disk', 'disk_identifier')
 
 
     models = {
@@ -37,11 +27,11 @@ class Migration(SchemaMigration):
             'disk_disks': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'disk_group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storage.DiskGroup']"}),
             'disk_hddstandby': ('django.db.models.fields.CharField', [], {'default': "'Always On'", 'max_length': '120'}),
+            'disk_identifier': ('django.db.models.fields.CharField', [], {'max_length': '42'}),
             'disk_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '120'}),
             'disk_smartoptions': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'disk_togglesmart': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'disk_transfermode': ('django.db.models.fields.CharField', [], {'default': "'Auto'", 'max_length': '120'}),
-            'disk_uuid': ('django.db.models.fields.CharField', [], {'max_length': '36'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         'storage.diskgroup': {

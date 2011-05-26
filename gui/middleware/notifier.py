@@ -1476,21 +1476,76 @@ class notifier:
         c.close()
 
     def uuid_to_name(self, uuid):
+        import libxml2
         p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
         p1.wait()
         output = p1.communicate()[0][:-1]
+        doc = libxml2.parseDoc(output)
+        try:
+            return doc.xpathEval("//class[name = 'PART']/geom//config[rawuuid = '%s']/../../name" % uuid)[0].content
+        except IndexError:
+            return None
+
+    def device_to_identifier(self, name):
         import libxml2
+        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
+        p1.wait()
+        output = p1.communicate()[0][:-1]
         doc = libxml2.parseDoc(output)
 
-    def name_to_uuid(self, name):
-        p1 = Popen(["gpart", "list"], stdout=PIPE, stderr=PIPE)
+        search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']/provider[last()]//rawuuid" % name)
+        if len(search) > 0:
+            return "{uuid}%s" % search[0].content
+
+        search = doc.xpathEval("//class[name = 'LABEL']/geom[name = '%s']/provider[first()]//name" % name)
+        if len(search) > 0:
+            return "{label}%s" % search[0].content
+
+        p1 = Popen(["smartctl", "-i", "/dev/%s" % name], stdout=PIPE, stdin=PIPE)
         p1.wait()
         output = p1.communicate()[0]
-        reg = re.search(r'^Geom name: %s.*?rawuuid: (?P<uuid>[a-f0-9-]{36})' % name, output, re.S|re.I|re.M)
-        if reg:
-            return reg.group("uuid")
-        else:
+        search = re.search(r'Serial Number:[ \t\s]+(?P<serial>.*+)', output, re.I)
+        if search:
+            return "{serial}%s"
+
+        return "{devicename}%s" % name
+
+    def identifier_to_device(self, ident):
+        import libxml2
+        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
+        p1.wait()
+        output = p1.communicate()[0][:-1]
+        doc = libxml2.parseDoc(output)
+
+        search = re.search(r'{(?P<type>.+?)}(?P<value>.*+)', ident)
+        if not search:
             return None
+
+        tp = search.group("type")
+        value = search.group("value")
+
+        if tp == 'uuid':
+            search = doc.xpathEval("//class[name = 'PART']/geom//config[rawuuid = '%s']/../../name" % value)
+            if len(search) > 0:
+                return search[0].content
+
+        elif tp == 'label':
+            search = doc.xpathEval("//class[name = 'LABEL']/geom//provider[name = '%s']/../name" % value)
+            if len(search) > 0:
+                return search[0].content
+
+        elif tp == 'serial'
+            raise NotImplementedError
+            p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE, stdin=PIPE)
+            p1.wait()
+            output = p1.communicate()[0]
+
+        if search:
+            return "{serial}%s"
+        elif tp == 'devicename':
+            return value
+        else:
+            raise NotImplementedError
 
     def volume_set_uuid(self, vid):
         c, conn = self.__open_db(True)
