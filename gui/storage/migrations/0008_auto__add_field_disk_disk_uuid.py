@@ -1,10 +1,9 @@
 # encoding: utf-8
 import datetime
-import re
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
-from subprocess import Popen, PIPE
+from middleware.notifier import notifier
 
 class Migration(SchemaMigration):
 
@@ -13,22 +12,12 @@ class Migration(SchemaMigration):
         # Adding field 'Disk.disk_uuid'
         db.add_column('storage_disk', 'disk_uuid', self.gf('django.db.models.fields.CharField')(default='', max_length=36), keep_default=False)
 
-        def name_to_uuid(name):
-            p1 = Popen(["gpart", "list"], stdout=PIPE, stderr=PIPE)
-            p1.wait()
-            output = p1.communicate()[0]
-            reg = re.search(r'^Geom name: %s.*?rawuuid: (?P<uuid>[a-f0-9-]{36})' % name, output, re.S|re.I|re.M)
-            if reg:
-                return reg.group("uuid")
-            else:
-                return None
-        
         """
         Migrate data
         Set the uuid for all disks
         """
         for disk in orm.Disk.objects.all():
-            uuid = name_to_uuid(disk.disk_name)
+            uuid = notifier().name_to_uuid(disk.disk_name)
             if uuid:
                 disk.disk_uuid = uuid
                 disk.save()

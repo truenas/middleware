@@ -204,7 +204,8 @@ class VolumeWizardForm(forms.Form):
             except:
                 pass
         # Exclude what's already added
-        for devname in [ x['disk_disks'] for x in models.Disk.objects.all().values('disk_disks')]:
+        print diskchoices
+        for devname in [ notifier().uuid_to_name(x['disk_uuid']) or x['disk_name'] for x in models.Disk.objects.all().values('disk_name','disk_uuid')]:
             try:
                 del diskchoices[devname]
             except:
@@ -331,6 +332,7 @@ class VolumeWizardForm(forms.Form):
             notifier().zfs_volume_attach_group(str(grp.id), force4khack=force4khack)
         else:
             notifier().init("volume", volume.id, force4khack=force4khack)
+        notifier().volume_set_uuid(volume.id)
 
 class VolumeImportForm(forms.Form):
 
@@ -430,6 +432,7 @@ class VolumeImportForm(forms.Form):
         diskobj.save()
 
         notifier().reload("disk")
+        notifier().volume_set_uuid(volume.id)
 
 class VolumeAutoImportForm(forms.Form):
 
@@ -439,7 +442,7 @@ class VolumeAutoImportForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(VolumeAutoImportForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        self.fields['volume_disks'].choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
+        #self.fields['volume_disks'].choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
 
     def _populate_disk_choices(self):
     
@@ -480,7 +483,7 @@ class VolumeAutoImportForm(forms.Form):
                     del diskchoices[part]
 
         choices = diskchoices.items()
-        choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
+        #choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
         return choices
 
     def clean(self):
@@ -587,6 +590,7 @@ class VolumeAutoImportForm(forms.Form):
                     diskobj.save()
 
         notifier().reload("disk")
+        notifier().volume_set_uuid(volume.id)
 
 #=================================
 

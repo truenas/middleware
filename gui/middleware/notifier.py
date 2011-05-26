@@ -1475,15 +1475,37 @@ class notifier:
         conn.commit()
         c.close()
 
-        def uuid_to_name(self, uuid):
-            p1 = self.__pipeopen("gpart list")
-            p1.wait()
-            output = p1.communicate()[0]
-            reg = re.search(r'^Geom name: (?P<name>[a-z0-9]+).*?rawuuid: %s' % uuid, output, re.S|re.I|re.M)
-            if reg:
-                return reg.group("name")
-            else:
-                return None
+    def uuid_to_name(self, uuid):
+        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
+        p1.wait()
+        output = p1.communicate()[0][:-1]
+        import libxml2
+        doc = libxml2.parseDoc(output)
+
+    def name_to_uuid(self, name):
+        p1 = Popen(["gpart", "list"], stdout=PIPE, stderr=PIPE)
+        p1.wait()
+        output = p1.communicate()[0]
+        reg = re.search(r'^Geom name: %s.*?rawuuid: (?P<uuid>[a-f0-9-]{36})' % name, output, re.S|re.I|re.M)
+        if reg:
+            return reg.group("uuid")
+        else:
+            return None
+
+    def volume_set_uuid(self, vid):
+        c, conn = self.__open_db(True)
+        c.execute("SELECT id FROM storage_diskgroup WHERE group_volume_id = ?", (str(vid),))
+        for dg in list(c.fetchall()):
+
+            dgid = dg[0]
+            c.execute("SELECT id, disk_name FROM storage_disk WHERE disk_group_id = ?", (dgid,))
+
+            for disk in list(c.fetchall()):
+                uuid = self.name_to_uuid(disk[1])
+                if uuid:
+                    c.execute("UPDATE storage_disk SET disk_uuid = ? WHERE id = ?", (str(uuid), str(disk[0])) )
+        conn.commit()
+        c.close()
 
 def usage():
     print ("Usage: %s action command" % argv[0])
