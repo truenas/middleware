@@ -831,7 +831,7 @@ Console setup
         show_ip()
 
         try:
-            ch = int(raw_input("Enter an option from 1-10: "))
+            ch = int(raw_input("Enter an option from 1-11: "))
         except ValueError:
             ch = None
         if ch >= menu_min and ch <= menu_max:
