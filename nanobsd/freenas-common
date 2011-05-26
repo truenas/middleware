@@ -181,6 +181,7 @@ add_port devel/bison -DWITHOUT_X11 # run dep of collectd
 add_port devel/libffi -DWITHOUT_X11 # run dep of collectd
 add_port x11-toolkits/pango -DWITHOUT_X11 # run dep of collectd
 add_port textproc/libxml2 -DWITHOUT_X11 # run dep of collectd
+add_port textproc/py-libxml2 -DWITHOUT_X11 # run dep of collectd
 add_port databases/rrdtool -DWITHOUT_X11 -DWITHOUT_PERL_MODULE -DWITH_PYTHON_MODULE # run dep of collectd
 add_port devel/gobject-introspection -DWITHOUT_X11 # run dep of collectd
 add_port net/liboping -DWITHOUT_X11 # run dep of collectd
