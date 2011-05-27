@@ -538,7 +538,8 @@ class VolumeAutoImportForm(forms.Form):
         grp.save()
 
         for diskname in vol['disks']:
-            diskobj = models.Disk(disk_name = diskname, disk_identifier = "{devicename}%s" % diskname,
+            ident = notifier().device_to_identifier(diskname)
+            diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
                            disk_description = ("Member of %s %s" %
                                               (volume_name, group_type)),
                            disk_group = grp)
