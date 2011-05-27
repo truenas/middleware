@@ -1345,8 +1345,8 @@ class notifier:
         imp.wait()
         if imp.returncode == 0:
             # These should probably be options that are configurable from the GUI
-            self.__system("zfs aclmode=passthrough %s" % name)
-            self.__system("zfs aclinherit=passthrough %s" % name)
+            self.__system("zfs set aclmode=passthrough %s" % name)
+            self.__system("zfs set aclinherit=passthrough %s" % name)
             return True
         return False
 
