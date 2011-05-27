@@ -514,13 +514,13 @@ class notifier:
             self.__system("gpart create -s gpt /dev/%s && gpart add -b 128 -t freebsd-swap -l swap-%s -s %d %s && gpart add -t %s -l %s %s" %
                          (devname, label, swapsize, devname, type, label, devname))
         else:
-            self.__system("gpart create -s gpt /dev/%s && gpart add -t freebsd-swap -l swap-%s -s %d %s && gpart add -t %s %s" %
-                         (devname, devname, swapsize, devname, type, devname))
+            self.__system("gpart create -s gpt /dev/%s && gpart add -b 128 -t freebsd-swap -s %d %s && gpart add -t %s %s" %
+                         (devname, swapsize, devname, type, devname))
         return need4khack
 
     def __gpt_unlabeldisk(self, devname):
         """Unlabel the disk"""
-        self.__system("swapoff /dev/gpt/swap-%s" % devname)
+        self.__system("swapoff /dev/%s" % self.swap_from_device(devname))
         self.__system("gpart destroy -F /dev/%s" % devname)
 
         # To be safe, wipe out the disk, both ends...
@@ -552,7 +552,7 @@ class notifier:
                 devname = self.identifier_to_device(disk[0])
                 need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
                                                   devname = devname,
-                                                  label = disk[1],
+                                                  label = "",
                                                   swapsize=swapsize)
                 # The identifier {uuid} should now be available
                 ident = self.device_to_identifier(devname)
@@ -561,13 +561,16 @@ class notifier:
                     c2.execute("UPDATE storage_disk SET disk_identifier = ? WHERE disk_identifier = ?", (ident, disk[0]))
                     c2.close()
                     conn.commit()
+                else:
+                    raise Exception
+                devname = self.identifier_to_partition(ident)
 
                 if need4khack or force4khack:
-                    hack_vdevs.append(disk[1])
-                    self.__system("gnop create -S 4096 /dev/gpt/" + disk[1])
-                    z_vdev += " /dev/gpt/" + disk[1] + ".nop"
+                    hack_vdevs.append(devname)
+                    self.__system("gnop create -S 4096 /dev/%s" % devname)
+                    z_vdev += " /dev/%s.nop" % devname
                 else:
-                    z_vdev += " /dev/gpt/" + disk[1]
+                    z_vdev += " /dev/%s" % devname
         self._reload_disk()
         # Finally, create the zpool.
         # TODO: disallowing cachefile may cause problem if there is
@@ -580,12 +583,12 @@ class notifier:
         if need4khack or force4khack:
             self.__system("zpool export %s" % (z_name))
             for disk in hack_vdevs:
-                self.__system("gnop destroy /dev/gpt/" + disk + ".nop")
+                self.__system("gnop destroy /dev/%s.nop" % disk)
             self.__system("zpool import %s" % (z_name))
 
         # These should probably be options that are configurable from the GUI
-        self.__system("zfs aclmode=passthrough %s" % z_name)
-        self.__system("zfs aclinherit=passthrough %s" % z_name)
+        self.__system("zfs set aclmode=passthrough %s" % z_name)
+        self.__system("zfs set aclinherit=passthrough %s" % z_name)
 
     # TODO: This is a rather ugly hack and duplicates some code, need to
     # TODO: cleanup this with the __create_zfs_volume.
@@ -594,7 +597,6 @@ class notifier:
         c = self.__open_db()
         c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
         swapsize=c.fetchone()[0]
-
 
         c.execute("SELECT id, group_type, group_volume_id FROM storage_diskgroup WHERE "
                   "id = ?", (group_id,))
@@ -627,12 +629,22 @@ class notifier:
                                                   devname = devname,
                                                   label = disk[1],
                                                   swapsize=swapsize)
-                if need4khack or force4khack:
-                    hack_vdevs.append(disk[1])
-                    self.__system("gnop create -S 4096 /dev/gpt/" + disk[1])
-                    z_vdev += " /dev/gpt/" + disk[1] + ".nop"
+                # The identifier {uuid} should now be available
+                ident = self.device_to_identifier(devname)
+                if ident != disk[0]:
+                    c2, conn = self.__open_db(True)
+                    c2.execute("UPDATE storage_disk SET disk_identifier = ? WHERE disk_identifier = ?", (ident, disk[0]))
+                    c2.close()
+                    conn.commit()
                 else:
-                    z_vdev += " /dev/gpt/" + disk[1]
+                    raise
+                devname = self.identifier_to_device(ident)
+
+                if need4khack or force4khack:
+                    self.__system("gnop create -S 4096 /dev/%s" % devname)
+                    z_vdev += " /dev/%s.nop" % devname
+                else:
+                    z_vdev += " /dev/%s" % devname
         self._reload_disk()
         # Finally, attach new groups to the zpool.
         self.__system("zpool add %s %s" % (z_name, z_vdev))
@@ -749,6 +761,15 @@ class notifier:
             disk = c.fetchone()
             devname = self.identifier_to_device(disk[0])
             self.__gpt_labeldisk(type = "freebsd-ufs", devname = devname, swapsize=swapsize)
+            ident = self.device_to_identifier(devname)
+            if ident != disk[0]:
+                c2, conn = self.__open_db(True)
+                c2.execute("UPDATE storage_disk SET disk_identifier = ? WHERE disk_identifier = ?", (ident, disk[0]))
+                c2.close()
+                conn.commit()
+            else:
+                raise
+            devname = self.identifier_to_device(ident)
             ufs_device = "/dev/ufs/" + disk[1]
             # TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar
             # generated automatically
@@ -775,8 +796,8 @@ class notifier:
         c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE "
                   "disk_group_id = ?", (ufs_volume_id,))
         if geom_type == '':
-            devname = self.identifier_to_device(disk[0])
             disk = c.fetchone()
+            devname = self.identifier_to_device(disk[0])
             self.__system("umount -f /dev/ufs/" + u_name)
             self.__gpt_unlabeldisk(devname = devname)
         else:
@@ -786,7 +807,7 @@ class notifier:
             vdev_member_list = c.fetchall()
             for disk in vdev_member_list:
                 devname = self.identifier_to_device(disk[0])
-                disk_name = " /dev/" + devname
+                disk_name = " /dev/%s" % devname
                 self.__system("geom %s clear %s" % (geom_type, disk_name))
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname,))
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
@@ -835,24 +856,21 @@ class notifier:
 
         # TODO: Test on real hardware to see if ashift would persist across replace
         volume = volume[1]
-        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", (from_diskid,))
-        fromdev_label = c.fetchone()[0]
-        fromdev = 'gpt/' + fromdev_label
-        fromdev_swap = '/dev/gpt/swap-' + fromdev_label
+        c.execute("SELECT disk_identifier FROM storage_disk WHERE id = ?", (from_diskid,))
+        fromdev = self.indeitifier_to_device(c.fetchone()[0])
+        fromdev_swap = self.swap_from_device(fromdev)
         c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE id = ?", (to_diskid,))
         disk = c.fetchone()
-        devname = self.identifier_to_device(disk[0])
-        label = disk[1]
-        todev = 'gpt/' + label
-        todev_swap = '/dev/gpt/swap-' + label
+        todev = self.identifier_to_device(disk[0])
+        todev_swap = self.swap_from_device(todev)
 
         self.__system('/sbin/swapoff %s' % (fromdev_swap))
 
         if from_diskid == to_diskid:
             self.__system('/sbin/zpool offline %s %s' % (volume, fromdev))
 
-        self.__gpt_labeldisk(type = "freebsd-zfs", devname = devname,
-                             label = label, swapsize=swapsize)
+        self.__gpt_labeldisk(type = "freebsd-zfs", devname = todev,
+                             label = "", swapsize=swapsize)
 
         self.__system('/sbin/swapon %s' % (todev_swap))
 
@@ -878,13 +896,12 @@ class notifier:
 
         # TODO: Handle with 4khack aftermath
         volume = volume[1]
-        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", (disk_id,))
-        label = c.fetchone()[0]
-        devname = 'gpt/' + label
+        c.execute("SELECT disk_identifier FROM storage_disk WHERE id = ?", (disk_id,))
+        devname = self.identifier_to_device(c.fetchone()[0])
 
         # Remove the swap partition for another time to be sure.
         # TODO: swap partition should be trashed instead.
-        devname_swap = '/dev/gpt/swap-' + label
+        devname_swap = self.swap_from_device(devname)
         self.__system('/sbin/swapoff %s' % (devname_swap))
 
         ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume, devname))
@@ -1498,7 +1515,10 @@ class notifier:
         output = p1.communicate()[0][:-1]
         doc = libxml2.parseDoc(output)
 
-        search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']/provider[last()]//rawuuid" % name)
+        search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-zfs']/rawuuid" % name)
+        if len(search) > 0:
+            return "{uuid}%s" % search[0].content
+        search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-ufs']/rawuuid" % name)
         if len(search) > 0:
             return "{uuid}%s" % search[0].content
 
@@ -1539,15 +1559,72 @@ class notifier:
                 return search[0].content
 
         elif tp == 'serial':
-            raise NotImplementedError
             p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE, stdin=PIPE)
             p1.wait()
             output = p1.communicate()[0]
+            for devname in output.split(' '):
+                p1 = Popen(["smartctl", "-i", "/dev/%s" % devname], stdout=PIPE, stdin=PIPE)
+                p1.wait()
+                output = p1.communicate()[0]
+                search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I)
+                if search and search.group("serial") == value:
+                    return devname
+            return None
 
         elif tp == 'devicename':
             return value
         else:
             raise NotImplementedError
+
+    def identifier_to_partition(self, ident):
+        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
+        p1.wait()
+        output = p1.communicate()[0][:-1]
+        doc = libxml2.parseDoc(output)
+
+        search = re.search(r'\{(?P<type>.+?)\}(?P<value>.+)', ident)
+        if not search:
+            return None
+
+        tp = search.group("type")
+        value = search.group("value")
+
+        if tp == 'uuid':
+            search = doc.xpathEval("//class[name = 'PART']/geom//config[rawuuid = '%s']/../name" % value)
+            if len(search) > 0:
+                return search[0].content
+
+        elif tp == 'label':
+            search = doc.xpathEval("//class[name = 'LABEL']/geom//provider[name = '%s']/../name" % value)
+            if len(search) > 0:
+                return search[0].content
+
+        elif tp == 'devicename':
+            return value
+        else:
+            raise NotImplementedError
+
+    def swap_from_device(self, device):
+        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
+        p1.wait()
+        output = p1.communicate()[0][:-1]
+        doc = libxml2.parseDoc(output)
+
+        search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-swap']/../name" % device)
+        if len(search) > 0:
+            return search[0].content
+
+    def swap_from_identifier(self, ident):
+        device = self.identifier_to_device(ident)
+        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
+        p1.wait()
+        output = p1.communicate()[0][:-1]
+        doc = libxml2.parseDoc(output)
+
+        search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-swap']/../name" % device)
+        if len(search) > 0:
+            return search[0].content
+        return ''
 
 def usage():
     print ("Usage: %s action command" % argv[0])
@@ -1572,4 +1649,4 @@ if __name__ == '__main__':
         except:
             print ("Unknown action: %s" % argv[1])
             usage()
-        f(argv[2])
+        print f(argv[2])
