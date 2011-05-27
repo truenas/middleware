@@ -47,6 +47,7 @@ import signal
 import time
 from shlex import split as shlex_split
 from subprocess import Popen, PIPE
+import libxml2
 
 class notifier:
     from os import system as ___system
@@ -1475,19 +1476,7 @@ class notifier:
         conn.commit()
         c.close()
 
-    def uuid_to_name(self, uuid):
-        import libxml2
-        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
-        p1.wait()
-        output = p1.communicate()[0][:-1]
-        doc = libxml2.parseDoc(output)
-        try:
-            return doc.xpathEval("//class[name = 'PART']/geom//config[rawuuid = '%s']/../../name" % uuid)[0].content
-        except IndexError:
-            return None
-
     def device_to_identifier(self, name):
-        import libxml2
         p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
         p1.wait()
         output = p1.communicate()[0][:-1]
@@ -1511,13 +1500,12 @@ class notifier:
         return "{devicename}%s" % name
 
     def identifier_to_device(self, ident):
-        import libxml2
         p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
         p1.wait()
         output = p1.communicate()[0][:-1]
         doc = libxml2.parseDoc(output)
 
-        search = re.search(r'{(?P<type>.+?)}(?P<value>.*+)', ident)
+        search = re.search(r'\{(?P<type>.+?)\}(?P<value>.+)', ident)
         if not search:
             return None
 
