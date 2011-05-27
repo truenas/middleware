@@ -14,26 +14,17 @@ class Migration(SchemaMigration):
         # Renaming column for 'AFP_Share.afp_path' to match new field type.
         db.rename_column('sharing_afp_share', 'afp_path2', 'afp_path')
 
-        # Removing index on 'AFP_Share', fields ['afp_path']
-        db.delete_index('sharing_afp_share', ['afp_path_id'])
-
         # Deleting field 'NFS_Share.nfs_path2'
         db.delete_column('sharing_nfs_share', 'nfs_path_id')
 
         # Renaming column for 'NFS_Share.nfs_path' to match new field type.
         db.rename_column('sharing_nfs_share', 'nfs_path2', 'nfs_path')
 
-        # Removing index on 'NFS_Share', fields ['nfs_path']
-        db.delete_index('sharing_nfs_share', ['nfs_path_id'])
-
         # Deleting field 'CIFS_Share.cifs_path2'
         db.delete_column('sharing_cifs_share', 'cifs_path_id')
 
         # Renaming column for 'CIFS_Share.cifs_path' to match new field type.
         db.rename_column('sharing_cifs_share', 'cifs_path2', 'cifs_path')
-
-        # Removing index on 'CIFS_Share', fields ['cifs_path']
-        db.delete_index('sharing_cifs_share', ['cifs_path_id'])
 
 
     def backwards(self, orm):
