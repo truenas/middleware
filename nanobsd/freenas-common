@@ -254,13 +254,13 @@ add_gui()
 	pprint 2 "Making freenas initial database"
 	mkdir ${NANO_WORLDDIR}/data
 	CR "(cd ${dstCR}; python manage.py syncdb --migrate)" << __EOF__
-	CR "(cd ${dstCR}; python manage.py compilemessages)" << __EOF__
 yes
 admin
 root@freenas.local
 freenas
 freenas
 __EOF__
+	CR "(cd ${dstCR}; python manage.py compilemessages)"
 	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
 	CR "chown -R www:www ${dstCR} data"
     else
