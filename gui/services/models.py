@@ -158,13 +158,13 @@ class CIFS(Model):
     cifs_srv_aio_rs = models.IntegerField(
             max_length=120,
             verbose_name=_("Minimal AIO read size"), 
-            help_text=_("Samba will read asynchronously if request size is larger than this value.  The default read size is 1."),
+            help_text=_("Samba will read asynchronously if request size is larger than this value. The default read size is 1."),
             default = "1"
             )
     cifs_srv_aio_ws = models.IntegerField(
             max_length=120,
             verbose_name=_("Minimal AIO write size"), 
-            help_text=_("Samba will write asynchronously if request size is larger than this value.  The default write size is 1."),
+            help_text=_("Samba will write asynchronously if request size is larger than this value. The default write size is 1."),
             default = "1"
             )
 
@@ -335,9 +335,9 @@ class iSCSITargetGlobalConfiguration(Model):
             )
     iscsi_luc_authnetwork = models.IPAddressField(
             max_length=120,
-            verbose_name=_("Controller Authorised netmask"),
+            verbose_name=_("Controller Authorized netmask"),
             default = "255.255.255.0",
-            help_text=_("Logical Unit Controller Authorised netmask (255.255.255.0 by default)"),
+            help_text=_("Logical Unit Controller Authorized netmask (255.255.255.0 by default)"),
             blank=True,
             )
     iscsi_luc_authmethod = models.CharField(
@@ -865,22 +865,22 @@ class FTP(Model):
     ftp_localuserbw = models.PositiveIntegerField(
             default=0,
             verbose_name = _("Local user upload bandwidth"), 
-            help_text = _("Local user upload bandwith in KB/s. Zero means infinity.")
+            help_text = _("Local user upload bandwidth in KB/s. Zero means infinity.")
             )
     ftp_localuserdlbw = models.PositiveIntegerField(
             default=0,
             verbose_name = _("Local user download bandwidth"), 
-            help_text = _("Local user download bandwith in KB/s. Zero means infinity.")
+            help_text = _("Local user download bandwidth in KB/s. Zero means infinity.")
             )
     ftp_anonuserbw = models.PositiveIntegerField(
             default=0,
             verbose_name = _("Anonymous user upload bandwidth"), 
-            help_text = _("Anonymous user upload bandwith in KB/s. Zero means infinity.")
+            help_text = _("Anonymous user upload bandwidth in KB/s. Zero means infinity.")
             )
     ftp_anonuserdlbw = models.PositiveIntegerField(
             default=0,
             verbose_name = _("Anonymous user download bandwidth"), 
-            help_text = _("Anonymous user download bandwith in KB/s. Zero means infinity.")
+            help_text = _("Anonymous user download bandwidth in KB/s. Zero means infinity.")
             )
     ftp_ssltls = models.BooleanField(
             verbose_name = _("Enable SSL/TLS"))
@@ -1121,7 +1121,7 @@ class LDAP(Model):
             )
     ldap_options = models.TextField(
             max_length=120,
-            verbose_name = _("Auxillary Parameters"),
+            verbose_name = _("Auxilary Parameters"),
             blank=True,
             help_text = _("These parameters are added to ldap.conf.")
             )

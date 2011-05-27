@@ -101,7 +101,7 @@ class AFP_Share(Model):
     afp_name = models.CharField(
             max_length=120, 
             verbose_name = _("Name"),
-            help_text = _("The volume name is the name that appears in the Chooser ot the 'connect to server' dialog on Macintoshes to represent the appropriate share. If volumename is unspecified, the last component of pathname is used. No two volumes may have the same name. The volume name cannot contain the ':'  character. The volume name is mangled if it is very long. Mac codepage volume name is limited to 27 characters. UTF8-MAC volume name is limited to 'Volume Name Length' parameter in Services:Apple Share")
+            help_text = _("The volume name is the name that appears in the Chooser of the 'connect to server' dialog on Macintoshes to represent the appropriate share. If volumename is unspecified, the last component of pathname is used. No two volumes may have the same name. The volume name cannot contain the ':' character. The volume name is mangled if it is very long. Mac codepage volume name is limited to 27 characters. UTF8-MAC volume name is limited to 'Volume Name Length' parameter in Services:Apple Share")
             )
     afp_comment = models.CharField(
             max_length=120, 
@@ -139,7 +139,7 @@ class AFP_Share(Model):
             max_length=120, 
             verbose_name = _("Read-only Access"),
             blank=True,
-            help_text = _("Allows certain users and groups to have read-only access to a share. This follows the allow option format.")
+            help_text = _("Allows certain users and groups to have read/write access to a share. This follows the allow option format.")
         )
     afp_rw = models.CharField(
             max_length=120, 
@@ -156,13 +156,13 @@ class AFP_Share(Model):
             choices=choices.DISKDISCOVERY_CHOICES, 
             default='Default', 
             verbose_name = _("Disk discovery mode"),
-            help_text = _("Note! Selecting 'Time Machine' on multiple shares will may cause unpredictable behavior in MacOS.  Default mode exports the volume as a data volume for users.")
+            help_text = _("Note! Selecting 'Time Machine' on multiple shares may cause unpredictable behavior in MacOS. Default mode exports the volume as a data volume for users.")
             )
     afp_dbpath = models.CharField(
             max_length=120, 
             verbose_name = _("Database Path"),
             blank=True,
-            help_text = _("Sets the database information to be stored in path. You have to specifiy a writable location, even if the volume is read only.")
+            help_text = _("Sets the database information to be stored in path. You have to specify a writable location, even if the volume is read only.")
             )
     afp_cachecnid = models.BooleanField(
             verbose_name = _("Cache CNID"),
@@ -178,7 +178,7 @@ class AFP_Share(Model):
             )
     afp_noadouble = models.BooleanField(
             verbose_name = _("No .AppleDouble"),
-            help_text = _("This controls whether the .AppleDouble directory gets created unless absolutely needed. This option should not be used if files are access mostly by Mac computers.  Clicking this option disables their creation.")
+            help_text = _("This will suppress automatic creation of the .AppleDouble directories. This option should not be used if files are accessed by Mac computers.")
             )
     afp_nodev = models.BooleanField(
             verbose_name = _("Zero Device Numbers"),
@@ -228,16 +228,16 @@ class NFS_Share(Model):
     nfs_network = models.CharField(
             max_length=120, 
             verbose_name = _("Authorized network or IP addresses"),
-            help_text = _("Network that is authorized to access the NFS share or a list of IP addresses.  Specify network numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."),
+            help_text = _("Network that is authorized to access the NFS share or a list of IP addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."),
             blank=True,
             )
     nfs_alldirs = models.BooleanField(
             verbose_name = _("All Directories"),
-            help_text = _("Allow mounting of any subdirectory under this mount point if selected.  Otherwise, only the top level directory can be mounted."),
+            help_text = _("Allow mounting of any subdirectory under this mount point if selected. Otherwise, only the top level directory can be mounted."),
             )
     nfs_ro = models.BooleanField(
             verbose_name = _("Read Only"),
-            help_text = _("Export the share read only.  Writes are not permitted.")
+            help_text = _("Export the share read only. Writes are not permitted.")
             )
     nfs_quiet = models.BooleanField(
             verbose_name = _("Quiet"),
