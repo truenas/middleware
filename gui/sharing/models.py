@@ -45,7 +45,8 @@ class CIFS_Share(Model):
             verbose_name = _("Comment"),
             blank=True,
             )
-    cifs_path = models.ForeignKey(MountPoint, limit_choices_to=mountpoint_limiter,
+    cifs_path = models.CharField(
+            max_length=255,
             verbose_name = _("Path"))
     cifs_ro = models.BooleanField(
             verbose_name = _("Export Read Only"))
@@ -107,7 +108,9 @@ class AFP_Share(Model):
             verbose_name = _("Share Comment"),
             blank=True
             )
-    afp_path = models.ForeignKey(MountPoint, limit_choices_to=mountpoint_limiter, verbose_name = _("Volume Path"))
+    afp_path = models.CharField(
+            max_length=255,
+            verbose_name = _("Path"))
     afp_sharepw = models.CharField(
             max_length=120, 
             verbose_name = _("Share password"),
@@ -219,7 +222,9 @@ class NFS_Share(Model):
             verbose_name = _("Comment"),
             blank=True,
             )
-    nfs_path = models.ForeignKey(MountPoint, limit_choices_to=mountpoint_limiter, verbose_name = _("Volume Path"))
+    nfs_path = models.CharField(
+            max_length=255,
+            verbose_name = _("Path"))
     nfs_network = models.CharField(
             max_length=120, 
             verbose_name = _("Authorized network or IP addresses"),

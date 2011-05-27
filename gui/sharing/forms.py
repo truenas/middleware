@@ -38,6 +38,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups, \
                                          FreeNAS_User, FreeNAS_Group
+from freeadmin.forms import DirectoryBrowser
 from ipaddr import IPAddress, IPNetwork, \
                    AddressValueError, NetmaskValueError
 
@@ -51,6 +52,9 @@ class MountPointForm(ModelForm):
 class CIFS_ShareForm(ModelForm):
     class Meta:
         model = models.CIFS_Share 
+        widgets = {
+            'cifs_path': DirectoryBrowser(),
+            }
     def save(self):
         ret = super(CIFS_ShareForm, self).save()
         notifier().reload("cifs")
@@ -59,6 +63,9 @@ class CIFS_ShareForm(ModelForm):
 class AFP_ShareForm(ModelForm):
     class Meta:
         model = models.AFP_Share 
+        widgets = {
+            'afp_path': DirectoryBrowser(),
+            }
     def save(self):
         ret = super(AFP_ShareForm, self).save()
         notifier().reload("afp")
@@ -67,6 +74,9 @@ class AFP_ShareForm(ModelForm):
 class NFS_ShareForm(ModelForm):
     class Meta:
         model = models.NFS_Share 
+        widgets = {
+            'nfs_path': DirectoryBrowser(),
+            }
     def clean_nfs_network(self):
         net = self.cleaned_data['nfs_network']
         net = re.sub(r'\s{2,}', ' ', net).strip()
