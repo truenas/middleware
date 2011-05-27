@@ -638,7 +638,7 @@ class notifier:
                     conn.commit()
                 else:
                     raise
-                devname = self.identifier_to_device(ident)
+                devname = self.identifier_to_partition(ident)
 
                 if need4khack or force4khack:
                     self.__system("gnop create -S 4096 /dev/%s" % devname)
