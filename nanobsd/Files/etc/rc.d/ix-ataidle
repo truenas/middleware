@@ -14,14 +14,18 @@ ataidle_start()
 {
 	local IFS=\|
 
-	local f="disk_disks disk_hddstandby disk_advpowermgmt disk_acousticlevel"
+	local f="disk_identifier disk_hddstandby disk_advpowermgmt disk_acousticlevel"
 	eval local $f
 	local cmd sf
 	sf=$(echo $f | sed -e 's/ /, /g')
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-		"SELECT $sf FROM storage_disk WHERE disk_disks LIKE 'ad%' OR disk_disks LIKE 'ada%'" | \
+		"SELECT $sf FROM storage_disk" | \
 	while eval read $f; do
+        disk=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py identifier_to_device "${disk_identifier}")
+        if [ -z `echo "${disk}"|egrep "^ada|^da"` ]; then
+            continue
+        fi
 		ataidle_args=""
 		if [ "${disk_advpowermgmt}" != "Disabled" ]; then
 			ataidle_args="-P ${disk_advpowermgmt}"
@@ -41,10 +45,10 @@ ataidle_start()
 		fi
 		ataidle_args="${ataidle_args} -A ${disk_acousticlevel}"
 		if [ -n "${ataidle_args}" ]; then
-			/usr/local/sbin/ataidle ${ataidle_args} ${disk_disks}
+			/usr/local/sbin/ataidle ${ataidle_args} ${disk}
 		fi
 		if [ "${disk_hddstandby}" != "Always On" ]; then
-			(sleep 60; /usr/local/sbin/ataidle ${disk_hddstandby} ${disk_disks}) > /dev/null 2>&1 &
+			(sleep 60; /usr/local/sbin/ataidle ${disk_hddstandby} ${disk}) > /dev/null 2>&1 &
 		fi
 	done
 }
