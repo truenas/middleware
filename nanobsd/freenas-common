@@ -208,6 +208,9 @@ add_port textproc/py-xml
 if [ "${DEBUG}" -eq "1" ]; then 
 	add_port databases/db42
 	add_port devel/apr1
+    add_port devel/py-logilab-common
+    add_port devel/py-astng
+	add_port devel/pylint
 	add_port www/neon29
 	add_port devel/subversion
 	add_port editors/vim-lite
