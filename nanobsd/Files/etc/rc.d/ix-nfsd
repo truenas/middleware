@@ -57,7 +57,7 @@ generate_exports()
 
 	local mountpoint network alldirs nfsro quiet
         local maproot_user maproot_group mapall_user mapall_group
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT mp_path, nfs_network, nfs_alldirs, nfs_ro, nfs_quiet, nfs_maproot_user, nfs_maproot_group, nfs_mapall_user, nfs_mapall_group FROM sharing_nfs_share AS us LEFT OUTER JOIN storage_mountpoint AS mp ON us.nfs_path_id = mp.id ORDER BY us.id DESC" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_path, nfs_network, nfs_alldirs, nfs_ro, nfs_quiet, nfs_maproot_user, nfs_maproot_group, nfs_mapall_user, nfs_mapall_group FROM sharing_nfs_share AS us ORDER BY us.id DESC" | \
 	while read mountpoint network alldirs nfsro quiet maproot_user maproot_group mapall_user mapall_group ; do
 		if [ -d "${mountpoint}" ]; then
 			echo -n ${mountpoint}
