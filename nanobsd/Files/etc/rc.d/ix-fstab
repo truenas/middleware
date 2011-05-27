@@ -61,14 +61,12 @@ generate_fstab_swap()
 {
 	local IFS=\|
 	local encrypted_swap swap_suffix
-	swap_suffix=""
-	#encrypted_swap=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_encswap FROM system_advanced ORDER BY -id LIMIT 1"`
-        #if [ "${encrypted_swap}" = "1" ]; then
-	#	swap_suffix=.eli
-	#fi
-        /usr/bin/find /dev/gpt/ -type c -name 'swap-*' 2>/dev/null | \
-        while read devname; do
-        	echo "${devname}${swap_suffix}	none			swap		sw		0	0"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT disk_identifier FROM storage_disk" | \
+	while read identifier; do
+        devname=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py swap_from_identifier "${identifier}")
+        if [ -n "${devname}" ]; then
+       	    echo "/dev/${devname}	none			swap		sw		0	0"
+        fi 
 	done
 }
 
