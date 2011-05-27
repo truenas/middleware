@@ -362,7 +362,7 @@ generate_exports()
 	SELECT
 		cifs_name,
 		cifs_comment,
-		mp_path,
+		cifs_path,
 		cifs_ro,
 		cifs_browsable,
 		cifs_inheritperms,
@@ -375,10 +375,6 @@ generate_exports()
 		cifs_hostsdeny
 	FROM
 		sharing_cifs_share AS cs
-
-	LEFT OUTER JOIN
-		storage_mountpoint AS mp
-	ON cs.cifs_path_id = mp.id
 
 	ORDER BY
 		cs.id ASC
