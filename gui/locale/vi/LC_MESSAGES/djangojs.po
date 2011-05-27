@@ -3,48 +3,48 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:23-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-05-26 18:26+0200\n"
+"Last-Translator: hien <phanquochien@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: vi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: media/lib/js/freeadmin.js:113
 msgid "Reporting"
-msgstr ""
+msgstr "Báo cáo"
 
 #: media/lib/js/freeadmin.js:125
 msgid "Settings"
-msgstr ""
+msgstr "Cấu hình"
 
 #: media/lib/js/freeadmin.js:136
 msgid "System Information"
-msgstr ""
+msgstr "Thông tin hệ thống"
 
 #: media/lib/js/freeadmin.js:176
 msgid "Network Settings"
-msgstr ""
+msgstr "Những thiết lập mạng"
 
 #: media/lib/js/freeadmin.js:238
 msgid "Services"
-msgstr ""
+msgstr "Dịch vụ"
 
 #: media/lib/js/freeadmin.js:278
 msgid "Account"
-msgstr ""
+msgstr "Tài khoản"
 
 #: media/lib/js/freeadmin.js:317
 msgid "Storage"
-msgstr ""
+msgstr "Lưu trữ"
 
 #: media/lib/js/freeadmin.js:344
 msgid "CronJobs"
@@ -52,7 +52,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:398
 msgid "Edit Disk"
-msgstr ""
+msgstr "Biên tập đĩa"
 
 #: media/lib/js/freeadmin.js:402
 msgid "Replace"
@@ -60,7 +60,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:403
 msgid "Disk Replacement"
-msgstr ""
+msgstr "Thay đổi đĩa"
 
 #: media/lib/js/freeadmin.js:407
 msgid "Detach"
@@ -72,7 +72,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:594
 msgid "Some error ocurried!"
-msgstr ""
+msgstr "Một số lỗi đã xảy ra!"
 
 #: media/lib/js/freeadmin/form/Cron.js:43
 msgid "Every"

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-25 09:36+0200\n"
-"Last-Translator: aida <tomas.sepek@gmail.com>\n"
+"PO-Revision-Date: 2011-05-26 22:28+0200\n"
+"Last-Translator: lllark123 <lllark123@email.cz>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -19,9 +19,8 @@ msgstr ""
 "X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
-#, fuzzy
 msgid "Plain"
-msgstr "Plain"
+msgstr "Prostý"
 
 #: choices.py:36 system/models.py:227 templates/system/settings.html:9
 msgid "SSL"
@@ -238,7 +237,7 @@ msgstr "lokální uživatel"
 
 #: choices.py:185
 msgid "Normal"
-msgstr ""
+msgstr "normální"
 
 #: choices.py:186
 msgid "Full"
@@ -254,7 +253,7 @@ msgstr "výchozí"
 
 #: choices.py:192
 msgid "Time Machine"
-msgstr ""
+msgstr "Time Machine"
 
 #: choices.py:195
 msgid "No case folding"
@@ -270,7 +269,7 @@ msgstr "Klient vidí velká písmena, server, malé písmena"
 
 #: choices.py:199
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "Klient vidí velká písmena, server, malé písmena"
 
 #: choices.py:203
 msgid "File"
@@ -312,7 +311,7 @@ msgstr "pouze čtení"
 #: choices.py:221 choices.py:227 services/forms.py:392 services/forms.py:394
 #: services/forms.py:692 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "Žádný"
 
 #: choices.py:223
 msgid "CHAP"
@@ -447,7 +446,7 @@ msgstr "shell"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
-msgstr ""
+msgstr "Zakázat přihlášení"
 
 #: account/forms.py:205
 msgid "Primary Group"
@@ -460,7 +459,7 @@ msgstr "Uživatelské jméno už existuje."
 #: account/forms.py:242 account/forms.py:328 account/forms.py:470
 #: system/forms.py:225
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "Heslo nesouhlasí."
 
 #: account/forms.py:247 account/forms.py:372
 msgid "Home directory has to start with /mnt/"
@@ -867,47 +866,48 @@ msgstr "uživatel %s neexistuje"
 #: services/forms.py:96
 msgid "This field is required for \"Enable home directories browsing\"."
 msgstr ""
+"Toto pole je vyžadováno pro volbu \"Povolit prohlížení domovských adresářů\"."
 
 #: services/forms.py:99
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "Toto pole je vyžadováno pro \"domovské adresáře.\""
 
 #: services/forms.py:145
 msgid "File Permission"
-msgstr ""
+msgstr "oprávnění pro soubor "
 
 #: services/forms.py:146
 msgid "Directory Permission"
-msgstr ""
+msgstr "oprávnění pro adresář"
 
 #: services/forms.py:165
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr ""
+msgstr "Tato hodnota musí být mezi 0 a 65535 včetně"
 
 #: services/forms.py:171 services/forms.py:189
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
+msgstr "Tato hodnota musí být mezi 0 a 10000 včetně."
 
 #: services/forms.py:177 services/forms.py:183
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
+msgstr "Tato hodnota musí být mezi 0 a 1000, včetně."
 
 #: services/forms.py:195
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
+msgstr "Tato hodnota musí být mezi 1024 a 65535 včetně. 0 pro výchozí"
 
 #: services/forms.py:201
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr ""
+msgstr "Tato hodnota musí být mezi 1024 a 65535 včetně. 0 pro výchozí."
 
 #: services/forms.py:220
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "Toto pole je vyžadováno pro anonymní přihlášení"
 
 #: services/forms.py:294 services/models.py:514
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
-msgstr ""
+msgstr "Heslo"
 
 #: services/forms.py:295 services/models.py:515
 msgid "Target side secret."
@@ -915,27 +915,27 @@ msgstr ""
 
 #: services/forms.py:296
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "Heslo (potvrzení)"
 
 #: services/forms.py:298 services/forms.py:306
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "Zadejte stejné heslo pro ověření výše."
 
 #: services/forms.py:299
 msgid "Initiator Secret"
-msgstr ""
+msgstr "Heslo iniciátora"
 
 #: services/forms.py:301 services/models.py:521 services/models.py:526
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr ""
+msgstr "Heslo z iniciátora (pro vzájemné ověřování CHAP)"
 
 #: services/forms.py:304
 msgid "Initiator Secret (Confirm)"
-msgstr ""
+msgstr "Heslo iniciátora (potvrzení)"
 
 #: services/forms.py:313
 msgid "Secret does not match"
-msgstr ""
+msgstr "Heslo se neshoduje"
 
 #: services/forms.py:328 services/forms.py:329
 msgid "The peer secret is required if you set a peer user."
@@ -947,7 +947,7 @@ msgstr ""
 
 #: services/forms.py:375
 msgid "LUN already exists in the same target."
-msgstr ""
+msgstr "LUN již existuje pro tento účel."
 
 #: services/forms.py:384 services/models.py:354
 msgid "Controller Auth Group"
@@ -966,7 +966,7 @@ msgstr ""
 #: services/forms.py:413
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr ""
+msgstr "Tato hodnota musí být mezi %(začátek) a % (konec), včetně."
 
 #: services/forms.py:421
 msgid ""

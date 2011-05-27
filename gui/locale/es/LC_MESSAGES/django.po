@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-26 00:57+0200\n"
-"Last-Translator: nomentero <toni7@telecable.es>\n"
+"PO-Revision-Date: 2011-05-26 23:08+0200\n"
+"Last-Translator: raulfg <raulfg3@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -443,7 +443,7 @@ msgstr "Repita la contraseña para verificarla."
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
 msgid "Shell"
-msgstr "Shell"
+msgstr "Terminal (Shell)"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
@@ -838,7 +838,7 @@ msgstr "Ver Todas las Agregaciones de Enlaces"
 
 #: network/nav.py:51
 msgid "Link Aggregations"
-msgstr "Link Aggregations"
+msgstr "Agregación de Enlaces"
 
 #: network/nav.py:97
 msgid "View All Interfaces"
@@ -1647,7 +1647,7 @@ msgstr "ID del Grupo de Autentificación"
 
 #: services/models.py:598
 msgid "Queue Depth"
-msgstr "Profundidad de Cola "
+msgstr "Profundidad de Cola"
 
 #: services/models.py:599
 msgid ""
@@ -2028,7 +2028,8 @@ msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
-"Puerto de escucha. Por defecto se escucha lo especificado en /etc/services"
+"Puerto de escucha. Por defecto se escucha el puerto tftp especificado en "
+"/etc/services"
 
 #: services/models.py:918
 msgid "Specifies the username which the service will run as."
@@ -2182,7 +2183,7 @@ msgstr "Contraseña del servidor principal de nombres"
 
 #: services/models.py:1059
 msgid "Password of the Service Principal Name account."
-msgstr ""
+msgstr "Contraseña de la cuenta del servicio principal de nombres"
 
 #: services/models.py:1063
 msgid "Kerberos Keytab File"
@@ -2219,7 +2220,7 @@ msgstr "Permitir enlaces anónimos"
 
 #: services/models.py:1091
 msgid "Root bind DN"
-msgstr ""
+msgstr "Union de raiz DN"
 
 #: services/models.py:1093
 msgid ""
@@ -2307,7 +2308,7 @@ msgstr "Certificado autofirmado"
 
 #: services/models.py:1140
 msgid "Place the contents of your self signed certificate file here."
-msgstr "Coloque el contenido de su archivo Certificado autofirmado aquí "
+msgstr "Coloque el contenido de su archivo Certificado autofirmado aquí"
 
 #: services/models.py:1144
 msgid "Auxillary Parameters"
@@ -2619,7 +2620,7 @@ msgstr ""
 
 #: sharing/models.py:173
 msgid "Windows File Names"
-msgstr "Nombres de archivo Windows "
+msgstr "Nombres de archivo Windows"
 
 #: sharing/models.py:174
 msgid ""
@@ -2639,6 +2640,9 @@ msgid ""
 "absolutely needed. This option should not be used if files are access mostly "
 "by Mac computers.  Clicking this option disables their creation."
 msgstr ""
+"Esto controla si el directorio .AppleDouble es creado o no. Esta opcion no "
+"deberia ser utilizada si se accede a los archivos usando clientes Macintosh. "
+"Al hacer clic en esta opción deshabilita su creación."
 
 #: sharing/models.py:181
 msgid "Zero Device Numbers"
@@ -2727,7 +2731,7 @@ msgid ""
 "Allow mounting of any subdirectory under this mount point if selected.  "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
-"Permite montar cualquier subdirectorio por debajo de este punto. Si no solo "
+"Permite montar cualquier subdirectorio por debajo de este punto. Si no, solo "
 "el nivel más alto podra ser montado"
 
 #: sharing/models.py:234
@@ -2741,7 +2745,7 @@ msgstr ""
 
 #: sharing/models.py:238
 msgid "Quiet"
-msgstr ""
+msgstr "Silencio"
 
 #: sharing/models.py:239
 msgid "Inibit syslog warnings if there are problems with exporting this share."
@@ -2751,15 +2755,15 @@ msgstr ""
 
 #: sharing/models.py:247
 msgid "User to map root to"
-msgstr ""
+msgstr "Usuario mapeado a 'root'"
 
 #: sharing/models.py:255
 msgid "Group to map root to"
-msgstr ""
+msgstr "Grupo mapeado a 'root'"
 
 #: sharing/models.py:263
 msgid "User to map all users to"
-msgstr ""
+msgstr "Usuario mapeado a todos los usuarios"
 
 #: sharing/models.py:271
 msgid "Group to map all users to"
@@ -3123,7 +3127,7 @@ msgstr "Cuanto tiempo ha pasado desde que fue hecha la ultima instantanea"
 
 #: storage/models.py:289
 msgid "Occurrence"
-msgstr ""
+msgstr "Ocurrencia"
 
 #: storage/models.py:290
 msgid "How the task is repeated"
@@ -3470,7 +3474,6 @@ msgid "System Information"
 msgstr "Información del Sistema"
 
 #: system/views.py:130
-#, fuzzy
 msgid "The uploaded file is not valid."
 msgstr "El fichero subido no es válido."
 
@@ -3539,7 +3542,7 @@ msgstr "Añadir Grupo"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:62
 msgid "Home"
-msgstr ""
+msgstr "Hogar"
 
 #: templates/account/bsdusers.html:37 templates/account/bsdusers.html.py:38
 #: templates/account/bsdusers.html:89 templates/account/bsdusers.html.py:90
@@ -3746,7 +3749,7 @@ msgstr "Publicaciones de Apoyo"
 
 #: templates/freeadmin/index.html:93
 msgid "Bug Tracker"
-msgstr ""
+msgstr "Seguidor de Fallos"
 
 #: templates/network/index2.html:9
 msgid "Static Routes"
@@ -3845,7 +3848,6 @@ msgid "Delete Static Route"
 msgstr "Borrar Rutas Estaticas"
 
 #: templates/network/staticroute.html:33
-#, fuzzy
 msgid "No static route defined"
 msgstr "Ruta estatica no definida"
 
@@ -3896,7 +3898,7 @@ msgstr "Bienvenido, %(username). Gracias por logarse"
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
-msgstr ""
+msgstr "Sesión cerrada"
 
 #: templates/registration/logout.html:8
 msgid "You are now logged out."
@@ -3904,7 +3906,7 @@ msgstr "Usted ahora a terminado sesión."
 
 #: templates/registration/logout.html:8
 msgid "Log back in"
-msgstr ""
+msgstr "Volver a iniciar sesión"
 
 #: templates/registration/password_change_done.html:20
 msgid "Success!"
@@ -3998,15 +4000,15 @@ msgstr "Destinos"
 
 #: templates/services/iscsi.html:9
 msgid "Device Extents"
-msgstr ""
+msgstr "Extender dispositivo"
 
 #: templates/services/iscsi.html:11
 msgid "Extents"
-msgstr ""
+msgstr "Extender"
 
 #: templates/services/iscsi.html:13
 msgid "Associated Targets"
-msgstr ""
+msgstr "Destinos asociados"
 
 #: templates/services/iscsi.html:15
 msgid "Authentication"
@@ -4036,15 +4038,15 @@ msgstr "No se ha definido destino"
 
 #: templates/services/iscsi_assoctargets.html:39
 msgid "Add Extent to Target"
-msgstr ""
+msgstr "Añadir extensión a destino"
 
 #: templates/services/iscsi_assoctargets.html:41
 msgid "Add Extent To Target"
-msgstr ""
+msgstr "Añadir extensión a destino"
 
 #: templates/services/iscsi_auth.html:8
 msgid "Peer"
-msgstr ""
+msgstr "Peer"
 
 #: templates/services/iscsi_auth.html:44 templates/services/iscsi_auth.html:46
 msgid "Add iSCSI User"
@@ -4199,7 +4201,7 @@ msgstr "Añadir un conjunto de datos"
 
 #: templates/storage/disk_detach.html:7
 msgid "Are you sure you want to detach?"
-msgstr ""
+msgstr "¿Está seguro de que desea desconectar el disco?"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
@@ -4237,7 +4239,7 @@ msgstr "Cambiar Permisos"
 #: templates/storage/permission.html:7
 #, python-format
 msgid "Change permission on %(path)s to"
-msgstr ""
+msgstr "Cambiar los permisos de %(path)s a"
 
 #: templates/storage/permission.html:11
 msgid "Change"
@@ -4315,7 +4317,7 @@ msgstr "Programar Instantáneas Periódicas"
 
 #: templates/storage/tasks.html:17
 msgid "There are no scheduled snapshots."
-msgstr ""
+msgstr "No hay instantaneas programadas"
 
 #: templates/storage/tasks.html:24
 msgid "How"
@@ -4343,7 +4345,7 @@ msgstr ", cada"
 
 #: templates/storage/tasks.html:48
 msgid "minutes,"
-msgstr "minutos, "
+msgstr "minutos,"
 
 #: templates/storage/tasks.html:50
 msgid "everyday"
@@ -4351,7 +4353,7 @@ msgstr "cada día"
 
 #: templates/storage/tasks.html:53
 msgid "on every"
-msgstr ""
+msgstr "en cada"
 
 #: templates/storage/tasks.html:143
 msgid "No periodic snapshots scheduled"
@@ -4392,7 +4394,7 @@ msgstr "Editar opciones ZFS"
 
 #: templates/storage/volumes.html:107 templates/storage/volumes.html.py:110
 msgid "Destroy Volume"
-msgstr ""
+msgstr "Destruir Volumen"
 
 #: templates/storage/volumes.html:140 templates/storage/volumes.html.py:144
 msgid "View Disks"
@@ -4404,11 +4406,11 @@ msgstr "No hay Volumenes Definidos"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
-msgstr ""
+msgstr "Discos miembros"
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
-msgstr ""
+msgstr "Tipo de grupo"
 
 #: templates/storage/wizard.html:84
 msgid "ZFS Extra"
@@ -4500,7 +4502,7 @@ msgstr "Gráficos Diarios"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr ""
+msgstr "Semanalmente"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"

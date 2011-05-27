@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:22-0700\n"
-"PO-Revision-Date: 2011-05-25 09:36+0200\n"
-"Last-Translator: aida <tomas.sepek@gmail.com>\n"
+"PO-Revision-Date: 2011-05-26 22:22+0200\n"
+"Last-Translator: lllark123 <lllark123@email.cz>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:113
 msgid "Reporting"
-msgstr ""
+msgstr "Reportování"
 
 #: media/lib/js/freeadmin.js:125
 msgid "Settings"
@@ -45,15 +45,15 @@ msgstr "Účet"
 
 #: media/lib/js/freeadmin.js:317
 msgid "Storage"
-msgstr ""
+msgstr "Úložiště"
 
 #: media/lib/js/freeadmin.js:344
 msgid "CronJobs"
-msgstr ""
+msgstr "Cron úlohy"
 
 #: media/lib/js/freeadmin.js:398
 msgid "Edit Disk"
-msgstr ""
+msgstr "Úpravy disku"
 
 #: media/lib/js/freeadmin.js:402
 #, fuzzy
@@ -62,7 +62,7 @@ msgstr "Nahradit"
 
 #: media/lib/js/freeadmin.js:403
 msgid "Disk Replacement"
-msgstr ""
+msgstr "výměna disku"
 
 #: media/lib/js/freeadmin.js:407
 #, fuzzy
@@ -76,7 +76,7 @@ msgstr "Odpojit disk"
 
 #: media/lib/js/freeadmin.js:594
 msgid "Some error ocurried!"
-msgstr ""
+msgstr "Stala se chyba!"
 
 #: media/lib/js/freeadmin/form/Cron.js:43
 msgid "Every"
@@ -84,8 +84,8 @@ msgstr "Každý"
 
 #: media/lib/js/freeadmin/form/Cron.js:51
 msgid "Each selected"
-msgstr ""
+msgstr "Každý vybraný"
 
 #: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
-msgstr ""
+msgstr "Každý N"

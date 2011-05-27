@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-19 04:30-0700\n"
-"PO-Revision-Date: 2011-05-26 03:59+0200\n"
+"PO-Revision-Date: 2011-05-27 10:55+0200\n"
 "Last-Translator: hamzul <zulkiflih@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ms\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: choices.py:35
 msgid "Plain"
-msgstr ""
+msgstr "Plain"
 
 #: choices.py:36 system/models.py:231 templates/system/settings.html:9
 msgid "SSL"
@@ -465,15 +465,15 @@ msgstr "folder utama harus bermula dengan /mnt/"
 #: services/forms.py:521 services/forms.py:749 storage/forms.py:223
 #: system/forms.py:271 system/forms.py:294
 msgid "This field is required."
-msgstr ""
+msgstr "Medan perlu di penuhi"
 
 #: account/forms.py:418
 msgid "Member users"
-msgstr ""
+msgstr "Kategori penguna"
 
 #: account/forms.py:436
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "Kumpulan Sokongan"
 
 #: account/forms.py:458 templates/registration/password_change_form.html:39
 msgid "New password"
@@ -481,11 +481,11 @@ msgstr "katalaluan baru"
 
 #: account/forms.py:459
 msgid "New password confirmation"
-msgstr ""
+msgstr "Pengesahan katalaluan baru"
 
 #: account/forms.py:484 templates/registration/password_change_form.html:31
 msgid "Old password"
-msgstr ""
+msgstr "Katalaluan lama"
 
 #: account/forms.py:492
 msgid "Your old password was entered incorrectly. Please enter it again."
@@ -539,24 +539,24 @@ msgstr ""
 
 #: account/models.py:108
 msgid "Full Name"
-msgstr ""
+msgstr "Nama Penuh"
 
 #: account/models.py:115 account/models.py:153 services/forms.py:782
 #: services/forms.py:829 services/models.py:510 services/models.py:1164
 #: services/models.py:1279 templates/services/cronjob.html:10
 #: templates/services/iscsi_auth.html:6
 msgid "User"
-msgstr ""
+msgstr "Penguna"
 
 #: account/models.py:132
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Penguna % di senarai kekal dalam rekord dan tidak boleh dipadam!"
 
 #: account/nav.py:10 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:85 templates/account/index2.html:7
 msgid "Change Password"
-msgstr ""
+msgstr "Tukar katalaluan"
 
 #: account/nav.py:18 templates/account/changeform.html:25
 #: templates/account/index2.html:4
@@ -565,21 +565,21 @@ msgstr ""
 
 #: account/nav.py:25 templates/account/index2.html:2
 msgid "My Account"
-msgstr ""
+msgstr "Akaun saya"
 
 #: account/nav.py:35
 msgid "View All Users"
-msgstr ""
+msgstr "Papar semua pengguna"
 
 #: account/nav.py:42
 msgid "View All Groups"
-msgstr ""
+msgstr "Papar semua kumpulan"
 
 #: account/views.py:82 account/views.py:97 account/views.py:108
 #: account/views.py:123
 #, python-format
 msgid "%s successfully update."
-msgstr ""
+msgstr "%s data berjaya dinaiktaraf."
 
 #: account/views.py:97
 msgid "Admin user"

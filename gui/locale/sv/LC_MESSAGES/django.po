@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-26 10:49+0200\n"
+"PO-Revision-Date: 2011-05-27 10:57+0200\n"
 "Last-Translator: denlun <dennis.lundkvist@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
@@ -434,7 +434,7 @@ msgstr "Lösenord"
 
 #: account/forms.py:201 account/forms.py:308 system/forms.py:181
 msgid "Password confirmation"
-msgstr "Lösenords bekräftelse"
+msgstr "Lösenordsbekräftelse"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
@@ -443,7 +443,7 @@ msgstr "För att verifiera, skriv samma lösenord som ovan."
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
 msgid "Shell"
-msgstr "Shell"
+msgstr "Kommando-skal"
 
 #: account/forms.py:204 account/forms.py:344
 msgid "Disable logins"
@@ -451,7 +451,7 @@ msgstr "Inaktivera inloggningar"
 
 #: account/forms.py:205
 msgid "Primary Group"
-msgstr "Primär grupp"
+msgstr "Primärgrupp"
 
 #: account/forms.py:234
 msgid "A user with that username already exists."
@@ -460,11 +460,11 @@ msgstr "En användare med det användarnamnet finns redan."
 #: account/forms.py:242 account/forms.py:328 account/forms.py:470
 #: system/forms.py:225
 msgid "The two password fields didn't match."
-msgstr "De två lösenords fälten matchade inte."
+msgstr "De två lösenordsfälten matchade inte."
 
 #: account/forms.py:247 account/forms.py:372
 msgid "Home directory has to start with /mnt/"
-msgstr "Hemkatalogen måste börja med / mnt /"
+msgstr "Hemkatalogen måste börja med /mnt/"
 
 #: account/forms.py:261 account/forms.py:265 services/forms.py:469
 #: services/forms.py:482 services/forms.py:699 storage/forms.py:223
@@ -474,7 +474,7 @@ msgstr "Detta fält är obligatoriskt."
 
 #: account/forms.py:418
 msgid "Member users"
-msgstr "Grupp medlemmar"
+msgstr "Gruppmedlemmar"
 
 #: account/forms.py:436
 msgid "Auxiliary groups"
@@ -501,11 +501,11 @@ msgstr "Ditt gamla lösenord var felaktigt angivet. Ange det igen."
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr "Grupp ID"
+msgstr "Grupp-ID"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr "Grupp namn"
+msgstr "Gruppnamn"
 
 #: account/models.py:47 account/models.py:147 storage/forms.py:92
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:49
@@ -516,7 +516,7 @@ msgstr "Grupp"
 #: account/models.py:61
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Gruppen %s är inbyggd och kan inte tas bort!"
 
 #: account/models.py:71
 msgid "User ID"
@@ -528,19 +528,19 @@ msgstr "Användare &"
 
 #: account/models.py:83
 msgid "Hashed UNIX password"
-msgstr "Hashat UNIX lösenord"
+msgstr "Hashat UNIX-lösenord"
 
 #: account/models.py:89
 msgid "Hashed SMB password"
-msgstr "Hashad SMB lösenord"
+msgstr "Hashad SMB-lösenord"
 
 #: account/models.py:93
 msgid "Primary Group ID"
-msgstr "Primär grupp ID"
+msgstr "Primär grupp-ID"
 
 #: account/models.py:98
 msgid "Home Directory"
-msgstr "Hemma katalog"
+msgstr "Hemkatalog"
 
 #: account/models.py:107
 msgid "Full Name"
@@ -554,7 +554,7 @@ msgstr "Användare"
 #: account/models.py:130
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr "Användare% s är inbyggt och kan inte tas bort!"
+msgstr "Användare %s är inbyggd och kan inte tas bort!"
 
 #: account/nav.py:9 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:85 templates/account/index2.html:7
@@ -564,15 +564,15 @@ msgstr "Ändra lösenord"
 #: account/nav.py:17 templates/account/changeform.html:25
 #: templates/account/index2.html:4
 msgid "Change Admin User"
-msgstr "Ändra Admin Användare"
+msgstr "Ändra Admin-användare"
 
 #: account/nav.py:33 templates/account/index2.html:2
 msgid "My Account"
-msgstr ""
+msgstr "Mitt konto"
 
 #: account/nav.py:41
 msgid "View All Users"
-msgstr "Visa samtliga användare"
+msgstr "Visa alla användare"
 
 #: account/nav.py:54
 msgid "View All Groups"
@@ -586,7 +586,7 @@ msgstr "%s uppdatering lyckades"
 
 #: account/views.py:94
 msgid "Admin user"
-msgstr "Administratörsanvändare"
+msgstr "Admin-användare"
 
 #: account/views.py:105 templates/account/index2.html:13
 msgid "Users"
@@ -663,40 +663,40 @@ msgstr "Värdnamn"
 
 #: network/models.py:47
 msgid "Domain"
-msgstr ""
+msgstr "Domän"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "IPv4 Standard-gateway"
 
 #: network/models.py:59
 msgid "IPv6 Default Gateway"
-msgstr ""
+msgstr "IPv6 Standard-gateway"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "Namnserver 1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "Namnserver 2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "Namnserver 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:18
 #: templates/network/index2.html:3
 msgid "Global Configuration"
-msgstr ""
+msgstr "Globala inställningar"
 
 #: network/models.py:95
 msgid "NIC"
-msgstr ""
+msgstr "Nätverkskort"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Välj ditt nätverkskort"
 
 #: network/models.py:101
 msgid "Interface Name"
@@ -704,61 +704,61 @@ msgstr "Gränsnittsnamn"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "Namnge ditt nätverkskort."
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
-msgstr ""
+msgstr "DHCP"
 
 #: network/models.py:107
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
-"När aktiverad, använd DHCP för att få IPv4 adress och default router, och så "
-"vidare"
+"När aktiverad, använd DHCP för att få IPv4-adress, standard-gateway och så "
+"vidare."
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "IPv4-adress"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr ""
+msgstr "IPv4-nätmask"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "Autokonfigurera IPv6"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr "När aktiverad, skapas automatiskt IPv6 via rtsol(8("
+msgstr "När aktiverad, autokonfigurera IPv6 via rtsol(8)."
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr ""
+msgstr "IPv6-adress"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr ""
+msgstr "IPv6-nätmask"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "Alternativ"
 
 #: network/models.py:157 network/models.py:158 templates/network/index2.html:5
 msgid "Interfaces"
-msgstr ""
+msgstr "Gränssnitt"
 
 #: network/models.py:172 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr ""
+msgstr "Virtuella gränssnitt"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr "Gränssnittsnamnet måste vara ett vlanXX där XX är ett nummer"
+msgstr "Gränssnittsnamnet måste vara vlanXX där XX är ett nummer"
 
 #: network/models.py:178 templates/network/lagg_members2.html:5
 #: templates/network/vlan.html:6
@@ -767,7 +767,7 @@ msgstr "Fysiskt gränssnitt"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
-msgstr ""
+msgstr "VLAN-tag"
 
 #: network/models.py:185 network/models.py:276 services/models.py:75
 #: services/models.py:747 storage/models.py:95
@@ -793,19 +793,19 @@ msgstr "LAGG gränsnittsgrupp"
 
 #: network/models.py:243
 msgid "LAGG Priority Number"
-msgstr "LAGG prioritets nummer"
+msgstr "LAGG prioritetsnummer"
 
 #: network/models.py:249
 msgid "Physical NIC"
-msgstr "Fysiskt NIC"
+msgstr "Fysiskt nätverkskort"
 
 #: network/models.py:259 templates/network/index2.html:7
 msgid "Link Aggregation"
-msgstr "Länk sammanslagning"
+msgstr "Länksammanslagning"
 
 #: network/models.py:268
 msgid "Destination network"
-msgstr "Destinations Nätverk"
+msgstr "Mål-nät"
 
 #: network/models.py:272 templates/network/staticroute.html:6
 msgid "Gateway"
@@ -821,19 +821,19 @@ msgstr "Nätverk sammanställning"
 
 #: network/nav.py:27
 msgid "Add Link Aggregation"
-msgstr "Lägg till Länk sammanslagning"
+msgstr "Lägg till Länksammanslagning"
 
 #: network/nav.py:28
 msgid "Create Link Aggregation"
-msgstr "Skapa Länk sammanslagning"
+msgstr "Skapa Länksammanslagning"
 
 #: network/nav.py:39
 msgid "View All Link Aggregations"
-msgstr "Visa Alla länk sammanslagningar"
+msgstr "Visa alla Länksammanslagningar"
 
 #: network/nav.py:51
 msgid "Link Aggregations"
-msgstr "Länk sammanslagning"
+msgstr "Länksammanslagning"
 
 #: network/nav.py:97
 msgid "View All Interfaces"
@@ -841,11 +841,11 @@ msgstr "Visa alla gränssnittstyper"
 
 #: network/nav.py:109
 msgid "View All VLANs"
-msgstr "Visa alla VLAN's"
+msgstr "Visa alla VLANs"
 
 #: network/nav.py:121
 msgid "View All Static Routes"
-msgstr "Visa alla Statisk routes"
+msgstr "Visa alla Statiska rutter"
 
 #: network/views.py:192
 #, python-format
@@ -866,39 +866,39 @@ msgstr "Användare %s är inte gilltig."
 
 #: services/forms.py:96
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr "Detta fält krävs för att \"Aktivera hemmakatalog's bläddring\"."
+msgstr "Detta fält krävs för att \"Aktivera hemkatalogsbläddring\"."
 
 #: services/forms.py:99
 msgid "This field is required for \"Home directories\"."
-msgstr "Detta fält krävs för \"hemmakataloger\""
+msgstr "Detta fält krävs för \"hemkataloger\""
 
 #: services/forms.py:145
 msgid "File Permission"
-msgstr "Fil rättigheter"
+msgstr "Filrättigheter"
 
 #: services/forms.py:146
 msgid "Directory Permission"
-msgstr "Katalog rättigheter"
+msgstr "Katalogrättigheter"
 
 #: services/forms.py:165
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr "Detta värde måste vara mellan 0 och 65535."
+msgstr "Detta värde måste vara mellan 0 och 65535, inklusive."
 
 #: services/forms.py:171 services/forms.py:189
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr "Detta värde måste vara mellan 0 och 10000."
+msgstr "Detta värde måste vara mellan 0 och 10000, inklusive."
 
 #: services/forms.py:177 services/forms.py:183
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr "Detta värde måste vara mellan 0 och 1000."
+msgstr "Detta värde måste vara mellan 0 och 1000, inklusive."
 
 #: services/forms.py:195
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr "Detta värde måste vara mellan 1024 och 65535. 0 är standard."
+msgstr "Detta värde måste vara mellan 1024 och 65535, inklusive. 0 är standard."
 
 #: services/forms.py:201
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr "Detta värde måste vara mellan 1024 och 65535. 0 är standard."
+msgstr "Detta värde måste vara mellan 1024 och 65535, inklusive. 0 är standard."
 
 #: services/forms.py:220
 msgid "This field is required for anonymous login"
@@ -919,72 +919,76 @@ msgstr "Hemlig (bekräfta)"
 
 #: services/forms.py:298 services/forms.py:306
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "För att verifiera, ange samma hemlighet som ovan."
 
 #: services/forms.py:299
 msgid "Initiator Secret"
-msgstr ""
+msgstr "Käll-hemlighet"
 
 #: services/forms.py:301 services/models.py:521 services/models.py:526
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr ""
+msgstr "Källsidans hemlighete. (för ömsesidig autentisering)"
 
 #: services/forms.py:304
 msgid "Initiator Secret (Confirm)"
-msgstr ""
+msgstr "Käll-hemlighet (verifiera)"
 
 #: services/forms.py:313
 msgid "Secret does not match"
-msgstr ""
+msgstr "Hemlighet matchar inte"
 
 #: services/forms.py:328 services/forms.py:329
 msgid "The peer secret is required if you set a peer user."
 msgstr ""
+"Jämlikehemligheten är obligatorisk om du har angett en jämlikeanvändare."
 
 #: services/forms.py:332
 msgid "The peer secret cannot be the same as user secret."
-msgstr ""
+msgstr "Jämlikehemligheten kan inte vara densamma som användarhemligheten."
 
 #: services/forms.py:375
 msgid "LUN already exists in the same target."
-msgstr "LUN finns redan på denna plats."
+msgstr "LUN finns redan på målet."
 
 #: services/forms.py:384 services/models.py:354
 msgid "Controller Auth Group"
-msgstr "Styrenhetens veriferingsgrupp"
+msgstr "Styrenhetens autentiseringsgrupp"
 
 #: services/forms.py:385 services/models.py:355
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
 msgstr ""
+"Isgtcontrol kan nå mål med rätt användare och hemlighet angiven i specifik "
+"autentiseringsgrupp."
 
 #: services/forms.py:386 services/models.py:248
 msgid "Discovery Auth Group"
-msgstr "Lista veriferingsgrupper"
+msgstr "Lista autentiseringsgrupper"
 
 #: services/forms.py:413
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr "Värdet måste vara mellan % (start)d och % (slut)d"
+msgstr "Värdet måste vara mellan % (start)d och % (slut)d, inklusive."
 
 #: services/forms.py:421
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutal."
-msgstr "Detta fält krävs om sökmetoden är satt till CHAP eller CHAP gemesam."
+msgstr "Detta fält krävs om sökmetoden är satt till CHAP eller CHAP-ömsesidig."
 
 #: services/forms.py:502 services/forms.py:530
 msgid "You need to specify a filepath, not a directory."
-msgstr "Du måste speciferar en sökväg, inte en katalog."
+msgstr "Du måste ange en sökväg, inte en katalog."
 
 #: services/forms.py:506 services/forms.py:534
 msgid "You need to specify a file inside your volume/dataset."
-msgstr "Du måste specifera en fil i din Volym/dataset."
+msgstr "Du måste ange en fil i ditt volym/dataset."
 
 #: services/forms.py:510 services/forms.py:538
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
-msgstr "Din sökväg måste finnas inom en Volym's monteringspunkt."
+msgstr ""
+"Sökvägen till extentet måste finnas inuti en volym/dataset-monteringspunkt."
 
 #: services/forms.py:552
 msgid ""
@@ -1015,7 +1019,7 @@ msgstr "Tjänst"
 
 #: services/models.py:42
 msgid "Name of Service, should be auto-generated at build time"
-msgstr ""
+msgstr "Tjänstnamn, skall autogenereras vid programkompilering"
 
 #: services/models.py:45
 msgid "Enable Service"
@@ -1104,7 +1108,7 @@ msgstr "Tillåt bara gäståtkomst"
 
 #: services/models.py:113 services/models.py:830
 msgid "File mask"
-msgstr ""
+msgstr "Filmask"
 
 #: services/models.py:115
 msgid "Use this option to override the file creation mask (0666 by default)."
@@ -1140,12 +1144,12 @@ msgstr "Stöd för Dos Fil attribut"
 
 #: services/models.py:132
 msgid "Allow Empty Password"
-msgstr ""
+msgstr "Tillåt tomt lösenord"
 
 #: services/models.py:135 services/models.py:675 services/models.py:709
 #: services/models.py:741 services/models.py:888
 msgid "Auxiliary parameters"
-msgstr ""
+msgstr "Övriga parametrar"
 
 #: services/models.py:137
 msgid "These parameters are added to [Global] section of smb.conf"
@@ -1153,7 +1157,7 @@ msgstr "Dessa parametrar har skapats i [Global] delen av smb.conf"
 
 #: services/models.py:140
 msgid "Enable home directories"
-msgstr ""
+msgstr "Aktivera hemkataloger"
 
 #: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
@@ -1216,11 +1220,11 @@ msgstr "Server namn"
 msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
-msgstr ""
+msgstr "Namn på server. Om detta fält lämnas tomt används standardserver."
 
 #: services/models.py:186
 msgid "Guest Access"
-msgstr ""
+msgstr "Gäståtkomst"
 
 #: services/models.py:187
 msgid "Allows guest access to all apple shares on this box."
@@ -1241,7 +1245,7 @@ msgstr ""
 
 #: services/models.py:196
 msgid "Local Access"
-msgstr ""
+msgstr "Lokalåtkomst"
 
 #: services/models.py:197
 msgid "Allow users with local accounts to access apple shares on this box."

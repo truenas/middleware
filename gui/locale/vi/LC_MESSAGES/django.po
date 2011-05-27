@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-25 12:22+0200\n"
-"Last-Translator: hungdn <hung.dnc@gmail.com>\n"
+"PO-Revision-Date: 2011-05-26 18:22+0200\n"
+"Last-Translator: hien <phanquochien@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: vi\n"
 "MIME-Version: 1.0\n"
@@ -40,11 +40,11 @@ msgstr "HTTPS"
 
 #: choices.py:48
 msgid "English"
-msgstr "Tieng Anh"
+msgstr "Tiếng Anh"
 
 #: choices.py:53 choices.py:222
 msgid "Auto"
-msgstr "tự động"
+msgstr "Tự động"
 
 #: choices.py:54
 msgid "PIO0"
@@ -153,7 +153,7 @@ msgstr ""
 
 #: choices.py:132 templates/storage/tasks.html:86
 msgid "January"
-msgstr ""
+msgstr "Tháng một"
 
 #: choices.py:133 templates/storage/tasks.html:89
 msgid "February"
@@ -165,7 +165,7 @@ msgstr ""
 
 #: choices.py:135 templates/storage/tasks.html:95
 msgid "April"
-msgstr ""
+msgstr "Tháng tư"
 
 #: choices.py:136 templates/storage/tasks.html:98
 msgid "May"
@@ -399,7 +399,7 @@ msgstr ""
 
 #: account/forms.py:93 templates/storage/volumes.html:62
 msgid "Available"
-msgstr ""
+msgstr "Sẵn sàng"
 
 #: account/forms.py:144
 msgid "Selected"
@@ -410,7 +410,7 @@ msgstr ""
 #: system/models.py:153 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:60
 msgid "Username"
-msgstr ""
+msgstr "Tên đăng nhập"
 
 #: account/forms.py:173 account/forms.py:198
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
@@ -436,7 +436,7 @@ msgstr "Gõ lại mật khẩu"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:182
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "Nhập lại mật khẩu giống như trên để xác nhận "
 
 #: account/forms.py:203 account/forms.py:345 account/models.py:103
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:63
@@ -453,16 +453,16 @@ msgstr ""
 
 #: account/forms.py:234
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "Người dùng với tên đăng nhập này đã toàn tại."
 
 #: account/forms.py:242 account/forms.py:328 account/forms.py:470
 #: system/forms.py:225
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "Hai trường mật khẩu không giống nhau."
 
 #: account/forms.py:247 account/forms.py:372
 msgid "Home directory has to start with /mnt/"
-msgstr ""
+msgstr "Thư mục Home phải bắt đầu bằng /mnt/"
 
 #: account/forms.py:261 account/forms.py:265 services/forms.py:469
 #: services/forms.py:482 services/forms.py:699 storage/forms.py:223
@@ -480,7 +480,7 @@ msgstr ""
 
 #: account/forms.py:458 templates/registration/password_change_form.html:39
 msgid "New password"
-msgstr ""
+msgstr "Mật khẩu mới"
 
 #: account/forms.py:459
 msgid "New password confirmation"
@@ -3692,7 +3692,7 @@ msgstr ""
 
 #: templates/registration/logout.html:8
 msgid "You are now logged out."
-msgstr ""
+msgstr "Bạn đã đăng nhập"
 
 #: templates/registration/logout.html:8
 msgid "Log back in"
@@ -3700,15 +3700,15 @@ msgstr ""
 
 #: templates/registration/password_change_done.html:20
 msgid "Success!"
-msgstr ""
+msgstr "Thành công!"
 
 #: templates/registration/password_change_done.html:21
 msgid "Your password was changed."
-msgstr ""
+msgstr "Mật khẩu của bạn đã được thay đổi."
 
 #: templates/registration/password_change_form.html:4
 msgid "Password change"
-msgstr ""
+msgstr "Đổi mật khẩu"
 
 #: templates/registration/password_change_form.html:13
 msgid "Please correct the error below."
@@ -4136,7 +4136,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:50
 msgid "everyday"
-msgstr ""
+msgstr "mỗi ngày"
 
 #: templates/storage/tasks.html:53
 msgid "on every"
@@ -4168,7 +4168,7 @@ msgstr ""
 
 #: templates/storage/volumes.html:64
 msgid "Status"
-msgstr ""
+msgstr "Trạng thái"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Destroy Dataset"
@@ -4253,7 +4253,7 @@ msgstr ""
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr ""
+msgstr "Đang khởi động lại...."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"

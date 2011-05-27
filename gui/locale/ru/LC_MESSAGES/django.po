@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-25 17:37+0200\n"
+"PO-Revision-Date: 2011-05-26 17:52+0200\n"
 "Last-Translator: xRaider <xraiderus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -1066,13 +1066,10 @@ msgid "Workgroup"
 msgstr "Рабочая группа"
 
 #: services/models.py:71
-#, fuzzy
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
-msgstr ""
-"Предложение сервера рабочей группы при получении запроса от клиента "
-"(максимум 15 символов)."
+msgstr "Имя раБочей группы, (максимум 15 символов)."
 
 #: services/models.py:77
 msgid "Server description. This can usually be left blank."
@@ -2368,20 +2365,24 @@ msgstr "Управление службами"
 # не уверен насчёт maproot и mapall
 # http://www.lissyara.su/articles/freebsd/trivia/win2003+nfs/
 #: sharing/forms.py:102 sharing/models.py:243
+#, fuzzy
 msgid "Maproot User"
-msgstr ""
+msgstr "Закрепить идентификатор root за пользователем"
 
 #: sharing/forms.py:107 sharing/models.py:251
+#, fuzzy
 msgid "Maproot Group"
-msgstr ""
+msgstr "Закрепить идентификатор root за группой"
 
 #: sharing/forms.py:112 sharing/models.py:259
+#, fuzzy
 msgid "Mapall User"
-msgstr ""
+msgstr "Закрепить идентификатор all за пользователем"
 
 #: sharing/forms.py:117 sharing/models.py:267
+#, fuzzy
 msgid "Mapall Group"
-msgstr ""
+msgstr "Закрепить идентификатор all за группой"
 
 #: sharing/forms.py:176
 msgid "The field is a not a valid IP address or network"
@@ -2398,16 +2399,25 @@ msgid "The group %s is not valid."
 msgstr "Группа %s является недопустимой."
 
 #: sharing/forms.py:226
+#, fuzzy
 msgid "Maproot group requires Maproot user"
 msgstr ""
+"Закрепление идентификатора root за группой требует закрепления "
+"идентификатора root за пользователем"
 
 #: sharing/forms.py:228
+#, fuzzy
 msgid "Mapall group requires Mapall user"
 msgstr ""
+"Закрепление идентификатора all за группой требует закрепления идентификатора "
+"all за пользователем"
 
 #: sharing/forms.py:231 sharing/forms.py:234
+#, fuzzy
 msgid "Maproot user/group disqualifies Mapall"
 msgstr ""
+"Закрепление идентификатора root за пользователем/группой отменяет "
+"закрепление идентификатора all"
 
 #: sharing/models.py:41 sharing/models.py:102 storage/models.py:44
 #: storage/models.py:68 storage/models.py:87
@@ -2446,9 +2456,8 @@ msgid "Only Allow Guest Access"
 msgstr "Разрешить только гостевой доступ"
 
 #: sharing/models.py:73
-#, fuzzy
 msgid "Hosts Allow"
-msgstr "Разрешённые хосты"
+msgstr "Разрешенные хосты"
 
 #: sharing/models.py:74
 msgid ""
@@ -2461,9 +2470,8 @@ msgstr ""
 "Оставьте это поле пустым, чтобы использовать настройки по умолчанию."
 
 #: sharing/models.py:79
-#, fuzzy
 msgid "Hosts Deny"
-msgstr "Запрещённые хосты"
+msgstr "Запрещенные хосты"
 
 #: sharing/models.py:80
 msgid ""
@@ -2628,10 +2636,13 @@ msgstr "Пути к базе данных"
 
 # смысл непонятен
 #: sharing/models.py:162
+#, fuzzy
 msgid ""
 "Sets the database information to be stored in path. You have to specifiy a "
 "writable location, even if the volume is read only."
 msgstr ""
+"Путь для хранения базы данных. Вы должны указать место для записи, даже если "
+"том доступен только для чтения."
 
 #: sharing/models.py:165
 msgid "Cache CNID"
@@ -2717,8 +2728,9 @@ msgstr "Отключить ID файла"
 
 # совсем не понятно
 #: sharing/models.py:186
+#, fuzzy
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr ""
+msgstr "Не оповещать о \"createfileid\", \"resolveid\", \"deleteid\"."
 
 #: sharing/models.py:189
 #, fuzzy
@@ -2743,14 +2755,18 @@ msgid "Provide compatibility with Apple II clients."
 msgstr "Обеспечение совместимости с Apple II клиентов."
 
 #: sharing/models.py:197
+#, fuzzy
 msgid "No Stat"
-msgstr ""
+msgstr "Нет статистики"
 
 #: sharing/models.py:198
+#, fuzzy
 msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
 msgstr ""
+"Не включать путь к тому в список томов. Это полезно для автомонтирования или "
+"для томов, созданных по сценарию preexec."
 
 #: sharing/models.py:201
 #, fuzzy
@@ -2816,20 +2832,24 @@ msgstr ""
 
 # опять про maproot и mapall ))
 #: sharing/models.py:247
+#, fuzzy
 msgid "User to map root to"
-msgstr ""
+msgstr "Назначить пользователю права доступа \"root\" для"
 
 #: sharing/models.py:255
+#, fuzzy
 msgid "Group to map root to"
-msgstr ""
+msgstr "Назначить группе права доступа \"all\" для"
 
 #: sharing/models.py:263
+#, fuzzy
 msgid "User to map all users to"
-msgstr ""
+msgstr "Назначить пользователю права доступа \"all\" для"
 
 #: sharing/models.py:271
+#, fuzzy
 msgid "Group to map all users to"
-msgstr ""
+msgstr "Назначить группе пользователей права доступа \"all\" для"
 
 #: sharing/models.py:278
 msgid "UNIX Share"
@@ -3228,24 +3248,28 @@ msgstr "Будний день"
 
 # не знаю, как это перевести
 #: storage/models.py:313
+#, fuzzy
 msgid "Periodic Snapshot Task"
-msgstr ""
+msgstr "Задача периодического снимка"
 
 #: storage/models.py:314 templates/storage/index.html:9
+#, fuzzy
 msgid "Periodic Snapshot Tasks"
-msgstr ""
+msgstr "Задачи периодических снимков"
 
 #: storage/nav.py:10
+#, fuzzy
 msgid "View All Replication Tasks"
-msgstr ""
+msgstr "Показать все задачи репликации"
 
 #: storage/nav.py:19
+#, fuzzy
 msgid "View All Periodic Snapshot Tasks"
-msgstr ""
+msgstr "Показать все задачи периодических снимков"
 
 #: storage/nav.py:30
 msgid "View All Snapshots"
-msgstr "Посмотреть все снимки"
+msgstr "Показать все снимки"
 
 #: storage/nav.py:40 templates/storage/replications.html:5
 #: templates/storage/volumes.html:6 templates/storage/volumes.html.py:11
@@ -3269,12 +3293,14 @@ msgid "Create ZFS Dataset"
 msgstr "Создание набора данных ZFS"
 
 #: storage/nav.py:84
+#, fuzzy
 msgid "Add Periodic Snapshot"
-msgstr ""
+msgstr "Добавить периодический снимок"
 
 #: storage/nav.py:85 templates/storage/tasks.html:10
+#, fuzzy
 msgid "Create Periodic Snapshot"
-msgstr ""
+msgstr "Создать периодический снимок"
 
 #: storage/nav.py:96
 msgid "Volumes"
@@ -4014,7 +4040,7 @@ msgstr ""
 #: templates/registration/login.html:34
 #, fuzzy, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr "Добро пожаловать,%(username). Спасибо за вход."
+msgstr "Добро пожаловать, %(username). Спасибо за вход."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -4541,18 +4567,16 @@ msgid "No volumes defined"
 msgstr "Тома не определены"
 
 #: templates/storage/wizard.html:26
-#, fuzzy
 msgid "Member disks"
-msgstr "Члены массива"
+msgstr "Список дисков"
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
 msgstr "Тип группы"
 
 #: templates/storage/wizard.html:84
-#, fuzzy
 msgid "ZFS Extra"
-msgstr "Дополнительная ZFS"
+msgstr "Дополнительные опции ZFS"
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
@@ -4624,7 +4648,7 @@ msgstr "Отправить тестовое письмо"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr "Ежечасно"
+msgstr "Почасовой"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"

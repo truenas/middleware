@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:22-0700\n"
-"PO-Revision-Date: 2011-05-25 10:47+0200\n"
-"Last-Translator: xRaider <xraiderus@gmail.com>\n"
+"PO-Revision-Date: 2011-05-26 17:09+0200\n"
+"Last-Translator: SkyNet <Kuzminvik@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -53,7 +53,7 @@ msgstr "Планировщик Cron"
 
 #: media/lib/js/freeadmin.js:398
 msgid "Edit Disk"
-msgstr "Редактирование диска"
+msgstr "Изменение диска"
 
 #: media/lib/js/freeadmin.js:402
 msgid "Replace"
