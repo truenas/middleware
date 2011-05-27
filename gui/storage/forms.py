@@ -47,6 +47,18 @@ from dojango import forms
 
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 
+def _humanize_size(capacity):
+    capacity = int(capacity)
+    if capacity >= 1099511627776:
+        capacity = "%.1f TiB" % (capacity / 1099511627776.0)
+    elif capacity >= 1073741824:
+        capacity = "%.1f GiB" % (capacity / 1073741824.0)
+    elif capacity >= 1048576:
+        capacity = "%.1f MiB" % (capacity / 1048576.0)
+    else:
+        capacity = "%d Bytes" % (capacity)
+    return capacity
+
 class UnixPermissionWidget(widgets.MultiWidget):
 
     def __init__(self, attrs=None):
@@ -103,7 +115,6 @@ class UnixPermissionWidget(widgets.MultiWidget):
         return html
 
 class UnixPermissionField(forms.MultiValueField):
-    """Input accurate timing. Interface with models.DecimalField for great success."""
     
     widget = UnixPermissionWidget()
     
@@ -185,15 +196,7 @@ class VolumeWizardForm(forms.Form):
         diskinfo = pipe.read().strip().split('\n')
         for disk in diskinfo:
             devname, capacity = disk.split('\t')
-            capacity = int(capacity)
-            if capacity >= 1099511627776:
-                    capacity = "%.1f TiB" % (capacity / 1099511627776.0)
-            elif capacity >= 1073741824:
-                    capacity = "%.1f GiB" % (capacity / 1073741824.0)
-            elif capacity >= 1048576:
-                    capacity = "%.1f MiB" % (capacity / 1048576.0)
-            else:
-                    capacity = "%d Bytes" % (capacity)
+            capacity = _humanize_size(capacity)
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
@@ -204,12 +207,8 @@ class VolumeWizardForm(forms.Form):
             except:
                 pass
         # Exclude what's already added
-        print diskchoices
-        for devname in [ notifier().uuid_to_name(x['disk_uuid']) or x['disk_name'] for x in models.Disk.objects.all().values('disk_name','disk_uuid')]:
-            try:
-                del diskchoices[devname]
-            except:
-                pass
+        for devname in [ notifier().identifier_to_device(x['disk_identifier']) or x['disk_name'] for x in models.Disk.objects.all().values('disk_name','disk_identifier')]:
+            diskchoices.pop(devname, None)
         choices = diskchoices.items()
         choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
         return choices
@@ -348,7 +347,7 @@ class VolumeImportForm(forms.Form):
     def _populate_disk_choices(self):
     
         diskchoices = dict()
-        used_disks = [i[0] for i in models.Disk.objects.all().values_list('disk_name').distinct()]
+        used_disks = [notifier().identifier_to_device(i[0]) for i in models.Disk.objects.all().values_list('disk_identifier').distinct()]
     
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
@@ -360,16 +359,7 @@ class VolumeImportForm(forms.Form):
 
         for part in parts:
             devname, capacity = parts[part]['devname'], parts[part]['capacity']
-
-            capacity = int(capacity)
-            if capacity >= 1099511627776:
-                    capacity = "%.1f TiB" % (capacity / 1099511627776.0)
-            elif capacity >= 1073741824:
-                    capacity = "%.1f GiB" % (capacity / 1073741824.0)
-            elif capacity >= 1048576:
-                    capacity = "%.1f MiB" % (capacity / 1048576.0)
-            else:
-                    capacity = "%d Bytes" % (capacity)
+            capacity = _humanize_size(capacity)
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
@@ -442,12 +432,11 @@ class VolumeAutoImportForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(VolumeAutoImportForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        #self.fields['volume_disks'].choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
 
     def _populate_disk_choices(self):
     
         diskchoices = dict()
-        used_disks = [i[0] for i in models.Disk.objects.all().values_list('disk_name').distinct()]
+        used_disks = [notifier().identifier_to_device(i[0]) for i in models.Disk.objects.all().values_list('disk_identifier').distinct()]
     
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
@@ -461,18 +450,6 @@ class VolumeAutoImportForm(forms.Form):
 
         for vol in vols:
             devname = "%s [%s - %s]" % (vol['label'],vol['type'],vol['group_type'])
-
-            """
-            capacity = int(capacity)
-            if capacity >= 1099511627776:
-                    capacity = "%.1f TiB" % (capacity / 1099511627776.0)
-            elif capacity >= 1073741824:
-                    capacity = "%.1f GiB" % (capacity / 1073741824.0)
-            elif capacity >= 1048576:
-                    capacity = "%.1f MiB" % (capacity / 1048576.0)
-            else:
-                    capacity = "%d Bytes" % (capacity)
-            """
             diskchoices[vol['label']] = "%s" % (devname,)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
@@ -483,7 +460,6 @@ class VolumeAutoImportForm(forms.Form):
                     del diskchoices[part]
 
         choices = diskchoices.items()
-        #choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
         return choices
 
     def clean(self):
