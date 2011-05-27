@@ -3,6 +3,7 @@ import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
+from middleware.notifier import notifier
 
 class Migration(SchemaMigration):
 
