@@ -11,6 +11,11 @@ class Migration(SchemaMigration):
         # Adding field 'Disk.disk_identifier'
         db.add_column('storage_disk', 'disk_identifier', self.gf('django.db.models.fields.CharField')(default='', max_length=42), keep_default=False)
 
+        for disk in orm.Disk.objects.all():
+            ident = notifier().device_to_identifier(disk.disk_name)
+            if ident:
+                disk.disk_identifier = ident
+                disk.save()
 
     def backwards(self, orm):
         
