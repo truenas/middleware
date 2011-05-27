@@ -289,7 +289,7 @@ class VolumeWizardForm(forms.Form):
         grp.save()
 
         for diskname in disk_list:
-            diskobj = models.Disk(disk_name = diskname, disk_disks = diskname,
+            diskobj = models.Disk(disk_name = diskname, disk_identifier = "{devicename}%s" % diskname,
                            disk_description = ("Member of %s %s" %
                                               (volume_name, group_type)),
                            disk_group = grp)
@@ -320,7 +320,7 @@ class VolumeWizardForm(forms.Form):
 
                 for diskname in grouped[grp_type]:
                     diskobj = models.Disk(disk_name = diskname,
-                                   disk_disks = diskname,
+                                   disk_identifier = "{devicename}%s" % diskname,
                                    disk_description = ("Member of %s %s" %
                                                       (volume.vol_name, group_type)),
                                    disk_group = grp
@@ -331,7 +331,6 @@ class VolumeWizardForm(forms.Form):
             notifier().zfs_volume_attach_group(str(grp.id), force4khack=force4khack)
         else:
             notifier().init("volume", volume.id, force4khack=force4khack)
-        notifier().volume_set_uuid(volume.id)
 
 class VolumeImportForm(forms.Form):
 
@@ -415,14 +414,13 @@ class VolumeImportForm(forms.Form):
         grp.save()
 
         diskname = disk_list
-        diskobj = models.Disk(disk_name = diskname, disk_disks = diskname,
+        diskobj = models.Disk(disk_name = diskname, disk_identifier = "{devicename}%s" % diskname,
                        disk_description = ("Member of %s" %
                                           (volume_name)),
                        disk_group = grp)
         diskobj.save()
 
         notifier().reload("disk")
-        notifier().volume_set_uuid(volume.id)
 
 class VolumeAutoImportForm(forms.Form):
 
@@ -540,7 +538,7 @@ class VolumeAutoImportForm(forms.Form):
         grp.save()
 
         for diskname in vol['disks']:
-            diskobj = models.Disk(disk_name = diskname, disk_disks = diskname,
+            diskobj = models.Disk(disk_name = diskname, disk_identifier = "{devicename}%s" % diskname,
                            disk_description = ("Member of %s %s" %
                                               (volume_name, group_type)),
                            disk_group = grp)
@@ -560,13 +558,12 @@ class VolumeAutoImportForm(forms.Form):
                 grp.save()
 
                 for diskname in grouped[grp_type]:
-                    diskobj = models.Disk(disk_name = diskname, disk_disks = diskname,
+                    diskobj = models.Disk(disk_name = diskname, disk_identifier = "{devicename}%s" % diskname,
                               disk_description = ("Member of %s %s" %
                                 (volume.vol_name, grp_type)), disk_group = grp)
                     diskobj.save()
 
         notifier().reload("disk")
-        notifier().volume_set_uuid(volume.id)
 
 #=================================
 
@@ -582,12 +579,12 @@ class DiskFormPartial(ModelForm):
         instance = getattr(self, 'instance', None)
         if instance and instance.id:
             self.fields['disk_name'].widget.attrs['readonly'] = True
-            self.fields['disk_disks'].widget.attrs['readonly'] = True
+            self.fields['disk_identifier'].widget.attrs['readonly'] = True
             self.fields['disk_group'].widget.attrs['readonly'] = True
     def clean_disk_name(self):
         return self.instance.disk_name
-    def clean_disk_disks(self):
-        return self.instance.disk_disks
+    def clean_disk_identifier(self):
+        return self.instance.disk_identifier
     def clean_disk_group(self):
         return self.instance.disk_group
 

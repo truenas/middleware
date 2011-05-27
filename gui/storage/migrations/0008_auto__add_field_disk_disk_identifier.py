@@ -13,12 +13,24 @@ class Migration(SchemaMigration):
         db.add_column('storage_disk', 'disk_identifier', self.gf('django.db.models.fields.CharField')(default='', max_length=42), keep_default=False)
 
         for disk in orm.Disk.objects.all():
-            ident = notifier().device_to_identifier(disk.disk_name)
+            ident = notifier().device_to_identifier(disk.disk_disks)
             if ident:
                 disk.disk_identifier = ident
                 disk.save()
 
+        # Deleting field 'Disk.disk_disks'
+        db.delete_column('storage_disk', 'disk_disks')
+
     def backwards(self, orm):
+        
+        # Adding field 'Disk.disk_disks'
+        db.add_column('storage_disk', 'disk_disks', self.gf('django.db.models.fields.CharField')(default='', max_length=120), keep_default=False)
+
+        for disk in orm.Disk.objects.all():
+            dname = notifier().identifier_to_device(disk.disk_identifier)
+            if dname:
+                disk.disk_disks = dname
+                disk.save()
         
         # Deleting field 'Disk.disk_identifier'
         db.delete_column('storage_disk', 'disk_identifier')

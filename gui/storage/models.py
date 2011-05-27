@@ -90,10 +90,6 @@ class Disk(Model):
             max_length=42,
             verbose_name = _("Identifier")
             )
-    disk_disks = models.CharField(
-            max_length=120, 
-            verbose_name = _("Disks")
-            )
     disk_description = models.CharField(
             max_length=120, 
             verbose_name = _("Description"), 
@@ -140,7 +136,7 @@ class Disk(Model):
     class Meta:
         verbose_name = _("Disk")
     def __unicode__(self):
-        return self.disk_disks + ' (' + self.disk_description + ')'
+        return self.disk_identifier + ' (' + self.disk_description + ')'
 
 class MountPoint(Model):
     mp_volume = models.ForeignKey(Volume)

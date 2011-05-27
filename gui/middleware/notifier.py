@@ -545,14 +545,23 @@ class notifier:
             if vgrp_type != 'stripe':
                 z_vdev += " " + vgrp_type
             # Grab all member disks from the current vdev group
-            c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE "
+            c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE "
                       "disk_group_id = ?", (str(vgrp[0]),))
             vdev_member_list = c.fetchall()
             for disk in vdev_member_list:
+                devname = self.identifier_to_device(disk[0])
                 need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
-                                                  devname = disk[0],
+                                                  devname = devname,
                                                   label = disk[1],
                                                   swapsize=swapsize)
+                # The identifier {uuid} should now be available
+                ident = self.device_to_identifier(devname)
+                if ident != disk[0]:
+                    c2, conn = self.__open_db(True)
+                    c2.execute("UPDATE storage_disk SET disk_identifier = ? WHERE disk_identifier = ?", (ident, disk[0]))
+                    c2.close()
+                    conn.commit()
+
                 if need4khack or force4khack:
                     hack_vdevs.append(disk[1])
                     self.__system("gnop create -S 4096 /dev/gpt/" + disk[1])
@@ -609,12 +618,13 @@ class notifier:
             if vgrp_type != 'stripe':
                 z_vdev += " " + vgrp_type
             # Grab all member disks from the current vdev group
-            c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE "
+            c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE "
                       "disk_group_id = ?", (str(vgrp[0]),))
             vdev_member_list = c.fetchall()
             for disk in vdev_member_list:
+                devname = self.identifier_to_device(disk[0])
                 need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
-                                                  devname = disk[0],
+                                                  devname = devname,
                                                   label = disk[1],
                                                   swapsize=swapsize)
                 if need4khack or force4khack:
@@ -714,11 +724,12 @@ class notifier:
         c.execute("SELECT id FROM storage_diskgroup WHERE group_volume_id = ?", (z_id,))
         vgroup_list = c.fetchall()
         for vgrp in vgroup_list:
-            c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE "
+            c.execute("SELECT disk_identifier FROM storage_disk WHERE "
                       "disk_group_id = ?", (str(vgrp[0]),))
             vdev_member_list = c.fetchall()
             for disk in vdev_member_list:
-                self.__gpt_unlabeldisk(devname = disk[0])
+                devname = self.identifier_to_device(disk[0])
+                self.__gpt_unlabeldisk(devname = devname)
         self._reload_disk()
 
     def __create_ufs_volume(self, c, u_id, u_name, swapsize):
@@ -732,19 +743,21 @@ class notifier:
         geom_type = vgrp_row[1]
         geom_name = vgrp_row[2]
         # Grab all disks from the group
-        c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE "
+        c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE "
                   "disk_group_id = ?", (ufs_volume_id,))
         if geom_type == '':
             disk = c.fetchone()
-            self.__gpt_labeldisk(type = "freebsd-ufs", devname = disk[0], swapsize=swapsize)
+            devname = self.identifier_to_device(disk[0])
+            self.__gpt_labeldisk(type = "freebsd-ufs", devname = devname, swapsize=swapsize)
             ufs_device = "/dev/ufs/" + disk[1]
             # TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar
             # generated automatically
-            self.__system("newfs -U -L %s /dev/%sp2" % (u_name, disk[0]))
+            self.__system("newfs -U -L %s /dev/%sp2" % (u_name, devname))
         else:
             vdev_member_list = c.fetchall()
             for disk in vdev_member_list:
-                geom_vdev += " /dev/" + disk[0]
+                devname = self.identifier_to_device(disk[0])
+                geom_vdev += " /dev/" + devname
             self.__system("geom %s load" % (geom_type))
             self.__system("geom %s label %s %s" % (geom_type, geom_name, geom_vdev))
             ufs_device = "/dev/%s/%s" % (geom_type, geom_name)
@@ -759,23 +772,25 @@ class notifier:
         geom_type = vgrp_row[1]
         geom_name = vgrp_row[2]
         # Grab all disks from the group
-        c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE "
+        c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE "
                   "disk_group_id = ?", (ufs_volume_id,))
         if geom_type == '':
+            devname = self.identifier_to_device(disk[0])
             disk = c.fetchone()
             self.__system("umount -f /dev/ufs/" + u_name)
-            self.__gpt_unlabeldisk(devname = disk[0])
+            self.__gpt_unlabeldisk(devname = devname)
         else:
             self.__system("swapoff -a")
             self.__system("umount -f /dev/ufs/" + u_name)
             self.__system("geom %s stop %s" % (geom_type, geom_name))
             vdev_member_list = c.fetchall()
             for disk in vdev_member_list:
-                disk_name = " /dev/" + disk[0]
+                devname = self.identifier_to_device(disk[0])
+                disk_name = " /dev/" + devname
                 self.__system("geom %s clear %s" % (geom_type, disk_name))
-                self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (disk[0]))
+                self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname,))
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (disk[0], disk[0]))
+                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (devname, devname))
         self._reload_disk()
 
     def _init_volume(self, volume_id, *args, **kwargs):
@@ -800,9 +815,10 @@ class notifier:
         c = self.__open_db()
         c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
         swapsize=c.fetchone()[0]
-        c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE id = ?", (disk_id,))
+        c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE id = ?", (disk_id,))
         disk = c.fetchone()
-        self.__gpt_labeldisk(type = "freebsd-zfs", devname = disk[0],
+        devname = self.identifier_to_device(disk[0])
+        self.__gpt_labeldisk(type = "freebsd-zfs", devname = devname,
                              label = disk[1], swapsize=swapsize)
 
     def zfs_replace_disk(self, volume_id, from_diskid, to_diskid):
@@ -823,9 +839,9 @@ class notifier:
         fromdev_label = c.fetchone()[0]
         fromdev = 'gpt/' + fromdev_label
         fromdev_swap = '/dev/gpt/swap-' + fromdev_label
-        c.execute("SELECT disk_disks, disk_name FROM storage_disk WHERE id = ?", (to_diskid,))
+        c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE id = ?", (to_diskid,))
         disk = c.fetchone()
-        devname = disk[0]
+        devname = self.identifier_to_device(disk[0])
         label = disk[1]
         todev = 'gpt/' + label
         todev_swap = '/dev/gpt/swap-' + label
@@ -1493,9 +1509,9 @@ class notifier:
         p1 = Popen(["smartctl", "-i", "/dev/%s" % name], stdout=PIPE, stdin=PIPE)
         p1.wait()
         output = p1.communicate()[0]
-        search = re.search(r'Serial Number:[ \t\s]+(?P<serial>.*+)', output, re.I)
+        search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I)
         if search:
-            return "{serial}%s"
+            return "{serial}%s" % search.group("serial")
 
         return "{devicename}%s" % name
 
@@ -1528,27 +1544,10 @@ class notifier:
             p1.wait()
             output = p1.communicate()[0]
 
-        if search:
-            return "{serial}%s"
         elif tp == 'devicename':
             return value
         else:
             raise NotImplementedError
-
-    def volume_set_uuid(self, vid):
-        c, conn = self.__open_db(True)
-        c.execute("SELECT id FROM storage_diskgroup WHERE group_volume_id = ?", (str(vid),))
-        for dg in list(c.fetchall()):
-
-            dgid = dg[0]
-            c.execute("SELECT id, disk_name FROM storage_disk WHERE disk_group_id = ?", (dgid,))
-
-            for disk in list(c.fetchall()):
-                uuid = self.name_to_uuid(disk[1])
-                if uuid:
-                    c.execute("UPDATE storage_disk SET disk_uuid = ? WHERE id = ?", (str(uuid), str(disk[0])) )
-        conn.commit()
-        c.close()
 
 def usage():
     print ("Usage: %s action command" % argv[0])
