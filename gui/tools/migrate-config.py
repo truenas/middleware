@@ -613,7 +613,7 @@ class ConfigParser:
 
         self.__set_pairs(__parent, __nodemap, __pairs)
         if __pairs:
-            self.__sql.inert(__table, __pairs)
+            self.__sql.insert(__table, __pairs)
 
 
         __share_nodemap = { 'path':'', 'mapall':'', 'network':'', 'comment':'' }
