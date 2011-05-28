@@ -45,6 +45,7 @@ class bsdGroups(Model):
             )
     class Meta:
         verbose_name = _("Group")
+        verbose_name_plural = _("Groups")
 
     class FreeAdmin:
         object_filters = {'bsdgrp_builtin__exact': False}
@@ -117,6 +118,7 @@ class bsdUsers(Model):
 
     class Meta:
         verbose_name = _("User")
+        verbose_name_plural = _("Users")
     class FreeAdmin:
         create_modelform = "bsdUserCreationForm"
         edit_modelform = "bsdUserChangeForm"

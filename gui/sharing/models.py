@@ -91,6 +91,7 @@ class CIFS_Share(Model):
         return self.cifs_name
     class Meta:
         verbose_name = _("Windows Share")
+        verbose_name_plural = _("Windows Shares")
     class FreeAdmin:
         icon_model = u"WindowsShareIcon"
         icon_add = u"AddWindowsShareIcon"
@@ -210,6 +211,7 @@ class AFP_Share(Model):
 
     class Meta:
         verbose_name = _("Apple Share")
+        verbose_name_plural = _("Apple Shares")
     class FreeAdmin:
         icon_model = u"AppleShareIcon"
         icon_add = u"AddAppleShareIcon"
@@ -281,6 +283,7 @@ class NFS_Share(Model):
 
     class Meta:
         verbose_name = _("UNIX Share")
+        verbose_name_plural = _("UNIX Shares")
     class FreeAdmin:
         icon_model = u"UNIXShareIcon"
         icon_add = u"AddUNIXShareIcon"

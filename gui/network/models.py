@@ -154,7 +154,7 @@ class Interfaces(Model):
         super(Interfaces, self).delete()
         notifier().start("network")
     class Meta:
-        verbose_name = _("Interfaces")
+        verbose_name = _("Interface")
         verbose_name_plural = _("Interfaces")
     class FreeAdmin:
         create_modelform = "InterfacesForm"
@@ -197,6 +197,7 @@ class VLAN(Model):
 
     class Meta:
         verbose_name = _("VLAN")
+        verbose_name_plural = _("VLANs")
 
     class FreeAdmin:
         icon_object = u"VLANIcon"
@@ -261,6 +262,7 @@ class LAGGInterfaceMembers(Model):
 
     class Meta:
         verbose_name = _("Link Aggregation")
+        verbose_name_plural = _("Link Aggregations")
     
     class FreeAdmin:
         icon_object = u"LAGGIcon"
@@ -283,6 +285,7 @@ class StaticRoute(Model):
 
     class Meta:
         verbose_name = _("Static Route")
+        verbose_name_plural = _("Static Routes")
 
     class FreeAdmin:
         icon_object = u"StaticRouteIcon"
