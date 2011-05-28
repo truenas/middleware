@@ -145,7 +145,7 @@ class AFP_Share(Model):
             max_length=120, 
             verbose_name = _("Read-write Access"),
             blank=True,
-            help_text = _("Allows certain users and groups to have read/write access to a share. This follows the allow option format. ")
+            help_text = _("Allows certain users and groups to have read/write access to a share. This follows the allow option format.")
             )
     afp_diskdiscovery = models.BooleanField(
             verbose_name = _("Disk Discovery"),
@@ -241,7 +241,7 @@ class NFS_Share(Model):
             )
     nfs_quiet = models.BooleanField(
             verbose_name = _("Quiet"),
-            help_text = _("Inibit syslog warnings if there are problems with exporting this share.")
+            help_text = _("Inhibit syslog warnings if there are problems with exporting this share.")
             )
 
     nfs_maproot_user = UserField(

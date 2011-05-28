@@ -1121,7 +1121,7 @@ class LDAP(Model):
             )
     ldap_options = models.TextField(
             max_length=120,
-            verbose_name = _("Auxilary Parameters"),
+            verbose_name = _("Auxiliary Parameters"),
             blank=True,
             help_text = _("These parameters are added to ldap.conf.")
             )

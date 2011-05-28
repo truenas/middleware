@@ -346,13 +346,13 @@ tr.ix, td.ix{
 .AddUNIXShareIcon { background-image: url('/media/images/ui/tree/add_unix_share.png'); width:16px;        height:16px; }
 .ViewAllUNIXSharesIcon { background-image: url('/media/images/ui/tree/view_all_unix_shares.png'); width:16px;        height:16px; }
 .TargetExtentIcon { background-image: url('/media/images/ui/tree/target_extents.png'); width:16px;        height:16px; }
-.AddTargetExtentIcon { background-image: url('/media/images/ui/tree/add_all_extents.png'); width:16px;        height:16px; }
+.AddTargetExtentIcon { background-image: url('/media/images/ui/tree/add_target_extents.png'); width:16px;        height:16px; }
 .ViewAllTargetExtentsIcon { background-image: url('/media/images/ui/tree/view_all_target_extents.png'); width:16px;        height:16px; }
-.TargetIcon { background-image: url('/media/images/ui/tree/target_extents.png'); width:16px;        height:16px; }
+.TargetIcon { background-image: url('/media/images/ui/tree/targets.png'); width:16px;        height:16px; }
 .AddTargetIcon { background-image: url('/media/images/ui/tree/add_target.png'); width:16px;        height:16px; }
 .ViewAllTargetsIcon { background-image: url('/media/images/ui/tree/view_all_targets.png'); width:16px;        height:16px; }
 .ExtentIcon { background-image: url('/media/images/ui/tree/extents.png'); width:16px;        height:16px; }
-.AddExtentIcon { background-image: url('/media/images/ui/tree/add_all_extents.png'); width:16px;        height:16px; }
+.AddExtentIcon { background-image: url('/media/images/ui/tree/add_extents.png'); width:16px;        height:16px; }
 .ViewAllExtentsIcon { background-image: url('/media/images/ui/tree/view_all_extents.png'); width:16px;        height:16px; }
 .InitiatorIcon { background-image: url('/media/images/ui/tree/initiators.png'); width:16px;        height:16px; }
 .AddInitiatorIcon { background-image: url('/media/images/ui/tree/add_initiator.png'); width:16px;        height:16px; }
