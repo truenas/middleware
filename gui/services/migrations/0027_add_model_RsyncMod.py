@@ -46,7 +46,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'AFP'},
             'afp_srv_ddp': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_guest': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'afp_srv_guest_user': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '120'}),
+            'afp_srv_guest_user': ('freeadmin.models.UserField', [], {'default': "'www'", 'max_length': '120'}),
             'afp_srv_local': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
@@ -63,7 +63,7 @@ class Migration(SchemaMigration):
             'cifs_srv_doscharset': ('django.db.models.fields.CharField', [], {'default': "'CP437'", 'max_length': '120'}),
             'cifs_srv_easupport': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_filemask': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'cifs_srv_guest': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '120'}),
+            'cifs_srv_guest': ('freeadmin.models.UserField', [], {'default': "''", 'max_length': '120'}),
             'cifs_srv_guestok': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_guestonly': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'cifs_srv_homedir': ('django.db.models.fields.related.ForeignKey', [], {'default': 'None', 'to': "orm['storage.MountPoint']", 'null': 'True', 'blank': 'True'}),
@@ -283,7 +283,7 @@ class Migration(SchemaMigration):
             'tftp_options': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'tftp_port': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'tftp_umask': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'tftp_username': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '120'})
+            'tftp_username': ('freeadmin.models.UserField', [], {'default': "''", 'max_length': '120'})
         },
         'services.ups': {
             'Meta': {'object_name': 'UPS'},
