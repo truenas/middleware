@@ -78,6 +78,9 @@ class FreeNASSQL:
 
         return __count
 
+    def query(self, sql):
+        return self.__cursor.execute(sql)
+
     def insert(self, table, pairs):
         __sql = "insert into %s (" % table
         for p in pairs:
@@ -89,6 +92,8 @@ class FreeNASSQL:
 
         self.sqldebug(__sql)
 
+        return self.__cursor.lastrowid
+
     def update(self, table, id, pairs):
         __sql = "update %s set " % table
         for p in pairs:
@@ -98,14 +103,16 @@ class FreeNASSQL:
            
         self.sqldebug(__sql)
 
+        return id
+
     def do(self, table, pairs):
         __id = self.getmaxID(table)
        
         if __id > 0:
-            self.update(table, __id, pairs)
+            return self.update(table, __id, pairs)
 
         else:
-            self.insert(table, pairs)
+            return self.insert(table, pairs)
 
 
     def close(self):
@@ -114,15 +121,17 @@ class FreeNASSQL:
 
 class ConfigParser:
     def __init__(self, config):
-        self._handlers = {}
+        pass
         self.__config = config
         self.__sql = FreeNASSQL(FREENAS_DBPATH, FREENAS_DEBUG)
 
     def __getChildNodeValue(self, __parent):
         __node = None
-        for __node in __parent.childNodes:
-            if __node.nodeType == __node.ELEMENT_NODE:
-                break 
+
+        if __parent and __parent.hasChildNodes():
+            for __node in __parent.childNodes:
+                if __node.nodeType == __node.ELEMENT_NODE:
+                    break 
 
         __value = None
         if __node:
@@ -133,7 +142,7 @@ class ConfigParser:
     def __getChildNode(self, __parent, __name):
         __node = None
 
-        if __parent.hasChildNodes():
+        if __parent and __parent.hasChildNodes():
             for __node in __parent.childNodes:
                 if (__node.nodeType == __node.ELEMENT_NODE) and (__name != __node.localName):
                     __node = self.__getChildNode(__node, __name)
@@ -149,11 +158,31 @@ class ConfigParser:
     def __getChildNodes(self, __parent, __name):
         __nodes = []
 
-        for __node in __parent.childNodes:
-            if __node.nodeType == __node.ELEMENT_NODE and __node.localName == __name:
-                __nodes.append(__node)
+        if __parent and __parent.hasChildNodes():
+            for __node in __parent.childNodes:
+                if __node.nodeType == __node.ELEMENT_NODE and __node.localName == __name:
+                    __nodes.append(__node)
+        else:
+            __node = self.__getChildNode(__parent, __name)
+            __nodes.append(__node)
 
         return __nodes
+
+    def __getNodeByName(self, __top, __parent, __nodename, __name, __value):
+       __topnode = self.__getChildNode(__top, __parent)
+
+       __found_node = None
+       if __topnode:
+           __nodes = self.__getChildNodes(__topnode, __nodename) 
+           for __node in __nodes:
+               __node_name = self.__getChildNode(__node, __name)
+               if __node_name: 
+                   __node_name_value = self.__getChildNodeValue(__node_name)
+                   if __node_name_value == __value:
+                       __found_node = __node
+                       break
+
+       return __found_node
 
     def _nullmethod(self, __parent, __level):
         pass
@@ -403,7 +432,7 @@ class ConfigParser:
     #
     def _handle_interfaces(self, __parent, __level):
         __nodemap = {'enable':None, 'if':'int_interface', 'ipaddr':'int_ipv4address',
-            'subnet':'int_v4netmaskbit', 'ipv6addr':'int_ipv6address',
+             'subnet':'int_v4netmaskbit', 'ipv6addr':'int_ipv6address',
             'ipv6subnet':'int_v6netmaskbit', 'media':None, 'mediaopt':'int_options', 'gateway':None}
 
         __table = "network_interfaces"
@@ -431,7 +460,6 @@ class ConfigParser:
 
             if __pairs:
                 self.__sql.insert(__table, __pairs) 
-
 
     #
     # XXX these are icky, come back to later XXX
@@ -546,8 +574,6 @@ class ConfigParser:
         #__target_nodes = self.__getChildNodes(__parent, "target")
         #for __target_node in __target_nodes:
         #    pass
-
-        sys.exit(0)
 
 
     #
@@ -1218,37 +1244,264 @@ class ConfigParser:
     def _handle_websrv(self, __parent, __level):
         pass
 
+    def __getdisk(self, __parent, __name):
+        __disk = {}
+
+        __disk_node = self.__getNodeByName(__parent, "disks", "disk", "name", __name)
+        if not __disk_node:
+            return None
+
+        __disk_name_node = self.__getChildNode(__disk_node, "name")
+        __disk_name = self.__getChildNodeValue(__disk_name_node)
+        __disk['name'] = __disk_name
+
+        __disk_devicespecialfile_node = self.__getChildNode(__disk_node, "devicespecialfile")
+        __disk_devicespecialfile = self.__getChildNodeValue(__disk_devicespecialfile_node)
+        __disk['devicespecialfile'] = __disk_devicespecialfile
+
+        __disk_harddiskstandby_node = self.__getChildNode(__disk_node, "harddiskstandby")
+        __disk_harddiskstandby = self.__getChildNodeValue(__disk_harddiskstandby_node)
+        __disk['harddiskstandby'] = __disk_harddiskstandby
+
+        __disk_acoustic_node = self.__getChildNode(__disk_node, "acoustic")
+        __disk_acoustic = self.__getChildNodeValue(__disk_acoustic_node)
+        __disk['acoustic'] = __disk_acoustic
+
+        __disk_apm_node = self.__getChildNode(__disk_node, "apm")
+        __disk_apm = self.__getChildNodeValue(__disk_apm_node)
+        __disk['apm'] = __disk_apm
+
+        __disk_transfermode_node = self.__getChildNode(__disk_node, "transfermode")
+        __disk_transfermode = self.__getChildNodeValue(__disk_transfermode_node)
+        __disk['transfermode'] = __disk_transfermode
+
+        __disk_type_node = self.__getChildNode(__disk_node, "type")
+        __disk_type = self.__getChildNodeValue(__disk_type_node)
+        __disk['type'] = __disk_type
+
+        __disk_desc_node = self.__getChildNode(__disk_node, "desc")
+        __disk_desc = self.__getChildNodeValue(__disk_desc_node)
+        __disk['desc'] = __disk_desc
+
+        __disk_size_node = self.__getChildNode(__disk_node, "size")
+        __disk_size = self.__getChildNodeValue(__disk_size_node)
+        __disk['size'] = __disk_size
+
+        __disk_fstype_node = self.__getChildNode(__disk_node, "fstype")
+        __disk_fstype = self.__getChildNodeValue(__disk_fstype_node)
+        __disk['fstype'] = __disk_fstype
+
+        return __disk
+
+
+    def __getdataset(self, __parent, __poolname):
+        __dataset = {}
+
+        __dataset_node = self.__getNodeByName(__parent, "datasets", "dataset", "pool", __poolname)
+        if not __dataset_node:
+            return None
+
+        __dataset_name_node = self.__getChildNode(__dataset_node, "name")
+        __dataset_name = self.__getChildNodeValue(__dataset_name_node)
+        __dataset['name'] = __dataset_name
+
+        __dataset_pool_node = self.__getChildNode(__dataset_node, "pool")
+        __dataset_pool = self.__getChildNodeValue(__dataset_pool_node)
+        __dataset['pool'] = __dataset_pool
+
+        __dataset_quota_node = self.__getChildNode(__dataset_node, "quota")
+        __dataset_quota = self.__getChildNodeValue(__dataset_quota_node)
+        __dataset['quota'] = __dataset_quota
+
+        __dataset_readonly_node = self.__getChildNode(__dataset_node, "readonly")
+        __dataset_readonly = self.__getChildNodeValue(__dataset_readonly_node)
+        __dataset['readonly'] = __dataset_readonly
+
+        __dataset_compression_node = self.__getChildNode(__dataset_node, "compression")
+        __dataset_compression = self.__getChildNodeValue(__dataset_compression_node)
+        __dataset['compression'] = __dataset_compression
+
+        __dataset_canmount_node = self.__getChildNode(__dataset_node, "canmount")
+        __dataset_canmount = self.__getChildNodeValue(__dataset_canmount_node)
+        __dataset['canmount'] = __dataset_canmount
+
+        __dataset_xattr_node = self.__getChildNode(__dataset_node, "xattr")
+        __dataset_xattr = self.__getChildNodeValue(__dataset_xattr_node)
+        __dataset['xattr'] = __dataset_xattr
+
+        __dataset_desc_node = self.__getChildNode(__dataset_node, "desc")
+        __dataset_desc = self.__getChildNodeValue(__dataset_desc_node)
+        __dataset['desc'] = __dataset_desc
+
+        return __dataset
+
     #
     # XXX this needs to be implemented XXX
     #
     def _handle_zfs(self, __parent, __level):
-        __vdevices_node = self.__getChildNode(__parent, "vdevices")
-        if __vdevices_node:
-            __vdevice_nodemap = { 'name':'', 'type':'', 'device':'', 'desc':'' }
-            __vdevice_nodes = self.__getChildNodes(__vdevices_node, "vdevice")
-            for __vdevice_node in __vdevice_nodes:
-                __pairs = {}
 
-                self.__set_pairs(__vdevice_node, __vdevice_nodemap, __pairs)
-
+        #
+        # Do ZFS pools first, for each pool, create a volume. 
+        #
         __pools_node = self.__getChildNode(__parent, "pools")
         if __pools_node:
-            __pool_nodemap = { 'name':'', 'vdevice':'', 'root':'', 'mountpoint':'', 'desc':'' }
+            __table = "storage_volume"
+
             __pool_nodes = self.__getChildNodes(__pools_node, "pool")
             for __pool_node in __pool_nodes:
-                __pairs = {}
 
-                self.__set_pairs(__pool_node, __pool_nodemap, __pairs)
+                __pool_name_node = self.__getChildNode(__pool_node, "name")
+                if not __pool_name_node:
+                    continue
 
-        __datasets_node = self.__getChildNode(__parent, "datasets")
-        if __datasets_node:
-            __dataset_nodemap = { 'name':'', 'pool':'', 'quota':'', 'readonly':'',
-                'compression':'', 'canmount':'', 'xattr':'', 'desc':'' }
-            __dataset_nodes = self.__getChildNodes(__datasets_node, "dataset")
-            for __dataset_node in __dataset_nodes:
-                __pairs = {}
+                __pool_name = self.__getChildNodeValue(__pool_name_node)
+                if not __pool_name:
+                    conitnue
 
-                self.__set_pairs(__dataset_node, __dataset_nodemap, __pairs)
+                __pool_root_node = self.__getChildNode(__pool_node, "root")
+                if not __pool_root_node:
+                    continue
+
+                __pool_root = self.__getChildNodeValue(__pool_root_node)
+                if not __pool_root:
+                    continue
+
+                __pool_mountpoint_node = self.__getChildNode(__pool_node, "mountpoint")
+                if not __pool_mountpoint_node:
+                    continue
+
+                __pool_mountpoint = self.__getChildNodeValue(__pool_mountpoint_node)
+                if not __pool_mountpoint:
+                    continue 
+
+                __pool_desc = None
+                __pool_desc_node = self.__getChildNode(__pool_node, "desc")
+                if __pool_desc_node:
+                    __pool_desc = self.__getChildNodeValue(__pool_desc_node)
+
+                __pool_pairs = {}
+                __pool_pairs['vol_name'] = __pool_name
+                __pool_pairs['vol_fstype'] = "ZFS"
+                __volume_id = self.__sql.insert(__table, __pool_pairs) 
+                __volume_name = __pool_name
+
+                __pool_vdevices_saved_nodes = []
+                __pool_vdevice_nodes = self.__getChildNodes(__pool_node, "vdevice")
+                for __pool_vdevice_node in __pool_vdevice_nodes:
+                    __pool_vdevice_value = self.__getChildNodeValue(__pool_vdevice_node)
+
+                    __vdevices_node = self.__getChildNode(__parent, "vdevices")
+                    if not __vdevices_node:
+                        continue
+
+                    __vdevice_nodes = self.__getChildNodes(__vdevices_node, "vdevice")
+                    for __vdevice_node in __vdevice_nodes:
+                        __vdevice_name_node = self.__getChildNode(__vdevice_node, "name")
+                        __vdevice_name = self.__getChildNodeValue(__vdevice_name_node)
+
+                        if __vdevice_name == __pool_vdevice_value:
+                            __pool_vdevices_saved_nodes.append(__vdevice_node)
+                            break
+
+                __volume_pool_vdevices = {}
+                for __pool_vdevice_node in __pool_vdevices_saved_nodes:
+                    __vdevice_name_node = self.__getChildNode(__pool_vdevice_node, "name")
+                    if not __vdevice_name_node:
+                        continue
+
+                    __vdevice_name = self.__getChildNodeValue(__vdevice_name_node)
+                    if not __vdevice_name:
+                        continue
+
+                    __vdevice_type_node = self.__getChildNode(__pool_vdevice_node, "type")
+                    if not __vdevice_type_node:
+                        continue
+
+                    __vdevice_type = self.__getChildNodeValue(__vdevice_type_node)
+                    if not __vdevice_type:
+                        continue
+
+                    if __vdevice_type == 'zraid':
+                        __vdevice_type = 'raidz'
+                    elif __vdevice_type == 'zraid1':
+                        __vdevice_type = 'raidz'
+                    elif __vdevice_type == 'zraid2':
+                        __vdevice_type = 'raidz2'
+
+                    __vdevice_desc = None
+                    __vdevice_desc_node = self.__getChildNode(__pool_vdevice_node, "desc")
+                    if __vdevice_desc_node:
+                        __vdevice_desc = self.__getChildNodeValue(__vdevice_desc_node)
+
+                    __vdevice_device_nodes = self.__getChildNodes(__pool_vdevice_node, "device")
+                    if not __vdevice_device_nodes:
+                        continue
+ 
+                    __devices = []
+                    for __vdevice_device_node in __vdevice_device_nodes:
+                        __vdevice_device_value = self.__getChildNodeValue(__vdevice_device_node)
+                        if not __vdevice_device_value:
+                            continue
+
+                        __devices.append(__vdevice_device_value)
+
+                    __volume_pool_vdevices[__vdevice_name] = {
+                        'type': __vdevice_type,
+                        'desc': __vdevice_desc,
+                        'devices': __devices
+                    }
+
+                #
+                # For each pool vdev, create a storage_diskgroup,
+                # for each disk in a vdev, create a storage_disk.
+                #
+                __parentNode = __parent.parentNode
+                for __pool_vdevice in __volume_pool_vdevices: 
+                    __vdevice = __volume_pool_vdevices[__pool_vdevice]
+                     
+
+                    __pairs = {}
+                    __table = "storage_diskgroup"
+                    if len(__vdevice['devices']) > 1:
+                        __pairs['group_name'] = __volume_name + __vdevice['type']
+                    else:
+                        __pairs['group_name'] = __volume_name
+
+                    __pairs['group_type'] = __vdevice['type']
+                    __pairs['group_volume_id'] = __volume_id
+
+                    __diskgroup_id = self.__sql.insert(__table, __pairs)
+
+                    __table = "storage_disk"
+                    for __device in __vdevice['devices']:
+                        __disk = self.__getdisk(__parentNode, __device)
+                        if __disk:
+                            __pairs = {
+                                'disk_name': __disk['name'],
+                                'disk_disks':__disk['name'],
+                                'disk_description': __disk['desc'],
+                                'disk_transfermode': __disk['transfermode'],
+                                'disk_hddstandby': __disk['harddiskstandby'],
+                                'disk_advpowermgmt': None,
+                                'disk_acousticlevel': __disk['acoustic'],
+                                'disk_togglesmart': None,
+                                'disk_smartoptions': None,
+                                'disk_group_id': __diskgroup_id
+                            }
+
+                            self.__sql.insert(__table, __pairs)
+
+                __table = "storage_mountpoint"
+                __dataset = self.__getdataset(__parent, __pool_name)
+                if __dataset:
+                    __pairs = {
+                        'mp_path': __pool_root,
+                        'mp_ischild': None,
+                        'mp_options': None,
+                        'mp_volume_id': __volume_id
+                    }
+
+                    self.__sql.insert(__table, __pairs)
 
 
     def __parse(self, __parent, __level):
@@ -1287,7 +1540,7 @@ def main():
     try:
         config = sys.argv[1]
     except:
-        usage()
+       usage()
 
     cp = ConfigParser(config)
     cp.run()
