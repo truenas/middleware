@@ -3,85 +3,85 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:22-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-05-25 13:02+0200\n"
+"Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: he\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: media/lib/js/freeadmin.js:113
 msgid "Reporting"
-msgstr ""
+msgstr "דיווח"
 
 #: media/lib/js/freeadmin.js:125
 msgid "Settings"
-msgstr ""
+msgstr "הגדרות"
 
 #: media/lib/js/freeadmin.js:136
 msgid "System Information"
-msgstr ""
+msgstr "מידע מערכת"
 
 #: media/lib/js/freeadmin.js:176
 msgid "Network Settings"
-msgstr ""
+msgstr "הגדרות רשת"
 
 #: media/lib/js/freeadmin.js:238
 msgid "Services"
-msgstr ""
+msgstr "שירותים"
 
 #: media/lib/js/freeadmin.js:278
 msgid "Account"
-msgstr ""
+msgstr "חשבון"
 
 #: media/lib/js/freeadmin.js:317
 msgid "Storage"
-msgstr ""
+msgstr "אחסון"
 
 #: media/lib/js/freeadmin.js:344
 msgid "CronJobs"
-msgstr ""
+msgstr "עבודות Cron"
 
 #: media/lib/js/freeadmin.js:398
 msgid "Edit Disk"
-msgstr ""
+msgstr "ערוך כונן"
 
 #: media/lib/js/freeadmin.js:402
 msgid "Replace"
-msgstr ""
+msgstr "החלף"
 
 #: media/lib/js/freeadmin.js:403
 msgid "Disk Replacement"
-msgstr ""
+msgstr "החלפת כונן"
 
 #: media/lib/js/freeadmin.js:407
 msgid "Detach"
-msgstr ""
+msgstr "נתק"
 
 #: media/lib/js/freeadmin.js:408
 msgid "Disk Detach"
-msgstr ""
+msgstr "נתק כונן"
 
 #: media/lib/js/freeadmin.js:594
 msgid "Some error ocurried!"
-msgstr ""
+msgstr "התרחשה תקלה!"
 
 #: media/lib/js/freeadmin/form/Cron.js:43
 msgid "Every"
-msgstr ""
+msgstr "כל"
 
 #: media/lib/js/freeadmin/form/Cron.js:51
 msgid "Each selected"
-msgstr ""
+msgstr "אחד נבחר"
 
 #: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
-msgstr ""
+msgstr "כל N"

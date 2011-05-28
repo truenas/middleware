@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:37-0700\n"
-"PO-Revision-Date: 2011-05-26 00:07+0200\n"
+"PO-Revision-Date: 2011-05-27 17:18+0200\n"
 "Last-Translator: qwerty1965 <c.coppola@inwind.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
@@ -2792,7 +2792,7 @@ msgstr "Silenzioso"
 msgid "Inibit syslog warnings if there are problems with exporting this share."
 msgstr ""
 "Inibisce gli avvisi in syslog nel caso ci siano problemi con l'esportazione "
-"di questa condivisione. "
+"di questa condivisione."
 
 #: sharing/models.py:247
 msgid "User to map root to"
@@ -2892,7 +2892,7 @@ msgstr ""
 
 #: storage/forms.py:396
 msgid "Some error ocurried while labelling the disk."
-msgstr "Si è verificato qualche errore durante l'etichettature del disco."
+msgstr "Si è verificato qualche errore durante l'etichettatura del disco."
 
 #: storage/forms.py:606
 msgid "Volume from which this dataset will be created on"
@@ -2995,23 +2995,23 @@ msgstr "Istantanea"
 
 #: storage/forms.py:874
 msgid "Clone Name (must be on same volume)"
-msgstr ""
+msgstr "Nome Clone (deve essere nello stesso volume)"
 
 #: storage/forms.py:887
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr ""
+msgstr "Come nome clone sono permessi solo i caratteri [-a-zA-Z0-9_./]"
 
 #: storage/forms.py:893
 msgid "Clone must be within the same volume"
-msgstr ""
+msgstr "Il Clone deve essere nello stesso volume"
 
 #: storage/forms.py:960 storage/models.py:212
 msgid "Remote hostname"
-msgstr ""
+msgstr "Nome Host Remoto"
 
 #: storage/forms.py:961 storage/models.py:216
 msgid "Remote hostkey"
-msgstr ""
+msgstr "Chiave host remota"
 
 #: storage/models.py:49
 msgid "File System Type"
@@ -3024,7 +3024,7 @@ msgstr "Volume"
 
 #: storage/models.py:78
 msgid "Volume this group belongs to"
-msgstr ""
+msgstr "Volume a cui appartiene questo gruppo"
 
 #: storage/models.py:91
 msgid "Disks"
@@ -3040,11 +3040,11 @@ msgstr "Standby HDD"
 
 #: storage/models.py:114
 msgid "Advanced Power Management"
-msgstr ""
+msgstr "Controllo avanzato dell'alimentazione (APM)"
 
 #: storage/models.py:120
 msgid "Acoustic Level"
-msgstr ""
+msgstr "Livello Acustico"
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
@@ -3056,7 +3056,7 @@ msgstr "Opzioni S.M.A.R.T. extra"
 
 #: storage/models.py:133
 msgid "Group Membership"
-msgstr ""
+msgstr "Appartenenza al Gruppo"
 
 #: storage/models.py:134
 msgid "The disk group containing this disk"
@@ -3081,15 +3081,15 @@ msgstr "Inserisci qui le opzioni di Mount"
 
 #: storage/models.py:169
 msgid "Error getting total space"
-msgstr ""
+msgstr "Errore durante la ricerca dello spazio totale"
 
 #: storage/models.py:175
 msgid "Error getting available space"
-msgstr ""
+msgstr "Errore durante la ricerca dello spazio disponibile"
 
 #: storage/models.py:181
 msgid "Error getting used space"
-msgstr ""
+msgstr "Errore durante la ricerca dello spazio utilizzato"
 
 #: storage/models.py:187 storage/models.py:199
 msgid "Error"
@@ -3097,43 +3097,45 @@ msgstr "Error"
 
 #: storage/models.py:219
 msgid "Remote Replication Host"
-msgstr ""
+msgstr "Host di Replica Remota"
 
 #: storage/models.py:220
 msgid "Remote Replication Hosts"
-msgstr ""
+msgstr "Hosts di Replica Remota"
 
 #: storage/models.py:231
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
+"Ultima istantanea inviata al lato remoto (lasciare vuoto per una replica "
+"completa)"
 
 #: storage/models.py:234 templates/storage/replications.html:15
 msgid "Remote Host"
-msgstr ""
+msgstr "Host Remoto"
 
 #: storage/models.py:237 templates/storage/replications.html:16
 msgid "Remote ZFS filesystem"
-msgstr ""
+msgstr "Filesystem ZFS remoto"
 
 #: storage/models.py:240
 msgid "Replication Task"
-msgstr ""
+msgstr "Task di Replica"
 
 #: storage/models.py:241
 msgid "Replication Tasks"
-msgstr ""
+msgstr "Tasks di Replica"
 
 #: storage/models.py:256 templates/storage/tasks.html:23
 msgid "Recursive"
-msgstr ""
+msgstr "Ricorsiva"
 
 #: storage/models.py:260
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "Valore del tempo di vita dell'istantanea"
 
 #: storage/models.py:266
 msgid "Snapshot lifetime unit"
-msgstr ""
+msgstr "Unità del tempo di vita dell'istantanea"
 
 #: storage/models.py:270
 msgid "Begin"
@@ -3142,6 +3144,7 @@ msgstr "Inizio"
 #: storage/models.py:271
 msgid "When in a day should we start making snapshots, e.g. 8:00"
 msgstr ""
+"Quando in un giorno dovremmo iniziare ad effettuare le istantanee, es. 8:00"
 
 #: storage/models.py:275
 msgid "End"
@@ -3150,27 +3153,31 @@ msgstr "Fine"
 #: storage/models.py:276
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
 msgstr ""
+"Quando in un giorno dovremmo terminare ad effettuare le istantanee, es. "
+"17:00"
 
 #: storage/models.py:282
 msgid "Interval"
-msgstr ""
+msgstr "Intervallo"
 
 #: storage/models.py:283
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
 msgstr ""
+"Quanti minuti debbono trascorrere prima che una nuova istantanea venga "
+"effettuata dopo l'ultima realizzata"
 
 #: storage/models.py:289
 msgid "Occurrence"
-msgstr ""
+msgstr "Occcorrenza"
 
 #: storage/models.py:290
 msgid "How the task is repeated"
-msgstr ""
+msgstr "Quante volte il task deve essere ripetuto"
 
 #: storage/models.py:295
 msgid "Weekday"
-msgstr ""
+msgstr "Giorno Feriale"
 
 #: storage/models.py:313
 msgid "Periodic Snapshot Task"

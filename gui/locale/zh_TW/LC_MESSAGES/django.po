@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-25 21:27+0200\n"
+"PO-Revision-Date: 2011-05-28 10:58+0200\n"
 "Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -488,7 +488,7 @@ msgstr "成員使用者"
 
 #: account/forms.py:436
 msgid "Auxiliary groups"
-msgstr "輔助群組"
+msgstr "附屬群組"
 
 #: account/forms.py:458 templates/registration/password_change_form.html:39
 msgid "New password"
@@ -582,11 +582,11 @@ msgstr "我的帳號"
 
 #: account/nav.py:41
 msgid "View All Users"
-msgstr "檢視所有使用者"
+msgstr "檢視全部使用者"
 
 #: account/nav.py:54
 msgid "View All Groups"
-msgstr "檢視所有群組"
+msgstr "檢視全部群組"
 
 #: account/views.py:79 account/views.py:94 account/views.py:105
 #: account/views.py:120
@@ -1142,7 +1142,7 @@ msgstr "允許不設密碼"
 #: services/models.py:135 services/models.py:675 services/models.py:709
 #: services/models.py:741 services/models.py:888
 msgid "Auxiliary parameters"
-msgstr "輔助參數"
+msgstr "附屬參數"
 
 #: services/models.py:137
 msgid "These parameters are added to [Global] section of smb.conf"
@@ -1227,6 +1227,7 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
+"此選項在使用連線服務時，將覆寫帳號權限（預設是'WWW），設定為訪客。該帳號的權限將提供給任何連接到共享服務。這個帳號必須存在於密碼檔，但並不需要登入"
 
 #: services/models.py:196
 msgid "Local Access"
@@ -1392,11 +1393,11 @@ msgstr "邏輯單元控制器的IP位址(預設為127.0.0.1(localhost))"
 
 #: services/models.py:332
 msgid "Controller TCP port"
-msgstr "控制器的TCP埠"
+msgstr "控制器的TCP連接埠"
 
 #: services/models.py:333
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr "邏輯單元控制器的TCP埠(預設為3261)"
+msgstr "邏輯單元控制器的TCP連接埠(預設為3261)"
 
 #: services/models.py:339
 msgid "Controller Authorised netmask"
@@ -1485,19 +1486,19 @@ msgid ""
 "port number. For any IPs (wildcard address), use '0.0.0.0:3260' and/or "
 "'[::]:3260'. Do not mix wildcard and other IPs at same address family."
 msgstr ""
-"入口採用的格式為「IP位址：埠」。例如：IPv4格式為「192.168.1.1:3260」 "
+"入口採用的格式為「IP位址：連接埠」。例如：IPv4格式為「192.168.1.1:3260」 "
 "，IPv6格式「[2001：db8：1:1：：1]：3260」。標準的iSCSI埠為3260。對於任何IP位址(萬用字元位址wildcard "
 "address)，請使用「0.0.0.0:3260」和「/」或「[::]:3260」。請不要在相同的位址混合萬用字元和其他IP位址。"
 
 #: services/models.py:464 templates/services/iscsi_authini.html:6
 msgid "Initiators"
-msgstr "建立者"
+msgstr "啟動器"
 
 #: services/models.py:466
 msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
-msgstr "授權連接 iSCSI設備的建立者。必須填入名稱或使用「ALL」讓所有的人使用。"
+msgstr "授權連接 iSCSI設備的啟動器。必須填入名稱或使用「ALL」讓所有的人使用。"
 
 #: services/models.py:470
 msgid "Authorized network"
@@ -1511,19 +1512,19 @@ msgstr "網路授權存取的iSCSI設備。須使用IP位址或CIDR 位址，或
 
 #: services/models.py:481
 msgid "Initiator"
-msgstr "建立者"
+msgstr "啟動器"
 
 #: services/models.py:510
 msgid "Target side user name. It is usually the initiator name by default."
-msgstr "目標端的使用者。在預設的情況下通常是建立者的名稱。"
+msgstr "目標端的使用者。在預設的情況下通常是啟動器的名稱。"
 
 #: services/models.py:520
 msgid "Peer User"
-msgstr "對等使用者"
+msgstr "同儕(Peer User)"
 
 #: services/models.py:525 templates/services/iscsi_auth.html:9
 msgid "Peer Secret"
-msgstr "對等機密"
+msgstr "同儕密鑰(Peer Secret)"
 
 #: services/models.py:529
 msgid "Authorized Access"
@@ -1547,7 +1548,7 @@ msgstr "目標別名"
 
 #: services/models.py:554
 msgid "Optional user-friendly string of the target."
-msgstr "人性化選用文字設備"
+msgstr "選用目標設備的人性化文字說明"
 
 #: services/models.py:559 storage/models.py:73
 #: templates/services/iscsi_extents.html:6
@@ -1565,7 +1566,7 @@ msgstr "設備旗標"
 
 #: services/models.py:574
 msgid "Initiator Group ID"
-msgstr "建立者群組 ID"
+msgstr "啟動器群組 ID"
 
 #: services/models.py:580 services/models.py:592
 msgid "Auth Method"
@@ -1707,7 +1708,7 @@ msgstr "和 UPS 溝通的驅動程式"
 
 #: services/models.py:736 services/models.py:788 services/models.py:911
 msgid "Port"
-msgstr "埠"
+msgstr "連接埠"
 
 #: services/models.py:738
 msgid "The serial or USB port where your UPS is connected."
@@ -1756,7 +1757,7 @@ msgstr "UPS不斷電系統"
 
 #: services/models.py:789
 msgid "Port to bind FTP server."
-msgstr "設定 FTP 伺服器埠"
+msgstr "設定 FTP 伺服器連接埠"
 
 #: services/models.py:793
 msgid "Clients"
@@ -1854,17 +1855,17 @@ msgstr "如果伺服器顯示給客戶端的資訊是特定的IP位址，可能�
 
 #: services/models.py:856
 msgid "Minimum passive port"
-msgstr "PASV被動模式埠的開始值"
+msgstr "PASV被動模式的連接埠起始值"
 
 #: services/models.py:857
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
-msgstr "允許在PASV被動模式傳輸資料使用埠的起始範圍 (0 = 使用任何埠)"
+msgstr "允許在PASV被動模式傳輸資料使用連接埠的起始範圍 (0 = 不限制，使用任何連接埠)"
 
 #: services/models.py:861
 msgid "Maximum passive port"
-msgstr "PASV被動模式埠的結束值"
+msgstr "PASV被動模式的連接埠結束值"
 
 #: services/models.py:862
 msgid ""
@@ -1877,9 +1878,9 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
-"允許在PASV被動模式傳輸資料使用埠的結束範圍 (0 = 使用任何埠)。當客戶端發送 PASV模式時，將從伺服器選擇被動模式埠的限制範圍。伺服器將從指定"
-"的範圍內隨機挑選一個可用的埠。選定的埠範圍必須在非保留範圍（如>=1024）。強烈建議選擇的範圍需夠大，才能同時處理大量連線（例如：在IANA註冊的臨時"
-"埠範圍 49152-65534）"
+"允許在PASV被動模式傳輸資料使用連接埠的結束範圍 (0 = 不限制。使用任何連接埠)。當客戶端發送 PASV模式時，將從伺服器選擇被動模式連接埠的限制"
+"範圍。伺服器將從指定的範圍內隨機挑選一個可用的連接埠。選定的連接埠範圍必須在非保留範圍（如>=1024）。強烈建議選擇的範圍需夠大，才能同時處理大量連線"
+"（例如：在IANA註冊的臨時連接埠範圍 49152-65534）"
 
 #: services/models.py:866
 msgid "Local user upload bandwidth"
@@ -1944,7 +1945,7 @@ msgstr "允許新的檔案"
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
-msgstr "要使用的埠。TFTP 預設使用的埠，指定在 /etc/services 內"
+msgstr "要使用的連接埠。TFTP 預設使用的連接埠，指定在 /etc/services 內"
 
 #: services/models.py:918
 msgid "Specifies the username which the service will run as."
@@ -2015,7 +2016,7 @@ msgstr "在此貼上PEM格式的RSA私鑰。"
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
-msgstr "用於 /etc/ssh/sshd_config 的額外選項(通常為空白)。注意，輸入錯誤的選項會導致 SSH 服務無法啟動。"
+msgstr "用於 /etc/ssh/sshd_config 的額外選項(通常為空白)。注意：輸入錯誤的選項會導致 SSH 服務無法啟動。"
 
 #: services/models.py:1006 services/models.py:1007
 #: templates/services/index2.html:97
@@ -2127,7 +2128,7 @@ msgstr "允許匿名連接"
 
 #: services/models.py:1091
 msgid "Root bind DN"
-msgstr "root 連接 DN"
+msgstr "Root 連接 DN"
 
 #: services/models.py:1093
 msgid ""
@@ -2252,7 +2253,7 @@ msgstr " '%s' 不是有效的 IP 位址"
 #: sharing/forms.py:206 sharing/forms.py:214 storage/forms.py:805
 #, python-format
 msgid "The group %s is not valid."
-msgstr "%s' 不是有效的群組"
+msgstr "%s 不是有效的群組"
 
 #: sharing/forms.py:226
 msgid "Maproot group requires Maproot user"
@@ -2368,7 +2369,7 @@ msgid ""
 "This option allows you to set a volume password, which can be a maximum of 8 "
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
-msgstr ""
+msgstr "此選項允許設定磁碟的密碼。最多8 個字元。(強烈建議使用ASCII字元 )"
 
 #: sharing/models.py:119
 msgid "Share Character Set"
@@ -2389,7 +2390,7 @@ msgid ""
 "This option allows the users and groups that access a share to be specified. "
 "Users and groups are specified, delimited by commas. Groups are designated "
 "by a @ prefix."
-msgstr ""
+msgstr "此選項指定允許存取的使用者和群組。使用者與群組用逗號分隔。群組請開頭請加上@。"
 
 #: sharing/models.py:131
 msgid "Deny List"
@@ -2399,7 +2400,7 @@ msgstr "拒絕列出"
 msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
-msgstr ""
+msgstr "此選項指定拒絕存取的使用者和群組。使用者與群組用逗號分隔。群組請開頭請加上@。"
 
 #: sharing/models.py:137
 msgid "Read-only Access"
@@ -2409,7 +2410,7 @@ msgstr "唯讀存取"
 msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
-msgstr ""
+msgstr "允許特定使用者和群組只能唯讀存取。使用者與群組用逗號分隔。群組請開頭請加上@。"
 
 #: sharing/models.py:143
 msgid "Read-write Access"
@@ -2419,7 +2420,7 @@ msgstr "可讀寫存取"
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format. "
-msgstr ""
+msgstr "允許特定使用者和群組可讀寫存取。使用者與群組用逗號分隔。群組請開頭請加上@。"
 
 #: sharing/models.py:148
 msgid "Disk Discovery"
@@ -2429,7 +2430,7 @@ msgstr "探索硬碟"
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
-msgstr ""
+msgstr "允許其他系統將此共享視為磁碟、時光回溯機(Time Machine)備份磁碟或其他設備進行數據探索。"
 
 #: sharing/models.py:155
 msgid "Disk discovery mode"
@@ -2440,21 +2441,21 @@ msgid ""
 "Note! Selecting 'Time Machine' on multiple shares will may cause "
 "unpredictable behavior in MacOS.  Default mode exports the volume as a data "
 "volume for users."
-msgstr ""
+msgstr "注意！在MacOS上多個共享選擇「時光回溯機(Time Machine)」將可能導致不可預知的錯誤。預設模式將供用戶匯出磁碟作為資料磁碟使用。"
 
 #: sharing/models.py:160
 msgid "Database Path"
-msgstr ""
+msgstr "資料庫路徑"
 
 #: sharing/models.py:162
 msgid ""
 "Sets the database information to be stored in path. You have to specifiy a "
 "writable location, even if the volume is read only."
-msgstr ""
+msgstr "設置資料庫資料存儲在路徑。即使是唯獨磁碟，也都必須指定一個可寫入的位置。"
 
 #: sharing/models.py:165
 msgid "Cache CNID"
-msgstr ""
+msgstr "快取 CNID"
 
 #: sharing/models.py:166
 msgid ""
@@ -2462,6 +2463,8 @@ msgid ""
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
+"設置 afpd 將 ID資料存儲在AppleDouble "
+"V2格式檔案的開頭，可減少資料庫負載。如果磁碟不是由AFP用戶端(NFS/SMB/local)管理 ，則請勿設置此選項。"
 
 #: sharing/models.py:169
 msgid "Translate CR/LF"
@@ -2475,6 +2478,8 @@ msgid ""
 "the filetype in a second step. Afpd will potentially destroy such files when "
 "'erroneously' changing bytes in order to do line break translation."
 msgstr ""
+"啟用 CRLF的文件斷行轉換，將自動轉換Macintosh到Unix的斷行格式。使用此選項可能會有風險，因為一些舊版文件當儲存或切換時會將二進制資料轉存"
+"成文字型態。 Afpd 為了做文件斷行轉換，有可能破壞這些文件時。"
 
 #: sharing/models.py:173
 msgid "Windows File Names"
@@ -2484,7 +2489,7 @@ msgstr "Windows 的檔案名稱"
 msgid ""
 "This forces filenames to be restricted to the character set used by Windows. "
 "This is not recommended for shares used principally by Mac computers."
-msgstr ""
+msgstr "這被限制在Windows的字元集檔案名稱。不建議主要使用Mac電腦的共享使用。"
 
 #: sharing/models.py:177
 msgid "No .AppleDouble"
@@ -2495,61 +2500,61 @@ msgid ""
 "This controls whether the .AppleDouble directory gets created unless "
 "absolutely needed. This option should not be used if files are access mostly "
 "by Mac computers.  Clicking this option disables their creation."
-msgstr ""
+msgstr "除非必要的情況下，這決定是否建立AppleDouble格式的目錄。如果文件主要是由Mac電腦存取，此選項無效。點選這個選項將會停用建立目錄。"
 
 #: sharing/models.py:181
 msgid "Zero Device Numbers"
-msgstr ""
+msgstr "零設備編號"
 
 #: sharing/models.py:182
 msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
-msgstr ""
+msgstr "如果設備沒有固定編號時，在重新啟動、使用叢集...的狀況下，總是使用 0 作為設備編號，會比較方便。"
 
 #: sharing/models.py:185
 msgid "Disable File ID"
-msgstr ""
+msgstr "停用檔案 ID"
 
 #: sharing/models.py:186
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr ""
+msgstr "不宣告createfileid, resolveid, deleteid 的呼叫"
 
 #: sharing/models.py:189
 msgid "Disable :hex Names"
-msgstr ""
+msgstr "停用：十六進制名稱"
 
 #: sharing/models.py:190
 msgid ""
 "Disable :hex translations for anything except dot files. This option makes "
 "the '/' character illegal."
-msgstr ""
+msgstr "停用：十六進制轉換以句點(.)開頭的檔案，這選項會造成 '/' 字元錯誤。"
 
 #: sharing/models.py:193
 msgid "ProDOS"
-msgstr ""
+msgstr "ProDOS"
 
 #: sharing/models.py:194
 msgid "Provide compatibility with Apple II clients."
-msgstr ""
+msgstr "提供相容Apple II用戶端"
 
 #: sharing/models.py:197
 msgid "No Stat"
-msgstr ""
+msgstr "沒有統計"
 
 #: sharing/models.py:198
 msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
-msgstr ""
+msgstr "當磁碟列出清單時，不要統計磁碟路徑。對於自動掛載或磁碟建立預先執行命令(preexec script)時有幫助。"
 
 #: sharing/models.py:201
 msgid "AFP3 Unix Privs"
-msgstr ""
+msgstr "AFP3 UNIX 權限"
 
 #: sharing/models.py:202
 msgid "Use AFP3 unix privileges."
-msgstr ""
+msgstr "使用 AFP3 UNIX 權限"
 
 #: sharing/models.py:209
 msgid "Apple Share"
@@ -2557,7 +2562,7 @@ msgstr "Apple Share"
 
 #: sharing/models.py:225
 msgid "Authorized network or IP addresses"
-msgstr ""
+msgstr "授權的網路或IP位址"
 
 #: sharing/models.py:226
 msgid ""
@@ -2565,16 +2570,18 @@ msgid ""
 "addresses.  Specify network numbers of the form 1.2.3.4/xx where xx is the "
 "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 msgstr ""
+"授權存取NFS共享的網路或IP位址清單。指定網路的形式為1.2.3.4/xx，其中xx是網路遮罩；或用IP位址清單：1.2.3.4 1.2.3.5 "
+"1.2.3.6"
 
 #: sharing/models.py:230
 msgid "All Directories"
-msgstr ""
+msgstr "所有目錄"
 
 #: sharing/models.py:231
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected.  "
 "Otherwise, only the top level directory can be mounted."
-msgstr ""
+msgstr "允許子目錄被掛載，否則就只有頂層目錄會被掛載。"
 
 #: sharing/models.py:234
 msgid "Read Only"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:32-0700\n"
-"PO-Revision-Date: 2011-05-24 17:13+0200\n"
+"PO-Revision-Date: 2011-05-27 14:17+0200\n"
 "Last-Translator: yurkis <yurkis@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -1048,68 +1048,71 @@ msgid "Service"
 msgstr "Служба"
 
 #: services/models.py:42
+#, fuzzy
 msgid "Name of Service, should be auto-generated at build time"
-msgstr ""
+msgstr "Ім'я служби, має бути автоматично згенеровано під час збирання"
 
 #: services/models.py:45
 msgid "Enable Service"
-msgstr ""
+msgstr "Увімкнути службу"
 
 #: services/models.py:48 services/models.py:49
 #: templates/common/menubar2.html:28 templates/services/index2.html:3
 msgid "Services"
-msgstr ""
+msgstr "Служби"
 
 #: services/models.py:61
 msgid "Authentication Model"
-msgstr ""
+msgstr "Модель аутентифікації"
 
 #: services/models.py:62
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
-msgstr ""
+msgstr "Використання Active Directory чи LDAP аутентифікації замінить цю опцію"
 
 #: services/models.py:66
 msgid "NetBIOS name"
-msgstr ""
+msgstr "Ім'я NetBIOS"
 
 #: services/models.py:70
 msgid "Workgroup"
-msgstr ""
+msgstr "Робоча група"
 
 #: services/models.py:71
+#, fuzzy
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
-msgstr ""
+msgstr "Ім'я робочої групи (максимум 15 символів)"
 
 #: services/models.py:77
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "Опис сервера. Можете лишити поле порожнім."
 
 #: services/models.py:83
 msgid "DOS charset"
-msgstr ""
+msgstr "Кодування DOS"
 
 #: services/models.py:89
 msgid "UNIX charset"
-msgstr ""
+msgstr "Кодування UNIX"
 
 #: services/models.py:95
 msgid "Log level"
-msgstr ""
+msgstr "Рівень журналювання"
 
 #: services/models.py:98
+#, fuzzy
 msgid "Local Master"
-msgstr ""
+msgstr "Локальний Мастер"
 
 #: services/models.py:100
 msgid "Time Server for Domain"
-msgstr ""
+msgstr "Сервер часу для домену"
 
 #: services/models.py:104 services/models.py:192
 msgid "Guest account"
-msgstr ""
+msgstr "Гостьовий рахунок користувача"
 
 #: services/models.py:105 sharing/models.py:64
 msgid ""

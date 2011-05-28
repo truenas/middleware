@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-27 10:57+0200\n"
-"Last-Translator: denlun <dennis.lundkvist@gmail.com>\n"
+"PO-Revision-Date: 2011-05-27 18:54+0200\n"
+"Last-Translator: Lage <tobhjelm@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -1228,7 +1228,7 @@ msgstr "Gäståtkomst"
 
 #: services/models.py:187
 msgid "Allows guest access to all apple shares on this box."
-msgstr "Tillåt gäst tillgång till alla apple utdelningar i denna ruta."
+msgstr "Tillåt gäståtkomst till alla Apple AFP-utdelningar på denna NAS."
 
 #: services/models.py:193
 msgid ""
@@ -1255,7 +1255,7 @@ msgstr ""
 
 #: services/models.py:200
 msgid "Enable DDP"
-msgstr ""
+msgstr "Aktivera DDP"
 
 #: services/models.py:201
 msgid "Enables DDP support for low-level appletalk access."
@@ -1264,11 +1264,11 @@ msgstr ""
 #: services/models.py:205 services/models.py:206
 #: templates/services/index2.html:7
 msgid "AFP"
-msgstr ""
+msgstr "AFP"
 
 #: services/models.py:215
 msgid "Number of servers"
-msgstr ""
+msgstr "Antal servrar"
 
 #: services/models.py:216
 msgid ""
@@ -1278,7 +1278,7 @@ msgstr ""
 
 #: services/models.py:220
 msgid "Asynchronous mode"
-msgstr ""
+msgstr "Asynkront läge"
 
 #: services/models.py:221
 msgid ""
@@ -1291,7 +1291,7 @@ msgstr ""
 #: services/models.py:226 services/models.py:227
 #: templates/services/index2.html:75
 msgid "NFS"
-msgstr ""
+msgstr "NFS"
 
 #: services/models.py:236
 msgid "Base Name"
@@ -1318,9 +1318,8 @@ msgid "I/O timeout in seconds (30 by default)."
 msgstr "Tidsgräns för I/O i sekunder (30 är standard)"
 
 #: services/models.py:261
-#, fuzzy
 msgid "NOPIN Interval"
-msgstr "NOPIN Intervall"
+msgstr "NOPIN-intervall"
 
 #: services/models.py:262
 msgid "NOPIN sending interval in seconds (20 by default)."
@@ -1328,19 +1327,20 @@ msgstr "NOPIN sänd intervall i sekunder (20 är standard)"
 
 #: services/models.py:267
 msgid "Max. sessions"
-msgstr ""
+msgstr "Max antal sessioner"
 
 #: services/models.py:268
 msgid "Maximum number of sessions holding at same time (16 by default)."
 msgstr ""
+"Maximalt antal sessioner som är aktiva vid samma tidpunkt (16 som standard)."
 
 #: services/models.py:273
 msgid "Max. connections"
-msgstr ""
+msgstr "Max antal anslutningar"
 
 #: services/models.py:274
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "Maximalt antal anslutningar i varje session (8 är standard)."
 
 #: services/models.py:279
 msgid "Max. pre-send R2T"

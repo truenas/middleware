@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-21 00:11+0200\n"
-"Last-Translator: brachux <brachux@gmail.com>\n"
+"PO-Revision-Date: 2011-05-27 16:37+0200\n"
+"Last-Translator: ok1 <ok1@trups.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lv\n"
 "MIME-Version: 1.0\n"
@@ -1036,11 +1036,11 @@ msgid "Authentication Model"
 msgstr "Autentifikācijas Modelis"
 
 #: services/models.py:62
-#, fuzzy
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
-"Izmantojot Active Directory vai LDAP autentifikāciju, šo iespēju pārņems"
+"Izmantojot Active Directory vai LDAP autentifikāciju, šī iespēja tiks "
+"pārņemta"
 
 #: services/models.py:66
 msgid "NetBIOS name"
@@ -1067,7 +1067,6 @@ msgid "DOS charset"
 msgstr "DOS zīmjukopa"
 
 #: services/models.py:89
-#, fuzzy
 msgid "UNIX charset"
 msgstr "UNIX zīmjukopa"
 
@@ -1111,6 +1110,7 @@ msgstr "Datnes maska"
 #: services/models.py:115
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
+"Lieto šo iespēju, lai ignorētu datņu veidošanas masku (0666 pēc noklusējuma)"
 
 #: services/models.py:119 services/models.py:836
 msgid "Directory mask"
@@ -1120,6 +1120,7 @@ msgstr "Mapes maska"
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
+"Lieto šo iespēju, lai ignorētu mapju veidošanas masku (0777 pēc noklusējuma)"
 
 #: services/models.py:124
 msgid "Large RW support"
@@ -1187,6 +1188,8 @@ msgid ""
 "Samba will read asynchronously if request size is larger than this value.  "
 "The default read size is 1."
 msgstr ""
+"Samba lasīs asinhroni, ja pieprasījuma lielums ir lielāks nekā šī vērtība. "
+"  Noklusējuma lasīšanas izmērs ir 1."
 
 #: services/models.py:166
 msgid "Minimal AIO write size"
@@ -1197,6 +1200,8 @@ msgid ""
 "Samba will write asynchronously if request size is larger than this value.  "
 "The default write size is 1."
 msgstr ""
+"Samba rakstīs asinhroni, ja pieprasījuma lielums ir lielāks nekā šī vērtība. "
+"  Noklusējuma rakstīšanas izmērs ir 1."
 
 #: services/models.py:172 services/models.py:173
 #: templates/services/index2.html:29
@@ -1219,9 +1224,8 @@ msgid "Guest Access"
 msgstr "Viesa piekļuve"
 
 #: services/models.py:187
-#, fuzzy
 msgid "Allows guest access to all apple shares on this box."
-msgstr "Ļauj viesu piekļuvi visām apple koplietošanas mapēm šajā lodziņā."
+msgstr "Ļauj viesiem piekļūt visām apple koplietošanas mapēm šajā vietā."
 
 #: services/models.py:193
 msgid ""
@@ -1239,19 +1243,19 @@ msgstr "Vietējā piekļuve"
 #: services/models.py:197
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
+"Ļaut lietotājiem ar vietējiem lietotājiem piekļūt apple koplietošanas mapēm "
+"šeit."
 
 #: services/models.py:200
-#, fuzzy
 msgid "Enable DDP"
 msgstr "Iespējot DDP"
 
 #: services/models.py:201
 msgid "Enables DDP support for low-level appletalk access."
-msgstr ""
+msgstr "Iespējot DDP adbalstu zemā-līmeņa appletalk pieejai."
 
 #: services/models.py:205 services/models.py:206
 #: templates/services/index2.html:7
-#, fuzzy
 msgid "AFP"
 msgstr "AFP"
 
@@ -1264,6 +1268,8 @@ msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
 msgstr ""
+"Norāda cik daudz serverus veidot. Šeit jābūt gana daudz, lai spētu apkalpot "
+"maksimālo laiksakritības līmeni no tā klientiem, parasti 4 līdz 6."
 
 #: services/models.py:220
 msgid "Asynchronous mode"
@@ -1274,10 +1280,10 @@ msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
+"Iespējo asinhrono režīmu, kurš palīdzēs jauda aiz gigabita tīkla ātrumiem."
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/index2.html:75
-#, fuzzy
 msgid "NFS"
 msgstr "NFS"
 
@@ -1290,18 +1296,19 @@ msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"Bāzes nosaukums (piem. iqn.2007-09.jp.ne.peach.istgt, skaties RFC 3720 un "
+"3721 priekš detaļām) tiks pievienot mērķa nosaukuma biegām, kurš nesākas ar "
+"'iqn.'"
 
 #: services/models.py:243
 msgid "Discovery Auth Method"
 msgstr "Atklāšanas Autentifikācijas metode"
 
 #: services/models.py:255
-#, fuzzy
 msgid "I/O Timeout"
 msgstr "I/O Noildze"
 
 #: services/models.py:256
-#, fuzzy
 msgid "I/O timeout in seconds (30 by default)."
 msgstr "I/O noildze sekundēs (30 pēc noklusējuma)."
 
@@ -1311,7 +1318,7 @@ msgstr "NOPIN Intervāls"
 
 #: services/models.py:262
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr ""
+msgstr "NOPIN sūtīšanas intervāls sekundēs (20 pēc noklusējuma.)"
 
 #: services/models.py:267
 msgid "Max. sessions"
@@ -1320,6 +1327,8 @@ msgstr "Max. sesijas"
 #: services/models.py:268
 msgid "Maximum number of sessions holding at same time (16 by default)."
 msgstr ""
+"Maksimalais skaits sesiju, kuras ir aizturētas vienā laikā (16 pēc "
+"noklusējuma)."
 
 #: services/models.py:273
 msgid "Max. connections"
@@ -1327,17 +1336,19 @@ msgstr "Max. pieslēgumi"
 
 #: services/models.py:274
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "Maksimālais savienojumu skaits katrā sesijā (8 pēc noklusējuma)."
 
 #: services/models.py:279
 msgid "Max. pre-send R2T"
-msgstr ""
+msgstr "Max. pirms-sūtīšanas R2T"
 
 #: services/models.py:280
 msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
 msgstr ""
+"Maksimālais pirms-sūtīšanas R2T skaits katrā savienojumā (32 pēc "
+"noklusējuma). Aktuālais cipars tiek limitēts uz mērķa Rindas Dziļumu"
 
 #: services/models.py:285
 msgid "MaxOutstandingR2T"
@@ -1345,43 +1356,43 @@ msgstr ""
 
 #: services/models.py:286
 msgid "iSCSI initial parameter (16 by default)."
-msgstr ""
+msgstr "iSCSI sākuma parametrs (16 pēc noklusējuma)."
 
 #: services/models.py:291
 msgid "First burst length"
-msgstr ""
+msgstr "Pirmais sprādziena garums"
 
 #: services/models.py:292
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr ""
+msgstr "iSCSI sākuma parametrs (65523 pēc noklusējuma)."
 
 #: services/models.py:297
 msgid "Max burst length"
-msgstr ""
+msgstr "Maksimālais sprādziena garums"
 
 #: services/models.py:298 services/models.py:304
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr ""
+msgstr "iSCSI sākuma parametrs (262144 pēc noklusējuma)."
 
 #: services/models.py:303
 msgid "Max receive data segment length"
-msgstr ""
+msgstr "Maksimālais saņemto datu segmenta garums"
 
 #: services/models.py:309
 msgid "DefaultTime2Wait"
-msgstr ""
+msgstr "Noklusējuma gaidīšanas laiks"
 
 #: services/models.py:310
 msgid "iSCSI initial parameter (2 by default)."
-msgstr ""
+msgstr "iSCSI sākuma parametrs (2 pēc noklusējuma)."
 
 #: services/models.py:315
 msgid "DefaultTime2Retain"
-msgstr ""
+msgstr "Noklusējuma paturēšanas laiks"
 
 #: services/models.py:316
 msgid "iSCSI initial parameter (60 by default)."
-msgstr ""
+msgstr "iSCSI sākuma parametrs (60 pēc noklusējuma)."
 
 #: services/models.py:321
 msgid "Enable LUC"
@@ -1394,6 +1405,8 @@ msgstr "Kontroliera IP adrese"
 #: services/models.py:326
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
 msgstr ""
+"Loģiskās Vienības Kontroliera IP adrse (127.0.0.1(saimniekdators) pēc "
+"nokusējuma)"
 
 #: services/models.py:332
 msgid "Controller TCP port"
@@ -1401,62 +1414,67 @@ msgstr "Kontroliera TCP ports"
 
 #: services/models.py:333
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr ""
+msgstr "Loģiskās Vienības Kontroliera TCP ports (3261 pēc noklusējuma)"
 
 #: services/models.py:339
 msgid "Controller Authorised netmask"
-msgstr ""
+msgstr "Autorizēta kontroliera tīkla maska"
 
 #: services/models.py:341
 msgid "Logical Unit Controller Authorised netmask (255.255.255.0 by default)"
 msgstr ""
+"Loģiskās Vienības Kontroliera Autorizētā tīkla maska (255.255.255.0 pēc "
+"noklusējuma)"
 
 #: services/models.py:348
 msgid "Controller Auth Method"
-msgstr ""
+msgstr "Kontroliera Autorizācijas Metode"
 
 #: services/models.py:349
 msgid "The method can be accepted in the controller."
-msgstr ""
+msgstr "Metodi var pieņemt kontrolierī."
 
 #: services/models.py:361 services/models.py:362
 #: templates/services/iscsi.html:5
 msgid "Target Global Configuration"
-msgstr ""
+msgstr "Mērķa Globālā Konfigurācija"
 
 #: services/models.py:373
 msgid "Extent Name"
-msgstr ""
+msgstr "Apjoma Vārds"
 
 #: services/models.py:374
 msgid "String identifier of the extent."
-msgstr ""
+msgstr "Apjoma virknes .identifikators."
 
 #: services/models.py:378
 msgid "Extent Type"
-msgstr ""
+msgstr "Apjoma Tips"
 
 #: services/models.py:379
 msgid "Type used as extent."
-msgstr ""
+msgstr "Tips, kuru izmanto par apjomu."
 
 #: services/models.py:384
 msgid "Path to the extent"
-msgstr ""
+msgstr "Ceļš uz apjomu"
 
 #: services/models.py:385
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
 msgstr ""
+"Datnes ceļš (piem. /mnt/sharename/extent/extent0) ,kurš lietots kā apjoms."
 
 #: services/models.py:390
 msgid "Extent size"
-msgstr ""
+msgstr "Apjoma izmērs"
 
 #: services/models.py:391
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
+"Apjoma izmērs, 0 nozīmē automātisks, parasts cipars ir baiti, vai ar sufiksu "
+"KB,MB,TB ērtumam."
 
 #: services/models.py:396 services/models.py:431 services/models.py:477
 #: sharing/models.py:45 sharing/models.py:219
@@ -1473,7 +1491,7 @@ msgstr "Tu vari ievadīt parakstu priekš sevis."
 #: services/models.py:400 services/models.py:629
 #: templates/services/iscsi_assoctargets.html:6
 msgid "Extent"
-msgstr ""
+msgstr "Apjoms"
 
 #: services/models.py:420 services/models.py:570
 msgid "Portal Group ID"
@@ -1490,6 +1508,10 @@ msgid ""
 "port number. For any IPs (wildcard address), use '0.0.0.0:3260' and/or "
 "'[::]:3260'. Do not mix wildcard and other IPs at same address family."
 msgstr ""
+"Portāls pieņem formu 'adrese:ports'. Piemēram. '192.168.1.1:3260' priekš "
+"IPv4, '[2001:db8:1:1::1]:3260' priekš IPv6. Ports 3260 ir standarta iSCSI "
+"porta numurs. Jebkurai IP (aizstājējadresei), lieto '0.0.0.0:3260'. Nejauc "
+"aizstājējus ar citām IP tajā pašā adrešu ģimenē."
 
 #: services/models.py:464 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -1500,16 +1522,20 @@ msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr ""
+"Iniciators ar piekļuvi iSCSI mērķim. Tas pieņem vārdu vai 'ALL' jebkuriem "
+"iniciatoriem."
 
 #: services/models.py:470
 msgid "Authorized network"
-msgstr ""
+msgstr "Autorizēts tīkls"
 
 #: services/models.py:472
 msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
+"Tīkls, kurš autorizēts piekļūt iSCSI mērķim. Tas pieņem IP vai CIDR adresi "
+"vai 'ALL' jebkurām IP."
 
 #: services/models.py:481
 msgid "Initiator"
@@ -1523,87 +1549,92 @@ msgstr ""
 
 #: services/models.py:520
 msgid "Peer User"
-msgstr ""
+msgstr "Vienādranga lietotājs"
 
 #: services/models.py:525 templates/services/iscsi_auth.html:9
 msgid "Peer Secret"
-msgstr ""
+msgstr "Vienādranga noslēpums"
 
 #: services/models.py:529
 msgid "Authorized Access"
-msgstr ""
+msgstr "Autorizēta Piekļuve"
 
 #: services/models.py:530
 msgid "Authorized Accesses"
-msgstr ""
+msgstr "Autorizētas piekļuves"
 
 #: services/models.py:545
 msgid "Target Name"
-msgstr ""
+msgstr "Mērķa nosaukums"
 
 #: services/models.py:546
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr ""
+msgstr "Bāzes nosaukums tiks pievienot automātiski, kad sāk bez 'iqn.'."
 
 #: services/models.py:553
 msgid "Target Alias"
-msgstr ""
+msgstr "Mērķa aizstājējvārds"
 
 #: services/models.py:554
 msgid "Optional user-friendly string of the target."
-msgstr ""
+msgstr "Neobligāta, mērķa lietotājam draudzīga virkne."
 
 #: services/models.py:559 storage/models.py:73
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7
 msgid "Type"
-msgstr ""
+msgstr "Tips"
 
 #: services/models.py:560
 msgid "Logical Unit Type mapped to LUN."
-msgstr ""
+msgstr "Loģiskās Vienības Tips, kurš kartēts uz LUN."
 
 #: services/models.py:566
 msgid "Target Flags"
-msgstr ""
+msgstr "Mērķa Karogi"
 
 #: services/models.py:574
 msgid "Initiator Group ID"
-msgstr ""
+msgstr "Iniciatora Grupas ID"
 
 #: services/models.py:580 services/models.py:592
 msgid "Auth Method"
-msgstr ""
+msgstr "Autentifikācijas metode"
 
 #: services/models.py:581 services/models.py:593
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
 msgstr ""
+"Metodi var pieņemt mērķis. Auto nozīmē abus - nekādu un autentifikācijas."
 
 #: services/models.py:585
 msgid "Authentication Group ID"
-msgstr ""
+msgstr "Autentifikācijas Grupas ID"
 
 #: services/models.py:598
 msgid "Queue Depth"
-msgstr ""
+msgstr "Rindas dziļums"
 
 #: services/models.py:599
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
 msgstr ""
+"0=atspējota, 1-255=iespējota komandu rindošana ar noteikto dziļumu. "
+"Ieteicamais dziļums ir 32."
 
 #: services/models.py:604
 msgid "Logical Block Size"
-msgstr ""
+msgstr "Loģiskā Bloka izmērs"
 
 #: services/models.py:605
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
 msgstr ""
+"Tu vari norādīt loģiskā bloka garumu (512 pēc noklusējuma). Ieteicamais "
+"garums saderībai ir 512."
 
 #: services/models.py:608 services/models.py:623
 #: templates/services/iscsi_assoctargets.html:5
@@ -1611,242 +1642,255 @@ msgstr ""
 #: templates/services/iscsi_extents.html:5
 #: templates/services/iscsi_targets.html:5
 msgid "Target"
-msgstr ""
+msgstr "Mērķis"
 
 #: services/models.py:624
 msgid "Target this extent belongs to"
-msgstr ""
+msgstr "Mērķa šis apjoms pieder"
 
 #: services/models.py:632
 msgid "Target / Extent"
-msgstr ""
+msgstr "Mērķis / Apjoms"
 
 #: services/models.py:647
 msgid "Provider"
-msgstr ""
+msgstr "Piegādātājs"
 
 #: services/models.py:651
 msgid "Domain name"
-msgstr ""
+msgstr "Domēna vārds"
 
 #: services/models.py:653
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
 msgstr ""
+"Saimnieka vārds aizvietotājs. Šī iespēja var parādīties vairākas reizes, "
+"katram domēnam, kuram ir tā pati IP. Lietot tukšumzīmi, lai atdalītu "
+"vairākus aizstājējvārdus."
 
 #: services/models.py:665
 msgid "Update period"
-msgstr ""
+msgstr "Atjaunošanas periods"
 
 #: services/models.py:667
 msgid "Time in milliseconds"
-msgstr ""
+msgstr "Laiks milisekundēs"
 
 #: services/models.py:671
 msgid "Forced update period"
-msgstr ""
+msgstr "Uzspiests atjaunošanās periods"
 
 #: services/models.py:677 services/models.py:711 services/models.py:743
 msgid "These parameters will be added to global settings in inadyn.conf."
 msgstr ""
+"Šie parametri tiks pievienoti globālajiem uzstādījumiem iekš inadyn.conf."
 
 #: services/models.py:681 services/models.py:682
 #: templates/services/index2.html:40
 msgid "Dynamic DNS"
-msgstr ""
+msgstr "Dinamiskais DNS"
 
 #: services/models.py:691
 msgid "Location"
-msgstr ""
+msgstr "Vieta"
 
 #: services/models.py:693
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
+"Vietas informācija, piem. fiziskā atrašanās vieta šai sistēmai. 'Mājas "
+"stāvs', 'Istaba xyzzy'."
 
 #: services/models.py:697
 msgid "Contact"
-msgstr ""
+msgstr "Kontakts"
 
 #: services/models.py:699
 msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
+"Kontakta informācija, piem. atbildīgās personas vārds vai e-pasts. "
+"'admin@epasta.adrese'."
 
 #: services/models.py:703
 msgid "Community"
-msgstr ""
+msgstr "Kopiena"
 
 #: services/models.py:704
 msgid "In most cases, 'public' is used here."
-msgstr ""
+msgstr "Vairumā gadījumu, 'public' tiek šeit lietots."
 
 #: services/models.py:707
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "Sūtīt SNMP slazdus"
 
 #: services/models.py:715 services/models.py:716
 #: templates/services/index2.html:86
 msgid "SNMP"
-msgstr ""
+msgstr "SNMP"
 
 #: services/models.py:725
 msgid "Identifier"
-msgstr ""
+msgstr "Identifikators"
 
 #: services/models.py:726
 msgid "This name is used to uniquely identify your UPS on this system."
-msgstr ""
+msgstr "Šo vārdu lieto, lai unikāli identificētu tavu UPS uz šīs sistēmas."
 
 #: services/models.py:730
 msgid "Driver"
-msgstr ""
+msgstr "Draiveris"
 
 #: services/models.py:732
 msgid "The driver used to communicate with your UPS."
-msgstr ""
+msgstr "Draiveris, kurš tiek lietots komunikācijai ar tavu UPS."
 
 #: services/models.py:736 services/models.py:788 services/models.py:911
 msgid "Port"
-msgstr ""
+msgstr "Ports"
 
 #: services/models.py:738
 msgid "The serial or USB port where your UPS is connected."
-msgstr ""
+msgstr "Seriālais vai USB ports, kurā tavs UPS ir pieslēgts."
 
 #: services/models.py:754
 msgid "Shutdown mode"
-msgstr ""
+msgstr "Izslēgšanās režīms"
 
 #: services/models.py:758
 msgid "Shutdown timer"
-msgstr ""
+msgstr "Izslēgšanās taimeris"
 
 #: services/models.py:759
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
 msgstr ""
+"Laiks sekundēs līdz izslēgšanās ir uzsākta. Ja UPS atgriežas pirms laiks ir "
+"beidzies, izslēgšana tiek atcelta."
 
 #: services/models.py:762
 msgid "Remote Monitor"
-msgstr ""
+msgstr "Attālināts Monitors"
 
 #: services/models.py:764
 msgid "Send Email Status Updates"
-msgstr ""
+msgstr "Sūtīt E-pasta Statusa Paziņojumus"
 
 #: services/models.py:767 services/models.py:773
 msgid "To email"
-msgstr ""
+msgstr "Uz e-pastu"
 
 #: services/models.py:769
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr ""
+msgstr "Mērķa e-pasta adrese. Atdali e-pasta adreses ar semikolu."
 
 #: services/models.py:774
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
+"E-pasta virsraksts. Tu vari izmantot sekojošus parametrus izcelšanai<br "
+"/><ul><li>%d - Date</li><li>%h - Saimnieka nosuakums</li></ul>"
 
 #: services/models.py:778 services/models.py:779
 msgid "UPS"
-msgstr ""
+msgstr "UPS"
 
 #: services/models.py:789
 msgid "Port to bind FTP server."
-msgstr ""
+msgstr "Ports, kuram piesaistīt FTP serveri."
 
 #: services/models.py:793
 msgid "Clients"
-msgstr ""
+msgstr "Klienti"
 
 #: services/models.py:794
 msgid "Maximum number of simultaneous clients."
-msgstr ""
+msgstr "Maksimālais skaits vienlaicīgu klientu."
 
 #: services/models.py:798
 msgid "Connections"
-msgstr ""
+msgstr "Savienojumi"
 
 #: services/models.py:799
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
+msgstr "Maksimālais skaits savienojumu IP adresei (0 = neierobežots)."
 
 #: services/models.py:803
 msgid "Login Attempts"
-msgstr ""
+msgstr "Autorizācijas mēģinājumi"
 
 #: services/models.py:804
 msgid "Maximum number of allowed password attempts before disconnection."
-msgstr ""
+msgstr "Maksimālais skaits atļautu paroles mēģinājumu pirms atvienošanas."
 
 #: services/models.py:808
 msgid "Timeout"
-msgstr ""
+msgstr "Noildze"
 
 #: services/models.py:809
 msgid "Maximum idle time in seconds."
-msgstr ""
+msgstr "Maksimālais bezdarbības laiks sekundēs."
 
 #: services/models.py:812
 msgid "Allow Root Login"
-msgstr ""
+msgstr "Atļaut Root pieslēgšanos"
 
 #: services/models.py:814
 msgid "Allow Anonymous Login"
-msgstr ""
+msgstr "Atļaut Anonīmu pieslēgšanos"
 
 #: services/models.py:818 sharing/models.py:49
 #: templates/services/iscsi_dextents.html:7
 #: templates/services/iscsi_extents.html:7 templates/sharing/windows.html:15
 #: templates/storage/volumes.html:60
 msgid "Path"
-msgstr ""
+msgstr "Ceļš"
 
 #: services/models.py:820
 msgid "Allow Local User Login"
-msgstr ""
+msgstr "Atļaut Vietējā Lietotāja Autorizāciju"
 
 #: services/models.py:823
 msgid "Banner"
-msgstr ""
+msgstr "Baneris"
 
 #: services/models.py:825
 msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr ""
+msgstr "Sveiciena teksts, kuru parādīs FTP, kad veiks savienojumu ar to."
 
 #: services/models.py:831 services/models.py:837
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr ""
+"Lieto šo iespēju, lai ignorētu datņu veidošanas masku (077 pēc noklusējuma)."
 
 #: services/models.py:840
 msgid "Enable FXP"
-msgstr ""
+msgstr "Iespējot FXP"
 
 #: services/models.py:842
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "Atļaut Pārsūtījumu atsākšanu"
 
 #: services/models.py:844
 msgid "Always Chroot"
-msgstr ""
+msgstr "Vienmēr Chroot"
 
 #: services/models.py:846
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "Pieprasīt IDENT Autentifikāciju"
 
 #: services/models.py:848
 msgid "Require Reverse DNS for IP"
-msgstr ""
+msgstr "Pieprasīt reversīvo DNS priekš IP"
 
 #: services/models.py:850
 msgid "Masquerade address"
-msgstr ""
+msgstr "Maskēt adresi"
 
 #: services/models.py:852
 msgid ""
