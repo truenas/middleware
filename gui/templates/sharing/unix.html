@@ -18,7 +18,7 @@
                 {% for n in nfs_share_list %}
                 <tr class="{% cycle 'odd' 'even' %}" id="{{ n.id }}">
                     <td>
-                        {{ n.nfs_path.mp_path }}
+                        {{ n.nfs_path }}
                     </td>
                     <td>
                         {{ n.nfs_comment }}
