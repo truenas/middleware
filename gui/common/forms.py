@@ -53,6 +53,7 @@ class Form(F):
     We need to hangle dynamic choices, mainly because of the FreeNAS_User, 
     so we use a custom formfield with a _reroll method which is called
     on every form instantiation
+    """
     def __init__(self, *args, **kwargs):
         super(Form, self).__init__(*args, **kwargs)
         for name,field in self.fields.items():
