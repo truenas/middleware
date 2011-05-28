@@ -58,9 +58,9 @@ class DirectoryBrowser(widgets.Widget):
         return mark_safe(render_to_string('freeadmin/directory_browser.html', context))
 
 class UserField(forms.ChoiceField):
-    def __init__(self, *args, **kwargs):
-        kwargs.update({'widget': widgets.Select()})
-        super(UserField, self).__init__(*args, **kwargs)
+    widget = widgets.Select()
+
+    def _reroll(self):
         if len(FreeNAS_Users()) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
@@ -76,6 +76,7 @@ class UserField(forms.ChoiceField):
             self.widget = widgets.FilteringSelect()
             self.choices = ulist
 
+
     def clean(self, user):
         if not self.required and user in ('-----',''):
             return None
@@ -84,9 +85,9 @@ class UserField(forms.ChoiceField):
         return user
 
 class GroupField(forms.ChoiceField):
-    def __init__(self, *args, **kwargs):
-        kwargs.update({'widget': widgets.Select()})
-        super(GroupField, self).__init__(*args, **kwargs)
+    widget = widgets.Select()
+
+    def _reroll(self):
         if len(FreeNAS_Groups()) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)

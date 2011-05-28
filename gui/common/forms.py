@@ -29,6 +29,16 @@ from dojango.forms import ModelForm as MF
 from dojango.forms import Form as F
 
 class ModelForm(MF):
+    """
+    We need to hangle dynamic choices, mainly because of the FreeNAS_User, 
+    so we use a custom formfield with a _reroll method which is called
+    on every form instantiation
+    """
+    def __init__(self, *args, **kwargs):
+        super(ModelForm, self).__init__(*args, **kwargs)
+        for name,field in self.fields.items():
+            if hasattr(field, "_reroll"):
+                field._reroll()
     def as_table(self):
         "Returns this form rendered as HTML <tr>s -- excluding the <table></table>."
         return self._html_output(
@@ -39,6 +49,15 @@ class ModelForm(MF):
             errors_on_separate_row = False)
 
 class Form(F):
+    """
+    We need to hangle dynamic choices, mainly because of the FreeNAS_User, 
+    so we use a custom formfield with a _reroll method which is called
+    on every form instantiation
+    def __init__(self, *args, **kwargs):
+        super(Form, self).__init__(*args, **kwargs)
+        for name,field in self.fields.items():
+            if hasattr(field, "_reroll"):
+                field._reroll()
     def as_table(self):
         "Returns this form rendered as HTML <tr>s -- excluding the <table></table>."
         return self._html_output(
