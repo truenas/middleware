@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-28 10:58+0200\n"
+"PO-Revision-Date: 2011-05-28 20:16+0200\n"
 "Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -154,62 +154,62 @@ msgstr "最高"
 # 01月
 #: choices.py:132 templates/storage/tasks.html:86
 msgid "January"
-msgstr "一月"
+msgstr "01月"
 
 # 02月
 #: choices.py:133 templates/storage/tasks.html:89
 msgid "February"
-msgstr "二月"
+msgstr "02月"
 
 # 03月
 #: choices.py:134 templates/storage/tasks.html:92
 msgid "March"
-msgstr "三月"
+msgstr "03月"
 
 # 04月
 #: choices.py:135 templates/storage/tasks.html:95
 msgid "April"
-msgstr "四月"
+msgstr "04月"
 
 # 05月
 #: choices.py:136 templates/storage/tasks.html:98
 msgid "May"
-msgstr "五月"
+msgstr "05月"
 
 # 06月
 #: choices.py:137 templates/storage/tasks.html:101
 msgid "June"
-msgstr "六月"
+msgstr "06月"
 
 # 07月
 #: choices.py:138 templates/storage/tasks.html:104
 msgid "July"
-msgstr "七月"
+msgstr "07月"
 
 # 08月
 #: choices.py:139 templates/storage/tasks.html:107
 msgid "August"
-msgstr "八月"
+msgstr "08月"
 
 # 09月
 #: choices.py:140 templates/storage/tasks.html:110
 msgid "September"
-msgstr "九月"
+msgstr "09月"
 
 # 10月
 #: choices.py:141 templates/storage/tasks.html:113
 msgid "October"
-msgstr "十月"
+msgstr "10月"
 
 # 11月
 #: choices.py:142 templates/storage/tasks.html:116
 msgid "November"
-msgstr "十一月"
+msgstr "11月"
 
 # 12月
 #: choices.py:143 templates/storage/tasks.html:119
 msgid "December"
-msgstr "十二月"
+msgstr "12月"
 
 #: choices.py:146 templates/storage/tasks.html:57
 msgid "Monday"
@@ -265,7 +265,7 @@ msgstr "預設"
 
 #: choices.py:192
 msgid "Time Machine"
-msgstr "時光回溯器"
+msgstr "Time Machine"
 
 #: choices.py:195
 msgid "No case folding"
@@ -310,7 +310,7 @@ msgstr "磁帶"
 
 #: choices.py:212
 msgid "Pass"
-msgstr ""
+msgstr "通過"
 
 #: choices.py:216
 msgid "read-write"
@@ -1004,7 +1004,7 @@ msgstr "磁碟設備"
 #: services/forms.py:658
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr "您的 Portal 群組編號不可大於 %d"
+msgstr "您的入口(Portal)群組編號不可大於 %d"
 
 #: services/forms.py:678
 #, python-format
@@ -1091,8 +1091,8 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
-"請使用此選項重新定義（override）存取訪客服務的帳號（預設為 'ftp'）此使用者的所有權限都將套用至每個連至訪客服務的用戶端。此使用者必須存在於 "
-"password 檔裡，但不必是個有效的登入帳號。"
+"請使用此選項重新定義（override）存取訪客服務的帳號（預設為 'ftp'）此帳號的所有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 "
+"password 檔裡，但不必是個有效的登入帳號"
 
 #: services/models.py:108
 msgid "Allow guest access"
@@ -1227,7 +1227,8 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
-"此選項在使用連線服務時，將覆寫帳號權限（預設是'WWW），設定為訪客。該帳號的權限將提供給任何連接到共享服務。這個帳號必須存在於密碼檔，但並不需要登入"
+"請使用此選項重新定義（override）存取訪客服務的帳號（預設為 'www'）此帳號的所有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 "
+"password 檔裡，但不必是個有效的登入帳號"
 
 #: services/models.py:196
 msgid "Local Access"
@@ -1422,37 +1423,37 @@ msgstr "目標全區組態"
 
 #: services/models.py:373
 msgid "Extent Name"
-msgstr "擴充(Extent)名稱"
+msgstr "延伸磁區(Extent)名稱"
 
 #: services/models.py:374
 msgid "String identifier of the extent."
-msgstr "擴充(Extent)名稱的字串識別碼"
+msgstr "延伸磁區(Extent)名稱的字串識別碼"
 
 #: services/models.py:378
 msgid "Extent Type"
-msgstr "擴充(Extent)類型"
+msgstr "延伸磁區(Extent)類型"
 
 #: services/models.py:379
 msgid "Type used as extent."
-msgstr "作為類別擴充"
+msgstr "作為延伸磁區(extent)"
 
 #: services/models.py:384
 msgid "Path to the extent"
-msgstr "擴充(Extent)的路徑"
+msgstr "延伸磁區(extent)的路徑"
 
 #: services/models.py:385
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
-msgstr "作為擴充的檔案路徑(例如： /mnt/sharename/extent/extent0)"
+msgstr "作為延伸磁區(extent)的檔案路徑(例如： /mnt/sharename/extent/extent0)"
 
 #: services/models.py:390
 msgid "Extent size"
-msgstr "擴充(Extent)的容量"
+msgstr "延伸磁區(extent)的容量"
 
 #: services/models.py:391
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
-msgstr "擴充(Extent)的容量，填 0 為自動判斷。原始單位格式是bytes，亦可用 KB, MB, TB 為單位。"
+msgstr "延伸磁區(extent)的容量，填 0 為自動判斷。原始單位格式是bytes，或在後面加註 KB, MB, TB 為單位。"
 
 #: services/models.py:396 services/models.py:431 services/models.py:477
 #: sharing/models.py:45 sharing/models.py:219
@@ -1469,7 +1470,7 @@ msgstr "請輸入說明供參考"
 #: services/models.py:400 services/models.py:629
 #: templates/services/iscsi_assoctargets.html:6
 msgid "Extent"
-msgstr "擴充(Extent)"
+msgstr "延伸磁區(Extent)"
 
 #: services/models.py:420 services/models.py:570
 msgid "Portal Group ID"
@@ -1726,7 +1727,7 @@ msgstr "關機定時器"
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
-msgstr "啟動關機時間。以秒為單位。如果UPS在恢復前，時間到期，就取消關機。"
+msgstr "啟動關機時間。以秒為單位。如果UPS在恢復前，關機時間到期，就取消關機。"
 
 #: services/models.py:762
 msgid "Remote Monitor"
@@ -1769,7 +1770,7 @@ msgstr "客戶端同時連線數上限"
 
 #: services/models.py:798
 msgid "Connections"
-msgstr "連接"
+msgstr "連線"
 
 #: services/models.py:799
 msgid "Maximum number of connections per IP address (0 = unlimited)."
@@ -1851,7 +1852,7 @@ msgid ""
 "Causes the server to display the network information for the specified IP "
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
-msgstr "如果伺服器顯示給客戶端的資訊是特定的IP位址，可能是該位址或是 DNS主機是作為NAT閘道或埠轉送的伺服器。"
+msgstr "如果伺服器顯示給客戶端的資訊是特定的IP位址，可能是該位址或是 DNS主機是作為NAT閘道或連接埠轉送的伺服器。"
 
 #: services/models.py:856
 msgid "Minimum passive port"
@@ -2351,6 +2352,9 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
+"該磁區名稱出現在選配器「連接到伺服器」的對話框，在Macintosh代表設定共享成功。如果磁區名稱沒有指定，使用路徑的最後一個。兩個磁區不能使用相同的名"
+"稱。磁區的名稱不能包含「：」字元。 Mac的編碼頁磁區名稱長度被限制為27個字。在Apple Share服務內UTF8- "
+"MAC的磁區名稱被限制在「磁區名稱長度」的參數"
 
 #: sharing/models.py:107
 msgid "Share Comment"
@@ -2358,7 +2362,7 @@ msgstr "共享區的註解"
 
 #: sharing/models.py:110 sharing/models.py:222
 msgid "Volume Path"
-msgstr "磁碟路徑"
+msgstr "磁區路徑"
 
 #: sharing/models.py:113
 msgid "Share password"
@@ -2369,7 +2373,7 @@ msgid ""
 "This option allows you to set a volume password, which can be a maximum of 8 "
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
-msgstr "此選項允許設定磁碟的密碼。最多8 個字元。(強烈建議使用ASCII字元 )"
+msgstr "此選項允許設定磁區的密碼。最多8 個字元。(強烈建議使用ASCII字元 )"
 
 #: sharing/models.py:119
 msgid "Share Character Set"
@@ -2430,7 +2434,7 @@ msgstr "探索硬碟"
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
-msgstr "允許其他系統將此共享視為磁碟、時光回溯機(Time Machine)備份磁碟或其他設備進行數據探索。"
+msgstr "允許其他系統將此共享視為磁碟、Time Machine備份磁碟或其他設備進行數據探索。"
 
 #: sharing/models.py:155
 msgid "Disk discovery mode"
@@ -2441,7 +2445,7 @@ msgid ""
 "Note! Selecting 'Time Machine' on multiple shares will may cause "
 "unpredictable behavior in MacOS.  Default mode exports the volume as a data "
 "volume for users."
-msgstr "注意！在MacOS上多個共享選擇「時光回溯機(Time Machine)」將可能導致不可預知的錯誤。預設模式將供用戶匯出磁碟作為資料磁碟使用。"
+msgstr "注意！在MacOS上多個共享選擇「Time Machine」將可能導致不可預知的錯誤。預設模式將匯出磁區作為資料磁區使用。"
 
 #: sharing/models.py:160
 msgid "Database Path"
@@ -2451,7 +2455,7 @@ msgstr "資料庫路徑"
 msgid ""
 "Sets the database information to be stored in path. You have to specifiy a "
 "writable location, even if the volume is read only."
-msgstr "設置資料庫資料存儲在路徑。即使是唯獨磁碟，也都必須指定一個可寫入的位置。"
+msgstr "設置資料庫資料存儲在路徑。即使是唯獨磁區，也都必須指定一個可寫入的位置。"
 
 #: sharing/models.py:165
 msgid "Cache CNID"
@@ -2464,7 +2468,7 @@ msgid ""
 "AFP clients (NFS/SMB/local)."
 msgstr ""
 "設置 afpd 將 ID資料存儲在AppleDouble "
-"V2格式檔案的開頭，可減少資料庫負載。如果磁碟不是由AFP用戶端(NFS/SMB/local)管理 ，則請勿設置此選項。"
+"V2格式檔案的開頭，可減少資料庫負載。如果磁區不是由AFP用戶端(NFS/SMB/local)管理 ，則請勿設置此選項。"
 
 #: sharing/models.py:169
 msgid "Translate CR/LF"
@@ -2489,7 +2493,7 @@ msgstr "Windows 的檔案名稱"
 msgid ""
 "This forces filenames to be restricted to the character set used by Windows. "
 "This is not recommended for shares used principally by Mac computers."
-msgstr "這被限制在Windows的字元集檔案名稱。不建議主要使用Mac電腦的共享使用。"
+msgstr "這被限制在Windows字元編碼的檔案名稱。不建議主要使用Mac電腦的共享使用。"
 
 #: sharing/models.py:177
 msgid "No .AppleDouble"
@@ -2546,7 +2550,7 @@ msgstr "沒有統計"
 msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
-msgstr "當磁碟列出清單時，不要統計磁碟路徑。對於自動掛載或磁碟建立預先執行命令(preexec script)時有幫助。"
+msgstr "當列出磁區清單時，不要統計磁區路徑。對於自動掛載或磁區建立預先執行命令(preexec script)時有幫助。"
 
 #: sharing/models.py:201
 msgid "AFP3 Unix Privs"
@@ -2589,47 +2593,47 @@ msgstr "唯獨"
 
 #: sharing/models.py:235
 msgid "Export the share read only.  Writes are not permitted."
-msgstr ""
+msgstr "唯讀匯出共享。不允許寫入。"
 
 #: sharing/models.py:238
 msgid "Quiet"
-msgstr ""
+msgstr "靜音"
 
 #: sharing/models.py:239
 msgid "Inibit syslog warnings if there are problems with exporting this share."
-msgstr ""
+msgstr "如果匯出共享發生問題，停用系統日誌警告。"
 
 #: sharing/models.py:247
 msgid "User to map root to"
-msgstr ""
+msgstr "使用者對應 root 帳號"
 
 #: sharing/models.py:255
 msgid "Group to map root to"
-msgstr ""
+msgstr "群組對應 root 帳號"
 
 #: sharing/models.py:263
 msgid "User to map all users to"
-msgstr ""
+msgstr "使用者對應 all users 帳號"
 
 #: sharing/models.py:271
 msgid "Group to map all users to"
-msgstr ""
+msgstr "群組對應 all users 帳號"
 
 #: sharing/models.py:278
 msgid "UNIX Share"
-msgstr ""
+msgstr "UNIX 共享"
 
 #: sharing/nav.py:8
 msgid "View All UNIX Shares"
-msgstr ""
+msgstr "檢視全部的 UNIX 共享"
 
 #: sharing/nav.py:18
 msgid "View All Apple Shares"
-msgstr ""
+msgstr "檢視全部的 Apple 共享"
 
 #: sharing/nav.py:28
 msgid "View All Windows Shares"
-msgstr ""
+msgstr "檢視全部的 Windows 共享"
 
 #: storage/forms.py:77
 msgid "Read"
@@ -2654,94 +2658,94 @@ msgstr "其他"
 #: storage/forms.py:140 storage/forms.py:331 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr ""
+msgstr "磁區名稱"
 
 #: storage/forms.py:144 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
-msgstr ""
+msgstr "強制4096位元組磁區大小"
 
 #: storage/forms.py:217
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\"."
-msgstr ""
+msgstr "磁區名稱必須使用英文字母開頭，可以包含數字、\"-\"和\"_\"符號。"
 
 #: storage/forms.py:231 system/forms.py:210 system/forms.py:216
 #: system/forms.py:221
 msgid "This field is required"
-msgstr ""
+msgstr "本欄位必填"
 
 #: storage/forms.py:236 storage/forms.py:382 storage/forms.py:484
 msgid "You already have a volume with same name"
-msgstr "已經有相同名稱的磁碟"
+msgstr "已經有相同名稱的磁區"
 
 #: storage/forms.py:242
 msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr ""
+msgstr "\"log\" 是保留字，無法使用"
 
 #: storage/forms.py:247
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr ""
+msgstr "磁區名稱的開頭可能無法使用 C[0-9]、mirror、raidz 或是spare 等文字"
 
 #: storage/forms.py:332 storage/forms.py:431 storage/forms.py:910
 msgid "Member disk"
-msgstr ""
+msgstr "成員磁碟"
 
 #: storage/forms.py:388 storage/forms.py:509
 msgid "The selected disks were not verified for this import rules."
-msgstr ""
+msgstr "選定的磁碟並沒有驗證這導入的規則"
 
 #: storage/forms.py:396
 msgid "Some error ocurried while labelling the disk."
-msgstr ""
+msgstr "標示磁碟時發生一些錯誤"
 
 #: storage/forms.py:606
 msgid "Volume from which this dataset will be created on"
-msgstr ""
+msgstr "將建立本資料集的磁區"
 
 #: storage/forms.py:607
 msgid "Dataset Name"
-msgstr ""
+msgstr "資料集名稱"
 
 #: storage/forms.py:608 storage/forms.py:660 storage/forms.py:717
 msgid "Compression level"
-msgstr ""
+msgstr "壓縮等級"
 
 #: storage/forms.py:609 storage/forms.py:661 storage/forms.py:718
 msgid "Enable atime"
-msgstr ""
+msgstr "啟用時間戳記(atime)"
 
 #: storage/forms.py:610 storage/forms.py:662 storage/forms.py:719
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "資料集配額"
 
 #: storage/forms.py:610 storage/forms.py:611 storage/forms.py:662
 #: storage/forms.py:663 storage/forms.py:719
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0 =不限制；例如：1g （表示1GB空間）"
 
 #: storage/forms.py:611 storage/forms.py:663
 msgid "Quota for this dataset and all children"
-msgstr ""
+msgstr "資料集和所有子資料集的配額"
 
 #: storage/forms.py:612 storage/forms.py:664 storage/forms.py:720
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "資料集的預留空間"
 
 #: storage/forms.py:612 storage/forms.py:613 storage/forms.py:664
 #: storage/forms.py:665 storage/forms.py:720
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0 =不預留；例如：1g（表示1GB空間）"
 
 #: storage/forms.py:613 storage/forms.py:665
 msgid "Reserved space for this dataset and all children"
-msgstr ""
+msgstr "資料集和所有子資料集的預留空間"
 
 #: storage/forms.py:626
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
-msgstr ""
+msgstr "資料集名稱只能使用英文字母和( - _ :  . )括弧內四種符號。"
 
 #: storage/forms.py:633
 msgid "You already have a dataset with the same name"
@@ -2749,15 +2753,15 @@ msgstr "已經有相同名稱的資料集"
 
 #: storage/forms.py:640 storage/forms.py:697 storage/forms.py:741
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
-msgstr ""
+msgstr "輸入正數（後面可用 M, G, T 等單位），或是輸入 0"
 
 #: storage/forms.py:756
 msgid "Owner (user)"
-msgstr ""
+msgstr "所有者(帳號)"
 
 #: storage/forms.py:759
 msgid "Owner (group)"
-msgstr ""
+msgstr "所有者(群組)"
 
 #: storage/forms.py:761
 msgid "Mode"
@@ -2765,15 +2769,15 @@ msgstr "模式"
 
 #: storage/forms.py:764
 msgid "Set permission recursively"
-msgstr ""
+msgstr "設定遞迴權限"
 
 #: storage/forms.py:846
 msgid "At least one day must be chosen"
-msgstr ""
+msgstr "至少必須選擇一天"
 
 #: storage/forms.py:851
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "遞迴快照"
 
 #: storage/forms.py:852
 msgid "Snapshot Name"
@@ -2781,7 +2785,7 @@ msgstr "快照名稱"
 
 #: storage/forms.py:859
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr "快照名稱只可以由下列的字元組成 a-z, A-Z, 0-9, _, - "
+msgstr "快照名稱只可以由下列的字元組成 [a-z A-Z 0-9 -_. ] "
 
 #: storage/forms.py:869
 msgid "Invalid prefix"
@@ -2793,11 +2797,11 @@ msgstr "快照"
 
 #: storage/forms.py:874
 msgid "Clone Name (must be on same volume)"
-msgstr "複製的名稱(必須在同一個磁碟)"
+msgstr "複製的名稱(必須在同一個磁區)"
 
 #: storage/forms.py:887
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr "複製的名稱只可以由下列的字元組成 a-z, A-Z, 0-9, _, -"
+msgstr "複製的名稱只可以由下列的字元組成  [a-z A-Z 0-9 -_. /]"
 
 #: storage/forms.py:893
 msgid "Clone must be within the same volume"
@@ -2805,11 +2809,11 @@ msgstr "複製必須在同一個磁碟"
 
 #: storage/forms.py:960 storage/models.py:212
 msgid "Remote hostname"
-msgstr ""
+msgstr "遠端主機名稱"
 
 #: storage/forms.py:961 storage/models.py:216
 msgid "Remote hostkey"
-msgstr ""
+msgstr "遠端主機密鑰"
 
 #: storage/models.py:49
 msgid "File System Type"
@@ -2818,11 +2822,11 @@ msgstr "檔案系統類型"
 #: storage/models.py:52 storage/models.py:77 storage/views.py:88
 #: storage/views.py:116 storage/views.py:139 templates/storage/volumes.html:59
 msgid "Volume"
-msgstr "磁碟"
+msgstr "磁區"
 
 #: storage/models.py:78
 msgid "Volume this group belongs to"
-msgstr ""
+msgstr "磁區群組屬於"
 
 #: storage/models.py:91
 msgid "Disks"
@@ -2830,19 +2834,19 @@ msgstr "磁碟"
 
 #: storage/models.py:102
 msgid "Transfer Mode"
-msgstr ""
+msgstr "傳輸模式"
 
 #: storage/models.py:108
 msgid "HDD Standby"
-msgstr ""
+msgstr "硬碟待機狀態"
 
 #: storage/models.py:114
 msgid "Advanced Power Management"
-msgstr ""
+msgstr "進階電源管理"
 
 #: storage/models.py:120
 msgid "Acoustic Level"
-msgstr ""
+msgstr "噪音控制"
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
@@ -2993,17 +2997,17 @@ msgstr "檢視全部快照"
 #: storage/nav.py:40 templates/storage/replications.html:5
 #: templates/storage/volumes.html:6 templates/storage/volumes.html.py:11
 msgid "Create Volume"
-msgstr "建立磁碟"
+msgstr "建立磁區"
 
 #: storage/nav.py:51 templates/storage/autoimport.html:25
 #: templates/storage/import.html:43 templates/storage/volumes.html:31
 #: templates/storage/volumes.html.py:35
 msgid "Import Volume"
-msgstr "匯入磁碟"
+msgstr "匯入磁區"
 
 #: storage/nav.py:62
 msgid "View All Volumes"
-msgstr "檢視全部磁碟"
+msgstr "檢視全部磁區"
 
 #: storage/nav.py:73 templates/storage/volumes.html:19
 #: templates/storage/volumes.html.py:23
@@ -3020,7 +3024,7 @@ msgstr "建立定期快照"
 
 #: storage/nav.py:96
 msgid "Volumes"
-msgstr "磁碟"
+msgstr "磁區"
 
 #: storage/nav.py:118 storage/nav.py:138 templates/storage/volumes.html:123
 #: templates/storage/volumes.html.py:126
@@ -3060,7 +3064,7 @@ msgstr "快照已成功複製"
 
 #: storage/views.py:518
 msgid "Disk replacement has been initiated."
-msgstr ""
+msgstr "磁碟已開始替換"
 
 #: storage/views.py:522
 msgid "Some error ocurried."
@@ -3074,7 +3078,7 @@ msgstr "成功卸除磁碟"
 msgid ""
 "The system will use this place to temporarily store the firmware file before "
 "it's being applied."
-msgstr ""
+msgstr "更新前，系統將利用此路徑暫時存放韌體檔案"
 
 #: system/forms.py:251
 msgid "New image to be installed"
@@ -3082,11 +3086,11 @@ msgstr "已安裝新的映像檔"
 
 #: system/forms.py:252 system/forms.py:275
 msgid "SHA256 sum for the image"
-msgstr ""
+msgstr "映像檔的 SHA256 sum 檔案驗證"
 
 #: system/forms.py:264
 msgid "Invalid firmware or checksum"
-msgstr "無效的韌體更新檔或檢查碼"
+msgstr "無效的韌體更新檔或驗證碼"
 
 #: system/forms.py:274
 msgid "Service Pack image to be installed"
@@ -3094,7 +3098,7 @@ msgstr "安裝系統更新檔"
 
 #: system/forms.py:287
 msgid "Invalid service pack or checksum"
-msgstr "無效的系統更新檔或檢查碼"
+msgstr "無效的系統更新檔或驗證碼"
 
 #: system/forms.py:297
 msgid "New config to be installed"
@@ -3150,11 +3154,11 @@ msgstr "開機警示聲"
 
 #: system/models.py:91
 msgid "Enable Special System Tuning"
-msgstr ""
+msgstr "啟用特定系統優化"
 
 #: system/models.py:93
 msgid "Enable powerd (Power Saving Daemon)"
-msgstr ""
+msgstr "啟用 powerd (省電服務)"
 
 #: system/models.py:95
 msgid "Enable Zeroconf/Bonjour"
@@ -3163,47 +3167,47 @@ msgstr "啟用 Bonjour（Zeroconf ）服務"
 #: system/models.py:98
 msgid ""
 "Swap size on each drive in GiB, affects new disks only.  Must be non-zero"
-msgstr ""
+msgstr "在每個磁碟上的 swap檔的容量(以GB為單位)，設定只在新磁碟有效。容量必須不能為零"
 
 #: system/models.py:101
 msgid "Show console messages in the footer (Requires UI reload)"
-msgstr ""
+msgstr "將控制訊息顯示在頁尾（需重新讀取使用介面）"
 
 #: system/models.py:109
 msgid "MOTD banner"
-msgstr ""
+msgstr "登入訊息看板"
 
 #: system/models.py:113 templates/system/settings.html:5
 msgid "Advanced"
-msgstr ""
+msgstr "進階"
 
 #: system/models.py:122
 msgid "From email"
-msgstr ""
+msgstr "從電子郵件"
 
 #: system/models.py:123
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@mydomain.com"
-msgstr ""
+msgstr "系統將使用電子郵件地址發送郵件，例如：freenas@mydomain.com"
 
 #: system/models.py:128
 msgid "Outgoing mail server"
-msgstr ""
+msgstr "外寄郵件伺服器"
 
 #: system/models.py:129
 msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
-msgstr ""
+msgstr "可接收郵件的主機名稱或IP位址，例如：mail.example.org，或192.168.1.1"
 
 #: system/models.py:135
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
-msgstr ""
+msgstr "整數，輸入從1-65535之間，一般為 25，465或587"
 
 #: system/models.py:136
 msgid "Port to connect to"
-msgstr ""
+msgstr "連接的通訊埠"
 
 #: system/models.py:142
 msgid "encryption of the connection"
@@ -3338,7 +3342,7 @@ msgstr "ID"
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:50 templates/account/bsdgroups.html:62
 msgid "Members"
-msgstr ""
+msgstr "成員"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/storage/tasks.html:134
@@ -3376,7 +3380,7 @@ msgstr "修改使用者"
 
 #: templates/account/bsdusers.html:38 templates/account/bsdusers.html.py:90
 msgid "Auxiliary Groups"
-msgstr "次要群組"
+msgstr "附屬群組"
 
 #: templates/account/bsdusers.html:43
 msgid "Delete User"
@@ -3412,7 +3416,7 @@ msgstr "儲存"
 
 #: templates/common/menubar2.html:23
 msgid "Sharing"
-msgstr "分享"
+msgstr "共享"
 
 #: templates/common/menubar2.html:33
 msgid "Log Out"
@@ -3505,7 +3509,7 @@ msgstr "/var/log/messages"
 
 #: templates/freeadmin/index.html:43
 msgid "Reboot the System"
-msgstr "請重新啟動系統"
+msgstr "重新啟動系統"
 
 #: templates/freeadmin/index.html:44 templates/freeadmin/index.html.py:55
 msgid "Warning!"
@@ -3519,13 +3523,13 @@ msgstr "系統將 <strong>重新啟動</strong>，是否繼續？"
 
 #: templates/freeadmin/index.html:54
 msgid "Shutdown the System"
-msgstr "系統將 <strong>關機</strong>，是否繼續？"
+msgstr "關閉系統"
 
 #: templates/freeadmin/index.html:56
 msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
-msgstr ""
+msgstr "系統將 <strong>關機</strong>，是否繼續？"
 
 #: templates/freeadmin/index.html:66
 msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
@@ -3545,7 +3549,7 @@ msgstr "IRC (Chat)"
 
 #: templates/freeadmin/index.html:77
 msgid "#freenas on freenode"
-msgstr ""
+msgstr "#在 freenode 的 freenas"
 
 #: templates/freeadmin/index.html:82
 msgid "Mailing Lists"
@@ -3605,19 +3609,19 @@ msgstr "管理"
 #: templates/network/interface.html:35 templates/network/lagg.html:14
 #: templates/network/lagg.html.py:16 templates/network/lagg_members2.html:17
 msgid "Edit Interface"
-msgstr "管理網路卡"
+msgstr "管理網路介面"
 
 #: templates/network/interface.html:41 templates/network/lagg.html:46
 msgid "Delete Interface"
-msgstr "刪除網路卡"
+msgstr "刪除網路介面"
 
 #: templates/network/interface.html:48 templates/network/summary.html:16
 msgid "No interfaces defined"
-msgstr "沒有預設網路卡"
+msgstr "沒有預設網路介面"
 
 #: templates/network/interface.html:54 templates/network/interface.html:56
 msgid "Add Interface"
-msgstr "新增網路卡"
+msgstr "新增網路介面"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 msgid "Actions"
@@ -3625,11 +3629,11 @@ msgstr "啟用"
 
 #: templates/network/lagg.html:20
 msgid "Edit Members"
-msgstr ""
+msgstr "成員管理"
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
-msgstr ""
+msgstr "LAGG 成員"
 
 #: templates/network/lagg.html:53 templates/network/lagg_members2.html:23
 msgid "No LAGG interface defined"
@@ -3673,7 +3677,7 @@ msgstr "刪除靜態路由"
 
 #: templates/network/staticroute.html:33
 msgid "No static route defined"
-msgstr "沒有預設靜態路由"
+msgstr "沒有設置靜態路由"
 
 #: templates/network/staticroute.html:39 templates/network/staticroute.html:41
 msgid "Add Static Route"
@@ -3685,7 +3689,7 @@ msgstr "網路名稱伺服器"
 
 #: templates/network/summary.html:31
 msgid "No nameserver defined"
-msgstr "沒有預設的網路名稱伺服器"
+msgstr "沒有設置網路名稱伺服器"
 
 #: templates/network/summary.html:37
 msgid "Default route"
@@ -3693,7 +3697,7 @@ msgstr "預設路由"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr "沒有預設路由定義"
+msgstr "沒有設置預設路由"
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
@@ -3705,7 +3709,7 @@ msgstr "刪除VLAN"
 
 #: templates/network/vlan.html:34
 msgid "No VLAN defined"
-msgstr "沒有預設VLAN"
+msgstr "沒有設置VLAN"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
@@ -3730,7 +3734,7 @@ msgstr "您已經登出"
 
 #: templates/registration/logout.html:8
 msgid "Log back in"
-msgstr ""
+msgstr "重新登入"
 
 #: templates/registration/password_change_done.html:20
 msgid "Success!"
@@ -3744,6 +3748,10 @@ msgstr "密碼已變更"
 msgid "Password change"
 msgstr "變更密碼"
 
+# Singular
+# 請更正以下錯誤
+# Plural
+# 請更正以下錯誤
 #: templates/registration/password_change_form.html:13
 msgid "Please correct the error below."
 msgid_plural "Please correct the errors below."
@@ -3817,35 +3825,35 @@ msgstr "iSCSI 管理"
 
 #: templates/services/iscsi.html:7
 msgid "Targets"
-msgstr ""
+msgstr "目標"
 
 #: templates/services/iscsi.html:9
 msgid "Device Extents"
-msgstr ""
+msgstr "設置延伸磁區(Extents)"
 
 #: templates/services/iscsi.html:11
 msgid "Extents"
-msgstr ""
+msgstr "延伸磁區(Extents)"
 
 #: templates/services/iscsi.html:13
 msgid "Associated Targets"
-msgstr ""
+msgstr "相關目標"
 
 #: templates/services/iscsi.html:15
 msgid "Authentication"
-msgstr ""
+msgstr "驗證"
 
 #: templates/services/iscsi.html:17
 msgid "Authorized Initiator"
-msgstr ""
+msgstr "授權啟動"
 
 #: templates/services/iscsi.html:19
 msgid "Portals"
-msgstr ""
+msgstr "入口"
 
 #: templates/services/iscsi_assoctargets.html:7
 msgid "LUN"
-msgstr ""
+msgstr "管理邏輯單元編號 (LUN)"
 
 #: templates/services/iscsi_assoctargets.html:33
 #: templates/services/iscsi_auth.html:37
@@ -3855,19 +3863,19 @@ msgstr ""
 #: templates/services/iscsi_portals.html:33
 #: templates/services/iscsi_targets.html:34
 msgid "No targets defined"
-msgstr ""
+msgstr "沒有定義的目標"
 
 #: templates/services/iscsi_assoctargets.html:39
 msgid "Add Extent to Target"
-msgstr ""
+msgstr "在目標新增延伸磁區(Extent)"
 
 #: templates/services/iscsi_assoctargets.html:41
 msgid "Add Extent To Target"
-msgstr ""
+msgstr "在目標新增延伸磁區(Extent)"
 
 #: templates/services/iscsi_auth.html:8
 msgid "Peer"
-msgstr ""
+msgstr "同儕(Peer)"
 
 #: templates/services/iscsi_auth.html:44 templates/services/iscsi_auth.html:46
 msgid "Add iSCSI User"
@@ -3875,12 +3883,12 @@ msgstr "新增 iSCSI 使用者"
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
-msgstr ""
+msgstr "授權的網路"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
 msgid "Add Authorized Initiator"
-msgstr ""
+msgstr "新增授權啟動"
 
 #: templates/services/iscsi_dextents.html:6
 #: templates/services/iscsi_targets.html:6
@@ -3892,24 +3900,24 @@ msgstr "別名"
 #: templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 msgid "Add Extent"
-msgstr ""
+msgstr "新增區段(Extent)"
 
 #: templates/services/iscsi_portals.html:6
 msgid "Listen"
-msgstr ""
+msgstr "監聽"
 
 #: templates/services/iscsi_portals.html:20
 msgid "Edit Portal"
-msgstr "編輯首頁"
+msgstr "編輯入口首頁"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Delete Portal"
-msgstr "刪除首頁"
+msgstr "刪除入口首頁"
 
 #: templates/services/iscsi_portals.html:39
 #: templates/services/iscsi_portals.html:41
 msgid "Add Portal"
-msgstr "新增首頁"
+msgstr "新增入口首頁"
 
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
@@ -3919,7 +3927,7 @@ msgstr "新增目標"
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
 msgid "Active Shares"
-msgstr "共享"
+msgstr "使用中的共享"
 
 #: templates/sharing/apple.html:8
 msgid "There are no active Apple Shares."
@@ -4034,7 +4042,7 @@ msgstr "檔案系統格式"
 
 #: templates/storage/index.html:3 templates/storage/volumes.html:51
 msgid "Active Volumes"
-msgstr "使用中的磁碟"
+msgstr "使用中的磁區"
 
 #: templates/storage/index.html:5
 msgid "ZFS Replication"
@@ -4110,23 +4118,23 @@ msgstr "使用的空間"
 
 #: templates/storage/snapshots.html:7
 msgid "Referenced space"
-msgstr ""
+msgstr "參照的空間"
 
 #: templates/storage/snapshots.html:21 templates/storage/snapshots.html:23
 msgid "Clone snapshot"
-msgstr "快照複製"
+msgstr "複製快照"
 
 #: templates/storage/snapshots.html:25 templates/storage/snapshots.html:27
 msgid "Destroy snapshot"
-msgstr ""
+msgstr "銷毀快照"
 
 #: templates/storage/snapshots.html:30 templates/storage/snapshots.html:32
 msgid "Rollback to this snapshot"
-msgstr ""
+msgstr "還原這個快照"
 
 #: templates/storage/snapshots.html:40
 msgid "No ZFS snapshot available"
-msgstr ""
+msgstr "無可用的ZFS快照"
 
 #: templates/storage/tasks.html:6
 msgid "Periodic Snapshots"
@@ -4154,27 +4162,27 @@ msgstr "No"
 
 #: templates/storage/tasks.html:42
 msgid "From"
-msgstr ""
+msgstr "來自"
 
 #: templates/storage/tasks.html:44
 msgid "through"
-msgstr ""
+msgstr "經過"
 
 #: templates/storage/tasks.html:46
 msgid ", every"
-msgstr ""
+msgstr ", 每"
 
 #: templates/storage/tasks.html:48
 msgid "minutes,"
-msgstr ""
+msgstr "分鐘，"
 
 #: templates/storage/tasks.html:50
 msgid "everyday"
-msgstr ""
+msgstr "每天"
 
 #: templates/storage/tasks.html:53
 msgid "on every"
-msgstr ""
+msgstr "在每"
 
 #: templates/storage/tasks.html:143
 msgid "No periodic snapshots scheduled"
@@ -4182,15 +4190,15 @@ msgstr "沒有排定自動快照的工作"
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
-msgstr "管理 ZFS 磁碟"
+msgstr "管理 ZFS 磁區"
 
 #: templates/storage/volumes.html:42 templates/storage/volumes.html.py:46
 msgid "Auto Import Volume"
-msgstr "自動搜尋磁碟"
+msgstr "自動搜尋磁區"
 
 #: templates/storage/volumes.html:53
 msgid "There are no active volumes."
-msgstr "沒有磁碟正在使用"
+msgstr "沒有磁區正在使用"
 
 #: templates/storage/volumes.html:61
 msgid "Used"
@@ -4206,7 +4214,7 @@ msgstr "狀態"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Destroy Dataset"
-msgstr ""
+msgstr "銷毀資料集"
 
 #: templates/storage/volumes.html:99 templates/storage/volumes.html.py:103
 #: templates/storage/volumes.html:114 templates/storage/volumes.html.py:118
@@ -4215,7 +4223,7 @@ msgstr "管理 ZFS 選項"
 
 #: templates/storage/volumes.html:107 templates/storage/volumes.html.py:110
 msgid "Destroy Volume"
-msgstr "刪除磁碟"
+msgstr "刪除磁區"
 
 #: templates/storage/volumes.html:140 templates/storage/volumes.html.py:144
 msgid "View Disks"
@@ -4223,23 +4231,23 @@ msgstr "檢視磁碟"
 
 #: templates/storage/volumes.html:151
 msgid "No volumes defined"
-msgstr "沒有預設磁碟"
+msgstr "沒有預設磁區"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
-msgstr ""
+msgstr "成員磁碟"
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
-msgstr ""
+msgstr "群組類型"
 
 #: templates/storage/wizard.html:84
 msgid "ZFS Extra"
-msgstr ""
+msgstr "ZFS 延伸磁區(Extra)"
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr ""
+msgstr "只使用1個 log 磁碟是非常沮喪"
 
 #: templates/storage/wizard.html:93
 msgid "Log"
@@ -4255,7 +4263,7 @@ msgstr "備用"
 
 #: templates/storage/wizard.html:119
 msgid "Add Volume"
-msgstr "新增磁碟"
+msgstr "新增磁區"
 
 #: templates/storage/wizard.html:120
 msgid "Existing data will be cleared"
@@ -4355,7 +4363,7 @@ msgstr "韌體更新"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
-msgstr "使用系統補完"
+msgstr "使用系統補丁包"
 
 #: templates/system/settings.html:15
 msgid "Config"

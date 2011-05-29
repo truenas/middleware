@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-25 13:02+0200\n"
+"PO-Revision-Date: 2011-05-28 21:26+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -323,11 +323,11 @@ msgstr "CHAP הדדי"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr "UPS הגיע לסוללה נמוכה"
+msgstr "סוללת אל-פסק מתקרבת לטעינה נמוכה"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr "UPS פועל על סוללה"
+msgstr "אל-פסק פועל על סוללה"
 
 #: choices.py:250
 msgid "Preferred"
@@ -347,7 +347,7 @@ msgstr "מורש"
 
 #: choices.py:280
 msgid "On"
-msgstr "דלוק"
+msgstr "מופעל"
 
 #: choices.py:281 choices.py:286
 msgid "Off"
@@ -462,7 +462,7 @@ msgstr "שני שדות הסיסמה אינם התאימו."
 
 #: account/forms.py:247 account/forms.py:372
 msgid "Home directory has to start with /mnt/"
-msgstr "תיקיית הבית חייב להתחיל עם /mnt/"
+msgstr "תיקיית הבית חייב להתחיל ב- /mnt/"
 
 #: account/forms.py:261 account/forms.py:265 services/forms.py:469
 #: services/forms.py:482 services/forms.py:699 storage/forms.py:223
@@ -817,11 +817,11 @@ msgstr "סיכום הרשת"
 
 #: network/nav.py:27
 msgid "Add Link Aggregation"
-msgstr "הוסף קישור מצורף"
+msgstr "הוסף קיבוץ כרטיסים"
 
 #: network/nav.py:28
 msgid "Create Link Aggregation"
-msgstr "יצור קישור מצורף"
+msgstr "יצור קיבוץ כרטיסים"
 
 #: network/nav.py:39
 msgid "View All Link Aggregations"
@@ -1710,7 +1710,7 @@ msgstr "מזהה"
 
 #: services/models.py:726
 msgid "This name is used to uniquely identify your UPS on this system."
-msgstr "השם הזה משמש לזהות באופן ייחודי את הUPS במערכת הזאת."
+msgstr "השם הזה משמש לזהות באופן ייחודי את האל-פסק במערכת הזאת."
 
 #: services/models.py:730
 msgid "Driver"
@@ -1718,7 +1718,7 @@ msgstr "מנהל התקן"
 
 #: services/models.py:732
 msgid "The driver used to communicate with your UPS."
-msgstr "המנהל התקן משמש לתקשר עם הUPS שלך."
+msgstr "המנהל התקן משמש לתקשר עם האל-פסק שלך."
 
 #: services/models.py:736 services/models.py:788 services/models.py:911
 msgid "Port"
@@ -1726,7 +1726,7 @@ msgstr "פורט"
 
 #: services/models.py:738
 msgid "The serial or USB port where your UPS is connected."
-msgstr "הפרוט הסריאלי או פורט הUSB שבו הUPS מחובר."
+msgstr "הפרוט הסריאלי או פורט הUSB שבו האל-פסק מחובר."
 
 #: services/models.py:754
 msgid "Shutdown mode"
@@ -1741,8 +1741,8 @@ msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
 msgstr ""
-"זמן בשניות עד שהכיבוי מתחיל. אם ה-UPS נדלק מחדש לפני שהזמן נגמר  הכיבוי "
-"מתבטל."
+"זמן בשניות עד שהכיבוי מתחיל. אם האל-פסקנדלק מחדש לפני שהזמן נגמר, הכיבוי "
+"יתבטל."
 
 #: services/models.py:762
 msgid "Remote Monitor"
@@ -1770,7 +1770,7 @@ msgstr ""
 
 #: services/models.py:778 services/models.py:779
 msgid "UPS"
-msgstr "UPS"
+msgstr "אל-פסק"
 
 #: services/models.py:789
 msgid "Port to bind FTP server."

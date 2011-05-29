@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-18 04:23-0700\n"
-"PO-Revision-Date: 2011-05-23 12:47+0200\n"
-"Last-Translator: yurkis <yurkis@gmail.com>\n"
+"PO-Revision-Date: 2011-05-28 20:47+0200\n"
+"Last-Translator: Localizator <localizator@ukr.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:113
 msgid "Reporting"
-msgstr ""
+msgstr "Звіти"
 
 #: media/lib/js/freeadmin.js:125
 msgid "Settings"
@@ -40,7 +40,6 @@ msgid "Services"
 msgstr "Сервіси"
 
 #: media/lib/js/freeadmin.js:278
-#, fuzzy
 msgid "Account"
 msgstr "Облікові записи"
 
@@ -57,12 +56,10 @@ msgid "Edit Disk"
 msgstr "Редагувати диск"
 
 #: media/lib/js/freeadmin.js:402
-#, fuzzy
 msgid "Replace"
 msgstr "Замінити"
 
 #: media/lib/js/freeadmin.js:403
-#, fuzzy
 msgid "Disk Replacement"
 msgstr "Заміна диску"
 
@@ -79,16 +76,13 @@ msgid "Some error ocurried!"
 msgstr "Сталася помилка!"
 
 #: media/lib/js/freeadmin/form/Cron.js:43
-#, fuzzy
 msgid "Every"
 msgstr "Кожні"
 
 #: media/lib/js/freeadmin/form/Cron.js:51
-#, fuzzy
 msgid "Each selected"
 msgstr "Кожен обраний"
 
 #: media/lib/js/freeadmin/form/Cron.js:96
-#, fuzzy
 msgid "Every N"
 msgstr "Кожні N"

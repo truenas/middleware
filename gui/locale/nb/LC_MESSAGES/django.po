@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-22 14:39+0200\n"
-"Last-Translator: Tamahay <figgen63@hotmail.com>\n"
+"PO-Revision-Date: 2011-05-28 16:25+0200\n"
+"Last-Translator: lein <torgaute@yahoo.no>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nb\n"
 "MIME-Version: 1.0\n"
@@ -302,7 +302,7 @@ msgstr "Godkjent"
 
 #: choices.py:216
 msgid "read-write"
-msgstr "lese-skriv"
+msgstr "lese-skrive"
 
 #: choices.py:217
 msgid "read-only"
@@ -1886,15 +1886,15 @@ msgstr ""
 
 #: services/models.py:866
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "Lokal brukers opplastings båndbredde"
 
 #: services/models.py:867
 msgid "Local user upload bandwith in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Lokal brukers upload båndbredde i KB/s. Null betyr uendelig."
 
 #: services/models.py:871
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Lokal brukers nedlastings båndbredde"
 
 #: services/models.py:872
 msgid "Local user download bandwith in KB/s. Zero means infinity."

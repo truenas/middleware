@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:35-0700\n"
-"PO-Revision-Date: 2011-05-25 14:46+0200\n"
+"PO-Revision-Date: 2011-05-28 17:11+0200\n"
 "Last-Translator: Rafal <rafal.ciszynski@d-tech.com.pl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
@@ -1726,21 +1726,24 @@ msgstr "Port szeregowy lub USB do którego jest podłączony Twój zasilacz UPS.
 
 #: services/models.py:754
 msgid "Shutdown mode"
-msgstr ""
+msgstr "Tryb zamykania systemu"
 
 #: services/models.py:758
 msgid "Shutdown timer"
-msgstr ""
+msgstr "Opóźnienie zamykania systemu"
 
 #: services/models.py:759
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
 msgstr ""
+"Czas w sekundach do rozpoczęcia zamykania systemu. Gdy zasilacz UPS zgłosi "
+"powrót zasilania przed upływem tego czasu, procedura zamykania systemu "
+"zostanie anulowana."
 
 #: services/models.py:762
 msgid "Remote Monitor"
-msgstr ""
+msgstr "Zdalne monitorowanie"
 
 #: services/models.py:764
 msgid "Send Email Status Updates"
@@ -1870,17 +1873,19 @@ msgstr ""
 
 #: services/models.py:856
 msgid "Minimum passive port"
-msgstr ""
+msgstr "Minimalny numer portu pasywnego"
 
 #: services/models.py:857
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
 msgstr ""
+"Minimalny numer portu alokowanego dla połączeń typu PASV (0 = użyj dowolnego "
+"portu)."
 
 #: services/models.py:861
 msgid "Maximum passive port"
-msgstr ""
+msgstr "Maksymalny numer portu pasywnego"
 
 #: services/models.py:862
 msgid ""
@@ -1896,39 +1901,47 @@ msgstr ""
 
 #: services/models.py:866
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "Limit wysyłania dla lokalnego użytkownika"
 
 #: services/models.py:867
 msgid "Local user upload bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Limit wysyłania w KB/s dla lokalnego użytkownika. Zero oznacza "
+"nieograniczony."
 
 #: services/models.py:871
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Limit pobierania dla lokalnego użytkownika"
 
 #: services/models.py:872
 msgid "Local user download bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Limit pobierania w KB/s dla lokalnego użytkownika. Zero oznacza "
+"nieograniczony."
 
 #: services/models.py:876
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Limit wysyłania dla anonimowego użytkownika"
 
 #: services/models.py:877
 msgid "Anonymous user upload bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Limit wysyłania w KB/s dla anonimowego użytkownika. Zero oznacza "
+"nieograniczony."
 
 #: services/models.py:881
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "Limit pobierania dla anonimowego użytkownika"
 
 #: services/models.py:882
 msgid "Anonymous user download bandwith in KB/s. Zero means infinity."
 msgstr ""
+"Limit pobierania w KB/s dla anonimowego użytkownika. Zero oznacza "
+"nieograniczony."
 
 #: services/models.py:885
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "Włącz SSL/TLS"
 
 #: services/models.py:890
 msgid "These parameters are added to proftpd.conf."
@@ -2167,7 +2180,7 @@ msgstr ""
 
 #: services/models.py:1104
 msgid "Password Encryption"
-msgstr ""
+msgstr "Szyfrowanie hasła"
 
 #: services/models.py:1105
 msgid "The password change protocol to use."
@@ -2215,7 +2228,7 @@ msgstr ""
 
 #: services/models.py:1133
 msgid "Turn on/off TLS"
-msgstr ""
+msgstr "Włącz/wyłącz TLS"
 
 #: services/models.py:1135
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
