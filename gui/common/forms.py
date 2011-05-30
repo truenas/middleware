@@ -30,7 +30,7 @@ from dojango.forms import Form as F
 
 class ModelForm(MF):
     """
-    We need to hangle dynamic choices, mainly because of the FreeNAS_User, 
+    We need to handle dynamic choices, mainly because of the FreeNAS_User, 
     so we use a custom formfield with a _reroll method which is called
     on every form instantiation
     """
@@ -50,7 +50,7 @@ class ModelForm(MF):
 
 class Form(F):
     """
-    We need to hangle dynamic choices, mainly because of the FreeNAS_User, 
+    We need to handle dynamic choices, mainly because of the FreeNAS_User, 
     so we use a custom formfield with a _reroll method which is called
     on every form instantiation
     """
