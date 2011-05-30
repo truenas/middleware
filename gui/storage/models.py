@@ -82,7 +82,6 @@ class DiskGroup(Model):
 
 class Disk(Model):
     disk_name = models.CharField(
-            unique=True,
             max_length=120, 
             verbose_name = _("Name")
             )
