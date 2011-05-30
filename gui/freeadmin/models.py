@@ -47,7 +47,7 @@ class GroupField(models.CharField):
         defaults.update(kwargs)
         return super(GroupField, self).formfield(**defaults)
 
-class PathField(forms.CharField):
+class PathField(models.CharField):
     def formfield(self, **kwargs):
         #FIXME: Move to top (causes cycle-dependency)
         from freeadmin.forms import PathField as PF
