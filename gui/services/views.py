@@ -137,7 +137,7 @@ def iscsi_extents(request, objtype=None):
     })
 
 def iscsi_dextents(request):
-    extent_device_list = models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
+    extent_device_list = models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__in=['Disk','ZVOL'])
     return render(request, 'services/iscsi_dextents.html', {
         'extent_device_list': extent_device_list,
     })

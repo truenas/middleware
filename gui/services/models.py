@@ -31,7 +31,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField
-from storage.models import MountPoint, Volume
+from storage.models import MountPoint, Volume, Disk
+from freenasUI.middleware.notifier import notifier
    
 mountpoint_limiter = { 'mp_path__startswith': '/mnt/' }
 
@@ -407,6 +408,15 @@ class iSCSITargetExtent(Model):
         icon_view = u"ViewAllExtentsIcon"
     def __unicode__(self):
         return unicode(self.iscsi_target_extent_name)
+    def get_device(self):
+        if self.iscsi_target_extent_type != "Disk":
+            return self.iscsi_target_extent_path
+        else:
+            try:
+                ident = Disk.objects.get(id=self.iscsi_target_extent_path).disk_identifier
+                return "/dev/%s" % notifier().identifier_to_device(ident)
+            except:
+                return self.iscsi_target_extent_path
     def delete(self):
         if self.iscsi_target_extent_path[:5] == '/dev/':
             expected_iscsi_volume_name = 'iscsi:' + self.iscsi_target_extent_path[5:]

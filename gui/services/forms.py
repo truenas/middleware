@@ -610,6 +610,7 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         diskinfo = pipe.read().strip().split('\n')
         for disk in diskinfo:
             devname, capacity = disk.split('\t')
+            #FIXME use storage.forms._humenize_size
             capacity = int(capacity)
             if capacity >= 1099511627776:
                     capacity = "%.1f TiB" % (capacity / 1099511627776.0)
@@ -629,22 +630,15 @@ class iSCSITargetDeviceExtentForm(ModelForm):
             except:
                 pass
         # Exclude what's already added
-        for devname in [ x['disk_disks'] for x in Disk.objects.all().values('disk_disks')]:
-            try:
-                del diskchoices[devname]
-            except:
-                pass
+        for devname in [ notifier().identifier_to_device(x['disk_identifier']) for x in Disk.objects.all().values('disk_identifier')]:
+            diskchoices.pop(devname, None)
         return diskchoices.items()
     class Meta:
         model = models.iSCSITargetExtent
         exclude = ('iscsi_target_extent_type', 'iscsi_target_extent_path', 'iscsi_target_extent_filesize')
     def save(self, commit=True):
         oExtent = super(iSCSITargetDeviceExtentForm, self).save(commit=False)
-        oExtent.iscsi_target_extent_type = 'Disk'
-        oExtent.iscsi_target_extent_filesize = 0
-        oExtent.iscsi_target_extent_path = '/dev/' + self.cleaned_data["iscsi_extent_disk"]
         if commit:
-            oExtent.save()
             # Construct a corresponding volume.
             volume_name = 'iscsi:' + self.cleaned_data["iscsi_extent_disk"]
             volume_fstype = 'iscsi'
@@ -659,10 +653,18 @@ class iSCSITargetDeviceExtentForm(ModelForm):
             grp.save()
 
             diskobj = Disk(disk_name = self.cleaned_data["iscsi_extent_disk"],
-                           disk_disks = self.cleaned_data["iscsi_extent_disk"],
+                           disk_identifier = notifier().device_to_identifier(self.cleaned_data["iscsi_extent_disk"]),
                            disk_description = 'iSCSI exported disk',
                            disk_group = grp)
             diskobj.save()
+            oExtent.iscsi_target_extent_filesize = 0
+            if self.cleaned_data["iscsi_extent_disk"].startswith("zvol"):
+                oExtent.iscsi_target_extent_type = 'ZVOL'
+                oExtent.iscsi_target_extent_path = '/dev/%s' % self.cleaned_data["iscsi_extent_disk"]
+            else:
+                oExtent.iscsi_target_extent_type = 'Disk'
+                oExtent.iscsi_target_extent_path = str(diskobj.id)
+            oExtent.save()
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))

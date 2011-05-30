@@ -12,7 +12,7 @@
     <tr class="{% cycle 'odd' 'even' %}" id="{{ e.id }}">
         <td>{{ e.iscsi_target_extent_name }}</td>
         <td>{{ e.iscsi_target_extent_type }}</td>
-        <td>{{ e.iscsi_target_extent_path }}</td>
+        <td>{{ e.get_device }}</td>
         <td>
             <button dojoType="dijit.form.Button" type="button">
                 {% trans "Edit" %}
