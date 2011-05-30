@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-19 09:16+0200\n"
-"Last-Translator: realhuh <real_huh@yahoo.com.sg>\n"
+"PO-Revision-Date: 2011-05-30 03:59+0200\n"
+"Last-Translator: ptaryasw <ptaryasw@isi-dps.ac.id>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: choices.py:35
 msgid "Plain"
-msgstr ""
+msgstr "Polos"
 
 #: choices.py:36 system/models.py:227 templates/system/settings.html:9
 msgid "SSL"
@@ -239,8 +239,8 @@ msgstr "Local User"
 msgid "Normal"
 msgstr "Normal"
 
+# Full as an option on Log Level
 #: choices.py:186
-#, fuzzy
 msgid "Full"
 msgstr "Penuh"
 
@@ -560,24 +560,24 @@ msgstr ""
 #: account/nav.py:9 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:85 templates/account/index2.html:7
 msgid "Change Password"
-msgstr ""
+msgstr "Ganti Password"
 
 #: account/nav.py:17 templates/account/changeform.html:25
 #: templates/account/index2.html:4
 msgid "Change Admin User"
-msgstr ""
+msgstr "Ganti Admin"
 
 #: account/nav.py:33 templates/account/index2.html:2
 msgid "My Account"
-msgstr ""
+msgstr "Akun Saya"
 
 #: account/nav.py:41
 msgid "View All Users"
-msgstr ""
+msgstr "Lihat Semua Pengguna"
 
 #: account/nav.py:54
 msgid "View All Groups"
-msgstr ""
+msgstr "Lihat Semua Grup"
 
 #: account/views.py:79 account/views.py:94 account/views.py:105
 #: account/views.py:120
@@ -4312,11 +4312,11 @@ msgstr ""
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"
-msgstr ""
+msgstr "Grafik Tahunan"
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr ""
+msgstr "Umum"
 
 #: templates/system/settings.html:11
 msgid "Firmware Update"
@@ -4332,7 +4332,7 @@ msgstr ""
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
-msgstr ""
+msgstr "Versi OS"
 
 #: templates/system/system_info.html:12
 msgid "Platform"
@@ -4344,11 +4344,11 @@ msgstr ""
 
 #: templates/system/system_info.html:20
 msgid "Uptime"
-msgstr ""
+msgstr "Waktu hidup"
 
 #: templates/system/system_info.html:24
 msgid "Load Average"
-msgstr ""
+msgstr "Beban Rata-rata"
 
 #: templates/system/system_info.html:28
 msgid "FreeNAS Build"

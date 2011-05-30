@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-26 23:08+0200\n"
+"PO-Revision-Date: 2011-05-29 18:01+0200\n"
 "Last-Translator: raulfg <raulfg3@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
@@ -121,7 +121,7 @@ msgstr "Nivel"
 
 #: choices.py:87
 msgid "Minimum power usage with Standby (spindown)"
-msgstr "Uso mínimo de energia en modo espera (detención de disco)"
+msgstr "Uso mínimo de energia en modo \"Standby\" (detención de disco)"
 
 #: choices.py:88 choices.py:89
 msgid "Intermediate power usage with Standby"
@@ -259,7 +259,7 @@ msgstr "Time Machine"
 
 #: choices.py:195
 msgid "No case folding"
-msgstr "No cajas desplegables"
+msgstr "Sin cajas desplegables"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
@@ -267,11 +267,11 @@ msgstr "Nombres en minúsculas en ambas direcciones"
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
-msgstr "El Cliente ve minúsculas, el servidor ve mayúsculas"
+msgstr "El cliente ve minúsculas, el servidor ve mayúsculas"
 
 #: choices.py:199
 msgid "Client sees uppercase, server sees lowercase"
-msgstr "El Cliente ve mayúsculas, el servidor ve minúsculas"
+msgstr "El cliente ve mayúsculas, el servidor ve minúsculas"
 
 #: choices.py:203
 msgid "File"
@@ -474,7 +474,7 @@ msgstr "Este campo es obligatorio."
 
 #: account/forms.py:418
 msgid "Member users"
-msgstr "Usuarios miembro"
+msgstr "Usuarios miembros"
 
 #: account/forms.py:436
 msgid "Auxiliary groups"

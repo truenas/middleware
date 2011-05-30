@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-26 02:59+0200\n"
-"Last-Translator: delphij <d@delphij.net>\n"
+"PO-Revision-Date: 2011-05-30 07:34+0200\n"
+"Last-Translator: Frnas_jon <zhszhnt@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -3080,15 +3080,15 @@ msgstr ""
 
 #: system/models.py:58
 msgid "NTP server 1"
-msgstr ""
+msgstr "网络授时服务器 1"
 
 #: system/models.py:63
 msgid "NTP server 2"
-msgstr ""
+msgstr "网络授时服务器 2"
 
 #: system/models.py:69
 msgid "NTP server 3"
-msgstr ""
+msgstr "网络授时服务器 3"
 
 #: system/models.py:74 system/nav.py:23 templates/system/settings.html:2
 msgid "Settings"
@@ -3197,7 +3197,7 @@ msgstr ""
 
 #: system/models.py:174
 msgid "Organization"
-msgstr ""
+msgstr "组织"
 
 #: system/models.py:175
 msgid "Organization Name (eg, company)"
@@ -3321,15 +3321,16 @@ msgstr ""
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:71
 msgid "Delete Group"
-msgstr ""
+msgstr "删除组"
 
 #: templates/account/bsdgroups.html:37
+#, fuzzy
 msgid "There are no user defined groups."
-msgstr ""
+msgstr "组内暂无成员用户"
 
 #: templates/account/bsdgroups.html:43
 msgid "Add New Group"
-msgstr ""
+msgstr "新建用户组"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:62
 msgid "Home"
@@ -3366,15 +3367,15 @@ msgstr ""
 
 #: templates/common/menubar2.html:8
 msgid "System"
-msgstr ""
+msgstr "系统面板"
 
 #: templates/common/menubar2.html:13
 msgid "Network"
-msgstr ""
+msgstr "网络面板"
 
 #: templates/common/menubar2.html:18
 msgid "Storage"
-msgstr ""
+msgstr "存储器面板"
 
 #: templates/common/menubar2.html:23
 msgid "Sharing"
@@ -3412,7 +3413,7 @@ msgstr ""
 #: templates/storage/dataset_confirm_delete2.html:7
 #: templates/storage/snapshot_confirm_delete2.html:7
 msgid "Are you sure you want to delete?"
-msgstr ""
+msgstr "你确定需要删除吗?"
 
 #: templates/freeadmin/generic_model_delete.html:10
 #: templates/storage/dataset_confirm_delete2.html:10
@@ -3491,7 +3492,7 @@ msgstr ""
 msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
-msgstr ""
+msgstr "你确认要<strong>关闭FreeNAS服务器</strong>吗?"
 
 #: templates/freeadmin/index.html:66
 msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
@@ -3503,11 +3504,11 @@ msgstr ""
 
 #: templates/freeadmin/index.html:71
 msgid "Community Forum"
-msgstr ""
+msgstr "FreeNAS社区论坛"
 
 #: templates/freeadmin/index.html:75
 msgid "IRC (Chat)"
-msgstr ""
+msgstr "IRC(聊天)"
 
 #: templates/freeadmin/index.html:77
 msgid "#freenas on freenode"
@@ -3547,7 +3548,7 @@ msgstr ""
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
-msgstr ""
+msgstr "自动配置IPv6"
 
 #: templates/network/interface.html:33 templates/network/lagg_members2.html:17
 #: templates/network/staticroute.html:18 templates/network/vlan.html:19
@@ -3635,7 +3636,7 @@ msgstr ""
 
 #: templates/network/staticroute.html:26
 msgid "Delete Static Route"
-msgstr ""
+msgstr "删除静态路由"
 
 #: templates/network/staticroute.html:33
 msgid "No static route defined"
@@ -3692,7 +3693,7 @@ msgstr ""
 
 #: templates/registration/logout.html:8
 msgid "You are now logged out."
-msgstr ""
+msgstr "现在，你已经退出了:-0"
 
 #: templates/registration/logout.html:8
 msgid "Log back in"
@@ -3775,11 +3776,11 @@ msgstr ""
 
 #: templates/services/index2.html:127
 msgid "ISCSI Settings"
-msgstr ""
+msgstr "iSCSI 设置"
 
 #: templates/services/iscsi.html:3
 msgid "iSCSI Management"
-msgstr ""
+msgstr "iSCSI 管理"
 
 #: templates/services/iscsi.html:7
 msgid "Targets"
@@ -4250,7 +4251,7 @@ msgstr ""
 
 #: templates/system/config.html:6
 msgid "Upload Config"
-msgstr ""
+msgstr "上传配置文件"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
