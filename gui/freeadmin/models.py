@@ -31,6 +31,7 @@ from south.modelsinspector import add_introspection_rules
 
 add_introspection_rules([], ["^freeadmin\.models\.UserField"])
 add_introspection_rules([], ["^freeadmin\.models\.GroupField"])
+add_introspection_rules([], ["^freeadmin\.models\.PathField"])
 class UserField(models.CharField):
     def formfield(self, **kwargs):
         #FIXME: Move to top (causes cycle-dependency)
