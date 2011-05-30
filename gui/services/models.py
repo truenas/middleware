@@ -418,8 +418,12 @@ class iSCSITargetExtent(Model):
             except:
                 return self.iscsi_target_extent_path
     def delete(self):
-        if self.iscsi_target_extent_path[:5] == '/dev/':
-            expected_iscsi_volume_name = 'iscsi:' + self.iscsi_target_extent_path[5:]
+        if self.iscsi_target_extent_type in ("Disk", "ZVOL"):
+            if self.iscsi_target_extent_type == "Disk":
+                ident = Disk.objects.get(id=self.iscsi_target_extent_path).disk_identifier
+                expected_iscsi_volume_name = 'iscsi:' + notifier().identifier_to_device(ident)
+            else:
+                expected_iscsi_volume_name = 'iscsi:' + self.iscsi_target_extent_path[5:]
             vol = Volume.objects.get(vol_name = expected_iscsi_volume_name)
             vol.delete()
         super(iSCSITargetExtent, self).delete()

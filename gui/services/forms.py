@@ -639,7 +639,9 @@ class iSCSITargetDeviceExtentForm(ModelForm):
     def save(self, commit=True):
         oExtent = super(iSCSITargetDeviceExtentForm, self).save(commit=False)
         if commit:
-            notifier().label_disk("extent_%s" % self.cleaned_data["iscsi_extent_disk"], self.cleaned_data["iscsi_extent_disk"])
+            # label it only if it is a real disk
+            if not self.cleaned_data["iscsi_extent_disk"].startswith("zvol"):
+                notifier().label_disk("extent_%s" % self.cleaned_data["iscsi_extent_disk"], self.cleaned_data["iscsi_extent_disk"])
             # Construct a corresponding volume.
             volume_name = 'iscsi:' + self.cleaned_data["iscsi_extent_disk"]
             volume_fstype = 'iscsi'

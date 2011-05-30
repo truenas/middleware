@@ -76,7 +76,7 @@ class ISCSIDevice(TreeNode):
     def __init__(self, *args, **kwargs):
 
         super(ISCSIDevice, self).__init__(*args, **kwargs)
-        for ext in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__exact='Disk').order_by('-id'):
+        for ext in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__in=['Disk','ZVOL']).order_by('-id'):
             nav = TreeNode()
             nav.name = unicode(ext)
             nav.view = u'freeadmin_model_edit'
