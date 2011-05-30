@@ -209,6 +209,8 @@ def disks_datagrid_json(request, vid):
         for f in data._meta.fields:
             if isinstance(f, dmodels.ImageField) or isinstance(f, dmodels.FileField): # filefields can't be json serialized
                 ret[f.attname] = unicode(getattr(data, f.attname))
+            elif f.attname == 'disk_name':
+                ret[f.attname] = notifier().identifier_to_device(data.disk_identifier)
             else:
                 ret[f.attname] = getattr(data, f.attname) #json_encode() this?
         #fields = dir(data.__class__) + ret.keys()
