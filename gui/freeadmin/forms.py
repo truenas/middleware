@@ -108,3 +108,6 @@ class GroupField(forms.ChoiceField):
         if FreeNAS_Group(group) == None:
             raise forms.ValidationError(_("The group %s is not valid.") % group)
         return group
+
+class PathField(forms.CharField):
+    widget = DirectoryBrowser()
