@@ -1516,7 +1516,7 @@ class notifier:
 
     def device_to_identifier(self, name):
         name = str(name)
-        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
+        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE)
         p1.wait()
         output = p1.communicate()[0][:-1]
         doc = libxml2.parseDoc(output)
@@ -1532,7 +1532,7 @@ class notifier:
         if len(search) > 0:
             return "{label}%s" % search[0].content
 
-        p1 = Popen(["smartctl", "-i", "/dev/%s" % name], stdout=PIPE, stdin=PIPE)
+        p1 = Popen(["smartctl", "-i", "/dev/%s" % name], stdout=PIPE)
         p1.wait()
         output = p1.communicate()[0]
         search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I)
@@ -1542,8 +1542,7 @@ class notifier:
         return "{devicename}%s" % name
 
     def identifier_to_device(self, ident):
-        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
-        p1.wait()
+        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE)
         output = p1.communicate()[0][:-1]
         doc = libxml2.parseDoc(output)
 
@@ -1565,12 +1564,10 @@ class notifier:
                 return search[0].content
 
         elif tp == 'serial':
-            p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE, stdin=PIPE)
-            p1.wait()
+            p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE)
             output = p1.communicate()[0]
             for devname in output.split(' '):
-                p1 = Popen(["smartctl", "-i", "/dev/%s" % devname], stdout=PIPE, stdin=PIPE)
-                p1.wait()
+                p1 = Popen(["smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
                 output = p1.communicate()[0]
                 search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I)
                 if search and search.group("serial") == value:
@@ -1583,8 +1580,7 @@ class notifier:
             raise NotImplementedError
 
     def identifier_to_partition(self, ident):
-        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
-        p1.wait()
+        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE)
         output = p1.communicate()[0][:-1]
         doc = libxml2.parseDoc(output)
 
@@ -1611,8 +1607,7 @@ class notifier:
             raise NotImplementedError
 
     def swap_from_device(self, device):
-        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
-        p1.wait()
+        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE)
         output = p1.communicate()[0][:-1]
         doc = libxml2.parseDoc(output)
 
@@ -1622,8 +1617,7 @@ class notifier:
 
     def swap_from_identifier(self, ident):
         device = self.identifier_to_device(ident)
-        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
-        p1.wait()
+        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE)
         output = p1.communicate()[0][:-1]
         doc = libxml2.parseDoc(output)
 
