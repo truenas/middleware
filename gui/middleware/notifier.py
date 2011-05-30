@@ -1210,7 +1210,7 @@ class notifier:
 
         return False
 
-    def label_disk(self, label, dev, fstype):
+    def label_disk(self, label, dev, fstype=None):
         """
         Label the disk being manually imported
         Currently UFS, NTFS and MSDOSFS are supported
@@ -1228,6 +1228,11 @@ class notifier:
                 return True
         elif fstype == 'MSDOSFS':
             p1 = Popen(["mlabel", "-i", dev, "::%s" % label], stdin=PIPE, stdout=PIPE)
+            p1.wait()
+            if p1.returncode == 0:
+                return True
+        elif fstype is None:
+            p1 = Popen(["geom", "label", "create", label, dev], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
@@ -1510,6 +1515,7 @@ class notifier:
         c.close()
 
     def device_to_identifier(self, name):
+        name = str(name)
         p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE, stdin=PIPE)
         p1.wait()
         output = p1.communicate()[0][:-1]
@@ -1522,7 +1528,7 @@ class notifier:
         if len(search) > 0:
             return "{uuid}%s" % search[0].content
 
-        search = doc.xpathEval("//class[name = 'LABEL']/geom[name = '%s']/provider[first()]//name" % name)
+        search = doc.xpathEval("//class[name = 'LABEL']/geom[name = '%s']/provider/name" % name)
         if len(search) > 0:
             return "{label}%s" % search[0].content
 
