@@ -1556,7 +1556,9 @@ class notifier:
         if tp == 'uuid':
             search = doc.xpathEval("//class[name = 'PART']/geom//config[rawuuid = '%s']/../../name" % value)
             if len(search) > 0:
-                return search[0].content
+                for entry in search:
+                    if not entry.content.startswith("label"):
+                        return entry.content
 
         elif tp == 'label':
             search = doc.xpathEval("//class[name = 'LABEL']/geom//provider[name = '%s']/../name" % value)
