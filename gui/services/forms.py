@@ -641,6 +641,7 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         if commit:
             # label it only if it is a real disk
             if not self.cleaned_data["iscsi_extent_disk"].startswith("zvol"):
+                notifier().unlabel_disk(str(self.cleaned_data["iscsi_extent_disk"]))
                 notifier().label_disk("extent_%s" % self.cleaned_data["iscsi_extent_disk"], self.cleaned_data["iscsi_extent_disk"])
             # Construct a corresponding volume.
             volume_name = 'iscsi:' + self.cleaned_data["iscsi_extent_disk"]

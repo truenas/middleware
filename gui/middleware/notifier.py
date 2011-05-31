@@ -529,6 +529,10 @@ class notifier:
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
                       "| awk '{print int($3 / (1024*1024)) - 3;}'`" % (devname, devname))
 
+    def unlabel_disk(self, devname):
+        # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
+        self.__gpt_unlabeldisk(devname)
+
     def __create_zfs_volume(self, c, z_id, z_name, swapsize, force4khack=False):
         """Internal procedure to create a ZFS volume identified by volume id"""
         z_vdev = ""
