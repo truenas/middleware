@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:36-0700\n"
-"PO-Revision-Date: 2011-05-28 20:16+0200\n"
+"PO-Revision-Date: 2011-05-31 03:39+0200\n"
 "Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -351,7 +351,7 @@ msgstr "可容忍值"
 
 #: choices.py:252
 msgid "Required"
-msgstr "最低需求"
+msgstr "必須"
 
 #: choices.py:279 choices.py:285
 msgid "Inherit"
@@ -3748,9 +3748,6 @@ msgstr "密碼已變更"
 msgid "Password change"
 msgstr "變更密碼"
 
-# Singular
-# 請更正以下錯誤
-# Plural
 # 請更正以下錯誤
 #: templates/registration/password_change_form.html:13
 msgid "Please correct the error below."
