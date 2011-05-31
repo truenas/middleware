@@ -1536,7 +1536,7 @@ class notifier:
         if len(search) > 0:
             return "{label}%s" % search[0].content
 
-        p1 = Popen(["smartctl", "-i", "/dev/%s" % name], stdout=PIPE)
+        p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % name], stdout=PIPE)
         p1.wait()
         output = p1.communicate()[0]
         search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I)
@@ -1573,7 +1573,7 @@ class notifier:
             p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE)
             output = p1.communicate()[0]
             for devname in output.split(' '):
-                p1 = Popen(["smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
+                p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
                 output = p1.communicate()[0]
                 search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I)
                 if search and search.group("serial") == value:
