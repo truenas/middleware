@@ -81,9 +81,9 @@
         <tr class="{% cycle 'odd' 'even' %}">
             <td>{{ volname }}</td>
             <td>/dev/zvol/{{ zvol }}</td>
-            <td>{{ attrs.used }}</td>
-            <td>{{ attrs.available }}</td>
             <td>-</td>
+            <td>-</td>
+            <td>{{ attrs.volsize }}</td>
             <td>-</td>
             <td>
                 <button id="delZVolBtn{{ forloop.counter }}" dojoType="dijit.form.Button" type="button"
