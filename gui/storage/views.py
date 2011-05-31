@@ -512,8 +512,8 @@ def disk_replacement(request, vid, object_id):
             devname = form.cleaned_data['volume_disks']
             if devname != fromdisk.disk_name:
                 disk = models.Disk()
-                disk.disk_disks = devname
                 disk.disk_name = devname
+                disk.disk_identifier = "{devicename}%s" % devname
                 disk.disk_group = fromdisk.disk_group
                 disk.disk_description = fromdisk.disk_description
                 disk.save()

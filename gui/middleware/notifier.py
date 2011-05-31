@@ -861,14 +861,16 @@ class notifier:
         # TODO: Test on real hardware to see if ashift would persist across replace
         volume = volume[1]
         c.execute("SELECT disk_identifier FROM storage_disk WHERE id = ?", (from_diskid,))
-        fromdev = self.indeitifier_to_device(c.fetchone()[0])
-        fromdev_swap = self.swap_from_device(fromdev)
+        fromident = c.fetchone()[0]
+        fromdev = self.identifier_to_partition(fromident)
+        fromdev_swap = self.swap_from_identifier(fromident)
+
         c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE id = ?", (to_diskid,))
         disk = c.fetchone()
         todev = self.identifier_to_device(disk[0])
-        todev_swap = self.swap_from_device(todev)
 
-        self.__system('/sbin/swapoff %s' % (fromdev_swap))
+        if fromdev_swap:
+            self.__system('/sbin/swapoff /dev/%s' % (fromdev_swap))
 
         if from_diskid == to_diskid:
             self.__system('/sbin/zpool offline %s %s' % (volume, fromdev))
@@ -876,7 +878,20 @@ class notifier:
         self.__gpt_labeldisk(type = "freebsd-zfs", devname = todev,
                              label = "", swapsize=swapsize)
 
-        self.__system('/sbin/swapon %s' % (todev_swap))
+        # The identifier {uuid} should now be available
+        ident = self.device_to_identifier(todev)
+        if ident != disk[0]:
+            c2, conn = self.__open_db(True)
+            c2.execute("UPDATE storage_disk SET disk_identifier = ? WHERE disk_identifier = ?", (ident, disk[0]))
+            c2.close()
+            conn.commit()
+        else:
+            raise Exception
+        todev = self.identifier_to_partition(ident)
+        todev_swap = self.swap_from_identifier(ident)
+
+        if todev_swap:
+            self.__system('/sbin/swapon /dev/%s' % (todev_swap))
 
         if from_diskid == to_diskid:
             self.__system('/sbin/zpool online %s %s' % (volume, fromdev))
@@ -906,11 +921,11 @@ class notifier:
         # Remove the swap partition for another time to be sure.
         # TODO: swap partition should be trashed instead.
         devname_swap = self.swap_from_device(devname)
-        self.__system('/sbin/swapoff %s' % (devname_swap))
+        self.__system('/sbin/swapoff /dev/%s' % (devname_swap))
 
         ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume, devname))
         # TODO: This operation will cause damage to disk data which should be limited
-        self.__gpt_unlabeldisk(label)
+        self.__gpt_unlabeldisk(devname)
         return ret
 
     def zfs_add_spare(self, volume_id, disk_id):
