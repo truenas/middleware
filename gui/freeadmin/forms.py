@@ -60,6 +60,10 @@ class DirectoryBrowser(widgets.Widget):
 class UserField(forms.ChoiceField):
     widget = widgets.Select()
 
+    def __init__(self, *args, **kwargs):
+        kwargs.pop('max_length', None)
+        super(UserField, self).__init__(*args, **kwargs)
+
     def _reroll(self):
         if len(FreeNAS_Users()) > 500:
             if self.initial:
@@ -86,6 +90,10 @@ class UserField(forms.ChoiceField):
 
 class GroupField(forms.ChoiceField):
     widget = widgets.Select()
+
+    def __init__(self, *args, **kwargs):
+        kwargs.pop('max_length', None)
+        super(GroupField, self).__init__(*args, **kwargs)
 
     def _reroll(self):
         if len(FreeNAS_Groups()) > 500:

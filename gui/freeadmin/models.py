@@ -37,24 +37,24 @@ class UserField(models.CharField):
         #FIXME: Move to top (causes cycle-dependency)
         from freeadmin.forms import UserField as UF
         defaults = {'form_class': UF}
-        defaults.update(kwargs)
-        return super(UserField, self).formfield(**defaults)
+        kwargs.update(defaults)
+        return super(UserField, self).formfield(**kwargs)
 
 class GroupField(models.CharField):
     def formfield(self, **kwargs):
         #FIXME: Move to top (causes cycle-dependency)
         from freeadmin.forms import GroupField as GF
         defaults = {'form_class': GF}
-        defaults.update(kwargs)
-        return super(GroupField, self).formfield(**defaults)
+        kwargs.update(defaults)
+        return super(GroupField, self).formfield(**kwargs)
 
 class PathField(models.CharField):
     def formfield(self, **kwargs):
         #FIXME: Move to top (causes cycle-dependency)
         from freeadmin.forms import PathField as PF
         defaults = {'form_class': PF}
-        defaults.update(kwargs)
-        return super(PathField, self).formfield(**defaults)
+        kwargs.update(defaults)
+        return super(PathField, self).formfield(**kwargs)
 
 class FreeAdminWrapper(object):
 
