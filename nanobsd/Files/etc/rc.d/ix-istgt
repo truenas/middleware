@@ -124,11 +124,17 @@ generate_istgt_config()
 		echo "  UnitOnline yes"
 		echo "  BlockLength ${iscsi_target_logical_blocksize}"
 		echo "  QueueDepth ${iscsi_target_queue_depth}"
-		local iscsi_target_extent_path iscsi_target_extent_filesize iscsi_target_lun
+		local iscsi_target_extent_path iscsi_target_extent_filesize iscsi_target_lun iscsi_target_extent_type
 		iscsi_target_lun=0
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT e.iscsi_target_extent_path, e.iscsi_target_extent_filesize FROM services_iscsitargetextent AS e LEFT OUTER JOIN services_iscsitargettoextent AS t ON e.id = t.iscsi_extent_id WHERE t.iscsi_target_id = ${id}" | \
-		while read iscsi_target_extent_path iscsi_target_extent_filesize; do
-			echo -n "  LUN${iscsi_target_lun} Storage ${iscsi_target_extent_path}"
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT e.iscsi_target_extent_path, e.iscsi_target_extent_filesize, iscsi_target_extent_type FROM services_iscsitargetextent AS e LEFT OUTER JOIN services_iscsitargettoextent AS t ON e.id = t.iscsi_extent_id WHERE t.iscsi_target_id = ${id}" | \
+		while read iscsi_target_extent_path iscsi_target_extent_filesize iscsi_target_extent_type; do
+            if [ "${iscsi_target_extent_type}" = "Disk" ]; then
+                ident=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT disk_identifier FROM storage_disk WHERE id = ${iscsi_target_extent_path}")
+                devname=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py identifier_to_device "${ident}")
+			    echo -n "  LUN${iscsi_target_lun} Storage /dev/${devname}"
+            else
+			    echo -n "  LUN${iscsi_target_lun} Storage ${iscsi_target_extent_path}"
+            fi
 			if [ -c "${iscsi_target_extent_path}" ]; then
 				echo " auto"
 			elif [ "${iscsi_target_extent_filesize}" = "0" ]; then
