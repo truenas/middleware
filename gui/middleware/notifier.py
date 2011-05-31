@@ -916,7 +916,7 @@ class notifier:
         # TODO: Handle with 4khack aftermath
         volume = volume[1]
         c.execute("SELECT disk_identifier FROM storage_disk WHERE id = ?", (disk_id,))
-        devname = self.identifier_to_device(c.fetchone()[0])
+        devname = self.identifier_to_partition(c.fetchone()[0])
 
         # Remove the swap partition for another time to be sure.
         # TODO: swap partition should be trashed instead.
