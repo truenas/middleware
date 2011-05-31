@@ -589,20 +589,28 @@ class iSCSITargetDeviceExtentForm(ModelForm):
             widget=forms.Select(attrs=attrs_dict), label = _('Disk device'))
     def __init__(self, *args, **kwargs):
         super(iSCSITargetDeviceExtentForm, self).__init__(*args, **kwargs)
-        self.fields['iscsi_extent_disk'].choices = self._populate_disk_choices()
+        print kwargs
+        if kwargs.has_key("instance"):
+            self.fields['iscsi_extent_disk'].choices = self._populate_disk_choices(exclude=self.instance)
+        else:
+            self.fields['iscsi_extent_disk'].choices = self._populate_disk_choices()
         self.fields['iscsi_extent_disk'].choices.sort()
     # TODO: This is largely the same with disk wizard.
-    def _populate_disk_choices(self):
+    def _populate_disk_choices(self, exclude=None):
         from os import popen
         import re
     
         diskchoices = dict()
     
-        extents = [i[0] for i in models.iSCSITargetExtent.objects.values_list('iscsi_target_extent_path')]
+        if exclude:
+            zextents = [i[0] for i in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='ZVOL').filter(id=exclude.id).values_list('iscsi_target_extent_path')]
+            dextents = [i[0] for i in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk').filter(id=exclude.id).values_list('iscsi_target_extent_path')]
+        else:
+            zextents = []
         for volume in Volume.objects.filter(vol_fstype__exact='ZFS'):
             zvols = notifier().list_zfs_vols(volume.vol_name)
             for zvol, attrs in zvols.items():
-                if "/dev/zvol/"+zvol not in extents:
+                if "/dev/zvol/"+zvol not in zextents:
                     diskchoices["zvol/"+zvol] = "%s (%s)" % (zvol, attrs['available'])
         # Grab disk list
         # NOTE: This approach may fail if device nodes are not accessible.
@@ -625,12 +633,13 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
         rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
         if rootdev_base != None:
-            try:
-                del diskchoices[rootdev_base.group(0)]
-            except:
-                pass
+            diskchoices.pop(rootdev_base.group(0), None)
         # Exclude what's already added
-        for devname in [ notifier().identifier_to_device(x['disk_identifier']) for x in Disk.objects.all().values('disk_identifier')]:
+        if exclude:
+            disks = Disk.objects.exclude(id__in=dextents).values('disk_identifier')
+        else:
+            disks = Disk.objects.values('disk_identifier')
+        for devname in [ notifier().identifier_to_device(x['disk_identifier']) for x in disks]:
             diskchoices.pop(devname, None)
         return diskchoices.items()
     class Meta:
