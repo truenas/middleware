@@ -29,18 +29,37 @@
 		{{ u.bsdusr_shell }}
 	    </td>
 	    <td>
-		<button dojoType="dijit.form.Button" type="button"
-                    onClick="editObject('{% trans "Change Password" %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserPasswordForm" %}?deletable=false', [this,]);">{% trans "Change Password" %}</button>
+                <button dojoType="dijit.form.Button" type="button">
+                    {% trans "Change Password" %}
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Change Password"|force_escape %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserPasswordForm" %}?deletable=false', [this,]);
+                    </script>
+                </button>
 	    </td>
 	    <td>
 		{% if not u.bsdusr_builtin %}
-                <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Modify User" %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id %}?deletable=false', [this,]);">{% trans "Modify User" %}</button>
-                <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Modify User" %}', '{% url account_bsduser_groups object_id=u.id %}', [this,]);">{% trans "Auxiliary Groups" %}</button>
+                <button dojoType="dijit.form.Button" type="button">
+                    {% trans "Modify User" %}
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Modify User"|force_escape %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id %}?deletable=false', [this,]);
+                    </script>
+                </button>
+                <button dojoType="dijit.form.Button" type="button">
+                    {% trans "Auxiliary Groups" %}
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Modify User"|force_escape %}', '{% url account_bsduser_groups object_id=u.id %}', [this,]);
+                    </script>
+                </button>
 		{% endif %}
 	    </td>
 	    <td>
 		{% if not u.bsdusr_builtin %}
-                <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Delete User" %}', '{% url freeadmin_model_delete app='account',model='bsdUsers',oid=u.id %}', [this,]);">{% trans "Remove User" %}</button>
+                <button dojoType="dijit.form.Button" type="button">
+                    {% trans "Remove User" %}
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Delete User"|force_escape %}', '{% url freeadmin_model_delete app='account',model='bsdUsers',oid=u.id %}', [this,]);
+                    </script>
+                </button>
 		{% endif %}
 	    </td>
 	</tr>
@@ -51,7 +70,14 @@
 	{% endfor %}
 	<tr>
 	    <td colspan="8">
-                <div style="padding:12px;"><button dojoType="dijit.form.Button" type="button" onClick="addObject('{% trans "Add New User" %}', '{% url freeadmin_model_add app="account",model="bsdUsers" %}', [this,]);">{% trans "Add New User" %}</button></div>
+                <div style="padding:12px;">
+                    <button dojoType="dijit.form.Button" type="button">
+                        {% trans "Add New User" %}
+                        <script type="dojo/method" event="onClick" args="evt">
+                            addObject('{% trans "Add New User"|force_escape %}', '{% url freeadmin_model_add app="account",model="bsdUsers" %}', [this,]);
+                        </script>
+                    </button>
+                </div>
 	    </td>
 	</tr>
     </tbody>
@@ -83,20 +109,45 @@
 		{{ u.bsdusr_shell }}
 	    </td>
 	    <td>
-                <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Change Password" %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserPasswordForm" %}?deletable=false', [this,]);">{% trans "Change Password" %}</button>
+                <button dojoType="dijit.form.Button" type="button">
+                    {% trans "Change Password" %}
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Change Password"|force_escape %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserPasswordForm" %}?deletable=false', [this,]);
+                    </script>
+                </button>
 	    </td>
 	    <td>
-                <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Change E-mail" %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserEmailForm" %}?deletable=false', [this,]);">{% trans "Change E-mail" %}</button>
+                <button dojoType="dijit.form.Button" type="button">
+                    {% trans "Change E-mail" %}
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Change E-mail"|force_escape %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id,mf="bsdUserEmailForm" %}?deletable=false', [this,]);
+                    </script>
+                </button>
 	    </td>
 	    <td>
 		{% if not u.bsdusr_builtin %}
-                <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Modify User" %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id %}?deletable=false', [this,]);">{% trans "Modify User" %}</button>
-                <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Modify User" %}', '{% url account_bsduser_groups object_id=u.id %}', [this,]);">{% trans "Auxiliary Groups" %}</button>
+                <button dojoType="dijit.form.Button" type="button">
+                    {% trans "Modify User" %}
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Modify User"|force_escape %}', '{% url freeadmin_model_edit app="account",model="bsdUsers",oid=u.id %}?deletable=false', [this,]);
+                    </script>
+                </button>
+                <button dojoType="dijit.form.Button" type="button">
+                    {% trans "Auxiliary Groups" %}
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Modify User"|force_escape %}', '{% url account_bsduser_groups object_id=u.id %}', [this,]);
+                    </script>
+                </button>
 		{% endif %}
 	    </td>
 	    <td>
 		{% if not u.bsdusr_builtin %}
-                <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Remove User" %}', '{% url freeadmin_model_delete app='account',model='bsdUsers',oid=u.id %}', [this,]);">{% trans "Remove User" %}</button>
+                <button dojoType="dijit.form.Button" type="button">
+                    {% trans "Remove User" %}
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Remove User"|force_escape %}', '{% url freeadmin_model_delete app='account',model='bsdUsers',oid=u.id %}', [this,]);
+                    </script>
+                </button>
 		{% endif %}
 	    </td>
 	</tr>

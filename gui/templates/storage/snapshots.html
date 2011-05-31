@@ -18,16 +18,31 @@
 	    <td>{{ snap.used }}</td>
 	    <td>{{ snap.refer }}</td>
 	    <td>
-	    <button id="cloneSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Clone snapshot" %}', '{% url storage_clonesnap snapshot=snap.fullname %}', [this,]);"><img src="{{ STATIC_URL }}images/ui/buttons/clone_snapshot.png"></button>
+                <button id="cloneSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button">
+                    <img src="{{ STATIC_URL }}images/ui/buttons/clone_snapshot.png">
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Clone snapshot"|force_escape %}', '{% url storage_clonesnap snapshot=snap.fullname %}', [this,]);
+                    </script>
+                </button>
 <div dojoType="dijit.Tooltip" connectId="cloneSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
     <strong>{% trans "Clone snapshot" %}</strong>
 </div>
-	    <button id="delSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Destroy snapshot" %}', '{% url storage_snapshot_delete dataset=fsname snapname=snap.name %}', [this,]);"><img src="{{ STATIC_URL }}images/ui/buttons/remove_snapshot.png"></button>
+                <button id="delSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button">
+                    <img src="{{ STATIC_URL }}images/ui/buttons/remove_snapshot.png">
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Destroy snapshot"|force_escape %}', '{% url storage_snapshot_delete dataset=fsname snapname=snap.name %}', [this,]);
+                    </script>
+                </button>
 <div dojoType="dijit.Tooltip" connectId="delSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
     <strong>{% trans "Destroy snapshot" %}</strong>
 </div>
 	    {% if snap.mostrecent %}
-	    <button id="rollbackSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Rollback to this snapshot" %}', '{% url storage_snapshot_rollback dataset=fsname snapname=snap.name %}', [this,]);"><img src="{{ STATIC_URL }}images/ui/buttons/rollback_snapshot.png"></button>
+            <button id="rollbackSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button">
+                <img src="{{ STATIC_URL }}images/ui/buttons/rollback_snapshot.png">
+                <script type="dojo/method" event="onClick" args="evt">
+                    editObject('{% trans "Rollback to this snapshot"|force_escape %}', '{% url storage_snapshot_rollback dataset=fsname snapname=snap.name %}', [this,]);
+                </script>
+            </button>
 <div dojoType="dijit.Tooltip" connectId="rollbackSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
     <strong>{% trans "Rollback to this snapshot" %}</strong>
 </div>

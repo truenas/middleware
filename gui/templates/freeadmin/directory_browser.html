@@ -2,12 +2,12 @@
 <input dojoType="dijit.form.TextBox" name="{{ name }}" value="{{ value|default_if_none:"" }}" id="{{ attrs.id }}" />
 <button dojoType="dijit.form.Button" label="{% trans "Browse" %}">
     <script type="dojo/connect" event="onClick">
-    if(this.get('label') == '{% trans "Close" %}') {
+    if(this.get('label') == '{% trans "Close"|force_escape %}') {
         dojo.style('{{ attrs.id }}_container', 'display', 'none');
-        this.set('label', '{% trans "Browse" %}');
+        this.set('label', '{% trans "Browse"|force_escape %}');
      } else {
         dojo.style('{{ attrs.id }}_container', 'display', 'block');
-        this.set('label', '{% trans "Close" %}');
+        this.set('label', '{% trans "Close"|force_escape %}');
      }
      </script>
 </button>

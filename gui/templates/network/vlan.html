@@ -18,13 +18,13 @@
                <button dojoType="dijit.form.Button" type="button">
                    {% trans "Edit" %}
                <script type="dojo/method" event="onClick" args="evt">
-                   editObject('{% trans "Edit VLAN" %}', '{% url freeadmin_model_edit app="network",model="VLAN",oid=v.id %}', [this,]);
+                   editObject('{% trans "Edit VLAN"|force_escape %}', '{% url freeadmin_model_edit app="network",model="VLAN",oid=v.id %}', [this,]);
                </script>
                </button>
                <button dojoType="dijit.form.Button" type="button">
                    {% trans "Delete" %}
                <script type="dojo/method" event="onClick" args="evt">
-                   editObject('{% trans "Delete VLAN" %}', '{% url freeadmin_model_delete app="network",model="VLAN",oid=v.id %}', [this,]);
+                   editObject('{% trans "Delete VLAN"|force_escape %}', '{% url freeadmin_model_delete app="network",model="VLAN",oid=v.id %}', [this,]);
                </script>
                </button>
            </td>
@@ -39,7 +39,7 @@
            <button id="vlan_button" dojoType="dijit.form.Button" type="button">
                {% trans "Add VLAN Interface" %}
                <script type="dojo/method" event="onClick" args="evt">
-                   addObject('{% trans "Add VLAN Interface" %}', '{% url freeadmin_model_add app="network",model="VLAN" %}', [this,]);
+                   addObject('{% trans "Add VLAN Interface"|force_escape %}', '{% url freeadmin_model_add app="network",model="VLAN" %}', [this,]);
            </script>
            </button>
            </p>

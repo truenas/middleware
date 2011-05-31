@@ -17,13 +17,13 @@
               <button dojoType="dijit.form.Button" type="button">
                   {% trans "Edit" %}
               <script type="dojo/method" event="onClick" args="evt">
-                  editObject('{% trans "Edit" %}', '{% url freeadmin_model_edit app="services", model="iSCSITarget",oid=t.id %}', [this,]);
+                  editObject('{% trans "Edit"|force_escape %}', '{% url freeadmin_model_edit app="services", model="iSCSITarget",oid=t.id %}', [this,]);
               </script>
               </button>
               <button dojoType="dijit.form.Button" type="button">
                   {% trans "Delete" %}
               <script type="dojo/method" event="onClick" args="evt">
-                  editObject('{% trans "Delete" %}', '{% url freeadmin_model_delete app="services",model="iSCSITarget",oid=t.id %}', [this,]);
+                  editObject('{% trans "Delete"|force_escape %}', '{% url freeadmin_model_delete app="services",model="iSCSITarget",oid=t.id %}', [this,]);
               </script>
               </button>
 
@@ -39,7 +39,7 @@
          <button id="tgt_button" dojoType="dijit.form.Button" type="button">
              {% trans "Add Target" %}
              <script type="dojo/method" event="onClick" args="evt">
-                 addObject('{% trans "Add Target" %}', '{% url freeadmin_model_add app="services",model="iSCSITarget" %}', [this,]);
+                 addObject('{% trans "Add Target"|force_escape %}', '{% url freeadmin_model_add app="services",model="iSCSITarget" %}', [this,]);
          </script>
          </button>
          </p>

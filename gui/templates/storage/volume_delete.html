@@ -8,7 +8,12 @@
     <tr><td>{% trans "Are you sure you want to delete?" %}</td></tr>
     <tr>
         <td>
-            <button class="submitform" dojoType="dijit.form.Button" type="submit" onClick="this.set('label', '{% trans "Please wait..." %}');">{% trans "Yes" %}</button>
+            <button class="submitform" dojoType="dijit.form.Button" type="submit">
+                {% trans "Yes" %}
+                <script type="dojo/method" event="onClick" args="evt">
+                    this.set('label', '{% trans "Please wait..."|force_escape %}');
+                </script>
+            </button>
 
             <button dojoType="dijit.form.Button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
         </td>

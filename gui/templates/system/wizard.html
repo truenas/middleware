@@ -10,7 +10,11 @@
 </table>
 <input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
 {{ previous_fields|safe }}
-<button class="submitform" dojoType="dijit.form.Button" type="submit" onClick="this.set('label', '{% trans "Please wait..." %}');">
-    {% trans "OK" %}</button>
+<button class="submitform" dojoType="dijit.form.Button" type="submit">
+    {% trans "OK" %}
+    <script type="dojo/method" event="onClick" args="evt">
+        this.set('label', '{% trans "Please wait..."|force_escape %}');
+    </script>
+</button>
 </form>
 </div>

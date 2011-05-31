@@ -14,8 +14,18 @@
 	<td>{{ nic.lagg_ordernum }}</td>
 	<td>{{ nic.lagg_deviceoptions }}</td>
 	<td>
-        <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Edit" %}', '{{ nic.get_edit_url }}', [this,]);">{% trans "Edit" %}</button>
-	    <button dojoType="dijit.form.Button" type="button" onClick="editObject('{% trans "Delete" %}', '{{ nic.get_delete_url }}', [this,]);">Delete</button>
+            <button dojoType="dijit.form.Button" type="button">
+                {% trans "Edit" %}
+                <script type="dojo/method" event="onClick" args="evt">
+                    editObject('{% trans "Edit"|force_escape %}', '{{ nic.get_edit_url }}', [this,]);
+                </script>
+            </button>
+            <button dojoType="dijit.form.Button" type="button">
+                Delete
+                <script type="dojo/method" event="onClick" args="evt">
+                    editObject('{% trans "Delete"|force_escape %}', '{{ nic.get_delete_url }}', [this,]);
+                </script>
+            </button>
 	</td>
     </tr>
         {% empty %}
@@ -28,7 +38,7 @@
               <button dojoType="dijit.form.Button" type="button">
                   {% trans "Add LAGG Member" %}
                   <script type="dojo/method" event="onClick" args="evt">
-                      addObject('{% trans "Add LAGG Member" %}', '{% url freeadmin_model_add app="network",model="LAGGInterfaceMembers" %}', [this,]);
+                      addObject('{% trans "Add LAGG Member"|force_escape %}', '{% url freeadmin_model_add app="network",model="LAGGInterfaceMembers" %}', [this,]);
               </script>
               </button>
               </p>

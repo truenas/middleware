@@ -19,13 +19,13 @@
                 <button dojoType="dijit.form.Button" type="button">
                     {% trans "Edit" %}
                 <script type="dojo/method" event="onClick" args="evt">
-                    editObject('{% trans "Edit" %}', '{% url freeadmin_model_edit app="services",model="iSCSITargetAuthorizedInitiator",oid=ai.id %}', [this,]);
+                    editObject('{% trans "Edit"|force_escape %}', '{% url freeadmin_model_edit app="services",model="iSCSITargetAuthorizedInitiator",oid=ai.id %}', [this,]);
                 </script>
                 </button>
                 <button dojoType="dijit.form.Button" type="button">
                     {% trans "Delete" %}
                 <script type="dojo/method" event="onClick" args="evt">
-                    editObject('{% trans "Delete" %}', '{% url freeadmin_model_delete app="services",model="iSCSITargetAuthorizedInitiator",oid=ai.id %}', [this,]);
+                    editObject('{% trans "Delete"|force_escape %}', '{% url freeadmin_model_delete app="services",model="iSCSITargetAuthorizedInitiator",oid=ai.id %}', [this,]);
                 </script>
                 </button>
             </td>
@@ -41,7 +41,7 @@
             <button id="access_button" dojoType="dijit.form.Button" type="button">
                 {% trans "Add Authorized Initiator" %}
                 <script type="dojo/method" event="onClick" args="evt">
-                    addObject('{% trans "Add Authorized Initiator" %}', '{% url freeadmin_model_add app="services",model="iSCSITargetAuthorizedInitiator" %}', [this,]);
+                    addObject('{% trans "Add Authorized Initiator"|force_escape %}', '{% url freeadmin_model_add app="services",model="iSCSITargetAuthorizedInitiator" %}', [this,]);
             </script>
             </button>
             </p>

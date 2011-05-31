@@ -17,13 +17,13 @@
              <button dojoType="dijit.form.Button" type="button">
                  {% trans "Edit" %}
              <script type="dojo/method" event="onClick" args="evt">
-                 editObject('{% trans "Edit" %}', '{{ r.get_edit_url }}', [this,]);
+                 editObject('{% trans "Edit"|force_escape %}', '{{ r.get_edit_url }}', [this,]);
              </script>
              </button>
              <button dojoType="dijit.form.Button" type="button">
                  {% trans "Delete" %}
              <script type="dojo/method" event="onClick" args="evt">
-                 editObject('{% trans "Delete" %}', '{{ r.get_delete_url }}', [this,]);
+                 editObject('{% trans "Delete"|force_escape %}', '{{ r.get_delete_url }}', [this,]);
              </script>
              </button>
 
@@ -39,7 +39,7 @@
         <button id="tgt_button" dojoType="dijit.form.Button" type="button">
             {% trans "Add Rsync Module" %}
             <script type="dojo/method" event="onClick" args="evt">
-                addObject('{% trans "Add Rsync Module" %}', '{% url freeadmin_model_add app="services",model="RsyncMod" %}', [this,]);
+                addObject('{% trans "Add Rsync Module"|force_escape %}', '{% url freeadmin_model_add app="services",model="RsyncMod" %}', [this,]);
         </script>
         </button>
         </p>

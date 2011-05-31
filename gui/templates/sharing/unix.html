@@ -27,13 +27,13 @@
                         <button dojoType="dijit.form.Button" type="button">
                             {% trans "Edit" %}
                         <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Edit NFS Share" %}', '{% url freeadmin_model_edit app="sharing",model="NFS_Share",oid=n.id %}', [this,]);
+                        editObject('{% trans "Edit NFS Share"|force_escape %}', '{% url freeadmin_model_edit app="sharing",model="NFS_Share",oid=n.id %}', [this,]);
                         </script>
                         </button>
                         <button dojoType="dijit.form.Button" type="button">
                             {% trans "Delete" %}
                         <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Delete NFS Share" %}', '{% url freeadmin_model_delete app="sharing",model="NFS_Share",oid=n.id %}', [this,]);
+                        editObject('{% trans "Delete NFS Share"|force_escape %}', '{% url freeadmin_model_delete app="sharing",model="NFS_Share",oid=n.id %}', [this,]);
                         </script>
                         </button>
                     </td>
@@ -49,7 +49,7 @@
                     <button dojoType="dijit.form.Button" type="button">
                         {% trans "Add UNIX Share" %}
                         <script type="dojo/method" event="onClick" args="evt">
-                        addObject('{% trans "Add UNIX Share (NFS)" %}', '{% url freeadmin_model_add app="sharing",model="NFS_Share" %}', [this,]);
+                        addObject('{% trans "Add UNIX Share (NFS)"|force_escape %}', '{% url freeadmin_model_add app="sharing",model="NFS_Share" %}', [this,]);
                     </script>
                     </button>
                 </p>

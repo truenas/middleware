@@ -31,13 +31,13 @@
                         <button dojoType="dijit.form.Button" type="button">
                             {% trans "Edit" %}
                         <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Edit Windows Share" %}', '{% url freeadmin_model_edit app="sharing" model="CIFS_Share" oid=c.id %}', [this,]);
+                        editObject('{% trans "Edit Windows Share"|force_escape %}', '{% url freeadmin_model_edit app="sharing" model="CIFS_Share" oid=c.id %}', [this,]);
                         </script>
                         </button>
                         <button dojoType="dijit.form.Button" type="button">
                             {% trans "Delete" %}
                         <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Delete Windows Share" %}', '{% url freeadmin_model_delete app="sharing" model="CIFS_Share" oid=c.id %}', [this,]);
+                        editObject('{% trans "Delete Windows Share"|force_escape %}', '{% url freeadmin_model_delete app="sharing" model="CIFS_Share" oid=c.id %}', [this,]);
                         </script>
                         </button>
                     </td>
@@ -53,7 +53,7 @@
                     <button dojoType="dijit.form.Button" type="button">
                         {% trans "Add Windows Share" %}
                         <script type="dojo/method" event="onClick" args="evt">
-                        addObject('{% trans "Add Windows Share (CIFS)" %}', '{% url freeadmin_model_add app="sharing" model="CIFS_Share" %}', [this,]);
+                        addObject('{% trans "Add Windows Share (CIFS)"|force_escape %}', '{% url freeadmin_model_add app="sharing" model="CIFS_Share" %}', [this,]);
                     </script>
                     </button>
                 </p>

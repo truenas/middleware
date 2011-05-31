@@ -7,7 +7,12 @@
     <tr><td>{{ disk.disk_name }}: {% trans "Are you sure you want to detach?" %}</td></tr>
     <tr>
         <td>
-            <button id="submitform" dojoType="dijit.form.Button" type="submit" onClick="this.set('label', '{% trans "Please wait..." %}');">{% trans "Yes" %}</button>
+            <button id="submitform" dojoType="dijit.form.Button" type="submit">
+                {% trans "Yes" %}
+                <script type="dojo/method" event="onClick" args="evt">
+                    this.set('label', '{% trans "Please wait..."|force_escape %}');
+                </script>
+            </button>
             <button dojoType="dijit.form.Button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
         </td>
     </tr>

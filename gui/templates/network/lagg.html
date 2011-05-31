@@ -13,7 +13,7 @@
              <button dojoType="dijit.form.Button" type="button">
                  {% trans "Edit Interface" %}
              <script type="dojo/method" event="onClick" args="evt">
-                 editObject('{% trans "Edit Interface" %}', '{% url freeadmin_model_edit app="network",model="Interfaces",oid=l.lagg_interface.id %}?deletable=false', [this,]);
+                 editObject('{% trans "Edit Interface"|force_escape %}', '{% url freeadmin_model_edit app="network",model="Interfaces",oid=l.lagg_interface.id %}?deletable=false', [this,]);
              </script>
              </button>
              <button dojoType="dijit.form.Button" type="button">
@@ -23,14 +23,14 @@
 
                  var c = p.getChildren();
                  for(var i=0; i<c.length; i++){
-                     if(c[i].title == '{% trans "LAGG Members" %} {{ l.lagg_interface.int_interface }}'){
+                     if(c[i].title == '{% trans "LAGG Members"|force_escape %} {{ l.lagg_interface.int_interface }}'){
                          p.selectChild(c[i]);
                          return;
                      }
                  }
 
                  var pane2 = new dijit.layout.ContentPane({
-                     title: '{% trans "LAGG Members" %} {{ l.lagg_interface.int_interface }}',
+                     title: '{% trans "LAGG Members"|force_escape %} {{ l.lagg_interface.int_interface }}',
                      refreshOnShow: true,
                      closable: true,
                      href:'{% url network_lagg_members object_id=l.id %}',
@@ -43,7 +43,7 @@
              <button dojoType="dijit.form.Button" type="button">
                  {% trans "Delete" %}
              <script type="dojo/method" event="onClick" args="evt">
-                 editObject('{% trans "Delete Interface" %}', '{% url freeadmin_model_delete  app="network",model="Interfaces",oid=l.lagg_interface.id %}', [this,]);
+                 editObject('{% trans "Delete Interface"|force_escape %}', '{% url freeadmin_model_delete  app="network",model="Interfaces",oid=l.lagg_interface.id %}', [this,]);
              </script>
              </button>
         </td>
@@ -59,7 +59,7 @@
         <button id="lagg_button" dojoType="dijit.form.Button" type="button">
             {% trans "Add LAGG Interface " %}
             <script type="dojo/method" event="onClick" args="evt">
-                addObject('{% trans "Add LAGG" %}', '{% url network_lagg_add %}', [this,]);
+                addObject('{% trans "Add LAGG"|force_escape %}', '{% url network_lagg_add %}', [this,]);
             </script>
         </button>
         </p>

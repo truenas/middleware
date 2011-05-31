@@ -3,7 +3,7 @@
         <img src="{{ STATIC_URL }}images/ui/buttons/create_periodic_snapshot.png">
         <br />
     <script type="dojo/method" event="onClick" args="evt">
-        addObject('{% trans "Periodic Snapshots" %}', '{% url storage_periodicsnap %}', [this,]);
+        addObject('{% trans "Periodic Snapshots"|force_escape %}', '{% url storage_periodicsnap %}', [this,]);
     </script>
 </button>
 <div dojoType="dijit.Tooltip" connectId="periodicSnapBtn" position="above">
@@ -129,14 +129,20 @@
 		{{ p.task_ret_count }}
 		{{ p.task_ret_unit }}
 	    </td>
-        <td>
-        <button dojoType="dijit.form.Button" type="button"
-            onClick="editObject('{% trans "Modify" %}', '{% url freeadmin_model_edit app="storage",model="Task",oid=p.id %}', [this,]);">{% trans "Modify" %}
-        </button>
-        <button dojoType="dijit.form.Button" type="button"
-            onClick="editObject('{% trans "Delete" %}', '{% url freeadmin_model_delete app="storage",model="Task",oid=p.id %}', [this,]);">{% trans "Delete" %}
-        </button>
-        </td>
+            <td>
+                <button dojoType="dijit.form.Button" type="button">
+                    {% trans "Modify" %}
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Modify"|force_escape %}', '{% url freeadmin_model_edit app="storage",model="Task",oid=p.id %}', [this,]);
+                    </script>
+                </button>
+                <button dojoType="dijit.form.Button" type="button">
+                    {% trans "Delete" %}
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Delete"|force_escape %}', '{% url freeadmin_model_delete app="storage",model="Task",oid=p.id %}', [this,]);
+                    </script>
+                </button>
+            </td>
 	</tr>
 	{% empty %}
 	<tr>
