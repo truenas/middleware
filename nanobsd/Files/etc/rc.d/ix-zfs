@@ -19,7 +19,9 @@ import_zpools()
 	local volumename
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vol_name FROM storage_volume WHERE vol_fstype = 'ZFS'" | \
 	while read volumename; do
-		/sbin/zpool import -o cachefile=none -f ${volumename}
+		/sbin/zpool import -o cachefile=none -R /mnt -f ${volumename}
+		# Fixup mountpoints
+		[ -d /mnt/mnt ] && /sbin/zfs inherit -r mountpoint ${volumename}
 	done
 }
 

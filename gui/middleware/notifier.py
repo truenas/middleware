@@ -47,7 +47,6 @@ import signal
 import time
 from shlex import split as shlex_split
 from subprocess import Popen, PIPE
-import libxml2
 
 class notifier:
     from os import system as ___system
@@ -520,7 +519,9 @@ class notifier:
 
     def __gpt_unlabeldisk(self, devname):
         """Unlabel the disk"""
-        self.__system("swapoff /dev/%s" % self.swap_from_device(devname))
+        swapdev = self.swap_from_device(devname)
+        if swapdev != '':
+            self.__system("swapoff /dev/%s" % self.swap_from_device(devname))
         self.__system("gpart destroy -F /dev/%s" % devname)
 
         # To be safe, wipe out the disk, both ends...
@@ -582,13 +583,14 @@ class notifier:
         if not os.path.isdir("/data/zfs"):
             os.makedirs("/data/zfs")
         self.__system("zpool create -o cachefile=/data/zfs/zpool.cache "
-                      "-fm /mnt/%s %s %s" % (z_name, z_name, z_vdev))
+                      "-f -o altroot=/mnt %s %s" % (z_name, z_vdev))
+        self.zfs_inherit_option(z_name, 'mountpoint')
         # If we have 4k hack then restore system to whatever it should be
         if need4khack or force4khack:
             self.__system("zpool export %s" % (z_name))
             for disk in hack_vdevs:
                 self.__system("gnop destroy /dev/%s.nop" % disk)
-            self.__system("zpool import %s" % (z_name))
+            self.__system("zpool import -R /mnt %s" % (z_name))
 
         # These should probably be options that are configurable from the GUI
         self.__system("zfs set aclmode=passthrough %s" % z_name)
@@ -868,7 +870,7 @@ class notifier:
         disk = c.fetchone()
         todev = self.identifier_to_device(disk[0])
 
-        if fromdev_swap:
+        if fromdev_swap != '':
             self.__system('/sbin/swapoff /dev/%s' % (fromdev_swap))
 
         if from_diskid == to_diskid:
@@ -920,7 +922,8 @@ class notifier:
         # Remove the swap partition for another time to be sure.
         # TODO: swap partition should be trashed instead.
         devname_swap = self.swap_from_device(devname)
-        self.__system('/sbin/swapoff /dev/%s' % (devname_swap))
+        if devname_swap != '':
+            self.__system('/sbin/swapoff /dev/%s' % (devname_swap))
 
         ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume, devname))
         # TODO: This operation will cause damage to disk data which should be limited
@@ -1364,9 +1367,11 @@ class notifier:
         return volumes
             
     def zfs_import(self, name):
-        imp = self.__pipeopen('zpool import %s' % name)
+        imp = self.__pipeopen('zpool import -R /mnt %s' % name)
         imp.wait()
         if imp.returncode == 0:
+            # Reset all mountpoints in the zpool
+            self.zfs_inherit_option(name, 'mountpoint', True)
             # These should probably be options that are configurable from the GUI
             self.__system("zfs set aclmode=passthrough %s" % name)
             self.__system("zfs set aclinherit=passthrough %s" % name)
@@ -1450,14 +1455,16 @@ class notifier:
             return True
         return False
 
-    def zfs_inherit_option(self, name, item):
+    def zfs_inherit_option(self, name, item, recursive=False):
         name = str(name)
         item = str(item)
-        zfsproc = self.__pipeopen('zfs inherit %s "%s"' % (item, name))
+        if recursive:
+            zfscmd = 'zfs inherit -r %s %s' % (item, name)
+        else:
+            zfscmd = 'zfs inherit %s %s' % (item, name)
+        zfsproc = self.__pipeopen(zfscmd)
         zfsproc.wait()
-        if zfsproc.returncode == 0:
-            return True
-        return False
+        return (zfsproc.returncode == 0)
 
     def geom_disk_state(self, geom, group_type, devname):
         p1 = self.__pipeopen("geom %s list %s" % (str(group_type), str(geom)))
@@ -1521,6 +1528,9 @@ class notifier:
 
         c.execute("DELETE FROM storage_mountpoint WHERE mp_ischild = 1 AND mp_volume_id = %s" % str(vol_id))
 
+        # Reset mountpoints on the whole volume
+        self.zfs_inherit_option(vol_name, 'mountpoint', True)
+
         p1 = self.__pipeopen("zfs list -t filesystem -o name -H -r %s" % str(vol_name))
         p1.wait()
         ret = p1.communicate()[0].split('\n')[1:-1]
@@ -1528,16 +1538,17 @@ class notifier:
             name = "".join(dataset.split('/')[1:])
             mp = os.path.join(mp_path, name)
             c.execute("INSERT INTO storage_mountpoint (mp_volume_id, mp_path, mp_options, mp_ischild) VALUES (?, ?, ?, ?)", (vol_id, mp,"noauto","1"), )
-            self.__system_nolog("zfs set mountpoint=%s %s" % (str(mp), str(dataset)) )
         conn.commit()
         c.close()
 
+    def __geom_confxml(self):
+        from libxml2 import parseDoc
+        sysctl_proc = self.__pipeopen('sysctl -b kern.geom.confxml')
+        return (parseDoc(sysctl_proc.communicate()[0][:-1]))
+
     def device_to_identifier(self, name):
         name = str(name)
-        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE)
-        p1.wait()
-        output = p1.communicate()[0][:-1]
-        doc = libxml2.parseDoc(output)
+        doc = self.__geom_confxml()
 
         search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-zfs']/rawuuid" % name)
         if len(search) > 0:
@@ -1560,9 +1571,7 @@ class notifier:
         return "{devicename}%s" % name
 
     def identifier_to_device(self, ident):
-        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE)
-        output = p1.communicate()[0][:-1]
-        doc = libxml2.parseDoc(output)
+        doc = self.__geom_confxml()
 
         search = re.search(r'\{(?P<type>.+?)\}(?P<value>.+)', ident)
         if not search:
@@ -1600,9 +1609,7 @@ class notifier:
             raise NotImplementedError
 
     def identifier_to_partition(self, ident):
-        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE)
-        output = p1.communicate()[0][:-1]
-        doc = libxml2.parseDoc(output)
+        doc = self.__geom_confxml()
 
         search = re.search(r'\{(?P<type>.+?)\}(?P<value>.+)', ident)
         if not search:
@@ -1627,24 +1634,16 @@ class notifier:
             raise NotImplementedError
 
     def swap_from_device(self, device):
-        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE)
-        output = p1.communicate()[0][:-1]
-        doc = libxml2.parseDoc(output)
+        doc = self.__geom_confxml()
 
         search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-swap']/../name" % device)
         if len(search) > 0:
             return search[0].content
+        else:
+            return ''
 
     def swap_from_identifier(self, ident):
-        device = self.identifier_to_device(ident)
-        p1 = Popen(["sysctl", "-b", "kern.geom.confxml"], stdout=PIPE)
-        output = p1.communicate()[0][:-1]
-        doc = libxml2.parseDoc(output)
-
-        search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-swap']/../name" % device)
-        if len(search) > 0:
-            return search[0].content
-        return ''
+        return self.swap_from_device(self.identifier_to_device(ident))
 
 def usage():
     print ("Usage: %s action command" % argv[0])
