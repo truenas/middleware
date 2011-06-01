@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:33-0700\n"
-"PO-Revision-Date: 2011-05-31 08:32+0200\n"
+"PO-Revision-Date: 2011-05-31 14:15+0200\n"
 "Last-Translator: Mortis <drammensgutten89@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nb\n"
@@ -2275,7 +2275,7 @@ msgstr ""
 #: templates/network/interface.html:6 templates/network/summary.html:5
 #: templates/sharing/apple.html:13 templates/sharing/windows.html:13
 msgid "Name"
-msgstr ""
+msgstr "Navn"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
@@ -2628,19 +2628,19 @@ msgstr ""
 
 #: storage/forms.py:77
 msgid "Read"
-msgstr ""
+msgstr "Lese"
 
 #: storage/forms.py:78
 msgid "Write"
-msgstr ""
+msgstr "Skrive"
 
 #: storage/forms.py:79
 msgid "Execute"
-msgstr ""
+msgstr "Kjør"
 
 #: storage/forms.py:92
 msgid "Owner"
-msgstr ""
+msgstr "Eier"
 
 #: storage/forms.py:92
 msgid "Other"
@@ -3097,15 +3097,15 @@ msgstr ""
 
 #: system/models.py:41
 msgid "Protocol"
-msgstr ""
+msgstr "Protokoll"
 
 #: system/models.py:47
 msgid "Language"
-msgstr ""
+msgstr "Språk"
 
 #: system/models.py:53
 msgid "Timezone"
-msgstr ""
+msgstr "Tidssone"
 
 #: system/models.py:58
 msgid "NTP server 1"
@@ -3121,7 +3121,7 @@ msgstr ""
 
 #: system/models.py:74 system/nav.py:23 templates/system/settings.html:2
 msgid "Settings"
-msgstr ""
+msgstr "Instillinger"
 
 #: system/models.py:81
 msgid "Enable Console Menu"
@@ -3170,7 +3170,7 @@ msgstr ""
 
 #: system/models.py:113 templates/system/settings.html:5
 msgid "Advanced"
-msgstr ""
+msgstr "Avansert"
 
 #: system/models.py:122
 msgid "From email"
@@ -3226,15 +3226,15 @@ msgstr ""
 
 #: system/models.py:174
 msgid "Organization"
-msgstr ""
+msgstr "Organisasjon"
 
 #: system/models.py:175
 msgid "Organization Name (eg, company)"
-msgstr ""
+msgstr "Organisasjons navn "
 
 #: system/models.py:181
 msgid "Organizational Unit"
-msgstr ""
+msgstr "Organisasjons enhet"
 
 #: system/models.py:182
 msgid "Organizational Unit Name (eg, section)"
@@ -3254,15 +3254,15 @@ msgstr ""
 
 #: system/models.py:202
 msgid "State"
-msgstr ""
+msgstr "Fylke"
 
 #: system/models.py:203
 msgid "State or Province Name (full name)"
-msgstr ""
+msgstr "Fylke (fult navn)"
 
 #: system/models.py:209
 msgid "Country"
-msgstr ""
+msgstr "Land"
 
 #: system/models.py:210
 msgid "Country Name (2 letter code)"
@@ -3291,7 +3291,7 @@ msgstr ""
 
 #: system/nav.py:16
 msgid "System Information"
-msgstr ""
+msgstr "Systeminformasjon"
 
 #: system/views.py:130
 msgid "The uploaded file is not valid."
@@ -3302,7 +3302,7 @@ msgstr ""
 #: templates/freeadmin/generic_model_edit.html:14
 #: templates/network/lagg_add.html:9 templates/system/wizard.html:14
 msgid "OK"
-msgstr ""
+msgstr "Ok"
 
 #: templates/account/bsdgroup2user_form2.html:10
 #: templates/freeadmin/generic_model_add.html:14
@@ -3323,51 +3323,51 @@ msgstr ""
 #: templates/system/config_restore.html:11
 #: templates/system/config_upload.html:35
 msgid "Cancel"
-msgstr ""
+msgstr "Avbryt"
 
 #: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:48
 #: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:59
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:50 templates/account/bsdgroups.html:62
 msgid "Members"
-msgstr ""
+msgstr "Medlemmer"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/storage/tasks.html:134
 msgid "Modify"
-msgstr ""
+msgstr "Modifiser"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
-msgstr ""
+msgstr "Fjern"
 
 #: templates/account/bsdgroups.html:25 templates/account/bsdgroups.html:66
 msgid "Modify Group"
-msgstr ""
+msgstr "Modifiser gruppe"
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:71
 msgid "Delete Group"
-msgstr ""
+msgstr "Slett gruppe"
 
 #: templates/account/bsdgroups.html:37
 msgid "There are no user defined groups."
-msgstr ""
+msgstr "Det er ingen brukerdefinerte grupper."
 
 #: templates/account/bsdgroups.html:43
 msgid "Add New Group"
-msgstr ""
+msgstr "Opprett ny gruppe"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:62
 msgid "Home"
-msgstr ""
+msgstr "Hjem"
 
 #: templates/account/bsdusers.html:37 templates/account/bsdusers.html.py:38
 #: templates/account/bsdusers.html:89 templates/account/bsdusers.html.py:90
 msgid "Modify User"
-msgstr ""
+msgstr "Modifiser bruker"
 
 #: templates/account/bsdusers.html:38 templates/account/bsdusers.html.py:90
 msgid "Auxiliary Groups"
@@ -3375,27 +3375,27 @@ msgstr ""
 
 #: templates/account/bsdusers.html:43
 msgid "Delete User"
-msgstr ""
+msgstr "Slett bruker"
 
 #: templates/account/bsdusers.html:43 templates/account/bsdusers.html.py:95
 msgid "Remove User"
-msgstr ""
+msgstr "Fjern bruker"
 
 #: templates/account/bsdusers.html:54
 msgid "Add New User"
-msgstr ""
+msgstr "Legg til ny bruker"
 
 #: templates/account/bsdusers.html:101
 msgid "No users defined"
-msgstr ""
+msgstr "Ingen brukere er definert"
 
 #: templates/account/passform.html:26
 msgid "Change Admin Password"
-msgstr ""
+msgstr "Bytt admin passord"
 
 #: templates/common/menubar2.html:8
 msgid "System"
-msgstr ""
+msgstr "System"
 
 #: templates/common/menubar2.html:13
 msgid "Network"
@@ -3403,7 +3403,7 @@ msgstr "Nettverk"
 
 #: templates/common/menubar2.html:18
 msgid "Storage"
-msgstr ""
+msgstr "Lagring"
 
 #: templates/common/menubar2.html:23
 msgid "Sharing"
@@ -3415,15 +3415,15 @@ msgstr "Logg ut"
 
 #: templates/common/menubar2.html:38
 msgid "Help"
-msgstr ""
+msgstr "Hjelp"
 
 #: templates/common/menubar2.html:43
 msgid "Account"
-msgstr ""
+msgstr "Konto"
 
 #: templates/common/menubar2.html:49 templates/registration/login.html:49
 msgid "Log In"
-msgstr ""
+msgstr "Logg inn"
 
 #: templates/freeadmin/generic_model_add.html:9
 #: templates/freeadmin/generic_model_delete.html:10
@@ -3441,7 +3441,7 @@ msgstr ""
 #: templates/storage/dataset_confirm_delete2.html:7
 #: templates/storage/snapshot_confirm_delete2.html:7
 msgid "Are you sure you want to delete?"
-msgstr ""
+msgstr "Er du sikker på at du vil slette?"
 
 #: templates/freeadmin/generic_model_delete.html:10
 #: templates/storage/dataset_confirm_delete2.html:10
@@ -3450,12 +3450,12 @@ msgstr ""
 #: templates/storage/snapshot_confirm_rollback2.html:10
 #: templates/storage/tasks.html:36 templates/system/config_restore.html:10
 msgid "Yes"
-msgstr ""
+msgstr "Ja"
 
 #: templates/freeadmin/generic_model_delete_ok.html:1
 #: templates/storage/dataset_confirm_delete_ok.html:1
 msgid "sucessfully deleted"
-msgstr ""
+msgstr "Slettet"
 
 #: templates/freeadmin/generic_model_edit.html:5
 msgid "Your changes have been successfully updated!"

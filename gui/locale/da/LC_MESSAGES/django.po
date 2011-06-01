@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-05-11 11:32-0700\n"
-"PO-Revision-Date: 2011-05-25 23:04+0200\n"
-"Last-Translator: rcapion <richard@capion.org>\n"
+"PO-Revision-Date: 2011-05-31 22:40+0200\n"
+"Last-Translator: McM <sp00bking@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
@@ -282,7 +282,7 @@ msgstr "Enhed"
 
 #: choices.py:205
 msgid "ZFS Volume"
-msgstr ""
+msgstr "ZFS Drev"
 
 #: choices.py:209 storage/models.py:137 templates/storage/autoimport.html:9
 #: templates/storage/import.html:18 templates/storage/wizard.html:91
@@ -736,11 +736,11 @@ msgstr ""
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr ""
+msgstr "IPv6 Adresse"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr ""
+msgstr "IPv6 Netmaske"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
