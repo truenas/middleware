@@ -74,7 +74,7 @@ add_port devel/pkg-config
 add_port devel/cdialog
 add_port dns/inadyn			# -mt?
 #+editors/nano
-add_port lang/perl5.10
+add_port lang/perl5.12
 add_port converters/libiconv
 add_port converters/iconv
 add_port devel/gettext
@@ -208,8 +208,8 @@ add_port textproc/py-xml
 if [ "${DEBUG}" -eq "1" ]; then 
 	add_port databases/db42
 	add_port devel/apr1
-    add_port devel/py-logilab-common
-    add_port devel/py-astng
+	add_port devel/py-logilab-common
+	add_port devel/py-astng
 	add_port devel/pylint
 	add_port www/neon29
 	add_port devel/subversion
