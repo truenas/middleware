@@ -611,7 +611,7 @@ class iSCSITargetDeviceExtentForm(ModelForm):
             zvols = notifier().list_zfs_vols(volume.vol_name)
             for zvol, attrs in zvols.items():
                 if "/dev/zvol/"+zvol not in zextents:
-                    diskchoices["zvol/"+zvol] = "%s (%s)" % (zvol, attrs['available'])
+                    diskchoices["zvol/"+zvol] = "%s (%s)" % (zvol, attrs['volsize'])
         # Grab disk list
         # NOTE: This approach may fail if device nodes are not accessible.
         pipe = popen("/usr/sbin/diskinfo ` /sbin/sysctl -n kern.disks` | /usr/bin/cut -f1,3")
