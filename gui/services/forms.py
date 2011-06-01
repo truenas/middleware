@@ -648,7 +648,8 @@ class iSCSITargetDeviceExtentForm(ModelForm):
     def save(self, commit=True):
         if self.instance.id:
             d = Disk.objects.get(id=self.instance.iscsi_target_extent_path)
-            notifier().unlabel_disk(d.identifier_to_device())
+            if self.instance.iscsi_target_extent_type == 'Disk':
+                notifier().unlabel_disk(d.identifier_to_device())
             d.delete()
         oExtent = super(iSCSITargetDeviceExtentForm, self).save(commit=False)
         if commit:
