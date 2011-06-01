@@ -7,6 +7,10 @@ from freenasUI.middleware.notifier import notifier
 
 class Migration(DataMigration):
 
+    depends_on = (
+            ("storage", "0008_auto__add_field_disk_disk_identifier"),
+    )
+
     def forwards(self, orm):
         for d in orm['storage.Disk'].objects.all():
             dev = notifier().identifier_to_device(d.disk_identifier)
