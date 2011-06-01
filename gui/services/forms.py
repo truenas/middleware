@@ -589,9 +589,9 @@ class iSCSITargetDeviceExtentForm(ModelForm):
             widget=forms.Select(attrs=attrs_dict), label = _('Disk device'))
     def __init__(self, *args, **kwargs):
         super(iSCSITargetDeviceExtentForm, self).__init__(*args, **kwargs)
-        print kwargs
         if kwargs.has_key("instance"):
             self.fields['iscsi_extent_disk'].choices = self._populate_disk_choices(exclude=self.instance)
+            self.fields['iscsi_extent_disk'].initial = self.instance.get_device()[5:]
         else:
             self.fields['iscsi_extent_disk'].choices = self._populate_disk_choices()
         self.fields['iscsi_extent_disk'].choices.sort()
