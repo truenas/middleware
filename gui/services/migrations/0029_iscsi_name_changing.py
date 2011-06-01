@@ -11,7 +11,7 @@ class Migration(DataMigration):
         for d in orm['storage.Disk'].objects.all():
             dev = notifier().identifier_to_device(d.disk_identifier)
             if dev:
-                for e in orm.iSCSITargetExtent.objects.filter(iscsi_target_extent_type="Disk",
+                for e in orm.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__in=["Disk","ZVOL"],
                                         iscsi_target_extent_path="/dev/%s" % dev):
                     e.iscsi_target_extent_path = str(d.id)
                     e.save()

@@ -603,14 +603,14 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         diskchoices = dict()
     
         if exclude:
-            zextents = [i[0] for i in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='ZVOL').filter(id=exclude.id).values_list('iscsi_target_extent_path')]
-            dextents = [i[0] for i in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk').filter(id=exclude.id).values_list('iscsi_target_extent_path')]
+            extents = [i[0] for i in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__in=['Disk','ZVOL']).filter(id=exclude.id).values_list('iscsi_target_extent_path')]
+            dextents = [d.identifier_to_device() for d in Disk.objects.filter(id__in=extents)]
         else:
-            zextents = []
+            dextents = []
         for volume in Volume.objects.filter(vol_fstype__exact='ZFS'):
             zvols = notifier().list_zfs_vols(volume.vol_name)
             for zvol, attrs in zvols.items():
-                if "/dev/zvol/"+zvol not in zextents:
+                if "/dev/zvol/"+zvol not in dextents:
                     diskchoices["zvol/"+zvol] = "%s (%s)" % (zvol, attrs['volsize'])
         # Grab disk list
         # NOTE: This approach may fail if device nodes are not accessible.
@@ -631,12 +631,12 @@ class iSCSITargetDeviceExtentForm(ModelForm):
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
-        rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
+        rootdev_base = re.search(r'[a-z/]*[0-9]*', rootdev)
         if rootdev_base != None:
             diskchoices.pop(rootdev_base.group(0), None)
         # Exclude what's already added
         if exclude:
-            disks = Disk.objects.exclude(id__in=dextents).values('disk_identifier')
+            disks = Disk.objects.exclude(id__in=extents).values('disk_identifier')
         else:
             disks = Disk.objects.values('disk_identifier')
         for devname in [ notifier().identifier_to_device(x['disk_identifier']) for x in disks]:
@@ -646,6 +646,10 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         model = models.iSCSITargetExtent
         exclude = ('iscsi_target_extent_type', 'iscsi_target_extent_path', 'iscsi_target_extent_filesize')
     def save(self, commit=True):
+        if self.instance.id:
+            d = Disk.objects.get(id=self.instance.iscsi_target_extent_path)
+            notifier().unlabel_disk(d.identifier_to_device())
+            d.delete()
         oExtent = super(iSCSITargetDeviceExtentForm, self).save(commit=False)
         if commit:
             # label it only if it is a real disk
@@ -670,13 +674,12 @@ class iSCSITargetDeviceExtentForm(ModelForm):
                            disk_description = 'iSCSI exported disk',
                            disk_group = grp)
             diskobj.save()
-            oExtent.iscsi_target_extent_filesize = 0
             if self.cleaned_data["iscsi_extent_disk"].startswith("zvol"):
                 oExtent.iscsi_target_extent_type = 'ZVOL'
-                oExtent.iscsi_target_extent_path = '/dev/%s' % self.cleaned_data["iscsi_extent_disk"]
             else:
                 oExtent.iscsi_target_extent_type = 'Disk'
-                oExtent.iscsi_target_extent_path = str(diskobj.id)
+            oExtent.iscsi_target_extent_filesize = 0
+            oExtent.iscsi_target_extent_path = str(diskobj.id)
             oExtent.save()
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
