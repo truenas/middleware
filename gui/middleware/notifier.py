@@ -1170,7 +1170,6 @@ class notifier:
                 p3 = Popen(["grep", "State:"], stdin=p2.stdout, stdout=PIPE)
                 p1.wait()
                 p2.wait()
-                p3.wait()
                 output = p3.communicate()[0]
                 return output.split(' ')[1]
             else:
@@ -1218,7 +1217,6 @@ class notifier:
 
             for part in listing:
                 p1 = Popen(["/usr/sbin/diskinfo", part], stdin=PIPE, stdout=PIPE)
-                p1.wait()
                 info = p1.communicate()[0].split('\t')
                 partitions.update({
                     part: {
@@ -1291,9 +1289,8 @@ class notifier:
         RE_DEV_NAME = re.compile(r'Name: (?P<name>\w+)', re.I)
         for geom in ('mirror', 'stripe', 'raid3'):
             p1 = Popen(["geom", geom, "list"], stdin=PIPE, stdout=PIPE)
-            p1.wait()
+            res = p1.communicate()[0]
             if p1.returncode == 0:
-                res = p1.communicate()[0]
                 for item in res.split('\n\n')[:-1]:
                     search = RE_GEOM_NAME.search(item)
                     if search:
@@ -1314,9 +1311,8 @@ class notifier:
         RE_POOL_NAME = re.compile(r'pool: (?P<name>[a-z][a-z0-9_-]+)', re.I)
         RE_DISK = re.compile(r'(?P<disk>[a-d]{2}\d+)[a-fsp]')
         p1 = Popen(["zpool", "import"], stdin=PIPE, stdout=PIPE)
-        p1.wait()
+        res = p1.communicate()[0]
         if p1.returncode == 0:
-            res = p1.communicate()[0]
             if RE_POOL_NAME.search(res):
                 label = RE_POOL_NAME.search(res).group("name")
                 status = res.split('pool: %s' % label)[1].split('config:')[1].split('pool:')[0]
@@ -1352,7 +1348,6 @@ class notifier:
                     p1.wait()
                     p2.wait()
                     p3.wait()
-                    p4.wait()
                     if p4.returncode == 0:
                         disk = p4.communicate()[0].split(' ')[2].split('\n')[0]
                     else:
@@ -1522,7 +1517,6 @@ class notifier:
 
         elif group_type == "raid3":
             p1 = self.__pipeopen("geom raid3 list %s" % str(group_name))
-            p1.wait()
             output = p1.communicate()[0]
             components = range(int(re.search(r'Components: (?P<num>\d+)', output).group("num")))
             filled = [int(i) for i in re.findall(r'Number: (?P<number>\d+)', output)]
@@ -1549,7 +1543,6 @@ class notifier:
         self.zfs_inherit_option(vol_name, 'mountpoint', True)
 
         p1 = self.__pipeopen("zfs list -t filesystem -o name -H -r %s" % str(vol_name))
-        p1.wait()
         ret = p1.communicate()[0].split('\n')[1:-1]
         for dataset in ret:
             name = "".join(dataset.split('/')[1:])
@@ -1579,7 +1572,6 @@ class notifier:
             return "{label}%s" % search[0].content
 
         p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % name], stdout=PIPE)
-        p1.wait()
         output = p1.communicate()[0]
         search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I)
         if search:
