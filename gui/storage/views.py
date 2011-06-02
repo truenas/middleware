@@ -169,6 +169,9 @@ def disks_datagrid(request, vid):
             else:
                 val += 7
         width.append(val)
+    names.insert(2, 'Serial')
+    _n.insert(2, 'serial')
+    width.insert(2, 50)
     fields = zip(names, _n, width)
 
     return render(request, 'storage/datagrid_disks.html', {
@@ -211,6 +214,7 @@ def disks_datagrid_json(request, vid):
                 ret[f.attname] = unicode(getattr(data, f.attname))
             elif f.attname == 'disk_name':
                 ret[f.attname] = notifier().identifier_to_device(data.disk_identifier)
+                ret['serial'] = data.get_serial() or _('Unknown')
             else:
                 ret[f.attname] = getattr(data, f.attname) #json_encode() this?
         #fields = dir(data.__class__) + ret.keys()
