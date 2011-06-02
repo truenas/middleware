@@ -36,6 +36,7 @@ setup_environ(settings)
 
 import os
 import re
+from datetime import timedelta
 from freenasUI.storage.models import Task, Replication
 from freenasUI.common.pipesubr import setname, pipeopen, system
 from freenasUI.common.locks import mntlock
@@ -127,7 +128,7 @@ for replication in replication_tasks:
 Hello,
     The replication failed for the local ZFS %s because the local state is mangled.
     This should never happen and manual intervention is required.
-                    """ % (localfs))
+                    """ % (localfs), interval = timedelta(hours = 2), channel = 'autorepl')
          # The user have to 'zfs inherit -r freenas:state fs' then reconfigure replicator
         continue
     elif len(release_list) == 1:
@@ -161,7 +162,7 @@ Hello,
 Hello,
     The replication failed for the local ZFS %s because the remote system have
     have diveraged snapshot with us.
-                        """ % (localfs))
+                        """ % (localfs), interval = timedelta(hours = 2), channel = 'autorepl')
                     MNTLOCK.unlock()
                     continue
                 MNTLOCK.unlock()
@@ -210,5 +211,5 @@ Hello,
     The system was unable to replicate snapshot %s to %s
 ======================
 %s
-            """ % (localfs, remote, msg))
+            """ % (localfs, remote, msg), interval = timedelta(hours = 2), channel = 'autorepl')
 

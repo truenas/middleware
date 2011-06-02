@@ -26,9 +26,10 @@
 # $FreeBSD$
 #####################################################################
 
-from os import popen
+from os import popen, stat
 import smtplib
 from email.mime.text import MIMEText
+from datetime import datetime, timedelta
 
 from django.contrib.auth.models import User
 
@@ -67,7 +68,19 @@ def get_freenas_var(var, default = None):
         val = default
     return val
 
-def send_mail(subject, text):
+def send_mail(subject, text, interval = timedelta(), channel = 'freenas'):
+    if interval > timedelta():
+        channelfile = '/tmp/.msg.%s' % (channel)
+        last_update = datetime.now() - interval
+        try:
+            last_update = datetime.fromtimestamp(stat(channelfile).st_mtime)
+        except OSError:
+            pass
+        timediff = datetime.now() - last_update
+        if (timediff >= interval) or (timediff < timedelta()):
+            f = open(channelfile, 'w')
+            f.close()
+
     error = False
     errmsg = ''
     email = Email.objects.all().order_by('-id')[0]
