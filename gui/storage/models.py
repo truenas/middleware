@@ -132,6 +132,10 @@ class Disk(Model):
             verbose_name = _("Group Membership"),
             help_text = _("The disk group containing this disk")
             )
+    def get_serial(self):
+        return notifier().serial_from_device(
+            notifier().identifier_to_device(self.disk_identifier)
+            )
     def identifier_to_device(self):
         return notifier().identifier_to_device(self.disk_identifier)
     class Meta:
