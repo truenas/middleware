@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-05-18 04:22-0700\n"
+"POT-Creation-Date: 2011-06-01 02:08-0700\n"
 "PO-Revision-Date: 2011-05-20 13:13+0200\n"
 "Last-Translator: spookey <spookey@cccmz.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,70 +18,69 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:113
+#: media/lib/js/freeadmin.js:114
 msgid "Reporting"
 msgstr "Reporting"
 
-#: media/lib/js/freeadmin.js:125
+#: media/lib/js/freeadmin.js:126
 msgid "Settings"
 msgstr "Settings"
 
-#: media/lib/js/freeadmin.js:136
+#: media/lib/js/freeadmin.js:137
 msgid "System Information"
 msgstr "System Information"
 
-#: media/lib/js/freeadmin.js:176
+#: media/lib/js/freeadmin.js:177
 msgid "Network Settings"
 msgstr "Network Settings"
 
-#: media/lib/js/freeadmin.js:238
+#: media/lib/js/freeadmin.js:239
 msgid "Services"
 msgstr "Services"
 
-#: media/lib/js/freeadmin.js:278
+#: media/lib/js/freeadmin.js:279
 msgid "Account"
 msgstr "Account"
 
-#: media/lib/js/freeadmin.js:317
+#: media/lib/js/freeadmin.js:318
 msgid "Storage"
 msgstr "Storage"
 
-#: media/lib/js/freeadmin.js:344
+#: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
 msgstr "CronJobs"
 
-#: media/lib/js/freeadmin.js:398
+#: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
 msgstr "Edit Disk"
 
-#: media/lib/js/freeadmin.js:402
+#: media/lib/js/freeadmin.js:443
 msgid "Replace"
 msgstr "Replace"
 
-#: media/lib/js/freeadmin.js:403
+#: media/lib/js/freeadmin.js:444
 msgid "Disk Replacement"
 msgstr "Disk Replacement"
 
-#: media/lib/js/freeadmin.js:407
+#: media/lib/js/freeadmin.js:448
 msgid "Detach"
 msgstr "Detach"
 
-#: media/lib/js/freeadmin.js:408
+#: media/lib/js/freeadmin.js:449
 msgid "Disk Detach"
 msgstr "Disk Detach"
 
-#: media/lib/js/freeadmin.js:594
+#: media/lib/js/freeadmin.js:635
 msgid "Some error ocurried!"
 msgstr "Some error ocurred!"
 
-#: media/lib/js/freeadmin/form/Cron.js:43
-msgid "Every"
-msgstr "Every"
-
-#: media/lib/js/freeadmin/form/Cron.js:51
+#: media/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
 msgstr "Each selected"
 
-#: media/lib/js/freeadmin/form/Cron.js:96
+#: media/lib/js/freeadmin/form/Cron.js:90
 msgid "Every N"
 msgstr "Every N"
+
+#~ msgid "Every"
+#~ msgstr "Every"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-05-18 04:22-0700\n"
+"POT-Creation-Date: 2011-06-01 02:09-0700\n"
 "PO-Revision-Date: 2011-05-19 21:22+0200\n"
 "Last-Translator: johann_thorir <johann.thorir.johannsson@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,70 +18,66 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:113
+#: media/lib/js/freeadmin.js:114
 msgid "Reporting"
 msgstr "Skýrslur"
 
-#: media/lib/js/freeadmin.js:125
+#: media/lib/js/freeadmin.js:126
 msgid "Settings"
 msgstr "Stillingar"
 
-#: media/lib/js/freeadmin.js:136
+#: media/lib/js/freeadmin.js:137
 msgid "System Information"
 msgstr "Kerfisupplýsingar"
 
-#: media/lib/js/freeadmin.js:176
+#: media/lib/js/freeadmin.js:177
 msgid "Network Settings"
 msgstr "Netstillingar"
 
-#: media/lib/js/freeadmin.js:238
+#: media/lib/js/freeadmin.js:239
 msgid "Services"
 msgstr "Þjónustur"
 
-#: media/lib/js/freeadmin.js:278
+#: media/lib/js/freeadmin.js:279
 msgid "Account"
 msgstr "Notendur"
 
-#: media/lib/js/freeadmin.js:317
+#: media/lib/js/freeadmin.js:318
 msgid "Storage"
 msgstr "Gagnageymslur"
 
-#: media/lib/js/freeadmin.js:344
+#: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
 msgstr "Reglubundnar keyrslur"
 
-#: media/lib/js/freeadmin.js:398
+#: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
 msgstr "Stilla disk"
 
-#: media/lib/js/freeadmin.js:402
+#: media/lib/js/freeadmin.js:443
 msgid "Replace"
 msgstr "Skipta út"
 
-#: media/lib/js/freeadmin.js:403
+#: media/lib/js/freeadmin.js:444
 msgid "Disk Replacement"
 msgstr "Diskur sem kemur í staðinn"
 
-#: media/lib/js/freeadmin.js:407
+#: media/lib/js/freeadmin.js:448
 msgid "Detach"
 msgstr "Aftengja"
 
-#: media/lib/js/freeadmin.js:408
+#: media/lib/js/freeadmin.js:449
 msgid "Disk Detach"
 msgstr ""
 
-#: media/lib/js/freeadmin.js:594
+#: media/lib/js/freeadmin.js:635
 msgid "Some error ocurried!"
 msgstr ""
 
-#: media/lib/js/freeadmin/form/Cron.js:43
-msgid "Every"
-msgstr ""
-
-#: media/lib/js/freeadmin/form/Cron.js:51
+#: media/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
 msgstr ""
 
-#: media/lib/js/freeadmin/form/Cron.js:96
+#: media/lib/js/freeadmin/form/Cron.js:90
 msgid "Every N"
 msgstr ""
