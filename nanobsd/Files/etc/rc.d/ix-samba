@@ -42,6 +42,7 @@ generate_smbconf()
 		cifs_srv_aio_ws,
 		cifs_srv_homedir_enable,
 		cifs_srv_homedir_browseable_enable,
+		cifs_srv_homedir,
 		(
 			SELECT
 				srv_enable
@@ -80,15 +81,13 @@ generate_smbconf()
 		ldap_usersuffix,
 		ldap_groupsuffix,
 		ldap_passwordsuffix,
-		ldap_machinesuffix,
-		mp_path as cifs_srv_homedir
+		ldap_machinesuffix
 
 	FROM
 		services_cifs
 
 	JOIN services_ldap ON (1 = 1)
 	JOIN services_activedirectory ON (1 = 1 )
-    LEFT JOIN storage_mountpoint mp ON (cifs_srv_homedir_id = mp.id)
 
 	ORDER BY
 		-services_cifs.id,
@@ -102,11 +101,11 @@ generate_smbconf()
 		cifs_filemask cifs_dirmask \
 		largerw sendfile easupport dosattr nullpw \
 		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_homedir \
-		cifs_homedir_browseable ad_enable ldap_enable ad_dcname \
+		cifs_homedir_browseable cifs_homedir_mp ad_enable ldap_enable ad_dcname \
 		ad_domainname ad_netbiosname ad_workgroup ad_adminname ad_adminpw \
 		ldap_hostname ldap_basedn ldap_anonbind ldap_rootbasedn \
 		ldap_rootbindpw ldap_pwencryption ldap_ssl ldap_usersuffix \
-		ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix cifs_homedir_mp;
+		ldap_groupsuffix ldap_passwordsuffix ldap_machinesuffix;
 	do
 		# Default user and group is ftp:ftp
 		if [ -z "${guest}" ]; then
