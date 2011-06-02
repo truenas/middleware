@@ -955,6 +955,7 @@ class ReplicationForm(ModelForm):
     def __init__(self, *args, **kwargs):
         repl = kwargs.get('instance', None)
         super(ReplicationForm, self).__init__(*args, **kwargs)
+        self.fields['repl_mountpoint'].queryset = self.fields['repl_mountpoint'].queryset.filter(task__in=models.Task.objects.all()).distinct()
         if repl != None and repl.id != None:
             self.fields['remote_hostname'].initial = repl.repl_remote.ssh_remote_hostname
             self.fields['remote_hostkey'].initial = repl.repl_remote.ssh_remote_hostkey
