@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-05-18 04:23-0700\n"
+"POT-Creation-Date: 2011-06-01 02:08-0700\n"
 "PO-Revision-Date: 2011-05-23 09:24+0200\n"
 "Last-Translator: delphij <d@delphij.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,70 +18,69 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:113
+#: media/lib/js/freeadmin.js:114
 msgid "Reporting"
 msgstr "报表"
 
-#: media/lib/js/freeadmin.js:125
+#: media/lib/js/freeadmin.js:126
 msgid "Settings"
 msgstr "配置"
 
-#: media/lib/js/freeadmin.js:136
+#: media/lib/js/freeadmin.js:137
 msgid "System Information"
 msgstr "系统信息"
 
-#: media/lib/js/freeadmin.js:176
+#: media/lib/js/freeadmin.js:177
 msgid "Network Settings"
 msgstr "网络配置"
 
-#: media/lib/js/freeadmin.js:238
+#: media/lib/js/freeadmin.js:239
 msgid "Services"
 msgstr "服务"
 
-#: media/lib/js/freeadmin.js:278
+#: media/lib/js/freeadmin.js:279
 msgid "Account"
 msgstr "帐号"
 
-#: media/lib/js/freeadmin.js:317
+#: media/lib/js/freeadmin.js:318
 msgid "Storage"
 msgstr "存储"
 
-#: media/lib/js/freeadmin.js:344
+#: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
 msgstr "计划任务"
 
-#: media/lib/js/freeadmin.js:398
+#: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
 msgstr "编辑硬盘"
 
-#: media/lib/js/freeadmin.js:402
+#: media/lib/js/freeadmin.js:443
 msgid "Replace"
 msgstr "替换"
 
-#: media/lib/js/freeadmin.js:403
+#: media/lib/js/freeadmin.js:444
 msgid "Disk Replacement"
 msgstr "替换硬盘"
 
-#: media/lib/js/freeadmin.js:407
+#: media/lib/js/freeadmin.js:448
 msgid "Detach"
 msgstr "卸载"
 
-#: media/lib/js/freeadmin.js:408
+#: media/lib/js/freeadmin.js:449
 msgid "Disk Detach"
 msgstr "卸载硬盘"
 
-#: media/lib/js/freeadmin.js:594
+#: media/lib/js/freeadmin.js:635
 msgid "Some error ocurried!"
 msgstr "有错误发生！"
 
-#: media/lib/js/freeadmin/form/Cron.js:43
-msgid "Every"
-msgstr "每个"
-
-#: media/lib/js/freeadmin/form/Cron.js:51
+#: media/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
 msgstr "每个选中的"
 
-#: media/lib/js/freeadmin/form/Cron.js:96
+#: media/lib/js/freeadmin/form/Cron.js:90
 msgid "Every N"
 msgstr "每N个"
+
+#~ msgid "Every"
+#~ msgstr "每个"

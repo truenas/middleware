@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-05-18 04:22-0700\n"
+"POT-Creation-Date: 2011-06-01 02:08-0700\n"
 "PO-Revision-Date: 2011-05-26 17:09+0200\n"
 "Last-Translator: SkyNet <Kuzminvik@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,74 +15,73 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:113
+#: media/lib/js/freeadmin.js:114
 msgid "Reporting"
 msgstr "Отчёты"
 
-#: media/lib/js/freeadmin.js:125
+#: media/lib/js/freeadmin.js:126
 msgid "Settings"
 msgstr "Настройки"
 
-#: media/lib/js/freeadmin.js:136
+#: media/lib/js/freeadmin.js:137
 msgid "System Information"
 msgstr "Информация о системе"
 
-#: media/lib/js/freeadmin.js:176
+#: media/lib/js/freeadmin.js:177
 msgid "Network Settings"
 msgstr "Настройки сети"
 
-#: media/lib/js/freeadmin.js:238
+#: media/lib/js/freeadmin.js:239
 msgid "Services"
 msgstr "Службы"
 
-#: media/lib/js/freeadmin.js:278
+#: media/lib/js/freeadmin.js:279
 msgid "Account"
 msgstr "Учётная запись"
 
-#: media/lib/js/freeadmin.js:317
+#: media/lib/js/freeadmin.js:318
 msgid "Storage"
 msgstr "Хранилище"
 
-#: media/lib/js/freeadmin.js:344
+#: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
 msgstr "Планировщик Cron"
 
-#: media/lib/js/freeadmin.js:398
+#: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
 msgstr "Изменение диска"
 
-#: media/lib/js/freeadmin.js:402
+#: media/lib/js/freeadmin.js:443
 msgid "Replace"
 msgstr "Заменить"
 
-#: media/lib/js/freeadmin.js:403
+#: media/lib/js/freeadmin.js:444
 msgid "Disk Replacement"
 msgstr "Замена диска"
 
-#: media/lib/js/freeadmin.js:407
+#: media/lib/js/freeadmin.js:448
 msgid "Detach"
 msgstr "Отсоединить"
 
-#: media/lib/js/freeadmin.js:408
+#: media/lib/js/freeadmin.js:449
 msgid "Disk Detach"
 msgstr "Отсоединить диск"
 
-#: media/lib/js/freeadmin.js:594
+#: media/lib/js/freeadmin.js:635
 msgid "Some error ocurried!"
 msgstr "Произошла ошибка!"
 
-#: media/lib/js/freeadmin/form/Cron.js:43
-msgid "Every"
-msgstr "Каждый"
-
-#: media/lib/js/freeadmin/form/Cron.js:51
+#: media/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
 msgstr "Каждый выбранный"
 
-#: media/lib/js/freeadmin/form/Cron.js:96
+#: media/lib/js/freeadmin/form/Cron.js:90
 msgid "Every N"
 msgstr "Каждый номер"
+
+#~ msgid "Every"
+#~ msgstr "Каждый"

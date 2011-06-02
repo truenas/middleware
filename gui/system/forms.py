@@ -35,7 +35,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import csrf_protect
 from django.http import Http404
 
-from freeadmin.forms import DirectoryBrowser, CronMultiple
+from freeadmin.forms import CronMultiple
 from freenasUI.storage.models import MountPoint
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_User
@@ -335,7 +335,6 @@ class RsyncForm(ModelForm):
     class Meta:
         model = models.Rsync
         widgets = {
-            'rsync_path': DirectoryBrowser(),
             'rsync_minute': CronMultiple(attrs={'numChoices': 60,'label':_("minute")}),
             'rsync_hour': CronMultiple(attrs={'numChoices': 24,'label':_("hour")}),
             'rsync_daymonth': CronMultiple(attrs={'numChoices': 31,'start':1,'label':_("day of month")}),

@@ -35,24 +35,22 @@ from django.core.management import setup_environ
 setup_environ(settings)
 
 import re
-import syslog
 from freenasUI.storage.models import Task, Replication
 from datetime import datetime, time, timedelta
-from shlex import split as shlex_split
-from subprocess import Popen, PIPE, STDOUT
-from os import system as __system
 
-def pipeopen(command):
-    syslog.openlog("autosnap", syslog.LOG_CONS | syslog.LOG_PID)
-    syslog.syslog(syslog.LOG_NOTICE, "Popen()ing: " + command)
-    args = shlex_split(command)
-    return Popen(args, stdin = PIPE, stdout = PIPE, stderr = PIPE, close_fds = True)
+from freenasUI.common.pipesubr import setname, pipeopen, system
+from freenasUI.common.locks import mntlock
 
-def system(command):
-    syslog.openlog("autosnap", syslog.LOG_CONS | syslog.LOG_PID)
-    syslog.syslog(syslog.LOG_NOTICE, "Executing: " + command)
-    __system("(" + command + ") 2>&1 | logger -p daemon.notice -t freenas")
-    syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
+# NOTE
+#
+# In this script there is no asynchnous programming so ALL locks are obtained
+# in the blocking way.
+#
+# With this assumption, the mntlock SHOULD only be instansized once during the
+# whole lifetime of this script.
+#
+MNTLOCK=mntlock()
+setname('autosnap')
 
 def snapinfodict2datetime(snapinfo):
     year = int(snapinfo['year'])
@@ -171,7 +169,6 @@ for mpkey in list_mp:
             del mp_to_task_map[mpkey]
 
 snaptime_str = snaptime.strftime('%Y%m%d.%H%M')
-sshcmd = '/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes -o StrictHostKeyChecking=yes -q'
 
 for mpkey in mp_to_task_map:
     mp_path, expire = mpkey
@@ -180,51 +177,29 @@ for mpkey in mp_to_task_map:
         if task.task_recursive == True:
             recursive = True
     if recursive == True:
-        recursive = ' -r'
+        rflag = ' -r'
     else:
-        recursive = ''
+        rflag = ''
 
     snapname = '%s@auto-%s-%s' % (mp_path[5:], snaptime_str, expire)
 
-    snapcmd = '/sbin/zfs snapshot%s %s' % (recursive, snapname)
-    system(snapcmd)
-    """Replicate snapshot to remote system"""
-    replication_tasks = Replication.objects.filter(repl_mountpoint__mp_path = mp_path)
-    for replication in replication_tasks:
-        remote = replication.repl_remote.ssh_remote_hostname.__str__()
-        fs = replication.repl_zfs.__str__()
-        last_snapshot = replication.repl_lastsnapshot.__str__()
-        if last_snapshot == '':
-            replcmd = '%s %s /sbin/zfs create -p %s' % (sshcmd, remote, fs)
-            system(replcmd)
-            replcmd = '/sbin/zfs send %s | %s %s /sbin/zfs receive -F -d %s' % (snapname, sshcmd, remote, fs)
-        else:
-            replcmd = '/sbin/zfs send -I %s %s | %s %s /sbin/zfs receive -F -d %s' % (last_snapshot, snapname, sshcmd, remote, fs)
-        p1 = Popen(replcmd, shell=True, stdout=PIPE, stderr=STDOUT)
-        output = p1.communicate()[0]
-        try:
-            p1.terminate()
-        except OSError:
-            pass
-        logger = Popen("logger -p daemon.notice -t autosnap".split(" "), stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        logger.communicate(input=output)
-        if p1.returncode != 0 and False:
-            from common.system import send_mail
-            error, errmsg = send_mail(subject="Replication failed!", text=\
-                """
-                Hello,
-
-                The replication failed for the snapshot %s.
-
-                The following text block was captured from the replicator command:
-                %s
-                """ % (snapname, output)
-            )
-        syslog.syslog(syslog.LOG_INFO, "Executed: " + replcmd)
-        
-        replication.repl_lastsnapshot = snapname
-        replication.save()
+    # If there is associated replication task, mark the snapshots as 'NEW'.
+    if Replication.objects.filter(repl_mountpoint__mp_path = mp_path).count() > 0:
+        MNTLOCK.lock()
+        snapcmd = '/sbin/zfs snapshot%s -o freenas:state=NEW %s' % (rflag, snapname)
+        system(snapcmd)
+        MNTLOCK.unlock()
+    else:
+        snapcmd = '/sbin/zfs snapshot%s %s' % (rflag, snapname)
+        system(snapcmd)
 
 for snapshot in snapshots_pending_delete:
-    snapcmd = '/sbin/zfs destroy %s' % (snapshot)
-    system(snapcmd)
+    MNTLOCK.lock()
+    zfsproc = pipeopen('/sbin/zfs get -H freenas:state %s' % (snapshot))
+    output = zfsproc.communicate()[0]
+    if output != '':
+        fsname, attrname, value, source = output.split('\n')[0].split('\t')
+	if value == '-':
+            snapcmd = '/sbin/zfs destroy %s' % (snapshot)
+            system(snapcmd)
+    MNTLOCK.unlock()

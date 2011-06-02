@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-05-18 04:22-0700\n"
+"POT-Creation-Date: 2011-06-01 02:08-0700\n"
 "PO-Revision-Date: 2011-05-23 19:53+0200\n"
 "Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,73 +19,72 @@ msgstr ""
 "X-Generator: Pootle 2.1.6\n"
 
 # Pour la fonction actuelle, "Graphiques" correspond plus.
-#: media/lib/js/freeadmin.js:113
+#: media/lib/js/freeadmin.js:114
 msgid "Reporting"
 msgstr "Graphiques"
 
-#: media/lib/js/freeadmin.js:125
+#: media/lib/js/freeadmin.js:126
 msgid "Settings"
 msgstr "Paramètres"
 
-#: media/lib/js/freeadmin.js:136
+#: media/lib/js/freeadmin.js:137
 msgid "System Information"
 msgstr "Informations Système"
 
-#: media/lib/js/freeadmin.js:176
+#: media/lib/js/freeadmin.js:177
 msgid "Network Settings"
 msgstr "Paramètres Réseau"
 
-#: media/lib/js/freeadmin.js:238
+#: media/lib/js/freeadmin.js:239
 msgid "Services"
 msgstr "Services"
 
-#: media/lib/js/freeadmin.js:278
+#: media/lib/js/freeadmin.js:279
 msgid "Account"
 msgstr "Compte"
 
-#: media/lib/js/freeadmin.js:317
+#: media/lib/js/freeadmin.js:318
 msgid "Storage"
 msgstr "Stockage"
 
-#: media/lib/js/freeadmin.js:344
+#: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
 msgstr "Tâches planifiées"
 
-#: media/lib/js/freeadmin.js:398
+#: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
 msgstr "Editer le Disque"
 
-#: media/lib/js/freeadmin.js:402
+#: media/lib/js/freeadmin.js:443
 msgid "Replace"
 msgstr "Remplacer"
 
-#: media/lib/js/freeadmin.js:403
+#: media/lib/js/freeadmin.js:444
 msgid "Disk Replacement"
 msgstr "Remplacement de Disque"
 
-#: media/lib/js/freeadmin.js:407
+#: media/lib/js/freeadmin.js:448
 msgid "Detach"
 msgstr "Détacher"
 
-#: media/lib/js/freeadmin.js:408
+#: media/lib/js/freeadmin.js:449
 msgid "Disk Detach"
 msgstr "Détacher le Disque"
 
-#: media/lib/js/freeadmin.js:594
+#: media/lib/js/freeadmin.js:635
 msgid "Some error ocurried!"
 msgstr "Des erreurs sont survenues !"
 
-# Utilisé dans "Every minute", "Every hour", "Every day of month"
-#: media/lib/js/freeadmin/form/Cron.js:43
-msgid "Every"
-msgstr "Tou(te)s les"
-
 # Utilisé dans "Every selected minute", "Every selected Hour", "Every selected day of month"
-#: media/lib/js/freeadmin/form/Cron.js:51
+#: media/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
 msgstr "Chaque sélection"
 
 # Utilisé dans "Every N minute", "Every N hour", "Every N day of month"
-#: media/lib/js/freeadmin/form/Cron.js:96
+#: media/lib/js/freeadmin/form/Cron.js:90
 msgid "Every N"
 msgstr "Tou(te)s les N"
+
+# Utilisé dans "Every minute", "Every hour", "Every day of month"
+#~ msgid "Every"
+#~ msgstr "Tou(te)s les"
