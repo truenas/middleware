@@ -1556,6 +1556,14 @@ class notifier:
         sysctl_proc = self.__pipeopen('sysctl -b kern.geom.confxml')
         return (parseDoc(sysctl_proc.communicate()[0][:-1]))
 
+    def serial_from_device(self, devname):
+        p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
+        output = p1.communicate()[0]
+        search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I)
+        if search:
+            return search.group("serial")
+        return None
+
     def device_to_identifier(self, name):
         name = str(name)
         doc = self.__geom_confxml()
@@ -1571,11 +1579,9 @@ class notifier:
         if len(search) > 0:
             return "{label}%s" % search[0].content
 
-        p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % name], stdout=PIPE)
-        output = p1.communicate()[0]
-        search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I)
-        if search:
-            return "{serial}%s" % search.group("serial")
+        serial = self.serial_from_device(name)
+        if serial:
+            return serial
 
         return "{devicename}%s" % name
 
@@ -1605,10 +1611,8 @@ class notifier:
             p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE)
             output = p1.communicate()[0]
             for devname in output.split(' '):
-                p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
-                output = p1.communicate()[0]
-                search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I)
-                if search and search.group("serial") == value:
+                serial = self.serial_from_device(devname)
+                if serial == value:
                     return devname
             return None
 
