@@ -280,7 +280,7 @@ class DojoFileStore(object):
         return node
     
     def children(self, entry):
-        children = [ self._item(self.path, entry) for entry in os.listdir(entry) if len([f for f in self.mp if os.path.join(self.path,entry).startswith(f)]) > 0]
+        children = [ self._item(self.path, entry) for entry in os.listdir(entry) if len([f for f in self.mp if os.path.join(self.path,entry).startswith(f+'/') or os.path.join(self.path,entry) == f]) > 0]
         if self.dirsonly:
             children = [ child for child in children if child['directory']]
         return children
