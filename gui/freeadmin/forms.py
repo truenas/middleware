@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import os
 import re
 
 from django.forms.widgets import Widget
@@ -39,6 +40,7 @@ from dojango.forms import widgets
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_User, \
                                          FreeNAS_Groups, FreeNAS_Group
 from account.forms import FilteredSelectJSON
+from storage.models import MountPoint
 
 class CronMultiple(DojoWidgetMixin, Widget):
     dojo_type = 'freeadmin.form.Cron'
@@ -54,7 +56,11 @@ class CronMultiple(DojoWidgetMixin, Widget):
 
 class DirectoryBrowser(widgets.Widget):
     def render(self, name, value, attrs=None):
-        context = dict(name=name, value=value, attrs=attrs)
+        context = {
+            'name': name, 
+            'value': value,
+            'attrs': attrs,
+            }
         return mark_safe(render_to_string('freeadmin/directory_browser.html', context))
 
 class UserField(forms.ChoiceField):
@@ -119,3 +125,14 @@ class GroupField(forms.ChoiceField):
 
 class PathField(forms.CharField):
     widget = DirectoryBrowser()
+    def clean(self, value):
+        if value not in ('', None):
+            value = os.path.abspath(value)
+            valid = False
+            for mp in MountPoint.objects.all().values_list('mp_path',):
+                if value.startswith(mp[0]+'/') or value == mp[0]:
+                    valid = True
+                    break
+            if not valid:
+                raise forms.ValidationError(_("The path must reside within a volume mount point"))
+        return value
