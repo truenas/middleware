@@ -723,8 +723,25 @@ class notifier:
         self.__system("zfs set %s=%s %s" % (attr, value, name))
 
     def destroy_zfs_dataset(self, path):
-        zfsproc = self.__pipeopen("zfs destroy %s" % (path))
-        retval = zfsproc.communicate()[1]
+        from freenasUI.common.locks import mntlock
+        retval = None
+        if '@' in path:
+            MNTLOCK = mntlock()
+            try:
+                MNTLOCK.lock_try()
+                zfsproc = self.__pipeopen("zfs get -H freenas:state %s" % (path))
+                output = zfsproc.communicate()[0]
+                if output != '':
+                    fsname, attrname, value, source = output.split('\n')[0].split('\t')
+                    if value != '-' and value != 'NEW':
+                        retval = 'Held by replication system.'
+                MNTLOCK.unlock()
+                del MNTLOCK
+            except IOError:
+                retval = 'Try again later.'
+        if retval == None:
+            zfsproc = self.__pipeopen("zfs destroy %s" % (path))
+            retval = zfsproc.communicate()[1]
         return retval
 
     def destroy_zfs_vol(self, name):
