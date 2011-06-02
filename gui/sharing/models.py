@@ -31,7 +31,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from storage.models import MountPoint as MountPoint 
 from freenasUI import choices
-from freeadmin.models import Model, UserField, GroupField
+from freeadmin.models import Model, UserField, GroupField, PathField
 
 mountpoint_limiter = { 'mp_path__startswith': '/mnt/' }
 
@@ -45,8 +45,7 @@ class CIFS_Share(Model):
             verbose_name = _("Comment"),
             blank=True,
             )
-    cifs_path = models.CharField(
-            max_length=255,
+    cifs_path = PathField(
             verbose_name = _("Path"))
     cifs_ro = models.BooleanField(
             verbose_name = _("Export Read Only"))
@@ -109,8 +108,7 @@ class AFP_Share(Model):
             verbose_name = _("Share Comment"),
             blank=True
             )
-    afp_path = models.CharField(
-            max_length=255,
+    afp_path = PathField(
             verbose_name = _("Path"))
     afp_sharepw = models.CharField(
             max_length=120, 
@@ -224,8 +222,7 @@ class NFS_Share(Model):
             verbose_name = _("Comment"),
             blank=True,
             )
-    nfs_path = models.CharField(
-            max_length=255,
+    nfs_path = PathField(
             verbose_name = _("Path"))
     nfs_network = models.CharField(
             max_length=120, 

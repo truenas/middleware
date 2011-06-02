@@ -43,7 +43,6 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_User, \
                                          FreeNAS_Groups, FreeNAS_Group
 from freenasUI.middleware.notifier import notifier
-from freeadmin.forms import DirectoryBrowser
 from dojango import forms
 from dojango.forms import widgets
 
@@ -58,16 +57,6 @@ class servicesForm(ModelForm):
 class CIFSForm(ModelForm):
     class Meta:
         model = models.CIFS
-    def __init__(self, *args, **kwargs):
-        #FIXME: Workaround for DOJO not showing select options with blank values
-        if len(args) > 0 and isinstance(args[0], QueryDict):
-            new = args[0].copy()
-            if new.get('cifs_srv_homedir', None) == '-----':
-                new['cifs_srv_homedir'] = ''
-            args = (new,) + args[1:]
-        super(CIFSForm, self).__init__(*args, **kwargs)
-        #FIXME: Workaround for DOJO not showing select options with blank values
-        self.fields['cifs_srv_homedir'].choices = (('-----', _('N/A')),) + tuple([x for x in self.fields['cifs_srv_homedir'].choices][1:])
     def clean(self):
         cleaned_data = self.cleaned_data
         home = cleaned_data['cifs_srv_homedir_enable']
@@ -229,9 +218,6 @@ class RsyncdForm(ModelForm):
 class RsyncModForm(ModelForm):
     class Meta:
         model = models.RsyncMod
-        widgets = {
-            'rsyncmod_path': DirectoryBrowser(),
-        }
     def clean_rsyncmod_name(self):
         name = self.cleaned_data['rsyncmod_name']
         if re.search(r'[/\]]', name):

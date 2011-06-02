@@ -49,10 +49,21 @@ class GroupField(models.CharField):
         return super(GroupField, self).formfield(**kwargs)
 
 class PathField(models.CharField):
+
+    description = "A generic path chooser"
+
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = 255
+        if kwargs.get('blank', False):
+            kwargs['null'] = True
+        super(PathField, self).__init__(*args, **kwargs)
+
     def formfield(self, **kwargs):
         #FIXME: Move to top (causes cycle-dependency)
         from freeadmin.forms import PathField as PF
-        defaults = {'form_class': PF}
+        defaults = {
+            'form_class': PF,
+            }
         kwargs.update(defaults)
         return super(PathField, self).formfield(**kwargs)
 

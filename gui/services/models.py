@@ -30,12 +30,10 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
-from freeadmin.models import Model, UserField, GroupField
+from freeadmin.models import Model, UserField, GroupField, PathField
 from storage.models import MountPoint, Volume, Disk
 from freenasUI.middleware.notifier import notifier
    
-mountpoint_limiter = { 'mp_path__startswith': '/mnt/' }
-
 class services(Model):
     srv_service = models.CharField(
             max_length=120, 
@@ -146,11 +144,9 @@ class CIFS(Model):
             help_text=_("This enables\disables home directories browsing for samba user."),
             default=False,
             )
-    cifs_srv_homedir = models.ForeignKey(MountPoint, 
+    cifs_srv_homedir = PathField(
             verbose_name=_("Home directories"),
-            null=True, 
             blank=True,
-            default=None,
             )
     cifs_srv_aio_enable = models.BooleanField(
             verbose_name=_("Enable AIO"), 
@@ -827,10 +823,9 @@ class FTP(Model):
             verbose_name = _("Allow Root Login"))
     ftp_onlyanonymous = models.BooleanField(
             verbose_name = _("Allow Anonymous Login"))
-    ftp_anonpath = models.ForeignKey(MountPoint, limit_choices_to=mountpoint_limiter,
-                                     blank=True,
-                                     null=True,
-                                     verbose_name = _("Path"))
+    ftp_anonpath = PathField(
+        blank=True,
+        verbose_name = _("Path"))
     ftp_onlylocal = models.BooleanField(
             verbose_name = _("Allow Local User Login"))
     ftp_banner = models.TextField(
@@ -1178,8 +1173,7 @@ class RsyncMod(Model):
             max_length=120,
             verbose_name=_("Comment"),
             )
-    rsyncmod_path = models.CharField(
-        max_length=255,
+    rsyncmod_path = PathField(
         verbose_name=_("Path"),
         help_text=_("Path to be shared"),
         )

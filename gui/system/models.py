@@ -34,6 +34,7 @@ from django.conf import settings
 from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField
 from freenasUI.middleware.notifier import notifier
+from freeadmin.models import PathField
 
 class Settings(Model):
     stg_guiprotocol = models.CharField(
@@ -331,8 +332,7 @@ class CronJob(Model):
             pass
 
 class Rsync(Model):
-    rsync_path = models.CharField(
-        max_length=255,
+    rsync_path = PathField(
         verbose_name=_("Path"),
         )
     rsync_remotehost = models.CharField(
