@@ -802,7 +802,7 @@ class notifier:
                 devname = self.identifier_to_device(disk[0])
                 geom_vdev += " /dev/" + devname
             self.__system("geom %s load" % (geom_type))
-            self.__system("geom %s label %s %s" % (geom_type, u_name, geom_vdev))
+            self.__system("geom %s label %s %s" % (geom_type, geom_name, geom_vdev))
             ufs_device = "/dev/%s/%s" % (geom_type, geom_name)
             self.__system("newfs -U -L %s %s" % (u_name, ufs_device))
 
