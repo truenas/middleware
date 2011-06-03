@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#- 
+#-
 # Copyright (c) 2010 iXsystems, Inc.
 # All rights reserved.
 #
@@ -1158,15 +1158,11 @@ class notifier:
                     gtype = 'raid3'
                     break
 
-            if gtype == 'mirror':
-                p1 = self.__pipeopen('gmirror list')
-            if gtype == 'stripe':
-                p1 = self.__pipeopen('gstripe list')
-            if gtype == 'raid3':
-                p1 = self.__pipeopen('graid3 list')
+            if gtype in ('mirror', 'stripe', 'raid3'):
+                p1 = self.__pipeopen('geom %s list' % gtype)
 
             if gtype:
-                p2 = Popen(["grep", "name: %s%s" % (name, gtype), "-A", "1"], stdin=p1.stdout, stdout=PIPE)
+                p2 = Popen(["grep", "name: %s" % (name, ), "-A", "1"], stdin=p1.stdout, stdout=PIPE)
                 p3 = Popen(["grep", "State:"], stdin=p2.stdout, stdout=PIPE)
                 p1.wait()
                 p2.wait()
@@ -1295,7 +1291,6 @@ class notifier:
                     search = RE_GEOM_NAME.search(item)
                     if search:
                         label = search.group("name")
-                        label = label.replace(geom, '')
                         consumers = item.split('Consumers:')[1]
                         if RE_DEV_NAME.search(consumers):
                             disks = []
@@ -1377,7 +1372,7 @@ class notifier:
                     })
 
         return volumes
-            
+
     def zfs_import(self, name):
         imp = self.__pipeopen('zpool import -R /mnt %s' % name)
         imp.wait()

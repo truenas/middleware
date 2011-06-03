@@ -187,9 +187,9 @@ class VolumeWizardForm(forms.Form):
         self.fields['group_type'].choices = grouptype_choices
 
     def _populate_disk_choices(self):
-    
+
         diskchoices = dict()
-    
+
         # Grab disk list
         # NOTE: This approach may fail if device nodes are not accessible.
         pipe = popen("/usr/sbin/diskinfo `/sbin/sysctl -n kern.disks | tr ' ' '\n' | grep -v '^cd[0-9]'` | /usr/bin/cut -f1,3")
@@ -347,7 +347,7 @@ class VolumeImportForm(forms.Form):
     
         diskchoices = dict()
         used_disks = [notifier().identifier_to_device(i[0]) for i in models.Disk.objects.all().values_list('disk_identifier').distinct()]
-    
+
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
         parts = notifier().get_partitions()
@@ -432,10 +432,10 @@ class VolumeAutoImportForm(forms.Form):
         self.fields['volume_disks'].choices = self._populate_disk_choices()
 
     def _populate_disk_choices(self):
-    
+
         diskchoices = dict()
         used_disks = [notifier().identifier_to_device(i[0]) for i in models.Disk.objects.all().values_list('disk_identifier').distinct()]
-    
+
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
         vols = notifier().detect_volumes()
@@ -480,17 +480,15 @@ class VolumeAutoImportForm(forms.Form):
 
             if cleaned_data['volume']['type'] == 'geom':
                 if cleaned_data['volume']['group_type'] == 'mirror':
-                    dev = "/dev/mirror/%s%s" % (cleaned_data['volume']['label'],
-                            cleaned_data['volume']['group_type'])
+                    dev = "/dev/mirror/%s" % (cleaned_data['volume']['label'])
                 elif cleaned_data['volume']['group_type'] == 'stripe':
-                    dev = "/dev/stripe/%s%s" % (cleaned_data['volume']['label'],
-                            cleaned_data['volume']['group_type'])
+                    dev = "/dev/stripe/%s" % (cleaned_data['volume']['label'])
                 elif cleaned_data['volume']['group_type'] == 'raid3':
-                    dev = "/dev/raid3/%s%s" % (cleaned_data['volume']['label'],
-                            cleaned_data['volume']['group_type'])
+                    dev = "/dev/raid3/%s" % (cleaned_data['volume']['label'])
                 else:
                     #TODO
                     raise NotImplementedError
+
                 isvalid = notifier().precheck_partition(dev, 'UFS')
                 if not isvalid:
                     msg = _(u"The selected disks were not verified for this import rules.")
@@ -523,7 +521,7 @@ class VolumeAutoImportForm(forms.Form):
 
             if not notifier().zfs_import(vol['label']):
                 assert False, "Could not run zfs import"
-            
+
         volume = models.Volume(vol_name = volume_name, vol_fstype = volume_fstype)
         volume.save()
         self.volume = volume
@@ -533,6 +531,8 @@ class VolumeAutoImportForm(forms.Form):
 
         if vol['type'] == 'zfs':
             notifier().zfs_sync_datasets(volume.id)
+        else:
+            notifier().label_disk(volume_name, "%s/%s" % (group_type, volume_name), 'UFS')
 
         grp = models.DiskGroup(group_name= volume_name, group_type = group_type, group_volume = volume)
         grp.save()
