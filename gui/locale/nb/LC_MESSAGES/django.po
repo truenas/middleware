@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:03-0700\n"
-"PO-Revision-Date: 2011-06-01 16:44+0200\n"
+"PO-Revision-Date: 2011-06-03 10:24+0200\n"
 "Last-Translator: christian1986 <christian.skeie@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nb\n"
@@ -111,34 +111,28 @@ msgid "Disabled"
 msgstr "Deaktivert"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Lavt strømforbruk med ventemodus (spindown)"
+msgstr "Nivå 1 - Lavt strømforbruk med ventemodus (spindown)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Normalt strømforbruk med hvilemodus"
+msgstr "Nivå 64 - Normalt strømforbruk med hvilemodus"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Normalt strømforbruk med hvilemodus"
+msgstr "Nivå 127 - Normalt strømforbruk med hvilemodus"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Lavt strømforbruk uten hvilemodus (ingen spindown)"
+msgstr "Nivå 128 - Lavt strømforbruk uten hvilemodus (ingen spindown)"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Normalt strømforbruk uten hvilemodus"
+msgstr "Nivå 192 - Normalt strømforbruk uten hvilemodus"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Høyeste ytelse og strømforbruk"
+msgstr "Nivå 254 - Høyeste ytelse og strømforbruk"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -360,19 +354,16 @@ msgid "lzjb (recommended)"
 msgstr "lzjb (anbefalt)"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "standardnivå"
+msgstr "gzip (standardnivå, 6)"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "raskeste"
+msgstr "gzip (raskest)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "maksimalt, sakte"
+msgstr "gzip (maksimalt, sakte)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -404,18 +395,16 @@ msgid "Every selected weekday"
 msgstr "Alle utvalgte ukedager"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
-msgstr "kun lese"
+msgstr "Kun lese"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "kun lese"
+msgstr "Kun skrive"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Lese og skrive"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -643,12 +632,12 @@ msgstr "The group %s is not valid."
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Legg til %"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "Vis alle brukere"
+msgstr "Vis alle %"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -674,7 +663,7 @@ msgstr "% er korrekt oppdatert."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Denne tjenesten kunne ikke startes på nytt."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -707,13 +696,12 @@ msgid "Parent Interface"
 msgstr "Virtuelt grensesnitt"
 
 #: network/forms.py:109
-#, fuzzy
 msgid "The name must be vlanXX where XX is a integer"
 msgstr "Navn på grensesnitt må være vlanXX, hvor XX er et tall"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "Vlan merker er 1 til 4095"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -850,7 +838,6 @@ msgid "VLAN"
 msgstr "VLAN"
 
 #: network/models.py:200
-#, fuzzy
 msgid "VLANs"
 msgstr "VLAN"
 
@@ -884,11 +871,11 @@ msgstr "Bestemmelsesnettverk"
 
 #: network/models.py:278 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr ""
+msgstr "Gateway"
 
 #: network/models.py:287
 msgid "Static Route"
-msgstr ""
+msgstr "Statisk ruting"
 
 #: network/models.py:288 templates/network/index.html:9
 msgid "Static Routes"
@@ -913,27 +900,27 @@ msgstr ""
 #: network/views.py:180
 #, python-format
 msgid "%s successfully added"
-msgstr ""
+msgstr "% lagt til"
 
 #: services/forms.py:70
 msgid "N/A"
-msgstr ""
+msgstr "N/A"
 
 #: services/forms.py:79
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr ""
+msgstr "Utfylling er nødvendig for å \"Aktivere visning av hjemmemapper\"."
 
 #: services/forms.py:82
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "Dette feltet er nødvendig for \"Hjemmemapper\"."
 
 #: services/forms.py:99
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "AFP-tjenesten klarte ikke å restarte."
 
 #: services/forms.py:108
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "NFS-tjenesten klarte ikke å restarte."
 
 #: services/forms.py:112
 msgid "File Permission"
@@ -969,19 +956,19 @@ msgstr "Dette feltet er nødvendig for anonym innlogging."
 
 #: services/forms.py:200
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "FTP-tjenesten klarte ikke å starte."
 
 #: services/forms.py:209
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "FTP-tjenesten klarte ikke å restarte."
 
 #: services/forms.py:216
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "SSH-tjenesten klarte ikke å restarte."
 
 #: services/forms.py:225 services/forms.py:253
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Rsync-tjenesten klarte ikke å restarte."
 
 #: services/forms.py:238
 msgid "The name cannot contain slash or a closing square backet."
@@ -989,19 +976,19 @@ msgstr ""
 
 #: services/forms.py:262
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "DynamiskDNS-tjenesten klarte ikke å restarte."
 
 #: services/forms.py:271
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "SNMP-tjenesten klarte ikke restarte."
 
 #: services/forms.py:285
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "Activedirectory-tjenesten klarte ikke å restarte."
 
 #: services/forms.py:296
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "Idap-tjenesten klarte ikke å restarte."
 
 #: services/forms.py:302 services/models.py:529
 #: templates/services/iscsi_auth.html:7
@@ -1010,19 +997,20 @@ msgstr "Hemmelighet"
 
 #: services/forms.py:303 services/models.py:530
 msgid "Target side secret."
-msgstr ""
+msgstr "Målside hemmelighet."
 
 #: services/forms.py:304
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "Hemmelighet (bekreft)"
 
 #: services/forms.py:306 services/forms.py:314
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "Skriv inn samme hemmeligheten som over for verifikasjon."
 
 #: services/forms.py:307
+#, fuzzy
 msgid "Initiator Secret"
-msgstr ""
+msgstr "Starthemmelighet"
 
 #: services/forms.py:309 services/models.py:536 services/models.py:541
 msgid "Initiator side secret. (for mutual CHAP authentication)"
@@ -1048,7 +1036,7 @@ msgstr ""
 #: services/forms.py:537 services/forms.py:584 services/forms.py:683
 #: services/forms.py:705 services/forms.py:726 services/forms.py:758
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "iSCSI-tjenesten klarte ikke å restarte."
 
 #: services/forms.py:385
 msgid "LUN already exists in the same target."
@@ -1056,7 +1044,7 @@ msgstr "LUN finnes allerede i det samme målet."
 
 #: services/forms.py:396 services/models.py:354
 msgid "Controller Auth Group"
-msgstr ""
+msgstr "Kontrollerautorisasjonsgruppe"
 
 #: services/forms.py:397 services/models.py:355
 msgid ""
@@ -1080,11 +1068,11 @@ msgstr ""
 
 #: services/forms.py:516 services/forms.py:546
 msgid "You need to specify a filepath, not a directory."
-msgstr ""
+msgstr "Du må angi en filbane, ikke en mappe."
 
 #: services/forms.py:520 services/forms.py:550
 msgid "You need to specify a file inside your volume/dataset."
-msgstr ""
+msgstr "Du må angi en fil i ditt volum/datasett."
 
 #: services/forms.py:524 services/forms.py:554
 msgid ""
@@ -1095,10 +1083,12 @@ msgstr ""
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr ""
+"Denne verdien kan være i bit, eller det kan anngis KB, MB, GB, TB i "
+"etterkant av tallet."
 
 #: services/forms.py:589
 msgid "Disk device"
-msgstr ""
+msgstr "Diskenhet"
 
 #: services/forms.py:699
 #, python-format
@@ -1116,11 +1106,11 @@ msgstr ""
 
 #: services/forms.py:761
 msgid "Delete underlying file"
-msgstr ""
+msgstr "Slett underliggende fil"
 
 #: services/models.py:42
 msgid "Service"
-msgstr ""
+msgstr "Tjeneste"
 
 #: services/models.py:43
 msgid "Name of Service, should be auto-generated at build time"
@@ -1235,7 +1225,7 @@ msgstr ""
 
 #: services/models.py:125
 msgid "Large RW support"
-msgstr ""
+msgstr "Stor RW støtte"
 
 #: services/models.py:127
 msgid "Send files with sendfile(2)"
@@ -1261,7 +1251,7 @@ msgstr "Tilleggsparameter"
 
 #: services/models.py:138
 msgid "These parameters are added to [Global] section of smb.conf"
-msgstr ""
+msgstr "Disse parameterne blir lagt til [Global] del av smb.conf"
 
 #: services/models.py:141
 msgid "Enable home directories"
@@ -1277,7 +1267,7 @@ msgstr "Tillat lesing av hjemmemapper"
 
 #: services/models.py:146
 msgid "This enables\\disables home directories browsing for samba user."
-msgstr ""
+msgstr "Dette aktiverer\\deaktiverer visning av hjemmemappen for sambabrukere."
 
 #: services/models.py:150
 msgid "Home directories"
@@ -1359,22 +1349,23 @@ msgstr "Aktiver DDP"
 
 #: services/models.py:202
 msgid "Enables DDP support for low-level appletalk access."
-msgstr ""
+msgstr "Aktiverer DDP støtte for lavnivå appletalktilgang."
 
 #: services/models.py:206 services/models.py:207
 #: templates/services/index.html:7
 msgid "AFP"
-msgstr ""
+msgstr "AFP"
 
 #: services/models.py:216
 msgid "Number of servers"
-msgstr ""
+msgstr "Antall servere"
 
 #: services/models.py:217
+#, fuzzy
 msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
-msgstr ""
+msgstr "Oppgi antall servere som skal opprettes. "
 
 #: services/models.py:221
 msgid "Asynchronous mode"
@@ -1407,15 +1398,15 @@ msgstr ""
 
 #: services/models.py:255
 msgid "I/O Timeout"
-msgstr ""
+msgstr "I/O Timeout"
 
 #: services/models.py:256
 msgid "I/O timeout in seconds (30 by default)."
-msgstr ""
+msgstr "I/O timeout i sekunder (30 er standard)."
 
 #: services/models.py:261
 msgid "NOPIN Interval"
-msgstr ""
+msgstr "NOPIN intervall"
 
 #: services/models.py:262
 msgid "NOPIN sending interval in seconds (20 by default)."
@@ -1423,23 +1414,23 @@ msgstr ""
 
 #: services/models.py:267
 msgid "Max. sessions"
-msgstr ""
+msgstr "Maks sesjoner"
 
 #: services/models.py:268
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr ""
+msgstr "Maks antall sesjoner til samme tid(16 er standard)."
 
 #: services/models.py:273
 msgid "Max. connections"
-msgstr ""
+msgstr "Maks tilkoblinger"
 
 #: services/models.py:274
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "Maks antall tilkoblinger i hver sesjon (8 er standard)."
 
 #: services/models.py:279
 msgid "Max. pre-send R2T"
-msgstr ""
+msgstr "Maks forhåndsendt R2T"
 
 #: services/models.py:280
 msgid ""
@@ -1529,8 +1520,9 @@ msgstr ""
 
 #: services/models.py:361 services/models.py:362
 #: templates/services/iscsi.html:3
+#, fuzzy
 msgid "Target Global Configuration"
-msgstr ""
+msgstr "Mål for global konfigurasjon"
 
 #: services/models.py:373
 msgid "Extent Name"
@@ -1573,7 +1565,7 @@ msgstr ""
 #: templates/sharing/apple.html:14 templates/sharing/unix.html:14
 #: templates/sharing/windows.html:14
 msgid "Comment"
-msgstr ""
+msgstr "Kommentar"
 
 #: services/models.py:397 services/models.py:447 services/models.py:493
 msgid "You may enter a description here for your reference."
@@ -1654,7 +1646,7 @@ msgstr ""
 
 #: services/models.py:568
 msgid "Target Alias"
-msgstr ""
+msgstr "Målalias"
 
 #: services/models.py:569
 msgid "Optional user-friendly string of the target."
@@ -1672,7 +1664,7 @@ msgstr ""
 
 #: services/models.py:581
 msgid "Target Flags"
-msgstr ""
+msgstr "Målflagg"
 
 #: services/models.py:589
 msgid "Initiator Group ID"
@@ -1699,10 +1691,11 @@ msgid "Queue Depth"
 msgstr ""
 
 #: services/models.py:614
+#, fuzzy
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
-msgstr ""
+msgstr "0=deaktivert, 1-255=aktivert kommando"
 
 #: services/models.py:619
 msgid "Logical Block Size"
@@ -1713,6 +1706,8 @@ msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
 msgstr ""
+"Du kan angi logisk blokklengde(512 er standard). Anbefalt for kompabilitet "
+"er 512."
 
 #: services/models.py:623 services/models.py:638
 #: templates/services/iscsi_assoctargets.html:5
@@ -1763,6 +1758,7 @@ msgstr "Tvungen periodisk oppdatering"
 #: services/models.py:693 services/models.py:727 services/models.py:759
 msgid "These parameters will be added to global settings in inadyn.conf."
 msgstr ""
+"Disse parameterne vil bli lagt til de globale instillingene i inadyn.conf."
 
 #: services/models.py:697 services/models.py:698
 #: templates/services/index.html:40
@@ -1802,8 +1798,9 @@ msgid "In most cases, 'public' is used here."
 msgstr "I de fleste tilfellene er 'offentlig' korrekt verdi."
 
 #: services/models.py:723
+#, fuzzy
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "Send SNMP feller"
 
 #: services/models.py:731 services/models.py:732
 #: templates/services/index.html:97
@@ -2506,7 +2503,7 @@ msgstr "Vis skjulte filer"
 
 #: sharing/models.py:64
 msgid "Guest Account"
-msgstr ""
+msgstr "Gjestekonto"
 
 #: sharing/models.py:68
 msgid "Allow Guest Access"

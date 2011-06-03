@@ -3,81 +3,81 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:08-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-06-02 17:53+0200\n"
+"Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: media/lib/js/freeadmin.js:114
 msgid "Reporting"
-msgstr ""
+msgstr "報表"
 
 #: media/lib/js/freeadmin.js:126
 msgid "Settings"
-msgstr ""
+msgstr "設定"
 
 #: media/lib/js/freeadmin.js:137
 msgid "System Information"
-msgstr ""
+msgstr "系統資訊"
 
 #: media/lib/js/freeadmin.js:177
 msgid "Network Settings"
-msgstr ""
+msgstr "網路設定"
 
 #: media/lib/js/freeadmin.js:239
 msgid "Services"
-msgstr ""
+msgstr "服務"
 
 #: media/lib/js/freeadmin.js:279
 msgid "Account"
-msgstr ""
+msgstr "帳號"
 
 #: media/lib/js/freeadmin.js:318
 msgid "Storage"
-msgstr ""
+msgstr "儲存"
 
 #: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
-msgstr ""
+msgstr "例行工作"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
-msgstr ""
+msgstr "磁碟管理"
 
 #: media/lib/js/freeadmin.js:443
 msgid "Replace"
-msgstr ""
+msgstr "移轉"
 
 #: media/lib/js/freeadmin.js:444
 msgid "Disk Replacement"
-msgstr ""
+msgstr "磁碟移轉"
 
 #: media/lib/js/freeadmin.js:448
 msgid "Detach"
-msgstr ""
+msgstr "卸載"
 
 #: media/lib/js/freeadmin.js:449
 msgid "Disk Detach"
-msgstr ""
+msgstr "磁碟卸載"
 
 #: media/lib/js/freeadmin.js:635
 msgid "Some error ocurried!"
-msgstr ""
+msgstr "發生錯誤！"
 
 #: media/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
-msgstr ""
+msgstr "所選的每個"
 
 #: media/lib/js/freeadmin/form/Cron.js:90
 msgid "Every N"
-msgstr ""
+msgstr "每 N 個"

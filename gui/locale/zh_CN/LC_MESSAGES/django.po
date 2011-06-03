@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:06-0700\n"
-"PO-Revision-Date: 2011-05-31 17:06+0200\n"
-"Last-Translator: Leady <aixinssc@gmail.com>\n"
+"PO-Revision-Date: 2011-06-02 17:09+0200\n"
+"Last-Translator: Joyway <joywaycn@yahoo.com.cn>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -364,14 +364,12 @@ msgid "gzip (default level, 6)"
 msgstr "默认级别"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "最快"
+msgstr "gzip(最快)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "最大压缩率，速度慢"
+msgstr "gzip(最大压缩率，速度慢)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -400,7 +398,7 @@ msgstr "每日"
 
 #: choices.py:435
 msgid "Every selected weekday"
-msgstr "每个已选的工作日"
+msgstr "每个选定的工作日"
 
 #: choices.py:441
 #, fuzzy
@@ -408,13 +406,12 @@ msgid "Read-only"
 msgstr "只读"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "只读"
+msgstr "只写"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "读写"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -422,7 +419,7 @@ msgstr "可用"
 
 #: account/forms.py:146
 msgid "Selected"
-msgstr "选择"
+msgstr "选定"
 
 #: account/forms.py:174 account/forms.py:198 account/models.py:79
 #: services/models.py:673 services/models.py:933 system/models.py:158
@@ -669,7 +666,7 @@ msgstr "%s 更新成功"
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "服务器重启失败。"
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -921,11 +918,11 @@ msgstr "此字段必需“主目录”。"
 
 #: services/forms.py:99
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "AFP服务重启失败。"
 
 #: services/forms.py:108
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "NFS服务重启失败。"
 
 #: services/forms.py:112
 msgid "File Permission"
@@ -961,39 +958,39 @@ msgstr "此字段必需匿名登录"
 
 #: services/forms.py:200
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "FTP服务重启失败。"
 
 #: services/forms.py:209
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "tftp服务重启失败。"
 
 #: services/forms.py:216
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "SSH服务重启失败。"
 
 #: services/forms.py:225 services/forms.py:253
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Rsync服务重启失败。"
 
 #: services/forms.py:238
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "名字不能包斜杠或者方括号。"
 
 #: services/forms.py:262
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "动态域名服务重启失败。"
 
 #: services/forms.py:271
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "SNMP服务重启失败。"
 
 #: services/forms.py:285
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "活动目录（ADS）服务重启失败。"
 
 #: services/forms.py:296
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "ldap服务重启失败。"
 
 #: services/forms.py:302 services/models.py:529
 #: templates/services/iscsi_auth.html:7
@@ -1040,7 +1037,7 @@ msgstr "对端密钥必须与用户密钥不同"
 #: services/forms.py:537 services/forms.py:584 services/forms.py:683
 #: services/forms.py:705 services/forms.py:726 services/forms.py:758
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "iSCSI服务重启失败。"
 
 #: services/forms.py:385
 msgid "LUN already exists in the same target."
@@ -1149,11 +1146,11 @@ msgstr "工作组"
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
-msgstr ""
+msgstr "客户机询问时显示的此服务器所在的工作组名（最多15个字符）"
 
 #: services/models.py:78
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "服务器说明。这里经常保持空白。"
 
 #: services/models.py:84
 msgid "DOS charset"

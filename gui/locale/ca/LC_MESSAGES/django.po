@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:05-0700\n"
-"PO-Revision-Date: 2011-05-25 13:50+0200\n"
-"Last-Translator: Marc <marc.codina@gmail.com>\n"
+"PO-Revision-Date: 2011-06-02 15:35+0200\n"
+"Last-Translator: Pere <pedro.cerdan@uab.cat>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
@@ -111,34 +111,29 @@ msgid "Disabled"
 msgstr "Desactivat"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Ús mínim d'energia amb mode d'espera (aturada del disc)"
+msgstr "Nivell 1 - Ús mínim d'energia amb mode d'espera (aturada del disc)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Ús intermedi d'energia amb mode d'espera"
+msgstr "Nivell 64 - Ús intermedi d'energia amb mode d'espera"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Ús intermedi d'energia amb mode d'espera"
+msgstr "Nivell 127 - Ús intermedi d'energia amb mode d'espera"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Ús mínim d'energia sense mode d'espera (no s'atura el disc)"
+msgstr ""
+"Nivell 128 - Ús mínim d'energia sense mode d'espera (no s'atura el disc)"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Ús intermedi d'energia sense mode d'espera"
+msgstr "Nivell 192 Ús intermedi d'energia sense mode d'espera"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Màxim rendiment, màxim ús d'energia"
+msgstr "Nivell 254 - Màxim rendiment, màxim ús d'energia"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -359,19 +354,16 @@ msgid "lzjb (recommended)"
 msgstr "lzjb (recomenat)"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "nivell per defecte"
+msgstr "gzip (nivell per defecte, 6)"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "El més ràpid"
+msgstr "gzip (El més ràpid)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "el màxim, lent"
+msgstr "gzip (el màxim, lent)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -403,18 +395,16 @@ msgid "Every selected weekday"
 msgstr "Cada dia d'entre setmana seleccionat"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
-msgstr "només lectura"
+msgstr "Només lectura"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "només lectura"
+msgstr "Només lectura"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Escriure i Llegir"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -642,12 +632,12 @@ msgstr "El grup %s no és vàlid"
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Afegir %s"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "Veure tots els usuaris"
+msgstr "Veure tots %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -673,7 +663,7 @@ msgstr "%s actualitzat amb èxit."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "El servei ha fallat el reinici"
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -701,18 +691,16 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "Has d'omplir el nameserver 1 abans de posar el nameserver 2"
 
 #: network/forms.py:100
-#, fuzzy
 msgid "Parent Interface"
-msgstr "Esborrar interfície"
+msgstr "Interfície Pare"
 
 #: network/forms.py:109
-#, fuzzy
 msgid "The name must be vlanXX where XX is a integer"
-msgstr "Els noms de les interfícies han d'esser vlanXX on XX és un número"
+msgstr "El nomsde ha d'esser vlanXX on XX és un número integre"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "Etiquetes VLAN van de 1 - 4095 incloses"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -849,9 +837,8 @@ msgid "VLAN"
 msgstr "VLAN"
 
 #: network/models.py:200
-#, fuzzy
 msgid "VLANs"
-msgstr "VLAN"
+msgstr "VLANs"
 
 #: network/models.py:220
 msgid "Protocol Type"
@@ -916,7 +903,7 @@ msgstr "%s afegit amb èxit"
 
 #: services/forms.py:70
 msgid "N/A"
-msgstr ""
+msgstr "No disponible"
 
 #: services/forms.py:79
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -928,11 +915,11 @@ msgstr "Aquest camp és requereix per \"Home directories\"."
 
 #: services/forms.py:99
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "El servei AFP ha fallat la recàrrega"
 
 #: services/forms.py:108
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "El servei NFS ha fallat la recàrrega"
 
 #: services/forms.py:112
 msgid "File Permission"
@@ -972,31 +959,33 @@ msgstr "Aquest camp es requereix per fer login anònim"
 
 #: services/forms.py:200
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "El servei FTP no ha pogut iniciar-se"
 
 #: services/forms.py:209
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "El servei TFTP ha fallat la recàrrega"
 
 #: services/forms.py:216
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "El servei SSH ha fallat la recàrrega"
 
 #: services/forms.py:225 services/forms.py:253
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "El servei Rsync ha fallat la recàrrega"
 
 #: services/forms.py:238
 msgid "The name cannot contain slash or a closing square backet."
 msgstr ""
+"El nom no pot contenir la barra inclinada (slash) o  tancament de corxets "
+"(closing square backet)"
 
 #: services/forms.py:262
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "El servei DynamicDNS ha fallat la recàrrega."
 
 #: services/forms.py:271
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "El servei SNMP ha fallat la recàrrega"
 
 #: services/forms.py:285
 msgid "The activedirectory service failed to reload."
@@ -1093,7 +1082,7 @@ msgstr "Necesites especificar una ruta a fitxer, no un directori"
 
 #: services/forms.py:520 services/forms.py:550
 msgid "You need to specify a file inside your volume/dataset."
-msgstr "Necesites especificar un fitxer dins el teu volum/dataset"
+msgstr "Necessites especificar un fitxer dins el teu volum/dataset"
 
 #: services/forms.py:524 services/forms.py:554
 msgid ""

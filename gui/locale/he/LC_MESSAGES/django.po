@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:02-0700\n"
-"PO-Revision-Date: 2011-05-28 21:26+0200\n"
+"PO-Revision-Date: 2011-06-02 19:36+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -111,34 +111,28 @@ msgid "Disabled"
 msgstr "מנוטרל"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "צריכת חשמל מינימלית עם שינה(האטה)"
+msgstr "רמה 1 - צריכת חשמל מינימלית עם שינה(האטה)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "צריכת חשמל מתקדמת עם שינה"
+msgstr "רמה 64 - צריכת חשמל מתקדמת עם שינה"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "צריכת חשמל מתקדמת עם שינה"
+msgstr "רמה 127 - צריכת חשמל מתקדמת עם שינה"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "צריכת חשמל מינימלית בלי שינה(ללא האטה)"
+msgstr "רמה 128 - צריכת חשמל מינימלית בלי שינה(ללא האטה)"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "צריכת חשמל מתקדמת בלי שינה"
+msgstr "רמה 192 - צריכת חשמל מתקדמת בלי שינה"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "ביצועיים מקסימליים, צריכת חשמל מקסימלית"
+msgstr "רמה 254 - ביצועיים מקסימליים, צריכת חשמל מקסימלית"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -359,19 +353,16 @@ msgid "lzjb (recommended)"
 msgstr "Izjb (מומלץ)"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "רמת ברירת מחדל"
+msgstr "gzip (רמת ברירת מחדל ,6)"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "מהיר ביותר"
+msgstr "gzip (מהיר ביותר)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "מקימסלי, איטי"
+msgstr "gzip (מקימסלי, איטי)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -403,18 +394,16 @@ msgid "Every selected weekday"
 msgstr "כל שבוע נבחר"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
 msgstr "קריאה-בלבד"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "קריאה-בלבד"
+msgstr "כתיבה-בלבד"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "קריאה וכתיבה"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -638,12 +627,12 @@ msgstr "הקבוצה %s אינה חוקית."
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "הוסף %s"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "ראה את כל המשתמשים"
+msgstr "ראה את כל ה %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -669,7 +658,7 @@ msgstr "%S עודכן בהצלחה."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "השירות נכשל להתחיל מחדש"
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -697,18 +686,16 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "חייב למלא את שם השרת 1 לפני שתמלא את שם השרת 2."
 
 #: network/forms.py:100
-#, fuzzy
 msgid "Parent Interface"
-msgstr "מחק מנשק"
+msgstr "מנשק הורה"
 
 #: network/forms.py:109
-#, fuzzy
 msgid "The name must be vlanXX where XX is a integer"
-msgstr "ממשק חייב להיות vlanXX מתי שXX הוא המספר."
+msgstr "השם חייב להיות vlanXX מתי שXX הוא מספר שלם."
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "התוווית של הVLAN הם 1 - 4095 כולל"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -844,9 +831,8 @@ msgid "VLAN"
 msgstr "VLAN"
 
 #: network/models.py:200
-#, fuzzy
 msgid "VLANs"
-msgstr "VLAN"
+msgstr "VLANs"
 
 #: network/models.py:220
 msgid "Protocol Type"
@@ -911,7 +897,7 @@ msgstr "%s הוסף בהצלחה"
 
 #: services/forms.py:70
 msgid "N/A"
-msgstr ""
+msgstr "לא זמין"
 
 #: services/forms.py:79
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -923,11 +909,11 @@ msgstr "השדה נדרש ל\"תיקיות הבית\"."
 
 #: services/forms.py:99
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "שירות הAFP נכשל להיטען מחדש"
 
 #: services/forms.py:108
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "שירות הNFS נכשל להיטען מחדש"
 
 #: services/forms.py:112
 msgid "File Permission"
@@ -963,39 +949,39 @@ msgstr "השדה הזה נדרש לצורך כניסה אנונימית"
 
 #: services/forms.py:200
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "שירות הftp נכשל להיטען מחדש."
 
 #: services/forms.py:209
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "שירות הtftp נכשל להיטען מחדש."
 
 #: services/forms.py:216
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "שירות הSSH נכשל להיטען מחדש."
 
 #: services/forms.py:225 services/forms.py:253
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "שרות הRsync נכשל להיטען מחדש."
 
 #: services/forms.py:238
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "השם אינו יכול להכיל חוצץ או תומך סוגר ריבוע."
 
 #: services/forms.py:262
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "השרות DynamicDNS נכשל להיטען מחדש."
 
 #: services/forms.py:271
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "שרות ה SNMP נכשל להיטען מחדש."
 
 #: services/forms.py:285
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "שרות התיקייה הפעילה נכשל להיטען מחדש."
 
 #: services/forms.py:296
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "שרות ה ldap נכשל להיטען מחדש."
 
 #: services/forms.py:302 services/models.py:529
 #: templates/services/iscsi_auth.html:7
@@ -1042,7 +1028,7 @@ msgstr "סוד העמית לא יכול להיות אותו סוד כמו סוד
 #: services/forms.py:537 services/forms.py:584 services/forms.py:683
 #: services/forms.py:705 services/forms.py:726 services/forms.py:758
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "שרות ה iSCSI נכשל להיטען מחדש."
 
 #: services/forms.py:385
 msgid "LUN already exists in the same target."
@@ -1069,10 +1055,9 @@ msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr "הערך הזה צריך להיות בין %(start)d ל-%(end)d, כולל."
 
 #: services/forms.py:433
-#, fuzzy
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
-msgstr "השדה הזה דרוש אם שיטת הגילוי היא CHAP או CHAP הדדי"
+msgstr "השדה הזה נחוץ אם שיטת הגילוי מוגדרת ל-CHAP או CHAP הדדי"
 
 #: services/forms.py:516 services/forms.py:546
 msgid "You need to specify a filepath, not a directory."
@@ -1111,9 +1096,8 @@ msgid "Authentication Group number"
 msgstr "אימות מספר הקבוצה"
 
 #: services/forms.py:761
-#, fuzzy
 msgid "Delete underlying file"
-msgstr "מחק מנשק"
+msgstr "מחק קובץ מוסתר."
 
 #: services/models.py:42
 msgid "Service"
@@ -1285,7 +1269,6 @@ msgid "Minimal AIO read size"
 msgstr "גודל קריאה AIO מינימלי"
 
 #: services/models.py:162
-#, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
@@ -1298,7 +1281,6 @@ msgid "Minimal AIO write size"
 msgstr "גודל כתיבה AIO מינימלי"
 
 #: services/models.py:168
-#, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
@@ -1516,12 +1498,10 @@ msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "יחידה לוגית של פורט TCP של הבקר (3261 בברית המחדל)"
 
 #: services/models.py:339
-#, fuzzy
 msgid "Controller Authorized netmask"
 msgstr "מסכת רשת מאושרת של הבקר"
 
 #: services/models.py:341
-#, fuzzy
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
 msgstr "יחידה לוגית של מסכת הרשת המאושרת של הבקר (255.255.255.0 בברירת המחדל)"
 
@@ -1746,9 +1726,8 @@ msgid "Target / Extent"
 msgstr "מטרה \\ הקף"
 
 #: services/models.py:648
-#, fuzzy
 msgid "Targets / Extents"
-msgstr "מטרה \\ הקף"
+msgstr "מטרות / הקפים"
 
 #: services/models.py:663
 msgid "Provider"
@@ -2031,36 +2010,32 @@ msgid "Local user upload bandwidth"
 msgstr "רוחב הפס להעלה של המשתמש המקומי"
 
 #: services/models.py:883
-#, fuzzy
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
-msgstr "רוחב פס להעלאה למשתמש המקומי בקילובייט\\שנייה . אפס משמעותו אין סוף."
+msgstr "רוחב פס להעלאה למשתמש המקומי בקילובייט/שנייה . אפס משמעותו אין סוף."
 
 #: services/models.py:887
 msgid "Local user download bandwidth"
 msgstr "רוחב פס להורדה למשתמש המקומי"
 
 #: services/models.py:888
-#, fuzzy
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
-msgstr "רוחב פס להורדה למשתמש המקומי בקילובייט\\שנייה. אפס משתועותו אין סוף."
+msgstr "רוחב פס להורדה למשתמש המקומי בקילובייט/שנייה. אפס משמעותו אין סוף."
 
 #: services/models.py:892
 msgid "Anonymous user upload bandwidth"
 msgstr "רוחב פס להעלאה למשתמש אנונימי"
 
 #: services/models.py:893
-#, fuzzy
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
-msgstr "רוחב פס להעלאה למשתמש אנונימי בקילובייט\\שנייה. אפס משתמעותו אין סוף."
+msgstr "רוחב פס להעלאה למשתמש אנונימי בקילובייט/שנייה. אפס משתמעותו אין סוף."
 
 #: services/models.py:897
 msgid "Anonymous user download bandwidth"
 msgstr "רוחב פס להעלאה למשתמש אנונימי"
 
 #: services/models.py:898
-#, fuzzy
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
-msgstr "רוחב פס להורדה למתמש אנונימי בקילובייט\\שנייה. אפס משמעותו אין סוף."
+msgstr "רוחב פס להורדה למתמש אנונימי בקילובייט/שנייה. אפס משמעותו אין סוף."
 
 #: services/models.py:901
 msgid "Enable SSL/TLS"
@@ -2354,46 +2329,40 @@ msgid "LDAP"
 msgstr "LDAP"
 
 #: services/models.py:1156
-#, fuzzy
 msgid "Alternate TCP port. Default is 873"
-msgstr "החלף את פורט הTCP (ברירת המחדל היא 22)"
+msgstr "החלף את פורט הTCP (ברירת המחדל היא 873)"
 
 #: services/models.py:1161
-#, fuzzy
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
-msgstr "המאיינים האלו יוספו למאפיינים הגלובליים ב- inadyn.conf."
+msgstr "המאפיינים האלו יוספו למאפיינים [הגלובליים] ב- rsyncd.conf."
 
 #: services/models.py:1165 services/models.py:1166
 msgid "Rsyncd"
-msgstr ""
+msgstr "Rsyncd"
 
 #: services/models.py:1176
-#, fuzzy
 msgid "Module name"
-msgstr "שם הנפח"
+msgstr "שם יחידת התפקוד"
 
 #: services/models.py:1185
-#, fuzzy
 msgid "Path to be shared"
-msgstr "הדרך להקף"
+msgstr "הנתיב לשיתוף"
 
 #: services/models.py:1191
 msgid "Access Mode"
-msgstr ""
+msgstr "מצב גישה"
 
 #: services/models.py:1192
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "זה שולט בגישה למארח המרוחק שצריך להיות יחדת תפקוד"
 
 #: services/models.py:1196
-#, fuzzy
 msgid "Maximum connections"
 msgstr "כמות חיבורים מקסימלית"
 
 #: services/models.py:1197
-#, fuzzy
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr "מספר מקסימלי של חיבורים לכל כתובת IP (י 0= בלתי מוגבל)."
+msgstr "מספר מקסימלי של חיבורים בו זמניים (י 0= בלתי מוגבל)."
 
 #: services/models.py:1203
 msgid ""

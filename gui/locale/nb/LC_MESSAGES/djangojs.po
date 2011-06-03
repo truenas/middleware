@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:08-0700\n"
-"PO-Revision-Date: 2011-06-01 16:03+0200\n"
+"PO-Revision-Date: 2011-06-03 09:19+0200\n"
 "Last-Translator: christian1986 <christian.skeie@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nb\n"
@@ -47,7 +47,6 @@ msgid "Storage"
 msgstr "Lagring"
 
 #: media/lib/js/freeadmin.js:385
-#, fuzzy
 msgid "CronJobs"
 msgstr "CronJobs"
 
@@ -81,4 +80,4 @@ msgstr "Hver valgte"
 
 #: media/lib/js/freeadmin/form/Cron.js:90
 msgid "Every N"
-msgstr ""
+msgstr "Hver N"

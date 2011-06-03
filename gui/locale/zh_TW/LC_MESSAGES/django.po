@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:05-0700\n"
-"PO-Revision-Date: 2011-06-01 13:41+0200\n"
+"PO-Revision-Date: 2011-06-03 10:20+0200\n"
 "Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -111,34 +111,28 @@ msgid "Disabled"
 msgstr "停用"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "省電模式並待機（怠速）"
+msgstr "層級 1 - 省電模式並待機（怠速）"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "正常用電模式並待機"
+msgstr "層級 64 -正常用電模式並待機"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "正常用電模式並待機"
+msgstr "層級 127 - 正常用電模式並待機"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "省電模式但不待機（不怠速）"
+msgstr "層級 128 - 省電模式但不待機（不怠速）"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "正常用電模式且不待機"
+msgstr "層級 192 - 正常用電模式且不待機"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "最大效能，最大用電模式"
+msgstr "層級 254 - 最大效能，最大用電模式"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -371,19 +365,16 @@ msgid "lzjb (recommended)"
 msgstr "lzjb 壓縮法（推薦）"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "預設層級"
+msgstr "gzip 壓縮法(預設壓縮等級為 6)"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "最快"
+msgstr "gzip 壓縮法(最快)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "最大壓縮率，但速度慢"
+msgstr "gzip 壓縮法(最大壓縮率，但速度慢)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -415,18 +406,16 @@ msgid "Every selected weekday"
 msgstr "所有已選的工作日"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
 msgstr "唯讀"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "唯讀"
+msgstr "唯寫"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "讀寫"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -650,12 +639,12 @@ msgstr "%s 不是有效的群組"
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "新增 %s"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "檢視全部使用者"
+msgstr "檢視全部使用者 %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -681,7 +670,7 @@ msgstr "%s 更新成功"
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "重啟服務失敗"
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -709,18 +698,16 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "填寫網域名稱伺服器 2 前必須先填網域名稱伺服器 1"
 
 #: network/forms.py:100
-#, fuzzy
 msgid "Parent Interface"
-msgstr "刪除網路介面"
+msgstr "上層網路介面"
 
 #: network/forms.py:109
-#, fuzzy
 msgid "The name must be vlanXX where XX is a integer"
 msgstr "介面名稱必須為 vlanXX 格式，其中 XX 為數字"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN 可標記在 1 - 4095 之間"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -854,7 +841,6 @@ msgid "VLAN"
 msgstr "VLAN 虛擬區網"
 
 #: network/models.py:200
-#, fuzzy
 msgid "VLANs"
 msgstr "VLAN 虛擬區網"
 
@@ -921,7 +907,7 @@ msgstr "%s 新增成功"
 
 #: services/forms.py:70
 msgid "N/A"
-msgstr ""
+msgstr "不適用"
 
 #: services/forms.py:79
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -933,11 +919,11 @@ msgstr "欲使用『家目錄』功能須填此欄位。"
 
 #: services/forms.py:99
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "AFP服務重新載入時發生失敗"
 
 #: services/forms.py:108
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "NFS服務重新載入時發生失敗"
 
 #: services/forms.py:112
 msgid "File Permission"
@@ -973,39 +959,39 @@ msgstr "欲使用『匿名登入』功能須填此欄位"
 
 #: services/forms.py:200
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "FTP服務啟動時發生失敗"
 
 #: services/forms.py:209
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "TFTP服務重新載入時失敗"
 
 #: services/forms.py:216
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "SSH服務重新載入時失敗"
 
 #: services/forms.py:225 services/forms.py:253
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Rsync 服務重新載入時失敗"
 
 #: services/forms.py:238
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "名稱不能包含斜線或右括號"
 
 #: services/forms.py:262
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "動態DNS 服務重新載入時失敗"
 
 #: services/forms.py:271
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "SNMP 服務重新載入時失敗"
 
 #: services/forms.py:285
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "Active Directory服務重新載入時失敗"
 
 #: services/forms.py:296
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "LDAP服務重新載入時失敗"
 
 #: services/forms.py:302 services/models.py:529
 #: templates/services/iscsi_auth.html:7
@@ -1052,7 +1038,7 @@ msgstr "同儕密鑰不可與使用者密鑰相同。"
 #: services/forms.py:537 services/forms.py:584 services/forms.py:683
 #: services/forms.py:705 services/forms.py:726 services/forms.py:758
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "iSCSI服務重新載入時失敗"
 
 #: services/forms.py:385
 msgid "LUN already exists in the same target."
@@ -1078,10 +1064,9 @@ msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr "值必須介於（含）%(start)d ～ %(end)d。"
 
 #: services/forms.py:433
-#, fuzzy
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
-msgstr "若探索方式設為 CHAP 或雙向 CHAP 則須填此欄位。"
+msgstr "若探索方式設為 CHAP 或雙向 CHAP 則此欄位必填"
 
 #: services/forms.py:516 services/forms.py:546
 msgid "You need to specify a filepath, not a directory."
@@ -1122,9 +1107,8 @@ msgid "Authentication Group number"
 msgstr "驗證群組編號"
 
 #: services/forms.py:761
-#, fuzzy
 msgid "Delete underlying file"
-msgstr "刪除網路介面"
+msgstr "刪除相關檔案"
 
 #: services/models.py:42
 msgid "Service"
@@ -1294,22 +1278,20 @@ msgid "Minimal AIO read size"
 msgstr "AIO 讀取最小區塊"
 
 #: services/models.py:162
-#, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
-msgstr "若請求的檔案大小超過這個值，Samba 將採非同步讀取。預設值為 1。"
+msgstr "若所需的檔案大小超過這個值，Samba 將採非同步讀取。預設值為 1。"
 
 #: services/models.py:167
 msgid "Minimal AIO write size"
 msgstr "AIO寫入最小區塊"
 
 #: services/models.py:168
-#, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
-msgstr "若請求的檔案大小超過這個值，Samba 將採非同步寫入。預設值為 1。"
+msgstr "若所需的檔案大小超過這個值，Samba 將採非同步寫入。預設值為 1。"
 
 #: services/models.py:173 services/models.py:174
 #: templates/services/index.html:29
@@ -1518,12 +1500,10 @@ msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "邏輯單元控制器的TCP連接埠(預設為3261)"
 
 #: services/models.py:339
-#, fuzzy
 msgid "Controller Authorized netmask"
 msgstr "控制器授權的網路遮罩"
 
 #: services/models.py:341
-#, fuzzy
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
 msgstr "邏輯單元控制器授權的網路遮罩(預設為255.255.255.0)"
 
@@ -1745,7 +1725,6 @@ msgid "Target / Extent"
 msgstr "設備 / 擴充"
 
 #: services/models.py:648
-#, fuzzy
 msgid "Targets / Extents"
 msgstr "設備 / 擴充"
 
@@ -2026,36 +2005,32 @@ msgid "Local user upload bandwidth"
 msgstr "本機使用者的上傳頻寬"
 
 #: services/models.py:883
-#, fuzzy
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
-msgstr "本機使用者的上傳頻寬 KB/s. (0 表示不限制)"
+msgstr "本機使用者的上傳頻寬 KB/s (0 表示不限制)"
 
 #: services/models.py:887
 msgid "Local user download bandwidth"
 msgstr "本機使用者的下載頻寬"
 
 #: services/models.py:888
-#, fuzzy
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
-msgstr "本機使用者的下載頻寬 KB/s. (0 表示不限制)"
+msgstr "本機使用者的下載頻寬 KB/s (0 表示不限制)"
 
 #: services/models.py:892
 msgid "Anonymous user upload bandwidth"
 msgstr "匿名使用者的上傳頻寬"
 
 #: services/models.py:893
-#, fuzzy
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
-msgstr "匿名使用者的上傳頻寬 KB/s. (0 表示不限制)"
+msgstr "匿名使用者的上傳頻寬 KB/s (0 表示不限制)"
 
 #: services/models.py:897
 msgid "Anonymous user download bandwidth"
 msgstr "匿名使用者的下載頻寬"
 
 #: services/models.py:898
-#, fuzzy
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
-msgstr "匿名使用者的下載頻寬 KB/s. (0 表示不限制)"
+msgstr "匿名使用者的下載頻寬 KB/s (0 表示不限制)"
 
 #: services/models.py:901
 msgid "Enable SSL/TLS"
@@ -2336,46 +2311,40 @@ msgid "LDAP"
 msgstr "LDAP"
 
 #: services/models.py:1156
-#, fuzzy
 msgid "Alternate TCP port. Default is 873"
-msgstr "替代的TCP連接埠，預設為22"
+msgstr "備用的TCP連接埠，預設為873"
 
 #: services/models.py:1161
-#, fuzzy
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
-msgstr "這些參數將被加入到全域設定 inadyn.conf 內"
+msgstr "這些參數將被加入到rsyncd.conf 檔案內的 [global] 設定"
 
 #: services/models.py:1165 services/models.py:1166
 msgid "Rsyncd"
-msgstr ""
+msgstr "使用Rsyncd"
 
 #: services/models.py:1176
-#, fuzzy
 msgid "Module name"
-msgstr "磁區名稱"
+msgstr "模組名稱"
 
 #: services/models.py:1185
-#, fuzzy
 msgid "Path to be shared"
-msgstr "延伸磁區(extent)的路徑"
+msgstr "共享的路徑"
 
 #: services/models.py:1191
 msgid "Access Mode"
-msgstr ""
+msgstr "存取模式"
 
 #: services/models.py:1192
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "控制存取遠端主機需此模組"
 
 #: services/models.py:1196
-#, fuzzy
 msgid "Maximum connections"
-msgstr "最大connections連線數"
+msgstr "最大連線數"
 
 #: services/models.py:1197
-#, fuzzy
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr "相同IP的連線數上限（0=不限制）"
+msgstr "相同IP的連線數上限，預設為0（不限制）"
 
 #: services/models.py:1203
 msgid ""
@@ -2383,36 +2352,30 @@ msgid ""
 "module should take place. In combination with the 'Group' option this "
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
-msgstr ""
+msgstr "指定使用檔案傳輸模組的帳號。可結合'群組'的選項，會決定授予哪些檔案權限。本欄位空白，則使用預設值設定。"
 
 #: services/models.py:1210
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
-msgstr ""
+msgstr "指定使用檔案傳輸模組的群組。本欄位空白，則使用預設值設定。"
 
 #: services/models.py:1214
-#, fuzzy
 msgid "Hosts allow"
 msgstr "允許連線的主機"
 
 #: services/models.py:1215
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of hosts which are "
 "permitted to access this module. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings"
-msgstr ""
-"您可以指定允許連線的主機名稱或 IP位址，請使用逗號、空格或 tab 分隔。本欄位預"
-"設空白。"
+msgstr "您可以指定允許連線的主機名稱或 IP位址，請使用逗號、空格或 tab 分隔。本欄位空白，則使用預設值設定。"
 
 #: services/models.py:1219
-#, fuzzy
 msgid "Hosts deny"
 msgstr "拒絕連線的主機"
 
 #: services/models.py:1220
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of host which are NOT "
 "permitted to access this module. Where the lists conflict, the allow list "
@@ -2421,37 +2384,34 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings"
 msgstr ""
-"您可以指定拒絕連線的主機名稱或 IP位址，請使用逗號、空格或 tab 分隔。允許和拒"
-"絕的名單有衝突時，以允許連線的主機為優先。若有必要拒絕所有連線，可填入 ALL 或"
-"是 (0.0.0.0/0) 。本欄位預設空白。"
+"您可以指定拒絕連線的主機名稱或 IP位址，請使用逗號、空格或 tab "
+"分隔。允許和拒絕的名單有衝突時，以允許連線的主機為優先。若有必要拒絕所有連線，可填入 ALL 或是 (0.0.0.0/0) "
+"。本欄位空白，則使用預設值設定。"
 
 #: services/models.py:1225
-#, fuzzy
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
-msgstr "這些參數將被加入到全域設定 inadyn.conf 內"
+msgstr "這些參數將被加入到 rsyncd.conf 檔案內的組態模組"
 
 #: services/models.py:1230
 msgid "Rsync Module"
-msgstr ""
+msgstr "Rsync 資料同步模組"
 
 #: services/models.py:1231
 msgid "Rsync Modules"
-msgstr ""
+msgstr "Rsync 資料同步模組"
 
 #: services/nav.py:12
 msgid "Control Services"
 msgstr "服務控制"
 
 #: services/nav.py:50
-#, fuzzy
 msgid "Add Device Extent"
-msgstr "設置延伸磁區(Extents)"
+msgstr "新增設備的延伸磁區(Extents)"
 
 #: services/nav.py:60
-#, fuzzy
 msgid "View All Device Extents"
-msgstr "設置延伸磁區(Extents)"
+msgstr "檢視全部設備的延伸磁區(Extents)"
 
 #: services/nav.py:70 templates/services/iscsi.html:7
 msgid "Device Extents"
@@ -2465,32 +2425,28 @@ msgid "Add Extent"
 msgstr "新增區段(Extent)"
 
 #: services/nav.py:102
-#, fuzzy
 msgid "View All Extents"
-msgstr "檢視全部使用者"
+msgstr "檢視全部延伸磁區(Extents)"
 
 #: services/nav.py:114 templates/services/iscsi.html:9
 msgid "Extents"
 msgstr "延伸磁區(Extents)"
 
 #: services/nav.py:136
-#, fuzzy
 msgid "ISCSI"
 msgstr "iSCSI"
 
 #: services/nav.py:147 system/models.py:429 templates/services/index.html:86
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync 資料同步"
 
 #: services/views.py:215
-#, fuzzy
 msgid "The service could not be stopped."
-msgstr "暫存區重建失敗"
+msgstr "服務無法終止"
 
 #: services/views.py:222
-#, fuzzy
 msgid "The service could not be started."
-msgstr "暫存區重建失敗"
+msgstr "服務無法啟動"
 
 #: sharing/forms.py:92
 msgid "The field is a not a valid IP address or network"
@@ -2592,12 +2548,10 @@ msgid "Windows Share"
 msgstr "Windows 檔案共享"
 
 #: sharing/models.py:94
-#, fuzzy
 msgid "Windows Shares"
 msgstr "Windows 檔案共享"
 
 #: sharing/models.py:105
-#, fuzzy
 msgid ""
 "The volume name is the name that appears in the Chooser of the 'connect to "
 "server' dialog on Macintoshes to represent the appropriate share. If "
@@ -2607,10 +2561,9 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
-"該磁區名稱出現在選配器「連接到伺服器」的對話框，在Macintosh代表設定共享成功。"
-"如果磁區名稱沒有指定，使用路徑的最後一個。兩個磁區不能使用相同的名稱。磁區的"
-"名稱不能包含「：」字元。 Mac的編碼頁磁區名稱長度被限制為27個字。在Apple Share"
-"服務內UTF8- MAC的磁區名稱被限制在「磁區名稱長度」的參數"
+"該磁區名稱出現在選配器「連接到伺服器」的對話框，在Macintosh代表設定共享成功。如果沒有指定磁區名稱，將使用最後用的路徑。磁區名稱不得重複。磁區名"
+"稱不能包含「：」字元。 在Mac的編碼中，磁區名稱長度被限制為27個字。在Apple Share服務內UTF8- "
+"MAC的磁區名稱被限制在「磁區名稱長度」的參數"
 
 #: sharing/models.py:109
 msgid "Share Comment"
@@ -2629,7 +2582,7 @@ msgstr "此選項允許設定磁區的密碼。最多8 個字元。(強烈建議
 
 #: sharing/models.py:123
 msgid "Share Character Set"
-msgstr "共享區的檔名編碼方式"
+msgstr "共享區的編碼字元集"
 
 #: sharing/models.py:125
 msgid ""
@@ -2665,7 +2618,6 @@ msgid "Read-only Access"
 msgstr "唯讀存取"
 
 #: sharing/models.py:143 sharing/models.py:149
-#, fuzzy
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
@@ -2692,26 +2644,21 @@ msgid "Disk discovery mode"
 msgstr "探索硬碟模式"
 
 #: sharing/models.py:160
-#, fuzzy
 msgid ""
 "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
-msgstr ""
-"注意！在MacOS上多個共享選擇「Time Machine」將可能導致不可預知的錯誤。預設模式"
-"將匯出磁區作為資料磁區使用。"
+msgstr "注意！在MacOS上，多個共享選擇「Time Machine」將可能導致不可預知的錯誤。預設模式將匯出磁區作為資料磁區使用。"
 
 #: sharing/models.py:164
 msgid "Database Path"
 msgstr "資料庫路徑"
 
 #: sharing/models.py:166
-#, fuzzy
 msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
-msgstr ""
-"設置資料庫資料存儲在路徑。即使是唯獨磁區，也都必須指定一個可寫入的位置。"
+msgstr "設置資料庫資料存儲在路徑。即使是唯獨磁區，也都必須指定一個可寫入的位置。 "
 
 #: sharing/models.py:169
 msgid "Cache CNID"
@@ -2757,13 +2704,10 @@ msgid "No .AppleDouble"
 msgstr "找不到 .AppleDouble格式"
 
 #: sharing/models.py:182
-#, fuzzy
 msgid ""
 "This will suppress automatic creation of the .AppleDouble directories. This "
 "option should not be used if files are accessed by Mac computers."
-msgstr ""
-"除非必要的情況下，這決定是否建立AppleDouble格式的目錄。如果文件主要是由Mac電"
-"腦存取，此選項無效。點選這個選項將會停用建立目錄。"
+msgstr "取消自動建立AppleDouble格式的目錄。如果主要是由Mac的電腦存取檔案，則此選項不可使用。"
 
 #: sharing/models.py:185
 msgid "Zero Device Numbers"
@@ -2828,53 +2772,48 @@ msgid "Apple Share"
 msgstr "Apple Share"
 
 #: sharing/models.py:214
-#, fuzzy
 msgid "Apple Shares"
-msgstr "Apple Share"
+msgstr "Apple Shares"
 
 #: sharing/models.py:232
 msgid "Authorized network or IP addresses"
 msgstr "授權的網路或IP位址"
 
 #: sharing/models.py:233
-#, fuzzy
 msgid ""
 "Network that is authorized to access the NFS share or a list of IP "
 "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
 "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 msgstr ""
-"授權存取NFS共享的網路或IP位址清單。指定網路的形式為1.2.3.4/xx，其中xx是網路遮"
-"罩；或用IP位址清單：1.2.3.4 1.2.3.5 1.2.3.6"
+"授權存取 NFS共享的網路或IP位址清單。指定網路的形式為1.2.3.4/xx，其中xx是網路遮罩；或用IP位址清單：1.2.3.4  1.2.3.5 "
+" 1.2.3.6 "
 
 #: sharing/models.py:237
 msgid "All Directories"
 msgstr "所有目錄"
 
 #: sharing/models.py:238
-#, fuzzy
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
-msgstr "允許子目錄被掛載，否則就只有頂層目錄會被掛載。"
+msgstr "允許子目錄被掛載，否則就只有根目錄會被掛載。"
 
 #: sharing/models.py:241
 msgid "Read Only"
 msgstr "唯獨"
 
 #: sharing/models.py:242
-#, fuzzy
 msgid "Export the share read only. Writes are not permitted."
-msgstr "唯讀匯出共享。不允許寫入。"
+msgstr "唯讀匯出共享。無法寫入。"
 
 #: sharing/models.py:245 system/models.py:408
 msgid "Quiet"
 msgstr "靜音"
 
 #: sharing/models.py:246
-#, fuzzy
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
-msgstr "如果匯出共享發生問題，停用系統日誌警告。"
+msgstr "如果匯出共享有問題，不要在系統日誌出現警告。"
 
 #: sharing/models.py:250
 msgid "Maproot User"
@@ -2913,7 +2852,6 @@ msgid "UNIX Share"
 msgstr "UNIX 共享"
 
 #: sharing/models.py:286
-#, fuzzy
 msgid "UNIX Shares"
 msgstr "UNIX 共享"
 
@@ -2934,12 +2872,11 @@ msgstr "強制4096位元組磁區大小"
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\"."
-msgstr "磁區名稱必須使用英文字母開頭，可以包含數字、\"-\"和\"_\"符號。"
+msgstr "磁區名稱必須使用英文字母開頭，可以包含數字和 - 以及 _ 符號。"
 
 #: storage/forms.py:233
-#, fuzzy
 msgid "You must select a filesystem"
-msgstr "遠端 ZFS 系統格式"
+msgstr "必須選擇一種檔案系統"
 
 #: storage/forms.py:237 system/forms.py:217 system/forms.py:223
 #: system/forms.py:228
@@ -2972,7 +2909,7 @@ msgstr "標示磁碟時發生一些錯誤"
 
 #: storage/forms.py:472
 msgid "You must select a volume."
-msgstr ""
+msgstr "必須選擇一個磁區"
 
 #: storage/forms.py:594
 msgid "Volume from which this dataset will be created on"
@@ -3032,25 +2969,22 @@ msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
 msgstr "輸入正數（後面可用 M, G, T 等單位），或是輸入 0"
 
 #: storage/forms.py:743
-#, fuzzy
 msgid "Volume from which this zvol will be created on"
-msgstr "將建立本資料集的磁區"
+msgstr "將建立 zvol 的磁區"
 
 #: storage/forms.py:744
-#, fuzzy
 msgid "ZVol Name"
-msgstr "全名"
+msgstr "ZVol 名稱"
 
 #: storage/forms.py:745
 msgid "Size for this zvol"
-msgstr ""
+msgstr "此 zvol 的容量"
 
 #: storage/forms.py:759
-#, fuzzy
 msgid ""
 "ZVol names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
-msgstr "資料集名稱只能使用英文字母和( - _ :  . )括弧內四種符號。"
+msgstr "ZVol名稱只能使用英文字母和( - _ :  . )括弧內四種符號。"
 
 #: storage/forms.py:781
 msgid "Owner (user)"
@@ -3343,39 +3277,35 @@ msgstr "設置選項時發生錯誤"
 
 #: storage/views.py:338
 msgid "ZVol"
-msgstr ""
+msgstr "ZVol (ZFS 磁碟)"
 
 #: storage/views.py:352
 msgid "This is in use by the iscsi target, please remove it there first"
-msgstr ""
+msgstr "正在被 iscsi 設備使用，請先移除"
 
 #: storage/views.py:356
-#, fuzzy
 msgid "ZFS Volume successfully destroyed."
-msgstr "%s 刪除成功"
+msgstr "ZFS 磁碟成功銷毀"
 
 #: storage/views.py:390
 msgid "Native dataset"
 msgstr "原生資料集"
 
 #: storage/views.py:406
-#, fuzzy
 msgid "Mount Point permissions successfully updated."
-msgstr "%s 更新成功"
+msgstr "掛載點權限更新成功"
 
 #: storage/views.py:421
-#, fuzzy
 msgid "Dataset successfully destroyed."
-msgstr "%s 刪除成功"
+msgstr "資料集銷毀成功"
 
 #: storage/views.py:435
-#, fuzzy
 msgid "Snapshot successfully deleted."
-msgstr "快照已成功複製"
+msgstr "快照刪除成功"
 
 #: storage/views.py:449
 msgid "Rollback successful."
-msgstr ""
+msgstr "已成功還原"
 
 #: storage/views.py:479
 msgid "Snapshot successfully taken"
@@ -3399,11 +3329,11 @@ msgstr "成功卸除磁碟"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
-msgstr ""
+msgstr "語言(需重新載入介面)"
 
 #: system/forms.py:250
 msgid "Place to temporarily place firmware file"
-msgstr ""
+msgstr "暫時存放韌體檔案的路徑"
 
 #: system/forms.py:250
 msgid ""
@@ -3436,17 +3366,16 @@ msgid "New config to be installed"
 msgstr "安裝新的組態檔"
 
 #: system/forms.py:310 system/forms.py:339
-#, fuzzy
 msgid "minute"
-msgstr "分鐘，"
+msgstr "分鐘"
 
 #: system/forms.py:311 system/forms.py:340
 msgid "hour"
-msgstr ""
+msgstr "小時"
 
 #: system/forms.py:312 system/forms.py:341
 msgid "day of month"
-msgstr ""
+msgstr "每月的第幾天"
 
 #: system/models.py:43
 msgid "Protocol"
@@ -3509,11 +3438,9 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "啟用 Bonjour（Zeroconf ）服務"
 
 #: system/models.py:100
-#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Must be non-zero"
-msgstr ""
-"在每個磁碟上的 swap檔的容量(以GB為單位)，設定只在新磁碟有效。容量必須不能為零"
+msgstr "每個磁碟上的 swap檔的容量(以GB為單位)，設定只對新磁碟有效。容量必須不能為零"
 
 #: system/models.py:103
 msgid "Show console messages in the footer (Requires UI reload)"
@@ -3521,7 +3448,7 @@ msgstr "將控制訊息顯示在頁尾（需重新讀取使用介面）"
 
 #: system/models.py:106
 msgid "Show tracebacks in case of fatal errors"
-msgstr ""
+msgstr "如果嚴重錯誤，請顯示追踪回報訊息"
 
 #: system/models.py:114
 msgid "MOTD banner"
@@ -3646,134 +3573,123 @@ msgstr "請在這貼上您產生的私鑰和公鑰的內容"
 
 #: system/models.py:241 system/models.py:380
 msgid "The user to run the command"
-msgstr ""
+msgstr "執行指令的帳號"
 
 #: system/models.py:245 templates/system/cronjob.html:11
-#, fuzzy
 msgid "Command"
-msgstr "註解"
+msgstr "指令"
 
 #: system/models.py:249 system/models.py:354 templates/system/cronjob.html:5
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Minute"
-msgstr "分鐘，"
+msgstr "分鐘"
 
 #: system/models.py:250 system/models.py:355
 msgid "Values 0-59 allowed."
-msgstr ""
+msgstr "只能填入 0-59 "
 
 #: system/models.py:254 system/models.py:359 templates/system/cronjob.html:6
 #: templates/system/rsync.html:6
-#, fuzzy
 msgid "Hour"
-msgstr "每小時"
+msgstr "小時"
 
 #: system/models.py:255 system/models.py:360
 msgid "Values 0-23 allowed."
-msgstr ""
+msgstr "只能填入 0-23"
 
 #: system/models.py:259 system/models.py:364 templates/system/cronjob.html:7
 #: templates/system/rsync.html:7
 msgid "Day of month"
-msgstr ""
+msgstr "每月的第幾天"
 
 #: system/models.py:260 system/models.py:365
 msgid "Values 1-31 allowed."
-msgstr ""
+msgstr "只能填入 1-31"
 
 #: system/models.py:265 system/models.py:370 templates/system/cronjob.html:8
 #: templates/system/rsync.html:8
-#, fuzzy
 msgid "Month"
-msgstr "每月"
+msgstr "月"
 
 #: system/models.py:270 system/models.py:375 templates/system/cronjob.html:9
 #: templates/system/rsync.html:9
 msgid "Day of week"
-msgstr ""
+msgstr "每週的第幾天"
 
 #: system/models.py:273
 msgid "CronJob"
-msgstr ""
+msgstr "例行工作"
 
 #: system/models.py:274
 msgid "CronJobs"
-msgstr ""
+msgstr "例行工作"
 
 #: system/models.py:284 system/models.py:440
-#, fuzzy
 msgid "Every minute"
-msgstr "分鐘，"
+msgstr "每分鐘"
 
 #: system/models.py:286 system/models.py:442
 #, python-format
 msgid "Every %s minute(s)"
-msgstr ""
+msgstr "每 %s 分鐘"
 
 #: system/models.py:292 system/models.py:448
 msgid "Every hour"
-msgstr ""
+msgstr "每小時"
 
 #: system/models.py:294 system/models.py:450
 #, python-format
 msgid "Every %s hour(s)"
-msgstr ""
+msgstr "每 %s 小時"
 
 #: system/models.py:302 system/models.py:458
-#, fuzzy, python-format
+#, python-format
 msgid "Every %s days"
-msgstr "每日"
+msgstr "每 %s 日"
 
 #: system/models.py:309 system/models.py:465
 msgid "Every month"
-msgstr ""
+msgstr "每月"
 
 #: system/models.py:341
 msgid "IP Address or hostname"
-msgstr ""
+msgstr "IP 位址或是主機名稱"
 
 #: system/models.py:345
-#, fuzzy
 msgid "Remote Module Name"
-msgstr "遠端主機名稱"
+msgstr "遠端模組名稱"
 
 #: system/models.py:349
-#, fuzzy
 msgid "Short description"
-msgstr "說明"
+msgstr "簡短說明"
 
 #: system/models.py:384
-#, fuzzy
 msgid "Recurse into directories"
-msgstr "家目錄"
+msgstr "包括目錄及子目錄"
 
 #: system/models.py:388
-#, fuzzy
 msgid "Times"
-msgstr "逾時"
+msgstr "耗時"
 
 #: system/models.py:389
 msgid "Preserve modification times"
-msgstr ""
+msgstr "保存修改時間"
 
 #: system/models.py:393
-#, fuzzy
 msgid "Compress"
-msgstr "壓縮等級"
+msgstr "壓縮"
 
 #: system/models.py:394
 msgid "Compress data during the transfer"
-msgstr ""
+msgstr "在傳輸過程中壓縮資料"
 
 #: system/models.py:398
 msgid "Archive"
-msgstr ""
+msgstr "封存"
 
 #: system/models.py:399
-#, fuzzy
 msgid "Archive mode"
-msgstr "使用中的磁區"
+msgstr "封存方式"
 
 #: system/models.py:403 templates/freeadmin/generic_model_edit.html:43
 #: templates/network/interface.html:39 templates/network/lagg.html:44
@@ -3802,41 +3718,39 @@ msgstr "刪除"
 
 #: system/models.py:404
 msgid "Delete files on the receiving side that don't exist on sender"
-msgstr ""
+msgstr "刪除接收端存在，卻在發送端不存在的檔案"
 
 #: system/models.py:409
 msgid "Suppress non-error messages"
-msgstr ""
+msgstr "隱藏非錯誤訊息"
 
 #: system/models.py:413
-#, fuzzy
 msgid "Preserve permissions"
-msgstr "繼承權限"
+msgstr "保留權限"
 
 #: system/models.py:414
 msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
-msgstr ""
+msgstr "這個選項會讓 rsync 將目的端的權限設定為與來源相同"
 
 #: system/models.py:418
 msgid "Preserve extended attributes"
-msgstr ""
+msgstr "保留擴充的屬性"
 
 #: system/models.py:419
 msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
-msgstr ""
+msgstr "這個選項會讓 rsync 將遠端的擴充屬性更新為與本地端的相同"
 
 #: system/models.py:425
-#, fuzzy
 msgid "Extra options to rsync command line (usually empty)"
-msgstr "額外選項的命令列(通常為空白)"
+msgstr "用於 rsync 的額外選項的命令列(通常為空白)"
 
 #: system/models.py:430
 msgid "Rsyncs"
-msgstr ""
+msgstr "Rsync 資料備份"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -3851,9 +3765,8 @@ msgid "System Information"
 msgstr "系統資訊"
 
 #: system/nav.py:32
-#, fuzzy
 msgid "Cron Scheduler"
-msgstr "排定快照工作週期"
+msgstr "例行工作排程"
 
 #: system/views.py:117
 msgid "The uploaded file is not valid."
@@ -3967,9 +3880,8 @@ msgid "Add New User"
 msgstr "新增使用者"
 
 #: templates/account/bsdusers.html:121 templates/account/bsdusers.html:123
-#, fuzzy
 msgid "Change E-mail"
-msgstr "電子郵件"
+msgstr "變更電子郵件"
 
 #: templates/account/bsdusers.html:156
 msgid "No users defined"
@@ -3982,12 +3894,12 @@ msgstr "變更管理者密碼"
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:7
 msgid "Browse"
-msgstr ""
+msgstr "瀏覽"
 
 #: templates/freeadmin/directory_browser.html:5
 #: templates/freeadmin/directory_browser.html:10
 msgid "Close"
-msgstr ""
+msgstr "關閉"
 
 #: templates/freeadmin/generic_model_add.html:15
 #: templates/freeadmin/generic_model_delete.html:16
@@ -4023,7 +3935,6 @@ msgid "Yes"
 msgstr "是"
 
 #: templates/freeadmin/generic_model_delete_ok.html:1
-#, fuzzy
 msgid "successfully deleted"
 msgstr "刪除成功"
 
@@ -4109,14 +4020,12 @@ msgid "FreeNAS Testing"
 msgstr "FreeNAS 的測試"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Docs"
-msgstr "FreeNAS 的開發"
+msgstr "FreeNAS 的文件"
 
 #: templates/freeadmin/index.html:92
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "FreeNAS 的測試"
+msgstr "FreeNAS的翻譯"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
@@ -4127,14 +4036,12 @@ msgid "Bug Tracker"
 msgstr "錯誤回報"
 
 #: templates/freeadmin/index.html:104
-#, fuzzy
 msgid "Documentation"
-msgstr "地點"
+msgstr "文件"
 
 #: templates/freeadmin/index.html:106
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "FreeNAS 的測試"
+msgstr "FreeNAS的文件"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4218,13 +4125,12 @@ msgstr "啟用"
 
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
-#, fuzzy
 msgid "Add LAGG Member"
-msgstr "LAGG 成員"
+msgstr "新增LAGG 成員"
 
 #: templates/network/staticroute.html:5
 msgid "Destination"
-msgstr "說明"
+msgstr "目的端"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
@@ -4307,7 +4213,7 @@ msgstr "密碼已變更"
 msgid "Password change"
 msgstr "變更密碼"
 
-# 請更正以下錯誤
+# 請更正下列錯誤
 #: templates/registration/password_change_form.html:13
 msgid "Please correct the error below."
 msgid_plural "Please correct the errors below."
@@ -4352,9 +4258,8 @@ msgid "NFS Settings"
 msgstr "NFS 設定"
 
 #: templates/services/index.html:92
-#, fuzzy
 msgid "Rsync Settings"
-msgstr "設定"
+msgstr "設定 Rsync"
 
 #: templates/services/index.html:103
 msgid "SNMP Settings"
@@ -4475,13 +4380,12 @@ msgid "Available actions"
 msgstr "可執行的功能"
 
 #: templates/services/rsyncmod.html:34
-#, fuzzy
 msgid "No rsync modules defined"
-msgstr "沒有設置靜態路由"
+msgstr "沒有定義 rsync的模組"
 
 #: templates/services/rsyncmod.html:40 templates/services/rsyncmod.html:42
 msgid "Add Rsync Module"
-msgstr ""
+msgstr "新增 Rsync 模組"
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
@@ -4535,7 +4439,7 @@ msgstr "掛載點"
 
 #: templates/sharing/unix.html:30
 msgid "Edit NFS Share"
-msgstr "設定NFS共享"
+msgstr "管理NFS共享"
 
 #: templates/sharing/unix.html:36
 msgid "Delete NFS Share"
@@ -4586,7 +4490,6 @@ msgid "Are you sure you want to detach?"
 msgstr "確定要卸載嗎？"
 
 #: templates/storage/disk_replacement.html:9
-#, fuzzy
 msgid "Replacing disk"
 msgstr "取代磁碟"
 
@@ -4720,7 +4623,7 @@ msgstr "保存快照"
 
 #: templates/storage/tasks.html:38
 msgid "No"
-msgstr "No"
+msgstr "否"
 
 #: templates/storage/tasks.html:42
 msgid "From"
@@ -4755,14 +4658,12 @@ msgid "Edit ZFS Volume"
 msgstr "管理 ZFS 磁區"
 
 #: templates/storage/volumes.html:30
-#, fuzzy
 msgid "Create ZFS Volume"
-msgstr "建立磁區"
+msgstr "建立ZFS 磁區"
 
 #: templates/storage/volumes.html:34
-#, fuzzy
 msgid "Create ZFS zvol"
-msgstr "建立 ZFS 資料集"
+msgstr "建立 ZFS  zvol 磁區"
 
 #: templates/storage/volumes.html:64
 msgid "There are no active volumes."
@@ -4781,9 +4682,8 @@ msgid "Status"
 msgstr "狀態"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Destroy ZFS Volume"
-msgstr "刪除磁區"
+msgstr "銷毀 ZFS 磁區"
 
 #: templates/storage/volumes.html:128 templates/storage/volumes.html.py:132
 msgid "Destroy Dataset"
@@ -4843,9 +4743,8 @@ msgid "Existing data will be cleared"
 msgstr "將清除現有的資料"
 
 #: templates/storage/zvols.html:9
-#, fuzzy
 msgid "Add ZVol"
-msgstr "新增磁區"
+msgstr "新增 ZVol 磁區"
 
 #: templates/system/config.html:2
 msgid "Restore to Factory Defaults"
@@ -4872,13 +4771,12 @@ msgid "Update"
 msgstr "更新"
 
 #: templates/system/cronjob.html:40
-#, fuzzy
 msgid "No CronJobs defined"
-msgstr "沒有預設使用者"
+msgstr "沒有設定例行工作"
 
 #: templates/system/cronjob.html:46 templates/system/cronjob.html.py:48
 msgid "Add CronJob"
-msgstr ""
+msgstr "新增例行工作"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -4925,13 +4823,12 @@ msgid "Yearly Graphs"
 msgstr "每年圖表"
 
 #: templates/system/rsync.html:38
-#, fuzzy
 msgid "No rsyncs defined"
-msgstr "沒有預設使用者"
+msgstr "沒有設定 rsyncs 工作"
 
 #: templates/system/rsync.html:44 templates/system/rsync.html.py:46
 msgid "Add Rsync"
-msgstr ""
+msgstr "新增 Rsyncs 工作"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -4959,7 +4856,7 @@ msgstr "平台"
 
 #: templates/system/system_info.html:16
 msgid "Memory"
-msgstr ""
+msgstr "記憶體"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
@@ -4980,7 +4877,7 @@ msgstr "FreeNAS Build"
 #: templates/system/wizard.html:3
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr ""
+msgstr "在 %(step)s ／ %(step_count) 步驟"
 
 msgid "English"
 msgstr "英語"
