@@ -442,3 +442,16 @@ ACCESS_MODE = (
     ('wo', _('Write-only')),
     ('rw', _('Read and Write')),
     )
+
+TASK_INTERVAL = (
+    (15, _("%(minutes)s minutes") % {'minutes': '15'}),
+    (30, _("%(minutes)s minutes") % {'minutes': '30'}),
+    (60, _("%(hour)s hour") % {'hour': '1'}),
+    (120, _("%(hours)s hours") % {'hours': '2'}),
+    (180, _("%(hours)s hours") % {'hours': '3'}),
+    (240, _("%(hours)s hours") % {'hours': '4'}),
+    (360, _("%(hours)s hours") % {'hours': '6'}),
+    (720, _("%(hours)s hours") % {'hours': '12'}),
+    (1440, _("%(day)s day") % {'day': '1'}),
+    (10080, _("%(week)s week") % {'week': '1'}),
+    )
