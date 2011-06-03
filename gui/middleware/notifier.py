@@ -1547,7 +1547,7 @@ class notifier:
     def serial_from_device(self, devname):
         p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
         output = p1.communicate()[0]
-        search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I)
+        search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I|re.M)
         if search:
             return search.group("serial")
         return None
@@ -1569,7 +1569,7 @@ class notifier:
 
         serial = self.serial_from_device(name)
         if serial:
-            return serial
+            return "{serial}%s" % serial
 
         return "{devicename}%s" % name
 
