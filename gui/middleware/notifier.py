@@ -882,6 +882,7 @@ class notifier:
         fromident = c.fetchone()[0]
         fromdev = self.identifier_to_partition(fromident)
         fromdev_swap = self.swap_from_identifier(fromident)
+        zdev = self.device_to_zlabel(fromdev, volume) or fromdev
 
         c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE id = ?", (to_diskid,))
         disk = c.fetchone()
@@ -891,7 +892,7 @@ class notifier:
             self.__system('/sbin/swapoff /dev/%s' % (fromdev_swap))
 
         if from_diskid == to_diskid:
-            self.__system('/sbin/zpool offline %s %s' % (volume, fromdev))
+            self.__system('/sbin/zpool offline %s %s' % (volume, zdev))
 
         self.__gpt_labeldisk(type = "freebsd-zfs", devname = todev,
                              label = "", swapsize=swapsize)
@@ -912,12 +913,12 @@ class notifier:
             self.__system('/sbin/swapon /dev/%s' % (todev_swap))
 
         if from_diskid == to_diskid:
-            self.__system('/sbin/zpool online %s %s' % (volume, fromdev))
-            ret = self.__system_nolog('/sbin/zpool replace %s %s' % (volume, fromdev))
+            self.__system('/sbin/zpool online %s %s' % (volume, zdev))
+            ret = self.__system_nolog('/sbin/zpool replace %s %s' % (volume, zdev))
             if ret == 256:
                 ret = self.__system_nolog('/sbin/zpool scrub %s' % (volume))
         else:
-            ret = self.__system_nolog('/sbin/zpool replace %s %s %s' % (volume, fromdev, todev))
+            ret = self.__system_nolog('/sbin/zpool replace %s %s %s' % (volume, zdev, todev))
         return ret
 
     def zfs_detach_disk(self, volume_id, disk_id):
@@ -1636,7 +1637,6 @@ class notifier:
 
     def swap_from_device(self, device):
         doc = self.__geom_confxml()
-
         search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-swap']/../name" % device)
         if len(search) > 0:
             return search[0].content
@@ -1645,6 +1645,18 @@ class notifier:
 
     def swap_from_identifier(self, ident):
         return self.swap_from_device(self.identifier_to_device(ident))
+
+    def device_to_zlabel(self, devname, pool):
+        status = self.__pipeopen("zpool status %s" % (str(pool),)).communicate()[0]
+
+        doc = self.__geom_confxml()
+        search = doc.xpathEval("//class[name = 'LABEL']/geom[name = '%s']//provider/name" % devname)
+
+        for entry in search:
+            if re.search(r'\b%s\b' % entry.content, status):
+                print "h,"
+                return entry.content
+        return None
 
 def usage():
     print ("Usage: %s action command" % argv[0])
