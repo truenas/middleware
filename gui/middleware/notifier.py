@@ -802,7 +802,7 @@ class notifier:
                 devname = self.identifier_to_device(disk[0])
                 geom_vdev += " /dev/" + devname
             self.__system("geom %s load" % (geom_type))
-            self.__system("geom %s label %s %s" % (geom_type, geom_name, geom_vdev))
+            self.__system("geom %s label %s %s" % (geom_type, u_name, geom_vdev))
             ufs_device = "/dev/%s/%s" % (geom_type, geom_name)
             self.__system("newfs -U -L %s %s" % (u_name, ufs_device))
 
@@ -1149,29 +1149,27 @@ class notifier:
             gtype = None
             for gtypes in group_type:
                 if 'mirror' == gtypes[0]:
-                    gtype = 'mirror'
+                    gtype = 'MIRROR'
                     break
                 elif 'stripe' == gtypes[0]:
-                    gtype = 'stripe'
+                    gtype = 'STRIPE'
                     break
                 elif 'raid3' == gtypes[0]:
-                    gtype = 'raid3'
+                    gtype = 'RAID3'
                     break
 
-            if gtype in ('mirror', 'stripe', 'raid3'):
-                p1 = self.__pipeopen('geom %s list' % gtype)
+            if gtype in ('MIRROR', 'STRIPE', 'RAID3'):
 
-            if gtype:
-                p2 = Popen(["grep", "name: %s" % (name, ), "-A", "1"], stdin=p1.stdout, stdout=PIPE)
-                p3 = Popen(["grep", "State:"], stdin=p2.stdout, stdout=PIPE)
-                p1.wait()
-                p2.wait()
-                output = p3.communicate()[0]
-                return output.split(' ')[1]
-            else:
-                return 'ONLINE'
-        else:
-                return 'UNKNOWN'
+                doc = self.__geom_confxml()
+                search = doc.xpathEval("//class[name = '%s']/geom[name = '%s']/config/State" % (gtype, name))
+                if len(search) > 0:
+                    return search[0].content
+
+                search = doc.xpathEval("//class[name = '%s']/geom[name = '%s%s']/config/State" % (gtype, name, gtype.lower()))
+                if len(search) > 0:
+                    return search[0].content
+
+        return 'UNKNOWN'
 
     def checksum(self, path, algorithm='sha256'):
         algorithm2map = {
@@ -1280,28 +1278,25 @@ class notifier:
         """
 
         volumes = []
+        doc = self.__geom_confxml()
         # Detect GEOM mirror, stripe and raid3
         RE_GEOM_NAME = re.compile(r'^Geom name: (?P<name>\w+)', re.I)
         RE_DEV_NAME = re.compile(r'Name: (?P<name>\w+)', re.I)
         for geom in ('mirror', 'stripe', 'raid3'):
-            p1 = Popen(["geom", geom, "list"], stdin=PIPE, stdout=PIPE)
-            res = p1.communicate()[0]
-            if p1.returncode == 0:
-                for item in res.split('\n\n')[:-1]:
-                    search = RE_GEOM_NAME.search(item)
-                    if search:
-                        label = search.group("name")
-                        consumers = item.split('Consumers:')[1]
-                        if RE_DEV_NAME.search(consumers):
-                            disks = []
-                            for search in RE_DEV_NAME.finditer(consumers):
-                                disks.append(search.group("name"))
-                            volumes.append({
-                                'label': label,
-                                'type': 'geom',
-                                'group_type': geom,
-                                'disks': disks,
-                                })
+            search = doc.xpathEval("//class[name = '%s']/geom/config" % (geom.upper(),))
+            for entry in search:
+                label = entry.xpathEval('../name')[0].content
+                disks = []
+                for consumer in entry.xpathEval('../consumer/provider'):
+                    provider = consumer.prop("ref")
+                    device = doc.xpathEval("//class[name = 'DISK']//provider[@id = '%s']/name" % provider)
+                    disks.append( device[0].content )
+                volumes.append({
+                    'label': label,
+                    'type': 'geom',
+                    'group_type': geom,
+                    'disks': disks,
+                    })
 
         RE_POOL_NAME = re.compile(r'pool: (?P<name>[a-z][a-z0-9_-]+)', re.I)
         RE_DISK = re.compile(r'(?P<disk>[a-d]{2}\d+)[a-fsp]')

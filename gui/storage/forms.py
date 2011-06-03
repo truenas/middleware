@@ -115,13 +115,13 @@ class UnixPermissionWidget(widgets.MultiWidget):
         return html
 
 class UnixPermissionField(forms.MultiValueField):
-    
+
     widget = UnixPermissionWidget()
-    
+
     def __init__(self, *args, **kwargs):
         fields = [forms.BooleanField()] * 9
         super(UnixPermissionField, self).__init__(fields, *args, **kwargs)
-    
+
     def compress(self, value):
         if value:
             owner = 0
@@ -161,8 +161,8 @@ class VolumeWizardForm(forms.Form):
         self.fields['volume_disks'].choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
         self.fields['volume_fstype'].widget.attrs['onClick'] = 'wizardcheckings();'
 
-        grouptype_choices = ( 
-            ('mirror', 'mirror'), 
+        grouptype_choices = (
+            ('mirror', 'mirror'),
             ('stripe', 'stripe'),
             )
         fstype = self.data.get("volume_fstype", None)
@@ -253,7 +253,7 @@ class VolumeWizardForm(forms.Form):
                 msg = _(u"The volume name may NOT start with c[0-9], mirror, raidz or spare")
                 self._errors["volume_name"] = self.error_class([msg])
                 cleaned_data.pop("volume_name", None)
-            
+
         return cleaned_data
 
     def done(self, request):
@@ -344,7 +344,7 @@ class VolumeImportForm(forms.Form):
         self.fields['volume_disks'].choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
 
     def _populate_disk_choices(self):
-    
+
         diskchoices = dict()
         used_disks = [notifier().identifier_to_device(i[0]) for i in models.Disk.objects.all().values_list('disk_identifier').distinct()]
 
