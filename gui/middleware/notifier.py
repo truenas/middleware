@@ -1280,8 +1280,6 @@ class notifier:
         volumes = []
         doc = self.__geom_confxml()
         # Detect GEOM mirror, stripe and raid3
-        RE_GEOM_NAME = re.compile(r'^Geom name: (?P<name>\w+)', re.I)
-        RE_DEV_NAME = re.compile(r'Name: (?P<name>\w+)', re.I)
         for geom in ('mirror', 'stripe', 'raid3'):
             search = doc.xpathEval("//class[name = '%s']/geom/config" % (geom.upper(),))
             for entry in search:
