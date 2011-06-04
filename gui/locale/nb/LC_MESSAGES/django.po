@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:03-0700\n"
-"PO-Revision-Date: 2011-06-03 10:24+0200\n"
+"PO-Revision-Date: 2011-06-03 18:27+0200\n"
 "Last-Translator: christian1986 <christian.skeie@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nb\n"
@@ -1059,12 +1059,15 @@ msgstr ""
 #: services/forms.py:425
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr ""
+msgstr "Denne verdien må være mellom %(start)d og %(end)d, inkludert."
 
 #: services/forms.py:433
+#, fuzzy
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
+"Dette feltet er nødvendig om en har valgt oppdagelsesmetoden CHAP eller CHAP "
+"gjensidig."
 
 #: services/forms.py:516 services/forms.py:546
 msgid "You need to specify a filepath, not a directory."
@@ -1098,11 +1101,11 @@ msgstr ""
 #: services/forms.py:720
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr ""
+msgstr "Din gruppeID kan ikke være høyere enn %d"
 
 #: services/forms.py:729
 msgid "Authentication Group number"
-msgstr ""
+msgstr "Autorisasjonsgruppenummer"
 
 #: services/forms.py:761
 msgid "Delete underlying file"
@@ -1290,6 +1293,8 @@ msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
 msgstr ""
+"Samba vil lese asynkront om forespurt størrelse er større enn denne veriden. "
+"Standardverdien er 1."
 
 #: services/models.py:167
 msgid "Minimal AIO write size"
@@ -1300,6 +1305,8 @@ msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
 msgstr ""
+"Samba vil skrive asynkront om forespurt størrelse er større enn denne "
+"veriden. Standardverdien er 1."
 
 #: services/models.py:173 services/models.py:174
 #: templates/services/index.html:29
@@ -1376,6 +1383,7 @@ msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
+"Aktiver asynkron modus som vil hjelpe for ytelse utover gigabitnettverk."
 
 #: services/models.py:227 services/models.py:228
 #: templates/services/index.html:75
@@ -1384,7 +1392,7 @@ msgstr "NFS"
 
 #: services/models.py:237
 msgid "Base Name"
-msgstr ""
+msgstr "Basenavn"
 
 #: services/models.py:238
 msgid ""
@@ -1852,7 +1860,7 @@ msgstr ""
 
 #: services/models.py:780
 msgid "Send Email Status Updates"
-msgstr ""
+msgstr "Send statusoppdateringer på email"
 
 #: services/models.py:783 services/models.py:789
 msgid "To email"
@@ -1863,10 +1871,11 @@ msgid "Destination email address. Separate email addresses by semi-colon."
 msgstr ""
 
 #: services/models.py:790
+#, fuzzy
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
-msgstr ""
+msgstr "Emnet for mailen."
 
 #: services/models.py:794 services/models.py:795
 msgid "UPS"
@@ -1905,7 +1914,7 @@ msgstr ""
 
 #: services/models.py:824
 msgid "Timeout"
-msgstr ""
+msgstr "Timeout"
 
 #: services/models.py:825
 msgid "Maximum idle time in seconds."
@@ -2038,20 +2047,20 @@ msgstr "Lokal brukers upload båndbredde i KB/s. Null betyr uendelig."
 
 #: services/models.py:901
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "Aktiver SSL/TLS"
 
 #: services/models.py:906
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "Disse parameterne blir lagt til proftpd.conf."
 
 #: services/models.py:910 services/models.py:911
 #: templates/services/index.html:53
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:920
 msgid "Directory"
-msgstr ""
+msgstr "Mappe"
 
 #: services/models.py:921
 msgid ""
@@ -2061,17 +2070,19 @@ msgstr ""
 
 #: services/models.py:924
 msgid "Allow New Files"
-msgstr ""
+msgstr "Tillat nye filer"
 
 #: services/models.py:928
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"Porten som lyttes til. Standardporten å lytte på er spesifisert i "
+"/etc/services."
 
 #: services/models.py:934
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "Angi brukernavnet som tjenesten skal kjøre som."
 
 #: services/models.py:938
 msgid "umask"
@@ -2592,7 +2603,7 @@ msgstr ""
 
 #: sharing/models.py:129
 msgid "Allow List"
-msgstr ""
+msgstr "Tillat disse"
 
 #: sharing/models.py:131
 msgid ""
@@ -2603,7 +2614,7 @@ msgstr ""
 
 #: sharing/models.py:135
 msgid "Deny List"
-msgstr ""
+msgstr "Nekt disse"
 
 #: sharing/models.py:137
 msgid ""
@@ -2712,7 +2723,7 @@ msgstr ""
 
 #: sharing/models.py:189
 msgid "Disable File ID"
-msgstr ""
+msgstr "Deaktiver Fil ID"
 
 #: sharing/models.py:190
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
@@ -2848,11 +2859,11 @@ msgstr "Deling"
 #: storage/forms.py:153 storage/forms.py:337 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr ""
+msgstr "Volumnavn"
 
 #: storage/forms.py:157 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
-msgstr ""
+msgstr "Tving 4096 byte sektorstørrelse"
 
 #: storage/forms.py:219
 msgid ""
@@ -2975,15 +2986,15 @@ msgstr ""
 
 #: storage/forms.py:781
 msgid "Owner (user)"
-msgstr ""
+msgstr "Eier (bruker)"
 
 #: storage/forms.py:782
 msgid "Owner (group)"
-msgstr ""
+msgstr "Eier (gruppe)"
 
 #: storage/forms.py:783
 msgid "Mode"
-msgstr ""
+msgstr "Modus"
 
 #: storage/forms.py:786
 msgid "Set permission recursively"
@@ -3040,7 +3051,7 @@ msgstr ""
 #: storage/models.py:52 storage/models.py:77 storage/views.py:88
 #: storage/views.py:115 storage/views.py:137 templates/storage/volumes.html:70
 msgid "Volume"
-msgstr ""
+msgstr "Volum"
 
 #: storage/models.py:78
 msgid "Volume this group belongs to"
@@ -3183,11 +3194,11 @@ msgstr ""
 
 #: storage/models.py:289
 msgid "How the task is repeated"
-msgstr ""
+msgstr "Hvordan oppgaven blir repertert"
 
 #: storage/models.py:294
 msgid "Weekday"
-msgstr ""
+msgstr "Ukedag"
 
 #: storage/models.py:312
 msgid "Periodic Snapshot Task"
@@ -3208,13 +3219,13 @@ msgstr ""
 #: storage/nav.py:34 templates/storage/replications.html:5
 #: templates/storage/volumes.html:6 templates/storage/volumes.html.py:11
 msgid "Create Volume"
-msgstr ""
+msgstr "Opprett volum"
 
 #: storage/nav.py:45 templates/storage/autoimport.html:25
 #: templates/storage/import.html:43 templates/storage/volumes.html:42
 #: templates/storage/volumes.html.py:46
 msgid "Import Volume"
-msgstr ""
+msgstr "Importer volum"
 
 #: storage/nav.py:56 templates/storage/volumes.html:53
 #: templates/storage/volumes.html.py:57
@@ -3223,12 +3234,12 @@ msgstr "Importer automatisk et volum"
 
 #: storage/nav.py:67
 msgid "View All Volumes"
-msgstr ""
+msgstr "Vis alle volumer"
 
 #: storage/nav.py:78 templates/storage/volumes.html:19
 #: templates/storage/volumes.html.py:23
 msgid "Create ZFS Dataset"
-msgstr ""
+msgstr "Lag ZFS datasett"
 
 #: storage/nav.py:89
 msgid "Add Periodic Snapshot"
@@ -3236,27 +3247,27 @@ msgstr ""
 
 #: storage/nav.py:100
 msgid "Volumes"
-msgstr ""
+msgstr "Volumer"
 
 #: storage/nav.py:121 storage/nav.py:139 templates/storage/volumes.html:168
 #: templates/storage/volumes.html.py:172
 msgid "Change Permissions"
-msgstr ""
+msgstr "Endre rettigheter"
 
 #: storage/views.py:88 storage/views.py:115 storage/views.py:137
 #: storage/views.py:279 storage/views.py:338 storage/views.py:466
 #: templates/freeadmin/generic_model_add_ok.html:1
 msgid "successfully added"
-msgstr ""
+msgstr "suksessfullt lagt til"
 
 #: storage/views.py:279 storage/views.py:314
 msgid "Dataset"
-msgstr ""
+msgstr "Datasett"
 
 #: storage/views.py:314 storage/views.py:390
 #: templates/freeadmin/generic_model_edit_ok.html:1
 msgid "successfully edited"
-msgstr ""
+msgstr "endringer utført"
 
 #: storage/views.py:316 storage/views.py:392
 msgid "Some error ocurried while setting the options"
@@ -3308,15 +3319,15 @@ msgstr ""
 
 #: storage/views.py:545
 msgid "Disk replacement has been initiated."
-msgstr ""
+msgstr "Diskerstattning har blitt startet."
 
 #: storage/views.py:549
 msgid "Some error ocurried."
-msgstr ""
+msgstr "En feil oppstod."
 
 #: storage/views.py:570
 msgid "Disk detach has been successfully done."
-msgstr ""
+msgstr "Disken har blitt utløst."
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
@@ -3342,7 +3353,7 @@ msgstr ""
 
 #: system/forms.py:271
 msgid "Invalid firmware or checksum"
-msgstr ""
+msgstr "Feil firmware eller sjekksum"
 
 #: system/forms.py:281
 msgid "Service Pack image to be installed"
@@ -3382,15 +3393,15 @@ msgstr "Tidssone"
 
 #: system/models.py:60
 msgid "NTP server 1"
-msgstr ""
+msgstr "NTP server 1"
 
 #: system/models.py:65
 msgid "NTP server 2"
-msgstr ""
+msgstr "NTP server 2"
 
 #: system/models.py:71
 msgid "NTP server 3"
-msgstr ""
+msgstr "NTP server 3"
 
 #: system/models.py:76 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
@@ -3398,15 +3409,15 @@ msgstr "Instillinger"
 
 #: system/models.py:83
 msgid "Enable Console Menu"
-msgstr ""
+msgstr "Aktiver konsollmeny"
 
 #: system/models.py:85
 msgid "Use Serial Console"
-msgstr ""
+msgstr "Bruk seriellkonsoll"
 
 #: system/models.py:87
 msgid "Enable screen saver"
-msgstr ""
+msgstr "Aktiver skjermsparer"
 
 #: system/models.py:89
 msgid "Automatically Check for New Firmware"
@@ -3451,7 +3462,7 @@ msgstr "Avansert"
 
 #: system/models.py:127
 msgid "From email"
-msgstr ""
+msgstr "Fra mailadresse"
 
 #: system/models.py:128
 msgid ""

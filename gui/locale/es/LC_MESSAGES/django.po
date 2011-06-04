@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:06-0700\n"
-"PO-Revision-Date: 2011-06-03 07:40+0200\n"
+"PO-Revision-Date: 2011-06-04 08:07+0200\n"
 "Last-Translator: raulfg <raulfg3@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
@@ -695,9 +695,8 @@ msgstr ""
 "Debe completar el servidor DNS #1 antes de completar el servidor DNS #2"
 
 #: network/forms.py:100
-#, fuzzy
 msgid "Parent Interface"
-msgstr "Borrar Interfaz"
+msgstr "Interfaz superior"
 
 #: network/forms.py:109
 msgid "The name must be vlanXX where XX is a integer"
@@ -1123,9 +1122,8 @@ msgid "Authentication Group number"
 msgstr "Número de Autenticación de Grupo"
 
 #: services/forms.py:761
-#, fuzzy
 msgid "Delete underlying file"
-msgstr "Borrar Interfaz"
+msgstr "Borrar el fichero seleccionado"
 
 #: services/models.py:42
 msgid "Service"
@@ -1555,9 +1553,8 @@ msgid "Controller Authorized netmask"
 msgstr "Mascara de red del Controlador Autorizado"
 
 #: services/models.py:341
-#, fuzzy
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
-msgstr "LUC máscara de red (255.255.255.0 por defecto)"
+msgstr "Máscara de red autorizada para LUC (255.255.255.0 por defecto)"
 
 #: services/models.py:348
 msgid "Controller Auth Method"
@@ -1787,9 +1784,8 @@ msgid "Target / Extent"
 msgstr "Destino / Medio"
 
 #: services/models.py:648
-#, fuzzy
 msgid "Targets / Extents"
-msgstr "Destino / Medio"
+msgstr "Destino / Extension"
 
 #: services/models.py:663
 msgid "Provider"
@@ -2443,12 +2439,18 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Esta opción especifica el nombre de usuario a donde se transfiere y el "
+"módulo implicado. En combinación con la opción \"Grupo\" determina los "
+"permisos que estan disponibles . Dejar vacio para usar los valores por "
+"defecto"
 
 #: services/models.py:1210
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"Esta opción especifica el nombre de grupo a donde se transfiere el fichero y "
+"el módulo implicado . Dejar vacio para usar los valores por defecto"
 
 #: services/models.py:1214
 msgid "Hosts allow"
@@ -2499,14 +2501,12 @@ msgid "Control Services"
 msgstr "Control de Servicios"
 
 #: services/nav.py:50
-#, fuzzy
 msgid "Add Device Extent"
-msgstr "Extender dispositivo"
+msgstr "Añadir dispositivo extendido"
 
 #: services/nav.py:60
-#, fuzzy
 msgid "View All Device Extents"
-msgstr "Extender dispositivo"
+msgstr "ver todos los dispositivos extendidos"
 
 #: services/nav.py:70 templates/services/iscsi.html:7
 msgid "Device Extents"
@@ -2520,9 +2520,8 @@ msgid "Add Extent"
 msgstr "Añadir Extensión"
 
 #: services/nav.py:102
-#, fuzzy
 msgid "View All Extents"
-msgstr "Ver Todos los Usuarios"
+msgstr "Ver todas las extensiones"
 
 #: services/nav.py:114 templates/services/iscsi.html:9
 msgid "Extents"
@@ -2650,7 +2649,6 @@ msgid "Windows Shares"
 msgstr "Compartidos de Windows"
 
 #: sharing/models.py:105
-#, fuzzy
 msgid ""
 "The volume name is the name that appears in the Chooser of the 'connect to "
 "server' dialog on Macintoshes to represent the appropriate share. If "
@@ -2663,7 +2661,7 @@ msgstr ""
 "El nombre del volumen es el nombre que aparece en el dialogo 'conectar al "
 "servidor' en los Macintosh. Si no se define, el ultimo componente del path "
 "es usado. No puede haber 2 volumenes con el mismo nombre. No puede contener "
-"el caracter ':' El Nombre será recortado si excede los 27 caracteres."
+"el caracter ':' El Nombre será recortado si excede los 27 caracteres"
 
 #: sharing/models.py:109
 msgid "Share Comment"
@@ -2726,13 +2724,12 @@ msgid "Read-only Access"
 msgstr "Acceso de solo lectura"
 
 #: sharing/models.py:143 sharing/models.py:149
-#, fuzzy
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
 msgstr ""
-"Permite a ciertos usuarios y grupos tener acceso de Lectura-Escritura. Tiene "
-"menos prioridad que la opción anterior."
+"Permite a ciertos usuarios y grupos tener acceso de Lectura-Escritura a un "
+"recurso compartido. Tiene menos prioridad que la opción anterior."
 
 #: sharing/models.py:147
 msgid "Read-write Access"
@@ -3589,7 +3586,6 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "Habilitar Zeroconf/Bonjour"
 
 #: system/models.py:100
-#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Must be non-zero"
 msgstr ""
@@ -3604,7 +3600,7 @@ msgstr ""
 
 #: system/models.py:106
 msgid "Show tracebacks in case of fatal errors"
-msgstr ""
+msgstr "Mostrar logs en caso de errores graves"
 
 #: system/models.py:114
 msgid "MOTD banner"
@@ -3825,14 +3821,12 @@ msgstr "Descripción corta"
 # PRIMARIO ---  I have personally used this
 # PRIVADO
 #: system/models.py:384
-#, fuzzy
 msgid "Recurse into directories"
-msgstr "Directorios (home)"
+msgstr "Entrar en los directorios"
 
 #: system/models.py:388
-#, fuzzy
 msgid "Times"
-msgstr "Tiempo de espera"
+msgstr "Tiempo"
 
 #: system/models.py:389
 msgid "Preserve modification times"

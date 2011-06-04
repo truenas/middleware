@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:03-0700\n"
-"PO-Revision-Date: 2011-06-02 13:07+0200\n"
+"PO-Revision-Date: 2011-06-03 12:13+0200\n"
 "Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -665,12 +665,12 @@ msgstr "Éteindre"
 #: freeadmin/views.py:225
 #, python-format
 msgid "%s successfully added."
-msgstr "%s ajouté avec succès."
+msgstr "%s ajouté(e) avec succès."
 
 #: freeadmin/views.py:384 freeadmin/views.py:386
 #, python-format
 msgid "%s successfully updated."
-msgstr "%s mis à jour avec succès."
+msgstr "%s mis(e) à jour avec succès."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
@@ -679,7 +679,7 @@ msgstr "Le redémarrage du service a echoué."
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
 msgid "%s successfully deleted."
-msgstr "%s supprimé avec succès."
+msgstr "%s supprimé(e) avec succès."
 
 #: network/forms.py:44 network/models.py:95
 msgid "NIC"
@@ -3468,7 +3468,7 @@ msgstr "Changer les permissions"
 #: storage/views.py:279 storage/views.py:338 storage/views.py:466
 #: templates/freeadmin/generic_model_add_ok.html:1
 msgid "successfully added"
-msgstr "ajouté avec succès"
+msgstr "ajouté(e) avec succès"
 
 #: storage/views.py:279 storage/views.py:314
 msgid "Dataset"
@@ -3478,7 +3478,7 @@ msgstr "Jeu de données"
 #: storage/views.py:314 storage/views.py:390
 #: templates/freeadmin/generic_model_edit_ok.html:1
 msgid "successfully edited"
-msgstr "modifié avec succès"
+msgstr "modifié(e) avec succès"
 
 #: storage/views.py:316 storage/views.py:392
 msgid "Some error ocurried while setting the options"
@@ -4167,7 +4167,7 @@ msgstr "Oui"
 # Gestion féminin et pluriel ?
 #: templates/freeadmin/generic_model_delete_ok.html:1
 msgid "successfully deleted"
-msgstr "suppression réussie"
+msgstr "supprimé(e) avec succès"
 
 #: templates/freeadmin/generic_model_edit.html:5
 msgid "Your changes have been successfully updated!"

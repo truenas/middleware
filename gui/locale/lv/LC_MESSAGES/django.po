@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:05-0700\n"
-"PO-Revision-Date: 2011-05-27 16:37+0200\n"
+"PO-Revision-Date: 2011-06-03 20:23+0200\n"
 "Last-Translator: ok1 <ok1@trups.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lv\n"
@@ -112,34 +112,28 @@ msgid "Disabled"
 msgstr "Izslēgts"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Minimāla strāvas izmantošana gaidstāvē (spindown)"
+msgstr "1 Līmenis - Minimāla strāvas izmantošana gaidstāvē (spindown)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Vidēja strāvas izmantošana gaidstāvē"
+msgstr "64 Līmenis - Vidēja strāvas izmantošana ar gaidstāvi"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Vidēja strāvas izmantošana gaidstāvē"
+msgstr "127 Līmenis - Vidēja strāvas izmantošana ar gaidstāvi"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Minimāla strāvas izmantošana bez gaidstāves (no spindown)"
+msgstr "128 Līmenis - Minimāla strāvas izmantošana bez gaidstāves (no spindown)"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Vidēja strāvas izmantošana bez gaidstāves"
+msgstr "192 Līmenis - Vidēja strāvas izmantošana bez gaidstāves"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Maksimāla veiktspēja, maksimāla jaudas izmantošana"
+msgstr "254 Līmenis - Maksimāla veiktspēja, maksimāla jaudas izmantošana"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -258,8 +252,9 @@ msgid "Time Machine"
 msgstr "Laika mašīna"
 
 #: choices.py:190
+#, fuzzy
 msgid "No case folding"
-msgstr ""
+msgstr "Nav lokāma gadījuma"
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
@@ -362,17 +357,15 @@ msgstr "lzjb (ieteicams)"
 #: choices.py:283
 #, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "sākotnējais līmenis"
+msgstr "gzip (sākotnējais līmenis, 6)"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "ātrākais"
+msgstr "gzip (ātrākais)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "maksimālais, lēns"
+msgstr "gzip (maksimālais, lēns)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -404,18 +397,16 @@ msgid "Every selected weekday"
 msgstr "Katru izvēlēto darba dienu"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
-msgstr "tikai lasīt"
+msgstr "Tikai lasīt"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "tikai lasīt"
+msgstr "Tikai rakstīt"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Lasīt un rakstīt"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -642,12 +633,12 @@ msgstr ""
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Pievieno %s"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "Skatīt visus lietotājus"
+msgstr "Skatīt visus %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -673,7 +664,7 @@ msgstr "%s veiksmīgi atjaunināts."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Servisam neizdevās re-startēties."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -701,18 +692,16 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "Jāaizpilda vārdu serveri 1 pirms aizpildot vārdu serveri 2"
 
 #: network/forms.py:100
-#, fuzzy
 msgid "Parent Interface"
-msgstr "Virtuālais interfeiss"
+msgstr "Vecāk-interfeiss"
 
 #: network/forms.py:109
-#, fuzzy
 msgid "The name must be vlanXX where XX is a integer"
-msgstr "Saskarnes nosaukumiem jābūt vlanXX kur XX ir skaitlis"
+msgstr "Saskarnes nosaukumiem jābūt vlanXX, kur XX ir skaitlis"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN birka ir 1 - 4095 ieskaitot"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -849,9 +838,8 @@ msgid "VLAN"
 msgstr "VLAN"
 
 #: network/models.py:200
-#, fuzzy
 msgid "VLANs"
-msgstr "VLAN"
+msgstr "VLANi"
 
 #: network/models.py:220
 msgid "Protocol Type"
@@ -916,7 +904,7 @@ msgstr "%s veiksmīgi pievienots"
 
 #: services/forms.py:70
 msgid "N/A"
-msgstr ""
+msgstr "N/A"
 
 #: services/forms.py:79
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -930,11 +918,11 @@ msgstr "Šis lauks ir nepieciešams priekš \"Mājas direktorijas\"."
 
 #: services/forms.py:99
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "AFP servisam neizdevās startēties."
 
 #: services/forms.py:108
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "NFS servisam neizdevās startēties."
 
 #: services/forms.py:112
 msgid "File Permission"
@@ -970,31 +958,31 @@ msgstr "Šis lauks ir nepieciešams anonīmai piekļuvei"
 
 #: services/forms.py:200
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "FTP servisam neizdevās startēties."
 
 #: services/forms.py:209
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "TFTP servisam neizdevās startēties."
 
 #: services/forms.py:216
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "SSH servisam neizdevās startēties."
 
 #: services/forms.py:225 services/forms.py:253
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Rsync servisam neizdevās startēties."
 
 #: services/forms.py:238
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "Nosaukums nedrīkst saturēt slīpsvītru vai noslēguma kvadrātiekavas."
 
 #: services/forms.py:262
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "DynamicDNS servisam neizdevās startēties."
 
 #: services/forms.py:271
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "SNMP servisam neizdevās startēties."
 
 #: services/forms.py:285
 msgid "The activedirectory service failed to reload."
@@ -1069,7 +1057,7 @@ msgstr ""
 
 #: services/forms.py:398 services/models.py:248
 msgid "Discovery Auth Group"
-msgstr ""
+msgstr "Atklāšanas Autorizācijas Grupa"
 
 #: services/forms.py:425
 #, python-format

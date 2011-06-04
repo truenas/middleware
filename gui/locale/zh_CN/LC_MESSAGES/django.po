@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:06-0700\n"
-"PO-Revision-Date: 2011-06-02 17:09+0200\n"
-"Last-Translator: Joyway <joywaycn@yahoo.com.cn>\n"
+"PO-Revision-Date: 2011-06-04 00:00+0200\n"
+"Last-Translator: delphij <d@delphij.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -111,19 +111,16 @@ msgid "Disabled"
 msgstr "停用"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "待机模式（停转）下的最低功耗"
+msgstr "层级1 - 待机模式（怠速）下的最低功耗"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "平衡功耗和性能的待机模式"
+msgstr "层级64 - 平衡功耗和性能的待机模式"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "平衡功耗和性能的待机模式"
+msgstr "层级127 - 平衡功耗和性能的待机模式"
 
 #: choices.py:85
 #, fuzzy
@@ -131,14 +128,12 @@ msgid "Level 128 - Minimum power usage without Standby (no spindown)"
 msgstr "非待机模式最低功耗（不停转硬盘）"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "非待机模式平衡电源功耗"
+msgstr "层级 192 - 非待机模式平衡电源功耗"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "最高性能，最大电源消耗"
+msgstr "层级254 - 最高性能，最大电源消耗"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -359,9 +354,8 @@ msgid "lzjb (recommended)"
 msgstr "lzjb压缩法（推荐）"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "默认级别"
+msgstr "gzip (6 -- 默认级别)"
 
 #: choices.py:284
 msgid "gzip (fastest)"
@@ -401,7 +395,6 @@ msgid "Every selected weekday"
 msgstr "每个选定的工作日"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
 msgstr "只读"
 
@@ -635,7 +628,7 @@ msgstr ""
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "添加 %s"
 
 #: freeadmin/navtree.py:327
 #, fuzzy, python-format
@@ -699,13 +692,12 @@ msgid "Parent Interface"
 msgstr "虚拟接口"
 
 #: network/forms.py:109
-#, fuzzy
 msgid "The name must be vlanXX where XX is a integer"
 msgstr "接口名称必须是vlanXX 其中XX是数字"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN Tag 必须是 1 - 4095 之间的数字(含)"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -906,7 +898,7 @@ msgstr "%s 添加成功"
 
 #: services/forms.py:70
 msgid "N/A"
-msgstr ""
+msgstr "不适用"
 
 #: services/forms.py:79
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1079,7 +1071,7 @@ msgstr "你需要指定一个卷/数据集。"
 #: services/forms.py:524 services/forms.py:554
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
-msgstr ""
+msgstr "指定的 extent 路径必须在分区/数据集挂点之下。"
 
 #: services/forms.py:568
 msgid ""
@@ -1106,7 +1098,7 @@ msgstr "认证群组号"
 
 #: services/forms.py:761
 msgid "Delete underlying file"
-msgstr ""
+msgstr "删除对应的文件存储"
 
 #: services/models.py:42
 msgid "Service"
@@ -1184,6 +1176,8 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
+"使用这个选项来改变以访客身份访问时采用的系统用户身份（默认为'ftp'用户）。这个用户的权限将决定所有以访客身份连接服务的客户的权限。这个用户在密码文件"
+"中必须存在，但不必拥有登录权限。"
 
 #: services/models.py:109
 msgid "Allow guest access"
@@ -1195,28 +1189,28 @@ msgstr "仅允许来宾帐户访问"
 
 #: services/models.py:114 services/models.py:846
 msgid "File mask"
-msgstr ""
+msgstr "用于文件的权限掩码"
 
 #: services/models.py:116
 msgid "Use this option to override the file creation mask (0666 by default)."
-msgstr ""
+msgstr "使用这个选项来改变文件创建时默认的权限掩码（默认值为0666）。"
 
 #: services/models.py:120 services/models.py:852
 msgid "Directory mask"
-msgstr ""
+msgstr "用于目录的权限掩码"
 
 #: services/models.py:122
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
-msgstr ""
+msgstr "使用这个选项来改变目录创建时默认的权限掩码（默认值为0666）。"
 
 #: services/models.py:125
 msgid "Large RW support"
-msgstr ""
+msgstr "支持大文件读写"
 
 #: services/models.py:127
 msgid "Send files with sendfile(2)"
-msgstr ""
+msgstr "使用 sendfile(2) 来传出文件"
 
 #: services/models.py:129
 msgid "EA Support"
@@ -1250,15 +1244,15 @@ msgstr "为 samba 用户启用或禁用主目录"
 
 #: services/models.py:145
 msgid "Enable home directories browsing"
-msgstr ""
+msgstr "启用主目录浏览"
 
 #: services/models.py:146
 msgid "This enables\\disables home directories browsing for samba user."
-msgstr ""
+msgstr "这个选项启用用户对应的主目录"
 
 #: services/models.py:150
 msgid "Home directories"
-msgstr ""
+msgstr "主目录"
 
 #: services/models.py:156
 msgid "Enable AIO"
@@ -1270,7 +1264,7 @@ msgstr "启用或禁用AIO支持"
 
 #: services/models.py:161
 msgid "Minimal AIO read size"
-msgstr ""
+msgstr "最小 AIO 读尺寸"
 
 #: services/models.py:162
 msgid ""
@@ -1280,7 +1274,7 @@ msgstr ""
 
 #: services/models.py:167
 msgid "Minimal AIO write size"
-msgstr ""
+msgstr "最小 AIO 写尺寸"
 
 #: services/models.py:168
 msgid ""
@@ -1291,25 +1285,25 @@ msgstr ""
 #: services/models.py:173 services/models.py:174
 #: templates/services/index.html:29
 msgid "CIFS"
-msgstr ""
+msgstr "CIFS"
 
 #: services/models.py:183
 msgid "Server Name"
-msgstr ""
+msgstr "服务器名"
 
 #: services/models.py:184
 msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
-msgstr ""
+msgstr "服务器的名字。如果留空表示使用本机的主机名。"
 
 #: services/models.py:187
 msgid "Guest Access"
-msgstr ""
+msgstr "允许访客"
 
 #: services/models.py:188
 msgid "Allows guest access to all apple shares on this box."
-msgstr ""
+msgstr "允许访客访问这台服务器上的 全部Apple共享内容"
 
 #: services/models.py:194
 msgid ""
