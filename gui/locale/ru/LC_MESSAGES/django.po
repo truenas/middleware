@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:05-0700\n"
-"PO-Revision-Date: 2011-06-02 10:46+0200\n"
-"Last-Translator: xRaider <xraiderus@gmail.com>\n"
+"PO-Revision-Date: 2011-06-05 11:00+0200\n"
+"Last-Translator: xStarx <dvv431@mail.ru>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -99,11 +99,11 @@ msgstr "UDMA-133"
 
 #: choices.py:62
 msgid "SATA 1.5Gbit/s"
-msgstr "SATA 1.5 Гб/с"
+msgstr "SATA 1.5 Гбит/с"
 
 #: choices.py:63
 msgid "SATA 3.0Gbit/s"
-msgstr "SATA 3 Гб/с"
+msgstr "SATA 3 Гбит/с"
 
 #: choices.py:67
 msgid "Always On"

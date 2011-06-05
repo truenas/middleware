@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:02-0700\n"
-"PO-Revision-Date: 2011-06-02 19:36+0200\n"
+"PO-Revision-Date: 2011-06-04 21:09+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -2371,36 +2371,37 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"האפשרות הזאת מגדירה את שם המשתמש אשר העברת קבצים ויחידת התפקוד יקרו בו. "
+"בצירוף עם 'קבוצה' יקבע את הרשות קבצים שהיו זמינים. השאר את השדה הזה ריק "
+"בשביל הגדרות ברירת המחדל"
 
 #: services/models.py:1210
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"האפשרות הזאת מגדירה את שם הקבוצה אשר העברת קבצים ויחידת התפקוד יקרו בו. השאר "
+"את השדה הזה ריק בשביל הגדרות ברירת המחדל"
 
 #: services/models.py:1214
-#, fuzzy
 msgid "Hosts allow"
-msgstr "אפשור מארח"
+msgstr "אפשורי מארח"
 
 #: services/models.py:1215
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of hosts which are "
 "permitted to access this module. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings"
 msgstr ""
-"האפשרות הזאת היא פסיק, רווח או טאב(TAB) מתוחמים לסט מארחים שמותרים לגשת "
-"לשיתוף הזה. אתה יכול להגדיר את המארחים ע\"י שם או מספר IP. השאר את השדה הזה "
+"האפשרות הזאת היא פסיק, רווח או טאב(TAB) מתוחמים לסט מארחים שמותרים ליחידת "
+"התפקוד הזאת. אתה יכול להגדיר את המארחים ע\"י שם או מספר IP. השאר את השדה הזה "
 "ריק כדי להשתמש בהגדרות ברירת מחדל."
 
 #: services/models.py:1219
-#, fuzzy
 msgid "Hosts deny"
 msgstr "דחיית מארחים"
 
 #: services/models.py:1220
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of host which are NOT "
 "permitted to access this module. Where the lists conflict, the allow list "
@@ -2409,39 +2410,36 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings"
 msgstr ""
-"האשפרות הזאת היא פסיק, רווח או טאב(TAB) מתומים לסט מארחים שלא מותרים לגשת "
-"לשיתוף הזה. איפה שיש קונפליקט בין הרשימות, המאושר לוקח חוזקה.בארוע שהכרחי "
+"האשפרות הזאת היא פסיק, רווח או טאב(TAB) מתומים לסט מארחים שלא מותרים ליחידת "
+"התפקוד הזאת. איפה שיש קונפליקט בין הרשימות, המאושר לוקח חוזקה.בארוע שהכרחי "
 "לדחות את הכל בברירת המחדל, השתמש במילה ALL (או במסכת רשת 0.0.0.0/0) ואז ציין "
 "באופן מפורש למארחים לאשר את המאפיינים שיאשרו גישה למארחים האלו. השאר את הזה "
 "ריק לברירת המחדל."
 
 #: services/models.py:1225
-#, fuzzy
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
-msgstr "המאיינים האלו יוספו למאפיינים הגלובליים ב- inadyn.conf."
+msgstr "המאפיינים האלו יוספו למאפיינים הגלובליים ב- rsyncd.conf."
 
 #: services/models.py:1230
 msgid "Rsync Module"
-msgstr ""
+msgstr "יחידת תפקוד Rsync"
 
 #: services/models.py:1231
 msgid "Rsync Modules"
-msgstr ""
+msgstr "יחידות תפקוד Rsync"
 
 #: services/nav.py:12
 msgid "Control Services"
 msgstr "שרותי שליטה"
 
 #: services/nav.py:50
-#, fuzzy
 msgid "Add Device Extent"
-msgstr "הקפי התקנים"
+msgstr "הוסף הקף התקן"
 
 #: services/nav.py:60
-#, fuzzy
 msgid "View All Device Extents"
-msgstr "הקפי התקנים"
+msgstr " ראה את כל הקפי התקנים"
 
 #: services/nav.py:70 templates/services/iscsi.html:7
 msgid "Device Extents"
@@ -2455,32 +2453,28 @@ msgid "Add Extent"
 msgstr "הוסף הקף"
 
 #: services/nav.py:102
-#, fuzzy
 msgid "View All Extents"
-msgstr "ראה את כל המשתמשים"
+msgstr "ראה את כל ההקפים"
 
 #: services/nav.py:114 templates/services/iscsi.html:9
 msgid "Extents"
 msgstr "הקפות"
 
 #: services/nav.py:136
-#, fuzzy
 msgid "ISCSI"
-msgstr "iSCSI"
+msgstr "ISCSI"
 
 #: services/nav.py:147 system/models.py:429 templates/services/index.html:86
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/views.py:215
-#, fuzzy
 msgid "The service could not be stopped."
-msgstr "המטמון לא יכול להיבנות מחדש"
+msgstr "השרות לא יכול להיעצר."
 
 #: services/views.py:222
-#, fuzzy
 msgid "The service could not be started."
-msgstr "המטמון לא יכול להיבנות מחדש"
+msgstr "השרות לא יכול לאתחל."
 
 #: sharing/forms.py:92
 msgid "The field is a not a valid IP address or network"
@@ -2585,12 +2579,10 @@ msgid "Windows Share"
 msgstr "שיתוף חלונות (ווינדוס)"
 
 #: sharing/models.py:94
-#, fuzzy
 msgid "Windows Shares"
-msgstr "שיתוף חלונות (ווינדוס)"
+msgstr "שיתופי חלונות (ווינדוס)"
 
 #: sharing/models.py:105
-#, fuzzy
 msgid ""
 "The volume name is the name that appears in the Chooser of the 'connect to "
 "server' dialog on Macintoshes to represent the appropriate share. If "
@@ -2601,7 +2593,7 @@ msgid ""
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
 "שם הנפח הוא השם מופיע בבחירת דיאלוג 'התחבר לשרת' על מקים כדי לייצג את השיתוף "
-"הנכון. שם שם הנפח לא מוגדר, המקטע האחרון של שם הנתיב ישומש. לא יכול להיות "
+"הנכון. אם שם הנפח לא מוגדר, המקטע האחרון של שם הנתיב ישומש. לא יכול להיות "
 "ששני נפחים יהיו עם אותו. שם הנפח יכול לכלול את התו ':'. שם הנפח נהרס אם הוא "
 "ארוך מאוד. שם הנפח לעמוד הקוד למק מוגבל ל27 תווים. UTF-MAC שם הנפח מוגבל ל "
 "מאפיין 'אורך שם הנפח' בשרותים: שיתוף אפל(apple share)"
@@ -2660,10 +2652,9 @@ msgstr ""
 
 #: sharing/models.py:141
 msgid "Read-only Access"
-msgstr "גישת קריאה בלבד"
+msgstr "גישת קריאה-בלבד"
 
 #: sharing/models.py:143 sharing/models.py:149
-#, fuzzy
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
@@ -2673,7 +2664,7 @@ msgstr ""
 
 #: sharing/models.py:147
 msgid "Read-write Access"
-msgstr "גישת כתיבה בלבד"
+msgstr "גישת כתיבה-בלבד"
 
 #: sharing/models.py:152
 msgid "Disk Discovery"
@@ -2692,13 +2683,12 @@ msgid "Disk discovery mode"
 msgstr "מצב גילוי הכונן"
 
 #: sharing/models.py:160
-#, fuzzy
 msgid ""
 "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
 msgstr ""
-"אזהרה! בחירת  'Time Machine' על כמה שיתופים יכול לגרום לתוצאות בלתי צפויות "
+"אזהרה! בחירת 'Time Machine' על כמה שיתופים יכול לגרום לתוצאות בלתי צפויות "
 "בMacOS. אפשרות ברירת המחדל היא ליצא את הנפח בתור נפח מידע בשביל משתמשים."
 
 #: sharing/models.py:164
@@ -2706,13 +2696,12 @@ msgid "Database Path"
 msgstr "נתיב בסיס מידע"
 
 #: sharing/models.py:166
-#, fuzzy
 msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
 msgstr ""
-"מגדיר את בסיס המידע  להיות שמור בנתיב. אתה צריך להגדיר ניקום שבר כתיבה, "
-"אפילו אם הנפח הוא כתיבה בלבד."
+"מגדיר את בסיס המידע  להיות שמור בנתיב. אתה צריך להגדיר מיקום בר כתיבה, אפילו "
+"אם הנפח הוא כתיבה בלבד."
 
 #: sharing/models.py:169
 msgid "Cache CNID"
@@ -2763,14 +2752,12 @@ msgid "No .AppleDouble"
 msgstr "אין AppleDouble"
 
 #: sharing/models.py:182
-#, fuzzy
 msgid ""
 "This will suppress automatic creation of the .AppleDouble directories. This "
 "option should not be used if files are accessed by Mac computers."
 msgstr ""
-"זה שולט האם תייקות ה AppleDouble  נוצרות רק ממש נצרכות. האפשרות לא צריכה "
-"להיות משומשת אם הקבצים ניגשים בעיקר ע\"י מחשבי מקינטוש. לחיצה על האפשרות "
-"הזאת מנטרל את היווצרותם."
+"זה ינטרל את היצירה האוטומטית של תיקותAppleDouble. האפשרות לא צריכה להיות "
+"משומשת אם הקבצים ניגשים בעיקר ע\"י מחשבי מקינטוש. "
 
 #: sharing/models.py:185
 msgid "Zero Device Numbers"
@@ -2837,44 +2824,40 @@ msgid "Apple Share"
 msgstr "שיתוף אפל (apple)"
 
 #: sharing/models.py:214
-#, fuzzy
 msgid "Apple Shares"
-msgstr "שיתוף אפל (apple)"
+msgstr "שיתופי אפל (apple)"
 
 #: sharing/models.py:232
 msgid "Authorized network or IP addresses"
 msgstr "כתובת IP או רשת מאושרת"
 
 #: sharing/models.py:233
-#, fuzzy
 msgid ""
 "Network that is authorized to access the NFS share or a list of IP "
 "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
 "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 msgstr ""
 "רשת שמאושרת לגשת לשיתופי NFS או רשימה של כתובות IP. ציין מספרים בצורת "
-"1.2.3.4/xx איפה שXX מציינים מציינים את מסספר ביטים של מסכת הרשת או רשימה של "
-"כתובות IP  1.2.3.4 1.2.3.5 1.2.3.6."
+"1.2.3.4/xx איפה שXX מציינים מציינים את מספר הביטים של מסכת הרשת או רשימה של "
+"כתובות IP 1.2.3.4 1.2.3.5 1.2.3.6."
 
 #: sharing/models.py:237
 msgid "All Directories"
 msgstr "כל התיקיות"
 
 #: sharing/models.py:238
-#, fuzzy
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
-"אפשר כינון של תיקיות משנה תחת נקודת כינון אם נבחרה. אחרת, רק הרמה הגבוהה של "
-"התיקייה יכולה להיכנן."
+"אפשר כינון של תיקיות משנה תחת נקודת כינון הזאת אם נבחרה. אחרת, רק הרמה "
+"הגבוהה של התיקייה יכולה להיכנן."
 
 #: sharing/models.py:241
 msgid "Read Only"
 msgstr "קריאה בלבד"
 
 #: sharing/models.py:242
-#, fuzzy
 msgid "Export the share read only. Writes are not permitted."
 msgstr "יצא את השיתוף לקריאה בלבד. כתיבה לא מותרת."
 
@@ -2883,7 +2866,6 @@ msgid "Quiet"
 msgstr "שקט"
 
 #: sharing/models.py:246
-#, fuzzy
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
 msgstr "מנע אהזרות של יומן המערכת עם יצוא השיתוף הזה."
@@ -2925,9 +2907,8 @@ msgid "UNIX Share"
 msgstr "שיתוף UNIX"
 
 #: sharing/models.py:286
-#, fuzzy
 msgid "UNIX Shares"
-msgstr "שיתוף UNIX"
+msgstr "שיתופי UNIX"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
@@ -2949,9 +2930,8 @@ msgid ""
 msgstr "שם הנפח חייב להתחיל עם אותיות ויכול להכיל מספרים, \"-\", \"_\"."
 
 #: storage/forms.py:233
-#, fuzzy
 msgid "You must select a filesystem"
-msgstr "מערכת ZFS מרוחקת"
+msgstr "אתה חייב לבחור מערכת קבצים"
 
 #: storage/forms.py:237 system/forms.py:217 system/forms.py:223
 #: system/forms.py:228
@@ -2968,7 +2948,7 @@ msgstr "\"יומן\" הוא מילה שמור ומכיוון זה לא יכול 
 
 #: storage/forms.py:253
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr "הנפח לא יכול להתחיל עם עם  c[0-9], mirror, raidz or spare"
+msgstr "הנפח לא יכול להתחיל עם עם c[0-9], mirror, raidz or spare"
 
 #: storage/forms.py:338 storage/forms.py:428 storage/forms.py:900
 msgid "Member disk"
@@ -2984,7 +2964,7 @@ msgstr "קרתה תקלה בזמן נתינת שם לכונן."
 
 #: storage/forms.py:472
 msgid "You must select a volume."
-msgstr ""
+msgstr "אתה חייב לבחור נפח."
 
 #: storage/forms.py:594
 msgid "Volume from which this dataset will be created on"
@@ -3046,27 +3026,24 @@ msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
 msgstr "הקש מספר חיובי (סיומת אוציונלית של M,G,T), or', 0"
 
 #: storage/forms.py:743
-#, fuzzy
 msgid "Volume from which this zvol will be created on"
-msgstr "נפח מסט המידע ייצר ב-"
+msgstr "נפח שה-zvol יוצר עליו"
 
 #: storage/forms.py:744
-#, fuzzy
 msgid "ZVol Name"
-msgstr "שם מלא"
+msgstr "שם ZVol"
 
 #: storage/forms.py:745
 msgid "Size for this zvol"
-msgstr ""
+msgstr "גודל בשביל הZVol"
 
 #: storage/forms.py:759
-#, fuzzy
 msgid ""
 "ZVol names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
 msgstr ""
-"שמות של סטי מידע חייבים להתחיל בתווין אלפא נומרים ויכולים להכיל (-), (_), "
-"(:) ו (.)."
+"שמות של  ZVol חייבים להתחיל בתווים אלפא נומרים ויכולים להכיל (-), (_), (:) ו "
+"(.)."
 
 #: storage/forms.py:781
 msgid "Owner (user)"
@@ -3098,7 +3075,7 @@ msgstr "שם הצילום"
 
 #: storage/forms.py:849
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr "רק [-a-zA-Z0-9_.]  מורשים לשם הצילום"
+msgstr "רק [-a-zA-Z0-9_.] מורשים לשם הצילום"
 
 #: storage/forms.py:859
 msgid "Invalid prefix"
@@ -3359,39 +3336,35 @@ msgstr "תקלה כלשהי קרתה בזמן קביעת האפשרות"
 
 #: storage/views.py:338
 msgid "ZVol"
-msgstr ""
+msgstr "ZVol"
 
 #: storage/views.py:352
 msgid "This is in use by the iscsi target, please remove it there first"
-msgstr ""
+msgstr "זה משומש בתור מטרת iscsi , בבקשה הסר את זה קודם."
 
 #: storage/views.py:356
-#, fuzzy
 msgid "ZFS Volume successfully destroyed."
-msgstr "%S נמחק בהצלחה."
+msgstr "נפח ZFS הושמד בהצלחה."
 
 #: storage/views.py:390
 msgid "Native dataset"
 msgstr "סט מידע טבעי"
 
 #: storage/views.py:406
-#, fuzzy
 msgid "Mount Point permissions successfully updated."
-msgstr "%S עודכן בהצלחה."
+msgstr "רשויות נקודות הכינון עודכנו בהצלחה."
 
 #: storage/views.py:421
-#, fuzzy
 msgid "Dataset successfully destroyed."
-msgstr "%S נמחק בהצלחה."
+msgstr "סט המידע הושמד בהצלחה."
 
 #: storage/views.py:435
-#, fuzzy
 msgid "Snapshot successfully deleted."
-msgstr "תצלום שוכפל בהצלחה"
+msgstr "התצלום נמחק בהצלחה."
 
 #: storage/views.py:449
 msgid "Rollback successful."
-msgstr ""
+msgstr "חזרה לאחורה מוצלחת."
 
 #: storage/views.py:479
 msgid "Snapshot successfully taken"
@@ -3415,11 +3388,11 @@ msgstr "ניתוק הכונן נעשה בהצלחה"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
-msgstr ""
+msgstr "שפה(דורש אתחול של מנשק המשתמש)"
 
 #: system/forms.py:250
 msgid "Place to temporarily place firmware file"
-msgstr ""
+msgstr "שים את קובץ הקושחה הזמנו במקיקום זמני"
 
 #: system/forms.py:250
 msgid ""
@@ -3453,17 +3426,16 @@ msgid "New config to be installed"
 msgstr "הגדרה חדשה להתקנה"
 
 #: system/forms.py:310 system/forms.py:339
-#, fuzzy
 msgid "minute"
-msgstr ",דקות"
+msgstr "דקה"
 
 #: system/forms.py:311 system/forms.py:340
 msgid "hour"
-msgstr ""
+msgstr "שעה"
 
 #: system/forms.py:312 system/forms.py:341
 msgid "day of month"
-msgstr ""
+msgstr "יום בחודש"
 
 #: system/models.py:43
 msgid "Protocol"
@@ -3526,7 +3498,6 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "אפשר Zeroconf/Bonjour"
 
 #: system/models.py:100
-#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Must be non-zero"
 msgstr ""
@@ -3539,7 +3510,7 @@ msgstr "הראה הודעות מסוף בקרה בסיומת עמוד (דורש 
 
 #: system/models.py:106
 msgid "Show tracebacks in case of fatal errors"
-msgstr ""
+msgstr "הראה עקיבות לאחורה במקרה של שגיאות קטלניות"
 
 #: system/models.py:114
 msgid "MOTD banner"
@@ -3667,134 +3638,123 @@ msgstr "חתוך והדבק את התוכן של התעודות האישיות �
 
 #: system/models.py:241 system/models.py:380
 msgid "The user to run the command"
-msgstr ""
+msgstr "המשתמש בשביל להריץ את הפקודה"
 
 #: system/models.py:245 templates/system/cronjob.html:11
-#, fuzzy
 msgid "Command"
-msgstr "הערה"
+msgstr "פקודה"
 
 #: system/models.py:249 system/models.py:354 templates/system/cronjob.html:5
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Minute"
-msgstr ",דקות"
+msgstr ",דקה"
 
 #: system/models.py:250 system/models.py:355
 msgid "Values 0-59 allowed."
-msgstr ""
+msgstr "הערכים 0-59 מותרים."
 
 #: system/models.py:254 system/models.py:359 templates/system/cronjob.html:6
 #: templates/system/rsync.html:6
-#, fuzzy
 msgid "Hour"
-msgstr "שעתי"
+msgstr "שעה"
 
 #: system/models.py:255 system/models.py:360
 msgid "Values 0-23 allowed."
-msgstr ""
+msgstr "ערכים 0-23 מותרים."
 
 #: system/models.py:259 system/models.py:364 templates/system/cronjob.html:7
 #: templates/system/rsync.html:7
 msgid "Day of month"
-msgstr ""
+msgstr "יום בחודש"
 
 #: system/models.py:260 system/models.py:365
 msgid "Values 1-31 allowed."
-msgstr ""
+msgstr "ערכים 1-31 מותרים."
 
 #: system/models.py:265 system/models.py:370 templates/system/cronjob.html:8
 #: templates/system/rsync.html:8
-#, fuzzy
 msgid "Month"
-msgstr "יומי"
+msgstr "חודש"
 
 #: system/models.py:270 system/models.py:375 templates/system/cronjob.html:9
 #: templates/system/rsync.html:9
 msgid "Day of week"
-msgstr ""
+msgstr "יום בשבוע"
 
 #: system/models.py:273
 msgid "CronJob"
-msgstr ""
+msgstr "עבודת Cron"
 
 #: system/models.py:274
 msgid "CronJobs"
-msgstr ""
+msgstr "עבודות cron"
 
 #: system/models.py:284 system/models.py:440
-#, fuzzy
 msgid "Every minute"
-msgstr ",דקות"
+msgstr "כל דקה"
 
 #: system/models.py:286 system/models.py:442
 #, python-format
 msgid "Every %s minute(s)"
-msgstr ""
+msgstr "כל %s דקות"
 
 #: system/models.py:292 system/models.py:448
 msgid "Every hour"
-msgstr ""
+msgstr "כל שעה "
 
 #: system/models.py:294 system/models.py:450
 #, python-format
 msgid "Every %s hour(s)"
-msgstr ""
+msgstr "כל %s שעות"
 
 #: system/models.py:302 system/models.py:458
-#, fuzzy, python-format
+#, python-format
 msgid "Every %s days"
-msgstr "כל יום"
+msgstr "כל %s ימים"
 
 #: system/models.py:309 system/models.py:465
 msgid "Every month"
-msgstr ""
+msgstr "כל חודש"
 
 #: system/models.py:341
 msgid "IP Address or hostname"
-msgstr ""
+msgstr "כתובת IP או שם מארח"
 
 #: system/models.py:345
-#, fuzzy
 msgid "Remote Module Name"
-msgstr "שם מארח מרוחק"
+msgstr "שם יחידת תפקוד מרוחקת"
 
 #: system/models.py:349
-#, fuzzy
 msgid "Short description"
-msgstr "תיאור"
+msgstr "תיאור קצר"
 
 #: system/models.py:384
-#, fuzzy
 msgid "Recurse into directories"
-msgstr "תיקיות בית"
+msgstr "רקורסיבי לתוך תיקיות"
 
 #: system/models.py:388
-#, fuzzy
 msgid "Times"
-msgstr "Timeout"
+msgstr "זמנים"
 
 #: system/models.py:389
 msgid "Preserve modification times"
-msgstr ""
+msgstr "שמור זמני שינויים"
 
 #: system/models.py:393
-#, fuzzy
 msgid "Compress"
-msgstr "רמת דחיסה"
+msgstr "דחיסה"
 
 #: system/models.py:394
 msgid "Compress data during the transfer"
-msgstr ""
+msgstr "דחוס מידע במהלך העברה"
 
 #: system/models.py:398
 msgid "Archive"
-msgstr ""
+msgstr "ארכיון"
 
 #: system/models.py:399
-#, fuzzy
 msgid "Archive mode"
-msgstr "נפחים פעילים"
+msgstr "מצב ארכיון"
 
 #: system/models.py:403 templates/freeadmin/generic_model_edit.html:43
 #: templates/network/interface.html:39 templates/network/lagg.html:44
@@ -5059,7 +5019,7 @@ msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
-"אפשר למשתמשים מסוימים גישת קריאה בלבד לשיתוף, זה נוהג על פי פרומט האישור."
+"אפשר למשתמשים מסוימים גישת קריאה בלבד לשיתוף, זה נוהג על פי פורמט האישור."
 
 msgid "View All UNIX Shares"
 msgstr "ראה את כל שיתופי UNIX (לינוקס)"

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:02-0700\n"
-"PO-Revision-Date: 2011-05-23 14:44+0200\n"
-"Last-Translator: OrderFoots <forestdoor@gmail.com>\n"
+"PO-Revision-Date: 2011-06-05 02:25+0200\n"
+"Last-Translator: Kimimasa <ham@cer110.orz.ne.jp>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -412,18 +412,17 @@ msgid "Every selected weekday"
 msgstr "毎週指定曜日"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
-msgstr "読込み専用"
+msgstr "読み取り専用"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "読込み専用"
+msgstr "書き込み専用"
 
 #: choices.py:443
+#, fuzzy
 msgid "Read and Write"
-msgstr ""
+msgstr "読み/書き"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -592,7 +591,7 @@ msgid "Users"
 msgstr "ユーザ"
 
 #: account/models.py:138
-#, fuzzy, python-format
+#, python-format
 msgid "User %s is built-in and can not be deleted!"
 msgstr "%s は組み込みユーザのため削除できません！"
 
@@ -650,14 +649,14 @@ msgid "The group %s is not valid."
 msgstr "'%s' は無効なグループです。"
 
 #: freeadmin/navtree.py:315
-#, python-format
+#, fuzzy, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "%s の追加"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "すべてのユーザを表示"
+msgstr "すべての %s を表示"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -682,8 +681,9 @@ msgid "%s successfully updated."
 msgstr "%s を更新しました。"
 
 #: freeadmin/views.py:388
+#, fuzzy
 msgid "The service failed to restart."
-msgstr ""
+msgstr "サービスの再起動に失敗しました。"
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -722,23 +722,22 @@ msgid "Parent Interface"
 msgstr "インタフェースの削除"
 
 #: network/forms.py:109
-#, fuzzy
 msgid "The name must be vlanXX where XX is a integer"
 msgstr "インターフェース名は、vlanXX（XXは数字）である必要があります。"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLANのタグは1～4095の数値で指定して下さい。"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
 msgstr "LAGG を構成する物理 NIC"
 
-# 自信がないので、ヘルプをお願いします。
+# ありがとうございました。
 #: network/forms.py:190
-#, fuzzy, python-format
+#, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr "'%s' は無効なネットワーク名です。CIDR 記法で指定してください。"
+msgstr "'%s' は無効なネットワーク名です。CIDR 表記で指定してください。"
 
 #: network/models.py:42 services/models.py:1072
 #: templates/system/system_info.html:4
@@ -933,7 +932,7 @@ msgstr "%s を追加しました。"
 
 #: services/forms.py:70
 msgid "N/A"
-msgstr ""
+msgstr "該当なし"
 
 #: services/forms.py:79
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -945,12 +944,14 @@ msgid "This field is required for \"Home directories\"."
 msgstr "この項目は、\"ホームディレクトリ\" のために必要です"
 
 #: services/forms.py:99
+#, fuzzy
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "AFP サービスを再開できませんでした。"
 
 #: services/forms.py:108
+#, fuzzy
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "NFS サービスを再開できませんでした。"
 
 #: services/forms.py:112
 msgid "File Permission"
@@ -991,39 +992,46 @@ msgstr "この項目は、匿名ログインのために必要です。"
 
 #: services/forms.py:200
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "FTP サービスを開始できませんでした。"
 
 #: services/forms.py:209
+#, fuzzy
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "tftp サービスを再開できませんでした。"
 
 #: services/forms.py:216
+#, fuzzy
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "SSH サービスを再開できませんでした。"
 
 #: services/forms.py:225 services/forms.py:253
+#, fuzzy
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Rsync サービスを再開できませんでした。"
 
 #: services/forms.py:238
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "名前に / または ] を含むことはできません。"
 
 #: services/forms.py:262
+#, fuzzy
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "DynamicDNS サービスを再開できませんでした。"
 
 #: services/forms.py:271
+#, fuzzy
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "SNMP サービスを再開できませんでした。"
 
 #: services/forms.py:285
+#, fuzzy
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "Active Directory（アクティブディレクトリ）サービスを再開できませんでした。"
 
 #: services/forms.py:296
+#, fuzzy
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "LDAP サービスを再開できませんでした。"
 
 #: services/forms.py:302 services/models.py:529
 #: templates/services/iscsi_auth.html:7
@@ -1070,8 +1078,9 @@ msgstr "ピアシークレットは、ユーザシークレットと異なる必
 #: services/forms.py:356 services/forms.py:393 services/forms.py:507
 #: services/forms.py:537 services/forms.py:584 services/forms.py:683
 #: services/forms.py:705 services/forms.py:726 services/forms.py:758
+#, fuzzy
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "iSCSI サービスを再開できませんでした。"
 
 #: services/forms.py:385
 msgid "LUN already exists in the same target."
@@ -1161,9 +1170,8 @@ msgstr "サービス"
 
 # shouldの訳が怪しい
 #: services/models.py:43
-#, fuzzy
 msgid "Name of Service, should be auto-generated at build time"
-msgstr "サービスの名称は、ビルド時されたときに自動生成されるはずです。"
+msgstr "サービスの名称は、ビルド時に自動生成されます。"
 
 #: services/models.py:46
 msgid "Enable Service"
@@ -1228,7 +1236,6 @@ msgid "Guest account"
 msgstr "ゲストアカウント"
 
 #: services/models.py:106 sharing/models.py:65
-#, fuzzy
 msgid ""
 "Use this option to override the username ('ftp' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
@@ -1236,11 +1243,9 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
-"このオプションは、サービスにアクセスする際のゲストユーザ名を変更する場合に使"
-"用します（デフォルトは 'ftp'）。このユーザにどのような権限を設定しても構いま"
-"せんが、ゲストサービスに接続するすべてのクライアントに適用されます。このユー"
-"ザは password file 内に必ず記述して下さい。なお、ログイン可能である必要はあり"
-"ません。"
+"このオプションは、guest ユーザ名を特に指定する場合に利用します（デフォルトは "
+"'ftp'）。このユーザにどのような権限を設定しても構いませんが、guest サービスに接続するすべてのクライアントに適用されます。ただし、このユーザを "
+"password file 内に必ず記述して下さい。なお、ログイン可能である必要はありません。"
 
 #: services/models.py:109
 msgid "Allow guest access"
@@ -1392,11 +1397,9 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
-"このオプションは、サービスにアクセスする際のゲストユーザ名を変更する場合に利"
-"用します（デフォルトは 'www'）。このユーザにどのような権限を設定しても構いま"
-"せんが、ゲストサービスに接続するすべてのクライアントに適用されます。このユー"
-"ザは password file 内に必ず記述して下さい。なお、ログイン可能である必要はあり"
-"ません。"
+"このオプションは、guest ユーザ名を特に指定する場合に利用します（デフォルトは "
+"'www'）。このユーザにどのような権限を設定しても構いませんが、guest サービスに接続するすべてのクライアントに適用されます。ただし、このユーザを "
+"password file 内に必ず記述して下さい。なお、ログイン可能である必要はありません。"
 
 #: services/models.py:197
 msgid "Local Access"
@@ -1448,12 +1451,10 @@ msgid "NFS"
 msgstr "NFS"
 
 #: services/models.py:237
-#, fuzzy
 msgid "Base Name"
 msgstr "ベースネーム"
 
 #: services/models.py:238
-#, fuzzy
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
@@ -1673,7 +1674,6 @@ msgid "Comment"
 msgstr "コメント"
 
 #: services/models.py:397 services/models.py:447 services/models.py:493
-#, fuzzy
 msgid "You may enter a description here for your reference."
 msgstr "コメントを記入できます。自由に使うことができます。"
 
@@ -1759,7 +1759,6 @@ msgid "Target Name"
 msgstr "ターゲット名"
 
 #: services/models.py:561
-#, fuzzy
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
 msgstr "ベースネームが'iqn'で始まらない場合は、自動的に追加されます。"
 
@@ -1768,7 +1767,6 @@ msgid "Target Alias"
 msgstr "ターゲットエイリアス名"
 
 #: services/models.py:569
-#, fuzzy
 msgid "Optional user-friendly string of the target."
 msgstr "オプションとして使いやすいように名前を指定できます。"
 
@@ -1795,7 +1793,6 @@ msgid "Auth Method"
 msgstr "認証方法"
 
 #: services/models.py:596 services/models.py:608
-#, fuzzy
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
@@ -1823,13 +1820,10 @@ msgid "Logical Block Size"
 msgstr "論理ブロックサイズ"
 
 #: services/models.py:620
-#, fuzzy
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
-msgstr ""
-"論理ブロックの大きさを指定できます。（デフォルト: 512 を推奨） 互換性があるの"
-"は 512 です。"
+msgstr "論理ブロックの長さを指定できます。（初期値は 512） 互換性の面からも 512 を推奨します。"
 
 #: services/models.py:623 services/models.py:638
 #: templates/services/iscsi_assoctargets.html:5
@@ -1849,7 +1843,6 @@ msgid "Target / Extent"
 msgstr "ターゲット/エクステント"
 
 #: services/models.py:648
-#, fuzzy
 msgid "Targets / Extents"
 msgstr "ターゲット/エクステント"
 
@@ -2132,7 +2125,6 @@ msgid "Maximum passive port"
 msgstr "パッシブモードで使用するポート番号の最大値"
 
 #: services/models.py:878
-#, fuzzy
 msgid ""
 "The maximum port to allocate for PASV style data connections (0 = use any "
 "port). Passive ports restricts the range of ports from which the server will "
@@ -2519,8 +2511,9 @@ msgstr ""
 "ここで指定したパラメータは、inadyn.conf のグローバル設定に追加されます。"
 
 #: services/models.py:1165 services/models.py:1166
+#, fuzzy
 msgid "Rsyncd"
-msgstr ""
+msgstr "Rsyncd"
 
 #: services/models.py:1176
 #, fuzzy
@@ -2533,8 +2526,9 @@ msgid "Path to be shared"
 msgstr "エクステントへのパス"
 
 #: services/models.py:1191
+#, fuzzy
 msgid "Access Mode"
-msgstr ""
+msgstr "アクセスモード"
 
 #: services/models.py:1192
 msgid "This controls the access a remote host has to this module"
@@ -2553,18 +2547,23 @@ msgstr ""
 "す。）"
 
 #: services/models.py:1203
+#, fuzzy
 msgid ""
 "This option specifies the user name that file transfers to and from that "
 "module should take place. In combination with the 'Group' option this "
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"このオプションにより、そのモジュールとファイル転送するユーザー名を指定します。 'グループ' オプションと組み合わせることで、このアクセス許可が使用可能"
+"なファイルかを決定します。デフォルトの設定を使用する場合はこのフィールドを空白のままにしてください。"
 
 #: services/models.py:1210
+#, fuzzy
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"このオプションにより、そのモジュールとファイル転送するグループ名を指定します。デフォルトの設定を使用する場合はこのフィールドを空白のままにしてください。"
 
 #: services/models.py:1214
 #, fuzzy
@@ -2612,11 +2611,11 @@ msgstr ""
 
 #: services/models.py:1230
 msgid "Rsync Module"
-msgstr ""
+msgstr "Rsync モジュール"
 
 #: services/models.py:1231
 msgid "Rsync Modules"
-msgstr ""
+msgstr "Rsync モジュール"
 
 #: services/nav.py:12
 msgid "Control Services"
@@ -2653,13 +2652,12 @@ msgid "Extents"
 msgstr "エクステント"
 
 #: services/nav.py:136
-#, fuzzy
 msgid "ISCSI"
 msgstr "iSCSI"
 
 #: services/nav.py:147 system/models.py:429 templates/services/index.html:86
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/views.py:215
 #, fuzzy
@@ -2795,12 +2793,10 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
-"ボリューム名は、 適切な共有を表すため、 Mac の 'connect to server' ダイアログ"
-"の Chooser に表示されています。もしボリューム名が指定されない場合、パス名の最"
-"後の部分が使われます。ボリューム名の重複はできません。ボリューム名に ':' を使"
-"えません。ボリューム名が長過ぎると名前が壊れます。 Mac ではボリューム名は 27 "
-"文字までとなっています。 UTF8-MAC ボリューム名は、アップル共有サービスの「ボ"
-"リューム名の長さ」パラメータに制限されます。"
+"このボリューム名は、適切な共有を表すため Mac の 'connect to server' ダイアログの Chooser "
+"に表示するためのものです。もしボリューム名が指定されない場合、パス名の最後の部分が使われます。ボリューム名の重複はできません。ボリューム名に ':' "
+"を使えません。ボリューム名が長過ぎると名前が壊れます。 Mac コードページではボリューム名は 27 文字までとなっています。 UTF-8-MAC "
+"ボリューム名は、アップル共有サービスの「ボリューム名の長さ」パラメータで制限しています。"
 
 #: sharing/models.py:109
 msgid "Share Comment"
@@ -3003,7 +2999,7 @@ msgstr "ファイル ID の無効化"
 #: sharing/models.py:190
 #, fuzzy
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr "createfileid, resoleveid 及び deleteid コールの広告を行いません"
+msgstr "createfileid, resoleveid 及び deleteid の呼び出しを宣伝しません。"
 
 #: sharing/models.py:193
 #, fuzzy
@@ -3057,7 +3053,6 @@ msgid "Apple Share"
 msgstr "Apple ファイル共有"
 
 #: sharing/models.py:214
-#, fuzzy
 msgid "Apple Shares"
 msgstr "Apple ファイル共有"
 
@@ -3066,7 +3061,6 @@ msgid "Authorized network or IP addresses"
 msgstr "許可するネットワークまたは IP アドレス"
 
 #: sharing/models.py:233
-#, fuzzy
 msgid ""
 "Network that is authorized to access the NFS share or a list of IP "
 "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
@@ -3081,7 +3075,6 @@ msgid "All Directories"
 msgstr "すべてのディレクトリ"
 
 #: sharing/models.py:238
-#, fuzzy
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
@@ -3094,20 +3087,17 @@ msgid "Read Only"
 msgstr "読み込み専用"
 
 #: sharing/models.py:242
-#, fuzzy
 msgid "Export the share read only. Writes are not permitted."
 msgstr "読み込み専用で共有します。書き込むことはできません。"
 
 #: sharing/models.py:245 system/models.py:408
-#, fuzzy
 msgid "Quiet"
-msgstr "静音"
+msgstr "Quiet モード"
 
 #: sharing/models.py:246
-#, fuzzy
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
-msgstr "この共有のエクスポート時に問題がある場合の、syslog警告を抑制します。"
+msgstr "この共有のエクスポート時に問題がある場合の、syslog 警告を抑制します。"
 
 #: sharing/models.py:250
 msgid "Maproot User"
@@ -3150,7 +3140,6 @@ msgid "UNIX Share"
 msgstr "Unix ファイル共有"
 
 #: sharing/models.py:286
-#, fuzzy
 msgid "UNIX Shares"
 msgstr "Unix ファイル共有"
 
@@ -3177,9 +3166,8 @@ msgstr ""
 "\" 、 \"_\" を含めることができます。"
 
 #: storage/forms.py:233
-#, fuzzy
 msgid "You must select a filesystem"
-msgstr "リモートZFSファイルシステム"
+msgstr "ファイルシステムを選択してください。"
 
 #: storage/forms.py:237 system/forms.py:217 system/forms.py:223
 #: system/forms.py:228
@@ -3213,7 +3201,7 @@ msgstr "ディスクのラベリング中にエラーが発生しました。"
 
 #: storage/forms.py:472
 msgid "You must select a volume."
-msgstr ""
+msgstr "ボリュームを選択してください。"
 
 #: storage/forms.py:594
 msgid "Volume from which this dataset will be created on"
@@ -3288,8 +3276,9 @@ msgid "ZVol Name"
 msgstr "フルネーム"
 
 #: storage/forms.py:745
+#, fuzzy
 msgid "Size for this zvol"
-msgstr ""
+msgstr "ZVol のサイズ"
 
 #: storage/forms.py:759
 #, fuzzy
@@ -3616,12 +3605,14 @@ msgid "Some error ocurried while setting the options"
 msgstr "オプションの設定中にエラーが発生しました。"
 
 #: storage/views.py:338
+#, fuzzy
 msgid "ZVol"
-msgstr ""
+msgstr "ZVol"
 
 #: storage/views.py:352
+#, fuzzy
 msgid "This is in use by the iscsi target, please remove it there first"
-msgstr ""
+msgstr "iSCSI ターゲットが使用しています。まずそちらを開放してください。"
 
 #: storage/views.py:356
 #, fuzzy
@@ -3648,8 +3639,9 @@ msgid "Snapshot successfully deleted."
 msgstr "クローンを作成しました。"
 
 #: storage/views.py:449
+#, fuzzy
 msgid "Rollback successful."
-msgstr ""
+msgstr "ロールバックしました。"
 
 #: storage/views.py:479
 msgid "Snapshot successfully taken"
@@ -3679,11 +3671,11 @@ msgstr "ディスクのデタッチが成功しました。"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
-msgstr ""
+msgstr "言語（設定後、画面を開き直してください）"
 
 #: system/forms.py:250
 msgid "Place to temporarily place firmware file"
-msgstr ""
+msgstr "ファームウェアファイルを一時保存する場所"
 
 #: system/forms.py:250
 #, fuzzy
@@ -3728,12 +3720,14 @@ msgid "minute"
 msgstr "分、"
 
 #: system/forms.py:311 system/forms.py:340
+#, fuzzy
 msgid "hour"
-msgstr ""
+msgstr "時"
 
 #: system/forms.py:312 system/forms.py:341
+#, fuzzy
 msgid "day of month"
-msgstr ""
+msgstr "日"
 
 #: system/models.py:43
 msgid "Protocol"
@@ -3809,8 +3803,9 @@ msgid "Show console messages in the footer (Requires UI reload)"
 msgstr "フッタへのコンソールメッセージの表示（UIのリロードが必要）"
 
 #: system/models.py:106
+#, fuzzy
 msgid "Show tracebacks in case of fatal errors"
-msgstr ""
+msgstr "致命的なエラーの発生時にトレースバックを表示します。"
 
 #: system/models.py:114
 msgid "MOTD banner"
@@ -3833,7 +3828,6 @@ msgstr ""
 "freenas@mydomain.com）"
 
 #: system/models.py:133
-#, fuzzy
 msgid "Outgoing mail server"
 msgstr "送信メールサーバ"
 
@@ -3944,8 +3938,9 @@ msgid ""
 msgstr "公開鍵と秘密鍵をコピーして貼り付けてください。"
 
 #: system/models.py:241 system/models.py:380
+#, fuzzy
 msgid "The user to run the command"
-msgstr ""
+msgstr "コマンドを実行するユーザ"
 
 #: system/models.py:245 templates/system/cronjob.html:11
 #, fuzzy
@@ -3960,7 +3955,7 @@ msgstr "分、"
 
 #: system/models.py:250 system/models.py:355
 msgid "Values 0-59 allowed."
-msgstr ""
+msgstr "0～59 の数値を使用できます。"
 
 #: system/models.py:254 system/models.py:359 templates/system/cronjob.html:6
 #: templates/system/rsync.html:6
@@ -3970,16 +3965,17 @@ msgstr "1時間"
 
 #: system/models.py:255 system/models.py:360
 msgid "Values 0-23 allowed."
-msgstr ""
+msgstr "0～23 の数値を使用できます。"
 
 #: system/models.py:259 system/models.py:364 templates/system/cronjob.html:7
 #: templates/system/rsync.html:7
+#, fuzzy
 msgid "Day of month"
-msgstr ""
+msgstr "日"
 
 #: system/models.py:260 system/models.py:365
 msgid "Values 1-31 allowed."
-msgstr ""
+msgstr "1～31 の数値を使用できます。"
 
 #: system/models.py:265 system/models.py:370 templates/system/cronjob.html:8
 #: templates/system/rsync.html:8
@@ -3989,16 +3985,19 @@ msgstr "1ヶ月間"
 
 #: system/models.py:270 system/models.py:375 templates/system/cronjob.html:9
 #: templates/system/rsync.html:9
+#, fuzzy
 msgid "Day of week"
-msgstr ""
+msgstr "曜日"
 
 #: system/models.py:273
+#, fuzzy
 msgid "CronJob"
-msgstr ""
+msgstr "CronJob"
 
 #: system/models.py:274
+#, fuzzy
 msgid "CronJobs"
-msgstr ""
+msgstr "CronJob"
 
 #: system/models.py:284 system/models.py:440
 #, fuzzy
@@ -4008,29 +4007,29 @@ msgstr "分、"
 #: system/models.py:286 system/models.py:442
 #, python-format
 msgid "Every %s minute(s)"
-msgstr ""
+msgstr "%s 分ごと"
 
 #: system/models.py:292 system/models.py:448
 msgid "Every hour"
-msgstr ""
+msgstr "1時間ごと"
 
 #: system/models.py:294 system/models.py:450
 #, python-format
 msgid "Every %s hour(s)"
-msgstr ""
+msgstr "％s 時間ごと"
 
 #: system/models.py:302 system/models.py:458
-#, fuzzy, python-format
+#, python-format
 msgid "Every %s days"
-msgstr "毎日"
+msgstr "%s 日ごと"
 
 #: system/models.py:309 system/models.py:465
 msgid "Every month"
-msgstr ""
+msgstr "毎月"
 
 #: system/models.py:341
 msgid "IP Address or hostname"
-msgstr ""
+msgstr "IP アドレス もしくは ホスト名"
 
 #: system/models.py:345
 #, fuzzy
@@ -4062,8 +4061,9 @@ msgid "Compress"
 msgstr "圧縮レベル"
 
 #: system/models.py:394
+#, fuzzy
 msgid "Compress data during the transfer"
-msgstr ""
+msgstr "転送時にデータを圧縮します。"
 
 #: system/models.py:398
 msgid "Archive"
@@ -4099,28 +4099,34 @@ msgstr "アクティブなボリューム"
 msgid "Delete"
 msgstr "削除"
 
+# rsync日本語READMEより転載。
 #: system/models.py:404
+#, fuzzy
 msgid "Delete files on the receiving side that don't exist on sender"
-msgstr ""
+msgstr "送信側に存在しない、受信側にあるファイルを削除します。"
 
 #: system/models.py:409
 msgid "Suppress non-error messages"
-msgstr ""
+msgstr "「エラーなし」メッセージを表示しない。"
 
 #: system/models.py:413
 #, fuzzy
 msgid "Preserve permissions"
 msgstr "パーミッションの継承"
 
+# rsyncの日本語READMEより転載。
 #: system/models.py:414
+#, fuzzy
 msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
-msgstr ""
+msgstr "ローカルのパーミッションと同じようにリモートのパーミッションを rsync に更新させます。"
 
+# 直訳です。
 #: system/models.py:418
+#, fuzzy
 msgid "Preserve extended attributes"
-msgstr ""
+msgstr "拡張属性を保持します。"
 
 #: system/models.py:419
 msgid ""
@@ -4133,9 +4139,10 @@ msgstr ""
 msgid "Extra options to rsync command line (usually empty)"
 msgstr "拡張オプションを指定します。（通常は空白です。）"
 
+# ソフトウェア名なのでそのままとします。
 #: system/models.py:430
 msgid "Rsyncs"
-msgstr ""
+msgstr "rsync"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -5089,14 +5096,12 @@ msgid "Edit ZFS Volume"
 msgstr "ZFS ボリュームの編集"
 
 #: templates/storage/volumes.html:30
-#, fuzzy
 msgid "Create ZFS Volume"
-msgstr "ボリュームの作成"
+msgstr "ZFS ボリュームの作成"
 
 #: templates/storage/volumes.html:34
-#, fuzzy
 msgid "Create ZFS zvol"
-msgstr "ZFSデータセットの作成"
+msgstr "ZVol を ZFS で作成"
 
 #: templates/storage/volumes.html:64
 msgid "There are no active volumes."
@@ -5116,9 +5121,8 @@ msgid "Status"
 msgstr "ステータス"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Destroy ZFS Volume"
-msgstr "ボリュームの破棄"
+msgstr "ZFS ボリュームの破棄"
 
 #: templates/storage/volumes.html:128 templates/storage/volumes.html.py:132
 msgid "Destroy Dataset"
@@ -5179,9 +5183,8 @@ msgid "Existing data will be cleared"
 msgstr "既存のデータは消去されます。"
 
 #: templates/storage/zvols.html:9
-#, fuzzy
 msgid "Add ZVol"
-msgstr "ボリュームの追加"
+msgstr "ZVol の追加"
 
 # 意訳
 #: templates/system/config.html:2
@@ -5217,8 +5220,9 @@ msgid "No CronJobs defined"
 msgstr "定義されたユーザはありません。"
 
 #: templates/system/cronjob.html:46 templates/system/cronjob.html.py:48
+#, fuzzy
 msgid "Add CronJob"
-msgstr ""
+msgstr "Cron ジョブを追加する。"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -5284,8 +5288,9 @@ msgid "No rsyncs defined"
 msgstr "定義されたユーザはありません。"
 
 #: templates/system/rsync.html:44 templates/system/rsync.html.py:46
+#, fuzzy
 msgid "Add Rsync"
-msgstr ""
+msgstr "Rsync を追加する。"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -5313,7 +5318,7 @@ msgstr "プラットフォーム"
 
 #: templates/system/system_info.html:16
 msgid "Memory"
-msgstr ""
+msgstr "メモリ"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
@@ -5333,9 +5338,9 @@ msgid "FreeNAS Build"
 msgstr "FreeNAS ビルド名"
 
 #: templates/system/wizard.html:3
-#, python-format
+#, fuzzy, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr ""
+msgstr "%(step)s ステップ目 / %(step_count)s ステップ"
 
 msgid "English"
 msgstr "英語"
