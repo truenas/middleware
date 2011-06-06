@@ -578,3 +578,17 @@ def disk_detach(request, vid, object_id):
         'object_id': object_id,
         'disk': disk,
     })
+
+
+def volume_export(request, vid):
+
+    volume = models.Volume.objects.get(pk=vid)
+    if request.method == "POST":
+        if volume.vol_fstype == 'ZFS' and not notifier().zfs_export(volume.vol_name):
+            return HttpResponse(simplejson.dumps({"error": True, "message": _("The volume failed to export")}), mimetype="application/json")
+        else:
+            volume.delete()
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("The volume has been successfully exported")}), mimetype="application/json")
+    return render(request, 'storage/volume_export.html', {
+        'volume': volume,
+    })

@@ -1299,71 +1299,156 @@ class notifier:
 
         RE_POOL_NAME = re.compile(r'pool: (?P<name>[a-z][a-z0-9_-]+)', re.I)
         RE_DISK = re.compile(r'(?P<disk>[a-d]{2}\d+)[a-fsp]')
-        p1 = Popen(["zpool", "import"], stdin=PIPE, stdout=PIPE)
+        p1 = self.__pipeopen("zpool import")
         res = p1.communicate()[0]
-        if p1.returncode == 0:
-            if RE_POOL_NAME.search(res):
-                label = RE_POOL_NAME.search(res).group("name")
-                status = res.split('pool: %s' % label)[1].split('config:')[1].split('pool:')[0]
-                if status.find("mirror") >= 0:
-                    group_type = 'mirror'
-                elif status.find("raidz1") >= 0:
-                    group_type = 'raidz1'
-                elif status.find("raidz2") >= 0:
-                    group_type = 'raidz2'
-                else:
-                    group_type = 'stripe'
+        """pool: test
+ state: ONLINE
+ scrub: none requested
+config:
 
-                disks = []
-                logs = []
-                cache = []
-                spare = []
-                section = None # None, log, cache or spare
-                for line in status.split('\n'):
-                    if re.compile('^$').search(line) or not line.startswith('\t  '):
-                        if line.startswith('\tlogs'):
-                            section = 'logs'
-                        if line.startswith('\tcache'):
-                            section = 'cache'
-                        if line.startswith('\tspare'):
-                            section = 'spare'
-                        continue
-                    line = line.strip('\t').strip(' ')
-                    name = line.split(' ')[0]
-                    p1 = Popen(["geom", "label", "status", "-s"], stdin=PIPE, stdout=PIPE)
-                    p2 = Popen(["tr", "-s", " "], stdin=p1.stdout, stdout=PIPE)
-                    p3 = Popen(["sed", "-e", "s/^[ \t]//g"], stdin=p2.stdout, stdout=PIPE)
-                    p4 = Popen(["grep", "^%s" % name], stdin=p3.stdout, stdout=PIPE)
-                    p1.wait()
-                    p2.wait()
-                    p3.wait()
-                    if p4.returncode == 0:
-                        disk = p4.communicate()[0].split(' ')[2].split('\n')[0]
+\ttest        ONLINE       0     0     0
+\t  da3p2     ONLINE       0     0     0
+\t  da4p2     ONLINE       0     0     0
+\t  da7p2     ONLINE       0     0     0
+\t  da8p2     ONLINE       0     0     0
+\tlogs
+\t  mirror    ONLINE       0     0     0
+\t    da6p2   ONLINE       0     0     0
+\t    da5p2   ONLINE       0     0     0
+\tcache
+\t  da7p2     ONLINE       0     0     0
+\tspares
+\t  da8p2     AVAIL   
+
+errors: No known data errors
+        """
+
+        class Tnode(object):
+            name = None
+            leaf = False
+            children = None
+            parent = None
+            type = None
+            def __init__(self, name, doc):
+                self._doc = doc
+                self.name = name
+                self.children = []
+            def find_by_name(self, name):
+                for c in self.children:
+                    if c.name == name:
+                        return c
+                return None
+            def append(self, tnode):
+                self.children.append(tnode)
+                tnode.parent = self
+            @staticmethod
+            def pprint(node, level=0):
+                print '   ' * level + node.name
+                for c in node.children:
+                    node.pprint(c, level+1)
+            def __repr__(self):
+                if not self.parent:
+                    return "<Section: %s>" % self.name
+                return "<Node: %s>" % self.name
+            def _is_vdev(self, name):
+                if name in ('stripe', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3') \
+                    or re.search(r'^(mirror|raidz|raidz1|raidz2|raidz3)(-\d+)?$', name):
+                    return True
+                return False
+            def _vdev_type(self, name):
+                if name.startswith('mirror'):
+                    return "mirror"
+                elif name.startswith("raidz3"):
+                    return "raidz3"
+                elif name.startswith("raidz2"):
+                    return "raidz3"
+                elif name.startswith("raidz"):
+                    return "raidz"
+                return False
+            def validate(self, level=0):
+                for c in list(self.children):
+                    c.validate(level+1)
+                if level == 1:
+                    if len(self.children) == 0:
+                        self.type = 'disk'
+                        stripe = self.parent.find_by_name("stripe")
+                        if not stripe:
+                            stripe = Tnode("stripe", self._doc)
+                            stripe.type = 'stripe'
+                            self.parent.append(stripe)
+                        self.parent.children.remove(self)
+                        stripe.append(self)
+                        #self.parent.append(stripe)
                     else:
-                        disk = name
-                    if RE_DISK.search(disk):
-                        disk = RE_DISK.search(disk).group("disk")
-                    if disk in ('mirror', 'raidz1', 'raidz2'):
-                        continue
-
-                    if section == 'logs':
-                        logs.append(disk)
-                    elif section == 'cache':
-                        cache.append(disk)
-                    elif section == 'spare':
-                        spare.append(disk)
+                        self.type = self._vdev_type(self.name)
+                elif level == 2:
+                    # The parent of a leaf should be a vdev, unless the parent is the pool (stripe)
+                    self.type = 'disk'
+                    if not self._is_vdev(self.parent.name) and \
+                        self.parent.parent is not None:
+                        raise Exception("Oh noes! This damn thing should be a vdev! %s" % self.parent)
+                    search = self._doc.xpathEval("//class[name = 'LABEL']//provider[name = '%s']/../name" % self.name)
+                    if len(search) > 0:
+                        self.devname = search[0].content
                     else:
-                        disks.append(disk)
+                        search = self._doc.xpathEval("//class[name = 'DEV']/geom[name = '%s']" % self.name)
+                        if len(search) > 0:
+                            self.devname = self.name
+                        else:
+                            pass
+                            #raise Exception("It should be a valid device: %s" % self.name)
+            def dump(self, level=0):
+                if level == 2:
+                    return self.devname
+                if level == 1:
+                    disks = []
+                    for c in self.children:
+                        disks.append(c.dump(level+1))
+                    return {'disks': disks, 'type': self.type}
+                if level == 0:
+                    vdevs = []
+                    for c in self.children:
+                        vdevs.append(c.dump(level+1))
+                    return {'name': self.name, 'vdevs': vdevs}
+        for pool in RE_POOL_NAME.findall(res):
+            # get status part of the pool
+            status = res.split('pool: %s' % pool)[1].split('config:')[1].split('pool:')[0]
+            roots = {'cache': None, 'logs': None, 'spares': None}
+            lastident = None
+            for line in status.split('\n'):
+                if line.startswith('\t'):
+                    spaces, word = re.search(r'^(?P<spaces>[ ]*)(?P<word>\S+)', line[1:]).groups()
+                    ident = len(spaces) / 2
+                    if ident == 0:
+                        tree = Tnode(word, doc)
+                        roots[word] = tree
+                        pnode = tree
+                    elif ident == lastident + 1:
+                        node = Tnode(word, doc)
+                        pnode.append(node)
+                        pnode = node
+                    elif ident == lastident:
+                        node = Tnode(word, doc)
+                        pnode.parent.append(node)
+                    elif ident < lastident:
+                        node = Tnode(word, doc)
+                        tree.append(node)
+                        pnode = node
+                    lastident = ident
+            for root in roots.values():
+                if root:
+                    root.validate()
 
-                volumes.append({
-                    'label': label,
-                    'type': 'zfs',
-                    'group_type': group_type,
-                    'cache': cache,
-                    'logs': logs,
-                    'spare': spare,
-                    'disks': disks,
-                    })
+
+            volumes.append({
+                'label': pool,
+                'type': 'zfs',
+                'group_type': 'none',
+                'cache': roots['cache'].dump() if roots['cache'] else None,
+                'logs': roots['logs'].dump() if roots['logs'] else None,
+                'spare': roots['spares'].dump() if roots['spares'] else None,
+                'disks': roots[pool].dump(),
+                })
 
         return volumes
 
@@ -1376,6 +1461,13 @@ class notifier:
             # These should probably be options that are configurable from the GUI
             self.__system("zfs set aclmode=passthrough %s" % name)
             self.__system("zfs set aclinherit=passthrough %s" % name)
+            return True
+        return False
+
+    def zfs_export(self, name):
+        imp = self.__pipeopen('zpool export %s' % str(name))
+        imp.wait()
+        if imp.returncode == 0:
             return True
         return False
 
