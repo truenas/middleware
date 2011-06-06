@@ -587,7 +587,7 @@ def volume_export(request, vid):
         if volume.vol_fstype == 'ZFS' and not notifier().zfs_export(volume.vol_name):
             return HttpResponse(simplejson.dumps({"error": True, "message": _("The volume failed to export")}), mimetype="application/json")
         else:
-            volume.delete()
+            volume.delete(destroy=False)
             return HttpResponse(simplejson.dumps({"error": False, "message": _("The volume has been successfully exported")}), mimetype="application/json")
     return render(request, 'storage/volume_export.html', {
         'volume': volume,
