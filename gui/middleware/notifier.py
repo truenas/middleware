@@ -1301,27 +1301,6 @@ class notifier:
         RE_DISK = re.compile(r'(?P<disk>[a-d]{2}\d+)[a-fsp]')
         p1 = self.__pipeopen("zpool import")
         res = p1.communicate()[0]
-        """pool: test
- state: ONLINE
- scrub: none requested
-config:
-
-\ttest        ONLINE       0     0     0
-\t  da3p2     ONLINE       0     0     0
-\t  da4p2     ONLINE       0     0     0
-\t  da7p2     ONLINE       0     0     0
-\t  da8p2     ONLINE       0     0     0
-\tlogs
-\t  mirror    ONLINE       0     0     0
-\t    da6p2   ONLINE       0     0     0
-\t    da5p2   ONLINE       0     0     0
-\tcache
-\t  da7p2     ONLINE       0     0     0
-\tspares
-\t  da8p2     AVAIL   
-
-errors: No known data errors
-        """
 
         class Tnode(object):
             name = None
@@ -1329,10 +1308,12 @@ errors: No known data errors
             children = None
             parent = None
             type = None
+
             def __init__(self, name, doc):
                 self._doc = doc
                 self.name = name
                 self.children = []
+
             def find_by_name(self, name):
                 for c in self.children:
                     if c.name == name:
@@ -1341,22 +1322,32 @@ errors: No known data errors
             def append(self, tnode):
                 self.children.append(tnode)
                 tnode.parent = self
+
             @staticmethod
             def pprint(node, level=0):
                 print '   ' * level + node.name
                 for c in node.children:
                     node.pprint(c, level+1)
+
             def __repr__(self):
                 if not self.parent:
                     return "<Section: %s>" % self.name
                 return "<Node: %s>" % self.name
+
             def _is_vdev(self, name):
                 if name in ('stripe', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3') \
                     or re.search(r'^(mirror|raidz|raidz1|raidz2|raidz3)(-\d+)?$', name):
                     return True
                 return False
+
+            def __iter__(self):
+                for c in list(self.children):
+                    yield c
+
             def _vdev_type(self, name):
-                if name.startswith('mirror'):
+                if name.startswith('stripe'):
+                    return "stripe"
+                elif name.startswith('mirror'):
                     return "mirror"
                 elif name.startswith("raidz3"):
                     return "raidz3"
@@ -1365,25 +1356,27 @@ errors: No known data errors
                 elif name.startswith("raidz"):
                     return "raidz"
                 return False
+
             def validate(self, level=0):
-                for c in list(self.children):
+                for c in self:
                     c.validate(level+1)
                 if level == 1:
                     if len(self.children) == 0:
-                        self.type = 'disk'
                         stripe = self.parent.find_by_name("stripe")
                         if not stripe:
                             stripe = Tnode("stripe", self._doc)
                             stripe.type = 'stripe'
                             self.parent.append(stripe)
-                        self.parent.children.remove(self)
-                        stripe.append(self)
-                        #self.parent.append(stripe)
+                            self.parent.children.remove(self)
+                            stripe.append(self)
+                        else:
+                            self.parent.children.remove(self)
+                            stripe.append(self)
+                            stripe.validate(level)
                     else:
                         self.type = self._vdev_type(self.name)
                 elif level == 2:
-                    # The parent of a leaf should be a vdev, unless the parent is the pool (stripe)
-                    self.type = 'disk'
+                    # The parent of a leaf should be a vdev
                     if not self._is_vdev(self.parent.name) and \
                         self.parent.parent is not None:
                         raise Exception("Oh noes! This damn thing should be a vdev! %s" % self.parent)
@@ -1395,21 +1388,23 @@ errors: No known data errors
                         if len(search) > 0:
                             self.devname = self.name
                         else:
-                            pass
-                            #raise Exception("It should be a valid device: %s" % self.name)
+                            raise Exception("It should be a valid device: %s" % self.name)
+
             def dump(self, level=0):
                 if level == 2:
                     return self.devname
                 if level == 1:
                     disks = []
-                    for c in self.children:
+                    for c in self:
                         disks.append(c.dump(level+1))
                     return {'disks': disks, 'type': self.type}
                 if level == 0:
+                    self.validate()
                     vdevs = []
-                    for c in self.children:
+                    for c in self:
                         vdevs.append(c.dump(level+1))
                     return {'name': self.name, 'vdevs': vdevs}
+
         for pool in RE_POOL_NAME.findall(res):
             # get status part of the pool
             status = res.split('pool: %s' % pool)[1].split('config:')[1].split('pool:')[0]
@@ -1435,10 +1430,6 @@ errors: No known data errors
                         tree.append(node)
                         pnode = node
                     lastident = ident
-            for root in roots.values():
-                if root:
-                    root.validate()
-
 
             volumes.append({
                 'label': pool,
@@ -1649,10 +1640,10 @@ errors: No known data errors
         name = str(name)
         doc = self.__geom_confxml()
 
-        search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-zfs']/rawuuid" % name)
+        search = doc.xpathEval("//class[name = 'PART']/geom//*[name = '%s']//config[type = 'freebsd-zfs']/rawuuid" % name)
         if len(search) > 0:
             return "{uuid}%s" % search[0].content
-        search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-ufs']/rawuuid" % name)
+        search = doc.xpathEval("//class[name = 'PART']/geom//*[name = '%s']//config[type = 'freebsd-ufs']/rawuuid" % name)
         if len(search) > 0:
             return "{uuid}%s" % search[0].content
 
