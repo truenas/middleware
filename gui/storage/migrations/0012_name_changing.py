@@ -19,6 +19,12 @@ class Migration(DataMigration):
                 Popen(["glabel", "destroy", label], stdout=PIPE).wait()
             notifier().zfs_import(str(v.vol_name))
 
+        for d in orm.Disk.objects.filter(disk_identifier__startswith='{devicename}gpt/'):
+            name = d.disk_identifier.replace("{devicename}", "{label}")
+            devname = notifier().identifier_to_device(name)
+            d.disk_identifier = notifier().device_to_identifier(devname)
+            d.save()
+
     def backwards(self, orm):
         "Write your backwards methods here."
 
