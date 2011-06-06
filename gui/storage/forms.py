@@ -33,6 +33,7 @@ from django.http import QueryDict
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ugettext as __
 from django.core.urlresolvers import reverse
+from django.db import transaction
 
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
@@ -519,50 +520,67 @@ class VolumeAutoImportForm(forms.Form):
                     'spare': vol['spare'],
                     }
 
+        with transaction.commit_on_success():
+            volume = models.Volume(vol_name = volume_name, vol_fstype = volume_fstype)
+            volume.save()
+            self.volume = volume
+
+            mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
+            mp.save()
+
+            if vol['type'] == 'zfs':
+
+                for vdev in vol['disks']['vdevs']:
+                    grp = models.DiskGroup(group_name= volume_name, group_type = vdev['type'],
+                                group_volume = volume)
+                    grp.save()
+
+                    for diskname in vdev['disks']:
+                        ident = notifier().device_to_identifier(diskname)
+                        diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
+                                       disk_description = ("Member of %s %s" %
+                                                          (volume_name, vdev['type'])),
+                                       disk_group = grp)
+                        diskobj.save()
+            else:
+                notifier().label_disk(volume_name, "%s/%s" % (group_type, volume_name), 'UFS')
+
+                grp = models.DiskGroup(group_name= volume_name, group_type = group_type, group_volume = volume)
+                grp.save()
+
+                for diskname in vol['disks']:
+                    ident = notifier().device_to_identifier(diskname)
+                    diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
+                                   disk_description = ("Member of %s %s" %
+                                                      (volume_name, group_type)),
+                                   disk_group = grp)
+                    diskobj.save()
+
+
+            for grp_type in grouped:
+
+                if grp_type in ('log','cache','spare') and grouped[grp_type]:
+                    # When doing log, we assume it's always 'mirror' for data safety
+                    if grp_type == 'log' and len(grouped[grp_type]) > 1:
+                        group_type='log mirror'
+                    else:
+                        group_type=grp_type
+                    grp = models.DiskGroup(group_name=volume.vol_name+grp_type, \
+                            group_type=group_type , group_volume = volume)
+                    grp.save()
+
+                    for diskname in grouped[grp_type]['vdevs']['disks']:
+                        ident = notifier().device_to_identifier(diskname)
+                        diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
+                                  disk_description = ("Member of %s %s" %
+                                    (volume.vol_name, grp_type)), disk_group = grp)
+                        diskobj.save()
+
             if not notifier().zfs_import(vol['label']):
                 assert False, "Could not run zfs import"
 
-        volume = models.Volume(vol_name = volume_name, vol_fstype = volume_fstype)
-        volume.save()
-        self.volume = volume
-
-        mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
-        mp.save()
-
         if vol['type'] == 'zfs':
             notifier().zfs_sync_datasets(volume.id)
-        else:
-            notifier().label_disk(volume_name, "%s/%s" % (group_type, volume_name), 'UFS')
-
-        grp = models.DiskGroup(group_name= volume_name, group_type = group_type, group_volume = volume)
-        grp.save()
-
-        for diskname in vol['disks']:
-            ident = notifier().device_to_identifier(diskname)
-            diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
-                           disk_description = ("Member of %s %s" %
-                                              (volume_name, group_type)),
-                           disk_group = grp)
-            diskobj.save()
-
-
-        for grp_type in grouped:
-
-            if grp_type in ('log','cache','spare'):
-                # When doing log, we assume it's always 'mirror' for data safety
-                if grp_type == 'log' and len(grouped[grp_type]) > 1:
-                    group_type='log mirror'
-                else:
-                    group_type=grp_type
-                grp = models.DiskGroup(group_name=volume.vol_name+grp_type, \
-                        group_type=group_type , group_volume = volume)
-                grp.save()
-
-                for diskname in grouped[grp_type]:
-                    diskobj = models.Disk(disk_name = diskname, disk_identifier = "{devicename}%s" % diskname,
-                              disk_description = ("Member of %s %s" %
-                                (volume.vol_name, grp_type)), disk_group = grp)
-                    diskobj.save()
 
         notifier().reload("disk")
 
