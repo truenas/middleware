@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:05-0700\n"
-"PO-Revision-Date: 2011-06-05 11:00+0200\n"
+"PO-Revision-Date: 2011-06-05 11:50+0200\n"
 "Last-Translator: xStarx <dvv431@mail.ru>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -611,13 +611,14 @@ msgstr "Заменить администратора"
 msgid "My Account"
 msgstr "Моя учётная запись"
 
+# Просмотрерть всех пользователей
 #: account/nav.py:36
 msgid "View All Users"
-msgstr "Смотерть всех пользователей"
+msgstr "Просмотрерть всех пользователей"
 
 #: account/nav.py:43
 msgid "View All Groups"
-msgstr "Смотреть все группы"
+msgstr "Просмотреть все группы"
 
 #: account/views.py:78 account/views.py:92 account/views.py:102
 #: account/views.py:115

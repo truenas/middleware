@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:03-0700\n"
-"PO-Revision-Date: 2011-06-01 22:05+0200\n"
-"Last-Translator: william <william88@gmail.com>\n"
+"PO-Revision-Date: 2011-06-06 03:57+0200\n"
+"Last-Translator: Marco Aurélio <mackrause@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -690,9 +690,8 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "Deve preencher o nameserver 1 antes de preencher o nameserver 2"
 
 #: network/forms.py:100
-#, fuzzy
 msgid "Parent Interface"
-msgstr "Excluir Interface"
+msgstr "Interface Controladora"
 
 #: network/forms.py:109
 msgid "The name must be vlanXX where XX is a integer"
@@ -901,7 +900,7 @@ msgstr "%s adicionado com sucesso"
 
 #: services/forms.py:70
 msgid "N/A"
-msgstr ""
+msgstr "N/A"
 
 #: services/forms.py:79
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -2419,9 +2418,8 @@ msgid "Maximum connections"
 msgstr "Máx. de conexões"
 
 #: services/models.py:1197
-#, fuzzy
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr "Número máximo de conexões por IP (0=ilimitado)."
+msgstr "O número máximo de conexões simultâneas. O padrão é 0 (ilimitado)"
 
 #: services/models.py:1203
 msgid ""
@@ -2487,11 +2485,11 @@ msgstr ""
 
 #: services/models.py:1230
 msgid "Rsync Module"
-msgstr ""
+msgstr "Módulo Rsync"
 
 #: services/models.py:1231
 msgid "Rsync Modules"
-msgstr ""
+msgstr "Modulos Rsync"
 
 #: services/nav.py:12
 msgid "Control Services"
@@ -2537,14 +2535,12 @@ msgid "Rsync"
 msgstr ""
 
 #: services/views.py:215
-#, fuzzy
 msgid "The service could not be stopped."
-msgstr "O cache não pode ser reconstruída"
+msgstr "O serviço não pôde ser interrompido."
 
 #: services/views.py:222
-#, fuzzy
 msgid "The service could not be started."
-msgstr "O cache não pode ser reconstruída"
+msgstr "O serviço não pôde ser iniciado."
 
 #: sharing/forms.py:92
 msgid "The field is a not a valid IP address or network"
@@ -4599,7 +4595,7 @@ msgstr "Nenhuma rota estática definida"
 
 #: templates/services/rsyncmod.html:40 templates/services/rsyncmod.html:42
 msgid "Add Rsync Module"
-msgstr ""
+msgstr "Adicionar Módulo Rsync"
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
@@ -4739,7 +4735,7 @@ msgstr "Criar Snapshot"
 
 #: templates/storage/permission.html:6
 msgid "Change permission"
-msgstr "Escolher permissão"
+msgstr "Alterar permissão"
 
 #: templates/storage/permission.html:7
 #, python-format

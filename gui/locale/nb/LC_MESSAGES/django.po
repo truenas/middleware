@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:03-0700\n"
-"PO-Revision-Date: 2011-06-03 18:27+0200\n"
-"Last-Translator: christian1986 <christian.skeie@gmail.com>\n"
+"PO-Revision-Date: 2011-06-05 21:58+0200\n"
+"Last-Translator: marcuskj <herrkjeldsen@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nb\n"
 "MIME-Version: 1.0\n"
@@ -319,7 +319,7 @@ msgstr "Felles CHAP"
 
 #: choices.py:241
 msgid "UPS reaches low battery"
-msgstr "UPS når lavt batteristand"
+msgstr "UPS når lav batteristand"
 
 #: choices.py:242
 msgid "UPS goes on battery"

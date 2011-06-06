@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:05-0700\n"
-"PO-Revision-Date: 2011-06-02 04:30+0200\n"
-"Last-Translator: msnfason <msnfason@hotmail.com>\n"
+"PO-Revision-Date: 2011-06-06 09:51+0200\n"
+"Last-Translator: RayTracer <saliherk@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -230,7 +230,7 @@ msgstr "Pazar"
 
 #: choices.py:158
 msgid "Anonymous"
-msgstr "İsimsiz"
+msgstr "Anonim"
 
 #: choices.py:159
 msgid "Local User"
@@ -279,11 +279,11 @@ msgstr "Dosya"
 
 #: choices.py:199
 msgid "Device"
-msgstr "Arac"
+msgstr "Aygıt"
 
 #: choices.py:200
 msgid "ZFS Volume"
-msgstr "ZFS Volume"
+msgstr "ZFS Bölümü"
 
 #: choices.py:204 storage/models.py:136 templates/storage/autoimport.html:9
 #: templates/storage/import.html:18 templates/storage/wizard.html:91
@@ -416,7 +416,7 @@ msgstr "salt okunur"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Oku ve Yaz"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -510,7 +510,7 @@ msgstr "Eski şifre"
 
 #: account/forms.py:502
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr "Eski şifrenizi yanlış girildi. tekrar girin."
+msgstr "Eski parolanızi yanlış girildi. Lütfen tekrar girin."
 
 #: account/models.py:36 services/models.py:475 services/models.py:520
 #: templates/services/iscsi_auth.html:5
@@ -552,7 +552,7 @@ msgstr "Karma UNIX şifre"
 
 #: account/models.py:91
 msgid "Hashed SMB password"
-msgstr "Karma SMB şifre"
+msgstr "Karıştırılmış SMB parola"
 
 #: account/models.py:95
 msgid "Primary Group ID"
@@ -617,7 +617,7 @@ msgstr "Tüm Grupları Gör"
 #: account/views.py:115
 #, python-format
 msgid "%s successfully update."
-msgstr "%s 'ler basari ile guncel."
+msgstr "%s başarıyla güncellendi."
 
 #: account/views.py:92
 msgid "Admin user"
@@ -643,12 +643,12 @@ msgstr ""
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Ekle %s"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "Bütün kullanıcıları göster"
+msgstr "Tümünü Göster %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -674,7 +674,7 @@ msgstr "%s başarıyla yüklendi"
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Hizmet yeniden başlatılamadı."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -683,11 +683,11 @@ msgstr "%s başarı ile silindi."
 
 #: network/forms.py:44 network/models.py:95
 msgid "NIC"
-msgstr ""
+msgstr "NIC (Ağ arabirim kontrol kartı)"
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
+msgstr "Adsunucusu3'ü doldurmadan önce Adsunucusu2'yi doldurmanız gerekir."
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
@@ -712,7 +712,7 @@ msgstr ""
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN etiketleri 1-4095 arasında."
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -721,16 +721,16 @@ msgstr ""
 #: network/forms.py:190
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "%s ağı geçersiz. CIDR bekletildi."
 
 #: network/models.py:42 services/models.py:1072
 #: templates/system/system_info.html:4
 msgid "Hostname"
-msgstr ""
+msgstr "Sunucu Adı"
 
 #: network/models.py:47
 msgid "Domain"
-msgstr ""
+msgstr "Alan Adı"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
@@ -759,68 +759,69 @@ msgstr "Global Yapılandırma"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Ağ kartınızı seçin"
 
 #: network/models.py:101
 msgid "Interface Name"
-msgstr ""
+msgstr "Arabirim Adı"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "Ağ kartınızın adı"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
-msgstr ""
+msgstr "DHCP"
 
 #: network/models.py:107
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
+"Aktif ettğinizde IPv4 adresiniz DHCP sunucusundan otomatik olarak alınır."
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "IPv4 Adresleri"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr ""
+msgstr "IPv4 Ağ Maskesi"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "IPv6 Otomatik Yapılandır"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr ""
+msgstr "Aktif ettğinizde IPv6 adresiniz rtsol(8) üzerinden otomatik ayarlanır."
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr ""
+msgstr "IPv6 Adresleri"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr ""
+msgstr "IPv6 Ağ Maskesi"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "Seçenekler"
 
 #: network/models.py:157 network/models.py:216
 #: templates/network/interface.html:5
 msgid "Interface"
-msgstr ""
+msgstr "Arabirim"
 
 #: network/models.py:158 templates/network/index.html:5
 msgid "Interfaces"
-msgstr ""
+msgstr "Arabirimler"
 
 #: network/models.py:172 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr ""
+msgstr "Sanal Arayüz"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
@@ -829,7 +830,7 @@ msgstr ""
 #: network/models.py:178 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr ""
+msgstr "Fiziksel Arayüz"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
@@ -839,31 +840,31 @@ msgstr ""
 #: services/models.py:763 storage/models.py:94
 #: templates/network/staticroute.html:7 templates/network/vlan.html:8
 msgid "Description"
-msgstr ""
+msgstr "Açıklama"
 
 #: network/models.py:199 templates/network/index.html:11
 msgid "VLAN"
-msgstr ""
+msgstr "VLAN"
 
 #: network/models.py:200
 msgid "VLANs"
-msgstr ""
+msgstr "VLAN'lar"
 
 #: network/models.py:220
 msgid "Protocol Type"
-msgstr ""
+msgstr "Protokol Tipi"
 
 #: network/models.py:241
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "LAGG arabirim grubu"
 
 #: network/models.py:244
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "LAGG önceliği numarası"
 
 #: network/models.py:249
 msgid "Physical NIC"
-msgstr ""
+msgstr "Fiziksel NIC (ethernet kartı)"
 
 #: network/models.py:264 templates/network/index.html:7
 msgid "Link Aggregation"
@@ -871,11 +872,11 @@ msgstr "Bağlantı Birleştirme"
 
 #: network/models.py:265 network/nav.py:53
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Bağlantı Birleştirmeler"
 
 #: network/models.py:274
 msgid "Destination network"
-msgstr "Hedef network"
+msgstr "Hedef ağ"
 
 #: network/models.py:278 templates/network/staticroute.html:6
 msgid "Gateway"
@@ -899,11 +900,11 @@ msgstr "Ağ Özeti"
 
 #: network/nav.py:30
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "Bağlantı birleştir"
 
 #: network/nav.py:41
 msgid "View All Link Aggregations"
-msgstr ""
+msgstr "Tüm birleştirilmiş bağlantıları göster"
 
 #: network/views.py:180
 #, python-format
@@ -912,35 +913,35 @@ msgstr "%s başarı ile eklendi"
 
 #: services/forms.py:70
 msgid "N/A"
-msgstr ""
+msgstr "Kullanılamaz"
 
 #: services/forms.py:79
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr ""
+msgstr "\"Ana dizin gözatma etkin\" ise bu alan doldurulmalıdır."
 
 #: services/forms.py:82
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "\"Ana dizin\" etkin ise gerekli alan."
 
 #: services/forms.py:99
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "AFP hizmeti tekrar yüklenemedi."
 
 #: services/forms.py:108
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "NFS hizmeti tekrar yüklenemedi."
 
 #: services/forms.py:112
 msgid "File Permission"
-msgstr "Dosya Yetkisi"
+msgstr "Dosya İzni"
 
 #: services/forms.py:113
 msgid "Directory Permission"
-msgstr "Dizin Yetkisi"
+msgstr "Dizin İzni"
 
 #: services/forms.py:138
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr "Bu değer 0 ile 65535 arasında olmalıdır."
+msgstr "Bu değer, 0 ile 65535 arasında olmalıdır."
 
 #: services/forms.py:144 services/forms.py:162
 msgid "This value must be between 0 and 10000, inclusive."
@@ -1003,7 +1004,7 @@ msgstr ""
 #: services/forms.py:302 services/models.py:529
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
-msgstr "Şifre"
+msgstr "Gizli"
 
 #: services/forms.py:303 services/models.py:530
 msgid "Target side secret."
@@ -1019,15 +1020,15 @@ msgstr "Doğrulama için yukarıdaki ile aynı şifreyi giriniz."
 
 #: services/forms.py:307
 msgid "Initiator Secret"
-msgstr ""
+msgstr "Başlatıcı Şifre"
 
 #: services/forms.py:309 services/models.py:536 services/models.py:541
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr ""
+msgstr "Başlatıcı tarafı gizli. (Ortak CHAP kimlik doğrulamaları için)"
 
 #: services/forms.py:312
 msgid "Initiator Secret (Confirm)"
-msgstr ""
+msgstr "Başlatıcı şifre (Onayla)"
 
 #: services/forms.py:321
 msgid "Secret does not match"
@@ -1035,7 +1036,7 @@ msgstr "Şifreler birbirinin aynısı değil"
 
 #: services/forms.py:336 services/forms.py:337
 msgid "The peer secret is required if you set a peer user."
-msgstr ""
+msgstr "Eş kullanıcı seçtiyseniz Eş Şifre Gereklidir."
 
 #: services/forms.py:340
 msgid "The peer secret cannot be the same as user secret."
@@ -4851,4 +4852,4 @@ msgid "Level"
 msgstr "Seviye"
 
 msgid "View All VLANs"
-msgstr "Tüm VLAN leri Gör"
+msgstr "Tüm VLAN'ları Gör"

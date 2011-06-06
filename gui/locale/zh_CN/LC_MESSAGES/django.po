@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:06-0700\n"
-"PO-Revision-Date: 2011-06-05 04:50+0200\n"
-"Last-Translator: topgun <miaozhw@gmail.com>\n"
+"PO-Revision-Date: 2011-06-05 19:52+0200\n"
+"Last-Translator: 然大爷 <leaion@sohu.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1392,7 +1392,7 @@ msgstr ""
 
 #: services/models.py:267
 msgid "Max. sessions"
-msgstr ""
+msgstr "最大会话数"
 
 #: services/models.py:268
 msgid "Maximum number of sessions holding at same time (16 by default)."
@@ -1400,7 +1400,7 @@ msgstr ""
 
 #: services/models.py:273
 msgid "Max. connections"
-msgstr ""
+msgstr "最大连接数"
 
 #: services/models.py:274
 msgid "Maximum number of connections in each session (8 by default)."
