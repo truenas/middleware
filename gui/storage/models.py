@@ -242,6 +242,10 @@ class Replication(Model):
     repl_zfs = models.CharField(max_length=120,
             verbose_name = _("Remote ZFS filesystem"),
             )
+    repl_userepl = models.BooleanField(
+            default = False,
+            verbose_name = _("Recursively replicate and remove stale snapshot on remote side"),
+            )
     class Meta:
         verbose_name = _(u"Replication Task")
         verbose_name_plural = _(u"Replication Tasks")

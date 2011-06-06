@@ -78,6 +78,11 @@ for replication in replication_tasks:
     localfs = replication.repl_mountpoint.mp_path[5:].__str__()
     last_snapshot = replication.repl_lastsnapshot.__str__()
 
+    if replication.repl_userepl:
+        Rflag = '-R '
+    else:
+        Rflag = ''
+
     wanted_list = []
     release_list = []
     expected_local_snapshot = ''
@@ -172,14 +177,15 @@ Hello,
          # Create remote filesystem
          replcmd = '%s %s /sbin/zfs create -p %s' % (sshcmd, remote, remotefs)
          system(replcmd)
+         last_snapshot = ''
     else:
          last_snapshot = release_list[0]
 
     for snapname in wanted_list:
         if last_snapshot == '':
-            replcmd = '/sbin/zfs send %s | %s %s "/sbin/zfs receive -F -d %s && echo Succeeded." > %s 2>&1' % (snapname, sshcmd, remote, remotefs, templog)
+            replcmd = '/sbin/zfs send %s%s | %s %s "/sbin/zfs receive -F -d %s && echo Succeeded." > %s 2>&1' % (Rflag, snapname, sshcmd, remote, remotefs, templog)
         else:
-            replcmd = '/sbin/zfs send -I %s %s | %s %s "/sbin/zfs receive -F -d %s && echo Succeeded." > %s 2>&1' % (last_snapshot, snapname, sshcmd, remote, remotefs, templog)
+            replcmd = '/sbin/zfs send %s-I %s %s | %s %s "/sbin/zfs receive -F -d %s && echo Succeeded." > %s 2>&1' % (Rflag, last_snapshot, snapname, sshcmd, remote, remotefs, templog)
         system(replcmd)
         f = open(templog)
         msg = f.read()
