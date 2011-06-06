@@ -448,7 +448,7 @@ class VolumeAutoImportForm(forms.Form):
                     break
 
         for vol in vols:
-            devname = "%s [%s - %s]" % (vol['label'],vol['type'],vol['group_type'])
+            devname = "%s [%s]" % (vol['label'],vol['type'])
             diskchoices[vol['label']] = "%s" % (devname,)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
@@ -569,7 +569,7 @@ class VolumeAutoImportForm(forms.Form):
                             group_type=group_type , group_volume = volume)
                     grp.save()
 
-                    for diskname in grouped[grp_type]['vdevs']['disks']:
+                    for diskname in grouped[grp_type]['vdevs'][0]['disks']:
                         ident = notifier().device_to_identifier(diskname)
                         diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
                                   disk_description = ("Member of %s %s" %

@@ -1298,7 +1298,6 @@ class notifier:
                     })
 
         RE_POOL_NAME = re.compile(r'pool: (?P<name>[a-z][a-z0-9_-]+)', re.I)
-        RE_DISK = re.compile(r'(?P<disk>[a-d]{2}\d+)[a-fsp]')
         p1 = self.__pipeopen("zpool import")
         res = p1.communicate()[0]
 
@@ -1319,6 +1318,7 @@ class notifier:
                     if c.name == name:
                         return c
                 return None
+
             def append(self, tnode):
                 self.children.append(tnode)
                 tnode.parent = self
@@ -1367,12 +1367,9 @@ class notifier:
                             stripe = Tnode("stripe", self._doc)
                             stripe.type = 'stripe'
                             self.parent.append(stripe)
-                            self.parent.children.remove(self)
-                            stripe.append(self)
-                        else:
-                            self.parent.children.remove(self)
-                            stripe.append(self)
-                            stripe.validate(level)
+                        self.parent.children.remove(self)
+                        stripe.append(self)
+                        stripe.validate(level)
                     else:
                         self.type = self._vdev_type(self.name)
                 elif level == 2:
@@ -1640,10 +1637,10 @@ class notifier:
         name = str(name)
         doc = self.__geom_confxml()
 
-        search = doc.xpathEval("//class[name = 'PART']/geom//*[name = '%s']//config[type = 'freebsd-zfs']/rawuuid" % name)
+        search = doc.xpathEval("//class[name = 'PART']/..//*[name = '%s']//config[type = 'freebsd-zfs']/rawuuid" % name)
         if len(search) > 0:
             return "{uuid}%s" % search[0].content
-        search = doc.xpathEval("//class[name = 'PART']/geom//*[name = '%s']//config[type = 'freebsd-ufs']/rawuuid" % name)
+        search = doc.xpathEval("//class[name = 'PART']/geom/..//*[name = '%s']//config[type = 'freebsd-ufs']/rawuuid" % name)
         if len(search) > 0:
             return "{uuid}%s" % search[0].content
 

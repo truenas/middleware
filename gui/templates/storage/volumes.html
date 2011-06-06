@@ -181,15 +181,6 @@
     <div dojoType="dijit.Tooltip" connectId="snapBtn{{ m.id }}" position="above">
         <strong>{% trans "Create Snapshot" %}</strong>
     </div>
-    <button id="exptBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
-        Export
-        <script type="dojo/method" event="onClick" args="evt">
-            editObject('{% trans "Export Volume"|force_escape %}', '{% url storage_export vid=m.id %}', [this,]);
-        </script>
-    </button>
-    <div dojoType="dijit.Tooltip" connectId="snapBtn{{ m.id }}" position="above">
-        <strong>{% trans "Create Snapshot" %}</strong>
-    </div>
 {% endif %}
 {% if not m.mp_ischild %}
     <button id="viewDisksBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
@@ -202,6 +193,15 @@
         <strong>{% trans "View Disks" %}</strong>
     </div>
 {% endif %}
+    <button id="exptBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
+        Export
+        <script type="dojo/method" event="onClick" args="evt">
+            editObject('{% trans "Export Volume"|force_escape %}', '{% url storage_export vid=m.id %}', [this,]);
+        </script>
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="snapBtn{{ m.id }}" position="above">
+        <strong>{% trans "Create Snapshot" %}</strong>
+    </div>
 	    </td>
 	</tr>
 	{% empty %}
