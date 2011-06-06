@@ -67,16 +67,20 @@ generate_istgt_config()
 
 	# Generate [PortalGroupNN] sections
 	echo "# PortalGroup section"
-	local fields="iscsi_target_portal_tag iscsi_target_portal_listen"
+	local fields="iscsi_target_portal_tag"
 	eval local ${fields}
 	local csfields
 	csfields=`echo ${fields} | sed -e 's/ /, /g'`
+	local iscsi_target_portal_listen
         ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${csfields} FROM services_iscsitargetportal ORDER BY id" | \
         while eval read ${fields}; do
 		echo "[PortalGroup${iscsi_target_portal_tag}]"
-		echo ${iscsi_target_portal_listen} | awk '{ a=a+1; print "  Portal DA" a " " $1 }'
-		echo
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT iscsi_target_portal_listen FROM services_iscsitargetportal WHERE iscsi_target_portal_tag=${iscsi_target_portal_tag}" | \
+		while read iscsi_target_portal_listen; do
+			echo "  Portal DA1 ${iscsi_target_portal_listen}"
+		done
 	done
+	echo
 
 	# Generate [InitiatorGroupNN] sections
 	echo "# InitiatorGroup section"

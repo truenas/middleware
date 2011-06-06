@@ -429,7 +429,7 @@ class iSCSITargetPortal(Model):
             default=1,
             verbose_name = _("Portal Group ID"),
             )
-    iscsi_target_portal_listen = models.CharField(
+    iscsi_target_portal_listen = models.TextField(
             max_length=120,
             default = "0.0.0.0:3260",
             verbose_name = _("Portal"),
