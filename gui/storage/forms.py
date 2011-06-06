@@ -530,8 +530,13 @@ class VolumeAutoImportForm(forms.Form):
 
             if vol['type'] == 'zfs':
 
+                i = 0
                 for vdev in vol['disks']['vdevs']:
-                    grp = models.DiskGroup(group_name= volume_name, group_type = vdev['type'],
+                    if i == 0:
+                        group_name = volume_name
+                    else:
+                        group_name = volume_name + vdev['type'] + str(i)
+                    grp = models.DiskGroup(group_name = group_name, group_type = vdev['type'],
                                 group_volume = volume)
                     grp.save()
 
@@ -542,6 +547,7 @@ class VolumeAutoImportForm(forms.Form):
                                                           (volume_name, vdev['type'])),
                                        disk_group = grp)
                         diskobj.save()
+                    i += 1
             else:
                 notifier().label_disk(volume_name, "%s/%s" % (group_type, volume_name), 'UFS')
 
