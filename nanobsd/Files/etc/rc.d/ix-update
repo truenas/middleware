@@ -60,9 +60,12 @@ handle_error()
 
 	. /etc/nanobsd.conf
 
+	LABELNAME=`echo ${NANO_DRIVE} | cut -f2 -d/`
 	if mount | grep ${NANO_DRIVE}s1 > /dev/null ; then
+		TARGET_DRIVE=`glabel status | awk '/ufs\/'${LABELNAME}'s1a/ { print $3; }' | sed -e s,s1a,,`
 		gpart set -a active -i 2 ${TARGET_DRIVE}
 	else
+		TARGET_DRIVE=`glabel status | awk '/ufs\/'${LABELNAME}'s1a/ { print $3; }' | sed -e s,s2a,,`
 		gpart set -a active -i 1 ${TARGET_DRIVE}
 	fi
 
