@@ -33,10 +33,13 @@ add_introspection_rules([], ["^freeadmin\.models\.UserField"])
 add_introspection_rules([], ["^freeadmin\.models\.GroupField"])
 add_introspection_rules([], ["^freeadmin\.models\.PathField"])
 class UserField(models.CharField):
+    def __init__(self, *args, **kwargs):
+        self._exclude = kwargs.pop('exclude', [])
+        super(UserField, self).__init__(*args, **kwargs)
     def formfield(self, **kwargs):
         #FIXME: Move to top (causes cycle-dependency)
         from freeadmin.forms import UserField as UF
-        defaults = {'form_class': UF}
+        defaults = {'form_class': UF, 'exclude': self._exclude}
         kwargs.update(defaults)
         return super(UserField, self).formfield(**kwargs)
 

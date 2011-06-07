@@ -99,7 +99,8 @@ class CIFS(Model):
             verbose_name=_("Time Server for Domain"))
     cifs_srv_guest = UserField(
             max_length=120,
-            default = "",
+            default="nobody",
+            exclude=["root"],
             verbose_name=_("Guest account"),
             help_text=_("Use this option to override the username ('ftp' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login.")
             )
@@ -185,7 +186,7 @@ class AFP(Model):
             )
     afp_srv_guest_user = UserField(
             max_length=120,
-            default = "www",
+            default = "nobody",
             verbose_name=_("Guest account"),
             help_text=_("Use this option to override the username ('www' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login.")
             )
@@ -923,7 +924,7 @@ class TFTP(Model):
             )
     tftp_username = UserField(
             max_length=120,
-            default = "",
+            default = "nobody",
             verbose_name = _("Username"),
             help_text = _("Specifies the username which the service will run as.")
             )

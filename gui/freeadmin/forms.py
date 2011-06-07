@@ -57,7 +57,7 @@ class CronMultiple(DojoWidgetMixin, Widget):
 class DirectoryBrowser(widgets.Widget):
     def render(self, name, value, attrs=None):
         context = {
-            'name': name, 
+            'name': name,
             'value': value,
             'attrs': attrs,
             }
@@ -68,21 +68,22 @@ class UserField(forms.ChoiceField):
 
     def __init__(self, *args, **kwargs):
         kwargs.pop('max_length', None)
+        self._exclude = kwargs.pop('exclude', [])
         super(UserField, self).__init__(*args, **kwargs)
 
     def _reroll(self):
         if len(FreeNAS_Users()) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
-            self.widget = FilteredSelectJSON(url=("account_bsduser_json",))
+            self.widget = FilteredSelectJSON(url=("account_bsduser_json", None, (), {'exclude': ','.join(self._exclude)}))
         else:
             ulist = []
             if not self.required:
                 ulist.append(('-----', 'N/A'))
             [ulist.append((x.bsdusr_username, x.bsdusr_username))
-                                                      for x in FreeNAS_Users()
-                                                     ]
-                
+                            for x in FreeNAS_Users() if x.bsdusr_username not in self._exclude
+                            ]
+
             self.widget = widgets.FilteringSelect()
             self.choices = ulist
 

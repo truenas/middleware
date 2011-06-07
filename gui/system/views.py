@@ -99,7 +99,7 @@ def config_upload(request):
         variables = {
             'form': form,
         }
-        
+
         if form.is_valid():
             import sqlite3
             sqlite = request.FILES['config'].read()
@@ -172,7 +172,7 @@ def reporting(request):
         graphs['yearly']  = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'yearly/') )],
     except OSError:
         pass
-    
+
     return render(request, 'system/reporting.html', {
         'graphs': graphs,
     })
@@ -240,7 +240,7 @@ def testmail(request):
     errmsg = ''
     if request.is_ajax():
         from common.system import send_mail
-        error, errmsg = send_mail(subject="Test message from FreeNAS", 
+        error, errmsg = send_mail(subject="Test message from FreeNAS",
                                   text="This is a message test from FreeNAS")
 
     return HttpResponse(simplejson.dumps({
@@ -269,31 +269,31 @@ class DojoFileStore(object):
             self.path = '/mnt/'+self.path
         self.path = os.path.abspath(self.path)
         self.dirsonly = dirsonly
-    
+
     def items(self):
         if self.path == '/mnt':
             return self.children(self.path)
-          
+
         node = self._item(self.path, self.path)
         if node['directory']:
             node['children'] = self.children(self.path)
         return node
-    
+
     def children(self, entry):
         children = [ self._item(self.path, entry) for entry in os.listdir(entry) if len([f for f in self.mp if os.path.join(self.path,entry).startswith(f+'/') or os.path.join(self.path,entry) == f]) > 0]
         if self.dirsonly:
             children = [ child for child in children if child['directory']]
         return children
-    
+
     def _item(self, path, entry):
         full_path = os.path.join(path, entry)
         isdir = os.path.isdir(full_path)
-        item = dict(name=os.path.basename(entry), 
+        item = dict(name=os.path.basename(entry),
                     directory=isdir,
                     path=full_path)
         if isdir:
             item['children'] = True
-        
+
         item['$ref'] = os.path.abspath(reverse('system_dirbrowser', kwargs={'path':full_path}))
         item['id'] = item['$ref']
         return item
@@ -301,7 +301,7 @@ class DojoFileStore(object):
 def directory_browser(request, path='/'):
     """ This view provides the ajax driven directory browser callback """
     if not path.startswith('/'):
-        path = '/%s' % path 
+        path = '/%s' % path
 
     directories = DojoFileStore(path, dirsonly=True).items()
     context = directories

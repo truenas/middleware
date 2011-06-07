@@ -294,7 +294,7 @@ class Migration(SchemaMigration):
         cifs.cifs_srv_loglevel=True
         cifs.cifs_srv_localmaster=True
         cifs.cifs_srv_timeserver=True
-        cifs.cifs_srv_guest='www'
+        cifs.cifs_srv_guest='nobody'
         cifs.cifs_srv_largerw=False
         cifs.cifs_srv_sendfile=True
         cifs.cifs_srv_easupport=False
