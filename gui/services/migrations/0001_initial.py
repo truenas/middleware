@@ -300,7 +300,7 @@ class Migration(SchemaMigration):
         cifs.cifs_srv_easupport=False
         cifs.cifs_srv_dosattr=True
         cifs.cifs_srv_nullpw=False
-        cifs.cifs_srv_aio_enable=False
+        cifs.cifs_srv_aio_enable=True
         cifs.cifs_srv_aio_rs=True
         cifs.cifs_srv_aio_ws=True
         cifs.save()
