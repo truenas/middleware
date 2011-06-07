@@ -12,17 +12,14 @@ class Migration(DataMigration):
     def forwards(self, orm):
 
         RE_GPT = re.compile(r'\bgpt/a?da\d+\b', re.I|re.M)
-        for v in orm.Volume.objects.filter(vol_fstype='ZFS'):
-            status = Popen(["zpool", "status", v.vol_name], stdout=PIPE).communicate()[0]
-            notifier().zfs_export(str(v.vol_name))
-            i = 0
-            for label in RE_GPT.findall(status):
-                part = notifier().identifier_to_partition("{label}%s" % label)
-                if part:
-                    dsk, idx = re.search(r'(.+?)p(\d+)', part, re.I).groups()
-                    Popen(["gpart", "modify", "-i", idx, "-l", "disk%d" % i, dsk], stdout=PIPE).wait()
-                    i += 1
-            notifier().zfs_import(str(v.vol_name))
+        status = Popen(["zpool", "import"], stdout=PIPE).communicate()[0]
+        i = 0
+        for label in RE_GPT.findall(status):
+            part = notifier().identifier_to_partition("{label}%s" % label)
+            if part:
+                dsk, idx = re.search(r'(.+?)p(\d+)', part, re.I).groups()
+                Popen(["gpart", "modify", "-i", idx, "-l", "disk%d" % i, dsk], stdout=PIPE).wait()
+                i += 1
 
         for d in orm.Disk.objects.filter(disk_identifier__startswith='{devicename}gpt/'):
             name = d.disk_identifier.replace("{devicename}", "{label}")
