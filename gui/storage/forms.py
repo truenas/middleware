@@ -296,6 +296,9 @@ class VolumeWizardForm(forms.Form):
                            disk_group = grp)
             diskobj.save()
 
+        if add:
+            notifier().zfs_volume_attach_group(str(grp.id), force4khack=force4khack)
+
         zpoolfields = re.compile(r'zpool_(.+)')
         disks = [(i, zpoolfields.search(i).group(1)) for i in request.POST.keys() \
                 if zpoolfields.match(i)]
@@ -328,9 +331,10 @@ class VolumeWizardForm(forms.Form):
                                    )
                     diskobj.save()
 
-        if add:
-            notifier().zfs_volume_attach_group(str(grp.id), force4khack=force4khack)
-        else:
+                if add:
+                    notifier().zfs_volume_attach_group(str(grp.id), force4khack=force4khack)
+
+        if not add:
             notifier().init("volume", volume.id, force4khack=force4khack)
 
 class VolumeImportForm(forms.Form):
