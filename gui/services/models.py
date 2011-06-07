@@ -33,10 +33,10 @@ from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField, PathField
 from storage.models import MountPoint, Volume, Disk
 from freenasUI.middleware.notifier import notifier
-   
+  
 class services(Model):
     srv_service = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name=_("Service"),
             help_text=_("Name of Service, should be auto-generated at build time")
             )
@@ -61,36 +61,36 @@ class CIFS(Model):
             help_text=_("Using Active Directory or LDAP authentication will supersede this option"),
             )
     cifs_srv_netbiosname = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name=_("NetBIOS name")
             )
     cifs_srv_workgroup = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name=_("Workgroup"),
             help_text=_("Workgroup the server will appear to be in when queried by clients (maximum 15 characters).")
             )
     cifs_srv_description = models.CharField(
-            max_length=120, 
-            verbose_name=_("Description"), 
+            max_length=120,
+            verbose_name=_("Description"),
             blank=True,
             help_text=_("Server description. This can usually be left blank.")
             )
     cifs_srv_doscharset = models.CharField(
-            max_length=120, 
-            choices=choices.DOSCHARSET_CHOICES, 
-            default = "CP437", 
+            max_length=120,
+            choices=choices.DOSCHARSET_CHOICES,
+            default = "CP437",
             verbose_name=_("DOS charset")
             )
     cifs_srv_unixcharset = models.CharField(
-            max_length=120, 
-            choices=choices.UNIXCHARSET_CHOICES, 
-            default = "UTF-8", 
+            max_length=120,
+            choices=choices.UNIXCHARSET_CHOICES,
+            default = "UTF-8",
             verbose_name=_("UNIX charset")
             )
     cifs_srv_loglevel = models.CharField(
-            max_length=120, 
-            choices=choices.LOGLEVEL_CHOICES, 
-            default = "Minimum", 
+            max_length=120,
+            choices=choices.LOGLEVEL_CHOICES,
+            default = "Minimum",
             verbose_name=_("Log level")
             )
     cifs_srv_localmaster = models.BooleanField(
@@ -98,9 +98,9 @@ class CIFS(Model):
     cifs_srv_timeserver = models.BooleanField(
             verbose_name=_("Time Server for Domain"))
     cifs_srv_guest = UserField(
-            max_length=120, 
-            default = "", 
-            verbose_name=_("Guest account"), 
+            max_length=120,
+            default = "",
+            verbose_name=_("Guest account"),
             help_text=_("Use this option to override the username ('ftp' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login.")
             )
     cifs_srv_guestok = models.BooleanField(
@@ -108,14 +108,14 @@ class CIFS(Model):
     cifs_srv_guestonly = models.BooleanField(
             verbose_name=_("Only allow guest access"))
     cifs_srv_filemask = models.CharField(
-            max_length=120, 
-            verbose_name=_("File mask"), 
+            max_length=120,
+            verbose_name=_("File mask"),
             blank=True,
             help_text=_("Use this option to override the file creation mask (0666 by default).")
             )
     cifs_srv_dirmask = models.CharField(
-            max_length=120, 
-            verbose_name=_("Directory mask"), 
+            max_length=120,
+            verbose_name=_("Directory mask"),
             blank=True,
             help_text=_("Use this option to override the directory creation mask (0777 by default).")
             )
@@ -130,17 +130,17 @@ class CIFS(Model):
     cifs_srv_nullpw = models.BooleanField(
             verbose_name=_("Allow Empty Password"))
     cifs_srv_smb_options = models.TextField(
-            max_length=120, 
-            verbose_name=_("Auxiliary parameters"), 
+            max_length=120,
+            verbose_name=_("Auxiliary parameters"),
             blank=True,
             help_text=_("These parameters are added to [Global] section of smb.conf")
             )
     cifs_srv_homedir_enable = models.BooleanField(
-            verbose_name=_("Enable home directories"), 
+            verbose_name=_("Enable home directories"),
             help_text=_("This enables\disables home directories for samba user.")
             )
     cifs_srv_homedir_browseable_enable = models.BooleanField(
-            verbose_name=_("Enable home directories browsing"), 
+            verbose_name=_("Enable home directories browsing"),
             help_text=_("This enables\disables home directories browsing for samba user."),
             default=False,
             )
@@ -149,18 +149,18 @@ class CIFS(Model):
             blank=True,
             )
     cifs_srv_aio_enable = models.BooleanField(
-            verbose_name=_("Enable AIO"), 
+            verbose_name=_("Enable AIO"),
             help_text=_("This enables\disables AIO support.")
             )
     cifs_srv_aio_rs = models.IntegerField(
             max_length=120,
-            verbose_name=_("Minimal AIO read size"), 
+            verbose_name=_("Minimal AIO read size"),
             help_text=_("Samba will read asynchronously if request size is larger than this value. The default read size is 1."),
             default = "1"
             )
     cifs_srv_aio_ws = models.IntegerField(
             max_length=120,
-            verbose_name=_("Minimal AIO write size"), 
+            verbose_name=_("Minimal AIO write size"),
             help_text=_("Samba will write asynchronously if request size is larger than this value. The default write size is 1."),
             default = "1"
             )
@@ -173,9 +173,9 @@ class CIFS(Model):
         deletable = False
         icon_model = u"CIFSIcon"
 
-class AFP(Model):            
+class AFP(Model):           
     afp_srv_name = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name=_("Server Name"),
             help_text=_("Name of the server. If this field is left empty the default server is specified.")
             )
@@ -184,9 +184,9 @@ class AFP(Model):
             help_text=_("Allows guest access to all apple shares on this box.")
             )
     afp_srv_guest_user = UserField(
-            max_length=120, 
-            default = "www", 
-            verbose_name=_("Guest account"), 
+            max_length=120,
+            default = "www",
+            verbose_name=_("Guest account"),
             help_text=_("Use this option to override the username ('www' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login.")
             )
     afp_srv_local = models.BooleanField(
@@ -206,9 +206,9 @@ class AFP(Model):
         deletable = False
         icon_model = u"AFPIcon"
 
-class NFS(Model):            
+class NFS(Model):           
     nfs_srv_servers = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name=_("Number of servers"),
             help_text=_("Specifies how many servers to create. There should be enough to handle the maximum level of concurrency from its clients, typically four to six.")
             )
@@ -471,13 +471,13 @@ class iSCSITargetAuthorizedInitiator(Model):
             )
     iscsi_target_initiator_initiators = models.TextField(
             max_length=2048,
-            verbose_name = _("Initiators"), 
+            verbose_name = _("Initiators"),
             default = "ALL",
             help_text = _("Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' for any initiators.")
             )
     iscsi_target_initiator_auth_network = models.TextField(
             max_length=2048,
-            verbose_name = _("Authorized network"), 
+            verbose_name = _("Authorized network"),
             default = "ALL",
             help_text = _("Network authorized to access to the iSCSI target. It takes IP or CIDR addresses or 'ALL' for any IPs.")
             )
@@ -652,41 +652,41 @@ class iSCSITargetToExtent(Model):
 
 class DynamicDNS(Model):
     ddns_provider = models.CharField(
-            max_length=120, 
-            choices=choices.DYNDNSPROVIDER_CHOICES, 
-            default='dyndns', 
+            max_length=120,
+            choices=choices.DYNDNSPROVIDER_CHOICES,
+            default='dyndns',
             verbose_name = _("Provider")
             )
     ddns_domain = models.CharField(
-            max_length=120, 
-            verbose_name = _("Domain name"), 
+            max_length=120,
+            verbose_name = _("Domain name"),
             blank=True,
             help_text = _("A host name alias. This option can appear multiple times, for each domain that has the same IP. Use a space to separate multiple alias names.")
             )
     ddns_username = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Username")
             )
     ddns_password = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Password")
-            ) # need to make this a 'password' field, but not available in django Models 
+            ) # need to make this a 'password' field, but not available in django Models
     ddns_updateperiod = models.CharField(
-            max_length=120, 
-            verbose_name = _("Update period"), 
+            max_length=120,
+            verbose_name = _("Update period"),
             blank=True,
             help_text = _("Time in milliseconds")
             )
     ddns_fupdateperiod = models.CharField(
-            max_length=120, 
-            verbose_name = _("Forced update period"), 
+            max_length=120,
+            verbose_name = _("Forced update period"),
             blank=True
             )
     ddns_options = models.TextField(
-            verbose_name = _("Auxiliary parameters"), 
+            verbose_name = _("Auxiliary parameters"),
             blank=True,
             help_text = _("These parameters will be added to global settings in inadyn.conf.")
-            ) 
+            )
 
     class Meta:
         verbose_name = _("Dynamic DNS")
@@ -698,29 +698,29 @@ class DynamicDNS(Model):
 
 class SNMP(Model):
     snmp_location = models.CharField(
-            max_length=120, 
-            verbose_name = _("Location"), 
+            max_length=120,
+            verbose_name = _("Location"),
             blank=True,
             help_text = _("Location information, e.g. physical location of this system: 'Floor of building, Room xyzzy'.")
             )
     snmp_contact = models.CharField(
-            max_length=120, 
-            verbose_name = _("Contact"), 
+            max_length=120,
+            verbose_name = _("Contact"),
             blank=True,
             help_text = _("Contact information, e.g. name or email of the person responsible for this system: 'admin@email.address'.")
             )
     snmp_community = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Community"),
             help_text = _("In most cases, 'public' is used here.")
             )
     snmp_traps = models.BooleanField(
             verbose_name = _("Send SNMP Traps"))
     snmp_options = models.TextField(
-            verbose_name = _("Auxiliary parameters"), 
+            verbose_name = _("Auxiliary parameters"),
             blank=True,
             help_text = _("These parameters will be added to global settings in inadyn.conf.")
-            ) 
+            )
 
     class Meta:
         verbose_name = _("SNMP")
@@ -730,42 +730,42 @@ class SNMP(Model):
         deletable = False
         icon_model = u"SNMPIcon"
 
-class UPS(Model):            
+class UPS(Model):
     ups_identifier = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Identifier"),
             help_text = _("This name is used to uniquely identify your UPS on this system.")
             )
     ups_driver = models.CharField(
-            max_length=120, 
-            verbose_name = _("Driver"), 
+            max_length=120,
+            verbose_name = _("Driver"),
             blank=True,
             help_text = _("The driver used to communicate with your UPS.")
             )
     ups_port = models.CharField(
-            max_length=120, 
-            verbose_name = _("Port"), 
+            max_length=120,
+            verbose_name = _("Port"),
             blank=True,
             help_text = _("The serial or USB port where your UPS is connected.")
             )
     ups_options = models.TextField(
-            verbose_name = _("Auxiliary parameters"), 
+            verbose_name = _("Auxiliary parameters"),
             blank=True,
             help_text = _("These parameters will be added to global settings in inadyn.conf.")
-            ) 
+            )
     ups_description = models.CharField(
-            max_length=120, 
-            verbose_name = _("Description"), 
+            max_length=120,
+            verbose_name = _("Description"),
             blank=True
             )
     ups_shutdown = models.CharField(
-            max_length=120, 
-            choices=choices.UPS_CHOICES, 
-            default='batt', 
+            max_length=120,
+            choices=choices.UPS_CHOICES,
+            default='batt',
             verbose_name = _("Shutdown mode")
             )
     ups_shutdowntimer = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Shutdown timer"),
             help_text = _("The time in seconds until shutdown is initiated. If the UPS happens to come back before the time is up the shutdown is canceled.")
             )
@@ -774,13 +774,13 @@ class UPS(Model):
     ups_emailnotify = models.BooleanField(
             verbose_name = _("Send Email Status Updates"))
     ups_toemail = models.CharField(
-            max_length=120, 
-            verbose_name = _("To email"), 
+            max_length=120,
+            verbose_name = _("To email"),
             blank=True,
             help_text = _("Destination email address. Separate email addresses by semi-colon.")
             )
     ups_subject = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("To email"),
             help_text = _("The subject of the email. You can use the following parameters for substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>")
             )
@@ -793,7 +793,7 @@ class UPS(Model):
         deletable = False
         icon_model = u"UPSIcon"
 
-class FTP(Model):            
+class FTP(Model):
     ftp_port = models.PositiveIntegerField(
             default=21,
             verbose_name = _("Port"),
@@ -829,19 +829,19 @@ class FTP(Model):
     ftp_onlylocal = models.BooleanField(
             verbose_name = _("Allow Local User Login"))
     ftp_banner = models.TextField(
-            max_length=120, 
-            verbose_name = _("Banner"), 
+            max_length=120,
+            verbose_name = _("Banner"),
             blank=True,
             help_text = _("Greeting banner displayed by FTP when a connection first comes in.")
             )
     ftp_filemask = models.CharField(
-            max_length=3, 
+            max_length=3,
             default = "077",
             verbose_name = _("File mask"),
             help_text = _("Use this option to override the file creation mask (077 by default).")
             )
     ftp_dirmask = models.CharField(
-            max_length=3, 
+            max_length=3,
             default="077",
             verbose_name = _("Directory mask"),
             help_text = _("Use this option to override the file creation mask (077 by default).")
@@ -857,7 +857,7 @@ class FTP(Model):
     ftp_reversedns = models.BooleanField(
             verbose_name = _("Require Reverse DNS for IP"))
     ftp_masqaddress = models.IPAddressField(
-            verbose_name = _("Masquerade address"), 
+            verbose_name = _("Masquerade address"),
             blank=True,
             help_text = _("Causes the server to display the network information for the specified IP address to the client, on the assumption that that IP address or DNS host is acting as a NAT gateway or port forwarder for the server.")
             )
@@ -873,29 +873,29 @@ class FTP(Model):
             )
     ftp_localuserbw = models.PositiveIntegerField(
             default=0,
-            verbose_name = _("Local user upload bandwidth"), 
+            verbose_name = _("Local user upload bandwidth"),
             help_text = _("Local user upload bandwidth in KB/s. Zero means infinity.")
             )
     ftp_localuserdlbw = models.PositiveIntegerField(
             default=0,
-            verbose_name = _("Local user download bandwidth"), 
+            verbose_name = _("Local user download bandwidth"),
             help_text = _("Local user download bandwidth in KB/s. Zero means infinity.")
             )
     ftp_anonuserbw = models.PositiveIntegerField(
             default=0,
-            verbose_name = _("Anonymous user upload bandwidth"), 
+            verbose_name = _("Anonymous user upload bandwidth"),
             help_text = _("Anonymous user upload bandwidth in KB/s. Zero means infinity.")
             )
     ftp_anonuserdlbw = models.PositiveIntegerField(
             default=0,
-            verbose_name = _("Anonymous user download bandwidth"), 
+            verbose_name = _("Anonymous user download bandwidth"),
             help_text = _("Anonymous user download bandwidth in KB/s. Zero means infinity.")
             )
     ftp_ssltls = models.BooleanField(
             verbose_name = _("Enable SSL/TLS"))
     ftp_options = models.TextField(
-            max_length=120, 
-            verbose_name = _("Auxiliary parameters"), 
+            max_length=120,
+            verbose_name = _("Auxiliary parameters"),
             blank=True,
             help_text = _("These parameters are added to proftpd.conf.")
             )
@@ -908,34 +908,34 @@ class FTP(Model):
         deletable = False
         icon_model = "FTPIcon"
 
-class TFTP(Model):            
+class TFTP(Model):
     tftp_directory = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Directory"),
             help_text = _("The directory containing the files you want to publish. The remote host does not need to pass along the directory as part of the transfer.")
             )
     tftp_newfiles = models.BooleanField(
             verbose_name = _("Allow New Files"))
     tftp_port = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Port"),
             help_text = _("The port to listen to. The default is to listen to the tftp port specified in /etc/services.")
             )
     tftp_username = UserField(
-            max_length=120, 
-            default = "", 
-            verbose_name = _("Username"), 
+            max_length=120,
+            default = "",
+            verbose_name = _("Username"),
             help_text = _("Specifies the username which the service will run as.")
             )
     tftp_umask = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("umask"),
             help_text = _("Set the umask for newly created files to the specified value. The default is 022 (everyone can read, nobody can write).")
             )
     tftp_options = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Extra options"),
-            blank=True, 
+            blank=True,
             help_text = _("Extra command line options (usually empty).")
             )
 
@@ -947,9 +947,9 @@ class TFTP(Model):
         deletable = False
         icon_model = "TFTPIcon"
 
-class SSH(Model):            
+class SSH(Model):
     ssh_tcpport = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("TCP Port"),
             help_text = _("Alternate TCP port. Default is 22")
             )
@@ -965,13 +965,13 @@ class SSH(Model):
             verbose_name = _("Compress Connections"))
     ssh_privatekey = models.TextField(
             max_length=1024,
-            verbose_name = _("Host Private Key"), 
+            verbose_name = _("Host Private Key"),
             blank=True,
             help_text = _("Paste a RSA PRIVATE KEY in PEM format here.")
             )
     ssh_options = models.TextField(
-            max_length=120, 
-            verbose_name = _("Extra options"), 
+            max_length=120,
+            verbose_name = _("Extra options"),
             blank=True,
             help_text = _("Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect entered options prevent SSH service to be started.")
             )
@@ -1019,15 +1019,15 @@ class SSH(Model):
     class FreeAdmin:
         deletable = False
         icon_model = "OpenSSHIcon"
-  
-class ActiveDirectory(Model):            
+
+class ActiveDirectory(Model):
     ad_dcname = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Domain Controller Name"),
             help_text = _("AD or PDC name.")
             )
     ad_domainname = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Domain Name (DNS/Realm-Name)"),
             help_text = _("Domain Name, eg example.com")
             )
@@ -1042,12 +1042,12 @@ class ActiveDirectory(Model):
             help_text = _("Workgroup Name in old format, eg EXAMPLE")
             )
     ad_adminname = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Administrator Name"),
             help_text = _("Username of Domain Administrator Account")
             )
     ad_adminpw = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Administrator Password"),
             help_text = _("Password of Domain Administrator account.")
             )
@@ -1060,15 +1060,15 @@ class ActiveDirectory(Model):
         deletable = False
         icon_model = "ActiveDirectoryIcon"
 
-class LDAP(Model):            
+class LDAP(Model):
     ldap_hostname = models.CharField(
-            max_length=120, 
-            verbose_name = _("Hostname"), 
+            max_length=120,
+            verbose_name = _("Hostname"),
             blank=True,
             help_text = _("The name or IP address of the LDAP server")
             )
     ldap_basedn = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Base DN"),
             blank=True,
             help_text = _("The default base Distinguished Name (DN) to use for searches, eg dc=test,dc=org")
@@ -1076,44 +1076,44 @@ class LDAP(Model):
     ldap_anonbind = models.BooleanField(
             verbose_name = _("Allow Anonymous Binding"))
     ldap_rootbasedn = models.CharField(
-            max_length=120, 
-            verbose_name = _("Root bind DN"), 
+            max_length=120,
+            verbose_name = _("Root bind DN"),
             blank=True,
             help_text = _("The distinguished name with which to bind to the directory server, e.g. cn=admin,dc=test,dc=org")
             )
     ldap_rootbindpw = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Root bind password"),
             blank=True,
             help_text = _("The credentials with which to bind.")
             )
     ldap_pwencryption = models.CharField(
-            max_length=120, 
-            choices=choices.PWEncryptionChoices, 
+            max_length=120,
+            choices=choices.PWEncryptionChoices,
             verbose_name = _("Password Encryption"),
             help_text = _("The password change protocol to use.")
             )
     ldap_usersuffix = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("User Suffix"),
             blank=True,
             help_text = _("This parameter specifies the suffix that is used for users when these are added to the LDAP directory, e.g. ou=Users")
             )
     ldap_groupsuffix = models.CharField(
-            max_length=120, 
-            verbose_name = _("Group Suffix"), 
+            max_length=120,
+            verbose_name = _("Group Suffix"),
             blank=True,
             help_text = _("This parameter specifies the suffix that is used for groups when these are added to the LDAP directory, e.g. ou=Groups")
             )
     ldap_passwordsuffix = models.CharField(
-            max_length=120, 
-            verbose_name = _("Password Suffix"), 
+            max_length=120,
+            verbose_name = _("Password Suffix"),
             blank=True,
             help_text = _("This parameter specifies the suffix that is used for passwords when these are added to the LDAP directory, e.g. ou=Passwords")
             )
     ldap_machinesuffix = models.CharField(
-            max_length=120, 
-            verbose_name = _("Machine Suffix"), 
+            max_length=120,
+            verbose_name = _("Machine Suffix"),
             blank=True,
             help_text = _("This parameter specifies the suffix that is used for machines when these are added to the LDAP directory, e.g. ou=Computers")
             )
@@ -1143,7 +1143,7 @@ class LDAP(Model):
         deletable = False
         icon_model = "LDAPIcon"
 
-class Rsyncd(Model):            
+class Rsyncd(Model):
     rsyncd_port = models.IntegerField(
             default=873,
             verbose_name=_("TCP Port"),
@@ -1164,7 +1164,7 @@ class Rsyncd(Model):
         menu_child_of = 'Rsync'
         #icon_model = u"Icon"
 
-class RsyncMod(Model):            
+class RsyncMod(Model):
     rsyncmod_name = models.CharField(
             max_length=120,
             verbose_name=_("Module name"),
