@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:02-0700\n"
-"PO-Revision-Date: 2011-06-05 02:25+0200\n"
+"PO-Revision-Date: 2011-06-06 15:55+0200\n"
 "Last-Translator: Kimimasa <ham@cer110.orz.ne.jp>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
@@ -413,16 +413,15 @@ msgstr "毎週指定曜日"
 
 #: choices.py:441
 msgid "Read-only"
-msgstr "読み取り専用"
+msgstr "読み込み専用"
 
 #: choices.py:442
 msgid "Write-only"
 msgstr "書き込み専用"
 
 #: choices.py:443
-#, fuzzy
 msgid "Read and Write"
-msgstr "読み/書き"
+msgstr "読み込み/書き込み"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -727,7 +726,7 @@ msgstr "インターフェース名は、vlanXX（XXは数字）である必要�
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr "VLANのタグは1～4095の数値で指定して下さい。"
+msgstr "VLANのタグは1-4095の数値で指定して下さい。"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -2558,7 +2557,6 @@ msgstr ""
 "なファイルかを決定します。デフォルトの設定を使用する場合はこのフィールドを空白のままにしてください。"
 
 #: services/models.py:1210
-#, fuzzy
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"

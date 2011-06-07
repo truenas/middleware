@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:05-0700\n"
-"PO-Revision-Date: 2011-06-05 19:15+0200\n"
+"PO-Revision-Date: 2011-06-06 13:34+0200\n"
 "Last-Translator: ok1 <ok1@trups.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lv\n"
@@ -626,7 +626,7 @@ msgstr "Lietotājs %s nav derīgs."
 #: freeadmin/forms.py:117
 #, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr "Grupa %s nav derīga."
 
 #: freeadmin/navtree.py:315
 #, python-format
@@ -2314,69 +2314,77 @@ msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
 msgstr ""
+"Šis parametrs nosaka sufiksu, kuru lieto lietotājiem, kad šos pievieno LDAP "
+"mapei, piem. ou=Users"
 
 #: services/models.py:1110
 msgid "Group Suffix"
-msgstr ""
+msgstr "Grupas Sufikss"
 
 #: services/models.py:1112
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
+"Šis parametrs nosaka sufiksu, kuru lieto grupām, kad šos pievieno LDAP "
+"mapei, piem. ou=Grupas"
 
 #: services/models.py:1116
 msgid "Password Suffix"
-msgstr ""
+msgstr "Paroles Sufikss"
 
 #: services/models.py:1118
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
+"Šis parametrs nosaka sufiksu, kuru lieto parolēm, kad šos pievieno LDAP "
+"mapei, piem. ou=Password"
 
 #: services/models.py:1122
 msgid "Machine Suffix"
-msgstr ""
+msgstr "Mašīnas Sufikss"
 
 #: services/models.py:1124
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
+"Šis parametrs nosaka sufiksu, kuru lieto mašīnām, kad šos pievieno LDAP "
+"mapei, piem. ou=Computers"
 
 #: services/models.py:1128
 msgid "Turn on/off TLS"
-msgstr ""
+msgstr "Ieslēgt/Izslēgt TLS"
 
 #: services/models.py:1130
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
-msgstr ""
+msgstr "Šis parametrs nosaka, vai lietot SSL/TLS, piem. on/off/start_tls"
 
 #: services/models.py:1133
 msgid "Self signed certificate"
-msgstr ""
+msgstr "Paša parakstīts sertifikāts"
 
 #: services/models.py:1135
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "Novieto sava paša parakstītā sertifikāta saturu šeit."
 
 #: services/models.py:1139 sharing/models.py:85
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "Papildu parametri"
 
 #: services/models.py:1141
 msgid "These parameters are added to ldap.conf."
-msgstr ""
+msgstr "Šie parametri ir pievienoti ldap.conf."
 
 #: services/models.py:1145 services/models.py:1146
 #: templates/services/index.html:64
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/models.py:1156
 msgid "Alternate TCP port. Default is 873"
-msgstr ""
+msgstr "Alternatīvs TCP ports. Pēc noklusējuma ir 873"
 
 #: services/models.py:1161
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
@@ -2384,11 +2392,11 @@ msgstr "Šie parametri tiks pievienoti [global] uzstādījumiem iekš inadyn.con
 
 #: services/models.py:1165 services/models.py:1166
 msgid "Rsyncd"
-msgstr ""
+msgstr "Rsyncd"
 
 #: services/models.py:1176
 msgid "Module name"
-msgstr ""
+msgstr "Moduļa vārds"
 
 #: services/models.py:1185
 msgid "Path to be shared"
@@ -2396,11 +2404,11 @@ msgstr "Ceļš, kuru koplietos"
 
 #: services/models.py:1191
 msgid "Access Mode"
-msgstr ""
+msgstr "Piekļuves režīms"
 
 #: services/models.py:1192
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "Šis kontrolē piekļuvi, kura ir attālinātajam saimniekdatoram"
 
 #: services/models.py:1196
 msgid "Maximum connections"
@@ -2417,16 +2425,21 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Šī iespēja norāda lietotājvārdu, kuram jāsūta un jāsaņem datus no tā moduļa. "
+"Kombinācijā ar 'Group' iespēju šis norāda kādas datņu atļaujas ir "
+"iespējamas. Atstāj šo lauku tukšu, lai lietotu noklusējuma uzstādījumus"
 
 #: services/models.py:1210
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"Šī iespēja norāda grupu, kurai jāsūta un jāsaņem datus no tā moduļa. Atstāj "
+"šo lauku tukšu, lai lietotu noklusējuma uzstādījumus"
 
 #: services/models.py:1214
 msgid "Hosts allow"
-msgstr ""
+msgstr "Atļautie saimniekdatori"
 
 #: services/models.py:1215
 msgid ""
@@ -2434,10 +2447,14 @@ msgid ""
 "permitted to access this module. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings"
 msgstr ""
+"Šī iespēja ir komats, tukšumzīme vai tabulēšanas rakstzīme delimitētu "
+"saimniekdatoru kopai, kuriem ir atļauja piekļūt šim modulim. Tu vari norādīt "
+"saimniekus pēc vārda vai IP numura. Atstāj šo lauku tukšu, lai lietotu "
+"noklusējuma uzstādījumus"
 
 #: services/models.py:1219
 msgid "Hosts deny"
-msgstr ""
+msgstr "Aizliegtie saimniekdatori"
 
 #: services/models.py:1220
 msgid ""
@@ -2448,6 +2465,12 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings"
 msgstr ""
+"Šī iespēja ir komats, tukšumzīme vai tabulēšanas rakstzīme delimitētai "
+"saimnieku kopai, kuri NAV atļauti piekļūt šim kopīgojumam. Kur saraksti "
+"konfliktē, atļauju saraksts ņem virsroku. Ja nepieciešams aizliegt visus pēc "
+"noklusējuma, lieto atslēgvārdu ALL (priekš tīkla maskas 0.0.0.0/0) un tad "
+"norādi saimniekdatorus, kuriem dot piekļuvi atļauju sarakstā. Atstāj šo logu "
+"tukšu, lai lietotu noklusējuma uzstādījumus."
 
 #: services/models.py:1225
 msgid ""
@@ -2456,19 +2479,19 @@ msgstr "Šie parametri tiks pievienoti moduļa uzstādījumiem iekš rsyncd.conf
 
 #: services/models.py:1230
 msgid "Rsync Module"
-msgstr ""
+msgstr "Rsync modulis"
 
 #: services/models.py:1231
 msgid "Rsync Modules"
-msgstr ""
+msgstr "Rsync moduļi"
 
 #: services/nav.py:12
 msgid "Control Services"
-msgstr ""
+msgstr "Kontrolēt Servisus"
 
 #: services/nav.py:50
 msgid "Add Device Extent"
-msgstr ""
+msgstr "Pievienot ierīces apjomu"
 
 #: services/nav.py:60
 msgid "View All Device Extents"
@@ -2495,40 +2518,40 @@ msgstr ""
 
 #: services/nav.py:136
 msgid "ISCSI"
-msgstr ""
+msgstr "ISCSI"
 
 #: services/nav.py:147 system/models.py:429 templates/services/index.html:86
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/views.py:215
 msgid "The service could not be stopped."
-msgstr ""
+msgstr "Servisu nevar apturēt."
 
 #: services/views.py:222
 msgid "The service could not be started."
-msgstr ""
+msgstr "Servisu nevarēja startēt."
 
 #: sharing/forms.py:92
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "Šis lauks nav derīga IP adrese vai tīkls"
 
 #: sharing/forms.py:98
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr "IP '%s' nav derīgs."
 
 #: sharing/forms.py:109
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "Mapall grupa pieprasa Mapall lietotāju"
 
 #: sharing/forms.py:111
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr "Mapall grupa pieprasa Mapall lietotāju"
 
 #: sharing/forms.py:114 sharing/forms.py:117
 msgid "Maproot user/group disqualifies Mapall"
-msgstr ""
+msgstr "Maproot lietotājs/grupa diskvalificē Mapall"
 
 #: sharing/models.py:41 sharing/models.py:104 storage/models.py:44
 #: storage/models.py:68 storage/models.py:86
@@ -2536,27 +2559,27 @@ msgstr ""
 #: templates/services/rsyncmod.html:5 templates/sharing/apple.html:13
 #: templates/sharing/windows.html:13
 msgid "Name"
-msgstr ""
+msgstr "Vārds"
 
 #: sharing/models.py:52
 msgid "Export Read Only"
-msgstr ""
+msgstr "Eksportēt tikai lasīšanai"
 
 #: sharing/models.py:54
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "Pārlūkojams tīkla klientiem"
 
 #: sharing/models.py:56
 msgid "Inherit Permissions"
-msgstr ""
+msgstr "Mantot atļaujas"
 
 #: sharing/models.py:58
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "Eksportēt atkritni"
 
 #: sharing/models.py:60
 msgid "Show Hidden Files"
-msgstr ""
+msgstr "Rādīt apslēptās datnes"
 
 #: sharing/models.py:64
 msgid "Guest Account"
@@ -2564,15 +2587,15 @@ msgstr "Viesu konts"
 
 #: sharing/models.py:68
 msgid "Allow Guest Access"
-msgstr ""
+msgstr "Atļaut viesa piekļuvi"
 
 #: sharing/models.py:70
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Atļaut tikai viesu piekļuvi"
 
 #: sharing/models.py:74
 msgid "Hosts Allow"
-msgstr ""
+msgstr "Saimnieki atļauj"
 
 #: sharing/models.py:75
 msgid ""
@@ -2580,10 +2603,14 @@ msgid ""
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
 msgstr ""
+"Šī iespēja ir komats, tukšumzīme vai tabulēšanas rakstzīme delimitēta "
+"saimnieku kopa, kurai ir atļauja piekļūt šim kopīgojumam. Tu vari norādīt "
+"saimniekus pēc vārda vai IP adreses. Atstāj šo lauku tukšu priekš "
+"noklusējuma uzstādījumiem."
 
 #: sharing/models.py:80
 msgid "Hosts Deny"
-msgstr ""
+msgstr "Saimnieki Aizliegt"
 
 #: sharing/models.py:81
 msgid ""
@@ -2594,14 +2621,20 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
 msgstr ""
+"Šī iespēja ir komats, tukšumzīme vai tabulēšanas rakstzīme delimitētai "
+"saimnieku kopai, kuri NAV atļauti piekļūt šim kopīgojumam. Kur saraksti "
+"konfliktē, atļauju saraksts ņem virsroku. Ja nepieciešams aizliegt visus pēc "
+"noklusējuma, lieto atslēgvārdu ALL (priekš tīkla maskas 0.0.0.0/0) un tad "
+"norādi saimniekdatorus, kuriem dot piekļuvi atļauju sarakstā. Atstāj šo logu "
+"tukšu, lai lietotu noklusējuma uzstādījumus."
 
 #: sharing/models.py:87
 msgid "These parameters are added to [Share] section of smb.conf"
-msgstr ""
+msgstr "Šie parametri ir pievienoti uz [Share] sekciju iekš smdb.conf"
 
 #: sharing/models.py:93
 msgid "Windows Share"
-msgstr ""
+msgstr "Windows Kopīgojums"
 
 #: sharing/models.py:94
 msgid "Windows Shares"
@@ -2620,11 +2653,11 @@ msgstr ""
 
 #: sharing/models.py:109
 msgid "Share Comment"
-msgstr ""
+msgstr "Kopīgojuma komentārs"
 
 #: sharing/models.py:117
 msgid "Share password"
-msgstr ""
+msgstr "Kopīgojuma parole"
 
 #: sharing/models.py:119
 msgid ""
@@ -2632,20 +2665,23 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
+"Šī iespēja ļauj uzstādīt sējuma paroli, kura var būt maksimāli 8 simbolus "
+"gara (ASCII ir stingri ieteicams)."
 
 #: sharing/models.py:123
 msgid "Share Character Set"
-msgstr ""
+msgstr "Kopīgojuma Zīmjukopa"
 
 #: sharing/models.py:125
 msgid ""
 "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
 "etc."
 msgstr ""
+"Norāda kopīgojuma zīmjukopu. Piemēram UTF8, UTF8-MAC, ISO-8859-15, citi."
 
 #: sharing/models.py:129
 msgid "Allow List"
-msgstr ""
+msgstr "Atļauju saraksts"
 
 #: sharing/models.py:131
 msgid ""
@@ -2653,20 +2689,25 @@ msgid ""
 "Users and groups are specified, delimited by commas. Groups are designated "
 "by a @ prefix."
 msgstr ""
+"Šī iespēja ļauj noteikt lietotājus un grupas, kuras piekļūst kopīgojumam. "
+"Lietotājus un grupas norāda, atdalot ar komatiem. Grupas dizainē ar @ "
+"prefiksu"
 
 #: sharing/models.py:135
 msgid "Deny List"
-msgstr ""
+msgstr "Aizliegto saraksts"
 
 #: sharing/models.py:137
 msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
 msgstr ""
+"Aizliegšanas iespēja norāda lietotājus un grupas, kurām nav atļauts piekļūt "
+"kopīgojumam. Tā seko tam pašam formātam kā atļauju iespēja."
 
 #: sharing/models.py:141
 msgid "Read-only Access"
-msgstr ""
+msgstr "Tikai lasīšanas piekļuve"
 
 #: sharing/models.py:143 sharing/models.py:149
 msgid ""
@@ -2676,21 +2717,23 @@ msgstr ""
 
 #: sharing/models.py:147
 msgid "Read-write Access"
-msgstr ""
+msgstr "Lasīšanas-Rakstīšanas piekļuve"
 
 #: sharing/models.py:152
 msgid "Disk Discovery"
-msgstr ""
+msgstr "Diska Atrašana"
 
 #: sharing/models.py:153
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
+"Atļaut citām sistēmām atklāt šo kopīgojumu kā disku datnēm, kā Laika Mašīnas "
+"dublējumkopiju sējumu vai nepavisam."
 
 #: sharing/models.py:159
 msgid "Disk discovery mode"
-msgstr ""
+msgstr "Diska atrašanas režīms"
 
 #: sharing/models.py:160
 msgid ""
@@ -2701,7 +2744,7 @@ msgstr ""
 
 #: sharing/models.py:164
 msgid "Database Path"
-msgstr ""
+msgstr "Datubāzes ceļš"
 
 #: sharing/models.py:166
 msgid ""
@@ -2711,7 +2754,7 @@ msgstr ""
 
 #: sharing/models.py:169
 msgid "Cache CNID"
-msgstr ""
+msgstr "Kešatmiņas CNID"
 
 #: sharing/models.py:170
 msgid ""
@@ -2719,10 +2762,13 @@ msgid ""
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
+"Ja uzstādīts afpd lieto ID informāciju, kura glabājas iekš AppleDouble V2 "
+"galvenes, lai samazinātu datubāzes slodzi. Neuzstādi šo iespēju, ja sējumu "
+"mainīs ne AFP klienti (NFS/SMB/local)."
 
 #: sharing/models.py:173
 msgid "Translate CR/LF"
-msgstr ""
+msgstr "Tulkot CR/LF"
 
 #: sharing/models.py:174
 msgid ""
@@ -2855,7 +2901,7 @@ msgstr ""
 
 #: sharing/models.py:250
 msgid "Maproot User"
-msgstr ""
+msgstr "Maproot Lietotājs"
 
 #: sharing/models.py:254
 msgid "User to map root to"
@@ -2863,7 +2909,7 @@ msgstr ""
 
 #: sharing/models.py:258
 msgid "Maproot Group"
-msgstr ""
+msgstr "Maproot Grupa"
 
 #: sharing/models.py:262
 msgid "Group to map root to"
@@ -2871,7 +2917,7 @@ msgstr ""
 
 #: sharing/models.py:266
 msgid "Mapall User"
-msgstr ""
+msgstr "Mapall Lietotājs"
 
 #: sharing/models.py:270
 msgid "User to map all users to"
@@ -2879,7 +2925,7 @@ msgstr ""
 
 #: sharing/models.py:274
 msgid "Mapall Group"
-msgstr ""
+msgstr "Mapall Grupa"
 
 #: sharing/models.py:278
 msgid "Group to map all users to"

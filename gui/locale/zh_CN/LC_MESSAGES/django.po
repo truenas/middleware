@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:06-0700\n"
-"PO-Revision-Date: 2011-06-05 19:52+0200\n"
-"Last-Translator: 然大爷 <leaion@sohu.com>\n"
+"PO-Revision-Date: 2011-06-06 12:36+0200\n"
+"Last-Translator: wyrich <wyrich@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -112,24 +112,23 @@ msgstr "停用"
 
 #: choices.py:82
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "层级1 - 待机模式（怠速）下的最低功耗"
+msgstr "层级1 - 待机省电模式（怠速）"
 
 #: choices.py:83
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "层级64 - 平衡功耗和性能的待机模式"
+msgstr "层级64 - 待机正常模式"
 
 #: choices.py:84
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "层级127 - 平衡功耗和性能的待机模式"
+msgstr "层级127 - 待机正常模式"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "非待机模式最低功耗（不停转硬盘）"
+msgstr "层级 128 - 非待机省电模式（不怠速）"
 
 #: choices.py:86
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "层级 192 - 非待机模式平衡电源功耗"
+msgstr "层级 192 - 非待机正常模式"
 
 #: choices.py:87
 msgid "Level 254 - Maximum performance, maximum power usage"
@@ -343,23 +342,23 @@ msgstr "继承"
 
 #: choices.py:275
 msgid "On"
-msgstr "开"
+msgstr "启用"
 
 #: choices.py:276 choices.py:281
 msgid "Off"
-msgstr "关"
+msgstr "停用"
 
 #: choices.py:282
 msgid "lzjb (recommended)"
-msgstr "lzjb压缩法（推荐）"
+msgstr "lzjb压缩（推荐）"
 
 #: choices.py:283
 msgid "gzip (default level, 6)"
-msgstr "gzip (6 -- 默认级别)"
+msgstr "gzip压缩 (默认压缩等级6)"
 
 #: choices.py:284
 msgid "gzip (fastest)"
-msgstr "gzip(最快)"
+msgstr "gzip压缩 (最快)"
 
 #: choices.py:285
 msgid "gzip (maximum, slow)"
@@ -392,7 +391,7 @@ msgstr "每日"
 
 #: choices.py:435
 msgid "Every selected weekday"
-msgstr "每个选定的工作日"
+msgstr "所有已选的工作日"
 
 #: choices.py:441
 msgid "Read-only"
@@ -422,11 +421,11 @@ msgstr "用户名"
 
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr "必填。不超过30个字符，只能使用英文字母、数字和@ . + - _特殊符号。"
+msgstr "必填。不超过30个字符，只能使用英文字母、数字和@ . + - _等符号。"
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr "只能使用英文字母、数字和@ . + - _特殊符号。"
+msgstr "只能使用英文字母、数字和@ . + - _等符号。"
 
 #: account/forms.py:201 account/forms.py:308 account/views.py:78
 #: services/models.py:677 system/forms.py:187 system/models.py:165
@@ -449,7 +448,7 @@ msgstr "Shell"
 
 #: account/forms.py:205 account/forms.py:345
 msgid "Disable logins"
-msgstr "禁止登陆"
+msgstr "禁止登录"
 
 #: account/forms.py:206
 msgid "Primary Group"
@@ -457,7 +456,7 @@ msgstr "主要群组"
 
 #: account/forms.py:235
 msgid "A user with that username already exists."
-msgstr "帐号名已经被占用。"
+msgstr "用户名已存在。"
 
 #: account/forms.py:243 account/forms.py:329 account/forms.py:480
 #: system/forms.py:232
@@ -522,7 +521,7 @@ msgstr "群组"
 #: account/models.py:63
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr "用户组 %s 是系统默认组不可以删除！"
+msgstr " %s 组是内置群组无法删除！"
 
 #: account/models.py:73
 msgid "User ID"
@@ -534,11 +533,11 @@ msgstr "用户 &"
 
 #: account/models.py:85
 msgid "Hashed UNIX password"
-msgstr "UNIX 密码的 Hash值"
+msgstr "混杂(Hashed) UNIX 密码"
 
 #: account/models.py:91
 msgid "Hashed SMB password"
-msgstr "SMB密码的Hash值"
+msgstr "混杂(Hashed) SMB 密码"
 
 #: account/models.py:95
 msgid "Primary Group ID"
@@ -570,7 +569,7 @@ msgstr "用户"
 #: account/models.py:138
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr "用户 %s 是系统默认的不可以删除！"
+msgstr "%s 是内置用户无法删除！"
 
 #: account/nav.py:5 templates/menubar.html:43
 msgid "Account"
@@ -631,9 +630,9 @@ msgid "Add %s"
 msgstr "添加 %s"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "查看所有用户"
+msgstr "查看所有 %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -659,7 +658,7 @@ msgstr "%s 更新成功"
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr "服务器重启失败。"
+msgstr "重启服务失败。"
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -687,9 +686,8 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "请首先填写1号域名服务器然后填写2号域名服务器"
 
 #: network/forms.py:100
-#, fuzzy
 msgid "Parent Interface"
-msgstr "虚拟接口"
+msgstr "上级接口"
 
 #: network/forms.py:109
 msgid "The name must be vlanXX where XX is a integer"
@@ -697,16 +695,16 @@ msgstr "接口名称必须是vlanXX 其中XX是数字"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr "VLAN Tag 必须是 1 - 4095 之间的数字(含)"
+msgstr "VLAN 标记必须是 1 - 4095 之间的数字"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
-msgstr "在LAGG中的物理网卡"
+msgstr "LAGG 中的物理网卡"
 
 #: network/forms.py:190
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr "无效的网络 '%s'，请使用无类域间路由（CIDR）。"
+msgstr "无效的网络 '%s'，请使用无类别域间路由（CIDR）。"
 
 #: network/models.py:42 services/models.py:1072
 #: templates/system/system_info.html:4
@@ -761,7 +759,7 @@ msgstr "DHCP"
 #: network/models.py:107
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
-msgstr "启用后将使用DHCP来自动获得IPv4地址和默认路由、网关等等。"
+msgstr "若启用，将使用DHCP来自动获得IPv4地址和默认路由、网关。"
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
@@ -778,7 +776,7 @@ msgstr "自动配置IPv6"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr "启用后将通过rtsol(8)自动配置IPv6地址。"
+msgstr "若启用，将通过 rtsol(8) 自动配置IPv6地址。"
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
@@ -809,7 +807,7 @@ msgstr "虚拟接口"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr "接口名称必须是vlanXX 其中XX是数字"
+msgstr "接口名称必须是 vlanXX 其中 XX 是数字"
 
 #: network/models.py:178 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
@@ -818,7 +816,7 @@ msgstr "物理接口"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
-msgstr "VLAN 标签"
+msgstr "VLAN 标记"
 
 #: network/models.py:185 network/models.py:282 services/models.py:76
 #: services/models.py:763 storage/models.py:94
@@ -845,7 +843,7 @@ msgstr "LAGG 接口组"
 
 #: network/models.py:244
 msgid "LAGG Priority Number"
-msgstr "LAGG 优先权号"
+msgstr "LAGG 优先权数"
 
 #: network/models.py:249
 msgid "Physical NIC"
@@ -853,11 +851,11 @@ msgstr "物理网卡"
 
 #: network/models.py:264 templates/network/index.html:7
 msgid "Link Aggregation"
-msgstr "网络链接聚合"
+msgstr "链接聚合"
 
 #: network/models.py:265 network/nav.py:53
 msgid "Link Aggregations"
-msgstr "网络链接聚合"
+msgstr "链接聚合"
 
 #: network/models.py:274
 msgid "Destination network"
@@ -885,11 +883,11 @@ msgstr "网络概况"
 
 #: network/nav.py:30
 msgid "Create Link Aggregation"
-msgstr "创建网络链接聚合"
+msgstr "创建链接聚合"
 
 #: network/nav.py:41
 msgid "View All Link Aggregations"
-msgstr "查看所有的网络链接聚合"
+msgstr "查看所有链接聚合"
 
 #: network/views.py:180
 #, python-format
@@ -902,19 +900,19 @@ msgstr "不适用"
 
 #: services/forms.py:79
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr "此字段必需“启用主文件夹浏览”。"
+msgstr "若使用“启用主文件夹浏览”此字段必需。"
 
 #: services/forms.py:82
 msgid "This field is required for \"Home directories\"."
-msgstr "此字段必需“主目录”。"
+msgstr "若使用“主目录”此字段必需。"
 
 #: services/forms.py:99
 msgid "The AFP service failed to reload."
-msgstr "AFP服务重启失败。"
+msgstr "AFP服务重新加载失败。"
 
 #: services/forms.py:108
 msgid "The NFS service failed to reload."
-msgstr "NFS服务重启失败。"
+msgstr "NFS服务重新加载失败。"
 
 #: services/forms.py:112
 msgid "File Permission"
@@ -926,63 +924,63 @@ msgstr "目录权限"
 
 #: services/forms.py:138
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr "此值应为 0 到 65535 之间，包含。"
+msgstr "此值应为 0 到 65535 之间（含）。"
 
 #: services/forms.py:144 services/forms.py:162
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr "此值应为 0 到 10000 之间，包含。"
+msgstr "此值应为 0 到 10000 之间（含）。"
 
 #: services/forms.py:150 services/forms.py:156
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr "此值应为 0 到 1000 之间，包含。"
+msgstr "此值应为 0 到 1000 之间（含）。"
 
 #: services/forms.py:168
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr "此值应为 1024 到 65535 之间，包含。0表示使用默认值。"
+msgstr "此值应为 1024 到 65535 之间（含）。0表示使用默认值。"
 
 #: services/forms.py:174
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr "此值应为 1024 到 65535 之间，包含。0表示使用默认值。"
+msgstr "此值应为 1024 到 65535 之间（含）。0表示使用默认值。"
 
 #: services/forms.py:193
 msgid "This field is required for anonymous login"
-msgstr "此字段必需匿名登录"
+msgstr "若使用匿名登录，此字段必需"
 
 #: services/forms.py:200
 msgid "The ftp service failed to start."
-msgstr "FTP服务重启失败。"
+msgstr "FTP服务启动失败。"
 
 #: services/forms.py:209
 msgid "The tftp service failed to reload."
-msgstr "tftp服务重启失败。"
+msgstr "tftp服务重新加载失败。"
 
 #: services/forms.py:216
 msgid "The SSH service failed to reload."
-msgstr "SSH服务重启失败。"
+msgstr "SSH服务重新加载失败。"
 
 #: services/forms.py:225 services/forms.py:253
 msgid "The Rsync service failed to reload."
-msgstr "Rsync服务重启失败。"
+msgstr "Rsync服务重新加载失败。"
 
 #: services/forms.py:238
 msgid "The name cannot contain slash or a closing square backet."
-msgstr "名字不能包斜杠或者方括号。"
+msgstr "名字不能包斜杠或者右括号。"
 
 #: services/forms.py:262
 msgid "The DynamicDNS service failed to reload."
-msgstr "动态域名服务重启失败。"
+msgstr "动态域名服务重新加载失败。"
 
 #: services/forms.py:271
 msgid "The SNMP service failed to reload."
-msgstr "SNMP服务重启失败。"
+msgstr "SNMP服务重新加载失败。"
 
 #: services/forms.py:285
 msgid "The activedirectory service failed to reload."
-msgstr "活动目录（ADS）服务重启失败。"
+msgstr "活动目录服务重新加载失败。"
 
 #: services/forms.py:296
 msgid "The ldap service failed to reload."
-msgstr "ldap服务重启失败。"
+msgstr "ldap服务重新加载失败。"
 
 #: services/forms.py:302 services/models.py:529
 #: templates/services/iscsi_auth.html:7
@@ -991,7 +989,7 @@ msgstr "密钥"
 
 #: services/forms.py:303 services/models.py:530
 msgid "Target side secret."
-msgstr "终结端的密钥。"
+msgstr "目标端密钥。"
 
 #: services/forms.py:304
 msgid "Secret (Confirm)"
@@ -999,7 +997,7 @@ msgstr "密钥（确认）"
 
 #: services/forms.py:306 services/forms.py:314
 msgid "Enter the same secret above for verification."
-msgstr "输入相同的密钥。"
+msgstr "请再次输入密钥以供验证。"
 
 #: services/forms.py:307
 msgid "Initiator Secret"
@@ -1007,7 +1005,7 @@ msgstr "发起端密钥"
 
 #: services/forms.py:309 services/models.py:536 services/models.py:541
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr "发起端密钥。（用于相互CHAP身份验证）"
+msgstr "发起端密钥。（用于双向CHAP验证）"
 
 #: services/forms.py:312
 msgid "Initiator Secret (Confirm)"
@@ -1029,7 +1027,7 @@ msgstr "对端密钥必须与用户密钥不同"
 #: services/forms.py:537 services/forms.py:584 services/forms.py:683
 #: services/forms.py:705 services/forms.py:726 services/forms.py:758
 msgid "The iSCSI service failed to reload."
-msgstr "iSCSI服务重启失败。"
+msgstr "iSCSI服务重新加载失败。"
 
 #: services/forms.py:385
 msgid "LUN already exists in the same target."
@@ -1043,22 +1041,21 @@ msgstr "控制器认证群组"
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
-msgstr "istgtcontrol正确的用户可以访问特定的认证和加密群组目标。"
+msgstr "istgtcontrol 正确的用户可以访问特定的认证和加密群组目标。"
 
 #: services/forms.py:398 services/models.py:248
 msgid "Discovery Auth Group"
-msgstr "发现认证群组"
+msgstr "探索认证群组"
 
 #: services/forms.py:425
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr "该值必须介于 %(start)d 和 %(end)d 之间，包含。"
+msgstr "该值必须介于 %(start)d 和 %(end)d 之间(含)。"
 
 #: services/forms.py:433
-#, fuzzy
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
-msgstr "此字段必需，如果发现方法设置为CHAP或相互CHAP。"
+msgstr "若探索方法设置为CHAP或双向CHAP，则此字段必需。"
 
 #: services/forms.py:516 services/forms.py:546
 msgid "You need to specify a filepath, not a directory."
@@ -1066,7 +1063,7 @@ msgstr "您需要指定一个文件路径，而不是一个文件夹。"
 
 #: services/forms.py:520 services/forms.py:550
 msgid "You need to specify a file inside your volume/dataset."
-msgstr "你需要指定一个卷/数据集。"
+msgstr "你需要指定一个位于卷或数据集的文件。"
 
 #: services/forms.py:524 services/forms.py:554
 msgid ""
@@ -1106,7 +1103,7 @@ msgstr "服务"
 
 #: services/models.py:43
 msgid "Name of Service, should be auto-generated at build time"
-msgstr "将在创建时自动生成服务名称"
+msgstr "服务名称，将在建立时自动生成"
 
 #: services/models.py:46
 msgid "Enable Service"
@@ -1142,27 +1139,27 @@ msgstr "客户机询问时显示的此服务器所在的工作组名（最多15�
 
 #: services/models.py:78
 msgid "Server description. This can usually be left blank."
-msgstr "服务器说明。这里经常保持空白。"
+msgstr "服务器说明。这里通常保持空白。"
 
 #: services/models.py:84
 msgid "DOS charset"
-msgstr "DOS字符集"
+msgstr "DOS 字符集"
 
 #: services/models.py:90
 msgid "UNIX charset"
-msgstr "UNIX字符集"
+msgstr "UNIX 字符集"
 
 #: services/models.py:96
 msgid "Log level"
-msgstr "日志详细程度"
+msgstr "日志等级"
 
 #: services/models.py:99
 msgid "Local Master"
-msgstr ""
+msgstr "本地管理员"
 
 #: services/models.py:101
 msgid "Time Server for Domain"
-msgstr "作用于域的时间服务器"
+msgstr "域内的时间服务器"
 
 #: services/models.py:105 services/models.py:193
 msgid "Guest account"
@@ -4855,7 +4852,7 @@ msgid "Level"
 msgstr "层级"
 
 msgid "Add Link Aggregation"
-msgstr "添加网络链接聚合"
+msgstr "添加链接聚合"
 
 msgid "View All Interfaces"
 msgstr "查看所有接口"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:05-0700\n"
-"PO-Revision-Date: 2011-06-06 09:51+0200\n"
+"PO-Revision-Date: 2011-06-06 12:00+0200\n"
 "Last-Translator: RayTracer <saliherk@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -967,39 +967,39 @@ msgstr "Bu alan Anonim giriş için gereklidir."
 
 #: services/forms.py:200
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "FTP hizmeti başlatılamadı."
 
 #: services/forms.py:209
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "FTP hizmeti yeniden yüklenemedi."
 
 #: services/forms.py:216
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "SHH hizmeti yeniden yüklenirken hata oluştu."
 
 #: services/forms.py:225 services/forms.py:253
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Rsync hizmeti yeniden yüklenirken hata oluştu."
 
 #: services/forms.py:238
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "Bu ad, slash ve köşeli parantez içeremez."
 
 #: services/forms.py:262
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "DynamicDNS hizmeti yeniden yüklenirken hata oluştu."
 
 #: services/forms.py:271
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "SNMP hizmeti yeniden yüklenirken hata oluştu."
 
 #: services/forms.py:285
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "ActiveDirectory hizmeti yeniden yüklenirken hata oluştu."
 
 #: services/forms.py:296
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "Ldap hizmeti yeniden yüklenirken hata oluştu."
 
 #: services/forms.py:302 services/models.py:529
 #: templates/services/iscsi_auth.html:7
@@ -1046,7 +1046,7 @@ msgstr ""
 #: services/forms.py:537 services/forms.py:584 services/forms.py:683
 #: services/forms.py:705 services/forms.py:726 services/forms.py:758
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "iSCSI himzeti yeniden yüklenirken hata oluştu."
 
 #: services/forms.py:385
 msgid "LUN already exists in the same target."
@@ -1066,7 +1066,7 @@ msgstr ""
 
 #: services/forms.py:398 services/models.py:248
 msgid "Discovery Auth Group"
-msgstr ""
+msgstr "Grup Yetkisine Gözat"
 
 #: services/forms.py:425
 #, python-format
@@ -1080,11 +1080,11 @@ msgstr ""
 
 #: services/forms.py:516 services/forms.py:546
 msgid "You need to specify a filepath, not a directory."
-msgstr ""
+msgstr "Dosya yolunu girmelisiniz (Klasör adı değil)"
 
 #: services/forms.py:520 services/forms.py:550
 msgid "You need to specify a file inside your volume/dataset."
-msgstr "Volume/Dataset iniz içinde yer alan bir dosyayı belirtmelisiniz."
+msgstr "Bölüm/Dataset iniz içinde yer alan bir dosyayı belirtmelisiniz."
 
 #: services/forms.py:524 services/forms.py:554
 msgid ""
@@ -1105,7 +1105,7 @@ msgstr "Disk aygıtı"
 #: services/forms.py:699
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr "Portal Grup ID niz %d den büyük olamaz"
+msgstr "Portal Grup ID'niz %d den büyük olamaz."
 
 #: services/forms.py:720
 #, python-format
@@ -1122,11 +1122,11 @@ msgstr ""
 
 #: services/models.py:42
 msgid "Service"
-msgstr "Servis"
+msgstr "Hizmet"
 
 #: services/models.py:43
 msgid "Name of Service, should be auto-generated at build time"
-msgstr "Servis Adı, kurulum esnasında otomatik olarak yaratılmalıdır"
+msgstr "Hizmet Adı, kurulum esnasında otomatik olarak yaratılmalıdır"
 
 #: services/models.py:46
 msgid "Enable Service"
@@ -1139,46 +1139,49 @@ msgstr "Hizmetler"
 
 #: services/models.py:62
 msgid "Authentication Model"
-msgstr ""
+msgstr "Kimlik Doğrulama Biçimi"
 
 #: services/models.py:63
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
-msgstr ""
+msgstr "Active Directory veya LDAP kimlik doğrulama, bu seçeneği geçersiz kılar"
 
 #: services/models.py:67
 msgid "NetBIOS name"
-msgstr ""
+msgstr "NetBIOS ismi"
 
 #: services/models.py:71
 msgid "Workgroup"
 msgstr "Çalışma Grubu"
 
 #: services/models.py:72
+#, fuzzy
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
+"Çalışma grubu, sunucu istemciler tarafından sorgulandığında görünecektir "
+"(maksimum 15 karakter)."
 
 #: services/models.py:78
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "Sunucu tanımı. Boş bırakabilirsiniz."
 
 #: services/models.py:84
 msgid "DOS charset"
-msgstr ""
+msgstr "DOS karakter seti"
 
 #: services/models.py:90
 msgid "UNIX charset"
-msgstr ""
+msgstr "UNIX karakter seti"
 
 #: services/models.py:96
 msgid "Log level"
-msgstr ""
+msgstr "Kayıt seviyesi"
 
 #: services/models.py:99
 msgid "Local Master"
-msgstr ""
+msgstr "Yerel Yönetici"
 
 #: services/models.py:101
 msgid "Time Server for Domain"
@@ -1186,7 +1189,7 @@ msgstr "Domain için Zaman Sunucusu"
 
 #: services/models.py:105 services/models.py:193
 msgid "Guest account"
-msgstr ""
+msgstr "Misafir Hesabı"
 
 #: services/models.py:106 sharing/models.py:65
 msgid ""
@@ -1199,15 +1202,15 @@ msgstr ""
 
 #: services/models.py:109
 msgid "Allow guest access"
-msgstr ""
+msgstr "Misafir erişimine izin ver."
 
 #: services/models.py:111
 msgid "Only allow guest access"
-msgstr ""
+msgstr "Sadece misafir erişimine izin ver."
 
 #: services/models.py:114 services/models.py:846
 msgid "File mask"
-msgstr ""
+msgstr "Dosya Maskesi"
 
 #: services/models.py:116
 msgid "Use this option to override the file creation mask (0666 by default)."

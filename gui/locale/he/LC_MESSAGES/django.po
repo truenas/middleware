@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:02-0700\n"
-"PO-Revision-Date: 2011-06-04 21:09+0200\n"
+"PO-Revision-Date: 2011-06-06 13:45+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -1934,7 +1934,7 @@ msgstr "כרזה "
 
 #: services/models.py:841
 msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr "כרזת ברכה שתופיע מתי שחיבור נכס בפעם הראשומה בחיבור FTP."
+msgstr "כרזת ברכה שתופיע מתי שחיבור נכס בפעם הראשונה בחיבור FTP."
 
 #: services/models.py:847 services/models.py:853
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -3783,16 +3783,15 @@ msgstr "מחק"
 
 #: system/models.py:404
 msgid "Delete files on the receiving side that don't exist on sender"
-msgstr ""
+msgstr "מחק קבצים בצד המקבל שלא קיימים אצל השולח"
 
 #: system/models.py:409
 msgid "Suppress non-error messages"
 msgstr ""
 
 #: system/models.py:413
-#, fuzzy
 msgid "Preserve permissions"
-msgstr "רשויות מורשות"
+msgstr "שמור רשויות"
 
 #: system/models.py:414
 msgid ""
