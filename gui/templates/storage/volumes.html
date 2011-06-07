@@ -192,7 +192,6 @@
     <div dojoType="dijit.Tooltip" connectId="viewDisksBtn{{ m.id }}" position="above">
         <strong>{% trans "View Disks" %}</strong>
     </div>
-{% endif %}
     <button id="exptBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         Export
         <script type="dojo/method" event="onClick" args="evt">
@@ -200,8 +199,9 @@
         </script>
     </button>
     <div dojoType="dijit.Tooltip" connectId="snapBtn{{ m.id }}" position="above">
-        <strong>{% trans "Create Snapshot" %}</strong>
+        <strong>{% trans "Export Volume" %}</strong>
     </div>
+{% endif %}
 	    </td>
 	</tr>
 	{% empty %}
