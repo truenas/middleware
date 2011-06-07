@@ -1614,9 +1614,9 @@ class notifier:
         p1 = self.__pipeopen("zfs list -t filesystem -o name -H -r %s" % str(vol_name))
         ret = p1.communicate()[0].split('\n')[1:-1]
         for dataset in ret:
-            name = "".join(dataset.split('/')[1:])
+            name = "/".join(dataset.split('/')[1:])
             mp = os.path.join(mp_path, name)
-            c.execute("INSERT INTO storage_mountpoint (mp_volume_id, mp_path, mp_options, mp_ischild) VALUES (?, ?, ?, ?)", (vol_id, mp,"noauto","1"), )
+            c.execute("INSERT INTO storage_mountpoint (mp_volume_id, mp_path, mp_options, mp_ischild) VALUES (?, ?, ?, ?)", (vol_id, mp, "noauto", "1"), )
         conn.commit()
         c.close()
 
