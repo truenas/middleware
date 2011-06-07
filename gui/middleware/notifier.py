@@ -1224,17 +1224,17 @@ class notifier:
     def precheck_partition(self, dev, fstype):
 
         if fstype == 'UFS':
-            p1 = Popen(["fsck_ufs", "-p", dev], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/sbin/fsck_ufs", "-p", dev], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
         elif fstype == 'NTFS':
-            p1 = Popen(["ntfsfix", dev], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/usr/local/bin/ntfsfix", dev], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
         elif fstype == 'MSDOSFS':
-            p1 = Popen(["fsck_msdosfs", "-p", dev], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/sbin/fsck_msdosfs", "-p", dev], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
@@ -1248,22 +1248,22 @@ class notifier:
         """
 
         if fstype == 'UFS':
-            p1 = Popen(["tunefs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/sbin/tunefs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
         elif fstype == 'NTFS':
-            p1 = Popen(["ntfslabel", dev, label], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/usr/local/sbin/ntfslabel", dev, label], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
         elif fstype == 'MSDOSFS':
-            p1 = Popen(["mlabel", "-i", dev, "::%s" % label], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/usr/local/bin/mlabel", "-i", dev, "::%s" % label], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
         elif fstype is None:
-            p1 = Popen(["geom", "label", "create", label, dev], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/sbin/geom", "label", "create", label, dev], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
