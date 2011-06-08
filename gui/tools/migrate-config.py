@@ -28,6 +28,7 @@
 import os
 import sys
 import sqlite3
+import re
 
 from xml.dom import minidom
 
@@ -231,11 +232,206 @@ class ConfigParser:
             if __nodemap[__key]:
                 __pairs[__nodemap[__key]] = __value
 
+    def __fail(self, fmt, *args):
+        __str = "FAIL: " + fmt
+        __str = __str % args
+        print >> sys.stderr, __str
+
+    def __handle_cronjob(self, __parent, __user, __command):
+        __enable = self.__getChildNode(__parent, "enable")
+        if not __enable: 
+            return
+
+        __all_mins_node = self.__getChildNode(__parent, "all_mins")
+        if __all_mins_node:
+            __all_mins_value = self.__getChildNodeValue(__all_mins_node)
+        
+        __all_hours_node = self.__getChildNode(__parent, "all_hours")
+        if __all_hours_node:
+            __all_hours_value = self.__getChildNodeValue(__all_hours_node)
+
+        __all_days_node = self.__getChildNode(__parent, "all_days")
+        if __all_days_node:
+            __all_days_value = self.__getChildNodeValue(__all_days_node)
+
+        __all_months_node = self.__getChildNode(__parent, "all_months")
+        if __all_months_node:
+            __all_months_value = self.__getChildNodeValue(__all_months_node)
+
+        __all_weekdays_node = self.__getChildNode(__parent, "all_weekdays")
+        if __all_weekdays_node:
+            __all_weekdays_value = self.__getChildNodeValue(__all_weekdays_node)
+
+        __minutes_value = ""
+        if __all_mins_value:
+            __minutes_value = "*"
+        else:
+            __minute_nodes = self.__getChildNodes(__parent, "minute")
+            for __minute_node in __minute_nodes:
+                if __minute_node:
+                    __minute_value = self.__getChildNodeValue(__minute_node)  
+                    __minutes_value += __minute_value + ","
+            if __minutes_value:
+                __minutes_value = __minutes_value.rstrip(",")
+
+        __hours_value = ""
+        if __all_hours_value:
+            __hours_value = "*"
+        else:
+            __hour_nodes = self.__getChildNodes(__parent, "hour")
+            for __hour_node in __hour_nodes:
+                if __hour_node:
+                    __hour_value = self.__getChildNodeValue(__hour_node)
+                    __hours_value += __hours_value + ","
+            if __hours_value:
+                __hours_value = __hours_value.rstrip(",")
+
+        __days_value = ""
+        if __all_days_value:
+            __days_value = "*"
+        else:
+            __day_nodes = self.__getChildNodes(__parent, "day")
+            for __day_node in __day_nodes:
+                if __day_node:
+                    __day_value = self.__getChildNodeValue(__day_node)
+                    __days_value += __days_value + ","
+            if __days_value:
+                __days_value = __days_value.rstrip(",")
+
+        __months_value = ""
+        if __all_months_value:
+            __months_value = "*"
+        else:
+            __month_nodes = self.__getChildNodes(__parent, "month")
+            for __month_node in __month_nodes:
+                if __month_node:
+                    __month_value = self.__getChildNodeValue(__month_value)
+                    __months_value += __months_value + ","
+            if __months_value:
+                __months_value = __months_value.rstrip(",")
+
+        __weekdays_value = ""
+        if __all_weekdays_value:
+            __weekdays_value = "*"
+        else:
+            __weekday_nodes = self.__getChildNodes(__parent, "weekday")
+            for __weekday_node in __weekday_nodes:
+                if __weekday_node:
+                    __weekday_value = self.__getChildNodeValue(__weekday_node)
+                    __weekdays_value += __weekdays_value + ","
+            if __weekdays_value:
+                __weekdays_value = __weekdays_value.rstrip(",")
+
+        __pairs = {}
+        __table = "services_cronjob"
+
+        __pairs['cron_minute'] = __minutes_value
+        __pairs['cron_hour'] = __hours_value
+        __pairs['cron_daymonth'] = __days_value
+        __pairs['cron_month'] = __months_value
+        __pairs['cron_dayweek'] = __weekdays_value
+        __pairs['user'] = __user
+        __pairs['command'] = __command
+
+        self.__sql.insert(__table, __pairs)
+
     #
-    # XXX WTF??? XXX
+    # XXX This seems to be user/group creation XXX
     #
     def _handle_access(self, __parent, __level):
-        pass
+
+        __table = "account_bsdgroups"
+        __group_nodes = self.__getChildNodes(__parent, "group")
+        for __group_node in __group_nodes:
+            __id_node = self.__getChildNode(__group_node, "id")
+            if not __id_node: 
+                continue
+
+            __id = self.__getChildNodeValue(__id_node)
+            if not __id:
+                continue
+
+            __name_node = self.__getChildNode(__group_node, "name")
+            if not __name_node:
+                continue
+
+            __name = self.__getChildNodeValue(__name_node)
+            if not __name:
+                continue
+
+            __pairs = {}
+            __pairs['bsdgrp_gid'] = __id
+            __pairs['bsdgrp_group'] = __name
+
+            self.__sql.insert(__table, __pairs)
+
+        __table = "account_bsdusers"
+        __user_nodes = self.__getChildNodes(__parent, "user")
+        for __user_node in __user_nodes:
+            __id_node = self.__getChildNode(__user_node, "id")
+            if not __id_node:
+                continue
+
+            __id = self.__getChildNodeValue(__id_node)
+            if not __id:
+                continue
+
+            __primarygroup_node = self.__getChildNode(__user_node, "primarygroup")
+            if not __primarygroup_node:
+                continue
+
+            __primarygroup = self.__getChildNodeValue(__primarygroup_node)
+            if not __primarygroup:
+                continue
+
+            __group_nodes = self.__getChildNodes(__user_node, "group")
+            for __group_node in __group_nodes:
+                __group = self.__getChildNodeValue(__group_node)
+
+            __login_node = self.__getChildNode(__user_node, "login")
+            if not __login_node:
+                continue 
+
+            __login = self.__getChildNodeValue(__login_node)
+            if not __login:
+                continue
+
+            __fullname_node = self.__getChildNode(__user_node, "fullname")
+            if not __fullname_node:
+                continue
+
+            __fullname = self.__getChildNodeValue(__fullname_node)
+            if not __fullname:
+                continue
+
+            __password_node = self.__getChildNode(__user_node, "password")
+            if not __password_node:
+                continue
+
+            __password = self.__getChildNodeValue(__password_node)
+            if not __password:
+                continue
+
+            __shell_node = self.__getChildNode(__user_node, "shell")
+            if not _shell_node:
+                continue
+
+            __shell = self.__getChildNodeValue(__shell_node)
+            if not __shell:
+                continue
+
+            __pairs = {}
+            __pairs['bsdusr_full_name'] = __fullname
+            __pairs['bsdusr_username'] = __login
+            #__pairs['bsdusr_group_id']
+            __pairs['bsdusr_uid'] = __id
+            #__pairs['bsdusr_unixhash']
+            __pairs['bsdusr_shell'] = __shell
+            #__pairs['bsdusr_builtin']
+            __pairs['bsdusr_home'] = "/home/" + __login
+
+           self.__sql.insert(__table, __pairs)
+
 
     def _handle_ad(self, __parent, __level):
         __nodemap = {'domaincontrollername':'ad_dcname', 'domainname_dns':'ad_domainname',
@@ -246,6 +442,12 @@ class ConfigParser:
         __table = "services_activedirectory"
 
         self.__set_pairs(__parent, __nodemap, __pairs)
+
+        __regex = ".{1,120}"
+        for __key in __pairs:
+            if not re.match(__regex, __pairs[__key]):
+                self.__fail("_handle_ad: %s is invalid", __pairs[__key])
+                return
 
         if __pairs:
             self.__sql.insert(__table, __pairs) 
@@ -260,15 +462,19 @@ class ConfigParser:
         __table = "services_afp"
 
         self.__set_pairs(__parent, __nodemap, __pairs)
+
+        __regex = ".{1,120}"
+        for __key in __pairs:
+            if not re.match(__regex, __pairs[__key]):
+                self.__fail("_handle_afp: %s is invalid", __pairs[__key])
+                return
+
         if __pairs:
             self.__sql.insert(__table, __pairs) 
 
     #
-    # XXX Not implemented XXX
+    # XXX does this work? XXX
     #
-    def _handle_bittorrent(self, __parent, __level):
-        pass
-
     def _handle_cron(self, __parent, __level):
         __nodemap = {'enable':None, 'desc':None, 'all_mins':None,
             'all_hours':None, 'all_days':None, 'all_months':None,
@@ -282,14 +488,15 @@ class ConfigParser:
             __pairs = {}
 
             self.__set_pairs(__job_node, __nodemap, __pairs)
+
+            __regex = ".{1,120}"
+            for __key in __pairs:
+                if not re.match(__regex, __pairs[__key]):
+                    self.__fail("_handle_cron: %s is invalid", __pairs[__key])
+                    continue
+
             if __pairs:
                 self.__sql.insert(__table, __pairs)
-
-    #
-    # XXX Not implemented XXX
-    #
-    def _handle_daap(self, __parent, __level):
-        pass
 
     #
     # XXX WTF??? XXX
@@ -300,24 +507,24 @@ class ConfigParser:
     #
     # XXX this needs more work XXX
     #
-    def _handle_disks(self, __parent, __level):
-        __nodemap = {'name':'disk_name', 'devicespecialfile':'disk_disks',
-            'harddiskstandby':'disk_hddstandby', 'acoustic':'disk_acousticlevel',
-            'apm':None, 'transfermode':'disk_transfermode', 'type':None,
-            'desc':'disk_description', 'size':None, 'smart':None, 'fstype':None}
+    #def _handle_disks(self, __parent, __level):
+    #    __nodemap = {'name':'disk_name', 'devicespecialfile':'disk_disks',
+    #        'harddiskstandby':'disk_hddstandby', 'acoustic':'disk_acousticlevel',
+    #        'apm':None, 'transfermode':'disk_transfermode', 'type':None,
+    #        'desc':'disk_description', 'size':None, 'smart':None, 'fstype':None}
 
-        __disk_nodes = self.__getChildNodes(__parent, "disk")
-        for __disk_node in __disk_nodes:
+    #    __disk_nodes = self.__getChildNodes(__parent, "disk")
+    #    for __disk_node in __disk_nodes:
 
-            __pairs = {}
-            __table = "storage_disk"
+    #        __pairs = {}
+    #        __table = "storage_disk"
 
-            self.__set_pairs(__disk_node, __nodemap, __pairs)
-            if __pairs:
-                self.__sql.insert(__table, __pairs)
+    #        self.__set_pairs(__disk_node, __nodemap, __pairs)
+    #        if __pairs:
+    #            self.__sql.insert(__table, __pairs)
 
     #
-    # XXX This needs to be implemented XXX
+    # XXX Is this correct ? XXX
     #
     def _handle_dynamicdns(self, __parent, __level):
         __nodemap = {'enable':None, 'provider':'ddns_provider',
@@ -329,6 +536,13 @@ class ConfigParser:
         __table = "services_dynamicdns"
 
         self.__set_pairs(__parent, __nodemap, __pairs)
+
+        __regex = ".{1,120}"
+        for __key in __pairs:
+            if not re.match(__regex, __pairs[__key]):
+                self.__fail("_handle_dynamicdns: %s is invalid", __pairs[__key])
+                return
+
         if __pairs:
             self.__sql.insert(__table, __pairs)
              
@@ -388,44 +602,112 @@ class ConfigParser:
                 if __nodemap[__key]:
                     __pairs[__nodemap[__key]] = __value
 
+        __regex = ".{1,120}"
+        for __key in __pairs:
+            if not re.match(__regex, __pairs[__key]):
+                self.__fail("_handle_dynamicdns: %s is invalid", __pairs[__key])
+                return
+
         if __pairs:
             self.__sql.insert(__table, __pairs) 
 
-    #
-    # XXX This needs to be looked at XXX
-    #
-    def _handle_gconcat(self, __parent, __level):
-        pass
-
-    #
-    # XXX This needs to be looked at XXX
-    #
-    def _handle_geli(self, __parent, __level):
-        pass
 
     #
     # XXX This needs to be looked at XXX
     #
     def _handle_gmirror(self, __parent, __level):
-        pass
+        __vdisks = self.__getChildNodes(__parent, "vdisk")
+        for __vdisk in __vdisks:
+            __name_node = self.__getChildNode(__vdisk, "name")
+            if not __name_node: 
+                continue
 
-    #
-    # XXX This needs to be looked at XXX
-    #
-    def _handle_graid5(self, __parent, __level):
-        pass
+            __name = self.__getChildNodeValue(__name_node)
+            if not __name:
+                continue
+
+            __balance_node = self.__getChildNode(__vdisk, "balance")
+            if not __balance_node:
+                continue
+
+            __balance = self.__getChildNodeValue(__balance_node)
+            if not __balance:
+                continue
+
+            __type_node = self.__getChildNode(__vdisk, "type")
+            if not __type_node:
+                continue
+
+            __type = self.__getChildNodeValue(__type_node)
+            if not __type:
+                continue
+
+            __device_nodes = self.__getChildNode(__vdisk, "device")
+            for __device_node in __device_nodes:
+                __device_name = self.__getChildNodeValue(__device_node)
+
+            __desc = None
+            __desc_node = self.__getChildNode(__vdisk, "desc")
+            if __desc_node:
+                __desc = self.__getChildNodeValue(__desc_node)
+
+            __devicespecialfile_node = self.__getChildNode(__vdisk, "devicespecialfile")
+            if not __devicespecialfile_node: 
+                continue
+
+            __devicespecialfile = self.__getChildNodeValue(____devicespecialfile_node)
+            if not __devicespecialfile: 
+                continue
+
+
 
     #
     # XXX This needs to be looked at XXX
     #
     def _handle_gstripe(self, __parent, __level):
-        pass
+        __vdisks = self.__getChildNodes(__parent, "vdisk")
+        for __vdisk in __vdisks:
+            __name_node = self.__getChildNode(__vdisk, "name")
+            if not __name_node: 
+                continue
 
-    #
-    # XXX This needs to be looked at XXX
-    #
-    def _handle_gvinum(self, __parent, __level):
-        pass
+            __name = self.__getChildNodeValue(__name_node)
+            if not __name:
+                continue
+
+            __balance_node = self.__getChildNode(__vdisk, "balance")
+            if not __balance_node:
+                continue
+
+            __balance = self.__getChildNodeValue(__balance_node)
+            if not __balance:
+                continue
+
+            __type_node = self.__getChildNode(__vdisk, "type")
+            if not __type_node:
+                continue
+
+            __type = self.__getChildNodeValue(__type_node)
+            if not __type:
+                continue
+
+            __device_nodes = self.__getChildNode(__vdisk, "device")
+            for __device_node in __device_nodes:
+                __device_name = self.__getChildNodeValue(__device_node)
+
+            __desc = None
+            __desc_node = self.__getChildNode(__vdisk, "desc")
+            if __desc_node:
+                __desc = self.__getChildNodeValue(__desc_node)
+
+            __devicespecialfile_node = self.__getChildNode(__vdisk, "devicespecialfile")
+            if not __devicespecialfile_node: 
+                continue
+
+            __devicespecialfile = self.__getChildNodeValue(____devicespecialfile_node)
+            if not __devicespecialfile: 
+                continue
+
 
     #
     # XXX not sure what to do with gateway on this one, default? static route?  XXX
@@ -462,20 +744,19 @@ class ConfigParser:
                 self.__sql.insert(__table, __pairs) 
 
     #
-    # XXX these are icky, come back to later XXX
+    # XXX I'm not sure of the purpose of this one ... XXX
     #
     def _handle_iscsiinit(self, __parent, __level):
         pass
 
+
     def _handle_iscsitarget(self, __parent, __level):
-
-
         #
         # iSCSI tables:
         #
         # services_iscsitarget
-        # services_iscsitargetauthcredential
-        # services_iscsitargetauthorizedinitiator
+        # X services_iscsitargetauthcredential
+        # X services_iscsitargetauthorizedinitiator
         # X services_iscsitargetextent
         # X services_iscsitargetglobalconfiguration
         # X services_iscsitargetportal
@@ -483,6 +764,9 @@ class ConfigParser:
         #
 
 
+        #
+        # Global Settings
+        #
         __table = "services_iscsitargetglobalconfiguration"
         __iscsi_nodemap = {'enable':None, 'nodebase':'iscsi_basename',
             'discoveryauthmethod':'iscsi_discoveryauthmethod', 
@@ -497,46 +781,9 @@ class ConfigParser:
             self.__sql.insert(__table, __pairs)
 
 
-        __table = "services_iscsitargetportal"
-        __portalgroup_nodemap = {'tag':'iscsi_target_portal_tag',
-            'comment':'iscsi_target_portal_comment', 'portal':'iscsi_target_portal_listen' }
-        __portalgroup_nodes = self.__getChildNodes(__parent, "portalgroup")
-        for __portalgroup_node in __portalgroup_nodes:
-            __pairs = {}
-
-            self.__set_pairs(__portalgroup_node, __portalgroup_nodemap, __pairs)
-            if __pairs:
-                self.__sql.insert(__table, __pairs)
-            
-
-        #__table = "services_iscsitargetauthorizedinitiator"
-        #__initialgroup_nodemap = {'tag':'iscsi_target_initiator_tag',
-        #    'comment':'iscsi_target_initiator_comment', 'iginitiatorname':'', 'ignetmask':''}
-        #__initialgroup_nodes = self.__getChildNodes(__parent, "initiatorgroup")
-        #for __initialgroup_node in __initialgroup_nodes:
-        #    for __key in __initialgroup_nodemap:
-        #        pass
-
-
-        __table = "services_iscsitargetauthcredential"
-        __authgroup_nodemap = {'tag':'iscsi_target_auth_tag', 'comment':None }
-        __agauth_nodemap = { 'authuser':'iscsi_target_auth_user',
-            'authsecret':'iscsi_target_auth_secret', 'authmuser':'iscsi_target_auth_peeruser',
-            'authmsecret':'iscsi_target_auth_peersecret' }
-
-        __authgroup_nodes = self.__getChildNodes(__parent, "authgroup")
-        for __authgroup_node in __authgroup_nodes:
-            __pairs = {}
-            self.__set_pairs(__authgroup_node, __authgroup_nodemap, __pairs)
-
-            __agauth_nodes = self.__getChildNodes(__authgroup_node, "agauth")
-            for __agauth_node in __agauth_nodes:
-                self.__set_pairs(__agauth_node, __agauth_nodemap, __pairs) 
-
-        if __pairs:
-            self.__sql.insert(__table, __pairs)
-
-
+        #
+        # Device Extents
+        #
         __table = "services_iscsitargetextent"
         __extent_nodemap = {'name':'iscsi_target_extent_name', 'path':'iscsi_target_extent_path',
             'size':'iscsi_target_extent_filesize', 'type':'iscsi_target_extent_type',
@@ -567,6 +814,62 @@ class ConfigParser:
             self.__sql.insert(__table, __pairs)
 
 
+        #
+        # Portal Groups
+        #
+        __table = "services_iscsitargetportal"
+        __portalgroup_nodemap = {'tag':'iscsi_target_portal_tag',
+            'comment':'iscsi_target_portal_comment', 'portal':'iscsi_target_portal_listen' }
+        __portalgroup_nodes = self.__getChildNodes(__parent, "portalgroup")
+        for __portalgroup_node in __portalgroup_nodes:
+            __pairs = {}
+
+            self.__set_pairs(__portalgroup_node, __portalgroup_nodemap, __pairs)
+            if __pairs:
+                self.__sql.insert(__table, __pairs)
+
+            
+        #
+        # Initiator Groups
+        #
+        __table = "services_iscsitargetauthorizedinitiator"
+        __initialgroup_nodemap = {'tag':'iscsi_target_initiator_tag',
+            'comment':'iscsi_target_initiator_comment',
+            'iginitiatorname':'iscsi_target_initiator_initiators',
+            'ignetmask':'iscsi_target_initiator_auth_network'}
+        __initiatorgroup_nodes = self.__getChildNodes(__parent, "initiatorgroup")
+        for __initiatorgroup_node in __initiatorgroup_nodes:
+            __pais = {}
+
+            self.__set_pairs(__initiatorgroup_node, __initiatorgroup_nodemap, __pairs)
+            if __pairs:
+                self.__sql.insert(__table, __pairs)
+
+
+
+        #
+        # Authentication
+        #
+        __table = "services_iscsitargetauthcredential"
+        __authgroup_nodemap = {'tag':'iscsi_target_auth_tag', 'comment':None }
+        __agauth_nodemap = { 'authuser':'iscsi_target_auth_user',
+            'authsecret':'iscsi_target_auth_secret', 'authmuser':'iscsi_target_auth_peeruser',
+            'authmsecret':'iscsi_target_auth_peersecret' }
+
+        __authgroup_nodes = self.__getChildNodes(__parent, "authgroup")
+        for __authgroup_node in __authgroup_nodes:
+            __pairs = {}
+            self.__set_pairs(__authgroup_node, __authgroup_nodemap, __pairs)
+
+            __agauth_nodes = self.__getChildNodes(__authgroup_node, "agauth")
+            for __agauth_node in __agauth_nodes:
+                self.__set_pairs(__agauth_node, __agauth_nodemap, __pairs) 
+
+        if __pairs:
+            self.__sql.insert(__table, __pairs)
+
+
+
         #__table = ""
         #__target_nodemap = {'name':'', 'alias':'', 'type':'', 'flags':'', 'comment':'',
         #    'authmethod':'', 'digest':'', 'queuedepth':'', 'inqvendor':'', 'inqproduct':'',
@@ -575,12 +878,6 @@ class ConfigParser:
         #for __target_node in __target_nodes:
         #    pass
 
-
-    #
-    # XXX don't care about this XXX
-    #
-    def _handle_lastchange(self, __parent, __level):
-        pass
 
     def _handle_ldap(self, __parent, __level):
         __nodemap = {'hostname':'ldap_hostname', 'base':'ldap_basedn', 'anonymousbind':'ldap_anonbind',
@@ -595,11 +892,88 @@ class ConfigParser:
         if __pairs:
             self.__sql.insert(__table, __pairs)
 
-    #
-    # XXX WTF??? XXX
-    #
     def _handle_mounts(self, __parent, __level):
-        pass
+        __mount_nodes = self.__getChildNodes(__parent, "mount")
+        for __mount_node in __mount_nodes:
+            __type_node = self.__getChildNode(__mount_node, "type")
+            if not __type_node:
+                continue
+
+            __type = self.__getChildNodeValue(__type_node) 
+            if not __type:
+                continue
+
+            __desc = None
+            __desc_node = self.__getChildNode(__mount_node, "desc")
+            if __desc_node:
+                __desc = self.__getChildNodeValue(__desc_node)
+
+            __sharename_node = self.__getChildNode(__mount_node, "sharename")
+            if not __sharename_node:
+                continue
+
+            __sharename = self.__getChildNodeValue(__sharename_node) 
+            if not __sharename:
+                continue
+
+            __fstype_node = self.__getChildNode(__mount_node, "fstype")
+            if not __fstype_node:
+                continue
+
+            __fstype = self.__getChildNodeValue(__fstype_node)
+            if not __fstype:
+                continue
+             
+            __mdisk_node = self.__getChildNode(__mount_node, "mdisk")
+            if not __mdisk_node:
+                continue
+
+            __mdisk = self.__getChildNodeValue(__mdisk_node)
+            if not __mdisk:
+                continue
+
+            __partition_node = self.__getChildNode(__mount_node, "partition")
+            if not __partition_node:
+                continue
+
+            __partition = self.__getChildNodeValue(__partition_node)
+            if not __partition:
+                continue
+
+            __devicespecialfile_node = self.__getChildNode(__mount_node, "devicespecialfile")
+            if not __devicespecialfile_node:
+                continue
+
+            __devicespecialfile = self.__getChildNodeValue(__devicespecialfile)
+            if not __devicespecialfile:
+                continue
+
+            __readonly = None
+            __readonly_node = self.__getChildNode(__mount_node, "readonly")
+            if __readonly_node:
+                __readonly = self.__getChildNodeValue(__readonly_node)
+
+            __fsck = None
+            __fsck_node = self.__getChildNode(__mount_node, "fsck")
+            if __fsck_node:
+                __fsck = self.__getChildNodeValue(__fsck_node) 
+
+            __owner = None
+            __group = None
+            __mode = None
+            __accessrestrictions_node = self.__getChildNode(__mount_node, "accessrestrictions")
+            if __accessrestrictions_node:
+                __owner_node = self.__getChildNode(__accessrestrictions_node, "owner")
+                if __owner_node:
+                    __owner = self.__getChildNodeValue(__owner_node)
+
+                __group_node = self.__getChildNode(__accessrestrictions_node, "group")
+                if __group_node:
+                    __group = self.__getChildNodeValue(__group_node)
+
+                __mode_node = self.__getChildNode(__accessrestrictions_node, "mode")
+                if __mode_node:
+                    __mode = self.__getChildNodeValue(__mode_node)
 
 
     #
@@ -615,7 +989,6 @@ class ConfigParser:
         if __pairs:
             self.__sql.insert(__table, __pairs)
 
-
         __share_nodemap = { 'path':'', 'mapall':'', 'network':'', 'comment':'' }
         __options_nodemap = { 'alldirs':'', 'ro':'', 'quiet':'' }
         __share_nodes = self.__getChildNodes(__parent, "share")
@@ -626,22 +999,34 @@ class ConfigParser:
             __options_node = self.__getChildNode(__share_node, "options")
 
     #
-    # XXX need data XXX
+    # XXX Not sure what do do with these on our system XXX
     #
     def _handle_rc(self, __parent, __level):
-        pass
+        __preinit_node = self.__getChildNode(__parent, "preinit")
+        __cmd_nodes = self.__getChildNodes(__preinit_node, "cmd")
+        for __cmd in __cmd_nodes:
+            pass
 
-    #
-    # XXX this looks like a cron job or something, needs looking into XXX
-    #
+        __postinit_node = self.__getChildNode(__parent, "postinit")
+        __cmd_nodes = self.__getChildNodes(__postinit_node, "cmd")
+        for __cmd in __cmd_nodes:
+            pass
+
+        __shutdown_node = self.__getChildNode(__parent, "shutdown")
+        __cmd_nodes = self.__getChildNodes(__shutdown_node, "cmd")
+        for __cmd in __cmd_nodes:
+            pass
+
+
     def _handle_reboot(self, __parent, __level):
-        pass
+        self.__handle_cronjob(__parent, "root", "/sbin/reboot")
 
     #
     # XXX needs to be implemented XXX
     #
     def _handle_rsync(self, __parent, __level):
-        pass
+        __rsynclocal_node = self.__getChildNode(__parent, "rsynclocal")
+        __rsyncclient_node = self.__getChildNode(__parent, "rsyncclient")
 
     #
     # XXX doesn't migrate? XXX
@@ -710,13 +1095,11 @@ class ConfigParser:
 
             if __share_pairs:
                 self.__sql.insert(__share_table, __share_pairs)
-            
 
-    #
-    # XXX this looks like a cron job or something, needs looking into XXX
-    #
+
     def _handle_shutdown(self, __parent, __level):
-        pass
+        self.__handle_cronjob(__parent, "root", "/sbin/shutdown")
+
 
     #
     # XXX Convert to smartd flags for /var/tmp/rc.conf.freenas XXX
@@ -752,13 +1135,6 @@ class ConfigParser:
             if __pairs:
                 self.__sql.insert(__table, __pairs)
         
-
-    #
-    # XXX can this be migrated? XXX
-    #
-    def _handle_statusreport(self, __parent, __level):
-        pass
-
     #
     # XXX need to look at code XXX
     #
@@ -930,11 +1306,6 @@ class ConfigParser:
         if not __value:
             return
 
-    #
-    # XXX no proxy support XXX
-    #
-    def _handle_system_proxy(self, __parent, __level):
-        pass
 
     def _handle_system_email(self, __parent, __level):
         __nodemap = {'server':'em_outgoingserver', 'port':'em_port', 'security':'em_security',
@@ -1148,7 +1519,95 @@ class ConfigParser:
     # XXX convert to pf rules XXX
     #
     def _handle_system_firewall(self, __parent, __level):
-        pass
+        rules = {}
+
+        __rule_nodes = self.__getChildNodes(__parent, "rule")
+        for __rule_node in __rule_nodes:
+            __enable_node = self.__getChildNode(__rule_node, "enable")
+            if not __enable_node:
+                continue
+
+            __ruleno_node = self.__getChildNode(__rule_node, "ruleno")
+            if __ruleno_node:
+                __ruleno = self.__getChildNodeValue(__ruleno_node)
+
+            __action_node = self.__getChildNode(__rule_node, "action")
+            if __action_node:
+                __action = self.__getChildNodeValue(__action_node)
+
+            __log_node = self.__getChildNode(__rule_node, "log")
+            if __log_node:
+                __log = self.__getChildNodeValue(__log_node)
+
+            __protocol_node = self.__getChildNode(__rule_node, "protocol")
+            if __protocol_node:
+                __protocol = self.__getChildNodeValue(__protocol_node)
+
+            __src_node = self.__getChildNode(__rule_node, "src")
+            if __src_node:
+                __src = self.__getChildNodeValue(__src_node)
+
+            __srcport_node = self.__getChildNode(__rule_node, "srcport")
+            if __srcport_node:
+                __srcport = self.__getChildNodeValue(__srcport_node)
+
+            __dst_node = self.__getChildNode(__rule_node, "dst")
+            if __dst_node: 
+                __dst = self.__getChildNodeValue(__dst_node)
+
+            __dstport_node = self.__getChildNode(__rule_node, "dstport")
+            if __dstport_node:
+                __dstport = self.__getChildNodeValue(__dstport_node)
+
+            __direction_node = self.__getChildNode(__rule_node, "direction")
+            if __direction_node:
+                __direction = self.__getChildNodeValue(__direction_node)
+
+            __if_node = self.__getChildNode(__rule_node, "if")
+            if __if_node:
+                __if = self.__getChildNodeValue(__if_node)
+
+            __extraoptions_node = self.__getChildNode(__rule_node, "extraoptions")
+            if __extraoptions_node:
+                __extraoptions = self.__getChildNodeValue(__extraoptions_node)
+
+            __desc_node = self.__getChildNode(__rule_node, "desc")
+            if __desc_node:
+                __desc = self.__getChildNodeValue(__desc_node)
+
+            __pf_rule = ""
+            if __action == "allow": 
+                __pf_rule = "pass "
+
+            elif __action == "deny":
+                __pf_rule = "block "
+
+            if __direction == "in":
+                __pf_rule += "in "
+            
+            elif __direction == "out":
+                __pf_rule += "out "
+
+            if __log:
+                __pf_rule += "log "
+
+            if __if:
+                __pf_rule += "on %s " % (__if)
+
+            if __protocol:
+                if __protocol == "udp":
+                    __pf_rule += "inet proto udp "
+
+                elif __protocol == "tcp":
+                    __pf_rule += "inet proto tcp "
+
+                elif __protocol == "icmp":
+                    __pf_rule += "proto icmp "
+
+        #
+        # XXX Get back to this XXX
+        #
+
 
     #
     # XXX needs to be implemented XXX
