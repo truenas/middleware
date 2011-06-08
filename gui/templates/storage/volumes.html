@@ -195,7 +195,7 @@
     <button id="exptBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         Export
         <script type="dojo/method" event="onClick" args="evt">
-            editObject('{% trans "Export Volume"|force_escape %}', '{% url storage_export vid=m.id %}', [this,]);
+            editObject('{% trans "Export Volume"|force_escape %}', '{% url storage_export vid=m.mp_volume.id %}', [this,]);
         </script>
     </button>
     <div dojoType="dijit.Tooltip" connectId="snapBtn{{ m.id }}" position="above">
