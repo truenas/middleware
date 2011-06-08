@@ -297,7 +297,7 @@ class whoChoices:
         return iter((i, i) for i in self._wholist)
 
 ## Network|Interface Management
-class NICChoices:
+class NICChoices(object):
     """Populate a list of NIC choices"""
     def __init__(self, nolagg=False, novlan=False, exclude_configured=True):
         pipe = popen("/sbin/ifconfig -l")

@@ -33,7 +33,7 @@ from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField, PathField
 from storage.models import MountPoint, Volume, Disk
 from freenasUI.middleware.notifier import notifier
-  
+
 class services(Model):
     srv_service = models.CharField(
             max_length=120,
@@ -174,7 +174,7 @@ class CIFS(Model):
         deletable = False
         icon_model = u"CIFSIcon"
 
-class AFP(Model):           
+class AFP(Model):
     afp_srv_name = models.CharField(
             max_length=120,
             verbose_name=_("Server Name"),
@@ -207,7 +207,7 @@ class AFP(Model):
         deletable = False
         icon_model = u"AFPIcon"
 
-class NFS(Model):           
+class NFS(Model):
     nfs_srv_servers = models.CharField(
             max_length=120,
             verbose_name=_("Number of servers"),
@@ -563,6 +563,12 @@ class iSCSITarget(Model):
             max_length=120,
             verbose_name = _("Target Alias"),
             help_text = _("Optional user-friendly string of the target."),
+            )
+    iscsi_target_serial = models.CharField(
+            verbose_name=_("Serial"),
+            max_length=16,
+            default="10000001",
+            help_text=_("Serial number for the logical unit")
             )
     iscsi_target_type = models.CharField(
             max_length=120,
