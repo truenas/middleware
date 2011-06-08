@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:02-0700\n"
-"PO-Revision-Date: 2011-06-06 15:55+0200\n"
+"PO-Revision-Date: 2011-06-07 15:03+0200\n"
 "Last-Translator: Kimimasa <ham@cer110.orz.ne.jp>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
@@ -2148,7 +2148,6 @@ msgid "Local user upload bandwidth"
 msgstr "ローカルユーザのアップロード帯域制限値"
 
 #: services/models.py:883
-#, fuzzy
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "ローカルユーザのアップロード帯域を KB/s に制限します。0 の場合は、無制限とな"
@@ -2159,7 +2158,6 @@ msgid "Local user download bandwidth"
 msgstr "ローカルユーザのダウンロード帯域制限値"
 
 #: services/models.py:888
-#, fuzzy
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "ローカルユーザのダウンロード帯域を KB/s に制限します。0 の場合は無制限となり"
@@ -2170,7 +2168,6 @@ msgid "Anonymous user upload bandwidth"
 msgstr "匿名ユーザーのアップロード帯域（スピード）"
 
 #: services/models.py:893
-#, fuzzy
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "匿名ユーザーのアップロード帯域（スピード）KB/s　0は無制限を意味します。"
@@ -2180,7 +2177,6 @@ msgid "Anonymous user download bandwidth"
 msgstr "匿名ユーザーのダウンロード帯域（スピード）"
 
 #: services/models.py:898
-#, fuzzy
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "匿名ユーザーのダウンロード帯域（スピード）KB/s　0は無制限を意味します。"
@@ -2489,7 +2485,6 @@ msgid "Auxiliary Parameters"
 msgstr "補助パラメータ"
 
 #: services/models.py:1141
-#, fuzzy
 msgid "These parameters are added to ldap.conf."
 msgstr "この項目で指定したパラメータは ldap.conf に追加されます。"
 
@@ -2529,9 +2524,11 @@ msgstr "エクステントへのパス"
 msgid "Access Mode"
 msgstr "アクセスモード"
 
+# 何の機能かよく分からないまま訳してますので、違うと思われたら修正ください。
 #: services/models.py:1192
+#, fuzzy
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "リモートホストのこのモジュールに対するアクセスをコントロールします。"
 
 #: services/models.py:1196
 #, fuzzy
@@ -2553,8 +2550,8 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
-"このオプションにより、そのモジュールとファイル転送するユーザー名を指定します。 'グループ' オプションと組み合わせることで、このアクセス許可が使用可能"
-"なファイルかを決定します。デフォルトの設定を使用する場合はこのフィールドを空白のままにしてください。"
+"このオプションにより、そのモジュールとファイル転送するユーザー名を指定します。 'グループ' "
+"オプションと組み合わせることで、どのパーミッションを適用するかを決定します。デフォルトの設定を使用する場合はこのフィールドを空白のままにしてください。"
 
 #: services/models.py:1210
 msgid ""
@@ -2779,7 +2776,7 @@ msgstr "Windowsファイル共有"
 msgid "Windows Shares"
 msgstr "Windowsファイル共有"
 
-# 「Chooser ot」が何のことやら…。その他ほぼ直訳。
+# 流暢な日本語にできなかった。しばらくこのまま晒して何か提案がなければ確定します。
 #: sharing/models.py:105
 #, fuzzy
 msgid ""
@@ -3033,8 +3030,7 @@ msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
 msgstr ""
-"ボリュームリスト作成時にボリュームパスに対して stat を行わないません。自動マ"
-"ウントや preexec スクリプトが作成するボリュームの場合に有用です。"
+"ボリュームリスト作成時にボリュームパスに対して stat を行いません。自動マウントや preexec スクリプトが作成するボリュームの場合に有用です。"
 
 #: sharing/models.py:205
 #, fuzzy
@@ -3274,7 +3270,6 @@ msgid "ZVol Name"
 msgstr "フルネーム"
 
 #: storage/forms.py:745
-#, fuzzy
 msgid "Size for this zvol"
 msgstr "ZVol のサイズ"
 
@@ -3603,7 +3598,6 @@ msgid "Some error ocurried while setting the options"
 msgstr "オプションの設定中にエラーが発生しました。"
 
 #: storage/views.py:338
-#, fuzzy
 msgid "ZVol"
 msgstr "ZVol"
 
@@ -3613,31 +3607,26 @@ msgid "This is in use by the iscsi target, please remove it there first"
 msgstr "iSCSI ターゲットが使用しています。まずそちらを開放してください。"
 
 #: storage/views.py:356
-#, fuzzy
 msgid "ZFS Volume successfully destroyed."
-msgstr "%s を削除しました。"
+msgstr "ZFS ボリュームを削除しました。"
 
 #: storage/views.py:390
 msgid "Native dataset"
 msgstr "ネイティブデータセット"
 
 #: storage/views.py:406
-#, fuzzy
 msgid "Mount Point permissions successfully updated."
-msgstr "%s を更新しました。"
+msgstr "マウントポイントのパーミッションを更新しました。"
 
 #: storage/views.py:421
-#, fuzzy
 msgid "Dataset successfully destroyed."
-msgstr "%s を削除しました。"
+msgstr "データセットを削除しました。"
 
 #: storage/views.py:435
-#, fuzzy
 msgid "Snapshot successfully deleted."
-msgstr "クローンを作成しました。"
+msgstr "スナップショットをを削除しました。"
 
 #: storage/views.py:449
-#, fuzzy
 msgid "Rollback successful."
 msgstr "ロールバックしました。"
 
@@ -3693,7 +3682,6 @@ msgid "SHA256 sum for the image"
 msgstr "イメージの SHA256 ハッシュ"
 
 #: system/forms.py:271
-#, fuzzy
 msgid "Invalid firmware or checksum"
 msgstr "無効なファームウェアかチェックサム"
 
@@ -3703,7 +3691,6 @@ msgid "Service Pack image to be installed"
 msgstr "Service Pack イメージ"
 
 #: system/forms.py:294
-#, fuzzy
 msgid "Invalid service pack or checksum"
 msgstr "無効なサービスパックかチェックサム"
 
@@ -3906,7 +3893,6 @@ msgid "State"
 msgstr "州/都道府県"
 
 #: system/models.py:208
-#, fuzzy
 msgid "State or Province Name (full name)"
 msgstr "州/都道府県名（フルネーム）"
 
@@ -3953,7 +3939,7 @@ msgstr "分、"
 
 #: system/models.py:250 system/models.py:355
 msgid "Values 0-59 allowed."
-msgstr "0～59 の数値を使用できます。"
+msgstr "0-59 の数値を使用できます。"
 
 #: system/models.py:254 system/models.py:359 templates/system/cronjob.html:6
 #: templates/system/rsync.html:6
@@ -3963,7 +3949,7 @@ msgstr "1時間"
 
 #: system/models.py:255 system/models.py:360
 msgid "Values 0-23 allowed."
-msgstr "0～23 の数値を使用できます。"
+msgstr "0-23 の数値を使用できます。"
 
 #: system/models.py:259 system/models.py:364 templates/system/cronjob.html:7
 #: templates/system/rsync.html:7
@@ -3973,7 +3959,7 @@ msgstr "日"
 
 #: system/models.py:260 system/models.py:365
 msgid "Values 1-31 allowed."
-msgstr "1～31 の数値を使用できます。"
+msgstr "1-31 の数値を使用できます。"
 
 #: system/models.py:265 system/models.py:370 templates/system/cronjob.html:8
 #: templates/system/rsync.html:8
@@ -3990,12 +3976,12 @@ msgstr "曜日"
 #: system/models.py:273
 #, fuzzy
 msgid "CronJob"
-msgstr "CronJob"
+msgstr "Cron ジョブ"
 
 #: system/models.py:274
 #, fuzzy
 msgid "CronJobs"
-msgstr "CronJob"
+msgstr "Cron ジョブ"
 
 #: system/models.py:284 system/models.py:440
 #, fuzzy
@@ -4050,8 +4036,9 @@ msgid "Times"
 msgstr "タイムアウト"
 
 #: system/models.py:389
+#, fuzzy
 msgid "Preserve modification times"
-msgstr ""
+msgstr "修正時刻を記録する"
 
 #: system/models.py:393
 #, fuzzy
@@ -4063,9 +4050,11 @@ msgstr "圧縮レベル"
 msgid "Compress data during the transfer"
 msgstr "転送時にデータを圧縮します。"
 
+# 無圧縮書庫のこと？
 #: system/models.py:398
+#, fuzzy
 msgid "Archive"
-msgstr ""
+msgstr "アーカイブ"
 
 #: system/models.py:399
 #, fuzzy
@@ -4126,11 +4115,13 @@ msgstr "ローカルのパーミッションと同じようにリモートのパ
 msgid "Preserve extended attributes"
 msgstr "拡張属性を保持します。"
 
+# remote extended attributeを直訳しましたが、通りますか?
 #: system/models.py:419
+#, fuzzy
 msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
-msgstr ""
+msgstr "このオプションにより、rsync のリモート拡張属性をローカルの設定と同じになるよう更新します。"
 
 #: system/models.py:425
 #, fuzzy
@@ -4286,15 +4277,18 @@ msgstr "定義されたユーザはありません。"
 msgid "Change Admin Password"
 msgstr "管理パスワードの変更"
 
+# どこで使われているかわからないので、とりあえず併記しました。
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:7
+#, fuzzy
 msgid "Browse"
-msgstr ""
+msgstr "ブラウズ (閲覧)"
 
 #: templates/freeadmin/directory_browser.html:5
 #: templates/freeadmin/directory_browser.html:10
+#, fuzzy
 msgid "Close"
-msgstr ""
+msgstr "閉じる"
 
 #: templates/freeadmin/generic_model_add.html:15
 #: templates/freeadmin/generic_model_delete.html:16
@@ -4316,7 +4310,6 @@ msgstr "しばらくお待ちください..."
 #: templates/storage/snapshot_confirm_delete.html:7
 #: templates/storage/volume_delete.html:8
 #: templates/storage/zvol_confirm_delete.html:7
-#, fuzzy
 msgid "Are you sure you want to delete?"
 msgstr "本当に削除してもよろしいですか？"
 
@@ -4713,9 +4706,11 @@ msgstr "iSCSIの管理"
 msgid "Targets"
 msgstr "ターゲット"
 
+# ほぼ直訳。wiredoolさんの提案の方が意味が当たっていれば、入れ替えて下さい。
 #: templates/services/iscsi.html:11
+#, fuzzy
 msgid "Associated Targets"
-msgstr ""
+msgstr "関連するターゲット"
 
 #: templates/services/iscsi.html:13
 msgid "Authentication"
@@ -4774,7 +4769,6 @@ msgid "Alias"
 msgstr "エイリアス"
 
 #: templates/services/iscsi_portals.html:6
-#, fuzzy
 msgid "Listen"
 msgstr "待ち受け"
 
@@ -4811,8 +4805,9 @@ msgid "No rsync modules defined"
 msgstr "定義された静的ルートはありません。"
 
 #: templates/services/rsyncmod.html:40 templates/services/rsyncmod.html:42
+#, fuzzy
 msgid "Add Rsync Module"
-msgstr ""
+msgstr "Rsync モジュールを追加する。"
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:05-0700\n"
-"PO-Revision-Date: 2011-06-06 18:28+0200\n"
+"PO-Revision-Date: 2011-06-07 15:13+0200\n"
 "Last-Translator: Nuno <nuno.piscinas@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
@@ -1695,59 +1695,65 @@ msgstr "Atalho de Destino"
 
 #: services/models.py:569
 msgid "Optional user-friendly string of the target."
-msgstr ""
+msgstr "Expressão amigável e opcional para o destino."
 
 #: services/models.py:574 storage/models.py:73
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7
 msgid "Type"
-msgstr ""
+msgstr "Tipo"
 
 #: services/models.py:575
 msgid "Logical Unit Type mapped to LUN."
-msgstr ""
+msgstr "Tipo de unidade lógica mapeado para LUN."
 
 #: services/models.py:581
 msgid "Target Flags"
-msgstr ""
+msgstr "Sinalizadores do Destino"
 
 #: services/models.py:589
 msgid "Initiator Group ID"
-msgstr ""
+msgstr "ID do Grupo Iniciador"
 
 #: services/models.py:595 services/models.py:607
 msgid "Auth Method"
-msgstr ""
+msgstr "Método de Autenticação"
 
 #: services/models.py:596 services/models.py:608
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
 msgstr ""
+"O método pode ser aceite pelo destino. Auto significa ambos sem e com "
+"autenticação."
 
 #: services/models.py:600
 msgid "Authentication Group ID"
-msgstr ""
+msgstr "ID do grupo de autenticação"
 
 #: services/models.py:613
 msgid "Queue Depth"
-msgstr ""
+msgstr "Profundidade da Fila de espera"
 
 #: services/models.py:614
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
 msgstr ""
+"0 = desativado, 1-255 = comando habilitado, enfileiramento de mensagens com "
+"profundidade especificada. A profundidade de fila recomendada é de 32."
 
 #: services/models.py:619
 msgid "Logical Block Size"
-msgstr ""
+msgstr "Tamanho de Bloco Lógico"
 
 #: services/models.py:620
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
 msgstr ""
+"Pode especificar o comprimento do bloco lógico (512 por defeito). O tamanho "
+"recomendado para compatibilidade é de 512."
 
 #: services/models.py:623 services/models.py:638
 #: templates/services/iscsi_assoctargets.html:5
@@ -1755,199 +1761,216 @@ msgstr ""
 #: templates/services/iscsi_extents.html:5
 #: templates/services/iscsi_targets.html:5
 msgid "Target"
-msgstr ""
+msgstr "Destino"
 
 #: services/models.py:639
 msgid "Target this extent belongs to"
-msgstr ""
+msgstr "Esta extensão pertence ao destino"
 
 #: services/models.py:647
 msgid "Target / Extent"
-msgstr ""
+msgstr "Destino / Extensão"
 
 #: services/models.py:648
 msgid "Targets / Extents"
-msgstr ""
+msgstr "Destinos / Extensões"
 
 #: services/models.py:663
 msgid "Provider"
-msgstr ""
+msgstr "Provedor"
 
 #: services/models.py:667
 msgid "Domain name"
-msgstr ""
+msgstr "Nome de domínio"
 
 #: services/models.py:669
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
 msgstr ""
+"Um alias de nome de host. Esta opção pode aparecer várias vezes, para cada "
+"domínio que tem o mesmo IP. Use um espaço para separar vários nomes de "
+"alias."
 
 #: services/models.py:681
 msgid "Update period"
-msgstr ""
+msgstr "Período de actualização"
 
 #: services/models.py:683
 msgid "Time in milliseconds"
-msgstr ""
+msgstr "Tempo em milisegundos"
 
 #: services/models.py:687
 msgid "Forced update period"
-msgstr ""
+msgstr "Período de actualização forçada"
 
 #: services/models.py:693 services/models.py:727 services/models.py:759
 msgid "These parameters will be added to global settings in inadyn.conf."
 msgstr ""
+"Estes parâmetros serão adicionados nas configurações globais no inadyn.conf."
 
 #: services/models.py:697 services/models.py:698
 #: templates/services/index.html:40
 msgid "Dynamic DNS"
-msgstr ""
+msgstr "DNS Dinâmico"
 
 #: services/models.py:707
 msgid "Location"
-msgstr ""
+msgstr "Localização"
 
 #: services/models.py:709
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
+"Informações sobre a localização, por exemplo, localização física deste "
+"sistema: 'Andar do edifício, Sala xyzzy'."
 
 #: services/models.py:713
 msgid "Contact"
-msgstr ""
+msgstr "Contacto"
 
 #: services/models.py:715
 msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
+"Informações de contacto, por exemplo, nome ou e-mail da pessoa responsável "
+"por este sistema: 'admin@email.address'."
 
 #: services/models.py:719
 msgid "Community"
-msgstr ""
+msgstr "Comunidade"
 
 #: services/models.py:720
 msgid "In most cases, 'public' is used here."
-msgstr ""
+msgstr "Na maioria dos casos, 'público' é usado aqui."
 
 #: services/models.py:723
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "Enviar Armadilhas SNMP"
 
 #: services/models.py:731 services/models.py:732
 #: templates/services/index.html:97
 msgid "SNMP"
-msgstr ""
+msgstr "SNMP"
 
 #: services/models.py:741 storage/models.py:90
 msgid "Identifier"
-msgstr ""
+msgstr "Identificador"
 
 #: services/models.py:742
 msgid "This name is used to uniquely identify your UPS on this system."
 msgstr ""
+"Este nome é usado para identificar exclusivamente a sua UPS neste sistema."
 
 #: services/models.py:746
 msgid "Driver"
-msgstr ""
+msgstr "Driver"
 
 #: services/models.py:748
 msgid "The driver used to communicate with your UPS."
-msgstr ""
+msgstr "O driver utilizador para comunicar com a UPS."
 
 #: services/models.py:752 services/models.py:804 services/models.py:927
 msgid "Port"
-msgstr ""
+msgstr "Porta"
 
 #: services/models.py:754
 msgid "The serial or USB port where your UPS is connected."
-msgstr ""
+msgstr "A porta USB ou serial onde a UPS está ligada."
 
 #: services/models.py:770
 msgid "Shutdown mode"
-msgstr ""
+msgstr "Modo de encerramento"
 
 #: services/models.py:774
 msgid "Shutdown timer"
-msgstr ""
+msgstr "Temporizador de encerramento"
 
 #: services/models.py:775
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
 msgstr ""
+"O tempo em segundos até o encerramento ser iniciado. Se a UPS voltar a ligar "
+"antes que o tempo termine este é cancelado."
 
 #: services/models.py:778
 msgid "Remote Monitor"
-msgstr ""
+msgstr "Monitor Remoto"
 
 #: services/models.py:780
 msgid "Send Email Status Updates"
-msgstr ""
+msgstr "Enviar Actualizações de Estado por E-mail"
 
 #: services/models.py:783 services/models.py:789
 msgid "To email"
-msgstr ""
+msgstr "Para e-mail"
 
 #: services/models.py:785
 msgid "Destination email address. Separate email addresses by semi-colon."
 msgstr ""
+"Endereço de e-mail do destinatário. Endereços de e-mail separados por ponto "
+"e vírgula."
 
 #: services/models.py:790
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
+"No assunto do email. Você pode usar os seguintes parâmetros de "
+"substituição:<br /><ul><li>%d - Data</li><li>%h - Hostname</li></ul>"
 
 #: services/models.py:794 services/models.py:795
 msgid "UPS"
-msgstr ""
+msgstr "UPS"
 
 #: services/models.py:805
 msgid "Port to bind FTP server."
-msgstr ""
+msgstr "Porta para ligar o servidor FTP."
 
 #: services/models.py:809
 msgid "Clients"
-msgstr ""
+msgstr "Clientes"
 
 #: services/models.py:810
 msgid "Maximum number of simultaneous clients."
-msgstr ""
+msgstr "Número máximo de clientes em simultâneo."
 
 #: services/models.py:814
 msgid "Connections"
-msgstr ""
+msgstr "Conexões"
 
 #: services/models.py:815
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
+msgstr "Número máximo de conexões por endereço IP (0 = ilimitado)."
 
 #: services/models.py:819
 msgid "Login Attempts"
-msgstr ""
+msgstr "Tentativas para Login"
 
 #: services/models.py:820
 msgid "Maximum number of allowed password attempts before disconnection."
 msgstr ""
+"Número máximo permitido de tentativas para introduzir a password antes da "
+"desconexão."
 
 #: services/models.py:824
 msgid "Timeout"
-msgstr ""
+msgstr "Tempo limite"
 
 #: services/models.py:825
 msgid "Maximum idle time in seconds."
-msgstr ""
+msgstr "Tempo ocioso máximo em segundos."
 
 #: services/models.py:828
 msgid "Allow Root Login"
-msgstr ""
+msgstr "Permitir o Login como Root"
 
 #: services/models.py:830
 msgid "Allow Anonymous Login"
-msgstr ""
+msgstr "Permitir Login Anónimo"
 
 #: services/models.py:834 services/models.py:1184 sharing/models.py:50
 #: sharing/models.py:114 sharing/models.py:229 system/models.py:336
@@ -1955,47 +1978,49 @@ msgstr ""
 #: templates/services/iscsi_extents.html:7 templates/services/rsyncmod.html:7
 #: templates/sharing/windows.html:15 templates/storage/volumes.html:71
 msgid "Path"
-msgstr ""
+msgstr "Caminho"
 
 #: services/models.py:836
 msgid "Allow Local User Login"
-msgstr ""
+msgstr "Permitir Login de um Utilizador Local"
 
 #: services/models.py:839
 msgid "Banner"
-msgstr ""
+msgstr "Publicidade"
 
 #: services/models.py:841
 msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr ""
+msgstr "Saudação exibida por FTP quando uma conexão entra pela primeira vez."
 
 #: services/models.py:847 services/models.py:853
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr ""
+"Use esta opção para substituir a máscara de criação do arquivo (077 por "
+"defeito)."
 
 #: services/models.py:856
 msgid "Enable FXP"
-msgstr ""
+msgstr "Activar FXP"
 
 #: services/models.py:858
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "Permitir a Retoma da Transferência"
 
 #: services/models.py:860
 msgid "Always Chroot"
-msgstr ""
+msgstr "Sempre Chroot"
 
 #: services/models.py:862
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "Requer Autenticação IDENT"
 
 #: services/models.py:864
 msgid "Require Reverse DNS for IP"
-msgstr ""
+msgstr "Necessita do DNS invertido para IP"
 
 #: services/models.py:866
 msgid "Masquerade address"
-msgstr ""
+msgstr "Endereço mascarado"
 
 #: services/models.py:868
 msgid ""
@@ -2003,20 +2028,26 @@ msgid ""
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
+"Faz com que o servidor exiba as informações de rede para o endereço IP "
+"especificado para o cliente, no pressuposto de que esse endereço IP ou DNS "
+"host está a actuar como um encaminhador NAT gateway ou porta para o "
+"servidor."
 
 #: services/models.py:872
 msgid "Minimum passive port"
-msgstr ""
+msgstr "Minimo da porta passiva"
 
 #: services/models.py:873
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
 msgstr ""
+"A porta mínima para alojar as conexões de dados de estilo PASV (0 = usar "
+"qualquer porta)."
 
 #: services/models.py:877
 msgid "Maximum passive port"
-msgstr ""
+msgstr "Máximo da porta passiva"
 
 #: services/models.py:878
 msgid ""
@@ -2029,244 +2060,275 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
+"O máximo da porta para alojar as conexões de dados do estilo PASV (0 = usar "
+"qualquer porta). Portas passivas restringem o intervalo de portas que o "
+"servidor irá seleccionar quando enviou o comando PASV de um cliente. O "
+"servidor irá escolher aleatoriamente um número de dentro de um intervalo "
+"especificado até que seja encontrada uma porta aberta. O intervalo de portas "
+"seleccionado deve estar no intervalo sem privilégios (eg. maior ou igual a "
+"1024). É altamente recomendável que o intervalo escolhido ser grande o "
+"suficiente para lidar com muitas conexões simultâneas de passivos (por "
+"exemplo, 49152-65534, o intervalo de portas efémeras registado na IANA)."
 
 #: services/models.py:882
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "Largura de banda do utilizador local para upload"
 
 #: services/models.py:883
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Largura de banda de upload de utilizador local em KB/s. Zero significa "
+"infinito."
 
 #: services/models.py:887
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Largura de banda do utilizador local para download"
 
 #: services/models.py:888
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Largura de banda de download de utilizador local em KB/s. Zero significa "
+"infinito."
 
 #: services/models.py:892
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Largura de banda do utilizador anónimo para upload"
 
 #: services/models.py:893
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Largura de banda de upload de utilizador anónimo em KB/s. Zero significa "
+"infinito."
 
 #: services/models.py:897
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "Largura de banda do utilizador anónimo para download"
 
 #: services/models.py:898
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Largura de banda de download de utilizador anónimo em KB/s. Zero significa "
+"infinito."
 
 #: services/models.py:901
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "Activar SSL/TLS"
 
 #: services/models.py:906
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "Estes parâmetros são adicionados ao proftpd.conf."
 
 #: services/models.py:910 services/models.py:911
 #: templates/services/index.html:53
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:920
 msgid "Directory"
-msgstr ""
+msgstr "Directório"
 
 #: services/models.py:921
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
+"O directório que contém os arquivos que deseja publicar. O host remoto não "
+"precisa passar o directório como parte da transferência."
 
 #: services/models.py:924
 msgid "Allow New Files"
-msgstr ""
+msgstr "Permite Ficheiros Novos"
 
 #: services/models.py:928
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"A porta de escuta. Por defeito escutar a porta de tftp especificada no "
+"/etc/services."
 
 #: services/models.py:934
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "Especifica o nome do utilizador que o serviço será executado como."
 
 #: services/models.py:938
 msgid "umask"
-msgstr ""
+msgstr "umask"
 
 #: services/models.py:939
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
 msgstr ""
+"Defina o umask para arquivos recém-criados para o valor especificado. O "
+"padrão é 022 (todos podem ler, ninguém pode escrever)."
 
 #: services/models.py:943 services/models.py:980 system/models.py:424
 msgid "Extra options"
-msgstr ""
+msgstr "Opções extra"
 
 #: services/models.py:945
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "Opções extra na linha de comandos (normalmente vazias)."
 
 #: services/models.py:949 services/models.py:950
 #: templates/services/index.html:119
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:959 services/models.py:1155
 msgid "TCP Port"
-msgstr ""
+msgstr "TCP Porta"
 
 #: services/models.py:960
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "Porta alternativa TCP. Por defeito é 22"
 
 #: services/models.py:963
 msgid "Login as Root with password"
-msgstr ""
+msgstr "Faça o login como Root com a password"
 
 #: services/models.py:964
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
 msgstr ""
+"Desactivado: O login como Root pode apenas ser feito por autenticação de "
+"chave pública; Activo: É permitido o login como Root com password"
 
 #: services/models.py:967
 msgid "Allow Password Authentication"
-msgstr ""
+msgstr "Permitir a Autenticação da Palavra-chave"
 
 #: services/models.py:969
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "Permitir o encaminhamento da porta TCP"
 
 #: services/models.py:971
 msgid "Compress Connections"
-msgstr ""
+msgstr "Conexões Comprimidas"
 
 #: services/models.py:974
 msgid "Host Private Key"
-msgstr ""
+msgstr "Chave Privada do Host"
 
 #: services/models.py:976
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr ""
+msgstr "Colar uma RSA PRIVATE KEY no formato PEM aqui."
 
 #: services/models.py:982
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
 msgstr ""
+"Opções extras para /etc/ssh/sshd_config (geralmente vazio). Observe, opções "
+"introduzidas incorrectas impede que o serviço SSH possa ser iniciado."
 
 #: services/models.py:1022 services/models.py:1023
 #: templates/services/index.html:108
 msgid "SSH"
-msgstr ""
+msgstr "SSH"
 
 #: services/models.py:1032
 msgid "Domain Controller Name"
-msgstr ""
+msgstr "Nome do Controlador de Domínio"
 
 #: services/models.py:1033
 msgid "AD or PDC name."
-msgstr ""
+msgstr "AD ou PDC nome."
 
 #: services/models.py:1037
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr ""
+msgstr "Nome do domínio (DNS/Realm-Name)"
 
 #: services/models.py:1038
 msgid "Domain Name, eg example.com"
-msgstr ""
+msgstr "Nome do domínio, eg example.com"
 
 #: services/models.py:1042
 msgid "Host Name (NetBIOS-Name)"
-msgstr ""
+msgstr "Nome do Host (NetBIOS-Name)"
 
 #: services/models.py:1043
 msgid "Host Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Nome do Host no formato antigo, eg EXAMPLE"
 
 #: services/models.py:1047
 msgid "Workgroup Name"
-msgstr ""
+msgstr "Nome do Grupo de trabalho"
 
 #: services/models.py:1048
 msgid "Workgroup Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Nome do Grupo de trabalho no formato antigo, eg EXAMPLE"
 
 #: services/models.py:1052
 msgid "Administrator Name"
-msgstr ""
+msgstr "Nome do Administrador"
 
 #: services/models.py:1053
 msgid "Username of Domain Administrator Account"
-msgstr ""
+msgstr "Nome do utilizador da Conta de Administrador do Domínio"
 
 #: services/models.py:1057
 msgid "Administrator Password"
-msgstr ""
+msgstr "Password do Administrador"
 
 #: services/models.py:1058
 msgid "Password of Domain Administrator account."
-msgstr ""
+msgstr "Password do Domínio da conta de Administrador."
 
 #: services/models.py:1062 services/models.py:1063
 #: templates/services/index.html:18
 msgid "Active Directory"
-msgstr ""
+msgstr "Active Directory"
 
 #: services/models.py:1074
 msgid "The name or IP address of the LDAP server"
-msgstr ""
+msgstr "O nome ou endereço IP do servidor LDAP"
 
 #: services/models.py:1078
 msgid "Base DN"
-msgstr ""
+msgstr "Base DN"
 
 #: services/models.py:1080
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr ""
+"Por defeito Nome Distinto de base (DN) a ser usado para pesquisas, pe "
+"dc=teste,dc=org"
 
 #: services/models.py:1083
 msgid "Allow Anonymous Binding"
-msgstr ""
+msgstr "Permitir Ligação Anónima"
 
 #: services/models.py:1086
 msgid "Root bind DN"
-msgstr ""
+msgstr "Ligação Root DN"
 
 #: services/models.py:1088
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
+"Nome distinto com o qual se deseja ligar ao servidor de directório, p.e. "
+"cn=admin,dc=test,dc=org"
 
 #: services/models.py:1092
 msgid "Root bind password"
-msgstr ""
+msgstr "Root password de ligação"
 
 #: services/models.py:1094
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "Credencial com o qual se deseja ligar."
 
 #: services/models.py:1099
 msgid "Password Encryption"
-msgstr ""
+msgstr "Encriptação de Password"
 
 #: services/models.py:1100
 msgid "The password change protocol to use."
-msgstr ""
+msgstr "Protocolo de troca de password a usar."
 
 #: services/models.py:1104
 msgid "User Suffix"

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:03-0700\n"
-"PO-Revision-Date: 2011-06-05 10:41+0200\n"
-"Last-Translator: david <d.briden@orange.fr>\n"
+"PO-Revision-Date: 2011-06-08 08:20+0200\n"
+"Last-Translator: Nihilman <enfroy.eric@numeo.fr>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -705,9 +705,10 @@ msgstr "Veuillez compléter le serveur de noms 1 avant le 2"
 msgid "Parent Interface"
 msgstr "Interface parente"
 
+# "où XX est un nombre" c'est en chaine 175
 #: network/forms.py:109
 msgid "The name must be vlanXX where XX is a integer"
-msgstr "Le nom doit être vlanXX, où XX est un nombre"
+msgstr "Le nom doit être vlanXX, où XX est un entier"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -786,7 +787,7 @@ msgstr "Adresse IPv4"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr "Masque de réseau IPv4"
+msgstr "Masque de sous réseau IPv4"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
@@ -803,7 +804,7 @@ msgstr "Adresse IPv6"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr "Masque de réseau IPv6"
+msgstr "Masque de sous réseau IPv6"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
