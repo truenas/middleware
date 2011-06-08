@@ -321,11 +321,8 @@ class VolumeWizardForm(forms.Form):
                     group_type=grp_type
                 grpnum = models.DiskGroup.objects.filter(group_name=volume.vol_name+grp_type).count()
                 if grpnum > 0:
-                    if grp_type != 'log':
-                        grp = models.DiskGroup(group_name=volume.vol_name+grp_type+str(grpnum), \
-                            group_type=group_type , group_volume = volume)
-                    else:
-                        continue
+                    grp = models.DiskGroup(group_name=volume.vol_name+grp_type+str(grpnum), \
+                        group_type=group_type , group_volume = volume)
                 else:
                     grp = models.DiskGroup(group_name=volume.vol_name+grp_type, \
                             group_type=group_type , group_volume = volume)
