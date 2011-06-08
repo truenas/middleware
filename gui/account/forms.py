@@ -280,8 +280,8 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
                 gid = group.bsdgrp_gid
             uid, gid, unixhash, smbhash = notifier().user_create(
                 username = self.cleaned_data['bsdusr_username'].__str__(),
-                fullname = self.cleaned_data['bsdusr_full_name'].__str__(),
-                password = self.cleaned_data['bsdusr_password2'].__str__(),
+                fullname = self.cleaned_data['bsdusr_full_name'].encode('utf8', 'ignore').replace(":",""),
+                password = self.cleaned_data['bsdusr_password2'].encode('utf8', 'ignore'),
                 uid = self.cleaned_data['bsdusr_uid'],
                 gid = gid,
                 shell = self.cleaned_data['bsdusr_shell'].__str__(),
