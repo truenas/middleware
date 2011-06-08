@@ -101,7 +101,7 @@ generate_istgt_config()
 
 	# Generate [LogicalUnitNN] sections
 	echo "# LogicalUnit section"
-	local fields="iscsi_target_logical_blocksize iscsi_target_portalgroup_id iscsi_target_queue_depth iscsi_target_name iscsi_target_initiatorgroup_id iscsi_target_alias iscsi_target_type iscsi_target_authgroup iscsi_target_authtype iscsi_target_initialdigest iscsi_target_flags id"
+	local fields="iscsi_target_logical_blocksize iscsi_target_portalgroup_id iscsi_target_queue_depth iscsi_target_name iscsi_target_initiatorgroup_id iscsi_target_alias iscsi_target_type iscsi_target_authgroup iscsi_target_authtype iscsi_target_initialdigest iscsi_target_flags id iscsi_target_serial"
 	eval local ${fields}
 	local csfields
 	iscsi_target_lun=0
@@ -125,6 +125,7 @@ generate_istgt_config()
 			echo "  ReadOnly Yes"
 		fi
 		echo "  UnitType ${iscsi_target_type}"
+		echo "  UnitInquiry \"FreeBSD\" \"iSCSI Disk\" \"0123\" \"${iscsi_target_serial}\""
 		echo "  UnitOnline yes"
 		echo "  BlockLength ${iscsi_target_logical_blocksize}"
 		echo "  QueueDepth ${iscsi_target_queue_depth}"
