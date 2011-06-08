@@ -421,7 +421,7 @@ def reset_gui_login():
     passwird: freenas
 
 
-    Press any key to continue
+    Press Enter to continue
     """
     raw_input("")
 
