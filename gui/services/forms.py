@@ -727,7 +727,7 @@ class iSCSITargetForm(ModelForm):
         if not kwargs.has_key("instance"):
             from subprocess import Popen, PIPE
             try:
-                nic = list(choices.NICChoices(nolagg=True,novlan=True))[0][0]
+                nic = list(choices.NICChoices(nolagg=True,novlan=True,exclude_configured=False))[0][0]
                 mac = Popen("ifconfig %s ether|grep \"ether\"|awk '{print $2}'|tr -d \":\"" % nic, shell=True, stdout=PIPE).communicate()[0]
                 ltg = models.iSCSITarget.objects.order_by('-id')
                 if ltg.count() > 0:
@@ -736,7 +736,6 @@ class iSCSITargetForm(ModelForm):
                     lid = 0
                 self.fields['iscsi_target_serial'].initial = mac.strip() + "%.2d" % lid
             except:
-                raise
                 self.fields['iscsi_target_serial'].initial = "10000001"
         self.fields['iscsi_target_authgroup'].required = False
         self.fields['iscsi_target_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
