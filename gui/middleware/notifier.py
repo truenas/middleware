@@ -1294,7 +1294,7 @@ class notifier:
                     'label': label,
                     'type': 'geom',
                     'group_type': geom,
-                    'disks': disks,
+                    'disks': {'vdevs': [{'disks': disks, 'name': geom}]},
                     })
 
         RE_POOL_NAME = re.compile(r'pool: (?P<name>[a-z][a-z0-9_-]+)', re.I)

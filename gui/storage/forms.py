@@ -446,10 +446,11 @@ class VolumeAutoImportForm(forms.Form):
         vols = notifier().detect_volumes()
 
         for vol in list(vols):
-            for disk in vol['disks']:
-                if len([i for i in used_disks if disk.startswith(i)]) > 0:
-                    vols.remove(vol)
-                    break
+            for vdev in vol['disks']['vdevs']:
+                for disk in vdev['disks']:
+                    if len([i for i in used_disks if i is not None and disk.startswith(i)]) > 0:
+                        vols.remove(vol)
+                        break
 
         for vol in vols:
             devname = "%s [%s]" % (vol['label'],vol['type'])
@@ -558,7 +559,7 @@ class VolumeAutoImportForm(forms.Form):
                 grp = models.DiskGroup(group_name= volume_name, group_type = group_type, group_volume = volume)
                 grp.save()
 
-                for diskname in vol['disks']:
+                for diskname in vol['disks']['vdevs'][0]['disks']:
                     ident = notifier().device_to_identifier(diskname)
                     diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
                                    disk_description = ("Member of %s %s" %
@@ -586,7 +587,7 @@ class VolumeAutoImportForm(forms.Form):
                                     (volume.vol_name, grp_type)), disk_group = grp)
                         diskobj.save()
 
-            if not notifier().zfs_import(vol['label']):
+            if vol['type'] == 'zfs' and not notifier().zfs_import(vol['label']):
                 assert False, "Could not run zfs import"
 
         if vol['type'] == 'zfs':
