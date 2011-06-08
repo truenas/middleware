@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#- 
+#-
 # Copyright (c) 2010 iXsystems, Inc.
 # All rights reserved.
 #
@@ -882,6 +882,7 @@ class notifier:
         fromident = c.fetchone()[0]
         fromdev = self.identifier_to_partition(fromident)
         fromdev_swap = self.swap_from_identifier(fromident)
+        zdev = self.device_to_zlabel(fromdev, volume) or fromdev
 
         c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE id = ?", (to_diskid,))
         disk = c.fetchone()
@@ -891,7 +892,7 @@ class notifier:
             self.__system('/sbin/swapoff /dev/%s' % (fromdev_swap))
 
         if from_diskid == to_diskid:
-            self.__system('/sbin/zpool offline %s %s' % (volume, fromdev))
+            self.__system('/sbin/zpool offline %s %s' % (volume, zdev))
 
         self.__gpt_labeldisk(type = "freebsd-zfs", devname = todev,
                              label = "", swapsize=swapsize)
@@ -912,12 +913,12 @@ class notifier:
             self.__system('/sbin/swapon /dev/%s' % (todev_swap))
 
         if from_diskid == to_diskid:
-            self.__system('/sbin/zpool online %s %s' % (volume, fromdev))
-            ret = self.__system_nolog('/sbin/zpool replace %s %s' % (volume, fromdev))
+            self.__system('/sbin/zpool online %s %s' % (volume, zdev))
+            ret = self.__system_nolog('/sbin/zpool replace %s %s' % (volume, zdev))
             if ret == 256:
                 ret = self.__system_nolog('/sbin/zpool scrub %s' % (volume))
         else:
-            ret = self.__system_nolog('/sbin/zpool replace %s %s %s' % (volume, fromdev, todev))
+            ret = self.__system_nolog('/sbin/zpool replace %s %s %s' % (volume, zdev, todev))
         return ret
 
     def zfs_detach_disk(self, volume_id, disk_id):
@@ -1149,33 +1150,27 @@ class notifier:
             gtype = None
             for gtypes in group_type:
                 if 'mirror' == gtypes[0]:
-                    gtype = 'mirror'
+                    gtype = 'MIRROR'
                     break
                 elif 'stripe' == gtypes[0]:
-                    gtype = 'stripe'
+                    gtype = 'STRIPE'
                     break
                 elif 'raid3' == gtypes[0]:
-                    gtype = 'raid3'
+                    gtype = 'RAID3'
                     break
 
-            if gtype == 'mirror':
-                p1 = self.__pipeopen('gmirror list')
-            if gtype == 'stripe':
-                p1 = self.__pipeopen('gstripe list')
-            if gtype == 'raid3':
-                p1 = self.__pipeopen('graid3 list')
+            if gtype in ('MIRROR', 'STRIPE', 'RAID3'):
 
-            if gtype:
-                p2 = Popen(["grep", "name: %s%s" % (name, gtype), "-A", "1"], stdin=p1.stdout, stdout=PIPE)
-                p3 = Popen(["grep", "State:"], stdin=p2.stdout, stdout=PIPE)
-                p1.wait()
-                p2.wait()
-                output = p3.communicate()[0]
-                return output.split(' ')[1]
-            else:
-                return 'ONLINE'
-        else:
-                return 'UNKNOWN'
+                doc = self.__geom_confxml()
+                search = doc.xpathEval("//class[name = '%s']/geom[name = '%s']/config/State" % (gtype, name))
+                if len(search) > 0:
+                    return search[0].content
+
+                search = doc.xpathEval("//class[name = '%s']/geom[name = '%s%s']/config/State" % (gtype, name, gtype.lower()))
+                if len(search) > 0:
+                    return search[0].content
+
+        return 'UNKNOWN'
 
     def checksum(self, path, algorithm='sha256'):
         algorithm2map = {
@@ -1229,17 +1224,17 @@ class notifier:
     def precheck_partition(self, dev, fstype):
 
         if fstype == 'UFS':
-            p1 = Popen(["fsck_ufs", "-p", dev], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/sbin/fsck_ufs", "-p", dev], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
         elif fstype == 'NTFS':
-            p1 = Popen(["ntfsfix", dev], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/usr/local/bin/ntfsfix", dev], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
         elif fstype == 'MSDOSFS':
-            p1 = Popen(["fsck_msdosfs", "-p", dev], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/sbin/fsck_msdosfs", "-p", dev], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
@@ -1253,22 +1248,22 @@ class notifier:
         """
 
         if fstype == 'UFS':
-            p1 = Popen(["tunefs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/sbin/tunefs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
         elif fstype == 'NTFS':
-            p1 = Popen(["ntfslabel", dev, label], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/usr/local/sbin/ntfslabel", dev, label], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
         elif fstype == 'MSDOSFS':
-            p1 = Popen(["mlabel", "-i", dev, "::%s" % label], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/usr/local/bin/mlabel", "-i", dev, "::%s" % label], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
         elif fstype is None:
-            p1 = Popen(["geom", "label", "create", label, dev], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/sbin/geom", "label", "create", label, dev], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
@@ -1284,100 +1279,167 @@ class notifier:
         """
 
         volumes = []
+        doc = self.__geom_confxml()
         # Detect GEOM mirror, stripe and raid3
-        RE_GEOM_NAME = re.compile(r'^Geom name: (?P<name>\w+)', re.I)
-        RE_DEV_NAME = re.compile(r'Name: (?P<name>\w+)', re.I)
         for geom in ('mirror', 'stripe', 'raid3'):
-            p1 = Popen(["geom", geom, "list"], stdin=PIPE, stdout=PIPE)
-            res = p1.communicate()[0]
-            if p1.returncode == 0:
-                for item in res.split('\n\n')[:-1]:
-                    search = RE_GEOM_NAME.search(item)
-                    if search:
-                        label = search.group("name")
-                        label = label.replace(geom, '')
-                        consumers = item.split('Consumers:')[1]
-                        if RE_DEV_NAME.search(consumers):
-                            disks = []
-                            for search in RE_DEV_NAME.finditer(consumers):
-                                disks.append(search.group("name"))
-                            volumes.append({
-                                'label': label,
-                                'type': 'geom',
-                                'group_type': geom,
-                                'disks': disks,
-                                })
-
-        RE_POOL_NAME = re.compile(r'pool: (?P<name>[a-z][a-z0-9_-]+)', re.I)
-        RE_DISK = re.compile(r'(?P<disk>[a-d]{2}\d+)[a-fsp]')
-        p1 = Popen(["zpool", "import"], stdin=PIPE, stdout=PIPE)
-        res = p1.communicate()[0]
-        if p1.returncode == 0:
-            if RE_POOL_NAME.search(res):
-                label = RE_POOL_NAME.search(res).group("name")
-                status = res.split('pool: %s' % label)[1].split('config:')[1].split('pool:')[0]
-                if status.find("mirror") >= 0:
-                    group_type = 'mirror'
-                elif status.find("raidz1") >= 0:
-                    group_type = 'raidz1'
-                elif status.find("raidz2") >= 0:
-                    group_type = 'raidz2'
-                else:
-                    group_type = 'stripe'
-
+            search = doc.xpathEval("//class[name = '%s']/geom/config" % (geom.upper(),))
+            for entry in search:
+                label = entry.xpathEval('../name')[0].content
                 disks = []
-                logs = []
-                cache = []
-                spare = []
-                section = None # None, log, cache or spare
-                for line in status.split('\n'):
-                    if re.compile('^$').search(line) or not line.startswith('\t  '):
-                        if line.startswith('\tlogs'):
-                            section = 'logs'
-                        if line.startswith('\tcache'):
-                            section = 'cache'
-                        if line.startswith('\tspare'):
-                            section = 'spare'
-                        continue
-                    line = line.strip('\t').strip(' ')
-                    name = line.split(' ')[0]
-                    p1 = Popen(["geom", "label", "status", "-s"], stdin=PIPE, stdout=PIPE)
-                    p2 = Popen(["tr", "-s", " "], stdin=p1.stdout, stdout=PIPE)
-                    p3 = Popen(["sed", "-e", "s/^[ \t]//g"], stdin=p2.stdout, stdout=PIPE)
-                    p4 = Popen(["grep", "^%s" % name], stdin=p3.stdout, stdout=PIPE)
-                    p1.wait()
-                    p2.wait()
-                    p3.wait()
-                    if p4.returncode == 0:
-                        disk = p4.communicate()[0].split(' ')[2].split('\n')[0]
-                    else:
-                        disk = name
-                    if RE_DISK.search(disk):
-                        disk = RE_DISK.search(disk).group("disk")
-                    if disk in ('mirror', 'raidz1', 'raidz2'):
-                        continue
-
-                    if section == 'logs':
-                        logs.append(disk)
-                    elif section == 'cache':
-                        cache.append(disk)
-                    elif section == 'spare':
-                        spare.append(disk)
-                    else:
-                        disks.append(disk)
-
+                for consumer in entry.xpathEval('../consumer/provider'):
+                    provider = consumer.prop("ref")
+                    device = doc.xpathEval("//class[name = 'DISK']//provider[@id = '%s']/name" % provider)
+                    disks.append( device[0].content )
                 volumes.append({
                     'label': label,
-                    'type': 'zfs',
-                    'group_type': group_type,
-                    'cache': cache,
-                    'logs': logs,
-                    'spare': spare,
-                    'disks': disks,
+                    'type': 'geom',
+                    'group_type': geom,
+                    'disks': {'vdevs': [{'disks': disks, 'name': geom}]},
                     })
 
+        RE_POOL_NAME = re.compile(r'pool: (?P<name>[a-z][a-z0-9_-]+)', re.I)
+        p1 = self.__pipeopen("zpool import")
+        res = p1.communicate()[0]
+
+        class Tnode(object):
+            name = None
+            leaf = False
+            children = None
+            parent = None
+            type = None
+
+            def __init__(self, name, doc):
+                self._doc = doc
+                self.name = name
+                self.children = []
+
+            def find_by_name(self, name):
+                for c in self.children:
+                    if c.name == name:
+                        return c
+                return None
+
+            def append(self, tnode):
+                self.children.append(tnode)
+                tnode.parent = self
+
+            @staticmethod
+            def pprint(node, level=0):
+                print '   ' * level + node.name
+                for c in node.children:
+                    node.pprint(c, level+1)
+
+            def __repr__(self):
+                if not self.parent:
+                    return "<Section: %s>" % self.name
+                return "<Node: %s>" % self.name
+
+            def _is_vdev(self, name):
+                if name in ('stripe', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3') \
+                    or re.search(r'^(mirror|raidz|raidz1|raidz2|raidz3)(-\d+)?$', name):
+                    return True
+                return False
+
+            def __iter__(self):
+                for c in list(self.children):
+                    yield c
+
+            def _vdev_type(self, name):
+                if name.startswith('stripe'):
+                    return "stripe"
+                elif name.startswith('mirror'):
+                    return "mirror"
+                elif name.startswith("raidz3"):
+                    return "raidz3"
+                elif name.startswith("raidz2"):
+                    return "raidz3"
+                elif name.startswith("raidz"):
+                    return "raidz"
+                return False
+
+            def validate(self, level=0):
+                for c in self:
+                    c.validate(level+1)
+                if level == 1:
+                    if len(self.children) == 0:
+                        stripe = self.parent.find_by_name("stripe")
+                        if not stripe:
+                            stripe = Tnode("stripe", self._doc)
+                            stripe.type = 'stripe'
+                            self.parent.append(stripe)
+                        self.parent.children.remove(self)
+                        stripe.append(self)
+                        stripe.validate(level)
+                    else:
+                        self.type = self._vdev_type(self.name)
+                elif level == 2:
+                    # The parent of a leaf should be a vdev
+                    if not self._is_vdev(self.parent.name) and \
+                        self.parent.parent is not None:
+                        raise Exception("Oh noes! This damn thing should be a vdev! %s" % self.parent)
+                    search = self._doc.xpathEval("//class[name = 'LABEL']//provider[name = '%s']/../name" % self.name)
+                    if len(search) > 0:
+                        self.devname = search[0].content
+                    else:
+                        search = self._doc.xpathEval("//class[name = 'DEV']/geom[name = '%s']" % self.name)
+                        if len(search) > 0:
+                            self.devname = self.name
+                        else:
+                            raise Exception("It should be a valid device: %s" % self.name)
+
+            def dump(self, level=0):
+                if level == 2:
+                    return self.devname
+                if level == 1:
+                    disks = []
+                    for c in self:
+                        disks.append(c.dump(level+1))
+                    return {'disks': disks, 'type': self.type}
+                if level == 0:
+                    self.validate()
+                    vdevs = []
+                    for c in self:
+                        vdevs.append(c.dump(level+1))
+                    return {'name': self.name, 'vdevs': vdevs}
+
+        for pool in RE_POOL_NAME.findall(res):
+            # get status part of the pool
+            status = res.split('pool: %s' % pool)[1].split('config:')[1].split('pool:')[0]
+            roots = {'cache': None, 'logs': None, 'spares': None}
+            lastident = None
+            for line in status.split('\n'):
+                if line.startswith('\t'):
+                    spaces, word = re.search(r'^(?P<spaces>[ ]*)(?P<word>\S+)', line[1:]).groups()
+                    ident = len(spaces) / 2
+                    if ident == 0:
+                        tree = Tnode(word, doc)
+                        roots[word] = tree
+                        pnode = tree
+                    elif ident == lastident + 1:
+                        node = Tnode(word, doc)
+                        pnode.append(node)
+                        pnode = node
+                    elif ident == lastident:
+                        node = Tnode(word, doc)
+                        pnode.parent.append(node)
+                    elif ident < lastident:
+                        node = Tnode(word, doc)
+                        tree.append(node)
+                        pnode = node
+                    lastident = ident
+
+            volumes.append({
+                'label': pool,
+                'type': 'zfs',
+                'group_type': 'none',
+                'cache': roots['cache'].dump() if roots['cache'] else None,
+                'logs': roots['logs'].dump() if roots['logs'] else None,
+                'spare': roots['spares'].dump() if roots['spares'] else None,
+                'disks': roots[pool].dump(),
+                })
+
         return volumes
-            
+
     def zfs_import(self, name):
         imp = self.__pipeopen('zpool import -R /mnt %s' % name)
         imp.wait()
@@ -1387,6 +1449,13 @@ class notifier:
             # These should probably be options that are configurable from the GUI
             self.__system("zfs set aclmode=passthrough %s" % name)
             self.__system("zfs set aclinherit=passthrough %s" % name)
+            return True
+        return False
+
+    def zfs_export(self, name):
+        imp = self.__pipeopen('zpool export %s' % str(name))
+        imp.wait()
+        if imp.returncode == 0:
             return True
         return False
 
@@ -1545,9 +1614,9 @@ class notifier:
         p1 = self.__pipeopen("zfs list -t filesystem -o name -H -r %s" % str(vol_name))
         ret = p1.communicate()[0].split('\n')[1:-1]
         for dataset in ret:
-            name = "".join(dataset.split('/')[1:])
+            name = "/".join(dataset.split('/')[1:])
             mp = os.path.join(mp_path, name)
-            c.execute("INSERT INTO storage_mountpoint (mp_volume_id, mp_path, mp_options, mp_ischild) VALUES (?, ?, ?, ?)", (vol_id, mp,"noauto","1"), )
+            c.execute("INSERT INTO storage_mountpoint (mp_volume_id, mp_path, mp_options, mp_ischild) VALUES (?, ?, ?, ?)", (vol_id, mp, "noauto", "1"), )
         conn.commit()
         c.close()
 
@@ -1559,7 +1628,7 @@ class notifier:
     def serial_from_device(self, devname):
         p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
         output = p1.communicate()[0]
-        search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I)
+        search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I|re.M)
         if search:
             return search.group("serial")
         return None
@@ -1568,10 +1637,10 @@ class notifier:
         name = str(name)
         doc = self.__geom_confxml()
 
-        search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-zfs']/rawuuid" % name)
+        search = doc.xpathEval("//class[name = 'PART']/..//*[name = '%s']//config[type = 'freebsd-zfs']/rawuuid" % name)
         if len(search) > 0:
             return "{uuid}%s" % search[0].content
-        search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-ufs']/rawuuid" % name)
+        search = doc.xpathEval("//class[name = 'PART']/geom/..//*[name = '%s']//config[type = 'freebsd-ufs']/rawuuid" % name)
         if len(search) > 0:
             return "{uuid}%s" % search[0].content
 
@@ -1581,7 +1650,7 @@ class notifier:
 
         serial = self.serial_from_device(name)
         if serial:
-            return serial
+            return "{serial}%s" % serial
 
         return "{devicename}%s" % name
 
@@ -1648,7 +1717,6 @@ class notifier:
 
     def swap_from_device(self, device):
         doc = self.__geom_confxml()
-
         search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-swap']/../name" % device)
         if len(search) > 0:
             return search[0].content
@@ -1657,6 +1725,18 @@ class notifier:
 
     def swap_from_identifier(self, ident):
         return self.swap_from_device(self.identifier_to_device(ident))
+
+    def device_to_zlabel(self, devname, pool):
+        status = self.__pipeopen("zpool status %s" % (str(pool),)).communicate()[0]
+
+        doc = self.__geom_confxml()
+        search = doc.xpathEval("//class[name = 'LABEL']/geom[name = '%s']//provider/name" % devname)
+
+        for entry in search:
+            if re.search(r'\b%s\b' % entry.content, status):
+                print "h,"
+                return entry.content
+        return None
 
 def usage():
     print ("Usage: %s action command" % argv[0])

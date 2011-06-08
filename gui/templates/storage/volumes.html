@@ -192,6 +192,15 @@
     <div dojoType="dijit.Tooltip" connectId="viewDisksBtn{{ m.id }}" position="above">
         <strong>{% trans "View Disks" %}</strong>
     </div>
+    <button id="exptBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
+        Export
+        <script type="dojo/method" event="onClick" args="evt">
+            editObject('{% trans "Export Volume"|force_escape %}', '{% url storage_export vid=m.mp_volume.id %}', [this,]);
+        </script>
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="snapBtn{{ m.id }}" position="above">
+        <strong>{% trans "Export Volume" %}</strong>
+    </div>
 {% endif %}
 	    </td>
 	</tr>

@@ -297,7 +297,7 @@ class whoChoices:
         return iter((i, i) for i in self._wholist)
 
 ## Network|Interface Management
-class NICChoices:
+class NICChoices(object):
     """Populate a list of NIC choices"""
     def __init__(self, nolagg=False, novlan=False, exclude_configured=True):
         pipe = popen("/sbin/ifconfig -l")
@@ -441,4 +441,17 @@ ACCESS_MODE = (
     ('ro', _('Read-only')),
     ('wo', _('Write-only')),
     ('rw', _('Read and Write')),
+    )
+
+TASK_INTERVAL = (
+    (15, _("%(minutes)s minutes") % {'minutes': '15'}),
+    (30, _("%(minutes)s minutes") % {'minutes': '30'}),
+    (60, _("%(hour)s hour") % {'hour': '1'}),
+    (120, _("%(hours)s hours") % {'hours': '2'}),
+    (180, _("%(hours)s hours") % {'hours': '3'}),
+    (240, _("%(hours)s hours") % {'hours': '4'}),
+    (360, _("%(hours)s hours") % {'hours': '6'}),
+    (720, _("%(hours)s hours") % {'hours': '12'}),
+    (1440, _("%(day)s day") % {'day': '1'}),
+    (10080, _("%(week)s week") % {'week': '1'}),
     )

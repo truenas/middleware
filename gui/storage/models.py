@@ -50,8 +50,9 @@ class Volume(Model):
             )
     class Meta:
         verbose_name = _("Volume")
-    def delete(self):
-        notifier().destroy("volume", self.id)
+    def delete(self, destroy=True):
+        if destroy:
+            notifier().destroy("volume", self.id)
         notifier().restart("collectd")
         # The framework would cascade delete all database items
         # referencing this volume.
@@ -241,6 +242,10 @@ class Replication(Model):
     repl_zfs = models.CharField(max_length=120,
             verbose_name = _("Remote ZFS filesystem"),
             )
+    repl_userepl = models.BooleanField(
+            default = False,
+            verbose_name = _("Recursively replicate and remove stale snapshot on remote side"),
+            )
     class Meta:
         verbose_name = _(u"Replication Task")
         verbose_name_plural = _(u"Replication Tasks")
@@ -282,7 +287,7 @@ class Task(Model):
             )
     task_interval = models.PositiveIntegerField(
             default = 60,
-            choices = [(x,"%s minutes" % x) for x in (15, 30, 60, 120, 180, 240)],
+            choices = choices.TASK_INTERVAL,
             max_length = 120,
             verbose_name = _("Interval"),
             help_text = _("How many minutes passed before a new snapshot is made after the last one."),

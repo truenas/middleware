@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:07-0700\n"
-"PO-Revision-Date: 2011-05-27 17:18+0200\n"
-"Last-Translator: qwerty1965 <c.coppola@inwind.it>\n"
+"PO-Revision-Date: 2011-06-03 09:45+0200\n"
+"Last-Translator: dgrossato.101 <dgrossato.101@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -111,34 +111,28 @@ msgid "Disabled"
 msgstr "Disabilitato"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Consumo minimo con Stanby (spindown)"
+msgstr "Livello 1 - Consumo minimo con Standby (spindown)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Consumo medio con Standby"
+msgstr "Livello 64 - Consumo medio in Standby"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Consumo medio con Standby"
+msgstr "Livello 127 - Consumo medio in Standby"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Consumo minimo senza Standby (no spindown)"
+msgstr "Livello 128 - Consumo minimo senza Standby (no spindown)"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Consumo medio senza Standby"
+msgstr "Livello 192 - Consumo medio senza Standby"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Prestazioni massime, consumo di energia massimo"
+msgstr "Livello 254 - Prestazioni massime, consumo di energia massimo"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -359,19 +353,16 @@ msgid "lzjb (recommended)"
 msgstr "lzjb (consigliato)"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "Livello predefinito"
+msgstr "gzip - Livello predefinito"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "più veloce"
+msgstr "gzip - più veloce"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "massimo, lento"
+msgstr "gzip - compressione massima, lento"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -408,13 +399,12 @@ msgid "Read-only"
 msgstr "sola lettura"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "sola lettura"
+msgstr "sola scrittura"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Lettura e Scrittura"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -641,12 +631,12 @@ msgstr "Il gruppo %s non è valido."
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Aggiungi %s"
 
 #: freeadmin/navtree.py:327
 #, fuzzy, python-format
 msgid "View All %s"
-msgstr "Visualizza tutti gli utenti"
+msgstr "Visualizza tutti %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -672,7 +662,7 @@ msgstr "%s aggiornato con successo"
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Riavvio del servizio fallito"
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -711,7 +701,7 @@ msgstr "Il nome dell'interfaccia deve essere vlanXX dove XX sono dei numeri"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "I Tag VLAN possono essere compresi tra 1 e 4095 inclusi"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -916,7 +906,7 @@ msgstr "%s aggiunto con successo."
 
 #: services/forms.py:70
 msgid "N/A"
-msgstr ""
+msgstr "N/A"
 
 #: services/forms.py:79
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -928,12 +918,14 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Questo campo è obbligatorio per \"directory base\"."
 
 #: services/forms.py:99
+#, fuzzy
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "Riavvio del servizio AFP fallito"
 
 #: services/forms.py:108
+#, fuzzy
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "Riavvio del servizio NFS fallito"
 
 #: services/forms.py:112
 msgid "File Permission"
@@ -972,39 +964,40 @@ msgstr "Questo campo e' necessario per un login anonimo"
 
 #: services/forms.py:200
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "Avvio del servizo ftp fallito"
 
 #: services/forms.py:209
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "Riavvio del servizio tfp fallito"
 
 #: services/forms.py:216
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "Riavvio del servizio SSH fallito"
 
 #: services/forms.py:225 services/forms.py:253
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Riavvio del servizio Rsync fallito"
 
 #: services/forms.py:238
+#, fuzzy
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "Il nome non può contenere / o ]"
 
 #: services/forms.py:262
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "Riavvio del servizio DynamicDNS fallito"
 
 #: services/forms.py:271
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "Riavvio del servizio SNMP fallito"
 
 #: services/forms.py:285
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "Il riavvio del servizio di ActiveDirectory  fallito"
 
 #: services/forms.py:296
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "Riavvio del servizio ldap fallito"
 
 #: services/forms.py:302 services/models.py:529
 #: templates/services/iscsi_auth.html:7
@@ -1052,7 +1045,7 @@ msgstr "La password per peer non può essere uguale alla password dell'utente."
 #: services/forms.py:537 services/forms.py:584 services/forms.py:683
 #: services/forms.py:705 services/forms.py:726 services/forms.py:758
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "Il riavvio del servizio iSCSI fallito"
 
 #: services/forms.py:385
 msgid "LUN already exists in the same target."
@@ -1080,7 +1073,6 @@ msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr "Questo valore deve essere compreso tra %(start)d e %(end)d, compresi."
 
 #: services/forms.py:433
-#, fuzzy
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
@@ -1313,7 +1305,6 @@ msgid "Minimal AIO read size"
 msgstr "Dimensione di lettura AIO minima"
 
 #: services/models.py:162
-#, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
@@ -1326,7 +1317,6 @@ msgid "Minimal AIO write size"
 msgstr "Dimensione di scrittura AIO minima"
 
 #: services/models.py:168
-#, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
@@ -2101,10 +2091,9 @@ msgid "Local user upload bandwidth"
 msgstr "Larghezza si banda per gli upload dell'utente locale"
 
 #: services/models.py:883
-#, fuzzy
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
-"Larghezza si banda per gli upload dell'utente locale in KB/s. Zero significa "
+"Larghezza di banda per gli upload dell'utente locale in KB/s. Zero significa "
 "infinito."
 
 #: services/models.py:887
@@ -2112,7 +2101,6 @@ msgid "Local user download bandwidth"
 msgstr "Larghezza si banda per i download dell'utente locale"
 
 #: services/models.py:888
-#, fuzzy
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Larghezza si banda per i download dell'utente locale in KB/s. Zero significa "
@@ -2123,10 +2111,9 @@ msgid "Anonymous user upload bandwidth"
 msgstr "Larghezza si banda per gli upload dell'utente anonimo"
 
 #: services/models.py:893
-#, fuzzy
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
-"Larghezza si banda per gli upload dell'utente anonimo in KB/s. Zero "
+"Larghezza di banda per gli upload dell'utente anonimo in KB/s. Zero "
 "significa infinito."
 
 #: services/models.py:897
@@ -2134,10 +2121,9 @@ msgid "Anonymous user download bandwidth"
 msgstr "Larghezza si banda per i download dell'utente anonimo"
 
 #: services/models.py:898
-#, fuzzy
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
-" Larghezza si banda per i download dell'utente anonimo in KB/s. Zero "
+" Larghezza di banda per i download dell'utente anonimo in KB/s. Zero "
 "significa infinito."
 
 #: services/models.py:901
@@ -2441,24 +2427,21 @@ msgid "LDAP"
 msgstr "LDAP"
 
 #: services/models.py:1156
-#, fuzzy
 msgid "Alternate TCP port. Default is 873"
-msgstr "Porta TCP alternativa. Il default è 22"
+msgstr "Porta TCP alternativa. Il default è 873"
 
 #: services/models.py:1161
-#, fuzzy
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
 msgstr ""
-"Questi parametri verranno aggiunti alle impostazioni globali in inadyn.conf."
+"Questi parametri verranno aggiunti alle impostazioni globali in rsyncd.conf"
 
 #: services/models.py:1165 services/models.py:1166
 msgid "Rsyncd"
-msgstr ""
+msgstr "Rsyncd"
 
 #: services/models.py:1176
-#, fuzzy
 msgid "Module name"
-msgstr "Nome Volume"
+msgstr "Nome modulo"
 
 #: services/models.py:1185
 #, fuzzy

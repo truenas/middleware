@@ -29,7 +29,7 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from storage.models import MountPoint as MountPoint 
+from storage.models import MountPoint as MountPoint
 from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField, PathField
 
@@ -266,7 +266,7 @@ class NFS_Share(Model):
             default = '',
             help_text = _("User to map all users to")
             )
-    
+
     nfs_mapall_group = GroupField(
             verbose_name = _("Mapall Group"),
             max_length = 120,

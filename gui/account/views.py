@@ -120,7 +120,7 @@ def user2group_update(request, object_id):
         'form' : f,
     })
 
-def json_users(request):
+def json_users(request, exclude=None):
 
     from common.freenasldap import FreeNAS_Users
     query = request.GET.get("q", None)
@@ -131,11 +131,16 @@ def json_users(request):
         'items': [],
     }
 
+    if exclude:
+        exclude = exclude.split(',')
+    else:
+        exclude = []
     idx = 1
     for user in FreeNAS_Users():
         if idx > 50:
             break
-        if query == None or user.bsdusr_username.startswith(query):
+        if (query == None or user.bsdusr_username.startswith(query)) and \
+          user.bsdusr_username not in exclude:
             json['items'].append({
                 'id': user.bsdusr_username,
                 'name': user.bsdusr_username,

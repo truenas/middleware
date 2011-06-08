@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:02-0700\n"
-"PO-Revision-Date: 2011-06-02 09:10+0200\n"
-"Last-Translator: mlohr <markus-pauli@gmx.de>\n"
+"PO-Revision-Date: 2011-06-04 01:08+0200\n"
+"Last-Translator: raymond <raymondv@gmx.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -114,35 +114,32 @@ msgstr "Deaktiviert"
 # auch würde ich evtl. eher drauf hinweisen, das es sich um das Abschalten der *Drehung* handelt, was beim Andrehen zu Zeitverlust führt!!!
 # kann man (solche)  "Anmerkungen" in die GUI hochgeben?
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Minimaler Stromverbrauch mit Bereitschaftsmodus (Platten abschalten)"
+msgstr ""
+"Level 1 - Minimaler Stromverbrauch mit Bereitschaftsmodus (Platten "
+"abschalten)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Mittlerer Stromverbrauch mit Bereitschaftsmodus"
+msgstr "Level 64 - Mittlerer Stromverbrauch mit Bereitschaftsmodus"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Mittlerer Stromverbrauch mit Bereitschaftsmodus"
+msgstr "Level 127 - Mittlerer Stromverbrauch mit Bereitschaftsmodus"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
 msgstr ""
-"Minimaler Stromverbrauch ohne Bereitschaftsmodus (Platten nicht abschalten)"
+"Level 128 - Minimaler Stromverbrauch ohne Bereitschaftsmodus (Platten nicht "
+"abschalten)"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Mittlerer Stromverbrauch ohne Bereitschaftsmodus"
+msgstr "Level 192 - Mittlerer Stromverbrauch ohne Bereitschaftsmodus"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Maximale Leistung, maximaler Stromverbrauch"
+msgstr "Level 254 - Maximale Leistung, maximaler Stromverbrauch"
 
 # je nach Kontext vielleicht auch "Minimal"?
 #: choices.py:91 choices.py:179
@@ -234,9 +231,10 @@ msgstr "Samstag"
 msgid "Sunday"
 msgstr "Sonntag"
 
+# "Anonymous" - ein alter Login- / Eigenname aus dem letzten Jahrtausend ;-)
 #: choices.py:158
 msgid "Anonymous"
-msgstr "Anonym"
+msgstr "Anonymous"
 
 #: choices.py:159
 msgid "Local User"
@@ -251,6 +249,7 @@ msgstr "Normal"
 msgid "Full"
 msgstr "Vollständig"
 
+# Verwendung in choices.py legt Verwendung des Begriffs als Log Level nahe
 #: choices.py:182
 msgid "Debug"
 msgstr "Debug"
@@ -321,7 +320,6 @@ msgstr "nur lesen"
 
 #: choices.py:216 choices.py:222 services/forms.py:404 services/forms.py:406
 #: services/forms.py:736 templates/storage/wizard.html:92
-#, fuzzy
 msgid "None"
 msgstr "Keine"
 
@@ -340,7 +338,7 @@ msgstr "USV erreicht niedrigen Ladestand"
 
 #: choices.py:242
 msgid "UPS goes on battery"
-msgstr "USV im Akku-Betrieb"
+msgstr "USV wechselt in den Akku-Betrieb"
 
 #: choices.py:245
 msgid "Preferred"
@@ -377,15 +375,13 @@ msgstr "gzip (Standardkompression, Level 6)"
 
 # je nach Kontext auch "Schnellster"
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "schnellste"
+msgstr "gzip (schnellste)"
 
 # die Kompressionsstufe bei ZFS
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "beste, langsam"
+msgstr "gzip (beste, langsam)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -417,18 +413,16 @@ msgid "Every selected weekday"
 msgstr "Jeden ausgewählten Wochentag"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
 msgstr "nur lesbar"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "nur lesbar"
+msgstr "nur schreibbar"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "lesbar und schreibbar"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -476,6 +470,7 @@ msgstr "Geben Sie das Passwort zur Prüfung erneut wie oben ein."
 msgid "Shell"
 msgstr "Shell"
 
+# könnte je nach Kontext auch heißen: Anmeldungen (aller Benutzer) deaktivieren
 #: account/forms.py:205 account/forms.py:345
 msgid "Disable logins"
 msgstr "Login deaktivieren"
@@ -585,6 +580,7 @@ msgstr "Heimatverzeichnis"
 msgid "Full Name"
 msgstr "Vollständiger Name"
 
+# der Begriff sollte durchgängig gleich geschrieben sein. Duden sagt: E-Mail
 #: account/models.py:115 templates/account/bsdusers.html:91
 msgid "E-mail"
 msgstr "E-Mail"
@@ -666,12 +662,12 @@ msgstr "Die Gruppe %s ist ungültig."
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "%s hinzufügen"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "Alle Benutzer anzeigen"
+msgstr "Alle %s anzeigen"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -697,7 +693,7 @@ msgstr "%s erfolgreich aktualisiert."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Der Dienst konnte nicht wieder gestartet werden."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -725,18 +721,16 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "Nameserver 1 muss vor Nameserver 2 eingetragen werden"
 
 #: network/forms.py:100
-#, fuzzy
 msgid "Parent Interface"
-msgstr "Netzwerkschnittstelle löschen"
+msgstr "Haupt-Netzwerkschnittstelle"
 
 #: network/forms.py:109
-#, fuzzy
 msgid "The name must be vlanXX where XX is a integer"
 msgstr "Schnittstellennamen müssen vlanXX sein, wobei XX für eine Nummer steht"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN Tags sind inklusive 1 - 4095"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -791,7 +785,7 @@ msgstr "Schnittstellenname"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr "Benennen Sie Ihre Netzwerkkarte"
+msgstr "Benennen Sie Ihre Netzwerkkarte."
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
@@ -875,7 +869,6 @@ msgid "VLAN"
 msgstr "VLAN"
 
 #: network/models.py:200
-#, fuzzy
 msgid "VLANs"
 msgstr "VLAN"
 
@@ -946,7 +939,7 @@ msgstr "%s erfolgreich hinzugefügt"
 
 #: services/forms.py:70
 msgid "N/A"
-msgstr ""
+msgstr "nicht zutreffend"
 
 #: services/forms.py:79
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -959,11 +952,11 @@ msgstr "Diese Feld wird für \"Heimatverzeichnisse\" benötigt."
 
 #: services/forms.py:99
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "Der AFP Dienst konnte nicht wieder geladen werden."
 
 #: services/forms.py:108
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "Der NFS Dienst konnte nicht wieder geladen werden."
 
 #: services/forms.py:112
 msgid "File Permission"
@@ -1001,39 +994,39 @@ msgstr "Dieses Feld ist für die anonyme Anmeldung notwendig"
 
 #: services/forms.py:200
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "Der TFTP Dienst konnte nicht wieder gestartet werden."
 
 #: services/forms.py:209
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "Der TFTP Dienst konnte nicht wieder geladen werden."
 
 #: services/forms.py:216
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "Der SSH Dienst konnte nicht wieder geladen werden."
 
 #: services/forms.py:225 services/forms.py:253
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Der Rsync Dienst konnte nicht wieder geladen werden."
 
 #: services/forms.py:238
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "Der Name darf kein Slash oder schließende Klammer enthalten."
 
 #: services/forms.py:262
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "Der DDNS Dienst konnte nicht wieder geladen werden."
 
 #: services/forms.py:271
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "Der SNMP Dienst konnte nicht wieder geladen werden."
 
 #: services/forms.py:285
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "Der Active Directory Dienst konnte nicht wieder geladen werden."
 
 #: services/forms.py:296
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "Der LDAP Dienst konnte nicht wieder geladen werden."
 
 #: services/forms.py:302 services/models.py:529
 #: templates/services/iscsi_auth.html:7
@@ -1082,7 +1075,7 @@ msgstr ""
 #: services/forms.py:537 services/forms.py:584 services/forms.py:683
 #: services/forms.py:705 services/forms.py:726 services/forms.py:758
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "Der iSCSI Dienst konnte nicht wieder geladen werden."
 
 #: services/forms.py:385
 msgid "LUN already exists in the same target."
@@ -1111,12 +1104,11 @@ msgstr "Dieser Wert muss zwischen %(start)d und einschließlich %(end)d liegen."
 
 # Syntax Error in English Text!
 #: services/forms.py:433
-#, fuzzy
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
-"Diese Feld ist notwendig, falls die Discovery-Methode auf CHAP oder CHAP "
-"Mutual eingestellt ist"
+"Dieses Feld ist notwendig, falls die Discovery-Methode auf CHAP oder CHAP "
+"Mutual eingestellt ist."
 
 #: services/forms.py:516 services/forms.py:546
 msgid "You need to specify a filepath, not a directory."
@@ -1159,9 +1151,8 @@ msgid "Authentication Group number"
 msgstr "Authentication Group Number"
 
 #: services/forms.py:761
-#, fuzzy
 msgid "Delete underlying file"
-msgstr "Netzwerkschnittstelle löschen"
+msgstr "Lösche darunterliegende Datei"
 
 #: services/models.py:42
 msgid "Service"
@@ -1343,26 +1334,24 @@ msgid "Minimal AIO read size"
 msgstr "Mindestgröße für AIO Lesezugriffe"
 
 #: services/models.py:162
-#, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
 msgstr ""
 "Samba verwendet asynchrone Lesezugriffe, wenn die Anfrage die eingestellte "
-"Größe überschreitet.Der Standardwert liegt bei 1."
+"Größe überschreitet. Der Standardwert liegt bei 1."
 
 #: services/models.py:167
 msgid "Minimal AIO write size"
 msgstr "Mindestgröße für AIO Schreibzugriffe"
 
 #: services/models.py:168
-#, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
 msgstr ""
 "Samba verwendet asynchrone Schreibzugriffe, wenn die Anfrage die "
-"eingestellte Größe überschreitet.Der Standardwert liegt bei 1."
+"eingestellte Größe überschreitet. Der Standardwert liegt bei 1."
 
 #: services/models.py:173 services/models.py:174
 #: templates/services/index.html:29
@@ -1396,11 +1385,11 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
-"Verwende diese Funktion, um den Nutzeramen zu überschreiben, der zum Zugriff "
-"auf Gastservices verwendet wird (Standartmäßig 'www'). Rechte, die diesem "
-"Nutzer zustehen sind jedem Client verfügbar der sich als Gast verbindet. "
-"Dieser Nutzer muss in der Passwortdatei bestehen, benötigt aber keinen "
-"gültigen Login."
+"Verwende diese Funktion, um den Nutzernamen zu überschreiben, der zum "
+"Zugriff auf Gastservices verwendet wird (standardmäßig 'www'). Rechte, die "
+"diesem Nutzer zustehen, sind jedem Client verfügbar, der sich als Gast "
+"verbindet. Dieser Nutzer muss in der Passwortdatei bestehen, benötigt aber "
+"keinen gültigen Login."
 
 #: services/models.py:197
 msgid "Local Access"
@@ -1592,13 +1581,11 @@ msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "Der TCP-Port des Logical Unit Controllers (3261 ist voreingestellt)."
 
 #: services/models.py:339
-#, fuzzy
 msgid "Controller Authorized netmask"
 msgstr "Vom Controller authorisierte Netzmaske"
 
 # "authorisierte Netzmaske" korrekt/sinnvoll?
 #: services/models.py:341
-#, fuzzy
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
 msgstr ""
 "Authorisierte Netzmaske des Logical Unit Controllers (255.255.255.0 ist "
@@ -1675,7 +1662,7 @@ msgstr "Sie können hier eine Beschreibung eingeben. "
 #: services/models.py:400 services/models.py:644
 #: templates/services/iscsi_assoctargets.html:6
 msgid "Extent"
-msgstr "Extent"
+msgstr "Erweiterung"
 
 # Übersetzen oder nicht?
 #: services/models.py:435 services/models.py:585
@@ -1696,9 +1683,9 @@ msgid ""
 msgstr ""
 "Das Portal wird in der Schreibweise \"Adresse:Port\" angegeben. Zum Beispiel "
 "\"192.168.1.1:3260\" für IPv4 oder \"[2001:db8:1:1::1]:3260\" für IPv6. Der "
-"Standarport für iSCSI ist 3260. Um alle IP-Adressen zu verwenden, benutzen "
-"Sie \"0,0,0,0;3260\" und/oder \"[::]:3260\". Sie dürfen diese Wildcard-"
-"Adressen jedoch nicht mit normalen IP-Adressen der gleichen Adressfamilie "
+"Standardport für iSCSI ist 3260. Um alle IP-Adressen zu verwenden, benutzen "
+"Sie \"0,0,0,0:3260\" und/oder \"[::]:3260\". Sie dürfen diese Wildcard-Adressen "
+"jedoch nicht mit normalen IP-Adressen der gleichen Adressfamilie "
 "kombinieren. "
 
 #: services/models.py:479 templates/services/iscsi_authini.html:6
@@ -1810,7 +1797,7 @@ msgstr "ID der Authentifizierungsgruppe"
 
 #: services/models.py:613
 msgid "Queue Depth"
-msgstr "Queue Depth"
+msgstr "Queue Tiefe"
 
 #: services/models.py:614
 msgid ""
@@ -1843,14 +1830,13 @@ msgstr "Target"
 # bitte um Gegenprüfung :)
 #: services/models.py:639
 msgid "Target this extent belongs to"
-msgstr "Dieses Extent gehört zu Target"
+msgstr "Ziel, zu dem diese Erweiterung gehört"
 
 #: services/models.py:647
 msgid "Target / Extent"
 msgstr "Target / Extent"
 
 #: services/models.py:648
-#, fuzzy
 msgid "Targets / Extents"
 msgstr "Target / Extent"
 
@@ -1860,7 +1846,7 @@ msgstr "Anbieter"
 
 #: services/models.py:667
 msgid "Domain name"
-msgstr "Hostname"
+msgstr "Domainname"
 
 # bitte um Gegenprüfung
 #: services/models.py:669
@@ -2151,7 +2137,7 @@ msgstr ""
 "Portnummer ein, die der Server für PASV-Kommandos an den Client übermitteln "
 "kann. Der Server wird eine zufällige Portnummer aus der Liste der "
 "verfügbaren Ports auswählen. Dies geschieht solange, bis ein freier Port "
-"gefunden wurde.  Die Ports müssen sich im Bereich der nicht-privilegierten "
+"gefunden wurde. Die Ports müssen sich im Bereich der nicht-privilegierten "
 "Portnummern befinden (d.h. Portnummern ab 1024).Wir empfehlen Ihnen "
 "dringend, einen Bereich auszuwählen, der groß genug ist, um viele simultane "
 "PASV-Verbindungen zu ermöglichen (zum Beispiel 49152-65534, der von IANA "
@@ -2162,7 +2148,6 @@ msgid "Local user upload bandwidth"
 msgstr "Upload-Bandbreite für angemeldete Benutzer"
 
 #: services/models.py:883
-#, fuzzy
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Erlaubte Upload-Bandbreite für angemeldete Benutzer in KB/s. Null steht für "
@@ -2173,7 +2158,6 @@ msgid "Local user download bandwidth"
 msgstr "Download-Bandbreite für angemeldete Benutzer"
 
 #: services/models.py:888
-#, fuzzy
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Erlaubte Download-Bandbreite für angemeldete Benutzer in KB/s. Null steht "
@@ -2184,7 +2168,6 @@ msgid "Anonymous user upload bandwidth"
 msgstr "Upload-Bandbreite für Gast-Benutzer"
 
 #: services/models.py:893
-#, fuzzy
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Erlaubte Upload-Bandbreite für Gast-Benutzer in KB/s. Null steht für keine "
@@ -2195,7 +2178,6 @@ msgid "Anonymous user download bandwidth"
 msgstr "Download-Bandbreite für Gast-Benutzer"
 
 #: services/models.py:898
-#, fuzzy
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Erlaubte Download-Bandbreite für Gast-Benutzer in KB/s. Null steht für keine "
@@ -2238,7 +2220,7 @@ msgid ""
 "in /etc/services."
 msgstr ""
 "Diese Portnummer für Verbindungen verwenden. In der Standardeinstellung wird "
-"die Portnummer des \"tftpd\"-Dienstes verwendet, die in /etc/services "
+"die Portnummer des \"tftp\"-Dienstes verwendet, die in /etc/services "
 "definiert ist."
 
 #: services/models.py:934
@@ -2280,7 +2262,7 @@ msgstr "TCP Port"
 
 #: services/models.py:960
 msgid "Alternate TCP port. Default is 22"
-msgstr "Alternativer TCP port. Standard ist 22"
+msgstr "Alternativer TCP Port. Standard ist 22"
 
 #: services/models.py:963
 msgid "Login as Root with password"
@@ -2351,7 +2333,7 @@ msgstr "Rechnername (NetBIOS)"
 
 #: services/models.py:1043
 msgid "Host Name in old format, eg EXAMPLE"
-msgstr "Hostname im alten Format, z.B. EXAMPLE"
+msgstr "Hostname im alten Format, z.B. BEISPIEL"
 
 #: services/models.py:1047
 msgid "Workgroup Name"
@@ -2367,7 +2349,7 @@ msgstr "Administratorname"
 
 #: services/models.py:1053
 msgid "Username of Domain Administrator Account"
-msgstr "Benutzername des Domänen Administrators"
+msgstr "Benutzername des Domänen Administratorkontos"
 
 #: services/models.py:1057
 msgid "Administrator Password"
@@ -2375,7 +2357,7 @@ msgstr "Administratorpasswort"
 
 #: services/models.py:1058
 msgid "Password of Domain Administrator account."
-msgstr "Passwort des Domänen Administrators"
+msgstr "Passwort des Domänen Administratorkontos"
 
 #: services/models.py:1062 services/models.py:1063
 #: templates/services/index.html:18
@@ -2416,7 +2398,7 @@ msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
-"Die DN mit der eine Bindung zum Directory Server eingegangen wird, z.B. "
+"Der DN mit der eine Bindung zum Directory Server eingegangen wird, z.B. "
 "cn=admin,dc=test,dc=org."
 
 #: services/models.py:1092
@@ -2515,46 +2497,40 @@ msgid "LDAP"
 msgstr "LDAP"
 
 #: services/models.py:1156
-#, fuzzy
 msgid "Alternate TCP port. Default is 873"
-msgstr "Alternativer TCP port. Standard ist 22"
+msgstr "Alternativer TCP port. Standard ist 873"
 
 #: services/models.py:1161
-#, fuzzy
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
 msgstr ""
-"Diese Parameter werden den globalen Einstellungen der Datei inadyn.conf "
+"Diese Parameter werden den globalen Einstellungen der Datei rsyncd.conf "
 "hinzugefügt."
 
 #: services/models.py:1165 services/models.py:1166
 msgid "Rsyncd"
-msgstr ""
+msgstr "Rsyncd"
 
 #: services/models.py:1176
-#, fuzzy
 msgid "Module name"
-msgstr "Datenträgerbezeichnung"
+msgstr "Modulname"
 
 #: services/models.py:1185
-#, fuzzy
 msgid "Path to be shared"
-msgstr "Extent Pfad"
+msgstr "Pfad der Freigegeben werden soll"
 
 #: services/models.py:1191
 msgid "Access Mode"
-msgstr ""
+msgstr "Zugriffsmodus"
 
 #: services/models.py:1192
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "Dieses kontrolliert den Zugriff eines entfernten Hosts auf dieses Modul"
 
 #: services/models.py:1196
-#, fuzzy
 msgid "Maximum connections"
 msgstr "Max. Verbindungen"
 
 #: services/models.py:1197
-#, fuzzy
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
 msgstr "Maximale Anzahl von Verbindungen pro IP Adresse (0 = unbegrenzt)."
 
@@ -2565,39 +2541,42 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Diese Option legt den Benutzernamen für den Dateitransfer zu und von dem "
+"Modul fest. In Kombination mit der 'Gruppen' Option wird bestimmt, welche "
+"Rechte möglich sind. Lassen Sie das Feld leer, um die Standardeinstellungen "
+"zu verwenden"
 
 #: services/models.py:1210
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"Diese Option legt den Gruppennamen für den Dateitransfer zu und von dem "
+"Modul fest. Lassen Sie das Feld leer, um die Standardeinstellungen zu "
+"verwenden"
 
 # nur dem Sinn nach übersetzt, um es Einsteigern leichter zu machen
 #: services/models.py:1214
-#, fuzzy
 msgid "Hosts allow"
 msgstr "Zugriff erlauben"
 
 #: services/models.py:1215
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of hosts which are "
 "permitted to access this module. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings"
 msgstr ""
-"Dies ist eine Liste von Rechnern, deren Zugriff auf die Freigaben erlaubt "
-"ist. Sie können sowohl Namen als auch IP-Adressen verwenden. Mehrere "
-"Einträge müssen mit Komma, Leerzeichen oder Tab voneinander getrennt werden. "
-"Lassen Sie das Feld leer, um die Standardeinstellungen zu verwenden."
+"Dies ist eine Liste von Rechnern, denen der Zugriff auf die Freigaben "
+"erlaubt ist. Sie können sowohl Namen als auch IP-Adressen verwenden. Mehrere "
+"Einträge müssen mit Komma, Leerzeichen oder Tab voneinander getrennt "
+"werden. Lassen Sie das Feld leer, um die Standardeinstellungen zu verwenden"
 
 # nur dem Sinn nach übersetzt, um es Einsteigern leichter zu machen
 #: services/models.py:1219
-#, fuzzy
 msgid "Hosts deny"
 msgstr "Zugriff verweigern"
 
 #: services/models.py:1220
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of host which are NOT "
 "permitted to access this module. Where the lists conflict, the allow list "
@@ -2617,34 +2596,31 @@ msgstr ""
 "zu verwenden."
 
 #: services/models.py:1225
-#, fuzzy
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
 msgstr ""
-"Diese Parameter werden den globalen Einstellungen der Datei inadyn.conf "
+"Diese Parameter werden der Modul-Konfiguration der Datei rsyncd.conf "
 "hinzugefügt."
 
 #: services/models.py:1230
 msgid "Rsync Module"
-msgstr ""
+msgstr "Rsync Module"
 
 #: services/models.py:1231
 msgid "Rsync Modules"
-msgstr ""
+msgstr "Rsync Module"
 
 #: services/nav.py:12
 msgid "Control Services"
 msgstr "Dienste verwalten"
 
 #: services/nav.py:50
-#, fuzzy
 msgid "Add Device Extent"
-msgstr "Geräte Extents"
+msgstr "Geräte Extent hinzufügen"
 
 #: services/nav.py:60
-#, fuzzy
 msgid "View All Device Extents"
-msgstr "Geräte Extents"
+msgstr "Alle Geräte Extents anzeigen"
 
 #: services/nav.py:70 templates/services/iscsi.html:7
 msgid "Device Extents"
@@ -2658,7 +2634,6 @@ msgid "Add Extent"
 msgstr "Extent hinzufügen"
 
 #: services/nav.py:102
-#, fuzzy
 msgid "View All Extents"
 msgstr "Alle Benutzer anzeigen"
 
@@ -2667,23 +2642,20 @@ msgid "Extents"
 msgstr "Extents"
 
 #: services/nav.py:136
-#, fuzzy
 msgid "ISCSI"
 msgstr "iSCSI"
 
 #: services/nav.py:147 system/models.py:429 templates/services/index.html:86
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/views.py:215
-#, fuzzy
 msgid "The service could not be stopped."
-msgstr "Der Cache konnte nicht wieder aufgebaut werden"
+msgstr "Der Dienst kann nicht gestoppt werden."
 
 #: services/views.py:222
-#, fuzzy
 msgid "The service could not be started."
-msgstr "Der Cache konnte nicht wieder aufgebaut werden"
+msgstr "Der Dienst konnte nicht gestartet werden."
 
 #: sharing/forms.py:92
 msgid "The field is a not a valid IP address or network"
@@ -2807,12 +2779,10 @@ msgid "Windows Share"
 msgstr "Windows Freigabe"
 
 #: sharing/models.py:94
-#, fuzzy
 msgid "Windows Shares"
-msgstr "Windows Freigabe"
+msgstr "Windows Freigaben"
 
 #: sharing/models.py:105
-#, fuzzy
 msgid ""
 "The volume name is the name that appears in the Chooser of the 'connect to "
 "server' dialog on Macintoshes to represent the appropriate share. If "
@@ -2846,7 +2816,7 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
-"Diese Einstellung erlaubt Ihnen ein Passwort für den Datenträger zu "
+"Diese Einstellung erlaubt Ihnen, ein Passwort für den Datenträger zu "
 "vergeben. Es darf maximal acht Zeichen enthalten. Wir empfehlen Ihnen "
 "dringend, hierfür ausschließlich ASCII-Zeichen zu verwenden."
 
@@ -2897,7 +2867,6 @@ msgid "Read-only Access"
 msgstr "Nur-Lese Zugriff"
 
 #: sharing/models.py:143 sharing/models.py:149
-#, fuzzy
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
@@ -2912,7 +2881,7 @@ msgstr "Lese-Schreib Zugriff"
 # keine gebräuchliche Übersetzeung gefunden...
 #: sharing/models.py:152
 msgid "Disk Discovery"
-msgstr "Disk Discovery"
+msgstr "Festplattenerkennung"
 
 #: sharing/models.py:153
 msgid ""
@@ -2927,7 +2896,6 @@ msgid "Disk discovery mode"
 msgstr "Disk Discovery Modus"
 
 #: sharing/models.py:160
-#, fuzzy
 msgid ""
 "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
 "behavior in MacOS. Default mode exports the volume as a data volume for "
@@ -2943,7 +2911,6 @@ msgid "Database Path"
 msgstr "Datenbankpfad"
 
 #: sharing/models.py:166
-#, fuzzy
 msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
@@ -3005,7 +2972,6 @@ msgid "No .AppleDouble"
 msgstr "Kein .AppleDouble"
 
 #: sharing/models.py:182
-#, fuzzy
 msgid ""
 "This will suppress automatic creation of the .AppleDouble directories. This "
 "option should not be used if files are accessed by Mac computers."
@@ -3087,16 +3053,14 @@ msgid "Apple Share"
 msgstr "Apple Freigabe"
 
 #: sharing/models.py:214
-#, fuzzy
 msgid "Apple Shares"
-msgstr "Apple Freigabe"
+msgstr "Apple Freigaben"
 
 #: sharing/models.py:232
 msgid "Authorized network or IP addresses"
 msgstr "Autorisiertes Netzwerk oder IP Adressen"
 
 #: sharing/models.py:233
-#, fuzzy
 msgid ""
 "Network that is authorized to access the NFS share or a list of IP "
 "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
@@ -3113,12 +3077,11 @@ msgid "All Directories"
 msgstr "Alle Verzeichnisse"
 
 #: sharing/models.py:238
-#, fuzzy
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
-"Erlaubt das Einhängen beliebiger Unterverzeichnisse dieser Freigabe."
+"Erlaubt das Einhängen beliebiger Unterverzeichnisse dieser Freigabe. "
 "Andernfalls kann lediglich das Hauptverzeichnis der Freigabe eingehängt "
 "werden."
 
@@ -3127,7 +3090,6 @@ msgid "Read Only"
 msgstr "Nur Lesen"
 
 #: sharing/models.py:242
-#, fuzzy
 msgid "Export the share read only. Writes are not permitted."
 msgstr ""
 "Die Freigabe nur mit Leserechten bereitstellen. Schreibzugriffe sind nicht "
@@ -3138,12 +3100,11 @@ msgid "Quiet"
 msgstr "Still"
 
 #: sharing/models.py:246
-#, fuzzy
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
 msgstr ""
-"Im Falle von Problemen bei der Bereitstellung der Freigabe die Warnungen "
-"lediglich an den \"syslog\"-Dienst senden."
+"Im Falle von Problemen bei der Bereitstellung der Freigabe die Warnungen an "
+"den \"syslog\"-Dienst verhindern."
 
 # sinnvoll?
 #: sharing/models.py:250
@@ -3186,7 +3147,6 @@ msgid "UNIX Share"
 msgstr "UNIX Freigabe"
 
 #: sharing/models.py:286
-#, fuzzy
 msgid "UNIX Shares"
 msgstr "UNIX Freigabe"
 
@@ -3212,9 +3172,8 @@ msgstr ""
 "sowie folgende Zeichen enthalten: \"-\", \"_\"."
 
 #: storage/forms.py:233
-#, fuzzy
 msgid "You must select a filesystem"
-msgstr "Remote ZFS Dateisystem"
+msgstr "Wählen Sie ein Dateisystem"
 
 #: storage/forms.py:237 system/forms.py:217 system/forms.py:223
 #: system/forms.py:228
@@ -3233,7 +3192,8 @@ msgstr ""
 #: storage/forms.py:253
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr ""
-"Der Volume-name kann nicht mit c[0-9], mirror, raidz oder spare beginnen"
+"Die Datenträgerbezeichnung darf NICHT mit c[0-9], mirror, raidz oder spare "
+"beginnen"
 
 #: storage/forms.py:338 storage/forms.py:428 storage/forms.py:900
 msgid "Member disk"
@@ -3250,7 +3210,7 @@ msgstr "Einige Fehler traten während der Benennung der Festplatte auf."
 
 #: storage/forms.py:472
 msgid "You must select a volume."
-msgstr ""
+msgstr "Sie müssen ein Volume wählen."
 
 #: storage/forms.py:594
 msgid "Volume from which this dataset will be created on"
@@ -3318,21 +3278,18 @@ msgstr ""
 "an."
 
 #: storage/forms.py:743
-#, fuzzy
 msgid "Volume from which this zvol will be created on"
 msgstr "Laufwerk auf dem das Dataset erstellt werden soll"
 
 #: storage/forms.py:744
-#, fuzzy
 msgid "ZVol Name"
-msgstr "Vollständiger Name"
+msgstr "ZVol Name"
 
 #: storage/forms.py:745
 msgid "Size for this zvol"
-msgstr ""
+msgstr "Größe des ZFS Volumes"
 
 #: storage/forms.py:759
-#, fuzzy
 msgid ""
 "ZVol names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
@@ -3479,7 +3436,7 @@ msgstr "Fehler bei der Ermittlung des verfügbaren Speicherplatzes."
 
 #: storage/models.py:180
 msgid "Error getting used space"
-msgstr "Fehler beim Abrufen des benutzen Speicherplatzes"
+msgstr "Fehler beim Abrufen des benutzten Speicherplatzes"
 
 #: storage/models.py:186 storage/models.py:198
 msgid "Error"
@@ -3518,7 +3475,7 @@ msgstr "Replizierungsaufgaben"
 
 #: storage/models.py:255 system/models.py:383 templates/storage/tasks.html:23
 msgid "Recursive"
-msgstr "rekursiv"
+msgstr "Rekursiv"
 
 #: storage/models.py:259
 msgid "Snapshot lifetime value"
@@ -3643,43 +3600,41 @@ msgstr "erfolgreich bearbeitet"
 
 #: storage/views.py:316 storage/views.py:392
 msgid "Some error ocurried while setting the options"
-msgstr "Beim Speichern der Einstellungen ist eni Fehler aufgetreten."
+msgstr "Beim Speichern der Einstellungen ist ein Fehler aufgetreten"
 
 #: storage/views.py:338
 msgid "ZVol"
-msgstr ""
+msgstr "ZVol"
 
 #: storage/views.py:352
 msgid "This is in use by the iscsi target, please remove it there first"
 msgstr ""
+"Dies ist noch in Verwendung durch das iSCSI-Ziel, bitte entfernen Sie es "
+"dort zuerst"
 
 #: storage/views.py:356
-#, fuzzy
 msgid "ZFS Volume successfully destroyed."
-msgstr "%s erfolgreich gelöscht."
+msgstr "ZFS Volume erfolgreich gelöscht."
 
 #: storage/views.py:390
 msgid "Native dataset"
 msgstr "Natives Dataset"
 
 #: storage/views.py:406
-#, fuzzy
 msgid "Mount Point permissions successfully updated."
-msgstr "%s erfolgreich aktualisiert."
+msgstr "Rechte der Einhängepunkte erfolgreich aktualisiert."
 
 #: storage/views.py:421
-#, fuzzy
 msgid "Dataset successfully destroyed."
-msgstr "%s erfolgreich gelöscht."
+msgstr "Dataset erfolgreich gelöscht."
 
 #: storage/views.py:435
-#, fuzzy
 msgid "Snapshot successfully deleted."
-msgstr "Snapshot erfolgreich geklont"
+msgstr "Snapshot erfolgreich geklont."
 
 #: storage/views.py:449
 msgid "Rollback successful."
-msgstr ""
+msgstr "Rollback erfolgreich."
 
 #: storage/views.py:479
 msgid "Snapshot successfully taken"
@@ -3692,7 +3647,7 @@ msgstr "Snapshot erfolgreich geklont"
 # statt "eingeleitet" wäre auch "initiiert" denkbar
 #: storage/views.py:545
 msgid "Disk replacement has been initiated."
-msgstr "Austausch der Festplatte erfolgreich eingeleitet."
+msgstr "Austausch der Festplatte erfolgreich initiiert."
 
 #: storage/views.py:549
 msgid "Some error ocurried."
@@ -3704,11 +3659,11 @@ msgstr "Festplatte erfolgreich ausgehängt."
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
-msgstr ""
+msgstr "Sprache (Benötigt neuladen der UI)"
 
 #: system/forms.py:250
 msgid "Place to temporarily place firmware file"
-msgstr ""
+msgstr "Ort für die temporäre Firmware-Datei"
 
 #: system/forms.py:250
 msgid ""
@@ -3743,17 +3698,16 @@ msgid "New config to be installed"
 msgstr "Neue Konfiguration zur Installation auswählen"
 
 #: system/forms.py:310 system/forms.py:339
-#, fuzzy
 msgid "minute"
-msgstr "Minuten, "
+msgstr "Minute"
 
 #: system/forms.py:311 system/forms.py:340
 msgid "hour"
-msgstr ""
+msgstr "Stunde"
 
 #: system/forms.py:312 system/forms.py:341
 msgid "day of month"
-msgstr ""
+msgstr "Tag des Monats"
 
 #: system/models.py:43
 msgid "Protocol"
@@ -3818,7 +3772,6 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "Zeroconf/Bonjour aktivieren"
 
 #: system/models.py:100
-#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Must be non-zero"
 msgstr ""
@@ -3833,7 +3786,7 @@ msgstr ""
 
 #: system/models.py:106
 msgid "Show tracebacks in case of fatal errors"
-msgstr ""
+msgstr "Zeige Tracebacks bei schwerwiegenden Fehlern"
 
 # IMHO kommt "banner" in der Form im deutschen Sprachgebrauch nicht vor, deshalb passt "Begrüßung" noch am Besten
 #: system/models.py:114
@@ -3895,11 +3848,11 @@ msgstr "SMTP Authentifizierung verwenden"
 
 #: system/models.py:159
 msgid "A username to authenticate to the remote server"
-msgstr "Der Benutzername für die Anmeldung am Mailausgangsserver"
+msgstr "Der Benutzername für die Anmeldung am Remoteserver"
 
 #: system/models.py:166
 msgid "A password to authenticate to the remote server"
-msgstr "Das Passwort für die Anmeldung am Mailausgangsserver"
+msgstr "Das Passwort für die Anmeldung am Remoteserver"
 
 # einheitliche Übersetzung
 #: system/models.py:169 templates/system/settings.html:7
@@ -3971,134 +3924,123 @@ msgstr ""
 
 #: system/models.py:241 system/models.py:380
 msgid "The user to run the command"
-msgstr ""
+msgstr "Der Benutzer, der den Befehl ausführt"
 
 #: system/models.py:245 templates/system/cronjob.html:11
-#, fuzzy
 msgid "Command"
-msgstr "Kommentar"
+msgstr "Befehl"
 
 #: system/models.py:249 system/models.py:354 templates/system/cronjob.html:5
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Minute"
-msgstr "Minuten, "
+msgstr "Minute"
 
 #: system/models.py:250 system/models.py:355
 msgid "Values 0-59 allowed."
-msgstr ""
+msgstr "Werte zwischen 0 - 59 sind erlaubt."
 
 #: system/models.py:254 system/models.py:359 templates/system/cronjob.html:6
 #: templates/system/rsync.html:6
-#, fuzzy
 msgid "Hour"
-msgstr "Stündlich"
+msgstr "Stunde"
 
 #: system/models.py:255 system/models.py:360
 msgid "Values 0-23 allowed."
-msgstr ""
+msgstr "Werte zwischen 0 - 23 sind erlaubt."
 
 #: system/models.py:259 system/models.py:364 templates/system/cronjob.html:7
 #: templates/system/rsync.html:7
 msgid "Day of month"
-msgstr ""
+msgstr "Monatstag"
 
 #: system/models.py:260 system/models.py:365
 msgid "Values 1-31 allowed."
-msgstr ""
+msgstr "Werte zwischen 1-31 sind erlaubt."
 
 #: system/models.py:265 system/models.py:370 templates/system/cronjob.html:8
 #: templates/system/rsync.html:8
-#, fuzzy
 msgid "Month"
-msgstr "Monatlich"
+msgstr "Monat"
 
 #: system/models.py:270 system/models.py:375 templates/system/cronjob.html:9
 #: templates/system/rsync.html:9
 msgid "Day of week"
-msgstr ""
+msgstr "Wochentag"
 
 #: system/models.py:273
 msgid "CronJob"
-msgstr ""
+msgstr "Cronjob"
 
 #: system/models.py:274
 msgid "CronJobs"
-msgstr ""
+msgstr "Cronjobs"
 
 #: system/models.py:284 system/models.py:440
-#, fuzzy
 msgid "Every minute"
-msgstr "Minuten, "
+msgstr "Jede Minute "
 
 #: system/models.py:286 system/models.py:442
 #, python-format
 msgid "Every %s minute(s)"
-msgstr ""
+msgstr "Jede %s. Minute"
 
 #: system/models.py:292 system/models.py:448
 msgid "Every hour"
-msgstr ""
+msgstr "Jede Stunde"
 
 #: system/models.py:294 system/models.py:450
 #, python-format
 msgid "Every %s hour(s)"
-msgstr ""
+msgstr "Jede %s. Stunde"
 
 #: system/models.py:302 system/models.py:458
-#, fuzzy, python-format
+#, python-format
 msgid "Every %s days"
-msgstr "Täglich"
+msgstr "Alle %s Tage"
 
 #: system/models.py:309 system/models.py:465
 msgid "Every month"
-msgstr ""
+msgstr "Jeden Monat"
 
 #: system/models.py:341
 msgid "IP Address or hostname"
-msgstr ""
+msgstr "IP Adresse oder Hostname"
 
 #: system/models.py:345
-#, fuzzy
 msgid "Remote Module Name"
 msgstr "Entfernter Rechnername"
 
 #: system/models.py:349
-#, fuzzy
 msgid "Short description"
-msgstr "Beschreibung"
+msgstr "Kurzbeschreibung"
 
 #: system/models.py:384
-#, fuzzy
 msgid "Recurse into directories"
-msgstr "Heimatverzeichnisse"
+msgstr "Unterverzeichnisse einbeziehen"
 
 #: system/models.py:388
-#, fuzzy
 msgid "Times"
-msgstr "Zeitüberschreitung"
+msgstr "Zeiten"
 
 #: system/models.py:389
 msgid "Preserve modification times"
-msgstr ""
+msgstr "Änderungszeiten aufbewahren"
 
 #: system/models.py:393
-#, fuzzy
 msgid "Compress"
 msgstr "Komprimierungsgrad"
 
 #: system/models.py:394
 msgid "Compress data during the transfer"
-msgstr ""
+msgstr "Komprimiere Daten während des Transfers."
 
 #: system/models.py:398
 msgid "Archive"
-msgstr ""
+msgstr "Archiv"
 
 #: system/models.py:399
-#, fuzzy
 msgid "Archive mode"
-msgstr "Aktive Datenträger"
+msgstr "Archivmodus"
 
 #: system/models.py:403 templates/freeadmin/generic_model_edit.html:43
 #: templates/network/interface.html:39 templates/network/lagg.html:44
@@ -4128,13 +4070,14 @@ msgstr "Löschen"
 #: system/models.py:404
 msgid "Delete files on the receiving side that don't exist on sender"
 msgstr ""
+"Löscht Dateien auf der Empfangsseite, welche nicht auf der Sender-Seite "
+"existierten"
 
 #: system/models.py:409
 msgid "Suppress non-error messages"
-msgstr ""
+msgstr "Unterdrückt Meldungen, die keine Fehler beinhalten"
 
 #: system/models.py:413
-#, fuzzy
 msgid "Preserve permissions"
 msgstr "Berechtigungen vererben"
 
@@ -4143,25 +4086,29 @@ msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
 msgstr ""
+"Diese Option veranlasst den empfangenden rsync, die Zielrechte auf den "
+"gleichen Stand wie die Quellrechte zu setzen."
 
 #: system/models.py:418
 msgid "Preserve extended attributes"
-msgstr ""
+msgstr "Erweiterte Attribute beibehalten"
 
 #: system/models.py:419
 msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
 msgstr ""
+"Diese Option veranlasst rsync, die erweiterten Attribute des Remote-Systems "
+"anhand der Werte des lokalen Status zu aktualisieren "
 
 #: system/models.py:425
-#, fuzzy
 msgid "Extra options to rsync command line (usually empty)"
-msgstr "Zusätzliche Optionen für die Kommandozeile (üblicherweise keine)."
+msgstr ""
+"Zusätzliche Optionen für Rsync für die Kommandozeile (üblicherweise keine)."
 
 #: system/models.py:430
 msgid "Rsyncs"
-msgstr ""
+msgstr "Rsyncs"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4176,7 +4123,6 @@ msgid "System Information"
 msgstr "Systeminformationen"
 
 #: system/nav.py:32
-#, fuzzy
 msgid "Cron Scheduler"
 msgstr "Zeitplan für periodische Snapshots"
 
@@ -4292,9 +4238,8 @@ msgid "Add New User"
 msgstr "Neuen Benutzer hinzufügen"
 
 #: templates/account/bsdusers.html:121 templates/account/bsdusers.html:123
-#, fuzzy
 msgid "Change E-mail"
-msgstr "E-Mail"
+msgstr "E-Mail ändern"
 
 #: templates/account/bsdusers.html:156
 msgid "No users defined"
@@ -4307,12 +4252,12 @@ msgstr "Admin-Passwort ändern"
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:7
 msgid "Browse"
-msgstr ""
+msgstr "Durchblättern"
 
 #: templates/freeadmin/directory_browser.html:5
 #: templates/freeadmin/directory_browser.html:10
 msgid "Close"
-msgstr ""
+msgstr "Schließen"
 
 #: templates/freeadmin/generic_model_add.html:15
 #: templates/freeadmin/generic_model_delete.html:16
@@ -4348,7 +4293,6 @@ msgid "Yes"
 msgstr "Ja"
 
 #: templates/freeadmin/generic_model_delete_ok.html:1
-#, fuzzy
 msgid "successfully deleted"
 msgstr "erfolgreich gelöscht"
 
@@ -4446,15 +4390,13 @@ msgstr "FreeNAS Testing"
 
 # die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Docs"
-msgstr "FreeNAS Devel"
+msgstr "FreeNAS Dokumentation"
 
 # die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:92
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "FreeNAS Testing"
+msgstr "FreeNAS Translations"
 
 # die alte Frage: "Support" übersetzen oder nicht?
 #: templates/freeadmin/index.html:97
@@ -4467,15 +4409,13 @@ msgid "Bug Tracker"
 msgstr "Bugtracker"
 
 #: templates/freeadmin/index.html:104
-#, fuzzy
 msgid "Documentation"
-msgstr "Standort"
+msgstr "Dokumentation"
 
 # die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:106
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "FreeNAS Testing"
+msgstr "FreeNAS Dokumentation"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4560,9 +4500,8 @@ msgstr "Aktion"
 
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
-#, fuzzy
 msgid "Add LAGG Member"
-msgstr "LAGG Mitglieder"
+msgstr "LAGG Mitglieder hinzufügen"
 
 #: templates/network/staticroute.html:5
 msgid "Destination"
@@ -4637,7 +4576,7 @@ msgstr "Sie sind jetzt abgemeldet."
 
 #: templates/registration/logout.html:21
 msgid "Log back in"
-msgstr "Wieder anmelden"
+msgstr "Erneut anmelden"
 
 # Kontext wichtig... vielleicht lieber "OK!" oder "Glückwunsch!".
 #: templates/registration/password_change_done.html:20
@@ -4699,9 +4638,8 @@ msgid "NFS Settings"
 msgstr "NFS Einstellungen"
 
 #: templates/services/index.html:92
-#, fuzzy
 msgid "Rsync Settings"
-msgstr "Einstellungen"
+msgstr "Rsync Einstellungen"
 
 #: templates/services/index.html:103
 msgid "SNMP Settings"
@@ -4822,13 +4760,12 @@ msgid "Available actions"
 msgstr "Verfügbare Aktionen"
 
 #: templates/services/rsyncmod.html:34
-#, fuzzy
 msgid "No rsync modules defined"
-msgstr "Keine statischen Routen angegeben"
+msgstr "Keine Rsync Module deininiert"
 
 #: templates/services/rsyncmod.html:40 templates/services/rsyncmod.html:42
 msgid "Add Rsync Module"
-msgstr ""
+msgstr "Rsync Modul hinzufügen"
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
@@ -4910,7 +4847,7 @@ msgstr "Windows Freigabe löschen"
 
 #: templates/sharing/windows.html:54
 msgid "Add Windows Share"
-msgstr "Winodws Freigabe hinzufügen"
+msgstr "Windows Freigabe hinzufügen"
 
 #: templates/sharing/windows.html:56
 msgid "Add Windows Share (CIFS)"
@@ -4934,7 +4871,6 @@ msgid "Are you sure you want to detach?"
 msgstr "Möchten Sie den Vorgang wirklich fortsetzen?"
 
 #: templates/storage/disk_replacement.html:9
-#, fuzzy
 msgid "Replacing disk"
 msgstr "Festplatte austauschen"
 
@@ -5107,12 +5043,10 @@ msgstr "ZFS Volume bearbeiten"
 
 # Volume = Datenträger
 #: templates/storage/volumes.html:30
-#, fuzzy
 msgid "Create ZFS Volume"
-msgstr "Erstelle Datenträger"
+msgstr "Erstelle ZFS Volume"
 
 #: templates/storage/volumes.html:34
-#, fuzzy
 msgid "Create ZFS zvol"
 msgstr "Erstelle ZFS Dataset"
 
@@ -5133,9 +5067,8 @@ msgid "Status"
 msgstr "Status"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Destroy ZFS Volume"
-msgstr "Laufwerk löschen"
+msgstr "ZFS Volume löschen"
 
 #: templates/storage/volumes.html:128 templates/storage/volumes.html.py:132
 msgid "Destroy Dataset"
@@ -5156,7 +5089,7 @@ msgstr "Zeige Festplatten"
 
 #: templates/storage/volumes.html:200
 msgid "No volumes defined"
-msgstr "Keine Volumes gewählt"
+msgstr "Keine Volumes angelegt"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
@@ -5196,9 +5129,8 @@ msgid "Existing data will be cleared"
 msgstr "Bestehende Daten werden gelöscht"
 
 #: templates/storage/zvols.html:9
-#, fuzzy
 msgid "Add ZVol"
-msgstr "Volume hinzufügen"
+msgstr "ZFS Volume hinzufügen"
 
 #: templates/system/config.html:2
 msgid "Restore to Factory Defaults"
@@ -5214,7 +5146,7 @@ msgstr "Hochladen der Einstellungen"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr "Neustart..."
+msgstr "Starte neu..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
@@ -5226,13 +5158,12 @@ msgid "Update"
 msgstr "Aktualisierung"
 
 #: templates/system/cronjob.html:40
-#, fuzzy
 msgid "No CronJobs defined"
-msgstr "Keine Benutzer definiert"
+msgstr "Keine Cronjobs definiert"
 
 #: templates/system/cronjob.html:46 templates/system/cronjob.html.py:48
 msgid "Add CronJob"
-msgstr ""
+msgstr "Cronjob hinzufügen"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -5279,13 +5210,12 @@ msgid "Yearly Graphs"
 msgstr "Jährliche Diagramme"
 
 #: templates/system/rsync.html:38
-#, fuzzy
 msgid "No rsyncs defined"
-msgstr "Keine Benutzer definiert"
+msgstr "Kein Rsync definiert"
 
 #: templates/system/rsync.html:44 templates/system/rsync.html.py:46
 msgid "Add Rsync"
-msgstr ""
+msgstr "Rsync hinzufügen"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -5313,7 +5243,7 @@ msgstr "Plattform"
 
 #: templates/system/system_info.html:16
 msgid "Memory"
-msgstr ""
+msgstr "Speicher"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
@@ -5334,7 +5264,7 @@ msgstr "FreeNAS Version"
 #: templates/system/wizard.html:3
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr ""
+msgstr "Schritt %(step)s von %(step_count)s"
 
 msgid "English"
 msgstr "Englisch"
@@ -5357,7 +5287,7 @@ msgid "View All Static Routes"
 msgstr "Alle statischen Routen anzeigen"
 
 msgid "Windows Version"
-msgstr "Windowsversion"
+msgstr "Windows Version"
 
 msgid "The version of Microsoft Windows that Active Directory is running."
 msgstr ""
@@ -5367,13 +5297,13 @@ msgid "Service Principal Name"
 msgstr "Service Principal Name"
 
 msgid "Service Principal Name, eg service/account."
-msgstr "Service Principal Name, z.B. Dienst/Zugang."
+msgstr "Service Principal Name, z.B. Dienst/Konto."
 
 msgid "Service Principal Name Password"
 msgstr "Service Principal Name Passwort"
 
 msgid "Password of the Service Principal Name account."
-msgstr "Passwort für das Service Principal Name Kontos."
+msgstr "Passwort für das Service Principal Name Konto."
 
 # Gibt es eine sinnvolle Übersetzung für "Keytab" bei Kerberos?
 msgid "Kerberos Keytab File"

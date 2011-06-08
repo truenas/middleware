@@ -539,7 +539,7 @@ class iSCSITargetFileExtentForm(ModelForm):
         if not valid:
             raise forms.ValidationError(_("Your path to the extent must reside inside a volume/dataset mount point."))
         return path
-        
+
     def clean_iscsi_target_extent_filesize(self):
         size = self.cleaned_data['iscsi_target_extent_filesize']
         try:
@@ -585,9 +585,9 @@ class iSCSITargetDeviceExtentForm(ModelForm):
     def _populate_disk_choices(self, exclude=None):
         from os import popen
         import re
-    
+
         diskchoices = dict()
-    
+
         if exclude:
             extents = [i[0] for i in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__in=['Disk','ZVOL']).filter(id=exclude.id).values_list('iscsi_target_extent_path')]
             dextents = [d.identifier_to_device() for d in Disk.objects.filter(id__in=extents)]
@@ -722,6 +722,20 @@ class iSCSITargetForm(ModelForm):
         exclude = ('iscsi_target_initialdigest',)
     def __init__(self, *args, **kwargs):
         super(iSCSITargetForm, self).__init__(*args, **kwargs)
+        if not kwargs.has_key("instance"):
+            from subprocess import Popen, PIPE
+            try:
+                nic = list(choices.NICChoices(nolagg=True,novlan=True))[0][0]
+                mac = Popen("ifconfig %s ether|grep \"ether\"|awk '{print $2}'|tr -d \":\"" % nic, shell=True, stdout=PIPE).communicate()[0]
+                ltg = models.iSCSITarget.objects.order_by('-id')
+                if ltg.count() > 0:
+                    lid = ltg[0].id
+                else:
+                    lid = 0
+                self.fields['iscsi_target_serial'].initial = mac.strip() + "%.2d" % lid
+            except:
+                raise
+                self.fields['iscsi_target_serial'].initial = "10000001"
         self.fields['iscsi_target_authgroup'].required = False
         self.fields['iscsi_target_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
 

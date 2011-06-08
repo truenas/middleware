@@ -480,7 +480,7 @@ class Rsync(Model):
         return ",".join(labels)
 
     def delete(self):
-        super(CronJob, self).delete()
+        super(Rsync, self).delete()
         try:
             notifier().restart("cron")
         except:

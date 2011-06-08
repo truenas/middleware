@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:05-0700\n"
-"PO-Revision-Date: 2011-05-27 16:37+0200\n"
+"PO-Revision-Date: 2011-06-06 13:34+0200\n"
 "Last-Translator: ok1 <ok1@trups.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lv\n"
@@ -112,34 +112,28 @@ msgid "Disabled"
 msgstr "Izslēgts"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Minimāla strāvas izmantošana gaidstāvē (spindown)"
+msgstr "1 Līmenis - Minimāla strāvas izmantošana gaidstāvē (spindown)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Vidēja strāvas izmantošana gaidstāvē"
+msgstr "64 Līmenis - Vidēja strāvas izmantošana ar gaidstāvi"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Vidēja strāvas izmantošana gaidstāvē"
+msgstr "127 Līmenis - Vidēja strāvas izmantošana ar gaidstāvi"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Minimāla strāvas izmantošana bez gaidstāves (no spindown)"
+msgstr "128 Līmenis - Minimāla strāvas izmantošana bez gaidstāves (no spindown)"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Vidēja strāvas izmantošana bez gaidstāves"
+msgstr "192 Līmenis - Vidēja strāvas izmantošana bez gaidstāves"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Maksimāla veiktspēja, maksimāla jaudas izmantošana"
+msgstr "254 Līmenis - Maksimāla veiktspēja, maksimāla jaudas izmantošana"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -259,7 +253,7 @@ msgstr "Laika mašīna"
 
 #: choices.py:190
 msgid "No case folding"
-msgstr ""
+msgstr "Bezgadījuma locīšana"
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
@@ -360,19 +354,16 @@ msgid "lzjb (recommended)"
 msgstr "lzjb (ieteicams)"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "sākotnējais līmenis"
+msgstr "gzip (noklusējuma līmenis, 6)"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "ātrākais"
+msgstr "gzip (ātrākais)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "maksimālais, lēns"
+msgstr "gzip (maksimālais, lēns)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -404,18 +395,16 @@ msgid "Every selected weekday"
 msgstr "Katru izvēlēto darba dienu"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
-msgstr "tikai lasīt"
+msgstr "Tikai lasīt"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "tikai lasīt"
+msgstr "Tikai rakstīt"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Lasīt un rakstīt"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -637,17 +626,17 @@ msgstr "Lietotājs %s nav derīgs."
 #: freeadmin/forms.py:117
 #, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr "Grupa %s nav derīga."
 
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Pievieno %s"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "Skatīt visus lietotājus"
+msgstr "Skatīt visus %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -673,7 +662,7 @@ msgstr "%s veiksmīgi atjaunināts."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Servisam neizdevās re-startēties."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -701,18 +690,16 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "Jāaizpilda vārdu serveri 1 pirms aizpildot vārdu serveri 2"
 
 #: network/forms.py:100
-#, fuzzy
 msgid "Parent Interface"
-msgstr "Virtuālais interfeiss"
+msgstr "Vecāk-interfeiss"
 
 #: network/forms.py:109
-#, fuzzy
 msgid "The name must be vlanXX where XX is a integer"
-msgstr "Saskarnes nosaukumiem jābūt vlanXX kur XX ir skaitlis"
+msgstr "Saskarnes nosaukumiem jābūt vlanXX, kur XX ir skaitlis"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN birka ir 1 - 4095 ieskaitot"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -849,9 +836,8 @@ msgid "VLAN"
 msgstr "VLAN"
 
 #: network/models.py:200
-#, fuzzy
 msgid "VLANs"
-msgstr "VLAN"
+msgstr "VLANi"
 
 #: network/models.py:220
 msgid "Protocol Type"
@@ -916,7 +902,7 @@ msgstr "%s veiksmīgi pievienots"
 
 #: services/forms.py:70
 msgid "N/A"
-msgstr ""
+msgstr "N/A"
 
 #: services/forms.py:79
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -930,11 +916,11 @@ msgstr "Šis lauks ir nepieciešams priekš \"Mājas direktorijas\"."
 
 #: services/forms.py:99
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "AFP servisam neizdevās startēties."
 
 #: services/forms.py:108
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "NFS servisam neizdevās startēties."
 
 #: services/forms.py:112
 msgid "File Permission"
@@ -970,39 +956,39 @@ msgstr "Šis lauks ir nepieciešams anonīmai piekļuvei"
 
 #: services/forms.py:200
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "FTP servisam neizdevās startēties."
 
 #: services/forms.py:209
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "TFTP servisam neizdevās startēties."
 
 #: services/forms.py:216
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "SSH servisam neizdevās startēties."
 
 #: services/forms.py:225 services/forms.py:253
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Rsync servisam neizdevās startēties."
 
 #: services/forms.py:238
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "Nosaukums nedrīkst saturēt slīpsvītru vai noslēguma kvadrātiekavas."
 
 #: services/forms.py:262
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "DynamicDNS servisam neizdevās startēties."
 
 #: services/forms.py:271
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "SNMP servisam neizdevās startēties."
 
 #: services/forms.py:285
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "Aktīvās mapes servisam neizdevās startēties."
 
 #: services/forms.py:296
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "Ldap servisam neizdevās startēties."
 
 #: services/forms.py:302 services/models.py:529
 #: templates/services/iscsi_auth.html:7
@@ -1049,7 +1035,7 @@ msgstr "\"Peer\" noslēpums nevar būt tāds pats kā lietotāja noslēpums."
 #: services/forms.py:537 services/forms.py:584 services/forms.py:683
 #: services/forms.py:705 services/forms.py:726 services/forms.py:758
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "iSCSI servisam neizdevās startēties."
 
 #: services/forms.py:385
 msgid "LUN already exists in the same target."
@@ -1069,7 +1055,7 @@ msgstr ""
 
 #: services/forms.py:398 services/models.py:248
 msgid "Discovery Auth Group"
-msgstr ""
+msgstr "Atklāšanas Autorizācijas Grupa"
 
 #: services/forms.py:425
 #, python-format
@@ -1077,11 +1063,10 @@ msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr "Vērtībai jābūt starp %(start)d un %(end)d, ieskaitot."
 
 #: services/forms.py:433
-#, fuzzy
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
-"Šis lauks ir nepieciešams, ja atklāšanas metode ir CHAP vai CHAP Mutal."
+"Šis lauks ir nepieciešams, ja atklāšanas metode ir CHAP vai CHAP Mutual."
 
 #: services/forms.py:516 services/forms.py:546
 msgid "You need to specify a filepath, not a directory."
@@ -1094,7 +1079,7 @@ msgstr "Tev jānorāda datne iekš sējuma."
 #: services/forms.py:524 services/forms.py:554
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
-msgstr ""
+msgstr "Tavam ceļam uz apjomu jābūt iekš sējuma montēšanas punkta."
 
 #: services/forms.py:568
 msgid ""
@@ -1121,7 +1106,7 @@ msgstr "Autorizācijas Grupas numurs"
 
 #: services/forms.py:761
 msgid "Delete underlying file"
-msgstr ""
+msgstr "Dzēst apakšā esošo datni"
 
 #: services/models.py:42
 msgid "Service"
@@ -1203,6 +1188,11 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
+"Lieto šo iespēju, lai ignorētu lietotājvārdu ('ftp', pēc noklusējuma), kurš "
+"tiks lietots piekļuvei priekš servisiem, kuri ir norādīti kā viesa. Jebkuras "
+"privilēģijas, kuras ir šim lietotājam, būs pieejamas jebkuram klientam, "
+"kurš savienosies ar viesa servisu. Šim lietotājam ir jāeksistē paroļu datnē, "
+"bet nevajag derīgu autorizāciju."
 
 #: services/models.py:109
 msgid "Allow guest access"
@@ -1294,12 +1284,11 @@ msgid "Minimal AIO read size"
 msgstr "Minimālais AIO lasīšanas lielums"
 
 #: services/models.py:162
-#, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
 msgstr ""
-"Samba lasīs asinhroni, ja pieprasījuma lielums ir lielāks nekā šī vērtība.   "
+"Samba lasīs asinhroni, ja pieprasījuma lielums ir lielāks nekā šī vērtība. "
 "Noklusējuma lasīšanas izmērs ir 1."
 
 #: services/models.py:167
@@ -1307,13 +1296,12 @@ msgid "Minimal AIO write size"
 msgstr "Minimālais AIO rakstīšanas lielums"
 
 #: services/models.py:168
-#, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
 msgstr ""
-"Samba rakstīs asinhroni, ja pieprasījuma lielums ir lielāks nekā šī "
-"vērtība.   Noklusējuma rakstīšanas izmērs ir 1."
+"Samba rakstīs asinhroni, ja pieprasījuma lielums ir lielāks nekā šī vērtība. "
+"Noklusējuma rakstīšanas izmērs ir 1."
 
 #: services/models.py:173 services/models.py:174
 #: templates/services/index.html:29
@@ -1347,6 +1335,11 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
+"Lieto šo iespēju, lai ignorētu lietotājvārdu ('www', pēc noklusējuma), kurš "
+"tiks lietots piekļuvei priekš servisiem, kuri ir norādīti kā viesa. Jebkuras "
+"privilēģijas, kuras ir šim lietotājam, būs pieejamas jebkuram klientam, "
+"kurš savienosies ar viesa servisu. Šim lietotājam ir jāeksistē paroļu datnē, "
+"bet nevajag derīgu autorizāciju."
 
 #: services/models.py:197
 msgid "Local Access"
@@ -1464,7 +1457,7 @@ msgstr ""
 
 #: services/models.py:285
 msgid "MaxOutstandingR2T"
-msgstr ""
+msgstr "MaxOutstandingR2T"
 
 #: services/models.py:286
 msgid "iSCSI initial parameter (16 by default)."
@@ -1529,12 +1522,10 @@ msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "Loģiskās Vienības Kontroliera TCP ports (3261 pēc noklusējuma)"
 
 #: services/models.py:339
-#, fuzzy
 msgid "Controller Authorized netmask"
 msgstr "Autorizēta kontroliera tīkla maska"
 
 #: services/models.py:341
-#, fuzzy
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
 msgstr ""
 "Loģiskās Vienības Kontroliera Autorizētā tīkla maska (255.255.255.0 pēc "
@@ -1768,9 +1759,8 @@ msgid "Target / Extent"
 msgstr "Mērķis / Apjoms"
 
 #: services/models.py:648
-#, fuzzy
 msgid "Targets / Extents"
-msgstr "Mērķis / Apjoms"
+msgstr "Mērķi / Apjomi"
 
 #: services/models.py:663
 msgid "Provider"
@@ -2019,20 +2009,25 @@ msgid ""
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
+"Liek serverim rādīt tīkla informāciju priekš specifiskas IP adreses "
+"klientam, pēc pieņēmuma, ka IP adrese vai DNS saimnieks darbojas kā NAT "
+"vartēja vai portu pārsūtītājs serverim."
 
 #: services/models.py:872
 msgid "Minimum passive port"
-msgstr ""
+msgstr "Minimālais pasīvais ports"
 
 #: services/models.py:873
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
 msgstr ""
+"Minimālais ports, kuru piešķirt priekš PASV stila datu savienojumiem (0 = "
+"izmantot jebkuru portu)."
 
 #: services/models.py:877
 msgid "Maximum passive port"
-msgstr ""
+msgstr "Maksimālais pasīvais ports"
 
 #: services/models.py:878
 msgid ""
@@ -2045,159 +2040,181 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
+"Maksimālais ports, kuru piešķirt PASV stila datu savienojumiem (0 - lietot "
+"jebkuru portu). Pasīvie porti ierobežo portu diapazonu no kura serveris "
+"izvēlēsies, kad saņems PASV komandu no klienta. Serveris nejauši izvēlēsies "
+"skaitli no noteiktā diapazona līdz tiek atrasts brīvs ports. Portu diapazons "
+"ir jāizvēlas ne-priviliģētā zonā (piem. lielākā vai vienādā ar 1024). Ir "
+"stingri ieteicams noteikt diapazonu, kurš ir gana liels, lai apkalpotu "
+"daudzus pasīvus savienojumus vienlaicīgi (piemēram, 49152-65534, IANA-"
+"reģistrētais efermais portu diapazons)."
 
 #: services/models.py:882
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "Vietējā lietotāja augšupielādes ātrums"
 
 #: services/models.py:883
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Vietējā lietotāja augšupielādes ātrums iekš KB/s. Nulle nozimē bezgalību."
 
 #: services/models.py:887
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Vietējā lietotāja lejupielādes ātrums"
 
 #: services/models.py:888
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Vietējā lietotāja lejupielādes ātrums iekš KB/s. Nulle nozīmē bezgalību."
 
 #: services/models.py:892
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Anonīma lietotāja augšupielādes ātrums"
 
 #: services/models.py:893
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Anonīmā lietotāja augšupielādes ātrums iekš KB/s. Nulle nozīmē bezgalību."
 
 #: services/models.py:897
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "Anonīma lietotāja lejupielādes ātrums"
 
 #: services/models.py:898
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Anonīmā lietotāja lejupielādes ātrums iekš KB/s. Nulle nozīmē bezgalību."
 
 #: services/models.py:901
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "Iespējot SSL/TLS"
 
 #: services/models.py:906
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "Šie parametri tika pievienoti proftpd.conf."
 
 #: services/models.py:910 services/models.py:911
 #: templates/services/index.html:53
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:920
 msgid "Directory"
-msgstr ""
+msgstr "Mape"
 
 #: services/models.py:921
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
+"Mape, kura satur datnes, kuras vēlies publicēt. Attālinātajam saimniekam "
+"nevajag iziet cauri mapei veicot pārsūtījumu."
 
 #: services/models.py:924
 msgid "Allow New Files"
-msgstr ""
+msgstr "Atļaut jaunas datnes"
 
 #: services/models.py:928
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"Ports, uz kura klausīties. Noklusējumā noklausās tftp portu, kurš norādīts "
+"iekš /etc/services."
 
 #: services/models.py:934
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "Norāda lietotājvārdu, ar kuru darbosies serviss."
 
 #: services/models.py:938
 msgid "umask"
-msgstr ""
+msgstr "atmaskot"
 
 #: services/models.py:939
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
 msgstr ""
+"Norādi atmaskošanu jaunām datnēm. Noklusējuma ir 022 (jebkurš var lasīt, bet "
+"neviens nevar rakstīt)."
 
 #: services/models.py:943 services/models.py:980 system/models.py:424
 msgid "Extra options"
-msgstr ""
+msgstr "Papildus iespējas"
 
 #: services/models.py:945
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "Papildus komandrindas iespējas (parasti tukšs)."
 
 #: services/models.py:949 services/models.py:950
 #: templates/services/index.html:119
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:959 services/models.py:1155
 msgid "TCP Port"
-msgstr ""
+msgstr "TCP Ports"
 
 #: services/models.py:960
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "Alternatīvais TCP ports. Noklusējuma ir 22"
 
 #: services/models.py:963
 msgid "Login as Root with password"
-msgstr ""
+msgstr "Autorizēties kā Root ar paroli"
 
 #: services/models.py:964
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
 msgstr ""
+"Atspējots: Root var autorizēties tikai ar publisko atslēgu; Iespējots: Root "
+"autorizācija atļauta ar paroli"
 
 #: services/models.py:967
 msgid "Allow Password Authentication"
-msgstr ""
+msgstr "Atļaut Paroles Autorizāciju"
 
 #: services/models.py:969
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "Atļaut TCP portu pārsūtīšanu"
 
 #: services/models.py:971
 msgid "Compress Connections"
-msgstr ""
+msgstr "Saspiest Savienojumus"
 
 #: services/models.py:974
 msgid "Host Private Key"
-msgstr ""
+msgstr "Saimnieka Privātā Atslēga"
 
 #: services/models.py:976
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr ""
+msgstr "Ievieto RSA PRIVATE KEY iekš PEM formāta šeit."
 
 #: services/models.py:982
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
 msgstr ""
+"Papildus iespējas uz /etc/ssh/sshd_config (parasti tukšs). Piezīme, "
+"nepareizi ievadītas iespējas neļaus startēties SSH servisam."
 
 #: services/models.py:1022 services/models.py:1023
 #: templates/services/index.html:108
 msgid "SSH"
-msgstr ""
+msgstr "SSH"
 
 #: services/models.py:1032
 msgid "Domain Controller Name"
-msgstr ""
+msgstr "Domēna Kontroliera Vārds"
 
 #: services/models.py:1033
 msgid "AD or PDC name."
-msgstr ""
+msgstr "AD vai PDC vārds."
 
 #: services/models.py:1037
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr ""
+msgstr "Domēna vārds (DNS/Realm-Vārds)"
 
 #: services/models.py:1038
 msgid "Domain Name, eg example.com"
@@ -2205,194 +2222,201 @@ msgstr "Domēna vārds, piemēram, example.com"
 
 #: services/models.py:1042
 msgid "Host Name (NetBIOS-Name)"
-msgstr ""
+msgstr "Saimnieka Vārds (NetBIOS-Vārds)"
 
 #: services/models.py:1043
 msgid "Host Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Saimnieka vārds vecajā formātā, piem. EXAMPLE"
 
 #: services/models.py:1047
 msgid "Workgroup Name"
-msgstr ""
+msgstr "Darbagrupas vārds"
 
 #: services/models.py:1048
 msgid "Workgroup Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Darbagrupas vārds vecajā formātā, piem. EXAMPLE"
 
 #: services/models.py:1052
 msgid "Administrator Name"
-msgstr ""
+msgstr "Administratora vārds"
 
 #: services/models.py:1053
 msgid "Username of Domain Administrator Account"
-msgstr ""
+msgstr "Domēna administratora lietotāja lietotājvārds"
 
 #: services/models.py:1057
 msgid "Administrator Password"
-msgstr ""
+msgstr "Administratora Parole"
 
 #: services/models.py:1058
 msgid "Password of Domain Administrator account."
-msgstr ""
+msgstr "Domēna administratora lietotāja parole."
 
 #: services/models.py:1062 services/models.py:1063
 #: templates/services/index.html:18
 msgid "Active Directory"
-msgstr ""
+msgstr "Aktīvā mape"
 
 #: services/models.py:1074
 msgid "The name or IP address of the LDAP server"
-msgstr ""
+msgstr "LDAP servera vārds vai IP adrese"
 
 #: services/models.py:1078
 msgid "Base DN"
-msgstr ""
+msgstr "Bāzes DN"
 
 #: services/models.py:1080
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr ""
+"Noklusējuma bāzes Ievērojamais Vārds (DN), lietojams meklēšanai, piem. "
+"dc=test,dc=org"
 
 #: services/models.py:1083
 msgid "Allow Anonymous Binding"
-msgstr ""
+msgstr "Atļaut Anonīmo Piesiešanu"
 
 #: services/models.py:1086
 msgid "Root bind DN"
-msgstr ""
+msgstr "Root siešanas DN"
 
 #: services/models.py:1088
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
+"Ievērojamais vārds ar kuru sasiet mapju serveri, piem. "
+"cn=admin,dc=test,dc=org"
 
 #: services/models.py:1092
 msgid "Root bind password"
-msgstr ""
+msgstr "Root siešanas parole"
 
 #: services/models.py:1094
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "Rekvizīti ar kuriem sasiet."
 
 #: services/models.py:1099
 msgid "Password Encryption"
-msgstr ""
+msgstr "Paroles šifrēšana"
 
 #: services/models.py:1100
 msgid "The password change protocol to use."
-msgstr ""
+msgstr "Lietojamais paroles maiņas protokols."
 
 #: services/models.py:1104
 msgid "User Suffix"
-msgstr ""
+msgstr "Lietotāja sufikss"
 
 #: services/models.py:1106
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
 msgstr ""
+"Šis parametrs nosaka sufiksu, kuru lieto lietotājiem, kad šos pievieno LDAP "
+"mapei, piem. ou=Users"
 
 #: services/models.py:1110
 msgid "Group Suffix"
-msgstr ""
+msgstr "Grupas Sufikss"
 
 #: services/models.py:1112
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
+"Šis parametrs nosaka sufiksu, kuru lieto grupām, kad šos pievieno LDAP "
+"mapei, piem. ou=Grupas"
 
 #: services/models.py:1116
 msgid "Password Suffix"
-msgstr ""
+msgstr "Paroles Sufikss"
 
 #: services/models.py:1118
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
+"Šis parametrs nosaka sufiksu, kuru lieto parolēm, kad šos pievieno LDAP "
+"mapei, piem. ou=Password"
 
 #: services/models.py:1122
 msgid "Machine Suffix"
-msgstr ""
+msgstr "Mašīnas Sufikss"
 
 #: services/models.py:1124
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
+"Šis parametrs nosaka sufiksu, kuru lieto mašīnām, kad šos pievieno LDAP "
+"mapei, piem. ou=Computers"
 
 #: services/models.py:1128
 msgid "Turn on/off TLS"
-msgstr ""
+msgstr "Ieslēgt/Izslēgt TLS"
 
 #: services/models.py:1130
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
-msgstr ""
+msgstr "Šis parametrs nosaka, vai lietot SSL/TLS, piem. on/off/start_tls"
 
 #: services/models.py:1133
 msgid "Self signed certificate"
-msgstr ""
+msgstr "Paša parakstīts sertifikāts"
 
 #: services/models.py:1135
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "Novieto sava paša parakstītā sertifikāta saturu šeit."
 
 #: services/models.py:1139 sharing/models.py:85
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "Papildu parametri"
 
 #: services/models.py:1141
 msgid "These parameters are added to ldap.conf."
-msgstr ""
+msgstr "Šie parametri ir pievienoti ldap.conf."
 
 #: services/models.py:1145 services/models.py:1146
 #: templates/services/index.html:64
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/models.py:1156
 msgid "Alternate TCP port. Default is 873"
-msgstr ""
+msgstr "Alternatīvs TCP ports. Pēc noklusējuma ir 873"
 
 #: services/models.py:1161
-#, fuzzy
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
-msgstr ""
-"Šie parametri tiks pievienoti globālajiem uzstādījumiem iekš inadyn.conf."
+msgstr "Šie parametri tiks pievienoti [global] uzstādījumiem iekš inadyn.conf"
 
 #: services/models.py:1165 services/models.py:1166
 msgid "Rsyncd"
-msgstr ""
+msgstr "Rsyncd"
 
 #: services/models.py:1176
 msgid "Module name"
-msgstr ""
+msgstr "Moduļa vārds"
 
 #: services/models.py:1185
-#, fuzzy
 msgid "Path to be shared"
-msgstr "Ceļš uz apjomu"
+msgstr "Ceļš, kuru koplietos"
 
 #: services/models.py:1191
 msgid "Access Mode"
-msgstr ""
+msgstr "Piekļuves režīms"
 
 #: services/models.py:1192
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "Šis kontrolē piekļuvi, kura ir attālinātajam saimniekdatoram"
 
 #: services/models.py:1196
-#, fuzzy
 msgid "Maximum connections"
 msgstr "Max. pieslēgumi"
 
 #: services/models.py:1197
-#, fuzzy
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr "Maksimālais skaits savienojumu IP adresei (0 = neierobežots)."
+msgstr "Maksimālais skaits vienlaicīgu savienojumu. 0 ir neierobežots."
 
 #: services/models.py:1203
 msgid ""
@@ -2401,16 +2425,21 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Šī iespēja norāda lietotājvārdu, kuram jāsūta un jāsaņem datus no tā moduļa. "
+"Kombinācijā ar 'Group' iespēju šis norāda kādas datņu atļaujas ir "
+"iespējamas. Atstāj šo lauku tukšu, lai lietotu noklusējuma uzstādījumus"
 
 #: services/models.py:1210
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"Šī iespēja norāda grupu, kurai jāsūta un jāsaņem datus no tā moduļa. Atstāj "
+"šo lauku tukšu, lai lietotu noklusējuma uzstādījumus"
 
 #: services/models.py:1214
 msgid "Hosts allow"
-msgstr ""
+msgstr "Atļautie saimniekdatori"
 
 #: services/models.py:1215
 msgid ""
@@ -2418,10 +2447,14 @@ msgid ""
 "permitted to access this module. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings"
 msgstr ""
+"Šī iespēja ir komats, tukšumzīme vai tabulēšanas rakstzīme delimitētu "
+"saimniekdatoru kopai, kuriem ir atļauja piekļūt šim modulim. Tu vari norādīt "
+"saimniekus pēc vārda vai IP numura. Atstāj šo lauku tukšu, lai lietotu "
+"noklusējuma uzstādījumus"
 
 #: services/models.py:1219
 msgid "Hosts deny"
-msgstr ""
+msgstr "Aizliegtie saimniekdatori"
 
 #: services/models.py:1220
 msgid ""
@@ -2432,34 +2465,37 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings"
 msgstr ""
+"Šī iespēja ir komats, tukšumzīme vai tabulēšanas rakstzīme delimitētai "
+"saimnieku kopai, kuri NAV atļauti piekļūt šim kopīgojumam. Kur saraksti "
+"konfliktē, atļauju saraksts ņem virsroku. Ja nepieciešams aizliegt visus pēc "
+"noklusējuma, lieto atslēgvārdu ALL (priekš tīkla maskas 0.0.0.0/0) un tad "
+"norādi saimniekdatorus, kuriem dot piekļuvi atļauju sarakstā. Atstāj šo logu "
+"tukšu, lai lietotu noklusējuma uzstādījumus."
 
 #: services/models.py:1225
-#, fuzzy
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
-msgstr ""
-"Šie parametri tiks pievienoti globālajiem uzstādījumiem iekš inadyn.conf."
+msgstr "Šie parametri tiks pievienoti moduļa uzstādījumiem iekš rsyncd.conf."
 
 #: services/models.py:1230
 msgid "Rsync Module"
-msgstr ""
+msgstr "Rsync modulis"
 
 #: services/models.py:1231
 msgid "Rsync Modules"
-msgstr ""
+msgstr "Rsync moduļi"
 
 #: services/nav.py:12
 msgid "Control Services"
-msgstr ""
+msgstr "Kontrolēt Servisus"
 
 #: services/nav.py:50
 msgid "Add Device Extent"
-msgstr ""
+msgstr "Pievienot ierīces apjomu"
 
 #: services/nav.py:60
-#, fuzzy
 msgid "View All Device Extents"
-msgstr "Skatīt visus statiskos ceļus"
+msgstr "Skatīt visus ierīču apjomus"
 
 #: services/nav.py:70 templates/services/iscsi.html:7
 msgid "Device Extents"
@@ -2473,9 +2509,8 @@ msgid "Add Extent"
 msgstr ""
 
 #: services/nav.py:102
-#, fuzzy
 msgid "View All Extents"
-msgstr "Skatīt visus lietotājus"
+msgstr "Skatīt visus apjomus"
 
 #: services/nav.py:114 templates/services/iscsi.html:9
 msgid "Extents"
@@ -2483,40 +2518,40 @@ msgstr ""
 
 #: services/nav.py:136
 msgid "ISCSI"
-msgstr ""
+msgstr "ISCSI"
 
 #: services/nav.py:147 system/models.py:429 templates/services/index.html:86
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/views.py:215
 msgid "The service could not be stopped."
-msgstr ""
+msgstr "Servisu nevar apturēt."
 
 #: services/views.py:222
 msgid "The service could not be started."
-msgstr ""
+msgstr "Servisu nevarēja startēt."
 
 #: sharing/forms.py:92
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "Šis lauks nav derīga IP adrese vai tīkls"
 
 #: sharing/forms.py:98
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr "IP '%s' nav derīgs."
 
 #: sharing/forms.py:109
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "Mapall grupa pieprasa Mapall lietotāju"
 
 #: sharing/forms.py:111
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr "Mapall grupa pieprasa Mapall lietotāju"
 
 #: sharing/forms.py:114 sharing/forms.py:117
 msgid "Maproot user/group disqualifies Mapall"
-msgstr ""
+msgstr "Maproot lietotājs/grupa diskvalificē Mapall"
 
 #: sharing/models.py:41 sharing/models.py:104 storage/models.py:44
 #: storage/models.py:68 storage/models.py:86
@@ -2524,27 +2559,27 @@ msgstr ""
 #: templates/services/rsyncmod.html:5 templates/sharing/apple.html:13
 #: templates/sharing/windows.html:13
 msgid "Name"
-msgstr ""
+msgstr "Vārds"
 
 #: sharing/models.py:52
 msgid "Export Read Only"
-msgstr ""
+msgstr "Eksportēt tikai lasīšanai"
 
 #: sharing/models.py:54
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "Pārlūkojams tīkla klientiem"
 
 #: sharing/models.py:56
 msgid "Inherit Permissions"
-msgstr ""
+msgstr "Mantot atļaujas"
 
 #: sharing/models.py:58
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "Eksportēt atkritni"
 
 #: sharing/models.py:60
 msgid "Show Hidden Files"
-msgstr ""
+msgstr "Rādīt apslēptās datnes"
 
 #: sharing/models.py:64
 msgid "Guest Account"
@@ -2552,15 +2587,15 @@ msgstr "Viesu konts"
 
 #: sharing/models.py:68
 msgid "Allow Guest Access"
-msgstr ""
+msgstr "Atļaut viesa piekļuvi"
 
 #: sharing/models.py:70
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Atļaut tikai viesu piekļuvi"
 
 #: sharing/models.py:74
 msgid "Hosts Allow"
-msgstr ""
+msgstr "Saimnieki atļauj"
 
 #: sharing/models.py:75
 msgid ""
@@ -2568,10 +2603,14 @@ msgid ""
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
 msgstr ""
+"Šī iespēja ir komats, tukšumzīme vai tabulēšanas rakstzīme delimitēta "
+"saimnieku kopa, kurai ir atļauja piekļūt šim kopīgojumam. Tu vari norādīt "
+"saimniekus pēc vārda vai IP adreses. Atstāj šo lauku tukšu priekš "
+"noklusējuma uzstādījumiem."
 
 #: sharing/models.py:80
 msgid "Hosts Deny"
-msgstr ""
+msgstr "Saimnieki Aizliegt"
 
 #: sharing/models.py:81
 msgid ""
@@ -2582,14 +2621,20 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
 msgstr ""
+"Šī iespēja ir komats, tukšumzīme vai tabulēšanas rakstzīme delimitētai "
+"saimnieku kopai, kuri NAV atļauti piekļūt šim kopīgojumam. Kur saraksti "
+"konfliktē, atļauju saraksts ņem virsroku. Ja nepieciešams aizliegt visus pēc "
+"noklusējuma, lieto atslēgvārdu ALL (priekš tīkla maskas 0.0.0.0/0) un tad "
+"norādi saimniekdatorus, kuriem dot piekļuvi atļauju sarakstā. Atstāj šo logu "
+"tukšu, lai lietotu noklusējuma uzstādījumus."
 
 #: sharing/models.py:87
 msgid "These parameters are added to [Share] section of smb.conf"
-msgstr ""
+msgstr "Šie parametri ir pievienoti uz [Share] sekciju iekš smdb.conf"
 
 #: sharing/models.py:93
 msgid "Windows Share"
-msgstr ""
+msgstr "Windows Kopīgojums"
 
 #: sharing/models.py:94
 msgid "Windows Shares"
@@ -2608,11 +2653,11 @@ msgstr ""
 
 #: sharing/models.py:109
 msgid "Share Comment"
-msgstr ""
+msgstr "Kopīgojuma komentārs"
 
 #: sharing/models.py:117
 msgid "Share password"
-msgstr ""
+msgstr "Kopīgojuma parole"
 
 #: sharing/models.py:119
 msgid ""
@@ -2620,20 +2665,23 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
+"Šī iespēja ļauj uzstādīt sējuma paroli, kura var būt maksimāli 8 simbolus "
+"gara (ASCII ir stingri ieteicams)."
 
 #: sharing/models.py:123
 msgid "Share Character Set"
-msgstr ""
+msgstr "Kopīgojuma Zīmjukopa"
 
 #: sharing/models.py:125
 msgid ""
 "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
 "etc."
 msgstr ""
+"Norāda kopīgojuma zīmjukopu. Piemēram UTF8, UTF8-MAC, ISO-8859-15, citi."
 
 #: sharing/models.py:129
 msgid "Allow List"
-msgstr ""
+msgstr "Atļauju saraksts"
 
 #: sharing/models.py:131
 msgid ""
@@ -2641,20 +2689,25 @@ msgid ""
 "Users and groups are specified, delimited by commas. Groups are designated "
 "by a @ prefix."
 msgstr ""
+"Šī iespēja ļauj noteikt lietotājus un grupas, kuras piekļūst kopīgojumam. "
+"Lietotājus un grupas norāda, atdalot ar komatiem. Grupas dizainē ar @ "
+"prefiksu"
 
 #: sharing/models.py:135
 msgid "Deny List"
-msgstr ""
+msgstr "Aizliegto saraksts"
 
 #: sharing/models.py:137
 msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
 msgstr ""
+"Aizliegšanas iespēja norāda lietotājus un grupas, kurām nav atļauts piekļūt "
+"kopīgojumam. Tā seko tam pašam formātam kā atļauju iespēja."
 
 #: sharing/models.py:141
 msgid "Read-only Access"
-msgstr ""
+msgstr "Tikai lasīšanas piekļuve"
 
 #: sharing/models.py:143 sharing/models.py:149
 msgid ""
@@ -2664,21 +2717,23 @@ msgstr ""
 
 #: sharing/models.py:147
 msgid "Read-write Access"
-msgstr ""
+msgstr "Lasīšanas-Rakstīšanas piekļuve"
 
 #: sharing/models.py:152
 msgid "Disk Discovery"
-msgstr ""
+msgstr "Diska Atrašana"
 
 #: sharing/models.py:153
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
+"Atļaut citām sistēmām atklāt šo kopīgojumu kā disku datnēm, kā Laika Mašīnas "
+"dublējumkopiju sējumu vai nepavisam."
 
 #: sharing/models.py:159
 msgid "Disk discovery mode"
-msgstr ""
+msgstr "Diska atrašanas režīms"
 
 #: sharing/models.py:160
 msgid ""
@@ -2689,7 +2744,7 @@ msgstr ""
 
 #: sharing/models.py:164
 msgid "Database Path"
-msgstr ""
+msgstr "Datubāzes ceļš"
 
 #: sharing/models.py:166
 msgid ""
@@ -2699,7 +2754,7 @@ msgstr ""
 
 #: sharing/models.py:169
 msgid "Cache CNID"
-msgstr ""
+msgstr "Kešatmiņas CNID"
 
 #: sharing/models.py:170
 msgid ""
@@ -2707,10 +2762,13 @@ msgid ""
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
+"Ja uzstādīts afpd lieto ID informāciju, kura glabājas iekš AppleDouble V2 "
+"galvenes, lai samazinātu datubāzes slodzi. Neuzstādi šo iespēju, ja sējumu "
+"mainīs ne AFP klienti (NFS/SMB/local)."
 
 #: sharing/models.py:173
 msgid "Translate CR/LF"
-msgstr ""
+msgstr "Tulkot CR/LF"
 
 #: sharing/models.py:174
 msgid ""
@@ -2843,7 +2901,7 @@ msgstr ""
 
 #: sharing/models.py:250
 msgid "Maproot User"
-msgstr ""
+msgstr "Maproot Lietotājs"
 
 #: sharing/models.py:254
 msgid "User to map root to"
@@ -2851,7 +2909,7 @@ msgstr ""
 
 #: sharing/models.py:258
 msgid "Maproot Group"
-msgstr ""
+msgstr "Maproot Grupa"
 
 #: sharing/models.py:262
 msgid "Group to map root to"
@@ -2859,7 +2917,7 @@ msgstr ""
 
 #: sharing/models.py:266
 msgid "Mapall User"
-msgstr ""
+msgstr "Mapall Lietotājs"
 
 #: sharing/models.py:270
 msgid "User to map all users to"
@@ -2867,7 +2925,7 @@ msgstr ""
 
 #: sharing/models.py:274
 msgid "Mapall Group"
-msgstr ""
+msgstr "Mapall Grupa"
 
 #: sharing/models.py:278
 msgid "Group to map all users to"
@@ -2878,9 +2936,8 @@ msgid "UNIX Share"
 msgstr ""
 
 #: sharing/models.py:286
-#, fuzzy
 msgid "UNIX Shares"
-msgstr "UNIX zīmjukopa"
+msgstr "UNIX Koplietojumi"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
@@ -3000,9 +3057,8 @@ msgid "Volume from which this zvol will be created on"
 msgstr ""
 
 #: storage/forms.py:744
-#, fuzzy
 msgid "ZVol Name"
-msgstr "Pilns vārds"
+msgstr "ZVol vārds"
 
 #: storage/forms.py:745
 msgid "Size for this zvol"
@@ -3312,28 +3368,24 @@ msgid "This is in use by the iscsi target, please remove it there first"
 msgstr ""
 
 #: storage/views.py:356
-#, fuzzy
 msgid "ZFS Volume successfully destroyed."
-msgstr "%s veiksmīgi izdzēsts."
+msgstr "ZFS Sējums veiksmīgi iznīcināts."
 
 #: storage/views.py:390
 msgid "Native dataset"
 msgstr ""
 
 #: storage/views.py:406
-#, fuzzy
 msgid "Mount Point permissions successfully updated."
-msgstr "%s veiksmīgi atjaunināts."
+msgstr "Montēšanas Punkta atļaujas veiksmīgi atjaunotas."
 
 #: storage/views.py:421
-#, fuzzy
 msgid "Dataset successfully destroyed."
-msgstr "%s veiksmīgi izdzēsts."
+msgstr "Datu kopa veiksmīgi iznīcināta."
 
 #: storage/views.py:435
-#, fuzzy
 msgid "Snapshot successfully deleted."
-msgstr "%s veiksmīgi izdzēsts."
+msgstr "Uzņēmums veiksmīgi dzēsts."
 
 #: storage/views.py:449
 msgid "Rollback successful."
@@ -3608,9 +3660,8 @@ msgid "The user to run the command"
 msgstr ""
 
 #: system/models.py:245 templates/system/cronjob.html:11
-#, fuzzy
 msgid "Command"
-msgstr "Komentārs"
+msgstr "Komanda"
 
 #: system/models.py:249 system/models.py:354 templates/system/cronjob.html:5
 #: templates/system/rsync.html:5
@@ -3623,9 +3674,8 @@ msgstr ""
 
 #: system/models.py:254 system/models.py:359 templates/system/cronjob.html:6
 #: templates/system/rsync.html:6
-#, fuzzy
 msgid "Hour"
-msgstr "Ik stundu"
+msgstr "Stunda"
 
 #: system/models.py:255 system/models.py:360
 msgid "Values 0-23 allowed."
@@ -3642,9 +3692,8 @@ msgstr ""
 
 #: system/models.py:265 system/models.py:370 templates/system/cronjob.html:8
 #: templates/system/rsync.html:8
-#, fuzzy
 msgid "Month"
-msgstr "Ik mēnesi"
+msgstr "Mēnesis"
 
 #: system/models.py:270 system/models.py:375 templates/system/cronjob.html:9
 #: templates/system/rsync.html:9
@@ -3678,9 +3727,9 @@ msgid "Every %s hour(s)"
 msgstr ""
 
 #: system/models.py:302 system/models.py:458
-#, fuzzy, python-format
+#, python-format
 msgid "Every %s days"
-msgstr "Ikdienas"
+msgstr "Katras %s dienas"
 
 #: system/models.py:309 system/models.py:465
 msgid "Every month"
@@ -3695,19 +3744,16 @@ msgid "Remote Module Name"
 msgstr ""
 
 #: system/models.py:349
-#, fuzzy
 msgid "Short description"
-msgstr "Apraksts"
+msgstr "Īss apraksts"
 
 #: system/models.py:384
-#, fuzzy
 msgid "Recurse into directories"
-msgstr "Mājas mapes"
+msgstr "Atpakļkurss mapēs"
 
 #: system/models.py:388
-#, fuzzy
 msgid "Times"
-msgstr "Noildze"
+msgstr "Laiki"
 
 #: system/models.py:389
 msgid "Preserve modification times"
@@ -3763,9 +3809,8 @@ msgid "Suppress non-error messages"
 msgstr ""
 
 #: system/models.py:413
-#, fuzzy
 msgid "Preserve permissions"
-msgstr "Direktoriju atļaujas"
+msgstr "Saglabāt atļaujas"
 
 #: system/models.py:414
 msgid ""
@@ -3919,9 +3964,8 @@ msgid "Add New User"
 msgstr ""
 
 #: templates/account/bsdusers.html:121 templates/account/bsdusers.html:123
-#, fuzzy
 msgid "Change E-mail"
-msgstr "E-pasts"
+msgstr "Mainīt E-pastu"
 
 #: templates/account/bsdusers.html:156
 msgid "No users defined"
@@ -3975,9 +4019,8 @@ msgid "Yes"
 msgstr ""
 
 #: templates/freeadmin/generic_model_delete_ok.html:1
-#, fuzzy
 msgid "successfully deleted"
-msgstr "%s veiksmīgi izdzēsts."
+msgstr "veiksmīgi izdzēsts"
 
 #: templates/freeadmin/generic_model_edit.html:5
 msgid "Your changes have been successfully updated!"
@@ -4061,9 +4104,8 @@ msgid "FreeNAS Testing"
 msgstr ""
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Docs"
-msgstr "FreeNAS versija"
+msgstr "FreeNAS Dokumenti"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Translations"
@@ -4078,9 +4120,8 @@ msgid "Bug Tracker"
 msgstr ""
 
 #: templates/freeadmin/index.html:104
-#, fuzzy
 msgid "Documentation"
-msgstr "Vieta"
+msgstr "Dokumentācija"
 
 #: templates/freeadmin/index.html:106
 msgid "FreeNAS Documentation"
@@ -4702,9 +4743,8 @@ msgid "Edit ZFS Volume"
 msgstr ""
 
 #: templates/storage/volumes.html:30
-#, fuzzy
 msgid "Create ZFS Volume"
-msgstr "ZFS sējums"
+msgstr "Veidot ZFS sējumu"
 
 #: templates/storage/volumes.html:34
 msgid "Create ZFS zvol"
@@ -4727,9 +4767,8 @@ msgid "Status"
 msgstr ""
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Destroy ZFS Volume"
-msgstr "ZFS sējums"
+msgstr "Iznīcināt ZFS sējumu"
 
 #: templates/storage/volumes.html:128 templates/storage/volumes.html.py:132
 msgid "Destroy Dataset"

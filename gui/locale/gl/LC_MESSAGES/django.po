@@ -3,256 +3,256 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:06-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-06-02 13:35+0200\n"
+"Last-Translator: santigonzalez <santigonzalez@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: gl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
 msgid "Plain"
-msgstr ""
+msgstr "Plano"
 
 #: choices.py:36 system/models.py:232 templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:37
 msgid "TLS"
-msgstr ""
+msgstr "TLS"
 
 #: choices.py:42
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: choices.py:43
 msgid "HTTPS"
-msgstr ""
+msgstr "HTTPS"
 
 #: choices.py:48 choices.py:217
 msgid "Auto"
-msgstr ""
+msgstr "Automático"
 
 #: choices.py:49
 msgid "PIO0"
-msgstr ""
+msgstr "PIO0"
 
 #: choices.py:50
 msgid "PIO1"
-msgstr ""
+msgstr "PIO1"
 
 #: choices.py:51
 msgid "PIO2"
-msgstr ""
+msgstr "PIO2"
 
 #: choices.py:52
 msgid "PIO3"
-msgstr ""
+msgstr "PIO3"
 
 #: choices.py:53
 msgid "PIO4"
-msgstr ""
+msgstr "PIO4"
 
 #: choices.py:54
 msgid "WDMA0"
-msgstr ""
+msgstr "WDMA0"
 
 #: choices.py:55
 msgid "WDMA1"
-msgstr ""
+msgstr "WDMA1"
 
 #: choices.py:56
 msgid "WDMA2"
-msgstr ""
+msgstr "WDMA2"
 
 #: choices.py:57
 msgid "UDMA-16"
-msgstr ""
+msgstr "UDMA-16"
 
 #: choices.py:58
 msgid "UDMA-33"
-msgstr ""
+msgstr "UDMA-33"
 
 #: choices.py:59
 msgid "UDMA-66"
-msgstr ""
+msgstr "UDMA-66"
 
 #: choices.py:60
 msgid "UDMA-100"
-msgstr ""
+msgstr "UDMA-100"
 
 #: choices.py:61
 msgid "UDMA-133"
-msgstr ""
+msgstr "UDMA-133"
 
 #: choices.py:62
 msgid "SATA 1.5Gbit/s"
-msgstr ""
+msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:63
 msgid "SATA 3.0Gbit/s"
-msgstr ""
+msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:67
 msgid "Always On"
-msgstr ""
+msgstr "Sempre Aceso"
 
 #: choices.py:81 choices.py:90
 msgid "Disabled"
-msgstr ""
+msgstr "Deshabilitado"
 
 #: choices.py:82
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "Nivel 1 - Mínimo consumo de enerxía co modo de espera (spindown)"
 
 #: choices.py:83
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "Nivel 64 - Consumo medio de enerxía co modo de espera "
 
 #: choices.py:84
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "Nivel 127 - Consumo medio de enerxía co modo de espera"
 
 #: choices.py:85
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr ""
+msgstr "Nivel 128 - Mínimo consumo de enerxía sen modo de espera (sen spindown)"
 
 #: choices.py:86
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr ""
+msgstr "Nivel 192 - Comsumo medio de enerxía sen modo de espera"
 
 #: choices.py:87
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr ""
+msgstr "Nivel 254 - Máximo rendemento, máximo consumo de enerxía"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
-msgstr ""
+msgstr "Mínimo"
 
 #: choices.py:92
 msgid "Medium"
-msgstr ""
+msgstr "Medio"
 
 #: choices.py:93
 msgid "Maximum"
-msgstr ""
+msgstr "Máximo"
 
 #: choices.py:127 templates/storage/tasks.html:86
 msgid "January"
-msgstr ""
+msgstr "Xaneiro"
 
 #: choices.py:128 templates/storage/tasks.html:89
 msgid "February"
-msgstr ""
+msgstr "Febreiro"
 
 #: choices.py:129 templates/storage/tasks.html:92
 msgid "March"
-msgstr ""
+msgstr "Marzo"
 
 #: choices.py:130 templates/storage/tasks.html:95
 msgid "April"
-msgstr ""
+msgstr "Abril"
 
 #: choices.py:131 templates/storage/tasks.html:98
 msgid "May"
-msgstr ""
+msgstr "Maio"
 
 #: choices.py:132 templates/storage/tasks.html:101
 msgid "June"
-msgstr ""
+msgstr "Xuño"
 
 #: choices.py:133 templates/storage/tasks.html:104
 msgid "July"
-msgstr ""
+msgstr "Xullo"
 
 #: choices.py:134 templates/storage/tasks.html:107
 msgid "August"
-msgstr ""
+msgstr "Agosto"
 
 #: choices.py:135 templates/storage/tasks.html:110
 msgid "September"
-msgstr ""
+msgstr "Setembro"
 
 #: choices.py:136 templates/storage/tasks.html:113
 msgid "October"
-msgstr ""
+msgstr "Outubro"
 
 #: choices.py:137 templates/storage/tasks.html:116
 msgid "November"
-msgstr ""
+msgstr "Novembro"
 
 #: choices.py:138 templates/storage/tasks.html:119
 msgid "December"
-msgstr ""
+msgstr "Decembro"
 
 #: choices.py:141 templates/storage/tasks.html:57
 msgid "Monday"
-msgstr ""
+msgstr "Luns"
 
 #: choices.py:142 templates/storage/tasks.html:60
 msgid "Tuesday"
-msgstr ""
+msgstr "Martes"
 
 #: choices.py:143 templates/storage/tasks.html:63
 msgid "Wednesday"
-msgstr ""
+msgstr "Mércores"
 
 #: choices.py:144 templates/storage/tasks.html:66
 msgid "Thursday"
-msgstr ""
+msgstr "Xoves"
 
 #: choices.py:145 templates/storage/tasks.html:69
 msgid "Friday"
-msgstr ""
+msgstr "Venres"
 
 #: choices.py:146 templates/storage/tasks.html:72
 msgid "Saturday"
-msgstr ""
+msgstr "Sábado"
 
 #: choices.py:147 templates/storage/tasks.html:75
 msgid "Sunday"
-msgstr ""
+msgstr "Domingo"
 
 #: choices.py:158
 msgid "Anonymous"
-msgstr ""
+msgstr "Anónimo"
 
 #: choices.py:159
 msgid "Local User"
-msgstr ""
+msgstr "Usuario Local"
 
 #: choices.py:180
 msgid "Normal"
-msgstr ""
+msgstr "Normal"
 
 #: choices.py:181
 msgid "Full"
-msgstr ""
+msgstr "Cheo"
 
 #: choices.py:182
 msgid "Debug"
-msgstr ""
+msgstr "Depurar"
 
 #: choices.py:186
 msgid "Default"
-msgstr ""
+msgstr "Por defecto"
 
 #: choices.py:187
 msgid "Time Machine"
-msgstr ""
+msgstr "Máquina de Tempo"
 
 #: choices.py:190
 msgid "No case folding"
-msgstr ""
+msgstr "Sen caixas despregables"
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"

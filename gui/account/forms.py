@@ -40,7 +40,7 @@ class SharedFunc():
     def _populate_shell_choices(self):
         from os import popen
         from os.path import basename
-        
+
         shell_dict = {}
         shells = popen("grep ^/ /etc/shells").read().split('\n')
         for shell in shells:
@@ -56,7 +56,7 @@ class FilteredSelectJSON(forms.widgets.ComboBox):
         super(FilteredSelectJSON, self).__init__(attrs, choices)
 
     def render(self, name, value, attrs={}, choices=()):
-        self.url = reverse(self.url[0])
+        self.url = reverse(*self.url)
         store = 'state'+attrs['id']
         attrs.update({
             'store': store,
@@ -77,7 +77,7 @@ class FilteredSelectJSON(forms.widgets.ComboBox):
         </script>""" % (attrs['id'] ) + "</select>" + ret[-1]
         ret = """<div dojoType="dojo.data.ItemFileReadStore" jsId="%s" clearOnClose="true" url="%s"></div>""" % (store, self.url) + ret
         return ret
-    
+
 class FilteredSelectMultiple(forms.widgets.SelectMultiple):
 
     def __init__(self, attrs=None, choices=()):
@@ -105,7 +105,7 @@ class FilteredSelectMultiple(forms.widgets.SelectMultiple):
                    }
             old = turn.onSubmit;
             turn.onSubmit = function(e) {
-                dojo.query("select", turn.domNode).forEach(function(s) { 
+                dojo.query("select", turn.domNode).forEach(function(s) {
                                 for (var i = 0; i < s.length; i++) {
                                         s.options[i].selected = 'selected';
                                    }
@@ -377,7 +377,6 @@ class bsdUserChangeForm(ModelForm, SharedFunc):
         return self.cleaned_data.get("bsdusr_login_disabled", False)
 
     def save(self):
-        
         bsduser = super(bsdUserChangeForm, self).save(commit=False)
         bsduser_locked = (bsduser.bsdusr_unixhash[0:8] == '*LOCKED*')
         if self.cleaned_data["bsdusr_login_disabled"] == True and bsduser_locked == False:

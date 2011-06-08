@@ -3,20 +3,20 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:08-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-06-07 20:35+0200\n"
+"Last-Translator: raymond <raymondv@gmx.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: fi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: media/lib/js/freeadmin.js:114
 msgid "Reporting"
@@ -24,7 +24,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:126
 msgid "Settings"
-msgstr ""
+msgstr "Asetukset"
 
 #: media/lib/js/freeadmin.js:137
 msgid "System Information"
@@ -36,15 +36,15 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:239
 msgid "Services"
-msgstr ""
+msgstr "Palvelut"
 
 #: media/lib/js/freeadmin.js:279
 msgid "Account"
-msgstr ""
+msgstr "Tili"
 
 #: media/lib/js/freeadmin.js:318
 msgid "Storage"
-msgstr ""
+msgstr "Varastointi"
 
 #: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
@@ -56,7 +56,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:443
 msgid "Replace"
-msgstr ""
+msgstr "Korvata"
 
 #: media/lib/js/freeadmin.js:444
 msgid "Disk Replacement"
@@ -64,7 +64,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:448
 msgid "Detach"
-msgstr ""
+msgstr "Irrottaa"
 
 #: media/lib/js/freeadmin.js:449
 msgid "Disk Detach"

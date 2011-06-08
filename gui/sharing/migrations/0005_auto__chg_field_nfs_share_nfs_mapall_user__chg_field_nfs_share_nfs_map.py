@@ -8,15 +8,19 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         
+        orm.NFS_Share.objects.filter(nfs_mapall_user__isnull=True).update(nfs_mapall_user='')
         # Changing field 'NFS_Share.nfs_mapall_user'
         db.alter_column('sharing_nfs_share', 'nfs_mapall_user', self.gf('freeadmin.models.UserField')(max_length=120))
 
+        orm.NFS_Share.objects.filter(nfs_maproot_group__isnull=True).update(nfs_maproot_group='')
         # Changing field 'NFS_Share.nfs_maproot_group'
         db.alter_column('sharing_nfs_share', 'nfs_maproot_group', self.gf('freeadmin.models.GroupField')(max_length=120))
 
+        orm.NFS_Share.objects.filter(nfs_maproot_user__isnull=True).update(nfs_maproot_user='')
         # Changing field 'NFS_Share.nfs_maproot_user'
         db.alter_column('sharing_nfs_share', 'nfs_maproot_user', self.gf('freeadmin.models.UserField')(max_length=120))
 
+        orm.NFS_Share.objects.filter(nfs_mapall_group__isnull=True).update(nfs_mapall_group='')
         # Changing field 'NFS_Share.nfs_mapall_group'
         db.alter_column('sharing_nfs_share', 'nfs_mapall_group', self.gf('freeadmin.models.GroupField')(max_length=120))
 

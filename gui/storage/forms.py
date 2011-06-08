@@ -33,6 +33,7 @@ from django.http import QueryDict
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ugettext as __
 from django.core.urlresolvers import reverse
+from django.db import transaction
 
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
@@ -115,13 +116,13 @@ class UnixPermissionWidget(widgets.MultiWidget):
         return html
 
 class UnixPermissionField(forms.MultiValueField):
-    
+
     widget = UnixPermissionWidget()
-    
+
     def __init__(self, *args, **kwargs):
         fields = [forms.BooleanField()] * 9
         super(UnixPermissionField, self).__init__(fields, *args, **kwargs)
-    
+
     def compress(self, value):
         if value:
             owner = 0
@@ -161,8 +162,8 @@ class VolumeWizardForm(forms.Form):
         self.fields['volume_disks'].choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
         self.fields['volume_fstype'].widget.attrs['onClick'] = 'wizardcheckings();'
 
-        grouptype_choices = ( 
-            ('mirror', 'mirror'), 
+        grouptype_choices = (
+            ('mirror', 'mirror'),
             ('stripe', 'stripe'),
             )
         fstype = self.data.get("volume_fstype", None)
@@ -187,9 +188,9 @@ class VolumeWizardForm(forms.Form):
         self.fields['group_type'].choices = grouptype_choices
 
     def _populate_disk_choices(self):
-    
+
         diskchoices = dict()
-    
+
         # Grab disk list
         # NOTE: This approach may fail if device nodes are not accessible.
         pipe = popen("/usr/sbin/diskinfo `/sbin/sysctl -n kern.disks | tr ' ' '\n' | grep -v '^cd[0-9]'` | /usr/bin/cut -f1,3")
@@ -253,7 +254,7 @@ class VolumeWizardForm(forms.Form):
                 msg = _(u"The volume name may NOT start with c[0-9], mirror, raidz or spare")
                 self._errors["volume_name"] = self.error_class([msg])
                 cleaned_data.pop("volume_name", None)
-            
+
         return cleaned_data
 
     def done(self, request):
@@ -295,6 +296,9 @@ class VolumeWizardForm(forms.Form):
                            disk_group = grp)
             diskobj.save()
 
+        if add:
+            notifier().zfs_volume_attach_group(str(grp.id), force4khack=force4khack)
+
         zpoolfields = re.compile(r'zpool_(.+)')
         disks = [(i, zpoolfields.search(i).group(1)) for i in request.POST.keys() \
                 if zpoolfields.match(i)]
@@ -327,9 +331,10 @@ class VolumeWizardForm(forms.Form):
                                    )
                     diskobj.save()
 
-        if add:
-            notifier().zfs_volume_attach_group(str(grp.id), force4khack=force4khack)
-        else:
+                if add:
+                    notifier().zfs_volume_attach_group(str(grp.id), force4khack=force4khack)
+
+        if not add:
             notifier().init("volume", volume.id, force4khack=force4khack)
 
 class VolumeImportForm(forms.Form):
@@ -344,10 +349,10 @@ class VolumeImportForm(forms.Form):
         self.fields['volume_disks'].choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
 
     def _populate_disk_choices(self):
-    
+
         diskchoices = dict()
         used_disks = [notifier().identifier_to_device(i[0]) for i in models.Disk.objects.all().values_list('disk_identifier').distinct()]
-    
+
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
         parts = notifier().get_partitions()
@@ -432,22 +437,23 @@ class VolumeAutoImportForm(forms.Form):
         self.fields['volume_disks'].choices = self._populate_disk_choices()
 
     def _populate_disk_choices(self):
-    
+
         diskchoices = dict()
         used_disks = [notifier().identifier_to_device(i[0]) for i in models.Disk.objects.all().values_list('disk_identifier').distinct()]
-    
+
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
         vols = notifier().detect_volumes()
 
         for vol in list(vols):
-            for disk in vol['disks']:
-                if len([i for i in used_disks if disk.startswith(i)]) > 0:
-                    vols.remove(vol)
-                    break
+            for vdev in vol['disks']['vdevs']:
+                for disk in vdev['disks']:
+                    if len([i for i in used_disks if i is not None and disk.startswith(i)]) > 0:
+                        vols.remove(vol)
+                        break
 
         for vol in vols:
-            devname = "%s [%s - %s]" % (vol['label'],vol['type'],vol['group_type'])
+            devname = "%s [%s]" % (vol['label'],vol['type'])
             diskchoices[vol['label']] = "%s" % (devname,)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
@@ -480,17 +486,15 @@ class VolumeAutoImportForm(forms.Form):
 
             if cleaned_data['volume']['type'] == 'geom':
                 if cleaned_data['volume']['group_type'] == 'mirror':
-                    dev = "/dev/mirror/%s%s" % (cleaned_data['volume']['label'],
-                            cleaned_data['volume']['group_type'])
+                    dev = "/dev/mirror/%s" % (cleaned_data['volume']['label'])
                 elif cleaned_data['volume']['group_type'] == 'stripe':
-                    dev = "/dev/stripe/%s%s" % (cleaned_data['volume']['label'],
-                            cleaned_data['volume']['group_type'])
+                    dev = "/dev/stripe/%s" % (cleaned_data['volume']['label'])
                 elif cleaned_data['volume']['group_type'] == 'raid3':
-                    dev = "/dev/raid3/%s%s" % (cleaned_data['volume']['label'],
-                            cleaned_data['volume']['group_type'])
+                    dev = "/dev/raid3/%s" % (cleaned_data['volume']['label'])
                 else:
                     #TODO
                     raise NotImplementedError
+
                 isvalid = notifier().precheck_partition(dev, 'UFS')
                 if not isvalid:
                     msg = _(u"The selected disks were not verified for this import rules.")
@@ -521,48 +525,73 @@ class VolumeAutoImportForm(forms.Form):
                     'spare': vol['spare'],
                     }
 
-            if not notifier().zfs_import(vol['label']):
-                assert False, "Could not run zfs import"
-            
-        volume = models.Volume(vol_name = volume_name, vol_fstype = volume_fstype)
-        volume.save()
-        self.volume = volume
+        with transaction.commit_on_success():
+            volume = models.Volume(vol_name = volume_name, vol_fstype = volume_fstype)
+            volume.save()
+            self.volume = volume
 
-        mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
-        mp.save()
+            mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
+            mp.save()
+
+            if vol['type'] == 'zfs':
+
+                i = 0
+                for vdev in vol['disks']['vdevs']:
+                    if i == 0:
+                        group_name = volume_name
+                    else:
+                        group_name = volume_name + vdev['type'] + str(i)
+                    grp = models.DiskGroup(group_name = group_name, group_type = vdev['type'],
+                                group_volume = volume)
+                    grp.save()
+
+                    for diskname in vdev['disks']:
+                        ident = notifier().device_to_identifier(diskname)
+                        diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
+                                       disk_description = ("Member of %s %s" %
+                                                          (volume_name, vdev['type'])),
+                                       disk_group = grp)
+                        diskobj.save()
+                    i += 1
+            else:
+                notifier().label_disk(volume_name, "%s/%s" % (group_type, volume_name), 'UFS')
+
+                grp = models.DiskGroup(group_name= volume_name, group_type = group_type, group_volume = volume)
+                grp.save()
+
+                for diskname in vol['disks']['vdevs'][0]['disks']:
+                    ident = notifier().device_to_identifier(diskname)
+                    diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
+                                   disk_description = ("Member of %s %s" %
+                                                      (volume_name, group_type)),
+                                   disk_group = grp)
+                    diskobj.save()
+
+
+            for grp_type in grouped:
+
+                if grp_type in ('log','cache','spare') and grouped[grp_type]:
+                    # When doing log, we assume it's always 'mirror' for data safety
+                    if grp_type == 'log' and len(grouped[grp_type]) > 1:
+                        group_type='log mirror'
+                    else:
+                        group_type=grp_type
+                    grp = models.DiskGroup(group_name=volume.vol_name+grp_type, \
+                            group_type=group_type , group_volume = volume)
+                    grp.save()
+
+                    for diskname in grouped[grp_type]['vdevs'][0]['disks']:
+                        ident = notifier().device_to_identifier(diskname)
+                        diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
+                                  disk_description = ("Member of %s %s" %
+                                    (volume.vol_name, grp_type)), disk_group = grp)
+                        diskobj.save()
+
+            if vol['type'] == 'zfs' and not notifier().zfs_import(vol['label']):
+                assert False, "Could not run zfs import"
 
         if vol['type'] == 'zfs':
             notifier().zfs_sync_datasets(volume.id)
-
-        grp = models.DiskGroup(group_name= volume_name, group_type = group_type, group_volume = volume)
-        grp.save()
-
-        for diskname in vol['disks']:
-            ident = notifier().device_to_identifier(diskname)
-            diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
-                           disk_description = ("Member of %s %s" %
-                                              (volume_name, group_type)),
-                           disk_group = grp)
-            diskobj.save()
-
-
-        for grp_type in grouped:
-
-            if grp_type in ('log','cache','spare'):
-                # When doing log, we assume it's always 'mirror' for data safety
-                if grp_type == 'log' and len(grouped[grp_type]) > 1:
-                    group_type='log mirror'
-                else:
-                    group_type=grp_type
-                grp = models.DiskGroup(group_name=volume.vol_name+grp_type, \
-                        group_type=group_type , group_volume = volume)
-                grp.save()
-
-                for diskname in grouped[grp_type]:
-                    diskobj = models.Disk(disk_name = diskname, disk_identifier = "{devicename}%s" % diskname,
-                              disk_description = ("Member of %s %s" %
-                                (volume.vol_name, grp_type)), disk_group = grp)
-                    diskobj.save()
 
         notifier().reload("disk")
 
@@ -610,7 +639,7 @@ class ZFSDataset_CreateForm(Form):
         return volumechoices.items()
     def clean_dataset_name(self):
         name = self.cleaned_data["dataset_name"]
-        if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*(?:/[a-zA-Z0-9][a-zA-Z0-9_\-:.])*$', name):
+        if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*(?:/[a-zA-Z0-9][a-zA-Z0-9_\-:.]+)*$', name):
             raise forms.ValidationError(_("Dataset names must begin with an alphanumeric character and may only contain (-), (_), (:) and (.)."))
         return name
     def clean(self):
@@ -955,6 +984,7 @@ class ReplicationForm(ModelForm):
     def __init__(self, *args, **kwargs):
         repl = kwargs.get('instance', None)
         super(ReplicationForm, self).__init__(*args, **kwargs)
+        self.fields['repl_mountpoint'].queryset = self.fields['repl_mountpoint'].queryset.filter(task__in=models.Task.objects.all()).distinct()
         if repl != None and repl.id != None:
             self.fields['remote_hostname'].initial = repl.repl_remote.ssh_remote_hostname
             self.fields['remote_hostkey'].initial = repl.repl_remote.ssh_remote_hostkey

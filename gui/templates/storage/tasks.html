@@ -44,8 +44,7 @@
 		{% trans "through" %}
 		{{ p.task_end }}
 		{% trans ", every" %}
-		{{ p.task_interval }}
-		{% trans "minutes," %}
+		{{ p.get_task_interval_display }}
 		{% if p.task_repeat_unit == "daily" %}
 			{% trans "everyday" %}
 		{% else %}

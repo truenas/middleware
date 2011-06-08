@@ -50,7 +50,7 @@ class Migration(SchemaMigration):
         },
         'services.cifs': {
             'Meta': {'object_name': 'CIFS'},
-            'cifs_srv_aio_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'cifs_srv_aio_enable': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'cifs_srv_aio_rs': ('django.db.models.fields.IntegerField', [], {'default': "'1'", 'max_length': '120'}),
             'cifs_srv_aio_ws': ('django.db.models.fields.IntegerField', [], {'default': "'1'", 'max_length': '120'}),
             'cifs_srv_authmodel': ('django.db.models.fields.CharField', [], {'max_length': '10'}),

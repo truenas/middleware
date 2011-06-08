@@ -24,7 +24,6 @@ generate_sshd()
 	"SELECT $sf FROM services_ssh ORDER BY -id LIMIT 1" | \
 	while eval read $f; do
 	    cat > $cfg <<EOF
-SyslogFacility LOCAL3
 Protocol 2
 UseDNS no
 Subsystem       sftp    /usr/libexec/sftp-server
