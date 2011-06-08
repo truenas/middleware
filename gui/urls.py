@@ -25,7 +25,7 @@
 #
 # $FreeBSD$
 #####################################################################
-import os 
+import os
 from django.conf.urls.defaults import include, patterns
 from django.views.static import serve
 from django.conf import settings

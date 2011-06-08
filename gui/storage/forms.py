@@ -265,7 +265,7 @@ class VolumeWizardForm(forms.Form):
         force4khack = self.cleaned_data.get("force4khack", False)
 
         if (len(disk_list) < 2):
-            group_type = ''
+            group_type = 'stripe'
         else:
             group_type = self.cleaned_data['group_type']
 
@@ -282,22 +282,23 @@ class VolumeWizardForm(forms.Form):
             mp.save()
         self.volume = volume
 
-        grpnum = models.DiskGroup.objects.filter(group_type = group_type, group_volume = volume).count()
-        if grpnum > 0:
-            grp = models.DiskGroup(group_name=volume_name + group_type + str(grpnum), group_type = group_type, group_volume = volume)
-        else:
-            grp = models.DiskGroup(group_name=volume_name + group_type, group_type = group_type, group_volume = volume)
-        grp.save()
+        if len(disk_list) > 0:
+            grpnum = models.DiskGroup.objects.filter(group_type = group_type, group_volume = volume).count()
+            if grpnum > 0:
+                grp = models.DiskGroup(group_name=volume_name + group_type + str(grpnum), group_type = group_type, group_volume = volume)
+            else:
+                grp = models.DiskGroup(group_name=volume_name + group_type, group_type = group_type, group_volume = volume)
+            grp.save()
 
-        for diskname in disk_list:
-            diskobj = models.Disk(disk_name = diskname, disk_identifier = "{devicename}%s" % diskname,
-                           disk_description = ("Member of %s %s" %
-                                              (volume_name, group_type)),
-                           disk_group = grp)
-            diskobj.save()
+            for diskname in disk_list:
+                diskobj = models.Disk(disk_name = diskname, disk_identifier = "{devicename}%s" % diskname,
+                               disk_description = ("Member of %s %s" %
+                                                  (volume_name, group_type)),
+                               disk_group = grp)
+                diskobj.save()
 
-        if add:
-            notifier().zfs_volume_attach_group(str(grp.id), force4khack=force4khack)
+            if add:
+                notifier().zfs_volume_attach_group(str(grp.id), force4khack=force4khack)
 
         zpoolfields = re.compile(r'zpool_(.+)')
         disks = [(i, zpoolfields.search(i).group(1)) for i in request.POST.keys() \
@@ -318,8 +319,16 @@ class VolumeWizardForm(forms.Form):
                     group_type='log mirror'
                 else:
                     group_type=grp_type
-                grp = models.DiskGroup(group_name=volume.vol_name+grp_type, \
-                        group_type=group_type , group_volume = volume)
+                grpnum = models.DiskGroup.objects.filter(group_name=volume.vol_name+grp_type).count()
+                if grpnum > 0:
+                    if grp_type != 'log':
+                        grp = models.DiskGroup(group_name=volume.vol_name+grp_type+str(grpnum), \
+                            group_type=group_type , group_volume = volume)
+                    else:
+                        continue
+                else:
+                    grp = models.DiskGroup(group_name=volume.vol_name+grp_type, \
+                            group_type=group_type , group_volume = volume)
                 grp.save()
 
                 for diskname in grouped[grp_type]:
@@ -576,16 +585,20 @@ class VolumeAutoImportForm(forms.Form):
                         group_type='log mirror'
                     else:
                         group_type=grp_type
-                    grp = models.DiskGroup(group_name=volume.vol_name+grp_type, \
-                            group_type=group_type , group_volume = volume)
-                    grp.save()
 
-                    for diskname in grouped[grp_type]['vdevs'][0]['disks']:
-                        ident = notifier().device_to_identifier(diskname)
-                        diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
-                                  disk_description = ("Member of %s %s" %
-                                    (volume.vol_name, grp_type)), disk_group = grp)
-                        diskobj.save()
+                    i = 0
+                    for vdev in grouped[grp_type]['vdevs']:
+                        grp = models.DiskGroup(group_name=volume.vol_name+grp_type+str(i), \
+                                group_type=group_type , group_volume = volume)
+                        grp.save()
+
+                        for diskname in vdev['disks']:
+                            ident = notifier().device_to_identifier(diskname)
+                            diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
+                                      disk_description = ("Member of %s %s" %
+                                        (volume.vol_name, grp_type)), disk_group = grp)
+                            diskobj.save()
+                        i += 1
 
             if vol['type'] == 'zfs' and not notifier().zfs_import(vol['label']):
                 assert False, "Could not run zfs import"
