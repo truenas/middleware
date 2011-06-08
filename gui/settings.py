@@ -28,7 +28,7 @@
 # Django settings for FreeNAS project.
 
 import os
-    
+
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 DEBUG = False
@@ -57,7 +57,7 @@ DATABASES = {
 # although not all choices may be available on all operating systems.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/Los_Angeles'
+TIME_ZONE = None
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
