@@ -1235,3 +1235,37 @@ class RsyncMod(Model):
 
     def __unicode__(self):
         return unicode(self.rsyncmod_name)
+
+class SMART(Model):
+    smart_powermode = models.CharField(
+            choices=choices.SMART_POWERMODE,
+            default="never",
+            max_length=60,
+            verbose_name=_("Power mode"),
+            )
+    smart_difference = models.IntegerField(
+            default=0,
+            verbose_name=_("Difference"),
+            help_text=_("Report if the temperature had changed by at least N degrees Celsius since last report. 0 to disable"),
+            )
+    smart_informal = models.IntegerField(
+            default=0,
+            verbose_name=_("Informal"),
+            help_text=_("Report if the temperature is greater or equal than N degrees Celsius. 0 to disable"),
+            )
+    smart_critical = models.IntegerField(
+            default=0,
+            verbose_name=_("Critical"),
+            help_text=_("Report if the temperature is greater or equal than N degrees Celsius. 0 to disable"),
+            )
+    smart_email = models.CharField(
+            verbose_name=_("Email to report"),
+            max_length=255,
+            blank=True,
+            help_text=_("Destination email address. Separate email addresses by semi-colon"),
+            )
+    class Meta:
+        verbose_name = _("S.M.A.R.T.")
+        verbose_name_plural = _("S.M.A.R.T.")
+    class FreeAdmin:
+        deletable = False

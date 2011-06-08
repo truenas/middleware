@@ -32,7 +32,9 @@ import os
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
 from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ungettext_lazy
 from django.core.urlresolvers import reverse
+from django.core.validators import email_re
 
 import choices
 from services import models
@@ -771,3 +773,26 @@ class ExtentDelete(Form):
         if self.cleaned_data['delete'] and \
             self.instance.iscsi_target_extent_type == 'File':
             os.system("rm \"%s\"" % self.instance.iscsi_target_extent_path)
+
+class SMARTForm(ModelForm):
+    class Meta:
+        model = models.SMART
+    def clean_smart_email(self):
+        email = self.cleaned_data.get("smart_email")
+        if email:
+            invalids = []
+            for e in email.split(';'):
+                if not email_re.match(e.strip()):
+                    invalids.append(e.strip())
+
+            if len(invalids) > 0:
+                raise forms.ValidationError(ungettext_lazy('The email %(email)s is not valid',
+                    'The following emails are not valid: %(email)s', len(invalids)) % {
+                    'email': ", ".join(invalids),
+                    })
+        return email
+    def save(self):
+        super(SMARTForm, self).save()
+        #started = notifier().restart("smart")
+        #if started is False and models.services.objects.get(srv_service='smart').srv_enable:
+        #    raise ServiceFailed("smart", _("The SMART service failed to reload."))
