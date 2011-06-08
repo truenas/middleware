@@ -37,11 +37,11 @@ mountpoint_limiter = { 'mp_path__startswith': '/mnt/' }
 
 class CIFS_Share(Model):
     cifs_name = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Name")
             )
     cifs_comment = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Comment"),
             blank=True,
             )
@@ -58,9 +58,10 @@ class CIFS_Share(Model):
     cifs_showhiddenfiles = models.BooleanField(
             verbose_name = _("Show Hidden Files"))
     cifs_guest = UserField(
-            max_length=120, 
-            default="www", 
-            verbose_name = _("Guest Account"), 
+            max_length=120,
+            default="www",
+            exclude=["root"],
+            verbose_name = _("Guest Account"),
             help_text = _("Use this option to override the username ('ftp' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login.")
             )
     cifs_guestok = models.BooleanField(
@@ -68,24 +69,24 @@ class CIFS_Share(Model):
     cifs_guestonly = models.BooleanField(
             verbose_name = _("Only Allow Guest Access"))
     cifs_hostsallow = models.CharField(
-            max_length=120, 
-            blank=True, 
+            max_length=120,
+            blank=True,
             verbose_name = _("Hosts Allow"),
             help_text = _("This option is a comma, space, or tab delimited set of hosts which are permitted to access this share. You can specify the hosts by name or IP number. Leave this field empty to use default settings.")
             )
     cifs_hostsdeny = models.CharField(
-            max_length=120, 
-            blank=True, 
+            max_length=120,
+            blank=True,
             verbose_name = _("Hosts Deny"),
             help_text = _("This option is a comma, space, or tab delimited set of host which are NOT permitted to access this share. Where the lists conflict, the allow list takes precedence. In the event that it is necessary to deny all by default, use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify to the hosts allow parameter those hosts that should be permitted access. Leave this field empty to use default settings.")
             )
     cifs_auxsmbconf = models.TextField(
-            max_length=120, 
-            verbose_name = _("Auxiliary Parameters"), 
+            max_length=120,
+            verbose_name = _("Auxiliary Parameters"),
             blank=True,
             help_text = _("These parameters are added to [Share] section of smb.conf")
             )
-    
+   
     def __unicode__(self):
         return self.cifs_name
     class Meta:
@@ -99,49 +100,49 @@ class CIFS_Share(Model):
 
 class AFP_Share(Model):
     afp_name = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Name"),
             help_text = _("The volume name is the name that appears in the Chooser of the 'connect to server' dialog on Macintoshes to represent the appropriate share. If volumename is unspecified, the last component of pathname is used. No two volumes may have the same name. The volume name cannot contain the ':' character. The volume name is mangled if it is very long. Mac codepage volume name is limited to 27 characters. UTF8-MAC volume name is limited to 'Volume Name Length' parameter in Services:Apple Share")
             )
     afp_comment = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Share Comment"),
             blank=True
             )
     afp_path = PathField(
             verbose_name = _("Path"))
     afp_sharepw = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Share password"),
             blank=True,
             help_text = _("This option allows you to set a volume password, which can be a maximum of 8 characters long (using ASCII strongly recommended at the time of this writing).")
         )
     afp_sharecharset = models.CharField(
-            max_length=120, 
-            verbose_name = _("Share Character Set"), 
+            max_length=120,
+            verbose_name = _("Share Character Set"),
             blank=True,
             help_text = _("Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, etc.")
             )
     afp_allow = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Allow List"),
             blank=True,
             help_text = _("This option allows the users and groups that access a share to be specified. Users and groups are specified, delimited by commas. Groups are designated by a @ prefix.")
             )
     afp_deny = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Deny List"),
             blank=True,
             help_text = _("The deny option specifies users and groups who are not allowed access to the share. It follows the same format as the allow option.")
             )
     afp_ro = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Read-only Access"),
             blank=True,
             help_text = _("Allows certain users and groups to have read/write access to a share. This follows the allow option format.")
         )
     afp_rw = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Read-write Access"),
             blank=True,
             help_text = _("Allows certain users and groups to have read/write access to a share. This follows the allow option format.")
@@ -151,14 +152,14 @@ class AFP_Share(Model):
             help_text = _("Allow other systems to discover this share as a disk for data, as a Time Machine backup volume or not at all.")
             )
     afp_discoverymode = models.CharField(
-            max_length=120, 
-            choices=choices.DISKDISCOVERY_CHOICES, 
-            default='Default', 
+            max_length=120,
+            choices=choices.DISKDISCOVERY_CHOICES,
+            default='Default',
             verbose_name = _("Disk discovery mode"),
             help_text = _("Note! Selecting 'Time Machine' on multiple shares may cause unpredictable behavior in MacOS. Default mode exports the volume as a data volume for users.")
             )
     afp_dbpath = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Database Path"),
             blank=True,
             help_text = _("Sets the database information to be stored in path. You have to specify a writable location, even if the volume is read only.")
@@ -203,7 +204,7 @@ class AFP_Share(Model):
             verbose_name = _("AFP3 Unix Privs"),
             help_text = _("Use AFP3 unix privileges.")
             )
-    
+   
     def __unicode__(self):
         return unicode(self.afp_name)
 
@@ -215,17 +216,17 @@ class AFP_Share(Model):
         icon_add = u"AddAppleShareIcon"
         icon_view = u"ViewAllAppleSharesIcon"
         icon_object = u"AppleShareIcon"
-    
+
 class NFS_Share(Model):
     nfs_comment = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Comment"),
             blank=True,
             )
     nfs_path = PathField(
             verbose_name = _("Path"))
     nfs_network = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Authorized network or IP addresses"),
             help_text = _("Network that is authorized to access the NFS share or a list of IP addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."),
             blank=True,
