@@ -139,7 +139,7 @@ class AFP_Share(Model):
             max_length=120,
             verbose_name = _("Read-only Access"),
             blank=True,
-            help_text = _("Allows certain users and groups to have read/write access to a share. This follows the allow option format.")
+            help_text = _("Allows certain users and groups to have read-only access to a share. This follows the allow option format.")
         )
     afp_rw = models.CharField(
             max_length=120,
