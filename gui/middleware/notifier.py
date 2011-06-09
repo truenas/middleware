@@ -256,6 +256,10 @@ class notifier:
         self.__system("/usr/sbin/service ix-sshd quietstart")
         self.__system("/usr/sbin/service sshd restart")
 
+    def _restart_smartd(self):
+        self.__system("/usr/sbin/service ix-smartd quietstart")
+        self.__system("/usr/sbin/service smartd restart")
+
     def _restart_ssh(self):
         self.__system("/usr/sbin/service ix-sshd quietstart")
         self.__system("/usr/sbin/service sshd restart")
@@ -978,6 +982,8 @@ class notifier:
             self.__destroy_ufs_volume(c = c, u_id = volume_id, u_name = volume[1])
 
     def _reload_disk(self):
+        self.__system("/usr/sbin/service ix-smartd quietstart")
+        self.__system("/usr/sbin/service smartd restart")
         self.__system("/usr/sbin/service ix-fstab quietstart")
         self.__system("/usr/sbin/service swap1 quietstart")
         self.__system("/usr/sbin/service mountlate quietstart")

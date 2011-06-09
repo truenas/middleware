@@ -40,13 +40,13 @@ from freeadmin.models import Model
 class Volume(Model):
     vol_name = models.CharField(
             unique=True,
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Name")
             )
     vol_fstype = models.CharField(
-            max_length=120, 
-            choices=choices.VolumeType_Choices, 
-            verbose_name = _("File System Type"), 
+            max_length=120,
+            choices=choices.VolumeType_Choices,
+            verbose_name = _("File System Type"),
             )
     class Meta:
         verbose_name = _("Volume")
@@ -65,13 +65,13 @@ class Volume(Model):
 class DiskGroup(Model):
     group_name = models.CharField(
             unique=True,
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Name")
             )
     group_type = models.CharField(
-            max_length=120, 
-            choices=(), 
-            verbose_name = _("Type"), 
+            max_length=120,
+            choices=(),
+            verbose_name = _("Type"),
             )
     group_volume = models.ForeignKey(
             Volume,
@@ -83,7 +83,7 @@ class DiskGroup(Model):
 
 class Disk(Model):
     disk_name = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Name")
             )
     disk_identifier = models.CharField(
@@ -91,32 +91,32 @@ class Disk(Model):
             verbose_name = _("Identifier")
             )
     disk_description = models.CharField(
-            max_length=120, 
-            verbose_name = _("Description"), 
+            max_length=120,
+            verbose_name = _("Description"),
             blank=True
             )
     disk_transfermode = models.CharField(
-            max_length=120, 
-            choices=choices.TRANSFERMODE_CHOICES, 
-            default="Auto", 
+            max_length=120,
+            choices=choices.TRANSFERMODE_CHOICES,
+            default="Auto",
             verbose_name = _("Transfer Mode")
             )
     disk_hddstandby = models.CharField(
-            max_length=120, 
-            choices=choices.HDDSTANDBY_CHOICES, 
-            default="Always On", 
+            max_length=120,
+            choices=choices.HDDSTANDBY_CHOICES,
+            default="Always On",
             verbose_name = _("HDD Standby")
             )
     disk_advpowermgmt = models.CharField(
-            max_length=120, 
-            choices=choices.ADVPOWERMGMT_CHOICES, 
-            default="Disabled", 
+            max_length=120,
+            choices=choices.ADVPOWERMGMT_CHOICES,
+            default="Disabled",
             verbose_name = _("Advanced Power Management")
             )
     disk_acousticlevel = models.CharField(
-            max_length=120, 
-            choices=choices.ACOUSTICLVL_CHOICES, 
-            default="Disabled", 
+            max_length=120,
+            choices=choices.ACOUSTICLVL_CHOICES,
+            default="Disabled",
             verbose_name = _("Acoustic Level")
             )
     disk_togglesmart = models.BooleanField(
@@ -124,8 +124,8 @@ class Disk(Model):
             verbose_name = _("Enable S.M.A.R.T."),
             )
     disk_smartoptions = models.CharField(
-            max_length=120, 
-            verbose_name = _("S.M.A.R.T. extra options"), 
+            max_length=120,
+            verbose_name = _("S.M.A.R.T. extra options"),
             blank=True
             )
     disk_group = models.ForeignKey(
@@ -139,6 +139,10 @@ class Disk(Model):
             )
     def identifier_to_device(self):
         return notifier().identifier_to_device(self.disk_identifier)
+    def save(self, *args, **kwargs):
+        if self.id:
+            notifier().restart("smartd")
+        super(Disk, self).save(*args, **kwargs)
     class Meta:
         verbose_name = _("Disk")
     def __unicode__(self):
