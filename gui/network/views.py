@@ -177,7 +177,7 @@ def lagg_add(request):
             _lagg_performadd(lagg)
             return HttpResponse(simplejson.dumps(
                        { "error": False,
-                         "message": _("%s successfully added") % "LAGG" }),
+                         "message": _("LAGG successfully added") }),
                        mimetype="application/json"
                        )
 

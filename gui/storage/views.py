@@ -85,7 +85,7 @@ def wizard(request):
         form = forms.VolumeWizardForm(request.POST)
         if form.is_valid():
             form.done(request)
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume") + " " + _("successfully added") + "."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume successfully added.")}), mimetype="application/json")
         else:
             if 'volume_disks' in request.POST:
                 disks = request.POST.getlist('volume_disks')
@@ -112,7 +112,7 @@ def volimport(request):
         form = forms.VolumeImportForm(request.POST)
         if form.is_valid():
             form.done(request)
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume") + " " + _("successfully added") + "."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume successfully added.")}), mimetype="application/json")
         else:
 
             if 'volume_disks' in request.POST:
@@ -134,7 +134,7 @@ def volautoimport(request):
         form = forms.VolumeAutoImportForm(request.POST)
         if form.is_valid():
             form.done(request)
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume") + " " + _("successfully added") + "."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume successfully added.")}), mimetype="application/json")
         else:
 
             if 'volume_disks' in request.POST:
@@ -280,7 +280,7 @@ def dataset_create(request):
             if errno == 0:
                 mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (dataset_name), mp_options='noauto', mp_ischild=True)
                 mp.save()
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset") + " " + _("successfully added") + "."}), mimetype="application/json")
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset successfully added.")}), mimetype="application/json")
             else:
                 dataset_form.set_error(errmsg)
     return render(request, 'storage/datasets.html', {
@@ -315,7 +315,7 @@ def dataset_edit(request, object_id):
             error |= not notifier().zfs_set_option(dataset_name, "refquota", dataset_form.cleaned_data["dataset_refquota"])
 
             if not error:
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset") + " " + _("successfully edited") + "."}), mimetype="application/json")
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset successfully edited.")}), mimetype="application/json")
             else:
                 dataset_form.set_error(_("Some error ocurried while setting the options"))
     return render(request, 'storage/dataset_edit.html', {
@@ -339,7 +339,7 @@ def zvol_create(request):
                 props['compression']=zvol_compression.__str__()
             errno, errmsg = notifier().create_zfs_vol(name=zvol_name.__str__(), size=zvol_size.__str__(), props=props)
             if errno == 0:
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("ZVol") + " " + _("successfully added") + "."}), mimetype="application/json")
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("ZVol successfully added.")}), mimetype="application/json")
             else:
                 zvol_form.set_error(errmsg)
     else:
@@ -353,7 +353,7 @@ def zvol_delete(request, name):
     if request.method == 'POST':
         extents = iSCSITargetExtent.objects.filter(iscsi_target_extent_path='/dev/zvol/'+name)
         if extents.count() > 0:
-            return HttpResponse(simplejson.dumps({"error": True, "message": _("This is in use by the iscsi target, please remove it there first")}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": True, "message": _("This is in use by the iscsi target, please remove it there first.")}), mimetype="application/json")
         else:
             retval = notifier().destroy_zfs_vol(name)
             if retval == '':
@@ -391,7 +391,7 @@ def zfsvolume_edit(request, object_id):
             error |= not notifier().zfs_set_option(volume_name, "refquota", volume_form.cleaned_data["volume_refquota"])
 
             if not error:
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("Native dataset") + " " + _("successfully edited") + "."}), mimetype="application/json")
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("Native dataset successfully edited.")}), mimetype="application/json")
             else:
                 volume_form.set_error(_("Some error ocurried while setting the options"))
     return render(request, 'storage/volume_edit.html', {
@@ -467,7 +467,7 @@ def periodicsnap(request):
         if form.is_valid():
             form.save()
 
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot") + " " + _("successfully added") + "."}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully added.")}), mimetype="application/json")
     else:
         form = forms.PeriodicSnapForm()
     return render(request, 'storage/periodicsnap.html', {
@@ -480,7 +480,7 @@ def manualsnap(request, path):
         form = forms.ManualSnapshotForm(request.POST)
         if form.is_valid():
             form.commit(path)
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully taken")}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully taken.")}), mimetype="application/json")
     else:
         form = forms.ManualSnapshotForm()
     return render(request, 'storage/manualsnap.html', {
@@ -495,7 +495,7 @@ def clonesnap(request, snapshot):
         if form.is_valid():
             retval = form.commit()
             if retval == '':
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully cloned")}), mimetype="application/json")
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully cloned.")}), mimetype="application/json")
             else:
                 return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
     else:

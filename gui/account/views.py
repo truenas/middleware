@@ -75,7 +75,7 @@ def password_change(request):
         if passform.is_valid():
             passform.save()
             passform = password_change_form(user=request.user)
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Password")}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Password successfully updated.")}), mimetype="application/json")
 
     extra_context.update({ 'passform' : passform, })
     return render(request, 'account/passform.html', extra_context)
@@ -89,7 +89,7 @@ def user_change(request):
         changeform = forms.UserChangeForm(instance=request.user, data=request.POST)
         if changeform.is_valid():
             changeform.save()
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Admin user")}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Admin user successfully updated.")}), mimetype="application/json")
 
     extra_context.update({ 'changeform' : changeform, })
     return render(request, 'account/changeform.html', extra_context)
@@ -99,7 +99,7 @@ def group2user_update(request, object_id):
         f = forms.bsdGroupToUserForm(object_id, request.POST)
         if f.is_valid():
             f.save()
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Users")}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Users successfully updated.")}), mimetype="application/json")
     else:
         f = forms.bsdGroupToUserForm(groupid=object_id)
     return render(request, 'account/bsdgroup2user_form.html', {
@@ -112,7 +112,7 @@ def user2group_update(request, object_id):
         f = forms.bsdUserToGroupForm(object_id, request.POST)
         if f.is_valid():
             f.save()
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully update.") % _("Groups")}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Groups successfully updated.")}), mimetype="application/json")
     else:
         f = forms.bsdUserToGroupForm(userid=object_id)
     return render(request, 'account/bsdgroup2user_form.html', {
