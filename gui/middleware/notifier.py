@@ -595,6 +595,7 @@ class notifier:
             for disk in hack_vdevs:
                 self.__system("gnop destroy /dev/%s.nop" % disk)
             self.__system("zpool import -R /mnt %s" % (z_name))
+            self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
 
         # These should probably be options that are configurable from the GUI
         self.__system("zfs set aclmode=passthrough %s" % z_name)
@@ -1452,6 +1453,8 @@ class notifier:
         if imp.returncode == 0:
             # Reset all mountpoints in the zpool
             self.zfs_inherit_option(name, 'mountpoint', True)
+            # Remember the pool cache
+            self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (name))
             # These should probably be options that are configurable from the GUI
             self.__system("zfs set aclmode=passthrough %s" % name)
             self.__system("zfs set aclinherit=passthrough %s" % name)
