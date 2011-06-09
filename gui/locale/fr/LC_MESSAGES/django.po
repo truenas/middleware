@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:03-0700\n"
-"PO-Revision-Date: 2011-06-08 18:24+0200\n"
+"PO-Revision-Date: 2011-06-09 22:39+0200\n"
 "Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -1929,7 +1929,8 @@ msgstr "Destinataire de l'e-mail"
 #: services/models.py:785
 msgid "Destination email address. Separate email addresses by semi-colon."
 msgstr ""
-"Adresses e-mail du destination. Séparez les adresses par des points-virgules."
+"Adresses e-mail de destination. Séparez les adresses par des points-"
+"virgules."
 
 #: services/models.py:790
 msgid ""
@@ -4002,10 +4003,10 @@ msgstr "Planificateur Cron"
 msgid "The uploaded file is not valid."
 msgstr "Le fichier envoyé n'est pas valide."
 
-# Trop long, ne tient pas dans le bouton sur lequel il est utilisé.
+# "Déconnexion" est trop long et ne tient pas dans le bouton sur lequel il est utilisé.
 #: templates/menubar.html:33
 msgid "Log Out"
-msgstr "Déconnexion"
+msgstr "Quitter"
 
 #: templates/menubar.html:38
 msgid "Help"

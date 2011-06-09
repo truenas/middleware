@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:09-0700\n"
-"PO-Revision-Date: 2011-06-08 17:13+0200\n"
-"Last-Translator: silver <silvano@carpene.tk>\n"
+"PO-Revision-Date: 2011-06-09 16:53+0200\n"
+"Last-Translator: misterredman <csulmoni@gmx.ch>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:114
 msgid "Reporting"
-msgstr "Reporting"
+msgstr "Rapporti"
 
 #: media/lib/js/freeadmin.js:126
 msgid "Settings"
@@ -40,7 +40,7 @@ msgstr "Servizi"
 
 #: media/lib/js/freeadmin.js:279
 msgid "Account"
-msgstr "Utenti"
+msgstr "Account"
 
 #: media/lib/js/freeadmin.js:318
 msgid "Storage"

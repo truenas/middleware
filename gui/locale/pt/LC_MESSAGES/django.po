@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:05-0700\n"
-"PO-Revision-Date: 2011-06-07 15:13+0200\n"
-"Last-Translator: Nuno <nuno.piscinas@gmail.com>\n"
+"PO-Revision-Date: 2011-06-09 18:02+0200\n"
+"Last-Translator: iMiguel <miguel.rosa17@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -112,27 +112,27 @@ msgstr "Desactivado"
 
 #: choices.py:82
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Nivel 1 - Utilização mínima de energia com Suspensão (spindown)"
+msgstr "Nível 1 - Utilização mínima de energia com Suspensão (spindown)"
 
 #: choices.py:83
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Nivel 64 - Utilização intermédia de energia com Suspenção"
+msgstr "Nível 64 - Utilização intermédia de energia com Suspensão"
 
 #: choices.py:84
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Nivel 127 - Utilização intermédia de energia com Suspenção"
+msgstr "Nível 127 - Utilização intermédia de energia com Suspensão"
 
 #: choices.py:85
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Nivel 128 - Utilização mínima de energia sem Suspenção (sem spindown)"
+msgstr "Nível 128 - Utilização mínima de energia sem Suspensão (sem spindown)"
 
 #: choices.py:86
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Nivel 192 - Utilização intermédia de energia sem Suspenção"
+msgstr "Nível 192 - Utilização intermédia de energia sem Suspensão"
 
 #: choices.py:87
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Nivel 254 - Desempenho máximo, consumo máximo de energia"
+msgstr "Nível 254 - Desempenho máximo, consumo máximo de energia"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -637,7 +637,7 @@ msgstr "Adicionar %s"
 #: freeadmin/navtree.py:327
 #, python-format
 msgid "View All %s"
-msgstr "Vêr todos os %s"
+msgstr "Ver todos os %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -676,19 +676,19 @@ msgstr "NIC"
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "Tem de preencher o nameserver 2 antes de preencher o nameserver 3"
+msgstr "Tem de preencher o Servidor DNS2 antes de preencher o Servidor DNS3"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
-msgstr "Obrigatório quando utiliza o nameserver 3"
+msgstr "Obrigatório quando utiliza o Servidor DNS3"
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr "Tem de preencher o nameserver 1 antes de preencher o nameserver 3"
+msgstr "Tem de preencher o Servidor DNS1 antes de preencher o Servidor DNS3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr "Tem de preencher o nameserver 1 antes de preencher o nameserver 2"
+msgstr "Tem de preencher o Servidor DNS1 antes de preencher o Servidor DNS2"
 
 #: network/forms.py:100
 msgid "Parent Interface"
@@ -718,7 +718,7 @@ msgstr "Nome do anfitrião"
 
 #: network/models.py:47
 msgid "Domain"
-msgstr "Dominio"
+msgstr "Domínio"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
@@ -730,15 +730,15 @@ msgstr "IPv6 Gateway por Defeito"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr "Servidor de nome 1"
+msgstr "Servidor DNS 1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr "Servidor de nome 2"
+msgstr "Servidor DNS 2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr "Servidor de nome 3"
+msgstr "Servidor DNS 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:21
 #: templates/network/index.html:3
@@ -845,7 +845,7 @@ msgstr "Tipo de Protocolo"
 
 #: network/models.py:241
 msgid "LAGG Interface group"
-msgstr "LAGG Interface grupo"
+msgstr "LAGG Interface de grupo"
 
 #: network/models.py:244
 msgid "LAGG Priority Number"
@@ -893,7 +893,7 @@ msgstr "Criar Agregação de Rede"
 
 #: network/nav.py:41
 msgid "View All Link Aggregations"
-msgstr "Vêr todas as Agregações de Rede"
+msgstr "Ver todas as Agregações de Rede"
 
 #: network/views.py:180
 #, python-format
@@ -907,7 +907,7 @@ msgstr "N/A"
 #: services/forms.py:79
 msgid "This field is required for \"Enable home directories browsing\"."
 msgstr ""
-"Este campo é necessário para \"Habilitar navegação nos directórios da raiz\"."
+"Este campo é necessário para \"Activar a navegação nos directórios da raiz\"."
 
 #: services/forms.py:82
 msgid "This field is required for \"Home directories\"."
@@ -1125,7 +1125,7 @@ msgstr ""
 
 #: services/models.py:46
 msgid "Enable Service"
-msgstr "Habilitar Serviço"
+msgstr "Activar Serviço"
 
 #: services/models.py:49 services/models.py:50 services/nav.py:5
 #: templates/menubar.html:28 templates/services/index.html:3
@@ -1171,7 +1171,7 @@ msgstr "Conjunto de caracteres do UNIX"
 
 #: services/models.py:96
 msgid "Log level"
-msgstr "Nivel de registo"
+msgstr "Nível de registo"
 
 #: services/models.py:99
 msgid "Local Master"
@@ -1179,7 +1179,7 @@ msgstr "Master Local"
 
 #: services/models.py:101
 msgid "Time Server for Domain"
-msgstr "Time Server para o Dominio"
+msgstr "Time Server para o Domínio"
 
 #: services/models.py:105 services/models.py:193
 msgid "Guest account"
@@ -1194,10 +1194,10 @@ msgid ""
 "require a valid login."
 msgstr ""
 "Utilize esta opção para substituir o nome de usuário ('ftp' por padrão) que "
-"será usada para acesso a serviços que são especificados como convidado. O "
-"que quer que este usuário tem privilégios estará disponível para qualquer "
-"cliente se conectar ao serviço ao cliente. Este usuário deve existir no "
-"arquivo de senha, mas não exige um login válido."
+"será usada para acesso a serviços que são especificados como "
+"convidado.Qualquer previlégios que este utilizador tem estará disponível "
+"para qualquer cliente se conectar ao serviço cliente. Este utilizador deve "
+"existir no arquivo de senha, mas não exige um login válido."
 
 #: services/models.py:109
 msgid "Allow guest access"
@@ -1346,9 +1346,9 @@ msgid ""
 "require a valid login."
 msgstr ""
 "Utilize esta opção para substituir o nome de usuário ('www' por padrão) que "
-"será usada para acesso a serviços que são especificados como convidado. O "
-"que quer que este usuário tem privilégios estará disponível para qualquer "
-"cliente se conectar ao serviço ao cliente. Este usuário deve existir no "
+"será usada para acesso a serviços que são especificados como convidado. "
+"Qualquer privilégios que este utilizador tem estará disponível para qualquer "
+"cliente se conectar ao serviço cliente. Este utilizador deve existir no "
 "arquivo de senha, mas não exige um login válido."
 
 #: services/models.py:197
@@ -1384,7 +1384,7 @@ msgid ""
 "maximum level of concurrency from its clients, typically four to six."
 msgstr ""
 "Especifica o número de servidores para criar. Não deve ser suficiente para "
-"lidar com o nível máximo de simultaneidade de seus clientes, tipicamente "
+"lidar com o nível máximo de simultaneidade dos seus clientes, tipicamente "
 "quatro para seis."
 
 #: services/models.py:221
@@ -2332,59 +2332,67 @@ msgstr "Protocolo de troca de password a usar."
 
 #: services/models.py:1104
 msgid "User Suffix"
-msgstr ""
+msgstr "Sufixo do Utilizador"
 
 #: services/models.py:1106
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
 msgstr ""
+"Este parâmetro especifica o sufixo que é utilizado para os utilizadores "
+"quando estes são adicionados ao diretório LDAP, p.e. ou=Utilizadores"
 
 #: services/models.py:1110
 msgid "Group Suffix"
-msgstr ""
+msgstr "Sufixo do Grupo"
 
 #: services/models.py:1112
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
+"Este parâmetro especifica o sufixo que é utilizado para os grupos quando "
+"estes são adicionados ao diretório LDAP, p.e. ou=Grupos"
 
 #: services/models.py:1116
 msgid "Password Suffix"
-msgstr ""
+msgstr "Sufixo da Password"
 
 #: services/models.py:1118
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
+"Este parâmetro especifica o sufixo que é utilizado para passwords quando "
+"estas são adicionados ao diretório LDAP, p.e. ou=Passwords"
 
 #: services/models.py:1122
 msgid "Machine Suffix"
-msgstr ""
+msgstr "Sufixo da Máquina"
 
 #: services/models.py:1124
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
+"Este parâmetro especifica o sufixo que é utilizado para os computadores "
+"quando estes são adicionados ao diretório LDAP, p.e. ou=Computadores"
 
 #: services/models.py:1128
 msgid "Turn on/off TLS"
-msgstr ""
+msgstr "Activa/Desactiva TLS"
 
 #: services/models.py:1130
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
-msgstr ""
+msgstr "Este parâmetro especifica se deve usar SSL/TLS, p.e. on/off/start_tls"
 
 #: services/models.py:1133
 msgid "Self signed certificate"
-msgstr ""
+msgstr "Auto-assinado certificado"
 
 #: services/models.py:1135
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "Coloque aqui o conteúdo do seu arquivo de certificado auto-assinado."
 
 #: services/models.py:1139 sharing/models.py:85
 msgid "Auxiliary Parameters"
@@ -2392,12 +2400,12 @@ msgstr ""
 
 #: services/models.py:1141
 msgid "These parameters are added to ldap.conf."
-msgstr ""
+msgstr "Estes parâmetros são adicionados ao ldap.conf."
 
 #: services/models.py:1145 services/models.py:1146
 #: templates/services/index.html:64
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/models.py:1156
 msgid "Alternate TCP port. Default is 873"
@@ -2489,7 +2497,7 @@ msgstr ""
 
 #: services/nav.py:12
 msgid "Control Services"
-msgstr ""
+msgstr "Serviços de Controlo"
 
 #: services/nav.py:50
 msgid "Add Device Extent"
@@ -4958,10 +4966,10 @@ msgid "Add Link Aggregation"
 msgstr "Adicionar Agregação de Rede"
 
 msgid "View All Interfaces"
-msgstr "Vêr todas as Interfaces"
+msgstr "Ver todas as Interfaces"
 
 msgid "View All VLANs"
-msgstr "Vêr todas as VLANs"
+msgstr "Ver todas as VLANs"
 
 msgid "The cache is being rebuilt."
 msgstr "A memória intermédia está a ser reconstruida."
