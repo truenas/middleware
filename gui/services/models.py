@@ -368,6 +368,7 @@ class iSCSITargetGlobalConfiguration(Model):
 class iSCSITargetExtent(Model):
     iscsi_target_extent_name = models.CharField(
             max_length=120,
+            unique=True,
             verbose_name = _("Extent Name"),
             help_text = _("String identifier of the extent."),
             )
@@ -416,12 +417,12 @@ class iSCSITargetExtent(Model):
                 return self.iscsi_target_extent_path
     def delete(self):
         if self.iscsi_target_extent_type in ("Disk", "ZVOL"):
-            disk = Disk.objects.get(id=self.iscsi_target_extent_path)
-            expected_iscsi_volume_name = 'iscsi:' + disk.identifier_to_device()
-            if self.iscsi_target_extent_type == "Disk":
-                notifier().unlabel_disk(disk.identifier_to_device())
-            disk.delete()
             try:
+                disk = Disk.objects.get(id=self.iscsi_target_extent_path)
+                if self.iscsi_target_extent_type == "Disk":
+                    notifier().unlabel_disk(disk.identifier_to_device())
+                disk.delete()
+                expected_iscsi_volume_name = 'iscsi:' + self.self.iscsi_target_extent_name
                 vol = Volume.objects.get(vol_name = expected_iscsi_volume_name)
                 vol.delete()
             except:

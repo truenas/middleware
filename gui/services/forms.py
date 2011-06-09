@@ -639,6 +639,8 @@ class iSCSITargetDeviceExtentForm(ModelForm):
             if self.instance.iscsi_target_extent_type == 'Disk':
                 notifier().unlabel_disk(d.identifier_to_device())
             d.delete()
+            volume = Volume.objects.get(vol_name='iscsi:%s' % self.instance.iscsi_target_extent_name)
+            volume.delete()
         oExtent = super(iSCSITargetDeviceExtentForm, self).save(commit=False)
         if commit:
             # label it only if it is a real disk
@@ -646,7 +648,7 @@ class iSCSITargetDeviceExtentForm(ModelForm):
                 notifier().unlabel_disk(str(self.cleaned_data["iscsi_extent_disk"]))
                 notifier().label_disk("extent_%s" % self.cleaned_data["iscsi_extent_disk"], self.cleaned_data["iscsi_extent_disk"])
             # Construct a corresponding volume.
-            volume_name = 'iscsi:' + self.cleaned_data["iscsi_extent_disk"]
+            volume_name = 'iscsi:' + self.cleaned_data["iscsi_target_extent_name"]
             volume_fstype = 'iscsi'
 
             volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
