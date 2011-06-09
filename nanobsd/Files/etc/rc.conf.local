@@ -92,8 +92,8 @@ _interface_config()
 	done
 	#
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_physnic, lagg_deviceoptions, network_interfaces.int_options FROM network_lagginterfacemembers INNER JOIN network_interfaces ON network_lagginterfacemembers.lagg_physnic=network_interfaces.int_interface ORDER BY lagg_ordernum" | \
-	while read lagg_physnic lagg_deviceoptions int_options; do
-		echo "ifconfig_${lagg_physnic}=\"${lagg_deviceoptions} ${int_options}\""
+	while read lagg_physnic lagg_deviceoptions options; do
+		echo "ifconfig_${lagg_physnic}=\"${lagg_deviceoptions} ${options}\""
 	done
 
 	# Hook to support vlan interfaces
