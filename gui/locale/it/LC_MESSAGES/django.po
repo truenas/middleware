@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:07-0700\n"
-"PO-Revision-Date: 2011-06-03 09:45+0200\n"
-"Last-Translator: dgrossato.101 <dgrossato.101@gmail.com>\n"
+"PO-Revision-Date: 2011-06-09 10:55+0200\n"
+"Last-Translator: misterredman <csulmoni@gmx.ch>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: choices.py:35
 msgid "Plain"
-msgstr "Piano"
+msgstr "In chiaro"
 
 #: choices.py:36 system/models.py:232 templates/system/settings.html:9
 msgid "SSL"
@@ -116,11 +116,11 @@ msgstr "Livello 1 - Consumo minimo con Standby (spindown)"
 
 #: choices.py:83
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Livello 64 - Consumo medio in Standby"
+msgstr "Livello 64 - Consumo medio con Standby"
 
 #: choices.py:84
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Livello 127 - Consumo medio in Standby"
+msgstr "Livello 127 - Consumo medio con Standby"
 
 #: choices.py:85
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
@@ -208,7 +208,7 @@ msgstr "Mercoledì"
 
 #: choices.py:144 templates/storage/tasks.html:66
 msgid "Thursday"
-msgstr "Giovedi"
+msgstr "Giovedì"
 
 #: choices.py:145 templates/storage/tasks.html:69
 msgid "Friday"
@@ -248,11 +248,11 @@ msgstr "Default"
 
 #: choices.py:187
 msgid "Time Machine"
-msgstr "Time Machine"
+msgstr "Time server"
 
 #: choices.py:190
 msgid "No case folding"
-msgstr "Non convertito in maiuscolo"
+msgstr "Nessuna conversione"
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
@@ -260,11 +260,11 @@ msgstr "Nomi in minuscolo in entrambe le direzioni"
 
 #: choices.py:193
 msgid "Client sees lowercase, server sees uppercase"
-msgstr "Il client vede in minuscolo, il server vede in maiuscolo"
+msgstr "Il client vede in minuscolo, il server in maiuscolo"
 
 #: choices.py:194
 msgid "Client sees uppercase, server sees lowercase"
-msgstr "il client vede in maiuscolo, il server vede in minuscolo"
+msgstr "Il client vede in maiuscolo, il server in minuscolo"
 
 #: choices.py:198
 msgid "File"
@@ -318,11 +318,11 @@ msgstr "Mutual CHAP"
 
 #: choices.py:241
 msgid "UPS reaches low battery"
-msgstr "UPS batteria scarica"
+msgstr "UPS batteria quasi scarica"
 
 #: choices.py:242
 msgid "UPS goes on battery"
-msgstr "UPS modalità batteria"
+msgstr "UPS in modalità batteria"
 
 #: choices.py:245
 msgid "Preferred"
@@ -354,15 +354,15 @@ msgstr "lzjb (consigliato)"
 
 #: choices.py:283
 msgid "gzip (default level, 6)"
-msgstr "gzip - Livello predefinito"
+msgstr "gzip (Livello predefinito, 6)"
 
 #: choices.py:284
 msgid "gzip (fastest)"
-msgstr "gzip - più veloce"
+msgstr "gzip (più veloce)"
 
 #: choices.py:285
 msgid "gzip (maximum, slow)"
-msgstr "gzip - compressione massima, lento"
+msgstr "gzip (compressione massima, lento)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -391,10 +391,9 @@ msgstr "Tutti i giorni"
 
 #: choices.py:435
 msgid "Every selected weekday"
-msgstr "Tutti i giorni della settimana selezionati"
+msgstr "Tutti i giorni selezionati"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
 msgstr "sola lettura"
 
@@ -422,7 +421,7 @@ msgstr "Nome utente"
 
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr "Obbligatorio. 30 caratteri o meno . Solo lettere, cifre e @/./+/-/_"
+msgstr "Obbligatorio. Massimo 30 caratteri. Solo lettere, cifre e @/./+/-/_"
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
@@ -523,7 +522,7 @@ msgstr "Gruppi"
 #: account/models.py:63
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr "Gruppo %s è parte del sistema e non può essere eliminato"
+msgstr "Il gruppo %s è parte del sistema e non può essere eliminato"
 
 #: account/models.py:73
 msgid "User ID"
@@ -571,7 +570,7 @@ msgstr "Utenti"
 #: account/models.py:138
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr "L'utente %s è stato creato e non può essere cancellato"
+msgstr "L'utente %s è parte del sistema e non può essere cancellato!"
 
 #: account/nav.py:5 templates/menubar.html:43
 msgid "Account"
@@ -634,7 +633,7 @@ msgid "Add %s"
 msgstr "Aggiungi %s"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
 msgstr "Visualizza tutti %s"
 
@@ -658,11 +657,11 @@ msgstr "%s aggiunto con successo."
 #: freeadmin/views.py:384 freeadmin/views.py:386
 #, python-format
 msgid "%s successfully updated."
-msgstr "%s aggiornato con successo"
+msgstr "%s aggiornato con successo."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr "Riavvio del servizio fallito"
+msgstr "Riavvio del servizio fallito."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -690,14 +689,12 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "Compilare il nome del server 1 prima di compilare il nome del server 2"
 
 #: network/forms.py:100
-#, fuzzy
 msgid "Parent Interface"
-msgstr "Interfaccia virtuale"
+msgstr "Interfaccia di origine"
 
 #: network/forms.py:109
-#, fuzzy
 msgid "The name must be vlanXX where XX is a integer"
-msgstr "Il nome dell'interfaccia deve essere vlanXX dove XX sono dei numeri"
+msgstr "Il nome deve essere vlanXX dove XX e' un numero intero"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -766,8 +763,8 @@ msgstr "DHCP"
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
-"Quando abilitato usa il DHCP per avere l'indirizzo IPv4 così come il router "
-"di default, ecc..."
+"Quando abilitato usa il DHCP per ottenere l'indirizzo IPv4 così come il "
+"router di default, ecc..."
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
@@ -839,9 +836,8 @@ msgid "VLAN"
 msgstr "VLAN"
 
 #: network/models.py:200
-#, fuzzy
 msgid "VLANs"
-msgstr "VLAN"
+msgstr "VLANs"
 
 #: network/models.py:220
 msgid "Protocol Type"
@@ -902,7 +898,7 @@ msgstr "Visualizza tutti i Link Aggregations"
 #: network/views.py:180
 #, python-format
 msgid "%s successfully added"
-msgstr "%s aggiunto con successo."
+msgstr "%s aggiunto con successo"
 
 #: services/forms.py:70
 msgid "N/A"
@@ -918,14 +914,12 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Questo campo è obbligatorio per \"directory base\"."
 
 #: services/forms.py:99
-#, fuzzy
 msgid "The AFP service failed to reload."
-msgstr "Riavvio del servizio AFP fallito"
+msgstr "Riavvio del servizio AFP fallito."
 
 #: services/forms.py:108
-#, fuzzy
 msgid "The NFS service failed to reload."
-msgstr "Riavvio del servizio NFS fallito"
+msgstr "Riavvio del servizio NFS fallito."
 
 #: services/forms.py:112
 msgid "File Permission"
@@ -964,40 +958,39 @@ msgstr "Questo campo e' necessario per un login anonimo"
 
 #: services/forms.py:200
 msgid "The ftp service failed to start."
-msgstr "Avvio del servizo ftp fallito"
+msgstr "Avvio del servizo ftp fallito."
 
 #: services/forms.py:209
 msgid "The tftp service failed to reload."
-msgstr "Riavvio del servizio tfp fallito"
+msgstr "Riavvio del servizio tftp fallito."
 
 #: services/forms.py:216
 msgid "The SSH service failed to reload."
-msgstr "Riavvio del servizio SSH fallito"
+msgstr "Riavvio del servizio SSH fallito."
 
 #: services/forms.py:225 services/forms.py:253
 msgid "The Rsync service failed to reload."
-msgstr "Riavvio del servizio Rsync fallito"
+msgstr "Riavvio del servizio Rsync fallito."
 
 #: services/forms.py:238
-#, fuzzy
 msgid "The name cannot contain slash or a closing square backet."
-msgstr "Il nome non può contenere / o ]"
+msgstr "Il nome non può contenere i caratteri / o ]"
 
 #: services/forms.py:262
 msgid "The DynamicDNS service failed to reload."
-msgstr "Riavvio del servizio DynamicDNS fallito"
+msgstr "Riavvio del servizio DynamicDNS fallito."
 
 #: services/forms.py:271
 msgid "The SNMP service failed to reload."
-msgstr "Riavvio del servizio SNMP fallito"
+msgstr "Riavvio del servizio SNMP fallito."
 
 #: services/forms.py:285
 msgid "The activedirectory service failed to reload."
-msgstr "Il riavvio del servizio di ActiveDirectory  fallito"
+msgstr "Riavvio del servizio ActiveDirectory fallito."
 
 #: services/forms.py:296
 msgid "The ldap service failed to reload."
-msgstr "Riavvio del servizio ldap fallito"
+msgstr "Riavvio del servizio ldap fallito."
 
 #: services/forms.py:302 services/models.py:529
 #: templates/services/iscsi_auth.html:7
@@ -1014,7 +1007,7 @@ msgstr "Password (Conferma)"
 
 #: services/forms.py:306 services/forms.py:314
 msgid "Enter the same secret above for verification."
-msgstr "Ripeti la password precedente per verifica"
+msgstr "Riscrivi la password per verifica."
 
 # Target e Initiator sarebbe meglio non tradurli essendo tipici del linguaggio iSCSI
 #: services/forms.py:307
@@ -1045,7 +1038,7 @@ msgstr "La password per peer non può essere uguale alla password dell'utente."
 #: services/forms.py:537 services/forms.py:584 services/forms.py:683
 #: services/forms.py:705 services/forms.py:726 services/forms.py:758
 msgid "The iSCSI service failed to reload."
-msgstr "Il riavvio del servizio iSCSI fallito"
+msgstr "Riavvio del servizio iSCSI fallito."
 
 #: services/forms.py:385
 msgid "LUN already exists in the same target."
@@ -1121,7 +1114,7 @@ msgstr "Numero del gruppo di autenticazione"
 
 #: services/forms.py:761
 msgid "Delete underlying file"
-msgstr ""
+msgstr "Cancella file sottostante"
 
 #: services/models.py:42
 msgid "Service"
@@ -1165,8 +1158,8 @@ msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
-"Gruppo di lavoro cui apparterrebbe il server quando viene interrogato dai "
-"client (massimo 15 caratteri)"
+"Gruppo di lavoro cui appartinene il server quando viene interrogato dai "
+"client (massimo 15 caratteri)."
 
 #: services/models.py:78
 msgid "Server description. This can usually be left blank."
@@ -1220,32 +1213,32 @@ msgstr "Permettere solo l'accesso guest"
 
 #: services/models.py:114 services/models.py:846
 msgid "File mask"
-msgstr "Permessi del file"
+msgstr "Maschera permessi di file"
 
 #: services/models.py:116
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
-"Utilizzare questa opzione per sovrascrivere la creazione dei permessi del "
-"file (0666 di default)."
+"Usa questa opzione per sovrascrivere la maschera dei permessi alla creazione "
+"dei nuovi file (0666 di default)."
 
 #: services/models.py:120 services/models.py:852
 msgid "Directory mask"
-msgstr "Permessi sulle cartelle"
+msgstr "Maschera permessi di cartelle"
 
 #: services/models.py:122
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
-"Utilizzare questa opzione per sovrascrivere i permessi delle cartelle (0777 "
-"di default)."
+"Usa questa opzione per sovrascrivere la maschera dei permessi alla creazione "
+"delle nuove cartelle (0777 di default)."
 
 #: services/models.py:125
 msgid "Large RW support"
-msgstr "Ampio supporto RW"
+msgstr "Supporta ampio RW"
 
 #: services/models.py:127
 msgid "Send files with sendfile(2)"
-msgstr "Inviare file con sendfile (2)"
+msgstr "Invia files con sendfile(2)"
 
 #: services/models.py:129
 msgid "EA Support"
@@ -1267,16 +1260,15 @@ msgstr "Parametri ausiliari"
 
 #: services/models.py:138
 msgid "These parameters are added to [Global] section of smb.conf"
-msgstr ""
-"Questi parametri sono stati aggiunti nella sezione [Global] di smb.conf"
+msgstr "Questi parametri sono aggiunti nella sezione [Global] di smb.conf"
 
 #: services/models.py:141
 msgid "Enable home directories"
-msgstr "Abilita home directory"
+msgstr "Abilita home directories"
 
 #: services/models.py:142
 msgid "This enables\\disables home directories for samba user."
-msgstr "Questo abilita\\disabilita l'home directory per gli utenti samba."
+msgstr "Abilita\\disabilita le home directories per gli utenti samba."
 
 #: services/models.py:145
 msgid "Enable home directories browsing"
@@ -1285,12 +1277,12 @@ msgstr "Abilita navigazione home directory"
 #: services/models.py:146
 msgid "This enables\\disables home directories browsing for samba user."
 msgstr ""
-"Questo abilita\\disabilita la navigazione dell'home directory per gli utenti "
-"samba"
+"Abilita/disabilita la visualizzazione delle home directories per gli utenti "
+"samba."
 
 #: services/models.py:150
 msgid "Home directories"
-msgstr "Directory home"
+msgstr "Home directories"
 
 #: services/models.py:156
 msgid "Enable AIO"
@@ -1545,14 +1537,14 @@ msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "Porta TCP del controller dell'unità logica ( di default è 3261 )."
 
 #: services/models.py:339
-#, fuzzy
 msgid "Controller Authorized netmask"
-msgstr "Controller autorizzato netmask"
+msgstr "Maschera di rete autorizzata dal controller"
 
 #: services/models.py:341
-#, fuzzy
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
-msgstr "Netmask del controller unità logica ( 255.255.255.0 di default )."
+msgstr ""
+"Maschera di rete autorizzata dal controller unità logica ( 255.255.255.0 di "
+"default )."
 
 #: services/models.py:348
 msgid "Controller Auth Method"
@@ -2444,17 +2436,16 @@ msgid "Module name"
 msgstr "Nome modulo"
 
 #: services/models.py:1185
-#, fuzzy
 msgid "Path to be shared"
-msgstr "Percorso per l'estensione."
+msgstr "Percorso da condividere."
 
 #: services/models.py:1191
 msgid "Access Mode"
-msgstr ""
+msgstr "Modalità di accesso"
 
 #: services/models.py:1192
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "Controlla l'accesso a questo modulo da parte di un host remoto"
 
 #: services/models.py:1196
 #, fuzzy
@@ -2462,9 +2453,8 @@ msgid "Maximum connections"
 msgstr "Connessioni massime"
 
 #: services/models.py:1197
-#, fuzzy
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr "Massimo numero di connessioni per indirizzi IP ( 0=illimitato )"
+msgstr "Numero massimo di connessioni per indirizzi IP ( 0=illimitato )"
 
 #: services/models.py:1203
 msgid ""
@@ -2473,6 +2463,10 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Questa opzione specifica il nome utente relativo ai trasferimenti dei file "
+"da e verso quel modulo. In combinazione con l'opzione 'Gruppo' questo "
+"determina i permessi disponibili. Lasciare questo campo vuoto per usare le "
+"impostazioni di default"
 
 #: services/models.py:1210
 msgid ""
@@ -4731,9 +4725,8 @@ msgid "Are you sure you want to detach?"
 msgstr ""
 
 #: templates/storage/disk_replacement.html:9
-#, fuzzy
 msgid "Replacing disk"
-msgstr "Task di Replica"
+msgstr "Sostituzione disco"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
@@ -4900,9 +4893,8 @@ msgid "Edit ZFS Volume"
 msgstr "Modifica Volume ZFS"
 
 #: templates/storage/volumes.html:30
-#, fuzzy
 msgid "Create ZFS Volume"
-msgstr "Modifica Volume ZFS"
+msgstr "Crea Volume ZFS"
 
 #: templates/storage/volumes.html:34
 #, fuzzy
@@ -4926,9 +4918,8 @@ msgid "Status"
 msgstr "Stato"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Destroy ZFS Volume"
-msgstr "Distruggi Volume"
+msgstr "Distruggi Volume ZFS"
 
 #: templates/storage/volumes.html:128 templates/storage/volumes.html.py:132
 msgid "Destroy Dataset"
@@ -4988,9 +4979,8 @@ msgid "Existing data will be cleared"
 msgstr "I dati esistenti saranno cancellati"
 
 #: templates/storage/zvols.html:9
-#, fuzzy
 msgid "Add ZVol"
-msgstr "Aggiungi Volume"
+msgstr "Aggiungi Dataset"
 
 #: templates/system/config.html:2
 msgid "Restore to Factory Defaults"
@@ -5018,13 +5008,12 @@ msgid "Update"
 msgstr "Aggiorna"
 
 #: templates/system/cronjob.html:40
-#, fuzzy
 msgid "No CronJobs defined"
-msgstr "Nessun volume definito"
+msgstr "Nessun CronJob definito"
 
 #: templates/system/cronjob.html:46 templates/system/cronjob.html.py:48
 msgid "Add CronJob"
-msgstr ""
+msgstr "Aggiungi CronJob"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -5071,13 +5060,12 @@ msgid "Yearly Graphs"
 msgstr "Grafico Annuale"
 
 #: templates/system/rsync.html:38
-#, fuzzy
 msgid "No rsyncs defined"
-msgstr "Nessun volume definito"
+msgstr "Nessuna replica rsync definita"
 
 #: templates/system/rsync.html:44 templates/system/rsync.html.py:46
 msgid "Add Rsync"
-msgstr ""
+msgstr "Aggiungi replica Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -5105,7 +5093,7 @@ msgstr "Piattaforma"
 
 #: templates/system/system_info.html:16
 msgid "Memory"
-msgstr ""
+msgstr "Memoria"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
@@ -5126,7 +5114,7 @@ msgstr "Versione FreeNAS"
 #: templates/system/wizard.html:3
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr ""
+msgstr "Passo %(step)s di %(step_count)"
 
 msgid "English"
 msgstr "Inglese"

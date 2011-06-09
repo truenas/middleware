@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:05-0700\n"
-"PO-Revision-Date: 2011-06-05 11:50+0200\n"
-"Last-Translator: xStarx <dvv431@mail.ru>\n"
+"PO-Revision-Date: 2011-06-09 10:32+0200\n"
+"Last-Translator: xRaider <xraiderus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -115,35 +115,29 @@ msgid "Disabled"
 msgstr "Отключен"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
 msgstr ""
-"Уровень 1 - Минимальное энергопотребление в режиме ожидания (остоновка HDD)"
+"Уровень 1 - Минимальное энергопотребление с режимом ожидания (остоновка HDD)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Уровень 64 - Среднее энергопотребление в режиме ожидания"
+msgstr "Уровень 64 - Среднее энергопотребление с режимом ожидания"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Уровень 127 - Среднее энергопотребление в режиме ожидания"
+msgstr "Уровень 127 - Среднее энергопотребление с режимом ожидания"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
 msgstr ""
 "Уровень 128 - Минимальное энергопотребление без режима ожидания (без "
 "остановки HDD)"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
 msgstr "Уровень 192 - Среднее энергопотребление без режима ожидания"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
 msgstr ""
 "Уровень 254 - Максимальная производительность, максимальное "
@@ -2304,35 +2298,32 @@ msgstr "Имя или IP-адрес сервера LDAP."
 
 # DN - не совсем понятно что
 #: services/models.py:1078
-#, fuzzy
 msgid "Base DN"
 msgstr "Базовое DN (выделенное имя)"
 
 #: services/models.py:1080
-#, fuzzy
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr ""
-"Базовое DN по умолчанию, для сопоставления имён, например dc=test,dc=org"
+"Базовое выделенное имя (DN) по умолчанию, используемое для поиска, например "
+"dc=test, dc=org"
 
 #: services/models.py:1083
 msgid "Allow Anonymous Binding"
 msgstr "Разрешить анонимную связь"
 
 #: services/models.py:1086
-#, fuzzy
 msgid "Root bind DN"
 msgstr "Корневая связь DN"
 
 #: services/models.py:1088
-#, fuzzy
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
-"Отличительное имя связанное с сервером каталогов, например, cn=admin, "
-"dc=test, dc=org"
+"Выделенное имя, связанное с сервером каталогов, например cn=admin, dc=test, "
+"dc=org"
 
 # корневая связь - тупой перевод))
 #: services/models.py:1092
@@ -2341,7 +2332,6 @@ msgid "Root bind password"
 msgstr "Пароль корневой связи"
 
 #: services/models.py:1094
-#, fuzzy
 msgid "The credentials with which to bind."
 msgstr "Права для связи."
 
@@ -2351,17 +2341,14 @@ msgstr "Шифрование пароля"
 
 # не понимаю смысла
 #: services/models.py:1100
-#, fuzzy
 msgid "The password change protocol to use."
-msgstr "Пароль изменения протокола."
+msgstr "Протокол, используемый для изменения пароля."
 
 #: services/models.py:1104
-#, fuzzy
 msgid "User Suffix"
-msgstr "Суффикс пользователя"
+msgstr "Пользователь Suffix"
 
 #: services/models.py:1106
-#, fuzzy
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
@@ -2371,7 +2358,7 @@ msgstr ""
 
 #: services/models.py:1110
 msgid "Group Suffix"
-msgstr "Суффикс группы"
+msgstr "Группа Suffix"
 
 #: services/models.py:1112
 msgid ""
@@ -2383,12 +2370,10 @@ msgstr ""
 
 # какое может быть окончание у пароля?...
 #: services/models.py:1116
-#, fuzzy
 msgid "Password Suffix"
-msgstr "Суффикс пароля"
+msgstr "Пароль Suffix"
 
 #: services/models.py:1118
-#, fuzzy
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
@@ -2397,12 +2382,10 @@ msgstr ""
 "добавлены в каталог LDAP, например ou=Passwords"
 
 #: services/models.py:1122
-#, fuzzy
 msgid "Machine Suffix"
-msgstr "Суффикс машины"
+msgstr "Машина Suffix"
 
 #: services/models.py:1124
-#, fuzzy
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
@@ -2458,7 +2441,6 @@ msgid "Module name"
 msgstr "Название модуля"
 
 #: services/models.py:1185
-#, fuzzy
 msgid "Path to be shared"
 msgstr "Путь к общему ресурсу"
 
@@ -2467,7 +2449,6 @@ msgid "Access Mode"
 msgstr "Режим доступа"
 
 #: services/models.py:1192
-#, fuzzy
 msgid "This controls the access a remote host has to this module"
 msgstr "Позволяет контролировать доступ к удаленному хосту для этого модуля"
 
@@ -2488,12 +2469,17 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Этот параметр задает имя пользователя для передачи файлов в/из модуля. В "
+"сочетании с опцией \"Группа' определяет возможные права для доступа к файлам. "
+"Оставьте это поле пустым, чтобы использовать настройки по умолчанию."
 
 #: services/models.py:1210
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"Этот параметр указывает имя группы для передачи файлов в/из модуля. Оставьте "
+"это поле пустым, чтобы использовать настройки по умолчанию."
 
 #: services/models.py:1214
 msgid "Hosts allow"
@@ -2514,7 +2500,6 @@ msgid "Hosts deny"
 msgstr "Запрещенные хосты"
 
 #: services/models.py:1220
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of host which are NOT "
 "permitted to access this module. Where the lists conflict, the allow list "
@@ -2540,7 +2525,6 @@ msgid "Rsync Module"
 msgstr "Модуль Rsync"
 
 #: services/models.py:1231
-#, fuzzy
 msgid "Rsync Modules"
 msgstr "Модули Rsync"
 
@@ -2550,15 +2534,13 @@ msgstr "Управление службами"
 
 # http://ru.wikipedia.org/wiki/Extent
 #: services/nav.py:50
-#, fuzzy
 msgid "Add Device Extent"
-msgstr "Экстенты устройства"
+msgstr "Добавить Экстенты устройства"
 
 # http://ru.wikipedia.org/wiki/Extent
 #: services/nav.py:60
-#, fuzzy
 msgid "View All Device Extents"
-msgstr "Экстенты устройства"
+msgstr "Смотреть все Экстенты устройства"
 
 # http://ru.wikipedia.org/wiki/Extent
 #: services/nav.py:70 templates/services/iscsi.html:7
@@ -2575,7 +2557,6 @@ msgid "Add Extent"
 msgstr "Добавить экстент"
 
 #: services/nav.py:102
-#, fuzzy
 msgid "View All Extents"
 msgstr "Смотреть все экстенты"
 
@@ -2805,9 +2786,8 @@ msgid "Read-write Access"
 msgstr "Доступ для чтения-записи"
 
 #: sharing/models.py:152
-#, fuzzy
 msgid "Disk Discovery"
-msgstr "Обзор диска"
+msgstr "Обнаружение диска"
 
 #: sharing/models.py:153
 msgid ""
@@ -2818,12 +2798,10 @@ msgstr ""
 "машины времени, резервного хранилища."
 
 #: sharing/models.py:159
-#, fuzzy
 msgid "Disk discovery mode"
-msgstr "Режим обзора диска"
+msgstr "Режим обнаружения диска"
 
 #: sharing/models.py:160
-#, fuzzy
 msgid ""
 "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
 "behavior in MacOS. Default mode exports the volume as a data volume for "
@@ -2839,7 +2817,6 @@ msgstr "Пути к базе данных"
 
 # смысл непонятен
 #: sharing/models.py:166
-#, fuzzy
 msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
@@ -2852,7 +2829,6 @@ msgid "Cache CNID"
 msgstr "Кэш CNID"
 
 #: sharing/models.py:170
-#, fuzzy
 msgid ""
 "If set afpd uses the ID information stored in AppleDouble V2 header files to "
 "reduce database load. Don't set this option if the volume is modified by non "
@@ -2867,7 +2843,6 @@ msgid "Translate CR/LF"
 msgstr "Преобразовывать CR/LF"
 
 #: sharing/models.py:174
-#, fuzzy
 msgid ""
 "Enables crlf translation for TEXT files, automatically converting macintosh "
 "line breaks into Unix ones. Use of this option might be dangerous since some "
@@ -2913,13 +2888,12 @@ msgstr "Номера нулевых устройств"
 
 # не совсем понятно, что они имели в виду
 #: sharing/models.py:186
-#, fuzzy
 msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
 msgstr ""
-"Всегда используйте 0 для номера устройства, помогает, когда номер устройства "
-"не является постоянной при перезагрузке, кластер, ..."
+"Всегда используйте 0 для номера устройства. Это помогает, если номер "
+"устройства не является постоянной при перезагрузке, например в кластере, ..."
 
 #: sharing/models.py:189
 msgid "Disable File ID"
@@ -2927,7 +2901,6 @@ msgstr "Отключить ID файла"
 
 # совсем не понятно
 #: sharing/models.py:190
-#, fuzzy
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
 msgstr "Не оповещать о \"createfileid\", \"resolveid\", \"deleteid\"."
 
@@ -2936,13 +2909,12 @@ msgid "Disable :hex Names"
 msgstr "Отключить :hex имена"
 
 #: sharing/models.py:194
-#, fuzzy
 msgid ""
 "Disable :hex translations for anything except dot files. This option makes "
 "the '/' character illegal."
 msgstr ""
-"Отключить :hex трансляцию всего, кроме точки файлов. Эта опция делает символ "
-"\"/\" недопустимым."
+"Отключить :hex трансляцию всего, кроме точки в файлах. Эта опция делает "
+"символ \"/\" недопустимым."
 
 #: sharing/models.py:197
 msgid "ProDOS"
@@ -2953,9 +2925,8 @@ msgid "Provide compatibility with Apple II clients."
 msgstr "Обеспечение совместимости с Apple II клиентов."
 
 #: sharing/models.py:201
-#, fuzzy
 msgid "No Stat"
-msgstr "Нет статистики"
+msgstr "Не использовать статистику"
 
 #: sharing/models.py:202
 #, fuzzy
@@ -2967,12 +2938,10 @@ msgstr ""
 "для томов, созданных по сценарию preexec."
 
 #: sharing/models.py:205
-#, fuzzy
 msgid "AFP3 Unix Privs"
 msgstr "AFP3 привилегии UNIX."
 
 #: sharing/models.py:206
-#, fuzzy
 msgid "Use AFP3 unix privileges."
 msgstr "Использовать AFP3 привилегии UNIX."
 
@@ -3003,7 +2972,6 @@ msgid "All Directories"
 msgstr "Все каталоги"
 
 #: sharing/models.py:238
-#, fuzzy
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
@@ -3024,12 +2992,11 @@ msgid "Quiet"
 msgstr "Тихий"
 
 #: sharing/models.py:246
-#, fuzzy
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
 msgstr ""
-"Предупреждения блокировки журнала, если есть проблемы с экспортом этого "
-"общего ресурса."
+"В случае возникновения проблем с экспортом этого общего ресурса, журнал "
+"оповещений отключается."
 
 # не уверен насчёт maproot и mapall
 # http://www.lissyara.su/articles/freebsd/trivia/win2003+nfs/
@@ -3133,7 +3100,6 @@ msgid "Member disk"
 msgstr "Член массива"
 
 #: storage/forms.py:385 storage/forms.py:496
-#, fuzzy
 msgid "The selected disks were not verified for this import rules."
 msgstr "Выбранные диски не были проверены для этих правил импорта."
 
@@ -3146,12 +3112,10 @@ msgid "You must select a volume."
 msgstr "Вы должны выбрать том."
 
 #: storage/forms.py:594
-#, fuzzy
 msgid "Volume from which this dataset will be created on"
 msgstr "Том будет создан из этих наборов данных"
 
 #: storage/forms.py:595
-#, fuzzy
 msgid "Dataset Name"
 msgstr "Имя набора данных"
 
@@ -3165,7 +3129,6 @@ msgid "Enable atime"
 msgstr "Включить atime"
 
 #: storage/forms.py:598 storage/forms.py:650 storage/forms.py:707
-#, fuzzy
 msgid "Quota for this dataset"
 msgstr "Квота для этого набора данных"
 
@@ -3175,14 +3138,12 @@ msgid "0=Unlimited; example: 1g"
 msgstr "0 = без ограничений; например 1g"
 
 #: storage/forms.py:599 storage/forms.py:651
-#, fuzzy
 msgid "Quota for this dataset and all children"
 msgstr "Квота для этого набора данных и всех его производных"
 
 #: storage/forms.py:600 storage/forms.py:652 storage/forms.py:708
-#, fuzzy
 msgid "Reserved space for this dataset"
-msgstr "Свободное пространство для этого набора данных"
+msgstr "Зарезервированное место для этого набора данных"
 
 #: storage/forms.py:600 storage/forms.py:601 storage/forms.py:652
 #: storage/forms.py:653 storage/forms.py:708
@@ -3190,9 +3151,8 @@ msgid "0=None; example: 1g"
 msgstr "0 = Нет, например 1g"
 
 #: storage/forms.py:601 storage/forms.py:653
-#, fuzzy
 msgid "Reserved space for this dataset and all children"
-msgstr "Свободное пространство для этого набора данных и всех его производных"
+msgstr "Зарезервированное место для этого набора данных и всех его производных"
 
 #: storage/forms.py:614
 msgid ""
@@ -3203,12 +3163,10 @@ msgstr ""
 "содержать \"-\", \"_\", \":\", \".\"."
 
 #: storage/forms.py:621 storage/forms.py:766
-#, fuzzy
 msgid "You already have a dataset with the same name"
 msgstr "У вас уже есть набор данных с тем же именем"
 
 #: storage/forms.py:628 storage/forms.py:685 storage/forms.py:729
-#, fuzzy
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
 msgstr "Введите положительное число (опционально с суффиксом М, G, T), или, 0"
 

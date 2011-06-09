@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:09-0700\n"
-"PO-Revision-Date: 2011-06-03 09:45+0200\n"
-"Last-Translator: dgrossato.101 <dgrossato.101@gmail.com>\n"
+"PO-Revision-Date: 2011-06-08 17:13+0200\n"
+"Last-Translator: silver <silvano@carpene.tk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -28,7 +28,7 @@ msgstr "Impostazioni"
 
 #: media/lib/js/freeadmin.js:137
 msgid "System Information"
-msgstr "Informazioni del Sistema"
+msgstr "Informazioni sul Sistema"
 
 #: media/lib/js/freeadmin.js:177
 msgid "Network Settings"
@@ -56,7 +56,7 @@ msgstr "Configura disco"
 
 #: media/lib/js/freeadmin.js:443
 msgid "Replace"
-msgstr "Sostituire"
+msgstr "Sostituisci"
 
 #: media/lib/js/freeadmin.js:444
 msgid "Disk Replacement"
@@ -64,19 +64,19 @@ msgstr "Sostituzione Dischi"
 
 #: media/lib/js/freeadmin.js:448
 msgid "Detach"
-msgstr "Scollegare"
+msgstr "Scollega"
 
 #: media/lib/js/freeadmin.js:449
 msgid "Disk Detach"
-msgstr "Disco Scollegato"
+msgstr "Scollega disco"
 
 #: media/lib/js/freeadmin.js:635
 msgid "Some error ocurried!"
-msgstr "Si è verificato qualche errore!"
+msgstr "Si è verificato un errore!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
-msgstr "Ciascuno selezionato"
+msgstr "Tutti i selezionati"
 
 #: media/lib/js/freeadmin/form/Cron.js:90
 msgid "Every N"

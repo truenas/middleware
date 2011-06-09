@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:01-0700\n"
-"PO-Revision-Date: 2011-05-27 10:55+0200\n"
+"PO-Revision-Date: 2011-06-08 11:32+0200\n"
 "Last-Translator: hamzul <zulkiflih@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ms\n"
@@ -278,7 +278,7 @@ msgstr "Alatan"
 
 #: choices.py:200
 msgid "ZFS Volume"
-msgstr "ZFS Saiz"
+msgstr "Saiz ZFS"
 
 #: choices.py:204 storage/models.py:136 templates/storage/autoimport.html:9
 #: templates/storage/import.html:18 templates/storage/wizard.html:91
@@ -500,57 +500,57 @@ msgstr "Katalaluan lama"
 
 #: account/forms.py:502
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr ""
+msgstr "Katalaluan lama tidak tepat, sila masukkan sekali lagi"
 
 #: account/models.py:36 services/models.py:475 services/models.py:520
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr ""
+msgstr "ID Kumpulan"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "Nama Kumpulan"
 
 #: account/models.py:47 account/models.py:155 services/models.py:1209
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:87
 msgid "Group"
-msgstr ""
+msgstr "Kumpulan"
 
 #: account/models.py:48 account/views.py:115 templates/account/index.html:10
 msgid "Groups"
-msgstr ""
+msgstr "Kumpulan"
 
 #: account/models.py:63
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Kumpulan %s kekal dan tidak boleh dipadam"
 
 #: account/models.py:73
 msgid "User ID"
-msgstr ""
+msgstr "ID Penguna"
 
 #: account/models.py:78
 msgid "User &"
-msgstr ""
+msgstr "Penguna &"
 
 #: account/models.py:85
 msgid "Hashed UNIX password"
-msgstr ""
+msgstr "Hashed UNIX password"
 
 #: account/models.py:91
 msgid "Hashed SMB password"
-msgstr ""
+msgstr "Hashed SMB password"
 
 #: account/models.py:95
 msgid "Primary Group ID"
-msgstr ""
+msgstr "Kumpulan ID Utama"
 
 #: account/models.py:100
 msgid "Home Directory"
-msgstr ""
+msgstr "Home Directory"
 
 #: account/models.py:109
 msgid "Full Name"
@@ -569,7 +569,7 @@ msgstr "Penguna"
 
 #: account/models.py:121 account/views.py:102 templates/account/index.html:13
 msgid "Users"
-msgstr ""
+msgstr "Penguna"
 
 #: account/models.py:138
 #, python-format
@@ -589,7 +589,7 @@ msgstr "Tukar katalaluan"
 #: account/nav.py:19 templates/account/changeform.html:25
 #: templates/account/index.html:4
 msgid "Change Admin User"
-msgstr ""
+msgstr "Tukar Admin"
 
 #: account/nav.py:26 templates/account/index.html:2
 msgid "My Account"
@@ -611,13 +611,13 @@ msgstr "%s data berjaya dinaiktaraf."
 
 #: account/views.py:92
 msgid "Admin user"
-msgstr ""
+msgstr "Penguna Admin"
 
 #: contrib/ext_formwizard.py:170
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
-msgstr ""
+msgstr "Maaf, masa telah tamat, sila isi semula medan berkenaan semula."
 
 #: freeadmin/forms.py:88
 #, python-format
@@ -632,34 +632,34 @@ msgstr ""
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Tambah %"
 
 #: freeadmin/navtree.py:327
 #, python-format
 msgid "View All %s"
-msgstr ""
+msgstr "Papar Semua %"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
-msgstr ""
+msgstr "Paparan Aplikasi Semasa"
 
 #: freeadmin/navtree.py:353 templates/freeadmin/index.html:53
 msgid "Reboot"
-msgstr ""
+msgstr "Reboot"
 
 #: freeadmin/navtree.py:360 templates/freeadmin/index.html:65
 msgid "Shutdown"
-msgstr ""
+msgstr "Shutdown"
 
 #: freeadmin/views.py:225
 #, python-format
 msgid "%s successfully added."
-msgstr ""
+msgstr "% berjaya ditambah."
 
 #: freeadmin/views.py:384 freeadmin/views.py:386
 #, python-format
 msgid "%s successfully updated."
-msgstr ""
+msgstr "% berjaya dinaiktaraf"
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
@@ -668,7 +668,7 @@ msgstr ""
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "% berjaya dipadam"
 
 #: network/forms.py:44 network/models.py:95
 msgid "NIC"

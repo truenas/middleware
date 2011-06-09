@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-01 02:02-0700\n"
-"PO-Revision-Date: 2011-06-02 09:45+0200\n"
-"Last-Translator: Crazy <vmishev07051@gmail.com>\n"
+"PO-Revision-Date: 2011-06-08 18:40+0200\n"
+"Last-Translator: raymond <raymondv@gmx.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
 "MIME-Version: 1.0\n"
@@ -717,7 +717,7 @@ msgstr ""
 
 #: network/models.py:47
 msgid "Domain"
-msgstr ""
+msgstr "Домейн"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
@@ -990,7 +990,7 @@ msgstr ""
 #: services/forms.py:302 services/models.py:529
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
-msgstr ""
+msgstr "Тайна"
 
 #: services/forms.py:303 services/models.py:530
 msgid "Target side secret."
@@ -3866,7 +3866,7 @@ msgstr ""
 #: templates/storage/zvol_confirm_delete.html:11
 #: templates/system/config_restore.html:11
 msgid "Yes"
-msgstr ""
+msgstr "Да"
 
 #: templates/freeadmin/generic_model_delete_ok.html:1
 msgid "successfully deleted"
@@ -4557,7 +4557,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:38
 msgid "No"
-msgstr ""
+msgstr "Не"
 
 #: templates/storage/tasks.html:42
 msgid "From"
@@ -4577,7 +4577,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:50
 msgid "everyday"
-msgstr ""
+msgstr "всекидневен"
 
 #: templates/storage/tasks.html:53
 msgid "on every"
@@ -4609,11 +4609,11 @@ msgstr ""
 
 #: templates/storage/volumes.html:74
 msgid "Size"
-msgstr ""
+msgstr "Размер"
 
 #: templates/storage/volumes.html:75
 msgid "Status"
-msgstr ""
+msgstr "Статус"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Destroy ZFS Volume"
@@ -4786,7 +4786,7 @@ msgstr ""
 
 #: templates/system/system_info.html:12
 msgid "Platform"
-msgstr ""
+msgstr "Платформа"
 
 #: templates/system/system_info.html:16
 msgid "Memory"
