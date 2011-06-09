@@ -339,7 +339,7 @@ def zvol_create(request):
                 props['compression']=zvol_compression.__str__()
             errno, errmsg = notifier().create_zfs_vol(name=zvol_name.__str__(), size=zvol_size.__str__(), props=props)
             if errno == 0:
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("ZVol successfully added.")}), mimetype="application/json")
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("ZFS Volume successfully added.")}), mimetype="application/json")
             else:
                 zvol_form.set_error(errmsg)
     else:

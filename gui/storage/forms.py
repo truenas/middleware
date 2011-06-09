@@ -779,9 +779,9 @@ class ZFSVolume_EditForm(Form):
         del self.cleaned_data
 
 class ZVol_CreateForm(Form):
-    zvol_volid = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict),  label=_('Volume from which this zvol will be created on'))
-    zvol_name = forms.CharField(max_length = 128, label = _('ZVol Name'))
-    zvol_size = forms.CharField(max_length = 128, initial=0, label=_('Size for this zvol'), help_text=_('0=Unlimited; example: 1g'))
+    zvol_volid = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict),  label=_('Volume from which this ZFS Volume will be created on'))
+    zvol_name = forms.CharField(max_length = 128, label = _('ZFS Volume Name'))
+    zvol_size = forms.CharField(max_length = 128, initial=0, label=_('Size for this ZFS Volume'), help_text=_('0=Unlimited; example: 1g'))
     zvol_compression = forms.ChoiceField(choices=choices.ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
     def __init__(self, *args, **kwargs):
         super(ZVol_CreateForm, self).__init__(*args, **kwargs)
@@ -795,7 +795,7 @@ class ZVol_CreateForm(Form):
     def clean_dataset_name(self):
         name = self.cleaned_data["zvol_name"]
         if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:.]*$', name):
-            raise forms.ValidationError(_("ZVol names must begin with an alphanumeric character and may only contain (-), (_), (:) and (.)."))
+            raise forms.ValidationError(_("ZFS Volume names must begin with an alphanumeric character and may only contain (-), (_), (:) and (.)."))
         return name
     def clean(self):
         cleaned_data = self.cleaned_data
