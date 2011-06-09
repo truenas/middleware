@@ -134,7 +134,7 @@ class Migration(SchemaMigration):
 
         stg = orm.Settings()
         stg.stg_guiprotocol='http'
-        stg.stg_language='english'
+        stg.stg_language='en'
         stg.stg_timezone='America/Los_Angeles'
         stg.stg_ntpserver1='0.freebsd.pool.ntp.org iburst maxpoll 9'
         stg.stg_ntpserver2='1.freebsd.pool.ntp.org iburst maxpoll 9'
