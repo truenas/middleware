@@ -102,7 +102,18 @@
            <td>
                <img id="snmp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "SNMP Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services",model="SNMP",oid=snmp.id %}');" title="{% trans "SNMP Settings" %}">
            </td>
-       </tr> 
+       </tr>
+       <tr>
+           <td>
+               <strong>{% trans "S.M.A.R.T." %}</strong>
+           </td>
+           <td>
+                <img id="smartd_toggle" name="smartd_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "smartd" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+           </td>
+           <td>
+               <img id="smartd_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "S.M.A.R.T. Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services",model="SMART",oid=smart.id %}');" title="{% trans "S.M.A.R.T. Settings" %}">
+           </td>
+       </tr>
        <tr>
            <td>
                <strong>{% trans "SSH" %}</strong>

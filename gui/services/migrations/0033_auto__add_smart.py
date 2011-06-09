@@ -19,6 +19,11 @@ class Migration(SchemaMigration):
             ('smart_email', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
         ))
         db.send_create_signal('services', ['SMART'])
+        srv = orm.services.objects.create(
+            srv_service='smartd',
+            srv_enable=False
+            )
+        srv.save()
 
 
     def backwards(self, orm):
@@ -26,6 +31,7 @@ class Migration(SchemaMigration):
         # Deleting model 'SMART'
         db.delete_table('services_smart')
 
+        orm.services.objects.filter(srv_service='smartd').delete()
 
     models = {
         'services.activedirectory': {

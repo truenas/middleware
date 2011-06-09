@@ -77,6 +77,11 @@ def home(request):
         rsyncd = models.Rsyncd.objects.create()
 
     try:
+        smart = models.SMART.objects.order_by("-id")[0]
+    except IndexError:
+        smart = models.SMART.objects.create()
+
+    try:
         ssh = models.SSH.objects.order_by("-id")[0]
     except IndexError:
         ssh = models.SSH.objects.create()
@@ -106,6 +111,7 @@ def home(request):
         #'bittorrent': bittorrent,
         'ftp': ftp,
         'tftp': tftp,
+        'smart': smart,
         'ssh': ssh,
         'activedirectory': activedirectory,
         'ldap': ldap,
@@ -175,6 +181,7 @@ def servicesToggleView(request, formname):
         'ad_toggle' : 'activedirectory',
         'ldap_toggle' : 'ldap',
         'rsync_toggle' : 'rsync',
+        'smartd_toggle' : 'smartd',
     }
     changing_service = form2namemap[formname]
     if changing_service == "":
