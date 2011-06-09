@@ -421,8 +421,11 @@ class iSCSITargetExtent(Model):
             if self.iscsi_target_extent_type == "Disk":
                 notifier().unlabel_disk(disk.identifier_to_device())
             disk.delete()
-            vol = Volume.objects.get(vol_name = expected_iscsi_volume_name)
-            vol.delete()
+            try:
+                vol = Volume.objects.get(vol_name = expected_iscsi_volume_name)
+                vol.delete()
+            except:
+                pass
         super(iSCSITargetExtent, self).delete()
 
 class iSCSITargetPortal(Model):

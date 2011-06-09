@@ -1270,7 +1270,7 @@ class notifier:
             if p1.returncode == 0:
                 return True
         elif fstype is None:
-            p1 = Popen(["/sbin/geom", "label", "create", label, dev], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/sbin/geom", "label", "label", label, dev], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
