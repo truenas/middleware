@@ -1237,6 +1237,11 @@ class RsyncMod(Model):
         return unicode(self.rsyncmod_name)
 
 class SMART(Model):
+    smart_interval = models.IntegerField(
+            default=30,
+            verbose_name=_("Check interval"),
+            help_text=_("Sets the interval between disk checks to N minutes. The default is 30 minutes"),
+            )
     smart_powermode = models.CharField(
             choices=choices.SMART_POWERMODE,
             default="never",

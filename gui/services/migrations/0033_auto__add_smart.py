@@ -11,6 +11,7 @@ class Migration(SchemaMigration):
         # Adding model 'SMART'
         db.create_table('services_smart', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('smart_interval', self.gf('django.db.models.fields.IntegerField')(default=30)),
             ('smart_powermode', self.gf('django.db.models.fields.CharField')(default='never', max_length=60)),
             ('smart_difference', self.gf('django.db.models.fields.IntegerField')(default=0)),
             ('smart_informal', self.gf('django.db.models.fields.IntegerField')(default=0)),
@@ -252,6 +253,7 @@ class Migration(SchemaMigration):
             'smart_difference': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'smart_email': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'smart_informal': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'smart_interval': ('django.db.models.fields.IntegerField', [], {'default': '30'}),
             'smart_powermode': ('django.db.models.fields.CharField', [], {'default': "'never'", 'max_length': '60'})
         },
         'services.snmp': {
