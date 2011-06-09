@@ -462,3 +462,10 @@ SMART_POWERMODE = (
     ('standby' ,_("Standby - Check the device unless it is in SLEEP or STANDBY mode")),
     ('idle' ,_("Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode")),
     )
+
+SMART_TEST = (
+    ('L', _('Long Self-Test')),
+    ('S', _('Short Self-Test')),
+    ('C', _('Conveyance Self-Test (ATA  only)')),
+    ('O', _('Offline Immediate Test (ATA only)')),
+    )

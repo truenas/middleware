@@ -35,39 +35,40 @@ from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField
 from freenasUI.middleware.notifier import notifier
 from freeadmin.models import PathField
+from storage.models import Disk
 
 class Settings(Model):
     stg_guiprotocol = models.CharField(
-            max_length=120, 
-            choices=choices.PROTOCOL_CHOICES, 
-            default="http", 
+            max_length=120,
+            choices=choices.PROTOCOL_CHOICES,
+            default="http",
             verbose_name = _("Protocol")
             )
     stg_language = models.CharField(
-            max_length=120, 
+            max_length=120,
             choices=settings.LANGUAGES,
             default="en",
             verbose_name = _("Language")
             )
     stg_timezone = models.CharField(
-            max_length=120, 
+            max_length=120,
             choices=choices.TimeZoneChoices(),
-            default="America/Los_Angeles", 
+            default="America/Los_Angeles",
             verbose_name = _("Timezone")
             )
     stg_ntpserver1 = models.CharField(
-            max_length=120, 
+            max_length=120,
             default="0.freebsd.pool.ntp.org iburst maxpoll 9",
             verbose_name = _("NTP server 1")
             )
     stg_ntpserver2 = models.CharField(
-            max_length=120, 
+            max_length=120,
             default="1.freebsd.pool.ntp.org iburst maxpoll 9",
             verbose_name = _("NTP server 2"),
             blank=True
             )
     stg_ntpserver3 = models.CharField(
-            max_length=120, 
+            max_length=120,
             default="2.freebsd.pool.ntp.org iburst maxpoll 9",
             verbose_name = _("NTP server 3"),
             blank=True
@@ -124,14 +125,14 @@ class Advanced(Model):
 ## System|Advanced|Email
 class Email(Model):
     em_fromemail = models.CharField(
-            max_length=120, 
-            verbose_name = _("From email"), 
+            max_length=120,
+            verbose_name = _("From email"),
             help_text = _("An email address that the system will use for the sending address for mail it sends, eg: freenas@mydomain.com"),
             blank=True
             )
     em_outgoingserver = models.CharField(
-            max_length=120, 
-            verbose_name = _("Outgoing mail server"), 
+            max_length=120,
+            verbose_name = _("Outgoing mail server"),
             help_text = _("A hostname or ip that will accept our mail, for instance mail.example.org, or 192.168.1.1"),
             blank=True
             )
@@ -142,9 +143,9 @@ class Email(Model):
             verbose_name = _("Port to connect to")
             )
     em_security = models.CharField(
-            max_length=120, 
+            max_length=120,
             choices=choices.SMTPAUTH_CHOICES,
-            default="plain", 
+            default="plain",
             help_text = _("encryption of the connection"),
             verbose_name = _("TLS/SSL")
             )
@@ -155,14 +156,14 @@ class Email(Model):
     em_user = models.CharField(
             blank=True,
             null=True,
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Username"),
             help_text = _("A username to authenticate to the remote server"),
             )
     em_pass = models.CharField(
             blank=True,
             null=True,
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Password"),
             help_text = _("A password to authenticate to the remote server"),
             )
@@ -176,49 +177,49 @@ class SSL(Model):
     ssl_org = models.CharField(
             blank=True,
             null=True,
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Organization"),
             help_text = _("Organization Name (eg, company)"),
             )
     ssl_unit = models.CharField(
             blank=True,
             null=True,
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Organizational Unit"),
             help_text = _("Organizational Unit Name (eg, section)"),
             )
     ssl_email = models.CharField(
             blank=True,
             null=True,
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Email Address"),
             help_text = _("Email Address"),
             )
     ssl_city = models.CharField(
             blank=True,
             null=True,
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Locality"),
             help_text = _("Locality Name (eg, city)"),
             )
     ssl_state = models.CharField(
             blank=True,
             null=True,
-            max_length=120, 
+            max_length=120,
             verbose_name = _("State"),
             help_text = _("State or Province Name (full name)"),
             )
     ssl_country = models.CharField(
             blank=True,
             null=True,
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Country"),
             help_text = _("Country Name (2 letter code)"),
             )
     ssl_common = models.CharField(
             blank=True,
             null=True,
-            max_length=120, 
+            max_length=120,
             verbose_name = _("Common Name"),
             help_text = _("Common Name (eg, YOUR name)"),
             )
@@ -485,3 +486,40 @@ class Rsync(Model):
             notifier().restart("cron")
         except:
             pass
+
+class SMARTTest(Model):
+    smarttest_disk = models.ForeignKey(
+            Disk,
+            verbose_name=_("Disk"),
+            )
+    smarttest_type = models.CharField(
+            choices=choices.SMART_TEST,
+            max_length=2,
+            verbose_name=_("Type"),
+            blank=True,
+            )
+    smarttest_desc = models.CharField(
+            max_length=120,
+            verbose_name=_("Short description"),
+            blank=True,
+            )
+    smarttest_hour = models.CharField(
+            max_length=100,
+            verbose_name=_("Hour"),
+            help_text=_("Values 0-23 allowed."),
+            )
+    smarttest_daymonth = models.CharField(
+            max_length=100,
+            verbose_name=_("Day of month"),
+            help_text=_("Values 1-31 allowed."),
+            )
+    smarttest_month = models.CharField(
+            max_length=100,
+            default='1,2,3,4,5,6,7,8,9,10,a,b,c',
+            verbose_name=_("Month"),
+            )
+    smarttest_dayweek = models.CharField(
+            max_length=100,
+            default="1,2,3,4,5,6,7",
+            verbose_name=_("Day of week"),
+            )
