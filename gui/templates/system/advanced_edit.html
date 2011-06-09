@@ -14,9 +14,9 @@
                         load: function(data) { 
                             sendbtn.set('disabled', false);
                             if(!data.error) {
-                                setMessage("{% trans "The cache is being rebuilt." %}");
+                                setMessage("{% trans "The cache is being rebuilt."|force_escape %}");
                             } else {
-                                setMessage("{% trans "The cache could not be rebuilt" %}: "+data.errmsg, "error");
+                                setMessage("{% trans "The cache could not be rebuilt"|force_escape %}: "+data.errmsg, "error");
                             }
                         },
                      });

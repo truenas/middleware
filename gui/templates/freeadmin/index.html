@@ -32,16 +32,16 @@ dojo.addOnLoad(function(){
         ttop.stop();
         ttop.start();
     </script>
-    <pre class="ix" id="top_output">{% trans "Loading" %}...</pre>
+    <pre class="ix" id="top_output">{% trans "Loading..." %}</pre>
 </div>
-<div id="log_dialog" dojoType="dijit.Dialog" title="{% trans "/var/log/messages" %}" style="min-height:400px;background-color:black;">
+<div id="log_dialog" dojoType="dijit.Dialog" title="/var/log/messages" style="min-height:400px;background-color:black;">
     <script type="dojo/method" event="onShow">
-        document.getElementById('msgfull_output').innerHTML = '{% trans "Loading"|force_escape %}...';
+        document.getElementById('msgfull_output').innerHTML = '{% trans "Loading..."|force_escape %}';
     t.stop();
     t.start();
         loadlog(true);
     </script>
-    <pre class="ix" id="msgfull_output" style="max-height:400px;overflow-y:auto;border:none;word-wrap: break-word;">{% trans "Loading" %}...</pre>
+    <pre class="ix" id="msgfull_output" style="max-height:400px;overflow-y:auto;border:none;word-wrap: break-word;">{% trans "Loading..." %}</pre>
 </div>
 <div dojoType="dijit.Dialog" id="rebootDialog" title="{% trans "Reboot the System" %}" >
     <h3>{% trans "Warning!" %}</h3>
@@ -66,7 +66,7 @@ dojo.addOnLoad(function(){
                 </button>
 </div>
 
-<div dojoType="dijit.Dialog" id="helpDialog" title="{% trans "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support" %}"  style="background:#fff;width:400px;">
+<div dojoType="dijit.Dialog" id="helpDialog" title="&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Help & Support" %}"  style="background:#fff;width:400px;">
     <img src="{{ STATIC_URL }}images/ui/menu/help.png" style="float:left;position:relative;top:-36px;right:5px;">
     <div style="float:left;">
     <h3>{% trans "Forum" %}</h3>

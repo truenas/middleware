@@ -434,7 +434,7 @@
         var gridhtml = dijit.getEnclosingWidget(dojo.byId(this.id));
 
         var content = new dijit.layout.ContentPane({});
-        var b = new dijit.form.Button({label: "Edit"});
+        var b = new dijit.form.Button({label: gettext("Edit")});
 
         dojo.connect(b.domNode, 'onclick', function(){ editObject(gettext('Edit Disk'), json.edit_url, [gridhtml,]); });
         content.domNode.appendChild(b.domNode);

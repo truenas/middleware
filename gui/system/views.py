@@ -240,8 +240,8 @@ def testmail(request):
     errmsg = ''
     if request.is_ajax():
         from common.system import send_mail
-        error, errmsg = send_mail(subject="Test message from FreeNAS",
-                                  text="This is a message test from FreeNAS")
+        error, errmsg = send_mail(subject=_("Test message from FreeNAS"),
+                                  text=_("This is a message test from FreeNAS"))
 
     return HttpResponse(simplejson.dumps({
         'error': error,

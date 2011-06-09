@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
 <div dojoType="dijit.layout.TabContainer" style="width:100%;height:400px;">
     <div dojoType="dijit.layout.ContentPane" title="404">
-        <h3>Page Not Found</h3>
+        <h3>{% trans "Page Not Found" %}</h3>
     </div>
 </div>
 {% endblock %}

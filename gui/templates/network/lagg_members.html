@@ -21,7 +21,7 @@
                 </script>
             </button>
             <button dojoType="dijit.form.Button" type="button">
-                Delete
+                {% trans "Delete" %}
                 <script type="dojo/method" event="onClick" args="evt">
                     editObject('{% trans "Delete"|force_escape %}', '{{ nic.get_delete_url }}', [this,]);
                 </script>

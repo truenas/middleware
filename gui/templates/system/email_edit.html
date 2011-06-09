@@ -14,9 +14,9 @@
                         load: function(data) { 
                             sendbtn.set('disabled', false);
                             if(!data.error) {
-                                setMessage("Your test email has been sent!");
+                                setMessage("{% trans "Your test email has been sent!"|force_escape %}");
                             } else {
-                                setMessage("Your test email could not be sent: "+data.errmsg, "error");
+                                setMessage("{% trans "Your test email could not be sent:"|force_escape %} "+data.errmsg, "error");
                             }
                         },
                      });

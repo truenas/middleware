@@ -31,7 +31,12 @@
             {% endfor %}
         </table>
         <p class="btn">
-		<button class="submitform" dojoType="dijit.form.Button" type="submit" onClick="this.set('label', 'Please wait...');">{% trans "Update" %}</button>
-        <button dojoType="dijit.form.Button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
+            <button class="submitform" dojoType="dijit.form.Button" type="submit">
+                {% trans "Update" %}
+                <script type="dojo/method" event="onClick" args="evt">
+                    this.set('label', '{% trans "Please wait..."|force_escape %}');
+                </script>
+            </button>
+            <button dojoType="dijit.form.Button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
         </p>
     </form>

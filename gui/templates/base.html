@@ -1,4 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+{% load i18n %}<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-gb" lang="en-gb" dir="ltr">
 <head>
     <title>{% if hostname %}{{ hostname }} - {% endif %}{{ freenas_version }}</title>
@@ -29,8 +29,8 @@
         <div dojoType="dijit.layout.BorderContainer" id="inter" style="width:272px; height:100%" region="left" gutters="false" splitter="true">
             <div dojoType="dijit.layout.ContentPane" id="colexpand"
                 region="top" style="height:20px;">
-                <a href="javascript:void(0);" onClick="dijit.byId('mytree').expandAll()">expand all</a> &nbsp; 
-                <a href="javascript:void(0);" onClick="dijit.byId('mytree').collapseAll()">collapse all</a>
+                <a href="javascript:void(0);" onClick="dijit.byId('mytree').expandAll()">{% trans "expand all" %}</a> &nbsp; 
+                <a href="javascript:void(0);" onClick="dijit.byId('mytree').collapseAll()">{% trans "collapse all" %}</a>
             </div>
             <div dojoType="dijit.layout.ContentPane" id="menupane"
                 region="center">

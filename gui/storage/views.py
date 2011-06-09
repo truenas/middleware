@@ -153,15 +153,18 @@ def disks_datagrid(request, vid):
 
     names = [x.verbose_name for x in models.Disk._meta.fields]
     _n = [x.name for x in models.Disk._meta.fields]
+
+    names.insert(2, _('Serial'))
+    _n.insert(2, 'serial')
     """
     Nasty hack to calculate the width of the datagrid column
     dojo DataGrid width="auto" doesnt work correctly and dont allow
          column resize with mouse
     """
     width = []
-    for x in models.Disk._meta.fields:
+    for x in names:
         val = 8
-        for letter in x.verbose_name:
+        for letter in x:
             if letter.isupper():
                 val += 10
             elif letter.isdigit():
@@ -169,9 +172,6 @@ def disks_datagrid(request, vid):
             else:
                 val += 7
         width.append(val)
-    names.insert(2, 'Serial')
-    _n.insert(2, 'serial')
-    width.insert(2, 50)
     fields = zip(names, _n, width)
 
     return render(request, 'storage/datagrid_disks.html', {
