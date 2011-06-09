@@ -267,7 +267,7 @@ class FirmwareUploadForm(Form):
             fw.close()
             checksum = notifier().checksum(filename)
             retval = notifier().validate_xz(filename)
-            if checksum != cleaned_data['sha256'].__str__() or retval == False:
+            if checksum != cleaned_data['sha256'].__str__().strip() or retval == False:
                 msg = _(u"Invalid firmware or checksum")
                 self._errors["firmware"] = self.error_class([msg])
                 del cleaned_data["firmware"]
