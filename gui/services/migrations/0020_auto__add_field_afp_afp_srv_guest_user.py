@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding field 'AFP.afp_srv_guest_user'
-        db.add_column('services_afp', 'afp_srv_guest_user', self.gf('django.db.models.fields.CharField')(default='www', max_length=120), keep_default=False)
+        db.add_column('services_afp', 'afp_srv_guest_user', self.gf('django.db.models.fields.CharField')(default='nobody', max_length=120), keep_default=False)
 
 
     def backwards(self, orm):

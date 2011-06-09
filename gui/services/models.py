@@ -102,7 +102,7 @@ class CIFS(Model):
             default="nobody",
             exclude=["root"],
             verbose_name=_("Guest account"),
-            help_text=_("Use this option to override the username ('ftp' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login.")
+            help_text=_("Use this option to override the username ('nobody' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login. The user root can not be used as guest account.")
             )
     cifs_srv_guestok = models.BooleanField(
             verbose_name=_("Allow guest access"))
@@ -186,9 +186,10 @@ class AFP(Model):
             )
     afp_srv_guest_user = UserField(
             max_length=120,
-            default = "nobody",
+            default="nobody",
+            exclude=["root"],
             verbose_name=_("Guest account"),
-            help_text=_("Use this option to override the username ('www' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login.")
+            help_text=_("Use this option to override the username ('nobody' by default) which will be used for access to services which are specified as guest. Whatever privileges this user has will be available to any client connecting to the guest service. This user must exist in the password file, but does not require a valid login. The user root can not be used as guest account.")
             )
     afp_srv_local = models.BooleanField(
             verbose_name=_("Local Access"),
