@@ -418,7 +418,7 @@ def reset_gui_login():
     The login information for the WebGUI has been reseted:
 
     login: admin
-    passwird: freenas
+    password: freenas
 
 
     Press Enter to continue
