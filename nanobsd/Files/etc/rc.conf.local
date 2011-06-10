@@ -219,7 +219,6 @@ _gen_conf()
 	_staticroute_config
 
 	## Daemons
-	_count_config smartd_enable storage_disk disk_togglesmart =1
 	_bool_svcconfig netatalk_enable afp
 	_bool_svcconfig afpd_enable afp
 	_bool_svcconfig cnid_metad_enable afp
@@ -236,6 +235,7 @@ _gen_conf()
 	_bool_svcconfig inetd_enable tftp
 	_bool_svcconfig istgt_enable iscsitarget
 	_bool_svcconfig inadyn_enable dynamicdns
+	_bool_svcconfig smartd_enable smartd
 
 	# Workaround: we don't enable ZFS by default but still want /etc/zfs/exports
 	# be exist for mountd(8)
@@ -252,7 +252,14 @@ _gen_conf()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_servers FROM services_nfs ORDER BY id DESC LIMIT 1" | \
 	while read numservers; do
             echo "nfs_server_flags=\"-t -u -n ${numservers}\""
-        done
+	done
+
+	local smartdint
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT smart_interval FROM services_smart ORDER BY id DESC LIMIT 1" | \
+	while read smartdint; do
+		inter=$(echo "${smartdint}*60"|/usr/bin/bc)
+		echo "smartd_flags=\"-i ${inter}\""
+	done
 }
 
 # If we're running really early, then mount /data read-only
