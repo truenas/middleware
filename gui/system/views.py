@@ -106,6 +106,7 @@ def config_upload(request):
                 user = User.objects.all()[0]
                 backend = get_backends()[0]
                 user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
+                login(request, user)
                 return render(request, 'system/config_ok.html', variables)
 
         if request.GET.has_key("iframe"):
