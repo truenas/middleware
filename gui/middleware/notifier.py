@@ -1528,12 +1528,12 @@ class notifier:
             f.close()
             return False
         else:
-            db = open('/data/freenas-v1.db', 'w')
+            db = open('/data/uploaded.db', 'w')
             db.write(sqlite)
             db.close()
             f.close()
             # Now we must run the migrate operation in the case the db is older
-            self.__system("/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate")
+            self.__system("touch /data/need-update")
             return True
 
     def zfs_get_options(self, name):
