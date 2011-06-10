@@ -1,7 +1,7 @@
 {% load i18n %}
       <table class="grid">
-	      <thead class="header">
-	  <tr>
+          <thead class="header">
+            <tr>
               <td>{% trans "Interface" %}</td>
               <td>{% trans "Name" %}</td>
               <td>{% trans "DHCP" %}</td>
@@ -9,8 +9,9 @@
               <td>{% trans "IPv6 Auto" %}</td>
               <td>{% trans "IPv6 Address" %}</td>
               <td>{% trans "Options" %}</td>
-	  </tr>
-	      </thead>
+              <td>{% trans "Available actions" %}</td>
+            </tr>
+          </thead>
           {% for i in int_list %}
           <tr class="{% cycle 'odd' 'even' %}" id="{{ i.id }}">
               <td>{{ i.int_interface }}</td>
@@ -45,7 +46,7 @@
           </tr>
           {% empty %}
           <tr>
-              <td colspan="9">{% trans "No interfaces defined" %}</td>
+              <td colspan="8">{% trans "No interfaces defined" %}</td>
           </tr>
           {% endfor %}
           </table>
