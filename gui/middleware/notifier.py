@@ -1511,6 +1511,31 @@ class notifier:
     def config_restore(self):
         self.__system("cp /data/factory-v1.db /data/freenas-v1.db")
 
+    def config_upload(self, f):
+        import sqlite3
+        import tempfile
+        sqlite = f.read()
+        f = tempfile.NamedTemporaryFile()
+        f.write(sqlite)
+        f.flush()
+        try:
+            conn = sqlite3.connect(f.name)
+            cur = conn.cursor()
+            cur.execute("""SELECT name FROM sqlite_master
+            WHERE type='table'
+            ORDER BY name;""")
+        except sqlite3.DatabaseError:
+            f.close()
+            return False
+        else:
+            db = open('/data/freenas-v1.db', 'w')
+            db.write(sqlite)
+            db.close()
+            f.close()
+            # Now we must run the migrate operation in the case the db is older
+            self.__system("/usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate")
+            return True
+
     def zfs_get_options(self, name):
         data = {}
         name = str(name)

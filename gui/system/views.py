@@ -27,7 +27,6 @@
 #####################################################################
 
 from datetime import datetime
-import tempfile
 import os
 import commands
 
@@ -101,29 +100,12 @@ def config_upload(request):
         }
 
         if form.is_valid():
-            import sqlite3
-            sqlite = request.FILES['config'].read()
-            f = tempfile.NamedTemporaryFile()
-            f.write(sqlite)
-            f.flush()
-            try:
-                conn = sqlite3.connect(f.name)
-                cur = conn.cursor()
-                cur.execute("""SELECT name FROM sqlite_master
-                WHERE type='table'
-                ORDER BY name;""")
-            except sqlite3.DatabaseError:
-                f.close()
+            if not notifier().config_upload(request.FILES['config']):
                 form._errors['__all__'] = form.error_class([_("The uploaded file is not valid."),])
             else:
-                db = open('/data/freenas-v1.db', 'w')
-                db.write(sqlite)
-                db.close()
-                f.close()
                 user = User.objects.all()[0]
                 backend = get_backends()[0]
                 user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
-                login(request, user)
                 return render(request, 'system/config_ok.html', variables)
 
         if request.GET.has_key("iframe"):
