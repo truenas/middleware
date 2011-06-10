@@ -15,10 +15,13 @@ class Migration(DataMigration):
                 disk = orm['storage.Disk'].objects.get(pk=d.iscsi_target_extent_path)
                 vol = disk.disk_group.group_volume
                 dg = disk.disk_group
+                mp = orm['storage.MountPoint'].objects.get(mp_volume=vol)
                 vol.vol_name = name
                 vol.save()
                 dg.group_name = name
                 dg.save()
+                mp.mp_path = name
+                mp.save()
 
                 if d.iscsi_target_extent_type == 'Disk':
                     devname = notifier().identifier_to_device(disk.disk_identifier)
