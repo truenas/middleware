@@ -33,3 +33,4 @@ PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
 
 15	3	*	*	*	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py expire >/dev/null 2>&1
 30	3	*	*	*	root 	/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py fill >/dev/null 2>&1
+0	3	*	*	*	root	find /tmp/ -iname "sessionid*" -ctime +1d -delete
