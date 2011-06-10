@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-01 02:08-0700\n"
-"PO-Revision-Date: 2011-06-09 11:33+0200\n"
+"POT-Creation-Date: 2011-06-09 13:51-0700\n"
+"PO-Revision-Date: 2011-06-09 23:15+0200\n"
 "Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -50,6 +50,10 @@ msgstr "Stockage"
 #: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
 msgstr "Tâches planifiées"
+
+#: media/lib/js/freeadmin.js:437
+msgid "Edit"
+msgstr "Modifier"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-01 02:08-0700\n"
-"PO-Revision-Date: 2011-06-06 11:42+0200\n"
+"POT-Creation-Date: 2011-06-09 13:51-0700\n"
+"PO-Revision-Date: 2011-06-06 12:00+0200\n"
 "Last-Translator: RayTracer <saliherk@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -49,6 +49,11 @@ msgstr "Depolama"
 #: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
 msgstr "CronJobs"
+
+#: media/lib/js/freeadmin.js:437
+#, fuzzy
+msgid "Edit"
+msgstr "Disk Düzenleme"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"

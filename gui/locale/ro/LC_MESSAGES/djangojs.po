@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-01 02:08-0700\n"
-"PO-Revision-Date: 2011-05-22 22:33+0200\n"
+"POT-Creation-Date: 2011-06-09 13:51-0700\n"
+"PO-Revision-Date: 2011-05-22 22:59+0200\n"
 "Last-Translator: bogdan_marcu <bogdan_marcu@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -51,6 +51,11 @@ msgstr "Stocare"
 msgid "CronJobs"
 msgstr "Job-uri Cron"
 
+#: media/lib/js/freeadmin.js:437
+#, fuzzy
+msgid "Edit"
+msgstr "Modificare disc"
+
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
 msgstr "Modificare disc"
@@ -83,5 +88,5 @@ msgstr "Fiecare selectat"
 msgid "Every N"
 msgstr "Fiecare N"
 
-#~ msgid "Every"
-#~ msgstr "Fiecare"
+msgid "Every"
+msgstr "Fiecare"

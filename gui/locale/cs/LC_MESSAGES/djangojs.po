@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-01 02:08-0700\n"
-"PO-Revision-Date: 2011-06-06 16:03+0200\n"
+"POT-Creation-Date: 2011-06-09 13:51-0700\n"
+"PO-Revision-Date: 2011-06-06 16:26+0200\n"
 "Last-Translator: Velociraptor <hrspam@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -50,6 +50,11 @@ msgstr "Úložiště"
 #: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
 msgstr "Cron úlohy"
+
+#: media/lib/js/freeadmin.js:437
+#, fuzzy
+msgid "Edit"
+msgstr "Úpravy disku"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"

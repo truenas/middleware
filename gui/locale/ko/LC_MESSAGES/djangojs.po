@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-01 02:09-0700\n"
-"PO-Revision-Date: 2011-05-30 19:28+0200\n"
+"POT-Creation-Date: 2011-06-09 13:51-0700\n"
+"PO-Revision-Date: 2011-05-30 19:29+0200\n"
 "Last-Translator: DEOK WON <gf4724@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
@@ -50,6 +50,11 @@ msgstr "스토리지"
 msgid "CronJobs"
 msgstr "복제작업"
 
+#: media/lib/js/freeadmin.js:437
+#, fuzzy
+msgid "Edit"
+msgstr "디스크 수정"
+
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
 msgstr "디스크 수정"
@@ -82,5 +87,5 @@ msgstr "개별 선택"
 msgid "Every N"
 msgstr "매일 N"
 
-#~ msgid "Every"
-#~ msgstr "매일"
+msgid "Every"
+msgstr "매일"

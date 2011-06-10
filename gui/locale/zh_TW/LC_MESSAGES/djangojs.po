@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-01 02:08-0700\n"
-"PO-Revision-Date: 2011-06-02 17:53+0200\n"
+"POT-Creation-Date: 2011-06-09 13:51-0700\n"
+"PO-Revision-Date: 2011-06-10 01:31+0200\n"
 "Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -49,6 +49,10 @@ msgstr "儲存"
 #: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
 msgstr "例行工作"
+
+#: media/lib/js/freeadmin.js:437
+msgid "Edit"
+msgstr "管理"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"

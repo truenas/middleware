@@ -7,16 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-01 02:08-0700\n"
-"PO-Revision-Date: 2011-05-26 17:09+0200\n"
-"Last-Translator: SkyNet <Kuzminvik@gmail.com>\n"
+"POT-Creation-Date: 2011-06-09 13:51-0700\n"
+"PO-Revision-Date: 2011-06-09 14:54+0200\n"
+"Last-Translator: stepanov.lexx <stepanov.lexx@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
+"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.1.6\n"
 
 #: media/lib/js/freeadmin.js:114
@@ -51,6 +51,11 @@ msgstr "Хранилище"
 msgid "CronJobs"
 msgstr "Планировщик Cron"
 
+#: media/lib/js/freeadmin.js:437
+#, fuzzy
+msgid "Edit"
+msgstr "Изменение диска"
+
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
 msgstr "Изменение диска"
@@ -83,5 +88,5 @@ msgstr "Каждый выбранный"
 msgid "Every N"
 msgstr "Каждый номер"
 
-#~ msgid "Every"
-#~ msgstr "Каждый"
+msgid "Every"
+msgstr "Каждый"

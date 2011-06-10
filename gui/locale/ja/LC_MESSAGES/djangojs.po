@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-01 02:08-0700\n"
-"PO-Revision-Date: 2011-05-22 16:56+0200\n"
+"POT-Creation-Date: 2011-06-09 13:51-0700\n"
+"PO-Revision-Date: 2011-06-07 15:03+0200\n"
 "Last-Translator: Kimimasa <ham@cer110.orz.ne.jp>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
@@ -50,6 +50,11 @@ msgstr "ストレージ"
 msgid "CronJobs"
 msgstr "CronJobs（定期的なコマンドの実行）"
 
+#: media/lib/js/freeadmin.js:437
+#, fuzzy
+msgid "Edit"
+msgstr "ディスクの編集"
+
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
 msgstr "ディスクの編集"
@@ -84,5 +89,5 @@ msgstr "選択したものそれぞれ"
 msgid "Every N"
 msgstr "各 N"
 
-#~ msgid "Every"
-#~ msgstr "すべて"
+msgid "Every"
+msgstr "すべて"

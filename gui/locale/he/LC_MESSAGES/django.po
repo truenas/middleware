@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-01 02:02-0700\n"
+"POT-Creation-Date: 2011-06-09 13:46-0700\n"
 "PO-Revision-Date: 2011-06-06 13:45+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,7 +22,7 @@ msgstr ""
 msgid "Plain"
 msgstr "פשוט"
 
-#: choices.py:36 system/models.py:232 templates/system/settings.html:9
+#: choices.py:36 system/models.py:234 templates/system/settings.html:9
 msgid "SSL"
 msgstr "SSL"
 
@@ -146,79 +146,79 @@ msgstr "בינוני"
 msgid "Maximum"
 msgstr "מקסימום"
 
-#: choices.py:127 templates/storage/tasks.html:86
+#: choices.py:127 templates/storage/tasks.html:85
 msgid "January"
 msgstr "ינואר"
 
-#: choices.py:128 templates/storage/tasks.html:89
+#: choices.py:128 templates/storage/tasks.html:88
 msgid "February"
 msgstr "פברואר"
 
-#: choices.py:129 templates/storage/tasks.html:92
+#: choices.py:129 templates/storage/tasks.html:91
 msgid "March"
 msgstr "מרץ"
 
-#: choices.py:130 templates/storage/tasks.html:95
+#: choices.py:130 templates/storage/tasks.html:94
 msgid "April"
 msgstr "אפריל"
 
-#: choices.py:131 templates/storage/tasks.html:98
+#: choices.py:131 templates/storage/tasks.html:97
 msgid "May"
 msgstr "מאי"
 
-#: choices.py:132 templates/storage/tasks.html:101
+#: choices.py:132 templates/storage/tasks.html:100
 msgid "June"
 msgstr "יוני"
 
-#: choices.py:133 templates/storage/tasks.html:104
+#: choices.py:133 templates/storage/tasks.html:103
 msgid "July"
 msgstr "יולי"
 
-#: choices.py:134 templates/storage/tasks.html:107
+#: choices.py:134 templates/storage/tasks.html:106
 msgid "August"
 msgstr "אוגוסט"
 
-#: choices.py:135 templates/storage/tasks.html:110
+#: choices.py:135 templates/storage/tasks.html:109
 msgid "September"
 msgstr "ספטמבר"
 
-#: choices.py:136 templates/storage/tasks.html:113
+#: choices.py:136 templates/storage/tasks.html:112
 msgid "October"
 msgstr "אוקטובר"
 
-#: choices.py:137 templates/storage/tasks.html:116
+#: choices.py:137 templates/storage/tasks.html:115
 msgid "November"
 msgstr "נובמבר"
 
-#: choices.py:138 templates/storage/tasks.html:119
+#: choices.py:138 templates/storage/tasks.html:118
 msgid "December"
 msgstr "דצמבר"
 
-#: choices.py:141 templates/storage/tasks.html:57
+#: choices.py:141 templates/storage/tasks.html:56
 msgid "Monday"
 msgstr "שני"
 
-#: choices.py:142 templates/storage/tasks.html:60
+#: choices.py:142 templates/storage/tasks.html:59
 msgid "Tuesday"
 msgstr "שלישי"
 
-#: choices.py:143 templates/storage/tasks.html:63
+#: choices.py:143 templates/storage/tasks.html:62
 msgid "Wednesday"
 msgstr "רביעי"
 
-#: choices.py:144 templates/storage/tasks.html:66
+#: choices.py:144 templates/storage/tasks.html:65
 msgid "Thursday"
 msgstr "חמישי"
 
-#: choices.py:145 templates/storage/tasks.html:69
+#: choices.py:145 templates/storage/tasks.html:68
 msgid "Friday"
 msgstr "שישי"
 
-#: choices.py:146 templates/storage/tasks.html:72
+#: choices.py:146 templates/storage/tasks.html:71
 msgid "Saturday"
 msgstr "שבת"
 
-#: choices.py:147 templates/storage/tasks.html:75
+#: choices.py:147 templates/storage/tasks.html:74
 msgid "Sunday"
 msgstr "ראשון"
 
@@ -278,8 +278,9 @@ msgstr "מכשיר"
 msgid "ZFS Volume"
 msgstr "נפח ZFS"
 
-#: choices.py:204 storage/models.py:136 templates/storage/autoimport.html:9
-#: templates/storage/import.html:18 templates/storage/wizard.html:91
+#: choices.py:204 storage/models.py:147 system/models.py:493
+#: templates/storage/autoimport.html:9 templates/storage/import.html:18
+#: templates/storage/wizard.html:91
 msgid "Disk"
 msgstr "כונן"
 
@@ -303,8 +304,8 @@ msgstr "קריאה-כתיבה"
 msgid "read-only"
 msgstr "קריאה-בלבד"
 
-#: choices.py:216 choices.py:222 services/forms.py:404 services/forms.py:406
-#: services/forms.py:736 templates/storage/wizard.html:92
+#: choices.py:216 choices.py:222 services/forms.py:392 services/forms.py:394
+#: services/forms.py:741 templates/storage/wizard.html:92
 msgid "None"
 msgstr "לא קיים"
 
@@ -384,8 +385,8 @@ msgstr "חודשים"
 msgid "Year(s)"
 msgstr "שנים"
 
-#: choices.py:434 system/models.py:300 system/models.py:319
-#: system/models.py:456 system/models.py:475
+#: choices.py:434 system/models.py:302 system/models.py:321
+#: system/models.py:457 system/models.py:476
 msgid "Everyday"
 msgstr "כל יום"
 
@@ -405,6 +406,63 @@ msgstr "כתיבה-בלבד"
 msgid "Read and Write"
 msgstr "קריאה וכתיבה"
 
+#: choices.py:447 choices.py:448
+#, python-format
+msgid "%(minutes)s minutes"
+msgstr ""
+
+#: choices.py:449
+#, python-format
+msgid "%(hour)s hour"
+msgstr ""
+
+#: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
+#, python-format
+msgid "%(hours)s hours"
+msgstr ""
+
+#: choices.py:455
+#, python-format
+msgid "%(day)s day"
+msgstr ""
+
+#: choices.py:456
+#, python-format
+msgid "%(week)s week"
+msgstr ""
+
+#: choices.py:460
+msgid "Never - Check the device regardless of its power mode"
+msgstr ""
+
+#: choices.py:461
+msgid "Sleep - Check the device unless it is in SLEEP mode"
+msgstr ""
+
+#: choices.py:462
+msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
+msgstr ""
+
+#: choices.py:463
+msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
+msgstr ""
+
+#: choices.py:467
+msgid "Long Self-Test"
+msgstr ""
+
+#: choices.py:468
+msgid "Short Self-Test"
+msgstr ""
+
+#: choices.py:469
+msgid "Conveyance Self-Test (ATA  only)"
+msgstr ""
+
+#: choices.py:470
+msgid "Offline Immediate Test (ATA only)"
+msgstr ""
+
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
 msgstr "זמין"
@@ -414,7 +472,7 @@ msgid "Selected"
 msgstr "בחור"
 
 #: account/forms.py:174 account/forms.py:198 account/models.py:79
-#: services/models.py:673 services/models.py:933 system/models.py:158
+#: services/models.py:676 services/models.py:935 system/models.py:160
 #: templates/account/bsdusers.html:5 templates/account/bsdusers.html.py:86
 msgid "Username"
 msgstr "שם משתמש"
@@ -427,9 +485,9 @@ msgstr "דרושים 30 תווים או פחות. אותיות, מספרים ו@
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
 msgstr "הערך הזה מכיל רק אותיות, מספרים ו@/./+/-/_ "
 
-#: account/forms.py:201 account/forms.py:308 account/views.py:78
-#: services/models.py:677 system/forms.py:187 system/models.py:165
-#: templates/account/bsdusers.html:9 templates/account/bsdusers.html.py:90
+#: account/forms.py:201 account/forms.py:308 services/models.py:680
+#: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
+#: templates/account/bsdusers.html.py:90
 msgid "Password"
 msgstr "סיסמה"
 
@@ -458,7 +516,7 @@ msgstr "קבוצה ראשית"
 msgid "A user with that username already exists."
 msgstr "שם משתמש עם השם הזה כבר קיים."
 
-#: account/forms.py:243 account/forms.py:329 account/forms.py:480
+#: account/forms.py:243 account/forms.py:329 account/forms.py:479
 #: system/forms.py:232
 msgid "The two password fields didn't match."
 msgstr "שני שדות הסיסמה אינם התאימו."
@@ -467,37 +525,37 @@ msgstr "שני שדות הסיסמה אינם התאימו."
 msgid "Home directory has to start with /mnt/"
 msgstr "תיקיית הבית חייב להתחיל ב- /mnt/"
 
-#: account/forms.py:262 account/forms.py:266 services/forms.py:481
-#: services/forms.py:494 services/forms.py:743 storage/forms.py:225
+#: account/forms.py:262 account/forms.py:266 services/forms.py:469
+#: services/forms.py:482 services/forms.py:748 storage/forms.py:226
 #: system/forms.py:275 system/forms.py:298
 msgid "This field is required."
 msgstr "השדה הזה נחוץ."
 
-#: account/forms.py:428
+#: account/forms.py:427
 msgid "Member users"
 msgstr "משתמשים חברים."
 
-#: account/forms.py:446
+#: account/forms.py:445
 msgid "Auxiliary groups"
 msgstr "קבוצות מסייעות"
 
-#: account/forms.py:468 templates/registration/password_change_form.html:39
+#: account/forms.py:467
 msgid "New password"
 msgstr "סיסמה חדשה"
 
-#: account/forms.py:469
+#: account/forms.py:468
 msgid "New password confirmation"
 msgstr "אימות סיסמה חדשה"
 
-#: account/forms.py:494 templates/registration/password_change_form.html:31
+#: account/forms.py:493
 msgid "Old password"
 msgstr "סיסמה ישנה"
 
-#: account/forms.py:502
+#: account/forms.py:501
 msgid "Your old password was entered incorrectly. Please enter it again."
 msgstr "הסיסמה הישנה שלך הוקשה לא נכון. בבקשה הקש אותה שוב."
 
-#: account/models.py:36 services/models.py:475 services/models.py:520
+#: account/models.py:36 services/models.py:472 services/models.py:517
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
@@ -508,13 +566,13 @@ msgstr "מזהה קבוצה"
 msgid "Group Name"
 msgstr "שם קבוצה"
 
-#: account/models.py:47 account/models.py:155 services/models.py:1209
+#: account/models.py:47 account/models.py:155 services/models.py:1210
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:87
 msgid "Group"
 msgstr "קבוצה"
 
-#: account/models.py:48 account/views.py:115 templates/account/index.html:10
+#: account/models.py:48 templates/account/index.html:10
 msgid "Groups"
 msgstr "קבוצות"
 
@@ -555,14 +613,14 @@ msgstr "שם מלא"
 msgid "E-mail"
 msgstr "אימייל"
 
-#: account/models.py:120 account/models.py:159 services/models.py:524
-#: services/models.py:1202 system/models.py:240 system/models.py:379
+#: account/models.py:120 account/models.py:159 services/models.py:521
+#: services/models.py:1203 system/models.py:242 system/models.py:380
 #: templates/services/iscsi_auth.html:6 templates/system/cronjob.html:10
 #: templates/system/rsync.html:10
 msgid "User"
 msgstr "משתמש"
 
-#: account/models.py:121 account/views.py:102 templates/account/index.html:13
+#: account/models.py:121 templates/account/index.html:13
 msgid "Users"
 msgstr "משתמשים"
 
@@ -598,15 +656,25 @@ msgstr "ראה את כל המשתמשים"
 msgid "View All Groups"
 msgstr "ראה את כל הקבוצות"
 
-#: account/views.py:78 account/views.py:92 account/views.py:102
-#: account/views.py:115
-#, python-format
-msgid "%s successfully update."
-msgstr "% התעדכן בהצלחה"
+#: account/views.py:78
+#, fuzzy
+msgid "Password successfully updated."
+msgstr "%S עודכן בהצלחה."
 
 #: account/views.py:92
-msgid "Admin user"
-msgstr "משתמש מנהל"
+#, fuzzy
+msgid "Admin user successfully updated."
+msgstr "%S עודכן בהצלחה."
+
+#: account/views.py:102
+#, fuzzy
+msgid "Users successfully updated."
+msgstr "%S עודכן בהצלחה."
+
+#: account/views.py:115
+#, fuzzy
+msgid "Groups successfully updated."
+msgstr "%S עודכן בהצלחה."
 
 #: contrib/ext_formwizard.py:170
 msgid ""
@@ -614,15 +682,20 @@ msgid ""
 "form from this page."
 msgstr "אנחנו מצטערים, אבל הטופס שלך פג. בבקשה תמשיך למלא את הטופס מהדף הזה."
 
-#: freeadmin/forms.py:88
+#: freeadmin/forms.py:95
 #, python-format
 msgid "The user %s is not valid."
 msgstr "המשתמש % לא חוקי."
 
-#: freeadmin/forms.py:117
+#: freeadmin/forms.py:124
 #, python-format
 msgid "The group %s is not valid."
 msgstr "הקבוצה %s אינה חוקית."
+
+#: freeadmin/forms.py:138
+#, fuzzy
+msgid "The path must reside within a volume mount point"
+msgstr "הדרך להקף חייב לשכון בתוך נקודת הכינון של הנפח\\סט מידע."
 
 #: freeadmin/navtree.py:315
 #, python-format
@@ -706,7 +779,7 @@ msgstr "NCIS פיזי בתוך LAGG"
 msgid "The network '%s' is not valid, CIDR expected."
 msgstr "הרשת '%S' לא חוקית, CIDR מצופה."
 
-#: network/models.py:42 services/models.py:1072
+#: network/models.py:42 services/models.py:1074
 #: templates/system/system_info.html:4
 msgid "Hostname"
 msgstr "שם המחשב"
@@ -820,8 +893,8 @@ msgstr "ממשק פיזי"
 msgid "VLAN Tag"
 msgstr "תווית VLAN"
 
-#: network/models.py:185 network/models.py:282 services/models.py:76
-#: services/models.py:763 storage/models.py:94
+#: network/models.py:185 network/models.py:282 services/models.py:74
+#: services/models.py:766 storage/models.py:95
 #: templates/network/staticroute.html:7 templates/network/vlan.html:8
 msgid "Description"
 msgstr "תיאור"
@@ -891,384 +964,388 @@ msgid "View All Link Aggregations"
 msgstr "ראה את כל הקישורים המצורפים"
 
 #: network/views.py:180
-#, python-format
-msgid "%s successfully added"
-msgstr "%s הוסף בהצלחה"
+#, fuzzy
+msgid "LAGG successfully added"
+msgstr "הוסף בהצלחה"
 
 #: services/forms.py:70
-msgid "N/A"
-msgstr "לא זמין"
-
-#: services/forms.py:79
 msgid "This field is required for \"Enable home directories browsing\"."
 msgstr "השדה נדרש בשביל \"הפעל סיור בתיקיות הבית\"."
 
-#: services/forms.py:82
+#: services/forms.py:73
 msgid "This field is required for \"Home directories\"."
 msgstr "השדה נדרש ל\"תיקיות הבית\"."
 
-#: services/forms.py:99
+#: services/forms.py:90
 msgid "The AFP service failed to reload."
 msgstr "שירות הAFP נכשל להיטען מחדש"
 
-#: services/forms.py:108
+#: services/forms.py:99
 msgid "The NFS service failed to reload."
 msgstr "שירות הNFS נכשל להיטען מחדש"
 
-#: services/forms.py:112
+#: services/forms.py:103
 msgid "File Permission"
 msgstr "רשויות קבצים"
 
-#: services/forms.py:113
+#: services/forms.py:104
 msgid "Directory Permission"
 msgstr "רשויות לתיקיות"
 
-#: services/forms.py:138
+#: services/forms.py:129
 msgid "This value must be between 0 and 65535, inclusive."
 msgstr "הערך חייב להיות בין 0 ל 65535, כולל"
 
-#: services/forms.py:144 services/forms.py:162
+#: services/forms.py:135 services/forms.py:153
 msgid "This value must be between 0 and 10000, inclusive."
 msgstr "הערך חייב להיות בין 0 ל10000, כולל."
 
-#: services/forms.py:150 services/forms.py:156
+#: services/forms.py:141 services/forms.py:147
 msgid "This value must be between 0 and 1000, inclusive."
 msgstr "הערך חייב להיות בין 0 ל1000, כולל."
 
-#: services/forms.py:168
+#: services/forms.py:159
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
 msgstr "הערך חייב להיות בין 1024 ל 65535, כולל. 0 לברירת מחדל"
 
-#: services/forms.py:174
+#: services/forms.py:165
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
 msgstr "הערך חייב להיות בין 1024 ל 65535, כולל. 0 לברירת מחדל."
 
-#: services/forms.py:193
+#: services/forms.py:184
 msgid "This field is required for anonymous login"
 msgstr "השדה הזה נדרש לצורך כניסה אנונימית"
 
-#: services/forms.py:200
+#: services/forms.py:191
 msgid "The ftp service failed to start."
 msgstr "שירות הftp נכשל להיטען מחדש."
 
-#: services/forms.py:209
+#: services/forms.py:200
 msgid "The tftp service failed to reload."
 msgstr "שירות הtftp נכשל להיטען מחדש."
 
-#: services/forms.py:216
+#: services/forms.py:207
 msgid "The SSH service failed to reload."
 msgstr "שירות הSSH נכשל להיטען מחדש."
 
-#: services/forms.py:225 services/forms.py:253
+#: services/forms.py:216 services/forms.py:241
 msgid "The Rsync service failed to reload."
 msgstr "שרות הRsync נכשל להיטען מחדש."
 
-#: services/forms.py:238
+#: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
 msgstr "השם אינו יכול להכיל חוצץ או תומך סוגר ריבוע."
 
-#: services/forms.py:262
+#: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
 msgstr "השרות DynamicDNS נכשל להיטען מחדש."
 
-#: services/forms.py:271
+#: services/forms.py:259
 msgid "The SNMP service failed to reload."
 msgstr "שרות ה SNMP נכשל להיטען מחדש."
 
-#: services/forms.py:285
+#: services/forms.py:273
 msgid "The activedirectory service failed to reload."
 msgstr "שרות התיקייה הפעילה נכשל להיטען מחדש."
 
-#: services/forms.py:296
+#: services/forms.py:284
 msgid "The ldap service failed to reload."
 msgstr "שרות ה ldap נכשל להיטען מחדש."
 
-#: services/forms.py:302 services/models.py:529
+#: services/forms.py:290 services/models.py:526
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
 msgstr "סוד"
 
-#: services/forms.py:303 services/models.py:530
+#: services/forms.py:291 services/models.py:527
 msgid "Target side secret."
 msgstr "צד המטרה סודי."
 
-#: services/forms.py:304
+#: services/forms.py:292
 msgid "Secret (Confirm)"
 msgstr "סוד (אמות)"
 
-#: services/forms.py:306 services/forms.py:314
+#: services/forms.py:294 services/forms.py:302
 msgid "Enter the same secret above for verification."
 msgstr "הקש את אותו סוד כמו למעלה לצורך אימות"
 
-#: services/forms.py:307
+#: services/forms.py:295
 msgid "Initiator Secret"
 msgstr "יזם סודי"
 
-#: services/forms.py:309 services/models.py:536 services/models.py:541
+#: services/forms.py:297 services/models.py:533 services/models.py:538
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "צד היזם סודי. (לצורך אימות CHAP הדדי) "
 
-#: services/forms.py:312
+#: services/forms.py:300
 msgid "Initiator Secret (Confirm)"
 msgstr "יזם סודי (אמות)"
 
-#: services/forms.py:321
+#: services/forms.py:309
 msgid "Secret does not match"
 msgstr "סוד אינו תואם"
 
-#: services/forms.py:336 services/forms.py:337
+#: services/forms.py:324 services/forms.py:325
 msgid "The peer secret is required if you set a peer user."
 msgstr "סוד עמיתנדרש אם  אתה קובע משתמש עמית."
 
-#: services/forms.py:340
+#: services/forms.py:328
 msgid "The peer secret cannot be the same as user secret."
 msgstr "סוד העמית לא יכול להיות אותו סוד כמו סוד המשתמש."
 
-#: services/forms.py:356 services/forms.py:393 services/forms.py:507
-#: services/forms.py:537 services/forms.py:584 services/forms.py:683
-#: services/forms.py:705 services/forms.py:726 services/forms.py:758
+#: services/forms.py:344 services/forms.py:381 services/forms.py:495
+#: services/forms.py:525 services/forms.py:572 services/forms.py:675
+#: services/forms.py:697 services/forms.py:718 services/forms.py:763
 msgid "The iSCSI service failed to reload."
 msgstr "שרות ה iSCSI נכשל להיטען מחדש."
 
-#: services/forms.py:385
+#: services/forms.py:373
 msgid "LUN already exists in the same target."
 msgstr "LUN כבר קיים עם אותה מטרה."
 
-#: services/forms.py:396 services/models.py:354
+#: services/forms.py:384 services/models.py:352
 msgid "Controller Auth Group"
 msgstr "קבוצת האימות של הבקר"
 
-#: services/forms.py:397 services/models.py:355
+#: services/forms.py:385 services/models.py:353
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
 msgstr ""
 "הistgcontrol יכול לגשת למטרות עם המשתמש הנכון וסוד בקבוצת זיהוי הספציפית."
 
-#: services/forms.py:398 services/models.py:248
+#: services/forms.py:386 services/models.py:246
 msgid "Discovery Auth Group"
 msgstr "גילוי קבוצת אימות"
 
-#: services/forms.py:425
+#: services/forms.py:413
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr "הערך הזה צריך להיות בין %(start)d ל-%(end)d, כולל."
 
-#: services/forms.py:433
+#: services/forms.py:421
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr "השדה הזה נחוץ אם שיטת הגילוי מוגדרת ל-CHAP או CHAP הדדי"
 
-#: services/forms.py:516 services/forms.py:546
+#: services/forms.py:504 services/forms.py:534
 msgid "You need to specify a filepath, not a directory."
 msgstr "אתה צריך להגדיר נתיב קובץ, לא תיקייה."
 
-#: services/forms.py:520 services/forms.py:550
+#: services/forms.py:508 services/forms.py:538
 msgid "You need to specify a file inside your volume/dataset."
 msgstr "אתה צריך להגדיר קובץ בתוך הנפח\\סט מידע."
 
-#: services/forms.py:524 services/forms.py:554
+#: services/forms.py:512 services/forms.py:542
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
 msgstr "הדרך להקף חייב לשכון בתוך נקודת הכינון של הנפח\\סט מידע."
 
-#: services/forms.py:568
+#: services/forms.py:556
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr "הערך יכול להיות בבייטים, או יכול להיות קבוע על KB, MB, GB, TB."
 
-#: services/forms.py:589
+#: services/forms.py:577
 msgid "Disk device"
 msgstr "התקן דיסק"
 
-#: services/forms.py:699
+#: services/forms.py:691
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "השער מזהה קבוצתי לא יכול להיות גבוה מ-%d"
 
-#: services/forms.py:720
+#: services/forms.py:712
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
 msgstr "המזהה הקבותי שלך לא יכול להיות גבוה מ%d"
 
-#: services/forms.py:729
+#: services/forms.py:721
 msgid "Authentication Group number"
 msgstr "אימות מספר הקבוצה"
 
-#: services/forms.py:761
+#: services/forms.py:766
 msgid "Delete underlying file"
 msgstr "מחק קובץ מוסתר."
 
-#: services/models.py:42
+#: services/forms.py:788
+#, fuzzy, python-format
+msgid "The email %(email)s is not valid"
+msgid_plural "The following emails are not valid: %(email)s"
+msgstr[0] "המשתמש % לא חוקי."
+msgstr[1] "המשתמש % לא חוקי."
+
+#: services/models.py:40
 msgid "Service"
 msgstr "שירות"
 
-#: services/models.py:43
+#: services/models.py:41
 msgid "Name of Service, should be auto-generated at build time"
 msgstr "שם השירות, אמור להיווצר אוטומטית בזמן הבנייה"
 
-#: services/models.py:46
+#: services/models.py:44
 msgid "Enable Service"
 msgstr "אפשר שרות"
 
-#: services/models.py:49 services/models.py:50 services/nav.py:5
+#: services/models.py:47 services/models.py:48 services/nav.py:5
 #: templates/menubar.html:28 templates/services/index.html:3
 msgid "Services"
 msgstr "שירותים"
 
-#: services/models.py:62
+#: services/models.py:60
 msgid "Authentication Model"
 msgstr "מודל האימות"
 
-#: services/models.py:63
+#: services/models.py:61
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr "שימוש בתיקייה פעילה או אימות LDAP יחליף את האופציה הזאת"
 
-#: services/models.py:67
+#: services/models.py:65
 msgid "NetBIOS name"
 msgstr "שם NetBIOS"
 
-#: services/models.py:71
+#: services/models.py:69
 msgid "Workgroup"
 msgstr "קבוצת עבודה"
 
-#: services/models.py:72
+#: services/models.py:70
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr "קבוצת העבודה שהשרת יופיע בו מתי שהוא נשאל ע\"י הלקוח(עד 15 תווים)"
 
-#: services/models.py:78
+#: services/models.py:76
 msgid "Server description. This can usually be left blank."
 msgstr "תיאור השרת, בדרך כלל יכול להישאר ריק."
 
-#: services/models.py:84
+#: services/models.py:82
 msgid "DOS charset"
 msgstr "קידוד תווים DOS"
 
-#: services/models.py:90
+#: services/models.py:88
 msgid "UNIX charset"
 msgstr "קידוד תווים UNIX"
 
-#: services/models.py:96
+#: services/models.py:94
 msgid "Log level"
 msgstr "רמת יומן"
 
-#: services/models.py:99
+#: services/models.py:97
 msgid "Local Master"
 msgstr "אדון מקומי"
 
-#: services/models.py:101
+#: services/models.py:99
 msgid "Time Server for Domain"
 msgstr "זמן השרת בשביל דומיין"
 
-#: services/models.py:105 services/models.py:193
+#: services/models.py:104 services/models.py:191
 msgid "Guest account"
 msgstr "חשבון אורח"
 
-#: services/models.py:106 sharing/models.py:65
+#: services/models.py:105 services/models.py:192
+#, fuzzy
 msgid ""
-"Use this option to override the username ('ftp' by default) which will be "
+"Use this option to override the username ('nobody' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
 "privileges this user has will be available to any client connecting to the "
 "guest service. This user must exist in the password file, but does not "
-"require a valid login."
+"require a valid login. The user root can not be used as guest account."
 msgstr ""
 "השתמש באפשרות הזאת על מנת לעקוף את המשתמש('ftp' בברירת מחדל) שישמש לצורך "
 "גישה לשרותים שמצוינים בתור אורח.איזה זכויות יתר שיש למשתמש הזה יהיו לכל לקוח "
 "שמתחבר לשרות אורח .המשתמש חייב להתקיים בתוך קובץ סיסמה, אבל  לא מצליח כניסה "
 "חוקית."
 
-#: services/models.py:109
+#: services/models.py:108
 msgid "Allow guest access"
 msgstr "אפשר גישת אורחים"
 
-#: services/models.py:111
+#: services/models.py:110
 msgid "Only allow guest access"
 msgstr "אפשר גישת אורחים בלבד"
 
-#: services/models.py:114 services/models.py:846
+#: services/models.py:113 services/models.py:848
 msgid "File mask"
 msgstr "מסכת קובץ"
 
-#: services/models.py:116
+#: services/models.py:115
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
 "השתמש באוצפיה זאתי על מנת לעקוף את מסכת יצירת קבצים (0666 בברירת מחדל)."
 
-#: services/models.py:120 services/models.py:852
+#: services/models.py:119 services/models.py:854
 msgid "Directory mask"
 msgstr "מסכת תיקייה"
 
-#: services/models.py:122
+#: services/models.py:121
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr "השתמש באופציה זאתי על מנת לעקוף את מסכת יצירת תיקיה (0777 בברירת מחדל)"
 
-#: services/models.py:125
+#: services/models.py:124
 msgid "Large RW support"
 msgstr "תמיכה בRW גדול"
 
-#: services/models.py:127
+#: services/models.py:126
 msgid "Send files with sendfile(2)"
 msgstr "של קבצים עם Sendfile (2)"
 
-#: services/models.py:129
+#: services/models.py:128
 msgid "EA Support"
 msgstr "תמיכה בEA"
 
-#: services/models.py:131
+#: services/models.py:130
 msgid "Support DOS File Attributes"
 msgstr "תמיכה בתארי קבצי DOS "
 
-#: services/models.py:133
+#: services/models.py:132
 msgid "Allow Empty Password"
 msgstr "אפשר סיסמה ריקה"
 
-#: services/models.py:136 services/models.py:691 services/models.py:725
-#: services/models.py:757 services/models.py:904 services/models.py:1160
-#: services/models.py:1224
+#: services/models.py:135 services/models.py:694 services/models.py:728
+#: services/models.py:760 services/models.py:906 services/models.py:1162
+#: services/models.py:1225
 msgid "Auxiliary parameters"
 msgstr "מאפיני עזר"
 
-#: services/models.py:138
+#: services/models.py:137
 msgid "These parameters are added to [Global] section of smb.conf"
 msgstr "המאפיינים האלו מוספים לחלק (עולמי) של smb.conf"
 
-#: services/models.py:141
+#: services/models.py:140
 msgid "Enable home directories"
 msgstr "אפשר תיקיות בית"
 
-#: services/models.py:142
+#: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
 msgstr "זה מאפשר\\מנטרל תיקיות בית למשתמש samba"
 
-#: services/models.py:145
+#: services/models.py:144
 msgid "Enable home directories browsing"
 msgstr "אפשר דפדוף בתיקיות בית"
 
-#: services/models.py:146
+#: services/models.py:145
 msgid "This enables\\disables home directories browsing for samba user."
 msgstr "זה מאפשר\\מנטרל דפדוף בתיקיות בית למשתמשי samba"
 
-#: services/models.py:150
+#: services/models.py:149
 msgid "Home directories"
 msgstr "תיקיות בית"
 
-#: services/models.py:156
+#: services/models.py:153
 msgid "Enable AIO"
 msgstr "אפשר AIO"
 
-#: services/models.py:157
+#: services/models.py:154
 msgid "This enables\\disables AIO support."
 msgstr "זה מאפשר\\מנטרל תמיכה בAIO"
 
-#: services/models.py:161
+#: services/models.py:158
 msgid "Minimal AIO read size"
 msgstr "גודל קריאה AIO מינימלי"
 
-#: services/models.py:162
+#: services/models.py:159
 msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
@@ -1276,11 +1353,11 @@ msgstr ""
 "samba יקרא באופן לא סינכרוני אם הבקשה גדולה יותר מהערך. גודל קריאה ברירת "
 "המחדל הוא 1."
 
-#: services/models.py:167
+#: services/models.py:164
 msgid "Minimal AIO write size"
 msgstr "גודל כתיבה AIO מינימלי"
 
-#: services/models.py:168
+#: services/models.py:165
 msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
@@ -1288,69 +1365,56 @@ msgstr ""
 "samba יכתוב באופן לא סינכרוני אם הבקשה גדולה יותר מהערך. גודל קריאה ברירת "
 "המחדל הוא 1."
 
-#: services/models.py:173 services/models.py:174
+#: services/models.py:170 services/models.py:171
 #: templates/services/index.html:29
 msgid "CIFS"
 msgstr "CIFS"
 
-#: services/models.py:183
+#: services/models.py:180
 msgid "Server Name"
 msgstr "שם השרת"
 
-#: services/models.py:184
+#: services/models.py:181
 msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
 msgstr "שם השרת. אם השדה הזה יושאר ריק שם השרת יהיה ברירת המחדל."
 
-#: services/models.py:187
+#: services/models.py:184
 msgid "Guest Access"
 msgstr "גישת אורחים"
 
-#: services/models.py:188
+#: services/models.py:185
 msgid "Allows guest access to all apple shares on this box."
 msgstr "אפשר גישת אורחים לכל שיתופי אפל(apple) במכונה הזאת."
 
-#: services/models.py:194
-msgid ""
-"Use this option to override the username ('www' by default) which will be "
-"used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to the "
-"guest service. This user must exist in the password file, but does not "
-"require a valid login."
-msgstr ""
-"השתמש באופציה זאתי על מנת לעקוף את שם המשתמש ('www' בברירת המחדל) שישומשו "
-"לגישה לשרותים שמצוינים בתור אורח.איזה זכיות יתר שיש למשתמש הזה יהיו זמינים "
-"לכל לקוח שמתחבר לשרות אורח.המתמש הזה חייב להתקיים בתור קובץ סיסמה, אבל לא "
-"מצריך כניסה חוקית."
-
-#: services/models.py:197
+#: services/models.py:195
 msgid "Local Access"
 msgstr "גישה מקומית"
 
-#: services/models.py:198
+#: services/models.py:196
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
 "אפשר למשתמשים עם חשבונות מקומיים לגשת לשיתופי אפל(apple) על המכונה הזאת."
 
-#: services/models.py:201
+#: services/models.py:199
 msgid "Enable DDP"
 msgstr "אפשר DDP"
 
-#: services/models.py:202
+#: services/models.py:200
 msgid "Enables DDP support for low-level appletalk access."
 msgstr "אפשר תמיכה בDDP לרמה נמוכה בגישת appletalk"
 
-#: services/models.py:206 services/models.py:207
+#: services/models.py:204 services/models.py:205
 #: templates/services/index.html:7
 msgid "AFP"
 msgstr "AFP"
 
-#: services/models.py:216
+#: services/models.py:214
 msgid "Number of servers"
 msgstr "מספר שרתים"
 
-#: services/models.py:217
+#: services/models.py:215
 msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
@@ -1358,26 +1422,26 @@ msgstr ""
 "ציין כמה שרתים לייצר. צרכים להיות מספיק כדי לטפל ברמת המקסימום של בוזמניות "
 "מהלקוחות של השרת, בדרך כלל ארבע עד שש."
 
-#: services/models.py:221
+#: services/models.py:219
 msgid "Asynchronous mode"
 msgstr "מצב לא סינכרוני"
 
-#: services/models.py:222
+#: services/models.py:220
 msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr "אפשר מצב לא סינכרוני, שיעזור לביצועים ברשתות שגבוהות ממהירות מגיגהביט."
 
-#: services/models.py:227 services/models.py:228
+#: services/models.py:225 services/models.py:226
 #: templates/services/index.html:75
 msgid "NFS"
 msgstr "NFS"
 
-#: services/models.py:237
+#: services/models.py:235
 msgid "Base Name"
 msgstr "שם בסיס"
 
-#: services/models.py:238
+#: services/models.py:236
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
@@ -1385,47 +1449,47 @@ msgstr ""
 "שם הבסיס(e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721) שיסופחו "
 "לשם המטרה שלא מתחיל עם 'iqn'"
 
-#: services/models.py:244
+#: services/models.py:242
 msgid "Discovery Auth Method"
 msgstr "שיטת אימות זיהוי"
 
-#: services/models.py:255
+#: services/models.py:253
 msgid "I/O Timeout"
 msgstr "זמן מקסימלי לכניסה\\יציאה(Timeout)"
 
-#: services/models.py:256
+#: services/models.py:254
 msgid "I/O timeout in seconds (30 by default)."
 msgstr "זמן מקסימלי(Timeout) לכניסה\\יציאה בשניות (30 בברירת המחדל)"
 
-#: services/models.py:261
+#: services/models.py:259
 msgid "NOPIN Interval"
 msgstr "פער הNOPIN"
 
-#: services/models.py:262
+#: services/models.py:260
 msgid "NOPIN sending interval in seconds (20 by default)."
 msgstr "פערים בשליחת הNOPIN בשניות (20 בברירת המחדל)"
 
-#: services/models.py:267
+#: services/models.py:265
 msgid "Max. sessions"
 msgstr "רמה מקסימלית סשנים(sessions)"
 
-#: services/models.py:268
+#: services/models.py:266
 msgid "Maximum number of sessions holding at same time (16 by default)."
 msgstr "רמה מקסימלית של סשנים(sessions) מחזיקים בו זמנית (16 בברית המחדל)"
 
-#: services/models.py:273
+#: services/models.py:271
 msgid "Max. connections"
 msgstr "כמות חיבורים מקסימלית"
 
-#: services/models.py:274
+#: services/models.py:272
 msgid "Maximum number of connections in each session (8 by default)."
 msgstr "כמות מקסימלית של חיבורים בכל סשן(sessions)   (י8 בברירת המחדל)"
 
-#: services/models.py:279
+#: services/models.py:277
 msgid "Max. pre-send R2T"
 msgstr "מקסימום R2T לפני שליחה"
 
-#: services/models.py:280
+#: services/models.py:278
 msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
@@ -1433,120 +1497,120 @@ msgstr ""
 "מקסימום R2T לפני שליחה בכל חיבור (32 ברירת המחדל). המספר האמיתי מוגבל ע\"י "
 "עומק התור של המטרה."
 
-#: services/models.py:285
+#: services/models.py:283
 msgid "MaxOutstandingR2T"
 msgstr "מספר מקסימלי של R2T יוצאי מן הכלל"
 
-#: services/models.py:286
+#: services/models.py:284
 msgid "iSCSI initial parameter (16 by default)."
 msgstr "מאפיינים תחילתיים של iSCSI (16 בברירת המחדל)"
 
-#: services/models.py:291
+#: services/models.py:289
 msgid "First burst length"
 msgstr "אורך התפרצות ראשונה"
 
-#: services/models.py:292
+#: services/models.py:290
 msgid "iSCSI initial parameter (65536 by default)."
 msgstr "מאפיינים תחילתיים של iSCSI (י 65536 בברירת המחדל)"
 
-#: services/models.py:297
+#: services/models.py:295
 msgid "Max burst length"
 msgstr "אורך התפרצות מקסימלית"
 
-#: services/models.py:298 services/models.py:304
+#: services/models.py:296 services/models.py:302
 msgid "iSCSI initial parameter (262144 by default)."
 msgstr "מאפיינים תחילתיים של iSCSI (י 262144 בברירת המחדל)"
 
-#: services/models.py:303
+#: services/models.py:301
 msgid "Max receive data segment length"
 msgstr "אורך מקסימלי של חלק מידע מתקבל"
 
-#: services/models.py:309
+#: services/models.py:307
 msgid "DefaultTime2Wait"
 msgstr "זמן לחכות בברירת המחדל"
 
-#: services/models.py:310
+#: services/models.py:308
 msgid "iSCSI initial parameter (2 by default)."
 msgstr "מאפיינים תחילתיים של iSCSI (י2 בברירת המחדל)."
 
-#: services/models.py:315
+#: services/models.py:313
 msgid "DefaultTime2Retain"
 msgstr "זמן להחזיק בברירת המחדל"
 
-#: services/models.py:316
+#: services/models.py:314
 msgid "iSCSI initial parameter (60 by default)."
 msgstr "מאפיינים תחילתיים של iSCSI (י60 בברירת המחדל)."
 
-#: services/models.py:321
+#: services/models.py:319
 msgid "Enable LUC"
 msgstr "אפשר LUC"
 
-#: services/models.py:325
+#: services/models.py:323
 msgid "Controller IP address"
 msgstr "כתובת IP של הבקר"
 
-#: services/models.py:326
+#: services/models.py:324
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
 msgstr "יחידה לוגית של כתובת IP של הבקר(127.0.0.1(localhost) בברית המחדל)"
 
-#: services/models.py:332
+#: services/models.py:330
 msgid "Controller TCP port"
 msgstr "פורט TCP של הבקר"
 
-#: services/models.py:333
+#: services/models.py:331
 msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "יחידה לוגית של פורט TCP של הבקר (3261 בברית המחדל)"
 
-#: services/models.py:339
+#: services/models.py:337
 msgid "Controller Authorized netmask"
 msgstr "מסכת רשת מאושרת של הבקר"
 
-#: services/models.py:341
+#: services/models.py:339
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
 msgstr "יחידה לוגית של מסכת הרשת המאושרת של הבקר (255.255.255.0 בברירת המחדל)"
 
-#: services/models.py:348
+#: services/models.py:346
 msgid "Controller Auth Method"
 msgstr "שיטת אימות של הבקר"
 
-#: services/models.py:349
+#: services/models.py:347
 msgid "The method can be accepted in the controller."
 msgstr "השיטה יכולה להתקבל בבקר"
 
-#: services/models.py:361 services/models.py:362
+#: services/models.py:359 services/models.py:360
 #: templates/services/iscsi.html:3
 msgid "Target Global Configuration"
 msgstr "הגדרת מטרה עולמית"
 
-#: services/models.py:373
+#: services/models.py:371
 msgid "Extent Name"
 msgstr "שם ההקף"
 
-#: services/models.py:374
+#: services/models.py:372
 msgid "String identifier of the extent."
 msgstr "מזהה החוט של ההקף."
 
-#: services/models.py:378
+#: services/models.py:376
 msgid "Extent Type"
 msgstr "סוג ההקף"
 
-#: services/models.py:379
+#: services/models.py:377
 msgid "Type used as extent."
 msgstr "סוג שמשמש כהקף"
 
-#: services/models.py:384
+#: services/models.py:382
 msgid "Path to the extent"
 msgstr "הדרך להקף"
 
-#: services/models.py:385
+#: services/models.py:383
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
 msgstr "דרך לקובץ (דוג' /mnt/sharename/extent/extent0) משמש כהקף."
 
-#: services/models.py:390
+#: services/models.py:388
 msgid "Extent size"
 msgstr "גודל הקף"
 
-#: services/models.py:391
+#: services/models.py:389
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
@@ -1554,8 +1618,8 @@ msgstr ""
 "גודל של ההקף, 0 משמעותו אוטומטי, מספר של בייטים גולמיים, או סיומת של KB, MB, "
 "TB לנוחיות."
 
-#: services/models.py:396 services/models.py:446 services/models.py:492
-#: services/models.py:1180 sharing/models.py:45 sharing/models.py:224
+#: services/models.py:394 services/models.py:443 services/models.py:489
+#: services/models.py:1182 sharing/models.py:45 sharing/models.py:223
 #: templates/services/iscsi_authini.html:8
 #: templates/services/iscsi_portals.html:7 templates/services/rsyncmod.html:6
 #: templates/sharing/apple.html:14 templates/sharing/unix.html:14
@@ -1563,24 +1627,24 @@ msgstr ""
 msgid "Comment"
 msgstr "הערה"
 
-#: services/models.py:397 services/models.py:447 services/models.py:493
+#: services/models.py:395 services/models.py:444 services/models.py:490
 msgid "You may enter a description here for your reference."
 msgstr "תוכל להקיש כאן את התיאור לצורך התיחסות שלך."
 
-#: services/models.py:400 services/models.py:644
+#: services/models.py:398 services/models.py:647
 #: templates/services/iscsi_assoctargets.html:6
 msgid "Extent"
 msgstr "הקף"
 
-#: services/models.py:435 services/models.py:585
+#: services/models.py:432 services/models.py:588
 msgid "Portal Group ID"
 msgstr "מזהה שער קבוצתי"
 
-#: services/models.py:440 services/models.py:450
+#: services/models.py:437 services/models.py:447
 msgid "Portal"
 msgstr "שער"
 
-#: services/models.py:441
+#: services/models.py:438
 msgid ""
 "The portal takes the form of 'address:port'. for example '192.168.1.1:3260' "
 "for IPv4, '[2001:db8:1:1::1]:3260' for IPv6. the port 3260 is standard iSCSI "
@@ -1592,21 +1656,21 @@ msgstr ""
 "IP (כתובת בתווים חופשייה), השתמש ב  '0.0.0.0:3260' and/or '[::]:3260'. אל "
 "תערבב תויים חופשיים ו IP אחרים עם אותה משפחת כתובות."
 
-#: services/models.py:479 templates/services/iscsi_authini.html:6
+#: services/models.py:476 templates/services/iscsi_authini.html:6
 msgid "Initiators"
 msgstr "יזמים"
 
-#: services/models.py:481
+#: services/models.py:478
 msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr "יזמים שמורשים לגשת למטרות iSCSI. זה לוקח שם או 'ALL' לכל היזמים."
 
-#: services/models.py:485
+#: services/models.py:482
 msgid "Authorized network"
 msgstr "רשת מורשית"
 
-#: services/models.py:487
+#: services/models.py:484
 msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
@@ -1614,94 +1678,102 @@ msgstr ""
 "רשת מורשה לגשת למטרות iSCSI. זה לוקח IP או CIDR כתובות או 'ALL' לכל כתובות ."
 "IP"
 
-#: services/models.py:496
+#: services/models.py:493
 msgid "Initiator"
 msgstr "יזם"
 
-#: services/models.py:525
+#: services/models.py:522
 msgid "Target side user name. It is usually the initiator name by default."
 msgstr "שם המשתמש של המטרה הצדדית. זה בדרך שם היזם בברירת המחדל."
 
-#: services/models.py:535
+#: services/models.py:532
 msgid "Peer User"
 msgstr "משתמש עמית"
 
-#: services/models.py:540 templates/services/iscsi_auth.html:9
+#: services/models.py:537 templates/services/iscsi_auth.html:9
 msgid "Peer Secret"
 msgstr "סוד העמית"
 
-#: services/models.py:544
+#: services/models.py:541
 msgid "Authorized Access"
 msgstr "גישה מאושרת"
 
-#: services/models.py:545
+#: services/models.py:542
 msgid "Authorized Accesses"
 msgstr "גישות מאושרות"
 
-#: services/models.py:560
+#: services/models.py:557
 msgid "Target Name"
 msgstr "שם מטרה"
 
-#: services/models.py:561
+#: services/models.py:558
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
 msgstr "שם הבסיס יסופח באופן אוטומטי מתי שהשם לא מתחיל עם 'Iqn'."
 
-#: services/models.py:568
+#: services/models.py:565
 msgid "Target Alias"
 msgstr "כינוי למטרה"
 
-#: services/models.py:569
+#: services/models.py:566
 msgid "Optional user-friendly string of the target."
 msgstr "שם משתמש אופציונלי לשם משתמש-חבר חוט של המטרה."
 
-#: services/models.py:574 storage/models.py:73
+#: services/models.py:569 storage/views.py:157
+msgid "Serial"
+msgstr ""
+
+#: services/models.py:572
+msgid "Serial number for the logical unit"
+msgstr ""
+
+#: services/models.py:577 storage/models.py:74 system/models.py:498
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7
 msgid "Type"
 msgstr "סוג"
 
-#: services/models.py:575
+#: services/models.py:578
 msgid "Logical Unit Type mapped to LUN."
 msgstr "יחידה לוגית שממופת לLUN."
 
-#: services/models.py:581
+#: services/models.py:584
 msgid "Target Flags"
 msgstr "דגלי מטרה"
 
-#: services/models.py:589
+#: services/models.py:592
 msgid "Initiator Group ID"
 msgstr "מזהה קבוצת יזם"
 
-#: services/models.py:595 services/models.py:607
+#: services/models.py:598 services/models.py:610
 msgid "Auth Method"
 msgstr "שיטת אימות"
 
-#: services/models.py:596 services/models.py:608
+#: services/models.py:599 services/models.py:611
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
 msgstr "השיטה יכולה להתקבל ע\"י המטרה. אוטומטי אומר בלי כלום ואימות."
 
-#: services/models.py:600
+#: services/models.py:603
 msgid "Authentication Group ID"
 msgstr "מזהה קבוצת אימות"
 
-#: services/models.py:613
+#: services/models.py:616
 msgid "Queue Depth"
 msgstr "עומק התור"
 
-#: services/models.py:614
+#: services/models.py:617
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
 msgstr ""
 "0=מנוטרל, 1-255 =מאפשר פקודת תור עם העומק המצוין. עומק התור המומלץ הוא 32."
 
-#: services/models.py:619
+#: services/models.py:622
 msgid "Logical Block Size"
 msgstr "גודל גוש לוגי"
 
-#: services/models.py:620
+#: services/models.py:623
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
@@ -1709,7 +1781,7 @@ msgstr ""
 "אתה יכול לציין את גודל הגוש הלוגי(512 בברירת המחדל). האורך המומלץ בשביל "
 "תאימות הוא 512."
 
-#: services/models.py:623 services/models.py:638
+#: services/models.py:626 services/models.py:641
 #: templates/services/iscsi_assoctargets.html:5
 #: templates/services/iscsi_dextents.html:5
 #: templates/services/iscsi_extents.html:5
@@ -1717,27 +1789,27 @@ msgstr ""
 msgid "Target"
 msgstr "מטרה"
 
-#: services/models.py:639
+#: services/models.py:642
 msgid "Target this extent belongs to"
 msgstr "מטרת ההקף הזאת שייכת ל-"
 
-#: services/models.py:647
+#: services/models.py:650
 msgid "Target / Extent"
 msgstr "מטרה \\ הקף"
 
-#: services/models.py:648
+#: services/models.py:651
 msgid "Targets / Extents"
 msgstr "מטרות / הקפים"
 
-#: services/models.py:663
+#: services/models.py:666
 msgid "Provider"
 msgstr "ספק"
 
-#: services/models.py:667
+#: services/models.py:670
 msgid "Domain name"
 msgstr "שם הדומיין"
 
-#: services/models.py:669
+#: services/models.py:672
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
@@ -1745,98 +1817,98 @@ msgstr ""
 "שם פונדקאי נרדף. האוציה הזאת יכולה להופיע מספר פעמים, לכל דומיין שיש את אותו "
 "IP. השתמש ברווח כדי להפריד בשמות נרדפים מרובים."
 
-#: services/models.py:681
+#: services/models.py:684
 msgid "Update period"
 msgstr "זמן עדכון"
 
-#: services/models.py:683
+#: services/models.py:686
 msgid "Time in milliseconds"
 msgstr "זמן במילי שניות"
 
-#: services/models.py:687
+#: services/models.py:690
 msgid "Forced update period"
 msgstr "כפה זמן עידכון"
 
-#: services/models.py:693 services/models.py:727 services/models.py:759
+#: services/models.py:696 services/models.py:730 services/models.py:762
 msgid "These parameters will be added to global settings in inadyn.conf."
 msgstr "המאיינים האלו יוספו למאפיינים הגלובליים ב- inadyn.conf."
 
-#: services/models.py:697 services/models.py:698
+#: services/models.py:700 services/models.py:701
 #: templates/services/index.html:40
 msgid "Dynamic DNS"
 msgstr "DNS דינאמי"
 
-#: services/models.py:707
+#: services/models.py:710
 msgid "Location"
 msgstr "מיקום"
 
-#: services/models.py:709
+#: services/models.py:712
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr "מידע מיקום, לדוג'.מיקום פיזי של המערכת: על רצפת הבניין, חדר XYZZY."
 
-#: services/models.py:713
+#: services/models.py:716
 msgid "Contact"
 msgstr "איש קשר"
 
-#: services/models.py:715
+#: services/models.py:718
 msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
 "מידע איש קשר, לדוג' שם או אימייל שאחראי למערכת הזאת:'admin@email.address."
 
-#: services/models.py:719
+#: services/models.py:722
 msgid "Community"
 msgstr "קהילה"
 
-#: services/models.py:720
+#: services/models.py:723
 msgid "In most cases, 'public' is used here."
 msgstr "ברוב המקרים, 'public' משומש כאן."
 
-#: services/models.py:723
+#: services/models.py:726
 msgid "Send SNMP Traps"
 msgstr "שלח מלכודות SNMP"
 
-#: services/models.py:731 services/models.py:732
+#: services/models.py:734 services/models.py:735
 #: templates/services/index.html:97
 msgid "SNMP"
 msgstr "SNMP"
 
-#: services/models.py:741 storage/models.py:90
+#: services/models.py:744 storage/models.py:91
 msgid "Identifier"
 msgstr "מזהה"
 
-#: services/models.py:742
+#: services/models.py:745
 msgid "This name is used to uniquely identify your UPS on this system."
 msgstr "השם הזה משמש לזהות באופן ייחודי את האל-פסק במערכת הזאת."
 
-#: services/models.py:746
+#: services/models.py:749
 msgid "Driver"
 msgstr "מנהל התקן"
 
-#: services/models.py:748
+#: services/models.py:751
 msgid "The driver used to communicate with your UPS."
 msgstr "המנהל התקן משמש לתקשר עם האל-פסק שלך."
 
-#: services/models.py:752 services/models.py:804 services/models.py:927
+#: services/models.py:755 services/models.py:807 services/models.py:929
 msgid "Port"
 msgstr "פורט"
 
-#: services/models.py:754
+#: services/models.py:757
 msgid "The serial or USB port where your UPS is connected."
 msgstr "הפרוט הסריאלי או פורט הUSB שבו האל-פסק מחובר."
 
-#: services/models.py:770
+#: services/models.py:773
 msgid "Shutdown mode"
 msgstr "מצב כיבוי"
 
-#: services/models.py:774
+#: services/models.py:777
 msgid "Shutdown timer"
 msgstr "שעון כיבוי"
 
-#: services/models.py:775
+#: services/models.py:778
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
@@ -1844,23 +1916,23 @@ msgstr ""
 "זמן בשניות עד שהכיבוי מתחיל. אם האל-פסקנדלק מחדש לפני שהזמן נגמר, הכיבוי "
 "יתבטל."
 
-#: services/models.py:778
+#: services/models.py:781
 msgid "Remote Monitor"
 msgstr "השגחה מרוחקת"
 
-#: services/models.py:780
+#: services/models.py:783
 msgid "Send Email Status Updates"
 msgstr "שלח עידכוני מצב באימייל."
 
-#: services/models.py:783 services/models.py:789
+#: services/models.py:786 services/models.py:792
 msgid "To email"
 msgstr "לשלוח אימייל"
 
-#: services/models.py:785
+#: services/models.py:788
 msgid "Destination email address. Separate email addresses by semi-colon."
 msgstr "כתובת אימייל של היעד,הפרד כתובות אמייל ע\"י נקודת פסיק."
 
-#: services/models.py:790
+#: services/models.py:793
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
@@ -1868,103 +1940,103 @@ msgstr ""
 "הנושא של האימייל. תוכל להשמש במאיינים הבאים: :<:<br /><ul><li>%d - Date</"
 "li><li>%h - Hostname</li></ul>"
 
-#: services/models.py:794 services/models.py:795
+#: services/models.py:797 services/models.py:798
 msgid "UPS"
 msgstr "אל-פסק"
 
-#: services/models.py:805
+#: services/models.py:808
 msgid "Port to bind FTP server."
 msgstr "פורט שמתקשר עם שרת הFTP"
 
-#: services/models.py:809
+#: services/models.py:812
 msgid "Clients"
 msgstr "לקוחות"
 
-#: services/models.py:810
+#: services/models.py:813
 msgid "Maximum number of simultaneous clients."
 msgstr "מספל מקסימלי שם לקוחות בו זמנית."
 
-#: services/models.py:814
+#: services/models.py:817
 msgid "Connections"
 msgstr "חיבורים"
 
-#: services/models.py:815
+#: services/models.py:818
 msgid "Maximum number of connections per IP address (0 = unlimited)."
 msgstr "מספר מקסימלי של חיבורים לכל כתובת IP (י 0= בלתי מוגבל)."
 
-#: services/models.py:819
+#: services/models.py:822
 msgid "Login Attempts"
 msgstr "ניסויי כניסה"
 
-#: services/models.py:820
+#: services/models.py:823
 msgid "Maximum number of allowed password attempts before disconnection."
 msgstr "מספר מקסימלי של ניסויי כניסה של סיסמה מותרים לפני נתוק."
 
-#: services/models.py:824
+#: services/models.py:827
 msgid "Timeout"
 msgstr "Timeout"
 
-#: services/models.py:825
+#: services/models.py:828
 msgid "Maximum idle time in seconds."
 msgstr "מקסימום זמן בלי לעשות כלום בשניות."
 
-#: services/models.py:828
+#: services/models.py:831
 msgid "Allow Root Login"
 msgstr "אפשר כניסת ROOT"
 
-#: services/models.py:830
+#: services/models.py:833
 msgid "Allow Anonymous Login"
 msgstr "אפשר כניסות אנונימיות"
 
-#: services/models.py:834 services/models.py:1184 sharing/models.py:50
-#: sharing/models.py:114 sharing/models.py:229 system/models.py:336
+#: services/models.py:836 services/models.py:1185 sharing/models.py:49
+#: sharing/models.py:113 sharing/models.py:227 system/models.py:337
 #: templates/services/iscsi_dextents.html:7
 #: templates/services/iscsi_extents.html:7 templates/services/rsyncmod.html:7
 #: templates/sharing/windows.html:15 templates/storage/volumes.html:71
 msgid "Path"
 msgstr "נתיב"
 
-#: services/models.py:836
+#: services/models.py:838
 msgid "Allow Local User Login"
 msgstr "אפשר כניסה של משתמש מקומי"
 
-#: services/models.py:839
+#: services/models.py:841
 msgid "Banner"
 msgstr "כרזה "
 
-#: services/models.py:841
+#: services/models.py:843
 msgid "Greeting banner displayed by FTP when a connection first comes in."
 msgstr "כרזת ברכה שתופיע מתי שחיבור נכס בפעם הראשונה בחיבור FTP."
 
-#: services/models.py:847 services/models.py:853
+#: services/models.py:849 services/models.py:855
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr "השתמש באפשרות הזאת כדי לעקוף את מסכת יצירת קובץ (077 בברירת המחדל)."
 
-#: services/models.py:856
+#: services/models.py:858
 msgid "Enable FXP"
 msgstr "אפשר FXP"
 
-#: services/models.py:858
+#: services/models.py:860
 msgid "Allow Transfer Resumption"
 msgstr "אפשר התחלה מחדש של ההעברה"
 
-#: services/models.py:860
+#: services/models.py:862
 msgid "Always Chroot"
 msgstr "אפשר Chroot"
 
-#: services/models.py:862
+#: services/models.py:864
 msgid "Require IDENT Authentication"
 msgstr "חייב אימות זהות"
 
-#: services/models.py:864
+#: services/models.py:866
 msgid "Require Reverse DNS for IP"
 msgstr "חייב DNS הפוך לIP"
 
-#: services/models.py:866
+#: services/models.py:868
 msgid "Masquerade address"
 msgstr "כתובת Masquerade"
 
-#: services/models.py:868
+#: services/models.py:870
 msgid ""
 "Causes the server to display the network information for the specified IP "
 "address to the client, on the assumption that that IP address or DNS host is "
@@ -1973,21 +2045,21 @@ msgstr ""
 "גורם לשרת להציג את מידע הרשת של הIP המצוין ללקוח. על ההשערה שכתובת הIP או "
 "פונדקאי הDNS משמש כשער NAT או מקדם פורטים בשביל השרת."
 
-#: services/models.py:872
+#: services/models.py:874
 msgid "Minimum passive port"
 msgstr "מינימום פורט פסיבי"
 
-#: services/models.py:873
+#: services/models.py:875
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
 msgstr "הפורט המינימלי ליעד בשביל  סגנון חיבוד PASV (י 0=השתמש כל פורט)."
 
-#: services/models.py:877
+#: services/models.py:879
 msgid "Maximum passive port"
 msgstr "מקסימום פורט פסיבי"
 
-#: services/models.py:878
+#: services/models.py:880
 msgid ""
 "The maximum port to allocate for PASV style data connections (0 = use any "
 "port). Passive ports restricts the range of ports from which the server will "
@@ -2005,56 +2077,56 @@ msgstr ""
 "בחוזקה שהטווח הנבחר יהיה גדול מספיק כדי להתמודד עם הרבה חיברוים פסיביים בו "
 "זמניים (לדוגמא, 49152-65534, רשום בטווח פורטים של IANA)."
 
-#: services/models.py:882
+#: services/models.py:884
 msgid "Local user upload bandwidth"
 msgstr "רוחב הפס להעלה של המשתמש המקומי"
 
-#: services/models.py:883
+#: services/models.py:885
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
 msgstr "רוחב פס להעלאה למשתמש המקומי בקילובייט/שנייה . אפס משמעותו אין סוף."
 
-#: services/models.py:887
+#: services/models.py:889
 msgid "Local user download bandwidth"
 msgstr "רוחב פס להורדה למשתמש המקומי"
 
-#: services/models.py:888
+#: services/models.py:890
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
 msgstr "רוחב פס להורדה למשתמש המקומי בקילובייט/שנייה. אפס משמעותו אין סוף."
 
-#: services/models.py:892
+#: services/models.py:894
 msgid "Anonymous user upload bandwidth"
 msgstr "רוחב פס להעלאה למשתמש אנונימי"
 
-#: services/models.py:893
+#: services/models.py:895
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
 msgstr "רוחב פס להעלאה למשתמש אנונימי בקילובייט/שנייה. אפס משתמעותו אין סוף."
 
-#: services/models.py:897
+#: services/models.py:899
 msgid "Anonymous user download bandwidth"
 msgstr "רוחב פס להעלאה למשתמש אנונימי"
 
-#: services/models.py:898
+#: services/models.py:900
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr "רוחב פס להורדה למתמש אנונימי בקילובייט/שנייה. אפס משמעותו אין סוף."
 
-#: services/models.py:901
+#: services/models.py:903
 msgid "Enable SSL/TLS"
 msgstr "אפשר SSL\\TLS"
 
-#: services/models.py:906
+#: services/models.py:908
 msgid "These parameters are added to proftpd.conf."
 msgstr "המאפיינים האלו מוספים לproftpd.conf."
 
-#: services/models.py:910 services/models.py:911
+#: services/models.py:912 services/models.py:913
 #: templates/services/index.html:53
 msgid "FTP"
 msgstr "FTP"
 
-#: services/models.py:920
+#: services/models.py:922
 msgid "Directory"
 msgstr "תיקייה"
 
-#: services/models.py:921
+#: services/models.py:923
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
@@ -2062,25 +2134,25 @@ msgstr ""
 "התיקייה מכילה קבצים שאתה רוצה לפרסם. הפונדקאי המרוחק אינו צריך לעבור עם "
 "התיקייה כחלק מהעברה."
 
-#: services/models.py:924
+#: services/models.py:926
 msgid "Allow New Files"
 msgstr "אפשר קבצים חדשים"
 
-#: services/models.py:928
+#: services/models.py:930
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr "הפורט להקשיב לו. הפורט ברירת מחדל להקשבה לTFTP מצוין ב/etc/services."
 
-#: services/models.py:934
+#: services/models.py:936
 msgid "Specifies the username which the service will run as."
 msgstr "מציין את השם משתמש שהשרות ירוץ כ."
 
-#: services/models.py:938
+#: services/models.py:940
 msgid "umask"
 msgstr "הורד מסכה(Unmask)"
 
-#: services/models.py:939
+#: services/models.py:941
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
@@ -2088,32 +2160,32 @@ msgstr ""
 "קבע הורדת מסכה(unmask) לקבצים חדשים שנוצרו בתוך הערך המצוין. ברירת המחדל היא "
 "022 (כולם יכולים לקרוא, אף אחד לא יכול לכתוב)."
 
-#: services/models.py:943 services/models.py:980 system/models.py:424
+#: services/models.py:945 services/models.py:982 system/models.py:425
 msgid "Extra options"
 msgstr "אפשרויות נוספות"
 
-#: services/models.py:945
+#: services/models.py:947
 msgid "Extra command line options (usually empty)."
 msgstr "שורות פקודות נוספות (בדרך כלל ריק)."
 
-#: services/models.py:949 services/models.py:950
-#: templates/services/index.html:119
+#: services/models.py:951 services/models.py:952
+#: templates/services/index.html:130
 msgid "TFTP"
 msgstr "TFTP"
 
-#: services/models.py:959 services/models.py:1155
+#: services/models.py:961 services/models.py:1157
 msgid "TCP Port"
 msgstr "פורט TCP"
 
-#: services/models.py:960
+#: services/models.py:962
 msgid "Alternate TCP port. Default is 22"
 msgstr "החלף את פורט הTCP (ברירת המחדל היא 22)"
 
-#: services/models.py:963
+#: services/models.py:965
 msgid "Login as Root with password"
 msgstr "התחבר בור root עם סיסמה"
 
-#: services/models.py:964
+#: services/models.py:966
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
@@ -2121,27 +2193,27 @@ msgstr ""
 "מנוטרל: root  יכול להתחבר רק באמצעות אימות מפתח ציבורי; מאופשר: root יכול "
 "מורשה להתחבר עם סיסמה"
 
-#: services/models.py:967
+#: services/models.py:969
 msgid "Allow Password Authentication"
 msgstr "אפשר אימות סיסמה"
 
-#: services/models.py:969
+#: services/models.py:971
 msgid "Allow TCP Port Forwarding"
 msgstr "אפשר קידום פורטי TCP"
 
-#: services/models.py:971
+#: services/models.py:973
 msgid "Compress Connections"
 msgstr "דחוס חיבורים"
 
-#: services/models.py:974
+#: services/models.py:976
 msgid "Host Private Key"
 msgstr "ארח מפתח אישי"
 
-#: services/models.py:976
+#: services/models.py:978
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
 msgstr "הדבק מפתח אישי RSA בפורמט PEM כאן."
 
-#: services/models.py:982
+#: services/models.py:984
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
@@ -2149,113 +2221,113 @@ msgstr ""
 "אפשרויות נוספות ל/etc/ssh/sshd_confi (בדרך כלל ריק). הערה, אפשרות נכונה "
 "שתוקש תמנע משירות הSSH מלהתחיל."
 
-#: services/models.py:1022 services/models.py:1023
-#: templates/services/index.html:108
+#: services/models.py:1024 services/models.py:1025
+#: templates/services/index.html:119
 msgid "SSH"
 msgstr "SSH"
 
-#: services/models.py:1032
+#: services/models.py:1034
 msgid "Domain Controller Name"
 msgstr "שם בקר הדומיין"
 
-#: services/models.py:1033
+#: services/models.py:1035
 msgid "AD or PDC name."
 msgstr "שם AD או PDC."
 
-#: services/models.py:1037
+#: services/models.py:1039
 msgid "Domain Name (DNS/Realm-Name)"
 msgstr "שם דומיין (שם תחום\\DNS)"
 
-#: services/models.py:1038
+#: services/models.py:1040
 msgid "Domain Name, eg example.com"
 msgstr "שם דומיין, לדוג' example.com"
 
-#: services/models.py:1042
+#: services/models.py:1044
 msgid "Host Name (NetBIOS-Name)"
 msgstr "שם מארח (שם ה-NetBIOS)"
 
-#: services/models.py:1043
+#: services/models.py:1045
 msgid "Host Name in old format, eg EXAMPLE"
 msgstr "שם המארח בפורמט ישן, דוג' EXAMPLE"
 
-#: services/models.py:1047
+#: services/models.py:1049
 msgid "Workgroup Name"
 msgstr "שם קבוצת עבודה (Workgroup)"
 
-#: services/models.py:1048
+#: services/models.py:1050
 msgid "Workgroup Name in old format, eg EXAMPLE"
 msgstr "שם קבוצת עבודה (Workgroup) בפורמט ישן, דוג' EXAMPLE"
 
-#: services/models.py:1052
+#: services/models.py:1054
 msgid "Administrator Name"
 msgstr "שם מנהל"
 
-#: services/models.py:1053
+#: services/models.py:1055
 msgid "Username of Domain Administrator Account"
 msgstr "שם המשתמש של חשבון מנהל הדומיין"
 
-#: services/models.py:1057
+#: services/models.py:1059
 msgid "Administrator Password"
 msgstr "סיסמת מנהל"
 
-#: services/models.py:1058
+#: services/models.py:1060
 msgid "Password of Domain Administrator account."
 msgstr "הסיסמה של חשבון מנהל הדומיין."
 
-#: services/models.py:1062 services/models.py:1063
+#: services/models.py:1064 services/models.py:1065
 #: templates/services/index.html:18
 msgid "Active Directory"
 msgstr "תיקייה פעילה"
 
-#: services/models.py:1074
+#: services/models.py:1076
 msgid "The name or IP address of the LDAP server"
 msgstr "השם או כתובת  הIP של שרת הLDAP"
 
-#: services/models.py:1078
+#: services/models.py:1080
 msgid "Base DN"
 msgstr "בסיס DN"
 
-#: services/models.py:1080
+#: services/models.py:1082
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr "שם הבסיס המובחן ברירת המחדל שישמש לחיפושים, לדוג' dc=test,dc=org"
 
-#: services/models.py:1083
+#: services/models.py:1085
 msgid "Allow Anonymous Binding"
 msgstr "אפשר קשירה אנונימית"
 
-#: services/models.py:1086
+#: services/models.py:1088
 msgid "Root bind DN"
 msgstr "קשירת Root DN"
 
-#: services/models.py:1088
+#: services/models.py:1090
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr "השם המבחין שיקשר עם התיקייה בשרת, לדוג' cn=admin,dc=test,dc=org"
 
-#: services/models.py:1092
+#: services/models.py:1094
 msgid "Root bind password"
 msgstr "קשירת סיסמת root"
 
-#: services/models.py:1094
+#: services/models.py:1096
 msgid "The credentials with which to bind."
 msgstr "הפרטים שיקשרו."
 
-#: services/models.py:1099
+#: services/models.py:1101
 msgid "Password Encryption"
 msgstr "הצפנת סיסמה"
 
-#: services/models.py:1100
+#: services/models.py:1102
 msgid "The password change protocol to use."
 msgstr "פרוטוקול החלפת סיסמה שישומש."
 
-#: services/models.py:1104
+#: services/models.py:1106
 msgid "User Suffix"
 msgstr "סיומת משתמש"
 
-#: services/models.py:1106
+#: services/models.py:1108
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
@@ -2263,11 +2335,11 @@ msgstr ""
 "המאפיין מציין את הסיומת שתשומש בשביל משתמשים מתי שהם מוספים לתיקיית LDAP, "
 "לדוג' ou=Users"
 
-#: services/models.py:1110
+#: services/models.py:1112
 msgid "Group Suffix"
 msgstr "סיומת קבוצה"
 
-#: services/models.py:1112
+#: services/models.py:1114
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
@@ -2275,11 +2347,11 @@ msgstr ""
 "המאפיין מציין את הסיומת שתשומש בשביל קבוצות מתי שהם מוספות לתיקיית LDAP, "
 "לדוג' ou=Users"
 
-#: services/models.py:1116
+#: services/models.py:1118
 msgid "Password Suffix"
 msgstr "סיומת סיסמה"
 
-#: services/models.py:1118
+#: services/models.py:1120
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
@@ -2287,11 +2359,11 @@ msgstr ""
 "המאפיין מציין את הסיומת שתשומש בשביל הסיסמאות מתי שהם מוספות לתיקיית ,LDAP, "
 "דוג' ou=Passwords"
 
-#: services/models.py:1122
+#: services/models.py:1124
 msgid "Machine Suffix"
 msgstr "סיומת מכונה"
 
-#: services/models.py:1124
+#: services/models.py:1126
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
@@ -2299,72 +2371,72 @@ msgstr ""
 "המאפיין מציין את הסיומת שתשומש בשביל המכונות מתי שהם מוספות לתיקיית LDAP, "
 "דוג' ou=Computers"
 
-#: services/models.py:1128
+#: services/models.py:1130
 msgid "Turn on/off TLS"
 msgstr "הדלק/כבה TLS"
 
-#: services/models.py:1130
+#: services/models.py:1132
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
 msgstr "המאפיין הזה מציין האם להשתמש ב SSL/TLS, דוג' on/off/start_tls"
 
-#: services/models.py:1133
+#: services/models.py:1135
 msgid "Self signed certificate"
 msgstr "תעודה חתומה עצמית"
 
-#: services/models.py:1135
+#: services/models.py:1137
 msgid "Place the contents of your self signed certificate file here."
 msgstr "שים כאן את התוכן של קובץ התעודה חתומה עצמית כאן."
 
-#: services/models.py:1139 sharing/models.py:85
+#: services/models.py:1141 sharing/models.py:85
 msgid "Auxiliary Parameters"
 msgstr "מאפייני עזר"
 
-#: services/models.py:1141
+#: services/models.py:1143
 msgid "These parameters are added to ldap.conf."
 msgstr "האפיינים האלו מוספים ל-ldap.conf."
 
-#: services/models.py:1145 services/models.py:1146
+#: services/models.py:1147 services/models.py:1148
 #: templates/services/index.html:64
 msgid "LDAP"
 msgstr "LDAP"
 
-#: services/models.py:1156
+#: services/models.py:1158
 msgid "Alternate TCP port. Default is 873"
 msgstr "החלף את פורט הTCP (ברירת המחדל היא 873)"
 
-#: services/models.py:1161
+#: services/models.py:1163
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
 msgstr "המאפיינים האלו יוספו למאפיינים [הגלובליים] ב- rsyncd.conf."
 
-#: services/models.py:1165 services/models.py:1166
+#: services/models.py:1167 services/models.py:1168
 msgid "Rsyncd"
 msgstr "Rsyncd"
 
-#: services/models.py:1176
+#: services/models.py:1178
 msgid "Module name"
 msgstr "שם יחידת התפקוד"
 
-#: services/models.py:1185
+#: services/models.py:1186
 msgid "Path to be shared"
 msgstr "הנתיב לשיתוף"
 
-#: services/models.py:1191
+#: services/models.py:1192
 msgid "Access Mode"
 msgstr "מצב גישה"
 
-#: services/models.py:1192
+#: services/models.py:1193
 msgid "This controls the access a remote host has to this module"
 msgstr "זה שולט בגישה למארח המרוחק שצריך להיות יחדת תפקוד"
 
-#: services/models.py:1196
+#: services/models.py:1197
 msgid "Maximum connections"
 msgstr "כמות חיבורים מקסימלית"
 
-#: services/models.py:1197
+#: services/models.py:1198
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
 msgstr "מספר מקסימלי של חיבורים בו זמניים (י 0= בלתי מוגבל)."
 
-#: services/models.py:1203
+#: services/models.py:1204
 msgid ""
 "This option specifies the user name that file transfers to and from that "
 "module should take place. In combination with the 'Group' option this "
@@ -2375,7 +2447,7 @@ msgstr ""
 "בצירוף עם 'קבוצה' יקבע את הרשות קבצים שהיו זמינים. השאר את השדה הזה ריק "
 "בשביל הגדרות ברירת המחדל"
 
-#: services/models.py:1210
+#: services/models.py:1211
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
@@ -2383,11 +2455,11 @@ msgstr ""
 "האפשרות הזאת מגדירה את שם הקבוצה אשר העברת קבצים ויחידת התפקוד יקרו בו. השאר "
 "את השדה הזה ריק בשביל הגדרות ברירת המחדל"
 
-#: services/models.py:1214
+#: services/models.py:1215
 msgid "Hosts allow"
 msgstr "אפשורי מארח"
 
-#: services/models.py:1215
+#: services/models.py:1216
 msgid ""
 "This option is a comma, space, or tab delimited set of hosts which are "
 "permitted to access this module. You can specify the hosts by name or IP "
@@ -2397,11 +2469,11 @@ msgstr ""
 "התפקוד הזאת. אתה יכול להגדיר את המארחים ע\"י שם או מספר IP. השאר את השדה הזה "
 "ריק כדי להשתמש בהגדרות ברירת מחדל."
 
-#: services/models.py:1219
+#: services/models.py:1220
 msgid "Hosts deny"
 msgstr "דחיית מארחים"
 
-#: services/models.py:1220
+#: services/models.py:1221
 msgid ""
 "This option is a comma, space, or tab delimited set of host which are NOT "
 "permitted to access this module. Where the lists conflict, the allow list "
@@ -2416,18 +2488,73 @@ msgstr ""
 "באופן מפורש למארחים לאשר את המאפיינים שיאשרו גישה למארחים האלו. השאר את הזה "
 "ריק לברירת המחדל."
 
-#: services/models.py:1225
+#: services/models.py:1226
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
 msgstr "המאפיינים האלו יוספו למאפיינים הגלובליים ב- rsyncd.conf."
 
-#: services/models.py:1230
+#: services/models.py:1231
 msgid "Rsync Module"
 msgstr "יחידת תפקוד Rsync"
 
-#: services/models.py:1231
+#: services/models.py:1232
 msgid "Rsync Modules"
 msgstr "יחידות תפקוד Rsync"
+
+#: services/models.py:1243
+#, fuzzy
+msgid "Check interval"
+msgstr "רווח"
+
+#: services/models.py:1244
+msgid ""
+"Sets the interval between disk checks to N minutes. The default is 30 minutes"
+msgstr ""
+
+#: services/models.py:1250
+#, fuzzy
+msgid "Power mode"
+msgstr "מצב כיבוי"
+
+#: services/models.py:1254
+msgid "Difference"
+msgstr ""
+
+#: services/models.py:1255
+msgid ""
+"Report if the temperature had changed by at least N degrees Celsius since "
+"last report. 0 to disable"
+msgstr ""
+
+#: services/models.py:1259
+#, fuzzy
+msgid "Informal"
+msgstr "נורמלי"
+
+#: services/models.py:1260 services/models.py:1265
+msgid ""
+"Report if the temperature is greater or equal than N degrees Celsius. 0 to "
+"disable"
+msgstr ""
+
+#: services/models.py:1264
+msgid "Critical"
+msgstr ""
+
+#: services/models.py:1268
+msgid "Email to report"
+msgstr ""
+
+#: services/models.py:1271
+#, fuzzy
+msgid "Destination email address. Separate email addresses by semi-colon"
+msgstr "כתובת אימייל של היעד,הפרד כתובות אמייל ע\"י נקודת פסיק."
+
+#: services/models.py:1274 services/models.py:1275
+#: templates/services/index.html:108
+#, fuzzy
+msgid "S.M.A.R.T."
+msgstr "אפשר S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
@@ -2464,70 +2591,83 @@ msgstr "הקפות"
 msgid "ISCSI"
 msgstr "ISCSI"
 
-#: services/nav.py:147 system/models.py:429 templates/services/index.html:86
+#: services/nav.py:147 system/models.py:430 templates/services/index.html:86
 msgid "Rsync"
 msgstr "Rsync"
 
-#: services/views.py:215
+#: services/views.py:222
 msgid "The service could not be stopped."
 msgstr "השרות לא יכול להיעצר."
 
-#: services/views.py:222
+#: services/views.py:229
 msgid "The service could not be started."
 msgstr "השרות לא יכול לאתחל."
 
-#: sharing/forms.py:92
+#: sharing/forms.py:82
 msgid "The field is a not a valid IP address or network"
 msgstr "השדה הזה אינו כתובת IP או רשת חוקית"
 
-#: sharing/forms.py:98
+#: sharing/forms.py:88
 #, python-format
 msgid "The IP '%s' is not valid."
 msgstr "ה-IP '%s' אינו חוקי."
 
-#: sharing/forms.py:109
+#: sharing/forms.py:99
 msgid "Maproot group requires Maproot user"
 msgstr "קבוצת Maproot דורשת משתמש Maproot"
 
-#: sharing/forms.py:111
+#: sharing/forms.py:101
 msgid "Mapall group requires Mapall user"
 msgstr "קבוצת Mapall דורשת משתמש Mapall"
 
-#: sharing/forms.py:114 sharing/forms.py:117
+#: sharing/forms.py:104 sharing/forms.py:107
 msgid "Maproot user/group disqualifies Mapall"
 msgstr "משתמש/קבוצת Maproot פוסל Mapall"
 
 #: sharing/models.py:41 sharing/models.py:104 storage/models.py:44
-#: storage/models.py:68 storage/models.py:86
+#: storage/models.py:69 storage/models.py:87
 #: templates/network/interface.html:6 templates/network/summary.html:5
 #: templates/services/rsyncmod.html:5 templates/sharing/apple.html:13
 #: templates/sharing/windows.html:13
 msgid "Name"
 msgstr "שם"
 
-#: sharing/models.py:52
+#: sharing/models.py:51
 msgid "Export Read Only"
 msgstr "יצוא קריאה בלבד"
 
-#: sharing/models.py:54
+#: sharing/models.py:53
 msgid "Browsable to Network Clients"
 msgstr "יכול להיות מדופדף(Browsable) ע\"י לקוחות הרשת"
 
-#: sharing/models.py:56
+#: sharing/models.py:55
 msgid "Inherit Permissions"
 msgstr "רשויות מורשות"
 
-#: sharing/models.py:58
+#: sharing/models.py:57
 msgid "Export Recycle Bin"
 msgstr "יצא פח מחזור"
 
-#: sharing/models.py:60
+#: sharing/models.py:59
 msgid "Show Hidden Files"
 msgstr "הראה קבצים מוסתרים"
 
 #: sharing/models.py:64
 msgid "Guest Account"
 msgstr "חשבון אורח"
+
+#: sharing/models.py:65
+msgid ""
+"Use this option to override the username ('ftp' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
+msgstr ""
+"השתמש באפשרות הזאת על מנת לעקוף את המשתמש('ftp' בברירת מחדל) שישמש לצורך "
+"גישה לשרותים שמצוינים בתור אורח.איזה זכויות יתר שיש למשתמש הזה יהיו לכל לקוח "
+"שמתחבר לשרות אורח .המשתמש חייב להתקיים בתוך קובץ סיסמה, אבל  לא מצליח כניסה "
+"חוקית."
 
 #: sharing/models.py:68
 msgid "Allow Guest Access"
@@ -2602,11 +2742,11 @@ msgstr ""
 msgid "Share Comment"
 msgstr "הערת שיתוף"
 
-#: sharing/models.py:117
+#: sharing/models.py:116
 msgid "Share password"
 msgstr "סיסמת שיתוף"
 
-#: sharing/models.py:119
+#: sharing/models.py:118
 msgid ""
 "This option allows you to set a volume password, which can be a maximum of 8 "
 "characters long (using ASCII strongly recommended at the time of this "
@@ -2615,21 +2755,21 @@ msgstr ""
 "האפשרות הזאת מאפשרת לתת סיסמה לנפח, שיכול להיות עד 8 תווים (שימוש בתווי "
 "ASCII מומלץ ביותר בזמן הכתיבה)."
 
-#: sharing/models.py:123
+#: sharing/models.py:122
 msgid "Share Character Set"
 msgstr "שתף סט תווים"
 
-#: sharing/models.py:125
+#: sharing/models.py:124
 msgid ""
 "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
 "etc."
 msgstr "מציין את סט תווי השיתוף, לדוגמא UTF8, UTF8-MAC, ISO-8859-15 וכו'"
 
-#: sharing/models.py:129
+#: sharing/models.py:128
 msgid "Allow List"
 msgstr "רשימה מאושרת"
 
-#: sharing/models.py:131
+#: sharing/models.py:130
 msgid ""
 "This option allows the users and groups that access a share to be specified. "
 "Users and groups are specified, delimited by commas. Groups are designated "
@@ -2638,11 +2778,11 @@ msgstr ""
 "האפשרות הזאת מאפשרץ למשתמשים וקבוצות לגשת לשיתוף מוגדר. משתמשים וקבוצות "
 "מצויינים, מוגבלים ע\"י פסיקים, קבוצות מצוינות ע\"י התו @."
 
-#: sharing/models.py:135
+#: sharing/models.py:134
 msgid "Deny List"
 msgstr "רשימת דחייה"
 
-#: sharing/models.py:137
+#: sharing/models.py:136
 msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
@@ -2650,11 +2790,22 @@ msgstr ""
 "אפשרות הדחייה מציינת את המשתמשים וקבוצות אשר לא מותרים לגשת לשיתוף. זה נוהג "
 "על פי הפורמט של אפשרות האישור. "
 
-#: sharing/models.py:141
+#: sharing/models.py:140
 msgid "Read-only Access"
 msgstr "גישת קריאה-בלבד"
 
-#: sharing/models.py:143 sharing/models.py:149
+#: sharing/models.py:142
+msgid ""
+"Allows certain users and groups to have read-only access to a share. This "
+"follows the allow option format."
+msgstr ""
+"אפשר למשתמשים מסוימים גישת קריאה בלבד לשיתוף, זה נוהג על פי פורמט האישור."
+
+#: sharing/models.py:146
+msgid "Read-write Access"
+msgstr "גישת כתיבה-בלבד"
+
+#: sharing/models.py:148
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
@@ -2662,15 +2813,11 @@ msgstr ""
 "אפשר למשתמשים מסוימים גישת קריאה/כתיבה לשיתוף. זה נוהג על פי פורמט אפשור "
 "האפשרות ."
 
-#: sharing/models.py:147
-msgid "Read-write Access"
-msgstr "גישת כתיבה-בלבד"
-
-#: sharing/models.py:152
+#: sharing/models.py:151
 msgid "Disk Discovery"
 msgstr "גילוי הכונן"
 
-#: sharing/models.py:153
+#: sharing/models.py:152
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
@@ -2678,11 +2825,11 @@ msgstr ""
 "אפשר למערכות אחרות לגלות את השיתוף הזה כמו כונן בשביל מידע, בשביל נפח Time "
 "Machine backup או לא בכלל."
 
-#: sharing/models.py:159
+#: sharing/models.py:158
 msgid "Disk discovery mode"
 msgstr "מצב גילוי הכונן"
 
-#: sharing/models.py:160
+#: sharing/models.py:159
 msgid ""
 "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
 "behavior in MacOS. Default mode exports the volume as a data volume for "
@@ -2691,11 +2838,11 @@ msgstr ""
 "אזהרה! בחירת 'Time Machine' על כמה שיתופים יכול לגרום לתוצאות בלתי צפויות "
 "בMacOS. אפשרות ברירת המחדל היא ליצא את הנפח בתור נפח מידע בשביל משתמשים."
 
-#: sharing/models.py:164
+#: sharing/models.py:163
 msgid "Database Path"
 msgstr "נתיב בסיס מידע"
 
-#: sharing/models.py:166
+#: sharing/models.py:165
 msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
@@ -2703,11 +2850,11 @@ msgstr ""
 "מגדיר את בסיס המידע  להיות שמור בנתיב. אתה צריך להגדיר מיקום בר כתיבה, אפילו "
 "אם הנפח הוא כתיבה בלבד."
 
-#: sharing/models.py:169
+#: sharing/models.py:168
 msgid "Cache CNID"
 msgstr "מטמון CNID"
 
-#: sharing/models.py:170
+#: sharing/models.py:169
 msgid ""
 "If set afpd uses the ID information stored in AppleDouble V2 header files to "
 "reduce database load. Don't set this option if the volume is modified by non "
@@ -2717,11 +2864,11 @@ msgstr ""
 "לחץ מידע הבסיס. אל תשנה את האפשרות הזאת אם אם הנפח משונה על ידי לקוחות שאינם "
 "לקוחות AFTP (NFS/SMB/local)."
 
-#: sharing/models.py:173
+#: sharing/models.py:172
 msgid "Translate CR/LF"
 msgstr "תרגם CR/LF"
 
-#: sharing/models.py:174
+#: sharing/models.py:173
 msgid ""
 "Enables crlf translation for TEXT files, automatically converting macintosh "
 "line breaks into Unix ones. Use of this option might be dangerous since some "
@@ -2735,11 +2882,11 @@ msgstr ""
 "בפוטנציאל להשמיד קבצים כאלה 'בטעות' כאשר מחליף בייטים בשביל לעשות תרגום "
 "שבירת קווין."
 
-#: sharing/models.py:177
+#: sharing/models.py:176
 msgid "Windows File Names"
 msgstr "שמות קבצים של חלונות"
 
-#: sharing/models.py:178
+#: sharing/models.py:177
 msgid ""
 "This forces filenames to be restricted to the character set used by Windows. "
 "This is not recommended for shares used principally by Mac computers."
@@ -2747,11 +2894,11 @@ msgstr ""
 "זה  מכריח שמות קבצים להיות מוגבלים לסט תווים של חלונות. זה לא מומלץ לשיתופים "
 "שבשביל מחשבי מקינטוש."
 
-#: sharing/models.py:181
+#: sharing/models.py:180
 msgid "No .AppleDouble"
 msgstr "אין AppleDouble"
 
-#: sharing/models.py:182
+#: sharing/models.py:181
 msgid ""
 "This will suppress automatic creation of the .AppleDouble directories. This "
 "option should not be used if files are accessed by Mac computers."
@@ -2759,11 +2906,11 @@ msgstr ""
 "זה ינטרל את היצירה האוטומטית של תיקותAppleDouble. האפשרות לא צריכה להיות "
 "משומשת אם הקבצים ניגשים בעיקר ע\"י מחשבי מקינטוש. "
 
-#: sharing/models.py:185
+#: sharing/models.py:184
 msgid "Zero Device Numbers"
 msgstr "אפס מספרי התקן"
 
-#: sharing/models.py:186
+#: sharing/models.py:185
 msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
@@ -2771,19 +2918,19 @@ msgstr ""
 "תמיד השתמש ב0 בשביל מספר התקן. עוזר מתי שמספר ההתקן קבוע בהפעלה מחדש, "
 "קבץ, ...."
 
-#: sharing/models.py:189
+#: sharing/models.py:188
 msgid "Disable File ID"
 msgstr "נטרל מזהה קובץ"
 
-#: sharing/models.py:190
+#: sharing/models.py:189
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
 msgstr "אל תפרסם יוצר שדה. (createfileid, resolveid, deleteid calls."
 
-#: sharing/models.py:193
+#: sharing/models.py:192
 msgid "Disable :hex Names"
 msgstr "נטרל: שמות hex"
 
-#: sharing/models.py:194
+#: sharing/models.py:193
 msgid ""
 "Disable :hex translations for anything except dot files. This option makes "
 "the '/' character illegal."
@@ -2791,19 +2938,19 @@ msgstr ""
 "נטרל: תרגומי hex בשביל הכל חוץ מקבצי dot. האפשרות הזאת גורמת לתו '/' להיות "
 "בלתי חוקי."
 
-#: sharing/models.py:197
+#: sharing/models.py:196
 msgid "ProDOS"
 msgstr "ProDOS"
 
-#: sharing/models.py:198
+#: sharing/models.py:197
 msgid "Provide compatibility with Apple II clients."
 msgstr "ספק תאיומות עם לקוחות אפל II (Apple II )."
 
-#: sharing/models.py:201
+#: sharing/models.py:200
 msgid "No Stat"
 msgstr "אין מצב"
 
-#: sharing/models.py:202
+#: sharing/models.py:201
 msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
@@ -2811,27 +2958,27 @@ msgstr ""
 "אל תמצב נפח מתי שסופר את רשימת הנפחים. יעיל בשביל כינון אוטומטי של נפחים "
 "שיוצרו ע\"י סקריפט preexec."
 
-#: sharing/models.py:205
+#: sharing/models.py:204
 msgid "AFP3 Unix Privs"
 msgstr "זכויות יצר AFP3 UNIX"
 
-#: sharing/models.py:206
+#: sharing/models.py:205
 msgid "Use AFP3 unix privileges."
 msgstr "השתמש בזכויות יתר של AFP3 UNIX."
 
-#: sharing/models.py:213
+#: sharing/models.py:212
 msgid "Apple Share"
 msgstr "שיתוף אפל (apple)"
 
-#: sharing/models.py:214
+#: sharing/models.py:213
 msgid "Apple Shares"
 msgstr "שיתופי אפל (apple)"
 
-#: sharing/models.py:232
+#: sharing/models.py:230
 msgid "Authorized network or IP addresses"
 msgstr "כתובת IP או רשת מאושרת"
 
-#: sharing/models.py:233
+#: sharing/models.py:231
 msgid ""
 "Network that is authorized to access the NFS share or a list of IP "
 "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
@@ -2841,11 +2988,11 @@ msgstr ""
 "1.2.3.4/xx איפה שXX מציינים מציינים את מספר הביטים של מסכת הרשת או רשימה של "
 "כתובות IP 1.2.3.4 1.2.3.5 1.2.3.6."
 
-#: sharing/models.py:237
+#: sharing/models.py:235
 msgid "All Directories"
 msgstr "כל התיקיות"
 
-#: sharing/models.py:238
+#: sharing/models.py:236
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
@@ -2853,60 +3000,60 @@ msgstr ""
 "אפשר כינון של תיקיות משנה תחת נקודת כינון הזאת אם נבחרה. אחרת, רק הרמה "
 "הגבוהה של התיקייה יכולה להיכנן."
 
-#: sharing/models.py:241
+#: sharing/models.py:239
 msgid "Read Only"
 msgstr "קריאה בלבד"
 
-#: sharing/models.py:242
+#: sharing/models.py:240
 msgid "Export the share read only. Writes are not permitted."
 msgstr "יצא את השיתוף לקריאה בלבד. כתיבה לא מותרת."
 
-#: sharing/models.py:245 system/models.py:408
+#: sharing/models.py:243 system/models.py:409
 msgid "Quiet"
 msgstr "שקט"
 
-#: sharing/models.py:246
+#: sharing/models.py:244
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
 msgstr "מנע אהזרות של יומן המערכת עם יצוא השיתוף הזה."
 
-#: sharing/models.py:250
+#: sharing/models.py:248
 msgid "Maproot User"
 msgstr "Maproot משתמש"
 
-#: sharing/models.py:254
+#: sharing/models.py:252
 msgid "User to map root to"
 msgstr "משתמש ממפה את root ל-"
 
-#: sharing/models.py:258
+#: sharing/models.py:256
 msgid "Maproot Group"
 msgstr "Maproot קבוצה"
 
-#: sharing/models.py:262
+#: sharing/models.py:260
 msgid "Group to map root to"
 msgstr "קבוצה ממפה את root ל-"
 
-#: sharing/models.py:266
+#: sharing/models.py:264
 msgid "Mapall User"
 msgstr "Mapall משתמש"
 
-#: sharing/models.py:270
+#: sharing/models.py:268
 msgid "User to map all users to"
 msgstr "מתשמש ממפה את כל המשתמשים ל-"
 
-#: sharing/models.py:274
+#: sharing/models.py:272
 msgid "Mapall Group"
 msgstr "Mapall קבוצה"
 
-#: sharing/models.py:278
+#: sharing/models.py:276
 msgid "Group to map all users to"
 msgstr "קבוצה ממפה את כל המשתמשים ל-"
 
-#: sharing/models.py:285
+#: sharing/models.py:283
 msgid "UNIX Share"
 msgstr "שיתוף UNIX"
 
-#: sharing/models.py:286
+#: sharing/models.py:284
 msgid "UNIX Shares"
 msgstr "שיתופי UNIX"
 
@@ -2914,102 +3061,102 @@ msgstr "שיתופי UNIX"
 msgid "Sharing"
 msgstr "שיתוף"
 
-#: storage/forms.py:153 storage/forms.py:337 templates/storage/import.html:9
+#: storage/forms.py:154 storage/forms.py:348 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
 msgstr "שם הנפח"
 
-#: storage/forms.py:157 templates/storage/wizard.html:53
+#: storage/forms.py:158 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
 msgstr "כפה סקטורים בגודל 4096 בייטים"
 
-#: storage/forms.py:219
+#: storage/forms.py:220
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\"."
 msgstr "שם הנפח חייב להתחיל עם אותיות ויכול להכיל מספרים, \"-\", \"_\"."
 
-#: storage/forms.py:233
+#: storage/forms.py:234
 msgid "You must select a filesystem"
 msgstr "אתה חייב לבחור מערכת קבצים"
 
-#: storage/forms.py:237 system/forms.py:217 system/forms.py:223
+#: storage/forms.py:238 system/forms.py:217 system/forms.py:223
 #: system/forms.py:228
 msgid "This field is required"
 msgstr "שדה זה נחוץ"
 
-#: storage/forms.py:242 storage/forms.py:379 storage/forms.py:477
+#: storage/forms.py:243 storage/forms.py:390 storage/forms.py:489
 msgid "You already have a volume with same name"
 msgstr "כבר יש נפח עם אותו שם"
 
-#: storage/forms.py:248
+#: storage/forms.py:249
 msgid "\"log\" is a reserved word and thus cannot be used"
 msgstr "\"יומן\" הוא מילה שמור ומכיוון זה לא יכול להיות משומש."
 
-#: storage/forms.py:253
+#: storage/forms.py:254
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr "הנפח לא יכול להתחיל עם עם c[0-9], mirror, raidz or spare"
 
-#: storage/forms.py:338 storage/forms.py:428 storage/forms.py:900
+#: storage/forms.py:349 storage/forms.py:439 storage/forms.py:939
 msgid "Member disk"
 msgstr "כונן חבר"
 
-#: storage/forms.py:385 storage/forms.py:496
+#: storage/forms.py:396 storage/forms.py:506
 msgid "The selected disks were not verified for this import rules."
 msgstr "הכוננים שנבחרו לא אומתו לחוקי היבוא האלו."
 
-#: storage/forms.py:393
+#: storage/forms.py:404
 msgid "Some error ocurried while labelling the disk."
 msgstr "קרתה תקלה בזמן נתינת שם לכונן."
 
-#: storage/forms.py:472
+#: storage/forms.py:484
 msgid "You must select a volume."
 msgstr "אתה חייב לבחור נפח."
 
-#: storage/forms.py:594
+#: storage/forms.py:633
 msgid "Volume from which this dataset will be created on"
 msgstr "נפח מסט המידע ייצר ב-"
 
-#: storage/forms.py:595
+#: storage/forms.py:634
 msgid "Dataset Name"
 msgstr "שם סט המידע"
 
-#: storage/forms.py:596 storage/forms.py:648 storage/forms.py:705
-#: storage/forms.py:746
+#: storage/forms.py:635 storage/forms.py:687 storage/forms.py:744
+#: storage/forms.py:785
 msgid "Compression level"
 msgstr "רמת דחיסה"
 
-#: storage/forms.py:597 storage/forms.py:649 storage/forms.py:706
+#: storage/forms.py:636 storage/forms.py:688 storage/forms.py:745
 msgid "Enable atime"
 msgstr "אפשר זמן "
 
-#: storage/forms.py:598 storage/forms.py:650 storage/forms.py:707
+#: storage/forms.py:637 storage/forms.py:689 storage/forms.py:746
 msgid "Quota for this dataset"
 msgstr "מכסה בשביל סט המידע"
 
-#: storage/forms.py:598 storage/forms.py:599 storage/forms.py:650
-#: storage/forms.py:651 storage/forms.py:707 storage/forms.py:745
+#: storage/forms.py:637 storage/forms.py:638 storage/forms.py:689
+#: storage/forms.py:690 storage/forms.py:746 storage/forms.py:784
 msgid "0=Unlimited; example: 1g"
 msgstr "0=בלתי מוגבל, דוגמא: 1g"
 
-#: storage/forms.py:599 storage/forms.py:651
+#: storage/forms.py:638 storage/forms.py:690
 msgid "Quota for this dataset and all children"
 msgstr "מכסה בשביל סט המידע וכל הילדים"
 
-#: storage/forms.py:600 storage/forms.py:652 storage/forms.py:708
+#: storage/forms.py:639 storage/forms.py:691 storage/forms.py:747
 msgid "Reserved space for this dataset"
 msgstr "נפח שמור בשביל סט המידע הזה"
 
-#: storage/forms.py:600 storage/forms.py:601 storage/forms.py:652
-#: storage/forms.py:653 storage/forms.py:708
+#: storage/forms.py:639 storage/forms.py:640 storage/forms.py:691
+#: storage/forms.py:692 storage/forms.py:747
 msgid "0=None; example: 1g"
 msgstr "0= כלום; דוגמא: 1g"
 
-#: storage/forms.py:601 storage/forms.py:653
+#: storage/forms.py:640 storage/forms.py:692
 msgid "Reserved space for this dataset and all children"
 msgstr "נפח שמור בשביל סט המידע הזה וכל הילדים"
 
-#: storage/forms.py:614
+#: storage/forms.py:653
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
@@ -3017,91 +3164,95 @@ msgstr ""
 "שמות של סטי מידע חייבים להתחיל בתווין אלפא נומרים ויכולים להכיל (-), (_), "
 "(:) ו (.)."
 
-#: storage/forms.py:621 storage/forms.py:766
+#: storage/forms.py:660 storage/forms.py:805
 msgid "You already have a dataset with the same name"
 msgstr "כבר יש סט מידע עם אותו השם"
 
-#: storage/forms.py:628 storage/forms.py:685 storage/forms.py:729
+#: storage/forms.py:667 storage/forms.py:724 storage/forms.py:768
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
 msgstr "הקש מספר חיובי (סיומת אוציונלית של M,G,T), or', 0"
 
-#: storage/forms.py:743
-msgid "Volume from which this zvol will be created on"
+#: storage/forms.py:782
+#, fuzzy
+msgid "Volume from which this ZFS Volume will be created on"
 msgstr "נפח שה-zvol יוצר עליו"
 
-#: storage/forms.py:744
-msgid "ZVol Name"
-msgstr "שם ZVol"
+#: storage/forms.py:783
+#, fuzzy
+msgid "ZFS Volume Name"
+msgstr "נפח ZFS"
 
-#: storage/forms.py:745
-msgid "Size for this zvol"
+#: storage/forms.py:784
+#, fuzzy
+msgid "Size for this ZFS Volume"
 msgstr "גודל בשביל הZVol"
 
-#: storage/forms.py:759
+#: storage/forms.py:798
+#, fuzzy
 msgid ""
-"ZVol names must begin with an alphanumeric character and may only contain "
-"(-), (_), (:) and (.)."
+"ZFS Volume names must begin with an alphanumeric character and may only "
+"contain (-), (_), (:) and (.)."
 msgstr ""
 "שמות של  ZVol חייבים להתחיל בתווים אלפא נומרים ויכולים להכיל (-), (_), (:) ו "
 "(.)."
 
-#: storage/forms.py:781
+#: storage/forms.py:820
 msgid "Owner (user)"
 msgstr "בעל (משתמש)"
 
-#: storage/forms.py:782
+#: storage/forms.py:821
 msgid "Owner (group)"
 msgstr "בעל (קבוצה)"
 
-#: storage/forms.py:783
+#: storage/forms.py:822
 msgid "Mode"
 msgstr "מצב"
 
-#: storage/forms.py:786
+#: storage/forms.py:825
 msgid "Set permission recursively"
 msgstr "קבע רשויות רקורסיבית"
 
-#: storage/forms.py:836
+#: storage/forms.py:875
 msgid "At least one day must be chosen"
 msgstr "לפחות יום אחת חייב להיבחר"
 
-#: storage/forms.py:841
+#: storage/forms.py:880
 msgid "Recursive snapshot"
 msgstr "צילום רקורסיבי"
 
-#: storage/forms.py:842
+#: storage/forms.py:881
 msgid "Snapshot Name"
 msgstr "שם הצילום"
 
-#: storage/forms.py:849
+#: storage/forms.py:888
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
 msgstr "רק [-a-zA-Z0-9_.] מורשים לשם הצילום"
 
-#: storage/forms.py:859
+#: storage/forms.py:898
 msgid "Invalid prefix"
 msgstr "תחילית בלתי חוקית"
 
-#: storage/forms.py:863 storage/views.py:466
+#: storage/forms.py:902
 msgid "Snapshot"
 msgstr "צילום"
 
-#: storage/forms.py:864
+#: storage/forms.py:903
 msgid "Clone Name (must be on same volume)"
 msgstr "שם שיכפול (חייב להיות באותו נפח)"
 
-#: storage/forms.py:877
+#: storage/forms.py:916
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
 msgstr "רק [-a-zA-Z0-9_./] מורשים שם השכפול"
 
-#: storage/forms.py:883
+#: storage/forms.py:922
 msgid "Clone must be within the same volume"
 msgstr "השכפול חייב להיות באותו ערך"
 
-#: storage/forms.py:950 storage/models.py:211
+#: storage/forms.py:989 storage/models.py:222
 msgid "Remote hostname"
 msgstr "שם מארח מרוחק"
 
-#: storage/forms.py:951 storage/models.py:215
+#: storage/forms.py:990 storage/models.py:226
 msgid "Remote hostkey"
 msgstr "מארח מפתח מרוחק"
 
@@ -3109,163 +3260,166 @@ msgstr "מארח מפתח מרוחק"
 msgid "File System Type"
 msgstr "סוג מערכת הקבצים"
 
-#: storage/models.py:52 storage/models.py:77 storage/views.py:88
-#: storage/views.py:115 storage/views.py:137 templates/storage/volumes.html:70
+#: storage/models.py:52 storage/models.py:78 templates/storage/volumes.html:70
 msgid "Volume"
 msgstr "נפח"
 
-#: storage/models.py:78
+#: storage/models.py:79
 msgid "Volume this group belongs to"
 msgstr "הנפח שייך לקבוצה"
 
-#: storage/models.py:101
+#: storage/models.py:102
 msgid "Transfer Mode"
 msgstr "מצב העברה"
 
-#: storage/models.py:107
+#: storage/models.py:108
 msgid "HDD Standby"
 msgstr "שינת כונן"
 
-#: storage/models.py:113
+#: storage/models.py:114
 msgid "Advanced Power Management"
 msgstr "ניהול חשמל מתקדם"
 
-#: storage/models.py:119
+#: storage/models.py:120
 msgid "Acoustic Level"
 msgstr "רמה אקוסטית"
 
-#: storage/models.py:123
+#: storage/models.py:124
 msgid "Enable S.M.A.R.T."
 msgstr "אפשר S.M.A.R.T."
 
-#: storage/models.py:127
+#: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
 msgstr " אפרויות יתר של S.M.A.R.T."
 
-#: storage/models.py:132
+#: storage/models.py:133
 msgid "Group Membership"
 msgstr "חברות הקבוצה"
 
-#: storage/models.py:133
+#: storage/models.py:134
 msgid "The disk group containing this disk"
 msgstr "קבוצת הכונן מכילה את הכונן הזה"
 
-#: storage/models.py:145 storage/models.py:226 storage/models.py:252
+#: storage/models.py:156 storage/models.py:237 storage/models.py:267
 #: templates/storage/tasks.html:22
 msgid "Mount Point"
 msgstr "נקודת כינון"
 
-#: storage/models.py:146
+#: storage/models.py:157
 msgid "Path to mount point"
 msgstr "נתיב לנקודת כינון"
 
-#: storage/models.py:150
+#: storage/models.py:161
 msgid "Mount options"
 msgstr "אפשרויות כינון"
 
-#: storage/models.py:151
+#: storage/models.py:162
 msgid "Enter Mount Point options here"
 msgstr "הקש אפשרויות כינון כאן"
 
-#: storage/models.py:168
+#: storage/models.py:179
 msgid "Error getting total space"
 msgstr "תקלה בקבלת הנפח הכללי"
 
-#: storage/models.py:174
+#: storage/models.py:185
 msgid "Error getting available space"
 msgstr "תקלה בקבלת הנפח הזמין"
 
-#: storage/models.py:180
+#: storage/models.py:191
 msgid "Error getting used space"
 msgstr "תקלה בקבלת הנפח המשומש"
 
-#: storage/models.py:186 storage/models.py:198
+#: storage/models.py:197 storage/models.py:209
 msgid "Error"
 msgstr "תקלה"
 
-#: storage/models.py:218
+#: storage/models.py:229
 msgid "Remote Replication Host"
 msgstr "מארח שיכפול מרוחק"
 
-#: storage/models.py:219
+#: storage/models.py:230
 msgid "Remote Replication Hosts"
 msgstr "מארחי שיכפול מרוחקים"
 
-#: storage/models.py:230
+#: storage/models.py:241
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr "תצלום אחרון שנשלח לצד המרוחק (השאר ריק לשיכפול מלא)"
 
-#: storage/models.py:233 system/models.py:340
+#: storage/models.py:244 system/models.py:341
 #: templates/storage/replications.html:15
 msgid "Remote Host"
 msgstr "מאחר מרוחק"
 
-#: storage/models.py:236 templates/storage/replications.html:16
+#: storage/models.py:247 templates/storage/replications.html:16
 msgid "Remote ZFS filesystem"
 msgstr "מערכת ZFS מרוחקת"
 
-#: storage/models.py:239
+#: storage/models.py:251
+msgid "Recursively replicate and remove stale snapshot on remote side"
+msgstr ""
+
+#: storage/models.py:254
 msgid "Replication Task"
 msgstr "מטלת שיכפול"
 
-#: storage/models.py:240
+#: storage/models.py:255
 msgid "Replication Tasks"
 msgstr "מטלות שיכפול"
 
-#: storage/models.py:255 system/models.py:383 templates/storage/tasks.html:23
+#: storage/models.py:270 system/models.py:384 templates/storage/tasks.html:23
 msgid "Recursive"
 msgstr "רקורסיבי"
 
-#: storage/models.py:259
+#: storage/models.py:274
 msgid "Snapshot lifetime value"
 msgstr "ערך זמן החיים של התצלום"
 
-#: storage/models.py:265
+#: storage/models.py:280
 msgid "Snapshot lifetime unit"
 msgstr "יחידת זמן החיים של התצלום"
 
-#: storage/models.py:269
+#: storage/models.py:284
 msgid "Begin"
 msgstr "התחלה"
 
-#: storage/models.py:270
+#: storage/models.py:285
 msgid "When in a day should we start making snapshots, e.g. 8:00"
 msgstr "מתי ביום נתחיל להכין תצלומים, דוג' 8:00"
 
-#: storage/models.py:274
+#: storage/models.py:289
 msgid "End"
 msgstr "סוף"
 
-#: storage/models.py:275
+#: storage/models.py:290
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
 msgstr "מתי ביום נפסיק להכין תצלומים, דוג' 17:00"
 
-#: storage/models.py:281
+#: storage/models.py:296
 msgid "Interval"
 msgstr "רווח"
 
-#: storage/models.py:282
+#: storage/models.py:297
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
 msgstr "כמה דקות עברו לפני הכנת התצלום החדש ואחרי התלום האחרון."
 
-#: storage/models.py:288
+#: storage/models.py:303
 msgid "Occurrence"
 msgstr "התרחשות"
 
-#: storage/models.py:289
+#: storage/models.py:304
 msgid "How the task is repeated"
 msgstr "איך המטלה חוזרת על עצמה"
 
-#: storage/models.py:294
+#: storage/models.py:309
 msgid "Weekday"
 msgstr "יום בשבוע"
 
-#: storage/models.py:312
+#: storage/models.py:327
 msgid "Periodic Snapshot Task"
 msgstr "מטלת תצלום תקופתית"
 
-#: storage/models.py:313 templates/storage/index.html:9
+#: storage/models.py:328 templates/storage/index.html:7
 msgid "Periodic Snapshot Tasks"
 msgstr "מטלות תצלום תקופתיות"
 
@@ -3316,75 +3470,99 @@ msgid "Change Permissions"
 msgstr "שנה רשויות"
 
 #: storage/views.py:88 storage/views.py:115 storage/views.py:137
-#: storage/views.py:279 storage/views.py:338 storage/views.py:466
-#: templates/freeadmin/generic_model_add_ok.html:1
-msgid "successfully added"
-msgstr "הוסף בהצלחה"
+#, fuzzy
+msgid "Volume successfully added."
+msgstr "%S הוסף בהצלחה"
 
-#: storage/views.py:279 storage/views.py:314
-msgid "Dataset"
-msgstr "סט מידע"
+#: storage/views.py:217
+msgid "Unknown"
+msgstr ""
 
-#: storage/views.py:314 storage/views.py:390
-#: templates/freeadmin/generic_model_edit_ok.html:1
-msgid "successfully edited"
-msgstr "נערך בהצלחה"
+#: storage/views.py:283
+#, fuzzy
+msgid "Dataset successfully added."
+msgstr "סט המידע הושמד בהצלחה."
 
-#: storage/views.py:316 storage/views.py:392
+#: storage/views.py:318
+#, fuzzy
+msgid "Dataset successfully edited."
+msgstr "סט המידע הושמד בהצלחה."
+
+#: storage/views.py:320 storage/views.py:396
 msgid "Some error ocurried while setting the options"
 msgstr "תקלה כלשהי קרתה בזמן קביעת האפשרות"
 
-#: storage/views.py:338
-msgid "ZVol"
-msgstr "ZVol"
-
-#: storage/views.py:352
-msgid "This is in use by the iscsi target, please remove it there first"
-msgstr "זה משומש בתור מטרת iscsi , בבקשה הסר את זה קודם."
+#: storage/views.py:342
+#, fuzzy
+msgid "ZFS Volume successfully added."
+msgstr "נפח ZFS הושמד בהצלחה."
 
 #: storage/views.py:356
+#, fuzzy
+msgid "This is in use by the iscsi target, please remove it there first."
+msgstr "זה משומש בתור מטרת iscsi , בבקשה הסר את זה קודם."
+
+#: storage/views.py:360
 msgid "ZFS Volume successfully destroyed."
 msgstr "נפח ZFS הושמד בהצלחה."
 
-#: storage/views.py:390
-msgid "Native dataset"
-msgstr "סט מידע טבעי"
+#: storage/views.py:394
+#, fuzzy
+msgid "Native dataset successfully edited."
+msgstr "סט המידע הושמד בהצלחה."
 
-#: storage/views.py:406
+#: storage/views.py:410
 msgid "Mount Point permissions successfully updated."
 msgstr "רשויות נקודות הכינון עודכנו בהצלחה."
 
-#: storage/views.py:421
+#: storage/views.py:425
 msgid "Dataset successfully destroyed."
 msgstr "סט המידע הושמד בהצלחה."
 
-#: storage/views.py:435
+#: storage/views.py:439
 msgid "Snapshot successfully deleted."
 msgstr "התצלום נמחק בהצלחה."
 
-#: storage/views.py:449
+#: storage/views.py:453
 msgid "Rollback successful."
 msgstr "חזרה לאחורה מוצלחת."
 
-#: storage/views.py:479
-msgid "Snapshot successfully taken"
+#: storage/views.py:470
+#, fuzzy
+msgid "Snapshot successfully added."
+msgstr "התצלום נמחק בהצלחה."
+
+#: storage/views.py:483
+#, fuzzy
+msgid "Snapshot successfully taken."
 msgstr "תצלום נלקח בהצלחה"
 
-#: storage/views.py:494
-msgid "Snapshot successfully cloned"
+#: storage/views.py:498
+#, fuzzy
+msgid "Snapshot successfully cloned."
 msgstr "תצלום שוכפל בהצלחה"
 
-#: storage/views.py:545
+#: storage/views.py:549
 msgid "Disk replacement has been initiated."
 msgstr "החלפת הכונן התחיל"
 
-#: storage/views.py:549
+#: storage/views.py:553
 msgid "Some error ocurried."
 msgstr "קרתה תקלה כלשהי."
 
-#: storage/views.py:570
+#: storage/views.py:574
 msgid "Disk detach has been successfully done."
 msgstr "ניתוק הכונן נעשה בהצלחה"
+
+#: storage/views.py:588
+#, fuzzy
+msgid "The volume failed to export"
+msgstr "השירות נכשל להתחיל מחדש"
+
+#: storage/views.py:591
+#, fuzzy
+msgid "The volume has been successfully exported"
+msgstr "השינויים שלך עודכנו בהצלחה!"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
@@ -3425,117 +3603,117 @@ msgstr "חבילת שרות אאו בדיקת סכום לא חוקית"
 msgid "New config to be installed"
 msgstr "הגדרה חדשה להתקנה"
 
-#: system/forms.py:310 system/forms.py:339
+#: system/forms.py:310 system/forms.py:338
 msgid "minute"
 msgstr "דקה"
 
-#: system/forms.py:311 system/forms.py:340
+#: system/forms.py:311 system/forms.py:339
 msgid "hour"
 msgstr "שעה"
 
-#: system/forms.py:312 system/forms.py:341
+#: system/forms.py:312 system/forms.py:340
 msgid "day of month"
 msgstr "יום בחודש"
 
-#: system/models.py:43
+#: system/models.py:45
 msgid "Protocol"
 msgstr "פרוטוקול"
 
-#: system/models.py:49
+#: system/models.py:51
 msgid "Language"
 msgstr "שפה"
 
-#: system/models.py:55
+#: system/models.py:57
 msgid "Timezone"
 msgstr "אזור זמן"
 
-#: system/models.py:60
+#: system/models.py:62
 msgid "NTP server 1"
 msgstr "שרת NTP 1"
 
-#: system/models.py:65
+#: system/models.py:67
 msgid "NTP server 2"
 msgstr "שרת NTP 2"
 
-#: system/models.py:71
+#: system/models.py:73
 msgid "NTP server 3"
 msgstr "שרת NTP 3"
 
-#: system/models.py:76 system/nav.py:25 templates/system/settings.html:2
+#: system/models.py:78 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
 msgstr "הגדרות"
 
-#: system/models.py:83
+#: system/models.py:85
 msgid "Enable Console Menu"
 msgstr "אפשר תפריט מסוף בקרה"
 
-#: system/models.py:85
+#: system/models.py:87
 msgid "Use Serial Console"
 msgstr "השתמש במסוף בקרה סריאלי"
 
-#: system/models.py:87
+#: system/models.py:89
 msgid "Enable screen saver"
 msgstr "אפשר שומר מסך"
 
-#: system/models.py:89
+#: system/models.py:91
 msgid "Automatically Check for New Firmware"
 msgstr "בדוק אוטומטית קושחה חדשה"
 
-#: system/models.py:91
+#: system/models.py:93
 msgid "Beep on boot"
 msgstr "צפצוף בהדלקה"
 
-#: system/models.py:93
+#: system/models.py:95
 msgid "Enable Special System Tuning"
 msgstr "אפשר כיוונן מערכת מיוחד"
 
-#: system/models.py:95
+#: system/models.py:97
 msgid "Enable powerd (Power Saving Daemon)"
 msgstr "אפשר דלוק(Daemon חסיכה בחשמל)"
 
-#: system/models.py:97
+#: system/models.py:99
 msgid "Enable Zeroconf/Bonjour"
 msgstr "אפשר Zeroconf/Bonjour"
 
-#: system/models.py:100
+#: system/models.py:102
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Must be non-zero"
 msgstr ""
 "גודל החלפה(SWAP) בכל כונן בג'יגהבייט, משפיע על כוננים חדשים בלבד. חייב להיות "
 "לא אפס."
 
-#: system/models.py:103
+#: system/models.py:105
 msgid "Show console messages in the footer (Requires UI reload)"
 msgstr "הראה הודעות מסוף בקרה בסיומת עמוד (דורש רענון מחדש של מנשק המשתמש)"
 
-#: system/models.py:106
+#: system/models.py:108
 msgid "Show tracebacks in case of fatal errors"
 msgstr "הראה עקיבות לאחורה במקרה של שגיאות קטלניות"
 
-#: system/models.py:114
+#: system/models.py:116
 msgid "MOTD banner"
 msgstr "כרזת MOTD"
 
-#: system/models.py:118 templates/system/settings.html:5
+#: system/models.py:120 templates/system/settings.html:5
 msgid "Advanced"
 msgstr "מתקדם"
 
-#: system/models.py:127
+#: system/models.py:129
 msgid "From email"
 msgstr "מאימייל"
 
-#: system/models.py:128
+#: system/models.py:130
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@mydomain.com"
 msgstr ""
 "כתובת אימייל שמערכת תשתמש לצורך שליחת אימיילים, דוג' freenas@mydomain.com"
 
-#: system/models.py:133
+#: system/models.py:135
 msgid "Outgoing mail server"
 msgstr "שרת דואר יוצא"
 
-#: system/models.py:134
+#: system/models.py:136
 msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
@@ -3543,221 +3721,222 @@ msgstr ""
 "שם מארח או כתובת IP שתקבל את האימייל שלנו, לדוגמא mail.example.org או "
 "192.168.1.1"
 
-#: system/models.py:140
+#: system/models.py:142
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
 msgstr "מספר שלם מ1-65535, בדרך כל 25, 465, 587"
 
-#: system/models.py:141
+#: system/models.py:143
 msgid "Port to connect to"
 msgstr "פורט להתחבר אליו"
 
-#: system/models.py:147
+#: system/models.py:149
 msgid "encryption of the connection"
 msgstr "ההצפנה של החיבור"
 
-#: system/models.py:148
+#: system/models.py:150
 msgid "TLS/SSL"
 msgstr "TLS/SSL"
 
-#: system/models.py:151
+#: system/models.py:153
 msgid "Use SMTP Authentication"
 msgstr "השתמש באימות SMTP"
 
-#: system/models.py:159
+#: system/models.py:161
 msgid "A username to authenticate to the remote server"
 msgstr "שם משתמש לאימות בשרת המרוחק"
 
-#: system/models.py:166
+#: system/models.py:168
 msgid "A password to authenticate to the remote server"
 msgstr "סיסמה לאימות בשרת המרוחק"
 
-#: system/models.py:169 templates/system/settings.html:7
+#: system/models.py:171 templates/system/settings.html:7
 msgid "Email"
 msgstr "אימייל"
 
-#: system/models.py:179
+#: system/models.py:181
 msgid "Organization"
 msgstr "אירגון"
 
-#: system/models.py:180
+#: system/models.py:182
 msgid "Organization Name (eg, company)"
 msgstr "שם האירגון (דוג' חברה)"
 
-#: system/models.py:186
+#: system/models.py:188
 msgid "Organizational Unit"
 msgstr "יחידת הארגון"
 
-#: system/models.py:187
+#: system/models.py:189
 msgid "Organizational Unit Name (eg, section)"
 msgstr "יחידת שם הארגון (דוג' section)"
 
-#: system/models.py:193 system/models.py:194
+#: system/models.py:195 system/models.py:196
 msgid "Email Address"
 msgstr "כתובת אימייל"
 
-#: system/models.py:200
+#: system/models.py:202
 msgid "Locality"
 msgstr "מיקום"
 
-#: system/models.py:201
+#: system/models.py:203
 msgid "Locality Name (eg, city)"
 msgstr "מיקום (דוג' תל-אביב)"
 
-#: system/models.py:207
+#: system/models.py:209
 msgid "State"
 msgstr "מדינה"
 
-#: system/models.py:208
+#: system/models.py:210
 msgid "State or Province Name (full name)"
 msgstr "מדינה או שם מחוז (שם מלא)"
 
-#: system/models.py:214
+#: system/models.py:216
 msgid "Country"
 msgstr "מדינה"
 
-#: system/models.py:215
+#: system/models.py:217
 msgid "Country Name (2 letter code)"
 msgstr "שם המדינה (קוד בעל 2 אותיות)"
 
-#: system/models.py:221
+#: system/models.py:223
 msgid "Common Name"
 msgstr "שם פשוט"
 
-#: system/models.py:222
+#: system/models.py:224
 msgid "Common Name (eg, YOUR name)"
 msgstr "שם פשוט (לדוגמא השם שלך)"
 
-#: system/models.py:227
+#: system/models.py:229
 msgid "SSL Certificate"
 msgstr "תעודת SSL"
 
-#: system/models.py:228
+#: system/models.py:230
 msgid ""
 "Cut and paste the contents of your private and public certificate files here."
 msgstr "חתוך והדבק את התוכן של התעודות האישיות וציבוריות שלך כאן."
 
-#: system/models.py:241 system/models.py:380
+#: system/models.py:243 system/models.py:381
 msgid "The user to run the command"
 msgstr "המשתמש בשביל להריץ את הפקודה"
 
-#: system/models.py:245 templates/system/cronjob.html:11
+#: system/models.py:247 templates/system/cronjob.html:11
 msgid "Command"
 msgstr "פקודה"
 
-#: system/models.py:249 system/models.py:354 templates/system/cronjob.html:5
+#: system/models.py:251 system/models.py:355 templates/system/cronjob.html:5
 #: templates/system/rsync.html:5
 msgid "Minute"
 msgstr ",דקה"
 
-#: system/models.py:250 system/models.py:355
+#: system/models.py:252 system/models.py:356
 msgid "Values 0-59 allowed."
 msgstr "הערכים 0-59 מותרים."
 
-#: system/models.py:254 system/models.py:359 templates/system/cronjob.html:6
-#: templates/system/rsync.html:6
+#: system/models.py:256 system/models.py:360 system/models.py:508
+#: templates/system/cronjob.html:6 templates/system/rsync.html:6
 msgid "Hour"
 msgstr "שעה"
 
-#: system/models.py:255 system/models.py:360
+#: system/models.py:257 system/models.py:361 system/models.py:509
 msgid "Values 0-23 allowed."
 msgstr "ערכים 0-23 מותרים."
 
-#: system/models.py:259 system/models.py:364 templates/system/cronjob.html:7
-#: templates/system/rsync.html:7
+#: system/models.py:261 system/models.py:365 system/models.py:513
+#: templates/system/cronjob.html:7 templates/system/rsync.html:7
 msgid "Day of month"
 msgstr "יום בחודש"
 
-#: system/models.py:260 system/models.py:365
+#: system/models.py:262 system/models.py:366 system/models.py:514
 msgid "Values 1-31 allowed."
 msgstr "ערכים 1-31 מותרים."
 
-#: system/models.py:265 system/models.py:370 templates/system/cronjob.html:8
-#: templates/system/rsync.html:8
+#: system/models.py:267 system/models.py:371 system/models.py:519
+#: templates/system/cronjob.html:8 templates/system/rsync.html:8
 msgid "Month"
 msgstr "חודש"
 
-#: system/models.py:270 system/models.py:375 templates/system/cronjob.html:9
-#: templates/system/rsync.html:9
+#: system/models.py:272 system/models.py:376 system/models.py:524
+#: templates/system/cronjob.html:9 templates/system/rsync.html:9
 msgid "Day of week"
 msgstr "יום בשבוע"
 
-#: system/models.py:273
+#: system/models.py:275
 msgid "CronJob"
 msgstr "עבודת Cron"
 
-#: system/models.py:274
+#: system/models.py:276
 msgid "CronJobs"
 msgstr "עבודות cron"
 
-#: system/models.py:284 system/models.py:440
+#: system/models.py:286 system/models.py:441
 msgid "Every minute"
 msgstr "כל דקה"
 
-#: system/models.py:286 system/models.py:442
+#: system/models.py:288 system/models.py:443
 #, python-format
 msgid "Every %s minute(s)"
 msgstr "כל %s דקות"
 
-#: system/models.py:292 system/models.py:448
+#: system/models.py:294 system/models.py:449
 msgid "Every hour"
 msgstr "כל שעה "
 
-#: system/models.py:294 system/models.py:450
+#: system/models.py:296 system/models.py:451
 #, python-format
 msgid "Every %s hour(s)"
 msgstr "כל %s שעות"
 
-#: system/models.py:302 system/models.py:458
+#: system/models.py:304 system/models.py:459
 #, python-format
 msgid "Every %s days"
 msgstr "כל %s ימים"
 
-#: system/models.py:309 system/models.py:465
+#: system/models.py:311 system/models.py:466
 msgid "Every month"
 msgstr "כל חודש"
 
-#: system/models.py:341
+#: system/models.py:342
 msgid "IP Address or hostname"
 msgstr "כתובת IP או שם מארח"
 
-#: system/models.py:345
+#: system/models.py:346
 msgid "Remote Module Name"
 msgstr "שם יחידת תפקוד מרוחקת"
 
-#: system/models.py:349
+#: system/models.py:350 system/models.py:503
 msgid "Short description"
 msgstr "תיאור קצר"
 
-#: system/models.py:384
+#: system/models.py:385
 msgid "Recurse into directories"
 msgstr "רקורסיבי לתוך תיקיות"
 
-#: system/models.py:388
+#: system/models.py:389
 msgid "Times"
 msgstr "זמנים"
 
-#: system/models.py:389
+#: system/models.py:390
 msgid "Preserve modification times"
 msgstr "שמור זמני שינויים"
 
-#: system/models.py:393
+#: system/models.py:394
 msgid "Compress"
 msgstr "דחיסה"
 
-#: system/models.py:394
+#: system/models.py:395
 msgid "Compress data during the transfer"
 msgstr "דחוס מידע במהלך העברה"
 
-#: system/models.py:398
+#: system/models.py:399
 msgid "Archive"
 msgstr "ארכיון"
 
-#: system/models.py:399
+#: system/models.py:400
 msgid "Archive mode"
 msgstr "מצב ארכיון"
 
-#: system/models.py:403 templates/freeadmin/generic_model_edit.html:43
+#: system/models.py:404 templates/freeadmin/generic_model_edit.html:43
 #: templates/network/interface.html:39 templates/network/lagg.html:44
+#: templates/network/lagg_members.html:24
 #: templates/network/lagg_members.html:26
 #: templates/network/staticroute.html:24 templates/network/vlan.html:25
 #: templates/services/iscsi_assoctargets.html:24
@@ -3774,47 +3953,47 @@ msgstr "מצב ארכיון"
 #: templates/services/iscsi_targets.html:26
 #: templates/services/rsyncmod.html:24 templates/services/rsyncmod.html:26
 #: templates/sharing/apple.html:34 templates/sharing/unix.html:34
-#: templates/sharing/windows.html:38 templates/storage/tasks.html:140
-#: templates/storage/tasks.html.py:142 templates/system/cronjob.html:31
+#: templates/sharing/windows.html:38 templates/storage/tasks.html:139
+#: templates/storage/tasks.html.py:141 templates/system/cronjob.html:31
 #: templates/system/cronjob.html.py:33 templates/system/rsync.html:29
 #: templates/system/rsync.html.py:31
 msgid "Delete"
 msgstr "מחק"
 
-#: system/models.py:404
+#: system/models.py:405
 msgid "Delete files on the receiving side that don't exist on sender"
 msgstr "מחק קבצים בצד המקבל שלא קיימים אצל השולח"
 
-#: system/models.py:409
+#: system/models.py:410
 msgid "Suppress non-error messages"
 msgstr ""
 
-#: system/models.py:413
+#: system/models.py:414
 msgid "Preserve permissions"
 msgstr "שמור רשויות"
 
-#: system/models.py:414
+#: system/models.py:415
 msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
 msgstr ""
 
-#: system/models.py:418
+#: system/models.py:419
 msgid "Preserve extended attributes"
 msgstr ""
 
-#: system/models.py:419
+#: system/models.py:420
 msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
 msgstr ""
 
-#: system/models.py:425
+#: system/models.py:426
 #, fuzzy
 msgid "Extra options to rsync command line (usually empty)"
 msgstr "שורות פקודות נוספות (בדרך כלל ריק)."
 
-#: system/models.py:430
+#: system/models.py:431
 msgid "Rsyncs"
 msgstr ""
 
@@ -3839,6 +4018,26 @@ msgstr "לוח זמנים לתצלומים התקופתיים"
 msgid "The uploaded file is not valid."
 msgstr "הקובץ המועלה אינו חוקי."
 
+#: system/views.py:243
+msgid "Test message from FreeNAS"
+msgstr ""
+
+#: system/views.py:244
+msgid "This is a message test from FreeNAS"
+msgstr ""
+
+#: templates/404.html:7
+msgid "Page Not Found"
+msgstr ""
+
+#: templates/base.html:32
+msgid "expand all"
+msgstr ""
+
+#: templates/base.html:33
+msgid "collapse all"
+msgstr ""
+
 #: templates/menubar.html:33
 msgid "Log Out"
 msgstr "יציאה"
@@ -3851,14 +4050,31 @@ msgstr "עזרה"
 msgid "Log In"
 msgstr "כניסה"
 
-#: templates/account/bsdgroup2user_form.html:9
+#: templates/account/bsdgroup2user_form.html:10
 #: templates/freeadmin/generic_model_add.html:13
 #: templates/freeadmin/generic_model_edit.html:14
 #: templates/network/lagg_add.html:10 templates/system/wizard.html:14
 msgid "OK"
 msgstr "אשר"
 
-#: templates/account/bsdgroup2user_form.html:10
+#: templates/account/bsdgroup2user_form.html:12
+#: templates/freeadmin/generic_model_add.html:15
+#: templates/freeadmin/generic_model_delete.html:16
+#: templates/freeadmin/generic_model_edit.html:16
+#: templates/network/lagg_add.html:12
+#: templates/storage/dataset_confirm_delete.html:13
+#: templates/storage/disk_detach.html:13
+#: templates/storage/snapshot_confirm_delete.html:13
+#: templates/storage/snapshot_confirm_rollback.html:13
+#: templates/storage/volume_delete.html:14
+#: templates/storage/volume_export.html:13
+#: templates/storage/zvol_confirm_delete.html:13
+#: templates/system/config_restore.html:13
+#: templates/system/config_upload.html:37 templates/system/wizard.html:16
+msgid "Please wait..."
+msgstr "חכה בבקשה..."
+
+#: templates/account/bsdgroup2user_form.html:15
 #: templates/freeadmin/generic_model_add.html:18
 #: templates/freeadmin/generic_model_delete.html:20
 #: templates/freeadmin/generic_model_edit.html:20
@@ -3874,10 +4090,11 @@ msgstr "אשר"
 #: templates/storage/snapshot_confirm_delete.html:16
 #: templates/storage/snapshot_confirm_rollback.html:16
 #: templates/storage/volume_delete.html:18
-#: templates/storage/volume_edit.html:11 templates/storage/wizard.html:123
+#: templates/storage/volume_edit.html:11
+#: templates/storage/volume_export.html:16 templates/storage/wizard.html:123
 #: templates/storage/zvol_confirm_delete.html:16
 #: templates/storage/zvols.html:11 templates/system/config_restore.html:16
-#: templates/system/config_upload.html:35
+#: templates/system/config_upload.html:40
 msgid "Cancel"
 msgstr "בטל"
 
@@ -3893,7 +4110,7 @@ msgid "Members"
 msgstr "חברים"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
-#: templates/storage/tasks.html:134 templates/storage/tasks.html.py:136
+#: templates/storage/tasks.html:133 templates/storage/tasks.html.py:135
 msgid "Modify"
 msgstr "ערוך/שנה"
 
@@ -3942,6 +4159,10 @@ msgstr "מחק משתמש"
 msgid "Delete User"
 msgstr "מחק משתמש"
 
+#: templates/account/bsdusers.html:68 templates/account/bsdusers.html:156
+msgid "No users defined"
+msgstr "אין משתמשים מוגדרים"
+
 #: templates/account/bsdusers.html:75 templates/account/bsdusers.html.py:77
 msgid "Add New User"
 msgstr "הוסף משתמש חדש"
@@ -3950,10 +4171,6 @@ msgstr "הוסף משתמש חדש"
 #, fuzzy
 msgid "Change E-mail"
 msgstr "אימייל"
-
-#: templates/account/bsdusers.html:156
-msgid "No users defined"
-msgstr "אין משתמשים מוגדרים"
 
 #: templates/account/passform.html:26
 msgid "Change Admin Password"
@@ -3969,19 +4186,9 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#: templates/freeadmin/generic_model_add.html:15
-#: templates/freeadmin/generic_model_delete.html:16
-#: templates/freeadmin/generic_model_edit.html:16
-#: templates/network/lagg_add.html:12
-#: templates/storage/dataset_confirm_delete.html:13
-#: templates/storage/disk_detach.html:13
-#: templates/storage/snapshot_confirm_delete.html:13
-#: templates/storage/snapshot_confirm_rollback.html:13
-#: templates/storage/volume_delete.html:14
-#: templates/storage/zvol_confirm_delete.html:13
-#: templates/system/config_restore.html:13 templates/system/wizard.html:16
-msgid "Please wait..."
-msgstr "חכה בבקשה..."
+#: templates/freeadmin/generic_model_add_ok.html:1
+msgid "successfully added"
+msgstr "הוסף בהצלחה"
 
 #: templates/freeadmin/generic_model_delete.html:10
 #: templates/storage/dataset_confirm_delete.html:7
@@ -3997,6 +4204,7 @@ msgstr "האם אתה בטוח שאתה רוצה למחוק?"
 #: templates/storage/snapshot_confirm_delete.html:11
 #: templates/storage/snapshot_confirm_rollback.html:11
 #: templates/storage/tasks.html:36 templates/storage/volume_delete.html:12
+#: templates/storage/volume_export.html:11
 #: templates/storage/zvol_confirm_delete.html:11
 #: templates/system/config_restore.html:11
 msgid "Yes"
@@ -4011,18 +4219,19 @@ msgstr "הוסף בהצלחה"
 msgid "Your changes have been successfully updated!"
 msgstr "השינויים שלך עודכנו בהצלחה!"
 
+#: templates/freeadmin/generic_model_edit_ok.html:1
+msgid "successfully edited"
+msgstr "נערך בהצלחה"
+
 #: templates/freeadmin/index.html:30
 msgid "Running Processes"
 msgstr "מריץ תוכנית"
 
 #: templates/freeadmin/index.html:35 templates/freeadmin/index.html.py:39
 #: templates/freeadmin/index.html:44
-msgid "Loading"
+#, fuzzy
+msgid "Loading..."
 msgstr "טוען"
-
-#: templates/freeadmin/index.html:37
-msgid "/var/log/messages"
-msgstr "/var/log/messages"
 
 #: templates/freeadmin/index.html:46
 msgid "Reboot the System"
@@ -4049,8 +4258,9 @@ msgid ""
 msgstr "אתה הולך ל</strong> כבות </strong> את המערכת, מה תרצה לעשות?"
 
 #: templates/freeadmin/index.html:69
-msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; עזרה ותמיכה"
+#, fuzzy
+msgid "Help & Support"
+msgstr "תמיכה בEA"
 
 #: templates/freeadmin/index.html:72
 msgid "Forum"
@@ -4263,6 +4473,15 @@ msgstr "שם המתשמש שלך והסיסמה לא התאימו. אנא נסה
 msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "ברוך הבא %(username)s. תודה שהתחברת."
 
+#: templates/registration/login.html:50
+msgid "Welcome to FreeNAS 8"
+msgstr ""
+
+#: templates/registration/login.html:51
+#, fuzzy
+msgid "Please log in."
+msgstr "חכה בבקשה..."
+
 #: templates/registration/logout.html:4
 msgid "Logged Out"
 msgstr "מנותק"
@@ -4274,36 +4493,6 @@ msgstr "אתה מנותק עכשיו"
 #: templates/registration/logout.html:21
 msgid "Log back in"
 msgstr "כנס בחזרה"
-
-#: templates/registration/password_change_done.html:20
-msgid "Success!"
-msgstr "הצלחה!"
-
-#: templates/registration/password_change_done.html:21
-msgid "Your password was changed."
-msgstr "סיסמתך שונתה."
-
-#: templates/registration/password_change_form.html:4
-msgid "Password change"
-msgstr "שינוי סיסמה"
-
-#: templates/registration/password_change_form.html:13
-msgid "Please correct the error below."
-msgid_plural "Please correct the errors below."
-msgstr[0] "יחיד במינו"
-msgstr[1] "ריבוי"
-
-#: templates/registration/password_change_form.html:18
-msgid ""
-"Please enter your old password, and then enter your new password twice to "
-"verify it is typed in correctly."
-msgstr ""
-"בבקשה הקש את סיסמתך הישנה, ואחר כך את סיסמתך החזרה פעמיים לצורך אימות שהקשת "
-"נכון."
-
-#: templates/registration/password_change_form.html:48
-msgid "Password (again)"
-msgstr "סיסמה (שוב)"
 
 #: templates/services/index.html:13
 msgid "AFP Settings"
@@ -4343,18 +4532,23 @@ msgid "SNMP Settings"
 msgstr "הגדרות SNMP"
 
 #: templates/services/index.html:114
+#, fuzzy
+msgid "S.M.A.R.T. Settings"
+msgstr " אפרויות יתר של S.M.A.R.T."
+
+#: templates/services/index.html:125
 msgid "SSH Settings"
 msgstr "הגדרות SSH"
 
-#: templates/services/index.html:125
+#: templates/services/index.html:136
 msgid "TFTP Settings"
 msgstr "הגדרות TFTP"
 
-#: templates/services/index.html:130
+#: templates/services/index.html:141
 msgid "iSCSI"
 msgstr "iSCSI"
 
-#: templates/services/index.html:138
+#: templates/services/index.html:149
 msgid "ISCSI Settings"
 msgstr "הגדרות iSCSI"
 
@@ -4555,6 +4749,11 @@ msgstr "הוסף שיתוף חלונות(ווינדוס)(CIFS)"
 msgid "Clone Snapshot"
 msgstr "שכפל צילום"
 
+#: templates/storage/datagrid_disks.html:9
+#, fuzzy
+msgid "Edit Disk"
+msgstr "ערוך סט מידע"
+
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
 msgstr "ערוך סט מידע"
@@ -4585,12 +4784,12 @@ msgid "Active Volumes"
 msgstr "נפחים פעילים"
 
 #: templates/storage/index.html:5
-msgid "ZFS Replication"
-msgstr "שכפול ZFS"
-
-#: templates/storage/index.html:7
 msgid "ZFS Snapshots"
 msgstr "צילומי ZFS"
+
+#: templates/storage/index.html:9
+msgid "ZFS Replication"
+msgstr "שכפול ZFS"
 
 #: templates/storage/manualsnap.html:13
 msgid "Manually Create Snapshot"
@@ -4716,19 +4915,15 @@ msgstr "דרך"
 msgid ", every"
 msgstr ", כל "
 
-#: templates/storage/tasks.html:48
-msgid "minutes,"
-msgstr ",דקות"
-
-#: templates/storage/tasks.html:50
+#: templates/storage/tasks.html:49
 msgid "everyday"
 msgstr "כל יום"
 
-#: templates/storage/tasks.html:53
+#: templates/storage/tasks.html:52
 msgid "on every"
 msgstr "על כל אחד"
 
-#: templates/storage/tasks.html:149
+#: templates/storage/tasks.html:148
 msgid "No periodic snapshots scheduled"
 msgstr "אין תצלומיים תקופתיים מתוכננים"
 
@@ -4736,15 +4931,15 @@ msgstr "אין תצלומיים תקופתיים מתוכננים"
 msgid "Edit ZFS Volume"
 msgstr "ערוך נפח ZFS"
 
-#: templates/storage/volumes.html:30
+#: templates/storage/volume_export.html:7
+#, fuzzy
+msgid "Are you sure you want to export?"
+msgstr "האם אתה בטוח שאתה רוצה למחוק?"
+
+#: templates/storage/volumes.html:30 templates/storage/volumes.html.py:34
 #, fuzzy
 msgid "Create ZFS Volume"
 msgstr "צור נפח"
-
-#: templates/storage/volumes.html:34
-#, fuzzy
-msgid "Create ZFS zvol"
-msgstr "יצור סט מידע ZFS"
 
 #: templates/storage/volumes.html:64
 msgid "There are no active volumes."
@@ -4784,7 +4979,12 @@ msgstr "הרוס נפח"
 msgid "View Disks"
 msgstr "ראה כוננים"
 
-#: templates/storage/volumes.html:200
+#: templates/storage/volumes.html:198 templates/storage/volumes.html.py:202
+#, fuzzy
+msgid "Export Volume"
+msgstr "יבא נפח"
+
+#: templates/storage/volumes.html:209
 msgid "No volumes defined"
 msgstr "שום נפח לא הוגדר"
 
@@ -4826,18 +5026,35 @@ msgstr "מידע קיים ימחק"
 
 #: templates/storage/zvols.html:9
 #, fuzzy
-msgid "Add ZVol"
-msgstr "הוסף נפח"
+msgid "Add ZFS Volume"
+msgstr "נפח ZFS"
 
-#: templates/system/config.html:2
+#: templates/system/advanced_edit.html:17
+msgid "The cache is being rebuilt."
+msgstr "המטמון נבנה מחדש כרגע."
+
+#: templates/system/advanced_edit.html:19
+msgid "The cache could not be rebuilt"
+msgstr "המטמון לא יכול להיבנות מחדש"
+
+#: templates/system/advanced_edit.html:24
+msgid "Rebuild LDAP/AD Cache"
+msgstr "בנה מחדש מטמון LDAP\\AD"
+
+#: templates/system/config.html:3
 msgid "Restore to Factory Defaults"
 msgstr "חזור להגדרות מפעל"
 
-#: templates/system/config.html:4
+#: templates/system/config.html:5
+#, fuzzy
+msgid "Restore Config"
+msgstr "שמור הגדרה"
+
+#: templates/system/config.html:9
 msgid "Save Config"
 msgstr "שמור הגדרה"
 
-#: templates/system/config.html:6
+#: templates/system/config.html:12 templates/system/config.html.py:14
 msgid "Upload Config"
 msgstr "העלה הגדרות"
 
@@ -4849,7 +5066,7 @@ msgstr "מפעיל מחדש..."
 msgid "Are you sure you want to restore to factory config?"
 msgstr "האם אתה בטוח שאתה רוצה לחזור להגדרות המפעל?"
 
-#: templates/system/config_upload.html:34
+#: templates/system/config_upload.html:35
 msgid "Update"
 msgstr "עידכון"
 
@@ -4865,6 +5082,18 @@ msgstr ""
 #: templates/system/done.html:13
 msgid "Rebooting..."
 msgstr "מפעיל מחדש..."
+
+#: templates/system/email_edit.html:17
+msgid "Your test email has been sent!"
+msgstr ""
+
+#: templates/system/email_edit.html:19
+msgid "Your test email could not be sent:"
+msgstr ""
+
+#: templates/system/email_edit.html:24
+msgid "Send Test Mail"
+msgstr "שלח אימייל ניסוי"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
@@ -4964,6 +5193,83 @@ msgstr "FreeNAS Build"
 msgid "Step %(step)s of %(step_count)s"
 msgstr ""
 
+msgid "%s successfully update."
+msgstr "% התעדכן בהצלחה"
+
+msgid "Admin user"
+msgstr "משתמש מנהל"
+
+msgid "%s successfully added"
+msgstr "%s הוסף בהצלחה"
+
+msgid "N/A"
+msgstr "לא זמין"
+
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"השתמש באופציה זאתי על מנת לעקוף את שם המשתמש ('www' בברירת המחדל) שישומשו "
+"לגישה לשרותים שמצוינים בתור אורח.איזה זכיות יתר שיש למשתמש הזה יהיו "
+"זמינים לכל לקוח שמתחבר לשרות אורח.המתמש הזה חייב להתקיים בתור קובץ סיסמה, "
+"אבל לא מצריך כניסה חוקית."
+
+msgid "ZVol Name"
+msgstr "שם ZVol"
+
+msgid "Dataset"
+msgstr "סט מידע"
+
+msgid "ZVol"
+msgstr "ZVol"
+
+msgid "Native dataset"
+msgstr "סט מידע טבעי"
+
+msgid "/var/log/messages"
+msgstr "/var/log/messages"
+
+msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; עזרה ותמיכה"
+
+msgid "Success!"
+msgstr "הצלחה!"
+
+msgid "Your password was changed."
+msgstr "סיסמתך שונתה."
+
+msgid "Password change"
+msgstr "שינוי סיסמה"
+
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "יחיד במינו"
+msgstr[1] "ריבוי"
+
+msgid ""
+"Please enter your old password, and then enter your new password twice to "
+"verify it is typed in correctly."
+msgstr ""
+"בבקשה הקש את סיסמתך הישנה, ואחר כך את סיסמתך החזרה פעמיים לצורך אימות "
+"שהקשת נכון."
+
+msgid "Password (again)"
+msgstr "סיסמה (שוב)"
+
+msgid "minutes,"
+msgstr ",דקות"
+
+#, fuzzy
+msgid "Create ZFS zvol"
+msgstr "יצור סט מידע ZFS"
+
+#, fuzzy
+msgid "Add ZVol"
+msgstr "הוסף נפח"
+
 msgid "English"
 msgstr "אנגלית"
 
@@ -5014,12 +5320,6 @@ msgstr "מאפייני עזר"
 msgid "Volume Path"
 msgstr "נתיב לנפח"
 
-msgid ""
-"Allows certain users and groups to have read-only access to a share. This "
-"follows the allow option format."
-msgstr ""
-"אפשר למשתמשים מסוימים גישת קריאה בלבד לשיתוף, זה נוהג על פי פורמט האישור."
-
 msgid "View All UNIX Shares"
 msgstr "ראה את כל שיתופי UNIX (לינוקס)"
 
@@ -5061,12 +5361,3 @@ msgstr "מנשק LAGG הוסף בהצלחה"
 
 msgid "ActiveDirectory Settings"
 msgstr "הגדרות תיקייה פעילה"
-
-msgid "The cache is being rebuilt."
-msgstr "המטמון נבנה מחדש כרגע."
-
-msgid "Rebuild LDAP/AD Cache"
-msgstr "בנה מחדש מטמון LDAP\\AD"
-
-msgid "Send Test Mail"
-msgstr "שלח אימייל ניסוי"
