@@ -246,6 +246,19 @@ class SSLForm(ModelForm):
     class Meta:
         model = models.SSL
 
+class SMARTTestForm(ModelForm):
+    def save(self):
+        super(SMARTTestForm, self).save()
+        notifier().restart("smartd")
+    class Meta:
+        model = models.SMARTTest
+        widgets = {
+            'smarttest_hour': CronMultiple(attrs={'numChoices': 24,'label':_("hour")}),
+            'smarttest_daymonth': CronMultiple(attrs={'numChoices': 31,'start':1,'label':_("day of month")}),
+            'smarttest_dayweek': forms.CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES),
+            'smarttest_month': forms.CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES),
+        }
+
 class FirmwareTemporaryLocationForm(Form):
     mountpoint = forms.ChoiceField(label=_("Place to temporarily place firmware file"), help_text = _("The system will use this place to temporarily store the firmware file before it's being applied."),choices=(), widget=forms.Select(attrs={ 'class': 'required' }),)
     def __init__(self, *args, **kwargs):

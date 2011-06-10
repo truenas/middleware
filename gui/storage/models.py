@@ -146,7 +146,8 @@ class Disk(Model):
     class Meta:
         verbose_name = _("Disk")
     def __unicode__(self):
-        return self.disk_identifier + ' (' + self.disk_description + ')'
+        ident = self.identifier_to_device() or _('Unknown')
+        return u"%s (%s)" % (ident, self.disk_description)
 
 class MountPoint(Model):
     mp_volume = models.ForeignKey(Volume)
