@@ -149,6 +149,8 @@ LOCALE_PATHS = (
     os.path.join(HERE, "locale"),
 )
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.file'
+
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
