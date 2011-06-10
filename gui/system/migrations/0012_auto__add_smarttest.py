@@ -11,7 +11,7 @@ class Migration(SchemaMigration):
         # Adding model 'SMARTTest'
         db.create_table('system_smarttest', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('smarttest_disk', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storage.Disk'])),
+            ('smarttest_disk', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['storage.Disk'], unique=True)),
             ('smarttest_type', self.gf('django.db.models.fields.CharField')(max_length=2, blank=True)),
             ('smarttest_desc', self.gf('django.db.models.fields.CharField')(max_length=120, blank=True)),
             ('smarttest_hour', self.gf('django.db.models.fields.CharField')(max_length=100)),
@@ -133,7 +133,7 @@ class Migration(SchemaMigration):
             'smarttest_daymonth': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'smarttest_dayweek': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7'", 'max_length': '100'}),
             'smarttest_desc': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'smarttest_disk': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storage.Disk']"}),
+            'smarttest_disk': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storage.Disk']", 'unique': 'True'}),
             'smarttest_hour': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'smarttest_month': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7,8,9,10,a,b,c'", 'max_length': '100'}),
             'smarttest_type': ('django.db.models.fields.CharField', [], {'max_length': '2', 'blank': 'True'})

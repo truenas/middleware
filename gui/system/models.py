@@ -490,6 +490,7 @@ class Rsync(Model):
 class SMARTTest(Model):
     smarttest_disk = models.ForeignKey(
             Disk,
+            unique=True,
             verbose_name=_("Disk"),
             )
     smarttest_type = models.CharField(
@@ -523,3 +524,13 @@ class SMARTTest(Model):
             default="1,2,3,4,5,6,7",
             verbose_name=_("Day of week"),
             )
+
+    def __unicode__(self):
+        return unicode(self.smarttest_disk)
+
+    class Meta:
+        verbose_name = _("S.M.A.R.T. Test")
+        verbose_name_plural = _("S.M.A.R.T. Tests")
+
+    class FreeAdmin:
+        pass

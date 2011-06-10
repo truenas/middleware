@@ -247,9 +247,53 @@ class SSLForm(ModelForm):
         model = models.SSL
 
 class SMARTTestForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        if kwargs.has_key('instance'):
+            ins = kwargs.get('instance')
+            ins.smarttest_month = ins.smarttest_month.replace("10", "a").replace("11", "b").replace("12", "c")
+            if ins.smarttest_daymonth == "..":
+                ins.smarttest_daymonth = '*/1'
+            if ins.smarttest_hour == "..":
+                ins.smarttest_hour = '*/1'
+        super(SMARTTestForm, self).__init__(*args, **kwargs)
     def save(self):
         super(SMARTTestForm, self).save()
         notifier().restart("smartd")
+    def clean_smarttest_hour(self):
+        h = self.cleaned_data.get("smarttest_hour")
+        if h.startswith('*/'):
+            each = int(h.split('*/')[1])
+            if each == 1:
+                return ".."
+            else:
+                minutes = []
+                for i in range(24):
+                    if i % each == 0:
+                        minutes.append("%.2d" % i)
+                return ",".join(minutes)
+        return h
+    def clean_smarttest_daymonth(self):
+        h = self.cleaned_data.get("smarttest_daymonth")
+        if h.startswith('*/'):
+            each = int(h.split('*/')[1])
+            if each == 1:
+                return ".."
+            else:
+                days = []
+                for i in range(1,32):
+                    if i % each == 0:
+                        days.append("%.2d" % i)
+                return ",".join(days)
+        return h
+    def clean_smarttest_month(self):
+        m = eval(self.cleaned_data.get("smarttest_month"))
+        m = ",".join(m)
+        m = m.replace("a", "10").replace("b", "11").replace("c", "12")
+        return m
+    def clean_smarttest_dayweek(self):
+        w = eval(self.cleaned_data.get("smarttest_dayweek"))
+        w = ",".join(w)
+        return w
     class Meta:
         model = models.SMARTTest
         widgets = {
