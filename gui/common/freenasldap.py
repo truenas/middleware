@@ -374,11 +374,11 @@ class FreeNAS_LDAP(object):
         scope = ldap.SCOPE_SUBTREE
 
         if type(user) in (types.IntType, types.LongType):
-            filter = '(&(objectclass=person)(uidnumber=%d))' % user
+            filter = '(&(|(objectclass=person)(objectclass=account))(uidnumber=%d))' % user
         elif user.isdigit():
-            filter = '(&(objectclass=person)(uidnumber=%s))' % user
+            filter = '(&(|(objectclass=person)(objectclass=account))(uidnumber=%s))' % user
         else:
-            filter = '(&(objectclass=person)(|(uid=%s)(cn=%s)))' % (user, user)
+            filter = '(&(|(objectclass=person)(objectclass=account))(|(uid=%s)(cn=%s)))' % (user, user)
 
         results = self.__search(self.basedn, scope, filter, self.attributes)
         if results:
@@ -400,7 +400,7 @@ class FreeNAS_LDAP(object):
 
         users = []
         scope = ldap.SCOPE_SUBTREE
-        filter = '(&(objectclass=person)(uid=*))'
+        filter = '(&(|(objectclass=person)(objectclass=account))(uid=*))'
 
         results = self.__search(self.basedn, scope, filter, self.attributes)
         if results:
