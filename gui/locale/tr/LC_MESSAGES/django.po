@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-06 12:00+0200\n"
-"Last-Translator: RayTracer <saliherk@hotmail.com>\n"
+"PO-Revision-Date: 2011-06-11 10:27+0200\n"
+"Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -92,7 +92,7 @@ msgstr "UDMA-100"
 
 #: choices.py:61
 msgid "UDMA-133"
-msgstr "UDMA-133-------------"
+msgstr "UDMA-133"
 
 #: choices.py:62
 msgid "SATA 1.5Gbit/s"
@@ -116,29 +116,24 @@ msgid "Level 1 - Minimum power usage with Standby (spindown)"
 msgstr "Bekleme konumlu en az güç tüketimi (disk dönüşü durur) "
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Bekleme konumlu orta derece güç tüketimi"
+msgstr "Seviye 64 - Bekleme konumlu orta seviye güç tüketimi"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Bekleme konumlu orta derece güç tüketimi"
+msgstr "Seviye 127 - Bekleme konumunda orta seviyede güç tüketimi"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Beklemede olmadan en az güç tuketimi (disk dönüşü durmaz)"
+msgstr "Seviye 128 - Beklemede olmadan en az güç tüketimi (disk dönüşü durmaz)"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Bekleme olmadan orta derece güc tüketimi"
+msgstr "Seviye 192 - Bekleme olmadan orta seviye güç tüketimi"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "En yüksek güç tüketimi, en yüksek performans"
+msgstr "Seviye 254 - En yüksek güç tüketimi, en yüksek performans"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -263,15 +258,15 @@ msgstr "Hiçbir durumda katlama"
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
-msgstr "Her iki tarafada kucuk harf"
+msgstr "Her iki tarafada küçük harf"
 
 #: choices.py:193
 msgid "Client sees lowercase, server sees uppercase"
-msgstr "Istemci kucuk harf gorur, sunucu ise buyu harf"
+msgstr "İstemci küçük harf görür, sunucu ise büyük harf"
 
 #: choices.py:194
 msgid "Client sees uppercase, server sees lowercase"
-msgstr "Istemci buyuk harf gorur, sunucu ise kucuk harf"
+msgstr "İstemci büyük harf görür, sunucu ise küçük harf"
 
 #: choices.py:198
 msgid "File"
@@ -323,7 +318,7 @@ msgstr "CHAP"
 
 #: choices.py:219
 msgid "Mutual CHAP"
-msgstr "Mutual CHAP"
+msgstr "Ortak CHAP"
 
 #: choices.py:241
 msgid "UPS reaches low battery"
@@ -343,7 +338,7 @@ msgstr "Tolere"
 
 #: choices.py:247
 msgid "Required"
-msgstr "Mecburi"
+msgstr "Gerekli"
 
 #: choices.py:274 choices.py:280
 msgid "Inherit"
@@ -351,69 +346,64 @@ msgstr "Miras"
 
 #: choices.py:275
 msgid "On"
-msgstr "Acik"
+msgstr "Açık"
 
 #: choices.py:276 choices.py:281
 msgid "Off"
-msgstr "Kapali"
+msgstr "Kapalı"
 
 #: choices.py:282
 msgid "lzjb (recommended)"
-msgstr "lzjb (Tavsiye Edilen)"
+msgstr "lzjb (tavsiye edilen)"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "Varsayilan seviye"
+msgstr "gzip (varsayılan seviye, 6)"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "En hizli"
+msgstr "gzip (en hızlı)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "En yuksek, yavas"
+msgstr "gzip (en yüksek, yavaş)"
 
 #: choices.py:426
 msgid "Hour(s)"
-msgstr "Saat"
+msgstr "Saat(ler)"
 
 #: choices.py:427
 msgid "Day(s)"
-msgstr "Gun"
+msgstr "Gün(ler)"
 
 #: choices.py:428
 msgid "Week(s)"
-msgstr "Hafta"
+msgstr "Hafta(lar)"
 
 #: choices.py:429
 msgid "Month(s)"
-msgstr "Ay"
+msgstr "Ay(lar)"
 
 #: choices.py:430
 msgid "Year(s)"
-msgstr "Sene"
+msgstr "Yıl(lar)"
 
 #: choices.py:434 system/models.py:302 system/models.py:321
 #: system/models.py:457 system/models.py:476
 msgid "Everyday"
-msgstr "Hergun"
+msgstr "Hergün"
 
 #: choices.py:435
 msgid "Every selected weekday"
-msgstr "Secilen her haftaici gunu"
+msgstr "Seçilmiş her hafta içi"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
-msgstr "salt okunur"
+msgstr "Salt-okunur"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "salt okunur"
+msgstr "Sadece-yazılabilir"
 
 #: choices.py:443
 msgid "Read and Write"
@@ -422,7 +412,7 @@ msgstr "Oku ve Yaz"
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "Kalan Yüzde Dakika"
 
 #: choices.py:449
 #, python-format
@@ -446,65 +436,67 @@ msgstr ""
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Asla - Güç modu ne olursa olsun aygıtı kontrol edin"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Uyku - UYKU modunda olmadıkça aygıtı kontrol edin"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
+msgstr "Bekleme - UYKU veya BEKLEME modunda olmadıça aygıtı kontrol edin"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
-msgstr ""
+msgstr "Boşta - UYKU, BEKLEME veya BOŞTA modunda olmadıkça aygıtı kontrol edin"
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Kendi kendine uzun test"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Kendi kendine kısa test"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Yalnızca ATA modda iken iletim Testi"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Çevrimdışı acil test (Sadece ATA mod)"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
-msgstr "Kullanilabilir"
+msgstr "Kullanılabilir"
 
 #: account/forms.py:146
 msgid "Selected"
-msgstr "Secilen"
+msgstr "Seçilen"
 
 #: account/forms.py:174 account/forms.py:198 account/models.py:79
 #: services/models.py:676 services/models.py:935 system/models.py:160
 #: templates/account/bsdusers.html:5 templates/account/bsdusers.html.py:86
 msgid "Username"
-msgstr "Kullanici Ismi"
+msgstr "Kullanıcı Adı"
 
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
 msgstr ""
-"Mecburi. Sadece, 30 karakter yada daha az, harfler, rakamlar ve @/./+/-/_"
+"Gerekli. 30 veya daha az karakter. Sadece harfler, rakamlar ve @/./+/-/_ "
+"kullanılabilir."
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
 msgstr ""
-"Bu deger sadece harfleri, rakamlari ve @/./+/-/_ isaretlerini barindirabilir."
+"Bu değer sadece harfleri, rakamları ve @/./+/-/_ işaretlerini "
+"barındırabilir."
 
 #: account/forms.py:201 account/forms.py:308 services/models.py:680
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
 #: templates/account/bsdusers.html.py:90
 msgid "Password"
-msgstr "Sifre"
+msgstr "Şifre"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:188
 msgid "Password confirmation"
@@ -512,7 +504,7 @@ msgstr "Parola doğrulama"
 
 #: account/forms.py:203 account/forms.py:310 system/forms.py:189
 msgid "Enter the same password as above, for verification."
-msgstr "Doğrulama için yukarıdaki parolayı tekrar girin."
+msgstr "Doğrulama için, parolayı yukarıdaki gibi tekrar girin."
 
 #: account/forms.py:204 account/forms.py:346 account/models.py:105
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:89
@@ -521,7 +513,7 @@ msgstr "Kabuk"
 
 #: account/forms.py:205 account/forms.py:345
 msgid "Disable logins"
-msgstr "Girişleri devre dışı bırak"
+msgstr "Oturum açmayı devre dışı bırak"
 
 #: account/forms.py:206
 msgid "Primary Group"
@@ -529,12 +521,12 @@ msgstr "Birincil Grup"
 
 #: account/forms.py:235
 msgid "A user with that username already exists."
-msgstr "O kullanıcı adıyla bir kullanıcı zaten var."
+msgstr "Aynı kullanıcı adı zaten var."
 
 #: account/forms.py:243 account/forms.py:329 account/forms.py:479
 #: system/forms.py:232
 msgid "The two password fields didn't match."
-msgstr "Iki şifre alanları eşleşmedi."
+msgstr "İki şifre alanı eşleşmedi."
 
 #: account/forms.py:248 account/forms.py:373
 msgid "Home directory has to start with /mnt/"
@@ -560,7 +552,7 @@ msgstr "Yeni şifre"
 
 #: account/forms.py:468
 msgid "New password confirmation"
-msgstr "Yeni şifre onay"
+msgstr "Yeni şifre onayı"
 
 #: account/forms.py:493
 msgid "Old password"
@@ -568,14 +560,14 @@ msgstr "Eski şifre"
 
 #: account/forms.py:501
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr "Eski parolanızi yanlış girildi. Lütfen tekrar girin."
+msgstr "Eski parolanızı yanlış girdiniz. Lütfen tekrar girin."
 
 #: account/models.py:36 services/models.py:472 services/models.py:517
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr "Grup kimliğini"
+msgstr "Grup kimliği"
 
 #: account/models.py:41
 msgid "Group Name"
@@ -606,7 +598,7 @@ msgstr "Kullanıcı &"
 
 #: account/models.py:85
 msgid "Hashed UNIX password"
-msgstr "Karma UNIX şifre"
+msgstr "Karıştırılmış UNIX parola"
 
 #: account/models.py:91
 msgid "Hashed SMB password"
@@ -618,7 +610,7 @@ msgstr "Birincil Grup Kimliği"
 
 #: account/models.py:100
 msgid "Home Directory"
-msgstr "Ana Dizin"
+msgstr "Ev Dizini"
 
 #: account/models.py:109
 msgid "Full Name"
@@ -652,12 +644,12 @@ msgstr ""
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:113
 #: templates/account/bsdusers.html:115 templates/account/index.html:7
 msgid "Change Password"
-msgstr "Şifre Değiştir"
+msgstr "Parola Değiştir"
 
 #: account/nav.py:19 templates/account/changeform.html:25
 #: templates/account/index.html:4
 msgid "Change Admin User"
-msgstr "Admin Kullanıcı Değiştir"
+msgstr "Yönetici Kullanıcısını Değiştir"
 
 #: account/nav.py:26 templates/account/index.html:2
 msgid "My Account"
@@ -665,11 +657,11 @@ msgstr "Hesabım"
 
 #: account/nav.py:36
 msgid "View All Users"
-msgstr "Bütün kullanıcıları göster"
+msgstr "Tüm kullanıcıları göster"
 
 #: account/nav.py:43
 msgid "View All Groups"
-msgstr "Tüm Grupları Gör"
+msgstr "Tüm Grupları Göster"
 
 #: account/views.py:78
 #, fuzzy
@@ -696,7 +688,8 @@ msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
 msgstr ""
-"Özür dileriz form süresi doldu. Bu sayfadaki formu doldurarak devam edin."
+"Özür dileriz, form doldurma süreniz sona erdi. Formu doldurmak için bu "
+"sayfadan devam edin."
 
 #: freeadmin/forms.py:95
 #, python-format
@@ -4356,11 +4349,11 @@ msgstr ""
 
 #: templates/registration/login.html:50
 msgid "Welcome to FreeNAS 8"
-msgstr ""
+msgstr "FreeNAS versiyon 8 hoşgeldiniz"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
-msgstr ""
+msgstr "Lütfen Giriş Yapın."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -4412,7 +4405,7 @@ msgstr ""
 
 #: templates/services/index.html:114
 msgid "S.M.A.R.T. Settings"
-msgstr ""
+msgstr "S.M.A.R.T Ayarları"
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
@@ -4533,8 +4526,9 @@ msgid "No rsync modules defined"
 msgstr ""
 
 #: templates/services/rsyncmod.html:40 templates/services/rsyncmod.html:42
+#, fuzzy
 msgid "Add Rsync Module"
-msgstr ""
+msgstr "Rsync modülü ekle"
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
@@ -4627,9 +4621,8 @@ msgid "Clone Snapshot"
 msgstr ""
 
 #: templates/storage/datagrid_disks.html:9
-#, fuzzy
 msgid "Edit Disk"
-msgstr "Disk"
+msgstr "Diski Düzenle"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
@@ -4644,8 +4637,9 @@ msgid "Are you sure you want to detach?"
 msgstr ""
 
 #: templates/storage/disk_replacement.html:9
+#, fuzzy
 msgid "Replacing disk"
-msgstr ""
+msgstr "disk değiştirmek"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
@@ -4729,15 +4723,17 @@ msgstr ""
 
 #: templates/storage/snapshots.html:6
 msgid "Used space"
-msgstr ""
+msgstr "Kullanılan Alan"
 
 #: templates/storage/snapshots.html:7
+#, fuzzy
 msgid "Referenced space"
-msgstr ""
+msgstr "Başvurulan alan"
 
 #: templates/storage/snapshots.html:24 templates/storage/snapshots.html:28
+#, fuzzy
 msgid "Clone snapshot"
-msgstr ""
+msgstr "Anlık Klonla"
 
 #: templates/storage/snapshots.html:33 templates/storage/snapshots.html:37
 msgid "Destroy snapshot"
@@ -4808,13 +4804,13 @@ msgid "Edit ZFS Volume"
 msgstr ""
 
 #: templates/storage/volume_export.html:7
+#, fuzzy
 msgid "Are you sure you want to export?"
-msgstr ""
+msgstr "Dışarı vermek istediğinizden emin misiniz?"
 
 #: templates/storage/volumes.html:30 templates/storage/volumes.html.py:34
-#, fuzzy
 msgid "Create ZFS Volume"
-msgstr "ZFS Volume"
+msgstr "ZFS Bölümü Oluştur"
 
 #: templates/storage/volumes.html:64
 msgid "There are no active volumes."
@@ -4833,9 +4829,8 @@ msgid "Status"
 msgstr ""
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Destroy ZFS Volume"
-msgstr "ZFS Volume"
+msgstr " ZFS Bölümünü Sil"
 
 #: templates/storage/volumes.html:128 templates/storage/volumes.html.py:132
 msgid "Destroy Dataset"
@@ -4855,9 +4850,8 @@ msgid "View Disks"
 msgstr ""
 
 #: templates/storage/volumes.html:198 templates/storage/volumes.html.py:202
-#, fuzzy
 msgid "Export Volume"
-msgstr "ZFS Bölümü"
+msgstr "Bölümü Export et"
 
 #: templates/storage/volumes.html:209
 msgid "No volumes defined"
@@ -4888,12 +4882,13 @@ msgid "Cache"
 msgstr ""
 
 #: templates/storage/wizard.html:95
+#, fuzzy
 msgid "Spare"
-msgstr ""
+msgstr "İdareli Kullan"
 
 #: templates/storage/wizard.html:119
 msgid "Add Volume"
-msgstr ""
+msgstr "Bölüm Ekle"
 
 #: templates/storage/wizard.html:120
 msgid "Existing data will be cleared"
@@ -4918,7 +4913,7 @@ msgstr ""
 
 #: templates/system/config.html:3
 msgid "Restore to Factory Defaults"
-msgstr ""
+msgstr "Varsayılan Fabrika Ayarlarına dön"
 
 #: templates/system/config.html:5
 #, fuzzy
@@ -4927,7 +4922,7 @@ msgstr "Şifre (Onayla)"
 
 #: templates/system/config.html:9
 msgid "Save Config"
-msgstr ""
+msgstr "Ayarları KAydet"
 
 #: templates/system/config.html:12 templates/system/config.html.py:14
 msgid "Upload Config"
@@ -4935,27 +4930,28 @@ msgstr ""
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr ""
+msgstr "Yeniden Başlatılıyor..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
-msgstr ""
+msgstr "Fabrika ayarlarına dönmek istediğinizden eminmisiniz!"
 
 #: templates/system/config_upload.html:35
 msgid "Update"
-msgstr ""
+msgstr "Güncelle"
 
 #: templates/system/cronjob.html:40
+#, fuzzy
 msgid "No CronJobs defined"
-msgstr ""
+msgstr " CronJobs henüz tanımlanmamış"
 
 #: templates/system/cronjob.html:46 templates/system/cronjob.html.py:48
 msgid "Add CronJob"
-msgstr ""
+msgstr "CronJob Ekle"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr ""
+msgstr "Yeniden Boot ediliyor..."
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
@@ -4971,91 +4967,97 @@ msgstr ""
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr ""
+msgstr "Saatlik"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
-msgstr ""
+msgstr "Saatlik Grafikler"
 
 #: templates/system/reporting.html:18
 msgid "Daily"
-msgstr ""
+msgstr "Günlük"
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
-msgstr ""
+msgstr "Günlük Grafikler"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr ""
+msgstr "Haftalık"
 
 #: templates/system/reporting.html:33
+#, fuzzy
 msgid "Weekly Graphs"
-msgstr ""
+msgstr "Haftalık Grafikler"
 
 #: templates/system/reporting.html:46
 msgid "Monthly"
-msgstr ""
+msgstr "Aylık"
 
 #: templates/system/reporting.html:47
 msgid "Monthly Graphs"
-msgstr ""
+msgstr "Aylık Grafikler"
 
 #: templates/system/reporting.html:60
 msgid "Yearly"
-msgstr ""
+msgstr "Yıllık"
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"
-msgstr ""
+msgstr "Yıllık Grafikler"
 
 #: templates/system/rsync.html:38
+#, fuzzy
 msgid "No rsyncs defined"
-msgstr ""
+msgstr "Henüz rsyncs tanımlanmamış"
 
 #: templates/system/rsync.html:44 templates/system/rsync.html.py:46
+#, fuzzy
 msgid "Add Rsync"
-msgstr ""
+msgstr "Rsync Ekle"
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr ""
+msgstr "Genel"
 
 #: templates/system/settings.html:11
 msgid "Firmware Update"
-msgstr ""
+msgstr "Firmwire Güncelleme"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
-msgstr ""
+msgstr "Hizmet Paketi Yükle"
 
 #: templates/system/settings.html:15
 msgid "Config"
-msgstr ""
+msgstr "Ayarla"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
-msgstr ""
+msgstr "İşletim Sistemi Versiyonu"
 
 #: templates/system/system_info.html:12
+#, fuzzy
 msgid "Platform"
-msgstr ""
+msgstr "Platform"
 
 #: templates/system/system_info.html:16
 msgid "Memory"
-msgstr "Bellek"
+msgstr "Hafıza"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
-msgstr ""
+msgstr "Sistem Saati"
 
 #: templates/system/system_info.html:24
+#, fuzzy
 msgid "Uptime"
-msgstr ""
+msgstr "Çalışma Süresi"
 
 #: templates/system/system_info.html:28
+#, fuzzy
 msgid "Load Average"
-msgstr ""
+msgstr "Yük Ortalama"
 
 #: templates/system/system_info.html:32
 msgid "FreeNAS Build"
@@ -5070,7 +5072,7 @@ msgid "%s successfully update."
 msgstr "%s başarıyla güncellendi."
 
 msgid "Admin user"
-msgstr "Admin kullanıcı"
+msgstr "Yönetici kullanıcısı"
 
 msgid "N/A"
 msgstr "Kullanılamaz"

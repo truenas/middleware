@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-06-09 23:10+0200\n"
+"PO-Revision-Date: 2011-06-10 18:57+0200\n"
 "Last-Translator: misterredman <csulmoni@gmx.ch>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
@@ -44,20 +44,19 @@ msgstr "Account"
 
 #: media/lib/js/freeadmin.js:318
 msgid "Storage"
-msgstr "Dischi"
+msgstr "Storage"
 
 #: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
 msgstr "CronJobs"
 
 #: media/lib/js/freeadmin.js:437
-#, fuzzy
 msgid "Edit"
-msgstr "Configura disco"
+msgstr "Modifica"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
-msgstr "Configura disco"
+msgstr "Modifica disco"
 
 #: media/lib/js/freeadmin.js:443
 msgid "Replace"
@@ -88,4 +87,4 @@ msgid "Every N"
 msgstr "Ogni N"
 
 msgid "Every"
-msgstr "Tutti"
+msgstr "Ogni"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-06-10 11:00+0200\n"
+"PO-Revision-Date: 2011-06-10 18:58+0200\n"
 "Last-Translator: misterredman <csulmoni@gmx.ch>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
@@ -409,72 +409,63 @@ msgstr "Lettura e Scrittura"
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minutes) minuto/1"
+msgstr "%(minutes)s minuto(i)"
 
 #: choices.py:449
-#, fuzzy, python-format
+#, python-format
 msgid "%(hour)s hour"
-msgstr "%(hour) ora/e"
+msgstr "%(hour)s ora(e)"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
-#, fuzzy, python-format
+#, python-format
 msgid "%(hours)s hours"
-msgstr "%(hours) ora/e"
+msgstr "%(hours)s ora(e)"
 
 #: choices.py:455
-#, fuzzy, python-format
+#, python-format
 msgid "%(day)s day"
-msgstr "%(day) giorno/i"
+msgstr "%(day)s giorno(i)"
 
 #: choices.py:456
-#, fuzzy, python-format
+#, python-format
 msgid "%(week)s week"
-msgstr "%(week) settimana/e"
+msgstr "%(week)s settimana(e)"
 
 #: choices.py:460
-#, fuzzy
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Mai - Controlla il dispositivo indipendentemente dal suo stato."
+msgstr "Mai - Controlla il dispositivo indipendentemente dal suo stato"
 
 #: choices.py:461
-#, fuzzy
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
-"Dormiente - Controlla il dispositivo a meno che non sia in modalità SLEEP"
+msgstr "Sleep - Controlla il dispositivo a meno che non sia in modalità SLEEP"
 
 #: choices.py:462
-#, fuzzy
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"Attesa - Controlla il dispositivo a meno che non sia in modalità SLEEP o in "
+"Standby - Controlla il dispositivo a meno che non sia in modalità SLEEP o in "
 "STANDBY"
 
 #: choices.py:463
-#, fuzzy
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
-"Spento - Controlla il dispositivo a meno che non sia in modalità SLEEP, "
+"Idle - Controlla il dispositivo a meno che non sia in modalità SLEEP, "
 "STANDBY o IDLE"
 
 #: choices.py:467
-#, fuzzy
 msgid "Long Self-Test"
 msgstr "Self-Test approfondito"
 
 #: choices.py:468
-#, fuzzy
 msgid "Short Self-Test"
 msgstr "Self-Test breve"
 
 #: choices.py:469
-#, fuzzy
 msgid "Conveyance Self-Test (ATA  only)"
 msgstr "Conveyance Self-Test (solo ATA)"
 
 #: choices.py:470
-#, fuzzy
 msgid "Offline Immediate Test (ATA only)"
-msgstr "Test di spegnimento istantaneo (solo ATA)"
+msgstr "Test offline immediato (solo ATA)"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -492,11 +483,11 @@ msgstr "Nome utente"
 
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr "Obbligatorio. Massimo 30 caratteri. Solo lettere, cifre e @/./+/-/_"
+msgstr "Obbligatorio. Massimo 30 caratteri. Solo lettere, cifre e @/./+/-/_ ."
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr "Questo campo può contenere solo lettere, numeri e @/./+/-/_"
+msgstr "Questo campo può contenere solo lettere, numeri e @/./+/-/_ ."
 
 #: account/forms.py:201 account/forms.py:308 services/models.py:680
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
@@ -593,7 +584,7 @@ msgstr "Gruppi"
 #: account/models.py:63
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr "Il gruppo %s è parte del sistema e non può essere eliminato"
+msgstr "Il gruppo %s è parte del sistema e non può essere eliminato!"
 
 #: account/models.py:73
 msgid "User ID"
@@ -671,22 +662,18 @@ msgid "View All Groups"
 msgstr "Visualizza tutti i gruppi"
 
 #: account/views.py:78
-#, fuzzy
 msgid "Password successfully updated."
 msgstr "Password aggiornata con successo."
 
 #: account/views.py:92
-#, fuzzy
 msgid "Admin user successfully updated."
-msgstr "Utente Admin aggiornato con successo."
+msgstr "Utente admin aggiornato con successo."
 
 #: account/views.py:102
-#, fuzzy
 msgid "Users successfully updated."
 msgstr "Utente aggiornato con successo."
 
 #: account/views.py:115
-#, fuzzy
 msgid "Groups successfully updated."
 msgstr "Gruppi aggiornati con successo."
 
@@ -709,9 +696,8 @@ msgid "The group %s is not valid."
 msgstr "Il gruppo %s non è valido."
 
 #: freeadmin/forms.py:138
-#, fuzzy
 msgid "The path must reside within a volume mount point"
-msgstr "Il percorso deve essere interno al punto di mount del volume/dataset."
+msgstr "Il percorso deve essere interno al punto di mount del volume"
 
 #: freeadmin/navtree.py:315
 #, python-format
@@ -850,7 +836,7 @@ msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
 "Quando abilitato usa il DHCP per ottenere l'indirizzo IPv4 così come il "
-"router di default, ecc..."
+"router di default, ecc."
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
@@ -982,9 +968,8 @@ msgid "View All Link Aggregations"
 msgstr "Visualizza tutti i Link Aggregations"
 
 #: network/views.py:180
-#, fuzzy
 msgid "LAGG successfully added"
-msgstr "Aggregato di Link aggiunto con successo"
+msgstr "LAGG aggiunto con successo"
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1056,7 +1041,7 @@ msgstr "Riavvio del servizio Rsync fallito."
 
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
-msgstr "Il nome non può contenere i caratteri / o ]"
+msgstr "Il nome non può contenere i caratteri slash (/) o chiusa parentesi (])."
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
@@ -1199,11 +1184,11 @@ msgid "Delete underlying file"
 msgstr "Cancella file sottostante"
 
 #: services/forms.py:788
-#, fuzzy, python-format
+#, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "L'email %s non è valida"
-msgstr[1] "Le seguenti email non sono valide: %s"
+msgstr[0] "L'email %(email)s non è valida"
+msgstr[1] "Le seguenti email non sono valide: %(email)s"
 
 #: services/models.py:40
 msgid "Service"
@@ -1381,7 +1366,7 @@ msgstr "Abilita AIO"
 
 #: services/models.py:154
 msgid "This enables\\disables AIO support."
-msgstr "Questo abilita\\disabilita il supporto AIO"
+msgstr "Questo abilita\\disabilita il supporto AIO."
 
 #: services/models.py:158
 msgid "Minimal AIO read size"
@@ -1432,7 +1417,7 @@ msgstr "Accesso guest"
 msgid "Allows guest access to all apple shares on this box."
 msgstr ""
 "Consente l'accesso all'utente guest alle condivisioni Apple in questa "
-"macchina"
+"macchina."
 
 #: services/models.py:195
 msgid "Local Access"
@@ -1442,7 +1427,7 @@ msgstr "Accesso locale"
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
 "Consenti agli utenti con account locale ad accedere alle condivisioni Apple "
-"in questa macchina"
+"in questa macchina."
 
 #: services/models.py:199
 msgid "Enable DDP"
@@ -1450,7 +1435,7 @@ msgstr "Abilita DDP"
 
 #: services/models.py:200
 msgid "Enables DDP support for low-level appletalk access."
-msgstr "Abilita il supporto DDP per l'accesso a basso livello di appletalk"
+msgstr "Abilita il supporto DDP per l'accesso a basso livello di appletalk."
 
 #: services/models.py:204 services/models.py:205
 #: templates/services/index.html:7
@@ -1495,9 +1480,9 @@ msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
-"Il nome di base (ad esempio iqn.2007-09.jp.ne.peach.istgt, vedere RFC 3.720 "
-"e 3.721 per i dettagli) aggiungerà il nome di destinazione che non inizia "
-"con 'iqn.'"
+"Il nome di base (ad esempio iqn.2007-09.jp.ne.peach.istgt, vedere RFC 3720 e "
+"3721 per i dettagli) aggiungerà il nome di destinazione che non inizia con "
+"'iqn.'"
 
 #: services/models.py:242
 msgid "Discovery Auth Method"
@@ -1525,7 +1510,7 @@ msgstr "Max. Sessioni"
 
 #: services/models.py:266
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr "Numero massimo di sessioni nello stesso tempo (16 di default)"
+msgstr "Numero massimo di sessioni nello stesso tempo (16 di default)."
 
 #: services/models.py:271
 msgid "Max. connections"
@@ -1611,7 +1596,7 @@ msgstr "Controller porta TCP"
 
 #: services/models.py:331
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr "Porta TCP del controller dell'unità logica ( di default è 3261 )."
+msgstr "Porta TCP del controller dell'unità logica ( di default è 3261 )"
 
 #: services/models.py:337
 msgid "Controller Authorized netmask"
@@ -1621,11 +1606,11 @@ msgstr "Maschera di rete autorizzata dal controller"
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
 msgstr ""
 "Maschera di rete autorizzata dal controller unità logica ( 255.255.255.0 di "
-"default )."
+"default )"
 
 #: services/models.py:346
 msgid "Controller Auth Method"
-msgstr "Metodo automatico del controller."
+msgstr "Metodo di autenticazione del controller"
 
 #: services/models.py:347
 msgid "The method can be accepted in the controller."
@@ -1714,7 +1699,7 @@ msgstr ""
 
 #: services/models.py:476 templates/services/iscsi_authini.html:6
 msgid "Initiators"
-msgstr "Inizializzatori."
+msgstr "Iniziatori"
 
 #: services/models.py:478
 msgid ""
@@ -1722,11 +1707,11 @@ msgid ""
 "for any initiators."
 msgstr ""
 "Inizializzatore autorizzato ad accedere alla destinazione ISCSI. Indicare un "
-"nome, oppure utilizzare \"ALL\" per tutti gli inizializzatori."
+"nome, oppure utilizzare 'ALL' per tutti gli inizializzatori."
 
 #: services/models.py:482
 msgid "Authorized network"
-msgstr "Rete autorizzata."
+msgstr "Rete autorizzata"
 
 #: services/models.py:484
 msgid ""
@@ -1734,11 +1719,11 @@ msgid ""
 "addresses or 'ALL' for any IPs."
 msgstr ""
 "Rete autorizzata ad accedere alla destinazione iSCSI. Richiede un indirizzo "
-"IP o CIDR, o utilizzare \"ALL\" per autorizzare qualsiasi rete."
+"IP o CIDR, o utilizzare 'ALL' per autorizzare qualsiasi rete."
 
 #: services/models.py:493
 msgid "Initiator"
-msgstr "Inizializzatore."
+msgstr "Iniziatore"
 
 #: services/models.py:522
 msgid "Target side user name. It is usually the initiator name by default."
@@ -1756,39 +1741,37 @@ msgstr "Password Peer"
 
 #: services/models.py:541
 msgid "Authorized Access"
-msgstr "Accesso autorizzato."
+msgstr "Accesso autorizzato"
 
 #: services/models.py:542
 msgid "Authorized Accesses"
-msgstr "Accessi autorizzati."
+msgstr "Accessi autorizzati"
 
 #: services/models.py:557
 msgid "Target Name"
-msgstr "Nome della destinazione."
+msgstr "Nome della destinazione"
 
 #: services/models.py:558
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
 msgstr ""
-"Il nome di base verrà automaticamente aggiunto quando si inizia senza \"iqn."
-"\"."
+"Il nome di base verrà automaticamente aggiunto quando si inizia senza "
+"'iqn.'."
 
 #: services/models.py:565
 msgid "Target Alias"
-msgstr "Alias della destinazione."
+msgstr "Alias del Target"
 
 #: services/models.py:566
 msgid "Optional user-friendly string of the target."
 msgstr "Stringa user-friendly opzionale per la destinazione."
 
 #: services/models.py:569 storage/views.py:157
-#, fuzzy
 msgid "Serial"
-msgstr "Seriale"
+msgstr "Numero di serie"
 
 #: services/models.py:572
-#, fuzzy
 msgid "Serial number for the logical unit"
-msgstr "Numero seriale dell'unità logica"
+msgstr "Numero di serie dell'unità logica"
 
 #: services/models.py:577 storage/models.py:74 system/models.py:498
 #: templates/services/iscsi_extents.html:6
@@ -1806,11 +1789,11 @@ msgstr "Flags di destinazione"
 
 #: services/models.py:592
 msgid "Initiator Group ID"
-msgstr "ID del gruppo degli inizializzatori."
+msgstr "ID del gruppo degli iniziatori"
 
 #: services/models.py:598 services/models.py:610
 msgid "Auth Method"
-msgstr "Metodo di Autenticazione."
+msgstr "Metodo di Autenticazione"
 
 #: services/models.py:599 services/models.py:611
 msgid ""
@@ -1818,7 +1801,7 @@ msgid ""
 "authentication."
 msgstr ""
 "Metodo che può essere accettato dalla destinazione. Auto significa sia "
-"\"nessuno\" che \"autenticazione\"."
+"Nessuno che Autenticazione."
 
 #: services/models.py:603
 msgid "Authentication Group ID"
@@ -1916,7 +1899,7 @@ msgid ""
 "building, Room xyzzy'."
 msgstr ""
 "Informazioni sull'ubicazione, es. per l'ubicazione fisica di questo sistema: "
-"\"Piano terra, Stanza xyzzy\"."
+"'Piano terra, Stanza xyzzy'."
 
 #: services/models.py:716
 msgid "Contact"
@@ -1936,7 +1919,7 @@ msgstr "Community"
 
 #: services/models.py:723
 msgid "In most cases, 'public' is used here."
-msgstr "Nella maggior parte dei casi, viene utilizzato \"public\"."
+msgstr "Nella maggior parte dei casi, viene utilizzato 'public'."
 
 #: services/models.py:726
 msgid "Send SNMP Traps"
@@ -1955,7 +1938,7 @@ msgstr "Identificatore"
 msgid "This name is used to uniquely identify your UPS on this system."
 msgstr ""
 "Questo nome è utilizzato per l'identificazione univoca del tuo UPS nel "
-"sistema"
+"sistema."
 
 #: services/models.py:749
 msgid "Driver"
@@ -2037,7 +2020,7 @@ msgstr "Connessioni"
 
 #: services/models.py:818
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr "Massimo numero di connessioni per indirizzi IP ( 0=illimitato )"
+msgstr "Massimo numero di connessioni per indirizzi IP ( 0=illimitato )."
 
 #: services/models.py:822
 msgid "Login Attempts"
@@ -2055,7 +2038,7 @@ msgstr "Timeout"
 
 #: services/models.py:828
 msgid "Maximum idle time in seconds."
-msgstr "Massimo tempo di inattività in secondi"
+msgstr "Massimo tempo di inattività in secondi."
 
 #: services/models.py:831
 msgid "Allow Root Login"
@@ -2075,7 +2058,7 @@ msgstr "Percorso"
 
 #: services/models.py:838
 msgid "Allow Local User Login"
-msgstr "Consenti il Login all'Utente Locale."
+msgstr "Consenti il Login all'Utente Locale"
 
 #: services/models.py:841
 msgid "Banner"
@@ -2522,7 +2505,7 @@ msgstr "Nome modulo"
 
 #: services/models.py:1186
 msgid "Path to be shared"
-msgstr "Percorso da condividere."
+msgstr "Percorso da condividere"
 
 #: services/models.py:1192
 msgid "Access Mode"
@@ -2559,7 +2542,7 @@ msgid ""
 msgstr ""
 "Questa opzione specifica il nome del gruppo con il quale vengono effettuati "
 "i trasferimenti da e verso questo modulo. Lasciare il campo vuoto per "
-"utilizzare la configurazione di default."
+"utilizzare la configurazione di default"
 
 #: services/models.py:1215
 msgid "Hosts allow"
@@ -2618,68 +2601,58 @@ msgid "Check interval"
 msgstr "Intervallo"
 
 #: services/models.py:1244
-#, fuzzy
 msgid ""
 "Sets the interval between disk checks to N minutes. The default is 30 minutes"
 msgstr ""
 "Imposta l'intervallo tra il controllo dei dischi a N minuti. Il default è 30 "
-"minuti."
+"minuti"
 
 #: services/models.py:1250
-#, fuzzy
 msgid "Power mode"
-msgstr "Metodo di Shutdown"
+msgstr "Modalità di alimentazione"
 
 #: services/models.py:1254
-#, fuzzy
 msgid "Difference"
 msgstr "Differenze"
 
 #: services/models.py:1255
-#, fuzzy
 msgid ""
 "Report if the temperature had changed by at least N degrees Celsius since "
 "last report. 0 to disable"
 msgstr ""
-"Effettua un report se la temperatura è variata di almeno N gradi centigradi "
-"dall'ultimo report. 0 per disabilitare."
+"Invia un rapporto se la temperatura è variata di almeno N gradi centigradi "
+"dall'ultimo report. 0 per disabilitare"
 
 #: services/models.py:1259
-#, fuzzy
 msgid "Informal"
-msgstr "informale"
+msgstr "Informale"
 
 #: services/models.py:1260 services/models.py:1265
-#, fuzzy
 msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
 msgstr ""
-"Effetua un report se la temperatura è maggiore o uguale di N gradi "
-"centigradi. 0 per disabilitare."
+"Invia un rapporto se la temperatura è maggiore o uguale a N gradi "
+"centigradi. 0 per disabilitare"
 
 #: services/models.py:1264
-#, fuzzy
 msgid "Critical"
 msgstr "Critico"
 
 #: services/models.py:1268
-#, fuzzy
 msgid "Email to report"
-msgstr "Email per il report"
+msgstr "Email per il rapporto"
 
 #: services/models.py:1271
-#, fuzzy
 msgid "Destination email address. Separate email addresses by semi-colon"
 msgstr ""
 "Indirizzi di destinazione dell'email. Separare gli indirizzi multipli con "
-"punto e virgola."
+"punto e virgola"
 
 #: services/models.py:1274 services/models.py:1275
 #: templates/services/index.html:108
-#, fuzzy
 msgid "S.M.A.R.T."
-msgstr "Abilita S.M.A.R.T."
+msgstr "S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
@@ -2694,7 +2667,6 @@ msgid "View All Device Extents"
 msgstr "Visualizza tutti gli Extent di tipo periferica"
 
 #: services/nav.py:70 templates/services/iscsi.html:7
-#, fuzzy
 msgid "Device Extents"
 msgstr "Extents di tipo periferica"
 
@@ -2815,9 +2787,9 @@ msgid ""
 "number. Leave this field empty to use default settings."
 msgstr ""
 "Questa opzione è una lista di Hosts, separati da una virgola, uno spazio o "
-"una tablatura, ai quali è permesso accedere alla risorsa condivisa. E' "
+"una tabulazione, ai quali è permesso accedere alla risorsa condivisa. E' "
 "possibile specificare gli Hosts per nome o indirizzo IP. Lasciare il campo "
-"vuoto per utilizzare le impostazioni di default"
+"vuoto per utilizzare le impostazioni di default."
 
 #: sharing/models.py:80
 msgid "Hosts Deny"
@@ -2833,12 +2805,12 @@ msgid ""
 "Leave this field empty to use default settings."
 msgstr ""
 "Questa opzione è una lista di Hosts, separati da una virgola, uno spazio o "
-"una tablatura, ai quali NON è permesso accedere alla risorsa condivisa. In "
+"una tabulazione, ai quali NON è permesso accedere alla risorsa condivisa. In "
 "caso di conflitto la lista Hosts Abilitati ha precedenza. Per disabilitare "
 "per dafault tutti gli Host utilizzare la keyword ALL (o la netmask "
 "0.0.0.0/0) quindi specificare gli Hosts Abilitati nell'apposita lista. E' "
 "possibile specificare gli Hosts per nome o indirizzo IP. Lasciare il campo "
-"vuoto per utilizzare le impostazioni di default"
+"vuoto per utilizzare le impostazioni di default."
 
 #: sharing/models.py:87
 msgid "These parameters are added to [Share] section of smb.conf"
@@ -3068,7 +3040,7 @@ msgid ""
 "across a reboot, cluster, ..."
 msgstr ""
 "Utilizzare sempre 0 come numero del dispositivo: serve quando il numero del "
-"dispositivo cambia a seguito di un riavvio, cluster,..."
+"dispositivo cambia a seguito di un riavvio, cluster, ..."
 
 #: sharing/models.py:188
 msgid "Disable File ID"
@@ -3178,7 +3150,6 @@ msgid "Maproot User"
 msgstr "Utente Maproot"
 
 #: sharing/models.py:252
-#, fuzzy
 msgid "User to map root to"
 msgstr "Utente verso cui mappare il root"
 
@@ -3187,7 +3158,6 @@ msgid "Maproot Group"
 msgstr "Gruppo Maproot"
 
 #: sharing/models.py:260
-#, fuzzy
 msgid "Group to map root to"
 msgstr "Gruppo verso cui mappare il root"
 
@@ -3196,7 +3166,6 @@ msgid "Mapall User"
 msgstr "Utente Mapall"
 
 #: sharing/models.py:268
-#, fuzzy
 msgid "User to map all users to"
 msgstr "Utente verso cui mappare tutti gli utenti"
 
@@ -3205,7 +3174,6 @@ msgid "Mapall Group"
 msgstr "Gruppo Mapall"
 
 #: sharing/models.py:276
-#, fuzzy
 msgid "Group to map all users to"
 msgstr "Gruppo verso cui mappare tutti gli utenti"
 
@@ -3338,28 +3306,24 @@ msgstr ""
 "Immettere un numero positivo (opzionalmente preceduto da M, G, T), oppure 0"
 
 #: storage/forms.py:782
-#, fuzzy
 msgid "Volume from which this ZFS Volume will be created on"
-msgstr "Volume a partire dal quale questo zvol sarà creato"
+msgstr "Volume a partire dal quale questo volume ZFS sarà creato"
 
 #: storage/forms.py:783
-#, fuzzy
 msgid "ZFS Volume Name"
-msgstr "Volume ZFS"
+msgstr "Nome del volume ZFS"
 
 #: storage/forms.py:784
-#, fuzzy
 msgid "Size for this ZFS Volume"
-msgstr "Dimensione di questo zvol"
+msgstr "Dimensione di questo volume ZFS"
 
 #: storage/forms.py:798
-#, fuzzy
 msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
 msgstr ""
-"Il nome del zvol deve iniziare con un carattere alfanumerico e può contenere "
-"solo (-), (_), (:) e (.)."
+"Il nome del volume ZFS deve iniziare con un carattere alfanumerico e può "
+"contenere solo (-), (_), (:) e (.)."
 
 #: storage/forms.py:820
 msgid "Owner (user)"
@@ -3523,7 +3487,7 @@ msgstr "Filesystem ZFS remoto"
 
 #: storage/models.py:251
 msgid "Recursively replicate and remove stale snapshot on remote side"
-msgstr ""
+msgstr "Replicare ricorsivamente e rimuovere i vecchi snapshots dal lato remoto"
 
 #: storage/models.py:254
 msgid "Replication Task"
@@ -3571,7 +3535,7 @@ msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
 msgstr ""
 "Quanti minuti debbono trascorrere prima che un nuovo snapshot venga "
-"effettuato dopo l'ultimo realizzato"
+"effettuato dopo l'ultimo realizzato."
 
 #: storage/models.py:303
 msgid "Occurrence"
@@ -3594,7 +3558,6 @@ msgid "Periodic Snapshot Tasks"
 msgstr "Tasks di snapshot periodico"
 
 #: storage/nav.py:5 templates/menubar.html:18
-#, fuzzy
 msgid "Storage"
 msgstr "Storage"
 
@@ -3641,46 +3604,40 @@ msgid "Change Permissions"
 msgstr "Cambia i permessi"
 
 #: storage/views.py:88 storage/views.py:115 storage/views.py:137
-#, fuzzy
 msgid "Volume successfully added."
-msgstr "%s aggiunto con successo."
+msgstr "Volume aggiunto con successo."
 
 #: storage/views.py:217
 msgid "Unknown"
-msgstr ""
+msgstr "Sconosciuto"
 
 #: storage/views.py:283
-#, fuzzy
 msgid "Dataset successfully added."
-msgstr "Dataset eliminato con successo."
+msgstr "Dataset aggiunto con successo."
 
 #: storage/views.py:318
-#, fuzzy
 msgid "Dataset successfully edited."
-msgstr "Dataset eliminato con successo."
+msgstr "Dataset modificato con successo."
 
 #: storage/views.py:320 storage/views.py:396
 msgid "Some error ocurried while setting the options"
 msgstr "Si sono verificati degli errori impostando le opzioni"
 
 #: storage/views.py:342
-#, fuzzy
 msgid "ZFS Volume successfully added."
-msgstr "Volume ZFS eliminato con successo."
+msgstr "Volume ZFS aggiunto con successo."
 
 #: storage/views.py:356
-#, fuzzy
 msgid "This is in use by the iscsi target, please remove it there first."
-msgstr "Questo è attualmente in uso dall'iSCSI target, rimuovilo prima li"
+msgstr "Questo è attualmente in uso dall'iSCSI target, rimuovilo prima li."
 
 #: storage/views.py:360
 msgid "ZFS Volume successfully destroyed."
 msgstr "Volume ZFS eliminato con successo."
 
 #: storage/views.py:394
-#, fuzzy
 msgid "Native dataset successfully edited."
-msgstr "Dataset eliminato con successo."
+msgstr "Dataset nativo modificato con successo."
 
 #: storage/views.py:410
 msgid "Mount Point permissions successfully updated."
@@ -3699,19 +3656,16 @@ msgid "Rollback successful."
 msgstr "Ripristino effettuato con successo."
 
 #: storage/views.py:470
-#, fuzzy
 msgid "Snapshot successfully added."
-msgstr "Snapshot eliminato con successo."
+msgstr "Snapshot aggiunto con successo."
 
 #: storage/views.py:483
-#, fuzzy
 msgid "Snapshot successfully taken."
-msgstr "Snapshot completato con successo"
+msgstr "Snapshot completato con successo."
 
 #: storage/views.py:498
-#, fuzzy
 msgid "Snapshot successfully cloned."
-msgstr "Snapshot clonato con successo"
+msgstr "Snapshot clonato con successo."
 
 #: storage/views.py:549
 msgid "Disk replacement has been initiated."
@@ -3726,14 +3680,12 @@ msgid "Disk detach has been successfully done."
 msgstr "Il disco è stato scollegato con successo."
 
 #: storage/views.py:588
-#, fuzzy
 msgid "The volume failed to export"
-msgstr "Riavvio del servizio fallito."
+msgstr "L'esportazione del volume è fallita"
 
 #: storage/views.py:591
-#, fuzzy
 msgid "The volume has been successfully exported"
-msgstr "I cambiamenti sono stati applicati con successo!"
+msgstr "Il volume è stato esportato con successo"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
@@ -3853,7 +3805,7 @@ msgid ""
 "Swap size on each drive in GiB, affects new disks only. Must be non-zero"
 msgstr ""
 "Dimensione del file di scambio (swap) su ogni disco in GiB, valida solo per "
-"i nuovi dischi. Deve essere diversa da zero."
+"i nuovi dischi. Deve essere diversa da zero"
 
 #: system/models.py:105
 msgid "Show console messages in the footer (Requires UI reload)"
@@ -4094,7 +4046,6 @@ msgid "Short description"
 msgstr "Breve descrizione"
 
 #: system/models.py:385
-#, fuzzy
 msgid "Recurse into directories"
 msgstr "Percorri le cartelle ricorsivamente"
 
@@ -4150,7 +4101,6 @@ msgid "Delete"
 msgstr "Cancella"
 
 #: system/models.py:405
-#, fuzzy
 msgid "Delete files on the receiving side that don't exist on sender"
 msgstr "Cancella i file dal sito ricevente che non esistono su quello di invio"
 
@@ -4186,7 +4136,7 @@ msgstr ""
 
 #: system/models.py:426
 msgid "Extra options to rsync command line (usually empty)"
-msgstr "Opzioni supplementari della riga comando di rsync (solitamente vuoto)."
+msgstr "Opzioni supplementari della riga comando di rsync (solitamente vuoto)"
 
 #: system/models.py:431
 msgid "Rsyncs"
@@ -4214,23 +4164,23 @@ msgstr "Il file caricato non è valido."
 
 #: system/views.py:243
 msgid "Test message from FreeNAS"
-msgstr ""
+msgstr "Messaggio di test da FreeNAS"
 
 #: system/views.py:244
 msgid "This is a message test from FreeNAS"
-msgstr ""
+msgstr "Questo è un messaggio di test da FreeNAS"
 
 #: templates/404.html:7
 msgid "Page Not Found"
-msgstr ""
+msgstr "Pagina Non Trovata"
 
 #: templates/base.html:32
 msgid "expand all"
-msgstr ""
+msgstr "espandi tutto"
 
 #: templates/base.html:33
 msgid "collapse all"
-msgstr ""
+msgstr "riduci tutto"
 
 #: templates/menubar.html:33
 msgid "Log Out"
@@ -4404,7 +4354,6 @@ msgid "Yes"
 msgstr "Si"
 
 #: templates/freeadmin/generic_model_delete_ok.html:1
-#, fuzzy
 msgid "successfully deleted"
 msgstr "eliminato(i) con successo"
 
@@ -4422,9 +4371,8 @@ msgstr "Processi in esecuzione"
 
 #: templates/freeadmin/index.html:35 templates/freeadmin/index.html.py:39
 #: templates/freeadmin/index.html:44
-#, fuzzy
 msgid "Loading..."
-msgstr "Caricamento"
+msgstr "Caricamento..."
 
 #: templates/freeadmin/index.html:46
 msgid "Reboot the System"
@@ -4460,9 +4408,8 @@ msgid "Forum"
 msgstr "Forum"
 
 #: templates/freeadmin/index.html:74
-#, fuzzy
 msgid "Community Forum"
-msgstr "Forum della community"
+msgstr "Community Forum"
 
 #: templates/freeadmin/index.html:79
 msgid "IRC (Chat)"
@@ -4473,7 +4420,6 @@ msgid "#freenas on freenode"
 msgstr "#freenas su freenode"
 
 #: templates/freeadmin/index.html:85
-#, fuzzy
 msgid "Mailing Lists"
 msgstr "Mailing Lists"
 
@@ -4498,7 +4444,6 @@ msgid "FreeNAS Docs"
 msgstr "Documentazione FreeNAS"
 
 #: templates/freeadmin/index.html:92
-#, fuzzy
 msgid "FreeNAS Translations"
 msgstr "Traduzioni FreeNAS"
 
@@ -4516,9 +4461,8 @@ msgid "Documentation"
 msgstr "Documentazione"
 
 #: templates/freeadmin/index.html:106
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Documentazione FreeNAS "
+msgstr "Documentazione FreeNAS"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4664,18 +4608,18 @@ msgstr ""
 "Il nome utente e la password non corrispondono. Provare di nuovo per favore."
 
 #: templates/registration/login.html:48
-#, fuzzy, python-format
+#, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Benvenuto, %(username)s. Grazie di esserti connesso."
 
 #: templates/registration/login.html:50
 msgid "Welcome to FreeNAS 8"
-msgstr ""
+msgstr "Benvenuto in FreeNAS 8"
 
 #: templates/registration/login.html:51
 #, fuzzy
 msgid "Please log in."
-msgstr "Attendere prego..."
+msgstr "Per favore connettersi."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -4726,9 +4670,8 @@ msgid "SNMP Settings"
 msgstr "Impostazioni SNMP"
 
 #: templates/services/index.html:114
-#, fuzzy
 msgid "S.M.A.R.T. Settings"
-msgstr "Opzioni S.M.A.R.T. extra"
+msgstr "Impostazioni S.M.A.R.T."
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
@@ -4943,9 +4886,8 @@ msgid "Clone Snapshot"
 msgstr "Clona lo snapshot"
 
 #: templates/storage/datagrid_disks.html:9
-#, fuzzy
 msgid "Edit Disk"
-msgstr "Modifica dataset"
+msgstr "Modifica Disco"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
@@ -5127,9 +5069,8 @@ msgid "Edit ZFS Volume"
 msgstr "Modifica Volume ZFS"
 
 #: templates/storage/volume_export.html:7
-#, fuzzy
 msgid "Are you sure you want to export?"
-msgstr "Sei sicuro di voler cancellare?"
+msgstr "Sei sicuro di voler esportare?"
 
 #: templates/storage/volumes.html:30 templates/storage/volumes.html.py:34
 msgid "Create ZFS Volume"
@@ -5173,9 +5114,8 @@ msgid "View Disks"
 msgstr "Visualizza Dischi"
 
 #: templates/storage/volumes.html:198 templates/storage/volumes.html.py:202
-#, fuzzy
 msgid "Export Volume"
-msgstr "Importa Volume"
+msgstr "Esporta Volume"
 
 #: templates/storage/volumes.html:209
 msgid "No volumes defined"
@@ -5218,13 +5158,12 @@ msgid "Existing data will be cleared"
 msgstr "I dati esistenti saranno cancellati"
 
 #: templates/storage/zvols.html:9
-#, fuzzy
 msgid "Add ZFS Volume"
-msgstr "Volume ZFS"
+msgstr "Aggiungi Volume ZFS"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
-msgstr "Ricostruzione della cache in corso"
+msgstr "Ricostruzione della cache in corso."
 
 #: templates/system/advanced_edit.html:19
 msgid "The cache could not be rebuilt"
@@ -5239,9 +5178,8 @@ msgid "Restore to Factory Defaults"
 msgstr "Ripristina le Impostazioni Predefinite di Fabbrica"
 
 #: templates/system/config.html:5
-#, fuzzy
 msgid "Restore Config"
-msgstr "Salva Configurazione"
+msgstr "Ripristina la Configurazione"
 
 #: templates/system/config.html:9
 msgid "Save Config"
@@ -5278,11 +5216,11 @@ msgstr "Riavvio..."
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "L'email di test è stata inviata!"
 
 #: templates/system/email_edit.html:19
 msgid "Your test email could not be sent:"
-msgstr ""
+msgstr "L'email di test non ha potuto essere inviata:"
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
@@ -5383,7 +5321,7 @@ msgstr "Versione FreeNAS"
 #: templates/system/wizard.html:3
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr "Passo %(step)s di %(step_count)"
+msgstr "Passo %(step)s di %(step_count)s"
 
 msgid "%s successfully update."
 msgstr "%s aggiornato con successo."
@@ -5432,7 +5370,7 @@ msgid "Success!"
 msgstr "Successo!"
 
 msgid "Your password was changed."
-msgstr "La password è stata modificata"
+msgstr "La password è stata modificata."
 
 msgid "Password change"
 msgstr "Modifica password"

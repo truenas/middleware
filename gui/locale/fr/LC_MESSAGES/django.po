@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:47-0700\n"
-"PO-Revision-Date: 2011-06-09 23:32+0200\n"
+"PO-Revision-Date: 2011-06-10 13:01+0200\n"
 "Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -3564,11 +3564,11 @@ msgstr "Jours de la semaine"
 
 #: storage/models.py:327
 msgid "Periodic Snapshot Task"
-msgstr "Tâche périodique de capture"
+msgstr "Tâche périodique d'instantané"
 
 #: storage/models.py:328 templates/storage/index.html:7
 msgid "Periodic Snapshot Tasks"
-msgstr "Tâches périodiques de capture"
+msgstr "Tâches périodiques d'instantané"
 
 #: storage/nav.py:5 templates/menubar.html:18
 msgid "Storage"
@@ -3605,7 +3605,7 @@ msgstr "Créer un jeu de données ZFS"
 
 #: storage/nav.py:89
 msgid "Add Periodic Snapshot"
-msgstr "Ajouter une capture périodique"
+msgstr "Ajouter un instantané périodique"
 
 #: storage/nav.py:100
 msgid "Volumes"
@@ -5491,7 +5491,7 @@ msgid "View All Replication Tasks"
 msgstr "Voir toutes les tâches de réplication"
 
 msgid "View All Periodic Snapshot Tasks"
-msgstr "Voir toutes les tâches périodiques de capture"
+msgstr "Voir toutes les tâches périodiques d'instantané"
 
 # Gestion féminin et pluriel ?
 msgid "sucessfully edited"

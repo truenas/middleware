@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-04 08:07+0200\n"
-"Last-Translator: raulfg <raulfg3@gmail.com>\n"
+"PO-Revision-Date: 2011-06-11 10:59+0200\n"
+"Last-Translator: alejometal <alejandro.metallord@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -412,31 +412,31 @@ msgstr "Lectura-Escritura"
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutos)s minutos"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hora)s hora"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(horas)s horas"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(día)s día"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(semana)s semana"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Nunca - Compruebe el dispositivo independientemente de su modo de poder"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
@@ -647,7 +647,7 @@ msgstr "Cambiar Contraseña"
 #: account/nav.py:19 templates/account/changeform.html:25
 #: templates/account/index.html:4
 msgid "Change Admin User"
-msgstr "Modificar Usuario Administrador"
+msgstr "Modificar Usuario Admin"
 
 #: account/nav.py:26 templates/account/index.html:2
 msgid "My Account"
@@ -662,24 +662,20 @@ msgid "View All Groups"
 msgstr "Ver Todos los Grupos"
 
 #: account/views.py:78
-#, fuzzy
 msgid "Password successfully updated."
-msgstr "%s ha sido actualizado correctamente."
+msgstr "Contraseña actualizada correctamente."
 
 #: account/views.py:92
-#, fuzzy
 msgid "Admin user successfully updated."
-msgstr "%s ha sido actualizado correctamente."
+msgstr "Usuario Admin actualizado correctamente."
 
 #: account/views.py:102
-#, fuzzy
 msgid "Users successfully updated."
-msgstr "%s ha sido actualizado correctamente."
+msgstr "Usuarios actualizados correctamente."
 
 #: account/views.py:115
-#, fuzzy
 msgid "Groups successfully updated."
-msgstr "%s ha sido actualizado correctamente."
+msgstr "Grupos actualizados correctamente."
 
 #: contrib/ext_formwizard.py:170
 msgid ""
@@ -700,11 +696,8 @@ msgid "The group %s is not valid."
 msgstr "El grupo %s no es valido"
 
 #: freeadmin/forms.py:138
-#, fuzzy
 msgid "The path must reside within a volume mount point"
-msgstr ""
-"La ruta hacia el archivo extent debe residir dentro de un punto de montaje "
-"volume/dataset."
+msgstr "La ruta de acceso debe residir en un punto de montaje del volumen"
 
 #: freeadmin/navtree.py:315
 #, python-format
@@ -979,9 +972,8 @@ msgid "View All Link Aggregations"
 msgstr "Ver Todas las Agregaciones de Enlaces"
 
 #: network/views.py:180
-#, fuzzy
 msgid "LAGG successfully added"
-msgstr "Añadido satisfactoriamente"
+msgstr "LAGG añadido satisfactoriamente"
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1198,11 +1190,11 @@ msgid "Delete underlying file"
 msgstr "Borrar el fichero seleccionado"
 
 #: services/forms.py:788
-#, fuzzy, python-format
+#, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "El usuario %s no es válido."
-msgstr[1] "El usuario %s no es válido."
+msgstr[0] "El email %(email)s no es valido"
+msgstr[1] "Los siguientes emails no son validos: %(email)s"
 
 #: services/models.py:40
 msgid "Service"
@@ -1778,11 +1770,11 @@ msgstr "Opcional - apodo del destino"
 
 #: services/models.py:569 storage/views.py:157
 msgid "Serial"
-msgstr ""
+msgstr "Serial"
 
 #: services/models.py:572
 msgid "Serial number for the logical unit"
-msgstr ""
+msgstr "Numero serial para la unidad lógica"
 
 #: services/models.py:577 storage/models.py:74 system/models.py:498
 #: templates/services/iscsi_extents.html:6
@@ -2570,14 +2562,15 @@ msgid "Rsync Modules"
 msgstr "Modulos Rsync"
 
 #: services/models.py:1243
-#, fuzzy
 msgid "Check interval"
-msgstr "Intervalo"
+msgstr "Comprobar intervalo"
 
 #: services/models.py:1244
 msgid ""
 "Sets the interval between disk checks to N minutes. The default is 30 minutes"
 msgstr ""
+"Establece el intervalo entre los controles de disco para N minutos. El valor "
+"por defecto es de 30 minutos"
 
 #: services/models.py:1250
 #, fuzzy
@@ -2586,44 +2579,45 @@ msgstr "Modo apagado"
 
 #: services/models.py:1254
 msgid "Difference"
-msgstr ""
+msgstr "Diferencia"
 
 #: services/models.py:1255
 msgid ""
 "Report if the temperature had changed by at least N degrees Celsius since "
 "last report. 0 to disable"
 msgstr ""
+"Reporte si la temperatura había cambiado al menos en N grados Celsius desde "
+"el último informe. 0 para desactivar"
 
 #: services/models.py:1259
-#, fuzzy
 msgid "Informal"
-msgstr "Normal"
+msgstr "Informal"
 
 #: services/models.py:1260 services/models.py:1265
 msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
 msgstr ""
+"Reporte si la temperatura es mayor o igual a N grados centígrados. 0 para "
+"desactivar"
 
 #: services/models.py:1264
 msgid "Critical"
-msgstr ""
+msgstr "Crítico"
 
 #: services/models.py:1268
 msgid "Email to report"
-msgstr ""
+msgstr "Email para reportar"
 
 #: services/models.py:1271
-#, fuzzy
 msgid "Destination email address. Separate email addresses by semi-colon"
 msgstr ""
 "Dirección e-mail de destino, separar con punto y coma \";\" si son 2 o más."
 
 #: services/models.py:1274 services/models.py:1275
 #: templates/services/index.html:108
-#, fuzzy
 msgid "S.M.A.R.T."
-msgstr "Habilitar S.M.A.R.T."
+msgstr "S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
@@ -5113,9 +5107,8 @@ msgid "Existing data will be cleared"
 msgstr "Los datos existentes serán borrados"
 
 #: templates/storage/zvols.html:9
-#, fuzzy
 msgid "Add ZFS Volume"
-msgstr "Volumen ZFS"
+msgstr "Añadir Volumen ZFS"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
@@ -5134,9 +5127,8 @@ msgid "Restore to Factory Defaults"
 msgstr "Volver a la configuración por defecto"
 
 #: templates/system/config.html:5
-#, fuzzy
 msgid "Restore Config"
-msgstr "Salvar Configuración"
+msgstr "Restaurar Configuración"
 
 #: templates/system/config.html:9
 msgid "Save Config"
@@ -5172,11 +5164,11 @@ msgstr "Reiniciando..."
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "Su email de prueba fue enviado!"
 
 #: templates/system/email_edit.html:19
 msgid "Your test email could not be sent:"
-msgstr ""
+msgstr "Su email de prueba no pudo ser enviado:"
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"

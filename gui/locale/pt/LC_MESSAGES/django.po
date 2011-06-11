@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-09 18:02+0200\n"
-"Last-Translator: iMiguel <miguel.rosa17@gmail.com>\n"
+"PO-Revision-Date: 2011-06-10 23:13+0200\n"
+"Last-Translator: jsemedo <jsemedo@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -409,12 +409,12 @@ msgstr "Leitura e Escrita"
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minuto)s minutos"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hora)s hora"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
@@ -424,7 +424,7 @@ msgstr ""
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(dia)s dia"
 
 #: choices.py:456
 #, python-format

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-05-28 16:26+0200\n"
-"Last-Translator: phutruong <freenas@phutruong.nl>\n"
+"PO-Revision-Date: 2011-06-11 06:08+0200\n"
+"Last-Translator: hieunghiem <hi3unb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: vi\n"
 "MIME-Version: 1.0\n"
@@ -108,11 +108,11 @@ msgstr ""
 
 #: choices.py:81 choices.py:90
 msgid "Disabled"
-msgstr ""
+msgstr "Vô hiệu hóa"
 
 #: choices.py:82
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "Mức 1 - Tối thiểu năng lượng sử dụng với Standby (spindown)"
 
 #: choices.py:83
 msgid "Level 64 - Intermediate power usage with Standby"
@@ -319,11 +319,11 @@ msgstr ""
 
 #: choices.py:241
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "UPS chạm mức pin yếu"
 
 #: choices.py:242
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS hoạt động trên pin"
 
 #: choices.py:245
 msgid "Preferred"
@@ -343,27 +343,27 @@ msgstr ""
 
 #: choices.py:275
 msgid "On"
-msgstr ""
+msgstr "Bật"
 
 #: choices.py:276 choices.py:281
 msgid "Off"
-msgstr ""
+msgstr "Tắt"
 
 #: choices.py:282
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (khuyến nghị)"
 
 #: choices.py:283
 msgid "gzip (default level, 6)"
-msgstr ""
+msgstr "gzip (mức mặc định, 6)"
 
 #: choices.py:284
 msgid "gzip (fastest)"
-msgstr ""
+msgstr "gzip (mức nhanh nhất)"
 
 #: choices.py:285
 msgid "gzip (maximum, slow)"
-msgstr ""
+msgstr "gzip (nén tối ưu, chậm)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -483,7 +483,7 @@ msgstr ""
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr ""
+msgstr "Giá trị nhập hợp lệ chỉ bao gồm các chữ, số và các ký tự @/./+/-/_."
 
 #: account/forms.py:201 account/forms.py:308 services/models.py:680
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
@@ -506,7 +506,7 @@ msgstr ""
 
 #: account/forms.py:205 account/forms.py:345
 msgid "Disable logins"
-msgstr ""
+msgstr "Vô hiệu hóa đăng nhập"
 
 #: account/forms.py:206
 msgid "Primary Group"
@@ -3762,11 +3762,11 @@ msgstr ""
 
 #: system/models.py:399
 msgid "Archive"
-msgstr ""
+msgstr "Lưu trữ"
 
 #: system/models.py:400
 msgid "Archive mode"
-msgstr ""
+msgstr "Chế độ lưu trữ"
 
 #: system/models.py:404 templates/freeadmin/generic_model_edit.html:43
 #: templates/network/interface.html:39 templates/network/lagg.html:44
@@ -3828,7 +3828,7 @@ msgstr ""
 
 #: system/models.py:431
 msgid "Rsyncs"
-msgstr ""
+msgstr "Rsyncs"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -3844,7 +3844,7 @@ msgstr ""
 
 #: system/nav.py:32
 msgid "Cron Scheduler"
-msgstr ""
+msgstr "Lịch trình Cron"
 
 #: system/views.py:117
 msgid "The uploaded file is not valid."
@@ -4267,31 +4267,31 @@ msgstr ""
 
 #: templates/network/summary.html:37
 msgid "Default route"
-msgstr ""
+msgstr "Định tuyến mặc định"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr ""
+msgstr "Định tuyến mặc định chưa được định nghĩa"
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
-msgstr ""
+msgstr "Chỉnh sửa VLAN"
 
 #: templates/network/vlan.html:27
 msgid "Delete VLAN"
-msgstr ""
+msgstr "Xóa VLAN"
 
 #: templates/network/vlan.html:34
 msgid "No VLAN defined"
-msgstr ""
+msgstr "Không có VLAN"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
-msgstr ""
+msgstr "Thêm giao tiếp VLAN"
 
 #: templates/registration/login.html:44
 msgid "Your username and password didn't match. Please try again."
-msgstr ""
+msgstr "Tên đăng nhập và mật khẩu không khớp. Xin vui lòng nhập lại."
 
 #: templates/registration/login.html:48
 #, python-format
@@ -4300,11 +4300,11 @@ msgstr ""
 
 #: templates/registration/login.html:50
 msgid "Welcome to FreeNAS 8"
-msgstr ""
+msgstr "Chào mừng đến với FreeNAS 8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
-msgstr ""
+msgstr "Lăm ơn đăng nhập."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -4312,39 +4312,39 @@ msgstr ""
 
 #: templates/registration/logout.html:21
 msgid "You are now logged out."
-msgstr "Bạn đã đăng nhập"
+msgstr "Bạn vừa đăng xuất."
 
 #: templates/registration/logout.html:21
 msgid "Log back in"
-msgstr ""
+msgstr "Đăng nhập trờ lại"
 
 #: templates/services/index.html:13
 msgid "AFP Settings"
-msgstr ""
+msgstr "Thiết lập AFP"
 
 #: templates/services/index.html:24
 msgid "Active Directory Settings"
-msgstr ""
+msgstr "Thiết lập Active Directory"
 
 #: templates/services/index.html:35
 msgid "CIFS Settings"
-msgstr ""
+msgstr "Thiết lập CIFS"
 
 #: templates/services/index.html:48
 msgid "Dynamic DNS Settings"
-msgstr ""
+msgstr "Thiết lập DNS động"
 
 #: templates/services/index.html:59
 msgid "FTP Settings"
-msgstr ""
+msgstr "Thiết lập FTP"
 
 #: templates/services/index.html:70
 msgid "LDAP Settings"
-msgstr ""
+msgstr "Thiết lập LDAP"
 
 #: templates/services/index.html:81
 msgid "NFS Settings"
-msgstr ""
+msgstr "Thiết lập NFS"
 
 #: templates/services/index.html:92
 msgid "Rsync Settings"
@@ -4352,7 +4352,7 @@ msgstr ""
 
 #: templates/services/index.html:103
 msgid "SNMP Settings"
-msgstr ""
+msgstr "Thiết lập SNMP"
 
 #: templates/services/index.html:114
 msgid "S.M.A.R.T. Settings"
@@ -4360,23 +4360,23 @@ msgstr ""
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
-msgstr ""
+msgstr "Thiết lập SSH"
 
 #: templates/services/index.html:136
 msgid "TFTP Settings"
-msgstr ""
+msgstr "Thiết lập TFTP"
 
 #: templates/services/index.html:141
 msgid "iSCSI"
-msgstr ""
+msgstr "iSCSI"
 
 #: templates/services/index.html:149
 msgid "ISCSI Settings"
-msgstr ""
+msgstr "Thiết lập iSCSI"
 
 #: templates/services/iscsi.html:2
 msgid "iSCSI Management"
-msgstr ""
+msgstr "Quản trị iSCSI"
 
 #: templates/services/iscsi.html:5
 msgid "Targets"
@@ -4388,7 +4388,7 @@ msgstr ""
 
 #: templates/services/iscsi.html:13
 msgid "Authentication"
-msgstr ""
+msgstr "Xác thực"
 
 #: templates/services/iscsi.html:15
 msgid "Authorized Initiator"
@@ -4861,7 +4861,7 @@ msgstr ""
 
 #: templates/system/config.html:5
 msgid "Restore Config"
-msgstr ""
+msgstr "Phục hồi cấu hình"
 
 #: templates/system/config.html:9
 msgid "Save Config"
@@ -4897,15 +4897,15 @@ msgstr ""
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "Gửi test email thành công!"
 
 #: templates/system/email_edit.html:19
 msgid "Your test email could not be sent:"
-msgstr ""
+msgstr "Gửi test mail thất bại:"
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr ""
+msgstr "Gửi Test Mail"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"

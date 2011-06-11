@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-08 18:40+0200\n"
-"Last-Translator: raymond <raymondv@gmx.de>\n"
+"PO-Revision-Date: 2011-06-11 00:16+0200\n"
+"Last-Translator: Crazy <vmishev07051@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
 "MIME-Version: 1.0\n"
@@ -527,7 +527,7 @@ msgstr "Паролата в двете полета не съвпада."
 
 #: account/forms.py:248 account/forms.py:373
 msgid "Home directory has to start with /mnt/"
-msgstr "Главната директория трябва да започва с \"/mnt/\""
+msgstr "Главната директория трябва да започва с /mnt/"
 
 #: account/forms.py:262 account/forms.py:266 services/forms.py:469
 #: services/forms.py:482 services/forms.py:748 storage/forms.py:226

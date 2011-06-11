@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:45-0700\n"
-"PO-Revision-Date: 2011-05-28 20:58+0200\n"
-"Last-Translator: Localizator <localizator@ukr.net>\n"
+"PO-Revision-Date: 2011-06-10 12:45+0200\n"
+"Last-Translator: yurkis <yurkis@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
@@ -406,33 +406,31 @@ msgid "Every selected weekday"
 msgstr "Кожен обраний день тижня"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
-msgstr "тільки читання"
+msgstr "Тільки читання"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "тільки читання"
+msgstr "Тільки читання"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Читання та запис"
 
 #: choices.py:447 choices.py:448
-#, python-format
+#, fuzzy, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes) хвилин"
 
 #: choices.py:449
-#, python-format
+#, fuzzy, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour) годин"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
-#, python-format
+#, fuzzy, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hours) годин"
 
 #: choices.py:455
 #, python-format
@@ -716,7 +714,7 @@ msgstr ""
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Додати %s"
 
 #: freeadmin/navtree.py:327
 #, fuzzy, python-format
@@ -747,7 +745,7 @@ msgstr "%s успішно оновлено."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Не вдалося перезапустити службу"
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -786,7 +784,7 @@ msgstr "Імена інтерфейсів повинні мати вигляд: 
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "Теги VLAN мають бути між 1 та 4095 включно"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -1059,23 +1057,23 @@ msgstr ""
 
 #: services/forms.py:216 services/forms.py:241
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Не вдалося перезапустити службу Rsync"
 
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "Ім'я не має містити косу чи квадратні дужки"
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "Не вдалося перезавантажити службу DynamicDNS."
 
 #: services/forms.py:259
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "Не вдалося перезапустити службу SNMP."
 
 #: services/forms.py:273
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "Не вдалося перезапустити службу Active Directory."
 
 #: services/forms.py:284
 msgid "The ldap service failed to reload."
@@ -1153,7 +1151,7 @@ msgstr ""
 #: services/forms.py:413
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr ""
+msgstr "Значення має бути між %(start)d та %(end)d, включно."
 
 #: services/forms.py:421
 #, fuzzy
@@ -1163,16 +1161,16 @@ msgstr "Це поле є обов'язковим для \"Домашні кат�
 
 #: services/forms.py:504 services/forms.py:534
 msgid "You need to specify a filepath, not a directory."
-msgstr ""
+msgstr "Ви маєте вказати шлях до файлу а каталог."
 
 #: services/forms.py:508 services/forms.py:538
 msgid "You need to specify a file inside your volume/dataset."
-msgstr ""
+msgstr "Ви маєте вказати файл в межах тому / набору даних."
 
 #: services/forms.py:512 services/forms.py:542
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
-msgstr ""
+msgstr "Ваш шлях має бути в межах точки монтування тому / набору даних."
 
 #: services/forms.py:556
 msgid ""
@@ -1181,7 +1179,7 @@ msgstr ""
 
 #: services/forms.py:577
 msgid "Disk device"
-msgstr ""
+msgstr "Дисковий пристрій"
 
 #: services/forms.py:691
 #, python-format
@@ -3509,16 +3507,18 @@ msgid "New config to be installed"
 msgstr ""
 
 #: system/forms.py:310 system/forms.py:338
+#, fuzzy
 msgid "minute"
-msgstr ""
+msgstr "хвилина"
 
 #: system/forms.py:311 system/forms.py:339
+#, fuzzy
 msgid "hour"
-msgstr ""
+msgstr "година"
 
 #: system/forms.py:312 system/forms.py:340
 msgid "day of month"
-msgstr ""
+msgstr "день місяця"
 
 #: system/models.py:45
 msgid "Protocol"
@@ -3910,15 +3910,16 @@ msgstr ""
 
 #: system/nav.py:18
 msgid "System Information"
-msgstr ""
+msgstr "Системна інформація"
 
 #: system/nav.py:32
 msgid "Cron Scheduler"
 msgstr ""
 
 #: system/views.py:117
+#, fuzzy
 msgid "The uploaded file is not valid."
-msgstr ""
+msgstr "Завантажений файл невірний."
 
 #: system/views.py:243
 msgid "Test message from FreeNAS"
@@ -3957,7 +3958,7 @@ msgstr ""
 #: templates/freeadmin/generic_model_edit.html:14
 #: templates/network/lagg_add.html:10 templates/system/wizard.html:14
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: templates/account/bsdgroup2user_form.html:12
 #: templates/freeadmin/generic_model_add.html:15
@@ -3998,32 +3999,32 @@ msgstr ""
 #: templates/storage/zvols.html:11 templates/system/config_restore.html:16
 #: templates/system/config_upload.html:40
 msgid "Cancel"
-msgstr ""
+msgstr "Відмінити"
 
 #: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
 #: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:85
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
 #: templates/account/bsdgroups.html:84 templates/account/bsdgroups.html:86
 msgid "Members"
-msgstr ""
+msgstr "Члени"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/storage/tasks.html:133 templates/storage/tasks.html.py:135
 msgid "Modify"
-msgstr ""
+msgstr "Змінити"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
-msgstr ""
+msgstr "Видалити"
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 #: templates/account/bsdgroups.html:93 templates/account/bsdgroups.html:95
 msgid "Modify Group"
-msgstr ""
+msgstr "Змінити групу"
 
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 #: templates/account/bsdgroups.html:103 templates/account/bsdgroups.html:105
@@ -4046,7 +4047,7 @@ msgstr ""
 #: templates/account/bsdusers.html:50 templates/account/bsdusers.html:130
 #: templates/account/bsdusers.html:132 templates/account/bsdusers.html:138
 msgid "Modify User"
-msgstr ""
+msgstr "Змінити користувача"
 
 #: templates/account/bsdusers.html:48 templates/account/bsdusers.html:136
 msgid "Auxiliary Groups"
@@ -4059,7 +4060,7 @@ msgstr ""
 
 #: templates/account/bsdusers.html:60
 msgid "Delete User"
-msgstr ""
+msgstr "Видалити користувача"
 
 #: templates/account/bsdusers.html:68 templates/account/bsdusers.html:156
 msgid "No users defined"
