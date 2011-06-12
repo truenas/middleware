@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-11 00:16+0200\n"
+"PO-Revision-Date: 2011-06-11 20:50+0200\n"
 "Last-Translator: Crazy <vmishev07051@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
@@ -294,20 +294,20 @@ msgstr "Лента"
 
 #: choices.py:207
 msgid "Pass"
-msgstr ""
+msgstr "Преминаване"
 
 #: choices.py:211
 msgid "read-write"
-msgstr "Четене и запис"
+msgstr "четене и запис"
 
 #: choices.py:212
 msgid "read-only"
-msgstr "Само за четене"
+msgstr "само за четене"
 
 #: choices.py:216 choices.py:222 services/forms.py:392 services/forms.py:394
 #: services/forms.py:741 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "Няма"
 
 #: choices.py:218
 msgid "CHAP"
@@ -319,11 +319,11 @@ msgstr "Споделен CHAP"
 
 #: choices.py:241
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "Батерията на UPS-a се изтощава"
 
 #: choices.py:242
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS-ът преминава на батерия"
 
 #: choices.py:245
 msgid "Preferred"
@@ -339,7 +339,7 @@ msgstr "Задължителен"
 
 #: choices.py:274 choices.py:280
 msgid "Inherit"
-msgstr ""
+msgstr "Наследяване"
 
 #: choices.py:275
 msgid "On"
@@ -363,19 +363,19 @@ msgstr "gzip (най-бързо)"
 
 #: choices.py:285
 msgid "gzip (maximum, slow)"
-msgstr ""
+msgstr "gzip (максимално, бавно)"
 
 #: choices.py:426
 msgid "Hour(s)"
-msgstr "Час(а)"
+msgstr "Час (а)"
 
 #: choices.py:427
 msgid "Day(s)"
-msgstr "Ден(Дни)"
+msgstr "Ден (Дни)"
 
 #: choices.py:428
 msgid "Week(s)"
-msgstr "Седмица(и)"
+msgstr "Седмица (и)"
 
 #: choices.py:429
 msgid "Month(s)"
@@ -409,27 +409,27 @@ msgstr "Четене и Запис"
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes)s минути"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour)s час"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hours)s часа"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day)s ден"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week)s седмица"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
@@ -506,11 +506,11 @@ msgstr "Въведете паролата отново за потвържден
 #: account/forms.py:204 account/forms.py:346 account/models.py:105
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:89
 msgid "Shell"
-msgstr ""
+msgstr "Обвивка (среда)"
 
 #: account/forms.py:205 account/forms.py:345
 msgid "Disable logins"
-msgstr ""
+msgstr "Забрани логването"
 
 #: account/forms.py:206
 msgid "Primary Group"
@@ -537,7 +537,7 @@ msgstr "Попълването на това поле е задължителн�
 
 #: account/forms.py:427
 msgid "Member users"
-msgstr ""
+msgstr "Потребители членове"
 
 #: account/forms.py:445
 msgid "Auxiliary groups"
@@ -595,11 +595,11 @@ msgstr "Потребител &"
 
 #: account/models.py:85
 msgid "Hashed UNIX password"
-msgstr ""
+msgstr "Хеширана UNIX парола"
 
 #: account/models.py:91
 msgid "Hashed SMB password"
-msgstr ""
+msgstr "Хеширана SMB парола"
 
 #: account/models.py:95
 msgid "Primary Group ID"
@@ -646,7 +646,7 @@ msgstr "Смяна на паролата"
 #: account/nav.py:19 templates/account/changeform.html:25
 #: templates/account/index.html:4
 msgid "Change Admin User"
-msgstr ""
+msgstr "Смяна на администраторския акаунт"
 
 #: account/nav.py:26 templates/account/index.html:2
 msgid "My Account"
@@ -654,33 +654,35 @@ msgstr "Моят профил"
 
 #: account/nav.py:36
 msgid "View All Users"
-msgstr ""
+msgstr "Преглед на всички потребители"
 
 #: account/nav.py:43
 msgid "View All Groups"
-msgstr ""
+msgstr "Преглед на всички групи"
 
 #: account/views.py:78
 msgid "Password successfully updated."
-msgstr ""
+msgstr "Паролата е обновена успешно."
 
 #: account/views.py:92
 msgid "Admin user successfully updated."
-msgstr ""
+msgstr "Администраторският акаунт е обновен успешно."
 
 #: account/views.py:102
 msgid "Users successfully updated."
-msgstr ""
+msgstr "Потребителите са успешно актуализирани."
 
 #: account/views.py:115
 msgid "Groups successfully updated."
-msgstr ""
+msgstr "Групите са успешно актуализирани."
 
 #: contrib/ext_formwizard.py:170
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
 msgstr ""
+"Извиняваме се, но Вашият формуляр е изтекъл. Моля продължете попълването на "
+"формуляра от тази страница."
 
 #: freeadmin/forms.py:95
 #, python-format
@@ -704,11 +706,11 @@ msgstr "Добави %s"
 #: freeadmin/navtree.py:327
 #, python-format
 msgid "View All %s"
-msgstr ""
+msgstr "Преглед на всички %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
-msgstr ""
+msgstr "Покажи системните процеси"
 
 #: freeadmin/navtree.py:353 templates/freeadmin/index.html:53
 msgid "Reboot"
@@ -721,21 +723,21 @@ msgstr "Изключване"
 #: freeadmin/views.py:225
 #, python-format
 msgid "%s successfully added."
-msgstr ""
+msgstr "%s успешно добавени."
 
 #: freeadmin/views.py:384 freeadmin/views.py:386
 #, python-format
 msgid "%s successfully updated."
-msgstr ""
+msgstr "%s успешно обновени."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Услугата не успя да се рестартира."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "%s успешно изтрити."
 
 #: network/forms.py:44 network/models.py:95
 msgid "NIC"
@@ -743,19 +745,19 @@ msgstr "Мрежов адаптер"
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
+msgstr "Необходимо е да попълните полето nameserver 2 преди nameserver 3"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
-msgstr ""
+msgstr "Задължително при използване на nameserver 3"
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr ""
+msgstr "Необходимо е да попълните полето nameserver 1 преди nameserver 3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr ""
+msgstr "Необходимо е да попълните полето nameserver 1 преди nameserver 2"
 
 #: network/forms.py:100
 msgid "Parent Interface"
@@ -763,25 +765,25 @@ msgstr ""
 
 #: network/forms.py:109
 msgid "The name must be vlanXX where XX is a integer"
-msgstr ""
+msgstr "Наименованието трябва да е vlanXX, където XX е цяло число"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN таговете са от 1 до 4095 включително"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
-msgstr ""
+msgstr "Фичически мрежови адаптери в LAGG"
 
 #: network/forms.py:190
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "Мрежата '%s' не е валидна, очаква се CIDR."
 
 #: network/models.py:42 services/models.py:1074
 #: templates/system/system_info.html:4
 msgid "Hostname"
-msgstr ""
+msgstr "Име на хост"
 
 #: network/models.py:47
 msgid "Domain"
@@ -789,23 +791,23 @@ msgstr "Домейн"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "IPv4 шлюз по подразбиране"
 
 #: network/models.py:59
 msgid "IPv6 Default Gateway"
-msgstr ""
+msgstr "IPv6 шлюз по подразбиране"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "Сървър 1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "Сървър 2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "Сървър 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:21
 #: templates/network/index.html:3
@@ -822,11 +824,11 @@ msgstr "Име на интерфейса"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "Задайте име на вашия мрежов адаптер."
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
-msgstr ""
+msgstr "DHCP"
 
 #: network/models.py:107
 msgid ""
@@ -840,11 +842,11 @@ msgstr "IPv4 адрес"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr ""
+msgstr "IPv4 мрежова маска"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "Автоматично конфигуриране на IPv6"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
@@ -856,12 +858,12 @@ msgstr "IPv6 адрес"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr ""
+msgstr "IPv6 мрежова маска"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "Настройки"
 
 #: network/models.py:157 network/models.py:216
 #: templates/network/interface.html:5
@@ -870,7 +872,7 @@ msgstr "Интерфейс"
 
 #: network/models.py:158 templates/network/index.html:5
 msgid "Interfaces"
-msgstr ""
+msgstr "Интерфейси"
 
 #: network/models.py:172 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
@@ -879,7 +881,7 @@ msgstr "Логически интерфейс"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr ""
+msgstr "Имената на интерфейсите трябва да са vlanXX, където XX е число"
 
 #: network/models.py:178 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
@@ -888,7 +890,7 @@ msgstr "Физически интерфейс"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
-msgstr ""
+msgstr "VLAN таг"
 
 #: network/models.py:185 network/models.py:282 services/models.py:74
 #: services/models.py:766 storage/models.py:95
@@ -898,11 +900,11 @@ msgstr "Описание"
 
 #: network/models.py:199 templates/network/index.html:11
 msgid "VLAN"
-msgstr ""
+msgstr "VLAN"
 
 #: network/models.py:200
 msgid "VLANs"
-msgstr ""
+msgstr "VLANs"
 
 #: network/models.py:220
 msgid "Protocol Type"
@@ -910,11 +912,11 @@ msgstr "Тип на протокола"
 
 #: network/models.py:241
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "LAGG интерфейсна група"
 
 #: network/models.py:244
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "LAGG приоритет"
 
 #: network/models.py:249
 msgid "Physical NIC"
@@ -922,11 +924,11 @@ msgstr "Физически мрежов адаптер"
 
 #: network/models.py:264 templates/network/index.html:7
 msgid "Link Aggregation"
-msgstr ""
+msgstr "Агрегация на трафика"
 
 #: network/models.py:265 network/nav.py:53
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Агрегации на трафика"
 
 #: network/models.py:274
 msgid "Destination network"
@@ -950,43 +952,45 @@ msgstr ""
 
 #: network/nav.py:13 templates/network/index.html:13
 msgid "Network Summary"
-msgstr ""
+msgstr "Обобщена информация за мрежата"
 
 #: network/nav.py:30
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "Създаване на агрегация на трафика"
 
 #: network/nav.py:41
 msgid "View All Link Aggregations"
-msgstr ""
+msgstr "Преглед на всички агрегации на трафика"
 
 #: network/views.py:180
 msgid "LAGG successfully added"
-msgstr ""
+msgstr "LAGG е успешно добавен"
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
 msgstr ""
+"Това поле е задължително за \"Разрешаване на разглеждането на стартовите "
+"директории\"."
 
 #: services/forms.py:73
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "Това поле е задължително за \"Стартови директории\"."
 
 #: services/forms.py:90
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "Услугата AFP не успя да се презареди."
 
 #: services/forms.py:99
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "Услугата NFS не успя да се презареди."
 
 #: services/forms.py:103
 msgid "File Permission"
-msgstr ""
+msgstr "Разрешение за достъп до файла"
 
 #: services/forms.py:104
 msgid "Directory Permission"
-msgstr ""
+msgstr "Разрешение за достъп до директорията"
 
 #: services/forms.py:129
 msgid "This value must be between 0 and 65535, inclusive."
@@ -1009,42 +1013,44 @@ msgstr ""
 #: services/forms.py:165
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
 msgstr ""
+"Тази стойност трябва да бъде в диапазона между 1024 и 65535 включително. 0 "
+"за стойност по подразбиране."
 
 #: services/forms.py:184
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "Това поле е задължително за анонимен вход"
 
 #: services/forms.py:191
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "Услугата FTP не успя да се стартира."
 
 #: services/forms.py:200
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "Услугата TFTP не успя да се презареди."
 
 #: services/forms.py:207
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "Услугата SSH не успя да се презареди."
 
 #: services/forms.py:216 services/forms.py:241
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Услугата Rsync не успя да се презареди."
 
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "Името не трябва да съдържа наклонена черта или квадратни скоби."
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "Услугата DynamicDNS не успя да се презареди."
 
 #: services/forms.py:259
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "Услугата SNMP не успя да се презареди."
 
 #: services/forms.py:273
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "Услагата activedirectory не успя да се презареди."
 
 #: services/forms.py:284
 msgid "The ldap service failed to reload."
@@ -1061,35 +1067,35 @@ msgstr ""
 
 #: services/forms.py:292
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "Тайна (Потвърждение)"
 
 #: services/forms.py:294 services/forms.py:302
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "Въведете същата тайна за проверка."
 
 #: services/forms.py:295
 msgid "Initiator Secret"
-msgstr ""
+msgstr "Тайна на инициатора"
 
 #: services/forms.py:297 services/models.py:533 services/models.py:538
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr ""
+msgstr "Тайна на страната инициатор. (за автентикация при споделен CHAP)"
 
 #: services/forms.py:300
 msgid "Initiator Secret (Confirm)"
-msgstr ""
+msgstr "Тайна на инициатора (Потвърждение)"
 
 #: services/forms.py:309
 msgid "Secret does not match"
-msgstr ""
+msgstr "Тайната не съвпада"
 
 #: services/forms.py:324 services/forms.py:325
 msgid "The peer secret is required if you set a peer user."
-msgstr ""
+msgstr "Изисква се партньорската тайна, ако сте задали потребител."
 
 #: services/forms.py:328
 msgid "The peer secret cannot be the same as user secret."
-msgstr ""
+msgstr "Партньорската тайна не може да бъде същата като потребителската."
 
 #: services/forms.py:344 services/forms.py:381 services/forms.py:495
 #: services/forms.py:525 services/forms.py:572 services/forms.py:675
@@ -1118,7 +1124,7 @@ msgstr ""
 #: services/forms.py:413
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr ""
+msgstr "Тази стойност трябва да бъде между %(start)d и %(end)d включително."
 
 #: services/forms.py:421
 msgid ""
@@ -1127,11 +1133,11 @@ msgstr ""
 
 #: services/forms.py:504 services/forms.py:534
 msgid "You need to specify a filepath, not a directory."
-msgstr ""
+msgstr "Трябва да укажете пътя до файла, а не директория."
 
 #: services/forms.py:508 services/forms.py:538
 msgid "You need to specify a file inside your volume/dataset."
-msgstr ""
+msgstr "Трябва да посочите файл във вашия дял/набор от данни."
 
 #: services/forms.py:512 services/forms.py:542
 msgid ""
@@ -2421,7 +2427,7 @@ msgstr ""
 
 #: services/models.py:1231
 msgid "Rsync Module"
-msgstr ""
+msgstr "Rsync модул"
 
 #: services/models.py:1232
 msgid "Rsync Modules"
@@ -2442,7 +2448,7 @@ msgstr ""
 
 #: services/models.py:1254
 msgid "Difference"
-msgstr ""
+msgstr "Разлика"
 
 #: services/models.py:1255
 msgid ""
@@ -2451,9 +2457,8 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1259
-#, fuzzy
 msgid "Informal"
-msgstr "Нормален"
+msgstr "Неофициален"
 
 #: services/models.py:1260 services/models.py:1265
 msgid ""
@@ -2463,7 +2468,7 @@ msgstr ""
 
 #: services/models.py:1264
 msgid "Critical"
-msgstr ""
+msgstr "Критичен"
 
 #: services/models.py:1268
 msgid "Email to report"
@@ -2476,7 +2481,7 @@ msgstr ""
 #: services/models.py:1274 services/models.py:1275
 #: templates/services/index.html:108
 msgid "S.M.A.R.T."
-msgstr ""
+msgstr "S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
@@ -2511,15 +2516,15 @@ msgstr ""
 
 #: services/nav.py:136
 msgid "ISCSI"
-msgstr ""
+msgstr "ISCSI"
 
 #: services/nav.py:147 system/models.py:430 templates/services/index.html:86
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/views.py:222
 msgid "The service could not be stopped."
-msgstr ""
+msgstr "Услугата не може да бъде спряна."
 
 #: services/views.py:229
 msgid "The service could not be started."
@@ -2576,7 +2581,7 @@ msgstr "Покажи скритите файлове"
 
 #: sharing/models.py:64
 msgid "Guest Account"
-msgstr ""
+msgstr "Гост"
 
 #: sharing/models.py:65
 msgid ""
@@ -2649,7 +2654,7 @@ msgstr ""
 
 #: sharing/models.py:116
 msgid "Share password"
-msgstr ""
+msgstr "Сподели паролата"
 
 #: sharing/models.py:118
 msgid ""
@@ -2660,7 +2665,7 @@ msgstr ""
 
 #: sharing/models.py:122
 msgid "Share Character Set"
-msgstr ""
+msgstr "Споделяне на символите"
 
 #: sharing/models.py:124
 msgid ""
@@ -2732,7 +2737,7 @@ msgstr ""
 
 #: sharing/models.py:163
 msgid "Database Path"
-msgstr ""
+msgstr "Път до базата от данни"
 
 #: sharing/models.py:165
 msgid ""
@@ -2814,7 +2819,7 @@ msgstr ""
 
 #: sharing/models.py:196
 msgid "ProDOS"
-msgstr ""
+msgstr "ProDOS"
 
 #: sharing/models.py:197
 msgid "Provide compatibility with Apple II clients."
@@ -3305,7 +3310,7 @@ msgstr ""
 #: storage/nav.py:56 templates/storage/volumes.html:53
 #: templates/storage/volumes.html.py:57
 msgid "Auto Import Volume"
-msgstr ""
+msgstr "Автомачтино добавяне на дял"
 
 #: storage/nav.py:67
 msgid "View All Volumes"
@@ -4307,11 +4312,11 @@ msgstr ""
 
 #: templates/registration/login.html:50
 msgid "Welcome to FreeNAS 8"
-msgstr ""
+msgstr "Добре дошли във FreeNAS8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
-msgstr ""
+msgstr "Моля идентифицирайте се."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -4355,7 +4360,7 @@ msgstr ""
 
 #: templates/services/index.html:92
 msgid "Rsync Settings"
-msgstr ""
+msgstr "Настройки за синхронизация"
 
 #: templates/services/index.html:103
 msgid "SNMP Settings"
@@ -4363,7 +4368,7 @@ msgstr ""
 
 #: templates/services/index.html:114
 msgid "S.M.A.R.T. Settings"
-msgstr ""
+msgstr "S.M.A.R.T. настройки"
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
@@ -4481,11 +4486,11 @@ msgstr ""
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
-msgstr ""
+msgstr "Няма дефинирани модули за синхронизация"
 
 #: templates/services/rsyncmod.html:40 templates/services/rsyncmod.html:42
 msgid "Add Rsync Module"
-msgstr ""
+msgstr "Добави модул за синхронизация"
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
@@ -4578,9 +4583,8 @@ msgid "Clone Snapshot"
 msgstr ""
 
 #: templates/storage/datagrid_disks.html:9
-#, fuzzy
 msgid "Edit Disk"
-msgstr "Диск"
+msgstr "Редактиране на диск"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
@@ -4596,7 +4600,7 @@ msgstr ""
 
 #: templates/storage/disk_replacement.html:9
 msgid "Replacing disk"
-msgstr ""
+msgstr "Подмяна на диск"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
@@ -4740,7 +4744,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:46
 msgid ", every"
-msgstr ""
+msgstr ", всеки"
 
 #: templates/storage/tasks.html:49
 msgid "everyday"
@@ -4748,31 +4752,31 @@ msgstr "всекидневен"
 
 #: templates/storage/tasks.html:52
 msgid "on every"
-msgstr ""
+msgstr "на всеки"
 
 #: templates/storage/tasks.html:148
 msgid "No periodic snapshots scheduled"
-msgstr ""
+msgstr "Няма планирани периодични моментни снимки"
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
-msgstr ""
+msgstr "Редактиране на ZFS дял"
 
 #: templates/storage/volume_export.html:7
 msgid "Are you sure you want to export?"
-msgstr ""
+msgstr "Сигурни ли сте че искате да експортирате?"
 
 #: templates/storage/volumes.html:30 templates/storage/volumes.html.py:34
 msgid "Create ZFS Volume"
-msgstr ""
+msgstr "Създаване на ZFS дял"
 
 #: templates/storage/volumes.html:64
 msgid "There are no active volumes."
-msgstr ""
+msgstr "Няма активни дялове."
 
 #: templates/storage/volumes.html:72
 msgid "Used"
-msgstr ""
+msgstr "Използвани"
 
 #: templates/storage/volumes.html:74
 msgid "Size"
@@ -4784,33 +4788,32 @@ msgstr "Статус"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Destroy ZFS Volume"
-msgstr ""
+msgstr "Изтриване на ZFS дял"
 
 #: templates/storage/volumes.html:128 templates/storage/volumes.html.py:132
 msgid "Destroy Dataset"
-msgstr ""
+msgstr "Унищожи набора от данни"
 
 #: templates/storage/volumes.html:137 templates/storage/volumes.html.py:141
 #: templates/storage/volumes.html:157 templates/storage/volumes.html.py:161
 msgid "Edit ZFS Options"
-msgstr ""
+msgstr "Редактирай ZFS опциите"
 
 #: templates/storage/volumes.html:147 templates/storage/volumes.html.py:151
 msgid "Destroy Volume"
-msgstr ""
+msgstr "Изтриване на дял"
 
 #: templates/storage/volumes.html:189 templates/storage/volumes.html.py:193
 msgid "View Disks"
-msgstr ""
+msgstr "Преглед на дисковете"
 
 #: templates/storage/volumes.html:198 templates/storage/volumes.html.py:202
-#, fuzzy
 msgid "Export Volume"
-msgstr "ZFS дял"
+msgstr "Експортиране на дял"
 
 #: templates/storage/volumes.html:209
 msgid "No volumes defined"
-msgstr ""
+msgstr "Няма дефинирани дялове"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
@@ -4818,172 +4821,171 @@ msgstr ""
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
-msgstr ""
+msgstr "Тип на групата"
 
 #: templates/storage/wizard.html:84
 msgid "ZFS Extra"
-msgstr ""
+msgstr "Допълнителни ZFS настройки"
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr ""
+msgstr "Използването смао на един лог диск не е препоръчително"
 
 #: templates/storage/wizard.html:93
 msgid "Log"
-msgstr ""
+msgstr "Лог"
 
 #: templates/storage/wizard.html:94
 msgid "Cache"
-msgstr ""
+msgstr "Кеш"
 
 #: templates/storage/wizard.html:95
 msgid "Spare"
-msgstr ""
+msgstr "Свободен"
 
 #: templates/storage/wizard.html:119
 msgid "Add Volume"
-msgstr ""
+msgstr "Добави дял"
 
 #: templates/storage/wizard.html:120
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "Съществуващата информация ще бъде премахната"
 
 #: templates/storage/zvols.html:9
-#, fuzzy
 msgid "Add ZFS Volume"
-msgstr "ZFS дял"
+msgstr "Добави ZFS дял"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
-msgstr ""
+msgstr "Кешът се възстановавя."
 
 #: templates/system/advanced_edit.html:19
 msgid "The cache could not be rebuilt"
-msgstr ""
+msgstr "Кешът не може да бъде възстановен"
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
-msgstr ""
+msgstr "Възстанови LDAP/AD кеша"
 
 #: templates/system/config.html:3
 msgid "Restore to Factory Defaults"
-msgstr ""
+msgstr "Възстановяване на фабричните настройки"
 
 #: templates/system/config.html:5
 msgid "Restore Config"
-msgstr ""
+msgstr "Възстановяване на конфигурацията"
 
 #: templates/system/config.html:9
 msgid "Save Config"
-msgstr ""
+msgstr "Запази конфигурацията"
 
 #: templates/system/config.html:12 templates/system/config.html.py:14
 msgid "Upload Config"
-msgstr ""
+msgstr "Качи конфигурация"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr ""
+msgstr "Рестартиране..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
-msgstr ""
+msgstr "Сигурни ли сте че искате да възстановите заводските настройки?"
 
 #: templates/system/config_upload.html:35
 msgid "Update"
-msgstr ""
+msgstr "Обнови"
 
 #: templates/system/cronjob.html:40
 msgid "No CronJobs defined"
-msgstr ""
+msgstr "Няма дефинирани задачи"
 
 #: templates/system/cronjob.html:46 templates/system/cronjob.html.py:48
 msgid "Add CronJob"
-msgstr ""
+msgstr "Добави задача"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr ""
+msgstr "Рестартиране..."
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "Вашият тестов имейл беше изпратен успешно!"
 
 #: templates/system/email_edit.html:19
 msgid "Your test email could not be sent:"
-msgstr ""
+msgstr "Вашият тестов имейл не може да бъде изпратен!"
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr ""
+msgstr "Изпрати тестов имейл"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr ""
+msgstr "Ежечасово"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
-msgstr ""
+msgstr "Часови графики"
 
 #: templates/system/reporting.html:18
 msgid "Daily"
-msgstr ""
+msgstr "Дневно"
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
-msgstr ""
+msgstr "Дневни графики"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr ""
+msgstr "Седмично"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"
-msgstr ""
+msgstr "Седмични графики"
 
 #: templates/system/reporting.html:46
 msgid "Monthly"
-msgstr ""
+msgstr "Месечно"
 
 #: templates/system/reporting.html:47
 msgid "Monthly Graphs"
-msgstr ""
+msgstr "Месечни графики"
 
 #: templates/system/reporting.html:60
 msgid "Yearly"
-msgstr ""
+msgstr "Годишно"
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"
-msgstr ""
+msgstr "Годишни графики"
 
 #: templates/system/rsync.html:38
 msgid "No rsyncs defined"
-msgstr ""
+msgstr "Няма дефинирана синхронизация"
 
 #: templates/system/rsync.html:44 templates/system/rsync.html.py:46
 msgid "Add Rsync"
-msgstr ""
+msgstr "Добави синхронизация на файлове"
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr ""
+msgstr "Обща информация"
 
 #: templates/system/settings.html:11
 msgid "Firmware Update"
-msgstr ""
+msgstr "Надстройка на фъруеъра"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
-msgstr ""
+msgstr "Приложи сервизния пакет"
 
 #: templates/system/settings.html:15
 msgid "Config"
-msgstr ""
+msgstr "Конфигурация"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
-msgstr ""
+msgstr "Версия на операционната система"
 
 #: templates/system/system_info.html:12
 msgid "Platform"
@@ -4991,25 +4993,25 @@ msgstr "Платформа"
 
 #: templates/system/system_info.html:16
 msgid "Memory"
-msgstr ""
+msgstr "Памет"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
-msgstr ""
+msgstr "Системно време"
 
 #: templates/system/system_info.html:24
 msgid "Uptime"
-msgstr ""
+msgstr "Време на работа"
 
 #: templates/system/system_info.html:28
 msgid "Load Average"
-msgstr ""
+msgstr "Средно време за зареждане"
 
 #: templates/system/system_info.html:32
 msgid "FreeNAS Build"
-msgstr ""
+msgstr "FreeNAS Build"
 
 #: templates/system/wizard.html:3
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr ""
+msgstr "Стъпка %(step)s от %(step_count)s"

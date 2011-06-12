@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-10 23:13+0200\n"
+"PO-Revision-Date: 2011-06-11 19:08+0200\n"
 "Last-Translator: jsemedo <jsemedo@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
@@ -419,7 +419,7 @@ msgstr "%(hora)s hora"
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(horas)s horas"
 
 #: choices.py:455
 #, python-format
@@ -429,11 +429,11 @@ msgstr "%(dia)s dia"
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(semana)s semana"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Nunca - Verifique o dispositivo independentemente do modo de energia"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
@@ -449,11 +449,11 @@ msgstr ""
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Auto-teste longo"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Auto-teste rápido"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
@@ -660,24 +660,20 @@ msgid "View All Groups"
 msgstr "Ver Todos os Grupos"
 
 #: account/views.py:78
-#, fuzzy
 msgid "Password successfully updated."
-msgstr "%s actualizado com sucesso."
+msgstr "Palavra-passe actualizada com sucesso."
 
 #: account/views.py:92
-#, fuzzy
 msgid "Admin user successfully updated."
-msgstr "%s actualizado com sucesso."
+msgstr "Utilizador \"Admin\" actualizado com sucesso."
 
 #: account/views.py:102
-#, fuzzy
 msgid "Users successfully updated."
-msgstr "%s actualizado com sucesso."
+msgstr "Utilizadores actualizados com sucesso."
 
 #: account/views.py:115
-#, fuzzy
 msgid "Groups successfully updated."
-msgstr "%s actualizado com sucesso."
+msgstr "Grupos actualizados com sucesso."
 
 #: contrib/ext_formwizard.py:170
 msgid ""
@@ -1763,11 +1759,11 @@ msgstr "Expressão amigável e opcional para o destino."
 
 #: services/models.py:569 storage/views.py:157
 msgid "Serial"
-msgstr ""
+msgstr "Série"
 
 #: services/models.py:572
 msgid "Serial number for the logical unit"
-msgstr ""
+msgstr "Número de série para a unidade lógica"
 
 #: services/models.py:577 storage/models.py:74 system/models.py:498
 #: templates/services/iscsi_extents.html:6
@@ -2479,7 +2475,7 @@ msgstr "LDAP"
 
 #: services/models.py:1158
 msgid "Alternate TCP port. Default is 873"
-msgstr ""
+msgstr "Porto TCP alternativo. Porto por defeito é 873"
 
 #: services/models.py:1163
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
@@ -2491,15 +2487,15 @@ msgstr ""
 
 #: services/models.py:1178
 msgid "Module name"
-msgstr ""
+msgstr "Nome do módulo"
 
 #: services/models.py:1186
 msgid "Path to be shared"
-msgstr ""
+msgstr "Caminho a ser partilhado"
 
 #: services/models.py:1192
 msgid "Access Mode"
-msgstr ""
+msgstr "Modo de acesso"
 
 #: services/models.py:1193
 msgid "This controls the access a remote host has to this module"
@@ -2696,7 +2692,7 @@ msgstr ""
 #: templates/services/rsyncmod.html:5 templates/sharing/apple.html:13
 #: templates/sharing/windows.html:13
 msgid "Name"
-msgstr ""
+msgstr "Nome"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
@@ -2708,15 +2704,15 @@ msgstr ""
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
-msgstr ""
+msgstr "Permissões herdadas"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "Exportar Lixeira"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr ""
+msgstr "Mostrar ficheiros escondidos"
 
 #: sharing/models.py:64
 msgid "Guest Account"
@@ -2742,7 +2738,7 @@ msgstr ""
 
 #: sharing/models.py:70
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Apenas permitir acesso a convidado"
 
 #: sharing/models.py:74
 msgid "Hosts Allow"

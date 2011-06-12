@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-11 10:59+0200\n"
-"Last-Translator: alejometal <alejandro.metallord@gmail.com>\n"
+"PO-Revision-Date: 2011-06-11 11:28+0200\n"
+"Last-Translator: nomentero <toni7@telecable.es>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -445,26 +445,30 @@ msgstr ""
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
+"En espera - Compruebe el dispositivo a no ser que se encuentra en REPOSO o "
+"modo ESPERA"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
+"Inactivo - Compruebe el dispositivo a no ser que se encuentra en REPOSO, "
+"ESPERA o modo INACTIVO"
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Autoprueba Larga"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Autoprueba Corta"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Autoprueba de Trasferencia (ATA sólo)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Prueba Fuera de línea Inmediata (ATA sólo)"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -3261,23 +3265,20 @@ msgid "Volume from which this ZFS Volume will be created on"
 msgstr "Volumen donde será creado este zvol"
 
 #: storage/forms.py:783
-#, fuzzy
 msgid "ZFS Volume Name"
-msgstr "Volumen ZFS"
+msgstr "Nombre del Volumen ZFS"
 
 #: storage/forms.py:784
-#, fuzzy
 msgid "Size for this ZFS Volume"
-msgstr "Tamaño del zvol"
+msgstr "Tamaño para este Volumen ZFS"
 
 #: storage/forms.py:798
-#, fuzzy
 msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
 msgstr ""
-"Los nombres zvol deben comenzar con un carácter alfanumérico y sólo podrán "
-"contener (-), (_), (:) y (.)."
+"Los nombres de los Volumenes ZFS deben comenzar con un carácter alfanumérico "
+"y sólo podrán contener (-), (_), (:) y (.)."
 
 #: storage/forms.py:820
 msgid "Owner (user)"
@@ -3555,47 +3556,40 @@ msgid "Change Permissions"
 msgstr "Cambiar Permisos"
 
 #: storage/views.py:88 storage/views.py:115 storage/views.py:137
-#, fuzzy
 msgid "Volume successfully added."
-msgstr "%s ha sido añadido correctamente."
+msgstr "Volumen añadido correctamente."
 
 #: storage/views.py:217
 msgid "Unknown"
-msgstr ""
+msgstr "Desconocido"
 
 #: storage/views.py:283
-#, fuzzy
 msgid "Dataset successfully added."
-msgstr "El conjunto de datos ha sido borrado correctamente."
+msgstr "El Conjunto de datos (dataset) ha sido borrado correctamente."
 
 #: storage/views.py:318
-#, fuzzy
 msgid "Dataset successfully edited."
-msgstr "El conjunto de datos ha sido borrado correctamente."
+msgstr "El conjunto de datos ha sido edidato correctamente."
 
 #: storage/views.py:320 storage/views.py:396
 msgid "Some error ocurried while setting the options"
 msgstr "Error al editar las opciones"
 
 #: storage/views.py:342
-#, fuzzy
 msgid "ZFS Volume successfully added."
-msgstr "El Volumen ZFS ha sido borrado correctamente."
+msgstr "Volumen ZFS añadido correctamente."
 
 #: storage/views.py:356
-#, fuzzy
 msgid "This is in use by the iscsi target, please remove it there first."
-msgstr ""
-"Está en uso por el destino iSCSI, por favor borrelo antes para poder usarlo"
+msgstr "Esto está en uso por el destino de iSCSI, por favor borrelo primero"
 
 #: storage/views.py:360
 msgid "ZFS Volume successfully destroyed."
 msgstr "El Volumen ZFS ha sido borrado correctamente."
 
 #: storage/views.py:394
-#, fuzzy
 msgid "Native dataset successfully edited."
-msgstr "El conjunto de datos ha sido borrado correctamente."
+msgstr "El conjunto de datos ha sido editado correctamente."
 
 #: storage/views.py:410
 msgid "Mount Point permissions successfully updated."
@@ -3641,14 +3635,12 @@ msgid "Disk detach has been successfully done."
 msgstr "La desconexión del disco se ha realizado correctamente"
 
 #: storage/views.py:588
-#, fuzzy
 msgid "The volume failed to export"
-msgstr "El servicio falló al reiniciarse"
+msgstr "El volumen falló al exportar"
 
 #: storage/views.py:591
-#, fuzzy
 msgid "The volume has been successfully exported"
-msgstr "Los cambios han sido realizados con exito!"
+msgstr "Volumen exportado correctamente"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
@@ -4113,23 +4105,23 @@ msgstr "El fichero subido no es válido."
 
 #: system/views.py:243
 msgid "Test message from FreeNAS"
-msgstr ""
+msgstr "Mensaje de prueba de FreeNAS"
 
 #: system/views.py:244
 msgid "This is a message test from FreeNAS"
-msgstr ""
+msgstr "Este es un mensaje de prueba de FreeNAS"
 
 #: templates/404.html:7
 msgid "Page Not Found"
-msgstr ""
+msgstr "Página no encontrada"
 
 #: templates/base.html:32
 msgid "expand all"
-msgstr ""
+msgstr "Expandir todos"
 
 #: templates/base.html:33
 msgid "collapse all"
-msgstr ""
+msgstr "Contraer todos"
 
 #: templates/menubar.html:33
 msgid "Log Out"
@@ -4320,9 +4312,8 @@ msgstr "Procesos activos"
 
 #: templates/freeadmin/index.html:35 templates/freeadmin/index.html.py:39
 #: templates/freeadmin/index.html:44
-#, fuzzy
 msgid "Loading..."
-msgstr "Cargando"
+msgstr "Cargando..."
 
 #: templates/freeadmin/index.html:46
 msgid "Reboot the System"
@@ -4350,9 +4341,8 @@ msgid ""
 msgstr "Está a punto de <strong>APAGAR</strong> el sistema, ¿qué quiere hacer?"
 
 #: templates/freeadmin/index.html:69
-#, fuzzy
 msgid "Help & Support"
-msgstr "Soporte EA"
+msgstr "Ayuda y Soporte"
 
 #: templates/freeadmin/index.html:72
 msgid "Forum"
@@ -4562,12 +4552,11 @@ msgstr "Bienvenido, %(username). Gracias por logarse"
 
 #: templates/registration/login.html:50
 msgid "Welcome to FreeNAS 8"
-msgstr ""
+msgstr "Bienvenido a FreeNAS 8"
 
 #: templates/registration/login.html:51
-#, fuzzy
 msgid "Please log in."
-msgstr "Por favor espere..."
+msgstr "Por favor ingrese."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -4618,9 +4607,8 @@ msgid "SNMP Settings"
 msgstr "Configuración SNMP"
 
 #: templates/services/index.html:114
-#, fuzzy
 msgid "S.M.A.R.T. Settings"
-msgstr "Opciones extra de S.M.A.R.T."
+msgstr "Opciones de S.M.A.R.T."
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
@@ -4835,9 +4823,8 @@ msgid "Clone Snapshot"
 msgstr "Clonar una Instantanea"
 
 #: templates/storage/datagrid_disks.html:9
-#, fuzzy
 msgid "Edit Disk"
-msgstr "Editar el conjunto de datos"
+msgstr "Editar Disco"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
@@ -5016,9 +5003,8 @@ msgid "Edit ZFS Volume"
 msgstr "Editar Volumen ZFS"
 
 #: templates/storage/volume_export.html:7
-#, fuzzy
 msgid "Are you sure you want to export?"
-msgstr "¿Está seguro de que quiere borrar?"
+msgstr "¿Está seguro de querer exportar?"
 
 #: templates/storage/volumes.html:30 templates/storage/volumes.html.py:34
 msgid "Create ZFS Volume"
@@ -5062,9 +5048,8 @@ msgid "View Disks"
 msgstr "Ver Discos"
 
 #: templates/storage/volumes.html:198 templates/storage/volumes.html.py:202
-#, fuzzy
 msgid "Export Volume"
-msgstr "Importar un Volumen"
+msgstr "Exportar Volumen"
 
 #: templates/storage/volumes.html:209
 msgid "No volumes defined"
@@ -5132,7 +5117,7 @@ msgstr "Restaurar Configuración"
 
 #: templates/system/config.html:9
 msgid "Save Config"
-msgstr "Salvar Configuración"
+msgstr "Guardar Configuración"
 
 #: templates/system/config.html:12 templates/system/config.html.py:14
 msgid "Upload Config"

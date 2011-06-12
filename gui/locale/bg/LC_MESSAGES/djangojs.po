@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-06-08 18:38+0200\n"
-"Last-Translator: raymond <raymondv@gmx.de>\n"
+"PO-Revision-Date: 2011-06-11 20:39+0200\n"
+"Last-Translator: Crazy <vmishev07051@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
 "MIME-Version: 1.0\n"
@@ -48,15 +48,15 @@ msgstr "Съхранение"
 
 #: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
-msgstr ""
+msgstr "Разписание на задачите"
 
 #: media/lib/js/freeadmin.js:437
 msgid "Edit"
-msgstr ""
+msgstr "Редактиране"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
-msgstr ""
+msgstr "Редактиране на диска"
 
 #: media/lib/js/freeadmin.js:443
 msgid "Replace"
@@ -64,24 +64,24 @@ msgstr "Замяна"
 
 #: media/lib/js/freeadmin.js:444
 msgid "Disk Replacement"
-msgstr ""
+msgstr "Смяна на диск"
 
 #: media/lib/js/freeadmin.js:448
 msgid "Detach"
-msgstr ""
+msgstr "Откачи"
 
 #: media/lib/js/freeadmin.js:449
 msgid "Disk Detach"
-msgstr ""
+msgstr "Откачи диска"
 
 #: media/lib/js/freeadmin.js:635
 msgid "Some error ocurried!"
-msgstr ""
+msgstr "Възникна грешка!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
-msgstr ""
+msgstr "Всяко от избраните"
 
 #: media/lib/js/freeadmin/form/Cron.js:90
 msgid "Every N"
-msgstr ""
+msgstr "Всяко N"
