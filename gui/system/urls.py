@@ -50,4 +50,5 @@ urlpatterns = patterns('freenasUI.system.views',
     url(r'^lsdir/(?P<path>.*)$', 'directory_browser', name="system_dirbrowser"),
     url(r'^cronjobs/$', 'cronjobs', name="system_cronjobs"),
     url(r'^rsyncs/$', 'rsyncs', name="system_rsyncs"),
+    url(r'^smarttests/$', 'smarttests', name="system_smarttests"),
     )

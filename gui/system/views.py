@@ -297,6 +297,12 @@ def cronjobs(request):
         'cronjobs': crons,
         })
 
+def smarttests(request):
+    tests = models.SMARTTest.objects.all().order_by('id')
+    return render(request, "system/smarttest.html", {
+        'smarttests': tests,
+        })
+
 def rsyncs(request):
     rsyncs = models.Rsync.objects.all().order_by('id')
     return render(request, "system/rsync.html", {

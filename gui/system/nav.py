@@ -38,3 +38,9 @@ class ViewRsync(TreeNode):
         gname = 'system.Rsync.View'
         view = 'system_rsyncs'
         append_app = False
+
+class ViewSmarttest(TreeNode):
+
+        gname = 'system.SMARTTest.View'
+        view = 'system_smarttests'
+        append_app = False

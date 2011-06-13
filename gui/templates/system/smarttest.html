@@ -1,51 +1,47 @@
 {% load i18n %}
 <table class="grid">
         <thead class="header">
-    	<tr>
-            <td>{% trans "Minute" %}</td>
+          <tr>
+            <td>{% trans "Description" %}</td>
             <td>{% trans "Hour" %}</td>
             <td>{% trans "Day of month" %}</td>
             <td>{% trans "Month" %}</td>
             <td>{% trans "Day of week" %}</td>
-            <td>{% trans "User" %}</td>
-            <td>{% trans "Command" %}</td>
             <td>{% trans "Available actions" %}</td>
-    	</tr>
-            </thead>
-    {% for c in cronjobs %}
-        <td>{{ c.get_human_minute }}</td>
-        <td>{{ c.get_human_hour }}</td>
-        <td>{{ c.get_human_daymonth }}</td>
-        <td>{{ c.get_human_month }}</td>
-        <td>{{ c.get_human_dayweek }}</td>
-        <td>{{ c.cron_user }}</td>
-        <td>{{ c.cron_command }}</td>
+          </tr>
+        </thead>
+    {% for s in smarttests %}
+        <td>{{ s.smarttest_desc|default:_("Unknown") }}</td>
+        <td>{{ s.get_human_hour }}</td>
+        <td>{{ s.get_human_daymonth }}</td>
+        <td>{{ s.get_human_month }}</td>
+        <td>{{ s.get_human_dayweek }}</td>
         <td>
             <button dojoType="dijit.form.Button" type="button">
                 {% trans "Edit" %}
             <script type="dojo/method" event="onClick" args="evt">
-                editObject('{% trans "Edit"|force_escape %}', '{{ c.get_edit_url }}', [this,]);
+                editObject('{% trans "Edit"|force_escape %}', '{{ s.get_edit_url }}', [this,]);
             </script>
             </button>
             <button dojoType="dijit.form.Button" type="button">
                 {% trans "Delete" %}
             <script type="dojo/method" event="onClick" args="evt">
-                editObject('{% trans "Delete"|force_escape %}', '{{ c.get_delete_url }}', [this,]);
+                editObject('{% trans "Delete"|force_escape %}', '{{ s.get_delete_url }}', [this,]);
             </script>
             </button>
         </td>
     </tr>
     {% empty %}
     <tr>
-        <td colspan="8">{% trans "No CronJobs defined" %}</td>
+        <td colspan="6">{% trans "No S.M.A.R.T. Tests defined" %}</td>
     </tr>
     {% endfor %}
     </table>
-              <p class="btn">
+    <p class="btn">
         <button dojoType="dijit.form.Button" type="button">
-            {% trans "Add CronJob" %}
+            {% trans "Add S.M.A.R.T. Test" %}
             <script type="dojo/method" event="onClick" args="evt">
-                addObject('{% trans "Add CronJob"|force_escape %}', '{% url freeadmin_model_add app="system",model="CronJob" %}', [this,]);
+                addObject('{% trans "Add S.M.A.R.T. Test"|force_escape %}', '{% url freeadmin_model_add app="system",model="CronJob" %}', [this,]);
         </script>
         </button>
-        </p>
+    </p>
