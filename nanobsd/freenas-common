@@ -148,6 +148,11 @@ add_port www/lighttpd
 #+add_port www/py-flup
 #-add_port www/py-flup
 add_port www/py-flup
+#+add_port sysutils/nut
+#-add_port sysutils/nut
+add_port net-mgmt/net-snmp
+add_port x11-toolkits/p5-Tk
+add_port sysutils/nut -DWITHOUT_NEON
 
 add_port x11/xproto -DWITHOUT_X11 # run dep of collectd
 add_port devel/libstatgrab -DWITHOUT_X11 # run dep of collectd
@@ -214,8 +219,8 @@ if [ "${DEBUG}" -eq "1" ]; then
 	add_port www/neon29
 	add_port devel/subversion
 	add_port editors/vim-lite
-        add_port misc/py-pexpect
-        add_port devel/ipython
+	add_port misc/py-pexpect
+	add_port devel/ipython
 fi
 	 
 
