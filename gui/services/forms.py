@@ -261,6 +261,25 @@ class SNMPForm(ModelForm):
 class UPSForm(ModelForm):
     class Meta:
         model = models.UPS
+    def clean_ups_toemail(self):
+        email = self.cleaned_data.get("ups_toemail")
+        if email:
+            invalids = []
+            for e in email.split(';'):
+                if not email_re.match(e.strip()):
+                    invalids.append(e.strip())
+
+            if len(invalids) > 0:
+                raise forms.ValidationError(ungettext_lazy('The email %(email)s is not valid',
+                    'The following emails are not valid: %(email)s', len(invalids)) % {
+                    'email': ", ".join(invalids),
+                    })
+        return email
+    def save(self):
+        super(UPSForm, self).save()
+        #started = notifier().restart("ups")
+        #if started is False and models.services.objects.get(srv_service='smartd').srv_enable:
+        #    raise ServiceFailed("smartd", _("The S.M.A.R.T. service failed to reload."))
 
 class ActiveDirectoryForm(ModelForm):
     #file = forms.FileField(label="Kerberos Keytab File", required=False)

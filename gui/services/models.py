@@ -793,7 +793,7 @@ class UPS(Model):
             )
     ups_subject = models.CharField(
             max_length=120,
-            verbose_name = _("To email"),
+            verbose_name = _("Email Subject"),
             help_text = _("The subject of the email. You can use the following parameters for substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>")
             )
 

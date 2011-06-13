@@ -3,7 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 import models
 
 NAME = _('Services')
-BLACKLIST = ['services','UPS']
+BLACKLIST = ['services']
 ICON = u'ServicesIcon'
 
 class EnDisServices(TreeNode):
