@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $FreeBSD: head/etc/periodic/daily/800.scrub-zfs 221430 2011-05-04 12:37:10Z netchild $
+# $FreeBSD: head/etc/periodic/daily/800.scrub-zfs 223056 2011-06-13 19:45:01Z jpaetzel $
 #
 
 # If there is a global system configuration file, suck it in.
@@ -46,7 +46,7 @@ case "$daily_scrub_zfs_enable" in
 		esac
 
 		# determine how many days shall be between scrubs
-		eval _pool_threshold=\${daily_scrub_zfs_$(echo "${pool}"|tr -s "-" "_")_threshold}
+		eval _pool_threshold=\${daily_scrub_zfs_$(echo "${pool}"|tr  ".:-" "_")_threshold}
 		if [ -z "${_pool_threshold}" ];then
 			_pool_threshold=${daily_scrub_zfs_default_threshold}
 		fi
