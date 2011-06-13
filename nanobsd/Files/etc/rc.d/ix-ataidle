@@ -48,7 +48,7 @@ ataidle_start()
 			/usr/local/sbin/ataidle ${ataidle_args} ${disk}
 		fi
 		if [ "${disk_hddstandby}" != "Always On" ]; then
-			(sleep 60; /usr/local/sbin/ataidle ${disk_hddstandby} ${disk}) > /dev/null 2>&1 &
+			(sleep 60; /usr/local/sbin/ataidle -I ${disk_hddstandby} ${disk}) > /dev/null 2>&1 &
 		fi
 	done
 }
