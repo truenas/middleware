@@ -31,9 +31,8 @@ import smtplib
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 
-from django.contrib.auth.models import User
-
 from freenasUI.system.models import Email
+from account.models import bsdUsers
 
 def get_freenas_version():
     version = "FreeNAS"
@@ -84,21 +83,21 @@ def send_mail(subject, text, interval = timedelta(), channel = 'freenas'):
     error = False
     errmsg = ''
     email = Email.objects.all().order_by('-id')[0]
-    admin = User.objects.all()[0]
+    admin = bsdUsers.objects.get(bsdusr_username='root')
     msg = MIMEText(text)
     msg['Subject'] = subject
     msg['From'] = email.em_fromemail
-    msg['To'] = admin.email
+    msg['To'] = admin.bsdusr_email
     try:
         if email.em_security == 'ssl':
-            server = smtplib.SMTP_SSL(email.em_outgoingserver, email.em_port)
+            server = smtplib.SMTP_SSL(email.em_outgoingserver, email.em_port, timeout=10)
         else:
-            server = smtplib.SMTP(email.em_outgoingserver, email.em_port)
+            server = smtplib.SMTP(email.em_outgoingserver, email.em_port, timeout=10)
             if email.em_security == 'tls':
                 server.starttls()
         if email.em_smtp:
             server.login(email.em_user, email.em_pass)
-        server.sendmail(email.em_fromemail, [admin.email], msg.as_string())
+        server.sendmail(email.em_fromemail, [admin.bsdusr_email], msg.as_string())
         server.quit()
     except Exception, e:
         errmsg = str(e)
