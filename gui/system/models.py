@@ -313,7 +313,9 @@ class CronJob(Model):
         mchoices = dict(choices.MONTHS_CHOICES)
         labels = []
         for m in months:
-            labels.append(unicode(mchoices[str(m)]))
+            if m in ('10', '11', '12'):
+                m = chr(87 + int(m))
+            labels.append(unicode(mchoices[m]))
         return ",".join(labels)
 
     def get_human_dayweek(self):
@@ -468,7 +470,9 @@ class Rsync(Model):
         mchoices = dict(choices.MONTHS_CHOICES)
         labels = []
         for m in months:
-            labels.append(unicode(mchoices[str(m)]))
+            if m in ('10', '11', '12'):
+                m = chr(87 + int(m))
+            labels.append(unicode(mchoices[m]))
         return ",".join(labels)
 
     def get_human_dayweek(self):
@@ -545,7 +549,9 @@ class SMARTTest(Model):
         mchoices = dict(choices.MONTHS_CHOICES)
         labels = []
         for m in months:
-            labels.append(unicode(mchoices[str(m)]))
+            if m in ('10', '11', '12'):
+                m = chr(87 + int(m))
+            labels.append(unicode(mchoices[m]))
         return ",".join(labels)
 
     def get_human_dayweek(self):
