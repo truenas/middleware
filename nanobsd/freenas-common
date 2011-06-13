@@ -151,8 +151,6 @@ add_port www/py-flup
 #+add_port sysutils/nut
 #-add_port sysutils/nut
 add_port net-mgmt/net-snmp
-add_port graphics/jpeg
-add_port x11-toolkits/p5-Tk
 add_port sysutils/nut -DWITHOUT_NEON
 
 add_port x11/xproto -DWITHOUT_X11 # run dep of collectd
