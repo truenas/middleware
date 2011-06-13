@@ -30,7 +30,7 @@ EOF
             if [ "${disk}" = "None" ]; then
                 continue
             fi
-            echo -n "/dev/${disk} -d removable"
+            echo -n "/dev/${disk}"
             echo -n " -n ${mode}"
             echo -n " -W ${diff},${info},${crit}"
             if [ -n "${email}" ]; then
