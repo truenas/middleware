@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-04 01:08+0200\n"
+"PO-Revision-Date: 2011-06-13 01:59+0200\n"
 "Last-Translator: raymond <raymondv@gmx.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
@@ -428,55 +428,55 @@ msgstr "lesbar und schreibbar"
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes)s Minuten"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour)s Stunde"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hours)s Stunden"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day)s Tag"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week)s Woche"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Nie - Überprüfe Gerät unabhängig von seinem Leistungsmodus"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Schlaf - Überprüfe Gerät außer es ist im SCHLAF-Modus"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
+msgstr "Standby - Überprüfe Gerät außer es ist im SCHLAF oder STANDBY Modus"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
-msgstr ""
+msgstr "Idle - Überprüfe Gerät außer es ist im SCHLAG, STANDBY oder IDLE Modus"
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Voller Selbsttest"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Kleiner Selbsttest"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Übertragungsraten Selbsttest (nur ATA)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
@@ -689,24 +689,20 @@ msgid "View All Groups"
 msgstr "Alle Gruppen anzeigen"
 
 #: account/views.py:78
-#, fuzzy
 msgid "Password successfully updated."
 msgstr "%s erfolgreich aktualisiert."
 
 #: account/views.py:92
-#, fuzzy
 msgid "Admin user successfully updated."
-msgstr "%s erfolgreich aktualisiert."
+msgstr "Administrator erfolgreich aktualisiert."
 
 #: account/views.py:102
-#, fuzzy
 msgid "Users successfully updated."
-msgstr "%s erfolgreich aktualisiert."
+msgstr "Benutzer erfolgreich aktualisiert."
 
 #: account/views.py:115
-#, fuzzy
 msgid "Groups successfully updated."
-msgstr "%s erfolgreich aktualisiert."
+msgstr "Gruppen erfolgreich aktualisiert."
 
 #: contrib/ext_formwizard.py:170
 msgid ""
@@ -727,10 +723,9 @@ msgid "The group %s is not valid."
 msgstr "Die Gruppe %s ist ungültig."
 
 #: freeadmin/forms.py:138
-#, fuzzy
 msgid "The path must reside within a volume mount point"
 msgstr ""
-"Ihr Pfad zur Erweiterung muss innerhalb eines Volume/Datensatz-"
+"Der Pfad zur Erweiterung muss innerhalb eines Volume/Datensatz-"
 "Einhängepunktes liegen."
 
 #: freeadmin/navtree.py:315
@@ -1007,9 +1002,8 @@ msgid "View All Link Aggregations"
 msgstr "Alle Link Aggregationen anzeigen"
 
 #: network/views.py:180
-#, fuzzy
 msgid "LAGG successfully added"
-msgstr "erfolgreich hinzugefügt"
+msgstr "LAGG erfolgreich hinzugefügt"
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1304,7 +1298,6 @@ msgid "Guest account"
 msgstr "Gastkonto"
 
 #: services/models.py:105 services/models.py:192
-#, fuzzy
 msgid ""
 "Use this option to override the username ('nobody' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
@@ -1313,7 +1306,7 @@ msgid ""
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
 "Benutzen Sie diese Option, um denjeinigen Benutzernamen (Standard: 'ftp') zu "
-"übersteuern, welcher für den Zugriff auf diejenigen Dienste benutzt wird, "
+"überschreiben, welcher für den Zugriff auf diejenigen Dienste benutzt wird, "
 "die als Gast bezeichnet sind. Sämtliche Berechtigungen diese Benutzers "
 "werden allen Clients zur Verfügung stehen, die sich mit dem Gast-Dienst "
 "verbinden. Dieser Benutzer muss zwar in der Passwortdatei existieren, "
@@ -1825,11 +1818,11 @@ msgstr "Optional eine benutzerfreundliche Bezeichnung für das Target."
 
 #: services/models.py:569 storage/views.py:157
 msgid "Serial"
-msgstr ""
+msgstr "Seriennummer"
 
 #: services/models.py:572
 msgid "Serial number for the logical unit"
-msgstr ""
+msgstr "Seriennummer für die Logikeinheit"
 
 #: services/models.py:577 storage/models.py:74 system/models.py:498
 #: templates/services/iscsi_extents.html:6
@@ -2683,23 +2676,23 @@ msgid "Rsync Modules"
 msgstr "Rsync Module"
 
 #: services/models.py:1243
-#, fuzzy
 msgid "Check interval"
-msgstr "Intervall"
+msgstr "Überprüfe Intervall"
 
 #: services/models.py:1244
 msgid ""
 "Sets the interval between disk checks to N minutes. The default is 30 minutes"
 msgstr ""
+"Legt den Intervall zwischen den Festplattenprüfungen in N Minuten fest. "
+"Standard ist 30 Minuten."
 
 #: services/models.py:1250
-#, fuzzy
 msgid "Power mode"
 msgstr "Abschaltmodus"
 
 #: services/models.py:1254
 msgid "Difference"
-msgstr ""
+msgstr "Differenz"
 
 #: services/models.py:1255
 msgid ""
@@ -2708,36 +2701,35 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1259
-#, fuzzy
 msgid "Informal"
-msgstr "Normal"
+msgstr "Informell"
 
 #: services/models.py:1260 services/models.py:1265
 msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
 msgstr ""
+"Berichte, falls die Temperatur höher oder genau N Grad Celsius entspricht. 0 "
+"um dies zu deaktivieren"
 
 #: services/models.py:1264
 msgid "Critical"
-msgstr ""
+msgstr "Kritisch"
 
 #: services/models.py:1268
 msgid "Email to report"
 msgstr ""
 
 #: services/models.py:1271
-#, fuzzy
 msgid "Destination email address. Separate email addresses by semi-colon"
 msgstr ""
-"E-Mail Empfänger, mehrere E-Mail Adressen werden mit einem Semikolon "
+"E-Mail Empfänger. Mehrere E-Mail Adressen werden mit einem Semikolon "
 "getrennt."
 
 #: services/models.py:1274 services/models.py:1275
 #: templates/services/index.html:108
-#, fuzzy
 msgid "S.M.A.R.T."
-msgstr "S.M.A.R.T. aktivieren"
+msgstr "S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
@@ -3436,23 +3428,20 @@ msgstr "Laufwerk auf dem das Dataset erstellt werden soll"
 
 # vielleicht auch: ZFS-Partition
 #: storage/forms.py:783
-#, fuzzy
 msgid "ZFS Volume Name"
 msgstr "ZFS-Datenträger"
 
 #: storage/forms.py:784
-#, fuzzy
 msgid "Size for this ZFS Volume"
 msgstr "Größe des ZFS Volumes"
 
 #: storage/forms.py:798
-#, fuzzy
 msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
 msgstr ""
 "Datensatznamen müssen mit einem alphanumerischen Zeichen beginnen und dürfen "
-"nur (-), (_) (:) und (.) beinhalten."
+"nur (-), (_) (:) und (.) enthalten."
 
 #: storage/forms.py:820
 msgid "Owner (user)"
@@ -3744,39 +3733,34 @@ msgid "Change Permissions"
 msgstr "Zugriffsrechte ändern"
 
 #: storage/views.py:88 storage/views.py:115 storage/views.py:137
-#, fuzzy
 msgid "Volume successfully added."
-msgstr "%s erfolgreich hinzugefügt."
+msgstr "Volume erfolgreich hinzugefügt."
 
 #: storage/views.py:217
 msgid "Unknown"
-msgstr ""
+msgstr "Unbekannt"
 
 #: storage/views.py:283
-#, fuzzy
 msgid "Dataset successfully added."
-msgstr "Dataset erfolgreich gelöscht."
+msgstr "Dataset erfolgreich hinzugefügt."
 
 #: storage/views.py:318
-#, fuzzy
 msgid "Dataset successfully edited."
-msgstr "Dataset erfolgreich gelöscht."
+msgstr "Dataset erfolgreich editiert."
 
 #: storage/views.py:320 storage/views.py:396
 msgid "Some error ocurried while setting the options"
 msgstr "Beim Speichern der Einstellungen ist ein Fehler aufgetreten"
 
 #: storage/views.py:342
-#, fuzzy
 msgid "ZFS Volume successfully added."
-msgstr "ZFS Volume erfolgreich gelöscht."
+msgstr "ZFS Volume erfolgreich hinzugefügt."
 
 #: storage/views.py:356
-#, fuzzy
 msgid "This is in use by the iscsi target, please remove it there first."
 msgstr ""
 "Dies ist noch in Verwendung durch das iSCSI-Ziel, bitte entfernen Sie es "
-"dort zuerst"
+"dort zuerst."
 
 #: storage/views.py:360
 msgid "ZFS Volume successfully destroyed."
@@ -3804,9 +3788,8 @@ msgid "Rollback successful."
 msgstr "Rollback erfolgreich."
 
 #: storage/views.py:470
-#, fuzzy
 msgid "Snapshot successfully added."
-msgstr "Snapshot erfolgreich geklont."
+msgstr "Snapshot erfolgreich hinzugefügt."
 
 #: storage/views.py:483
 #, fuzzy
@@ -3814,9 +3797,8 @@ msgid "Snapshot successfully taken."
 msgstr "Snapshot erfolgreich erstellt"
 
 #: storage/views.py:498
-#, fuzzy
 msgid "Snapshot successfully cloned."
-msgstr "Snapshot erfolgreich geklont"
+msgstr "Snapshot erfolgreich geklont."
 
 # statt "eingeleitet" wäre auch "initiiert" denkbar
 #: storage/views.py:549
@@ -4317,23 +4299,23 @@ msgstr "Die hochgeladene Datei ist ungültig."
 
 #: system/views.py:243
 msgid "Test message from FreeNAS"
-msgstr ""
+msgstr "Testnachricht von FreeNAS"
 
 #: system/views.py:244
 msgid "This is a message test from FreeNAS"
-msgstr ""
+msgstr "Dies ist ein Nachrichtentest von FreeNAS"
 
 #: templates/404.html:7
 msgid "Page Not Found"
-msgstr ""
+msgstr "Seite nicht gefunden"
 
 #: templates/base.html:32
 msgid "expand all"
-msgstr ""
+msgstr "Erweitere alle"
 
 #: templates/base.html:33
 msgid "collapse all"
-msgstr ""
+msgstr "Alles zusammenklappen"
 
 #: templates/menubar.html:33
 msgid "Log Out"
@@ -4525,9 +4507,8 @@ msgstr "Laufende Prozesse"
 # der Kontext ist entscheidend... eventuell auch "wird geladen"
 #: templates/freeadmin/index.html:35 templates/freeadmin/index.html.py:39
 #: templates/freeadmin/index.html:44
-#, fuzzy
 msgid "Loading..."
-msgstr "Laden"
+msgstr "Laden..."
 
 #: templates/freeadmin/index.html:46
 msgid "Reboot the System"
@@ -4558,9 +4539,8 @@ msgstr ""
 "Sie sind dabei das System <strong>HERUNTERZUFAHREN</strong>. Sind Sie sicher?"
 
 #: templates/freeadmin/index.html:69
-#, fuzzy
 msgid "Help & Support"
-msgstr "EA Unterstützung"
+msgstr "Hilfe & Unterstützung"
 
 #: templates/freeadmin/index.html:72
 msgid "Forum"
@@ -4783,12 +4763,11 @@ msgstr "Willkommen, %(username)s. Schön, dass Sie hier sind."
 
 #: templates/registration/login.html:50
 msgid "Welcome to FreeNAS 8"
-msgstr ""
+msgstr "Willkommen zu FreeNAS 8"
 
 #: templates/registration/login.html:51
-#, fuzzy
 msgid "Please log in."
-msgstr "Bitte warten..."
+msgstr "Bitte melden Sie sich an."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -4839,9 +4818,8 @@ msgid "SNMP Settings"
 msgstr "SNMP Einstellungen"
 
 #: templates/services/index.html:114
-#, fuzzy
 msgid "S.M.A.R.T. Settings"
-msgstr "S.M.A.R.T. weitere Optionen"
+msgstr "S.M.A.R.T. Optionen"
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
@@ -5241,9 +5219,8 @@ msgid "Edit ZFS Volume"
 msgstr "ZFS Volume bearbeiten"
 
 #: templates/storage/volume_export.html:7
-#, fuzzy
 msgid "Are you sure you want to export?"
-msgstr "Möchten Sie wirklich löschen?"
+msgstr "Möchten Sie wirklich exportieren?"
 
 # Volume = Datenträger
 #: templates/storage/volumes.html:30 templates/storage/volumes.html.py:34
@@ -5288,9 +5265,8 @@ msgid "View Disks"
 msgstr "Zeige Festplatten"
 
 #: templates/storage/volumes.html:198 templates/storage/volumes.html.py:202
-#, fuzzy
 msgid "Export Volume"
-msgstr "Importiere Datenträger"
+msgstr "Exportiere Datenträger"
 
 #: templates/storage/volumes.html:209
 msgid "No volumes defined"
@@ -5335,9 +5311,8 @@ msgstr "Bestehende Daten werden gelöscht"
 
 # vielleicht auch: ZFS-Partition
 #: templates/storage/zvols.html:9
-#, fuzzy
 msgid "Add ZFS Volume"
-msgstr "ZFS-Datenträger"
+msgstr "ZFS-Datenträger hinzufügen"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
@@ -5356,9 +5331,8 @@ msgid "Restore to Factory Defaults"
 msgstr "Werkseinstellungen wiederherstellen"
 
 #: templates/system/config.html:5
-#, fuzzy
 msgid "Restore Config"
-msgstr "Speichern der Einstellungen"
+msgstr "Wiederherstellung der Konfiguration"
 
 #: templates/system/config.html:9
 msgid "Save Config"
@@ -5395,11 +5369,11 @@ msgstr "Neustart..."
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "Ihre Test-E-Mail wurde gesendet!"
 
 #: templates/system/email_edit.html:19
 msgid "Your test email could not be sent:"
-msgstr ""
+msgstr "Ihre Test-E-Mail konnte nicht gesendet werden:"
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-05-27 18:54+0200\n"
-"Last-Translator: Lage <tobhjelm@gmail.com>\n"
+"PO-Revision-Date: 2011-06-13 07:38+0200\n"
+"Last-Translator: varpan <markus@varpula.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -111,34 +111,28 @@ msgid "Disabled"
 msgstr "Inaktiverad"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Minimal strömförbrukning med Standby (spindown)"
+msgstr "Nivå 1- Minimal strömförbrukning med Standby (spindown)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Medel strömförbrukning med standby"
+msgstr "Nivå 64 - Medel strömförbrukning med standby"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Medel strömförbrukning med standby"
+msgstr "Nivå 127 - Medel strömförbrukning med standby"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Minimal strömförbrukning utan Standby (ingen spindown)"
+msgstr "Nivå 128 - Minimal strömförbrukning utan Standby (ingen spindown)"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Medel strömförbrukning utan Standby"
+msgstr "Nivå 192 - Medel strömförbrukning utan Standby"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Maximal prestanda, maximal strömförbrukning"
+msgstr "Nivå 254 - Maximal prestanda, maximal strömförbrukning"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -360,19 +354,16 @@ msgid "lzjb (recommended)"
 msgstr "lzjb (rekommenderad)"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "standardnivå"
+msgstr "gzip (standardnivå 6)"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "snabbast"
+msgstr "gzip (snabbast)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "maximal, långsam"
+msgstr "gzip (maximal, långsam)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -404,18 +395,16 @@ msgid "Every selected weekday"
 msgstr "Varje vald veckodag"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
-msgstr "endast läsning"
+msgstr "Läsning-enbart"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "endast läsning"
+msgstr "Enbart-skrivning"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Läsning och skrivning"
 
 #: choices.py:447 choices.py:448
 #, python-format
@@ -444,7 +433,7 @@ msgstr ""
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Aldrig - Kontrollera enheten oavsett vilket strömläge den har"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
@@ -558,7 +547,7 @@ msgstr "Nytt lösenord"
 
 #: account/forms.py:468
 msgid "New password confirmation"
-msgstr "Bekräftelse nytt lösenord "
+msgstr "Bekräftelse nytt lösenord"
 
 #: account/forms.py:493
 msgid "Old password"
@@ -670,24 +659,20 @@ msgid "View All Groups"
 msgstr "Visa alla grupper"
 
 #: account/views.py:78
-#, fuzzy
 msgid "Password successfully updated."
-msgstr "%s uppdateringen lyckades."
+msgstr "Lösenordet är uppdaterat."
 
 #: account/views.py:92
-#, fuzzy
 msgid "Admin user successfully updated."
-msgstr "%s uppdateringen lyckades."
+msgstr "Admin användare uppdaterades."
 
 #: account/views.py:102
-#, fuzzy
 msgid "Users successfully updated."
-msgstr "%s uppdateringen lyckades."
+msgstr "Användaren uppdaterad."
 
 #: account/views.py:115
-#, fuzzy
 msgid "Groups successfully updated."
-msgstr "%s uppdateringen lyckades."
+msgstr "Grupper uppdaterade."
 
 #: contrib/ext_formwizard.py:170
 msgid ""
@@ -708,10 +693,9 @@ msgid "The group %s is not valid."
 msgstr ""
 
 #: freeadmin/forms.py:138
-#, fuzzy
 msgid "The path must reside within a volume mount point"
 msgstr ""
-"Sökvägen till extentet måste finnas inuti en volym/dataset-monteringspunkt."
+"Sökvägen till extentet måste finnas inuti en volym/dataset-monteringspunkt"
 
 #: freeadmin/navtree.py:315
 #, python-format
@@ -719,9 +703,9 @@ msgid "Add %s"
 msgstr ""
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "Visa alla användare"
+msgstr "Visa alla %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -738,7 +722,7 @@ msgstr "Stäng av"
 #: freeadmin/views.py:225
 #, python-format
 msgid "%s successfully added."
-msgstr "%s har skapats"
+msgstr "%s har skapats."
 
 #: freeadmin/views.py:384 freeadmin/views.py:386
 #, python-format
@@ -747,12 +731,12 @@ msgstr "%s uppdateringen lyckades."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Den här servicen kunde inte starta om."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
 msgid "%s successfully deleted."
-msgstr "%s har tagits bort"
+msgstr "%s har tagits bort."
 
 #: network/forms.py:44 network/models.py:95
 msgid "NIC"
@@ -772,7 +756,7 @@ msgstr "Namnserver 1 måste fyllas i innan namnserver 3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr "Namnserver 1 måste fyllas i innan namnserver 2."
+msgstr "Namnserver 1 måste fyllas i innan namnserver 2"
 
 #: network/forms.py:100
 #, fuzzy
@@ -795,7 +779,7 @@ msgstr "Fyskisk NICs i LAGG"
 #: network/forms.py:190
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr "Nätverk %s är inte rätt, CIDR förväntas."
+msgstr "Nätverket '%s'  är inte rätt, CIDR förväntas."
 
 #: network/models.py:42 services/models.py:1074
 #: templates/system/system_info.html:4
@@ -983,9 +967,8 @@ msgid "View All Link Aggregations"
 msgstr "Visa alla Länksammanslagningar"
 
 #: network/views.py:180
-#, fuzzy
 msgid "LAGG successfully added"
-msgstr "%s har lagts till"
+msgstr "LAGG har lagts till"
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -993,7 +976,7 @@ msgstr "Detta fält krävs för att \"Aktivera hemkatalogsbläddring\"."
 
 #: services/forms.py:73
 msgid "This field is required for \"Home directories\"."
-msgstr "Detta fält krävs för \"hemkataloger\""
+msgstr "Detta fält krävs för \"hemkataloger\"."
 
 #: services/forms.py:90
 msgid "The AFP service failed to reload."
@@ -1001,7 +984,7 @@ msgstr ""
 
 #: services/forms.py:99
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "NFS tjänsten kunde inte starta om."
 
 #: services/forms.py:103
 msgid "File Permission"
@@ -1025,8 +1008,7 @@ msgstr "Detta värde måste vara mellan 0 och 1000, inklusive."
 
 #: services/forms.py:159
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
-"Detta värde måste vara mellan 1024 och 65535, inklusive. 0 är standard."
+msgstr "Detta värde måste vara mellan 1024 och 65535, inklusive. 0 är standard"
 
 #: services/forms.py:165
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
@@ -1035,27 +1017,29 @@ msgstr ""
 
 #: services/forms.py:184
 msgid "This field is required for anonymous login"
-msgstr "Detta fält krävs för anonyma inloggningar."
+msgstr "Detta fält krävs för anonyma inloggningar"
 
 #: services/forms.py:191
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "FTP-tjänsten kunde inte starta om."
 
 #: services/forms.py:200
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "TFTP-tjänsten kunde inte starta om."
 
 #: services/forms.py:207
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "SSH-tjänsten kunde inte starta om."
 
 #: services/forms.py:216 services/forms.py:241
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Rsync-tjänsten kunde inte starta om."
 
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
 msgstr ""
+"Namnet kan inte innehålla varken divisionstecken eller avslutande "
+"hakparantes."
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
@@ -1063,7 +1047,7 @@ msgstr ""
 
 #: services/forms.py:259
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "SNMP-tjänsten kunde inte starta om."
 
 #: services/forms.py:273
 msgid "The activedirectory service failed to reload."
@@ -1096,7 +1080,7 @@ msgstr "Käll-hemlighet"
 
 #: services/forms.py:297 services/models.py:533 services/models.py:538
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr "Källsidans hemlighete. (för ömsesidig autentisering)"
+msgstr "Källsidans hemlighet. (för ömsesidig CHAP autentisering)"
 
 #: services/forms.py:300
 msgid "Initiator Secret (Confirm)"
@@ -1144,7 +1128,7 @@ msgstr "Lista autentiseringsgrupper"
 #: services/forms.py:413
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr "Värdet måste vara mellan % (start)d och % (slut)d, inklusive."
+msgstr "Värdet måste vara mellan %(start)d och %(end)d, inklusive."
 
 #: services/forms.py:421
 #, fuzzy
@@ -1169,7 +1153,7 @@ msgstr ""
 #: services/forms.py:556
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
-msgstr "Detta värde kan vara storleken i byte eller i Kb, Mb, Gb, Tb"
+msgstr "Detta värde kan vara en storlek i byte eller anges med KB, MB, GB, TB"
 
 #: services/forms.py:577
 msgid "Disk device"
@@ -1194,11 +1178,11 @@ msgid "Delete underlying file"
 msgstr ""
 
 #: services/forms.py:788
-#, fuzzy, python-format
+#, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "Användare %s är inte gilltig."
-msgstr[1] "Användare %s är inte gilltig."
+msgstr[0] "E-post adressen %(email)s är inte gilltig"
+msgstr[1] "Följande E-post adresser är inte gilltiga %(email)s"
 
 #: services/models.py:40
 msgid "Service"
@@ -1262,7 +1246,7 @@ msgstr "Logg nivå"
 
 #: services/models.py:97
 msgid "Local Master"
-msgstr "lokalt överornad"
+msgstr "Lokalt Överordnad"
 
 #: services/models.py:99
 msgid "Time Server for Domain"
@@ -1273,7 +1257,6 @@ msgid "Guest account"
 msgstr "Gästkonto"
 
 #: services/models.py:105 services/models.py:192
-#, fuzzy
 msgid ""
 "Use this option to override the username ('nobody' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
@@ -1281,7 +1264,7 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"Använd detta val för att överrida användarnamnet(´ftp´by default) som "
+"Använd detta val för att åsidosätta användarnamnet(´nobody' är standard) som "
 "används för tillgång till tjänster för gästkontot. Alla rättigheter som "
 "användaren har blir tillgängliga för alla som använder gästkontot. Denna "
 "användare måste finnas i lösenordsfilen, men behöver inget giltigt lösenord."
@@ -1302,7 +1285,7 @@ msgstr "Filmask"
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
 "Använd detta alternativ för att överrida skapande av fil masken (0666 är "
-"standard)"
+"standard)."
 
 #: services/models.py:119 services/models.py:854
 msgid "Directory mask"
@@ -1312,7 +1295,7 @@ msgstr "Katalog mask"
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
-"Använd detta för att överrida skapande av katalog mask (0777 är standard)"
+"Använd detta för att överrida skapande av katalog mask (0777 är standard)."
 
 #: services/models.py:124
 msgid "Large RW support"
@@ -1328,7 +1311,7 @@ msgstr "Stöd för EA"
 
 #: services/models.py:130
 msgid "Support DOS File Attributes"
-msgstr "Stöd för Dos Fil attribut"
+msgstr "Stöd för DOS Fil attribut"
 
 #: services/models.py:132
 msgid "Allow Empty Password"
@@ -1350,7 +1333,7 @@ msgstr "Aktivera hemkataloger"
 
 #: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
-msgstr "Detta aktiverar\\inaktiverar hemma kataloger för samba användare.  "
+msgstr "Detta aktiverar\\inaktiverar hemma kataloger för samba användare."
 
 #: services/models.py:144
 msgid "Enable home directories browsing"
@@ -1371,20 +1354,19 @@ msgstr "Aktivera AIO"
 
 #: services/models.py:154
 msgid "This enables\\disables AIO support."
-msgstr "Detta aktiverar\\inaktiverar stöd för AIO"
+msgstr "Detta aktiverar\\inaktiverar stöd för AIO."
 
 #: services/models.py:158
 msgid "Minimal AIO read size"
 msgstr "Minsta AIO lässtorlek"
 
 #: services/models.py:159
-#, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
 msgstr ""
 "Samba kommer att läsa asynkront om den begärda storleken är större än detta "
-"värde.   Standard värdet är 1."
+"värde. Standard värdet är 1."
 
 #: services/models.py:164
 msgid "Minimal AIO write size"
@@ -1482,7 +1464,7 @@ msgid ""
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
 "Basnamnet (t.ex. iqn.2007-09.jp.ne.peach.istgt, se RFC 3720 och 3721 för "
-"detaljer) kommer att läggas till målnamn som inte börjar med \"iqn.\""
+"detaljer) kommer att läggas till målnamn som inte börjar med 'iqn.'"
 
 #: services/models.py:242
 msgid "Discovery Auth Method"
@@ -1490,11 +1472,11 @@ msgstr ""
 
 #: services/models.py:253
 msgid "I/O Timeout"
-msgstr " Tidsgräns för I/O"
+msgstr "Tidsgräns för I/O"
 
 #: services/models.py:254
 msgid "I/O timeout in seconds (30 by default)."
-msgstr "Tidsgräns för I/O i sekunder (30 är standard)"
+msgstr "Tidsgräns för I/O i sekunder (30 är standard)."
 
 #: services/models.py:259
 msgid "NOPIN Interval"
@@ -1502,7 +1484,7 @@ msgstr "NOPIN-intervall"
 
 #: services/models.py:260
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr "NOPIN sänd intervall i sekunder (20 är standard)"
+msgstr "NOPIN sändningsintervall i sekunder (20 är standard)."
 
 #: services/models.py:265
 msgid "Max. sessions"
@@ -2428,9 +2410,10 @@ msgid "Maximum connections"
 msgstr "Max antal anslutningar"
 
 #: services/models.py:1198
-#, fuzzy
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr "Maximalt antal anslutningar i varje session (8 är standard)."
+msgstr ""
+"Maximalt antal samtidiga anslutningar i varje session. 0 är standard "
+"(obegränsat)"
 
 #: services/models.py:1204
 msgid ""
@@ -2472,10 +2455,11 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1226
-#, fuzzy
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
-msgstr "Dessa parametrar har skapats i [Global] delen av smb.conf"
+msgstr ""
+"Dessa parametrar kommer att läggas till i modul konfigurationen i "
+"rsyncd.conf"
 
 #: services/models.py:1231
 msgid "Rsync Module"
@@ -2646,7 +2630,7 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
-"Använd detta val för att överrida användarnamnet(´ftp´by default) som "
+"Använd detta val för att åsidosätta användarnamnet(standard är 'ftp') som "
 "används för tillgång till tjänster för gästkontot. Alla rättigheter som "
 "användaren har blir tillgängliga för alla som använder gästkontot. Denna "
 "användare måste finnas i lösenordsfilen, men behöver inget giltigt lösenord."
@@ -3396,80 +3380,68 @@ msgid "Change Permissions"
 msgstr ""
 
 #: storage/views.py:88 storage/views.py:115 storage/views.py:137
-#, fuzzy
 msgid "Volume successfully added."
-msgstr "%s har skapats"
+msgstr "Volymen har lagts till."
 
 #: storage/views.py:217
 msgid "Unknown"
 msgstr ""
 
 #: storage/views.py:283
-#, fuzzy
 msgid "Dataset successfully added."
-msgstr "%s har tagits bort"
+msgstr "Datasetet har lagts till."
 
 #: storage/views.py:318
-#, fuzzy
 msgid "Dataset successfully edited."
-msgstr "%s har tagits bort"
+msgstr "Datasetet har blivit ändrat."
 
 #: storage/views.py:320 storage/views.py:396
 msgid "Some error ocurried while setting the options"
 msgstr ""
 
 #: storage/views.py:342
-#, fuzzy
 msgid "ZFS Volume successfully added."
-msgstr "%s har tagits bort"
+msgstr "ZFS volymen har lagts till."
 
 #: storage/views.py:356
 msgid "This is in use by the iscsi target, please remove it there first."
 msgstr ""
 
 #: storage/views.py:360
-#, fuzzy
 msgid "ZFS Volume successfully destroyed."
-msgstr "%s har tagits bort"
+msgstr "ZFS volymen har tagits bort."
 
 #: storage/views.py:394
-#, fuzzy
 msgid "Native dataset successfully edited."
-msgstr "%s har tagits bort"
+msgstr "Ursprungligt dataset har ändrats."
 
 #: storage/views.py:410
-#, fuzzy
 msgid "Mount Point permissions successfully updated."
-msgstr "%s uppdateringen lyckades."
+msgstr "Rättigheter för monteringspunkten har uppdaterats."
 
 #: storage/views.py:425
-#, fuzzy
 msgid "Dataset successfully destroyed."
-msgstr "%s har tagits bort"
+msgstr "Datasetet har tagits bort."
 
 #: storage/views.py:439
-#, fuzzy
 msgid "Snapshot successfully deleted."
-msgstr "%s har tagits bort"
+msgstr "Ögonblicksbilden har tagits bort."
 
 #: storage/views.py:453
 msgid "Rollback successful."
 msgstr ""
 
 #: storage/views.py:470
-#, fuzzy
 msgid "Snapshot successfully added."
-msgstr "%s har tagits bort"
+msgstr "Ögonblicksbild har lagts till."
 
 #: storage/views.py:483
-#, fuzzy
 msgid "Snapshot successfully taken."
-msgstr "%s har tagits bort"
+msgstr "Ögonblicksbild har tagits."
 
 #: storage/views.py:498
-#, fuzzy
 msgid "Snapshot successfully cloned."
-msgstr "%s har tagits bort"
+msgstr "Ögonblicksbilden har klonats."
 
 #: storage/views.py:549
 msgid "Disk replacement has been initiated."
@@ -3488,9 +3460,8 @@ msgid "The volume failed to export"
 msgstr ""
 
 #: storage/views.py:591
-#, fuzzy
 msgid "The volume has been successfully exported"
-msgstr "%s har tagits bort"
+msgstr "Volymen har exporterats"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
@@ -3755,9 +3726,8 @@ msgstr ""
 
 #: system/models.py:256 system/models.py:360 system/models.py:508
 #: templates/system/cronjob.html:6 templates/system/rsync.html:6
-#, fuzzy
 msgid "Hour"
-msgstr "Timme(ar)"
+msgstr "Timme"
 
 #: system/models.py:257 system/models.py:361 system/models.py:509
 msgid "Values 0-23 allowed."
@@ -3774,9 +3744,8 @@ msgstr ""
 
 #: system/models.py:267 system/models.py:371 system/models.py:519
 #: templates/system/cronjob.html:8 templates/system/rsync.html:8
-#, fuzzy
 msgid "Month"
-msgstr "Månad(er)"
+msgstr "Månad"
 
 #: system/models.py:272 system/models.py:376 system/models.py:524
 #: templates/system/cronjob.html:9 templates/system/rsync.html:9
@@ -3810,9 +3779,9 @@ msgid "Every %s hour(s)"
 msgstr ""
 
 #: system/models.py:304 system/models.py:459
-#, fuzzy, python-format
+#, python-format
 msgid "Every %s days"
-msgstr "Varje dag"
+msgstr "Varje %s dag"
 
 #: system/models.py:311 system/models.py:466
 msgid "Every month"
@@ -4136,9 +4105,8 @@ msgid "Yes"
 msgstr ""
 
 #: templates/freeadmin/generic_model_delete_ok.html:1
-#, fuzzy
 msgid "successfully deleted"
-msgstr "%s har tagits bort"
+msgstr "har tagits bort"
 
 #: templates/freeadmin/generic_model_edit.html:5
 msgid "Your changes have been successfully updated!"
@@ -4847,7 +4815,7 @@ msgstr ""
 
 #: templates/storage/volume_export.html:7
 msgid "Are you sure you want to export?"
-msgstr ""
+msgstr "Är du säker på att du vill exportera?"
 
 #: templates/storage/volumes.html:30 templates/storage/volumes.html.py:34
 #, fuzzy
@@ -4893,9 +4861,8 @@ msgid "View Disks"
 msgstr ""
 
 #: templates/storage/volumes.html:198 templates/storage/volumes.html.py:202
-#, fuzzy
 msgid "Export Volume"
-msgstr "ZFS Volym"
+msgstr "Exportera Volym"
 
 #: templates/storage/volumes.html:209
 msgid "No volumes defined"
@@ -4938,30 +4905,30 @@ msgid "Existing data will be cleared"
 msgstr ""
 
 #: templates/storage/zvols.html:9
-#, fuzzy
 msgid "Add ZFS Volume"
-msgstr "ZFS Volym"
+msgstr "Lägg till ZFS Volym"
 
 #: templates/system/advanced_edit.html:17
+#, fuzzy
 msgid "The cache is being rebuilt."
-msgstr ""
+msgstr "Cachen byggs om."
 
 #: templates/system/advanced_edit.html:19
+#, fuzzy
 msgid "The cache could not be rebuilt"
-msgstr ""
+msgstr "Cachen kunde inte byggas om"
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
-msgstr ""
+msgstr "Skapa om LDAP/AD Cachen"
 
 #: templates/system/config.html:3
 msgid "Restore to Factory Defaults"
 msgstr ""
 
 #: templates/system/config.html:5
-#, fuzzy
 msgid "Restore Config"
-msgstr "Hemlig (bekräfta)"
+msgstr "Återställ konfigurationen"
 
 #: templates/system/config.html:9
 msgid "Save Config"
@@ -4997,15 +4964,15 @@ msgstr ""
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "Ditt test meddelande har skickats!"
 
 #: templates/system/email_edit.html:19
 msgid "Your test email could not be sent:"
-msgstr ""
+msgstr "Ditt test meddelande kunde inte skickas:"
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr ""
+msgstr "Skicka test meddelande"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
@@ -5049,11 +5016,11 @@ msgstr ""
 
 #: templates/system/rsync.html:38
 msgid "No rsyncs defined"
-msgstr ""
+msgstr "Inga rsync är definerade"
 
 #: templates/system/rsync.html:44 templates/system/rsync.html.py:46
 msgid "Add Rsync"
-msgstr ""
+msgstr "Lägg till Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -5081,7 +5048,7 @@ msgstr ""
 
 #: templates/system/system_info.html:16
 msgid "Memory"
-msgstr ""
+msgstr "Minne"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
@@ -5105,7 +5072,7 @@ msgid "Step %(step)s of %(step_count)s"
 msgstr ""
 
 msgid "%s successfully update."
-msgstr "%s uppdatering lyckades"
+msgstr "%s uppdatering lyckades."
 
 msgid "Admin user"
 msgstr "Admin-användare"
@@ -5117,11 +5084,10 @@ msgid ""
 "the guest service. This user must exist in the password file, but does "
 "not require a valid login."
 msgstr ""
-"Använd detta val för att överrida användarnamnet(´www´by default) som "
+"Använd detta val för att åsidosätta användarnamnet(standard är 'www') som "
 "används för tillgång till tjänster för gästkontot. Alla rättigheter som "
 "användaren har blir tillgängliga för alla som använder gästkontot. Denna "
-"användare måste finnas i lösenordsfilen, men behöver inget giltigt "
-"lösenord."
+"användare måste finnas i lösenordsfilen, men behöver inget giltigt lösenord."
 
 #, fuzzy
 msgid "ZVol Name"

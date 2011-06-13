@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-06-04 01:08+0200\n"
+"PO-Revision-Date: 2011-06-13 01:55+0200\n"
 "Last-Translator: raymond <raymondv@gmx.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
@@ -51,9 +51,8 @@ msgid "CronJobs"
 msgstr "Zeitgesteuerte Aufgaben"
 
 #: media/lib/js/freeadmin.js:437
-#, fuzzy
 msgid "Edit"
-msgstr "Festplatte bearbeiten"
+msgstr "Bearbeiten"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"

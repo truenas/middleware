@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-11 16:46+0200\n"
+"PO-Revision-Date: 2011-06-13 10:59+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -695,7 +695,7 @@ msgstr "Kullanıcı %s geçerli değil."
 #: freeadmin/forms.py:124
 #, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr "'%s' grubu geçerli değil."
 
 #: freeadmin/forms.py:138
 msgid "The path must reside within a volume mount point"
@@ -1587,7 +1587,7 @@ msgstr "Kontrolör Yetki Yöntemi"
 
 #: services/models.py:347
 msgid "The method can be accepted in the controller."
-msgstr ""
+msgstr "Bu yöntem kontrolör olarak kabul edilebilir."
 
 #: services/models.py:359 services/models.py:360
 #: templates/services/iscsi.html:3
@@ -1747,7 +1747,7 @@ msgstr "Tür"
 
 #: services/models.py:578
 msgid "Logical Unit Type mapped to LUN."
-msgstr ""
+msgstr "Eşleşen Mantıksal Birim Türü LUN."
 
 #: services/models.py:584
 msgid "Target Flags"
@@ -1775,13 +1775,15 @@ msgstr "Kimlik Doğrulaması Grup Kimliği"
 
 #: services/models.py:616
 msgid "Queue Depth"
-msgstr ""
+msgstr "Sıra Derinliği"
 
 #: services/models.py:617
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
 msgstr ""
+"0 = kapalı, 1-255 = etkin. Komutları belirtilen derinliği sıraya alır. "
+"Tavsiye edilen derinlik sırası 32'dir."
 
 #: services/models.py:622
 msgid "Logical Block Size"
@@ -2100,128 +2102,144 @@ msgstr "Yerel kullanıcı bant genişliği yükleme"
 #: services/models.py:885
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Yerel kullanıcının KB/s olarak bant genişliği yükleme değeri. Sıfır sınırsız "
+"demektir."
 
 #: services/models.py:889
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Yerel kullanıcının indirme bant genişliği"
 
 #: services/models.py:890
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Yerel kullanıcının KB/s olarak bant genişliği indirme değeri. Sıfır sınırsız "
+"demektir."
 
 #: services/models.py:894
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Anonim kullanıcının yükleme bant genişliği"
 
 #: services/models.py:895
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Anonim kullanıcının KB/s olarak bant genişliği yükleme değeri. Sıfır "
+"sınırsız demektir."
 
 #: services/models.py:899
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "Anonim kullanıcının indirme bant genişliği"
 
 #: services/models.py:900
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
+"Anonim kullanıcının KB/s olarak bant genişliği indirme değeri. Sıfır "
+"sınırsız demektir."
 
 #: services/models.py:903
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "SSL/TLS Etkinleştir"
 
 #: services/models.py:908
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "Bu parametreler proftpd.conf dosyasına eklenir."
 
 #: services/models.py:912 services/models.py:913
 #: templates/services/index.html:53
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:922
 msgid "Directory"
-msgstr ""
+msgstr "Dizin"
 
 #: services/models.py:923
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
+"Yayımlamak istediğiniz dosyaları içeren dizin. Aktarımın parçası olarak "
+"dizinin uzak ana bilgisayar boyunca geçmesine gerek yoktur."
 
 #: services/models.py:926
 msgid "Allow New Files"
-msgstr ""
+msgstr "Yeni Dosyalara İzin Ver"
 
 #: services/models.py:930
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"Bu bağlantı noktasını dinle. Varsayılan tftp bağlantı noktasını dinlemek "
+"için /etc/services belirtildi."
 
 #: services/models.py:936
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "Belirten kullanıcı adı hangi servis olarak çalışacak."
 
 #: services/models.py:940
 msgid "umask"
-msgstr ""
+msgstr "varsayılan erişim hakları"
 
 #: services/models.py:941
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
 msgstr ""
+"Yeni oluşturulan dosyalar için varsayılan erişim haklarını ayarlayın. "
+"Varsayılan değer 022'dir (herkes okuyabilir, hiç kimse yazamaz)."
 
 #: services/models.py:945 services/models.py:982 system/models.py:425
 msgid "Extra options"
-msgstr ""
+msgstr "Ek seçenekler"
 
 #: services/models.py:947
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "Ek komut satırı seçenekleri (genellikle boş)."
 
 #: services/models.py:951 services/models.py:952
 #: templates/services/index.html:130
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:961 services/models.py:1157
 msgid "TCP Port"
-msgstr ""
+msgstr "TCP Bağlantı Noktası"
 
 #: services/models.py:962
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "Alternatif TCP bağlantı noktası. Varsayılan değer 22'dir"
 
 #: services/models.py:965
 msgid "Login as Root with password"
-msgstr ""
+msgstr "Parola ile Root olarak giriş"
 
 #: services/models.py:966
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
 msgstr ""
+"Kapalı: Root olarak sadece açık anahtar ile giriş yapabilirsiniz; Etkin: "
+"Parola ile Root girişine izin ver"
 
 #: services/models.py:969
 msgid "Allow Password Authentication"
-msgstr ""
+msgstr "Parola Doğrulamasına İzin Ver"
 
 #: services/models.py:971
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "TCP Bağlantı Noktası Yönlendirmesine İzin Ver"
 
 #: services/models.py:973
 msgid "Compress Connections"
-msgstr ""
+msgstr "Sıkıştırma Bağlantıları"
 
 #: services/models.py:976
 msgid "Host Private Key"
-msgstr ""
+msgstr "Ana Bilgisayar Özel Anahtarı"
 
 #: services/models.py:978
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr ""
+msgstr "RSA ÖZEL ANAHTARINI buraya PEM biçiminde yapıştır."
 
 #: services/models.py:984
 msgid ""
@@ -2232,209 +2250,224 @@ msgstr ""
 #: services/models.py:1024 services/models.py:1025
 #: templates/services/index.html:119
 msgid "SSH"
-msgstr ""
+msgstr "SSH"
 
 #: services/models.py:1034
 msgid "Domain Controller Name"
-msgstr ""
+msgstr "Alan Adı Kontrolcüsünün Adı"
 
 #: services/models.py:1035
 msgid "AD or PDC name."
-msgstr ""
+msgstr "AD veya PDC adı."
 
 #: services/models.py:1039
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr ""
+msgstr "Alan Adı (DNS/Güvenlik etki alanı-Adı)"
 
 #: services/models.py:1040
 msgid "Domain Name, eg example.com"
-msgstr ""
+msgstr "Alan Adı, örneğin ornek.com"
 
 #: services/models.py:1044
 msgid "Host Name (NetBIOS-Name)"
-msgstr ""
+msgstr "Ana Bilgisayar Adı (NetBIOS Adı)"
 
 #: services/models.py:1045
 msgid "Host Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Eski biçimde Ana Bilgisayar Adı örneğin ÖRNEK"
 
 #: services/models.py:1049
 msgid "Workgroup Name"
-msgstr ""
+msgstr "Çalışma Grubu Adı"
 
 #: services/models.py:1050
 msgid "Workgroup Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Eski biçimde Çalışma Grubu Adı, örneğin ÖRNEK"
 
 #: services/models.py:1054
 msgid "Administrator Name"
-msgstr ""
+msgstr "Yönetici Adı"
 
 #: services/models.py:1055
 msgid "Username of Domain Administrator Account"
-msgstr ""
+msgstr "Alan Adı Yönetici Hesabının Kullanıcı Adı"
 
 #: services/models.py:1059
 msgid "Administrator Password"
-msgstr ""
+msgstr "Yönetci Parolası"
 
 #: services/models.py:1060
 msgid "Password of Domain Administrator account."
-msgstr ""
+msgstr "Alan Adı Yönetici Hesabının Parolası."
 
 #: services/models.py:1064 services/models.py:1065
 #: templates/services/index.html:18
 msgid "Active Directory"
-msgstr ""
+msgstr "Aktif Dizin"
 
 #: services/models.py:1076
 msgid "The name or IP address of the LDAP server"
-msgstr ""
+msgstr "LDAP sunucusunun adı veya IP adresi"
 
 #: services/models.py:1080
 msgid "Base DN"
-msgstr ""
+msgstr "Temel DN"
 
 #: services/models.py:1082
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr ""
+"Varsayılan Ayırt Edici (DN) adı aramak için kullanılabilecek yöntem: "
+"dc=test, dc=org"
 
 #: services/models.py:1085
 msgid "Allow Anonymous Binding"
-msgstr ""
+msgstr "Anonim kullanıcı için Bağlama İzni"
 
 #: services/models.py:1088
 msgid "Root bind DN"
-msgstr ""
+msgstr "Root için ayırt edici (DN) bağlama"
 
 #: services/models.py:1090
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
+"Dizin sunucusuna bağlanmak için kullanılabilecek ayırt edici adı yöntemi: "
+"örneğin cn=admin,dc=test,dc=org"
 
 #: services/models.py:1094
 msgid "Root bind password"
-msgstr ""
+msgstr "Root bağlanma parolası"
 
 #: services/models.py:1096
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "Bağlanmak için kimlik bilgileri."
 
 #: services/models.py:1101
 msgid "Password Encryption"
-msgstr ""
+msgstr "Parola ile Şifreleme"
 
 #: services/models.py:1102
 msgid "The password change protocol to use."
-msgstr ""
+msgstr "Parola değiştirme kuralını kullanmak."
 
 #: services/models.py:1106
 msgid "User Suffix"
-msgstr ""
+msgstr "Kullanıcı Soneki"
 
 #: services/models.py:1108
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
 msgstr ""
+"Bu parametre LDAP dizinine eklendiğinde kullanıcılar için kullanılabilir eki "
+"belirler. Örneğin ou=Kullanıcılar"
 
 #: services/models.py:1112
 msgid "Group Suffix"
-msgstr ""
+msgstr "Grup Soneki"
 
 #: services/models.py:1114
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
+"Bu parametre LDAP dizinine eklendiğinde gruplar için kullanılabilir eki "
+"belirler. Örneğin ou=Gruplar"
 
 #: services/models.py:1118
 msgid "Password Suffix"
-msgstr ""
+msgstr "Parola Soneki"
 
 #: services/models.py:1120
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
+"Bu parametre LDAP dizinine eklendiğinde parolalar için kullanılabilir eki "
+"belirler. Örneğin ou=Parolalar"
 
 #: services/models.py:1124
 msgid "Machine Suffix"
-msgstr ""
+msgstr "Bilgisayar Soneki"
 
 #: services/models.py:1126
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
+"Bu parametre LDAP dizinine eklendiğinde bilgisayarlar için kullanılabilir "
+"eki belirler. Örneğin ou=Bilgisayarlar"
 
 #: services/models.py:1130
 msgid "Turn on/off TLS"
-msgstr ""
+msgstr "TLS açma/kapama"
 
 #: services/models.py:1132
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
 msgstr ""
+"Bu parametre SSL/TLS kullanılıp kullanılmadığını belirler. Örneğin "
+"açık/kapalı/tls_başlat"
 
 #: services/models.py:1135
 msgid "Self signed certificate"
-msgstr ""
+msgstr "Kendinden imzalı sertifika"
 
 #: services/models.py:1137
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "Buraya kendinden imzalı sertifika dosyasının içeriğini yerleştirin."
 
 #: services/models.py:1141 sharing/models.py:85
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "Yardımcı Parametreler"
 
 #: services/models.py:1143
 msgid "These parameters are added to ldap.conf."
-msgstr ""
+msgstr "Bu parametreler ldap.conf dosyasına eklenir."
 
 #: services/models.py:1147 services/models.py:1148
 #: templates/services/index.html:64
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/models.py:1158
 msgid "Alternate TCP port. Default is 873"
-msgstr ""
+msgstr "Alternatif TCP bağlantı noktası. Varsayılan değer 873"
 
 #: services/models.py:1163
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
 msgstr ""
+"Bu parametreler rsyncd.conf dosyası içinde [global] ayarlara eklenecektir"
 
 #: services/models.py:1167 services/models.py:1168
 msgid "Rsyncd"
-msgstr ""
+msgstr "Rsyncd"
 
 #: services/models.py:1178
 msgid "Module name"
-msgstr ""
+msgstr "Modül adı"
 
 #: services/models.py:1186
 msgid "Path to be shared"
-msgstr ""
+msgstr "Paylaşılacak olan yol"
 
 #: services/models.py:1192
 msgid "Access Mode"
-msgstr ""
+msgstr "Erişim Durumu"
 
 #: services/models.py:1193
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "Bu modül uzak ana bilgisayar erişimine sahip kontrolleri içerir"
 
 #: services/models.py:1197
 msgid "Maximum connections"
-msgstr ""
+msgstr "En fazla bağlantı"
 
 #: services/models.py:1198
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr ""
+msgstr "Aynı anda en fazla bağlantı sayısı. Varsayılan değer 0 (sınırsız)"
 
 #: services/models.py:1204
 msgid ""
@@ -2443,16 +2476,23 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Dosya aktarımlarının ve bu modül gerçekleşmesi gerektiğinde bu seçenek "
+"kullanıcıların adını belirtir. Bu izinler mevcut dosyalar ile 'Grup' "
+"seçenekleri izinlerini belirler. Varsayılan ayarları kabul etmek için bu "
+"alanı boş bırakın."
 
 #: services/models.py:1211
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"Dosya aktarımlarının ve bu modül gerçekleşmesi gerektiğinde bu seçenek "
+"kullanıcıların adını belirtir. Varsayılan ayarları kabul etmek için bu alanı "
+"boş bırakın."
 
 #: services/models.py:1215
 msgid "Hosts allow"
-msgstr ""
+msgstr "Ana bilgisayarlara izin ver"
 
 #: services/models.py:1216
 msgid ""
@@ -2460,10 +2500,13 @@ msgid ""
 "permitted to access this module. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings"
 msgstr ""
+"Modül erişimine izin verilen ana bilgisayarlarda bu seçenek virgül, boşluk "
+"veya sekme ile ayarlanır. Bilgisayar adı veya IP numarası ile bilgisayarlar "
+"belirtebilirsiniz. Varsayılan ayarları kullanmak için bu alanı boş bırakın."
 
 #: services/models.py:1220
 msgid "Hosts deny"
-msgstr ""
+msgstr "Reddedilecek Ana Bilgisayarlar"
 
 #: services/models.py:1221
 msgid ""
@@ -2479,14 +2522,15 @@ msgstr ""
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
 msgstr ""
+"Bu parametreler rsyncd.conf dosyasında modül yapılandırmasına eklenecektir."
 
 #: services/models.py:1231
 msgid "Rsync Module"
-msgstr ""
+msgstr "Rsync Modül"
 
 #: services/models.py:1232
 msgid "Rsync Modules"
-msgstr ""
+msgstr "Rsync Modülleri"
 
 #: services/models.py:1243
 msgid "Check interval"
@@ -2541,16 +2585,15 @@ msgstr ""
 
 #: services/nav.py:12
 msgid "Control Services"
-msgstr ""
+msgstr "Kontrol Hizmetleri"
 
 #: services/nav.py:50
 msgid "Add Device Extent"
-msgstr ""
+msgstr "Aygıt Boyutu Ekle"
 
 #: services/nav.py:60
-#, fuzzy
 msgid "View All Device Extents"
-msgstr "Tüm Statik Yönlendirmeleri Gör"
+msgstr "Aygıt Boyutlarının Tümünü Görüntüle"
 
 #: services/nav.py:70 templates/services/iscsi.html:7
 msgid "Device Extents"
@@ -2564,9 +2607,8 @@ msgid "Add Extent"
 msgstr ""
 
 #: services/nav.py:102
-#, fuzzy
 msgid "View All Extents"
-msgstr "Bütün kullanıcıları göster"
+msgstr "Tüm Boyutları Göster"
 
 #: services/nav.py:114 templates/services/iscsi.html:9
 msgid "Extents"
@@ -2574,36 +2616,36 @@ msgstr ""
 
 #: services/nav.py:136
 msgid "ISCSI"
-msgstr ""
+msgstr "ISCSI"
 
 #: services/nav.py:147 system/models.py:430 templates/services/index.html:86
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/views.py:222
 msgid "The service could not be stopped."
-msgstr ""
+msgstr "Servis durdurulamadı."
 
 #: services/views.py:229
 msgid "The service could not be started."
-msgstr ""
+msgstr "Servis balatılamadı."
 
 #: sharing/forms.py:82
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "Bu alan geçerli bir IP adresi veya ağ değil"
 
 #: sharing/forms.py:88
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr "'%s' IP'si geçerli değil."
 
 #: sharing/forms.py:99
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "Harita Yöneticisi Kullanıcısı Harita Yöneticisi Grubunu gerektirir"
 
 #: sharing/forms.py:101
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr "Tüm harita kullanıcısı Tüm Harita grubunu gerektirir"
 
 #: sharing/forms.py:104 sharing/forms.py:107
 msgid "Maproot user/group disqualifies Mapall"
@@ -2615,27 +2657,27 @@ msgstr ""
 #: templates/services/rsyncmod.html:5 templates/sharing/apple.html:13
 #: templates/sharing/windows.html:13
 msgid "Name"
-msgstr ""
+msgstr "Adı"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
-msgstr ""
+msgstr "İhraç edilenler Sadece Okunabilir"
 
 #: sharing/models.py:53
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "Ağ İstemcileri için Göz Atılabilir"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
-msgstr ""
+msgstr "Kalıtsallık İzinleri"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "İhraç Geri Dönüşüm Kutusu"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr ""
+msgstr "Gizli Dosyaları Göster"
 
 #: sharing/models.py:64
 msgid "Guest Account"
@@ -2657,15 +2699,15 @@ msgstr ""
 
 #: sharing/models.py:68
 msgid "Allow Guest Access"
-msgstr ""
+msgstr "Misafir Erişime İzin Ver"
 
 #: sharing/models.py:70
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Sadece Misafir Erişime İzin Ver"
 
 #: sharing/models.py:74
 msgid "Hosts Allow"
-msgstr ""
+msgstr "Ana Bilgisayarlara İzin Ver"
 
 #: sharing/models.py:75
 msgid ""
@@ -2673,10 +2715,13 @@ msgid ""
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
 msgstr ""
+"Bu seçenek ile erişime izin verilen ana bilgisayrlar virgül, boşluk veya "
+"sekme ile ayarlanır. Bilgisayar adı veya IP numarası ile bilgisayarlar "
+"belirtebilirsiniz. Varsayılan ayarları kullanmak için bu alanı boş bırakın."
 
 #: sharing/models.py:80
 msgid "Hosts Deny"
-msgstr ""
+msgstr "Reddediecek Ana Bilgisayarlar"
 
 #: sharing/models.py:81
 msgid ""
@@ -2690,11 +2735,11 @@ msgstr ""
 
 #: sharing/models.py:87
 msgid "These parameters are added to [Share] section of smb.conf"
-msgstr ""
+msgstr "Bu parametreler smb.conf dosyasında [Share] bölümüne eklenir"
 
 #: sharing/models.py:93
 msgid "Windows Share"
-msgstr ""
+msgstr "Windows Paylaşımı"
 
 #: sharing/models.py:94
 msgid "Windows Shares"
@@ -2713,11 +2758,11 @@ msgstr ""
 
 #: sharing/models.py:109
 msgid "Share Comment"
-msgstr ""
+msgstr "Paylaşım Yorumu"
 
 #: sharing/models.py:116
 msgid "Share password"
-msgstr ""
+msgstr "Paylaşım parolası"
 
 #: sharing/models.py:118
 msgid ""
@@ -2725,20 +2770,24 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
+"Bu seçenek en fazla 8 karakterli bir parola belirlemenize olanak sağlar (bu "
+"yazı yazılırken ASCII karakterlerinin kullanılması tavsiye edilir)"
 
 #: sharing/models.py:122
 msgid "Share Character Set"
-msgstr ""
+msgstr "Paylaşılan Karakter Ayarları"
 
 #: sharing/models.py:124
 msgid ""
 "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
 "etc."
 msgstr ""
+"Belirtilen paylaşım karakter ayarları. Örneğin UTF8, UTF8-MAC, ISO-8859-15 "
+"vs."
 
 #: sharing/models.py:128
 msgid "Allow List"
-msgstr ""
+msgstr "İzin Verilen Liste"
 
 #: sharing/models.py:130
 msgid ""
@@ -2746,10 +2795,13 @@ msgid ""
 "Users and groups are specified, delimited by commas. Groups are designated "
 "by a @ prefix."
 msgstr ""
+"Bu seçenek ile paylaşımda belirtilecek kullanıcı ve gruplar belirlenir. "
+"Kullanıcı ve grupları belirlemek için virgülle ayrılır. Gruplar @ öneki ile "
+"belirtilir."
 
 #: sharing/models.py:134
 msgid "Deny List"
-msgstr ""
+msgstr "Reddedilen Listesi"
 
 #: sharing/models.py:136
 msgid ""
@@ -2759,7 +2811,7 @@ msgstr ""
 
 #: sharing/models.py:140
 msgid "Read-only Access"
-msgstr ""
+msgstr "Sadece-Okuma Erişimi"
 
 #: sharing/models.py:142
 msgid ""
@@ -2769,7 +2821,7 @@ msgstr ""
 
 #: sharing/models.py:146
 msgid "Read-write Access"
-msgstr ""
+msgstr "Okuma-Yazma Erişimi"
 
 #: sharing/models.py:148
 msgid ""
@@ -2779,7 +2831,7 @@ msgstr ""
 
 #: sharing/models.py:151
 msgid "Disk Discovery"
-msgstr ""
+msgstr "Disk Bulma"
 
 #: sharing/models.py:152
 msgid ""
@@ -2789,7 +2841,7 @@ msgstr ""
 
 #: sharing/models.py:158
 msgid "Disk discovery mode"
-msgstr ""
+msgstr "Disk bulma modu"
 
 #: sharing/models.py:159
 msgid ""
@@ -2800,7 +2852,7 @@ msgstr ""
 
 #: sharing/models.py:163
 msgid "Database Path"
-msgstr ""
+msgstr "Veritabanı Yolu"
 
 #: sharing/models.py:165
 msgid ""
@@ -2954,7 +3006,7 @@ msgstr ""
 
 #: sharing/models.py:248
 msgid "Maproot User"
-msgstr ""
+msgstr "Harita Yöneticisi Kullanıcısı"
 
 #: sharing/models.py:252
 msgid "User to map root to"
@@ -2962,7 +3014,7 @@ msgstr ""
 
 #: sharing/models.py:256
 msgid "Maproot Group"
-msgstr ""
+msgstr "Harita Yöneticisi Grubu"
 
 #: sharing/models.py:260
 msgid "Group to map root to"
@@ -2970,7 +3022,7 @@ msgstr ""
 
 #: sharing/models.py:264
 msgid "Mapall User"
-msgstr ""
+msgstr "Tüm Harita Kullanıcısı"
 
 #: sharing/models.py:268
 msgid "User to map all users to"
@@ -2978,7 +3030,7 @@ msgstr ""
 
 #: sharing/models.py:272
 msgid "Mapall Group"
-msgstr ""
+msgstr "Tüm Harita Grubu"
 
 #: sharing/models.py:276
 msgid "Group to map all users to"
