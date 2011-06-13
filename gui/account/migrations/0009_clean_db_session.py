@@ -2,14 +2,18 @@
 import datetime
 from south.db import db
 from south.v2 import DataMigration
-from django.db import models
+from django.db import models, transaction, connection
 
 class Migration(DataMigration):
 
     def forwards(self, orm):
         "Write your forwards methods here."
+        cursor = connection.cursor()
 
         orm['sessions.session'].objects.all().delete()
+        cursor.execute("VACUUM")
+        transaction.commit_unless_managed()
+
 
     def backwards(self, orm):
         "Write your backwards methods here."
