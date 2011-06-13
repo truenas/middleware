@@ -36,6 +36,7 @@ from freeadmin.models import Model, UserField, GroupField
 from freenasUI.middleware.notifier import notifier
 from freeadmin.models import PathField
 from storage.models import Disk
+import choices
 
 class Settings(Model):
     stg_guiprotocol = models.CharField(
@@ -319,10 +320,10 @@ class CronJob(Model):
         weeks = eval(self.cron_dayweek)
         if len(weeks) == 7:
             return _("Everyday")
-        wchoices = dict(choices.WEEK_CHOICES)
+        wchoices = dict(choices.WEEKDAYS_CHOICES)
         labels = []
         for w in weeks:
-            labels.append(unicode(wchoices[w]))
+            labels.append(unicode(wchoices[str(w)]))
         return ",".join(labels)
 
     def delete(self):
@@ -474,10 +475,10 @@ class Rsync(Model):
         weeks = eval(self.rsync_dayweek)
         if len(weeks) == 7:
             return _("Everyday")
-        wchoices = dict(choices.WEEK_CHOICES)
+        wchoices = dict(choices.WEEKDAYS_CHOICES)
         labels = []
         for w in weeks:
-            labels.append(unicode(wchoices[w]))
+            labels.append(unicode(wchoices[str(w)]))
         return ",".join(labels)
 
     def delete(self):
@@ -524,6 +525,38 @@ class SMARTTest(Model):
             default="1,2,3,4,5,6,7",
             verbose_name=_("Day of week"),
             )
+
+    def get_human_hour(self):
+        if self.smarttest_hour == '..':
+            return _(u'Every hour')
+        else:
+            return self.smarttest_hour
+
+    def get_human_daymonth(self):
+        if self.smarttest_daymonth == '..':
+            return _(u'Everyday')
+        else:
+            return self.smarttest_daymonth
+
+    def get_human_month(self):
+        months = self.smarttest_month.split(",")
+        if len(months) == 12:
+            return _("Every month")
+        mchoices = dict(choices.MONTHS_CHOICES)
+        labels = []
+        for m in months:
+            labels.append(unicode(mchoices[m]))
+        return ",".join(labels)
+
+    def get_human_dayweek(self):
+        weeks = eval(self.smarttest_dayweek)
+        if len(weeks) == 7:
+            return _("Everyday")
+        wchoices = dict(choices.WEEKDAYS_CHOICES)
+        labels = []
+        for w in weeks:
+            labels.append(unicode(wchoices[str(w)]))
+        return ",".join(labels)
 
     def __unicode__(self):
         return unicode(self.smarttest_disk)
