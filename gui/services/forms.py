@@ -794,6 +794,6 @@ class SMARTForm(ModelForm):
         return email
     def save(self):
         super(SMARTForm, self).save()
-        #started = notifier().restart("smart")
-        #if started is False and models.services.objects.get(srv_service='smart').srv_enable:
-        #    raise ServiceFailed("smart", _("The SMART service failed to reload."))
+        started = notifier().restart("smartd")
+        if started is False and models.services.objects.get(srv_service='smartd').srv_enable:
+            raise ServiceFailed("smartd", _("The S.M.A.R.T. service failed to reload."))
