@@ -135,7 +135,18 @@
            <td>
                <img id="tftp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "TFTP Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="TFTP",oid=tftp.id %}');" title="{% trans "TFTP Settings" %}">
            </td>
-       </tr>
+      </tr>
+      <tr>
+           <td>
+               <strong>{% trans "UPS" %}</strong>
+           </td>
+           <td>
+                <img id="ups_toggle" name="ups_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "ups" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+           </td>
+           <td>
+               <img id="tftp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "TFTP Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="TFTP",oid=tftp.id %}');" title="{% trans "TFTP Settings" %}">
+           </td>
+      </tr>
       <tr>
            <td>
                <strong>{% trans "iSCSI" %}</strong>

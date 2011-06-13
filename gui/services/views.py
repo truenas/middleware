@@ -37,9 +37,9 @@ from freenasUI.middleware.notifier import notifier
 def home(request):
 
     try:
-        cifs = models.CIFS.objects.order_by("-id")[0]
+        activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
     except IndexError:
-        cifs = models.CIFS.objects.create()
+        activedirectory = models.ActiveDirectory.objects.create()
 
     try:
         afp = models.AFP.objects.order_by("-id")[0]
@@ -47,9 +47,9 @@ def home(request):
         afp = models.AFP.objects.create()
 
     try:
-        nfs = models.NFS.objects.order_by("-id")[0]
+        cifs = models.CIFS.objects.order_by("-id")[0]
     except IndexError:
-        nfs = models.NFS.objects.create()
+        cifs = models.CIFS.objects.create()
 
     try:
         dynamicdns = models.DynamicDNS.objects.order_by("-id")[0]
@@ -57,9 +57,9 @@ def home(request):
         dynamicdns = models.DynamicDNS.objects.create()
 
     try:
-        snmp = models.SNMP.objects.order_by("-id")[0]
+        nfs = models.NFS.objects.order_by("-id")[0]
     except IndexError:
-        snmp = models.SNMP.objects.create()
+        nfs = models.NFS.objects.create()
 
     try:
         ftp = models.FTP.objects.order_by("-id")[0]
@@ -82,14 +82,19 @@ def home(request):
         smart = models.SMART.objects.create()
 
     try:
+        snmp = models.SNMP.objects.order_by("-id")[0]
+    except IndexError:
+        snmp = models.SNMP.objects.create()
+
+    try:
         ssh = models.SSH.objects.order_by("-id")[0]
     except IndexError:
         ssh = models.SSH.objects.create()
 
     try:
-        activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
+        ups = models.UPS.objects.order_by("-id")[0]
     except IndexError:
-        activedirectory = models.ActiveDirectory.objects.create()
+        ups = models.UPS.objects.create()
 
     try:
         ldap = models.LDAP.objects.order_by("-id")[0]
@@ -106,7 +111,7 @@ def home(request):
         #'unison': unison,
         'dynamicdns': dynamicdns,
         'snmp': snmp,
-        #'ups': ups,
+        'ups': ups,
         #'webserver': webserver,
         #'bittorrent': bittorrent,
         'ftp': ftp,
@@ -182,6 +187,7 @@ def servicesToggleView(request, formname):
         'ldap_toggle' : 'ldap',
         'rsync_toggle' : 'rsync',
         'smartd_toggle' : 'smartd',
+        'ups_toggle' : 'ups',
     }
     changing_service = form2namemap[formname]
     if changing_service == "":
