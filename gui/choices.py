@@ -469,3 +469,25 @@ SMART_TEST = (
     ('C', _('Conveyance Self-Test (ATA  only)')),
     ('O', _('Offline Immediate Test (ATA only)')),
     )
+
+class UPSDRIVER_CHOICES(object):
+    "Populate choices from /usr/local/etc/nut/driver.list"
+    def __iter__(self):
+        import os
+        import re
+        import csv
+        import cStringIO
+        if os.path.exists("/usr/local/etc/nut/driver.list"):
+            with open('/usr/local/etc/nut/driver.list', 'rb') as f:
+                d = f.read()
+            r = cStringIO.StringIO()
+            for line in re.sub(r'[ \t]+', ' ', d, flags=re.M).split('\n'):
+                r.write(line.strip()+'\n')
+            r.seek(0)
+            reader = csv.reader(r, delimiter=' ', quotechar='"')
+            for row in reader:
+                if len(row) == 0 or row[0].startswith('#'):
+                    continue
+                if row[-1].find(' (experimental)') != -1:
+                    row[-1] = row[-1].replace(' (experimental)','').strip()
+                yield (row[-1], "%s (%s)" % (" ".join(row[0:-1]), row[-1]))

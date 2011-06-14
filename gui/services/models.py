@@ -751,6 +751,7 @@ class UPS(Model):
     ups_driver = models.CharField(
             max_length=120,
             verbose_name = _("Driver"),
+            choices=choices.UPSDRIVER_CHOICES(),
             blank=True,
             help_text = _("The driver used to communicate with your UPS.")
             )
@@ -763,7 +764,7 @@ class UPS(Model):
     ups_options = models.TextField(
             verbose_name = _("Auxiliary parameters"),
             blank=True,
-            help_text = _("These parameters will be added to global settings in inadyn.conf.")
+            help_text = _("Additional parameters to the hardware-specific part of the driver.")
             )
     ups_description = models.CharField(
             max_length=120,

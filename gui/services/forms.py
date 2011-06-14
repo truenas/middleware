@@ -261,6 +261,9 @@ class SNMPForm(ModelForm):
 class UPSForm(ModelForm):
     class Meta:
         model = models.UPS
+        widgets = {
+            'ups_driver': forms.widgets.FilteringSelect(),
+        }
     def clean_ups_toemail(self):
         email = self.cleaned_data.get("ups_toemail")
         if email:
@@ -277,9 +280,9 @@ class UPSForm(ModelForm):
         return email
     def save(self):
         super(UPSForm, self).save()
-        #started = notifier().restart("ups")
-        #if started is False and models.services.objects.get(srv_service='smartd').srv_enable:
-        #    raise ServiceFailed("smartd", _("The S.M.A.R.T. service failed to reload."))
+        started = notifier().restart("ups")
+        if started is False and models.services.objects.get(srv_service='ups').srv_enable:
+            raise ServiceFailed("ups", _("The UPS service failed to reload."))
 
 class ActiveDirectoryForm(ModelForm):
     #file = forms.FileField(label="Kerberos Keytab File", required=False)
@@ -293,7 +296,7 @@ class ActiveDirectoryForm(ModelForm):
     class Meta:
         model = models.ActiveDirectory
         exclude = ('ad_keytab','ad_spn','ad_spnpw')
-        widgets = {'ad_adminpw': forms.widgets.PasswordInput(render_value=True), } 
+        widgets = {'ad_adminpw': forms.widgets.PasswordInput(render_value=True), }
 
 class LDAPForm(ModelForm):
     def save(self):
