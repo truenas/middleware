@@ -48,7 +48,7 @@ generate_upsmon()
 	while eval read $f; do
         cat > /var/tmp/nut_notify.sh << EOF
 #!/bin/bash
-echo $1 | mail -s "${ups_subject}" "${ups_toemail}"
+echo \$1 | mail -s "\$(echo "${ups_subject}"|sed "s/%d/\$(date)/"|sed "s/%h/\$(hostname)/")" "${ups_toemail}"
 EOF
         chmod +x /var/tmp/nut_notify.sh
 	    cat <<EOF
