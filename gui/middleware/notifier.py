@@ -123,6 +123,7 @@ class notifier:
             'ftp': ('proftpd', '/var/run/proftpd.pid'),
             'tftp': ('inetd', '/var/run/inetd.pid'),
             'iscsitarget': ('istgt', '/var/run/istgt.pid'),
+            'ups': ('upsd', '/var/db/nut/upsd.pid'),
         }
         """
         We need to wait a little bit so pgrep works
@@ -392,6 +393,17 @@ class notifier:
     def _start_ftp(self):
         self.__system("/usr/sbin/service ix-proftpd quietstart")
         self.__system("/usr/sbin/service proftpd start")
+
+    def _start_ups(self):
+        self.__system("/usr/sbin/service ix-ups quietstart")
+        self.__system("/usr/sbin/service nut start")
+
+    def _stop_ups(self):
+        self.__system("/usr/sbin/service nut stop")
+
+    def _restart_ups(self):
+        self.__system("/usr/sbin/service ix-ups quietstart")
+        self.__system("/usr/sbin/service nut restart")
 
     def _load_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
