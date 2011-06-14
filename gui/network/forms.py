@@ -45,7 +45,7 @@ class InterfacesForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(InterfacesForm, self).__init__(*args, **kwargs)
-        self.fields['int_interface'].choices = choices.NICChoices()
+        self.fields['int_interface'].choices = choices.NICChoices(exclude_configured=False, exclude_existing=True)
 
     def save(self):
         # TODO: new IP address should be added in a side-by-side manner
