@@ -1,0 +1,48 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-ups
+# REQUIRE: FILESYSTEMS
+# BEFORE: nut
+
+. /etc/rc.subr
+
+UPS_CONFPATH="/usr/local/etc/nut"
+UPS_CONFIG="${UPS_CONFPATH}/ups.conf"
+UPS_DAEMONFILE="${UPS_CONFPATH}/upsd.conf"
+
+generate_ups()
+{
+    local IFS=\|
+    local f="ups_identifier ups_driver ups_port ups_options ups_description ups_shutdown ups_shutdowntimer ups_rmonitor ups_emailnotify ups_toemail ups_subject"
+    eval local $f
+    local cmd sf cfg
+    sf=$(echo $f | sed -e 's/ /, /g')
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
+	while eval read $f; do
+	    cat <<EOF
+[${ups_identifier}]
+    driver = ${ups_driver}
+    port = ${ups_port}
+    desc = "${ups_description}"
+    ${ups_options}
+EOF
+    done
+}
+
+generate_ups_conf()
+{
+    mkdir -p ${UPS_CONFPATH}
+    generate_ups > ${UPS_CONFIG}
+    #generate_upsd > ${UPS_DAEMONFILE}
+}
+
+name="ix-ups"
+start_cmd='generate_ups_conf'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

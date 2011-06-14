@@ -236,6 +236,7 @@ _gen_conf()
 	_bool_svcconfig istgt_enable iscsitarget
 	_bool_svcconfig inadyn_enable dynamicdns
 	_bool_svcconfig smartd_enable smartd
+	_bool_svcconfig nut_enable ups
 
 	# Workaround: we don't enable ZFS by default but still want /etc/zfs/exports
 	# be exist for mountd(8)
