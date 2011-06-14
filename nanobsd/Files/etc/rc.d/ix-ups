@@ -11,6 +11,8 @@
 
 UPS_CONFPATH="/usr/local/etc/nut"
 UPS_CONFIG="${UPS_CONFPATH}/ups.conf"
+UPS_MONFILE="${UPS_CONFPATH}/upsmon.conf"
+UPS_USERSFILE="${UPS_CONFPATH}/upsd.users"
 UPS_DAEMONFILE="${UPS_CONFPATH}/upsd.conf"
 
 generate_ups()
@@ -33,10 +35,45 @@ EOF
     done
 }
 
+generate_upsmon()
+{
+    local IFS=\|
+    local f="ups_identifier ups_driver ups_port ups_options ups_description ups_shutdown ups_shutdowntimer ups_rmonitor ups_emailnotify ups_toemail ups_subject"
+    eval local $f
+    local cmd sf cfg
+    sf=$(echo $f | sed -e 's/ /, /g')
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
+	while eval read $f; do
+	    cat <<EOF
+MONITOR ${ups_identifier} 1 upsmon fixmepass master
+NOTIFYCMD "echo \"Your UPS is on battery\"|mail -s \"${ups_subject}\" \"${ups_toemail}\" "
+EOF
+    echo -n "NOTIFYFLAG ONBATT SYSLOG+WALL"
+    if [ "${ups_emailnotify}" -eq 1 ]; then
+        echo "+EXEC"
+    fi
+    echo "SHUTDOWNCMD \"/sbin/shutdown -p now\""
+    done
+}
+
+generate_upsdusers()
+{
+
+	    cat <<EOF
+[upsmon]
+    password = fixmepass
+    upsmon master
+EOF
+
+}
+
 generate_ups_conf()
 {
     mkdir -p ${UPS_CONFPATH}
     generate_ups > ${UPS_CONFIG}
+    generate_upsmon > ${UPS_MONFILE}
+    generate_upsdusers > ${UPS_USERSFILE}
     #generate_upsd > ${UPS_DAEMONFILE}
 }
 
