@@ -216,7 +216,7 @@ class VolumeWizardForm(forms.Form):
 
     def clean_volume_name(self):
         vname = self.cleaned_data['volume_name']
-        if not re.search(r'^[a-z][a-z0-9_-.]*$', vname, re.I):
+        if not re.search(r'^[a-z][-_.a-z0-9]*$', vname, re.I):
             raise forms.ValidationError(_("The volume name must start with letters and may include numbers, \"-\", \"_\" and \".\" ."))
         return vname
 
