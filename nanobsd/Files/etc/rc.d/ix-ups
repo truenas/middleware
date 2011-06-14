@@ -14,6 +14,7 @@ UPS_CONFIG="${UPS_CONFPATH}/ups.conf"
 UPS_MONFILE="${UPS_CONFPATH}/upsmon.conf"
 UPS_USERSFILE="${UPS_CONFPATH}/upsd.users"
 UPS_DAEMONFILE="${UPS_CONFPATH}/upsd.conf"
+UPS_VARPATH="/var/db/nut"
 
 generate_ups()
 {
@@ -68,13 +69,26 @@ EOF
 
 }
 
+generate_upsd()
+{
+
+	    cat <<EOF
+LISTEN 127.0.0.1
+EOF
+
+}
+
 generate_ups_conf()
 {
     mkdir -p ${UPS_CONFPATH}
+    mkdir -p ${UPS_VARPATH}
     generate_ups > ${UPS_CONFIG}
     generate_upsmon > ${UPS_MONFILE}
     generate_upsdusers > ${UPS_USERSFILE}
-    #generate_upsd > ${UPS_DAEMONFILE}
+    generate_upsd > ${UPS_DAEMONFILE}
+    chown root:uucp ${UPS_VARPATH} ${UPS_CONFIG} ${UPS_MONFILE} ${UPS_USERSFILE} ${UPS_DAEMONFILE}
+    chmod 440 ${UPS_CONFIG} ${UPS_MONFILE} ${UPS_USERSFILE} ${UPS_DAEMONFILE}
+    chmod g=rwx ${UPS_VARPATH}
 }
 
 name="ix-ups"
