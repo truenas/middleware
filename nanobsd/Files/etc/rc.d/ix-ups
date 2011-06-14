@@ -52,6 +52,7 @@ echo \$1 | mail -s "\$(echo "${ups_subject}"|sed "s/%d/\$(date)/"|sed "s/%h/\$(h
 EOF
         chmod +x /var/tmp/nut_notify.sh
 	    cat <<EOF
+FINALDELAY ${ups_shutdowntimer}
 MONITOR ${ups_identifier} 1 upsmon fixmepass master
 NOTIFYCMD "/var/tmp/nut_notify.sh"
 EOF
@@ -77,9 +78,20 @@ EOF
 generate_upsd()
 {
 
-	    cat <<EOF
-LISTEN 127.0.0.1
-EOF
+    local IFS=\|
+    local f="ups_rmonitor"
+    eval local $f
+    local cmd sf cfg
+    sf=$(echo $f | sed -e 's/ /, /g')
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
+	while eval read $f; do
+        if [ "${ups_rmonitor}" -eq 1 ]; then
+	        echo "LISTEN 0.0.0.0"
+        else
+	        echo "LISTEN 127.0.0.1"
+        fi
+    done
 
 }
 
