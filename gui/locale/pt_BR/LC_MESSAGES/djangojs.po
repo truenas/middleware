@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-06-11 01:41+0200\n"
-"Last-Translator: Marcelo <marcelommagnani@uol.com.br>\n"
+"PO-Revision-Date: 2011-06-14 11:05+0200\n"
+"Last-Translator: marlosab <marlosab@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -64,7 +64,7 @@ msgstr "Substituir"
 
 #: media/lib/js/freeadmin.js:444
 msgid "Disk Replacement"
-msgstr "Substituir Disco"
+msgstr "Substituição de Disco"
 
 #: media/lib/js/freeadmin.js:448
 msgid "Detach"

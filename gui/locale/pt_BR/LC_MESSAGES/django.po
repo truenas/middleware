@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:47-0700\n"
-"PO-Revision-Date: 2011-06-11 01:50+0200\n"
-"Last-Translator: Marcelo <marcelommagnani@uol.com.br>\n"
+"PO-Revision-Date: 2011-06-14 11:00+0200\n"
+"Last-Translator: marlosab <marlosab@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -2477,30 +2477,38 @@ msgstr "Modo de Acesso"
 
 #: services/models.py:1193
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "Controla o acesso de um host remoto a este módulo"
 
 #: services/models.py:1197
-#, fuzzy
 msgid "Maximum connections"
-msgstr "Máx. de conexões"
+msgstr "Núm. máx. de conexões"
 
 #: services/models.py:1198
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
 msgstr "O número máximo de conexões simultâneas. O padrão é 0 (ilimitado)"
 
 #: services/models.py:1204
+#, fuzzy
 msgid ""
 "This option specifies the user name that file transfers to and from that "
 "module should take place. In combination with the 'Group' option this "
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Esta opção especifica o nome de usuário que transferências de arquivos de e "
+"para o módulo devem substituir. Em combinação com a opção \"Grupo\" determina "
+"quais permissões de arquivo estão disponíveis. Deixe este campo em branco "
+"para usar a configuração padrão"
 
 #: services/models.py:1211
+#, fuzzy
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"Esta opção especifica o nome do grupo que transferências de arquivos de e "
+"para o módulo devem substituir. Deixe este campo em branco para usar a "
+"configuração padrão"
 
 #: services/models.py:1215
 #, fuzzy
@@ -2514,10 +2522,9 @@ msgid ""
 "permitted to access this module. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings"
 msgstr ""
-"Esta opção é uma vírgula, espaço ou tabulação de hosts que NÃO são "
-"autorizados a acessarem este compartilhamento. Você pode especificar os "
-"hosts pelo nome ou número de IP. Deixar este campo vazio para usar as "
-"configurações padrão."
+"Seleção delimitada por vírgula, espaço ou tabulação de hosts autorizados a "
+"acessar este módulo. Você pode especificar os hosts pelo nome ou número de "
+"IP. Deixer este campo em branco para usar as configurações padrão"
 
 #: services/models.py:1220
 #, fuzzy
@@ -2534,21 +2541,20 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings"
 msgstr ""
-"Esta opção é uma vírgula, espaço ou tabulação de hosts que NOT são "
-"autorizados a acessarem este compartilhamento. Quando houver conflito na "
-"lista, a lista de liberação terá precedência. No caso em que é necessário "
-"negar todos por padrão, usar a palavra ALL (ou a mascara de rede 0.0.0.0/0) "
-"e então especifique explicitamente para o parâmetro de hosts permitidos "
-"aqueles hosts que tem o acesso permitido. Deixe o campo em branco para usar "
-"as configurações padrão."
+"Seleção delimitada por vírgula, espaço ou tabulação de hosts NÃO autorizados "
+"a acessar este módulo. Em caso de conflito, a lista de permitidos terá "
+"prioridade sobre a de negados. Para situações em que for necessário negar "
+"todos por padrão, use a palavra ALL (ou a máscara de rede 0.0.0.0/0) e então "
+"especifique explicitamente para o parâmetro hosts permitidos aqueles hosts "
+"que devem ter acesso permitido. Deixe o campo em branco para usar as "
+"configurações padrão"
 
 #: services/models.py:1226
-#, fuzzy
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
 msgstr ""
-"Esses parâmetros serão adicionados nas configurações globais no arquivo "
-"inadyn.conf."
+"Esses parâmetros serão adicionados às configurações do módulo no arquivo "
+"rsyncd.conf"
 
 #: services/models.py:1231
 msgid "Rsync Module"
@@ -2556,7 +2562,7 @@ msgstr "Módulo Rsync"
 
 #: services/models.py:1232
 msgid "Rsync Modules"
-msgstr "Modulos Rsync"
+msgstr "Módulos Rsync"
 
 #: services/models.py:1243
 #, fuzzy
@@ -2824,8 +2830,8 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
-"Esta opção permite que você defina uma senha do volume, que pode ser um "
-"máximo de 8 caracteres (usando ASCII altamente recomendável)."
+"Esta opção permite a você definir uma senha de volume, que pode ter no "
+"máximo 8 caracteres (o uso de ASCII é altamente recomendável)."
 
 #: sharing/models.py:122
 msgid "Share Character Set"
@@ -2836,7 +2842,7 @@ msgid ""
 "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
 "etc."
 msgstr ""
-"Especifique o conjunto de caracteres do compartilhamento. Por exemplo UTF8, "
+"Especifica o conjunto de caracteres do compartilhamento. Por exemplo UTF8, "
 "UTF8-MAC, ISO-8859-15, etc."
 
 #: sharing/models.py:128

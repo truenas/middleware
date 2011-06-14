@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-11 11:28+0200\n"
-"Last-Translator: nomentero <toni7@telecable.es>\n"
+"PO-Revision-Date: 2011-06-13 23:26+0200\n"
+"Last-Translator: raulfg <raulfg3@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -441,6 +441,7 @@ msgstr "Nunca - Compruebe el dispositivo independientemente de su modo de poder"
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
 msgstr ""
+"Reposo - Comprueba el dispositivo a menos que haya entrado en modo REPOSO"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
@@ -1273,7 +1274,6 @@ msgid "Guest account"
 msgstr "Cuenta de Invitado"
 
 #: services/models.py:105 services/models.py:192
-#, fuzzy
 msgid ""
 "Use this option to override the username ('nobody' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
@@ -1281,12 +1281,13 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"Use esta opción para reemplazar el nombre de usuario ('ftp' por defecto) el "
-"cual se utilizará para el acceso a los servicios que se especifican como "
+"Use esta opción para reemplazar el nombre de usuario ('nobody' por defecto) "
+"el cual se utilizará para el acceso a los servicios que se especifican como "
 "invitado. Cualquier privilegio que este usuario pueda tener, estará "
 "disponible a cualquier cliente que se conecte al servicio de invitado. Este "
 "usuario debe existir en el archivo de contraseña, pero no requiere un inicio "
-"de sesión válido."
+"de sesión válido. El usuario 'root' no puede ser usado en una cuenta de "
+"invitado"
 
 #: services/models.py:108
 msgid "Allow guest access"
@@ -2577,9 +2578,8 @@ msgstr ""
 "por defecto es de 30 minutos"
 
 #: services/models.py:1250
-#, fuzzy
 msgid "Power mode"
-msgstr "Modo apagado"
+msgstr "Modo de Energía"
 
 #: services/models.py:1254
 msgid "Difference"
@@ -3260,9 +3260,8 @@ msgstr ""
 "Introduzca el número de positivos (opcionalmente con el sufijo M, G, T), o, 0"
 
 #: storage/forms.py:782
-#, fuzzy
 msgid "Volume from which this ZFS Volume will be created on"
-msgstr "Volumen donde será creado este zvol"
+msgstr "Volumen donde será creado este volumen ZFS"
 
 #: storage/forms.py:783
 msgid "ZFS Volume Name"
@@ -3443,6 +3442,7 @@ msgstr "Sistema de ficheros ZFS remoto"
 #: storage/models.py:251
 msgid "Recursively replicate and remove stale snapshot on remote side"
 msgstr ""
+"Replicar y eliminar recursivamente instantáneas antiguas en el lado remoto"
 
 #: storage/models.py:254
 msgid "Replication Task"
@@ -3608,17 +3608,14 @@ msgid "Rollback successful."
 msgstr "Restauracion satisfactoria."
 
 #: storage/views.py:470
-#, fuzzy
 msgid "Snapshot successfully added."
-msgstr "Instantanea correctamente clonada."
+msgstr "Instantanea correctamente añadida"
 
 #: storage/views.py:483
-#, fuzzy
 msgid "Snapshot successfully taken."
 msgstr "Instantanea correctamente tomada"
 
 #: storage/views.py:498
-#, fuzzy
 msgid "Snapshot successfully cloned."
 msgstr "Instantanea correctamente clonada"
 
