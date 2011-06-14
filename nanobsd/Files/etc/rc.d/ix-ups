@@ -93,7 +93,7 @@ generate_ups_conf()
     generate_upsd > ${UPS_DAEMONFILE}
     chown root:uucp ${UPS_VARPATH} ${UPS_CONFIG} ${UPS_MONFILE} ${UPS_USERSFILE} ${UPS_DAEMONFILE}
     chmod 440 ${UPS_CONFIG} ${UPS_MONFILE} ${UPS_USERSFILE} ${UPS_DAEMONFILE}
-    chmod g=rwx ${UPS_VARPATH}
+    chmod g=rwx,o= ${UPS_VARPATH}
 }
 
 name="ix-ups"
