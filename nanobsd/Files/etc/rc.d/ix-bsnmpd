@@ -9,7 +9,7 @@
 
 . /etc/rc.subr
 
-bsnmp_config=/etc/snmpd.conf
+bsnmp_config=/etc/snmpd.config
 
 generate_snmpconf()
 {
@@ -44,8 +44,7 @@ begemotSnmpdCommunityString.0.1 = ${snmp_community}
 begemotSnmpdCommunityDisable = 1
 
 # open standard SNMP ports
-begemotSnmpdPortStatus.[${hostname}].161 = 1
-begemotSnmpdPortStatus.127.0.0.1.161 = 1
+begemotSnmpdPortStatus.0.0.0.0.161 = 1
 
 # open a unix domain socket
 begemotSnmpdLocalPortStatus."/var/run/snmpd.sock" = 1
