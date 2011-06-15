@@ -11,7 +11,7 @@
 
 # Defaults
 afpd_enable=${afpd_enable:-"NO"}
-afpd_config=${afpd_config:-"/usr/local/etc/afpd.conf"}
+afpd_config=${afpd_config:-"/etc/afpd.conf"}
 afpd_avdefault=${afpd_avdefault:-"/usr/local/etc/AppleVolumes.default"}
 afpd_avsystem=${afpd_avsystem:-"/usr/local/etc/AppleVolumes.system"}
 avahi_daemon_config=${avahi_daemon_config:-"/usr/local/etc/avahi/avahi-daemon.conf"}
