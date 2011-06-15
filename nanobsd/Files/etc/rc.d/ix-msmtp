@@ -37,6 +37,9 @@ __EOF__
 		    else
 		        echo tls_starttls on
 		    fi
+		    if [ ${em_security} = "ssl" ]; then
+		        echo tls_force_sslv3 on
+		    fi
 		fi
                 if [ "${em_smtp}" = "1" ]; then
 		    echo auth login
