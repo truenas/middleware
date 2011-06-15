@@ -48,18 +48,28 @@ generate_upsmon()
 	while eval read $f; do
         cat > /var/tmp/nut_notify.sh << EOF
 #!/bin/bash
+EOF
+        if [ "${ups_emailnotify}" -eq 1 ]; then
+            cat >> /var/tmp/nut_notify.sh << EOF
 echo \$1 | mail -s "\$(echo "${ups_subject}"|sed "s/%d/\$(date)/"|sed "s/%h/\$(hostname)/")" "${ups_toemail}"
 EOF
+        fi
+        if [ "${ups_shutdown}" = "batt" ]; then
+            cat >> /var/tmp/nut_notify.sh << EOF
+if [ "\${NOTIFYTYPE}" = "ONBATT" ]; then
+    shutdown -p now "\$1"
+fi
+EOF
+        fi
         chmod +x /var/tmp/nut_notify.sh
 	    cat <<EOF
 FINALDELAY ${ups_shutdowntimer}
 MONITOR ${ups_identifier} 1 upsmon fixmepass master
 NOTIFYCMD "/var/tmp/nut_notify.sh"
 EOF
-    echo -n "NOTIFYFLAG ONBATT SYSLOG+WALL"
-    if [ "${ups_emailnotify}" -eq 1 ]; then
-        echo "+EXEC"
-    fi
+
+    echo -n "NOTIFYFLAG ONBATT SYSLOG+WALL+EXEC"
+    echo -n "NOTIFYFLAG LOWBATT SYSLOG+WALL+EXEC"
     echo "SHUTDOWNCMD \"/sbin/shutdown -p now\""
     done
 }
