@@ -225,8 +225,7 @@ class NFS_Share(Model):
             )
     nfs_path = PathField(
             verbose_name = _("Path"))
-    nfs_network = models.CharField(
-            max_length=120,
+    nfs_network = models.TextField(
             verbose_name = _("Authorized network or IP addresses"),
             help_text = _("Network that is authorized to access the NFS share or a list of IP addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."),
             blank=True,

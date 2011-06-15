@@ -69,7 +69,7 @@ class NFS_ShareForm(ModelForm):
         model = models.NFS_Share 
     def clean_nfs_network(self):
         net = self.cleaned_data['nfs_network']
-        net = re.sub(r'\s{2,}', ' ', net).strip()
+        net = re.sub(r'\s{2,}|\n', ' ', net).strip()
         if not net:
             return net
         #only one address = CIDR or IP
