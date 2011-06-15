@@ -324,7 +324,6 @@ freenas_custom()
         find ${NANO_WORLDDIR}/usr/local -type f -name "*.po" -delete
         ln -s /usr/local/bin/bash ${NANO_WORLDDIR}/bin/bash
 	ln -s /data/zfs/zpool.cache ${NANO_WORLDDIR}/boot/zfs/zpool.cache
-	ln -s /var/empty ${NANO_WORLDDIR}/home
 }
 late_customize_cmd freenas_custom
 
