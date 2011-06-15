@@ -39,6 +39,7 @@ from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms
 from freenasUI.storage import models
 from freenasUI.middleware.notifier import notifier
+from middleware.exceptions import MiddlewareError
 
 ## Disk section
 
@@ -84,8 +85,12 @@ def wizard(request):
 
         form = forms.VolumeWizardForm(request.POST)
         if form.is_valid():
-            form.done(request)
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume successfully added.")}), mimetype="application/json")
+            try:
+                form.done(request)
+            except MiddlewareError, e:
+                return HttpResponse(simplejson.dumps({"error": True, "message": _("Error: %s") % str(e)}), mimetype="application/json")
+            else:
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume successfully added.")}), mimetype="application/json")
         else:
             if 'volume_disks' in request.POST:
                 disks = request.POST.getlist('volume_disks')

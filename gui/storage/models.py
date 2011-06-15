@@ -52,7 +52,7 @@ class Volume(Model):
         verbose_name = _("Volume")
     def delete(self, destroy=True):
         if destroy:
-            notifier().destroy("volume", self.id)
+            notifier().destroy("volume", self)
         notifier().restart("collectd")
         # The framework would cascade delete all database items
         # referencing this volume.

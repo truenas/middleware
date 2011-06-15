@@ -45,7 +45,6 @@ import grp
 import pwd
 import signal
 import time
-from shlex import split as shlex_split
 from subprocess import Popen, PIPE
 
 class notifier:
@@ -86,8 +85,7 @@ class notifier:
     def __pipeopen(self, command):
         syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
         syslog.syslog(syslog.LOG_NOTICE, "Popen()ing: " + command)
-        args = shlex_split(command)
-        return Popen(args, stdin = PIPE, stdout = PIPE, stderr = PIPE, close_fds = True)
+        return Popen(command, stdin = PIPE, stdout = PIPE, stderr = PIPE, shell = True, close_fds = True)
 
     def _do_nada(self):
         pass
@@ -526,11 +524,15 @@ class notifier:
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
                       "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (devname, devname))
         if label != "":
-            self.__system("gpart create -s gpt /dev/%s && gpart add -b 128 -t freebsd-swap -l swap-%s -s %d %s && gpart add -t %s -l %s %s" %
-                         (devname, label, swapsize, devname, type, label, devname))
+            p1 = self.__pipeopen("gpart create -s gpt /dev/%s && gpart add -b 128 -t freebsd-swap -l swap-%s -s %d %s && gpart add -t %s -l %s %s" %
+                         (str(devname), str(label), swapsize, str(devname), str(type), str(label), str(devname)))
         else:
-            self.__system("gpart create -s gpt /dev/%s && gpart add -b 128 -t freebsd-swap -s %d %s && gpart add -t %s %s" %
-                         (devname, swapsize, devname, type, devname))
+            p1 = self.__pipeopen("gpart create -s gpt /dev/%s && gpart add -b 128 -t freebsd-swap -s %d %s && gpart add -t %s %s" %
+                         (str(devname), swapsize, str(devname), str(type), str(devname)))
+        p1.wait()
+        if p1.returncode != 0:
+            from middleware.exceptions import MiddlewareError
+            raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
         return need4khack
 
     def __gpt_unlabeldisk(self, devname):
@@ -550,38 +552,33 @@ class notifier:
         # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
         self.__gpt_unlabeldisk(devname)
 
-    def __create_zfs_volume(self, c, z_id, z_name, swapsize, force4khack=False):
+    def __create_zfs_volume(self, volume, swapsize, force4khack=False):
         """Internal procedure to create a ZFS volume identified by volume id"""
+        z_id = volume.id
+        z_name = str(volume.vol_name)
         z_vdev = ""
         need4khack = False
         # Grab all disk groups' id matching the volume ID
-        c.execute("SELECT id, group_type FROM storage_diskgroup WHERE "
-                  "group_volume_id = ?", (z_id,))
-        vgroup_list = c.fetchall()
+        vgroup_list = volume.diskgroup_set.all()
         self.__system("swapoff -a")
-        for vgrp_row in vgroup_list:
+        for vgrp in vgroup_list:
             hack_vdevs = []
-            vgrp = (vgrp_row[0],)
-            vgrp_type = vgrp_row[1]
+            vgrp_type = vgrp.group_type
             if vgrp_type != 'stripe':
                 z_vdev += " " + vgrp_type
             # Grab all member disks from the current vdev group
-            c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE "
-                      "disk_group_id = ?", (str(vgrp[0]),))
-            vdev_member_list = c.fetchall()
+            vdev_member_list = vgrp.disk_set.all()
             for disk in vdev_member_list:
-                devname = self.identifier_to_device(disk[0])
+                devname = self.identifier_to_device(disk.disk_identifier)
                 need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
                                                   devname = devname,
                                                   label = "",
                                                   swapsize=swapsize)
                 # The identifier {uuid} should now be available
                 ident = self.device_to_identifier(devname)
-                if ident != disk[0]:
-                    c2, conn = self.__open_db(True)
-                    c2.execute("UPDATE storage_disk SET disk_identifier = ? WHERE disk_identifier = ?", (ident, disk[0]))
-                    c2.close()
-                    conn.commit()
+                if ident != disk.disk_identifier:
+                    disk.disk_identifier = ident
+                    disk.save()
                 else:
                     raise Exception
                 devname = self.identifier_to_partition(ident)
@@ -598,8 +595,13 @@ class notifier:
         # preexisting zpool having the exact same name.
         if not os.path.isdir("/data/zfs"):
             os.makedirs("/data/zfs")
-        self.__system("zpool create -o cachefile=/data/zfs/zpool.cache "
+        p1 = self.__pipeopen("zpool create -o cachefile=/data/zfs/zpool.cache "
                       "-f -o altroot=/mnt %s %s" % (z_name, z_vdev))
+        p1.wait()
+        if p1.returncode != 0:
+            from middleware.exceptions import MiddlewareError
+            error = ", ".join(p1.communicate()[1].split('\n'))
+            raise MiddlewareError('Unable to create the pool: %s' % error)
         self.zfs_inherit_option(z_name, 'mountpoint')
         # If we have 4k hack then restore system to whatever it should be
         if need4khack or force4khack:
@@ -615,59 +617,45 @@ class notifier:
 
     # TODO: This is a rather ugly hack and duplicates some code, need to
     # TODO: cleanup this with the __create_zfs_volume.
-    def zfs_volume_attach_group(self, group_id, force4khack=False):
+    def zfs_volume_attach_group(self, group, force4khack=False):
         """Attach a disk group to a zfs volume"""
         c = self.__open_db()
         c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
         swapsize=c.fetchone()[0]
 
-        c.execute("SELECT id, group_type, group_volume_id FROM storage_diskgroup WHERE "
-                  "id = ?", (group_id,))
-        vgroup_list = c.fetchall()
-        volume_id = vgroup_list[0][2]
-
-        c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
-                 (volume_id,))
-        volume = c.fetchone()
-        assert volume[0] == 'ZFS'
-        z_name = volume[1]
+        volume = group.group_volume
+        assert volume.vol_fstype == 'ZFS'
+        z_name = volume.vol_name
 
         z_vdev = ""
         need4khack = False
         # Grab all disk groups' id matching the volume ID
         self.__system("swapoff -a")
-        for vgrp_row in vgroup_list:
-            hack_vdevs = []
-            vgrp = (vgrp_row[0],)
-            vgrp_type = vgrp_row[1]
-            if vgrp_type != 'stripe':
-                z_vdev += " " + vgrp_type
-            # Grab all member disks from the current vdev group
-            c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE "
-                      "disk_group_id = ?", (str(vgrp[0]),))
-            vdev_member_list = c.fetchall()
-            for disk in vdev_member_list:
-                devname = self.identifier_to_device(disk[0])
-                need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
-                                                  devname = devname,
-                                                  label = disk[1],
-                                                  swapsize=swapsize)
-                # The identifier {uuid} should now be available
-                ident = self.device_to_identifier(devname)
-                if ident != disk[0]:
-                    c2, conn = self.__open_db(True)
-                    c2.execute("UPDATE storage_disk SET disk_identifier = ? WHERE disk_identifier = ?", (ident, disk[0]))
-                    c2.close()
-                    conn.commit()
-                else:
-                    raise
-                devname = self.identifier_to_partition(ident)
+        vgrp_type = group.group_type
+        if vgrp_type != 'stripe':
+            z_vdev += " " + vgrp_type
+        # Grab all member disks from the current vdev group
+        vdev_member_list = group.disk_set.all()
+        for disk in vdev_member_list:
+            devname = self.identifier_to_device(disk.disk_identifier)
+            need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
+                                              devname = devname,
+                                              label = "",
+                                              swapsize=swapsize)
+            # The identifier {uuid} should now be available
+            ident = self.device_to_identifier(devname)
+            if ident != disk.disk_identifier:
+                disk.disk_identifier = ident
+                disk.save()
+            else:
+                raise
+            devname = self.identifier_to_partition(ident)
 
-                if need4khack or force4khack:
-                    self.__system("gnop create -S 4096 /dev/%s" % devname)
-                    z_vdev += " /dev/%s.nop" % devname
-                else:
-                    z_vdev += " /dev/%s" % devname
+            if need4khack or force4khack:
+                self.__system("gnop create -S 4096 /dev/%s" % devname)
+                z_vdev += " /dev/%s.nop" % devname
+            else:
+                z_vdev += " /dev/%s" % devname
         self._reload_disk()
         # Finally, attach new groups to the zpool.
         self.__system("zpool add %s %s" % (z_name, z_vdev))
@@ -766,86 +754,83 @@ class notifier:
         retval = zfsproc.communicate()[1]
         return retval
 
-    def __destroy_zfs_volume(self, c, z_id, z_name):
+    def __destroy_zfs_volume(self, volume):
         """Internal procedure to destroy a ZFS volume identified by volume id"""
+        z_id = volume.id
+        z_name = str(volume.vol_name)
         # First, destroy the zpool.
         self.__system("zpool destroy -f %s" % (z_name))
 
         # Clear out disks associated with the volume
-        c.execute("SELECT id FROM storage_diskgroup WHERE group_volume_id = ?", (z_id,))
-        vgroup_list = c.fetchall()
+        vgroup_list = volume.diskgroup_set.all()
         for vgrp in vgroup_list:
-            c.execute("SELECT disk_identifier FROM storage_disk WHERE "
-                      "disk_group_id = ?", (str(vgrp[0]),))
-            vdev_member_list = c.fetchall()
+            vdev_member_list = vgrp.disk_set.all()
             for disk in vdev_member_list:
-                devname = self.identifier_to_device(disk[0])
+                devname = self.identifier_to_device(disk.disk_identifier)
                 self.__gpt_unlabeldisk(devname = devname)
         self._reload_disk()
 
-    def __create_ufs_volume(self, c, u_id, u_name, swapsize):
+    def __create_ufs_volume(self, volume, swapsize):
         geom_vdev = ""
+        u_id = volume.id
+        u_name = str(volume.vol_name)
         ufs_device = ""
-        c.execute("SELECT id, group_type, group_name FROM storage_diskgroup "
-                  "WHERE group_volume_id = ?", (u_id,))
         # TODO: We do not support multiple GEOM levels for now.
-        vgrp_row = c.fetchone()
-        ufs_volume_id = vgrp_row[0]
-        geom_type = vgrp_row[1]
-        geom_name = vgrp_row[2]
-        # Grab all disks from the group
-        c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE "
-                  "disk_group_id = ?", (ufs_volume_id,))
+        vgrp_row = volume.diskgroup_set.all()[0]
+        ufs_volume_id = vgrp_row.id
+        geom_type = vgrp_row.group_type
+        geom_name = vgrp_row.group_name
+
         if geom_type == '':
-            disk = c.fetchone()
-            devname = self.identifier_to_device(disk[0])
+            # Grab disk from the group
+            disk = vgrp_row.disk_set.all()[0]
+            devname = self.identifier_to_device(disk.disk_identifier)
             self.__gpt_labeldisk(type = "freebsd-ufs", devname = devname, swapsize=swapsize)
             ident = self.device_to_identifier(devname)
-            if ident != disk[0]:
-                c2, conn = self.__open_db(True)
-                c2.execute("UPDATE storage_disk SET disk_identifier = ? WHERE disk_identifier = ?", (ident, disk[0]))
-                c2.close()
-                conn.commit()
+            if ident != disk.disk_identifier:
+                disk.disk_identifier = ident
+                disk.save()
             else:
                 raise
             devname = self.identifier_to_device(ident)
-            ufs_device = "/dev/ufs/" + disk[1]
+            ufs_device = "/dev/ufs/" + disk.disk_name
             # TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar
             # generated automatically
             self.__system("newfs -U -L %s /dev/%sp2" % (u_name, devname))
         else:
-            vdev_member_list = c.fetchall()
+            # Grab all disks from the group
+            vdev_member_list = vgrp_row.disk_set.all()
             for disk in vdev_member_list:
-                devname = self.identifier_to_device(disk[0])
+                devname = self.identifier_to_device(disk.disk_identifier)
                 geom_vdev += " /dev/" + devname
             self.__system("geom %s load" % (geom_type))
             self.__system("geom %s label %s %s" % (geom_type, geom_name, geom_vdev))
             ufs_device = "/dev/%s/%s" % (geom_type, geom_name)
             self.__system("newfs -U -L %s %s" % (u_name, ufs_device))
 
-    def __destroy_ufs_volume(self, c, u_id, u_name):
+    def __destroy_ufs_volume(self, volume):
         """Internal procedure to destroy a UFS volume identified by volume id"""
-        c.execute("SELECT id, group_type, group_name FROM storage_diskgroup WHERE "
-                  "group_volume_id = ?", (u_id,))
-        vgrp_row = c.fetchone()
-        ufs_volume_id = vgrp_row[0]
-        geom_type = vgrp_row[1]
-        geom_name = vgrp_row[2]
-        # Grab all disks from the group
-        c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE "
-                  "disk_group_id = ?", (ufs_volume_id,))
+        u_id = volume.id
+        u_name = str(volume.vol_name)
+
+        vgrp = volume.diskgroup_set.all()[0]
+        ufs_volume_id = vgrp.id
+        geom_type = vgrp.group_type
+        geom_name = vgrp.group_name
         if geom_type == '':
-            disk = c.fetchone()
-            devname = self.identifier_to_device(disk[0])
+            # Grab disk from the group
+            disk = vgrp.disk_set.all()[0]
+            devname = self.identifier_to_device(disk.disk_identifier)
             self.__system("umount -f /dev/ufs/" + u_name)
             self.__gpt_unlabeldisk(devname = devname)
         else:
             self.__system("swapoff -a")
             self.__system("umount -f /dev/ufs/" + u_name)
             self.__system("geom %s stop %s" % (geom_type, geom_name))
-            vdev_member_list = c.fetchall()
+            # Grab all disks from the group
+            vdev_member_list = vgrp.disk_set.all()
             for disk in vdev_member_list:
-                devname = self.identifier_to_device(disk[0])
+                devname = self.identifier_to_device(disk.disk_identifier)
                 disk_name = " /dev/%s" % devname
                 self.__system("geom %s clear %s" % (geom_type, disk_name))
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname,))
@@ -853,20 +838,18 @@ class notifier:
                       "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (devname, devname))
         self._reload_disk()
 
-    def _init_volume(self, volume_id, *args, **kwargs):
+    def _init_volume(self, volume, *args, **kwargs):
         """Initialize a volume designated by volume_id"""
         c = self.__open_db()
         c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
         swapsize=c.fetchone()[0]
-        c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
-                 (volume_id,))
-        volume = c.fetchone()
+        c.close()
 
-        assert volume[0] == 'ZFS' or volume[0] == 'UFS'
-        if volume[0] == 'ZFS':
-            self.__create_zfs_volume(c, volume_id, volume[1], swapsize, kwargs.pop('force4khack', False))
-        elif volume[0] == 'UFS':
-            self.__create_ufs_volume(c, volume_id, volume[1], swapsize)
+        assert volume.vol_fstype == 'ZFS' or volume.vol_fstype == 'UFS'
+        if volume.vol_fstype == 'ZFS':
+            self.__create_zfs_volume(volume, swapsize, kwargs.pop('force4khack', False))
+        elif volume.vol_fstype == 'UFS':
+            self.__create_ufs_volume(volume, swapsize)
         self._reload_disk()
 
     def _init_zfs_disk(self, disk_id):
@@ -981,18 +964,14 @@ class notifier:
         ret = self.__system_nolog('/sbin/zpool add %s spare %s' % (volume, devname))
         return ret
 
-    def _destroy_volume(self, volume_id):
+    def _destroy_volume(self, volume):
         """Destroy a volume designated by volume_id"""
-        c = self.__open_db()
-        c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
-                 (volume_id,))
-        volume = c.fetchone()
 
-        assert volume[0] in ('ZFS', 'UFS', 'iscsi', 'NTFS', 'MSDOSFS')
-        if volume[0] == 'ZFS':
-            self.__destroy_zfs_volume(c = c, z_id = volume_id, z_name = volume[1])
-        elif volume[0] == 'UFS':
-            self.__destroy_ufs_volume(c = c, u_id = volume_id, u_name = volume[1])
+        assert volume.vol_fstype in ('ZFS', 'UFS', 'iscsi', 'NTFS', 'MSDOSFS')
+        if volume.vol_fstype == 'ZFS':
+            self.__destroy_zfs_volume(volume)
+        elif volume.vol_fstype == 'UFS':
+            self.__destroy_ufs_volume(volume)
 
     def _reload_disk(self):
         self.__system("/usr/sbin/service ix-smartd quietstart")
