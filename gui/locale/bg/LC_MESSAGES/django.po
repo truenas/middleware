@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-13 21:59+0200\n"
+"PO-Revision-Date: 2011-06-15 10:27+0200\n"
 "Last-Translator: Crazy <vmishev07051@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
@@ -1136,6 +1136,7 @@ msgstr "Тази стойност трябва да бъде между %(start)
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
+"Това поле е задължително, ако методът за откриване е CHAP или споделен CHAP."
 
 #: services/forms.py:504 services/forms.py:534
 msgid "You need to specify a filepath, not a directory."
@@ -1180,11 +1181,11 @@ msgid "Delete underlying file"
 msgstr ""
 
 #: services/forms.py:788
-#, fuzzy, python-format
+#, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "Потребителят %s е невалиден."
-msgstr[1] "Потребителят %s е невалиден."
+msgstr[0] "Имейлът %(email)s е невалиден"
+msgstr[1] "Следните имейли са невалидни: %(email)s"
 
 #: services/models.py:40
 msgid "Service"
@@ -1228,10 +1229,12 @@ msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
+"Работна група към коята принадлежи сървърът при запитване от страна на "
+"клиентите (максимална дължина 15 символа)."
 
 #: services/models.py:76
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "Описание на сървъра. Това поле обикновено може да бъде оставено празно."
 
 #: services/models.py:82
 msgid "DOS charset"
@@ -1251,11 +1254,11 @@ msgstr ""
 
 #: services/models.py:99
 msgid "Time Server for Domain"
-msgstr ""
+msgstr "Сървърно време за домейна"
 
 #: services/models.py:104 services/models.py:191
 msgid "Guest account"
-msgstr ""
+msgstr "Гост"
 
 #: services/models.py:105 services/models.py:192
 msgid ""
@@ -1268,23 +1271,25 @@ msgstr ""
 
 #: services/models.py:108
 msgid "Allow guest access"
-msgstr ""
+msgstr "Разреши достъп за гост"
 
 #: services/models.py:110
 msgid "Only allow guest access"
-msgstr ""
+msgstr "Разреши достъп само за гост"
 
 #: services/models.py:113 services/models.py:848
 msgid "File mask"
-msgstr ""
+msgstr "Маска на файла"
 
 #: services/models.py:115
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
+"Използвайте тази опция, за да отмените създадената маска на файла (0666 по "
+"подразбиране)."
 
 #: services/models.py:119 services/models.py:854
 msgid "Directory mask"
-msgstr ""
+msgstr "Маска на директорията"
 
 #: services/models.py:121
 msgid ""
@@ -1293,65 +1298,68 @@ msgstr ""
 
 #: services/models.py:124
 msgid "Large RW support"
-msgstr ""
+msgstr "Поддръжка на големи RW"
 
 #: services/models.py:126
 msgid "Send files with sendfile(2)"
-msgstr ""
+msgstr "Изпращай файловете със sendfile(2)"
 
 #: services/models.py:128
 msgid "EA Support"
-msgstr ""
+msgstr "EA Поддръжка"
 
 #: services/models.py:130
 msgid "Support DOS File Attributes"
-msgstr ""
+msgstr "Поддръжка на DOS файлови атрибути"
 
 #: services/models.py:132
 msgid "Allow Empty Password"
-msgstr ""
+msgstr "Позволи празна парола"
 
 #: services/models.py:135 services/models.py:694 services/models.py:728
 #: services/models.py:760 services/models.py:906 services/models.py:1162
 #: services/models.py:1225
 msgid "Auxiliary parameters"
-msgstr ""
+msgstr "Допълнителни параметри"
 
 #: services/models.py:137
 msgid "These parameters are added to [Global] section of smb.conf"
-msgstr ""
+msgstr "Тези параметри се добавят към раздел [Global] на smb.conf"
 
 #: services/models.py:140
 msgid "Enable home directories"
-msgstr ""
+msgstr "Разреши стартови директории"
 
 #: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
 msgstr ""
+"Това дава възможност\\забранява стартовите директории за samba потребители."
 
 #: services/models.py:144
 msgid "Enable home directories browsing"
-msgstr ""
+msgstr "Разреши разглеждането на стартовите директории"
 
 #: services/models.py:145
 msgid "This enables\\disables home directories browsing for samba user."
 msgstr ""
+"Това дава възможност\\забранява разглеждането на стартовите директории за "
+"samba потребители."
 
 #: services/models.py:149
 msgid "Home directories"
-msgstr ""
+msgstr "Стартови директории"
 
 #: services/models.py:153
 msgid "Enable AIO"
-msgstr ""
+msgstr "Разреши AIO"
 
 #: services/models.py:154
 msgid "This enables\\disables AIO support."
-msgstr ""
+msgstr "Тази опция разрешава\\забранява поддръжката на AIO."
 
 #: services/models.py:158
 msgid "Minimal AIO read size"
-msgstr ""
+msgstr "Минимален размер на AIO за четене"
 
 #: services/models.py:159
 msgid ""
@@ -1361,7 +1369,7 @@ msgstr ""
 
 #: services/models.py:164
 msgid "Minimal AIO write size"
-msgstr ""
+msgstr "Минимален размер на AIO за запис"
 
 #: services/models.py:165
 msgid ""
@@ -1372,11 +1380,11 @@ msgstr ""
 #: services/models.py:170 services/models.py:171
 #: templates/services/index.html:29
 msgid "CIFS"
-msgstr ""
+msgstr "CIFS"
 
 #: services/models.py:180
 msgid "Server Name"
-msgstr ""
+msgstr "Име на сървъра"
 
 #: services/models.py:181
 msgid ""
@@ -1386,7 +1394,7 @@ msgstr ""
 
 #: services/models.py:184
 msgid "Guest Access"
-msgstr ""
+msgstr "Достъп за гост"
 
 #: services/models.py:185
 msgid "Allows guest access to all apple shares on this box."
@@ -1402,16 +1410,16 @@ msgstr ""
 
 #: services/models.py:199
 msgid "Enable DDP"
-msgstr ""
+msgstr "Разреши DDP"
 
 #: services/models.py:200
 msgid "Enables DDP support for low-level appletalk access."
-msgstr ""
+msgstr "Разреши поддръжката на DDP за ниско ниво на достъп"
 
 #: services/models.py:204 services/models.py:205
 #: templates/services/index.html:7
 msgid "AFP"
-msgstr ""
+msgstr "AFP"
 
 #: services/models.py:214
 msgid "Number of servers"
@@ -1422,31 +1430,37 @@ msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
 msgstr ""
+"Определя броя на създадените сървъри. Трябва да бъде достатъчен, за да "
+"обслужи всички клинети едновременно, обикновено 4-6."
 
 #: services/models.py:219
 msgid "Asynchronous mode"
-msgstr ""
+msgstr "Асинхронен режим"
 
 #: services/models.py:220
 msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
+"Разреши асинхронен режим, който ще повиши производителността при мрежова "
+"свързаност над 1 гбит/с."
 
 #: services/models.py:225 services/models.py:226
 #: templates/services/index.html:75
 msgid "NFS"
-msgstr ""
+msgstr "NFS"
 
 #: services/models.py:235
 msgid "Base Name"
-msgstr ""
+msgstr "Базово наименование"
 
 #: services/models.py:236
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"Базовото наименование (например: iqn.2007-09.jp.ne.peach.istgt, виж RFC 3720 "
+"и 3721 за подробности) ще прибави името на целта, което не започва с 'iqn.'"
 
 #: services/models.py:242
 msgid "Discovery Auth Method"
@@ -1462,7 +1476,7 @@ msgstr ""
 
 #: services/models.py:259
 msgid "NOPIN Interval"
-msgstr ""
+msgstr "NOPIN интервал"
 
 #: services/models.py:260
 msgid "NOPIN sending interval in seconds (20 by default)."
@@ -1470,19 +1484,19 @@ msgstr ""
 
 #: services/models.py:265
 msgid "Max. sessions"
-msgstr ""
+msgstr "Максимален брой сесии"
 
 #: services/models.py:266
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr ""
+msgstr "Максимален брой едновременни сесии (16 по подразбиране)."
 
 #: services/models.py:271
 msgid "Max. connections"
-msgstr ""
+msgstr "Максимален брой връзки"
 
 #: services/models.py:272
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "Максимален брой връзки за всяка сесия (8 по подразбиране)."
 
 #: services/models.py:277
 msgid "Max. pre-send R2T"
@@ -2345,16 +2359,16 @@ msgstr ""
 
 #: services/models.py:1141 sharing/models.py:85
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "Допълнителни параметри"
 
 #: services/models.py:1143
 msgid "These parameters are added to ldap.conf."
-msgstr ""
+msgstr "Тези параметри се добавят към ldap.conf."
 
 #: services/models.py:1147 services/models.py:1148
 #: templates/services/index.html:64
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/models.py:1158
 msgid "Alternate TCP port. Default is 873"
@@ -2366,31 +2380,31 @@ msgstr ""
 
 #: services/models.py:1167 services/models.py:1168
 msgid "Rsyncd"
-msgstr ""
+msgstr "Rsyncd"
 
 #: services/models.py:1178
 msgid "Module name"
-msgstr ""
+msgstr "Име на модула"
 
 #: services/models.py:1186
 msgid "Path to be shared"
-msgstr ""
+msgstr "Път, който да бъде споделен"
 
 #: services/models.py:1192
 msgid "Access Mode"
-msgstr ""
+msgstr "Режим на достъп"
 
 #: services/models.py:1193
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "Контрол на достъпа на отдалечения хост за този модул"
 
 #: services/models.py:1197
 msgid "Maximum connections"
-msgstr ""
+msgstr "Максимален брой връзки"
 
 #: services/models.py:1198
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr ""
+msgstr "Максимален брой едновременни връзки. По подразбиране 0 (неограничен)"
 
 #: services/models.py:1204
 msgid ""
@@ -2496,7 +2510,7 @@ msgstr "S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
-msgstr ""
+msgstr "Контрол на Услугите"
 
 #: services/nav.py:50
 msgid "Add Device Extent"
@@ -2543,20 +2557,20 @@ msgstr ""
 
 #: sharing/forms.py:82
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "В полето не е въведен валиден IP адрес или мрежа"
 
 #: sharing/forms.py:88
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr "IP адресът '%s' е невалиден."
 
 #: sharing/forms.py:99
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "Maproot групата изисква Maproot потребител"
 
 #: sharing/forms.py:101
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr "Mapall групата изисква Mapall потребител"
 
 #: sharing/forms.py:104 sharing/forms.py:107
 msgid "Maproot user/group disqualifies Mapall"
@@ -2568,7 +2582,7 @@ msgstr ""
 #: templates/services/rsyncmod.html:5 templates/sharing/apple.html:13
 #: templates/sharing/windows.html:13
 msgid "Name"
-msgstr ""
+msgstr "Име"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
@@ -2605,15 +2619,15 @@ msgstr ""
 
 #: sharing/models.py:68
 msgid "Allow Guest Access"
-msgstr ""
+msgstr "Разреши достъпа за гости"
 
 #: sharing/models.py:70
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Разреши достъп само за гости"
 
 #: sharing/models.py:74
 msgid "Hosts Allow"
-msgstr ""
+msgstr "Позволени хостове"
 
 #: sharing/models.py:75
 msgid ""
@@ -2902,7 +2916,7 @@ msgstr ""
 
 #: sharing/models.py:248
 msgid "Maproot User"
-msgstr ""
+msgstr "Maproot Потребител"
 
 #: sharing/models.py:252
 msgid "User to map root to"
@@ -2910,7 +2924,7 @@ msgstr ""
 
 #: sharing/models.py:256
 msgid "Maproot Group"
-msgstr ""
+msgstr "Maproot Група"
 
 #: sharing/models.py:260
 msgid "Group to map root to"
@@ -2918,7 +2932,7 @@ msgstr ""
 
 #: sharing/models.py:264
 msgid "Mapall User"
-msgstr ""
+msgstr "Mapall Потребител"
 
 #: sharing/models.py:268
 msgid "User to map all users to"
@@ -2926,7 +2940,7 @@ msgstr ""
 
 #: sharing/models.py:272
 msgid "Mapall Group"
-msgstr ""
+msgstr "Mapall Група"
 
 #: sharing/models.py:276
 msgid "Group to map all users to"
@@ -2938,7 +2952,7 @@ msgstr ""
 
 #: sharing/models.py:284
 msgid "UNIX Shares"
-msgstr ""
+msgstr "Споделени ресурси за UNIX"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
@@ -3111,7 +3125,7 @@ msgstr ""
 
 #: storage/forms.py:902
 msgid "Snapshot"
-msgstr ""
+msgstr "Моментна снимка"
 
 #: storage/forms.py:903
 msgid "Clone Name (must be on same volume)"

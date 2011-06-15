@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-05-30 18:47+0200\n"
-"Last-Translator: Rafal <rafal.ciszynski@d-tech.com.pl>\n"
+"PO-Revision-Date: 2011-06-15 02:25+0200\n"
+"Last-Translator: raymond <raymondv@gmx.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
@@ -5178,7 +5178,7 @@ msgstr ""
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr ""
+msgstr "Tygodnia"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"
@@ -5186,7 +5186,7 @@ msgstr ""
 
 #: templates/system/reporting.html:46
 msgid "Monthly"
-msgstr ""
+msgstr "Miesięcznie"
 
 #: templates/system/reporting.html:47
 msgid "Monthly Graphs"
@@ -5194,7 +5194,7 @@ msgstr ""
 
 #: templates/system/reporting.html:60
 msgid "Yearly"
-msgstr ""
+msgstr "Rocznie"
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-13 01:59+0200\n"
+"PO-Revision-Date: 2011-06-15 02:19+0200\n"
 "Last-Translator: raymond <raymondv@gmx.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
@@ -480,7 +480,7 @@ msgstr "Übertragungsraten Selbsttest (nur ATA)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "\"Sofort Offline\"-Test (nur ATA)"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -2699,6 +2699,8 @@ msgid ""
 "Report if the temperature had changed by at least N degrees Celsius since "
 "last report. 0 to disable"
 msgstr ""
+"Bericht, ob sich die Temperatur seit dem vorherigen Bericht um mindestens N "
+"Grad Celsius verändert hat. 0 zum Deaktivieren"
 
 #: services/models.py:1259
 msgid "Informal"
@@ -2718,7 +2720,7 @@ msgstr "Kritisch"
 
 #: services/models.py:1268
 msgid "Email to report"
-msgstr ""
+msgstr "E-Mail, an die der Bericht gesendet wird"
 
 #: services/models.py:1271
 msgid "Destination email address. Separate email addresses by semi-colon"
@@ -3422,7 +3424,6 @@ msgstr ""
 "an."
 
 #: storage/forms.py:782
-#, fuzzy
 msgid "Volume from which this ZFS Volume will be created on"
 msgstr "Laufwerk auf dem das Dataset erstellt werden soll"
 
@@ -3767,9 +3768,8 @@ msgid "ZFS Volume successfully destroyed."
 msgstr "ZFS Volume erfolgreich gelöscht."
 
 #: storage/views.py:394
-#, fuzzy
 msgid "Native dataset successfully edited."
-msgstr "Dataset erfolgreich gelöscht."
+msgstr "Dataset erfolgreich geändert."
 
 #: storage/views.py:410
 msgid "Mount Point permissions successfully updated."
@@ -3792,9 +3792,8 @@ msgid "Snapshot successfully added."
 msgstr "Snapshot erfolgreich hinzugefügt."
 
 #: storage/views.py:483
-#, fuzzy
 msgid "Snapshot successfully taken."
-msgstr "Snapshot erfolgreich erstellt"
+msgstr "Snapshot erfolgreich erstellt."
 
 #: storage/views.py:498
 msgid "Snapshot successfully cloned."

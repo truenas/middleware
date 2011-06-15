@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-13 18:43+0200\n"
+"PO-Revision-Date: 2011-06-15 07:44+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -417,22 +417,22 @@ msgstr "Kalan Yüzde Dakika"
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour) saat"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hour) saat"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day) gün"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week) hafta"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
@@ -1262,6 +1262,12 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
+"Misafir kullanıcı olarak belirtilen hizmetlere erişim için kullanılacak "
+"kullanıcı adını (varsayılan 'nobody') geçersiz kılmak için bu seçeneği "
+"kullanın. Bu seçenek misafir servisine bağlanmadan müşteriye sunulacak olan "
+"ayrıcalıkları içermektedir. Bu kullanıcının geçerli giriş gerçekleştirmesi "
+"için şifre dosyasında olması gerekmektedir. root misafir hesabı olarak "
+"kullanılamaz."
 
 #: services/models.py:108
 msgid "Allow guest access"
@@ -1461,6 +1467,8 @@ msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"'iqn' temel isim değildir, hedef isimlere ekler eklenir. (Örneğin "
+"iqn.2007-09.jp.ne.peach.istg gibi, detaylar için RFC 3720 ve 3721 bakınız)"
 
 #: services/models.py:242
 msgid "Discovery Auth Method"
@@ -1472,7 +1480,7 @@ msgstr "G/Ç Zaman aşımı"
 
 #: services/models.py:254
 msgid "I/O timeout in seconds (30 by default)."
-msgstr ""
+msgstr "Saniye cinsinden G/Ç zaman aşımı (varsayılan değer 30)."
 
 #: services/models.py:259
 msgid "NOPIN Interval"
@@ -1481,6 +1489,7 @@ msgstr "NOPIN Aralığı"
 #: services/models.py:260
 msgid "NOPIN sending interval in seconds (20 by default)."
 msgstr ""
+"NOPIN değerini saniye cinsinden aralıklarla gönderme (varsayılan değer 20)."
 
 #: services/models.py:265
 msgid "Max. sessions"
@@ -1500,17 +1509,19 @@ msgstr "Her bölümdeki en fazla bağlantı sayısı (varsayılan 8)."
 
 #: services/models.py:277
 msgid "Max. pre-send R2T"
-msgstr ""
+msgstr "Mak. R2T ön-gönderim"
 
 #: services/models.py:278
 msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
 msgstr ""
+"Bağlantı öncesi R2T ön gönderim en fazla sayısı (varsayılan değer 32). "
+"Gerçek sayı hedefi QueueDepth ile sınırlıdır."
 
 #: services/models.py:283
 msgid "MaxOutstandingR2T"
-msgstr ""
+msgstr "MakÇıkışDuranR2T"
 
 #: services/models.py:284
 msgid "iSCSI initial parameter (16 by default)."
@@ -2993,6 +3004,9 @@ msgid ""
 "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
 "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 msgstr ""
+"Ağınız NFS paylaşımı veya IP adreslerinin listesine erişim yetkisine "
+"sahiptir. Belirlenen ağ numaraları 1.2.3.4/xx şeklindedir. Buradaki xx bit "
+"sayısıdır. Ağ veya IP adresler 1.2.3.4 1.2.3.5 1.2.3.6 şeklinde olabilir."
 
 #: sharing/models.py:235
 msgid "All Directories"
@@ -3165,6 +3179,8 @@ msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
 msgstr ""
+"Veri kümesi isimleri alfasayısal karakterlerle başlamalıdır ve sadece (-), "
+"(_), (:) ve (.) içerebilir."
 
 #: storage/forms.py:660 storage/forms.py:805
 msgid "You already have a dataset with the same name"
