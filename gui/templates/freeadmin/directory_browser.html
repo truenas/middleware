@@ -13,24 +13,24 @@
 </button>
 
 <div id="{{ attrs.id }}_container" class="treecontainer" style="display: none">
-    <div 
-        dojoType="dojox.data.JsonRestStore" 
+    <div
+        dojoType="freeadmin.tree.JsonRestStore"
         target="{% url system_dirbrowser path="/" %}"
-        labelAttribute="name" 
+        labelAttribute="name"
         jsId="{{ attrs.id }}_store">
     </div>
-    <div dojoType="dijit.tree.ForestStoreModel" 
-         jsId="{{ attrs.id }}_model" 
+    <div dojoType="freeadmin.tree.ForestStoreModel"
+         jsId="{{ attrs.id }}_model"
          store="{{ attrs.id }}_store"
-         query="{}" 
-         rootId="items" 
-         rootLabel="/mnt" 
-         childrenAttrs="children" 
+         query="{}"
+         rootId="items"
+         rootLabel="/mnt"
+         childrenAttrs="children"
          deferItemLoadingUntilExpand="true">
     </div>
-    <div id="{{ attrs.id }}_tree" 
-        dojoType="dijit.Tree" 
-        model="{{ attrs.id }}_model" 
+    <div id="{{ attrs.id }}_tree"
+        dojoType="freeadmin.tree.TreeLazy"
+        model="{{ attrs.id }}_model"
         persist="false"
         style="height: 250px;">
         <script type="dojo/connect" event="onClick" args="obj, node, ev">

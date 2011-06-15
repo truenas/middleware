@@ -64,6 +64,8 @@
 
     dojo.registerModulePath("freeadmin", "../../../../../media/lib/js/freeadmin");
     dojo.require("freeadmin.form.Cron");
+    dojo.require("freeadmin.tree.Tree");
+    dojo.require("freeadmin.tree.TreeLazy");
 
     dojo._contentHandlers.text = (function(old){
       return function(xhr){
@@ -110,7 +112,7 @@
                 }
             }
             if(opened != true) {
-                var pane = new dijit.layout.ContentPane({ 
+                var pane = new dijit.layout.ContentPane({
                     title: gettext('Reporting'),
                     refreshOnShow: true,
                     closable: true,
@@ -121,7 +123,7 @@
             }
 
             if(opened2 != true) {
-                var pane2 = new dijit.layout.ContentPane({ 
+                var pane2 = new dijit.layout.ContentPane({
                     id: 'settingstab',
                     title: gettext('Settings'),
                     closable: true,
@@ -132,7 +134,7 @@
             }
 
             if(opened3 != true) {
-                var pane3 = new dijit.layout.ContentPane({ 
+                var pane3 = new dijit.layout.ContentPane({
                     id: 'sysinfotab',
                     title: gettext('System Information'),
                     refreshOnShow: true,
@@ -173,7 +175,7 @@
                     openurl += '?tab='+tab;
                 }
 
-                var pane = new dijit.layout.ContentPane({ 
+                var pane = new dijit.layout.ContentPane({
                     title: gettext('Network Settings'),
                     closable: true,
                     //refreshOnShow: true,
@@ -211,7 +213,7 @@
                 if(tab) {
                     openurl += '?tab='+tab;
                 }
-                var pane = new dijit.layout.ContentPane({ 
+                var pane = new dijit.layout.ContentPane({
                     title: 'Shares',
                     closable: true,
                     //refreshOnShow: true,
@@ -235,7 +237,7 @@
                 }
             }
             if(opened != true) {
-                var pane = new dijit.layout.ContentPane({ 
+                var pane = new dijit.layout.ContentPane({
                     title: gettext('Services'),
                     closable: true,
                     href: this.urlServices,
@@ -267,7 +269,7 @@
                             }
                         }
                     }
-                    
+
                 }
             }
             if(opened != true) {
@@ -275,7 +277,7 @@
                 if(tab) {
                     openurl += '?tab='+tab;
                 }
-                var pane = new dijit.layout.ContentPane({ 
+                var pane = new dijit.layout.ContentPane({
                     title: gettext('Account'),
                     closable: true,
                     href:openurl,
@@ -314,7 +316,7 @@
                 if(tab) {
                     openurl += '?tab='+tab;
                 }
-                var pane = new dijit.layout.ContentPane({ 
+                var pane = new dijit.layout.ContentPane({
                     title: gettext('Storage'),
                     closable: true,
                     href:openurl,
@@ -355,7 +357,7 @@
                     openurl += '?tab='+tab;
                 }
 
-                var pane = new dijit.layout.ContentPane({ 
+                var pane = new dijit.layout.ContentPane({
                     title: 'iSCSI',
                     closable: true,
                     //refreshOnShow: true,
@@ -381,7 +383,7 @@
             if(opened != true) {
                 openurl = this.urlCron;
 
-                var pane = new dijit.layout.ContentPane({ 
+                var pane = new dijit.layout.ContentPane({
                     title: gettext('CronJobs'),
                     closable: true,
                     refreshOnShow: true,
@@ -545,7 +547,7 @@
                 form: item.domNode,
                 handleAs: 'text',
                 //headers: {"X-CSRFToken": dojo.cookie('csrftoken')},
-                load: function(data, ioArgs) { 
+                load: function(data, ioArgs) {
 
                     try {
                         var json = dojo.fromJson(data);
@@ -574,7 +576,7 @@
                         //dojo.style(suc, "opacity", "0");
                         //dojo.fadeIn({ node: suc }).play();
                     } catch(err) {
-                        rnode.set('content', data); 
+                        rnode.set('content', data);
                         if(callback) callback();
                         var qry = dojo.query('#success', rnode.domNode);
                         if(qry.length>0)
@@ -595,7 +597,7 @@
                 url: url,
                 content: newData,
                 handleAs: 'text',
-                load: function(data) { 
+                load: function(data) {
 
                     try {
                         var json = dojo.fromJson(data);
@@ -623,7 +625,7 @@
                         //dojo.fadeIn({ node: suc }).play();
                     } catch(err) {
 
-                        rnode.set('content', data); 
+                        rnode.set('content', data);
                         try {
                             if(callback) callback();
                             var qry = dojo.query('#success', rnode.domNode);
@@ -632,7 +634,7 @@
                         } catch(err) {}
                     }
                 },
-                error: function(data) { 
+                error: function(data) {
 
                         setMessage(gettext('Some error ocurried!'), "error");
 
@@ -806,7 +808,7 @@
             if(turn.isInstanceOf(dijit.Dialog)) break;
         }
         return turn;
-    
+
     };
 
     getForm = function(from) {
@@ -817,11 +819,11 @@
             if(turn.isInstanceOf(dijit.form.Form)) break;
         }
         return turn;
-    
+
     };
 
     cancelDialog = function(from) {
-    
+   
         var dialog = getDialog(from);
         canceled = true;
         dialog.hide();
@@ -830,14 +832,14 @@
 
     addObject = function(name, url, nodes) {
         canceled = false;
-        dialog = new dijit.Dialog({ 
+        dialog = new dijit.Dialog({
             id: 'add_dialog',
-            title: name, 
-            href: url, 
+            title: name,
+            href: url,
             parseOnLoad: true,
-            closable: true, 
+            closable: true,
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
-            onHide: function() { 
+            onHide: function() {
                 setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
                 refreshTabs(nodes);
             },
@@ -872,14 +874,14 @@
 
     editObject = function(name, url, nodes) {
         canceled = false;
-        dialog = new dijit.Dialog({ 
+        dialog = new dijit.Dialog({
             id: 'edit_dialog',
-            title: name, 
-            href: url, 
+            title: name,
+            href: url,
             parseOnLoad: true,
-            closable: true, 
+            closable: true,
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
-            onHide: function() { 
+            onHide: function() {
                 setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
                 refreshTabs(nodes);
             },
@@ -888,14 +890,14 @@
     };
 
     volumeWizard = function(name, url, nodes) {
-         dialog = new dijit.Dialog({ 
+         dialog = new dijit.Dialog({
              id: 'wizard_dialog',
-             title: name, 
-             href: url, 
+             title: name,
+             href: url,
              parseOnLoad: true,
-             closable: true, 
+             closable: true,
              style: "max-width: 650px;min-height:200px;max-height:500px;background-color:white;overflow:auto;",
-             onHide: function() { 
+             onHide: function() {
                 setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
                 refreshTabs(nodes);
              },
@@ -913,9 +915,9 @@
                 return;
             }
         }
-        var pane = new dijit.layout.ContentPane({ 
-            href: url, 
-            title: name, 
+        var pane = new dijit.layout.ContentPane({
+            href: url,
+            title: name,
             closable: true,
             parseOnLoad: true,
             refreshOnShow: true,
@@ -927,7 +929,7 @@
 
     refreshImgs = function() {
 
-        dojo.query(".chart > img").forEach(function(e) { 
+        dojo.query(".chart > img").forEach(function(e) {
             e.src = new String(e.src).split('?')[0] + '?' + new Date().getTime();
         });
         setTimeout(refreshImgs, 300000);
@@ -936,91 +938,10 @@
     dojo.addOnLoad(function() {
 
         setTimeout(refreshImgs, 300000);
-        dojo.declare("my.Tree", dijit.Tree, {  
-           
-            _expandNode: function( node, recursive){
-                if(node._expandNodeDeferred && !recursive){
-                    return node._expandNodeDeferred;    // dojo.Deferred
-                }
-                
-                //item = node.item;
-                //alert("doing ya");
-                //if (item._loadObject && !node._loadObjectFunction) {
-                //    node._loadObjectFunction = item._loadObject;
-                //}
-                return this.inherited(arguments);
-            }, 
-            expandAll: function() {
-                // summary:
-                //     Expand all nodes in the tree
-                // returns:
-                //     Deferred that fires when all nodes have expanded
-
-                var _this = this;
-
-                function expand(node) {
-                    _this._expandNode(node);
-
-                    var childBranches = dojo.filter(node.getChildren() || [], function(node) {
-                        return node.isExpandable;
-                    });
-
-                    var def = new dojo.Deferred();
-                    defs = dojo.map(childBranches, expand);
-                }
-                return expand(this.rootNode);
-            },
-            collapseAll: function() {
-                // summary:
-                //     Expand all nodes in the tree
-                // returns:
-                //     Deferred that fires when all nodes have expanded
-
-                var _this = this;
-
-                function collapse(node) {
-                    // never collapse root node, otherwise hides whole tree !
-                    if ( _this.showRoot == false && node != _this.rootNode ) {
-                     _this._collapseNode(node);
-                    }
-
-                    var childBranches = dojo.filter(node.getChildren() || [], function(node) {
-                        return node.isExpandable;
-                    });
-
-                    var def = new dojo.Deferred();
-                    defs = dojo.map(childBranches, collapse);
-                }
-                return collapse(this.rootNode);
-            },
-            reload: function () {
-
-                this.model.store.close();
-                path = this.get('path');
-                
-                if (this.rootNode) {
-                    this.rootNode.destroyRecursive();
-                }
-            
-                this.rootNode.state = "UNCHECKED";
-              
-                this.model.constructor(this.model);
-                
-                this.postMixInProperties();
-                this._load();
-                this.set('path', path).then(
-                        dojo.hitch(this, function() { 
-                            this.focusNode(this.get('selectedNode')); 
-                        } 
-                ));
-
-            } 
-            
-        });
 
         var store = new dojo.data.ItemFileReadStore({
             url: "/admin/menu.json",
-            urlPreventCache: true, 
+            urlPreventCache: true,
             clearOnClose: true,
         });
 
@@ -1041,7 +962,7 @@
 
         treeclick = function(item) {
             var p = dijit.byId("content");
-                
+
             if(item.type && item.type == 'object') {
                 var data = dojo.query(".data_"+item.app_name+"_"+item.model);
                 if(data) {
@@ -1066,7 +987,7 @@
                         }
                     });
                     volumeWizard(item.name, item.view, widgets);
-                } else 
+                } else
                     volumeWizard(item.name, item.view);
             } else if(item.type && item.type == 'editobject') {
                 var data = dojo.query(".data_"+item.app_name+"_"+item.model);
@@ -1112,10 +1033,10 @@
                         return;
                     }
                 }
-                var pane = new dijit.layout.ContentPane({ 
+                var pane = new dijit.layout.ContentPane({
                     id: "data_"+item.app_name+"_"+item.model,
-                    href: item.view, 
-                    title: item.name, 
+                    href: item.view,
+                    title: item.name,
                     closable: true,
                     refreshOnShow: true,
                     parseOnLoad: true,
@@ -1132,9 +1053,9 @@
                         return;
                     }
                 }
-                var pane = new dijit.layout.ContentPane({ 
-                    href: item.view, 
-                    title: item.name, 
+                var pane = new dijit.layout.ContentPane({
+                    href: item.view,
+                    title: item.name,
                     closable: true,
                     parseOnLoad: true,
                 });
@@ -1146,12 +1067,12 @@
 
         };
 
-        mytree = new my.Tree({
+        mytree = new freeadmin.tree.Tree({
             id: "mytree",
             model: treeModel,
             showRoot: false,
             onClick: treeclick,
-            onLoad: function() { 
+            onLoad: function() {
                 var fadeArgs = {
                    node: "mytree",
                  };
