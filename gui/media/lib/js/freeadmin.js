@@ -469,7 +469,7 @@
 
         var toset;
         var box = dijit.byId("id_iscsi_toggleluc");
-        if(box.attr("value")==false) {
+        if(box.get("value")==false) {
             toset = true;
         } else{
             toset = false;
@@ -486,14 +486,14 @@
 
         var toset;
         var box = dijit.byId("id_em_smtp");
-        if(box.attr("value")==false) {
+        if(box.get("value")==false) {
             toset = true;
         } else{
             toset = false;
         }
         dijit.byId("id_em_pass1").set('disabled', toset);
-        dijit.byId("id_em_pass2").attr("disabled", toset);
-        dijit.byId("id_em_user").attr("disabled", toset);
+        dijit.byId("id_em_pass2").set("disabled", toset);
+        dijit.byId("id_em_user").set("disabled", toset);
 
     }
 
