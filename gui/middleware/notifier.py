@@ -794,11 +794,15 @@ class notifier:
                 disk.save()
             else:
                 raise
-            devname = self.identifier_to_device(ident)
-            ufs_device = "/dev/ufs/" + disk.disk_name
+            devname = self.identifier_to_partition(ident)
             # TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar
             # generated automatically
-            self.__system("newfs -U -L %s /dev/%sp2" % (u_name, devname))
+            p1 = self.__pipeopen("newfs -U -L %s /dev/%s" % (u_name, devname))
+            p1.wait()
+            if p1.returncode != 0:
+                from middleware.exceptions import MiddlewareError
+                error = ", ".join(p1.communicate()[1].split('\n'))
+                raise MiddlewareError('Volume creation failed: "%s"' % error)
         else:
             # Grab all disks from the group
             vdev_member_list = vgrp_row.disk_set.all()
@@ -806,7 +810,12 @@ class notifier:
                 devname = self.identifier_to_device(disk.disk_identifier)
                 geom_vdev += " /dev/" + devname
             self.__system("geom %s load" % (geom_type))
-            self.__system("geom %s label %s %s" % (geom_type, geom_name, geom_vdev))
+            p1 = self.__pipeopen("geom %s label %s %s" % (geom_type, geom_name, geom_vdev))
+            p1.wait()
+            if p1.returncode != 0:
+                from middleware.exceptions import MiddlewareError
+                error = ", ".join(p1.communicate()[1].split('\n'))
+                raise MiddlewareError('Volume creation failed: "%s"' % error)
             ufs_device = "/dev/%s/%s" % (geom_type, geom_name)
             self.__system("newfs -U -L %s %s" % (u_name, ufs_device))
 

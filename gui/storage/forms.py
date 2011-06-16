@@ -265,7 +265,11 @@ class VolumeWizardForm(forms.Form):
         force4khack = self.cleaned_data.get("force4khack", False)
 
         if (len(disk_list) < 2):
-            group_type = 'stripe'
+            if volume_fstype == 'ZFS':
+                group_type = 'stripe'
+            else:
+                # UFS middleware expects no group_type for single disk volume
+                group_type = ''
         else:
             group_type = self.cleaned_data['group_type']
 
