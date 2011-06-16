@@ -1617,14 +1617,14 @@ class notifier:
     def vlan_delete(self, vint):
         self.__system("ifconfig %s destroy" % vint)
 
-    def zfs_sync_datasets(self, vol_id):
+    def zfs_sync_datasets(self, volume):
         c, conn = self.__open_db(True)
-        c.execute("SELECT vol_name FROM storage_volume WHERE id = ?", (vol_id,))
-        vol_name = c.fetchone()[0]
-        c.execute("SELECT mp_path FROM storage_mountpoint WHERE mp_volume_id = ?", (vol_id,))
-        mp_path = c.fetchone()[0]
+        vol_name = str(volume.vol_name)
+        c.execute("SELECT mp_path FROM storage_mountpoint WHERE mp_volume_id = ?", (volume.id,))
+        mp = volume.mountpoint_set.all()[0]
+        mp_path = str(mp.mp_path)
 
-        c.execute("DELETE FROM storage_mountpoint WHERE mp_ischild = 1 AND mp_volume_id = %s" % str(vol_id))
+        c.execute("DELETE FROM storage_mountpoint WHERE mp_ischild = 1 AND mp_volume_id = %s" % str(volume.id))
 
         # Reset mountpoints on the whole volume
         self.zfs_inherit_option(vol_name, 'mountpoint', True)
@@ -1634,7 +1634,7 @@ class notifier:
         for dataset in ret:
             name = "/".join(dataset.split('/')[1:])
             mp = os.path.join(mp_path, name)
-            c.execute("INSERT INTO storage_mountpoint (mp_volume_id, mp_path, mp_options, mp_ischild) VALUES (?, ?, ?, ?)", (vol_id, mp, "noauto", "1"), )
+            c.execute("INSERT INTO storage_mountpoint (mp_volume_id, mp_path, mp_options, mp_ischild) VALUES (?, ?, ?, ?)", (volume.id, mp, "noauto", "1"), )
         conn.commit()
         c.close()
 

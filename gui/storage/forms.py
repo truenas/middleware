@@ -606,7 +606,7 @@ class VolumeAutoImportForm(forms.Form):
                 assert False, "Could not run zfs import"
 
         if vol['type'] == 'zfs':
-            notifier().zfs_sync_datasets(volume.id)
+            notifier().zfs_sync_datasets(volume)
 
         notifier().reload("disk")
 
