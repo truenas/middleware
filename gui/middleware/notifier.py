@@ -542,11 +542,9 @@ class notifier:
             self.__system("swapoff /dev/%s" % self.swap_from_device(devname))
         self.__system("gpart destroy -F /dev/%s" % devname)
 
-        # To be safe, wipe out the disk, both ends...
-        # TODO: This should be fixed, it's an overkill to overwrite that much
-        self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=10" % (devname))
-        self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print int($3 / (1024*1024)) - 3;}'`" % (devname, devname))
+        # Wipe out the partition table by doing an additional iterate of create/destroy
+        self.__system("gpart create -s gpt /dev/%s" % devname)
+        self.__system("gpart destroy -F /dev/%s" % devname)
 
     def unlabel_disk(self, devname):
         # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
