@@ -19,7 +19,7 @@ main()
 	echo "Can't find image file for ${REVISION}, punting"
 	exit 1
     fi
-    export NANO_NAME="FreeNAS-{REVISION}-${FREENAS_ARCH}"
+    export NANO_NAME="FreeNAS-${REVISION}-${FREENAS_ARCH}"
     export NANO_IMGNAME="${NANO_NAME}.full"
 
     # Paths that may need altering on the build system
