@@ -666,7 +666,8 @@ class notifier:
         if props:
             assert type(props) is types.DictType
             for k in props.keys():
-                options += "-o %s=%s " % (k, props[k])
+                if props[k] != 'inherit':
+                    options += "-o %s=%s " % (k, props[k])
         zfsproc = self.__pipeopen("/sbin/zfs create %s -V %s %s" % (options, size, name))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_error = zfsproc.wait()
@@ -678,7 +679,8 @@ class notifier:
         if props:
             assert type(props) is types.DictType
             for k in props.keys():
-                options += "-o %s=%s " % (k, props[k])
+                if props[k] != 'inherit':
+                    options += "-o %s=%s " % (k, props[k])
         zfsproc = self.__pipeopen("/sbin/zfs create %s %s" % (options, path))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_error = zfsproc.wait()
