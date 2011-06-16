@@ -264,11 +264,9 @@ def dataset_create(request):
             volume_name = volume.vol_name
             dataset_name = "%s/%s" % (volume_name, cleaned_data.get('dataset_name'))
             dataset_compression = cleaned_data.get('dataset_compression')
-            if dataset_compression != 'inherit':
-                props['compression']=dataset_compression.__str__()
+            props['compression']=dataset_compression.__str__()
             dataset_atime = cleaned_data.get('dataset_atime')
-            if dataset_atime != 'inherit':
-                props['atime']=dataset_atime.__str__()
+            props['atime']=dataset_atime.__str__()
             refquota = cleaned_data.get('dataset_refquota')
             if refquota != '0':
                 props['refquota']=refquota.__str__()
@@ -340,8 +338,7 @@ def zvol_create(request):
             zvol_size = cleaned_data.get('zvol_size')
             zvol_name = "%s/%s" % (volume_name, cleaned_data.get('zvol_name'))
             zvol_compression = cleaned_data.get('zvol_compression')
-            if zvol_compression != 'inherit':
-                props['compression']=zvol_compression.__str__()
+            props['compression']=zvol_compression.__str__()
             errno, errmsg = notifier().create_zfs_vol(name=zvol_name.__str__(), size=zvol_size.__str__(), props=props)
             if errno == 0:
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("ZFS Volume successfully added.")}), mimetype="application/json")
