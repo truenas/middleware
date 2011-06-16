@@ -210,7 +210,7 @@ def disks_datagrid_json(request, vid):
             state = notifier().geom_disk_state(data.disk_group.group_name, \
                                 data.disk_group.group_type, data.disk_name)
             if data.disk_group.group_type in ('mirror', 'raid3') and \
-                                        state not in ("ACTIVE", "SYNCHRONIZING"):
+                                        state not in ("SYNCHRONIZING",):
                 ret['edit']['replace_url'] = reverse('storage_disk_replacement', kwargs={'vid': vid, 'object_id': data.id})
         ret['edit'] = simplejson.dumps(ret['edit'])
 

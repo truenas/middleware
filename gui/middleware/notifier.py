@@ -1583,26 +1583,17 @@ class notifier:
         else:
             return "FAILED"
 
-    def geom_disk_replace(self, volume_id, from_diskid, to_diskid):
+    def geom_disk_replace(self, volume, from_disk, to_disk):
         """Replace disk in volume_id from from_diskid to to_diskid"""
         """Gather information"""
 
-        c = self.__open_db()
-        c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
-                 (volume_id,))
-        volume = c.fetchone()
-        assert volume[0] == 'UFS'
-        volume = volume[1]
-        c.execute("SELECT disk_group_id FROM storage_disk WHERE id = ?", (from_diskid,))
-        dg_id = c.fetchone()[0]
+        assert volume.vol_fstype == 'UFS'
 
-        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", (to_diskid,))
-        todev = c.fetchone()[0]
+        todev = to_disk.identifier_to_device()
 
-        c.execute("SELECT group_name, group_type FROM storage_diskgroup WHERE id = ?", (str(dg_id),))
-        dg = c.fetchone()
-        group_name = dg[0]
-        group_type = dg[1]
+        dg = from_disk.disk_group
+        group_name = dg.group_name
+        group_type = dg.group_type
 
         if group_type == "mirror":
             rv = self.__system_nolog("geom mirror forget %s" % (str(group_name),))
