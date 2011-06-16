@@ -322,6 +322,7 @@ freenas_custom()
 	chown root:wheel ${NANO_WORLDDIR}/usr
         find ${NANO_WORLDDIR} -type f -name "*~" -delete
         find ${NANO_WORLDDIR}/usr/local -type f -name "*.po" -delete
+	mkdir ${NANO_WORLDDIR}/data/zfs
         ln -s /usr/local/bin/bash ${NANO_WORLDDIR}/bin/bash
 	ln -s /data/zfs/zpool.cache ${NANO_WORLDDIR}/boot/zfs/zpool.cache
 }
