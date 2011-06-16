@@ -534,12 +534,14 @@ def disk_replacement(request, vid, object_id):
 
 def disk_detach(request, vid, object_id):
 
+    volume = models.Volume.objects.get(pk=vid)
     disk = models.Disk.objects.get(pk=object_id)
 
     if request.method == "POST":
-        notifier().zfs_detach_disk(vid, object_id)
+        notifier().zfs_detach_disk(volume, disk)
         dg = disk.disk_group
         disk.delete()
+        # delete disk group if is now empty
         if models.Disk.objects.filter(disk_group=dg).count() == 0:
             dg.delete()
         return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk detach has been successfully done.")}), mimetype="application/json")

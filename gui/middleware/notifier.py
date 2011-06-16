@@ -919,21 +919,15 @@ class notifier:
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
         return ret
 
-    def zfs_detach_disk(self, volume_id, disk_id):
+    def zfs_detach_disk(self, volume, disk):
         """Detach a disk from zpool
            (more technically speaking, a replaced disk.  The replacement actually
            creates a mirror for the device to be replaced)"""
-        c = self.__open_db()
 
-        c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
-                 (volume_id,))
-        volume = c.fetchone()
-        assert volume[0] == 'ZFS'
+        assert volume.vol_fstype == 'ZFS'
 
         # TODO: Handle with 4khack aftermath
-        volume = volume[1]
-        c.execute("SELECT disk_identifier FROM storage_disk WHERE id = ?", (disk_id,))
-        devname = self.identifier_to_partition(c.fetchone()[0])
+        devname = disk.identifier_to_device()
 
         # Remove the swap partition for another time to be sure.
         # TODO: swap partition should be trashed instead.
@@ -941,7 +935,7 @@ class notifier:
         if devname_swap != '':
             self.__system('/sbin/swapoff /dev/%s' % (devname_swap))
 
-        ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume, devname))
+        ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume.vol_name, devname))
         # TODO: This operation will cause damage to disk data which should be limited
         self.__gpt_unlabeldisk(devname)
         return ret
