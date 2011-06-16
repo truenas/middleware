@@ -32,7 +32,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
-from django.db import models as dmodels
+from django.db import transaction, models as dmodels
 
 from dojango.util import to_dojo_data
 from freenasUI.services.models import iSCSITargetExtent
@@ -515,44 +515,13 @@ def disk_replacement(request, vid, object_id):
     if request.method == "POST":
         form = forms.DiskReplacementForm(request.POST, disk=fromdisk)
         if form.is_valid():
-            devname = form.cleaned_data['volume_disks']
-            if devname != fromdisk.disk_name:
-                disk = models.Disk()
-                disk.disk_name = devname
-                disk.disk_identifier = "{devicename}%s" % devname
-                disk.disk_group = fromdisk.disk_group
-                disk.disk_description = fromdisk.disk_description
-                disk.save()
-                if volume.vol_fstype == 'ZFS':
-                    rv = notifier().zfs_replace_disk(vid, object_id, unicode(disk.id))
-                elif volume.vol_fstype == 'UFS':
-                    rv = notifier().geom_disk_replace(vid, object_id, unicode(disk.id))
-            else: 
-                if volume.vol_fstype == 'ZFS':
-                    rv = notifier().zfs_replace_disk(vid, object_id, object_id)
-                elif volume.vol_fstype == 'UFS':
-                    rv = notifier().geom_disk_replace(vid, object_id, object_id)
-            if rv == 0:
-                if devname != fromdisk.disk_name:
-                    if volume.vol_fstype == 'ZFS':
-                        dg = models.DiskGroup.objects.filter(group_volume=volume,group_type='detached')
-                        if dg.count() == 0:
-                            dg = models.DiskGroup()
-                            dg.group_volume = volume
-                            dg.group_name = "%sdetached" % volume.vol_name
-                            dg.group_type = 'detached'
-                            dg.save()
-                        else:
-                            dg = dg[0]
-                        fromdisk.disk_group = dg
-                        fromdisk.save()
-                    elif volume.vol_fstype == 'UFS':
-                        fromdisk.delete()
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk replacement has been initiated.")}), mimetype="application/json")
-            else:
-                if devname != fromdisk.disk_name:
-                    disk.delete()
-                return HttpResponse(simplejson.dumps({"error": True, "message": _("Some error ocurried.")}), mimetype="application/json")
+            try:
+                if form.done(volume, fromdisk):
+                    return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk replacement has been initiated.")}), mimetype="application/json")
+                else:
+                    return HttpResponse(simplejson.dumps({"error": True, "message": _("Some error ocurried.")}), mimetype="application/json")
+            except MiddlewareError, e:
+                return HttpResponse(simplejson.dumps({"error": True, "message": _("Error: %s") % str(e)}), mimetype="application/json")
 
     else:
         form = forms.DiskReplacementForm(disk=fromdisk)

@@ -866,34 +866,26 @@ class notifier:
         self.__gpt_labeldisk(type = "freebsd-zfs", devname = devname,
                              label = disk[1], swapsize=swapsize)
 
-    def zfs_replace_disk(self, volume_id, from_diskid, to_diskid):
+    def zfs_replace_disk(self, volume, from_disk, to_disk):
         """Replace disk in volume_id from from_diskid to to_diskid"""
         """Gather information"""
         c = self.__open_db()
         c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
         swapsize=c.fetchone()[0]
 
-        c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
-                 (volume_id,))
-        volume = c.fetchone()
-        assert volume[0] == 'ZFS'
+        assert volume.vol_fstype == 'ZFS'
 
         # TODO: Test on real hardware to see if ashift would persist across replace
-        volume = volume[1]
-        c.execute("SELECT disk_identifier FROM storage_disk WHERE id = ?", (from_diskid,))
-        fromident = c.fetchone()[0]
-        fromdev = self.identifier_to_partition(fromident)
-        fromdev_swap = self.swap_from_identifier(fromident)
-        zdev = self.device_to_zlabel(fromdev, volume) or fromdev
+        fromdev = self.identifier_to_partition(from_disk.disk_identifier)
+        fromdev_swap = self.swap_from_identifier(from_disk.disk_identifier)
+        zdev = self.device_to_zlabel(fromdev, volume.vol_name) or fromdev
 
-        c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE id = ?", (to_diskid,))
-        disk = c.fetchone()
-        todev = self.identifier_to_device(disk[0])
+        todev = self.identifier_to_device(to_disk.disk_identifier)
 
         if fromdev_swap != '':
             self.__system('/sbin/swapoff /dev/%s' % (fromdev_swap))
 
-        if from_diskid == to_diskid:
+        if from_disk.id == to_disk.id:
             self.__system('/sbin/zpool offline %s %s' % (volume, zdev))
 
         self.__gpt_labeldisk(type = "freebsd-zfs", devname = todev,
@@ -901,11 +893,9 @@ class notifier:
 
         # The identifier {uuid} should now be available
         ident = self.device_to_identifier(todev)
-        if ident != disk[0]:
-            c2, conn = self.__open_db(True)
-            c2.execute("UPDATE storage_disk SET disk_identifier = ? WHERE disk_identifier = ?", (ident, disk[0]))
-            c2.close()
-            conn.commit()
+        if ident != to_disk.disk_identifier:
+            to_disk.disk_identifier = ident
+            to_disk.save()
         else:
             raise Exception
         todev = self.identifier_to_partition(ident)
@@ -914,13 +904,19 @@ class notifier:
         if todev_swap:
             self.__system('/sbin/swapon /dev/%s' % (todev_swap))
 
-        if from_diskid == to_diskid:
-            self.__system('/sbin/zpool online %s %s' % (volume, zdev))
-            ret = self.__system_nolog('/sbin/zpool replace %s %s' % (volume, zdev))
+        if from_disk.id == to_disk.id:
+            self.__system('/sbin/zpool online %s %s' % (volume.vol_name, zdev))
+            ret = self.__system_nolog('/sbin/zpool replace %s %s' % (volume.vol_name, zdev))
             if ret == 256:
-                ret = self.__system_nolog('/sbin/zpool scrub %s' % (volume))
+                ret = self.__system_nolog('/sbin/zpool scrub %s' % (volume.vol_name))
         else:
-            ret = self.__system_nolog('/sbin/zpool replace %s %s %s' % (volume, zdev, todev))
+            p1 = self.__pipeopen('/sbin/zpool replace %s %s %s' % (volume.vol_name, zdev, todev))
+            p1.wait()
+            ret = p1.returncode
+            if ret != 0:
+                from middleware.exceptions import MiddlewareError
+                error = ", ".join(p1.communicate()[1].split('\n'))
+                raise MiddlewareError('Disk replacement failed: "%s"' % error)
         return ret
 
     def zfs_detach_disk(self, volume_id, disk_id):

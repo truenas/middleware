@@ -985,6 +985,46 @@ class DiskReplacementForm(forms.Form):
         choices = diskchoices.items()
         choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
         return choices
+    def done(self, volume, fromdisk):
+        with transaction.commit_on_success():
+            devname = self.cleaned_data['volume_disks']
+            if devname != fromdisk.identifier_to_device():
+                disk = models.Disk()
+                disk.disk_name = devname
+                disk.disk_identifier = "{devicename}%s" % devname
+                disk.disk_group = fromdisk.disk_group
+                disk.disk_description = fromdisk.disk_description
+                disk.save()
+                if volume.vol_fstype == 'ZFS':
+                    rv = notifier().zfs_replace_disk(volume, fromdisk, disk)
+                elif volume.vol_fstype == 'UFS':
+                    rv = notifier().geom_disk_replace(volume, fromdisk, disk)
+            else:
+                if volume.vol_fstype == 'ZFS':
+                    rv = notifier().zfs_replace_disk(volume, fromdisk, fromdisk)
+                elif volume.vol_fstype == 'UFS':
+                    rv = notifier().geom_disk_replace(volume, fromdisk, fromdisk)
+            if rv == 0:
+                if devname != fromdisk.identifier_to_device():
+                    if volume.vol_fstype == 'ZFS':
+                        dg = models.DiskGroup.objects.filter(group_volume=volume,group_type='detached')
+                        if dg.count() == 0:
+                            dg = models.DiskGroup()
+                            dg.group_volume = volume
+                            dg.group_name = "%sdetached" % volume.vol_name
+                            dg.group_type = 'detached'
+                            dg.save()
+                        else:
+                            dg = dg[0]
+                        fromdisk.disk_group = dg
+                        fromdisk.save()
+                    elif volume.vol_fstype == 'UFS':
+                        fromdisk.delete()
+                return True
+            else:
+                if devname != fromdisk.identifier_to_device():
+                    disk.delete()
+                return False
 
 class ReplicationForm(ModelForm):
     remote_hostname = forms.CharField(_("Remote hostname"),)
