@@ -3,44 +3,50 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-06-15 11:31+0200\n"
+"Last-Translator: Mohsen <nulloxide@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: fa\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: media/lib/js/freeadmin.js:114
+#, fuzzy
 msgid "Reporting"
-msgstr ""
+msgstr "گزارش"
 
 #: media/lib/js/freeadmin.js:126
+#, fuzzy
 msgid "Settings"
-msgstr ""
+msgstr "تنظیمات"
 
 #: media/lib/js/freeadmin.js:137
+#, fuzzy
 msgid "System Information"
-msgstr ""
+msgstr "اطلاعات سیستم "
 
 #: media/lib/js/freeadmin.js:177
+#, fuzzy
 msgid "Network Settings"
-msgstr ""
+msgstr "تنظیمات شبکه"
 
 #: media/lib/js/freeadmin.js:239
+#, fuzzy
 msgid "Services"
-msgstr ""
+msgstr "خدمات"
 
 #: media/lib/js/freeadmin.js:279
+#, fuzzy
 msgid "Account"
-msgstr ""
+msgstr "حساب کاربری"
 
 #: media/lib/js/freeadmin.js:318
 msgid "Storage"
@@ -55,24 +61,29 @@ msgid "Edit"
 msgstr ""
 
 #: media/lib/js/freeadmin.js:439
+#, fuzzy
 msgid "Edit Disk"
-msgstr ""
+msgstr "ویرایش دیسک"
 
 #: media/lib/js/freeadmin.js:443
+#, fuzzy
 msgid "Replace"
-msgstr ""
+msgstr "جایگزین کردن"
 
 #: media/lib/js/freeadmin.js:444
+#, fuzzy
 msgid "Disk Replacement"
-msgstr ""
+msgstr "جایگزین دیسک"
 
 #: media/lib/js/freeadmin.js:448
+#, fuzzy
 msgid "Detach"
-msgstr ""
+msgstr "جدا کردن"
 
 #: media/lib/js/freeadmin.js:449
+#, fuzzy
 msgid "Disk Detach"
-msgstr ""
+msgstr "جدا کردن دیسک"
 
 #: media/lib/js/freeadmin.js:635
 msgid "Some error ocurried!"

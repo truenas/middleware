@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-15 07:44+0200\n"
+"PO-Revision-Date: 2011-06-16 07:50+0200\n"
 "Last-Translator: Ersan <yakazan@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -1607,37 +1607,40 @@ msgstr "Genel Hedef Yapılandırma"
 
 #: services/models.py:371
 msgid "Extent Name"
-msgstr ""
+msgstr "Alan Adı"
 
 #: services/models.py:372
 msgid "String identifier of the extent."
-msgstr ""
+msgstr "Alan kimliğinin dizilimi."
 
 #: services/models.py:376
 msgid "Extent Type"
-msgstr ""
+msgstr "Alan Türü"
 
 #: services/models.py:377
 msgid "Type used as extent."
-msgstr ""
+msgstr "Alan türü kullan."
 
 #: services/models.py:382
 msgid "Path to the extent"
-msgstr ""
+msgstr "Alanın yolu"
 
 #: services/models.py:383
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
 msgstr ""
+"Alanın dosya yolu kullanılmalıdır (örneğin /mnt/sharename/extent/extent0)."
 
 #: services/models.py:388
 msgid "Extent size"
-msgstr ""
+msgstr "Alan boyutu"
 
 #: services/models.py:389
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
+"Alan boyutunda, 0 otomatik anlamına, bayt olarak bir sayı ve son ek olarakta "
+"KB, MB veya TB kullanılabilir."
 
 #: services/models.py:394 services/models.py:443 services/models.py:489
 #: services/models.py:1182 sharing/models.py:45 sharing/models.py:223
@@ -1655,7 +1658,7 @@ msgstr "Referans için buraya bir açıklama girebilirsiniz."
 #: services/models.py:398 services/models.py:647
 #: templates/services/iscsi_assoctargets.html:6
 msgid "Extent"
-msgstr ""
+msgstr "Alan"
 
 #: services/models.py:432 services/models.py:588
 msgid "Portal Group ID"
@@ -1732,7 +1735,7 @@ msgstr "Hedef Adı"
 
 #: services/models.py:558
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr ""
+msgstr "Temel isimlerin başına otomatik olarak 'iqn.é eklenir."
 
 #: services/models.py:565
 msgid "Target Alias"
@@ -1899,7 +1902,7 @@ msgstr "Çoğu durumda burada 'genel' kullanılır."
 
 #: services/models.py:726
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "SNMP Tuzakları Gönder"
 
 #: services/models.py:734 services/models.py:735
 #: templates/services/index.html:97
@@ -2069,7 +2072,7 @@ msgstr "IP için Ters DNS Gerekir"
 
 #: services/models.py:868
 msgid "Masquerade address"
-msgstr ""
+msgstr "Maske adresi"
 
 #: services/models.py:870
 msgid ""
@@ -2257,6 +2260,8 @@ msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
 msgstr ""
+"Ekstara seçenekler için /etc/ssh/sshd_conf (genellikle boş). Dikkat, Hatalı "
+"girilen seçenekler SSH servisinin başlamasını engeller."
 
 #: services/models.py:1024 services/models.py:1025
 #: templates/services/index.html:119
@@ -2825,6 +2830,8 @@ msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
 msgstr ""
+"Bu seçenek ile reddeilen belirli kullanıcı ve grupların paylaşımına izin "
+"verilmez. İzin verilen bu seçenek aynı biçimi izler."
 
 #: sharing/models.py:140
 msgid "Read-only Access"
@@ -2835,6 +2842,8 @@ msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Bazı kullanıcılar ve gruplara bir paylaşıma salt okunur erişimi sağlar. Bu "
+"izin seçenek biçimine uyar."
 
 #: sharing/models.py:146
 msgid "Read-write Access"
@@ -2845,6 +2854,8 @@ msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Bazı kullanıcı ve gruplara paylaşım için okuma/yazma erişimi ver. Bu izin "
+"verme seçenek biçimine uyar."
 
 #: sharing/models.py:151
 msgid "Disk Discovery"
@@ -2855,6 +2866,8 @@ msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
+"Bir Zaman Makinesi yedekleme birimi olarak veri diskini paylaşmak veya "
+"aramak için bu diske diğer sistemlere erişim izni verin veya iptal edin."
 
 #: sharing/models.py:158
 msgid "Disk discovery mode"
@@ -2866,6 +2879,9 @@ msgid ""
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
 msgstr ""
+"Not: Birden fazla 'Zaman Makinesi' paylaşımı seçiminde MacOS beklenmedik "
+"davranışlara neden olabilir. Standart mod kullanıcıları için bir veri bölümü "
+"olarak bölüm verir."
 
 #: sharing/models.py:163
 msgid "Database Path"
@@ -2876,6 +2892,8 @@ msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
 msgstr ""
+"Kaydedilecek veri tabanı bilgileri yolunu ayarlar. Bölüm salt okunabilir "
+"olsa bile bir konum belirtmeniz gerekir."
 
 #: sharing/models.py:168
 msgid "Cache CNID"
@@ -2927,6 +2945,8 @@ msgid ""
 "This will suppress automatic creation of the .AppleDouble directories. This "
 "option should not be used if files are accessed by Mac computers."
 msgstr ""
+"Bu otomatik olarak oluşturulmasını engeller. AppleÇift dizinleri. Mac "
+"bilgisayarlar tarafından erişilen dosyalar için bu seçenek kullanılmalıdır."
 
 #: sharing/models.py:184
 msgid "Zero Device Numbers"
@@ -3017,6 +3037,8 @@ msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
+"Seçilen bu bağlama noktası altında herhangi bir alt bağlantıya izin verin. "
+"Aksi taktirde sadece üst düzey dizin bağlanabilir."
 
 #: sharing/models.py:239
 msgid "Read Only"
@@ -3349,11 +3371,11 @@ msgstr "Hata"
 
 #: storage/models.py:229
 msgid "Remote Replication Host"
-msgstr ""
+msgstr "Ana Bilgisayarı Uzaktan Kopyalama"
 
 #: storage/models.py:230
 msgid "Remote Replication Hosts"
-msgstr ""
+msgstr "Ana Bilgisayarları Uzaktan Kopyalama"
 
 #: storage/models.py:241
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -3373,14 +3395,16 @@ msgstr "Uzak ZFS dosya sistemi"
 #: storage/models.py:251
 msgid "Recursively replicate and remove stale snapshot on remote side"
 msgstr ""
+"Ardışık olarak uzak sunucudaki eski anlık durum görüntüleri kopyalama ve "
+"kaldırma"
 
 #: storage/models.py:254
 msgid "Replication Task"
-msgstr ""
+msgstr "Kopyalama Görevi"
 
 #: storage/models.py:255
 msgid "Replication Tasks"
-msgstr ""
+msgstr "Kopyalama Görevleri"
 
 #: storage/models.py:270 system/models.py:384 templates/storage/tasks.html:23
 msgid "Recursive"
@@ -3515,9 +3539,8 @@ msgid "This is in use by the iscsi target, please remove it there first."
 msgstr "Bu isci hedefi tarafından kullanılıyor lütfen önce onu kaldırın."
 
 #: storage/views.py:360
-#, fuzzy
 msgid "ZFS Volume successfully destroyed."
-msgstr "%s başarı ile silindi."
+msgstr "ZFS Bölümü başarıyla silindi."
 
 #: storage/views.py:394
 msgid "Native dataset successfully edited."
@@ -3681,7 +3704,7 @@ msgstr "Gücü etkinleştir (Güç Koruma Programcığı)"
 
 #: system/models.py:99
 msgid "Enable Zeroconf/Bonjour"
-msgstr ""
+msgstr "Zeroconf/Bonjour Etkinleştir"
 
 #: system/models.py:102
 msgid ""
@@ -3753,7 +3776,7 @@ msgstr "SMTP İçin Kimlik Doğrulaması Kullan"
 
 #: system/models.py:161
 msgid "A username to authenticate to the remote server"
-msgstr ""
+msgstr "Uzak sunucuda kimlik doğrulaması için kullanıcı adı"
 
 #: system/models.py:168
 msgid "A password to authenticate to the remote server"
@@ -3826,7 +3849,7 @@ msgstr "Özel kamu sertifikası dosya içeriğini kesin ve buraya yapıştırın
 
 #: system/models.py:243 system/models.py:381
 msgid "The user to run the command"
-msgstr ""
+msgstr "Kullanıcı için çalıştırılacak komut"
 
 #: system/models.py:247 templates/system/cronjob.html:11
 msgid "Command"
@@ -3920,7 +3943,7 @@ msgstr "Kısa açıklama"
 
 #: system/models.py:385
 msgid "Recurse into directories"
-msgstr ""
+msgstr "Tekrarlanan dizinler"
 
 #: system/models.py:389
 msgid "Times"
@@ -3978,7 +4001,7 @@ msgstr "Alıcı tarafından göndereni bulunmayan dosyaları sil"
 
 #: system/models.py:410
 msgid "Suppress non-error messages"
-msgstr ""
+msgstr "Olmayan hata mesajlarını durdur"
 
 #: system/models.py:414
 #, fuzzy
@@ -3990,6 +4013,8 @@ msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
 msgstr ""
+"Bu seçenek aynı kaynak izinleri aynı hedef izinlerini ayarlamak için "
+"rsync'den bilgileri alır."
 
 #: system/models.py:419
 msgid "Preserve extended attributes"
@@ -4267,7 +4292,7 @@ msgstr "Sistemi <strong>KAPATMAK</strong> ile ilgili tercihiniz nedir?"
 
 #: templates/freeadmin/index.html:69
 msgid "Help & Support"
-msgstr ""
+msgstr "Yardım & Destek"
 
 #: templates/freeadmin/index.html:72
 msgid "Forum"
@@ -4460,7 +4485,7 @@ msgstr "VLAN Sil"
 
 #: templates/network/vlan.html:34
 msgid "No VLAN defined"
-msgstr ""
+msgstr "Tanımlanmış VLAN Yok"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
@@ -4493,7 +4518,7 @@ msgstr "Şimdi oturumu kapattınız."
 
 #: templates/registration/logout.html:21
 msgid "Log back in"
-msgstr ""
+msgstr "Tekrar giriş yap"
 
 #: templates/services/index.html:13
 msgid "AFP Settings"
@@ -4786,7 +4811,7 @@ msgstr "ZFS Anlık Durum Görüntüsü"
 
 #: templates/storage/index.html:9
 msgid "ZFS Replication"
-msgstr ""
+msgstr "ZFS Kopyalama"
 
 #: templates/storage/manualsnap.html:13
 msgid "Manually Create Snapshot"
@@ -4812,11 +4837,11 @@ msgstr "Değiştir"
 
 #: templates/storage/replications.html:9
 msgid "Add Replication"
-msgstr ""
+msgstr "Kopyalam Ekle"
 
 #: templates/storage/replications.html:13
 msgid "Mount point"
-msgstr ""
+msgstr "Bağlantı noktası"
 
 #: templates/storage/replications.html:14
 msgid "Last snapshot"
@@ -4825,16 +4850,16 @@ msgstr "Son Anlık Durum Görüntüsü"
 #: templates/storage/replications.html:30
 #: templates/storage/replications.html:34
 msgid "Delete Replication"
-msgstr ""
+msgstr "Kopyayı Sil"
 
 #: templates/storage/replications.html:39
 #: templates/storage/replications.html:43
 msgid "Edit Replication"
-msgstr ""
+msgstr "Kopyayı Düzenle"
 
 #: templates/storage/replications.html:49
 msgid "No ZFS replication available"
-msgstr ""
+msgstr "Hiç ZFS kopyası yok"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
 msgid "Are you sure you want to rollback the snapshot to previous state?"
@@ -4903,7 +4928,7 @@ msgstr "Hayır"
 
 #: templates/storage/tasks.html:42
 msgid "From"
-msgstr ""
+msgstr "Kimden"
 
 #: templates/storage/tasks.html:44
 msgid "through"

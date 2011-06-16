@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-01 21:02+0200\n"
-"Last-Translator: rcapion <richard@capion.org>\n"
+"PO-Revision-Date: 2011-06-15 12:42+0200\n"
+"Last-Translator: Christian <christian@junker.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
@@ -111,34 +111,28 @@ msgid "Disabled"
 msgstr "Slået fra"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Minimalt strømforbrug med standby (spindown)"
+msgstr "Niveau 1 - Minimalt strømforbrug med standby (spindown)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Middel strømforbrug med standby"
+msgstr "Niveau 64 - Middel strømforbrug med standby"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Middel strømforbrug med standby"
+msgstr "Niveau 127 - Middel strømforbrug med standby"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Minimalt strømforbrug uden standby (ingen spindown)"
+msgstr "Niveau 128 - Minimalt strømforbrug uden standby (ingen spindown)"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Middel strømforbrug uden standby"
+msgstr "Niveau 192 - Middel strømforbrug uden standby"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Maksimal ydeevne, maksimalt strømforbrug"
+msgstr "Niveau 254 - Maksimal ydeevne, maksimalt strømforbrug"
 
 # eller minimalt...?
 #: choices.py:91 choices.py:179
@@ -361,19 +355,16 @@ msgid "lzjb (recommended)"
 msgstr "lzjb (anbefalet)"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "standard niveau"
+msgstr "gzip (standard niveau, 6)"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "hurtigste"
+msgstr "gzip (hurtigste)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "maksimal, langsom"
+msgstr "gzip (maksimal, langsom)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -405,9 +396,8 @@ msgid "Every selected weekday"
 msgstr "Hver af de udvalgte ugedage"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
-msgstr "skrivebeskyttet"
+msgstr "Skrivebeskyttet"
 
 #: choices.py:442
 #, fuzzy
@@ -416,7 +406,7 @@ msgstr "skrivebeskyttet"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Læse og skrive"
 
 #: choices.py:447 choices.py:448
 #, python-format
@@ -477,7 +467,7 @@ msgstr ""
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
-msgstr "TIlgængelig"
+msgstr "Tilgængelig"
 
 #: account/forms.py:146
 msgid "Selected"

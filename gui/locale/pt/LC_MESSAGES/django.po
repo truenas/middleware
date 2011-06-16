@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-13 00:09+0200\n"
+"PO-Revision-Date: 2011-06-15 18:23+0200\n"
 "Last-Translator: Nuno <nuno.piscinas@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
@@ -248,7 +248,7 @@ msgstr "Pré-definido"
 
 #: choices.py:187
 msgid "Time Machine"
-msgstr "Máquina do Tempo"
+msgstr "Time Machine"
 
 #: choices.py:190
 msgid "No case folding"
@@ -433,36 +433,37 @@ msgstr "%(week)s semana"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Nunca - Verifique o dispositivo independentemente do modo de energia"
+msgstr "Nunca - Verifica o dispositivo independentemente do modo de energia"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Sleep - Verifique o dispositivo caso não esteja em modo SLEEP"
+msgstr "Sleep - Verifica o dispositivo caso não esteja em modo SLEEP"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"Standby - Verifique o dispositivo caso não esteja no modo SLEEP ou STANDBY"
+"Standby - Verifica o dispositivo caso não esteja no modo SLEEP ou STANDBY"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
+"Idle - Verifica o dispositivo caso não esteja no modo SLEEP, STANDBY ou IDLE"
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr "Auto-teste longo"
+msgstr "Auto-Teste Longo"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr "Auto-teste rápido"
+msgstr "Auto-Teste Rápido"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Auto-Teste de Conveniência (ATA  somente)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Teste imediato se desligado (ATA somente)"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -666,7 +667,7 @@ msgstr "Palavra-passe actualizada com sucesso."
 
 #: account/views.py:92
 msgid "Admin user successfully updated."
-msgstr "Utilizador Admin actualizado com sucesso."
+msgstr "Utilizador admin actualizado com sucesso."
 
 #: account/views.py:102
 msgid "Users successfully updated."
@@ -747,19 +748,24 @@ msgstr "NIC"
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "Tem de preencher o servidor DNS2 antes de preencher o servidor DNS3"
+msgstr ""
+"Tem de preencher o servidor de nomes 2 antes de preencher o servidor de "
+"nomes 3"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
-msgstr "Obrigatório quando utiliza o servidor DNS3"
+msgstr "Obrigatório quando utiliza o servidor de nomes 3"
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr "Tem de preencher o servidor DNS1 antes de preencher o servidor DNS3"
+msgstr ""
+"Tem de preencher o servidor de nomes 1 antes de preencher o servidor nomes 3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr "Tem de preencher o servidor DNS1 antes de preencher o servidor DNS2"
+msgstr ""
+"Tem de preencher o servidor de nomes 1 antes de preencher o servidor de "
+"nomes 2"
 
 #: network/forms.py:100
 msgid "Parent Interface"
@@ -775,7 +781,7 @@ msgstr "VLAN Etiquetas são entre 1 - 4095 inclusive"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
-msgstr "NICs físicos na LAGG"
+msgstr "NICs Físicos na LAGG"
 
 #: network/forms.py:190
 #, python-format
@@ -801,15 +807,15 @@ msgstr "IPv6 Gateway por Defeito"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr "Servidor DNS1"
+msgstr "Servidor de nomes 1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr "Servidor DNS2"
+msgstr "Servidor de nomes 2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr "Servidor DNS3"
+msgstr "Servidor de nomes 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:21
 #: templates/network/index.html:3
@@ -2478,6 +2484,7 @@ msgstr "Porto TCP alternativo. Porto por defeito é 873"
 #: services/models.py:1163
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
 msgstr ""
+"Estes parâmetros irão ser adicionados as definições [global] no rsyncd.conf"
 
 #: services/models.py:1167 services/models.py:1168
 msgid "Rsyncd"
@@ -2514,12 +2521,19 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Esta opção especifica o usuário o nome desse arquivo transferências de e "
+"para que o módulo devem ter lugar. Em combinação com a opção 'Grupo' isso "
+"determina que permissões de arquivo estão disponíveis. Deixar este campo "
+"vazio para usar configurações padrão"
 
 #: services/models.py:1211
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"Esta opção especifica o grupo de nomear esse arquivo transferências de e "
+"para que o módulo devem ter lugar. Deixar este campo vazio para usar "
+"configurações padrão"
 
 #: services/models.py:1215
 msgid "Hosts allow"
@@ -2531,6 +2545,10 @@ msgid ""
 "permitted to access this module. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings"
 msgstr ""
+"Esta opção é uma vírgula, espaço, ou conjunto de hosts que têm permissão "
+"para acessar este módulo delimitado por tabulação. Você pode especificar os "
+"hosts por nome ou número IP. Deixar este campo vazio para usar configurações "
+"padrão"
 
 #: services/models.py:1220
 msgid "Hosts deny"
@@ -2545,6 +2563,13 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings"
 msgstr ""
+"Esta opção é uma vírgula, espaço, ou conjunto de host que não tem permissão "
+"para acessar este módulo delimitado por tabulação. Sempre que as listas em "
+"conflito, a lista de permissões tem precedência. Se é necessário negar tudo "
+"por padrão, use a palavra-chave todos (ou a máscara de rede 0.0.0.0/0) e, em "
+"seguida, especificar explicitamente para os hosts permitem parâmetro esses "
+"hosts que deverão ser autorizados a aceder. Deixar este campo vazio para "
+"usar configurações padrão"
 
 #: services/models.py:1226
 msgid ""
@@ -2569,6 +2594,7 @@ msgstr "Confirmar intervalo"
 msgid ""
 "Sets the interval between disk checks to N minutes. The default is 30 minutes"
 msgstr ""
+"Define o intervalo entre disco verifica n minutos. O padrão é 30 minutos"
 
 #: services/models.py:1250
 msgid "Power mode"
@@ -2583,6 +2609,8 @@ msgid ""
 "Report if the temperature had changed by at least N degrees Celsius since "
 "last report. 0 to disable"
 msgstr ""
+"Relatório se a temperatura tinha mudado pelo menos n graus Celsius desde o "
+"último relatório. 0 para desativar"
 
 #: services/models.py:1259
 msgid "Informal"
@@ -2593,6 +2621,8 @@ msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
 msgstr ""
+"Relatório se a temperatura for maior ou igual a n graus Celsius. 0 para "
+"desativar"
 
 #: services/models.py:1264
 msgid "Critical"
@@ -2619,7 +2649,7 @@ msgstr "Serviços de Controlo"
 
 #: services/nav.py:50
 msgid "Add Device Extent"
-msgstr ""
+msgstr "Adicionar Extensão do Dispositivo"
 
 #: services/nav.py:60
 msgid "View All Device Extents"
@@ -2671,15 +2701,15 @@ msgstr "O IP '%s' não é válido."
 
 #: sharing/forms.py:99
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "Maproot grupo requer Maproot utilizador"
 
 #: sharing/forms.py:101
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr "Mapall grupo requer Mapall utilizador"
 
 #: sharing/forms.py:104 sharing/forms.py:107
 msgid "Maproot user/group disqualifies Mapall"
-msgstr ""
+msgstr "Maproot utilizador/grupo desqualifica Mapall"
 
 #: sharing/models.py:41 sharing/models.py:104 storage/models.py:44
 #: storage/models.py:69 storage/models.py:87
@@ -2691,7 +2721,7 @@ msgstr "Nome"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
-msgstr ""
+msgstr "Lêr Apenas a Exportar"
 
 #: sharing/models.py:53
 msgid "Browsable to Network Clients"
@@ -2745,6 +2775,10 @@ msgid ""
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
 msgstr ""
+"Esta opção é uma vírgula, espaço, ou conjunto de hosts que têm permissão "
+"para acessar esse compartilhamento delimitado por tabulação. Você pode "
+"especificar os hosts por nome ou número IP. Deixe este campo vazio para usar "
+"as configurações padrão."
 
 #: sharing/models.py:80
 msgid "Hosts Deny"
@@ -2759,6 +2793,13 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
 msgstr ""
+"Esta opção é uma vírgula, espaço, ou conjunto de host que não tem permissão "
+"para acessar esse compartilhamento delimitado por tabulação. Sempre que as "
+"listas em conflito, a lista de permissões tem precedência. Se é necessário "
+"negar tudo por padrão, use a palavra-chave todos (ou a máscara de rede "
+"0.0.0.0/0) e, em seguida, especificar explicitamente para os hosts permitem "
+"parâmetro esses hosts que deverão ser autorizados a aceder. Deixe este campo "
+"vazio para usar as configurações padrão."
 
 #: sharing/models.py:87
 msgid "These parameters are added to [Share] section of smb.conf"
@@ -2770,7 +2811,7 @@ msgstr "Partilha Windows"
 
 #: sharing/models.py:94
 msgid "Windows Shares"
-msgstr ""
+msgstr "Partilhas Windows"
 
 #: sharing/models.py:105
 msgid ""
@@ -2782,6 +2823,14 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
+"O nome do volume é o nome que aparece no seletor da caixa de diálogo 'ligar "
+"ao servidor' em Macintoshes para representar a parte adequada. Se não for "
+"especificado o nome do volume, o último componente do nome do caminho é "
+"usado. Não há dois volumes podem ter o mesmo nome. O nome de volume não pode "
+"conter o ':' caractere. O nome de volume é danificado se é muito longo. "
+"Nome do volume Mac codepage é limitado a 27 caracteres. Nome do volume "
+"UTF8-MAC é limitada ao parâmetro 'Comprimento do nome de Volume' na parte de "
+"serviços: Apple"
 
 #: sharing/models.py:109
 msgid "Share Comment"
@@ -2797,16 +2846,21 @@ msgid ""
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
+"Esta opção permite que você defina uma senha de volume, que pode ter no "
+"máximo 8 caracteres (usando ASCII é fortemente recomendado no momento da "
+"redação deste artigo)."
 
 #: sharing/models.py:122
 msgid "Share Character Set"
-msgstr ""
+msgstr "Partilhar Conjunto de Caracteres"
 
 #: sharing/models.py:124
 msgid ""
 "Specifies the share character set. For example UTF8, UTF8-MAC, ISO-8859-15, "
 "etc."
 msgstr ""
+"Especifica o conjunto de caracteres. Por exemplo UTF8, UTF8-MAC, "
+"ISO-8859-15, etc."
 
 #: sharing/models.py:128
 msgid "Allow List"
@@ -2818,6 +2872,9 @@ msgid ""
 "Users and groups are specified, delimited by commas. Groups are designated "
 "by a @ prefix."
 msgstr ""
+"Esta opção permite que os usuários e grupos que acessar um compartilhamento "
+"deve ser especificado. Usuários e grupos são especificados, delimitados por "
+"vírgulas. Grupos são designados por um prefixo @."
 
 #: sharing/models.py:134
 msgid "Deny List"
@@ -2828,6 +2885,8 @@ msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
 msgstr ""
+"A opção deny especifica os usuários e grupos que não têm permissão de acesso "
+"ao compartilhamento. Ele segue o mesmo formato que a opção permitir."
 
 #: sharing/models.py:140
 msgid "Read-only Access"
@@ -2848,6 +2907,8 @@ msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Permite que determinados usuários e grupos ter acesso de leitura/gravação "
+"para uma partilha. Isso segue o formato de opção permitir."
 
 #: sharing/models.py:151
 msgid "Disk Discovery"
@@ -2858,10 +2919,12 @@ msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
+"Permitir que outros sistemas descobram esta partilha como disco de dados, "
+"como um backup de Time Machine ou nada."
 
 #: sharing/models.py:158
 msgid "Disk discovery mode"
-msgstr "Modo de pesquisa de Disco"
+msgstr "Modo de pesquisa de disco"
 
 #: sharing/models.py:159
 msgid ""
@@ -2869,6 +2932,9 @@ msgid ""
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
 msgstr ""
+"Nota! Seleccionar 'Time Machine' em múltiplas partilhas pode causar "
+"comportamento inesperado no MacOS. Modo por defeito exporta o volume como um "
+"volume de dados para os utilizadores."
 
 #: sharing/models.py:163
 msgid "Database Path"
@@ -2879,10 +2945,12 @@ msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
 msgstr ""
+"Define as informações de banco de dados a serem armazenados no caminho. Você "
+"deve especificar um local gravável, mesmo que o volume é somente leitura."
 
 #: sharing/models.py:168
 msgid "Cache CNID"
-msgstr ""
+msgstr "Cache CNID"
 
 #: sharing/models.py:169
 msgid ""
@@ -2890,6 +2958,9 @@ msgid ""
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
+"Se definir afpd usa as informações de ID armazenadas em arquivos de "
+"cabeçalho AppleDouble V2 para reduzir a carga do banco de dados. Não defina "
+"esta opção se o volume for modificado por clientes não AFP (NFS/SMB/local)."
 
 #: sharing/models.py:172
 msgid "Translate CR/LF"
@@ -2903,6 +2974,12 @@ msgid ""
 "the filetype in a second step. Afpd will potentially destroy such files when "
 "'erroneously' changing bytes in order to do line break translation."
 msgstr ""
+"Permite a tradução de crlf para arquivos de texto, automaticamente converter "
+"quebras de linha macintosh em Unix ones. O uso desta opção pode ser "
+"perigoso já que alguns programas mais antigos armazenam arquivos de dados "
+"binários como tipo 'Texto' quando salvar e mudar o tipo de arquivo em uma "
+"segunda etapa. AFPd potencialmente irá destruir esses arquivos quando "
+"alterar 'erroneamente' bytes para tradução de quebra de linha."
 
 #: sharing/models.py:176
 msgid "Windows File Names"
@@ -2913,6 +2990,9 @@ msgid ""
 "This forces filenames to be restricted to the character set used by Windows. "
 "This is not recommended for shares used principally by Mac computers."
 msgstr ""
+"Isso faz com que nomes de arquivo para ser restrito para o conjunto de "
+"caracteres usado pelo Windows. Isso não é recomendado para ações usadas "
+"principalmente por computadores Mac."
 
 #: sharing/models.py:180
 msgid "No .AppleDouble"
@@ -2923,16 +3003,20 @@ msgid ""
 "This will suppress automatic creation of the .AppleDouble directories. This "
 "option should not be used if files are accessed by Mac computers."
 msgstr ""
+"Isto irá suprimir a criação automática da.AppleDouble diretórios. Esta opção "
+"não deve ser usada se os arquivos são acessados por computadores Mac."
 
 #: sharing/models.py:184
 msgid "Zero Device Numbers"
-msgstr ""
+msgstr "Zero Números de Dispositivo"
 
 #: sharing/models.py:185
 msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
 msgstr ""
+"Sempre use 0 para o número do dispositivo, de ajuda quando o número de "
+"dispositivo não é constante em toda uma reinicialização, cluster,..."
 
 #: sharing/models.py:188
 msgid "Disable File ID"
@@ -2940,17 +3024,19 @@ msgstr "Desligar ID de Ficheiro"
 
 #: sharing/models.py:189
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr ""
+msgstr "Não anuncie chamadas de criar id, resolver id e de apagar id."
 
 #: sharing/models.py:192
 msgid "Disable :hex Names"
-msgstr ""
+msgstr "Desliga: hex Nomes"
 
 #: sharing/models.py:193
 msgid ""
 "Disable :hex translations for anything except dot files. This option makes "
 "the '/' character illegal."
 msgstr ""
+"Desativar: traduções para qualquer coisa exceto arquivos ponto número "
+"hexadecimal. Esta opção faz com que o caractere '/' ilegal."
 
 #: sharing/models.py:196
 msgid "ProDOS"
@@ -2958,29 +3044,31 @@ msgstr "ProDOS"
 
 #: sharing/models.py:197
 msgid "Provide compatibility with Apple II clients."
-msgstr ""
+msgstr "Fornece compatibilidade com clientes Apple II."
 
 #: sharing/models.py:200
 msgid "No Stat"
-msgstr ""
+msgstr "Sem Estado"
 
 #: sharing/models.py:201
 msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
 msgstr ""
+"Não relatar caminho de volume ao enumerar lista de volumes, útil para a "
+"automontagem ou volumes criados por um script preexec."
 
 #: sharing/models.py:204
 msgid "AFP3 Unix Privs"
-msgstr ""
+msgstr "AFP3 Unix Privs"
 
 #: sharing/models.py:205
 msgid "Use AFP3 unix privileges."
-msgstr ""
+msgstr "Use privilégios AFP3 unix."
 
 #: sharing/models.py:212
 msgid "Apple Share"
-msgstr ""
+msgstr "Partilha Apple"
 
 #: sharing/models.py:213
 msgid "Apple Shares"
@@ -2988,7 +3076,7 @@ msgstr ""
 
 #: sharing/models.py:230
 msgid "Authorized network or IP addresses"
-msgstr ""
+msgstr "Rede autorizada ou endereços IP"
 
 #: sharing/models.py:231
 msgid ""
@@ -2999,7 +3087,7 @@ msgstr ""
 
 #: sharing/models.py:235
 msgid "All Directories"
-msgstr ""
+msgstr "Todos os Directórios"
 
 #: sharing/models.py:236
 msgid ""
@@ -3009,7 +3097,7 @@ msgstr ""
 
 #: sharing/models.py:239
 msgid "Read Only"
-msgstr ""
+msgstr "Lêr Apenas"
 
 #: sharing/models.py:240
 msgid "Export the share read only. Writes are not permitted."
@@ -3017,7 +3105,7 @@ msgstr ""
 
 #: sharing/models.py:243 system/models.py:409
 msgid "Quiet"
-msgstr ""
+msgstr "Silencio"
 
 #: sharing/models.py:244
 msgid ""
@@ -3026,39 +3114,39 @@ msgstr ""
 
 #: sharing/models.py:248
 msgid "Maproot User"
-msgstr ""
+msgstr "Maproot Utilizador"
 
 #: sharing/models.py:252
 msgid "User to map root to"
-msgstr ""
+msgstr "Utilizador root de mapa para"
 
 #: sharing/models.py:256
 msgid "Maproot Group"
-msgstr ""
+msgstr "Maproot Grupo"
 
 #: sharing/models.py:260
 msgid "Group to map root to"
-msgstr ""
+msgstr "Grupo root de mapa para"
 
 #: sharing/models.py:264
 msgid "Mapall User"
-msgstr ""
+msgstr "Mapall Utilizador"
 
 #: sharing/models.py:268
 msgid "User to map all users to"
-msgstr ""
+msgstr "Utilizador de mapa para todos os utilizadores"
 
 #: sharing/models.py:272
 msgid "Mapall Group"
-msgstr ""
+msgstr "Mapall Grupo"
 
 #: sharing/models.py:276
 msgid "Group to map all users to"
-msgstr ""
+msgstr "Grupo de mapa para todos os utilizadores"
 
 #: sharing/models.py:283
 msgid "UNIX Share"
-msgstr ""
+msgstr "Partilha UNIX"
 
 #: sharing/models.py:284
 msgid "UNIX Shares"
@@ -3071,17 +3159,18 @@ msgstr ""
 #: storage/forms.py:154 storage/forms.py:348 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr ""
+msgstr "Nome do volume"
 
 #: storage/forms.py:158 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
-msgstr ""
+msgstr "Força o sector para o tamanho de 4096 bytes"
 
 #: storage/forms.py:220
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\"."
 msgstr ""
+"O nome do volume deve começar com letras e podem incluir números, \"-\", \"_\"."
 
 #: storage/forms.py:234
 msgid "You must select a filesystem"
@@ -3090,19 +3179,19 @@ msgstr ""
 #: storage/forms.py:238 system/forms.py:217 system/forms.py:223
 #: system/forms.py:228
 msgid "This field is required"
-msgstr ""
+msgstr "Este campo é necessário"
 
 #: storage/forms.py:243 storage/forms.py:390 storage/forms.py:489
 msgid "You already have a volume with same name"
-msgstr ""
+msgstr "Já existe um volume com o mesmo nome"
 
 #: storage/forms.py:249
 msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr ""
+msgstr "\"log\" é uma palavra reservada e, portanto, não pode ser usado"
 
 #: storage/forms.py:254
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr ""
+msgstr "O nome de volume NÃO pode começar com c[0-9], mirror, raidz ou spare"
 
 #: storage/forms.py:349 storage/forms.py:439 storage/forms.py:939
 msgid "Member disk"
@@ -4492,7 +4581,7 @@ msgstr ""
 
 #: templates/services/index.html:48
 msgid "Dynamic DNS Settings"
-msgstr ""
+msgstr "Definições de DNS Dinâmico"
 
 #: templates/services/index.html:59
 msgid "FTP Settings"

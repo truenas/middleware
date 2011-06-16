@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-06-10 18:58+0200\n"
+"PO-Revision-Date: 2011-06-15 14:27+0200\n"
 "Last-Translator: misterredman <csulmoni@gmx.ch>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
@@ -1264,7 +1264,6 @@ msgid "Guest account"
 msgstr "Account Guest"
 
 #: services/models.py:105 services/models.py:192
-#, fuzzy
 msgid ""
 "Use this option to override the username ('nobody' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
@@ -1277,7 +1276,7 @@ msgstr ""
 "guest. Qualunque privilegio abbia l'utente sarà disponibile a qualsiasi "
 "client connesso al servizio come guest. Questo utente deve esistere nel file "
 "delle password, ma non richiede un account valido. L'utente root non può "
-"essere usato come utente guest."
+"essere usato come account guest."
 
 #: services/models.py:108
 msgid "Allow guest access"
@@ -2596,9 +2595,8 @@ msgid "Rsync Modules"
 msgstr "Moduli rsync"
 
 #: services/models.py:1243
-#, fuzzy
 msgid "Check interval"
-msgstr "Intervallo"
+msgstr "Intervallo tra controlli"
 
 #: services/models.py:1244
 msgid ""

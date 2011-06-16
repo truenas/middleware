@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-14 00:02+0200\n"
+"PO-Revision-Date: 2011-06-16 11:00+0200\n"
 "Last-Translator: xRaider <xraiderus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -2714,21 +2714,18 @@ msgid "The IP '%s' is not valid."
 msgstr "IP-адрес '%s' является недопустимым."
 
 #: sharing/forms.py:99
-#, fuzzy
 msgid "Maproot group requires Maproot user"
 msgstr ""
 "Закрепление идентификатора root за группой требует закрепления "
 "идентификатора root за пользователем"
 
 #: sharing/forms.py:101
-#, fuzzy
 msgid "Mapall group requires Mapall user"
 msgstr ""
 "Закрепление идентификатора all за группой требует закрепления идентификатора "
 "all за пользователем"
 
 #: sharing/forms.py:104 sharing/forms.py:107
-#, fuzzy
 msgid "Maproot user/group disqualifies Mapall"
 msgstr ""
 "Закрепление идентификатора root за пользователем/группой отменяет "
@@ -3143,18 +3140,15 @@ msgstr ""
 # не уверен насчёт maproot и mapall
 # http://www.lissyara.su/articles/freebsd/trivia/win2003+nfs/
 #: sharing/models.py:248
-#, fuzzy
 msgid "Maproot User"
 msgstr "Закрепить идентификатор root за пользователем"
 
 # опять про maproot и mapall ))
 #: sharing/models.py:252
-#, fuzzy
 msgid "User to map root to"
-msgstr "Назначить пользователю права доступа \"root\" для"
+msgstr "Назначить пользователю права доступа \"root\""
 
 #: sharing/models.py:256
-#, fuzzy
 msgid "Maproot Group"
 msgstr "Закрепить идентификатор root за группой"
 
@@ -3164,7 +3158,6 @@ msgid "Group to map root to"
 msgstr "Назначить группе права доступа \"all\" для"
 
 #: sharing/models.py:264
-#, fuzzy
 msgid "Mapall User"
 msgstr "Закрепить идентификатор all за пользователем"
 
@@ -3174,7 +3167,6 @@ msgid "User to map all users to"
 msgstr "Назначить пользователю права доступа \"all\" для"
 
 #: sharing/models.py:272
-#, fuzzy
 msgid "Mapall Group"
 msgstr "Закрепить идентификатор all за группой"
 
