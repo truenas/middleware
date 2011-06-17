@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:47-0700\n"
-"PO-Revision-Date: 2011-06-15 05:37+0200\n"
-"Last-Translator: mauriciommagalhaes <mauriciommagalhaes@gmail.com>\n"
+"PO-Revision-Date: 2011-06-17 00:47+0200\n"
+"Last-Translator: marlosab <marlosab@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -319,7 +319,7 @@ msgstr "CHAP Mútuo"
 
 #: choices.py:241
 msgid "UPS reaches low battery"
-msgstr "Nível de bateria baixa no UPS"
+msgstr "Nível de bateria baixo no UPS"
 
 #: choices.py:242
 msgid "UPS goes on battery"
@@ -2530,6 +2530,7 @@ msgid "Hosts deny"
 msgstr "Hosts negados"
 
 # Dá erro de acronyms pq ele diz que o NOT obrigatoriamente não se traduz! e ai?
+# (marlosab) Nesse caso foi utlilizado NOT em maiúscula para enfatizar que é uma lista de NÃO permitidos. Portanto, acredito não deve ser traduzido.
 #: services/models.py:1221
 msgid ""
 "This option is a comma, space, or tab delimited set of host which are NOT "
@@ -2610,7 +2611,7 @@ msgstr "Email para aviso"
 #: services/models.py:1271
 msgid "Destination email address. Separate email addresses by semi-colon"
 msgstr ""
-"Endereço e-mail do destinatário. Separe os endereços por ponto e vírgula"
+"Endereço de e-mail do destinatário. Separe os endereços por ponto e vírgula"
 
 #: services/models.py:1274 services/models.py:1275
 #: templates/services/index.html:108

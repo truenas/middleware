@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-15 18:23+0200\n"
-"Last-Translator: Nuno <nuno.piscinas@gmail.com>\n"
+"PO-Revision-Date: 2011-06-16 22:08+0200\n"
+"Last-Translator: iMiguel <miguel.rosa17@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -636,7 +636,7 @@ msgstr "O utilizador %s está embutido e não pode ser eliminado!"
 
 #: account/nav.py:5 templates/menubar.html:43
 msgid "Account"
-msgstr ""
+msgstr "Conta"
 
 #: account/nav.py:11 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:113
@@ -958,7 +958,7 @@ msgstr ""
 
 #: network/nav.py:6 templates/menubar.html:13
 msgid "Network"
-msgstr ""
+msgstr "Rede"
 
 #: network/nav.py:13 templates/network/index.html:13
 msgid "Network Summary"
@@ -2546,9 +2546,9 @@ msgid ""
 "number. Leave this field empty to use default settings"
 msgstr ""
 "Esta opção é uma vírgula, espaço, ou conjunto de hosts que têm permissão "
-"para acessar este módulo delimitado por tabulação. Você pode especificar os "
-"hosts por nome ou número IP. Deixar este campo vazio para usar configurações "
-"padrão"
+"para aceder a este módulo delimitado por tabulação. Você pode especificar os "
+"hosts por nome ou número IP. Deixar este campo vazio para usar "
+"configurações padrão"
 
 #: services/models.py:1220
 msgid "Hosts deny"
@@ -3072,7 +3072,7 @@ msgstr "Partilha Apple"
 
 #: sharing/models.py:213
 msgid "Apple Shares"
-msgstr ""
+msgstr "Partilhas Apple"
 
 #: sharing/models.py:230
 msgid "Authorized network or IP addresses"
@@ -3154,7 +3154,7 @@ msgstr ""
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
-msgstr ""
+msgstr "Partilha"
 
 #: storage/forms.py:154 storage/forms.py:348 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
@@ -3174,7 +3174,7 @@ msgstr ""
 
 #: storage/forms.py:234
 msgid "You must select a filesystem"
-msgstr ""
+msgstr "Tem de escolher um Sistema de Ficheiros"
 
 #: storage/forms.py:238 system/forms.py:217 system/forms.py:223
 #: system/forms.py:228
@@ -3228,12 +3228,12 @@ msgstr ""
 
 #: storage/forms.py:637 storage/forms.py:689 storage/forms.py:746
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "Quota para este dataset"
 
 #: storage/forms.py:637 storage/forms.py:638 storage/forms.py:689
 #: storage/forms.py:690 storage/forms.py:746 storage/forms.py:784
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0=Ilimitado; exemplo: 1g"
 
 #: storage/forms.py:638 storage/forms.py:690
 msgid "Quota for this dataset and all children"
@@ -3241,12 +3241,12 @@ msgstr ""
 
 #: storage/forms.py:639 storage/forms.py:691 storage/forms.py:747
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "Espaço reservado para este dataset"
 
 #: storage/forms.py:639 storage/forms.py:640 storage/forms.py:691
 #: storage/forms.py:692 storage/forms.py:747
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0=Nenhum; exemplo: 1g"
 
 #: storage/forms.py:640 storage/forms.py:692
 msgid "Reserved space for this dataset and all children"
@@ -3260,7 +3260,7 @@ msgstr ""
 
 #: storage/forms.py:660 storage/forms.py:805
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "Já tem um dataset com esse nome"
 
 #: storage/forms.py:667 storage/forms.py:724 storage/forms.py:768
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
@@ -3296,7 +3296,7 @@ msgstr ""
 
 #: storage/forms.py:822
 msgid "Mode"
-msgstr ""
+msgstr "Modo"
 
 #: storage/forms.py:825
 msgid "Set permission recursively"
@@ -3320,7 +3320,7 @@ msgstr ""
 
 #: storage/forms.py:898
 msgid "Invalid prefix"
-msgstr ""
+msgstr "Prefixo inválido"
 
 #: storage/forms.py:902
 msgid "Snapshot"
@@ -3352,7 +3352,7 @@ msgstr ""
 
 #: storage/models.py:52 storage/models.py:78 templates/storage/volumes.html:70
 msgid "Volume"
-msgstr ""
+msgstr "Volume"
 
 #: storage/models.py:79
 msgid "Volume this group belongs to"
@@ -3409,19 +3409,19 @@ msgstr ""
 
 #: storage/models.py:179
 msgid "Error getting total space"
-msgstr ""
+msgstr "Erro ao obter o espaço total"
 
 #: storage/models.py:185
 msgid "Error getting available space"
-msgstr ""
+msgstr "Erro ao obter o espaço disponível"
 
 #: storage/models.py:191
 msgid "Error getting used space"
-msgstr ""
+msgstr "Erro ao obter o espaço usado"
 
 #: storage/models.py:197 storage/models.py:209
 msgid "Error"
-msgstr ""
+msgstr "Erro"
 
 #: storage/models.py:229
 msgid "Remote Replication Host"
@@ -3438,7 +3438,7 @@ msgstr ""
 #: storage/models.py:244 system/models.py:341
 #: templates/storage/replications.html:15
 msgid "Remote Host"
-msgstr ""
+msgstr "Host remoto"
 
 #: storage/models.py:247 templates/storage/replications.html:16
 msgid "Remote ZFS filesystem"
@@ -3458,7 +3458,7 @@ msgstr ""
 
 #: storage/models.py:270 system/models.py:384 templates/storage/tasks.html:23
 msgid "Recursive"
-msgstr ""
+msgstr "Recursivo"
 
 #: storage/models.py:274
 msgid "Snapshot lifetime value"
@@ -3495,7 +3495,7 @@ msgstr ""
 
 #: storage/models.py:303
 msgid "Occurrence"
-msgstr ""
+msgstr "Ocorrência"
 
 #: storage/models.py:304
 msgid "How the task is repeated"
@@ -3503,7 +3503,7 @@ msgstr ""
 
 #: storage/models.py:309
 msgid "Weekday"
-msgstr ""
+msgstr "Dia da Semana"
 
 #: storage/models.py:327
 msgid "Periodic Snapshot Task"
@@ -3519,27 +3519,27 @@ msgstr ""
 
 #: storage/nav.py:24
 msgid "View All Snapshots"
-msgstr ""
+msgstr "Ver todas as Snapshots"
 
 #: storage/nav.py:34 templates/storage/replications.html:5
 #: templates/storage/volumes.html:6 templates/storage/volumes.html.py:11
 msgid "Create Volume"
-msgstr ""
+msgstr "Criar Volume"
 
 #: storage/nav.py:45 templates/storage/autoimport.html:25
 #: templates/storage/import.html:43 templates/storage/volumes.html:42
 #: templates/storage/volumes.html.py:46
 msgid "Import Volume"
-msgstr ""
+msgstr "Importar Volume"
 
 #: storage/nav.py:56 templates/storage/volumes.html:53
 #: templates/storage/volumes.html.py:57
 msgid "Auto Import Volume"
-msgstr ""
+msgstr "Importar automaticamente o Volume"
 
 #: storage/nav.py:67
 msgid "View All Volumes"
-msgstr ""
+msgstr "Ver todos os Volumes"
 
 #: storage/nav.py:78 templates/storage/volumes.html:19
 #: templates/storage/volumes.html.py:23
@@ -3552,12 +3552,12 @@ msgstr ""
 
 #: storage/nav.py:100
 msgid "Volumes"
-msgstr ""
+msgstr "Volumes"
 
 #: storage/nav.py:121 storage/nav.py:139 templates/storage/volumes.html:168
 #: templates/storage/volumes.html.py:172
 msgid "Change Permissions"
-msgstr ""
+msgstr "Alterar permissões"
 
 #: storage/views.py:88 storage/views.py:115 storage/views.py:137
 msgid "Volume successfully added."
@@ -3636,7 +3636,7 @@ msgstr ""
 
 #: storage/views.py:553
 msgid "Some error ocurried."
-msgstr ""
+msgstr "Ocorreu um erro"
 
 #: storage/views.py:574
 msgid "Disk detach has been successfully done."
@@ -3690,23 +3690,23 @@ msgstr ""
 
 #: system/forms.py:310 system/forms.py:338
 msgid "minute"
-msgstr ""
+msgstr "minuto"
 
 #: system/forms.py:311 system/forms.py:339
 msgid "hour"
-msgstr ""
+msgstr "hora"
 
 #: system/forms.py:312 system/forms.py:340
 msgid "day of month"
-msgstr ""
+msgstr "Dia do mês"
 
 #: system/models.py:45
 msgid "Protocol"
-msgstr ""
+msgstr "Protocolo"
 
 #: system/models.py:51
 msgid "Language"
-msgstr ""
+msgstr "Linguagem"
 
 #: system/models.py:57
 msgid "Timezone"
@@ -3779,7 +3779,7 @@ msgstr ""
 
 #: system/models.py:120 templates/system/settings.html:5
 msgid "Advanced"
-msgstr ""
+msgstr "Avançadas"
 
 #: system/models.py:129
 msgid "From email"
@@ -3831,11 +3831,11 @@ msgstr ""
 
 #: system/models.py:171 templates/system/settings.html:7
 msgid "Email"
-msgstr ""
+msgstr "Email"
 
 #: system/models.py:181
 msgid "Organization"
-msgstr ""
+msgstr "Organização"
 
 #: system/models.py:182
 msgid "Organization Name (eg, company)"
@@ -3851,15 +3851,15 @@ msgstr ""
 
 #: system/models.py:195 system/models.py:196
 msgid "Email Address"
-msgstr ""
+msgstr "Endereço Email"
 
 #: system/models.py:202
 msgid "Locality"
-msgstr ""
+msgstr "Localidade"
 
 #: system/models.py:203
 msgid "Locality Name (eg, city)"
-msgstr ""
+msgstr "Nome Localidade (ex: Cidade)"
 
 #: system/models.py:209
 msgid "State"
@@ -3887,7 +3887,7 @@ msgstr ""
 
 #: system/models.py:229
 msgid "SSL Certificate"
-msgstr ""
+msgstr "Certificado SSL"
 
 #: system/models.py:230
 msgid ""
@@ -3900,12 +3900,12 @@ msgstr ""
 
 #: system/models.py:247 templates/system/cronjob.html:11
 msgid "Command"
-msgstr ""
+msgstr "Comando"
 
 #: system/models.py:251 system/models.py:355 templates/system/cronjob.html:5
 #: templates/system/rsync.html:5
 msgid "Minute"
-msgstr ""
+msgstr "Minuto"
 
 #: system/models.py:252 system/models.py:356
 msgid "Values 0-59 allowed."
@@ -4009,7 +4009,7 @@ msgstr ""
 
 #: system/models.py:399
 msgid "Archive"
-msgstr ""
+msgstr "Arquivo"
 
 #: system/models.py:400
 msgid "Archive mode"
@@ -4039,7 +4039,7 @@ msgstr ""
 #: templates/system/cronjob.html.py:33 templates/system/rsync.html:29
 #: templates/system/rsync.html.py:31
 msgid "Delete"
-msgstr ""
+msgstr "Eliminar"
 
 #: system/models.py:405
 msgid "Delete files on the receiving side that don't exist on sender"
@@ -4107,7 +4107,7 @@ msgstr ""
 
 #: templates/404.html:7
 msgid "Page Not Found"
-msgstr ""
+msgstr "Página não encontrada"
 
 #: templates/base.html:32
 msgid "expand all"
@@ -4119,22 +4119,22 @@ msgstr ""
 
 #: templates/menubar.html:33
 msgid "Log Out"
-msgstr ""
+msgstr "Sair"
 
 #: templates/menubar.html:38
 msgid "Help"
-msgstr ""
+msgstr "Ajuda"
 
 #: templates/menubar.html:49 templates/registration/login.html:63
 msgid "Log In"
-msgstr ""
+msgstr "Entrar"
 
 #: templates/account/bsdgroup2user_form.html:10
 #: templates/freeadmin/generic_model_add.html:13
 #: templates/freeadmin/generic_model_edit.html:14
 #: templates/network/lagg_add.html:10 templates/system/wizard.html:14
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: templates/account/bsdgroup2user_form.html:12
 #: templates/freeadmin/generic_model_add.html:15
@@ -4151,7 +4151,7 @@ msgstr ""
 #: templates/system/config_restore.html:13
 #: templates/system/config_upload.html:37 templates/system/wizard.html:16
 msgid "Please wait..."
-msgstr ""
+msgstr "Por favor, aguarde..."
 
 #: templates/account/bsdgroup2user_form.html:15
 #: templates/freeadmin/generic_model_add.html:18
@@ -4175,27 +4175,27 @@ msgstr ""
 #: templates/storage/zvols.html:11 templates/system/config_restore.html:16
 #: templates/system/config_upload.html:40
 msgid "Cancel"
-msgstr ""
+msgstr "Cancelar"
 
 #: templates/account/bsdgroups.html:4 templates/account/bsdgroups.html:69
 #: templates/account/bsdusers.html:4 templates/account/bsdusers.html.py:85
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: templates/account/bsdgroups.html:6 templates/account/bsdgroups.html:21
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
 #: templates/account/bsdgroups.html:84 templates/account/bsdgroups.html:86
 msgid "Members"
-msgstr ""
+msgstr "Membros"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/storage/tasks.html:133 templates/storage/tasks.html.py:135
 msgid "Modify"
-msgstr ""
+msgstr "Modificar"
 
 #: templates/account/bsdgroups.html:8 templates/account/bsdusers.html:11
 msgid "Remove"
-msgstr ""
+msgstr "Remover"
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 #: templates/account/bsdgroups.html:93 templates/account/bsdgroups.html:95
@@ -4223,7 +4223,7 @@ msgstr ""
 #: templates/account/bsdusers.html:50 templates/account/bsdusers.html:130
 #: templates/account/bsdusers.html:132 templates/account/bsdusers.html:138
 msgid "Modify User"
-msgstr ""
+msgstr "Editar utilizador"
 
 #: templates/account/bsdusers.html:48 templates/account/bsdusers.html:136
 msgid "Auxiliary Groups"
@@ -4258,7 +4258,7 @@ msgstr ""
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:7
 msgid "Browse"
-msgstr ""
+msgstr "Navegar"
 
 #: templates/freeadmin/directory_browser.html:5
 #: templates/freeadmin/directory_browser.html:10
@@ -4275,7 +4275,7 @@ msgstr ""
 #: templates/storage/volume_delete.html:8
 #: templates/storage/zvol_confirm_delete.html:7
 msgid "Are you sure you want to delete?"
-msgstr ""
+msgstr "Tem a certeza que pretende eliminar?"
 
 #: templates/freeadmin/generic_model_delete.html:14
 #: templates/storage/dataset_confirm_delete.html:11
@@ -4287,7 +4287,7 @@ msgstr ""
 #: templates/storage/zvol_confirm_delete.html:11
 #: templates/system/config_restore.html:11
 msgid "Yes"
-msgstr ""
+msgstr "Sim"
 
 #: templates/freeadmin/generic_model_delete_ok.html:1
 msgid "successfully deleted"
@@ -4295,7 +4295,7 @@ msgstr "eliminado com sucesso"
 
 #: templates/freeadmin/generic_model_edit.html:5
 msgid "Your changes have been successfully updated!"
-msgstr ""
+msgstr "As alteração foram actualizadas com sucesso!"
 
 #: templates/freeadmin/generic_model_edit_ok.html:1
 msgid "successfully edited"
@@ -4303,21 +4303,20 @@ msgstr ""
 
 #: templates/freeadmin/index.html:30
 msgid "Running Processes"
-msgstr ""
+msgstr "Processos activos"
 
 #: templates/freeadmin/index.html:35 templates/freeadmin/index.html.py:39
 #: templates/freeadmin/index.html:44
-#, fuzzy
 msgid "Loading..."
-msgstr "Reiniciar..."
+msgstr "A Iniciar..."
 
 #: templates/freeadmin/index.html:46
 msgid "Reboot the System"
-msgstr ""
+msgstr "Reiniciar o sistema"
 
 #: templates/freeadmin/index.html:47 templates/freeadmin/index.html.py:58
 msgid "Warning!"
-msgstr ""
+msgstr "Aviso!"
 
 #: templates/freeadmin/index.html:48
 msgid ""
@@ -4327,7 +4326,7 @@ msgstr ""
 
 #: templates/freeadmin/index.html:57
 msgid "Shutdown the System"
-msgstr ""
+msgstr "Desligar"
 
 #: templates/freeadmin/index.html:59
 msgid ""
@@ -4383,7 +4382,7 @@ msgstr "Construtor FreeNAS"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Translations"
-msgstr ""
+msgstr "Traduções FreeNAS"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
@@ -4399,7 +4398,7 @@ msgstr ""
 
 #: templates/freeadmin/index.html:106
 msgid "FreeNAS Documentation"
-msgstr ""
+msgstr "Documentação FreeNAS"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4426,7 +4425,7 @@ msgstr ""
 #: templates/system/cronjob.html:25 templates/system/cronjob.html.py:27
 #: templates/system/rsync.html:23 templates/system/rsync.html.py:25
 msgid "Edit"
-msgstr ""
+msgstr "Editar"
 
 #: templates/network/interface.html:35 templates/network/lagg.html:14
 #: templates/network/lagg.html.py:16
@@ -4524,19 +4523,19 @@ msgstr ""
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
-msgstr ""
+msgstr "Editar VLAN"
 
 #: templates/network/vlan.html:27
 msgid "Delete VLAN"
-msgstr ""
+msgstr "Apagar VLAN"
 
 #: templates/network/vlan.html:34
 msgid "No VLAN defined"
-msgstr ""
+msgstr "VLAN não definida"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
-msgstr ""
+msgstr "Adicionar interface VLAN"
 
 #: templates/registration/login.html:44
 msgid "Your username and password didn't match. Please try again."
@@ -4545,15 +4544,15 @@ msgstr ""
 #: templates/registration/login.html:48
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr ""
+msgstr "Bem vindo, %(username). Obrigado por ter entrado."
 
 #: templates/registration/login.html:50
 msgid "Welcome to FreeNAS 8"
-msgstr ""
+msgstr "Bem vindo ao FreeNAS 8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
-msgstr ""
+msgstr "Por favor, inicie a sessão."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -4561,7 +4560,7 @@ msgstr ""
 
 #: templates/registration/logout.html:21
 msgid "You are now logged out."
-msgstr ""
+msgstr "Você saiu da sessão."
 
 #: templates/registration/logout.html:21
 msgid "Log back in"
@@ -4605,7 +4604,7 @@ msgstr ""
 
 #: templates/services/index.html:114
 msgid "S.M.A.R.T. Settings"
-msgstr ""
+msgstr "Definições do S.M.A.R.T."
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
@@ -4732,7 +4731,7 @@ msgstr "Adicionar Rsync Modulo"
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
 msgid "Active Shares"
-msgstr ""
+msgstr "Partilhas activas"
 
 #: templates/sharing/apple.html:8
 msgid "There are no active Apple Shares."
@@ -4761,7 +4760,7 @@ msgstr ""
 
 #: templates/sharing/index.html:3
 msgid "Apple"
-msgstr ""
+msgstr "Apple"
 
 #: templates/sharing/index.html:5
 msgid "UNIX"
@@ -4769,11 +4768,11 @@ msgstr ""
 
 #: templates/sharing/index.html:7
 msgid "Windows"
-msgstr ""
+msgstr "Windows"
 
 #: templates/sharing/unix.html:8
 msgid "There are no active UNIX Shares."
-msgstr ""
+msgstr "Não existem partilhas UNIX activas."
 
 #: templates/sharing/unix.html:13
 msgid "Mountpoint"
@@ -4801,28 +4800,27 @@ msgstr ""
 
 #: templates/sharing/windows.html:34
 msgid "Edit Windows Share"
-msgstr ""
+msgstr "Editar partilha Windows"
 
 #: templates/sharing/windows.html:40
 msgid "Delete Windows Share"
-msgstr ""
+msgstr "Apagar partilha Windows"
 
 #: templates/sharing/windows.html:54
 msgid "Add Windows Share"
-msgstr ""
+msgstr "Adicionar partilha Windows"
 
 #: templates/sharing/windows.html:56
 msgid "Add Windows Share (CIFS)"
-msgstr ""
+msgstr "Adicionar partilha Windows (CIFS)"
 
 #: templates/storage/clonesnap.html:12
 msgid "Clone Snapshot"
 msgstr ""
 
 #: templates/storage/datagrid_disks.html:9
-#, fuzzy
 msgid "Edit Disk"
-msgstr "Disco"
+msgstr "Editar Disco"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
@@ -4842,15 +4840,15 @@ msgstr "A substituir o disco"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
-msgstr ""
+msgstr "Substituir disco"
 
 #: templates/storage/import.html:32 templates/storage/wizard.html:43
 msgid "Filesystem type"
-msgstr ""
+msgstr "Tipo de Sistema de Ficheiros"
 
 #: templates/storage/index.html:3 templates/storage/volumes.html:62
 msgid "Active Volumes"
-msgstr ""
+msgstr "Volumes activos"
 
 #: templates/storage/index.html:5
 msgid "ZFS Snapshots"
@@ -4871,16 +4869,16 @@ msgstr ""
 
 #: templates/storage/permission.html:6
 msgid "Change permission"
-msgstr ""
+msgstr "Alterar permissão"
 
 #: templates/storage/permission.html:7
 #, python-format
 msgid "Change permission on %(path)s to"
-msgstr ""
+msgstr "Alterar permissão de %(path) a"
 
 #: templates/storage/permission.html:11
 msgid "Change"
-msgstr ""
+msgstr "Alterar"
 
 #: templates/storage/replications.html:9
 msgid "Add Replication"
@@ -4922,7 +4920,7 @@ msgstr ""
 
 #: templates/storage/snapshots.html:6
 msgid "Used space"
-msgstr ""
+msgstr "Espaço usado"
 
 #: templates/storage/snapshots.html:7
 msgid "Referenced space"
@@ -4934,7 +4932,7 @@ msgstr ""
 
 #: templates/storage/snapshots.html:33 templates/storage/snapshots.html:37
 msgid "Destroy snapshot"
-msgstr ""
+msgstr "Apagar snapshot"
 
 #: templates/storage/snapshots.html:43 templates/storage/snapshots.html:47
 msgid "Rollback to this snapshot"
@@ -4970,19 +4968,19 @@ msgstr ""
 
 #: templates/storage/tasks.html:38
 msgid "No"
-msgstr ""
+msgstr "Não"
 
 #: templates/storage/tasks.html:42
 msgid "From"
-msgstr ""
+msgstr "De"
 
 #: templates/storage/tasks.html:44
 msgid "through"
-msgstr ""
+msgstr "através"
 
 #: templates/storage/tasks.html:46
 msgid ", every"
-msgstr ""
+msgstr ", cada"
 
 #: templates/storage/tasks.html:49
 msgid "everyday"
@@ -5011,19 +5009,19 @@ msgstr "Criar Volume ZFS"
 
 #: templates/storage/volumes.html:64
 msgid "There are no active volumes."
-msgstr ""
+msgstr "Não existem Volumes activos"
 
 #: templates/storage/volumes.html:72
 msgid "Used"
-msgstr ""
+msgstr "Usado"
 
 #: templates/storage/volumes.html:74
 msgid "Size"
-msgstr ""
+msgstr "Tamanho"
 
 #: templates/storage/volumes.html:75
 msgid "Status"
-msgstr ""
+msgstr "Estado"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Destroy ZFS Volume"
@@ -5040,11 +5038,11 @@ msgstr ""
 
 #: templates/storage/volumes.html:147 templates/storage/volumes.html.py:151
 msgid "Destroy Volume"
-msgstr ""
+msgstr "Apagar Volume"
 
 #: templates/storage/volumes.html:189 templates/storage/volumes.html.py:193
 msgid "View Disks"
-msgstr ""
+msgstr "Ver discos"
 
 #: templates/storage/volumes.html:198 templates/storage/volumes.html.py:202
 #, fuzzy
@@ -5151,11 +5149,11 @@ msgstr "Reiniciar..."
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "O seu email de teste foi enviado!"
 
 #: templates/system/email_edit.html:19
 msgid "Your test email could not be sent:"
-msgstr ""
+msgstr "O seu email de teste não pode ser enviado:"
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
