@@ -38,3 +38,16 @@ def humanize_number_si(number):
         if number > factor:
             return ('%.1f %s' % (number/factor, suffix))
 
+
+def humanize_size(number):
+    number = int(number)
+    humanize_si_map = (
+        ('TB', 1099511627776.0),
+        ('GB', 1073741824.0),
+        ('MB', 1048576.0),
+        ('KB', 1024.0),
+        ('B', 1),
+        )
+    for suffix, factor in humanize_si_map:
+        if number > factor:
+            return ('%.2f %s' % (number/factor, suffix))
