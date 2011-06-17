@@ -55,7 +55,15 @@ dd of=/dev/${TARGET_DRIVE}s1 obs=128k
 fsck_ffs -n /dev/${TARGET_DRIVE}s1a
 
 # Save root ssh keys, /boot/modules/* and fusionio utilities if present
-mkdir /tmp/upgrade
+if [ -e /tmp/upgrade ]; then
+    if ! [ -d /tmp/upgrade ]; then
+        rm -rf /tmp/upgrade
+        mkdir /tmp/upgrade
+    fi
+else
+    mkdir /tmp/upgrade
+fi
+
 mount /dev/${TARGET_DRIVE}s1a /tmp/upgrade
 
 if [ -d /root/.ssh ]; then

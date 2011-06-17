@@ -56,7 +56,15 @@ fsck_ffs -n /dev/${TARGET_DRIVE}s2a
 tunefs -L ${LABELNAME}s2a /dev/${TARGET_DRIVE}s2a
 
 # Save root ssh keys, /boot/modules/* and fusionio utilities if present
-mkdir /tmp/upgrade
+if [ -e /tmp/upgrade ]; then
+    if ! [ -d /tmp/upgrade ]; then
+        rm -rf /tmp/upgrade
+        mkdir /tmp/upgrade
+    fi
+else
+    mkdir /tmp/upgrade
+fi
+
 mount /dev/${TARGET_DRIVE}s2a /tmp/upgrade
 
 if [ -d /root/.ssh ]; then

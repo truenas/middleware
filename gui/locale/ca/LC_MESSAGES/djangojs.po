@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-06-02 15:35+0200\n"
-"Last-Translator: Pere <pedro.cerdan@uab.cat>\n"
+"PO-Revision-Date: 2011-06-16 12:56+0200\n"
+"Last-Translator: Marc <marc.codina@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
@@ -52,7 +52,7 @@ msgstr "Cronjobs"
 
 #: media/lib/js/freeadmin.js:437
 msgid "Edit"
-msgstr ""
+msgstr "Editar"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"

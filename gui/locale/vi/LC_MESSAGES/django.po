@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-11 06:08+0200\n"
-"Last-Translator: hieunghiem <hi3unb@gmail.com>\n"
+"PO-Revision-Date: 2011-06-17 09:28+0200\n"
+"Last-Translator: DHD <dohuudat@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: vi\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: choices.py:35
 msgid "Plain"
-msgstr ""
+msgstr "Rõ ràng"
 
 #: choices.py:36 system/models.py:234 templates/system/settings.html:9
 msgid "SSL"
@@ -104,7 +104,7 @@ msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:67
 msgid "Always On"
-msgstr ""
+msgstr "Luôn mở"
 
 #: choices.py:81 choices.py:90
 msgid "Disabled"
@@ -116,83 +116,85 @@ msgstr "Mức 1 - Tối thiểu năng lượng sử dụng với Standby (spindo
 
 #: choices.py:83
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "Mức 64 - Mức độ tiêu thụ vừa phải bằng việc sử dụng chế độ chờ"
 
 #: choices.py:84
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "Mức 127 - Mức độ tiêu thụ vừa phải bằng việc sử dụng chế độ chờ"
 
 #: choices.py:85
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
 msgstr ""
+"Mức 128 - Sử dụng năng lượng ít nhất bằng việc tắt chế độ chờ (không dùng "
+"chế độ giảm tốc độ quay của đĩa cứng)"
 
 #: choices.py:86
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr ""
+msgstr "Mức 192 - Mức độ tiêu thụ vừa phải, không sử dụng chế độ chờ"
 
 #: choices.py:87
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr ""
+msgstr "Mức 254 - Hiệu năng cao nhất, tiêu thụ năng lượng nhiều nhất"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
-msgstr ""
+msgstr "Nhỏ nhất"
 
 #: choices.py:92
 msgid "Medium"
-msgstr ""
+msgstr "Vừa phải"
 
 #: choices.py:93
 msgid "Maximum"
-msgstr ""
+msgstr "Lớn nhất"
 
 #: choices.py:127 templates/storage/tasks.html:85
 msgid "January"
-msgstr "Tháng một"
+msgstr "Tháng Một"
 
 #: choices.py:128 templates/storage/tasks.html:88
 msgid "February"
-msgstr ""
+msgstr "Tháng Hai"
 
 #: choices.py:129 templates/storage/tasks.html:91
 msgid "March"
-msgstr ""
+msgstr "Tháng Ba"
 
 #: choices.py:130 templates/storage/tasks.html:94
 msgid "April"
-msgstr "Tháng tư"
+msgstr "Tháng Tư"
 
 #: choices.py:131 templates/storage/tasks.html:97
 msgid "May"
-msgstr ""
+msgstr "Tháng Năm"
 
 #: choices.py:132 templates/storage/tasks.html:100
 msgid "June"
-msgstr ""
+msgstr "Tháng Sáu"
 
 #: choices.py:133 templates/storage/tasks.html:103
 msgid "July"
-msgstr ""
+msgstr "Tháng Bảy"
 
 #: choices.py:134 templates/storage/tasks.html:106
 msgid "August"
-msgstr ""
+msgstr "Tháng Tám"
 
 #: choices.py:135 templates/storage/tasks.html:109
 msgid "September"
-msgstr ""
+msgstr "Tháng Chín"
 
 #: choices.py:136 templates/storage/tasks.html:112
 msgid "October"
-msgstr ""
+msgstr "Tháng Mười"
 
 #: choices.py:137 templates/storage/tasks.html:115
 msgid "November"
-msgstr ""
+msgstr "Tháng Mười một"
 
 #: choices.py:138 templates/storage/tasks.html:118
 msgid "December"
-msgstr ""
+msgstr "Tháng Mười hai"
 
 #: choices.py:141 templates/storage/tasks.html:56
 msgid "Monday"
@@ -224,7 +226,7 @@ msgstr "Chủ Nhật"
 
 #: choices.py:158
 msgid "Anonymous"
-msgstr ""
+msgstr "Vô danh"
 
 #: choices.py:159
 msgid "Local User"
@@ -232,7 +234,7 @@ msgstr ""
 
 #: choices.py:180
 msgid "Normal"
-msgstr "Thường"
+msgstr "Bình thường"
 
 #: choices.py:181
 msgid "Full"
@@ -240,69 +242,69 @@ msgstr "Đầy đủ"
 
 #: choices.py:182
 msgid "Debug"
-msgstr ""
+msgstr "Gỡ lỗi"
 
 #: choices.py:186
 msgid "Default"
-msgstr ""
+msgstr "Mặc định"
 
 #: choices.py:187
 msgid "Time Machine"
-msgstr ""
+msgstr "Time Machine"
 
 #: choices.py:190
 msgid "No case folding"
-msgstr ""
+msgstr "Không phân biệt viết hoa hay viết thường"
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "Tên viết thường với cả 2 bên"
 
 #: choices.py:193
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "Máy khách hiện chữ thường, máy chủ hiện chữ hoa"
 
 #: choices.py:194
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "Máy khách hiện chữ hoa, máy chủ hiện chữ thường"
 
 #: choices.py:198
 msgid "File"
-msgstr ""
+msgstr "Tập tin"
 
 #: choices.py:199
 msgid "Device"
-msgstr ""
+msgstr "Thiết bị"
 
 #: choices.py:200
 msgid "ZFS Volume"
-msgstr ""
+msgstr "Phân vùng định dạng ZFS"
 
 #: choices.py:204 storage/models.py:147 system/models.py:493
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
 #: templates/storage/wizard.html:91
 msgid "Disk"
-msgstr ""
+msgstr "Ổ đĩa"
 
 #: choices.py:205
 msgid "DVD"
-msgstr ""
+msgstr "DVD"
 
 #: choices.py:206
 msgid "Tape"
-msgstr ""
+msgstr "Băng từ"
 
 #: choices.py:207
 msgid "Pass"
-msgstr ""
+msgstr "Đi qua"
 
 #: choices.py:211
 msgid "read-write"
-msgstr ""
+msgstr "đọc - ghi"
 
 #: choices.py:212
 msgid "read-only"
-msgstr ""
+msgstr "chỉ đọc"
 
 #: choices.py:216 choices.py:222 services/forms.py:392 services/forms.py:394
 #: services/forms.py:741 templates/storage/wizard.html:92
@@ -311,35 +313,35 @@ msgstr "Không"
 
 #: choices.py:218
 msgid "CHAP"
-msgstr ""
+msgstr "CHAP"
 
 #: choices.py:219
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "Mutual CHAP"
 
 #: choices.py:241
 msgid "UPS reaches low battery"
-msgstr "UPS chạm mức pin yếu"
+msgstr "UPS (bộ lưu điện) sắp hết pin"
 
 #: choices.py:242
 msgid "UPS goes on battery"
-msgstr "UPS hoạt động trên pin"
+msgstr "UPS (bộ lưu điện) đang sử dụng pin"
 
 #: choices.py:245
 msgid "Preferred"
-msgstr ""
+msgstr "Ưu tiên"
 
 #: choices.py:246
 msgid "Tolerated"
-msgstr ""
+msgstr "Chấp nhận"
 
 #: choices.py:247
 msgid "Required"
-msgstr ""
+msgstr "Đòi hỏi"
 
 #: choices.py:274 choices.py:280
 msgid "Inherit"
-msgstr ""
+msgstr "Thừa hưởng"
 
 #: choices.py:275
 msgid "On"
@@ -351,7 +353,7 @@ msgstr "Tắt"
 
 #: choices.py:282
 msgid "lzjb (recommended)"
-msgstr "lzjb (khuyến nghị)"
+msgstr "lzjb (khuyến cáo)"
 
 #: choices.py:283
 msgid "gzip (default level, 6)"
@@ -367,97 +369,100 @@ msgstr "gzip (nén tối ưu, chậm)"
 
 #: choices.py:426
 msgid "Hour(s)"
-msgstr ""
+msgstr "Giờ"
 
 #: choices.py:427
 msgid "Day(s)"
-msgstr ""
+msgstr "Ngày"
 
 #: choices.py:428
 msgid "Week(s)"
-msgstr ""
+msgstr "Tuần"
 
 #: choices.py:429
 msgid "Month(s)"
-msgstr ""
+msgstr "Tháng"
 
 #: choices.py:430
 msgid "Year(s)"
-msgstr ""
+msgstr "Năm"
 
 #: choices.py:434 system/models.py:302 system/models.py:321
 #: system/models.py:457 system/models.py:476
 msgid "Everyday"
-msgstr ""
+msgstr "Hàng ngày"
 
 #: choices.py:435
 msgid "Every selected weekday"
-msgstr ""
+msgstr "Mỗi ngày trong tuần được chọn"
 
 #: choices.py:441
 msgid "Read-only"
-msgstr ""
+msgstr "Chỉ đọc"
 
 #: choices.py:442
 msgid "Write-only"
-msgstr ""
+msgstr "Chỉ ghi"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Đọc và Ghi"
 
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes) phút"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour) giờ"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hour) giờ"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day) ngày"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week) tuần"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Không quan tâm - Kiểm tra các thiết bị không phân biệt chế độ"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Chế độ Ngủ - Chỉ kiểm tra thiết bị khi thiết bị đang ở chế độ Ngủ"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
+"Chế độ chờ - Chỉ kiểm tra thiết bị khi thiết bị đang ở chế độ Ngủ hoặc Chờ"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
+"Chế độ nhàn rỗi - Chỉ kiểm tra thiết bị khi thiết bị đang ở chế độ Ngủ, Chờ "
+"hoặc Nhàn rỗi"
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Tự kiểm tra một cách đầy đủ"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Tự kiểm tra nhanh"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Tự kiểm tra quá trình thông tin (đối với ổ đĩa ATA)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
@@ -469,7 +474,7 @@ msgstr "Sẵn sàng"
 
 #: account/forms.py:146
 msgid "Selected"
-msgstr ""
+msgstr "Đã chọn"
 
 #: account/forms.py:174 account/forms.py:198 account/models.py:79
 #: services/models.py:676 services/models.py:935 system/models.py:160
@@ -480,10 +485,12 @@ msgstr "Tên đăng nhập"
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
 msgstr ""
+"Yêu cầu phải có. Tối đa 30 ký tự. Chỉ dùng chữ cái, số và các ký tự "
+"@/./+/-/_"
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr "Giá trị nhập hợp lệ chỉ bao gồm các chữ, số và các ký tự @/./+/-/_."
+msgstr "Giá trị này chỉ chấp nhận các chữ, số và các ký tự @/./+/-/_."
 
 #: account/forms.py:201 account/forms.py:308 services/models.py:680
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
@@ -510,11 +517,11 @@ msgstr "Vô hiệu hóa đăng nhập"
 
 #: account/forms.py:206
 msgid "Primary Group"
-msgstr ""
+msgstr "Nhóm chính"
 
 #: account/forms.py:235
 msgid "A user with that username already exists."
-msgstr "Người dùng với tên đăng nhập này đã toàn tại."
+msgstr "Tên đăng nhập này đã tồn tại."
 
 #: account/forms.py:243 account/forms.py:329 account/forms.py:479
 #: system/forms.py:232
@@ -529,15 +536,15 @@ msgstr "Thư mục Home phải bắt đầu bằng /mnt/"
 #: services/forms.py:482 services/forms.py:748 storage/forms.py:226
 #: system/forms.py:275 system/forms.py:298
 msgid "This field is required."
-msgstr ""
+msgstr "Mục này là bắt buộc"
 
 #: account/forms.py:427
 msgid "Member users"
-msgstr ""
+msgstr "Thành viên"
 
 #: account/forms.py:445
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "Nhóm phụ"
 
 #: account/forms.py:467
 msgid "New password"
@@ -545,49 +552,49 @@ msgstr "Mật khẩu mới"
 
 #: account/forms.py:468
 msgid "New password confirmation"
-msgstr ""
+msgstr "Xác nhận mật khẩu mới"
 
 #: account/forms.py:493
 msgid "Old password"
-msgstr ""
+msgstr "Mật khẩu cũ"
 
 #: account/forms.py:501
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr ""
+msgstr "Bạn nhập không đúng mật khẩu cũ. Vui lòng nhập lại."
 
 #: account/models.py:36 services/models.py:472 services/models.py:517
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr ""
+msgstr "Mã nhóm"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "Tên nhóm"
 
 #: account/models.py:47 account/models.py:155 services/models.py:1210
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:87
 msgid "Group"
-msgstr ""
+msgstr "Nhóm"
 
 #: account/models.py:48 templates/account/index.html:10
 msgid "Groups"
-msgstr ""
+msgstr "Nhóm"
 
 #: account/models.py:63
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Nhóm %s là nhóm được tạo sẵn và không xóa được!"
 
 #: account/models.py:73
 msgid "User ID"
-msgstr ""
+msgstr "Mã người dùng"
 
 #: account/models.py:78
 msgid "User &"
-msgstr ""
+msgstr "Người dùng &"
 
 #: account/models.py:85
 msgid "Hashed UNIX password"
@@ -599,15 +606,15 @@ msgstr ""
 
 #: account/models.py:95
 msgid "Primary Group ID"
-msgstr ""
+msgstr "Mã nhóm chính"
 
 #: account/models.py:100
 msgid "Home Directory"
-msgstr ""
+msgstr "Thư mục gốc"
 
 #: account/models.py:109
 msgid "Full Name"
-msgstr ""
+msgstr "Tên đầy đủ"
 
 #: account/models.py:115 templates/account/bsdusers.html:91
 msgid "E-mail"
@@ -618,16 +625,16 @@ msgstr "Email"
 #: templates/services/iscsi_auth.html:6 templates/system/cronjob.html:10
 #: templates/system/rsync.html:10
 msgid "User"
-msgstr ""
+msgstr "Người dùng"
 
 #: account/models.py:121 templates/account/index.html:13
 msgid "Users"
-msgstr ""
+msgstr "Người dùng"
 
 #: account/models.py:138
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Tài khoản %s là tài khoản được tạo sẵn và không xóa được!"
 
 #: account/nav.py:5 templates/menubar.html:43
 msgid "Account"
@@ -637,46 +644,46 @@ msgstr ""
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:113
 #: templates/account/bsdusers.html:115 templates/account/index.html:7
 msgid "Change Password"
-msgstr ""
+msgstr "Thay đổi mật khẩu"
 
 #: account/nav.py:19 templates/account/changeform.html:25
 #: templates/account/index.html:4
 msgid "Change Admin User"
-msgstr ""
+msgstr "Thay đổi mật khẩu tài khoản Admin (tài khoản quản trị hệ thống)"
 
 #: account/nav.py:26 templates/account/index.html:2
 msgid "My Account"
-msgstr ""
+msgstr "Tài khoản của tôi"
 
 #: account/nav.py:36
 msgid "View All Users"
-msgstr ""
+msgstr "Xem tất cả tài khoản"
 
 #: account/nav.py:43
 msgid "View All Groups"
-msgstr ""
+msgstr "Xem tất cả các nhóm"
 
 #: account/views.py:78
 msgid "Password successfully updated."
-msgstr ""
+msgstr "Mật khẩu đã cập nhật thành công."
 
 #: account/views.py:92
 msgid "Admin user successfully updated."
-msgstr ""
+msgstr "Tài khoản Admin (tài khoản quản trị hệ thống) đã cập nhật thành công."
 
 #: account/views.py:102
 msgid "Users successfully updated."
-msgstr ""
+msgstr "Tài khoản người dùng đã cập nhật thành công."
 
 #: account/views.py:115
 msgid "Groups successfully updated."
-msgstr ""
+msgstr "Các nhóm đã cập nhật thành công."
 
 #: contrib/ext_formwizard.py:170
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
-msgstr ""
+msgstr "Rất tiếc, thời hạn nhập mẫu đã hết. Vui lòng nhập lại từ trang này."
 
 #: freeadmin/forms.py:95
 #, python-format
@@ -695,63 +702,63 @@ msgstr ""
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Thêm  %s"
 
 #: freeadmin/navtree.py:327
 #, python-format
 msgid "View All %s"
-msgstr ""
+msgstr "Xem tất cả %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
-msgstr ""
+msgstr "Hiện các tiến trình hệ thống"
 
 #: freeadmin/navtree.py:353 templates/freeadmin/index.html:53
 msgid "Reboot"
-msgstr ""
+msgstr "Khởi động lại"
 
 #: freeadmin/navtree.py:360 templates/freeadmin/index.html:65
 msgid "Shutdown"
-msgstr ""
+msgstr "Tắt"
 
 #: freeadmin/views.py:225
 #, python-format
 msgid "%s successfully added."
-msgstr ""
+msgstr "%s đã thêm vào hệ thống thành công."
 
 #: freeadmin/views.py:384 freeadmin/views.py:386
 #, python-format
 msgid "%s successfully updated."
-msgstr ""
+msgstr "%s đã cập nhật thành công."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Khởi động lại dịch vụ đã không thành công."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "%s đã xóa thành công."
 
 #: network/forms.py:44 network/models.py:95
 msgid "NIC"
-msgstr ""
+msgstr "NIC"
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
+msgstr "Phải điền máy chủ 2 trước khi điền máy chủ 3"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
-msgstr ""
+msgstr "Cần thiết khi sử dụng máy chủ 3"
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr ""
+msgstr "Phải điền máy chủ 1 trước khi điền máy chủ 3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr ""
+msgstr "Phải điền máy chủ 1 trước khi điền máy chủ 2"
 
 #: network/forms.py:100
 msgid "Parent Interface"
@@ -759,7 +766,7 @@ msgstr ""
 
 #: network/forms.py:109
 msgid "The name must be vlanXX where XX is a integer"
-msgstr ""
+msgstr "Định dạng tên phải là vlanXX với XX là các chữ số tự nhiên"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -777,40 +784,40 @@ msgstr ""
 #: network/models.py:42 services/models.py:1074
 #: templates/system/system_info.html:4
 msgid "Hostname"
-msgstr ""
+msgstr "Hostname"
 
 #: network/models.py:47
 msgid "Domain"
-msgstr ""
+msgstr "Domain"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "Gateway mặc định cho IPv4"
 
 #: network/models.py:59
 msgid "IPv6 Default Gateway"
-msgstr ""
+msgstr "Gateway mặc định cho IPv6"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "Máy chủ 1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "Máy chủ 2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "Máy chủ 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:21
 #: templates/network/index.html:3
 msgid "Global Configuration"
-msgstr ""
+msgstr "Thiết đặt chung"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Chọn NIC"
 
 #: network/models.py:101
 msgid "Interface Name"

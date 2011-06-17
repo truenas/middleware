@@ -34,7 +34,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
 from freenasUI.middleware.notifier import notifier
-from freenasUI.common import humanize_number_si
+from freenasUI.common import humanize_size
 from freeadmin.models import Model
 
 class Volume(Model):
@@ -175,19 +175,19 @@ class MountPoint(Model):
     def _get_total_si(self):
         try:
             totalbytes = self._vfs.f_blocks*self._vfs.f_frsize
-            return u"%s" % (humanize_number_si(totalbytes))
+            return u"%s" % (humanize_size(totalbytes))
         except:
             return _(u"Error getting total space")
     def _get_avail_si(self):
         try:
             availbytes = self._vfs.f_bavail*self._vfs.f_frsize
-            return u"%s" % (humanize_number_si(availbytes))
+            return u"%s" % (humanize_size(availbytes))
         except:
             return _(u"Error getting available space")
     def _get_used_si(self):
         try:
             usedbytes = (self._vfs.f_blocks-self._vfs.f_bfree)*self._vfs.f_frsize
-            return u"%s" % (humanize_number_si(usedbytes))
+            return u"%s" % (humanize_size(usedbytes))
         except:
             return _(u"Error getting used space")
     def _get_used_pct(self):

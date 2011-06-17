@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-16 11:00+0200\n"
+"PO-Revision-Date: 2011-06-16 16:03+0200\n"
 "Last-Translator: xRaider <xraiderus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -117,7 +117,7 @@ msgstr "Отключен"
 #: choices.py:82
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
 msgstr ""
-"Уровень 1 - Минимальное энергопотребление с режимом ожидания (остоновка HDD)"
+"Уровень 1 - Минимальное энергопотребление с режимом ожидания (остановка HDD)"
 
 #: choices.py:83
 msgid "Level 64 - Intermediate power usage with Standby"
@@ -2716,20 +2716,20 @@ msgstr "IP-адрес '%s' является недопустимым."
 #: sharing/forms.py:99
 msgid "Maproot group requires Maproot user"
 msgstr ""
-"Закрепление идентификатора root за группой требует закрепления "
-"идентификатора root за пользователем"
+"Закрепление идентификатора \"root\" за группой требует закрепления "
+"идентификатора \"root\" за пользователем"
 
 #: sharing/forms.py:101
 msgid "Mapall group requires Mapall user"
 msgstr ""
-"Закрепление идентификатора all за группой требует закрепления идентификатора "
-"all за пользователем"
+"Закрепление идентификатора \"all\" за группой требует закрепления "
+"идентификатора \"all\" за пользователем"
 
 #: sharing/forms.py:104 sharing/forms.py:107
 msgid "Maproot user/group disqualifies Mapall"
 msgstr ""
-"Закрепление идентификатора root за пользователем/группой отменяет "
-"закрепление идентификатора all"
+"Закрепление идентификатора \"root\" за пользователем/группой отменяет "
+"закрепление идентификатора \"all\""
 
 #: sharing/models.py:41 sharing/models.py:104 storage/models.py:44
 #: storage/models.py:69 storage/models.py:87
@@ -3141,7 +3141,7 @@ msgstr ""
 # http://www.lissyara.su/articles/freebsd/trivia/win2003+nfs/
 #: sharing/models.py:248
 msgid "Maproot User"
-msgstr "Закрепить идентификатор root за пользователем"
+msgstr "Закрепить идентификатор \"root\" за пользователем"
 
 # опять про maproot и mapall ))
 #: sharing/models.py:252
@@ -3150,30 +3150,27 @@ msgstr "Назначить пользователю права доступа \"
 
 #: sharing/models.py:256
 msgid "Maproot Group"
-msgstr "Закрепить идентификатор root за группой"
+msgstr "Закрепить идентификатор \"root\" за группой"
 
 #: sharing/models.py:260
-#, fuzzy
 msgid "Group to map root to"
-msgstr "Назначить группе права доступа \"all\" для"
+msgstr "Назначить группе права доступа \"all\""
 
 #: sharing/models.py:264
 msgid "Mapall User"
-msgstr "Закрепить идентификатор all за пользователем"
+msgstr "Закрепить идентификатор \"all\" за пользователем"
 
 #: sharing/models.py:268
-#, fuzzy
 msgid "User to map all users to"
-msgstr "Назначить пользователю права доступа \"all\" для"
+msgstr "Назначить пользователю права доступа \"all\""
 
 #: sharing/models.py:272
 msgid "Mapall Group"
-msgstr "Закрепить идентификатор all за группой"
+msgstr "Закрепить идентификатор \"all\" за группой"
 
 #: sharing/models.py:276
-#, fuzzy
 msgid "Group to map all users to"
-msgstr "Назначить группе пользователей права доступа \"all\" для"
+msgstr "Назначить группе пользователей права доступа \"all\""
 
 #: sharing/models.py:283
 msgid "UNIX Share"
@@ -3504,9 +3501,8 @@ msgid "Snapshot lifetime value"
 msgstr "Время жизни снимка"
 
 #: storage/models.py:280
-#, fuzzy
 msgid "Snapshot lifetime unit"
-msgstr "Время жизни снимка устройства"
+msgstr "Время жизни снимка"
 
 #: storage/models.py:284
 msgid "Begin"
@@ -3547,12 +3543,10 @@ msgstr "Будний день"
 
 # не знаю, как это перевести
 #: storage/models.py:327
-#, fuzzy
 msgid "Periodic Snapshot Task"
 msgstr "Задача периодического снимка"
 
 #: storage/models.py:328 templates/storage/index.html:7
-#, fuzzy
 msgid "Periodic Snapshot Tasks"
 msgstr "Задачи периодических снимков"
 
@@ -3590,7 +3584,6 @@ msgid "Create ZFS Dataset"
 msgstr "Создание набора данных ZFS"
 
 #: storage/nav.py:89
-#, fuzzy
 msgid "Add Periodic Snapshot"
 msgstr "Добавить периодический снимок"
 
@@ -3628,7 +3621,6 @@ msgid "ZFS Volume successfully added."
 msgstr "Том ZFS успешно добавлен."
 
 #: storage/views.py:356
-#, fuzzy
 msgid "This is in use by the iscsi target, please remove it there first."
 msgstr "Цель iSCSI уже используется, пожалуйста сначала удалите"
 
@@ -4996,7 +4988,6 @@ msgid "Periodic Snapshots"
 msgstr "Периодические снимки"
 
 #: templates/storage/tasks.html:10
-#, fuzzy
 msgid "Create Periodic Snapshot"
 msgstr "Создать периодический снимок"
 
@@ -5459,7 +5450,6 @@ msgstr "Диски"
 msgid "View All Replication Tasks"
 msgstr "Показать все задачи репликации"
 
-#, fuzzy
 msgid "View All Periodic Snapshot Tasks"
 msgstr "Показать все задачи периодических снимков"
 

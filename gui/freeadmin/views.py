@@ -221,8 +221,11 @@ def generic_model_add(request, app, model, mf=None):
         instance = m()
         mf = mf(request.POST, request.FILES, instance=instance)
         if mf.is_valid():
-            mf.save()
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully added.") % m._meta.verbose_name}))
+            try:
+                mf.save()
+                return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully added.") % m._meta.verbose_name}))
+            except ServiceFailed, e:
+                return HttpResponse(simplejson.dumps({"error": True, "message": _("The service failed to restart.") % m._meta.verbose_name}))
 
     else:
         mf = mf()

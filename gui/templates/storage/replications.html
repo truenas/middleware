@@ -8,6 +8,9 @@
     <div dojoType="dijit.Tooltip" connectId="addReplBtn" position="above">
         <strong>{% trans "Add Replication" %}</strong>
     </div>
+    <div>
+    <p style="margin:10px;"><span style="color: red;">{% trans "ATTENTION: A periodic snapshot of a given mount point is required to create a replication task" %}</span></p>
+    </div>
 <table class="grid">
     <thead class="ghead">
 	    <td>{% trans "Mount point" %}</td>

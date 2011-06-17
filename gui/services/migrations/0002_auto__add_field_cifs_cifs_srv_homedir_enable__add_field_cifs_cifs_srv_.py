@@ -13,6 +13,7 @@ class Migration(SchemaMigration):
 
         # Adding field 'CIFS.cifs_srv_aio_enable'
         db.add_column('services_cifs', 'cifs_srv_aio_enable', self.gf('django.db.models.fields.BooleanField')(default=True), keep_default=False)
+        orm.CIFS.objects.update(cifs_srv_aio_enable=True)
 
         # Adding field 'CIFS.cifs_srv_aio_rs'
         db.add_column('services_cifs', 'cifs_srv_aio_rs', self.gf('django.db.models.fields.IntegerField')(default='1', max_length=120), keep_default=False)
@@ -77,9 +78,9 @@ class Migration(SchemaMigration):
         },
         'services.cifs': {
             'Meta': {'object_name': 'CIFS'},
-            'cifs_srv_aio_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'cifs_srv_aio_rs': ('django.db.models.fields.IntegerField', [], {'default': "'1'", 'max_length': '120'}),
-            'cifs_srv_aio_ws': ('django.db.models.fields.IntegerField', [], {'default': "'1'", 'max_length': '120'}),
+            'cifs_srv_aio_enable': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'cifs_srv_aio_rs': ('django.db.models.fields.IntegerField', [], {'default': "1", 'max_length': '120'}),
+            'cifs_srv_aio_ws': ('django.db.models.fields.IntegerField', [], {'default': "1", 'max_length': '120'}),
             'cifs_srv_description': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'cifs_srv_dirmask': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'cifs_srv_dosattr': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),

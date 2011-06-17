@@ -36,8 +36,8 @@ from django.core.urlresolvers import reverse
 from django.db import transaction
 
 from freenasUI.middleware.notifier import notifier
-from freenasUI.common.forms import ModelForm
-from freenasUI.common.forms import Form
+from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common import humanize_size
 from freenasUI.storage import models
 from freenasUI import choices
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups, \
@@ -47,18 +47,6 @@ from dojango.forms import widgets, CheckboxSelectMultiple
 from dojango import forms
 
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }
-
-def _humanize_size(capacity):
-    capacity = int(capacity)
-    if capacity >= 1099511627776:
-        capacity = "%.1f TiB" % (capacity / 1099511627776.0)
-    elif capacity >= 1073741824:
-        capacity = "%.1f GiB" % (capacity / 1073741824.0)
-    elif capacity >= 1048576:
-        capacity = "%.1f MiB" % (capacity / 1048576.0)
-    else:
-        capacity = "%d Bytes" % (capacity)
-    return capacity
 
 class UnixPermissionWidget(widgets.MultiWidget):
 
@@ -197,7 +185,7 @@ class VolumeWizardForm(forms.Form):
         diskinfo = pipe.read().strip().split('\n')
         for disk in diskinfo:
             devname, capacity = disk.split('\t')
-            capacity = _humanize_size(capacity)
+            capacity = humanize_size(capacity)
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
@@ -374,7 +362,7 @@ class VolumeImportForm(forms.Form):
 
         for part in parts:
             devname, capacity = parts[part]['devname'], parts[part]['capacity']
-            capacity = _humanize_size(capacity)
+            capacity = humanize_size(capacity)
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
