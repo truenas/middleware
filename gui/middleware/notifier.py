@@ -460,6 +460,7 @@ class notifier:
         self.__system("/usr/sbin/service samba quietstart")
 
     def _restart_snmp(self):
+        self.__system("/usr/sbin/service ix-bsnmpd quietstart")
         self.__system("/usr/sbin/service bsnmpd forcestop")
         self.__system("/usr/sbin/service bsnmpd quietstart")
 
