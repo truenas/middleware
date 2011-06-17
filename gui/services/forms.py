@@ -254,17 +254,17 @@ class SNMPForm(ModelForm):
         model = models.SNMP
     def clean_snmp_location(self):
         location = self.cleaned_data['snmp_location']
-        if not re.match(r'^[-_a-zA-Z0-9]+$', location):
+        if not re.match(r'^[-_a-zA-Z0-9\s]+$', location):
             raise forms.ValidationError(_(u"The location must contain only alphanumeric characters, _ or -"))
         return location
     def clean_snmp_contact(self):
         contact = self.cleaned_data['snmp_contact']
-        if not re.match(r'^[-_a-zA-Z0-9]+$', contact):
+        if not re.match(r'^[-_a-zA-Z0-9\s]+$', contact):
             raise forms.ValidationError(_(u"The contact must contain only alphanumeric characters, _ or -"))
         return contact
     def clean_snmp_comunity(self):
         community = self.cleaned_data['snmp_community']
-        if not re.match(r'^[-_a-zA-Z0-9]+$', community):
+        if not re.match(r'^[-_a-zA-Z0-9\s]+$', community):
             raise forms.ValidationError(_(u"The community must contain only alphanumeric characters, _ or -"))
         return community
     def save(self):

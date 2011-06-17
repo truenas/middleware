@@ -28,8 +28,8 @@ generate_snmpconf()
 		cat << E*O*F > ${bsnmp_config}
 # Set some common variables
 host := ${hostname}
-contact := ${snmp_contact}
-location := ${snmp_location}
+contact := "${snmp_contact}"
+location := "${snmp_location}"
 system := 1 # FreeBSD
 description := "Hardware: ${hw_machine} ${hw_model} running at ${hw_clockrate} Software: ${kern_ostype} ${kern_osrelease} (revision ${kern_osrevision})"
 read := "${snmp_community}"
@@ -40,7 +40,7 @@ begemotSnmpdDebugDumpPdus = 2
 begemotSnmpdDebugSyslogPri = 7
 
 # Set the read and write communities.
-begemotSnmpdCommunityString.0.1 = ${snmp_community}
+begemotSnmpdCommunityString.0.1 = "${snmp_community}"
 begemotSnmpdCommunityDisable = 1
 
 # open standard SNMP ports
