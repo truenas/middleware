@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-02 10:14+0200\n"
-"Last-Translator: ptaryasw <ptaryasw@isi-dps.ac.id>\n"
+"PO-Revision-Date: 2011-06-18 10:59+0200\n"
+"Last-Translator: Rully <paradoxnazi@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
@@ -111,34 +111,28 @@ msgid "Disabled"
 msgstr "Dimatikan"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Power minimal dengan Standby (spindown)"
+msgstr "Tingkat 1 - Penggunaan daya minimal dengan Standby (spindown)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Power menengah dengan Standby"
+msgstr "Tingkat 64 - Penggunaan daya menengah dengan Standby"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Power menengah dengan Standby"
+msgstr "Tingkat 127 - Penggunaan daya menengah dengan Standby"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Power minimal tanpa Standby (tanpa spindown)"
+msgstr "Tingkat 128 - Penggunaan daya minimal tanpa Standby (tanpa spindown)"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Power menengah tanpa Standby"
+msgstr "Tingkat 192 - Penggunaan daya menengah tanpa Standby"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Performa maksimal, penggunaan power maksimal"
+msgstr "Level 254 - Performa maksimal, penggunaan listrik maksimal"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -230,11 +224,11 @@ msgstr "Minggu"
 
 #: choices.py:158
 msgid "Anonymous"
-msgstr "Anonymous"
+msgstr "Anonim"
 
 #: choices.py:159
 msgid "Local User"
-msgstr "Local User"
+msgstr "Pengguna Lokal"
 
 #: choices.py:180
 msgid "Normal"
@@ -259,19 +253,19 @@ msgstr "Mesin Waktu"
 
 #: choices.py:190
 msgid "No case folding"
-msgstr ""
+msgstr "Besar kecilnya huruf tak masalah"
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "Nama dengan huruf kecil di kedua arah"
 
 #: choices.py:193
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "Di klien terlihat huruf kecil, di server terlihat huruf besar (kapital)"
 
 #: choices.py:194
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "Di klien terlihat huruf besar (kapital), di server terlihat huruf kecil"
 
 #: choices.py:198
 msgid "File"
@@ -279,7 +273,7 @@ msgstr "Berkas"
 
 #: choices.py:199
 msgid "Device"
-msgstr "Alat"
+msgstr "Perangkat"
 
 #: choices.py:200
 msgid "ZFS Volume"
@@ -327,15 +321,15 @@ msgstr "Mutual CHAP"
 
 #: choices.py:241
 msgid "UPS reaches low battery"
-msgstr "Batre UPS lemah"
+msgstr "Baterai UPS lemah"
 
 #: choices.py:242
 msgid "UPS goes on battery"
-msgstr "UPS beralih ke batre"
+msgstr "UPS beralih ke baterai"
 
 #: choices.py:245
 msgid "Preferred"
-msgstr "Disarankan"
+msgstr "Disukai"
 
 #: choices.py:246
 msgid "Tolerated"
@@ -363,19 +357,16 @@ msgid "lzjb (recommended)"
 msgstr "lzjb (disarankan)"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "tingkat standar"
+msgstr "gzip (tingkat standar, 6)"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "tercepat"
+msgstr "gzip (tercepat)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "maksimal, lambat"
+msgstr "gzip (maksimal, lambat)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -421,27 +412,27 @@ msgstr "Baca dan Tulis"
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes)s menit"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour)s jam"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hours)s jam"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day)s hari"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week)s minggu"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
@@ -461,11 +452,11 @@ msgstr ""
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Swa-uji yg lama"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Swa-uji yg sebentar"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
@@ -487,7 +478,7 @@ msgstr "Terpilih"
 #: services/models.py:676 services/models.py:935 system/models.py:160
 #: templates/account/bsdusers.html:5 templates/account/bsdusers.html.py:86
 msgid "Username"
-msgstr "Username"
+msgstr "Nama Pengguna"
 
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
@@ -501,15 +492,15 @@ msgstr "Hanya boleh huruf, angka dan lambang @/./+/-/_"
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
 #: templates/account/bsdusers.html.py:90
 msgid "Password"
-msgstr "Password"
+msgstr "Kata sandi"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:188
 msgid "Password confirmation"
-msgstr "Konfirmasi password"
+msgstr "Konfirmasi kata sandi"
 
 #: account/forms.py:203 account/forms.py:310 system/forms.py:189
 msgid "Enter the same password as above, for verification."
-msgstr "Ulangi password diatas. Untuk verifikasi"
+msgstr "Ulangi kata sandi diatas untuk verifikasi."
 
 #: account/forms.py:204 account/forms.py:346 account/models.py:105
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:89
@@ -522,16 +513,16 @@ msgstr "Matikan login"
 
 #: account/forms.py:206
 msgid "Primary Group"
-msgstr "Primary Group"
+msgstr "Kelompok Utama"
 
 #: account/forms.py:235
 msgid "A user with that username already exists."
-msgstr "Username telah terdaftar. Cari yg lain."
+msgstr "Nama pengguna telah terdaftar. Cari yg lain."
 
 #: account/forms.py:243 account/forms.py:329 account/forms.py:479
 #: system/forms.py:232
 msgid "The two password fields didn't match."
-msgstr "Kedua kolom sandi tidak sama"
+msgstr "Kedua kolom sandi tidak cocok."
 
 #: account/forms.py:248 account/forms.py:373
 msgid "Home directory has to start with /mnt/"
@@ -541,11 +532,11 @@ msgstr "Direktori Home harus dimulai dengan /mnt/"
 #: services/forms.py:482 services/forms.py:748 storage/forms.py:226
 #: system/forms.py:275 system/forms.py:298
 msgid "This field is required."
-msgstr "Kolom wajib"
+msgstr "Kotak ini harus diisi."
 
 #: account/forms.py:427
 msgid "Member users"
-msgstr "Anggota pengguna"
+msgstr "Anggota Pengguna"
 
 #: account/forms.py:445
 msgid "Auxiliary groups"
@@ -553,19 +544,19 @@ msgstr "Grup tambahan"
 
 #: account/forms.py:467
 msgid "New password"
-msgstr "Sandi baru"
+msgstr "Kata sandi baru"
 
 #: account/forms.py:468
 msgid "New password confirmation"
-msgstr "Konfirmasi sandi yang baru"
+msgstr "Konfirmasi kata sandi yang baru"
 
 #: account/forms.py:493
 msgid "Old password"
-msgstr "Sandi yang lama"
+msgstr "Kata sandi yang lama"
 
 #: account/forms.py:501
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr "Anda keliru memasukkan sandi lama Anda. Coba masukkan sekali lagi."
+msgstr "Anda keliru memasukkan kata sandi lama Anda. Coba masukkan lagi."
 
 #: account/models.py:36 services/models.py:472 services/models.py:517
 #: templates/services/iscsi_auth.html:5
@@ -586,7 +577,7 @@ msgstr "Grup"
 
 #: account/models.py:48 templates/account/index.html:10
 msgid "Groups"
-msgstr ""
+msgstr "Grup-grup"
 
 #: account/models.py:63
 #, python-format
@@ -611,15 +602,15 @@ msgstr "Sandi SMB yang sudah dihash"
 
 #: account/models.py:95
 msgid "Primary Group ID"
-msgstr ""
+msgstr "ID Grup Utama"
 
 #: account/models.py:100
 msgid "Home Directory"
-msgstr ""
+msgstr "Direktori Home"
 
 #: account/models.py:109
 msgid "Full Name"
-msgstr ""
+msgstr "Nama Lengkap"
 
 #: account/models.py:115 templates/account/bsdusers.html:91
 msgid "E-mail"
@@ -630,16 +621,16 @@ msgstr "E-mail"
 #: templates/services/iscsi_auth.html:6 templates/system/cronjob.html:10
 #: templates/system/rsync.html:10
 msgid "User"
-msgstr ""
+msgstr "Pengguna"
 
 #: account/models.py:121 templates/account/index.html:13
 msgid "Users"
-msgstr ""
+msgstr "Pengguna-pengguna"
 
 #: account/models.py:138
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Pengguna %s adalah bawaan dan tak bisa dihapus!"
 
 #: account/nav.py:5 templates/menubar.html:43
 msgid "Account"
@@ -649,7 +640,7 @@ msgstr ""
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:113
 #: templates/account/bsdusers.html:115 templates/account/index.html:7
 msgid "Change Password"
-msgstr "Ganti Password"
+msgstr "Ganti kata sandi"
 
 #: account/nav.py:19 templates/account/changeform.html:25
 #: templates/account/index.html:4
@@ -670,30 +661,32 @@ msgstr "Lihat Semua Grup"
 
 #: account/views.py:78
 msgid "Password successfully updated."
-msgstr ""
+msgstr "Kata sandi berhasil diperbaharui."
 
 #: account/views.py:92
 msgid "Admin user successfully updated."
-msgstr ""
+msgstr "Admin berhasil diperbaharui."
 
 #: account/views.py:102
 msgid "Users successfully updated."
-msgstr ""
+msgstr "Pengguna berhasil diperbaharui."
 
 #: account/views.py:115
 msgid "Groups successfully updated."
-msgstr ""
+msgstr "Grup berhasil diperbaharui."
 
 #: contrib/ext_formwizard.py:170
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
 msgstr ""
+"Maaf, kolom isian anda kadaluarsa. Silahkan lanjutkan mengisi isian di "
+"halaman ini."
 
 #: freeadmin/forms.py:95
 #, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "Pengguna %s tidak valid."
 
 #: freeadmin/forms.py:124
 #, python-format
@@ -702,251 +695,253 @@ msgstr ""
 
 #: freeadmin/forms.py:138
 msgid "The path must reside within a volume mount point"
-msgstr ""
+msgstr "Path harus ada dalam volume mount point"
 
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Tambahkan %s"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "Lihat Semua Pengguna"
+msgstr "Lihat semua %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
-msgstr ""
+msgstr "Menampilkan Proses Sistim"
 
 #: freeadmin/navtree.py:353 templates/freeadmin/index.html:53
 msgid "Reboot"
-msgstr ""
+msgstr "Nyalakan ulang"
 
 #: freeadmin/navtree.py:360 templates/freeadmin/index.html:65
 msgid "Shutdown"
-msgstr ""
+msgstr "Matikan"
 
 #: freeadmin/views.py:225
 #, python-format
 msgid "%s successfully added."
-msgstr ""
+msgstr "%s berhasil ditambahkan."
 
 #: freeadmin/views.py:384 freeadmin/views.py:386
 #, python-format
 msgid "%s successfully updated."
-msgstr ""
+msgstr "%s berhasil diperbaharui."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Servis gagal memulai ulang."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "%s berhasil dihapus."
 
 #: network/forms.py:44 network/models.py:95
 msgid "NIC"
-msgstr ""
+msgstr "NIC"
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
+msgstr "Harus mengisi namaserver 2 sebelum mengisi namaserver 3"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
-msgstr ""
+msgstr "Diperlukan ketika menggunakan namaserver 3"
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr ""
+msgstr "Harus mengisi namaserver 1 sebelum mengisi namaserver 3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr ""
+msgstr "Harus mengisi namaserver 1 sebelum mengisi namaserver 2"
 
 #: network/forms.py:100
 msgid "Parent Interface"
-msgstr ""
+msgstr "Tampilan Induk"
 
 #: network/forms.py:109
 msgid "The name must be vlanXX where XX is a integer"
-msgstr ""
+msgstr "Nama harus vlanXX dimana XX adalah bilangan bulat"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "Label VLAN adalah 1 -4095 inklusif"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
-msgstr ""
+msgstr "Fisik NIC di LAGG"
 
 #: network/forms.py:190
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "Jaringan '%s' tidak valid, CIDR dibutuhkan."
 
 #: network/models.py:42 services/models.py:1074
 #: templates/system/system_info.html:4
 msgid "Hostname"
-msgstr ""
+msgstr "Nama host"
 
 #: network/models.py:47
 msgid "Domain"
-msgstr ""
+msgstr "Domain"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "IPv4 Gateway asal"
 
 #: network/models.py:59
 msgid "IPv6 Default Gateway"
-msgstr ""
+msgstr "IPv6 Gateway asal"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "Namaserver 1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "Namaserver 2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "Namaserver 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:21
 #: templates/network/index.html:3
 msgid "Global Configuration"
-msgstr ""
+msgstr "Pengaturan Global"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Pilih NIC mu"
 
 #: network/models.py:101
 msgid "Interface Name"
-msgstr ""
+msgstr "Nama Antarmuka"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "Nama NIC mu"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
-msgstr ""
+msgstr "DHCP"
 
 #: network/models.py:107
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
+"Ketika dinyalakan, gunakan DHCP utuk memperoleh alamat IPv4 sesuai dengan "
+"bawaan router, dll."
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "Alamat IPv4"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr ""
+msgstr "Netmask IPv4"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "Pengaturan IPv6 otomatis"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr ""
+msgstr "Ketika dinyalakan, alamat IPv6 diatur secara otomatis via rtsol(8)."
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr ""
+msgstr "Alamat IPv6"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr ""
+msgstr "Netmask IPv6"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "Opsi"
 
 #: network/models.py:157 network/models.py:216
 #: templates/network/interface.html:5
 msgid "Interface"
-msgstr ""
+msgstr "Interface"
 
 #: network/models.py:158 templates/network/index.html:5
 msgid "Interfaces"
-msgstr ""
+msgstr "Interface"
 
 #: network/models.py:172 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr ""
+msgstr "Interface Virtual"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr ""
+msgstr "Nama Interface harus vlanXX dimana XX adalah angka"
 
 #: network/models.py:178 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr ""
+msgstr "Interface Fisik"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
-msgstr ""
+msgstr "Nama VLAN"
 
 #: network/models.py:185 network/models.py:282 services/models.py:74
 #: services/models.py:766 storage/models.py:95
 #: templates/network/staticroute.html:7 templates/network/vlan.html:8
 msgid "Description"
-msgstr ""
+msgstr "Deskripsi"
 
 #: network/models.py:199 templates/network/index.html:11
 msgid "VLAN"
-msgstr ""
+msgstr "VLAN"
 
 #: network/models.py:200
 msgid "VLANs"
-msgstr ""
+msgstr "VLAN"
 
 #: network/models.py:220
 msgid "Protocol Type"
-msgstr ""
+msgstr "Jenis Protokol"
 
 #: network/models.py:241
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "Grup Interface LAGG"
 
 #: network/models.py:244
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "Nomor Prioritas LAGG"
 
 #: network/models.py:249
 msgid "Physical NIC"
-msgstr ""
+msgstr "NIC Fisik"
 
 #: network/models.py:264 templates/network/index.html:7
 msgid "Link Aggregation"
-msgstr ""
+msgstr "Agregat Tautan"
 
 #: network/models.py:265 network/nav.py:53
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Agregat Tautan"
 
 #: network/models.py:274
 msgid "Destination network"
-msgstr ""
+msgstr "Jaringan tujuan"
 
 #: network/models.py:278 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr ""
+msgstr "Gateway"
 
 #: network/models.py:287
 msgid "Static Route"
-msgstr ""
+msgstr "Rute Statis"
 
 #: network/models.py:288 templates/network/index.html:9
 msgid "Static Routes"
@@ -958,164 +953,167 @@ msgstr ""
 
 #: network/nav.py:13 templates/network/index.html:13
 msgid "Network Summary"
-msgstr ""
+msgstr "Ringkasan Jaringan"
 
 #: network/nav.py:30
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "Buat Agregat Tautan"
 
 #: network/nav.py:41
 msgid "View All Link Aggregations"
-msgstr ""
+msgstr "Lihat Semua Agregat Tautan"
 
 #: network/views.py:180
 msgid "LAGG successfully added"
-msgstr ""
+msgstr "LAGG berhasil ditambahkan"
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr ""
+msgstr "Kolom ini diperlukan untuk \"Menyalakan penjelajahan direktori home\"."
 
 #: services/forms.py:73
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "Kolom ini diperlukan untuk \"Direktori home\"."
 
 #: services/forms.py:90
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "Servis AFP gagal untuk memuat ulang."
 
 #: services/forms.py:99
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "Servis NFS gagal untuk memuat ulang."
 
 #: services/forms.py:103
 msgid "File Permission"
-msgstr ""
+msgstr "Perizinan Berkas"
 
 #: services/forms.py:104
 msgid "Directory Permission"
-msgstr ""
+msgstr "Perizinan Direktori"
 
 #: services/forms.py:129
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr ""
+msgstr "Nilai ini harus diantara 0 dan 65535, inklusif."
 
 #: services/forms.py:135 services/forms.py:153
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
+msgstr "Nilai ini harus diantara 0 dan 10000, inklusif."
 
 #: services/forms.py:141 services/forms.py:147
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
+msgstr "Nilai ini harus diantara 0 dan 1000, inklusif."
 
 #: services/forms.py:159
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
+msgstr "Nilai ini harus diantara 1024 dan 65535, inklusif. 0 untuk asal."
 
 #: services/forms.py:165
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr ""
+msgstr "Nilai ini harus diantara 1024 dan 65535, inklusif. 0 untuk asal."
 
 #: services/forms.py:184
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "Kolom ini diperlukan untuk masuk secara anonim."
 
 #: services/forms.py:191
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "Servis FTP gagal untuk memulai."
 
 #: services/forms.py:200
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "Servis TFTP gagal untuk memuat ulang."
 
 #: services/forms.py:207
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "Servis SSH gagal untuk memuat ulang."
 
 #: services/forms.py:216 services/forms.py:241
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Servis Rsync gagal untuk memuat ulang."
 
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "Nama tidak boleh menggandung garis miring (/) atau kotak tutup (])"
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "Servis DynamicDNS gagal untuk memuat ulang."
 
 #: services/forms.py:259
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "Servis SNMP gagal untuk memuat ulang."
 
 #: services/forms.py:273
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "Servis activedirectory gagal untuk memuat ulang."
 
 #: services/forms.py:284
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "Servis LDAP gagal untuk memuat ulang."
 
 #: services/forms.py:290 services/models.py:526
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
-msgstr ""
+msgstr "Rahasia"
 
 #: services/forms.py:291 services/models.py:527
 msgid "Target side secret."
-msgstr ""
+msgstr "Target samping rahasia."
 
 #: services/forms.py:292
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "Rahasia (Konfirmasi)"
 
 #: services/forms.py:294 services/forms.py:302
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "Masukkan rahasia yang sama dengan diatas untuk verifikasi."
 
 #: services/forms.py:295
 msgid "Initiator Secret"
-msgstr ""
+msgstr "Inisiator Rahasia"
 
 #: services/forms.py:297 services/models.py:533 services/models.py:538
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr ""
+msgstr "Inisiator sisi rahasia. (untuk saling otentikasi CHAP)"
 
 #: services/forms.py:300
 msgid "Initiator Secret (Confirm)"
-msgstr ""
+msgstr "Inisiator Rahasia (Konfirmasi)"
 
 #: services/forms.py:309
 msgid "Secret does not match"
-msgstr ""
+msgstr "Rahasia tidak cocok"
 
 #: services/forms.py:324 services/forms.py:325
 msgid "The peer secret is required if you set a peer user."
-msgstr ""
+msgstr "Rahasia bersama diperlukan jika anda memilih pengguna bersama."
 
 #: services/forms.py:328
 msgid "The peer secret cannot be the same as user secret."
-msgstr ""
+msgstr "Rahasia bersama tidak bisa sama dengan rahasia pengguna."
 
 #: services/forms.py:344 services/forms.py:381 services/forms.py:495
 #: services/forms.py:525 services/forms.py:572 services/forms.py:675
 #: services/forms.py:697 services/forms.py:718 services/forms.py:763
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "Servis iSCSI gagal untuk memuat ulang."
 
 #: services/forms.py:373
 msgid "LUN already exists in the same target."
-msgstr ""
+msgstr "LUN telah ada di target yang sama."
 
 #: services/forms.py:384 services/models.py:352
 msgid "Controller Auth Group"
-msgstr ""
+msgstr "Pengontrol Grup"
 
 #: services/forms.py:385 services/models.py:353
+#, fuzzy
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
 msgstr ""
+"istgtcontrol dapat mengakses target denagn pengguna yang benar dan rahasia "
+"pada Pengontrol Grup spesifik."
 
 #: services/forms.py:386 services/models.py:246
 msgid "Discovery Auth Group"
@@ -1124,126 +1122,135 @@ msgstr ""
 #: services/forms.py:413
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr ""
+msgstr "Nilai ini harus diantara %(start)d dan %(end)d, inklusif."
 
 #: services/forms.py:421
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
+"Kolom ini di[erlukan jika metode discovery dipasang ke CHAP atau CHAP "
+"Mutual."
 
 #: services/forms.py:504 services/forms.py:534
 msgid "You need to specify a filepath, not a directory."
-msgstr ""
+msgstr "Anda harus menentukan path berkas, bukan direktori."
 
 #: services/forms.py:508 services/forms.py:538
 msgid "You need to specify a file inside your volume/dataset."
-msgstr ""
+msgstr "Anda perlu menentukan berkas dalam volume/dataset anda."
 
 #: services/forms.py:512 services/forms.py:542
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
-msgstr ""
+msgstr "Path anda harus ada dalam titik mount volume/dataset anda."
 
 #: services/forms.py:556
+#, fuzzy
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr ""
+"Nilia ini bisa dalam bentuk byte, atau dapat dibulatkan menjadi KB, MB, GB, "
+"TB"
 
 #: services/forms.py:577
 msgid "Disk device"
-msgstr ""
+msgstr "Perangkat cakram"
 
 #: services/forms.py:691
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr ""
+msgstr "ID Grup Portal anda tak dapat lebih besar daripada %d"
 
 #: services/forms.py:712
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr ""
+msgstr "ID Grup anda tak dapat lebih besar daripada %d"
 
 #: services/forms.py:721
 msgid "Authentication Group number"
-msgstr ""
+msgstr "Otentikasi nomor Grup"
 
 #: services/forms.py:766
 msgid "Delete underlying file"
-msgstr ""
+msgstr "Hapus berkas pokok"
 
 #: services/forms.py:788
 #, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] ""
+msgstr[0] "Alamat email %(email)s tidak valid"
 
 #: services/models.py:40
 msgid "Service"
-msgstr ""
+msgstr "Servis"
 
 #: services/models.py:41
 msgid "Name of Service, should be auto-generated at build time"
-msgstr ""
+msgstr "Nama Servis harusnya telah otomatis dibuat saat kompilasi"
 
 #: services/models.py:44
 msgid "Enable Service"
-msgstr ""
+msgstr "Hidupkan Servis"
 
 #: services/models.py:47 services/models.py:48 services/nav.py:5
 #: templates/menubar.html:28 templates/services/index.html:3
 msgid "Services"
-msgstr ""
+msgstr "Servis-servis"
 
 #: services/models.py:60
 msgid "Authentication Model"
-msgstr ""
+msgstr "Model Otentikasi"
 
 #: services/models.py:61
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
+"Menggunakan Direktori Aktif atau otentikasi LDAP akan mengganti pilihan ini"
 
 #: services/models.py:65
 msgid "NetBIOS name"
-msgstr ""
+msgstr "Nama NetBIOS"
 
 #: services/models.py:69
+#, fuzzy
 msgid "Workgroup"
-msgstr ""
+msgstr "Workgroup"
 
 #: services/models.py:70
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
+"Server Workgroup akan tampil ketika diminta oleh klien (maksimum 15 "
+"karakter)."
 
 #: services/models.py:76
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "Deskripsi Server. Dapat dikosongi."
 
 #: services/models.py:82
 msgid "DOS charset"
-msgstr ""
+msgstr "Set karakter DOS"
 
 #: services/models.py:88
 msgid "UNIX charset"
-msgstr ""
+msgstr "Set karakter UNIX"
 
 #: services/models.py:94
 msgid "Log level"
-msgstr ""
+msgstr "Tingkatan pencatatan"
 
 #: services/models.py:97
 msgid "Local Master"
-msgstr ""
+msgstr "Master Lokal"
 
 #: services/models.py:99
 msgid "Time Server for Domain"
-msgstr ""
+msgstr "Server Waktu untuk Domain"
 
 #: services/models.py:104 services/models.py:191
 msgid "Guest account"
-msgstr ""
+msgstr "Akun Tamu"
 
 #: services/models.py:105 services/models.py:192
 msgid ""
@@ -1253,93 +1260,106 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
+"Gunakan opsi ini untuk mengesampingkan nama pengguna ('nobody' secara "
+"default) yang akan digunakan untuk mengakses servis sebagai Tamu. Apapun "
+"haknya pengguna ini akan ada pada setiap klien yang terhubung pada servis "
+"Tamu. Pengguna ini harus asa pada berkas kata sandi, tetapi tidak perlu "
+"login. Pengguna root tidak dapat digunakan sebagai akun Tamu."
 
 #: services/models.py:108
 msgid "Allow guest access"
-msgstr ""
+msgstr "Izinkan akses Tamu"
 
 #: services/models.py:110
 msgid "Only allow guest access"
-msgstr ""
+msgstr "Hanya izinkan akses Tamu"
 
 #: services/models.py:113 services/models.py:848
+#, fuzzy
 msgid "File mask"
-msgstr ""
+msgstr "Masker berkas"
 
 #: services/models.py:115
+#, fuzzy
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
+"Gunakan opsi ini untuk mengesampingkan pembuatan masker berkas (0666 secara "
+"default)."
 
 #: services/models.py:119 services/models.py:854
+#, fuzzy
 msgid "Directory mask"
-msgstr ""
+msgstr "Masker Direktori"
 
 #: services/models.py:121
+#, fuzzy
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
+"Gunakan opsi ini untuk mengesampinkan pembuatan masker direktori (0777 "
+"secara default)."
 
 #: services/models.py:124
 msgid "Large RW support"
-msgstr ""
+msgstr "Dukungan baca/tulis yang besar"
 
 #: services/models.py:126
 msgid "Send files with sendfile(2)"
-msgstr ""
+msgstr "Kirim berkas dengan sendfile(2)"
 
 #: services/models.py:128
 msgid "EA Support"
-msgstr ""
+msgstr "Dukungan atribut diperpanjang"
 
 #: services/models.py:130
 msgid "Support DOS File Attributes"
-msgstr ""
+msgstr "Dukungan atribut berkas DOS"
 
 #: services/models.py:132
 msgid "Allow Empty Password"
-msgstr ""
+msgstr "Izinkan kata sandi kosong"
 
 #: services/models.py:135 services/models.py:694 services/models.py:728
 #: services/models.py:760 services/models.py:906 services/models.py:1162
 #: services/models.py:1225
 msgid "Auxiliary parameters"
-msgstr ""
+msgstr "Parameter tambahan"
 
 #: services/models.py:137
 msgid "These parameters are added to [Global] section of smb.conf"
-msgstr ""
+msgstr "Parameter tersebut ditambahkan ke bagian [Global] dari smb.conf"
 
 #: services/models.py:140
 msgid "Enable home directories"
-msgstr ""
+msgstr "Nyalakan direktori home"
 
 #: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
-msgstr ""
+msgstr "Menyalakan/mematikan direktori home untuk pengguna samba"
 
 #: services/models.py:144
 msgid "Enable home directories browsing"
-msgstr ""
+msgstr "Nyalakan penjelajahan direktori rumah"
 
 #: services/models.py:145
 msgid "This enables\\disables home directories browsing for samba user."
-msgstr ""
+msgstr "Menyalakan/mematikan penjelajahan direktori home untuk pengguna samba."
 
 #: services/models.py:149
 msgid "Home directories"
-msgstr ""
+msgstr "Direktori home"
 
 #: services/models.py:153
 msgid "Enable AIO"
-msgstr ""
+msgstr "Nyalakan AIO"
 
 #: services/models.py:154
 msgid "This enables\\disables AIO support."
-msgstr ""
+msgstr "Menyalakan/mematikan dukungan AIO."
 
 #: services/models.py:158
 msgid "Minimal AIO read size"
-msgstr ""
+msgstr "Ukuran pembacaan AIO minimal"
 
 #: services/models.py:159
 msgid ""
@@ -1349,92 +1369,104 @@ msgstr ""
 
 #: services/models.py:164
 msgid "Minimal AIO write size"
-msgstr ""
+msgstr "Ukuran penulisan AIO minimal"
 
 #: services/models.py:165
 msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
 msgstr ""
+"Samba akan menulis secara asynchronous jika ukuran yang diminta lebih besar "
+"daripada nilai berikut. Ukuran tulis asal adalah 1."
 
 #: services/models.py:170 services/models.py:171
 #: templates/services/index.html:29
 msgid "CIFS"
-msgstr ""
+msgstr "CIFS"
 
 #: services/models.py:180
 msgid "Server Name"
-msgstr ""
+msgstr "Nama Server"
 
 #: services/models.py:181
+#, fuzzy
 msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
-msgstr ""
+msgstr "Nama Server. Jika kolom ini kosong, server asal yang digunakan."
 
 #: services/models.py:184
 msgid "Guest Access"
-msgstr ""
+msgstr "Akses Tamu"
 
 #: services/models.py:185
+#, fuzzy
 msgid "Allows guest access to all apple shares on this box."
-msgstr ""
+msgstr "Izinkan akses Tamu ke semua Apple share di kotak ini."
 
 #: services/models.py:195
 msgid "Local Access"
-msgstr ""
+msgstr "Akses Lokal"
 
 #: services/models.py:196
+#, fuzzy
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
+"Izinkan pengguna dengan akun lokal untuk mengakses Apple share di kotak ini."
 
 #: services/models.py:199
 msgid "Enable DDP"
-msgstr ""
+msgstr "Nyalakan DDP"
 
 #: services/models.py:200
 msgid "Enables DDP support for low-level appletalk access."
-msgstr ""
+msgstr "Nyalakan dukungan DDP untuk akses AppleTalk tingkat rendah."
 
 #: services/models.py:204 services/models.py:205
 #: templates/services/index.html:7
 msgid "AFP"
-msgstr ""
+msgstr "AFP"
 
 #: services/models.py:214
 msgid "Number of servers"
-msgstr ""
+msgstr "Jumlah server"
 
 #: services/models.py:215
 msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
 msgstr ""
+"Tentukan berapa banyak server yang dibuat. Harus ada cukup untuk menangani "
+"konkurensi tingkat maksimum dari klien, biasanya 4-6."
 
 #: services/models.py:219
 msgid "Asynchronous mode"
-msgstr ""
+msgstr "Mode Asynchronous"
 
 #: services/models.py:220
 msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
+"Nyalakan mode asynchronous, yang akan membantu performa diluar kecepatan "
+"jaringan gigabit."
 
 #: services/models.py:225 services/models.py:226
 #: templates/services/index.html:75
 msgid "NFS"
-msgstr ""
+msgstr "NFS"
 
 #: services/models.py:235
 msgid "Base Name"
-msgstr ""
+msgstr "Nama Dasar"
 
 #: services/models.py:236
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"Nama dasar (e.g. iqn.2007-09.jp.ne.peach.istgt, lihatRFC 3720 dan 3721untuk "
+"detail) akan ditambahkan ke nama target yang tidak diawali dengan 'iqn.'"
 
 #: services/models.py:242
 msgid "Discovery Auth Method"
@@ -1442,53 +1474,57 @@ msgstr ""
 
 #: services/models.py:253
 msgid "I/O Timeout"
-msgstr ""
+msgstr "I/O Timeout"
 
 #: services/models.py:254
 msgid "I/O timeout in seconds (30 by default)."
-msgstr ""
+msgstr "Waktu tenggang I/O dalam detik (30 secara default)."
 
 #: services/models.py:259
 msgid "NOPIN Interval"
-msgstr ""
+msgstr "Interval NOPIN"
 
 #: services/models.py:260
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr ""
+msgstr "Interval pengiriman NOPIN dalam detik (20 secara default)."
 
 #: services/models.py:265
 msgid "Max. sessions"
-msgstr ""
+msgstr "Sesi maksimum"
 
 #: services/models.py:266
 msgid "Maximum number of sessions holding at same time (16 by default)."
 msgstr ""
+"Jumlah maksimum dari sesi yang dipakai pada waktu yang bersamaan (16 secara "
+"default)."
 
 #: services/models.py:271
 msgid "Max. connections"
-msgstr ""
+msgstr "Koneksi maksimum"
 
 #: services/models.py:272
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "Jumlah maksimum dari koneksi di setiap sesi (8 secara default)."
 
 #: services/models.py:277
 msgid "Max. pre-send R2T"
-msgstr ""
+msgstr "R2T pra-kirim maksimal"
 
 #: services/models.py:278
 msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
 msgstr ""
+"Jumlah maksimum dari R2T pra-kirim dalam setiap koneksi (32 secara default). "
+"Jumlah aktual terbatas pada kedalaman antrean pada target."
 
 #: services/models.py:283
 msgid "MaxOutstandingR2T"
-msgstr ""
+msgstr "MaxOutstandingR2T"
 
 #: services/models.py:284
 msgid "iSCSI initial parameter (16 by default)."
-msgstr ""
+msgstr "Parameter inisial iSCSI (16 secara default)."
 
 #: services/models.py:289
 msgid "First burst length"
@@ -1496,7 +1532,7 @@ msgstr ""
 
 #: services/models.py:290
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr ""
+msgstr "Parameter inisial iSCSI (65536 secara default)."
 
 #: services/models.py:295
 msgid "Max burst length"
@@ -1504,102 +1540,109 @@ msgstr ""
 
 #: services/models.py:296 services/models.py:302
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr ""
+msgstr "Parameter inisial iSCSI (262144 secara default)."
 
 #: services/models.py:301
 msgid "Max receive data segment length"
-msgstr ""
+msgstr "Panjang maksimal segmen data yang diterima"
 
 #: services/models.py:307
 msgid "DefaultTime2Wait"
-msgstr ""
+msgstr "DefaultTime2Wait"
 
 #: services/models.py:308
 msgid "iSCSI initial parameter (2 by default)."
-msgstr ""
+msgstr "Parameter inisial iSCSI (2 secara default)."
 
 #: services/models.py:313
 msgid "DefaultTime2Retain"
-msgstr ""
+msgstr "DefaultTime2Retain"
 
 #: services/models.py:314
 msgid "iSCSI initial parameter (60 by default)."
-msgstr ""
+msgstr "Parameter inisial iSCSI (60 secara default)."
 
 #: services/models.py:319
 msgid "Enable LUC"
-msgstr ""
+msgstr "Nyalakan LUC"
 
 #: services/models.py:323
 msgid "Controller IP address"
-msgstr ""
+msgstr "Alamat IP pengontrol"
 
 #: services/models.py:324
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
 msgstr ""
+"Alamat IP Pengontrol Unit Logikal (127.0.0.1 (localhost) secara default)"
 
 #: services/models.py:330
 msgid "Controller TCP port"
-msgstr ""
+msgstr "Port TCP pengontrol"
 
 #: services/models.py:331
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr ""
+msgstr "Port TCP Pengontrol Unit Logikal (3261 secara default)"
 
 #: services/models.py:337
 msgid "Controller Authorized netmask"
-msgstr ""
+msgstr "Netmask Pengontrol yang berwenang"
 
 #: services/models.py:339
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
 msgstr ""
+"Netmask pengontrol berwenang dari unit logikal (255.255.255.0 secara "
+"default)"
 
 #: services/models.py:346
 msgid "Controller Auth Method"
-msgstr ""
+msgstr "Metode Otentikasi Pengontrol"
 
 #: services/models.py:347
 msgid "The method can be accepted in the controller."
-msgstr ""
+msgstr "Metode dapat diterima oleh pengontrol"
 
 #: services/models.py:359 services/models.py:360
 #: templates/services/iscsi.html:3
 msgid "Target Global Configuration"
-msgstr ""
+msgstr "Konfigurasi Target Global"
 
 #: services/models.py:371
 msgid "Extent Name"
-msgstr ""
+msgstr "Nama Ekstensi"
 
 #: services/models.py:372
 msgid "String identifier of the extent."
-msgstr ""
+msgstr "Identifikasi string dari ekstensi."
 
 #: services/models.py:376
 msgid "Extent Type"
-msgstr ""
+msgstr "Tipe Ekstensi"
 
 #: services/models.py:377
 msgid "Type used as extent."
-msgstr ""
+msgstr "Tipe yang digunakan sebagai ekstensi."
 
 #: services/models.py:382
 msgid "Path to the extent"
-msgstr ""
+msgstr "Path ekstensi"
 
 #: services/models.py:383
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
 msgstr ""
+"Path berkas (e.g. /mny/sharename/extent/extent0) yang digunakan sebagai "
+"ekstensi."
 
 #: services/models.py:388
 msgid "Extent size"
-msgstr ""
+msgstr "Ukuran ekstensi"
 
 #: services/models.py:389
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
+"Ukuran ekstensi, 0 berarti otomatis, angka biasa berarti byte, atau ditambah "
+"akhiran KB, MB, TB untuk mudahnya."
 
 #: services/models.py:394 services/models.py:443 services/models.py:489
 #: services/models.py:1182 sharing/models.py:45 sharing/models.py:223
@@ -1608,24 +1651,24 @@ msgstr ""
 #: templates/sharing/apple.html:14 templates/sharing/unix.html:14
 #: templates/sharing/windows.html:14
 msgid "Comment"
-msgstr ""
+msgstr "Komentar"
 
 #: services/models.py:395 services/models.py:444 services/models.py:490
 msgid "You may enter a description here for your reference."
-msgstr ""
+msgstr "Anda bisa memasukkan sebuah deskripsi disini untuk referensi."
 
 #: services/models.py:398 services/models.py:647
 #: templates/services/iscsi_assoctargets.html:6
 msgid "Extent"
-msgstr ""
+msgstr "Ekstensi"
 
 #: services/models.py:432 services/models.py:588
 msgid "Portal Group ID"
-msgstr ""
+msgstr "ID Grup Portal"
 
 #: services/models.py:437 services/models.py:447
 msgid "Portal"
-msgstr ""
+msgstr "Portal"
 
 #: services/models.py:438
 msgid ""
@@ -1634,66 +1677,76 @@ msgid ""
 "port number. For any IPs (wildcard address), use '0.0.0.0:3260' and/or "
 "'[::]:3260'. Do not mix wildcard and other IPs at same address family."
 msgstr ""
+"Portal mengambil bentuk dari 'alamat:port'. Contohnya '192.168.1.1:3260' "
+"untuk IPv4, '[2001:db8:1:1::1]:3260' untuk IPv6. Port 3260 adalah nomor port "
+"iSCSI standart. Untuk sembarang IP (alamat wildcard), gunakan "
+"'0.0.0.0:3260' dan/atau '[::]:3260'. Jangan campur wildcard dan IP yang lain "
+"pada keluarga alamat yang sama."
 
 #: services/models.py:476 templates/services/iscsi_authini.html:6
 msgid "Initiators"
-msgstr ""
+msgstr "Inisiator"
 
 #: services/models.py:478
 msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr ""
+"Inisiator berwenang untuk mengakses target iSCSI. Dibutuhkan sebuah nama "
+"atau 'ALL' untuk sembarang inisiator."
 
 #: services/models.py:482
 msgid "Authorized network"
-msgstr ""
+msgstr "Jaringan yang berwenang"
 
 #: services/models.py:484
 msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
+"Jaringan berwenang untuk mengakses target iSCSI. Dibutuhkan alamat IP atau "
+"CIDR atau 'ALL' untuk sembarang IP."
 
 #: services/models.py:493
 msgid "Initiator"
-msgstr ""
+msgstr "Inisiator"
 
 #: services/models.py:522
 msgid "Target side user name. It is usually the initiator name by default."
-msgstr ""
+msgstr "Nama pengguna target samping. Biasanya nama inisiator secara default."
 
 #: services/models.py:532
 msgid "Peer User"
-msgstr ""
+msgstr "Rekan Pengguna"
 
 #: services/models.py:537 templates/services/iscsi_auth.html:9
 msgid "Peer Secret"
-msgstr ""
+msgstr "Rahasia Rekan"
 
 #: services/models.py:541
 msgid "Authorized Access"
-msgstr ""
+msgstr "Akses Berwenang"
 
 #: services/models.py:542
 msgid "Authorized Accesses"
-msgstr ""
+msgstr "Akses-akses Berwenang"
 
 #: services/models.py:557
 msgid "Target Name"
-msgstr ""
+msgstr "Nama Target"
 
 #: services/models.py:558
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
 msgstr ""
+"Nama Induk akan ditambahkan secara otomatis ketika dimulai tanpa 'iqn.'."
 
 #: services/models.py:565
 msgid "Target Alias"
-msgstr ""
+msgstr "Alias Target"
 
 #: services/models.py:566
 msgid "Optional user-friendly string of the target."
-msgstr ""
+msgstr "Target string opsional pengguna"
 
 #: services/models.py:569 storage/views.py:157
 msgid "Serial"
@@ -1707,53 +1760,59 @@ msgstr ""
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7
 msgid "Type"
-msgstr ""
+msgstr "Tipe"
 
 #: services/models.py:578
 msgid "Logical Unit Type mapped to LUN."
-msgstr ""
+msgstr "Tipe Unit Logikal dijabarkan pada LUN."
 
 #: services/models.py:584
 msgid "Target Flags"
-msgstr ""
+msgstr "Isyarat Target"
 
 #: services/models.py:592
 msgid "Initiator Group ID"
-msgstr ""
+msgstr "ID Grup Inisiator"
 
 #: services/models.py:598 services/models.py:610
 msgid "Auth Method"
-msgstr ""
+msgstr "Metode Otentikasi"
 
 #: services/models.py:599 services/models.py:611
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
 msgstr ""
+"Metode dapat diterima oleh target. Otomatis berarti baik tanpa dan dengan "
+"otentikasi."
 
 #: services/models.py:603
 msgid "Authentication Group ID"
-msgstr ""
+msgstr "Otentikasi ID Grup"
 
 #: services/models.py:616
 msgid "Queue Depth"
-msgstr ""
+msgstr "Kedalaman Antrean"
 
 #: services/models.py:617
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
 msgstr ""
+"0=dimatikan, 1-255=menyalakan perintah antrean dengan kepadalaman spesifik. "
+"Kedalaman antrean yang disarankan adalah 32."
 
 #: services/models.py:622
 msgid "Logical Block Size"
-msgstr ""
+msgstr "Ukuran Blok Logikal"
 
 #: services/models.py:623
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
 msgstr ""
+"Anda dapat menentukan panjang blok logikal (512 secara default). Panjang "
+"yang disarankan untuk kompatibilitas adalah 512."
 
 #: services/models.py:626 services/models.py:641
 #: templates/services/iscsi_assoctargets.html:5
@@ -1761,15 +1820,15 @@ msgstr ""
 #: templates/services/iscsi_extents.html:5
 #: templates/services/iscsi_targets.html:5
 msgid "Target"
-msgstr ""
+msgstr "Target"
 
 #: services/models.py:642
 msgid "Target this extent belongs to"
-msgstr ""
+msgstr "Target yang termasuk dalam ekstensi"
 
 #: services/models.py:650
 msgid "Target / Extent"
-msgstr ""
+msgstr "Target / Ekstensi"
 
 #: services/models.py:651
 msgid "Targets / Extents"
@@ -1777,99 +1836,108 @@ msgstr ""
 
 #: services/models.py:666
 msgid "Provider"
-msgstr ""
+msgstr "Penyedia"
 
 #: services/models.py:670
 msgid "Domain name"
-msgstr ""
+msgstr "Nama domain"
 
 #: services/models.py:672
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
 msgstr ""
+"Alias dari nama host. Opsi ini dapat muncul berkali-kali, untuk setiap "
+"domain yang memiliki IP sama. Gunakan spasi untuk menyekat beberapa nama "
+"alias."
 
 #: services/models.py:684
 msgid "Update period"
-msgstr ""
+msgstr "Periode pembaharuan"
 
 #: services/models.py:686
 msgid "Time in milliseconds"
-msgstr ""
+msgstr "Waktu dalam milidetik"
 
 #: services/models.py:690
 msgid "Forced update period"
-msgstr ""
+msgstr "Periode pembaharuan paksa"
 
 #: services/models.py:696 services/models.py:730 services/models.py:762
 msgid "These parameters will be added to global settings in inadyn.conf."
 msgstr ""
+"Parameten tersebut akan ditambahkan ke pengaturan global di inadyn.conf."
 
 #: services/models.py:700 services/models.py:701
 #: templates/services/index.html:40
 msgid "Dynamic DNS"
-msgstr ""
+msgstr "DNS Dinamis"
 
 #: services/models.py:710
 msgid "Location"
-msgstr ""
+msgstr "Lokasi"
 
 #: services/models.py:712
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
+"Informasi lokasi, e.g. lokasi fisik dari sistim: 'Lantai bangunan, Ruangan "
+"xyzzy'."
 
 #: services/models.py:716
 msgid "Contact"
-msgstr ""
+msgstr "Kontak"
 
 #: services/models.py:718
 msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
+"Informasi kontan, e.g. nama atau email dari orang yang bertanggungjawab atas "
+"sistim ini: 'admin@email.address'."
 
 #: services/models.py:722
 msgid "Community"
-msgstr ""
+msgstr "Komunitas"
 
 #: services/models.py:723
 msgid "In most cases, 'public' is used here."
-msgstr ""
+msgstr "Di banyak kasus, 'public' digunakan disini."
 
 #: services/models.py:726
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "Kirim Perangkap SNMP"
 
 #: services/models.py:734 services/models.py:735
 #: templates/services/index.html:97
 msgid "SNMP"
-msgstr ""
+msgstr "SNMP"
 
 #: services/models.py:744 storage/models.py:91
 msgid "Identifier"
-msgstr ""
+msgstr "Pengenal"
 
 #: services/models.py:745
 msgid "This name is used to uniquely identify your UPS on this system."
 msgstr ""
+"Nama ini digunakan sebagai tanda pengenal unik untuk UPS di sisteim ini."
 
 #: services/models.py:749
 msgid "Driver"
-msgstr ""
+msgstr "Driver"
 
 #: services/models.py:751
 msgid "The driver used to communicate with your UPS."
-msgstr ""
+msgstr "Driver digunakan untuk berkomunikasi dengan UPS anda."
 
 #: services/models.py:755 services/models.py:807 services/models.py:929
 msgid "Port"
-msgstr ""
+msgstr "Port"
 
 #: services/models.py:757
 msgid "The serial or USB port where your UPS is connected."
-msgstr ""
+msgstr "Port serial atau USB dimana UPS anda terhubung."
 
 #: services/models.py:773
 msgid "Shutdown mode"
@@ -2581,7 +2649,7 @@ msgstr ""
 
 #: sharing/models.py:64
 msgid "Guest Account"
-msgstr ""
+msgstr "Akun Tamu"
 
 #: sharing/models.py:65
 msgid ""
@@ -2591,6 +2659,11 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
+"Gunakan opsi ini untuk mengesampingkan nama pengguna ('ftp') dimana yang "
+"akan digunakan untuk mengakses servis sebagai Tamu. Hak apapun pengguna ini "
+"akan tersedia untuk setiap klien yang terhubung pada Servis Tamu. Pengguna "
+"ini harus asa pada berkas kata sandi, tetapi tidak memerlukan login yang "
+"valid."
 
 #: sharing/models.py:68
 msgid "Allow Guest Access"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-15 12:42+0200\n"
+"PO-Revision-Date: 2011-06-17 13:36+0200\n"
 "Last-Translator: Christian <christian@junker.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
@@ -257,7 +257,7 @@ msgstr ""
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "Klienten ser små bogstaver, serveren ser små bogstaver"
 
 #: choices.py:193
 msgid "Client sees lowercase, server sees uppercase"
@@ -611,7 +611,7 @@ msgstr "Hjemmemappe"
 
 #: account/models.py:109
 msgid "Full Name"
-msgstr "Fuldt navn"
+msgstr "Fulde navn"
 
 #: account/models.py:115 templates/account/bsdusers.html:91
 msgid "E-mail"

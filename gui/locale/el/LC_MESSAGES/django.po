@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-05-24 16:17+0200\n"
-"Last-Translator: Bth <oti_nane@hotmail.com>\n"
+"PO-Revision-Date: 2011-06-18 09:15+0200\n"
+"Last-Translator: athkoub <athkoub@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: choices.py:35
 msgid "Plain"
-msgstr "σαφής"
+msgstr "Βασικό"
 
 #: choices.py:36 system/models.py:234 templates/system/settings.html:9
 msgid "SSL"

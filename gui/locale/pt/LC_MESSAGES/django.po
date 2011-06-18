@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-16 22:08+0200\n"
+"PO-Revision-Date: 2011-06-17 17:29+0200\n"
 "Last-Translator: iMiguel <miguel.rosa17@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
@@ -3220,7 +3220,7 @@ msgstr ""
 #: storage/forms.py:635 storage/forms.py:687 storage/forms.py:744
 #: storage/forms.py:785
 msgid "Compression level"
-msgstr ""
+msgstr "Nível de compressão"
 
 #: storage/forms.py:636 storage/forms.py:688 storage/forms.py:745
 msgid "Enable atime"

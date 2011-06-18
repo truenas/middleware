@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-17 04:36+0200\n"
-"Last-Translator: mchong <mchong@gmail.com>\n"
+"PO-Revision-Date: 2011-06-18 09:17+0200\n"
+"Last-Translator: xiangzhou <xiangzhou@cloudshinee.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -44,19 +44,19 @@ msgstr "自动"
 
 #: choices.py:49
 msgid "PIO0"
-msgstr "PIO0"
+msgstr "PIO模式0"
 
 #: choices.py:50
 msgid "PIO1"
-msgstr "PIO1"
+msgstr "PIO模式1"
 
 #: choices.py:51
 msgid "PIO2"
-msgstr "PIO2"
+msgstr "PIO模式2"
 
 #: choices.py:52
 msgid "PIO3"
-msgstr "PIO3"
+msgstr "PIO模式3"
 
 #: choices.py:53
 msgid "PIO4"
@@ -409,43 +409,43 @@ msgstr "读写"
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes)s 分钟"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour)s 小时"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hour)s 小时"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day)s 天"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week)s 周"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "从不 - 检查设备不论其电源处于何种模式"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "休眠 - 检查设备，除非正处于休眠模式"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
+msgstr "待机 - 检查设备，除非它正处于休眠或者待机模式"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
-msgstr ""
+msgstr "空闲 - 检查设备，除非它正处于休眠、待机或者空闲模式"
 
 #: choices.py:467
 msgid "Long Self-Test"
@@ -457,11 +457,11 @@ msgstr "短自检"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "传输过程自我测试（仅仅支持ATA)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "离线后立即测试（仅仅支持ATA硬盘）"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -689,9 +689,8 @@ msgid "The group %s is not valid."
 msgstr ""
 
 #: freeadmin/forms.py:138
-#, fuzzy
 msgid "The path must reside within a volume mount point"
-msgstr "指定的 extent 路径必须在分区/数据集挂点之下。"
+msgstr "指定的 extent 路径必须在分区/数据集挂点之下"
 
 #: freeadmin/navtree.py:315
 #, python-format
@@ -922,8 +921,9 @@ msgid "Link Aggregation"
 msgstr "链接聚合"
 
 #: network/models.py:265 network/nav.py:53
+#, fuzzy
 msgid "Link Aggregations"
-msgstr "链接聚合"
+msgstr "链路聚合"
 
 #: network/models.py:274
 msgid "Destination network"
@@ -951,11 +951,12 @@ msgstr "网络概况"
 
 #: network/nav.py:30
 msgid "Create Link Aggregation"
-msgstr "创建链接聚合"
+msgstr "创建链路聚合"
 
 #: network/nav.py:41
+#, fuzzy
 msgid "View All Link Aggregations"
-msgstr "查看所有链接聚合"
+msgstr "查看所有链路聚合"
 
 #: network/views.py:180
 msgid "LAGG successfully added"
@@ -1224,7 +1225,7 @@ msgstr "日志等级"
 
 #: services/models.py:97
 msgid "Local Master"
-msgstr "本地管理员"
+msgstr "LMB本地主浏览服务器"
 
 #: services/models.py:99
 msgid "Time Server for Domain"
@@ -1316,7 +1317,7 @@ msgstr "启用主目录浏览"
 
 #: services/models.py:145
 msgid "This enables\\disables home directories browsing for samba user."
-msgstr "这个选项启用用户对应的主目录"
+msgstr "是否允许浏览SAMBA用户的主目录"
 
 #: services/models.py:149
 msgid "Home directories"
@@ -1521,7 +1522,7 @@ msgstr ""
 
 #: services/models.py:319
 msgid "Enable LUC"
-msgstr ""
+msgstr "启用LUC"
 
 #: services/models.py:323
 msgid "Controller IP address"
@@ -1744,7 +1745,7 @@ msgstr ""
 
 #: services/models.py:622
 msgid "Logical Block Size"
-msgstr ""
+msgstr "逻辑块大小"
 
 #: services/models.py:623
 msgid ""
@@ -3356,23 +3357,20 @@ msgid "Unknown"
 msgstr "未知"
 
 #: storage/views.py:283
-#, fuzzy
 msgid "Dataset successfully added."
-msgstr "%s 成功删除"
+msgstr "成功删除数据集。"
 
 #: storage/views.py:318
-#, fuzzy
 msgid "Dataset successfully edited."
-msgstr "%s 成功删除"
+msgstr "成功删除数据集。"
 
 #: storage/views.py:320 storage/views.py:396
 msgid "Some error ocurried while setting the options"
 msgstr ""
 
 #: storage/views.py:342
-#, fuzzy
 msgid "ZFS Volume successfully added."
-msgstr "%s 成功删除"
+msgstr "成功添加ZFS卷。"
 
 #: storage/views.py:356
 msgid "This is in use by the iscsi target, please remove it there first."
@@ -3383,19 +3381,16 @@ msgid "ZFS Volume successfully destroyed."
 msgstr "ZFS卷成功删除"
 
 #: storage/views.py:394
-#, fuzzy
 msgid "Native dataset successfully edited."
-msgstr "%s 成功删除"
+msgstr "成功删除本地数据集。"
 
 #: storage/views.py:410
-#, fuzzy
 msgid "Mount Point permissions successfully updated."
-msgstr "%s 更新成功"
+msgstr "成功更新挂载点权限"
 
 #: storage/views.py:425
-#, fuzzy
 msgid "Dataset successfully destroyed."
-msgstr "%s 成功删除"
+msgstr "成功删除数据集"
 
 #: storage/views.py:439
 msgid "Snapshot successfully deleted."
@@ -3410,14 +3405,12 @@ msgid "Snapshot successfully added."
 msgstr "快照添加成功"
 
 #: storage/views.py:483
-#, fuzzy
 msgid "Snapshot successfully taken."
-msgstr "%s 成功删除"
+msgstr "成功取得快照。"
 
 #: storage/views.py:498
-#, fuzzy
 msgid "Snapshot successfully cloned."
-msgstr "%s 成功删除"
+msgstr "成功克隆快照。"
 
 #: storage/views.py:549
 msgid "Disk replacement has been initiated."
@@ -3437,9 +3430,8 @@ msgid "The volume failed to export"
 msgstr "重启服务失败。"
 
 #: storage/views.py:591
-#, fuzzy
 msgid "The volume has been successfully exported"
-msgstr "%s 成功删除"
+msgstr "卷被成功输出"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
@@ -3762,9 +3754,9 @@ msgid "Every %s hour(s)"
 msgstr ""
 
 #: system/models.py:304 system/models.py:459
-#, fuzzy, python-format
+#, python-format
 msgid "Every %s days"
-msgstr "每日"
+msgstr "每%s日"
 
 #: system/models.py:311 system/models.py:466
 msgid "Every month"
@@ -4089,9 +4081,8 @@ msgid "Yes"
 msgstr "是"
 
 #: templates/freeadmin/generic_model_delete_ok.html:1
-#, fuzzy
 msgid "successfully deleted"
-msgstr "%s 成功删除"
+msgstr "成功删除"
 
 #: templates/freeadmin/generic_model_edit.html:5
 msgid "Your changes have been successfully updated!"
