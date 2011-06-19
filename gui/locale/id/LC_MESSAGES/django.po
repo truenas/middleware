@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-18 10:59+0200\n"
+"PO-Revision-Date: 2011-06-18 13:46+0200\n"
 "Last-Translator: Rully <paradoxnazi@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: id\n"
@@ -691,7 +691,7 @@ msgstr "Pengguna %s tidak valid."
 #: freeadmin/forms.py:124
 #, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr "Grup %s tidak valid."
 
 #: freeadmin/forms.py:138
 msgid "The path must reside within a volume mount point"
@@ -1750,11 +1750,11 @@ msgstr "Target string opsional pengguna"
 
 #: services/models.py:569 storage/views.py:157
 msgid "Serial"
-msgstr ""
+msgstr "Nomor seri"
 
 #: services/models.py:572
 msgid "Serial number for the logical unit"
-msgstr ""
+msgstr "Nomor seri untuk unit logikal"
 
 #: services/models.py:577 storage/models.py:74 system/models.py:498
 #: templates/services/iscsi_extents.html:6
@@ -1832,7 +1832,7 @@ msgstr "Target / Ekstensi"
 
 #: services/models.py:651
 msgid "Targets / Extents"
-msgstr ""
+msgstr "Target / Ekstensi"
 
 #: services/models.py:666
 msgid "Provider"
@@ -1941,87 +1941,92 @@ msgstr "Port serial atau USB dimana UPS anda terhubung."
 
 #: services/models.py:773
 msgid "Shutdown mode"
-msgstr ""
+msgstr "Modus mati"
 
 #: services/models.py:777
 msgid "Shutdown timer"
-msgstr ""
+msgstr "Pengatur waktu mati"
 
 #: services/models.py:778
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
 msgstr ""
+"Waktu dalam detik sampai proses pematian dimulai. Jika UPS menyala lagi "
+"sebelum waktu habis, maka pematian dibatalkan."
 
 #: services/models.py:781
 msgid "Remote Monitor"
-msgstr ""
+msgstr "Monitor jarak jauh"
 
 #: services/models.py:783
 msgid "Send Email Status Updates"
-msgstr ""
+msgstr "Kirim email pembaharuan status"
 
 #: services/models.py:786 services/models.py:792
 msgid "To email"
-msgstr ""
+msgstr "Ke email"
 
 #: services/models.py:788
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr ""
+msgstr "Alamat tujuan email. Pisahkan alamat email dengan titik koma."
 
 #: services/models.py:793
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
+"Subjek email. Anda bisa menggunakan parameter berikut untuk pengganti:<br "
+"/><ul><li>%d - Tanggal</li><li>%h - Nama host</li></ul>"
 
 #: services/models.py:797 services/models.py:798
 msgid "UPS"
-msgstr ""
+msgstr "UPS"
 
 #: services/models.py:808
 msgid "Port to bind FTP server."
-msgstr ""
+msgstr "Port untuk mengikat server FTP"
 
 #: services/models.py:812
 msgid "Clients"
-msgstr ""
+msgstr "Klien-klien"
 
 #: services/models.py:813
 msgid "Maximum number of simultaneous clients."
-msgstr ""
+msgstr "Jumlah maksimal klien-klien secara bersamaan."
 
 #: services/models.py:817
 msgid "Connections"
-msgstr ""
+msgstr "Koneksi-koneksi"
 
 #: services/models.py:818
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
+msgstr "Jumlah maksimal koneksi per alamat IP (0 = tak terbatas)."
 
 #: services/models.py:822
 msgid "Login Attempts"
-msgstr ""
+msgstr "Kesempatan login"
 
 #: services/models.py:823
 msgid "Maximum number of allowed password attempts before disconnection."
 msgstr ""
+"Jumlah kesempatan maksimum dari kata sandi yang diizinkan sebelum terputus."
 
 #: services/models.py:827
 msgid "Timeout"
-msgstr ""
+msgstr "Waktu tenggang"
 
 #: services/models.py:828
 msgid "Maximum idle time in seconds."
-msgstr ""
+msgstr "Waktu nganggur maksimal dalam detik."
 
 #: services/models.py:831
 msgid "Allow Root Login"
-msgstr ""
+msgstr "Izinkan Login Root"
 
 #: services/models.py:833
 msgid "Allow Anonymous Login"
-msgstr ""
+msgstr "Izinkan Login Anonim"
 
 #: services/models.py:836 services/models.py:1185 sharing/models.py:49
 #: sharing/models.py:113 sharing/models.py:227 system/models.py:337
@@ -2029,43 +2034,47 @@ msgstr ""
 #: templates/services/iscsi_extents.html:7 templates/services/rsyncmod.html:7
 #: templates/sharing/windows.html:15 templates/storage/volumes.html:71
 msgid "Path"
-msgstr ""
+msgstr "Path"
 
 #: services/models.py:838
 msgid "Allow Local User Login"
-msgstr ""
+msgstr "Izinkan Login Pengguna Lokal"
 
 #: services/models.py:841
 msgid "Banner"
-msgstr ""
+msgstr "Spanduk"
 
 #: services/models.py:843
 msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr ""
+msgstr "Spanduk penyambut ditampilkan oleh FTP ketika koneksi pertama kali."
 
 #: services/models.py:849 services/models.py:855
+#, fuzzy
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr ""
+"Gunakan opsi ini untuk mengesampingkan pembuatan masker file (077 secara "
+"default)"
 
 #: services/models.py:858
 msgid "Enable FXP"
-msgstr ""
+msgstr "Nyalakan FXP"
 
 #: services/models.py:860
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "Izinkan Pelanjutan Transfer"
 
+# Diterjemahkan dari Bahasa Prancis.
 #: services/models.py:862
 msgid "Always Chroot"
-msgstr ""
+msgstr "Terbatas ke direktori"
 
 #: services/models.py:864
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "Diperlukan Otentikasi IDENT"
 
 #: services/models.py:866
 msgid "Require Reverse DNS for IP"
-msgstr ""
+msgstr "Diperlukan Pembalikan DNS untuk IP"
 
 #: services/models.py:868
 msgid "Masquerade address"
@@ -2077,20 +2086,25 @@ msgid ""
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
+"Karena server menampilkan informasi jaringan untuk alamat IP spesifik ke "
+"klien, dalam asumsi bahwa alamat IP atau host DNS tersebut berperan sebagai "
+"gateway NAT atau port pelanjut untuk server."
 
 #: services/models.py:874
 msgid "Minimum passive port"
-msgstr ""
+msgstr "Port pasif minimum"
 
 #: services/models.py:875
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
 msgstr ""
+"Port minimum yang dialokasikan untuk model koneksi data PASV (0 = gunakan "
+"sembarang port)."
 
 #: services/models.py:879
 msgid "Maximum passive port"
-msgstr ""
+msgstr "Port pasif maksumum"
 
 #: services/models.py:880
 msgid ""
@@ -2103,349 +2117,382 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
+"Port maksimum yang dialokasikan untuk model koneksi data PASV (0 = gunakan "
+"sembarang port). Port pasif membatasi jangkauan port dari server yang akan "
+"memilih ketika mengirim perintah PASV dari klien. Server akan secara acak "
+"memilih nomor dari jangkauan yang ditentukan hingga port yang terbuka "
+"ditemukan. Jangkauan port yang dipilih harus tidak dalam jangkauan yang "
+"berhak (eg. lebih besar atau sama dengan 1024). Sangat disarankan ketika "
+"memilih jangkauan yang besar untuk melayani koneksi pasih secara bersamaan "
+"(contohnya 49152-65534, IANA-jangkauan port tidak kekal yang terdaftar)."
 
 #: services/models.py:884
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "Bandwidh unggah pengguna lokal"
 
 #: services/models.py:885
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Bandwidth unggah pengguna lokal dalam KB/s. Nol berarti tak terbatas."
 
 #: services/models.py:889
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Bandwidth unduh pengguna lokal"
 
 #: services/models.py:890
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Bandwidth unduh pengguna lokal dalam KB/s. Nol berati tak terbatas."
 
 #: services/models.py:894
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Bandwidth unggah pengguna anonim"
 
 #: services/models.py:895
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Bandwidth pengguna anonim dalam KB/s. Nol berarti tak terbatas."
 
 #: services/models.py:899
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "Bandwidth unduh pengguna anonim"
 
 #: services/models.py:900
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Bandwitdth unduh pengguna anonim dalam KB/s. Nol berarti tak terbatas."
 
 #: services/models.py:903
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "Nyalakan SSL/TLS"
 
 #: services/models.py:908
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "Pararameter tersebut ditambahkan ke proftpd.conf."
 
 #: services/models.py:912 services/models.py:913
 #: templates/services/index.html:53
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:922
 msgid "Directory"
-msgstr ""
+msgstr "Direktori"
 
 #: services/models.py:923
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
+"Direktori mengandung berkas yang ingin anda publikasikan. Host jarak jauh "
+"tidak perlu menyampaikan direktori sebagai bagian dari transfer."
 
 #: services/models.py:926
 msgid "Allow New Files"
-msgstr ""
+msgstr "Izinkan Berkas Baru"
 
 #: services/models.py:930
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"Port untuk mendengarkan. Asalnya adalah untuk mendengar port tftp pada "
+"/etc/services."
 
 #: services/models.py:936
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "Tentukan nama pengguna servis yang akan digunakan sebagai."
 
 #: services/models.py:940
 msgid "umask"
-msgstr ""
+msgstr "hilangkan masker"
 
 #: services/models.py:941
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
 msgstr ""
+"Atur penghilangan masker untuk pembuatan berkas baru ke nilai yang "
+"ditentukan. Secara default adalah 022 (semua orang bisa baca, tak seorangpun "
+"bisa tulis)."
 
 #: services/models.py:945 services/models.py:982 system/models.py:425
 msgid "Extra options"
-msgstr ""
+msgstr "Opsi tambahan"
 
 #: services/models.py:947
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "Opsi baris perintah tambahan (biasanya kosong). "
 
 #: services/models.py:951 services/models.py:952
 #: templates/services/index.html:130
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:961 services/models.py:1157
 msgid "TCP Port"
-msgstr ""
+msgstr "Port TCP"
 
 #: services/models.py:962
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "Port TCP alternatif. 22 secara default"
 
 #: services/models.py:965
 msgid "Login as Root with password"
-msgstr ""
+msgstr "Login sebagai Root dengan kata sandi"
 
 #: services/models.py:966
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
 msgstr ""
+"Dimatikan: Root hanya dapat login via otentikasi kunci publik; Dinyalakan: "
+"Root boleh login dengan kata sandi"
 
 #: services/models.py:969
 msgid "Allow Password Authentication"
-msgstr ""
+msgstr "Iznikan Otentikasi Kata Sandi"
 
 #: services/models.py:971
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "Izinkan Penerusan Port TCP"
 
 #: services/models.py:973
 msgid "Compress Connections"
-msgstr ""
+msgstr "Kompres Koneksi"
 
 #: services/models.py:976
 msgid "Host Private Key"
-msgstr ""
+msgstr "Kunci Privat Host"
 
 #: services/models.py:978
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr ""
+msgstr "Tempet kunci privat RSA dalam format PEM disini."
 
 #: services/models.py:984
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
 msgstr ""
+"Opsi tambahan untuk /etc/ssh/sshd_config (biasanya kosong). Catatan, "
+"memasukkan opsi yang salah akan mencegah servis SSH untuk memulai."
 
 #: services/models.py:1024 services/models.py:1025
 #: templates/services/index.html:119
 msgid "SSH"
-msgstr ""
+msgstr "SSH"
 
 #: services/models.py:1034
 msgid "Domain Controller Name"
-msgstr ""
+msgstr "Nama Pengontrol Domain"
 
 #: services/models.py:1035
 msgid "AD or PDC name."
-msgstr ""
+msgstr "Nama AD atau PDC."
 
 #: services/models.py:1039
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr ""
+msgstr "Nama Domain (DNS/Realm)"
 
 #: services/models.py:1040
 msgid "Domain Name, eg example.com"
-msgstr ""
+msgstr "Nama Domain, e.g. example.com"
 
 #: services/models.py:1044
 msgid "Host Name (NetBIOS-Name)"
-msgstr ""
+msgstr "Nama Host (NetBIOS)"
 
 #: services/models.py:1045
 msgid "Host Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Nama Host dalam format lama, e.g. EXAMPLE"
 
 #: services/models.py:1049
 msgid "Workgroup Name"
-msgstr ""
+msgstr "Nama Workgroup"
 
 #: services/models.py:1050
 msgid "Workgroup Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Nama Workgroup dalam format lama, e.g. EXAMPLE"
 
 #: services/models.py:1054
 msgid "Administrator Name"
-msgstr ""
+msgstr "Nama Admin"
 
 #: services/models.py:1055
 msgid "Username of Domain Administrator Account"
-msgstr ""
+msgstr "Nama pengguna dari Akun Admin Domain"
 
 #: services/models.py:1059
 msgid "Administrator Password"
-msgstr ""
+msgstr "Kata Sandi Admin"
 
 #: services/models.py:1060
 msgid "Password of Domain Administrator account."
-msgstr ""
+msgstr "Kata Sandi akun Admin Domain."
 
 #: services/models.py:1064 services/models.py:1065
 #: templates/services/index.html:18
 msgid "Active Directory"
-msgstr ""
+msgstr "Direktori Aktif"
 
 #: services/models.py:1076
 msgid "The name or IP address of the LDAP server"
-msgstr ""
+msgstr "Nama atau alamat IP dari server LDAP"
 
 #: services/models.py:1080
 msgid "Base DN"
-msgstr ""
+msgstr "Base DN"
 
 #: services/models.py:1082
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
-msgstr ""
+msgstr "Nama pembeda (DN) asal digunakan untuk pencarian, e.g. dc=test,dc=org"
 
 #: services/models.py:1085
 msgid "Allow Anonymous Binding"
-msgstr ""
+msgstr "Izinkan Pengikatan Anonim"
 
 #: services/models.py:1088
 msgid "Root bind DN"
-msgstr ""
+msgstr "Nama pembeda (DN) Root"
 
 #: services/models.py:1090
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
+"Nama pembeda yang digunakan untuk mengikat direktori server, e.g. "
+"cn=admin,dc=test,dc=org"
 
 #: services/models.py:1094
 msgid "Root bind password"
-msgstr ""
+msgstr "Kata sandi root"
 
 #: services/models.py:1096
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "Mandat yang mengikat."
 
 #: services/models.py:1101
 msgid "Password Encryption"
-msgstr ""
+msgstr "Enkripsi Kata Sandi"
 
 #: services/models.py:1102
 msgid "The password change protocol to use."
-msgstr ""
+msgstr "Protokol penggantian kata sandi yang digunakan."
 
 #: services/models.py:1106
 msgid "User Suffix"
-msgstr ""
+msgstr "Akhiran Pengguna"
 
 #: services/models.py:1108
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
 msgstr ""
+"Parameter ini menentukan akhiran yang digunakan pengguna ketika ditambahkan "
+"ke direktori LDAP, e.g. ou=Pengguna"
 
 #: services/models.py:1112
 msgid "Group Suffix"
-msgstr ""
+msgstr "Akhiran Grup"
 
 #: services/models.py:1114
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
+"Parameter ini menentukan akhiran yang digunakan grup ketika diambahkan ke "
+"direktori LDAP, e.g. ou=Grup"
 
 #: services/models.py:1118
 msgid "Password Suffix"
-msgstr ""
+msgstr "Akhiran kata sandi"
 
 #: services/models.py:1120
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
+"Parameter ini menentukan akhiran yang digunakan kata sandi ketika "
+"ditambahkan ke direktori LDAP, e.g. ou=KataSandi"
 
 #: services/models.py:1124
 msgid "Machine Suffix"
-msgstr ""
+msgstr "Akhiran Mesin"
 
 #: services/models.py:1126
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
+"Parameter ini mengatur akhiran yang digunakan mesin ketika ditambahkan ke "
+"direktori LDAP, e.g. ou=Komputer"
 
 #: services/models.py:1130
 msgid "Turn on/off TLS"
-msgstr ""
+msgstr "Nyalakan/Matikan TLS"
 
 #: services/models.py:1132
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
 msgstr ""
+"Parameter ini menentukan jika menggunakan SSL/TLS, e.g. on/off/start_tls"
 
 #: services/models.py:1135
+#, fuzzy
 msgid "Self signed certificate"
-msgstr ""
+msgstr "Setifikat sendiri"
 
 #: services/models.py:1137
+#, fuzzy
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "Tempatkan konten dari berkas sertifikat sendiri anda disini."
 
 #: services/models.py:1141 sharing/models.py:85
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "Parameter Bantuan"
 
 #: services/models.py:1143
 msgid "These parameters are added to ldap.conf."
-msgstr ""
+msgstr "Parameter tersebut ditambahkan ke ldap.conf"
 
 #: services/models.py:1147 services/models.py:1148
 #: templates/services/index.html:64
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/models.py:1158
 msgid "Alternate TCP port. Default is 873"
-msgstr ""
+msgstr "Port TCP alternatif. 873 secara default."
 
 #: services/models.py:1163
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
 msgstr ""
+"Parameter tersebut akan ditambahkan ke pengaturan [global] pada rsync.conf"
 
 #: services/models.py:1167 services/models.py:1168
 msgid "Rsyncd"
-msgstr ""
+msgstr "Rsyncd"
 
 #: services/models.py:1178
 msgid "Module name"
-msgstr ""
+msgstr "Nama modul"
 
 #: services/models.py:1186
 msgid "Path to be shared"
-msgstr ""
+msgstr "Path untuk dibagikan"
 
 #: services/models.py:1192
 msgid "Access Mode"
-msgstr ""
+msgstr "Modus Akses"
 
 #: services/models.py:1193
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "Kontrol akses host ada pada modul ini"
 
 #: services/models.py:1197
 msgid "Maximum connections"
-msgstr ""
+msgstr "Koneksi maksimum"
 
 #: services/models.py:1198
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr ""
+msgstr "Jumlah koneksi bersamaan maksimal. 0 secara default (tak terbatas)"
 
 #: services/models.py:1204
 msgid ""
@@ -2454,6 +2501,10 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Opsi ini menentukan nama pengguna tujuan transfer berkas dan dari itu modul "
+"perlu mengambil tempat. Dalam kombinasi dengan opsi 'Grup' ini menentukan "
+"hak akses berkas yang tersedia. Tinggalkan kolom ini kosong untuk "
+"menggunakan pengaturan asal."
 
 #: services/models.py:1211
 msgid ""
@@ -2552,7 +2603,7 @@ msgstr ""
 
 #: services/nav.py:12
 msgid "Control Services"
-msgstr ""
+msgstr "Servis Kontrol"
 
 #: services/nav.py:50
 msgid "Add Device Extent"
@@ -2600,12 +2651,12 @@ msgstr ""
 
 #: sharing/forms.py:82
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "Isian pada kolom adalah alamat IP atau jaringan yang tidak valid"
 
 #: sharing/forms.py:88
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr "Alamat IP '%s' tidak valid."
 
 #: sharing/forms.py:99
 msgid "Maproot group requires Maproot user"
@@ -2625,27 +2676,27 @@ msgstr ""
 #: templates/services/rsyncmod.html:5 templates/sharing/apple.html:13
 #: templates/sharing/windows.html:13
 msgid "Name"
-msgstr ""
+msgstr "Nama"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
-msgstr ""
+msgstr "Eksport baca-saja"
 
 #: sharing/models.py:53
 msgid "Browsable to Network Clients"
-msgstr ""
+msgstr "Dapat dijelajahi oleh Klien Jaringan"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
-msgstr ""
+msgstr "Izin Warisan"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "Eksport Kotak Daur Ulang"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr ""
+msgstr "Tampilkan Berkas Tersembunyi"
 
 #: sharing/models.py:64
 msgid "Guest Account"
@@ -2667,15 +2718,15 @@ msgstr ""
 
 #: sharing/models.py:68
 msgid "Allow Guest Access"
-msgstr ""
+msgstr "Izinkan Akses Tamu"
 
 #: sharing/models.py:70
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Hanya izinkan akses tamu"
 
 #: sharing/models.py:74
 msgid "Hosts Allow"
-msgstr ""
+msgstr "Izinkan Host"
 
 #: sharing/models.py:75
 msgid ""
@@ -2683,10 +2734,14 @@ msgid ""
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
 msgstr ""
+"Opsi ini adalah sebuah koma, spasi, atau tab mengatur host yang "
+"diperbolehkan untuk mengakses berbagi ini. Anda dapat menentukan host dengan "
+"nama atau nomer IP. Tinggalkan kolom ini kosong untuk menggunakan "
+"pengaturan asal."
 
 #: sharing/models.py:80
 msgid "Hosts Deny"
-msgstr ""
+msgstr "Host ditolak"
 
 #: sharing/models.py:81
 msgid ""
@@ -2697,10 +2752,16 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
 msgstr ""
+"Opsi ini adalah sebuah koma, spasi, atau tab yang megatur host yang TIDAK "
+"diizikan untuk mengakses berbagi ini. Jika aka konflik dengan daftar, maka "
+"daftar diutamakan. Dalam hal ini perlu untuk menolak semua secara default, "
+"gunakan kata kunci ALL (atau netmask 0.0.0.0/0) dan kemudian secara "
+"eksplisit menentukan parameter izin untuk host untuk diizinkan akses. "
+"Tinggalkan kolom ini kosong untuk menggunakan pengaturan asal."
 
 #: sharing/models.py:87
 msgid "These parameters are added to [Share] section of smb.conf"
-msgstr ""
+msgstr "Parameter tersebut ditambahkan ke bagian [Share] pada smb.conf"
 
 #: sharing/models.py:93
 msgid "Windows Share"
@@ -2962,9 +3023,10 @@ msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
 msgstr ""
 
+# Diterjemahkan dari bahasa Prancis
 #: sharing/models.py:248
 msgid "Maproot User"
-msgstr ""
+msgstr "Tautan ke pengguna root"
 
 #: sharing/models.py:252
 msgid "User to map root to"
@@ -2972,7 +3034,7 @@ msgstr ""
 
 #: sharing/models.py:256
 msgid "Maproot Group"
-msgstr ""
+msgstr "Tautan ke Grup"
 
 #: sharing/models.py:260
 msgid "Group to map root to"
