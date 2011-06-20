@@ -251,6 +251,11 @@ class Replication(Model):
             default = False,
             verbose_name = _("Recursively replicate and remove stale snapshot on remote side"),
             )
+    repl_limit = models.IntegerField(
+            default = 0,
+            verbose_name = _("Limit (kB/s)"),
+            help_text = _("Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."),
+            )
     class Meta:
         verbose_name = _(u"Replication Task")
         verbose_name_plural = _(u"Replication Tasks")
