@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:47-0700\n"
-"PO-Revision-Date: 2011-06-13 22:45+0200\n"
+"PO-Revision-Date: 2011-06-19 13:12+0200\n"
 "Last-Translator: HotRod <reg03@kittilsbotn.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nb\n"
@@ -136,15 +136,15 @@ msgstr "Nivå 254 - Høyeste ytelse og strømforbruk"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
-msgstr "Minimalt"
+msgstr "Minimum"
 
 #: choices.py:92
 msgid "Medium"
-msgstr "Gjennomsnittlig"
+msgstr "Moderat"
 
 #: choices.py:93
 msgid "Maximum"
-msgstr "Høyeste"
+msgstr "Maksimalt"
 
 #: choices.py:127 templates/storage/tasks.html:85
 msgid "January"
@@ -232,7 +232,7 @@ msgstr "Lokalbruker"
 
 #: choices.py:180
 msgid "Normal"
-msgstr "Vanlig"
+msgstr "Normal"
 
 #: choices.py:181
 msgid "Full"
@@ -249,12 +249,11 @@ msgstr "Standard"
 # Egenavn
 #: choices.py:187
 msgid "Time Machine"
-msgstr "Time Machine"
+msgstr "Tidsmaskin"
 
 #: choices.py:190
-#, fuzzy
 msgid "No case folding"
-msgstr "Ingen tekst normalisering"
+msgstr "Ingen tekstnormalisering"
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
@@ -881,7 +880,7 @@ msgstr "Grensesnitt"
 #: network/models.py:172 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr "Virtuelt grensesnitt"
+msgstr "Virtuellt grensesnitt"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
@@ -944,7 +943,7 @@ msgstr "Gateway"
 
 #: network/models.py:287
 msgid "Static Route"
-msgstr "Statisk ruting"
+msgstr "Statisk rute"
 
 #: network/models.py:288 templates/network/index.html:9
 msgid "Static Routes"
@@ -972,11 +971,11 @@ msgstr "LAGG ble lagt til"
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr "Utfylling er nødvendig for å \"Aktivere visning av hjemmemapper\"."
+msgstr "Utfylling er påkrevd for å \"Aktivere visning av hjemmemapper\"."
 
 #: services/forms.py:73
 msgid "This field is required for \"Home directories\"."
-msgstr "Dette feltet er nødvendig for \"Hjemmemapper\"."
+msgstr "Dette feltet er påkrevd for \"Hjemmemapper\"."
 
 #: services/forms.py:90
 msgid "The AFP service failed to reload."
@@ -1040,19 +1039,19 @@ msgstr "Navnet kan ikke inneholde '/' eller ']'."
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
-msgstr "DynamiskDNS-tjenesten klarte ikke å restarte."
+msgstr "DynamiskDNS-tjenesten klarte ikke å laste på ny."
 
 #: services/forms.py:259
 msgid "The SNMP service failed to reload."
-msgstr "SNMP-tjenesten klarte ikke restarte."
+msgstr "SNMP-tjenesten klarte ikke å laste på nytt."
 
 #: services/forms.py:273
 msgid "The activedirectory service failed to reload."
-msgstr "Activedirectory-tjenesten klarte ikke å restarte."
+msgstr "Activedirectory-tjenesten klarte ikke å laste på nytt."
 
 #: services/forms.py:284
 msgid "The ldap service failed to reload."
-msgstr "Idap-tjenesten klarte ikke å restarte."
+msgstr "Idap-tjenesten klarte ikke å laste på nytt."
 
 #: services/forms.py:290 services/models.py:526
 #: templates/services/iscsi_auth.html:7
@@ -1100,7 +1099,7 @@ msgstr ""
 #: services/forms.py:525 services/forms.py:572 services/forms.py:675
 #: services/forms.py:697 services/forms.py:718 services/forms.py:763
 msgid "The iSCSI service failed to reload."
-msgstr "iSCSI-tjenesten klarte ikke å restarte."
+msgstr "iSCSI-tjenesten klarte ikke å laste på nytt."
 
 #: services/forms.py:373
 msgid "LUN already exists in the same target."
@@ -1153,7 +1152,7 @@ msgstr ""
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr ""
-"Denne verdien kan være i bit, eller det kan anngis KB, MB, GB, TB i "
+"Denne verdien kan være i byte, eller det kan anngis KB, MB, GB, TB i "
 "etterkant av tallet."
 
 #: services/forms.py:577
@@ -1163,7 +1162,7 @@ msgstr "Diskenhet"
 #: services/forms.py:691
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr "Din portalgruppeid kan ikke være høyere enn %d"
+msgstr "Din portalgruppeID kan ikke være høyere enn %d"
 
 #: services/forms.py:712
 #, python-format
@@ -1205,14 +1204,13 @@ msgstr "Tjenester"
 
 #: services/models.py:60
 msgid "Authentication Model"
-msgstr "Autentiseringsmodell"
+msgstr "Godkjenningsmodell"
 
 #: services/models.py:61
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
-"Bruk av Active Directory eller LDAP autentifisering vil overstyre dette "
-"valget"
+"Bruk av Active Directory eller LDAP-godkjenning vil overstyre dette valget"
 
 #: services/models.py:65
 msgid "NetBIOS name"
@@ -1232,7 +1230,7 @@ msgstr ""
 
 #: services/models.py:76
 msgid "Server description. This can usually be left blank."
-msgstr "Serverbeskrivelse. Denne kan normalt sett være blank."
+msgstr "Serverbeskrivelse. Denne kan normalt være tom."
 
 #: services/models.py:82
 msgid "DOS charset"
@@ -1471,7 +1469,6 @@ msgstr ""
 "detaljer) vil legges til målnavn som ikke starter med 'iqn.'"
 
 #: services/models.py:242
-#, fuzzy
 msgid "Discovery Auth Method"
 msgstr "Oppdagelses godkjenningsmetode"
 
@@ -1528,7 +1525,6 @@ msgid "iSCSI initial parameter (16 by default)."
 msgstr "iSCSI startparametre (16 er standard)."
 
 #: services/models.py:289
-#, fuzzy
 msgid "First burst length"
 msgstr "Første løsrivelseslengde"
 
@@ -1537,18 +1533,16 @@ msgid "iSCSI initial parameter (65536 by default)."
 msgstr "iSCSI startparametre (65536 er standard)."
 
 #: services/models.py:295
-#, fuzzy
 msgid "Max burst length"
-msgstr "Maks løsrivelseslengde"
+msgstr "Maks. løsrivelseslengde"
 
 #: services/models.py:296 services/models.py:302
 msgid "iSCSI initial parameter (262144 by default)."
 msgstr "iSCSI startparametre (262144 er standard)."
 
 #: services/models.py:301
-#, fuzzy
 msgid "Max receive data segment length"
-msgstr "Maks mottaks data segmentlengde"
+msgstr "Maks. mottaks datasegmentlengde"
 
 #: services/models.py:307
 msgid "DefaultTime2Wait"
@@ -1588,11 +1582,11 @@ msgstr "Logisk enhetskontroll TCP-port (3261 som standard)"
 
 #: services/models.py:337
 msgid "Controller Authorized netmask"
-msgstr ""
+msgstr "Kontroller godkjent nettmaske"
 
 #: services/models.py:339
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
-msgstr ""
+msgstr "Logisk enhetskontroller godkjent nettmaske (255.255.255.0 som standard)"
 
 #: services/models.py:346
 msgid "Controller Auth Method"
@@ -1604,51 +1598,43 @@ msgstr "Metoden kan aksepteres av kontroller"
 
 #: services/models.py:359 services/models.py:360
 #: templates/services/iscsi.html:3
-#, fuzzy
 msgid "Target Global Configuration"
 msgstr "Mål for global konfigurasjon"
 
 #: services/models.py:371
-#, fuzzy
 msgid "Extent Name"
-msgstr "Omfang navn"
+msgstr "Omfangets navn"
 
 #: services/models.py:372
-#, fuzzy
 msgid "String identifier of the extent."
-msgstr "Strengidentifikator til omfang."
+msgstr "Strengidentifikator til omfanget."
 
 #: services/models.py:376
-#, fuzzy
 msgid "Extent Type"
-msgstr "Omfang type"
+msgstr "Omfangets type"
 
 #: services/models.py:377
-#, fuzzy
 msgid "Type used as extent."
 msgstr "Type brukt som omfang."
 
 #: services/models.py:382
-#, fuzzy
 msgid "Path to the extent"
-msgstr "Sti til omfang"
+msgstr "Sti til omfanget"
 
 #: services/models.py:383
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
 msgstr "Filsti (f.eks. /mnt/sharename/extent/extent0) brukt som omfang."
 
 #: services/models.py:388
-#, fuzzy
 msgid "Extent size"
-msgstr "Omfangstørrelse"
+msgstr "Omfangsstørrelse"
 
 #: services/models.py:389
-#, fuzzy
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
-"Omfangstørrelse, 0 betyr auto, et rånummer er bytes, eller med benevnelse "
+"Omfangsstørrelse, 0 betyr auto, et rå-nummer er bytes, eller med benevnelse "
 "KB, MB, TB for å gjøre det lettere."
 
 #: services/models.py:394 services/models.py:443 services/models.py:489
@@ -1666,7 +1652,6 @@ msgstr "Her kan du skrive en beskrivelse for din egen del."
 
 #: services/models.py:398 services/models.py:647
 #: templates/services/iscsi_assoctargets.html:6
-#, fuzzy
 msgid "Extent"
 msgstr "Omfang"
 
@@ -1685,50 +1670,63 @@ msgid ""
 "port number. For any IPs (wildcard address), use '0.0.0.0:3260' and/or "
 "'[::]:3260'. Do not mix wildcard and other IPs at same address family."
 msgstr ""
+"Portalen tar form i 'adresse:port'. F.eks. '192.168.1.1:3260' for IPv4, "
+"'[2001:db8:1::1]:3260' for IPv6. Porten 3260 er standard iSCSI portnummer. "
+"For hvilke som helst IP'er (jokertegn adresser), benytt '0.0.0.0:3260' "
+"og/eller '[::]:3260'. Ikke bland jokertegn og andre IP'er i samme "
+"adressefamilie."
 
 #: services/models.py:476 templates/services/iscsi_authini.html:6
 msgid "Initiators"
-msgstr ""
+msgstr "Initiativtakere"
 
 #: services/models.py:478
+#, fuzzy
 msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr ""
+"Initiativtaker er godkjent for tilgang til iSCSI målet. Det kreves et navn "
+"eller 'ALLE' for hvilken som helst initiativtakere."
 
 #: services/models.py:482
 msgid "Authorized network"
 msgstr "Autorisert nettverk"
 
 #: services/models.py:484
+#, fuzzy
 msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
+"Nettverk er godkjent for tilgang til iSCSI målet. Det kreves IP eller CIDR "
+"adresser eller 'ALLE' for hvilke som helst IP adresser."
 
 #: services/models.py:493
 msgid "Initiator"
-msgstr ""
+msgstr "Initiativtaker"
 
 #: services/models.py:522
+#, fuzzy
 msgid "Target side user name. It is usually the initiator name by default."
 msgstr ""
+"Målets sidebrukernavn. Normalt er dette initiativtakers navn som standard."
 
 #: services/models.py:532
 msgid "Peer User"
-msgstr ""
+msgstr "Peer bruker"
 
 #: services/models.py:537 templates/services/iscsi_auth.html:9
 msgid "Peer Secret"
-msgstr ""
+msgstr "Peer hemmelighet"
 
 #: services/models.py:541
 msgid "Authorized Access"
-msgstr ""
+msgstr "Godkjent tilgang"
 
 #: services/models.py:542
 msgid "Authorized Accesses"
-msgstr ""
+msgstr "Godkjente tilganger"
 
 #: services/models.py:557
 msgid "Target Name"
@@ -1736,23 +1734,24 @@ msgstr "Målnavn"
 
 #: services/models.py:558
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr ""
+msgstr "Hovednavn vil bli lagt til automatisk når det begynner uten 'iqn.'."
 
 #: services/models.py:565
 msgid "Target Alias"
 msgstr "Målalias"
 
 #: services/models.py:566
+#, fuzzy
 msgid "Optional user-friendly string of the target."
-msgstr ""
+msgstr "Valgfri brukervennlig adresse til målet."
 
 #: services/models.py:569 storage/views.py:157
 msgid "Serial"
-msgstr ""
+msgstr "Serie"
 
 #: services/models.py:572
 msgid "Serial number for the logical unit"
-msgstr ""
+msgstr "Serienummer for logisk enhet"
 
 #: services/models.py:577 storage/models.py:74 system/models.py:498
 #: templates/services/iscsi_extents.html:6
@@ -1762,7 +1761,7 @@ msgstr "Type"
 
 #: services/models.py:578
 msgid "Logical Unit Type mapped to LUN."
-msgstr ""
+msgstr "Logisk enhetstype knyttet til LUN."
 
 #: services/models.py:584
 msgid "Target Flags"
@@ -1770,7 +1769,7 @@ msgstr "Målflagg"
 
 #: services/models.py:592
 msgid "Initiator Group ID"
-msgstr ""
+msgstr "Initiativtakers gruppeID"
 
 #: services/models.py:598 services/models.py:610
 msgid "Auth Method"
@@ -1786,18 +1785,19 @@ msgstr ""
 
 #: services/models.py:603
 msgid "Authentication Group ID"
-msgstr ""
+msgstr "Godkjennings gruppeID"
 
 #: services/models.py:616
 msgid "Queue Depth"
-msgstr ""
+msgstr "Kødybde"
 
 #: services/models.py:617
-#, fuzzy
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
-msgstr "0=deaktivert, 1-255=aktivert kommando"
+msgstr ""
+"0=deaktivert, 1-255=aktivert køkommando med spesifisert dybde. Anbefalt "
+"kødybde er 32."
 
 #: services/models.py:622
 msgid "Logical Block Size"
@@ -1821,15 +1821,15 @@ msgstr "Mål"
 
 #: services/models.py:642
 msgid "Target this extent belongs to"
-msgstr ""
+msgstr "Målet dette omfanget tilhører"
 
 #: services/models.py:650
 msgid "Target / Extent"
-msgstr ""
+msgstr "Mål / Omfang"
 
 #: services/models.py:651
 msgid "Targets / Extents"
-msgstr ""
+msgstr "Mål / Omfang"
 
 #: services/models.py:666
 msgid "Provider"
@@ -1844,6 +1844,8 @@ msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
 msgstr ""
+"Vertsnavn kallenavn. Dette alternativet kan oppstå flere ganger, for hvert "
+"domene som har samme IP. Benytt et mellomrom for å separere flere kallenavn."
 
 #: services/models.py:684
 msgid "Update period"
@@ -1947,10 +1949,12 @@ msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
 msgstr ""
+"Tiden i sekunder til start av nedstengning. Om UPS strøm kommer tilbake før "
+"tiden utløper blir nedstengning avbrutt."
 
 #: services/models.py:781
 msgid "Remote Monitor"
-msgstr ""
+msgstr "Fjernmonitor"
 
 #: services/models.py:783
 msgid "Send Email Status Updates"
@@ -1962,14 +1966,15 @@ msgstr "Til e-post"
 
 #: services/models.py:788
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr ""
+msgstr "Destinasjons epost adresse. Skill epost adressene med semikolon."
 
 #: services/models.py:793
-#, fuzzy
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
-msgstr "Emnet for mailen."
+msgstr ""
+"Emne for epost. Du kan benytte følgende parametre for erstattning:<br "
+"/><ul><li>%d - Dato</li><li>%h - Vertsnavn</li></ul>"
 
 #: services/models.py:797 services/models.py:798
 msgid "UPS"
@@ -2012,7 +2017,7 @@ msgstr "Timeout"
 
 #: services/models.py:828
 msgid "Maximum idle time in seconds."
-msgstr ""
+msgstr "Maksimal inaktiv tid i sekunder."
 
 #: services/models.py:831
 msgid "Allow Root Login"
@@ -2036,15 +2041,17 @@ msgstr "tillat pålogging for lokale brukere"
 
 #: services/models.py:841
 msgid "Banner"
-msgstr ""
+msgstr "Fane"
 
 #: services/models.py:843
 msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr ""
+msgstr "Velkomstfane vist av FTP når en tilkobling opprettes."
 
 #: services/models.py:849 services/models.py:855
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr ""
+"Benytt dette alternativet for å overstyre filopprettelsesmaske (077 er "
+"standard)."
 
 #: services/models.py:858
 msgid "Enable FXP"
@@ -2052,7 +2059,7 @@ msgstr "Aktiver FXP"
 
 #: services/models.py:860
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "Tillat Overførings Gjenopptakelse"
 
 #: services/models.py:862
 msgid "Always Chroot"
@@ -2060,11 +2067,11 @@ msgstr "Alltid bruk Chroot"
 
 #: services/models.py:864
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "Krev IDENT godkjenning"
 
 #: services/models.py:866
 msgid "Require Reverse DNS for IP"
-msgstr ""
+msgstr "Krev reversert DNS for IP"
 
 #: services/models.py:868
 msgid "Masquerade address"
@@ -2076,10 +2083,13 @@ msgid ""
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
+"Fører til at server viser nettverksinformasjonen for den spesifiserte IP "
+"adressen til klienten, når det antas at IP adresse eller DNS vert utgir seg "
+"som NAT gateway eller portvideresending for serveren."
 
 #: services/models.py:874
 msgid "Minimum passive port"
-msgstr ""
+msgstr "Minimum passiv port"
 
 #: services/models.py:875
 msgid ""
