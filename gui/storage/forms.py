@@ -774,7 +774,7 @@ class ZFSVolume_EditForm(Form):
 class ZVol_CreateForm(Form):
     zvol_volid = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict),  label=_('Volume from which this ZFS Volume will be created on'))
     zvol_name = forms.CharField(max_length = 128, label = _('ZFS Volume Name'))
-    zvol_size = forms.CharField(max_length = 128, initial=0, label=_('Size for this ZFS Volume'), help_text=_('0=Unlimited; example: 1g'))
+    zvol_size = forms.CharField(max_length = 128, initial=0, label=_('Size for this ZFS Volume'), help_text=_('Example: 1g'))
     zvol_compression = forms.ChoiceField(choices=choices.ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
     def __init__(self, *args, **kwargs):
         super(ZVol_CreateForm, self).__init__(*args, **kwargs)
