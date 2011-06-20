@@ -36,23 +36,19 @@ from freenasUI.middleware.notifier import notifier
 
 ## Network|Global Configuration
 class GlobalConfiguration(Model):
-
     gc_hostname = models.CharField(
             max_length=120,
             verbose_name=_("Hostname")
             )
-
     gc_domain = models.CharField(
             max_length=120,
             verbose_name=_("Domain")
             )
-
     gc_ipv4gateway = IP4AddressField(
             blank=True,
             default='',
-            verbose_name=_("IPv4 Default Gateway"), 
+            verbose_name=_("IPv4 Default Gateway"),
             )
-
     gc_ipv6gateway = IP6AddressField(
             blank=True,
             default='',
@@ -64,92 +60,79 @@ class GlobalConfiguration(Model):
             default='',
             verbose_name=_("Nameserver 1")
             )
-
     gc_nameserver2 = IPAddressField(
             default='',
             blank=True,
             verbose_name=_("Nameserver 2")
             )
-
     gc_nameserver3 = IPAddressField(
             default='',
             blank=True,
             verbose_name=_("Nameserver 3")
             )
-
     def __unicode__(self):
-            return u'%s' % self.id 
+            return u'%s' % self.id
     class Meta:
         verbose_name = _("Global Configuration")
         verbose_name_plural = _("Global Configuration")
-
     class FreeAdmin:
         deletable = False
 
 ## Network|Interface Management
 class Interfaces(Model):
-
     int_interface = models.CharField(
-            max_length=300, 
-            blank=False, 
+            max_length=300,
+            blank=False,
             verbose_name=_("NIC"),
             help_text=_("Pick your NIC")
             )
-
     int_name = models.CharField(
-            max_length="120", 
+            max_length="120",
             verbose_name=_("Interface Name"),
             help_text=_("Name your NIC.")
             )
-
     int_dhcp = models.BooleanField(
-            verbose_name=_("DHCP"), 
+            verbose_name=_("DHCP"),
             help_text=_("When enabled, use DHCP to obtain IPv4 address as well as default router, etc.")
             )
-
     int_ipv4address = IPAddressField(
             verbose_name=_("IPv4 Address"),
             blank=True,
             default='',
             )
-
     int_v4netmaskbit = models.CharField(
-            max_length=3, 
-            choices=choices.v4NetmaskBitList, 
-            blank=True, 
+            max_length=3,
+            choices=choices.v4NetmaskBitList,
+            blank=True,
             default='',
             verbose_name=_("IPv4 Netmask"),
             help_text=""
             )
-
     int_ipv6auto = models.BooleanField(
-            verbose_name=_("Auto configure IPv6"), 
+            verbose_name=_("Auto configure IPv6"),
             help_text=_("When enabled, automatically configurate IPv6 address via rtsol(8).")
             )
-
     int_ipv6address = IPAddressField(
             verbose_name=_("IPv6 Address"),
             blank=True,
             default='',
             )
-
     int_v6netmaskbit = models.CharField(
-            max_length=4, 
-            choices=choices.v6NetmaskBitList, 
+            max_length=4,
+            choices=choices.v6NetmaskBitList,
             blank=True,
             default='',
             verbose_name=_("IPv6 Netmask"),
             help_text=""
             )
-
     int_options = models.CharField(
-            max_length=120, 
-            verbose_name=_("Options"), 
+            max_length=120,
+            verbose_name=_("Options"),
             blank=True
             )
 
     def __unicode__(self):
-            return u'%s' % self.int_name 
+            return u'%s' % self.int_name
     def delete(self):
         super(Interfaces, self).delete()
         notifier().start("network")
@@ -168,24 +151,24 @@ class Interfaces(Model):
 ## Network|Interface Management|VLAN
 class VLAN(Model):
     vlan_vint = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name=_("Virtual Interface"),
-            help_text=_("Interface names must be vlanXX where XX is a number")
+            help_text=_("Interface names must be vlanXX where XX is a number. Example: vlan0.")
             )
     vlan_pint = models.CharField(
-            max_length=300, 
-            blank=False, 
+            max_length=300,
+            blank=False,
             verbose_name=_("Physical Interface")
             )
     vlan_tag = models.PositiveIntegerField(
             verbose_name=_("VLAN Tag")
             )
     vlan_description = models.CharField(
-            max_length=120, 
-            verbose_name=_("Description"), 
+            max_length=120,
+            verbose_name=_("Description"),
             blank=True
             )
-    
+
     def __unicode__(self):
         return self.vlan_vint
 
@@ -216,7 +199,7 @@ class LAGGInterface(Model):
             verbose_name=_("Interface")
             )
     lagg_protocol = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name=_("Protocol Type"),
             choices=choices.LAGGType,
             )
@@ -237,19 +220,19 @@ class LAGGInterface(Model):
 # Physical interfaces list inside one LAGG group
 class LAGGInterfaceMembers(Model):
     lagg_interfacegroup = models.ForeignKey(
-            LAGGInterface, 
+            LAGGInterface,
             verbose_name=_("LAGG Interface group")
             )
     lagg_ordernum = models.IntegerField(
             verbose_name=_("LAGG Priority Number"),
             )
     lagg_physnic = models.CharField(
-            max_length=120, 
+            max_length=120,
             unique = True,
             verbose_name=_("Physical NIC")
             )
     lagg_deviceoptions = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name=_("Options")
             )
     def __unicode__(self):
@@ -263,23 +246,23 @@ class LAGGInterfaceMembers(Model):
     class Meta:
         verbose_name = _("Link Aggregation")
         verbose_name_plural = _("Link Aggregations")
-    
+   
     class FreeAdmin:
         icon_object = u"LAGGIcon"
         icon_model = u"LAGGIcon"
 
 class StaticRoute(Model):
     sr_destination = models.CharField(
-            max_length=120, 
+            max_length=120,
             verbose_name=_("Destination network")
             )
     sr_gateway = IP4AddressField(
-            max_length=120, 
+            max_length=120,
             verbose_name=_("Gateway")
             )
     sr_description = models.CharField(
-            max_length=120, 
-            verbose_name=_("Description"), 
+            max_length=120,
+            verbose_name=_("Description"),
             blank=True
             )
 
@@ -295,6 +278,6 @@ class StaticRoute(Model):
 
     def __unicode__(self):
         return self.sr_destination
-    
+
     def save(self, *args, **kwargs):
         super(StaticRoute, self).save(*args, **kwargs)
