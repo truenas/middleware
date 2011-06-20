@@ -491,7 +491,6 @@ class VolumeAutoImportForm(forms.Form):
                 elif cleaned_data['volume']['group_type'] == 'raid3':
                     dev = "/dev/raid3/%s" % (cleaned_data['volume']['label'])
                 else:
-                    #TODO
                     raise NotImplementedError
 
                 isvalid = notifier().precheck_partition(dev, 'UFS')
@@ -503,7 +502,6 @@ class VolumeAutoImportForm(forms.Form):
             elif cleaned_data['volume']['type'] == 'zfs':
                 pass
             else:
-                #TODO
                 raise NotImplementedError
 
         return cleaned_data

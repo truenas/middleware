@@ -44,6 +44,7 @@ from storage.forms import UnixPermissionField
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_User, \
                                          FreeNAS_Groups, FreeNAS_Group
+from freenasUI.common import humanize_size
 from freenasUI.middleware.notifier import notifier
 from dojango import forms
 from dojango.forms import widgets
@@ -643,16 +644,7 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         diskinfo = pipe.read().strip().split('\n')
         for disk in diskinfo:
             devname, capacity = disk.split('\t')
-            #FIXME use storage.forms._humenize_size
-            capacity = int(capacity)
-            if capacity >= 1099511627776:
-                    capacity = "%.1f TiB" % (capacity / 1099511627776.0)
-            elif capacity >= 1073741824:
-                    capacity = "%.1f GiB" % (capacity / 1073741824.0)
-            elif capacity >= 1048576:
-                    capacity = "%.1f MiB" % (capacity / 1048576.0)
-            else:
-                    capacity = "%d Bytes" % (capacity)
+            capacity = humanize_size(capacity)
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
