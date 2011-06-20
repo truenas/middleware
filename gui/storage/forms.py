@@ -340,7 +340,7 @@ class VolumeImportForm(forms.Form):
 
     volume_name = forms.CharField(max_length = 30, label = _('Volume name') )
     volume_disks = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label = _('Member disk'))
-    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'NTFS', 'MSDOSFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
+    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'NTFS', 'MSDOSFS', 'EXT2FS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
 
     def __init__(self, *args, **kwargs):
         super(VolumeImportForm, self).__init__(*args, **kwargs)

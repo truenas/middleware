@@ -967,7 +967,7 @@ class notifier:
     def _destroy_volume(self, volume):
         """Destroy a volume designated by volume_id"""
 
-        assert volume.vol_fstype in ('ZFS', 'UFS', 'iscsi', 'NTFS', 'MSDOSFS')
+        assert volume.vol_fstype in ('ZFS', 'UFS', 'iscsi', 'NTFS', 'MSDOSFS', 'EXT2FS')
         if volume.vol_fstype == 'ZFS':
             self.__destroy_zfs_volume(volume)
         elif volume.vol_fstype == 'UFS':
@@ -1248,13 +1248,18 @@ class notifier:
             p1.wait()
             if p1.returncode == 0:
                 return True
+        elif fstype == 'EXT2FS':
+            p1 = Popen(["/sbin/fsck_ext2fs", "-p", dev], stdin=PIPE, stdout=PIPE)
+            p1.wait()
+            if p1.returncode == 0:
+                return True
 
         return False
 
     def label_disk(self, label, dev, fstype=None):
         """
         Label the disk being manually imported
-        Currently UFS, NTFS and MSDOSFS are supported
+        Currently UFS, NTFS, MSDOSFS and EXT2FS are supported
         """
 
         if fstype == 'UFS':
@@ -1269,6 +1274,11 @@ class notifier:
                 return True
         elif fstype == 'MSDOSFS':
             p1 = Popen(["/usr/local/bin/mlabel", "-i", dev, "::%s" % label], stdin=PIPE, stdout=PIPE)
+            p1.wait()
+            if p1.returncode == 0:
+                return True
+        elif fstype == 'EXT2FS':
+            p1 = Popen(["/usr/local/sbin/tune2fs", "-L", dev, label], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
