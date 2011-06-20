@@ -388,7 +388,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
                 else:
                     return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully updated.") % m._meta.verbose_name}))
             except ServiceFailed, e:
-                return HttpResponse(simplejson.dumps({"error": True, "message": _("The service failed to restart.") % m._meta.verbose_name}))
+                return HttpResponse(simplejson.dumps({"error": True, "message": _("The service failed to restart.") % m._meta.verbose_name, "events": ["serviceFailed(\"%s\")" % e.service]}))
 
     else:
         mf = mf(instance=instance)

@@ -18,7 +18,7 @@
                <strong>{% trans "Active Directory" %}</strong>
            </td>
            <td>
-   	    <img id="ad_toggle" name="ad_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "activedirectory" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+   	    <img id="activedirectory_toggle" name="activedirectory_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "activedirectory" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
            </td>
            <td>
                <img id="ad_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Active Directory Settings"|force_escape|force_escape %}', '{% url freeadmin_model_edit app="services", model="ActiveDirectory",oid=activedirectory.id %}');" title="{% trans "Active Directory Settings" %}">

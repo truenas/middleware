@@ -510,15 +510,16 @@
         dojo.addClass(suc, css);
         dojo.html.set(suc, "<p>"+msg+"</p>");
         setTimeout(function() { if(suc) dojo.fadeOut({node: suc}).play();}, 7000);
-        //var footer = dojo.byId("messages");
-        //dojo.empty(footer);
-        //var suc = dojo.create("div");
-        //footer.appendChild(suc);
-        //dojo.addClass(suc, "success");
-        //dojo.html.set(suc, msg);
-        //setTimeout(function() { if(suc) dojo.fadeOut({node: suc}).play();}, 7000);
 
     };
+
+    serviceFailed = function(srv) {
+        var obj = dojo.query("img#"+srv+"_toggle");
+        if(obj.length > 0) {
+            obj = obj[0];
+            toggle_service(obj);
+        }
+    }
 
     formSubmit = function(item, e, url, callback, attrs) {
         dojo.stopEvent(e); // prevent the default submit
@@ -623,6 +624,11 @@
                         setMessage(json.message);
                         //dojo.style(suc, "opacity", "0");
                         //dojo.fadeIn({ node: suc }).play();
+                        if(json.events) {
+                            for(i=0;json.events.length>i;i++){
+                                eval(json.events[i]);
+                            }
+                        }
                     } catch(err) {
 
                         rnode.set('content', data);

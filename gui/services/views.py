@@ -183,7 +183,7 @@ def servicesToggleView(request, formname):
         'ftp_toggle' : 'ftp',
         'tftp_toggle' : 'tftp',
         'ssh_toggle' : 'ssh',
-        'ad_toggle' : 'activedirectory',
+        'activedirectory_toggle' : 'activedirectory',
         'ldap_toggle' : 'ldap',
         'rsync_toggle' : 'rsync',
         'smartd_toggle' : 'smartd',
