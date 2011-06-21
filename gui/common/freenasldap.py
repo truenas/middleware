@@ -408,7 +408,7 @@ class FreeNAS_LDAP(object):
 
             self.__cache[key] = result
 
-        syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: %d results" % len(results))
+        syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: %d results" % len(result))
         syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: leave")
         return result
 
