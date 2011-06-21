@@ -222,6 +222,12 @@ if [ "${DEBUG}" -eq "1" ]; then
 	add_port editors/vim-lite
 	add_port misc/py-pexpect
 	add_port devel/ipython
+	add_port ftp/curl
+	add_port devel/p5-Term-ReadKey
+	add_port devel/p5-subversion
+	add_port mail/p5-Net-SMTP-SSL
+	add_port lang/p5-Error
+	add_port devel/git -DWITH_SVN -DWITHOUT_P4 -DWITHOUT_CVS
 fi
 	 
 
