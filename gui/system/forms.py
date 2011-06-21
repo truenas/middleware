@@ -138,6 +138,10 @@ class FileWizard(FormWizard):
 class SettingsForm(ModelForm):
     class Meta:
         model = models.Settings
+        widgets = {
+            'stg_timezone': forms.widgets.FilteringSelect(),
+            'stg_language': forms.widgets.FilteringSelect(),
+        }
     def __init__(self, *args, **kwargs):
         super(SettingsForm, self).__init__( *args, **kwargs)
         self.instance._original_stg_guiprotocol = self.instance.stg_guiprotocol
