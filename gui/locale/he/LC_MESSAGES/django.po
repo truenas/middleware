@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-06 13:45+0200\n"
+"PO-Revision-Date: 2011-06-20 19:28+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -409,35 +409,35 @@ msgstr "קריאה וכתיבה"
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes)s דקות"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour)s שעות"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hours)s שעות"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day)s יום"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week)s שבועות"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "לעולם לא - בודק את ההתקן בכל מצב צריכת חשמל"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "שינה - בודק את ההתקן חוץ מבמצב שינה"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"

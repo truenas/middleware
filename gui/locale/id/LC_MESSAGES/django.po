@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-20 10:43+0200\n"
+"PO-Revision-Date: 2011-06-21 03:25+0200\n"
 "Last-Translator: Rully <paradoxnazi@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: id\n"
@@ -261,11 +261,11 @@ msgstr "Nama dengan huruf kecil di kedua arah"
 
 #: choices.py:193
 msgid "Client sees lowercase, server sees uppercase"
-msgstr "Di klien terlihat huruf kecil, di server terlihat huruf besar (kapital)"
+msgstr "Di klien terlihat huruf kecil, di server terlihat huruf besar"
 
 #: choices.py:194
 msgid "Client sees uppercase, server sees lowercase"
-msgstr "Di klien terlihat huruf besar (kapital), di server terlihat huruf kecil"
+msgstr "Di klien terlihat huruf besar, di server terlihat huruf kecil"
 
 #: choices.py:198
 msgid "File"
@@ -2564,54 +2564,58 @@ msgstr "Modul-modul Rsync"
 
 #: services/models.py:1243
 msgid "Check interval"
-msgstr ""
+msgstr "Interval pengecekan"
 
 #: services/models.py:1244
 msgid ""
 "Sets the interval between disk checks to N minutes. The default is 30 minutes"
 msgstr ""
+"Atur interval antar pengecekan cakram ke N menit. 30 menit secara default"
 
 #: services/models.py:1250
 msgid "Power mode"
-msgstr ""
+msgstr "Modus daya"
 
 #: services/models.py:1254
 msgid "Difference"
-msgstr ""
+msgstr "Perbedaan"
 
 #: services/models.py:1255
 msgid ""
 "Report if the temperature had changed by at least N degrees Celsius since "
 "last report. 0 to disable"
 msgstr ""
+"Laporkan jika temperatur berubah setidaknya N derajat Celcius sejak "
+"pelaporan terakhir. 0 untuk mematikan"
 
 #: services/models.py:1259
-#, fuzzy
 msgid "Informal"
-msgstr "Normal"
+msgstr "Informal"
 
 #: services/models.py:1260 services/models.py:1265
 msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
 msgstr ""
+"Laporkan jika temperatur lebih besar atau sama dengan N derajat Celcius. 0 "
+"untuk mematikan"
 
 #: services/models.py:1264
 msgid "Critical"
-msgstr ""
+msgstr "Kritikal"
 
 #: services/models.py:1268
 msgid "Email to report"
-msgstr ""
+msgstr "Email untuk melapor"
 
 #: services/models.py:1271
 msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr ""
+msgstr "Alamat email tujuan. Pisahkan alamat email dengan titik koma"
 
 #: services/models.py:1274 services/models.py:1275
 #: templates/services/index.html:108
 msgid "S.M.A.R.T."
-msgstr ""
+msgstr "S.M.A.R.T"
 
 #: services/nav.py:12
 msgid "Control Services"
@@ -2781,7 +2785,7 @@ msgstr "Berbagi Windows"
 
 #: sharing/models.py:94
 msgid "Windows Shares"
-msgstr ""
+msgstr "Berbagi Windows"
 
 #: sharing/models.py:105
 msgid ""
@@ -2793,6 +2797,13 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
+"Nama volume adalah nama yang tampil pada pilihan dialog 'koneksikan ke "
+"server' pada Macintosh untuk mewakili berbagi yang bersangkutan. Jika nama "
+"volume tidak diatur, komponen terakhir dari nama path yang digunakan. Tidak "
+"ada dua volume yang mempunyai nama sama. Nama volume tidak boleh berisikan "
+"karakter '.'. Nama volume kompong jika terlalu panjang. Nama volume codepage "
+"Mac terbatas pada 27 karakter. Nama volume dengan UTF8-MAC terbatas pada "
+"parameter 'Panjang Nama Volume' di servis Berbagi Apple"
 
 #: sharing/models.py:109
 msgid "Share Comment"
@@ -2857,6 +2868,8 @@ msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Izinkan pengguna dan grup tertentu untuk memiliki akses baca-saja pada "
+"sebuah berbagi. Ini diikuti format opsi izin."
 
 #: sharing/models.py:146
 msgid "Read-write Access"
@@ -2867,6 +2880,8 @@ msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Izinkan pengguna dan grup tertetu untuk memiliki akses baca/tulis terhadap "
+"sebuah berbagi. Ini diikuti oleh format opsi izin."
 
 #: sharing/models.py:151
 msgid "Disk Discovery"
@@ -2890,6 +2905,9 @@ msgid ""
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
 msgstr ""
+"Catatan! Memilih 'Mesin Waktu' pada beberapa berbagi mungkin menyebabkan "
+"perilaku yang tidak terprediksi pada MacOS. Modus asal mengeksport volume "
+"sebagai volume data untuk pengguna."
 
 #: sharing/models.py:163
 msgid "Database Path"
@@ -2900,6 +2918,8 @@ msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
 msgstr ""
+"Atur informasi database untuk disimpan di path. Anda bisa memilih lokasi "
+"yang dapat ditulisi, walaupun jika volume hanya baca saja."
 
 #: sharing/models.py:168
 msgid "Cache CNID"
@@ -2911,10 +2931,13 @@ msgid ""
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
+"Jika anda mengatur afpd menggunakan informasi ID yang tersimpan di awalan "
+"berkas AppleDouble V2 untuk mengurangi muatan database. Jangan mengatur opsi "
+"ini jika volume dimodifikasi oleh klien non AFP (NFS/SMB/lokal)."
 
 #: sharing/models.py:172
 msgid "Translate CR/LF"
-msgstr ""
+msgstr "Translate CR/LF"
 
 #: sharing/models.py:173
 msgid ""
@@ -2924,92 +2947,108 @@ msgid ""
 "the filetype in a second step. Afpd will potentially destroy such files when "
 "'erroneously' changing bytes in order to do line break translation."
 msgstr ""
+"Nyalakan translasi CR/LF untuk berkas TEXT, secara otomatis mengkonversi "
+"batas baris Macintosh ke UNIX. Menggunakan opsi ini mungkin berbahaya karena "
+"sebagian program lama menyimpan data biner sebagai 'TEXT' ketika menyimpan "
+"dan mengganti tipe berkas setelahnya. Afpd akan berpotensi merusak file "
+"seperti itu ketika mengganti byte dalam hal mentranslasi batas baris."
 
 #: sharing/models.py:176
 msgid "Windows File Names"
-msgstr ""
+msgstr "Nama Berkas Windows"
 
 #: sharing/models.py:177
 msgid ""
 "This forces filenames to be restricted to the character set used by Windows. "
 "This is not recommended for shares used principally by Mac computers."
 msgstr ""
+"Ini akan memaksa nama berkas untuk membatasi set karakter yang digunakan "
+"oleh Windows. Tidak direkomendasikan untuk berbagi dengan komputer Mac."
 
 #: sharing/models.py:180
+#, fuzzy
 msgid "No .AppleDouble"
-msgstr ""
+msgstr "Tanpa .AppleDouble"
 
 #: sharing/models.py:181
 msgid ""
 "This will suppress automatic creation of the .AppleDouble directories. This "
 "option should not be used if files are accessed by Mac computers."
 msgstr ""
+"Ini akan secara otomatis menekan pembuatan direktori .AppleDouble. Opsi ini "
+"tidak seharusnya digunakan jika berkas diakses oleh komputer Mac."
 
 #: sharing/models.py:184
 msgid "Zero Device Numbers"
-msgstr ""
+msgstr "Nomor Perangkat Nol"
 
 #: sharing/models.py:185
 msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
 msgstr ""
+"Selalu gunakan 0 untuk nomor perangkat, membantu ketika nomor perangkat "
+"tidak tetap ketika menyalakan ulang, kluster, ..."
 
 #: sharing/models.py:188
 msgid "Disable File ID"
-msgstr ""
+msgstr "Matikan ID Berkas"
 
 #: sharing/models.py:189
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr ""
+msgstr "Jangan umumkan panggilan createfileid, resolveid, deleteid."
 
 #: sharing/models.py:192
 msgid "Disable :hex Names"
-msgstr ""
+msgstr "Matikan nama hex"
 
 #: sharing/models.py:193
 msgid ""
 "Disable :hex translations for anything except dot files. This option makes "
 "the '/' character illegal."
 msgstr ""
+"Matikan translasi hex untuk semuanya kecuali berkas dot. Opsi ini membuat "
+"karakter '/' ilegal."
 
 #: sharing/models.py:196
 msgid "ProDOS"
-msgstr ""
+msgstr "ProDOS"
 
 #: sharing/models.py:197
 msgid "Provide compatibility with Apple II clients."
-msgstr ""
+msgstr "Menyediakan kompatibilitas dengan klien Apple II."
 
 #: sharing/models.py:200
 msgid "No Stat"
-msgstr ""
+msgstr "Tanpa stat"
 
 #: sharing/models.py:201
 msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
 msgstr ""
+"Jangan gunakan stat path volume ketika mencacah daftar volume, berguna untuk "
+"mount otomatis atau volume yang dibuat oleh sebuah skrip preexec."
 
 #: sharing/models.py:204
 msgid "AFP3 Unix Privs"
-msgstr ""
+msgstr "Privasi Unix AFP3"
 
 #: sharing/models.py:205
 msgid "Use AFP3 unix privileges."
-msgstr ""
+msgstr "Gunakan hak UNIX AFP3."
 
 #: sharing/models.py:212
 msgid "Apple Share"
-msgstr ""
+msgstr "Berbagi Apple"
 
 #: sharing/models.py:213
 msgid "Apple Shares"
-msgstr ""
+msgstr "Berbagi Apple"
 
 #: sharing/models.py:230
 msgid "Authorized network or IP addresses"
-msgstr ""
+msgstr "Jaringan atau alamat IP yang berhak"
 
 #: sharing/models.py:231
 msgid ""
@@ -3017,33 +3056,41 @@ msgid ""
 "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
 "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 msgstr ""
+"Jaringan yang berhak untuk mengakses berbagi NFS atau sebuah daftar alamat "
+"IP. Tentukan nomor jaringan yang berbentuk 1.2.3.4/xx dimana xx adalah nomor "
+"dari bit sebuah netmask atau daftar alamat IP 1.2.3.4 1.2.3.5 1.2.3.6."
 
 #: sharing/models.py:235
 msgid "All Directories"
-msgstr ""
+msgstr "Semua Direktori"
 
 #: sharing/models.py:236
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
+"Izinkan mounting pada semua subdirektori dibawah titik mount ini jika "
+"dipilih. Sebaliknya, hanya direktori level atas saja yang bisa di-mount."
 
 #: sharing/models.py:239
 msgid "Read Only"
-msgstr ""
+msgstr "Baca Saja"
 
 #: sharing/models.py:240
 msgid "Export the share read only. Writes are not permitted."
-msgstr ""
+msgstr "Eksport berbagi baca-saja. Penulisan tidak diizinkan."
 
 #: sharing/models.py:243 system/models.py:409
 msgid "Quiet"
-msgstr ""
+msgstr "Diam"
 
 #: sharing/models.py:244
+#, fuzzy
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
 msgstr ""
+"Menghuni peringatan syslog jika disana terdapat masalah ketika meng-eksport "
+"berbagi ini."
 
 # Diterjemahkan dari bahasa Prancis
 #: sharing/models.py:248
@@ -3080,11 +3127,11 @@ msgstr ""
 
 #: sharing/models.py:283
 msgid "UNIX Share"
-msgstr ""
+msgstr "Berbagi UNIX"
 
 #: sharing/models.py:284
 msgid "UNIX Shares"
-msgstr ""
+msgstr "Berbagi UNIX"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
@@ -3093,358 +3140,372 @@ msgstr ""
 #: storage/forms.py:154 storage/forms.py:348 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr ""
+msgstr "Nama volume"
 
 #: storage/forms.py:158 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
-msgstr ""
+msgstr "Paksa ukuran sektor 4096 byte"
 
 #: storage/forms.py:220
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\"."
 msgstr ""
+"Nama volume harus diawali dengan tulisan dan mungkin termasuk angka, \"-\", "
+"\"_\"."
 
 #: storage/forms.py:234
 msgid "You must select a filesystem"
-msgstr ""
+msgstr "Anda harus memilih sebuah sistem berkas (filesystem)"
 
 #: storage/forms.py:238 system/forms.py:217 system/forms.py:223
 #: system/forms.py:228
 msgid "This field is required"
-msgstr ""
+msgstr "Kolom ini diperlukan"
 
 #: storage/forms.py:243 storage/forms.py:390 storage/forms.py:489
 msgid "You already have a volume with same name"
-msgstr ""
+msgstr "Anda telah memiliki nama volume yang sama"
 
 #: storage/forms.py:249
 msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr ""
+msgstr "\"log\" adalah kata yang sudah dipesan jadi tidak dapat digunakan"
 
 #: storage/forms.py:254
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr ""
+msgstr "Nama volume TIDAK boleh diawali dengan c[0-9], mirror, raidz atau spare"
 
 #: storage/forms.py:349 storage/forms.py:439 storage/forms.py:939
 msgid "Member disk"
-msgstr ""
+msgstr "Anggota cakram"
 
 #: storage/forms.py:396 storage/forms.py:506
 msgid "The selected disks were not verified for this import rules."
-msgstr ""
+msgstr "Cakram yang dipilih tidak terverifikasi untuk aturan import ini."
 
 #: storage/forms.py:404
 msgid "Some error ocurried while labelling the disk."
-msgstr ""
+msgstr "Beberapa kesalahan muncul ketika memberi label pada cakram."
 
 #: storage/forms.py:484
 msgid "You must select a volume."
-msgstr ""
+msgstr "Anda harus memilih sebuah volume."
 
 #: storage/forms.py:633
 msgid "Volume from which this dataset will be created on"
-msgstr ""
+msgstr "Volume dari dataset yang mana akan dibuat"
 
 #: storage/forms.py:634
 msgid "Dataset Name"
-msgstr ""
+msgstr "Nama Daatset"
 
 #: storage/forms.py:635 storage/forms.py:687 storage/forms.py:744
 #: storage/forms.py:785
 msgid "Compression level"
-msgstr ""
+msgstr "Tingkat Kompresi"
 
 #: storage/forms.py:636 storage/forms.py:688 storage/forms.py:745
 msgid "Enable atime"
-msgstr ""
+msgstr "Nyalakan atime"
 
 #: storage/forms.py:637 storage/forms.py:689 storage/forms.py:746
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "Kuota untuk dataset ini"
 
 #: storage/forms.py:637 storage/forms.py:638 storage/forms.py:689
 #: storage/forms.py:690 storage/forms.py:746 storage/forms.py:784
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0 = tak terbatas; contoh: 1g"
 
 #: storage/forms.py:638 storage/forms.py:690
 msgid "Quota for this dataset and all children"
-msgstr ""
+msgstr "Kuota untuk dataset ini dan anak-anaknya"
 
 #: storage/forms.py:639 storage/forms.py:691 storage/forms.py:747
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "Tempat yang telah dipesan untuk dataset ini"
 
 #: storage/forms.py:639 storage/forms.py:640 storage/forms.py:691
 #: storage/forms.py:692 storage/forms.py:747
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0 = tak ada; contoh: 1g"
 
 #: storage/forms.py:640 storage/forms.py:692
 msgid "Reserved space for this dataset and all children"
-msgstr ""
+msgstr "Tempat yang telah dipesan untuk dataset ini dan semua anak-anaknya"
 
 #: storage/forms.py:653
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
 msgstr ""
+"Nama dataset harus diawali dengan sebuah karakter alfanumerik dan boleh "
+"berisi (-), (_). (:) dan (.)."
 
 #: storage/forms.py:660 storage/forms.py:805
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "Anda telah memiliki sebuah dataset dengan nama yang sama"
 
 #: storage/forms.py:667 storage/forms.py:724 storage/forms.py:768
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
-msgstr ""
+msgstr "Masukkan nomor positif (opsionalnya diakhiri dengan M, G, T), atau 0"
 
 #: storage/forms.py:782
 msgid "Volume from which this ZFS Volume will be created on"
-msgstr ""
+msgstr "Volume dari volume ZFS yang akan dibuat"
 
 #: storage/forms.py:783
-#, fuzzy
 msgid "ZFS Volume Name"
-msgstr "ZFS Volume"
+msgstr "Nama Volume ZFS"
 
 #: storage/forms.py:784
-#, fuzzy
 msgid "Size for this ZFS Volume"
-msgstr "ZFS Volume"
+msgstr "Ukuran untuk Volume ZFS ini"
 
 #: storage/forms.py:798
 msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
 msgstr ""
+"Nama Volume ZFS harus diawali dengan sebuah karakter alfanumerik dan boleh "
+"hanya berisi (-), (_), (:) dan (.)."
 
 #: storage/forms.py:820
 msgid "Owner (user)"
-msgstr ""
+msgstr "Pemilik (pengguna)"
 
 #: storage/forms.py:821
 msgid "Owner (group)"
-msgstr ""
+msgstr "Pemilik (grup)"
 
 #: storage/forms.py:822
 msgid "Mode"
-msgstr ""
+msgstr "Modus"
 
 #: storage/forms.py:825
 msgid "Set permission recursively"
-msgstr ""
+msgstr "Mengatur izin dengan rekursif"
 
 #: storage/forms.py:875
 msgid "At least one day must be chosen"
-msgstr ""
+msgstr "Setidaknya satu hari harus dipilih"
 
 #: storage/forms.py:880
+#, fuzzy
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "Snapshot recursif"
 
 #: storage/forms.py:881
 msgid "Snapshot Name"
-msgstr ""
+msgstr "Nama Snapshot"
 
 #: storage/forms.py:888
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
 msgstr ""
+"Hanya karakter alfanumerik, '-'. '_' dan '.' yang diizinkan sebagai nama "
+"snapshot"
 
 #: storage/forms.py:898
 msgid "Invalid prefix"
-msgstr ""
+msgstr "Awalan invalid"
 
 #: storage/forms.py:902
 msgid "Snapshot"
-msgstr ""
+msgstr "Snapshot"
 
 #: storage/forms.py:903
 msgid "Clone Name (must be on same volume)"
-msgstr ""
+msgstr "Nama Klom (harus pada volume yang sama)"
 
 #: storage/forms.py:916
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
 msgstr ""
+"Hanya karakter alfanumerik, '-', '_', '.' dan '/' yang diizinkan sebagai "
+"nama klon"
 
 #: storage/forms.py:922
 msgid "Clone must be within the same volume"
-msgstr ""
+msgstr "Klon harus pada volume yang sama"
 
 #: storage/forms.py:989 storage/models.py:222
 msgid "Remote hostname"
-msgstr ""
+msgstr "Nama host jarak jauh"
 
 #: storage/forms.py:990 storage/models.py:226
 msgid "Remote hostkey"
-msgstr ""
+msgstr "Kunci host jarak jauh"
 
 #: storage/models.py:49
 msgid "File System Type"
-msgstr ""
+msgstr "Tipe Sistem Berkas"
 
 #: storage/models.py:52 storage/models.py:78 templates/storage/volumes.html:70
 msgid "Volume"
-msgstr ""
+msgstr "Volume"
 
 #: storage/models.py:79
 msgid "Volume this group belongs to"
-msgstr ""
+msgstr "Volume dimana grup ini berada"
 
 #: storage/models.py:102
 msgid "Transfer Mode"
-msgstr ""
+msgstr "Modus Transfer"
 
 #: storage/models.py:108
 msgid "HDD Standby"
-msgstr ""
+msgstr "HDD Standby"
 
 #: storage/models.py:114
 msgid "Advanced Power Management"
-msgstr ""
+msgstr "Managemen Daya Lanjutan"
 
 #: storage/models.py:120
 msgid "Acoustic Level"
-msgstr ""
+msgstr "Tingkat Kebisingan"
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
-msgstr ""
+msgstr "Nyalakan S.M.A.R.T"
 
 #: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
-msgstr ""
+msgstr "Opsi tambahan S.M.A.R.T"
 
 #: storage/models.py:133
 msgid "Group Membership"
-msgstr ""
+msgstr "Keanggotaan Grup"
 
 #: storage/models.py:134
 msgid "The disk group containing this disk"
-msgstr ""
+msgstr "Grup cakram berisi cakram ini"
 
 #: storage/models.py:156 storage/models.py:237 storage/models.py:267
 #: templates/storage/tasks.html:22
 msgid "Mount Point"
-msgstr ""
+msgstr "Poin Mount"
 
 #: storage/models.py:157
 msgid "Path to mount point"
-msgstr ""
+msgstr "Path ke poin mount"
 
 #: storage/models.py:161
 msgid "Mount options"
-msgstr ""
+msgstr "Opsi mount"
 
 #: storage/models.py:162
 msgid "Enter Mount Point options here"
-msgstr ""
+msgstr "Masukkan opsi Poin Mount disini"
 
 #: storage/models.py:179
 msgid "Error getting total space"
-msgstr ""
+msgstr "Kesalahan ketika mengecek total ruang"
 
 #: storage/models.py:185
 msgid "Error getting available space"
-msgstr ""
+msgstr "Kesalahan ketika mengecek ruang yang tersedia"
 
 #: storage/models.py:191
 msgid "Error getting used space"
-msgstr ""
+msgstr "Kesalahan ketika mengecek ruang yang terpakai"
 
 #: storage/models.py:197 storage/models.py:209
 msgid "Error"
-msgstr ""
+msgstr "Kesalahan"
 
 #: storage/models.py:229
 msgid "Remote Replication Host"
-msgstr ""
+msgstr "Host Replikasi Jarak Jauh"
 
 #: storage/models.py:230
 msgid "Remote Replication Hosts"
-msgstr ""
+msgstr "Host-host Replikasi Jarak Jauh"
 
 #: storage/models.py:241
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
+"Snapshot terakhir dikirim ke sisi jarak jauh (tinggalkan kosong untuk "
+"replikasi penuh)"
 
 #: storage/models.py:244 system/models.py:341
 #: templates/storage/replications.html:15
 msgid "Remote Host"
-msgstr ""
+msgstr "Host Jarak Jauh"
 
 #: storage/models.py:247 templates/storage/replications.html:16
 msgid "Remote ZFS filesystem"
-msgstr ""
+msgstr "Sistem berkas ZFS jarak jauh"
 
 #: storage/models.py:251
 msgid "Recursively replicate and remove stale snapshot on remote side"
 msgstr ""
+"Secara rekrusif mereplika dan membuang snapshot basi pada sisi jarak jauh"
 
 #: storage/models.py:254
 msgid "Replication Task"
-msgstr ""
+msgstr "Replikasi Tugas"
 
 #: storage/models.py:255
 msgid "Replication Tasks"
-msgstr ""
+msgstr "Replikasi Tugas-tugas"
 
 #: storage/models.py:270 system/models.py:384 templates/storage/tasks.html:23
 msgid "Recursive"
-msgstr ""
+msgstr "Rekursif"
 
 #: storage/models.py:274
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "Nilai waktu hidup snapshot"
 
 #: storage/models.py:280
 msgid "Snapshot lifetime unit"
-msgstr ""
+msgstr "Unit waktu hidup snapshot"
 
 #: storage/models.py:284
 msgid "Begin"
-msgstr ""
+msgstr "Mulai"
 
 #: storage/models.py:285
 msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr ""
+msgstr "Ketika dalam suatu hari harus memulai membuat snapshot, e.g. 8:00"
 
 #: storage/models.py:289
 msgid "End"
-msgstr ""
+msgstr "Selesai"
 
 #: storage/models.py:290
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr ""
+msgstr "Ketika dalam suatu hari harus mengakhiri membuat snapsho, e.g. 17:00"
 
 #: storage/models.py:296
 msgid "Interval"
-msgstr ""
+msgstr "Interval"
 
 #: storage/models.py:297
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
 msgstr ""
+"Berapa menit terlewati sebelum sebuah snapshot yang baru diuat setelah yang "
+"terakhir. "
 
 #: storage/models.py:303
 msgid "Occurrence"
-msgstr ""
+msgstr "Kemunculan"
 
 #: storage/models.py:304
 msgid "How the task is repeated"
-msgstr ""
+msgstr "Berapa kali tugas diulang"
 
 #: storage/models.py:309
 msgid "Weekday"
-msgstr ""
+msgstr "Hari kerja"
 
 #: storage/models.py:327
 msgid "Periodic Snapshot Task"
-msgstr ""
+msgstr "Tugas Snapshot Periodik"
 
 #: storage/models.py:328 templates/storage/index.html:7
 msgid "Periodic Snapshot Tasks"
-msgstr ""
+msgstr "Tugas-tugas Snapshot Periodic"
 
 #: storage/nav.py:5 templates/menubar.html:18
 msgid "Storage"
@@ -3452,18 +3513,18 @@ msgstr ""
 
 #: storage/nav.py:24
 msgid "View All Snapshots"
-msgstr ""
+msgstr "Lihat Semua Snapshot"
 
 #: storage/nav.py:34 templates/storage/replications.html:5
 #: templates/storage/volumes.html:6 templates/storage/volumes.html.py:11
 msgid "Create Volume"
-msgstr ""
+msgstr "Buat Volume"
 
 #: storage/nav.py:45 templates/storage/autoimport.html:25
 #: templates/storage/import.html:43 templates/storage/volumes.html:42
 #: templates/storage/volumes.html.py:46
 msgid "Import Volume"
-msgstr ""
+msgstr "Import Volume"
 
 #: storage/nav.py:56 templates/storage/volumes.html:53
 #: templates/storage/volumes.html.py:57
@@ -3472,25 +3533,25 @@ msgstr ""
 
 #: storage/nav.py:67
 msgid "View All Volumes"
-msgstr ""
+msgstr "Lihat Semua Volume-volume"
 
 #: storage/nav.py:78 templates/storage/volumes.html:19
 #: templates/storage/volumes.html.py:23
 msgid "Create ZFS Dataset"
-msgstr ""
+msgstr "Buat Dataset ZFS"
 
 #: storage/nav.py:89
 msgid "Add Periodic Snapshot"
-msgstr ""
+msgstr "Tambah Snapshot Periodik"
 
 #: storage/nav.py:100
 msgid "Volumes"
-msgstr ""
+msgstr "Volume-Volume"
 
 #: storage/nav.py:121 storage/nav.py:139 templates/storage/volumes.html:168
 #: templates/storage/volumes.html.py:172
 msgid "Change Permissions"
-msgstr ""
+msgstr "Ubah Perizinan"
 
 #: storage/views.py:88 storage/views.py:115 storage/views.py:137
 msgid "Volume successfully added."
@@ -3510,7 +3571,7 @@ msgstr ""
 
 #: storage/views.py:320 storage/views.py:396
 msgid "Some error ocurried while setting the options"
-msgstr ""
+msgstr "Beberapa kesalahan muncul ketika mengatur opsi"
 
 #: storage/views.py:342
 msgid "ZFS Volume successfully added."
@@ -3522,7 +3583,7 @@ msgstr ""
 
 #: storage/views.py:360
 msgid "ZFS Volume successfully destroyed."
-msgstr ""
+msgstr "Volume ZFS berhasil dihancurkan."
 
 #: storage/views.py:394
 msgid "Native dataset successfully edited."
@@ -3558,15 +3619,15 @@ msgstr ""
 
 #: storage/views.py:549
 msgid "Disk replacement has been initiated."
-msgstr ""
+msgstr "Pergantian cakram telah dimulai."
 
 #: storage/views.py:553
 msgid "Some error ocurried."
-msgstr ""
+msgstr "Beberapa kesalahan muncul."
 
 #: storage/views.py:574
 msgid "Disk detach has been successfully done."
-msgstr ""
+msgstr "Pencopotan cakram berhasil dilakukan."
 
 #: storage/views.py:588
 msgid "The volume failed to export"
@@ -3589,30 +3650,32 @@ msgid ""
 "The system will use this place to temporarily store the firmware file before "
 "it's being applied."
 msgstr ""
+"Sistem akan menggunakan tempat ini untuk sementara menyimpan berkas firmware "
+"sebelum diaplikasikan."
 
 #: system/forms.py:258
 msgid "New image to be installed"
-msgstr ""
+msgstr "Image baru yang akan dipasang"
 
 #: system/forms.py:259 system/forms.py:282
 msgid "SHA256 sum for the image"
-msgstr ""
+msgstr "Jumlah SHA256 untuk image"
 
 #: system/forms.py:271
 msgid "Invalid firmware or checksum"
-msgstr ""
+msgstr "Firmware atau cheksum yang invalid"
 
 #: system/forms.py:281
 msgid "Service Pack image to be installed"
-msgstr ""
+msgstr "Image Service Pack yang akan dipasang"
 
 #: system/forms.py:294
 msgid "Invalid service pack or checksum"
-msgstr ""
+msgstr "Service Pack atau checksum yang invalid"
 
 #: system/forms.py:304
 msgid "New config to be installed"
-msgstr ""
+msgstr "Pengaturan baru yang akan dipasang"
 
 #: system/forms.py:310 system/forms.py:338
 msgid "minute"
@@ -3628,63 +3691,63 @@ msgstr ""
 
 #: system/models.py:45
 msgid "Protocol"
-msgstr ""
+msgstr "Protokol"
 
 #: system/models.py:51
 msgid "Language"
-msgstr ""
+msgstr "Bahasa"
 
 #: system/models.py:57
 msgid "Timezone"
-msgstr ""
+msgstr "Zona Waktu"
 
 #: system/models.py:62
 msgid "NTP server 1"
-msgstr ""
+msgstr "Server NTP 1"
 
 #: system/models.py:67
 msgid "NTP server 2"
-msgstr ""
+msgstr "Server NTP 2"
 
 #: system/models.py:73
 msgid "NTP server 3"
-msgstr ""
+msgstr "Server NTP 3"
 
 #: system/models.py:78 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
-msgstr ""
+msgstr "Pengaturan"
 
 #: system/models.py:85
 msgid "Enable Console Menu"
-msgstr ""
+msgstr "Nyalakan Menu Konsol"
 
 #: system/models.py:87
 msgid "Use Serial Console"
-msgstr ""
+msgstr "Gunakan Konsol Serial"
 
 #: system/models.py:89
 msgid "Enable screen saver"
-msgstr ""
+msgstr "Nyalakan screen saver"
 
 #: system/models.py:91
 msgid "Automatically Check for New Firmware"
-msgstr ""
+msgstr "Secara otomatis mengecek firmware baru"
 
 #: system/models.py:93
 msgid "Beep on boot"
-msgstr ""
+msgstr "Bunyi ketika boot"
 
 #: system/models.py:95
 msgid "Enable Special System Tuning"
-msgstr ""
+msgstr "Nyalakan pengaturan spesial pada sistem"
 
 #: system/models.py:97
 msgid "Enable powerd (Power Saving Daemon)"
-msgstr ""
+msgstr "Nyalakan powerd (Power Saving Daemon)"
 
 #: system/models.py:99
 msgid "Enable Zeroconf/Bonjour"
-msgstr ""
+msgstr "Nyalakan Zeroconf/Bonjour"
 
 #: system/models.py:102
 msgid ""
@@ -3693,7 +3756,7 @@ msgstr ""
 
 #: system/models.py:105
 msgid "Show console messages in the footer (Requires UI reload)"
-msgstr ""
+msgstr "Tampilkan konsol pesan pada footer (Diperlukan muat ulang UI)"
 
 #: system/models.py:108
 msgid "Show tracebacks in case of fatal errors"
@@ -3701,63 +3764,67 @@ msgstr ""
 
 #: system/models.py:116
 msgid "MOTD banner"
-msgstr ""
+msgstr "Spanduk MOTD"
 
 #: system/models.py:120 templates/system/settings.html:5
 msgid "Advanced"
-msgstr ""
+msgstr "Lanjutan"
 
 #: system/models.py:129
 msgid "From email"
-msgstr ""
+msgstr "Dari email"
 
 #: system/models.py:130
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@mydomain.com"
 msgstr ""
+"Sebuah alamat email yang digunakan oleh sistem akan digunakan untuk "
+"mengirim, e.g: freenas@mydomain.com"
 
 #: system/models.py:135
 msgid "Outgoing mail server"
-msgstr ""
+msgstr "Server surat keluar"
 
 #: system/models.py:136
 msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
 msgstr ""
+"Sebuah nama host atau IP yang akan menerima surat kita, untuk instansi "
+"mail.example.org, atau 192.168.1.1"
 
 #: system/models.py:142
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
-msgstr ""
+msgstr "Sebuah bilangan bulat dari 1 - 65535, umumnya 25, 465 atau 587"
 
 #: system/models.py:143
 msgid "Port to connect to"
-msgstr ""
+msgstr "Port dimana akan dikoneksikan"
 
 #: system/models.py:149
 msgid "encryption of the connection"
-msgstr ""
+msgstr "enkripsi dari koneksi"
 
 #: system/models.py:150
 msgid "TLS/SSL"
-msgstr ""
+msgstr "TLS/SSL"
 
 #: system/models.py:153
 msgid "Use SMTP Authentication"
-msgstr ""
+msgstr "Gunakan otentikasi SMTP"
 
 #: system/models.py:161
 msgid "A username to authenticate to the remote server"
-msgstr ""
+msgstr "Sebuah nama pengguna untuk mengotentikasi pada server jarak jauh"
 
 #: system/models.py:168
 msgid "A password to authenticate to the remote server"
-msgstr ""
+msgstr "Sebuah kata sandi untuk mengotentikasi pada server jarak jauh"
 
 #: system/models.py:171 templates/system/settings.html:7
 msgid "Email"
-msgstr ""
+msgstr "Email"
 
 #: system/models.py:181
 msgid "Organization"
@@ -4194,7 +4261,7 @@ msgstr ""
 
 #: templates/freeadmin/generic_model_add_ok.html:1
 msgid "successfully added"
-msgstr ""
+msgstr "berhasil ditambahkan"
 
 #: templates/freeadmin/generic_model_delete.html:10
 #: templates/storage/dataset_confirm_delete.html:7
@@ -4226,7 +4293,7 @@ msgstr ""
 
 #: templates/freeadmin/generic_model_edit_ok.html:1
 msgid "successfully edited"
-msgstr ""
+msgstr "berhasil disunting"
 
 #: templates/freeadmin/index.html:30
 msgid "Running Processes"
@@ -4874,7 +4941,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:10
 msgid "Create Periodic Snapshot"
-msgstr ""
+msgstr "Buat Snapshot Periodik"
 
 #: templates/storage/tasks.html:14
 msgid "Periodic Snapshot Schedule"

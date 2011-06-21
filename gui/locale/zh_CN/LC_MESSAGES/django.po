@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-18 09:17+0200\n"
-"Last-Translator: xiangzhou <xiangzhou@cloudshinee.com>\n"
+"PO-Revision-Date: 2011-06-20 19:27+0200\n"
+"Last-Translator: kiDemon <275378227@qq.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1165,7 +1165,7 @@ msgstr "删除对应的文件存储"
 #, fuzzy, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "用户 %s 无效"
+msgstr[0] ""
 
 #: services/models.py:40
 msgid "Service"
@@ -1339,7 +1339,7 @@ msgstr "最小 AIO 读尺寸"
 msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
-msgstr ""
+msgstr "如果要求的大小比这个值大，Samba将不同步地读取。默认读取值为1。"
 
 #: services/models.py:164
 msgid "Minimal AIO write size"
@@ -1380,7 +1380,7 @@ msgstr "本地访问"
 
 #: services/models.py:196
 msgid "Allow users with local accounts to access apple shares on this box."
-msgstr ""
+msgstr "允许用户在这块区域使用当前账户类型来访问苹果共享"
 
 #: services/models.py:199
 msgid "Enable DDP"
@@ -1413,7 +1413,7 @@ msgstr "异步模式"
 msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
-msgstr ""
+msgstr "使用不同步模式，这将帮助性能超过网络速度"
 
 #: services/models.py:225 services/models.py:226
 #: templates/services/index.html:75
@@ -1422,17 +1422,17 @@ msgstr "NFS"
 
 #: services/models.py:235
 msgid "Base Name"
-msgstr ""
+msgstr "返回路径中的文件名部分"
 
 #: services/models.py:236
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
-msgstr ""
+msgstr "返回路径中的文件名部分 （例如 ）"
 
 #: services/models.py:242
 msgid "Discovery Auth Method"
-msgstr ""
+msgstr "发现自生的方法"
 
 #: services/models.py:253
 msgid "I/O Timeout"

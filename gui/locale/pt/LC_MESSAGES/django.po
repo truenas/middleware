@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-19 02:08+0200\n"
-"Last-Translator: picaditto <picaditto@gmail.com>\n"
+"PO-Revision-Date: 2011-06-20 17:20+0200\n"
+"Last-Translator: Nuno <nuno.piscinas@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -2566,7 +2566,7 @@ msgstr ""
 "Esta opção é uma vírgula, espaço, ou conjunto de host que não tem permissão "
 "para acessar este módulo delimitado por tabulação. Sempre que as listas em "
 "conflito, a lista de permissões tem precedência. Se é necessário negar tudo "
-"por padrão, use a palavra-chave todos (ou a máscara de rede 0.0.0.0/0) e, em "
+"por padrão, use a palavra-chave ALL (ou a máscara de rede 0.0.0.0/0) e, em "
 "seguida, especificar explicitamente para os hosts permitem parâmetro esses "
 "hosts que deverão ser autorizados a aceder. Deixar este campo vazio para "
 "usar configurações padrão"
@@ -2796,7 +2796,7 @@ msgstr ""
 "Esta opção é uma vírgula, espaço, ou conjunto de host que não tem permissão "
 "para acessar esse compartilhamento delimitado por tabulação. Sempre que as "
 "listas em conflito, a lista de permissões tem precedência. Se é necessário "
-"negar tudo por padrão, use a palavra-chave todos (ou a máscara de rede "
+"negar tudo por padrão, use a palavra-chave ALL (ou a máscara de rede "
 "0.0.0.0/0) e, em seguida, especificar explicitamente para os hosts permitem "
 "parâmetro esses hosts que deverão ser autorizados a aceder. Deixe este campo "
 "vazio para usar as configurações padrão."
@@ -2830,7 +2830,7 @@ msgstr ""
 "conter o ':' caractere. O nome de volume é danificado se é muito longo. "
 "Nome do volume Mac codepage é limitado a 27 caracteres. Nome do volume "
 "UTF8-MAC é limitada ao parâmetro 'Comprimento do nome de Volume' na parte de "
-"serviços: Apple"
+"serviços:Partilha Apple"
 
 #: sharing/models.py:109
 msgid "Share Comment"
@@ -2897,6 +2897,8 @@ msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Permite que determinados usuários e grupos ter acesso somente leitura a um "
+"compartilhamento. Isso segue o formato de opção permitir."
 
 #: sharing/models.py:146
 msgid "Read-write Access"
@@ -2977,7 +2979,7 @@ msgstr ""
 "Permite a tradução de crlf para arquivos de texto, automaticamente converter "
 "quebras de linha macintosh em Unix ones. O uso desta opção pode ser "
 "perigoso já que alguns programas mais antigos armazenam arquivos de dados "
-"binários como tipo 'Texto' quando salvar e mudar o tipo de arquivo em uma "
+"binários como tipo 'TEXT' quando salvar e mudar o tipo de arquivo em uma "
 "segunda etapa. AFPd potencialmente irá destruir esses arquivos quando "
 "alterar 'erroneamente' bytes para tradução de quebra de linha."
 
@@ -3016,7 +3018,7 @@ msgid ""
 "across a reboot, cluster, ..."
 msgstr ""
 "Sempre use 0 para o número do dispositivo, de ajuda quando o número de "
-"dispositivo não é constante em toda uma reinicialização, cluster,..."
+"dispositivo não é constante em toda uma reinicialização, cluster, ..."
 
 #: sharing/models.py:188
 msgid "Disable File ID"
@@ -3028,14 +3030,14 @@ msgstr "Não anuncie chamadas de criar id, resolver id e de apagar id."
 
 #: sharing/models.py:192
 msgid "Disable :hex Names"
-msgstr "Desliga: hex Nomes"
+msgstr "Desliga :hex Nomes"
 
 #: sharing/models.py:193
 msgid ""
 "Disable :hex translations for anything except dot files. This option makes "
 "the '/' character illegal."
 msgstr ""
-"Desativar: traduções para qualquer coisa exceto arquivos ponto número "
+"Desativar :traduções para qualquer coisa exceto arquivos ponto número "
 "hexadecimal. Esta opção faz com que o caractere '/' ilegal."
 
 #: sharing/models.py:196
@@ -3087,7 +3089,7 @@ msgstr ""
 "A rede que está autorizada a aceder à partilha NFS ou a lista de endereços "
 "IP. Especifique os endereços ip no formulário 1.2.3.4/xx. Onde está xx é o "
 "numero de bits da mascara de rede ou a lista de endereços de IP 1.2.3.4 "
-"1.2.3.5 1.2.3.6"
+"1.2.3.5 1.2.3.6."
 
 #: sharing/models.py:235
 msgid "All Directories"
@@ -3195,7 +3197,7 @@ msgstr "\"log\" é uma palavra reservada e, portanto, não pode ser usado"
 
 #: storage/forms.py:254
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr "O nome de volume NÃO pode começar com c[0-9], mirror, raidz ou spare"
+msgstr "O nome de volume NOT pode começar com c[0-9], mirror, raidz ou spare"
 
 #: storage/forms.py:349 storage/forms.py:439 storage/forms.py:939
 msgid "Member disk"
@@ -3205,7 +3207,7 @@ msgstr "Disco membro"
 msgid "The selected disks were not verified for this import rules."
 msgstr ""
 "Os discos seleccionados não foram verificados para as regras de importação "
-"definidas"
+"definidas."
 
 #: storage/forms.py:404
 msgid "Some error ocurried while labelling the disk."
@@ -3217,11 +3219,11 @@ msgstr ""
 
 #: storage/forms.py:633
 msgid "Volume from which this dataset will be created on"
-msgstr "Seleccione o volume onde a dataset vai ser criada."
+msgstr "Seleccione o volume onde a dataset vai ser criada em"
 
 #: storage/forms.py:634
 msgid "Dataset Name"
-msgstr "Nome da dataset."
+msgstr "Nome da Dataset"
 
 #: storage/forms.py:635 storage/forms.py:687 storage/forms.py:744
 #: storage/forms.py:785
@@ -3256,7 +3258,7 @@ msgstr "0=Nenhum; exemplo: 1g"
 
 #: storage/forms.py:640 storage/forms.py:692
 msgid "Reserved space for this dataset and all children"
-msgstr ""
+msgstr "Espaço reservado para este conjunto de dados e todas as crianças"
 
 #: storage/forms.py:653
 msgid ""
@@ -3308,11 +3310,11 @@ msgstr "Modo"
 
 #: storage/forms.py:825
 msgid "Set permission recursively"
-msgstr "Definir as permissões recursivamente."
+msgstr "Definir as permissões recursivamente"
 
 #: storage/forms.py:875
 msgid "At least one day must be chosen"
-msgstr "Tem de ser escolhido pelo menos um dia."
+msgstr "Tem de ser escolhido pelo menos um dia"
 
 #: storage/forms.py:880
 msgid "Recursive snapshot"
@@ -3644,7 +3646,7 @@ msgstr ""
 
 #: storage/views.py:553
 msgid "Some error ocurried."
-msgstr "Ocorreu um erro"
+msgstr "Ocorreu um erro."
 
 #: storage/views.py:574
 msgid "Disk detach has been successfully done."
@@ -3706,7 +3708,7 @@ msgstr "hora"
 
 #: system/forms.py:312 system/forms.py:340
 msgid "day of month"
-msgstr "Dia do mês"
+msgstr "dia do mês"
 
 #: system/models.py:45
 msgid "Protocol"
@@ -4552,7 +4554,7 @@ msgstr ""
 #: templates/registration/login.html:48
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr "Bem vindo, %(username). Obrigado por ter entrado."
+msgstr "Bem vindo, %(username)s. Obrigado por ter entrado."
 
 #: templates/registration/login.html:50
 msgid "Welcome to FreeNAS 8"
@@ -4612,7 +4614,7 @@ msgstr ""
 
 #: templates/services/index.html:114
 msgid "S.M.A.R.T. Settings"
-msgstr "Definições do S.M.A.R.T."
+msgstr "Definições S.M.A.R.T"
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
@@ -4882,7 +4884,7 @@ msgstr "Alterar permissão"
 #: templates/storage/permission.html:7
 #, python-format
 msgid "Change permission on %(path)s to"
-msgstr "Alterar permissão de %(path) a"
+msgstr "Alterar permissão de %(path)s a"
 
 #: templates/storage/permission.html:11
 msgid "Change"
@@ -5017,7 +5019,7 @@ msgstr "Criar Volume ZFS"
 
 #: templates/storage/volumes.html:64
 msgid "There are no active volumes."
-msgstr "Não existem volumes activos"
+msgstr "Não existem volumes activos."
 
 #: templates/storage/volumes.html:72
 msgid "Used"
@@ -5042,7 +5044,7 @@ msgstr "Destruir Dataset"
 #: templates/storage/volumes.html:137 templates/storage/volumes.html.py:141
 #: templates/storage/volumes.html:157 templates/storage/volumes.html.py:161
 msgid "Edit ZFS Options"
-msgstr "Editar opções ZFS "
+msgstr "Editar opções ZFS"
 
 #: templates/storage/volumes.html:147 templates/storage/volumes.html.py:151
 msgid "Destroy Volume"

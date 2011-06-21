@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-05-21 17:45+0200\n"
-"Last-Translator: Richárd <kovacsr@fkf.hu>\n"
+"PO-Revision-Date: 2011-06-21 00:13+0200\n"
+"Last-Translator: petyuska <petyuska@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
@@ -111,34 +111,30 @@ msgid "Disabled"
 msgstr "Kikapcsolva"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Minimális energia-felhasználás, készenléttel (leáll)"
+msgstr "1. Szint - Minimális energia-felhasználás, készenléttel (leáll)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Közepes energia-felhasználás, készenléttel"
+msgstr "64. Szint - Közepes energia-felhasználás, készenléttel"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Közepes energia-felhasználás, készenléttel"
+msgstr "127. Szint - Közepes energia-felhasználás, készenléttel"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Minimális energia-felhasználás, készenlét nélkül (mindig pörög)"
+msgstr ""
+"128. Szint - Minimális energia-felhasználás, készenlét nélkül (nincs "
+"leállás)"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Közepes energia-felhasználás, készenlét nélkül"
+msgstr "192. Szint - Közepes energia-felhasználás, készenlét nélkül"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Maximális teljesítmény és energia-felhasználás"
+msgstr "254. Szint - Maximális teljesítmény és energia-felhasználás"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -262,17 +258,16 @@ msgid "No case folding"
 msgstr "Nincs betűméret átalakítás"
 
 #: choices.py:191 choices.py:192
-#, fuzzy
 msgid "Lowercase names in both directions"
 msgstr "Kisbetűs nevek mindkét irányba"
 
 #: choices.py:193
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "Kliens kisbetűst lát, szerver nagybetűst"
 
 #: choices.py:194
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "Kliens nagybetűst lát, szerver kisbetűst"
 
 #: choices.py:198
 msgid "File"
@@ -362,19 +357,16 @@ msgid "lzjb (recommended)"
 msgstr "lzjb (ajánlott)"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "alap szint"
+msgstr "gzip (alap szint, 6)"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "leggyorsabb"
+msgstr "gzip (leggyorsabb)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "maximális, lassú"
+msgstr "gzip (maximális, lassú)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -406,43 +398,41 @@ msgid "Every selected weekday"
 msgstr "Minden kiválasztott napon"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
-msgstr "csak olvasható"
+msgstr "Csak olvasható"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "csak olvasható"
+msgstr "Csak írható"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Írható és Olvasható"
 
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes) perc"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour) óra"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hours) óra"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day) nap"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week) hét"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
@@ -450,27 +440,29 @@ msgstr ""
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Alvó - Ellenőrizze az eszközt SLEEP módban"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
+msgstr "Készenlét - Ellenőrizze az eszközt SLEEP vagy STANDBY módban"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
+"Tétlen - Készenlét - Ellenőrizze az eszközt SLEEP, STANDBY vagy IDLE módban"
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Hosszú Ön-Teszt"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Rövid Ön-Teszt"
 
 #: choices.py:469
+#, fuzzy
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Továbbítás Ön-Teszt (csak ATA)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
@@ -534,7 +526,7 @@ msgstr "Ilyen nevű felhasználó már létezik."
 #: account/forms.py:243 account/forms.py:329 account/forms.py:479
 #: system/forms.py:232
 msgid "The two password fields didn't match."
-msgstr "A két jelszó nem egyezik!"
+msgstr "A megadott két jelszó nem egyezik!"
 
 #: account/forms.py:248 account/forms.py:373
 msgid "Home directory has to start with /mnt/"
@@ -544,7 +536,7 @@ msgstr "A saját mappának /mnt/-vel kell kezdődnie!"
 #: services/forms.py:482 services/forms.py:748 storage/forms.py:226
 #: system/forms.py:275 system/forms.py:298
 msgid "This field is required."
-msgstr "Ez a mező kötelező."
+msgstr "Kötelező."
 
 #: account/forms.py:427
 msgid "Member users"
@@ -575,7 +567,7 @@ msgstr "A régi jelszó helytelen! Próbáld meg újra!"
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr "Csoport azonosító"
+msgstr "Csoport ID"
 
 #: account/models.py:41
 msgid "Group Name"
@@ -598,7 +590,7 @@ msgstr "A %s csoport beépített, nem törölhető!"
 
 #: account/models.py:73
 msgid "User ID"
-msgstr "Felhasználó azonosító"
+msgstr "Felhasználó ID"
 
 #: account/models.py:78
 msgid "User &"
@@ -606,15 +598,15 @@ msgstr "Felhasználó &"
 
 #: account/models.py:85
 msgid "Hashed UNIX password"
-msgstr "Hashelt UNIX jelszó"
+msgstr "Kivonatolt UNIX jelszó"
 
 #: account/models.py:91
 msgid "Hashed SMB password"
-msgstr "Hashelt SMB jelszó"
+msgstr "Kivonatolt SMB jelszó"
 
 #: account/models.py:95
 msgid "Primary Group ID"
-msgstr "Elsődleges csoport azonosító"
+msgstr "Elsődleges csoport ID"
 
 #: account/models.py:100
 msgid "Home Directory"
@@ -652,12 +644,12 @@ msgstr ""
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:113
 #: templates/account/bsdusers.html:115 templates/account/index.html:7
 msgid "Change Password"
-msgstr "Jelszó megváltoztatása"
+msgstr "Jelszó csere"
 
 #: account/nav.py:19 templates/account/changeform.html:25
 #: templates/account/index.html:4
 msgid "Change Admin User"
-msgstr "Admin felhasználó cseréje"
+msgstr "Admin felhasználó csere"
 
 #: account/nav.py:26 templates/account/index.html:2
 msgid "My Account"
@@ -672,27 +664,22 @@ msgid "View All Groups"
 msgstr "Minden csoport mutatása"
 
 #: account/views.py:78
-#, fuzzy
 msgid "Password successfully updated."
-msgstr "%s sikeresen módosítva!"
+msgstr "A jelszó sikeresen módosítva lett!"
 
 #: account/views.py:92
-#, fuzzy
 msgid "Admin user successfully updated."
-msgstr "%s sikeresen módosítva!"
+msgstr "Az Admin felhasználó sikeresen módosítva lett!"
 
 #: account/views.py:102
-#, fuzzy
 msgid "Users successfully updated."
-msgstr "%s sikeresen módosítva!"
+msgstr "A felhasználók sikeresen módosítva lettek!"
 
 #: account/views.py:115
-#, fuzzy
 msgid "Groups successfully updated."
-msgstr "%s sikeresen módosítva!"
+msgstr "A csoportok sikeresen módosítva lettek!"
 
 #: contrib/ext_formwizard.py:170
-#, fuzzy
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
@@ -701,7 +688,7 @@ msgstr "Sajnáljuk, az oldal lejárt! Folytassa a kitöltést erről az oldalró
 #: freeadmin/forms.py:95
 #, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "A %s felhasználó érvénytelen."
 
 #: freeadmin/forms.py:124
 #, python-format
@@ -715,12 +702,12 @@ msgstr ""
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Hozzáad %s"
 
 #: freeadmin/navtree.py:327
 #, fuzzy, python-format
 msgid "View All %s"
-msgstr "Minden felhasználó mutatása"
+msgstr "Minden %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -746,7 +733,7 @@ msgstr "%s sikeresen módosítva!"
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Nem sikerült a szolgáltatást újraindítani."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -759,7 +746,7 @@ msgstr "Hálókártya"
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "Ki kell tölteni a 2.névszervert a 3. előtt!"
+msgstr "Ki kell tölteni a 2. névszervert a 3. előtt!"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
@@ -767,25 +754,24 @@ msgstr "Szükséges, ha használja a 3. névszervert."
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr "Ki kell tölteni a 1.névszervert a 3. előtt!"
+msgstr "Ki kell tölteni a 1. névszervert a 3. előtt!"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr "Ki kell tölteni a 1.névszervert a 2. előtt!"
+msgstr "Ki kell tölteni a 1. névszervert a 2. előtt!"
 
 #: network/forms.py:100
 #, fuzzy
 msgid "Parent Interface"
-msgstr "Virtuális interfész"
+msgstr "Szülő interfész"
 
 #: network/forms.py:109
-#, fuzzy
 msgid "The name must be vlanXX where XX is a integer"
-msgstr "Az interfész név vlanXX lehet, ahol XX egy szám."
+msgstr "A neve vlanXX lehet, ahol XX egy szám."
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN címkék 1 - 4095-ig"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -794,7 +780,7 @@ msgstr "Fizikai hálókártyák a LAGG-ban"
 #: network/forms.py:190
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "A '%s' hálózat érvénytelen, CIDR-t vártam."
 
 #: network/models.py:42 services/models.py:1074
 #: templates/system/system_info.html:4
@@ -815,15 +801,15 @@ msgstr "IPv6 alapértelmezett átjáró"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr "1. névszerver"
+msgstr "1. Névszerver"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr "2. névszerver"
+msgstr "2. Névszerver"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr "3. névszerver"
+msgstr "3. Névszerver"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:21
 #: templates/network/index.html:3
@@ -836,11 +822,11 @@ msgstr "Válaszd ki a hálókártyád!"
 
 #: network/models.py:101
 msgid "Interface Name"
-msgstr ""
+msgstr "Interfész neve"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "Nevezd el a hálókártyád!"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
@@ -923,9 +909,8 @@ msgid "VLAN"
 msgstr "VLAN"
 
 #: network/models.py:200
-#, fuzzy
 msgid "VLANs"
-msgstr "VLAN"
+msgstr "VLAN(ok)"
 
 #: network/models.py:220
 msgid "Protocol Type"
@@ -973,7 +958,7 @@ msgstr ""
 
 #: network/nav.py:13 templates/network/index.html:13
 msgid "Network Summary"
-msgstr ""
+msgstr "Hálózat összegzés"
 
 #: network/nav.py:30
 #, fuzzy
@@ -986,9 +971,8 @@ msgid "View All Link Aggregations"
 msgstr "Minden összefűzött kapcsolat mutatása"
 
 #: network/views.py:180
-#, fuzzy
 msgid "LAGG successfully added"
-msgstr "%s sikeresen hozzáadva"
+msgstr "LAGG sikeresen hozzáadva"
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1000,23 +984,23 @@ msgstr ""
 
 #: services/forms.py:90
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "Az AFP szolgáltatás újraindítása nem sikerült."
 
 #: services/forms.py:99
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "Az NFS szolgáltatás újraindítása nem sikerült."
 
 #: services/forms.py:103
 msgid "File Permission"
-msgstr ""
+msgstr "Fájl jogosultság"
 
 #: services/forms.py:104
 msgid "Directory Permission"
-msgstr ""
+msgstr "Könyvtár jogosultság"
 
 #: services/forms.py:129
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr ""
+msgstr "Az értéknek 0 és 65535 között kell lennie."
 
 #: services/forms.py:135 services/forms.py:153
 msgid "This value must be between 0 and 10000, inclusive."
@@ -1040,52 +1024,52 @@ msgstr "Névtelen belépéshez szükséges mező"
 
 #: services/forms.py:191
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "Az FTP szolgáltatást nem sikerült elindítani."
 
 #: services/forms.py:200
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "A TFTP szolgáltatás újraindítása nem sikerült."
 
 #: services/forms.py:207
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "Az SSH szolgáltatás újraindítása nem sikerült."
 
 #: services/forms.py:216 services/forms.py:241
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Az Rsync szolgáltatás újraindítása nem sikerült."
 
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "A név nem tartalmazhat / vagy ] jeleket."
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "A DinamikusDNS szolgáltatás újraindítása nem sikerült."
 
 #: services/forms.py:259
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "Az SNMP szolgáltatás újraindítása nem sikerült."
 
 #: services/forms.py:273
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "Az ActiveDirectory szolgáltatás újraindítása nem sikerült."
 
 #: services/forms.py:284
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "Az LDAP szolgáltatás újraindítása nem sikerült."
 
 #: services/forms.py:290 services/models.py:526
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
-msgstr ""
+msgstr "Titok"
 
 #: services/forms.py:291 services/models.py:527
 msgid "Target side secret."
-msgstr ""
+msgstr "Cél oldali titok."
 
 #: services/forms.py:292
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "Titok (megerősít)"
 
 #: services/forms.py:294 services/forms.py:302
 msgid "Enter the same secret above for verification."
@@ -1105,7 +1089,7 @@ msgstr ""
 
 #: services/forms.py:309
 msgid "Secret does not match"
-msgstr ""
+msgstr "A titkok nem egyeznek meg."
 
 #: services/forms.py:324 services/forms.py:325
 msgid "The peer secret is required if you set a peer user."
@@ -1150,7 +1134,6 @@ msgid ""
 msgstr ""
 
 #: services/forms.py:504 services/forms.py:534
-#, fuzzy
 msgid "You need to specify a filepath, not a directory."
 msgstr "Fájl elérést kell megadni, nem egy könyvtárat!"
 
@@ -1483,7 +1466,7 @@ msgstr ""
 
 #: services/models.py:253
 msgid "I/O Timeout"
-msgstr "I / O időtúllépés"
+msgstr "I/O időtúllépés"
 
 #: services/models.py:254
 msgid "I/O timeout in seconds (30 by default)."
@@ -1674,9 +1657,8 @@ msgid "Extent"
 msgstr ""
 
 #: services/models.py:432 services/models.py:588
-#, fuzzy
 msgid "Portal Group ID"
-msgstr "Portal csoport azonosító"
+msgstr "Portal csoport ID"
 
 #: services/models.py:437 services/models.py:447
 #, fuzzy
@@ -1760,7 +1742,7 @@ msgstr ""
 
 #: services/models.py:569 storage/views.py:157
 msgid "Serial"
-msgstr ""
+msgstr "Soros"
 
 #: services/models.py:572
 msgid "Serial number for the logical unit"
@@ -1810,7 +1792,7 @@ msgstr ""
 
 #: services/models.py:622
 msgid "Logical Block Size"
-msgstr ""
+msgstr "Logikai blokk méret"
 
 #: services/models.py:623
 msgid ""
@@ -1844,7 +1826,7 @@ msgstr "Szolgáltató"
 
 #: services/models.py:670
 msgid "Domain name"
-msgstr ""
+msgstr "Domén név"
 
 #: services/models.py:672
 msgid ""
@@ -1854,15 +1836,15 @@ msgstr ""
 
 #: services/models.py:684
 msgid "Update period"
-msgstr ""
+msgstr "Frissítés gyakorisága"
 
 #: services/models.py:686
 msgid "Time in milliseconds"
-msgstr ""
+msgstr "Idő miliszekundumban"
 
 #: services/models.py:690
 msgid "Forced update period"
-msgstr ""
+msgstr "Kényszerített frissítés gyakorisága"
 
 #: services/models.py:696 services/models.py:730 services/models.py:762
 msgid "These parameters will be added to global settings in inadyn.conf."
@@ -1871,7 +1853,7 @@ msgstr ""
 #: services/models.py:700 services/models.py:701
 #: templates/services/index.html:40
 msgid "Dynamic DNS"
-msgstr ""
+msgstr "Dinamikus DNS"
 
 #: services/models.py:710
 msgid "Location"
@@ -1885,7 +1867,7 @@ msgstr ""
 
 #: services/models.py:716
 msgid "Contact"
-msgstr ""
+msgstr "Kapcsolat"
 
 #: services/models.py:718
 msgid ""
@@ -1908,11 +1890,11 @@ msgstr ""
 #: services/models.py:734 services/models.py:735
 #: templates/services/index.html:97
 msgid "SNMP"
-msgstr ""
+msgstr "SNMP"
 
 #: services/models.py:744 storage/models.py:91
 msgid "Identifier"
-msgstr ""
+msgstr "Azonosító"
 
 #: services/models.py:745
 msgid "This name is used to uniquely identify your UPS on this system."
@@ -1920,7 +1902,7 @@ msgstr ""
 
 #: services/models.py:749
 msgid "Driver"
-msgstr ""
+msgstr "Meghajtó"
 
 #: services/models.py:751
 msgid "The driver used to communicate with your UPS."
@@ -1928,7 +1910,7 @@ msgstr ""
 
 #: services/models.py:755 services/models.py:807 services/models.py:929
 msgid "Port"
-msgstr ""
+msgstr "Port"
 
 #: services/models.py:757
 msgid "The serial or USB port where your UPS is connected."
@@ -1958,7 +1940,7 @@ msgstr ""
 
 #: services/models.py:786 services/models.py:792
 msgid "To email"
-msgstr ""
+msgstr "E-mail címzett"
 
 #: services/models.py:788
 msgid "Destination email address. Separate email addresses by semi-colon."
@@ -1972,7 +1954,7 @@ msgstr ""
 
 #: services/models.py:797 services/models.py:798
 msgid "UPS"
-msgstr ""
+msgstr "UPS"
 
 #: services/models.py:808
 msgid "Port to bind FTP server."
@@ -1980,7 +1962,7 @@ msgstr ""
 
 #: services/models.py:812
 msgid "Clients"
-msgstr ""
+msgstr "Kliensek"
 
 #: services/models.py:813
 msgid "Maximum number of simultaneous clients."
@@ -1988,7 +1970,7 @@ msgstr ""
 
 #: services/models.py:817
 msgid "Connections"
-msgstr ""
+msgstr "Kapcsolatok"
 
 #: services/models.py:818
 msgid "Maximum number of connections per IP address (0 = unlimited)."
@@ -2012,11 +1994,11 @@ msgstr ""
 
 #: services/models.py:831
 msgid "Allow Root Login"
-msgstr ""
+msgstr "Root belépés engedélyezése"
 
 #: services/models.py:833
 msgid "Allow Anonymous Login"
-msgstr ""
+msgstr "Anonymous belépés engedélyezése"
 
 #: services/models.py:836 services/models.py:1185 sharing/models.py:49
 #: sharing/models.py:113 sharing/models.py:227 system/models.py:337
@@ -2648,7 +2630,6 @@ msgid "Show Hidden Files"
 msgstr ""
 
 #: sharing/models.py:64
-#, fuzzy
 msgid "Guest Account"
 msgstr "Vendég fiók"
 
@@ -3434,18 +3415,16 @@ msgid "Some error ocurried while setting the options"
 msgstr ""
 
 #: storage/views.py:342
-#, fuzzy
 msgid "ZFS Volume successfully added."
-msgstr "%s sikeresen törölve!"
+msgstr "ZFS kötet sikeresen hozzáadva."
 
 #: storage/views.py:356
 msgid "This is in use by the iscsi target, please remove it there first."
 msgstr ""
 
 #: storage/views.py:360
-#, fuzzy
 msgid "ZFS Volume successfully destroyed."
-msgstr "%s sikeresen törölve!"
+msgstr "ZFS kötet sikeresen törölve!"
 
 #: storage/views.py:394
 #, fuzzy
@@ -4465,7 +4444,7 @@ msgstr ""
 
 #: templates/services/index.html:114
 msgid "S.M.A.R.T. Settings"
-msgstr ""
+msgstr "S.M.A.R.T. beállítások"
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
@@ -4995,7 +4974,7 @@ msgstr ""
 
 #: templates/system/config_upload.html:35
 msgid "Update"
-msgstr ""
+msgstr "Frissítés"
 
 #: templates/system/cronjob.html:40
 msgid "No CronJobs defined"
@@ -5007,7 +4986,7 @@ msgstr ""
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr ""
+msgstr "Újraindítás..."
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
@@ -5019,11 +4998,11 @@ msgstr ""
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr ""
+msgstr "Teszt levél küldése"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr ""
+msgstr "Óránként"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
@@ -5039,7 +5018,7 @@ msgstr ""
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr ""
+msgstr "Heti"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"
@@ -5047,7 +5026,7 @@ msgstr ""
 
 #: templates/system/reporting.html:46
 msgid "Monthly"
-msgstr ""
+msgstr "Havi"
 
 #: templates/system/reporting.html:47
 msgid "Monthly Graphs"
@@ -5148,9 +5127,8 @@ msgstr "Angol"
 msgid "Level"
 msgstr "Szint"
 
-#, fuzzy
 msgid "Add Link Aggregation"
-msgstr "Kapcsolat összefűzés hozzáadása"
+msgstr "Hálózat egyesítés hozzáadása"
 
 msgid "View All Interfaces"
 msgstr "Minden interfész mutatása"
