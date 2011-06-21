@@ -1208,13 +1208,14 @@ class notifier:
 
         return disksd
 
-    def get_partitions(self):
+    def get_partitions(self, try_disks=True):
         disks = self.get_disks().keys()
         partitions = {}
         for disk in disks:
 
             listing = glob.glob('/dev/%s[a-fps]*' % disk)
-            listing.sort()
+            if try_disks is True and len(listing) == 0:
+                listing = [disk]
             for part in list(listing):
                 toremove = len([i for i in listing if i.startswith(part) and i != part]) > 0
                 if toremove:
@@ -1278,7 +1279,7 @@ class notifier:
             if p1.returncode == 0:
                 return True
         elif fstype == 'EXT2FS':
-            p1 = Popen(["/usr/local/sbin/tune2fs", "-L", dev, label], stdin=PIPE, stdout=PIPE)
+            p1 = Popen(["/usr/local/sbin/tune2fs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
