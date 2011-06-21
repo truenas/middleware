@@ -895,6 +895,24 @@
         dialog.show();
     };
 
+    //FIXME: Duplicated of editObject changing ID
+    editScaryObject = function(name, url, nodes) {
+        canceled = false;
+        dialog = new dijit.Dialog({
+            id: 'editscary_dialog',
+            title: name,
+            href: url,
+            parseOnLoad: true,
+            closable: true,
+            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+            onHide: function() {
+                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
+                refreshTabs(nodes);
+            },
+        });
+        dialog.show();
+    };
+
     volumeWizard = function(name, url, nodes) {
          dialog = new dijit.Dialog({
              id: 'wizard_dialog',
