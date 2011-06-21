@@ -73,6 +73,8 @@ FREENAS_LDAP_VERSION = ldap.VERSION3
 FREENAS_LDAP_REFERRALS = get_freenas_var("FREENAS_LDAP_REFERRALS", 0)
 FREENAS_LDAP_CACERTFILE = get_freenas_var("CERT_FILE")
 
+FREENAS_LDAP_PAGESIZE = get_freenas_var("FREENAS_LDAP_PAGESIZE", 8192)
+
 ldap.protocol_version = FREENAS_LDAP_VERSION
 ldap.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
 
@@ -204,7 +206,7 @@ class FreeNAS_GroupCache(FreeNAS_BaseCache):
 class FreeNAS_LDAP(object):
     def __init__(self, host = None, binddn = None, bindpw = None,
         basedn = None, ssl = FREENAS_LDAP_NOSSL, scope = None,
-        filter = None, attributes = None):
+        filter = None, attributes = None, pagesize = 0):
         syslog(LOG_DEBUG, "FreeNAS_LDAP.__init__: enter")
 
         self.host = host
@@ -215,6 +217,7 @@ class FreeNAS_LDAP(object):
         self.scope = scope
         self.filter = filter
         self.attributes = attributes
+        self.pagesize = pagesize
         self.__handle = None
         self.__isopen = 0
         self.__cache = FreeNAS_LDAP_QueryCache()
@@ -315,7 +318,8 @@ class FreeNAS_LDAP(object):
             self.__isopen = 0
             syslog(LOG_DEBUG, "FreeNAS_LDAP.close: connection closed")
 
-    def __search(self, basedn, scope = ldap.SCOPE_SUBTREE, filter = None, attributes = None):
+    def __search(self, basedn, scope=ldap.SCOPE_SUBTREE, filter=None, attributes=None,
+        attrsonly=0, serverctrls=None, clientctrls=None, timeout=-1, sizelimit=0):
         syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: enter")
         syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: basedn = '%s', filter = '%s'" % (basedn, filter))
         if self.__isopen == 0:
@@ -332,22 +336,77 @@ class FreeNAS_LDAP(object):
 
         result = []
         results = []
-        id = self.__handle.search(basedn, scope, filter, attributes)
-        type = ldap.RES_SEARCH_ENTRY
+        paged = ldap.controls.SimplePagedResultsControl(
+            ldap.LDAP_CONTROL_PAGE_OID,
+            True,
+            (self.pagesize, '')
+        )
 
-        while type != ldap.RES_SEARCH_RESULT:
-            try:
-                type, data = self.__handle.result(id, 0)
-            except:
-                break
+        if self.pagesize > 0:
+            syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: pagesize = %d" % self.pagesize)
 
-            results.append(data)
+            page = 0
+            while True:
+                syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: getting page %d" % page)
 
-        for i in range(len(results)):
-            for entry in results[i]:
-                result.append(entry)
+                if self.pagesize > 0:
+                    serverctrls = [paged]
+                else:
+                    serverctrls = None
 
-        self.__cache[key] = result
+                id = self.__handle.search_ext(
+                   basedn,
+                   scope,
+                   filterstr=filter,
+                   attrlist=attributes,
+                   attrsonly=attrsonly,
+                   serverctrls=serverctrls
+                )
+
+                (rtype, rdata, rmsgid, serverctrls) = self.__handle.result3(id)
+                for entry in rdata:
+                    result.append(entry)
+
+                cookie = None
+                for sc in serverctrls:
+                    if sc.controlType == ldap.LDAP_CONTROL_PAGE_OID:
+                        est, cookie = sc.controlValue
+                        if cookie:
+                            paged.controlValue = (self.pagesize, cookie)
+
+                        break
+
+                if not cookie:
+                    break
+
+                page += 1 
+        else:
+            syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: pagesize = 0")
+
+            id = self.__handle.search_ext(
+                basedn,
+                scope,
+                filterstr=filter,
+                attrlist=attributes,
+                attrsonly=attrsonly,
+                serverctrls=serverctrls
+            )
+
+            type = ldap.RES_SEARCH_ENTRY
+            while type != ldap.RES_SEARCH_RESULT:
+                try:
+                    type, data = self.__handle.result(id, 0)
+
+                except:
+                    break
+
+                results.append(data)
+
+            for i in range(len(results)):
+                for entry in results[i]:
+                    result.append(entry)
+
+            self.__cache[key] = result
 
         syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: %d results" % len(results))
         syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: leave")
@@ -627,7 +686,7 @@ class FreeNAS_LDAP_Users:
         for user in self.__users:
             yield user
 
-    def __get_groups(self, l = None, f = None):
+    def __get_groups(self, l=None, f=None):
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_groups: enter")
         if l is None:
             l = LDAP.objects.all().order_by('-id')[0]
@@ -681,7 +740,7 @@ class FreeNAS_LDAP_Users:
 
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_groups: leave")
 
-    def __get_users(self, l = None, f = None):
+    def __get_users(self, l=None, f=None):
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Users.__get_users: enter")
         if l is None:
             l = LDAP.objects.all().order_by('-id')[0]
@@ -771,7 +830,7 @@ class FreeNAS_ActiveDirectory_Users:
         for user in self.__users:
             yield user
 
-    def __get_groups(self, ad = None, f = None):
+    def __get_groups(self, ad=None, f=None):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_groups: enter")
         if ad is None:
             ad = ActiveDirectory.objects.all().order_by('-id')[0]
@@ -788,6 +847,7 @@ class FreeNAS_ActiveDirectory_Users:
         f.host = ad.ad_dcname
         f.basedn = f.get_active_directory_baseDN()
         f.attributes = ['sAMAccountName']
+        f.pagesize = FREENAS_LDAP_PAGESIZE
 
         write_cache = False
         if not self.__dgcache.empty():
@@ -825,7 +885,7 @@ class FreeNAS_ActiveDirectory_Users:
 
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_groups: leave")
 
-    def __get_users(self, ad = None, f = None):  
+    def __get_users(self, ad=None, f=None):  
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Users.__get_users: enter")
         if ad is None:
             ad = ActiveDirectory.objects.all().order_by('-id')[0]
@@ -844,6 +904,7 @@ class FreeNAS_ActiveDirectory_Users:
         f.host = ad.ad_dcname
         f.basedn = f.get_active_directory_baseDN()
         f.attributes = ['sAMAccountName']
+        f.pagesize = FREENAS_LDAP_PAGESIZE
 
         write_cache = False
         if not self.__ducache.empty():
@@ -933,7 +994,7 @@ class FreeNAS_LDAP_Groups:
         for group in self.__groups:
             yield group
 
-    def __get_groups(self, l = None, f = None):
+    def __get_groups(self, l=None, f=None):
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Groups.__get_groups: enter")
         if l is None:
             l = LDAP.objects.all().order_by('-id')[0]
@@ -1006,7 +1067,7 @@ class FreeNAS_ActiveDirectory_Groups:
         for group in self.__groups:
             yield group
 
-    def __get_groups(self, ad = None, f = None):
+    def __get_groups(self, ad=None, f=None):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Groups.__get_groups: enter")
         if ad is None:
             ad = ActiveDirectory.objects.all().order_by('-id')[0]
