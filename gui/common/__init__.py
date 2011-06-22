@@ -28,10 +28,10 @@
 # The hard drive industry is using SI (10^n) rather than 2^n
 def humanize_number_si(number):
     humanize_si_map = (
-        ('TB', 1000000000000.0),
-        ('GB', 1000000000.0),
-        ('MB', 1000000.0),
-        ('KB', 1000.0),
+        ('TiB', 1000000000000.0),
+        ('GiB', 1000000000.0),
+        ('MiB', 1000000.0),
+        ('KiB', 1000.0),
         ('B', 1),
         )
     for suffix, factor in humanize_si_map:
@@ -42,10 +42,10 @@ def humanize_number_si(number):
 def humanize_size(number):
     number = int(number)
     humanize_si_map = (
-        ('TiB', 1099511627776.0),
-        ('GiB', 1073741824.0),
-        ('MiB', 1048576.0),
-        ('KiB', 1024.0),
+        ('TB', 1099511627776.0),
+        ('GB', 1073741824.0),
+        ('MB', 1048576.0),
+        ('KB', 1024.0),
         ('B', 1),
         )
     for suffix, factor in humanize_si_map:
