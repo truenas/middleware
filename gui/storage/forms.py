@@ -37,7 +37,7 @@ from django.db import transaction
 
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.common import humanize_size
+from freenasUI.common import humanize_size, humanize_size_si
 from freenasUI.storage import models
 from freenasUI import choices
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups, \
@@ -185,7 +185,7 @@ class VolumeWizardForm(forms.Form):
         diskinfo = pipe.read().strip().split('\n')
         for disk in diskinfo:
             devname, capacity = disk.split('\t')
-            capacity = humanize_size(capacity)
+            capacity = humanize_size_si(capacity)
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
