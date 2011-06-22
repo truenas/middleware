@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-20 19:27+0200\n"
+"PO-Revision-Date: 2011-06-22 06:30+0200\n"
 "Last-Translator: kiDemon <275378227@qq.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -1162,7 +1162,7 @@ msgid "Delete underlying file"
 msgstr "删除对应的文件存储"
 
 #: services/forms.py:788
-#, fuzzy, python-format
+#, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
 msgstr[0] ""
@@ -1349,7 +1349,7 @@ msgstr "最小 AIO 写尺寸"
 msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
-msgstr ""
+msgstr "Samba将非同步地读取如果要求的值比这个值大。默认读取值为1."
 
 #: services/models.py:170 services/models.py:171
 #: templates/services/index.html:29
@@ -1440,15 +1440,15 @@ msgstr "I/O 超时"
 
 #: services/models.py:254
 msgid "I/O timeout in seconds (30 by default)."
-msgstr ""
+msgstr "I/O端口登出时间（默认为30秒）"
 
 #: services/models.py:259
 msgid "NOPIN Interval"
-msgstr ""
+msgstr "NOPIN时间间隔"
 
 #: services/models.py:260
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr ""
+msgstr "NOPIN发送时间间隔以秒为单位（默认值为20）"
 
 #: services/models.py:265
 msgid "Max. sessions"
@@ -1456,7 +1456,7 @@ msgstr "最大会话数"
 
 #: services/models.py:266
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr ""
+msgstr "在同一时间内保持的最大会话数（默认值为16）"
 
 #: services/models.py:271
 msgid "Max. connections"
@@ -1464,7 +1464,7 @@ msgstr "最大连接数"
 
 #: services/models.py:272
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "每个会话中的最大连接数（默认值为8）"
 
 #: services/models.py:277
 msgid "Max. pre-send R2T"
@@ -1482,43 +1482,43 @@ msgstr ""
 
 #: services/models.py:284
 msgid "iSCSI initial parameter (16 by default)."
-msgstr ""
+msgstr "iSCSI初始参数（默认值为16）"
 
 #: services/models.py:289
 msgid "First burst length"
-msgstr ""
+msgstr "最初出现长度"
 
 #: services/models.py:290
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr ""
+msgstr "iSCSI初始参数（默认值为65536）"
 
 #: services/models.py:295
 msgid "Max burst length"
-msgstr ""
+msgstr "最大迸发长度"
 
 #: services/models.py:296 services/models.py:302
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr ""
+msgstr "iSCSI初始参数 （默认值为262144）"
 
 #: services/models.py:301
 msgid "Max receive data segment length"
-msgstr ""
+msgstr "接受数据段最大长度"
 
 #: services/models.py:307
 msgid "DefaultTime2Wait"
-msgstr ""
+msgstr "等待默认时间"
 
 #: services/models.py:308
 msgid "iSCSI initial parameter (2 by default)."
-msgstr ""
+msgstr "iSCSI初始参数 （默认值为2）"
 
 #: services/models.py:313
 msgid "DefaultTime2Retain"
-msgstr ""
+msgstr "保持的默认时间"
 
 #: services/models.py:314
 msgid "iSCSI initial parameter (60 by default)."
-msgstr ""
+msgstr "iSCSI初始参数 （默认值为60）"
 
 #: services/models.py:319
 msgid "Enable LUC"
@@ -1526,19 +1526,19 @@ msgstr "启用LUC"
 
 #: services/models.py:323
 msgid "Controller IP address"
-msgstr ""
+msgstr "管理员IP地址"
 
 #: services/models.py:324
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
-msgstr ""
+msgstr "逻辑单元管理员IP地址（默认为127.0.0.1（本地主机））"
 
 #: services/models.py:330
 msgid "Controller TCP port"
-msgstr ""
+msgstr "管理员TCP端口"
 
 #: services/models.py:331
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr ""
+msgstr "逻辑单元管理员IP地址TCP端口（默认为3261）"
 
 #: services/models.py:337
 #, fuzzy
@@ -1551,28 +1551,28 @@ msgstr ""
 
 #: services/models.py:346
 msgid "Controller Auth Method"
-msgstr ""
+msgstr "管理员授权方式"
 
 #: services/models.py:347
 msgid "The method can be accepted in the controller."
-msgstr ""
+msgstr "此程序能被管理员接受。"
 
 #: services/models.py:359 services/models.py:360
 #: templates/services/iscsi.html:3
 msgid "Target Global Configuration"
-msgstr ""
+msgstr "全局配置目标"
 
 #: services/models.py:371
 msgid "Extent Name"
-msgstr ""
+msgstr "名字范围"
 
 #: services/models.py:372
 msgid "String identifier of the extent."
-msgstr ""
+msgstr "字符串标识符的范围"
 
 #: services/models.py:376
 msgid "Extent Type"
-msgstr ""
+msgstr "程度类型"
 
 #: services/models.py:377
 msgid "Type used as extent."
@@ -1580,15 +1580,15 @@ msgstr ""
 
 #: services/models.py:382
 msgid "Path to the extent"
-msgstr ""
+msgstr "该范围的路径"
 
 #: services/models.py:383
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
-msgstr ""
+msgstr "文件路径（例如 /mnt/sharename/extent/extent0）作为范围"
 
 #: services/models.py:388
 msgid "Extent size"
-msgstr ""
+msgstr "范围大小"
 
 #: services/models.py:389
 msgid ""

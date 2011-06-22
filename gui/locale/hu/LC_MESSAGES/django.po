@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-21 00:13+0200\n"
-"Last-Translator: petyuska <petyuska@gmail.com>\n"
+"PO-Revision-Date: 2011-06-22 02:00+0200\n"
+"Last-Translator: Peter <petyuska@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
@@ -976,11 +976,11 @@ msgstr "LAGG sikeresen hozzáadva"
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr ""
+msgstr "Kötelező mező a \"Saját könyvtár böngészésének engedélyezéséhez\""
 
 #: services/forms.py:73
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "Kötelező mező a \"Saját könyvtárak\" eléréséhez"
 
 #: services/forms.py:90
 msgid "The AFP service failed to reload."
@@ -1073,7 +1073,7 @@ msgstr "Titok (megerősít)"
 
 #: services/forms.py:294 services/forms.py:302
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "Ismételd meg a titkot"
 
 #: services/forms.py:295
 msgid "Initiator Secret"
@@ -1107,7 +1107,7 @@ msgstr ""
 
 #: services/forms.py:373
 msgid "LUN already exists in the same target."
-msgstr ""
+msgstr "A LUN már létezik a célcsoportban."
 
 #: services/forms.py:384 services/models.py:352
 msgid "Controller Auth Group"
@@ -1126,7 +1126,7 @@ msgstr ""
 #: services/forms.py:413
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr ""
+msgstr "Az értéknek %(start) és %(end) közöttinek kell lennie."
 
 #: services/forms.py:421
 msgid ""
@@ -1177,8 +1177,8 @@ msgstr ""
 #, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Érvénytelen e-mail cím: %(email)s"
+msgstr[1] "Az alábbi e-mail címek érvénytelenek: %(email)s"
 
 #: services/models.py:40
 msgid "Service"
@@ -1402,7 +1402,7 @@ msgstr "Vendég hozzáférés"
 
 #: services/models.py:185
 msgid "Allows guest access to all apple shares on this box."
-msgstr ""
+msgstr "A Vendég felhasználó hozzáférhet minden Apple megosztáshoz."
 
 #: services/models.py:195
 msgid "Local Access"
@@ -1410,7 +1410,7 @@ msgstr "Helyi hozzáférés"
 
 #: services/models.py:196
 msgid "Allow users with local accounts to access apple shares on this box."
-msgstr ""
+msgstr "A Helyi felhasználók hozzáférhetnek minden Apple megosztáshoz."
 
 #: services/models.py:199
 msgid "Enable DDP"
@@ -1444,6 +1444,8 @@ msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
+"Aszinkron mód engedélyezése, ami javíthat a teljesítményen gigabit hálózati "
+"sebességen túl."
 
 #: services/models.py:225 services/models.py:226
 #: templates/services/index.html:75
@@ -1452,13 +1454,16 @@ msgstr "NFS"
 
 #: services/models.py:235
 msgid "Base Name"
-msgstr ""
+msgstr "Alap név"
 
 #: services/models.py:236
+#, fuzzy
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"Az alap név (pl.iqn.2007-09.jp.ne.peach.istgt, részletesen az RFC 3720 és "
+"3721-ben) ..."
 
 #: services/models.py:242
 msgid "Discovery Auth Method"
@@ -1518,7 +1523,6 @@ msgid "iSCSI initial parameter (16 by default)."
 msgstr "iSCSI kezdő paramétere (16 alapból)"
 
 #: services/models.py:289
-#, fuzzy
 msgid "First burst length"
 msgstr "Első burst hossz"
 
@@ -1527,7 +1531,6 @@ msgid "iSCSI initial parameter (65536 by default)."
 msgstr "iSCSI kezdő paramétere (65536 alapból)"
 
 #: services/models.py:295
-#, fuzzy
 msgid "Max burst length"
 msgstr "Max burst hossz"
 
@@ -1540,9 +1543,8 @@ msgid "Max receive data segment length"
 msgstr "Maximális fogadott adat-szegmens hossz"
 
 #: services/models.py:307
-#, fuzzy
 msgid "DefaultTime2Wait"
-msgstr "DefaultTime2Wait"
+msgstr "Alapértelmezett várakozási idő"
 
 #: services/models.py:308
 msgid "iSCSI initial parameter (2 by default)."
@@ -1661,7 +1663,6 @@ msgid "Portal Group ID"
 msgstr "Portal csoport ID"
 
 #: services/models.py:437 services/models.py:447
-#, fuzzy
 msgid "Portal"
 msgstr "Portál"
 
@@ -1746,7 +1747,7 @@ msgstr "Soros"
 
 #: services/models.py:572
 msgid "Serial number for the logical unit"
-msgstr ""
+msgstr "A logikai egység sorozatszáma"
 
 #: services/models.py:577 storage/models.py:74 system/models.py:498
 #: templates/services/iscsi_extents.html:6
@@ -1782,13 +1783,15 @@ msgstr ""
 
 #: services/models.py:616
 msgid "Queue Depth"
-msgstr ""
+msgstr "Várakozási sor mélysége"
 
 #: services/models.py:617
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
 msgstr ""
+"0=tiltott, 1-255=engedélyezett a megadott várakozási sor mélységgel. Az "
+"ajánlott értéke 32."
 
 #: services/models.py:622
 msgid "Logical Block Size"
@@ -1799,6 +1802,8 @@ msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
 msgstr ""
+"Megadható a logikai blokk hossza (512 az alap). Az ajánlott hossz 512 a "
+"kompatibilitás megőrzése miatt."
 
 #: services/models.py:626 services/models.py:641
 #: templates/services/iscsi_assoctargets.html:5
@@ -1849,6 +1854,8 @@ msgstr "Kényszerített frissítés gyakorisága"
 #: services/models.py:696 services/models.py:730 services/models.py:762
 msgid "These parameters will be added to global settings in inadyn.conf."
 msgstr ""
+"Ezek a paraméterek hozzá lesznek adva a globális beállításokhoz az "
+"inadyn.conf fájlban."
 
 #: services/models.py:700 services/models.py:701
 #: templates/services/index.html:40
@@ -1857,13 +1864,13 @@ msgstr "Dinamikus DNS"
 
 #: services/models.py:710
 msgid "Location"
-msgstr ""
+msgstr "Hely"
 
 #: services/models.py:712
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
-msgstr ""
+msgstr "Elhelyezkedés, pl. a rendszer fizikai helye: 'I. emelet, 5-ös szoba'."
 
 #: services/models.py:716
 msgid "Contact"
@@ -1874,18 +1881,21 @@ msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
+"Kapcsolat, pl. a rendszerért felelős neve vagy e-mail címe: "
+"'admin@e-mail.address'."
 
 #: services/models.py:722
 msgid "Community"
-msgstr ""
+msgstr "Közösség"
 
+# az snmp trap-nál a public kulcsót használják, azért nem fordítottam le.
 #: services/models.py:723
 msgid "In most cases, 'public' is used here."
-msgstr ""
+msgstr "A legtöbbször a 'public' használatos."
 
 #: services/models.py:726
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "SNMP Trap küldése"
 
 #: services/models.py:734 services/models.py:735
 #: templates/services/index.html:97
@@ -1898,7 +1908,7 @@ msgstr "Azonosító"
 
 #: services/models.py:745
 msgid "This name is used to uniquely identify your UPS on this system."
-msgstr ""
+msgstr "Ez a név egyedileg azonosítja a rendszerhez kapcsolt UPS-t."
 
 #: services/models.py:749
 msgid "Driver"
@@ -1906,7 +1916,7 @@ msgstr "Meghajtó"
 
 #: services/models.py:751
 msgid "The driver used to communicate with your UPS."
-msgstr ""
+msgstr "Az UPS-el való kommunikációhoz használt vezérlő."
 
 #: services/models.py:755 services/models.py:807 services/models.py:929
 msgid "Port"
@@ -1914,25 +1924,27 @@ msgstr "Port"
 
 #: services/models.py:757
 msgid "The serial or USB port where your UPS is connected."
-msgstr ""
+msgstr "A soros vagy USB port ahova az UPS csatlakoztatva van."
 
 #: services/models.py:773
 msgid "Shutdown mode"
-msgstr ""
+msgstr "Leállítás mód"
 
 #: services/models.py:777
 msgid "Shutdown timer"
-msgstr ""
+msgstr "Leállítás késleltetése"
 
 #: services/models.py:778
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
 msgstr ""
+"Ennyi idő (mp) után indul el a leállítási folyamat. Ha az áram visszajön ez "
+"idő alatt akkor a leállítási folyamat nem lesz elindítva."
 
 #: services/models.py:781
 msgid "Remote Monitor"
-msgstr ""
+msgstr "Távoli megfigyelés"
 
 #: services/models.py:783
 msgid "Send Email Status Updates"
@@ -1944,13 +1956,15 @@ msgstr "E-mail címzett"
 
 #: services/models.py:788
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr ""
+msgstr "Az e-mail címzettje. Több cím esetén pontosvesszővel (;) felsorolva."
 
 #: services/models.py:793
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
+"Az e-mail tárgya. Az alábbi paraméterek használhatók:<br /><ul><li>%d - "
+"Dátum</li><li>%h - Hostnév</li></ul>"
 
 #: services/models.py:797 services/models.py:798
 msgid "UPS"
@@ -1958,7 +1972,7 @@ msgstr "UPS"
 
 #: services/models.py:808
 msgid "Port to bind FTP server."
-msgstr ""
+msgstr "Az FTP szerver portja."
 
 #: services/models.py:812
 msgid "Clients"
@@ -1966,7 +1980,7 @@ msgstr "Kliensek"
 
 #: services/models.py:813
 msgid "Maximum number of simultaneous clients."
-msgstr ""
+msgstr "Az egyidejű kliensek maximális száma."
 
 #: services/models.py:817
 msgid "Connections"
@@ -1974,23 +1988,23 @@ msgstr "Kapcsolatok"
 
 #: services/models.py:818
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
+msgstr "Az IP címenkénti kapcsolatok maximális száma (0=korlátlan)."
 
 #: services/models.py:822
 msgid "Login Attempts"
-msgstr ""
+msgstr "Belépési kísérletek"
 
 #: services/models.py:823
 msgid "Maximum number of allowed password attempts before disconnection."
-msgstr ""
+msgstr "A belépési kísérletek maximális száma a kapcsolat bontása előtt."
 
 #: services/models.py:827
 msgid "Timeout"
-msgstr ""
+msgstr "Időtúllépés"
 
 #: services/models.py:828
 msgid "Maximum idle time in seconds."
-msgstr ""
+msgstr "A maximális üresjárati idő (mp-ben)."
 
 #: services/models.py:831
 msgid "Allow Root Login"
@@ -2006,19 +2020,19 @@ msgstr "Anonymous belépés engedélyezése"
 #: templates/services/iscsi_extents.html:7 templates/services/rsyncmod.html:7
 #: templates/sharing/windows.html:15 templates/storage/volumes.html:71
 msgid "Path"
-msgstr ""
+msgstr "Útvonal"
 
 #: services/models.py:838
 msgid "Allow Local User Login"
-msgstr ""
+msgstr "Helyi felhasználó belépésének engedélyezése"
 
 #: services/models.py:841
 msgid "Banner"
-msgstr ""
+msgstr "Üdvözlő üzenet"
 
 #: services/models.py:843
 msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr ""
+msgstr "Az FTP kapcsolatkor ez az üdvözlő üzenet jelenik meg elsőként."
 
 #: services/models.py:849 services/models.py:855
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -2026,23 +2040,23 @@ msgstr ""
 
 #: services/models.py:858
 msgid "Enable FXP"
-msgstr ""
+msgstr "FXP engedélyezése"
 
 #: services/models.py:860
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "Adatátvitel újrakezdés engedélyezése"
 
 #: services/models.py:862
 msgid "Always Chroot"
-msgstr ""
+msgstr "Mindig Chroot"
 
 #: services/models.py:864
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "IDENT azonosítás szükséges"
 
 #: services/models.py:866
 msgid "Require Reverse DNS for IP"
-msgstr ""
+msgstr "Reverse DNS szükséges az IP-hez"
 
 #: services/models.py:868
 msgid "Masquerade address"
@@ -2057,7 +2071,7 @@ msgstr ""
 
 #: services/models.py:874
 msgid "Minimum passive port"
-msgstr ""
+msgstr "Minimális passzív port"
 
 #: services/models.py:875
 msgid ""
@@ -2067,7 +2081,7 @@ msgstr ""
 
 #: services/models.py:879
 msgid "Maximum passive port"
-msgstr ""
+msgstr "Maximális passzív port"
 
 #: services/models.py:880
 msgid ""
@@ -2083,52 +2097,52 @@ msgstr ""
 
 #: services/models.py:884
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "Helyi felhasználó feltöltési sávszélesség"
 
 #: services/models.py:885
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Helyi felhasználó feltöltési sávszélessége (KB/s). 0=Korlátlan"
 
 #: services/models.py:889
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Helyi felhasználó letöltési sávszélesség"
 
 #: services/models.py:890
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Helyi felhasználó letöltési sávszélessége (KB/s). 0=Korlátlan"
 
 #: services/models.py:894
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Anonim felhasználó feltöltési sávszélesség"
 
 #: services/models.py:895
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Anonim felhasználó feltöltési sávszélessége (KB/s). 0=Korlátlan"
 
 #: services/models.py:899
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "Anonim felhasználó letöltési sávszélesség"
 
 #: services/models.py:900
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Anonim felhasználó letöltési sávszélessége (KB/s). 0=Korlátlan"
 
 #: services/models.py:903
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "SSL/TLS engedélyezése"
 
 #: services/models.py:908
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "Ezek a paraméterek a proftpd.conf fájlban lesznek tárolva."
 
 #: services/models.py:912 services/models.py:913
 #: templates/services/index.html:53
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:922
 msgid "Directory"
-msgstr ""
+msgstr "Könyvtár"
 
 #: services/models.py:923
 msgid ""
@@ -2138,21 +2152,23 @@ msgstr ""
 
 #: services/models.py:926
 msgid "Allow New Files"
-msgstr ""
+msgstr "Új fájlok engedélyezése"
 
 #: services/models.py:930
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
+"TFTP portja. Az alapértelmezett érték az /etc/services fájlban található."
 
 #: services/models.py:936
 msgid "Specifies the username which the service will run as."
 msgstr ""
+"Meghatározza a felhasználónevet akinek a nevében fog a szolgáltatás futni."
 
 #: services/models.py:940
 msgid "umask"
-msgstr ""
+msgstr "umask"
 
 #: services/models.py:941
 msgid ""
@@ -2162,54 +2178,56 @@ msgstr ""
 
 #: services/models.py:945 services/models.py:982 system/models.py:425
 msgid "Extra options"
-msgstr ""
+msgstr "Extra opciók"
 
 #: services/models.py:947
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "Extra parancssori opciók (általában üres)."
 
 #: services/models.py:951 services/models.py:952
 #: templates/services/index.html:130
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:961 services/models.py:1157
 msgid "TCP Port"
-msgstr ""
+msgstr "TCP Port"
 
 #: services/models.py:962
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "Alternatív TCP port. A 22 az alapértelmezett."
 
 #: services/models.py:965
 msgid "Login as Root with password"
-msgstr ""
+msgstr "Belépés Root-ként jelszóval"
 
 #: services/models.py:966
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
 msgstr ""
+"Tiltva: A Root csak publikus kulccsal azonosíthatja magát; Engedélyezve: A "
+"Root azonosítható jelszóval"
 
 #: services/models.py:969
 msgid "Allow Password Authentication"
-msgstr ""
+msgstr "Jelszavas hitelesítés engedélyezése"
 
 #: services/models.py:971
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "TCP Port Forwarding engedélyezése"
 
 #: services/models.py:973
 msgid "Compress Connections"
-msgstr ""
+msgstr "Kapcsolat tömörítés"
 
 #: services/models.py:976
 msgid "Host Private Key"
-msgstr ""
+msgstr "Host Privát kulcsa"
 
 #: services/models.py:978
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr ""
+msgstr "A PEM formátumú RSA Privát kulcs beillesztésének helye."
 
 #: services/models.py:984
 msgid ""
@@ -2220,43 +2238,43 @@ msgstr ""
 #: services/models.py:1024 services/models.py:1025
 #: templates/services/index.html:119
 msgid "SSH"
-msgstr ""
+msgstr "SSH"
 
 #: services/models.py:1034
 msgid "Domain Controller Name"
-msgstr ""
+msgstr "Domain vezérlő neve"
 
 #: services/models.py:1035
 msgid "AD or PDC name."
-msgstr ""
+msgstr "AD vagy PDC neve."
 
 #: services/models.py:1039
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr ""
+msgstr "Domain név (DNS/Realm-Name)"
 
 #: services/models.py:1040
 msgid "Domain Name, eg example.com"
-msgstr ""
+msgstr "Domain név, pl. valami.hu"
 
 #: services/models.py:1044
 msgid "Host Name (NetBIOS-Name)"
-msgstr ""
+msgstr "Host név (NetBIOS-név)"
 
 #: services/models.py:1045
 msgid "Host Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Host név régebbi formában, pl VALAMI"
 
 #: services/models.py:1049
 msgid "Workgroup Name"
-msgstr ""
+msgstr "Munkacsoport neve"
 
 #: services/models.py:1050
 msgid "Workgroup Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Munkacsoport neve régebbi formában, pl. VALAMI"
 
 #: services/models.py:1054
 msgid "Administrator Name"
-msgstr ""
+msgstr "Adminisztrátor neve"
 
 #: services/models.py:1055
 msgid "Username of Domain Administrator Account"
@@ -2641,11 +2659,11 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
-"Ezzel a beállítással felülbírálható az a felhasználónév ('ftp' "
+"Ezzel a beállítással felülbírálható a felhasználónév ('ftp' "
 "alapértelmezetten) amivel a vendégként elérhető szolgáltatások használhatók. "
 "Amilyen jogosultság van a felhasználói fiókhoz rendelve, azt mind elérik a "
-"vendégként kapcsolódó felhasználók. Ennek a felhasználónak szerepelnie kell "
-"a jelszó fájlban, de nem szükséges érvényes bejelentkezési engedély."
+"vendégként kapcsolódó felhasználók. A felhasználónak szerepelnie kell a "
+"jelszó fájlban, de nem szükséges érvényes bejelentkezési engedély."
 
 #: sharing/models.py:68
 msgid "Allow Guest Access"

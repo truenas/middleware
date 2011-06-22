@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-20 17:20+0200\n"
-"Last-Translator: Nuno <nuno.piscinas@gmail.com>\n"
+"PO-Revision-Date: 2011-06-21 15:53+0200\n"
+"Last-Translator: iMiguel <miguel.rosa17@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -2563,13 +2563,13 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings"
 msgstr ""
-"Esta opção é uma vírgula, espaço, ou conjunto de host que não tem permissão "
-"para acessar este módulo delimitado por tabulação. Sempre que as listas em "
-"conflito, a lista de permissões tem precedência. Se é necessário negar tudo "
-"por padrão, use a palavra-chave ALL (ou a máscara de rede 0.0.0.0/0) e, em "
-"seguida, especificar explicitamente para os hosts permitem parâmetro esses "
-"hosts que deverão ser autorizados a aceder. Deixar este campo vazio para "
-"usar configurações padrão"
+"Esta opção é um conjunto de hosts delimitados por vírgula, espaço ou tab que "
+"NÃO têm permissão para aceder a este módulo. Sempre que as listas entrarem "
+"em conflito, a lista de permissões tem precedência. No caso de ser "
+"necessário negar todos por defeito, utilize a keyword ALL (ou a máscara de "
+"rede 0.0.0.0/0) e depois especifique explicitamente no parâmetro de "
+"permissão desses hosts qual deve ser permitido acesso.Deixe este campo em "
+"branco para utilizar as definições pré-definidas."
 
 #: services/models.py:1226
 msgid ""
@@ -2793,13 +2793,13 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
 msgstr ""
-"Esta opção é uma vírgula, espaço, ou conjunto de host que não tem permissão "
-"para acessar esse compartilhamento delimitado por tabulação. Sempre que as "
-"listas em conflito, a lista de permissões tem precedência. Se é necessário "
-"negar tudo por padrão, use a palavra-chave ALL (ou a máscara de rede "
-"0.0.0.0/0) e, em seguida, especificar explicitamente para os hosts permitem "
-"parâmetro esses hosts que deverão ser autorizados a aceder. Deixe este campo "
-"vazio para usar as configurações padrão."
+"Esta opção é um conjunto de hosts delimitados por vírgula, espaço ou tab que "
+"NÃO têm permissão para aceder a esta partilha. Sempre que as listas "
+"entrarem em conflito, a lista de permissões tem precedência. No caso de ser "
+"necessário negar todos por defeito, utilize a keyword ALL (ou a máscara de "
+"rede 0.0.0.0/0) e depois especifique explicitamente no parâmetro de "
+"permissão desses hosts qual deve ser permitido acesso.Deixe este campo em "
+"branco para utilizar as definições pré-definidas."
 
 #: sharing/models.py:87
 msgid "These parameters are added to [Share] section of smb.conf"
@@ -3215,7 +3215,7 @@ msgstr "Ocorreram alguns erros ao renomear o disco."
 
 #: storage/forms.py:484
 msgid "You must select a volume."
-msgstr ""
+msgstr "Tem de escolher um Volume."
 
 #: storage/forms.py:633
 msgid "Volume from which this dataset will be created on"
@@ -3274,7 +3274,7 @@ msgstr "Já tem um dataset com esse nome"
 
 #: storage/forms.py:667 storage/forms.py:724 storage/forms.py:768
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
-msgstr ""
+msgstr "Insira um número positivo (pode usar um sufixo M, G, T) ou 0"
 
 #: storage/forms.py:782
 msgid "Volume from which this ZFS Volume will be created on"
@@ -3322,11 +3322,11 @@ msgstr ""
 
 #: storage/forms.py:881
 msgid "Snapshot Name"
-msgstr ""
+msgstr "Nome da snapshot"
 
 #: storage/forms.py:888
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr ""
+msgstr "Apenas [-a-zA-Z0-9_.] é permitido para o nome da snapshot"
 
 #: storage/forms.py:898
 msgid "Invalid prefix"
@@ -3342,7 +3342,7 @@ msgstr "Clonar nome (tem de estar no mesmo volume)"
 
 #: storage/forms.py:916
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr ""
+msgstr "Apenas [-a-zA-Z0-9_.] é permitido para o nome do clone"
 
 #: storage/forms.py:922
 msgid "Clone must be within the same volume"
@@ -3350,11 +3350,11 @@ msgstr ""
 
 #: storage/forms.py:989 storage/models.py:222
 msgid "Remote hostname"
-msgstr ""
+msgstr "Hostname remoto"
 
 #: storage/forms.py:990 storage/models.py:226
 msgid "Remote hostkey"
-msgstr ""
+msgstr "Hostkey remoto"
 
 #: storage/models.py:49
 msgid "File System Type"
@@ -3370,27 +3370,27 @@ msgstr ""
 
 #: storage/models.py:102
 msgid "Transfer Mode"
-msgstr ""
+msgstr "Modo de transferência"
 
 #: storage/models.py:108
 msgid "HDD Standby"
-msgstr ""
+msgstr "HDD em Stanby"
 
 #: storage/models.py:114
 msgid "Advanced Power Management"
-msgstr ""
+msgstr "Gestão de Energia Avançada"
 
 #: storage/models.py:120
 msgid "Acoustic Level"
-msgstr ""
+msgstr "Nível de ruído"
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
-msgstr ""
+msgstr "Activar S.M.A.R.T."
 
 #: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
-msgstr ""
+msgstr "Opções extra do S.M.A.R.T."
 
 #: storage/models.py:133
 msgid "Group Membership"
@@ -3411,11 +3411,11 @@ msgstr ""
 
 #: storage/models.py:161
 msgid "Mount options"
-msgstr ""
+msgstr "Opções de Montagem"
 
 #: storage/models.py:162
 msgid "Enter Mount Point options here"
-msgstr ""
+msgstr "Insira aqui as opções de Montagem"
 
 #: storage/models.py:179
 msgid "Error getting total space"
@@ -3480,7 +3480,7 @@ msgstr ""
 
 #: storage/models.py:284
 msgid "Begin"
-msgstr ""
+msgstr "Começar"
 
 #: storage/models.py:285
 msgid "When in a day should we start making snapshots, e.g. 8:00"
@@ -3488,7 +3488,7 @@ msgstr ""
 
 #: storage/models.py:289
 msgid "End"
-msgstr ""
+msgstr "Fim"
 
 #: storage/models.py:290
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
@@ -4309,7 +4309,7 @@ msgstr "As alteração foram actualizadas com sucesso!"
 
 #: templates/freeadmin/generic_model_edit_ok.html:1
 msgid "successfully edited"
-msgstr ""
+msgstr "Editado com sucesso"
 
 #: templates/freeadmin/index.html:30
 msgid "Running Processes"
@@ -5009,9 +5009,8 @@ msgid "Edit ZFS Volume"
 msgstr "Editar ZFS Volume"
 
 #: templates/storage/volume_export.html:7
-#, fuzzy
 msgid "Are you sure you want to export?"
-msgstr "Tem a certeza que pretende restaurar as configurações de fábrica?"
+msgstr "Tem a certeza que pretende exportar?"
 
 #: templates/storage/volumes.html:30 templates/storage/volumes.html.py:34
 msgid "Create ZFS Volume"
@@ -5055,9 +5054,8 @@ msgid "View Disks"
 msgstr "Ver discos"
 
 #: templates/storage/volumes.html:198 templates/storage/volumes.html.py:202
-#, fuzzy
 msgid "Export Volume"
-msgstr "Volume ZFS"
+msgstr "Exportar volume"
 
 #: templates/storage/volumes.html:209
 msgid "No volumes defined"
@@ -5100,9 +5098,8 @@ msgid "Existing data will be cleared"
 msgstr "Informação existente será apagada"
 
 #: templates/storage/zvols.html:9
-#, fuzzy
 msgid "Add ZFS Volume"
-msgstr "Volume ZFS"
+msgstr "Adicionar volume ZFS"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
@@ -5121,9 +5118,8 @@ msgid "Restore to Factory Defaults"
 msgstr "Restaurar para Definições de Fábrica"
 
 #: templates/system/config.html:5
-#, fuzzy
 msgid "Restore Config"
-msgstr "Salvar configurações"
+msgstr "Restaurar configurações"
 
 #: templates/system/config.html:9
 msgid "Save Config"
@@ -5255,11 +5251,11 @@ msgstr "Ligado"
 
 #: templates/system/system_info.html:28
 msgid "Load Average"
-msgstr "Média da carga"
+msgstr "Carga média"
 
 #: templates/system/system_info.html:32
 msgid "FreeNAS Build"
-msgstr "Construtor FreeNAS"
+msgstr "Compilação FreeNAS"
 
 #: templates/system/wizard.html:3
 #, python-format
@@ -5293,7 +5289,7 @@ msgid "ZVol Name"
 msgstr "Nome Completo"
 
 msgid "Create ZFS zvol"
-msgstr "Criar ZFS zvol"
+msgstr "Criar zvol ZFS"
 
 msgid "Add ZVol"
 msgstr "Adicionar ZVol"
