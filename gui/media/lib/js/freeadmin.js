@@ -457,14 +457,6 @@
 
     var canceled = false;
 
-    function itemAccept(node, source, position){
-        var item = dijit.getEnclosingWidget(node).item;
-        if (item && item.children){
-                return true;
-        }
-        return false;
-    }
-
     toggleLuc = function(c) {
 
         var toset;
