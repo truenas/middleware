@@ -83,6 +83,7 @@ def LDAPEnabled():
     try:
         s = services.objects.get(srv_service = 'ldap')
         return (True if s.srv_enable != 0 else False)
+
     except services.DoesNotExist:
         return False
 
@@ -90,6 +91,7 @@ def ActiveDirectoryEnabled():
     try:
         s = services.objects.get(srv_service = 'activedirectory')
         return (True if s.srv_enable != 0 else False)
+
     except services.DoesNotExist:
         return False
 
@@ -140,67 +142,75 @@ class FreeNAS_LDAP_QueryCache(FreeNAS_BaseCache):
 
 
 class FreeNAS_Directory_UserCache(FreeNAS_BaseCache):
-    def __init__(self):
+    def __new__(cls):
+        obj = None
         if LDAPEnabled():
-            self.__class__ = FreeNAS_LDAP_UserCache
-            FreeNAS_LDAP_UserCache.__init__(self)
+            obj = FreeNAS_LDAP_UserCache()
  
         elif ActiveDirectoryEnabled():
-            self.__class__ = FreeNAS_ActiveDirectory_UserCache
-            FreeNAS_ActiveDirectory_UserCache.__init__(self)
+            obj = FreeNAS_ActiveDirectory_UserCache()
+
+        return obj
 
 
 class FreeNAS_Directory_GroupCache(FreeNAS_BaseCache):
-    def __init__(self):
+    def __new__(cls):
+        obj = None
         if LDAPEnabled():
-            self.__class__ = FreeNAS_LDAP_GroupCache
-            FreeNAS_LDAP_GroupCache.__init__(self)
+            obj = FreeNAS_LDAP_GroupCache()
 
         elif ActiveDirectoryEnabled():
-            self.__class__ = FreeNAS_ActiveDirectory_GroupCache
-            FreeNAS_ActiveDirectory_GroupCache.__init__(self)
+            obj = FreeNAS_ActiveDirectory_GroupCache()
+
+        return obj
 
 
 class FreeNAS_Directory_LocalUserCache(FreeNAS_BaseCache):
-    def __init__(self):
+    def __new__(cls):
+        obj = None
         if LDAPEnabled():
-            self.__class__ = FreeNAS_LDAP_LocalUserCache
-            FreeNAS_LDAP_LocalUserCache.__init__(self)
+            obj = FreeNAS_LDAP_LocalUserCache()
  
         elif ActiveDirectoryEnabled():
-            self.__class__ = FreeNAS_ActiveDirectory_LocalUserCache
-            FreeNAS_ActiveDirectory_LocalUserCache.__init__(self)
+            obj = FreeNAS_ActiveDirectory_LocalUserCache()
+
+        return obj
 
 
 class FreeNAS_Directory_LocalGroupCache(FreeNAS_BaseCache):
-    def __init__(self):
+    def __new__(cls):
+        obj = None
         if LDAPEnabled():
-            self.__class__ = FreeNAS_LDAP_LocalGroupCache
-            FreeNAS_LDAP_LocalGroupCache.__init__(self)
+            obj = FreeNAS_LDAP_LocalGroupCache()
 
         elif ActiveDirectoryEnabled():
-            self.__class__ = FreeNAS_ActiveDirectory_LocalGroupCache
-            FreeNAS_ActiveDirectory_LocalGroupCache.__init__(self)
+            obj = FreeNAS_ActiveDirectory_LocalGroupCache()
+
+        return obj
 
 
 class FreeNAS_UserCache(FreeNAS_BaseCache):
-    def __init__(self, cachedir = FREENAS_USERCACHE):
+    def __new__(cls):
+        obj = None
         if LDAPEnabled() or ActiveDirectoryEnabled():
-            self.__class__ = FreeNAS_Directory_LocalUserCache 
-            FreeNAS_Directory_LocalUserCache.__init__(self)
+            obj = FreeNAS_Directory_LocalUserCache()
 
         else:
-            FreeNAS_BaseCache.__init__(self, cachedir)
+            obj = FreeNAS_BaseCache()
+
+        return obj
 
 
 class FreeNAS_GroupCache(FreeNAS_BaseCache):
-    def __init__(self, cachedir = FREENAS_GROUPCACHE):
+    def __new__(cls):
+        obj = None
         if LDAPEnabled() or ActiveDirectoryEnabled():
-            self.__class__ = FreeNAS_Directory_LocalGroupCache 
-            FreeNAS_Directory_LocalGroupCache.__init__(self)
+            obj = FreeNAS_Directory_LocalGroupCache()
 
         else:
-            FreeNAS_BaseCache.__init__(self, cachedir)
+            obj = FreeNAS_BaseCache()
+
+        return obj
 
 
 class FreeNAS_LDAP(object):
