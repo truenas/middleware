@@ -642,7 +642,7 @@
                 },
                 error: function(data) {
 
-                        setMessage(gettext('Some error ocurried!'), "error");
+                        setMessage(gettext('Some error ocurred!'), "error");
 
                         try {
                            rnode.hide();

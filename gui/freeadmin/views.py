@@ -80,7 +80,7 @@ def menu(request, objtype = None):
 
 """
 We use the django debug 500 classes to show the traceback to the user
-instead of the useless "An error ocurried" used by dojo in case of 
+instead of the useless "An error ocurred" used by dojo in case of 
 HTTP 500 responses.
 
 As this is not a public API of django we need to duplicate some code

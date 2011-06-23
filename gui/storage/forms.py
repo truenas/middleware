@@ -394,7 +394,7 @@ class VolumeImportForm(forms.Form):
         if cleaned_data.has_key("volume_name"):
             dolabel = notifier().label_disk(cleaned_data["volume_name"], "/dev/%s" % cleaned_data['volume_disks'], cleaned_data['volume_fstype'])
             if not dolabel:
-                msg = _(u"Some error ocurried while labelling the disk.")
+                msg = _(u"Some error ocurred while labelling the disk.")
                 self._errors["volume_name"] = self.error_class([msg])
                 if cleaned_data.has_key("volume_name"):
                     del cleaned_data["volume_name"]
