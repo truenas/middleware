@@ -79,7 +79,6 @@ debug_active_directory()
 	local workgroup
 	local netbiosname
 	local adminname
-	local windows_version
 	local domainname
 	local dcname
 	local pamfiles
@@ -112,13 +111,12 @@ debug_active_directory()
 	#	Next, dump Active Directory configuration
 	#
 	local IFS="|"
-	read workgroup netbiosname adminname windows_version domainname dcname <<-__AD__
+	read workgroup netbiosname adminname domainname dcname <<-__AD__
 	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ad_workgroup,
 		ad_netbiosname,
 		ad_adminname,
-		ad_windows_version,
 		ad_domainname,
 		ad_dcname
 
@@ -140,7 +138,6 @@ __AD__
 	WORKGROUP:              ${workgroup}
 	NETBIOS NAME:           ${netbiosname}
 	ADMINNAME:              ${adminname}
-	WINDOWS VERSION:        ${windows_version}
 	DOMAIN NAME:            ${domainname}
 	DCNAME:                 ${dcname}
 __EOF__
