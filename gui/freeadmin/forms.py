@@ -75,7 +75,10 @@ class UserField(forms.ChoiceField):
         if len(FreeNAS_Users()) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
-            self.widget = FilteredSelectJSON(url=("account_bsduser_json", None, (), {'exclude': ','.join(self._exclude)}))
+            kwargs = {}
+            if len(self._exclude) > 0:
+                kwargs['exclude'] = ','.join(self._exclude)
+            self.widget = FilteredSelectJSON(url=("account_bsduser_json", None, (), kwargs))
         else:
             ulist = []
             if not self.required:
