@@ -595,7 +595,7 @@ class notifier:
         if not os.path.isdir("/data/zfs"):
             os.makedirs("/data/zfs")
         p1 = self.__pipeopen("zpool create -o cachefile=/data/zfs/zpool.cache "
-                      "-f -o altroot=/mnt %s %s" % (z_name, z_vdev))
+                      "-f -m /mnt/%s -o altroot=/mnt %s %s" % (z_name, z_name, z_vdev))
         p1.wait()
         if p1.returncode != 0:
             from middleware.exceptions import MiddlewareError
@@ -608,7 +608,8 @@ class notifier:
             for disk in hack_vdevs:
                 self.__system("gnop destroy /dev/%s.nop" % disk)
             self.__system("zpool import -R /mnt %s" % (z_name))
-            self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
+
+        self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
 
         # These should probably be options that are configurable from the GUI
         self.__system("zfs set aclmode=passthrough %s" % z_name)
