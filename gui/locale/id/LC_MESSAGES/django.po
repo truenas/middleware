@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-21 16:19+0200\n"
+"PO-Revision-Date: 2011-06-22 15:21+0200\n"
 "Last-Translator: Rully <paradoxnazi@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: id\n"
@@ -339,7 +339,6 @@ msgid "Required"
 msgstr "Diperlukan"
 
 #: choices.py:274 choices.py:280
-#, fuzzy
 msgid "Inherit"
 msgstr "Diwariskan"
 
@@ -435,19 +434,20 @@ msgstr "%(week)s minggu"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Tidak pernah - Periksa perangkat tanpa peduli modus dayanya"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Tidur - Periksa perangkat kecuali di modus TIDUR"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
+msgstr "Stadby - Periksa perangkat kecuali di modus TIDUR atau STANDBY"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
+"Nganggur - Periksa perangkat kecuali di modus TIDUR, STANDBY atau NGANGGUR."
 
 #: choices.py:467
 msgid "Long Self-Test"
@@ -459,11 +459,11 @@ msgstr "Swa-uji yg sebentar"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Pengangkutan Swa-Uji (hanya ATA) "
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Tes Luring Segera (hanya ATA)"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -1106,7 +1106,6 @@ msgid "Controller Auth Group"
 msgstr "Pengontrol Grup"
 
 #: services/forms.py:385 services/models.py:353
-#, fuzzy
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
@@ -1116,7 +1115,7 @@ msgstr ""
 
 #: services/forms.py:386 services/models.py:246
 msgid "Discovery Auth Group"
-msgstr ""
+msgstr "Penemuan Otentikasi Grup"
 
 #: services/forms.py:413
 #, python-format
@@ -1144,7 +1143,6 @@ msgid ""
 msgstr "Path anda harus ada dalam titik mount volume/dataset anda."
 
 #: services/forms.py:556
-#, fuzzy
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr ""
@@ -1211,7 +1209,6 @@ msgid "NetBIOS name"
 msgstr "Nama NetBIOS"
 
 #: services/models.py:69
-#, fuzzy
 msgid "Workgroup"
 msgstr "Workgroup"
 
@@ -1274,24 +1271,20 @@ msgid "Only allow guest access"
 msgstr "Hanya izinkan akses Tamu"
 
 #: services/models.py:113 services/models.py:848
-#, fuzzy
 msgid "File mask"
 msgstr "Masker berkas"
 
 #: services/models.py:115
-#, fuzzy
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
 "Gunakan opsi ini untuk mengesampingkan pembuatan masker berkas (0666 secara "
 "default)."
 
 #: services/models.py:119 services/models.py:854
-#, fuzzy
 msgid "Directory mask"
 msgstr "Masker Direktori"
 
 #: services/models.py:121
-#, fuzzy
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
@@ -1365,6 +1358,8 @@ msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
 msgstr ""
+"Samba akan membaca secara tidak sinkron jika ukuran yang diminta lebih besar "
+"daripada nilai ini. Ukuran baca asal adalah 1."
 
 #: services/models.py:164
 msgid "Minimal AIO write size"
@@ -1388,7 +1383,6 @@ msgid "Server Name"
 msgstr "Nama Server"
 
 #: services/models.py:181
-#, fuzzy
 msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
@@ -1399,19 +1393,18 @@ msgid "Guest Access"
 msgstr "Akses Tamu"
 
 #: services/models.py:185
-#, fuzzy
 msgid "Allows guest access to all apple shares on this box."
-msgstr "Izinkan akses Tamu ke semua Apple share di kotak ini."
+msgstr "Izinkan akses Tamu ke semua berbagi Apple di kotak ini."
 
 #: services/models.py:195
 msgid "Local Access"
 msgstr "Akses Lokal"
 
 #: services/models.py:196
-#, fuzzy
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
-"Izinkan pengguna dengan akun lokal untuk mengakses Apple share di kotak ini."
+"Izinkan pengguna dengan akun lokal untuk mengakses berbagi Apple di kotak "
+"ini."
 
 #: services/models.py:199
 msgid "Enable DDP"
@@ -1469,7 +1462,7 @@ msgstr ""
 
 #: services/models.py:242
 msgid "Discovery Auth Method"
-msgstr ""
+msgstr "Metode Penemuan Otentikasi"
 
 #: services/models.py:253
 msgid "I/O Timeout"
@@ -1527,7 +1520,7 @@ msgstr "Parameter inisial iSCSI (16 secara default)."
 
 #: services/models.py:289
 msgid "First burst length"
-msgstr ""
+msgstr "Panjang burst pertama"
 
 #: services/models.py:290
 msgid "iSCSI initial parameter (65536 by default)."
@@ -1535,7 +1528,7 @@ msgstr "Parameter inisial iSCSI (65536 secara default)."
 
 #: services/models.py:295
 msgid "Max burst length"
-msgstr ""
+msgstr "Panjang burst maksimal"
 
 #: services/models.py:296 services/models.py:302
 msgid "iSCSI initial parameter (262144 by default)."
@@ -2048,7 +2041,6 @@ msgid "Greeting banner displayed by FTP when a connection first comes in."
 msgstr "Spanduk penyambut ditampilkan oleh FTP ketika koneksi pertama kali."
 
 #: services/models.py:849 services/models.py:855
-#, fuzzy
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr ""
 "Gunakan opsi ini untuk mengesampingkan pembuatan masker file (077 secara "
@@ -2077,7 +2069,7 @@ msgstr "Diperlukan Pembalikan DNS untuk IP"
 
 #: services/models.py:868
 msgid "Masquerade address"
-msgstr ""
+msgstr "Samarkan alamat"
 
 #: services/models.py:870
 msgid ""
@@ -2674,16 +2666,19 @@ msgid "The IP '%s' is not valid."
 msgstr "Alamat IP '%s' tidak valid."
 
 #: sharing/forms.py:99
+#, fuzzy
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "Maproot grup memerlukan Maproot pengguna"
 
 #: sharing/forms.py:101
+#, fuzzy
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr "Memetakan semua grup memerlukan memetakan semua pengguna"
 
 #: sharing/forms.py:104 sharing/forms.py:107
+#, fuzzy
 msgid "Maproot user/group disqualifies Mapall"
-msgstr ""
+msgstr "Maproot pengguna/grup mendiskualifikasi Mapall"
 
 #: sharing/models.py:41 sharing/models.py:104 storage/models.py:44
 #: storage/models.py:69 storage/models.py:87
@@ -3111,7 +3106,7 @@ msgstr ""
 
 #: sharing/models.py:264
 msgid "Mapall User"
-msgstr ""
+msgstr "Petakan semua pengguna"
 
 #: sharing/models.py:268
 msgid "User to map all users to"
@@ -3119,7 +3114,7 @@ msgstr ""
 
 #: sharing/models.py:272
 msgid "Mapall Group"
-msgstr ""
+msgstr "Petakan semua grup"
 
 #: sharing/models.py:276
 msgid "Group to map all users to"
@@ -3529,7 +3524,7 @@ msgstr "Import Volume"
 #: storage/nav.py:56 templates/storage/volumes.html:53
 #: templates/storage/volumes.html.py:57
 msgid "Auto Import Volume"
-msgstr ""
+msgstr "Impor Volume Otomatis"
 
 #: storage/nav.py:67
 msgid "View All Volumes"
@@ -4314,7 +4309,7 @@ msgstr "Proses Berjalan"
 #: templates/freeadmin/index.html:35 templates/freeadmin/index.html.py:39
 #: templates/freeadmin/index.html:44
 msgid "Loading..."
-msgstr ""
+msgstr "Memuat..."
 
 #: templates/freeadmin/index.html:46
 msgid "Reboot the System"
@@ -4346,7 +4341,7 @@ msgstr ""
 
 #: templates/freeadmin/index.html:69
 msgid "Help & Support"
-msgstr ""
+msgstr "Bantuan & Dukungan"
 
 #: templates/freeadmin/index.html:72
 msgid "Forum"
@@ -4386,11 +4381,11 @@ msgstr "FreeNAS Testing"
 
 #: templates/freeadmin/index.html:91
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS Docs"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Translations"
-msgstr ""
+msgstr "FreeNAS Translations"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
@@ -4402,11 +4397,11 @@ msgstr "Bug Tracker"
 
 #: templates/freeadmin/index.html:104
 msgid "Documentation"
-msgstr ""
+msgstr "Dokumentasi"
 
 #: templates/freeadmin/index.html:106
 msgid "FreeNAS Documentation"
-msgstr ""
+msgstr "FreeNAS Documentation"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4491,7 +4486,7 @@ msgstr "Aksi"
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
 msgid "Add LAGG Member"
-msgstr ""
+msgstr "Tambahkan Anggota LAGG"
 
 #: templates/network/staticroute.html:5
 msgid "Destination"
@@ -4556,11 +4551,11 @@ msgstr "Selamat datang, %(username)s. Terimakasih telah log masuk."
 
 #: templates/registration/login.html:50
 msgid "Welcome to FreeNAS 8"
-msgstr ""
+msgstr "Selamat Datang di FreeNAS 8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
-msgstr ""
+msgstr "Silahkan log masuk."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -4604,7 +4599,7 @@ msgstr "Pengaturan NFS"
 
 #: templates/services/index.html:92
 msgid "Rsync Settings"
-msgstr ""
+msgstr "Pengaturan Rsync"
 
 #: templates/services/index.html:103
 msgid "SNMP Settings"
@@ -4612,7 +4607,7 @@ msgstr "Pengaturan SNMP"
 
 #: templates/services/index.html:114
 msgid "S.M.A.R.T. Settings"
-msgstr ""
+msgstr "Pengaturan S.M.A.R.T"
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
@@ -4730,11 +4725,11 @@ msgstr "Aksi yang tersedia"
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
-msgstr ""
+msgstr "Tidak ada modul rsync yang didefinisikan"
 
 #: templates/services/rsyncmod.html:40 templates/services/rsyncmod.html:42
 msgid "Add Rsync Module"
-msgstr ""
+msgstr "Tambahkan Modul Rsync"
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
@@ -4756,204 +4751,203 @@ msgstr "Hapus Berbagi Apple"
 #: templates/sharing/apple.html:43 templates/sharing/unix.html:43
 #: templates/sharing/windows.html:47
 msgid "No shares defined"
-msgstr ""
+msgstr "Tidak ada berbagi yang didefinisikan"
 
 #: templates/sharing/apple.html:50
 msgid "Add Apple Share"
-msgstr ""
+msgstr "Tambahkan Berbagi Apple"
 
 #: templates/sharing/apple.html:52
 msgid "Add Apple Share (AFP)"
-msgstr ""
+msgstr "Tambahkan Berbagi Apple (AFP)"
 
 #: templates/sharing/index.html:3
 msgid "Apple"
-msgstr ""
+msgstr "Apple"
 
 #: templates/sharing/index.html:5
 msgid "UNIX"
-msgstr ""
+msgstr "UNIX"
 
 #: templates/sharing/index.html:7
 msgid "Windows"
-msgstr ""
+msgstr "Windows"
 
 #: templates/sharing/unix.html:8
 msgid "There are no active UNIX Shares."
-msgstr ""
+msgstr "Tidak ada Berbagi UNIX yang aktif disini."
 
 #: templates/sharing/unix.html:13
 msgid "Mountpoint"
-msgstr ""
+msgstr "Titik Mount"
 
 #: templates/sharing/unix.html:30
 msgid "Edit NFS Share"
-msgstr ""
+msgstr "Sunting Berbagi NFS"
 
 #: templates/sharing/unix.html:36
 msgid "Delete NFS Share"
-msgstr ""
+msgstr "Hapus Berbagi NFS"
 
 #: templates/sharing/unix.html:50
 msgid "Add UNIX Share"
-msgstr ""
+msgstr "Tambahkan Berbagi UNIX"
 
 #: templates/sharing/unix.html:52
 msgid "Add UNIX Share (NFS)"
-msgstr ""
+msgstr "Tambahkan Berbagi UNIX (NFS)"
 
 #: templates/sharing/windows.html:8
 msgid "There are no active Windows Shares."
-msgstr ""
+msgstr "Tidak ada Berbagi Windows yang aktif disini."
 
 #: templates/sharing/windows.html:34
 msgid "Edit Windows Share"
-msgstr ""
+msgstr "Sunting Berbagi Windows"
 
 #: templates/sharing/windows.html:40
 msgid "Delete Windows Share"
-msgstr ""
+msgstr "Hapus Berbagi Windows"
 
 #: templates/sharing/windows.html:54
 msgid "Add Windows Share"
-msgstr ""
+msgstr "Tambahkan Berbagi Windows"
 
 #: templates/sharing/windows.html:56
 msgid "Add Windows Share (CIFS)"
-msgstr ""
+msgstr "Tambahkan Berbagi Windows (CIFS)"
 
 #: templates/storage/clonesnap.html:12
 msgid "Clone Snapshot"
-msgstr ""
+msgstr "Klon Snapshot"
 
 #: templates/storage/datagrid_disks.html:9
-#, fuzzy
 msgid "Edit Disk"
-msgstr "Cakram"
+msgstr "Sunting Cakram"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
-msgstr ""
+msgstr "Sunting Dataset"
 
 #: templates/storage/datasets.html:9
 msgid "Add Dataset"
-msgstr ""
+msgstr "Tambahkan Dataset"
 
 #: templates/storage/disk_detach.html:7
 msgid "Are you sure you want to detach?"
-msgstr ""
+msgstr "Apakah anda yakin ingin melepas?"
 
 #: templates/storage/disk_replacement.html:9
 msgid "Replacing disk"
-msgstr ""
+msgstr "Mengganti cakram"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
-msgstr ""
+msgstr "Ganti cakram"
 
 #: templates/storage/import.html:32 templates/storage/wizard.html:43
 msgid "Filesystem type"
-msgstr ""
+msgstr "Tipe sistem berkas"
 
 #: templates/storage/index.html:3 templates/storage/volumes.html:62
 msgid "Active Volumes"
-msgstr ""
+msgstr "Volume Aktif"
 
 #: templates/storage/index.html:5
 msgid "ZFS Snapshots"
-msgstr ""
+msgstr "Snapshot ZFS"
 
 #: templates/storage/index.html:9
 msgid "ZFS Replication"
-msgstr ""
+msgstr "Replikasi ZFS"
 
 #: templates/storage/manualsnap.html:13
 msgid "Manually Create Snapshot"
-msgstr ""
+msgstr "Buat Snapshot secara manual"
 
 #: templates/storage/periodicsnap.html:13 templates/storage/volumes.html:178
 #: templates/storage/volumes.html.py:182
 msgid "Create Snapshot"
-msgstr ""
+msgstr "Buat Snapshot"
 
 #: templates/storage/permission.html:6
 msgid "Change permission"
-msgstr ""
+msgstr "Ganti perizinan"
 
 #: templates/storage/permission.html:7
 #, python-format
 msgid "Change permission on %(path)s to"
-msgstr ""
+msgstr "Ganti perizinan pada %(path)s ke"
 
 #: templates/storage/permission.html:11
 msgid "Change"
-msgstr ""
+msgstr "Ganti"
 
 #: templates/storage/replications.html:9
 msgid "Add Replication"
-msgstr ""
+msgstr "Tambahkan Replikasi"
 
 #: templates/storage/replications.html:13
 msgid "Mount point"
-msgstr ""
+msgstr "Titip mount"
 
 #: templates/storage/replications.html:14
 msgid "Last snapshot"
-msgstr ""
+msgstr "Snapshot terakhir"
 
 #: templates/storage/replications.html:30
 #: templates/storage/replications.html:34
 msgid "Delete Replication"
-msgstr ""
+msgstr "Hapus Replikasi"
 
 #: templates/storage/replications.html:39
 #: templates/storage/replications.html:43
 msgid "Edit Replication"
-msgstr ""
+msgstr "Sunting Replikasi"
 
 #: templates/storage/replications.html:49
 msgid "No ZFS replication available"
-msgstr ""
+msgstr "Tidak ada replikasi ZFS yang tersedia"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
 msgid "Are you sure you want to rollback the snapshot to previous state?"
-msgstr ""
+msgstr "Apakan anda yakin ingin mengembalikan snapshot ke keadaan sebelumnya?"
 
 #: templates/storage/snapshots.html:4
 msgid "Dataset name"
-msgstr ""
+msgstr "Nama dataset"
 
 #: templates/storage/snapshots.html:5
 msgid "Snapshot name"
-msgstr ""
+msgstr "Nama snapshot"
 
 #: templates/storage/snapshots.html:6
 msgid "Used space"
-msgstr ""
+msgstr "Ruang terpakai"
 
 #: templates/storage/snapshots.html:7
 msgid "Referenced space"
-msgstr ""
+msgstr "Ruang yang direferensikan"
 
 #: templates/storage/snapshots.html:24 templates/storage/snapshots.html:28
 msgid "Clone snapshot"
-msgstr ""
+msgstr "Klon snapshot"
 
 #: templates/storage/snapshots.html:33 templates/storage/snapshots.html:37
 msgid "Destroy snapshot"
-msgstr ""
+msgstr "Hancurkan snapshot"
 
 #: templates/storage/snapshots.html:43 templates/storage/snapshots.html:47
 msgid "Rollback to this snapshot"
-msgstr ""
+msgstr "Kembalikan ke snapshot ini"
 
 #: templates/storage/snapshots.html:55
 msgid "No ZFS snapshot available"
-msgstr ""
+msgstr "Tidak ada snapshot ZFS yang tersedia"
 
 #: templates/storage/tasks.html:6
 msgid "Periodic Snapshots"
-msgstr ""
+msgstr "Snapshot Periodik"
 
 #: templates/storage/tasks.html:10
 msgid "Create Periodic Snapshot"
@@ -4961,248 +4955,244 @@ msgstr "Buat Snapshot Periodik"
 
 #: templates/storage/tasks.html:14
 msgid "Periodic Snapshot Schedule"
-msgstr ""
+msgstr "Jadwal Snapshot Periodik"
 
 #: templates/storage/tasks.html:17
 msgid "There are no scheduled snapshots."
-msgstr ""
+msgstr "Tidak ada jadwal snapshot disini."
 
 #: templates/storage/tasks.html:24
 msgid "How"
-msgstr ""
+msgstr "Bagaimana"
 
 #: templates/storage/tasks.html:25
 msgid "Keep snapshot for"
-msgstr ""
+msgstr "Jaga snapshot untuk"
 
 #: templates/storage/tasks.html:38
 msgid "No"
-msgstr ""
+msgstr "Tidak"
 
 #: templates/storage/tasks.html:42
 msgid "From"
-msgstr ""
+msgstr "Dari"
 
 #: templates/storage/tasks.html:44
 msgid "through"
-msgstr ""
+msgstr "melalui"
 
 #: templates/storage/tasks.html:46
 msgid ", every"
-msgstr ""
+msgstr ", setiap"
 
 #: templates/storage/tasks.html:49
 msgid "everyday"
-msgstr ""
+msgstr "setiap hari"
 
 #: templates/storage/tasks.html:52
 msgid "on every"
-msgstr ""
+msgstr "pada setiap"
 
 #: templates/storage/tasks.html:148
 msgid "No periodic snapshots scheduled"
-msgstr ""
+msgstr "Tidak ada snapshot periodik yang dijadwal"
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
-msgstr ""
+msgstr "Sunting Volume ZFS"
 
 #: templates/storage/volume_export.html:7
 msgid "Are you sure you want to export?"
-msgstr ""
+msgstr "Apakah anda yakin ingin meng-ekspor?"
 
 #: templates/storage/volumes.html:30 templates/storage/volumes.html.py:34
-#, fuzzy
 msgid "Create ZFS Volume"
-msgstr "ZFS Volume"
+msgstr "Buat ZFS Volume"
 
 #: templates/storage/volumes.html:64
 msgid "There are no active volumes."
-msgstr ""
+msgstr "Tidak ada volume aktif disini."
 
 #: templates/storage/volumes.html:72
 msgid "Used"
-msgstr ""
+msgstr "Digunakan"
 
 #: templates/storage/volumes.html:74
 msgid "Size"
-msgstr ""
+msgstr "Ukuran"
 
 #: templates/storage/volumes.html:75
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Destroy ZFS Volume"
-msgstr "ZFS Volume"
+msgstr "Hancurkan ZFS Volume"
 
 #: templates/storage/volumes.html:128 templates/storage/volumes.html.py:132
 msgid "Destroy Dataset"
-msgstr ""
+msgstr "Hancurkan Dataset"
 
 #: templates/storage/volumes.html:137 templates/storage/volumes.html.py:141
 #: templates/storage/volumes.html:157 templates/storage/volumes.html.py:161
 msgid "Edit ZFS Options"
-msgstr ""
+msgstr "Sunting Opsi ZFS"
 
 #: templates/storage/volumes.html:147 templates/storage/volumes.html.py:151
 msgid "Destroy Volume"
-msgstr ""
+msgstr "Hancurkan Volume"
 
 #: templates/storage/volumes.html:189 templates/storage/volumes.html.py:193
 msgid "View Disks"
-msgstr ""
+msgstr "Lihat Cakram"
 
 #: templates/storage/volumes.html:198 templates/storage/volumes.html.py:202
-#, fuzzy
 msgid "Export Volume"
-msgstr "ZFS Volume"
+msgstr "Ekspor Volume"
 
 #: templates/storage/volumes.html:209
 msgid "No volumes defined"
-msgstr ""
+msgstr "Tidak ada volume yang didefinisikan"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
-msgstr ""
+msgstr "Anggota cakram"
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
-msgstr ""
+msgstr "Tipe grup"
 
 #: templates/storage/wizard.html:84
 msgid "ZFS Extra"
-msgstr ""
+msgstr "ZFS Tambahan"
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr ""
+msgstr "Penggunaan hanya 1 cakram log sangat tidak disarankan"
 
 #: templates/storage/wizard.html:93
 msgid "Log"
-msgstr ""
+msgstr "Log"
 
 #: templates/storage/wizard.html:94
 msgid "Cache"
-msgstr ""
+msgstr "Cache"
 
 #: templates/storage/wizard.html:95
 msgid "Spare"
-msgstr ""
+msgstr "Luang"
 
 #: templates/storage/wizard.html:119
 msgid "Add Volume"
-msgstr ""
+msgstr "Tambahkan Volume"
 
 #: templates/storage/wizard.html:120
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "Data yang ada akan dibersihkan"
 
 #: templates/storage/zvols.html:9
-#, fuzzy
 msgid "Add ZFS Volume"
-msgstr "ZFS Volume"
+msgstr "Tambah ZFS Volume"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
-msgstr ""
+msgstr "Cache sedang dibangun ulang."
 
 #: templates/system/advanced_edit.html:19
 msgid "The cache could not be rebuilt"
-msgstr ""
+msgstr "Cache tidak dapat dibangun ulang"
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
-msgstr ""
+msgstr "Bangun ulang Cache LDAP/AD"
 
 #: templates/system/config.html:3
 msgid "Restore to Factory Defaults"
-msgstr ""
+msgstr "Kembalikan ke pengaturan asal"
 
 #: templates/system/config.html:5
 msgid "Restore Config"
-msgstr ""
+msgstr "Kembalikan Pengaturan"
 
 #: templates/system/config.html:9
 msgid "Save Config"
-msgstr ""
+msgstr "Simpan Pengaturan"
 
 #: templates/system/config.html:12 templates/system/config.html.py:14
 msgid "Upload Config"
-msgstr ""
+msgstr "Unggah Pengaturan"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr ""
+msgstr "Memulai ulang..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
-msgstr ""
+msgstr "Apakan anda yakin ingin mengembalikan ke pengaturan asal?"
 
 #: templates/system/config_upload.html:35
 msgid "Update"
-msgstr ""
+msgstr "Perbaharui"
 
 #: templates/system/cronjob.html:40
 msgid "No CronJobs defined"
-msgstr ""
+msgstr "Tidak ada CronJob yang didefinisikan"
 
 #: templates/system/cronjob.html:46 templates/system/cronjob.html.py:48
 msgid "Add CronJob"
-msgstr ""
+msgstr "Tambahkan CronJob"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr ""
+msgstr "Boot ulang..."
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "Email tes anda telah dikirim!"
 
 #: templates/system/email_edit.html:19
 msgid "Your test email could not be sent:"
-msgstr ""
+msgstr "Email tes anda tidak dapat dikirim:"
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr ""
+msgstr "Kirim Pesan Tes"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr ""
+msgstr "Per jam"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
-msgstr ""
+msgstr "Grafik per Jam"
 
 #: templates/system/reporting.html:18
 msgid "Daily"
-msgstr ""
+msgstr "Per hari"
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
-msgstr ""
+msgstr "Grafik Harian"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr ""
+msgstr "Per minggu"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"
-msgstr ""
+msgstr "Grafik Mingguan"
 
 #: templates/system/reporting.html:46
 msgid "Monthly"
-msgstr ""
+msgstr "Per Bulan"
 
 #: templates/system/reporting.html:47
 msgid "Monthly Graphs"
-msgstr ""
+msgstr "Grafik Bulanan"
 
 #: templates/system/reporting.html:60
 msgid "Yearly"
-msgstr ""
+msgstr "Per tahun"
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"
@@ -5210,11 +5200,11 @@ msgstr "Grafik Tahunan"
 
 #: templates/system/rsync.html:38
 msgid "No rsyncs defined"
-msgstr ""
+msgstr "Tidak ada rsync yang didefinisikan"
 
 #: templates/system/rsync.html:44 templates/system/rsync.html.py:46
 msgid "Add Rsync"
-msgstr ""
+msgstr "Tambahkan Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -5222,15 +5212,15 @@ msgstr "Umum"
 
 #: templates/system/settings.html:11
 msgid "Firmware Update"
-msgstr ""
+msgstr "Perbaharui Firmware"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
-msgstr ""
+msgstr "Aplikasikan Service Pack"
 
 #: templates/system/settings.html:15
 msgid "Config"
-msgstr ""
+msgstr "Pengaturan"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
@@ -5238,15 +5228,15 @@ msgstr "Versi OS"
 
 #: templates/system/system_info.html:12
 msgid "Platform"
-msgstr ""
+msgstr "Platform"
 
 #: templates/system/system_info.html:16
 msgid "Memory"
-msgstr ""
+msgstr "Memori"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
-msgstr ""
+msgstr "Waktu Sistem"
 
 #: templates/system/system_info.html:24
 msgid "Uptime"
@@ -5258,12 +5248,12 @@ msgstr "Beban Rata-rata"
 
 #: templates/system/system_info.html:32
 msgid "FreeNAS Build"
-msgstr ""
+msgstr "FreeNAS Build"
 
 #: templates/system/wizard.html:3
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr ""
+msgstr "Langkah %(step)s dari %(step_count)s"
 
 msgid "English"
 msgstr "Inggris"
