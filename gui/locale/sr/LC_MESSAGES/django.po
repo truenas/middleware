@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-23 10:59+0200\n"
-"Last-Translator: dejanjo <dejanjo71@gmail.com>\n"
+"PO-Revision-Date: 2011-06-24 08:39+0200\n"
+"Last-Translator: bscomputer <office@bscomputer.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
 "MIME-Version: 1.0\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: choices.py:35
 msgid "Plain"
-msgstr ""
+msgstr "Jednostavno"
 
 #: choices.py:36 system/models.py:234 templates/system/settings.html:9
 msgid "SSL"
@@ -45,15 +45,15 @@ msgstr "Automatski"
 
 #: choices.py:49
 msgid "PIO0"
-msgstr ""
+msgstr "PIO0"
 
 #: choices.py:50
 msgid "PIO1"
-msgstr ""
+msgstr "PIO1"
 
 #: choices.py:51
 msgid "PIO2"
-msgstr ""
+msgstr "PIO2"
 
 #: choices.py:52
 msgid "PIO3"
@@ -113,23 +113,25 @@ msgstr "Onemogućeno"
 
 #: choices.py:82
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "Nivo 1 - Minimalna potrošnja struje na čekanju ( smanjen broj obrtaja)"
 
 #: choices.py:83
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "Nivo 64 - Srednja potrošnja struje na čekanju"
 
 #: choices.py:84
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "Nivo 127 - Srednja potrošnja struje na čekanju"
 
 #: choices.py:85
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
 msgstr ""
+"Nivo 128 - Minimalna potrošnja struje bez stanja čekanja (bez smanjenja "
+"broja obrtaja)"
 
 #: choices.py:86
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr ""
+msgstr "Nivo 192 - Srednja potrošnja struje bez stanja čekanja"
 
 #: choices.py:87
 msgid "Level 254 - Maximum performance, maximum power usage"
@@ -241,11 +243,11 @@ msgstr "Popunjeno"
 
 #: choices.py:182
 msgid "Debug"
-msgstr ""
+msgstr "Ispravljanje grešaka"
 
 #: choices.py:186
 msgid "Default"
-msgstr ""
+msgstr "Podrazumevano"
 
 #: choices.py:187
 msgid "Time Machine"
@@ -257,15 +259,15 @@ msgstr ""
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "Mala slova u oba smera"
 
 #: choices.py:193
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "Klijent vidi mala slova, server vidi velika slova"
 
 #: choices.py:194
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "Klijent vidi velika slova, server vidi mala slova"
 
 #: choices.py:198
 msgid "File"
@@ -277,7 +279,7 @@ msgstr "Uređaj"
 
 #: choices.py:200
 msgid "ZFS Volume"
-msgstr ""
+msgstr "Particija sa ZFS sistemom datoteka"
 
 #: choices.py:204 storage/models.py:147 system/models.py:493
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
@@ -295,7 +297,7 @@ msgstr "Traka"
 
 #: choices.py:207
 msgid "Pass"
-msgstr ""
+msgstr "Prolaz"
 
 #: choices.py:211
 msgid "read-write"
@@ -308,23 +310,23 @@ msgstr "samo iščitavanje"
 #: choices.py:216 choices.py:222 services/forms.py:392 services/forms.py:394
 #: services/forms.py:741 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "Nijedan"
 
 #: choices.py:218
 msgid "CHAP"
-msgstr ""
+msgstr "CHAP"
 
 #: choices.py:219
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "Uzajamni CHAP"
 
 #: choices.py:241
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "UPS je skoro prazan"
 
 #: choices.py:242
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS napaja preko baterije"
 
 #: choices.py:245
 msgid "Preferred"
@@ -364,7 +366,7 @@ msgstr "gzip (najbrže)"
 
 #: choices.py:285
 msgid "gzip (maximum, slow)"
-msgstr ""
+msgstr "gzip (maksimalna kompresija, sporo)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -397,15 +399,15 @@ msgstr "Svakog izabranog radnog dana"
 
 #: choices.py:441
 msgid "Read-only"
-msgstr ""
+msgstr "Samo za čitanje"
 
 #: choices.py:442
 msgid "Write-only"
-msgstr ""
+msgstr "Samo za pisanje"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Čitanje i Pisanje"
 
 #: choices.py:447 choices.py:448
 #, python-format
@@ -435,6 +437,7 @@ msgstr ""
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
 msgstr ""
+"Nikada - Proveravaj uređaj bez obzira na režim napajanja u kojem se nalazi"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
@@ -450,11 +453,11 @@ msgstr ""
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Dugačko Samo-testiranje"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Kratko Samo-testiranje"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
@@ -466,11 +469,11 @@ msgstr ""
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
-msgstr ""
+msgstr "Slobodno"
 
 #: account/forms.py:146
 msgid "Selected"
-msgstr ""
+msgstr "Odabrano"
 
 #: account/forms.py:174 account/forms.py:198 account/models.py:79
 #: services/models.py:676 services/models.py:935 system/models.py:160
@@ -480,11 +483,12 @@ msgstr "Korisničko ime"
 
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr ""
+msgstr "Obavezno. 30 znakova i manje. Slova, brojevi i @/./+/-/_ isključivo."
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
 msgstr ""
+"Ova vrednost može isključivo sadržati slova, brojeve i @/./+/-/_ znakove."
 
 #: account/forms.py:201 account/forms.py:308 services/models.py:680
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
@@ -498,20 +502,20 @@ msgstr "Potvrda šifre"
 
 #: account/forms.py:203 account/forms.py:310 system/forms.py:189
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "Unesi ponovo šifru radi provere."
 
 #: account/forms.py:204 account/forms.py:346 account/models.py:105
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:89
 msgid "Shell"
-msgstr ""
+msgstr "Ljuska"
 
 #: account/forms.py:205 account/forms.py:345
 msgid "Disable logins"
-msgstr ""
+msgstr "Onemogući prijavu"
 
 #: account/forms.py:206
 msgid "Primary Group"
-msgstr ""
+msgstr "Osnovna grupa"
 
 #: account/forms.py:235
 msgid "A user with that username already exists."
@@ -520,7 +524,7 @@ msgstr "Korisnik sa tim imenom već postoji."
 #: account/forms.py:243 account/forms.py:329 account/forms.py:479
 #: system/forms.py:232
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "Šifre se ne poklapaju."
 
 #: account/forms.py:248 account/forms.py:373
 msgid "Home directory has to start with /mnt/"
@@ -561,21 +565,21 @@ msgstr "Vaša stara šifra je uneta pogrešno. Molimo unesite je ponovo."
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr ""
+msgstr "ID grupe"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "Ime grupe"
 
 #: account/models.py:47 account/models.py:155 services/models.py:1210
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:87
 msgid "Group"
-msgstr ""
+msgstr "Grupa"
 
 #: account/models.py:48 templates/account/index.html:10
 msgid "Groups"
-msgstr ""
+msgstr "Grupe"
 
 #: account/models.py:63
 #, python-format
@@ -584,11 +588,11 @@ msgstr ""
 
 #: account/models.py:73
 msgid "User ID"
-msgstr ""
+msgstr "ID Korisnika"
 
 #: account/models.py:78
 msgid "User &"
-msgstr ""
+msgstr "Korisnik &"
 
 #: account/models.py:85
 msgid "Hashed UNIX password"
@@ -600,7 +604,7 @@ msgstr ""
 
 #: account/models.py:95
 msgid "Primary Group ID"
-msgstr ""
+msgstr "ID Primarne grupe"
 
 #: account/models.py:100
 msgid "Home Directory"
@@ -623,7 +627,7 @@ msgstr "Korisnik"
 
 #: account/models.py:121 templates/account/index.html:13
 msgid "Users"
-msgstr ""
+msgstr "Korisnik"
 
 #: account/models.py:138
 #, python-format
@@ -632,7 +636,7 @@ msgstr ""
 
 #: account/nav.py:5 templates/menubar.html:43
 msgid "Account"
-msgstr ""
+msgstr "Korisnički nalog"
 
 #: account/nav.py:11 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:113
@@ -643,7 +647,7 @@ msgstr "Promeni Šifru"
 #: account/nav.py:19 templates/account/changeform.html:25
 #: templates/account/index.html:4
 msgid "Change Admin User"
-msgstr ""
+msgstr "Promeni Admin korisnika"
 
 #: account/nav.py:26 templates/account/index.html:2
 msgid "My Account"
@@ -692,7 +696,7 @@ msgstr ""
 #: freeadmin/forms.py:95
 #, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "Korisnik %s nije ispravan."
 
 #: freeadmin/forms.py:124
 #, python-format
@@ -711,7 +715,7 @@ msgstr "Dodaj %s"
 #: freeadmin/navtree.py:327
 #, python-format
 msgid "View All %s"
-msgstr ""
+msgstr "Pogledaj sve %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -743,7 +747,7 @@ msgstr "Servis nije uspešno restartovan."
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "%s uspešno obrisani."
 
 #: network/forms.py:44 network/models.py:95
 msgid "NIC"
@@ -818,11 +822,11 @@ msgstr ""
 #: network/models.py:83 network/models.py:84 network/nav.py:21
 #: templates/network/index.html:3
 msgid "Global Configuration"
-msgstr ""
+msgstr "Globalna Konfiguracija"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Odaberi tvoju mrežnu kartu"
 
 #: network/models.py:101
 msgid "Interface Name"
@@ -894,7 +898,7 @@ msgstr "Imena interfejsa moraju biti u oznaci vlanXX gde je XX broj"
 #: network/models.py:178 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr ""
+msgstr "Fizički interfejs"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
@@ -948,7 +952,7 @@ msgstr ""
 
 #: network/models.py:287
 msgid "Static Route"
-msgstr ""
+msgstr "Statička ruta"
 
 #: network/models.py:288 templates/network/index.html:9
 msgid "Static Routes"
@@ -956,7 +960,7 @@ msgstr ""
 
 #: network/nav.py:6 templates/menubar.html:13
 msgid "Network"
-msgstr ""
+msgstr "Mreža"
 
 #: network/nav.py:13 templates/network/index.html:13
 msgid "Network Summary"
@@ -2939,7 +2943,7 @@ msgstr ""
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
-msgstr ""
+msgstr "Deljenje"
 
 #: storage/forms.py:154 storage/forms.py:348 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
@@ -3297,7 +3301,7 @@ msgstr ""
 
 #: storage/nav.py:5 templates/menubar.html:18
 msgid "Storage"
-msgstr ""
+msgstr "Uređaj za skladištenje"
 
 #: storage/nav.py:24
 msgid "View All Snapshots"
@@ -3709,7 +3713,7 @@ msgstr ""
 #: system/models.py:261 system/models.py:365 system/models.py:513
 #: templates/system/cronjob.html:7 templates/system/rsync.html:7
 msgid "Day of month"
-msgstr ""
+msgstr "Dan u mesecu"
 
 #: system/models.py:262 system/models.py:366 system/models.py:514
 msgid "Values 1-31 allowed."
@@ -3735,7 +3739,7 @@ msgstr ""
 
 #: system/models.py:286 system/models.py:441
 msgid "Every minute"
-msgstr ""
+msgstr "Svakog minuta"
 
 #: system/models.py:288 system/models.py:443
 #, python-format
@@ -3904,15 +3908,15 @@ msgstr ""
 
 #: templates/menubar.html:33
 msgid "Log Out"
-msgstr ""
+msgstr "Odjavi se"
 
 #: templates/menubar.html:38
 msgid "Help"
-msgstr ""
+msgstr "Pomoć"
 
 #: templates/menubar.html:49 templates/registration/login.html:63
 msgid "Log In"
-msgstr ""
+msgstr "Prijavi se"
 
 #: templates/account/bsdgroup2user_form.html:10
 #: templates/freeadmin/generic_model_add.html:13

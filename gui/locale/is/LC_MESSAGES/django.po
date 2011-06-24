@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-06-09 01:06+0200\n"
-"Last-Translator: raymond <raymondv@gmx.de>\n"
+"PO-Revision-Date: 2011-06-23 19:00+0200\n"
+"Last-Translator: samueljon <sammi@villingaholt.nu>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: is\n"
 "MIME-Version: 1.0\n"
@@ -24,87 +24,87 @@ msgstr ""
 
 #: choices.py:36 system/models.py:234 templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:37
 msgid "TLS"
-msgstr ""
+msgstr "TLS"
 
 #: choices.py:42
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: choices.py:43
 msgid "HTTPS"
-msgstr ""
+msgstr "HTTPS"
 
 #: choices.py:48 choices.py:217
 msgid "Auto"
-msgstr ""
+msgstr "Sjálfvirkt"
 
 #: choices.py:49
 msgid "PIO0"
-msgstr ""
+msgstr "PIO0"
 
 #: choices.py:50
 msgid "PIO1"
-msgstr ""
+msgstr "PIO1"
 
 #: choices.py:51
 msgid "PIO2"
-msgstr ""
+msgstr "PIO2"
 
 #: choices.py:52
 msgid "PIO3"
-msgstr ""
+msgstr "PIO3"
 
 #: choices.py:53
 msgid "PIO4"
-msgstr ""
+msgstr "PIO4"
 
 #: choices.py:54
 msgid "WDMA0"
-msgstr ""
+msgstr "WDMA0"
 
 #: choices.py:55
 msgid "WDMA1"
-msgstr ""
+msgstr "WDMA1"
 
 #: choices.py:56
 msgid "WDMA2"
-msgstr ""
+msgstr "WDMA2"
 
 #: choices.py:57
 msgid "UDMA-16"
-msgstr ""
+msgstr "UDMA-16"
 
 #: choices.py:58
 msgid "UDMA-33"
-msgstr ""
+msgstr "UDMA-33"
 
 #: choices.py:59
 msgid "UDMA-66"
-msgstr ""
+msgstr "UDMA-66"
 
 #: choices.py:60
 msgid "UDMA-100"
-msgstr ""
+msgstr "UDMA-100"
 
 #: choices.py:61
 msgid "UDMA-133"
-msgstr ""
+msgstr "UDMA-133"
 
 #: choices.py:62
 msgid "SATA 1.5Gbit/s"
-msgstr ""
+msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:63
 msgid "SATA 3.0Gbit/s"
-msgstr ""
+msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:67
 msgid "Always On"
-msgstr ""
+msgstr "Ávallt kveikt"
 
 #: choices.py:81 choices.py:90
 msgid "Disabled"
@@ -235,16 +235,17 @@ msgid "Normal"
 msgstr ""
 
 #: choices.py:181
+#, fuzzy
 msgid "Full"
-msgstr ""
+msgstr "Fullt"
 
 #: choices.py:182
 msgid "Debug"
-msgstr ""
+msgstr "Aflúsa"
 
 #: choices.py:186
 msgid "Default"
-msgstr ""
+msgstr "Sjálfgefið"
 
 #: choices.py:187
 msgid "Time Machine"
@@ -282,15 +283,15 @@ msgstr ""
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
 #: templates/storage/wizard.html:91
 msgid "Disk"
-msgstr ""
+msgstr "Diskur"
 
 #: choices.py:205
 msgid "DVD"
-msgstr ""
+msgstr "DVD"
 
 #: choices.py:206
 msgid "Tape"
-msgstr ""
+msgstr "Snælda"
 
 #: choices.py:207
 msgid "Pass"
@@ -346,8 +347,9 @@ msgid "On"
 msgstr ""
 
 #: choices.py:276 choices.py:281
+#, fuzzy
 msgid "Off"
-msgstr ""
+msgstr "Af"
 
 #: choices.py:282
 msgid "lzjb (recommended)"
@@ -383,24 +385,24 @@ msgstr ""
 
 #: choices.py:430
 msgid "Year(s)"
-msgstr ""
+msgstr "Ár"
 
 #: choices.py:434 system/models.py:302 system/models.py:321
 #: system/models.py:457 system/models.py:476
 msgid "Everyday"
-msgstr ""
+msgstr "Hverjum degi"
 
 #: choices.py:435
 msgid "Every selected weekday"
-msgstr ""
+msgstr "Hverjum völdum vikudegi"
 
 #: choices.py:441
 msgid "Read-only"
-msgstr ""
+msgstr "Ritvarið"
 
 #: choices.py:442
 msgid "Write-only"
-msgstr ""
+msgstr "Lesvarið"
 
 #: choices.py:443
 msgid "Read and Write"
@@ -465,17 +467,17 @@ msgstr ""
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
-msgstr ""
+msgstr "Til staðar"
 
 #: account/forms.py:146
 msgid "Selected"
-msgstr ""
+msgstr "Valið"
 
 #: account/forms.py:174 account/forms.py:198 account/models.py:79
 #: services/models.py:676 services/models.py:935 system/models.py:160
 #: templates/account/bsdusers.html:5 templates/account/bsdusers.html.py:86
 msgid "Username"
-msgstr ""
+msgstr "Notandanafn"
 
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
@@ -489,15 +491,15 @@ msgstr ""
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
 #: templates/account/bsdusers.html.py:90
 msgid "Password"
-msgstr ""
+msgstr "Lykilorð"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:188
 msgid "Password confirmation"
-msgstr ""
+msgstr "Staðfesta lykilorð"
 
 #: account/forms.py:203 account/forms.py:310 system/forms.py:189
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "Sláðu inn sama lykilorð og fyrir ofan til staðfestingar."
 
 #: account/forms.py:204 account/forms.py:346 account/models.py:105
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:89
@@ -574,7 +576,7 @@ msgstr ""
 
 #: account/models.py:48 templates/account/index.html:10
 msgid "Groups"
-msgstr ""
+msgstr "Hópar"
 
 #: account/models.py:63
 #, python-format
@@ -583,11 +585,11 @@ msgstr ""
 
 #: account/models.py:73
 msgid "User ID"
-msgstr ""
+msgstr "Notandaauðkenni"
 
 #: account/models.py:78
 msgid "User &"
-msgstr ""
+msgstr "Notandi &"
 
 #: account/models.py:85
 msgid "Hashed UNIX password"
@@ -607,27 +609,27 @@ msgstr ""
 
 #: account/models.py:109
 msgid "Full Name"
-msgstr ""
+msgstr "Fullt nafn"
 
 #: account/models.py:115 templates/account/bsdusers.html:91
 msgid "E-mail"
-msgstr ""
+msgstr "Netfang"
 
 #: account/models.py:120 account/models.py:159 services/models.py:521
 #: services/models.py:1203 system/models.py:242 system/models.py:380
 #: templates/services/iscsi_auth.html:6 templates/system/cronjob.html:10
 #: templates/system/rsync.html:10
 msgid "User"
-msgstr ""
+msgstr "Notandi"
 
 #: account/models.py:121 templates/account/index.html:13
 msgid "Users"
-msgstr ""
+msgstr "Notendur"
 
 #: account/models.py:138
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Notandi %s er innbyggður og því ekki hægt að eyða!"
 
 #: account/nav.py:5 templates/menubar.html:43
 msgid "Account"
@@ -637,24 +639,24 @@ msgstr ""
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:113
 #: templates/account/bsdusers.html:115 templates/account/index.html:7
 msgid "Change Password"
-msgstr ""
+msgstr "Breyta lykilorði"
 
 #: account/nav.py:19 templates/account/changeform.html:25
 #: templates/account/index.html:4
 msgid "Change Admin User"
-msgstr ""
+msgstr "Breyta kerfisnotanda"
 
 #: account/nav.py:26 templates/account/index.html:2
 msgid "My Account"
-msgstr ""
+msgstr "Minn aðgangur"
 
 #: account/nav.py:36
 msgid "View All Users"
-msgstr ""
+msgstr "Skoða alla notendur"
 
 #: account/nav.py:43
 msgid "View All Groups"
-msgstr ""
+msgstr "Skoða alla hópa"
 
 #: account/views.py:78
 msgid "Password successfully updated."
@@ -666,11 +668,11 @@ msgstr ""
 
 #: account/views.py:102
 msgid "Users successfully updated."
-msgstr ""
+msgstr "Notandi uppfærður."
 
 #: account/views.py:115
 msgid "Groups successfully updated."
-msgstr ""
+msgstr "Hópar uppfærðir"
 
 #: contrib/ext_formwizard.py:170
 msgid ""
@@ -708,11 +710,11 @@ msgstr ""
 
 #: freeadmin/navtree.py:353 templates/freeadmin/index.html:53
 msgid "Reboot"
-msgstr ""
+msgstr "Endurræsa"
 
 #: freeadmin/navtree.py:360 templates/freeadmin/index.html:65
 msgid "Shutdown"
-msgstr ""
+msgstr "Slökkva"
 
 #: freeadmin/views.py:225
 #, python-format
@@ -785,23 +787,23 @@ msgstr ""
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "Sjálfgefin IPv4 gátt"
 
 #: network/models.py:59
 msgid "IPv6 Default Gateway"
-msgstr ""
+msgstr "Sjálfgefin IPv6 gátt"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "Nafnaþjónn 1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "Nafnaþjónn 2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "Nafnaþjónn 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:21
 #: templates/network/index.html:3
@@ -832,15 +834,15 @@ msgstr ""
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "IPv4 vistfang"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr ""
+msgstr "IPv4 netmöskvi"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "Sjálfvirkt stilla IPv6"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
@@ -848,16 +850,16 @@ msgstr ""
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr ""
+msgstr "IPv6 vistfang"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr ""
+msgstr "IPv6 netmöskvi"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "Valmöguleikar"
 
 #: network/models.py:157 network/models.py:216
 #: templates/network/interface.html:5
@@ -890,11 +892,11 @@ msgstr ""
 #: services/models.py:766 storage/models.py:95
 #: templates/network/staticroute.html:7 templates/network/vlan.html:8
 msgid "Description"
-msgstr ""
+msgstr "Lýsing"
 
 #: network/models.py:199 templates/network/index.html:11
 msgid "VLAN"
-msgstr ""
+msgstr "VLAN"
 
 #: network/models.py:200
 msgid "VLANs"
@@ -978,11 +980,11 @@ msgstr ""
 
 #: services/forms.py:103
 msgid "File Permission"
-msgstr ""
+msgstr "Skráarréttindi"
 
 #: services/forms.py:104
 msgid "Directory Permission"
-msgstr ""
+msgstr "Möppuréttindi"
 
 #: services/forms.py:129
 msgid "This value must be between 0 and 65535, inclusive."
@@ -1010,19 +1012,19 @@ msgstr ""
 
 #: services/forms.py:191
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "Ekki tókst að ræsa ftp þjónustu. "
 
 #: services/forms.py:200
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "Ekki tókst að endurhlaða tftp þjónustu."
 
 #: services/forms.py:207
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "Ekki tókst að endurhlaða SSH þjónustu."
 
 #: services/forms.py:216 services/forms.py:241
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Ekki tókst að endurhlaða Rsync þjónustu."
 
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
@@ -1034,7 +1036,7 @@ msgstr ""
 
 #: services/forms.py:259
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "Ekki tókst að endurhlaða SNMP þjónustu."
 
 #: services/forms.py:273
 msgid "The activedirectory service failed to reload."
@@ -1042,7 +1044,7 @@ msgstr ""
 
 #: services/forms.py:284
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "Ekki tókst að endurhlaða ldap þjónustu."
 
 #: services/forms.py:290 services/models.py:526
 #: templates/services/iscsi_auth.html:7
@@ -1089,7 +1091,7 @@ msgstr ""
 #: services/forms.py:525 services/forms.py:572 services/forms.py:675
 #: services/forms.py:697 services/forms.py:718 services/forms.py:763
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "Ekki tókst að endurhlaða iSCSI þjónustu."
 
 #: services/forms.py:373
 msgid "LUN already exists in the same target."
@@ -1120,8 +1122,9 @@ msgid ""
 msgstr ""
 
 #: services/forms.py:504 services/forms.py:534
+#, fuzzy
 msgid "You need to specify a filepath, not a directory."
-msgstr ""
+msgstr "Þú verður að tilgreina skráarslóð en ekki möppu."
 
 #: services/forms.py:508 services/forms.py:538
 msgid "You need to specify a file inside your volume/dataset."
@@ -1163,12 +1166,12 @@ msgstr ""
 #, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Eftirfarandi netfang er ógilt %(email)s"
+msgstr[1] "Eftirfarandi netföng eru ógild: %(email)s"
 
 #: services/models.py:40
 msgid "Service"
-msgstr ""
+msgstr "Þjónusta"
 
 #: services/models.py:41
 msgid "Name of Service, should be auto-generated at build time"
@@ -1176,16 +1179,16 @@ msgstr ""
 
 #: services/models.py:44
 msgid "Enable Service"
-msgstr ""
+msgstr "Virkja þjónustu"
 
 #: services/models.py:47 services/models.py:48 services/nav.py:5
 #: templates/menubar.html:28 templates/services/index.html:3
 msgid "Services"
-msgstr ""
+msgstr "Þjónustur"
 
 #: services/models.py:60
 msgid "Authentication Model"
-msgstr ""
+msgstr "Auðkenningarmódel"
 
 #: services/models.py:61
 msgid ""
@@ -1245,7 +1248,7 @@ msgstr ""
 
 #: services/models.py:108
 msgid "Allow guest access"
-msgstr ""
+msgstr "Leyfa gestaaðgang"
 
 #: services/models.py:110
 msgid "Only allow guest access"
@@ -1300,31 +1303,34 @@ msgstr ""
 
 #: services/models.py:140
 msgid "Enable home directories"
-msgstr ""
+msgstr "Virkja heimamöppur"
 
 #: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
-msgstr ""
+msgstr "Þessi kostur virkjar\\afvirkjar heimamöppur fyrir samba notanda."
 
 #: services/models.py:144
+#, fuzzy
 msgid "Enable home directories browsing"
-msgstr ""
+msgstr "Virkja vöfrun á heimamöppum"
 
 #: services/models.py:145
+#, fuzzy
 msgid "This enables\\disables home directories browsing for samba user."
 msgstr ""
+"Þessi kostur virkjar\\afvirkjar vöfrun á heimamöppum fyrir samba notanda."
 
 #: services/models.py:149
 msgid "Home directories"
-msgstr ""
+msgstr "Heimamöppur"
 
 #: services/models.py:153
 msgid "Enable AIO"
-msgstr ""
+msgstr "Virkja AIO"
 
 #: services/models.py:154
 msgid "This enables\\disables AIO support."
-msgstr ""
+msgstr "Þessi kostur virkjar\\afvirkjar AIO stuðning."
 
 #: services/models.py:158
 msgid "Minimal AIO read size"
@@ -1388,17 +1394,20 @@ msgstr ""
 #: services/models.py:204 services/models.py:205
 #: templates/services/index.html:7
 msgid "AFP"
-msgstr ""
+msgstr "AFP"
 
 #: services/models.py:214
 msgid "Number of servers"
-msgstr ""
+msgstr "Fjöldi þjóna"
 
 #: services/models.py:215
+#, fuzzy
 msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
 msgstr ""
+"Tilgreinir hve marga netþjóna skal stofna. Velja skal tölu sem er talin "
+"fullnægjandi til að þjóna hámarks samtímanotkun. Oftast í kringum 4-6."
 
 #: services/models.py:219
 msgid "Asynchronous mode"
@@ -1413,7 +1422,7 @@ msgstr ""
 #: services/models.py:225 services/models.py:226
 #: templates/services/index.html:75
 msgid "NFS"
-msgstr ""
+msgstr "NFS"
 
 #: services/models.py:235
 msgid "Base Name"
@@ -1455,11 +1464,11 @@ msgstr ""
 
 #: services/models.py:271
 msgid "Max. connections"
-msgstr ""
+msgstr "Hámarksfj. tenginga"
 
 #: services/models.py:272
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "Hámarksfjöldi tenginga fyrir hverja setu (sjálfgildi er 8)"
 
 #: services/models.py:277
 msgid "Max. pre-send R2T"
@@ -1696,7 +1705,7 @@ msgstr ""
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7
 msgid "Type"
-msgstr ""
+msgstr "Gerð"
 
 #: services/models.py:578
 msgid "Logical Unit Type mapped to LUN."
@@ -1801,31 +1810,35 @@ msgstr ""
 
 #: services/models.py:710
 msgid "Location"
-msgstr ""
+msgstr "Staðsetning"
 
 #: services/models.py:712
 msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
+"Upplýsingar um staðsetningu td. fýsísk staðsetning kerfis: 'Hæð xx í "
+"herbergi yy'."
 
 #: services/models.py:716
 msgid "Contact"
-msgstr ""
+msgstr "Tengiliður"
 
 #: services/models.py:718
 msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
+"Tengiliðsupplýsingar, td. nafn eða netfang persónu sem ber ábyrgð á kerfinu: "
+"'kerfisstjóri@netfang.lén'."
 
 #: services/models.py:722
 msgid "Community"
-msgstr ""
+msgstr "Samfélag"
 
 #: services/models.py:723
 msgid "In most cases, 'public' is used here."
-msgstr ""
+msgstr "Oftast er samfélagið 'public' notað.  "
 
 #: services/models.py:726
 msgid "Send SNMP Traps"
@@ -1834,7 +1847,7 @@ msgstr ""
 #: services/models.py:734 services/models.py:735
 #: templates/services/index.html:97
 msgid "SNMP"
-msgstr ""
+msgstr "SNMP"
 
 #: services/models.py:744 storage/models.py:91
 msgid "Identifier"
@@ -2068,21 +2081,24 @@ msgstr ""
 #: services/models.py:912 services/models.py:913
 #: templates/services/index.html:53
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:922
 msgid "Directory"
-msgstr ""
+msgstr "Mappa"
 
 #: services/models.py:923
+#, fuzzy
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
+"Mappa sem inniheldur þær skrár sem þú vilt birta. Fjartengd vél þarf ekki að "
+"slá inn nafn möppu sem hluta af skráarflutning. "
 
 #: services/models.py:926
 msgid "Allow New Files"
-msgstr ""
+msgstr "Leyfa nýjar skrár"
 
 #: services/models.py:930
 msgid ""
@@ -2115,11 +2131,11 @@ msgstr ""
 #: services/models.py:951 services/models.py:952
 #: templates/services/index.html:130
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:961 services/models.py:1157
 msgid "TCP Port"
-msgstr ""
+msgstr "TCP Port"
 
 #: services/models.py:962
 msgid "Alternate TCP port. Default is 22"
@@ -2172,7 +2188,7 @@ msgstr ""
 
 #: services/models.py:1035
 msgid "AD or PDC name."
-msgstr ""
+msgstr "Nafn á AD eða PDC."
 
 #: services/models.py:1039
 msgid "Domain Name (DNS/Realm-Name)"
@@ -2305,11 +2321,12 @@ msgstr ""
 
 #: services/models.py:1130
 msgid "Turn on/off TLS"
-msgstr ""
+msgstr "Virkja/afvirkja TLS"
 
 #: services/models.py:1132
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
 msgstr ""
+"Þessi kostur tilgreinir hvort nota eigi SSL/TLS til dæmis on/off/start_tls"
 
 #: services/models.py:1135
 msgid "Self signed certificate"
@@ -2330,11 +2347,12 @@ msgstr ""
 #: services/models.py:1147 services/models.py:1148
 #: templates/services/index.html:64
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/models.py:1158
+#, fuzzy
 msgid "Alternate TCP port. Default is 873"
-msgstr ""
+msgstr "Annað TCP port. Sjálfgefið er 873"
 
 #: services/models.py:1163
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
@@ -2342,7 +2360,7 @@ msgstr ""
 
 #: services/models.py:1167 services/models.py:1168
 msgid "Rsyncd"
-msgstr ""
+msgstr "Rsyncd"
 
 #: services/models.py:1178
 msgid "Module name"
@@ -2350,7 +2368,7 @@ msgstr ""
 
 #: services/models.py:1186
 msgid "Path to be shared"
-msgstr ""
+msgstr "Slóð sem á að deila"
 
 #: services/models.py:1192
 msgid "Access Mode"
@@ -2468,11 +2486,11 @@ msgstr ""
 #: services/models.py:1274 services/models.py:1275
 #: templates/services/index.html:108
 msgid "S.M.A.R.T."
-msgstr ""
+msgstr "S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
-msgstr ""
+msgstr "Stjórna þjónustum"
 
 #: services/nav.py:50
 msgid "Add Device Extent"
@@ -2503,19 +2521,19 @@ msgstr ""
 
 #: services/nav.py:136
 msgid "ISCSI"
-msgstr ""
+msgstr "ISCSI"
 
 #: services/nav.py:147 system/models.py:430 templates/services/index.html:86
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/views.py:222
 msgid "The service could not be stopped."
-msgstr ""
+msgstr "Ekki tókst að stöðva þjónustuna."
 
 #: services/views.py:229
 msgid "The service could not be started."
-msgstr ""
+msgstr "Ekki tókst að ræsa þjónustuna."
 
 #: sharing/forms.py:82
 msgid "The field is a not a valid IP address or network"
@@ -2544,7 +2562,7 @@ msgstr ""
 #: templates/services/rsyncmod.html:5 templates/sharing/apple.html:13
 #: templates/sharing/windows.html:13
 msgid "Name"
-msgstr ""
+msgstr "Nafn"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
@@ -2564,11 +2582,11 @@ msgstr ""
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr ""
+msgstr "Birta faldar skrár"
 
 #: sharing/models.py:64
 msgid "Guest Account"
-msgstr ""
+msgstr "Gestaaðgangur"
 
 #: sharing/models.py:65
 msgid ""
@@ -2851,7 +2869,7 @@ msgstr ""
 
 #: sharing/models.py:235
 msgid "All Directories"
-msgstr ""
+msgstr "Allar möppur"
 
 #: sharing/models.py:236
 msgid ""
@@ -2942,7 +2960,7 @@ msgstr ""
 #: storage/forms.py:238 system/forms.py:217 system/forms.py:223
 #: system/forms.py:228
 msgid "This field is required"
-msgstr ""
+msgstr "Þessi reitur krefst útfyllingar"
 
 #: storage/forms.py:243 storage/forms.py:390 storage/forms.py:489
 msgid "You already have a volume with same name"
@@ -2950,7 +2968,7 @@ msgstr ""
 
 #: storage/forms.py:249
 msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr ""
+msgstr "\"log\" er frátekið orð og því má ekki nota það"
 
 #: storage/forms.py:254
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
@@ -2987,16 +3005,16 @@ msgstr ""
 
 #: storage/forms.py:636 storage/forms.py:688 storage/forms.py:745
 msgid "Enable atime"
-msgstr ""
+msgstr "Virkja atime"
 
 #: storage/forms.py:637 storage/forms.py:689 storage/forms.py:746
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "Kvóti fyrir þetta gagnasett"
 
 #: storage/forms.py:637 storage/forms.py:638 storage/forms.py:689
 #: storage/forms.py:690 storage/forms.py:746 storage/forms.py:784
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0=Ótakmarkað; dæmi: 1g"
 
 #: storage/forms.py:638 storage/forms.py:690
 msgid "Quota for this dataset and all children"
@@ -3004,12 +3022,12 @@ msgstr ""
 
 #: storage/forms.py:639 storage/forms.py:691 storage/forms.py:747
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "Frátekið svæði fyrir þetta gagnasett"
 
 #: storage/forms.py:639 storage/forms.py:640 storage/forms.py:691
 #: storage/forms.py:692 storage/forms.py:747
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0=Ekkert; dæmi: 1g"
 
 #: storage/forms.py:640 storage/forms.py:692
 msgid "Reserved space for this dataset and all children"
