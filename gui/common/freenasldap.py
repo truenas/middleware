@@ -98,51 +98,71 @@ def ActiveDirectoryEnabled():
 
 class FreeNAS_LDAP_UserCache(FreeNAS_BaseCache):
     def __init__(self, cachedir = FREENAS_LDAP_USERCACHE):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_UserCache.__init__: enter")
         FreeNAS_BaseCache.__init__(self, cachedir)
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_UserCache.__init__: leave")
 
 
 class FreeNAS_LDAP_GroupCache(FreeNAS_BaseCache):
     def __init__(self, cachedir = FREENAS_LDAP_GROUPCACHE):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_GroupCache.__init__: enter")
         FreeNAS_BaseCache.__init__(self, cachedir)
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_GroupCache.__init__: leave")
 
 
 class FreeNAS_LDAP_LocalUserCache(FreeNAS_BaseCache):
     def __init__(self, cachedir = FREENAS_LDAP_LOCAL_USERCACHE):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_LocalUserCache.__init__: enter")
         FreeNAS_BaseCache.__init__(self, cachedir)
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_LocalUserCache.__init__: leave")
 
 
 class FreeNAS_LDAP_LocalGroupCache(FreeNAS_BaseCache):
     def __init__(self, cachedir = FREENAS_LDAP_LOCAL_GROUPCACHE):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_LocalGroupCache.__init__: enter")
         FreeNAS_BaseCache.__init__(self, cachedir)
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_LocalGroupCache.__init__: leave")
 
 
 class FreeNAS_ActiveDirectory_UserCache(FreeNAS_BaseCache):
     def __init__(self, cachedir = FREENAS_AD_USERCACHE):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_UserCache.__init__: enter")
         FreeNAS_BaseCache.__init__(self, cachedir)
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_UserCache.__init__: leave")
 
 
 class FreeNAS_ActiveDirectory_GroupCache(FreeNAS_BaseCache):
     def __init__(self, cachedir = FREENAS_AD_GROUPCACHE):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_GroupCache.__init__: enter")
         FreeNAS_BaseCache.__init__(self, cachedir)
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_GroupCache.__init__: leave")
 
 
 class FreeNAS_ActiveDirectory_LocalUserCache(FreeNAS_BaseCache):
     def __init__(self, cachedir = FREENAS_AD_LOCAL_USERCACHE):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_LocalUserCache.__init__: enter")
         FreeNAS_BaseCache.__init__(self, cachedir)
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_LocalUserCache.__init__: leave")
 
 
 class FreeNAS_ActiveDirectory_LocalGroupCache(FreeNAS_BaseCache):
     def __init__(self, cachedir = FREENAS_AD_LOCAL_GROUPCACHE):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_LocalGroupCache.__init__: enter")
         FreeNAS_BaseCache.__init__(self, cachedir)
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_LocalGroupCache.__init__: leave")
 
 
 class FreeNAS_LDAP_QueryCache(FreeNAS_BaseCache):
     def __init__(self, cachedir = FREENAS_LDAP_QUERYCACHE):
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_QueryCache.__init__: enter")
         FreeNAS_BaseCache.__init__(self, cachedir)
+        syslog(LOG_DEBUG, "FreeNAS_LDAP_QueryCache.__init__: leave")
 
 
 class FreeNAS_Directory_UserCache(FreeNAS_BaseCache):
     def __new__(cls):
+        syslog(LOG_DEBUG, "FreeNAS_Directory_UserCache.__new__: enter")
+
         obj = None
         if LDAPEnabled():
             obj = FreeNAS_LDAP_UserCache()
@@ -150,11 +170,14 @@ class FreeNAS_Directory_UserCache(FreeNAS_BaseCache):
         elif ActiveDirectoryEnabled():
             obj = FreeNAS_ActiveDirectory_UserCache()
 
+        syslog(LOG_DEBUG, "FreeNAS_Directory_UserCache.__new__: leave")
         return obj
 
 
 class FreeNAS_Directory_GroupCache(FreeNAS_BaseCache):
     def __new__(cls):
+        syslog(LOG_DEBUG, "FreeNAS_Directory_GroupCache.__new__: enter")
+
         obj = None
         if LDAPEnabled():
             obj = FreeNAS_LDAP_GroupCache()
@@ -162,11 +185,14 @@ class FreeNAS_Directory_GroupCache(FreeNAS_BaseCache):
         elif ActiveDirectoryEnabled():
             obj = FreeNAS_ActiveDirectory_GroupCache()
 
+        syslog(LOG_DEBUG, "FreeNAS_Directory_GroupCache.__new__: leave")
         return obj
 
 
 class FreeNAS_Directory_LocalUserCache(FreeNAS_BaseCache):
     def __new__(cls):
+        syslog(LOG_DEBUG, "FreeNAS_Directory_LocalUserCache.__new__: enter")
+
         obj = None
         if LDAPEnabled():
             obj = FreeNAS_LDAP_LocalUserCache()
@@ -174,11 +200,14 @@ class FreeNAS_Directory_LocalUserCache(FreeNAS_BaseCache):
         elif ActiveDirectoryEnabled():
             obj = FreeNAS_ActiveDirectory_LocalUserCache()
 
+        syslog(LOG_DEBUG, "FreeNAS_Directory_LocalUserCache.__new__: leave")
         return obj
 
 
 class FreeNAS_Directory_LocalGroupCache(FreeNAS_BaseCache):
     def __new__(cls):
+        syslog(LOG_DEBUG, "FreeNAS_Directory_LocalGroupCache.__new__: enter")
+
         obj = None
         if LDAPEnabled():
             obj = FreeNAS_LDAP_LocalGroupCache()
@@ -186,11 +215,14 @@ class FreeNAS_Directory_LocalGroupCache(FreeNAS_BaseCache):
         elif ActiveDirectoryEnabled():
             obj = FreeNAS_ActiveDirectory_LocalGroupCache()
 
+        syslog(LOG_DEBUG, "FreeNAS_Directory_LocalGroupCache.__new__: leave")
         return obj
 
 
 class FreeNAS_UserCache(FreeNAS_BaseCache):
     def __new__(cls):
+        syslog(LOG_DEBUG, "FreeNAS_UserCache.__new__: enter")
+
         obj = None
         if LDAPEnabled() or ActiveDirectoryEnabled():
             obj = FreeNAS_Directory_LocalUserCache()
@@ -198,11 +230,14 @@ class FreeNAS_UserCache(FreeNAS_BaseCache):
         else:
             obj = FreeNAS_BaseCache()
 
+        syslog(LOG_DEBUG, "FreeNAS_UserCache.__new__: leave")
         return obj
 
 
 class FreeNAS_GroupCache(FreeNAS_BaseCache):
     def __new__(cls):
+        syslog(LOG_DEBUG, "FreeNAS_GroupCache.__new__: enter")
+
         obj = None
         if LDAPEnabled() or ActiveDirectoryEnabled():
             obj = FreeNAS_Directory_LocalGroupCache()
@@ -210,6 +245,7 @@ class FreeNAS_GroupCache(FreeNAS_BaseCache):
         else:
             obj = FreeNAS_BaseCache()
 
+        syslog(LOG_DEBUG, "FreeNAS_GroupCache.__new__: leave")
         return obj
 
 
@@ -713,6 +749,7 @@ class FreeNAS_LDAP_Users:
 
         f.basedn = l.ldap_groupsuffix + "," + l.ldap_basedn;
         f.attributes = ['cn']
+        f.pagesize = FREENAS_LDAP_PAGESIZE
 
         write_cache = False
         if not self.__dgcache.empty():
@@ -769,6 +806,7 @@ class FreeNAS_LDAP_Users:
 
         f.basedn = l.ldap_usersuffix + "," + l.ldap_basedn;
         f.attributes = ['uid']
+        f.pagesize = FREENAS_LDAP_PAGESIZE
 
         write_cache = False 
         if not self.__ducache.empty():
