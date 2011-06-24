@@ -45,7 +45,18 @@ import grp
 import pwd
 import signal
 import time
+import sys
 from subprocess import Popen, PIPE
+
+WWW_PATH = "/usr/local/www"
+FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
+
+sys.path.append(WWW_PATH)
+sys.path.append(FREENAS_PATH)
+
+os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
+
+from django.db import models
 
 class notifier:
     from os import system as ___system
@@ -285,6 +296,7 @@ class notifier:
         self.__system("/usr/sbin/service samba quietstart")
 
     def _started_ldap(self):
+        ret = False
         from freenasUI.common.freenasldap import FreeNAS_LDAP
         c = self.__open_db()
         c.execute("SELECT srv_enable FROM services_services WHERE srv_service='ldap' ORDER BY -id LIMIT 1")
@@ -293,11 +305,14 @@ class notifier:
             c.execute("SELECT ldap_hostname,ldap_rootbasedn,ldap_rootbindpw,ldap_basedn,ldap_ssl FROM services_ldap ORDER BY -id LIMIT 1")
             host, rootbasedn, pw, basedn, ssl = c.fetchone()
             f = FreeNAS_LDAP(host, rootbasedn, pw, basedn, ssl)
+            f.open()
             if f.isOpen():
-                return True
+                ret = True
             else:
-                return False
-        return False
+                ret = False
+            f.close()
+
+        return ret
 
     def _stop_ldap(self):
         self.__system("/usr/sbin/service ix-ldap quietstart")
@@ -313,6 +328,7 @@ class notifier:
         self.__system("/usr/sbin/service samba quietstart")
 
     def _started_activedirectory(self):
+        ret = False
         from freenasUI.common.freenasldap import FreeNAS_LDAP
         c = self.__open_db()
         c.execute("SELECT srv_enable FROM services_services WHERE srv_service='activedirectory' ORDER BY -id LIMIT 1")
@@ -325,10 +341,12 @@ class notifier:
             f.basedn = f.get_active_directory_baseDN()
             f.open()
             if f.isOpen():
-                return True
+                ret = True
             else:
-                return False
-        return False
+                ret = False
+            f.close()
+
+        return ret
 
     def _start_activedirectory(self):
         self.__system("/usr/sbin/service ix-kerberos quietstart")
