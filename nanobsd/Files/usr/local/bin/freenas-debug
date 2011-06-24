@@ -32,6 +32,26 @@
 
 : ${FREENAS_DEBUG_FILE:="/var/tmp/freenas-debug.txt"}
 
+syslog_debug_on()
+{
+	cp /etc/syslog.conf /etc/syslog.conf.bak
+	sed -E 's|^#\*.=debug|\*.=debug|' /etc/syslog.conf > /tmp/syslog.conf
+	if [ -f /tmp/syslog.conf ]
+	then
+		mv /tmp/syslog.conf /etc/syslog.conf
+		/etc/rc.d/syslogd onerestart >/dev/null 2>&1
+	fi
+}
+
+syslog_debug_off()
+{
+	if [ -f /etc/syslog.conf.bak ]
+	then
+		mv /etc/syslog.conf.bak /etc/syslog.conf
+		/etc/rc.d/syslogd onerestart >/dev/null 2>&1
+	fi
+}
+
 section_header()
 {
 	local name="${1}"
@@ -85,6 +105,11 @@ debug_active_directory()
 	local onoff
 	local enabled="DISABLED"
 
+
+	#
+	#	Turn on debug.log in syslog
+	#
+	syslog_debug_on
 
 	#
 	#	First, check if the Active Directory service is enabled.
@@ -240,11 +265,28 @@ __EOF__
 	section_header "Groups"
 	getent group
 	section_footer
+
+	#
+	#	Include LDAP debugging
+	#
+	section_header "/var/log/debug.log"
+	cat /var/log/debug.log
+	section_footer
+
+	#
+	#	Turn off debug.log in syslog
+	#
+	syslog_debug_off
 }
 
 debug_ldap()
 {
 	local onoff
+
+	#
+	#	Turn on debug.log in syslog
+	#
+	syslog_debug_on
 
 	#
 	#	First, check if the LDAP service is enabled.
@@ -384,6 +426,18 @@ __EOF__
 	section_header "Groups"
 	getent group
 	section_footer
+
+	#
+	#	Include LDAP debugging
+	#
+	section_header "/var/log/debug.log"
+	cat /var/log/debug.log
+	section_footer
+
+	#
+	#	Turn off debug.log in syslog
+	#
+	syslog_debug_off
 }
 
 debug_ssl()
