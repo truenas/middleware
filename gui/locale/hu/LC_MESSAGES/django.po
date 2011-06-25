@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-22 02:00+0200\n"
+"PO-Revision-Date: 2011-06-24 21:21+0200\n"
 "Last-Translator: Peter <petyuska@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hu\n"
@@ -148,81 +148,83 @@ msgstr "Közepes"
 msgid "Maximum"
 msgstr "Maximális"
 
+# a magyar nyelvtan szabályai szerint a hónapneveket kis kezdőbetűvel írjuk.
 #: choices.py:127 templates/storage/tasks.html:85
 msgid "January"
-msgstr "Január"
+msgstr "január"
 
 #: choices.py:128 templates/storage/tasks.html:88
 msgid "February"
-msgstr "Február"
+msgstr "február"
 
 #: choices.py:129 templates/storage/tasks.html:91
 msgid "March"
-msgstr "Március"
+msgstr "március"
 
 #: choices.py:130 templates/storage/tasks.html:94
 msgid "April"
-msgstr "Április"
+msgstr "április"
 
 #: choices.py:131 templates/storage/tasks.html:97
 msgid "May"
-msgstr "Május"
+msgstr "május"
 
 #: choices.py:132 templates/storage/tasks.html:100
 msgid "June"
-msgstr "Június"
+msgstr "június"
 
 #: choices.py:133 templates/storage/tasks.html:103
 msgid "July"
-msgstr "Július"
+msgstr "július"
 
 #: choices.py:134 templates/storage/tasks.html:106
 msgid "August"
-msgstr "Augusztus"
+msgstr "augusztus"
 
 #: choices.py:135 templates/storage/tasks.html:109
 msgid "September"
-msgstr "Szeptember"
+msgstr "szeptember"
 
 #: choices.py:136 templates/storage/tasks.html:112
 msgid "October"
-msgstr "Október"
+msgstr "október"
 
 #: choices.py:137 templates/storage/tasks.html:115
 msgid "November"
-msgstr "November"
+msgstr "november"
 
 #: choices.py:138 templates/storage/tasks.html:118
 msgid "December"
-msgstr "December"
+msgstr "december"
 
+# a hónapokhoz hasonlóan a napok neveit sem írjuk nagy kezdőbetűvel
 #: choices.py:141 templates/storage/tasks.html:56
 msgid "Monday"
-msgstr "Hétfő"
+msgstr "hétfő"
 
 #: choices.py:142 templates/storage/tasks.html:59
 msgid "Tuesday"
-msgstr "Kedd"
+msgstr "kedd"
 
 #: choices.py:143 templates/storage/tasks.html:62
 msgid "Wednesday"
-msgstr "Szerda"
+msgstr "szerda"
 
 #: choices.py:144 templates/storage/tasks.html:65
 msgid "Thursday"
-msgstr "Csütörtök"
+msgstr "csütörtök"
 
 #: choices.py:145 templates/storage/tasks.html:68
 msgid "Friday"
-msgstr "Péntek"
+msgstr "péntek"
 
 #: choices.py:146 templates/storage/tasks.html:71
 msgid "Saturday"
-msgstr "Szombat"
+msgstr "szombat"
 
 #: choices.py:147 templates/storage/tasks.html:74
 msgid "Sunday"
-msgstr "Vasárnap"
+msgstr "vasárnap"
 
 #: choices.py:158
 msgid "Anonymous"
@@ -476,6 +478,7 @@ msgstr "Elérhető"
 msgid "Selected"
 msgstr "Kiválasztva"
 
+# megnéztem, egy szó ;-)
 #: account/forms.py:174 account/forms.py:198 account/models.py:79
 #: services/models.py:676 services/models.py:935 system/models.py:160
 #: templates/account/bsdusers.html:5 templates/account/bsdusers.html.py:86
