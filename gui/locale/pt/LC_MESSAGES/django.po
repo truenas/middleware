@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-21 15:53+0200\n"
+"PO-Revision-Date: 2011-06-25 14:01+0200\n"
 "Last-Translator: iMiguel <miguel.rosa17@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
@@ -1003,19 +1003,19 @@ msgstr "Permissões do Directório"
 
 #: services/forms.py:129
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr "Este valor tem que ser entre 0 e 65535, inclusivé."
+msgstr "Este valor tem que ser entre 0 e 65535, inclusive."
 
 #: services/forms.py:135 services/forms.py:153
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr "Este valor tem que ser entre 0 e 10000, inclusivé."
+msgstr "Este valor tem que ser entre 0 e 10000, inclusive."
 
 #: services/forms.py:141 services/forms.py:147
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr "Este valor tem que ser entre 0 e 1000, inclusivé."
+msgstr "Este valor tem que ser entre 0 e 1000, inclusive."
 
 #: services/forms.py:159
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr "Este valor tem que ser entre 1024 e 65535, inclusivé. 0 é por defeito"
+msgstr "Este valor tem que ser entre 1024 e 65535, inclusive. 0 é por defeito"
 
 #: services/forms.py:165
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
@@ -1233,7 +1233,7 @@ msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
-"O grupo de trabalho do servidor irá aparecer para estar disponivel quando "
+"O grupo de trabalho do servidor irá aparecer para estar disponível quando "
 "requerido pelos clientes (no máximo 15 caracteres)."
 
 #: services/models.py:76
@@ -2848,7 +2848,7 @@ msgid ""
 msgstr ""
 "Esta opção permite que você defina uma senha de volume, que pode ter no "
 "máximo 8 caracteres (usando ASCII é fortemente recomendado no momento da "
-"redação deste artigo)."
+"redacção deste artigo)."
 
 #: sharing/models.py:122
 msgid "Share Character Set"
@@ -3100,6 +3100,8 @@ msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
+"Permitir a montagem de qualquer sub-directório neste ponto de montagem, se "
+"seleccionado. Caso contrário, apenas o directório superior pode ser montado."
 
 #: sharing/models.py:239
 msgid "Read Only"
@@ -3318,7 +3320,7 @@ msgstr "Tem de ser escolhido pelo menos um dia"
 
 #: storage/forms.py:880
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "Snapshot recursivo"
 
 #: storage/forms.py:881
 msgid "Snapshot Name"
@@ -3358,7 +3360,7 @@ msgstr "Hostkey remoto"
 
 #: storage/models.py:49
 msgid "File System Type"
-msgstr ""
+msgstr "Tipo de Sistema de Ficheiros"
 
 #: storage/models.py:52 storage/models.py:78 templates/storage/volumes.html:70
 msgid "Volume"
@@ -3403,11 +3405,11 @@ msgstr ""
 #: storage/models.py:156 storage/models.py:237 storage/models.py:267
 #: templates/storage/tasks.html:22
 msgid "Mount Point"
-msgstr ""
+msgstr "Ponto de Montagem"
 
 #: storage/models.py:157
 msgid "Path to mount point"
-msgstr ""
+msgstr "Localização do Ponto de Montagem"
 
 #: storage/models.py:161
 msgid "Mount options"
@@ -3496,7 +3498,7 @@ msgstr ""
 
 #: storage/models.py:296
 msgid "Interval"
-msgstr ""
+msgstr "Intervalo"
 
 #: storage/models.py:297
 msgid ""
@@ -3525,7 +3527,7 @@ msgstr ""
 
 #: storage/nav.py:5 templates/menubar.html:18
 msgid "Storage"
-msgstr ""
+msgstr "Armazenamento"
 
 #: storage/nav.py:24
 msgid "View All Snapshots"
@@ -3575,7 +3577,7 @@ msgstr "Volume adicionado com sucesso."
 
 #: storage/views.py:217
 msgid "Unknown"
-msgstr ""
+msgstr "Desconhecido"
 
 #: storage/views.py:283
 #, fuzzy
@@ -3662,7 +3664,7 @@ msgstr "Volume exportado com sucesso"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
-msgstr ""
+msgstr "Linguagem (necessita reiniciar)"
 
 #: system/forms.py:250
 msgid "Place to temporarily place firmware file"
@@ -3684,7 +3686,7 @@ msgstr ""
 
 #: system/forms.py:271
 msgid "Invalid firmware or checksum"
-msgstr ""
+msgstr "Firmware ou Checksum inválido"
 
 #: system/forms.py:281
 msgid "Service Pack image to be installed"
@@ -3720,7 +3722,7 @@ msgstr "Linguagem"
 
 #: system/models.py:57
 msgid "Timezone"
-msgstr ""
+msgstr "Fuso horário"
 
 #: system/models.py:62
 msgid "NTP server 1"
@@ -3736,7 +3738,7 @@ msgstr ""
 
 #: system/models.py:78 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
-msgstr ""
+msgstr "Definições"
 
 #: system/models.py:85
 msgid "Enable Console Menu"
@@ -3756,7 +3758,7 @@ msgstr ""
 
 #: system/models.py:93
 msgid "Beep on boot"
-msgstr ""
+msgstr "Beep no arranque"
 
 #: system/models.py:95
 msgid "Enable Special System Tuning"
@@ -3793,7 +3795,7 @@ msgstr "Avançadas"
 
 #: system/models.py:129
 msgid "From email"
-msgstr ""
+msgstr "De"
 
 #: system/models.py:130
 msgid ""
@@ -3803,7 +3805,7 @@ msgstr ""
 
 #: system/models.py:135
 msgid "Outgoing mail server"
-msgstr ""
+msgstr "Servidor de envio de email"
 
 #: system/models.py:136
 msgid ""
@@ -3825,11 +3827,11 @@ msgstr ""
 
 #: system/models.py:150
 msgid "TLS/SSL"
-msgstr ""
+msgstr "TLS/SSL"
 
 #: system/models.py:153
 msgid "Use SMTP Authentication"
-msgstr ""
+msgstr "Usar autenticação SMTP"
 
 #: system/models.py:161
 msgid "A username to authenticate to the remote server"
@@ -3849,7 +3851,7 @@ msgstr "Organização"
 
 #: system/models.py:182
 msgid "Organization Name (eg, company)"
-msgstr ""
+msgstr "Nome da Organização (ex, empresa)"
 
 #: system/models.py:188
 msgid "Organizational Unit"
@@ -3873,7 +3875,7 @@ msgstr "Nome Localidade (ex: Cidade)"
 
 #: system/models.py:209
 msgid "State"
-msgstr ""
+msgstr "Estado"
 
 #: system/models.py:210
 msgid "State or Province Name (full name)"
@@ -3881,11 +3883,11 @@ msgstr ""
 
 #: system/models.py:216
 msgid "Country"
-msgstr ""
+msgstr "País"
 
 #: system/models.py:217
 msgid "Country Name (2 letter code)"
-msgstr ""
+msgstr "Nome do País (código de 2 letras)"
 
 #: system/models.py:223
 msgid "Common Name"
@@ -3933,7 +3935,7 @@ msgstr ""
 #: system/models.py:261 system/models.py:365 system/models.py:513
 #: templates/system/cronjob.html:7 templates/system/rsync.html:7
 msgid "Day of month"
-msgstr ""
+msgstr "Dia do Mês"
 
 #: system/models.py:262 system/models.py:366 system/models.py:514
 msgid "Values 1-31 allowed."
@@ -3947,7 +3949,7 @@ msgstr "Mês"
 #: system/models.py:272 system/models.py:376 system/models.py:524
 #: templates/system/cronjob.html:9 templates/system/rsync.html:9
 msgid "Day of week"
-msgstr ""
+msgstr "Dia da Semana"
 
 #: system/models.py:275
 msgid "CronJob"
@@ -4011,7 +4013,7 @@ msgstr ""
 
 #: system/models.py:394
 msgid "Compress"
-msgstr ""
+msgstr "Comprimir"
 
 #: system/models.py:395
 msgid "Compress data during the transfer"
@@ -4089,15 +4091,15 @@ msgstr ""
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
-msgstr ""
+msgstr "Sistema"
 
 #: system/nav.py:11 templates/system/reporting.html:2
 msgid "Reporting"
-msgstr ""
+msgstr "Reportar"
 
 #: system/nav.py:18
 msgid "System Information"
-msgstr ""
+msgstr "Informação do Sistema"
 
 #: system/nav.py:32
 msgid "Cron Scheduler"
@@ -4105,15 +4107,15 @@ msgstr ""
 
 #: system/views.py:117
 msgid "The uploaded file is not valid."
-msgstr ""
+msgstr "O ficheiro enviado não é válido"
 
 #: system/views.py:243
 msgid "Test message from FreeNAS"
-msgstr ""
+msgstr "Mensagem de teste do FreeNAS"
 
 #: system/views.py:244
 msgid "This is a message test from FreeNAS"
-msgstr ""
+msgstr "Esta é uma mensagem de teste do FreeNAS"
 
 #: templates/404.html:7
 msgid "Page Not Found"
@@ -4121,7 +4123,7 @@ msgstr "Página não encontrada"
 
 #: templates/base.html:32
 msgid "expand all"
-msgstr ""
+msgstr "Expandir tudo"
 
 #: templates/base.html:33
 msgid "collapse all"
@@ -4210,7 +4212,7 @@ msgstr "Remover"
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 #: templates/account/bsdgroups.html:93 templates/account/bsdgroups.html:95
 msgid "Modify Group"
-msgstr ""
+msgstr "Modificar Grupo"
 
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 #: templates/account/bsdgroups.html:103 templates/account/bsdgroups.html:105
@@ -4227,7 +4229,7 @@ msgstr ""
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:88
 msgid "Home"
-msgstr ""
+msgstr "Entrada"
 
 #: templates/account/bsdusers.html:42 templates/account/bsdusers.html.py:44
 #: templates/account/bsdusers.html:50 templates/account/bsdusers.html:130
@@ -4237,16 +4239,16 @@ msgstr "Editar utilizador"
 
 #: templates/account/bsdusers.html:48 templates/account/bsdusers.html:136
 msgid "Auxiliary Groups"
-msgstr ""
+msgstr "Grupos auxiliares"
 
 #: templates/account/bsdusers.html:58 templates/account/bsdusers.html:146
 #: templates/account/bsdusers.html:148
 msgid "Remove User"
-msgstr ""
+msgstr "Remover Utilizador"
 
 #: templates/account/bsdusers.html:60
 msgid "Delete User"
-msgstr ""
+msgstr "Eliminar Utilizador"
 
 #: templates/account/bsdusers.html:68 templates/account/bsdusers.html:156
 msgid "No users defined"
@@ -4254,7 +4256,7 @@ msgstr ""
 
 #: templates/account/bsdusers.html:75 templates/account/bsdusers.html.py:77
 msgid "Add New User"
-msgstr ""
+msgstr "Adicionar novo utilizador"
 
 #: templates/account/bsdusers.html:121 templates/account/bsdusers.html:123
 #, fuzzy
@@ -4263,7 +4265,7 @@ msgstr "Email"
 
 #: templates/account/passform.html:26
 msgid "Change Admin Password"
-msgstr ""
+msgstr "Alterar a password de Administrador"
 
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:7
@@ -4277,7 +4279,7 @@ msgstr ""
 
 #: templates/freeadmin/generic_model_add_ok.html:1
 msgid "successfully added"
-msgstr ""
+msgstr "Adicionado com sucesso"
 
 #: templates/freeadmin/generic_model_delete.html:10
 #: templates/storage/dataset_confirm_delete.html:7
@@ -4345,13 +4347,12 @@ msgid ""
 msgstr ""
 
 #: templates/freeadmin/index.html:69
-#, fuzzy
 msgid "Help & Support"
-msgstr "EA Suporte"
+msgstr "Ajuda & Suporte"
 
 #: templates/freeadmin/index.html:72
 msgid "Forum"
-msgstr ""
+msgstr "Fórum"
 
 #: templates/freeadmin/index.html:74
 msgid "Community Forum"
@@ -4359,11 +4360,11 @@ msgstr ""
 
 #: templates/freeadmin/index.html:79
 msgid "IRC (Chat)"
-msgstr ""
+msgstr "IRC (Chat)"
 
 #: templates/freeadmin/index.html:81
 msgid "#freenas on freenode"
-msgstr ""
+msgstr "#freenas em freenode"
 
 #: templates/freeadmin/index.html:85
 msgid "Mailing Lists"
@@ -4371,7 +4372,7 @@ msgstr ""
 
 #: templates/freeadmin/index.html:87
 msgid "FreeNAS Announce"
-msgstr ""
+msgstr "Anúncios FreeNAS"
 
 #: templates/freeadmin/index.html:88
 msgid "FreeNAS Commit"
@@ -4386,9 +4387,8 @@ msgid "FreeNAS Testing"
 msgstr ""
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Docs"
-msgstr "Construtor FreeNAS"
+msgstr "Documentação FreeNAS"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Translations"
@@ -4400,11 +4400,11 @@ msgstr ""
 
 #: templates/freeadmin/index.html:99
 msgid "Bug Tracker"
-msgstr ""
+msgstr "Bug Tracker"
 
 #: templates/freeadmin/index.html:104
 msgid "Documentation"
-msgstr ""
+msgstr "Documentação"
 
 #: templates/freeadmin/index.html:106
 msgid "FreeNAS Documentation"
@@ -4412,7 +4412,7 @@ msgstr "Documentação FreeNAS"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
-msgstr ""
+msgstr "IPv6 Automático"
 
 #: templates/network/interface.html:33 templates/network/lagg_members.html:18
 #: templates/network/lagg_members.html:20
@@ -4440,19 +4440,19 @@ msgstr "Editar"
 #: templates/network/interface.html:35 templates/network/lagg.html:14
 #: templates/network/lagg.html.py:16
 msgid "Edit Interface"
-msgstr ""
+msgstr "Editar interface"
 
 #: templates/network/interface.html:41 templates/network/lagg.html:46
 msgid "Delete Interface"
-msgstr ""
+msgstr "Eliminar interface"
 
 #: templates/network/interface.html:48 templates/network/summary.html:16
 msgid "No interfaces defined"
-msgstr ""
+msgstr "Não há interfaces definidas"
 
 #: templates/network/interface.html:54 templates/network/interface.html:56
 msgid "Add Interface"
-msgstr ""
+msgstr "Adicionar interface"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 msgid "Actions"
@@ -4460,7 +4460,7 @@ msgstr ""
 
 #: templates/network/lagg.html:20
 msgid "Edit Members"
-msgstr ""
+msgstr "Editar Membros"
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
@@ -4549,7 +4549,7 @@ msgstr "Adicionar interface VLAN"
 
 #: templates/registration/login.html:44
 msgid "Your username and password didn't match. Please try again."
-msgstr ""
+msgstr "O seu username e password não combinam. Por favor, tente novamente."
 
 #: templates/registration/login.html:48
 #, python-format
@@ -4586,7 +4586,7 @@ msgstr ""
 
 #: templates/services/index.html:35
 msgid "CIFS Settings"
-msgstr ""
+msgstr "Definições do CIFS"
 
 #: templates/services/index.html:48
 msgid "Dynamic DNS Settings"
@@ -4594,15 +4594,15 @@ msgstr "Definições de DNS Dinâmico"
 
 #: templates/services/index.html:59
 msgid "FTP Settings"
-msgstr ""
+msgstr "Definições de FTP"
 
 #: templates/services/index.html:70
 msgid "LDAP Settings"
-msgstr ""
+msgstr "Definições de LDAP"
 
 #: templates/services/index.html:81
 msgid "NFS Settings"
-msgstr ""
+msgstr "Definições de NFS"
 
 #: templates/services/index.html:92
 msgid "Rsync Settings"
@@ -4610,7 +4610,7 @@ msgstr "Definições Rsync"
 
 #: templates/services/index.html:103
 msgid "SNMP Settings"
-msgstr ""
+msgstr "Definições de SNMP"
 
 #: templates/services/index.html:114
 msgid "S.M.A.R.T. Settings"
@@ -4618,19 +4618,19 @@ msgstr "Definições S.M.A.R.T"
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
-msgstr ""
+msgstr "Definições de SSH"
 
 #: templates/services/index.html:136
 msgid "TFTP Settings"
-msgstr ""
+msgstr "Definições de TFTP"
 
 #: templates/services/index.html:141
 msgid "iSCSI"
-msgstr ""
+msgstr "iSCSI"
 
 #: templates/services/index.html:149
 msgid "ISCSI Settings"
-msgstr ""
+msgstr "Definições de iSCSI"
 
 #: templates/services/iscsi.html:2
 msgid "iSCSI Management"
@@ -4646,7 +4646,7 @@ msgstr ""
 
 #: templates/services/iscsi.html:13
 msgid "Authentication"
-msgstr ""
+msgstr "Autenticação"
 
 #: templates/services/iscsi.html:15
 msgid "Authorized Initiator"
@@ -4688,7 +4688,7 @@ msgstr ""
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
-msgstr ""
+msgstr "Rede Autorizada"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
@@ -4728,7 +4728,7 @@ msgstr ""
 #: templates/storage/volumes.html:76 templates/system/cronjob.html:12
 #: templates/system/rsync.html:11
 msgid "Available actions"
-msgstr ""
+msgstr "Acções disponíveis"
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
@@ -4745,15 +4745,15 @@ msgstr "Partilhas activas"
 
 #: templates/sharing/apple.html:8
 msgid "There are no active Apple Shares."
-msgstr ""
+msgstr "Não existem partilhas Apple activas"
 
 #: templates/sharing/apple.html:30
 msgid "Edit Apple Share"
-msgstr ""
+msgstr "Editar partilha Apple"
 
 #: templates/sharing/apple.html:36
 msgid "Delete Apple Share"
-msgstr ""
+msgstr "Eliminar partilha Apple"
 
 #: templates/sharing/apple.html:43 templates/sharing/unix.html:43
 #: templates/sharing/windows.html:47
@@ -4790,23 +4790,23 @@ msgstr ""
 
 #: templates/sharing/unix.html:30
 msgid "Edit NFS Share"
-msgstr ""
+msgstr "Editar partilha NFS"
 
 #: templates/sharing/unix.html:36
 msgid "Delete NFS Share"
-msgstr ""
+msgstr "Eliminar partilha NFS"
 
 #: templates/sharing/unix.html:50
 msgid "Add UNIX Share"
-msgstr ""
+msgstr "Adicionar partilha UNIX"
 
 #: templates/sharing/unix.html:52
 msgid "Add UNIX Share (NFS)"
-msgstr ""
+msgstr "Adicionar partilha UNIX (NFS)"
 
 #: templates/sharing/windows.html:8
 msgid "There are no active Windows Shares."
-msgstr ""
+msgstr "Não existem partilhas Windows activas"
 
 #: templates/sharing/windows.html:34
 msgid "Edit Windows Share"
@@ -4994,7 +4994,7 @@ msgstr ", cada"
 
 #: templates/storage/tasks.html:49
 msgid "everyday"
-msgstr ""
+msgstr "Diáriamente"
 
 #: templates/storage/tasks.html:52
 msgid "on every"

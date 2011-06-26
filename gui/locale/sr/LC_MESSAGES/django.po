@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-24 08:39+0200\n"
+"PO-Revision-Date: 2011-06-26 02:01+0200\n"
 "Last-Translator: bscomputer <office@bscomputer.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -528,7 +528,7 @@ msgstr "Šifre se ne poklapaju."
 
 #: account/forms.py:248 account/forms.py:373
 msgid "Home directory has to start with /mnt/"
-msgstr ""
+msgstr "Korisnički direktorijum mora da počinje sa /mnt/"
 
 #: account/forms.py:262 account/forms.py:266 services/forms.py:469
 #: services/forms.py:482 services/forms.py:748 storage/forms.py:226
@@ -608,7 +608,7 @@ msgstr "ID Primarne grupe"
 
 #: account/models.py:100
 msgid "Home Directory"
-msgstr ""
+msgstr "Korisnički Direktorijum"
 
 #: account/models.py:109
 msgid "Full Name"
@@ -663,27 +663,23 @@ msgstr "Pogledaj Sve Grupe"
 
 # ako % predstavlja user  kao users 
 #: account/views.py:78
-#, fuzzy
 msgid "Password successfully updated."
-msgstr "%s uspešno ažurirani."
+msgstr "Šifra uspešno ažurirana."
 
 # ako % predstavlja user  kao users 
 #: account/views.py:92
-#, fuzzy
 msgid "Admin user successfully updated."
-msgstr "%s uspešno ažurirani."
+msgstr "Admin korisnik uspešno ažuriran."
 
 # ako % predstavlja user  kao users 
 #: account/views.py:102
-#, fuzzy
 msgid "Users successfully updated."
-msgstr "%s uspešno ažurirani."
+msgstr "Korisnici uspešno ažurirani."
 
 # ako % predstavlja user  kao users 
 #: account/views.py:115
-#, fuzzy
 msgid "Groups successfully updated."
-msgstr "%s uspešno ažurirani."
+msgstr "Grupe uspešno ažurirane."
 
 #: contrib/ext_formwizard.py:170
 msgid ""
@@ -751,7 +747,7 @@ msgstr "%s uspešno obrisani."
 
 #: network/forms.py:44 network/models.py:95
 msgid "NIC"
-msgstr ""
+msgstr "Mrežna karta"
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -771,7 +767,7 @@ msgstr ""
 
 #: network/forms.py:100
 msgid "Parent Interface"
-msgstr ""
+msgstr "Nadređeni interfejs"
 
 #: network/forms.py:109
 msgid "The name must be vlanXX where XX is a integer"
@@ -834,7 +830,7 @@ msgstr "Naziv interfejsa"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "Dodaj naziv tvojoj mrežnoj karti"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
@@ -902,7 +898,7 @@ msgstr "Fizički interfejs"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
-msgstr ""
+msgstr "VLAN Oznaka"
 
 #: network/models.py:185 network/models.py:282 services/models.py:74
 #: services/models.py:766 storage/models.py:95
@@ -932,7 +928,7 @@ msgstr "LAGG Prioritetni Broj"
 
 #: network/models.py:249
 msgid "Physical NIC"
-msgstr ""
+msgstr "Fizička mrežna karta"
 
 #: network/models.py:264 templates/network/index.html:7
 msgid "Link Aggregation"
@@ -940,7 +936,7 @@ msgstr "Agregacija Linka"
 
 #: network/models.py:265 network/nav.py:53
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Agregacije linka"
 
 #: network/models.py:274
 msgid "Destination network"
@@ -968,11 +964,11 @@ msgstr ""
 
 #: network/nav.py:30
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "Kreiraj Agregaciju linka"
 
 #: network/nav.py:41
 msgid "View All Link Aggregations"
-msgstr ""
+msgstr "Pogledaj sve agregirane linkove"
 
 #: network/views.py:180
 #, fuzzy
@@ -989,19 +985,19 @@ msgstr ""
 
 #: services/forms.py:90
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "AFP servis nije uspeo ponovo da se učita."
 
 #: services/forms.py:99
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "NFS servis nije uspeo ponovo da se učita."
 
 #: services/forms.py:103
 msgid "File Permission"
-msgstr ""
+msgstr "Dozvole fajla"
 
 #: services/forms.py:104
 msgid "Directory Permission"
-msgstr ""
+msgstr "Dozvole direktorijuma"
 
 #: services/forms.py:129
 msgid "This value must be between 0 and 65535, inclusive."
@@ -1009,19 +1005,23 @@ msgstr "Ova vrednost mora biti izmedju 0 i 65535, uključujući i njih."
 
 #: services/forms.py:135 services/forms.py:153
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
+msgstr "Ova vrednost mora biti između 0 i 10000, uključujući i njih."
 
 #: services/forms.py:141 services/forms.py:147
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
+msgstr "Ova vrednost mora biti između 0 i 1000, uključujući i njih."
 
 #: services/forms.py:159
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
 msgstr ""
+"Ova vrednost mora biti između 1024 i 65535, uključujući i njih. 0 za "
+"podrazumevano podešavanje"
 
 #: services/forms.py:165
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
 msgstr ""
+"Ova vrednost mora biti između 1024 i 65535, uključujući i njih. 0 za "
+"podrazumevano podešavanje."
 
 #: services/forms.py:184
 msgid "This field is required for anonymous login"
@@ -1159,7 +1159,7 @@ msgstr ""
 
 #: services/forms.py:577
 msgid "Disk device"
-msgstr ""
+msgstr "Disk uređaj"
 
 #: services/forms.py:691
 #, python-format
@@ -1189,7 +1189,7 @@ msgstr[2] ""
 
 #: services/models.py:40
 msgid "Service"
-msgstr ""
+msgstr "Servis"
 
 #: services/models.py:41
 msgid "Name of Service, should be auto-generated at build time"
@@ -1197,7 +1197,7 @@ msgstr ""
 
 #: services/models.py:44
 msgid "Enable Service"
-msgstr ""
+msgstr "Omogući servis"
 
 #: services/models.py:47 services/models.py:48 services/nav.py:5
 #: templates/menubar.html:28 templates/services/index.html:3
@@ -1222,7 +1222,7 @@ msgstr "NetBIOS ime"
 
 #: services/models.py:69
 msgid "Workgroup"
-msgstr ""
+msgstr "Radna grupa"
 
 #: services/models.py:70
 msgid ""
@@ -1244,7 +1244,7 @@ msgstr "UNIX set karaktera"
 
 #: services/models.py:94
 msgid "Log level"
-msgstr ""
+msgstr "Nivo zapisa"
 
 #: services/models.py:97
 msgid "Local Master"
@@ -1302,21 +1302,21 @@ msgstr ""
 
 #: services/models.py:128
 msgid "EA Support"
-msgstr ""
+msgstr "EA Podrška"
 
 #: services/models.py:130
 msgid "Support DOS File Attributes"
-msgstr ""
+msgstr "Podrži DOS atribute fajlova"
 
 #: services/models.py:132
 msgid "Allow Empty Password"
-msgstr ""
+msgstr "Dozvoli prazne šifre"
 
 #: services/models.py:135 services/models.py:694 services/models.py:728
 #: services/models.py:760 services/models.py:906 services/models.py:1162
 #: services/models.py:1225
 msgid "Auxiliary parameters"
-msgstr ""
+msgstr "Ostali parametri"
 
 #: services/models.py:137
 msgid "These parameters are added to [Global] section of smb.conf"
@@ -1344,7 +1344,7 @@ msgstr ""
 
 #: services/models.py:153
 msgid "Enable AIO"
-msgstr ""
+msgstr "Omogući AIO"
 
 #: services/models.py:154
 msgid "This enables\\disables AIO support."
@@ -1373,11 +1373,11 @@ msgstr ""
 #: services/models.py:170 services/models.py:171
 #: templates/services/index.html:29
 msgid "CIFS"
-msgstr ""
+msgstr "CIFS"
 
 #: services/models.py:180
 msgid "Server Name"
-msgstr ""
+msgstr "Ime Servera"
 
 #: services/models.py:181
 msgid ""
@@ -1395,7 +1395,7 @@ msgstr ""
 
 #: services/models.py:195
 msgid "Local Access"
-msgstr "Lokalna Adresa"
+msgstr "Lokalna pristup"
 
 #: services/models.py:196
 msgid "Allow users with local accounts to access apple shares on this box."
@@ -1403,7 +1403,7 @@ msgstr ""
 
 #: services/models.py:199
 msgid "Enable DDP"
-msgstr ""
+msgstr "Omogući DDP"
 
 #: services/models.py:200
 msgid "Enables DDP support for low-level appletalk access."
@@ -1412,11 +1412,11 @@ msgstr ""
 #: services/models.py:204 services/models.py:205
 #: templates/services/index.html:7
 msgid "AFP"
-msgstr ""
+msgstr "AFP"
 
 #: services/models.py:214
 msgid "Number of servers"
-msgstr ""
+msgstr "Broj servera"
 
 #: services/models.py:215
 msgid ""
@@ -1426,7 +1426,7 @@ msgstr ""
 
 #: services/models.py:219
 msgid "Asynchronous mode"
-msgstr ""
+msgstr "Asinhroni mod"
 
 #: services/models.py:220
 msgid ""
@@ -1437,7 +1437,7 @@ msgstr ""
 #: services/models.py:225 services/models.py:226
 #: templates/services/index.html:75
 msgid "NFS"
-msgstr ""
+msgstr "NFS"
 
 #: services/models.py:235
 msgid "Base Name"
@@ -1471,7 +1471,7 @@ msgstr ""
 
 #: services/models.py:265
 msgid "Max. sessions"
-msgstr ""
+msgstr "Maksimalni broj sesija"
 
 #: services/models.py:266
 msgid "Maximum number of sessions holding at same time (16 by default)."
@@ -1638,7 +1638,7 @@ msgstr ""
 
 #: services/models.py:437 services/models.py:447
 msgid "Portal"
-msgstr ""
+msgstr "Portal"
 
 #: services/models.py:438
 msgid ""
@@ -1922,7 +1922,7 @@ msgstr ""
 
 #: services/models.py:797 services/models.py:798
 msgid "UPS"
-msgstr ""
+msgstr "UPS"
 
 #: services/models.py:808
 msgid "Port to bind FTP server."
@@ -1930,15 +1930,15 @@ msgstr ""
 
 #: services/models.py:812
 msgid "Clients"
-msgstr ""
+msgstr "Klijenti"
 
 #: services/models.py:813
 msgid "Maximum number of simultaneous clients."
-msgstr ""
+msgstr "Maksimalni broj paralelno povezanih klijenata."
 
 #: services/models.py:817
 msgid "Connections"
-msgstr ""
+msgstr "Konekcije"
 
 #: services/models.py:818
 msgid "Maximum number of connections per IP address (0 = unlimited)."
@@ -1946,7 +1946,7 @@ msgstr ""
 
 #: services/models.py:822
 msgid "Login Attempts"
-msgstr ""
+msgstr "Pokušaji prijavljivanja"
 
 #: services/models.py:823
 msgid "Maximum number of allowed password attempts before disconnection."
@@ -1962,7 +1962,7 @@ msgstr ""
 
 #: services/models.py:831
 msgid "Allow Root Login"
-msgstr ""
+msgstr "Dozvoli prijavljivanje Root korisnika"
 
 #: services/models.py:833
 msgid "Allow Anonymous Login"
@@ -1974,7 +1974,7 @@ msgstr ""
 #: templates/services/iscsi_extents.html:7 templates/services/rsyncmod.html:7
 #: templates/sharing/windows.html:15 templates/storage/volumes.html:71
 msgid "Path"
-msgstr ""
+msgstr "Putanja"
 
 #: services/models.py:838
 msgid "Allow Local User Login"
@@ -1994,7 +1994,7 @@ msgstr ""
 
 #: services/models.py:858
 msgid "Enable FXP"
-msgstr ""
+msgstr "Omogući FXP"
 
 #: services/models.py:860
 msgid "Allow Transfer Resumption"
@@ -2593,7 +2593,7 @@ msgstr ""
 
 #: sharing/models.py:64
 msgid "Guest Account"
-msgstr ""
+msgstr "Gostinski korisnički nalog"
 
 #: sharing/models.py:65
 msgid ""
@@ -4935,15 +4935,15 @@ msgstr "Restartovanje..."
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "Vaša test email poruka je poslata!"
 
 #: templates/system/email_edit.html:19
 msgid "Your test email could not be sent:"
-msgstr ""
+msgstr "Vaša test email poruka nije mogla da se pošalje:"
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr ""
+msgstr "Pošalji Test email poruku"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
