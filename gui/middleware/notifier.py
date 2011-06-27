@@ -1095,12 +1095,10 @@ class notifier:
                              mode='0755', recursive=False):
         self.__system("/bin/setfacl -b '%s'" % path)
         self.__system("for i in $(jot 5); do setfacl -x 0 '%s'; done" % path)
-        self.__system("/bin/setfacl -a 0 group@:wpD::deny '%s'" % path)
-        self.__system("/bin/setfacl -a 1 everyone@:wpDAWCo::deny '%s'" % path)
-        self.__system("/bin/setfacl -a 2 group@:rxs::allow '%s'" % path)
-        self.__system("/bin/setfacl -a 3 everyone@:rxaRcs::allow '%s'" % path)
-        self.__system("/bin/setfacl -a 4 owner@:rwxpdDaARWcCo:fd:allow '%s'" % path)
-        self.__system("/bin/setfacl -x 5 '%s'" % path)
+        self.__system("/bin/setfacl -a 0 group@:rxs::allow '%s'" % path)
+        self.__system("/bin/setfacl -a 1 everyone@:rxaRcs::allow '%s'" % path)
+        self.__system("/bin/setfacl -a 2 owner@:rwxpdDaARWcCo:fd:allow '%s'" % path)
+        self.__system("/bin/setfacl -x 3 '%s'" % path)
 
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',
                              mode='0755', recursive=False):
