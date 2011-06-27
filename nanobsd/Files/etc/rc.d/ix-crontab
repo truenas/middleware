@@ -67,7 +67,7 @@ generate_crontab()
             fi
 
         )
-        echo -e "${minute}\t${hour}\t${daymonth}\t${month}\t${dayweek}\t${user}\tPATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin ${command}" >> /etc/crontab
+        echo -e "${minute}\t${hour}\t${daymonth}\t${month}\t${dayweek}\t${user}\tPATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin ${command} 2>&1 |/usr/bin/logger -t rsync" >> /etc/crontab
     done
 }
 
