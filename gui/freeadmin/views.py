@@ -455,7 +455,8 @@ def generic_model_delete(request, app, model, oid):
             return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully deleted.") % m._meta.verbose_name}), mimetype="application/json")
     if form and form_i is None:
         form_i = form(instance=instance)
-        context.update({'form': form})
+    if form:
+        context.update({'form': form_i})
     template = "%s/%s_delete.html" % (m._meta.app_label, m._meta.object_name.lower())
     try:
         get_template(template)

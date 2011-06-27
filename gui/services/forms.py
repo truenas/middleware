@@ -104,7 +104,7 @@ class FTPForm(ModelForm):
     ftp_filemask = UnixPermissionField(label=_('File Permission'))
     ftp_dirmask = UnixPermissionField(label=_('Directory Permission'))
     class Meta:
-        model = models.FTP 
+        model = models.FTP
 
     def __init__(self, *args, **kwargs):
 
@@ -794,7 +794,7 @@ class iSCSITargetForm(ModelForm):
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
 class ExtentDelete(Form):
-    delete = forms.BooleanField(label=_("Delete underlying file"), initial=False)
+    delete = forms.BooleanField(label=_("Delete underlying file"), initial=False, required=False)
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
         super(ExtentDelete, self).__init__(*args, **kwargs)
