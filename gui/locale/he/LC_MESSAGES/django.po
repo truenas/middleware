@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-25 20:39+0200\n"
+"PO-Revision-Date: 2011-06-26 23:38+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -846,7 +846,7 @@ msgstr "קבע באופן אוטומטי IPv6"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr "מתי שמופעל, קבע תצורה באופן אוטומטי כתובת IPv4 דרך (rtsol) 8"
+msgstr "כשמופעל, הגדר את כתובת IPv6 באופן אוטומטי דרך (rtsol(8)."
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
@@ -948,7 +948,7 @@ msgstr "רשת"
 
 #: network/nav.py:13 templates/network/index.html:13
 msgid "Network Summary"
-msgstr "סיכום הרשת"
+msgstr "פרטי הרשת"
 
 #: network/nav.py:30
 msgid "Create Link Aggregation"
@@ -1379,7 +1379,7 @@ msgstr "גישת אורחים"
 
 #: services/models.py:185
 msgid "Allows guest access to all apple shares on this box."
-msgstr "אפשר גישת אורחים לכל שיתופי אפל(apple) במכונה הזאת."
+msgstr "אפשר גישת אורחים לכל שיתופי אפל במכונה הזאת."
 
 #: services/models.py:195
 msgid "Local Access"
@@ -1387,8 +1387,7 @@ msgstr "גישה מקומית"
 
 #: services/models.py:196
 msgid "Allow users with local accounts to access apple shares on this box."
-msgstr ""
-"אפשר למשתמשים עם חשבונות מקומיים לגשת לשיתופי אפל(apple) על המכונה הזאת."
+msgstr "אפשר למשתמשים עם חשבונות מקומיים לגשת לשיתופי אפל על המכונה הזאת."
 
 #: services/models.py:199
 msgid "Enable DDP"
@@ -1713,7 +1712,7 @@ msgstr "שם משתמש אופציונלי לשם משתמש-חבר חוט של 
 
 #: services/models.py:569 storage/views.py:157
 msgid "Serial"
-msgstr "סדרתי (סריאלי)"
+msgstr "מספר סידורי"
 
 #: services/models.py:572
 msgid "Serial number for the logical unit"
@@ -2547,7 +2546,7 @@ msgstr "S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
-msgstr "שרותי שליטה"
+msgstr "שלוט בשירותים"
 
 #: services/nav.py:50
 msgid "Add Device Extent"
@@ -2705,7 +2704,7 @@ msgstr "המאפיינים האלו מוספים ל(שיתוף) חלק של smb.
 
 #: sharing/models.py:93
 msgid "Windows Share"
-msgstr "שיתוף חלונות (ווינדוס)"
+msgstr "שיתוף חלונות "
 
 #: sharing/models.py:94
 msgid "Windows Shares"
@@ -3544,7 +3543,7 @@ msgstr "שפה(דורש אתחול של מנשק המשתמש)"
 
 #: system/forms.py:250
 msgid "Place to temporarily place firmware file"
-msgstr "שים את קובץ הקושחה הזמנו במקיקום זמני"
+msgstr "מקום בשביל קובץ הקושחה הזמני"
 
 #: system/forms.py:250
 msgid ""
@@ -4044,7 +4043,7 @@ msgstr "אשר"
 #: templates/system/config_restore.html:13
 #: templates/system/config_upload.html:37 templates/system/wizard.html:16
 msgid "Please wait..."
-msgstr "חכה בבקשה..."
+msgstr "המתן בבקשה..."
 
 #: templates/account/bsdgroup2user_form.html:15
 #: templates/freeadmin/generic_model_add.html:18
@@ -4195,7 +4194,7 @@ msgstr "נערך בהצלחה"
 
 #: templates/freeadmin/index.html:30
 msgid "Running Processes"
-msgstr "מריץ תוכנית"
+msgstr "תוכניות רצות"
 
 #: templates/freeadmin/index.html:35 templates/freeadmin/index.html.py:39
 #: templates/freeadmin/index.html:44
@@ -4654,7 +4653,7 @@ msgstr "אפל(apple)"
 
 #: templates/sharing/index.html:5
 msgid "UNIX"
-msgstr "UNIX (לינוקס)"
+msgstr "UNIX "
 
 #: templates/sharing/index.html:7
 msgid "Windows"
@@ -4678,7 +4677,7 @@ msgstr "מחק שיתוף NFS"
 
 #: templates/sharing/unix.html:50
 msgid "Add UNIX Share"
-msgstr "הוסף שיתוף UNIX (לינוקס)"
+msgstr "הוסף שיתוף UNIX"
 
 #: templates/sharing/unix.html:52
 msgid "Add UNIX Share (NFS)"
@@ -4854,7 +4853,7 @@ msgstr "איך"
 
 #: templates/storage/tasks.html:25
 msgid "Keep snapshot for"
-msgstr "שמור תמונה בשביל"
+msgstr "שמור תצלום למשך"
 
 #: templates/storage/tasks.html:38
 msgid "No"
@@ -4866,7 +4865,7 @@ msgstr "מ-"
 
 #: templates/storage/tasks.html:44
 msgid "through"
-msgstr "דרך"
+msgstr "עד"
 
 #: templates/storage/tasks.html:46
 msgid ", every"
@@ -5236,7 +5235,7 @@ msgid "View All Static Routes"
 msgstr "ראה את כל הנתובים הסטטים"
 
 msgid "Windows Version"
-msgstr "גירסת חלונות (ווינדוס)"
+msgstr "גירסת חלונות"
 
 msgid "The version of Microsoft Windows that Active Directory is running."
 msgstr "הגירסה של חלונות מיקרוסופט שהתיקייה הפעילה רצה."
@@ -5268,7 +5267,7 @@ msgid "Volume Path"
 msgstr "נתיב לנפח"
 
 msgid "View All UNIX Shares"
-msgstr "ראה את כל שיתופי UNIX (לינוקס)"
+msgstr "ראה את כל שיתופי UNIX "
 
 msgid "View All Apple Shares"
 msgstr "ראה את כל שיתופי אפל (apple)"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-25 14:01+0200\n"
+"PO-Revision-Date: 2011-06-26 16:12+0200\n"
 "Last-Translator: iMiguel <miguel.rosa17@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
@@ -3368,7 +3368,7 @@ msgstr "Volume"
 
 #: storage/models.py:79
 msgid "Volume this group belongs to"
-msgstr ""
+msgstr "Este grupo de volume este pertence a"
 
 #: storage/models.py:102
 msgid "Transfer Mode"
@@ -3462,11 +3462,11 @@ msgstr ""
 
 #: storage/models.py:254
 msgid "Replication Task"
-msgstr ""
+msgstr "Tarefa de replicação"
 
 #: storage/models.py:255
 msgid "Replication Tasks"
-msgstr ""
+msgstr "Tarefas de replicação"
 
 #: storage/models.py:270 system/models.py:384 templates/storage/tasks.html:23
 msgid "Recursive"
@@ -3580,23 +3580,20 @@ msgid "Unknown"
 msgstr "Desconhecido"
 
 #: storage/views.py:283
-#, fuzzy
 msgid "Dataset successfully added."
-msgstr "Dataset eliminado com sucesso."
+msgstr "Dataset adicionado com sucesso."
 
 #: storage/views.py:318
-#, fuzzy
 msgid "Dataset successfully edited."
-msgstr "Dataset eliminado com sucesso."
+msgstr "Dataset editado com sucesso."
 
 #: storage/views.py:320 storage/views.py:396
 msgid "Some error ocurried while setting the options"
 msgstr ""
 
 #: storage/views.py:342
-#, fuzzy
 msgid "ZFS Volume successfully added."
-msgstr "Volume ZFS eliminado com sucesso."
+msgstr "Volume ZFS adicionado com sucesso."
 
 #: storage/views.py:356
 msgid "This is in use by the iscsi target, please remove it there first."
@@ -3607,9 +3604,8 @@ msgid "ZFS Volume successfully destroyed."
 msgstr "Volume ZFS eliminado com sucesso."
 
 #: storage/views.py:394
-#, fuzzy
 msgid "Native dataset successfully edited."
-msgstr "Dataset eliminado com sucesso."
+msgstr "Dataset nativo editado com sucesso."
 
 #: storage/views.py:410
 msgid "Mount Point permissions successfully updated."
@@ -3628,19 +3624,16 @@ msgid "Rollback successful."
 msgstr ""
 
 #: storage/views.py:470
-#, fuzzy
 msgid "Snapshot successfully added."
-msgstr "Snapshot eliminado com sucesso."
+msgstr "Snapshot adicionado com sucesso."
 
 #: storage/views.py:483
-#, fuzzy
 msgid "Snapshot successfully taken."
-msgstr "Snapshot eliminado com sucesso."
+msgstr "Snapshot tomada com sucesso."
 
 #: storage/views.py:498
-#, fuzzy
 msgid "Snapshot successfully cloned."
-msgstr "Snapshot eliminado com sucesso."
+msgstr "Snapshot clonado com sucesso."
 
 #: storage/views.py:549
 msgid "Disk replacement has been initiated."
@@ -3678,11 +3671,11 @@ msgstr ""
 
 #: system/forms.py:258
 msgid "New image to be installed"
-msgstr ""
+msgstr "Nova imagem para ser instalada"
 
 #: system/forms.py:259 system/forms.py:282
 msgid "SHA256 sum for the image"
-msgstr ""
+msgstr "sum SHA256 para a imagem"
 
 #: system/forms.py:271
 msgid "Invalid firmware or checksum"
@@ -3690,15 +3683,15 @@ msgstr "Firmware ou Checksum inválido"
 
 #: system/forms.py:281
 msgid "Service Pack image to be installed"
-msgstr ""
+msgstr "Imagem do Service Pack para ser instalado"
 
 #: system/forms.py:294
 msgid "Invalid service pack or checksum"
-msgstr ""
+msgstr "Service Pack ou checksum inválido"
 
 #: system/forms.py:304
 msgid "New config to be installed"
-msgstr ""
+msgstr "Nova configuração para ser instalada"
 
 #: system/forms.py:310 system/forms.py:338
 msgid "minute"
@@ -3726,15 +3719,15 @@ msgstr "Fuso horário"
 
 #: system/models.py:62
 msgid "NTP server 1"
-msgstr ""
+msgstr "Servidor NTP 1"
 
 #: system/models.py:67
 msgid "NTP server 2"
-msgstr ""
+msgstr "Servidor NTP 2"
 
 #: system/models.py:73
 msgid "NTP server 3"
-msgstr ""
+msgstr "Servidor NTP 3"
 
 #: system/models.py:78 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
@@ -3750,7 +3743,7 @@ msgstr ""
 
 #: system/models.py:89
 msgid "Enable screen saver"
-msgstr ""
+msgstr "Activar o Screen Saver"
 
 #: system/models.py:91
 msgid "Automatically Check for New Firmware"
@@ -3770,7 +3763,7 @@ msgstr ""
 
 #: system/models.py:99
 msgid "Enable Zeroconf/Bonjour"
-msgstr ""
+msgstr "Activar Zeroconf/Bonjour"
 
 #: system/models.py:102
 msgid ""
@@ -3787,7 +3780,7 @@ msgstr ""
 
 #: system/models.py:116
 msgid "MOTD banner"
-msgstr ""
+msgstr "Banner MOTD"
 
 #: system/models.py:120 templates/system/settings.html:5
 msgid "Advanced"
@@ -3819,11 +3812,11 @@ msgstr ""
 
 #: system/models.py:143
 msgid "Port to connect to"
-msgstr ""
+msgstr "Porta para conectar a"
 
 #: system/models.py:149
 msgid "encryption of the connection"
-msgstr ""
+msgstr "encriptação da conexão"
 
 #: system/models.py:150
 msgid "TLS/SSL"
@@ -3839,7 +3832,7 @@ msgstr ""
 
 #: system/models.py:168
 msgid "A password to authenticate to the remote server"
-msgstr ""
+msgstr "A password para autenticar com o servidor remoto"
 
 #: system/models.py:171 templates/system/settings.html:7
 msgid "Email"
@@ -3855,7 +3848,7 @@ msgstr "Nome da Organização (ex, empresa)"
 
 #: system/models.py:188
 msgid "Organizational Unit"
-msgstr ""
+msgstr "Unidade Organizacional"
 
 #: system/models.py:189
 msgid "Organizational Unit Name (eg, section)"
@@ -3995,9 +3988,8 @@ msgid "Remote Module Name"
 msgstr ""
 
 #: system/models.py:350 system/models.py:503
-#, fuzzy
 msgid "Short description"
-msgstr "Descrição"
+msgstr "Pequena descrição"
 
 #: system/models.py:385
 msgid "Recurse into directories"
@@ -4259,9 +4251,8 @@ msgid "Add New User"
 msgstr "Adicionar novo utilizador"
 
 #: templates/account/bsdusers.html:121 templates/account/bsdusers.html:123
-#, fuzzy
 msgid "Change E-mail"
-msgstr "Email"
+msgstr "Alterar Email"
 
 #: templates/account/passform.html:26
 msgid "Change Admin Password"
@@ -4900,7 +4891,7 @@ msgstr ""
 
 #: templates/storage/replications.html:14
 msgid "Last snapshot"
-msgstr ""
+msgstr "Último snapshot"
 
 #: templates/storage/replications.html:30
 #: templates/storage/replications.html:34
@@ -4934,11 +4925,11 @@ msgstr "Espaço usado"
 
 #: templates/storage/snapshots.html:7
 msgid "Referenced space"
-msgstr ""
+msgstr "Espaço referenciado"
 
 #: templates/storage/snapshots.html:24 templates/storage/snapshots.html:28
 msgid "Clone snapshot"
-msgstr ""
+msgstr "Clonar snapshot"
 
 #: templates/storage/snapshots.html:33 templates/storage/snapshots.html:37
 msgid "Destroy snapshot"
@@ -4974,7 +4965,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:25
 msgid "Keep snapshot for"
-msgstr ""
+msgstr "Manter snapshot por"
 
 #: templates/storage/tasks.html:38
 msgid "No"
