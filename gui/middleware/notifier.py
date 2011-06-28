@@ -954,7 +954,7 @@ class notifier:
         assert volume.vol_fstype == 'ZFS'
 
         # TODO: Handle with 4khack aftermath
-        devname = disk.identifier_to_device()
+        devname = disk.identifier_to_partition()
         zlabel = self.device_to_zlabel(devname, volume.vol_name)
 
         # Remove the swap partition for another time to be sure.
@@ -1792,6 +1792,8 @@ class notifier:
         for entry in search:
             if re.search(r'\b%s\b' % entry.content, status):
                 return entry.content
+        if re.search(r'\b%s\b' % devname, status):
+            return devname
         return None
 
 def usage():
@@ -1808,7 +1810,7 @@ def usage():
 # When running as standard-alone script
 if __name__ == '__main__':
     from sys import argv
-    if len(argv) != 3:
+    if len(argv) < 3:
         usage()
     else:
         n = notifier()
@@ -1817,4 +1819,4 @@ if __name__ == '__main__':
         except:
             print ("Unknown action: %s" % argv[1])
             usage()
-        print f(argv[2])
+        print f(*argv[2:])

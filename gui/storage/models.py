@@ -139,6 +139,8 @@ class Disk(Model):
             )
     def identifier_to_device(self):
         return notifier().identifier_to_device(self.disk_identifier)
+    def identifier_to_partition(self):
+        return notifier().identifier_to_partition(self.disk_identifier)
     def save(self, *args, **kwargs):
         if self.id:
             notifier().restart("smartd")
