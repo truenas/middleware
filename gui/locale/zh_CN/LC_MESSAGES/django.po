@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-22 06:30+0200\n"
+"PO-Revision-Date: 2011-06-28 10:59+0200\n"
 "Last-Translator: kiDemon <275378227@qq.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -1498,7 +1498,7 @@ msgstr "最大迸发长度"
 
 #: services/models.py:296 services/models.py:302
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr "iSCSI初始参数 （默认值为262144）"
+msgstr "iSCSI初始参数（默认值为262144）"
 
 #: services/models.py:301
 msgid "Max receive data segment length"

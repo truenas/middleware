@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-06-23 19:00+0200\n"
+"PO-Revision-Date: 2011-06-27 11:17+0200\n"
 "Last-Translator: samueljon <sammi@villingaholt.nu>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: is\n"
@@ -3155,7 +3155,7 @@ msgstr ""
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
-msgstr ""
+msgstr "Virkja S.M.A.R.T."
 
 #: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
@@ -3282,7 +3282,7 @@ msgstr ""
 
 #: storage/models.py:309
 msgid "Weekday"
-msgstr ""
+msgstr "Vikudagur"
 
 #: storage/models.py:327
 msgid "Periodic Snapshot Task"
@@ -3336,7 +3336,7 @@ msgstr ""
 #: storage/nav.py:121 storage/nav.py:139 templates/storage/volumes.html:168
 #: templates/storage/volumes.html.py:172
 msgid "Change Permissions"
-msgstr ""
+msgstr "Breyta réttindum"
 
 #: storage/views.py:88 storage/views.py:115 storage/views.py:137
 msgid "Volume successfully added."
@@ -3478,27 +3478,27 @@ msgstr ""
 
 #: system/models.py:51
 msgid "Language"
-msgstr ""
+msgstr "Tungumál"
 
 #: system/models.py:57
 msgid "Timezone"
-msgstr ""
+msgstr "Tímabelti"
 
 #: system/models.py:62
 msgid "NTP server 1"
-msgstr ""
+msgstr "NTP þjónn 1"
 
 #: system/models.py:67
 msgid "NTP server 2"
-msgstr ""
+msgstr "NTP þjónn 2"
 
 #: system/models.py:73
 msgid "NTP server 3"
-msgstr ""
+msgstr "NTP þjónn 3"
 
 #: system/models.py:78 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
-msgstr ""
+msgstr "Stillingar"
 
 #: system/models.py:85
 msgid "Enable Console Menu"
@@ -3510,7 +3510,7 @@ msgstr ""
 
 #: system/models.py:89
 msgid "Enable screen saver"
-msgstr ""
+msgstr "Virkja skjávara"
 
 #: system/models.py:91
 msgid "Automatically Check for New Firmware"

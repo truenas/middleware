@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-26 23:38+0200\n"
+"PO-Revision-Date: 2011-06-27 19:08+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -2546,7 +2546,7 @@ msgstr "S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
-msgstr "שלוט בשירותים"
+msgstr "נהל שירותים"
 
 #: services/nav.py:50
 msgid "Add Device Extent"

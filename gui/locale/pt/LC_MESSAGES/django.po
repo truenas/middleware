@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-26 16:12+0200\n"
+"PO-Revision-Date: 2011-06-28 10:53+0200\n"
 "Last-Translator: iMiguel <miguel.rosa17@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
@@ -3283,14 +3283,12 @@ msgid "Volume from which this ZFS Volume will be created on"
 msgstr ""
 
 #: storage/forms.py:783
-#, fuzzy
 msgid "ZFS Volume Name"
-msgstr "Volume ZFS"
+msgstr "Nome do Volume ZFS"
 
 #: storage/forms.py:784
-#, fuzzy
 msgid "Size for this ZFS Volume"
-msgstr "Criar Volume ZFS"
+msgstr "Tamanho para o Volume ZFS"
 
 #: storage/forms.py:798
 msgid ""
@@ -3396,11 +3394,11 @@ msgstr "Opções extra do S.M.A.R.T."
 
 #: storage/models.py:133
 msgid "Group Membership"
-msgstr ""
+msgstr "Membro do Grupo"
 
 #: storage/models.py:134
 msgid "The disk group containing this disk"
-msgstr ""
+msgstr "O grupo de disco que contém este disco"
 
 #: storage/models.py:156 storage/models.py:237 storage/models.py:267
 #: templates/storage/tasks.html:22
@@ -3437,11 +3435,11 @@ msgstr "Erro"
 
 #: storage/models.py:229
 msgid "Remote Replication Host"
-msgstr ""
+msgstr "Host de replicação remota"
 
 #: storage/models.py:230
 msgid "Remote Replication Hosts"
-msgstr ""
+msgstr "Hosts de replicação remota"
 
 #: storage/models.py:241
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -3556,7 +3554,7 @@ msgstr "Ver todos os Volumes"
 #: storage/nav.py:78 templates/storage/volumes.html:19
 #: templates/storage/volumes.html.py:23
 msgid "Create ZFS Dataset"
-msgstr ""
+msgstr "Criar um Dataset em ZFS"
 
 #: storage/nav.py:89
 msgid "Add Periodic Snapshot"
@@ -5275,7 +5273,6 @@ msgstr ""
 "para qualquer cliente se conectar ao serviço cliente. Este utilizador "
 "deve existir no arquivo de senha, mas não exige um login válido."
 
-#, fuzzy
 msgid "ZVol Name"
 msgstr "Nome Completo"
 
