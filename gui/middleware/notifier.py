@@ -1096,8 +1096,8 @@ class notifier:
                              mode='0755', recursive=False):
         self.__system("/bin/setfacl -b '%s'" % path)
         self.__system("for i in $(jot 5); do setfacl -x 0 '%s'; done" % path)
-        self.__system("/bin/setfacl -a 0 group@:rxs::allow '%s'" % path)
-        self.__system("/bin/setfacl -a 1 everyone@:rxaRcs::allow '%s'" % path)
+        self.__system("/bin/setfacl -a 0 group@:rxs:fd:allow '%s'" % path)
+        self.__system("/bin/setfacl -a 1 everyone@:rxaRcs:fd:allow '%s'" % path)
         self.__system("/bin/setfacl -a 2 owner@:rwxpdDaARWcCo:fd:allow '%s'" % path)
         self.__system("/bin/setfacl -x 3 '%s'" % path)
 
