@@ -955,6 +955,7 @@ class notifier:
 
         # TODO: Handle with 4khack aftermath
         devname = disk.identifier_to_device()
+        zlabel = self.device_to_zlabel(devname, volume.vol_name)
 
         # Remove the swap partition for another time to be sure.
         # TODO: swap partition should be trashed instead.
@@ -962,7 +963,7 @@ class notifier:
         if devname_swap != '':
             self.__system('/sbin/swapoff /dev/%s' % (devname_swap))
 
-        ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume.vol_name, devname))
+        ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume.vol_name, zlabel))
         # TODO: This operation will cause damage to disk data which should be limited
         self.__gpt_unlabeldisk(devname)
         return ret
@@ -1790,7 +1791,6 @@ class notifier:
 
         for entry in search:
             if re.search(r'\b%s\b' % entry.content, status):
-                print "h,"
                 return entry.content
         return None
 
