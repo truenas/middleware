@@ -88,8 +88,8 @@ class CIFS_Share(Model):
     def __unicode__(self):
         return self.cifs_name
     class Meta:
-        verbose_name = _("Windows Share")
-        verbose_name_plural = _("Windows Shares")
+        verbose_name = _("CIFS Share")
+        verbose_name_plural = _("CIFS Shares")
     class FreeAdmin:
         icon_model = u"WindowsShareIcon"
         icon_add = u"AddWindowsShareIcon"
