@@ -642,6 +642,11 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         # NOTE: This approach may fail if device nodes are not accessible.
         pipe = popen("/usr/sbin/diskinfo ` /sbin/sysctl -n kern.disks` | /usr/bin/cut -f1,3")
         diskinfo = pipe.read().strip().split('\n')
+        # HAST Devices through GEOM GATE
+        gate_pipe = popen("/usr/sbin/diskinfo `/sbin/geom gate status -s | /usr/bin/cut -d\" \" -f1` | /usr/bin/cut -f1,3")
+        gate_diskinfo = gate_pipe.read().strip().split('\n')
+        for item in gate_diskinfo:
+            diskinfo.append(item)
         for disk in diskinfo:
             devname, capacity = disk.split('\t')
             capacity = humanize_size(capacity)
