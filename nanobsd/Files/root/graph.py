@@ -48,6 +48,9 @@ class Cache:
         if old_md5 != new_md5:
             File.WriteString(md5_path, new_md5)
             return False
+        else:
+            os.remove(md5_path)
+            os.remove(path)
         return True
 
 times = ['1h', '1d', '1w', '1m', '1y']
