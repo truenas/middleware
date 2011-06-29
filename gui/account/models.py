@@ -73,7 +73,7 @@ class bsdUsers(Model):
             verbose_name=_("User ID")
             )
     bsdusr_username = models.CharField(
-            max_length=30,
+            max_length=16,
             unique=True,
             default=_('User &'),
             verbose_name=_("Username")
