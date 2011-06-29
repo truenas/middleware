@@ -207,8 +207,8 @@ class AFP_Share(Model):
         return unicode(self.afp_name)
 
     class Meta:
-        verbose_name = _("Apple Share")
-        verbose_name_plural = _("Apple Shares")
+        verbose_name = _("AFP Share")
+        verbose_name_plural = _("AFP Shares")
     class FreeAdmin:
         icon_model = u"AppleShareIcon"
         icon_add = u"AddAppleShareIcon"
@@ -277,8 +277,8 @@ class NFS_Share(Model):
         return unicode(self.nfs_path)
 
     class Meta:
-        verbose_name = _("UNIX Share")
-        verbose_name_plural = _("UNIX Shares")
+        verbose_name = _("NFS Share")
+        verbose_name_plural = _("NFS Shares")
     class FreeAdmin:
         icon_model = u"UNIXShareIcon"
         icon_add = u"AddUNIXShareIcon"
