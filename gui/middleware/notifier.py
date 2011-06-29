@@ -552,6 +552,9 @@ class notifier:
         if p1.returncode != 0:
             from middleware.exceptions import MiddlewareError
             raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
+        # Install a dummy boot block so system gives meaningful message if booting
+        # from the wrong disk.
+        self.__system("gpart bootcode -b /boot/pmbr-datadisk /dev/%s" % (str(devname)))
         return need4khack
 
     def __gpt_unlabeldisk(self, devname):
