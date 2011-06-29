@@ -1,5 +1,5 @@
 #rebootDialog_underlay { background-color:#000; }
-#shutdownDialog_underlay { background-color:#FD0000; }
+#shutdownDialog_underlay, #editscary_dialog_underlay { background-color:#FD0000; }
 #top_dialog_underlay { background-color:#000; }
 #top_dialog .dijitDialogPaneContent { background-color:#000 !important; }
 #log_dialog .dijitDialogPaneContent { width:800px;background-color:#000 !important; }

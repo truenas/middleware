@@ -34,6 +34,7 @@ from django.contrib.auth.views import logout
 urlpatterns = patterns('account.views',
     url(r'^home/$', 'home', name="account_home"),
     url(r'^bsduser/$', 'bsduser', name="account_bsduser"),
+    url(r'^bsduser/json/$', 'json_users', name="account_bsduser_json"),
     url(r'^bsduser/json/(?P<exclude>.+)/$', 'json_users', name="account_bsduser_json"),
     url(r'^bsduser/(?P<object_id>\d+)/groups/$', 'user2group_update', name="account_bsduser_groups"),
     url(r'^bsdgroup/$', 'bsdgroup', name="account_bsdgroup"),

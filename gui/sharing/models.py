@@ -68,14 +68,12 @@ class CIFS_Share(Model):
             verbose_name = _("Allow Guest Access"))
     cifs_guestonly = models.BooleanField(
             verbose_name = _("Only Allow Guest Access"))
-    cifs_hostsallow = models.CharField(
-            max_length=120,
+    cifs_hostsallow = models.TextField(
             blank=True,
             verbose_name = _("Hosts Allow"),
             help_text = _("This option is a comma, space, or tab delimited set of hosts which are permitted to access this share. You can specify the hosts by name or IP number. Leave this field empty to use default settings.")
             )
-    cifs_hostsdeny = models.CharField(
-            max_length=120,
+    cifs_hostsdeny = models.TextField(
             blank=True,
             verbose_name = _("Hosts Deny"),
             help_text = _("This option is a comma, space, or tab delimited set of host which are NOT permitted to access this share. Where the lists conflict, the allow list takes precedence. In the event that it is necessary to deny all by default, use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify to the hosts allow parameter those hosts that should be permitted access. Leave this field empty to use default settings.")
@@ -86,7 +84,7 @@ class CIFS_Share(Model):
             blank=True,
             help_text = _("These parameters are added to [Share] section of smb.conf")
             )
-   
+
     def __unicode__(self):
         return self.cifs_name
     class Meta:

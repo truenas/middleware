@@ -45,7 +45,18 @@ import grp
 import pwd
 import signal
 import time
+import sys
 from subprocess import Popen, PIPE
+
+WWW_PATH = "/usr/local/www"
+FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
+
+sys.path.append(WWW_PATH)
+sys.path.append(FREENAS_PATH)
+
+os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
+
+from django.db import models
 
 class notifier:
     from os import system as ___system
@@ -285,6 +296,7 @@ class notifier:
         self.__system("/usr/sbin/service samba quietstart")
 
     def _started_ldap(self):
+        ret = False
         from freenasUI.common.freenasldap import FreeNAS_LDAP
         c = self.__open_db()
         c.execute("SELECT srv_enable FROM services_services WHERE srv_service='ldap' ORDER BY -id LIMIT 1")
@@ -293,11 +305,14 @@ class notifier:
             c.execute("SELECT ldap_hostname,ldap_rootbasedn,ldap_rootbindpw,ldap_basedn,ldap_ssl FROM services_ldap ORDER BY -id LIMIT 1")
             host, rootbasedn, pw, basedn, ssl = c.fetchone()
             f = FreeNAS_LDAP(host, rootbasedn, pw, basedn, ssl)
+            f.open()
             if f.isOpen():
-                return True
+                ret = True
             else:
-                return False
-        return False
+                ret = False
+            f.close()
+
+        return ret
 
     def _stop_ldap(self):
         self.__system("/usr/sbin/service ix-ldap quietstart")
@@ -313,6 +328,7 @@ class notifier:
         self.__system("/usr/sbin/service samba quietstart")
 
     def _started_activedirectory(self):
+        ret = False
         from freenasUI.common.freenasldap import FreeNAS_LDAP
         c = self.__open_db()
         c.execute("SELECT srv_enable FROM services_services WHERE srv_service='activedirectory' ORDER BY -id LIMIT 1")
@@ -325,10 +341,12 @@ class notifier:
             f.basedn = f.get_active_directory_baseDN()
             f.open()
             if f.isOpen():
-                return True
+                ret = True
             else:
-                return False
-        return False
+                ret = False
+            f.close()
+
+        return ret
 
     def _start_activedirectory(self):
         self.__system("/usr/sbin/service ix-kerberos quietstart")
@@ -595,7 +613,7 @@ class notifier:
         if not os.path.isdir("/data/zfs"):
             os.makedirs("/data/zfs")
         p1 = self.__pipeopen("zpool create -o cachefile=/data/zfs/zpool.cache "
-                      "-f -o altroot=/mnt %s %s" % (z_name, z_vdev))
+                      "-f -m /mnt/%s -o altroot=/mnt %s %s" % (z_name, z_name, z_vdev))
         p1.wait()
         if p1.returncode != 0:
             from middleware.exceptions import MiddlewareError
@@ -608,7 +626,8 @@ class notifier:
             for disk in hack_vdevs:
                 self.__system("gnop destroy /dev/%s.nop" % disk)
             self.__system("zpool import -R /mnt %s" % (z_name))
-            self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
+
+        self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
 
         # These should probably be options that are configurable from the GUI
         self.__system("zfs set aclmode=passthrough %s" % z_name)
@@ -935,7 +954,8 @@ class notifier:
         assert volume.vol_fstype == 'ZFS'
 
         # TODO: Handle with 4khack aftermath
-        devname = disk.identifier_to_device()
+        devname = disk.identifier_to_partition()
+        zlabel = self.device_to_zlabel(devname, volume.vol_name)
 
         # Remove the swap partition for another time to be sure.
         # TODO: swap partition should be trashed instead.
@@ -943,7 +963,7 @@ class notifier:
         if devname_swap != '':
             self.__system('/sbin/swapoff /dev/%s' % (devname_swap))
 
-        ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume.vol_name, devname))
+        ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume.vol_name, zlabel))
         # TODO: This operation will cause damage to disk data which should be limited
         self.__gpt_unlabeldisk(devname)
         return ret
@@ -967,7 +987,7 @@ class notifier:
     def _destroy_volume(self, volume):
         """Destroy a volume designated by volume_id"""
 
-        assert volume.vol_fstype in ('ZFS', 'UFS', 'iscsi', 'NTFS', 'MSDOSFS')
+        assert volume.vol_fstype in ('ZFS', 'UFS', 'iscsi', 'NTFS', 'MSDOSFS', 'EXT2FS')
         if volume.vol_fstype == 'ZFS':
             self.__destroy_zfs_volume(volume)
         elif volume.vol_fstype == 'UFS':
@@ -1076,12 +1096,10 @@ class notifier:
                              mode='0755', recursive=False):
         self.__system("/bin/setfacl -b '%s'" % path)
         self.__system("for i in $(jot 5); do setfacl -x 0 '%s'; done" % path)
-        self.__system("/bin/setfacl -a 0 group@:wpD::deny '%s'" % path)
-        self.__system("/bin/setfacl -a 1 everyone@:wpDAWCo::deny '%s'" % path)
-        self.__system("/bin/setfacl -a 2 group@:rxs::allow '%s'" % path)
-        self.__system("/bin/setfacl -a 3 everyone@:rxaRcs::allow '%s'" % path)
-        self.__system("/bin/setfacl -a 4 owner@:rwxpdDaARWcCo:fd:allow '%s'" % path)
-        self.__system("/bin/setfacl -x 5 '%s'" % path)
+        self.__system("/bin/setfacl -a 0 group@:rxs:fd:allow '%s'" % path)
+        self.__system("/bin/setfacl -a 1 everyone@:rxaRcs:fd:allow '%s'" % path)
+        self.__system("/bin/setfacl -a 2 owner@:rwxpdDaARWcCo:fd:allow '%s'" % path)
+        self.__system("/bin/setfacl -x 3 '%s'" % path)
 
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',
                              mode='0755', recursive=False):
@@ -1208,13 +1226,14 @@ class notifier:
 
         return disksd
 
-    def get_partitions(self):
+    def get_partitions(self, try_disks=True):
         disks = self.get_disks().keys()
         partitions = {}
         for disk in disks:
 
             listing = glob.glob('/dev/%s[a-fps]*' % disk)
-            listing.sort()
+            if try_disks is True and len(listing) == 0:
+                listing = [disk]
             for part in list(listing):
                 toremove = len([i for i in listing if i.startswith(part) and i != part]) > 0
                 if toremove:
@@ -1248,13 +1267,18 @@ class notifier:
             p1.wait()
             if p1.returncode == 0:
                 return True
+        elif fstype == 'EXT2FS':
+            p1 = Popen(["/sbin/fsck_ext2fs", "-p", dev], stdin=PIPE, stdout=PIPE)
+            p1.wait()
+            if p1.returncode == 0:
+                return True
 
         return False
 
     def label_disk(self, label, dev, fstype=None):
         """
         Label the disk being manually imported
-        Currently UFS, NTFS and MSDOSFS are supported
+        Currently UFS, NTFS, MSDOSFS and EXT2FS are supported
         """
 
         if fstype == 'UFS':
@@ -1269,6 +1293,11 @@ class notifier:
                 return True
         elif fstype == 'MSDOSFS':
             p1 = Popen(["/usr/local/bin/mlabel", "-i", dev, "::%s" % label], stdin=PIPE, stdout=PIPE)
+            p1.wait()
+            if p1.returncode == 0:
+                return True
+        elif fstype == 'EXT2FS':
+            p1 = Popen(["/usr/local/sbin/tune2fs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
             p1.wait()
             if p1.returncode == 0:
                 return True
@@ -1762,8 +1791,9 @@ class notifier:
 
         for entry in search:
             if re.search(r'\b%s\b' % entry.content, status):
-                print "h,"
                 return entry.content
+        if re.search(r'\b%s\b' % devname, status):
+            return devname
         return None
 
 def usage():
@@ -1780,7 +1810,7 @@ def usage():
 # When running as standard-alone script
 if __name__ == '__main__':
     from sys import argv
-    if len(argv) != 3:
+    if len(argv) < 3:
         usage()
     else:
         n = notifier()
@@ -1789,4 +1819,4 @@ if __name__ == '__main__':
         except:
             print ("Unknown action: %s" % argv[1])
             usage()
-        print f(argv[2])
+        print f(*argv[2:])

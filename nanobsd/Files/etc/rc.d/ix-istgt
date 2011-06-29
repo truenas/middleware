@@ -108,6 +108,10 @@ generate_istgt_config()
 	csfields=`echo ${fields} | sed -e 's/ /, /g'`
         ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${csfields} FROM services_iscsitarget ORDER BY id" | \
         while eval read ${fields}; do
+		extent_count=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(*) FROM services_iscsitargettoextent AS t WHERE t.iscsi_target_id = ${id}"`
+		if [ "${extent_count}" = "0" ]; then
+			continue
+		fi
 		echo "[LogicalUnit${id}]"
 		echo "  TargetName \"${iscsi_target_name}\""
 		if [ -n "${iscsi_target_alias}" ]; then

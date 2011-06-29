@@ -37,7 +37,7 @@ from django.db import transaction
 
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.common import humanize_size
+from freenasUI.common import humanize_size, humanize_number_si
 from freenasUI.storage import models
 from freenasUI import choices
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups, \
@@ -185,7 +185,7 @@ class VolumeWizardForm(forms.Form):
         diskinfo = pipe.read().strip().split('\n')
         for disk in diskinfo:
             devname, capacity = disk.split('\t')
-            capacity = humanize_size(capacity)
+            capacity = humanize_number_si(capacity)
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
@@ -340,7 +340,7 @@ class VolumeImportForm(forms.Form):
 
     volume_name = forms.CharField(max_length = 30, label = _('Volume name') )
     volume_disks = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict), label = _('Member disk'))
-    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'NTFS', 'MSDOSFS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
+    volume_fstype = forms.ChoiceField(choices = ((x, x) for x in ('UFS', 'NTFS', 'MSDOSFS', 'EXT2FS')), widget=forms.RadioSelect(attrs=attrs_dict), label = 'File System type')
 
     def __init__(self, *args, **kwargs):
         super(VolumeImportForm, self).__init__(*args, **kwargs)
@@ -394,7 +394,7 @@ class VolumeImportForm(forms.Form):
         if cleaned_data.has_key("volume_name"):
             dolabel = notifier().label_disk(cleaned_data["volume_name"], "/dev/%s" % cleaned_data['volume_disks'], cleaned_data['volume_fstype'])
             if not dolabel:
-                msg = _(u"Some error ocurried while labelling the disk.")
+                msg = _(u"Some error ocurred while labelling the disk.")
                 self._errors["volume_name"] = self.error_class([msg])
                 if cleaned_data.has_key("volume_name"):
                     del cleaned_data["volume_name"]
@@ -491,7 +491,6 @@ class VolumeAutoImportForm(forms.Form):
                 elif cleaned_data['volume']['group_type'] == 'raid3':
                     dev = "/dev/raid3/%s" % (cleaned_data['volume']['label'])
                 else:
-                    #TODO
                     raise NotImplementedError
 
                 isvalid = notifier().precheck_partition(dev, 'UFS')
@@ -503,7 +502,6 @@ class VolumeAutoImportForm(forms.Form):
             elif cleaned_data['volume']['type'] == 'zfs':
                 pass
             else:
-                #TODO
                 raise NotImplementedError
 
         return cleaned_data
@@ -774,7 +772,7 @@ class ZFSVolume_EditForm(Form):
 class ZVol_CreateForm(Form):
     zvol_volid = forms.ChoiceField(choices=(), widget=forms.Select(attrs=attrs_dict),  label=_('Volume from which this ZFS Volume will be created on'))
     zvol_name = forms.CharField(max_length = 128, label = _('ZFS Volume Name'))
-    zvol_size = forms.CharField(max_length = 128, initial=0, label=_('Size for this ZFS Volume'), help_text=_('0=Unlimited; example: 1g'))
+    zvol_size = forms.CharField(max_length = 128, initial=0, label=_('Size for this ZFS Volume'), help_text=_('Example: 1g'))
     zvol_compression = forms.ChoiceField(choices=choices.ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
     def __init__(self, *args, **kwargs):
         super(ZVol_CreateForm, self).__init__(*args, **kwargs)

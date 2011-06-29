@@ -29,44 +29,34 @@ from freenasUI.common.system import get_freenas_var
 
 import os
 import cPickle as pickle
-import shelve 
 import syslog
 import time
+import bsddb3
 
+from bsddb3 import db
 from syslog import syslog, LOG_DEBUG
 
 FREENAS_CACHEDIR = get_freenas_var("FREENAS_CACHEDIR", "/var/tmp/.cache")
 FREENAS_CACHEEXPIRE = int(get_freenas_var("FREENAS_CACHEEXPIRE", 60))
 
-class FreeNAS_BaseCache:
+class FreeNAS_BaseCache(object):
     def __init__(self, cachedir = FREENAS_CACHEDIR):
         syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: enter")
 
         self.__cachedir = cachedir 
-        self.__index = os.path.join(self.__cachedir, ".index")
-        syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: cachedir = %s" % self.__cachedir)
-        syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: index = %s" % self.__index)
-
-        #st = os.stat(self.__index + ".db") 
-        #print st.st_ctime
-        #print st
-
-        #now = time.mktime(time.localtime())
-        #print now
-
-        #diffsec = int(now) - int(st.st_ctime)
-        #print "diffsec = %d" % diffsec
-
-        #diffmin  = diffsec / 60
-        #print "diffmin = %d" % diffmin
-
-        #if diffmin >= FREENAS_LDAP_CACHE_EXPIRE:
-        #    print "PLEASE EXPIRE THE CACHE"
+        self.__cachefile = os.path.join(self.__cachedir, ".cache.db")
 
         if not self.__dir_exists(self.__cachedir):
             os.makedirs(self.__cachedir)
 
-        self.__shelve = shelve.open(self.__index)
+        self.__dbenv = db.DBEnv()
+        self.__dbenv.open(self.__cachedir, db.DB_INIT_CDB|db.DB_INIT_MPOOL|db.DB_CREATE, 0700)
+
+        self.__cache = db.DB(self.__dbenv)
+        self.__cache.open(self.__cachefile, None, db.DB_BTREE, db.DB_CREATE)
+
+#        syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: cachedir = %s" % self.__cachedir)
+        syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: cachefile = %s" % self.__cachefile)
         syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: leave")
 
     def __dir_exists(self, path):
@@ -81,66 +71,66 @@ class FreeNAS_BaseCache:
         return path_exists
 
     def __len__(self):
-        return len(self.__shelve)
+        return len(self.__cache)
 
     def __iter__(self):
-        for key in sorted(self.__shelve.keys()):
-            obj = pickle.loads(self.__shelve[key])
+        for key in sorted(self.__cache.keys()):
+            obj = pickle.loads(self.__cache[key])
             yield obj
 
     def __getitem__(self, key):
-        return pickle.loads(self.__shelve[key])
+        return pickle.loads(self.__cache.get(key))
 
     def __setitem__(self, key, value):
-        self.__shelve[key] = pickle.dumps(value)
+        self.__cache[key] = pickle.dumps(value)
 
     def has_key(self, key):
-        return self.__shelve.has_key(key)
+        return self.__cache.has_key(key)
 
     def keys(self):
-        return self.__shelve.keys()
+        return self.__cache.keys()
 
     def values(self):
-        shelve_values = []
-        for key in self.__shelve.keys():
-            shelve_values.append(pickle.loads(self.__shelve[key]))
-        return shelve_values
+        cache_values = []
+        for key in self.__cache.keys():
+            cache_values.append(pickle.loads(self.__cache[key]))
+        return cache_values
 
     def items(self):
-        shelve_items = []
-        for key in self.__shelve.keys():
-            shelve_items.append((key, pickle.loads(self.__shelve[key])))
-        return shelve_items
+        cache_items = []
+        for key in self.__cache.keys():
+            cache_items.append((key, pickle.loads(self.__cache[key])))
+        return cache_items
 
     def empty(self):
-        return (len(self.__shelve) == 0)
+        return (len(self.__cache) == 0)
 
     def expire(self):
-        for key in self.__shelve.keys():
-            del self.__shelve[key]
-        self.__shelve.close()
-        os.unlink(self.__index + ".db")
+        for key in self.__cache.keys():
+            self.__cache.delete(key)
+        self.__cache.close()
+        os.unlink(self.__cachefile)
 
     def read(self, key):
         if not key:
             return None
 
-        pobj = pickle.loads(self.__shelve[key])
+        pobj = pickle.loads(self.__cache[key])
         return pobj
 
     def write(self, key, entry):
         if not key:
             return False
 
-        self.__shelve[key] = pickle.dumps(entry)
+        self.__cache[key] = pickle.dumps(entry)
         return True
 
     def delete(self, key):
         if not key:
             return False
 
-        del self.__shelve[key]
+        self.__cache.delete(key)
         return True
 
     def close(self):
-        self.__shelve.close() 
+        self.__cache.close() 

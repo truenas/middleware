@@ -89,7 +89,7 @@
                 <button id="delZVolBtn{{ forloop.counter }}" dojoType="dijit.form.Button" type="button">
                     <img src="{{ STATIC_URL }}images/ui/buttons/remove_volume.png" width="18px" height="18px">
                     <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Destroy ZFS Volume"|force_escape %}', '{% url storage_zvol_delete name=zvol %}', [this,]);
+                        editScaryObject('{% trans "Destroy ZFS Volume"|force_escape %}', '{% url storage_zvol_delete name=zvol %}', [this,]);
                     </script>
                 </button>
                 <div dojoType="dijit.Tooltip" connectId="delZVolBtn{{ forloop.counter }}" position="above">
@@ -125,7 +125,7 @@
     <button id="delDSBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/remove_dataset.png">
         <script type="dojo/method" event="onClick" args="evt">
-            editObject('{% trans "Destroy Dataset"|force_escape %}', '{% url storage_dataset_delete object_id=m.id %}', [this,]);
+            editScaryObject('{% trans "Destroy Dataset"|force_escape %}', '{% url storage_dataset_delete object_id=m.id %}', [this,]);
         </script>
     </button>
     <div dojoType="dijit.Tooltip" connectId="delDSBtn{{ m.id }}" position="above">
@@ -144,7 +144,7 @@
     <button id="delVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/remove_volume.png" width="18px" height="18px">
         <script type="dojo/method" event="onClick" args="evt">
-            editObject('{% trans "Destroy Volume"|force_escape %}', '{% url freeadmin_model_delete app="storage",model="Volume",oid=m.mp_volume.id %}', [this,]);
+            editScaryObject('{% trans "Destroy Volume"|force_escape %}', '{% url freeadmin_model_delete app="storage",model="Volume",oid=m.mp_volume.id %}', [this,]);
         </script>
     </button>
     <div dojoType="dijit.Tooltip" connectId="delVolBtn{{ m.id }}" position="above">

@@ -182,10 +182,14 @@ Hello,
          last_snapshot = release_list[0]
 
     for snapname in wanted_list:
-        if last_snapshot == '':
-            replcmd = '/sbin/zfs send %s%s | %s %s "/sbin/zfs receive -F -d %s && echo Succeeded." > %s 2>&1' % (Rflag, snapname, sshcmd, remote, remotefs, templog)
+        if replication.repl_limit != 0:
+            limit = ' | /usr/local/bin/throttle -K %d' % replication.repl_limit
         else:
-            replcmd = '/sbin/zfs send %s-I %s %s | %s %s "/sbin/zfs receive -F -d %s && echo Succeeded." > %s 2>&1' % (Rflag, last_snapshot, snapname, sshcmd, remote, remotefs, templog)
+            limit = ''
+        if last_snapshot == '':
+            replcmd = '/sbin/zfs send %s%s%s | %s %s "/sbin/zfs receive -F -d %s && echo Succeeded." > %s 2>&1' % (Rflag, snapname, limit, sshcmd, remote, remotefs, templog)
+        else:
+            replcmd = '/sbin/zfs send %s-I %s %s%s | %s %s "/sbin/zfs receive -F -d %s && echo Succeeded." > %s 2>&1' % (Rflag, last_snapshot, snapname, limit, sshcmd, remote, remotefs, templog)
         system(replcmd)
         f = open(templog)
         msg = f.read()

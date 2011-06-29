@@ -32,7 +32,7 @@ from django.core.urlresolvers import reverse
 from django.http import QueryDict
 
 from dojango import forms
-from dojango.forms import widgets 
+from dojango.forms import widgets
 from freenasUI.sharing import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
@@ -50,7 +50,15 @@ class MountPointForm(ModelForm):
 
 class CIFS_ShareForm(ModelForm):
     class Meta:
-        model = models.CIFS_Share 
+        model = models.CIFS_Share
+    def clean_cifs_hostsallow(self):
+        net = self.cleaned_data.get("cifs_hostsallow")
+        net = re.sub(r'\s{2,}|\n', ' ', net).strip()
+        return net
+    def clean_cifs_hostsdeny(self):
+        net = self.cleaned_data.get("cifs_hostsdeny")
+        net = re.sub(r'\s{2,}|\n', ' ', net).strip()
+        return net
     def save(self):
         ret = super(CIFS_ShareForm, self).save()
         notifier().reload("cifs")
@@ -58,7 +66,7 @@ class CIFS_ShareForm(ModelForm):
 
 class AFP_ShareForm(ModelForm):
     class Meta:
-        model = models.AFP_Share 
+        model = models.AFP_Share
     def save(self):
         ret = super(AFP_ShareForm, self).save()
         notifier().reload("afp")
@@ -66,7 +74,7 @@ class AFP_ShareForm(ModelForm):
 
 class NFS_ShareForm(ModelForm):
     class Meta:
-        model = models.NFS_Share 
+        model = models.NFS_Share
     def clean_nfs_network(self):
         net = self.cleaned_data['nfs_network']
         net = re.sub(r'\s{2,}|\n', ' ', net).strip()
@@ -90,7 +98,7 @@ class NFS_ShareForm(ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
-        for field in ('nfs_maproot_user', 'nfs_maproot_group', 
+        for field in ('nfs_maproot_user', 'nfs_maproot_group',
                         'nfs_mapall_user', 'nfs_mapall_group'):
             if cdata.get(field, None) in ('', '-----'):
                 cdata[field] = None

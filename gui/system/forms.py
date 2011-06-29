@@ -65,13 +65,9 @@ class FileWizard(FormWizard):
         previous_form_list = []
         for i in range(current_step):
             f = self.get_form(i, request.POST, request.FILES)
-            # TODO: Remove try for new django version
-            try:
-                if not self._check_security_hash(request.POST.get("hash_%d" % i, ''),
-                                                 request, f):
-                    return self.render_hash_failure(request, i)
-            except:
-                pass
+            if not self._check_security_hash(request.POST.get("hash_%d" % i, ''),
+                                             request, f):
+                return self.render_hash_failure(request, i)
 
             if not f.is_valid():
                 return self.render_revalidation_failure(request, i, f)
@@ -142,6 +138,10 @@ class FileWizard(FormWizard):
 class SettingsForm(ModelForm):
     class Meta:
         model = models.Settings
+        widgets = {
+            'stg_timezone': forms.widgets.FilteringSelect(),
+            'stg_language': forms.widgets.FilteringSelect(),
+        }
     def __init__(self, *args, **kwargs):
         super(SettingsForm, self).__init__( *args, **kwargs)
         self.instance._original_stg_guiprotocol = self.instance.stg_guiprotocol

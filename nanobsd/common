@@ -135,6 +135,7 @@ WITHOUT_SENDMAIL=true
 WITHOUT_SHAREDOCS=true
 WITHOUT_SSP=true
 WITHOUT_SYSCONS=true
+WITHOUT_SYSINSTALL=true
 WITHOUT_LIB32=true
 PYTHON_DEFAULT_VERSION=python2.7
 "
@@ -301,7 +302,10 @@ freenas_custom()
 	# Perl seems to be needed for build, but nothing after the
 	# build.  cope with bad dependencies (or misunderstood) and
 	# blow it away (saves 43MB)
-	rm -rf ${NANO_WORLDDIR}/usr/local/lib/perl5
+	if [ ! "${DEBUG}" -eq "1" ]; then
+		rm -rf ${NANO_WORLDDIR}/usr/local/lib/perl5
+	fi
+
 
 	# Kill all .a's that are installed (15MB)
 	find ${NANO_WORLDDIR} -name \*.a | xargs rm

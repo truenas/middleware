@@ -679,10 +679,11 @@ Index: sbin/geom/class/raid5/Makefile
 ===================================================================
 --- sbin/geom/class/raid5/Makefile	(revision 0)
 +++ sbin/geom/class/raid5/Makefile	(revision 0)
-@@ -0,0 +1,7 @@
+@@ -0,0 +1,8 @@
 +# $FreeBSD$
 +
 +.PATH: ${.CURDIR}/../../misc
++CFLAGS+=  -I${.CURDIR}/../../../../sys
 +
 +CLASS=	raid5
 +

@@ -55,6 +55,19 @@ generate_fstab_real()
 			echo "/dev/msdosfs/${vname}		${mountpoint}			msdosfs		rw,late	2	2"
 		fi
 	done
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT v.vol_name, mp.mp_path FROM storage_volume AS v LEFT OUTER JOIN storage_mountpoint AS mp ON v.id = mp.mp_volume_id WHERE v.vol_fstype = 'EXT2FS'" | \
+	while read volumename newmp; do
+		if [ -c "/dev/ext2fs/${volumename}" ]; then
+			if [ -z "${newmp}" ]; then
+				mountpoint=/mnt/${volumename}
+			else
+				mountpoint=${newmp}
+			fi
+			mkdir -p ${mountpoint}
+			echo "/dev/ext2fs/${volumename}		${mountpoint}			ext2fs		rw,late	2	2"
+		fi
+	done
 }
 
 generate_fstab_swap()

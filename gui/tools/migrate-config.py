@@ -27,6 +27,7 @@
 
 import os
 import sys
+import getopt
 import sqlite3
 import re
 
@@ -38,13 +39,10 @@ FREENAS_SYSCTLCONF = os.path.join(FREENAS_ETC_BASE, "sysctl.conf")
 FREENAS_HOSTSALLOW = os.path.join(FREENAS_ETC_BASE, "hosts.allow")
 FREENAS_HOSTS = os.path.join(FREENAS_ETC_BASE, "hosts")
 
-#FREENAS_DBPATH = "/data/freenas-v1.db"
-FREENAS_DBPATH = "/home/john/freenas-v1.db"
-FREENAS_DEBUG = 1
 
 
 def usage():
-    print >> sys.stderr, "%s <config.xml>" % sys.argv[0]
+    print >> sys.stderr, "%s [-d] -c <config.xml> -b <database.db>" % sys.argv[0]
     sys.exit(1)
 
 
@@ -55,10 +53,20 @@ class FreeNASSQL:
         self.__debug = debug
 
     def sqldebug(self, fmt, *args):
+
+        __id = -1
         if self.__debug:
             __str = "DEBUG: " + fmt
             __str = __str % args
             print >> sys.stderr, __str
+
+        else:
+            __sql = fmt % args
+            self.__cursor.execute(__sql)
+            self.__cursor.commit()
+            __id = self.__cursor.lastrowid
+
+        return __id
 
     def getmaxID(self, table, idname = "id"):
         self.__cursor.execute("select max(%s) from %s" % (idname, table))
@@ -91,7 +99,7 @@ class FreeNASSQL:
             __sql += "'%s', " % pairs[p]
         __sql = __sql[:-2] + ');'
 
-        self.sqldebug(__sql)
+        __lastrowid = self.sqldebug(__sql)
 
         return self.__cursor.lastrowid
 
@@ -117,14 +125,15 @@ class FreeNASSQL:
 
 
     def close(self):
-        pass
+        self.__cursor.close()
 
 
 class ConfigParser:
-    def __init__(self, config):
+    def __init__(self, config, database, debug = False):
         pass
         self.__config = config
-        self.__sql = FreeNASSQL(FREENAS_DBPATH, FREENAS_DEBUG)
+        self.__sql = FreeNASSQL(database, debug)
+        self.__failed = False
 
     def __getChildNodeValue(self, __parent):
         __node = None
@@ -200,7 +209,7 @@ class ConfigParser:
             __method = getattr(self, __prefix + __name)
 
         except AttributeError:
-            print "oops, missing %s" % __prefix + __name
+            #print "oops, missing %s" % __prefix + __name
             __method = self._nullmethod
 
         return __method
@@ -236,6 +245,7 @@ class ConfigParser:
         __str = "FAIL: " + fmt
         __str = __str % args
         print >> sys.stderr, __str
+
 
     def __handle_cronjob(self, __parent, __user, __command):
         __enable = self.__getChildNode(__parent, "enable")
@@ -430,7 +440,7 @@ class ConfigParser:
             #__pairs['bsdusr_builtin']
             __pairs['bsdusr_home'] = "/home/" + __login
 
-           self.__sql.insert(__table, __pairs)
+            self.__sql.insert(__table, __pairs)
 
 
     def _handle_ad(self, __parent, __level):
@@ -457,6 +467,7 @@ class ConfigParser:
     #
     def _handle_afp(self, __parent, __level):
         __nodemap = {'enable':None, 'afpname':'afp_srv_name', 'guest':'afp_srv_guest'}
+        #__enable_node = self.__getChildNode(__parent, "enable")
 
         __pairs = {}
         __table = "services_afp"
@@ -497,12 +508,6 @@ class ConfigParser:
 
             if __pairs:
                 self.__sql.insert(__table, __pairs)
-
-    #
-    # XXX WTF??? XXX
-    #
-    def _handle_diag(self, __parent, __level):
-        pass
 
     #
     # XXX this needs more work XXX
@@ -1277,12 +1282,6 @@ class ConfigParser:
         __pairs['ssl_certfile'] = __value
         self.__sql.do(__table, __pairs) 
 
-    #
-    # XXX WTF XXX
-    #
-    def _handle_system_zerconf(self, __parent, __level):
-        pass
-
     def _handle_system_motd(self, __parent, __level):
         __value = self.__getChildNodeValue(__parent)
         if not __value:
@@ -1609,11 +1608,17 @@ class ConfigParser:
         #
 
 
-    #
-    # XXX needs to be implemented XXX
-    #
     def _handle_system_sysconsaver(self, __parent, __level):
-        pass
+        __sysconsaver_node = self.__getChildNode(__parent, "sysconsaver")
+        if __sysconsaver_node:
+            __enable_node = self.__getChildNode(__sysconsaver_node, "enable")
+            if __enable_node:
+                __table = "system_advanced"
+
+                __pairs = {}
+                __pairs['adv_consolescreensaver'] = 1
+                self.__sql.do(__table, __pairs) 
+                
 
     def _handle_system_dnsserver(self, __parent, __level):
         __value = self.__getChildNodeValue(__parent)
@@ -1626,11 +1631,13 @@ class ConfigParser:
         __pairs['gc_nameserver1'] = __value
         self.__sql.do(__table, __pairs) 
 
+
     def _handle_system(self, __parent, __level):
         for __node in __parent.childNodes:
             if __node.nodeType == __node.ELEMENT_NODE:
                 __method = self.__getmethod("system", __node.localName)
                 __method(__node, 0)
+
 
     def _handle_tftpd(self, __parent, __level):
         __nodemap = {'dir':'tftp_directory', 'extraoptions':'tftp_options',
@@ -1640,20 +1647,12 @@ class ConfigParser:
         __table = "services_tftp"
 
         self.__set_pairs(__parent, __nodemap, __pairs)
+        __allowfilecreateion_node = self.__getChildNode(__parent, "allowfilecreation")
+        if __allowfilecreateion_node:
+            __pairs['tftp_newfiles'] = 1
+
         if __pairs:
             self.__sql.insert(__table, __pairs) 
-
-    #
-    # XXX WTF??? XXX
-    #
-    def _handle_unison(self, __parent, __level):
-        pass
-
-    #
-    # XXX WTF??? XXX
-    #
-    def _handle_upnp(self, __parent, __level):
-        pass
 
     def _handle_ups(self, __parent, __level):
         __nodemap = {'upsname':'ups_identifier', 'shutdownmode':'ups_shutdown',
@@ -1690,18 +1689,6 @@ class ConfigParser:
 
         if __pairs:
             self.__sql.insert(__table, __pairs) 
-
-    #
-    # XXX Do we care about this? XXX
-    #
-    def _handle_version(self, __parent, __level):
-        pass
-
-    #
-    # XXX Do we care about this? webgui has settings for the django gui XXX
-    #
-    def _handle_websrv(self, __parent, __level):
-        pass
 
     def __getdisk(self, __parent, __name):
         __disk = {}
@@ -1976,6 +1963,16 @@ class ConfigParser:
         __level = 0
         self.__parse(__root, __level)
 
+    def failed(self):
+        return self.__failed
+
+
+def make_db_backup(database, database_backup):
+    pass
+
+def restore_db(database_backup, database):
+    pass
+
 
 #
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1994,15 +1991,42 @@ class ConfigParser:
 #
 
 def main():
+    debug = False
     config = None
+    database = None
+    backup = None
 
     try:
-        config = sys.argv[1]
-    except:
-       usage()
+        opts, args = getopt.getopt(sys.argv[1:], "db:c:", ["debug", "config="])
 
-    cp = ConfigParser(config)
+    except:
+        usage()
+
+    if not len(opts):
+        usage()
+
+    for opt, arg in opts:
+        if opt in ("-b", "--database"):
+            database = arg
+	  
+        if opt in ("-c", "--config"):
+            config = arg
+
+        if opt in ("-d", "--debug"):
+            debug = True
+
+    if not config or not database:
+        usage()
+
+
+    backup = database + ".orig"
+    make_db_backup(database, backup)
+
+    cp = ConfigParser(config, database, debug)
     cp.run()
+
+    if cp.failed():
+        restore_db(backup, database)
 
 
 if __name__ == '__main__':

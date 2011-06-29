@@ -44,6 +44,7 @@ from storage.forms import UnixPermissionField
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_User, \
                                          FreeNAS_Groups, FreeNAS_Group
+from freenasUI.common import humanize_size
 from freenasUI.middleware.notifier import notifier
 from dojango import forms
 from dojango.forms import widgets
@@ -103,7 +104,7 @@ class FTPForm(ModelForm):
     ftp_filemask = UnixPermissionField(label=_('File Permission'))
     ftp_dirmask = UnixPermissionField(label=_('Directory Permission'))
     class Meta:
-        model = models.FTP 
+        model = models.FTP
 
     def __init__(self, *args, **kwargs):
 
@@ -254,17 +255,17 @@ class SNMPForm(ModelForm):
         model = models.SNMP
     def clean_snmp_location(self):
         location = self.cleaned_data['snmp_location']
-        if not re.match(r'^[-_a-zA-Z0-9]+$', location):
+        if not re.match(r'^[-_a-zA-Z0-9\s]+$', location):
             raise forms.ValidationError(_(u"The location must contain only alphanumeric characters, _ or -"))
         return location
     def clean_snmp_contact(self):
         contact = self.cleaned_data['snmp_contact']
-        if not re.match(r'^[-_a-zA-Z0-9]+$', contact):
+        if not re.match(r'^[-_a-zA-Z0-9\s]+$', contact):
             raise forms.ValidationError(_(u"The contact must contain only alphanumeric characters, _ or -"))
         return contact
     def clean_snmp_comunity(self):
         community = self.cleaned_data['snmp_community']
-        if not re.match(r'^[-_a-zA-Z0-9]+$', community):
+        if not re.match(r'^[-_a-zA-Z0-9\s]+$', community):
             raise forms.ValidationError(_(u"The community must contain only alphanumeric characters, _ or -"))
         return community
     def save(self):
@@ -643,16 +644,7 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         diskinfo = pipe.read().strip().split('\n')
         for disk in diskinfo:
             devname, capacity = disk.split('\t')
-            #FIXME use storage.forms._humenize_size
-            capacity = int(capacity)
-            if capacity >= 1099511627776:
-                    capacity = "%.1f TiB" % (capacity / 1099511627776.0)
-            elif capacity >= 1073741824:
-                    capacity = "%.1f GiB" % (capacity / 1073741824.0)
-            elif capacity >= 1048576:
-                    capacity = "%.1f MiB" % (capacity / 1048576.0)
-            else:
-                    capacity = "%d Bytes" % (capacity)
+            capacity = humanize_size(capacity)
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
@@ -802,7 +794,7 @@ class iSCSITargetForm(ModelForm):
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
 class ExtentDelete(Form):
-    delete = forms.BooleanField(label=_("Delete underlying file"), initial=False)
+    delete = forms.BooleanField(label=_("Delete underlying file"), initial=False, required=False)
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
         super(ExtentDelete, self).__init__(*args, **kwargs)

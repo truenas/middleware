@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-15 02:19+0200\n"
+"PO-Revision-Date: 2011-06-18 15:18+0200\n"
 "Last-Translator: raymond <raymondv@gmx.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
@@ -1219,11 +1219,11 @@ msgid "Delete underlying file"
 msgstr "Lösche darunterliegende Datei"
 
 #: services/forms.py:788
-#, fuzzy, python-format
+#, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "Der Benutzer %s ist ungültig."
-msgstr[1] "Der Benutzer %s ist ungültig."
+msgstr[0] "Die E-Mail-Adresse %s ist ungültig."
+msgstr[1] "Die E-Mail-Adressen %s sind ungültig."
 
 #: services/models.py:40
 msgid "Service"
@@ -3614,6 +3614,8 @@ msgstr "Remote ZFS Dateisystem"
 #: storage/models.py:251
 msgid "Recursively replicate and remove stale snapshot on remote side"
 msgstr ""
+"Rekursives Reproduzieren und Entfernen der veralteten Momentaufnahme auf der "
+"Gegenseite"
 
 #: storage/models.py:254
 msgid "Replication Task"
@@ -3813,14 +3815,12 @@ msgid "Disk detach has been successfully done."
 msgstr "Festplatte erfolgreich ausgehängt."
 
 #: storage/views.py:588
-#, fuzzy
 msgid "The volume failed to export"
-msgstr "Der Dienst konnte nicht wieder gestartet werden."
+msgstr "Das Volume konnte nicht wieder gestartet werden"
 
 #: storage/views.py:591
-#, fuzzy
 msgid "The volume has been successfully exported"
-msgstr "Ihre Änderungen wurden erfolgreich übernommen!"
+msgstr "Das Volume wurden erfolgreich übernommen"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
@@ -5033,9 +5033,8 @@ msgid "Clone Snapshot"
 msgstr "Snapshot klonen"
 
 #: templates/storage/datagrid_disks.html:9
-#, fuzzy
 msgid "Edit Disk"
-msgstr "Dataset bearbeiten"
+msgstr "Festplatte bearbeiten"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"

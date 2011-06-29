@@ -62,11 +62,7 @@ NANO_RAM_TMPVARSIZE=$((160*1024))
 DEBUG="0"
 
 NANO_IMAGES=2
-if [ "${DEBUG}" -eq "1" ]; then 
-    FlashDevice generic 2g
-else
-    FlashDevice generic 1g
-fi
+FlashDevice generic 2g
 
 . ${NANO_CFG_BASE}/common
 
@@ -135,6 +131,7 @@ add_port net/libdnet
 add_port emulators/open-vm-tools-nox11
 add_port databases/sqlite3
 add_port databases/py-sqlite3
+add_port databases/py-bsddb3
 add_port www/py-django -DWITHOUT_MYSQL
 add_port www/py-dojango
 #+databases/py-south
@@ -221,6 +218,12 @@ if [ "${DEBUG}" -eq "1" ]; then
 	add_port editors/vim-lite
 	add_port misc/py-pexpect
 	add_port devel/ipython
+	add_port ftp/curl
+	add_port devel/p5-Term-ReadKey
+	add_port devel/p5-subversion
+	add_port mail/p5-Net-SMTP-SSL
+	add_port lang/p5-Error
+	add_port devel/git -DWITH_SVN -DWITHOUT_P4 -DWITHOUT_CVS
 fi
 	 
 

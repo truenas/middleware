@@ -80,7 +80,7 @@ def menu(request, objtype = None):
 
 """
 We use the django debug 500 classes to show the traceback to the user
-instead of the useless "An error ocurried" used by dojo in case of 
+instead of the useless "An error ocurred" used by dojo in case of 
 HTTP 500 responses.
 
 As this is not a public API of django we need to duplicate some code
@@ -388,7 +388,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
                 else:
                     return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully updated.") % m._meta.verbose_name}))
             except ServiceFailed, e:
-                return HttpResponse(simplejson.dumps({"error": True, "message": _("The service failed to restart.") % m._meta.verbose_name}))
+                return HttpResponse(simplejson.dumps({"error": True, "message": _("The service failed to restart.") % m._meta.verbose_name, "events": ["serviceFailed(\"%s\")" % e.service]}))
 
     else:
         mf = mf(instance=instance)
@@ -455,7 +455,8 @@ def generic_model_delete(request, app, model, oid):
             return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully deleted.") % m._meta.verbose_name}), mimetype="application/json")
     if form and form_i is None:
         form_i = form(instance=instance)
-        context.update({'form': form})
+    if form:
+        context.update({'form': form_i})
     template = "%s/%s_delete.html" % (m._meta.app_label, m._meta.object_name.lower())
     try:
         get_template(template)

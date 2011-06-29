@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-06-11 17:31+0200\n"
-"Last-Translator: serangku <serangku@gmail.com>\n"
+"PO-Revision-Date: 2011-06-17 17:03+0200\n"
+"Last-Translator: Rully <paradoxnazi@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
@@ -56,7 +56,7 @@ msgstr "Sesuaikan"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
-msgstr "Sesuaikan Disk"
+msgstr "Sesuaikan Cakram"
 
 #: media/lib/js/freeadmin.js:443
 msgid "Replace"
@@ -64,7 +64,7 @@ msgstr "Ganti"
 
 #: media/lib/js/freeadmin.js:444
 msgid "Disk Replacement"
-msgstr "Mengganti Disk"
+msgstr "Pergantian Cakram"
 
 #: media/lib/js/freeadmin.js:448
 msgid "Detach"
@@ -72,7 +72,7 @@ msgstr "Melepaskan"
 
 #: media/lib/js/freeadmin.js:449
 msgid "Disk Detach"
-msgstr "Melepaskan Disk"
+msgstr "Melepaskan Cakram"
 
 #: media/lib/js/freeadmin.js:635
 msgid "Some error ocurried!"

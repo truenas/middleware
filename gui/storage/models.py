@@ -139,6 +139,8 @@ class Disk(Model):
             )
     def identifier_to_device(self):
         return notifier().identifier_to_device(self.disk_identifier)
+    def identifier_to_partition(self):
+        return notifier().identifier_to_partition(self.disk_identifier)
     def save(self, *args, **kwargs):
         if self.id:
             notifier().restart("smartd")
@@ -250,6 +252,11 @@ class Replication(Model):
     repl_userepl = models.BooleanField(
             default = False,
             verbose_name = _("Recursively replicate and remove stale snapshot on remote side"),
+            )
+    repl_limit = models.IntegerField(
+            default = 0,
+            verbose_name = _("Limit (kB/s)"),
+            help_text = _("Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."),
             )
     class Meta:
         verbose_name = _(u"Replication Task")

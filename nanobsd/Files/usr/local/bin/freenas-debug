@@ -32,6 +32,26 @@
 
 : ${FREENAS_DEBUG_FILE:="/var/tmp/freenas-debug.txt"}
 
+syslog_debug_on()
+{
+	cp /etc/syslog.conf /etc/syslog.conf.bak
+	sed -E 's|^#\*.=debug|\*.=debug|' /etc/syslog.conf > /tmp/syslog.conf
+	if [ -f /tmp/syslog.conf ]
+	then
+		mv /tmp/syslog.conf /etc/syslog.conf
+		/etc/rc.d/syslogd onerestart >/dev/null 2>&1
+	fi
+}
+
+syslog_debug_off()
+{
+	if [ -f /etc/syslog.conf.bak ]
+	then
+		mv /etc/syslog.conf.bak /etc/syslog.conf
+		/etc/rc.d/syslogd onerestart >/dev/null 2>&1
+	fi
+}
+
 section_header()
 {
 	local name="${1}"
@@ -74,18 +94,68 @@ section_footer()
 	echo
 }
 
+debug_cache()
+{
+	local cachetype="${1}"
+
+	cachedir="${FREENAS_CACHEDIR}"
+	directory_cachedir=
+
+	case ${cachetype} in
+		AD) directory_cachedir="${cachedir}/.ldap/.activedirectory" ;;
+		LDAP) directory_cachedir="${cachedir}/.ldap/.ldap" ;;
+	esac
+
+	directory_local_users="${directory_cachedir}/.local/.users/.cache.db"
+	directory_local_groups="${directory_cachedir}/.local/.users/.cache.db"
+	directory_users="${directory_cachedir}/.users/.cache.db"
+	directory_groups="${directory_cachedir}/.groups/.cache.db"
+
+	if [ -f "${directory_local_users}" ]
+	then
+		section_header "${directory_local_users}"
+		/usr/local/bin/db_stat-4.6 -d "${directory_local_users}"
+		section_footer
+	fi
+
+	if [ -f "${directory_local_groups}" ]
+	then
+		section_header "${directory_local_groups}"
+		/usr/local/bin/db_stat-4.6 -d "${directory_local_groups}"
+		section_footer
+	fi
+
+	if [ -f "${directory_users}" ]
+	then
+		section_header "${directory_users}"
+		/usr/local/bin/db_stat-4.6 -d "${directory_users}"
+		section_footer
+	fi
+
+	if [ -f "${directory_groups}" ]
+	then
+		section_header "${directory_groups}"
+		/usr/local/bin/db_stat-4.6 -d "${directory_groups}"
+		section_footer
+	fi
+}
+
 debug_active_directory()
 {
 	local workgroup
 	local netbiosname
 	local adminname
-	local windows_version
 	local domainname
 	local dcname
 	local pamfiles
 	local onoff
 	local enabled="DISABLED"
 
+
+	#
+	#	Turn on debug.log in syslog
+	#
+	syslog_debug_on
 
 	#
 	#	First, check if the Active Directory service is enabled.
@@ -112,13 +182,12 @@ debug_active_directory()
 	#	Next, dump Active Directory configuration
 	#
 	local IFS="|"
-	read workgroup netbiosname adminname windows_version domainname dcname <<-__AD__
+	read workgroup netbiosname adminname domainname dcname <<-__AD__
 	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ad_workgroup,
 		ad_netbiosname,
 		ad_adminname,
-		ad_windows_version,
 		ad_domainname,
 		ad_dcname
 
@@ -140,7 +209,6 @@ __AD__
 	WORKGROUP:              ${workgroup}
 	NETBIOS NAME:           ${netbiosname}
 	ADMINNAME:              ${adminname}
-	WINDOWS VERSION:        ${windows_version}
 	DOMAIN NAME:            ${domainname}
 	DCNAME:                 ${dcname}
 __EOF__
@@ -243,11 +311,33 @@ __EOF__
 	section_header "Groups"
 	getent group
 	section_footer
+
+	#
+	#	Dump cache info
+	#
+	debug_cache "AD"
+
+	#
+	#	Include LDAP debugging
+	#
+	section_header "/var/log/debug.log"
+	cat /var/log/debug.log
+	section_footer
+
+	#
+	#	Turn off debug.log in syslog
+	#
+	syslog_debug_off
 }
 
 debug_ldap()
 {
 	local onoff
+
+	#
+	#	Turn on debug.log in syslog
+	#
+	syslog_debug_on
 
 	#
 	#	First, check if the LDAP service is enabled.
@@ -387,6 +477,23 @@ __EOF__
 	section_header "Groups"
 	getent group
 	section_footer
+
+	#
+	#	Dump cache info
+	#
+	debug_cache "LDAP"
+
+	#
+	#	Include LDAP debugging
+	#
+	section_header "/var/log/debug.log"
+	cat /var/log/debug.log
+	section_footer
+
+	#
+	#	Turn off debug.log in syslog
+	#
+	syslog_debug_off
 }
 
 debug_ssl()

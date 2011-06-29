@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-06-06 13:34+0200\n"
+"PO-Revision-Date: 2011-06-18 22:06+0200\n"
 "Last-Translator: ok1 <ok1@trups.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lv\n"
@@ -53,7 +53,7 @@ msgstr "Cron darbi"
 
 #: media/lib/js/freeadmin.js:437
 msgid "Edit"
-msgstr ""
+msgstr "Labot"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
