@@ -383,6 +383,14 @@ generate_exports()
 		recyclebin showhiddenfiles guest guestok guestonly hostsallow hostsdeny;
 	do
 		if [ -d "${mountpoint}" ]; then
+			mp_id=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM storage_mountpoint WHERE mp_path=\"${mountpoint}\";"`
+			if [ -n "${mp_id}" ]; then
+				task_rint=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT task_ret_count FROM storage_task WHERE task_mountpoint_id=${mp_id} LIMIT 1;"`
+				task_runit=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT task_ret_unit FROM storage_task WHERE task_mountpoint_id=${mp_id} LIMIT 1;" | /usr/bin/cut -c1`
+				if [ -n "${task_rint}" ]; then
+					vfsobj_shadow=" shadow_copy2"
+				fi
+			fi
 			echo "[${name}]"
 			echo "    path = ${mountpoint}"
 			echo "    printable = no"
@@ -412,7 +420,7 @@ generate_exports()
 			fi
 			if [ "${recyclebin}" = "1" ]; then
 			cat<<-EOF
-			    vfs objects = zfsacl recycle
+			    vfs objects = zfsacl recycle${vfsobj_shadow}
 			    recycle:repository = .recycle/%U
 			    recycle:keeptree = yes
 			    recycle:versions = yes
@@ -421,7 +429,15 @@ generate_exports()
 			    recycle:subdir_mode = 0700
 EOF
 			else
-				echo "    vfs objects = zfsacl"
+				echo "    vfs objects = zfsacl ${vfsobj_shadow}"
+			fi
+			if [ -n "${task_rint}" ]; then
+			cat <<-EOF
+			    shadow: snapdir = .zfs/snapshot
+			    shadow: sort = desc
+			    shadow: localtime = yes
+			    shadow: format = auto-%Y%m%d.%H%M-${task_rint}${task_runit}
+EOF
 			fi
 			if [ "${showhiddenfiles}" = "1" ]; then
 				echo "    hide dot files = no"
