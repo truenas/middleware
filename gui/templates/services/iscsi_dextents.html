@@ -1,12 +1,12 @@
 {% load i18n %}
 <table class="grid">
         <thead class="header">
-    	<tr>
-            <td>{% trans "Target" %}</td>
-            <td>{% trans "Alias" %}</td>
+        <tr>
+            <td>{% trans "Extent" %}</td>
+            <td>{% trans "Type" %}</td>
             <td>{% trans "Path" %}</td>
             <td></td>
-    	</tr>
+        </tr>
         </thead>
     {% for e in extent_device_list %}
     <tr class="{% cycle 'odd' 'even' %}" id="{{ e.id }}">

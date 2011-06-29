@@ -1,18 +1,16 @@
 {% load i18n %}
 <table class="grid">
         <thead class="header">
-   	<tr>
+        <tr>
             <td>{% trans "Target" %}</td>
             <td>{% trans "Extent" %}</td>
-            <td>{% trans "LUN" %}</td>
             <td></td>
-   	</tr>
-           </thead>
+            </tr>
+        </thead>
     {% for tte in asctarget_list %}
     <tr class="{% cycle 'odd' 'even' %}" id="{{ tte.id }}">
         <td>{{ tte.iscsi_target }}</td>
         <td>{{ tte.iscsi_extent }}</td>
-        <td>{{ tte.iscsi_target_lun }}</td>
         <td>
             <button dojoType="dijit.form.Button" type="button">
                 {% trans "Edit" %}
@@ -30,7 +28,7 @@
     </tr>
     {% empty %}
     <tr>
-        <td colspan="4">{% trans "No targets defined" %}</td>
+        <td colspan="3">{% trans "No targets defined" %}</td>
     </tr>
     {% endfor %}
     </table>
