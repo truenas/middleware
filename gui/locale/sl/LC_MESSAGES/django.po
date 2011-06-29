@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-06-28 10:49+0200\n"
+"PO-Revision-Date: 2011-06-28 15:31+0200\n"
 "Last-Translator: Janezfun <janez.subic@siol.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sl\n"
@@ -253,7 +253,7 @@ msgstr "Časovni stroj"
 
 #: choices.py:190
 msgid "No case folding"
-msgstr ""
+msgstr "Ne razlikuje malih in velikih črk"
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
@@ -277,7 +277,7 @@ msgstr "Naprava"
 
 #: choices.py:200
 msgid "ZFS Volume"
-msgstr ""
+msgstr "ZFS Nosilec"
 
 #: choices.py:204 storage/models.py:147 system/models.py:493
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
@@ -295,7 +295,7 @@ msgstr "Trak"
 
 #: choices.py:207
 msgid "Pass"
-msgstr ""
+msgstr "Prehod"
 
 #: choices.py:211
 msgid "read-write"
@@ -312,11 +312,11 @@ msgstr "Brez"
 
 #: choices.py:218
 msgid "CHAP"
-msgstr ""
+msgstr "CHAP"
 
 #: choices.py:219
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "Medsebojni CHAP"
 
 #: choices.py:241
 msgid "UPS reaches low battery"
@@ -355,19 +355,16 @@ msgid "lzjb (recommended)"
 msgstr "lzjb (priporočeno)"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "privzeta stopnja"
+msgstr "gzip (privzeti nivo, 6)"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "najhitrejši"
+msgstr "gzip (najhitrejši)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "maksimum, počasno"
+msgstr "gzip (največji, počasno)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -399,9 +396,8 @@ msgid "Every selected weekday"
 msgstr "Vsak izbran dan v tednu"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
-msgstr "samo-branje"
+msgstr "Samo branje"
 
 #: choices.py:442
 #, fuzzy
@@ -410,64 +406,68 @@ msgstr "samo-branje"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Branj in pisanje"
 
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%minut minuta"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%ur ura"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%ur ura"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%dni dan"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%tednov teden"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Nikoli - Preverite napravo ne glede na njegov način porabe"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Spanje - Preverite napravo, razen če je v stanju mirovanja"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
+"Pripravljenost - Preverite napravo, razen če je v stanju mirovanja ali "
+"pripravljenosti"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
+"Nedejavenost - Preverite napravo, razen če je v stanju mirovanja, "
+"pripravljenosti ali nedejavnosti"
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Dolg Self-Test"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Kratek Self-Test"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Prenosni Self-Test (ATA   only)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Nepovezan takojšnji Test (ATA only)"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -489,7 +489,8 @@ msgstr "Zahtevano. 30 znakov ali manj. Samo črke, številke in @/./+/-/_"
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr "Ta vnos lahko vsebuje samo črke, številke in @/./+/-/_ znake."
+msgstr ""
+"Ta vnos lahko vsebuje samo črke, številke in posebne znake (@/./+/-/_ )."
 
 #: account/forms.py:201 account/forms.py:308 services/models.py:680
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
@@ -539,11 +540,11 @@ msgstr "Obvezno polje."
 
 #: account/forms.py:427
 msgid "Member users"
-msgstr ""
+msgstr "Uporabniki"
 
 #: account/forms.py:445
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "Pomožne skupine"
 
 #: account/forms.py:467
 msgid "New password"
@@ -566,74 +567,74 @@ msgstr "Vaše staro geslo je napačno. Prosim poskusite ponovno."
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr ""
+msgstr "ID skupine"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "Ime skupine"
 
 #: account/models.py:47 account/models.py:155 services/models.py:1210
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:87
 msgid "Group"
-msgstr ""
+msgstr "Skupina"
 
 #: account/models.py:48 templates/account/index.html:10
 msgid "Groups"
-msgstr ""
+msgstr "Skupine"
 
 #: account/models.py:63
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Skupina  je vpisana in je ni mogoče brisati!"
 
 #: account/models.py:73
 msgid "User ID"
-msgstr ""
+msgstr "ID uporabnika"
 
 #: account/models.py:78
 msgid "User &"
-msgstr ""
+msgstr "Uporabnik &"
 
 #: account/models.py:85
 msgid "Hashed UNIX password"
-msgstr ""
+msgstr "Zgoščeno UNIX geslo"
 
 #: account/models.py:91
 msgid "Hashed SMB password"
-msgstr ""
+msgstr "Zgoščeno SMB geslo"
 
 #: account/models.py:95
 msgid "Primary Group ID"
-msgstr ""
+msgstr "ID Primarne skupine"
 
 #: account/models.py:100
 msgid "Home Directory"
-msgstr ""
+msgstr "Domači Imenik"
 
 #: account/models.py:109
 msgid "Full Name"
-msgstr ""
+msgstr "Polno ime"
 
 #: account/models.py:115 templates/account/bsdusers.html:91
 msgid "E-mail"
-msgstr "E-mail"
+msgstr "E-pošta"
 
 #: account/models.py:120 account/models.py:159 services/models.py:521
 #: services/models.py:1203 system/models.py:242 system/models.py:380
 #: templates/services/iscsi_auth.html:6 templates/system/cronjob.html:10
 #: templates/system/rsync.html:10
 msgid "User"
-msgstr ""
+msgstr "Uporabnik"
 
 #: account/models.py:121 templates/account/index.html:13
 msgid "Users"
-msgstr ""
+msgstr "Uporabniki"
 
 #: account/models.py:138
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Uporabnik je vpisan in ga ni mogoče brisati!"
 
 #: account/nav.py:5 templates/menubar.html:43
 msgid "Account"
@@ -643,51 +644,53 @@ msgstr ""
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:113
 #: templates/account/bsdusers.html:115 templates/account/index.html:7
 msgid "Change Password"
-msgstr ""
+msgstr "Spremeni geslo"
 
 #: account/nav.py:19 templates/account/changeform.html:25
 #: templates/account/index.html:4
 msgid "Change Admin User"
-msgstr ""
+msgstr "Spremeni administratorja"
 
 #: account/nav.py:26 templates/account/index.html:2
 msgid "My Account"
-msgstr ""
+msgstr "Moj račun"
 
 #: account/nav.py:36
 msgid "View All Users"
-msgstr ""
+msgstr "Poglej vse uporabnike"
 
 #: account/nav.py:43
 msgid "View All Groups"
-msgstr ""
+msgstr "Poglej vse skupine"
 
 #: account/views.py:78
 msgid "Password successfully updated."
-msgstr ""
+msgstr "Geslo je bilo uspešno posodobljeno."
 
 #: account/views.py:92
 msgid "Admin user successfully updated."
-msgstr ""
+msgstr "Administrator uspešno posodobljen."
 
 #: account/views.py:102
 msgid "Users successfully updated."
-msgstr ""
+msgstr "Uporabniki uspešno posodobljeni."
 
 #: account/views.py:115
 msgid "Groups successfully updated."
-msgstr ""
+msgstr "Skupine uspešno posodobljene."
 
 #: contrib/ext_formwizard.py:170
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
 msgstr ""
+"Vaš obrazec je potekel. Prosim nadaljujete izpolnjevanje obrazca na tej "
+"strani."
 
 #: freeadmin/forms.py:95
 #, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "Uporabnik % ni veljaven."
 
 #: freeadmin/forms.py:124
 #, python-format
@@ -696,80 +699,80 @@ msgstr ""
 
 #: freeadmin/forms.py:138
 msgid "The path must reside within a volume mount point"
-msgstr ""
+msgstr "Pot mora biti znotraj priklopne točke nosilca"
 
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Dodan %"
 
 #: freeadmin/navtree.py:327
 #, python-format
 msgid "View All %s"
-msgstr ""
+msgstr "Poglej vse %"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
-msgstr ""
+msgstr "Prikaži sistemske procese"
 
 #: freeadmin/navtree.py:353 templates/freeadmin/index.html:53
 msgid "Reboot"
-msgstr ""
+msgstr "Ponovni zagon"
 
 #: freeadmin/navtree.py:360 templates/freeadmin/index.html:65
 msgid "Shutdown"
-msgstr ""
+msgstr "Zaustavitev"
 
 #: freeadmin/views.py:225
 #, python-format
 msgid "%s successfully added."
-msgstr ""
+msgstr "% uspešno dodan."
 
 #: freeadmin/views.py:384 freeadmin/views.py:386
 #, python-format
 msgid "%s successfully updated."
-msgstr ""
+msgstr "% uspešno posodobljen."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Servis se ni mogel ponovno zagnati."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "% uspešno izbrisan."
 
 #: network/forms.py:44 network/models.py:95
 msgid "NIC"
-msgstr ""
+msgstr "mrežni vmesnik"
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
+msgstr "Najprej vpišite domenski strežnik 2, preden vpišete domenski strežnik 3"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
-msgstr ""
+msgstr "Zahtevano če uporabljate domenski stežnik 3"
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr ""
+msgstr "Najprej vpišite domenski strežnik 1, preden vpišete domenski strežnik 3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr ""
+msgstr "Najprej vpišite domenski strežnik 1, preden vpišete domenski strežnik 2"
 
 #: network/forms.py:100
 msgid "Parent Interface"
-msgstr ""
+msgstr "Parent vmesnik"
 
 #: network/forms.py:109
 msgid "The name must be vlanXX where XX is a integer"
-msgstr ""
+msgstr "Ime mora biti vlanXX, kjer je XX celo število"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN Tagi so v območju 1 - 4095"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -778,165 +781,167 @@ msgstr ""
 #: network/forms.py:190
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "Omrežje ni veljavno, pričakovan CIDR."
 
 #: network/models.py:42 services/models.py:1074
 #: templates/system/system_info.html:4
 msgid "Hostname"
-msgstr ""
+msgstr "Ime gostitelja"
 
 #: network/models.py:47
 msgid "Domain"
-msgstr ""
+msgstr "Domena"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
-msgstr ""
+msgstr "IPv4 privzeti prehod"
 
 #: network/models.py:59
 msgid "IPv6 Default Gateway"
-msgstr ""
+msgstr "IPv6 privzeti prehod"
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "Domenski strežnik 1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "Domenski strežnik 2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "Domenski strežnik 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:21
 #: templates/network/index.html:3
 msgid "Global Configuration"
-msgstr ""
+msgstr "Globalne nastavitve"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Izberi svoj mrežni vmesnik"
 
 #: network/models.py:101
 msgid "Interface Name"
-msgstr ""
+msgstr "Ime vmesnika"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "Poimenuj mrežni vmesnik."
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
-msgstr ""
+msgstr "DHCP"
 
 #: network/models.py:107
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
+"Ko je omogočeno, uporabi DHCP za nastavitev IPv4 naslova, privzetega "
+"prehoda, itd."
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "IPv4 naslov"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr ""
+msgstr "IPv4 mrežna maska"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
-msgstr ""
+msgstr "Avtokonfiguracija IPv6"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr ""
+msgstr "Ko je omogočeno, se avtomatsko konfigurira IPv6 naslov preko rtsol(8)."
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr ""
+msgstr "IPv6 naslov"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr ""
+msgstr "IPv6 mrežna maska"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "Opcije"
 
 #: network/models.py:157 network/models.py:216
 #: templates/network/interface.html:5
 msgid "Interface"
-msgstr ""
+msgstr "Vmesnik"
 
 #: network/models.py:158 templates/network/index.html:5
 msgid "Interfaces"
-msgstr ""
+msgstr "Vmesniki"
 
 #: network/models.py:172 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr ""
+msgstr "Navidezni vmesniki"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr ""
+msgstr "Imena vmesnikov morajo biti vlanXX kjer je XX celo število"
 
 #: network/models.py:178 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr ""
+msgstr "Fizični vmesnik"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
-msgstr ""
+msgstr "VLAN Tag"
 
 #: network/models.py:185 network/models.py:282 services/models.py:74
 #: services/models.py:766 storage/models.py:95
 #: templates/network/staticroute.html:7 templates/network/vlan.html:8
 msgid "Description"
-msgstr ""
+msgstr "Opis"
 
 #: network/models.py:199 templates/network/index.html:11
 msgid "VLAN"
-msgstr ""
+msgstr "VLAN"
 
 #: network/models.py:200
 msgid "VLANs"
-msgstr ""
+msgstr "VLANi"
 
 #: network/models.py:220
 msgid "Protocol Type"
-msgstr ""
+msgstr "Protokol"
 
 #: network/models.py:241
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "LAGG skupina vmesnika"
 
 #: network/models.py:244
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "LAGG Prioriteta"
 
 #: network/models.py:249
 msgid "Physical NIC"
-msgstr ""
+msgstr "Fizični NIC"
 
 #: network/models.py:264 templates/network/index.html:7
 msgid "Link Aggregation"
-msgstr ""
+msgstr "Agregacijska povezava"
 
 #: network/models.py:265 network/nav.py:53
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Agregacijske povezave"
 
 #: network/models.py:274
 msgid "Destination network"
-msgstr ""
+msgstr "Ponorno omrežje"
 
 #: network/models.py:278 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr ""
+msgstr "Prehod"
 
 #: network/models.py:287
 msgid "Static Route"
@@ -952,15 +957,15 @@ msgstr ""
 
 #: network/nav.py:13 templates/network/index.html:13
 msgid "Network Summary"
-msgstr ""
+msgstr "Omrežni povzetek"
 
 #: network/nav.py:30
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "Ustvari agregacijsko povezavo"
 
 #: network/nav.py:41
 msgid "View All Link Aggregations"
-msgstr ""
+msgstr "Poglej vse agregacijske povezave"
 
 #: network/views.py:180
 msgid "LAGG successfully added"
@@ -968,51 +973,51 @@ msgstr ""
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr ""
+msgstr "To je zahtevano polje za \"Omogoči brskanje domačih direktorijev\"."
 
 #: services/forms.py:73
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "To je zahtevano polje za \"Domači direktoriji\"."
 
 #: services/forms.py:90
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "AFP servis se ni ponovno zagnal."
 
 #: services/forms.py:99
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "NFS servis se ni ponovno zagnal."
 
 #: services/forms.py:103
 msgid "File Permission"
-msgstr ""
+msgstr "Datoteka dovoljenje"
 
 #: services/forms.py:104
 msgid "Directory Permission"
-msgstr ""
+msgstr "Direktorij dovoljenje"
 
 #: services/forms.py:129
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr ""
+msgstr "Vrednost mora biti med 0 in vključno 65535."
 
 #: services/forms.py:135 services/forms.py:153
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
+msgstr "Vrednost mora biti med 0 in vključno 10000."
 
 #: services/forms.py:141 services/forms.py:147
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
+msgstr "Vrednost mora biti med 0 in vključno 1000."
 
 #: services/forms.py:159
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
+msgstr "Vrednost mora biti med 1024 in vključno 65535. 0 je privzeto."
 
 #: services/forms.py:165
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr ""
+msgstr "Vrednost mora biti med 1024 in vključno 65535. 0 je privzeto."
 
 #: services/forms.py:184
 msgid "This field is required for anonymous login"
-msgstr ""
+msgstr "To je zahtevano polje za anonimen vpis"
 
 #: services/forms.py:191
 msgid "The ftp service failed to start."
@@ -1053,31 +1058,31 @@ msgstr ""
 #: services/forms.py:290 services/models.py:526
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
-msgstr ""
+msgstr "Skrivno"
 
 #: services/forms.py:291 services/models.py:527
 msgid "Target side secret."
-msgstr ""
+msgstr "Skrivna ciljna stran."
 
 #: services/forms.py:292
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "Skrivno (potrdi)"
 
 #: services/forms.py:294 services/forms.py:302
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "Zaradi preverjanja ponovno vmesi."
 
 #: services/forms.py:295
 msgid "Initiator Secret"
-msgstr ""
+msgstr "Skriti pobudnik"
 
 #: services/forms.py:297 services/models.py:533 services/models.py:538
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr ""
+msgstr "Pobudnik skrite strani. (za medsebojno CHAP avtentikacijo)"
 
 #: services/forms.py:300
 msgid "Initiator Secret (Confirm)"
-msgstr ""
+msgstr "Skriti pobudnik (potrdi)"
 
 #: services/forms.py:309
 msgid "Secret does not match"
@@ -2577,7 +2582,7 @@ msgstr ""
 
 #: sharing/models.py:64
 msgid "Guest Account"
-msgstr ""
+msgstr "Račun za goste"
 
 #: sharing/models.py:65
 msgid ""

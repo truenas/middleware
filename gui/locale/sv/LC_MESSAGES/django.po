@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-25 22:27+0200\n"
-"Last-Translator: varpan <markus@varpula.com>\n"
+"PO-Revision-Date: 2011-06-28 14:48+0200\n"
+"Last-Translator: Jonas <mossemansson@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -4958,7 +4958,7 @@ msgstr ""
 
 #: templates/system/cronjob.html:40
 msgid "No CronJobs defined"
-msgstr ""
+msgstr "Inga Cron inställningar har lagts till"
 
 #: templates/system/cronjob.html:46 templates/system/cronjob.html.py:48
 msgid "Add CronJob"
