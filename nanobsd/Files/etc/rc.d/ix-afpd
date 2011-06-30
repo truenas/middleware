@@ -61,7 +61,7 @@ EOF
 	if [ ${afp_srv_guest} -eq 1 -a ${afp_srv_local} -eq 0 ]; then
 	    echo "-uamlist uams_guest.so"
 	elif [ ${afp_srv_local} -eq 1 ]; then
-	    echo "-uamlist uams_guest.so,uams_clrtxt.so,uams_dhx.so,uams_randnum.so"
+	    echo "-uamlist uams_guest.so,uams_clrtxt.so,uams_dhx.so,uams_randnum.so,uams_dhx2.so"
 	else
 	    echo
 	fi
