@@ -25,8 +25,14 @@ class Migration(DataMigration):
 
                 if d.iscsi_target_extent_type == 'Disk':
                     devname = notifier().identifier_to_device(disk.disk_identifier)
-                    if not devname:
+                    if not devname and disk.disk_identifier.startswith('{label}'):
                         devname = disk.disk_identifier.split('{label}label/extent_')[1]
+                        serial = serial_from_device(devname)
+                        if serial:
+                            disk.disk_identifier = "{serial}%s" % serial
+                        else:
+                            disk.disk_identifier = "{devicename}%s" % devname
+                        disk.save()
                     notifier().label_disk("extent_%s" % devname, "/dev/%s" % devname)
             except:
                 pass
