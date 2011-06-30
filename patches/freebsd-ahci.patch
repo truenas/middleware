@@ -1,7 +1,5 @@
-Index: sys/dev/ahci/ahci.c
-===================================================================
---- sys/dev/ahci/ahci.c	(revision 223089)
-+++ sys/dev/ahci/ahci.c	(working copy)
+--- sys/dev/ahci/ahci.c.orig	2010-12-21 11:09:25.000000000 -0600
++++ sys/dev/ahci/ahci.c	2011-06-30 18:17:01.487832983 -0500
 @@ -33,6 +33,7 @@
  #include <sys/kernel.h>
  #include <sys/ata.h>
@@ -49,7 +47,7 @@ Index: sys/dev/ahci/ahci.c
  } ahci_ids[] = {
  	{0x43801002, 0x00, "ATI IXP600",	0},
  	{0x43901002, 0x00, "ATI IXP700",	0},
-@@ -161,21 +167,44 @@
+@@ -161,21 +167,45 @@
  	{0x1c038086, 0x00, "Intel Cougar Point",	0},
  	{0x1c048086, 0x00, "Intel Cougar Point",	0},
  	{0x1c058086, 0x00, "Intel Cougar Point",	0},
@@ -86,6 +84,7 @@ Index: sys/dev/ahci/ahci.c
 +	{0x91201b4b, 0x00, "Marvell 88SE912x",	AHCI_Q_EDGEIS|AHCI_Q_NOBSYRES},
 +	{0x91231b4b, 0x11, "Marvell 88SE912x",	AHCI_Q_NOBSYRES|AHCI_Q_ALTSIG},
  	{0x91231b4b, 0x00, "Marvell 88SE912x",	AHCI_Q_EDGEIS|AHCI_Q_SATA2|AHCI_Q_NOBSYRES},
++	{0x91251b4b, 0x00, "Marvell 88SE912x",  AHCI_Q_NOBSYRES},
 +	{0x91721b4b, 0x00, "Marvell 88SE9172",	AHCI_Q_NOBSYRES},
 +	{0x91821b4b, 0x00, "Marvell 88SE9182",	AHCI_Q_NOBSYRES},
  	{0x06201103, 0x00, "HighPoint RocketRAID 620",	AHCI_Q_NOBSYRES},
@@ -99,7 +98,7 @@ Index: sys/dev/ahci/ahci.c
  	{0x044c10de, 0x00, "NVIDIA MCP65",	AHCI_Q_NOAA},
  	{0x044d10de, 0x00, "NVIDIA MCP65",	AHCI_Q_NOAA},
  	{0x044e10de, 0x00, "NVIDIA MCP65",	AHCI_Q_NOAA},
-@@ -253,6 +282,12 @@
+@@ -253,6 +283,12 @@
  	{0x00000000, 0x00, NULL,		0}
  };
  
@@ -112,7 +111,7 @@ Index: sys/dev/ahci/ahci.c
  static int
  ahci_probe(device_t dev)
  {
-@@ -365,6 +400,13 @@
+@@ -365,6 +401,13 @@
  	if (ctlr->caps & AHCI_CAP_EMS)
  		ctlr->capsem = ATA_INL(ctlr->r_mem, AHCI_EM_CTL);
  	ctlr->ichannels = ATA_INL(ctlr->r_mem, AHCI_PI);
@@ -126,7 +125,7 @@ Index: sys/dev/ahci/ahci.c
  	if (ctlr->quirks & AHCI_Q_1CH) {
  		ctlr->caps &= ~AHCI_CAP_NPMASK;
  		ctlr->ichannels &= 0x01;
-@@ -387,6 +429,8 @@
+@@ -387,6 +430,8 @@
  		ctlr->caps &= ~AHCI_CAP_SNCQ;
  	if ((ctlr->caps & AHCI_CAP_CCCS) == 0)
  		ctlr->ccc = 0;
@@ -135,7 +134,7 @@ Index: sys/dev/ahci/ahci.c
  	ahci_ctlr_setup(dev);
  	/* Setup interrupts. */
  	if (ahci_setup_interrupt(dev)) {
-@@ -490,6 +534,7 @@
+@@ -490,6 +535,7 @@
  	rman_fini(&ctlr->sc_iomem);
  	if (ctlr->r_mem)
  		bus_release_resource(dev, SYS_RES_MEMORY, ctlr->r_rid, ctlr->r_mem);
@@ -143,7 +142,7 @@ Index: sys/dev/ahci/ahci.c
  	return (0);
  }
  
-@@ -850,18 +895,20 @@
+@@ -850,18 +896,20 @@
  	struct cam_devq *devq;
  	int rid, error, i, sata_rev = 0;
  	u_int32_t version;
@@ -165,7 +164,7 @@ Index: sys/dev/ahci/ahci.c
  	/* Limit speed for my onboard JMicron external port.
  	 * It is not eSATA really. */
  	if (pci_get_devid(ctlr->dev) == 0x2363197b &&
-@@ -956,6 +1003,25 @@
+@@ -956,6 +1004,25 @@
  		    ahci_ch_pm, dev);
  	}
  	mtx_unlock(&ch->mtx);
@@ -191,7 +190,7 @@ Index: sys/dev/ahci/ahci.c
  	return (0);
  
  err3:
-@@ -975,9 +1041,19 @@
+@@ -975,9 +1042,19 @@
  ahci_ch_detach(device_t dev)
  {
  	struct ahci_channel *ch = device_get_softc(dev);
@@ -211,7 +210,7 @@ Index: sys/dev/ahci/ahci.c
  	xpt_free_path(ch->path);
  	xpt_bus_deregister(cam_sim_path(ch->sim));
  	cam_sim_free(ch->sim, /*free_devq*/TRUE);
-@@ -985,6 +1061,7 @@
+@@ -985,6 +1062,7 @@
  
  	if (ch->pm_level > 3)
  		callout_drain(&ch->pm_timer);
@@ -219,7 +218,7 @@ Index: sys/dev/ahci/ahci.c
  	bus_teardown_intr(dev, ch->r_irq, ch->ih);
  	bus_release_resource(dev, SYS_RES_IRQ, ATA_IRQ_RID, ch->r_irq);
  
-@@ -1050,6 +1127,12 @@
+@@ -1050,6 +1128,12 @@
  
  	mtx_lock(&ch->mtx);
  	xpt_freeze_simq(ch->sim, 1);
@@ -232,7 +231,7 @@ Index: sys/dev/ahci/ahci.c
  	while (ch->oslots)
  		msleep(ch, &ch->mtx, PRIBIO, "ahcisusp", hz/100);
  	ahci_ch_deinit(dev);
-@@ -1086,6 +1169,47 @@
+@@ -1086,6 +1170,47 @@
  };
  DRIVER_MODULE(ahcich, ahci, ahcich_driver, ahcich_devclass, 0, 0);
  
@@ -280,7 +279,7 @@ Index: sys/dev/ahci/ahci.c
  struct ahci_dc_cb_args {
  	bus_addr_t maddr;
  	int error;
-@@ -1230,37 +1354,69 @@
+@@ -1230,34 +1355,66 @@
  	}
  }
  
@@ -321,9 +320,9 @@ Index: sys/dev/ahci/ahci.c
 +		return (1);
  	}
 +	return (0);
- }
- 
- static void
++}
++
++static void
 +ahci_cpd_check_events(device_t dev)
 +{
 +	struct ahci_channel *ch = device_get_softc(dev);
@@ -352,13 +351,10 @@ Index: sys/dev/ahci/ahci.c
 +		return;
 +	}
 +	xpt_rescan(ccb);
-+}
-+
-+static void
- ahci_notify_events(device_t dev, u_int32_t status)
- {
- 	struct ahci_channel *ch = device_get_softc(dev);
-@@ -1317,7 +1473,7 @@
+ }
+ 
+ static void
+@@ -1317,7 +1474,7 @@
  	struct ahci_channel *ch = device_get_softc(dev);
  	uint32_t istatus, sstatus, cstatus, serr = 0, sntf = 0, ok, err;
  	enum ahci_err_type et;
@@ -367,7 +363,7 @@ Index: sys/dev/ahci/ahci.c
  
  	/* Read and clear interrupt statuses. */
  	istatus = ATA_INL(ch->r_mem, AHCI_P_IS);
-@@ -1353,9 +1509,12 @@
+@@ -1353,9 +1510,12 @@
  		serr = ATA_INL(ch->r_mem, AHCI_P_SERR);
  		if (serr) {
  			ATA_OUTL(ch->r_mem, AHCI_P_SERR, serr);
@@ -381,7 +377,7 @@ Index: sys/dev/ahci/ahci.c
  	/* Process command errors */
  	if (istatus & (AHCI_P_IX_OF | AHCI_P_IX_IF |
  	    AHCI_P_IX_HBD | AHCI_P_IX_HBF | AHCI_P_IX_TFE)) {
-@@ -1445,7 +1604,7 @@
+@@ -1445,7 +1605,7 @@
  		 * We can't reinit port if there are some other
  		 * commands active, use resume to complete them.
  		 */
@@ -390,7 +386,7 @@ Index: sys/dev/ahci/ahci.c
  			ATA_OUTL(ch->r_mem, AHCI_P_FBS, AHCI_P_FBS_EN | AHCI_P_FBS_DEC);
  	}
  	/* Process NOTIFY events */
-@@ -1607,7 +1766,7 @@
+@@ -1607,7 +1767,7 @@
  	struct ahci_cmd_list *clp;
  	union ccb *ccb = slot->ccb;
  	int port = ccb->ccb_h.target_id & 0x0f;
@@ -399,7 +395,7 @@ Index: sys/dev/ahci/ahci.c
  	uint8_t *fis = ch->dma.rfis + 0x40;
  	uint8_t val;
  
-@@ -1634,17 +1793,20 @@
+@@ -1634,17 +1794,20 @@
  	if ((ccb->ccb_h.func_code == XPT_ATA_IO) &&
  	    (ccb->ataio.cmd.flags & CAM_ATAIO_CONTROL)) {
  		if (ccb->ataio.cmd.control & ATA_A_RESET) {
@@ -421,7 +417,7 @@ Index: sys/dev/ahci/ahci.c
  	clp->bytecount = 0;
  	clp->cmd_table_phys = htole64(ch->dma.work_bus + AHCI_CT_OFFSET +
  				  (AHCI_CT_SIZE * slot->slot));
-@@ -1668,19 +1830,21 @@
+@@ -1668,19 +1831,21 @@
  	ATA_OUTL(ch->r_mem, AHCI_P_CI, (1 << slot->slot));
  	/* Device reset commands doesn't interrupt. Poll them. */
  	if (ccb->ccb_h.func_code == XPT_ATA_IO &&
@@ -448,7 +444,7 @@ Index: sys/dev/ahci/ahci.c
  				et = AHCI_ERR_TFE;
  				break;
  			}
-@@ -1692,9 +1856,20 @@
+@@ -1692,9 +1857,20 @@
  				break;
  			}
  		}
@@ -471,7 +467,7 @@ Index: sys/dev/ahci/ahci.c
  			device_printf(dev, "is %08x cs %08x ss %08x "
  			    "rs %08x tfd %02x serr %08x\n",
  			    ATA_INL(ch->r_mem, AHCI_P_IS),
-@@ -1704,30 +1879,11 @@
+@@ -1704,30 +1880,11 @@
  			    ATA_INL(ch->r_mem, AHCI_P_SERR));
  			et = AHCI_ERR_TIMEOUT;
  		}
@@ -491,22 +487,22 @@ Index: sys/dev/ahci/ahci.c
 -				}
 -			} 
 -		}
+-		ahci_end_transaction(slot, et);
 +
-+		/* Kick controller into sane state and enable FBS. */
-+		if (softreset == 2)
-+			ch->eslots |= (1 << slot->slot);
- 		ahci_end_transaction(slot, et);
--		/* Kick controller into sane state and enable FBS. */
+ 		/* Kick controller into sane state and enable FBS. */
 -		if ((ccb->ccb_h.func_code == XPT_ATA_IO) &&
 -		    (ccb->ataio.cmd.flags & CAM_ATAIO_CONTROL) &&
 -		    (ccb->ataio.cmd.control & ATA_A_RESET) == 0) {
 -			ahci_stop(ch->dev);
 -			ahci_start(ch->dev, 1);
 -		}
++		if (softreset == 2)
++			ch->eslots |= (1 << slot->slot);
++		ahci_end_transaction(slot, et);
  		return;
  	}
  	/* Start command execution timeout */
-@@ -1805,7 +1961,8 @@
+@@ -1805,7 +1962,8 @@
  		return;
  	}
  
@@ -516,7 +512,7 @@ Index: sys/dev/ahci/ahci.c
  	device_printf(dev, "is %08x cs %08x ss %08x rs %08x tfd %02x serr %08x\n",
  	    ATA_INL(ch->r_mem, AHCI_P_IS), ATA_INL(ch->r_mem, AHCI_P_CI),
  	    ATA_INL(ch->r_mem, AHCI_P_SACT), ch->rslots,
-@@ -1856,6 +2013,7 @@
+@@ -1856,6 +2014,7 @@
  	union ccb *ccb = slot->ccb;
  	struct ahci_cmd_list *clp;
  	int lastto;
@@ -524,7 +520,7 @@ Index: sys/dev/ahci/ahci.c
  
  	bus_dmamap_sync(ch->dma.work_tag, ch->dma.work_map,
  	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-@@ -1893,15 +2051,31 @@
+@@ -1893,15 +2052,31 @@
  			res->lba_high_exp = fis[10];
  			res->sector_count = fis[12];
  			res->sector_count_exp = fis[13];
@@ -558,7 +554,7 @@ Index: sys/dev/ahci/ahci.c
  			ccb->csio.resid =
  			    ccb->csio.dxfer_len - le32toh(clp->bytecount);
  		}
-@@ -1915,7 +2089,7 @@
+@@ -1915,7 +2090,7 @@
  	if (et != AHCI_ERR_NONE)
  		ch->eslots |= (1 << slot->slot);
  	/* In case of error, freeze device for proper recovery. */
@@ -567,7 +563,7 @@ Index: sys/dev/ahci/ahci.c
  	    !(ccb->ccb_h.status & CAM_DEV_QFRZN)) {
  		xpt_freeze_devq(ccb->ccb_h.path, 1);
  		ccb->ccb_h.status |= CAM_DEV_QFRZN;
-@@ -1946,7 +2120,7 @@
+@@ -1946,7 +2121,7 @@
  		break;
  	case AHCI_ERR_SATA:
  		ch->fatalerr = 1;
@@ -576,7 +572,7 @@ Index: sys/dev/ahci/ahci.c
  			xpt_freeze_simq(ch->sim, 1);
  			ccb->ccb_h.status &= ~CAM_STATUS_MASK;
  			ccb->ccb_h.status |= CAM_RELEASE_SIMQ;
-@@ -1954,7 +2128,7 @@
+@@ -1954,7 +2129,7 @@
  		ccb->ccb_h.status |= CAM_UNCOR_PARITY;
  		break;
  	case AHCI_ERR_TIMEOUT:
@@ -585,7 +581,7 @@ Index: sys/dev/ahci/ahci.c
  			xpt_freeze_simq(ch->sim, 1);
  			ccb->ccb_h.status &= ~CAM_STATUS_MASK;
  			ccb->ccb_h.status |= CAM_RELEASE_SIMQ;
-@@ -1997,21 +2171,19 @@
+@@ -1997,21 +2172,19 @@
  		return;
  	}
  	/* If it was our READ LOG command - process it. */
@@ -615,7 +611,7 @@ Index: sys/dev/ahci/ahci.c
  	/* If we have no other active commands, ... */
  	if (ch->rslots == 0) {
  		/* if there was fatal error - reset port. */
-@@ -2021,16 +2193,24 @@
+@@ -2021,16 +2194,24 @@
  			/* if we have slots in error, we can reinit port. */
  			if (ch->eslots != 0) {
  				ahci_stop(dev);
@@ -642,7 +638,7 @@ Index: sys/dev/ahci/ahci.c
  	/* Start PM timer. */
  	if (ch->numrslots == 0 && ch->pm_level > 3 &&
  	    (ch->curr[ch->pm_present ? 15 : 0].caps & CTS_SATA_CAPS_D_PMREQ)) {
-@@ -2040,45 +2220,78 @@
+@@ -2040,45 +2221,78 @@
  }
  
  static void
@@ -745,7 +741,7 @@ Index: sys/dev/ahci/ahci.c
  	xpt_freeze_simq(ch->sim, 1);
  	ahci_begin_transaction(dev, ccb);
  }
-@@ -2091,7 +2304,7 @@
+@@ -2091,7 +2305,7 @@
  	struct ata_res *res;
  	int i;
  
@@ -754,7 +750,7 @@ Index: sys/dev/ahci/ahci.c
  
  	data = ccb->ataio.data_ptr;
  	if ((ccb->ccb_h.status & CAM_STATUS_MASK) == CAM_REQ_CMP &&
-@@ -2099,6 +2312,8 @@
+@@ -2099,6 +2313,8 @@
  		for (i = 0; i < ch->numslots; i++) {
  			if (!ch->hold[i])
  				continue;
@@ -763,7 +759,7 @@ Index: sys/dev/ahci/ahci.c
  			if ((data[0] & 0x1F) == i) {
  				res = &ch->hold[i]->ataio.res;
  				res->status = data[2];
-@@ -2129,6 +2344,8 @@
+@@ -2129,6 +2345,8 @@
  		for (i = 0; i < ch->numslots; i++) {
  			if (!ch->hold[i])
  				continue;
@@ -772,7 +768,7 @@ Index: sys/dev/ahci/ahci.c
  			xpt_done(ch->hold[i]);
  			ch->hold[i] = NULL;
  			ch->numhslots--;
-@@ -2140,6 +2357,28 @@
+@@ -2140,6 +2358,28 @@
  }
  
  static void
@@ -801,7 +797,7 @@ Index: sys/dev/ahci/ahci.c
  ahci_start(device_t dev, int fbs)
  {
  	struct ahci_channel *ch = device_get_softc(dev);
-@@ -2175,8 +2414,8 @@
+@@ -2175,8 +2415,8 @@
  	/* Wait for activity stop. */
  	timeout = 0;
  	do {
@@ -812,7 +808,7 @@ Index: sys/dev/ahci/ahci.c
  			device_printf(dev, "stopping AHCI engine failed\n");
  			break;
  		}
-@@ -2198,8 +2437,8 @@
+@@ -2198,8 +2438,8 @@
  		ATA_OUTL(ch->r_mem, AHCI_P_CMD, cmd);
  		timeout = 0;
  		do {
@@ -823,7 +819,7 @@ Index: sys/dev/ahci/ahci.c
  			    device_printf(dev, "executing CLO failed\n");
  			    break;
  			}
-@@ -2220,8 +2459,8 @@
+@@ -2220,8 +2460,8 @@
  	/* Wait for FIS reception stop. */
  	timeout = 0;
  	do {
@@ -834,7 +830,7 @@ Index: sys/dev/ahci/ahci.c
  			device_printf(dev, "stopping AHCI FR engine failed\n");
  			break;
  		}
-@@ -2240,7 +2479,7 @@
+@@ -2240,7 +2480,7 @@
  }
  
  static int
@@ -843,7 +839,7 @@ Index: sys/dev/ahci/ahci.c
  {
  	struct ahci_channel *ch = device_get_softc(dev);
  	int timeout = 0;
-@@ -2248,19 +2487,50 @@
+@@ -2248,19 +2488,50 @@
  
  	while ((val = ATA_INL(ch->r_mem, AHCI_P_TFD)) &
  	    (ATA_S_BUSY | ATA_S_DRQ)) {
@@ -900,7 +896,7 @@ Index: sys/dev/ahci/ahci.c
  ahci_reset(device_t dev)
  {
  	struct ahci_channel *ch = device_get_softc(dev);
-@@ -2270,6 +2540,12 @@
+@@ -2270,6 +2541,12 @@
  	xpt_freeze_simq(ch->sim, 1);
  	if (bootverbose)
  		device_printf(dev, "AHCI reset...\n");
@@ -913,7 +909,7 @@ Index: sys/dev/ahci/ahci.c
  	/* Requeue freezed command. */
  	if (ch->frozen) {
  		union ccb *fccb = ch->frozen;
-@@ -2310,29 +2586,39 @@
+@@ -2310,29 +2587,39 @@
  	if (!ahci_sata_phy_reset(dev)) {
  		if (bootverbose)
  			device_printf(dev,
@@ -963,7 +959,7 @@ Index: sys/dev/ahci/ahci.c
  }
  
  static int
-@@ -2390,11 +2676,13 @@
+@@ -2390,11 +2677,13 @@
  ahci_sata_connect(struct ahci_channel *ch)
  {
  	u_int32_t status;
@@ -979,7 +975,7 @@ Index: sys/dev/ahci/ahci.c
  		if (((status & ATA_SS_DET_MASK) == ATA_SS_DET_PHY_ONLINE) &&
  		    ((status & ATA_SS_SPD_MASK) != ATA_SS_SPD_NO_SPEED) &&
  		    ((status & ATA_SS_IPM_MASK) == ATA_SS_IPM_ACTIVE))
-@@ -2406,18 +2694,21 @@
+@@ -2406,18 +2695,21 @@
  			}
  			return (0);
  		}
@@ -1007,7 +1003,7 @@ Index: sys/dev/ahci/ahci.c
  	}
  	/* Clear SATA error register */
  	ATA_OUTL(ch->r_mem, AHCI_P_SERR, 0xffffffff);
-@@ -2431,6 +2722,12 @@
+@@ -2431,6 +2723,12 @@
  	int sata_rev;
  	uint32_t val;
  
@@ -1020,7 +1016,7 @@ Index: sys/dev/ahci/ahci.c
  	sata_rev = ch->user[ch->pm_present ? 15 : 0].revision;
  	if (sata_rev == 1)
  		val = ATA_SC_SPD_SPEED_GEN1;
-@@ -2443,13 +2740,17 @@
+@@ -2443,13 +2741,17 @@
  	ATA_OUTL(ch->r_mem, AHCI_P_SCTL,
  	    ATA_SC_DET_RESET | val |
  	    ATA_SC_IPM_DIS_PARTIAL | ATA_SC_IPM_DIS_SLUMBER);
@@ -1041,7 +1037,7 @@ Index: sys/dev/ahci/ahci.c
  			ATA_OUTL(ch->r_mem, AHCI_P_SCTL, ATA_SC_DET_DISABLE);
  		return (0);
  	}
-@@ -2497,6 +2798,7 @@
+@@ -2497,6 +2799,7 @@
  			ccb->ccb_h.status = CAM_SEL_TIMEOUT;
  			break;
  		}
@@ -1049,7 +1045,7 @@ Index: sys/dev/ahci/ahci.c
  		/* Check for command collision. */
  		if (ahci_check_collision(dev, ccb)) {
  			/* Freeze command. */
-@@ -2662,4 +2964,9 @@
+@@ -2662,4 +2965,9 @@
  	struct ahci_channel *ch = (struct ahci_channel *)cam_sim_softc(sim);
  
  	ahci_ch_intr(ch->dev);
@@ -1059,10 +1055,8 @@ Index: sys/dev/ahci/ahci.c
 +		ahci_reset_to(ch->dev);
 +	}
  }
-Index: sys/dev/ahci/ahci.h
-===================================================================
---- sys/dev/ahci/ahci.h	(revision 223089)
-+++ sys/dev/ahci/ahci.h	(working copy)
+--- sys/dev/ahci/ahci.h.orig	2010-12-21 11:09:25.000000000 -0600
++++ sys/dev/ahci/ahci.h	2011-06-30 18:15:00.117980921 -0500
 @@ -118,6 +118,7 @@
  #define         ATA_SE_LINKSEQ_ERR      0x00800000
  #define         ATA_SE_TRANSPORT_ERR    0x01000000
