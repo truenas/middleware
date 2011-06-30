@@ -133,6 +133,7 @@ class notifier:
             'tftp': ('inetd', '/var/run/inetd.pid'),
             'iscsitarget': ('istgt', '/var/run/istgt.pid'),
             'ups': ('upsd', '/var/db/nut/upsd.pid'),
+            'smartd': ('smartd', '/var/run/smartd.pid'),
         }
         """
         We need to wait a little bit so pgrep works
