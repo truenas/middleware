@@ -1,5 +1,7 @@
---- sys/dev/ahci/ahci.c.orig	2010-12-21 11:09:25.000000000 -0600
-+++ sys/dev/ahci/ahci.c	2011-06-30 18:17:01.487832983 -0500
+Index: sys/dev/ahci/ahci.c
+===================================================================
+--- sys/dev/ahci/ahci.c	(revision 223089)
++++ sys/dev/ahci/ahci.c	(working copy)
 @@ -33,6 +33,7 @@
  #include <sys/kernel.h>
  #include <sys/ata.h>
@@ -84,7 +86,7 @@
 +	{0x91201b4b, 0x00, "Marvell 88SE912x",	AHCI_Q_EDGEIS|AHCI_Q_NOBSYRES},
 +	{0x91231b4b, 0x11, "Marvell 88SE912x",	AHCI_Q_NOBSYRES|AHCI_Q_ALTSIG},
  	{0x91231b4b, 0x00, "Marvell 88SE912x",	AHCI_Q_EDGEIS|AHCI_Q_SATA2|AHCI_Q_NOBSYRES},
-+	{0x91251b4b, 0x00, "Marvell 88SE912x",  AHCI_Q_NOBSYRES},
++	{0x91251b4b, 0x00, "Marvell 88SE9125",	AHCI_Q_NOBSYRES},
 +	{0x91721b4b, 0x00, "Marvell 88SE9172",	AHCI_Q_NOBSYRES},
 +	{0x91821b4b, 0x00, "Marvell 88SE9182",	AHCI_Q_NOBSYRES},
  	{0x06201103, 0x00, "HighPoint RocketRAID 620",	AHCI_Q_NOBSYRES},
@@ -279,7 +281,7 @@
  struct ahci_dc_cb_args {
  	bus_addr_t maddr;
  	int error;
-@@ -1230,34 +1355,66 @@
+@@ -1230,37 +1355,69 @@
  	}
  }
  
@@ -320,9 +322,9 @@
 +		return (1);
  	}
 +	return (0);
-+}
-+
-+static void
+ }
+ 
+ static void
 +ahci_cpd_check_events(device_t dev)
 +{
 +	struct ahci_channel *ch = device_get_softc(dev);
@@ -351,9 +353,12 @@
 +		return;
 +	}
 +	xpt_rescan(ccb);
- }
- 
- static void
++}
++
++static void
+ ahci_notify_events(device_t dev, u_int32_t status)
+ {
+ 	struct ahci_channel *ch = device_get_softc(dev);
 @@ -1317,7 +1474,7 @@
  	struct ahci_channel *ch = device_get_softc(dev);
  	uint32_t istatus, sstatus, cstatus, serr = 0, sntf = 0, ok, err;
@@ -487,18 +492,18 @@
 -				}
 -			} 
 -		}
--		ahci_end_transaction(slot, et);
 +
- 		/* Kick controller into sane state and enable FBS. */
++		/* Kick controller into sane state and enable FBS. */
++		if (softreset == 2)
++			ch->eslots |= (1 << slot->slot);
+ 		ahci_end_transaction(slot, et);
+-		/* Kick controller into sane state and enable FBS. */
 -		if ((ccb->ccb_h.func_code == XPT_ATA_IO) &&
 -		    (ccb->ataio.cmd.flags & CAM_ATAIO_CONTROL) &&
 -		    (ccb->ataio.cmd.control & ATA_A_RESET) == 0) {
 -			ahci_stop(ch->dev);
 -			ahci_start(ch->dev, 1);
 -		}
-+		if (softreset == 2)
-+			ch->eslots |= (1 << slot->slot);
-+		ahci_end_transaction(slot, et);
  		return;
  	}
  	/* Start command execution timeout */
@@ -1055,8 +1060,10 @@
 +		ahci_reset_to(ch->dev);
 +	}
  }
---- sys/dev/ahci/ahci.h.orig	2010-12-21 11:09:25.000000000 -0600
-+++ sys/dev/ahci/ahci.h	2011-06-30 18:15:00.117980921 -0500
+Index: sys/dev/ahci/ahci.h
+===================================================================
+--- sys/dev/ahci/ahci.h	(revision 223089)
++++ sys/dev/ahci/ahci.h	(working copy)
 @@ -118,6 +118,7 @@
  #define         ATA_SE_LINKSEQ_ERR      0x00800000
  #define         ATA_SE_TRANSPORT_ERR    0x01000000
