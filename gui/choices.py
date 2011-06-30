@@ -299,7 +299,7 @@ class whoChoices:
 ## Network|Interface Management
 class NICChoices(object):
     """Populate a list of NIC choices"""
-    def __init__(self, nolagg=False, novlan=False, exclude_configured=True, exclude_existing=False):
+    def __init__(self, nolagg=False, novlan=False, exclude_configured=True):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
         # Remove lo0 from choices
@@ -351,17 +351,6 @@ class NICChoices(object):
                 c.execute("SELECT int_interface FROM network_interfaces "
                           "WHERE int_ipv4address != '' OR int_dhcp != '0' "
                           "OR int_ipv6auto != '0' OR int_ipv6address != ''")
-            except sqlite3.OperationalError:
-                pass
-            else:
-                for interface in c:
-                    if interface[0] in self._NIClist:
-                        self._NIClist.remove(interface[0])
-
-        if exclude_existing:
-            try:
-                # Exclude any existing interfaces
-                c.execute("SELECT int_interface FROM network_interfaces")
             except sqlite3.OperationalError:
                 pass
             else:
