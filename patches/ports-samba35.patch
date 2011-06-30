@@ -1,12 +1,12 @@
-Index: net/samba34/files/patch-source3__modules__vfs_shadow_copy2.c
+Index: net/samba35/files/patch-source3__modules__vfs_shadow_copy2.c
 ===================================================================
-RCS file: net/samba34/files/patch-source3__modules__vfs_shadow_copy2.c
-diff -N net/samba34/files/patch-source3__modules__vfs_shadow_copy2.c
+RCS file: net/samba35/files/patch-source3__modules__vfs_shadow_copy2.c
+diff -N net/samba35/files/patch-source3__modules__vfs_shadow_copy2.c
 --- /dev/null	1 Jan 1970 00:00:00 -0000
-+++ files/patch-source3__modules__vfs_shadow_copy2.c	28 Jun 2011 20:36:26 -0000
++++ files/patch-source3__modules__vfs_shadow_copy2.c	30 Jun 2011 22:49:24 -0000
 @@ -0,0 +1,268 @@
-+--- ./source3/modules/vfs_shadow_copy2.c.orig	2010-09-09 07:23:21.000000000 -0700
-++++ ./source3/modules/vfs_shadow_copy2.c	2011-06-28 13:36:08.157725998 -0700
++--- ./source3/modules/vfs_shadow_copy2.c.orig	2011-06-14 04:17:28.000000000 -0700
+++++ ./source3/modules/vfs_shadow_copy2.c	2011-06-30 15:49:21.157033439 -0700
 +@@ -2,6 +2,7 @@
 +  * implementation of an Shadow Copy module - version 2
 +  *
@@ -78,8 +78,8 @@ diff -N net/samba34/files/patch-source3__modules__vfs_shadow_copy2.c
 + 
 + /*
 +   make very sure it is one of our special names 
-+@@ -91,6 +126,40 @@
-+ 	return True;
++@@ -158,6 +193,40 @@
++ 	return pcopy;
 + }
 + 
 ++static char *shadow_copy2_snapshot_to_gmt(TALLOC_CTX *mem_ctx, vfs_handle_struct *handle, const char *name)
@@ -119,7 +119,7 @@ diff -N net/samba34/files/patch-source3__modules__vfs_shadow_copy2.c
 + /*
 +   convert a name to the shadow directory
 +  */
-+@@ -240,6 +309,19 @@
++@@ -347,6 +416,19 @@
 + 	size_t baselen;
 + 	char *ret;
 + 
@@ -139,8 +139,8 @@ diff -N net/samba34/files/patch-source3__modules__vfs_shadow_copy2.c
 + 	snapdir = shadow_copy2_find_snapdir(tmp_ctx, handle);
 + 	if (snapdir == NULL) {
 + 		DEBUG(2,("no snapdir found for share at %s\n", handle->conn->connectpath));
-+@@ -254,7 +336,22 @@
-+ 		return NULL;
++@@ -369,7 +451,22 @@
++ 		}
 + 	}
 + 
 +-	relpath = fname + GMT_NAME_LEN;
@@ -163,7 +163,7 @@ diff -N net/samba34/files/patch-source3__modules__vfs_shadow_copy2.c
 + 	baselen = strlen(basedir);
 + 	baseoffset = handle->conn->connectpath + baselen;
 + 
-+@@ -270,9 +367,9 @@
++@@ -385,9 +482,9 @@
 + 	if (*relpath == '/') relpath++;
 + 	if (*baseoffset == '/') baseoffset++;
 + 
@@ -175,7 +175,7 @@ diff -N net/samba34/files/patch-source3__modules__vfs_shadow_copy2.c
 + 			      baseoffset, 
 + 			      relpath);
 + 	DEBUG(6,("convert_shadow2_name: '%s' -> '%s'\n", fname, ret));
-+@@ -491,6 +588,45 @@
++@@ -718,6 +815,45 @@
 +         SHADOW2_NEXT(CHMOD_ACL, (handle, name, mode), int, -1);
 + }
 + 
@@ -221,7 +221,7 @@ diff -N net/samba34/files/patch-source3__modules__vfs_shadow_copy2.c
 + static int shadow_copy2_get_shadow_copy2_data(vfs_handle_struct *handle, 
 + 					      files_struct *fsp, 
 + 					      SHADOW_COPY_DATA *shadow_copy2_data, 
-+@@ -500,6 +636,7 @@
++@@ -727,6 +863,7 @@
 + 	const char *snapdir;
 + 	SMB_STRUCT_DIRENT *d;
 + 	TALLOC_CTX *tmp_ctx = talloc_new(handle->data);
@@ -229,7 +229,7 @@ diff -N net/samba34/files/patch-source3__modules__vfs_shadow_copy2.c
 + 
 + 	snapdir = shadow_copy2_find_snapdir(tmp_ctx, handle);
 + 	if (snapdir == NULL) {
-+@@ -520,8 +657,6 @@
++@@ -747,8 +884,6 @@
 + 		return -1;
 + 	}
 + 
@@ -238,18 +238,18 @@ diff -N net/samba34/files/patch-source3__modules__vfs_shadow_copy2.c
 + 	shadow_copy2_data->num_volumes = 0;
 + 	shadow_copy2_data->labels      = NULL;
 + 
-+@@ -529,7 +664,9 @@
++@@ -756,7 +891,9 @@
 + 		SHADOW_COPY_LABEL *tlabels;
 + 
 + 		/* ignore names not of the right form in the snapshot directory */
-+-		if (!shadow_copy2_match_name(d->d_name)) {
-++		snapshot = shadow_copy2_snapshot_to_gmt(tmp_ctx, handle, d->d_name);
-++		DEBUG(6,("shadow_copy2_get_shadow_copy2_data: %s -> %s\n", d->d_name, snapshot));
-++		if (!snapshot) {
++-		if (!shadow_copy2_match_name(d->d_name, NULL)) {
+++ 		snapshot = shadow_copy2_snapshot_to_gmt(tmp_ctx, handle, d->d_name);
+++ 		DEBUG(6,("shadow_copy2_get_shadow_copy2_data: %s -> %s\n", d->d_name, snapshot));
+++ 		if (!snapshot) {
 + 			continue;
 + 		}
 + 
-+@@ -545,15 +682,22 @@
++@@ -772,15 +909,22 @@
 + 		if (tlabels == NULL) {
 + 			DEBUG(0,("shadow_copy2: out of memory\n"));
 + 			SMB_VFS_NEXT_CLOSEDIR(handle, p);
