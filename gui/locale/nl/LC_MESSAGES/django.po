@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:47-0700\n"
-"PO-Revision-Date: 2011-05-26 10:54+0200\n"
-"Last-Translator: Luiehond <bram.schellen@gmail.com>\n"
+"PO-Revision-Date: 2011-06-29 14:29+0200\n"
+"Last-Translator: Christian <c.helmus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -111,34 +111,28 @@ msgid "Disabled"
 msgstr "Uitgeschakeld"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Minimum energieverbruik met Standby (spindown)"
+msgstr "Level 1 - Minimaal energieverbruik met Standby (spindown)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Gemiddeld energieverbruik met Standby"
+msgstr "Level 64 - Gemiddeld energieverbruik met Standby"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Gemiddeld energieverbruik met Standby"
+msgstr "Level 127 - Gemiddeld energieverbruik met Standby"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Minimaal energieverbruik zonder Standby (geen spindown)"
+msgstr "Level 128 - Minimaal energieverbruik zonder Standby (geen spindown)"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Gemiddeld energieverbruik zonder Standby"
+msgstr "Level 192 - Gemiddeld energieverbruik zonder Standby"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Maximale prestaties, maximaal energieverbruik"
+msgstr "Level 254 - Maximale prestaties, maximaal energieverbruik"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -360,19 +354,16 @@ msgid "lzjb (recommended)"
 msgstr "lzjb (aanbevolen)"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "standaardniveau"
+msgstr "gzip (standaardniveau,6)"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "snelste"
+msgstr "gzip (snelste)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "maximum, traag"
+msgstr "gzip (maximum, traag)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -404,75 +395,73 @@ msgid "Every selected weekday"
 msgstr "Elke geselecteerde weekdag"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
-msgstr "alleen-lezen"
+msgstr "Alleen-lezen"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "alleen-lezen"
+msgstr "Alleen schrijven"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Lezen en Schrijven"
 
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minuten)s minuten"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(uren)s uur"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hours)s uren"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day)s dag"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week)s week"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Nooit - Controleer het apparaat ongeacht de power mode"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Slaapstand - Controleer het apparaat ongeacht de SLAAP mode"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
+msgstr "Standby - Controleer het apparaat ongeacht de SLAAP of STANDBY mode"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
-msgstr ""
+msgstr "Idle - Controleer het apparaat ongeacht de SLAAP, STANDBY of IDLE mode"
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Lange Zelf-Test"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Korte Zelf-Test"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Transport Zelf-Test (Alleen ATA)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Onmiddelijke Offline Test (Alleen ATA)"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -522,7 +511,7 @@ msgstr "Logins uitschakelen"
 
 #: account/forms.py:206
 msgid "Primary Group"
-msgstr "Hoofdgroep"
+msgstr "Hoofd Groep"
 
 #: account/forms.py:235
 msgid "A user with that username already exists."
@@ -553,19 +542,21 @@ msgstr "Ondersteunende groepen"
 
 #: account/forms.py:467
 msgid "New password"
-msgstr "Nieuwe wachtwoord"
+msgstr "Nieuw wachtwoord"
 
 #: account/forms.py:468
 msgid "New password confirmation"
-msgstr "Nieuwe wachtwoord bevestiging"
+msgstr "Nieuw wachtwoord bevestiging"
 
 #: account/forms.py:493
 msgid "Old password"
-msgstr "Oude wachtwoord"
+msgstr "Oud wachtwoord"
 
 #: account/forms.py:501
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr "Uw oude wachtwoord is niet correct. Voer uw oude wachtwoord in a.u.b."
+msgstr ""
+"Uw oude wachtwoord is niet correct. Voer uw oude wachtwoord a.u.b. nogmaals "
+"in."
 
 #: account/models.py:36 services/models.py:472 services/models.py:517
 #: templates/services/iscsi_auth.html:5
@@ -576,7 +567,7 @@ msgstr "Groep ID"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr "Groep naam"
+msgstr "Groep Naam"
 
 #: account/models.py:47 account/models.py:155 services/models.py:1210
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
@@ -595,7 +586,7 @@ msgstr "Groep %s is een standaard groep en kan niet worden verwijderd!"
 
 #: account/models.py:73
 msgid "User ID"
-msgstr "Gebruiker ID"
+msgstr "Gebruikers ID"
 
 #: account/models.py:78
 msgid "User &"
@@ -669,24 +660,20 @@ msgid "View All Groups"
 msgstr "Alle Groepen Bekijken"
 
 #: account/views.py:78
-#, fuzzy
 msgid "Password successfully updated."
-msgstr "%s succesvol aangepast."
+msgstr "Wachtwoord succesvol aangepast."
 
 #: account/views.py:92
-#, fuzzy
 msgid "Admin user successfully updated."
-msgstr "%s succesvol aangepast."
+msgstr "Admin gebruiker succesvol aangepast."
 
 #: account/views.py:102
-#, fuzzy
 msgid "Users successfully updated."
-msgstr "%s succesvol aangepast."
+msgstr "Gebruikers succesvol aangepast."
 
 #: account/views.py:115
-#, fuzzy
 msgid "Groups successfully updated."
-msgstr "%s succesvol aangepast."
+msgstr "Groepen succesvol aangepast."
 
 #: contrib/ext_formwizard.py:170
 msgid ""
@@ -707,7 +694,6 @@ msgid "The group %s is not valid."
 msgstr "De groep %s is niet geldig."
 
 #: freeadmin/forms.py:138
-#, fuzzy
 msgid "The path must reside within a volume mount point"
 msgstr ""
 "Het pad naar de extent moet zich bevinden in een volume / dataset mount "
@@ -716,12 +702,12 @@ msgstr ""
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "%s Toevoegen"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "Alle Gebruikers Bekijken"
+msgstr "Bekijk Alle %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -747,7 +733,7 @@ msgstr "%s succesvol aangepast."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Het herstarten van de service is mislukt."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -776,18 +762,16 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "Verplicht om nameserver 1 in te vullen voor nameserver 2"
 
 #: network/forms.py:100
-#, fuzzy
 msgid "Parent Interface"
-msgstr "Verwijder Interface"
+msgstr "Bovenliggende Poort"
 
 #: network/forms.py:109
-#, fuzzy
 msgid "The name must be vlanXX where XX is a integer"
 msgstr "Poort namen moeten vlanXX, zijn waar XX een nummer is"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN Tags zijn 1 t/m 4095"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -923,9 +907,8 @@ msgid "VLAN"
 msgstr "VLAN"
 
 #: network/models.py:200
-#, fuzzy
 msgid "VLANs"
-msgstr "VLAN"
+msgstr "VLANs"
 
 #: network/models.py:220
 msgid "Protocol Type"
@@ -984,9 +967,8 @@ msgid "View All Link Aggregations"
 msgstr "Bekijk Alle Link Aggregaties"
 
 #: network/views.py:180
-#, fuzzy
 msgid "LAGG successfully added"
-msgstr "succesvol toegevoegd"
+msgstr "LAGG succesvol toegevoegd"
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -998,11 +980,11 @@ msgstr "Dit veld is verplicht voor \"Thuis mappen\"."
 
 #: services/forms.py:90
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "De AFP service herstarten is mislukt."
 
 #: services/forms.py:99
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "De NFS service herstarten is mislukt."
 
 #: services/forms.py:103
 msgid "File Permission"
@@ -1038,39 +1020,39 @@ msgstr "Dit veld is vereist voor anonieme login"
 
 #: services/forms.py:191
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "De FTP service herstarten is mislukt."
 
 #: services/forms.py:200
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "De TFTP service herstarten is mislukt"
 
 #: services/forms.py:207
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "De SSH service herstarten is mislukt."
 
 #: services/forms.py:216 services/forms.py:241
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "De Rync service herladen is mislukt."
 
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "De naam mag geen / of ] bevatten."
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "De DynamicDNS service herladen is mislukt."
 
 #: services/forms.py:259
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "De SNMP service herladen is mislukt."
 
 #: services/forms.py:273
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "De ActiveDirectory service herladen is mislukt."
 
 #: services/forms.py:284
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "De LDAP service herladen is mislukt."
 
 #: services/forms.py:290 services/models.py:526
 #: templates/services/iscsi_auth.html:7
@@ -1079,7 +1061,7 @@ msgstr "Geheim"
 
 #: services/forms.py:291 services/models.py:527
 msgid "Target side secret."
-msgstr "Geheime Doel kant"
+msgstr "Geheim doelzijde."
 
 #: services/forms.py:292
 msgid "Secret (Confirm)"
@@ -1087,11 +1069,11 @@ msgstr "Geheim (Bevestig)"
 
 #: services/forms.py:294 services/forms.py:302
 msgid "Enter the same secret above for verification."
-msgstr "Typ het geheim zoals bovenstaand ter controle"
+msgstr "Typ het geheim zoals hierboven ter controle."
 
 #: services/forms.py:295
 msgid "Initiator Secret"
-msgstr "Initiator Geheim"
+msgstr "IInitiator Geheim"
 
 #: services/forms.py:297 services/models.py:533 services/models.py:538
 msgid "Initiator side secret. (for mutual CHAP authentication)"
@@ -1117,11 +1099,11 @@ msgstr "Een peer geheim mag niet hetzelfde zijn als het gebruikers geheim"
 #: services/forms.py:525 services/forms.py:572 services/forms.py:675
 #: services/forms.py:697 services/forms.py:718 services/forms.py:763
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "De iSCSI service herladen is mislukt."
 
 #: services/forms.py:373
 msgid "LUN already exists in the same target."
-msgstr "LUN bestaat reeds in hetzelfde doel"
+msgstr "LUN bestaat reeds in hetzelfde doel."
 
 #: services/forms.py:384 services/models.py:352
 msgid "Controller Auth Group"
@@ -1145,12 +1127,11 @@ msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr "De waarde moet zich bevinden tussen %(start)d en %(end)d, inclusief."
 
 #: services/forms.py:421
-#, fuzzy
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
 "Dit veld is vereist wanneer de ontdekkingsmethode is gezet op CHAP of CHAP "
-"Mutal."
+"Mutual."
 
 #: services/forms.py:504 services/forms.py:534
 msgid "You need to specify a filepath, not a directory."
@@ -1191,16 +1172,15 @@ msgid "Authentication Group number"
 msgstr "Authenticatie Groep nummer"
 
 #: services/forms.py:766
-#, fuzzy
 msgid "Delete underlying file"
-msgstr "Verwijder Interface"
+msgstr "Verwijder onderliggend bestand"
 
 #: services/forms.py:788
-#, fuzzy, python-format
+#, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "De gebruiker %s is niet geldig"
-msgstr[1] "De gebruiker %s is niet geldig"
+msgstr[0] "De E-Mail %(email)s is niet geldig"
+msgstr[1] "De volgende e-mails zijn niet geldig: %(email)s"
 
 #: services/models.py:40
 msgid "Service"
@@ -1274,7 +1254,6 @@ msgid "Guest account"
 msgstr "Gast account"
 
 #: services/models.py:105 services/models.py:192
-#, fuzzy
 msgid ""
 "Use this option to override the username ('nobody' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
@@ -1380,7 +1359,6 @@ msgid "Minimal AIO read size"
 msgstr "Minimale AIO lees grootte"
 
 #: services/models.py:159
-#, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
@@ -1393,7 +1371,6 @@ msgid "Minimal AIO write size"
 msgstr "Minimale AIO schijf grootte"
 
 #: services/models.py:165
-#, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
@@ -1606,15 +1583,14 @@ msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "Logische Eenheid Controller TCP poort (3261 is standaard)"
 
 #: services/models.py:337
-#, fuzzy
 msgid "Controller Authorized netmask"
-msgstr "Controller Geautoriseerd Netmasker"
+msgstr "Controller Geautoriseerd netmasker"
 
 #: services/models.py:339
-#, fuzzy
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
 msgstr ""
-"Logische Unit Controller Geautoriseerd Netmasker (255.255.255.0 is standaard)"
+"Logische Unit Controller Geautoriseerd netmasker (255.255.255.0 is "
+"standaard)"
 
 #: services/models.py:346
 msgid "Controller Auth Method"
@@ -1772,11 +1748,11 @@ msgstr "Optionele gebruikersvriendelijke string van het doel."
 
 #: services/models.py:569 storage/views.py:157
 msgid "Serial"
-msgstr ""
+msgstr "Serienummer"
 
 #: services/models.py:572
 msgid "Serial number for the logical unit"
-msgstr ""
+msgstr "Serienummer voor logische unit"
 
 #: services/models.py:577 storage/models.py:74 system/models.py:498
 #: templates/services/iscsi_extents.html:6
@@ -1853,9 +1829,8 @@ msgid "Target / Extent"
 msgstr "Doel / Extent"
 
 #: services/models.py:651
-#, fuzzy
 msgid "Targets / Extents"
-msgstr "Doel / Extent"
+msgstr "Doelen / Extents"
 
 #: services/models.py:666
 msgid "Provider"
@@ -2151,7 +2126,6 @@ msgid "Local user upload bandwidth"
 msgstr "Lokale gebruiker upload bandbreedte"
 
 #: services/models.py:885
-#, fuzzy
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
 msgstr "Lokale gebruiker upload bandbreedte in KB/s. Nul betekend oneindig."
 
@@ -2160,7 +2134,6 @@ msgid "Local user download bandwidth"
 msgstr "Lokale gebruiker download bandbreedte"
 
 #: services/models.py:890
-#, fuzzy
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
 msgstr "Lokale gebruiker download bandbreedte in KB/s. Nul betekend oneindig."
 
@@ -2169,7 +2142,6 @@ msgid "Anonymous user upload bandwidth"
 msgstr "Anonieme gebruiker upload bandbreedte"
 
 #: services/models.py:895
-#, fuzzy
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
 msgstr "Anonieme gebruiker upload bandbreedte in KB/s. Nul betekend oneindig."
 
@@ -2178,7 +2150,6 @@ msgid "Anonymous user download bandwidth"
 msgstr "Anonieme gebruiker download bandbreedte"
 
 #: services/models.py:900
-#, fuzzy
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Anonieme gebruiker download bandbreedte in KB/s. Nul betekend oneindig."
@@ -2483,47 +2454,42 @@ msgid "LDAP"
 msgstr "LDAP"
 
 #: services/models.py:1158
-#, fuzzy
 msgid "Alternate TCP port. Default is 873"
-msgstr "Alternatieve TCP poort. Standaardwaarde is 22"
+msgstr "Alternatieve TCP poort. Standaard is 873"
 
 #: services/models.py:1163
-#, fuzzy
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
 msgstr ""
-"Deze parameters worden toegevoegd aan de globale instellingen in inadyn.conf."
+"Deze parameters worden toegevoegd aan de [global] instellingen in "
+"rsyncd.conf"
 
 #: services/models.py:1167 services/models.py:1168
 msgid "Rsyncd"
-msgstr ""
+msgstr "Rsyncd"
 
 #: services/models.py:1178
-#, fuzzy
 msgid "Module name"
-msgstr "Volumenaam"
+msgstr "Modulenaam"
 
 #: services/models.py:1186
-#, fuzzy
 msgid "Path to be shared"
-msgstr "Pad naar extent"
+msgstr "Te delen pad"
 
 #: services/models.py:1192
 msgid "Access Mode"
-msgstr ""
+msgstr "Access Mode"
 
 #: services/models.py:1193
 msgid "This controls the access a remote host has to this module"
 msgstr ""
 
 #: services/models.py:1197
-#, fuzzy
 msgid "Maximum connections"
-msgstr "Max. connecties"
+msgstr "Maximum connecties"
 
 #: services/models.py:1198
-#, fuzzy
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr "Maximaal aantal connecties per IP adres (0 = ongelimiteerd)."
+msgstr "Maximum aantal simultane connecties. Standaard is 0 (onbeperkt)"
 
 #: services/models.py:1204
 msgid ""
@@ -2540,12 +2506,10 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1215
-#, fuzzy
 msgid "Hosts allow"
-msgstr "Hosts Toegestaan"
+msgstr "Hosts toestaan"
 
 #: services/models.py:1216
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of hosts which are "
 "permitted to access this module. You can specify the hosts by name or IP "
@@ -2556,12 +2520,10 @@ msgstr ""
 "adres. Laat dit veld leeg voor standaard instellingen."
 
 #: services/models.py:1220
-#, fuzzy
 msgid "Hosts deny"
-msgstr "Hosts Geweigerd"
+msgstr "Hosts weigeren"
 
 #: services/models.py:1221
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of host which are NOT "
 "permitted to access this module. Where the lists conflict, the allow list "
@@ -2578,19 +2540,18 @@ msgstr ""
 "lijst. Laat dit veld voor de standaard instellingen."
 
 #: services/models.py:1226
-#, fuzzy
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
 msgstr ""
-"Deze parameters worden toegevoegd aan de globale instellingen in inadyn.conf."
+"Deze parameters worden toegevoegd aan de module instellingen in rsyncd.conf"
 
 #: services/models.py:1231
 msgid "Rsync Module"
-msgstr ""
+msgstr "Rsync Module"
 
 #: services/models.py:1232
 msgid "Rsync Modules"
-msgstr ""
+msgstr "Rsync Modules"
 
 #: services/models.py:1243
 #, fuzzy
@@ -2652,14 +2613,12 @@ msgid "Control Services"
 msgstr "Controle Services"
 
 #: services/nav.py:50
-#, fuzzy
 msgid "Add Device Extent"
-msgstr "Apparaat Extents"
+msgstr "Apparaat Extents Toevoegen"
 
 #: services/nav.py:60
-#, fuzzy
 msgid "View All Device Extents"
-msgstr "Apparaat Extents"
+msgstr "Toon Alle Apparaat Extents"
 
 #: services/nav.py:70 templates/services/iscsi.html:7
 msgid "Device Extents"
@@ -2673,32 +2632,28 @@ msgid "Add Extent"
 msgstr "Extent Toevoegen"
 
 #: services/nav.py:102
-#, fuzzy
 msgid "View All Extents"
-msgstr "Alle Gebruikers Bekijken"
+msgstr "Toon Alle Extents"
 
 #: services/nav.py:114 templates/services/iscsi.html:9
 msgid "Extents"
 msgstr "Extents"
 
 #: services/nav.py:136
-#, fuzzy
 msgid "ISCSI"
 msgstr "iSCSI"
 
 #: services/nav.py:147 system/models.py:430 templates/services/index.html:86
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/views.py:222
-#, fuzzy
 msgid "The service could not be stopped."
-msgstr "Het cache kon niet herbouwd worden"
+msgstr "De service kan niet worden gestopt."
 
 #: services/views.py:229
-#, fuzzy
 msgid "The service could not be started."
-msgstr "Het cache kon niet herbouwd worden"
+msgstr "De service kan niet worden gestart."
 
 #: sharing/forms.py:82
 msgid "The field is a not a valid IP address or network"

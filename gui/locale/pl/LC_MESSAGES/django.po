@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-15 02:25+0200\n"
-"Last-Translator: raymond <raymondv@gmx.de>\n"
+"PO-Revision-Date: 2011-06-30 00:50+0200\n"
+"Last-Translator: voytec <dec.wojciech@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
@@ -112,34 +112,28 @@ msgid "Disabled"
 msgstr "Wyłączony"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Minimalne zużycie prądu z czuwaniem (spindown)"
+msgstr "Poziom 1 - Minimalne zużycie energii z czuwaniem (spindown)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Średnie zużycie prądu z czuwaniem"
+msgstr "Poziom 64 - Średnie zużycie energii z czuwaniem"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Średnie zużycie prądu z czuwaniem"
+msgstr "Poziom 127 - Średnie zużycie energii z czuwaniem"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Minimalny pobór prądu bez czuwania (no spindown)"
+msgstr "Poziom 128 - Minimalne zużycie energii bez czuwania (bez spindown'a)"
 
 #: choices.py:86
-#, fuzzy
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Średni pobór prądu bez czuwania"
+msgstr "Poziom 192 - Średnie zużycie energii bez czuwania"
 
 #: choices.py:87
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Maksymalna wydajność, maksymalny pobór prądu"
+msgstr "Poziom 254 - Maksymalna wydajność, maksymalny pobór energii"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -366,26 +360,24 @@ msgid "gzip (default level, 6)"
 msgstr "poziom domyślny"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "najszybszy"
+msgstr "gzip (najszybszy)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "maksimum, wolny"
+msgstr "gzip (maksimum, wolny)"
 
 #: choices.py:426
 msgid "Hour(s)"
-msgstr "godzina/y"
+msgstr "Godzina/y"
 
 #: choices.py:427
 msgid "Day(s)"
-msgstr "Dzien/Dni"
+msgstr "Dzień/Dni"
 
 #: choices.py:428
 msgid "Week(s)"
-msgstr "Tydzien/Tygodnie"
+msgstr "Tydzień/Tygodnie"
 
 #: choices.py:429
 msgid "Month(s)"
@@ -458,14 +450,16 @@ msgstr ""
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
+"Bezczynny - Sprawdź urządzenie o ile nie jest w trybie UŚPIENIA, CZUWANIA "
+"lub BEZCZYNNOŚCI"
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Długi Auto-Test"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Krótki Auto-Test"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
@@ -519,7 +513,7 @@ msgstr "Powłoka"
 
 #: account/forms.py:205 account/forms.py:345
 msgid "Disable logins"
-msgstr "Wyłączeni użytkownicy"
+msgstr "Wyłącz możliwość logowania"
 
 #: account/forms.py:206
 msgid "Primary Group"
@@ -599,23 +593,20 @@ msgid "User ID"
 msgstr "ID użytkownika"
 
 #: account/models.py:78
-#, fuzzy
 msgid "User &"
 msgstr "Użytkownik &"
 
 #: account/models.py:85
-#, fuzzy
 msgid "Hashed UNIX password"
 msgstr "Zaszyfrowane hasło UNIX-owe"
 
 #: account/models.py:91
-#, fuzzy
 msgid "Hashed SMB password"
 msgstr "Zaszyfrowane hasło Samby"
 
 #: account/models.py:95
 msgid "Primary Group ID"
-msgstr "ID grupy nadrzędnej"
+msgstr "ID grupy głównej"
 
 #: account/models.py:100
 msgid "Home Directory"
@@ -673,14 +664,12 @@ msgid "View All Groups"
 msgstr "Pokaż wszystkie grupy"
 
 #: account/views.py:78
-#, fuzzy
 msgid "Password successfully updated."
-msgstr "%s zaktualizowany pomyślnie."
+msgstr "Hasło zaktualizowane pomyślnie."
 
 #: account/views.py:92
-#, fuzzy
 msgid "Admin user successfully updated."
-msgstr "%s zaktualizowany pomyślnie."
+msgstr "Użytkownik Admin zaktualizowany pomyślnie."
 
 #: account/views.py:102
 #, fuzzy
@@ -720,7 +709,7 @@ msgstr ""
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Dodaj %s"
 
 #: freeadmin/navtree.py:327
 #, fuzzy, python-format
@@ -779,14 +768,12 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "Musisz wpisać pierwszy serwer DNS przed wpisaniem drugiego"
 
 #: network/forms.py:100
-#, fuzzy
 msgid "Parent Interface"
-msgstr "Usuń interfejs"
+msgstr "Interfejs nadrzędny"
 
 #: network/forms.py:109
-#, fuzzy
 msgid "The name must be vlanXX where XX is a integer"
-msgstr "Interfejs musi mieć nazwę vlanXX gdzie XX jest liczbą"
+msgstr "Nazwa musi być w formacie vlanXX gdzie XX jest liczbą"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -926,9 +913,8 @@ msgid "VLAN"
 msgstr "VLAN"
 
 #: network/models.py:200
-#, fuzzy
 msgid "VLANs"
-msgstr "VLAN"
+msgstr "VLANy"
 
 #: network/models.py:220
 msgid "Protocol Type"
@@ -987,9 +973,8 @@ msgid "View All Link Aggregations"
 msgstr "Pokaż wszystkie agregacje połączeń"
 
 #: network/views.py:180
-#, fuzzy
 msgid "LAGG successfully added"
-msgstr "dodano pomyślnie"
+msgstr "LAGG dodany pomyślnie"
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1061,6 +1046,8 @@ msgstr ""
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
 msgstr ""
+"Nazwa nie może zawierać slash'a oraz kwadratowego nawiasu zamykającego (/ "
+"])."
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
@@ -1279,7 +1266,6 @@ msgid "Guest account"
 msgstr "Konto gościa"
 
 #: services/models.py:105 services/models.py:192
-#, fuzzy
 msgid ""
 "Use this option to override the username ('nobody' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
@@ -1287,11 +1273,12 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"Użyj tej opcji aby nadpisać nazwę użytkownika (domyślnie 'ftp') jaka będzie "
-"używana przy usługach do których dostęp jest anonimowy. Ponadto uprawnienia "
-"tego użytkownika mogą być dostępne dla dowolnego klienta korzystającego z "
-"takiej usługi. Użytkownik ten musi istnieć w pliku z hasłami, nie jest "
-"jednak wymagany prawidłowy login."
+"Użyj tej opcji aby nadpisać nazwę użytkownika (domyślnie 'nobody') jaka "
+"będzie używana przy usługach do których dostęp jest anonimowy. Ponadto "
+"uprawnienia tego użytkownika mogą być dostępne dla dowolnego klienta "
+"korzystającego z takiej usługi. Użytkownik ten musi istnieć w pliku z "
+"hasłami, nie jest jednak wymagany prawidłowy login. Użytkownik root nie może "
+"zostać użyty jako konto gościa."
 
 #: services/models.py:108
 msgid "Allow guest access"
@@ -1772,7 +1759,7 @@ msgstr "Opcjonalna nazwa celu przyjazna użytkownikowi."
 
 #: services/models.py:569 storage/views.py:157
 msgid "Serial"
-msgstr ""
+msgstr "Numer seryjny"
 
 #: services/models.py:572
 msgid "Serial number for the logical unit"
@@ -2469,23 +2456,20 @@ msgid "LDAP"
 msgstr "LDAP"
 
 #: services/models.py:1158
-#, fuzzy
 msgid "Alternate TCP port. Default is 873"
-msgstr "Alternatywny port TCP. Domyślnie 22"
+msgstr "Alternatywny port TCP. Domyślnie 873"
 
 #: services/models.py:1163
-#, fuzzy
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
-msgstr "Te parametry zostaną dodane do ustawień globalnych w inadyn.conf."
+msgstr "Te parametry bedą dodane do ustawień globalnych w rsyncd.conf"
 
 #: services/models.py:1167 services/models.py:1168
 msgid "Rsyncd"
-msgstr ""
+msgstr "Rsyncd"
 
 #: services/models.py:1178
-#, fuzzy
 msgid "Module name"
-msgstr "Nazwa wolumenu"
+msgstr "Nazwa modułu"
 
 #: services/models.py:1186
 #, fuzzy
@@ -2494,21 +2478,19 @@ msgstr "Ścieżka do grupy"
 
 #: services/models.py:1192
 msgid "Access Mode"
-msgstr ""
+msgstr "Tryb dostępu"
 
 #: services/models.py:1193
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "Ta opcja pozwala na kontrolę dostępu zdalnego hosta do tego modułu"
 
 #: services/models.py:1197
-#, fuzzy
 msgid "Maximum connections"
 msgstr "Maksymalna ilość połączeń"
 
 #: services/models.py:1198
-#, fuzzy
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr "Maksymalna ilość połączeń na adres IP (0 = nieograniczona)."
+msgstr "Maksymalna ilość równoczesnych połączeń. Domyślnie 0  (nieograniczona)."
 
 #: services/models.py:1204
 msgid ""
@@ -2525,9 +2507,8 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1215
-#, fuzzy
 msgid "Hosts allow"
-msgstr "Komputery dozwolone"
+msgstr "Dopuszczone hosty"
 
 #: services/models.py:1216
 #, fuzzy
@@ -2542,9 +2523,8 @@ msgstr ""
 "użyć ustawień domyślnych."
 
 #: services/models.py:1220
-#, fuzzy
 msgid "Hosts deny"
-msgstr "Komputery zabronione"
+msgstr "Zablokowane hosty"
 
 #: services/models.py:1221
 #, fuzzy
@@ -2572,11 +2552,11 @@ msgstr "Te parametry zostaną dodane do ustawień globalnych w inadyn.conf."
 
 #: services/models.py:1231
 msgid "Rsync Module"
-msgstr ""
+msgstr "Moduł Rsync"
 
 #: services/models.py:1232
 msgid "Rsync Modules"
-msgstr ""
+msgstr "Moduły Rsync"
 
 #: services/models.py:1243
 #, fuzzy
@@ -2668,7 +2648,6 @@ msgid "Extents"
 msgstr "Grupy"
 
 #: services/nav.py:136
-#, fuzzy
 msgid "ISCSI"
 msgstr "iSCSI"
 
@@ -2727,7 +2706,7 @@ msgstr "Dziedzicz uprawnienia"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
-msgstr "Włącz kosz"
+msgstr "Eksportuj kosz"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
@@ -2776,7 +2755,7 @@ msgstr ""
 
 #: sharing/models.py:80
 msgid "Hosts Deny"
-msgstr "Komputery zabronione"
+msgstr "Zablokowane hosty"
 
 #: sharing/models.py:81
 msgid ""
@@ -5344,7 +5323,7 @@ msgid "View All Interfaces"
 msgstr "Pokaż wszystkie interfejsy"
 
 msgid "View All VLANs"
-msgstr "Pokaż wszystkie VLAN-y"
+msgstr "Pokaż wszystkie VLANy"
 
 msgid "View All Static Routes"
 msgstr "Pokaż wszystkie trasy statyczne"

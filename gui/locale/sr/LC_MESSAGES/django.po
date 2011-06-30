@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-26 02:01+0200\n"
+"PO-Revision-Date: 2011-06-30 09:29+0200\n"
 "Last-Translator: bscomputer <office@bscomputer.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
@@ -254,8 +254,9 @@ msgid "Time Machine"
 msgstr "Vremenska Mašina"
 
 #: choices.py:190
+#, fuzzy
 msgid "No case folding"
-msgstr ""
+msgstr "Bez konverzije"
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
@@ -460,8 +461,9 @@ msgid "Short Self-Test"
 msgstr "Kratko Samo-testiranje"
 
 #: choices.py:469
+#, fuzzy
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Samo-testiranje prenosa (samo ATA)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
