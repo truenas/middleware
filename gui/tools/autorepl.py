@@ -172,8 +172,11 @@ Hello,
                     continue
                 MNTLOCK.unlock()
         else:
+            # Reset the "latest" snapshot to a new one.
+            system('/sbin/zfs set freenas:state=NEW %s' % (release_list[0]))
+            release_list = []
             last_snapshot = ''
-    elif len(release_list) == 0:
+    if len(release_list) == 0:
          # Create remote filesystem
          replcmd = '%s %s /sbin/zfs create -p %s' % (sshcmd, remote, remotefs)
          system(replcmd)
