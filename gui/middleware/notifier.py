@@ -1109,7 +1109,7 @@ class notifier:
             flags=''
         self.__system("/usr/sbin/chown %s'%s':'%s' %s" % (flags, user, group, path))
         self.__system("/bin/chmod %s%s %s" % (flags, mode, path))
-        self.__make_windows_happy(path, user, group, mode, recursive)
+        #self.__make_windows_happy(path, user, group, mode, recursive)
 
     def mp_get_permission(self, path):
         if os.path.isdir(path):
