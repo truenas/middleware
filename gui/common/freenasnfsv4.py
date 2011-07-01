@@ -35,7 +35,6 @@ from subprocess import Popen, PIPE
 
 GETFACL_PATH = "/bin/getfacl"
 SETFACL_PATH = "/bin/setfacl"
-CHMOD_PATH = "/bin/chmod"
 
 #
 # NFSv4 flags only
@@ -361,6 +360,11 @@ class NFSv4_ACL:
                 entry.type = acl_type
                 self.__entries.append(entry)
 
+    def __refresh(self):
+        self.__entries = []
+        self.__get()
+        self.__dirty = False
+
     def set(self, tag, qualifier, permissions, inheritance_flags = None, type = None):
         for entry in self.__entries:
             if entry.tag == tag and entry.qualifier == qualifier:
@@ -454,6 +458,8 @@ class NFSv4_ACL:
             gid = entry.gr_gid
 
         os.chown(self.__path, uid, gid)
+        self.__refresh()
+
         return True
             
     def chmod(self, mode):
@@ -493,8 +499,5 @@ class NFSv4_ACL:
             NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_MODIFY)
             n += 1
 
-        self.__entries = []
-        self.__get()
-        self.__dirty = False
-
+        self.__refresh()
         return True
