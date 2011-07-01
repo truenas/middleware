@@ -475,18 +475,24 @@ class NFSv4_ACL:
 
             if n & 4:
                 self.set(tag, None, '+r', None, 'allow')
+                self.set(tag, None, '-r', None, 'deny')
             else:
                 self.set(tag, None, '-r', None, 'allow')
+                self.set(tag, None, '+r', None, 'deny')
 
             if n & 2:
                 self.set(tag, None, '+w', None, 'allow')
+                self.set(tag, None, '-w', None, 'deny')
             else:
                 self.set(tag, None, '-w', None, 'allow')
+                self.set(tag, None, '+w', None, 'deny')
 
             if n & 1:
                 self.set(tag, None, '+x', None, 'allow')
+                self.set(tag, None, '-x', None, 'deny')
             else:
                 self.set(tag, None, '-x', None, 'allow')
+                self.set(tag, None, '+x', None, 'deny')
 
             pos += 1
 
