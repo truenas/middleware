@@ -133,6 +133,7 @@ class NFSv4_setfacl:
             args += "-x "
 
         self.__out = str(NFSv4_pipe("%s %s '%s' '%s'" % (self.__setfacl, args, self.__entry, self.__path)))
+        #print "%s %s '%s' '%s'" % (self.__setfacl, args, self.__entry, self.__path)
 
 
 class NFSv4_ACL_Entry:
@@ -389,6 +390,21 @@ class NFSv4_ACL:
                         entry.set_inheritance_flags(inheritance_flags)
                         self.__dirty = True
 
+    def add(self, tag, qualifier = None, permissions = None, inheritance_flags = None, type = None):
+        entry = NFSv4_ACL_Entry()
+        entry.tag = tag
+
+        if qualifier:
+            entry.qualifier = qualifier
+        if permissions:
+            entry.set_access_permissions(permissions)
+        if inheritance_flags:
+            entry.set_inheritance_flags(inheritance_flags)
+
+        entry.type = (type if type else 'allow')
+        self.__entries.append(entry)
+        self.__dirty = True
+
     def get(self, tag = None, qualifier = None, type = None):
         entries = []
         for entry in self.__entries:
@@ -437,65 +453,33 @@ class NFSv4_ACL:
         return True
             
     def chmod(self, mode):
-        pos = 0 
         length = len(mode) 
+        if length == 4:
+            mode = mode[1:]
 
-        if length == 3:
-            mode = '0' + mode
-
-        who = [None, 'u', 'g', 'o']
-        acl = [None, 'owner@', 'group@', 'everyone@']
+        who = ['u', 'g', 'o']
+        acl = ['owner@', 'group@', 'everyone@']
         
+        pos = 0 
         for c in mode:
             n = int(c)
             w = who[pos]
             tag = acl[pos]
 
             if n & 4:
-                if pos == 0:
-                    NFSv4_pipe("%s u+s %s" % (CHMOD_PATH, self.__path))
-
-                else:
-                    self.set(tag, None, '+r', None, 'allow')
-                    self.set(tag, None, '-r', None, 'deny')
+                self.set(tag, None, '+r', None, 'allow')
             else:
-                if pos == 0:
-                    NFSv4_pipe("%s u-s %s" % (CHMOD_PATH, self.__path))
-
-                else:
-                    self.set(tag, None, '-r', None, 'allow')
-                    self.set(tag, None, '+r', None, 'deny')
-      
+                self.set(tag, None, '-r', None, 'allow')
 
             if n & 2:
-                if pos == 0:
-                    NFSv4_pipe("%s g+s %s" % (CHMOD_PATH, self.__path))
-
-                else:
-                    self.set(tag, None, '+wp', None, 'allow')
-                    self.set(tag, None, '-wp', None, 'deny')
+                self.set(tag, None, '+w', None, 'allow')
             else:
-                if pos == 0:
-                    NFSv4_pipe("%s g-s %s" % (CHMOD_PATH, self.__path))
-
-                else:
-                    self.set(tag, None, '-wp', None, 'allow')
-                    self.set(tag, None, '+wp', None, 'deny')
+                self.set(tag, None, '-w', None, 'allow')
 
             if n & 1:
-                if pos == 0:
-                    NFSv4_pipe("%s +t %s" % (CHMOD_PATH, self.__path))
-
-                else:
-                    self.set(tag, None, '+x', None, 'allow')
-                    self.set(tag, None, '-x', None, 'deny')
+                self.set(tag, None, '+x', None, 'allow')
             else:
-                if pos == 0:
-                    NFSv4_pipe("%s -t %s" % (CHMOD_PATH, self.__path))
-
-                else:
-                    self.set(tag, None, '-x', None, 'allow')
-                    self.set(tag, None, '+x', None, 'deny')
+                self.set(tag, None, '-x', None, 'allow')
 
             pos += 1
 
@@ -508,5 +492,8 @@ class NFSv4_ACL:
             NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_MODIFY)
             n += 1
 
+        self.__entries = []
+        self.__get()
         self.__dirty = False
+
         return True
