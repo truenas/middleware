@@ -133,7 +133,6 @@ class NFSv4_setfacl:
             args += "-x "
 
         self.__out = str(NFSv4_pipe("%s %s '%s' '%s'" % (self.__setfacl, args, self.__entry, self.__path)))
-        #print "%s %s '%s' '%s'" % (self.__setfacl, args, self.__entry, self.__path)
 
 
 class NFSv4_ACL_Entry:
@@ -421,7 +420,12 @@ class NFSv4_ACL:
         entries = []
         for entry in self.__entries:
             if entry.tag == tag and entry.qualifier == qualifier:
-                pass
+                if type and entry.type == type:
+                    self.__entries.remove(entry)
+                    self.__dirty = True
+                elif not type:
+                    self.__entries.remove(entry)
+                    self.__dirty = True
 
     def chown(self, who):
         if not who:
@@ -457,13 +461,10 @@ class NFSv4_ACL:
         if length == 4:
             mode = mode[1:]
 
-        who = ['u', 'g', 'o']
-        acl = ['owner@', 'group@', 'everyone@']
-        
         pos = 0 
+        acl = ['owner@', 'group@', 'everyone@']
         for c in mode:
             n = int(c)
-            w = who[pos]
             tag = acl[pos]
 
             if n & 4:
