@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-30 10:40+0200\n"
+"PO-Revision-Date: 2011-06-30 21:23+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -4926,7 +4926,7 @@ msgstr "ערוך אפשרויות ZFS"
 
 #: templates/storage/volumes.html:147 templates/storage/volumes.html.py:151
 msgid "Destroy Volume"
-msgstr "הרוס נפח"
+msgstr "השמד נפח"
 
 #: templates/storage/volumes.html:189 templates/storage/volumes.html.py:193
 msgid "View Disks"
@@ -5139,7 +5139,7 @@ msgstr "FreeNAS Build"
 #: templates/system/wizard.html:3
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr "צעד %(step)s מ%(step_count)s"
+msgstr "שלב %(step)s מ%(step_count)s"
 
 msgid "%s successfully update."
 msgstr "% התעדכן בהצלחה"

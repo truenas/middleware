@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-30 00:50+0200\n"
+"PO-Revision-Date: 2011-07-01 09:27+0200\n"
 "Last-Translator: voytec <dec.wojciech@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
@@ -355,9 +355,8 @@ msgid "lzjb (recommended)"
 msgstr "lzjb (zalecany)"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "poziom domyślny"
+msgstr "gzip (poziom domyślny, 6)"
 
 #: choices.py:284
 msgid "gzip (fastest)"
@@ -397,18 +396,16 @@ msgid "Every selected weekday"
 msgstr "W wybrane dni"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
-msgstr "wyłącznie odczyt"
+msgstr "Wyłącznie odczyt"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "wyłącznie odczyt"
+msgstr "Wyłącznie zapis"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Odczyt i Zapis"
 
 #: choices.py:447 choices.py:448
 #, python-format
@@ -437,15 +434,15 @@ msgstr ""
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Nigdy - Sprawdź urządzenie niezależnie od trybu zasilania"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Sleep - Sprawdź urządzenie o ile nie jest w trybie SLEEP"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
+msgstr "Standby - Sprawdź urządzenie o ile nie jest w trybie SLEEP lub STANDBY"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
@@ -504,7 +501,7 @@ msgstr "Potwierdzenie hasła"
 
 #: account/forms.py:203 account/forms.py:310 system/forms.py:189
 msgid "Enter the same password as above, for verification."
-msgstr "Wpisz jeszcze raz hasło w celu potwierdzenia."
+msgstr "Wpisz ponownie hasło w celu weryfikacji."
 
 #: account/forms.py:204 account/forms.py:346 account/models.py:105
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:89
@@ -672,14 +669,12 @@ msgid "Admin user successfully updated."
 msgstr "Użytkownik Admin zaktualizowany pomyślnie."
 
 #: account/views.py:102
-#, fuzzy
 msgid "Users successfully updated."
-msgstr "%s zaktualizowany pomyślnie."
+msgstr "Pomyślnie zaktualizowano użytkowników."
 
 #: account/views.py:115
-#, fuzzy
 msgid "Groups successfully updated."
-msgstr "%s zaktualizowany pomyślnie."
+msgstr "Pomyślnie zaktualizowano grupy."
 
 #: contrib/ext_formwizard.py:170
 msgid ""
@@ -700,11 +695,8 @@ msgid "The group %s is not valid."
 msgstr "Grupa %s nie jest prawidłowa."
 
 #: freeadmin/forms.py:138
-#, fuzzy
 msgid "The path must reside within a volume mount point"
-msgstr ""
-"Ścieżka do grupy musi znajdować się wewnątrz punktu muntowania wolumenu/"
-"zbioru danych."
+msgstr "Ścieżka musi się zawierać w punkcie montowania wolumenu"
 
 #: freeadmin/navtree.py:315
 #, python-format
@@ -712,9 +704,9 @@ msgid "Add %s"
 msgstr "Dodaj %s"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "Pokaż wszystkich użytkowników"
+msgstr "Pokaż wszystkich %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -740,7 +732,7 @@ msgstr "%s zaktualizowany pomyślnie."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Nieudane zrestartowanie usługi."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -777,14 +769,14 @@ msgstr "Nazwa musi być w formacie vlanXX gdzie XX jest liczbą"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN Tags od 1 - 4095 włącznie"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
 msgstr "Porty fizyczne składające się na LAGG"
 
 #: network/forms.py:190
-#, fuzzy, python-format
+#, python-format
 msgid "The network '%s' is not valid, CIDR expected."
 msgstr "Sieć '%s' nie jest prawidłowa, oczekiwano CIDR."
 
@@ -832,7 +824,7 @@ msgstr "Nazwa interfejsu"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr "Nazwa Twego interfejsu sieciowego"
+msgstr "Nazwa Twojego interfejsu sieciowego"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
@@ -987,11 +979,11 @@ msgstr "To pole jest wymagane dla opcji \"Katalogi domowe\"."
 
 #: services/forms.py:90
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "Nieudane przeładowanie usługi AFP."
 
 #: services/forms.py:99
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "Nieudane przeładowanie usługi NFS."
 
 #: services/forms.py:103
 msgid "File Permission"
@@ -1029,19 +1021,19 @@ msgstr "To pole jest wymagane dla logowania anonimowego"
 
 #: services/forms.py:191
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "Uruchomienie usługi FTP nie powiodło się."
 
 #: services/forms.py:200
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "Nieudane przeładowanie usługi TFTP."
 
 #: services/forms.py:207
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "Nieudane przeładowanie usługi SSH."
 
 #: services/forms.py:216 services/forms.py:241
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Nieudane przeładowanie usługi Rsync."
 
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
@@ -1051,19 +1043,19 @@ msgstr ""
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "Nieudane przeładowanie usługi DynamicDNS."
 
 #: services/forms.py:259
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "Nieudane przeładowanie usługi SNMP."
 
 #: services/forms.py:273
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "Nieudane przeładowanie usługi activedirectory."
 
 #: services/forms.py:284
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "Nieudane przeładowanie  usługi ldap."
 
 #: services/forms.py:290 services/models.py:526
 #: templates/services/iscsi_auth.html:7
@@ -1110,7 +1102,7 @@ msgstr "Hasło klienta nie może być takie samo jak hasło użytkownika."
 #: services/forms.py:525 services/forms.py:572 services/forms.py:675
 #: services/forms.py:697 services/forms.py:718 services/forms.py:763
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "Nieudane przeładowanie usługi iSCSI."
 
 #: services/forms.py:373
 msgid "LUN already exists in the same target."
@@ -1136,11 +1128,10 @@ msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr "Ta wartość musi zawierać się pomiędzy %(start)d i %(end)d, włącznie."
 
 #: services/forms.py:421
-#, fuzzy
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
-"To pole jest wymagane jeśli metoda wyszukiwania jest ustawiona na CHAP lub "
+"To pole jest wymagane jeśli metoda wykrywania jest ustawiona na CHAP lub "
 "CHAP Mutual."
 
 #: services/forms.py:504 services/forms.py:534
@@ -1188,12 +1179,12 @@ msgid "Delete underlying file"
 msgstr "Usuń interfejs"
 
 #: services/forms.py:788
-#, fuzzy, python-format
+#, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "Użytkownik %s nie jest prawidłowy."
-msgstr[1] "Użytkownik %s nie jest prawidłowy."
-msgstr[2] "Użytkownik %s nie jest prawidłowy."
+msgstr[0] "Adres email %(email) nie jest prawidłowy."
+msgstr[1] "Adres email %(email) nie jest prawidłowy."
+msgstr[2] "Adres email %(email) nie jest prawidłowy."
 
 #: services/models.py:40
 msgid "Service"
@@ -1373,7 +1364,6 @@ msgid "Minimal AIO read size"
 msgstr "Minimalny rozmiar odczytu AIO"
 
 #: services/models.py:159
-#, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
@@ -1386,7 +1376,6 @@ msgid "Minimal AIO write size"
 msgstr "Minimalny rozmiar zapisu AIO"
 
 #: services/models.py:165
-#, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
@@ -1763,7 +1752,7 @@ msgstr "Numer seryjny"
 
 #: services/models.py:572
 msgid "Serial number for the logical unit"
-msgstr ""
+msgstr "Numer seryjny dla jednostki logicznej"
 
 #: services/models.py:577 storage/models.py:74 system/models.py:498
 #: templates/services/iscsi_extents.html:6
@@ -2077,7 +2066,6 @@ msgid "Always Chroot"
 msgstr "Zawsze zmieniaj na katalog użytkownika"
 
 #: services/models.py:864
-#, fuzzy
 msgid "Require IDENT Authentication"
 msgstr "Wymagaj autentykacji IDENT"
 
@@ -2095,6 +2083,9 @@ msgid ""
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
+"Powoduje wyświetlenie informacji o sieci przez serwer dla danego adresu IP "
+"klienta, przy założeniu że adres IP lub host DNS zachowuje się jako brama "
+"NAT lub przekierowuje porty dla serwera."
 
 #: services/models.py:874
 msgid "Minimum passive port"
@@ -2129,7 +2120,6 @@ msgid "Local user upload bandwidth"
 msgstr "Limit wysyłania dla lokalnego użytkownika"
 
 #: services/models.py:885
-#, fuzzy
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Limit wysyłania w KB/s dla lokalnego użytkownika. Zero oznacza "
@@ -2140,7 +2130,6 @@ msgid "Local user download bandwidth"
 msgstr "Limit pobierania dla lokalnego użytkownika"
 
 #: services/models.py:890
-#, fuzzy
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Limit pobierania w KB/s dla lokalnego użytkownika. Zero oznacza "
@@ -2151,7 +2140,6 @@ msgid "Anonymous user upload bandwidth"
 msgstr "Limit wysyłania dla anonimowego użytkownika"
 
 #: services/models.py:895
-#, fuzzy
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Limit wysyłania w KB/s dla anonimowego użytkownika. Zero oznacza "
@@ -2162,7 +2150,6 @@ msgid "Anonymous user download bandwidth"
 msgstr "Limit pobierania dla anonimowego użytkownika"
 
 #: services/models.py:900
-#, fuzzy
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
 "Limit pobierania w KB/s dla anonimowego użytkownika. Zero oznacza "
@@ -2186,12 +2173,11 @@ msgid "Directory"
 msgstr "Katalog"
 
 #: services/models.py:923
-#, fuzzy
 msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
-"Katalog zawierający pliki które chcesz publikować. Komputer zdalny nie "
+"Katalog zawierający pliki które chcesz publikować. Zdalny host nie "
 "potrzebuje przechodzić przez katalog podczas transferu."
 
 #: services/models.py:926
@@ -2569,9 +2555,8 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1250
-#, fuzzy
 msgid "Power mode"
-msgstr "Tryb zamykania systemu"
+msgstr "Tryb zasilania"
 
 #: services/models.py:1254
 msgid "Difference"
@@ -2596,7 +2581,7 @@ msgstr ""
 
 #: services/models.py:1264
 msgid "Critical"
-msgstr ""
+msgstr "Krytyczny"
 
 #: services/models.py:1268
 msgid "Email to report"
@@ -2653,11 +2638,11 @@ msgstr "iSCSI"
 
 #: services/nav.py:147 system/models.py:430 templates/services/index.html:86
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/views.py:222
 msgid "The service could not be stopped."
-msgstr ""
+msgstr "Usługa nie może być zatrzymana."
 
 #: services/views.py:229
 msgid "The service could not be started."
@@ -2783,7 +2768,6 @@ msgid "Windows Share"
 msgstr "Udział Windows"
 
 #: sharing/models.py:94
-#, fuzzy
 msgid "Windows Shares"
 msgstr "Udział Windows"
 
@@ -2871,7 +2855,7 @@ msgstr ""
 
 #: sharing/models.py:151
 msgid "Disk Discovery"
-msgstr ""
+msgstr "Wykrywanie dysków"
 
 #: sharing/models.py:152
 msgid ""
@@ -2881,7 +2865,7 @@ msgstr ""
 
 #: sharing/models.py:158
 msgid "Disk discovery mode"
-msgstr ""
+msgstr "Tryb wykrywania dysków"
 
 #: sharing/models.py:159
 msgid ""
@@ -3003,7 +2987,6 @@ msgid "Apple Share"
 msgstr "Udział Apple"
 
 #: sharing/models.py:213
-#, fuzzy
 msgid "Apple Shares"
 msgstr "Udział Apple"
 
@@ -3033,13 +3016,12 @@ msgid "Read Only"
 msgstr "Tylko do odczytu"
 
 #: sharing/models.py:240
-#, fuzzy
 msgid "Export the share read only. Writes are not permitted."
-msgstr "Udostępnia udział tylko do odczytu.  Zapis nie jest dozwolony."
+msgstr "Udostępnia udział tylko do odczytu. Zapis nie jest dozwolony."
 
 #: sharing/models.py:243 system/models.py:409
 msgid "Quiet"
-msgstr ""
+msgstr "Cichy"
 
 #: sharing/models.py:244
 msgid ""
@@ -3083,7 +3065,6 @@ msgid "UNIX Share"
 msgstr "Udział UNIX"
 
 #: sharing/models.py:284
-#, fuzzy
 msgid "UNIX Shares"
 msgstr "Udział UNIX"
 
@@ -3107,9 +3088,8 @@ msgid ""
 msgstr ""
 
 #: storage/forms.py:234
-#, fuzzy
 msgid "You must select a filesystem"
-msgstr "Zdalny system plików ZFS"
+msgstr "Musisz wybrać system plików"
 
 #: storage/forms.py:238 system/forms.py:217 system/forms.py:223
 #: system/forms.py:228
@@ -3138,11 +3118,11 @@ msgstr ""
 
 #: storage/forms.py:404
 msgid "Some error ocurried while labelling the disk."
-msgstr ""
+msgstr "Wystąpił nieokreślony błąd podczas nadawania nazwy dysku."
 
 #: storage/forms.py:484
 msgid "You must select a volume."
-msgstr ""
+msgstr "Musisz wybrać wolumen."
 
 #: storage/forms.py:633
 msgid "Volume from which this dataset will be created on"
@@ -3159,7 +3139,7 @@ msgstr "Poziom kompresji"
 
 #: storage/forms.py:636 storage/forms.py:688 storage/forms.py:745
 msgid "Enable atime"
-msgstr ""
+msgstr "Włącz atime"
 
 #: storage/forms.py:637 storage/forms.py:689 storage/forms.py:746
 msgid "Quota for this dataset"
@@ -3213,9 +3193,8 @@ msgid "ZFS Volume Name"
 msgstr "Wolumen ZFS"
 
 #: storage/forms.py:784
-#, fuzzy
 msgid "Size for this ZFS Volume"
-msgstr "Edytuj wolumen ZFS"
+msgstr "Rozmiar dla tego wolumenu ZFS"
 
 #: storage/forms.py:798
 msgid ""
@@ -3261,7 +3240,7 @@ msgstr "Nieprawidłowy przedrostek"
 
 #: storage/forms.py:902
 msgid "Snapshot"
-msgstr "Kopia migawkowa"
+msgstr "Migawka"
 
 #: storage/forms.py:903
 msgid "Clone Name (must be on same volume)"
@@ -3413,7 +3392,7 @@ msgstr "Początek"
 
 #: storage/models.py:285
 msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr ""
+msgstr "O której godzinie w ciągu dnia zacząć tworzenie migawki, np: 8:00"
 
 #: storage/models.py:289
 msgid "End"
@@ -3421,7 +3400,7 @@ msgstr "Koniec"
 
 #: storage/models.py:290
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr ""
+msgstr "O której godzinie w ciągu dnia zakończyć tworzenie migawek, np: 17:00"
 
 #: storage/models.py:296
 msgid "Interval"
@@ -3501,23 +3480,20 @@ msgid "Change Permissions"
 msgstr "Zmiana uprawnień"
 
 #: storage/views.py:88 storage/views.py:115 storage/views.py:137
-#, fuzzy
 msgid "Volume successfully added."
-msgstr "%s dodany pomyślnie."
+msgstr "Wolumen dodany pomyślnie."
 
 #: storage/views.py:217
 msgid "Unknown"
-msgstr ""
+msgstr "Nieznany"
 
 #: storage/views.py:283
-#, fuzzy
 msgid "Dataset successfully added."
-msgstr "%s usunięty pomyślnie."
+msgstr "Dataset dodany pomyślnie."
 
 #: storage/views.py:318
-#, fuzzy
 msgid "Dataset successfully edited."
-msgstr "%s usunięty pomyślnie."
+msgstr "Dataset pomyślnie zedytowany."
 
 #: storage/views.py:320 storage/views.py:396
 msgid "Some error ocurried while setting the options"
@@ -3548,14 +3524,12 @@ msgid "Mount Point permissions successfully updated."
 msgstr "%s zaktualizowany pomyślnie."
 
 #: storage/views.py:425
-#, fuzzy
 msgid "Dataset successfully destroyed."
-msgstr "%s usunięty pomyślnie."
+msgstr "Dataset pomyślnie usunięty."
 
 #: storage/views.py:439
-#, fuzzy
 msgid "Snapshot successfully deleted."
-msgstr "Kopia migawkowa sklonowana pomyślnie"
+msgstr "Kopia migawkowa pomyślnie usunięta."
 
 #: storage/views.py:453
 msgid "Rollback successful."
@@ -3599,7 +3573,7 @@ msgstr "Twoje zmiany zostały pomyślnie zastosowane!"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
-msgstr ""
+msgstr "Język (wymagane przeładowanie interfejsu)"
 
 #: system/forms.py:250
 msgid "Place to temporarily place firmware file"
@@ -3615,7 +3589,7 @@ msgstr ""
 
 #: system/forms.py:258
 msgid "New image to be installed"
-msgstr "Nowy obraz systemu został zainstalowany"
+msgstr "Nowy obraz systemu do zainstalowania"
 
 #: system/forms.py:259 system/forms.py:282
 msgid "SHA256 sum for the image"
@@ -3635,7 +3609,7 @@ msgstr "Nieprawidłowy pakiet poprawek lub suma kontrolna"
 
 #: system/forms.py:304
 msgid "New config to be installed"
-msgstr "Nowa konfiguracja zostanie zainstalowana"
+msgstr "Nowa konfiguracja do zainstalowania"
 
 #: system/forms.py:310 system/forms.py:338
 #, fuzzy
@@ -3648,7 +3622,7 @@ msgstr ""
 
 #: system/forms.py:312 system/forms.py:340
 msgid "day of month"
-msgstr ""
+msgstr "dzień miesiąca"
 
 #: system/models.py:45
 msgid "Protocol"
@@ -3799,7 +3773,7 @@ msgstr "Dział organizacji"
 
 #: system/models.py:189
 msgid "Organizational Unit Name (eg, section)"
-msgstr "Nazwa działu organizacji (np. dział)"
+msgstr "Nazwa działu organizacji (np. sekcja)"
 
 #: system/models.py:195 system/models.py:196
 msgid "Email Address"
