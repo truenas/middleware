@@ -25,14 +25,17 @@
 #
 # $FreeBSD$
 #####################################################################
-import re
 import os
 import sys
+import grp
+import pwd
+import re
 
 from subprocess import Popen, PIPE
 
 GETFACL_PATH = "/bin/getfacl"
 SETFACL_PATH = "/bin/setfacl"
+CHMOD_PATH = "/bin/chmod"
 
 #
 # NFSv4 flags only
@@ -100,7 +103,7 @@ class NFSv4_getfacl:
         if flags & GETFACL_FLAGS_VERBOSE:
             args += "-v "
 
-        self.__out = str(NFSv4_pipe("'%s' %s '%s'" % (self.__getfacl, args, self.__path)))
+        self.__out = str(NFSv4_pipe("%s %s '%s'" % (self.__getfacl, args, self.__path)))
 
     def __str__(self):
         return self.__out
@@ -129,8 +132,7 @@ class NFSv4_setfacl:
         if flags & SETFACL_FLAGS_REMOVE_ENTRY:
             args += "-x "
 
-        #self.__out = str(NFSv4_pipe("'%s' %s '%s' '%s'" % (self.__setfacl, args, self.__entry, self.__path)))
-        print "'%s' %s '%s' '%s'" % (self.__setfacl, args, self.__entry, self.__path)
+        self.__out = str(NFSv4_pipe("%s %s '%s' '%s'" % (self.__setfacl, args, self.__entry, self.__path)))
 
 
 class NFSv4_ACL_Entry:
@@ -387,12 +389,15 @@ class NFSv4_ACL:
                         entry.set_inheritance_flags(inheritance_flags)
                         self.__dirty = True
 
-    def get(self, tag, qualifier = None, type = None):
+    def get(self, tag = None, qualifier = None, type = None):
         entries = []
         for entry in self.__entries:
-            if entry.tag == tag and entry.qualifier == qualifier:
+            if tag and entry.tag == tag and entry.qualifier == qualifier:
                 if not type or entry.type == type:
                     entries.append(entry)
+
+            elif not tag:
+                entries.append(entry)
 
         return entries
 
@@ -401,67 +406,102 @@ class NFSv4_ACL:
         for entry in self.__entries:
             if entry.tag == tag and entry.qualifier == qualifier:
                 pass
+
+    def chown(self, who):
+        if not who:
+            return False 
+
+        user = group = None
+        uid = gid = -1
+
+        parts = who.split(':')
+
+        if parts[0]:
+            user = parts[0]
+        if len(parts) > 1 and parts[1]:
+            group = parts[1]
+
+        if user and re.match('^\d+', user):
+            uid = int(user)
+        elif user: 
+            entry = pwd.getpwnam(user)
+            uid = entry.pw_uid
+
+        if group and re.match('^\d+', group):
+            gid = int(group)
+        elif group:
+            entry = grp.getgrnam(group)
+            gid = entry.gr_gid
+
+        os.chown(self.__path, uid, gid)
+        return True
             
     def chmod(self, mode):
-
-#        acl = NFSv4_ACL(path)
-#        entries = acl.get('owner@', None, 'allow')
-#        for e in entries:
-#            print e
-
-#        print "\n\n\n\n"
-#        acl.set('owner@', None, '-rwx', '-fd', 'allow')
-
-#        entries = acl.get('owner@', None, 'allow')
-#        for e in entries:
-#            print e
-
-#        acl.save()
-#        sys.exit(0)
-
         pos = 0 
         length = len(mode) 
 
         if length == 3:
             mode = '0' + mode
 
-
-        who = ['u', 'g', 'o']
-        acl = ['owner@', 'group@', 'everyone@']
-
+        who = [None, 'u', 'g', 'o']
+        acl = [None, 'owner@', 'group@', 'everyone@']
+        
         for c in mode:
             n = int(c)
-            #w = who[n]
+            w = who[pos]
+            tag = acl[pos]
 
             if n & 4:
                 if pos == 0:
-                    print "setuid"
+                    NFSv4_pipe("%s u+s %s" % (CHMOD_PATH, self.__path))
+
                 else:
-                    print "read"
+                    self.set(tag, None, '+r', None, 'allow')
+                    self.set(tag, None, '-r', None, 'deny')
+            else:
+                if pos == 0:
+                    NFSv4_pipe("%s u-s %s" % (CHMOD_PATH, self.__path))
+
+                else:
+                    self.set(tag, None, '-r', None, 'allow')
+                    self.set(tag, None, '+r', None, 'deny')
+      
 
             if n & 2:
                 if pos == 0:
-                    print "setgid"
+                    NFSv4_pipe("%s g+s %s" % (CHMOD_PATH, self.__path))
+
                 else:
-                    print "write"
+                    self.set(tag, None, '+wp', None, 'allow')
+                    self.set(tag, None, '-wp', None, 'deny')
+            else:
+                if pos == 0:
+                    NFSv4_pipe("%s g-s %s" % (CHMOD_PATH, self.__path))
+
+                else:
+                    self.set(tag, None, '-wp', None, 'allow')
+                    self.set(tag, None, '+wp', None, 'deny')
 
             if n & 1:
                 if pos == 0:
-                    print "sticky"
+                    NFSv4_pipe("%s +t %s" % (CHMOD_PATH, self.__path))
+
                 else:
-                    print "execute"
+                    self.set(tag, None, '+x', None, 'allow')
+                    self.set(tag, None, '-x', None, 'deny')
+            else:
+                if pos == 0:
+                    NFSv4_pipe("%s -t %s" % (CHMOD_PATH, self.__path))
+
+                else:
+                    self.set(tag, None, '-x', None, 'allow')
+                    self.set(tag, None, '+x', None, 'deny')
 
             pos += 1
 
     def save(self):
         if not self.__dirty:
             return False
-
-        #
-        # Change owner and group if necessary here.
-        #
-        # XXXXXX
-        #
 
         n = 0
         for entry in self.__entries:
