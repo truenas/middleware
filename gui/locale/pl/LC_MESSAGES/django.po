@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-07-01 09:27+0200\n"
+"PO-Revision-Date: 2011-07-01 16:18+0200\n"
 "Last-Translator: voytec <dec.wojciech@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
@@ -4038,23 +4038,23 @@ msgstr "Załadowany plik nie jest prawidłowy."
 
 #: system/views.py:243
 msgid "Test message from FreeNAS"
-msgstr ""
+msgstr "Testowa wiadomość od FreeNAS"
 
 #: system/views.py:244
 msgid "This is a message test from FreeNAS"
-msgstr ""
+msgstr "To jest testowa wiadomość od FreeNAS"
 
 #: templates/404.html:7
 msgid "Page Not Found"
-msgstr ""
+msgstr "Strona nie znaleziona"
 
 #: templates/base.html:32
 msgid "expand all"
-msgstr ""
+msgstr "rozwiń wszystko"
 
 #: templates/base.html:33
 msgid "collapse all"
-msgstr ""
+msgstr "zwiń wszystko"
 
 #: templates/menubar.html:33
 msgid "Log Out"
@@ -4491,12 +4491,11 @@ msgstr "Witaj, %(username)s. Dziękujemy za zalogowanie."
 
 #: templates/registration/login.html:50
 msgid "Welcome to FreeNAS 8"
-msgstr ""
+msgstr "Witamy w FreeNAS 8"
 
 #: templates/registration/login.html:51
-#, fuzzy
 msgid "Please log in."
-msgstr "Proszę czekać..."
+msgstr "Proszę się zalogować."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -4539,18 +4538,16 @@ msgid "NFS Settings"
 msgstr "Ustawienia NFS"
 
 #: templates/services/index.html:92
-#, fuzzy
 msgid "Rsync Settings"
-msgstr "Ustawienia"
+msgstr "Ustawienia Rsync"
 
 #: templates/services/index.html:103
 msgid "SNMP Settings"
 msgstr "Ustawienia SNMP"
 
 #: templates/services/index.html:114
-#, fuzzy
 msgid "S.M.A.R.T. Settings"
-msgstr "Dodatkowe opcje S.M.A.R.T."
+msgstr "Ustawienia S.M.A.R.T."
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
@@ -4667,13 +4664,12 @@ msgid "Available actions"
 msgstr "Dostępne akcje"
 
 #: templates/services/rsyncmod.html:34
-#, fuzzy
 msgid "No rsync modules defined"
-msgstr "Brak zdefiniowanych tras statycznych"
+msgstr "Nie zdefiniowano modułów rsync"
 
 #: templates/services/rsyncmod.html:40 templates/services/rsyncmod.html:42
 msgid "Add Rsync Module"
-msgstr ""
+msgstr "Dodaj moduł Rsync"
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
@@ -4766,9 +4762,8 @@ msgid "Clone Snapshot"
 msgstr "Klonuj kopię migawkową"
 
 #: templates/storage/datagrid_disks.html:9
-#, fuzzy
 msgid "Edit Disk"
-msgstr "Edytuj zbiór danych"
+msgstr "Edytuj Dysk"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
@@ -4950,14 +4945,12 @@ msgid "Edit ZFS Volume"
 msgstr "Edytuj wolumen ZFS"
 
 #: templates/storage/volume_export.html:7
-#, fuzzy
 msgid "Are you sure you want to export?"
-msgstr "Jesteś pewien że chcesz usunąć?"
+msgstr "Jesteś pewien że chcesz wyeksportować?"
 
 #: templates/storage/volumes.html:30 templates/storage/volumes.html.py:34
-#, fuzzy
 msgid "Create ZFS Volume"
-msgstr "Utwórz wolumen"
+msgstr "Utwórz wolumen ZFS"
 
 #: templates/storage/volumes.html:64
 msgid "There are no active volumes."
@@ -4976,9 +4969,8 @@ msgid "Status"
 msgstr "Status"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Destroy ZFS Volume"
-msgstr "Zniszcz wolumen"
+msgstr "Zniszcz wolumen ZFS"
 
 #: templates/storage/volumes.html:128 templates/storage/volumes.html.py:132
 msgid "Destroy Dataset"
@@ -4998,9 +4990,8 @@ msgid "View Disks"
 msgstr "Pokaż dyski"
 
 #: templates/storage/volumes.html:198 templates/storage/volumes.html.py:202
-#, fuzzy
 msgid "Export Volume"
-msgstr "Importuj wolumen"
+msgstr "Export wolumenu"
 
 #: templates/storage/volumes.html:209
 msgid "No volumes defined"
@@ -5028,11 +5019,11 @@ msgstr "Log"
 
 #: templates/storage/wizard.html:94
 msgid "Cache"
-msgstr ""
+msgstr "Cache"
 
 #: templates/storage/wizard.html:95
 msgid "Spare"
-msgstr ""
+msgstr "Spare"
 
 #: templates/storage/wizard.html:119
 msgid "Add Volume"
@@ -5043,30 +5034,28 @@ msgid "Existing data will be cleared"
 msgstr "Istniejące dane zostaną usunięte"
 
 #: templates/storage/zvols.html:9
-#, fuzzy
 msgid "Add ZFS Volume"
-msgstr "Wolumen ZFS"
+msgstr "Dodaj Wolumen ZFS"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
-msgstr ""
+msgstr "Cache jest w trakcie przebudowy."
 
 #: templates/system/advanced_edit.html:19
 msgid "The cache could not be rebuilt"
-msgstr ""
+msgstr "Cache nie może być przebudowany"
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
-msgstr ""
+msgstr "Przebuduj LDAP/AD Cache"
 
 #: templates/system/config.html:3
 msgid "Restore to Factory Defaults"
 msgstr "Przywróć do ustwień fabrycznych"
 
 #: templates/system/config.html:5
-#, fuzzy
 msgid "Restore Config"
-msgstr "Zapisz ustawienia"
+msgstr "Przywróć konfigurację"
 
 #: templates/system/config.html:9
 msgid "Save Config"
@@ -5089,13 +5078,12 @@ msgid "Update"
 msgstr "Aktualizacja"
 
 #: templates/system/cronjob.html:40
-#, fuzzy
 msgid "No CronJobs defined"
-msgstr "Brak zdefiniowanych użytkowników"
+msgstr "Brak zdefiniowanych CronJobs"
 
 #: templates/system/cronjob.html:46 templates/system/cronjob.html.py:48
 msgid "Add CronJob"
-msgstr ""
+msgstr "Dodaj CronJob"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -5103,11 +5091,11 @@ msgstr "Ponowne uruchamianie..."
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "Twój testowy email został wysłany!"
 
 #: templates/system/email_edit.html:19
 msgid "Your test email could not be sent:"
-msgstr ""
+msgstr "Twój testowy email nie może być wysłany:"
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
@@ -5119,7 +5107,7 @@ msgstr ""
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
-msgstr ""
+msgstr "Godzinne wykresy"
 
 #: templates/system/reporting.html:18
 msgid "Daily"
@@ -5127,7 +5115,7 @@ msgstr ""
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
-msgstr ""
+msgstr "Dobowe wykresy"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
@@ -5135,7 +5123,7 @@ msgstr "Tygodnia"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"
-msgstr ""
+msgstr "Tygodniowe wykresy"
 
 #: templates/system/reporting.html:46
 msgid "Monthly"
@@ -5143,7 +5131,7 @@ msgstr "Miesięcznie"
 
 #: templates/system/reporting.html:47
 msgid "Monthly Graphs"
-msgstr ""
+msgstr "Miesięczne wykresy"
 
 #: templates/system/reporting.html:60
 msgid "Yearly"
@@ -5151,16 +5139,15 @@ msgstr "Rocznie"
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"
-msgstr ""
+msgstr "Roczne wykresy"
 
 #: templates/system/rsync.html:38
-#, fuzzy
 msgid "No rsyncs defined"
-msgstr "Brak zdefiniowanych użytkowników"
+msgstr "Brak zdefiniowanych rsync'ów"
 
 #: templates/system/rsync.html:44 templates/system/rsync.html.py:46
 msgid "Add Rsync"
-msgstr ""
+msgstr "Dodaj Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -5171,9 +5158,8 @@ msgid "Firmware Update"
 msgstr "Aktualizacja oprogramowania"
 
 #: templates/system/settings.html:13
-#, fuzzy
 msgid "Apply Service Pack"
-msgstr "Zatwierdź pakiet poprawek"
+msgstr "Zastosuj pakiet poprawek"
 
 #: templates/system/settings.html:15
 msgid "Config"
@@ -5189,7 +5175,7 @@ msgstr "Platforma"
 
 #: templates/system/system_info.html:16
 msgid "Memory"
-msgstr ""
+msgstr "Pamięć"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
@@ -5204,14 +5190,13 @@ msgid "Load Average"
 msgstr "Średnie obciążenie"
 
 #: templates/system/system_info.html:32
-#, fuzzy
 msgid "FreeNAS Build"
 msgstr "FreeNAS Build"
 
 #: templates/system/wizard.html:3
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr ""
+msgstr "Krok %(step)s z %(step_count)s"
 
 msgid "%s successfully update."
 msgstr "%s zaktualizowany pomyślnie."
@@ -5276,13 +5261,11 @@ msgstr "Hasło (ponownie)"
 msgid "minutes,"
 msgstr "minut, "
 
-#, fuzzy
 msgid "Create ZFS zvol"
-msgstr "Utwórz zbiór danych ZFS"
+msgstr "Utwórz ZFS ZVol"
 
-#, fuzzy
 msgid "Add ZVol"
-msgstr "Dodaj wolumen"
+msgstr "Dodaj ZVol"
 
 msgid "English"
 msgstr "Angielski"

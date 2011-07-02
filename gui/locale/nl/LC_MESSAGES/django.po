@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:47-0700\n"
-"PO-Revision-Date: 2011-06-29 14:29+0200\n"
-"Last-Translator: Christian <c.helmus@gmail.com>\n"
+"PO-Revision-Date: 2011-07-01 14:24+0200\n"
+"Last-Translator: CocoChanel <meneermaris@yahoo.com.sg>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -240,7 +240,7 @@ msgstr "Volledig"
 
 #: choices.py:182
 msgid "Debug"
-msgstr "Debug"
+msgstr "Foutopsporing"
 
 #: choices.py:186
 msgid "Default"
@@ -282,7 +282,7 @@ msgstr "ZFS Volume"
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
 #: templates/storage/wizard.html:91
 msgid "Disk"
-msgstr "Schijf"
+msgstr "Harde schijf"
 
 #: choices.py:205
 msgid "DVD"
@@ -290,7 +290,7 @@ msgstr "DVD"
 
 #: choices.py:206
 msgid "Tape"
-msgstr "Cassette"
+msgstr "Tape"
 
 #: choices.py:207
 msgid "Pass"
@@ -298,7 +298,7 @@ msgstr "Geslaagd"
 
 #: choices.py:211
 msgid "read-write"
-msgstr "lees-schrijf"
+msgstr "lezen-schrijven"
 
 #: choices.py:212
 msgid "read-only"
@@ -319,7 +319,7 @@ msgstr "Wederzijdse CHAP"
 
 #: choices.py:241
 msgid "UPS reaches low battery"
-msgstr "UPS bereikt lage batterij"
+msgstr "UPS batterij laag"
 
 #: choices.py:242
 msgid "UPS goes on battery"
@@ -355,7 +355,7 @@ msgstr "lzjb (aanbevolen)"
 
 #: choices.py:283
 msgid "gzip (default level, 6)"
-msgstr "gzip (standaardniveau,6)"
+msgstr "gzip (standaardniveau, 6)"
 
 #: choices.py:284
 msgid "gzip (fastest)"
@@ -414,7 +414,7 @@ msgstr "%(minuten)s minuten"
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(uren)s uur"
+msgstr "%(hour)s uur"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
@@ -437,15 +437,18 @@ msgstr "Nooit - Controleer het apparaat ongeacht de power mode"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Slaapstand - Controleer het apparaat ongeacht de SLAAP mode"
+msgstr "Slaap - Controleer het apparaat tenzij het in SLAAP stand staat"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr "Standby - Controleer het apparaat ongeacht de SLAAP of STANDBY mode"
+msgstr ""
+"Standby - Controleer het apparaat tenzij het in SLAAP of STANDBY stand staat"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
-msgstr "Idle - Controleer het apparaat ongeacht de SLAAP, STANDBY of IDLE mode"
+msgstr ""
+"Idle - Controleer het apparaat tenzij het in de SLAAP, STANDBY of IDLE stand "
+"staat"
 
 #: choices.py:467
 msgid "Long Self-Test"
@@ -534,11 +537,11 @@ msgstr "Dit veld is verplicht."
 
 #: account/forms.py:427
 msgid "Member users"
-msgstr "Leden gebruikers"
+msgstr "Gebruikers die lid zijn"
 
 #: account/forms.py:445
 msgid "Auxiliary groups"
-msgstr "Ondersteunende groepen"
+msgstr "Hulp groepen"
 
 #: account/forms.py:467
 msgid "New password"
@@ -555,8 +558,7 @@ msgstr "Oud wachtwoord"
 #: account/forms.py:501
 msgid "Your old password was entered incorrectly. Please enter it again."
 msgstr ""
-"Uw oude wachtwoord is niet correct. Voer uw oude wachtwoord a.u.b. nogmaals "
-"in."
+"Uw oude wachtwoord is niet correct. Voer uw oude wachtwoord nogmaals in."
 
 #: account/models.py:36 services/models.py:472 services/models.py:517
 #: templates/services/iscsi_auth.html:5
@@ -582,7 +584,7 @@ msgstr "Groepen"
 #: account/models.py:63
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr "Groep %s is een standaard groep en kan niet worden verwijderd!"
+msgstr "Groep %s is een standaard groep en kan niet verwijderd worden!"
 
 #: account/models.py:73
 msgid "User ID"
@@ -590,7 +592,7 @@ msgstr "Gebruikers ID"
 
 #: account/models.py:78
 msgid "User &"
-msgstr "Gebruiker %"
+msgstr "Gebruiker &"
 
 #: account/models.py:85
 msgid "Hashed UNIX password"
@@ -630,7 +632,7 @@ msgstr "Gebruikers"
 #: account/models.py:138
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr "Gebruiker %s in ingebouwd en kan niet worden verwijderd!"
+msgstr "Gebruiker %s is ingebouwd en kan niet worden verwijderd!"
 
 #: account/nav.py:5 templates/menubar.html:43
 msgid "Account"
@@ -707,15 +709,15 @@ msgstr "%s Toevoegen"
 #: freeadmin/navtree.py:327
 #, python-format
 msgid "View All %s"
-msgstr "Bekijk Alle %s"
+msgstr "Bekijk alle %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
-msgstr "Toon Systeem processen"
+msgstr "Systeem processen Weergeven"
 
 #: freeadmin/navtree.py:353 templates/freeadmin/index.html:53
 msgid "Reboot"
-msgstr "Herstarten"
+msgstr "Opnieuw opstarten"
 
 #: freeadmin/navtree.py:360 templates/freeadmin/index.html:65
 msgid "Shutdown"
@@ -724,12 +726,12 @@ msgstr "Uitschakelen"
 #: freeadmin/views.py:225
 #, python-format
 msgid "%s successfully added."
-msgstr "%s succesvol toegevoegd."
+msgstr "%s werd succesvol toegevoegd."
 
 #: freeadmin/views.py:384 freeadmin/views.py:386
 #, python-format
 msgid "%s successfully updated."
-msgstr "%s succesvol aangepast."
+msgstr "%s werd succesvol aangepast."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
@@ -738,7 +740,7 @@ msgstr "Het herstarten van de service is mislukt."
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
 msgid "%s successfully deleted."
-msgstr "%s succesvol gewist."
+msgstr "%s werd succesvol verwijderd."
 
 #: network/forms.py:44 network/models.py:95
 msgid "NIC"
@@ -2481,7 +2483,7 @@ msgstr "Access Mode"
 
 #: services/models.py:1193
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "Dit controleert de toegang die een remote host tot deze module heeft"
 
 #: services/models.py:1197
 msgid "Maximum connections"
@@ -2504,6 +2506,9 @@ msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"Deze optie specifieert de groepsnaam waarmee file transfers van en naar die "
+"module uitgevoerd worden. Laat het veld leeg om de standaard instellingen te "
+"gebruiken."
 
 #: services/models.py:1215
 msgid "Hosts allow"
@@ -2554,29 +2559,31 @@ msgid "Rsync Modules"
 msgstr "Rsync Modules"
 
 #: services/models.py:1243
-#, fuzzy
 msgid "Check interval"
-msgstr "Interval"
+msgstr "Check interval"
 
 #: services/models.py:1244
 msgid ""
 "Sets the interval between disk checks to N minutes. The default is 30 minutes"
 msgstr ""
+"Zet het interval tussen disk checks op N minuten. De standaard instelling is "
+"30 minuten."
 
 #: services/models.py:1250
-#, fuzzy
 msgid "Power mode"
-msgstr "Afsluit mode"
+msgstr "Power mode"
 
 #: services/models.py:1254
 msgid "Difference"
-msgstr ""
+msgstr "Verschil"
 
 #: services/models.py:1255
 msgid ""
 "Report if the temperature had changed by at least N degrees Celsius since "
 "last report. 0 to disable"
 msgstr ""
+"Rapporteer als de temperatuur met minstens N graden Celsius veranderd is "
+"sinds de laatste rapportage. Zet op 0 om uit te schakelen"
 
 #: services/models.py:1259
 #, fuzzy
@@ -2588,25 +2595,25 @@ msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
 msgstr ""
+"Rapporteer als de temperatuur groter of gelijk is aan N graden Celsius. Zet "
+"op 0 om uit te schakelen."
 
 #: services/models.py:1264
 msgid "Critical"
-msgstr ""
+msgstr "Kritisch"
 
 #: services/models.py:1268
 msgid "Email to report"
-msgstr ""
+msgstr "Emai adres voor rapportage"
 
 #: services/models.py:1271
-#, fuzzy
 msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr "Ontvangende email adres. Gescheiden email adressen met comma."
+msgstr "Ontvangend email adres. Scheid meerdere email adressen met een comma"
 
 #: services/models.py:1274 services/models.py:1275
 #: templates/services/index.html:108
-#, fuzzy
 msgid "S.M.A.R.T."
-msgstr "S.M.A.R.T. Inschakelen"
+msgstr "S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
@@ -2773,9 +2780,8 @@ msgid "Windows Share"
 msgstr "Windows Share"
 
 #: sharing/models.py:94
-#, fuzzy
 msgid "Windows Shares"
-msgstr "Windows Share"
+msgstr "Windows Shares (gedeelde mappen)"
 
 #: sharing/models.py:105
 #, fuzzy
@@ -2871,13 +2877,12 @@ msgid "Read-write Access"
 msgstr "Lees/Schrijf Toegang"
 
 #: sharing/models.py:148
-#, fuzzy
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
 msgstr ""
 "Bepaalde gebruikers en groepen toestaan om Lees/Schrijf toegang te hebben "
-"tot een share. Dit volgt na het 'allow option format'."
+"tot een share. Dit volgt hetzelfde formaat als de 'Toestaan' optie."
 
 #: sharing/models.py:151
 msgid "Disk Discovery"
@@ -2896,15 +2901,14 @@ msgid "Disk discovery mode"
 msgstr "Schijf ontdekkings modus"
 
 #: sharing/models.py:159
-#, fuzzy
 msgid ""
 "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
 msgstr ""
-"NB: Het selecteren van 'Time  Machine' op meerdere shares zal onvoorspelbaar "
-"gedrag hebben in MacOS. De standaard modus exporteert het volume als een "
-"data volume voor gebruikers."
+"NB: Het selecteren van 'Time  Machine' op meerdere shares kan een "
+"onvoorspelbaar gedrag veroorzaken in MacOS. De standaard modus exporteert "
+"het volume als een data volume voor gebruikers."
 
 #: sharing/models.py:163
 msgid "Database Path"
@@ -3043,9 +3047,8 @@ msgid "Apple Share"
 msgstr "Apple Share"
 
 #: sharing/models.py:213
-#, fuzzy
 msgid "Apple Shares"
-msgstr "Apple Share"
+msgstr "Apple Shares (gedeelde mappen)"
 
 #: sharing/models.py:230
 msgid "Authorized network or IP addresses"
@@ -3068,22 +3071,21 @@ msgid "All Directories"
 msgstr "Alle mappen"
 
 #: sharing/models.py:236
-#, fuzzy
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
-"Mouten van elke submap toestaan onder dit mount point wanneer geselecteerd."
-"Anders kan alleen het hoofdniveau van de map worden gemount."
+"Indien geselecteerd, wordt het mounten van elke submap toegestaan onder dit "
+"mount point. Indien niet geselecteerd, kan alleen het hoofdniveau van de map "
+"gemount worden."
 
 #: sharing/models.py:239
 msgid "Read Only"
 msgstr "Alleen Lezen"
 
 #: sharing/models.py:240
-#, fuzzy
 msgid "Export the share read only. Writes are not permitted."
-msgstr "Exporteer de share als alleen lezen.Schrijven is niet toegestaan."
+msgstr "Exporteer de share als alleen lezen. Schrijven is niet toegestaan."
 
 #: sharing/models.py:243 system/models.py:409
 msgid "Quiet"
@@ -3134,9 +3136,8 @@ msgid "UNIX Share"
 msgstr "UNIX Share"
 
 #: sharing/models.py:284
-#, fuzzy
 msgid "UNIX Shares"
-msgstr "UNIX Share"
+msgstr "UNIX Shares"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
@@ -3160,9 +3161,8 @@ msgstr ""
 "\"."
 
 #: storage/forms.py:234
-#, fuzzy
 msgid "You must select a filesystem"
-msgstr "Remote ZFS bestandssysteem"
+msgstr "U moet een bestandssysteem kiezen"
 
 #: storage/forms.py:238 system/forms.py:217 system/forms.py:223
 #: system/forms.py:228
@@ -3196,7 +3196,7 @@ msgstr "Er is een fout opgetreden tijdens het labelen van de schijf."
 
 #: storage/forms.py:484
 msgid "You must select a volume."
-msgstr ""
+msgstr "U moet een volume selecteren."
 
 #: storage/forms.py:633
 msgid "Volume from which this dataset will be created on"
@@ -3258,28 +3258,24 @@ msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
 msgstr "Voer positief nummer in (optioneel met M, G, T), of, 0"
 
 #: storage/forms.py:782
-#, fuzzy
 msgid "Volume from which this ZFS Volume will be created on"
-msgstr "Volume vanaf waar deze dataset op wordt gecreërd"
+msgstr "Volume van waarop dit ZFS volume gecreërd wordt"
 
 #: storage/forms.py:783
-#, fuzzy
 msgid "ZFS Volume Name"
-msgstr "ZFS Volume"
+msgstr "ZFS Volume naam"
 
 #: storage/forms.py:784
-#, fuzzy
 msgid "Size for this ZFS Volume"
-msgstr "Wijzig ZFS volume"
+msgstr "De grootte van dit ZFS volume"
 
 #: storage/forms.py:798
-#, fuzzy
 msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
 msgstr ""
-"Datasetnamen moeten beginnen met een alfanummeriek karakter en mag alleen "
-"(-), (_), (:) en (.) bevatten."
+"ZFS volumenamen moeten beginnen met een alfanummeriek karakter en mogen "
+"enkel (-), (_), (:) en (.) als speciale karakters bevatten."
 
 #: storage/forms.py:820
 msgid "Owner (user)"
@@ -3442,7 +3438,7 @@ msgstr "Remote ZFS bestandssysteem"
 
 #: storage/models.py:251
 msgid "Recursively replicate and remove stale snapshot on remote side"
-msgstr ""
+msgstr "Repliceer recursief en verwijder het stale snapshot aan de remote kant"
 
 #: storage/models.py:254
 msgid "Replication Task"
@@ -3558,80 +3554,71 @@ msgid "Change Permissions"
 msgstr "Wijzig Permissies"
 
 #: storage/views.py:88 storage/views.py:115 storage/views.py:137
-#, fuzzy
 msgid "Volume successfully added."
-msgstr "%s succesvol toegevoegd."
+msgstr "Volume succesvol toegevoegd."
 
 #: storage/views.py:217
 msgid "Unknown"
-msgstr ""
+msgstr "Onbekend"
 
 #: storage/views.py:283
-#, fuzzy
 msgid "Dataset successfully added."
-msgstr "%s succesvol gewist."
+msgstr "Dataset succesvol toegevoegd."
 
 #: storage/views.py:318
-#, fuzzy
 msgid "Dataset successfully edited."
-msgstr "%s succesvol gewist."
+msgstr "Dataset succesvol gewijzigd."
 
 #: storage/views.py:320 storage/views.py:396
 msgid "Some error ocurried while setting the options"
 msgstr "Er is een fout opgetreden tijdens het toevoegen van de opties"
 
 #: storage/views.py:342
-#, fuzzy
 msgid "ZFS Volume successfully added."
-msgstr "%s succesvol gewist."
+msgstr "ZFS Volume succesvol toegevoegd."
 
 #: storage/views.py:356
 msgid "This is in use by the iscsi target, please remove it there first."
 msgstr ""
+"Dit is reeds in gebruik door het iscsi doel, gelieve daar eerst te "
+"verwijderen."
 
 #: storage/views.py:360
-#, fuzzy
 msgid "ZFS Volume successfully destroyed."
-msgstr "%s succesvol gewist."
+msgstr "Het ZFS volume werd succesvol verwijderd."
 
 #: storage/views.py:394
 #, fuzzy
 msgid "Native dataset successfully edited."
-msgstr "%s succesvol gewist."
+msgstr "De standaard dataset werd succesvol gewijzigd."
 
 #: storage/views.py:410
-#, fuzzy
 msgid "Mount Point permissions successfully updated."
-msgstr "%s succesvol aangepast."
+msgstr "De mount point permissies werden succesvol aangepast."
 
 #: storage/views.py:425
-#, fuzzy
 msgid "Dataset successfully destroyed."
-msgstr "%s succesvol gewist."
+msgstr "De dataset werd succesvol verwijderd."
 
 #: storage/views.py:439
-#, fuzzy
 msgid "Snapshot successfully deleted."
-msgstr "Snapshot succesvol gekloont"
+msgstr "Snapshot succesvol verwijderd."
 
 #: storage/views.py:453
 msgid "Rollback successful."
-msgstr ""
+msgstr "Terugdraaien werd succesvol uitgevoerd."
 
 #: storage/views.py:470
-#, fuzzy
 msgid "Snapshot successfully added."
-msgstr "Snapshot succesvol gekloont"
+msgstr "Snapshot succesvol toegevoegd"
 
 #: storage/views.py:483
-#, fuzzy
 msgid "Snapshot successfully taken."
-msgstr "Snapshot succesvol gemaakt"
+msgstr "Snapshot succesvol aangemaakt"
 
 #: storage/views.py:498
-#, fuzzy
 msgid "Snapshot successfully cloned."
-msgstr "Snapshot succesvol gekloont"
+msgstr "Snapshot succesvol gekloond"
 
 #: storage/views.py:549
 msgid "Disk replacement has been initiated."
@@ -3647,20 +3634,19 @@ msgstr "Schijf succesvol afgekoppeld."
 
 #: storage/views.py:588
 msgid "The volume failed to export"
-msgstr ""
+msgstr "Exporteren van het volume is mislukt."
 
 #: storage/views.py:591
-#, fuzzy
 msgid "The volume has been successfully exported"
-msgstr "Je veranderingen zijn succesvol doorgevoerd!"
+msgstr "Het volume werd succesvol geexporteerd"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
-msgstr ""
+msgstr "Taal (dit wijzigen vereist het herladen van de gebruikersinterface)"
 
 #: system/forms.py:250
 msgid "Place to temporarily place firmware file"
-msgstr ""
+msgstr "Plek om de firmware file tijdelijk te bewaren"
 
 #: system/forms.py:250
 msgid ""
@@ -3701,11 +3687,11 @@ msgstr "minuten"
 
 #: system/forms.py:311 system/forms.py:339
 msgid "hour"
-msgstr ""
+msgstr "uur"
 
 #: system/forms.py:312 system/forms.py:340
 msgid "day of month"
-msgstr ""
+msgstr "dag van de maand"
 
 #: system/models.py:45
 msgid "Protocol"
@@ -3768,12 +3754,11 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "Zeroconf/Bonjour Inschakelen"
 
 #: system/models.py:102
-#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Must be non-zero"
 msgstr ""
-"Grootte van wisselbestand op iedere schijf in GiB heeft alleen effect op "
-"nieuwe schijven.Waarde mag niet nul zijn."
+"Grootte van het wisselbestand op iedere schijf in GiB, heeft enkel effect op "
+"nieuwe schijven. Waarde mag niet nul zijn."
 
 #: system/models.py:105
 msgid "Show console messages in the footer (Requires UI reload)"
@@ -3781,7 +3766,7 @@ msgstr "Toon console berichten onderaan de pagina (UI herladen is vereist)"
 
 #: system/models.py:108
 msgid "Show tracebacks in case of fatal errors"
-msgstr ""
+msgstr "Toon de traceer sporen in het geval van fatale fouten."
 
 #: system/models.py:116
 msgid "MOTD banner"
@@ -3911,134 +3896,124 @@ msgstr ""
 
 #: system/models.py:243 system/models.py:381
 msgid "The user to run the command"
-msgstr ""
+msgstr "De gebruiker die de instructie uitvoert"
 
 #: system/models.py:247 templates/system/cronjob.html:11
-#, fuzzy
 msgid "Command"
-msgstr "Toevoeging"
+msgstr "Instructie"
 
 #: system/models.py:251 system/models.py:355 templates/system/cronjob.html:5
 #: templates/system/rsync.html:5
-#, fuzzy
 msgid "Minute"
-msgstr "minuten"
+msgstr "Minuten"
 
 #: system/models.py:252 system/models.py:356
 msgid "Values 0-59 allowed."
-msgstr ""
+msgstr "Waarden 0-59 toegestaan"
 
 #: system/models.py:256 system/models.py:360 system/models.py:508
 #: templates/system/cronjob.html:6 templates/system/rsync.html:6
-#, fuzzy
 msgid "Hour"
-msgstr "Elk uur"
+msgstr "Uur"
 
 #: system/models.py:257 system/models.py:361 system/models.py:509
 msgid "Values 0-23 allowed."
-msgstr ""
+msgstr "Waarden 0-23 toegestaan."
 
 #: system/models.py:261 system/models.py:365 system/models.py:513
 #: templates/system/cronjob.html:7 templates/system/rsync.html:7
 msgid "Day of month"
-msgstr ""
+msgstr "Dag van de maand"
 
 #: system/models.py:262 system/models.py:366 system/models.py:514
 msgid "Values 1-31 allowed."
-msgstr ""
+msgstr "Waarden 1-31 toegestaan."
 
 #: system/models.py:267 system/models.py:371 system/models.py:519
 #: templates/system/cronjob.html:8 templates/system/rsync.html:8
-#, fuzzy
 msgid "Month"
-msgstr "maandelijks"
+msgstr "Maand"
 
 #: system/models.py:272 system/models.py:376 system/models.py:524
 #: templates/system/cronjob.html:9 templates/system/rsync.html:9
 msgid "Day of week"
-msgstr ""
+msgstr "Dag van de week"
 
 #: system/models.py:275
 msgid "CronJob"
-msgstr ""
+msgstr "CronJob"
 
 #: system/models.py:276
 msgid "CronJobs"
-msgstr ""
+msgstr "CronJobs"
 
 #: system/models.py:286 system/models.py:441
-#, fuzzy
 msgid "Every minute"
-msgstr "minuten"
+msgstr "Elke minuut"
 
 #: system/models.py:288 system/models.py:443
 #, python-format
 msgid "Every %s minute(s)"
-msgstr ""
+msgstr "Elke %s minuten"
 
 #: system/models.py:294 system/models.py:449
 msgid "Every hour"
-msgstr ""
+msgstr "Elk uur"
 
 #: system/models.py:296 system/models.py:451
 #, python-format
 msgid "Every %s hour(s)"
-msgstr ""
+msgstr "Elke %s uren"
 
 #: system/models.py:304 system/models.py:459
-#, fuzzy, python-format
+#, python-format
 msgid "Every %s days"
-msgstr "Dagelijks"
+msgstr "Elke %s dagen"
 
 #: system/models.py:311 system/models.py:466
 msgid "Every month"
-msgstr ""
+msgstr "Elke maand"
 
 #: system/models.py:342
 msgid "IP Address or hostname"
-msgstr ""
+msgstr "IP adres of host naam"
 
 #: system/models.py:346
 #, fuzzy
 msgid "Remote Module Name"
-msgstr "Remote hostname"
+msgstr "Remote Module naam"
 
 #: system/models.py:350 system/models.py:503
-#, fuzzy
 msgid "Short description"
-msgstr "Beschrijving"
+msgstr "Korte omschrijving"
 
 #: system/models.py:385
-#, fuzzy
 msgid "Recurse into directories"
-msgstr "Thuismappen"
+msgstr "Alle submappen meenemen"
 
 #: system/models.py:389
-#, fuzzy
 msgid "Times"
-msgstr "Timeout"
+msgstr "Aantal keer"
 
 #: system/models.py:390
 msgid "Preserve modification times"
-msgstr ""
+msgstr "Behoud de wijzigingstijden"
 
 #: system/models.py:394
-#, fuzzy
 msgid "Compress"
-msgstr "Compressieniveau"
+msgstr "Comprimeer"
 
 #: system/models.py:395
 msgid "Compress data during the transfer"
-msgstr ""
+msgstr "Comprimeer de data tijdens het transport"
 
 #: system/models.py:399
 msgid "Archive"
-msgstr ""
+msgstr "Archiveren"
 
 #: system/models.py:400
-#, fuzzy
 msgid "Archive mode"
-msgstr "Actieve Volumes"
+msgstr "Archiveer modus"
 
 #: system/models.py:404 templates/freeadmin/generic_model_edit.html:43
 #: templates/network/interface.html:39 templates/network/lagg.html:44
@@ -4069,40 +4044,44 @@ msgstr "Verwijder"
 #: system/models.py:405
 msgid "Delete files on the receiving side that don't exist on sender"
 msgstr ""
+"Verwijder de files aan de ontvangende zijde die niet bestaan aan de zender "
+"zijde"
 
 #: system/models.py:410
 msgid "Suppress non-error messages"
-msgstr ""
+msgstr "Enkel fout boodschappen weergeven"
 
 #: system/models.py:414
-#, fuzzy
 msgid "Preserve permissions"
-msgstr "Permissies Erven"
+msgstr "Permissies behouden"
 
 #: system/models.py:415
 msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
 msgstr ""
+"Deze optie zorgt ervoor dat de ontvangende rsync de doel permissies "
+"hetzelfde instelt als de bron permissies"
 
 #: system/models.py:419
 msgid "Preserve extended attributes"
-msgstr ""
+msgstr "Uitgebreide attributen behouden"
 
 #: system/models.py:420
 msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
 msgstr ""
+"Deze optie zorgt ervoor dat rsync de uitgebreide attributen op de remote "
+"zijde hetzelfde instelt als op de locale zijde"
 
 #: system/models.py:426
-#, fuzzy
 msgid "Extra options to rsync command line (usually empty)"
-msgstr "Extra command line opties (gebruikelijk leeg)."
+msgstr "Extra rsync command line opties (wordt meestal leeg gelaten)."
 
 #: system/models.py:431
 msgid "Rsyncs"
-msgstr ""
+msgstr "Rsyncs"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4117,9 +4096,8 @@ msgid "System Information"
 msgstr "Systeem Informatie"
 
 #: system/nav.py:32
-#, fuzzy
 msgid "Cron Scheduler"
-msgstr "Periodieke Snapshot Schema"
+msgstr "Cron tijdschema"
 
 #: system/views.py:117
 msgid "The uploaded file is not valid."
@@ -4127,23 +4105,23 @@ msgstr "Het geüploade bestand is niet geldig."
 
 #: system/views.py:243
 msgid "Test message from FreeNAS"
-msgstr ""
+msgstr "Test boodschap van FreeNAS"
 
 #: system/views.py:244
 msgid "This is a message test from FreeNAS"
-msgstr ""
+msgstr "Dit is een test boodschap van FreeNAS"
 
 #: templates/404.html:7
 msgid "Page Not Found"
-msgstr ""
+msgstr "Pagina niet gevonden"
 
 #: templates/base.html:32
 msgid "expand all"
-msgstr ""
+msgstr "Alles uitklappen"
 
 #: templates/base.html:33
 msgid "collapse all"
-msgstr ""
+msgstr "Alles inklappen"
 
 #: templates/menubar.html:33
 msgid "Log Out"
@@ -4276,9 +4254,8 @@ msgid "Add New User"
 msgstr "Nieuwe Gebruiker Toevoegen"
 
 #: templates/account/bsdusers.html:121 templates/account/bsdusers.html:123
-#, fuzzy
 msgid "Change E-mail"
-msgstr "E-mail"
+msgstr "Wijzig E-mail"
 
 #: templates/account/passform.html:26
 msgid "Change Admin Password"
@@ -4287,12 +4264,12 @@ msgstr "Verander Admin Wachtwoord"
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:7
 msgid "Browse"
-msgstr ""
+msgstr "Zoeken"
 
 #: templates/freeadmin/directory_browser.html:5
 #: templates/freeadmin/directory_browser.html:10
 msgid "Close"
-msgstr ""
+msgstr "Sluiten"
 
 #: templates/freeadmin/generic_model_add_ok.html:1
 msgid "successfully added"
@@ -4319,7 +4296,6 @@ msgid "Yes"
 msgstr "Ja"
 
 #: templates/freeadmin/generic_model_delete_ok.html:1
-#, fuzzy
 msgid "successfully deleted"
 msgstr "Succesvol verwijderd"
 
@@ -4337,9 +4313,8 @@ msgstr "Lopende Processen"
 
 #: templates/freeadmin/index.html:35 templates/freeadmin/index.html.py:39
 #: templates/freeadmin/index.html:44
-#, fuzzy
 msgid "Loading..."
-msgstr "Bezig met Laden"
+msgstr "Bezig met laden..."
 
 #: templates/freeadmin/index.html:46
 msgid "Reboot the System"
@@ -4370,9 +4345,8 @@ msgstr ""
 "doen?"
 
 #: templates/freeadmin/index.html:69
-#, fuzzy
 msgid "Help & Support"
-msgstr "EA Ondersteuning"
+msgstr "Help en Ondersteuning"
 
 #: templates/freeadmin/index.html:72
 msgid "Forum"
@@ -4413,12 +4387,11 @@ msgstr "FreeNAS Testing"
 #: templates/freeadmin/index.html:91
 #, fuzzy
 msgid "FreeNAS Docs"
-msgstr "FreeNAS Devel"
+msgstr "FreeNAS Docs"
 
 #: templates/freeadmin/index.html:92
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "FreeNAS Testing"
+msgstr "FreeNAS Vertalingen"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
@@ -4429,14 +4402,12 @@ msgid "Bug Tracker"
 msgstr "Bug Tracker"
 
 #: templates/freeadmin/index.html:104
-#, fuzzy
 msgid "Documentation"
-msgstr "Locatie"
+msgstr "Documentatie"
 
 #: templates/freeadmin/index.html:106
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "FreeNAS Testing"
+msgstr "FreeNAS Documentatie"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4520,9 +4491,8 @@ msgstr "Actie"
 
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
-#, fuzzy
 msgid "Add LAGG Member"
-msgstr "LAGG Leden"
+msgstr "LAGG lid toevoegen"
 
 #: templates/network/staticroute.html:5
 msgid "Destination"
@@ -4589,12 +4559,11 @@ msgstr "Welkom, %(username)s. Bedankt voor het aanmelden."
 
 #: templates/registration/login.html:50
 msgid "Welcome to FreeNAS 8"
-msgstr ""
+msgstr "Welkom bij FreeNAS 8"
 
 #: templates/registration/login.html:51
-#, fuzzy
 msgid "Please log in."
-msgstr "Even geduld..."
+msgstr "Gelieve in te loggen."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -4637,18 +4606,16 @@ msgid "NFS Settings"
 msgstr "NFS Instellingen"
 
 #: templates/services/index.html:92
-#, fuzzy
 msgid "Rsync Settings"
-msgstr "Instellingen"
+msgstr "Rsync Instellingen"
 
 #: templates/services/index.html:103
 msgid "SNMP Settings"
 msgstr "SNMP Instellingen"
 
 #: templates/services/index.html:114
-#, fuzzy
 msgid "S.M.A.R.T. Settings"
-msgstr "S.M.A.R.T. extra opties"
+msgstr "S.M.A.R.T. instellingen"
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
@@ -4765,13 +4732,12 @@ msgid "Available actions"
 msgstr "Beschikbare Acties"
 
 #: templates/services/rsyncmod.html:34
-#, fuzzy
 msgid "No rsync modules defined"
-msgstr "Geen static route gedefinieerd"
+msgstr "Geen Rsync modules gedefinieerd"
 
 #: templates/services/rsyncmod.html:40 templates/services/rsyncmod.html:42
 msgid "Add Rsync Module"
-msgstr ""
+msgstr "Rsync module toevoegen"
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
@@ -4864,9 +4830,8 @@ msgid "Clone Snapshot"
 msgstr "Snapshot Klonen"
 
 #: templates/storage/datagrid_disks.html:9
-#, fuzzy
 msgid "Edit Disk"
-msgstr "Dataset Bewerken"
+msgstr "Disk wijzigen"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
@@ -5046,14 +5011,12 @@ msgid "Edit ZFS Volume"
 msgstr "Wijzig ZFS volume"
 
 #: templates/storage/volume_export.html:7
-#, fuzzy
 msgid "Are you sure you want to export?"
-msgstr "Weet u zeker dat u wilt verwijderen?"
+msgstr "Weet u zeker dat u wilt exporteren?"
 
 #: templates/storage/volumes.html:30 templates/storage/volumes.html.py:34
-#, fuzzy
 msgid "Create ZFS Volume"
-msgstr "Creëer Volume"
+msgstr "Creëer ZFS Volume"
 
 #: templates/storage/volumes.html:64
 msgid "There are no active volumes."
@@ -5072,9 +5035,8 @@ msgid "Status"
 msgstr "Status"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Destroy ZFS Volume"
-msgstr "Verwijder Volume"
+msgstr "Verwijder ZFS Volume"
 
 #: templates/storage/volumes.html:128 templates/storage/volumes.html.py:132
 msgid "Destroy Dataset"
@@ -5094,9 +5056,8 @@ msgid "View Disks"
 msgstr "Bekijk Schijven"
 
 #: templates/storage/volumes.html:198 templates/storage/volumes.html.py:202
-#, fuzzy
 msgid "Export Volume"
-msgstr "Importeer Volume"
+msgstr "Volume exporteren"
 
 #: templates/storage/volumes.html:209
 msgid "No volumes defined"
@@ -5139,9 +5100,8 @@ msgid "Existing data will be cleared"
 msgstr "Bestaande data zal worden gewist"
 
 #: templates/storage/zvols.html:9
-#, fuzzy
 msgid "Add ZFS Volume"
-msgstr "ZFS Volume"
+msgstr "ZFS Volume toevoegen"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
@@ -5160,9 +5120,8 @@ msgid "Restore to Factory Defaults"
 msgstr "Fabrieksinstellingen terugzetten"
 
 #: templates/system/config.html:5
-#, fuzzy
 msgid "Restore Config"
-msgstr "Configuratie Opslaan"
+msgstr "Configuratie terugzetten"
 
 #: templates/system/config.html:9
 msgid "Save Config"
@@ -5185,13 +5144,12 @@ msgid "Update"
 msgstr "Updaten"
 
 #: templates/system/cronjob.html:40
-#, fuzzy
 msgid "No CronJobs defined"
-msgstr "Geen gebruikers gedefinieerd"
+msgstr "Geen CronJobs gedefinieerd"
 
 #: templates/system/cronjob.html:46 templates/system/cronjob.html.py:48
 msgid "Add CronJob"
-msgstr ""
+msgstr "CronJob toevoegen"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -5199,11 +5157,11 @@ msgstr "Opnieuw aan het opstarten..."
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "Uw test email is verstuurd!"
 
 #: templates/system/email_edit.html:19
 msgid "Your test email could not be sent:"
-msgstr ""
+msgstr "Uw test email kon niet verstuurd worden: "
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
@@ -5250,13 +5208,12 @@ msgid "Yearly Graphs"
 msgstr "jaarlijkse grafieken"
 
 #: templates/system/rsync.html:38
-#, fuzzy
 msgid "No rsyncs defined"
-msgstr "Geen gebruikers gedefinieerd"
+msgstr "Geen RSyncs gedefinieerd"
 
 #: templates/system/rsync.html:44 templates/system/rsync.html.py:46
 msgid "Add Rsync"
-msgstr ""
+msgstr "Rsync toevoegen"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -5284,7 +5241,7 @@ msgstr "Platform"
 
 #: templates/system/system_info.html:16
 msgid "Memory"
-msgstr ""
+msgstr "Geheugen"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
@@ -5305,7 +5262,7 @@ msgstr "FreeNAS Build"
 #: templates/system/wizard.html:3
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr ""
+msgstr "Stap %(step)s van %(step_count)s"
 
 msgid "%s successfully update."
 msgstr "%s succesvol geupdate."
@@ -5330,9 +5287,8 @@ msgstr ""
 "bestaan in het wachtwoord bestand, maar er is geen geldige aanmelding "
 "vereist."
 
-#, fuzzy
 msgid "ZVol Name"
-msgstr "Volledige naam"
+msgstr "ZVol naam"
 
 msgid "Dataset"
 msgstr "Dataset"
@@ -5374,13 +5330,11 @@ msgstr "Wachtwoord (opnieuw)"
 msgid "minutes,"
 msgstr "minuten"
 
-#, fuzzy
 msgid "Create ZFS zvol"
-msgstr "Creëer ZFS Dataset"
+msgstr "Creëer ZFS zvol"
 
-#, fuzzy
 msgid "Add ZVol"
-msgstr "Voeg Volume Toe"
+msgstr "ZVol toevoegen"
 
 msgid "English"
 msgstr "Engels"
