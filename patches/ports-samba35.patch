@@ -3,10 +3,10 @@ Index: net/samba35/files/patch-source3__modules__vfs_shadow_copy2.c
 RCS file: net/samba35/files/patch-source3__modules__vfs_shadow_copy2.c
 diff -N net/samba35/files/patch-source3__modules__vfs_shadow_copy2.c
 --- /dev/null	1 Jan 1970 00:00:00 -0000
-+++ files/patch-source3__modules__vfs_shadow_copy2.c	30 Jun 2011 22:49:24 -0000
-@@ -0,0 +1,268 @@
++++ files/patch-source3__modules__vfs_shadow_copy2.c	02 Jul 2011 10:45:22 -0000
+@@ -0,0 +1,308 @@
 +--- ./source3/modules/vfs_shadow_copy2.c.orig	2011-06-14 04:17:28.000000000 -0700
-++++ ./source3/modules/vfs_shadow_copy2.c	2011-06-30 15:49:21.157033439 -0700
+++++ ./source3/modules/vfs_shadow_copy2.c	2011-07-01 21:44:13.133596276 -0700
 +@@ -2,6 +2,7 @@
 +  * implementation of an Shadow Copy module - version 2
 +  *
@@ -163,19 +163,59 @@ diff -N net/samba35/files/patch-source3__modules__vfs_shadow_copy2.c
 + 	baselen = strlen(basedir);
 + 	baseoffset = handle->conn->connectpath + baselen;
 + 
-+@@ -385,9 +482,9 @@
++@@ -385,11 +482,15 @@
 + 	if (*relpath == '/') relpath++;
 + 	if (*baseoffset == '/') baseoffset++;
 + 
 +-	ret = talloc_asprintf(handle->data, "%s/%.*s/%s/%s", 
-++	ret = talloc_asprintf(handle->data, "%s/%s/%s/%s", 
+++	ret = talloc_asprintf(handle->data, "%s/%s%s%s/%s", 
 + 			      snapdir, 
 +-			      GMT_NAME_LEN, fname, 
 ++			      snapshot,
+++			      *baseoffset ? "/" : "",
 + 			      baseoffset, 
 + 			      relpath);
+++	/* XXX */
+++	if (ret != NULL && strlen(ret) > 1 && ret[strlen(ret) - 1] == '/')
+++		ret[strlen(ret) - 1] = '\0';
 + 	DEBUG(6,("convert_shadow2_name: '%s' -> '%s'\n", fname, ret));
-+@@ -718,6 +815,45 @@
++ 	talloc_free(tmp_ctx);
++ 	return ret;
++@@ -557,6 +658,7 @@
++ static char *shadow_copy2_realpath(vfs_handle_struct *handle,
++ 			    const char *fname, char *resolved_path)
++ {
+++#if 0
++ 	const char *gmt;
++ 
++ 	if (shadow_copy2_match_name(fname, &gmt)
++@@ -576,6 +678,7 @@
++ 		TALLOC_FREE(copy);
++ 		return result;
++ 	}
+++#endif
++         SHADOW2_NEXT(REALPATH, (handle, name, resolved_path), char *, NULL);
++ }
++ 
++@@ -606,6 +709,7 @@
++ 		return NULL;
++ 	}
++ 
+++#if 0
++ 	snapdir = shadow_copy2_find_snapdir(tmp_ctx, handle);
++ 	if (snapdir == NULL) {
++ 		DEBUG(2,("no snapdir found for share at %s\n",
++@@ -642,6 +746,9 @@
++ 			      snapdir,
++ 			      GMT_NAME_LEN, fname,
++ 			      baseoffset);
+++#else
+++	ret = convert_shadow2_name(handle, fname, gmt_start);
+++#endif
++ 	DEBUG(6,("shadow_copy2_connectpath: '%s' -> '%s'\n", fname, ret));
++ 	TALLOC_FREE(tmp_ctx);
++ 	return ret;
++@@ -718,6 +825,45 @@
 +         SHADOW2_NEXT(CHMOD_ACL, (handle, name, mode), int, -1);
 + }
 + 
@@ -221,7 +261,7 @@ diff -N net/samba35/files/patch-source3__modules__vfs_shadow_copy2.c
 + static int shadow_copy2_get_shadow_copy2_data(vfs_handle_struct *handle, 
 + 					      files_struct *fsp, 
 + 					      SHADOW_COPY_DATA *shadow_copy2_data, 
-+@@ -727,6 +863,7 @@
++@@ -727,6 +873,7 @@
 + 	const char *snapdir;
 + 	SMB_STRUCT_DIRENT *d;
 + 	TALLOC_CTX *tmp_ctx = talloc_new(handle->data);
@@ -229,7 +269,7 @@ diff -N net/samba35/files/patch-source3__modules__vfs_shadow_copy2.c
 + 
 + 	snapdir = shadow_copy2_find_snapdir(tmp_ctx, handle);
 + 	if (snapdir == NULL) {
-+@@ -747,8 +884,6 @@
++@@ -747,8 +894,6 @@
 + 		return -1;
 + 	}
 + 
@@ -238,7 +278,7 @@ diff -N net/samba35/files/patch-source3__modules__vfs_shadow_copy2.c
 + 	shadow_copy2_data->num_volumes = 0;
 + 	shadow_copy2_data->labels      = NULL;
 + 
-+@@ -756,7 +891,9 @@
++@@ -756,7 +901,9 @@
 + 		SHADOW_COPY_LABEL *tlabels;
 + 
 + 		/* ignore names not of the right form in the snapshot directory */
@@ -249,7 +289,7 @@ diff -N net/samba35/files/patch-source3__modules__vfs_shadow_copy2.c
 + 			continue;
 + 		}
 + 
-+@@ -772,15 +909,22 @@
++@@ -772,15 +919,22 @@
 + 		if (tlabels == NULL) {
 + 			DEBUG(0,("shadow_copy2: out of memory\n"));
 + 			SMB_VFS_NEXT_CLOSEDIR(handle, p);
