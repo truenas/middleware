@@ -1388,16 +1388,11 @@ class notifier:
                     yield c
 
             def _vdev_type(self, name):
-                if name.startswith('stripe'):
-                    return "stripe"
-                elif name.startswith('mirror'):
-                    return "mirror"
-                elif name.startswith("raidz3"):
-                    return "raidz3"
-                elif name.startswith("raidz2"):
-                    return "raidz3"
-                elif name.startswith("raidz"):
-                    return "raidz"
+                # raidz needs to appear after other raidz types
+                supported_types = ('stripe', 'mirror', 'raidz3', 'raidz2', 'raidz')
+                for type in supported_types:
+                    if name.startswith(type):
+                        return type
                 return False
 
             def validate(self, level=0):
@@ -1731,11 +1726,13 @@ class notifier:
                 for entry in search:
                     if not entry.content.startswith("label"):
                         return entry.content
+            return None
 
         elif tp == 'label':
             search = doc.xpathEval("//class[name = 'LABEL']/geom//provider[name = '%s']/../name" % value)
             if len(search) > 0:
                 return search[0].content
+            return None
 
         elif tp == 'serial':
             p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE)
