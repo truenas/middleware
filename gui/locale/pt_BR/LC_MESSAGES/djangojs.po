@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-06-14 11:05+0200\n"
-"Last-Translator: marlosab <marlosab@gmail.com>\n"
+"PO-Revision-Date: 2011-07-04 01:28+0200\n"
+"Last-Translator: eduardoalvim <eduardoalvim@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -76,11 +76,11 @@ msgstr "Separar Disco"
 
 #: media/lib/js/freeadmin.js:635
 msgid "Some error ocurried!"
-msgstr "Ocorreu algum erro!"
+msgstr "Algum erro ocorreu!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
-msgstr "Selecionar cada"
+msgstr "Cada selecionado"
 
 #: media/lib/js/freeadmin/form/Cron.js:90
 msgid "Every N"

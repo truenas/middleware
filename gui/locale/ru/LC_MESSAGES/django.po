@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-30 09:53+0200\n"
-"Last-Translator: xRaider <xraiderus@gmail.com>\n"
+"PO-Revision-Date: 2011-07-04 06:09+0200\n"
+"Last-Translator: v_kr <v_kr@inbox.ru>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -2346,7 +2346,7 @@ msgstr "Имя администратора"
 
 #: services/models.py:1055
 msgid "Username of Domain Administrator Account"
-msgstr "Имя пользователя администратора домена"
+msgstr "Имя учетной записи администратора домена"
 
 #: services/models.py:1059
 msgid "Administrator Password"

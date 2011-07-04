@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-02 22:18+0200\n"
-"Last-Translator: najt_k <zic.spse@gmail.com>\n"
+"PO-Revision-Date: 2011-07-03 15:30+0200\n"
+"Last-Translator: duri <foo.bar@centrum.sk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
@@ -407,7 +407,7 @@ msgstr "Iba na zápis"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr "Čítanie a Žápis"
+msgstr "Čítanie a Zápis"
 
 #: choices.py:447 choices.py:448
 #, python-format
@@ -1276,6 +1276,12 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
+"Použite túto možnosť na zmenu používateľského mena (predvolene \"nobody\"), "
+"ktoré bude použité pre prístup k službám, ktoré sú špecifikované ako "
+"hosťovské. Akékoľvek privilégiá bude mať tento používateľ, bude prístupný "
+"akémukoľvek klientovi pripájajúcemu sa k hosťovskej službe. Tento používateľ "
+"sa musí nachádzať v súbore s heslami, ale platné prihlásenie nie je "
+"vyžadované. Používateľ root nemôže byť použitý ako hosťovský účet."
 
 #: services/models.py:108
 msgid "Allow guest access"
@@ -1646,7 +1652,7 @@ msgid ""
 "TB for convenience."
 msgstr ""
 "Veľkosť extent-u, 0 znamená automatické nastavenie, čislo bez prípony je v "
-"bytoch,  príponou KB, MB, TB pre zjednodušenie."
+"bytoch, alebo použite príponu KB, MB, TB pre zjednodušenie."
 
 #: services/models.py:394 services/models.py:443 services/models.py:489
 #: services/models.py:1182 sharing/models.py:45 sharing/models.py:223
@@ -1784,7 +1790,7 @@ msgstr "Autentifikačná metóda"
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
-msgstr "Metóda môže byť prijatá cielom. Auto znamená bez aj s autentifikáciou."
+msgstr "Metóda môže byť prijatá cieľom. Auto znamená bez aj s autentifikáciou."
 
 #: services/models.py:603
 msgid "Authentication Group ID"
@@ -1832,7 +1838,7 @@ msgstr ""
 
 #: services/models.py:666
 msgid "Provider"
-msgstr "Poskytovatel"
+msgstr "Poskytovateľ"
 
 #: services/models.py:670
 msgid "Domain name"
@@ -1843,6 +1849,9 @@ msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
 msgstr ""
+"Alias pre názov hostiteľa. Táto voľba sa môže zobraziť viackrát, pre každú "
+"doménu s rovnakou IP adresou. Použite medzeru na oddelenie viacerých "
+"aliasov."
 
 #: services/models.py:684
 msgid "Update period"
@@ -4803,12 +4812,12 @@ msgstr "ZFS Replikácia"
 
 #: templates/storage/manualsnap.html:13
 msgid "Manually Create Snapshot"
-msgstr "Manuálne vytvoriť snímok"
+msgstr "Manuálne vytvoriť snímku"
 
 #: templates/storage/periodicsnap.html:13 templates/storage/volumes.html:178
 #: templates/storage/volumes.html.py:182
 msgid "Create Snapshot"
-msgstr "Vytvoriť snímok"
+msgstr "Vytvoriť snímku"
 
 #: templates/storage/permission.html:6
 msgid "Change permission"
@@ -4833,7 +4842,7 @@ msgstr "Prípojný bod"
 
 #: templates/storage/replications.html:14
 msgid "Last snapshot"
-msgstr ""
+msgstr "Posledná snímka"
 
 #: templates/storage/replications.html:30
 #: templates/storage/replications.html:34
