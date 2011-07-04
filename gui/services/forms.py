@@ -618,6 +618,8 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         if kwargs.has_key("instance"):
             self.fields['iscsi_extent_disk'].choices = self._populate_disk_choices(exclude=self.instance)
             self.fields['iscsi_extent_disk'].initial = self.instance.get_device()[5:]
+            self._path = self.instance.iscsi_target_extent_path
+            self._name = self.instance.iscsi_target_extent_name
         else:
             self.fields['iscsi_extent_disk'].choices = self._populate_disk_choices()
         self.fields['iscsi_extent_disk'].choices.sort()
@@ -669,11 +671,11 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         exclude = ('iscsi_target_extent_type', 'iscsi_target_extent_path', 'iscsi_target_extent_filesize')
     def save(self, commit=True):
         if self.instance.id:
-            d = Disk.objects.get(id=self.instance.iscsi_target_extent_path)
+            d = Disk.objects.get(id=self._path)
             if self.instance.iscsi_target_extent_type == 'Disk':
                 notifier().unlabel_disk(d.identifier_to_device())
             d.delete()
-            volume = Volume.objects.get(vol_name='iscsi:%s' % self.instance.iscsi_target_extent_name)
+            volume = Volume.objects.get(vol_name='iscsi:%s' % self._name)
             volume.delete()
         oExtent = super(iSCSITargetDeviceExtentForm, self).save(commit=False)
         if commit:
