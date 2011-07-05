@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:47-0700\n"
-"PO-Revision-Date: 2011-06-17 00:47+0200\n"
-"Last-Translator: marlosab <marlosab@gmail.com>\n"
+"PO-Revision-Date: 2011-07-04 02:17+0200\n"
+"Last-Translator: eduardoalvim <eduardoalvim@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -434,8 +434,7 @@ msgstr "%(week)s semana"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
-"Nunca - Verifica o dispositivo, independentemente do seu modo de energia"
+msgstr "Nunca - Verifica o dispositivo independentemente do seu modo de energia"
 
 # Tirada do Freenas 7.2
 #: choices.py:461
@@ -455,11 +454,11 @@ msgstr ""
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr "Auto-teste longo"
+msgstr "Auto-teste demorado"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr "Auto-teste curto"
+msgstr "Auto-teste rápido"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
@@ -467,7 +466,7 @@ msgstr "Auto-teste de transmissão (somente  ATA)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
-msgstr "Teste de Offline Imediato (somente ATA)"
+msgstr "Teste Offline Imediato (somente ATA)"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -522,7 +521,7 @@ msgstr "Grupo Principal"
 
 #: account/forms.py:235
 msgid "A user with that username already exists."
-msgstr "Um usuário com esse nome já existe."
+msgstr "Já existe um usuário com esse nome."
 
 #: account/forms.py:243 account/forms.py:329 account/forms.py:479
 #: system/forms.py:232
@@ -670,11 +669,11 @@ msgstr "Senha atualizada com sucesso."
 
 #: account/views.py:92
 msgid "Admin user successfully updated."
-msgstr "Usuário administrador atualizado com sucesso."
+msgstr "Administrador atualizado com sucesso."
 
 #: account/views.py:102
 msgid "Users successfully updated."
-msgstr "Usuário atualizado com sucesso."
+msgstr "Usuários atualizados com sucesso."
 
 #: account/views.py:115
 msgid "Groups successfully updated."
@@ -957,7 +956,7 @@ msgstr "Rede"
 
 #: network/nav.py:13 templates/network/index.html:13
 msgid "Network Summary"
-msgstr "Sumário de rede"
+msgstr "Resumo da Rede"
 
 #: network/nav.py:30
 msgid "Create Link Aggregation"
@@ -1261,12 +1260,12 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"Use essa opção para sobrepor o nome do usuário ('nobody' por padrão) que "
-"será usado para acesso aos serviços cuja especificação seja convidado. "
-"Independente dos privilégios de acesso que o usuário tenha, será permitida a "
-"conexão no serviço de convidados. O usuário precisa possuir uma senha, mas "
-"não é necessário um login válido. O Usuário root não pode ser usado como uma "
-"conta convidado."
+"Use para sobrepor o nome de usuário ('nobody' por padrão) a ser usado para "
+"acessar serviços especificados como 'guest'. Independente dos privilégios de "
+"acesso que tal usuário tenha, será permitida a qualquer cliente a conexão "
+"ao serviço 'guest'. Este usuário precisa existir no arquivo de senhas, "
+"entretanto não será requerido um login válido. O usuário 'root' não pode ser "
+"usado como uma conta 'guest'."
 
 #: services/models.py:108
 msgid "Allow guest access"
@@ -1581,13 +1580,13 @@ msgstr "Unidade lógica controladora da porta TCP (3261 por padrão)"
 
 #: services/models.py:337
 msgid "Controller Authorized netmask"
-msgstr "Controlador Authorizado mascara de rede"
+msgstr "Máscara de rede para Controlador Autorizado"
 
 #: services/models.py:339
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
 msgstr ""
-"Unidade lógica controladora autorizada máscara de rede (255.255.255.0 por "
-"padrão)"
+"Máscara de rede para Unidade Lógica Controladora Autorizada (255.255.255.0 "
+"por padrão)"
 
 #: services/models.py:346
 msgid "Controller Auth Method"
@@ -1637,8 +1636,8 @@ msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
-"Tamanho do extent, 0 automático, natural em bytes ou adicione com sufixo KB,"
-"MB,TB por conveniência."
+"Tamanho do extent, 0 significa automático, número bruto em bytes, ou "
+"adicione sufixo KB, MB, TB para conveniência."
 
 #: services/models.py:394 services/models.py:443 services/models.py:489
 #: services/models.py:1182 sharing/models.py:45 sharing/models.py:223
@@ -1675,10 +1674,10 @@ msgid ""
 "port number. For any IPs (wildcard address), use '0.0.0.0:3260' and/or "
 "'[::]:3260'. Do not mix wildcard and other IPs at same address family."
 msgstr ""
-"O portal utiliza o campo 'address:port'. por exemplo '192.168.1.1:3260' para "
-"IPv4, '[2001:db8:1:1::1]:3260' para IPv6. A porta 3260 é iSCSI padrão. Para "
-"qualquer IPs (caracteres coringas), use '0.0.0.0:3260' e/ou '[::]:3260'. "
-"Não misture caracteres coringas e outros IPs na mesma família de endereços."
+"O portal utiliza o campo 'address:port'; por exemplo '192.168.1.1:3260' para "
+"IPv4; '[2001:db8:1:1::1]:3260' para IPv6; a porta 3260 é iSCSI padrão. Para "
+"qualquer IPs (endereços coringas), use '0.0.0.0:3260' e/ou '[::]:3260'. Não "
+"misture coringas e outros IPs na mesma família de endereços."
 
 #: services/models.py:476 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -1690,7 +1689,7 @@ msgid ""
 "for any initiators."
 msgstr ""
 "Iniciador autorizado para acessar o destino iSCSI. Será utilizado um nome ou "
-"'ALL' para todos iniciadores."
+"'ALL' para qualquer iniciador."
 
 #: services/models.py:482
 msgid "Authorized network"
@@ -1800,7 +1799,7 @@ msgstr ""
 
 #: services/models.py:622
 msgid "Logical Block Size"
-msgstr "Tamanho do bloco lógico"
+msgstr "Tamanho do Bloco Lógico"
 
 #: services/models.py:623
 msgid ""
@@ -2036,9 +2035,10 @@ msgstr "Caminho"
 msgid "Allow Local User Login"
 msgstr "Permite login de usuário local"
 
+# Não traduziria esse termo...
 #: services/models.py:841
 msgid "Banner"
-msgstr "Insígnia"
+msgstr "Banner"
 
 #: services/models.py:843
 msgid "Greeting banner displayed by FTP when a connection first comes in."
@@ -2062,10 +2062,10 @@ msgstr "Habilita recomeço de transferência"
 msgid "Always Chroot"
 msgstr "Sempre Chroot"
 
-# Será que esse IDENT é de idêntica no sentido de requerer Upper Case e Lower Case?
+# IDENT é um tipo de autenticação
 #: services/models.py:864
 msgid "Require IDENT Authentication"
-msgstr "Exigir autenticação IDENT"
+msgstr "Exige autenticação IDENT"
 
 #: services/models.py:866
 msgid "Require Reverse DNS for IP"
@@ -2240,8 +2240,8 @@ msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
 msgstr ""
-"Desativado: Root pode logar somente com chave de autenticação pública; "
-"Habilitado: Permitido login de root com senha"
+"Desativado: root pode logar somente com chave de autenticação pública; "
+"Habilitado: permitido login de root com senha"
 
 #: services/models.py:969
 msgid "Allow Password Authentication"
@@ -2257,11 +2257,11 @@ msgstr "Conexões compactadas"
 
 #: services/models.py:976
 msgid "Host Private Key"
-msgstr "Chave privativa do Host"
+msgstr "Chave Privada para Host"
 
 #: services/models.py:978
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr "Cole uma RSA PRIVATE KEY no formato PEM aqui."
+msgstr "Cole uma CHAVE PRIVADA RSA no formato PEM aqui."
 
 #: services/models.py:984
 msgid ""
@@ -2278,7 +2278,7 @@ msgstr "SSH"
 
 #: services/models.py:1034
 msgid "Domain Controller Name"
-msgstr "Nome do controlador de domínio"
+msgstr "Nome do Controlador de Domínio"
 
 #: services/models.py:1035
 msgid "AD or PDC name."
@@ -2286,19 +2286,19 @@ msgstr "Nome do AD ou PDC."
 
 #: services/models.py:1039
 msgid "Domain Name (DNS/Realm-Name)"
-msgstr "Nome do domínio (Nome DNS/Realm)"
+msgstr "Nome do Domínio (Nome DNS/Realm)"
 
 #: services/models.py:1040
 msgid "Domain Name, eg example.com"
-msgstr "Nome do domínio, Ex.: exemple.com"
+msgstr "Nome do Domínio, Ex.: exemplo.com.br"
 
 #: services/models.py:1044
 msgid "Host Name (NetBIOS-Name)"
-msgstr "Nome do domínio (Nome NetBIOS)"
+msgstr "Nome do Host (Nome NetBIOS)"
 
 #: services/models.py:1045
 msgid "Host Name in old format, eg EXAMPLE"
-msgstr "Nome do Host em formato antigo, e.x: EXAMPLE"
+msgstr "Nome do Host em formato antigo, ex: EXEMPLO"
 
 #: services/models.py:1049
 msgid "Workgroup Name"
@@ -2314,7 +2314,7 @@ msgstr "Nome do Administrador"
 
 #: services/models.py:1055
 msgid "Username of Domain Administrator Account"
-msgstr "Nome de um usuário de um administrador do domínio"
+msgstr "Usuário do Administrador do Domínio"
 
 #: services/models.py:1059
 msgid "Administrator Password"
@@ -2322,7 +2322,7 @@ msgstr "Senha do Administrador"
 
 #: services/models.py:1060
 msgid "Password of Domain Administrator account."
-msgstr "Senha da conta do administrador do domínio."
+msgstr "Senha do Administrador do Domínio."
 
 #: services/models.py:1064 services/models.py:1065
 #: templates/services/index.html:18
@@ -2544,9 +2544,8 @@ msgstr ""
 "a acessar este módulo. Em caso de conflito, a lista de permitidos terá "
 "prioridade sobre a de negados. Para situações em que for necessário negar "
 "todos por padrão, use a palavra ALL (ou a máscara de rede 0.0.0.0/0) e então "
-"especifique explicitamente para o parâmetro hosts permitidos aqueles hosts "
-"que devem ter acesso permitido. Deixe o campo em branco para usar as "
-"configurações padrão"
+"indique explicitamente para o parâmetro hosts permitidos aqueles hosts que "
+"serão autorizados. Deixe o campo em branco para usar as configurações padrão"
 
 #: services/models.py:1226
 msgid ""
@@ -2632,7 +2631,7 @@ msgstr "Visualizar Todos Dispositivos Extents"
 
 #: services/nav.py:70 templates/services/iscsi.html:7
 msgid "Device Extents"
-msgstr "Dispositivos Extents"
+msgstr "Dispositivo Extents"
 
 #: services/nav.py:92 templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
@@ -3027,7 +3026,7 @@ msgstr "Fornece compatibilidade com clientes Apple II."
 
 #: sharing/models.py:200
 msgid "No Stat"
-msgstr "No Stat"
+msgstr "Sem Stat"
 
 #: sharing/models.py:201
 msgid ""
@@ -3182,7 +3181,7 @@ msgstr "\"log\" é uma palavra reservada e não pode ser utilizada"
 # Dá erro de acronyms pq ele diz que o NOT obrigatoriamente não se traduz! e ai?
 #: storage/forms.py:254
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr "O nome do volume NÃO pode iniciar com c[0-9], mirror, raidz ou spare"
+msgstr "O nome do volume NÃO deve se iniciar com c[0-9], mirror, raidz ou spare"
 
 #: storage/forms.py:349 storage/forms.py:439 storage/forms.py:939
 msgid "Member disk"
@@ -3788,7 +3787,7 @@ msgstr "E-mail do destinário, ex: freenas@mydomain.com"
 
 #: system/models.py:135
 msgid "Outgoing mail server"
-msgstr "Servidor de mensagen enviadas"
+msgstr "Servidor para envio de emails"
 
 #: system/models.py:136
 msgid ""
@@ -3876,11 +3875,11 @@ msgstr "Nome da Cidade (Código com 2 Letras)"
 
 #: system/models.py:223
 msgid "Common Name"
-msgstr "Seu nome"
+msgstr "Primeiro nome"
 
 #: system/models.py:224
 msgid "Common Name (eg, YOUR name)"
-msgstr "Nome Comum (eg, YOUR name)"
+msgstr "Primeiro nome (ex. JOSÉ da Silva)"
 
 #: system/models.py:229
 msgid "SSL Certificate"
@@ -4213,7 +4212,7 @@ msgstr "Apagar Grupo"
 
 #: templates/account/bsdgroups.html:51
 msgid "There are no user defined groups."
-msgstr "Não existem grupos definidos pelo usuário."
+msgstr "Não existem grupos definidos para usuários."
 
 #: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
 msgid "Add New Group"
@@ -4563,7 +4562,7 @@ msgstr "Por favor acesse."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
-msgstr "Sair"
+msgstr "Desconectado"
 
 #: templates/registration/logout.html:21
 msgid "You are now logged out."
@@ -4667,7 +4666,7 @@ msgstr "LUN"
 #: templates/services/iscsi_portals.html:33
 #: templates/services/iscsi_targets.html:34
 msgid "No targets defined"
-msgstr "Nenhum target definido"
+msgstr "Sem target definido"
 
 # Não traduz a palavra Target no ISCSI - "TARGET NÂO É DESTINO EM INGLES"
 #: templates/services/iscsi_assoctargets.html:39
@@ -4763,7 +4762,7 @@ msgstr "Nenhum compartilhamento foi definido"
 
 #: templates/sharing/apple.html:50
 msgid "Add Apple Share"
-msgstr "Adicionar compartilhamento Apple"
+msgstr "Adicionar Apple Share"
 
 #: templates/sharing/apple.html:52
 msgid "Add Apple Share (AFP)"
@@ -5359,7 +5358,7 @@ msgid "Windows Version"
 msgstr "Versão do Windows"
 
 msgid "The version of Microsoft Windows that Active Directory is running."
-msgstr "A versão do Microsoft Windows que o Active Directory está rodando."
+msgstr "Versão do Microsoft Windows que o Active Directory está rodando."
 
 msgid "Service Principal Name"
 msgstr "Nome do Serviço Principal"

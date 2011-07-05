@@ -72,12 +72,9 @@ def snap_expired(snapinfo, snaptime):
     elif snap_ttl_unit == 'w':
         snapinfo_expirationtime = snapinfo_expirationtime + timedelta(days = 7*snap_ttl_value)
     elif snap_ttl_unit == 'm':
-        if snapinfo_expirationtime == 12:
-            snapinfo_expirationtime = snapinfo_expirationtime.replace(year = snapinfo_expirationtime.year+1, month=1)
-        else:
-            snapinfo_expirationtime = snapinfo_expirationtime.replace(month = snapinfo_expirationtime.month+1)
+        snapinfo_expirationtime = snapinfo_expirationtime + timedelta(days = int(30.436875*snap_ttl_value))
     elif snap_ttl_unit == 'y':
-        snapinfo_expirationtime = snapinfo_expirationtime.replace(year = snapinfo_expirationtime.year+1)
+        snapinfo_expirationtime = snapinfo_expirationtime + timedelta(days = int(365.2425*snap_ttl_value))
 
     return snapinfo_expirationtime <= snaptime
 

@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-28 10:53+0200\n"
-"Last-Translator: iMiguel <miguel.rosa17@gmail.com>\n"
+"PO-Revision-Date: 2011-06-30 12:51+0200\n"
+"Last-Translator: Nuno <nuno.piscinas@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -954,7 +954,7 @@ msgstr "Caminho estático"
 
 #: network/models.py:288 templates/network/index.html:9
 msgid "Static Routes"
-msgstr ""
+msgstr "Caminhos Estáticos"
 
 #: network/nav.py:6 templates/menubar.html:13
 msgid "Network"
@@ -2564,12 +2564,12 @@ msgid ""
 "Leave this field empty to use default settings"
 msgstr ""
 "Esta opção é um conjunto de hosts delimitados por vírgula, espaço ou tab que "
-"NÃO têm permissão para aceder a este módulo. Sempre que as listas entrarem "
+"NOT têm permissão para aceder a este módulo. Sempre que as listas entrarem "
 "em conflito, a lista de permissões tem precedência. No caso de ser "
 "necessário negar todos por defeito, utilize a keyword ALL (ou a máscara de "
 "rede 0.0.0.0/0) e depois especifique explicitamente no parâmetro de "
 "permissão desses hosts qual deve ser permitido acesso.Deixe este campo em "
-"branco para utilizar as definições pré-definidas."
+"branco para utilizar as definições pré-definidas"
 
 #: services/models.py:1226
 msgid ""
@@ -2794,7 +2794,7 @@ msgid ""
 "Leave this field empty to use default settings."
 msgstr ""
 "Esta opção é um conjunto de hosts delimitados por vírgula, espaço ou tab que "
-"NÃO têm permissão para aceder a esta partilha. Sempre que as listas "
+"NOT têm permissão para aceder a esta partilha. Sempre que as listas "
 "entrarem em conflito, a lista de permissões tem precedência. No caso de ser "
 "necessário negar todos por defeito, utilize a keyword ALL (ou a máscara de "
 "rede 0.0.0.0/0) e depois especifique explicitamente no parâmetro de "
@@ -3118,7 +3118,7 @@ msgstr "Silencio"
 #: sharing/models.py:244
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
-msgstr ""
+msgstr "Inibir syslog avisos se houver problemas com esta quota de exportação."
 
 #: sharing/models.py:248
 msgid "Maproot User"
@@ -3182,7 +3182,7 @@ msgstr ""
 
 #: storage/forms.py:234
 msgid "You must select a filesystem"
-msgstr "Tem de escolher um Sistema de Ficheiros"
+msgstr "Tem de escolher um sistema de ficheiros"
 
 #: storage/forms.py:238 system/forms.py:217 system/forms.py:223
 #: system/forms.py:228
@@ -3217,7 +3217,7 @@ msgstr "Ocorreram alguns erros ao renomear o disco."
 
 #: storage/forms.py:484
 msgid "You must select a volume."
-msgstr "Tem de escolher um Volume."
+msgstr "Tem de escolher um volume."
 
 #: storage/forms.py:633
 msgid "Volume from which this dataset will be created on"
@@ -3267,7 +3267,7 @@ msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
 msgstr ""
-"Os nomes dos Dataset têm de começar com caracteres alfanuméricos e podem "
+"Os nomes dos dataset têm de começar com caracteres alfanuméricos e podem "
 "conter (-), (_), (:) e (.)."
 
 #: storage/forms.py:660 storage/forms.py:805
@@ -3280,7 +3280,7 @@ msgstr "Insira um número positivo (pode usar um sufixo M, G, T) ou 0"
 
 #: storage/forms.py:782
 msgid "Volume from which this ZFS Volume will be created on"
-msgstr ""
+msgstr "Volume de que este ZFS Volume será criado em"
 
 #: storage/forms.py:783
 msgid "ZFS Volume Name"
@@ -3295,6 +3295,8 @@ msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
 msgstr ""
+"Nomes de Volume ZFS devem começar com um caractere alfanumérico e só podem "
+"conter (-), (_), (:) and (.)."
 
 #: storage/forms.py:820
 msgid "Owner (user)"
@@ -3346,7 +3348,7 @@ msgstr "Apenas [-a-zA-Z0-9_.] é permitido para o nome do clone"
 
 #: storage/forms.py:922
 msgid "Clone must be within the same volume"
-msgstr ""
+msgstr "O clone deve estár no mesmo volume"
 
 #: storage/forms.py:989 storage/models.py:222
 msgid "Remote hostname"
@@ -3390,7 +3392,7 @@ msgstr "Activar S.M.A.R.T."
 
 #: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
-msgstr "Opções extra do S.M.A.R.T."
+msgstr "Opções extra do S.M.A.R.T"
 
 #: storage/models.py:133
 msgid "Group Membership"
@@ -3407,11 +3409,11 @@ msgstr "Ponto de Montagem"
 
 #: storage/models.py:157
 msgid "Path to mount point"
-msgstr "Localização do Ponto de Montagem"
+msgstr "Localização do ponto de montagem"
 
 #: storage/models.py:161
 msgid "Mount options"
-msgstr "Opções de Montagem"
+msgstr "Opções de montagem"
 
 #: storage/models.py:162
 msgid "Enter Mount Point options here"
@@ -3444,6 +3446,8 @@ msgstr "Hosts de replicação remota"
 #: storage/models.py:241
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
+"Ultimo snapshot enviado para destino remoto (deixe em branco para replicação "
+"completa)"
 
 #: storage/models.py:244 system/models.py:341
 #: templates/storage/replications.html:15
@@ -3452,11 +3456,11 @@ msgstr "Host remoto"
 
 #: storage/models.py:247 templates/storage/replications.html:16
 msgid "Remote ZFS filesystem"
-msgstr ""
+msgstr "Sistema de ficheiros ZFS remoto"
 
 #: storage/models.py:251
 msgid "Recursively replicate and remove stale snapshot on remote side"
-msgstr ""
+msgstr "Recursivamente replicar e remover obsoleto instantâneo no lado remoto"
 
 #: storage/models.py:254
 msgid "Replication Task"
@@ -3472,11 +3476,11 @@ msgstr "Recursivo"
 
 #: storage/models.py:274
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "Valor para duração de vida do snapshot"
 
 #: storage/models.py:280
 msgid "Snapshot lifetime unit"
-msgstr ""
+msgstr "Unidade para duração de vida do sanpshot"
 
 #: storage/models.py:284
 msgid "Begin"
@@ -3484,7 +3488,7 @@ msgstr "Começar"
 
 #: storage/models.py:285
 msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr ""
+msgstr "A que horas do dia começamos a criar os snapshots, e.g. 8:00"
 
 #: storage/models.py:289
 msgid "End"
@@ -3492,7 +3496,7 @@ msgstr "Fim"
 
 #: storage/models.py:290
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr ""
+msgstr "A que horas do dia paramos de criar os snapshots, e.g. 17:00"
 
 #: storage/models.py:296
 msgid "Interval"
@@ -3501,7 +3505,7 @@ msgstr "Intervalo"
 #: storage/models.py:297
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
-msgstr ""
+msgstr "Após quanto tempo podemos criar um novo snapshot depois do anterior."
 
 #: storage/models.py:303
 msgid "Occurrence"
@@ -3509,19 +3513,19 @@ msgstr "Ocorrência"
 
 #: storage/models.py:304
 msgid "How the task is repeated"
-msgstr ""
+msgstr "Como a tarefa é repetida"
 
 #: storage/models.py:309
 msgid "Weekday"
-msgstr "Dia da Semana"
+msgstr "Dia da semana"
 
 #: storage/models.py:327
 msgid "Periodic Snapshot Task"
-msgstr ""
+msgstr "Tarefa Periódica Sanpshot"
 
 #: storage/models.py:328 templates/storage/index.html:7
 msgid "Periodic Snapshot Tasks"
-msgstr ""
+msgstr "Tarefas Periódicas Sanpshot"
 
 #: storage/nav.py:5 templates/menubar.html:18
 msgid "Storage"
@@ -3558,7 +3562,7 @@ msgstr "Criar um Dataset em ZFS"
 
 #: storage/nav.py:89
 msgid "Add Periodic Snapshot"
-msgstr ""
+msgstr "Adicionar Snapshot Periódico"
 
 #: storage/nav.py:100
 msgid "Volumes"
@@ -3587,7 +3591,7 @@ msgstr "Dataset editado com sucesso."
 
 #: storage/views.py:320 storage/views.py:396
 msgid "Some error ocurried while setting the options"
-msgstr ""
+msgstr "Algum erro ocurreu enquanto definia as opções"
 
 #: storage/views.py:342
 msgid "ZFS Volume successfully added."
@@ -3595,7 +3599,7 @@ msgstr "Volume ZFS adicionado com sucesso."
 
 #: storage/views.py:356
 msgid "This is in use by the iscsi target, please remove it there first."
-msgstr ""
+msgstr "Isto está em uso pelo destino iscsi, por favor, removê-lo lá primeiro."
 
 #: storage/views.py:360
 msgid "ZFS Volume successfully destroyed."
@@ -3619,7 +3623,7 @@ msgstr "Snapshot eliminado com sucesso."
 
 #: storage/views.py:453
 msgid "Rollback successful."
-msgstr ""
+msgstr "Reversão bem sucedido."
 
 #: storage/views.py:470
 msgid "Snapshot successfully added."
@@ -3635,7 +3639,7 @@ msgstr "Snapshot clonado com sucesso."
 
 #: storage/views.py:549
 msgid "Disk replacement has been initiated."
-msgstr ""
+msgstr "Substituição do disco foi iniciada."
 
 #: storage/views.py:553
 msgid "Some error ocurried."
@@ -3643,7 +3647,7 @@ msgstr "Ocorreu um erro."
 
 #: storage/views.py:574
 msgid "Disk detach has been successfully done."
-msgstr ""
+msgstr "Separação do disco foi feito com sucesso."
 
 #: storage/views.py:588
 msgid "The volume failed to export"
@@ -3655,17 +3659,19 @@ msgstr "Volume exportado com sucesso"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
-msgstr "Linguagem (necessita reiniciar)"
+msgstr "Linguagem (necessita reiniciar UI)"
 
 #: system/forms.py:250
 msgid "Place to temporarily place firmware file"
-msgstr ""
+msgstr "Lugar para colocar temporariamente o arquivo firmware"
 
 #: system/forms.py:250
 msgid ""
 "The system will use this place to temporarily store the firmware file before "
 "it's being applied."
 msgstr ""
+"O sistema usará este lugar para armazenar temporariamente o arquivo firmware "
+"antes que está sendo aplicada."
 
 #: system/forms.py:258
 msgid "New image to be installed"
@@ -3673,11 +3679,11 @@ msgstr "Nova imagem para ser instalada"
 
 #: system/forms.py:259 system/forms.py:282
 msgid "SHA256 sum for the image"
-msgstr "sum SHA256 para a imagem"
+msgstr "SHA256 sum para a imagem"
 
 #: system/forms.py:271
 msgid "Invalid firmware or checksum"
-msgstr "Firmware ou Checksum inválido"
+msgstr "Firmware ou checksum inválido"
 
 #: system/forms.py:281
 msgid "Service Pack image to be installed"
@@ -3685,7 +3691,7 @@ msgstr "Imagem do Service Pack para ser instalado"
 
 #: system/forms.py:294
 msgid "Invalid service pack or checksum"
-msgstr "Service Pack ou checksum inválido"
+msgstr "Service pack ou checksum inválido"
 
 #: system/forms.py:304
 msgid "New config to be installed"
@@ -3733,19 +3739,19 @@ msgstr "Definições"
 
 #: system/models.py:85
 msgid "Enable Console Menu"
-msgstr ""
+msgstr "Habilitar Menu na Consola"
 
 #: system/models.py:87
 msgid "Use Serial Console"
-msgstr ""
+msgstr "Utilizar Consola por Serial"
 
 #: system/models.py:89
 msgid "Enable screen saver"
-msgstr "Activar o Screen Saver"
+msgstr "Activar o screen saver"
 
 #: system/models.py:91
 msgid "Automatically Check for New Firmware"
-msgstr ""
+msgstr "Verificar Automaticamente Novo Firmware"
 
 #: system/models.py:93
 msgid "Beep on boot"
@@ -3753,11 +3759,11 @@ msgstr "Beep no arranque"
 
 #: system/models.py:95
 msgid "Enable Special System Tuning"
-msgstr ""
+msgstr "Activar o Ajuste de Especial do Sistema"
 
 #: system/models.py:97
 msgid "Enable powerd (Power Saving Daemon)"
-msgstr ""
+msgstr "Activar serviço de energia (Power Saving Daemon)"
 
 #: system/models.py:99
 msgid "Enable Zeroconf/Bonjour"
@@ -3767,14 +3773,16 @@ msgstr "Activar Zeroconf/Bonjour"
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Must be non-zero"
 msgstr ""
+"O tamanho swap de cada unidade em GiB, afecta somente a discos novos. Deve "
+"ser diferente de zero"
 
 #: system/models.py:105
 msgid "Show console messages in the footer (Requires UI reload)"
-msgstr ""
+msgstr "Mostrar menssagens da consola no rodapé (Requer actualizar UI)"
 
 #: system/models.py:108
 msgid "Show tracebacks in case of fatal errors"
-msgstr ""
+msgstr "Mostrar tracebacks em caso de erros fatais"
 
 #: system/models.py:116
 msgid "MOTD banner"
@@ -3793,6 +3801,8 @@ msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@mydomain.com"
 msgstr ""
+"Um endereço de e-mail que o sistema usará para o endereço de envio de "
+"correio envia, ex: freenas@mydomain.com"
 
 #: system/models.py:135
 msgid "Outgoing mail server"
@@ -3803,10 +3813,12 @@ msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
 msgstr ""
+"Um nome de host ou ip que vai aceitar o nosso mail, por exemplo, "
+"mail.example.org, ou 192.168.1.1"
 
 #: system/models.py:142
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
-msgstr ""
+msgstr "Um inteiro de 1 a 65535, geralmente será 25, 465 ou 587"
 
 #: system/models.py:143
 msgid "Port to connect to"
@@ -3826,7 +3838,7 @@ msgstr "Usar autenticação SMTP"
 
 #: system/models.py:161
 msgid "A username to authenticate to the remote server"
-msgstr ""
+msgstr "Um nome de utilizador para autenticar o servidor remoto"
 
 #: system/models.py:168
 msgid "A password to authenticate to the remote server"
@@ -3850,7 +3862,7 @@ msgstr "Unidade Organizacional"
 
 #: system/models.py:189
 msgid "Organizational Unit Name (eg, section)"
-msgstr ""
+msgstr "Nome da Unidade Organizacional (ex, sector)"
 
 #: system/models.py:195 system/models.py:196
 msgid "Email Address"
@@ -3870,7 +3882,7 @@ msgstr "Estado"
 
 #: system/models.py:210
 msgid "State or Province Name (full name)"
-msgstr ""
+msgstr "Estado ou Nome de Provincia (nome completo)"
 
 #: system/models.py:216
 msgid "Country"
@@ -3882,11 +3894,11 @@ msgstr "Nome do País (código de 2 letras)"
 
 #: system/models.py:223
 msgid "Common Name"
-msgstr ""
+msgstr "Nome Comum"
 
 #: system/models.py:224
 msgid "Common Name (eg, YOUR name)"
-msgstr ""
+msgstr "Nome Comum (ex. O SEU nome)"
 
 #: system/models.py:229
 msgid "SSL Certificate"
@@ -3896,10 +3908,11 @@ msgstr "Certificado SSL"
 msgid ""
 "Cut and paste the contents of your private and public certificate files here."
 msgstr ""
+"Cortar e colar aqui o conteúdo dos seus certificados públicos e privados."
 
 #: system/models.py:243 system/models.py:381
 msgid "The user to run the command"
-msgstr ""
+msgstr "O utilizador a executar o comando"
 
 #: system/models.py:247 templates/system/cronjob.html:11
 msgid "Command"
@@ -3912,7 +3925,7 @@ msgstr "Minuto"
 
 #: system/models.py:252 system/models.py:356
 msgid "Values 0-59 allowed."
-msgstr ""
+msgstr "Valores 0-59 permitidos."
 
 #: system/models.py:256 system/models.py:360 system/models.py:508
 #: templates/system/cronjob.html:6 templates/system/rsync.html:6
@@ -3921,16 +3934,16 @@ msgstr "Hora"
 
 #: system/models.py:257 system/models.py:361 system/models.py:509
 msgid "Values 0-23 allowed."
-msgstr ""
+msgstr "Valores 0-23 permitidos."
 
 #: system/models.py:261 system/models.py:365 system/models.py:513
 #: templates/system/cronjob.html:7 templates/system/rsync.html:7
 msgid "Day of month"
-msgstr "Dia do Mês"
+msgstr "Dia do mês"
 
 #: system/models.py:262 system/models.py:366 system/models.py:514
 msgid "Values 1-31 allowed."
-msgstr ""
+msgstr "Valores 1-31 permitidos."
 
 #: system/models.py:267 system/models.py:371 system/models.py:519
 #: templates/system/cronjob.html:8 templates/system/rsync.html:8
@@ -3940,33 +3953,33 @@ msgstr "Mês"
 #: system/models.py:272 system/models.py:376 system/models.py:524
 #: templates/system/cronjob.html:9 templates/system/rsync.html:9
 msgid "Day of week"
-msgstr "Dia da Semana"
+msgstr "Dia da semana"
 
 #: system/models.py:275
 msgid "CronJob"
-msgstr ""
+msgstr "Tarefa Agendada"
 
 #: system/models.py:276
 msgid "CronJobs"
-msgstr ""
+msgstr "Tarefas Agendadas"
 
 #: system/models.py:286 system/models.py:441
 msgid "Every minute"
-msgstr ""
+msgstr "Todos os minutos"
 
 #: system/models.py:288 system/models.py:443
 #, python-format
 msgid "Every %s minute(s)"
-msgstr ""
+msgstr "Todos %s minuto(s)"
 
 #: system/models.py:294 system/models.py:449
 msgid "Every hour"
-msgstr ""
+msgstr "Todas as horas"
 
 #: system/models.py:296 system/models.py:451
 #, python-format
 msgid "Every %s hour(s)"
-msgstr ""
+msgstr "Todas %s hora(s)"
 
 #: system/models.py:304 system/models.py:459
 #, python-format
@@ -3975,15 +3988,15 @@ msgstr "Todos %s dias"
 
 #: system/models.py:311 system/models.py:466
 msgid "Every month"
-msgstr ""
+msgstr "Todo mês"
 
 #: system/models.py:342
 msgid "IP Address or hostname"
-msgstr ""
+msgstr "Endereço IP ou hostname"
 
 #: system/models.py:346
 msgid "Remote Module Name"
-msgstr ""
+msgstr "Nome do Módulo Remoto"
 
 #: system/models.py:350 system/models.py:503
 msgid "Short description"
@@ -3991,11 +4004,11 @@ msgstr "Pequena descrição"
 
 #: system/models.py:385
 msgid "Recurse into directories"
-msgstr ""
+msgstr "Pesquisa em diretórios"
 
 #: system/models.py:389
 msgid "Times"
-msgstr ""
+msgstr "Vezes"
 
 #: system/models.py:390
 msgid "Preserve modification times"
@@ -4097,7 +4110,7 @@ msgstr ""
 
 #: system/views.py:117
 msgid "The uploaded file is not valid."
-msgstr "O ficheiro enviado não é válido"
+msgstr "O ficheiro enviado não é válido."
 
 #: system/views.py:243
 msgid "Test message from FreeNAS"
@@ -4113,7 +4126,7 @@ msgstr "Página não encontrada"
 
 #: templates/base.html:32
 msgid "expand all"
-msgstr "Expandir tudo"
+msgstr "expandir tudo"
 
 #: templates/base.html:33
 msgid "collapse all"
@@ -4207,15 +4220,15 @@ msgstr "Modificar Grupo"
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 #: templates/account/bsdgroups.html:103 templates/account/bsdgroups.html:105
 msgid "Delete Group"
-msgstr ""
+msgstr "Apagar Grupo"
 
 #: templates/account/bsdgroups.html:51
 msgid "There are no user defined groups."
-msgstr ""
+msgstr "Não há grupos definidos pelo utilizador."
 
 #: templates/account/bsdgroups.html:59 templates/account/bsdgroups.html:61
 msgid "Add New Group"
-msgstr ""
+msgstr "Adicionar Novo Grupo"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:88
 msgid "Home"
@@ -4242,7 +4255,7 @@ msgstr "Eliminar Utilizador"
 
 #: templates/account/bsdusers.html:68 templates/account/bsdusers.html:156
 msgid "No users defined"
-msgstr ""
+msgstr "Sem utilizadores definidos"
 
 #: templates/account/bsdusers.html:75 templates/account/bsdusers.html.py:77
 msgid "Add New User"
@@ -4268,7 +4281,7 @@ msgstr ""
 
 #: templates/freeadmin/generic_model_add_ok.html:1
 msgid "successfully added"
-msgstr "Adicionado com sucesso"
+msgstr "adicionado com sucesso"
 
 #: templates/freeadmin/generic_model_delete.html:10
 #: templates/storage/dataset_confirm_delete.html:7
@@ -4300,7 +4313,7 @@ msgstr "As alteração foram actualizadas com sucesso!"
 
 #: templates/freeadmin/generic_model_edit_ok.html:1
 msgid "successfully edited"
-msgstr "Editado com sucesso"
+msgstr "editado com sucesso"
 
 #: templates/freeadmin/index.html:30
 msgid "Running Processes"
@@ -4309,7 +4322,7 @@ msgstr "Processos activos"
 #: templates/freeadmin/index.html:35 templates/freeadmin/index.html.py:39
 #: templates/freeadmin/index.html:44
 msgid "Loading..."
-msgstr "A Iniciar..."
+msgstr "A iniciar..."
 
 #: templates/freeadmin/index.html:46
 msgid "Reboot the System"
@@ -4324,6 +4337,8 @@ msgid ""
 "You are about to <strong>REBOOT</strong> the system, what would you like to "
 "do?"
 msgstr ""
+"Você está prestes a <strong>REINICIAR </strong> o sistema, o que deseja "
+"fazer?"
 
 #: templates/freeadmin/index.html:57
 msgid "Shutdown the System"
@@ -4334,6 +4349,7 @@ msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
 msgstr ""
+"Você está prestes a <strong>DESLIGAR</strong> o sistema, o que deseja fazer?"
 
 #: templates/freeadmin/index.html:69
 msgid "Help & Support"
@@ -4345,7 +4361,7 @@ msgstr "Fórum"
 
 #: templates/freeadmin/index.html:74
 msgid "Community Forum"
-msgstr ""
+msgstr "Fórum da Comunidade"
 
 #: templates/freeadmin/index.html:79
 msgid "IRC (Chat)"
@@ -4357,7 +4373,7 @@ msgstr "#freenas em freenode"
 
 #: templates/freeadmin/index.html:85
 msgid "Mailing Lists"
-msgstr ""
+msgstr "Listas de Mailings"
 
 #: templates/freeadmin/index.html:87
 msgid "FreeNAS Announce"
@@ -4365,15 +4381,15 @@ msgstr "Anúncios FreeNAS"
 
 #: templates/freeadmin/index.html:88
 msgid "FreeNAS Commit"
-msgstr ""
+msgstr "FreeNAS Confirmação"
 
 #: templates/freeadmin/index.html:89
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS Desenv"
 
 #: templates/freeadmin/index.html:90
 msgid "FreeNAS Testing"
-msgstr ""
+msgstr "FreeNAS Teste"
 
 #: templates/freeadmin/index.html:91
 msgid "FreeNAS Docs"
@@ -4385,7 +4401,7 @@ msgstr "Traduções FreeNAS"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
-msgstr ""
+msgstr "Questões de suporte"
 
 #: templates/freeadmin/index.html:99
 msgid "Bug Tracker"
@@ -4445,7 +4461,7 @@ msgstr "Adicionar interface"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 msgid "Actions"
-msgstr ""
+msgstr "Acções"
 
 #: templates/network/lagg.html:20
 msgid "Edit Members"
@@ -4453,31 +4469,31 @@ msgstr "Editar Membros"
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
-msgstr ""
+msgstr "Menbros LAGG"
 
 #: templates/network/lagg.html:53 templates/network/lagg_members.html:33
 msgid "No LAGG interface defined"
-msgstr ""
+msgstr "Sem interface LAGG definido"
 
 #: templates/network/lagg.html:60
 msgid "Add LAGG Interface "
-msgstr ""
+msgstr "Adicionar Interface LAGG"
 
 #: templates/network/lagg.html:62
 msgid "Add LAGG"
-msgstr ""
+msgstr "Adicionar LAGG"
 
 #: templates/network/lagg_members.html:6
 msgid "Ordering Priority"
-msgstr ""
+msgstr "Prioridade de Ordenação"
 
 #: templates/network/lagg_members.html:7
 msgid "Startup option"
-msgstr ""
+msgstr "Opção no arranque"
 
 #: templates/network/lagg_members.html:8 templates/sharing/unix.html:15
 msgid "Action"
-msgstr ""
+msgstr "Acção"
 
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
@@ -4486,15 +4502,15 @@ msgstr ""
 
 #: templates/network/staticroute.html:5
 msgid "Destination"
-msgstr ""
+msgstr "Destino"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
-msgstr ""
+msgstr "Editar Caminho Estático"
 
 #: templates/network/staticroute.html:26
 msgid "Delete Static Route"
-msgstr ""
+msgstr "Apagar Caminho estático"
 
 #: templates/network/staticroute.html:33
 msgid "No static route defined"
@@ -4619,7 +4635,7 @@ msgstr "iSCSI"
 
 #: templates/services/index.html:149
 msgid "ISCSI Settings"
-msgstr "Definições de iSCSI"
+msgstr "Definições de ISCSI"
 
 #: templates/services/iscsi.html:2
 msgid "iSCSI Management"
@@ -4734,7 +4750,7 @@ msgstr "Partilhas activas"
 
 #: templates/sharing/apple.html:8
 msgid "There are no active Apple Shares."
-msgstr "Não existem partilhas Apple activas"
+msgstr "Não existem partilhas Apple activas."
 
 #: templates/sharing/apple.html:30
 msgid "Edit Apple Share"
@@ -4795,7 +4811,7 @@ msgstr "Adicionar partilha UNIX (NFS)"
 
 #: templates/sharing/windows.html:8
 msgid "There are no active Windows Shares."
-msgstr "Não existem partilhas Windows activas"
+msgstr "Não existem partilhas Windows activas."
 
 #: templates/sharing/windows.html:34
 msgid "Edit Windows Share"
@@ -4843,7 +4859,7 @@ msgstr "Substituir disco"
 
 #: templates/storage/import.html:32 templates/storage/wizard.html:43
 msgid "Filesystem type"
-msgstr "Tipo de Sistema de Ficheiros"
+msgstr "Tipo de sistema de ficheiros"
 
 #: templates/storage/index.html:3 templates/storage/volumes.html:62
 msgid "Active Volumes"
@@ -4947,7 +4963,7 @@ msgstr ""
 
 #: templates/storage/tasks.html:10
 msgid "Create Periodic Snapshot"
-msgstr ""
+msgstr "Criar Sanpshot Periódico"
 
 #: templates/storage/tasks.html:14
 msgid "Periodic Snapshot Schedule"
@@ -4983,7 +4999,7 @@ msgstr ", cada"
 
 #: templates/storage/tasks.html:49
 msgid "everyday"
-msgstr "Diáriamente"
+msgstr "diáriamente"
 
 #: templates/storage/tasks.html:52
 msgid "on every"

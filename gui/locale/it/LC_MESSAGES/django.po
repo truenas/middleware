@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-06-15 14:27+0200\n"
-"Last-Translator: misterredman <csulmoni@gmx.ch>\n"
+"PO-Revision-Date: 2011-07-02 13:58+0200\n"
+"Last-Translator: fabiusx <fabioslurp@yahoo.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -3926,7 +3926,6 @@ msgid "Country"
 msgstr "Nazione"
 
 #: system/models.py:217
-#, fuzzy
 msgid "Country Name (2 letter code)"
 msgstr "Nome della nazione (codice a 2 lettere)"
 
@@ -3936,7 +3935,6 @@ msgid "Common Name"
 msgstr "Nome comune (CN)"
 
 #: system/models.py:224
-#, fuzzy
 msgid "Common Name (eg, YOUR name)"
 msgstr "Nome comune (es. TUO nome)"
 
@@ -4446,7 +4444,6 @@ msgid "FreeNAS Translations"
 msgstr "Traduzioni FreeNAS"
 
 #: templates/freeadmin/index.html:97
-#, fuzzy
 msgid "Support Issues"
 msgstr "Supporto problemi"
 
@@ -4972,6 +4969,7 @@ msgid "No ZFS replication available"
 msgstr "Nessuna replicazione ZFS disponibile"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
+#, fuzzy
 msgid "Are you sure you want to rollback the snapshot to previous state?"
 msgstr ""
 "Sei sicuro di voler ripristinare lo snapshot e tornare a uno stato "

@@ -37,6 +37,7 @@ setup_environ(settings)
 import os
 import re
 from datetime import timedelta
+from time import sleep
 from freenasUI.storage.models import Task, Replication
 from freenasUI.common.pipesubr import setname, pipeopen, system
 from freenasUI.common.locks import mntlock
@@ -69,6 +70,9 @@ def ExitIfRunning(theirpid):
         exit(0)
     except:
         pass
+
+# TODO: use a better way to synchornize with snapshotter
+sleep(2)
 
 # Traverse all replication tasks
 replication_tasks = Replication.objects.all()
