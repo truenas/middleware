@@ -59,6 +59,10 @@ for i in $(cd ${root}/patches && echo ports-*.patch); do
     fi
 done
 
+if [ -n ${PREP_SOURCE} ]; then
+    exit
+fi
+
 # OK, now we can build
 cd FreeBSD/src
 args="-c ../../nanobsd/freenas-common"
