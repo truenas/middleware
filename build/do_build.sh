@@ -60,7 +60,7 @@ for i in $(cd ${root}/patches && echo ports-*.patch); do
     fi
 done
 
-if [ -n ${PREP_SOURCE} ]; then
+if [ -n "${PREP_SOURCE}" ]; then
     exit
 fi
 
