@@ -30,14 +30,16 @@ import sys
 import grp
 import pwd
 import re
+import syslog
 
 from subprocess import Popen, PIPE
+from syslog import syslog, LOG_DEBUG
 
 GETFACL_PATH = "/bin/getfacl"
 SETFACL_PATH = "/bin/setfacl"
 
 #
-# NFSv4 flags only
+# getfacl NFSv4 flags
 #
 GETFACL_FLAGS_SYMLINK_ACL  = 0x0001
 GETFACL_FLAGS_APPEND_IDS   = 0x0002
@@ -46,7 +48,7 @@ GETFACL_FLAGS_NO_COMMENTS  = 0x0008
 GETFACL_FLAGS_VERBOSE      = 0x0010
 
 #
-# NFSv4 flags only
+# setfacl NFSv4 flags
 #
 SETFACL_FLAGS_MODIFY_ENTRY = 0x0001
 SETFACL_FLAGS_SET_DEFAULTS = 0x0002
@@ -54,15 +56,29 @@ SETFACL_FLAGS_SYMLINK_OP   = 0x0004
 SETFACL_FLAGS_MODIFY       = 0x0008
 SETFACL_FLAGS_REMOVE_ENTRY = 0x0010
 
+#
+# NFSv4_ACL entry flags
+#
+ACL_ENTRY_FLAGS_NONE       = 0x0000
+ACL_ENTRY_FLAGS_ADD        = 0x0001
+ACL_ENTRY_FLAGS_UPDATE     = 0x0002
+ACL_ENTRY_FLAGS_REMOVE     = 0x0004
 
 class NFSv4_ACL_Exception(Exception):
     def __init__(self, msg = None):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Exception.__init__: enter")
+
         if msg:
             print >> sys.stderr, "NFSv4_ACL_Exception: %s" % msg
+
+        syslog(LOG_DEBUG, "NFSv4_ACL_Exception.__init__: leave")
 
 
 class NFSv4_pipe:
     def __init__(self, cmd):
+        syslog(LOG_DEBUG, "NFSv4_pipe.__init__: enter")
+        syslog(LOG_DEBUG, "NFSv4_pipe.__init__: cmd = %s" % cmd)
+
         self.__pipe = Popen(cmd, stdin = PIPE, stdout = PIPE,
             stderr = PIPE, shell = True, close_fds = True)
 
@@ -73,8 +89,12 @@ class NFSv4_pipe:
         self.__out = self.__stdout.read().strip()
         self.__pipe.wait()
 
+        syslog(LOG_DEBUG, "NFSv4_pipe.__init__: out = %s" % self.__out)
+
         if self.__pipe.returncode != 0:
             raise NFSv4_ACL_Exception(self.__stderr.read().strip())
+
+        syslog(LOG_DEBUG, "NFSv4_pipe.__init__: leave")
 
     def __str__(self):
         return self.__out
@@ -87,6 +107,9 @@ class NFSv4_pipe:
 
 class NFSv4_getfacl:
     def __init__(self, path, flags = 0):
+        syslog(LOG_DEBUG, "NFSv4_getfacl.__init__: enter")
+        syslog(LOG_DEBUG, "NFSv4_getfacl.__init__: path = %s, flags = 0x%08x" % (path, flags))
+
         self.__getfacl = GETFACL_PATH
         self.__path = path
 
@@ -104,6 +127,9 @@ class NFSv4_getfacl:
 
         self.__out = str(NFSv4_pipe("%s %s '%s'" % (self.__getfacl, args, self.__path)))
 
+        syslog(LOG_DEBUG, "NFSv4_getfacl.__init__: out = %s" % self.__out)
+        syslog(LOG_DEBUG, "NFSv4_getfacl.__init__: leave")
+
     def __str__(self):
         return self.__out
 
@@ -114,7 +140,11 @@ class NFSv4_getfacl:
 
 
 class NFSv4_setfacl:
-    def __init__(self, path, entry, flags = 0, pos = 0):
+    def __init__(self, path, entry = None, flags = 0, pos = 0):
+        syslog(LOG_DEBUG, "NFSv4_setfacl.__init__: enter")
+        syslog(LOG_DEBUG, "NFSv4_setfacl.__init__: path = %s, entry = %s, flags = 0x%08x" %
+            (path, (entry if entry else ""), flags))
+
         self.__setfacl = SETFACL_PATH
         self.__path = path
         self.__entry = entry
@@ -129,13 +159,19 @@ class NFSv4_setfacl:
         if flags & SETFACL_FLAGS_MODIFY:
             args += "-m "
         if flags & SETFACL_FLAGS_REMOVE_ENTRY:
-            args += "-x "
+            args += "-x %d" % pos
 
-        self.__out = str(NFSv4_pipe("%s %s '%s' '%s'" % (self.__setfacl, args, self.__entry, self.__path)))
+        self.__out = str(NFSv4_pipe("%s %s '%s' '%s'" % (
+            self.__setfacl, args, self.__entry if self.__entry else '', self.__path)))
+
+        syslog(LOG_DEBUG, "NFSv4_setfacl.__init__: out = %s" % self.__out)
+        syslog(LOG_DEBUG, "NFSv4_setfacl.__init__: leave")
+
 
 
 class NFSv4_ACL_Entry:
     def __init__(self):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__init__: enter")
 
         #
         # ACL tag
@@ -178,7 +214,13 @@ class NFSv4_ACL_Entry:
         #
         self.type = None
 
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__init__: leave")
+
     def __set_access_permission(self, permission, value):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_access_permission: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_access_permission: permission = %s, value = %s" %
+            (permission, value))
+
         if permission == 'r':
             self.read_data = value
         elif permission == 'w':
@@ -208,17 +250,31 @@ class NFSv4_ACL_Entry:
         elif permission == 'S':
             self.synchronize = value
 
-    def __set_access_permissions(self, permissions):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_access_permission: enter")
+
+    def _set_access_permissions(self, permissions):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry._set_access_permissions: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry._set_access_permissions: permissions = %s" % permissions)
+
         self.clear_access_permissions()
         for p in permissions:
             if p == '-':
                 continue
-            self.__set_access_permission(p)
+            self.__set_access_permission(p, True)
+
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry._set_access_permissions: leave")
 
     def set_access_permission(self, permission):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_access_permission: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_access_permission: permission = %s" % permission)
+
         self.__set_access_permission(permission, True)
 
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_access_permission: leave")
+
     def clear_access_permissions(self):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.clear_access_permissions: enter")
+
         self.read_data = False
         self.write_data = False
         self.execute = False
@@ -234,10 +290,20 @@ class NFSv4_ACL_Entry:
         self.write_owner = False
         self.synchronize = False
 
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.clear_access_permissions: leave")
+
     def clear_access_permission(self, permission):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.clear_access_permission: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.clear_access_permission: permission = %s" % permission)
+
         self.__set_access_permission(permission, False)
 
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.clear_access_permission: leave")
+
     def __set_inheritance_flag(self, flag, value):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_inheritance_flag: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_inheritance_flag: flag = %s, value = %s" % (flag, value))
+
         if flag == 'f':
             self.file_inherit = value
         elif flag == 'd':
@@ -247,24 +313,45 @@ class NFSv4_ACL_Entry:
         elif flag == 'n':
             self.no_propagate = value
 
-    def __set_inheritance_flags(self, flags):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_inheritance_flag: enter")
+
+    def _set_inheritance_flags(self, flags):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_inheritance_flags: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_inheritance_flags: flags = %s" % flags)
+
         self.clear_inheritance_flags()
-        for f in inheritance_flags:
+        for f in flags:
             if f == '-':
                 continue
-            self.__set_inheritance_flag(f)
+            self.__set_inheritance_flag(f, True)
+
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_inheritance_flags: leave")
 
     def set_inheritance_flag(self, flag):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: flag = %s" % flag)
+
         self.__set_inheritance_flag(flag, True)
 
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: leave")
+
     def clear_inheritance_flags(self):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flags: enter")
+
         self.file_inherit = False
         self.dir_inherit = False
         self.inherit_only = False
         self.no_propagate = False
 
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flags: leave")
+
     def clear_inheritance_flag(self, flag):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: flag = %s" % flag)
+
         self.__set_inheritance_flag(flag, False)
+
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: leave")
 
     def __str__(self):
         str = self.tag
@@ -300,9 +387,11 @@ class NFSv4_ACL_Entry:
 
 class NFSv4_ACL:
     def __init__(self, path, acl = None):
+        syslog(LOG_DEBUG, "NFSv4_ACL.__init__: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL.__init__: path = %s, acl = %s" % (path, (acl if acl else "")))
 
         #
-        # Array of NFSv4_Entry's
+        # Array NFSv4_ACL_Entry's
         #
         self.__entries = []
         self.file = None
@@ -313,8 +402,14 @@ class NFSv4_ACL:
         self.__path = path
         self.__get() 
 
+        syslog(LOG_DEBUG, "NFSv4_ACL.__init__: leave")
+
     def __get(self):
+        syslog(LOG_DEBUG, "NFSv4_ACL.__get: enter")
+
         for line in NFSv4_getfacl(self.__path):
+            syslog(LOG_DEBUG, "NFSv4_ACL.__get: line = %s" % line)
+
             if line.startswith("#"):
                 comment_parts = line.split('#')[1:]
                 for c in comment_parts:
@@ -360,12 +455,24 @@ class NFSv4_ACL:
                 entry.type = acl_type
                 self.__entries.append(entry)
 
+        syslog(LOG_DEBUG, "NFSv4_ACL.__get: enter")
+
     def __refresh(self):
+        syslog(LOG_DEBUG, "NFSv4_ACL.__refresh: enter")
+
         self.__entries = []
         self.__get()
         self.__dirty = False
 
-    def set(self, tag, qualifier, permissions, inheritance_flags = None, type = None):
+        syslog(LOG_DEBUG, "NFSv4_ACL.__refresh: leave")
+
+    def update(self, tag, qualifier, permissions, inheritance_flags = None, type = None):
+        syslog(LOG_DEBUG, "NFSv4_ACL.update: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL.update: tag = %s, qualifier = %s, permissions = %s,"
+            "inheritance_flags = %s, type = %s" % (tag,
+            (qualifier if qualifier else ""), (permissions if permissions else ""),
+            (inheritance_flags if inheritance_flags else ""), (type if type else "")))
+
         for entry in self.__entries:
             if entry.tag == tag and entry.qualifier == qualifier:
                 if type == None or entry.type == type:
@@ -378,7 +485,7 @@ class NFSv4_ACL:
                             entry.clear_access_permission(p)
                         self.__dirty = True
                     elif permissions:
-                        entry.set_access_permissions(permissions)
+                        entry._set_access_permissions(permissions)
                         self.__dirty = True
 
                     if inheritance_flags and inheritance_flags.startswith('+'):
@@ -390,25 +497,43 @@ class NFSv4_ACL:
                             entry.clear_inheritance_flag(f)
                         self.__dirty = True
                     elif inheritance_flags:
-                        entry.set_inheritance_flags(inheritance_flags)
+                        entry._set_inheritance_flags(inheritance_flags)
                         self.__dirty = True
 
-    def add(self, tag, qualifier = None, permissions = None, inheritance_flags = None, type = None):
+        self.__refresh()
+        syslog(LOG_DEBUG, "NFSv4_ACL.update: leave")
+
+    def add(self, tag, qualifier = None, permissions = None, inheritance_flags = None, type = None, pos = 0):
+        syslog(LOG_DEBUG, "NFSv4_ACL.add: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL.add: tag = %s, qualifier = %s, permissions = %s, "
+            "inheritance_flags = %s, type = %s, pos = %s" %
+            (tag, qualifier if qualifier else "", permissions if permissions else "",
+            inheritance_flags if inheritance_flags else "", type if type else "", pos))
+
         entry = NFSv4_ACL_Entry()
         entry.tag = tag
 
         if qualifier:
             entry.qualifier = qualifier
         if permissions:
-            entry.set_access_permissions(permissions)
+            entry._set_access_permissions(permissions)
         if inheritance_flags:
-            entry.set_inheritance_flags(inheritance_flags)
+            entry._set_inheritance_flags(inheritance_flags)
 
         entry.type = (type if type else 'allow')
         self.__entries.append(entry)
         self.__dirty = True
 
+        NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_MODIFY_ENTRY, pos)
+        self.__refresh()
+
+        syslog(LOG_DEBUG, "NFSv4_ACL.add: leave")
+
     def get(self, tag = None, qualifier = None, type = None):
+        syslog(LOG_DEBUG, "NFSv4_ACL.get: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL.get: tag = %s, qualifier = %s, type = %s" % (
+            (tag if tag else ""), (qualifier if qualifier else ""), (type if type else "")))
+
         entries = []
         for entry in self.__entries:
             if tag and entry.tag == tag and entry.qualifier == qualifier:
@@ -418,20 +543,65 @@ class NFSv4_ACL:
             elif not tag:
                 entries.append(entry)
 
+        syslog(LOG_DEBUG, "NFSv4_ACL.get: leave")
         return entries
 
-    def remove(self, tag, qualifier = None, type = None):
+    def remove(self, tag, qualifier = None, type = None, pos = None):
+        syslog(LOG_DEBUG, "NFSv4_ACL.remove: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL.remove: tag = %s, qualifier = %s, type = %s" % (
+            (tag if tag else ""), (qualifier if qualifier else ""), (type if type else "")))
+
         entries = []
+        entry = None
+
+        n = 0
         for entry in self.__entries:
-            if entry.tag == tag and entry.qualifier == qualifier:
+            if entry.tag == tag and entry.qualifier == qualifier and pos == None:
                 if type and entry.type == type:
-                    self.__entries.remove(entry)
-                    self.__dirty = True
-                elif not type:
-                    self.__entries.remove(entry)
+                    NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_REMOVE_ENTRY, 0)
                     self.__dirty = True
 
+                elif not type:
+                    NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_REMOVE_ENTRY, 0)
+                    self.__dirty = True
+
+            elif n == pos:
+                NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_REMOVE_ENTRY, 0)
+                self.__dirty = True
+
+            n += 1
+
+        if pos == -1 and entry:
+            NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_REMOVE_ENTRY, 0)
+            self.__dirty = True
+
+        self.__refresh()
+        syslog(LOG_DEBUG, "NFSv4_ACL.remove: leave")
+
+    def reset(self):
+        syslog(LOG_DEBUG, "NFSv4_ACL.reset: enter")
+
+        NFSv4_setfacl(self.__path, None, SETFACL_FLAGS_SET_DEFAULTS)
+        self.__refresh()
+
+        syslog(LOG_DEBUG, "NFSv4_ACL.reset: leave")
+
+    def clear(self):
+        syslog(LOG_DEBUG, "NFSv4_ACL.clear: enter")
+
+        self.reset()
+        self.__refresh()
+
+        for entry in self.__entries:
+            if not (entry.tag == 'everyone@' and entry.type == 'allow'):
+                self.remove(entry.tag, entry.qualifier, entry.type)
+
+        syslog(LOG_DEBUG, "NFSv4_ACL.clear: leave")
+
     def chown(self, who):
+        syslog(LOG_DEBUG, "NFSv4_ACL.chown: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL.chown: who = %s" % who)
+
         if not who:
             return False 
 
@@ -460,9 +630,13 @@ class NFSv4_ACL:
         os.chown(self.__path, uid, gid)
         self.__refresh()
 
+        syslog(LOG_DEBUG, "NFSv4_ACL.chown: leave")
         return True
             
     def chmod(self, mode):
+        syslog(LOG_DEBUG, "NFSv4_ACL.chmod: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL.chmod: mode = %s" % mode)
+
         length = len(mode) 
         if length == 4:
             mode = mode[1:]
@@ -474,36 +648,37 @@ class NFSv4_ACL:
             tag = acl[pos]
 
             if n & 4:
-                self.set(tag, None, '+r', None, 'allow')
-                self.set(tag, None, '-r', None, 'deny')
+                self.update(tag, None, '+r', None, 'allow')
+                self.update(tag, None, '-r', None, 'deny')
             else:
-                self.set(tag, None, '-r', None, 'allow')
-                self.set(tag, None, '+r', None, 'deny')
+                self.update(tag, None, '-r', None, 'allow')
+                self.update(tag, None, '+r', None, 'deny')
 
             if n & 2:
-                self.set(tag, None, '+w', None, 'allow')
-                self.set(tag, None, '-w', None, 'deny')
+                self.update(tag, None, '+w', None, 'allow')
+                self.update(tag, None, '-w', None, 'deny')
             else:
-                self.set(tag, None, '-w', None, 'allow')
-                self.set(tag, None, '+w', None, 'deny')
+                self.update(tag, None, '-w', None, 'allow')
+                self.update(tag, None, '+w', None, 'deny')
 
             if n & 1:
-                self.set(tag, None, '+x', None, 'allow')
-                self.set(tag, None, '-x', None, 'deny')
+                self.update(tag, None, '+x', None, 'allow')
+                self.update(tag, None, '-x', None, 'deny')
             else:
-                self.set(tag, None, '-x', None, 'allow')
-                self.set(tag, None, '+x', None, 'deny')
+                self.update(tag, None, '-x', None, 'allow')
+                self.update(tag, None, '+x', None, 'deny')
 
             pos += 1
 
+        syslog(LOG_DEBUG, "NFSv4_ACL.chmod: enter")
+
     def save(self):
+        syslog(LOG_DEBUG, "NFSv4_ACL.save: enter")
+
         if not self.__dirty:
             return False
 
-        n = 0
-        for entry in self.__entries:
-            NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_MODIFY)
-            n += 1
-
         self.__refresh()
+
+        syslog(LOG_DEBUG, "NFSv4_ACL.save: leave")
         return True
