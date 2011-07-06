@@ -796,49 +796,42 @@ You may try the following URLs to access the web user interface:
            'sed -e s,^,%s://,g -e s,$,/,g' % proto)
 
 def main_menu():
-    handler = { 1: configure_interface,
-                2: configure_lagg_interface,
-                3: create_vlan,
-                4: configure_default_route,
-                5: configure_static_routes,
-                6: configure_dns,
-                7: reset_gui_login,
-                8: reset_factory_defaults,
-                9: shell,
-                10: reboot,
-                11: shutdown
-              }
-
-    menu_min = 1
-    menu_max = 11
+    menu = [
+        [ "Configure Network Interfaces", configure_interface ],
+        [ "Configure Link Aggregation", configure_lagg_interface ],
+        [ "Create VLAN Interface", create_vlan ],
+        [ "Configure Default Route", configure_default_route ],
+        [ "Configure Static Routes", configure_static_routes ],
+        [ "Configure DNS", configure_dns ],
+        [ "Reset WebGUI login credentials", reset_gui_login ],
+        [ "Reset to factory defaults", reset_factory_defaults ],
+        [ "Shell", shell ],
+        [ "Reboot", reboot ],
+        [ "Shutdown", shutdown],
+              ]
+    menu_map = {}
+    menu_max = 0
+    for item in menu:
+        menu_max = menu_max + 1
+        menu_map[menu_max] = item
 
     while True:
         print """
 Console setup
 -------------
-1) Configure Network Interfaces
-2) Configure Link Aggregation
-3) Create VLAN Interface
-4) Configure Default Route
-5) Configure Static Routes
-6) Configure DNS
-7) Reset WebGUI login credentials
-8) Reset to factory defaults
-9) Shell
-10) Reboot
-11) Shutdown
         """
+        for index in menu_map:
+            print "%d) %s" % (index, menu_map[index][0])
+
         show_ip()
 
         try:
-            ch = int(raw_input("Enter an option from 1-11: "))
+            ch = int(raw_input("Enter an option from 1-%d: " % (menu_max)))
         except ValueError:
             ch = None
-        if ch >= menu_min and ch <= menu_max:
-            handler[ch]()
-            continue
-        else:
-            continue
+        if ch in menu_map:
+            menu_map[ch][1]()
+        continue
 
 
 #
