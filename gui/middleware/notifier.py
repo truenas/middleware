@@ -57,6 +57,7 @@ sys.path.append(FREENAS_PATH)
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
 from django.db import models
+from freenasUI.common.freenasnfsv4 import NFSv4_ACL
 
 class notifier:
     from os import system as ___system
@@ -297,8 +298,9 @@ class notifier:
         self.__system("/usr/sbin/service samba quietstart")
 
     def _started_ldap(self):
-        ret = False
         from freenasUI.common.freenasldap import FreeNAS_LDAP
+
+        ret = False
         c = self.__open_db()
         c.execute("SELECT srv_enable FROM services_services WHERE srv_service='ldap' ORDER BY -id LIMIT 1")
         enabled = c.fetchone()[0]
@@ -329,8 +331,9 @@ class notifier:
         self.__system("/usr/sbin/service samba quietstart")
 
     def _started_activedirectory(self):
-        ret = False
         from freenasUI.common.freenasldap import FreeNAS_LDAP
+
+        ret = False
         c = self.__open_db()
         c.execute("SELECT srv_enable FROM services_services WHERE srv_service='activedirectory' ORDER BY -id LIMIT 1")
         enabled = c.fetchone()[0]
@@ -1098,12 +1101,12 @@ class notifier:
 
     def __make_windows_happy(self, path='/mnt', user='root', group='wheel',
                              mode='0755', recursive=False):
-        self.__system("/bin/setfacl -b '%s'" % path)
-        self.__system("for i in $(jot 5); do setfacl -x 0 '%s'; done" % path)
-        self.__system("/bin/setfacl -a 0 group@:rxs:fd:allow '%s'" % path)
-        self.__system("/bin/setfacl -a 1 everyone@:rxaRcs:fd:allow '%s'" % path)
-        self.__system("/bin/setfacl -a 2 owner@:rwxpdDaARWcCo:fd:allow '%s'" % path)
-        self.__system("/bin/setfacl -x 3 '%s'" % path)
+        acl = NFSv4_ACL(path)
+        acl.clear()
+        acl.add('group@', None, 'rxs', 'fd', 'allow')
+        acl.add('everyone@', None, 'rxaRcs', 'fd', 'allow')
+        acl.add('owner@', None, 'rwxpdDaARWcCo', 'fd', 'allow')
+        acl.remove('everyone@', None, None, -1)
 
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',
                              mode='0755', recursive=False):
