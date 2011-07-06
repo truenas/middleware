@@ -68,10 +68,8 @@ ACL_ENTRY_FLAGS_REMOVE     = 0x0004
 class NFSv4_ACL_Exception(Exception):
     def __init__(self, msg = None):
         syslog(LOG_DEBUG, "NFSv4_ACL_Exception.__init__: enter")
-
         if msg:
-            print >> sys.stderr, "NFSv4_ACL_Exception: %s" % msg
-
+            syslog(LOG_DEBUG, "NFSv4_ACL_Exception.__init__: error = %s" % msg)
         syslog(LOG_DEBUG, "NFSv4_ACL_Exception.__init__: leave")
 
 
@@ -253,17 +251,22 @@ class NFSv4_ACL_Entry:
 
         syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_access_permission: enter")
 
-    def _set_access_permissions(self, permissions):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry._set_access_permissions: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry._set_access_permissions: permissions = %s" % permissions)
+    def set_access_permissions(self, permissions):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_access_permissions: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_access_permissions: permissions = %s" % permissions)
 
-        self.clear_access_permissions()
+        flag = True
         for p in permissions:
-            if p == '-':
+            if p == '+':
+                flag = True
                 continue
-            self.__set_access_permission(p, True)
+            elif p == '-':
+                flag = False
+                continue
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry._set_access_permissions: leave")
+            self.__set_access_permission(p, flag)
+
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_access_permissions: leave")
 
     def set_access_permission(self, permission):
         syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_access_permission: enter")
@@ -316,17 +319,22 @@ class NFSv4_ACL_Entry:
 
         syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_inheritance_flag: enter")
 
-    def _set_inheritance_flags(self, flags):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_inheritance_flags: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_inheritance_flags: flags = %s" % flags)
+    def set_inheritance_flags(self, flags):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flags: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flags: flags = %s" % flags)
 
-        self.clear_inheritance_flags()
+        flag = True
         for f in flags:
-            if f == '-':
+            if f == '+':
+                flag = True
                 continue
-            self.__set_inheritance_flag(f, True)
+            elif f == '-':
+                flag = False
+                continue
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_inheritance_flags: leave")
+            self.__set_inheritance_flag(f, flag)
+
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flags: leave")
 
     def set_inheritance_flag(self, flag):
         syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: enter")
@@ -337,14 +345,14 @@ class NFSv4_ACL_Entry:
         syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: leave")
 
     def clear_inheritance_flags(self):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flags: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.clear_inheritance_flags: enter")
 
         self.file_inherit = False
         self.dir_inherit = False
         self.inherit_only = False
         self.no_propagate = False
 
-        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flags: leave")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Entry.clear_inheritance_flags: leave")
 
     def clear_inheritance_flag(self, flag):
         syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: enter")
@@ -354,13 +362,8 @@ class NFSv4_ACL_Entry:
 
         syslog(LOG_DEBUG, "NFSv4_ACL_Entry.set_inheritance_flag: leave")
 
-    def __str__(self):
-        str = self.tag
-
-        if self.qualifier:
-            str = str + ":" + self.qualifier
-
-        str = str + ":"
+    def get_access_permissions(self):
+        str = ""
         str = str + ('r' if self.read_data else '-')
         str = str + ('w' if self.write_data else '-')
         str = str + ('x' if self.execute else '-')
@@ -375,12 +378,27 @@ class NFSv4_ACL_Entry:
         str = str + ('C' if self.write_acl else '-')
         str = str + ('o' if self.write_owner else '-')
         str = str + ('S' if self.synchronize else '-')
+        return str
 
-        str = str + ":"
+    def get_inheritance_flags(self):
+        str = ""
         str = str + ('f' if self.file_inherit else '-')
         str = str + ('d' if self.dir_inherit else '-')
         str = str + ('i' if self.inherit_only else '-')
         str = str + ('n' if self.no_propagate else '-')
+        return str
+
+    def __str__(self):
+        str = self.tag
+
+        if self.qualifier:
+            str = str + ":" + self.qualifier
+
+        str = str + ":"
+        str += self.get_access_permissions()
+
+        str = str + ":"
+        str += self.get_inheritance_flags()
 
         str = str + ":" + self.type
         return str
@@ -477,28 +495,13 @@ class NFSv4_ACL:
         for entry in self.__entries:
             if entry.tag == tag and entry.qualifier == qualifier:
                 if type == None or entry.type == type:
-                    if permissions and permissions.startswith('+'):
-                        for p in permissions[1:]:
-                            entry.set_access_permission(p)
-                        self.__dirty = True
-                    elif permissions and permissions.startswith('-'):
-                        for p in permissions[1:]:
-                            entry.clear_access_permission(p)
-                        self.__dirty = True
-                    elif permissions:
-                        entry._set_access_permissions(permissions)
+                    if permissions:
+                        entry.set_access_permissions(permissions)
                         self.__dirty = True
 
-                    if inheritance_flags and inheritance_flags.startswith('+'):
-                        for f in inheritance_flags[1:]:
-                            entry.set_inheritance_flag(f)
-                        self.__dirty = True
-                    elif inheritance_flags and inheritance_flags.startswith('-'):
-                        for f in inheritance_flags[1:]:
-                            entry.clear_inheritance_flag(f)
-                        self.__dirty = True
-                    elif inheritance_flags:
-                        entry._set_inheritance_flags(inheritance_flags)
+                    if inheritance_flags:
+                        inheritance_flags += "+" + entry.get_inheritance_flags()
+                        entry.set_inheritance_flags(inheritance_flags)
                         self.__dirty = True
 
             if self.__dirty:
@@ -520,9 +523,9 @@ class NFSv4_ACL:
         if qualifier:
             entry.qualifier = qualifier
         if permissions:
-            entry._set_access_permissions(permissions)
+            entry.set_access_permissions(permissions)
         if inheritance_flags:
-            entry._set_inheritance_flags(inheritance_flags)
+            entry.set_inheritance_flags(inheritance_flags)
 
         entry.type = (type if type else 'allow')
         self.__entries.append(entry)
@@ -576,7 +579,7 @@ class NFSv4_ACL:
             n += 1
 
         if pos == -1 and entry:
-            NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_REMOVE_ENTRY, 0)
+            NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_REMOVE_ENTRY, (n - 1) if n > 0 else n)
             self.__dirty = True
 
         self.__refresh()
@@ -650,27 +653,34 @@ class NFSv4_ACL:
         for c in mode:
             n = int(c)
             tag = acl[pos]
-
+            permissions_allow = permissions_deny = ""
+           
             if n & 4:
-                self.update(tag, None, '+r', None, 'allow')
-                self.update(tag, None, '-r', None, 'deny')
+                permissions_allow += "+r"
+                permissions_deny += "-r"
             else:
-                self.update(tag, None, '-r', None, 'allow')
-                self.update(tag, None, '+r', None, 'deny')
+                permissions_allow += "-r"
+                permissions_deny += "+r"
 
             if n & 2:
-                self.update(tag, None, '+w', None, 'allow')
-                self.update(tag, None, '-w', None, 'deny')
+                permissions_allow += "+w"
+                permissions_deny += "-w"
             else:
-                self.update(tag, None, '-w', None, 'allow')
-                self.update(tag, None, '+w', None, 'deny')
+                permissions_allow += "-w"
+                permissions_deny += "+w"
 
             if n & 1:
-                self.update(tag, None, '+x', None, 'allow')
-                self.update(tag, None, '-x', None, 'deny')
+                permissions_allow += "+x"
+                permissions_deny += "-x"
             else:
-                self.update(tag, None, '-x', None, 'allow')
-                self.update(tag, None, '+x', None, 'deny')
+                permissions_allow += "-x"
+                permissions_deny += "+x"
+
+            if permissions_allow:
+                self.update(tag, None, permissions_allow, None, 'allow')
+
+            if permissions_deny:
+                self.update(tag, None, permissions_deny, None, 'deny')
 
             pos += 1
 
