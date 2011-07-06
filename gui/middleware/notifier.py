@@ -1099,24 +1099,31 @@ class notifier:
         self.__system("/usr/sbin/service ix-aliases quietstart")
         self.reload("cifs")
 
-    def __make_windows_happy(self, path='/mnt', user='root', group='wheel',
-                             mode='0755', recursive=False):
+    def __set_default_permissions(self, path='/mnt', user='root', group='wheel', mode='0755'):
         acl = NFSv4_ACL(path)
         acl.clear()
         acl.add('group@', None, 'rxs', 'fd', 'allow')
         acl.add('everyone@', None, 'rxaRcs', 'fd', 'allow')
         acl.add('owner@', None, 'rwxpdDaARWcCo', 'fd', 'allow')
         acl.remove('everyone@', None, None, -1)
+        acl.chown(user + ":" + group)
+        acl.chmod(mode)
+        acl.save()
 
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',
                              mode='0755', recursive=False):
+        self.__set_default_permissions(path, user, group, mode)
         if recursive:
-            flags='-R '
-        else:
-            flags=''
-        self.__system("/usr/sbin/chown %s'%s':'%s' %s" % (flags, user, group, path))
-        self.__system("/bin/chmod %s%s %s" % (flags, mode, path))
-        self.__make_windows_happy(path, user, group, mode, recursive)
+            files = os.listdir(path)
+            for f in files:
+                file = os.path.join(path, f)
+                st = os.stat(file)
+
+                if stat.S_ISDIR(st.st_mode):
+                    self.mp_change_permission(file, user, group, mode, recursive) 
+
+                else:
+                    self.__set_default_permissions(file, user, group, mode)
 
     def mp_get_permission(self, path):
         if os.path.isdir(path):
