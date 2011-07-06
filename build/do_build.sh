@@ -10,6 +10,7 @@ root=$(pwd)
 : ${FREENAS_ARCH=$(uname -p)}
 export FREENAS_ARCH
 export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
+PREP_SOURCE=${PREP_SOURCE:-""}
 
 # Make sure we have FreeBSD dirs
 if [ ! -d FreeBSD ]; then
@@ -59,7 +60,7 @@ for i in $(cd ${root}/patches && echo ports-*.patch); do
     fi
 done
 
-if [ -n ${PREP_SOURCE} ]; then
+if [ -n "${PREP_SOURCE}" ]; then
     exit
 fi
 
