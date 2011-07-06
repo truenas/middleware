@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-03 15:30+0200\n"
-"Last-Translator: duri <foo.bar@centrum.sk>\n"
+"PO-Revision-Date: 2011-07-05 13:50+0200\n"
+"Last-Translator: ataman <mk@ataman.sk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
@@ -951,7 +951,7 @@ msgstr "Statická cesta"
 
 #: network/models.py:288 templates/network/index.html:9
 msgid "Static Routes"
-msgstr ""
+msgstr "Statická cesta"
 
 #: network/nav.py:6 templates/menubar.html:13
 msgid "Network"
@@ -1703,6 +1703,8 @@ msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr ""
+"Iniciátor autorizovaný pre prístup na iSCSI cieľ. Berie meno alebo 'ALL' pre "
+"všetky iniciatori."
 
 #: services/models.py:482
 msgid "Authorized network"
@@ -1718,7 +1720,7 @@ msgstr ""
 
 #: services/models.py:493
 msgid "Initiator"
-msgstr ""
+msgstr "Iniciátor"
 
 #: services/models.py:522
 msgid "Target side user name. It is usually the initiator name by default."
@@ -1776,11 +1778,11 @@ msgstr ""
 
 #: services/models.py:584
 msgid "Target Flags"
-msgstr ""
+msgstr "Cieľové značky (Flags)"
 
 #: services/models.py:592
 msgid "Initiator Group ID"
-msgstr ""
+msgstr "Iniciátor Skupina ID"
 
 #: services/models.py:598 services/models.py:610
 msgid "Auth Method"
@@ -2626,7 +2628,7 @@ msgstr "Zobraziť všetky Extenty zariadenia"
 
 #: services/nav.py:70 templates/services/iscsi.html:7
 msgid "Device Extents"
-msgstr ""
+msgstr "Rozšírenia zariadenia"
 
 #: services/nav.py:92 templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
@@ -3220,21 +3222,23 @@ msgstr "Vložte kladné čislo (volitelne s príponou M, G, T) alebo 0"
 
 #: storage/forms.py:782
 msgid "Volume from which this ZFS Volume will be created on"
-msgstr ""
+msgstr "Zväzok, z ktorého bude tento ZFS zväzok vytvorený"
 
 #: storage/forms.py:783
 msgid "ZFS Volume Name"
-msgstr ""
+msgstr "Meno ZFS zväzku"
 
 #: storage/forms.py:784
 msgid "Size for this ZFS Volume"
-msgstr ""
+msgstr "Veľkosť tohto ZFS zväzku"
 
 #: storage/forms.py:798
 msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
 msgstr ""
+"Meno ZFS zväzku musí začínať alfanumerickým znakom a môže obsahovať iba (-), "
+"(_), (:) a (.)."
 
 #: storage/forms.py:820
 msgid "Owner (user)"
@@ -3396,7 +3400,7 @@ msgstr "Vzdialený ZFS súborový systém"
 
 #: storage/models.py:251
 msgid "Recursively replicate and remove stale snapshot on remote side"
-msgstr ""
+msgstr "Rekurzívne replikovať a zmazať zastralý snímok na vzdialenej strane"
 
 #: storage/models.py:254
 msgid "Replication Task"
@@ -3475,13 +3479,13 @@ msgstr "Zobraziť všetky snímky"
 #: storage/nav.py:34 templates/storage/replications.html:5
 #: templates/storage/volumes.html:6 templates/storage/volumes.html.py:11
 msgid "Create Volume"
-msgstr ""
+msgstr "Vytvoriť zväzok"
 
 #: storage/nav.py:45 templates/storage/autoimport.html:25
 #: templates/storage/import.html:43 templates/storage/volumes.html:42
 #: templates/storage/volumes.html.py:46
 msgid "Import Volume"
-msgstr ""
+msgstr "Importovať zväzok"
 
 #: storage/nav.py:56 templates/storage/volumes.html:53
 #: templates/storage/volumes.html.py:57
@@ -3490,20 +3494,20 @@ msgstr "Automaticky importovať zväzok"
 
 #: storage/nav.py:67
 msgid "View All Volumes"
-msgstr ""
+msgstr "Ukázať všetky zväzky"
 
 #: storage/nav.py:78 templates/storage/volumes.html:19
 #: templates/storage/volumes.html.py:23
 msgid "Create ZFS Dataset"
-msgstr ""
+msgstr "Vytvoriť ZFS Dataset"
 
 #: storage/nav.py:89
 msgid "Add Periodic Snapshot"
-msgstr ""
+msgstr "Pridať periodickú snímku (Snapshot)"
 
 #: storage/nav.py:100
 msgid "Volumes"
-msgstr ""
+msgstr "Zväzky"
 
 #: storage/nav.py:121 storage/nav.py:139 templates/storage/volumes.html:168
 #: templates/storage/volumes.html.py:172
@@ -3512,7 +3516,7 @@ msgstr "Zmeniť práva"
 
 #: storage/views.py:88 storage/views.py:115 storage/views.py:137
 msgid "Volume successfully added."
-msgstr ""
+msgstr "Zväzok úspešne pridaný."
 
 #: storage/views.py:217
 msgid "Unknown"
@@ -3536,15 +3540,15 @@ msgstr "ZFS zväzok úspešne pridaný."
 
 #: storage/views.py:356
 msgid "This is in use by the iscsi target, please remove it there first."
-msgstr ""
+msgstr "Toto používa iscsi cieľ, prosím odstránte najprv iscsi cieľ."
 
 #: storage/views.py:360
 msgid "ZFS Volume successfully destroyed."
-msgstr ""
+msgstr "ZFS zväzok úspešne zničený."
 
 #: storage/views.py:394
 msgid "Native dataset successfully edited."
-msgstr ""
+msgstr "Natívny dataset úspešne editovaný."
 
 #: storage/views.py:410
 msgid "Mount Point permissions successfully updated."
@@ -3552,7 +3556,7 @@ msgstr "Oprávnenia prípojného bodu úspešne aktualizované."
 
 #: storage/views.py:425
 msgid "Dataset successfully destroyed."
-msgstr ""
+msgstr "Dataset úspešne zničený."
 
 #: storage/views.py:439
 msgid "Snapshot successfully deleted."
@@ -3568,7 +3572,7 @@ msgstr "Snímka úspešne pridaná."
 
 #: storage/views.py:483
 msgid "Snapshot successfully taken."
-msgstr ""
+msgstr "Snímka(snapshot) úspešná."
 
 #: storage/views.py:498
 msgid "Snapshot successfully cloned."
@@ -3588,11 +3592,11 @@ msgstr "Odpojenie disku prebehlo úspešne."
 
 #: storage/views.py:588
 msgid "The volume failed to export"
-msgstr ""
+msgstr "Zväzok sa nepodarilo exportovať"
 
 #: storage/views.py:591
 msgid "The volume has been successfully exported"
-msgstr ""
+msgstr "Zväzok bol úspešne exportovaný"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
@@ -3692,11 +3696,11 @@ msgstr "Automaticky kontrolovať nový firmware"
 
 #: system/models.py:93
 msgid "Beep on boot"
-msgstr ""
+msgstr "Pípnuť pri boote"
 
 #: system/models.py:95
 msgid "Enable Special System Tuning"
-msgstr ""
+msgstr "Zapnúť Špecíalny Túnovací Systém"
 
 #: system/models.py:97
 msgid "Enable powerd (Power Saving Daemon)"
@@ -3940,7 +3944,7 @@ msgstr "Krátky popis"
 
 #: system/models.py:385
 msgid "Recurse into directories"
-msgstr ""
+msgstr "Rekurzívne v/do zložiek"
 
 #: system/models.py:389
 msgid "Times"
@@ -3964,7 +3968,7 @@ msgstr "Archív"
 
 #: system/models.py:400
 msgid "Archive mode"
-msgstr ""
+msgstr "Archívny mód"
 
 #: system/models.py:404 templates/freeadmin/generic_model_edit.html:43
 #: templates/network/interface.html:39 templates/network/lagg.html:44
@@ -3994,7 +3998,7 @@ msgstr "Vymazať"
 
 #: system/models.py:405
 msgid "Delete files on the receiving side that don't exist on sender"
-msgstr ""
+msgstr "Zmazať súbory na prijímajucej strane, ktoré neexistujú u odosielateľa"
 
 #: system/models.py:410
 msgid "Suppress non-error messages"
@@ -4030,7 +4034,7 @@ msgstr "Dodatoćné voľby pre rsync príkazový riadok (obvykle prázdne)"
 
 #: system/models.py:431
 msgid "Rsyncs"
-msgstr ""
+msgstr "Rsynky"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4038,7 +4042,7 @@ msgstr "Systém"
 
 #: system/nav.py:11 templates/system/reporting.html:2
 msgid "Reporting"
-msgstr ""
+msgstr "Reportovanie"
 
 #: system/nav.py:18
 msgid "System Information"
@@ -4141,7 +4145,7 @@ msgstr "ID"
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
 #: templates/account/bsdgroups.html:84 templates/account/bsdgroups.html:86
 msgid "Members"
-msgstr ""
+msgstr "Členovia"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/storage/tasks.html:133 templates/storage/tasks.html.py:135
@@ -4318,11 +4322,11 @@ msgstr "FreeNAS Announce"
 
 #: templates/freeadmin/index.html:88
 msgid "FreeNAS Commit"
-msgstr ""
+msgstr "FreeNAS Commit"
 
 #: templates/freeadmin/index.html:89
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS vývoj"
 
 #: templates/freeadmin/index.html:90
 msgid "FreeNAS Testing"
@@ -4406,7 +4410,7 @@ msgstr "Upraviť členov"
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
-msgstr ""
+msgstr "LAGG člen"
 
 #: templates/network/lagg.html:53 templates/network/lagg_members.html:33
 msgid "No LAGG interface defined"
@@ -4426,7 +4430,7 @@ msgstr "Priorita zoraďovania"
 
 #: templates/network/lagg_members.html:7
 msgid "Startup option"
-msgstr ""
+msgstr "Štartovacie možnosti"
 
 #: templates/network/lagg_members.html:8 templates/sharing/unix.html:15
 msgid "Action"
@@ -4435,7 +4439,7 @@ msgstr "Akcia"
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
 msgid "Add LAGG Member"
-msgstr ""
+msgstr "Pridať LAGG člena"
 
 #: templates/network/staticroute.html:5
 msgid "Destination"
@@ -4443,35 +4447,35 @@ msgstr "Cieľ"
 
 #: templates/network/staticroute.html:20
 msgid "Edit Static Route"
-msgstr ""
+msgstr "Upraviť statickú cestu/smerovanie"
 
 #: templates/network/staticroute.html:26
 msgid "Delete Static Route"
-msgstr ""
+msgstr "Zmazať statickú cestu"
 
 #: templates/network/staticroute.html:33
 msgid "No static route defined"
-msgstr ""
+msgstr "Žiadna statická cesta nieje definovaná"
 
 #: templates/network/staticroute.html:39 templates/network/staticroute.html:41
 msgid "Add Static Route"
-msgstr ""
+msgstr "Pridať statickú cestu"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
-msgstr ""
+msgstr "Doménový server (DNS)"
 
 #: templates/network/summary.html:31
 msgid "No nameserver defined"
-msgstr ""
+msgstr "Doménový (DNS) server nieje definovaný"
 
 #: templates/network/summary.html:37
 msgid "Default route"
-msgstr ""
+msgstr "Východisková cesta/smer"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr ""
+msgstr "Východisková cesta/smer nie je definovaná"
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
@@ -4584,7 +4588,7 @@ msgstr "Ciele"
 
 #: templates/services/iscsi.html:11
 msgid "Associated Targets"
-msgstr ""
+msgstr "Asociované ciele"
 
 #: templates/services/iscsi.html:13
 msgid "Authentication"
@@ -4592,7 +4596,7 @@ msgstr "Autentifikácia"
 
 #: templates/services/iscsi.html:15
 msgid "Authorized Initiator"
-msgstr ""
+msgstr "Autorizovaný Iniciátor"
 
 #: templates/services/iscsi.html:17
 msgid "Portals"
@@ -4768,7 +4772,7 @@ msgstr "Pridať Windows Zdieľaný Adresár (CIFS)"
 
 #: templates/storage/clonesnap.html:12
 msgid "Clone Snapshot"
-msgstr ""
+msgstr "Klonovať Snapshot"
 
 #: templates/storage/datagrid_disks.html:9
 msgid "Edit Disk"
@@ -4776,15 +4780,15 @@ msgstr "Upraviť disk"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
-msgstr ""
+msgstr "Editovať Dataset"
 
 #: templates/storage/datasets.html:9
 msgid "Add Dataset"
-msgstr ""
+msgstr "Pridať Dataset"
 
 #: templates/storage/disk_detach.html:7
 msgid "Are you sure you want to detach?"
-msgstr ""
+msgstr "Určite to chcete odpojiť?"
 
 #: templates/storage/disk_replacement.html:9
 msgid "Replacing disk"
@@ -4800,11 +4804,11 @@ msgstr "Typ súborového systému"
 
 #: templates/storage/index.html:3 templates/storage/volumes.html:62
 msgid "Active Volumes"
-msgstr ""
+msgstr "Aktívny zväzok"
 
 #: templates/storage/index.html:5
 msgid "ZFS Snapshots"
-msgstr ""
+msgstr "ZFS Snapshots(snímky)"
 
 #: templates/storage/index.html:9
 msgid "ZFS Replication"
@@ -4900,7 +4904,7 @@ msgstr "Periodické snímky"
 
 #: templates/storage/tasks.html:10
 msgid "Create Periodic Snapshot"
-msgstr ""
+msgstr "Vytvoriť periodickú snímku (Snapshot)"
 
 #: templates/storage/tasks.html:14
 msgid "Periodic Snapshot Schedule"

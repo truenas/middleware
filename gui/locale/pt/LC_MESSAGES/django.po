@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-30 12:51+0200\n"
-"Last-Translator: Nuno <nuno.piscinas@gmail.com>\n"
+"PO-Revision-Date: 2011-07-06 09:37+0200\n"
+"Last-Translator: iMiguel <miguel.rosa17@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -2664,7 +2664,7 @@ msgstr ""
 #: templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 msgid "Add Extent"
-msgstr ""
+msgstr "Adicionar Extent"
 
 #: services/nav.py:102
 msgid "View All Extents"
@@ -4012,7 +4012,7 @@ msgstr "Vezes"
 
 #: system/models.py:390
 msgid "Preserve modification times"
-msgstr ""
+msgstr "Preservar modificação"
 
 #: system/models.py:394
 msgid "Compress"
@@ -4020,15 +4020,15 @@ msgstr "Comprimir"
 
 #: system/models.py:395
 msgid "Compress data during the transfer"
-msgstr ""
+msgstr "Comprimir dados durante a tranferência"
 
 #: system/models.py:399
 msgid "Archive"
-msgstr "Arquivo"
+msgstr "Arquivos"
 
 #: system/models.py:400
 msgid "Archive mode"
-msgstr ""
+msgstr "Modo de Arquivo"
 
 #: system/models.py:404 templates/freeadmin/generic_model_edit.html:43
 #: templates/network/interface.html:39 templates/network/lagg.html:44
@@ -4058,11 +4058,11 @@ msgstr "Eliminar"
 
 #: system/models.py:405
 msgid "Delete files on the receiving side that don't exist on sender"
-msgstr ""
+msgstr "Apagar ficheiros no lado do receptor que não existem no remetente"
 
 #: system/models.py:410
 msgid "Suppress non-error messages"
-msgstr ""
+msgstr "Suprimir as mensagens sem erro"
 
 #: system/models.py:414
 msgid "Preserve permissions"
@@ -4073,24 +4073,28 @@ msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
 msgstr ""
+"Esta opção faz com que a repeção rsync defina que as permissões de destino "
+"sejam iguais as de origem"
 
 #: system/models.py:419
 msgid "Preserve extended attributes"
-msgstr ""
+msgstr "Preservar atributos extendidos"
 
 #: system/models.py:420
 msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
 msgstr ""
+"Esta opção faz com que o rsync actualize os atributos remotos para que sejam "
+"iguais aos atributos locais"
 
 #: system/models.py:426
 msgid "Extra options to rsync command line (usually empty)"
-msgstr ""
+msgstr "Opção extra para linha de comando rsync (normalmente vazia)"
 
 #: system/models.py:431
 msgid "Rsyncs"
-msgstr ""
+msgstr "syncs"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4106,7 +4110,7 @@ msgstr "Informação do Sistema"
 
 #: system/nav.py:32
 msgid "Cron Scheduler"
-msgstr ""
+msgstr "Agendar Cron"
 
 #: system/views.py:117
 msgid "The uploaded file is not valid."
@@ -4130,7 +4134,7 @@ msgstr "expandir tudo"
 
 #: templates/base.html:33
 msgid "collapse all"
-msgstr ""
+msgstr "minimizar todos"
 
 #: templates/menubar.html:33
 msgid "Log Out"
@@ -4277,7 +4281,7 @@ msgstr "Navegar"
 #: templates/freeadmin/directory_browser.html:5
 #: templates/freeadmin/directory_browser.html:10
 msgid "Close"
-msgstr ""
+msgstr "Fechar"
 
 #: templates/freeadmin/generic_model_add_ok.html:1
 msgid "successfully added"
@@ -4514,27 +4518,27 @@ msgstr "Apagar Caminho estático"
 
 #: templates/network/staticroute.html:33
 msgid "No static route defined"
-msgstr ""
+msgstr "Nenhuma rota estática definida"
 
 #: templates/network/staticroute.html:39 templates/network/staticroute.html:41
 msgid "Add Static Route"
-msgstr ""
+msgstr "Adicionar rota estática"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
-msgstr ""
+msgstr "DNS"
 
 #: templates/network/summary.html:31
 msgid "No nameserver defined"
-msgstr ""
+msgstr "Sem DNS definido"
 
 #: templates/network/summary.html:37
 msgid "Default route"
-msgstr ""
+msgstr "Rota de origem"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr ""
+msgstr "Nenhuma rota padrão definido"
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
@@ -4571,7 +4575,7 @@ msgstr "Por favor, inicie a sessão."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
-msgstr ""
+msgstr "Desconectado"
 
 #: templates/registration/logout.html:21
 msgid "You are now logged out."
@@ -4579,15 +4583,15 @@ msgstr "Você saiu da sessão."
 
 #: templates/registration/logout.html:21
 msgid "Log back in"
-msgstr ""
+msgstr "Voltou"
 
 #: templates/services/index.html:13
 msgid "AFP Settings"
-msgstr ""
+msgstr "Definições de AFP"
 
 #: templates/services/index.html:24
 msgid "Active Directory Settings"
-msgstr ""
+msgstr "Definições da Active Directory"
 
 #: templates/services/index.html:35
 msgid "CIFS Settings"
@@ -4639,11 +4643,11 @@ msgstr "Definições de ISCSI"
 
 #: templates/services/iscsi.html:2
 msgid "iSCSI Management"
-msgstr ""
+msgstr "Gestão do iSCSI"
 
 #: templates/services/iscsi.html:5
 msgid "Targets"
-msgstr ""
+msgstr "Destinos"
 
 #: templates/services/iscsi.html:11
 msgid "Associated Targets"
@@ -4655,15 +4659,15 @@ msgstr "Autenticação"
 
 #: templates/services/iscsi.html:15
 msgid "Authorized Initiator"
-msgstr ""
+msgstr "Iniciador autorizado"
 
 #: templates/services/iscsi.html:17
 msgid "Portals"
-msgstr ""
+msgstr "Portais"
 
 #: templates/services/iscsi_assoctargets.html:7
 msgid "LUN"
-msgstr ""
+msgstr "LUN"
 
 #: templates/services/iscsi_assoctargets.html:33
 #: templates/services/iscsi_auth.html:37
@@ -4673,23 +4677,23 @@ msgstr ""
 #: templates/services/iscsi_portals.html:33
 #: templates/services/iscsi_targets.html:34
 msgid "No targets defined"
-msgstr ""
+msgstr "Nenhum target definido"
 
 #: templates/services/iscsi_assoctargets.html:39
 msgid "Add Extent to Target"
-msgstr ""
+msgstr "Adicionar Extent para o Target"
 
 #: templates/services/iscsi_assoctargets.html:41
 msgid "Add Extent To Target"
-msgstr ""
+msgstr "Adicionar Extent para o Target"
 
 #: templates/services/iscsi_auth.html:8
 msgid "Peer"
-msgstr ""
+msgstr "Peer"
 
 #: templates/services/iscsi_auth.html:44 templates/services/iscsi_auth.html:46
 msgid "Add iSCSI User"
-msgstr ""
+msgstr "Adicionar Utilizador iSCSI"
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
@@ -4698,34 +4702,34 @@ msgstr "Rede Autorizada"
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
 msgid "Add Authorized Initiator"
-msgstr ""
+msgstr "Adicionar iniciador autorizado"
 
 #: templates/services/iscsi_dextents.html:6
 #: templates/services/iscsi_targets.html:6
 msgid "Alias"
-msgstr ""
+msgstr "Apelido"
 
 #: templates/services/iscsi_portals.html:6
 msgid "Listen"
-msgstr ""
+msgstr "Escutar"
 
 #: templates/services/iscsi_portals.html:20
 msgid "Edit Portal"
-msgstr ""
+msgstr "Editar Portal"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Delete Portal"
-msgstr ""
+msgstr "Apagar Portal"
 
 #: templates/services/iscsi_portals.html:39
 #: templates/services/iscsi_portals.html:41
 msgid "Add Portal"
-msgstr ""
+msgstr "Adicionar Portal"
 
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
 msgid "Add Target"
-msgstr ""
+msgstr "Adicionar Destino"
 
 #: templates/services/rsyncmod.html:8 templates/sharing/apple.html:15
 #: templates/sharing/windows.html:16 templates/storage/replications.html:17
@@ -4763,15 +4767,15 @@ msgstr "Eliminar partilha Apple"
 #: templates/sharing/apple.html:43 templates/sharing/unix.html:43
 #: templates/sharing/windows.html:47
 msgid "No shares defined"
-msgstr ""
+msgstr "Sem partilhas definidas"
 
 #: templates/sharing/apple.html:50
 msgid "Add Apple Share"
-msgstr ""
+msgstr "Adicionar partilha Apple"
 
 #: templates/sharing/apple.html:52
 msgid "Add Apple Share (AFP)"
-msgstr ""
+msgstr "Adicionar partilha Apple (AFP)"
 
 #: templates/sharing/index.html:3
 msgid "Apple"
@@ -4779,7 +4783,7 @@ msgstr "Apple"
 
 #: templates/sharing/index.html:5
 msgid "UNIX"
-msgstr ""
+msgstr "UNIX"
 
 #: templates/sharing/index.html:7
 msgid "Windows"
@@ -4791,7 +4795,7 @@ msgstr "Não existem partilhas UNIX activas."
 
 #: templates/sharing/unix.html:13
 msgid "Mountpoint"
-msgstr ""
+msgstr "Ponto de montagem"
 
 #: templates/sharing/unix.html:30
 msgid "Edit NFS Share"
@@ -4831,7 +4835,7 @@ msgstr "Adicionar partilha Windows (CIFS)"
 
 #: templates/storage/clonesnap.html:12
 msgid "Clone Snapshot"
-msgstr ""
+msgstr "Clonar Snapshot"
 
 #: templates/storage/datagrid_disks.html:9
 msgid "Edit Disk"

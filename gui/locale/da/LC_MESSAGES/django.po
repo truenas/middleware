@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-19 14:39+0200\n"
-"Last-Translator: denza <dennis@chma.dk>\n"
+"PO-Revision-Date: 2011-07-06 00:21+0200\n"
+"Last-Translator: Christian <christian@junker.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
@@ -96,11 +96,11 @@ msgstr "UDMA-133"
 
 #: choices.py:62
 msgid "SATA 1.5Gbit/s"
-msgstr "SATA 1.5Gbit/s"
+msgstr "SATA 1,5Gbit/s"
 
 #: choices.py:63
 msgid "SATA 3.0Gbit/s"
-msgstr "SATA 3.0Gbit/s"
+msgstr "SATA 3,0Gbit/s"
 
 #: choices.py:67
 msgid "Always On"
@@ -253,7 +253,7 @@ msgstr "Time Machine"
 
 #: choices.py:190
 msgid "No case folding"
-msgstr ""
+msgstr "Ingen store begyndelsesbogstaver"
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
@@ -277,7 +277,7 @@ msgstr "Enhed"
 
 #: choices.py:200
 msgid "ZFS Volume"
-msgstr "ZFS Drev"
+msgstr "ZFS volume"
 
 #: choices.py:204 storage/models.py:147 system/models.py:493
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
@@ -293,9 +293,10 @@ msgstr "DVD"
 msgid "Tape"
 msgstr "Bånd"
 
+# Kan også betyde gennemgang.
 #: choices.py:207
 msgid "Pass"
-msgstr "Adgang"
+msgstr "Passere"
 
 #: choices.py:211
 msgid "read-write"
@@ -303,7 +304,7 @@ msgstr "læse-skrive"
 
 #: choices.py:212
 msgid "read-only"
-msgstr "skrivebeskyttet"
+msgstr "skrive beskyttet"
 
 #: choices.py:216 choices.py:222 services/forms.py:392 services/forms.py:394
 #: services/forms.py:741 templates/storage/wizard.html:92
@@ -393,11 +394,11 @@ msgstr "Hver dag"
 
 #: choices.py:435
 msgid "Every selected weekday"
-msgstr "Hver af de udvalgte ugedage"
+msgstr "Valgte ugedage"
 
 #: choices.py:441
 msgid "Read-only"
-msgstr "Skrivebeskyttet"
+msgstr "Skrive beskyttet"
 
 #: choices.py:442
 msgid "Write-only"
@@ -410,59 +411,60 @@ msgstr "Læse og skrive"
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes) minutter"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour) timer"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hours) timer"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day) dage"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week) uger"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Aldrig - Tjek enhed uanset strøm tilstand"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Sleep - Tjek enhed, medmindre den er i Sleep tilstand"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
+msgstr "Standby - Tjek enheden, medmindre den er i Sleep eller Standby tilstand"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
+"Idle - Tjek enhed, medmindre den er i Sleep, Standby eller Idle tilstand"
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Lang egen-test"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Kort egen-test"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Overdragelse egen-test (kun ATA)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Øjeblikkelig offline test (kun ATA)"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -504,7 +506,7 @@ msgstr "Indtast for at verificere den samme adgangskode som ovenfor."
 #: account/forms.py:204 account/forms.py:346 account/models.py:105
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:89
 msgid "Shell"
-msgstr "Shell"
+msgstr "Kommandofortolker (shell)"
 
 #: account/forms.py:205 account/forms.py:345
 msgid "Disable logins"
@@ -535,11 +537,11 @@ msgstr "Dette felt er påkrævet."
 
 #: account/forms.py:427
 msgid "Member users"
-msgstr ""
+msgstr "Gruppe medlemmer"
 
 #: account/forms.py:445
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "Hjælpegrupper"
 
 #: account/forms.py:467
 msgid "New password"
@@ -551,7 +553,7 @@ msgstr "Ny adgangskode bekræftelse"
 
 #: account/forms.py:493
 msgid "Old password"
-msgstr "Forhenværende adgangskode"
+msgstr "Gammel adgangskode"
 
 #: account/forms.py:501
 msgid "Your old password was entered incorrectly. Please enter it again."
@@ -645,7 +647,7 @@ msgstr "Skift adgangskode"
 #: account/nav.py:19 templates/account/changeform.html:25
 #: templates/account/index.html:4
 msgid "Change Admin User"
-msgstr "Skift administrator"
+msgstr "Skift admin bruger"
 
 #: account/nav.py:26 templates/account/index.html:2
 msgid "My Account"
@@ -660,24 +662,20 @@ msgid "View All Groups"
 msgstr "Vis alle grupper"
 
 #: account/views.py:78
-#, fuzzy
 msgid "Password successfully updated."
-msgstr "%s blev opdateret."
+msgstr "Adgangskode opdateret"
 
 #: account/views.py:92
-#, fuzzy
 msgid "Admin user successfully updated."
-msgstr "%s blev opdateret."
+msgstr "Admin bruger opdateret"
 
 #: account/views.py:102
-#, fuzzy
 msgid "Users successfully updated."
-msgstr "%s blev opdateret."
+msgstr "Brugere opdateret."
 
 #: account/views.py:115
-#, fuzzy
 msgid "Groups successfully updated."
-msgstr "%s blev opdateret."
+msgstr "Grupper opdateret."
 
 #: contrib/ext_formwizard.py:170
 msgid ""
@@ -704,12 +702,12 @@ msgstr ""
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Tilføj %s"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "Vis alle brugere"
+msgstr "Vis alle %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -717,7 +715,7 @@ msgstr "Vis systemprocesser"
 
 #: freeadmin/navtree.py:353 templates/freeadmin/index.html:53
 msgid "Reboot"
-msgstr "Start igen"
+msgstr "Genstart"
 
 #: freeadmin/navtree.py:360 templates/freeadmin/index.html:65
 msgid "Shutdown"
@@ -735,7 +733,7 @@ msgstr "%s blev opdateret."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Service kunne ikke genstarte"
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, fuzzy, python-format
@@ -769,11 +767,11 @@ msgstr "Enhedsnavn"
 
 #: network/forms.py:109
 msgid "The name must be vlanXX where XX is a integer"
-msgstr ""
+msgstr "Navnet skal være vlanXX hvor XX er et heltal."
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN mærke er 1 - 4095 inklusive"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -782,7 +780,7 @@ msgstr "Fysiske netkort i LAGG"
 #: network/forms.py:190
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "Netværket %s er ikke valid. CIDR forventet."
 
 #: network/models.py:42 services/models.py:1074
 #: templates/system/system_info.html:4
@@ -856,7 +854,7 @@ msgstr "Autokonfigurer IPv6"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr ""
+msgstr "Når aktiveret, konfigureres IPv6 automatisk via rtsol(8)."
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
@@ -869,7 +867,7 @@ msgstr "IPv6 Netmaske"
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
 msgid "Options"
-msgstr ""
+msgstr "Valg"
 
 #: network/models.py:157 network/models.py:216
 #: templates/network/interface.html:5
@@ -887,7 +885,7 @@ msgstr ""
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr ""
+msgstr "Netværks navne skal være vlanXX, hvor XX er et heltal."
 
 #: network/models.py:178 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
@@ -902,19 +900,19 @@ msgstr ""
 #: services/models.py:766 storage/models.py:95
 #: templates/network/staticroute.html:7 templates/network/vlan.html:8
 msgid "Description"
-msgstr ""
+msgstr "Beskrivelse"
 
 #: network/models.py:199 templates/network/index.html:11
 msgid "VLAN"
-msgstr ""
+msgstr "VLAN"
 
 #: network/models.py:200
 msgid "VLANs"
-msgstr ""
+msgstr "VLAN"
 
 #: network/models.py:220
 msgid "Protocol Type"
-msgstr ""
+msgstr "Protokol type"
 
 #: network/models.py:241
 msgid "LAGG Interface group"
@@ -922,7 +920,7 @@ msgstr ""
 
 #: network/models.py:244
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "LAGG prioritets nummer"
 
 #: network/models.py:249
 msgid "Physical NIC"
@@ -938,15 +936,15 @@ msgstr ""
 
 #: network/models.py:274
 msgid "Destination network"
-msgstr ""
+msgstr "Destinations netværk"
 
 #: network/models.py:278 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr ""
+msgstr "Gateway"
 
 #: network/models.py:287
 msgid "Static Route"
-msgstr ""
+msgstr "Statisk route"
 
 #: network/models.py:288 templates/network/index.html:9
 msgid "Static Routes"
@@ -958,7 +956,7 @@ msgstr ""
 
 #: network/nav.py:13 templates/network/index.html:13
 msgid "Network Summary"
-msgstr ""
+msgstr "Netværks sammenfatning"
 
 #: network/nav.py:30
 msgid "Create Link Aggregation"
@@ -969,9 +967,8 @@ msgid "View All Link Aggregations"
 msgstr ""
 
 #: network/views.py:180
-#, fuzzy
 msgid "LAGG successfully added"
-msgstr "%s blev tilføjet."
+msgstr "LAGG tilføjet"
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -983,19 +980,19 @@ msgstr "Dette felt er påkrævet for \"Hjemmemapper\"."
 
 #: services/forms.py:90
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "AFP service kunne ikke genstarte."
 
 #: services/forms.py:99
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "NFS service kunne ikke genstarte."
 
 #: services/forms.py:103
 msgid "File Permission"
-msgstr "Filrettigheder"
+msgstr "Fil rettigheder"
 
 #: services/forms.py:104
 msgid "Directory Permission"
-msgstr "Mapperettigheder"
+msgstr "Mappe rettigheder"
 
 #: services/forms.py:129
 msgid "This value must be between 0 and 65535, inclusive."
@@ -1023,39 +1020,39 @@ msgstr "Dette felt er påkrævet for anonym login"
 
 #: services/forms.py:191
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "Ftp service kunne ikke genstarte"
 
 #: services/forms.py:200
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "Tftp service kunne ikke genstarte."
 
 #: services/forms.py:207
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "SSH service kunne ikke genstarte."
 
 #: services/forms.py:216 services/forms.py:241
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Rsync service kunne ikke genstarte."
 
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "Navn må ikke indeholde / eller ]."
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "DynamicDNS service kunne ikke genstarte."
 
 #: services/forms.py:259
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "SNMP service kunne ikke genstarte."
 
 #: services/forms.py:273
 msgid "The activedirectory service failed to reload."
-msgstr ""
+msgstr "Activedirectory service kunne ikke genstarte."
 
 #: services/forms.py:284
 msgid "The ldap service failed to reload."
-msgstr ""
+msgstr "Ldap service kunne ikke genstarte."
 
 #: services/forms.py:290 services/models.py:526
 #: templates/services/iscsi_auth.html:7
@@ -1078,19 +1075,19 @@ msgstr "Indtast den samme hemmelighed ovenfor for verifikation."
 
 #: services/forms.py:295
 msgid "Initiator Secret"
-msgstr ""
+msgstr "Afsender hemmelighed"
 
 #: services/forms.py:297 services/models.py:533 services/models.py:538
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr ""
+msgstr "Afsenders hemmelighed. (For gensidig CHAP godkendelse)"
 
 #: services/forms.py:300
 msgid "Initiator Secret (Confirm)"
-msgstr ""
+msgstr "Afsender hemmelighed (bekræft)"
 
 #: services/forms.py:309
 msgid "Secret does not match"
-msgstr ""
+msgstr "Hemmeligheder er ikke ens"
 
 #: services/forms.py:324 services/forms.py:325
 msgid "The peer secret is required if you set a peer user."
@@ -1104,7 +1101,7 @@ msgstr ""
 #: services/forms.py:525 services/forms.py:572 services/forms.py:675
 #: services/forms.py:697 services/forms.py:718 services/forms.py:763
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "iSCSI service kunne ikke genstarte."
 
 #: services/forms.py:373
 msgid "LUN already exists in the same target."
@@ -1127,7 +1124,7 @@ msgstr ""
 #: services/forms.py:413
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr ""
+msgstr "Denne værdi skal være mellem %start)d og %(end)d, inklusive."
 
 #: services/forms.py:421
 msgid ""
@@ -1136,7 +1133,7 @@ msgstr ""
 
 #: services/forms.py:504 services/forms.py:534
 msgid "You need to specify a filepath, not a directory."
-msgstr ""
+msgstr "Du skal angive en sti, ikke et bibliotek."
 
 #: services/forms.py:508 services/forms.py:538
 msgid "You need to specify a file inside your volume/dataset."
@@ -1150,21 +1147,21 @@ msgstr ""
 #: services/forms.py:556
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
-msgstr ""
+msgstr "Værdien kan være i bytes, eller være efterfulgt af KB, MB, GB, TB"
 
 #: services/forms.py:577
 msgid "Disk device"
-msgstr ""
+msgstr "Disk enhed."
 
 #: services/forms.py:691
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr ""
+msgstr "Portal gruppe-id må ikke være større end %d"
 
 #: services/forms.py:712
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr ""
+msgstr "Gruppe-id må ikke være større end %d"
 
 #: services/forms.py:721
 msgid "Authentication Group number"
@@ -1183,7 +1180,7 @@ msgstr[1] "Brugeren %s er ikke gyldig."
 
 #: services/models.py:40
 msgid "Service"
-msgstr ""
+msgstr "Service"
 
 #: services/models.py:41
 msgid "Name of Service, should be auto-generated at build time"
@@ -1196,7 +1193,7 @@ msgstr ""
 #: services/models.py:47 services/models.py:48 services/nav.py:5
 #: templates/menubar.html:28 templates/services/index.html:3
 msgid "Services"
-msgstr ""
+msgstr "Service"
 
 #: services/models.py:60
 msgid "Authentication Model"
@@ -1206,10 +1203,11 @@ msgstr ""
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
+"Brug af Active Directory eller LDAP godkendelse, vil overskrive dette valg"
 
 #: services/models.py:65
 msgid "NetBIOS name"
-msgstr ""
+msgstr "NetBIOS navn"
 
 #: services/models.py:69
 msgid "Workgroup"
@@ -1223,31 +1221,31 @@ msgstr ""
 
 #: services/models.py:76
 msgid "Server description. This can usually be left blank."
-msgstr ""
+msgstr "Server beskrivelse. Kan efterlades tom."
 
 #: services/models.py:82
 msgid "DOS charset"
-msgstr ""
+msgstr "DOS karaktersæt"
 
 #: services/models.py:88
 msgid "UNIX charset"
-msgstr ""
+msgstr "UNIX karaktersæt"
 
 #: services/models.py:94
 msgid "Log level"
-msgstr ""
+msgstr "Log niveau"
 
 #: services/models.py:97
 msgid "Local Master"
-msgstr ""
+msgstr "Lokal master"
 
 #: services/models.py:99
 msgid "Time Server for Domain"
-msgstr ""
+msgstr "Tids server for domæne"
 
 #: services/models.py:104 services/models.py:191
 msgid "Guest account"
-msgstr ""
+msgstr "Gæste konto"
 
 #: services/models.py:105 services/models.py:192
 msgid ""
@@ -2585,7 +2583,7 @@ msgstr ""
 
 #: sharing/models.py:64
 msgid "Guest Account"
-msgstr ""
+msgstr "Gæste konto"
 
 #: sharing/models.py:65
 msgid ""
@@ -5048,7 +5046,7 @@ msgid "%s successfully update."
 msgstr "%s blev succesfuldt opdateret."
 
 msgid "Admin user"
-msgstr "Administrator"
+msgstr "Admin bruger"
 
 #, fuzzy
 msgid "ZVol Name"
