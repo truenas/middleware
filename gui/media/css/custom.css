@@ -1,3 +1,9 @@
+/* system->settings->config */
+.configbtn {
+        float:left;
+        padding:4px;
+    }
+
 #rebootDialog_underlay { background-color:#000; }
 #shutdownDialog_underlay, #editscary_dialog_underlay { background-color:#FD0000; }
 #top_dialog_underlay { background-color:#000; }
