@@ -500,6 +500,9 @@ class NFSv4_ACL:
                         entry._set_inheritance_flags(inheritance_flags)
                         self.__dirty = True
 
+            if self.__dirty:
+                NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_MODIFY)
+
         self.__refresh()
         syslog(LOG_DEBUG, "NFSv4_ACL.update: leave")
 
