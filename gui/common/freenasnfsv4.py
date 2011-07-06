@@ -419,6 +419,9 @@ class NFSv4_ACL:
 
         self.__dirty = False
         self.__path = path
+
+        st = os.stat(path) 
+        self.__mode = st.st_mode
         self.__get() 
 
         syslog(LOG_DEBUG, "NFSv4_ACL.__init__: leave")
@@ -499,7 +502,7 @@ class NFSv4_ACL:
                         entry.set_access_permissions(permissions)
                         self.__dirty = True
 
-                    if inheritance_flags:
+                    if inheritance_flags and not stat.S_ISREG(self.__mode):
                         inheritance_flags += "+" + entry.get_inheritance_flags()
                         entry.set_inheritance_flags(inheritance_flags)
                         self.__dirty = True
@@ -524,7 +527,7 @@ class NFSv4_ACL:
             entry.qualifier = qualifier
         if permissions:
             entry.set_access_permissions(permissions)
-        if inheritance_flags:
+        if inheritance_flags and not stat.S_ISREG(self.__mode):
             entry.set_inheritance_flags(inheritance_flags)
 
         entry.type = (type if type else 'allow')
