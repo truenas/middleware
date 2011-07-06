@@ -30,6 +30,7 @@ import sys
 import grp
 import pwd
 import re
+import stat
 import syslog
 
 from subprocess import Popen, PIPE
