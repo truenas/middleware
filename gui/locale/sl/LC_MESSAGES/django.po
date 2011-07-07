@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-06 10:59+0200\n"
+"PO-Revision-Date: 2011-07-06 11:27+0200\n"
 "Last-Translator: Janezfun <janez.subic@siol.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sl\n"
@@ -1260,6 +1260,11 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
+"Uporabite to možnost za preglasitev uporabnišekga imena (privzeto 'nobody') "
+", ki se bo uporabljal za dostod do storitev gosta. Ne glede na privilegije "
+"bo ta uporabnik imel možnost client povezave do storitev gosta. Uporabnik "
+"mora biti v dateteki gesel, toda ne zahteva veljavne prijave. Korenski "
+"(root) uporabnik ne more biti uporabljati računa gosta."
 
 #: services/models.py:108
 msgid "Allow guest access"
@@ -1355,6 +1360,8 @@ msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
 msgstr ""
+"Samba bo brala asinhrono, če bo zahtevana velikost večja kot ta vrednost. "
+"Privzeta bralna velikost je 1."
 
 #: services/models.py:164
 msgid "Minimal AIO write size"
@@ -1365,6 +1372,8 @@ msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
 msgstr ""
+"Samba bo pisala asinhrono, če bo zahtevana velikost večja kot ta vrednost. "
+"Privzeta pisalna velikost je 1."
 
 #: services/models.py:170 services/models.py:171
 #: templates/services/index.html:29
@@ -1433,115 +1442,121 @@ msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
+"Omogočite asinhroni način, ki bo povečal zmogljivosti zunaj gigabitnih "
+"mrežnih hitrosti."
 
 #: services/models.py:225 services/models.py:226
 #: templates/services/index.html:75
 msgid "NFS"
-msgstr ""
+msgstr "NFS"
 
 #: services/models.py:235
 msgid "Base Name"
-msgstr ""
+msgstr "Ima baze"
 
 #: services/models.py:236
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"Ime baze (npr. iqn.2007-09.jp.ne.peach.istgt, glej RFC 3720 and 3721 za "
+"podrobnosti) bo dodano ciljnemu imenu, ki se ne začne z 'iqn'."
 
 #: services/models.py:242
 msgid "Discovery Auth Method"
-msgstr ""
+msgstr "Odkrivanje avtorizacijske metode"
 
 #: services/models.py:253
 msgid "I/O Timeout"
-msgstr ""
+msgstr "I/O Timeout"
 
 #: services/models.py:254
 msgid "I/O timeout in seconds (30 by default)."
-msgstr ""
+msgstr "I/O timeout v sekundah (privzeto 30)."
 
 #: services/models.py:259
 msgid "NOPIN Interval"
-msgstr ""
+msgstr "NOPIN Interval"
 
 #: services/models.py:260
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr ""
+msgstr "NOPIN interval pošiljanja v sekundah (privzeto 20)."
 
 #: services/models.py:265
 msgid "Max. sessions"
-msgstr ""
+msgstr "Največje število sej"
 
 #: services/models.py:266
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr ""
+msgstr "Največje število sej istočano (privzeto 16)."
 
 #: services/models.py:271
 msgid "Max. connections"
-msgstr ""
+msgstr "Največje število povezav"
 
 #: services/models.py:272
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "Največje število povezav vsaki seji (privzeto 8)."
 
 #: services/models.py:277
 msgid "Max. pre-send R2T"
-msgstr ""
+msgstr "Največji pre-send R2T"
 
 #: services/models.py:278
 msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
 msgstr ""
+"Največji število pre-send R2T v vsaki povezavi (privzeto 32). Dejansko "
+"število je omejeno na \"QueueDepth\" cilja."
 
 #: services/models.py:283
 msgid "MaxOutstandingR2T"
-msgstr ""
+msgstr "Največji OutstandingR2T"
 
 #: services/models.py:284
 msgid "iSCSI initial parameter (16 by default)."
-msgstr ""
+msgstr "iSCSI začetni parameter (privzeto 16)."
 
 #: services/models.py:289
 msgid "First burst length"
-msgstr ""
+msgstr "Prva praska dolžine"
 
 #: services/models.py:290
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr ""
+msgstr "iSCSI začetni parameter (privzeto 65536)."
 
 #: services/models.py:295
 msgid "Max burst length"
-msgstr ""
+msgstr "Maksimalna praska dolžine"
 
 #: services/models.py:296 services/models.py:302
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr ""
+msgstr "iSCSI začetni parameter (privzeto 262144)."
 
 #: services/models.py:301
 msgid "Max receive data segment length"
-msgstr ""
+msgstr "Največja dolžiina sprejetega podatkovnega segmenta"
 
 #: services/models.py:307
 msgid "DefaultTime2Wait"
-msgstr ""
+msgstr "Privzeto Time2Wait"
 
 #: services/models.py:308
 msgid "iSCSI initial parameter (2 by default)."
-msgstr ""
+msgstr "iSCSI začetni parameter (privzeto 2)."
 
 #: services/models.py:313
 msgid "DefaultTime2Retain"
-msgstr ""
+msgstr "Privzeto Time2Retain"
 
 #: services/models.py:314
 msgid "iSCSI initial parameter (60 by default)."
-msgstr ""
+msgstr "iSCSI začetni parameter (privzeto60)."
 
 #: services/models.py:319
 msgid "Enable LUC"
-msgstr ""
+msgstr "Omogoči LUC"
 
 #: services/models.py:323
 msgid "Controller IP address"
