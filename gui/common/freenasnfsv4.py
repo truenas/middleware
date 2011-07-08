@@ -1,5 +1,5 @@
 #+
-# Copyright 2010 iXsystems
+# Copyright 2011 iXsystems
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -65,6 +65,20 @@ ACL_ENTRY_FLAGS_ADD        = 0x0001
 ACL_ENTRY_FLAGS_UPDATE     = 0x0002
 ACL_ENTRY_FLAGS_REMOVE     = 0x0004
 
+#
+# NFSv4_ACL type
+#
+# This should probably be filesystem types ;-)
+#
+ACL_TYPE_UNIX              = 0x0001
+ACL_TYPE_WINDOWS           = 0x0002
+
+
+
+ACL_HIER_COURSE_GRAINED    = 0x0001
+ACL_HIER_FINE_GRAINED      = 0x0002
+
+
 class NFSv4_ACL_Exception(Exception):
     def __init__(self, msg = None):
         syslog(LOG_DEBUG, "NFSv4_ACL_Exception.__init__: enter")
@@ -124,7 +138,12 @@ class NFSv4_getfacl:
         if flags & GETFACL_FLAGS_VERBOSE:
             args += "-v "
 
-        self.__out = str(NFSv4_pipe("%s %s '%s'" % (self.__getfacl, args, self.__path)))
+        cmd = "%s " % self.__getfacl
+        if args:
+            cmd += "%s " % args
+        cmd += "'%s'" % self.__path
+
+        self.__out = str(NFSv4_pipe(cmd))
 
         syslog(LOG_DEBUG, "NFSv4_getfacl.__init__: out = %s" % self.__out)
         syslog(LOG_DEBUG, "NFSv4_getfacl.__init__: leave")
@@ -159,9 +178,16 @@ class NFSv4_setfacl:
             args += "-m "
         if flags & SETFACL_FLAGS_REMOVE_ENTRY:
             args += "-x %d" % pos
+            self.__entry = None
 
-        self.__out = str(NFSv4_pipe("%s %s '%s' '%s'" % (
-            self.__setfacl, args, self.__entry if self.__entry else '', self.__path)))
+        cmd = "%s " % self.__setfacl
+        if args:
+            cmd += "%s " % args
+        if self.__entry:
+            cmd += "%s " % self.__entry
+        cmd += "'%s'" % self.__path
+        
+        self.__out = str(NFSv4_pipe(cmd))
 
         syslog(LOG_DEBUG, "NFSv4_setfacl.__init__: out = %s" % self.__out)
         syslog(LOG_DEBUG, "NFSv4_setfacl.__init__: leave")
@@ -246,7 +272,7 @@ class NFSv4_ACL_Entry:
             self.write_acl = value
         elif permission == 'o':
             self.write_owner = value
-        elif permission == 'S':
+        elif permission == 's':
             self.synchronize = value
 
         syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__set_access_permission: enter")
@@ -377,7 +403,7 @@ class NFSv4_ACL_Entry:
         str = str + ('c' if self.read_acl else '-')
         str = str + ('C' if self.write_acl else '-')
         str = str + ('o' if self.write_owner else '-')
-        str = str + ('S' if self.synchronize else '-')
+        str = str + ('s' if self.synchronize else '-')
         return str
 
     def get_inheritance_flags(self):
@@ -421,10 +447,27 @@ class NFSv4_ACL:
         self.__path = path
 
         st = os.stat(path) 
-        self.__mode = st.st_mode
+        self.mode = st.st_mode
+
+        self.__type = ACL_TYPE_UNIX
+        if os.access(os.path.join(self.__path, ".windows"), 0):
+            self.__type = ACL_TYPE_WINDOWS
+
         self.__get() 
 
         syslog(LOG_DEBUG, "NFSv4_ACL.__init__: leave")
+
+    def is_unix(self):
+        return self.__type == ACL_TYPE_UNIX
+
+    def is_windows(self):
+        return self.__type == ACL_TYPE_WINDOWS 
+
+    def path(self):
+        return self.__path
+
+    def dirty(self):
+        return self.__dirty
 
     def __get(self):
         syslog(LOG_DEBUG, "NFSv4_ACL.__get: enter")
@@ -502,8 +545,7 @@ class NFSv4_ACL:
                         entry.set_access_permissions(permissions)
                         self.__dirty = True
 
-                    if inheritance_flags and not stat.S_ISREG(self.__mode):
-                        inheritance_flags += "+" + entry.get_inheritance_flags()
+                    if inheritance_flags and not stat.S_ISREG(self.mode):
                         entry.set_inheritance_flags(inheritance_flags)
                         self.__dirty = True
 
@@ -527,7 +569,7 @@ class NFSv4_ACL:
             entry.qualifier = qualifier
         if permissions:
             entry.set_access_permissions(permissions)
-        if inheritance_flags and not stat.S_ISREG(self.__mode):
+        if inheritance_flags and not stat.S_ISREG(self.mode):
             entry.set_inheritance_flags(inheritance_flags)
 
         entry.type = (type if type else 'allow')
@@ -699,3 +741,176 @@ class NFSv4_ACL:
 
         syslog(LOG_DEBUG, "NFSv4_ACL.save: leave")
         return True
+
+
+class NFSv4_ACL_Hierarchy:
+    def __init__(self, path):
+        self.__path = path
+        self.__type = ACL_TYPE_UNIX
+      
+        if os.access(os.path.join(self.__path, ".windows"), 0):
+            self.__type = ACL_TYPE_WINDOWS
+
+    def is_unix(self):
+        return self.__type == ACL_TYPE_UNIX
+
+    def is_windows(self):
+        return self.__type == ACL_TYPE_WINDOWS
+
+    def __recurse(self, path, callback, *args):
+        callback(path, *args)
+
+        files = os.listdir(path)
+        for f in files:
+            file = os.path.join(path, f)
+            st = os.stat(file)
+
+            if stat.S_ISDIR(st.st_mode):
+                if os.access(os.path.join(path, ".windows"), 0):
+                    self.__type = ACL_TYPE_WINDOWS
+                self.__recurse(file, callback, *args)
+
+            else:
+                if f != '.windows':
+                    callback(file, *args)
+
+    def __set_windows_file_defaults(self, acl):
+        acl.clear()
+
+        pos = 0
+        acl.add('group@', None, 'rxaRcs', None, 'allow', pos); pos += 1
+        acl.add('everyone@', None, 'rxaRcs', None, 'allow', pos); pos += 1
+        acl.add('owner@', None, 'rwxpDdaARWcCos', None, 'allow', pos); pos += 1
+        acl.remove('everyone@', None, None, -1)
+        acl.chmod('755')
+
+    def __set_unix_file_defaults(self, acl):
+        acl.reset()
+        acl.chmod('644')
+
+    def __set_file_defaults(self, acl):
+        if self.is_windows(): 
+            self.__set_windows_file_defaults(acl)
+        else:
+            self.__set_unix_file_defaults(acl)
+
+
+    def __set_windows_directory_defaults(self, acl):
+        acl.clear()
+
+        pos = 0
+        acl.add('group@', None, 'rxaRcs', 'fd', 'allow', pos); pos += 1
+        acl.add('everyone@', None, 'rxaRcs', 'fd', 'allow', pos); pos += 1
+        acl.add('owner@', None, 'rwxpDdaARWcCos', 'fd', 'allow', pos); pos += 1
+        acl.remove('everyone@', None, None, -1)
+        acl.chmod('755') 
+
+    def __set_unix_directory_defaults(self, acl):
+        acl.reset()
+        acl.chmod('755')
+
+    def __set_directory_defaults(self, acl):
+        if self.is_windows():
+            self.__set_windows_directory_defaults(acl)
+        else:
+            self.__set_unix_directory_defaults(acl)
+
+    def __set_defaults(self, path, args = None):
+        acl = NFSv4_ACL(path)
+
+        if stat.S_ISREG(acl.mode):
+            self.__set_file_defaults(acl)
+        elif stat.S_ISDIR(acl.mode):
+            self.__set_directory_defaults(acl)
+        else:
+            self.__set_file_defaults(acl)
+
+        acl.save()
+
+    def set_defaults(self, recursive = False):
+        if recursive:
+            self.__recurse(self.__path, self.__set_defaults, None)
+
+        else:
+            self.__set_defaults(path)
+
+    def __reset(self, path, args = None):
+        acl = NFSv4_ACL(path)
+        acl.reset()
+        acl.save()
+
+    def reset(self, recursive = False):
+        if recursive:
+            self.__recurse(self.__path, self.__reset, None)
+        else:
+            self.__reset(self.__path)
+
+    def __clear(self, path, args = None):
+        acl = NFSv4_ACL(path)
+        acl.clear()
+        acl.save()
+
+    def clear(self, recursive = False):
+        if recursive:
+            self.__recurse(self.__path, self.__clear, None)
+        else:
+            self.__clear(self.__path)
+    
+    def __add(self, path, tag, qualifier = None, inheritance_flags = None, type = None, pos = 0):
+        acl = NFSv4_ACL(path)
+        acl.add(tag, qualifier, inheritance_flags, type, pos)
+        acl.save()
+
+    def add(self, tag, qualifier = None, inheritance_flags = None, type = None, pos = 0, recursive = False):
+        if recursive:
+            self.__recurse(self.__path, self.__add, tag, qualifier, inheritance_flags, type, pos)
+        else:
+            self.__add(self.__path, tag, qualifier, inheritance_flags, type, pos)
+
+    def __update(self, path, tag, qualifier, permissions, inheritance_flags = None, type = None):
+        acl = NFSv4_ACL(path)
+        acl.update(tag, qualifier, permissions, inheritance_flags, type)
+        acl.save()
+
+    def update(self, tag, qualifier, permissions, inheritance_flags = None, type = None,  recursive = False):
+        if recursive:
+            self.__recurse(self.__path, self.__update, tag, qualifier, permissions, inheritance_flags, type)
+        else:
+            self.__update(self.__path, tag, qualifier, permissions, inheritance_flags, type)
+
+    def __remove(self, path, tag, qualifier = None, type = None, pos = None):
+        acl = NFSv4_ACL(path)
+        acl.remove(tag, qualifier, type, pos)
+        acl.save()
+
+    def remove(self, tag, qualifier = None, type = None, pos = None, recursive = False):
+        if recursive:
+            self.__recurse(self.__path, self.__remove, tag, qualifier, type, pos)
+        else:
+            self.__remove(self.__path, tag, qualifier, type, pos)
+
+    def __chmod(self, path, mode):
+        acl = NFSv4_ACL(path)
+        acl.chmod(mode)
+        acl.save()
+
+    def chmod(self, mode, recursive = False):
+        if recursive:
+            self.__recurse(self.__path, self.__chmod, mode)
+        else:
+            self.__chmod(self.__path, mode)
+
+    def __chown(self, path, who):
+        acl = NFSv4_ACL(path)
+        acl.chown(who)
+        acl.save()
+
+    def chown(self, who, recursive = False):
+        if recursive:
+            self.__recurse(self.__path, self.__chown, who)
+        else:
+            self.__chown(self.__path, who)
+
+    def close(self):
+        self.__path = None
+        self.__type = None
