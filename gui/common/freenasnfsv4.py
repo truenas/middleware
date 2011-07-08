@@ -708,11 +708,11 @@ class NFSv4_ACL:
                 permissions_deny += "+r"
 
             if n & 2:
-                permissions_allow += "+w"
-                permissions_deny += "-w"
+                permissions_allow += "+wp"
+                permissions_deny += "-wp"
             else:
-                permissions_allow += "-w"
-                permissions_deny += "+w"
+                permissions_allow += "-wp"
+                permissions_deny += "+wp"
 
             if n & 1:
                 permissions_allow += "+x"
