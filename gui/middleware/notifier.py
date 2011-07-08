@@ -57,7 +57,7 @@ sys.path.append(FREENAS_PATH)
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
 from django.db import models
-from freenasUI.common.freenasnfsv4 import NFSv4_ACL
+from freenasUI.common.freenasnfsv4 import NFSv4_ACL_Hierarchy
 
 class notifier:
     from os import system as ___system
@@ -1099,31 +1099,14 @@ class notifier:
         self.__system("/usr/sbin/service ix-aliases quietstart")
         self.reload("cifs")
 
-    def __set_default_permissions(self, path='/mnt', user='root', group='wheel', mode='0755'):
-        acl = NFSv4_ACL(path)
-        acl.clear()
-        acl.add('group@', None, 'rxs', 'fd', 'allow')
-        acl.add('everyone@', None, 'rxaRcs', 'fd', 'allow')
-        acl.add('owner@', None, 'rwxpdDaARWcCo', 'fd', 'allow')
-        acl.remove('everyone@', None, None, -1)
-        acl.chown(user + ":" + group)
-        acl.chmod(mode)
-        acl.save()
-
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',
                              mode='0755', recursive=False):
-        self.__set_default_permissions(path, user, group, mode)
-        if recursive:
-            files = os.listdir(path)
-            for f in files:
-                file = os.path.join(path, f)
-                st = os.stat(file)
 
-                if stat.S_ISDIR(st.st_mode):
-                    self.mp_change_permission(file, user, group, mode, recursive) 
-
-                else:
-                    self.__set_default_permissions(file, user, group, mode)
+        hier = NFSv4_ACL_Hierarchy(path)
+        hier.set_defaults(recursive)
+        hier.chown(user + ":" + group, recursive)
+        hier.chmod(mode, recursive)
+        hier.close()
 
     def mp_get_permission(self, path):
         if os.path.isdir(path):
