@@ -308,7 +308,7 @@ freenas_custom()
 
 
 	# Kill all .a's that are installed (15MB)
-	find ${NANO_WORLDDIR} -name \*.a | xargs rm
+	find ${NANO_WORLDDIR} -name \*.a -delete
 
 	# magic.mgc is just a speed optimization.  Kill it for 1.7MB
 	rm -f ${NANO_WORLDDIR}/usr/share/misc/magic.mgc

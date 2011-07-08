@@ -328,7 +328,7 @@ customize_cmd select_httpd
 
 remove_patch_divots ( )
 {
-	find ${NANO_WORLDDIR} -name \*.orig | xargs rm -f
+	find ${NANO_WORLDDIR} -name \*.orig -delete
 }
 customize_cmd remove_patch_divots
 
