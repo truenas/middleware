@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-05 13:50+0200\n"
-"Last-Translator: ataman <mk@ataman.sk>\n"
+"PO-Revision-Date: 2011-07-07 22:16+0200\n"
+"Last-Translator: najt_k <zic.spse@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
@@ -1725,6 +1725,8 @@ msgstr "Iniciátor"
 #: services/models.py:522
 msgid "Target side user name. It is usually the initiator name by default."
 msgstr ""
+"Používateľské meno na cieľovej strane. Predvolene je to väčšinou meno "
+"iniciátora."
 
 #: services/models.py:532
 msgid "Peer User"
@@ -1744,15 +1746,15 @@ msgstr "Autorizované prístupy"
 
 #: services/models.py:557
 msgid "Target Name"
-msgstr "Názov ciela"
+msgstr "Názov cieľa"
 
 #: services/models.py:558
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr "Základný názov bude pripojený automaticky ak začína bez 'iqn.'."
+msgstr "Základný názov bude pripojený automaticky, ak začína bez 'iqn.'."
 
 #: services/models.py:565
 msgid "Target Alias"
-msgstr "Alias ciela"
+msgstr "Alias cieľa"
 
 #: services/models.py:566
 msgid "Optional user-friendly string of the target."
@@ -1810,13 +1812,15 @@ msgstr ""
 
 #: services/models.py:622
 msgid "Logical Block Size"
-msgstr ""
+msgstr "Veľkosť logického bloku"
 
 #: services/models.py:623
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
 msgstr ""
+"Môžete určiť dĺžku logického bloku (predvolene 512). Pre zachovanie "
+"kompatibility, odporúčaná dĺžka je 512."
 
 #: services/models.py:626 services/models.py:641
 #: templates/services/iscsi_assoctargets.html:5
@@ -1824,7 +1828,7 @@ msgstr ""
 #: templates/services/iscsi_extents.html:5
 #: templates/services/iscsi_targets.html:5
 msgid "Target"
-msgstr "Ciel"
+msgstr "Cieľ"
 
 #: services/models.py:642
 msgid "Target this extent belongs to"
@@ -2539,11 +2543,11 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings"
 msgstr ""
-"Táto možnosť je sada hostiteľov NEoprávnených k prístupu k tomuto modulu, "
-"oddelených čiarkou, medzerou alebo tabulátorom. Keď si zoznamy odporujú, "
-"zoznam povolení má prednosť pred zoznamom zákazov. Keď je nevyhnutné "
-"predvolene zakázať všetkých hostiteľov, použite kľúčové slovo ALL (alebo "
-"sieťovú masku 0.0.0.0/0) a potom v zozname s povoleniami explicitne "
+"Táto možnosť obsahuje zoznam hostiteľov oddelených čiarkou, medzerou alebo "
+"tabulátorom, ktorí NIE sú oprávnení k prístupu k tomuto modulu. Keď si "
+"zoznamy odporujú, zoznam povolení má prednosť pred zoznamom zákazov. Keď je "
+"nevyhnutné predvolene zakázať všetkých hostiteľov, použite kľúčové slovo ALL "
+"(alebo sieťovú masku 0.0.0.0/0) a potom v zozname s povoleniami explicitne "
 "špecifikujte parametre tých hostiteľov, ktoré majú mať povolený prístup. "
 "Ponechajte toto pole prázdne pre uplatnenie predvolených nastavení"
 
@@ -2763,13 +2767,13 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings."
 msgstr ""
-"Táto možnosť obsahuje čiarkou, medzerou alebo tabulátorom oddelený zoznam "
-"hostitelov, ktorý NEMAJÚ povolený prístup k zdieľanému adresáru. Ak existuje "
-"konflikt medzi zoznamami, zoznam povoleným má prednosť. V prípade, že je "
-"potrebné predvoliť zákaz všetkých hostiteľov, použite kľúčové slovo ALL "
-"(alebo sieťovú masku 0.0.0.0/0) a potom explicitne špecifikujte hostiteľov, "
-"ktorí majú mať prístup v poli povoliť hostitelov. Nechajte prázdne pre "
-"použitie predvolených nastavení."
+"Táto možnosť obsahuje zoznam hostiteľov oddelených čiarkou, medzerou alebo "
+"tabulátorom, ktorí NEMAJÚ povolený prístup k zdieľanému adresáru. Ak "
+"existuje konflikt medzi zoznamami, zoznam povolení má prednosť. V prípade, "
+"že je potrebné predvoliť zákaz všetkých hostiteľov, použite kľúčové slovo "
+"ALL (alebo sieťovú masku 0.0.0.0/0) a potom explicitne špecifikujte "
+"hostiteľov, ktorí majú mať prístup v poli povoliť hostitelov. Nechajte "
+"prázdne pre použitie predvolených nastavení."
 
 #: sharing/models.py:87
 msgid "These parameters are added to [Share] section of smb.conf"
@@ -2809,7 +2813,7 @@ msgid ""
 "writing)."
 msgstr ""
 "Táto možnosť vám umožňuje nastaviť heslo zväzku, ktoré môže byť najviac 8 "
-"znakov dlhé (použitie ASCII je tohto času silne doporučené)"
+"znakov dlhé (použitie ASCII je tohto času silne doporučené)."
 
 #: sharing/models.py:122
 msgid "Share Character Set"

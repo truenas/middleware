@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-07-06 00:21+0200\n"
+"PO-Revision-Date: 2011-07-08 00:23+0200\n"
 "Last-Translator: Christian <christian@junker.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
@@ -696,8 +696,9 @@ msgid "The group %s is not valid."
 msgstr ""
 
 #: freeadmin/forms.py:138
+#, fuzzy
 msgid "The path must reside within a volume mount point"
-msgstr ""
+msgstr "Stien skal være under enheds mount point"
 
 #: freeadmin/navtree.py:315
 #, python-format
@@ -722,12 +723,12 @@ msgid "Shutdown"
 msgstr "Luk ned"
 
 #: freeadmin/views.py:225
-#, fuzzy, python-format
+#, python-format
 msgid "%s successfully added."
 msgstr "%s blev tilføjet."
 
 #: freeadmin/views.py:384 freeadmin/views.py:386
-#, fuzzy, python-format
+#, python-format
 msgid "%s successfully updated."
 msgstr "%s blev opdateret."
 
@@ -736,7 +737,7 @@ msgid "The service failed to restart."
 msgstr "Service kunne ikke genstarte"
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
-#, fuzzy, python-format
+#, python-format
 msgid "%s successfully deleted."
 msgstr "%s blev slettet."
 
@@ -761,7 +762,6 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "Navneserver 1 skal udfyldes før navneserver 2"
 
 #: network/forms.py:100
-#, fuzzy
 msgid "Parent Interface"
 msgstr "Enhedsnavn"
 
@@ -872,16 +872,16 @@ msgstr "Valg"
 #: network/models.py:157 network/models.py:216
 #: templates/network/interface.html:5
 msgid "Interface"
-msgstr ""
+msgstr "Netværks enhed"
 
 #: network/models.py:158 templates/network/index.html:5
 msgid "Interfaces"
-msgstr ""
+msgstr "Netværks enheder"
 
 #: network/models.py:172 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr ""
+msgstr "Virtuel netværks enhed"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
@@ -890,11 +890,11 @@ msgstr "Netværks navne skal være vlanXX, hvor XX er et heltal."
 #: network/models.py:178 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr ""
+msgstr "Fysisk netværks enhed"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
-msgstr ""
+msgstr "VLAN mærke"
 
 #: network/models.py:185 network/models.py:282 services/models.py:74
 #: services/models.py:766 storage/models.py:95
@@ -916,7 +916,7 @@ msgstr "Protokol type"
 
 #: network/models.py:241
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "LAGG netværks gruppe"
 
 #: network/models.py:244
 msgid "LAGG Priority Number"
@@ -928,11 +928,11 @@ msgstr "Fysisk netkort"
 
 #: network/models.py:264 templates/network/index.html:7
 msgid "Link Aggregation"
-msgstr ""
+msgstr "Link samling"
 
 #: network/models.py:265 network/nav.py:53
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Link samlinger"
 
 #: network/models.py:274
 msgid "Destination network"
@@ -960,11 +960,11 @@ msgstr "Netværks sammenfatning"
 
 #: network/nav.py:30
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "Opret link samling"
 
 #: network/nav.py:41
 msgid "View All Link Aggregations"
-msgstr ""
+msgstr "Vis alle link samlinger"
 
 #: network/views.py:180
 msgid "LAGG successfully added"
@@ -1060,9 +1060,8 @@ msgid "Secret"
 msgstr "Hemmelighed"
 
 #: services/forms.py:291 services/models.py:527
-#, fuzzy
 msgid "Target side secret."
-msgstr "Target side hemmelighed."
+msgstr "Modtager side hemmelighed."
 
 #: services/forms.py:292
 #, fuzzy
@@ -1091,7 +1090,7 @@ msgstr "Hemmeligheder er ikke ens"
 
 #: services/forms.py:324 services/forms.py:325
 msgid "The peer secret is required if you set a peer user."
-msgstr ""
+msgstr "En gensidig hemmelighed er påkrævet, hvis du sætter en gensidig bruger."
 
 #: services/forms.py:328
 msgid "The peer secret cannot be the same as user secret."
