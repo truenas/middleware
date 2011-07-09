@@ -811,19 +811,30 @@ class MountPointAccessForm(Form):
     mp_user = UserField(label=_('Owner (user)'))
     mp_group = GroupField(label=_('Owner (group)'))
     mp_mode = UnixPermissionField(label=_('Mode'))
+    mp_acl = forms.ChoiceField(label=_('Type of ACL'), choices=(
+        ('unix', 'Unix'),
+        ('windows', 'Windows'),
+        ), initial='unix', widget=forms.widgets.RadioSelect())
     mp_recursive = forms.BooleanField(initial=False,
                                       required=False,
                                       label=_('Set permission recursively')
                                       )
+
     def __init__(self, *args, **kwargs):
         super(MountPointAccessForm, self).__init__(*args, **kwargs)
 
         path = kwargs.get('initial', {}).get('path', None)
         if path:
+            import os
+            if os.path.exists(os.path.join(path, ".windows")):
+                self.fields['mp_acl'].initial = 'windows'
+            else:
+                self.fields['mp_acl'].initial = 'unix'
             user, group = notifier().mp_get_owner(path)
             self.fields['mp_mode'].initial = "%.3o" % notifier().mp_get_permission(path)
             self.fields['mp_user'].initial = user
             self.fields['mp_group'].initial = group
+
 
     def commit(self, path='/mnt/'):
 
@@ -832,11 +843,12 @@ class MountPointAccessForm(Form):
             user=self.cleaned_data['mp_user'].__str__(),
             group=self.cleaned_data['mp_group'].__str__(),
             mode=self.cleaned_data['mp_mode'].__str__(),
-            recursive=self.cleaned_data['mp_recursive'])
+            recursive=self.cleaned_data['mp_recursive'],
+            acl=self.cleaned_data['mp_acl'])
 
 class PeriodicSnapForm(ModelForm):
     class Meta:
-        model = models.Task 
+        model = models.Task
         widgets = {
             'task_byweekday': CheckboxSelectMultiple(choices=choices.WEEKDAYS_CHOICES)
             #'task_bymonth': CheckboxSelectMultiple(choices=choices.MONTHS_CHOICES)

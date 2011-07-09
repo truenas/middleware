@@ -1100,7 +1100,14 @@ class notifier:
         self.reload("cifs")
 
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',
-                             mode='0755', recursive=False):
+                             mode='0755', recursive=False, acl='unix'):
+
+        winacl = os.path.join(path, ".windows")
+        winexists = os.path.exists(winacl)
+        if acl == 'windows' and not winexists:
+            open(winacl, 'a').close()
+        elif acl == 'unix' and winexists:
+            os.unlink(winacl)
 
         hier = NFSv4_ACL_Hierarchy(path)
         hier.set_defaults(recursive)
