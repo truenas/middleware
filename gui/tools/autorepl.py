@@ -195,7 +195,8 @@ Hello,
         else:
             syslog.syslog(syslog.LOG_NOTICE, "Can not locate %s on remote system, starting from there" % (release_list[0]))
             # Reset the "latest" snapshot to a new one.
-            system('/sbin/zfs set freenas:state=NEW %s' % (release_list[0]))
+            system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, release_list[0]))
+            wanted_list.insert(0, release_list[0])
             release_list = []
             last_snapshot = ''
     if len(release_list) == 0:
