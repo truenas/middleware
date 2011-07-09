@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:45-0700\n"
-"PO-Revision-Date: 2011-06-08 11:32+0200\n"
-"Last-Translator: hamzul <zulkiflih@gmail.com>\n"
+"PO-Revision-Date: 2011-07-08 11:46+0200\n"
+"Last-Translator: promode2u <promode2u@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ms\n"
 "MIME-Version: 1.0\n"
@@ -123,9 +123,8 @@ msgid "Level 127 - Intermediate power usage with Standby"
 msgstr "Level 127 - penjimatan kuasa sederhana dalam mode sedia"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Level 128 - penjimatan kuasa diluar mode sedia (no spindown)"
+msgstr "Level 128 - penggunaan kuasa tanpa mode sedia (no spindown)"
 
 #: choices.py:86
 #, fuzzy
@@ -402,9 +401,8 @@ msgid "Read-only"
 msgstr "baca sahaja"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "baca sahaja"
+msgstr "catat sahaja"
 
 #: choices.py:443
 msgid "Read and Write"
@@ -413,27 +411,27 @@ msgstr ""
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minit) minit"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(jam) jam"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(jam) jam"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(hari) hari"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(minggu) minggu"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
@@ -498,7 +496,7 @@ msgstr "katalaluan"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:188
 msgid "Password confirmation"
-msgstr "Katalaluan Sah"
+msgstr "Pengesahan Katalaluan"
 
 #: account/forms.py:203 account/forms.py:310 system/forms.py:189
 msgid "Enter the same password as above, for verification."
@@ -616,7 +614,7 @@ msgstr "Nama Penuh"
 
 #: account/models.py:115 templates/account/bsdusers.html:91
 msgid "E-mail"
-msgstr "E-mail"
+msgstr "Emel"
 
 #: account/models.py:120 account/models.py:159 services/models.py:521
 #: services/models.py:1203 system/models.py:242 system/models.py:380

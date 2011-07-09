@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-01 21:38+0200\n"
-"Last-Translator: Anonymous Pootle User\n"
+"PO-Revision-Date: 2011-07-08 23:23+0200\n"
+"Last-Translator: Paktas <zilvinas.bartkus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n"
-"%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%"
+"100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
@@ -25,91 +25,105 @@ msgstr ""
 
 #: choices.py:36 system/models.py:234 templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:37
 msgid "TLS"
-msgstr ""
+msgstr "TLS"
 
 #: choices.py:42
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: choices.py:43
 msgid "HTTPS"
-msgstr ""
+msgstr "HTTPS"
 
 #: choices.py:48 choices.py:217
 msgid "Auto"
-msgstr ""
+msgstr "Automatiškai"
 
 #: choices.py:49
 msgid "PIO0"
-msgstr ""
+msgstr "PIO0"
 
 #: choices.py:50
+#, fuzzy
 msgid "PIO1"
-msgstr ""
+msgstr "PIO1"
 
 #: choices.py:51
+#, fuzzy
 msgid "PIO2"
-msgstr ""
+msgstr "PIO2"
 
 #: choices.py:52
+#, fuzzy
 msgid "PIO3"
-msgstr ""
+msgstr "PIO3"
 
 #: choices.py:53
+#, fuzzy
 msgid "PIO4"
-msgstr ""
+msgstr "PIO4"
 
 #: choices.py:54
+#, fuzzy
 msgid "WDMA0"
-msgstr ""
+msgstr "WDMA0"
 
 #: choices.py:55
+#, fuzzy
 msgid "WDMA1"
-msgstr ""
+msgstr "WDMA1"
 
 #: choices.py:56
+#, fuzzy
 msgid "WDMA2"
-msgstr ""
+msgstr "WDMA2"
 
 #: choices.py:57
+#, fuzzy
 msgid "UDMA-16"
-msgstr ""
+msgstr "UDMA-16"
 
 #: choices.py:58
+#, fuzzy
 msgid "UDMA-33"
-msgstr ""
+msgstr "UDMA-33"
 
 #: choices.py:59
+#, fuzzy
 msgid "UDMA-66"
-msgstr ""
+msgstr "UDMA-66"
 
 #: choices.py:60
+#, fuzzy
 msgid "UDMA-100"
-msgstr ""
+msgstr "UDMA-100"
 
 #: choices.py:61
+#, fuzzy
 msgid "UDMA-133"
-msgstr ""
+msgstr "UDMA-133"
 
 #: choices.py:62
+#, fuzzy
 msgid "SATA 1.5Gbit/s"
-msgstr ""
+msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:63
+#, fuzzy
 msgid "SATA 3.0Gbit/s"
-msgstr ""
+msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:67
 msgid "Always On"
-msgstr ""
+msgstr "Visada Įjungtas"
 
 #: choices.py:81 choices.py:90
 msgid "Disabled"
-msgstr ""
+msgstr "Išjungta"
 
 #: choices.py:82
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
@@ -137,119 +151,119 @@ msgstr ""
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
-msgstr ""
+msgstr "Minimaliai"
 
 #: choices.py:92
 msgid "Medium"
-msgstr ""
+msgstr "Vidutiniškai"
 
 #: choices.py:93
 msgid "Maximum"
-msgstr ""
+msgstr "Maksimaliai"
 
 #: choices.py:127 templates/storage/tasks.html:85
 msgid "January"
-msgstr ""
+msgstr "Sausis"
 
 #: choices.py:128 templates/storage/tasks.html:88
 msgid "February"
-msgstr ""
+msgstr "Vasaris"
 
 #: choices.py:129 templates/storage/tasks.html:91
 msgid "March"
-msgstr ""
+msgstr "Kodas"
 
 #: choices.py:130 templates/storage/tasks.html:94
 msgid "April"
-msgstr ""
+msgstr "Balandis"
 
 #: choices.py:131 templates/storage/tasks.html:97
 msgid "May"
-msgstr ""
+msgstr "Gegužė"
 
 #: choices.py:132 templates/storage/tasks.html:100
 msgid "June"
-msgstr ""
+msgstr "Birželis"
 
 #: choices.py:133 templates/storage/tasks.html:103
 msgid "July"
-msgstr ""
+msgstr "Liepa"
 
 #: choices.py:134 templates/storage/tasks.html:106
 msgid "August"
-msgstr ""
+msgstr "Rugpjūtis"
 
 #: choices.py:135 templates/storage/tasks.html:109
 msgid "September"
-msgstr ""
+msgstr "Rugsėjis"
 
 #: choices.py:136 templates/storage/tasks.html:112
 msgid "October"
-msgstr ""
+msgstr "Spalis"
 
 #: choices.py:137 templates/storage/tasks.html:115
 msgid "November"
-msgstr ""
+msgstr "Lapkritis"
 
 #: choices.py:138 templates/storage/tasks.html:118
 msgid "December"
-msgstr ""
+msgstr "Gruodis"
 
 #: choices.py:141 templates/storage/tasks.html:56
 msgid "Monday"
-msgstr ""
+msgstr "Pirmadienis"
 
 #: choices.py:142 templates/storage/tasks.html:59
 msgid "Tuesday"
-msgstr ""
+msgstr "Antradienis"
 
 #: choices.py:143 templates/storage/tasks.html:62
 msgid "Wednesday"
-msgstr ""
+msgstr "Trečiadienis"
 
 #: choices.py:144 templates/storage/tasks.html:65
 msgid "Thursday"
-msgstr ""
+msgstr "Ketvirtadienis"
 
 #: choices.py:145 templates/storage/tasks.html:68
 msgid "Friday"
-msgstr ""
+msgstr "Penktadienis"
 
 #: choices.py:146 templates/storage/tasks.html:71
 msgid "Saturday"
-msgstr ""
+msgstr "Šeštadienis"
 
 #: choices.py:147 templates/storage/tasks.html:74
 msgid "Sunday"
-msgstr ""
+msgstr "Sekmadienis"
 
 #: choices.py:158
 msgid "Anonymous"
-msgstr ""
+msgstr "Anonimiškai"
 
 #: choices.py:159
 msgid "Local User"
-msgstr ""
+msgstr "Vietinis Vartotojas"
 
 #: choices.py:180
 msgid "Normal"
-msgstr ""
+msgstr "Normaliai"
 
 #: choices.py:181
 msgid "Full"
-msgstr ""
+msgstr "Pilnai"
 
 #: choices.py:182
 msgid "Debug"
-msgstr ""
+msgstr "Debug'as"
 
 #: choices.py:186
 msgid "Default"
-msgstr ""
+msgstr "Numatytasis"
 
 #: choices.py:187
 msgid "Time Machine"
-msgstr ""
+msgstr "Time Machine"
 
 #: choices.py:190
 msgid "No case folding"
@@ -269,11 +283,11 @@ msgstr ""
 
 #: choices.py:198
 msgid "File"
-msgstr ""
+msgstr "Failas"
 
 #: choices.py:199
 msgid "Device"
-msgstr ""
+msgstr "Įrenginys"
 
 #: choices.py:200
 msgid "ZFS Volume"
@@ -283,15 +297,16 @@ msgstr ""
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
 #: templates/storage/wizard.html:91
 msgid "Disk"
-msgstr ""
+msgstr "Diskas"
 
 #: choices.py:205
+#, fuzzy
 msgid "DVD"
-msgstr ""
+msgstr "DVD"
 
 #: choices.py:206
 msgid "Tape"
-msgstr ""
+msgstr "Juosta"
 
 #: choices.py:207
 msgid "Pass"
@@ -299,20 +314,21 @@ msgstr ""
 
 #: choices.py:211
 msgid "read-write"
-msgstr ""
+msgstr "skaityti-rašyti"
 
 #: choices.py:212
 msgid "read-only"
-msgstr ""
+msgstr "tik-skaityti"
 
 #: choices.py:216 choices.py:222 services/forms.py:392 services/forms.py:394
 #: services/forms.py:741 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "Joks"
 
 #: choices.py:218
+#, fuzzy
 msgid "CHAP"
-msgstr ""
+msgstr "CHAP"
 
 #: choices.py:219
 msgid "Mutual CHAP"
@@ -344,11 +360,11 @@ msgstr ""
 
 #: choices.py:275
 msgid "On"
-msgstr ""
+msgstr "Įjungta"
 
 #: choices.py:276 choices.py:281
 msgid "Off"
-msgstr ""
+msgstr "Išjungta"
 
 #: choices.py:282
 msgid "lzjb (recommended)"
@@ -490,11 +506,11 @@ msgstr ""
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
 #: templates/account/bsdusers.html.py:90
 msgid "Password"
-msgstr ""
+msgstr "Slaptažodis"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:188
 msgid "Password confirmation"
-msgstr ""
+msgstr "Slaptažodžio patvirtinimas"
 
 #: account/forms.py:203 account/forms.py:310 system/forms.py:189
 msgid "Enter the same password as above, for verification."
@@ -575,7 +591,7 @@ msgstr ""
 
 #: account/models.py:48 templates/account/index.html:10
 msgid "Groups"
-msgstr ""
+msgstr "Grupės"
 
 #: account/models.py:63
 #, python-format
@@ -623,7 +639,7 @@ msgstr ""
 
 #: account/models.py:121 templates/account/index.html:13
 msgid "Users"
-msgstr ""
+msgstr "Vartotojai"
 
 #: account/models.py:138
 #, python-format
@@ -647,15 +663,15 @@ msgstr ""
 
 #: account/nav.py:26 templates/account/index.html:2
 msgid "My Account"
-msgstr ""
+msgstr "Mano paskyra"
 
 #: account/nav.py:36
 msgid "View All Users"
-msgstr ""
+msgstr "Rodyti Visus Vartotojus"
 
 #: account/nav.py:43
 msgid "View All Groups"
-msgstr ""
+msgstr "Rodyti Visas Grupes"
 
 #: account/views.py:78
 msgid "Password successfully updated."
@@ -709,16 +725,16 @@ msgstr ""
 
 #: freeadmin/navtree.py:353 templates/freeadmin/index.html:53
 msgid "Reboot"
-msgstr ""
+msgstr "Perkrauti"
 
 #: freeadmin/navtree.py:360 templates/freeadmin/index.html:65
 msgid "Shutdown"
-msgstr ""
+msgstr "Išjungti"
 
 #: freeadmin/views.py:225
 #, python-format
 msgid "%s successfully added."
-msgstr ""
+msgstr "%s sėkmnigai pridėtas."
 
 #: freeadmin/views.py:384 freeadmin/views.py:386
 #, python-format
@@ -823,7 +839,7 @@ msgstr ""
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
-msgstr ""
+msgstr "DHCP"
 
 #: network/models.py:107
 msgid ""
@@ -833,7 +849,7 @@ msgstr ""
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr ""
+msgstr "IPv4 Adresas"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
@@ -1599,7 +1615,7 @@ msgstr ""
 #: templates/sharing/apple.html:14 templates/sharing/unix.html:14
 #: templates/sharing/windows.html:14
 msgid "Comment"
-msgstr ""
+msgstr "Komentaras"
 
 #: services/models.py:395 services/models.py:444 services/models.py:490
 msgid "You may enter a description here for your reference."
@@ -2871,7 +2887,7 @@ msgstr ""
 
 #: sharing/models.py:243 system/models.py:409
 msgid "Quiet"
-msgstr ""
+msgstr "Tyliai"
 
 #: sharing/models.py:244
 msgid ""
@@ -3147,7 +3163,7 @@ msgstr ""
 
 #: storage/models.py:133
 msgid "Group Membership"
-msgstr ""
+msgstr "Grupės Narystė"
 
 #: storage/models.py:134
 msgid "The disk group containing this disk"

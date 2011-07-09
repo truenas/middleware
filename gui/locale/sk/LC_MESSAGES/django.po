@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-07 22:16+0200\n"
+"PO-Revision-Date: 2011-07-08 20:09+0200\n"
 "Last-Translator: najt_k <zic.spse@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
@@ -788,7 +788,7 @@ msgstr "Sieť '%s' nie je platná, očakávané CIDR."
 #: network/models.py:42 services/models.py:1074
 #: templates/system/system_info.html:4
 msgid "Hostname"
-msgstr "Meno hostitela (Hostname)"
+msgstr "Meno hostiteľa (Hostname)"
 
 #: network/models.py:47
 msgid "Domain"
@@ -4038,7 +4038,7 @@ msgstr "Dodatoćné voľby pre rsync príkazový riadok (obvykle prázdne)"
 
 #: system/models.py:431
 msgid "Rsyncs"
-msgstr "Rsynky"
+msgstr "Rsync"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -5117,7 +5117,7 @@ msgstr "Odoslať skúšobný mail"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr "Hodinovo"
+msgstr "Hodina"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
@@ -5125,7 +5125,7 @@ msgstr "Hodinové grafy"
 
 #: templates/system/reporting.html:18
 msgid "Daily"
-msgstr "Denne"
+msgstr "Deň"
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
@@ -5133,7 +5133,7 @@ msgstr "Denné grafy"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr "Týždenne"
+msgstr "Týždeň"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"
@@ -5141,7 +5141,7 @@ msgstr "Týždenné grafy"
 
 #: templates/system/reporting.html:46
 msgid "Monthly"
-msgstr "Mesačne"
+msgstr "Mesiac"
 
 #: templates/system/reporting.html:47
 msgid "Monthly Graphs"
@@ -5149,7 +5149,7 @@ msgstr "Mesačné grafy"
 
 #: templates/system/reporting.html:60
 msgid "Yearly"
-msgstr "Ročne"
+msgstr "Rok"
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"

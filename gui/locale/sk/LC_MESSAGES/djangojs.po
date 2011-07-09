@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-07-02 17:00+0200\n"
+"PO-Revision-Date: 2011-07-08 17:25+0200\n"
 "Last-Translator: najt_k <zic.spse@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:114
 msgid "Reporting"
-msgstr "Oznamovanie"
+msgstr "Štatistika"
 
 #: media/lib/js/freeadmin.js:126
 msgid "Settings"

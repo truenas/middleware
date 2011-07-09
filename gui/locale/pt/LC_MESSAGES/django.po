@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-07-06 09:37+0200\n"
-"Last-Translator: iMiguel <miguel.rosa17@gmail.com>\n"
+"PO-Revision-Date: 2011-07-08 12:29+0200\n"
+"Last-Translator: Nuno <nuno.piscinas@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -2657,7 +2657,7 @@ msgstr "Vêr Todas as Extensões do Dispositivo"
 
 #: services/nav.py:70 templates/services/iscsi.html:7
 msgid "Device Extents"
-msgstr ""
+msgstr "Extensões Dispositivos"
 
 #: services/nav.py:92 templates/services/iscsi_dextents.html:39
 #: templates/services/iscsi_dextents.html:41
@@ -2672,7 +2672,7 @@ msgstr "Ver Todas as Extensões"
 
 #: services/nav.py:114 templates/services/iscsi.html:9
 msgid "Extents"
-msgstr ""
+msgstr "Extensões"
 
 #: services/nav.py:136
 msgid "ISCSI"
@@ -3898,7 +3898,7 @@ msgstr "Nome Comum"
 
 #: system/models.py:224
 msgid "Common Name (eg, YOUR name)"
-msgstr "Nome Comum (ex. O SEU nome)"
+msgstr "Nome Comum (ex. o SEU nome)"
 
 #: system/models.py:229
 msgid "SSL Certificate"
@@ -4094,7 +4094,7 @@ msgstr "Opção extra para linha de comando rsync (normalmente vazia)"
 
 #: system/models.py:431
 msgid "Rsyncs"
-msgstr "syncs"
+msgstr "Rsyncs"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4481,7 +4481,7 @@ msgstr "Sem interface LAGG definido"
 
 #: templates/network/lagg.html:60
 msgid "Add LAGG Interface "
-msgstr "Adicionar Interface LAGG"
+msgstr "Adicionar Interface LAGG "
 
 #: templates/network/lagg.html:62
 msgid "Add LAGG"
@@ -4502,7 +4502,7 @@ msgstr "Acção"
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
 msgid "Add LAGG Member"
-msgstr ""
+msgstr "Adicionar membro LAGG"
 
 #: templates/network/staticroute.html:5
 msgid "Destination"
@@ -4643,7 +4643,7 @@ msgstr "Definições de ISCSI"
 
 #: templates/services/iscsi.html:2
 msgid "iSCSI Management"
-msgstr "Gestão do iSCSI"
+msgstr "iSCSI Gestão"
 
 #: templates/services/iscsi.html:5
 msgid "Targets"
@@ -4651,7 +4651,7 @@ msgstr "Destinos"
 
 #: templates/services/iscsi.html:11
 msgid "Associated Targets"
-msgstr ""
+msgstr "Destinos Associados"
 
 #: templates/services/iscsi.html:13
 msgid "Authentication"
@@ -4843,15 +4843,15 @@ msgstr "Editar Disco"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
-msgstr ""
+msgstr "Editar Dataset"
 
 #: templates/storage/datasets.html:9
 msgid "Add Dataset"
-msgstr ""
+msgstr "Adicionar Dataset"
 
 #: templates/storage/disk_detach.html:7
 msgid "Are you sure you want to detach?"
-msgstr ""
+msgstr "Tem a certeza que pretende desconectar?"
 
 #: templates/storage/disk_replacement.html:9
 msgid "Replacing disk"
@@ -4871,20 +4871,20 @@ msgstr "Volumes activos"
 
 #: templates/storage/index.html:5
 msgid "ZFS Snapshots"
-msgstr ""
+msgstr "ZFS Snapshots"
 
 #: templates/storage/index.html:9
 msgid "ZFS Replication"
-msgstr ""
+msgstr "Replicação ZFS"
 
 #: templates/storage/manualsnap.html:13
 msgid "Manually Create Snapshot"
-msgstr ""
+msgstr "Criar manualmente um Snapshot"
 
 #: templates/storage/periodicsnap.html:13 templates/storage/volumes.html:178
 #: templates/storage/volumes.html.py:182
 msgid "Create Snapshot"
-msgstr ""
+msgstr "Criar snapshot"
 
 #: templates/storage/permission.html:6
 msgid "Change permission"
@@ -4901,11 +4901,11 @@ msgstr "Alterar"
 
 #: templates/storage/replications.html:9
 msgid "Add Replication"
-msgstr ""
+msgstr "Adicionar Replicação"
 
 #: templates/storage/replications.html:13
 msgid "Mount point"
-msgstr ""
+msgstr "Ponto de Montagem"
 
 #: templates/storage/replications.html:14
 msgid "Last snapshot"
@@ -4914,28 +4914,28 @@ msgstr "Último snapshot"
 #: templates/storage/replications.html:30
 #: templates/storage/replications.html:34
 msgid "Delete Replication"
-msgstr ""
+msgstr "Eliminar Replicação"
 
 #: templates/storage/replications.html:39
 #: templates/storage/replications.html:43
 msgid "Edit Replication"
-msgstr ""
+msgstr "Editar Replicação"
 
 #: templates/storage/replications.html:49
 msgid "No ZFS replication available"
-msgstr ""
+msgstr "Sem Replicação ZFS disponível"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
 msgid "Are you sure you want to rollback the snapshot to previous state?"
-msgstr ""
+msgstr "Tem a certeza que pretende reverter o snapshot para o estado anterior?"
 
 #: templates/storage/snapshots.html:4
 msgid "Dataset name"
-msgstr ""
+msgstr "Nome do Dataset"
 
 #: templates/storage/snapshots.html:5
 msgid "Snapshot name"
-msgstr ""
+msgstr "Nome do snapshot"
 
 #: templates/storage/snapshots.html:6
 msgid "Used space"
@@ -4955,15 +4955,15 @@ msgstr "Apagar snapshot"
 
 #: templates/storage/snapshots.html:43 templates/storage/snapshots.html:47
 msgid "Rollback to this snapshot"
-msgstr ""
+msgstr "Reverter para esta captura"
 
 #: templates/storage/snapshots.html:55
 msgid "No ZFS snapshot available"
-msgstr ""
+msgstr "Sem captura ZFS disponível"
 
 #: templates/storage/tasks.html:6
 msgid "Periodic Snapshots"
-msgstr ""
+msgstr "Capturas períodicas"
 
 #: templates/storage/tasks.html:10
 msgid "Create Periodic Snapshot"
@@ -4971,15 +4971,15 @@ msgstr "Criar Sanpshot Periódico"
 
 #: templates/storage/tasks.html:14
 msgid "Periodic Snapshot Schedule"
-msgstr ""
+msgstr "Calendarizar Captura Periódica"
 
 #: templates/storage/tasks.html:17
 msgid "There are no scheduled snapshots."
-msgstr ""
+msgstr "Não existem capturas calendarizadas."
 
 #: templates/storage/tasks.html:24
 msgid "How"
-msgstr ""
+msgstr "Como"
 
 #: templates/storage/tasks.html:25
 msgid "Keep snapshot for"
@@ -5011,7 +5011,7 @@ msgstr "sempre"
 
 #: templates/storage/tasks.html:148
 msgid "No periodic snapshots scheduled"
-msgstr ""
+msgstr "Sem capturas periódicas definidas"
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
