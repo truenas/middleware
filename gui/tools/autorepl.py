@@ -114,7 +114,6 @@ for replication in replication_tasks:
                   if state == 'LATEST':
                        release_list.append(snapshot)
                        syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to release list" % (snapshot))
-                       MNTLOCK.unlock()
                        continue
                   elif state == 'NEW':
                        wanted_list.append(snapshot)
@@ -129,11 +128,9 @@ for replication in replication_tasks:
                        # The snapshot is already replicated, or is not
                        # an automated snapshot.
                        syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s unwanted" % (snapshot))
-                       MNTLOCK.unlock()
                        continue
                   else:
                        # This should be exception but skip for now.
-                       MNTLOCK.unlock()
                        continue
                   # NEW or INPROGRESS (stale), change the state to reflect that
                   # we own the snapshot by using INPROGRESS-{pid}.
@@ -243,6 +240,8 @@ Hello,
                 replication.repl_lastsnapshot = last_snapshot
                 replication.save()
                 continue
+            else:
+                syslog.syslog(syslog.LOG_ALERT, "Remote and local mismatch after replication: %s vs %s" % (expected_local_snapshot, snapname))
 
         # Something wrong, report.
         syslog.syslog(syslog.LOG_ALERT, "Replication of %s failed with %s" % (snapname, msg))
@@ -253,5 +252,6 @@ Hello,
 ======================
 %s
             """ % (localfs, remote, msg), interval = timedelta(hours = 2), channel = 'autorepl')
+        break
 
 syslog.syslog(syslog.LOG_DEBUG, "Autosnap replication finished (our tag: %s)" % (inprogress_tag))
