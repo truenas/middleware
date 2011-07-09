@@ -832,7 +832,7 @@ class NFSv4_ACL_Hierarchy:
             self.__recurse(self.__path, self.__set_defaults, None)
 
         else:
-            self.__set_defaults(path)
+            self.__set_defaults(self.__path)
 
     def __reset(self, path, args = None):
         acl = NFSv4_ACL(path)
