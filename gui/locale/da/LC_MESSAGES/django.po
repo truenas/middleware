@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-07-08 00:23+0200\n"
+"PO-Revision-Date: 2011-07-10 09:26+0200\n"
 "Last-Translator: Christian <christian@junker.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
@@ -341,7 +341,7 @@ msgstr "Påkrævet"
 
 #: choices.py:274 choices.py:280
 msgid "Inherit"
-msgstr "Overtag"
+msgstr "Nedarver"
 
 #: choices.py:275
 msgid "On"
@@ -411,27 +411,27 @@ msgstr "Læse og skrive"
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minutes) minutter"
+msgstr "%(minutes)s minutter"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(hour) timer"
+msgstr "%(hour)s timer"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr "%(hours) timer"
+msgstr "%(hours)s timer"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr "%(day) dage"
+msgstr "%(day)s dage"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr "%(week) uger"
+msgstr "%(week)s uger"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
@@ -482,12 +482,11 @@ msgstr "Brugernavn"
 
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr ""
-"Påkrævet. 30 tegn eller færre. Kun bogstaver, tal og tegnene @ . + - _."
+msgstr "Påkrævet. 30 tegn eller færre. Kun bogstaver, tal og tegnene @/./+/-/_"
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr "Denne værdi kan kun indeholde bogstaver, tal og tegnene @ . + - _."
+msgstr "Denne værdi kan kun indeholde bogstaver, tal og tegnene @/./+/-/_"
 
 #: account/forms.py:201 account/forms.py:308 services/models.py:680
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
@@ -501,7 +500,7 @@ msgstr "Adgangskode bekræftelse"
 
 #: account/forms.py:203 account/forms.py:310 system/forms.py:189
 msgid "Enter the same password as above, for verification."
-msgstr "Indtast for at verificere den samme adgangskode som ovenfor."
+msgstr "Indtast, for at verificere, den samme adgangskode som ovenfor."
 
 #: account/forms.py:204 account/forms.py:346 account/models.py:105
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:89
@@ -616,7 +615,7 @@ msgstr "Fulde navn"
 
 #: account/models.py:115 templates/account/bsdusers.html:91
 msgid "E-mail"
-msgstr "E-post"
+msgstr "E-mail"
 
 #: account/models.py:120 account/models.py:159 services/models.py:521
 #: services/models.py:1203 system/models.py:242 system/models.py:380
