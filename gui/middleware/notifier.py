@@ -1646,6 +1646,33 @@ class notifier:
             retval = 'Try again later.'
         return retval
 
+    # Reactivate replication on all snapshots
+    def zfs_dataset_reset_replicated_snapshots(self, name, recursive=False):
+        from freenasUI.common.locks import mntlock
+        name = str(name)
+        retval = None
+        if recursive:
+            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r %s" % (name)
+        else:
+            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 %s" % (name)
+        MNTLOCK = mntlock()
+        try:
+            MNTLOCK.lock_try()
+            zfsproc = self.__pipeopen(zfscmd)
+            output = zfsproc.communicate()[0]
+            if output != '':
+                snapshots_list = output.split('\n')
+            for snapshot_item in snapshots_list:
+                if snapshot_item != '':
+                    snapshot, state = snapshot_item.split('\t')
+                    if state != 'NEW':
+                        self.zfs_set_option(snapshot, 'freenas:state', 'NEW')
+            MNTLOCK.unlock()
+            del MNTLOCK
+        except IOError:
+            retval = 'Try again later.'
+        return retval
+
     def geom_disk_state(self, geom, group_type, devname):
         p1 = self.__pipeopen("geom %s list %s" % (str(group_type), str(geom)))
         output = p1.communicate()[0]
