@@ -102,45 +102,57 @@ for replication in replication_tasks:
     # Test if there is work to do, if so, own them
     MNTLOCK.lock()
     syslog.syslog(syslog.LOG_DEBUG, "Checking dataset %s" % (localfs))
-    zfsproc = pipeopen('/sbin/zfs list -Ht snapshot -o name,freenas:state -r -s creation -d 1 %s' % (localfs))
+    zfsproc = pipeopen('/sbin/zfs list -Ht snapshot -o name,freenas:state -r -S creation -d 1 %s' % (localfs))
     zfsproc.wait()
     output = zfsproc.communicate()[0]
     if output != '':
         snapshots_list = output.split('\n')
+        found_latest = False
         for snapshot_item in snapshots_list:
-             if snapshot_item != '':
-                  snapshot, state = snapshot_item.split('\t')
-                  syslog.syslog(syslog.LOG_DEBUG, "Snapshot: %s State: %s" % (snapshot, state))
-                  if state == 'LATEST':
-                       release_list.append(snapshot)
-                       syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to release list" % (snapshot))
-                       continue
-                  elif state == 'NEW':
-                       wanted_list.append(snapshot)
-                       syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list" % (snapshot))
-                  elif state[:11] == 'INPROGRESS-':
-                       # Rob ownership for orphan snapshot, but quit if
-                       # there is already inprogres transfer.
-                       ExitIfRunning(int(state[11:]))
-                       wanted_list.append(snapshot)
-                       syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list (continuing failed backup)" % (snapshot))
-                  elif state == '-':
-                       # The snapshot is already replicated, or is not
-                       # an automated snapshot.
-                       syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s unwanted" % (snapshot))
-                       continue
-                  else:
-                       # This should be exception but skip for now.
-                       continue
-                  # NEW or INPROGRESS (stale), change the state to reflect that
-                  # we own the snapshot by using INPROGRESS-{pid}.
-                  system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, snapshot))
+            if snapshot_item != '':
+                snapshot, state = snapshot_item.split('\t')
+                if not found_latest:
+                    syslog.syslog(syslog.LOG_DEBUG, "Snapshot: %s State: %s" % (snapshot, state))
+                    if state == 'LATEST':
+                        found_latest = True
+                        release_list.append(snapshot)
+                        syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to release list" % (snapshot))
+                        continue
+                    elif state == 'NEW':
+                        wanted_list.insert(0, snapshot)
+                        syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list" % (snapshot))
+                    elif state[:11] == 'INPROGRESS-':
+                        # Rob ownership for orphan snapshot, but quit if
+                        # there is already inprogres transfer.
+                        ExitIfRunning(int(state[11:]))
+                        wanted_list.insert(0, snapshot)
+                        syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list (continuing failed backup)" % (snapshot))
+                    elif state == '-':
+                        # The snapshot is already replicated, or is not
+                        # an automated snapshot.
+                        syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s unwanted" % (snapshot))
+                        continue
+                    else:
+                        # This should be exception but skip for now.
+                        continue
+                    # NEW or INPROGRESS (stale), change the state to reflect that
+                    # we own the snapshot by using INPROGRESS-{pid}.
+                    system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, snapshot))
+                else:
+                    # assert (len(release_list) == 1) because found_latest
+                    if state != '-':
+                        system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, release_list[0]))
+                        system('/sbin/zfs set freenas:state=LATEST %s' % (snapshot))
+                        release_list = []
+                        release_list.append(snapshot)
+                        syslog.syslog(syslog.LOG_ALERT, "Snapshot %s became latest snapshot" % (snapshot))
     MNTLOCK.unlock()
 
     # If there is nothing to do, go through next replication entry
     if len(wanted_list) == 0:
         continue
 
+    # TODO: Convert this an assertion here
     if len(release_list) > 1:
         # This should never happen, report this situation.
         syslog.syslog(syslog.LOG_ALERT, "Local state is mangled.")
