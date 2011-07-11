@@ -211,6 +211,7 @@ add_port net/avahi-libdns
 add_port textproc/py-xml
 add_port sysutils/throttle
 add_port sysutils/dmidecode
+add_port sysutils/tmux
 
 if [ "${DEBUG}" -eq "1" ]; then 
 	add_port databases/db42
