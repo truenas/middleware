@@ -650,7 +650,7 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         gate_diskinfo = gate_pipe.read().strip().split('\n')
         for item in gate_diskinfo:
             if item != "":
-            diskinfo.append(item)
+                diskinfo.append(item)
         for disk in diskinfo:
             devname, capacity = disk.split('\t')
             capacity = humanize_size(capacity)
