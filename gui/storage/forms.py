@@ -336,6 +336,10 @@ class VolumeWizardForm(forms.Form):
             if not add:
                 notifier().init("volume", volume, force4khack=force4khack)
 
+        # This must be outside transaction block to make sure the changes are committed
+        # before the call of ix-fstab
+        notifier().reload("disk")
+
 class VolumeImportForm(forms.Form):
 
     volume_name = forms.CharField(max_length = 30, label = _('Volume name') )

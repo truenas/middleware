@@ -886,7 +886,6 @@ class notifier:
             self.__create_zfs_volume(volume, swapsize, kwargs.pop('force4khack', False))
         elif volume.vol_fstype == 'UFS':
             self.__create_ufs_volume(volume, swapsize)
-        self._reload_disk()
 
     def _init_zfs_disk(self, disk_id):
         """Initialize a disk designated by disk_id"""
