@@ -1,5 +1,7 @@
---- rescue/rescue/Makefile.orig	2010-06-13 20:09:06.000000000 -0600
-+++ rescue/rescue/Makefile	2010-12-04 18:31:45.000000000 -0700
+Index: rescue/rescue/Makefile
+===================================================================
+--- rescue/rescue/Makefile	(revision 223845)
++++ rescue/rescue/Makefile	(working copy)
 @@ -72,6 +72,7 @@
  CRUNCH_PROGS_bin= cat chflags chio chmod cp date dd df echo 	\
  	 ed expr getfacl hostname kenv kill ln ls mkdir mv	\
@@ -12,7 +14,7 @@
  CRUNCH_SRCDIRS+= usr.bin
  
  CRUNCH_PROGS_usr.bin= head mt sed tail tee
-+CRUNCH_PROGS_usr.bin+= awk cmp cut dialog dirname find grep mktemp sort tr uname
++CRUNCH_PROGS_usr.bin+= awk cmp cut dialog dirname find grep mktemp sort tr uname xargs
  
  CRUNCH_PROGS_usr.bin+= gzip
  CRUNCH_ALIAS_gzip= gunzip gzcat zcat
