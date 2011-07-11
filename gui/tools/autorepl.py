@@ -96,7 +96,7 @@ for replication in replication_tasks:
         Rflag = ''
 
     wanted_list = []
-    release_list = []
+    known_latest_snapshot = ''
     expected_local_snapshot = ''
 
     # Test if there is work to do, if so, own them
@@ -115,7 +115,7 @@ for replication in replication_tasks:
                     syslog.syslog(syslog.LOG_DEBUG, "Snapshot: %s State: %s" % (snapshot, state))
                     if state == 'LATEST':
                         found_latest = True
-                        release_list.append(snapshot)
+                        known_latest_snapshot = snapshot
                         syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to release list" % (snapshot))
                         continue
                     elif state == 'NEW':
@@ -139,12 +139,11 @@ for replication in replication_tasks:
                     # we own the snapshot by using INPROGRESS-{pid}.
                     system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, snapshot))
                 else:
-                    # assert (len(release_list) == 1) because found_latest
+                    # assert (known_latest_snapshot != '') because found_latest
                     if state != '-':
-                        system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, release_list[0]))
+                        system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, known_latest_snapshot))
                         system('/sbin/zfs set freenas:state=LATEST %s' % (snapshot))
-                        release_list = []
-                        release_list.append(snapshot)
+                        known_latest_snapshot = snapshot
                         syslog.syslog(syslog.LOG_ALERT, "Snapshot %s became latest snapshot" % (snapshot))
     MNTLOCK.unlock()
 
@@ -152,19 +151,7 @@ for replication in replication_tasks:
     if len(wanted_list) == 0:
         continue
 
-    # TODO: Convert this an assertion here
-    if len(release_list) > 1:
-        # This should never happen, report this situation.
-        syslog.syslog(syslog.LOG_ALERT, "Local state is mangled.")
-        error, errmsg = send_mail(subject="Replication failed!", text=\
-            """
-Hello,
-    The replication failed for the local ZFS %s because the local state is mangled.
-    This should never happen and manual intervention is required.
-                    """ % (localfs), interval = timedelta(hours = 2), channel = 'autorepl')
-         # The user have to 'zfs inherit -r freenas:state fs' then reconfigure replicator
-        continue
-    elif len(release_list) == 1:
+    if known_latest_snapshot != '':
         # Check if it matches remote snapshot
         rzfscmd = '"zfs list -Hr -o name -S creation -t snapshot -d 2 %s | head -n 1 | cut -d@ -f2"' % (remotefs)
         sshproc = pipeopen('%s %s %s' % (sshcmd, remote, rzfscmd))
@@ -175,10 +162,10 @@ Hello,
                 # Accept: remote and local snapshots matches
                 syslog.syslog(syslog.LOG_DEBUG, "Found matching latest snapshot %s remotely" % (last_snapshot))
                 pass
-            elif expected_local_snapshot == release_list[0]:
+            elif expected_local_snapshot == known_latest_snapshot:
                 # Accept
-                syslog.syslog(syslog.LOG_DEBUG, "Found matching latest snapshot %s remotely (but not the recorded one)" % (release_list[0]))
-                last_snapshot = release_list[0]
+                syslog.syslog(syslog.LOG_DEBUG, "Found matching latest snapshot %s remotely (but not the recorded one)" % (known_latest_snapshot))
+                last_snapshot = known_latest_snapshot
             else:
                 # Do we have it locally? if yes then mark it immediately
                 syslog.syslog(syslog.LOG_INFO, "Can not locate expected snapshot %s, looking more carefully" % (expected_local_snapshot))
@@ -189,9 +176,9 @@ Hello,
                     last_snapshot, state = output.split('\n')[0].split('\t')
                     syslog.syslog(syslog.LOG_INFO, "Marking %s as latest snapshot" % (last_snapshot))
                     if state == '-':
-                        system('/sbin/zfs inherit freenas:state %s' % (release_list[0]))
+                        system('/sbin/zfs inherit freenas:state %s' % (known_latest_snapshot))
                         system('/sbin/zfs set freenas:state=LATEST %s' % (last_snapshot))
-                        release_list = [last_snapshot]
+                        known_latest_snapshot = last_snapshot
                 else:
                     syslog.syslog(syslog.LOG_ALERT, "Can not locate a proper local snapshot for %s" % (localfs))
                     # Can NOT proceed any further.  Report this situation.
@@ -205,20 +192,20 @@ Hello,
                     continue
                 MNTLOCK.unlock()
         else:
-            syslog.syslog(syslog.LOG_NOTICE, "Can not locate %s on remote system, starting from there" % (release_list[0]))
+            syslog.syslog(syslog.LOG_NOTICE, "Can not locate %s on remote system, starting from there" % (known_latest_snapshot))
             # Reset the "latest" snapshot to a new one.
-            system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, release_list[0]))
-            wanted_list.insert(0, release_list[0])
-            release_list = []
+            system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, known_latest_snapshot))
+            wanted_list.insert(0, known_latest_snapshot)
             last_snapshot = ''
-    if len(release_list) == 0:
+            known_latest_snapshot = ''
+    if known_latest_snapshot == ''
          # Create remote filesystem
          syslog.syslog(syslog.LOG_NOTICE, "Creating %s on remote system" % (remotefs))
          replcmd = '%s %s /sbin/zfs create -p %s' % (sshcmd, remote, remotefs)
          system(replcmd)
          last_snapshot = ''
     else:
-         last_snapshot = release_list[0]
+         last_snapshot = known_latest_snapshot
 
     for snapname in wanted_list:
         #if replication.repl_limit != 0:
