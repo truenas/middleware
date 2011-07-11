@@ -198,7 +198,7 @@ Hello,
             wanted_list.insert(0, known_latest_snapshot)
             last_snapshot = ''
             known_latest_snapshot = ''
-    if known_latest_snapshot == ''
+    if known_latest_snapshot == '':
          # Create remote filesystem
          syslog.syslog(syslog.LOG_NOTICE, "Creating %s on remote system" % (remotefs))
          replcmd = '%s %s /sbin/zfs create -p %s' % (sshcmd, remote, remotefs)
