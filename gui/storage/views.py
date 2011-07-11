@@ -403,18 +403,16 @@ def zfsvolume_edit(request, object_id):
 
 def mp_permission(request, object_id):
     mp = models.MountPoint.objects.get(id = object_id)
-    mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
     if request.method == 'POST':
-        form = forms.MountPointAccessForm(request.POST)
+        form = forms.MountPointAccessForm(request.POST, fs=mp.mp_volume.vol_fstype)
         if form.is_valid():
             mp_path=mp.mp_path.__str__()
             form.commit(path=mp_path)
             return HttpResponse(simplejson.dumps({"error": False, "message": _("Mount Point permissions successfully updated.")}), mimetype="application/json")
     else:
-        form = forms.MountPointAccessForm(initial={'path':mp.mp_path})
+        form = forms.MountPointAccessForm(fs=mp.mp_volume.vol_fstype, initial={'path':mp.mp_path})
     return render(request, 'storage/permission.html', {
         'mp': mp,
-        'mp_list': mp_list,
         'form': form,
     })
 

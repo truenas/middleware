@@ -821,7 +821,10 @@ class MountPointAccessForm(Form):
                                       )
 
     def __init__(self, *args, **kwargs):
+        self.fs = kwargs.pop('fs', None)
         super(MountPointAccessForm, self).__init__(*args, **kwargs)
+        if self.fs == 'UFS':
+            self.fields['mp_acl'].widget = forms.widgets.HiddenInput()
 
         path = kwargs.get('initial', {}).get('path', None)
         if path:
@@ -844,7 +847,8 @@ class MountPointAccessForm(Form):
             group=self.cleaned_data['mp_group'].__str__(),
             mode=self.cleaned_data['mp_mode'].__str__(),
             recursive=self.cleaned_data['mp_recursive'],
-            acl=self.cleaned_data['mp_acl'])
+            acl=self.cleaned_data['mp_acl'],
+            fs=self.fs)
 
 class PeriodicSnapForm(ModelForm):
     class Meta:

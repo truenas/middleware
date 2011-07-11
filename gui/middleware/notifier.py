@@ -1100,7 +1100,16 @@ class notifier:
         self.reload("cifs")
 
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',
-                             mode='0755', recursive=False, acl='unix'):
+                             mode='0755', recursive=False, acl='unix', fs='ZFS'):
+
+        if fs == 'UFS':
+            if recursive:
+                flags='-R '
+            else:
+                flags=''
+            self.__system("/usr/sbin/chown %s'%s':'%s' %s" % (flags, user, group, path))
+            self.__system("/bin/chmod %s%s %s" % (flags, mode, path))
+            return
 
         winacl = os.path.join(path, ".windows")
         winexists = os.path.exists(winacl)
