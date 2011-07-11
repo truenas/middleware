@@ -1806,6 +1806,15 @@ class notifier:
             return devname
         return None
 
+    def filesystem_path(self, path):
+        from storage.models import MountPoint
+        mps = MountPoint.objects.filter(mp_volume__vol_fstype__in=('ZFS','UFS'))
+        path = os.path.abspath(path)
+        for mp in mps:
+            if path.startswith(os.path.abspath(mp.mp_path)):
+                return mp.mp_volume.vol_fstype
+        return 'UFS'
+
 def usage():
     print ("Usage: %s action command" % argv[0])
     print """\
