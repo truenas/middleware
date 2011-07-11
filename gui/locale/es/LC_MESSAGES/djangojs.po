@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-06-11 10:48+0200\n"
-"Last-Translator: alejometal <alejandro.metallord@gmail.com>\n"
+"PO-Revision-Date: 2011-07-10 23:33+0200\n"
+"Last-Translator: raulfg <raulfg3@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -28,11 +28,11 @@ msgstr "Configuración"
 
 #: media/lib/js/freeadmin.js:137
 msgid "System Information"
-msgstr "Información de Sistema"
+msgstr "Información del Sistema"
 
 #: media/lib/js/freeadmin.js:177
 msgid "Network Settings"
-msgstr "Configuración de red"
+msgstr "Configuración de Red"
 
 #: media/lib/js/freeadmin.js:239
 msgid "Services"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-07-10 09:26+0200\n"
+"PO-Revision-Date: 2011-07-11 08:44+0200\n"
 "Last-Translator: Christian <christian@junker.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
@@ -526,7 +526,7 @@ msgstr "Adgangskoderne i de to feltet var ikke ens."
 
 #: account/forms.py:248 account/forms.py:373
 msgid "Home directory has to start with /mnt/"
-msgstr "Hjemmemappen er nødt til at start med /mnt/"
+msgstr "Hjemmemappen skal start med /mnt/"
 
 #: account/forms.py:262 account/forms.py:266 services/forms.py:469
 #: services/forms.py:482 services/forms.py:748 storage/forms.py:226
@@ -779,7 +779,7 @@ msgstr "Fysiske netkort i LAGG"
 #: network/forms.py:190
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr "Netværket %s er ikke valid. CIDR forventet."
+msgstr "Netværket '%s' er ikke valid. CIDR forventet."
 
 #: network/models.py:42 services/models.py:1074
 #: templates/system/system_info.html:4
@@ -5041,7 +5041,7 @@ msgid "Step %(step)s of %(step_count)s"
 msgstr ""
 
 msgid "%s successfully update."
-msgstr "%s blev succesfuldt opdateret."
+msgstr "%s succesfuldt opdateret."
 
 msgid "Admin user"
 msgstr "Admin bruger"
