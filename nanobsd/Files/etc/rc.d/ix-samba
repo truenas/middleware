@@ -418,9 +418,17 @@ generate_exports()
 			else
 				echo "    inherit permissions = no"
 			fi
+
+			fstype=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py filesystem_path ${mountpoint})
+			if [ "${fstype}" = "ZFS" ]; then
+				zfsacl="zfsacl "
+			else
+				zfsacl=""
+			fi
+
 			if [ "${recyclebin}" = "1" ]; then
 			cat<<-EOF
-			    vfs objects = zfsacl recycle${vfsobj_shadow}
+			    vfs objects = ${zfsacl}recycle${vfsobj_shadow}
 			    recycle:repository = .recycle/%U
 			    recycle:keeptree = yes
 			    recycle:versions = yes
@@ -429,7 +437,7 @@ generate_exports()
 			    recycle:subdir_mode = 0700
 EOF
 			else
-				echo "    vfs objects = zfsacl ${vfsobj_shadow}"
+				echo "    vfs objects = ${zfsacl}${vfsobj_shadow}"
 			fi
 			if [ -n "${task_rint}" ]; then
 			cat <<-EOF
