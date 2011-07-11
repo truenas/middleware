@@ -1,4 +1,4 @@
-import rrdtool, os, re, hashlib
+import rrdtool, os, re, hashlib, shutil
 
 class File:
     @staticmethod
@@ -54,6 +54,14 @@ class Cache:
         return True
 
 times = ['1h', '1d', '1w', '1m', '1y']
+GRAPHDIR = "/tmp/graph"
+
+if not os.path.exists(GRAPHDIR):
+    os.mkdir(GRAPHDIR)
+else:
+    if not os.path.isdir(GRAPHDIR):
+        shutil.rmtree(GRAPHDIR)
+        os.mkdir(GRAPHDIR)
 
 re_octets = re.compile(r'(?<=octets-)[a-z0-9]+')
 def filterOctet(file):
@@ -70,7 +78,8 @@ def GenerateInterfaceGraph():
         path = os.path.join(rrd_dir, file)
         if not Cache.IsValid(path):
             for time in times:
-                rrdtool.graph('/tmp/if-%s-%s.png' % (iface, time),
+                graphfile = os.path.join(GRAPHDIR, "if-%s-%s.png" % (iface, time))
+                rrdtool.graph(graphfile,
                 '--imgformat', 'PNG',
                 '--vertical-label', 'Bits per second',
                 '--title', 'Interface Traffic (%s)' % iface,
@@ -121,7 +130,8 @@ def GenerateCpuGraph():
     cpu_interrupt = "/var/db/collectd/rrd/localhost/cpu-0/cpu-interrupt.rrd"
     file = "cpu"
     for time in times:
-        rrdtool.graph("/tmp/%s-%s.png" % (file, time),
+        graphfile = os.path.join(GRAPHDIR, "%s-%s.png" % (file, time))
+        rrdtool.graph(graphfile,
         '--imgformat', 'PNG',
         '--vertical-label', '%CPU',
         '--title', 'CPU Usage',
@@ -188,7 +198,8 @@ def GenerateMemoryGraph():
     memory_wired = "/var/db/collectd/rrd/localhost/memory/memory-wired.rrd"
     file = "memory"
     for time in times:
-        rrdtool.graph("/tmp/%s-%s.png" % (file, time),
+        graphfile = os.path.join(GRAPHDIR, "%s-%s.png" % (file, time))
+        rrdtool.graph(graphfile,
         '--imgformat', 'PNG',
         '--vertical-label', 'Bytes',
         '--title', 'Physical memory utilization',
@@ -251,7 +262,8 @@ def GenerateSystemLoadGraph():
     load = "/var/db/collectd/rrd/localhost/load/load.rrd"
     file = "load"
     for time in times:
-        rrdtool.graph("/tmp/%s-%s.png" % (file, time),
+        graphfile = os.path.join(GRAPHDIR, "%s-%s.png" % (file, time))
+        rrdtool.graph(graphfile,
         '--imgformat', 'PNG',
         '--vertical-label', 'System Load',
         '--title', 'System Load',
@@ -297,7 +309,8 @@ def GenerateProcessGraph():
     file = "processes"
 
     for time in times:
-        rrdtool.graph("/tmp/%s-%s.png" % (file, time),
+        graphfile = os.path.join(GRAPHDIR, "%s-%s.png" % (file, time))
+        rrdtool.graph(graphfile,
         '--imgformat', 'PNG',
         '--vertical-label', 'Processes',
         '--title', 'Processes',
@@ -382,7 +395,8 @@ def GenerateSwapGraph():
     file = "swap"
 
     for time in times:
-        rrdtool.graph("/tmp/%s-%s.png" % (file, time),
+        graphfile = os.path.join(GRAPHDIR, "%s-%s.png" % (file, time))
+        rrdtool.graph(graphfile,
         '--imgformat', 'PNG',
         '--vertical-label', 'Bytes',
         '--title', 'Swap Utilization',
@@ -420,7 +434,9 @@ def GenerateDiskspaceGraph():
 
             if not Cache.IsValid(path):
                 for time in times:
-                    rrdtool.graph("/tmp/df-%s-%s.png" % (volname, time),
+                    graphfile = os.path.join(GRAPHDIR, "df-%s-%s.png" % \
+                                            (volname, time))
+                    rrdtool.graph(graphfile,
                     '--imgformat', 'PNG',
                     '--vertical-label', 'Bytes',
                     '--title', 'Diskspace (%s)' % volname,
@@ -461,15 +477,16 @@ Path.TryMkDir(base)
 for period in ['hourly', 'daily', 'weekly', 'monthly', 'yearly']:
     Path.TryMkDir(os.path.join(base, period))
 
-os.system("find /var/db/graphs -type f -delete")
-for file in os.listdir("/tmp/"):
+os.system("find %s -type f -delete" % base)
+for file in os.listdir(GRAPHDIR):
     if "1h.png" in file:
-        os.system("cp /tmp/%s /var/db/graphs/hourly/" % file)
+        shutil.copy(os.path.join(GRAPHDIR, file), os.path.join(base, "hourly", file))
     elif "1d.png" in file:
-        os.system("cp /tmp/%s /var/db/graphs/daily/" % file)
+        shutil.copy(os.path.join(GRAPHDIR, file), os.path.join(base, "daily", file))
     elif "1w.png" in file:
-        os.system("cp /tmp/%s /var/db/graphs/weekly/" % file)
+        shutil.copy(os.path.join(GRAPHDIR, file), os.path.join(base, "weekly", file))
     elif "1m.png" in file:
-        os.system("cp /tmp/%s /var/db/graphs/monthly/" % file)
+        shutil.copy(os.path.join(GRAPHDIR, file), os.path.join(base, "monthly", file))
     elif "1y.png" in file:
-        os.system("cp /tmp/%s /var/db/graphs/yearly/" % file)
+        shutil.copy(os.path.join(GRAPHDIR, file), os.path.join(base, "yearly", file))
+os.system("find %s -type f -delete" % GRAPHDIR)
