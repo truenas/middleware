@@ -202,5 +202,5 @@ for snapshot in snapshots_pending_delete:
             system(snapcmd)
     MNTLOCK.unlock()
 
-execl('/usr/local/bin/python', '/usr/local/www/freenasUI/tools/autorepl.py')
+execl('/usr/local/bin/python', 'python', '/usr/local/www/freenasUI/tools/autorepl.py')
 
