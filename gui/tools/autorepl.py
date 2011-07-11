@@ -113,7 +113,7 @@ for replication in replication_tasks:
                     if state == 'LATEST':
                         found_latest = True
                         known_latest_snapshot = snapshot
-                        syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to release list" % (snapshot))
+                        syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s is the recorded latest snapshot" % (snapshot))
                         continue
                     elif state == 'NEW':
                         wanted_list.insert(0, snapshot)
@@ -140,6 +140,8 @@ for replication in replication_tasks:
                     if state != '-':
                         system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, known_latest_snapshot))
                         system('/sbin/zfs set freenas:state=LATEST %s' % (snapshot))
+                        wanted_list.insert(0, known_latest_snapshot)
+                        syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list (was LATEST)" % (snapshot))
                         known_latest_snapshot = snapshot
                         syslog.syslog(syslog.LOG_ALERT, "Snapshot %s became latest snapshot" % (snapshot))
     MNTLOCK.unlock()
@@ -240,6 +242,21 @@ Hello,
                 continue
             else:
                 syslog.syslog(syslog.LOG_ALERT, "Remote and local mismatch after replication: %s vs %s" % (expected_local_snapshot, snapname))
+                localfs, snaptime = snapname.split('@')
+                dataset = localfs.split('/')[-1]
+                rzfscmd = '"zfs list -Ho name -t snapshot %s/%s@%s | head -n 1 | cut -d@ -f2"' % (remotefs, dataset, snaptime)
+                sshproc = pipeopen('%s %s %s' % (sshcmd, remote, rzfscmd))
+                output = sshproc.communicate()[0]
+                if output != '':
+                    expected_local_snapshot = '%s@%s' % (localfs, output.split('\n')[0])
+                    if expected_local_snapshot == snapname:
+                        syslog.syslog(syslog.LOG_ALERT, "Snapshot %s already exist on remote, marking as such" % (snapname))
+                        system('%s %s "/sbin/zfs inherit -r freenas:state %s"' % (sshcmd, remote, remotefs))
+                        # Replication was successful, mark as such
+                        MNTLOCK.lock()
+                        system('/sbin/zfs inherit freenas:state %s' % (snapname))
+                        MNTLOCK.unlock()
+                        continue
 
         # Something wrong, report.
         syslog.syslog(syslog.LOG_ALERT, "Replication of %s failed with %s" % (snapname, msg))
