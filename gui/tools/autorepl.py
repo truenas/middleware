@@ -79,9 +79,6 @@ def ExitIfRunning(theirpid):
         pass
     syslog.syslog(syslog.LOG_NOTICE, "Process %d gone, will cleanup its work" % (theirpid))
 
-# TODO: use a better way to synchornize with snapshotter
-sleep(2)
-
 # Traverse all replication tasks
 replication_tasks = Replication.objects.all()
 for replication in replication_tasks:

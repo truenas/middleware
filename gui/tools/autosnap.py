@@ -35,6 +35,7 @@ from django.core.management import setup_environ
 setup_environ(settings)
 
 import re
+from os import execl
 from freenasUI.storage.models import Task, Replication
 from datetime import datetime, time, timedelta
 
@@ -200,3 +201,6 @@ for snapshot in snapshots_pending_delete:
             snapcmd = '/sbin/zfs destroy %s' % (snapshot)
             system(snapcmd)
     MNTLOCK.unlock()
+
+execl('/usr/local/bin/python', '/usr/local/www/freenasUI/tools/autorepl.py')
+
