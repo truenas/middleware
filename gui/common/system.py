@@ -79,6 +79,8 @@ def send_mail(subject, text, interval = timedelta(), channel = 'freenas'):
         if (timediff >= interval) or (timediff < timedelta()):
             f = open(channelfile, 'w')
             f.close()
+        else:
+            return
 
     error = False
     errmsg = ''
