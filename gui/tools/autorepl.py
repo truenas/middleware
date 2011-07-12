@@ -53,19 +53,6 @@ from freenasUI.common.system import send_mail
 #   -:                          The replication system no longer cares this.
 #
 
-MNTLOCK=mntlock()
-setname('autorepl')
-syslog.openlog("autorepl", syslog.LOG_CONS | syslog.LOG_PID)
-
-sshcmd = '/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes -o StrictHostKeyChecking=yes -q'
-
-mypid = os.getpid()
-inprogress_tag = 'INPROGRESS-%d' % (mypid)
-templog = '/tmp/repl-%d' % (mypid)
-
-syslog.syslog(syslog.LOG_DEBUG, "Autosnap replication started (our tag: %s)" % (inprogress_tag))
-syslog.syslog(syslog.LOG_DEBUG, "temp log file: %s" % (templog))
-
 # Detect if another instance is running
 def ExitIfRunning(theirpid):
     syslog.syslog(syslog.LOG_DEBUG, "Checking if process %d is still alive" % (theirpid))
@@ -78,6 +65,47 @@ def ExitIfRunning(theirpid):
     except OSError:
         pass
     syslog.syslog(syslog.LOG_NOTICE, "Process %d gone, will cleanup its work" % (theirpid))
+
+MNTLOCK=mntlock()
+setname('autorepl')
+syslog.openlog("autorepl", syslog.LOG_CONS | syslog.LOG_PID)
+
+sshcmd = '/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes -o StrictHostKeyChecking=yes -q'
+
+mypid = os.getpid()
+inprogress_tag = 'INPROGRESS-%d' % (mypid)
+templog = '/tmp/repl-%d' % (mypid)
+
+# (mis)use MNTLOCK as PIDFILE lock.
+locked = True
+try:
+    MNTLOCK.lock_try()
+except IOError:
+    locked = False
+if not locked:
+    exit(0)
+
+theirpid = -1
+try:
+    pidfile = open('/var/run/autorepl.pid', 'r')
+    theirpid = int(pidfile.read())
+    pidfile.close()
+except:
+    pass
+
+if theirpid != -1:
+    ExitIfRunning(theirpid)
+
+pidfile = open('/var/run/autorepl.pid', 'w')
+pidfile.write('%d' % mypid)
+pidfile.close()
+
+MNTLOCK.unlock()
+
+# At this point, we are sure that only one autorepl instance is running.
+
+syslog.syslog(syslog.LOG_DEBUG, "Autosnap replication started (our tag: %s)" % (inprogress_tag))
+syslog.syslog(syslog.LOG_DEBUG, "temp log file: %s" % (templog))
 
 # Traverse all replication tasks
 replication_tasks = Replication.objects.all()
@@ -119,9 +147,7 @@ for replication in replication_tasks:
                         wanted_list.insert(0, snapshot)
                         syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list" % (snapshot))
                     elif state[:11] == 'INPROGRESS-':
-                        # Rob ownership for orphan snapshot, but quit if
-                        # there is already inprogres transfer.
-                        ExitIfRunning(int(state[11:]))
+                        # Rob ownership for orphan snapshot unconditionally since I am the only instance
                         wanted_list.insert(0, snapshot)
                         syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list (continuing failed backup)" % (snapshot))
                     elif state == '-':
