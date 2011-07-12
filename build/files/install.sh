@@ -157,42 +157,36 @@ disk_is_freenas()
     local _disk="$1"
     local _rv=1
 
-    mkdir /tmp/junk
-    mount /dev/${_disk}s4 /tmp/junk
-    ls /tmp/junk > /tmp/junk.ls
+    mkdir /tmp/data_old
+    mount /dev/${_disk}s4 /tmp/data_old
+    ls /tmp/data_old > /tmp/data_old.ls
     if [ -f /tmp/junk/freenas-v1.db ]; then
-        cp /tmp/junk/freenas-v1.db /tmp/freenas-v1.db
         _rv=0
     fi
-    if [ -f /tmp/junk/rrd_dir.tar.bz2 ]; then
-        cp /tmp/junk/rrd_dir.tar.bz2 /tmp/
-    fi
-    if [ -d /tmp/junk/zfs ]; then
-        cp -R /tmp/junk/zfs /tmp/
-    fi
-    umount /tmp/junk
+    cp -R /tmp/data_old /tmp/data_preserved
+    umount /tmp/data_old
     if [ $_rv -eq 0 ]; then
-	mount /dev/${_disk}s1a /tmp/junk
+	mount /dev/${_disk}s1a /tmp/data_old
         # ah my old friend, the can't see the mount til I access the mountpoint
         # bug
-        ls /tmp/junk > /dev/null
-        cp /tmp/junk/conf/base/etc/hostid /tmp/
-        if [ -d /tmp/junk/root/.ssh ]; then
-            cp -R /tmp/junk/root/.ssh /tmp/
+        ls /tmp/data_old > /dev/null
+        cp /tmp/data_old/conf/base/etc/hostid /tmp/
+        if [ -d /tmp/data_old/root/.ssh ]; then
+            cp -R /tmp/data_old/root/.ssh /tmp/
         fi
-        if [ -d /tmp/junk/boot/modules ]; then
+        if [ -d /tmp/data_old/boot/modules ]; then
             mkdir /tmp/modules
             for i in `ls /tmp/junk/boot/modules`
             do
-                cp /tmp/junk/boot/modules/$i /tmp/modules/
+                cp /tmp/data_old/boot/modules/$i /tmp/modules/
             done
         fi
-        if [ -d /tmp/junk/usr/local/fusionio ]; then
-            cp -R /tmp/junk/usr/local/fusionio /tmp/junk/
+        if [ -d /tmp/data_old/usr/local/fusionio ]; then
+            cp -R /tmp/data_old/usr/local/fusionio /tmp/junk/
         fi
-        umount /tmp/junk
+        umount /tmp/data_old
     fi
-    rmdir /tmp/junk
+    rmdir /tmp/data_old
 
     return ${_rv}
 }
@@ -271,36 +265,30 @@ menu_install()
     ls /cdrom > /dev/null
     /rescue/pc-sysinstall -c ${_config_file}
     if [ ${_do_upgrade} -eq 1 ]; then
-        mkdir /tmp/junk
-        mount /dev/${_disk}s4 /tmp/junk
-        ls /tmp/junk > /dev/null
-        cp /tmp/freenas-v1.db /tmp/junk
-        if [ -f /tmp/rrd_dir.tar.bz2 ]; then
-            cp /tmp/rrd_dir.tar.bz2 /tmp/junk/
-        fi
-        if [ -d /tmp/zfs ]; then
-            cp -R /tmp/zfs /tmp/junk/
-        fi
-        cp /dev/null /tmp/junk/need-update
-	touch /tmp/junk/cd_update
-        umount /tmp/junk
-        mount /dev/${_disk}s1a /tmp/junk
-        ls /tmp/junk > /dev/null
-        cp /tmp/hostid /tmp/junk/conf/base/etc
+        mkdir /tmp/data_new
+        mount /dev/${_disk}s4 /tmp/data_new
+        ls /tmp/data_new > /dev/null
+        cp -R /tmp/data_preserved /tmp/data_new
+        cp /dev/null /tmp/data_new/need-update
+	touch /tmp/data_new/cd_update
+        umount /tmp/data_new
+        mount /dev/${_disk}s1a /tmp/data_new
+        ls /tmp/data_new > /dev/null
+        cp /tmp/hostid /tmp/data_new/conf/base/etc
         if [ -d /tmp/.ssh ]; then
-            cp -R /tmp/.ssh /tmp/junk/root/
+            cp -R /tmp/.ssh /tmp/data_new/root/
         fi
         if [ -d /tmp/modules ]; then
             for i in `ls /tmp/modules`
             do
-                cp /tmp/modules/$i /tmp/junk/boot/modules
+                cp /tmp/modules/$i /tmp/data_new/boot/modules
             done
         fi
         if [ -d /tmp/fusionio ]; then
-            cp -R /tmp/fusionio /tmp/junk/usr/local/
+            cp -R /tmp/fusionio /tmp/data_new/usr/local/
         fi
-        umount /tmp/junk
-        rmdir /tmp/junk
+        umount /tmp/data_new
+        rmdir /tmp/data_new
 	dialog --msgbox 'The installer has preserved your database file.
 FreeNAS will migrate this file, if necessary, to the current format.' 6 74
     fi
