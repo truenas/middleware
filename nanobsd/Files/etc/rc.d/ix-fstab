@@ -25,7 +25,7 @@ generate_fstab_real()
 				mountpoint=${newmp}
 			fi
 			mkdir -p ${mountpoint}
-			echo "/dev/ufs/${volumename}		${mountpoint}			ufs		rw,late	2	2"
+			echo "/dev/ufs/${volumename}		${mountpoint}			ufs		rw,late,nfsv4acls	2	2"
 		fi
 	done
 
