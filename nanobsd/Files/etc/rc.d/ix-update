@@ -57,6 +57,12 @@ handle_error()
 
 	rm -f /data/need-update
 	mv ${FREENAS_CONFIG}.bak ${FREENAS_CONFIG}
+	if [ -f /data/cd_upgrade ]; then
+		rm /data/cd_upgrade
+		echo "Database upgrade FAILED, check /data/upgrade.failed.  Rebooting in 15 seconds."
+		echo "Reverting a failed CD upgrade is not totally possible."
+		sleep 15
+		reboot
 
 	. /etc/nanobsd.conf
 

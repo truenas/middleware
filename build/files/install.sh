@@ -282,6 +282,7 @@ menu_install()
             cp -R /tmp/zfs /tmp/junk/
         fi
         cp /dev/null /tmp/junk/need-update
+	touch /tmp/junk/cd_update
         umount /tmp/junk
         mount /dev/${_disk}s1a /tmp/junk
         ls /tmp/junk > /dev/null
