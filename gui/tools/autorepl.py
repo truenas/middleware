@@ -272,7 +272,7 @@ Hello,
                     expected_local_snapshot = '%s@%s' % (localfs, output.split('\n')[0])
                     if expected_local_snapshot == snapname:
                         syslog.syslog(syslog.LOG_ALERT, "Snapshot %s already exist on remote, marking as such" % (snapname))
-                        system('%s %s "/sbin/zfs inherit -r freenas:state %s"' % (sshcmd, remote, remotefs))
+                        system('%s %s "/sbin/zfs inherit -r freenas:state %s"' % (sshcmd, remote, desired_remotefs))
                         # Replication was successful, mark as such
                         MNTLOCK.lock()
                         system('/sbin/zfs inherit freenas:state %s' % (snapname))
