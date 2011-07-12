@@ -242,6 +242,9 @@ Hello,
         f.close()
         os.remove(templog)
         syslog.syslog(syslog.LOG_DEBUG, "Replication result: %s" % (msg))
+
+        desired_remotefs = '%s/%s' % (remotefs, snapname.split('/')[-1])
+
         # Determine if the remote side have the snapshot we have now.
         rzfscmd = '"zfs list -Hr -o name -S creation -t snapshot -d 2 %s | head -n 1 | cut -d@ -f2"' % (remotefs)
         sshproc = pipeopen('%s %s %s' % (sshcmd, remote, rzfscmd))
@@ -249,7 +252,7 @@ Hello,
         if output != '':
             expected_local_snapshot = '%s@%s' % (localfs, output.split('\n')[0])
             if expected_local_snapshot == snapname:
-                system('%s %s "/sbin/zfs inherit -r freenas:state %s"' % (sshcmd, remote, remotefs))
+                system('%s %s "/sbin/zfs inherit -r freenas:state %s"' % (sshcmd, remote, desired_remotefs))
                 # Replication was successful, mark as such
                 MNTLOCK.lock()
                 if last_snapshot != '':
@@ -262,9 +265,7 @@ Hello,
                 continue
             else:
                 syslog.syslog(syslog.LOG_ALERT, "Remote and local mismatch after replication: %s vs %s" % (expected_local_snapshot, snapname))
-                localfs, snaptime = snapname.split('@')
-                dataset = localfs.split('/')[-1]
-                rzfscmd = '"zfs list -Ho name -t snapshot %s/%s@%s | head -n 1 | cut -d@ -f2"' % (remotefs, dataset, snaptime)
+                rzfscmd = '"zfs list -Ho name -t snapshot %s | head -n 1 | cut -d@ -f2"' % (desired_remotefs)
                 sshproc = pipeopen('%s %s %s' % (sshcmd, remote, rzfscmd))
                 output = sshproc.communicate()[0]
                 if output != '':
