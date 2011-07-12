@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-07-08 23:23+0200\n"
+"PO-Revision-Date: 2011-07-11 16:02+0200\n"
 "Last-Translator: Paktas <zilvinas.bartkus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lt\n"
@@ -171,7 +171,7 @@ msgstr "Vasaris"
 
 #: choices.py:129 templates/storage/tasks.html:91
 msgid "March"
-msgstr "Kodas"
+msgstr "Kovas"
 
 #: choices.py:130 templates/storage/tasks.html:94
 msgid "April"
@@ -310,7 +310,7 @@ msgstr "Juosta"
 
 #: choices.py:207
 msgid "Pass"
-msgstr ""
+msgstr "Slaptažodis"
 
 #: choices.py:211
 msgid "read-write"
@@ -405,7 +405,7 @@ msgstr ""
 #: choices.py:434 system/models.py:302 system/models.py:321
 #: system/models.py:457 system/models.py:476
 msgid "Everyday"
-msgstr ""
+msgstr "Kasdien"
 
 #: choices.py:435
 msgid "Every selected weekday"
@@ -486,13 +486,13 @@ msgstr ""
 
 #: account/forms.py:146
 msgid "Selected"
-msgstr ""
+msgstr "Pasirinktas"
 
 #: account/forms.py:174 account/forms.py:198 account/models.py:79
 #: services/models.py:676 services/models.py:935 system/models.py:160
 #: templates/account/bsdusers.html:5 templates/account/bsdusers.html.py:86
 msgid "Username"
-msgstr ""
+msgstr "Vartotojo vardas"
 
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
@@ -558,15 +558,15 @@ msgstr ""
 
 #: account/forms.py:467
 msgid "New password"
-msgstr ""
+msgstr "Naujas slaptažodis"
 
 #: account/forms.py:468
 msgid "New password confirmation"
-msgstr ""
+msgstr "Naujo slaptažodžio patvirtinimas"
 
 #: account/forms.py:493
 msgid "Old password"
-msgstr ""
+msgstr "Senas slaptažodis"
 
 #: account/forms.py:501
 msgid "Your old password was entered incorrectly. Please enter it again."
@@ -628,7 +628,7 @@ msgstr ""
 
 #: account/models.py:115 templates/account/bsdusers.html:91
 msgid "E-mail"
-msgstr ""
+msgstr "El.paštas"
 
 #: account/models.py:120 account/models.py:159 services/models.py:521
 #: services/models.py:1203 system/models.py:242 system/models.py:380
@@ -1430,8 +1430,9 @@ msgstr ""
 
 #: services/models.py:225 services/models.py:226
 #: templates/services/index.html:75
+#, fuzzy
 msgid "NFS"
-msgstr ""
+msgstr "NFS"
 
 #: services/models.py:235
 msgid "Base Name"
@@ -1851,8 +1852,9 @@ msgstr ""
 
 #: services/models.py:734 services/models.py:735
 #: templates/services/index.html:97
+#, fuzzy
 msgid "SNMP"
-msgstr ""
+msgstr "SNMP"
 
 #: services/models.py:744 storage/models.py:91
 msgid "Identifier"
@@ -1872,7 +1874,7 @@ msgstr ""
 
 #: services/models.py:755 services/models.py:807 services/models.py:929
 msgid "Port"
-msgstr ""
+msgstr "Portas"
 
 #: services/models.py:757
 msgid "The serial or USB port where your UPS is connected."
@@ -2485,8 +2487,9 @@ msgstr ""
 
 #: services/models.py:1274 services/models.py:1275
 #: templates/services/index.html:108
+#, fuzzy
 msgid "S.M.A.R.T."
-msgstr ""
+msgstr "S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
@@ -3001,7 +3004,7 @@ msgstr ""
 #: storage/forms.py:635 storage/forms.py:687 storage/forms.py:744
 #: storage/forms.py:785
 msgid "Compression level"
-msgstr ""
+msgstr "Suspaudimo lygis"
 
 #: storage/forms.py:636 storage/forms.py:688 storage/forms.py:745
 msgid "Enable atime"
@@ -3079,7 +3082,7 @@ msgstr ""
 
 #: storage/forms.py:825
 msgid "Set permission recursively"
-msgstr ""
+msgstr "Pritaikyti teises rekursiškai"
 
 #: storage/forms.py:875
 msgid "At least one day must be chosen"
@@ -3200,7 +3203,7 @@ msgstr ""
 
 #: storage/models.py:197 storage/models.py:209
 msgid "Error"
-msgstr ""
+msgstr "Klaida"
 
 #: storage/models.py:229
 msgid "Remote Replication Host"
