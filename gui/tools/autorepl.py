@@ -48,7 +48,6 @@ from freenasUI.common.system import send_mail
 #
 # A snapshot transists its state in its lifetime this way:
 #   NEW:                        A newly created snapshot by autosnap
-#   INPROGRESS-123:             A snapshot being replicated by process 123
 #   LATEST:                     A snapshot marked to be the latest one
 #   -:                          The replication system no longer cares this.
 #
@@ -73,7 +72,6 @@ syslog.openlog("autorepl", syslog.LOG_CONS | syslog.LOG_PID)
 sshcmd = '/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes -o StrictHostKeyChecking=yes -q'
 
 mypid = os.getpid()
-inprogress_tag = 'INPROGRESS-%d' % (mypid)
 templog = '/tmp/repl-%d' % (mypid)
 
 # (mis)use MNTLOCK as PIDFILE lock.
@@ -104,7 +102,7 @@ MNTLOCK.unlock()
 
 # At this point, we are sure that only one autorepl instance is running.
 
-syslog.syslog(syslog.LOG_DEBUG, "Autosnap replication started (our tag: %s)" % (inprogress_tag))
+syslog.syslog(syslog.LOG_DEBUG, "Autosnap replication started")
 syslog.syslog(syslog.LOG_DEBUG, "temp log file: %s" % (templog))
 
 # Traverse all replication tasks
@@ -142,29 +140,25 @@ for replication in replication_tasks:
                         found_latest = True
                         known_latest_snapshot = snapshot
                         syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s is the recorded latest snapshot" % (snapshot))
-                        continue
                     elif state == 'NEW':
                         wanted_list.insert(0, snapshot)
                         syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list" % (snapshot))
-                    elif state[:11] == 'INPROGRESS-':
-                        # Rob ownership for orphan snapshot unconditionally since I am the only instance
+                    elif state.startswith('INPROGRESS'):
+                        # For compatibility with older versions
                         wanted_list.insert(0, snapshot)
-                        syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list (continuing failed backup)" % (snapshot))
+                        system('/sbin/zfs set freenas:state=NEW %s' % (snapshot))
+                        syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list (stale)" % (snapshot))
                     elif state == '-':
                         # The snapshot is already replicated, or is not
                         # an automated snapshot.
                         syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s unwanted" % (snapshot))
-                        continue
                     else:
                         # This should be exception but skip for now.
                         continue
-                    # NEW or INPROGRESS (stale), change the state to reflect that
-                    # we own the snapshot by using INPROGRESS-{pid}.
-                    system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, snapshot))
                 else:
                     # assert (known_latest_snapshot != '') because found_latest
                     if state != '-':
-                        system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, known_latest_snapshot))
+                        system('/sbin/zfs set freenas:state=NEW %s' % (known_latest_snapshot))
                         system('/sbin/zfs set freenas:state=LATEST %s' % (snapshot))
                         wanted_list.insert(0, known_latest_snapshot)
                         syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list (was LATEST)" % (snapshot))
@@ -219,7 +213,7 @@ Hello,
         else:
             syslog.syslog(syslog.LOG_NOTICE, "Can not locate %s on remote system, starting from there" % (known_latest_snapshot))
             # Reset the "latest" snapshot to a new one.
-            system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, known_latest_snapshot))
+            system('/sbin/zfs set freenas:state=NEW %s' % (known_latest_snapshot))
             wanted_list.insert(0, known_latest_snapshot)
             last_snapshot = ''
             known_latest_snapshot = ''
@@ -295,4 +289,4 @@ Hello,
             """ % (localfs, remote, msg), interval = timedelta(hours = 2), channel = 'autorepl')
         break
 
-syslog.syslog(syslog.LOG_DEBUG, "Autosnap replication finished (our tag: %s)" % (inprogress_tag))
+syslog.syslog(syslog.LOG_DEBUG, "Autosnap replication finished")
