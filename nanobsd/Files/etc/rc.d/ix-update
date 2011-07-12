@@ -63,6 +63,7 @@ handle_error()
 		echo "Reverting a failed CD upgrade is not totally possible."
 		sleep 15
 		reboot
+	fi
 
 	. /etc/nanobsd.conf
 
