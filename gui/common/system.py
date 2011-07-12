@@ -26,7 +26,7 @@
 # $FreeBSD$
 #####################################################################
 
-from os import popen, stat
+from os import popen, stat, access
 import smtplib
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
@@ -105,3 +105,17 @@ def send_mail(subject, text, interval = timedelta(), channel = 'freenas'):
         errmsg = str(e)
         error = True
     return error, errmsg
+
+def get_fstype(path):
+    if not path:
+        return None
+    if not access(path, 0):
+        return None
+
+    pipe = popen("/bin/df -T '%s'" % path)
+    lines = pipe.read().strip().split('\n')
+    pipe.close()
+
+    out = (lines[len(lines) - 1]).split()
+
+    return (out[1].upper())
