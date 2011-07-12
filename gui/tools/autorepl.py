@@ -220,7 +220,7 @@ Hello,
     if known_latest_snapshot == '':
          # Create remote filesystem
          syslog.syslog(syslog.LOG_NOTICE, "Creating %s on remote system" % (remotefs))
-         replcmd = '%s %s /sbin/zfs create -p %s' % (sshcmd, remote, remotefs)
+         replcmd = '%s %s /sbin/zfs create -o readonly=on -p %s' % (sshcmd, remote, remotefs)
          system(replcmd)
          last_snapshot = ''
     else:
