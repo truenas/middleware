@@ -97,7 +97,7 @@ generate_ldapconf()
 		pam_password ${pwencryption}
 		nss_base_passwd ${usersuffix},${basedn}
 		nss_base_group ${groupsuffix},${basedn}
-                nss_override_attribute_value loginShell /bin/sh
+		nss_override_attribute_value loginShell /bin/sh
 EOF
 		if [ "${ssl}" = "start_tls" ]
 		then
