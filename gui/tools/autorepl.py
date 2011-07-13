@@ -63,7 +63,7 @@ def ExitIfRunning(theirpid):
         exit(0)
     except OSError:
         pass
-    syslog.syslog(syslog.LOG_NOTICE, "Process %d gone, will cleanup its work" % (theirpid))
+    syslog.syslog(syslog.LOG_DEBUG, "Process %d gone" % (theirpid))
 
 MNTLOCK=mntlock()
 setname('autorepl')
@@ -290,4 +290,5 @@ Hello,
             """ % (localfs, remote, msg), interval = timedelta(hours = 2), channel = 'autorepl')
         break
 
+os.remove('/var/run/autorepl.pid')
 syslog.syslog(syslog.LOG_DEBUG, "Autosnap replication finished")
