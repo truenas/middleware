@@ -48,23 +48,9 @@ from freenasUI.common.system import send_mail
 #
 # A snapshot transists its state in its lifetime this way:
 #   NEW:                        A newly created snapshot by autosnap
-#   INPROGRESS-123:             A snapshot being replicated by process 123
 #   LATEST:                     A snapshot marked to be the latest one
 #   -:                          The replication system no longer cares this.
 #
-
-MNTLOCK=mntlock()
-setname('autorepl')
-syslog.openlog("autorepl", syslog.LOG_CONS | syslog.LOG_PID)
-
-sshcmd = '/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes -o StrictHostKeyChecking=yes -q'
-
-mypid = os.getpid()
-inprogress_tag = 'INPROGRESS-%d' % (mypid)
-templog = '/tmp/repl-%d' % (mypid)
-
-syslog.syslog(syslog.LOG_DEBUG, "Autosnap replication started (our tag: %s)" % (inprogress_tag))
-syslog.syslog(syslog.LOG_DEBUG, "temp log file: %s" % (templog))
 
 # Detect if another instance is running
 def ExitIfRunning(theirpid):
@@ -77,7 +63,47 @@ def ExitIfRunning(theirpid):
         exit(0)
     except OSError:
         pass
-    syslog.syslog(syslog.LOG_NOTICE, "Process %d gone, will cleanup its work" % (theirpid))
+    syslog.syslog(syslog.LOG_DEBUG, "Process %d gone" % (theirpid))
+
+MNTLOCK=mntlock()
+setname('autorepl')
+syslog.openlog("autorepl", syslog.LOG_CONS | syslog.LOG_PID)
+
+sshcmd = '/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes -o StrictHostKeyChecking=yes -q'
+
+mypid = os.getpid()
+templog = '/tmp/repl-%d' % (mypid)
+
+# (mis)use MNTLOCK as PIDFILE lock.
+locked = True
+try:
+    MNTLOCK.lock_try()
+except IOError:
+    locked = False
+if not locked:
+    exit(0)
+
+theirpid = -1
+try:
+    pidfile = open('/var/run/autorepl.pid', 'r')
+    theirpid = int(pidfile.read())
+    pidfile.close()
+except:
+    pass
+
+if theirpid != -1:
+    ExitIfRunning(theirpid)
+
+pidfile = open('/var/run/autorepl.pid', 'w')
+pidfile.write('%d' % mypid)
+pidfile.close()
+
+MNTLOCK.unlock()
+
+# At this point, we are sure that only one autorepl instance is running.
+
+syslog.syslog(syslog.LOG_DEBUG, "Autosnap replication started")
+syslog.syslog(syslog.LOG_DEBUG, "temp log file: %s" % (templog))
 
 # Traverse all replication tasks
 replication_tasks = Replication.objects.all()
@@ -114,31 +140,25 @@ for replication in replication_tasks:
                         found_latest = True
                         known_latest_snapshot = snapshot
                         syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s is the recorded latest snapshot" % (snapshot))
-                        continue
                     elif state == 'NEW':
                         wanted_list.insert(0, snapshot)
                         syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list" % (snapshot))
-                    elif state[:11] == 'INPROGRESS-':
-                        # Rob ownership for orphan snapshot, but quit if
-                        # there is already inprogres transfer.
-                        ExitIfRunning(int(state[11:]))
+                    elif state.startswith('INPROGRESS'):
+                        # For compatibility with older versions
                         wanted_list.insert(0, snapshot)
-                        syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list (continuing failed backup)" % (snapshot))
+                        system('/sbin/zfs set freenas:state=NEW %s' % (snapshot))
+                        syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list (stale)" % (snapshot))
                     elif state == '-':
                         # The snapshot is already replicated, or is not
                         # an automated snapshot.
                         syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s unwanted" % (snapshot))
-                        continue
                     else:
                         # This should be exception but skip for now.
                         continue
-                    # NEW or INPROGRESS (stale), change the state to reflect that
-                    # we own the snapshot by using INPROGRESS-{pid}.
-                    system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, snapshot))
                 else:
                     # assert (known_latest_snapshot != '') because found_latest
                     if state != '-':
-                        system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, known_latest_snapshot))
+                        system('/sbin/zfs set freenas:state=NEW %s' % (known_latest_snapshot))
                         system('/sbin/zfs set freenas:state=LATEST %s' % (snapshot))
                         wanted_list.insert(0, known_latest_snapshot)
                         syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list (was LATEST)" % (snapshot))
@@ -193,14 +213,14 @@ Hello,
         else:
             syslog.syslog(syslog.LOG_NOTICE, "Can not locate %s on remote system, starting from there" % (known_latest_snapshot))
             # Reset the "latest" snapshot to a new one.
-            system('/sbin/zfs set freenas:state=%s %s' % (inprogress_tag, known_latest_snapshot))
+            system('/sbin/zfs set freenas:state=NEW %s' % (known_latest_snapshot))
             wanted_list.insert(0, known_latest_snapshot)
             last_snapshot = ''
             known_latest_snapshot = ''
     if known_latest_snapshot == '':
          # Create remote filesystem
          syslog.syslog(syslog.LOG_NOTICE, "Creating %s on remote system" % (remotefs))
-         replcmd = '%s %s /sbin/zfs create -p %s' % (sshcmd, remote, remotefs)
+         replcmd = '%s %s /sbin/zfs create -o readonly=on -p %s' % (sshcmd, remote, remotefs)
          system(replcmd)
          last_snapshot = ''
     else:
@@ -222,6 +242,9 @@ Hello,
         f.close()
         os.remove(templog)
         syslog.syslog(syslog.LOG_DEBUG, "Replication result: %s" % (msg))
+
+        desired_remotefs = '%s/%s' % (remotefs, snapname.split('/')[-1])
+
         # Determine if the remote side have the snapshot we have now.
         rzfscmd = '"zfs list -Hr -o name -S creation -t snapshot -d 2 %s | head -n 1 | cut -d@ -f2"' % (remotefs)
         sshproc = pipeopen('%s %s %s' % (sshcmd, remote, rzfscmd))
@@ -229,7 +252,7 @@ Hello,
         if output != '':
             expected_local_snapshot = '%s@%s' % (localfs, output.split('\n')[0])
             if expected_local_snapshot == snapname:
-                system('%s %s "/sbin/zfs inherit -r freenas:state %s"' % (sshcmd, remote, remotefs))
+                system('%s %s "/sbin/zfs inherit -r freenas:state %s"' % (sshcmd, remote, desired_remotefs))
                 # Replication was successful, mark as such
                 MNTLOCK.lock()
                 if last_snapshot != '':
@@ -242,16 +265,14 @@ Hello,
                 continue
             else:
                 syslog.syslog(syslog.LOG_ALERT, "Remote and local mismatch after replication: %s vs %s" % (expected_local_snapshot, snapname))
-                localfs, snaptime = snapname.split('@')
-                dataset = localfs.split('/')[-1]
-                rzfscmd = '"zfs list -Ho name -t snapshot %s/%s@%s | head -n 1 | cut -d@ -f2"' % (remotefs, dataset, snaptime)
+                rzfscmd = '"zfs list -Ho name -t snapshot %s | head -n 1 | cut -d@ -f2"' % (desired_remotefs)
                 sshproc = pipeopen('%s %s %s' % (sshcmd, remote, rzfscmd))
                 output = sshproc.communicate()[0]
                 if output != '':
                     expected_local_snapshot = '%s@%s' % (localfs, output.split('\n')[0])
                     if expected_local_snapshot == snapname:
                         syslog.syslog(syslog.LOG_ALERT, "Snapshot %s already exist on remote, marking as such" % (snapname))
-                        system('%s %s "/sbin/zfs inherit -r freenas:state %s"' % (sshcmd, remote, remotefs))
+                        system('%s %s "/sbin/zfs inherit -r freenas:state %s"' % (sshcmd, remote, desired_remotefs))
                         # Replication was successful, mark as such
                         MNTLOCK.lock()
                         system('/sbin/zfs inherit freenas:state %s' % (snapname))
@@ -269,4 +290,5 @@ Hello,
             """ % (localfs, remote, msg), interval = timedelta(hours = 2), channel = 'autorepl')
         break
 
-syslog.syslog(syslog.LOG_DEBUG, "Autosnap replication finished (our tag: %s)" % (inprogress_tag))
+os.remove('/var/run/autorepl.pid')
+syslog.syslog(syslog.LOG_DEBUG, "Autosnap replication finished")

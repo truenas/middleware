@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-08 20:09+0200\n"
-"Last-Translator: najt_k <zic.spse@gmail.com>\n"
+"PO-Revision-Date: 2011-07-13 09:14+0200\n"
+"Last-Translator: ataman <mk@ataman.sk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
@@ -1802,13 +1802,15 @@ msgstr "ID autentifikačnej skupiny"
 
 #: services/models.py:616
 msgid "Queue Depth"
-msgstr ""
+msgstr "Hĺbka fronty"
 
 #: services/models.py:617
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
 msgstr ""
+"0=vypnuté, 1-255=zapnuté, príkaz radenia do fronty so špecifikovanou hĺbkou. "
+"Odporúčaná hĺbka fronty je 32."
 
 #: services/models.py:622
 msgid "Logical Block Size"
@@ -1836,7 +1838,7 @@ msgstr ""
 
 #: services/models.py:650
 msgid "Target / Extent"
-msgstr ""
+msgstr "Cieľ/rozsah"
 
 #: services/models.py:651
 msgid "Targets / Extents"
@@ -1914,7 +1916,7 @@ msgstr "Vo väčšine prípadov je tu použité 'public'."
 
 #: services/models.py:726
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "Poslať SNMP trapy"
 
 #: services/models.py:734 services/models.py:735
 #: templates/services/index.html:97
@@ -2289,7 +2291,7 @@ msgstr "SSH"
 
 #: services/models.py:1034
 msgid "Domain Controller Name"
-msgstr ""
+msgstr "Meno doménového kontrolera"
 
 #: services/models.py:1035
 msgid "AD or PDC name."
@@ -2444,7 +2446,7 @@ msgstr "Tento parameter špecifikuje či použiť SSL/TLS, napr. on/off/start_tl
 
 #: services/models.py:1135
 msgid "Self signed certificate"
-msgstr ""
+msgstr "Certifikát podpísaný samým sebou"
 
 #: services/models.py:1137
 msgid "Place the contents of your self signed certificate file here."
