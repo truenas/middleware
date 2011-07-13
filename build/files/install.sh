@@ -176,13 +176,13 @@ disk_is_freenas()
         fi
         if [ -d /tmp/data_old/boot/modules ]; then
             mkdir /tmp/modules
-            for i in `ls /tmp/junk/boot/modules`
+            for i in `ls /tmp/data_old/boot/modules`
             do
                 cp /tmp/data_old/boot/modules/$i /tmp/modules/
             done
         fi
         if [ -d /tmp/data_old/usr/local/fusionio ]; then
-            cp -R /tmp/data_old/usr/local/fusionio /tmp/junk/
+            cp -R /tmp/data_old/usr/local/fusionio /tmp/
         fi
         umount /tmp/data_old
     fi
