@@ -126,7 +126,6 @@ for replication in replication_tasks:
     MNTLOCK.lock()
     syslog.syslog(syslog.LOG_DEBUG, "Checking dataset %s" % (localfs))
     zfsproc = pipeopen('/sbin/zfs list -Ht snapshot -o name,freenas:state -r -S creation -d 1 %s' % (localfs))
-    zfsproc.wait()
     output = zfsproc.communicate()[0]
     if output != '':
         snapshots_list = output.split('\n')
