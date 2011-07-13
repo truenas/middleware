@@ -160,7 +160,7 @@ disk_is_freenas()
     mkdir /tmp/data_old
     mount /dev/${_disk}s4 /tmp/data_old
     ls /tmp/data_old > /tmp/data_old.ls
-    if [ -f /tmp/junk/freenas-v1.db ]; then
+    if [ -f /tmp/data_old/freenas-v1.db ]; then
         _rv=0
     fi
     cp -R /tmp/data_old /tmp/data_preserved
@@ -268,7 +268,7 @@ menu_install()
         mkdir /tmp/data_new
         mount /dev/${_disk}s4 /tmp/data_new
         ls /tmp/data_new > /dev/null
-        cp -R /tmp/data_preserved /tmp/data_new
+        cp -R /tmp/data_preserved/ /tmp/data_new
         cp /dev/null /tmp/data_new/need-update
 	touch /tmp/data_new/cd_update
         umount /tmp/data_new
