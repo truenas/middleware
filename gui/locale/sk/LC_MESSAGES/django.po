@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-13 09:14+0200\n"
-"Last-Translator: ataman <mk@ataman.sk>\n"
+"PO-Revision-Date: 2011-07-14 02:54+0200\n"
+"Last-Translator: najt_k <zic.spse@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
@@ -278,7 +278,7 @@ msgstr "Zariadenie"
 
 #: choices.py:200
 msgid "ZFS Volume"
-msgstr "Zväzok ZFS (ZFS Volume)"
+msgstr "ZFS Zväzok "
 
 #: choices.py:204 storage/models.py:147 system/models.py:493
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
@@ -441,18 +441,18 @@ msgstr "Nikdy - Kontrola zariadení bez ohľadu na režim napájania"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Spánok - Skontroluje zariadenia, pokial nie sú v REŽIME SPÁNKU"
+msgstr "Sleep - Skontroluje zariadenia, pokial nie sú v REŽIME Sleep"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"Pohotovostný režim - Skontroluje zariadenia, pokiaľ nie sú v REŽIME SPÁNKU "
+"Pohotovostný režim - Skontroluje zariadenia, pokiaľ nie sú v REŽIME Sleep "
 "alebo POHOTOVOSTNOM REŽIME"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
-"Idle - Skontroluje zariadenie, pokial nie je v režime SPÁNKU, POHOTOVOSTNOM "
+"Idle - Skontroluje zariadenie, pokial nie je v režime Sleep, POHOTOVOSTNOM "
 "režime alebo režime NEČINNOSTI"
 
 #: choices.py:467
@@ -465,7 +465,7 @@ msgstr "Krátky autotest"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Conveyance Self-Test (iba pre ATA)"
+msgstr "Conveyance autotest (iba pre ATA)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
@@ -487,11 +487,15 @@ msgstr "Užívateľské meno"
 
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr "Požadované. 30 znakov alebo menej. Iba písmená, číslice a @/./+/-/_"
+msgstr ""
+"Požadované. 30 znakov alebo viac. Písmená, číslice a nasledujúce znaky "
+"@/./+/-/_ ."
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr "Táto hodnota môže obsahovať iba písmená, číslice a znaky @/./+/-/_"
+msgstr ""
+"Táto hodnota môže obsahovať len písmená, číslice a nasledujúce znaky "
+"@/./+/-/_ ."
 
 #: account/forms.py:201 account/forms.py:308 services/models.py:680
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
@@ -600,11 +604,11 @@ msgstr "Používateľ &"
 # heš, kto to kedy videl
 #: account/models.py:85
 msgid "Hashed UNIX password"
-msgstr "Hashovane UNIX heslo"
+msgstr "Hashované UNIX heslo"
 
 #: account/models.py:91
 msgid "Hashed SMB password"
-msgstr "Hashovane SMB heslo"
+msgstr "Hashované SMB heslo"
 
 #: account/models.py:95
 msgid "Primary Group ID"
@@ -1542,15 +1546,16 @@ msgstr "iSCSI počiatočný parameter (16 v predvolenom nastavení). "
 
 #: services/models.py:289
 msgid "First burst length"
-msgstr ""
+msgstr "First burst length"
 
 #: services/models.py:290
 msgid "iSCSI initial parameter (65536 by default)."
 msgstr "iSCSI počiatočný parameter (65536 v predvolenom nastavení)."
 
 #: services/models.py:295
+#, fuzzy
 msgid "Max burst length"
-msgstr ""
+msgstr "Max burst length"
 
 #: services/models.py:296 services/models.py:302
 msgid "iSCSI initial parameter (262144 by default)."
@@ -1586,7 +1591,7 @@ msgstr "IP adresa kontrolera"
 
 #: services/models.py:324
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
-msgstr ""
+msgstr "Logická jednotka, kontroler IP adresa (127.0.0.1(localhost) predvolené)"
 
 #: services/models.py:330
 msgid "Controller TCP port"
@@ -1594,7 +1599,7 @@ msgstr "TCP port kontrolera"
 
 #: services/models.py:331
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr ""
+msgstr "Logická jednotka, kontrolér TCP port (3261 predvolene)"
 
 #: services/models.py:337
 msgid "Controller Authorized netmask"
@@ -1696,7 +1701,7 @@ msgstr ""
 #: services/models.py:476 templates/services/iscsi_authini.html:6
 #, fuzzy
 msgid "Initiators"
-msgstr "Inicializátori(Initiators)"
+msgstr "Inicializátori"
 
 #: services/models.py:478
 msgid ""

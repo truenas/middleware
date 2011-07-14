@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-02 13:58+0200\n"
-"Last-Translator: fabiusx <fabioslurp@yahoo.it>\n"
+"PO-Revision-Date: 2011-07-13 16:08+0200\n"
+"Last-Translator: novos3lic <dom.cavallo@libero.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -4046,9 +4046,8 @@ msgid "Recurse into directories"
 msgstr "Percorri le cartelle ricorsivamente"
 
 #: system/models.py:389
-#, fuzzy
 msgid "Times"
-msgstr "Tempi"
+msgstr "Ripetizioni"
 
 #: system/models.py:390
 msgid "Preserve modification times"
@@ -4395,9 +4394,8 @@ msgid ""
 msgstr "Stai per <strong>SPEGNERE</strong> il sistema, cosa vuoi fare?"
 
 #: templates/freeadmin/index.html:69
-#, fuzzy
 msgid "Help & Support"
-msgstr "Supporto EA"
+msgstr "Aiuto e supporto"
 
 #: templates/freeadmin/index.html:72
 msgid "Forum"
@@ -4528,9 +4526,8 @@ msgid "Add LAGG"
 msgstr "Aggiungi LAGG"
 
 #: templates/network/lagg_members.html:6
-#, fuzzy
 msgid "Ordering Priority"
-msgstr "Ordine di priorità"
+msgstr "Priorità d'ordinamento"
 
 #: templates/network/lagg_members.html:7
 msgid "Startup option"
@@ -4612,7 +4609,6 @@ msgid "Welcome to FreeNAS 8"
 msgstr "Benvenuto in FreeNAS 8"
 
 #: templates/registration/login.html:51
-#, fuzzy
 msgid "Please log in."
 msgstr "Per favore connettersi."
 
