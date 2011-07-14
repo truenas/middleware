@@ -25,19 +25,8 @@
 #
 # $FreeBSD$
 #####################################################################
-import os
-import sys
-import grp
-import pwd
-import re
-import stat
-import syslog
+from freenasUI.common.acl import *
 
-from subprocess import Popen, PIPE
-from syslog import syslog, LOG_DEBUG
-
-GETFACL_PATH = "/bin/getfacl"
-SETFACL_PATH = "/bin/setfacl"
 
 #
 # getfacl NFSv4 flags
@@ -65,66 +54,19 @@ ACL_ENTRY_FLAGS_ADD        = 0x0001
 ACL_ENTRY_FLAGS_UPDATE     = 0x0002
 ACL_ENTRY_FLAGS_REMOVE     = 0x0004
 
-#
-# NFSv4_ACL type
-#
-# This should probably be filesystem types ;-)
-#
-ACL_TYPE_UNIX              = 0x0001
-ACL_TYPE_WINDOWS           = 0x0002
+
+class NFSv4_ACL_Exception(Base_ACL_Exception):
+    pass
+
+class NFSv4_pipe(Base_ACL_pipe):
+    pass
 
 
-
-ACL_HIER_COURSE_GRAINED    = 0x0001
-ACL_HIER_FINE_GRAINED      = 0x0002
-
-
-class NFSv4_ACL_Exception(Exception):
-    def __init__(self, msg = None):
-        syslog(LOG_DEBUG, "NFSv4_ACL_Exception.__init__: enter")
-        if msg:
-            syslog(LOG_DEBUG, "NFSv4_ACL_Exception.__init__: error = %s" % msg)
-        syslog(LOG_DEBUG, "NFSv4_ACL_Exception.__init__: leave")
-
-
-class NFSv4_pipe:
-    def __init__(self, cmd):
-        syslog(LOG_DEBUG, "NFSv4_pipe.__init__: enter")
-        syslog(LOG_DEBUG, "NFSv4_pipe.__init__: cmd = %s" % cmd)
-
-        self.__pipe = Popen(cmd, stdin = PIPE, stdout = PIPE,
-            stderr = PIPE, shell = True, close_fds = True)
-
-        self.__stdin = self.__pipe.stdin
-        self.__stdout = self.__pipe.stdout
-        self.__stderr = self.__pipe.stderr
-
-        self.__out = self.__stdout.read().strip()
-        self.__pipe.wait()
-
-        syslog(LOG_DEBUG, "NFSv4_pipe.__init__: out = %s" % self.__out)
-
-        if self.__pipe.returncode != 0:
-            raise NFSv4_ACL_Exception(self.__stderr.read().strip())
-
-        syslog(LOG_DEBUG, "NFSv4_pipe.__init__: leave")
-
-    def __str__(self):
-        return self.__out
-
-    def __iter__(self):
-        lines = self.__out.splitlines()
-        for line in lines:
-            yield line
-
-
-class NFSv4_getfacl:
-    def __init__(self, path, flags = 0):
-        syslog(LOG_DEBUG, "NFSv4_getfacl.__init__: enter")
-        syslog(LOG_DEBUG, "NFSv4_getfacl.__init__: path = %s, flags = 0x%08x" % (path, flags))
-
-        self.__getfacl = GETFACL_PATH
-        self.__path = path
+class NFSv4_getfacl(Base_ACL_getfacl):
+    def _build_args(self, path, flags):
+        syslog(LOG_DEBUG, "NFSv4_getfacl._build_args: enter")
+        syslog(LOG_DEBUG, "NFSv4_getfacl._build_args: path = %s, flags = 0x%08x" % 
+            (path, flags))
 
         args = ""
         if flags & GETFACL_FLAGS_SYMLINK_ACL:
@@ -138,34 +80,15 @@ class NFSv4_getfacl:
         if flags & GETFACL_FLAGS_VERBOSE:
             args += "-v "
 
-        cmd = "%s " % self.__getfacl
-        if args:
-            cmd += "%s " % args
-        cmd += "'%s'" % self.__path
-
-        self.__out = str(NFSv4_pipe(cmd))
-
-        syslog(LOG_DEBUG, "NFSv4_getfacl.__init__: out = %s" % self.__out)
-        syslog(LOG_DEBUG, "NFSv4_getfacl.__init__: leave")
-
-    def __str__(self):
-        return self.__out
-
-    def __iter__(self):
-        lines = self.__out.splitlines()
-        for line in lines:
-            yield line
+        syslog(LOG_DEBUG, "NFSv4_getfacl._build_args: leave")
+        return args
 
 
-class NFSv4_setfacl:
-    def __init__(self, path, entry = None, flags = 0, pos = 0):
-        syslog(LOG_DEBUG, "NFSv4_setfacl.__init__: enter")
-        syslog(LOG_DEBUG, "NFSv4_setfacl.__init__: path = %s, entry = %s, flags = 0x%08x" %
-            (path, (entry if entry else ""), flags))
-
-        self.__setfacl = SETFACL_PATH
-        self.__path = path
-        self.__entry = entry
+class NFSv4_setfacl(Base_ACL_setfacl):
+    def _build_args(self, path, entry, flags, pos):
+        syslog(LOG_DEBUG, "NFSv4_setfacl._build_args: enter")
+        syslog(LOG_DEBUG, "NFSv4_setfacl._build_args: path = %s, entry = %s, flags = 0x%08x, pos = %d" %
+            (path, entry, flags, pos))
 
         args = ""
         if flags & SETFACL_FLAGS_MODIFY_ENTRY:
@@ -180,21 +103,11 @@ class NFSv4_setfacl:
             args += "-x %d" % pos
             self.__entry = None
 
-        cmd = "%s " % self.__setfacl
-        if args:
-            cmd += "%s " % args
-        if self.__entry:
-            cmd += "%s " % self.__entry
-        cmd += "'%s'" % self.__path
-        
-        self.__out = str(NFSv4_pipe(cmd))
-
-        syslog(LOG_DEBUG, "NFSv4_setfacl.__init__: out = %s" % self.__out)
-        syslog(LOG_DEBUG, "NFSv4_setfacl.__init__: leave")
+        syslog(LOG_DEBUG, "NFSv4_setfacl._build_args: leave")
+        return  args
 
 
-
-class NFSv4_ACL_Entry:
+class NFSv4_ACL_Entry(Base_ACL_Entry):
     def __init__(self):
         syslog(LOG_DEBUG, "NFSv4_ACL_Entry.__init__: enter")
 
@@ -430,50 +343,13 @@ class NFSv4_ACL_Entry:
         return str
 
 
-class NFSv4_ACL:
-    def __init__(self, path, acl = None):
-        syslog(LOG_DEBUG, "NFSv4_ACL.__init__: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL.__init__: path = %s, acl = %s" % (path, (acl if acl else "")))
+class NFSv4_ACL(Base_ACL):
 
-        #
-        # Array NFSv4_ACL_Entry's
-        #
-        self.__entries = []
-        self.file = None
-        self.owner = None
-        self.group = None
+    def _load(self):
+        syslog(LOG_DEBUG, "NFSv4_ACL._load: enter")
 
-        self.__dirty = False
-        self.__path = path
-
-        st = os.stat(path) 
-        self.mode = st.st_mode
-
-        self.__type = ACL_TYPE_UNIX
-        if os.access(os.path.join(self.__path, ".windows"), 0):
-            self.__type = ACL_TYPE_WINDOWS
-
-        self.__get() 
-
-        syslog(LOG_DEBUG, "NFSv4_ACL.__init__: leave")
-
-    def is_unix(self):
-        return self.__type == ACL_TYPE_UNIX
-
-    def is_windows(self):
-        return self.__type == ACL_TYPE_WINDOWS 
-
-    def path(self):
-        return self.__path
-
-    def dirty(self):
-        return self.__dirty
-
-    def __get(self):
-        syslog(LOG_DEBUG, "NFSv4_ACL.__get: enter")
-
-        for line in NFSv4_getfacl(self.__path):
-            syslog(LOG_DEBUG, "NFSv4_ACL.__get: line = %s" % line)
+        for line in NFSv4_getfacl(self.path):
+            syslog(LOG_DEBUG, "NFSv4_ACL._load: line = %s" % line)
 
             if line.startswith("#"):
                 comment_parts = line.split('#')[1:]
@@ -518,18 +394,18 @@ class NFSv4_ACL:
                         entry.set_inheritance_flag(f)
 
                 entry.type = acl_type
-                self.__entries.append(entry)
+                self.entries.append(entry)
 
-        syslog(LOG_DEBUG, "NFSv4_ACL.__get: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL._load: leave")
 
-    def __refresh(self):
-        syslog(LOG_DEBUG, "NFSv4_ACL.__refresh: enter")
+    def _refresh(self):
+        syslog(LOG_DEBUG, "NFSv4_ACL._refresh: enter")
 
-        self.__entries = []
-        self.__get()
-        self.__dirty = False
+        self.entries = []
+        self._load()
+        self.dirty = False
 
-        syslog(LOG_DEBUG, "NFSv4_ACL.__refresh: leave")
+        syslog(LOG_DEBUG, "NFSv4_ACL._refresh: leave")
 
     def update(self, tag, qualifier, permissions, inheritance_flags = None, type = None):
         syslog(LOG_DEBUG, "NFSv4_ACL.update: enter")
@@ -538,21 +414,21 @@ class NFSv4_ACL:
             (qualifier if qualifier else ""), (permissions if permissions else ""),
             (inheritance_flags if inheritance_flags else ""), (type if type else "")))
 
-        for entry in self.__entries:
+        for entry in self.entries:
             if entry.tag == tag and entry.qualifier == qualifier:
                 if type == None or entry.type == type:
                     if permissions:
                         entry.set_access_permissions(permissions)
-                        self.__dirty = True
+                        self.dirty = True
 
                     if inheritance_flags and not stat.S_ISREG(self.mode):
                         entry.set_inheritance_flags(inheritance_flags)
-                        self.__dirty = True
+                        self.dirty = True
 
-            if self.__dirty:
-                NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_MODIFY)
+            if self.dirty:
+                NFSv4_setfacl(self.path, entry, SETFACL_FLAGS_MODIFY)
 
-        self.__refresh()
+        self._refresh()
         syslog(LOG_DEBUG, "NFSv4_ACL.update: leave")
 
     def add(self, tag, qualifier = None, permissions = None, inheritance_flags = None, type = None, pos = 0):
@@ -573,11 +449,11 @@ class NFSv4_ACL:
             entry.set_inheritance_flags(inheritance_flags)
 
         entry.type = (type if type else 'allow')
-        self.__entries.append(entry)
-        self.__dirty = True
+        self.entries.append(entry)
+        self.dirty = True
 
-        NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_MODIFY_ENTRY, pos)
-        self.__refresh()
+        NFSv4_setfacl(self.path, entry, SETFACL_FLAGS_MODIFY_ENTRY, pos)
+        self._refresh()
 
         syslog(LOG_DEBUG, "NFSv4_ACL.add: leave")
 
@@ -587,7 +463,7 @@ class NFSv4_ACL:
             (tag if tag else ""), (qualifier if qualifier else ""), (type if type else "")))
 
         entries = []
-        for entry in self.__entries:
+        for entry in self.entries:
             if tag and entry.tag == tag and entry.qualifier == qualifier:
                 if not type or entry.type == type:
                     entries.append(entry)
@@ -603,38 +479,37 @@ class NFSv4_ACL:
         syslog(LOG_DEBUG, "NFSv4_ACL.remove: tag = %s, qualifier = %s, type = %s" % (
             (tag if tag else ""), (qualifier if qualifier else ""), (type if type else "")))
 
+        n = 0
         entries = []
         entry = None
-
-        n = 0
-        for entry in self.__entries:
+        for entry in self.entries:
             if entry.tag == tag and entry.qualifier == qualifier and pos == None:
                 if type and entry.type == type:
-                    NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_REMOVE_ENTRY, 0)
-                    self.__dirty = True
+                    NFSv4_setfacl(self.path, entry, SETFACL_FLAGS_REMOVE_ENTRY, 0)
+                    self.dirty = True
 
                 elif not type:
-                    NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_REMOVE_ENTRY, 0)
-                    self.__dirty = True
+                    NFSv4_setfacl(self.path, entry, SETFACL_FLAGS_REMOVE_ENTRY, 0)
+                    self.dirty = True
 
             elif n == pos:
-                NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_REMOVE_ENTRY, 0)
-                self.__dirty = True
+                NFSv4_setfacl(self.path, entry, SETFACL_FLAGS_REMOVE_ENTRY, n)
+                self.dirty = True
 
             n += 1
 
         if pos == -1 and entry:
-            NFSv4_setfacl(self.__path, entry, SETFACL_FLAGS_REMOVE_ENTRY, (n - 1) if n > 0 else n)
-            self.__dirty = True
+            NFSv4_setfacl(self.path, entry, SETFACL_FLAGS_REMOVE_ENTRY, (n - 1) if n > 0 else n)
+            self.dirty = True
 
-        self.__refresh()
+        self._refresh()
         syslog(LOG_DEBUG, "NFSv4_ACL.remove: leave")
 
     def reset(self):
         syslog(LOG_DEBUG, "NFSv4_ACL.reset: enter")
 
-        NFSv4_setfacl(self.__path, None, SETFACL_FLAGS_SET_DEFAULTS)
-        self.__refresh()
+        NFSv4_setfacl(self.path, None, SETFACL_FLAGS_SET_DEFAULTS)
+        self._refresh()
 
         syslog(LOG_DEBUG, "NFSv4_ACL.reset: leave")
 
@@ -642,48 +517,13 @@ class NFSv4_ACL:
         syslog(LOG_DEBUG, "NFSv4_ACL.clear: enter")
 
         self.reset()
-        self.__refresh()
+        self._refresh()
 
-        for entry in self.__entries:
+        for entry in self.entries:
             if not (entry.tag == 'everyone@' and entry.type == 'allow'):
                 self.remove(entry.tag, entry.qualifier, entry.type)
 
         syslog(LOG_DEBUG, "NFSv4_ACL.clear: leave")
-
-    def chown(self, who):
-        syslog(LOG_DEBUG, "NFSv4_ACL.chown: enter")
-        syslog(LOG_DEBUG, "NFSv4_ACL.chown: who = %s" % who)
-
-        if not who:
-            return False 
-
-        user = group = None
-        uid = gid = -1
-
-        parts = who.split(':')
-
-        if parts[0]:
-            user = parts[0]
-        if len(parts) > 1 and parts[1]:
-            group = parts[1]
-
-        if user and re.match('^\d+', user):
-            uid = int(user)
-        elif user: 
-            entry = pwd.getpwnam(user)
-            uid = entry.pw_uid
-
-        if group and re.match('^\d+', group):
-            gid = int(group)
-        elif group:
-            entry = grp.getgrnam(group)
-            gid = entry.gr_gid
-
-        os.chown(self.__path, uid, gid)
-        self.__refresh()
-
-        syslog(LOG_DEBUG, "NFSv4_ACL.chown: leave")
-        return True
             
     def chmod(self, mode):
         syslog(LOG_DEBUG, "NFSv4_ACL.chmod: enter")
@@ -729,188 +569,69 @@ class NFSv4_ACL:
 
             pos += 1
 
-        syslog(LOG_DEBUG, "NFSv4_ACL.chmod: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL.chmod: leave")
 
     def save(self):
         syslog(LOG_DEBUG, "NFSv4_ACL.save: enter")
 
-        if not self.__dirty:
+        if not self.dirty:
             return False
 
-        self.__refresh()
+        self._refresh()
 
         syslog(LOG_DEBUG, "NFSv4_ACL.save: leave")
         return True
 
 
-class NFSv4_ACL_Hierarchy:
-    def __init__(self, path):
-        self.__path = path
-        self.__type = ACL_TYPE_UNIX
-      
-        if os.access(os.path.join(self.__path, ".windows"), 0):
-            self.__type = ACL_TYPE_WINDOWS
+class NFSv4_ACL_Hierarchy(Base_ACL_Hierarchy):
 
-    def is_unix(self):
-        return self.__type == ACL_TYPE_UNIX
-
-    def is_windows(self):
-        return self.__type == ACL_TYPE_WINDOWS
-
-    def __recurse(self, path, callback, *args):
-        callback(path, *args)
-
-        files = os.listdir(path)
-        for f in files:
-            file = os.path.join(path, f)
-            st = os.stat(file)
-
-            if stat.S_ISDIR(st.st_mode):
-                if os.access(os.path.join(path, ".windows"), 0):
-                    self.__type = ACL_TYPE_WINDOWS
-                self.__recurse(file, callback, *args)
-
-            else:
-                if f != '.windows':
-                    callback(file, *args)
-
-    def __set_windows_file_defaults(self, acl):
-        acl.clear()
+    def _set_windows_file_defaults(self, acl):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_windows_file_defaults: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_windows_file_defaults: acl = %s" % acl)
 
         pos = 0
+        acl.clear()
         acl.add('group@', None, 'rxaRcs', None, 'allow', pos); pos += 1
         acl.add('everyone@', None, 'rxaRcs', None, 'allow', pos); pos += 1
         acl.add('owner@', None, 'rwxpDdaARWcCos', None, 'allow', pos); pos += 1
         acl.remove('everyone@', None, None, -1)
         acl.chmod('755')
 
-    def __set_unix_file_defaults(self, acl):
-        acl.reset()
-        acl.chmod('644')
+        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_windows_file_defaults: leave")
 
-    def __set_file_defaults(self, acl):
-        if self.is_windows(): 
-            self.__set_windows_file_defaults(acl)
-        else:
-            self.__set_unix_file_defaults(acl)
-
-
-    def __set_windows_directory_defaults(self, acl):
-        acl.clear()
+    def _set_windows_directory_defaults(self, acl):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_windows_directory_defaults: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_windows_directory_defaults: acl = %s" % acl)
 
         pos = 0
+        acl.clear()
         acl.add('group@', None, 'rxaRcs', 'fd', 'allow', pos); pos += 1
         acl.add('everyone@', None, 'rxaRcs', 'fd', 'allow', pos); pos += 1
         acl.add('owner@', None, 'rwxpDdaARWcCos', 'fd', 'allow', pos); pos += 1
         acl.remove('everyone@', None, None, -1)
         acl.chmod('755') 
 
-    def __set_unix_directory_defaults(self, acl):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_windows_directory_defaults: leave")
+
+    def _set_unix_file_defaults(self, acl):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_unix_file_defaults: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_unix_file_defaults: acl = %s" % acl)
+
+        acl.reset()
+        acl.chmod('644')
+
+        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_unix_file_defaults: leave")
+
+    def _set_unix_directory_defaults(self, acl):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_unix_directory_defaults: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_unix_directory_defaults: acl = %s" % acl)
+
         acl.reset()
         acl.chmod('755')
 
-    def __set_directory_defaults(self, acl):
-        if self.is_windows():
-            self.__set_windows_directory_defaults(acl)
-        else:
-            self.__set_unix_directory_defaults(acl)
+        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy._set_unix_directory_defaults: leave")
 
-    def __set_defaults(self, path, args = None):
-        acl = NFSv4_ACL(path)
-
-        if stat.S_ISREG(acl.mode):
-            self.__set_file_defaults(acl)
-        elif stat.S_ISDIR(acl.mode):
-            self.__set_directory_defaults(acl)
-        else:
-            self.__set_file_defaults(acl)
-
-        acl.save()
-
-    def set_defaults(self, recursive = False):
-        if recursive:
-            self.__recurse(self.__path, self.__set_defaults, None)
-
-        else:
-            self.__set_defaults(self.__path)
-
-    def __reset(self, path, args = None):
-        acl = NFSv4_ACL(path)
-        acl.reset()
-        acl.save()
-
-    def reset(self, recursive = False):
-        if recursive:
-            self.__recurse(self.__path, self.__reset, None)
-        else:
-            self.__reset(self.__path)
-
-    def __clear(self, path, args = None):
-        acl = NFSv4_ACL(path)
-        acl.clear()
-        acl.save()
-
-    def clear(self, recursive = False):
-        if recursive:
-            self.__recurse(self.__path, self.__clear, None)
-        else:
-            self.__clear(self.__path)
-    
-    def __add(self, path, tag, qualifier = None, inheritance_flags = None, type = None, pos = 0):
-        acl = NFSv4_ACL(path)
-        acl.add(tag, qualifier, inheritance_flags, type, pos)
-        acl.save()
-
-    def add(self, tag, qualifier = None, inheritance_flags = None, type = None, pos = 0, recursive = False):
-        if recursive:
-            self.__recurse(self.__path, self.__add, tag, qualifier, inheritance_flags, type, pos)
-        else:
-            self.__add(self.__path, tag, qualifier, inheritance_flags, type, pos)
-
-    def __update(self, path, tag, qualifier, permissions, inheritance_flags = None, type = None):
-        acl = NFSv4_ACL(path)
-        acl.update(tag, qualifier, permissions, inheritance_flags, type)
-        acl.save()
-
-    def update(self, tag, qualifier, permissions, inheritance_flags = None, type = None,  recursive = False):
-        if recursive:
-            self.__recurse(self.__path, self.__update, tag, qualifier, permissions, inheritance_flags, type)
-        else:
-            self.__update(self.__path, tag, qualifier, permissions, inheritance_flags, type)
-
-    def __remove(self, path, tag, qualifier = None, type = None, pos = None):
-        acl = NFSv4_ACL(path)
-        acl.remove(tag, qualifier, type, pos)
-        acl.save()
-
-    def remove(self, tag, qualifier = None, type = None, pos = None, recursive = False):
-        if recursive:
-            self.__recurse(self.__path, self.__remove, tag, qualifier, type, pos)
-        else:
-            self.__remove(self.__path, tag, qualifier, type, pos)
-
-    def __chmod(self, path, mode):
-        acl = NFSv4_ACL(path)
-        acl.chmod(mode)
-        acl.save()
-
-    def chmod(self, mode, recursive = False):
-        if recursive:
-            self.__recurse(self.__path, self.__chmod, mode)
-        else:
-            self.__chmod(self.__path, mode)
-
-    def __chown(self, path, who):
-        acl = NFSv4_ACL(path)
-        acl.chown(who)
-        acl.save()
-
-    def chown(self, who, recursive = False):
-        if recursive:
-            self.__recurse(self.__path, self.__chown, who)
-        else:
-            self.__chown(self.__path, who)
-
-    def close(self):
-        self.__path = None
-        self.__type = None
+    def new_ACL(self, path):
+        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy.new_ACL: enter")
+        syslog(LOG_DEBUG, "NFSv4_ACL_Hierarchy.new_ACL: leave")
+        return NFSv4_ACL(path)
