@@ -57,7 +57,10 @@ sys.path.append(FREENAS_PATH)
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
 from django.db import models
-from freenasUI.common.freenasnfsv4 import NFSv4_ACL_Hierarchy
+
+from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
+from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
+
 
 class notifier:
     from os import system as ___system
@@ -1101,14 +1104,14 @@ class notifier:
     def mp_change_permission(self, path='/mnt', user='root', group='wheel',
                              mode='0755', recursive=False, acl='unix'):
 
-        winacl = os.path.join(path, ".windows")
-        winexists = os.path.exists(winacl)
+        winacl = os.path.join(path, ACL_WINDOWS_FILE)
+        winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
         if acl == 'windows' and not winexists:
             open(winacl, 'a').close()
         elif acl == 'unix' and winexists:
             os.unlink(winacl)
 
-        hier = NFSv4_ACL_Hierarchy(path)
+        hier = ACL_Hierarchy(path)
         hier.set_defaults(recursive)
         hier.chown(user + ":" + group, recursive)
         hier.chmod(mode, recursive)
