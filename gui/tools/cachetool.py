@@ -84,16 +84,28 @@ def cache_expire(cachedir):
         else:
             raise OSError, oe
 
+def cache_dump(cachedir):
+    print "FreeNAS_Users:"
+    for u in FreeNAS_Users():
+        print "    ", u
+
+    print "\n\n"
+
+    print "FreeNAS_Groups:"
+    for g in FreeNAS_Groups():
+        print "    ", g
+
 
 def main():
     cache_funcs = {}
     cache_funcs['fill'] = cache_fill
     cache_funcs['expire'] = cache_expire
+    cache_funcs['dump'] = cache_dump
 
     if len(sys.argv) < 2:
         usage()
 
-    if not sys.argv[1] in ('fill', 'expire'):
+    if not sys.argv[1] in cache_funcs.keys():
         usage()
 
     (cache_funcs[sys.argv[1]])(FREENAS_CACHEDIR)
