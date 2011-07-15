@@ -138,6 +138,10 @@ debug_cache()
 		/usr/local/bin/db_stat-4.6 -d "${directory_groups}"
 		section_footer
 	fi
+
+	section_header "User and Group cache dump"
+	/usr/local/www/freenasUI/tools/cachetool.py dump
+	section_footer
 }
 
 debug_active_directory()
