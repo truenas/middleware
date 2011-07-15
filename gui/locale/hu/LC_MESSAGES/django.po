@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-06-24 21:21+0200\n"
+"PO-Revision-Date: 2011-07-14 23:11+0200\n"
 "Last-Translator: Peter <petyuska@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hu\n"
@@ -1174,7 +1174,7 @@ msgstr ""
 
 #: services/forms.py:766
 msgid "Delete underlying file"
-msgstr ""
+msgstr "Aljzat fájlok törlése"
 
 #: services/forms.py:788
 #, python-format

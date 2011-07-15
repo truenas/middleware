@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-05-30 19:29+0200\n"
-"Last-Translator: DEOK WON <gf4724@gmail.com>\n"
+"PO-Revision-Date: 2011-07-15 10:46+0200\n"
+"Last-Translator: vincent <iwi@daum.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: choices.py:35
 msgid "Plain"
-msgstr ""
+msgstr "알기 쉬운"
 
 #: choices.py:36 system/models.py:234 templates/system/settings.html:9
 msgid "SSL"
@@ -239,7 +239,7 @@ msgstr "내부 사용자"
 
 #: choices.py:180
 msgid "Normal"
-msgstr ""
+msgstr "보통"
 
 #: choices.py:181
 msgid "Full"
@@ -338,15 +338,15 @@ msgstr ""
 
 #: choices.py:246
 msgid "Tolerated"
-msgstr ""
+msgstr "허용됨"
 
 #: choices.py:247
 msgid "Required"
-msgstr ""
+msgstr "필수"
 
 #: choices.py:274 choices.py:280
 msgid "Inherit"
-msgstr ""
+msgstr "상속"
 
 #: choices.py:275
 msgid "On"
@@ -405,43 +405,41 @@ msgid "Every selected weekday"
 msgstr ""
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
-msgstr "읽기만"
+msgstr "읽기전용"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "읽기만"
+msgstr "쓰기전용"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "읽기 쓰기"
 
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes) 분"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour) 시간"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hours) 시간"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day)s 일"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week) 주"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
@@ -477,7 +475,7 @@ msgstr ""
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
-msgstr "가능한"
+msgstr "사용 가능함"
 
 #: account/forms.py:146
 msgid "Selected"
@@ -674,27 +672,22 @@ msgid "Password successfully updated."
 msgstr "%s가 갱신 되었습니다. "
 
 #: account/views.py:92
-#, fuzzy
 msgid "Admin user successfully updated."
-msgstr "%s가 갱신 되었습니다. "
+msgstr "Admin 계정이 갱신되었습니다."
 
 #: account/views.py:102
-#, fuzzy
 msgid "Users successfully updated."
-msgstr "%s가 갱신 되었습니다. "
+msgstr "사용자가 갱신되었습니다. "
 
 #: account/views.py:115
-#, fuzzy
 msgid "Groups successfully updated."
-msgstr "%s가 갱신 되었습니다. "
+msgstr "그룹이 갱신되었습니다. "
 
 #: contrib/ext_formwizard.py:170
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
-msgstr ""
-"죄송합니다, 입력 양식이 만료되었습니다. 이페이지에서 양식을 계속 작성하십시"
-"오. "
+msgstr "죄송합니다, 입력 양식이 만료되었습니다. 이 페이지에서 양식을 계속 작성하십시오. "
 
 #: freeadmin/forms.py:95
 #, python-format
@@ -708,25 +701,25 @@ msgstr ""
 
 #: freeadmin/forms.py:138
 msgid "The path must reside within a volume mount point"
-msgstr ""
+msgstr "경로는 volume mount point 내에 존재하여야 합니다."
 
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "추가 %s"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
-msgstr "모든 사용자 보기"
+msgstr "%s 모두 보기"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
-msgstr "시스템 프로세서 보기"
+msgstr "시스템 프로세스 보기"
 
 #: freeadmin/navtree.py:353 templates/freeadmin/index.html:53
 msgid "Reboot"
-msgstr "재기동"
+msgstr "재시작"
 
 #: freeadmin/navtree.py:360 templates/freeadmin/index.html:65
 msgid "Shutdown"
@@ -744,7 +737,7 @@ msgstr "%s가 갱신 되었습니다. "
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "서비스 재시작 실패."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -772,9 +765,8 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "2차 네임서버를 입력하기 전에 1차 네임서버를 입력하세요"
 
 #: network/forms.py:100
-#, fuzzy
 msgid "Parent Interface"
-msgstr "인터페이스 삭제"
+msgstr "상위 인터페이스"
 
 #: network/forms.py:109
 #, fuzzy
@@ -783,7 +775,7 @@ msgstr "인터페이스 명은 vlanXX의 형식이어야 하며 XX는 숫자입�
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN Tags 범위(1 - 4095)"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -792,7 +784,7 @@ msgstr ""
 #: network/forms.py:190
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "네트워크 '%s'가 유효하지 않습니다. CIDR이 필요합니다."
 
 #: network/models.py:42 services/models.py:1074
 #: templates/system/system_info.html:4
@@ -830,7 +822,7 @@ msgstr "전역 설정"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "NIC를 선택하십시오."
 
 #: network/models.py:101
 msgid "Interface Name"
@@ -838,7 +830,7 @@ msgstr "인터페이스 명"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "네트워크 인터페이스 이름을 입력하세요."
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
@@ -992,11 +984,11 @@ msgstr "\"홈 디렉토리\"를 위해 필요한 입력란입니다. "
 
 #: services/forms.py:90
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "AFP 서비스 재실행 실패."
 
 #: services/forms.py:99
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "NFS 서비스 재실행 실패."
 
 #: services/forms.py:103
 msgid "File Permission"
@@ -1069,35 +1061,35 @@ msgstr ""
 #: services/forms.py:290 services/models.py:526
 #: templates/services/iscsi_auth.html:7
 msgid "Secret"
-msgstr ""
+msgstr "비밀번호"
 
 #: services/forms.py:291 services/models.py:527
 msgid "Target side secret."
-msgstr ""
+msgstr "새 비밀번호"
 
 #: services/forms.py:292
 msgid "Secret (Confirm)"
-msgstr ""
+msgstr "비밀번호(확인)"
 
 #: services/forms.py:294 services/forms.py:302
 msgid "Enter the same secret above for verification."
-msgstr ""
+msgstr "확인을 위해 같은 비밀번호를 한번 더 입력해주세요."
 
 #: services/forms.py:295
 msgid "Initiator Secret"
-msgstr ""
+msgstr "Initiator 비밀번호"
 
 #: services/forms.py:297 services/models.py:533 services/models.py:538
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr ""
+msgstr "Initiator 비밀번호.(상호 CHAP 인증에 필요)"
 
 #: services/forms.py:300
 msgid "Initiator Secret (Confirm)"
-msgstr ""
+msgstr "Initiator 비밀번호(확인)"
 
 #: services/forms.py:309
 msgid "Secret does not match"
-msgstr ""
+msgstr "비밀번호 불일치"
 
 #: services/forms.py:324 services/forms.py:325
 msgid "The peer secret is required if you set a peer user."

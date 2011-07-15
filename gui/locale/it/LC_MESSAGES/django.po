@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-13 16:08+0200\n"
-"Last-Translator: novos3lic <dom.cavallo@libero.it>\n"
+"PO-Revision-Date: 2011-07-14 12:58+0200\n"
+"Last-Translator: fabiusx <fabioslurp@yahoo.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -3113,7 +3113,7 @@ msgstr ""
 
 #: sharing/models.py:235
 msgid "All Directories"
-msgstr "Tutte la Cartelle"
+msgstr "Tutte le Cartelle"
 
 #: sharing/models.py:236
 msgid ""
