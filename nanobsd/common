@@ -30,7 +30,7 @@
 # an explicit copyright/license statement, but are implicitly BSDL.
 #
 
-NANO_PMAKE="make"					# NB: disable -j 3
+NANO_PMAKE="make -j8"					# NB: disable -j 3
 
 # Where cust_pkg() finds packages to install
 #XXX: Is this the right place?

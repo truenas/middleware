@@ -34,7 +34,7 @@ if [ ! -f FreeBSD/supfile -o -n "$force_update" ]; then
 *default delete use-rel-suffix
 
 src-all tag=RELENG_8_2
-ports-all date=2011.06.26.00.00.00
+ports-all date=2011.07.01.00.00.00
 EOF
     csup -L 1 ${root}/FreeBSD/supfile
 # cvsup fixes any changes we make, it seems.  Repatch
@@ -85,8 +85,8 @@ done
 echo tools/tools/nanobsd/nanobsd.sh $args $extra_args
 sh tools/tools/nanobsd/nanobsd.sh $args $extra_args
 if [ $? -eq 0 ]; then
-	REVISION=`svnversion ${root}`
-	NANO_NAME="FreeNAS-8r${REVISION}-${FREENAS_ARCH}"
+	REVISION="8.0.1-BETA-p1"
+	NANO_NAME="FreeNAS-${REVISION}-${FREENAS_ARCH}"
 	xz -f ${NANO_OBJ}/_.disk.image
 	mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_NAME}.xz
 	sha256 ${NANO_OBJ}/${NANO_NAME}.xz
