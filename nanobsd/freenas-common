@@ -98,7 +98,7 @@ add_port databases/db46
 #-net/netatalk
 add_port net/netatalk		-DWITH_PAM
 #+net/nss_ldap
-add_port net/openldap24-client
+add_port net/openldap24-client -DWITH_SASL
 #-net/nss_ldap
 add_port net/nss_ldap
 add_port net/rsync 
