@@ -40,6 +40,7 @@ import time
 import hashlib
 
 from syslog import syslog, LOG_DEBUG
+from ldap.controls import SimplePagedResultsControl
 
 
 FREENAS_LDAP_NOSSL = 0
@@ -382,11 +383,13 @@ class FreeNAS_LDAP(object):
 
         result = []
         results = []
-        paged = ldap.controls.SimplePagedResultsControl(
-            ldap.LDAP_CONTROL_PAGE_OID,
+        paged = SimplePagedResultsControl(
             True,
-            (self.pagesize, '')
+            size=self.pagesize,
+            cookie=''
         )
+
+        paged_ctrls = { SimplePagedResultsControl.controlType:SimplePagedResultsControl, }
 
         if self.pagesize > 0:
             syslog(LOG_DEBUG, "FreeNAS_LDAP.__search: pagesize = %d" % self.pagesize)
@@ -409,16 +412,20 @@ class FreeNAS_LDAP(object):
                    serverctrls=serverctrls
                 )
 
-                (rtype, rdata, rmsgid, serverctrls) = self.__handle.result3(id)
+                (rtype, rdata, rmsgid, serverctrls) = self.__handle.result3(
+                    id, resp_ctrl_classes=paged_ctrls
+                )
+
                 for entry in rdata:
                     result.append(entry)
 
                 cookie = None
                 for sc in serverctrls:
-                    if sc.controlType == ldap.LDAP_CONTROL_PAGE_OID:
-                        est, cookie = sc.controlValue
+                    if sc.controlType == SimplePagedResultsControl.controlType:
+                        cookie = sc.cookie 
                         if cookie:
-                            paged.controlValue = (self.pagesize, cookie)
+                            paged.cookie = cookie
+                            paged.size = self.pagesize
 
                         break
 
