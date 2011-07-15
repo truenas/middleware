@@ -196,7 +196,7 @@ add_port converters/base64
 add_port emulators/mtools -DWITHOUT_X11
 add_port sysutils/arcconf
 add_port sysutils/tw_cli
-add_port net/py-ldap2
+add_port net/py-ldap2 -DWITH_SASL
 add_port sysutils/ataidle
 add_port devel/xorg-macros
 add_port x11/kbproto
