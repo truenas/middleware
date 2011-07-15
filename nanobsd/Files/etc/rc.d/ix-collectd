@@ -37,17 +37,6 @@ LoadPlugin rrdtool
 LoadPlugin swap
 LoadPlugin uptime
 
-<Plugin "df">
-    Mountpoint "/"
-    Mountpoint "/dev"
-    Mountpoint "/etc"
-    Mountpoint "/var"
-    Mountpoint "/mnt"
-    Mountpoint "/data"
-    Mountpoint "/var/tmp/.cache"
-    IgnoreSelected true
-</Plugin>
-
 <Plugin "interface">
     Interface "lo0"
     Interface "plip0"
@@ -59,7 +48,13 @@ LoadPlugin uptime
     CacheTimeout 120
     CacheFlush 900
 </Plugin>
+
+<Plugin "df">
 EOF
+
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT mp_path FROM storage_mountpoint" | sed -e 's,^,    Mountpoint ",g' -e 's,$,",g' >> ${cfg}
+echo '    IgnoreSelected false' >> ${cfg}
+echo '</Plugin>' >> ${cfg}
 }
 
 
