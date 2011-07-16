@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-15 10:46+0200\n"
+"PO-Revision-Date: 2011-07-15 11:21+0200\n"
 "Last-Translator: vincent <iwi@daum.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
@@ -970,9 +970,8 @@ msgid "View All Link Aggregations"
 msgstr "모든 링크어그리게이션 보기"
 
 #: network/views.py:180
-#, fuzzy
 msgid "LAGG successfully added"
-msgstr "%s가 추가 되었습니다. "
+msgstr "LAGG가 추가되었습니다."
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1024,27 +1023,27 @@ msgstr "이 란은 익명 로긴이 요구 됨."
 
 #: services/forms.py:191
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "FTP 서비스 시작 실패."
 
 #: services/forms.py:200
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "TFTP 재시작 실패."
 
 #: services/forms.py:207
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "SSH 서비스 재시작 실패."
 
 #: services/forms.py:216 services/forms.py:241
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Rsync 서비스 재시작 실패."
 
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "이름에는 / 또는 ] 문자를 사용할 수 없습니다."
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "DynamicDNS 서비스 재시작 실패."
 
 #: services/forms.py:259
 msgid "The SNMP service failed to reload."
@@ -1107,11 +1106,11 @@ msgstr ""
 
 #: services/forms.py:373
 msgid "LUN already exists in the same target."
-msgstr ""
+msgstr "이미 같은 대상에 LUN이 존재합니다."
 
 #: services/forms.py:384 services/models.py:352
 msgid "Controller Auth Group"
-msgstr ""
+msgstr "Controller 인증 그룹"
 
 #: services/forms.py:385 services/models.py:353
 msgid ""
@@ -1121,12 +1120,12 @@ msgstr ""
 
 #: services/forms.py:386 services/models.py:246
 msgid "Discovery Auth Group"
-msgstr ""
+msgstr "Discovery 인증 그룹"
 
 #: services/forms.py:413
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr ""
+msgstr "이 값의 입력범위는 %(start)d 부터 %(end)d 사이 입니다."
 
 #: services/forms.py:421
 #, fuzzy
@@ -1136,7 +1135,7 @@ msgstr "\"홈 디렉토리\"를 위해 필요한 입력란입니다. "
 
 #: services/forms.py:504 services/forms.py:534
 msgid "You need to specify a filepath, not a directory."
-msgstr ""
+msgstr "파일명을 포함한 전체 경로를 입력하세요."
 
 #: services/forms.py:508 services/forms.py:538
 msgid "You need to specify a file inside your volume/dataset."
