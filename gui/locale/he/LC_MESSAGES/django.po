@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-30 21:23+0200\n"
+"PO-Revision-Date: 2011-07-16 22:45+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -4624,15 +4624,15 @@ msgstr "שיתופים פעילים"
 
 #: templates/sharing/apple.html:8
 msgid "There are no active Apple Shares."
-msgstr "אין שום שיתופי אפל(apple) פעילים"
+msgstr "אין שום שיתופי אפל פעילים"
 
 #: templates/sharing/apple.html:30
 msgid "Edit Apple Share"
-msgstr "ערוך שיתוף אפל(apple)"
+msgstr "ערוך שיתוף אפל"
 
 #: templates/sharing/apple.html:36
 msgid "Delete Apple Share"
-msgstr "מחק שיתוף אפל(apple)"
+msgstr "מחק שיתוף אפל"
 
 #: templates/sharing/apple.html:43 templates/sharing/unix.html:43
 #: templates/sharing/windows.html:47
@@ -4641,15 +4641,15 @@ msgstr "שום שיתוף לא מוגדר"
 
 #: templates/sharing/apple.html:50
 msgid "Add Apple Share"
-msgstr "הוסף שיתוף אפל(apple)"
+msgstr "הוסף שיתוף אפל"
 
 #: templates/sharing/apple.html:52
 msgid "Add Apple Share (AFP)"
-msgstr "הוסף שיתוף אפל(apple)(AFP)"
+msgstr "הוסף שיתוף אפל (AFP)"
 
 #: templates/sharing/index.html:3
 msgid "Apple"
-msgstr "אפל(apple)"
+msgstr "אפל"
 
 #: templates/sharing/index.html:5
 msgid "UNIX"
@@ -4685,23 +4685,23 @@ msgstr "הוסף שיתוף UNIX (NFS)"
 
 #: templates/sharing/windows.html:8
 msgid "There are no active Windows Shares."
-msgstr "אין שום שיתופי חלונות(ווינדוס) פעילים."
+msgstr "אין שום שיתופי חלונות פעילים."
 
 #: templates/sharing/windows.html:34
 msgid "Edit Windows Share"
-msgstr "ערוך שיתוף חלונות(ווינדוס)"
+msgstr "ערוך שיתוף חלונות"
 
 #: templates/sharing/windows.html:40
 msgid "Delete Windows Share"
-msgstr "מחק שיתוף חלונות(ווינדוס)"
+msgstr "מחק שיתוף חלונות"
 
 #: templates/sharing/windows.html:54
 msgid "Add Windows Share"
-msgstr "הוסף שיתוף חלונות(ווינדוס)"
+msgstr "הוסף שיתוף חלונות"
 
 #: templates/sharing/windows.html:56
 msgid "Add Windows Share (CIFS)"
-msgstr "הוסף שיתוף חלונות(ווינדוס)(CIFS)"
+msgstr "הוסף שיתוף חלונות (CIFS)"
 
 #: templates/storage/clonesnap.html:12
 msgid "Clone Snapshot"

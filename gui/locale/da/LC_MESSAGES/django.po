@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-07-11 08:44+0200\n"
+"PO-Revision-Date: 2011-07-16 13:38+0200\n"
 "Last-Translator: Christian <christian@junker.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
@@ -762,7 +762,7 @@ msgstr "Navneserver 1 skal udfyldes før navneserver 2"
 
 #: network/forms.py:100
 msgid "Parent Interface"
-msgstr "Enhedsnavn"
+msgstr "Overordnet enhed"
 
 #: network/forms.py:109
 msgid "The name must be vlanXX where XX is a integer"
@@ -1195,7 +1195,7 @@ msgstr "Service"
 
 #: services/models.py:60
 msgid "Authentication Model"
-msgstr ""
+msgstr "Godkendelses model"
 
 #: services/models.py:61
 msgid ""
@@ -1209,7 +1209,7 @@ msgstr "NetBIOS navn"
 
 #: services/models.py:69
 msgid "Workgroup"
-msgstr ""
+msgstr "Arbejdsgruppe"
 
 #: services/models.py:70
 msgid ""
