@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-29 04:44+0200\n"
-"Last-Translator: starsliao <starsliao@163.com>\n"
+"PO-Revision-Date: 2011-07-18 07:59+0200\n"
+"Last-Translator: rickdu <rickdu.im@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -686,7 +686,7 @@ msgstr "用户 %s 无效"
 #: freeadmin/forms.py:124
 #, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr "非法的组: '%s'。"
 
 #: freeadmin/forms.py:138
 msgid "The path must reside within a volume mount point"
@@ -1699,7 +1699,7 @@ msgstr "串口"
 
 #: services/models.py:572
 msgid "Serial number for the logical unit"
-msgstr ""
+msgstr "将序列号当成逻辑单元号"
 
 #: services/models.py:577 storage/models.py:74 system/models.py:498
 #: templates/services/iscsi_extents.html:6
@@ -1883,29 +1883,29 @@ msgstr "关机定时器"
 msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
-msgstr ""
+msgstr "关机前等待的秒数。如果UPS在秒数有剩余前恢复，则取消关机操作。"
 
 #: services/models.py:781
 msgid "Remote Monitor"
-msgstr ""
+msgstr "远程监控"
 
 #: services/models.py:783
 msgid "Send Email Status Updates"
-msgstr ""
+msgstr "发送邮件状态更新"
 
 #: services/models.py:786 services/models.py:792
 msgid "To email"
-msgstr ""
+msgstr "发信"
 
 #: services/models.py:788
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr ""
+msgstr "目标邮件地址。以半角冒号分隔多个地址。"
 
 #: services/models.py:793
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
-msgstr ""
+msgstr "邮件主题。可使用如下参数代替：<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 
 #: services/models.py:797 services/models.py:798
 msgid "UPS"
@@ -1939,7 +1939,7 @@ msgstr "登录尝试"
 
 #: services/models.py:823
 msgid "Maximum number of allowed password attempts before disconnection."
-msgstr ""
+msgstr "关闭连接前最多允许尝试密码登录的次数。"
 
 #: services/models.py:827
 msgid "Timeout"
@@ -1975,11 +1975,11 @@ msgstr ""
 
 #: services/models.py:843
 msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr ""
+msgstr "一个连接首次登录FTP时显示的欢迎信息。"
 
 #: services/models.py:849 services/models.py:855
 msgid "Use this option to override the file creation mask (077 by default)."
-msgstr ""
+msgstr "用该选项覆盖创建文件时的掩码（默认077）"
 
 #: services/models.py:858
 msgid "Enable FXP"
@@ -1987,19 +1987,19 @@ msgstr "启用FXP"
 
 #: services/models.py:860
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "启用断点续传"
 
 #: services/models.py:862
 msgid "Always Chroot"
-msgstr ""
+msgstr "锁定到主目录"
 
 #: services/models.py:864
 msgid "Require IDENT Authentication"
-msgstr ""
+msgstr "需要IDENT认证"
 
 #: services/models.py:866
 msgid "Require Reverse DNS for IP"
-msgstr ""
+msgstr "需要DNS反向解析"
 
 #: services/models.py:868
 #, fuzzy
@@ -2011,7 +2011,7 @@ msgid ""
 "Causes the server to display the network information for the specified IP "
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
-msgstr ""
+msgstr "使服务器显示指定客户端IP对应的网络信息，并把该IP或主机名看作一个NAT网关或者端口转发服务器。"
 
 #: services/models.py:874
 msgid "Minimum passive port"
@@ -2021,7 +2021,7 @@ msgstr "最小passive模式端口号"
 msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
-msgstr ""
+msgstr "分配给PASV的最小数据端口（0 = 使用任何端口）"
 
 #: services/models.py:879
 msgid "Maximum passive port"
@@ -2038,6 +2038,9 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
+"分配给PASV的最小数据端口（0 = 使用任何端口）。当客户端发送PASV命令后服务器选择被动端口的范围。服务器将随机选择一个端口供客户端连接。选择的端"
+"口号范围必须是非特权端口(>=1024)。强烈建议把端口范围选的足够大已满足大量的并发被动连接（例如，由IANA注册过的临时端口范围：49152-655"
+"34）。"
 
 #: services/models.py:884
 msgid "Local user upload bandwidth"
@@ -2045,7 +2048,7 @@ msgstr "本地用户上传带宽"
 
 #: services/models.py:885
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "本地用户上传带宽限制(KB/s)，0表示不限。"
 
 #: services/models.py:889
 msgid "Local user download bandwidth"
@@ -2053,7 +2056,7 @@ msgstr "本地用户下载带宽"
 
 #: services/models.py:890
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "本地用户上传带宽限制(KB/s)，0表示不限。"
 
 #: services/models.py:894
 msgid "Anonymous user upload bandwidth"
@@ -2061,7 +2064,7 @@ msgstr "匿名用户上传带宽"
 
 #: services/models.py:895
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "匿名用户上传带宽限制(KB/s)，0表示不限。"
 
 #: services/models.py:899
 msgid "Anonymous user download bandwidth"
@@ -2069,7 +2072,7 @@ msgstr "匿名用户下载带宽"
 
 #: services/models.py:900
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "匿名用户上传带宽限制(KB/s)，0表示不限。"
 
 #: services/models.py:903
 msgid "Enable SSL/TLS"
@@ -2077,7 +2080,7 @@ msgstr "启用 SSL/TLS"
 
 #: services/models.py:908
 msgid "These parameters are added to proftpd.conf."
-msgstr ""
+msgstr "参数已被添加到proftpd.conf。"
 
 #: services/models.py:912 services/models.py:913
 #: templates/services/index.html:53
@@ -2096,40 +2099,40 @@ msgstr ""
 
 #: services/models.py:926
 msgid "Allow New Files"
-msgstr ""
+msgstr "允许新建文件"
 
 #: services/models.py:930
 msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
-msgstr ""
+msgstr "监听端口。默认监听在由/etc/services中指定的tftp端口上。"
 
 #: services/models.py:936
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "指定启动服务的用户。"
 
 #: services/models.py:940
 msgid "umask"
-msgstr ""
+msgstr "掩码"
 
 #: services/models.py:941
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
-msgstr ""
+msgstr "为新建文件设置掩码。默认掩码是022（新建文件权限为644，目录权限为755）"
 
 #: services/models.py:945 services/models.py:982 system/models.py:425
 msgid "Extra options"
-msgstr ""
+msgstr "额外选项"
 
 #: services/models.py:947
 msgid "Extra command line options (usually empty)."
-msgstr ""
+msgstr "额外的命令行选项（通常为空）。"
 
 #: services/models.py:951 services/models.py:952
 #: templates/services/index.html:130
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:961 services/models.py:1157
 msgid "TCP Port"
@@ -2148,15 +2151,15 @@ msgstr "使用root登录"
 msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
-msgstr ""
+msgstr "禁止: Root用户只能通过公钥验证登录;允许: Root用户可以用密码登录"
 
 #: services/models.py:969
 msgid "Allow Password Authentication"
-msgstr ""
+msgstr "允许密码认证"
 
 #: services/models.py:971
 msgid "Allow TCP Port Forwarding"
-msgstr ""
+msgstr "允许TCP端口转发"
 
 #: services/models.py:973
 msgid "Compress Connections"
@@ -2168,13 +2171,13 @@ msgstr "主机私有密钥"
 
 #: services/models.py:978
 msgid "Paste a RSA PRIVATE KEY in PEM format here."
-msgstr ""
+msgstr "在这粘贴一个PEM格式的RSA私钥。"
 
 #: services/models.py:984
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
-msgstr ""
+msgstr "额外的/etc/ssh/sshd_config选项（通常为空）。注意，错误的选项会导致SSH服务无法启动。"
 
 #: services/models.py:1024 services/models.py:1025
 #: templates/services/index.html:119
@@ -2187,7 +2190,7 @@ msgstr "域控制器名称"
 
 #: services/models.py:1035
 msgid "AD or PDC name."
-msgstr ""
+msgstr "域控制器或主域控制器名称。"
 
 #: services/models.py:1039
 #, fuzzy
@@ -2241,17 +2244,17 @@ msgstr "LDAP服务器名或者IP地址"
 
 #: services/models.py:1080
 msgid "Base DN"
-msgstr ""
+msgstr "基础DN"
 
 #: services/models.py:1082
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
-msgstr ""
+msgstr "默认用于搜索的基础唯一甄别名（DN），例如: dc=test,dc=org"
 
 #: services/models.py:1085
 msgid "Allow Anonymous Binding"
-msgstr ""
+msgstr "允许匿名绑定"
 
 #: services/models.py:1088
 msgid "Root bind DN"
@@ -2269,7 +2272,7 @@ msgstr ""
 
 #: services/models.py:1096
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "绑定到哪个证书。"
 
 #: services/models.py:1101
 msgid "Password Encryption"
@@ -2277,63 +2280,63 @@ msgstr "加密密码"
 
 #: services/models.py:1102
 msgid "The password change protocol to use."
-msgstr ""
+msgstr "使用的密码变更协议。"
 
 #: services/models.py:1106
 msgid "User Suffix"
-msgstr ""
+msgstr "用户后缀"
 
 #: services/models.py:1108
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
-msgstr ""
+msgstr "该参数指定添加到LDAP目录中的用户后缀，例如:ou=Users"
 
 #: services/models.py:1112
 msgid "Group Suffix"
-msgstr ""
+msgstr "组后缀"
 
 #: services/models.py:1114
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
-msgstr ""
+msgstr "该参数指定添加到LDAP目录中的组后缀，例如:ou=Groups"
 
 #: services/models.py:1118
 msgid "Password Suffix"
-msgstr ""
+msgstr "密码后缀"
 
 #: services/models.py:1120
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
-msgstr ""
+msgstr "该参数指定添加到LDAP目录中的密码后缀，例如:ou=Passwords"
 
 #: services/models.py:1124
 msgid "Machine Suffix"
-msgstr ""
+msgstr "设备后缀"
 
 #: services/models.py:1126
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
-msgstr ""
+msgstr "该参数指定添加到LDAP目录中的设备后缀，例如:ou=Computers"
 
 #: services/models.py:1130
 msgid "Turn on/off TLS"
-msgstr ""
+msgstr "开/关 TLS"
 
 #: services/models.py:1132
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
-msgstr ""
+msgstr "该参数指定是否使用SSL/TLS,例如: on/off/start_tls"
 
 #: services/models.py:1135
 msgid "Self signed certificate"
-msgstr ""
+msgstr "自签名证书"
 
 #: services/models.py:1137
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "你的自签名证书内容放在这里。"
 
 #: services/models.py:1141 sharing/models.py:85
 msgid "Auxiliary Parameters"
@@ -2341,12 +2344,12 @@ msgstr ""
 
 #: services/models.py:1143
 msgid "These parameters are added to ldap.conf."
-msgstr ""
+msgstr "这些参数已经添加到ldap.conf。"
 
 #: services/models.py:1147 services/models.py:1148
 #: templates/services/index.html:64
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/models.py:1158
 msgid "Alternate TCP port. Default is 873"
@@ -2491,7 +2494,7 @@ msgstr "S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
-msgstr ""
+msgstr "控制服务"
 
 #: services/nav.py:50
 msgid "Add Device Extent"
@@ -2540,20 +2543,20 @@ msgstr "服务无法启动"
 
 #: sharing/forms.py:82
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "该域不是一个合法的IP地址或网络"
 
 #: sharing/forms.py:88
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr ""
+msgstr "非法的IP:'%s'。"
 
 #: sharing/forms.py:99
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "Maproot组要求Maproot用户"
 
 #: sharing/forms.py:101
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr "Mapall组要求Mapall用户"
 
 #: sharing/forms.py:104 sharing/forms.py:107
 msgid "Maproot user/group disqualifies Mapall"
@@ -2903,7 +2906,7 @@ msgstr ""
 
 #: sharing/models.py:248
 msgid "Maproot User"
-msgstr ""
+msgstr "Maproot用户"
 
 #: sharing/models.py:252
 msgid "User to map root to"
@@ -2911,7 +2914,7 @@ msgstr ""
 
 #: sharing/models.py:256
 msgid "Maproot Group"
-msgstr ""
+msgstr "Maproot组"
 
 #: sharing/models.py:260
 msgid "Group to map root to"
@@ -2919,7 +2922,7 @@ msgstr ""
 
 #: sharing/models.py:264
 msgid "Mapall User"
-msgstr ""
+msgstr "Mapall用户"
 
 #: sharing/models.py:268
 msgid "User to map all users to"
@@ -2927,7 +2930,7 @@ msgstr ""
 
 #: sharing/models.py:272
 msgid "Mapall Group"
-msgstr ""
+msgstr "Mapall组"
 
 #: sharing/models.py:276
 msgid "Group to map all users to"

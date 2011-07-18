@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-14 12:58+0200\n"
+"PO-Revision-Date: 2011-07-17 14:21+0200\n"
 "Last-Translator: fabiusx <fabioslurp@yahoo.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
@@ -396,11 +396,11 @@ msgstr "Tutti i giorni selezionati"
 
 #: choices.py:441
 msgid "Read-only"
-msgstr "sola lettura"
+msgstr "Sola lettura"
 
 #: choices.py:442
 msgid "Write-only"
-msgstr "sola scrittura"
+msgstr "Sola scrittura"
 
 #: choices.py:443
 msgid "Read and Write"
@@ -798,15 +798,19 @@ msgstr "Gateway IPv4 di default"
 msgid "IPv6 Default Gateway"
 msgstr "Gateway IPv6 di default"
 
+# Attenzione, da revisionare tutte le voci che in inglese contengono la parola "nameserver".
 #: network/models.py:65
+#, fuzzy
 msgid "Nameserver 1"
 msgstr "Nome server 1"
 
 #: network/models.py:71
+#, fuzzy
 msgid "Nameserver 2"
 msgstr "Nome server 2"
 
 #: network/models.py:77
+#, fuzzy
 msgid "Nameserver 3"
 msgstr "Nome server 3"
 
@@ -824,6 +828,7 @@ msgid "Interface Name"
 msgstr "Nome interfaccia"
 
 #: network/models.py:102
+#, fuzzy
 msgid "Name your NIC."
 msgstr "Nome del tuo NIC."
 
@@ -835,7 +840,7 @@ msgstr "DHCP"
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
-"Quando abilitato usa il DHCP per ottenere l'indirizzo IPv4 così come il "
+"Quando abilitato, usa il DHCP per ottenere l'indirizzo IPv4 così come il "
 "router di default, ecc."
 
 #: network/models.py:111 templates/network/interface.html:8
@@ -965,7 +970,7 @@ msgstr "Crea Link Aggregation"
 
 #: network/nav.py:41
 msgid "View All Link Aggregations"
-msgstr "Visualizza tutti i Link Aggregations"
+msgstr "Visualizza tutti i Link Aggregation"
 
 #: network/views.py:180
 msgid "LAGG successfully added"
@@ -1108,6 +1113,7 @@ msgid "The iSCSI service failed to reload."
 msgstr "Riavvio del servizio iSCSI fallito."
 
 #: services/forms.py:373
+#, fuzzy
 msgid "LUN already exists in the same target."
 msgstr "LUN esiste già nello stesso target."
 

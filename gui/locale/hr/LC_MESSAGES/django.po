@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:47-0700\n"
-"PO-Revision-Date: 2011-07-17 01:49+0200\n"
-"Last-Translator: kkuhar <karlo.kuhar@zg.t-com.hr>\n"
+"PO-Revision-Date: 2011-07-17 13:19+0200\n"
+"Last-Translator: Karlo <karlo.kuhar@zg.t-com.hr>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hr\n"
 "MIME-Version: 1.0\n"
@@ -253,7 +253,7 @@ msgstr "Vremenski stroj"
 
 #: choices.py:190
 msgid "No case folding"
-msgstr ""
+msgstr "Ne mijenjaj mala slova u velika"
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
@@ -756,7 +756,7 @@ msgstr "Obavezno kod uporabe DNS servera 3"
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr "Upišite DNS server 1 prije upisa DNS servera 3."
+msgstr "Upišite DNS server 1 prije upisa DNS servera 3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
@@ -978,7 +978,7 @@ msgstr "Ovo polje je obavezno za \"Omogućavanje pregleda korisničkih mapa\"."
 
 #: services/forms.py:73
 msgid "This field is required for \"Home directories\"."
-msgstr "Ovo polje je obavezno za \"Korisničke mape\""
+msgstr "Ovo polje je obavezno za \"Korisničke mape\"."
 
 #: services/forms.py:90
 msgid "The AFP service failed to reload."
@@ -998,20 +998,19 @@ msgstr "Prava na mape"
 
 #: services/forms.py:129
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr "Vrijednost mora biti između 0 i 65535"
+msgstr "Vrijednost mora biti između 0 i 65535."
 
 #: services/forms.py:135 services/forms.py:153
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr "Vrijednost mora biti između 0 i 10000"
+msgstr "Vrijednost mora biti između 0 i 10000."
 
 #: services/forms.py:141 services/forms.py:147
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr "Vrijednost mora biti između 0 i 1000"
+msgstr "Vrijednost mora biti između 0 i 1000."
 
 #: services/forms.py:159
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
-"Vrijednost mora biti između 1024 i 65535. 0 za podrazumijevanu postavku."
+msgstr "Vrijednost mora biti između 1024 i 65535. 0 za podrazumijevanu postavku"
 
 #: services/forms.py:165
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
@@ -1065,7 +1064,7 @@ msgstr "Tajna"
 
 #: services/forms.py:291 services/models.py:527
 msgid "Target side secret."
-msgstr "Tajna na strani odredišta"
+msgstr "Tajna na strani odredišta."
 
 #: services/forms.py:292
 msgid "Secret (Confirm)"
@@ -1128,7 +1127,7 @@ msgstr "Otkrivanje autorizacijske grupe"
 #: services/forms.py:413
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr "Vrijednost mora biti između %(start) i %(end)"
+msgstr "Vrijednost mora biti između %(start)d i %(end)d."
 
 #: services/forms.py:421
 msgid ""
@@ -1148,7 +1147,7 @@ msgstr "Morate specificirati datoteku unutar volumena."
 #: services/forms.py:512 services/forms.py:542
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
-msgstr ""
+msgstr "Staza do proširenja se mora nalaziti unutar particije/dataseta."
 
 #: services/forms.py:556
 msgid ""
@@ -1183,7 +1182,7 @@ msgstr "Obriši osnovnu datoteku"
 #, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] ""
+msgstr[0] "Sljedeći emailovi nisu važeći: %(email)"
 msgstr[1] ""
 msgstr[2] ""
 
@@ -1212,7 +1211,7 @@ msgstr "Model autentifikacije"
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
-"Korištenje Active Directory ili LDAP autentikacije će nadjačati ovu opciju."
+"Korištenje Active Directory ili LDAP autentikacije će nadjačati ovu opciju"
 
 #: services/models.py:65
 msgid "NetBIOS name"
@@ -1266,6 +1265,12 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
+"Koristite ovu opciju za promjenu korisničkog imena ('nobody' za "
+"pretpostavljeno) koje će biti korišteno za servise koji su specificirani kao "
+"gost. Sva prava koja ima ovaj korisnik biti će dostupna svakom klijentu "
+"koji se spaja na gost servis. Korisnik mora postojati u datoteci zaporki ali "
+"ne mora koristiti ispravane podatke za prijavu. Root korisnik ne može se "
+"koristiti kao gost korisnički račun."
 
 #: services/models.py:108
 msgid "Allow guest access"
@@ -1282,7 +1287,7 @@ msgstr "Maska datoteke"
 #: services/models.py:115
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
-"Koristite ovu opciju za nadglašavanje maske datoteke (0666 pretpostavljeno)"
+"Koristite ovu opciju za nadglašavanje maske datoteke (0666 pretpostavljeno)."
 
 #: services/models.py:119 services/models.py:854
 msgid "Directory mask"
@@ -1291,7 +1296,8 @@ msgstr "Maska mape"
 #: services/models.py:121
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
-msgstr "Koristite ovu opciju za nadglašavanje maske mape (0777 pretpostavljeno)"
+msgstr ""
+"Koristite ovu opciju za nadglašavanje maske mape (0777 pretpostavljeno)."
 
 #: services/models.py:124
 msgid "Large RW support"
@@ -1360,6 +1366,8 @@ msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
 msgstr ""
+"Samba će čitati asinkrono ako je veličina zahtjeva veća od ove vrijednosti. "
+"Pretpostavljena vrijednost čitanja je 1."
 
 #: services/models.py:164
 msgid "Minimal AIO write size"
@@ -1370,6 +1378,8 @@ msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
 msgstr ""
+"Samba će pisati asinkrono ako je veličina zahtjeva veća od ove vrijednosti. "
+"Pretpostavljena vrijednost pisanja je 1."
 
 #: services/models.py:170 services/models.py:171
 #: templates/services/index.html:29
@@ -1403,6 +1413,8 @@ msgstr "Lokalni pristup"
 #: services/models.py:196
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
+"Omogući lokalnim korisnicima pristup apple dijeljenim mapama na ovom "
+"poslužitelju."
 
 #: services/models.py:199
 msgid "Enable DDP"
@@ -1410,7 +1422,7 @@ msgstr "Omogući DDP"
 
 #: services/models.py:200
 msgid "Enables DDP support for low-level appletalk access."
-msgstr ""
+msgstr "Omogućuje DDP podršku za appletalk protokol niske razine."
 
 #: services/models.py:204 services/models.py:205
 #: templates/services/index.html:7
@@ -1426,6 +1438,8 @@ msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
 msgstr ""
+"Specificira koliko poslužitelja treba kreirati. Treba ih biti dovoljno za "
+"posluživanje maksimalnog broja istovremenih korisnika, obično 4 - 6."
 
 #: services/models.py:219
 msgid "Asynchronous mode"
@@ -1436,6 +1450,8 @@ msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
+"Omogući asinkroni režim rada, povećavajući radna svojstva na gigabitnim "
+"mrežama."
 
 #: services/models.py:225 services/models.py:226
 #: templates/services/index.html:75
@@ -1451,42 +1467,44 @@ msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"Osnovni naziv (npr. iqn.2007-09.jp.ne.peach.istgt, vidi RFC 3720 i 3721 za "
+"detalje) dodaje prefiks 'iqn.' u osnovni naziv koji ne počinje s 'iqn.'"
 
 #: services/models.py:242
 msgid "Discovery Auth Method"
-msgstr ""
+msgstr "Autentifikacijska metoda za detekciju"
 
 #: services/models.py:253
 msgid "I/O Timeout"
-msgstr ""
+msgstr "I/O vrijeme isteka"
 
 #: services/models.py:254
 msgid "I/O timeout in seconds (30 by default)."
-msgstr ""
+msgstr "I/O vrijeme isteka u sekundama (pretpostavljeno 30)."
 
 #: services/models.py:259
 msgid "NOPIN Interval"
-msgstr ""
+msgstr "NOPIN interval"
 
 #: services/models.py:260
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr ""
+msgstr "NOPIN interval slanja u sekundama (pretpostavljeno 20)."
 
 #: services/models.py:265
 msgid "Max. sessions"
-msgstr ""
+msgstr "Maksimalni broj sesija"
 
 #: services/models.py:266
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr ""
+msgstr "Maksimalni broj istovremenih sesija (pretpostavljeno 16)."
 
 #: services/models.py:271
 msgid "Max. connections"
-msgstr ""
+msgstr "Maksimalni broj konekcija"
 
 #: services/models.py:272
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr ""
+msgstr "Maksimalni broj konekcija po sesiji (pretpostavljeno 8)."
 
 #: services/models.py:277
 msgid "Max. pre-send R2T"
@@ -4330,11 +4348,11 @@ msgstr ""
 
 #: templates/registration/login.html:50
 msgid "Welcome to FreeNAS 8"
-msgstr ""
+msgstr "Dobrodošli u FreeNAS 8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
-msgstr ""
+msgstr "Prijavite se na sustav."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -4386,7 +4404,7 @@ msgstr ""
 
 #: templates/services/index.html:114
 msgid "S.M.A.R.T. Settings"
-msgstr ""
+msgstr "S.M.A.R.T postavke"
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
@@ -4504,11 +4522,11 @@ msgstr ""
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
-msgstr ""
+msgstr "rsync moduli nisu definirani"
 
 #: templates/services/rsyncmod.html:40 templates/services/rsyncmod.html:42
 msgid "Add Rsync Module"
-msgstr ""
+msgstr "Dodaj Rsync modul"
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
@@ -4602,7 +4620,7 @@ msgstr ""
 
 #: templates/storage/datagrid_disks.html:9
 msgid "Edit Disk"
-msgstr ""
+msgstr "Uredi disk"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
@@ -4618,7 +4636,7 @@ msgstr ""
 
 #: templates/storage/disk_replacement.html:9
 msgid "Replacing disk"
-msgstr ""
+msgstr "Zamijenjujem disk"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
@@ -4782,11 +4800,11 @@ msgstr ""
 
 #: templates/storage/volume_export.html:7
 msgid "Are you sure you want to export?"
-msgstr ""
+msgstr "Da li ste sigurni da želite izvoz?"
 
 #: templates/storage/volumes.html:30 templates/storage/volumes.html.py:34
 msgid "Create ZFS Volume"
-msgstr ""
+msgstr "Kreiraj ZFS particiju"
 
 #: templates/storage/volumes.html:64
 msgid "There are no active volumes."
@@ -4806,7 +4824,7 @@ msgstr ""
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Destroy ZFS Volume"
-msgstr ""
+msgstr "Uništi ZFS particiju"
 
 #: templates/storage/volumes.html:128 templates/storage/volumes.html.py:132
 msgid "Destroy Dataset"
@@ -4827,7 +4845,7 @@ msgstr ""
 
 #: templates/storage/volumes.html:198 templates/storage/volumes.html.py:202
 msgid "Export Volume"
-msgstr ""
+msgstr "Izvezi particiju"
 
 #: templates/storage/volumes.html:209
 msgid "No volumes defined"
@@ -4839,200 +4857,200 @@ msgstr ""
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
-msgstr ""
+msgstr "Vrsta grupe"
 
 #: templates/storage/wizard.html:84
 msgid "ZFS Extra"
-msgstr ""
+msgstr "ZFS dodatno"
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr ""
+msgstr "Korištenje samo jednog diska za bilješke nije preporučljivo"
 
 #: templates/storage/wizard.html:93
 msgid "Log"
-msgstr ""
+msgstr "Bilješke"
 
 #: templates/storage/wizard.html:94
 msgid "Cache"
-msgstr ""
+msgstr "Predmemorija"
 
 #: templates/storage/wizard.html:95
 msgid "Spare"
-msgstr ""
+msgstr "Rezerva"
 
 #: templates/storage/wizard.html:119
 msgid "Add Volume"
-msgstr ""
+msgstr "Dodaj particiju"
 
 #: templates/storage/wizard.html:120
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "Postojeći podaci će biti obrisani"
 
 #: templates/storage/zvols.html:9
 msgid "Add ZFS Volume"
-msgstr ""
+msgstr "Dodaj ZFS particiju"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
-msgstr ""
+msgstr "U tijeku je regenereriranje predmemorije."
 
 #: templates/system/advanced_edit.html:19
 msgid "The cache could not be rebuilt"
-msgstr ""
+msgstr "Neuspješno regeneriranje predmemorije"
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
-msgstr ""
+msgstr "Regeneriraj LDAP/AD predmemoriju"
 
 #: templates/system/config.html:3
 msgid "Restore to Factory Defaults"
-msgstr ""
+msgstr "Povrat tvorničkih postavki"
 
 #: templates/system/config.html:5
 msgid "Restore Config"
-msgstr ""
+msgstr "Restauriraj konfiguraciju"
 
 #: templates/system/config.html:9
 msgid "Save Config"
-msgstr ""
+msgstr "Spremi postavke"
 
 #: templates/system/config.html:12 templates/system/config.html.py:14
 msgid "Upload Config"
-msgstr ""
+msgstr "Pošalji konfiguraciju"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr ""
+msgstr "Ponovno pokretanje..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
-msgstr ""
+msgstr "Da li ste sigurni da želite vratiti tvorničke postavke?"
 
 #: templates/system/config_upload.html:35
 msgid "Update"
-msgstr ""
+msgstr "Obnovi"
 
 #: templates/system/cronjob.html:40
 msgid "No CronJobs defined"
-msgstr ""
+msgstr "Ne postoje Cron zadaci"
 
 #: templates/system/cronjob.html:46 templates/system/cronjob.html.py:48
 msgid "Add CronJob"
-msgstr ""
+msgstr "Dodaj Cron zadatak"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr ""
+msgstr "Ponovno pokretanje..."
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "Testna poruka je uspješno poslana!"
 
 #: templates/system/email_edit.html:19
 msgid "Your test email could not be sent:"
-msgstr ""
+msgstr "Neuspješno slanje test poruke:"
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr ""
+msgstr "Pošalji probnu poruku"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr ""
+msgstr "Po satu"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
-msgstr ""
+msgstr "Grafovi po satu"
 
 #: templates/system/reporting.html:18
 msgid "Daily"
-msgstr ""
+msgstr "Dnevno"
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
-msgstr ""
+msgstr "Grafovi po danima"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr ""
+msgstr "Tjedno"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"
-msgstr ""
+msgstr "Grafovi po tjednima"
 
 #: templates/system/reporting.html:46
 msgid "Monthly"
-msgstr ""
+msgstr "Mjesečno"
 
 #: templates/system/reporting.html:47
 msgid "Monthly Graphs"
-msgstr ""
+msgstr "Grafovi po mjesecima"
 
 #: templates/system/reporting.html:60
 msgid "Yearly"
-msgstr ""
+msgstr "Godišnje"
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"
-msgstr ""
+msgstr "Grafovi po godinama"
 
 #: templates/system/rsync.html:38
 msgid "No rsyncs defined"
-msgstr ""
+msgstr "Nisu definirani rsync"
 
 #: templates/system/rsync.html:44 templates/system/rsync.html.py:46
 msgid "Add Rsync"
-msgstr ""
+msgstr "Dodaj Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr ""
+msgstr "Osnovno"
 
 #: templates/system/settings.html:11
 msgid "Firmware Update"
-msgstr ""
+msgstr "Nadogradnja ugrađenog softvera (firmware)"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
-msgstr ""
+msgstr "Apliciraj servisni paket"
 
 #: templates/system/settings.html:15
 msgid "Config"
-msgstr ""
+msgstr "Konfiguracija"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
-msgstr ""
+msgstr "Verzija OS-a"
 
 #: templates/system/system_info.html:12
 msgid "Platform"
-msgstr ""
+msgstr "Platforma"
 
 #: templates/system/system_info.html:16
 msgid "Memory"
-msgstr ""
+msgstr "Memorija"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
-msgstr ""
+msgstr "Sistemsko vrijeme"
 
 #: templates/system/system_info.html:24
 msgid "Uptime"
-msgstr ""
+msgstr "Vrijeme rada"
 
 #: templates/system/system_info.html:28
 msgid "Load Average"
-msgstr ""
+msgstr "Prosječno opterećenje"
 
 #: templates/system/system_info.html:32
 msgid "FreeNAS Build"
-msgstr ""
+msgstr "FreeNAS verzija"
 
 #: templates/system/wizard.html:3
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr ""
+msgstr "Korak %(step)s od %(step_counts)s"
 
 msgid "Admin user"
 msgstr "Administrator"
