@@ -8,7 +8,7 @@
 #
 
 #-
-# Copyright (c) 2010 iXsystems, Inc., All rights reserved.
+# Copyright (c) 2010, 2011 iXsystems, Inc., All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -43,7 +43,7 @@ load_rc_config $name
 : ${django_pidfile="/var/run/${name}.pid"}
 : ${django_sockfile="/tmp/${name}.sock"}
 : ${django_path="/usr/local/www/freenasUI"}
-: ${django_config="/usr/local/www/freenasUI/local_settings.py"}
+: ${django_config="/etc/local_settings.py"}
 
 pidfile=${django_pidfile}
 sockfile=${django_sockfile}
@@ -56,10 +56,8 @@ start_command()
 {
 	local logs="/var/log/lighttpd.error.log /var/log/lighttpd.access.log"
 	new_string=`dd if=/dev/random bs=32 count=1 2>/dev/null | /usr/local/bin/base64`
-	mount -uw /
 	sed -i "" -e /SECRET_KEY.*/d ${django_config} 2> /dev/null
         echo "SECRET_KEY = '${new_string}'" >> ${django_config}
-	mount -r /
 	/usr/local/bin/python ${path}/manage.py runfcgi method=threaded \
 		socket=${sockfile} pidfile=${pidfile}
 	touch ${logs}
