@@ -62,11 +62,7 @@ NANO_RAM_TMPVARSIZE=$((160*1024))
 DEBUG="1"
 
 NANO_IMAGES=2
-if [ "${DEBUG}" -eq "1" ]; then 
-    FlashDevice generic 2g
-else
-    FlashDevice generic 1g
-fi
+FlashDevice generic 2g
 
 . ${NANO_CFG_BASE}/common
 
