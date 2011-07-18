@@ -85,7 +85,7 @@ done
 echo tools/tools/nanobsd/nanobsd.sh $args $extra_args
 sh tools/tools/nanobsd/nanobsd.sh $args $extra_args
 if [ $? -eq 0 ]; then
-	REVISION="8.0.1-BETA-p1"
+	REVISION="8.0.1-BETA4-p1"
 	NANO_NAME="FreeNAS-${REVISION}-${FREENAS_ARCH}"
 	xz -f ${NANO_OBJ}/_.disk.image
 	mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_NAME}.xz
