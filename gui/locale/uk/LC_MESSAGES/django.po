@@ -1182,7 +1182,7 @@ msgid "Delete underlying file"
 msgstr "Вилучити основний файл"
 
 #: services/forms.py:788
-#, fuzzy, python-format
+#, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
 msgstr[0] ""
