@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-05-30 17:04+0200\n"
-"Last-Translator: Anonymous Pootle User\n"
+"PO-Revision-Date: 2011-07-19 22:36+0200\n"
+"Last-Translator: Chehab <Chehab87@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ar\n"
 "MIME-Version: 1.0\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: choices.py:35
 msgid "Plain"
-msgstr ""
+msgstr "عادي"
 
 #: choices.py:36 system/models.py:234 templates/system/settings.html:9
 msgid "SSL"
@@ -41,7 +41,7 @@ msgstr ""
 
 #: choices.py:48 choices.py:217
 msgid "Auto"
-msgstr ""
+msgstr "تلقائي"
 
 #: choices.py:49
 msgid "PIO0"
@@ -105,151 +105,154 @@ msgstr ""
 
 #: choices.py:67
 msgid "Always On"
-msgstr ""
+msgstr "دائما متاح"
 
 #: choices.py:81 choices.py:90
 msgid "Disabled"
-msgstr ""
+msgstr "تعطيل"
 
 #: choices.py:82
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
 msgstr ""
+"المستوى ١ - الحد الأدنى من استهلاك الطاقة مع الاستعداد (تخفيض معدل الدوران)"
 
 #: choices.py:83
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "مستوى ٦٤ - متوسط ​​استهلاك الطاقة مع الاستعداد"
 
 #: choices.py:84
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "مستوى ١٢٧ - متوسط ​​استهلاك الطاقة مع الاستعداد"
 
 #: choices.py:85
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
 msgstr ""
+"مستوى ١٢٨-الحد الأدنى لاستهلاك الطاقة من دون الاستعداد (بدون تخفيض معدل "
+"الدوران)"
 
 #: choices.py:86
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr ""
+msgstr "مستوى ١٩٢ - متوسط ​​الاستهلاك الحالي مع عدم وجود الاستعداد"
 
 #: choices.py:87
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr ""
+msgstr "مستوى ٢٥٤ - الحد الأقصى من الأداء ، والحد الأقصى استخدام الطاقة"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
-msgstr ""
+msgstr "الحد الأدنى"
 
 #: choices.py:92
 msgid "Medium"
-msgstr ""
+msgstr "متوسط"
 
 #: choices.py:93
 msgid "Maximum"
-msgstr ""
+msgstr "أقصى"
 
 #: choices.py:127 templates/storage/tasks.html:85
 msgid "January"
-msgstr ""
+msgstr "يناير / كانون الثاني"
 
 #: choices.py:128 templates/storage/tasks.html:88
 msgid "February"
-msgstr ""
+msgstr "فبراير / شباط"
 
 #: choices.py:129 templates/storage/tasks.html:91
 msgid "March"
-msgstr ""
+msgstr "مارس / آذار"
 
 #: choices.py:130 templates/storage/tasks.html:94
 msgid "April"
-msgstr ""
+msgstr "أبريل / نيسان"
 
 #: choices.py:131 templates/storage/tasks.html:97
 msgid "May"
-msgstr ""
+msgstr "مايو / أيار"
 
 #: choices.py:132 templates/storage/tasks.html:100
 msgid "June"
-msgstr ""
+msgstr "يونيو / حزيران"
 
 #: choices.py:133 templates/storage/tasks.html:103
 msgid "July"
-msgstr ""
+msgstr "يوليو / تموز"
 
 #: choices.py:134 templates/storage/tasks.html:106
 msgid "August"
-msgstr ""
+msgstr "أغسطس / آب"
 
 #: choices.py:135 templates/storage/tasks.html:109
 msgid "September"
-msgstr ""
+msgstr "سبتمبر / أيلول"
 
 #: choices.py:136 templates/storage/tasks.html:112
 msgid "October"
-msgstr ""
+msgstr "أكتوبر / تشرين الأول"
 
 #: choices.py:137 templates/storage/tasks.html:115
 msgid "November"
-msgstr ""
+msgstr "نوفمبر / تشرين الثاني"
 
 #: choices.py:138 templates/storage/tasks.html:118
 msgid "December"
-msgstr ""
+msgstr "ديسمبر / كانون الأول"
 
 #: choices.py:141 templates/storage/tasks.html:56
 msgid "Monday"
-msgstr ""
+msgstr "الاثنين"
 
 #: choices.py:142 templates/storage/tasks.html:59
 msgid "Tuesday"
-msgstr ""
+msgstr "الثلاثاء"
 
 #: choices.py:143 templates/storage/tasks.html:62
 msgid "Wednesday"
-msgstr ""
+msgstr "الأربعاء"
 
 #: choices.py:144 templates/storage/tasks.html:65
 msgid "Thursday"
-msgstr ""
+msgstr "الخميس"
 
 #: choices.py:145 templates/storage/tasks.html:68
 msgid "Friday"
-msgstr ""
+msgstr "الجمعة"
 
 #: choices.py:146 templates/storage/tasks.html:71
 msgid "Saturday"
-msgstr ""
+msgstr "السبت"
 
 #: choices.py:147 templates/storage/tasks.html:74
 msgid "Sunday"
-msgstr ""
+msgstr "الأحد"
 
 #: choices.py:158
 msgid "Anonymous"
-msgstr ""
+msgstr "مجهول"
 
 #: choices.py:159
 msgid "Local User"
-msgstr ""
+msgstr "المستخدم المحلي"
 
 #: choices.py:180
 msgid "Normal"
-msgstr ""
+msgstr "عادي"
 
 #: choices.py:181
 msgid "Full"
-msgstr ""
+msgstr "كامل"
 
 #: choices.py:182
 msgid "Debug"
-msgstr ""
+msgstr "التصحيح"
 
 #: choices.py:186
 msgid "Default"
-msgstr ""
+msgstr "الافتراضي"
 
 #: choices.py:187
 msgid "Time Machine"
-msgstr ""
+msgstr "آلة الزمن"
 
 #: choices.py:190
 msgid "No case folding"
@@ -261,19 +264,19 @@ msgstr ""
 
 #: choices.py:193
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "يرى العميل احرف صغيرة (abc)، يرى خادم احرف الكبيرة (ABC)"
 
 #: choices.py:194
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "يرى خادم احرف صغيرة (abc)، يرى العميل احرف الكبيرة (ABC)"
 
 #: choices.py:198
 msgid "File"
-msgstr ""
+msgstr "ملف"
 
 #: choices.py:199
 msgid "Device"
-msgstr ""
+msgstr "جهاز"
 
 #: choices.py:200
 msgid "ZFS Volume"
@@ -283,32 +286,32 @@ msgstr ""
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
 #: templates/storage/wizard.html:91
 msgid "Disk"
-msgstr ""
+msgstr "القرص"
 
 #: choices.py:205
 msgid "DVD"
-msgstr ""
+msgstr "دي في دي"
 
 #: choices.py:206
 msgid "Tape"
-msgstr ""
+msgstr "شريط"
 
 #: choices.py:207
 msgid "Pass"
-msgstr ""
+msgstr "تمرير"
 
 #: choices.py:211
 msgid "read-write"
-msgstr ""
+msgstr "قراءة - كتابة"
 
 #: choices.py:212
 msgid "read-only"
-msgstr ""
+msgstr "قراءة فقط"
 
 #: choices.py:216 choices.py:222 services/forms.py:392 services/forms.py:394
 #: services/forms.py:741 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "لا شيء"
 
 #: choices.py:218
 msgid "CHAP"
@@ -319,8 +322,9 @@ msgid "Mutual CHAP"
 msgstr ""
 
 #: choices.py:241
+#, fuzzy
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "يو بي إس يصل إلى بطارية منخفضة"
 
 #: choices.py:242
 msgid "UPS goes on battery"
@@ -328,27 +332,27 @@ msgstr ""
 
 #: choices.py:245
 msgid "Preferred"
-msgstr ""
+msgstr "مفضل"
 
 #: choices.py:246
 msgid "Tolerated"
-msgstr ""
+msgstr "التسامح"
 
 #: choices.py:247
 msgid "Required"
-msgstr ""
+msgstr "مطلوب"
 
 #: choices.py:274 choices.py:280
 msgid "Inherit"
-msgstr ""
+msgstr "يرث"
 
 #: choices.py:275
 msgid "On"
-msgstr ""
+msgstr "متاح"
 
 #: choices.py:276 choices.py:281
 msgid "Off"
-msgstr ""
+msgstr "غير متاح"
 
 #: choices.py:282
 msgid "lzjb (recommended)"
@@ -368,44 +372,44 @@ msgstr ""
 
 #: choices.py:426
 msgid "Hour(s)"
-msgstr ""
+msgstr "ساعة (ساعات)"
 
 #: choices.py:427
 msgid "Day(s)"
-msgstr ""
+msgstr "يوم (أيام)"
 
 #: choices.py:428
 msgid "Week(s)"
-msgstr ""
+msgstr "أسبوع (أسابيع)"
 
 #: choices.py:429
 msgid "Month(s)"
-msgstr ""
+msgstr "شهر (أشهر)"
 
 #: choices.py:430
 msgid "Year(s)"
-msgstr ""
+msgstr "سنة (سنوات)"
 
 #: choices.py:434 system/models.py:302 system/models.py:321
 #: system/models.py:457 system/models.py:476
 msgid "Everyday"
-msgstr ""
+msgstr "كل يوم"
 
 #: choices.py:435
 msgid "Every selected weekday"
-msgstr ""
+msgstr "كل يوم من أيام الأسبوع المحددة"
 
 #: choices.py:441
 msgid "Read-only"
-msgstr ""
+msgstr "قراءة فقط"
 
 #: choices.py:442
 msgid "Write-only"
-msgstr ""
+msgstr "كتابة فقط"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "قراءة و كتابة"
 
 #: choices.py:447 choices.py:448
 #, python-format
@@ -415,17 +419,17 @@ msgstr ""
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "٪ ساعة (ساعات)"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "٪ ساعة (ساعات)"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "٪ يوم (أيام)"
 
 #: choices.py:456
 #, python-format
@@ -466,17 +470,17 @@ msgstr ""
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
-msgstr ""
+msgstr "متاح"
 
 #: account/forms.py:146
 msgid "Selected"
-msgstr ""
+msgstr "مختارة"
 
 #: account/forms.py:174 account/forms.py:198 account/models.py:79
 #: services/models.py:676 services/models.py:935 system/models.py:160
 #: templates/account/bsdusers.html:5 templates/account/bsdusers.html.py:86
 msgid "Username"
-msgstr ""
+msgstr "اسم المستخدم"
 
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
@@ -490,7 +494,7 @@ msgstr ""
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
 #: templates/account/bsdusers.html.py:90
 msgid "Password"
-msgstr ""
+msgstr "كلمة السر"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:188
 msgid "Password confirmation"
@@ -612,7 +616,7 @@ msgstr ""
 
 #: account/models.py:115 templates/account/bsdusers.html:91
 msgid "E-mail"
-msgstr ""
+msgstr "البريد الإلكتروني"
 
 #: account/models.py:120 account/models.py:159 services/models.py:521
 #: services/models.py:1203 system/models.py:242 system/models.py:380

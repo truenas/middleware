@@ -3,86 +3,86 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2011-07-19 22:03+0200\n"
+"Last-Translator: Chehab <Chehab87@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language: ar\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
-"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5\n"
+"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+"X-Generator: Pootle 2.1.6\n"
 
 #: media/lib/js/freeadmin.js:114
 msgid "Reporting"
-msgstr ""
+msgstr "إبلاغ"
 
 #: media/lib/js/freeadmin.js:126
 msgid "Settings"
-msgstr ""
+msgstr "الإعدادات"
 
 #: media/lib/js/freeadmin.js:137
 msgid "System Information"
-msgstr ""
+msgstr "بيانات النظام"
 
 #: media/lib/js/freeadmin.js:177
 msgid "Network Settings"
-msgstr ""
+msgstr "إعدادات الشبكة"
 
 #: media/lib/js/freeadmin.js:239
 msgid "Services"
-msgstr ""
+msgstr "الخدمات"
 
 #: media/lib/js/freeadmin.js:279
 msgid "Account"
-msgstr ""
+msgstr "حساب"
 
 #: media/lib/js/freeadmin.js:318
 msgid "Storage"
-msgstr ""
+msgstr "تخزين"
 
 #: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
-msgstr ""
+msgstr "جدولة المهام"
 
 #: media/lib/js/freeadmin.js:437
 msgid "Edit"
-msgstr ""
+msgstr "تحرير"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
-msgstr ""
+msgstr "تحرير القرص"
 
 #: media/lib/js/freeadmin.js:443
 msgid "Replace"
-msgstr ""
+msgstr "استبدل"
 
 #: media/lib/js/freeadmin.js:444
 msgid "Disk Replacement"
-msgstr ""
+msgstr "استبدال القرص"
 
 #: media/lib/js/freeadmin.js:448
 msgid "Detach"
-msgstr ""
+msgstr "فصل / حل"
 
 #: media/lib/js/freeadmin.js:449
 msgid "Disk Detach"
-msgstr ""
+msgstr "فصل القرص"
 
 #: media/lib/js/freeadmin.js:635
 msgid "Some error ocurried!"
-msgstr ""
+msgstr "حادثات بعض الاخطاء!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
-msgstr ""
+msgstr "كل المختارة"
 
 #: media/lib/js/freeadmin/form/Cron.js:90
 msgid "Every N"
-msgstr ""
+msgstr "كل N"

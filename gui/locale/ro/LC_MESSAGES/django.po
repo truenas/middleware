@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-05-22 22:59+0200\n"
-"Last-Translator: bogdan_marcu <bogdan_marcu@hotmail.com>\n"
+"PO-Revision-Date: 2011-07-19 22:13+0200\n"
+"Last-Translator: HarryE <harald.ersch@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
 "MIME-Version: 1.0\n"
@@ -112,14 +112,12 @@ msgid "Disabled"
 msgstr "Dezactivat"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Utilizare minimă cu oprire (discurile se opresc)"
+msgstr "Nivel 1 + Utilizare cu consum minim şi oprire (discurile se opresc)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Utilizare intermediară cu oprire"
+msgstr "Nivel 64 - Utilizare cu consum mediu şi  oprire "
 
 #: choices.py:84
 #, fuzzy
@@ -361,19 +359,16 @@ msgid "lzjb (recommended)"
 msgstr "lzjb (recomandat)"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "nivel implicit"
+msgstr "gzip (nivel implicit 6)"
 
 #: choices.py:284
-#, fuzzy
 msgid "gzip (fastest)"
-msgstr "cel mai rapid"
+msgstr "gzip (cel mai rapid)"
 
 #: choices.py:285
-#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr "maximum, încet"
+msgstr "gzip (maximum, încet)"
 
 #: choices.py:426
 msgid "Hour(s)"
@@ -405,55 +400,56 @@ msgid "Every selected weekday"
 msgstr "Fiecare zi din săptămână selectată"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
 msgstr "doar-citire"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "doar-citire"
+msgstr "doar-scriere"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "citire şi scriere"
 
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes)s minute"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour)s ore"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hour)s ore"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day)s zile"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week)s săptămâni"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
 msgstr ""
+"Niciodată - Verifică dispozitivul indiferent de modul de economisire a "
+"energiei"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Sleep - Verifică dispozitivul doar dacă NU e în modul SLEEP"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
+"Standby - Verifică dispozitivul doar dacă NU e în modurile SLEEP sau STANDBY"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"

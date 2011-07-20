@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-06-27 11:17+0200\n"
-"Last-Translator: samueljon <sammi@villingaholt.nu>\n"
+"PO-Revision-Date: 2011-07-20 01:17+0200\n"
+"Last-Translator: Chipcius <andri@chipcy.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: is\n"
 "MIME-Version: 1.0\n"
@@ -108,43 +108,45 @@ msgstr "Ávallt kveikt"
 
 #: choices.py:81 choices.py:90
 msgid "Disabled"
-msgstr ""
+msgstr "Afvirkjað"
 
 #: choices.py:82
+#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "Stig 1 - Lágmarks orkunotkun með Bið (spindown)"
 
 #: choices.py:83
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "Stig 64 - Miðlungs orkunotkun með Bið"
 
 #: choices.py:84
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "Stig 127 - Miðlungs orkunotkun með Bið"
 
 #: choices.py:85
+#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr ""
+msgstr "Stig 128 - Lágmarks orkunotkun án Bið (ekkert spindown)"
 
 #: choices.py:86
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr ""
+msgstr "Stig 192 - Miðlungs orkunotkun án Bið"
 
 #: choices.py:87
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr ""
+msgstr "Stig 254 - Hámaks afköst, hámarks orkunotkun"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
-msgstr ""
+msgstr "Lágmark"
 
 #: choices.py:92
 msgid "Medium"
-msgstr ""
+msgstr "Miðlungs"
 
 #: choices.py:93
 msgid "Maximum"
-msgstr ""
+msgstr "Hámarks"
 
 #: choices.py:127 templates/storage/tasks.html:85
 msgid "January"
@@ -249,35 +251,39 @@ msgstr "Sjálfgefið"
 
 #: choices.py:187
 msgid "Time Machine"
-msgstr ""
+msgstr "Tímahylki"
 
 #: choices.py:190
+#, fuzzy
 msgid "No case folding"
-msgstr ""
+msgstr "Breytið ekki hástöfum og lágstöfum"
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "lágstafa nöfn í báðar áttir"
 
 #: choices.py:193
+#, fuzzy
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "Útstöð sér lágstafi, þjónn sér hástafi"
 
 #: choices.py:194
+#, fuzzy
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "Útstöð sér hástafi, þjónn sér lágstafi"
 
 #: choices.py:198
 msgid "File"
-msgstr ""
+msgstr "Skrá"
 
 #: choices.py:199
 msgid "Device"
-msgstr ""
+msgstr "Tæki"
 
 #: choices.py:200
+#, fuzzy
 msgid "ZFS Volume"
-msgstr ""
+msgstr "ZFS Flæmi"
 
 #: choices.py:204 storage/models.py:147 system/models.py:493
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
@@ -295,56 +301,56 @@ msgstr "Snælda"
 
 #: choices.py:207
 msgid "Pass"
-msgstr ""
+msgstr "Sleppa"
 
 #: choices.py:211
 msgid "read-write"
-msgstr ""
+msgstr "lesa-skrifa"
 
 #: choices.py:212
 msgid "read-only"
-msgstr ""
+msgstr "aðeins-lesa"
 
 #: choices.py:216 choices.py:222 services/forms.py:392 services/forms.py:394
 #: services/forms.py:741 templates/storage/wizard.html:92
 msgid "None"
-msgstr ""
+msgstr "Engin"
 
 #: choices.py:218
 msgid "CHAP"
-msgstr ""
+msgstr "CHAP"
 
 #: choices.py:219
 msgid "Mutual CHAP"
-msgstr ""
+msgstr "Gagnkvæm CHAP"
 
 #: choices.py:241
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "UPS á lítið battery eftir"
 
 #: choices.py:242
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS tengir battery"
 
 #: choices.py:245
 msgid "Preferred"
-msgstr ""
+msgstr "Æskilegt"
 
 #: choices.py:246
 msgid "Tolerated"
-msgstr ""
+msgstr "Þolanlegt"
 
 #: choices.py:247
 msgid "Required"
-msgstr ""
+msgstr "Skilyrt"
 
 #: choices.py:274 choices.py:280
 msgid "Inherit"
-msgstr ""
+msgstr "Erfa"
 
 #: choices.py:275
 msgid "On"
-msgstr ""
+msgstr "Á"
 
 #: choices.py:276 choices.py:281
 #, fuzzy
@@ -353,35 +359,35 @@ msgstr "Af"
 
 #: choices.py:282
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (mælt með)"
 
 #: choices.py:283
 msgid "gzip (default level, 6)"
-msgstr ""
+msgstr "gzip (sjálfgefið stig, 6)"
 
 #: choices.py:284
 msgid "gzip (fastest)"
-msgstr ""
+msgstr "gzip (hraðast)"
 
 #: choices.py:285
 msgid "gzip (maximum, slow)"
-msgstr ""
+msgstr "gzip (hámarks, hægt)"
 
 #: choices.py:426
 msgid "Hour(s)"
-msgstr ""
+msgstr "Klukkustund(ir)"
 
 #: choices.py:427
 msgid "Day(s)"
-msgstr ""
+msgstr "Dagur(ar)"
 
 #: choices.py:428
 msgid "Week(s)"
-msgstr ""
+msgstr "Vika(ur)"
 
 #: choices.py:429
 msgid "Month(s)"
-msgstr ""
+msgstr "Mánaður(uðir)"
 
 #: choices.py:430
 msgid "Year(s)"
@@ -406,22 +412,22 @@ msgstr "Lesvarið"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Lesa og Skriifa"
 
 #: choices.py:447 choices.py:448
-#, python-format
+#, fuzzy, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes)s mínútur"
 
 #: choices.py:449
-#, python-format
+#, fuzzy, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(tími)ar tími"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(tími)ar tími"
 
 #: choices.py:455
 #, python-format
@@ -481,11 +487,11 @@ msgstr "Notandanafn"
 
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr ""
+msgstr "Skilyrt. 30 stafir eða færri. Bara bókstafir, tölustafir og @/./+/-/_"
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr ""
+msgstr "Þetta gildi má bara innihalda bókstafir, tölustafir og @/./+/-/_"
 
 #: account/forms.py:201 account/forms.py:308 services/models.py:680
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
@@ -3870,23 +3876,24 @@ msgstr ""
 
 #: system/views.py:243
 msgid "Test message from FreeNAS"
-msgstr ""
+msgstr "Prufu skilaboð frá FreeNAS"
 
 #: system/views.py:244
 msgid "This is a message test from FreeNAS"
-msgstr ""
+msgstr "Þetta er skilaboða prófun frá FreeNAS"
 
 #: templates/404.html:7
 msgid "Page Not Found"
-msgstr ""
+msgstr "Síðan Fannst Ekki"
 
 #: templates/base.html:32
+#, fuzzy
 msgid "expand all"
-msgstr ""
+msgstr "útvíkka allt"
 
 #: templates/base.html:33
 msgid "collapse all"
-msgstr ""
+msgstr "Fella allt saman"
 
 #: templates/menubar.html:33
 msgid "Log Out"
@@ -4146,11 +4153,11 @@ msgstr ""
 
 #: templates/freeadmin/index.html:91
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS Skjöl"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Translations"
-msgstr ""
+msgstr "FreeNAS Þýðingar"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
@@ -4460,25 +4467,25 @@ msgstr ""
 
 #: templates/services/iscsi_portals.html:6
 msgid "Listen"
-msgstr ""
+msgstr "Hlusta"
 
 #: templates/services/iscsi_portals.html:20
 msgid "Edit Portal"
-msgstr ""
+msgstr "Breyta Gátt"
 
 #: templates/services/iscsi_portals.html:26
 msgid "Delete Portal"
-msgstr ""
+msgstr "Eyða Gátt"
 
 #: templates/services/iscsi_portals.html:39
 #: templates/services/iscsi_portals.html:41
 msgid "Add Portal"
-msgstr ""
+msgstr "Bæta við Gátt"
 
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
 msgid "Add Target"
-msgstr ""
+msgstr "Bæta við Takmarki"
 
 #: templates/services/rsyncmod.html:8 templates/sharing/apple.html:15
 #: templates/sharing/windows.html:16 templates/storage/replications.html:17
@@ -4486,7 +4493,7 @@ msgstr ""
 #: templates/storage/volumes.html:76 templates/system/cronjob.html:12
 #: templates/system/rsync.html:11
 msgid "Available actions"
-msgstr ""
+msgstr "Virkar aðgerðir"
 
 #: templates/services/rsyncmod.html:34
 msgid "No rsync modules defined"
@@ -4498,53 +4505,55 @@ msgstr ""
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
+#, fuzzy
 msgid "Active Shares"
-msgstr ""
+msgstr "Bæta við Deilingum"
 
 #: templates/sharing/apple.html:8
 msgid "There are no active Apple Shares."
-msgstr ""
+msgstr "Það eru engar virkar Apple Deilingar"
 
 #: templates/sharing/apple.html:30
 msgid "Edit Apple Share"
-msgstr ""
+msgstr "Breyta Apple Deilingu"
 
 #: templates/sharing/apple.html:36
 msgid "Delete Apple Share"
-msgstr ""
+msgstr "Eyða Apple Deilingu"
 
 #: templates/sharing/apple.html:43 templates/sharing/unix.html:43
 #: templates/sharing/windows.html:47
 msgid "No shares defined"
-msgstr ""
+msgstr "Engin deiling skylgreind"
 
 #: templates/sharing/apple.html:50
 msgid "Add Apple Share"
-msgstr ""
+msgstr "Bæta við Apple Deilingu"
 
 #: templates/sharing/apple.html:52
 msgid "Add Apple Share (AFP)"
-msgstr ""
+msgstr "Bæta við Apple Deilingu (AFP)"
 
 #: templates/sharing/index.html:3
 msgid "Apple"
-msgstr ""
+msgstr "Apple"
 
 #: templates/sharing/index.html:5
 msgid "UNIX"
-msgstr ""
+msgstr "UNIX"
 
 #: templates/sharing/index.html:7
 msgid "Windows"
-msgstr ""
+msgstr "Windows"
 
 #: templates/sharing/unix.html:8
 msgid "There are no active UNIX Shares."
-msgstr ""
+msgstr "Það eru engar virkar UNIX Deilingar"
 
 #: templates/sharing/unix.html:13
+#, fuzzy
 msgid "Mountpoint"
-msgstr ""
+msgstr "Áhangipunktur"
 
 #: templates/sharing/unix.html:30
 msgid "Edit NFS Share"
@@ -4921,7 +4930,7 @@ msgstr ""
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr ""
+msgstr "Senda Prufu Póst"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
