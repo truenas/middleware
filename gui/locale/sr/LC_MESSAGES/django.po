@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-30 09:29+0200\n"
-"Last-Translator: bscomputer <office@bscomputer.com>\n"
+"PO-Revision-Date: 2011-07-20 14:34+0200\n"
+"Last-Translator: djevrek <djevrek@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sr\n"
 "MIME-Version: 1.0\n"
@@ -413,27 +413,27 @@ msgstr "Čitanje i Pisanje"
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes) minuta"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(hour) sati"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hours) sati"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day) dan"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week) nedelja"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
@@ -441,8 +441,9 @@ msgstr ""
 "Nikada - Proveravaj uređaj bez obzira na režim napajanja u kojem se nalazi"
 
 #: choices.py:461
+#, fuzzy
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Spavanje - Proverite uređaj osim ako nije u režimu spavanja"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-20 01:17+0200\n"
+"PO-Revision-Date: 2011-07-20 22:57+0200\n"
 "Last-Translator: Chipcius <andri@chipcy.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: is\n"
@@ -19,8 +19,9 @@ msgstr ""
 "X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
+#, fuzzy
 msgid "Plain"
-msgstr ""
+msgstr "Einfalt"
 
 #: choices.py:36 system/models.py:234 templates/system/settings.html:9
 msgid "SSL"
@@ -111,7 +112,6 @@ msgid "Disabled"
 msgstr "Afvirkjað"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
 msgstr "Stig 1 - Lágmarks orkunotkun með Bið (spindown)"
 
@@ -124,7 +124,6 @@ msgid "Level 127 - Intermediate power usage with Standby"
 msgstr "Stig 127 - Miðlungs orkunotkun með Bið"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
 msgstr "Stig 128 - Lágmarks orkunotkun án Bið (ekkert spindown)"
 
@@ -226,15 +225,15 @@ msgstr "Sunnudagur"
 
 #: choices.py:158
 msgid "Anonymous"
-msgstr ""
+msgstr "Nafnlaus"
 
 #: choices.py:159
 msgid "Local User"
-msgstr ""
+msgstr "Staðrænn Notandi"
 
 #: choices.py:180
 msgid "Normal"
-msgstr ""
+msgstr "Venjulegt"
 
 #: choices.py:181
 #, fuzzy
@@ -254,7 +253,6 @@ msgid "Time Machine"
 msgstr "Tímahylki"
 
 #: choices.py:190
-#, fuzzy
 msgid "No case folding"
 msgstr "Breytið ekki hástöfum og lágstöfum"
 
@@ -263,12 +261,10 @@ msgid "Lowercase names in both directions"
 msgstr "lágstafa nöfn í báðar áttir"
 
 #: choices.py:193
-#, fuzzy
 msgid "Client sees lowercase, server sees uppercase"
 msgstr "Útstöð sér lágstafi, þjónn sér hástafi"
 
 #: choices.py:194
-#, fuzzy
 msgid "Client sees uppercase, server sees lowercase"
 msgstr "Útstöð sér hástafi, þjónn sér lágstafi"
 
@@ -281,7 +277,6 @@ msgid "Device"
 msgstr "Tæki"
 
 #: choices.py:200
-#, fuzzy
 msgid "ZFS Volume"
 msgstr "ZFS Flæmi"
 
@@ -353,7 +348,6 @@ msgid "On"
 msgstr "Á"
 
 #: choices.py:276 choices.py:281
-#, fuzzy
 msgid "Off"
 msgstr "Af"
 
@@ -432,44 +426,47 @@ msgstr "%(tími)ar tími"
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(dagur)ar dagur"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(vika)ur vika"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Aldrei - Athuga tækið óháð orkuham"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Sofa - Athuga tækið nema það sé i Svefn ham"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
+msgstr "Viðbragðsstaða - Athuga tækið nema það sé í Svefn- eða Viðbragðsham"
 
 #: choices.py:463
+#, fuzzy
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
+"Aðgerðalaus - Athuga tækið nema það sá í Svefn-, Viðbragðs- eða "
+"Aðgerðarleysisham"
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Lang Sjálfspróf"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Stutt Sjálfspróf"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Flutnings Sjálfspróf (aðeins ATA)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Skjótt Aftengt Próf (aðeins ATA)"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -510,75 +507,75 @@ msgstr "Sláðu inn sama lykilorð og fyrir ofan til staðfestingar."
 #: account/forms.py:204 account/forms.py:346 account/models.py:105
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:89
 msgid "Shell"
-msgstr ""
+msgstr "Skipana hamur"
 
 #: account/forms.py:205 account/forms.py:345
 msgid "Disable logins"
-msgstr ""
+msgstr "Afvirkja aðganga"
 
 #: account/forms.py:206
 msgid "Primary Group"
-msgstr ""
+msgstr "Aðal Hópur"
 
 #: account/forms.py:235
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "Notandi með þetta notandanafn er þegar til."
 
 #: account/forms.py:243 account/forms.py:329 account/forms.py:479
 #: system/forms.py:232
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "Lykilorðs reitirnir tveir eru ekki eins"
 
 #: account/forms.py:248 account/forms.py:373
 msgid "Home directory has to start with /mnt/"
-msgstr ""
+msgstr "Heima mappan verður að byrja á /mnt/"
 
 #: account/forms.py:262 account/forms.py:266 services/forms.py:469
 #: services/forms.py:482 services/forms.py:748 storage/forms.py:226
 #: system/forms.py:275 system/forms.py:298
 msgid "This field is required."
-msgstr ""
+msgstr "Þú þarft að filla þennan reit."
 
 #: account/forms.py:427
 msgid "Member users"
-msgstr ""
+msgstr "Hópsmeðlimir"
 
 #: account/forms.py:445
 msgid "Auxiliary groups"
-msgstr ""
+msgstr "Auka hópar"
 
 #: account/forms.py:467
 msgid "New password"
-msgstr ""
+msgstr "Nýtt lykilorð"
 
 #: account/forms.py:468
 msgid "New password confirmation"
-msgstr ""
+msgstr "Staðfesta nýtt lykilorð"
 
 #: account/forms.py:493
 msgid "Old password"
-msgstr ""
+msgstr "Gamalt lykilorð"
 
 #: account/forms.py:501
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr ""
+msgstr "Gamla lykilorðið þitt er ekki rétt skrifað. Reyndu aftur."
 
 #: account/models.py:36 services/models.py:472 services/models.py:517
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr ""
+msgstr "Hóp ID"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr ""
+msgstr "Hóp nafn"
 
 #: account/models.py:47 account/models.py:155 services/models.py:1210
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:87
 msgid "Group"
-msgstr ""
+msgstr "Hópur"
 
 #: account/models.py:48 templates/account/index.html:10
 msgid "Groups"
@@ -587,7 +584,7 @@ msgstr "Hópar"
 #: account/models.py:63
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr ""
+msgstr "Hópur %s er innbyggður og er ekki hægt að eyða!"
 
 #: account/models.py:73
 msgid "User ID"
@@ -599,19 +596,19 @@ msgstr "Notandi &"
 
 #: account/models.py:85
 msgid "Hashed UNIX password"
-msgstr ""
+msgstr "Hashað UNIX lykilorð"
 
 #: account/models.py:91
 msgid "Hashed SMB password"
-msgstr ""
+msgstr "Hashað SMB lykilorð"
 
 #: account/models.py:95
 msgid "Primary Group ID"
-msgstr ""
+msgstr "Aðal Hóp ID"
 
 #: account/models.py:100
 msgid "Home Directory"
-msgstr ""
+msgstr "Heima mappa"
 
 #: account/models.py:109
 msgid "Full Name"
@@ -685,6 +682,8 @@ msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
 msgstr ""
+"Við biðjum afsökunar, en eyðublaðið rann út. Vinsamlega haldið áfram að "
+"filla út eyðublaðið á þessari síðu."
 
 #: freeadmin/forms.py:95
 #, python-format
@@ -703,16 +702,16 @@ msgstr ""
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Bæta %s við"
 
 #: freeadmin/navtree.py:327
 #, python-format
 msgid "View All %s"
-msgstr ""
+msgstr "Sína alla %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
-msgstr ""
+msgstr "Sýna Stöðu Kerfis"
 
 #: freeadmin/navtree.py:353 templates/freeadmin/index.html:53
 msgid "Reboot"
@@ -725,12 +724,12 @@ msgstr "Slökkva"
 #: freeadmin/views.py:225
 #, python-format
 msgid "%s successfully added."
-msgstr ""
+msgstr "%s hefur verið bætt við."
 
 #: freeadmin/views.py:384 freeadmin/views.py:386
 #, python-format
 msgid "%s successfully updated."
-msgstr ""
+msgstr "%s hefur verið uppfært."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
@@ -739,7 +738,7 @@ msgstr ""
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
 msgid "%s successfully deleted."
-msgstr ""
+msgstr "%s hefur verið eytt."
 
 #: network/forms.py:44 network/models.py:95
 msgid "NIC"
@@ -747,19 +746,19 @@ msgstr ""
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr ""
+msgstr "Verður að skrifa í nafnþjón 2 áður en þú skrifar í nafnþjón 3"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
-msgstr ""
+msgstr "Krafist þegar verið er að nota nafnþjón 3"
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr ""
+msgstr "Verður að skrifa í nafnþjón 1 áður en þú skrifar í nafnþjón 3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr ""
+msgstr "Verður að skrifa í nafnþjón 1 áður en þú skrifar í nafnþjón 2"
 
 #: network/forms.py:100
 msgid "Parent Interface"
@@ -775,12 +774,12 @@ msgstr ""
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
-msgstr ""
+msgstr "Veraldleg NIC í LAGG"
 
 #: network/forms.py:190
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr ""
+msgstr "Netkerfið '%s' er ekki gilt, bjóst við CIDR."
 
 #: network/models.py:42 services/models.py:1074
 #: templates/system/system_info.html:4
