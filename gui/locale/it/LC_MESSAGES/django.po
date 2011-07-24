@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-17 14:21+0200\n"
+"PO-Revision-Date: 2011-07-23 15:00+0200\n"
 "Last-Translator: fabiusx <fabioslurp@yahoo.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
@@ -1882,7 +1882,7 @@ msgstr "Tempo in millisecondi"
 
 #: services/models.py:690
 msgid "Forced update period"
-msgstr "Forza periodo di update"
+msgstr "Intervallo di aggiornamento forzato"
 
 #: services/models.py:696 services/models.py:730 services/models.py:762
 msgid "These parameters will be added to global settings in inadyn.conf."
@@ -1903,7 +1903,7 @@ msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
-"Informazioni sull'ubicazione, es. per l'ubicazione fisica di questo sistema: "
+"Informazioni sull'ubicazione, es. ubicazione fisica di questo sistema: "
 "'Piano terra, Stanza xyzzy'."
 
 #: services/models.py:716
@@ -1959,7 +1959,7 @@ msgstr "Porta"
 
 #: services/models.py:757
 msgid "The serial or USB port where your UPS is connected."
-msgstr "Porta Seriale o USB dov'è collegato il tuo UPS."
+msgstr "Porta Seriale o USB alla quale è collegato l'UPS."
 
 #: services/models.py:773
 msgid "Shutdown mode"
@@ -2025,7 +2025,7 @@ msgstr "Connessioni"
 
 #: services/models.py:818
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr "Massimo numero di connessioni per indirizzi IP ( 0=illimitato )."
+msgstr "Massimo numero di connessioni per indirizzo IP (0=illimitato)."
 
 #: services/models.py:822
 msgid "Login Attempts"
@@ -2047,7 +2047,7 @@ msgstr "Massimo tempo di inattività in secondi."
 
 #: services/models.py:831
 msgid "Allow Root Login"
-msgstr "Consenti il Root Login"
+msgstr "Consenti il Login di Root"
 
 #: services/models.py:833
 msgid "Allow Anonymous Login"
@@ -2110,10 +2110,11 @@ msgid ""
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
 "Consente al server di visualizzare le informazioni di rete per lo specifico "
-"indirizzo IP del cliente, presupponendo che quell'indirizzo IP o host DNS "
-"stia lavorando come NAT gateway o port forwarder per il server."
+"indirizzo IP del client, presupponendo che quell'indirizzo IP o host DNS "
+"stia lavorando come un NAT gateway o port forwarder per il server."
 
 #: services/models.py:874
+#, fuzzy
 msgid "Minimum passive port"
 msgstr "Passive port minimo"
 
@@ -2126,6 +2127,7 @@ msgstr ""
 "utilizza qualsiasi port)."
 
 #: services/models.py:879
+#, fuzzy
 msgid "Maximum passive port"
 msgstr "Passive port massimo"
 

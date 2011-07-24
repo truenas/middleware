@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-07-01 16:18+0200\n"
-"Last-Translator: voytec <dec.wojciech@gmail.com>\n"
+"PO-Revision-Date: 2011-07-23 13:10+0200\n"
+"Last-Translator: ChybeQ <mchybowski06@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
@@ -2374,7 +2374,7 @@ msgstr "Protokół używany do zmiany hasła."
 
 #: services/models.py:1106
 msgid "User Suffix"
-msgstr ""
+msgstr "Przyrostek użytkownika"
 
 #: services/models.py:1108
 msgid ""
@@ -2384,7 +2384,7 @@ msgstr ""
 
 #: services/models.py:1112
 msgid "Group Suffix"
-msgstr ""
+msgstr "Przyrostek grupy"
 
 #: services/models.py:1114
 msgid ""
@@ -2460,7 +2460,7 @@ msgstr "Nazwa modułu"
 #: services/models.py:1186
 #, fuzzy
 msgid "Path to be shared"
-msgstr "Ścieżka do grupy"
+msgstr "Ścieżka (katalog) do współdzielenia"
 
 #: services/models.py:1192
 msgid "Access Mode"
@@ -2479,25 +2479,30 @@ msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
 msgstr "Maksymalna ilość równoczesnych połączeń. Domyślnie 0  (nieograniczona)."
 
 #: services/models.py:1204
+#, fuzzy
 msgid ""
 "This option specifies the user name that file transfers to and from that "
 "module should take place. In combination with the 'Group' option this "
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Ta opcja przydziela nazwę użytkownika, do i od którego transfery powinny "
+"mieć miejsce. W połączeniu z opcją \"Grupa\", pozwala to ustalić prawa dostępu "
+"do plików. Pozostaw to pole puste by użyć domyślnych ustawień."
 
 #: services/models.py:1211
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"Ta opcja przydiela nazwę grupy, od i do której transfery powinny mieć "
+"miejsce. Zostaw to pole puste by użyć domyślnych ustawień."
 
 #: services/models.py:1215
 msgid "Hosts allow"
 msgstr "Dopuszczone hosty"
 
 #: services/models.py:1216
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of hosts which are "
 "permitted to access this module. You can specify the hosts by name or IP "
@@ -2513,7 +2518,6 @@ msgid "Hosts deny"
 msgstr "Zablokowane hosty"
 
 #: services/models.py:1221
-#, fuzzy
 msgid ""
 "This option is a comma, space, or tab delimited set of host which are NOT "
 "permitted to access this module. Where the lists conflict, the allow list "
@@ -2523,7 +2527,7 @@ msgid ""
 "Leave this field empty to use default settings"
 msgstr ""
 "Jest to zestaw przedzielonych przecinkiem, spacją lub tabulatorem "
-"komputerów, dla których jest zabroniony dostęp do tego udziału. Jeśli "
+"komputerów, dla których jest ZABRONIONY dostęp do tego udziału. Jeśli "
 "wystąpi konflikt list, pierwszeństwo ma lista zezwalająca na dostęp. W "
 "przypadku gdy wymagany jest domyślnie brak dostępu dla wszystkich, użyj ALL "
 "(lub maskę sieciową 0.0.0.0/0) a następnie jednoznacznie określ dozwolone "
@@ -2531,10 +2535,9 @@ msgstr ""
 "domyślnych."
 
 #: services/models.py:1226
-#, fuzzy
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
-msgstr "Te parametry zostaną dodane do ustawień globalnych w inadyn.conf."
+msgstr "Te parametry zostaną dodane do ustawień globalnych w rsyncd.conf."
 
 #: services/models.py:1231
 msgid "Rsync Module"
@@ -2600,17 +2603,17 @@ msgstr "Włącz S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
-msgstr ""
+msgstr "Kontrola usług"
 
 #: services/nav.py:50
 #, fuzzy
 msgid "Add Device Extent"
-msgstr "Grupy urządzeń"
+msgstr "Dodaj grupę urządzeń"
 
 #: services/nav.py:60
 #, fuzzy
 msgid "View All Device Extents"
-msgstr "Grupy urządzeń"
+msgstr "Pokaż wszystkie grupy urządzeń"
 
 #: services/nav.py:70 templates/services/iscsi.html:7
 msgid "Device Extents"
@@ -2646,11 +2649,12 @@ msgstr "Usługa nie może być zatrzymana."
 
 #: services/views.py:229
 msgid "The service could not be started."
-msgstr ""
+msgstr "Usługa nie mogła zostać uruchomiona."
 
 #: sharing/forms.py:82
+#, fuzzy
 msgid "The field is a not a valid IP address or network"
-msgstr ""
+msgstr "W polu nie znajduje się prawidłowy adres IP lub sieć"
 
 #: sharing/forms.py:88
 #, python-format
@@ -2658,16 +2662,19 @@ msgid "The IP '%s' is not valid."
 msgstr "Adres IP '%s' nie jest prawidłowy."
 
 #: sharing/forms.py:99
+#, fuzzy
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "Maproot group wymaga ustalenia wartości dla Maproot user"
 
 #: sharing/forms.py:101
+#, fuzzy
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr "Mapall group wymaga ustalenia wartości dla Mapall user"
 
 #: sharing/forms.py:104 sharing/forms.py:107
+#, fuzzy
 msgid "Maproot user/group disqualifies Mapall"
-msgstr ""
+msgstr "Maproot user/group wyklucza ustalanie wartości dla Mapall"
 
 #: sharing/models.py:41 sharing/models.py:104 storage/models.py:44
 #: storage/models.py:69 storage/models.py:87
@@ -2791,11 +2798,14 @@ msgid "Share password"
 msgstr "Hasło udziału"
 
 #: sharing/models.py:118
+#, fuzzy
 msgid ""
 "This option allows you to set a volume password, which can be a maximum of 8 "
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
+"Ta opcja pozwala ustawić woluminowi hasło, które może mieć maksymalnie 8 "
+"znaków długości (używanie ASCII zalecane w czasie tworzenia tekstu)"
 
 #: sharing/models.py:122
 msgid "Share Character Set"
@@ -2828,10 +2838,14 @@ msgid "Deny List"
 msgstr "Lista zabronionych"
 
 #: sharing/models.py:136
+#, fuzzy
 msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
 msgstr ""
+"Ta opcja pozwala na ustalenie użytkwników i grup, którzy nie mają prawa "
+"dostępu do tego obszaru współdzielonego. Format, w którym podawać należy "
+"wykluczone elementy jest taki sam, jak w opcji zezwalającej na dostęp."
 
 #: sharing/models.py:140
 msgid "Read-only Access"
@@ -2858,10 +2872,13 @@ msgid "Disk Discovery"
 msgstr "Wykrywanie dysków"
 
 #: sharing/models.py:152
+#, fuzzy
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
+"Zezwalaj innym systemom na odnajdowanie tego współdzielonego obszaru jako "
+"dysk na dane, wolumin odzyskiwania \"Time Machine\" lub wcale."
 
 #: sharing/models.py:158
 msgid "Disk discovery mode"
@@ -2886,14 +2903,19 @@ msgstr ""
 
 #: sharing/models.py:168
 msgid "Cache CNID"
-msgstr ""
+msgstr "Cache CNID"
 
 #: sharing/models.py:169
+#, fuzzy
 msgid ""
 "If set afpd uses the ID information stored in AppleDouble V2 header files to "
 "reduce database load. Don't set this option if the volume is modified by non "
 "AFP clients (NFS/SMB/local)."
 msgstr ""
+"W wypadku użycia tej opcji, \"afpd\" użyje informacji o ID przechowywanych w "
+"plikach nagłówka AppleDouble V2 aby zmniejszyć obciążenie bazy danych. Nie "
+"używać tej opcji jeżeli wolumin jest modyfikowany przez klienta nie "
+"wspierającego AFP (NFS/SMB/local)."
 
 #: sharing/models.py:172
 msgid "Translate CR/LF"
