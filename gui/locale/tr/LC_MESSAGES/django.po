@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-07-20 14:22+0200\n"
+"PO-Revision-Date: 2011-07-24 15:05+0200\n"
 "Last-Translator: Simor <batio3pzt@aol.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -274,6 +274,14 @@ msgstr "Dosya"
 msgid "Device"
 msgstr "Aygıt"
 
+# ZFS Volume, aslında bölüm değil. YAni diğer dosya sistemlerindeki partition(bölümleme değil). HAtta unix ve linux onu bir aygıt olarak kabul ediyor. O yüzden bence bölüm yanlış. 
+# Open solaris sayfasından alıntı: ZFS Volumes
+# 
+# A ZFS volume is a dataset that represents a block device and can be used like any block device. ZFS volumes are identified as devices in the /dev/zvol/{dsk,rdsk}/path directory.
+# 
+# In the following example, 5-Gbyte ZFS volume, tank/vol, is created:
+# 
+# .. Bu yüzden bence birim veya ne bileyim sanal aygıt denebilir veya daha uygun birşey.
 #: choices.py:200
 msgid "ZFS Volume"
 msgstr "ZFS Bölümü"
@@ -313,6 +321,8 @@ msgstr "Hiçbiri"
 msgid "CHAP"
 msgstr "CHAP"
 
+# Ortak değil karşılıklı chap olabilir. Çünkü KArşılıklı kimlik doğrulamasından bahsediliyor.
+# http://technet.microsoft.com/en-us/library/cc786456%28WS.10%29.aspx
 #: choices.py:219
 msgid "Mutual CHAP"
 msgstr "Ortak CHAP"
@@ -409,7 +419,7 @@ msgstr "Oku ve Yaz"
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "Kalan Yüzde Dakika"
+msgstr "%(minutes) dakika"
 
 #: choices.py:449
 #, python-format
@@ -523,7 +533,7 @@ msgstr "Aynı kullanıcı adı zaten var."
 #: account/forms.py:243 account/forms.py:329 account/forms.py:479
 #: system/forms.py:232
 msgid "The two password fields didn't match."
-msgstr "İki şifre alanı eşleşmedi."
+msgstr "İki parola alanı eşleşmedi."
 
 #: account/forms.py:248 account/forms.py:373
 msgid "Home directory has to start with /mnt/"
@@ -543,6 +553,7 @@ msgstr "Üye kullanıcılar,"
 msgid "Auxiliary groups"
 msgstr "Yardımcı gruplar"
 
+# "password"un  karşılığı, şifre yani bir şeyi şifrelemek için kullanılan nesnesin sıfatı değildir. Orada sorulan, "geçiş kodu"  yani paroladır. Ordudaki parola işaret gibi. SÜrekli yanlış kullanılıyor bu yanlışı devam ettirmemek gerek. Hem Türkçe karşılığı ve hemde işlevsel ve mantıksal anlamı poroladır, şifre değil.
 #: account/forms.py:467
 msgid "New password"
 msgstr "Yeni şifre"
