@@ -383,13 +383,13 @@ class notifier:
         self.__system("/usr/bin/killall winbindd")
         self.__system("/usr/sbin/service samba quietstart")
 
-    def _restart_syslog(self):
-        self.__system("/usr/sbin/service ix-syslog quietstart")
-        self.__system("/usr/sbin/service syslog restart")
+    def _restart_syslogd(self):
+        self.__system("/usr/sbin/service ix-syslogd quietstart")
+        self.__system("/usr/sbin/service syslogd restart")
 
-    def _start_syslog(self):
-        self.__system("/usr/sbin/service ix-syslog quietstart")
-        self.__system("/usr/sbin/service syslog start")
+    def _start_syslogd(self):
+        self.__system("/usr/sbin/service ix-syslogd quietstart")
+        self.__system("/usr/sbin/service syslogd start")
 
     def _reload_tftp(self):
         self.__system("/usr/sbin/service ix-inetd quietstart")
