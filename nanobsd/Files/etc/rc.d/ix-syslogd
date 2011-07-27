@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-syslogd
+# REQUIRE: root
+# BEFORE: syslogd
+
+. /etc/rc.subr
+
+generate_syslog_conf()
+{
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		stg_syslogserver
+
+	FROM
+		system_settings
+
+	ORDER BY
+		-id
+
+	LIMIT 1
+	" | \
+	while read syslogserver
+	do
+		if [ -n "${syslogserver}" ]
+		then
+			echo "*.*	@${syslogserver}" > /etc/syslog.conf
+		else
+			cp /conf/base/etc/syslog.conf /etc/syslog.conf
+		fi
+	done
+}
+
+name="ix-syslogd"
+start_cmd='generate_syslog_conf'
+stop_cmd=':'
+        
+load_rc_config $name
+run_rc_command "$1"
