@@ -579,7 +579,7 @@ class notifier:
         # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
         self.__gpt_unlabeldisk(devname)
 
-    def __create_zfs_volume(self, volume, swapsize, force4khack=False):
+    def __create_zfs_volume(self, volume, swapsize, force4khack=False, path=None):
         """Internal procedure to create a ZFS volume identified by volume id"""
         z_id = volume.id
         z_name = str(volume.vol_name)
@@ -622,8 +622,12 @@ class notifier:
         # preexisting zpool having the exact same name.
         if not os.path.isdir("/data/zfs"):
             os.makedirs("/data/zfs")
+
+        altroot = 'none' if path else '/mnt'
+        mountpoint = path if path else ('/mnt/%s' % z_name)
         p1 = self.__pipeopen("zpool create -o cachefile=/data/zfs/zpool.cache "
-                      "-f -m /mnt/%s -o altroot=/mnt %s %s" % (z_name, z_name, z_vdev))
+                      "-f -m %s -o altroot=%s %s %s" % (mountpoint, altroot, z_name, z_vdev))
+
         p1.wait()
         if p1.returncode != 0:
             from middleware.exceptions import MiddlewareError
@@ -886,7 +890,7 @@ class notifier:
 
         assert volume.vol_fstype == 'ZFS' or volume.vol_fstype == 'UFS'
         if volume.vol_fstype == 'ZFS':
-            self.__create_zfs_volume(volume, swapsize, kwargs.pop('force4khack', False))
+            self.__create_zfs_volume(volume, swapsize, kwargs.pop('force4khack', False), kwargs.pop('path', None))
         elif volume.vol_fstype == 'UFS':
             self.__create_ufs_volume(volume, swapsize)
 
