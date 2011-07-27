@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-07-18 07:59+0200\n"
-"Last-Translator: rickdu <rickdu.im@gmail.com>\n"
+"PO-Revision-Date: 2011-07-27 07:33+0200\n"
+"Last-Translator: zmoon <zhao460@tom.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -60,7 +60,7 @@ msgstr "PIO模式3"
 
 #: choices.py:53
 msgid "PIO4"
-msgstr "PIO4"
+msgstr "PIO模式4"
 
 #: choices.py:54
 msgid "WDMA0"
@@ -5077,7 +5077,7 @@ msgid "Level"
 msgstr "层级"
 
 msgid "Add Link Aggregation"
-msgstr "添加链接聚合"
+msgstr "添加链路聚合"
 
 msgid "View All Interfaces"
 msgstr "查看所有接口"
