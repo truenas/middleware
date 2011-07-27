@@ -74,6 +74,11 @@ class Settings(Model):
             verbose_name = _("NTP server 3"),
             blank=True
             )
+    stg_syslogserver = models.CharField(
+            max_length=120,
+            verbose_name = _("Syslog server"),
+            blank=True
+            )
 
     class Meta:
         verbose_name = _("Settings")
