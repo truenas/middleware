@@ -145,12 +145,15 @@ class SettingsForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(SettingsForm, self).__init__( *args, **kwargs)
         self.instance._original_stg_guiprotocol = self.instance.stg_guiprotocol
+        self.instance._original_stg_syslogserver = self.instance.stg_syslogserver
         self.fields['stg_language'].choices=settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
     def save(self):
         super(SettingsForm, self).save()
         if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol:
             notifier().restart("http")
+        if self.instance._original_stg_syslogserver != self.instance.stg_syslogserver:
+            notifier().restart("syslogd")
         notifier().reload("timeservices")
 
 class AdvancedForm(ModelForm):
