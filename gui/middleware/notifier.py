@@ -383,6 +383,14 @@ class notifier:
         self.__system("/usr/bin/killall winbindd")
         self.__system("/usr/sbin/service samba quietstart")
 
+    def _restart_syslog(self):
+        self.__system("/usr/sbin/service ix-syslog quietstart")
+        self.__system("/usr/sbin/service syslog restart")
+
+    def _start_syslog(self):
+        self.__system("/usr/sbin/service ix-syslog quietstart")
+        self.__system("/usr/sbin/service syslog start")
+
     def _reload_tftp(self):
         self.__system("/usr/sbin/service ix-inetd quietstart")
         self.__system("/usr/sbin/service inetd forcestop")
