@@ -1061,3 +1061,8 @@ class ReplicationForm(ModelForm):
 class ReplRemoteForm(ModelForm):
     class Meta:
         model = models.ReplRemote
+    def save(self):
+        rv = super(ReplRemoteForm, self).save()
+        notifier().reload("ssh")
+        return rv
+
