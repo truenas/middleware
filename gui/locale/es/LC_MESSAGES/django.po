@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-13 23:26+0200\n"
-"Last-Translator: raulfg <raulfg3@gmail.com>\n"
+"PO-Revision-Date: 2011-07-27 21:13+0200\n"
+"Last-Translator: nomentero <toni7@telecable.es>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -112,12 +112,11 @@ msgstr "Deshabilitado"
 
 #: choices.py:82
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr ""
-"Nivel 1 - Uso mínimo de energia en modo \"Standby\" (detención de disco)"
+msgstr "Nivel 1 - Uso mínimo de energía en modo Espera (detención de disco)"
 
 #: choices.py:83
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Nivel 64 - Uso de energía intermedio utilizando el modo \"Standby\""
+msgstr "Nivel 64 - Uso de energía intermedio utilizando el modo Espera"
 
 #: choices.py:84
 msgid "Level 127 - Intermediate power usage with Standby"
@@ -320,13 +319,14 @@ msgstr "CHAP"
 msgid "Mutual CHAP"
 msgstr "CHAP mutuo"
 
+# Debe de ser el y no la ,ya que SAI es:sistema de alimentación ininterrumpida
 #: choices.py:241
 msgid "UPS reaches low battery"
-msgstr "La SAI tiene poca batería"
+msgstr "El SAI tiene poca batería"
 
 #: choices.py:242
 msgid "UPS goes on battery"
-msgstr "La SAI está funcionando en batería"
+msgstr "SAI utilizando batería"
 
 #: choices.py:245
 msgid "Preferred"
