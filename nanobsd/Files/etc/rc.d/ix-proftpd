@@ -92,11 +92,11 @@ generate_proftp()
 {
     local IFS=\|
 #XXX missing: ftp_chrooteveryone ftp_tlsrequired ftp_mod_ban
-    local ftp_chrooteveryone=0 ftp_mod_ban=0
+    local ftp_chrooteveryone=0 ftp_mod_ban=0 ftp_banner
 #XXX unused: ftp_chrooteveryone ftp_ssltls
-    local f="ftp_port ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_banner ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_ssltls ftp_anondir"
+    local f="ftp_port ftp_clients ftp_ipconnections ftp_loginattempt ftp_timeout ftp_rootlogin ftp_onlyanonymous ftp_onlylocal ftp_filemask ftp_dirmask ftp_fxp ftp_resume ftp_defaultroot ftp_ident ftp_reversedns ftp_masqaddress ftp_passiveportsmin ftp_passiveportsmax ftp_localuserbw ftp_localuserdlbw ftp_anonuserbw ftp_anonuserdlbw ftp_ssltls ftp_anondir"
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-        "SELECT ftp_port, ftp_clients, ftp_ipconnections, ftp_loginattempt, ftp_timeout, ftp_rootlogin, ftp_onlyanonymous, ftp_onlylocal, ftp_banner, ftp_filemask, ftp_dirmask, ftp_fxp, ftp_resume, ftp_defaultroot, ftp_ident, ftp_reversedns, ftp_masqaddress, ftp_passiveportsmin, ftp_passiveportsmax, ftp_localuserbw, ftp_localuserdlbw, ftp_anonuserbw, ftp_anonuserdlbw, ftp_ssltls, ftp_anonpath FROM services_ftp ORDER BY -services_ftp.id LIMIT 1" | \
+        "SELECT ftp_port, ftp_clients, ftp_ipconnections, ftp_loginattempt, ftp_timeout, ftp_rootlogin, ftp_onlyanonymous, ftp_onlylocal, ftp_filemask, ftp_dirmask, ftp_fxp, ftp_resume, ftp_defaultroot, ftp_ident, ftp_reversedns, ftp_masqaddress, ftp_passiveportsmin, ftp_passiveportsmax, ftp_localuserbw, ftp_localuserdlbw, ftp_anonuserbw, ftp_anonuserdlbw, ftp_ssltls, ftp_anonpath FROM services_ftp ORDER BY -services_ftp.id LIMIT 1" | \
     while eval read $f; do
 	# Check if required directories exists.
 	[ ! -d "/var/run/proftpd" ] && mkdir "/var/run/proftpd"
@@ -107,6 +107,8 @@ generate_proftp()
 	[ ! -e "${proftpd_tcpaccessfilesallow}" ] && cat /dev/null > "${proftpd_tcpaccessfilesallow}"
 	[ ! -e "${proftpd_tcpaccessfilesdeny}" ] && cat /dev/null > "${proftpd_tcpaccessfilesdeny}"
 	[ ! -e "/var/log/wtmp" ] && touch /var/log/wtmp && chmod 644 /var/log/wtmp
+
+        ftp_banner=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ftp_banner FROM services_ftp ORDER BY -services_ftp.id LIMIT 1")
 
 	# Create welcome message file
 	if [ -z "${ftp_banner}" ]; then
