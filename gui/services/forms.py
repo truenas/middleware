@@ -369,8 +369,10 @@ class iSCSITargetAuthCredentialForm(ModelForm):
         else:
             if len(cdata.get('iscsi_target_auth_peersecret1', '')) > 0:
                 self._errors['iscsi_target_auth_peersecret1'] = self.error_class([_("The peer user is required if you set a peer secret.")])
+                del cdata['iscsi_target_auth_peersecret1']
             if len(cdata.get('iscsi_target_auth_peersecret2', '')) > 0:
                 self._errors['iscsi_target_auth_peersecret2'] = self.error_class([_("The peer user is required if you set a peer secret.")])
+                del cdata['iscsi_target_auth_peersecret2']
 
         return cdata
 
