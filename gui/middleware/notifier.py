@@ -838,10 +838,10 @@ class notifier:
             # TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar
             # generated automatically
             p1 = self.__pipeopen("newfs -U -L %s /dev/%s" % (u_name, devname))
-            p1.wait()
+            stdout, stderr = p1.communicate()
             if p1.returncode != 0:
                 from middleware.exceptions import MiddlewareError
-                error = ", ".join(p1.communicate()[1].split('\n'))
+                error = ", ".join(stderr.split('\n'))
                 raise MiddlewareError('Volume creation failed: "%s"' % error)
         else:
             # Grab all disks from the group
@@ -851,10 +851,10 @@ class notifier:
                 geom_vdev += " /dev/" + devname
             self.__system("geom %s load" % (geom_type))
             p1 = self.__pipeopen("geom %s label %s %s" % (geom_type, geom_name, geom_vdev))
-            p1.wait()
+            stdout, stderr = p1.communicate()
             if p1.returncode != 0:
                 from middleware.exceptions import MiddlewareError
-                error = ", ".join(p1.communicate()[1].split('\n'))
+                error = ", ".join(stderr.split('\n'))
                 raise MiddlewareError('Volume creation failed: "%s"' % error)
             ufs_device = "/dev/%s/%s" % (geom_type, geom_name)
             self.__system("newfs -U -L %s %s" % (u_name, ufs_device))
@@ -959,11 +959,11 @@ class notifier:
                 ret = self.__system_nolog('/sbin/zpool scrub %s' % (volume.vol_name))
         else:
             p1 = self.__pipeopen('/sbin/zpool replace %s %s %s' % (volume.vol_name, zdev, todev))
-            p1.wait()
+            stdout, stderr = p1.communicate()
             ret = p1.returncode
             if ret != 0:
                 from middleware.exceptions import MiddlewareError
-                error = ", ".join(p1.communicate()[1].split('\n'))
+                error = ", ".join(stderr.split('\n'))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
         return ret
 
@@ -1494,7 +1494,7 @@ class notifier:
 
     def zfs_import(self, name):
         imp = self.__pipeopen('zpool import -R /mnt %s' % name)
-        imp.wait()
+        stdout, stderr = imp.communicate()
         if imp.returncode == 0:
             # Reset all mountpoints in the zpool
             self.zfs_inherit_option(name, 'mountpoint', True)
@@ -1508,7 +1508,7 @@ class notifier:
 
     def zfs_export(self, name):
         imp = self.__pipeopen('zpool export %s' % str(name))
-        imp.wait()
+        stdout, stderr = imp.communicate()
         if imp.returncode == 0:
             return True
         return False
