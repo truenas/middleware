@@ -500,7 +500,6 @@ class Rsync(Model):
 class SMARTTest(Model):
     smarttest_disk = models.ForeignKey(
             Disk,
-            unique=True,
             verbose_name=_("Disk"),
             )
     smarttest_type = models.CharField(
