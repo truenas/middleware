@@ -194,7 +194,7 @@ class FTPForm(ModelForm):
 
 class TFTPForm(ModelForm):
     class Meta:
-        model = models.TFTP 
+        model = models.TFTP
     def save(self):
         super(TFTPForm, self).save()
         started = notifier().reload("tftp")
@@ -208,7 +208,7 @@ class SSHForm(ModelForm):
         if started is False and models.services.objects.get(srv_service='ssh').srv_enable:
             raise ServiceFailed("ssh", _("The SSH service failed to reload."))
     class Meta:
-        model = models.SSH 
+        model = models.SSH
 
 class RsyncdForm(ModelForm):
     def save(self):
@@ -323,21 +323,22 @@ class LDAPForm(ModelForm):
             raise ServiceFailed("ldap", _("The ldap service failed to reload."))
     class Meta:
         model = models.LDAP
-        widgets = {'ldap_rootbindpw': forms.widgets.PasswordInput(render_value=True), } 
+        widgets = {'ldap_rootbindpw': forms.widgets.PasswordInput(render_value=True), }
 
 class iSCSITargetAuthCredentialForm(ModelForm):
-    iscsi_target_auth_secret1 = forms.CharField(label=_("Secret"), 
-            widget=forms.PasswordInput, help_text=_("Target side secret."))
-    iscsi_target_auth_secret2 = forms.CharField(label=_("Secret (Confirm)"), 
-            widget=forms.PasswordInput, 
+    iscsi_target_auth_secret1 = forms.CharField(label=_("Secret"),
+            widget=forms.PasswordInput(render_value=True),
+            help_text=_("Target side secret."))
+    iscsi_target_auth_secret2 = forms.CharField(label=_("Secret (Confirm)"),
+            widget=forms.PasswordInput(render_value=True),
             help_text=_("Enter the same secret above for verification."))
     iscsi_target_auth_peersecret1 = forms.CharField(label=_("Initiator Secret"),
-            widget=forms.PasswordInput, help_text=
-            _("Initiator side secret. (for mutual CHAP authentication)"),
+            widget=forms.PasswordInput(render_value=True),
+            help_text=_("Initiator side secret. (for mutual CHAP authentication)"),
             required=False)
     iscsi_target_auth_peersecret2 = forms.CharField(
-            label=_("Initiator Secret (Confirm)"), 
-            widget=forms.PasswordInput, 
+            label=_("Initiator Secret (Confirm)"),
+            widget=forms.PasswordInput(render_value=True),
             help_text=_("Enter the same secret above for verification."),
             required=False)
 
@@ -365,6 +366,11 @@ class iSCSITargetAuthCredentialForm(ModelForm):
             elif cdata.get('iscsi_target_auth_peersecret1', '') == cdata.get('iscsi_target_auth_secret1', ''):
                 del cdata['iscsi_target_auth_peersecret1']
                 self._errors['iscsi_target_auth_peersecret1'] = self.error_class([_("The peer secret cannot be the same as user secret.")])
+        else:
+            if len(cdata.get('iscsi_target_auth_peersecret1', '')) > 0:
+                self._errors['iscsi_target_auth_peersecret1'] = self.error_class([_("The peer user is required if you set a peer secret.")])
+            if len(cdata.get('iscsi_target_auth_peersecret2', '')) > 0:
+                self._errors['iscsi_target_auth_peersecret2'] = self.error_class([_("The peer user is required if you set a peer secret.")])
 
         return cdata
 
@@ -394,13 +400,12 @@ class iSCSITargetAuthCredentialForm(ModelForm):
             'iscsi_target_auth_peersecret1',
             'iscsi_target_auth_peersecret2']
 
-        try:
+        ins = kwargs.get("instance", None)
+        if ins:
             self.fields['iscsi_target_auth_secret1'].initial = self.instance.iscsi_target_auth_secret
             self.fields['iscsi_target_auth_secret2'].initial = self.instance.iscsi_target_auth_secret
             self.fields['iscsi_target_auth_peersecret1'].initial = self.instance.iscsi_target_auth_peersecret
             self.fields['iscsi_target_auth_peersecret2'].initial = self.instance.iscsi_target_auth_peersecret
-        except:
-            pass
 
 class iSCSITargetToExtentForm(ModelForm):
     class Meta:
@@ -515,7 +520,7 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
         luc = cdata.get("iscsi_toggleluc", False)
         if luc:
-            for field in ('iscsi_lucip', 'iscsi_luc_authnetwork', 
+            for field in ('iscsi_lucip', 'iscsi_luc_authnetwork',
                     'iscsi_luc_authmethod', 'iscsi_luc_authgroup'):
                 if cdata.has_key(field) and cdata[field] == '':
                     self._errors[field] = self.error_class([_("This field is required.")])
@@ -615,7 +620,7 @@ class iSCSITargetFileExtentForm(ModelForm):
         return oExtent
 
 class iSCSITargetDeviceExtentForm(ModelForm):
-    iscsi_extent_disk = forms.ChoiceField(choices=(), 
+    iscsi_extent_disk = forms.ChoiceField(choices=(),
             widget=forms.Select(attrs=attrs_dict), label = _('Disk device'))
     def __init__(self, *args, **kwargs):
         super(iSCSITargetDeviceExtentForm, self).__init__(*args, **kwargs)

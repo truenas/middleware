@@ -4,9 +4,7 @@
 	<tr>
             <td>{% trans "Group ID" %}</td>
             <td>{% trans "User" %}</td>
-            <td>{% trans "Secret" %}</td>
             <td>{% trans "Peer" %}</td>
-            <td>{% trans "Peer Secret" %}</td>
             <td></td>
 	</tr>
         </thead>
@@ -14,9 +12,7 @@
    <tr class="{% cycle 'odd' 'even' %}" id="{{ ta.id }}">
        <td>{{ ta.iscsi_target_auth_tag }}</td>
        <td>{{ ta.iscsi_target_auth_user }}</td>
-       <td>{{ ta.iscsi_target_auth_secret }}</td>
        <td>{{ ta.iscsi_target_auth_peeruser }}</td>
-       <td>{{ ta.iscsi_target_auth_peersecret }}</td>
        <td>
            <button dojoType="dijit.form.Button" type="button">
                {% trans "Edit" %}
@@ -34,7 +30,7 @@
    </tr>
    {% empty %}
    <tr>
-       <td colspan="6">{% trans "No targets defined" %}</td>
+       <td colspan="4">{% trans "No targets defined" %}</td>
    </tr>
    {% endfor %}
    </table>
