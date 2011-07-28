@@ -53,12 +53,12 @@ class Volume(Model):
     def delete(self, destroy=True):
         if destroy:
             notifier().destroy("volume", self)
-        notifier().restart("collectd")
         # The framework would cascade delete all database items
         # referencing this volume.
         super(Volume, self).delete()
         # Refresh the fstab
         notifier().reload("disk")
+        notifier().restart("collectd")
     def __unicode__(self):
         return "%s (%s)" % (self.vol_name, self.vol_fstype)
 
