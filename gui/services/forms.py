@@ -48,6 +48,7 @@ from freenasUI.common import humanize_size
 from freenasUI.middleware.notifier import notifier
 from dojango import forms
 from dojango.forms import widgets
+from freeadmin.forms import DirectoryBrowser
 
 """ Services """
 
@@ -566,6 +567,9 @@ class iSCSITargetFileExtentForm(ModelForm):
     class Meta:
         model = models.iSCSITargetExtent
         exclude = ('iscsi_target_extent_type')
+        widgets = {
+            'iscsi_target_extent_path': DirectoryBrowser(),
+        }
     def clean_iscsi_target_extent_path(self):
         path = self.cleaned_data["iscsi_target_extent_path"]
         if path[-1] == '/':
