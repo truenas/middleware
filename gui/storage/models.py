@@ -231,6 +231,10 @@ class ReplRemote(Model):
     class Meta:
         verbose_name = _(u"Remote Replication Host")
         verbose_name_plural = _(u"Remote Replication Hosts")
+    def delete(self):
+        rv = super(ReplRemote, self).delete()
+        notifier().reload("ssh")
+        return rv
     def __unicode__(self):
         return self.ssh_remote_hostname
 
