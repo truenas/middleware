@@ -396,7 +396,11 @@ class Base_ACL_Hierarchy(Base_ACL):
         files = os.listdir(path)
         for f in files:
             file = os.path.join(path, f)
-            st = os.stat(file)
+            st = os.lstat(file)
+
+            # Do not follow symbolic links (default for chmod)
+            if stat.S_ISLNK(st.st_mode):
+                continue
 
             if stat.S_ISDIR(st.st_mode):
                 if self.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS:
