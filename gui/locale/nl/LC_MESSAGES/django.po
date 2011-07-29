@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:47-0700\n"
-"PO-Revision-Date: 2011-07-01 14:24+0200\n"
-"Last-Translator: CocoChanel <meneermaris@yahoo.com.sg>\n"
+"PO-Revision-Date: 2011-07-28 13:44+0200\n"
+"Last-Translator: johiem <hiemstra.joey@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -2500,6 +2500,10 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Deze optie specifieert de gebruikersnaam waarmee bestandsoverdrachten van en "
+"naar deze module uitgevoerd worden. In combinatie met de 'Groep' optie "
+"bepaalt dit welke bestandspermissies beschikbaar zijn. Laat het veld leeg om "
+"de standaard instellingen te gebruiken."
 
 #: services/models.py:1211
 msgid ""
@@ -2586,9 +2590,8 @@ msgstr ""
 "sinds de laatste rapportage. Zet op 0 om uit te schakelen"
 
 #: services/models.py:1259
-#, fuzzy
 msgid "Informal"
-msgstr "Normaal"
+msgstr "Informeel"
 
 #: services/models.py:1260 services/models.py:1265
 msgid ""
@@ -2784,7 +2787,6 @@ msgid "Windows Shares"
 msgstr "Windows Shares (gedeelde mappen)"
 
 #: sharing/models.py:105
-#, fuzzy
 msgid ""
 "The volume name is the name that appears in the Chooser of the 'connect to "
 "server' dialog on Macintoshes to represent the appropriate share. If "
@@ -2798,7 +2800,7 @@ msgstr ""
 "met server' venster op Macintoshes. Deze naam vertegenwoordigd de share. "
 "Wanneer de volumenaam leeg is wordt het laatste gedeelte van de pad naam "
 "gebruikt. Volumes mogen niet dezelfde naam hebben. Volumes mogen niet het "
-"karakter ':' bevatten. Het volumenaam wordt ingekort wanneer het erg lang "
+"karakter ':' bevatten. De volumenaam wordt ingekort wanneer deze erg lang "
 "is. Mac codepage volumenamen zijn gelimiteerd tot 27 karakters. UTF8-MAC "
 "volumenamen zijn gelimiteerd tot de parameter 'Volumenaam Lengte' in "
 "Diensten:Apple Share"
@@ -2915,7 +2917,6 @@ msgid "Database Path"
 msgstr "Database Pad"
 
 #: sharing/models.py:165
-#, fuzzy
 msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
@@ -3979,9 +3980,8 @@ msgid "IP Address or hostname"
 msgstr "IP adres of host naam"
 
 #: system/models.py:346
-#, fuzzy
 msgid "Remote Module Name"
-msgstr "Remote Module naam"
+msgstr "Remote Module Naam"
 
 #: system/models.py:350 system/models.py:503
 msgid "Short description"
@@ -4385,9 +4385,8 @@ msgid "FreeNAS Testing"
 msgstr "FreeNAS Testing"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Docs"
-msgstr "FreeNAS Docs"
+msgstr "FreeNAS Documentatie"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Translations"
