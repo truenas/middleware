@@ -252,6 +252,11 @@ class CronJob(Model):
             max_length=120,
             verbose_name=_("Command"),
             )
+    cron_description = models.CharField(
+            max_length=200,
+            verbose_name=_("Description"),
+            blank=True,
+            )
     cron_minute = models.CharField(
             max_length=100,
             verbose_name=_("Minute"),
@@ -276,6 +281,10 @@ class CronJob(Model):
             max_length=100,
             default="1,2,3,4,5,6,7",
             verbose_name=_("Day of week"),
+            )
+    cron_enabled = models.BooleanField(
+            default=True,
+            verbose_name=_("Enabled"),
             )
     class Meta:
         verbose_name = _("CronJob")
