@@ -557,7 +557,7 @@
                                    dijit.getEnclosingWidget(inputElem).set('disabled',false);
                                }
                             );
-                            dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','OK');
+                            dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','Save');
                         }
 
                         if(json.error == false){
@@ -607,7 +607,7 @@
                                    dijit.getEnclosingWidget(inputElem).set('disabled',false);
                                }
                             );
-                            dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','OK');
+                            dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','Save');
                         }
                         if(json.error == false){
                             dojo.query('ul[class=errorlist]', rnode.domNode).forEach(function(i) { i.parentNode.removeChild(i); });
@@ -645,7 +645,7 @@
                                }
                             );
 
-                            dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','OK');
+                            dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','Save');
                         }
                  }
              });

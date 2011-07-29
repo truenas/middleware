@@ -11,7 +11,11 @@
                 <script type="dojo/method">
                         {{ extra_js }}
                 </script>
+                {% if inline %}
+                {% trans "Save" %}
+                {% else %}
                 {% trans "OK" %}
+                {% endif %}
                 <script type="dojo/method" event="onClick" args="evt">
                     this.set('label', '{% trans "Please wait..."|force_escape %}');
                 </script>
@@ -22,7 +26,7 @@
         </td>
         <td align="right">
             {% if deletable == False %}
-            <button dojoType="dijit.form.Button" > 
+            <button dojoType="dijit.form.Button" >
                 <script type="dojo/event" event="onClick" args="e">
                     try {
                         var form = getForm(this);
