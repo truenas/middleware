@@ -758,7 +758,7 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
         }
     def clean_iscsi_target_initiator_tag(self):
         tag = self.cleaned_data["iscsi_target_initiator_tag"]
-        higher = models.iSCSITargetPortal.objects.all().count() + 1
+        higher = models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
         if tag > higher:
             raise forms.ValidationError(_("Your Group ID cannot be higher than %d") % higher)
         return tag
