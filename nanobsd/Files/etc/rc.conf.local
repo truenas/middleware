@@ -82,7 +82,8 @@ _interface_config()
 			ipv6_interfaces="${ipv6_interfaces} ${interface}"
 		fi
 		if [ -n "${lagg_id}" ]; then
-			echo cloned_interfaces=\"${interface}\ ${cloned_interfaces}\"
+			cloned_interfaces="${interface} ${cloned_interfaces}"
+			echo "cloned_interfaces=\"${cloned_interfaces}\""
 		fi
 		# TODO: Since the variable exists only in the subshell, we 
 		# have to make a workaround.
@@ -91,6 +92,7 @@ _interface_config()
 			echo "ipv6_network_interfaces=\"lo0${ipv6_interfaces}\""
 		fi
 	done
+
 	#
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_physnic, lagg_deviceoptions, lagg_interfacegroup_id FROM network_lagginterfacemembers ORDER BY lagg_ordernum" | \
 	while read lagg_physnic lagg_deviceoptions lagg_gid; do
