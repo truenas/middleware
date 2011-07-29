@@ -16,7 +16,7 @@ generate_crontab()
     cp /conf/base/etc/crontab /etc/crontab
     # Generate cronjobs
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-	"SELECT cron_minute,cron_hour,cron_daymonth,cron_month,cron_dayweek,cron_user,cron_command FROM system_cronjob ORDER BY id" | \
+	"SELECT cron_minute,cron_hour,cron_daymonth,cron_month,cron_dayweek,cron_user,cron_command FROM system_cronjob WHERE cron_enabled = 1 ORDER BY id" | \
 	while read minute hour daymonth month dayweek user command; do
         echo -e "${minute}\t${hour}\t${daymonth}\t${month}\t${dayweek}\t${user}\tPATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/root/bin ${command} >/dev/null 2>&1" >> /etc/crontab
     done
