@@ -79,6 +79,20 @@ def snapshots(request):
         'zfsnap_list': zfsnap_list,
         })
 
+def snapshots_data(request):
+    zfsnap_list = notifier().zfs_snapshot_list()
+
+    data = []
+    for vol, snaps in zfsnap_list.items():
+        for snap in snaps:
+            snap['extra'] = simplejson.dumps({
+                'clone_url': reverse('storage_clonesnap', kwargs={'snapshot': snap['fullname']}),
+                'rollback_url': reverse('storage_snapshot_rollback', kwargs={'dataset': vol, 'snapname': snap['name']}) if snap['mostrecent'] else None,
+                'delete_url': reverse('storage_snapshot_delete', kwargs={'dataset': vol, 'snapname': snap['name']}),
+            })
+            data.append(snap)
+    return HttpResponse(simplejson.dumps(data))
+
 def wizard(request):
 
     if request.method == "POST":

@@ -1,59 +1,121 @@
 {% load i18n %}
-<table class="grid">
-    <thead class="ghead">
-	<td>{% trans "Dataset name" %}</td>
-	<td>{% trans "Snapshot name" %}</td>
-	<td>{% trans "Used space" %}</td>
-	<td>{% trans "Referenced space" %}</td>
-	<td>{% trans "Available actions" %}</td>
-    </thead>
-    <tbody>
-	{% for fsname, snapinfo in zfsnap_list.items %}
-        {% for snap in snapinfo %}
-	<tr class="{% cycle 'odd' 'even' %}">
-            {% if forloop.first %}
-	    <td rowspan="{{ snapinfo|length }}">{{ fsname }}</td>
-            {% endif %}
-	    <td>{{ snap.name }}</td>
-	    <td>{{ snap.used }}</td>
-	    <td>{{ snap.refer }}</td>
-	    <td>
-                <button id="cloneSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button">
-                    <img src="{{ STATIC_URL }}images/ui/buttons/clone_snapshot.png">
-                    <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Clone snapshot"|force_escape %}', '{% url storage_clonesnap snapshot=snap.fullname %}', [this,]);
-                    </script>
-                </button>
-<div dojoType="dijit.Tooltip" connectId="cloneSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
-    <strong>{% trans "Clone snapshot" %}</strong>
+<div dojoType="dijit.layout.BorderContainer" style="height:100%; width:100%;">
+<div dojoType="dijit.layout.ContentPane" id="datagrid" region="center" style="height:100%; width:100%;">
+<script type="dojo/method">
+
+    function acts(v) {
+        var json = dojo.fromJson(v);
+        var content = new dijit.layout.ContentPane({});
+
+        var b = new dijit.form.Button({
+            label: '<img src="{{ STATIC_URL }}images/ui/buttons/clone_snapshot.png">',
+        });
+        dojo.require("dijit.Tooltip");
+        new dijit.Tooltip({
+           connectId: [b],
+           label: "{% trans "Clone Snapshot"|force_escape %}",
+           position: ['above'],
+        });
+        content.domNode.appendChild(b.domNode);
+        dojo.connect(b, 'onClick', function() {
+            editObject('{% trans "Clone snapshot"|force_escape %}', json['clone_url'], [this,]);
+        });
+
+        if(json['delete_url']) {
+            var b = new dijit.form.Button({
+                label: '<img src="{{ STATIC_URL }}images/ui/buttons/remove_snapshot.png">',
+            });
+            dojo.require("dijit.Tooltip");
+            new dijit.Tooltip({
+               connectId: [b],
+               label: "{% trans "Destroy Snapshot"|force_escape %}",
+               position: ['above'],
+            });
+            content.domNode.appendChild(b.domNode);
+            dojo.connect(b, 'onClick', function() {
+                editObject('{% trans "Destroy this snapshot"|force_escape %}', json['delete_url'], [this,]);
+            });
+        }
+
+        if(json['rollback_url']) {
+            var b = new dijit.form.Button({
+                label: '<img src="{{ STATIC_URL }}images/ui/buttons/rollback_snapshot.png">',
+            });
+            dojo.require("dijit.Tooltip");
+            new dijit.Tooltip({
+               connectId: [b],
+               label: "{% trans "Clone Snapshot"|force_escape %}",
+               position: ['above'],
+            });
+            content.domNode.appendChild(b.domNode);
+            dojo.connect(b, 'onClick', function() {
+                editObject('{% trans "Rollback to this snapshot"|force_escape %}', json['rollback_url'], [this,]);
+            });
+        }
+
+        return content;
+    }
+
+    var store = new dojox.data.JsonRestStore({
+        target: "{% url storage_snapshots_data %}",
+        idAttribute:"id",
+        });
+
+    var struc = [
+    {
+        field: 'name',
+        name: 'Snapshot Name',
+        width: 'auto',
+    },
+    {
+        field: 'used',
+        name: 'Used',
+        width: 'auto',
+    },
+    {
+        field: 'refer',
+        name: 'Refer',
+        width: 'auto',
+    },
+    {
+        field: 'extra',
+        name: 'Available Actions',
+        width: 'auto',
+        formatter: acts,
+    },
+    ];
+
+    var vd = dijit.byId("viewdatagrid");
+    if (vd) vd.destroy();
+
+    var grid4 = new dojox.grid.EnhancedGrid({
+        query: {
+        },
+        store: store,
+        id: 'viewdatagrid',
+        clientSort: true,
+        //rowSelector: '20px',
+        plugins: {
+            //nestedSorting: true,
+            dnd: true,
+            pagination: true,
+            indirectSelection: true,
+            },
+        structure: struc
+    });
+
+    // append the new grid to the div "gridContainer4":
+    this.domNode.appendChild(grid4.domNode);
+
+    // Call startup, in order to render the grid:
+    grid4.startup();
+</script>
 </div>
-                <button id="delSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button">
-                    <img src="{{ STATIC_URL }}images/ui/buttons/remove_snapshot.png">
-                    <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Destroy snapshot"|force_escape %}', '{% url storage_snapshot_delete dataset=fsname snapname=snap.name %}', [this,]);
-                    </script>
-                </button>
-<div dojoType="dijit.Tooltip" connectId="delSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
-    <strong>{% trans "Destroy snapshot" %}</strong>
+<div dojoType="dijit.layout.ContentPane" region="bottom" style="height:50px;">
+    {% comment %}
+    <button id="delSnapshot" dojoType="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/remove_snapshot.png">
+    </button>
+    {% endcomment %}
 </div>
-	    {% if snap.mostrecent %}
-            <button id="rollbackSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button">
-                <img src="{{ STATIC_URL }}images/ui/buttons/rollback_snapshot.png">
-                <script type="dojo/method" event="onClick" args="evt">
-                    editObject('{% trans "Rollback to this snapshot"|force_escape %}', '{% url storage_snapshot_rollback dataset=fsname snapname=snap.name %}', [this,]);
-                </script>
-            </button>
-<div dojoType="dijit.Tooltip" connectId="rollbackSnapshot{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
-    <strong>{% trans "Rollback to this snapshot" %}</strong>
 </div>
-	    {% endif %}
-	    </td>
-	</tr>
-        {% endfor %}
-        {% empty %}
-	<tr>
-	    <td colspan="5">{% trans "No ZFS snapshot available" %}</td>
-	</tr>
-        {% endfor %}
-    </tbody>
-</table>

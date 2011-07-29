@@ -62,6 +62,14 @@
     dojo.require("dijit.form.HorizontalRule");
     dojo.require("dijit.form.HorizontalRuleLabels");
 
+    dojo.require("dojox.data.JsonRestStore");
+    dojo.require("dojox.grid.EnhancedGrid");
+    dojo.require("dojox.grid.enhanced.plugins.DnD");
+    dojo.require("dojox.grid.enhanced.plugins.Menu");
+    dojo.require("dojox.grid.enhanced.plugins.NestedSorting");
+    dojo.require("dojox.grid.enhanced.plugins.IndirectSelection");
+    dojo.require("dojox.grid.enhanced.plugins.Pagination");
+
     dojo.registerModulePath("freeadmin", "../../../../../media/lib/js/freeadmin");
     dojo.require("freeadmin.form.Cron");
     dojo.require("freeadmin.tree.Tree");
