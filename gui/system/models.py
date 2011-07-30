@@ -32,6 +32,7 @@ from django.db import models
 from django.conf import settings
 
 from freenasUI import choices
+from freenasUI.contrib.IPAddressField import IPAddressField
 from freeadmin.models import Model, UserField, GroupField
 from freenasUI.middleware.notifier import notifier
 from freeadmin.models import PathField
@@ -44,6 +45,13 @@ class Settings(Model):
             choices=choices.PROTOCOL_CHOICES,
             default="http",
             verbose_name = _("Protocol")
+            )
+    stg_guiaddress = models.CharField(
+            max_length=120,
+            blank=True,
+            default='',
+            choices=choices.IPChoices(),
+            verbose_name = _("Bind address")
             )
     stg_language = models.CharField(
             max_length=120,
@@ -74,10 +82,10 @@ class Settings(Model):
             verbose_name = _("NTP server 3"),
             blank=True
             )
-    stg_syslogserver = models.CharField(
-            max_length=120,
-            verbose_name = _("Syslog server"),
-            blank=True
+    stg_syslogserver = IPAddressField(
+            default='',
+            blank=True,
+            verbose_name = _("Syslog server")
             )
 
     class Meta:
