@@ -366,6 +366,24 @@ class NICChoices(object):
     def __iter__(self):
         return iter((i, i) for i in self._NIClist)
 
+class IPChoices(NICChoices):
+    def __init__(self, nolagg=False, novlan=False, exclude_configured=False):
+        super(IPChoices, self).__init__(nolagg, novlan, exclude_configured)
+
+        self._IPlist = []
+        for iface in self._NIClist:
+            pipe = popen("/sbin/ifconfig %s|/usr/bin/grep inet|/usr/bin/awk '{ print $2 }'" % iface)
+            addr = pipe.read().strip()
+            if addr:
+                self._IPlist.append(addr)
+            pipe.close() 
+
+    def remove(self, addr):
+        return self._IPlist.remove(addr)
+
+    def __iter__(self):
+        return iter((i, i) for i in self._IPlist)
+
 class TimeZoneChoices:
     """Populate timezone from /usr/share/zoneinfo choices"""
     def __init__(self):
