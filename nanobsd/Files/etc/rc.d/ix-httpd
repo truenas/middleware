@@ -24,10 +24,12 @@ generate_httpd_conf()
 {
 	local res=1
 	local ssl_enable="${1}"
+	local bind_addr="${2}"
 	local tmp="/var/tmp/lighttpd.conf"
 
 	awk -v ssl_enable="${ssl_enable}" \
 		-v ssl_cert="${HTTPDCERT}" \
+		-v httpd_addr="${bind_addr}" \
 		-v httpd_port="${HTTPDPORT}" \
 		-v httpd_ssl_port="${HTTPDSSLPORT}" '
 		BEGIN {
@@ -43,6 +45,13 @@ generate_httpd_conf()
 					sub(httpd_ssl_port, httpd_port, $0);
 				}
 				print $0;
+
+			} else if (/^(( |\t|#)*)?server.bind/) {
+				if (httpd_addr) {
+					printf("server.bind\t= \"%s\"\n", httpd_addr)
+				} else {
+					printf("#%s", $0)
+				}
 
 			} else if (/^(( |\t)*)?ssl\.engine/) {
 				next;
@@ -186,13 +195,22 @@ set_stg_guiprotocol()
 
 do_httpd_config()
 {
+	local IFS="|"
+
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		stg_guiprotocol
+		stg_guiprotocol,
+		stg_guiaddress
+
 	FROM
 		system_settings
+
+	ORDER BY
+		-id
+
+	LIMIT 1
 	" | \
-	while read proto
+	while read proto addr
 	do
 		local ssl_enable=0
 
@@ -208,7 +226,7 @@ do_httpd_config()
 			ssl_enable=0
 		fi
 
-		generate_httpd_conf "${ssl_enable}"
+		generate_httpd_conf "${ssl_enable}" "${addr}"
 		if ! test_httpd_config "${ssl_enable}"
 		then
 
@@ -218,11 +236,12 @@ do_httpd_config()
 				set_stg_guiprotocol "http"
 			fi
 
-			generate_httpd_conf "${ssl_enable}"
+			generate_httpd_conf "${ssl_enable}" "${addr}"
 			${HTTPDSCRIPT} start
 		fi
 	done
 }
+
 
 name="ix-httpd"
 start_cmd='do_httpd_config'
