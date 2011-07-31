@@ -698,7 +698,7 @@ class notifier:
                 z_vdev += " /dev/%s" % devname
         self._reload_disk()
         # Finally, attach new groups to the zpool.
-        self.__system("zpool add %s %s" % (z_name, z_vdev))
+        self.__system("zpool add -f %s %s" % (z_name, z_vdev))
 
     def create_zfs_vol(self, name, size, props=None):
         """Internal procedure to create ZFS volume"""
@@ -754,20 +754,6 @@ class notifier:
                 'volsize': data[1],
                 }
         return retval
-
-    def get_zfs_attributes(self, zfsname):
-        """Return a dictionary that contains all ZFS attributes"""
-        zfsproc = self.__pipeopen("/sbin/zfs get -H all %s" % (zfsname))
-        zfs_output, zfs_err = zfsproc.communicate()
-        zfs_output = zfs_output.split('\n')
-        retval = {}
-        for line in zfs_output:
-            if line != "":
-                data = line.split('\t')
-                retval[data[1]] = data[2]
-        return retval
-    def set_zfs_attribute(self, name, attr, value):
-        self.__system("zfs set %s=%s %s" % (attr, value, name))
 
     def destroy_zfs_dataset(self, path):
         from freenasUI.common.locks import mntlock
@@ -1002,7 +988,7 @@ class notifier:
         c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", (disk_id,))
         devname = 'gpt/' + c.fetchone()[0]
 
-        ret = self.__system_nolog('/sbin/zpool add %s spare %s' % (volume, devname))
+        ret = self.__system_nolog('/sbin/zpool add -f %s spare %s' % (volume, devname))
         return ret
 
     def _destroy_volume(self, volume):
@@ -1582,28 +1568,21 @@ class notifier:
 
     def zfs_get_options(self, name):
         data = {}
-        name = str(name)
-        zfsproc = self.__pipeopen('zfs get -H -o value,source compression "%s"' % (name))
-        fields = zfsproc.communicate()[0].split('\n')[0].split("\t")
-        if fields[1] == "default":
-            data['compression'] = "inherit"
-        else:
-            data['compression'] = fields[0]
-        zfsproc = self.__pipeopen('zfs get -H -o value,source atime %s' % (name))
-        fields = zfsproc.communicate()[0].split('\n')[0].split("\t")
-        if fields[1] == "default":
-            data['atime'] = "inherit"
-        else:
-            data['atime'] = fields[0]
-        zfsproc = self.__pipeopen('zfs get -H -o value refquota %s' % (name))
-        data['refquota'] = zfsproc.communicate()[0].split('\n')[0]
-        zfsproc = self.__pipeopen('zfs get -H -o value quota %s' % (name))
-        data['quota'] = zfsproc.communicate()[0].split('\n')[0]
-        zfsproc = self.__pipeopen('zfs get -H -o value refreservation %s' % (name))
-        data['refreservation'] = zfsproc.communicate()[0].split('\n')[0]
-        zfsproc = self.__pipeopen('zfs get -H -o value reservation %s' % (name))
-        data['reservation'] = zfsproc.communicate()[0].split('\n')[0]
-        return data
+        noinherit_fields = ['quota', 'refquota', 'reservation', 'refreservation']
+        zfsname = str(name)
+
+        zfsproc = self.__pipeopen("/sbin/zfs get -H -o property,value,source all %s" % (zfsname))
+        zfs_output, zfs_err = zfsproc.communicate()
+        zfs_output = zfs_output.split('\n')
+        retval = {}
+        for line in zfs_output:
+            if line != "":
+                data = line.split('\t')
+                if (not data[0] in noinherit_fields) and (data[2] == 'default' or data[2].startswith('inherited')):
+                    retval[data[0]] = "inherit"
+                else:
+                    retval[data[0]] = data[1]
+        return retval
 
     def zfs_set_option(self, name, item, value):
         name = str(name)
