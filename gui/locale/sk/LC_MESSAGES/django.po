@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-14 02:54+0200\n"
-"Last-Translator: najt_k <zic.spse@gmail.com>\n"
+"PO-Revision-Date: 2011-07-30 23:31+0200\n"
+"Last-Translator: ataman <mk@ataman.sk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
@@ -1553,7 +1553,6 @@ msgid "iSCSI initial parameter (65536 by default)."
 msgstr "iSCSI počiatočný parameter (65536 v predvolenom nastavení)."
 
 #: services/models.py:295
-#, fuzzy
 msgid "Max burst length"
 msgstr "Max burst length"
 
@@ -1608,6 +1607,8 @@ msgstr "Autorizovaná sieťová maska kontrolera"
 #: services/models.py:339
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
 msgstr ""
+"Autorizovaná sieťová maska Logickej Jednotky Kontroléra ( 255.255.255.0 "
+"predefinované)"
 
 #: services/models.py:346
 msgid "Controller Auth Method"
@@ -1780,8 +1781,9 @@ msgid "Type"
 msgstr "Typ"
 
 #: services/models.py:578
+#, fuzzy
 msgid "Logical Unit Type mapped to LUN."
-msgstr ""
+msgstr "Logická Jednotka Typu namapovaná na LUN"
 
 #: services/models.py:584
 msgid "Target Flags"
@@ -1839,7 +1841,7 @@ msgstr "Cieľ"
 
 #: services/models.py:642
 msgid "Target this extent belongs to"
-msgstr ""
+msgstr "Cieľ extentu patrí"
 
 #: services/models.py:650
 msgid "Target / Extent"
@@ -1847,7 +1849,7 @@ msgstr "Cieľ/rozsah"
 
 #: services/models.py:651
 msgid "Targets / Extents"
-msgstr ""
+msgstr "Ciele/Extenty"
 
 #: services/models.py:666
 msgid "Provider"
@@ -1970,7 +1972,7 @@ msgstr ""
 
 #: services/models.py:781
 msgid "Remote Monitor"
-msgstr ""
+msgstr "Vzdialený Monitor"
 
 #: services/models.py:783
 msgid "Send Email Status Updates"
@@ -2087,8 +2089,9 @@ msgid "Require Reverse DNS for IP"
 msgstr "Požadovať reverzné DNS pre IP"
 
 #: services/models.py:868
+#, fuzzy
 msgid "Masquerade address"
-msgstr ""
+msgstr "Adresa Maškarády(NAT)"
 
 #: services/models.py:870
 msgid ""
@@ -2365,25 +2368,27 @@ msgstr ""
 
 #: services/models.py:1085
 msgid "Allow Anonymous Binding"
-msgstr ""
+msgstr "Povolenie anonymného Bindingu"
 
 #: services/models.py:1088
 msgid "Root bind DN"
-msgstr ""
+msgstr "Zviazať DN s root-om"
 
 #: services/models.py:1090
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
+"Charakteristické meno, ktoré bude spojené s adresárom servera, napr. "
+"cn=admin, dc=test, dc=org"
 
 #: services/models.py:1094
 msgid "Root bind password"
-msgstr ""
+msgstr "Root bind heslo"
 
 #: services/models.py:1096
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "Údaje, s ktorými prepojiť."
 
 #: services/models.py:1101
 msgid "Password Encryption"
@@ -2455,11 +2460,11 @@ msgstr "Certifikát podpísaný samým sebou"
 
 #: services/models.py:1137
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "Vlož obsah tebou podpísaného certifikačného súboru tu."
 
 #: services/models.py:1141 sharing/models.py:85
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "Pomocné Parametre"
 
 #: services/models.py:1143
 msgid "These parameters are added to ldap.conf."
@@ -2515,12 +2520,19 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
+"Toto nastavenie špecifikuje užívateľské meno, ktoré prenos súboru do a z "
+"tohto modulu by sa malo uskutočniť. V kombinácii s nastavením \"Skupiny\" toto "
+"determinuje aké oprávnenia sú dostupné. Nechaj toto pole prázdne pre "
+"použitie predvoleného nastavenia"
 
 #: services/models.py:1211
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
+"Toto nastavenie špecifikuje meno skupiny, kde prenos súboru do a z tohto "
+"modulu by sa mal uskutočniť. Nechaj toto pole prázdne pre použitie "
+"predvoleného nastavenia"
 
 #: services/models.py:1215
 msgid "Hosts allow"
@@ -2683,11 +2695,11 @@ msgstr "IP %s' nie je platná."
 
 #: sharing/forms.py:99
 msgid "Maproot group requires Maproot user"
-msgstr ""
+msgstr "Maproot skupina požaduje Maproot užívateľa"
 
 #: sharing/forms.py:101
 msgid "Mapall group requires Mapall user"
-msgstr ""
+msgstr "Mapall skupina požaduje Mapall užívateľa"
 
 #: sharing/forms.py:104 sharing/forms.py:107
 msgid "Maproot user/group disqualifies Mapall"
@@ -2881,17 +2893,19 @@ msgstr ""
 
 #: sharing/models.py:151
 msgid "Disk Discovery"
-msgstr ""
+msgstr "Disk Discovery"
 
 #: sharing/models.py:152
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
+"Dovoliť ostatným systémom nájsť tento share ako disk pre dáta, ako Time "
+"Machine záložný volume alebo nič z toho."
 
 #: sharing/models.py:158
 msgid "Disk discovery mode"
-msgstr ""
+msgstr "Disk discovery mód"
 
 #: sharing/models.py:159
 msgid ""
@@ -2976,6 +2990,8 @@ msgid ""
 "Always use 0 for device number, helps when the device number is not constant "
 "across a reboot, cluster, ..."
 msgstr ""
+"Vždy použi 0 ako číslo zariadenia, pomôže to, keď číslo zariadenia nie je "
+"konštantné po reboote, cluster, ..."
 
 #: sharing/models.py:188
 msgid "Disable File ID"
@@ -3007,7 +3023,7 @@ msgstr "Poskytnúť kompatibilitu s Apple II klientami."
 
 #: sharing/models.py:200
 msgid "No Stat"
-msgstr ""
+msgstr "Žiadne štatistiky"
 
 #: sharing/models.py:201
 msgid ""
@@ -3017,23 +3033,23 @@ msgstr ""
 
 #: sharing/models.py:204
 msgid "AFP3 Unix Privs"
-msgstr ""
+msgstr "AFP3 Unix Privs"
 
 #: sharing/models.py:205
 msgid "Use AFP3 unix privileges."
-msgstr ""
+msgstr "Použi AFP3 unix privilégia."
 
 #: sharing/models.py:212
 msgid "Apple Share"
-msgstr ""
+msgstr "Apple Share"
 
 #: sharing/models.py:213
 msgid "Apple Shares"
-msgstr ""
+msgstr "Apple share"
 
 #: sharing/models.py:230
 msgid "Authorized network or IP addresses"
-msgstr ""
+msgstr "Autorizovaná sieť alebo IP adresa"
 
 #: sharing/models.py:231
 msgid ""
@@ -3047,7 +3063,7 @@ msgstr ""
 
 #: sharing/models.py:235
 msgid "All Directories"
-msgstr ""
+msgstr "Všetky Priečinky"
 
 #: sharing/models.py:236
 msgid ""
@@ -3060,7 +3076,7 @@ msgstr ""
 
 #: sharing/models.py:239
 msgid "Read Only"
-msgstr ""
+msgstr "Iba na čítanie"
 
 #: sharing/models.py:240
 msgid "Export the share read only. Writes are not permitted."
@@ -3068,7 +3084,7 @@ msgstr "Exportovať zdieľaný adresár iba na čítanie. Zápis nie je povolen�
 
 #: sharing/models.py:243 system/models.py:409
 msgid "Quiet"
-msgstr ""
+msgstr "Ticho"
 
 #: sharing/models.py:244
 msgid ""
@@ -3079,7 +3095,7 @@ msgstr ""
 
 #: sharing/models.py:248
 msgid "Maproot User"
-msgstr ""
+msgstr "Maproot užívateľ"
 
 #: sharing/models.py:252
 msgid "User to map root to"
@@ -3087,7 +3103,7 @@ msgstr ""
 
 #: sharing/models.py:256
 msgid "Maproot Group"
-msgstr ""
+msgstr "Maproot skupina"
 
 #: sharing/models.py:260
 msgid "Group to map root to"
@@ -3095,7 +3111,7 @@ msgstr ""
 
 #: sharing/models.py:264
 msgid "Mapall User"
-msgstr ""
+msgstr "Mapall užívateľ"
 
 #: sharing/models.py:268
 msgid "User to map all users to"
@@ -3103,7 +3119,7 @@ msgstr ""
 
 #: sharing/models.py:272
 msgid "Mapall Group"
-msgstr ""
+msgstr "Mapall skupina"
 
 #: sharing/models.py:276
 msgid "Group to map all users to"
@@ -3160,15 +3176,15 @@ msgstr "Názov zväzku NEmôže začínať s c[0-9], mirror, raidz alebo spare."
 
 #: storage/forms.py:349 storage/forms.py:439 storage/forms.py:939
 msgid "Member disk"
-msgstr ""
+msgstr "Členský disk"
 
 #: storage/forms.py:396 storage/forms.py:506
 msgid "The selected disks were not verified for this import rules."
-msgstr ""
+msgstr "Vybraný disk nebol overený pre tieto importovacie pravidlá."
 
 #: storage/forms.py:404
 msgid "Some error ocurried while labelling the disk."
-msgstr ""
+msgstr "Nastala nejaká chyba pri pokuse olejblovať disk."
 
 #: storage/forms.py:484
 msgid "You must select a volume."
@@ -3185,20 +3201,20 @@ msgstr ""
 #: storage/forms.py:635 storage/forms.py:687 storage/forms.py:744
 #: storage/forms.py:785
 msgid "Compression level"
-msgstr ""
+msgstr "Level kompresie"
 
 #: storage/forms.py:636 storage/forms.py:688 storage/forms.py:745
 msgid "Enable atime"
-msgstr ""
+msgstr "Zapnúť atime"
 
 #: storage/forms.py:637 storage/forms.py:689 storage/forms.py:746
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "Kvota pre tento dataset"
 
 #: storage/forms.py:637 storage/forms.py:638 storage/forms.py:689
 #: storage/forms.py:690 storage/forms.py:746 storage/forms.py:784
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0= bez limitu, príklad: 1g"
 
 #: storage/forms.py:638 storage/forms.py:690
 msgid "Quota for this dataset and all children"
