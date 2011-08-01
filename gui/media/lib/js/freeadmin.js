@@ -878,7 +878,7 @@
         }
     }
 
-    editObject = function(name, url, nodes) {
+    editObject = function(name, url, nodes, onload) {
         canceled = false;
         dialog = new dijit.Dialog({
             id: 'edit_dialog',
@@ -892,6 +892,10 @@
                 refreshTabs(nodes);
             },
         });
+        if(onload) {
+            f = dojo.hitch(dialog, onload);
+            f();
+        }
         dialog.show();
     };
 

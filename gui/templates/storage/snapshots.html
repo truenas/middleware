@@ -94,7 +94,7 @@
         store: store,
         id: 'viewdatagrid',
         clientSort: true,
-        //rowSelector: '20px',
+        rowSelector: 'auto',
         plugins: {
             //nestedSorting: true,
             dnd: true,
@@ -112,10 +112,29 @@
 </script>
 </div>
 <div dojoType="dijit.layout.ContentPane" region="bottom" style="height:50px;">
-    {% comment %}
     <button id="delSnapshot" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/remove_snapshot.png">
+        <script type="dojo/method" event="onClick" args="evt">
+            dg = dijit.byId('viewdatagrid');
+            var snaps = [];
+            dojo.forEach(dg.selection.getSelected(), function(item, idx) {
+                snaps.push(item['fullname']);
+            });
+            if(snaps.length == 0) return true;
+
+            editObject('test', null, [this], function(data) {
+                var dialog = this;
+                dojo.rawXhrPost({
+                    url: '{% url storage_snapshot_delete_bulk %}',
+                    content: {snaps: snaps.join("|")},
+                    handleAs: "text",
+                    sync: true,
+                    load: function(data){
+                        dialog.set('content', data);
+                    },
+                });
+            });
+        </script>
     </button>
-    {% endcomment %}
 </div>
 </div>
