@@ -119,3 +119,37 @@ def get_fstype(path):
     out = (lines[len(lines) - 1]).split()
 
     return (out[1].upper())
+
+def get_mounted_filesystems():
+    mounted = []
+
+    pipe = popen("/sbin/mount")
+    lines = pipe.read().strip().split('\n')
+    pipe.close()
+
+    for line in lines:
+        parts = line.split()
+        mount = {}
+        mount['fs_spec'] = parts[0]
+        mount['fs_file'] = parts[2]
+        mount['fs_vfstype'] = parts[3].split('(')[1].split(',')[0]
+        mounted.append(mount)
+
+    return mounted
+        
+def is_mounted(**kwargs):
+    ret = False  
+
+    mounted = get_mounted_filesystems()
+    for mount in mounted:
+        if kwargs.has_key('device'):
+            if mount['fs_spec'] == kwargs['device']:
+                ret = True
+                break 
+
+        elif kwargs.has_key('path'):
+            if mount['fs_file'] == kwargs['path']:
+                ret = True
+                break 
+
+    return ret
