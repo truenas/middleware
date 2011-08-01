@@ -93,7 +93,7 @@ class IPNetworkField(models.Field):
       
     def formfield(self, **kwargs):
         defaults = {
-            'form_class' : fields.CharField,
+            'form_class' : IPAddressFormField,
             'widget': IPNetworkWidget,
         }
         defaults.update(kwargs)
