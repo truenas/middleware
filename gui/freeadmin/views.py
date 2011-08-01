@@ -49,6 +49,7 @@ from system.models import Advanced
 from network.models import GlobalConfiguration
 from services.exceptions import ServiceFailed
 from dojango.views import datagrid_list
+from dojango.forms.models import inlineformset_factory
 
 def adminInterface(request, objtype = None):
 
@@ -217,21 +218,56 @@ def generic_model_add(request, app, model, mf=None):
             mf = navtree._modelforms[m][mf]
 
 
+    instance = m()
+    formsets = {}
     if request.method == "POST":
-        instance = m()
         mf = mf(request.POST, request.FILES, instance=instance)
         if mf.is_valid():
+            valid = True
+        else:
+            valid = False
+
+        if m._admin.inlines:
+            from django import forms as dforms
+            for inline, prefix in m._admin.inlines:
+                _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
+                inline = getattr(_temp, inline)
+                extrakw = {
+                    'can_delete': False
+                    }
+                fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=0, **extrakw)
+                try:
+                    formsets['formset_%s' % inline._meta.model._meta.module_name] = fset(request.POST, prefix=prefix, instance=instance)
+                except dforms.ValidationError:
+                    pass
+
+        for name, fs in formsets.items():
+            valid &= fs.is_valid()
+
+        if valid:
             try:
                 mf.save()
+                for name, fs in formsets.items():
+                    fs.save()
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully added.") % m._meta.verbose_name}))
             except ServiceFailed, e:
                 return HttpResponse(simplejson.dumps({"error": True, "message": _("The service failed to restart.") % m._meta.verbose_name}))
 
     else:
         mf = mf()
+        if m._admin.inlines:
+            extrakw = {
+                'can_delete': False
+                }
+            for inline, prefix in m._admin.inlines:
+                _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
+                inline = getattr(_temp, inline)
+                fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=1, **extrakw)
+                formsets['formset_%s' % inline._meta.model._meta.module_name] = fset(prefix=prefix, instance=instance)
 
     context.update({
         'form': mf,
+        'formsets': formsets,
     })
 
     template = "%s/%s_add.html" % (m._meta.app_label, m._meta.object_name.lower())
@@ -378,11 +414,36 @@ def generic_model_edit(request, app, model, oid, mf=None):
         else:
             mf = navtree._modelforms[m][mf]
 
+    formsets = {}
     if request.method == "POST":
         mf = mf(request.POST, request.FILES, instance=instance)
         if mf.is_valid():
+            valid = True
+        else:
+            valid = False
+
+        if m._admin.inlines:
+            from django import forms as dforms
+            for inline, prefix in m._admin.inlines:
+                _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
+                inline = getattr(_temp, inline)
+                extrakw = {
+                    'can_delete': True,
+                    }
+                fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=0, **extrakw)
+                try:
+                    formsets['formset_%s' % inline._meta.model._meta.module_name] = fset(request.POST, prefix=prefix, instance=instance)
+                except dforms.ValidationError:
+                    pass
+
+        for name, fs in formsets.items():
+            valid &= fs.is_valid()
+
+        if valid:
             try:
                 mf.save()
+                for name, fs in formsets.items():
+                    fs.save()
                 if request.GET.has_key("iframe"):
                     return HttpResponse("<html><body><textarea>"+simplejson.dumps({"error": False, "message": _("%s successfully updated.") % m._meta.verbose_name})+"</textarea></boby></html>")
                 else:
@@ -392,9 +453,19 @@ def generic_model_edit(request, app, model, oid, mf=None):
 
     else:
         mf = mf(instance=instance)
+        if m._admin.inlines:
+            extrakw = {
+                'can_delete': True,
+                }
+            for inline, prefix in m._admin.inlines:
+                _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
+                inline = getattr(_temp, inline)
+                fset = inlineformset_factory(m, inline._meta.model, form=inline, extra=1, **extrakw)
+                formsets['formset_%s' % inline._meta.model._meta.module_name] = fset(prefix=prefix, instance=instance)
 
     context.update({
         'form': mf,
+        'formsets': formsets,
     })
 
     template = "%s/%s_edit.html" % (m._meta.app_label, m._meta.object_name.lower())

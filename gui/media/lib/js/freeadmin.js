@@ -30,6 +30,7 @@
     dojo.require("dojo.dnd.Moveable");
     //dojo.require("dijit.tree.dndSource");
     dojo.require("dojo.NodeList-traverse");
+    dojo.require("dojo.NodeList-manipulate");
     dojo.require("dojo.io.iframe");
     dojo.require("dojo._base.xhr");
     dojo.require("dojox.validate.regexp");
@@ -407,6 +408,43 @@
 
     };
     /* end Menu */
+
+    addAlias = function(a, name) {
+
+        extra = dijit.byId("id_"+name+"-TOTAL_FORMS");
+        var extran = extra.get("value");
+        na = new dijit.form.TextBox({
+            name: name+"-"+extran+"-alias_address",
+            value: "",
+        });
+
+        getid = dijit.byId("id_"+name+"-"+(parseInt(extran)-1)+"-alias_netmaskbit");
+        nn = new dijit.form.Select({
+            name: name+"-"+extran+"-alias_netmaskbit",
+            value: "",
+            options: getid.options,
+        });
+
+        ni = new dijit.form.TextBox({
+            name: name+"-"+extran+"-id",
+            type: "hidden",
+        });
+        var tr = dojo.create("tr");
+        var td1 = dojo.create("th", {innerHTML: "IP Address:"}, tr, "last");
+        var td2 = dojo.create("td", null, tr, "last");
+        dojo.query(a.parentNode.parentNode).before(tr);
+        na.placeAt(td2);
+
+        ni.placeAt(td2);
+
+        var tr = dojo.create("tr");
+        var td1 = dojo.create("th", {innerHTML: "IP Netmask:"}, tr, "last");
+        var td2 = dojo.create("td", null, tr, "last");
+        dojo.query(a.parentNode.parentNode).before(tr);
+        nn.placeAt(td2);
+
+        extra.set('value', parseInt(extran) + 1);
+    }
 
     function toggle_service(obj) {
         var td = obj.parentNode;

@@ -5,6 +5,22 @@
 </script>{% if inline and saved %}<span class="saved">{% trans "Your changes have been successfully updated!" %}</span>{% endif %}
 <table> 
 {% admin_form form %}
+    {% block formset %}
+    <tr><td colspan="2">
+    {% for name, formset in formsets.items %}
+    <table>
+        <tr><td colspan="2">
+        Aliases
+        </td></tr>
+    {{ formset }}
+    <tr>
+        <td colspan="2">
+        <a href="javascript:void(0);" onClick="addAlias(this, 'alias_set');">Add extra alias</a>
+        </td>
+    </tr>
+    </table>
+    {% endfor %}
+    {% endblock %}
     <tr>
         <td>
             <button class="submitform" dojoType="dijit.form.Button" type="submit">

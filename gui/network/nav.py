@@ -5,7 +5,7 @@ import models
 
 NAME = _('Network')
 ICON = u'NetworkIcon'
-BLACKLIST = ['LAGGInterfaceMembers',]
+BLACKLIST = ['LAGGInterfaceMembers','Alias']
 
 class NetSummary(TreeNode):
 

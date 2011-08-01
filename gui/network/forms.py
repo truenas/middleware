@@ -195,3 +195,8 @@ class StaticRouteForm(ModelForm):
         retval = super(StaticRouteForm, self).save()
         notifier().start("routing")
         return retval
+
+class AliasForm(ModelForm):
+    class Meta:
+        model = models.Alias
+        fields = ('alias_address', 'alias_netmaskbit')

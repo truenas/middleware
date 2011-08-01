@@ -30,7 +30,8 @@ from django.utils.translation import ugettext_lazy as _
 from django.db import models
 
 from freenasUI import choices
-from freenasUI.contrib.IPAddressField import IPAddressField, IP4AddressField, IP6AddressField
+from freenasUI.contrib.IPAddressField import IPAddressField, IP4AddressField,\
+                                             IP6AddressField, IPNetworkField
 from freeadmin.models import Model
 from freenasUI.middleware.notifier import notifier
 
@@ -146,7 +147,38 @@ class Interfaces(Model):
         icon_model = u"InterfacesIcon"
         icon_add = u"AddInterfaceIcon"
         icon_view = u"ViewAllInterfacesIcon"
+        inlines = [
+            ('AliasForm', 'alias_set'),
+        ]
 
+
+class Alias(Model):
+    alias_interface = models.ForeignKey(
+            Interfaces,
+            verbose_name=_("Interface")
+            )
+    alias_address = IPAddressField(
+            verbose_name=_("IP Address"),
+            default='',
+            )
+    alias_netmaskbit = IPNetworkField(
+            default='',
+            verbose_name=_("IP Netmask"),
+            help_text=""
+            )
+
+    def __unicode__(self):
+            return u'%s:%s' % (self.alias_interface.int_name, self.alias_address)
+    def delete(self):
+        super(Alias, self).delete()
+        notifier().start("network")
+    class Meta:
+        verbose_name = _("Alias")
+        verbose_name_plural = _("Aliases")
+    class FreeAdmin:
+        pass
+        #create_modelform = "InterfacesForm"
+        #edit_modelform = "InterfacesEditForm"
 
 ## Network|Interface Management|VLAN
 class VLAN(Model):
