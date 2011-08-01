@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-30 23:31+0200\n"
+"PO-Revision-Date: 2011-07-31 23:10+0200\n"
 "Last-Translator: ataman <mk@ataman.sk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
@@ -1700,7 +1700,6 @@ msgstr ""
 "adries[IPv4/IPv6]."
 
 #: services/models.py:476 templates/services/iscsi_authini.html:6
-#, fuzzy
 msgid "Initiators"
 msgstr "Inicializátori"
 
@@ -1781,7 +1780,6 @@ msgid "Type"
 msgstr "Typ"
 
 #: services/models.py:578
-#, fuzzy
 msgid "Logical Unit Type mapped to LUN."
 msgstr "Logická Jednotka Typu namapovaná na LUN"
 
@@ -2089,7 +2087,6 @@ msgid "Require Reverse DNS for IP"
 msgstr "Požadovať reverzné DNS pre IP"
 
 #: services/models.py:868
-#, fuzzy
 msgid "Masquerade address"
 msgstr "Adresa Maškarády(NAT)"
 
@@ -2501,7 +2498,7 @@ msgstr "Spôsob prístupu"
 
 #: services/models.py:1193
 msgid "This controls the access a remote host has to this module"
-msgstr ""
+msgstr "Toto kontroluje aký prístup má vzdialený host do tohto modulu"
 
 #: services/models.py:1197
 msgid "Maximum connections"
@@ -2703,7 +2700,7 @@ msgstr "Mapall skupina požaduje Mapall užívateľa"
 
 #: sharing/forms.py:104 sharing/forms.py:107
 msgid "Maproot user/group disqualifies Mapall"
-msgstr ""
+msgstr "Maproot užívateľ/skupina diskvalifikuje Mapall"
 
 #: sharing/models.py:41 sharing/models.py:104 storage/models.py:44
 #: storage/models.py:69 storage/models.py:87
@@ -2775,7 +2772,7 @@ msgstr ""
 
 #: sharing/models.py:80
 msgid "Hosts Deny"
-msgstr ""
+msgstr "Zakázané hosty"
 
 #: sharing/models.py:81
 msgid ""
@@ -2890,6 +2887,8 @@ msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Dovoľ niektorým užívateľom a skupinám čítanie/zápis (read/write) prístup na "
+"share. Toto sleduje \"povoľ\" formát nastavenia."
 
 #: sharing/models.py:151
 msgid "Disk Discovery"
@@ -2913,6 +2912,9 @@ msgid ""
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
 msgstr ""
+"Pozor! Výber \"Time Machine\" na viacerých sharoch môže spôsobyť "
+"nepredvýdateľné správanie na MacOS. Štandardný mód exportuje volume ako "
+"dátový volume pre užívateľov."
 
 #: sharing/models.py:163
 msgid "Database Path"
@@ -2983,7 +2985,7 @@ msgstr ""
 
 #: sharing/models.py:184
 msgid "Zero Device Numbers"
-msgstr ""
+msgstr "Čísla Zero zariadení"
 
 #: sharing/models.py:185
 msgid ""
@@ -2995,7 +2997,7 @@ msgstr ""
 
 #: sharing/models.py:188
 msgid "Disable File ID"
-msgstr ""
+msgstr "Deaktivuj ID súboru"
 
 #: sharing/models.py:189
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
@@ -3099,7 +3101,7 @@ msgstr "Maproot užívateľ"
 
 #: sharing/models.py:252
 msgid "User to map root to"
-msgstr ""
+msgstr "Užívateľ mapuje roota do"
 
 #: sharing/models.py:256
 msgid "Maproot Group"
@@ -3127,7 +3129,7 @@ msgstr ""
 
 #: sharing/models.py:283
 msgid "UNIX Share"
-msgstr ""
+msgstr "UNIX Share"
 
 #: sharing/models.py:284
 msgid "UNIX Shares"
