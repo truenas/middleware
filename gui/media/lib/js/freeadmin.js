@@ -413,16 +413,28 @@
 
         extra = dijit.byId("id_"+name+"-TOTAL_FORMS");
         var extran = extra.get("value");
-        na = new dijit.form.TextBox({
-            name: name+"-"+extran+"-alias_address",
+        n4a = new dijit.form.TextBox({
+            name: name+"-"+extran+"-alias_v4address",
             value: "",
         });
 
-        getid = dijit.byId("id_"+name+"-"+(parseInt(extran)-1)+"-alias_netmaskbit");
-        nn = new dijit.form.Select({
-            name: name+"-"+extran+"-alias_netmaskbit",
+        getid4 = dijit.byId("id_"+name+"-"+(parseInt(extran)-1)+"-alias_v4netmaskbit");
+        n4n = new dijit.form.Select({
+            name: name+"-"+extran+"-alias_v4netmaskbit",
             value: "",
-            options: getid.options,
+            options: getid4.options,
+        });
+
+        n6a = new dijit.form.TextBox({
+            name: name+"-"+extran+"-alias_v6address",
+            value: "",
+        });
+
+        getid6 = dijit.byId("id_"+name+"-"+(parseInt(extran)-1)+"-alias_v6netmaskbit");
+        n6n = new dijit.form.Select({
+            name: name+"-"+extran+"-alias_v6netmaskbit",
+            value: "",
+            options: getid6.options,
         });
 
         ni = new dijit.form.TextBox({
@@ -430,18 +442,31 @@
             type: "hidden",
         });
         var tr = dojo.create("tr");
-        var td1 = dojo.create("th", {innerHTML: "IP Address:"}, tr, "last");
+        var td1 = dojo.create("th", {innerHTML: "IPv4 Address"}, tr, "last");
         var td2 = dojo.create("td", null, tr, "last");
         dojo.query(a.parentNode.parentNode).before(tr);
-        na.placeAt(td2);
+        n4a.placeAt(td2);
+        ni.placeAt(td2);
+
+        var tr = dojo.create("tr");
+        var td1 = dojo.create("th", {innerHTML: "IPv4 Netmask"}, tr, "last");
+        var td2 = dojo.create("td", null, tr, "last");
+        dojo.query(a.parentNode.parentNode).before(tr);
+        n4n.placeAt(td2);
+
+        var tr = dojo.create("tr");
+        var td1 = dojo.create("th", {innerHTML: "IPv6 Address"}, tr, "last");
+        var td2 = dojo.create("td", null, tr, "last");
+        dojo.query(a.parentNode.parentNode).before(tr);
+        n6a.placeAt(td2);
 
         ni.placeAt(td2);
 
         var tr = dojo.create("tr");
-        var td1 = dojo.create("th", {innerHTML: "IP Netmask:"}, tr, "last");
+        var td1 = dojo.create("th", {innerHTML: "IPv6 Netmask"}, tr, "last");
         var td2 = dojo.create("td", null, tr, "last");
         dojo.query(a.parentNode.parentNode).before(tr);
-        nn.placeAt(td2);
+        n6n.placeAt(td2);
 
         extra.set('value', parseInt(extran) + 1);
     }

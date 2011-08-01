@@ -157,13 +157,30 @@ class Alias(Model):
             Interfaces,
             verbose_name=_("Interface")
             )
-    alias_address = IPAddressField(
-            verbose_name=_("IP Address"),
+    alias_v4address = IP4AddressField(
+            verbose_name=_("IPv4 Address"),
             default='',
+            blank=True,
             )
-    alias_netmaskbit = IPNetworkField(
+    alias_v4netmaskbit = models.CharField(
+            max_length=3,
+            choices=choices.v4NetmaskBitList,
             default='',
-            verbose_name=_("IP Netmask"),
+            blank=True,
+            verbose_name=_("IPv4 Netmask"),
+            help_text=""
+            )
+    alias_v6address = IP6AddressField(
+            verbose_name=_("IPv6 Address"),
+            default='',
+            blank=True,
+            )
+    alias_v6netmaskbit = models.CharField(
+            max_length=3,
+            choices=choices.v6NetmaskBitList,
+            default='',
+            blank=True,
+            verbose_name=_("IPv6 Netmask"),
             help_text=""
             )
 

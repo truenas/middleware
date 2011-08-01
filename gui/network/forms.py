@@ -199,4 +199,4 @@ class StaticRouteForm(ModelForm):
 class AliasForm(ModelForm):
     class Meta:
         model = models.Alias
-        fields = ('alias_address', 'alias_netmaskbit')
+        fields = ('alias_v4address', 'alias_v4netmaskbit', 'alias_v6address', 'alias_v6netmaskbit')
