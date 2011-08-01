@@ -1,0 +1,13 @@
+Index: sys/dev/hptiop/hptiop.c
+===================================================================
+--- sys/dev/hptiop/hptiop.c	(revision 224492)
++++ sys/dev/hptiop/hptiop.c	(working copy)
+@@ -1269,6 +1269,8 @@
+ 	id = pci_get_device(dev);
+ 
+ 	switch (id) {
++		case 0x4322:
++		case 0x4321:
+ 		case 0x4320:
+ 			sas = 1;
+ 		case 0x3220:
