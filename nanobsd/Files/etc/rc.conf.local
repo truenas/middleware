@@ -73,6 +73,16 @@ _interface_config()
 			fi
 		fi
 		echo \"
+
+	    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "create temporary table mytmp as select * from network_alias WHERE alias_interface_id = ${interface_id}; SELECT rowid, id, alias_v4address, alias_v4netmaskbit,  alias_v6address, alias_v6netmaskbit FROM mytmp ORDER BY id" | \
+	    while read rowid alias_id v4addr v4netmask v6addr v6netmask; do
+            if [ -n "${v4addr}" ]; then
+                echo -n "ifconfig_${interface}_alias$(expr ${rowid} - 1)=\"inet ${v4addr} netmask "
+                printf "0x%x\"\n" $(($((0xffffffff << $(expr 32 - ${v4netmask}))) & 0xffffffff))
+            elif [ -n "${v6addr}" ]; then
+                echo "ifconfig_${interface}_alias$(expr ${rowid} - 1)=\"inet6 ${v6addr} prefixlen ${v6netmask}\""
+            fi
+        done
 		if [ "${doipv6auto}" = "0" ]; then
 			if [ -n "${ipv6addr}" ]; then
 				echo ipv6_ifconfig_${interface}=\"${ipv6addr}/${ipv6netmask}\"
