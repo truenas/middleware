@@ -204,10 +204,10 @@ class AliasForm(ModelForm):
     def clean(self):
         cdata = self.cleaned_data
         ipv4, ipv6 = False, False
+
         if cdata.get("alias_v4address") or cdata.get("alias_v4netmaskbit"):
             ipv4 = True
         if cdata.get("alias_v6address") or cdata.get("alias_v6netmaskbit"):
-            print cdata.get("alias_v6address"), cdata.get("alias_v6netmaskbit")
             ipv6 = True
 
         if ipv6 and ipv4:
