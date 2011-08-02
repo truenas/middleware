@@ -153,3 +153,33 @@ def is_mounted(**kwargs):
                 break 
 
     return ret
+
+def mount(dev, path, mntopts=None):
+    ret = False
+
+    opts = ""
+    if mntopts:
+        opts = "-o %s" % mntopts
+
+    try:
+        pipe = popen("/sbin/mount %s %s %s" % (dev, opts, path))
+        ret = True
+
+    except:
+        ret = False
+
+    pipe.close()
+    return ret
+
+def umount(path):
+    ret = False
+
+    try:
+        pipe = popen("/sbin/umount %s" % path)
+        ret = True
+
+    except:
+        ret = False
+
+    pipe.close()
+    return ret
