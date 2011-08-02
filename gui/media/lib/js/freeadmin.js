@@ -850,23 +850,30 @@
             dojo.style('zfssectorsize', 'display', 'none');
         }
 
+        if(ufs) {
+            dojo.style("ufspath", "display", "table-row");
+        } else {
+            dojo.style("ufspath", "display", "none");
+        }
+
         if(d.length >= 3 && zfs) {
                 dojo.style("grpraidz", "display", "block");
         } else {
                 dojo.style("grpraidz", "display", "none");
         }
+
         if(d.length >= 4 && zfs) {
                 dojo.style("grpraidz2", "display", "block");
         } else {
                 dojo.style("grpraidz2", "display", "none");
         }
+
         if(ufs && d.length-1 >= 2 && (((d.length-2)&(d.length-1)) == 0)) {
             if(ufs)
                 dojo.style("grpraid3", "display", "block");
         } else {
             dojo.style("grpraid3", "display", "none");
         }
-
     }
 
     getDialog = function(from) {

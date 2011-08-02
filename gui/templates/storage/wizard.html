@@ -111,6 +111,13 @@
                 </table>
             </td>
         </tr>
+        <tr id="ufspath" {% if ufs %}{% else %}style="display:none;"{% endif %}>
+            <td style="width:150px;"> {% trans "Path" %}</td>
+            <td>
+                {{ form.ufspath.errors }}
+                {{ form.ufspath }}
+            </td>
+        </tr>
     </table>
         <button dojoType="dijit.form.Button" type="submit" class="submitform">
     <script type="dojo/method">

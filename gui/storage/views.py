@@ -319,7 +319,7 @@ def dataset_create(request):
                 props['refreservation']=refreservation.__str__()
             errno, errmsg = notifier().create_zfs_dataset(path=dataset_name.__str__(), props=props)
             if errno == 0:
-                mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (dataset_name), mp_options='noauto', mp_ischild=True)
+                mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (dataset_name), mp_options='rw,late', mp_ischild=True)
                 mp.save()
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset successfully added.")}), mimetype="application/json")
             else:

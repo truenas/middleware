@@ -27,7 +27,8 @@
 #####################################################################
 import re
 from datetime import datetime, time
-from os import popen
+from os import popen, access, stat, mkdir, rmdir
+from stat import S_ISDIR
 
 from django.http import QueryDict
 from django.utils.translation import ugettext_lazy as _
@@ -42,6 +43,7 @@ from freenasUI.storage import models
 from freenasUI import choices
 from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups, \
                                          FreeNAS_User, FreeNAS_Group
+from freenasUI.common.system import is_mounted, mount, umount
 from freeadmin.forms import UserField, GroupField
 from dojango.forms import widgets, CheckboxSelectMultiple
 from dojango import forms
@@ -144,6 +146,7 @@ class VolumeWizardForm(forms.Form):
     volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks', required=False)
     group_type = forms.ChoiceField(choices=(), widget=forms.RadioSelect(attrs=attrs_dict), required=False)
     force4khack = forms.BooleanField(required=False, initial=False, help_text=_('Force 4096 bytes sector size'))
+    ufspath = forms.CharField(max_length = 1024, label = _('Path'), required=False)
     def __init__(self, *args, **kwargs):
         super(VolumeWizardForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
@@ -214,6 +217,17 @@ class VolumeWizardForm(forms.Form):
             raise forms.ValidationError(_("This field is required."))
         return self.cleaned_data['group_type']
 
+    def clean_ufspath(self):
+        ufspath = self.cleaned_data['ufspath']
+        if not ufspath:
+            return None
+        if not access(ufspath, 0):
+            raise forms.ValidationError(_("Path does not exist."))
+        st = stat(ufspath)
+        if not S_ISDIR(st.st_mode):
+            raise forms.ValidationError(_("Path is not a directory."))
+        return ufspath
+
     def clean(self):
         cleaned_data = self.cleaned_data
         volume_name = cleaned_data.get("volume_name", "")
@@ -251,6 +265,9 @@ class VolumeWizardForm(forms.Form):
         volume_fstype = self.cleaned_data['volume_fstype']
         disk_list = self.cleaned_data['volume_disks']
         force4khack = self.cleaned_data.get("force4khack", False)
+        ufspath = self.cleaned_data['ufspath']
+        mp_options = "rw,late"
+        mp_path = None
 
         if (len(disk_list) < 2):
             if volume_fstype == 'ZFS':
@@ -271,7 +288,14 @@ class VolumeWizardForm(forms.Form):
                 volume = models.Volume(vol_name = volume_name, vol_fstype = volume_fstype)
                 volume.save()
 
-                mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
+                mp_path = ufspath if ufspath else '/mnt/' + volume_name
+                if mp_path in ('/etc', '/var', '/usr'):
+                    mp_options = 'rw'
+
+                if volume_fstype == 'UFS':
+                    mp_options += ',nfsv4acls'
+
+                mp = models.MountPoint(mp_volume=volume, mp_path=mp_path, mp_options=mp_options)
                 mp.save()
             self.volume = volume
 
@@ -334,11 +358,27 @@ class VolumeWizardForm(forms.Form):
                         notifier().zfs_volume_attach_group(grp, force4khack=force4khack)
 
             if not add:
-                notifier().init("volume", volume, force4khack=force4khack)
+                notifier().init("volume", volume, force4khack=force4khack, path=ufspath)
 
-        # This must be outside transaction block to make sure the changes are committed
-        # before the call of ix-fstab
-        notifier().reload("disk")
+        if mp_path in ('/etc', '/var', '/usr'):
+            device = '/dev/ufs/' + volume_name
+            mp = '/mnt/' + volume_name
+
+            if not access(mp, 0):
+                mkdir(mp, 755)
+
+            mount(device, mp)
+            popen("/usr/local/bin/rsync -avz '%s/*' '%s/'" % (mp_path, mp)).close()
+            umount(mp)
+
+            if access(mp, 0): 
+                rmdir(mp)
+
+        else:
+
+            # This must be outside transaction block to make sure the changes are committed
+            # before the call of ix-fstab
+            notifier().reload("disk")
 
 class VolumeImportForm(forms.Form):
 
@@ -415,7 +455,7 @@ class VolumeImportForm(forms.Form):
         volume.save()
         self.volume = volume
 
-        mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
+        mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw,late')
         mp.save()
 
         grp = models.DiskGroup(group_name= volume_name, group_type = '', group_volume = volume)
@@ -531,7 +571,7 @@ class VolumeAutoImportForm(forms.Form):
             volume.save()
             self.volume = volume
 
-            mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
+            mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw,late')
             mp.save()
 
             if vol['type'] == 'zfs':
