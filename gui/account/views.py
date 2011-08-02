@@ -46,8 +46,8 @@ def home(request):
 
 def bsduser(request):
 
-    bsduser_list = models.bsdUsers.objects.order_by("id").select_related().filter(bsdusr_builtin=False)
-    bsduser_list_builtin = models.bsdUsers.objects.order_by("id").select_related().filter(bsdusr_builtin=True)
+    bsduser_list = models.bsdUsers.objects.order_by("bsdusr_uid").select_related().filter(bsdusr_builtin=False)
+    bsduser_list_builtin = models.bsdUsers.objects.order_by("bsdusr_uid").select_related().filter(bsdusr_builtin=True)
 
     return render(request, 'account/bsdusers.html', {
         'bsduser_list': bsduser_list,
@@ -56,8 +56,8 @@ def bsduser(request):
 
 def bsdgroup(request):
 
-    bsdgroup_list = models.bsdGroups.objects.order_by("id").filter(bsdgrp_builtin=False)
-    bsdgroup_list_builtin = models.bsdGroups.objects.order_by("id").filter(bsdgrp_builtin=True)
+    bsdgroup_list = models.bsdGroups.objects.order_by("bsdgrp_gid").filter(bsdgrp_builtin=False)
+    bsdgroup_list_builtin = models.bsdGroups.objects.order_by("bsdgrp_gid").filter(bsdgrp_builtin=True)
 
     return render_to_response('account/bsdgroups.html', {
         'bsdgroup_list': bsdgroup_list,
