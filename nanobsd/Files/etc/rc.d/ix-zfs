@@ -15,8 +15,10 @@
 import_zpools()
 {
 	local IFS=\|
-
 	local volumename
+	if [ ! -d "/data/zfs" ]; then
+		mkdir /data/zfs || true
+	fi
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vol_name FROM storage_volume WHERE vol_fstype = 'ZFS'" | \
 	while read volumename; do
 		/sbin/zpool import -o cachefile=none -R /mnt -f ${volumename}
