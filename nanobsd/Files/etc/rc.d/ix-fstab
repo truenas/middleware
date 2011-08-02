@@ -14,58 +14,44 @@
 generate_fstab_real()
 {
 	local IFS=\|
+	local fstype volumename newmp mountpoint mpoptions device fs
 
-	local volumename newmp mountpoint
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT v.vol_name, mp.mp_path FROM storage_volume AS v LEFT OUTER JOIN storage_mountpoint AS mp ON v.id = mp.mp_volume_id WHERE v.vol_fstype = 'UFS'" | \
-	while read volumename newmp; do
-		if [ -c "/dev/ufs/${volumename}" ]; then
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		SELECT
+			v.vol_fstype,
+			v.vol_name,
+			mp.mp_path,
+			mp.mp_options
+
+		FROM
+			storage_volume as v
+
+		LEFT OUTER JOIN
+			storage_mountpoint as mp
+		ON
+			v.id = mp.mp_volume_id
+
+		WHERE
+			v.vol_fstype in ('UFS', 'NTFS', 'MSDOSFS', 'EXT2FS')
+	" | \
+	while read fstype volumename newmp mpoptions; do
+		case "${fstype}" in
+			UFS) device="/dev/ufs/${volumename}"; fs="ufs" ;;
+			NTFS) device="/dev/ntfs/${volumename}"; fs="ntfs-3g" ;;
+			EXT2FS) device="/dev/ext2fs/${volumename}"; fs="ext2fs" ;;
+			MSDOSFS) vname=$(echo ${volumename}|tr '[:lower:]' '[:upper:]')
+				device="/dev/msdosfs/${vname}"; fs="msdosfs" ;;
+		esac
+
+		if [ -c "${device}" ]; then
 			if [ -z "${newmp}" ]; then
 				mountpoint=/mnt/${volumename}
 			else
 				mountpoint=${newmp}
 			fi
-			mkdir -p ${mountpoint}
-			echo "/dev/ufs/${volumename}		${mountpoint}			ufs		rw,late,nfsv4acls	2	2"
-		fi
-	done
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT v.vol_name, mp.mp_path FROM storage_volume AS v LEFT OUTER JOIN storage_mountpoint AS mp ON v.id = mp.mp_volume_id WHERE v.vol_fstype = 'NTFS'" | \
-	while read volumename newmp; do
-		if [ -c "/dev/ntfs/${volumename}" ]; then
-			if [ -z "${newmp}" ]; then
-				mountpoint=/mnt/${volumename}
-			else
-				mountpoint=${newmp}
-			fi
 			mkdir -p ${mountpoint}
-			echo "/dev/ntfs/${volumename}		${mountpoint}			ntfs-3g		rw,late	2	2"
-		fi
-	done
-
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT v.vol_name, mp.mp_path FROM storage_volume AS v LEFT OUTER JOIN storage_mountpoint AS mp ON v.id = mp.mp_volume_id WHERE v.vol_fstype = 'MSDOSFS'" | \
-	while read volumename newmp; do
-            vname=$(echo ${volumename}|tr '[:lower:]' '[:upper:]')
-		if [ -c "/dev/msdosfs/${vname}" ]; then
-			if [ -z "${newmp}" ]; then
-				mountpoint=/mnt/${volumename}
-			else
-				mountpoint=${newmp}
-			fi
-			mkdir -p ${mountpoint}
-			echo "/dev/msdosfs/${vname}		${mountpoint}			msdosfs		rw,late	2	2"
-		fi
-	done
-
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT v.vol_name, mp.mp_path FROM storage_volume AS v LEFT OUTER JOIN storage_mountpoint AS mp ON v.id = mp.mp_volume_id WHERE v.vol_fstype = 'EXT2FS'" | \
-	while read volumename newmp; do
-		if [ -c "/dev/ext2fs/${volumename}" ]; then
-			if [ -z "${newmp}" ]; then
-				mountpoint=/mnt/${volumename}
-			else
-				mountpoint=${newmp}
-			fi
-			mkdir -p ${mountpoint}
-			echo "/dev/ext2fs/${volumename}		${mountpoint}			ext2fs		rw,late	2	2"
+			echo "${device}	${mountpoint}	${fs}	${mpoptions}	2	2"
 		fi
 	done
 }
