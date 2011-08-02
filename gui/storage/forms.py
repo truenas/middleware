@@ -1037,7 +1037,7 @@ class ReplicationForm(ModelForm):
     remote_hostkey = forms.CharField(_("Remote hostkey"),widget=forms.Textarea())
     class Meta:
         model = models.Replication
-        exclude = ('repl_lastsnapshot','repl_remote')
+        exclude = ('repl_lastsnapshot','repl_remote','repl_limit')
     def __init__(self, *args, **kwargs):
         repl = kwargs.get('instance', None)
         super(ReplicationForm, self).__init__(*args, **kwargs)
