@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-30 19:41+0200\n"
+"PO-Revision-Date: 2011-08-01 21:06+0200\n"
 "Last-Translator: jjstecchino <jjstecchino@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
@@ -3903,7 +3903,6 @@ msgid "Email Address"
 msgstr "Indirizzo email"
 
 #: system/models.py:202
-#, fuzzy
 msgid "Locality"
 msgstr "Località"
 
