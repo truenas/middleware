@@ -80,18 +80,42 @@ def snapshots(request):
         })
 
 def snapshots_data(request):
-    zfsnap_list = notifier().zfs_snapshot_list()
+    zfsnap_list = notifier().zfs_snapshot_list().items()
+
+    r = request.META.get("HTTP_RANGE", None)
+    if r:
+        r = r.split('=')[1].split('-')
+        r1 = int(r[0])
+        r2 = int(r[1]) + 1
 
     data = []
-    for vol, snaps in zfsnap_list.items():
+    count = 0
+    total = 0
+    for vol, snaps in zfsnap_list:
+        total += len(snaps)
+        snaps.reverse()
         for snap in snaps:
+            if r:
+                if count < r1:
+                    count += 1
+                    continue
+                elif count > r2:
+                    count += 1
+                    break
             snap['extra'] = simplejson.dumps({
                 'clone_url': reverse('storage_clonesnap', kwargs={'snapshot': snap['fullname']}),
                 'rollback_url': reverse('storage_snapshot_rollback', kwargs={'dataset': vol, 'snapname': snap['name']}) if snap['mostrecent'] else None,
                 'delete_url': reverse('storage_snapshot_delete', kwargs={'dataset': vol, 'snapname': snap['name']}),
             })
             data.append(snap)
-    return HttpResponse(simplejson.dumps(data))
+            count += 1
+
+    if r:
+        resp = HttpResponse(simplejson.dumps(data))
+        resp['Content-Range'] = 'items %d-%d/%d' % (r1,r1+count, total)
+    else:
+        resp = HttpResponse(simplejson.dumps(data))
+    return resp
 
 def wizard(request):
 
