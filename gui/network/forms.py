@@ -205,11 +205,14 @@ class AliasForm(ModelForm):
         cdata = self.cleaned_data
         ipv4, ipv6 = False, False
 
-        if cdata.get("alias_v4address") or cdata.get("alias_v4netmaskbit"):
+        if cdata.get("alias_v4address") and cdata.get("alias_v4netmaskbit"):
             ipv4 = True
-        if cdata.get("alias_v6address") or cdata.get("alias_v6netmaskbit"):
+        if cdata.get("alias_v6address") and cdata.get("alias_v6netmaskbit"):
             ipv6 = True
 
         if ipv6 and ipv4:
             self._errors['__all__'] = self.error_class(["You have to choose between IPv4 or IPv6 per alias"])
+        if not ipv6 and not ipv4:
+            self._errors['__all__'] = self.error_class(["You must specify either an valid IPv4 or IPv6 with maskbit per alias"])
+
         return cdata
