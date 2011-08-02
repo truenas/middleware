@@ -47,7 +47,7 @@
                 <button dojoType="dijit.form.Button" type="button">
                     {% trans "Auxiliary Groups" %}
                     <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Modify User"|force_escape %}', '{% url account_bsduser_groups object_id=u.id %}', [this,]);
+                        editObject('{% trans "Auxiliary Groups"|force_escape %}', '{% url account_bsduser_groups object_id=u.id %}', [this,]);
                     </script>
                 </button>
 		{% endif %}
