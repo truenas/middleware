@@ -591,6 +591,9 @@ class SMARTTest(Model):
     class Meta:
         verbose_name = _("S.M.A.R.T. Test")
         verbose_name_plural = _("S.M.A.R.T. Tests")
+        unique_together = (
+            ('smarttest_disk', 'smarttest_type'),
+        )
 
     class FreeAdmin:
         pass
