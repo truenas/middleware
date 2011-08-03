@@ -41,7 +41,7 @@
         <button dojoType="dijit.form.Button" type="button">
             {% trans "Add S.M.A.R.T. Test" %}
             <script type="dojo/method" event="onClick" args="evt">
-                addObject('{% trans "Add S.M.A.R.T. Test"|force_escape %}', '{% url freeadmin_model_add app="system",model="CronJob" %}', [this,]);
+                addObject('{% trans "Add S.M.A.R.T. Test"|force_escape %}', '{% url freeadmin_model_add app="system",model="SMARTTest" %}', [this,]);
         </script>
         </button>
     </p>
