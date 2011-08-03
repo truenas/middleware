@@ -116,7 +116,7 @@ class VLANForm(ModelForm):
         return tag
 
     class Meta:
-        model = models.VLAN 
+        model = models.VLAN
 
     def save(self):
         retval = super(VLANForm, self).save()
