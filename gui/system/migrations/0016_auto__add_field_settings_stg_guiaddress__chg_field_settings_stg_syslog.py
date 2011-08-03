@@ -73,6 +73,8 @@ class Migration(SchemaMigration):
             'cron_command': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'cron_daymonth': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'cron_dayweek': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7'", 'max_length': '100'}),
+            'cron_description': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'}),
+            'cron_enabled': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'cron_hour': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'cron_minute': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'cron_month': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7,8,9,10,a,b,c'", 'max_length': '100'}),
@@ -131,7 +133,7 @@ class Migration(SchemaMigration):
             'smarttest_daymonth': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'smarttest_dayweek': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7'", 'max_length': '100'}),
             'smarttest_desc': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'smarttest_disk': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storage.Disk']", 'unique': 'True'}),
+            'smarttest_disk': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storage.Disk']"}),
             'smarttest_hour': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'smarttest_month': ('django.db.models.fields.CharField', [], {'default': "'1,2,3,4,5,6,7,8,9,10,a,b,c'", 'max_length': '100'}),
             'smarttest_type': ('django.db.models.fields.CharField', [], {'max_length': '2', 'blank': 'True'})
