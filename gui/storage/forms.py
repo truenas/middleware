@@ -723,8 +723,8 @@ class ZFSDataset_EditForm(Form):
     dataset_atime = forms.ChoiceField(choices=choices.ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label=_('Enable atime'))
     dataset_refquota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset'), help_text=_('0=Unlimited; example: 1g'))
     dataset_quota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset and all children'), help_text=_('0=Unlimited; example: 1g'))
-    dataset_refreserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset'), help_text=_('0=None; example: 1g'))
-    dataset_reserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset and all children'), help_text=_('0=None; example: 1g'))
+    dataset_refreservation = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset'), help_text=_('0=None; example: 1g'))
+    dataset_reservation = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset and all children'), help_text=_('0=None; example: 1g'))
 
     def __init__(self, *args, **kwargs):
         self._mp = kwargs.pop("mp", None)
@@ -733,42 +733,28 @@ class ZFSDataset_EditForm(Form):
         data = notifier().zfs_get_options(dataset)
         self.fields['dataset_compression'].initial = data['compression']
         self.fields['dataset_atime'].initial = data['atime']
-        if data['refquota'] == 'none':
-            self.fields['dataset_refquota'].initial = 0
-        else:
-            self.fields['dataset_refquota'].initial = data['refquota']
-        if data['quota'] == 'none':
-            self.fields['dataset_quota'].initial = 0
-        else:
-            self.fields['dataset_quota'].initial = data['quota']
-        if data['reservation'] == 'none':
-            self.fields['dataset_reserv'].initial = 0
-        else:
-            self.fields['dataset_reserv'].initial = data['reservation']
-        if data['refreservation'] == 'none':
-            self.fields['dataset_refreserv'].initial = 0
-        else:
-            self.fields['dataset_refreserv'].initial = data['refreservation']
+
+        for attr in ('refquota', 'quota', 'reservation', 'refreservation'):
+            formfield = 'dataset_%s' % (attr)
+            if data[attr] == 'none':
+                self.fields[formfield].initial = 0
+            else:
+                self.fields[formfield].initial = data[attr]
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        for field in ('dataset_refquota', 'dataset_quota', 'dataset_reserv', 'dataset_refreserv'):
+        for field in ('dataset_refquota', 'dataset_quota', 'dataset_reservation', 'dataset_refreservation'):
             if not cleaned_data.has_key(field):
                 cleaned_data[field] = ''
         r = re.compile('^(0|[1-9]\d*[mMgGtT]?)$')
         msg = _(u"Enter positive number (optionally suffixed by M, G, T), or, 0")
-        if r.match(cleaned_data['dataset_refquota'].__str__())==None:
-            self._errors['dataset_refquota'] = self.error_class([msg])
-            del cleaned_data['dataset_refquota']
-        if r.match(cleaned_data['dataset_quota'].__str__())==None:
-            self._errors['dataset_quota'] = self.error_class([msg])
-            del cleaned_data['dataset_quota']
-        if r.match(cleaned_data['dataset_refreserv'].__str__())==None:
-            self._errors['dataset_refreserv'] = self.error_class([msg])
-            del cleaned_data['dataset_refreserv']
-        if r.match(cleaned_data['dataset_reserv'].__str__())==None:
-            self._errors['dataset_reserv'] = self.error_class([msg])
-            del cleaned_data['dataset_reserv']
+
+        for attr in ('refquota', 'quota', 'reservation', 'refreservation'):
+            formfield = 'dataset_%s' % (attr)
+            if r.match(cleaned_data[formfield].__str__())==None:
+                self._errors[formfield] = self.error_class([msg])
+                del cleaned_data['dataset_refquota']
+
         return cleaned_data
     def set_error(self, msg):
         msg = u"%s" % msg
@@ -779,34 +765,37 @@ class ZFSVolume_EditForm(Form):
     volume_compression = forms.ChoiceField(choices=choices.ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
     volume_atime = forms.ChoiceField(choices=choices.ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label=_('Enable atime'))
     volume_refquota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset'), help_text=_('0=Unlimited; example: 1g'))
-    volume_refreserv = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset'), help_text=_('0=None; example: 1g'))
+    volume_refreservation = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset'), help_text=_('0=None; example: 1g'))
 
     def __init__(self, *args, **kwargs):
         self._mp = kwargs.pop("mp", None)
         name = self._mp.mp_path.replace("/mnt/","")
         super(ZFSVolume_EditForm, self).__init__(*args, **kwargs)
         data = notifier().zfs_get_options(name)
+
         self.fields['volume_compression'].initial = data['compression']
         self.fields['volume_atime'].initial = data['atime']
-        if data['refquota'] == 'none':
-            self.fields['volume_refquota'].initial = 0
-        else:
-            self.fields['volume_refquota'].initial = data['refquota']
-        if data['refreservation'] == 'none':
-            self.fields['volume_refreserv'].initial = 0
-        else:
-            self.fields['volume_refreserv'].initial = data['refreservation']
+
+
+        for attr in ('refquota', 'refreservation'):
+            formfield = 'volume_%s' % (attr)
+            if data[attr] == 'none':
+                self.fields[formfield].initial = 0
+            else:
+                self.fields[formfield].initial = data[attr]
+
 
     def clean(self):
         cleaned_data = self.cleaned_data
         r = re.compile('^(0|[1-9]\d*[mMgGtT]?)$')
         msg = _(u"Enter positive number (optionally suffixed by M, G, T), or, 0")
-        if r.match(cleaned_data['volume_refquota'].__str__())==None:
-            self._errors['volume_refquota'] = self.error_class([msg])
-            del cleaned_data['volume_refquota']
-        if r.match(cleaned_data['volume_refreserv'].__str__())==None:
-            self._errors['volume_refreserv'] = self.error_class([msg])
-            del cleaned_data['volume_refreserv']
+
+        for attr in ('refquota', 'refreservation'):
+            formfield = 'volume_%s' % (attr)
+            if r.match(cleaned_data[formfield].__str__())==None:
+                self._errors[formfield] = self.error_class([msg])
+                del cleaned_data['dataset_refquota']
+
         return cleaned_data
     def set_error(self, msg):
         msg = u"%s" % msg

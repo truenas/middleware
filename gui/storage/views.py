@@ -342,16 +342,16 @@ def dataset_edit(request, object_id):
                 dataset_form.cleaned_data["dataset_refquota"] = "none"
 
             error = False
-            if dataset_form.cleaned_data["dataset_compression"] == "inherit":
-                error |= not notifier().zfs_inherit_option(dataset_name, "compression")
-            else:
-                error |= not notifier().zfs_set_option(dataset_name, "compression", dataset_form.cleaned_data["dataset_compression"])
-            if dataset_form.cleaned_data["dataset_atime"] == "inherit":
-                error |= not notifier().zfs_inherit_option(dataset_name, "atime")
-            else:
-                error |= not notifier().zfs_set_option(dataset_name, "atime", dataset_form.cleaned_data["dataset_atime"])
-            error |= not notifier().zfs_set_option(dataset_name, "reservation", dataset_form.cleaned_data["dataset_reserv"])
-            error |= not notifier().zfs_set_option(dataset_name, "refreservation", dataset_form.cleaned_data["dataset_refreserv"])
+
+            for attr in ('compression', 'atime'):
+                formfield = 'dataset_%s' % attr
+                if dataset_form.cleaned_data[formfield] == "inherit":
+                    error |= not notifier().zfs_inherit_option(dataset_name, attr)
+                else:
+                    error |= not notifier().zfs_set_option(dataset_name, attr, dataset_form.cleaned_data[formfield])
+
+            error |= not notifier().zfs_set_option(dataset_name, "reservation", dataset_form.cleaned_data["dataset_reservation"])
+            error |= not notifier().zfs_set_option(dataset_name, "refreservation", dataset_form.cleaned_data["dataset_refreservation"])
             error |= not notifier().zfs_set_option(dataset_name, "quota", dataset_form.cleaned_data["dataset_quota"])
             error |= not notifier().zfs_set_option(dataset_name, "refquota", dataset_form.cleaned_data["dataset_refquota"])
 
@@ -419,15 +419,15 @@ def zfsvolume_edit(request, object_id):
                 volume_form.cleaned_data["volume_refquota"] = "none"
 
             error = False
-            if volume_form.cleaned_data["volume_compression"] == "inherit":
-                error |= not notifier().zfs_inherit_option(volume_name, "compression")
-            else:
-                error |= not notifier().zfs_set_option(volume_name, "compression", volume_form.cleaned_data["volume_compression"])
-            if volume_form.cleaned_data["volume_atime"] == "inherit":
-                error |= not notifier().zfs_inherit_option(volume_name, "atime")
-            else:
-                error |= not notifier().zfs_set_option(volume_name, "atime", volume_form.cleaned_data["volume_atime"])
-            error |= not notifier().zfs_set_option(volume_name, "refreservation", volume_form.cleaned_data["volume_refreserv"])
+
+            for attr in ('compression', 'atime'):
+                formfield = 'volume_%s' % attr
+                if volume_form.cleaned_data[formfield] == "inherit":
+                    error |= not notifier().zfs_inherit_option(volume_name, attr)
+                else:
+                    error |= not notifier().zfs_set_option(volume_name, attr, volume_form.cleaned_data[formfield])
+
+            error |= not notifier().zfs_set_option(volume_name, "refreservation", volume_form.cleaned_data["volume_refreservation"])
             error |= not notifier().zfs_set_option(volume_name, "refquota", volume_form.cleaned_data["volume_refquota"])
 
             if not error:
