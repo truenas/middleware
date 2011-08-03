@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-07-23 13:10+0200\n"
+"PO-Revision-Date: 2011-08-02 23:20+0200\n"
 "Last-Translator: ChybeQ <mchybowski06@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
@@ -295,7 +295,7 @@ msgstr "Taśma"
 
 #: choices.py:207
 msgid "Pass"
-msgstr ""
+msgstr "Hasło"
 
 #: choices.py:211
 msgid "read-write"
@@ -410,27 +410,27 @@ msgstr "Odczyt i Zapis"
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes) minut"
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr ""
+msgstr "%(godzin) godzina"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hours) godzin"
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day) dni"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week) tydzień"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
@@ -460,11 +460,11 @@ msgstr "Krótki Auto-Test"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr ""
+msgstr "Przeniesienie autodiagnostyki (tylko interfejs ATA)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Test Natychmiastowy (Tylko ATA)"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"

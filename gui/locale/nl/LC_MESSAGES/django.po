@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:47-0700\n"
-"PO-Revision-Date: 2011-07-28 13:44+0200\n"
-"Last-Translator: johiem <hiemstra.joey@gmail.com>\n"
+"PO-Revision-Date: 2011-08-02 16:39+0200\n"
+"Last-Translator: Christian <c.helmus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -2973,7 +2973,6 @@ msgid "No .AppleDouble"
 msgstr "Geen .AppleDouble"
 
 #: sharing/models.py:181
-#, fuzzy
 msgid ""
 "This will suppress automatic creation of the .AppleDouble directories. This "
 "option should not be used if files are accessed by Mac computers."
@@ -3056,7 +3055,6 @@ msgid "Authorized network or IP addresses"
 msgstr "Geautoriseerde netwerk of IP adressen"
 
 #: sharing/models.py:231
-#, fuzzy
 msgid ""
 "Network that is authorized to access the NFS share or a list of IP "
 "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
@@ -3093,7 +3091,6 @@ msgid "Quiet"
 msgstr "Stil"
 
 #: sharing/models.py:244
-#, fuzzy
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
 msgstr ""
@@ -3589,9 +3586,8 @@ msgid "ZFS Volume successfully destroyed."
 msgstr "Het ZFS volume werd succesvol verwijderd."
 
 #: storage/views.py:394
-#, fuzzy
 msgid "Native dataset successfully edited."
-msgstr "De standaard dataset werd succesvol gewijzigd."
+msgstr "De standaard dataset succesvol gewijzigd."
 
 #: storage/views.py:410
 msgid "Mount Point permissions successfully updated."
@@ -3682,9 +3678,8 @@ msgid "New config to be installed"
 msgstr "Nieuwe configuratie voor installatie"
 
 #: system/forms.py:310 system/forms.py:338
-#, fuzzy
 msgid "minute"
-msgstr "minuten"
+msgstr "minuut"
 
 #: system/forms.py:311 system/forms.py:339
 msgid "hour"
@@ -4845,7 +4840,6 @@ msgid "Are you sure you want to detach?"
 msgstr "Weet u zeker dat u wilt loskoppelen?"
 
 #: templates/storage/disk_replacement.html:9
-#, fuzzy
 msgid "Replacing disk"
 msgstr "Schijf vervangen"
 
