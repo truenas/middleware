@@ -211,8 +211,8 @@ class AliasForm(ModelForm):
             ipv6 = True
 
         if ipv6 and ipv4:
-            self._errors['__all__'] = self.error_class(["You have to choose between IPv4 or IPv6 per alias"])
+            self._errors['__all__'] = self.error_class([_("You have to choose between IPv4 or IPv6 per alias")])
         if not ipv6 and not ipv4:
-            self._errors['__all__'] = self.error_class(["You must specify either an valid IPv4 or IPv6 with maskbit per alias"])
+            self._errors['__all__'] = self.error_class([_("You must specify either an valid IPv4 or IPv6 with maskbit per alias")])
 
         return cdata
