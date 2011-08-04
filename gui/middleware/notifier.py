@@ -248,10 +248,22 @@ class notifier:
         self.__system("/usr/sbin/service istgt reload")
 
     def _start_network(self):
-        # TODO: Skip this step when IPv6 is already enabled
-        self.__system("/sbin/sysctl net.inet6.ip6.auto_linklocal=1")
-        self.__system("/usr/sbin/service autolink auto_linklocal quietstart")
-        self.__system("/usr/sbin/service netif stop")
+        c = self.__open_db()
+        c.execute("SELECT COUNT(id) FROM network_interfaces WHERE int_ipv6auto = 1 OR int_ipv6address != ''")
+        ipv6_interfaces = c.fetchone()[0]
+        if ipv6_interfaces > 0:
+            libc = ctypes.cdll.LoadLibrary("libc.so.7")
+            auto_linklocal = ctypes.c_uint(0)
+            auto_linklocal_size = ctypes.c_uint(4)
+            rv = libc.sysctlbyname("net.inet6.ip6.auto_linklocal", ctypes.byref(auto_linklocal), ctypes.byref(auto_linklocal_size), None, 0)
+            if rv == 0:
+                auto_linklocal = auto_linklocal.value
+            else:
+                auto_linklocal = 0
+            if auto_linklocal == 0:
+                self.__system("/sbin/sysctl net.inet6.ip6.auto_linklocal=1")
+                self.__system("/usr/sbin/service autolink auto_linklocal quietstart")
+                self.__system("/usr/sbin/service netif stop")
         self.__system("/etc/netstart")
 
     def _reload_named(self):
