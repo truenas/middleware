@@ -60,6 +60,7 @@ from django.db import models
 
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
+from middleware import zfs
 
 
 class notifier:
@@ -1344,127 +1345,10 @@ class notifier:
         p1 = self.__pipeopen("zpool import")
         res = p1.communicate()[0]
 
-        class Tnode(object):
-            name = None
-            leaf = False
-            children = None
-            parent = None
-            type = None
-
-            def __init__(self, name, doc):
-                self._doc = doc
-                self.name = name
-                self.children = []
-
-            def find_by_name(self, name):
-                for c in self.children:
-                    if c.name == name:
-                        return c
-                return None
-
-            def append(self, tnode):
-                self.children.append(tnode)
-                tnode.parent = self
-
-            @staticmethod
-            def pprint(node, level=0):
-                print '   ' * level + node.name
-                for c in node.children:
-                    node.pprint(c, level+1)
-
-            def __repr__(self):
-                if not self.parent:
-                    return "<Section: %s>" % self.name
-                return "<Node: %s>" % self.name
-
-            def _is_vdev(self, name):
-                if name in ('stripe', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3') \
-                    or re.search(r'^(mirror|raidz|raidz1|raidz2|raidz3)(-\d+)?$', name):
-                    return True
-                return False
-
-            def __iter__(self):
-                for c in list(self.children):
-                    yield c
-
-            def _vdev_type(self, name):
-                # raidz needs to appear after other raidz types
-                supported_types = ('stripe', 'mirror', 'raidz3', 'raidz2', 'raidz')
-                for type in supported_types:
-                    if name.startswith(type):
-                        return type
-                return False
-
-            def validate(self, level=0):
-                for c in self:
-                    c.validate(level+1)
-                if level == 1:
-                    if len(self.children) == 0:
-                        stripe = self.parent.find_by_name("stripe")
-                        if not stripe:
-                            stripe = Tnode("stripe", self._doc)
-                            stripe.type = 'stripe'
-                            self.parent.append(stripe)
-                        self.parent.children.remove(self)
-                        stripe.append(self)
-                        stripe.validate(level)
-                    else:
-                        self.type = self._vdev_type(self.name)
-                elif level == 2:
-                    # The parent of a leaf should be a vdev
-                    if not self._is_vdev(self.parent.name) and \
-                        self.parent.parent is not None:
-                        raise Exception("Oh noes! This damn thing should be a vdev! %s" % self.parent)
-                    search = self._doc.xpathEval("//class[name = 'LABEL']//provider[name = '%s']/../name" % self.name)
-                    if len(search) > 0:
-                        self.devname = search[0].content
-                    else:
-                        search = self._doc.xpathEval("//class[name = 'DEV']/geom[name = '%s']" % self.name)
-                        if len(search) > 0:
-                            self.devname = self.name
-                        else:
-                            raise Exception("It should be a valid device: %s" % self.name)
-
-            def dump(self, level=0):
-                if level == 2:
-                    return self.devname
-                if level == 1:
-                    disks = []
-                    for c in self:
-                        disks.append(c.dump(level+1))
-                    return {'disks': disks, 'type': self.type}
-                if level == 0:
-                    self.validate()
-                    vdevs = []
-                    for c in self:
-                        vdevs.append(c.dump(level+1))
-                    return {'name': self.name, 'vdevs': vdevs}
-
         for pool in RE_POOL_NAME.findall(res):
             # get status part of the pool
-            status = res.split('pool: %s' % pool)[1].split('config:')[1].split('pool:')[0]
-            roots = {'cache': None, 'logs': None, 'spares': None}
-            lastident = None
-            for line in status.split('\n'):
-                if line.startswith('\t'):
-                    spaces, word = re.search(r'^(?P<spaces>[ ]*)(?P<word>\S+)', line[1:]).groups()
-                    ident = len(spaces) / 2
-                    if ident == 0:
-                        tree = Tnode(word, doc)
-                        roots[word] = tree
-                        pnode = tree
-                    elif ident == lastident + 1:
-                        node = Tnode(word, doc)
-                        pnode.append(node)
-                        pnode = node
-                    elif ident == lastident:
-                        node = Tnode(word, doc)
-                        pnode.parent.append(node)
-                    elif ident < lastident:
-                        node = Tnode(word, doc)
-                        tree.append(node)
-                        pnode = node
-                    lastident = ident
+            status = res.split('pool: %s' % pool)[1].split('pool:')[0]
+            roots = zfs.parse_status(pool, doc, status)
 
             volumes.append({
                 'label': pool,
