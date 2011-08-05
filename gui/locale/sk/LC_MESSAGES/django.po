@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-31 23:10+0200\n"
+"PO-Revision-Date: 2011-08-05 09:16+0200\n"
 "Last-Translator: ataman <mk@ataman.sk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
@@ -2813,6 +2813,13 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
+"Meno zväzku (volume) je meno, ktoré sa objaví vo Výbere pri \"pripojiť na "
+"server\" dialógu na Mac-koch na reprezentáciu zodpovedajúceho sharu. Ak meno "
+"zväzku je nešpecifikované, posledná časť cesty je použitá. Žiadne dva zväzky "
+"nemajú rovnaké meno. Meno zväzku nemôže obsahovať \".\". Meno zväzku je "
+"orezané ak je príliš dlhé. Mac codepage volume meno je limitované na 27 "
+"znakov. UTF8-MAC zväzok (volume) meno je limitované na \"Dĺžku zväzku mena\" "
+"parameter v Services:Apple Share"
 
 #: sharing/models.py:109
 msgid "Share Comment"
@@ -2877,6 +2884,8 @@ msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Dovoľ určitým užívateľom a skupinám mať \"iba-čítanie\" prístup na share. Toto "
+"sa riadi pomocou \"allow option\" formátu."
 
 #: sharing/models.py:146
 msgid "Read-write Access"
@@ -2925,6 +2934,8 @@ msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
 msgstr ""
+"Nastav databázové informácie, ktoré budú uložené v ceste. Máš špecifikovať "
+"miesto, kde sa dá zapisovať, napriek tomu že zväzok je iba na čítanie."
 
 #: sharing/models.py:168
 msgid "Cache CNID"
@@ -3001,7 +3012,7 @@ msgstr "Deaktivuj ID súboru"
 
 #: sharing/models.py:189
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
-msgstr ""
+msgstr "Neoznamovať createfileid, resolveid, deleteid volania."
 
 #: sharing/models.py:192
 msgid "Disable :hex Names"
@@ -3032,6 +3043,8 @@ msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
 msgstr ""
+"Nezasahuj do zväzku cesty, keď sa vypočítava list zväzkov, užitočné pre "
+"automatické pripájanie, alebo vytvorené zväzky pomocou preexec skriptu."
 
 #: sharing/models.py:204
 msgid "AFP3 Unix Privs"
@@ -3109,7 +3122,7 @@ msgstr "Maproot skupina"
 
 #: sharing/models.py:260
 msgid "Group to map root to"
-msgstr ""
+msgstr "Mapovať skupinu root do"
 
 #: sharing/models.py:264
 msgid "Mapall User"
@@ -3117,7 +3130,7 @@ msgstr "Mapall užívateľ"
 
 #: sharing/models.py:268
 msgid "User to map all users to"
-msgstr ""
+msgstr "Užívateľ mapujúci všetkých užívateľov do"
 
 #: sharing/models.py:272
 msgid "Mapall Group"
@@ -3125,7 +3138,7 @@ msgstr "Mapall skupina"
 
 #: sharing/models.py:276
 msgid "Group to map all users to"
-msgstr ""
+msgstr "Skupina mapujúca všetkých užívateľov do"
 
 #: sharing/models.py:283
 msgid "UNIX Share"
@@ -3142,7 +3155,7 @@ msgstr "Zdieľanie"
 #: storage/forms.py:154 storage/forms.py:348 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr ""
+msgstr "Meno volumu/zväzku"
 
 #: storage/forms.py:158 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
@@ -3190,15 +3203,15 @@ msgstr "Nastala nejaká chyba pri pokuse olejblovať disk."
 
 #: storage/forms.py:484
 msgid "You must select a volume."
-msgstr ""
+msgstr "Musíš vybrať zväzok (volume)."
 
 #: storage/forms.py:633
 msgid "Volume from which this dataset will be created on"
-msgstr ""
+msgstr "Zväzok z ktorého tento dataset bude vytvorený"
 
 #: storage/forms.py:634
 msgid "Dataset Name"
-msgstr ""
+msgstr "Meno datasetu"
 
 #: storage/forms.py:635 storage/forms.py:687 storage/forms.py:744
 #: storage/forms.py:785
@@ -3220,30 +3233,32 @@ msgstr "0= bez limitu, príklad: 1g"
 
 #: storage/forms.py:638 storage/forms.py:690
 msgid "Quota for this dataset and all children"
-msgstr ""
+msgstr "Kvóta pre tento dataset a všetky datasety pod ním"
 
 #: storage/forms.py:639 storage/forms.py:691 storage/forms.py:747
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "Rezervované miesto pre tento dataset"
 
 #: storage/forms.py:639 storage/forms.py:640 storage/forms.py:691
 #: storage/forms.py:692 storage/forms.py:747
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0=Žiaden, príklad: 1g"
 
 #: storage/forms.py:640 storage/forms.py:692
 msgid "Reserved space for this dataset and all children"
-msgstr ""
+msgstr "Rezervované miesto pre tento dataset a všetky jeho \"deti\""
 
 #: storage/forms.py:653
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
 msgstr ""
+"Meno dataset-u musí začínať alfanumerickým znakom a môže obsahovať iba (-), "
+"(_), (:) a (.)."
 
 #: storage/forms.py:660 storage/forms.py:805
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "Už máš dataset s rovnakým menom"
 
 #: storage/forms.py:667 storage/forms.py:724 storage/forms.py:768
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
@@ -3311,15 +3326,15 @@ msgstr "Snímok"
 
 #: storage/forms.py:903
 msgid "Clone Name (must be on same volume)"
-msgstr ""
+msgstr "Klonuj meno (misí byť na rovnakom zväzku)"
 
 #: storage/forms.py:916
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr ""
+msgstr "Iba [-a-zA-Z0-9_./] sú dovolené ako meno klonu"
 
 #: storage/forms.py:922
 msgid "Clone must be within the same volume"
-msgstr ""
+msgstr "Klonovanie musí byť s rovnakým zväzkom (volume)"
 
 #: storage/forms.py:989 storage/models.py:222
 msgid "Remote hostname"
@@ -3327,7 +3342,7 @@ msgstr "Názov vzdialeného hostiteľa"
 
 #: storage/forms.py:990 storage/models.py:226
 msgid "Remote hostkey"
-msgstr ""
+msgstr "Vzdialený hostkľúč (hostkey)"
 
 #: storage/models.py:49
 msgid "File System Type"
@@ -3335,11 +3350,11 @@ msgstr "Typ súborového systému"
 
 #: storage/models.py:52 storage/models.py:78 templates/storage/volumes.html:70
 msgid "Volume"
-msgstr ""
+msgstr "Zväzok (Volume)"
 
 #: storage/models.py:79
 msgid "Volume this group belongs to"
-msgstr ""
+msgstr "Zväzok (Volume) tejto skupiny patrí do"
 
 #: storage/models.py:102
 msgid "Transfer Mode"
@@ -3347,48 +3362,48 @@ msgstr "Metóda prenosu"
 
 #: storage/models.py:108
 msgid "HDD Standby"
-msgstr ""
+msgstr "HDD standby"
 
 #: storage/models.py:114
 msgid "Advanced Power Management"
-msgstr ""
+msgstr "APM (Advanced Power Management)"
 
 #: storage/models.py:120
 msgid "Acoustic Level"
-msgstr ""
+msgstr "Akustický stupeň"
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
-msgstr ""
+msgstr "Zapni S.M.A.R.T."
 
 #: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
-msgstr ""
+msgstr "S.M.A.R.T. extra možnosti"
 
 #: storage/models.py:133
 msgid "Group Membership"
-msgstr ""
+msgstr "Členstvo v skupine"
 
 #: storage/models.py:134
 msgid "The disk group containing this disk"
-msgstr ""
+msgstr "Skupina diskov obsahuje tento disk"
 
 #: storage/models.py:156 storage/models.py:237 storage/models.py:267
 #: templates/storage/tasks.html:22
 msgid "Mount Point"
-msgstr ""
+msgstr "Prípojný bod"
 
 #: storage/models.py:157
 msgid "Path to mount point"
-msgstr ""
+msgstr "Cesta k prípojnému bodu"
 
 #: storage/models.py:161
 msgid "Mount options"
-msgstr ""
+msgstr "Možnosti pripojenia"
 
 #: storage/models.py:162
 msgid "Enter Mount Point options here"
-msgstr ""
+msgstr "Možnosti/nastavenia prípojného bodu sem"
 
 #: storage/models.py:179
 msgid "Error getting total space"
@@ -3408,15 +3423,17 @@ msgstr "Chyba"
 
 #: storage/models.py:229
 msgid "Remote Replication Host"
-msgstr ""
+msgstr "Host pre vzdialenú replikáciu"
 
 #: storage/models.py:230
 msgid "Remote Replication Hosts"
-msgstr ""
+msgstr "Hosty pre vzdialenú replikáciu"
 
 #: storage/models.py:241
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
+"Posledný snapshot poslaný na druhú stran (nechaj prázdne pre plnú "
+"replikáciu)"
 
 #: storage/models.py:244 system/models.py:341
 #: templates/storage/replications.html:15
@@ -3433,11 +3450,11 @@ msgstr "Rekurzívne replikovať a zmazať zastralý snímok na vzdialenej strane
 
 #: storage/models.py:254
 msgid "Replication Task"
-msgstr ""
+msgstr "Replikačná úloha"
 
 #: storage/models.py:255
 msgid "Replication Tasks"
-msgstr ""
+msgstr "Replikačné úlohy"
 
 #: storage/models.py:270 system/models.py:384 templates/storage/tasks.html:23
 msgid "Recursive"
@@ -3445,11 +3462,11 @@ msgstr "Rekurzívne"
 
 #: storage/models.py:274
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "Doba držania snapshotu"
 
 #: storage/models.py:280
 msgid "Snapshot lifetime unit"
-msgstr ""
+msgstr "Doba životnosti snapshot dielu"
 
 #: storage/models.py:284
 msgid "Begin"
@@ -3491,11 +3508,11 @@ msgstr "Deň v týždni"
 
 #: storage/models.py:327
 msgid "Periodic Snapshot Task"
-msgstr ""
+msgstr "Periodická snapshot úloha"
 
 #: storage/models.py:328 templates/storage/index.html:7
 msgid "Periodic Snapshot Tasks"
-msgstr ""
+msgstr "Periodické snapshot úlohy"
 
 #: storage/nav.py:5 templates/menubar.html:18
 msgid "Storage"
@@ -3752,7 +3769,7 @@ msgstr "Zobrazovať správy z konzoly v pätičke (Požaduje opätovné načíta
 
 #: system/models.py:108
 msgid "Show tracebacks in case of fatal errors"
-msgstr ""
+msgstr "Ukáž tracebacks v prípade fatálnych chýb"
 
 #: system/models.py:116
 msgid "MOTD banner"
@@ -4343,7 +4360,7 @@ msgstr "#freenas na freenode"
 
 #: templates/freeadmin/index.html:85
 msgid "Mailing Lists"
-msgstr ""
+msgstr "Mailing list"
 
 #: templates/freeadmin/index.html:87
 msgid "FreeNAS Announce"
@@ -4359,7 +4376,7 @@ msgstr "FreeNAS vývoj"
 
 #: templates/freeadmin/index.html:90
 msgid "FreeNAS Testing"
-msgstr ""
+msgstr "FreeNAS testovanie"
 
 #: templates/freeadmin/index.html:91
 msgid "FreeNAS Docs"
@@ -4371,11 +4388,11 @@ msgstr "FreeNAS Preklady"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
-msgstr ""
+msgstr "Podporované problémy"
 
 #: templates/freeadmin/index.html:99
 msgid "Bug Tracker"
-msgstr ""
+msgstr "Bug Tracker"
 
 #: templates/freeadmin/index.html:104
 msgid "Documentation"
@@ -5038,7 +5055,7 @@ msgstr "Žiadne zväzky definované"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
-msgstr ""
+msgstr "Členský disk"
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
@@ -5046,7 +5063,7 @@ msgstr "Typ skupiny"
 
 #: templates/storage/wizard.html:84
 msgid "ZFS Extra"
-msgstr ""
+msgstr "ZFS Extra"
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
