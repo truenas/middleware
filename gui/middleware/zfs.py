@@ -28,7 +28,6 @@ import re
 
 class Tnode(object):
     name = None
-    leaf = False
     children = None
     parent = None
     type = None
@@ -58,19 +57,13 @@ class Tnode(object):
             return unavails
 
     def append(self, tnode):
-        self.children.append(tnode)
-        tnode.parent = self
+        raise NotImplementedError
 
     @staticmethod
     def pprint(node, level=0):
         print '   ' * level + node.name
         for c in node.children:
             node.pprint(c, level+1)
-
-    def __repr__(self):
-        if not self.parent:
-            return "<Section: %s>" % self.name
-        return "<Node: %s>" % self.name
 
     def _is_vdev(self, name):
         if name in ('stripe', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3') \
@@ -91,48 +84,92 @@ class Tnode(object):
         return False
 
     def validate(self, level=0):
-        for c in self:
-            c.validate(level+1)
-        if level == 1:
-            if len(self.children) == 0:
-                stripe = self.parent.find_by_name("stripe")
-                if not stripe:
-                    stripe = Tnode("stripe", self._doc)
-                    stripe.type = 'stripe'
-                    self.parent.append(stripe)
-                self.parent.children.remove(self)
-                stripe.append(self)
-                stripe.validate(level)
-            else:
-                self.type = self._vdev_type(self.name)
-        elif level == 2:
-            # The parent of a leaf should be a vdev
-            if not self._is_vdev(self.parent.name) and \
-                self.parent.parent is not None:
-                raise Exception("Oh noes! This damn thing should be a vdev! %s" % self.parent)
-            search = self._doc.xpathEval("//class[name = 'LABEL']//provider[name = '%s']/../name" % self.name)
-            if len(search) > 0:
-                self.devname = search[0].content
-            else:
-                search = self._doc.xpathEval("//class[name = 'DEV']/geom[name = '%s']" % self.name)
-                if len(search) > 0:
-                    self.devname = self.name
-                else:
-                    raise Exception("It should be a valid device: %s" % self.name)
+        raise NotImplementedError
+
     def dump(self, level=0):
-        if level == 2:
-            return self.devname
-        if level == 1:
-            disks = []
-            for c in self:
-                disks.append(c.dump(level+1))
-            return {'disks': disks, 'type': self.type}
-        if level == 0:
-            self.validate()
-            vdevs = []
-            for c in self:
-                vdevs.append(c.dump(level+1))
-            return {'name': self.name, 'vdevs': vdevs}
+        raise NotImplementedError
+
+class Pool(Tnode):
+    pass
+
+class Root(Tnode):
+
+    def append(self, node):
+        if not isinstance(node, Vdev):
+            raise Exception("Not a vdev: %s" % node)
+        self.children.append(node)
+        node.parent = self
+
+    def dump(self):
+        self.validate()
+        vdevs = []
+        for c in self:
+            vdevs.append(c.dump())
+        return {'name': self.name, 'vdevs': vdevs}
+
+    def validate(self):
+        for c in self:
+            c.validate()
+
+class Vdev(Tnode):
+
+    def __repr__(self):
+        return "<Section: %s>" % self.name
+
+    def append(self, node):
+        if not isinstance(node, Dev):
+            raise Exception("Not a device")
+        self.children.append(node)
+        node.parent = self
+
+    def dump(self):
+        disks = []
+        for c in self:
+            disks.append(c.dump())
+        return {'disks': disks, 'type': self.type}
+
+    def validate(self):
+        for c in self:
+            c.validate()
+        if len(self.children) == 0:
+            stripe = self.parent.find_by_name("stripe")
+            if not stripe:
+                stripe = Tnode("stripe", self._doc)
+                stripe.type = 'stripe'
+                self.parent.append(stripe)
+            self.parent.children.remove(self)
+            stripe.append(self)
+            stripe.validate(level)
+        else:
+            self.type = self._vdev_type(self.name)
+
+class Dev(Tnode):
+
+    def __repr__(self):
+        return "<Node: %s>" % self.name
+
+    def append(self, node):
+        raise Exception("What? You can't append child to a Dev")
+
+    def dump(self):
+        return self.devname
+
+    def validate(self):
+        for c in self:
+            c.validate()
+        # The parent of a leaf should be a vdev
+        if not self._is_vdev(self.parent.name) and \
+            self.parent.parent is not None:
+            raise Exception("Oh noes! This damn thing should be a vdev! %s" % self.parent)
+        search = self._doc.xpathEval("//class[name = 'LABEL']//provider[name = '%s']/../name" % self.name)
+        if len(search) > 0:
+            self.devname = search[0].content
+        else:
+            search = self._doc.xpathEval("//class[name = 'DEV']/geom[name = '%s']" % self.name)
+            if len(search) > 0:
+                self.devname = self.name
+            else:
+                raise Exception("It should be a valid device: %s" % self.name)
 
 def parse_status(name, doc, data):
 
@@ -141,27 +178,44 @@ def parse_status(name, doc, data):
     lastident = None
     for line in status.split('\n'):
         if line.startswith('\t'):
-            spaces, word, status = re.search(r'^(?P<spaces>[ ]*)(?P<word>\S+)\s+(?P<status>\S+)', line[1:]).groups()
+
+            try:
+                spaces, word, status = re.search(r'^(?P<spaces>[ ]*)(?P<word>\S+)\s+(?P<status>\S+)', line[1:]).groups()
+            except:
+                spaces, word = re.search(r'^(?P<spaces>[ ]*)(?P<word>\S+)', line[1:]).groups()
+                status = None
             ident = len(spaces) / 2
+            if ident < lastident:
+                for x in range(lastident - ident):
+                    pnode = pnode.parent
+
             if ident == 0:
-                if word == name:
-                    tree = Tnode(word, doc)
+                if word != 'NAME':
+                    tree = Root(word, doc)
                     tree.status = status
                     roots[word] = tree
                     pnode = tree
-            elif ident == lastident + 1:
-                node = Tnode(word, doc)
+
+            elif ident == 1:
+                if pnode._is_vdev(word):
+                    node = Vdev(word, doc)
+                    node.status = status
+                    pnode.append(node)
+                    pnode = node
+                else:
+                    node = Vdev("stripe", doc)
+                    node.status = status
+
+                    node2 = Dev(word, doc)
+                    node2.status = status
+
+                    pnode.append(node)
+                    node.append(node2)
+                    pnode = node
+            elif ident == 2:
+                node = Dev(word, doc)
                 node.status = status
                 pnode.append(node)
-                pnode = node
-            elif ident == lastident:
-                node = Tnode(word, doc)
-                node.status = status
-                pnode.parent.append(node)
-            elif ident < lastident:
-                node = Tnode(word, doc)
-                node.status = status
-                tree.append(node)
-                pnode = node
+
             lastident = ident
     return roots
