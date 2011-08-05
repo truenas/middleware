@@ -210,6 +210,7 @@ add_port sysutils/throttle
 add_port sysutils/dmidecode
 add_port devel/libevent
 add_port sysutils/tmux
+add_port benchmarks/iozone
 
 if [ "${DEBUG}" -eq "1" ]; then 
 	add_port databases/db42
