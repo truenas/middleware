@@ -51,7 +51,6 @@ EOF
 
 generate_smartd()
 {
-	echo "generate_smartd_cfg > ${smartd_config}"
 	generate_smartd_cfg > ${smartd_config}
 }
 
