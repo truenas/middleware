@@ -23,7 +23,7 @@ ataidle_start()
 		"SELECT $sf FROM storage_disk" | \
 	while eval read $f; do
         disk=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py identifier_to_device "${disk_identifier}")
-        if [ -z `echo "${disk}"|egrep "^ada|^da"` ]; then
+        if [ -z `echo "${disk}"|egrep "^ada|^ad"` ]; then
             continue
         fi
 		ataidle_args=""
