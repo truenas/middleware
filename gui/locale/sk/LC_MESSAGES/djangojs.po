@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-07-08 17:25+0200\n"
-"Last-Translator: najt_k <zic.spse@gmail.com>\n"
+"PO-Revision-Date: 2011-08-05 15:18+0200\n"
+"Last-Translator: ataman <mk@ataman.sk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:114
 msgid "Reporting"
-msgstr "Štatistika"
+msgstr "Reportovanie"
 
 #: media/lib/js/freeadmin.js:126
 msgid "Settings"
@@ -48,7 +48,7 @@ msgstr "Úložisko"
 
 #: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
-msgstr "Cronjobs"
+msgstr "Cron úlohy"
 
 #: media/lib/js/freeadmin.js:437
 msgid "Edit"
@@ -56,7 +56,7 @@ msgstr "Upraviť"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
-msgstr "Upraviť disk"
+msgstr "Úpravy disku"
 
 #: media/lib/js/freeadmin.js:443
 msgid "Replace"
@@ -64,7 +64,7 @@ msgstr "Nahradiť"
 
 #: media/lib/js/freeadmin.js:444
 msgid "Disk Replacement"
-msgstr "Nahradenie disku"
+msgstr "Výmena disku"
 
 #: media/lib/js/freeadmin.js:448
 msgid "Detach"

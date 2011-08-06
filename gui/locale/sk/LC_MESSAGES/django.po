@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-08-05 09:16+0200\n"
+"PO-Revision-Date: 2011-08-05 15:14+0200\n"
 "Last-Translator: ataman <mk@ataman.sk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sk\n"
@@ -441,13 +441,13 @@ msgstr "Nikdy - Kontrola zariadení bez ohľadu na režim napájania"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Sleep - Skontroluje zariadenia, pokial nie sú v REŽIME Sleep"
+msgstr "Sleep - Skontrolujte zariadenia, ak nieje v režime Sleep"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"Pohotovostný režim - Skontroluje zariadenia, pokiaľ nie sú v REŽIME Sleep "
-"alebo POHOTOVOSTNOM REŽIME"
+"Pohotovostný režim - zariadenie je kontrolované, pokiaľ nie je v režime "
+"Sleep alebo POHOTOVOSTNOM REŽIME"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
