@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-07-21 10:31+0200\n"
-"Last-Translator: hessu <hessu@mailinator.com>\n"
+"PO-Revision-Date: 2011-08-06 12:58+0200\n"
+"Last-Translator: nonless <tero.harju@netti.fi>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fi\n"
 "MIME-Version: 1.0\n"
@@ -56,7 +56,7 @@ msgstr "Muokkaa"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
-msgstr ""
+msgstr "Muokkaa levyä"
 
 #: media/lib/js/freeadmin.js:443
 msgid "Replace"
@@ -80,7 +80,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
-msgstr ""
+msgstr "Kaikki valitut"
 
 #: media/lib/js/freeadmin/form/Cron.js:90
 msgid "Every N"

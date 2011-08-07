@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-07 20:43+0200\n"
-"Last-Translator: raymond <raymondv@gmx.de>\n"
+"PO-Revision-Date: 2011-08-06 13:00+0200\n"
+"Last-Translator: nonless <tero.harju@netti.fi>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fi\n"
 "MIME-Version: 1.0\n"
@@ -298,11 +298,11 @@ msgstr ""
 
 #: choices.py:211
 msgid "read-write"
-msgstr ""
+msgstr "luku-kirjoutus"
 
 #: choices.py:212
 msgid "read-only"
-msgstr ""
+msgstr "vain luku"
 
 #: choices.py:216 choices.py:222 services/forms.py:392 services/forms.py:394
 #: services/forms.py:741 templates/storage/wizard.html:92

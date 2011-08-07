@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-07-16 13:38+0200\n"
-"Last-Translator: Christian <christian@junker.com>\n"
+"PO-Revision-Date: 2011-08-07 02:04+0200\n"
+"Last-Translator: woodplace <lasse@skovsted.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
@@ -1311,15 +1311,15 @@ msgstr ""
 
 #: services/models.py:140
 msgid "Enable home directories"
-msgstr ""
+msgstr "Opret Home bibliotek "
 
 #: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
-msgstr ""
+msgstr "Dette slår home biblioteker til eller fra for samba brugere."
 
 #: services/models.py:144
 msgid "Enable home directories browsing"
-msgstr ""
+msgstr "Tillad adgang til home biblioteket"
 
 #: services/models.py:145
 msgid "This enables\\disables home directories browsing for samba user."
@@ -1364,7 +1364,7 @@ msgstr ""
 
 #: services/models.py:180
 msgid "Server Name"
-msgstr ""
+msgstr "Server navn"
 
 #: services/models.py:181
 msgid ""
@@ -1374,7 +1374,7 @@ msgstr ""
 
 #: services/models.py:184
 msgid "Guest Access"
-msgstr ""
+msgstr "Gæste adgang"
 
 #: services/models.py:185
 msgid "Allows guest access to all apple shares on this box."
@@ -1382,7 +1382,7 @@ msgstr ""
 
 #: services/models.py:195
 msgid "Local Access"
-msgstr ""
+msgstr "Lokal adgang"
 
 #: services/models.py:196
 msgid "Allow users with local accounts to access apple shares on this box."
@@ -1403,7 +1403,7 @@ msgstr ""
 
 #: services/models.py:214
 msgid "Number of servers"
-msgstr ""
+msgstr "Antal servere"
 
 #: services/models.py:215
 msgid ""
