@@ -561,7 +561,7 @@ class VolumeAutoImportForm(forms.Form):
         elif vol['type'] == 'zfs':
             volume_fstype = 'ZFS'
             grouped = {
-                    'log': vol['logs'],
+                    'log': vol['log'],
                     'cache': vol['cache'],
                     'spare': vol['spare'],
                     }

@@ -1367,8 +1367,8 @@ class notifier:
                 'type': 'zfs',
                 'group_type': 'none',
                 'cache': roots['cache'].dump() if roots['cache'] else None,
-                'logs': roots['logs'].dump() if roots['logs'] else None,
-                'spare': roots['spares'].dump() if roots['spares'] else None,
+                'log': roots['log'].dump() if roots['log'] else None,
+                'spare': roots['spare'].dump() if roots['spare'] else None,
                 'disks': roots[pool].dump(),
                 })
 

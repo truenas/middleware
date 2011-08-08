@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #-
-# Copyright (c) 2010 iXsystems, Inc.
+# Copyright (c) 2011 iXsystems, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,36 @@
 # SUCH DAMAGE.
 #
 import re
+
+class Pool(object):
+    name = None
+
+    data = None
+    cache = None
+    spare = None
+    log = None
+
+    def __init__(self, name):
+        self.name = name
+
+    def __getitem__(self, name):
+        if hasattr(self, name):
+            return getattr(self, name)
+        elif name == self.name:
+            return self.data
+        else:
+            raise KeyError
+
+    def add_root(self, root):
+        setattr(self, root.name, root)
+
+    def __repr__(self):
+        return repr({
+            'data': self.data,
+            'cache': self.cache,
+            'spare': self.spare,
+            'log': self.log,
+        })
 
 class Tnode(object):
     name = None
@@ -92,9 +122,6 @@ class Tnode(object):
 
     def dump(self, level=0):
         raise NotImplementedError
-
-class Pool(Tnode):
-    pass
 
 class Root(Tnode):
 
@@ -180,7 +207,7 @@ class Dev(Tnode):
 def parse_status(name, doc, data):
 
     status = data.split('config:')[1]
-    roots = {'cache': None, 'logs': None, 'spares': None}
+    pool = Pool(name)
     lastident = None
     for line in status.split('\n'):
         if line.startswith('\t'):
@@ -199,8 +226,8 @@ def parse_status(name, doc, data):
                 if word != 'NAME':
                     tree = Root(word, doc)
                     tree.status = status
-                    roots[word] = tree
                     pnode = tree
+                    pool.add_root(tree)
 
             elif ident == 1:
                 if pnode._is_vdev(word):
@@ -221,4 +248,4 @@ def parse_status(name, doc, data):
                 pnode.append(node)
 
             lastident = ident
-    return roots
+    return pool
