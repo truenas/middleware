@@ -1028,6 +1028,7 @@ class notifier:
         self.__system("/usr/sbin/service ix-fstab quietstart")
         self.__system("/usr/sbin/service swap1 quietstart")
         self.__system("/usr/sbin/service mountlate quietstart")
+        del self.__confxml
 
     # Create a user in system then samba
     def __pw_with_password(self, command, password):
@@ -1628,9 +1629,13 @@ class notifier:
         c.close()
 
     def __geom_confxml(self):
-        from libxml2 import parseDoc
-        sysctl_proc = self.__pipeopen('sysctl -b kern.geom.confxml')
-        return (parseDoc(sysctl_proc.communicate()[0][:-1]))
+        try:
+            return self.__confxml
+        except:
+            from libxml2 import parseDoc
+            sysctl_proc = self.__pipeopen('sysctl -b kern.geom.confxml')
+            self.__confxml = parseDoc(sysctl_proc.communicate()[0][:-1])
+        return self.__confxml
 
     def serial_from_device(self, devname):
         p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
