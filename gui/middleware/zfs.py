@@ -209,6 +209,7 @@ def parse_status(name, doc, data):
     status = data.split('config:')[1]
     pool = Pool(name)
     lastident = None
+    tree = None
     for line in status.split('\n'):
         if line.startswith('\t'):
 
@@ -224,6 +225,8 @@ def parse_status(name, doc, data):
 
             if ident == 0:
                 if word != 'NAME':
+                    if tree:
+                        tree.validate()
                     tree = Root(word, doc)
                     tree.status = status
                     pnode = tree

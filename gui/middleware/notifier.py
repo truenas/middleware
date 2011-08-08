@@ -929,12 +929,12 @@ class notifier:
         if not zdev:
             pool = self.zpool_parse(volume.vol_name)
             unavail = pool[volume.vol_name].find_unavail()
-            if len(unavail) > 1:
-                raise NotImplementedError
-            elif len(unavail) == 1:
+            if len(unavail) >= 1:
+                #FIXME: Can we do that if unavail > 1 for _every_ case?
                 zdev = unavail[0].name
             else:
-                raise NotImplementedError
+                from middleware.exceptions import MiddlewareError
+                raise MiddlewareError('An unavail disk could not be found in the pool to be replaced.')
 
         todev = self.identifier_to_device(to_disk.disk_identifier)
 
