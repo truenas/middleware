@@ -600,6 +600,34 @@ class notifier:
         # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
         self.__gpt_unlabeldisk(devname)
 
+    def __prepare_zfs_vdev(self, disks, swapsize, force4khack):
+        vdevs = ['',]
+        for disk in disks:
+            devname = self.identifier_to_device(disk.disk_identifier)
+            need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
+                                              devname = devname,
+                                              label = "",
+                                              swapsize=swapsize)
+        self.__confxml = None
+        for disk in disks:
+            # The identifier {uuid} should now be available
+            devname = self.identifier_to_device(disk.disk_identifier)
+            ident = self.device_to_identifier(devname)
+            if ident != disk.disk_identifier:
+                disk.disk_identifier = ident
+                disk.save()
+            else:
+                raise Exception
+
+            devname = self.identifier_to_partition(ident)
+            if need4khack or force4khack:
+                hack_vdevs.append(devname)
+                self.__system("gnop create -S 4096 /dev/%s" % devname)
+                vdevs.append("/dev/%s.nop" % devname)
+            else:
+                vdevs.append("/dev/%s" % devname)
+        return (' '.join(vdevs))
+
     def __create_zfs_volume(self, volume, swapsize, force4khack=False, path=None):
         """Internal procedure to create a ZFS volume identified by volume id"""
         z_id = volume.id
@@ -614,32 +642,8 @@ class notifier:
             vgrp_type = vgrp.group_type
             if vgrp_type != 'stripe':
                 z_vdev += " " + vgrp_type
-            # Grab all member disks from the current vdev group
-            vdev_member_list = vgrp.disk_set.all()
-            for disk in vdev_member_list:
-                devname = self.identifier_to_device(disk.disk_identifier)
-                need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
-                                                  devname = devname,
-                                                  label = "",
-                                                  swapsize=swapsize)
-            self.__confxml = None
-            for disk in vdev_member_list:
-                # The identifier {uuid} should now be available
-                devname = self.identifier_to_device(disk.disk_identifier)
-                ident = self.device_to_identifier(devname)
-                if ident != disk.disk_identifier:
-                    disk.disk_identifier = ident
-                    disk.save()
-                else:
-                    raise Exception
-
-                devname = self.identifier_to_partition(ident)
-                if need4khack or force4khack:
-                    hack_vdevs.append(devname)
-                    self.__system("gnop create -S 4096 /dev/%s" % devname)
-                    z_vdev += " /dev/%s.nop" % devname
-                else:
-                    z_vdev += " /dev/%s" % devname
+            # Prepare disks nominated in this group
+            z_vdev += self.__prepare_zfs_vdev(vgrp.disk_set.all(), swapsize, force4khack)
 
         # Finally, create the zpool.
         # TODO: disallowing cachefile may cause problem if there is
@@ -650,6 +654,7 @@ class notifier:
         altroot = 'none' if path else '/mnt'
         mountpoint = path if path else ('/mnt/%s' % z_name)
         p1 = self.__pipeopen("zpool create -o cachefile=/data/zfs/zpool.cache "
+                      "-O aclmode=passthrough -O aclinherit=passthrough "
                       "-f -m %s -o altroot=%s %s %s" % (mountpoint, altroot, z_name, z_vdev))
 
         p1.wait()
@@ -667,12 +672,6 @@ class notifier:
 
         self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
 
-        # These should probably be options that are configurable from the GUI
-        self.__system("zfs set aclmode=passthrough %s" % z_name)
-        self.__system("zfs set aclinherit=passthrough %s" % z_name)
-
-    # TODO: This is a rather ugly hack and duplicates some code, need to
-    # TODO: cleanup this with the __create_zfs_volume.
     def zfs_volume_attach_group(self, group, force4khack=False):
         """Attach a disk group to a zfs volume"""
         c = self.__open_db()
@@ -690,36 +689,14 @@ class notifier:
         vgrp_type = group.group_type
         if vgrp_type != 'stripe':
             z_vdev += " " + vgrp_type
-        # Grab all member disks from the current vdev group
-        vdev_member_list = group.disk_set.all()
-        for disk in vdev_member_list:
-            devname = self.identifier_to_device(disk.disk_identifier)
-            need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
-                                              devname = devname,
-                                              label = "",
-                                              swapsize=swapsize)
 
-        self.__confxml = None
-        for disk in vdev_member_list:
-            # The identifier {uuid} should now be available
-            devname = self.identifier_to_device(disk.disk_identifier)
-            ident = self.device_to_identifier(devname)
-            if ident != disk.disk_identifier:
-                disk.disk_identifier = ident
-                disk.save()
-            else:
-                raise
+        # Prepare disks nominated in this group
+        z_vdev += self.__prepare_zfs_vdev(group.disk_set.all(), swapsize, force4khack)
 
-            devname = self.identifier_to_partition(ident)
-            if need4khack or force4khack:
-                self.__system("gnop create -S 4096 /dev/%s" % devname)
-                z_vdev += " /dev/%s.nop" % devname
-            else:
-                z_vdev += " /dev/%s" % devname
-
-        self._reload_disk()
         # Finally, attach new groups to the zpool.
         self.__system("zpool add -f %s %s" % (z_name, z_vdev))
+
+        self._reload_disk()
 
     def create_zfs_vol(self, name, size, props=None):
         """Internal procedure to create ZFS volume"""
