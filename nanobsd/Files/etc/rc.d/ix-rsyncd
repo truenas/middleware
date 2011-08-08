@@ -15,7 +15,7 @@
 generate_rsyncd()
 {
     local IFS=\|
-    local f="rsyncd_port rsyncd_auxiliary"
+    local f="rsyncd_port"
     eval local $f
     local cmd sf cfg
     sf=$(echo $f | sed -e 's/ /, /g')
@@ -31,10 +31,11 @@ EOF
 	    if [ "$rsyncd_port" -ne 873 ]; then
 		echo "port  = $rsyncd_port" >> $cfg
 	    fi
-        echo "${rsyncd_auxiliary}" >> $cfg
     done
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT rsyncd_auxiliary FROM services_rsyncd ORDER BY -id LIMIT 1" >> $cfg
 
-    local f="rsyncmod_name rsyncmod_comment rsyncmod_path rsyncmod_mode rsyncmod_maxconn rsyncmod_user rsyncmod_group rsyncmod_hostsallow rsyncmod_hostsdeny rsyncmod_auxiliary"
+    local f="id rsyncmod_name rsyncmod_comment rsyncmod_path rsyncmod_mode rsyncmod_maxconn rsyncmod_user rsyncmod_group rsyncmod_hostsallow rsyncmod_hostsdeny"
     eval local $f
     local cmd sf cfg
     sf=$(echo $f | sed -e 's/ /, /g')
@@ -65,7 +66,8 @@ EOF
 	    if [ -n "${rsyncd_hostsdeny}" ]; then
             echo "    hosts deny = ${rsyncmod_hostsdeny}" >> $cfg
         fi
-        echo "${rsyncmod_auxiliary}" >> $cfg
+        ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	    "SELECT rsyncmod_auxiliary FROM services_rsyncmod WHERE id = ${id}" >> $cfg
     done
 }
 
