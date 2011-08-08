@@ -550,17 +550,21 @@ class notifier:
             return c, conn
         return c
 
-    def __gpt_labeldisk(self, type, devname, label = "", swapsize=2):
+    def __gpt_labeldisk(self, type, devname, test4k = False, label = "", swapsize=2):
         """Label the whole disk with GPT under the desired label and type"""
-        # Taste the disk to know whether it's 4K formatted.
-        # requires > 8.1-STABLE after r213467
-        ret_4kstripe = self.__system_nolog("geom disk list %s "
-                                           "| grep 'Stripesize: 4096'" % (devname))
-        ret_512bsector = self.__system_nolog("geom disk list %s "
-                                             "| grep 'Sectorsize: 512'" % (devname))
-        # Make sure that the partition is 4k-aligned, if the disk reports 512byte sector
-        # while using 4k stripe, use an offset of 64.
-        need4khack = (ret_4kstripe == 0) and (ret_512bsector == 0)
+        if test4k:
+            # Taste the disk to know whether it's 4K formatted.
+            # requires > 8.1-STABLE after r213467
+            ret_4kstripe = self.__system_nolog("geom disk list %s "
+                                               "| grep 'Stripesize: 4096'" % (devname))
+            ret_512bsector = self.__system_nolog("geom disk list %s "
+                                                 "| grep 'Sectorsize: 512'" % (devname))
+            # Make sure that the partition is 4k-aligned, if the disk reports 512byte sector
+            # while using 4k stripe, use an offset of 64.
+            need4khack = (ret_4kstripe == 0) and (ret_512bsector == 0)
+        else:
+            need4khack = False
+
         # Caculate swap size.
         swapsize = swapsize * 1024 * 1024 * 2
         # Round up to nearest whole integral multiple of 128 and subtract by 34
@@ -601,13 +605,23 @@ class notifier:
         self.__gpt_unlabeldisk(devname)
 
     def __prepare_zfs_vdev(self, disks, swapsize, force4khack):
-        vdevs = ['',]
+        vdevs = ['']
+        gnop_devs = []
+        test4k = not force4khack
+        want4khack = force4khack
+        first = True
         for disk in disks:
             devname = self.identifier_to_device(disk.disk_identifier)
-            need4khack = self.__gpt_labeldisk(type = "freebsd-zfs",
-                                              devname = devname,
-                                              label = "",
-                                              swapsize=swapsize)
+            rv = self.__gpt_labeldisk(type = "freebsd-zfs",
+                                      devname = devname,
+                                      label = "",
+                                      test4k = (first and test4k),
+                                      swapsize=swapsize)
+            first = False
+            if test4k:
+                test4k = False
+                want4khack = rv
+
         self.__confxml = None
         for disk in disks:
             # The identifier {uuid} should now be available
@@ -620,13 +634,15 @@ class notifier:
                 raise Exception
 
             devname = self.identifier_to_partition(ident)
-            if need4khack or force4khack:
-                hack_vdevs.append(devname)
+            if want4khack:
                 self.__system("gnop create -S 4096 /dev/%s" % devname)
-                vdevs.append("/dev/%s.nop" % devname)
+                devname = ('/dev/%s.nop' % devname)
+                gnop_devs.append(devname)
             else:
-                vdevs.append("/dev/%s" % devname)
-        return (' '.join(vdevs))
+                devname = ("/dev/%s" % devname)
+            vdevs.append(devname)
+
+        return vdevs, gnop_devs, want4khack
 
     def __create_zfs_volume(self, volume, swapsize, force4khack=False, path=None):
         """Internal procedure to create a ZFS volume identified by volume id"""
@@ -637,13 +653,18 @@ class notifier:
         # Grab all disk groups' id matching the volume ID
         vgroup_list = volume.diskgroup_set.all()
         self.__system("swapoff -a")
+        gnop_devs = []
+
+        want4khack = force4khack
+
         for vgrp in vgroup_list:
-            hack_vdevs = []
             vgrp_type = vgrp.group_type
             if vgrp_type != 'stripe':
                 z_vdev += " " + vgrp_type
             # Prepare disks nominated in this group
-            z_vdev += self.__prepare_zfs_vdev(vgrp.disk_set.all(), swapsize, force4khack)
+            vdevs, gnops, want4khack = self.__prepare_zfs_vdev(vgrp.disk_set.all(), swapsize, want4khack)
+            z_vdev += " ".join(vdevs)
+            gnop_devs += gnops
 
         # Finally, create the zpool.
         # TODO: disallowing cachefile may cause problem if there is
@@ -656,18 +677,18 @@ class notifier:
         p1 = self.__pipeopen("zpool create -o cachefile=/data/zfs/zpool.cache "
                       "-O aclmode=passthrough -O aclinherit=passthrough "
                       "-f -m %s -o altroot=%s %s %s" % (mountpoint, altroot, z_name, z_vdev))
-
         p1.wait()
         if p1.returncode != 0:
             from middleware.exceptions import MiddlewareError
             error = ", ".join(p1.communicate()[1].split('\n'))
             raise MiddlewareError('Unable to create the pool: %s' % error)
         self.zfs_inherit_option(z_name, 'mountpoint')
+
         # If we have 4k hack then restore system to whatever it should be
-        if need4khack or force4khack:
+        if want4khack:
             self.__system("zpool export %s" % (z_name))
-            for disk in hack_vdevs:
-                self.__system("gnop destroy /dev/%s.nop" % disk)
+            for gnop in gnop_devs:
+                self.__system("gnop destroy %s" % gnop)
             self.__system("zpool import -R /mnt %s" % (z_name))
 
         self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
@@ -691,7 +712,8 @@ class notifier:
             z_vdev += " " + vgrp_type
 
         # Prepare disks nominated in this group
-        z_vdev += self.__prepare_zfs_vdev(group.disk_set.all(), swapsize, force4khack)
+        vdevs = self.__prepare_zfs_vdev(group.disk_set.all(), swapsize, True)[0]
+        z_vdev += " ".join(vdevs)
 
         # Finally, attach new groups to the zpool.
         self.__system("zpool add -f %s %s" % (z_name, z_vdev))
@@ -888,18 +910,6 @@ class notifier:
             self.__create_zfs_volume(volume, swapsize, kwargs.pop('force4khack', False), kwargs.pop('path', None))
         elif volume.vol_fstype == 'UFS':
             self.__create_ufs_volume(volume, swapsize)
-
-    def _init_zfs_disk(self, disk_id):
-        """Initialize a disk designated by disk_id"""
-        """notifier().init("disk", 1)"""
-        c = self.__open_db()
-        c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
-        swapsize=c.fetchone()[0]
-        c.execute("SELECT disk_identifier, disk_name FROM storage_disk WHERE id = ?", (disk_id,))
-        disk = c.fetchone()
-        devname = self.identifier_to_device(disk[0])
-        self.__gpt_labeldisk(type = "freebsd-zfs", devname = devname,
-                             label = disk[1], swapsize=swapsize)
 
     def zfs_replace_disk(self, volume, from_disk, to_disk):
         """Replace disk in volume_id from from_diskid to to_diskid"""
