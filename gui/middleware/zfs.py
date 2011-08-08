@@ -48,6 +48,11 @@ class Pool(object):
     def add_root(self, root):
         setattr(self, root.name, root)
 
+    def validate(self):
+        for key in ('data', 'cache', 'spare', 'log', self.name):
+            if getattr(self, key):
+                getattr(self, key).validate()
+
     def __repr__(self):
         return repr({
             'data': self.data,
@@ -209,7 +214,6 @@ def parse_status(name, doc, data):
     status = data.split('config:')[1]
     pool = Pool(name)
     lastident = None
-    tree = None
     for line in status.split('\n'):
         if line.startswith('\t'):
 
@@ -225,8 +229,6 @@ def parse_status(name, doc, data):
 
             if ident == 0:
                 if word != 'NAME':
-                    if tree:
-                        tree.validate()
                     tree = Root(word, doc)
                     tree.status = status
                     pnode = tree
@@ -251,4 +253,5 @@ def parse_status(name, doc, data):
                 pnode.append(node)
 
             lastident = ident
+    pool.validate()
     return pool
