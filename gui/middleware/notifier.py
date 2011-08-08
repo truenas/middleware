@@ -583,7 +583,6 @@ class notifier:
         # Install a dummy boot block so system gives meaningful message if booting
         # from the wrong disk.
         self.__system("gpart bootcode -b /boot/pmbr-datadisk /dev/%s" % (str(devname)))
-        self.__confxml = None
         return need4khack
 
     def __gpt_unlabeldisk(self, devname):
@@ -623,22 +622,25 @@ class notifier:
                                                   devname = devname,
                                                   label = "",
                                                   swapsize=swapsize)
+            self.__confxml = None
+            for disk in vdev_member_list:
                 # The identifier {uuid} should now be available
+                devname = self.identifier_to_device(disk.disk_identifier)
                 ident = self.device_to_identifier(devname)
                 if ident != disk.disk_identifier:
                     disk.disk_identifier = ident
                     disk.save()
                 else:
                     raise Exception
-                devname = self.identifier_to_partition(ident)
 
+                devname = self.identifier_to_partition(ident)
                 if need4khack or force4khack:
                     hack_vdevs.append(devname)
                     self.__system("gnop create -S 4096 /dev/%s" % devname)
                     z_vdev += " /dev/%s.nop" % devname
                 else:
                     z_vdev += " /dev/%s" % devname
-        self._reload_disk()
+
         # Finally, create the zpool.
         # TODO: disallowing cachefile may cause problem if there is
         # preexisting zpool having the exact same name.
@@ -696,20 +698,25 @@ class notifier:
                                               devname = devname,
                                               label = "",
                                               swapsize=swapsize)
+
+        self.__confxml = None
+        for disk in vdev_member_list:
             # The identifier {uuid} should now be available
+            devname = self.identifier_to_device(disk.disk_identifier)
             ident = self.device_to_identifier(devname)
             if ident != disk.disk_identifier:
                 disk.disk_identifier = ident
                 disk.save()
             else:
                 raise
-            devname = self.identifier_to_partition(ident)
 
+            devname = self.identifier_to_partition(ident)
             if need4khack or force4khack:
                 self.__system("gnop create -S 4096 /dev/%s" % devname)
                 z_vdev += " /dev/%s.nop" % devname
             else:
                 z_vdev += " /dev/%s" % devname
+
         self._reload_disk()
         # Finally, attach new groups to the zpool.
         self.__system("zpool add -f %s %s" % (z_name, z_vdev))
@@ -810,6 +817,7 @@ class notifier:
             for disk in vdev_member_list:
                 devname = self.identifier_to_device(disk.disk_identifier)
                 self.__gpt_unlabeldisk(devname = devname)
+
         self._reload_disk()
 
     def __create_ufs_volume(self, volume, swapsize):
@@ -828,6 +836,7 @@ class notifier:
             disk = vgrp_row.disk_set.all()[0]
             devname = self.identifier_to_device(disk.disk_identifier)
             self.__gpt_labeldisk(type = "freebsd-ufs", devname = devname, swapsize=swapsize)
+            self.__confxml = None
             ident = self.device_to_identifier(devname)
             if ident != disk.disk_identifier:
                 disk.disk_identifier = ident
@@ -887,6 +896,7 @@ class notifier:
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname,))
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
                       "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (devname, devname))
+
         self._reload_disk()
 
     def _init_volume(self, volume, *args, **kwargs):
@@ -947,6 +957,8 @@ class notifier:
 
         self.__gpt_labeldisk(type = "freebsd-zfs", devname = todev,
                              label = "", swapsize=swapsize)
+
+        self.__confxml = None
 
         # The identifier {uuid} should now be available
         ident = self.device_to_identifier(todev)
