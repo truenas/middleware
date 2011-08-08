@@ -33,10 +33,11 @@ class Tnode(object):
     type = None
     status = None
 
-    def __init__(self, name, doc):
+    def __init__(self, name, doc, status=None):
         self._doc = doc
         self.name = name
         self.children = []
+        self.status = status
 
     def find_by_name(self, name):
         for c in self.children:
@@ -44,16 +45,19 @@ class Tnode(object):
                 return c
         return None
 
-    def find_unavail(self, node):
+    def find_unavail(self):
         if len(self.children) == 0:
             if self.status == 'UNAVAIL':
                 return self
         else:
             unavails = []
             for c in self.children:
-                find = self.find_unavail(c)
+                find = c.find_unavail()
                 if find:
-                    unavails.append(find)
+                    if isinstance(find, list):
+                        unavails += find
+                    else:
+                        unavails.append(find)
             return unavails
 
     def append(self, tnode):
@@ -168,8 +172,10 @@ class Dev(Tnode):
             search = self._doc.xpathEval("//class[name = 'DEV']/geom[name = '%s']" % self.name)
             if len(search) > 0:
                 self.devname = self.name
-            else:
+            elif self.status == 'ONLINE':
                 raise Exception("It should be a valid device: %s" % self.name)
+            else:
+                self.devname = self.name
 
 def parse_status(name, doc, data):
 
@@ -198,23 +204,20 @@ def parse_status(name, doc, data):
 
             elif ident == 1:
                 if pnode._is_vdev(word):
-                    node = Vdev(word, doc)
-                    node.status = status
+                    node = Vdev(word, doc, status=status)
                     pnode.append(node)
                     pnode = node
                 else:
                     node = Vdev("stripe", doc)
                     node.status = status
 
-                    node2 = Dev(word, doc)
-                    node2.status = status
+                    node2 = Dev(word, doc, status=status)
 
                     pnode.append(node)
                     node.append(node2)
                     pnode = node
             elif ident == 2:
-                node = Dev(word, doc)
-                node.status = status
+                node = Dev(word, doc, status=status)
                 pnode.append(node)
 
             lastident = ident
