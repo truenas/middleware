@@ -1748,6 +1748,13 @@ class notifier:
                 return mp.mp_volume.vol_fstype
         return 'UFS'
 
+    def zpool_parse(self, name):
+        doc = self.__geom_confxml()
+        p1 = self.__pipeopen("zpool status %s" % name)
+        res = p1.communicate()[0]
+        parse = zfs.parse_status(name, doc, res)
+        return parse
+
 def usage():
     print ("Usage: %s action command" % argv[0])
     print """\
