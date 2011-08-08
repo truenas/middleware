@@ -137,14 +137,18 @@ class Disk(Model):
         return notifier().serial_from_device(
             notifier().identifier_to_device(self.disk_identifier)
             )
+    def __init__(self, *args, **kwargs):
+        rv = super(Disk, self).__init__(*args, **kwargs)
+        self._original_state = dict(self.__dict__)
+        return rv
     def identifier_to_device(self):
         return notifier().identifier_to_device(self.disk_identifier)
     def identifier_to_partition(self):
         return notifier().identifier_to_partition(self.disk_identifier)
     def save(self, *args, **kwargs):
-        if self.id:
+        if self.id and self._original_state.get("disk_togglesmart", None) != self.__dict__.get("disk_togglesmart"):
             notifier().restart("smartd")
-        super(Disk, self).save(*args, **kwargs)
+        super(Disk, self).save(args, kwargs)
     class Meta:
         verbose_name = _("Disk")
     def __unicode__(self):

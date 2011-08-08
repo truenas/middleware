@@ -583,6 +583,7 @@ class notifier:
         # Install a dummy boot block so system gives meaningful message if booting
         # from the wrong disk.
         self.__system("gpart bootcode -b /boot/pmbr-datadisk /dev/%s" % (str(devname)))
+        self.__confxml = None
         return need4khack
 
     def __gpt_unlabeldisk(self, devname):
@@ -1028,7 +1029,7 @@ class notifier:
         self.__system("/usr/sbin/service ix-fstab quietstart")
         self.__system("/usr/sbin/service swap1 quietstart")
         self.__system("/usr/sbin/service mountlate quietstart")
-        del self.__confxml
+        self.__confxml = None
 
     # Create a user in system then samba
     def __pw_with_password(self, command, password):
@@ -1628,10 +1629,11 @@ class notifier:
         conn.commit()
         c.close()
 
+    def __init__(self):
+        self.__confxml = None
+
     def __geom_confxml(self):
-        try:
-            return self.__confxml
-        except:
+        if self.__confxml == None:
             from libxml2 import parseDoc
             sysctl_proc = self.__pipeopen('sysctl -b kern.geom.confxml')
             self.__confxml = parseDoc(sysctl_proc.communicate()[0][:-1])
