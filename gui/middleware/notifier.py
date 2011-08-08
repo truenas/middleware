@@ -925,7 +925,16 @@ class notifier:
         # TODO: Test on real hardware to see if ashift would persist across replace
         fromdev = self.identifier_to_partition(from_disk.disk_identifier)
         fromdev_swap = self.swap_from_identifier(from_disk.disk_identifier)
-        zdev = self.device_to_zlabel(fromdev, volume.vol_name) or fromdev
+        zdev = self.device_to_zlabel(fromdev, volume.vol_name)
+        if not zdev:
+            pool = self.zpool_parse(volume.vol_name)
+            unavail = pool[volume.vol_name].find_unavail()
+            if len(unavail) > 1:
+                raise NotImplementedError
+            elif len(unavail) == 1:
+                zdev = unavail[0].name
+            else:
+                raise NotImplementedError
 
         todev = self.identifier_to_device(to_disk.disk_identifier)
 
