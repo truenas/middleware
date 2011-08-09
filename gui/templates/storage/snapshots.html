@@ -111,9 +111,12 @@
     grid4.startup();
 </script>
 </div>
-<div dojoType="dijit.layout.ContentPane" region="bottom" style="height:36px;">
+<div dojoType="dijit.layout.ContentPane" region="bottom" style="height:56px;">
     <button id="delSnapshot" dojoType="dijit.form.Button" type="button" style="margin:5px;">
         <img src="{{ STATIC_URL }}images/ui/buttons/remove_snapshot.png">
+        <br />
+        Destroy
+
         <script type="dojo/method" event="onClick" args="evt">
             dg = dijit.byId('viewdatagrid');
             var snaps = [];
