@@ -400,7 +400,7 @@ dump_hardware()
 	desc="Physical Memory"
 	ram=$(sysctl -n hw.physmem)
 	rram=$(echo "scale=4;${ram}/1024/1024/1024"|bc|xargs printf "%0.2f")
-	echo "${desc}: ${out} GiB"
+	echo "${desc}: ${rram} GiB"
 
 	section_footer
 }
