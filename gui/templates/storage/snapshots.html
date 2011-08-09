@@ -12,7 +12,7 @@
         });
         dojo.require("dijit.Tooltip");
         new dijit.Tooltip({
-           connectId: [b],
+           connectId: [b.domNode],
            label: "{% trans "Clone Snapshot"|force_escape %}",
            position: ['above'],
         });
@@ -27,7 +27,7 @@
             });
             dojo.require("dijit.Tooltip");
             new dijit.Tooltip({
-               connectId: [b],
+               connectId: [b.domNode],
                label: "{% trans "Destroy Snapshot"|force_escape %}",
                position: ['above'],
             });
@@ -43,7 +43,7 @@
             });
             dojo.require("dijit.Tooltip");
             new dijit.Tooltip({
-               connectId: [b],
+               connectId: [b.domNode],
                label: "{% trans "Clone Snapshot"|force_escape %}",
                position: ['above'],
             });
@@ -94,7 +94,7 @@
         store: store,
         id: 'viewdatagrid',
         clientSort: true,
-        rowSelector: 'auto',
+        //rowSelector: 'auto',
         plugins: {
             //nestedSorting: true,
             dnd: true,
