@@ -469,6 +469,10 @@ dump_hardware()
 	dmidecode
 	section_footer
 
+	section_header "memcontrol list"
+	memcontrol list
+	section_footer
+
 	section_header "camcontrol devlist"
 	camcontrol devlist
 	section_footer
