@@ -50,8 +50,8 @@ esac
 if [ -n "${FREENAS_ARCH}" ]; then
     NANO_ARCH=${FREENAS_ARCH}
 fi
-: ${REVISION=`svnversion ${NANO_CFG_BASE}`}
-NANO_NAME="FreeNAS-8r${REVISION}-${NANO_ARCH}"
+REVISION="8.0.1-BETA4"
+NANO_NAME="FreeNAS-${REVISION}-${NANO_ARCH}"
 NANO_IMGNAME="${NANO_NAME}.full"
 NANO_KERNEL=${NANO_CFG_BASE}/FREENAS.${NANO_ARCH}
 : ${NANO_OBJ=/tmp/${LOGNAME}/obj.freenas.${NANO_ARCH}}
@@ -59,7 +59,7 @@ NANO_LABEL=FreeNAS
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 NANO_RAM_TMPVARSIZE=$((160*1024))
 
-DEBUG="1"
+DEBUG="0"
 
 NANO_IMAGES=2
 FlashDevice generic 2g
@@ -67,6 +67,7 @@ FlashDevice generic 2g
 . ${NANO_CFG_BASE}/common
 
 add_port devel/pkg-config
+add_port x11/libX11
 add_port devel/cdialog
 add_port dns/inadyn			# -mt?
 #+editors/nano
@@ -87,15 +88,11 @@ add_port net-mgmt/bsnmptools
 add_port net-mgmt/clog
 add_port net-mgmt/sipcalc
 add_port net/istgt
-#+net/netatalk
 add_port security/libgcrypt
 add_port security/libgpg-error
 add_port databases/db46
-#-net/netatalk
-add_port net/netatalk		-DWITH_PAM
 #+net/nss_ldap
-add_port security/cyrus-sasl2
-add_port net/openldap24-sasl-client
+add_port net/openldap24-client
 #-net/nss_ldap
 add_port net/nss_ldap
 add_port net/rsync 
@@ -172,6 +169,8 @@ add_port x11/libXau -DWITHOUT_X11 # run dep of collectd
 add_port x11/libXdmcp -DWITHOUT_X11 # run dep of collectd
 add_port x11/libxcb -DWITHOUT_X11 # run dep of collectd
 add_port x11/xcb-util -DWITHOUT_X11 # run dep of collectd
+add_port x11/libXrender
+add_port x11/renderproto
 add_port x11/xcb-proto -DWITHOUT_X11 # run dep of collectd
 add_port devel/gamin -DWITHOUT_X11 # run dep of collectd
 add_port devel/gio-fam-backend -DWITHOUT_X11 # run dep of collectd
@@ -181,6 +180,7 @@ add_port graphics/cairo -DWITHOUT_X11 # run dep of collectd
 add_port devel/m4 -DWITHOUT_X11 # run dep of collectd
 add_port devel/bison -DWITHOUT_X11 # run dep of collectd
 add_port devel/libffi -DWITHOUT_X11 # run dep of collectd
+add_port x11/kbproto
 add_port x11-toolkits/pango -DWITHOUT_X11 # run dep of collectd
 add_port textproc/libxml2 -DWITHOUT_X11 # run dep of collectd
 add_port textproc/py-libxml2 -DWITHOUT_X11 # run dep of collectd
@@ -193,10 +193,9 @@ add_port converters/base64
 add_port emulators/mtools -DWITHOUT_X11
 add_port sysutils/arcconf
 add_port sysutils/tw_cli
-add_port net/py-ldap2 -DWITH_SASL
+add_port net/py-ldap2
 add_port sysutils/ataidle
 add_port devel/xorg-macros
-add_port x11/kbproto
 add_port sysutils/gnome_subr
 add_port x11/libX11
 add_port devel/dbus
@@ -210,7 +209,7 @@ add_port sysutils/throttle
 add_port sysutils/dmidecode
 add_port devel/libevent
 add_port sysutils/tmux
-add_port benchmarks/iozone
+add_port net/netatalk		-DWITH_PAM
 
 if [ "${DEBUG}" -eq "1" ]; then 
 	add_port databases/db42
@@ -278,7 +277,6 @@ freenas
 __EOF__
 	CR "(cd ${dstCR}; python manage.py compilemessages)"
 	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
-	CR "ln -sf /etc/local_settings.py ${dstCR}/local_settings.py"
 	CR "chown -R www:www ${dstCR} data"
     else
         pprint 2 "GUI OMITTED from image"
