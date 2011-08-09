@@ -32,7 +32,7 @@
 
 : ${FREENAS_DEBUG_FILE:="/var/tmp/freenas-debug.txt"}
 
-DUMPS="active_directory geom hardware ldap network ssl zfs"
+DUMPS="active_directory geom hardware ldap network ssl sysctl zfs"
 
 
 syslog_debug_on()
@@ -101,6 +101,37 @@ section_footer()
 {
 	echo
 	echo
+}
+
+freenas_header()
+{
+	section_header "$(cat /etc/version.freenas)"
+
+	desc=$(sysctl -nd kern.ostype)
+	out=$(sysctl -n kern.ostype)
+	echo "${desc}: ${out}"
+
+	desc=$(sysctl -nd kern.osrelease)
+	out=$(sysctl -n kern.osrelease)
+	echo "${desc}: ${out}"
+
+	desc=$(sysctl -nd kern.osrevision)
+	out=$(sysctl -n kern.osrevision)
+	echo "${desc}: ${out}"
+
+	desc=$(sysctl -nd kern.version)
+	out=$(sysctl -n kern.version)
+	echo "${desc}: ${out}"
+
+	desc=$(sysctl -nd kern.hostname)
+	out=$(sysctl -n kern.hostname)
+	echo "${desc}: ${out}"
+
+	desc=$(sysctl -nd kern.bootfile)
+	out=$(sysctl -n kern.bootfile)
+	echo "${desc}: ${out}"
+	
+	section_footer
 }
 
 active_directory_opt() { echo a; }
@@ -390,6 +421,18 @@ dump_hardware()
 {
 	section_header "Hardware"
 
+	desc=$(sysctl -nd hw.machine)
+	out=$(sysctl -n hw.machine)
+	echo "${desc}: ${out}"
+
+	desc=$(sysctl -nd hw.machine_arch)
+	out=$(sysctl -n hw.machine_arch)
+	echo "${desc}: ${out}"
+
+	desc=$(sysctl -nd hw.model)
+	out=$(sysctl -n hw.model)
+	echo "${desc}: ${out}"
+
 	desc=$(sysctl -nd hw.ncpu)
 	out=$(sysctl -n hw.ncpu)
 	echo "${desc}: ${out}"
@@ -408,6 +451,14 @@ dump_hardware()
 	rram=$(echo "scale=4;${ram}/1024/1024/1024"|bc|xargs printf "%0.2f")
 	echo "${desc}: ${rram} GiB"
 
+	section_footer
+
+	section_header "pciconf -lv"
+	pciconf -lv
+	section_footer
+
+	section_header "devinfo -rv"
+	devinfo -rv
 	section_footer
 }
 
@@ -639,6 +690,15 @@ dump_ssl()
 	echo "Not implemented."
 }
 
+sysctl_opt() { echo y; }
+sysctl_help() { echo "Dump Sysctl configuration"; }
+dump_sysctl()
+{
+	section_header "sysctl -a"
+	sysctl -a
+	section_footer
+}
+
 zfs_opt() { echo z; }
 zfs_help() { echo "Dump ZFS configuration"; }
 dump_zfs()
@@ -754,6 +814,8 @@ main()
 	done
 
 	: > ${FREENAS_DEBUG_FILE}
+
+	freenas_header
 	while getopts ":${opts}" OPTION
 	do
 		local var=\$$(echo "dump_func_${OPTION}")
