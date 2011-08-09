@@ -930,6 +930,8 @@ class notifier:
             if len(unavail) >= 1:
                 #FIXME: Can we do that if unavail > 1 for _every_ case?
                 zdev = unavail[0].name
+                from_disk.disk_name = zdev
+                from_disk.save()
             else:
                 from middleware.exceptions import MiddlewareError
                 raise MiddlewareError('An unavail disk could not be found in the pool to be replaced.')
@@ -985,6 +987,8 @@ class notifier:
         # TODO: Handle with 4khack aftermath
         devname = disk.identifier_to_partition()
         zlabel = self.device_to_zlabel(devname, volume.vol_name)
+        if not zlabel:
+            zlabel = disk.disk_name
 
         # Remove the swap partition for another time to be sure.
         # TODO: swap partition should be trashed instead.

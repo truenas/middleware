@@ -82,7 +82,7 @@ class Tnode(object):
 
     def find_unavail(self):
         if len(self.children) == 0:
-            if self.status == 'UNAVAIL':
+            if self.status != 'ONLINE':
                 return self
         else:
             unavails = []
