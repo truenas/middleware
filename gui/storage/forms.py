@@ -983,7 +983,7 @@ class DiskReplacementForm(forms.Form):
     def _populate_disk_choices(self):
 
         diskchoices = dict()
-        used_disks = [i[0] for i in models.Disk.objects.exclude(disk_name=self.disk.disk_name).values_list('disk_name').distinct()]
+        used_disks = [notifier().identifier_to_device(i[0]) for i in models.Disk.objects.exclude(disk_name=self.disk.disk_name).values_list('disk_identifier').distinct()]
 
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
