@@ -136,6 +136,7 @@ class Interfaces(Model):
             return u'%s' % self.int_name
     def delete(self):
         super(Interfaces, self).delete()
+        notifier().stop("netif")
         notifier().start("network")
     class Meta:
         verbose_name = _("Interface")
@@ -188,6 +189,7 @@ class Alias(Model):
             return u'%s:%s' % (self.alias_interface.int_name, self.alias_address)
     def delete(self):
         super(Alias, self).delete()
+        notifier().stop("netif")
         notifier().start("network")
     class Meta:
         verbose_name = _("Alias")
