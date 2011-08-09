@@ -1,8 +1,20 @@
+/* button styles */
+.claro .dijitButtonText {
+    padding: 4px;
+    font-weight:bold;
+    color:#333;
+}
 /* system->settings->config */
 .configbtn {
         float:left;
         padding:4px;
     }
+/**/
+.claro .dijitTextBox  {
+    margin-right:18px;
+}
+/* end field styles */
+
 
 #rebootDialog_underlay { background-color:#000; }
 #shutdownDialog_underlay, #editscary_dialog_underlay { background-color:#FD0000; }
@@ -131,9 +143,6 @@ table.grid thead {
 table.grid td {
     padding:4px;
 }
-table.grid tr {
-    border:1px solid #ccc;
-}
 tbody tr:hover {
     background-color:#d7ebff;
 }
@@ -208,20 +217,16 @@ float:left;
 text-align:left;
 }
 .label {
-    border-bottom:1px solid #C5C5C5;
-    border-left:1px solid #C5C5C5;
-    border-right:1px dotted #C5C5C5;
+    text-transform:uppercase;
     font-weight:bold;
     color:#50575F;
     line-height:24px;
-    padding-left:16px;
-    width:135px
+    padding-left:10px;
 }
 .descr {
-    border-bottom:1px dotted #C5C5C5;
-    border-right:1px solid #C5C5C5;
     line-height:24px;
-    padding:4px
+    padding-left:10px;
+    vertical-align:top;
 }
 html, body, #mainDiv {
       width: 100%; height: 100%;
@@ -273,10 +278,12 @@ tr.ix, td.ix{
     color:#000;
 }
  th{
-    color: #000;
-    width:170px;
-    padding:6px;
-    background-color:#d6d6d6;
+    color: #50575F;
+    font-weight:bold;
+    margin-right:8px;
+    text-transform:uppercase;
+    vertical-align:top;
+    line-height:24px;
 }
 
 .cifs_text_class radio{

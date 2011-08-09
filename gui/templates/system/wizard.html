@@ -1,20 +1,22 @@
 {% load i18n %}
 <div dojoType="dijit.layout.ContentPane" class="objrefresh" doLayout="false">
-<p>{% blocktrans %}Step {{ step }} of {{ step_count }}{% endblocktrans %}</p>
+<h1>{% blocktrans %}Step {{ step }} of {{ step_count }}{% endblocktrans %}</h1>
 <form dojoType="dijit.form.Form" action="." enctype="multipart/form-data" method="post">{% csrf_token %}
 <script type="dojo/event" event="onSubmit" args="e">
     formSubmit(this, e, '{{ postpath }}', [this, ]);
 </script>
 <table>
 {{ form }}
-</table>
 <input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
 {{ previous_fields|safe }}
+<td>
 <button class="submitform" dojoType="dijit.form.Button" type="submit">
-    {% trans "OK" %}
+    {% trans "Apply Update" %}
     <script type="dojo/method" event="onClick" args="evt">
         this.set('label', '{% trans "Please wait..."|force_escape %}');
     </script>
 </button>
+</td>
 </form>
+</table>
 </div>

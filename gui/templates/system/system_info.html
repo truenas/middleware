@@ -1,35 +1,36 @@
 {% load i18n %}
-<table style="margin-top:10px;">
+<h1>System Information</h1>
+<table>
     <tr>
-        <td class="label" style="border-top: 1px solid #ddd;"><strong>{% trans "Hostname" %}:</strong></td>
-        <td class="descr" style="border-top: 1px dotted #ddd;">{{ hostname }}</td>
+        <th>{% trans "Hostname" %}</th>
+        <td class="descr">{{ hostname }}</td>
     </tr>
     <tr>
-        <td class="label"><strong>{% trans "OS Version" %}:</strong></td>
+        <th>{% trans "OS Version" %}</th>
         <td class="descr">{{ uname1 }} {{ uname2 }}</td>
     </tr>
     <tr>
-        <td class="label"><strong>{% trans "Platform" %}:</strong></td>
+        <th>{% trans "Platform" %}</th>
         <td class="descr">{{ platform }}</td>
     </tr>
     <tr>
-        <td class="label"><strong>{% trans "Memory" %}:</strong></td>
+        <th>{% trans "Memory" %}</th>
         <td class="descr">{{ physmem }}</td>
     </tr>
     <tr>
-        <td class="label"><strong>{% trans "System Time" %}:</strong></td>
+        <th>{% trans "System Time" %}</th>
         <td class="descr">{{ date }}</td>
     </tr>
     <tr>
-        <td class="label"><strong>{% trans "Uptime" %}:</strong></td>
+        <th>{% trans "Uptime" %}</th>
         <td class="descr">{{ uptime }}</td>
     </tr>
     <tr>
-        <td class="label"><strong>{% trans "Load Average" %}:</strong></td>
+        <th>{% trans "Load Average" %}</th>
         <td class="descr">{{ loadavg }}</td>
     </tr>
     <tr>
-        <td class="label"><strong>{% trans "FreeNAS Build" %}:</strong></td>
+        <th>{% trans "FreeNAS Build" %}</th>
         <td class="descr">{{ freenas_build }}</td>
     </tr>
 </table>
