@@ -2,6 +2,7 @@
 .claro .dijitButtonText {
     padding: 4px;
     font-weight:bold;
+    font-size: 7pt !important;
     color:#666;
 }
 .claro .dijitButtonText p:hover {
