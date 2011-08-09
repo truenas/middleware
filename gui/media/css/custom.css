@@ -296,6 +296,9 @@ width: 50% !important;
 margin-top:10px !important;
 }
 
+table.grid tr {
+    border-bottom:1px #ccc solid;
+}
 .SystemIcon { background-image: url('/media/images/ui/tree/system.png'); width:16px; height:    16px; }
 .ReportingIcon { background-image: url('/media/images/ui/tree/reporting.png'); width:16px; height:    16px; }
 .InfoIcon { background-image: url('/media/images/ui/tree/system_information.png'); width:16px; height:    16px; }

@@ -9,10 +9,6 @@
     </script>
     </button>
 
-    <div dojoType="dijit.Tooltip" connectId="addVolumeBtn" position="above">
-        <strong>{% trans "Create Volume" %}</strong>
-    </div>
-
 {% if en_dataset %}
     <button id="datasetBtn" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/add_dataset.png">
@@ -23,9 +19,6 @@
             addObject('{% trans "Create ZFS Dataset"|force_escape %}', '{% url storage_dataset %}', [this,]);
         </script>
     </button>
-    <div dojoType="dijit.Tooltip" connectId="datasetBtn" position="above">
-        <strong>{% trans "Create ZFS Dataset" %}</strong>
-    </div>
 
     <button id="zvolBtn" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/add_dataset.png">
@@ -36,9 +29,6 @@
             addObject('{% trans "Create ZFS Volume"|force_escape %}', '{% url storage_zvol %}', [this,]);
         </script>
     </button>
-    <div dojoType="dijit.Tooltip" connectId="zvolBtn" position="above">
-        <strong>{% trans "Create ZFS Volume" %}</strong>
-    </div>
 {% endif %}
 
     <button id="importVolBtn" dojoType="dijit.form.Button" type="button">
@@ -50,9 +40,6 @@
             volumeWizard('{% trans "Import Volume"|force_escape %}', '{% url storage_import %}', [this,]);
         </script>
     </button>
-    <div dojoType="dijit.Tooltip" connectId="importVolBtn" position="above">
-        <strong>{% trans "Import Volume" %}</strong>
-    </div>
 
     <button id="autoImportVolBtn" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/auto_import_volume.png">
@@ -63,9 +50,6 @@
             volumeWizard('{% trans "Auto Import Volume"|force_escape %}', '{% url storage_autoimport %}', [this,]);
         </script>
     </button>
-    <div dojoType="dijit.Tooltip" connectId="autoImportVolBtn" position="above">
-        <strong>{% trans "Auto Import Volume" %}</strong>
-    </div>
 
     <h5>
         {% if mp_list %}
