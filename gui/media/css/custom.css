@@ -289,6 +289,12 @@ tr.ix, td.ix{
     background-color:#000;
 
 }
+/* Tree Expand / Collapse */
+#colexpand { 
+margin-left:10px !important;
+width: 50% !important;
+margin-top:10px !important;
+}
 
 .SystemIcon { background-image: url('/media/images/ui/tree/system.png'); width:16px; height:    16px; }
 .ReportingIcon { background-image: url('/media/images/ui/tree/reporting.png'); width:16px; height:    16px; }
