@@ -474,7 +474,7 @@ dump_hardware()
 	section_footer
 
 	section_header "atacontrol list"
-	camcontrol devlist
+	atacontrol list
 	section_footer
 }
 
