@@ -32,7 +32,7 @@
 
 : ${FREENAS_DEBUG_FILE:="/var/tmp/freenas-debug.txt"}
 
-DUMPS="active_directory geom hardware ldap network ssl sysctl system zfs"
+DUMPS="active_directory cache geom hardware ldap network ssl sysctl system zfs"
 
 
 syslog_debug_on()
@@ -136,7 +136,7 @@ freenas_header()
 
 active_directory_opt() { echo a; }
 active_directory_help() { echo "Dump Active Directory Configuration"; }
-dump_active_directory()
+active_directory_dump()
 {
 	local workgroup
 	local netbiosname
@@ -311,7 +311,7 @@ __EOF__
 	#
 	#	Dump cache info
 	#
-	dump_cache "AD"
+	cache_dump "AD"
 
 	#
 	#	Include LDAP debugging
@@ -327,8 +327,8 @@ __EOF__
 }
 
 cache_opt() { echo c; }
-cache_help() { echo "Dump Cache"; }
-dump_cache()
+cache_help() { echo "Dump (AD|LDAP) Cache"; }
+cache_dump()
 {
 	local cachetype="${1}"
 
@@ -380,7 +380,7 @@ dump_cache()
 
 geom_opt() { echo g; }
 geom_help() { echo "Dump GEOM configuration"; }
-dump_geom()
+geom_dump()
 {
 	geom_inode=$(ls -i /sbin/geom|awk '{ print $1 }')
 	classes=$(ls -i /sbin|grep "^${geom_inode}"|awk '{ print $2 }')
@@ -417,7 +417,7 @@ dump_geom()
 
 hardware_opt() { echo h; }
 hardware_help() { echo "Dump Hardware Configuration"; }
-dump_hardware()
+hardware_dump()
 {
 	section_header "Hardware"
 
@@ -484,7 +484,7 @@ dump_hardware()
 
 ldap_opt() { echo l; }
 ldap_help() { echo "Dump LDAP Configuration"; }
-dump_ldap()
+ldap_dump()
 {
 	local onoff
 
@@ -635,7 +635,7 @@ __EOF__
 	#
 	#	Dump cache info
 	#
-	dump_cache "LDAP"
+	cache_dump "LDAP"
 
 	#
 	#	Include LDAP debugging
@@ -652,7 +652,7 @@ __EOF__
 
 network_opt() { echo n; }
 network_help() { echo "Dump Network Configuration"; }
-dump_network()
+network_dump()
 {
 	section_header "Hostname"
 	hostname
@@ -713,14 +713,50 @@ dump_network()
 	section_footer
 }
 
-dump_ssl()
+ssl_opt() { echo s; }
+ssl_help() { echo "Dump SSL Configuration"; }
+ssl_dump()
 {
-	echo "Not implemented."
+	ssldir="/etc/ssl"
+	fndir="${ssldir}/freenas"
+	cadir="${fndir}/CA"
+	privdir="${cadir}/private"
+	certsdir="${cadir}/certs"
+	sslconf="${fndir}/openssl.conf"
+	httpdpem="${fndir}/httpd.pem"
+
+	section_header "${ssldir}"
+	ls -l ${ssldir}
+	section_footer
+
+	section_header "${fndir}"
+	ls -l ${fndir}
+	section_footer
+
+	section_header "${cadir}"
+	ls -l ${cadir}
+	section_footer
+
+	section_header "${privdir}"
+	ls -l ${privdir}
+	section_footer
+
+	section_header "${certsdir}"
+	ls -l ${certsdir}
+	section_footer
+
+	section_header "${sslconf}"
+	cat ${sslconf}
+	section_footer
+
+	section_header "${httpdpem}"
+	cat ${httpdpem}
+	section_footer
 }
 
 sysctl_opt() { echo y; }
-sysctl_help() { echo "Dump Sysctl configuration"; }
-dump_sysctl()
+sysctl_help() { echo "Dump Sysctl Configuration"; }
+sysctl_dump()
 {
 	section_header "sysctl -a"
 	sysctl -a
@@ -728,8 +764,8 @@ dump_sysctl()
 }
 
 system_opt() { echo t; }
-system_help() { echo "Dump System information"; }
-dump_system()
+system_help() { echo "Dump System Information"; }
+system_dump()
 {
 	section_header "uptime"
 	uptime
@@ -762,7 +798,7 @@ dump_system()
 
 zfs_opt() { echo z; }
 zfs_help() { echo "Dump ZFS configuration"; }
-dump_zfs()
+zfs_dump()
 {
 	section_header "ZFS Pools"
 	zpool list
@@ -835,7 +871,7 @@ is_valid_dump()
 	local name="${1}"
 	local ret=0
 
-	if ! is_function "dump_${name}"
+	if ! is_function "${name}_dump"
 	then
 		ret=1
 	fi
@@ -870,7 +906,7 @@ main()
 		fi
 
 		opt=$(eval "${d}_opt" 2>/dev/null)
-		export "$(echo dump_func_${opt})=dump_${d}"
+		export "$(echo dump_func_${opt})=${d}_dump"
 		opts="${opts}${opt}"
 	done
 
