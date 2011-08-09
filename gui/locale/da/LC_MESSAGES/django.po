@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-08-07 02:04+0200\n"
-"Last-Translator: woodplace <lasse@skovsted.net>\n"
+"PO-Revision-Date: 2011-08-08 14:12+0200\n"
+"Last-Translator: ulderen <jensgandersen@deloitte.dk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
@@ -1167,14 +1167,14 @@ msgstr ""
 
 #: services/forms.py:766
 msgid "Delete underlying file"
-msgstr ""
+msgstr "Slet underliggende fil"
 
 #: services/forms.py:788
-#, fuzzy, python-format
+#, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "Brugeren %s er ikke gyldig."
-msgstr[1] "Brugeren %s er ikke gyldig."
+msgstr[0] "Emailen %(email)s er ikke gyldig."
+msgstr[1] "Følgende emails er ikke gyldige: %(email)s"
 
 #: services/models.py:40
 msgid "Service"
@@ -1186,7 +1186,7 @@ msgstr ""
 
 #: services/models.py:44
 msgid "Enable Service"
-msgstr ""
+msgstr "Aktiver service"
 
 #: services/models.py:47 services/models.py:48 services/nav.py:5
 #: templates/menubar.html:28 templates/services/index.html:3
@@ -1256,15 +1256,16 @@ msgstr ""
 
 #: services/models.py:108
 msgid "Allow guest access"
-msgstr ""
+msgstr "Tillad gæsteadgang"
 
 #: services/models.py:110
 msgid "Only allow guest access"
-msgstr ""
+msgstr "Tillad alene gæsteadgang"
 
 #: services/models.py:113 services/models.py:848
+#, fuzzy
 msgid "File mask"
-msgstr ""
+msgstr "Filmaske"
 
 #: services/models.py:115
 msgid "Use this option to override the file creation mask (0666 by default)."
@@ -1297,13 +1298,13 @@ msgstr ""
 
 #: services/models.py:132
 msgid "Allow Empty Password"
-msgstr ""
+msgstr "Tillad tom adgangskode"
 
 #: services/models.py:135 services/models.py:694 services/models.py:728
 #: services/models.py:760 services/models.py:906 services/models.py:1162
 #: services/models.py:1225
 msgid "Auxiliary parameters"
-msgstr ""
+msgstr "Hjælpeparametre"
 
 #: services/models.py:137
 msgid "These parameters are added to [Global] section of smb.conf"
@@ -1364,7 +1365,7 @@ msgstr ""
 
 #: services/models.py:180
 msgid "Server Name"
-msgstr "Server navn"
+msgstr "Servernavn"
 
 #: services/models.py:181
 msgid ""
@@ -1424,7 +1425,7 @@ msgstr ""
 #: services/models.py:225 services/models.py:226
 #: templates/services/index.html:75
 msgid "NFS"
-msgstr ""
+msgstr "NFS"
 
 #: services/models.py:235
 msgid "Base Name"
@@ -1608,11 +1609,11 @@ msgstr ""
 #: templates/sharing/apple.html:14 templates/sharing/unix.html:14
 #: templates/sharing/windows.html:14
 msgid "Comment"
-msgstr ""
+msgstr "Kommentar"
 
 #: services/models.py:395 services/models.py:444 services/models.py:490
 msgid "You may enter a description here for your reference."
-msgstr ""
+msgstr "Du kan indtaste en beskrivelse her til din reference."
 
 #: services/models.py:398 services/models.py:647
 #: templates/services/iscsi_assoctargets.html:6
@@ -1961,19 +1962,20 @@ msgstr ""
 #: templates/services/iscsi_extents.html:7 templates/services/rsyncmod.html:7
 #: templates/sharing/windows.html:15 templates/storage/volumes.html:71
 msgid "Path"
-msgstr ""
+msgstr "Sti"
 
 #: services/models.py:838
 msgid "Allow Local User Login"
-msgstr ""
+msgstr "Tillad lokal bruger adgang"
 
 #: services/models.py:841
+#, fuzzy
 msgid "Banner"
-msgstr ""
+msgstr "Medelelse"
 
 #: services/models.py:843
 msgid "Greeting banner displayed by FTP when a connection first comes in."
-msgstr ""
+msgstr "Velkomstsmeddelelse der vises af FTP når der oprettes forbindelse."
 
 #: services/models.py:849 services/models.py:855
 msgid "Use this option to override the file creation mask (077 by default)."
@@ -1981,11 +1983,11 @@ msgstr ""
 
 #: services/models.py:858
 msgid "Enable FXP"
-msgstr ""
+msgstr "Aktiver FXP (File eXchange Protocol)"
 
 #: services/models.py:860
 msgid "Allow Transfer Resumption"
-msgstr ""
+msgstr "Tillad genoptagelse af overførsel"
 
 #: services/models.py:862
 msgid "Always Chroot"
@@ -2038,15 +2040,15 @@ msgstr ""
 
 #: services/models.py:884
 msgid "Local user upload bandwidth"
-msgstr ""
+msgstr "Lokal brugers båndbredde ved upload"
 
 #: services/models.py:885
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
-msgstr ""
+msgstr "Lokal brugers båndbredde ved upload i KB/s. Nul er lig med ubegrænset."
 
 #: services/models.py:889
 msgid "Local user download bandwidth"
-msgstr ""
+msgstr "Lokal brugers båndbredde ved download"
 
 #: services/models.py:890
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
@@ -2054,7 +2056,7 @@ msgstr ""
 
 #: services/models.py:894
 msgid "Anonymous user upload bandwidth"
-msgstr ""
+msgstr "Anonym brugers båndbredde ved upload"
 
 #: services/models.py:895
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
@@ -2062,7 +2064,7 @@ msgstr ""
 
 #: services/models.py:899
 msgid "Anonymous user download bandwidth"
-msgstr ""
+msgstr "Anonym brugers båndbredde ved download"
 
 #: services/models.py:900
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
@@ -2070,7 +2072,7 @@ msgstr ""
 
 #: services/models.py:903
 msgid "Enable SSL/TLS"
-msgstr ""
+msgstr "Aktiver SSL/TLS"
 
 #: services/models.py:908
 msgid "These parameters are added to proftpd.conf."
@@ -2079,11 +2081,12 @@ msgstr ""
 #: services/models.py:912 services/models.py:913
 #: templates/services/index.html:53
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 #: services/models.py:922
+#, fuzzy
 msgid "Directory"
-msgstr ""
+msgstr "Mappe"
 
 #: services/models.py:923
 msgid ""
@@ -2093,7 +2096,7 @@ msgstr ""
 
 #: services/models.py:926
 msgid "Allow New Files"
-msgstr ""
+msgstr "Tillad nye filer"
 
 #: services/models.py:930
 msgid ""
@@ -2103,7 +2106,7 @@ msgstr ""
 
 #: services/models.py:936
 msgid "Specifies the username which the service will run as."
-msgstr ""
+msgstr "Angiv navnet som tjeneste vil køre som."
 
 #: services/models.py:940
 msgid "umask"
@@ -2130,11 +2133,11 @@ msgstr ""
 
 #: services/models.py:961 services/models.py:1157
 msgid "TCP Port"
-msgstr ""
+msgstr "TCP port"
 
 #: services/models.py:962
 msgid "Alternate TCP port. Default is 22"
-msgstr ""
+msgstr "Alternativ TCP port. Standard er 22"
 
 #: services/models.py:965
 msgid "Login as Root with password"
@@ -2203,15 +2206,15 @@ msgstr ""
 
 #: services/models.py:1049
 msgid "Workgroup Name"
-msgstr ""
+msgstr "Navn på netværksgruppe"
 
 #: services/models.py:1050
 msgid "Workgroup Name in old format, eg EXAMPLE"
-msgstr ""
+msgstr "Navn på netværksgruppe i gammelt format, eks. EXAMPLE"
 
 #: services/models.py:1054
 msgid "Administrator Name"
-msgstr ""
+msgstr "Administratornavn"
 
 #: services/models.py:1055
 msgid "Username of Domain Administrator Account"
@@ -2480,7 +2483,7 @@ msgstr ""
 #: services/models.py:1274 services/models.py:1275
 #: templates/services/index.html:108
 msgid "S.M.A.R.T."
-msgstr ""
+msgstr "S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
@@ -2955,7 +2958,7 @@ msgstr ""
 #: storage/forms.py:238 system/forms.py:217 system/forms.py:223
 #: system/forms.py:228
 msgid "This field is required"
-msgstr ""
+msgstr "Dette felt skal udfyldes"
 
 #: storage/forms.py:243 storage/forms.py:390 storage/forms.py:489
 msgid "You already have a volume with same name"
@@ -4330,7 +4333,7 @@ msgstr ""
 
 #: templates/registration/login.html:50
 msgid "Welcome to FreeNAS 8"
-msgstr ""
+msgstr "Velkommen til FreeNAS 8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -4601,9 +4604,8 @@ msgid "Clone Snapshot"
 msgstr ""
 
 #: templates/storage/datagrid_disks.html:9
-#, fuzzy
 msgid "Edit Disk"
-msgstr "Disk"
+msgstr "Rediger disk"
 
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
@@ -4619,7 +4621,7 @@ msgstr ""
 
 #: templates/storage/disk_replacement.html:9
 msgid "Replacing disk"
-msgstr ""
+msgstr "Erstatter disk"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
@@ -4783,12 +4785,11 @@ msgstr ""
 
 #: templates/storage/volume_export.html:7
 msgid "Are you sure you want to export?"
-msgstr ""
+msgstr "Er du sikker på at du vil eksportere?"
 
 #: templates/storage/volumes.html:30 templates/storage/volumes.html.py:34
-#, fuzzy
 msgid "Create ZFS Volume"
-msgstr "ZFS Drev"
+msgstr "Opret ZFS Drev"
 
 #: templates/storage/volumes.html:64
 msgid "There are no active volumes."
@@ -4807,9 +4808,8 @@ msgid "Status"
 msgstr ""
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Destroy ZFS Volume"
-msgstr "ZFS Drev"
+msgstr "Slet ZFS Drev"
 
 #: templates/storage/volumes.html:128 templates/storage/volumes.html.py:132
 msgid "Destroy Dataset"
@@ -4826,12 +4826,11 @@ msgstr ""
 
 #: templates/storage/volumes.html:189 templates/storage/volumes.html.py:193
 msgid "View Disks"
-msgstr ""
+msgstr "Vis drev"
 
 #: templates/storage/volumes.html:198 templates/storage/volumes.html.py:202
-#, fuzzy
 msgid "Export Volume"
-msgstr "ZFS Drev"
+msgstr "Eksporter ZFS Drev"
 
 #: templates/storage/volumes.html:209
 msgid "No volumes defined"
@@ -4874,17 +4873,16 @@ msgid "Existing data will be cleared"
 msgstr ""
 
 #: templates/storage/zvols.html:9
-#, fuzzy
 msgid "Add ZFS Volume"
-msgstr "ZFS Drev"
+msgstr "Tilføj ZFS Drev"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
-msgstr ""
+msgstr "Cachen genopbygges."
 
 #: templates/system/advanced_edit.html:19
 msgid "The cache could not be rebuilt"
-msgstr ""
+msgstr "Cachen kunne ikke genopbygges"
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
@@ -4895,9 +4893,8 @@ msgid "Restore to Factory Defaults"
 msgstr ""
 
 #: templates/system/config.html:5
-#, fuzzy
 msgid "Restore Config"
-msgstr "Hemmelighed (Bekræft)"
+msgstr "Gendan Config"
 
 #: templates/system/config.html:9
 msgid "Save Config"
@@ -4921,11 +4918,11 @@ msgstr ""
 
 #: templates/system/cronjob.html:40
 msgid "No CronJobs defined"
-msgstr ""
+msgstr "Der er ikke defineret nogle CronJobs"
 
 #: templates/system/cronjob.html:46 templates/system/cronjob.html.py:48
 msgid "Add CronJob"
-msgstr ""
+msgstr "Tilføj CronJob"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
@@ -4933,15 +4930,15 @@ msgstr ""
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
-msgstr ""
+msgstr "Din testemail er sendt!"
 
 #: templates/system/email_edit.html:19
 msgid "Your test email could not be sent:"
-msgstr ""
+msgstr "Din testemail kunne ikke sendes:"
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr ""
+msgstr "Send testemail"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
@@ -4985,11 +4982,11 @@ msgstr ""
 
 #: templates/system/rsync.html:38
 msgid "No rsyncs defined"
-msgstr ""
+msgstr "Der er ikke defineret nogle rsyncs"
 
 #: templates/system/rsync.html:44 templates/system/rsync.html.py:46
 msgid "Add Rsync"
-msgstr ""
+msgstr "Tilføj Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -5013,19 +5010,19 @@ msgstr ""
 
 #: templates/system/system_info.html:12
 msgid "Platform"
-msgstr ""
+msgstr "Platform"
 
 #: templates/system/system_info.html:16
 msgid "Memory"
-msgstr ""
+msgstr "Hukommelse"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
-msgstr ""
+msgstr "System Tid"
 
 #: templates/system/system_info.html:24
 msgid "Uptime"
-msgstr ""
+msgstr "Oppetid"
 
 #: templates/system/system_info.html:28
 msgid "Load Average"
@@ -5038,7 +5035,7 @@ msgstr ""
 #: templates/system/wizard.html:3
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr ""
+msgstr "Trin %(step)s af %(step_count)s"
 
 msgid "%s successfully update."
 msgstr "%s succesfuldt opdateret."

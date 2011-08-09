@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-07-05 20:33+0200\n"
-"Last-Translator: Christian <christian@junker.com>\n"
+"PO-Revision-Date: 2011-08-08 13:00+0200\n"
+"Last-Translator: ulderen <jensgandersen@deloitte.dk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
@@ -28,7 +28,7 @@ msgstr "Indstillinger"
 
 #: media/lib/js/freeadmin.js:137
 msgid "System Information"
-msgstr "System information"
+msgstr "Systeminformation"
 
 #: media/lib/js/freeadmin.js:177
 msgid "Network Settings"
@@ -68,7 +68,7 @@ msgstr "Disk erstatning"
 
 #: media/lib/js/freeadmin.js:448
 msgid "Detach"
-msgstr "Frakobl"
+msgstr "Frakobel"
 
 #: media/lib/js/freeadmin.js:449
 msgid "Disk Detach"
