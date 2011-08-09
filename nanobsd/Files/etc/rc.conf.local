@@ -80,11 +80,11 @@ _interface_config()
 			eval count_v6=\${counter_${interface}_v6:-0}
 			if [ -n "${v4addr}" ]; then
 				echo "ifconfig_${interface}_alias${count_v4}=\"${v4addr}/${v4netmask}\""
-				eval "counter_${interface_v4}=\$((count_v4+1))"
+				eval "counter_${interface}_v4=\$((count_v4+1))"
 			fi
 			if [ -n "${v6addr}" ]; then
 				echo "ipv6_ifconfig_${interface}_alias${count_v6}=\"${v6addr}/${v6netmask}\""
-				eval "counter_${interface_v6}=\$((count_v6+1))"
+				eval "counter_${interface}_v6=\$((count_v6+1))"
 			fi
 		done
 
