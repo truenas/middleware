@@ -298,6 +298,8 @@ tr.ix, td.ix{
 }
  th{
     color: #50575F;
+    background:#f5f5f5;
+    padding:6px;
     font-weight:bold;
     margin-right:8px;
     vertical-align:top;
