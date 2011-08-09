@@ -2,13 +2,12 @@
 <button id="periodicSnapBtn" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/create_periodic_snapshot.png">
         <br />
+        <p>Add Periodic Snapshot</p>
+
     <script type="dojo/method" event="onClick" args="evt">
         addObject('{% trans "Periodic Snapshots"|force_escape %}', '{% url storage_periodicsnap %}', [this,]);
     </script>
 </button>
-<div dojoType="dijit.Tooltip" connectId="periodicSnapBtn" position="above">
-    <strong>{% trans "Create Periodic Snapshot" %}</strong>
-</div>
 <h5>
     {% if task_list %}
     {% trans "Periodic Snapshot Schedule" %}: <strong>{{ task_list|length }}</strong>
@@ -145,7 +144,7 @@
 	</tr>
 	{% empty %}
 	<tr>
-            <td colspan="7">{% trans "No periodic snapshots scheduled" %}</td>
+            <td colspan="7">{% trans "There are no periodic snapshots scheduled." %}</td>
 	</tr>
 	{% endfor %}
     </tbody>

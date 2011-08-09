@@ -2,7 +2,15 @@
 .claro .dijitButtonText {
     padding: 4px;
     font-weight:bold;
+    color:#666;
+}
+.claro .dijitButtonText p:hover{
     color:#333;
+}
+.claro .dijitButtonText p{
+    padding-top: 6px;
+    padding-bottom: 2px !important;
+    font-size:7pt;
 }
 /* system->settings->config */
 .configbtn {
