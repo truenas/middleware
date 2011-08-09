@@ -217,7 +217,6 @@ float:left;
 text-align:left;
 }
 .label {
-    text-transform:uppercase;
     font-weight:bold;
     color:#50575F;
     line-height:24px;
@@ -281,7 +280,6 @@ tr.ix, td.ix{
     color: #50575F;
     font-weight:bold;
     margin-right:8px;
-    text-transform:uppercase;
     vertical-align:top;
     line-height:24px;
 }
