@@ -32,7 +32,7 @@
 
 : ${FREENAS_DEBUG_FILE:="/var/tmp/freenas-debug.txt"}
 
-DUMPS="active_directory geom hardware ldap network ssl sysctl zfs"
+DUMPS="active_directory geom hardware ldap network ssl sysctl system zfs"
 
 
 syslog_debug_on()
@@ -460,6 +460,22 @@ dump_hardware()
 	section_header "devinfo -rv"
 	devinfo -rv
 	section_footer
+
+	section_header "usbconfig list"
+	usbconfig list
+	section_footer
+
+	section_header "dmidecode"
+	dmidecode
+	section_footer
+
+	section_header "camcontrol devlist"
+	camcontrol devlist
+	section_footer
+
+	section_header "atacontrol list"
+	camcontrol devlist
+	section_footer
 }
 
 ldap_opt() { echo l; }
@@ -683,6 +699,14 @@ dump_network()
 	section_header "Default Route"
 	route -n show default|grep gateway|awk '{ print $2 }'
 	section_footer
+
+	section_header "netstat -nr"
+	netstat -nr
+	section_footer
+
+	section_header "arp -a"
+	arp -a
+	section_footer
 }
 
 dump_ssl()
@@ -696,6 +720,39 @@ dump_sysctl()
 {
 	section_header "sysctl -a"
 	sysctl -a
+	section_footer
+}
+
+system_opt() { echo t; }
+system_help() { echo "Dump System information"; }
+dump_system()
+{
+	section_header "uptime"
+	uptime
+	section_footer
+
+	section_header "ps -axw"
+	ps -axw
+	section_footer
+
+	section_header "mount"
+	mount
+	section_footer
+
+	section_header "df -h"
+	df -h
+	section_footer
+
+	section_header "swapinfo -h"
+	swapinfo -h
+	section_footer
+
+	section_header "kldstat"
+	kldstat
+	section_footer
+
+	section_header "dmesg"
+	dmesg
 	section_footer
 }
 
