@@ -47,12 +47,10 @@ class InterfacesForm(ModelForm):
         super(InterfacesForm, self).__init__(*args, **kwargs)
         self.fields['int_interface'].choices = choices.NICChoices()
 
-    def save(self):
+    def done(self):
         # TODO: new IP address should be added in a side-by-side manner
         # or the interface wouldn't appear once IP was changed.
-        retval = super(InterfacesForm, self).save()
         notifier().start("network")
-        return retval
 
 class GlobalConfigurationForm(ModelForm):
     class Meta:

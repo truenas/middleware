@@ -249,6 +249,8 @@ def generic_model_add(request, app, model, mf=None):
                 mf.save()
                 for name, fs in formsets.items():
                     fs.save()
+                if hasattr(mf, "done") and callable(mf.done):
+                    mf.done()
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully added.") % m._meta.verbose_name}))
             except ServiceFailed, e:
                 return HttpResponse(simplejson.dumps({"error": True, "message": _("The service failed to restart.") % m._meta.verbose_name}))
@@ -444,6 +446,8 @@ def generic_model_edit(request, app, model, oid, mf=None):
                 mf.save()
                 for name, fs in formsets.items():
                     fs.save()
+                if hasattr(mf, "done") and callable(mf.done):
+                    mf.done()
                 if request.GET.has_key("iframe"):
                     return HttpResponse("<html><body><textarea>"+simplejson.dumps({"error": False, "message": _("%s successfully updated.") % m._meta.verbose_name})+"</textarea></boby></html>")
                 else:
