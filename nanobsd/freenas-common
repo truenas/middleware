@@ -50,8 +50,8 @@ esac
 if [ -n "${FREENAS_ARCH}" ]; then
     NANO_ARCH=${FREENAS_ARCH}
 fi
-REVISION="8.0.1-BETA4"
-NANO_NAME="FreeNAS-${REVISION}-${NANO_ARCH}"
+: ${REVISION=`svnversion ${NANO_CFG_BASE}`}
+NANO_NAME="FreeNAS-8r${REVISION}-${NANO_ARCH}"
 NANO_IMGNAME="${NANO_NAME}.full"
 NANO_KERNEL=${NANO_CFG_BASE}/FREENAS.${NANO_ARCH}
 : ${NANO_OBJ=/tmp/${LOGNAME}/obj.freenas.${NANO_ARCH}}
@@ -59,7 +59,7 @@ NANO_LABEL=FreeNAS
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 NANO_RAM_TMPVARSIZE=$((160*1024))
 
-DEBUG="0"
+DEBUG="1"
 
 NANO_IMAGES=2
 FlashDevice generic 2g
@@ -92,7 +92,8 @@ add_port security/libgcrypt
 add_port security/libgpg-error
 add_port databases/db46
 #+net/nss_ldap
-add_port net/openldap24-client
+add_port security/cyrus-sasl2
+add_port net/openldap24-sasl-client
 #-net/nss_ldap
 add_port net/nss_ldap
 add_port net/rsync 
@@ -193,7 +194,7 @@ add_port converters/base64
 add_port emulators/mtools -DWITHOUT_X11
 add_port sysutils/arcconf
 add_port sysutils/tw_cli
-add_port net/py-ldap2
+add_port net/py-ldap2 -DWITH_SASL
 add_port sysutils/ataidle
 add_port devel/xorg-macros
 add_port sysutils/gnome_subr
@@ -277,6 +278,7 @@ freenas
 __EOF__
 	CR "(cd ${dstCR}; python manage.py compilemessages)"
 	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
+	CR "ln -sf /etc/local_settings.py ${dstCR}/local_settings.py"
 	CR "chown -R www:www ${dstCR} data"
     else
         pprint 2 "GUI OMITTED from image"
