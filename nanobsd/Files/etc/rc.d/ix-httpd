@@ -8,18 +8,6 @@
 
 . /etc/rc.freenas
 
-mount_w()
-{
-	mount -uw /
-	return $?
-}
-
-mount_r()
-{
-	mount -ur /
-	return $?
-}
-
 generate_httpd_conf()
 {
 	local res=1
@@ -75,49 +63,9 @@ generate_httpd_conf()
 	${HTTPD} -t -f "${tmp}" >/dev/null 2>&1
 	if [ "$?" = "0" ]
 	then
-		mount_w
 		mv "${tmp}" "${HTTPDCONF}"
 		res=0
-		mount_r
 	fi
-
-	return ${res}
-}
-
-wait_for_http()
-{
-	local res=1
-	local timeout=180
-	local pidfile="/var/run/lighttpd.pid"
-
-	local start=$(date '+%S')
-	while /usr/bin/true
-	do
-		if [ -s "${pidfile}" ]
-		then
-			local pid=$(cat "${pidfile}")
-			if ps -ax|awk '{ print $1 }'|egrep "^${pid}" >/dev/null 2>&1
-			then
-				res=0
-				break
-			fi
-		fi
-
-		if ps -ax|awk '{print $5 }'|egrep '/usr/local/sbin/lighttpd' 2>/dev/null
-		then
-			res=0
-			break
-		fi
-		
-	
-		local now=$(date '+%S')
-		local diff=$(echo "${now} - ${start}"|bc)
-		if [ "${diff}" -ge "${timeout}" ]
-		then
-			res=1
-			break
-		fi
-	done
 
 	return ${res}
 }
@@ -131,7 +79,7 @@ test_httpd_config()
 {
 	local ssl_enable="${1}"
 	local proto="http"
-	local ntries=2
+	local ntries=5
 	local res=1
 	local try=0
 
@@ -142,33 +90,27 @@ test_httpd_config()
 	
 	local host=$(get_host_ip)
 
-	${HTTPDSCRIPT} onestop >/dev/null 2>&1
-	${HTTPDSCRIPT} onestart >/dev/null 2>&1
+	${HTTPDSCRIPT} onerestart >/dev/null 2>&1
 	if [ "$?" = "0" ]
 	then
 		echo -n "Waiting for ${proto}..."
+		export HTTP_TIMEOUT=1
+		export FTP_TIMEOUT=1
 		while [ "${try}" -lt "${ntries}" ]
 		do
-			if wait_for_http
+			if fetch -q -o /dev/null "${proto}://${host}" > /dev/null 2>&1
 			then
 				res=0
 				break		
 			fi
-			
+
 			try=$((${try} + 1))
 		done
-		echo "Done."
-
-		if [ "${res}" = "1" ]
-		then
-			return 1
+		if [ "${res}" = 0 ]; then
+			echo "Done."
+		else
+			echo "Failed."
 		fi
-
-		sleep 5
-		fetch -q -o /var/tmp/.fetch.txt "${proto}://${host}"
-		res="$?"
-
-		rm -f /var/tmp/.fetch.txt
 	fi
 
 	return ${res}
