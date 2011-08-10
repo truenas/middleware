@@ -8,8 +8,4 @@
     </div>
     <div dojoType="dijit.layout.ContentPane" title="{% trans "SSL" %}" doLayout="false" {% if focus_form == "ssl" %} selected="true"{% endif %} href="{% url freeadmin_model_edit app="system", model="SSL",oid=ssl%}?inline=true" class="objrefresh" refreshOnShow="true">
     </div>
-    <div dojoType="dijit.layout.ContentPane" title="{% trans "Firmware Update" %}" doLayout="false" {% if focus_form == "firmware" %} selected="true"{% endif %} href="{% url system_firmwizard %}" id=" firmwareup" class="objrefresh" refreshOnShow="true">
-    </div>
-    <div dojoType="dijit.layout.ContentPane" title="{% trans "Apply Service Pack" %}" doLayout="false" href="{% url system_spwizard %}" id="applysp" class="objrefresh" refreshOnShow="true">
-    </div>
 </div>
