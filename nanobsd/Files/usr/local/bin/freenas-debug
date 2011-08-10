@@ -37,23 +37,27 @@ DUMPS="active_directory cache geom hardware ldap network ssl sysctl system zfs"
 
 syslog_debug_on()
 {
-	if [ ! -f /etc/syslog.conf.bak ]
-	then
-		mv /etc/syslog.conf /etc/syslog.conf.bak
-		echo -e '*.=debug\t/var/log/debug.log' > /etc/syslog.conf
-		cat /etc/syslog.conf.bak >> /etc/syslog.conf
+	echo -e '*.=debug\t/var/log/debug.log' > /tmp/syslog.conf
+	cat /etc/syslog.conf >> /tmp/syslog.conf
+	
+	mount -uw /
+	cp /etc/syslog.conf /etc/syslog.conf.bak
+	mv /tmp/syslog.conf /etc/syslog.conf
+	mount -ur /
 
-		/etc/rc.d/syslogd reload >/dev/null 2>&1
-	fi
+	/etc/rc.d/syslogd onerestart >/dev/null 2>&1
+	sleep 5
 }
 
 syslog_debug_off()
 {
 	if [ -f /etc/syslog.conf.bak ]
 	then
+		mount -uw /
 		mv /etc/syslog.conf.bak /etc/syslog.conf
+		mount -ur /
 
-		/etc/rc.d/syslogd reload >/dev/null 2>&1
+		/etc/rc.d/syslogd onerestart >/dev/null 2>&1
 	fi
 }
 
@@ -885,8 +889,31 @@ is_valid_dump()
 	return ${ret}
 }
 
+send_email()
+{
+	local email="${1}"
+
+	if [ -n "${email}" ]
+	then
+		mfile=/var/tmp/.mail.txt
+
+		cat<<-EOF>"${mfile}"
+		To: ${email}
+		Subject: FreeNAS Debug
+
+EOF
+		cat "${FREENAS_DEBUG_FILE}" >> "${mfile}"
+		echo -e "\n\n" >> "${mfile}"
+
+		sendmail -t < "${mfile}"
+		rm "${mfile}"
+	fi
+}
+
 main()
 {
+	email=""
+
 	if [ "$#" = "0" ]
 	then
 		usage
@@ -907,18 +934,23 @@ main()
 	done
 
 	: > ${FREENAS_DEBUG_FILE}
-
-	freenas_header
-	while getopts ":${opts}" OPTION
+	freenas_header 2>&1|tee -a "${FREENAS_DEBUG_FILE}"
+	while getopts ":e:${opts}" OPTION
 	do
 		local var=\$$(echo "dump_func_${OPTION}")
 		local func=$(eval "echo ${var}")
 
+		if [ "${OPTION}" = "e" ]
+		then
+			email="${OPTARG}"
+		fi
+
 		if is_function "${func}"
 		then
-			eval "${func}" >> "${FREENAS_DEBUG_FILE}" 2>&1
+			eval "${func}" 2>&1|tee -a "${FREENAS_DEBUG_FILE}"
 		fi
 	done
+	send_email "${email}"
 }
 
 main $*
