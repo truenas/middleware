@@ -40,24 +40,19 @@ syslog_debug_on()
 	echo -e '*.=debug\t/var/log/debug.log' > /tmp/syslog.conf
 	cat /etc/syslog.conf >> /tmp/syslog.conf
 	
-	mount -uw /
 	cp /etc/syslog.conf /etc/syslog.conf.bak
 	mv /tmp/syslog.conf /etc/syslog.conf
-	mount -ur /
 
-	/etc/rc.d/syslogd onerestart >/dev/null 2>&1
-	sleep 5
+	/etc/rc.d/syslogd reload >/dev/null 2>&1
 }
 
 syslog_debug_off()
 {
 	if [ -f /etc/syslog.conf.bak ]
 	then
-		mount -uw /
 		mv /etc/syslog.conf.bak /etc/syslog.conf
-		mount -ur /
 
-		/etc/rc.d/syslogd onerestart >/dev/null 2>&1
+		/etc/rc.d/syslogd reload >/dev/null 2>&1
 	fi
 }
 
