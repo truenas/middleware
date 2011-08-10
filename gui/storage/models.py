@@ -67,33 +67,22 @@ class Volume(Model):
         """
         import os
         from sharing.models import CIFS_Share, AFP_Share, NFS_Share
-        reload_cifs = False
-        reload_afp = False
-        reload_nfs = False
+
+        # TODO: This is ugly.
+        svcs    = ('cifs', 'afp', 'nfs', 'iscsitarget')
+        reloads = (False, False, False,  False)
+
         for mp in self.mountpoint_set.all():
-            # We need extra care to do delete similar paths, e.g.
-            #   /mnt/tank
-            #   /mnt/tankabc
-            for cifs in CIFS_Share.objects.filter(cifs_path__startswith=os.path.abspath(mp.mp_path)):
-                if Volume.__path_belong_to(cifs.cifs_path, mp.mp_path):
-                    cifs.delete()
-                    reload_cifs = True
-            for afp in AFP_Share.objects.filter(afp_path__startswith=os.path.abspath(mp.mp_path)):
-                if Volume.__path_belong_to(afp.afp_path, mp.mp_path):
-                    afp.delete()
-                    reload_afp = True
-            for nfs in NFS_Share.objects.filter(nfs_path__startswith=os.path.abspath(mp.mp_path)):
-                if Volume.__path_belong_to(nfs.nfs_path, mp.mp_path):
-                    nfs.delete()
-                    reload_nfs = True
-        if reload_cifs:
-            notifier().restart("cifs")
-        if reload_afp:
-            notifier().restart("afp")
-        if reload_nfs:
-            notifier().restart("nfs")
+            reloads = map(sum, zip(reloads, mp.delete_attachments()))
+            mp.delete(reload=False)
+
+        for (svc, dirty) in zip(svcs, reloads):
+            if dirty:
+                notifier().restart(svc)
+
         if destroy:
             notifier().destroy("volume", self)
+
         # The framework would cascade delete all database items
         # referencing this volume.
         super(Volume, self).delete()
@@ -213,6 +202,62 @@ class MountPoint(Model):
     mp_ischild = models.BooleanField(
             default=False,
             )
+    def is_my_path(self, path):
+        import os
+        if path == self.mp_path:
+            return True
+        elif path.find(self.mp_path) >= 0:
+            # TODO: This is wrong, need to be fixed by revealing
+            # the underlying file system ids.
+            rep = path.replace(self.mp_path, self.mp_path+'/')
+            if os.path.abspath(rep) == os.path.abspath(path):
+                return True
+        return False
+    def delete_attachments(self):
+        """
+        Some places reference a path which will not cascade delete
+        We need to manually find all paths within this volume mount point
+        """
+        import os
+        from sharing.models import CIFS_Share, AFP_Share, NFS_Share
+        from services.models import iSCSITargetExtent
+
+        reload_cifs = False
+        reload_afp = False
+        reload_nfs = False
+        reload_iscsi = False
+
+        mypath = os.path.abspath(self.mp_path)
+
+        # Delete attached paths if they are under our tree.
+        # and report if some action needs to be done.
+        for cifs in CIFS_Share.objects.filter(cifs_path__startswith=mypath):
+            if self.is_my_path(cifs.cifs_path):
+                cifs.delete()
+                reload_cifs = True
+        for afp in AFP_Share.objects.filter(afp_path__startswith=mypath):
+            if self.is_my_path(afp.afp_path):
+                afp.delete()
+                reload_afp = True
+        for nfs in NFS_Share.objects.filter(nfs_path__startswith=mypath):
+            if self.is_my_path(nfs.nfs_path):
+                nfs.delete()
+                reload_nfs = True
+        for iscsiextent in iSCSITargetExtent.objects.filter(iscsi_target_extent_path__startswith=mypath):
+            if self.is_my_path(iscsiextent.iscsi_target_extent_path):
+                iscsiextent.delete()
+                reload_iscsi = True
+        return (reload_cifs, reload_afp, reload_nfs, reload_iscsi)
+    def delete(self, reload=True):
+        reloads = self.delete_attachments()
+
+        if reload:
+            svcs = ('cifs', 'afp', 'nfs', 'iscsitarget')
+            for (svc, dirty) in zip(svcs, reloads):
+                if dirty:
+                    notifier().restart(svc)
+
+        super(MountPoint, self).delete()
     def __unicode__(self):
         return self.mp_path
     def _get__vfs(self):
