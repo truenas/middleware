@@ -741,6 +741,9 @@ class iSCSITargetPortalForm(ModelForm):
         if tag > higher:
             raise forms.ValidationError(_("Your Portal Group ID cannot be higher than %d") % higher)
         return tag
+    def clean_iscsi_target_portal_listen(self):
+        val = self.cleaned_data.get("iscsi_target_portal_listen")
+        return val.strip()
     def save(self):
         super(iSCSITargetPortalForm, self).save()
         started = notifier().reload("iscsitarget")
