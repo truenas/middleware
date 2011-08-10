@@ -887,18 +887,35 @@ is_valid_dump()
 send_email()
 {
 	local email="${1}"
+	local body="${2}"
 
 	if [ -n "${email}" ]
 	then
 		mfile=/var/tmp/.mail.txt
+		afile=$(basename ${FREENAS_DEBUG_FILE})
+		boundary="@@@_beer_@@@"
 
 		cat<<-EOF>"${mfile}"
+		Content-Transfer-Encoding: 7bit
+		Content-Type: multipart/mixed; boundary="${boundary}"
+		MIME-Version: 1.0
 		To: ${email}
+		Date: $(date)
 		Subject: FreeNAS Debug
 
+		--${boundary}
+		Content-Type: text/plain
+		Content-Disposition: inline
+
+		${body}
+
+		--${boundary}
+		Content-Type: text/plain
+		Content-Disposition: attachment; filename=${afile};
+		Content-Description: output of $(basename $0)
 EOF
 		cat "${FREENAS_DEBUG_FILE}" >> "${mfile}"
-		echo -e "\n\n" >> "${mfile}"
+		echo "--${boundary}" >> "${mfile}"
 
 		sendmail -t < "${mfile}"
 		rm "${mfile}"
@@ -907,7 +924,9 @@ EOF
 
 main()
 {
-	email=""
+	local email=""
+	local email_opt="e"
+	local cmd="$0 $*"
 
 	if [ "$#" = "0" ]
 	then
@@ -930,12 +949,12 @@ main()
 
 	: > ${FREENAS_DEBUG_FILE}
 	freenas_header 2>&1|tee -a "${FREENAS_DEBUG_FILE}"
-	while getopts ":e:${opts}" OPTION
+	while getopts ":${email_opt}:${opts}" OPTION
 	do
 		local var=\$$(echo "dump_func_${OPTION}")
 		local func=$(eval "echo ${var}")
 
-		if [ "${OPTION}" = "e" ]
+		if [ "${OPTION}" = "${email_opt}" ]
 		then
 			email="${OPTARG}"
 		fi
@@ -945,7 +964,7 @@ main()
 			eval "${func}" 2>&1|tee -a "${FREENAS_DEBUG_FILE}"
 		fi
 	done
-	send_email "${email}"
+	send_email "${email}" "${cmd}"
 }
 
 main $*
