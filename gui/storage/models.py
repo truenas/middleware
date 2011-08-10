@@ -50,9 +50,38 @@ class Volume(Model):
             )
     class Meta:
         verbose_name = _("Volume")
+    @staticmethod
+    def __path_belong_to(share, mp):
+        import os
+        if share == mp:
+            return True
+        elif share.find(mp) > 0:
+            rep = share.replace(mp, mp+'/')
+            if os.path.abspath(rep) == os.path.abspath(share):
+                return True
+        return False
     def delete(self, destroy=True):
         if destroy:
             notifier().destroy("volume", self)
+        """
+        Some places reference a path which will not cascade delete
+        We need to manually find all paths within this volume mount point
+        """
+        import os
+        from sharing.models import CIFS_Share, AFP_Share, NFS_Share
+        for mp in self.mountpoint_set.all():
+            # We need extra care to do delete similar paths, e.g.
+            #   /mnt/tank
+            #   /mnt/tankabc
+            for cifs in CIFS_Share.objects.filter(cifs_path__startswith=os.path.abspath(mp.mp_path)):
+                if Volume.__path_belong_to(cifs.cifs_path, mp.mp_path):
+                    cifs.delete()
+            for afp in AFP_Share.objects.filter(afp_path__startswith=os.path.abspath(mp.mp_path)):
+                if Volume.__path_belong_to(afp.afp_path, mp.mp_path):
+                    afp.delete()
+            for nfs in NFS_Share.objects.filter(nfs_path__startswith=os.path.abspath(mp.mp_path)):
+                if Volume.__path_belong_to(nfs.nfs_path, mp.mp_path):
+                    nfs.delete()
         # The framework would cascade delete all database items
         # referencing this volume.
         super(Volume, self).delete()
