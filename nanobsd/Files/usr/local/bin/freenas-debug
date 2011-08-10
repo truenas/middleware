@@ -37,13 +37,14 @@ DUMPS="active_directory cache geom hardware ldap network ssl sysctl system zfs"
 
 syslog_debug_on()
 {
-	echo -e '*.=debug\t/var/log/debug.log' > /tmp/syslog.conf
-	cat /etc/syslog.conf >> /tmp/syslog.conf
-	
-	cp /etc/syslog.conf /etc/syslog.conf.bak
-	mv /tmp/syslog.conf /etc/syslog.conf
+	if [ ! -f /etc/syslog.conf.bak ]
+	then
+		mv /etc/syslog.conf /etc/syslog.conf.bak
+		echo -e '*.=debug\t/var/log/debug.log' > /etc/syslog.conf
+		cat /etc/syslog.conf.bak >> /etc/syslog.conf
 
-	/etc/rc.d/syslogd reload >/dev/null 2>&1
+		/etc/rc.d/syslogd reload >/dev/null 2>&1
+	fi
 }
 
 syslog_debug_off()
