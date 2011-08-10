@@ -607,8 +607,12 @@ class notifier:
     def __prepare_zfs_vdev(self, disks, swapsize, force4khack):
         vdevs = ['']
         gnop_devs = []
-        test4k = not force4khack
-        want4khack = force4khack
+        if force4khack == None:
+            test4k = False
+            want4khack = False
+        else:
+            test4k = not force4khack
+            want4khack = force4khack
         first = True
         for disk in disks:
             devname = self.identifier_to_device(disk.disk_identifier)
@@ -712,7 +716,7 @@ class notifier:
             z_vdev += " " + vgrp_type
 
         # Prepare disks nominated in this group
-        vdevs = self.__prepare_zfs_vdev(group.disk_set.all(), swapsize, True)[0]
+        vdevs = self.__prepare_zfs_vdev(group.disk_set.all(), swapsize, None)[0]
         z_vdev += " ".join(vdevs)
 
         # Finally, attach new groups to the zpool.
