@@ -77,9 +77,6 @@ def system_info(request):
     sysinfo = _system_info()
     return render(request, 'system/system_info.html', sysinfo)
 
-def config(request):
-    return render(request, 'system/config.html')
-
 def config_restore(request):
     if request.method == "POST":
         notifier().config_restore()
