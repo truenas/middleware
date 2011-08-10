@@ -77,7 +77,9 @@ generate_istgt_config()
 		echo "[PortalGroup${iscsi_target_portal_tag}]"
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT iscsi_target_portal_listen FROM services_iscsitargetportal WHERE iscsi_target_portal_tag=${iscsi_target_portal_tag}" | \
 		while read iscsi_target_portal_listen; do
-			echo "  Portal DA1 ${iscsi_target_portal_listen}"
+			if [ ! -z "${iscsi_target_portal_listen}" ]; then
+				echo "  Portal DA1 ${iscsi_target_portal_listen}"
+			fi
 		done
 	done
 	echo
