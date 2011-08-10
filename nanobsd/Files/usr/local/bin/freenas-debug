@@ -913,10 +913,11 @@ send_email()
 		Content-Type: text/plain
 		Content-Disposition: attachment; filename=${afile};
 		Content-Description: output of $(basename $0)
-EOF
-		cat "${FREENAS_DEBUG_FILE}" >> "${mfile}"
-		echo "--${boundary}" >> "${mfile}"
 
+		$(cat ${FREENAS_DEBUG_FILE})
+
+		--${boundary}--
+EOF
 		sendmail -t < "${mfile}"
 		rm "${mfile}"
 	fi
