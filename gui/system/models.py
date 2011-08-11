@@ -54,7 +54,7 @@ class Settings(Model):
             verbose_name = _("Bind address")
             )
     stg_guiport = models.IntegerField(
-            default='',
+            default=None,
             blank=True,
             null=True,
             validators=[MinValueValidator(1), MaxValueValidator(65535)],
