@@ -1293,10 +1293,7 @@ class notifier:
             if p1.returncode == 0:
                 return True
         elif fstype == 'NTFS':
-            p1 = Popen(["/usr/local/bin/ntfsfix", dev], stdin=PIPE, stdout=PIPE)
-            p1.wait()
-            if p1.returncode == 0:
-                return True
+            return True
         elif fstype == 'MSDOSFS':
             p1 = Popen(["/sbin/fsck_msdosfs", "-p", dev], stdin=PIPE, stdout=PIPE)
             p1.wait()

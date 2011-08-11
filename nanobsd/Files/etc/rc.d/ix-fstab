@@ -37,7 +37,7 @@ generate_fstab_real()
 	while read fstype volumename newmp mpoptions; do
 		case "${fstype}" in
 			UFS) device="/dev/ufs/${volumename}"; fs="ufs" ;;
-			NTFS) device="/dev/ntfs/${volumename}"; fs="ntfs-3g" ;;
+			NTFS) device="/dev/ntfs/${volumename}"; fs="ntfs" ;;
 			EXT2FS) device="/dev/ext2fs/${volumename}"; fs="ext2fs" ;;
 			MSDOSFS) vname=$(echo ${volumename}|tr '[:lower:]' '[:upper:]')
 				device="/dev/msdosfs/${vname}"; fs="msdosfs" ;;
