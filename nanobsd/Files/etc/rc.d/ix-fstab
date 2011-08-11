@@ -51,7 +51,7 @@ generate_fstab_real()
 			fi
 
 			mkdir -p ${mountpoint}
-			echo "${device}	${mountpoint}	${fs}	${mpoptions}	2	2"
+			echo "${device}	${mountpoint}	${fs}	${mpoptions},late	2	2"
 		fi
 	done
 }
