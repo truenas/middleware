@@ -35,6 +35,7 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common import humanize_size
+from freenasUI.storage.evilhack import evil_zvol_destroy
 from freeadmin.models import Model
 
 class Volume(Model):
@@ -67,6 +68,7 @@ class Volume(Model):
         """
         import os
         from sharing.models import CIFS_Share, AFP_Share, NFS_Share
+        from services.models import iSCSITargetExtent
 
         # TODO: This is ugly.
         svcs    = ('cifs', 'afp', 'nfs', 'iscsitarget')
@@ -75,6 +77,10 @@ class Volume(Model):
         for mp in self.mountpoint_set.all():
             reloads = map(sum, zip(reloads, mp.delete_attachments()))
             mp.delete(reload=False)
+
+        zvols = notifier().list_zfs_vols(self.vol_name)
+        for zvol in zvols:
+            reloads = map(sum, zip(reloads, evil_zvol_destroy(zvol, iSCSITargetExtent, Disk, WearingSafetyBelt=False)))
 
         for (svc, dirty) in zip(svcs, reloads):
             if dirty:

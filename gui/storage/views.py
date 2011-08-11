@@ -38,6 +38,7 @@ from dojango.util import to_dojo_data
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms
 from freenasUI.storage import models
+from freenasUI.storage.evilhack import evil_zvol_destroy
 from freenasUI.middleware.notifier import notifier
 from middleware.exceptions import MiddlewareError
 
@@ -391,15 +392,14 @@ def zvol_create(request):
 def zvol_delete(request, name):
 
     if request.method == 'POST':
-        extents = iSCSITargetExtent.objects.filter(iscsi_target_extent_path='/dev/zvol/'+name)
-        if extents.count() > 0:
+        try:
+            retval = evil_zvol_destroy(name, iSCSITargetExtent, models.Disk)
+        except ValueError:
             return HttpResponse(simplejson.dumps({"error": True, "message": _("This is in use by the iscsi target, please remove it there first.")}), mimetype="application/json")
+        if retval == '':
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("ZFS Volume successfully destroyed.")}), mimetype="application/json")
         else:
-            retval = notifier().destroy_zfs_vol(name)
-            if retval == '':
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("ZFS Volume successfully destroyed.")}), mimetype="application/json")
-            else:
-                return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
+            return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
     else:
         return render(request, 'storage/zvol_confirm_delete.html', {
             'name': name,
