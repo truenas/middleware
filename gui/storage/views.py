@@ -104,7 +104,7 @@ def snapshots_data(request):
                 rev = True
             else:
                 rev = False
-            if item.has_key(field):
+            if zfsnap_list[0].has_key(field):
                 zfsnap_list.sort(key=lambda item:item[field], reverse=rev)
 
     data = []
