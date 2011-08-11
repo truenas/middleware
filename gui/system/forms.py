@@ -150,6 +150,18 @@ class SettingsForm(ModelForm):
         self.instance._original_stg_syslogserver = self.instance.stg_syslogserver
         self.fields['stg_language'].choices=settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
+    def clean_stg_guiport(self):
+        val = self.cleaned_data.get("stg_guiport")
+        if val == '':
+            return val
+        try:
+            val = int(val)
+            if val < 1 or val > 65535:
+                raise forms.ValidationError(_("You must specify a number between 1 and 65535, inclusive."))
+        except ValueError:
+            raise forms.ValidationError(_("Number is required."))
+        print val
+        return val
     def save(self):
         super(SettingsForm, self).save()
         if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol or \
