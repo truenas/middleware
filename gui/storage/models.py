@@ -53,16 +53,6 @@ class Volume(Model):
         verbose_name = _("Volume")
     class FreeAdmin:
         delete_form = "VolumeDelete"
-    @staticmethod
-    def __path_belong_to(share, mp):
-        import os
-        if share == mp:
-            return True
-        elif share.find(mp) > 0:
-            rep = share.replace(mp, mp+'/')
-            if os.path.abspath(rep) == os.path.abspath(share):
-                return True
-        return False
     def delete(self, destroy=True, cascade=True):
         """
         Some places reference a path which will not cascade delete
