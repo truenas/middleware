@@ -9,7 +9,7 @@
           {% for i in ifaces %}
           <tr class="{% cycle 'odd' 'even' %}">
               <td>{{ i.name }}</td>
-              <td>{{ i.inet }}</td>
+              <td>{{ i.inet }}/{{ i.netmask }}</td>
           </tr>
           {% empty %}
           <tr>

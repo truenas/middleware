@@ -97,17 +97,30 @@ def summary(request):
 
         p1 = Popen(["ifconfig", iface, "inet"], stdin=PIPE, stdout=PIPE)
         p2 = Popen(["grep", "inet "], stdin=p1.stdout, stdout=PIPE)
-        p1.wait()
-        p2.wait()
+        output = p2.communicate()[0]
         if p2.returncode == 0:
-            output = p2.communicate()[0]
-            output = output.strip('\t').strip().split(' ')
-            ifaces.append({
-                'name': iface,
-                'inet': output[1],
-                'netmask': output[3],
-                'broadcast': output[5],
-                })
+            for line in output.split('\n'):
+                if not line:
+                    continue
+                line = line.strip('\t').strip().split(' ')
+                netmask = line[3]
+                try:
+                    netmask = int(netmask, 16)
+                    count = 0
+                    for i in range(32):
+                        if netmask == 0:
+                            break
+                        count += 1
+                        netmask = netmask << 1 & 0xffffffff
+                    netmask = count
+                except:
+                    pass
+                ifaces.append({
+                    'name': iface,
+                    'inet': line[1],
+                    'netmask': netmask,
+                    'broadcast': line[5],
+                    })
         #else:
         #    ifaces.append({
         #        'name': iface,
