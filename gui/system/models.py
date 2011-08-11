@@ -53,9 +53,10 @@ class Settings(Model):
             choices=choices.IPChoices(),
             verbose_name = _("Bind address")
             )
-    stg_guiport = models.CharField(
-            max_length=120,
+    stg_guiport = models.IntegerField(
             blank=True,
+            validators=[MinValueValidator(1), MaxValueValidator(65535)],
+            help_text = _("An integer from 1 - 65535, generally will be 80, or 8080"),
             verbose_name = _("Bind port")
             )
     stg_language = models.CharField(
