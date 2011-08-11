@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-08-02 23:20+0200\n"
-"Last-Translator: ChybeQ <mchybowski06@gmail.com>\n"
+"PO-Revision-Date: 2011-08-11 01:41+0200\n"
+"Last-Translator: vadi <vadi.art@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: choices.py:35
 msgid "Plain"
-msgstr "Prosty"
+msgstr "Zwykły"
 
 #: choices.py:36 system/models.py:234 templates/system/settings.html:9
 msgid "SSL"
@@ -1110,17 +1110,19 @@ msgstr "LUN już istnieje w tym celu."
 
 #: services/forms.py:384 services/models.py:352
 msgid "Controller Auth Group"
-msgstr "Grupa autentykacji kontrolera"
+msgstr "Kontroler grup autentykacji"
 
 #: services/forms.py:385 services/models.py:353
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
 msgstr ""
+"Istgtcontrol może uzyskać dostęp do celów z właściwą nazwą użytkownika i "
+"hasłem w określonej grupie autentykacji."
 
 #: services/forms.py:386 services/models.py:246
 msgid "Discovery Auth Group"
-msgstr ""
+msgstr "Wykrywanie grupy autentykacji"
 
 #: services/forms.py:413
 #, python-format
@@ -1174,9 +1176,8 @@ msgid "Authentication Group number"
 msgstr "Numer grupy autentykacyjnej"
 
 #: services/forms.py:766
-#, fuzzy
 msgid "Delete underlying file"
-msgstr "Usuń interfejs"
+msgstr "Usuń plik bazowy"
 
 #: services/forms.py:788
 #, python-format
@@ -1475,7 +1476,7 @@ msgstr ""
 
 #: services/models.py:242
 msgid "Discovery Auth Method"
-msgstr ""
+msgstr "Metoda autentykacji wykrywania"
 
 #: services/models.py:253
 msgid "I/O Timeout"
@@ -1518,6 +1519,8 @@ msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
 msgstr ""
+"Maksymalna liczba wysłanych R2T w każdym połączeniu (domyślnie 32). Bieżąca "
+"liczba ograniczona jest przez długość kolejki urządzenia docelowego."
 
 #: services/models.py:283
 msgid "MaxOutstandingR2T"
@@ -1584,15 +1587,13 @@ msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "Port TCP kontrolera logicznego (domyślnie 3261)"
 
 #: services/models.py:337
-#, fuzzy
 msgid "Controller Authorized netmask"
-msgstr "Autoryzowana maska kontrolera"
+msgstr "Maska autoryzowanania kontrolera"
 
 #: services/models.py:339
-#, fuzzy
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
 msgstr ""
-"Autoryzowana maska sieciowa jednostki kontrolera logicznego (domyślnie "
+"Autoryzowana maska sieciowa logicznej jednostki kontrolera (domyślnie "
 "255.255.255.0)"
 
 #: services/models.py:346
@@ -1831,7 +1832,7 @@ msgstr "Cel / Grupa"
 #: services/models.py:651
 #, fuzzy
 msgid "Targets / Extents"
-msgstr "Cel / Grupa"
+msgstr "Cele / Zakresy"
 
 #: services/models.py:666
 msgid "Provider"
@@ -4269,9 +4270,8 @@ msgstr "Uruchomione procesy"
 
 #: templates/freeadmin/index.html:35 templates/freeadmin/index.html.py:39
 #: templates/freeadmin/index.html:44
-#, fuzzy
 msgid "Loading..."
-msgstr "Ładowanie"
+msgstr "Ładowanie..."
 
 #: templates/freeadmin/index.html:46
 msgid "Reboot the System"
@@ -4298,9 +4298,8 @@ msgid ""
 msgstr ""
 
 #: templates/freeadmin/index.html:69
-#, fuzzy
 msgid "Help & Support"
-msgstr "Wsparcie dla EA"
+msgstr "Pomoc i Wsparcie"
 
 #: templates/freeadmin/index.html:72
 msgid "Forum"
@@ -4446,9 +4445,8 @@ msgstr "Akcja"
 
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
-#, fuzzy
 msgid "Add LAGG Member"
-msgstr "Członkowie LAGG"
+msgstr "Dodaj członka LAGG"
 
 #: templates/network/staticroute.html:5
 msgid "Destination"
@@ -4800,9 +4798,8 @@ msgid "Are you sure you want to detach?"
 msgstr "Jesteś pewien że chcesz odłączyć?"
 
 #: templates/storage/disk_replacement.html:9
-#, fuzzy
 msgid "Replacing disk"
-msgstr "Zmień dysk"
+msgstr "Zamienianie dysku"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
@@ -4818,7 +4815,7 @@ msgstr "Aktywne wolumeny"
 
 #: templates/storage/index.html:5
 msgid "ZFS Snapshots"
-msgstr "Kopie migawkowe ZFS"
+msgstr "Migawkowi ZFS"
 
 #: templates/storage/index.html:9
 msgid "ZFS Replication"
@@ -5129,7 +5126,7 @@ msgstr ""
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
-msgstr "Godzinne wykresy"
+msgstr "Wykresy godzinne"
 
 #: templates/system/reporting.html:18
 msgid "Daily"
@@ -5137,11 +5134,11 @@ msgstr ""
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
-msgstr "Dobowe wykresy"
+msgstr "Wykresy dobowe"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr "Tygodnia"
+msgstr "Tygodniowo"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"
