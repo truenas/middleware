@@ -51,6 +51,8 @@ class Volume(Model):
             )
     class Meta:
         verbose_name = _("Volume")
+    class FreeAdmin:
+        delete_form = "VolumeDelete"
     @staticmethod
     def __path_belong_to(share, mp):
         import os
@@ -282,9 +284,11 @@ class MountPoint(Model):
             return u"%s" % (humanize_size(availbytes))
         except:
             return _(u"Error getting available space")
+    def _get_used_bytes(self):
+        return (self._vfs.f_blocks-self._vfs.f_bfree)*self._vfs.f_frsize
     def _get_used_si(self):
         try:
-            usedbytes = (self._vfs.f_blocks-self._vfs.f_bfree)*self._vfs.f_frsize
+            usedbytes = self._get_used_bytes()
             return u"%s" % (humanize_size(usedbytes))
         except:
             return _(u"Error getting used space")

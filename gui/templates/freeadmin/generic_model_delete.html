@@ -1,9 +1,11 @@
 {% load i18n %}
 <form dojoType="dijit.form.Form">
 <script type="dojo/event" event="onSubmit" args="e">
+    {% block onsubmit %}
     formSubmit(this, e, '{% url freeadmin_model_delete app=app,model=model,oid=oid %}');
+    {% endblock %}
 </script>
-<table> 
+<table>
 {% if form %}
     {{ form }}
 {% endif %}

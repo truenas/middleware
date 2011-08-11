@@ -1095,3 +1095,19 @@ class ReplRemoteForm(ModelForm):
         notifier().reload("ssh")
         return rv
 
+class VolumeDelete(Form):
+    def __init__(self, *args, **kwargs):
+        from freenasUI.common import humanize_size
+        self.instance = kwargs.pop('instance', None)
+        super(VolumeDelete, self).__init__(*args, **kwargs)
+        usedbytes = sum([mp._get_used_bytes() for mp in self.instance.mountpoint_set.all()])
+        self.usedsize = humanize_size(usedbytes)
+
+    def as_table(self):
+        from django.utils.safestring import mark_safe
+        return mark_safe("""<tr>
+            <td colspan="2">
+                """ + (__("You have %s of used space within this volume.") % self.usedsize) + \
+                """
+            </td>
+            </tr>""")
