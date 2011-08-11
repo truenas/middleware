@@ -13,13 +13,14 @@ generate_httpd_conf()
 	local res=1
 	local ssl_enable="${1}"
 	local bind_addr="${2}"
+	local bind_port="${3}"
 	local tmp="/var/tmp/lighttpd.conf"
+
 
 	awk -v ssl_enable="${ssl_enable}" \
 		-v ssl_cert="${HTTPDCERT}" \
 		-v httpd_addr="${bind_addr}" \
-		-v httpd_port="${HTTPDPORT}" \
-		-v httpd_ssl_port="${HTTPDSSLPORT}" '
+		-v httpd_port="${bind_port}" '
 		BEGIN {
 			ssl_engine = 0;
 			ssl_pemfile = 0;
@@ -27,12 +28,10 @@ generate_httpd_conf()
 
 		{
 			if (/^(( |\t)*)?server.port/) {
-				if (ssl_enable) {
-					sub(httpd_port, httpd_ssl_port, $0);
-				} else {
-					sub(httpd_ssl_port, httpd_port, $0);
+				if (!httpd_port) {
+					httpd_port = ssl_enable ? 443 : 80;
 				}
-				print $0;
+				printf("server.port\t= \"%d\"\n", httpd_port)
 
 			} else if (/^(( |\t|#)*)?server.bind/) {
 				if (httpd_addr) {
@@ -78,6 +77,7 @@ get_host_ip()
 test_httpd_config()
 {
 	local ssl_enable="${1}"
+	local port="${2}"
 	local proto="http"
 	local ntries=5
 	local res=1
@@ -89,6 +89,11 @@ test_httpd_config()
 	fi
 	
 	local host=$(get_host_ip)
+	if [ -n "${port}" ]
+	then
+		host="${host}:${port}"
+	fi
+
 
 	${HTTPDSCRIPT} onerestart >/dev/null 2>&1
 	if [ "$?" = "0" ]
@@ -142,7 +147,8 @@ do_httpd_config()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		stg_guiprotocol,
-		stg_guiaddress
+		stg_guiaddress,
+		stg_guiport
 
 	FROM
 		system_settings
@@ -152,7 +158,7 @@ do_httpd_config()
 
 	LIMIT 1
 	" | \
-	while read proto addr
+	while read proto addr port
 	do
 		local ssl_enable=0
 
@@ -168,8 +174,8 @@ do_httpd_config()
 			ssl_enable=0
 		fi
 
-		generate_httpd_conf "${ssl_enable}" "${addr}"
-		if ! test_httpd_config "${ssl_enable}"
+		generate_httpd_conf "${ssl_enable}" "${addr}" "${port}"
+		if ! test_httpd_config "${ssl_enable}" "${port}"
 		then
 
 			if [ "${ssl_enable}" = "1" ]
@@ -178,7 +184,7 @@ do_httpd_config()
 				set_stg_guiprotocol "http"
 			fi
 
-			generate_httpd_conf "${ssl_enable}" "${addr}"
+			generate_httpd_conf "${ssl_enable}" "${addr}" "${port}"
 			${HTTPDSCRIPT} start
 		fi
 	done
