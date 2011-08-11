@@ -207,6 +207,9 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
 
     class Meta:
         model = models.bsdUsers
+        widgets = {
+                'bsdusr_uid': forms.widgets.ValidationTextInput(),
+                }
         exclude = ('bsdusr_unixhash','bsdusr_smbhash','bsdusr_builtin','bsdusr_group')
         fields = ('bsdusr_uid', 'bsdusr_username', 'bsdusr_group2', 'bsdusr_home', 'bsdusr_shell', 'bsdusr_full_name', 'bsdusr_email', 'bsdusr_password1', 'bsdusr_password2', 'bsdusr_login_disabled')
 
@@ -401,6 +404,9 @@ class bsdGroupsForm(ModelForm):
     class Meta:
         model = models.bsdGroups
         exclude = ('bsdgrp_builtin',)
+        widgets = {
+                'bsdgrp_gid': forms.widgets.ValidationTextInput(),
+                }
     def __init__(self, *args, **kwargs):
         super(bsdGroupsForm, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
