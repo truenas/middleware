@@ -63,7 +63,7 @@ class Volume(Model):
             if os.path.abspath(rep) == os.path.abspath(share):
                 return True
         return False
-    def delete(self, destroy=True):
+    def delete(self, destroy=True, cascade=True):
         """
         Some places reference a path which will not cascade delete
         We need to manually find all paths within this volume mount point
@@ -72,21 +72,22 @@ class Volume(Model):
         from sharing.models import CIFS_Share, AFP_Share, NFS_Share
         from services.models import iSCSITargetExtent
 
-        # TODO: This is ugly.
-        svcs    = ('cifs', 'afp', 'nfs', 'iscsitarget')
-        reloads = (False, False, False,  False)
+        if cascade:
+            # TODO: This is ugly.
+            svcs    = ('cifs', 'afp', 'nfs', 'iscsitarget')
+            reloads = (False, False, False,  False)
 
-        for mp in self.mountpoint_set.all():
-            reloads = map(sum, zip(reloads, mp.delete_attachments()))
-            mp.delete(reload=False)
+            for mp in self.mountpoint_set.all():
+                reloads = map(sum, zip(reloads, mp.delete_attachments()))
+                mp.delete(reload=False)
 
-        zvols = notifier().list_zfs_vols(self.vol_name)
-        for zvol in zvols:
-            reloads = map(sum, zip(reloads, evil_zvol_destroy(zvol, iSCSITargetExtent, Disk, WearingSafetyBelt=False)))
+            zvols = notifier().list_zfs_vols(self.vol_name)
+            for zvol in zvols:
+                reloads = map(sum, zip(reloads, evil_zvol_destroy(zvol, iSCSITargetExtent, Disk, WearingSafetyBelt=False)))
 
-        for (svc, dirty) in zip(svcs, reloads):
-            if dirty:
-                notifier().restart(svc)
+            for (svc, dirty) in zip(svcs, reloads):
+                if dirty:
+                    notifier().restart(svc)
 
         if destroy:
             notifier().destroy("volume", self)

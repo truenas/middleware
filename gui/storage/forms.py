@@ -1111,3 +1111,12 @@ class VolumeDelete(Form):
                 """
             </td>
             </tr>""")
+
+class VolumeExport(Form):
+    cascade = forms.BooleanField(required=False,
+        initial=False,
+        label=_("Delete related shares"),
+        )
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)
+        super(VolumeExport, self).__init__(*args, **kwargs)

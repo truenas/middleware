@@ -3,7 +3,8 @@
 <script type="dojo/event" event="onSubmit" args="e">
     formSubmit(this, e, '{% url storage_export vid=volume.id %}');
 </script>
-<table> 
+<table>
+    {{ form }}
     <tr><td><strong>{{ volume.vol_name}}</strong>: {% trans "Are you sure you want to export?" %}</td></tr>
     <tr>
         <td>
