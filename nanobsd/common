@@ -331,7 +331,7 @@ freenas_custom()
         ln -s /usr/local/bin/bash ${NANO_WORLDDIR}/bin/bash
 	ln -s /data/zfs/zpool.cache ${NANO_WORLDDIR}/boot/zfs/zpool.cache
 	mv ${NANO_WORLDDIR}/sbin/mount_ntfs ${NANO_WORLDDIR}/sbin/mount_ntfs-kern
-	ln -s /sbin/mount_ntfs-kern ${NANO_WORLDDIR}/sbin/mount_ntfs
+	ln -s /usr/sbin/mount_ntfs-fuse ${NANO_WORLDDIR}/sbin/mount_ntfs
 }
 late_customize_cmd freenas_custom
 
