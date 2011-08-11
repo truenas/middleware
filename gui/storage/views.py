@@ -81,7 +81,14 @@ def snapshots(request):
         })
 
 def snapshots_data(request):
-    zfsnap_list = notifier().zfs_snapshot_list().items()
+    zfsnap = notifier().zfs_snapshot_list().items()
+    zfsnap_list = []
+    for vol, snaps in zfsnap:
+        for snap in snaps:
+            snap.update({
+                'filesystem': vol,
+            })
+            zfsnap_list.append(snap)
 
     r = request.META.get("HTTP_RANGE", None)
     if r:
@@ -89,27 +96,30 @@ def snapshots_data(request):
         r1 = int(r[0])
         r2 = int(r[1]) + 1
 
+    for key in request.GET.keys():
+        reg = re.search(r'sort\((?P<sign>.)(?P<field>.+?)\)', key)
+        if reg:
+            sign, field = reg.groups()
+            if sign == '-':
+                rev = True
+            else:
+                rev = False
+            if item.has_key(field):
+                zfsnap_list.sort(key=lambda item:item[field], reverse=rev)
+
     data = []
     count = 0
-    total = 0
-    for vol, snaps in zfsnap_list:
-        total += len(snaps)
-        snaps.reverse()
-        for snap in snaps:
-            if r:
-                if count < r1:
-                    count += 1
-                    continue
-                elif count > r2:
-                    count += 1
-                    break
-            snap['extra'] = simplejson.dumps({
-                'clone_url': reverse('storage_clonesnap', kwargs={'snapshot': snap['fullname']}),
-                'rollback_url': reverse('storage_snapshot_rollback', kwargs={'dataset': vol, 'snapname': snap['name']}) if snap['mostrecent'] else None,
-                'delete_url': reverse('storage_snapshot_delete', kwargs={'dataset': vol, 'snapname': snap['name']}),
-            })
-            data.append(snap)
-            count += 1
+    total = len(zfsnap_list)
+    if r:
+        zfsnap_list = zfsnap_list[r1:r2]
+    for snap in zfsnap_list:
+        snap['extra'] = simplejson.dumps({
+            'clone_url': reverse('storage_clonesnap', kwargs={'snapshot': snap['fullname']}),
+            'rollback_url': reverse('storage_snapshot_rollback', kwargs={'dataset': vol, 'snapname': snap['name']}) if snap['mostrecent'] else None,
+            'delete_url': reverse('storage_snapshot_delete', kwargs={'dataset': vol, 'snapname': snap['name']}),
+        })
+        data.append(snap)
+        count += 1
 
     if r:
         resp = HttpResponse(simplejson.dumps(data))
@@ -136,8 +146,8 @@ def wizard(request):
             else:
                 disks = None
             zpoolfields = re.compile(r'zpool_(.+)')
-            zfsextra = [(zpoolfields.search(i).group(1), i, request.POST.get(i)) for i in request.POST.keys() \
-                        if zpoolfields.match(i)]
+            zfsextra = [(zpoolfields.search(i).group(1), i, request.POST.get(i)) \
+                        for i in request.POST.keys() if zpoolfields.match(i)]
 
     else:
         form = forms.VolumeWizardForm()
