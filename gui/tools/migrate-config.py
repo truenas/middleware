@@ -60,7 +60,7 @@ class FreeNASSQL:
     def sqldebug(self, fmt, *args):
 
         __id = -1
-        if self.__debug:
+        if self.__flags == MIGRATE_FLAGS_DEBUG:
             __str = "DEBUG: " + fmt
             __str = __str % args
             print >> sys.stderr, __str
