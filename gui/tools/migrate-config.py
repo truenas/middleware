@@ -29,6 +29,7 @@ import os
 import sys
 import getopt
 import sqlite3
+import shutil
 import re
 
 from xml.dom import minidom
@@ -40,17 +41,21 @@ FREENAS_HOSTSALLOW = os.path.join(FREENAS_ETC_BASE, "hosts.allow")
 FREENAS_HOSTS = os.path.join(FREENAS_ETC_BASE, "hosts")
 
 
+MIGRATE_FLAGS_NONE     = 0x0000
+MIGRATE_FLAGS_VERBOSE  = 0x0001
+MIGRATE_FLAGS_DEBUG    = 0x0002 
+
 
 def usage():
-    print >> sys.stderr, "%s [-d] -c <config.xml> -b <database.db>" % sys.argv[0]
+    print >> sys.stderr, "%s [-d] [-v] -c <config.xml> -b <database.db>" % sys.argv[0]
     sys.exit(1)
 
 
 class FreeNASSQL:
-    def __init__(self, database, debug = 0):
+    def __init__(self, database, flags = MIGRATE_FLAGS_NONE):
         self.__handle = sqlite3.connect(database)
         self.__cursor = self.__handle.cursor()
-        self.__debug = debug
+        self.__flags = flags
 
     def sqldebug(self, fmt, *args):
 
@@ -129,10 +134,10 @@ class FreeNASSQL:
 
 
 class ConfigParser:
-    def __init__(self, config, database, debug = False):
+    def __init__(self, config, database, flags = MIGRATE_FLAGS_NONE):
         pass
         self.__config = config
-        self.__sql = FreeNASSQL(database, debug)
+        self.__sql = FreeNASSQL(database, flags)
         self.__failed = False
 
     def __getChildNodeValue(self, __parent):
@@ -1954,7 +1959,12 @@ class ConfigParser:
         for __node in __parent.childNodes:
             if __node.nodeType == __node.ELEMENT_NODE:
                 __method = self.__getmethod(None, __node.localName)
-                __method(__node, 0)
+
+                try: 
+                    __method(__node, 0)
+
+                except:
+                   self.__failed = True
 
     def run(self):
         __doc = minidom.parse(self.__config)
@@ -1968,10 +1978,10 @@ class ConfigParser:
 
 
 def make_db_backup(database, database_backup):
-    pass
+    shutil.copy2(database, database_backup)
 
 def restore_db(database_backup, database):
-    pass
+    shutil.copy2(database_backup, database)
 
 
 #
@@ -1991,10 +2001,11 @@ def restore_db(database_backup, database):
 #
 
 def main():
-    debug = False
     config = None
     database = None
     backup = None
+    flags = 0
+    res = 0
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "db:c:", ["debug", "config="])
@@ -2013,7 +2024,10 @@ def main():
             config = arg
 
         if opt in ("-d", "--debug"):
-            debug = True
+            flags |= MIGRATE_FLAGS_DEBUG
+
+        if opt in ("-v", "--verbose"):
+            flags |= MIGRATE_FLAGS_VERBOSE
 
     if not config or not database:
         usage()
@@ -2022,12 +2036,15 @@ def main():
     backup = database + ".orig"
     make_db_backup(database, backup)
 
-    cp = ConfigParser(config, database, debug)
+    cp = ConfigParser(config, database, flags)
     cp.run()
 
     if cp.failed():
         restore_db(backup, database)
+        res = 1
+
+    return res
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
