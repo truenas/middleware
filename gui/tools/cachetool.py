@@ -25,6 +25,7 @@
 # SUCH DAMAGE.
 #
 
+import errno
 import os
 import sys
 import stat
@@ -77,12 +78,10 @@ def cache_expire(cachedir):
         os.rmdir(cachedir)
 
     except OSError, oe:
-        (p1, p2) = oe
-        if p1 == 16:
+        if oe.errno == errno.EBUSY:
             pass
-
         else:
-            raise OSError, oe
+            raise
 
 def cache_dump(cachedir):
     print "FreeNAS_Users:"
