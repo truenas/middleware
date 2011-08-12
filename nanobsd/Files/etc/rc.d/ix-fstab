@@ -35,10 +35,11 @@ generate_fstab_real()
 			v.vol_fstype in ('UFS', 'NTFS', 'MSDOSFS', 'EXT2FS')
 	" | \
 	while read fstype volumename newmp mpoptions; do
+		passno=2
 		case "${fstype}" in
-			UFS) device="/dev/ufs/${volumename}"; fs="ufs" ;;
-			NTFS) device="/dev/ntfs/${volumename}"; fs="ntfs" ;;
-			EXT2FS) device="/dev/ext2fs/${volumename}"; fs="ext2fs" ;;
+			UFS) device="/dev/ufs/${volumename}"; fs="ufs"; ;;
+			NTFS) device="/dev/ntfs/${volumename}"; fs="ntfs"; passno=0 ;;
+			EXT2FS) device="/dev/ext2fs/${volumename}"; fs="ext2fs"; passno=0 ;;
 			MSDOSFS) vname=$(echo ${volumename}|tr '[:lower:]' '[:upper:]')
 				device="/dev/msdosfs/${vname}"; fs="msdosfs" ;;
 		esac
@@ -51,7 +52,14 @@ generate_fstab_real()
 			fi
 
 			mkdir -p ${mountpoint}
-			echo "${device}	${mountpoint}	${fs}	${mpoptions}	2	2"
+
+			
+
+			if [ "${mountpoint#/mnt}" = "${mountpoint}" ]; then
+				echo "${device}	${mountpoint}	${fs}	${mpoptions}	2	${passno}"
+			else
+				echo "${device}	${mountpoint}	${fs}	${mpoptions%%,late*}${mpoptions##*,late},late	2	${passno}"
+			fi
 		fi
 	done
 }
