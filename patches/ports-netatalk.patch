@@ -1,6 +1,6 @@
-diff -ruN net/netatalk/Makefile ../../ports3/ports/net/netatalk/Makefile
---- net/netatalk/Makefile	2011-05-08 16:08:21.000000000 -0700
-+++ net/netatalk/Makefile	2011-08-07 10:43:59.000000000 -0700
+diff -ruN net/netatalk.orig/Makefile net/netatalk/Makefile
+--- net/netatalk.orig/Makefile	2011-08-12 12:37:55.000000000 -0700
++++ net/netatalk/Makefile	2011-08-12 12:40:46.000000000 -0700
 @@ -2,15 +2,15 @@
  # Date created:         23 Jul 1997
  # Whom:                 stb
@@ -105,17 +105,26 @@ diff -ruN net/netatalk/Makefile ../../ports3/ports/net/netatalk/Makefile
  		${WRKSRC}/configure
  
  post-install:
-diff -ruN net/netatalk/distinfo ../../ports3/ports/net/netatalk/distinfo
---- net/netatalk/distinfo	2010-12-28 20:36:17.000000000 -0800
-+++ net/netatalk/distinfo	2011-07-30 20:30:57.000000000 -0700
+diff -ruN net/netatalk.orig/distinfo net/netatalk/distinfo
+--- net/netatalk.orig/distinfo	2011-08-12 12:37:55.000000000 -0700
++++ net/netatalk/distinfo	2011-08-12 12:40:46.000000000 -0700
 @@ -1,2 +1,2 @@
 -SHA256 (netatalk-2.1.5.tar.bz2) = 11fcce36cc5179de60c5c0b10032ff9e042ed8b8c6e0b99d2d7200c8d0749038
 -SIZE (netatalk-2.1.5.tar.bz2) = 1125946
 +SHA256 (netatalk-2.2.0.tar.bz2) = 31bf7c1ea311f876d9be6d4be9faed24d170a89e6ce692304fc2cb525f25143b
 +SIZE (netatalk-2.2.0.tar.bz2) = 1216174
-diff -ruN net/netatalk/files/netatalk.in ../../ports3/ports/net/netatalk/files/netatalk.in
---- net/netatalk/files/netatalk.in	2010-03-26 17:13:49.000000000 -0700
-+++ net/netatalk/files/netatalk.in	2011-08-08 10:24:55.000000000 -0700
+diff -ruN net/netatalk.orig/files/netatalk.in net/netatalk/files/netatalk.in
+--- net/netatalk.orig/files/netatalk.in	2011-08-12 12:37:55.000000000 -0700
++++ net/netatalk/files/netatalk.in	2011-08-12 12:41:55.000000000 -0700
+@@ -3,7 +3,7 @@
+ # $FreeBSD: ports/net/netatalk/files/netatalk.in,v 1.3 2010/03/27 00:13:49 dougb Exp $
+ #
+ # PROVIDE: atalkd papd cnid_metad timelord afpd
+-# REQUIRE: DAEMON %%SRVLOC%%
++# REQUIRE: DAEMON %%SRVLOC%% avahi_dnsconfd
+ # KEYWORD: shutdown
+ #
+ # AppleTalk daemons. Make sure not to start atalkd in the background:
 @@ -11,16 +11,6 @@
  # other processes.
  #
@@ -171,9 +180,9 @@ diff -ruN net/netatalk/files/netatalk.in ../../ports3/ports/net/netatalk/files/n
      checkyesno papd_enable && killall papd
      checkyesno atalkd_enable && killall atalkd
  }
-diff -ruN net/netatalk/files/patch-config_netatalk.conf ../../ports3/ports/net/netatalk/files/patch-config_netatalk.conf
---- net/netatalk/files/patch-config_netatalk.conf	2010-05-30 10:03:17.000000000 -0700
-+++ net/netatalk/files/patch-config_netatalk.conf	2011-07-30 20:30:58.000000000 -0700
+diff -ruN net/netatalk.orig/files/patch-config_netatalk.conf net/netatalk/files/patch-config_netatalk.conf
+--- net/netatalk.orig/files/patch-config_netatalk.conf	2011-08-12 12:37:55.000000000 -0700
++++ net/netatalk/files/patch-config_netatalk.conf	2011-08-12 12:40:46.000000000 -0700
 @@ -1,43 +1,20 @@
 ---- config/netatalk.conf.orig	2010-04-19 11:35:26.000000000 +0000
 -+++ config/netatalk.conf	2010-05-20 19:14:32.000000000 +0000
@@ -230,9 +239,9 @@ diff -ruN net/netatalk/files/patch-config_netatalk.conf ../../ports3/ports/net/n
 + 
 + #### maximum number of clients that can connect:
 + #AFPD_MAX_CLIENTS=20
-diff -ruN net/netatalk/files/patch-configure ../../ports3/ports/net/netatalk/files/patch-configure
---- net/netatalk/files/patch-configure	2010-07-24 18:37:08.000000000 -0700
-+++ net/netatalk/files/patch-configure	2011-08-01 00:29:01.000000000 -0700
+diff -ruN net/netatalk.orig/files/patch-configure net/netatalk/files/patch-configure
+--- net/netatalk.orig/files/patch-configure	2011-08-12 12:37:55.000000000 -0700
++++ net/netatalk/files/patch-configure	2011-08-12 12:40:46.000000000 -0700
 @@ -1,11 +1,37 @@
 ---- configure.orig	2010-07-10 06:18:22.000000000 -0400
 -+++ configure	2010-07-24 21:33:50.000000000 -0400
@@ -276,9 +285,9 @@ diff -ruN net/netatalk/files/patch-configure ../../ports3/ports/net/netatalk/fil
 + 
 + cat >>confdefs.h <<\_ACEOF
 + #define HAVE_ACL_GET_PERM_NP 1
-diff -ruN net/netatalk/files/patch-etc_afpd_acls.c ../../ports3/ports/net/netatalk/files/patch-etc_afpd_acls.c
---- net/netatalk/files/patch-etc_afpd_acls.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/netatalk/files/patch-etc_afpd_acls.c	2011-07-30 20:30:58.000000000 -0700
+diff -ruN net/netatalk.orig/files/patch-etc_afpd_acls.c net/netatalk/files/patch-etc_afpd_acls.c
+--- net/netatalk.orig/files/patch-etc_afpd_acls.c	1969-12-31 16:00:00.000000000 -0800
++++ net/netatalk/files/patch-etc_afpd_acls.c	2011-08-12 12:40:46.000000000 -0700
 @@ -0,0 +1,63 @@
 +--- etc/afpd/acls.c.orig	2011-07-30 18:08:35.000000000 -0400
 ++++ etc/afpd/acls.c	2011-07-30 18:19:19.000000000 -0400
@@ -343,9 +352,9 @@ diff -ruN net/netatalk/files/patch-etc_afpd_acls.c ../../ports3/ports/net/netata
 + #endif
 +     /* adds the clients aces */
 +     EC_ZERO_ERR(map_aces_darwin_to_posix(daces, &def_acl, &acc_acl, ace_count), AFPERR_MISC);
-diff -ruN net/netatalk/files/patch-etc_afpd_afp_asp.c ../../ports3/ports/net/netatalk/files/patch-etc_afpd_afp_asp.c
---- net/netatalk/files/patch-etc_afpd_afp_asp.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/netatalk/files/patch-etc_afpd_afp_asp.c	2011-07-30 20:30:58.000000000 -0700
+diff -ruN net/netatalk.orig/files/patch-etc_afpd_afp_asp.c net/netatalk/files/patch-etc_afpd_afp_asp.c
+--- net/netatalk.orig/files/patch-etc_afpd_afp_asp.c	1969-12-31 16:00:00.000000000 -0800
++++ net/netatalk/files/patch-etc_afpd_afp_asp.c	2011-08-12 12:40:46.000000000 -0700
 @@ -0,0 +1,13 @@
 +--- etc/afpd/afp_asp.c.orig	2011-07-30 23:13:47.000000000 -0400
 ++++ etc/afpd/afp_asp.c	2011-07-30 23:14:22.000000000 -0400
@@ -360,9 +369,9 @@ diff -ruN net/netatalk/files/patch-etc_afpd_afp_asp.c ../../ports3/ports/net/net
 + #include "switch.h"
 + #include "auth.h"
 + #include "fork.h"
-diff -ruN net/netatalk/files/patch-etc_apfd_Makefile.in ../../ports3/ports/net/netatalk/files/patch-etc_apfd_Makefile.in
---- net/netatalk/files/patch-etc_apfd_Makefile.in	2011-05-08 16:08:21.000000000 -0700
-+++ net/netatalk/files/patch-etc_apfd_Makefile.in	2011-07-30 20:30:58.000000000 -0700
+diff -ruN net/netatalk.orig/files/patch-etc_apfd_Makefile.in net/netatalk/files/patch-etc_apfd_Makefile.in
+--- net/netatalk.orig/files/patch-etc_apfd_Makefile.in	2011-08-12 12:37:55.000000000 -0700
++++ net/netatalk/files/patch-etc_apfd_Makefile.in	2011-08-12 12:40:46.000000000 -0700
 @@ -1,11 +1,11 @@
 ---- etc/afpd/Makefile.in.orig	2011-05-08 19:04:22.000000000 -0400
 -+++ etc/afpd/Makefile.in	2011-05-08 19:04:34.000000000 -0400
@@ -385,9 +394,9 @@ diff -ruN net/netatalk/files/patch-etc_apfd_Makefile.in ../../ports3/ports/net/n
 - afpd_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/sys \
 - 	 @SLP_CFLAGS@ \
 + afpd_CFLAGS = \
-diff -ruN net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c ../../ports3/ports/net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c
---- net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c	2011-07-30 20:30:58.000000000 -0700
+diff -ruN net/netatalk.orig/files/patch-etc_cnid_dbd_cnid_metad.c net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c
+--- net/netatalk.orig/files/patch-etc_cnid_dbd_cnid_metad.c	1969-12-31 16:00:00.000000000 -0800
++++ net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c	2011-08-12 12:40:46.000000000 -0700
 @@ -0,0 +1,10 @@
 +--- etc/cnid_dbd/cnid_metad.c.orig	2011-07-30 18:28:32.000000000 -0400
 ++++ etc/cnid_dbd/cnid_metad.c	2011-07-30 18:29:01.000000000 -0400
@@ -399,9 +408,9 @@ diff -ruN net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c ../../ports3/ports/
 + #include <sys/time.h>
 + #include <sys/wait.h>
 + #include <sys/uio.h>
-diff -ruN net/netatalk/files/patch-etc_cnid_dbd_comm.c ../../ports3/ports/net/netatalk/files/patch-etc_cnid_dbd_comm.c
---- net/netatalk/files/patch-etc_cnid_dbd_comm.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/netatalk/files/patch-etc_cnid_dbd_comm.c	2011-07-30 20:30:58.000000000 -0700
+diff -ruN net/netatalk.orig/files/patch-etc_cnid_dbd_comm.c net/netatalk/files/patch-etc_cnid_dbd_comm.c
+--- net/netatalk.orig/files/patch-etc_cnid_dbd_comm.c	1969-12-31 16:00:00.000000000 -0800
++++ net/netatalk/files/patch-etc_cnid_dbd_comm.c	2011-08-12 12:40:46.000000000 -0700
 @@ -0,0 +1,12 @@
 +--- etc/cnid_dbd/comm.c.orig	2011-07-30 18:27:55.000000000 -0400
 ++++ etc/cnid_dbd/comm.c	2011-07-30 18:28:04.000000000 -0400
@@ -415,9 +424,9 @@ diff -ruN net/netatalk/files/patch-etc_cnid_dbd_comm.c ../../ports3/ports/net/ne
 + #ifndef __EXTENSIONS__
 + # define __EXTENSIONS__
 + #endif
-diff -ruN net/netatalk/pkg-plist ../../ports3/ports/net/netatalk/pkg-plist
---- net/netatalk/pkg-plist	2010-06-02 07:46:42.000000000 -0700
-+++ net/netatalk/pkg-plist	2011-08-07 10:43:59.000000000 -0700
+diff -ruN net/netatalk.orig/pkg-plist net/netatalk/pkg-plist
+--- net/netatalk.orig/pkg-plist	2011-08-12 12:37:55.000000000 -0700
++++ net/netatalk/pkg-plist	2011-08-12 12:40:46.000000000 -0700
 @@ -1,20 +1,15 @@
 -bin/achfile
 -bin/ad
