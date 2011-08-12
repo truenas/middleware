@@ -320,7 +320,7 @@ class ConfigParser:
             __month_nodes = self.__getChildNodes(__parent, "month")
             for __month_node in __month_nodes:
                 if __month_node:
-                    __month_value = self.__getChildNodeValue(__month_value)
+                    __month_value = self.__getChildNodeValue(__month_node)
                     __months_value += __months_value + ","
             if __months_value:
                 __months_value = __months_value.rstrip(",")
@@ -428,7 +428,7 @@ class ConfigParser:
                 continue
 
             __shell_node = self.__getChildNode(__user_node, "shell")
-            if not _shell_node:
+            if not __shell_node:
                 continue
 
             __shell = self.__getChildNodeValue(__shell_node)
@@ -665,7 +665,7 @@ class ConfigParser:
             if not __devicespecialfile_node: 
                 continue
 
-            __devicespecialfile = self.__getChildNodeValue(____devicespecialfile_node)
+            __devicespecialfile = self.__getChildNodeValue(__devicespecialfile_node)
             if not __devicespecialfile: 
                 continue
 
@@ -714,7 +714,7 @@ class ConfigParser:
             if not __devicespecialfile_node: 
                 continue
 
-            __devicespecialfile = self.__getChildNodeValue(____devicespecialfile_node)
+            __devicespecialfile = self.__getChildNodeValue(__devicespecialfile_node)
             if not __devicespecialfile: 
                 continue
 
@@ -843,7 +843,7 @@ class ConfigParser:
         # Initiator Groups
         #
         __table = "services_iscsitargetauthorizedinitiator"
-        __initialgroup_nodemap = {'tag':'iscsi_target_initiator_tag',
+        __initiatorgroup_nodemap = {'tag':'iscsi_target_initiator_tag',
             'comment':'iscsi_target_initiator_comment',
             'iginitiatorname':'iscsi_target_initiator_initiators',
             'ignetmask':'iscsi_target_initiator_auth_network'}
@@ -954,7 +954,7 @@ class ConfigParser:
             if not __devicespecialfile_node:
                 continue
 
-            __devicespecialfile = self.__getChildNodeValue(__devicespecialfile)
+            __devicespecialfile = self.__getChildNodeValue(__devicespecialfile_node)
             if not __devicespecialfile:
                 continue
 
@@ -1807,7 +1807,7 @@ class ConfigParser:
 
                 __pool_name = self.__getChildNodeValue(__pool_name_node)
                 if not __pool_name:
-                    conitnue
+                    continue
 
                 __pool_root_node = self.__getChildNode(__pool_node, "root")
                 if not __pool_root_node:
