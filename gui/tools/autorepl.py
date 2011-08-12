@@ -85,18 +85,16 @@ if not locked:
 
 theirpid = -1
 try:
-    pidfile = open('/var/run/autorepl.pid', 'r')
-    theirpid = int(pidfile.read())
-    pidfile.close()
+    with open('/var/run/autorepl.pid', 'r') as pidfile:
+        theirpid = int(pidfile.read())
 except:
     pass
 
 if theirpid != -1:
     ExitIfRunning(theirpid)
 
-pidfile = open('/var/run/autorepl.pid', 'w')
-pidfile.write('%d' % mypid)
-pidfile.close()
+with open('/var/run/autorepl.pid', 'w') as pidfile:
+    pidfile.write('%d' % mypid)
 
 MNTLOCK.unlock()
 
@@ -236,9 +234,8 @@ Hello,
         else:
             replcmd = '(/sbin/zfs send %s-I %s %s%s | %s %s "/sbin/zfs receive -F -d %s && echo Succeeded.") > %s 2>&1' % (Rflag, last_snapshot, snapname, limit, sshcmd, remote, remotefs, templog)
         system(replcmd)
-        f = open(templog)
-        msg = f.read()
-        f.close()
+        with open(templog) as f:
+            msg = f.read()
         os.remove(templog)
         syslog.syslog(syslog.LOG_DEBUG, "Replication result: %s" % (msg))
 
