@@ -73,6 +73,13 @@ def password_change(request):
     if request.method == 'POST':
         passform = password_change_form(user=request.user, data=request.POST)
         if passform.is_valid():
+            root = models.bsdUsers.objects.get(bsdusr_username='root')
+            new_password = passform.cleaned_data.get('new_password1')
+            bsdpasswdform = forms.bsdUserPasswordForm(instance=root)
+            bsdpasswdform.cleaned_data = {}
+            bsdpasswdform.cleaned_data['bsdusr_password1'] = new_password
+            bsdpasswdform.cleaned_data['bsdusr_password2'] = new_password
+            bsdpasswdform.save()
             passform.save()
             passform = password_change_form(user=request.user)
             return HttpResponse(simplejson.dumps({"error": False, "message": _("Password successfully updated.")}), mimetype="application/json")
