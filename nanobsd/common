@@ -275,13 +275,24 @@ create_amd64_diskimage()
 	create_i386_diskimage "$*"
 }
 
+compress_ko()
+{
+	if [ -f ${NANO_WORLDDIR}/boot/kernel/$1 ]
+	then
+		gzip -v9 ${NANO_WORLDDIR}/boot/kernel/$1
+	fi
+}
+
 freenas_custom()
 {
-	# Compress the kernel (save 19Mb)
-	if [ -f ${NANO_WORLDDIR}/boot/kernel/kernel ]
-	then
-		gzip -v9 ${NANO_WORLDDIR}/boot/kernel/kernel
-	fi
+	# Compress the kernel and preloaded modules
+	compress_ko kernel
+	compress_ko geom_mirror.ko
+	compress_ko geom_stripe.ko
+	compress_ko geom_raid3.ko
+	compress_ko geom_gate.ko
+	compress_ko ntfs.ko
+	compress_ko smbfs.ko
 
 	# kill docs (saves 22MB)
 	rm -rf ${NANO_WORLDDIR}/usr/local/share/doc
