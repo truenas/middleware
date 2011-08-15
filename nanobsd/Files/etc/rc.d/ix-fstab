@@ -58,7 +58,11 @@ generate_fstab_real()
 			if [ "${mountpoint#/mnt}" = "${mountpoint}" ]; then
 				echo "${device}	${mountpoint}	${fs}	${mpoptions}	2	${passno}"
 			else
-				echo "${device}	${mountpoint}	${fs}	${mpoptions%%,late*}${mpoptions##*,late},late	2	${passno}"
+				if [ "${mpoptions%%late*}" = "${mpoptions}" ]; then
+					echo "${device}	${mountpoint}	${fs}	${mpoptions},late	2	${passno}"
+				else
+					echo "${device}	${mountpoint}	${fs}	${mpoptions%%,late*}${mpoptions##*,late},late	2	${passno}"
+				fi
 			fi
 		fi
 	done
