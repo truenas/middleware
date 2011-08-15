@@ -67,6 +67,12 @@ FlashDevice generic 2g
 . ${NANO_CFG_BASE}/common
 
 add_port devel/pkg-config
+add_port x11/kbproto
+add_port x11/xproto -DWITHOUT_X11 # run dep of collectd
+add_port x11/libXdmcp -DWITHOUT_X11 # run dep of collectd
+add_port x11/libXau -DWITHOUT_X11 # run dep of collectd
+add_port devel/libpthread-stubs -DWITHOUT_X11 # run dep of collectd
+add_port x11/libxcb -DWITHOUT_X11 # run dep of collectd
 add_port x11/libX11
 add_port devel/cdialog
 add_port dns/inadyn			# -mt?
@@ -149,7 +155,6 @@ add_port www/py-flup
 add_port net-mgmt/net-snmp
 add_port sysutils/nut -DWITHOUT_NEON NUT_USER=operator NUT_GROUP=operator
 
-add_port x11/xproto -DWITHOUT_X11 # run dep of collectd
 add_port devel/libstatgrab -DWITHOUT_X11 # run dep of collectd
 add_port devel/libltdl -DWITHOUT_X11 # run dep of collectd
 add_port print/freetype2 -DWITHOUT_X11 # run dep of collectd
@@ -165,10 +170,6 @@ add_port x11-fonts/bitstream-vera -DWITHOUT_X11 # run dep of collectd
 add_port x11-fonts/font-util -DWITHOUT_X11 # run dep of collectd
 add_port x11-fonts/encodings -DWITHOUT_X11 # run dep of collectd
 add_port x11-fonts/xorg-fonts-truetype -DWITHOUT_X11 # run dep of collectd
-add_port devel/libpthread-stubs -DWITHOUT_X11 # run dep of collectd
-add_port x11/libXau -DWITHOUT_X11 # run dep of collectd
-add_port x11/libXdmcp -DWITHOUT_X11 # run dep of collectd
-add_port x11/libxcb -DWITHOUT_X11 # run dep of collectd
 add_port x11/xcb-util -DWITHOUT_X11 # run dep of collectd
 add_port x11/libXrender
 add_port x11/renderproto
@@ -181,7 +182,6 @@ add_port graphics/cairo -DWITHOUT_X11 # run dep of collectd
 add_port devel/m4 -DWITHOUT_X11 # run dep of collectd
 add_port devel/bison -DWITHOUT_X11 # run dep of collectd
 add_port devel/libffi -DWITHOUT_X11 # run dep of collectd
-add_port x11/kbproto
 add_port x11-toolkits/pango -DWITHOUT_X11 # run dep of collectd
 add_port textproc/libxml2 -DWITHOUT_X11 # run dep of collectd
 add_port textproc/py-libxml2 -DWITHOUT_X11 # run dep of collectd
