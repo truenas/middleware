@@ -273,7 +273,7 @@ EOF
 			    winbind use default domain = yes
 			    winbind refresh tickets = yes
 			    winbind separator = +
-			    allow trusted domains = no
+			    allow trusted domains = yes
 
 			    template shell = /bin/sh
 			    template homedir = /home/%U
