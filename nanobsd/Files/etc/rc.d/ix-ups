@@ -66,11 +66,11 @@ EOF
 FINALDELAY ${ups_shutdowntimer}
 MONITOR ${ups_identifier} 1 upsmon fixmepass master
 NOTIFYCMD "/var/tmp/nut_notify.sh"
+NOTIFYFLAG ONBATT SYSLOG+WALL+EXEC
+NOTIFYFLAG LOWBATT SYSLOG+WALL+EXEC
+SHUTDOWNCMD "/sbin/shutdown -p now"
 EOF
 
-    echo -n "NOTIFYFLAG ONBATT SYSLOG+WALL+EXEC"
-    echo -n "NOTIFYFLAG LOWBATT SYSLOG+WALL+EXEC"
-    echo "SHUTDOWNCMD \"/sbin/shutdown -p now\""
     done
 }
 
