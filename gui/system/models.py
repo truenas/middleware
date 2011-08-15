@@ -301,8 +301,8 @@ class CronJob(Model):
             verbose_name=_("Enabled"),
             )
     class Meta:
-        verbose_name = _("cron job")
-        verbose_name_plural = _("cron jobs")
+        verbose_name = _("Cron Job")
+        verbose_name_plural = _("Cron Jobs")
 
     class FreeAdmin:
         icon_model = u"cronJobIcon"
@@ -459,8 +459,8 @@ class Rsync(Model):
             blank=True
             )
     class Meta:
-        verbose_name = _("rsync task")
-        verbose_name_plural = _("rsync tasks")
+        verbose_name = _("Rsync Task")
+        verbose_name_plural = _("Rsync Tasks")
 
     class FreeAdmin:
         icon_model = u"rsyncIcon"
@@ -598,8 +598,8 @@ class SMARTTest(Model):
         return unicode(self.smarttest_disk)
 
     class Meta:
-        verbose_name = _("S.M.A.R.T. test")
-        verbose_name_plural = _("S.M.A.R.T. tests")
+        verbose_name = _("S.M.A.R.T. Test")
+        verbose_name_plural = _("S.M.A.R.T. Tests")
         unique_together = (
             ('smarttest_disk', 'smarttest_type'),
         )

@@ -144,14 +144,14 @@ class ISCSI(TreeNode):
 class Rsync(TreeNode):
 
     gname = 'Rsync'
-    name = _(u'rsync')
+    name = _(u'Rsync')
     type = u'rsync'
     icon = u'rsyncIcon'
 
 class RsyncModAdd(TreeNode):
 
     gname = 'services.RsyncMod.Add'
-    name = _(u'Add rsync module')
+    name = _(u'Add Rsync Module')
     type = u'object'
     view = u'freeadmin_model_add'
     kwargs = {'app': 'services', 'model': 'RsyncMod', 'mf': 'RsyncModForm'}
@@ -161,7 +161,7 @@ class RsyncModAdd(TreeNode):
 class RsyncModView(TreeNode):
 
     gname = 'services.RsyncMod.View'
-    name = _(u'View rsync modules')
+    name = _(u'View Rsync Modules')
     view = u'services_rsyncmod'
     icon = u'ViewAllrsyncModIcon'
     append_app = False

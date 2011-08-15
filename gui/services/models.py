@@ -1170,8 +1170,8 @@ class Rsyncd(Model):
             )
 
     class Meta:
-        verbose_name = _("configure rsyncd")
-        verbose_name_plural = _("configure rsyncd")
+        verbose_name = _("Configure Rsyncd")
+        verbose_name_plural = _("Configure Rsyncd")
 
     class FreeAdmin:
         deletable = False
@@ -1234,8 +1234,8 @@ class RsyncMod(Model):
             )
 
     class Meta:
-        verbose_name = _("rsync module")
-        verbose_name_plural = _("rsync modules")
+        verbose_name = _("Rsync Module")
+        verbose_name_plural = _("Rsync Modules")
 
     class FreeAdmin:
         menu_child_of = 'Rsync'
