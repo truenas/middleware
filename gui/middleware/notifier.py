@@ -550,7 +550,7 @@ class notifier:
             return c, conn
         return c
 
-    def __gpt_labeldisk(self, type, devname, test4k = False, label = "", swapsize=2):
+    def __gpt_labeldisk(self, type, devname, test4k=False, swapsize=2):
         """Label the whole disk with GPT under the desired label and type"""
         if test4k:
             # Taste the disk to know whether it's 4K formatted.
@@ -574,19 +574,26 @@ class notifier:
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname))
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
                       "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (devname, devname))
-        if label != "":
-            p1 = self.__pipeopen("gpart create -s gpt /dev/%s && gpart add -b 128 -t freebsd-swap -l swap-%s -s %d %s && gpart add -t %s -l %s %s" %
-                         (str(devname), str(label), swapsize, str(devname), str(type), str(label), str(devname)))
+
+        commands = []
+        commands.append("gpart create -s gpt /dev/%s" % (devname))
+        if swapsize > 0:
+            commands.append("gpart add -b 128 -t freebsd-swap -s %d %s" % (swapsize, devname))
+            commands.append("gpart add -t %s %s" % (type, devname))
         else:
-            p1 = self.__pipeopen("gpart create -s gpt /dev/%s && gpart add -b 128 -t freebsd-swap -s %d %s && gpart add -t %s %s" %
-                         (str(devname), swapsize, str(devname), str(type), str(devname)))
-        p1.wait()
-        if p1.returncode != 0:
-            from middleware.exceptions import MiddlewareError
-            raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
+            commands.append("gpart add -b 128 -t %s %s" % (type, devname))
+
+        commands.append("gpart bootcode -b /boot/pmbr-datadisk /dev/%s" % (devname))
+
+        for command in commands:
+            proc = self.__pipeopen(command)
+            proc.wait()
+            if proc.returncode != 0:
+                from middleware.exceptions import MiddlewareError
+                raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
+
         # Install a dummy boot block so system gives meaningful message if booting
         # from the wrong disk.
-        self.__system("gpart bootcode -b /boot/pmbr-datadisk /dev/%s" % (str(devname)))
         return need4khack
 
     def __gpt_unlabeldisk(self, devname):
@@ -618,7 +625,6 @@ class notifier:
             devname = self.identifier_to_device(disk.disk_identifier)
             rv = self.__gpt_labeldisk(type = "freebsd-zfs",
                                       devname = devname,
-                                      label = "",
                                       test4k = (first and test4k),
                                       swapsize=swapsize)
             first = False
@@ -665,8 +671,12 @@ class notifier:
             vgrp_type = vgrp.group_type
             if vgrp_type != 'stripe':
                 z_vdev += " " + vgrp_type
+            if vgrp_type in ('cache', 'log'):
+                vdev_swapsize = 0
+            else:
+                vdev_swapsize = swapsize
             # Prepare disks nominated in this group
-            vdevs, gnops, want4khack = self.__prepare_zfs_vdev(vgrp.disk_set.all(), swapsize, want4khack)
+            vdevs, gnops, want4khack = self.__prepare_zfs_vdev(vgrp.disk_set.all(), vdev_swapsize, want4khack)
             z_vdev += " ".join(vdevs)
             gnop_devs += gnops
 
@@ -949,7 +959,7 @@ class notifier:
             self.__system('/sbin/zpool offline %s %s' % (volume, zdev))
 
         self.__gpt_labeldisk(type = "freebsd-zfs", devname = todev,
-                             label = "", swapsize=swapsize)
+                             swapsize=swapsize)
 
         self.__confxml = None
 
