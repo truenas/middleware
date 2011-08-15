@@ -348,6 +348,10 @@ class Replication(Model):
             default = False,
             verbose_name = _("Recursively replicate and remove stale snapshot on remote side"),
             )
+    repl_resetonce = models.BooleanField(
+            default = False,
+            verbose_name = _("Initialize remote side for once.  (May cause data loss on remote side!)"),
+            )
     repl_limit = models.IntegerField(
             default = 0,
             verbose_name = _("Limit (kB/s)"),
