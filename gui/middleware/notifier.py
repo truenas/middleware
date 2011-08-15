@@ -441,13 +441,19 @@ class notifier:
     def _start_ups(self):
         self.__system("/usr/sbin/service ix-ups quietstart")
         self.__system("/usr/sbin/service nut start")
+        self.__system("/usr/sbin/service nut_upsmon start")
+        self.__system("/usr/sbin/service nut_upslog start")
 
     def _stop_ups(self):
+        self.__system("/usr/sbin/service nut_upslog stop")
+        self.__system("/usr/sbin/service nut_upsmon stop")
         self.__system("/usr/sbin/service nut stop")
 
     def _restart_ups(self):
         self.__system("/usr/sbin/service ix-ups quietstart")
         self.__system("/usr/sbin/service nut restart")
+        self.__system("/usr/sbin/service nut_upsmon restart")
+        self.__system("/usr/sbin/service nut_upslog restart")
 
     def _load_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
