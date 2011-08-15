@@ -118,8 +118,8 @@ class Advanced(Model):
     adv_zeroconfbonjour = models.BooleanField(
             verbose_name = _("Enable Zeroconf/Bonjour"))
     adv_swapondrive = models.IntegerField(
-            validators=[MinValueValidator(1)],
-            verbose_name = _("Swap size on each drive in GiB, affects new disks only. Must be non-zero"),
+            validators=[MinValueValidator(0)],
+            verbose_name = _("Swap size on each drive in GiB, affects new disks only."),
             default=2)
     adv_consolemsg = models.BooleanField(
             verbose_name = _("Show console messages in the footer (Requires UI reload)"),
