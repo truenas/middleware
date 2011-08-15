@@ -57,7 +57,7 @@ class Settings(Model):
             max_length=120,
             blank=True,
             default='',
-            verbose_name = _("Bind port")
+            verbose_name = _("WebGUI Port")
             )
     stg_language = models.CharField(
             max_length=120,
