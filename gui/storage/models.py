@@ -261,7 +261,10 @@ class MountPoint(Model):
         return self.mp_path
     def _get__vfs(self):
         if not hasattr(self, '__vfs'):
-            self.__vfs = statvfs(self.mp_path)
+            try:
+                self.__vfs = statvfs(self.mp_path)
+            except:
+                self.__vfs = None
         return self.__vfs
     def _get_total_si(self):
         try:
