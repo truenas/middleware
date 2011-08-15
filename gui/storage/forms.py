@@ -406,7 +406,7 @@ class VolumeImportForm(forms.Form):
 
         for part in parts:
             devname, capacity = parts[part]['devname'], parts[part]['capacity']
-            capacity = humanize_size(capacity)
+            capacity = humanize_size_si(capacity)
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
@@ -995,16 +995,7 @@ class DiskReplacementForm(forms.Form):
 
         for disk in disks:
             devname, capacity = disks[disk]['devname'], disks[disk]['capacity']
-
-            capacity = int(capacity)
-            if capacity >= 1099511627776:
-                    capacity = "%.1f TiB" % (capacity / 1099511627776.0)
-            elif capacity >= 1073741824:
-                    capacity = "%.1f GiB" % (capacity / 1073741824.0)
-            elif capacity >= 1048576:
-                    capacity = "%.1f MiB" % (capacity / 1048576.0)
-            else:
-                    capacity = "%d Bytes" % (capacity)
+            capacity = humanize_number_si(int(capacity))
             if devname == self.disk.disk_name:
                 diskchoices[devname] = "In-place [%s (%s)]" % (devname, capacity)
             else:
