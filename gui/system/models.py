@@ -51,7 +51,7 @@ class Settings(Model):
             blank=True,
             default='',
             choices=choices.IPChoices(),
-            verbose_name = _("Bind address")
+            verbose_name = _("WebGUI Address")
             )
     stg_guiport = models.CharField(
             max_length=120,
