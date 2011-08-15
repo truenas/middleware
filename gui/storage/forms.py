@@ -266,7 +266,7 @@ class VolumeWizardForm(forms.Form):
         disk_list = self.cleaned_data['volume_disks']
         force4khack = self.cleaned_data.get("force4khack", False)
         ufspath = self.cleaned_data['ufspath']
-        mp_options = "rw,late"
+        mp_options = "rw"
         mp_path = None
 
         if (len(disk_list) < 2):
@@ -289,11 +289,9 @@ class VolumeWizardForm(forms.Form):
                 volume.save()
 
                 mp_path = ufspath if ufspath else '/mnt/' + volume_name
-                if mp_path in ('/etc', '/var', '/usr'):
-                    mp_options = 'rw'
 
                 if volume_fstype == 'UFS':
-                    mp_options += ',nfsv4acls'
+                    mp_options = 'rw,nfsv4acls'
 
                 mp = models.MountPoint(mp_volume=volume, mp_path=mp_path, mp_options=mp_options)
                 mp.save()
@@ -455,7 +453,7 @@ class VolumeImportForm(forms.Form):
         volume.save()
         self.volume = volume
 
-        mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw,late')
+        mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
         mp.save()
 
         grp = models.DiskGroup(group_name= volume_name, group_type = '', group_volume = volume)
@@ -571,7 +569,7 @@ class VolumeAutoImportForm(forms.Form):
             volume.save()
             self.volume = volume
 
-            mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw,late')
+            mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/' + volume_name, mp_options='rw')
             mp.save()
 
             if vol['type'] == 'zfs':
