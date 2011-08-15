@@ -1,4 +1,4 @@
 [usbrules=100]
-dd path 'usbctl' mode 660 group operator
+add path 'usbctl' mode 660 group operator
 add path 'usb/*' mode 660 group operator
 
