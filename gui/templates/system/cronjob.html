@@ -37,15 +37,15 @@
     </tr>
     {% empty %}
     <tr>
-        <td colspan="8">{% trans "No CronJobs defined" %}</td>
+        <td colspan="8">{% trans "No cron jobs defined." %}</td>
     </tr>
     {% endfor %}
     </table>
               <p class="btn">
         <button dojoType="dijit.form.Button" type="button">
-            {% trans "Add CronJob" %}
+            {% trans "Add a cron job" %}
             <script type="dojo/method" event="onClick" args="evt">
-                addObject('{% trans "Add CronJob"|force_escape %}', '{% url freeadmin_model_add app="system",model="CronJob" %}', [this,]);
+                addObject('{% trans "Add cron job"|force_escape %}', '{% url freeadmin_model_add app="system",model="CronJob" %}', [this,]);
         </script>
         </button>
         </p>

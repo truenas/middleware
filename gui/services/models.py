@@ -1170,13 +1170,13 @@ class Rsyncd(Model):
             )
 
     class Meta:
-        verbose_name = _("Rsyncd")
-        verbose_name_plural = _("Rsyncd")
+        verbose_name = _("configure rsyncd")
+        verbose_name_plural = _("configure rsyncd")
 
     class FreeAdmin:
         deletable = False
-        menu_child_of = 'Rsync'
-        #icon_model = u"Icon"
+        menu_child_of = "Rsync"
+        icon_model = u"rsyncdIcon"
 
 class RsyncMod(Model):
     rsyncmod_name = models.CharField(
@@ -1234,11 +1234,12 @@ class RsyncMod(Model):
             )
 
     class Meta:
-        verbose_name = _("Rsync Module")
-        verbose_name_plural = _("Rsync Modules")
+        verbose_name = _("rsync module")
+        verbose_name_plural = _("rsync modules")
 
     class FreeAdmin:
         menu_child_of = 'Rsync'
+        icon_model = u"rsyncModIcon"
 
     def __unicode__(self):
         return unicode(self.rsyncmod_name)
@@ -1281,3 +1282,5 @@ class SMART(Model):
         verbose_name_plural = _("S.M.A.R.T.")
     class FreeAdmin:
         deletable = False
+        icon_model = u"SMARTIcon"
+

@@ -35,13 +35,13 @@
     </tr>
     {% empty %}
     <tr>
-        <td colspan="8">{% trans "No rsyncs defined" %}</td>
+        <td colspan="8">{% trans "No rsync tasks defined." %}</td>
     </tr>
     {% endfor %}
     </table>
               <p class="btn">
         <button dojoType="dijit.form.Button" type="button">
-            {% trans "Add Rsync" %}
+            {% trans "Add rsync task" %}
             <script type="dojo/method" event="onClick" args="evt">
                 addObject('{% trans "Add Rsync"|force_escape %}', '{% url freeadmin_model_add app="system",model="Rsync" %}', [this,]);
         </script>

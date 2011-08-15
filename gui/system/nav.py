@@ -29,13 +29,15 @@ class Settings(TreeNode):
 class ViewCron(TreeNode):
 
         gname = 'system.CronJob.View'
-        name = _('Cron Scheduler')
+        name = _('View cron jobs')
         type = 'opencron'
+        icon = u"ViewcronJobIcon"
         append_app = False
 
 class ViewRsync(TreeNode):
 
         gname = 'system.Rsync.View'
+        name = _('View rsync tasks')
         view = 'system_rsyncs'
         append_app = False
 
@@ -43,4 +45,5 @@ class ViewSmarttest(TreeNode):
 
         gname = 'system.SMARTTest.View'
         view = 'system_smarttests'
+        name = _('View S.M.A.R.T. tests')
         append_app = False

@@ -414,6 +414,19 @@ table.grid tr {
 .AddReplIcon { background-image: url('/media/images/ui/tree/add_replication.png'); width:16px;        height:16px; }
 .ReplIcon { background-image: url('/media/images/ui/tree/replication.png'); width:16px;        height:16px; }
 .ViewAllReplIcon { background-image: url('/media/images/ui/tree/view_all_replication.png'); width:16px;        height:16px; }
+.cronJobIcon { background-image: url('/media/images/ui/tree/cron.png'); width:16px;        height:16px; }
+.AddcronJobIcon { background-image: url('/media/images/ui/tree/add_cron_job.png'); width:16px;        height:16px; }
+.ViewcronJobIcon { background-image: url('/media/images/ui/tree/view_cron_jobs.png'); width:16px;        height:16px; }
+.SMARTIcon { background-image: url('/media/images/ui/tree/smart.png'); width:16px;        height:16px; }
+.AddSMARTTestIcon { background-image: url('/media/images/ui/tree/add_smart_test.png'); width:16px;        height:16px; }
+.ViewSMARTTestIcon { background-image: url('/media/images/ui/tree/view_smart_tests.png'); width:16px;        height:16px; }
+.rsyncIcon { background-image: url('/media/images/ui/tree/rsync.png'); width:16px;        height:16px; }
+.rsyncdIcon { background-image: url('/media/images/ui/tree/settings.png'); width:16px;        height:16px; }
+.rsyncModIcon { background-image: url('/media/images/ui/tree/rsync_modules.png'); width:16px;        height:16px; }
+.AddrsyncTaskIcon { background-image: url('/media/images/ui/tree/add_rsync_task.png'); width:16px;        height:16px; }
+.ViewrsyncTaskIcon { background-image: url('/media/images/ui/tree/view_rsync_tasks.png'); width:16px;        height:16px; }
+.AddrsyncModIcon { background-image: url('/media/images/ui/tree/add_rsync_module.png'); width:16px;        height:16px; }
+.ViewAllrsyncModIcon { background-image: url('/media/images/ui/tree/view_rsync_modules.png'); width:16px;        height:16px; }
 
 .dijitTextArea {
 min-height:60px;

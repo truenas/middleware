@@ -301,11 +301,12 @@ class CronJob(Model):
             verbose_name=_("Enabled"),
             )
     class Meta:
-        verbose_name = _("CronJob")
-        verbose_name_plural = _("CronJobs")
+        verbose_name = _("cron job")
+        verbose_name_plural = _("cron jobs")
 
     class FreeAdmin:
-        pass
+        icon_model = u"cronJobIcon"
+        icon_add = u"AddcronJobIcon"
 
     def __unicode__(self):
         return u"%d (%s)" % (self.id, self.cron_user)
@@ -458,11 +459,13 @@ class Rsync(Model):
             blank=True
             )
     class Meta:
-        verbose_name = _("Rsync")
-        verbose_name_plural = _("Rsyncs")
+        verbose_name = _("rsync task")
+        verbose_name_plural = _("rsync tasks")
 
     class FreeAdmin:
-        pass
+        icon_model = u"rsyncIcon"
+        icon_add = u"AddrsyncTaskIcon"
+        icon_view = u"ViewrsyncTaskIcon"
 
     def __unicode__(self):
         return u"%d (%s)" % (self.id, self.rsync_user)
@@ -595,11 +598,13 @@ class SMARTTest(Model):
         return unicode(self.smarttest_disk)
 
     class Meta:
-        verbose_name = _("S.M.A.R.T. Test")
-        verbose_name_plural = _("S.M.A.R.T. Tests")
+        verbose_name = _("S.M.A.R.T. test")
+        verbose_name_plural = _("S.M.A.R.T. tests")
         unique_together = (
             ('smarttest_disk', 'smarttest_type'),
         )
 
     class FreeAdmin:
-        pass
+        icon_model = u"SMARTIcon"
+        icon_add = u"AddSMARTTestIcon"
+        icon_view = u"ViewSMARTTestIcon"

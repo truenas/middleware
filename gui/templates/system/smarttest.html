@@ -33,7 +33,7 @@
     </tr>
     {% empty %}
     <tr>
-        <td colspan="6">{% trans "No S.M.A.R.T. Tests defined" %}</td>
+        <td colspan="6">{% trans "No S.M.A.R.T. tests defined" %}</td>
     </tr>
     {% endfor %}
     </table>
@@ -41,7 +41,7 @@
         <button dojoType="dijit.form.Button" type="button">
             {% trans "Add S.M.A.R.T. Test" %}
             <script type="dojo/method" event="onClick" args="evt">
-                addObject('{% trans "Add S.M.A.R.T. Test"|force_escape %}', '{% url freeadmin_model_add app="system",model="SMARTTest" %}', [this,]);
+                addObject('{% trans "Add S.M.A.R.T. test"|force_escape %}', '{% url freeadmin_model_add app="system",model="SMARTTest" %}', [this,]);
         </script>
         </button>
     </p>
