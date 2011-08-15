@@ -280,6 +280,9 @@ _gen_conf()
 	_count_config fusefs_enable storage_volume vol_fstype =\'NTFS\'
 	_count_config fusefs_safe storage_volume vol_fstype =\'NTFS\'
 	_count_config powerd_enable system_advanced adv_powerdaemon =1
+	_count_config mountd_enable sharing_nfs_share nfs_path !=\'\'
+	_count_config nfs_server_enable sharing_nfs_share nfs_path !=\'\'
+	_count_config nfsd_enable sharing_nfs_share nfs_path !=\'\'
 
 	# set NFS server options
 	local IFS=\|
