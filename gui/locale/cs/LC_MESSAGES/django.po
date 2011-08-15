@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-08-09 08:36+0200\n"
-"Last-Translator: Vencis <vencis@seznam.cz>\n"
+"PO-Revision-Date: 2011-08-14 14:08+0200\n"
+"Last-Translator: Radim <kolar.radim@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -111,9 +111,8 @@ msgid "Disabled"
 msgstr "Vypnuto"
 
 #: choices.py:82
-#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Minimální spotřeba s pohotovostním režimem (spindown)"
+msgstr "Level 1 - Minimální spotřeba s pohotovostním režimem (spindown)"
 
 #: choices.py:83
 #, fuzzy
@@ -360,9 +359,8 @@ msgid "lzjb (recommended)"
 msgstr "lzjb (doporučeno)"
 
 #: choices.py:283
-#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr "výchozí úroveň"
+msgstr "gzip (Standardní komprese, Level 6)"
 
 #: choices.py:284
 msgid "gzip (fastest)"
@@ -407,18 +405,17 @@ msgid "Read-only"
 msgstr "pouze čtení"
 
 #: choices.py:442
-#, fuzzy
 msgid "Write-only"
-msgstr "pouze čtení"
+msgstr "pouze zápis"
 
 #: choices.py:443
 msgid "Read and Write"
 msgstr ""
 
 #: choices.py:447 choices.py:448
-#, python-format
+#, fuzzy, python-format
 msgid "%(minutes)s minutes"
-msgstr ""
+msgstr "%(minutes) minut"
 
 #: choices.py:449
 #, python-format
@@ -426,19 +423,19 @@ msgid "%(hour)s hour"
 msgstr "hodin: %"
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
-#, python-format
+#, fuzzy, python-format
 msgid "%(hours)s hours"
-msgstr ""
+msgstr "%(hours) hodin"
 
 #: choices.py:455
-#, python-format
+#, fuzzy, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(day) dnů"
 
 #: choices.py:456
-#, python-format
+#, fuzzy, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(week) týden"
 
 #: choices.py:460
 #, fuzzy
@@ -459,6 +456,8 @@ msgstr ""
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
+"Nečinný režim - zařízení je kontrolováno pokud není v režimu spánku, úspory "
+"nebo nečinnosti"
 
 #: choices.py:467
 msgid "Long Self-Test"
@@ -645,7 +644,7 @@ msgstr "Uživatele %s nelze smazat!"
 
 #: account/nav.py:5 templates/menubar.html:43
 msgid "Account"
-msgstr ""
+msgstr "Účty"
 
 #: account/nav.py:11 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:113
@@ -671,24 +670,20 @@ msgid "View All Groups"
 msgstr "zobrazit všechny skupiny"
 
 #: account/views.py:78
-#, fuzzy
 msgid "Password successfully updated."
-msgstr "%s úspěšně aktualizováno."
+msgstr "Heslo úspěšně aktualizováno."
 
 #: account/views.py:92
-#, fuzzy
 msgid "Admin user successfully updated."
-msgstr "%s úspěšně aktualizováno."
+msgstr "Administrátor byl úspěšně aktualizován."
 
 #: account/views.py:102
-#, fuzzy
 msgid "Users successfully updated."
-msgstr "%s úspěšně aktualizováno."
+msgstr "Uživatelé byli úspěšně aktualizováni."
 
 #: account/views.py:115
-#, fuzzy
 msgid "Groups successfully updated."
-msgstr "%s úspěšně aktualizováno."
+msgstr "Skupiny byly úspěšně aktualizovány."
 
 #: contrib/ext_formwizard.py:170
 msgid ""
@@ -709,13 +704,14 @@ msgid "The group %s is not valid."
 msgstr ""
 
 #: freeadmin/forms.py:138
+#, fuzzy
 msgid "The path must reside within a volume mount point"
-msgstr ""
+msgstr "Adresář se musí nacházet v rámci připojení svazku"
 
 #: freeadmin/navtree.py:315
 #, python-format
 msgid "Add %s"
-msgstr ""
+msgstr "Přidat %s"
 
 #: freeadmin/navtree.py:327
 #, fuzzy, python-format
@@ -746,7 +742,7 @@ msgstr "%s úspěšně aktualizováno."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Pokus o restart služby byl neúspěšný."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -779,13 +775,13 @@ msgid "Parent Interface"
 msgstr "virtuální rozhraní"
 
 #: network/forms.py:109
-#, fuzzy
 msgid "The name must be vlanXX where XX is a integer"
-msgstr "připojení se musí jmenovat vlanXX kde XX je jméno"
+msgstr "připojení se musí jmenovat vlanXX kde XX je číslo"
 
 #: network/forms.py:115
+#, fuzzy
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "čísla VLANů jsou od 1 do 4095 včetně"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -828,7 +824,7 @@ msgstr "DNS 3"
 #: network/models.py:83 network/models.py:84 network/nav.py:21
 #: templates/network/index.html:3
 msgid "Global Configuration"
-msgstr "hlavní nastavení"
+msgstr "Hlavní nastavení"
 
 #: network/models.py:96
 msgid "Pick your NIC"
@@ -921,9 +917,8 @@ msgid "VLAN"
 msgstr "VLAN"
 
 #: network/models.py:200
-#, fuzzy
 msgid "VLANs"
-msgstr "VLAN"
+msgstr "VLANy"
 
 #: network/models.py:220
 msgid "Protocol Type"
@@ -982,9 +977,8 @@ msgid "View All Link Aggregations"
 msgstr "zobrazit všechny linky agregace"
 
 #: network/views.py:180
-#, fuzzy
 msgid "LAGG successfully added"
-msgstr "%s úspěšně přidáno"
+msgstr "Rozhraní typu LAGG bylo úspěšně přidáno"
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -996,16 +990,17 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Toto pole je vyžadováno pro \"domovské adresáře.\""
 
 #: services/forms.py:90
+#, fuzzy
 msgid "The AFP service failed to reload."
-msgstr ""
+msgstr "Službě AFP se nepodařilo znovu načíst konfiguraci"
 
 #: services/forms.py:99
 msgid "The NFS service failed to reload."
-msgstr ""
+msgstr "Službě NFS se nepodařilo znovu načíst konfiguraci"
 
 #: services/forms.py:103
 msgid "File Permission"
-msgstr "oprávnění pro soubor "
+msgstr "oprávnění pro soubor"
 
 #: services/forms.py:104
 msgid "Directory Permission"
@@ -1037,31 +1032,31 @@ msgstr "Toto pole je vyžadováno pro anonymní přihlášení"
 
 #: services/forms.py:191
 msgid "The ftp service failed to start."
-msgstr ""
+msgstr "Pokus o start služby ftp byl neúspěšný."
 
 #: services/forms.py:200
 msgid "The tftp service failed to reload."
-msgstr ""
+msgstr "Službě tftp se nepodařilo znovu načíst konfiguraci."
 
 #: services/forms.py:207
 msgid "The SSH service failed to reload."
-msgstr ""
+msgstr "Službě SSH se nepodařilo znovu načíst konfiguraci."
 
 #: services/forms.py:216 services/forms.py:241
 msgid "The Rsync service failed to reload."
-msgstr ""
+msgstr "Službě Rsync se nepodařilo znovu načíst konfiguraci."
 
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
-msgstr ""
+msgstr "Jméno nemůže obsahovat lomítko nebo hranatou závorku"
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
-msgstr ""
+msgstr "Službě DynamicDNS se nepodařilo znovu načíst konfiguraci."
 
 #: services/forms.py:259
 msgid "The SNMP service failed to reload."
-msgstr ""
+msgstr "Službě SNMP se nepodařilo znovu načíst konfiguraci."
 
 #: services/forms.py:273
 msgid "The activedirectory service failed to reload."
@@ -1078,7 +1073,7 @@ msgstr "Heslo"
 
 #: services/forms.py:291 services/models.py:527
 msgid "Target side secret."
-msgstr ""
+msgstr "Heslo cíle"
 
 #: services/forms.py:292
 msgid "Secret (Confirm)"
@@ -1106,7 +1101,7 @@ msgstr "Heslo se neshoduje"
 
 #: services/forms.py:324 services/forms.py:325
 msgid "The peer secret is required if you set a peer user."
-msgstr ""
+msgstr "Pokud nastavíte uživatele musíte nastavit i heslo"
 
 #: services/forms.py:328
 msgid "The peer secret cannot be the same as user secret."
@@ -1139,7 +1134,7 @@ msgstr ""
 #: services/forms.py:413
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr "Tato hodnota musí být mezi %(začátek) a % (konec), včetně."
+msgstr "Tato hodnota musí být mezi %(start) a % (end), včetně."
 
 #: services/forms.py:421
 #, fuzzy
@@ -1149,11 +1144,11 @@ msgstr "Toto pole je vyžadováno pro \"domovské adresáře.\""
 
 #: services/forms.py:504 services/forms.py:534
 msgid "You need to specify a filepath, not a directory."
-msgstr ""
+msgstr "Je potřeba zadat cestu k souboru, ne k adresáři"
 
 #: services/forms.py:508 services/forms.py:538
 msgid "You need to specify a file inside your volume/dataset."
-msgstr ""
+msgstr "Musíte zadat soubor uvnitř vašeho svazku."
 
 #: services/forms.py:512 services/forms.py:542
 msgid ""
@@ -1261,7 +1256,7 @@ msgstr ""
 
 #: services/models.py:104 services/models.py:191
 msgid "Guest account"
-msgstr ""
+msgstr "Účet hosta"
 
 #: services/models.py:105 services/models.py:192
 msgid ""
@@ -2950,7 +2945,7 @@ msgstr ""
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
-msgstr ""
+msgstr "Sdílení"
 
 #: storage/forms.py:154 storage/forms.py:348 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
@@ -3527,7 +3522,7 @@ msgstr ""
 
 #: system/models.py:78 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
-msgstr ""
+msgstr "Nastavení"
 
 #: system/models.py:85
 msgid "Enable Console Menu"
@@ -3891,7 +3886,7 @@ msgstr ""
 
 #: system/nav.py:18
 msgid "System Information"
-msgstr ""
+msgstr "Informace o Systému"
 
 #: system/nav.py:32
 msgid "Cron Scheduler"
@@ -3915,11 +3910,11 @@ msgstr ""
 
 #: templates/base.html:32
 msgid "expand all"
-msgstr ""
+msgstr "rozbal vše"
 
 #: templates/base.html:33
 msgid "collapse all"
-msgstr ""
+msgstr "Sbal vše"
 
 #: templates/menubar.html:33
 msgid "Log Out"
@@ -4351,11 +4346,11 @@ msgstr ""
 
 #: templates/registration/login.html:50
 msgid "Welcome to FreeNAS 8"
-msgstr ""
+msgstr "Vítejte ve FreeNAS 8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
-msgstr ""
+msgstr "Přihlašte se."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
@@ -4371,51 +4366,51 @@ msgstr ""
 
 #: templates/services/index.html:13
 msgid "AFP Settings"
-msgstr ""
+msgstr "Nastavení AFP"
 
 #: templates/services/index.html:24
 msgid "Active Directory Settings"
-msgstr ""
+msgstr "Nastavení Active Directory"
 
 #: templates/services/index.html:35
 msgid "CIFS Settings"
-msgstr ""
+msgstr "Nastavení CIFS"
 
 #: templates/services/index.html:48
 msgid "Dynamic DNS Settings"
-msgstr ""
+msgstr "Nastavení Dynamic DNS"
 
 #: templates/services/index.html:59
 msgid "FTP Settings"
-msgstr ""
+msgstr "Nastavení FTP"
 
 #: templates/services/index.html:70
 msgid "LDAP Settings"
-msgstr ""
+msgstr "Nastavení LDAP"
 
 #: templates/services/index.html:81
 msgid "NFS Settings"
-msgstr ""
+msgstr "Nastavení NFS"
 
 #: templates/services/index.html:92
 msgid "Rsync Settings"
-msgstr ""
+msgstr "Nastavení Rsync"
 
 #: templates/services/index.html:103
 msgid "SNMP Settings"
-msgstr ""
+msgstr "Nastavení SNMP"
 
 #: templates/services/index.html:114
 msgid "S.M.A.R.T. Settings"
-msgstr ""
+msgstr "Nastavení S.M.A.R.T."
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
-msgstr ""
+msgstr "Nastavení SSH"
 
 #: templates/services/index.html:136
 msgid "TFTP Settings"
-msgstr ""
+msgstr "Nastavení TFTP"
 
 #: templates/services/index.html:141
 msgid "iSCSI"
@@ -4423,7 +4418,7 @@ msgstr ""
 
 #: templates/services/index.html:149
 msgid "ISCSI Settings"
-msgstr ""
+msgstr "Nastavení ISCSI"
 
 #: templates/services/iscsi.html:2
 msgid "iSCSI Management"
@@ -4807,9 +4802,8 @@ msgid "Are you sure you want to export?"
 msgstr ""
 
 #: templates/storage/volumes.html:30 templates/storage/volumes.html.py:34
-#, fuzzy
 msgid "Create ZFS Volume"
-msgstr "svazek ZFS"
+msgstr "Vytvořit svazek ZFS"
 
 #: templates/storage/volumes.html:64
 msgid "There are no active volumes."
@@ -4828,9 +4822,8 @@ msgid "Status"
 msgstr ""
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
-#, fuzzy
 msgid "Destroy ZFS Volume"
-msgstr "svazek ZFS"
+msgstr "Zrušit svazek ZFS"
 
 #: templates/storage/volumes.html:128 templates/storage/volumes.html.py:132
 msgid "Destroy Dataset"
@@ -4895,9 +4888,8 @@ msgid "Existing data will be cleared"
 msgstr ""
 
 #: templates/storage/zvols.html:9
-#, fuzzy
 msgid "Add ZFS Volume"
-msgstr "svazek ZFS"
+msgstr "Přidat svazek ZFS"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
@@ -4909,7 +4901,7 @@ msgstr "Mezipaměť nemohla být znovu vytvořena."
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
-msgstr ""
+msgstr "Obnovit LDAP/AD vyrovnávací paměť"
 
 #: templates/system/config.html:3
 msgid "Restore to Factory Defaults"
@@ -4921,11 +4913,11 @@ msgstr "Obnovit původní nastavení"
 
 #: templates/system/config.html:9
 msgid "Save Config"
-msgstr ""
+msgstr "Uložit konfiguraci"
 
 #: templates/system/config.html:12 templates/system/config.html.py:14
 msgid "Upload Config"
-msgstr ""
+msgstr "Nahrát konfiguraci"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
@@ -4941,7 +4933,7 @@ msgstr ""
 
 #: templates/system/cronjob.html:40
 msgid "No CronJobs defined"
-msgstr ""
+msgstr "Žádné úlohy nejsou naplánovány"
 
 #: templates/system/cronjob.html:46 templates/system/cronjob.html.py:48
 msgid "Add CronJob"
@@ -4949,7 +4941,7 @@ msgstr ""
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr ""
+msgstr "Restartuji systém..."
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
@@ -4965,43 +4957,43 @@ msgstr "Odeslat zkušební email"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
-msgstr ""
+msgstr "Hodinové"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
-msgstr ""
+msgstr "Hodinové grafy"
 
 #: templates/system/reporting.html:18
 msgid "Daily"
-msgstr ""
+msgstr "Denní"
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
-msgstr ""
+msgstr "Denní grafy"
 
 #: templates/system/reporting.html:32
 msgid "Weekly"
-msgstr ""
+msgstr "Týdenní"
 
 #: templates/system/reporting.html:33
 msgid "Weekly Graphs"
-msgstr ""
+msgstr "Týdenní grafy"
 
 #: templates/system/reporting.html:46
 msgid "Monthly"
-msgstr ""
+msgstr "Měsíční"
 
 #: templates/system/reporting.html:47
 msgid "Monthly Graphs"
-msgstr ""
+msgstr "Měsíční grafy"
 
 #: templates/system/reporting.html:60
 msgid "Yearly"
-msgstr ""
+msgstr "Roční"
 
 #: templates/system/reporting.html:61
 msgid "Yearly Graphs"
-msgstr ""
+msgstr "Roční Grafy"
 
 #: templates/system/rsync.html:38
 msgid "No rsyncs defined"
@@ -5037,7 +5029,7 @@ msgstr ""
 
 #: templates/system/system_info.html:16
 msgid "Memory"
-msgstr ""
+msgstr "Paměť"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
@@ -5056,9 +5048,9 @@ msgid "FreeNAS Build"
 msgstr ""
 
 #: templates/system/wizard.html:3
-#, python-format
+#, fuzzy, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr ""
+msgstr "Krok %(step) z %(step_count)"
 
 msgid "%s successfully update."
 msgstr "%s aktualizace proběhla úspěšně"
