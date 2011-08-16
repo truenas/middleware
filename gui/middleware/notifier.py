@@ -1222,9 +1222,9 @@ class notifier:
         self.__system("/bin/rm -fr /var/tmp/firmware/etc")
 
     def get_volume_status(self, name, fs, group_type):
+        status = 'UNKNOWN'
         if fs == 'ZFS':
-            result = self.__pipeopen('zpool list -H -o health %s' % name.__str__()).communicate()[0].strip('\n')
-            return result
+            status = self.__pipeopen('zpool list -H -o health %s' % name.__str__()).communicate()[0].strip('\n')
         elif fs == 'UFS':
             gtype = None
             for gtypes in group_type:
@@ -1243,13 +1243,16 @@ class notifier:
                 doc = self.__geom_confxml()
                 search = doc.xpathEval("//class[name = '%s']/geom[name = '%s']/config/State" % (gtype, name))
                 if len(search) > 0:
-                    return search[0].content
+                    status = search[0].content
 
-                search = doc.xpathEval("//class[name = '%s']/geom[name = '%s%s']/config/State" % (gtype, name, gtype.lower()))
-                if len(search) > 0:
-                    return search[0].content
+                else:
+                    search = doc.xpathEval("//class[name = '%s']/geom[name = '%s%s']/config/State" % (gtype, name, gtype.lower()))
+                    if len(search) > 0:
+                        status = search[0].content
 
-        return 'UNKNOWN'
+        if status in ('UP', 'COMPLETE'):
+            status = 'ONLINE'
+        return status
 
     def checksum(self, path, algorithm='sha256'):
         algorithm2map = {

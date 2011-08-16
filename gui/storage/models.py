@@ -49,6 +49,17 @@ class Volume(Model):
             choices=choices.VolumeType_Choices,
             verbose_name = _("File System Type"),
             )
+    def _get_status(self):
+        try:
+            # Make sure do not compute it twice
+            if not hasattr(self, '_status'):
+                group_type = DiskGroup.objects.filter(group_volume__exact=\
+                        self).values_list('group_type')
+                self._status = notifier().get_volume_status(self.vol_name, self.vol_fstype, group_type)
+            return self._status
+        except Exception:
+            return _(u"Error")
+    status = property(_get_status)
     class Meta:
         verbose_name = _("Volume")
     class FreeAdmin:
@@ -340,13 +351,8 @@ class MountPoint(Model):
             return _(u"Error")
     def _get_status(self):
         try:
-            # Make sure do not compute it twice
             if not hasattr(self, '_status'):
-                fs = self.mp_volume.vol_fstype
-                name = self.mp_volume.vol_name
-                group_type = DiskGroup.objects.filter(group_volume__exact=\
-                        self.mp_volume).values_list('group_type')
-                self._status = notifier().get_volume_status(name, fs, group_type)
+                self._status = self.mp_volume.status
             return self._status
         except Exception:
             return _(u"Error")
