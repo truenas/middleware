@@ -90,7 +90,7 @@ class Volume(Model):
 
             for mp in self.mountpoint_set.all():
                 reloads = map(sum, zip(reloads, mp.delete_attachments()))
-                mp.delete(reload=False)
+                mp.delete(do_reload=False)
 
             zvols = notifier().list_zfs_vols(self.vol_name)
             for zvol in zvols:
