@@ -148,6 +148,8 @@ add_port www/py-dojango
 add_port devel/py-setuptools
 #-databases/py-south
 add_port databases/py-south
+add_port devel/py-asn1
+add_port devel/py-asn1-modules
 #+add_port www/lighttpd
 add_port www/spawn-fcgi
 #-add_port www/lighttpd
