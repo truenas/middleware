@@ -27,13 +27,13 @@
                         <button dojoType="dijit.form.Button" type="button">
                             {% trans "Edit" %}
                         <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Edit Apple Share"|force_escape %}', '{% url freeadmin_model_edit app="sharing",model="AFP_Share",oid=a.id %}', [this,]);
+                        editObject('{% trans "Edit Apple Share"|force_escape %}', '{{ a.get_edit_url }}', [this,]);
                         </script>
                         </button>
                         <button dojoType="dijit.form.Button" type="button">
                             {% trans "Delete" %}
                         <script type="dojo/method" event="onClick" args="evt">
-                        editObject('{% trans "Delete Apple Share"|force_escape %}', '{% url freeadmin_model_delete app="sharing",model="AFP_Share",oid=a.id %}', [this,]);
+                        editObject('{% trans "Delete Apple Share"|force_escape %}', '{{ a.get_delete_url }}', [this,]);
                         </script>
                         </button>
                     </td>
@@ -49,7 +49,7 @@
                     <button dojoType="dijit.form.Button" type="button">
                         {% trans "Add Apple Share" %}
                         <script type="dojo/method" event="onClick" args="evt">
-                        addObject('{% trans "Add Apple Share (AFP)"|force_escape %}', '{% url freeadmin_model_add app="sharing",model="AFP_Share" %}', [this,]);
+                        editObject('{% trans "Add Apple Share (AFP)"|force_escape %}', '{% url freeadmin_model_add app="sharing",model="AFP_Share" %}', [this,]);
                     </script>
                     </button>
                 </p>

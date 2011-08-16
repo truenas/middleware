@@ -80,7 +80,7 @@ class CIFSForm(ModelForm):
         super(CIFSForm, self).save()
         started = notifier().reload("cifs")
         if started is False and models.services.objects.get(srv_service='cifs').srv_enable:
-            raise ServiceFailed("cifs", "The CIFS service failed to reload.")
+            raise ServiceFailed("cifs", _("The CIFS service failed to reload."))
 
 class AFPForm(ModelForm):
     class Meta:

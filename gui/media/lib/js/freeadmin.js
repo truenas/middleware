@@ -28,7 +28,6 @@
     dojo.require("dojo.data.ItemFileReadStore");
     dojo.require("dojo.data.ItemFileWriteStore");
     dojo.require("dojo.dnd.Moveable");
-    //dojo.require("dijit.tree.dndSource");
     dojo.require("dojo.NodeList-traverse");
     dojo.require("dojo.NodeList-manipulate");
     dojo.require("dojo.io.iframe");
