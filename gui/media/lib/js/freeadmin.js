@@ -1071,9 +1071,9 @@
                             widgets.push(widget);
                         }
                     });
-                    addObject(item.name, item.view, widgets);
+                    editObject(item.name, item.view, widgets);
                 } else
-                    addObject(item.name, item.view);
+                    editObject(item.name, item.view);
             } else if(item.type && item.type == 'volumewizard') {
                 var data = dojo.query(".data_"+item.app_name+"_"+item.model);
                 if(data) {
