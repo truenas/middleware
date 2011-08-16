@@ -60,7 +60,7 @@ class bsdGroups(Model):
         return self.bsdgrp_group
     def delete(self, using=None, reload=True):
         if self.bsdgrp_builtin == True:
-            raise ValueError(_("Group %s is built-in and can not be deleted!") % (self.bsdgroup_group))
+            raise ValueError(_("Group %s is built-in and can not be deleted!") % (self.bsdgrp_group))
         notifier().user_deletegroup(self.bsdgrp_group.__str__())
         super(bsdGroups, self).delete(using)
         if reload:

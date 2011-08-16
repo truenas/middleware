@@ -223,7 +223,7 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
         super(bsdUserCreationForm, self).__init__(*args, **kwargs)
         self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
         self.fields['bsdusr_shell'].choices.sort()
-        self.initial['bsdusr_uid'] = notifier().user_getnextuid()
+        self.fields['bsdusr_uid'].initial = notifier().user_getnextuid()
         self.fields['bsdusr_group2'].widget.attrs['maxHeight'] = 200
         self.fields['bsdusr_group2'].choices = (('-----', '-----'),) + tuple([x for x in self.fields['bsdusr_group2'].choices][1:])
         self.fields['bsdusr_group2'].required = False

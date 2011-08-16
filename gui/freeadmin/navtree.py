@@ -364,14 +364,11 @@ class NavTree(object):
         tree_roots.register(nav)
 
     def _build_nav(self):
-
         navs = []
         for nav in tree_roots['main']:
-
             nav.option_list = self.build_options(nav)
             nav.get_absolute_url()
             navs.append(nav)
-
         return navs
 
     def build_options(self, nav):
@@ -476,46 +473,6 @@ def _get_or_create(name, groups):
     nav.nav_group = 'main'
     groups.register(nav)
     return nav
-
-def json2nav(jdata):
-    import json
-    data = json.loads(jdata)
-
-    group = NavGroups()
-    #group = tree_roots
-
-    navs = {}
-    for item in data['items']:
-
-        navopt = TreeNode()
-        for attr in item:
-
-            if attr in ['children', 'app']:
-                continue
-
-            if attr == 'view':
-                try:
-                    func, args, kwargs = resolve(item['view'])
-                    navopt.view = func.__name__
-                    navopt.args = args
-                    navopt.kwargs = kwargs
-                    pass
-                except Http404:
-                    pass
-            else:
-                navopt.__setattr__(attr, item[attr])
-
-        navs[navopt.id] = navopt
-
-        if item.has_key('children'):
-            for dic in item['children']:
-                id = dic["_reference"]
-                navopt.append_child( navs[id] )
-        if item.has_key('app'):
-            app = _get_or_create(item['app'], group)
-            app.append_child(navopt)
-
-    return group
 
 
 """

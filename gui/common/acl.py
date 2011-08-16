@@ -144,13 +144,13 @@ class Base_ACL_setfacl:
         if self.__entry:
             cmd += "%s " % self.__entry
         cmd += "'%s'" % self.__path
-        
+
         self.__out = str(Base_ACL_pipe(cmd))
 
         syslog(LOG_DEBUG, "Base_ACL_setfacl.__init__: out = %s" % self.__out)
         syslog(LOG_DEBUG, "Base_ACL_setfacl.__init__: leave")
 
-    def _buld_args(self, path, entry, flags, pos):
+    def _build_args(self, path, entry, flags, pos):
         return None
 
 
@@ -412,7 +412,7 @@ class Base_ACL_Hierarchy(Base_ACL):
                     callback(file, *args, **kwargs)
 
     def new_ACL(self, path):
-        return base_ACL(path)
+        return Base_ACL(path)
 
     def _set_windows_file_defaults(self, acl):
         pass
@@ -427,7 +427,7 @@ class Base_ACL_Hierarchy(Base_ACL):
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__set_file_defaults: enter")
         syslog(LOG_DEBUG, "Base_ACL_Hierarchy.__set_file_defaults: acl = %s" % acl)
 
-        if self.windows: 
+        if self.windows:
             self._set_windows_file_defaults(acl)
         else:
             self._set_unix_file_defaults(acl)

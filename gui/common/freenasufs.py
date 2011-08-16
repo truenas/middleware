@@ -211,13 +211,13 @@ class POSIX_ACL(Base_ACL):
                 for c in comment_parts:
                     c = c.strip()
 
-                    parts = c.split(":") 
+                    parts = c.split(":")
                     if parts[0] == 'file':
                         self.file = parts[1]
                     elif parts[0] == 'owner':
-                        self.owner = parts[1] 
+                        self.owner = parts[1]
                     elif parts[0] == 'group':
-                        self.group = parts[1] 
+                        self.group = parts[1]
 
             else:
                 line = line.strip()

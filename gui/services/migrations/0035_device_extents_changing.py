@@ -3,6 +3,7 @@ import datetime
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
+from freenasUI.middleware import notifier
 
 class Migration(DataMigration):
 
@@ -27,7 +28,7 @@ class Migration(DataMigration):
                     devname = notifier().identifier_to_device(disk.disk_identifier)
                     if not devname and disk.disk_identifier.startswith('{label}'):
                         devname = disk.disk_identifier.split('{label}label/extent_')[1]
-                        serial = serial_from_device(devname)
+                        serial = notifier().serial_from_device(devname)
                         if serial:
                             disk.disk_identifier = "{serial}%s" % serial
                         else:
