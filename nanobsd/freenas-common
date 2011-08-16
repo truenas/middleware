@@ -104,6 +104,7 @@ add_port net/openldap24-sasl-client
 add_port net/nss_ldap
 add_port net/rsync 
 add_port lang/python27
+add_port dns/py-dnspython
 #+net/samba
 add_port devel/talloc
 add_port devel/libexecinfo
