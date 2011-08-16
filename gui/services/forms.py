@@ -303,9 +303,19 @@ class UPSForm(ModelForm):
 
 class ActiveDirectoryForm(ModelForm):
     #file = forms.FileField(label="Kerberos Keytab File", required=False)
+    ad_adminpw2 = forms.CharField(max_length=50,
+            label=_("Confirm Administrator Password"),
+            widget=forms.widgets.PasswordInput(),
+            )
+    def clean_ad_adminpw2(self):
+        password1 = self.cleaned_data.get("ad_adminpw")
+        password2 = self.cleaned_data.get("ad_adminpw2")
+        if password1 != password2:
+            raise forms.ValidationError(_("The two password fields didn't match."))
+        return password2
     def save(self):
-        if self.files.has_key('file'):
-            self.instance.ad_keytab = base64.encodestring(self.files['file'].read())
+        #if self.files.has_key('file'):
+        #    self.instance.ad_keytab = base64.encodestring(self.files['file'].read())
         super(ActiveDirectoryForm, self).save()
         started = notifier().start("activedirectory")
         if started is False and models.services.objects.get(srv_service='activedirectory').srv_enable:
@@ -313,7 +323,7 @@ class ActiveDirectoryForm(ModelForm):
     class Meta:
         model = models.ActiveDirectory
         exclude = ('ad_keytab','ad_spn','ad_spnpw')
-        widgets = {'ad_adminpw': forms.widgets.PasswordInput(render_value=True), }
+        widgets = {'ad_adminpw': forms.widgets.PasswordInput(render_value=False), }
 
 class LDAPForm(ModelForm):
     def save(self):
