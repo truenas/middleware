@@ -50,6 +50,10 @@ esac
 if [ -n "${FREENAS_ARCH}" ]; then
     NANO_ARCH=${FREENAS_ARCH}
 fi
+# REVISION gets overloaded when doing tagged versions, SVNREVISION allows
+# us to kleep the SVN revision number even when the version string is
+# overloaded with a name.
+: ${SVNREVISION=`svnversion ${NANO_CFG_BASE}`}
 : ${REVISION=`svnversion ${NANO_CFG_BASE}`}
 NANO_NAME="FreeNAS-8r${REVISION}-${NANO_ARCH}"
 NANO_IMGNAME="${NANO_NAME}.full"
@@ -343,6 +347,10 @@ customize_cmd configure_mnt_md
 
 save_build ( )
 {
-	echo ${NANO_NAME} > ${NANO_WORLDDIR}/etc/version.freenas
+	if [ "${SVNREVISION}" = "${REVISION}" ]; then
+		echo "${NANO_NAME}" > ${NANO_WORLDDIR}/etc/version.freenas
+	else
+		echo "${NANO_NAME} (${SVNREVISION})" > ${NANO_WORLDDIR}/etc/version.freenas
+	fi
 }
 customize_cmd save_build
