@@ -52,8 +52,8 @@ class Alert(object):
 
     def volumes_status(self):
         for vol in Volume.objects.filter(vol_fstype__in=['ZFS','UFS']):
-            if vol.status == 'ONLINE':
-                self.log(self.LOG_OK, "The volume %s status is ONLINE" % vol)
+            if vol.status == 'HEALTHY':
+                self.log(self.LOG_OK, "The volume %s status is HEALTHY" % vol)
             elif vol.status == 'DEGRADED':
                 self.log(self.LOG_CRIT, "The volume %s status is DEGRADED" % vol)
             else:

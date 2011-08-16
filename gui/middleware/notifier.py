@@ -1250,8 +1250,8 @@ class notifier:
                     if len(search) > 0:
                         status = search[0].content
 
-        if status in ('UP', 'COMPLETE'):
-            status = 'ONLINE'
+        if status in ('UP', 'COMPLETE', 'ONLINE'):
+            status = 'HEALTHY'
         return status
 
     def checksum(self, path, algorithm='sha256'):
