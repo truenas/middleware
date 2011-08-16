@@ -1091,15 +1091,19 @@ class VolumeDelete(Form):
         super(VolumeDelete, self).__init__(*args, **kwargs)
         usedbytes = sum([mp._get_used_bytes() for mp in self.instance.mountpoint_set.all()])
         self.usedsize = humanize_size(usedbytes)
+        self.services = self.instance.has_attachments()
+        if self.services.keys():
+            self.fields['shares'] = forms.BooleanField(initial=False,
+                    required=True,
+                    label=_("I'm aware all shares related to this volume will be deleted"))
 
     def as_table(self):
-        from django.utils.safestring import mark_safe
-        return mark_safe("""<tr>
-            <td colspan="2">
-                """ + (__("You have %s of used space within this volume.") % self.usedsize) + \
-                """
-            </td>
-            </tr>""")
+        from django.template.loader import render_to_string
+        return render_to_string('storage/volume_delete_extra.html', {
+            'form': self,
+            'used': self.usedsize,
+            'services': self.services
+        })
 
 class VolumeExport(Form):
     cascade = forms.BooleanField(required=False,

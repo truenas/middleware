@@ -53,13 +53,18 @@ class Volume(Model):
         verbose_name = _("Volume")
     class FreeAdmin:
         delete_form = "VolumeDelete"
+    def has_attachments(self):
+        services = {}
+        for mp in self.mountpoint_set.all():
+            for service, ids in mp.has_attachments().items():
+                if ids:
+                    services[service] = services.get(service, 0) + len(ids)
+        return services
     def delete(self, destroy=True, cascade=True):
         """
         Some places reference a path which will not cascade delete
         We need to manually find all paths within this volume mount point
         """
-        import os
-        from sharing.models import CIFS_Share, AFP_Share, NFS_Share
         from services.models import iSCSITargetExtent
 
         if cascade:
@@ -203,6 +208,7 @@ class MountPoint(Model):
             )
     def is_my_path(self, path):
         import os
+        from sharing.models import CIFS_Share, AFP_Share, NFS_Share
         if path == self.mp_path:
             return True
         elif path.find(self.mp_path) >= 0:
@@ -212,12 +218,39 @@ class MountPoint(Model):
             if os.path.abspath(rep) == os.path.abspath(path):
                 return True
         return False
+
+    def has_attachments(self):
+        import os
+        from sharing.models import CIFS_Share, AFP_Share, NFS_Share
+        from services.models import iSCSITargetExtent
+        mypath = os.path.abspath(self.mp_path)
+        attachments = {
+            'cifs': [],
+            'afp': [],
+            'nfs': [],
+            'iscsiextent': [],
+        }
+
+        for cifs in CIFS_Share.objects.filter(cifs_path__startswith=mypath):
+            if self.is_my_path(cifs.cifs_path):
+                attachments['cifs'].append(cifs.id)
+        for afp in AFP_Share.objects.filter(afp_path__startswith=mypath):
+            if self.is_my_path(afp.afp_path):
+                attachments['afp'].append(cifs.id)
+        for nfs in NFS_Share.objects.filter(nfs_path__startswith=mypath):
+            if self.is_my_path(nfs.nfs_path):
+                attachments['nfs'].append(cifs.id)
+        for iscsiextent in iSCSITargetExtent.objects.filter(iscsi_target_extent_path__startswith=mypath):
+            if self.is_my_path(iscsiextent.iscsi_target_extent_path):
+                attachments['iscsiextent'].append(cifs.id)
+
+        return attachments
+
     def delete_attachments(self):
         """
         Some places reference a path which will not cascade delete
         We need to manually find all paths within this volume mount point
         """
-        import os
         from sharing.models import CIFS_Share, AFP_Share, NFS_Share
         from services.models import iSCSITargetExtent
 
@@ -226,26 +259,21 @@ class MountPoint(Model):
         reload_nfs = False
         reload_iscsi = False
 
-        mypath = os.path.abspath(self.mp_path)
-
         # Delete attached paths if they are under our tree.
         # and report if some action needs to be done.
-        for cifs in CIFS_Share.objects.filter(cifs_path__startswith=mypath):
-            if self.is_my_path(cifs.cifs_path):
-                cifs.delete()
-                reload_cifs = True
-        for afp in AFP_Share.objects.filter(afp_path__startswith=mypath):
-            if self.is_my_path(afp.afp_path):
-                afp.delete()
-                reload_afp = True
-        for nfs in NFS_Share.objects.filter(nfs_path__startswith=mypath):
-            if self.is_my_path(nfs.nfs_path):
-                nfs.delete()
-                reload_nfs = True
-        for iscsiextent in iSCSITargetExtent.objects.filter(iscsi_target_extent_path__startswith=mypath):
-            if self.is_my_path(iscsiextent.iscsi_target_extent_path):
-                iscsiextent.delete()
-                reload_iscsi = True
+        attachments = self.has_attachments()
+        if attachments['cifs']:
+            CIFS_Share.objects.filter(id__in=attachments['cifs']).delete()
+            reload_cifs = True
+        if attachments['afp']:
+            AFP_Share.objects.filter(id__in=attachments['afp']).delete()
+            reload_afp = True
+        if attachments['nfs']:
+            NFS_Share.objects.filter(id__in=attachments['nfs']).delete()
+            reload_nfs = True
+        if attachments['iscsiextent']:
+            iSCSITargetExtent.objects.filter(id__in=attachments['iscsiextent'])
+            reload_iscsi = True
         return (reload_cifs, reload_afp, reload_nfs, reload_iscsi)
     def delete(self, reload=True):
         reloads = self.delete_attachments()
