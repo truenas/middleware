@@ -36,5 +36,6 @@ urlpatterns = patterns('freenasUI.freeadmin.views',
     url(r'^app-(?P<app>\w+)/(?P<model>\w+)/datagrid/$', 'generic_model_datagrid', name="freeadmin_model_datagrid"),
     url(r'^app-(?P<app>\w+)/(?P<model>\w+)/datagrid/json$', 'generic_model_datagrid_json', name="freeadmin_model_datagrid_json"),
     url(r'^menu\.json$', 'menu', name="freeadmin_menu"),
+    url(r'^alert/status/$', 'alert_status', name="freeadmin_alert_status"),
     (r'^interface/$', 'adminInterface'),
 )

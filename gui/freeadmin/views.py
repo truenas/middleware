@@ -79,9 +79,27 @@ def menu(request, objtype = None):
 
     return HttpResponse(json, mimetype="application/json")
 
+def alert_status(request):
+
+    if os.path.exists('/var/tmp/alert'):
+        current = 'OK'
+        f = open('/var/tmp/alert', 'r')
+        entries = f.read().split('\n')
+        f.close()
+        for entry in entries:
+            if not entry:
+                continue
+            status, message = entry.split(': ')
+            if (status == 'WARN' and current == 'OK') or \
+              status == 'CRIT' and current in ('OK','WARN'):
+                current = status
+        return HttpResponse(current)
+    else:
+        return HttpResponse('OK')
+
 """
 We use the django debug 500 classes to show the traceback to the user
-instead of the useless "An error ocurred" used by dojo in case of 
+instead of the useless "An error ocurred" used by dojo in case of
 HTTP 500 responses.
 
 As this is not a public API of django we need to duplicate some code
