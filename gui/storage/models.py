@@ -54,6 +54,11 @@ class Volume(Model):
     class FreeAdmin:
         delete_form = "VolumeDelete"
     def has_attachments(self):
+        """
+        This is mainly used by the VolumeDelete form.
+        Responsible for telling the user whether there is a related
+        share, asking for confirmation
+        """
         services = {}
         for mp in self.mountpoint_set.all():
             for service, ids in mp.has_attachments().items():
@@ -78,7 +83,8 @@ class Volume(Model):
 
             zvols = notifier().list_zfs_vols(self.vol_name)
             for zvol in zvols:
-                reloads = map(sum, zip(reloads, evil_zvol_destroy(zvol, iSCSITargetExtent, Disk, WearingSafetyBelt=False)))
+                reloads = map(sum, zip(reloads, evil_zvol_destroy(zvol, \
+                            iSCSITargetExtent, Disk, WearingSafetyBelt=False)))
 
             for (svc, dirty) in zip(svcs, reloads):
                 if dirty:
@@ -172,15 +178,21 @@ class Disk(Model):
             notifier().identifier_to_device(self.disk_identifier)
             )
     def __init__(self, *args, **kwargs):
-        rv = super(Disk, self).__init__(*args, **kwargs)
+        super(Disk, self).__init__(*args, **kwargs)
         self._original_state = dict(self.__dict__)
-        return rv
     def identifier_to_device(self):
+        """
+        Get the corresponding device name from disk_identifier field
+        """
         return notifier().identifier_to_device(self.disk_identifier)
     def identifier_to_partition(self):
+        """
+        Get the corresponding partition from disk_identifier field
+        """
         return notifier().identifier_to_partition(self.disk_identifier)
     def save(self, *args, **kwargs):
-        if self.id and self._original_state.get("disk_togglesmart", None) != self.__dict__.get("disk_togglesmart"):
+        if self.id and self._original_state.get("disk_togglesmart", None) != \
+                self.__dict__.get("disk_togglesmart"):
             notifier().restart("smartd")
         super(Disk, self).save(args, kwargs)
     class Meta:
@@ -220,6 +232,10 @@ class MountPoint(Model):
         return False
 
     def has_attachments(self):
+        """
+        Return a dict composed by the name of services and ids of shares
+        dependent of this MountPoint
+        """
         import os
         from sharing.models import CIFS_Share, AFP_Share, NFS_Share
         from services.models import iSCSITargetExtent
@@ -236,13 +252,15 @@ class MountPoint(Model):
                 attachments['cifs'].append(cifs.id)
         for afp in AFP_Share.objects.filter(afp_path__startswith=mypath):
             if self.is_my_path(afp.afp_path):
-                attachments['afp'].append(cifs.id)
+                attachments['afp'].append(afp.id)
         for nfs in NFS_Share.objects.filter(nfs_path__startswith=mypath):
             if self.is_my_path(nfs.nfs_path):
-                attachments['nfs'].append(cifs.id)
-        for iscsiextent in iSCSITargetExtent.objects.filter(iscsi_target_extent_path__startswith=mypath):
+                attachments['nfs'].append(nfs.id)
+        for iscsiextent in iSCSITargetExtent.objects.filter(
+                iscsi_target_extent_path__startswith=mypath
+                ):
             if self.is_my_path(iscsiextent.iscsi_target_extent_path):
-                attachments['iscsiextent'].append(cifs.id)
+                attachments['iscsiextent'].append(iscsiextent.id)
 
         return attachments
 
@@ -275,10 +293,10 @@ class MountPoint(Model):
             iSCSITargetExtent.objects.filter(id__in=attachments['iscsiextent'])
             reload_iscsi = True
         return (reload_cifs, reload_afp, reload_nfs, reload_iscsi)
-    def delete(self, reload=True):
+    def delete(self, do_reload=True):
         reloads = self.delete_attachments()
 
-        if reload:
+        if do_reload:
             svcs = ('cifs', 'afp', 'nfs', 'iscsitarget')
             for (svc, dirty) in zip(svcs, reloads):
                 if dirty:
@@ -381,7 +399,7 @@ class Replication(Model):
             )
     repl_resetonce = models.BooleanField(
             default = False,
-            verbose_name = _("Initialize remote side for once.  (May cause data loss on remote side!)"),
+            verbose_name = _("Initialize remote side for once. (May cause data loss on remote side!)"),
             )
     repl_limit = models.IntegerField(
             default = 0,
@@ -459,7 +477,8 @@ class Task(Model):
 #            blank = True,
 #            )
     def __unicode__(self):
-        return '%s_%s_%d%s' % (self.task_mountpoint.mp_path[5:], self.task_repeat_unit, self.task_ret_count, self.task_ret_unit)
+        return '%s_%s_%d%s' % (self.task_mountpoint.mp_path[5:],
+                self.task_repeat_unit, self.task_ret_count, self.task_ret_unit)
 
     class Meta:
         verbose_name = _(u"Periodic Snapshot Task")
