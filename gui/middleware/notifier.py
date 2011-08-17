@@ -109,7 +109,7 @@ class notifier:
     def _simplecmd(self, action, what):
         syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
         syslog.syslog(syslog.LOG_DEBUG, "Calling: %s(%s) " % (action, what))
-        f = getattr(self, '_' + action + '_' + what)
+        f = getattr(self, '_' + action + '_' + what, None)
         if f is None:
             # Provide generic start/stop/restart verbs for rc.d scripts
             if action in ("start", "stop", "restart", "reload"):
@@ -163,21 +163,15 @@ class notifier:
         if objectid == None:
             self._simplecmd("init", what)
         else:
-            try:
-                f = getattr(self, '_init_' + what)
-                f(objectid, *args, **kwargs)
-            except:
-                raise
+            f = getattr(self, '_init_' + what)
+            f(objectid, *args, **kwargs)
 
     def destroy(self, what, objectid = None):
         if objectid == None:
             raise ValueError("Calling destroy without id")
         else:
-            try:
-                f = getattr(self, '_destroy_' + what)
-                f(objectid)
-            except:
-                raise
+            f = getattr(self, '_destroy_' + what)
+            f(objectid)
 
     def start(self, what):
         """ Start the service specified by "what".
@@ -1814,7 +1808,7 @@ if __name__ == '__main__':
     else:
         n = notifier()
         f = getattr(n, argv[1], None)
-        if not f:
+        if f is None:
             sys.stderr.write("Unknown action: %s\n" % argv[1])
             usage()
         print f(*argv[2:])
