@@ -109,21 +109,17 @@ class notifier:
     def _simplecmd(self, action, what):
         syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
         syslog.syslog(syslog.LOG_DEBUG, "Calling: %s(%s) " % (action, what))
-        try:
-            f = getattr(self, '_' + action + '_' + what)
-        except AttributeError:
-            """ Provide generic start/stop/restart verbs for rc.d scripts """
+        f = getattr(self, '_' + action + '_' + what)
+        if f is None:
+            # Provide generic start/stop/restart verbs for rc.d scripts
             if action in ("start", "stop", "restart", "reload"):
                 if action == 'restart':
                     self.__system("/usr/sbin/service " + what + " forcestop ")
                 self.__system("/usr/sbin/service " + what + " " + action)
                 f = self._do_nada
             else:
-                raise "Internal error: Unknown command"
-        try:
-            f()
-        except:
-            raise
+                raise ValueError("Internal error: Unknown command")
+        f()
 
     def _started(self, what):
         service2daemon = {
@@ -1800,15 +1796,15 @@ class notifier:
         return parse
 
 def usage():
-    print ("Usage: %s action command" % argv[0])
-    print """\
+    usage_str = """usage: %s action command
     Action is one of:
         start: start a command
         stop: stop a command
         restart: restart a command
-        reload: reload a command (try reload, if unsuccessful do restart)
-        change: notify change for a command (try self.reload, if unsuccessful do start)"""
-    exit
+        reload: reload a command (try reload; if unsuccessful do restart)
+        change: notify change for a command (try self.reload; if unsuccessful do start)""" \
+        % (os.path.basename(sys.argv[0]), )
+    sys.exit(usage_str)
 
 # When running as standard-alone script
 if __name__ == '__main__':
@@ -1817,9 +1813,8 @@ if __name__ == '__main__':
         usage()
     else:
         n = notifier()
-        try:
-            f = getattr(n, argv[1])
-        except:
-            print ("Unknown action: %s" % argv[1])
+        f = getattr(n, argv[1], None)
+        if not f:
+            sys.stderr.write("Unknown action: %s\n" % argv[1])
             usage()
         print f(*argv[2:])
