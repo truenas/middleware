@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-08-12 06:40+0200\n"
-"Last-Translator: dreamfox <dreamfox225@hotmail.com>\n"
+"PO-Revision-Date: 2011-08-17 01:45+0200\n"
+"Last-Translator: delphij <d@delphij.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -921,7 +921,6 @@ msgid "Link Aggregation"
 msgstr "链接聚合"
 
 #: network/models.py:265 network/nav.py:53
-#, fuzzy
 msgid "Link Aggregations"
 msgstr "链路聚合"
 
@@ -954,7 +953,6 @@ msgid "Create Link Aggregation"
 msgstr "创建链路聚合"
 
 #: network/nav.py:41
-#, fuzzy
 msgid "View All Link Aggregations"
 msgstr "查看所有链路聚合"
 
@@ -1236,7 +1234,6 @@ msgid "Guest account"
 msgstr "来宾帐户"
 
 #: services/models.py:105 services/models.py:192
-#, fuzzy
 msgid ""
 "Use this option to override the username ('nobody' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
@@ -1244,9 +1241,8 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"使用这个选项来改变以访客身份访问时采用的系统用户身份（默认为'ftp'用户）。这个"
-"用户的权限将决定所有以访客身份连接服务的客户的权限。这个用户在密码文件中必须"
-"存在，但不必拥有登录权限。"
+"使用这个选项来改变以访客身份访问时采用的系统用户身份（默认为'nobody'用户）。这个用户的权限将决定所有以访客身份连接服务的客户的权限。这个用户在密"
+"码文件中必须存在，但不必拥有登录权限。root作为访客帐户使用。"
 
 #: services/models.py:108
 msgid "Allow guest access"
@@ -1403,7 +1399,7 @@ msgstr "服务器数量"
 msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
-msgstr ""
+msgstr "指定运行的服务进程数量。这个数值需要满足客户端最高并发数，通常设为4至6之间。"
 
 #: services/models.py:219
 msgid "Asynchronous mode"
@@ -1468,7 +1464,7 @@ msgstr "每个会话中的最大连接数（默认值为8）"
 
 #: services/models.py:277
 msgid "Max. pre-send R2T"
-msgstr ""
+msgstr "最大预发送 R2T"
 
 #: services/models.py:278
 msgid ""
