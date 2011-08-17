@@ -372,11 +372,13 @@ class IPChoices(NICChoices):
 
         self._IPlist = []
         for iface in self._NIClist:
-            pipe = popen("/sbin/ifconfig %s|/usr/bin/grep inet|/usr/bin/awk '{ print $2 }'" % iface)
-            addr = pipe.read().strip()
-            if addr:
-                self._IPlist.append(addr)
+            pipe = popen("/sbin/ifconfig %s" % iface)
+            lines = pipe.read().strip().split('\n')
+            for line in lines:
+                if line.startswith('\tinet'):
+                    self._IPlist.append(line.split(' ')[1])
             pipe.close() 
+            self._IPlist.sort()
 
     def remove(self, addr):
         return self._IPlist.remove(addr)
