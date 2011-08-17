@@ -41,7 +41,6 @@ NOTIFIER_PATH = os.path.join(FREENAS_PATH, "middleware/notifier.py")
 
 FREENAS_DATA_PATH = "/data"
 FREENAS_DB = os.path.join(FREENAS_DATA_PATH, "freenas-v1.db")
-FREENAS_FACTORY_DB = os.path.join(FREENAS_DATA_PATH, "factory-v1.db")
 
 sys.path.append(WWW_PATH)
 sys.path.append(FREENAS_PATH)
@@ -427,13 +426,13 @@ def reset_gui_login():
 
 def reset_factory_defaults():
     a = raw_input("Are you sure you want to reset to factory defaults? (yes/no): ")
-    if a.startswith('y') or a.startswith('Y'):
-        if not os.stat(FREENAS_FACTORY_DB):
-            print >> sys.stderr, "Unable to reset to factory defaults, %s doesn't exist!" % FREENAS_FACTORY_DB
-
-        else:
-            os.unlink(FREENAS_DB)
-            shutil.copyfile(FREENAS_FACTORY_DB, FREENAS_DB)
+    if a.lower().startswith('y'):
+        os.unlink(FREENAS_DB)
+        save_path = os.getcwd()
+        os.chdir(FREENAS_PATH)
+        os.system("/usr/local/bin/python manage.py syncdb --noinput")
+        os.system("/usr/local/bin/python manage.py migrate --all")
+        os.chdir(save_path)
 
 def configure_lagg_interface():
     lagg_index = 0
