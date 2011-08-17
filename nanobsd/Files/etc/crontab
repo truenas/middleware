@@ -28,6 +28,7 @@ PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
 0	*	*	*	*	root	/bin/sh /root/save_rrds.sh
 
 0	*	*	*	*	root	/usr/local/bin/python /usr/local/bin/mfistatus.py > /dev/null 2>&1
+*/5	*	*	*	*	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/alert.py > /dev/null 2>&1
 *	*	*	*	*	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/autosnap.py > /dev/null 2>&1
 
 15	3	*	*	*	root	/usr/local/bin/python /usr/local/www/freenasUI/tools/cachetool.py expire >/dev/null 2>&1
