@@ -12,6 +12,20 @@
 
 : ${SMB_CONF:="/usr/local/etc/smb.conf"}
 
+is_within_zfs() {
+
+	local mp share_dev
+	share_dev=$(stat -f "%d" "$1")
+	zfs list -H -o mountpoint | while read mp; do
+		if [ "${share_dev}" -eq "`stat -f "%d" "${mp}"`" ]; then
+			echo "zfsacl"
+			return 0
+		fi
+	done
+	return 1
+
+}
+
 generate_smbconf()
 {
 	local IFS=\|
@@ -419,9 +433,10 @@ generate_exports()
 				echo "    inherit permissions = no"
 			fi
 
+			zfsacl=$(is_within_zfs "${mountpoint}")
 			if [ "${recyclebin}" = "1" ]; then
 			cat<<-EOF
-			    vfs objects = ${zfsacl}recycle${vfsobj_shadow}
+			    vfs objects = ${zfsacl} recycle${vfsobj_shadow}
 			    recycle:repository = .recycle/%U
 			    recycle:keeptree = yes
 			    recycle:versions = yes
@@ -430,7 +445,7 @@ generate_exports()
 			    recycle:subdir_mode = 0700
 EOF
 			else
-				echo "    vfs objects = zfsacl ${vfsobj_shadow}"
+				echo "    vfs objects = ${zfsacl} ${vfsobj_shadow}"
 			fi
 			if [ -n "${task_rint}" ]; then
 			cat <<-EOF
