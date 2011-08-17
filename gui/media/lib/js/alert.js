@@ -73,6 +73,9 @@ dojo.addOnLoad(function(){
             style: "width: 400px",
             id: "alert_dialog",
             href: "/admin/alert/",
+            onHide: function() {
+                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
+            },
         });
         alertdlg.show();
     });
