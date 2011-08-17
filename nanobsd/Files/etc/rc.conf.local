@@ -259,6 +259,8 @@ _gen_conf()
 	_bool_svcconfig nfs_server_enable nfs
 	_bool_svcconfig rpc_lockd_enable nfs
 	_bool_svcconfig rpc_statd_enable nfs
+	_bool_svcconfig mountd_enable nfs
+	_bool_svcconfig nfsd_enable nfs
 	_bool_svcconfig samba_enable cifs
 	_bool_svcconfig rsyncd_enable rsync
 	_bool_svcconfig bsnmpd_enable snmp
@@ -280,9 +282,6 @@ _gen_conf()
 	_count_config fusefs_enable storage_volume vol_fstype =\'NTFS\'
 	_count_config fusefs_safe storage_volume vol_fstype =\'NTFS\'
 	_count_config powerd_enable system_advanced adv_powerdaemon =1
-	_count_config mountd_enable sharing_nfs_share nfs_path !=\'\'
-	_count_config nfs_server_enable sharing_nfs_share nfs_path !=\'\'
-	_count_config nfsd_enable sharing_nfs_share nfs_path !=\'\'
 
 	# set NFS server options
 	local IFS=\|
