@@ -237,6 +237,7 @@ if [ "${DEBUG}" -eq "1" ]; then
 	add_port mail/p5-Net-SMTP-SSL
 	add_port lang/p5-Error
 	add_port devel/git -DWITH_SVN -DWITHOUT_P4 -DWITHOUT_CVS
+	add_port devel/ctags 
 fi
 	 
 
