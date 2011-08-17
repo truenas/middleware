@@ -427,12 +427,8 @@ def reset_gui_login():
 def reset_factory_defaults():
     a = raw_input("Are you sure you want to reset to factory defaults? (yes/no): ")
     if a.lower().startswith('y'):
-        os.unlink(FREENAS_DB)
-        save_path = os.getcwd()
-        os.chdir(FREENAS_PATH)
-        os.system("/usr/local/bin/python manage.py syncdb --noinput")
-        os.system("/usr/local/bin/python manage.py migrate --all")
-        os.chdir(save_path)
+        notifier().config_restore()
+        os.system("/sbin/reboot")
 
 def configure_lagg_interface():
     lagg_index = 0
