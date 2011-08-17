@@ -335,7 +335,10 @@ class MountPoint(Model):
         except:
             return _(u"Error getting available space")
     def _get_used_bytes(self):
-        return (self._vfs.f_blocks-self._vfs.f_bfree)*self._vfs.f_frsize
+        try:
+            return (self._vfs.f_blocks-self._vfs.f_bfree)*self._vfs.f_frsize
+        except:
+            return 0
     def _get_used_si(self):
         try:
             usedbytes = self._get_used_bytes()
