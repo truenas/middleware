@@ -2,10 +2,11 @@
 {% load i18n %}
 
 {% block dojango_header_extra %}
-<link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/grid/resources/claroGrid.css" type="text/css" /> 
+<link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/grid/resources/claroGrid.css" type="text/css" />
 <script type="text/javascript" src="{% url django.views.i18n.javascript_catalog %}"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/freeadmin.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/top.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lib/js/alert.js"></script>
 <script type="text/javascript">
 var STORAGE_URL = '{% url storage_wizard %}';
 dojo.addOnLoad(function(){

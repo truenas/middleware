@@ -110,7 +110,7 @@ class ExceptionReporter(debug.ExceptionReporter):
     def get_traceback_html(self):
         """
         Copied from debug.ExceptionReporter
-        The Template was replaced to use 500_freenas.html instead 
+        The Template was replaced to use 500_freenas.html instead
         of the hard-coded one
 
         Return HTML code for traceback."

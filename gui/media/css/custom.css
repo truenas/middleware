@@ -479,3 +479,21 @@ background:white;
 .treecontainer div {
 padding-left:5px;
 }
+
+.alert_ok {
+    width: 20px;
+    height:20px;
+    background-color: green;
+}
+
+.alert_crit {
+    width: 20px;
+    height:20px;
+    background-color: yellow;
+}
+
+.alert_warn {
+    width: 20px;
+    height:20px;
+    background-color: red;
+}
