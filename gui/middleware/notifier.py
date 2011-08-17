@@ -1469,7 +1469,12 @@ class notifier:
         return retval
 
     def config_restore(self):
-        self.__system("cp /data/factory-v1.db /data/freenas-v1.db")
+        os.unlink("/data/freenas-v1.db")
+        save_path = os.getcwd()
+        os.chdir(FREENAS_PATH)
+        self.__system("/usr/local/bin/python manage.py syncdb --noinput")
+        self.__system("/usr/local/bin/python manage.py migrate --all")
+        os.chdir(save_path)
 
     def config_upload(self, f):
         import sqlite3

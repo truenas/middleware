@@ -115,7 +115,7 @@ def alert_detail(request):
             'alerts': alerts,
             })
     else:
-        return HttpResponse('OK')
+        return HttpResponse(_("It was not possible to retrieve the current status"))
 
 """
 We use the django debug 500 classes to show the traceback to the user

@@ -231,7 +231,6 @@ class MountPoint(Model):
             )
     def is_my_path(self, path):
         import os
-        from sharing.models import CIFS_Share, AFP_Share, NFS_Share
         if path == self.mp_path:
             return True
         elif path.find(self.mp_path) >= 0:
