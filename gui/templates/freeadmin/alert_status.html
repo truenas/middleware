@@ -1,0 +1,19 @@
+{% load i18n %}<ul>
+{% for alert in alerts %}
+<li>
+    {% if alert.status == 'OK'%}
+        <span style="color:green;">
+        {% trans "OK" %}:
+    {% else %}
+        {% if alert.status == 'WARN'%}
+            <span style="color:yellow;">
+            {% trans "WARNING" %}:
+        {% else %}
+            <span style="color:red;">
+            {% trans "CRITICAL" %}:
+        {% endif %}
+    {% endif %}
+    </span>
+    {{ alert.message }}</li>
+{% endfor %}
+</ul>

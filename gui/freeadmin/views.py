@@ -80,7 +80,6 @@ def menu(request, objtype = None):
     return HttpResponse(json, mimetype="application/json")
 
 def alert_status(request):
-
     if os.path.exists('/var/tmp/alert'):
         current = 'OK'
         f = open('/var/tmp/alert', 'r')
@@ -94,6 +93,27 @@ def alert_status(request):
               status == 'CRIT' and current in ('OK','WARN'):
                 current = status
         return HttpResponse(current)
+    else:
+        return HttpResponse('OK')
+
+def alert_detail(request):
+    if os.path.exists('/var/tmp/alert'):
+        f = open('/var/tmp/alert', 'r')
+        entries = f.read().split('\n')
+        f.close()
+        alerts = []
+        for entry in entries:
+            if not entry:
+                continue
+            status, message = entry.split(': ')
+            alerts.append({
+                'status': status,
+                'message': message,
+            })
+
+        return render(request, "freeadmin/alert_status.html", {
+            'alerts': alerts,
+            })
     else:
         return HttpResponse('OK')
 

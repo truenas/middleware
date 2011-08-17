@@ -54,6 +54,7 @@ function loadalert() {
     });
 }
 
+
 dojo.addOnLoad(function(){
 
     var talert = new dojox.timing.Timer(1000*60*5);
@@ -65,5 +66,15 @@ dojo.addOnLoad(function(){
         loadalert();
     }
     talert.start();
+    var alertdiv = dijit.byId("alert_status");
+    dojo.connect(alertdiv.domNode, "onclick", function() {
+        var alertdlg = new dijit.Dialog({
+            title: "Alert System",
+            style: "width: 400px",
+            id: "alert_dialog",
+            href: "/admin/alert/",
+        });
+        alertdlg.show();
+    });
 
 });
