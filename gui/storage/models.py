@@ -76,7 +76,8 @@ class Volume(Model):
                 if ids:
                     services[service] = services.get(service, 0) + len(ids)
         return services
-    def delete(self, destroy=True, cascade=True):
+
+    def delete_step1(self, destroy, cascade):
         """
         Some places reference a path which will not cascade delete
         We need to manually find all paths within this volume mount point
@@ -101,6 +102,7 @@ class Volume(Model):
                 if dirty:
                     notifier().restart(svc)
 
+    def delete_step2(self, destroy, cascade):
         if destroy:
             notifier().destroy("volume", self)
 
@@ -110,6 +112,11 @@ class Volume(Model):
         # Refresh the fstab
         notifier().reload("disk")
         notifier().restart("collectd")
+
+    def delete(self, destroy=True, cascade=True):
+        self.delete_step1(destroy, cascade)
+        self.delete_step2(destroy, cascade)
+
     def __unicode__(self):
         return "%s (%s)" % (self.vol_name, self.vol_fstype)
 
