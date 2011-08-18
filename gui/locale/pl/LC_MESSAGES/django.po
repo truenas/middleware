@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-08-11 01:41+0200\n"
+"PO-Revision-Date: 2011-08-17 22:14+0200\n"
 "Last-Translator: vadi <vadi.art@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
@@ -1473,6 +1473,9 @@ msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
+"Nazwa podstawowa (np. iqn.2007-09.jp.ne.peach.istgt, przeczytaj RFC 3720 "
+"oraz 3721 w celu uzyskania większej ilosci informacji) dołączy nazwę celu, "
+"którego nazwa nie zaczyna się od \"iqn\"."
 
 #: services/models.py:242
 msgid "Discovery Auth Method"
@@ -1679,6 +1682,10 @@ msgid ""
 "port number. For any IPs (wildcard address), use '0.0.0.0:3260' and/or "
 "'[::]:3260'. Do not mix wildcard and other IPs at same address family."
 msgstr ""
+"Portal przyjmuje formę \"adres:port\", np. '192.168.1.1:3260\" dla IPv4, "
+"\"[2001:db8:1:1::1]:3260\" dla IPv6. Port 3260 jest standardowym portem iSCSI. "
+"Dla dowolnego IP (adres \"wildcard\"), użyj \"0.0.0.0:3260\" i/lub \"[::]:3260\". "
+"Nie mieszaj \"wildcard\" i innych adresów IP w danej rodzinie adresów."
 
 #: services/models.py:476 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -1830,7 +1837,6 @@ msgid "Target / Extent"
 msgstr "Cel / Grupa"
 
 #: services/models.py:651
-#, fuzzy
 msgid "Targets / Extents"
 msgstr "Cele / Zakresy"
 
@@ -2115,6 +2121,14 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
+"Najwyższy port do przydzielenia dla połączeń danych typu \"PASV\" (0 -> użyj "
+"dowolnego portu). Pasywne porty ograniczają zakres portów, spośród których "
+"serwer wybierze port, z którego wyśle komendę \"PASV\" od klienta. Serwer "
+"losowo wybierać będzie numer z podanego zakresu, aż do natrafienia na "
+"otwarty port. Zakres portów musi znajdować się w nieuprzywilejowanym "
+"przedziale (np. większy lub równy 1024). Zaleca się, aby wybrany przedział "
+"był wystarczająco obszerny, by mógł jednocześnie obsłużyć kilka pasywnych "
+"połączeń (np. 49152-65534, efemeryczny zakres portów w formacie IANA)."
 
 #: services/models.py:884
 msgid "Local user upload bandwidth"
@@ -2335,39 +2349,43 @@ msgstr "Nazwa lub adres IP serwera LDAP"
 
 #: services/models.py:1080
 msgid "Base DN"
-msgstr ""
+msgstr "Bazowa NW (Nazwa wyróżniająca) (ang.DN)"
 
 #: services/models.py:1082
 msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr ""
+"Domyślna nazowa Nazwa wyróżniająca (NW) (ang.DN) do użycia w wyszukiwaniu, "
+"np dc=test,dc=org"
 
 #: services/models.py:1085
 msgid "Allow Anonymous Binding"
-msgstr ""
+msgstr "Zezwól na anonimowe przypisanie"
 
 #: services/models.py:1088
 msgid "Root bind DN"
-msgstr ""
+msgstr "Nazwa Wyróżniająca przypisania Root"
 
 #: services/models.py:1090
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
+"Nazwa wyróżniająca (NW) (ang.DN), którą przypisywać serwerowi, np. "
+"dc=test,dc=org"
 
 #: services/models.py:1094
 msgid "Root bind password"
-msgstr ""
+msgstr "Hasło przypisania Root"
 
 #: services/models.py:1096
 msgid "The credentials with which to bind."
-msgstr ""
+msgstr "Poświadczenia, którymi powiązywać"
 
 #: services/models.py:1101
 msgid "Password Encryption"
-msgstr "Szyfrowanie hasła"
+msgstr "Szyfrowanie hasłem"
 
 #: services/models.py:1102
 msgid "The password change protocol to use."
@@ -2382,6 +2400,8 @@ msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
 msgstr ""
+"Ten parametr ustala przyrostek użyty dla użytkowników, gdy ci zostaną dodani "
+"do lokalizaji LDAP, np. ou=Users"
 
 #: services/models.py:1112
 msgid "Group Suffix"
@@ -2392,26 +2412,32 @@ msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
+"Ten parametr ustala przyrostek użyty dla grup, gdy te zostaną dodane do "
+"LDAP, np. ou=Groups"
 
 #: services/models.py:1118
 msgid "Password Suffix"
-msgstr ""
+msgstr "Przyrostek hasła"
 
 #: services/models.py:1120
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
+"Ten parametr ustala przyrostek użyty dla haseł, gdy te zostają dodane do "
+"LDAP, np. ou=Passwords"
 
 #: services/models.py:1124
 msgid "Machine Suffix"
-msgstr ""
+msgstr "Przyrostek maszyny"
 
 #: services/models.py:1126
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
+"Ten parametr ustala przyrostek dla maszyn, gdy te zostają dodane do LDAP, "
+"np. ou=Computers"
 
 #: services/models.py:1130
 msgid "Turn on/off TLS"
@@ -2419,15 +2445,15 @@ msgstr "Włącz/wyłącz TLS"
 
 #: services/models.py:1132
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
-msgstr ""
+msgstr "Ten parametr ustala czy użyć SSL/TLS, np. /on/of/start_tls"
 
 #: services/models.py:1135
 msgid "Self signed certificate"
-msgstr ""
+msgstr "Certyfikat podpisany przez siebie"
 
 #: services/models.py:1137
 msgid "Place the contents of your self signed certificate file here."
-msgstr ""
+msgstr "Umieść zawartość pliku certyfikatu podpisanego przez siebie tutaj."
 
 #: services/models.py:1141 sharing/models.py:85
 msgid "Auxiliary Parameters"
@@ -2459,7 +2485,6 @@ msgid "Module name"
 msgstr "Nazwa modułu"
 
 #: services/models.py:1186
-#, fuzzy
 msgid "Path to be shared"
 msgstr "Ścieżka (katalog) do współdzielenia"
 
@@ -2549,9 +2574,8 @@ msgid "Rsync Modules"
 msgstr "Moduły Rsync"
 
 #: services/models.py:1243
-#, fuzzy
 msgid "Check interval"
-msgstr "Interwał"
+msgstr "Interwał sprawdzania"
 
 #: services/models.py:1244
 msgid ""
@@ -2604,17 +2628,15 @@ msgstr "Włącz S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
-msgstr "Kontrola usług"
+msgstr "Usługi kontroli"
 
 #: services/nav.py:50
-#, fuzzy
 msgid "Add Device Extent"
-msgstr "Dodaj grupę urządzeń"
+msgstr "Dodaj Zakres urządzeń"
 
 #: services/nav.py:60
-#, fuzzy
 msgid "View All Device Extents"
-msgstr "Pokaż wszystkie grupy urządzeń"
+msgstr "Zobacz wszystkie zakresy urządzeń"
 
 #: services/nav.py:70 templates/services/iscsi.html:7
 msgid "Device Extents"
@@ -2628,9 +2650,8 @@ msgid "Add Extent"
 msgstr "Dodaj grupę"
 
 #: services/nav.py:102
-#, fuzzy
 msgid "View All Extents"
-msgstr "Pokaż wszystkich użytkowników"
+msgstr "Zobacz wszystkie zakresy"
 
 #: services/nav.py:114 templates/services/iscsi.html:9
 msgid "Extents"
@@ -2653,7 +2674,6 @@ msgid "The service could not be started."
 msgstr "Usługa nie mogła zostać uruchomiona."
 
 #: sharing/forms.py:82
-#, fuzzy
 msgid "The field is a not a valid IP address or network"
 msgstr "W polu nie znajduje się prawidłowy adres IP lub sieć"
 
@@ -2663,19 +2683,16 @@ msgid "The IP '%s' is not valid."
 msgstr "Adres IP '%s' nie jest prawidłowy."
 
 #: sharing/forms.py:99
-#, fuzzy
 msgid "Maproot group requires Maproot user"
-msgstr "Maproot group wymaga ustalenia wartości dla Maproot user"
+msgstr "Grupa maproot wymaga użytkownika maproot"
 
 #: sharing/forms.py:101
-#, fuzzy
 msgid "Mapall group requires Mapall user"
-msgstr "Mapall group wymaga ustalenia wartości dla Mapall user"
+msgstr "Grupa mapall wymaga użytkownika mapall "
 
 #: sharing/forms.py:104 sharing/forms.py:107
-#, fuzzy
 msgid "Maproot user/group disqualifies Mapall"
-msgstr "Maproot user/group wyklucza ustalanie wartości dla Mapall"
+msgstr "Użytkownik/Grupa maproot dyskwalifikuje mapall"
 
 #: sharing/models.py:41 sharing/models.py:104 storage/models.py:44
 #: storage/models.py:69 storage/models.py:87
@@ -2691,7 +2708,7 @@ msgstr "Udostępnij tylko do odczytu"
 
 #: sharing/models.py:53
 msgid "Browsable to Network Clients"
-msgstr "Widoczny dla klientów w sieci"
+msgstr "Przeglądalny dla klientów sieci"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
@@ -2799,14 +2816,13 @@ msgid "Share password"
 msgstr "Hasło udziału"
 
 #: sharing/models.py:118
-#, fuzzy
 msgid ""
 "This option allows you to set a volume password, which can be a maximum of 8 "
 "characters long (using ASCII strongly recommended at the time of this "
 "writing)."
 msgstr ""
 "Ta opcja pozwala ustawić woluminowi hasło, które może mieć maksymalnie 8 "
-"znaków długości (używanie ASCII zalecane w czasie tworzenia tekstu)"
+"znaków długości (używanie ASCII zalecane na czas tworzenia tekstu)"
 
 #: sharing/models.py:122
 msgid "Share Character Set"
@@ -2839,14 +2855,13 @@ msgid "Deny List"
 msgstr "Lista zabronionych"
 
 #: sharing/models.py:136
-#, fuzzy
 msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
 msgstr ""
-"Ta opcja pozwala na ustalenie użytkwników i grup, którzy nie mają prawa "
-"dostępu do tego obszaru współdzielonego. Format, w którym podawać należy "
-"wykluczone elementy jest taki sam, jak w opcji zezwalającej na dostęp."
+"Ta opcja zabrania dostępu użytkownikom i grupom, którzy nie mają prawa "
+"dostępu obszaru współdzielonego. Format, w którym podawać należy wykluczone "
+"elementy jest taki sam, jak w opcji zezwalającej na dostęp."
 
 #: sharing/models.py:140
 msgid "Read-only Access"
@@ -2873,13 +2888,12 @@ msgid "Disk Discovery"
 msgstr "Wykrywanie dysków"
 
 #: sharing/models.py:152
-#, fuzzy
 msgid ""
 "Allow other systems to discover this share as a disk for data, as a Time "
 "Machine backup volume or not at all."
 msgstr ""
 "Zezwalaj innym systemom na odnajdowanie tego współdzielonego obszaru jako "
-"dysk na dane, wolumin odzyskiwania \"Time Machine\" lub wcale."
+"dysk na dane, jako wolumin odzyskiwania \"Time Machine\" lub wcale."
 
 #: sharing/models.py:158
 msgid "Disk discovery mode"
@@ -3053,7 +3067,7 @@ msgstr ""
 
 #: sharing/models.py:248
 msgid "Maproot User"
-msgstr ""
+msgstr "Użytkownik maproot "
 
 #: sharing/models.py:252
 msgid "User to map root to"
@@ -3061,7 +3075,7 @@ msgstr ""
 
 #: sharing/models.py:256
 msgid "Maproot Group"
-msgstr ""
+msgstr "Grupa maproot "
 
 #: sharing/models.py:260
 msgid "Group to map root to"
@@ -3069,7 +3083,7 @@ msgstr ""
 
 #: sharing/models.py:264
 msgid "Mapall User"
-msgstr ""
+msgstr "Użytkownik mapall"
 
 #: sharing/models.py:268
 msgid "User to map all users to"
@@ -3077,7 +3091,7 @@ msgstr "Użytkownik do którego są mapowani wszyscy użytkownicy"
 
 #: sharing/models.py:272
 msgid "Mapall Group"
-msgstr ""
+msgstr "Grupa mapall"
 
 #: sharing/models.py:276
 msgid "Group to map all users to"
