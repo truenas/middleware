@@ -313,7 +313,7 @@ class notifier:
         if enabled == 1:
             c.execute("SELECT ldap_hostname,ldap_rootbasedn,ldap_rootbindpw,ldap_basedn,ldap_ssl FROM services_ldap ORDER BY -id LIMIT 1")
             host, rootbasedn, pw, basedn, ssl = c.fetchone()
-            f = FreeNAS_LDAP(host, rootbasedn, pw, basedn, ssl)
+            f = FreeNAS_LDAP(host=host, binddn=rootbasedn, bindpw=pw, basedn=basedn, ssl=ssl)
             f.open()
             if f.isOpen():
                 ret = True
@@ -337,7 +337,7 @@ class notifier:
         self.__system("/usr/sbin/service samba quietstart")
 
     def _started_activedirectory(self):
-        from freenasUI.common.freenasldap import FreeNAS_LDAP
+        from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory
 
         ret = False
         c = self.__open_db()
@@ -347,8 +347,8 @@ class notifier:
             c.execute("SELECT ad_dcname,ad_domainname,ad_adminname,ad_adminpw FROM services_activedirectory ORDER BY -id LIMIT 1")
             ad_dcname,ad_domainname,ad_adminname,ad_adminpw = c.fetchone()
             #base = ','.join(["dc=%s" % part for part in ad_domainname.split(".")])
-            f = FreeNAS_LDAP(ad_dcname, ad_adminname+"@"+ad_domainname, ad_adminpw)
-            f.basedn = f.get_active_directory_baseDN()
+            f = FreeNAS_ActiveDirectory(host=ad_dcname, binddn=ad_adminname+"@"+ad_domainname, bindpw=ad_adminpw)
+            f.basedn = f.get_baseDN()
             f.open()
             if f.isOpen():
                 ret = True
