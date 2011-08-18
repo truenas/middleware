@@ -27,6 +27,8 @@
 #####################################################################
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User, UNUSABLE_PASSWORD
+from django.contrib.auth import login, get_backends
 from django.utils.cache import patch_vary_headers
 from django.utils import translation
 
@@ -46,6 +48,13 @@ class RequireLoginMiddleware(object):
             return None
         if hasattr(view_func, '__is_public'):
             return None
+        if not request.user.is_authenticated():
+            user = User.objects.filter(is_superuser=True,password=UNUSABLE_PASSWORD)
+            if user.exists():
+                user = user[0]
+                backend = get_backends()[0]
+                user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
+                login(request, user)
         return login_required(view_func)(request,*view_args,**view_kwargs)
 
 class LocaleMiddleware(object):
@@ -54,7 +63,7 @@ class LocaleMiddleware(object):
         if request.method == 'GET' and 'lang' in request.GET:
                 language = request.GET['lang']
         else:
-            #FIXME we could avoid this db hit using a cache, 
+            #FIXME we could avoid this db hit using a cache,
             # invalidated when settings are edited
             language = Settings.objects.order_by('-id')[0].stg_language
 

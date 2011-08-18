@@ -496,7 +496,9 @@ class PasswordChangeForm(SetPasswordForm):
     A form that lets a user change his/her password by entering
     their old password.
     """
-    old_password = forms.CharField(label=_("Old password"), widget=forms.PasswordInput)
+    old_password = forms.CharField(label=_("Old password"),
+        widget=forms.PasswordInput,
+        required=False)
     change_root = forms.BooleanField(label=_("Change root password as well"),
         initial=True,
         required=False)
@@ -505,6 +507,8 @@ class PasswordChangeForm(SetPasswordForm):
         """
         Validates that the old_password field is correct.
         """
+        if not self.user.has_usable_password():
+            return ''
         old_password = self.cleaned_data["old_password"]
         if not self.user.check_password(old_password):
             raise forms.ValidationError(_("Your old password was entered incorrectly. Please enter it again."))

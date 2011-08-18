@@ -100,10 +100,6 @@ def config_upload(request):
             if not notifier().config_upload(request.FILES['config']):
                 form._errors['__all__'] = form.error_class([_("The uploaded file is not valid."),])
             else:
-                #user = User.objects.all()[0]
-                #backend = get_backends()[0]
-                #user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
-                #login(request, user)
                 return render(request, 'system/config_ok.html', variables)
 
         if request.GET.has_key("iframe"):
