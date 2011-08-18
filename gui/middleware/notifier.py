@@ -1463,8 +1463,8 @@ class notifier:
         os.unlink("/data/freenas-v1.db")
         save_path = os.getcwd()
         os.chdir(FREENAS_PATH)
-        self.__system("/usr/local/bin/python manage.py syncdb --noinput")
-        self.__system("/usr/local/bin/python manage.py migrate --all")
+        self.__system("/usr/local/bin/python manage.py syncdb --noinput --migrate")
+        self.__system("/usr/local/bin/python manage.py createadmin")
         os.chdir(save_path)
 
     def config_upload(self, f):
