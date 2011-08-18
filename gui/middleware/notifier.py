@@ -1261,12 +1261,13 @@ class notifier:
         for disk in disks:
             if regexp_nocamcdrom.match(disk) == None:
                 info = self.__pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
-                disksd.update({
-                    disk: {
-                        'devname': info[0],
-                        'capacity': info[2]
-                    },
-                })
+                if len(info) > 3:
+                    disksd.update({
+                        disk: {
+                            'devname': info[0],
+                            'capacity': info[2]
+                        },
+                    })
 
         return disksd
 
