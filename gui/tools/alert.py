@@ -34,6 +34,8 @@ from freenasUI import settings
 from django.core.management import setup_environ
 setup_environ(settings)
 
+from django.contrib.auth.models import User, UNUSABLE_PASSWORD
+
 import os
 from freenasUI.common.system import send_mail
 from freenasUI.storage.models import Volume
@@ -59,9 +61,15 @@ class Alert(object):
             else:
                 self.log(self.LOG_WARN, "The volume %s status is %s" % (vol, vol.status))
 
+    def admin_password(self):
+        user = User.objects.filter(password=UNUSABLE_PASSWORD)
+        if user.exists():
+            self.log(self.LOG_CRIT, "You have to change the password for the admin user (currently no password is required to login)")
+
     def __del__(self):
         self.__f.close()
 
 if __name__ == "__main__":
     alert = Alert()
     alert.volumes_status()
+    alert.admin_password()
