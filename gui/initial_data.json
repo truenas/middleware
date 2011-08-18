@@ -1524,7 +1524,7 @@
       "last_login": "2011-08-17 15:10:49", 
       "groups": [], 
       "user_permissions": [], 
-      "password": "sha1$79dd7$f5dd61983c4a415a1da098dd10eae5d345eda4b9", 
+      "password": "!", 
       "email": "root@freenas.local", 
       "date_joined": "2011-08-17 15:10:49"
     }
