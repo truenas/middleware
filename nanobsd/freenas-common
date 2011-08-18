@@ -278,13 +278,8 @@ add_gui()
 	  find . -print | grep -Ev '/(CVS|\.svn)' | cpio -dumpv ${dst} )
 	pprint 2 "Making freenas initial database"
 	mkdir ${NANO_WORLDDIR}/data
-	CR "(cd ${dstCR}; python manage.py syncdb --migrate)" << __EOF__
-yes
-admin
-root@freenas.local
-freenas
-freenas
-__EOF__
+	CR "(cd ${dstCR}; python manage.py syncdb --noinput --migrate)"
+	CR "(cd ${dstCR}; python manage.py createadmin --email root@freenas.local)"
 	CR "(cd ${dstCR}; python manage.py compilemessages)"
 	CR "(cd /data; cp freenas-v1.db factory-v1.db)"
 	CR "ln -sf /etc/local_settings.py ${dstCR}/local_settings.py"
