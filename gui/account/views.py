@@ -81,9 +81,18 @@ def password_change(request):
                 bsdpasswdform.cleaned_data['bsdusr_password1'] = new_password
                 bsdpasswdform.cleaned_data['bsdusr_password2'] = new_password
                 bsdpasswdform.save()
+            usable = request.user.has_usable_password()
             passform.save()
-            passform = password_change_form(user=request.user)
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Password successfully updated.")}), mimetype="application/json")
+            events = []
+            if not usable:
+                from freenasUI.tools.alert import Alert
+                alert = Alert()
+                alert.perform()
+                alert.write()
+                del alert
+                events.append("loadalert()")
+
+            return HttpResponse(simplejson.dumps({"error": False, "message": _("Password successfully updated."), "events": events}), mimetype="application/json")
 
     extra_context.update({ 'passform' : passform, })
     return render(request, 'account/passform.html', extra_context)

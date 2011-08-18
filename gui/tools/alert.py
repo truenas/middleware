@@ -37,6 +37,8 @@ setup_environ(settings)
 from django.contrib.auth.models import User, UNUSABLE_PASSWORD
 
 import os
+from cStringIO import StringIO
+
 from freenasUI.common.system import send_mail
 from freenasUI.storage.models import Volume
 
@@ -47,10 +49,10 @@ class Alert(object):
     LOG_WARN = "WARN"
 
     def __init__(self):
-        self.__f = open('/var/tmp/alert', 'w')
+        self.__s = StringIO()
 
     def log(self, level, msg):
-        self.__f.write("%s: %s\n" % (level, msg) )
+        self.__s.write("%s: %s\n" % (level, msg) )
 
     def volumes_status(self):
         for vol in Volume.objects.filter(vol_fstype__in=['ZFS','UFS']):
@@ -66,10 +68,19 @@ class Alert(object):
         if user.exists():
             self.log(self.LOG_CRIT, "You have to change the password for the admin user (currently no password is required to login)")
 
+    def perform(self):
+        self.volumes_status()
+        self.admin_password()
+
+    def write(self):
+        f = open('/var/tmp/alert', 'w')
+        f.write(self.__s.getvalue())
+        f.close()
+
     def __del__(self):
-        self.__f.close()
+        self.__s.close()
 
 if __name__ == "__main__":
     alert = Alert()
-    alert.volumes_status()
-    alert.admin_password()
+    alert.perform()
+    alert.write()
