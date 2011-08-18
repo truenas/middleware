@@ -497,6 +497,9 @@ class PasswordChangeForm(SetPasswordForm):
     their old password.
     """
     old_password = forms.CharField(label=_("Old password"), widget=forms.PasswordInput)
+    change_root = forms.BooleanField(label=_("Change root password as well"),
+        initial=True,
+        required=False)
 
     def clean_old_password(self):
         """
@@ -506,5 +509,5 @@ class PasswordChangeForm(SetPasswordForm):
         if not self.user.check_password(old_password):
             raise forms.ValidationError(_("Your old password was entered incorrectly. Please enter it again."))
         return old_password
-PasswordChangeForm.base_fields.keyOrder = ['old_password', 'new_password1', 'new_password2']
+PasswordChangeForm.base_fields.keyOrder = ['old_password', 'new_password1', 'new_password2', 'change_root']
 
