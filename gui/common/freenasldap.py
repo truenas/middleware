@@ -34,7 +34,6 @@ import os
 import grp
 import pwd
 import types
-import dns
 import ldap
 import syslog
 import time
@@ -42,7 +41,6 @@ import hashlib
 
 from syslog import syslog, LOG_DEBUG
 from ldap.controls import SimplePagedResultsControl
-from dns import resolver
 
 
 FREENAS_LDAP_NOSSL = 0
