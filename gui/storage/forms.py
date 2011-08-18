@@ -1110,6 +1110,10 @@ class VolumeExport(Form):
         initial=False,
         label=_("Delete related shares"),
         )
+    mark_new = forms.BooleanField(required=False,
+        initial=False,
+        label=_("Mark the disks as new (destroy data)"),
+        )
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
         super(VolumeExport, self).__init__(*args, **kwargs)
