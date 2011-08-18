@@ -154,7 +154,7 @@ class Vdev(Tnode):
 
     def append(self, node):
         if not isinstance(node, Dev):
-            raise Exception("Not a device")
+            raise Exception("Not a device: %s" % node)
         self.children.append(node)
         node.parent = self
 
@@ -240,12 +240,15 @@ def parse_status(name, doc, data):
                     pnode.append(node)
                     pnode = node
                 else:
-                    node = Vdev("stripe", doc)
-                    node.status = status
+                    if lastident != ident:
+                        node = Vdev("stripe", doc)
+                        node.status = status
+                        pnode.append(node)
+                    else:
+                        node = pnode
+                        pnode = node.parent
 
                     node2 = Dev(word, doc, status=status)
-
-                    pnode.append(node)
                     node.append(node2)
                     pnode = node
             elif ident == 2:
