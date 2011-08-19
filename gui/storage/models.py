@@ -62,8 +62,6 @@ class Volume(Model):
     status = property(_get_status)
     class Meta:
         verbose_name = _("Volume")
-    class FreeAdmin:
-        delete_form = "VolumeDelete"
     def has_attachments(self):
         """
         This is mainly used by the VolumeDelete form.

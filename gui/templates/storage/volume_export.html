@@ -1,12 +1,25 @@
 {% load i18n %}
 <form dojoType="dijit.form.Form">
 <script type="dojo/event" event="onSubmit" args="e">
-    formSubmit(this, e, '{% url storage_export vid=volume.id %}');
+    formSubmit(this, e, '{% url storage_export vid=volume.id %}', null, {progressbar: true});
 </script>
 <table>
+    <tr>
+        <td colspan="2">
+            {% blocktrans with used=used %}You have {{ used }} of used space within this volume{% endblocktrans %}
+        </td>
+    </tr>
+{% if services %}
+    <tr>
+        <td colspan="2">
+        <p>ATTENTION - Currently the following services depend on this volume: <strong>{{ services.keys|join:", " }}</strong></p>
+        </td>
+    </tr>
+{% endif %}
+
     {{ form }}
     <tr><td><strong>{{ volume.vol_name}}</strong>: {% trans "Are you sure you want to export?" %}</td></tr>
-    <tr>
+   <tr>
         <td>
             <button id="submitform" dojoType="dijit.form.Button" type="submit">
                 {% trans "Yes" %}

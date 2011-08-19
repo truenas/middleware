@@ -307,7 +307,7 @@ add_data_to_fstab ( )
 {
 	(
 	cd ${NANO_WORLDDIR}
-	echo "/dev/${NANO_DRIVE}s4 /data ufs rw 2 2" >> etc/fstab
+	echo "/dev/${NANO_DRIVE}s4 /data ufs rw,noatime 2 2" >> etc/fstab
 	mkdir -p data
 	)
 	

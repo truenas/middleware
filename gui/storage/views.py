@@ -617,9 +617,13 @@ def disk_detach(request, vid, object_id):
 
 def volume_export(request, vid):
 
+    from freenasUI.common import humanize_size
     volume = models.Volume.objects.get(pk=vid)
+    usedbytes = sum([mp._get_used_bytes() for mp in volume.mountpoint_set.all()])
+    usedsize = humanize_size(usedbytes)
+    services = volume.has_attachments()
     if request.method == "POST":
-        form = forms.VolumeExport(request.POST, instance=volume)
+        form = forms.VolumeExport(request.POST, instance=volume, services=services)
         if form.is_valid():
             volume.delete_step1(destroy=form.cleaned_data['mark_new'], cascade=form.cleaned_data['cascade'])
             if volume.vol_fstype == 'ZFS' and not notifier().zfs_export(volume.vol_name):
@@ -628,8 +632,10 @@ def volume_export(request, vid):
                 volume.delete_step2(destroy=form.cleaned_data['mark_new'], cascade=form.cleaned_data['cascade'])
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("The volume has been successfully exported")}), mimetype="application/json")
     else:
-        form = forms.VolumeExport(instance=volume)
+        form = forms.VolumeExport(instance=volume, services=services)
     return render(request, 'storage/volume_export.html', {
         'volume': volume,
         'form': form,
+        'used': usedsize,
+        'services': services,
     })

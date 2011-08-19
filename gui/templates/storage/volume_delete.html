@@ -1,5 +1,0 @@
-{% extends "freeadmin/generic_model_delete.html" %}
-{% block onsubmit %}
-    formSubmit(this, e, '{% url freeadmin_model_delete app=app,model=model,oid=oid %}',
-    null, {progressbar: true});
-{% endblock %}

@@ -128,11 +128,11 @@
     <button id="delVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/remove_volume.png" width="18px" height="18px">
         <script type="dojo/method" event="onClick" args="evt">
-            editScaryObject('{% trans "Destroy Volume"|force_escape %}', '{% url freeadmin_model_delete app="storage",model="Volume",oid=m.mp_volume.id %}', [this,]);
+            editScaryObject('{% trans "Export Volume"|force_escape %}', '{% url storage_export vid=m.mp_volume.id %}', [this,]);
         </script>
     </button>
     <div dojoType="dijit.Tooltip" connectId="delVolBtn{{ m.id }}" position="above">
-        <strong>{% trans "Destroy Volume" %}</strong>
+        <strong>{% trans "Export Volume" %}</strong>
     </div>
     {% if m.mp_volume.vol_fstype == 'ZFS' %}
     <button id="editVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
@@ -175,15 +175,6 @@
     </button>
     <div dojoType="dijit.Tooltip" connectId="viewDisksBtn{{ m.id }}" position="above">
         <strong>{% trans "View Disks" %}</strong>
-    </div>
-    <button id="exptBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
-        Export
-        <script type="dojo/method" event="onClick" args="evt">
-            editObject('{% trans "Export Volume"|force_escape %}', '{% url storage_export vid=m.mp_volume.id %}', [this,]);
-        </script>
-    </button>
-    <div dojoType="dijit.Tooltip" connectId="snapBtn{{ m.id }}" position="above">
-        <strong>{% trans "Export Volume" %}</strong>
     </div>
 {% endif %}
 	    </td>
