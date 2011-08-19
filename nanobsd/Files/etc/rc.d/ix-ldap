@@ -152,18 +152,34 @@ EOF
 
 setup_homedirs()
 {
-	local hdsrc="/var/home"
-	local hddst="/home"
+	default="/var/home"
+	homedir=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		cifs_srv_homedir
 
-	local dst=$(dirname "${hddst}")
+	FROM
+		services_cifs
 
-	mount -uw /	
+	ORDER BY
+		-services_cifs.id
 
-	mkdir -p "${hdsrc}"
-	mkdir -p "${dst}"
-	ln -s "${hdsrc}" "${dst}" 2>/dev/null
+	LIMIT 1;
+	")
 
-	mount -ur /
+	if [ -n "${homedir}" ]
+	then
+		mkdir -p "${homedir}"
+
+		mount -uw /
+		ln -s "${homedir}" /home 2>/dev/null
+		mount -ur /
+	else
+		mkdir -p "${default}"
+
+		mount -uw /
+		ln -s "${default}" /home 2>/dev/null
+		mount -ur /
+	fi
 }
 
 create_cache_filesystem()
