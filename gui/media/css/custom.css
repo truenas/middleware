@@ -482,10 +482,11 @@ padding-left:5px;
 #alert_status_text p {
     margin-top:20px !important;
     margin-right:20px !important;
+    text-align:center;
     padding-right: !important;
 }
 .alert_ok {
-    background: url("/media/images/ui/alerts/ok.png") no-repeat scroll 3px 0 transparent !important;
+    background: url("/media/images/ui/alerts/ok.png") no-repeat scroll 7px 0 transparent !important;
     width:30px;
     height:25px;
     padding: 0 !important;
@@ -494,12 +495,11 @@ padding-left:5px;
     padding-left:4px !important;
     margin-top:5px !important;
     margin-top:5px !important;
-    margin-right:10px !important;
     border:none !important;
 
 }
 .alert_warn {
-    background: url("/media/images/ui/alerts/warn.gif") no-repeat scroll 3px 0 transparent !important;
+    background: url("/media/images/ui/alerts/warn.gif") no-repeat scroll 7px 0 transparent !important;
     width:30px;
     height:25px;
     padding: 0 !important;
@@ -508,13 +508,12 @@ padding-left:5px;
     padding-left:4px !important;
     margin-top:5px !important;
     margin-top:5px !important;
-    margin-right:10px !important;
     border:none !important;
 
 }
 .alert_crit {
-    background: url("/media/images/ui/alerts/crit.gif") no-repeat scroll 3px 0 transparent !important;
-    width:30px;
+    background: url("/media/images/ui/alerts/crit.gif") no-repeat scroll 7px 0 transparent !important;
+    width:25px;
     height:25px;
     padding: 0 !important;
     position:relative;
@@ -522,7 +521,6 @@ padding-left:5px;
     padding-left:4px !important;
     margin-top:5px !important;
     margin-top:5px !important;
-    margin-right:10px !important;
     border:none !important;
 
 }
