@@ -35,12 +35,14 @@ import grp
 import pwd
 import types
 import ldap
+import dns
 import syslog
 import time
 import hashlib
 
 from syslog import syslog, LOG_DEBUG
 from ldap.controls import SimplePagedResultsControl
+from dns import resolver
 
 
 FREENAS_LDAP_NOSSL = 0
@@ -699,8 +701,9 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
     def __init__(self, **kwargs):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.__init__: enter")
 
-        self.separator = FREENAS_AD_SEPARATOR
         ad = ActiveDirectory.objects.all().order_by('-id')[0]
+        self.separator = FREENAS_AD_SEPARATOR
+        self.domain = ad.ad_domainname
 
         tmphost = kwargs['host'] if kwargs.has_key('host') else ad.ad_dcname
         host = tmphost.split(':')[0]
@@ -794,9 +797,14 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         rootDSE = self.get_rootDSE()
         basedn = rootDSE[0][1]['configurationNamingContext'][0]
         config = rootDSE[0][1]['defaultNamingContext'][0]
-        host = rootDSE[0][1]['dnsHostName'][0]
 
-        gc_args = { 'host': host, 'port': 3268,
+        srv = "_gc._tcp.%s" % self.domain
+        answers = resolver.query(srv, 'SRV')
+        if not answers:
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: SRV record for %s doesn't exist!" % srv)
+
+        rdata = answers[0]
+        gc_args = { 'host': str(rdata.target), 'port': long(rdata.port),
             'binddn': self.binddn, 'bindpw': self.bindpw }
 
         gc = FreeNAS_LDAP_Directory(**gc_args)
@@ -804,6 +812,10 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
 
         domains = [] 
         results = gc._search("", ldap.SCOPE_SUBTREE, '(objectclass=domain)', ['dn'])
+        if not results:
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: no domain objects found")
+            results = []
+
         for r in results:
             domains.append(r[0])
 
