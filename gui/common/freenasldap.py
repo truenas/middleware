@@ -1227,7 +1227,6 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
 
                 u = u[1]
                 sAMAccountName = "%s%s%s" % (n, self.separator, u['sAMAccountName'][0])
-                print "sAMAccountName = %s" % sAMAccountName
 
                 try:
                     pw = pwd.getpwnam(sAMAccountName)
