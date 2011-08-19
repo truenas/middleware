@@ -479,21 +479,50 @@ background:white;
 .treecontainer div {
 padding-left:5px;
 }
-
+#alert_status_text p {
+    margin-top:20px !important;
+    margin-right:20px !important;
+    padding-right: !important;
+}
 .alert_ok {
-    width: 20px;
-    height:20px;
-    background-color: green;
-}
+    background: url("/media/images/ui/alerts/ok.png") no-repeat scroll 3px 0 transparent !important;
+    width:30px;
+    height:25px;
+    padding: 0 !important;
+    position:relative;
+    float:right;
+    padding-left:4px !important;
+    margin-top:5px !important;
+    margin-top:5px !important;
+    margin-right:10px !important;
+    border:none !important;
 
-.alert_crit {
-    width: 20px;
-    height:20px;
-    background-color: red;
 }
-
 .alert_warn {
-    width: 20px;
-    height:20px;
-    background-color: yellow;
+    background: url("/media/images/ui/alerts/warn.gif") no-repeat scroll 3px 0 transparent !important;
+    width:30px;
+    height:25px;
+    padding: 0 !important;
+    position:relative;
+    float:right;
+    padding-left:4px !important;
+    margin-top:5px !important;
+    margin-top:5px !important;
+    margin-right:10px !important;
+    border:none !important;
+
+}
+.alert_crit {
+    background: url("/media/images/ui/alerts/crit.gif") no-repeat scroll 3px 0 transparent !important;
+    width:30px;
+    height:25px;
+    padding: 0 !important;
+    position:relative;
+    float:right;
+    padding-left:4px !important;
+    margin-top:5px !important;
+    margin-top:5px !important;
+    margin-right:10px !important;
+    border:none !important;
+
 }
