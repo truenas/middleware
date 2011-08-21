@@ -478,6 +478,7 @@ class notifier:
         self.__system("/usr/sbin/service mountd forcestop")
         self.__system("/usr/sbin/service nfsd forcestop")
         self.__system("/usr/sbin/service ix-nfsd quietstart")
+        self.__system("/usr/sbin/service mountd quietstart")
         self.__system("/usr/sbin/service nfsd quietstart")
 
     def _restart_dynamicdns(self):
