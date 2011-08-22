@@ -455,6 +455,10 @@ class iSCSITargetAuthCredentialForm(ModelForm):
 class iSCSITargetToExtentForm(ModelForm):
     class Meta:
         model = models.iSCSITargetToExtent
+        widgets = {
+            'iscsi_target': forms.widgets.FilteringSelect(),
+            'iscsi_extent': forms.widgets.FilteringSelect(),
+        }
     def clean_iscsi_target_lun(self):
         try:
             models.iSCSITargetToExtent.objects.get(iscsi_target=self.cleaned_data.get('iscsi_target'),
