@@ -38,7 +38,7 @@ IGNORE=		could not find the SPEC2008 media on ${CD_MOUNTPTS}
 do-extract:
 	@${RM} -rf ${WRKDIR}
 	@${MKDIR} ${WRKSRC}
-	(ktrace ${TAR} -cf - -C ${_mountpoint}/spec-sfs2008/ . && \
+	@(${TAR} -cf - -C ${_mountpoint}/spec-sfs2008/ . && \
 	 ${TOUCH} ${WRKSRC}/.fetch_done) | ${TAR} -xf - -C ${WRKSRC}
 	@${TEST} -f ${WRKSRC}/.fetch_done
 
