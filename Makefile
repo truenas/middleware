@@ -42,72 +42,134 @@ do-extract:
 	 ${TOUCH} ${WRKSRC}/.fetch_done) | ${TAR} -xf - -C ${WRKSRC}
 	@${TEST} -f ${WRKSRC}/.fetch_done
 
-TEST_BINS=	bin/sfs_prime bin/sfs_syncd bin/sfscifs bin/sfsnfs3
+MANAGER_JAR_DIRS=\
+	manager \
 
-TEST_DOC_DIRS=	html \
-		html/SPECsfs2008_run_rules_files \
-		html/SPECsfs2008_users_guide_files \
-		ms-word \
-		pdf \
+MANAGER_JAR_FILES=\
+	manager/Manager.jar \
+	manager/SfsManager.jar \
 
-TEST_DOCS=	html/SPECsfs2008_run_rules.htm \
-		html/SPECsfs2008_run_rules_files/filelist.xml \
-		html/SPECsfs2008_run_rules_files/header.htm \
-		html/SPECsfs2008_run_rules_files/image001.wmz \
-		html/SPECsfs2008_run_rules_files/image002.gif \
-		html/SPECsfs2008_run_rules_files/image003.wmz \
-		html/SPECsfs2008_run_rules_files/image004.gif \
-		html/SPECsfs2008_run_rules_files/image005.wmz \
-		html/SPECsfs2008_run_rules_files/image006.gif \
-		html/SPECsfs2008_users_guide.htm \
-		html/SPECsfs2008_users_guide_files/filelist.xml \
-		html/SPECsfs2008_users_guide_files/header.htm \
-		html/SPECsfs2008_users_guide_files/image001.gif \
-		html/SPECsfs2008_users_guide_files/image002.gif \
-		html/SPECsfs2008_users_guide_files/image003.gif \
-		html/SPECsfs2008_users_guide_files/image004.gif \
-		html/SPECsfs2008_users_guide_files/image005.gif \
-		html/SPECsfs2008_users_guide_files/image006.gif \
-		html/SPECsfs2008_users_guide_files/image007.gif \
-		ms-word/SPECsfs2008_run_rules.doc \
-		ms-word/SPECsfs2008_users_guide.doc \
-		pdf/SPECsfs2008_run_rules.pdf \
-		pdf/SPECsfs2008_users_guide.pdf \
+SUBMIT_TOOLS_JAR_DIRS=\
+	submit_tools/specreport/lib \
+	submit_tools/specreport \
+	submit_tools/subedit \
+	submit_tools \
 
-PLIST_FILES=	${TEST_BINS} bin/UnivSystem.sh \
-		share/examples/spec-sfs/sfs_ext_mon \
+SUBMIT_TOOLS_JAR_FILES=\
+	submit_tools/specreport/ChartGen.jar \
+	submit_tools/specreport/lib/jcommon-1.0.0.jar \
+	submit_tools/specreport/lib/jfreechart-1.0.1.jar \
+	submit_tools/subedit/Subedit.jar \
 
-.for doc in ${TEST_DOCS}
-PLIST_FILES+=	share/doc/spec-sfs/${doc}
+SUBMIT_TOOLS_PERL_DIRS=\
+	submit_tools/dev \
+	submit_tools/lib \
+	submit_tools/specreport \
+	submit_tools \
+
+SUBMIT_TOOLS_PERL_FILES=\
+	submit_tools/dev/schema2table.pl \
+	submit_tools/lib/ReportRender.pm \
+	submit_tools/lib/SimpleMath.pm \
+	submit_tools/lib/SimpleObj.pm \
+	submit_tools/lib/Subedit.jar \
+	submit_tools/specreport/specreport.pl \
+	submit_tools/specreport.pl \
+
+BINS=\
+	bin/sfs_prime bin/sfs_syncd bin/sfscifs bin/sfsnfs3
+
+DOC_DIRS=\
+	html/SPECsfs2008_run_rules_files \
+	html/SPECsfs2008_users_guide_files \
+	html \
+	ms-word \
+	pdf \
+
+DOCS=\
+	html/SPECsfs2008_run_rules.htm \
+	html/SPECsfs2008_run_rules_files/filelist.xml \
+	html/SPECsfs2008_run_rules_files/header.htm \
+	html/SPECsfs2008_run_rules_files/image001.wmz \
+	html/SPECsfs2008_run_rules_files/image002.gif \
+	html/SPECsfs2008_run_rules_files/image003.wmz \
+	html/SPECsfs2008_run_rules_files/image004.gif \
+	html/SPECsfs2008_run_rules_files/image005.wmz \
+	html/SPECsfs2008_run_rules_files/image006.gif \
+	html/SPECsfs2008_users_guide.htm \
+	html/SPECsfs2008_users_guide_files/filelist.xml \
+	html/SPECsfs2008_users_guide_files/header.htm \
+	html/SPECsfs2008_users_guide_files/image001.gif \
+	html/SPECsfs2008_users_guide_files/image002.gif \
+	html/SPECsfs2008_users_guide_files/image003.gif \
+	html/SPECsfs2008_users_guide_files/image004.gif \
+	html/SPECsfs2008_users_guide_files/image005.gif \
+	html/SPECsfs2008_users_guide_files/image006.gif \
+	html/SPECsfs2008_users_guide_files/image007.gif \
+	ms-word/SPECsfs2008_run_rules.doc \
+	ms-word/SPECsfs2008_users_guide.doc \
+	pdf/SPECsfs2008_run_rules.pdf \
+	pdf/SPECsfs2008_users_guide.pdf \
+
+PLIST_FILES=	${BINS} bin/UnivSystem.sh \
+		%%EXAMPLESDIR%%/sfs_ext_mon \
+
+.for doc in ${DOCS}
+PLIST_FILES+=	%%DOCSDIR%%/${doc}
+.endfor
+
+.for file in ${MANAGER_JAR_FILES} ${SUBMIT_TOOLS_JAR_FILES}
+PLIST_FILES+=	%%JAVAJARDIR%%/${PORTNAME}/${file}
+.endfor
+
+.for file in ${SUBMIT_TOOLS_PERL_FILES}
+PLIST_FILES+=	%%SITE_PERL%%/${PORTNAME}/${file}
 .endfor
 
 do-install:
-	@${MKDIR} ${PREFIX}/bin
-.for file in ${TEST_BINS}
+	${SH} ${WRKSRC}/post_install.sh ${WRKSRC}
+	${MKDIR} ${PREFIX}/bin
+.for file in ${BINS}
 	${STRIP_CMD} ${WRKSRC}/${file}
-	${INSTALL_PROGRAM} ${WRKSRC}/${file} ${PREFIX}/${file}
+	${INSTALL} ${WRKSRC}/${file} ${PREFIX}/${file}
 .endfor
-	${INSTALL_SCRIPT} ${WRKSRC}/src/UnivSystem.sh ${PREFIX}/bin
-	@${MKDIR} ${PREFIX}/share/examples/spec-sfs
-	${INSTALL_SCRIPT} ${WRKSRC}/bin/sfs_ext_mon \
-	    ${PREFIX}/share/examples/spec-sfs
-.for subdir in ${TEST_DOC_DIRS}
-	${MKDIR} -m 00755 ${PREFIX}/share/doc/spec-sfs/${subdir}
+	${INSTALL} ${WRKSRC}/src/UnivSystem.sh ${PREFIX}/bin
+	${MKDIR} ${EXAMPLESDIR}
+	${ECHO_CMD} "@unexec rmdir ${EXAMPLESDIR}" >> ${TMPPLIST}
+	${INSTALL} ${WRKSRC}/bin/sfs_ext_mon ${EXAMPLESDIR}
+.for dir in ${DOC_DIRS}
+	${MKDIR} ${DOCSDIR}/${dir}
+	${ECHO_CMD} "@unexec rmdir ${DOCSDIR}/${dir}" >> ${TMPPLIST}
 .endfor
-.for doc in ${TEST_DOCS}
-	${INSTALL_DATA} ${WRKSRC}/documents/${doc} \
-	    ${PREFIX}/share/doc/spec-sfs/${doc}
+	${ECHO_CMD} "@unexec rmdir ${DOCSDIR}" >> ${TMPPLIST}
+.for doc in ${DOCS}
+	${INSTALL_DATA} ${WRKSRC}/documents/${doc} ${DOCSDIR}/${doc}
 .endfor
-.for subdir in ${TEST_DOC_DIRS}
-	@${ECHO_CMD} "@unexec rmdir ${PREFIX}/share/doc/spec-sfs/${subdir}" >> \
+.for dir in ${MANAGER_JAR_DIRS}
+	${MKDIR} ${JAVAJARDIR}/${PORTNAME}/${dir}
+	${ECHO_CMD} "@unexec rmdir ${JAVAJARDIR}/${PORTNAME}/${dir}" >> \
 	    ${TMPPLIST}
 .endfor
-.for dir in share/doc share/examples
-	@${ECHO_CMD} "@unexec rmdir ${PREFIX}/${dir}/spec-sfs" >> ${TMPPLIST}
+.for file in ${MANAGER_JAR_FILES}
+	${INSTALL_DATA} ${WRKSRC}/${file} ${JAVAJARDIR}/${PORTNAME}/${file}
 .endfor
-.for dir in share/doc share/examples share
-	@${ECHO_CMD} "@unexec rmdir ${PREFIX}/${dir} 2>/dev/null || true" >> \
+.for dir in ${SUBMIT_TOOLS_JAR_DIRS}
+	${MKDIR} ${JAVAJARDIR}/${PORTNAME}/${dir}
+	${ECHO_CMD} "@unexec rmdir ${JAVAJARDIR}/${PORTNAME}/${dir}" >> \
 	    ${TMPPLIST}
+.endfor
+	${ECHO_CMD} "@unexec rmdir ${JAVAJARDIR}/${PORTNAME}" >> ${TMPPLIST}
+.for file in ${SUBMIT_TOOLS_JAR_FILES}
+	${INSTALL_DATA} ${WRKSRC}/${file} ${JAVAJARDIR}/${PORTNAME}/${file}
+.endfor
+.for dir in ${SUBMIT_TOOLS_PERL_DIRS}
+	${MKDIR} ${SITE_PERL}/${PORTNAME}/${dir}
+	${ECHO_CMD} "@unexec rmdir ${SITE_PERL}/${PORTNAME}/${dir}" >> \
+	    ${TMPPLIST}
+.endfor
+	${ECHO_CMD} "@unexec rmdir ${SITE_PERL}/${PORTNAME}" >> ${TMPPLIST}
+.for file in ${SUBMIT_TOOLS_PERL_FILES}
+	${INSTALL_DATA} ${WRKSRC}/${file} ${SITE_PERL}/${PORTNAME}/${file}
 .endfor
 
 post-install:
