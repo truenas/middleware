@@ -8,11 +8,16 @@
 PORTNAME=	spec-sfs
 PORTVERSION=	2008
 CATEGORIES=	benchmarks
+MASTER_SITES=
+DISTFILES=
 
 MAINTAINER=	gcooper@FreeBSD.org
-COMMENT=	SPEC NFS and CIFS filesystem benchmark suite.
+COMMENT=	SPEC NFS and CIFS filesystem benchmark suite
 
-DISTFILES=
+RUN_DEPENDS=	p5-XML-XPath>=0:${PORTSDIR}/textproc/p5-XML-XPath
+
+NO_PACKAGE=	license restricts redistribution
+RESTRICTED=	license restricts redistribution
 
 USE_GMAKE=
 USE_JAVA=
@@ -20,10 +25,11 @@ USE_PERL5_RUN=	yes
 
 JAVA_VERSION=	1.5
 
-NO_PACKAGE=	license restricts redistribution
-RESTRICTED=	license restricts redistribution
-
 OPTIONS=	RESERVED_PORT	"Use privileged ports when doing NFS testing" on
+
+.if defined(WITH_RESERVED_PORT)
+CFLAGS+=	-DRESVPORT
+.endif
 
 .include <bsd.port.pre.mk>
 
@@ -38,11 +44,11 @@ IGNORE=		could not find the SPEC2008 media on ${CD_MOUNTPTS}
 .endif
 
 do-extract:
-	@${RM} -rf ${WRKDIR}
-	@${MKDIR} ${WRKSRC}
-	@(${TAR} -cf - -C ${_mountpoint}/spec-sfs2008/ . && \
+	${RM} -rf ${WRKDIR}
+	${MKDIR} ${WRKSRC}
+	(${TAR} -cf - -C ${_mountpoint}/spec-sfs2008/ . && \
 	 ${TOUCH} ${WRKSRC}/.fetch_done) | ${TAR} -xf - -C ${WRKSRC}
-	@${TEST} -f ${WRKSRC}/.fetch_done
+	${TEST} -f ${WRKSRC}/.fetch_done
 
 MANAGER_JAR_DIRS=\
 	manager \
