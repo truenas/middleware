@@ -250,7 +250,7 @@ class DynamicDNSForm(ModelForm):
             )
     def __init__(self, *args, **kwargs):
         super(DynamicDNSForm, self).__init__(*args, **kwargs)
-        if self.instance.id:
+        if self.instance.ddns_password:
             self.fields['ddns_password'].required = False
     def clean_pw2(self):
         password1 = self.cleaned_data.get("ddns_password")
