@@ -1,0 +1,13 @@
+SPECsfs2008: the SPEC NFSv3/CIFS benchmark
+
+SPECsfs2008 is the latest version of the Standard Performance Evaluation
+Corporation benchmark suite measuring file server throughput and response time,
+providing a standardized method for comparing performance across different
+vendor platforms. SPECsfs2008 results summarize the server's capabilities with
+respect to the number of operations that can be handled per second, as well as
+the overall latency of the operations. The suite is a follow-on to the SFS97_R1
+benchmark, adding a CIFS workload, an updated NFSv3 workload, support for
+additional client platforms, and a new test harness and reporting/submission
+framework.
+
+WWW: http://www.spec.org/sfs2008/
