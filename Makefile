@@ -114,6 +114,9 @@ DOCS=\
 PLIST_FILES=	${BINS} bin/UnivSystem.sh \
 		%%EXAMPLESDIR%%/sfs_ext_mon \
 
+USERS=	spec
+GROUPS=	spec
+
 .for doc in ${DOCS}
 PLIST_FILES+=	%%DOCSDIR%%/${doc}
 .endfor
