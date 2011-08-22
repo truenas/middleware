@@ -186,7 +186,8 @@ def umount(path):
     return ret
 
 def service_enabled(name):
-    h = sqlite3.connect("/data/freenas-v1.db")
+    db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
+    h = sqlite3.connect(db)
     c = h.cursor()
 
     enabled = False
