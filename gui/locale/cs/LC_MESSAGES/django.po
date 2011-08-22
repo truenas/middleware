@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-08-20 12:37+0200\n"
-"Last-Translator: flegy <pfleger.martin@seznam.cz>\n"
+"PO-Revision-Date: 2011-08-21 16:51+0200\n"
+"Last-Translator: Velociraptor <hrspam@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -115,19 +115,16 @@ msgid "Level 1 - Minimum power usage with Standby (spindown)"
 msgstr "Level 1 - Minimální spotřeba s pohotovostním režimem (spindown)"
 
 #: choices.py:83
-#, fuzzy
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Průměrná spotřeba s pohotovostním režimem"
+msgstr "Level 64 - Průměrná spotřeba s pohotovostním režimem"
 
 #: choices.py:84
-#, fuzzy
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Průměrná spotřeba s pohotovostním režimem"
+msgstr "Level 127 - Průměrná spotřeba s pohotovostním režimem"
 
 #: choices.py:85
-#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Minimální spotřeba bez pohotovostního režimu (bez spindown)"
+msgstr "Level 128 - Minimální spotřeba bez pohotovostního režimu (bez spindown)"
 
 #: choices.py:86
 #, fuzzy
