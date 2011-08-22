@@ -243,8 +243,31 @@ class RsyncModForm(ModelForm):
             raise ServiceFailed("rsync", _("The Rsync service failed to reload."))
 
 class DynamicDNSForm(ModelForm):
+    pw2 = forms.CharField(max_length=50,
+            label=_("Confirm Password"),
+            widget=forms.widgets.PasswordInput(),
+            required=False,
+            )
+    def __init__(self, *args, **kwargs):
+        super(DynamicDNSForm, self).__init__(*args, **kwargs)
+        if self.instance.id:
+            self.fields['ddns_password'].required = False
+    def clean_pw2(self):
+        password1 = self.cleaned_data.get("ddns_password")
+        password2 = self.cleaned_data.get("pw2")
+        if password1 != password2:
+            raise forms.ValidationError(_("The two password fields didn't match."))
+        return password2
+    def clean(self):
+        cdata = self.cleaned_data
+        if not cdata.get("ddns_password"):
+            cdata['ddns_password'] = self.instance.ddns_password
+        return cdata
     class Meta:
         model = models.DynamicDNS
+        widgets = {'ddns_password': forms.widgets.PasswordInput(render_value=False), }
+        fields = ('ddns_provider', 'ddns_domain', 'ddns_username', 'ddns_password', 'pw2',
+                    'ddns_updateperiod', 'ddns_fupdateperiod', 'ddns_options')
     def save(self):
         super(DynamicDNSForm, self).save()
         started = notifier().restart("dynamicdns")
