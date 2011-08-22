@@ -198,5 +198,7 @@ def service_enabled(name):
     if row and row[0] != 0:
         enabled = True
 
+    c.close()
     h.close()
+
     return enabled
