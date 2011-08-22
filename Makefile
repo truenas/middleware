@@ -114,8 +114,8 @@ DOCS=\
 PLIST_FILES=	${BINS} bin/UnivSystem.sh \
 		%%EXAMPLESDIR%%/sfs_ext_mon \
 
-USERS=	spec
-GROUPS=	spec
+USERS=		spec
+GROUPS=		spec
 
 .for doc in ${DOCS}
 PLIST_FILES+=	%%DOCSDIR%%/${doc}
@@ -130,27 +130,28 @@ PLIST_FILES+=	%%SITE_PERL%%/${PORTNAME}/${file}
 .endfor
 
 do-install:
-	${SH} ${WRKSRC}/post_install.sh ${WRKSRC}
 	${MKDIR} ${PREFIX}/bin
 .for file in ${BINS}
 	${STRIP_CMD} ${WRKSRC}/${file}
-	${INSTALL} ${WRKSRC}/${file} ${PREFIX}/${file}
+	${INSTALL_PROGRAM} ${WRKSRC}/${file} ${PREFIX}/${file}
 .endfor
-	${INSTALL} ${WRKSRC}/src/UnivSystem.sh ${PREFIX}/bin
+	${CHMOD} 04755 ${PREFIX}/bin/sfscifs
+	${CHMOD} 04755 ${PREFIX}/bin/sfsnfs3
+	${INSTALL_SCRIPT} ${WRKSRC}/src/UnivSystem.sh ${PREFIX}/bin
 	${MKDIR} ${EXAMPLESDIR}
-	${ECHO_CMD} "@unexec rmdir ${EXAMPLESDIR}" >> ${TMPPLIST}
-	${INSTALL} ${WRKSRC}/bin/sfs_ext_mon ${EXAMPLESDIR}
+	@${ECHO_CMD} "@unexec rmdir ${EXAMPLESDIR}" >> ${TMPPLIST}
+	${INSTALL_SCRIPT} ${WRKSRC}/bin/sfs_ext_mon ${EXAMPLESDIR}
 .for dir in ${DOC_DIRS}
 	${MKDIR} ${DOCSDIR}/${dir}
-	${ECHO_CMD} "@unexec rmdir ${DOCSDIR}/${dir}" >> ${TMPPLIST}
+	@${ECHO_CMD} "@unexec rmdir ${DOCSDIR}/${dir}" >> ${TMPPLIST}
 .endfor
-	${ECHO_CMD} "@unexec rmdir ${DOCSDIR}" >> ${TMPPLIST}
+	@${ECHO_CMD} "@unexec rmdir ${DOCSDIR}" >> ${TMPPLIST}
 .for doc in ${DOCS}
 	${INSTALL_DATA} ${WRKSRC}/documents/${doc} ${DOCSDIR}/${doc}
 .endfor
 .for dir in ${MANAGER_JAR_DIRS}
 	${MKDIR} ${JAVAJARDIR}/${PORTNAME}/${dir}
-	${ECHO_CMD} "@unexec rmdir ${JAVAJARDIR}/${PORTNAME}/${dir}" >> \
+	@${ECHO_CMD} "@unexec rmdir ${JAVAJARDIR}/${PORTNAME}/${dir}" >> \
 	    ${TMPPLIST}
 .endfor
 .for file in ${MANAGER_JAR_FILES}
@@ -158,19 +159,19 @@ do-install:
 .endfor
 .for dir in ${SUBMIT_TOOLS_JAR_DIRS}
 	${MKDIR} ${JAVAJARDIR}/${PORTNAME}/${dir}
-	${ECHO_CMD} "@unexec rmdir ${JAVAJARDIR}/${PORTNAME}/${dir}" >> \
+	@${ECHO_CMD} "@unexec rmdir ${JAVAJARDIR}/${PORTNAME}/${dir}" >> \
 	    ${TMPPLIST}
 .endfor
-	${ECHO_CMD} "@unexec rmdir ${JAVAJARDIR}/${PORTNAME}" >> ${TMPPLIST}
+	@${ECHO_CMD} "@unexec rmdir ${JAVAJARDIR}/${PORTNAME}" >> ${TMPPLIST}
 .for file in ${SUBMIT_TOOLS_JAR_FILES}
 	${INSTALL_DATA} ${WRKSRC}/${file} ${JAVAJARDIR}/${PORTNAME}/${file}
 .endfor
 .for dir in ${SUBMIT_TOOLS_PERL_DIRS}
 	${MKDIR} ${SITE_PERL}/${PORTNAME}/${dir}
-	${ECHO_CMD} "@unexec rmdir ${SITE_PERL}/${PORTNAME}/${dir}" >> \
+	@${ECHO_CMD} "@unexec rmdir ${SITE_PERL}/${PORTNAME}/${dir}" >> \
 	    ${TMPPLIST}
 .endfor
-	${ECHO_CMD} "@unexec rmdir ${SITE_PERL}/${PORTNAME}" >> ${TMPPLIST}
+	@${ECHO_CMD} "@unexec rmdir ${SITE_PERL}/${PORTNAME}" >> ${TMPPLIST}
 .for file in ${SUBMIT_TOOLS_PERL_FILES}
 	${INSTALL_DATA} ${WRKSRC}/${file} ${SITE_PERL}/${PORTNAME}/${file}
 .endfor
