@@ -668,6 +668,7 @@ class DynamicDNS(Model):
             max_length=120,
             choices=choices.DYNDNSPROVIDER_CHOICES,
             default='dyndns',
+            blank=True,
             verbose_name = _("Provider")
             )
     ddns_domain = models.CharField(
