@@ -28,6 +28,7 @@
 
 from os import popen, stat, access
 import smtplib
+import sqlite3
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 
@@ -183,3 +184,18 @@ def umount(path):
 
     pipe.close()
     return ret
+
+def service_enabled(name):
+    h = sqlite3.connect("/data/freenas-v1.db")
+    c = h.cursor()
+
+    enabled = False
+    sql = "select srv_enable from services_services " \
+        "where srv_service = '%s' order by -id limit 1" % name
+    c.execute(sql)
+    row = c.fetchone()
+    if row and row[0] != 0:
+        enabled = True
+
+    h.close()
+    return enabled
