@@ -91,7 +91,13 @@ generate_exports()
 
 	set_sysctl
 
-	/usr/sbin/service mountd onereload
+
+	if ! /etc/rc.d/mountd forcestatus 1>/dev/null 2>&1
+	then
+		force_depend mountd || return 1
+	else
+		/usr/sbin/service mountd onereload
+	fi
 }
 
 name="ix-nfsd"
