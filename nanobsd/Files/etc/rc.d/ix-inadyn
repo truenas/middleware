@@ -19,7 +19,7 @@ generate_inadyn_real()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 		"SELECT $sf FROM services_dynamicdns ORDER BY -id LIMIT 1" | \
 	while eval read $f; do
-		if [ "${ddns_provider}" != "__custom__" ]; then
+		if [ -n "${ddns_provider}" ]; then
 			echo "dyndns_system ${ddns_provider}"
 		fi
 		cat << E*O*F
