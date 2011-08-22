@@ -329,13 +329,23 @@ class ActiveDirectoryForm(ModelForm):
     ad_adminpw2 = forms.CharField(max_length=50,
             label=_("Confirm Administrator Password"),
             widget=forms.widgets.PasswordInput(),
+            required=False,
             )
+    def __init__(self, *args, **kwargs):
+        super(ActiveDirectoryForm, self).__init__(*args, **kwargs)
+        if self.instance.ad_adminpw:
+            self.fields['ad_adminpw'].required = False
     def clean_ad_adminpw2(self):
         password1 = self.cleaned_data.get("ad_adminpw")
         password2 = self.cleaned_data.get("ad_adminpw2")
         if password1 != password2:
             raise forms.ValidationError(_("The two password fields didn't match."))
         return password2
+    def clean(self):
+        cdata = self.cleaned_data
+        if not cdata.get("ad_adminpw"):
+            cdata['ad_adminpw'] = self.instance.ad_adminpw
+        return cdata
     def save(self):
         #if self.files.has_key('file'):
         #    self.instance.ad_keytab = base64.encodestring(self.files['file'].read())
