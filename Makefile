@@ -23,6 +23,8 @@ JAVA_VERSION=	1.5
 NO_PACKAGE=	license restricts redistribution
 RESTRICTED=	license restricts redistribution
 
+OPTIONS=	RESERVED_PORT	"Use privileged ports when doing NFS testing" on
+
 .include <bsd.port.pre.mk>
 
 _mountpoint=
