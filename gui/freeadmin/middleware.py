@@ -44,10 +44,6 @@ class RequireLoginMiddleware(object):
     unless its decorated with @public
     """
     def process_view(self,request,view_func,view_args,view_kwargs):
-        if request.path == settings.LOGIN_URL:
-            return None
-        if hasattr(view_func, '__is_public'):
-            return None
         if not request.user.is_authenticated():
             user = User.objects.filter(is_superuser=True,password=UNUSABLE_PASSWORD)
             if user.exists():
@@ -55,6 +51,10 @@ class RequireLoginMiddleware(object):
                 backend = get_backends()[0]
                 user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
                 login(request, user)
+        if request.path == settings.LOGIN_URL:
+            return None
+        if hasattr(view_func, '__is_public'):
+            return None
         return login_required(view_func)(request,*view_args,**view_kwargs)
 
 class LocaleMiddleware(object):
