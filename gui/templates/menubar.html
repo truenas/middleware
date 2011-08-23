@@ -27,11 +27,15 @@
 	<br />
         <span>{% trans "Services" %}</span>
     </div>
+    <div dojoType="dijit.MenuBarItem" id="alert_status" class=" alert " style="margin-left:25px !important;" >
+        <p>Alert</p>
+    </div>
     <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" class="menu_icon" style="float:right;">
 	<img src="{{ STATIC_URL }}images/ui/menu/logout.png">
 	<br />
         <span>{% trans "Log Out" %}</span>
     </div>
+
     <div dojoType="dijit.MenuBarItem" onClick="dijit.byId('helpDialog').show();" class="menu_icon{% if focused_tab == "help" %} dijitMenuItemSelected{% endif %}" style="float:right;">
 	<img src="{{ STATIC_URL }}images/ui/menu/help.png">
 	<br />
@@ -42,6 +46,7 @@
 	<br />
         <span>{% trans "Account" %}</span>
     </div>
+
     {% else %}
     <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/login/'" class="menu_icon" style="font-weight:bold;">
 	<img src="{{ STATIC_URL }}images/ui/menu/login.png">
