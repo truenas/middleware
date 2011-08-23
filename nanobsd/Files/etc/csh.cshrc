@@ -2,7 +2,6 @@
 #
 # System-wide .cshrc file for csh(1).
 
-# pretty path
 set path = ( ~/bin /bin /usr/local/bin /usr/local/sbin /usr/bin /sbin \
              /usr/sbin )
 
@@ -31,9 +30,8 @@ setenv LSCOLORS ExGxFxdxCxegedabagExEx
 
 if (! $?term) exit
 
-# cool autocomplete goodness
+alias	ls		'ls -GFa'
 
-# more complete loving.
 complete {alias,unalias}	p/1/a/
 complete {bg,fg,stop}	c/%/j/ p/1/"(%)"//
 complete cd		p/1/d/
