@@ -2,8 +2,8 @@
 #
 
 # PROVIDE: ix-istgt
-# REQUIRE: NETWORKING
-# BEFORE: mountcritremote istgt
+# REQUIRE: NETWORKING mountlate
+# BEFORE: istgt
 # KEYWORD: nojail
 
 . /etc/rc.subr
