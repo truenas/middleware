@@ -32,6 +32,7 @@ if (! $?term) exit
 
 alias	ls		'ls -GFa'
 
+set noglob
 complete {alias,unalias}	p/1/a/
 complete {bg,fg,stop}	c/%/j/ p/1/"(%)"//
 complete cd		p/1/d/
@@ -47,7 +48,6 @@ complete set		'c/*=/f/' 'p/1/s/=' 'n/=/f/'
 complete sysctl		'n/*/`sysctl -Na`/'
 complete unset		n/*/s/
 complete which		n/*/c/
-
 unset noglob
 
 bindkey -k up history-search-backward
