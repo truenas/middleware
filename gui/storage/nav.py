@@ -83,6 +83,17 @@ class AddDataset(TreeNode):
         model = 'Volumes'
         append_app = False
 
+class AddZVol(TreeNode):
+
+        gname = 'storage.ZVol.Add'
+        name = _(u'Create ZFS Volume')
+        view = 'storage_zvol'
+        icon = u'AddDatasetIcon'
+        type = 'object'
+        app_name = 'storage'
+        model = 'Volumes'
+        append_app = False
+
 class CreatePeriodicSnap(TreeNode):
 
         gname = 'storage.Task.Add'
@@ -107,6 +118,7 @@ class Volumes(TreeNode):
             en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
             if en_dataset:
                 self.append_child(AddDataset)
+                self.append_child(AddZVol)
 
             mp = models.MountPoint.objects.filter(mp_ischild=False).exclude(mp_volume__vol_fstype__exact='iscsi').select_related().order_by('-id')
             for i in mp:
