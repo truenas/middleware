@@ -27,7 +27,7 @@
 #####################################################################
 
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, render
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
@@ -204,7 +204,9 @@ def login_wrapper(request, template_name='registration/login.html',
           authentication_form=authentication_form,
           current_app=current_app, extra_context=extra_context)
     if response.status_code in (301, 302) and response._headers.get('location', ('',''))[1] in (
-            reverse('system_reboot'), reverse('system_shutdown'), reverse('account_logout')
+            reverse('system_reboot'), reverse('system_shutdown'), reverse('account_logout'),
             ):
         response._headers['location'] = ('Location', '/')
+    elif request.user.is_authenticated():
+        return HttpResponseRedirect('/')
     return response
