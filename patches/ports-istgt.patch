@@ -1,6 +1,11 @@
---- net/istgt/Makefile	2011-08-19 14:30:30.000000000 -0700
-+++ net/istgt/Makefile	2011-08-19 14:32:10.000000000 -0700
-@@ -2,11 +2,11 @@
+Index: net/istgt/Makefile
+===================================================================
+RCS file: /home/ncvs/ports/net/istgt/Makefile,v
+retrieving revision 1.23
+diff -u -p -r1.23 Makefile
+--- net/istgt/Makefile	30 May 2011 20:10:18 -0000	1.23
++++ net/istgt/Makefile	23 Aug 2011 18:40:44 -0000
+@@ -2,11 +2,12 @@
  # Date created:		2009-02-23
  # Whom:			Daisuke Aoyama <aoyama@peach.ne.jp>
  #
@@ -11,10 +16,11 @@
  PORTNAME=	istgt
 -PORTVERSION=	20110529
 +PORTVERSION=	20110717
++PORTREVISION=	1
  CATEGORIES=	net
  MASTER_SITES=	http://www.peach.ne.jp/archives/istgt/
  
-@@ -17,6 +17,7 @@
+@@ -17,6 +18,7 @@ SUB_FILES=	pkg-message
  PKGMESSAGE=	${WRKDIR}/pkg-message
  
  GNU_CONFIGURE=	yes
@@ -22,10 +28,32 @@
  
  MAN1=		istgt.1
  MANCOMPRESSED=	yes
---- net/istgt/distinfo	2011-08-19 14:30:30.000000000 -0700
-+++ net/istgt/distinfo	2011-08-19 14:31:07.000000000 -0700
+Index: net/istgt/distinfo
+===================================================================
+RCS file: /home/ncvs/ports/net/istgt/distinfo,v
+retrieving revision 1.22
+diff -u -p -r1.22 distinfo
+--- net/istgt/distinfo	30 May 2011 20:10:18 -0000	1.22
++++ net/istgt/distinfo	23 Aug 2011 18:40:44 -0000
 @@ -1,2 +1,2 @@
 -SHA256 (istgt-20110529.tar.gz) = 51a3bde2177780f1a9cd0b32d3949f5db5e614f8d2c520e408e329778f7c49e0
 -SIZE (istgt-20110529.tar.gz) = 224527
 +SHA256 (istgt-20110717.tar.gz) = b9605c6ca4286e25a581791871ca4c90d253b4aad6d25bbde6eed0713d50bdb3
 +SIZE (istgt-20110717.tar.gz) = 229746
+Index: net/istgt/files/patch-etc__istgt.sh.in
+===================================================================
+RCS file: net/istgt/files/patch-etc__istgt.sh.in
+diff -N net/istgt/files/patch-etc__istgt.sh.in
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/istgt/files/patch-etc__istgt.sh.in	23 Aug 2011 18:40:48 -0000
+@@ -0,0 +1,10 @@
++--- ./etc/istgt.sh.in.orig	2011-05-29 03:53:29.000000000 -0700
+++++ ./etc/istgt.sh.in	2011-08-23 11:14:24.910003136 -0700
++@@ -2,7 +2,6 @@
++ 
++ # PROVIDE: istgt
++ # REQUIRE: NETWORKING
++-# BEFORE: mountcritremote
++ # KEYWORD: shutdown
++ 
++ . /etc/rc.subr
