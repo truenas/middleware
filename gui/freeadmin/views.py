@@ -94,7 +94,7 @@ def alert_status(request):
                 current = status
         return HttpResponse(current)
     else:
-        return HttpResponse('OK')
+        return HttpResponse('WARN')
 
 def alert_detail(request):
     if os.path.exists('/var/tmp/alert'):
