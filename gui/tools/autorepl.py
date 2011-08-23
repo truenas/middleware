@@ -214,8 +214,8 @@ for replication in replication_tasks:
                     error, errmsg = send_mail(subject="Replication failed!", text=\
                         """
 Hello,
-    The replication failed for the local ZFS %s because the remote system have
-    have diveraged snapshot with us.
+    The replication failed for the local ZFS %s because the remote system
+    have diverged snapshot with us.
                         """ % (localfs), interval = timedelta(hours = 2), channel = 'autorepl')
                     MNTLOCK.unlock()
                     continue
