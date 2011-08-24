@@ -161,6 +161,9 @@ add_port www/py-flup
 #-add_port sysutils/nut
 add_port net-mgmt/net-snmp
 add_port sysutils/nut -DWITHOUT_NEON
+#+add_port sysutils/graid5
+#-add_port sysutils/graid5
+add_port sysutils/graid5
 
 add_port devel/libstatgrab -DWITHOUT_X11 # run dep of collectd
 add_port devel/libltdl -DWITHOUT_X11 # run dep of collectd
