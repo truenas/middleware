@@ -48,6 +48,25 @@ def get_freenas_version():
 
     return version
 
+def get_freenas_login_version():
+    # A specialized case of get_freenas_version() used by the login
+    # dialog to only return the middle of the version string.
+    # For example, if the file contains FreeNAS-8r7200-amd64 we want to
+    # return 8r7200
+    version = "FreeNAS"
+    try:
+        fd = open("/etc/version.freenas")
+    except:
+        fd = None
+
+    if fd:
+        version = fd.read().strip().split("-")
+        fd.close()
+        return version[1]
+
+    return version
+
+
 
 def get_freenas_var_by_file(file, var):
     if not file or not var:
