@@ -72,20 +72,23 @@ SUBMIT_TOOLS_JAR_FILES=\
 SUBMIT_TOOLS_PERL_DIRS=\
 	submit_tools/dev \
 	submit_tools/lib \
-	submit_tools/specreport \
 	submit_tools \
 
-SUBMIT_TOOLS_PERL_FILES=\
+SUBMIT_TOOLS_PERL_SCRIPTS=\
 	submit_tools/dev/schema2table.pl \
+	submit_tools/specreport.pl \
+	submit_tools/subedit.pl \
+
+SUBMIT_TOOLS_PERL_MODULES=\
+	submit_tools/lib/Exceptions.pm \
+	submit_tools/lib/HtmlParser.pm \
+	submit_tools/lib/Html2Text.pm \
 	submit_tools/lib/ReportRender.pm \
 	submit_tools/lib/SimpleMath.pm \
 	submit_tools/lib/SimpleObj.pm \
-	submit_tools/lib/Subedit.jar \
-	submit_tools/specreport/specreport.pl \
-	submit_tools/specreport.pl \
 
 BINS=\
-	bin/sfs_prime bin/sfs_syncd bin/sfscifs bin/sfsnfs3
+	bin/sfs_prime bin/sfs_syncd bin/sfscifs bin/sfsnfs3 \
 
 DOC_DIRS=\
 	html/SPECsfs2008_run_rules_files \
@@ -119,7 +122,7 @@ DOCS=\
 	pdf/SPECsfs2008_run_rules.pdf \
 	pdf/SPECsfs2008_users_guide.pdf \
 
-PLIST_FILES=	${BINS} bin/UnivSystem.sh \
+PLIST_FILES=	${BINS} bin/UnivSystem.sh bin/specreport bin/subedit \
 		%%EXAMPLESDIR%%/sfs_ext_mon \
 
 USERS=		spec
@@ -130,63 +133,89 @@ PLIST_FILES+=	%%DOCSDIR%%/${doc}
 .endfor
 
 .for file in ${MANAGER_JAR_FILES} ${SUBMIT_TOOLS_JAR_FILES}
-PLIST_FILES+=	%%JAVAJARDIR%%/${PORTNAME}/${file}
+PLIST_FILES+=	${PREFIX}/${PORTNAME}/${file}
 .endfor
 
-.for file in ${SUBMIT_TOOLS_PERL_FILES}
-PLIST_FILES+=	%%SITE_PERL%%/${PORTNAME}/${file}
+.for file in ${SUBMIT_TOOLS_PERL_MODULES}
+PLIST_FILES+=	${PREFIX}/${PORTNAME}/${file}
 .endfor
 
-do-install:
+PLIST_FILES+=	${SUBMIT_TOOLS_PERL_SCRIPTS}
+
+# XXX: why doesn't this work?
+# PLIST_SUB+=	PORTNAME=${PORTNAME} SITE_PERL=${SITE_PERL}
+
+SUB_FILES+=	pkg-message specreport subedit
+
+generate-plist.2: generate-plist
+	@${ECHO_CMD} "@unexec rmdir ${EXAMPLESDIR}" >> ${TMPPLIST}
+.for dir in ${DOC_DIRS}
+	@${ECHO_CMD} "@unexec rmdir ${DOCSDIR}/${dir}" >> ${TMPPLIST}
+.endfor
+	@${ECHO_CMD} "@unexec rmdir ${DOCSDIR}" >> ${TMPPLIST}
+.for dir in ${MANAGER_JAR_DIRS}
+	@${ECHO_CMD} "@unexec rmdir ${PREFIX}/${PORTNAME}/${dir}" >> \
+	    ${TMPPLIST}
+.endfor
+.for dir in ${SUBMIT_TOOLS_JAR_DIRS}
+	@${ECHO_CMD} "@unexec rmdir ${PREFIX}/${PORTNAME}/${dir}" >> \
+	    ${TMPPLIST}
+.endfor
+	@${ECHO_CMD} "@unexec rmdir ${PREFIX}/${PORTNAME}" >> ${TMPPLIST}
+.for dir in ${SUBMIT_TOOLS_PERL_DIRS}
+	@${ECHO_CMD} "@unexec rmdir ${PREFIX}/${PORTNAME}/${dir}" >> \
+	    ${TMPPLIST}
+.endfor
+	@${ECHO_CMD} "@unexec rmdir ${PREFIX}/${PORTNAME}" >> ${TMPPLIST}
+
+do-install: generate-plist.2
 	${MKDIR} ${PREFIX}/bin
 .for file in ${BINS}
 	${STRIP_CMD} ${WRKSRC}/${file}
 	${INSTALL_PROGRAM} ${WRKSRC}/${file} ${PREFIX}/${file}
 .endfor
+.for file in specreport subedit
+	# XXX: this sed hackery shouldn't be required.
+	${REINPLACE_CMD} -e 's,%%PORTNAME%%,${PORTNAME},g' \
+		-e 's,%%SITE_PERL%%,${SITE_PERL},g' ${WRKDIR}/${file}
+	${INSTALL_SCRIPT} ${WRKDIR}/${file} ${PREFIX}/bin/${file:T}
+.endfor
 	${CHMOD} 04755 ${PREFIX}/bin/sfscifs
 	${CHMOD} 04755 ${PREFIX}/bin/sfsnfs3
 	${INSTALL_SCRIPT} ${WRKSRC}/src/UnivSystem.sh ${PREFIX}/bin
 	${MKDIR} ${EXAMPLESDIR}
-	@${ECHO_CMD} "@unexec rmdir ${EXAMPLESDIR}" >> ${TMPPLIST}
 	${INSTALL_SCRIPT} ${WRKSRC}/bin/sfs_ext_mon ${EXAMPLESDIR}
 .for dir in ${DOC_DIRS}
 	${MKDIR} ${DOCSDIR}/${dir}
-	@${ECHO_CMD} "@unexec rmdir ${DOCSDIR}/${dir}" >> ${TMPPLIST}
 .endfor
-	@${ECHO_CMD} "@unexec rmdir ${DOCSDIR}" >> ${TMPPLIST}
 .for doc in ${DOCS}
 	${INSTALL_DATA} ${WRKSRC}/documents/${doc} ${DOCSDIR}/${doc}
 .endfor
 .for dir in ${MANAGER_JAR_DIRS}
-	${MKDIR} ${JAVAJARDIR}/${PORTNAME}/${dir}
-	@${ECHO_CMD} "@unexec rmdir ${JAVAJARDIR}/${PORTNAME}/${dir}" >> \
-	    ${TMPPLIST}
+	${MKDIR} ${PREFIX}/${PORTNAME}/${dir}
 .endfor
 .for file in ${MANAGER_JAR_FILES}
-	${INSTALL_DATA} ${WRKSRC}/${file} ${JAVAJARDIR}/${PORTNAME}/${file}
+	${INSTALL_DATA} ${WRKSRC}/${file} ${PREFIX}/${PORTNAME}/${file}
 .endfor
-.for dir in ${SUBMIT_TOOLS_JAR_DIRS}
-	${MKDIR} ${JAVAJARDIR}/${PORTNAME}/${dir}
-	@${ECHO_CMD} "@unexec rmdir ${JAVAJARDIR}/${PORTNAME}/${dir}" >> \
-	    ${TMPPLIST}
+.for dir in ${SUBMIT_TOOLS_JAR_DIRS} 
+	${MKDIR} ${PREFIX}/${PORTNAME}/${dir}
 .endfor
-	@${ECHO_CMD} "@unexec rmdir ${JAVAJARDIR}/${PORTNAME}" >> ${TMPPLIST}
 .for file in ${SUBMIT_TOOLS_JAR_FILES}
-	${INSTALL_DATA} ${WRKSRC}/${file} ${JAVAJARDIR}/${PORTNAME}/${file}
+	${INSTALL_DATA} ${WRKSRC}/${file} ${PREFIX}/${PORTNAME}/${file}
 .endfor
 .for dir in ${SUBMIT_TOOLS_PERL_DIRS}
-	${MKDIR} ${SITE_PERL}/${PORTNAME}/${dir}
-	@${ECHO_CMD} "@unexec rmdir ${SITE_PERL}/${PORTNAME}/${dir}" >> \
-	    ${TMPPLIST}
+	${MKDIR} ${PREFIX}/${PORTNAME}/${dir}
 .endfor
-	@${ECHO_CMD} "@unexec rmdir ${SITE_PERL}/${PORTNAME}" >> ${TMPPLIST}
-.for file in ${SUBMIT_TOOLS_PERL_FILES}
-	${INSTALL_DATA} ${WRKSRC}/${file} ${SITE_PERL}/${PORTNAME}/${file}
+.for file in ${SUBMIT_TOOLS_PERL_MODULES}
+	${INSTALL_DATA} ${WRKSRC}/${file} ${PREFIX}/${PORTNAME}/${file}
+.endfor
+.for file in ${SUBMIT_TOOLS_PERL_SCRIPTS}
+	${INSTALL_SCRIPT} ${WRKSRC}/${file} ${PREFIX}/${PORTNAME}/${file}
 .endfor
 
 post-install:
 	@${ECHO_CMD}
-	@${CAT} ${PKGMESSAGE}
+	@${CAT} ${WRKDIR}/${PKGMESSAGE:T}
 	@${ECHO_CMD}
 
 .include <bsd.port.post.mk>
