@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-07-04 06:09+0200\n"
-"Last-Translator: v_kr <v_kr@inbox.ru>\n"
+"PO-Revision-Date: 2011-08-22 18:02+0200\n"
+"Last-Translator: Koshin <koshnv@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -1168,12 +1168,13 @@ msgstr ""
 "Ваш путь должен находиться в пределах точки монтирования раздела/набора "
 "данных."
 
+# KB, MB, GB, TB - должны быть на английском, так как это часть системной команды.
 #: services/forms.py:556
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr ""
-"Это значение может быть размером в байтах, или может обозначаться как КБ, "
-"МБ, ГБ, ТБ"
+"Значение может иметь размером в байтах, или снабжаться постфиксом: к KB, MB, "
+"GB, TB"
 
 #: services/forms.py:577
 msgid "Disk device"
@@ -1371,11 +1372,11 @@ msgstr "Домашние каталоги"
 
 #: services/models.py:153
 msgid "Enable AIO"
-msgstr "Включить асинхронный ввод/вывод"
+msgstr "Включить AIO"
 
 #: services/models.py:154
 msgid "This enables\\disables AIO support."
-msgstr "Включает\\отключает асинхронный ввод/вывод"
+msgstr "Включает/отключает AIO"
 
 #: services/models.py:158
 msgid "Minimal AIO read size"
@@ -1499,11 +1500,11 @@ msgstr "Метод аутентификации для просмотра"
 
 #: services/models.py:253
 msgid "I/O Timeout"
-msgstr "Таймаут ввода/вывода"
+msgstr "I/O Таймаут "
 
 #: services/models.py:254
 msgid "I/O timeout in seconds (30 by default)."
-msgstr "Таймаут ввода/вывода в секундах (30 по умолчанию)."
+msgstr "I/O Таймаут в секундах (30 по умолчанию)."
 
 #: services/models.py:259
 msgid "NOPIN Interval"
