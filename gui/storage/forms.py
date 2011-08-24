@@ -1094,6 +1094,6 @@ class VolumeExport(Form):
         services = kwargs.pop('services', {})
         super(VolumeExport, self).__init__(*args, **kwargs)
         if services.keys():
-            self.fields['cascade'] = forms.BooleanField(initial=False,
+            self.fields['cascade'] = forms.BooleanField(initial=True,
                     required=False,
                     label=_("Delete all shares related to this volume"))

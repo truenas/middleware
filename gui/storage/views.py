@@ -625,11 +625,11 @@ def volume_export(request, vid):
     if request.method == "POST":
         form = forms.VolumeExport(request.POST, instance=volume, services=services)
         if form.is_valid():
-            volume.delete_step1(destroy=form.cleaned_data['mark_new'], cascade=form.cleaned_data['cascade'])
+            volume.delete_step1(destroy=form.cleaned_data['mark_new'], cascade=form.cleaned_data.get('cascade', True))
             if volume.vol_fstype == 'ZFS' and not notifier().zfs_export(volume.vol_name):
                 return HttpResponse(simplejson.dumps({"error": True, "message": _("The volume failed to export")}), mimetype="application/json")
             else:
-                volume.delete_step2(destroy=form.cleaned_data['mark_new'], cascade=form.cleaned_data['cascade'])
+                volume.delete_step2(destroy=form.cleaned_data['mark_new'], cascade=form.cleaned_data.get('cascade', True))
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("The volume has been successfully exported")}), mimetype="application/json")
     else:
         form = forms.VolumeExport(instance=volume, services=services)

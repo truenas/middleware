@@ -100,6 +100,9 @@ class Volume(Model):
                 if dirty:
                     notifier().restart(svc)
 
+        if not destroy:
+            notifier().detach_volume_swaps(self)
+
     def delete_step2(self, destroy, cascade):
         if destroy:
             notifier().destroy("volume", self)

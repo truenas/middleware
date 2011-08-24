@@ -1028,6 +1028,17 @@ class notifier:
         ret = self.__system_nolog('/sbin/zpool add -f %s spare %s' % (volume, devname))
         return ret
 
+    def detach_volume_swaps(self, volume):
+        """Detach all swaps associated with volume"""
+        vgroup_list = volume.diskgroup_set.all()
+        for vgrp in vgroup_list:
+            vdev_member_list = vgrp.disk_set.all()
+            for disk in vdev_member_list:
+                devname = self.identifier_to_device(disk.disk_identifier)
+                swapdev = self.swap_from_device(devname)
+                if swapdev != '':
+                    self.__system("swapoff /dev/%s" % self.swap_from_device(devname))
+
     def _destroy_volume(self, volume):
         """Destroy a volume designated by volume_id"""
 
