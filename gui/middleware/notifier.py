@@ -1406,15 +1406,16 @@ class notifier:
             status = res.split('pool: %s' % pool)[1].split('pool:')[0]
             roots = zfs.parse_status(pool, doc, status)
 
-            volumes.append({
-                'label': pool,
-                'type': 'zfs',
-                'group_type': 'none',
-                'cache': roots['cache'].dump() if roots['cache'] else None,
-                'log': roots['log'].dump() if roots['log'] else None,
-                'spare': roots['spare'].dump() if roots['spare'] else None,
-                'disks': roots[pool].dump(),
-                })
+            if roots[pool].status != 'UNAVAIL':
+                volumes.append({
+                    'label': pool,
+                    'type': 'zfs',
+                    'group_type': 'none',
+                    'cache': roots['cache'].dump() if roots['cache'] else None,
+                    'log': roots['log'].dump() if roots['log'] else None,
+                    'spare': roots['spare'].dump() if roots['spare'] else None,
+                    'disks': roots[pool].dump(),
+                    })
 
         return volumes
 

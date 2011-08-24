@@ -632,7 +632,7 @@ class VolumeAutoImportForm(forms.Form):
 
             if vol['type'] == 'zfs' and not notifier().zfs_import(vol['label']):
                 from middleware.exceptions import MiddlewareError
-                raise MiddlewareError('The volume "%s" failed to import' % vol['label'])
+                raise MiddlewareError(_('The volume "%s" failed to import, for futher details check pool status') % vol['label'])
 
         if vol['type'] == 'zfs':
             notifier().zfs_sync_datasets(volume)
