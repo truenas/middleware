@@ -187,7 +187,10 @@ def volautoimport(request):
 
         form = forms.VolumeAutoImportForm(request.POST)
         if form.is_valid():
-            form.done(request)
+            try:
+                form.done(request)
+            except MiddlewareError, e:
+                return HttpResponse(simplejson.dumps({"error": True, "message": _("Error: %s") % str(e)}), mimetype="application/json")
             return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume successfully added.")}), mimetype="application/json")
         else:
 

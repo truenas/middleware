@@ -631,7 +631,8 @@ class VolumeAutoImportForm(forms.Form):
                         i += 1
 
             if vol['type'] == 'zfs' and not notifier().zfs_import(vol['label']):
-                assert False, "Could not run zfs import"
+                from middleware.exceptions import MiddlewareError
+                raise MiddlewareError('The volume "%s" failed to import' % vol['label'])
 
         if vol['type'] == 'zfs':
             notifier().zfs_sync_datasets(volume)
