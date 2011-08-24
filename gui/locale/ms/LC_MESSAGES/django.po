@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:45-0700\n"
-"PO-Revision-Date: 2011-08-20 11:00+0200\n"
+"PO-Revision-Date: 2011-08-20 11:10+0200\n"
 "Last-Translator: fx175 <felix83@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ms\n"
@@ -351,11 +351,11 @@ msgstr "On"
 
 #: choices.py:276 choices.py:281
 msgid "Off"
-msgstr "Tutup"
+msgstr "Off"
 
 #: choices.py:282
 msgid "lzjb (recommended)"
-msgstr "lzjb (cadangan)"
+msgstr "lzjb (disyorkan)"
 
 #: choices.py:283
 msgid "gzip (default level, 6)"
@@ -396,20 +396,19 @@ msgstr "Setiap hari"
 
 #: choices.py:435
 msgid "Every selected weekday"
-msgstr "Setiap hari pilihan"
+msgstr "Setiap hari minggu yang dipilih"
 
 #: choices.py:441
-#, fuzzy
 msgid "Read-only"
-msgstr "baca sahaja"
+msgstr "Baca-sahaja"
 
 #: choices.py:442
 msgid "Write-only"
-msgstr "catat sahaja"
+msgstr "Tulis-sahaja"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr ""
+msgstr "Baca dan Tulis"
 
 #: choices.py:447 choices.py:448
 #, python-format
@@ -438,11 +437,11 @@ msgstr "%(minggu) minggu"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Tidak Pernah - Semak peranti tanpa mengira mod kuasanya"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "Tidur - Semak peranti kecuali jika ia dalam mod TIDUR"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
@@ -454,7 +453,7 @@ msgstr ""
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Ujian-Sendiri Panjang"
 
 #: choices.py:468
 msgid "Short Self-Test"
@@ -499,11 +498,11 @@ msgstr "katalaluan"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:188
 msgid "Password confirmation"
-msgstr "Pengesahan Katalaluan"
+msgstr "Pengesahan Kata Laluan"
 
 #: account/forms.py:203 account/forms.py:310 system/forms.py:189
 msgid "Enter the same password as above, for verification."
-msgstr "Sila taip sekali lagi katalaluan untuk pengesahan"
+msgstr "Sila taip kata laluan yang sama sekali lagi untuk pengesahan"
 
 #: account/forms.py:204 account/forms.py:346 account/models.py:105
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:89
@@ -520,7 +519,7 @@ msgstr "Kumpulan utama"
 
 #: account/forms.py:235
 msgid "A user with that username already exists."
-msgstr "Nama penguna sudah wujud"
+msgstr "Nama pengguna sudah wujud"
 
 #: account/forms.py:243 account/forms.py:329 account/forms.py:479
 #: system/forms.py:232
@@ -628,7 +627,7 @@ msgstr "Penguna"
 
 #: account/models.py:121 templates/account/index.html:13
 msgid "Users"
-msgstr "Penguna"
+msgstr "Pengguna"
 
 #: account/models.py:138
 #, python-format
@@ -803,24 +802,24 @@ msgstr ""
 
 #: network/models.py:65
 msgid "Nameserver 1"
-msgstr ""
+msgstr "Server Nama 1"
 
 #: network/models.py:71
 msgid "Nameserver 2"
-msgstr ""
+msgstr "Server Nama 2"
 
 #: network/models.py:77
 msgid "Nameserver 3"
-msgstr ""
+msgstr "Server Nama 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:21
 #: templates/network/index.html:3
 msgid "Global Configuration"
-msgstr ""
+msgstr "Konfigurasi Global"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Pilih NIC anda"
 
 #: network/models.py:101
 msgid "Interface Name"
@@ -5036,7 +5035,7 @@ msgid "%s successfully update."
 msgstr "%s data berjaya dinaiktaraf."
 
 msgid "Admin user"
-msgstr "Penguna Admin"
+msgstr "Pengguna Admin"
 
 #, fuzzy
 msgid "ZVol Name"
