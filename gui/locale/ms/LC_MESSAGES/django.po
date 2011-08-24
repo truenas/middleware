@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:45-0700\n"
-"PO-Revision-Date: 2011-07-08 11:46+0200\n"
-"Last-Translator: promode2u <promode2u@gmail.com>\n"
+"PO-Revision-Date: 2011-08-20 11:00+0200\n"
+"Last-Translator: fx175 <felix83@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ms\n"
 "MIME-Version: 1.0\n"
@@ -137,7 +137,7 @@ msgstr "Level 254 -pengunaan kuasa penuh pc, kuasa penuh tenaga elektrik"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
-msgstr "Sedikit"
+msgstr "Rendah"
 
 #: choices.py:92
 msgid "Medium"
@@ -145,7 +145,7 @@ msgstr "Sederhana"
 
 #: choices.py:93
 msgid "Maximum"
-msgstr "Tertinggi"
+msgstr "Tinggi"
 
 #: choices.py:127 templates/storage/tasks.html:85
 msgid "January"
@@ -193,7 +193,7 @@ msgstr "November"
 
 #: choices.py:138 templates/storage/tasks.html:118
 msgid "December"
-msgstr "Desember"
+msgstr "Disember"
 
 #: choices.py:141 templates/storage/tasks.html:56
 msgid "Monday"
@@ -225,11 +225,11 @@ msgstr "Ahad"
 
 #: choices.py:158
 msgid "Anonymous"
-msgstr "Tak bernama"
+msgstr "Tanpa Nama"
 
 #: choices.py:159
 msgid "Local User"
-msgstr "Penguna dalaman"
+msgstr "Pengguna Tempatan"
 
 #: choices.py:180
 msgid "Normal"
@@ -247,9 +247,10 @@ msgstr "Ralat"
 msgid "Default"
 msgstr "Setting Asal"
 
+# refer to Apple Time Machine
 #: choices.py:187
 msgid "Time Machine"
-msgstr "Masa PC"
+msgstr "Time Machine"
 
 #: choices.py:190
 msgid "No case folding"
@@ -261,15 +262,17 @@ msgstr "huruf kecil di kedua-dua arah"
 
 #: choices.py:193
 msgid "Client sees lowercase, server sees uppercase"
-msgstr "huruf kecil oleh PC akan di baca sebagai huruf besar oleh SERVER"
+msgstr ""
+"Akan dibaca sebagai huruf kecil oleh PC dan sebagai huruf besar oleh SERVER"
 
 #: choices.py:194
 msgid "Client sees uppercase, server sees lowercase"
-msgstr "huruf besar oleh PC akan di baca sebagai huruf kecil oleh SERVER"
+msgstr ""
+"Akan dibaca sebagai huruf besar oleh PC dan sebagai huruf kecil oleh SERVER"
 
 #: choices.py:198
 msgid "File"
-msgstr "File"
+msgstr "Fail"
 
 #: choices.py:199
 msgid "Device"
@@ -308,7 +311,7 @@ msgstr "baca sahaja"
 #: choices.py:216 choices.py:222 services/forms.py:392 services/forms.py:394
 #: services/forms.py:741 templates/storage/wizard.html:92
 msgid "None"
-msgstr "tak ada apa2"
+msgstr "Tiada"
 
 #: choices.py:218
 msgid "CHAP"
@@ -324,11 +327,11 @@ msgstr "UPS - kuasa bateri rendah"
 
 #: choices.py:242
 msgid "UPS goes on battery"
-msgstr "UPS - mengunakan bateri"
+msgstr "UPS - menggunakan bateri"
 
 #: choices.py:245
 msgid "Preferred"
-msgstr ""
+msgstr "Pilihan Utama"
 
 #: choices.py:246
 msgid "Tolerated"
@@ -344,7 +347,7 @@ msgstr "Mewarisi"
 
 #: choices.py:275
 msgid "On"
-msgstr "Hidup"
+msgstr "On"
 
 #: choices.py:276 choices.py:281
 msgid "Off"
