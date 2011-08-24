@@ -65,7 +65,7 @@ class CIFSForm(ModelForm):
         cleaned_data = self.cleaned_data
         home = cleaned_data['cifs_srv_homedir_enable']
         browse = cleaned_data['cifs_srv_homedir_browseable_enable']
-        hdir = cleaned_data['cifs_srv_homedir']
+        hdir = cleaned_data.get('cifs_srv_homedir')
         if (browse or hdir) and not home:
             self._errors['cifs_srv_homedir_enable'] = self.error_class()
             if browse:
