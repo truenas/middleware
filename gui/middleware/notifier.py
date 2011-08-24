@@ -1251,6 +1251,13 @@ class notifier:
                     search = doc.xpathEval("//class[name = '%s']/geom[name = '%s%s']/config/State" % (gtype, name, gtype.lower()))
                     if len(search) > 0:
                         status = search[0].content
+            else:
+                p1 = self.__pipeopen('mount|grep "/dev/ufs/%s"' % name)
+                p1.communicate()
+                if p1.returncode == 0:
+                    status = 'HEALTHY'
+                else:
+                    status = 'DEGRADED'
 
         if status in ('UP', 'COMPLETE', 'ONLINE'):
             status = 'HEALTHY'
