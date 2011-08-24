@@ -28,6 +28,7 @@
 
 from os import popen, stat, access
 import smtplib
+import sqlite3
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 
@@ -46,6 +47,25 @@ def get_freenas_version():
         fd.close()
 
     return version
+
+def get_freenas_login_version():
+    # A specialized case of get_freenas_version() used by the login
+    # dialog to only return the middle of the version string.
+    # For example, if the file contains FreeNAS-8r7200-amd64 we want to
+    # return 8r7200
+    version = "FreeNAS"
+    try:
+        fd = open("/etc/version.freenas")
+    except:
+        fd = None
+
+    if fd:
+        version = fd.read().strip().split("-")
+        fd.close()
+        return version[1]
+
+    return version
+
 
 
 def get_freenas_var_by_file(file, var):
@@ -183,3 +203,21 @@ def umount(path):
 
     pipe.close()
     return ret
+
+def service_enabled(name):
+    db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
+    h = sqlite3.connect(db)
+    c = h.cursor()
+
+    enabled = False
+    sql = "select srv_enable from services_services " \
+        "where srv_service = '%s' order by -id limit 1" % name
+    c.execute(sql)
+    row = c.fetchone()
+    if row and row[0] != 0:
+        enabled = True
+
+    c.close()
+    h.close()
+
+    return enabled

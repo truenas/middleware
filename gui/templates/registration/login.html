@@ -47,7 +47,7 @@
 {% if user.is_authenticated %}
 <p>{% blocktrans with user.username as username %}Welcome, {{ username }}. Thanks for logging in.{% endblocktrans %}</p>
 {% else %} 
-<div id="login" dojoType="dijit.Dialog" title="{% trans "Welcome to FreeNAS&trade; 8" %}">
+<div id="login" dojoType="dijit.Dialog" title="{% blocktrans with freenas_login_version as freenas_login_version %}Welcome to FreeNAS&trade; {{ freenas_login_version }}{% endblocktrans %}">
     <h3>{% trans "Please log in." %}</h3>
 <form action="." method="post">{% csrf_token %}
 <table>
