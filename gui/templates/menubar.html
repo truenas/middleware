@@ -27,8 +27,9 @@
 	<br />
         <span>{% trans "Services" %}</span>
     </div>
-    <div dojoType="dijit.MenuBarItem" id="alert_status" class=" alert " style=width:50px !important;" >
-        <p>Alert</p>
+    <div dojoType="dijit.MenuBarItem" class="menu_icon" onClick="alert_open();" style="float:right;" >
+    <div dojoType="dijit.layout.ContentPane" id="alert_status" class="alert_ok"></div>
+        <span>Alert</span>
     </div>
     <div dojoType="dijit.MenuBarItem" onClick="window.location='/account/logout/'" class="menu_icon" style="float:right;">
 	<img src="{{ STATIC_URL }}images/ui/menu/logout.png">

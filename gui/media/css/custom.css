@@ -486,41 +486,32 @@ padding-left:5px;
     padding-right: !important;
 }
 .alert_ok {
-    background: url("/media/images/ui/alerts/ok.png") no-repeat scroll 7px 0 transparent !important;
-    width:30px;
+    background: url("/media/images/ui/alerts/ok.png") no-repeat 0 0 transparent !important;
+    width:25px;
     height:25px;
-    padding: 0 !important;
-    position:relative;
-    float:right;
-    padding-left:4px !important;
-    margin-top:5px !important;
-    margin-top:5px !important;
+    padding: 0;
+    margin: 0 auto;
+    margin-bottom:3px;
     border:none !important;
 
 }
 .alert_warn {
-    background: url("/media/images/ui/alerts/warn.gif") no-repeat scroll 7px 0 transparent !important;
-    width:30px;
+    background: url("/media/images/ui/alerts/warn.gif") no-repeat 0 0 transparent !important;
+    width:25px;
     height:25px;
     padding: 0 !important;
-    position:relative;
-    float:right;
-    padding-left:4px !important;
-    margin-top:5px !important;
-    margin-top:5px !important;
+    margin: 0 auto;
+    margin-bottom:3px;
     border:none !important;
 
 }
 .alert_crit {
-    background: url("/media/images/ui/alerts/crit.gif") no-repeat scroll 7px 0 transparent !important;
+    background: url("/media/images/ui/alerts/crit.gif") no-repeat 0 0 transparent !important;
     width:25px;
     height:25px;
     padding: 0 !important;
-    position:relative;
-    float:right;
-    padding-left:4px !important;
-    margin-top:5px !important;
-    margin-top:5px !important;
+    margin: 0 auto;
+    margin-bottom:3px;
     border:none !important;
 
 }

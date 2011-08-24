@@ -37,23 +37,37 @@ function loadalert() {
         handleAs: "text",
         load: function(data) {
 
-            var alertdiv = dijit.byId("alert_status");
+            var alertdiv = dojo.byId("alert_status");
+            if(data == _alert_status)
+                return true;
             _alert_status = data;
             if(data == 'OK') {
-                dojo.removeClass(alertdiv.domNode, ["alert_crit", "alert_warn"]);
-                dojo.addClass(alertdiv.domNode, "alert_ok");
+                dojo.removeClass(alertdiv, ["alert_crit", "alert_warn"]);
+                dojo.addClass(alertdiv, "alert_ok");
             } else if(data == 'WARN') {
-                dojo.removeClass(alertdiv.domNode, ["alert_crit", "alert_ok"]);
-                dojo.addClass(alertdiv.domNode, "alert_warn");
+                dojo.removeClass(alertdiv, ["alert_crit", "alert_ok"]);
+                dojo.addClass(alertdiv, "alert_warn");
             } else if(data == 'CRIT') {
-                dojo.removeClass(alertdiv.domNode, ["alert_warn", "alert_ok"]);
-                dojo.addClass(alertdiv.domNode, "alert_crit");
+                dojo.removeClass(alertdiv, ["alert_warn", "alert_ok"]);
+                dojo.addClass(alertdiv, "alert_crit");
             }
 
         },
     });
 }
 
+alert_open = function() {
+    var alertdlg = new dijit.Dialog({
+        title: "Alert System",
+        style: "width: 400px",
+        id: "alert_dialog",
+        href: "/admin/alert/",
+        onHide: function() {
+            setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
+        },
+    });
+    alertdlg.show();
+}
 
 dojo.addOnLoad(function(){
 
@@ -66,18 +80,5 @@ dojo.addOnLoad(function(){
         loadalert();
     }
     talert.start();
-    var alertdiv = dijit.byId("alert_status");
-    dojo.connect(alertdiv.domNode, "onclick", function() {
-        var alertdlg = new dijit.Dialog({
-            title: "Alert System",
-            style: "width: 400px",
-            id: "alert_dialog",
-            href: "/admin/alert/",
-            onHide: function() {
-                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
-            },
-        });
-        alertdlg.show();
-    });
 
 });
