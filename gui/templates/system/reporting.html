@@ -4,12 +4,10 @@
         <div dojoType="dijit.layout.ContentPane" nested="true" title="{% trans "Hourly" %}" {% if focus_form == "system" %} selected="true"{% endif %} style="overflow-y:scroll;">
             <h3>{% trans "Hourly Graphs" %}</h3>
             <div id="reports">
-            {% for hourly in graphs.hourly %}
-                {% for img in hourly %}
+            {% for img in graphs.hourly %}
                 <div class="chart">
                     <img src="/reporting/graphs/hourly/{{ img }}">
                 </div>
-                {% endfor %}
             {% endfor %}
             </div>
         </div>
@@ -18,12 +16,10 @@
         <div dojoType="dijit.layout.ContentPane" title="{% trans "Daily" %}">
             <h3>{% trans "Daily Graphs" %}</h3>
             <div id="reports">
-            {% for daily in graphs.daily %}
-                {% for img in daily %}
+            {% for img in graphs.daily %}
                 <div class="chart">
                     <img src="/reporting/graphs/daily/{{ img }}">
                 </div>
-                {% endfor %}
             {% endfor %}
             </div>
         </div>
@@ -32,12 +28,10 @@
         <div dojoType="dijit.layout.ContentPane" title="{% trans "Weekly" %}">
             <h3>{% trans "Weekly Graphs" %}</h3>
             <div id="reports">
-            {% for weekly in graphs.weekly %}
-                {% for img in weekly %}
+            {% for img in graphs.weekly %}
                 <div class="chart">
                     <img src="/reporting/graphs/weekly/{{ img }}">
                 </div>
-                {% endfor %}
             {% endfor %}
             </div>
         </div>
@@ -46,12 +40,10 @@
         <div dojoType="dijit.layout.ContentPane" title="{% trans "Monthly" %}">
             <h3>{% trans "Monthly Graphs" %}</h3>
             <div id="reports">
-            {% for monthly in graphs.monthly %}
-                {% for img in monthly %}
+            {% for img in graphs.monthly %}
                 <div class="chart">
                     <img src="/reporting/graphs/monthly/{{ img }}">
                 </div>
-                {% endfor %}
             {% endfor %}
             </div>
         </div>
@@ -60,12 +52,10 @@
         <div dojoType="dijit.layout.ContentPane" title="{% trans "Yearly" %}">
             <h3>{% trans "Yearly Graphs" %}</h3>
             <div id="reports">
-            {% for yearly in graphs.yearly %}
-                {% for img in yearly %}
+            {% for img in graphs.yearly %}
                 <div class="chart">
                     <img src="/reporting/graphs/yearly/{{ img }}">
                 </div>
-                {% endfor %}
             {% endfor %}
             </div>
         </div>
