@@ -33,7 +33,6 @@ import grp
 import pwd
 import types
 import ldap
-import dns
 import syslog
 import time
 import hashlib
