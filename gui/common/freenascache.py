@@ -55,7 +55,7 @@ class FreeNAS_BaseCache(object):
         self.__cache = db.DB(self.__dbenv)
         self.__cache.open(self.__cachefile, None, db.DB_BTREE, db.DB_CREATE)
 
-#        syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: cachedir = %s" % self.__cachedir)
+        syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: cachedir = %s" % self.__cachedir)
         syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: cachefile = %s" % self.__cachefile)
         syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: leave")
 
@@ -81,8 +81,10 @@ class FreeNAS_BaseCache(object):
     def __getitem__(self, key):
         return pickle.loads(self.__cache.get(key))
 
-    def __setitem__(self, key, value):
-        self.__cache[key] = pickle.dumps(value)
+    def __setitem__(self, key, value, overwrite=False):
+        haskey = self.__cache.has_key(key)
+        if (haskey and overwrite) or (not haskey):
+            self.__cache[key] = pickle.dumps(value)
 
     def has_key(self, key):
         return self.__cache.has_key(key)
@@ -118,11 +120,14 @@ class FreeNAS_BaseCache(object):
         pobj = pickle.loads(self.__cache[key])
         return pobj
 
-    def write(self, key, entry):
+    def write(self, key, entry, overwrite=False):
         if not key:
             return False
 
-        self.__cache[key] = pickle.dumps(entry)
+        haskey = self.__cache.has_key(key)
+        if (haskey and overwrite) or (not haskey):
+            self.__cache[key] = pickle.dumps(value)
+      
         return True
 
     def delete(self, key):
