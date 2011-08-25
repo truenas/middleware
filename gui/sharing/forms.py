@@ -36,8 +36,6 @@ from dojango.forms import widgets
 from freenasUI.sharing import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
-from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups, \
-                                         FreeNAS_User, FreeNAS_Group
 from ipaddr import IPAddress, IPNetwork, \
                    AddressValueError, NetmaskValueError
 

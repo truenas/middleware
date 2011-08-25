@@ -41,8 +41,6 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common import humanize_size, humanize_number_si
 from freenasUI.storage import models
 from freenasUI import choices
-from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_Groups, \
-                                         FreeNAS_User, FreeNAS_Group
 from freenasUI.common.system import is_mounted, mount, umount
 from freeadmin.forms import UserField, GroupField
 from dojango.forms import widgets, CheckboxSelectMultiple

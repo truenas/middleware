@@ -38,7 +38,6 @@ from django.http import Http404
 from freeadmin.forms import CronMultiple
 from freenasUI.storage.models import MountPoint
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_User
 from freenasUI.system import models
 from freenasUI.middleware.notifier import notifier
 from dojango import forms
