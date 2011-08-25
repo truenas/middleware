@@ -85,7 +85,7 @@ class UserField(forms.ChoiceField):
                 ulist.append(('-----', 'N/A'))
             ulist.extend(map(lambda x: (x.pw_name, x.pw_name, ),
                              filter(lambda y: y.pw_name not in self._exclude,
-                                              FreeNAS_Users()))
+                                              FreeNAS_Users())))
 
             self.widget = widgets.FilteringSelect()
             self.choices = ulist
@@ -114,7 +114,7 @@ class GroupField(forms.ChoiceField):
             glist = []
             if not self.required:
                 glist.append(('-----', 'N/A'))
-            glist.extend([(x.gr_name, x.gr_name)) for x in FreeNAS_Groups()])
+            glist.extend([(x.gr_name, x.gr_name) for x in FreeNAS_Groups()])
             self.widget = widgets.FilteringSelect()
             self.choices = glist
 
