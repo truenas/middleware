@@ -88,7 +88,7 @@ class AddZVol(TreeNode):
         gname = 'storage.ZVol.Add'
         name = _(u'Create ZFS Volume')
         view = 'storage_zvol'
-        icon = u'AddDatasetIcon'
+        icon = u'AddZFSVolumeIcon'
         type = 'object'
         app_name = 'storage'
         model = 'Volumes'

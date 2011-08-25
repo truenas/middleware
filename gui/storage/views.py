@@ -406,7 +406,7 @@ def zvol_delete(request, name):
 
     if request.method == 'POST':
         try:
-            retval = evil_zvol_destroy(name, iSCSITargetExtent, models.Disk)
+            retval = evil_zvol_destroy(name, iSCSITargetExtent, models.Disk, destroy=True)
         except ValueError:
             return HttpResponse(simplejson.dumps({"error": True, "message": _("This is in use by the iscsi target, please remove it there first.")}), mimetype="application/json")
         if retval == '':
