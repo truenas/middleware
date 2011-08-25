@@ -390,11 +390,15 @@ class VolumeImportForm(forms.Form):
     def _populate_disk_choices(self):
 
         diskchoices = dict()
-        used_disks = [notifier().identifier_to_device(i[0]) for i in models.Disk.objects.all().values_list('disk_identifier').distinct()]
+        n = notifier()
+        used_disks = [n.identifier_to_device(i[0]) for i in models.Disk.objects.all().values_list('disk_identifier').distinct()]
+        # HACK: identifier_to_device can return None. Let's not blow up below
+        # when testing the string with startswith.
+        used_disks = filter(None, used_disks)
 
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
-        parts = notifier().get_partitions()
+        parts = n.get_partitions()
 
         for part in parts.keys():
             if len([i for i in used_disks if parts[part]['devname'].startswith(i)]) > 0:
