@@ -40,7 +40,7 @@ sys.path.append(FREENASUI_PATH)
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
 from freenasUI.common.freenascache import *
-from freenasUI.common.freenasldap import *
+from freenasUI.common.freenasusers import *
 
 def usage():
     print >> sys.stderr, "Usage: %s <fill|expire>" % sys.argv[0]
