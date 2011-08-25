@@ -2,7 +2,7 @@
 
 from freenasUI.middleware.notifier import notifier
 
-def evil_zvol_destroy(name, iSCSITargetExtent, Disk, WearingSafetyBelt=True):
+def evil_zvol_destroy(name, iSCSITargetExtent, Disk, destroy=True, WearingSafetyBelt=True):
     reloads = (False, False, False, False)
     disks = Disk.objects.filter(disk_name='zvol/'+name)
     for disk in disks:
@@ -13,7 +13,11 @@ def evil_zvol_destroy(name, iSCSITargetExtent, Disk, WearingSafetyBelt=True):
             extents.delete()
             reloads = (False, False, False, True)
 
-    retval = notifier().destroy_zfs_vol(name)
+    if destroy:
+        retval = notifier().destroy_zfs_vol(name)
+    else:
+        retval = "Not destroyed"
+
     if WearingSafetyBelt:
         return retval
     else:
