@@ -4,7 +4,7 @@
     formSubmit(this, e, '{% url storage_snapshot_rollback dataset=dataset snapname=snapname %}');
 </script>
 <table> 
-    <tr><td>{% trans "Are you sure you want to rollback the snapshot to previous state?" %}</td></tr>
+    <tr><td>{% trans "Are you sure you want to rollback dataset to this snapshot state?" %}</td></tr>
     <tr>
         <td>
             <button id="submitform" dojoType="dijit.form.Button" type="submit">
