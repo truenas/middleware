@@ -26,9 +26,11 @@
 # $FreeBSD$
 #####################################################################
 
-from datetime import datetime
-import os
 import commands
+import os
+import shutil
+import subprocess
+import time
 
 from django.contrib.auth import login, get_backends
 from django.contrib.auth.models import User
@@ -44,22 +46,24 @@ from freenasUI.system import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.system import get_freenas_version
 
+GRAPHS_DIR = '/var/db/graphs'
+VERSION_FILE = '/etc/version.freenas'
+
 def _system_info():
-    hostname = commands.getoutput("hostname")
-    uname1 = os.uname()[0]
-    uname2 = os.uname()[2]
-    platform = os.popen("sysctl -n hw.model").read()
-    physmem = str(int(int(os.popen("sysctl -n hw.physmem").read()) / 1048576)) + "MB"
-    date = os.popen('env -u TZ date').read()
+    # OS, hostname, release
+    uname1, hostname, uname2 = os.uname()[0:3]
+    platform = subprocess.check_output(['sysctl' '-n', 'hw.model'])
+    physmem = str(int(int(subprocess.check_output(['sysctl', '-n', 'hw.physmem'])) / 1048576)) + 'MB'
+    date = time.asctime(time.gmtime()) + '\n'
     uptime = commands.getoutput("env -u TZ uptime | awk -F', load averages:' '{    print $1 }'")
     loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
 
+    freenas_build = "Unrecognized build (%s        missing?)" % VERSION_FILE
     try:
-        d = open('/etc/version.freenas', 'r')
-        freenas_build = d.read()
-        d.close()
+        with open(VERSION_FILE, 'r') as d:
+            freenas_build = d.read()
     except:
-        freenas_build = "Unrecognized build (/etc/version.freenas        missing?)"
+        pass
 
     return {
         'hostname': hostname,
@@ -82,7 +86,8 @@ def config_restore(request):
         notifier().config_restore()
         user = User.objects.all()[0]
         backend = get_backends()[0]
-        user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
+        user.backend = "%s.%s" % (backend.__module__,
+                                  backend.__class__.__name__)
         login(request, user)
         return render(request, 'system/config_ok2.html')
     return render(request, 'system/config_restore.html')
@@ -98,17 +103,23 @@ def config_upload(request):
 
         if form.is_valid():
             if not notifier().config_upload(request.FILES['config']):
-                form._errors['__all__'] = form.error_class([_("The uploaded file is not valid."),])
+                form._errors['__all__'] = \
+                    form.error_class([_('The uploaded file is not valid.'),])
             else:
                 return render(request, 'system/config_ok.html', variables)
 
-        if request.GET.has_key("iframe"):
-            return HttpResponse("<html><body><textarea>"+render_to_string('system/config_upload.html', variables)+"</textarea></boby></html>")
+        if request.GET.has_key('iframe'):
+            return HttpResponse('<html><body><textarea>' +
+                                render_to_string('system/config_upload.html',
+                                                 variables) +
+                                '</textarea></boby></html>')
         else:
             return render(request, 'system/config_upload.html', variables)
     else:
-        os.system("rm -rf /var/tmp/firmware")
-        os.system("/bin/ln -s /var/tmp/ /var/tmp/firmware")
+        # XXX: this just seems wrong because of the recursive symlink created
+        # below...
+        shutil.rmtree('/var/tmp/firmware')
+        os.symlink('/var/tmp', '/var/tmp/firmware')
         form = forms.ConfigUploadForm()
 
         return render(request, 'system/config_upload.html', {
@@ -122,32 +133,19 @@ def config_save(request):
     wrapper = FileWrapper(file(filename))
     response = HttpResponse(wrapper, content_type='application/octet-stream')
     response['Content-Length'] = os.path.getsize(filename)
-    response['Content-Disposition'] = 'attachment; filename=freenas-%s.db' % datetime.now().strftime("%Y-%m-%d")
+    response['Content-Disposition'] = \
+        'attachment; filename=freenas-%s.db' % time.strftime('%Y-%m-%d')
     return response
 
 def reporting(request):
 
     graphs = {}
-    try:
-        graphs['hourly']  = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'hourly/') )],
-    except OSError:
-        pass
-    try:
-        graphs['daily']   = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'daily/') )],
-    except OSError:
-        pass
-    try:
-        graphs['weekly']  = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'weekly/') )],
-    except OSError:
-        pass
-    try:
-        graphs['monthly'] = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'monthly/') )],
-    except OSError:
-        pass
-    try:
-        graphs['yearly']  = None or [file for file in os.listdir( os.path.join('/var/db/graphs/', 'yearly/') )],
-    except OSError:
-        pass
+    for gtype in ('hourly', 'daily', 'weekly', 'monthly', 'yearly', ):
+        graphs_dir = os.path.join(GRAPHS_DIR, gtype)
+        if os.path.isdir(graphs_dir):
+            graphs[gtype] = os.listdir(graphs_dir)
+        else:
+            graphs[gtype] = None
 
     return render(request, 'system/reporting.html', {
         'graphs': graphs,
@@ -182,7 +180,7 @@ def advanced(request):
     return render(request, 'system/advanced.html', extra_context)
 
 def varlogmessages(request, lines):
-    if lines == None:
+    if lines is None:
         lines = 3
     msg = os.popen('tail -n %s /var/log/messages' % int(lines)).read().strip()
     return render(request, 'system/status/msg.xml', {
@@ -190,10 +188,14 @@ def varlogmessages(request, lines):
     }, content_type='text/xml')
 
 def top(request):
-    top = os.popen('top').read()
+    top_pipe = os.popen('top')
+    try:
+        top_output = top_pipe.read()
+    finally:
+        top_pipe.close()
     return render(request, 'system/status/top.xml', {
         'focused_tab' : 'system',
-        'top': top,
+        'top': top_output,
     }, content_type='text/xml')
 
 def reboot(request):
@@ -256,21 +258,24 @@ class DojoFileStore(object):
         return node
 
     def children(self, entry):
-        children = [ self._item(self.path, entry) for entry in os.listdir(entry) if len([f for f in self.mp if os.path.join(self.path,entry).startswith(f+'/') or os.path.join(self.path,entry) == f]) > 0]
+        _children = [self._item(self.path, entry) for entry in os.listdir(entry) if len([f for f in self.mp if os.path.join(self.path, entry).startswith(f + '/') or os.path.join(self.path, entry) == f]) > 0]
         if self.dirsonly:
-            children = [ child for child in children if child['directory']]
-        return children
+            _children = [child for child in _children if child['directory']]
+        return _children
 
     def _item(self, path, entry):
         full_path = os.path.join(path, entry)
         isdir = os.path.isdir(full_path)
-        item = dict(name=os.path.basename(entry),
-                    directory=isdir,
-                    path=full_path)
+        item = {
+                 'name': os.path.basename(entry),
+                 'directory': isdir,
+                 'path': full_path,
+               }
         if isdir:
             item['children'] = True
 
-        item['$ref'] = os.path.abspath(reverse('system_dirbrowser', kwargs={'path':full_path}))
+        item['$ref'] = os.path.abspath(reverse('system_dirbrowser',
+                                       kwargs={ 'path' : full_path }))
         item['id'] = item['$ref']
         return item
 
@@ -297,7 +302,7 @@ def smarttests(request):
         })
 
 def rsyncs(request):
-    rsyncs = models.Rsync.objects.all().order_by('id')
-    return render(request, "system/rsync.html", {
-        'rsyncs': rsyncs,
+    syncs = models.Rsync.objects.all().order_by('id')
+    return render(request, 'system/rsync.html', {
+        'rsyncs': syncs,
         })
