@@ -42,8 +42,6 @@ from services.exceptions import ServiceFailed
 from storage.models import Volume, MountPoint, DiskGroup, Disk
 from storage.forms import UnixPermissionField
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.common.freenasldap import FreeNAS_Users, FreeNAS_User, \
-                                         FreeNAS_Groups, FreeNAS_Group
 from freenasUI.common import humanize_size
 from freenasUI.middleware.notifier import notifier
 from dojango import forms
