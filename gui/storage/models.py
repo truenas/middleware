@@ -274,11 +274,15 @@ class MountPoint(Model):
         for nfs in NFS_Share.objects.filter(nfs_path__startswith=mypath):
             if self.is_my_path(nfs.nfs_path):
                 attachments['nfs'].append(nfs.id)
-        for iscsiextent in iSCSITargetExtent.objects.filter(
-                iscsi_target_extent_path__startswith=mypath
-                ):
-            if self.is_my_path(iscsiextent.iscsi_target_extent_path):
-                attachments['iscsiextent'].append(iscsiextent.id)
+        # TODO: Refactor this into something not this ugly.  The problem
+        #       is that iSCSI Extent is not stored in proper relationship
+        #       model.
+        if mypath.startswith('/mnt/'):
+            devpath = 'zvol/%s/' % (mypath[5:])
+            for zvol in Disk.objects.filter(disk_name__startswith=devpath):
+                for iscsiextent in iSCSITargetExtent.objects.filter(
+                    iscsi_target_extent_path=str(zvol.id)):
+                        attachments['iscsiextent'].append(iscsiextent.id)
 
         return attachments
 
@@ -308,7 +312,8 @@ class MountPoint(Model):
             NFS_Share.objects.filter(id__in=attachments['nfs']).delete()
             reload_nfs = True
         if attachments['iscsiextent']:
-            iSCSITargetExtent.objects.filter(id__in=attachments['iscsiextent'])
+            for target in iSCSITargetExtent.objects.filter(id__in=attachments['iscsiextent']):
+                target.delete()
             reload_iscsi = True
         return (reload_cifs, reload_afp, reload_nfs, reload_iscsi)
     def delete(self, do_reload=True):
