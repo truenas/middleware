@@ -40,6 +40,7 @@ import sqlite3
 
 from syslog import syslog, LOG_DEBUG
 from ldap.controls import SimplePagedResultsControl
+from dns import resolver
 
 
 FREENAS_LDAP_NOSSL = 0
@@ -975,7 +976,6 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
             syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: trying [%s]..." % g)
             gc_args['host'] = str(g.target)
             gc_args['port'] = long(g.port)
-        host = rootDSE[0][1]['dnsHostName'][0]
 
             gc = FreeNAS_LDAP_Directory(**gc_args)
             gc.open()
@@ -1435,7 +1435,6 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
 
                 u = u[1]
                 sAMAccountName = "%s%s%s" % (n, FREENAS_AD_SEPARATOR, u['sAMAccountName'][0])
-                print "sAMAccountName = %s" % sAMAccountName
 
                 try:
                     pw = pwd.getpwnam(sAMAccountName)
