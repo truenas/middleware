@@ -247,6 +247,7 @@ EOF
 			local ad_workgroup="${ad_workgroup}"
 
 			AD_init
+			mkdir -p ${FREENAS_CACHEDIR}/.samba
 
 			# wins server ?
 			# template??
