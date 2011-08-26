@@ -6,7 +6,7 @@
 # PROVIDE: ix-kerberos
 # BEFORE: kerberos
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 : ${PATH_KRB5_TEMPLATE:="/etc/ix/templates/kerberos/krb5.conf"}
 : ${PATH_KRB5_CONFIG:="/etc/krb5.conf"}
@@ -55,35 +55,20 @@ generate_krb5_conf()
 
 generate_kerberos_files()
 {
-	local IFS="|"
+	if AD_enabled
+	then
+		AD_init
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		ad_dcname,
-		ad_domainname,
-		ad_netbiosname,
-		ad_adminname,
-		ad_adminpw
+		dcname=$(AD_get dcname)
+		domainname=$(AD_get domainname)
+		netbiosname=$(AD_get netbiosname)
+		adminname=$(AD_get adminname)
+		adminpw=$(AD_get adminpw)
 
-	FROM
-		services_services,
-		services_activedirectory
-
-	WHERE (
-		srv_service = 'activedirectory' and
-		srv_enable = '1'
-	)
-
-	ORDER BY
-		-services_activedirectory.id
-
-	LIMIT 1
-	" | \
-	while read dcname domainname netbiosname adminname adminpw
-	do
 		generate_krb5_conf "${dcname}" "${domainname}" \
 			"${netbiosname}" "${adminname}" "${adminpw}"
-	done
+		
+	fi
 }
 
 name="ix-kerberos"

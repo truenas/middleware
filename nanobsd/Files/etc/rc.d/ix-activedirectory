@@ -13,89 +13,48 @@
 : ${FREENAS_CACHEDIR:="/var/tmp/.cache"}
 : ${FREENAS_CACHESIZE:="100m"}
 
-join_activedirectory_domain()
-{
-	local IFS="|"
-
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		ad_adminname,
-		ad_adminpw
-
-	FROM
-		services_services,
-		services_activedirectory
-
-	WHERE (
-		srv_service = 'activedirectory' and
-		srv_enable = '1'
-	)
-
-	ORDER BY
-		-services_activedirectory.id
-
-	LIMIT 1
-	" | \
-	while read adminname adminpw
-	do
-		/usr/local/bin/net ads join -U "${adminname}%${adminpw}"
-	done
-}
 
 generate_nss_ldap_conf()
 {
 	local IFS="|"
 	local nssconf="${NSS_LDAP_CONF}"
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		ad_dcname,
-		ad_domainname,
-		ad_adminname,
-		ad_adminpw
+	dcname=$(AD_get dcname)
+	domainname=$(AD_get domainname)
+	adminname=$(AD_get adminname)
+	adminpw=$(AD_get adminpw)
 
-	FROM
-		services_services,
-		services_activedirectory
-
-	WHERE
-		(srv_service = 'activedirectory' and srv_enable = 1)
-	" | \
-	while read dcname domainname adminname adminpw 
-	do
-		base=$(echo "${domainname}" | awk '{
-			n = split($0, parts, ".");
-			if (n > 0) {
-				base = sprintf("dc=%s", parts[1]);
-				for (i=2;i <= n;i++) {
-					base = sprintf("%s,dc=%s", base, parts[i]);
-				}
-				printf("%s", base);
+	base=$(echo "${domainname}" | awk '{
+		n = split($0, parts, ".");
+		if (n > 0) {
+			base = sprintf("dc=%s", parts[1]);
+			for (i=2;i <= n;i++) {
+				base = sprintf("%s,dc=%s", base, parts[i]);
 			}
-		}')
+			printf("%s", base);
+		}
+	}')
 
-		[ -z "${dcname}" -o -z "${base}" ] && return 1 
+	[ -z "${dcname}" -o -z "${base}" ] && return 1 
 
-		cat<<-EOF>"${nssconf}"
-		host ${dcname}
-		base ${base}
-		uri ldap://${dcname}/
-		binddn ${adminname}@${domainname}
-		bindpw ${adminpw}
-		scope sub
-		ssl no
-		nss_base_passwd ${base}?sub
-		nss_base_shadow ${base}?sub
-		nss_base_group ${base}?sub? &(objectCategory=group)(gidnumber=*)
-		nss_map_objectclass posixAccount user
-		nss_map_objectclass shadowAccount user
-		nss_map_objectclass posixGroup group
-		nss_map_attribute gecos cn
-		nss_map_attribute homeDirectory unixHomeDirectory
-		nss_map_attribute uniqueMember member
+	cat<<-EOF>"${nssconf}"
+	host ${dcname}
+	base ${base}
+	uri ldap://${dcname}/
+	binddn ${adminname}@${domainname}
+	bindpw ${adminpw}
+	scope sub
+	ssl no
+	nss_base_passwd ${base}?sub
+	nss_base_shadow ${base}?sub
+	nss_base_group ${base}?sub? &(objectCategory=group)(gidnumber=*)
+	nss_map_objectclass posixAccount user
+	nss_map_objectclass shadowAccount user
+	nss_map_objectclass posixGroup group
+	nss_map_attribute gecos cn
+	nss_map_attribute homeDirectory unixHomeDirectory
+	nss_map_attribute uniqueMember member
 EOF
-	done
-
 	ln -s ${nssconf} "$(dirname ${nssconf})/ldap.conf" 2>/dev/null
 
 	return 0
@@ -103,34 +62,18 @@ EOF
 
 setup_homedirs()
 {
-	default="/var/home"
-	homedir=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		cifs_srv_homedir
+	local hdsrc="/var/home"
+	local hddst="/home"
 
-	FROM
-		services_cifs
+	local dst=$(dirname "${hddst}")
 
-	ORDER BY
-		-services_cifs.id
+	mount -uw /	
 
-	LIMIT 1;
-	")
+	mkdir -p "${hdsrc}"
+	mkdir -p "${dst}"
+	ln -s "${hdsrc}" "${dst}" 2>/dev/null
 
-	if [ -n "${homedir}" ]
-	then
-		mkdir -p "${homedir}"
-
-		mount -uw /
-		ln -s "${homedir}" /home 2>/dev/null
-		mount -ur /
-	else
-		mkdir -p "${default}"
-
-		mount -uw /
-		ln -s "${default}" /home 2>/dev/null
-		mount -ur /
-	fi
+	mount -ur /
 }
 
 create_cache_filesystem()
@@ -158,56 +101,36 @@ create_cache_filesystem()
 	return ${res}
 }
 
-activedirectory_enabled()
+
+activedirectory_start()
 {
-	local res=1
-	local enabled
-
-	enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		count(*)
-
-	FROM
-		services_services
-
-	WHERE (
-		srv_service = 'activedirectory' and
-		srv_enable = 1
-	)
-
-	ORDER BY
-		-services_services.id
-
-	LIMIT 1")
-
-	if [ "${enabled}" = "1" ]
+	if AD_enabled
 	then
-		res=0
-	fi
+		AD_init
+		AD_join_domain
 
-	return ${res}
-}
+		#generate_nss_ldap_conf
 
-do_activedirectory_stuff()
-{
-	if activedirectory_enabled
-	then
-		join_activedirectory_domain
 		setup_homedirs
 		create_cache_filesystem
+
 		sleep 10
 		/usr/sbin/service samba restart >/dev/null 2>&1
 	fi
 }
 
-expire_cache()
+activedirectory_stop()
 {
+	AD_init
+
         /usr/local/www/freenasUI/tools/cachetool.py expire
+	AD_leave_domain
 }
 
+
 name="ix-activedirectory"
-start_cmd='do_activedirectory_stuff'
-stop_cmd='expire_cache'
+start_cmd='activedirectory_start'
+stop_cmd='activedirectory_stop'
             
 load_rc_config $name
 run_rc_command "$1"

@@ -26,6 +26,14 @@
 
 . /etc/rc.subr
 
+
+#
+#	FreeNAS settings	
+#
+: ${FREENAS_CONFIG:="/data/freenas-v1.db"}
+: ${FREENAS_SQLITE_CMD:="/usr/local/bin/sqlite3"}
+: ${FREENAS_RC:="/var/tmp/rc.conf.freenas"}
+
 #
 #	OPENSSL settings
 #
@@ -53,7 +61,7 @@
 #	Misc settings
 #
 : ${FREENAS_CACHEDIR:="/var/tmp/.cache"}
-: ${FREENAS_CACHESIZE:="500m"}
+: ${FREENAS_CACHESIZE:="1500m"}
 : ${FREENAS_CACHEEXPIRE:="60"}
 
 #
@@ -87,3 +95,352 @@
 #
 : ${SMB_CONF:="/usr/local/etc/smb.conf"}
 
+
+#
+#	Active Directory Functions
+#
+__get_SRV_record()
+{
+	local host="${1}"
+	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
+
+	dig -t srv +short "${host}" | sort -n +0 +1 > "${tmpfile}"
+
+	exec 3<&0
+	exec 0<"${tmpfile}"
+	while read -r line
+	do
+		host=$(echo "${line}"|awk '{ print $4 }'|sed 's/\.$//')
+		port=$(echo "${line}"|awk '{ print $3 }')
+
+		__do_AD_query "${host}" "${port}" "" "" "" "base" "" "" >/dev/null 2>&1
+		if [ "$?" = "0" ]
+		then
+			exec 0<&3
+			echo "${host}:${port}"
+			rm "${tmpfile}"
+			return 0
+		fi
+	done
+	exec 0<&3
+	rm "${tmpfile}"
+
+	return 1
+}
+
+AD_get_domain_controller()
+{
+	__get_SRV_record "_ldap._tcp.${1}"
+	return $?
+}
+
+AD_get_global_catalog()
+{
+	__get_SRV_record "_gc._tcp.${1}"
+	return $?
+}
+
+__do_AD_query()
+{
+	local dcname="${1}"
+	local dcport="${2}"
+	local basedn="${3}"
+	local binddn="${4}"
+	local adminpw="${5}"
+	local scope="${6}"
+	local filter="${7}"
+	local attributes="${8}"
+
+	: ${dcname:="$(AD_get dcname)"}
+	: ${dcport:="$(AD_get dcport)"}
+	: ${basedn:="$(AD_get basedn)"}
+	: ${binddn:="$(AD_get binddn)"}
+	: ${adminpw:="$(AD_get adminpw)"}
+	: ${scope:="sub"}
+	: ${filter:="(objectclass=*)"}
+
+	cat<<__EOF__
+	ldapsearch 
+		-H "ldap://${dcname}:${dcport}" 
+		-b "${basedn}" 
+		-D "${binddn}" 
+		-w "${adminpw}" 
+		-s "${scope}"  
+		-x 
+		-z 0 
+		-E 'pr=16384/noprompt' 
+		-LLL 
+		"${filter}" "${attributes}"
+__EOF__
+
+	ldapsearch \
+		-H "ldap://${dcname}:${dcport}" \
+		-b "${basedn}" \
+		-D "${binddn}" \
+		-w "${adminpw}" \
+		-s "${scope}"  \
+		-x \
+		-z 0 \
+		-E 'pr=16384/noprompt' \
+		-LLL \
+		"${filter}" "${attributes}"
+}
+
+AD_query()
+{
+	local basedn="${1}"
+	local filter="${2}"
+
+	shift
+	local attributes="${*}"
+
+	: ${basedn:="$(AD_get basedn)"}
+	: ${filter:='(objectclass=*)'}
+
+	dcname="$(AD_get dcname)"
+	dcport="$(AD_get dcport)"
+	binddn="$(AD_get binddn)"
+	adminpw="$(AD_get adminpw)"
+
+	__do_AD_query "${dcname}" "${dcport}" "${basedn}" \
+		"${binddn}" "${adminpw}" "sub" "${filter}" \
+		"${attributes}" 2>/dev/null
+}
+
+AD_query_global_catalog()
+{
+	local filter="${1}"
+
+	shift
+	local attributes="${*}"
+
+    	: ${filter:='(objectclass=*)'}
+
+	gchost="$(AD_get gchost)"
+	gcport="$(AD_get gcport)"
+	binddn="$(AD_get binddn)"
+	adminpw="$(AD_get adminpw)"
+
+	ldapsearch \
+		-H "ldap://${gchost}:${gcport}" \
+		-D "${binddn}" \
+		-w "${adminpw}" \
+		-b "" \
+		-s sub \
+		-x \
+		-z 0 \
+		-LLL \
+		"${filter}" ${attributes} 2>/dev/null
+}
+
+AD_query_rootDSE()
+{
+	local filter="${1}"
+
+	: ${filter:='(objectclass=*)'}
+
+	dcname="$(AD_get dcname)"
+	dcport="$(AD_get dcport)"
+	binddn="$(AD_get binddn)"
+	adminpw="$(AD_get adminpw)"
+
+	ldapsearch \
+		-H "ldap://${dcname}:${dcport}" \
+		-D "${binddn}" \
+		-w "${adminpw}" \
+		-b "" \
+		-s base \
+		-x \
+		-z 0 \
+		-LLL \
+		"${filter}" 2>/dev/null
+}
+
+__do_AD_get()
+{
+	local prefix="${1}"
+	local name="${2}"
+
+	local var=\$$(echo "${prefix}${name}")
+	local val=$(eval "echo ${var}")
+
+	echo "${val}"
+}
+
+AD_get()
+{
+	local vars="${*}"
+	local prefix="__ad_"
+
+	for v in ${vars}
+	do
+		__do_AD_get "${prefix}" "${v}"
+	done
+}
+
+__do_AD_set()
+{
+	local prefix="${1}"
+	local pair="${2}"
+
+	local name=$(echo ${pair}|cut -s -f1 -d=|xargs)
+	local val=$(echo ${pair}|cut -s -f2- -d=|xargs)
+
+	local var=$(echo "${prefix}${name}")
+
+	eval "${var}=${val}"
+}
+
+AD_set()
+{
+	local args="${*}"
+	local prefix="__ad_"
+
+	for pair in ${args}
+	do
+		__do_AD_set "${prefix}" "${pair}"
+	done
+}
+
+AD_save()
+{
+	local prefix="__save_"
+	local vars="dcname dcport domainname basedn adminname \
+		adminpw workgroup netbiosname gchost gcport"
+	
+	for v in ${vars}
+	do
+		__do_AD_set "${prefix}" "${v}=$(AD_get ${v})"
+	done
+}
+
+AD_restore()
+{
+	local prefix="__save_"
+	local vars="dcname dcport domainname basedn adminname \
+		adminpw workgroup netbiosname gchost gcport"
+	
+	for v in ${vars}
+	do
+		AD_set "${v}=$(__do_AD_get ${prefix} ${v})"
+	done
+}
+
+AD_show_config()
+{
+	printf "Active Directory Config:\n"
+	printf "+------------------------------------------+\n"
+	printf "dcname:       %s\n" $(AD_get dcname)
+	printf "dcport:       %d\n" $(AD_get dcport)
+	printf "domainname:   %s\n" $(AD_get domainname)
+	printf "basedn:       %s\n" $(AD_get basedn)
+	printf "adminname:    %s\n" $(AD_get adminname)
+	printf "adminpw:      %s\n" $(AD_get adminpw)
+	printf "workgroup:    %s\n" $(AD_get workgroup)
+	printf "netbiosname:  %s\n" $(AD_get netbiosname)
+	printf "gchost:       %s\n" $(AD_get gchost)
+	printf "gcport:       %d\n" $(AD_get gcport)
+	printf "+------------------------------------------+\n"
+}
+
+AD_join_domain()
+{
+	local adminname="${1}"
+	local adminpw="${2}"
+
+	: ${adminname:="$(AD_get adminname)"}
+	: ${adminpw:="$(AD_get adminpw)}
+
+	/usr/local/bin/net ads join -U "${adminname}%${adminpw}"
+	return $?
+}
+
+AD_leave_domain()
+{
+	local adminname="${1}"
+	local adminpw="${2}"
+
+	: ${adminname:="$(AD_get adminname)"}
+	: ${adminpw:="$(AD_get adminpw)}
+
+	/usr/local/bin/net ads leave -U "${adminname}%${adminpw}"
+	return $?
+}
+
+AD_enabled()
+{
+	local res=1
+	local enabled
+
+	enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	SELECT
+		count(*)
+ 
+	FROM
+		services_services
+
+	WHERE (
+		srv_service = 'activedirectory' and
+		srv_enable = 1  
+	)
+
+	ORDER BY
+                -id
+
+	LIMIT 1")
+        
+	if [ "${enabled}" = "1" ]   
+	then
+		res=0
+	fi
+
+	return ${res}
+}
+
+AD_init()
+{
+	local tmpfile="$(mktemp -q /var/tmp/.adfooXXXXXX)"
+
+	cat << __SQL__ | ${FREENAS_SQLITE_CMD} -line ${FREENAS_CONFIG} > ${tmpfile}
+	SELECT
+		ad_domainname,
+		ad_adminname,
+		ad_adminpw,
+		ad_workgroup,
+		ad_netbiosname
+
+	FROM
+		services_activedirectory
+
+	ORDER BY
+		-id	
+
+	LIMIT 1;
+__SQL__
+
+	exec 3<&0
+	exec 0<"${tmpfile}"
+	while read -r line
+	do
+		var=$(echo ${line}|cut -f1 -d=|xargs|cut -f2 -d_)
+		val=$(echo ${line}|cut -f2- -d=|xargs)
+
+		AD_set "${var}=${val}"
+	done
+	exec 0<&3
+	rm "${tmpfile}"
+
+	local adminname=$(AD_get adminname)
+	local domainname=$(AD_get domainname)
+	AD_set binddn="${adminname}@$(echo ${domainname}|tr a-z A-Z)"
+
+	dc=$(AD_get_domain_controller "${domainname}")
+	AD_set dcname=$(echo "${dc}"|cut -f1 -d:)
+	AD_set dcport=$(echo "${dc}"|cut -f2 -d:)
+
+	AD_set basedn="$(AD_query_rootDSE|egrep '^defaultNamingContext'|cut -f2- -d:|xargs)"
+
+	gc=$(AD_get_global_catalog "${domainname}")
+	AD_set gchost=$(echo "${gc}"|cut -f1 -d:)
+	AD_set gcport=$(echo "${gc}"|cut -f2 -d:)
+}

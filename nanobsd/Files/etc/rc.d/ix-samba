@@ -79,7 +79,6 @@ generate_smbconf()
 				-id
 			LIMIT 1
 		) as cifs_srv_ldap_enable,
-		ad_dcname,
 		ad_domainname,
 		ad_netbiosname,
 		ad_workgroup,
@@ -115,7 +114,7 @@ generate_smbconf()
 		cifs_filemask cifs_dirmask \
 		largerw sendfile easupport dosattr nullpw \
 		cifs_aio_enable cifs_aio_rs cifs_aio_ws cifs_homedir \
-		cifs_homedir_browseable cifs_homedir_mp ad_enable ldap_enable ad_dcname \
+		cifs_homedir_browseable cifs_homedir_mp ad_enable ldap_enable \
 		ad_domainname ad_netbiosname ad_workgroup ad_adminname ad_adminpw \
 		ldap_hostname ldap_basedn ldap_anonbind ldap_rootbasedn \
 		ldap_rootbindpw ldap_pwencryption ldap_ssl ldap_usersuffix \
@@ -247,6 +246,8 @@ EOF
 			local domain=$(echo "${ad_domainname}"|tr a-z A-Z)
 			local ad_workgroup="${ad_workgroup}"
 
+			AD_init
+
 			# wins server ?
 			# template??
 			# admin users??
@@ -261,8 +262,8 @@ EOF
 			    client use spnego = yes
 			    cache directory = ${FREENAS_CACHEDIR}/.samba
 			    
-			    wins server = ${ad_dcname}
-			    password server = ${ad_dcname}
+			    wins server = $(AD_get dcname)
+			    password server = $(AD_get dcname)
 			    
 			    local master = no
 			    domain master = no
@@ -284,7 +285,7 @@ EOF
 			    winbind enum users = yes
 			    winbind enum groups = yes
 			    winbind nested groups = yes
-			    winbind use default domain = no
+			    winbind use default domain = yes
 			    winbind refresh tickets = yes
 			    winbind separator = +
 			    allow trusted domains = yes
