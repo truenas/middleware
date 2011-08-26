@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-samba
-# REQUIRE: FILESYSTEMS
+# REQUIRE: FILESYSTEMS mountlate
 # REQUIRE: ix-pam
 # BEFORE: smbd
 
