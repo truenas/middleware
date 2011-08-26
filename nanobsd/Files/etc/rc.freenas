@@ -159,21 +159,7 @@ __do_AD_query()
 	: ${scope:="sub"}
 	: ${filter:="(objectclass=*)"}
 
-	cat<<__EOF__
-	ldapsearch 
-		-H "ldap://${dcname}:${dcport}" 
-		-b "${basedn}" 
-		-D "${binddn}" 
-		-w "${adminpw}" 
-		-s "${scope}"  
-		-x 
-		-z 0 
-		-E 'pr=16384/noprompt' 
-		-LLL 
-		"${filter}" "${attributes}"
-__EOF__
-
-	ldapsearch \
+	/usr/local/bin/ldapsearch \
 		-H "ldap://${dcname}:${dcport}" \
 		-b "${basedn}" \
 		-D "${binddn}" \
@@ -221,7 +207,7 @@ AD_query_global_catalog()
 	binddn="$(AD_get binddn)"
 	adminpw="$(AD_get adminpw)"
 
-	ldapsearch \
+	/usr/local/bin/ldapsearch \
 		-H "ldap://${gchost}:${gcport}" \
 		-D "${binddn}" \
 		-w "${adminpw}" \
@@ -244,7 +230,7 @@ AD_query_rootDSE()
 	binddn="$(AD_get binddn)"
 	adminpw="$(AD_get adminpw)"
 
-	ldapsearch \
+	/usr/local/bin/ldapsearch \
 		-H "ldap://${dcname}:${dcport}" \
 		-D "${binddn}" \
 		-w "${adminpw}" \
