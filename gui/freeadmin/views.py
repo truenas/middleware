@@ -51,6 +51,27 @@ from services.exceptions import ServiceFailed
 from dojango.views import datagrid_list
 from dojango.forms.models import inlineformset_factory
 
+class JsonResponse(HttpResponse):
+
+    error = False
+    message = ''
+    events = []
+    def __init__(self, *args, **kwargs):
+        if kwargs.has_key("error"):
+            self.error = kwargs.pop('error')
+        if kwargs.has_key("message"):
+            self.message = kwargs.pop('message')
+        if kwargs.has_key("events"):
+            self.events = kwargs.pop('events')
+        data = {
+            'error': self.error,
+            'message': self.message,
+            'events': self.events,
+        }
+        kwargs['content'] = simplejson.dumps(data)
+        kwargs['content_type'] = 'application/json'
+        super(JsonResponse, self).__init__(*args, **kwargs)
+
 def adminInterface(request, objtype = None):
 
     try:
@@ -484,12 +505,17 @@ def generic_model_edit(request, app, model, oid, mf=None):
                 mf.save()
                 for name, fs in formsets.items():
                     fs.save()
+                events = []
                 if hasattr(mf, "done") and callable(mf.done):
-                    mf.done()
+                    #FIXME: temporary workaround to do not change all MF to accept this arg
+                    try:
+                        mf.done(events=events)
+                    except:
+                        mf.done()
                 if request.GET.has_key("iframe"):
                     return HttpResponse("<html><body><textarea>"+simplejson.dumps({"error": False, "message": _("%s successfully updated.") % m._meta.verbose_name})+"</textarea></boby></html>")
                 else:
-                    return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully updated.") % m._meta.verbose_name}))
+                    return JsonResponse(message=_("%s successfully updated.") % m._meta.verbose_name, events=events)
             except ServiceFailed, e:
                 return HttpResponse(simplejson.dumps({"error": True, "message": _("The service failed to restart.") % m._meta.verbose_name, "events": ["serviceFailed(\"%s\")" % e.service]}))
 
