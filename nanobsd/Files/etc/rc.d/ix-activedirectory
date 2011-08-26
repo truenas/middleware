@@ -113,6 +113,7 @@ activedirectory_start()
 
 		setup_homedirs
 		create_cache_filesystem
+		mkdir -p ${FREENAS_CACHEDIR}/.samba
 
 		sleep 10
 		/usr/sbin/service samba restart >/dev/null 2>&1
