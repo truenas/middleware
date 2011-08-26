@@ -116,8 +116,13 @@ def config_upload(request):
         else:
             return render(request, 'system/config_upload.html', variables)
     else:
-        shutil.rmtree('/var/tmp/firmware')
-        os.symlink('/nonexistent', '/var/tmp/firmware')
+        FIRMWARE_DIR = '/var/tmp/firmware'
+        if os.path.exists(FIRMWARE_DIR):
+            if os.path.exists(FIRMWARE_DIR + '/'):
+                shutil.rmtree(FIRMWARE_DIR + '/')
+            os.unlink(FIRMWARE_DIR)
+            
+        os.symlink('/var/tmp', '/var/tmp/firmware')
         form = forms.ConfigUploadForm()
 
         return render(request, 'system/config_upload.html', {
