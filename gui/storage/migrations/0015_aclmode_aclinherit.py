@@ -18,13 +18,15 @@ class Migration(DataMigration):
         """
         for vol in orm.Volume.objects.filter(vol_fstype='ZFS'):
             psave = Popen(["zpool", "import", "-R", "/mnt", vol.vol_name], stdout=PIPE)
-            p1 = Popen(["zfs", "get", "-H", "-o", "value", "aclmode,aclinherit", vol.vol_name], stdout=PIPE)
-            aclmode, aclinherit = p1.communicate()[0].split('\n')[:2]
-            if aclmode != 'passthrough':
-                Popen(["zfs", "set", "aclmode=passthrough", vol.vol_name], stdout=PIPE).communicate()
-            if aclinherit != 'passthrough':
-                Popen(["zfs", "set", "aclinherit=passthrough", vol.vol_name], stdout=PIPE).communicate()
+            if psave.wait() == 0:
+                p1 = Popen(["zfs", "get", "-H", "-o", "value", "aclmode,aclinherit", vol.vol_name], stdout=PIPE)
+                aclmode, aclinherit = p1.communicate()[0].split('\n')[:2]
+                if aclmode != 'passthrough':
+                    Popen(["zfs", "set", "aclmode=passthrough", vol.vol_name], stdout=PIPE).communicate()
+                if aclinherit != 'passthrough':
+                    Popen(["zfs", "set", "aclinherit=passthrough", vol.vol_name], stdout=PIPE).communicate()
             psave = Popen(["zpool", "export", vol.vol_name], stdout=PIPE)
+            psave.wait()
 
     def backwards(self, orm):
         "Write your backwards methods here."
