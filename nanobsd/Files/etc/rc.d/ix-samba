@@ -285,7 +285,7 @@ EOF
 			    winbind enum users = yes
 			    winbind enum groups = yes
 			    winbind nested groups = yes
-			    winbind use default domain = yes
+			    winbind use default domain = no
 			    winbind refresh tickets = yes
 			    winbind separator = +
 			    allow trusted domains = yes
