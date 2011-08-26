@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:47-0700\n"
-"PO-Revision-Date: 2011-06-10 13:01+0200\n"
-"Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
+"PO-Revision-Date: 2011-08-25 20:35+0200\n"
+"Last-Translator: skimpax <skimpax@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -104,7 +104,7 @@ msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:67
 msgid "Always On"
-msgstr "Toujours Actif"
+msgstr "Toujours actif"
 
 #: choices.py:81 choices.py:90
 msgid "Disabled"
@@ -232,7 +232,7 @@ msgstr "Anonyme"
 
 #: choices.py:159
 msgid "Local User"
-msgstr "Utilisateur Local"
+msgstr "Utilisateur local"
 
 #: choices.py:180
 msgid "Normal"
@@ -413,7 +413,7 @@ msgstr "Écriture seule"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr "Lecture et Écriture"
+msgstr "Lecture et écriture"
 
 #: choices.py:447 choices.py:448
 #, python-format
@@ -442,39 +442,39 @@ msgstr "%(week)s semaine"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Jamais - Contrôler l'appareil quelque soit son mode d'alimentation"
+msgstr "Jamais - Contrôler le périphérique quelque soit son mode d'alimentation"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Veille - Contrôler l'appareil à moins qu'il ne soit en veille"
+msgstr "Veille - Contrôler le périphérique à moins qu'il ne soit en veille"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"En attente - Contrôler l'appareil à moins qu'il ne soit en veille ou en "
+"En attente - Contrôler le périphérique à moins qu'il ne soit en veille ou en "
 "attente"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
-"Ralenti - Contrôler l'appareil à moins qu'il ne soit en veille, en attente "
-"ou au ralenti"
+"Ralenti - Contrôler le périphérique à moins qu'il ne soit en veille, en "
+"attente ou au ralenti"
 
 #: choices.py:467
 msgid "Long Self-Test"
-msgstr "Auto-Test Long"
+msgstr "Auto-test long"
 
 #: choices.py:468
 msgid "Short Self-Test"
-msgstr "Auto-Test Court"
+msgstr "Auto-test court"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Auto-Test Transport (ATA seulement)"
+msgstr "Auto-test du transport (ATA seulement)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
-msgstr "Test Hors-Ligne Immédiat (ATA seulement)"
+msgstr "Test hors-ligne immédiat (ATA seulement)"
 
 #: account/forms.py:95 templates/storage/volumes.html:73
 msgid "Available"
@@ -495,7 +495,7 @@ msgstr "Nom d'utilisateur"
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
 msgstr ""
 "Requis. 30 caractères ou moins. Lettres, chiffres et '@', '.', '+', '-', '_' "
-"seulement."
+"uniquement."
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
@@ -515,7 +515,7 @@ msgstr "Confirmation du mot de passe"
 
 #: account/forms.py:203 account/forms.py:310 system/forms.py:189
 msgid "Enter the same password as above, for verification."
-msgstr "Entrez le même mot de passe qu'au dessus pour vérification."
+msgstr "Entrer le même mot de passe que ci-dessus pour vérification."
 
 #: account/forms.py:204 account/forms.py:346 account/models.py:105
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:89
@@ -524,11 +524,11 @@ msgstr "Interpréteur"
 
 #: account/forms.py:205 account/forms.py:345
 msgid "Disable logins"
-msgstr "Désactiver les connexions"
+msgstr "Désactiver les connexions (login)"
 
 #: account/forms.py:206
 msgid "Primary Group"
-msgstr "Groupe Primaire"
+msgstr "Groupe primaire"
 
 #: account/forms.py:235
 msgid "A user with that username already exists."
@@ -571,18 +571,18 @@ msgstr "Ancien mot de passe"
 
 #: account/forms.py:501
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr "Votre ancien mot de passe est incorrect. Entrez le à nouveau."
+msgstr "Votre ancien mot de passe est incorrect. Entrez-le à nouveau."
 
 #: account/models.py:36 services/models.py:472 services/models.py:517
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr "ID de Groupe"
+msgstr "ID de groupe"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr "Nom de Groupe"
+msgstr "Nom de groupe"
 
 #: account/models.py:47 account/models.py:155 services/models.py:1210
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
@@ -617,15 +617,15 @@ msgstr "Condensat du mot de passe SMB"
 
 #: account/models.py:95
 msgid "Primary Group ID"
-msgstr "ID du Groupe Principal"
+msgstr "ID du groupe principal"
 
 #: account/models.py:100
 msgid "Home Directory"
-msgstr "Répertoire Personnel"
+msgstr "Répertoire personnel"
 
 #: account/models.py:109
 msgid "Full Name"
-msgstr "Nom Complet"
+msgstr "Nom complet"
 
 #: account/models.py:115 templates/account/bsdusers.html:91
 msgid "E-mail"
@@ -655,24 +655,24 @@ msgstr "Compte"
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:113
 #: templates/account/bsdusers.html:115 templates/account/index.html:7
 msgid "Change Password"
-msgstr "Changer de Mot de passe"
+msgstr "Changer le mot de passe"
 
 #: account/nav.py:19 templates/account/changeform.html:25
 #: templates/account/index.html:4
 msgid "Change Admin User"
-msgstr "Changer l'Administrateur"
+msgstr "Changer l'administrateur"
 
 #: account/nav.py:26 templates/account/index.html:2
 msgid "My Account"
-msgstr "Mon Compte"
+msgstr "Mon compte"
 
 #: account/nav.py:36
 msgid "View All Users"
-msgstr "Voir les Utilisateurs"
+msgstr "Voir les utilisateurs"
 
 #: account/nav.py:43
 msgid "View All Groups"
-msgstr "Voir les Groupes"
+msgstr "Voir les groupes"
 
 #: account/views.py:78
 msgid "Password successfully updated."
@@ -695,8 +695,8 @@ msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
 msgstr ""
-"Veuillez nous excusez, votre formulaire a expiré. Continuez à remplir le "
-"formulaire depuis cette page."
+"Veuillez nous excuser, votre formulaire a expiré. Remplissez le formulaire "
+"depuis cette page."
 
 #: freeadmin/forms.py:95
 #, python-format
@@ -746,7 +746,7 @@ msgstr "%s mis(e) à jour avec succès."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr "Le redémarrage du service a echoué."
+msgstr "Le redémarrage du service a échoué."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -827,7 +827,7 @@ msgstr "Serveur de noms 3"
 #: network/models.py:83 network/models.py:84 network/nav.py:21
 #: templates/network/index.html:3
 msgid "Global Configuration"
-msgstr "Configuration Globale"
+msgstr "Configuration générale"
 
 #: network/models.py:96
 msgid "Pick your NIC"
@@ -849,8 +849,8 @@ msgstr "DHCP"
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
-"Lorsqu'activé, utiliser le protocole DHCP pour obtenir une adresse IPv4 "
-"ainsi que le routeur par défaut, etc."
+"Si activé, le protocole DHCP est utilisé pour obtenir une adresse IPv4 ainsi "
+"que le routeur par défaut, etc."
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
@@ -868,7 +868,7 @@ msgstr "Configuration IPv6 automatique"
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
 msgstr ""
-"Lorsqu'activé, configurer automatiquement une adresse IPv6 via rtsol(8)."
+"Si activé, une adresse IPv6 est automatiquement configurée via rtsol(8)."
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
@@ -895,7 +895,7 @@ msgstr "Interfaces"
 #: network/models.py:172 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr "Interface Virtuelle"
+msgstr "Interface virtuelle"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
@@ -904,7 +904,7 @@ msgstr "Les noms d'interfaces doivent être vlanXX, où XX est un nombre"
 #: network/models.py:178 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr "Interface Physique"
+msgstr "Interface physique"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
@@ -926,7 +926,7 @@ msgstr "VLAN"
 
 #: network/models.py:220
 msgid "Protocol Type"
-msgstr "Type de Protocole"
+msgstr "Type de protocole"
 
 #: network/models.py:241
 msgid "LAGG Interface group"
@@ -1086,7 +1086,7 @@ msgstr "Secret côté cible."
 
 #: services/forms.py:292
 msgid "Secret (Confirm)"
-msgstr "Secret (Confirmation)"
+msgstr "Secret (confirmation)"
 
 #: services/forms.py:294 services/forms.py:302
 msgid "Enter the same secret above for verification."
@@ -1102,7 +1102,7 @@ msgstr "Secret côté initiateur. (pour authentification mutuelle CHAP)"
 
 #: services/forms.py:300
 msgid "Initiator Secret (Confirm)"
-msgstr "Secret de l'initiateur (Confirmation)"
+msgstr "Secret de l'initiateur (confirmation)"
 
 #: services/forms.py:309
 msgid "Secret does not match"
@@ -1183,16 +1183,16 @@ msgstr "Périphérique disque"
 #: services/forms.py:691
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr "L'ID du Groupe Portail ne peut être supérieur à %d"
+msgstr "L'ID du groupe portail ne peut être supérieur à %d"
 
 #: services/forms.py:712
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr "L'ID du Groupe ne peut être supérieur à %d"
+msgstr "L'ID du groupe ne peut être supérieur à %d"
 
 #: services/forms.py:721
 msgid "Authentication Group number"
-msgstr "Numéro d'Authentification du Groupe"
+msgstr "Numéro du groupe d'authentification"
 
 #: services/forms.py:766
 msgid "Delete underlying file"
@@ -1203,7 +1203,7 @@ msgstr "Supprimer le fichier associé"
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
 msgstr[0] "L'e-mail %(email)s est invalide"
-msgstr[1] "Les e-mails suivants sont invalides: %(email)s"
+msgstr[1] "Les e-mails suivants sont invalides : %(email)s"
 
 #: services/models.py:40
 msgid "Service"
@@ -1215,7 +1215,7 @@ msgstr "Nom du Service, devrait être automatiquement généré à la compilatio
 
 #: services/models.py:44
 msgid "Enable Service"
-msgstr "Activer le Service"
+msgstr "Activer le service"
 
 #: services/models.py:47 services/models.py:48 services/nav.py:5
 #: templates/menubar.html:28 templates/services/index.html:3
@@ -1238,19 +1238,19 @@ msgstr "Nom NetBIOS"
 
 #: services/models.py:69
 msgid "Workgroup"
-msgstr "Groupe de Travail"
+msgstr "Groupe de travail"
 
 #: services/models.py:70
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
-"Groupe de Travail sous lequel le serveur apparaît lorsqu'il est interrogé "
+"Groupe de travail sous lequel le serveur apparaît lorsqu'il est interrogé "
 "par des clients (15 caractères maximum)."
 
 #: services/models.py:76
 msgid "Server description. This can usually be left blank."
-msgstr "Description du Serveur. Celle-ci peut être laissée vide."
+msgstr "Description du serveur. Celle-ci peut être laissée vide."
 
 #: services/models.py:82
 msgid "DOS charset"
@@ -1266,15 +1266,15 @@ msgstr "Verbosité du journal"
 
 #: services/models.py:97
 msgid "Local Master"
-msgstr "Maître Local"
+msgstr "Maître local"
 
 #: services/models.py:99
 msgid "Time Server for Domain"
-msgstr "Serveur de Temps pour le Domaine"
+msgstr "Serveur de temps pour le domaine"
 
 #: services/models.py:104 services/models.py:191
 msgid "Guest account"
-msgstr "Compte Invité"
+msgstr "Compte invité"
 
 #: services/models.py:105 services/models.py:192
 msgid ""
@@ -1284,7 +1284,7 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"Utilisez cette option pour forcer le nom d'utilisateur (\"nobody\" par défaut) "
+"Utiliser cette option pour forcer le nom d'utilisateur (\"nobody\" par défaut) "
 "qui sera utilisé pour l'accès aux services en tant qu'invité. Tous "
 "privilèges accordés à cet utilisateur le seront également pour les clients "
 "se connectant au service en tant qu'invités. Cet utilisateur doit exister "
@@ -1297,7 +1297,7 @@ msgstr "Autoriser l'accès invité"
 
 #: services/models.py:110
 msgid "Only allow guest access"
-msgstr "Autoriser l'accès invité seulement"
+msgstr "Autoriser l'accès invité uniquement"
 
 #: services/models.py:113 services/models.py:848
 msgid "File mask"
@@ -1322,7 +1322,7 @@ msgstr ""
 
 #: services/models.py:124
 msgid "Large RW support"
-msgstr "Support des Lectures/Écritures élargies"
+msgstr "Support des lectures/écritures élargies"
 
 #: services/models.py:126
 msgid "Send files with sendfile(2)"
@@ -1330,11 +1330,11 @@ msgstr "Envoi les fichiers avec sendfile(2)"
 
 #: services/models.py:128
 msgid "EA Support"
-msgstr "Support des Attributs Étendus"
+msgstr "Support des attributs étendus"
 
 #: services/models.py:130
 msgid "Support DOS File Attributes"
-msgstr "Support des Attributs de Fichiers DOS"
+msgstr "Support des attributs de fichiers DOS"
 
 #: services/models.py:132
 msgid "Allow Empty Password"
@@ -1356,7 +1356,7 @@ msgstr "Activer les répertoires personnels"
 
 #: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
-msgstr "Active/Désactive les répertoires personnels des utilisateurs samba."
+msgstr "Active/désactive les répertoires personnels des utilisateurs samba."
 
 #: services/models.py:144
 msgid "Enable home directories browsing"
@@ -1365,7 +1365,7 @@ msgstr "Activer la navigation dans les répertoires personnels"
 #: services/models.py:145
 msgid "This enables\\disables home directories browsing for samba user."
 msgstr ""
-"Active/Désactive la navigation dans les répertoires personnels des "
+"Active/désactive la navigation dans les répertoires personnels des "
 "utilisateurs samba."
 
 #: services/models.py:149
@@ -1378,7 +1378,7 @@ msgstr "Activer AIO"
 
 #: services/models.py:154
 msgid "This enables\\disables AIO support."
-msgstr "Active/Désactive le support des E/S Asynchrones (AIO)."
+msgstr "Active/désactive le support des E/S asynchrones (AIO)."
 
 #: services/models.py:158
 msgid "Minimal AIO read size"
@@ -1411,7 +1411,7 @@ msgstr "CIFS"
 
 #: services/models.py:180
 msgid "Server Name"
-msgstr "Nom du Serveur"
+msgstr "Nom du serveur"
 
 #: services/models.py:181
 msgid ""
@@ -1422,7 +1422,7 @@ msgstr ""
 
 #: services/models.py:184
 msgid "Guest Access"
-msgstr "Accès Invités"
+msgstr "Accès invités"
 
 #: services/models.py:185
 msgid "Allows guest access to all apple shares on this box."
@@ -1435,8 +1435,8 @@ msgstr "Accès local"
 #: services/models.py:196
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
-"Autoriser les utilisateurs avec un compte local à se connecter aux partages "
-"Apple de ce serveur."
+"Autoriser les utilisateurs avec un compte local à accéder aux partages Apple "
+"de ce serveur."
 
 #: services/models.py:199
 msgid "Enable DDP"
@@ -1587,7 +1587,7 @@ msgstr "Paramètre initial iSCSI (60 par défaut)."
 
 #: services/models.py:319
 msgid "Enable LUC"
-msgstr "Activer le contrôleur d'unités logiques"
+msgstr "Activer le contrôleur d'unités logiques (LUC)"
 
 #: services/models.py:323
 msgid "Controller IP address"
@@ -1664,7 +1664,7 @@ msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
-"Taille de l'extension: 0 pour automatique, un nombre en octets ou suffixé "
+"Taille de l'extension : 0 pour automatique, un nombre en octets ou suffixé "
 "par KB, MB, BG, TB pour plus de facilité."
 
 #: services/models.py:394 services/models.py:443 services/models.py:489
@@ -1687,7 +1687,7 @@ msgstr "Extension"
 
 #: services/models.py:432 services/models.py:588
 msgid "Portal Group ID"
-msgstr "ID du Groupe Portail"
+msgstr "ID du groupe portail"
 
 #: services/models.py:437 services/models.py:447
 msgid "Portal"
@@ -1777,11 +1777,11 @@ msgstr "Un nom optionnel identifiant facilement la cible."
 
 #: services/models.py:569 storage/views.py:157
 msgid "Serial"
-msgstr "Numéro de Série"
+msgstr "Numéro de série"
 
 #: services/models.py:572
 msgid "Serial number for the logical unit"
-msgstr "Numéri de série de l'unité logique"
+msgstr "Numéro de série de l'unité logique"
 
 #: services/models.py:577 storage/models.py:74 system/models.py:498
 #: templates/services/iscsi_extents.html:6
@@ -1795,11 +1795,11 @@ msgstr "Type d'unité logique attaché au LUN."
 
 #: services/models.py:584
 msgid "Target Flags"
-msgstr "Drapeaux de la cible"
+msgstr "Droits de la cible"
 
 #: services/models.py:592
 msgid "Initiator Group ID"
-msgstr "ID du Groupe Initiateur"
+msgstr "ID du groupe initiateur"
 
 #: services/models.py:598 services/models.py:610
 msgid "Auth Method"
@@ -1815,7 +1815,7 @@ msgstr ""
 
 #: services/models.py:603
 msgid "Authentication Group ID"
-msgstr "ID du Groupe d'Authentification"
+msgstr "ID du groupe d'authentification"
 
 #: services/models.py:616
 msgid "Queue Depth"
@@ -1826,8 +1826,8 @@ msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
 msgstr ""
-"0=désactivée, 1-255=active la mise en queue des commandes cette valeur pour "
-"profondeur. La profondeur recommandée est 32."
+"0=désactivé, 1-255=active la mise en queue des commandes en utilisant cette "
+"valeur pour profondeur. La profondeur recommandée est 32."
 
 #: services/models.py:622
 msgid "Logical Block Size"
@@ -1893,7 +1893,7 @@ msgstr "Période de mise à jour forcée"
 #: services/models.py:696 services/models.py:730 services/models.py:762
 msgid "These parameters will be added to global settings in inadyn.conf."
 msgstr ""
-"Ces paramètres seront ajoutés à la configuration globale dans inadyn.conf."
+"Ces paramètres seront ajoutés à la configuration générale dans inadyn.conf."
 
 #: services/models.py:700 services/models.py:701
 #: templates/services/index.html:40
@@ -1909,7 +1909,7 @@ msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
-"Informations de localisation, e.g. emplacement physique de ce système: "
+"Informations de localisation, e.g. emplacement physique de ce système : "
 "\"Étage du bâtiment, Pièce xyz\"."
 
 #: services/models.py:716
@@ -1922,7 +1922,7 @@ msgid ""
 "system: 'admin@email.address'."
 msgstr ""
 "Information de contact, e.g. nom ou e-mail de la personne responsable de ce "
-"système: \"admin@email.address\"."
+"système : \"admin@email.address\"."
 
 #: services/models.py:722
 msgid "Community"
@@ -1934,7 +1934,7 @@ msgstr "Dans la plupart des cas, \"public\" est utilisé."
 
 #: services/models.py:726
 msgid "Send SNMP Traps"
-msgstr "Envoyer des traps SNMP"
+msgstr "Envoyer les traps SNMP"
 
 #: services/models.py:734 services/models.py:735
 #: templates/services/index.html:97
@@ -2038,7 +2038,7 @@ msgstr "Tentatives de connexion"
 
 #: services/models.py:823
 msgid "Maximum number of allowed password attempts before disconnection."
-msgstr "Nombre maximum d'essais de mots de passe avant déconnexion."
+msgstr "Nombre maximum de tentatives de mots de passe avant déconnexion."
 
 #: services/models.py:827
 msgid "Timeout"
@@ -2093,7 +2093,7 @@ msgstr "Autoriser la reprise des transferts"
 # Trad de l'option DefaultRoot de proftpd
 #: services/models.py:862
 msgid "Always Chroot"
-msgstr "Limiter au répertoire personnel"
+msgstr "Effectuer systématiquement un 'chroot'"
 
 #: services/models.py:864
 msgid "Require IDENT Authentication"
@@ -2280,8 +2280,8 @@ msgid ""
 "Disabled: Root can only login via public key authentication; Enabled: Root "
 "login permitted with password"
 msgstr ""
-"Désactivé: Root ne peut se connecter qu'avec une authentification par clé "
-"publique; Activé: Root peut se connecter avec un mot de passe"
+"Désactivé : root ne peut se connecter qu'avec une authentification par clé "
+"publique. Activé : root peut se connecter avec un mot de passe."
 
 #: services/models.py:969
 msgid "Allow Password Authentication"
@@ -2348,7 +2348,7 @@ msgstr "Nom du groupe de travail"
 # Préciser WORKGROUP?
 #: services/models.py:1050
 msgid "Workgroup Name in old format, eg EXAMPLE"
-msgstr "Nom du groupe de travail dans l'ancien format, e.g. EXAMPLE"
+msgstr "Nom du groupe de travail dans l'ancien format, e.g. EXEMPLE"
 
 #: services/models.py:1054
 msgid "Administrator Name"
@@ -2457,7 +2457,7 @@ msgid ""
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
 "Ce paramètre spécifie le suffixe utilisé lors de l'ajout de mots de passe à "
-"l'annuaire LDAP, e.g. ou=MotsDePasse"
+"l'annuaire LDAP, e.g. ou=MotsDePasses"
 
 #: services/models.py:1124
 msgid "Machine Suffix"
@@ -2469,7 +2469,7 @@ msgid ""
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
 "Ce paramètre spécifie le suffixe utilisé lors de l'ajout de machines à "
-"l'annuaire LDAP, e.g. ou=Mahcines"
+"l'annuaire LDAP, e.g. ou=Machines"
 
 #: services/models.py:1130
 msgid "Turn on/off TLS"
@@ -2520,7 +2520,7 @@ msgstr "Nom du module"
 
 #: services/models.py:1186
 msgid "Path to be shared"
-msgstr "Chemin à partager"
+msgstr "Chemin du partage"
 
 #: services/models.py:1192
 msgid "Access Mode"
@@ -2546,9 +2546,9 @@ msgid ""
 "use default settings"
 msgstr ""
 "Cette option indique le nom d'utilisateur avec lequel sont effectués les "
-"tansferts depuis et vers ce module. En la combinant avec le \"Groupe\", "
-"cette option détermine quelles permissions de fichiers sont disponibles. "
-"Laissez le champ vide pour utiliser la configuration par défaut"
+"transferts depuis et vers ce module. En la combinant avec le \"Groupe\", cette "
+"option détermine quelles permissions de fichiers sont disponibles. Laisser "
+"le champ vide pour utiliser la configuration par défaut."
 
 #: services/models.py:1211
 msgid ""
@@ -2556,8 +2556,8 @@ msgid ""
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
 "Cette option indique le nom du groupe avec lequel sont effectués les "
-"transert depuis et vers ce module. Laissez le champ vide pour utiliser la "
-"configuration par défaut"
+"transferts depuis et vers ce module. Laisser le champ vide pour utiliser la "
+"configuration par défaut."
 
 #: services/models.py:1215
 msgid "Hosts allow"
@@ -2571,7 +2571,7 @@ msgid ""
 msgstr ""
 "Cette option est une liste délimitée par des virgules, espaces ou "
 "tabulations d'hôtes autorisés à accéder à ce module. Les hôtes peuvent être "
-"définis par leur nom ou adresse IP. Laissez le champ vide pour utiliser la "
+"définis par leur nom ou adresse IP. Laisser le champ vide pour utiliser la "
 "configuration par défaut."
 
 #: services/models.py:1220
@@ -2592,7 +2592,7 @@ msgstr ""
 "dans les listes, la liste des autorisations est prioritaire. Dans le cas où "
 "il est nécessaire de tout interdire par défaut, utilisez le mot-clé ALL (ou "
 "le masque réseau 0.0.0.0/0) et spécifiez ensuite les hôtes dont l'accès doit "
-"être autorisé dans le paramètre Hôtes autorisés. Laissez le champ vide pour "
+"être autorisé dans le paramètre Hôtes autorisés. Laisser le champ vide pour "
 "utiliser la configuration par défaut."
 
 #: services/models.py:1226
@@ -2654,7 +2654,7 @@ msgstr "Critique"
 
 #: services/models.py:1268
 msgid "Email to report"
-msgstr "E-mail où signaler"
+msgstr "E-mail destinataire"
 
 #: services/models.py:1271
 msgid "Destination email address. Separate email addresses by semi-colon"
@@ -2764,7 +2764,7 @@ msgstr "Montrer les fichiers cachés"
 
 #: sharing/models.py:64
 msgid "Guest Account"
-msgstr "Compte Invité"
+msgstr "Compte invité"
 
 #: sharing/models.py:65
 msgid ""
@@ -2782,11 +2782,11 @@ msgstr ""
 
 #: sharing/models.py:68
 msgid "Allow Guest Access"
-msgstr "Autoriser les accès invité"
+msgstr "Autoriser les accès invités"
 
 #: sharing/models.py:70
 msgid "Only Allow Guest Access"
-msgstr "Autoriser les accès invité seulement"
+msgstr "Autoriser les accès invités uniquement"
 
 #: sharing/models.py:74
 msgid "Hosts Allow"
@@ -2800,7 +2800,7 @@ msgid ""
 msgstr ""
 "Cette option est une liste délimitée par des virgules, espaces ou "
 "tabulations d'hôtes autorisés à accéder à ce partage. Les hôtes peuvent être "
-"définis par leur nom ou adresse IP. Laissez le champ vide pour utiliser la "
+"définis par leur nom ou adresse IP. Laisser le champ vide pour utiliser la "
 "configuration par défaut."
 
 #: sharing/models.py:80
@@ -2821,7 +2821,7 @@ msgstr ""
 "dans les listes, la liste des autorisations est prioritaire. Dans le cas où "
 "il est nécessaire de tout interdire par défaut, utilisez le mot-clé ALL (ou "
 "le masque réseau 0.0.0.0/0) et spécifiez ensuite les hôtes dont l'accès doit "
-"être autorisé dans le paramètre Hôtes autorisés. Laissez le champ vide pour "
+"être autorisé dans le paramètre Hôtes autorisés. Laisser le champ vide pour "
 "utiliser la configuration par défaut."
 
 #: sharing/models.py:87
@@ -2925,7 +2925,7 @@ msgstr ""
 
 #: sharing/models.py:146
 msgid "Read-write Access"
-msgstr "Accès en Lecture/Écriture"
+msgstr "Accès en lecture/écriture"
 
 #: sharing/models.py:148
 msgid ""
@@ -3105,7 +3105,7 @@ msgstr "Partages Apple"
 
 #: sharing/models.py:230
 msgid "Authorized network or IP addresses"
-msgstr "Réseau ou adresses IP autorisés"
+msgstr "Réseaux ou adresses IP autorisés"
 
 #: sharing/models.py:231
 msgid ""
@@ -3136,7 +3136,7 @@ msgstr "Lecture seule"
 
 #: sharing/models.py:240
 msgid "Export the share read only. Writes are not permitted."
-msgstr "Exporter le partage en lecture seule. L'écriture n'est pas permise."
+msgstr "Exporter le partage en lecture seule. L'écriture n'est pas autorisée."
 
 #: sharing/models.py:243 system/models.py:409
 msgid "Quiet"
@@ -3147,8 +3147,7 @@ msgstr "Silencieux"
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
 msgstr ""
-"Rendre muettes les alertes syslog concernant les problèmes d'export de ce "
-"partage."
+"Inhibe les alertes syslog concernant les problèmes d'export de ce partage."
 
 #: sharing/models.py:248
 msgid "Maproot User"
@@ -3552,7 +3551,7 @@ msgstr ""
 
 #: storage/models.py:303
 msgid "Occurrence"
-msgstr "Répétition"
+msgstr "Périodicité"
 
 #: storage/models.py:304
 msgid "How the task is repeated"
@@ -3703,7 +3702,7 @@ msgstr "Le volume a été exporté avec succès"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
-msgstr "Langue (Nécessite de recharger l'interface)"
+msgstr "Langue (nécessite de recharger l'interface)"
 
 #: system/forms.py:250
 msgid "Place to temporarily place firmware file"
@@ -3824,7 +3823,7 @@ msgstr ""
 #: system/models.py:105
 msgid "Show console messages in the footer (Requires UI reload)"
 msgstr ""
-"Afficher les messages de la console en pied de page (Nécessite de recharger "
+"Afficher les messages de la console en pied de page (nécessite de recharger "
 "l'interface)"
 
 #: system/models.py:108
@@ -4121,7 +4120,7 @@ msgid ""
 "be the same as the source permissions"
 msgstr ""
 "Cette option indique au rsync récepteur qu'il doit définir les mêmes "
-"permissions qu'à la source"
+"permissions que celles de la source"
 
 #: system/models.py:419
 msgid "Preserve extended attributes"
@@ -4179,11 +4178,11 @@ msgstr "Page Non Trouvée"
 
 #: templates/base.html:32
 msgid "expand all"
-msgstr "Développer tout"
+msgstr "Tout développer"
 
 #: templates/base.html:33
 msgid "collapse all"
-msgstr "Réduire tout"
+msgstr "Tout réduire"
 
 # "Déconnexion" est trop long et ne tient pas dans le bouton sur lequel il est utilisé.
 #: templates/menubar.html:33
@@ -4818,7 +4817,7 @@ msgstr "Modifier le partage Apple"
 
 #: templates/sharing/apple.html:36
 msgid "Delete Apple Share"
-msgstr "Supprimer le Partage Apple"
+msgstr "Supprimer le partage Apple"
 
 #: templates/sharing/apple.html:43 templates/sharing/unix.html:43
 #: templates/sharing/windows.html:47
@@ -4923,7 +4922,7 @@ msgstr "Type de système de fichiers"
 
 #: templates/storage/index.html:3 templates/storage/volumes.html:62
 msgid "Active Volumes"
-msgstr "Volumes Actifs"
+msgstr "Volumes actifs"
 
 #: templates/storage/index.html:5
 msgid "ZFS Snapshots"
@@ -4931,7 +4930,7 @@ msgstr "Instantanés ZFS"
 
 #: templates/storage/index.html:9
 msgid "ZFS Replication"
-msgstr "Replication ZFS"
+msgstr "Réplication ZFS"
 
 #: templates/storage/manualsnap.html:13
 msgid "Manually Create Snapshot"
@@ -4957,7 +4956,7 @@ msgstr "Changer"
 
 #: templates/storage/replications.html:9
 msgid "Add Replication"
-msgstr "Ajouter une Replication"
+msgstr "Ajouter une Réplication"
 
 #: templates/storage/replications.html:13
 msgid "Mount point"
@@ -4970,12 +4969,12 @@ msgstr "Dernier instantané"
 #: templates/storage/replications.html:30
 #: templates/storage/replications.html:34
 msgid "Delete Replication"
-msgstr "Supprimer la Réplication"
+msgstr "Supprimer la réplication"
 
 #: templates/storage/replications.html:39
 #: templates/storage/replications.html:43
 msgid "Edit Replication"
-msgstr "Modifier la Réplication"
+msgstr "Modifier la réplication"
 
 #: templates/storage/replications.html:49
 msgid "No ZFS replication available"
@@ -5202,7 +5201,7 @@ msgstr "Redémarrage en cours..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
-msgstr "Êtes-vous sûr de vouloir restaurer les paramètres d'usine ?"
+msgstr "Êtes-vous sûr de vouloir restaurer les paramètres par défaut ?"
 
 #: templates/system/config_upload.html:35
 msgid "Update"
@@ -5226,11 +5225,11 @@ msgstr "L'e-mail de test a été envoyé !"
 
 #: templates/system/email_edit.html:19
 msgid "Your test email could not be sent:"
-msgstr "L'e-mail de test n'a pas pu être envoyé:"
+msgstr "L'e-mail de test n'a pas pu être envoyé :"
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr "Envoyer un E-Mail de Test"
+msgstr "Envoyer un e-mail de test"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
@@ -5310,7 +5309,7 @@ msgstr "Mémoire"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
-msgstr "Heure Système"
+msgstr "Heure système"
 
 #: templates/system/system_info.html:24
 msgid "Uptime"
@@ -5318,7 +5317,7 @@ msgstr "En activité depuis"
 
 #: templates/system/system_info.html:28
 msgid "Load Average"
-msgstr "Charge Moyenne"
+msgstr "Charge moyenne"
 
 #: templates/system/system_info.html:32
 msgid "FreeNAS Build"
@@ -5349,12 +5348,11 @@ msgid ""
 "the guest service. This user must exist in the password file, but does "
 "not require a valid login."
 msgstr ""
-"Utilisez cette option pour forcer le nom d'utilisateur (\"www\" par "
-"défaut) qui sera utilisé pour l'accès aux services en tant qu'invité. "
-"Tous privilèges accordés à cet utilisateur le seront également pour les "
-"clients se connectant au service en tant qu'invités. Cet utilisateur doit "
-"exister dans le fichier de mot de passe, mais ne nécessite pas une "
-"connexion valide."
+"Utiliser cette option pour forcer le nom d'utilisateur (\"www\" par défaut) "
+"qui sera utilisé pour l'accès aux services en tant qu'invité. Tous "
+"privilèges accordés à cet utilisateur le seront également pour les clients "
+"se connectant au service en tant qu'invités. Cet utilisateur doit exister "
+"dans le fichier de mot de passe, mais ne nécessite pas une connexion valide."
 
 msgid "ZVol Name"
 msgstr "Nom du ZVol ZFS"
@@ -5418,13 +5416,13 @@ msgid "Add Link Aggregation"
 msgstr "Ajouter une agrégation de liens"
 
 msgid "View All Interfaces"
-msgstr "Voir toutes les interfaces"
+msgstr "Voir les interfaces"
 
 msgid "View All VLANs"
-msgstr "Voir tous les VLAN"
+msgstr "Voir les VLAN"
 
 msgid "View All Static Routes"
-msgstr "Voir toutes les routes statiques"
+msgstr "Voir les routes statiques"
 
 msgid "Windows Version"
 msgstr "Version de Windows"
@@ -5461,13 +5459,13 @@ msgid "Volume Path"
 msgstr "Chemin du volume"
 
 msgid "View All UNIX Shares"
-msgstr "Voir Tous Les Partages UNIX"
+msgstr "Voir les partages UNIX"
 
 msgid "View All Apple Shares"
-msgstr "Voir Tous Les Partages Apple"
+msgstr "Voir les partages Apple"
 
 msgid "View All Windows Shares"
-msgstr "Voir Tous Les Partages Windows"
+msgstr "Voir les partages Windows"
 
 msgid "Read"
 msgstr "Lecture"
@@ -5488,10 +5486,10 @@ msgid "Disks"
 msgstr "Disques"
 
 msgid "View All Replication Tasks"
-msgstr "Voir toutes les tâches de réplication"
+msgstr "Voir les tâches de réplication"
 
 msgid "View All Periodic Snapshot Tasks"
-msgstr "Voir toutes les tâches périodiques d'instantané"
+msgstr "Voir les tâches périodiques d'instantané"
 
 # Gestion féminin et pluriel ?
 msgid "sucessfully edited"

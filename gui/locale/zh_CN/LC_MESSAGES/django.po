@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-08-17 01:45+0200\n"
-"Last-Translator: delphij <d@delphij.net>\n"
+"PO-Revision-Date: 2011-08-26 09:01+0200\n"
+"Last-Translator: hpyxyz <moonearthsun@foxmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1603,16 +1603,16 @@ msgstr "注释"
 
 #: services/models.py:395 services/models.py:444 services/models.py:490
 msgid "You may enter a description here for your reference."
-msgstr ""
+msgstr "你可以在这儿对你的参考添加描述"
 
 #: services/models.py:398 services/models.py:647
 #: templates/services/iscsi_assoctargets.html:6
 msgid "Extent"
-msgstr ""
+msgstr "范围"
 
 #: services/models.py:432 services/models.py:588
 msgid "Portal Group ID"
-msgstr ""
+msgstr "网站组ID"
 
 #: services/models.py:437 services/models.py:447
 msgid "Portal"

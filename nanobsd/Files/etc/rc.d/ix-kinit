@@ -8,56 +8,43 @@
 # REQUIRE: ix-samba
 # REQUIRE: ntpd
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 
-kerberos_init()
+kerberos_start()
 {
-	local IFS="|"
+	if AD_enabled
+	then
+		AD_init
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		ad_dcname,
-		ad_domainname,
-		ad_netbiosname,
-		ad_adminname,
-		ad_adminpw
+		domainname=$(AD_get domainname)
+		adminname=$(AD_get adminname)
+		adminpw=$(AD_get adminpw)
 
-	FROM
-		services_services,
-		services_activedirectory
-
-	WHERE (
-		srv_service = 'activedirectory' and
-		srv_enable = '1'
-	)
-
-	ORDER BY
-		-services_activedirectory.id
-
-	LIMIT 1
-	" | \
-	while read dc domain netbios admin pw
-	do
-		if [ -n "${admin}" -a -n "${domain}" -a -n "${pw}" ]
+		if [ -n "${adminname}" -a -n "${domainname}" -a -n "${adminpw}" ]
 		then
 			local pwfile="/tmp/."$(date '+%H%M%S')
 			touch "${pwfile}"
 			chmod 600 "${pwfile}"
-			echo "${pw}" > ${pwfile}
+			echo "${adminpw}" > ${pwfile}
 
-			domain=$(echo "${domain}"|tr a-z A-Z)
-			kinit --password-file="${pwfile}" "${admin}@${domain}"
+			domainname=$(echo "${domainname}"|tr a-z A-Z)
+			kinit --password-file="${pwfile}" "${adminname}@${domainname}"
 
 			rm "${pwfile}"
 			sleep 10
 		fi
-	done
+	fi
+}
+
+kerberos_stop()
+{
+	klist destroy
 }
 
 name="ix-kinit"
-start_cmd='kerberos_init'
-stop_cmd=':'
+start_cmd='kerberos_start'
+stop_cmd='kerberos_stop'
         
 load_rc_config $name
 run_rc_command "$1"
