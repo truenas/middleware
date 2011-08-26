@@ -595,9 +595,9 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         ssl = FREENAS_LDAP_NOSSL
         if kwargs.has_key('ssl') and kwargs['ssl']:
-            ssl =  int(kwargs['ssl'])
+            ssl = int(kwargs['ssl'])
         elif ldap.has_key('ldap_ssl') and ldap['ldap_ssl']:
-            ssl =  int(ldap['ldap_ssl'])
+            ssl = int(ldap['ldap_ssl'])
 
         if port == None:
             tmp = tmphost.split(':')
@@ -738,42 +738,6 @@ class FreeNAS_LDAP(FreeNAS_LDAP_Base):
 
 
 class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
-    def __init__(self, **kwargs):
-        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.__init__: enter")
-
-        ad = ActiveDirectory_objects()[0]
-        self.domain = ad['ad_domainname']
-
-        tmphost = kwargs['host'] if kwargs.has_key('host') else ad['ad_dcname']
-        host = tmphost.split(':')[0]
-
-        port = long(kwargs['port']) if kwargs.has_key('port') else None
-        binddn = kwargs['binddn'] if kwargs.has_key('binddn') \
-            else ad['ad_adminname'] + '@' + ad['ad_domainname'].upper()
-        bindpw = kwargs['bindpw'] if kwargs.has_key('binddn') else ad['ad_adminpw']
-
-        if port == None:
-            tmp = tmphost.split(':')
-            if len(tmp) > 1:
-                port = long(tmp[1])
-
-        args = { 'host': host, 'binddn': binddn, 'bindpw': bindpw }
-        if port:
-            args['port'] = port
-
-        super(FreeNAS_ActiveDirectory_Base, self).__init__(**args)
-
-        self.netbiosname = self.get_netbios_name()
-        if kwargs.has_key('netbiosname'):
-            if self.netbiosname != kwargs['netbiosname']:
-                d = self.get_domains(netbiosname=kwargs['netbiosname'])
-                if d: 
-                    d = d[0]
-                    args['host'] = d['dnsRoot'] 
-                    self.netbiosname = d['nETBIOSName']
-                    super(FreeNAS_ActiveDirectory_Base, self).__init__(**args)
-
-        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.__init__: leave")
 
     @staticmethod 
     def get_domain_controllers(domain):
@@ -786,7 +750,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
 
         try:
             answers = resolver.query(host, 'SRV')
-            dcs = sorted(answers, key=lambda: a: (int(a.priority), int(a.weight)))
+            dcs = sorted(answers, key=lambda a: (int(a.priority), int(a.weight)))
 
         except:
             dcs = [] 
@@ -804,12 +768,84 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
 
         try:
             answers = resolver.query(host, 'SRV')
-            gcs = sorted(answers, key=lambda: a: (int(a.priority), int(a.weight)))
+            gcs = sorted(answers, key=lambda a: (int(a.priority), int(a.weight)))
 
         except:
             gcs = []
 
         return gcs
+
+    def __default_init__(self, **kwargs):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.__default_init__: enter")
+
+        ad = ActiveDirectory_objects()[0]
+        self.domain = kwargs['domain'] if kwargs.has_key('domain') else ad['ad_domainname']
+
+        host = port = None 
+        tmphost = kwargs['host'] if kwargs.has_key('host') else None
+        if tmphost:
+            host = tmphost.split(':')[0]
+            port = long(kwargs['port']) if kwargs.has_key('port') else None
+            if port == None:
+                tmp = tmphost.split(':')
+                if len(tmp) > 1:
+                    port = long(tmp[1])
+
+        if kwargs.has_key('port') and kwargs['port'] and not port:
+            port = long(kwargs['port'])
+
+        binddn = kwargs['binddn'] if kwargs.has_key('binddn') \
+            else ad['ad_adminname'] + '@' + self.domain.upper()
+        bindpw = kwargs['bindpw'] if kwargs.has_key('binddn') else ad['ad_adminpw']
+
+        args = { 'binddn': binddn, 'bindpw': bindpw }
+        if host:
+            args['host'] = host
+            if port:
+                args['port'] = port
+
+            super(FreeNAS_ActiveDirectory_Base, self).__init__(**args)
+            self.open()
+
+        else:
+            dcs = self.get_domain_controllers(self.domain)
+            for dc in dcs:
+                syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.__default_init__: "
+                    "trying [%s]..." % dc)
+
+                args['host'] = str(dc.target)
+                args['port'] = long(dc.port)
+
+                super(FreeNAS_ActiveDirectory_Base, self).__init__(**args)
+                self.open()
+
+                if self._isopen:
+                    break
+
+                self.close()
+
+        if not self._isopen:
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.__default_init__: "
+                "unable to connect to a domain controller")
+
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.__default_init__: leave")
+
+    def __init__(self, **kwargs):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.__init__: enter")
+
+        self.__default_init__(**kwargs)
+
+        self.netbiosname = self.get_netbios_name()
+        if kwargs.has_key('netbiosname'):
+            if self.netbiosname != kwargs['netbiosname']:
+                d = self.get_domains(netbiosname=kwargs['netbiosname'])
+                if d: 
+                    d = d[0]
+                    args['host'] = d['dnsRoot'] 
+                    self.netbiosname = d['nETBIOSName']
+                    super(FreeNAS_ActiveDirectory_Base, self).__init__(**args)
+
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.__init__: leave")
 
     def get_rootDSE(self):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_rootDSE: enter")
@@ -933,41 +969,43 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         isopen = self._isopen
         self.open() 
 
+        gc = None
+        gc_args = { 'binddn': self.binddn, 'bindpw': self.bindpw }
+        gcs = self.get_global_catalogs(self.domain)
+        for g in gcs:
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: trying [%s]..." % g)
+            gc_args['host'] = str(g.target)
+            gc_args['port'] = long(g.port)
+
+            gc = FreeNAS_LDAP_Directory(**gc_args)
+            gc.open()
+
+            if gc._isopen:
+                break
+
+            gc.close()
+            gc = None
+
+
+        domains = [] 
+        if gc and gc._isopen:
+            results = gc._search("", ldap.SCOPE_SUBTREE, '(objectclass=domain)', ['dn'])
+            if not results:
+                syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: no domain objects found")
+                results = []
+
+            for r in results:
+                domains.append(r[0])
+
+            gc.close()
+
+        else:
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: "
+                "unable to connect to a global catalog server")
+
         rootDSE = self.get_rootDSE()
         basedn = rootDSE[0][1]['configurationNamingContext'][0]
         config = rootDSE[0][1]['defaultNamingContext'][0]
-
-        host = "_gc._tcp.%s" % self.domain
-
-        answers = []
-        try:
-            answers = resolver.query(host, 'SRV')
-
-        except:
-            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: "\
-                "SRV record for %s doesn't exist!" % host)
-            answers = []
-
-        if not answers: 
-            return answers
-
-        rdata = answers[0]
-        gc_args = { 'host': str(rdata.target), 'port': long(rdata.port),
-            'binddn': self.binddn, 'bindpw': self.bindpw }
-
-        gc = FreeNAS_LDAP_Directory(**gc_args)
-        gc.open()
-
-        domains = [] 
-        results = gc._search("", ldap.SCOPE_SUBTREE, '(objectclass=domain)', ['dn'])
-        if not results:
-            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: no domain objects found")
-            results = []
-
-        for r in results:
-            domains.append(r[0])
-
-        gc.close()
 
         result = []
         haskey = False
