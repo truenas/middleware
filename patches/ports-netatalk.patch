@@ -1,5 +1,650 @@
---- net/netatalk/Makefile	2011-08-16 14:44:27.000000000 -0700
-+++ net/netatalk/Makefile	2011-08-14 10:17:28.000000000 -0700
+Index: net/netatalk/files/patch-etc__afpd__afp_options.c
+===================================================================
+RCS file: net/netatalk/files/patch-etc__afpd__afp_options.c
+diff -N net/netatalk/files/patch-etc__afpd__afp_options.c
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/netatalk/files/patch-etc__afpd__afp_options.c	25 Aug 2011 17:11:29 -0000
+@@ -0,0 +1,13 @@
++--- ./etc/afpd/afp_options.c.orig	2011-07-27 04:55:39.000000000 -0700
+++++ ./etc/afpd/afp_options.c	2011-08-19 14:43:45.034785568 -0700
++@@ -240,6 +240,10 @@
++         options->flags |= OPTION_ANNOUNCESSH;
++     if (strstr(buf, " -noacl2maccess"))
++         options->flags &= ~OPTION_ACL2MACCESS;
+++    if (strstr(buf, " -keepsessions")) {
+++        default_options.flags |= OPTION_KEEPSESSIONS;
+++        options->flags |= OPTION_KEEPSESSIONS;
+++    }
++ 
++     /* passwd bits */
++     if (strstr(buf, " -nosavepassword"))
+Index: net/netatalk/files/patch-etc__afpd__main.c
+===================================================================
+RCS file: net/netatalk/files/patch-etc__afpd__main.c
+diff -N net/netatalk/files/patch-etc__afpd__main.c
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/netatalk/files/patch-etc__afpd__main.c	25 Aug 2011 17:11:29 -0000
+@@ -0,0 +1,139 @@
++--- ./etc/afpd/main.c.orig	2011-07-27 04:55:39.000000000 -0700
+++++ ./etc/afpd/main.c	2011-08-19 14:43:45.042815401 -0700
++@@ -52,11 +52,11 @@
++ #endif /* TRU64 */
++ 
++ unsigned char	nologin = 0;
++-
++ struct afp_options default_options;
++ static AFPConfig *configs;
++ static server_child *server_children;
++ static sig_atomic_t reloadconfig = 0;
+++static sig_atomic_t gotsigchld = 0;
++ 
++ /* Two pointers to dynamic allocated arrays which store pollfds and associated data */
++ static struct pollfd *fdset;
++@@ -94,7 +94,11 @@
++             continue;
++         fdset_add_fd(&fdset, &polldata, &fdset_used, &fdset_size, config->fd, LISTEN_FD, config);
++     }
++-    fdset_add_fd(&fdset, &polldata, &fdset_used, &fdset_size, disasociated_ipc_fd, DISASOCIATED_IPC_FD, NULL);
+++
+++    if (default_options.flags & OPTION_KEEPSESSIONS) {
+++        LOG(log_note, logtype_afpd, "Activating continous service");
+++        fdset_add_fd(&fdset, &polldata, &fdset_used, &fdset_size, disasociated_ipc_fd, DISASOCIATED_IPC_FD, NULL);
+++    }
++ }
++  
++ static void fd_reset_listening_sockets(void)
++@@ -106,7 +110,9 @@
++             continue;
++         fdset_del_fd(&fdset, &polldata, &fdset_used, &fdset_size, config->fd);
++     }
++-    fdset_del_fd(&fdset, &polldata, &fdset_used, &fdset_size, disasociated_ipc_fd);
+++
+++    if (default_options.flags & OPTION_KEEPSESSIONS)
+++        fdset_del_fd(&fdset, &polldata, &fdset_used, &fdset_size, disasociated_ipc_fd);
++ }
++ 
++ /* ------------------ */
++@@ -127,7 +133,12 @@
++             LOG(log_note, logtype_afpd, "AFP Server shutting down on SIGTERM");
++             break;
++         case SIGQUIT:
++-            LOG(log_note, logtype_afpd, "AFP Server shutting down on SIGQUIT, NOT disconnecting clients");
+++            if (default_options.flags & OPTION_KEEPSESSIONS) {
+++                LOG(log_note, logtype_afpd, "AFP Server shutting down on SIGQUIT, NOT disconnecting clients");
+++            } else {
+++                LOG(log_note, logtype_afpd, "AFP Server shutting down on SIGQUIT");
+++                sig = SIGTERM;
+++            }
++             break;
++         }
++         if (server_children)
++@@ -154,13 +165,18 @@
++         reloadconfig = 1;
++         break;
++ 
+++    case SIGCHLD:
+++        /* w/ a configuration file, we can force a re-read if we want */
+++        gotsigchld = 1;
+++        break;
+++
++     default :
++         LOG(log_error, logtype_afpd, "afp_goaway: bad signal" );
++     }
++     return;
++ }
++ 
++-static void child_handler(int sig _U_)
+++static void child_handler(void)
++ {
++     int fd;
++     int status, i;
++@@ -273,7 +289,8 @@
++     }
++ #endif
++     
++-    sv.sa_handler = child_handler;
+++    sv.sa_handler = afp_goaway; /* handler for all sigs */
+++
++     sigemptyset( &sv.sa_mask );
++     sigaddset(&sv.sa_mask, SIGALRM);
++     sigaddset(&sv.sa_mask, SIGHUP);
++@@ -286,7 +303,6 @@
++         exit(EXITERR_SYS);
++     }
++ 
++-    sv.sa_handler = afp_goaway;
++     sigemptyset( &sv.sa_mask );
++     sigaddset(&sv.sa_mask, SIGALRM);
++     sigaddset(&sv.sa_mask, SIGTERM);
++@@ -374,6 +390,7 @@
++     afp_child_t *child;
++     int fd[2];  /* we only use one, but server_child_add expects [2] */
++     pid_t pid;
+++    int saveerrno;
++ 
++     /* wait for an appleshare connection. parent remains in the loop
++      * while the children get handled by afp_over_{asp,dsi}.  this is
++@@ -386,7 +403,13 @@
++         pthread_sigmask(SIG_UNBLOCK, &sigs, NULL);
++         ret = poll(fdset, fdset_used, -1);
++         pthread_sigmask(SIG_BLOCK, &sigs, NULL);
++-        int saveerrno = errno;
+++        saveerrno = errno;
+++
+++        if (gotsigchld) {
+++            gotsigchld = 0;
+++            child_handler();
+++            continue;
+++        }
++ 
++         if (reloadconfig) {
++             nologin++;
++@@ -441,11 +464,11 @@
++                     child = (afp_child_t *)polldata[i].data;
++                     LOG(log_debug, logtype_afpd, "main: IPC request from child[%u]", child->pid);
++ 
++-                    if ((ret = ipc_server_read(server_children, child->ipc_fds[0])) == 0) {
+++                    if (ipc_server_read(server_children, child->ipc_fds[0]) != 0) {
++                         fdset_del_fd(&fdset, &polldata, &fdset_used, &fdset_size, child->ipc_fds[0]);
++                         close(child->ipc_fds[0]);
++                         child->ipc_fds[0] = -1;
++-                        if (child->disasociated) {
+++                        if ((default_options.flags & OPTION_KEEPSESSIONS) && child->disasociated) {
++                             LOG(log_note, logtype_afpd, "main: removing reattached child[%u]", child->pid);
++                             server_child_remove(server_children, CHILD_DSIFORK, child->pid);
++                         }
++@@ -461,8 +484,9 @@
++                     if (readt(fd[0], &pid, sizeof(pid_t), 0, 1) != sizeof(pid_t)) {
++                         LOG(log_error, logtype_afpd, "main: readt: %s", strerror(errno));
++                         close(fd[0]);
+++                        break;
++                     }
++-                    LOG(log_note, logtype_afpd, "main: IPC reconnect from [%u]", pid);
+++                    LOG(log_note, logtype_afpd, "main: IPC reconnect from pid [%u]", pid);
++                     if ((child = server_child_add(server_children, CHILD_DSIFORK, pid, fd)) == NULL) {
++                         LOG(log_error, logtype_afpd, "main: server_child_add");
++                         close(fd[0]);
+Index: net/netatalk/files/patch-include__atalk__globals.h
+===================================================================
+RCS file: net/netatalk/files/patch-include__atalk__globals.h
+diff -N net/netatalk/files/patch-include__atalk__globals.h
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/netatalk/files/patch-include__atalk__globals.h	25 Aug 2011 17:11:29 -0000
+@@ -0,0 +1,39 @@
++--- ./include/atalk/globals.h.orig	2011-07-27 04:55:39.000000000 -0700
+++++ ./include/atalk/globals.h	2011-08-19 14:43:45.046204676 -0700
++@@ -43,6 +43,7 @@
++ #define OPTION_UUID          (1 << 7)
++ #define OPTION_ACL2MACCESS   (1 << 8)
++ #define OPTION_NOZEROCONF    (1 << 9)
+++#define OPTION_KEEPSESSIONS  (1 << 10) /* preserve sessions across master afpd restart with SIGQUIT */
++ 
++ #ifdef FORCE_UIDGID
++ /* set up a structure for this */
++@@ -127,18 +128,16 @@
++ /* typedef for AFP functions handlers */
++ typedef int (*AFPCmd)(AFPObj *obj, char *ibuf, size_t ibuflen, char *rbuf,  size_t *rbuflen);
++ 
++-/* afp_dsi.c */
++-extern AFPObj *AFPobj;
++-
++-extern int		afp_version;
++-extern int		afp_errno;
++-extern unsigned char	nologin;
++-extern struct dir	*curdir;
++-extern char		getwdbuf[];
++-
++-/* FIXME CNID */
++-extern const char *Cnid_srv;
++-extern const char *Cnid_port;
+++/* Global variables */
+++extern AFPObj             *AFPobj;
+++extern int                afp_version;
+++extern int                afp_errno;
+++extern unsigned char      nologin;
+++extern struct dir         *curdir;
+++extern char               getwdbuf[];
+++extern struct afp_options default_options;
+++extern const char         *Cnid_srv;
+++extern const char         *Cnid_port;
++ 
++ extern int  get_afp_errno   (const int param);
++ extern void afp_options_init (struct afp_options *);
+Index: net/netatalk/files/patch-libatalk__util__server_child.c
+===================================================================
+RCS file: net/netatalk/files/patch-libatalk__util__server_child.c
+diff -N net/netatalk/files/patch-libatalk__util__server_child.c
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/netatalk/files/patch-libatalk__util__server_child.c	25 Aug 2011 17:11:29 -0000
+@@ -0,0 +1,14 @@
++--- ./libatalk/util/server_child.c.orig	2011-07-27 04:55:39.000000000 -0700
+++++ ./libatalk/util/server_child.c	2011-08-19 14:42:28.704028827 -0700
++@@ -135,8 +135,10 @@
++ 
++     /* it's possible that the child could have already died before the
++      * pthread_sigmask. we need to check for this. */
++-    if (kill(pid, 0) < 0)
+++    if (kill(pid, 0) < 0) {
+++        LOG(log_error, logtype_default, "server_child_add: no such process pid [%d]", pid);
++         goto exit;
+++    }
++ 
++     fork = (server_child_fork *) children->fork + forkid;
++ 
+Index: net/netatalk/files/patch-libatalk__util__server_ipc.c
+===================================================================
+RCS file: net/netatalk/files/patch-libatalk__util__server_ipc.c
+diff -N net/netatalk/files/patch-libatalk__util__server_ipc.c
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/netatalk/files/patch-libatalk__util__server_ipc.c	25 Aug 2011 17:11:29 -0000
+@@ -0,0 +1,61 @@
++--- ./libatalk/util/server_ipc.c.orig	2011-07-27 04:55:39.000000000 -0700
+++++ ./libatalk/util/server_ipc.c	2011-08-19 14:42:28.728518099 -0700
++@@ -214,21 +214,27 @@
++ /*!
++  * Read a IPC message from a child
++  *
+++ * This is using an fd with non-blocking IO, so EAGAIN is not an error
+++ *
++  * @args children  (rw) pointer to our structure with all childs
++  * @args fd        (r)  IPC socket with child
++  *
++- * @returns number of bytes transfered, -1 on error, 0 on EOF
+++ * @returns -1 on error, 0 on success
++  */
++ int ipc_server_read(server_child *children, int fd)
++ {
++-    int       ret = 0;
+++    int       ret;
++     struct ipc_header ipc;
++     char      buf[IPC_MAXMSGSIZE], *p;
++ 
++     if ((ret = read(fd, buf, IPC_HEADERLEN)) != IPC_HEADERLEN) {
++-        LOG(log_error, logtype_afpd, "Reading IPC header failed (%i of %u bytes read): %s",
++-            ret, IPC_HEADERLEN, strerror(errno));
++-        return ret;
+++        if (ret != 0) {
+++            if (errno == EAGAIN)
+++                return 0;
+++            LOG(log_error, logtype_afpd, "Reading IPC header failed (%i of %u bytes read): %s",
+++                ret, IPC_HEADERLEN, strerror(errno));
+++        }
+++        return -1;
++     }
++ 
++     p = buf;
++@@ -255,7 +261,7 @@
++ 	    if ((ret = read(fd, buf, ipc.len)) != (int) ipc.len) {
++             LOG(log_info, logtype_afpd, "Reading IPC message failed (%u of %u  bytes read): %s",
++                 ret, ipc.len, strerror(errno));
++-            return ret;
+++            return -1;
++     	}	 
++     }
++     ipc.msg = buf;
++@@ -271,6 +277,7 @@
++         if (readt(fd, &ipc.DSI_requestID, 2, 0, 2) != 2) {
++             LOG (log_error, logtype_afpd, "ipc_read(%s:child[%u]): couldnt read DSI id: %s",
++                  ipc_cmd_str[ipc.command], ipc.child_pid, strerror(errno));
+++            return -1;
++         }
++         if ((ipc.afp_socket = recv_fd(fd, 1)) == -1) {
++             LOG (log_error, logtype_afpd, "ipc_read(%s:child[%u]): recv_fd: %s",
++@@ -296,7 +303,7 @@
++ 		return -1;
++     }
++ 
++-    return ret;
+++    return 0;
++ }
++ 
++ /* ----------------- */
+Index: net/netatalk/files/patch-etc_afpd_acls.c
+===================================================================
+RCS file: net/netatalk/files/patch-etc_afpd_acls.c
+diff -N net/netatalk/files/patch-etc_afpd_acls.c
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/netatalk/files/patch-etc_afpd_acls.c	25 Aug 2011 17:08:39 -0000
+@@ -0,0 +1,63 @@
++--- etc/afpd/acls.c.orig	2011-07-30 18:08:35.000000000 -0400
+++++ etc/afpd/acls.c	2011-07-30 18:19:19.000000000 -0400
++@@ -1060,7 +1060,59 @@ static int set_acl(const struct vol *vol
++ #ifdef HAVE_ACL_FROM_MODE
++     EC_NULL_LOG_ERR(acc_acl = acl_from_mode(st.st_mode), AFPERR_MISC);
++ #else
++-#error "Missing acl_from_mode() replacement"
+++    /* Implement the non POSIX.1e function acl_from_mode
+++     *
+++     * Taken from http://people.freebsd.org/~markus/stuff/kacl.diff
+++     */
+++    {
+++	    acl_t new_acl = acl_init( 3 );
+++	    acl_entry_t entry;
+++	    acl_permset_t permset = 0;
+++	    int error = 0;
+++
+++	    /* Add owner entry */
+++	    if ( ( error = acl_create_entry( &new_acl, &entry ) ) == 0 ) {
+++		    /* Set owner permissions */
+++		    acl_set_tag_type( entry, ACL_USER_OBJ );
+++		    acl_get_permset( entry, &permset );
+++		    acl_clear_perms( permset );
+++		    if ( st.st_mode & S_IRUSR ) acl_add_perm( permset, ACL_READ );
+++		    if ( st.st_mode & S_IWUSR ) acl_add_perm( permset, ACL_WRITE );
+++		    if ( st.st_mode & S_IXUSR ) acl_add_perm( permset, ACL_EXECUTE );
+++		    acl_set_permset( entry, permset );
+++
+++		    /* Add group entry */
+++		    if ( ( error = acl_create_entry( &new_acl, &entry ) ) == 0 ) {
+++			    /* Set group permissions */
+++			    acl_set_tag_type( entry, ACL_GROUP_OBJ );
+++			    acl_get_permset( entry, &permset );
+++			    acl_clear_perms( permset );
+++			    if ( st.st_mode & S_IRGRP ) acl_add_perm( permset, ACL_READ );
+++			    if ( st.st_mode & S_IWGRP ) acl_add_perm( permset, ACL_WRITE );
+++			    if ( st.st_mode & S_IXGRP ) acl_add_perm( permset, ACL_EXECUTE );
+++			    acl_set_permset( entry, permset );
+++
+++			    /* Add other entry */
+++			    if ( ( error = acl_create_entry( &new_acl, &entry ) ) == 0 ) {
+++				    /* Set other permissions */
+++				    acl_set_tag_type( entry, ACL_OTHER );
+++				    acl_get_permset( entry, &permset );
+++				    acl_clear_perms( permset );
+++				    if ( st.st_mode & S_IROTH ) acl_add_perm( permset, ACL_READ );
+++				    if ( st.st_mode & S_IWOTH ) acl_add_perm( permset, ACL_WRITE );
+++				    if ( st.st_mode & S_IXOTH ) acl_add_perm( permset, ACL_EXECUTE );
+++				    acl_set_permset( entry, permset );
+++			    }
+++		    }
+++	    }
+++
+++	    if ( error ) {
+++		    acl_free( &new_acl );
+++		    EC_NULL_LOG_ERR(acc_acl = NULL, AFPERR_MISC);
+++	    }
+++	    else
+++		    acc_acl = new_acl;
+++    }
++ #endif
++     /* adds the clients aces */
++     EC_ZERO_ERR(map_aces_darwin_to_posix(daces, &def_acl, &acc_acl, ace_count), AFPERR_MISC);
+Index: net/netatalk/files/patch-etc_afpd_afp_asp.c
+===================================================================
+RCS file: net/netatalk/files/patch-etc_afpd_afp_asp.c
+diff -N net/netatalk/files/patch-etc_afpd_afp_asp.c
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/netatalk/files/patch-etc_afpd_afp_asp.c	25 Aug 2011 17:08:39 -0000
+@@ -0,0 +1,13 @@
++--- etc/afpd/afp_asp.c.orig	2011-07-30 23:13:47.000000000 -0400
+++++ etc/afpd/afp_asp.c	2011-07-30 23:14:22.000000000 -0400
++@@ -31,9 +31,9 @@
++ #include <atalk/atp.h>
++ #include <atalk/asp.h>
++ #include <atalk/compat.h>
+++#include <atalk/globals.h>
++ #include <atalk/util.h>
++ 
++-#include "globals.h"
++ #include "switch.h"
++ #include "auth.h"
++ #include "fork.h"
+Index: net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c
+===================================================================
+RCS file: net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c
+diff -N net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c	25 Aug 2011 17:08:39 -0000
+@@ -0,0 +1,10 @@
++--- etc/cnid_dbd/cnid_metad.c.orig	2011-07-30 18:28:32.000000000 -0400
+++++ etc/cnid_dbd/cnid_metad.c	2011-07-30 18:29:01.000000000 -0400
++@@ -39,6 +39,7 @@
++ #include <string.h>
++ #include <signal.h>
++ #include <sys/types.h>
+++#include <sys/resource.h>
++ #include <sys/time.h>
++ #include <sys/wait.h>
++ #include <sys/uio.h>
+Index: net/netatalk/files/patch-etc_cnid_dbd_comm.c
+===================================================================
+RCS file: net/netatalk/files/patch-etc_cnid_dbd_comm.c
+diff -N net/netatalk/files/patch-etc_cnid_dbd_comm.c
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/netatalk/files/patch-etc_cnid_dbd_comm.c	25 Aug 2011 17:08:39 -0000
+@@ -0,0 +1,12 @@
++--- etc/cnid_dbd/comm.c.orig	2011-07-30 18:27:55.000000000 -0400
+++++ etc/cnid_dbd/comm.c	2011-07-30 18:28:04.000000000 -0400
++@@ -9,9 +9,6 @@
++ #include "config.h"
++ #endif
++ 
++-#ifndef _XOPEN_SOURCE
++-# define _XOPEN_SOURCE 600
++-#endif
++ #ifndef __EXTENSIONS__
++ # define __EXTENSIONS__
++ #endif
+Index: net/netatalk/files/netatalk.in
+===================================================================
+RCS file: /home/ncvs/ports/net/netatalk/files/netatalk.in,v
+retrieving revision 1.3
+diff -u -r1.3 netatalk.in
+--- net/netatalk/files/netatalk.in	27 Mar 2010 00:13:49 -0000	1.3
++++ net/netatalk/files/netatalk.in	25 Aug 2011 17:08:39 -0000
+@@ -3,7 +3,7 @@
+ # $FreeBSD: ports/net/netatalk/files/netatalk.in,v 1.3 2010/03/27 00:13:49 dougb Exp $
+ #
+ # PROVIDE: atalkd papd cnid_metad timelord afpd
+-# REQUIRE: DAEMON %%SRVLOC%%
++# REQUIRE: DAEMON %%SRVLOC%% avahi_dnsconfd
+ # KEYWORD: shutdown
+ #
+ # AppleTalk daemons. Make sure not to start atalkd in the background:
+@@ -11,16 +11,6 @@
+ # other processes.
+ #
+ 
+-# Set defaults. Please overide these in %%PREFIX%%/etc/netatalk.conf
+-ATALK_ZONE=
+-ATALK_NAME="`/bin/hostname -s`"
+-AFPD_UAMLIST=
+-AFPD_MAX_CLIENTS=50
+-AFPD_GUEST=nobody
+-
+-# Load user config
+-if [ -f %%PREFIX%%/etc/netatalk.conf ]; then . %%PREFIX%%/etc/netatalk.conf; fi
+-
+ netatalk_enable=${netatalk_enable-"NO"}
+ atalkd_enable=${atalkd_enable-"NO"}
+ papd_enable=${papd_enable-"NO"}
+@@ -33,6 +23,7 @@
+ name=netatalk
+ rcvar=`set_rcvar`
+ hostname=`hostname -s`
++pidfile="/var/run/afpd.pid"
+ 
+ start_cmd=netatalk_start
+ stop_cmd=netatalk_stop
+@@ -46,19 +37,20 @@
+     checkyesno papd_enable && %%PREFIX%%/sbin/papd
+     checkyesno cnid_metad_enable && %%PREFIX%%/sbin/cnid_metad
+     checkyesno timelord_enable && %%PREFIX%%/sbin/timelord
+-    checkyesno afpd_enable && \
+-    	%%PREFIX%%/sbin/afpd -n "${ATALK_NAME}${ATALK_ZONE}" \
+-		-s %%PREFIX%%/etc/AppleVolumes.system \
+-		-f %%PREFIX%%/etc/AppleVolumes.default \
+-		-g ${AFPD_GUEST} \
+-		-c ${AFPD_MAX_CLIENTS} \
+-		${AFPD_UAMLIST}
++    checkyesno afpd_enable && %%PREFIX%%/sbin/afpd -P ${pidfile} -F /etc/afpd.conf
+ }
+ 
+ netatalk_stop() {
+     checkyesno timelord_enable && killall timelord
+-    checkyesno afpd_enable && killall afpd
+-    checkyesno cnid_metad_enable && killall cnid_metad
++    if [ -f ${pidfile} ]; then
++        kill `cat ${pidfile}`
++        if [ $? -ne 0 ]; then
++            kill -9 `cat ${pidfile}`
++        fi
++    else
++        killall afpd
++    fi
++    killall cnid_metad
+     checkyesno papd_enable && killall papd
+     checkyesno atalkd_enable && killall atalkd
+ }
+Index: net/netatalk/files/patch-config_netatalk.conf
+===================================================================
+RCS file: /home/ncvs/ports/net/netatalk/files/patch-config_netatalk.conf,v
+retrieving revision 1.3
+diff -u -r1.3 patch-config_netatalk.conf
+--- net/netatalk/files/patch-config_netatalk.conf	30 May 2010 17:03:17 -0000	1.3
++++ net/netatalk/files/patch-config_netatalk.conf	25 Aug 2011 17:08:39 -0000
+@@ -1,43 +1,20 @@
+---- config/netatalk.conf.orig	2010-04-19 11:35:26.000000000 +0000
+-+++ config/netatalk.conf	2010-05-20 19:14:32.000000000 +0000
++--- config/netatalk.conf.orig	2011-07-22 00:30:42.000000000 -0400
+++++ config/netatalk.conf	2011-07-30 18:01:04.000000000 -0400
+ @@ -1,4 +1,5 @@
+ -# Netatalk configuration
+ +# netatalk configuration
+ +# For details see man netatalk.conf
+- # Change this to increase the maximum number of clients that can connect:
+- AFPD_MAX_CLIENTS=20
+  
+-@@ -6,7 +7,7 @@
+- # NOTE: if your zone has spaces in it, you're better off specifying
+- #       it in afpd.conf
+- #ATALK_ZONE=@zone
+--ATALK_NAME=`echo ${HOSTNAME}|cut -d. -f1`
+-+ATALK_NAME=`/bin/hostname -s`
++ #########################################################################
++ # Global configuration
++@@ -21,8 +22,8 @@ export ATALK_MAC_CHARSET
+  
+- # specify the Mac and unix charsets to be used
+- ATALK_MAC_CHARSET='MAC_ROMAN'
+-@@ -20,24 +21,5 @@
+- # Change this to set the id of the guest user
+- AFPD_GUEST=nobody
+- 
+--# Set which daemons to run.
+--# If you need legacy AppleTalk, run atalkd.
+--# papd, timelord and a2boot are dependent upon atalkd.
+--# If you use "AFP over TCP" server only, run only cnid_metad and afpd.
+--ATALKD_RUN=no
+--PAPD_RUN=no
+--TIMELORD_RUN=no
+--A2BOOT_RUN=no
++ #### Set which daemons to run.
++ #### If you use AFP file server, run both cnid_metad and afpd.
+ -CNID_METAD_RUN=yes
+ -AFPD_RUN=yes
+--
+--# Control whether the daemons are started in the background.
+--# If it is dissatisfied that atalkd starts slowly, set "yes".
+--ATALK_BGROUND=no
+--
+--# export the charsets, read form ENV by apps
+--export ATALK_MAC_CHARSET
+--export ATALK_UNIX_CHARSET
+--
+- # config for cnid_metad. Default log config:
+- # CNID_CONFIG="-l log_note"
+++#CNID_METAD_RUN=yes
+++#AFPD_RUN=yes
++ 
++ #### maximum number of clients that can connect:
++ #AFPD_MAX_CLIENTS=20
+Index: net/netatalk/files/patch-configure
+===================================================================
+RCS file: /home/ncvs/ports/net/netatalk/files/patch-configure,v
+retrieving revision 1.17
+diff -u -r1.17 patch-configure
+--- net/netatalk/files/patch-configure	25 Jul 2010 01:37:08 -0000	1.17
++++ net/netatalk/files/patch-configure	25 Aug 2011 17:08:39 -0000
+@@ -1,11 +1,37 @@
+---- configure.orig	2010-07-10 06:18:22.000000000 -0400
+-+++ configure	2010-07-24 21:33:50.000000000 -0400
+-@@ -30958,7 +30958,7 @@ if test "x$bdb_required" = "xyes"; then
++--- configure.orig	2011-07-27 07:59:28.000000000 -0400
+++++ configure	2011-08-01 03:26:25.000000000 -0400
++@@ -27039,6 +27039,7 @@ fi
++ 
++         savedcflags="$CFLAGS"
++         savedldflags="$LDFLAGS"
+++        saved_CPPFLAGS="$CPPFLAGS"
++ 	ICONV_CFLAGS=""
++ 	ICONV_LIBS=""
++ 
++@@ -28265,6 +28266,8 @@ echo "$as_me: error: internal error, ata
++ 	if test "x$zeroconf" != "xno"; then
++ 		savedcppflags="$CPPFLAGS"
++ 		savedldflags="$LDFLAGS"
+++		CPPFLAGS="-I%%LOCALBASE%%/include $CPPFLAGS"
+++		LDFLAGS="-L%%LOCALBASE%%/lib $LDFLAGS"
++ 
++ 		if test "x$zeroconf" = "xyes" -o "x$zeroconf" = "xtry"; then
++ 			zeroconf_dir="/usr"
++@@ -31357,7 +31360,7 @@ if test "x$bdb_required" = "xyes"; then
+      trybdbdir=""
+      dobdbsearch=yes
+      bdb_search_dirs="/usr/local /usr"
+--    search_subdirs="/ /db5 /db5.0 /db50 /db4.8 /db48 /db4.7 /db47 /db4.6 /db46 /db4"
+-+    search_subdirs="/%%DB_NAME%% / /db5 /db5.0 /db50 /db4.8 /db48 /db4.7 /db47 /db4.6 /db46 /db4"
++-    search_subdirs="/ /db5 /db5.1 /db51 /db5.0 /db50 /db4.8 /db48 /db4.7 /db47 /db4.6 /db46 /db4"
+++    search_subdirs="/%%DB_NAME%% / /db5 /db5.1 /db51 /db5.0 /db50 /db4.8 /db48 /db4.7 /db47 /db4.6 /db46 /db4"
+  
+      bdbfound=no
+      savedcflags="$CFLAGS"
++@@ -33387,7 +33390,7 @@ rm -f core conftest.err conftest.$ac_obj
++ fi
++ { echo "$as_me:$LINENO: result: $netatalk_cv_HAVE_ACL_GET_PERM_NP" >&5
++ echo "${ECHO_T}$netatalk_cv_HAVE_ACL_GET_PERM_NP" >&6; }
++-			if test x"netatalk_cv_HAVE_ACL_GET_PERM_NP" = x"yes"; then
+++			if test x"$netatalk_cv_HAVE_ACL_GET_PERM_NP" = x"yes"; then
++ 
++ cat >>confdefs.h <<\_ACEOF
++ #define HAVE_ACL_GET_PERM_NP 1
+Index: net/netatalk/files/patch-etc_apfd_Makefile.in
+===================================================================
+RCS file: /home/ncvs/ports/net/netatalk/files/patch-etc_apfd_Makefile.in,v
+retrieving revision 1.1
+diff -u -r1.1 patch-etc_apfd_Makefile.in
+--- net/netatalk/files/patch-etc_apfd_Makefile.in	8 May 2011 23:08:21 -0000	1.1
++++ net/netatalk/files/patch-etc_apfd_Makefile.in	25 Aug 2011 17:08:39 -0000
+@@ -1,11 +1,11 @@
+---- etc/afpd/Makefile.in.orig	2011-05-08 19:04:22.000000000 -0400
+-+++ etc/afpd/Makefile.in	2011-05-08 19:04:34.000000000 -0400
+-@@ -295,7 +295,7 @@ afpd_SOURCES = unix.c ofork.c main.c swi
+- 	afp_dsi.c messages.c afp_config.c nfsquota.c quota.c uam.c \
+- 	afs.c uid.c afp_util.c catsearch.c afprun.c hash.c extattrs.c \
+- 	$(am__append_1)
+--afpd_LDADD = $(top_builddir)/libatalk/cnid/libcnid.la $(top_builddir)/libatalk/libatalk.la @QUOTA_LIBS@ @SLP_LIBS@ @WRAP_LIBS@ @LIBADD_DL@
+-+afpd_LDADD = $(top_builddir)/libatalk/cnid/libcnid.la $(top_builddir)/libatalk/libatalk.la @QUOTA_LIBS@ @SLP_LIBS@ @WRAP_LIBS@ @LIBADD_DL@ @PAM_LIBS@
++--- etc/afpd/Makefile.in.orig	2011-07-27 07:59:24.000000000 -0400
+++++ etc/afpd/Makefile.in	2011-07-30 18:03:30.000000000 -0400
++@@ -317,7 +317,7 @@ afpd_SOURCES = afp_asp.c afp_avahi.c afp
++ afpd_LDADD = \
++ 	$(top_builddir)/libatalk/cnid/libcnid.la \
++ 	$(top_builddir)/libatalk/libatalk.la \
++-	@LIBGCRYPT_LIBS@ @ZEROCONF_LIBS@ @QUOTA_LIBS@ @SLP_LIBS@ @WRAP_LIBS@ @LIBADD_DL@ @ACL_LIBS@ @PTHREAD_LIBS@
+++	@LIBGCRYPT_LIBS@ @ZEROCONF_LIBS@ @QUOTA_LIBS@ @SLP_LIBS@ @WRAP_LIBS@ @LIBADD_DL@ @ACL_LIBS@ @PTHREAD_LIBS@ @PAM_LIBS@
++ 
+  afpd_LDFLAGS = -export-dynamic 
+- afpd_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/sys \
+- 	 @SLP_CFLAGS@ \
++ afpd_CFLAGS = \
+Index: net/netatalk/Makefile
+===================================================================
+RCS file: /home/ncvs/ports/net/netatalk/Makefile,v
+retrieving revision 1.96
+diff -u -r1.96 Makefile
+--- net/netatalk/Makefile	3 Jul 2011 11:40:45 -0000	1.96
++++ net/netatalk/Makefile	25 Aug 2011 17:11:29 -0000
 @@ -2,15 +2,15 @@
  # Date created:         23 Jul 1997
  # Whom:                 stb
@@ -12,7 +657,7 @@
 -PORTVERSION=	2.1.5
 -PORTREVISION=	2
 +PORTVERSION=	2.2.0
-+PORTREVISION=	3
++PORTREVISION=	4
  PORTEPOCH=	1
  CATEGORIES=	net print
 -MASTER_SITES=	SF
@@ -107,462 +752,25 @@
  		${WRKSRC}/configure
  
  post-install:
---- net/netatalk/distinfo	2011-08-16 14:44:27.000000000 -0700
-+++ net/netatalk/distinfo	2011-07-30 20:30:57.000000000 -0700
+Index: net/netatalk/distinfo
+===================================================================
+RCS file: /home/ncvs/ports/net/netatalk/distinfo,v
+retrieving revision 1.30
+diff -u -r1.30 distinfo
+--- net/netatalk/distinfo	29 Dec 2010 04:36:17 -0000	1.30
++++ net/netatalk/distinfo	25 Aug 2011 17:08:39 -0000
 @@ -1,2 +1,2 @@
 -SHA256 (netatalk-2.1.5.tar.bz2) = 11fcce36cc5179de60c5c0b10032ff9e042ed8b8c6e0b99d2d7200c8d0749038
 -SIZE (netatalk-2.1.5.tar.bz2) = 1125946
 +SHA256 (netatalk-2.2.0.tar.bz2) = 31bf7c1ea311f876d9be6d4be9faed24d170a89e6ce692304fc2cb525f25143b
 +SIZE (netatalk-2.2.0.tar.bz2) = 1216174
---- net/netatalk/files/netatalk.in	2010-03-26 17:13:49.000000000 -0700
-+++ net/netatalk/files/netatalk.in	2011-08-16 14:54:12.000000000 -0700
-@@ -3,7 +3,7 @@
- # $FreeBSD: ports/net/netatalk/files/netatalk.in,v 1.3 2010/03/27 00:13:49 dougb Exp $
- #
- # PROVIDE: atalkd papd cnid_metad timelord afpd
--# REQUIRE: DAEMON %%SRVLOC%%
-+# REQUIRE: DAEMON %%SRVLOC%% avahi_dnsconfd
- # KEYWORD: shutdown
- #
- # AppleTalk daemons. Make sure not to start atalkd in the background:
-@@ -11,16 +11,6 @@
- # other processes.
- #
- 
--# Set defaults. Please overide these in %%PREFIX%%/etc/netatalk.conf
--ATALK_ZONE=
--ATALK_NAME="`/bin/hostname -s`"
--AFPD_UAMLIST=
--AFPD_MAX_CLIENTS=50
--AFPD_GUEST=nobody
--
--# Load user config
--if [ -f %%PREFIX%%/etc/netatalk.conf ]; then . %%PREFIX%%/etc/netatalk.conf; fi
--
- netatalk_enable=${netatalk_enable-"NO"}
- atalkd_enable=${atalkd_enable-"NO"}
- papd_enable=${papd_enable-"NO"}
-@@ -33,6 +23,7 @@
- name=netatalk
- rcvar=`set_rcvar`
- hostname=`hostname -s`
-+pidfile="/var/run/afpd.pid"
- 
- start_cmd=netatalk_start
- stop_cmd=netatalk_stop
-@@ -46,19 +37,20 @@
-     checkyesno papd_enable && %%PREFIX%%/sbin/papd
-     checkyesno cnid_metad_enable && %%PREFIX%%/sbin/cnid_metad
-     checkyesno timelord_enable && %%PREFIX%%/sbin/timelord
--    checkyesno afpd_enable && \
--    	%%PREFIX%%/sbin/afpd -n "${ATALK_NAME}${ATALK_ZONE}" \
--		-s %%PREFIX%%/etc/AppleVolumes.system \
--		-f %%PREFIX%%/etc/AppleVolumes.default \
--		-g ${AFPD_GUEST} \
--		-c ${AFPD_MAX_CLIENTS} \
--		${AFPD_UAMLIST}
-+    checkyesno afpd_enable && %%PREFIX%%/sbin/afpd -P ${pidfile} -F /etc/afpd.conf
- }
- 
- netatalk_stop() {
-     checkyesno timelord_enable && killall timelord
--    checkyesno afpd_enable && killall afpd
--    checkyesno cnid_metad_enable && killall cnid_metad
-+    if [ -f ${pidfile} ]; then
-+        kill `cat ${pidfile}`
-+        if [ $? -ne 0 ]; then
-+            kill -9 `cat ${pidfile}`
-+        fi
-+    else
-+        killall afpd
-+    fi
-+    killall cnid_metad
-     checkyesno papd_enable && killall papd
-     checkyesno atalkd_enable && killall atalkd
- }
---- net/netatalk/files/netatalk.in.orig	2010-03-26 17:13:49.000000000 -0700
-+++ net/netatalk/files/netatalk.in.orig	1969-12-31 16:00:00.000000000 -0800
-@@ -1,67 +0,0 @@
--#!/bin/sh
--#
--# $FreeBSD: ports/net/netatalk/files/netatalk.in,v 1.3 2010/03/27 00:13:49 dougb Exp $
--#
--# PROVIDE: atalkd papd cnid_metad timelord afpd
--# REQUIRE: DAEMON %%SRVLOC%%
--# KEYWORD: shutdown
--#
--# AppleTalk daemons. Make sure not to start atalkd in the background:
--# its data structures must have time to stablize before running the
--# other processes.
--#
--
--# Set defaults. Please overide these in %%PREFIX%%/etc/netatalk.conf
--ATALK_ZONE=
--ATALK_NAME="`/bin/hostname -s`"
--AFPD_UAMLIST=
--AFPD_MAX_CLIENTS=50
--AFPD_GUEST=nobody
--
--# Load user config
--if [ -f %%PREFIX%%/etc/netatalk.conf ]; then . %%PREFIX%%/etc/netatalk.conf; fi
--
--netatalk_enable=${netatalk_enable-"NO"}
--atalkd_enable=${atalkd_enable-"NO"}
--papd_enable=${papd_enable-"NO"}
--cnid_metad_enable=${cnid_metad_enable-"NO"}
--afpd_enable=${afpd_enable-"NO"}
--timelord_enable=${timelord_enable-"NO"}
--
--. /etc/rc.subr
--
--name=netatalk
--rcvar=`set_rcvar`
--hostname=`hostname -s`
--
--start_cmd=netatalk_start
--stop_cmd=netatalk_stop
--
--netatalk_start() {
--    checkyesno atalkd_enable && %%PREFIX%%/sbin/atalkd
--    checkyesno atalkd_enable && \
--    	%%PREFIX%%/bin/nbprgstr -p 4 "${ATALK_NAME}:Workstation${ATALK_ZONE}" &
--    checkyesno atalkd_enable && \
--    	%%PREFIX%%/bin/nbprgstr -p 4 "${ATALK_NAME}:netatalk${ATALK_ZONE}" &
--    checkyesno papd_enable && %%PREFIX%%/sbin/papd
--    checkyesno cnid_metad_enable && %%PREFIX%%/sbin/cnid_metad
--    checkyesno timelord_enable && %%PREFIX%%/sbin/timelord
--    checkyesno afpd_enable && \
--    	%%PREFIX%%/sbin/afpd -n "${ATALK_NAME}${ATALK_ZONE}" \
--		-s %%PREFIX%%/etc/AppleVolumes.system \
--		-f %%PREFIX%%/etc/AppleVolumes.default \
--		-g ${AFPD_GUEST} \
--		-c ${AFPD_MAX_CLIENTS} \
--		${AFPD_UAMLIST}
--}
--
--netatalk_stop() {
--    checkyesno timelord_enable && killall timelord
--    checkyesno afpd_enable && killall afpd
--    checkyesno cnid_metad_enable && killall cnid_metad
--    checkyesno papd_enable && killall papd
--    checkyesno atalkd_enable && killall atalkd
--}
--
--load_rc_config ${name}
--run_rc_command "$1"
---- net/netatalk/files/patch-config_netatalk.conf	2011-08-16 14:44:27.000000000 -0700
-+++ net/netatalk/files/patch-config_netatalk.conf	2011-07-30 20:30:58.000000000 -0700
-@@ -1,43 +1,20 @@
----- config/netatalk.conf.orig	2010-04-19 11:35:26.000000000 +0000
--+++ config/netatalk.conf	2010-05-20 19:14:32.000000000 +0000
-+--- config/netatalk.conf.orig	2011-07-22 00:30:42.000000000 -0400
-++++ config/netatalk.conf	2011-07-30 18:01:04.000000000 -0400
- @@ -1,4 +1,5 @@
- -# Netatalk configuration
- +# netatalk configuration
- +# For details see man netatalk.conf
-- # Change this to increase the maximum number of clients that can connect:
-- AFPD_MAX_CLIENTS=20
-  
--@@ -6,7 +7,7 @@
-- # NOTE: if your zone has spaces in it, you're better off specifying
-- #       it in afpd.conf
-- #ATALK_ZONE=@zone
---ATALK_NAME=`echo ${HOSTNAME}|cut -d. -f1`
--+ATALK_NAME=`/bin/hostname -s`
-+ #########################################################################
-+ # Global configuration
-+@@ -21,8 +22,8 @@ export ATALK_MAC_CHARSET
-  
-- # specify the Mac and unix charsets to be used
-- ATALK_MAC_CHARSET='MAC_ROMAN'
--@@ -20,24 +21,5 @@
-- # Change this to set the id of the guest user
-- AFPD_GUEST=nobody
-- 
---# Set which daemons to run.
---# If you need legacy AppleTalk, run atalkd.
---# papd, timelord and a2boot are dependent upon atalkd.
---# If you use "AFP over TCP" server only, run only cnid_metad and afpd.
---ATALKD_RUN=no
---PAPD_RUN=no
---TIMELORD_RUN=no
---A2BOOT_RUN=no
-+ #### Set which daemons to run.
-+ #### If you use AFP file server, run both cnid_metad and afpd.
- -CNID_METAD_RUN=yes
- -AFPD_RUN=yes
---
---# Control whether the daemons are started in the background.
---# If it is dissatisfied that atalkd starts slowly, set "yes".
---ATALK_BGROUND=no
---
---# export the charsets, read form ENV by apps
---export ATALK_MAC_CHARSET
---export ATALK_UNIX_CHARSET
---
-- # config for cnid_metad. Default log config:
-- # CNID_CONFIG="-l log_note"
-++#CNID_METAD_RUN=yes
-++#AFPD_RUN=yes
-+ 
-+ #### maximum number of clients that can connect:
-+ #AFPD_MAX_CLIENTS=20
---- net/netatalk/files/patch-config_netatalk.conf.orig	2011-08-12 14:09:09.000000000 -0700
-+++ net/netatalk/files/patch-config_netatalk.conf.orig	1969-12-31 16:00:00.000000000 -0800
-@@ -1,43 +0,0 @@
----- config/netatalk.conf.orig	2010-04-19 11:35:26.000000000 +0000
--+++ config/netatalk.conf	2010-05-20 19:14:32.000000000 +0000
--@@ -1,4 +1,5 @@
---# Netatalk configuration
--+# netatalk configuration
--+# For details see man netatalk.conf
-- # Change this to increase the maximum number of clients that can connect:
-- AFPD_MAX_CLIENTS=20
-- 
--@@ -6,7 +7,7 @@
-- # NOTE: if your zone has spaces in it, you're better off specifying
-- #       it in afpd.conf
-- #ATALK_ZONE=@zone
---ATALK_NAME=`echo ${HOSTNAME}|cut -d. -f1`
--+ATALK_NAME=`/bin/hostname -s`
-- 
-- # specify the Mac and unix charsets to be used
-- ATALK_MAC_CHARSET='MAC_ROMAN'
--@@ -20,24 +21,5 @@
-- # Change this to set the id of the guest user
-- AFPD_GUEST=nobody
-- 
---# Set which daemons to run.
---# If you need legacy AppleTalk, run atalkd.
---# papd, timelord and a2boot are dependent upon atalkd.
---# If you use "AFP over TCP" server only, run only cnid_metad and afpd.
---ATALKD_RUN=no
---PAPD_RUN=no
---TIMELORD_RUN=no
---A2BOOT_RUN=no
---CNID_METAD_RUN=yes
---AFPD_RUN=yes
---
---# Control whether the daemons are started in the background.
---# If it is dissatisfied that atalkd starts slowly, set "yes".
---ATALK_BGROUND=no
---
---# export the charsets, read form ENV by apps
---export ATALK_MAC_CHARSET
---export ATALK_UNIX_CHARSET
---
-- # config for cnid_metad. Default log config:
-- # CNID_CONFIG="-l log_note"
---- net/netatalk/files/patch-configure	2011-08-16 14:44:27.000000000 -0700
-+++ net/netatalk/files/patch-configure	2011-08-01 00:29:01.000000000 -0700
-@@ -1,11 +1,37 @@
----- configure.orig	2010-07-10 06:18:22.000000000 -0400
--+++ configure	2010-07-24 21:33:50.000000000 -0400
--@@ -30958,7 +30958,7 @@ if test "x$bdb_required" = "xyes"; then
-+--- configure.orig	2011-07-27 07:59:28.000000000 -0400
-++++ configure	2011-08-01 03:26:25.000000000 -0400
-+@@ -27039,6 +27039,7 @@ fi
-+ 
-+         savedcflags="$CFLAGS"
-+         savedldflags="$LDFLAGS"
-++        saved_CPPFLAGS="$CPPFLAGS"
-+ 	ICONV_CFLAGS=""
-+ 	ICONV_LIBS=""
-+ 
-+@@ -28265,6 +28266,8 @@ echo "$as_me: error: internal error, ata
-+ 	if test "x$zeroconf" != "xno"; then
-+ 		savedcppflags="$CPPFLAGS"
-+ 		savedldflags="$LDFLAGS"
-++		CPPFLAGS="-I%%LOCALBASE%%/include $CPPFLAGS"
-++		LDFLAGS="-L%%LOCALBASE%%/lib $LDFLAGS"
-+ 
-+ 		if test "x$zeroconf" = "xyes" -o "x$zeroconf" = "xtry"; then
-+ 			zeroconf_dir="/usr"
-+@@ -31357,7 +31360,7 @@ if test "x$bdb_required" = "xyes"; then
-      trybdbdir=""
-      dobdbsearch=yes
-      bdb_search_dirs="/usr/local /usr"
---    search_subdirs="/ /db5 /db5.0 /db50 /db4.8 /db48 /db4.7 /db47 /db4.6 /db46 /db4"
--+    search_subdirs="/%%DB_NAME%% / /db5 /db5.0 /db50 /db4.8 /db48 /db4.7 /db47 /db4.6 /db46 /db4"
-+-    search_subdirs="/ /db5 /db5.1 /db51 /db5.0 /db50 /db4.8 /db48 /db4.7 /db47 /db4.6 /db46 /db4"
-++    search_subdirs="/%%DB_NAME%% / /db5 /db5.1 /db51 /db5.0 /db50 /db4.8 /db48 /db4.7 /db47 /db4.6 /db46 /db4"
-  
-      bdbfound=no
-      savedcflags="$CFLAGS"
-+@@ -33387,7 +33390,7 @@ rm -f core conftest.err conftest.$ac_obj
-+ fi
-+ { echo "$as_me:$LINENO: result: $netatalk_cv_HAVE_ACL_GET_PERM_NP" >&5
-+ echo "${ECHO_T}$netatalk_cv_HAVE_ACL_GET_PERM_NP" >&6; }
-+-			if test x"netatalk_cv_HAVE_ACL_GET_PERM_NP" = x"yes"; then
-++			if test x"$netatalk_cv_HAVE_ACL_GET_PERM_NP" = x"yes"; then
-+ 
-+ cat >>confdefs.h <<\_ACEOF
-+ #define HAVE_ACL_GET_PERM_NP 1
---- net/netatalk/files/patch-configure.orig	2011-08-12 14:09:09.000000000 -0700
-+++ net/netatalk/files/patch-configure.orig	1969-12-31 16:00:00.000000000 -0800
-@@ -1,11 +0,0 @@
----- configure.orig	2010-07-10 06:18:22.000000000 -0400
--+++ configure	2010-07-24 21:33:50.000000000 -0400
--@@ -30958,7 +30958,7 @@ if test "x$bdb_required" = "xyes"; then
--     trybdbdir=""
--     dobdbsearch=yes
--     bdb_search_dirs="/usr/local /usr"
---    search_subdirs="/ /db5 /db5.0 /db50 /db4.8 /db48 /db4.7 /db47 /db4.6 /db46 /db4"
--+    search_subdirs="/%%DB_NAME%% / /db5 /db5.0 /db50 /db4.8 /db48 /db4.7 /db47 /db4.6 /db46 /db4"
-- 
--     bdbfound=no
--     savedcflags="$CFLAGS"
---- net/netatalk/files/patch-etc_afpd_acls.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/netatalk/files/patch-etc_afpd_acls.c	2011-07-30 20:30:58.000000000 -0700
-@@ -0,0 +1,63 @@
-+--- etc/afpd/acls.c.orig	2011-07-30 18:08:35.000000000 -0400
-++++ etc/afpd/acls.c	2011-07-30 18:19:19.000000000 -0400
-+@@ -1060,7 +1060,59 @@ static int set_acl(const struct vol *vol
-+ #ifdef HAVE_ACL_FROM_MODE
-+     EC_NULL_LOG_ERR(acc_acl = acl_from_mode(st.st_mode), AFPERR_MISC);
-+ #else
-+-#error "Missing acl_from_mode() replacement"
-++    /* Implement the non POSIX.1e function acl_from_mode
-++     *
-++     * Taken from http://people.freebsd.org/~markus/stuff/kacl.diff
-++     */
-++    {
-++	    acl_t new_acl = acl_init( 3 );
-++	    acl_entry_t entry;
-++	    acl_permset_t permset = 0;
-++	    int error = 0;
-++
-++	    /* Add owner entry */
-++	    if ( ( error = acl_create_entry( &new_acl, &entry ) ) == 0 ) {
-++		    /* Set owner permissions */
-++		    acl_set_tag_type( entry, ACL_USER_OBJ );
-++		    acl_get_permset( entry, &permset );
-++		    acl_clear_perms( permset );
-++		    if ( st.st_mode & S_IRUSR ) acl_add_perm( permset, ACL_READ );
-++		    if ( st.st_mode & S_IWUSR ) acl_add_perm( permset, ACL_WRITE );
-++		    if ( st.st_mode & S_IXUSR ) acl_add_perm( permset, ACL_EXECUTE );
-++		    acl_set_permset( entry, permset );
-++
-++		    /* Add group entry */
-++		    if ( ( error = acl_create_entry( &new_acl, &entry ) ) == 0 ) {
-++			    /* Set group permissions */
-++			    acl_set_tag_type( entry, ACL_GROUP_OBJ );
-++			    acl_get_permset( entry, &permset );
-++			    acl_clear_perms( permset );
-++			    if ( st.st_mode & S_IRGRP ) acl_add_perm( permset, ACL_READ );
-++			    if ( st.st_mode & S_IWGRP ) acl_add_perm( permset, ACL_WRITE );
-++			    if ( st.st_mode & S_IXGRP ) acl_add_perm( permset, ACL_EXECUTE );
-++			    acl_set_permset( entry, permset );
-++
-++			    /* Add other entry */
-++			    if ( ( error = acl_create_entry( &new_acl, &entry ) ) == 0 ) {
-++				    /* Set other permissions */
-++				    acl_set_tag_type( entry, ACL_OTHER );
-++				    acl_get_permset( entry, &permset );
-++				    acl_clear_perms( permset );
-++				    if ( st.st_mode & S_IROTH ) acl_add_perm( permset, ACL_READ );
-++				    if ( st.st_mode & S_IWOTH ) acl_add_perm( permset, ACL_WRITE );
-++				    if ( st.st_mode & S_IXOTH ) acl_add_perm( permset, ACL_EXECUTE );
-++				    acl_set_permset( entry, permset );
-++			    }
-++		    }
-++	    }
-++
-++	    if ( error ) {
-++		    acl_free( &new_acl );
-++		    EC_NULL_LOG_ERR(acc_acl = NULL, AFPERR_MISC);
-++	    }
-++	    else
-++		    acc_acl = new_acl;
-++    }
-+ #endif
-+     /* adds the clients aces */
-+     EC_ZERO_ERR(map_aces_darwin_to_posix(daces, &def_acl, &acc_acl, ace_count), AFPERR_MISC);
---- net/netatalk/files/patch-etc_afpd_afp_asp.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/netatalk/files/patch-etc_afpd_afp_asp.c	2011-07-30 20:30:58.000000000 -0700
-@@ -0,0 +1,13 @@
-+--- etc/afpd/afp_asp.c.orig	2011-07-30 23:13:47.000000000 -0400
-++++ etc/afpd/afp_asp.c	2011-07-30 23:14:22.000000000 -0400
-+@@ -31,9 +31,9 @@
-+ #include <atalk/atp.h>
-+ #include <atalk/asp.h>
-+ #include <atalk/compat.h>
-++#include <atalk/globals.h>
-+ #include <atalk/util.h>
-+ 
-+-#include "globals.h"
-+ #include "switch.h"
-+ #include "auth.h"
-+ #include "fork.h"
---- net/netatalk/files/patch-etc_apfd_Makefile.in	2011-08-16 14:44:27.000000000 -0700
-+++ net/netatalk/files/patch-etc_apfd_Makefile.in	2011-07-30 20:30:58.000000000 -0700
-@@ -1,11 +1,11 @@
----- etc/afpd/Makefile.in.orig	2011-05-08 19:04:22.000000000 -0400
--+++ etc/afpd/Makefile.in	2011-05-08 19:04:34.000000000 -0400
--@@ -295,7 +295,7 @@ afpd_SOURCES = unix.c ofork.c main.c swi
-- 	afp_dsi.c messages.c afp_config.c nfsquota.c quota.c uam.c \
-- 	afs.c uid.c afp_util.c catsearch.c afprun.c hash.c extattrs.c \
-- 	$(am__append_1)
---afpd_LDADD = $(top_builddir)/libatalk/cnid/libcnid.la $(top_builddir)/libatalk/libatalk.la @QUOTA_LIBS@ @SLP_LIBS@ @WRAP_LIBS@ @LIBADD_DL@
--+afpd_LDADD = $(top_builddir)/libatalk/cnid/libcnid.la $(top_builddir)/libatalk/libatalk.la @QUOTA_LIBS@ @SLP_LIBS@ @WRAP_LIBS@ @LIBADD_DL@ @PAM_LIBS@
-+--- etc/afpd/Makefile.in.orig	2011-07-27 07:59:24.000000000 -0400
-++++ etc/afpd/Makefile.in	2011-07-30 18:03:30.000000000 -0400
-+@@ -317,7 +317,7 @@ afpd_SOURCES = afp_asp.c afp_avahi.c afp
-+ afpd_LDADD = \
-+ 	$(top_builddir)/libatalk/cnid/libcnid.la \
-+ 	$(top_builddir)/libatalk/libatalk.la \
-+-	@LIBGCRYPT_LIBS@ @ZEROCONF_LIBS@ @QUOTA_LIBS@ @SLP_LIBS@ @WRAP_LIBS@ @LIBADD_DL@ @ACL_LIBS@ @PTHREAD_LIBS@
-++	@LIBGCRYPT_LIBS@ @ZEROCONF_LIBS@ @QUOTA_LIBS@ @SLP_LIBS@ @WRAP_LIBS@ @LIBADD_DL@ @ACL_LIBS@ @PTHREAD_LIBS@ @PAM_LIBS@
-+ 
-  afpd_LDFLAGS = -export-dynamic 
-- afpd_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/sys \
-- 	 @SLP_CFLAGS@ \
-+ afpd_CFLAGS = \
---- net/netatalk/files/patch-etc_apfd_Makefile.in.orig	2011-08-12 14:09:09.000000000 -0700
-+++ net/netatalk/files/patch-etc_apfd_Makefile.in.orig	1969-12-31 16:00:00.000000000 -0800
-@@ -1,11 +0,0 @@
----- etc/afpd/Makefile.in.orig	2011-05-08 19:04:22.000000000 -0400
--+++ etc/afpd/Makefile.in	2011-05-08 19:04:34.000000000 -0400
--@@ -295,7 +295,7 @@ afpd_SOURCES = unix.c ofork.c main.c swi
-- 	afp_dsi.c messages.c afp_config.c nfsquota.c quota.c uam.c \
-- 	afs.c uid.c afp_util.c catsearch.c afprun.c hash.c extattrs.c \
-- 	$(am__append_1)
---afpd_LDADD = $(top_builddir)/libatalk/cnid/libcnid.la $(top_builddir)/libatalk/libatalk.la @QUOTA_LIBS@ @SLP_LIBS@ @WRAP_LIBS@ @LIBADD_DL@
--+afpd_LDADD = $(top_builddir)/libatalk/cnid/libcnid.la $(top_builddir)/libatalk/libatalk.la @QUOTA_LIBS@ @SLP_LIBS@ @WRAP_LIBS@ @LIBADD_DL@ @PAM_LIBS@
-- afpd_LDFLAGS = -export-dynamic 
-- afpd_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/sys \
-- 	 @SLP_CFLAGS@ \
---- net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c	2011-07-30 20:30:58.000000000 -0700
-@@ -0,0 +1,10 @@
-+--- etc/cnid_dbd/cnid_metad.c.orig	2011-07-30 18:28:32.000000000 -0400
-++++ etc/cnid_dbd/cnid_metad.c	2011-07-30 18:29:01.000000000 -0400
-+@@ -39,6 +39,7 @@
-+ #include <string.h>
-+ #include <signal.h>
-+ #include <sys/types.h>
-++#include <sys/resource.h>
-+ #include <sys/time.h>
-+ #include <sys/wait.h>
-+ #include <sys/uio.h>
---- net/netatalk/files/patch-etc_cnid_dbd_comm.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/netatalk/files/patch-etc_cnid_dbd_comm.c	2011-07-30 20:30:58.000000000 -0700
-@@ -0,0 +1,12 @@
-+--- etc/cnid_dbd/comm.c.orig	2011-07-30 18:27:55.000000000 -0400
-++++ etc/cnid_dbd/comm.c	2011-07-30 18:28:04.000000000 -0400
-+@@ -9,9 +9,6 @@
-+ #include "config.h"
-+ #endif
-+ 
-+-#ifndef _XOPEN_SOURCE
-+-# define _XOPEN_SOURCE 600
-+-#endif
-+ #ifndef __EXTENSIONS__
-+ # define __EXTENSIONS__
-+ #endif
---- net/netatalk/pkg-plist	2011-08-16 14:44:27.000000000 -0700
-+++ net/netatalk/pkg-plist	2011-08-07 10:43:59.000000000 -0700
+Index: net/netatalk/pkg-plist
+===================================================================
+RCS file: /home/ncvs/ports/net/netatalk/pkg-plist,v
+retrieving revision 1.31
+diff -u -r1.31 pkg-plist
+--- net/netatalk/pkg-plist	2 Jun 2010 14:46:42 -0000	1.31
++++ net/netatalk/pkg-plist	25 Aug 2011 17:08:39 -0000
 @@ -1,20 +1,15 @@
 -bin/achfile
 -bin/ad
