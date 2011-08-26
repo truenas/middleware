@@ -116,10 +116,8 @@ def config_upload(request):
         else:
             return render(request, 'system/config_upload.html', variables)
     else:
-        # XXX: this just seems wrong because of the recursive symlink created
-        # below...
         shutil.rmtree('/var/tmp/firmware')
-        os.symlink('/var/tmp', '/var/tmp/firmware')
+        os.symlink('/nonexistent', '/var/tmp/firmware')
         form = forms.ConfigUploadForm()
 
         return render(request, 'system/config_upload.html', {
