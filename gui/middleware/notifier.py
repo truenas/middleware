@@ -304,16 +304,11 @@ class notifier:
         self.__system("/usr/sbin/service samba quietstart")
 
     def _started_ldap(self):
-        from freenasUI.common.freenasldap import FreeNAS_LDAP
+        from freenasUI.common.freenasldap import FreeNAS_LDAP, LDAPEnabled
 
         ret = False
-        c = self.__open_db()
-        c.execute("SELECT srv_enable FROM services_services WHERE srv_service='ldap' ORDER BY -id LIMIT 1")
-        enabled = c.fetchone()[0]
-        if enabled == 1:
-            c.execute("SELECT ldap_hostname,ldap_rootbasedn,ldap_rootbindpw,ldap_basedn,ldap_ssl FROM services_ldap ORDER BY -id LIMIT 1")
-            host, rootbasedn, pw, basedn, ssl = c.fetchone()
-            f = FreeNAS_LDAP(host=host, binddn=rootbasedn, bindpw=pw, basedn=basedn, ssl=ssl)
+        if LDAPEnabled():
+            f = FreeNAS_LDAP()
             f.open()
             if f.isOpen():
                 ret = True
@@ -337,18 +332,11 @@ class notifier:
         self.__system("/usr/sbin/service samba quietstart")
 
     def _started_activedirectory(self):
-        from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory
+        from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory, ActiveDirectoryEnabled
 
         ret = False
-        c = self.__open_db()
-        c.execute("SELECT srv_enable FROM services_services WHERE srv_service='activedirectory' ORDER BY -id LIMIT 1")
-        enabled = c.fetchone()[0]
-        if enabled == 1:
-            c.execute("SELECT ad_dcname,ad_domainname,ad_adminname,ad_adminpw FROM services_activedirectory ORDER BY -id LIMIT 1")
-            ad_dcname,ad_domainname,ad_adminname,ad_adminpw = c.fetchone()
-            #base = ','.join(["dc=%s" % part for part in ad_domainname.split(".")])
-            f = FreeNAS_ActiveDirectory(host=ad_dcname, binddn=ad_adminname+"@"+ad_domainname, bindpw=ad_adminpw)
-            f.basedn = f.get_baseDN()
+        if ActiveDirectoryEnabled():
+            f = FreeNAS_ActiveDirectory()
             f.open()
             if f.isOpen():
                 ret = True
