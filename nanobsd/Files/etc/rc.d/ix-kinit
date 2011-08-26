@@ -39,7 +39,7 @@ kerberos_start()
 
 kerberos_stop()
 {
-	klist destroy
+	kdestroy
 }
 
 name="ix-kinit"
