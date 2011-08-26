@@ -408,6 +408,16 @@
     };
     /* end Menu */
 
+    toggleProtocol = function() {
+        var loc = new String(window.location);
+        if(loc.search("http://") > -1) {
+            loc = loc.replace('http://', 'https://');
+        } else {
+            loc = loc.replace('https://', 'http://');
+        }
+        window.location=loc;
+    }
+
     addAlias = function(a, name) {
 
         extra = dijit.byId("id_"+name+"-TOTAL_FORMS");

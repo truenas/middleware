@@ -160,7 +160,6 @@ class SettingsForm(ModelForm):
                 raise forms.ValidationError(_("You must specify a number between 1 and 65535, inclusive."))
         except ValueError:
             raise forms.ValidationError(_("Number is required."))
-        print val
         return val
     def save(self):
         super(SettingsForm, self).save()
@@ -171,6 +170,9 @@ class SettingsForm(ModelForm):
         if self.instance._original_stg_syslogserver != self.instance.stg_syslogserver:
             notifier().restart("syslogd")
         notifier().reload("timeservices")
+    def done(self, events):
+        if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol:
+            events.append("toggleProtocol()")
 
 class AdvancedForm(ModelForm):
     class Meta:
