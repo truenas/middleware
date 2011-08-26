@@ -335,7 +335,7 @@ AD_join_domain()
 	local adminpw="${2}"
 
 	: ${adminname:="$(AD_get adminname)"}
-	: ${adminpw:="$(AD_get adminpw)}
+	: ${adminpw:="$(AD_get adminpw)"}
 
 	/usr/local/bin/net ads join -U "${adminname}%${adminpw}"
 	return $?
@@ -347,7 +347,7 @@ AD_leave_domain()
 	local adminpw="${2}"
 
 	: ${adminname:="$(AD_get adminname)"}
-	: ${adminpw:="$(AD_get adminpw)}
+	: ${adminpw:="$(AD_get adminpw)"}
 
 	/usr/local/bin/net ads leave -U "${adminname}%${adminpw}"
 	return $?
