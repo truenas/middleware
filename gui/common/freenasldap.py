@@ -594,7 +594,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         basedn = kwargs['basedn'] if kwargs.has_key('basedn') else ldap['ldap_basedn']
 
         ssl = FREENAS_LDAP_NOSSL
-        if kwargs.has_key('ssl'):
+        if kwargs.has_key('ssl') and kwargs['ssl']:
             ssl =  int(kwargs['ssl'])
         elif ldap.has_key('ldap_ssl') and ldap['ldap_ssl']:
             ssl =  int(ldap['ldap_ssl'])
@@ -775,6 +775,42 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
 
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.__init__: leave")
 
+    @staticmethod 
+    def get_domain_controllers(domain):
+        dcs = [] 
+        
+        if not domain:
+            return dcs
+
+        host = "_ldap._tcp.%s" % domain
+
+        try:
+            answers = resolver.query(host, 'SRV')
+            dcs = sorted(answers, key=lambda: a: (int(a.priority), int(a.weight)))
+
+        except:
+            dcs = [] 
+
+        return dcs
+
+    @staticmethod
+    def get_global_catalogs(domain):
+        gcs = []
+
+        if not domain:
+            return gcs
+
+        host = "_gc._tcp.%s" % domain
+
+        try:
+            answers = resolver.query(host, 'SRV')
+            gcs = sorted(answers, key=lambda: a: (int(a.priority), int(a.weight)))
+
+        except:
+            gcs = []
+
+        return gcs
+
     def get_rootDSE(self):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_rootDSE: enter")
         isopen = self._isopen
@@ -901,11 +937,19 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         basedn = rootDSE[0][1]['configurationNamingContext'][0]
         config = rootDSE[0][1]['defaultNamingContext'][0]
 
-        srv = "_gc._tcp.%s" % self.domain
-        answers = resolver.query(srv, 'SRV')
-        if not answers:
+        host = "_gc._tcp.%s" % self.domain
+
+        answers = []
+        try:
+            answers = resolver.query(host, 'SRV')
+
+        except:
             syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: "\
-                "SRV record for %s doesn't exist!" % srv)
+                "SRV record for %s doesn't exist!" % host)
+            answers = []
+
+        if not answers: 
+            return answers
 
         rdata = answers[0]
         gc_args = { 'host': str(rdata.target), 'port': long(rdata.port),
