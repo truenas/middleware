@@ -29,10 +29,11 @@
 
 import os
 import sys
-from signal import signal, SIGINT, SIG_IGN
 import re
-import ipaddr
 import shutil
+from signal import signal, SIGINT, SIG_IGN
+
+import ipaddr
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
@@ -148,8 +149,12 @@ def get_lagg_proto():
     return proto
 
 
-def get_lagg_nics(nics = NICChoices()):
+def get_lagg_nics(nics=None):
+
     group = [ ]
+
+    if nics is None:
+        nics = NICChoices(nolagg=True)
 
     while True:
         nic = get_nic(nics)
@@ -758,8 +763,7 @@ def shutdown():
             return False
 
 def show_ip():
-    from os import system
-    ret = system("sockstat -4p 443 | grep lighttpd")
+    ret = os.system("sockstat -4p 443 | grep lighttpd")
     if not ret:
         proto = "https"
     else:
@@ -767,8 +771,8 @@ def show_ip():
     print """
 You may try the following URLs to access the web user interface:
 """
-    system('ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
-           'sed -e s,^,%s://,g -e s,$,/,g' % proto)
+    os.system('ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
+              'sed -e s,^,%s://,g -e s,$,/,g' % proto)
 
 def main_menu():
     menu = [
