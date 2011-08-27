@@ -28,10 +28,9 @@
 #####################################################################
 
 import os
-import sys
 import re
-import shutil
-from signal import signal, SIGINT, SIG_IGN
+import signal
+import sys
 
 import ipaddr
 
@@ -49,11 +48,9 @@ sys.path.append(NETWORK_PATH)
 
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
-from django.db import models
 from django.contrib.auth.models import User
 
 from freenasUI.choices import NICChoices, LAGGType
-from freenasUI.network import models
 from freenasUI.network.models import GlobalConfiguration, Interfaces, \
 	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
 from freenasUI.middleware.notifier import notifier
@@ -83,8 +80,8 @@ def quad_to_cidr(quad):
     return count
 
 
-def hex_to_cidr(hex):
-    h = hex.replace("0x", "")
+def hex_to_cidr(_hex):
+    h = _hex.replace("0x", "")
     h = h.replace("0X", "")
     h = int(h, 16)
 
@@ -97,17 +94,13 @@ def hex_to_cidr(hex):
     return count
 
 
-def prompt(s, val):
+def prompt(prompt_str, default_value=None):
     """Returns a string that forms a prompt, based on values passed in"""
-    prompt = []
-    prompt.append(s) 
-    if val:
-        prompt.append(" ")
-        prompt.append("[")
-        prompt.append(str(val))
-        prompt.append("]")
-    prompt.append(": ")
-    return "".join(prompt)
+    if default_value:
+        default_str = ' [%s]' % (str(default), )
+    else:
+        default_str = ''
+    return (prompt_str + default_str + ':')
 
 
 def get_nic(choices = NICChoices()):
@@ -189,8 +182,8 @@ def configure_interface():
         iface = Interfaces()
 
     while True:
-        input = raw_input("Delete existing config? (y/n) ")
-        if input.lower().startswith("y"):
+        _input = raw_input("Delete existing config? (y/n) ")
+        if _input.lower().startswith("y"):
             print "Deleting interface configuration:",
             try:
                 if iface.id != None:
@@ -215,15 +208,15 @@ def configure_interface():
                 print "Failed"
             print "ok"
             return True
-        elif input.lower().startswith("n"):
+        elif _input.lower().startswith('n'):
             break
         else:
             continue
 
     need_restart = False
     while True:
-        input = raw_input("Configure interface for DHCP? (y/n) ")
-        if input.lower().startswith("y"):
+        _input = raw_input("Configure interface for DHCP? (y/n) ")
+        if _input.lower().startswith("y"):
             int_name_prompt = prompt("Interface name", iface.int_name)
             int_name = raw_input(int_name_prompt)
             if not int_name and iface.int_name:
@@ -252,7 +245,7 @@ def configure_interface():
                 return False
             print "Ok"
             break
-        elif input.lower().startswith("n"):
+        elif _input.lower().startswith('n'):
             break
         else:
             continue
@@ -401,7 +394,8 @@ def configure_interface():
 
 def reset_gui_login():
     User.objects.all().delete()
-    admin = User.objects.create(username="admin", email="freenas@local.domain", is_superuser=True, is_staff=True)
+    admin = User.objects.create(username="admin", email="freenas@local.domain",
+                                is_superuser=True, is_staff=True)
     admin.set_password("freenas")
     admin.save()
     print """
@@ -416,7 +410,8 @@ def reset_gui_login():
     raw_input("")
 
 def reset_factory_defaults():
-    a = raw_input("Are you sure you want to reset to factory defaults? (yes/no): ")
+    a = raw_input('Are you sure you want to reset to factory defaults? '
+                  '(yes/no): ')
     if a.lower().startswith('y'):
         notifier().config_restore()
         os.system("/sbin/reboot")
@@ -818,7 +813,7 @@ Console setup
 #	will be setup in /etc/ttys, so we just exit ;-). 
 #
 if __name__ == '__main__':
-    signal(SIGINT, SIG_IGN)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     while True:
         try:
