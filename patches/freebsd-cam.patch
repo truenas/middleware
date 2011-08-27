@@ -1,6 +1,6 @@
 Index: sys/cam/ata/ata_xpt.c
 ===================================================================
---- sys/cam/ata/ata_xpt.c	(revision 224228)
+--- sys/cam/ata/ata_xpt.c	(revision 225217)
 +++ sys/cam/ata/ata_xpt.c	(working copy)
 @@ -727,6 +727,7 @@ probedone(struct cam_periph *periph, union ccb *do
  	struct ata_params *ident_buf;
@@ -55,3 +55,50 @@ Index: sys/cam/ata/ata_xpt.c
  		 * If we get to this point, we got an error status back
  		 * from the inquiry and the error status doesn't require
  		 * automatically retrying the command.  Therefore, the
+Index: sys/cam/ata/ata_da.c
+===================================================================
+--- sys/cam/ata/ata_da.c	(revision 225217)
++++ sys/cam/ata/ata_da.c	(working copy)
+@@ -303,7 +303,8 @@ adaclose(struct disk *dp)
+ 
+ 	softc = (struct ada_softc *)periph->softc;
+ 	/* We only sync the cache if the drive is capable of it. */
+-	if (softc->flags & ADA_FLAG_CAN_FLUSHCACHE) {
++	if ((softc->flags & ADA_FLAG_CAN_FLUSHCACHE) != 0 &&
++	    (softc->flags & ADA_FLAG_PACK_INVALID) == 0) {
+ 
+ 		ccb = cam_periph_getccb(periph, CAM_PRIORITY_NORMAL);
+ 		cam_fill_ataio(&ccb->ataio,
+@@ -345,12 +346,20 @@ static void
+ adaschedule(struct cam_periph *periph)
+ {
+ 	struct ada_softc *softc = (struct ada_softc *)periph->softc;
++	uint32_t prio;
+ 
++	/* Check if cam_periph_getccb() was called. */
++	prio = periph->immediate_priority;
++
++	/* Check if we have more work to do. */
+ 	if (bioq_first(&softc->bio_queue) ||
+ 	    (!softc->trim_running && bioq_first(&softc->trim_queue))) {
+-		/* Have more work to do, so ensure we stay scheduled */
+-		xpt_schedule(periph, CAM_PRIORITY_NORMAL);
++		prio = CAM_PRIORITY_NORMAL;
+ 	}
++
++	/* Schedule CCB if any of above is true. */
++	if (prio != CAM_PRIORITY_NONE)
++		xpt_schedule(periph, prio);
+ }
+ 
+ /*
+@@ -1030,7 +1039,8 @@ adadone(struct cam_periph *periph, union ccb *done
+ 				return;
+ 			}
+ 			if (error != 0) {
+-				if (error == ENXIO) {
++				if (error == ENXIO &&
++				    (softc->flags & ADA_FLAG_PACK_INVALID) == 0) {
+ 					/*
+ 					 * Catastrophic error.  Mark our pack as
+ 					 * invalid.
