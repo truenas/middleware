@@ -210,8 +210,8 @@ class AFP(Model):
         icon_model = u"AFPIcon"
 
 class NFS(Model):
-    nfs_srv_servers = models.CharField(
-            max_length=120,
+    nfs_srv_servers = models.PositiveIntegerField(
+            default=4,
             verbose_name=_("Number of servers"),
             help_text=_("Specifies how many servers to create. There should be enough to handle the maximum level of concurrency from its clients, typically four to six.")
             )
