@@ -346,7 +346,7 @@ def configure_interface():
             break
 
     while True:
-        yes = raw_input("Configure IPv6? (y/n)")
+        yes = raw_input("Configure IPv6? (y/n) ")
         if yes.lower().startswith("y"):
             ip_prompt = prompt("IPv6 Address", iface.int_ipv6address)
             mask_prompt = prompt("IPv6 Netmask", iface.int_v6netmaskbit)
