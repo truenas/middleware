@@ -337,7 +337,7 @@ class NICChoices(object):
             # remove these devices if we are adding a vlan since multiple
             # vlan devices may share the same parent.
             try:
-                 c.execute("SELECT vlan_pint FROM network_vlan")
+                c.execute("SELECT vlan_pint FROM network_vlan")
             except sqlite3.OperationalError:
                 pass
             else:
