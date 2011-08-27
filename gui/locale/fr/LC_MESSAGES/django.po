@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:47-0700\n"
-"PO-Revision-Date: 2011-08-25 20:35+0200\n"
-"Last-Translator: skimpax <skimpax@gmail.com>\n"
+"PO-Revision-Date: 2011-08-26 11:22+0200\n"
+"Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -4956,7 +4956,7 @@ msgstr "Changer"
 
 #: templates/storage/replications.html:9
 msgid "Add Replication"
-msgstr "Ajouter une Réplication"
+msgstr "Ajouter une réplication"
 
 #: templates/storage/replications.html:13
 msgid "Mount point"
