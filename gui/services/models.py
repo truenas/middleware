@@ -815,7 +815,7 @@ class FTP(Model):
             help_text = _("Port to bind FTP server.")
             )
     ftp_clients = models.PositiveIntegerField(
-            default=0,
+            default=32,
             verbose_name = _("Clients"),
             help_text = _("Maximum number of simultaneous clients.")
             )
@@ -825,12 +825,12 @@ class FTP(Model):
             help_text = _("Maximum number of connections per IP address (0 = unlimited).")
             )
     ftp_loginattempt = models.PositiveIntegerField(
-            default=0,
+            default=3,
             verbose_name = _("Login Attempts"),
             help_text = _("Maximum number of allowed password attempts before disconnection.")
             )
     ftp_timeout = models.PositiveIntegerField(
-            default=0,
+            default=120,
             verbose_name = _("Timeout"),
             help_text = _("Maximum idle time in seconds.")
             )
