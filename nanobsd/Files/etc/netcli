@@ -103,8 +103,11 @@ def prompt(prompt_str, default_value=None):
     return (prompt_str + default_str + ':')
 
 
-def get_nic(choices = NICChoices()):
+def get_nic(choices=None):
     nic = False
+
+    if choices is None:
+        choices = NICChoices()
 
     while True:
         nics = []
