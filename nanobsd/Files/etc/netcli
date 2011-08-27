@@ -65,9 +65,9 @@ def quad_to_cidr(quad):
 	
     count = 0
     octets = quad.split('.')
-    for oct in octets:
+    for octet in octets:
         i = 7
-        o = int(oct)
+        o = int(octet)
         if vals.get(o):
             while i >= 0:
                 if o & (1 << i):
@@ -113,21 +113,17 @@ def get_nic(choices = NICChoices()):
     nic = False
 
     while True:
-        i = 0
-        nics = { }
-        for c in choices:
-            nics[i] = c[0]
+        nics = []
+        for i, c in enumerate(choices):
+            nics.append(c[0])
             print "%d) %s" % (i + 1, nics[i])
-            i += 1
 
-        i = raw_input("Select an interface (q to quit): ")
-        if i.isdigit() and nics.has_key(int(i) - 1):
-            nic = nics[int(i) - 1]
+        _input = raw_input("Select an interface (q to quit): ")
+        if _input.isdigit() and _input in range(1, len(nics)+1):
+            nic = nics[int(_input) - 1]
             break
-        elif i.lower().startswith("q"):
+        elif _input.lower().startswith("q"):
             return False
-        else:
-            continue
 
     return nic
 
@@ -136,22 +132,18 @@ def get_lagg_proto():
     proto = False
 
     while True:
-        i = 0
         protos = { }
         types = LAGGType
-        for t in types:
+        for i, t in enumerate(types):
             protos[i] = t[0]
             print "%d) %s" % (i + 1, protos[i])
-            i += 1
 
-        i = raw_input("Select a lagg protocol (q to quit): ")
-        if i.isdigit() and protos.has_key(int(i) - 1):
-            proto = protos[int(i) - 1]
+        _input = raw_input("Select a lagg protocol (q to quit): ")
+        if _input.isdigit() and int(_input) in xrange(1, len(protos)+1):
+            proto = protos[int(_input) - 1]
             break
-        elif i.lower().startswith("q"):
+        elif _input.lower().startswith("q"):
             return False
-        else:
-            continue
 
     return proto
 
@@ -172,24 +164,18 @@ def get_lagg_nics(nics = NICChoices()):
 
 def configure_interface():
     while True:
-        i = 0
-        nics = {}
+        nics = []
         choices = NICChoices(exclude_configured=False)
-        for c in choices:
-            nics[i] = c[0]
+        for i, c in enumerate(choices):
+            nics.append(c[0])
             print "%d) %s" % (i + 1, nics[i])
-            i += 1
-	
-        regex = "^[1-%d]$" % i
 
-        i = raw_input("Select an interface (q to quit): ")
-        if re.match(regex, i):
-            nic = nics[int(i) - 1]
+        _input = raw_input("Select an interface (q to quit): ")
+        if _input.isdigit() and _input in xrange(1, len(nics)+1):
+            nic = nics[int(_input) - 1]
             break
-        elif i.lower().startswith("q"):
+        elif _input.lower().startswith("q"):
             return True
-        else:
-            continue
 
     iface = Interfaces.objects.filter(int_interface = nic)
     if iface:
@@ -494,24 +480,18 @@ def create_vlan():
 
     # Select parent interface
     while True:
-        i = 0
-        nics = {}
+        nics = []
         choices = NICChoices(novlan=True)
-        for c in choices:
-            nics[i] = c[0]
-            print "%d) %s" % (i + 1, nics[i])
-            i += 1
-	
-        regex = "^[1-%d]$" % i
+        for i, c in enumerate(choices):
+            nics.append(c[0])
+            print "%2d) %s" % (i + 1, nics[i])
 
-        i = raw_input("Select a parent interface (q to quit): ")
-        if re.match(regex, i):
-            vlan_pint = nics[int(i) - 1]
+        _input = raw_input("Select a parent interface (q to quit): ")
+        if _input.isdigit() and _input in xrange(1, len(nics)+1):
+            vlan_pint = nics[int(_input) - 1]
             break
-        elif i.lower().startswith("q"):
+        elif _input.lower().startswith("q"):
             return True
-        else:
-            continue
     # Get interface name
     while True:
         vlan_vint = raw_input("Enter an interface name "
@@ -663,7 +643,7 @@ def configure_static_routes():
         sr.save()
     except:
         print "Failed"
-        return false
+        return False
     print "ok"
     try:
         print "Restarting routing:",
