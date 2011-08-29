@@ -571,7 +571,7 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         lucgroup = self.cleaned_data['iscsi_luc_authgroup']
         if lucmethod in ('CHAP', 'CHAP Mutual'):
             if lucgroup != '' and int(lucgroup) == -1:
-                raise forms.ValidationError(_("This field is required."))
+                raise forms.ValidationError(_("This field is required whether CHAP or Mutual CHAP are set for Controller Auth Method."))
         elif lucgroup != '' and int(lucgroup) == -1:
             return None
         return lucgroup
