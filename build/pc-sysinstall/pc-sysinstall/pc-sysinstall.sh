@@ -6,7 +6,7 @@
 #  system installations, as well as calls which a front-end can use
 #  to retrive information about the system
 #####################################################################
-# Copyright 2010 iXsystems
+# Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
