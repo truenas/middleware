@@ -63,7 +63,7 @@ class SharedFunc():
                 invalid = True
                 invalids.append(char)
         if invalid:
-            raise forms.ValidationError(_("Your username contains invalid characters (%s).") % ", ".join(invalids))
+            raise forms.ValidationError(_("Your name contains invalid characters (%s).") % ", ".join(invalids))
 
 class FilteredSelectJSON(forms.widgets.ComboBox):
 #class FilteredSelectJSON(forms.widgets.FilteringSelect):
@@ -476,6 +476,11 @@ class bsdUserToGroupForm(Form):
         user = models.bsdUsers.objects.get(id=self.userid)
         self.fields['bsduser_to_group'].choices = [(x.id, x.bsdgrp_group) for x in models.bsdGroups.objects.all()]
         self.fields['bsduser_to_group'].initial = [(x.bsdgrpmember_group.id) for x in models.bsdGroupMembership.objects.filter(bsdgrpmember_user=user)]
+    def clean_bsduser_to_group(self):
+        v = self.cleaned_data.get("bsduser_to_group")
+        if len(v) > 64:
+            raise forms.ValidationError(_("An user cannot belong to more than 64 auxiliary groups"))
+        return v
     def save(self):
         user = models.bsdUsers.objects.get(id=self.userid)
         models.bsdGroupMembership.objects.filter(bsdgrpmember_user=user).delete()
