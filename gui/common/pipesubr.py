@@ -1,5 +1,5 @@
 #+
-# Copyright 2011 iXsystems
+# Copyright 2011 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
