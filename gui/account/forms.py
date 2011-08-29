@@ -25,6 +25,8 @@
 #
 # $FreeBSD$
 #####################################################################
+import re
+
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User as django_User
@@ -47,6 +49,21 @@ class SharedFunc():
             shell_dict[shell] = basename(shell)
         shell_dict['/sbin/nologin'] = 'nologin'
         return shell_dict.items()
+
+    def pw_checkname(self, bsdusr_username):
+        if bsdusr_username.startswith('-'):
+            raise forms.ValidationError(_("Your name cannot start with \"-\""))
+        if bsdusr_username.find('$') not in (-1, len(bsdusr_username) - 1):
+            raise forms.ValidationError(_("The character $ is only allowed as the final character"))
+        INVALID_CHARS = ' ,\t:+&#%\^()!@~\*?<>=|\\/"'
+        invalid = False
+        invalids = []
+        for char in bsdusr_username:
+            if char in INVALID_CHARS and char not in invalids:
+                invalid = True
+                invalids.append(char)
+        if invalid:
+            raise forms.ValidationError(_("Your username contains invalid characters (%s).") % ", ".join(invalids))
 
 class FilteredSelectJSON(forms.widgets.ComboBox):
 #class FilteredSelectJSON(forms.widgets.FilteringSelect):
@@ -195,9 +212,7 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
     # Yanked from django/contrib/auth/
     A form that creates a user, with no privileges, from the given username and password.
     """
-    bsdusr_username = forms.RegexField(label=_("Username"), max_length=30, regex=r'^[\w.@+-]+$',
-        help_text = _("Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."),
-        error_messages = {'invalid': _("This value may contain only letters, numbers and @/./+/-/_ characters.")})
+    bsdusr_username = forms.CharField(label=_("Username"), max_length=30)
     bsdusr_password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput, required=False)
     bsdusr_password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput,
         help_text = _("Enter the same password as above, for verification."), required=False)
@@ -231,6 +246,7 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
     def clean_bsdusr_username(self):
         if self.instance.id is None:
             bsdusr_username = self.cleaned_data["bsdusr_username"]
+            self.pw_checkname(bsdusr_username)
             try:
                 models.bsdUsers.objects.get(bsdusr_username=bsdusr_username)
             except models.bsdUsers.DoesNotExist:
@@ -400,7 +416,7 @@ class bsdUserEmailForm(ModelForm, SharedFunc):
         notifier().reload("user")
         return bsduser
 
-class bsdGroupsForm(ModelForm):
+class bsdGroupsForm(ModelForm, SharedFunc):
     class Meta:
         model = models.bsdGroups
         exclude = ('bsdgrp_builtin',)
@@ -414,6 +430,11 @@ class bsdGroupsForm(ModelForm):
             self.fields['bsdgrp_gid'].widget.attrs['readonly'] = True
         else:
             self.initial['bsdgrp_gid'] = notifier().user_getnextgid()
+
+    def clean_bsdgrp_group(self):
+        bsdgrp_group = self.cleaned_data.get("bsdgrp_group")
+        self.pw_checkname(bsdgrp_group)
+        return bsdgrp_group
 
     def clean_bsdgrp_gid(self):
         instance = getattr(self, 'instance', None)
