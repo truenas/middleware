@@ -24,19 +24,62 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #####################################################################
 
-from fcntl import flock, LOCK_EX, LOCK_UN, LOCK_NB
-from os import O_DIRECTORY
-from os import open as os_open, close as os_close
+import fcntl
+import os
 
-class mntlock:
-    def __init__(self):
-        self._fd = os_open('/mnt', O_DIRECTORY)
+MNTPT = '/mnt'
+
+class MountLock:
+    """A mutex for which is used for serializing tasks that need direct
+       access to the mountpoints, for whatever reason."""
+    def __init__(self, blocking=True, mntpt=MNTPT):
+
+        self._fd = os.open(mntpt, os.O_DIRECTORY)
+        # Don't spread lock file descriptors to child processes.
+        flags = fcntl.FD_CLOEXEC | fcntl.fcntl(self._fd, fcntl.F_GETFL)
+        fcntl.fcntl(self._fd, fcntl.F_SETFL, flags)
+        if blocking:
+            self.__enter__ = self.lock
+        else:
+            self.__enter__ = self.lock_try
+
     def __del__(self):
         if self._fd:
-            os_close(self._fd)
+            os.close(self._fd)
+
+    def __exit__(self, exc_type, value, traceback):
+        self.unlock()
+
     def lock_try(self):
-        flock(self._fd, LOCK_EX | LOCK_NB)
+        """Try to lock the mountpoint in a non-blocking manner.
+
+        :raises:
+            IOError - the lock could not be acquired immediately.
+        """
+        fcntl.flock(self._fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            
     def lock(self):
-        flock(self._fd, LOCK_EX)
+        """Try to lock the mountpoint in a blocking manner.
+
+        XXX: this will not raise an IOError unless EBADF, EINVAL, or
+             EOPNOTSUPP occurs when running flock(3) (unless one has stumbled
+             across an OS bug). Some portions of FreeNAS incorrectly assume
+             that IOError will occur with this API if the lock is unavailable.
+
+        :raises:
+             IOError - see the ERRORS section under flock(3) for more details;
+                       skip over the EWOULDBLOCK case.
+        """
+        fcntl.flock(self._fd, fcntl.LOCK_EX)
+
     def unlock(self):
-        flock(self._fd, LOCK_UN)
+        """Unlock the mountpoint [in a blocking manner].
+
+        :raises:
+             IOError - see the ERRORS section under flock(3) for more details;
+                       skip over the EWOULDBLOCK case.
+        """
+        fcntl.flock(self._fd, fcntl.LOCK_UN)
+
+# Quick and dirty backwards compatibility.
+mntlock = MountLock

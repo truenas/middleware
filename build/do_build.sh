@@ -70,7 +70,7 @@ fi
 
 # OK, now we can build
 cd FreeBSD/src
-args="-c ../../nanobsd/freenas-common"
+args="-c ${root}/nanobsd/freenas-common"
 if [ -d ${NANO_OBJ} ]; then
 	extra_args="-b"
 fi
