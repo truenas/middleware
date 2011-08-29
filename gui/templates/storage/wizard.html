@@ -111,6 +111,13 @@
                 </table>
             </td>
         </tr>
+        <tr id="ufspathen" {% if ufs %}{% else %}style="display:none;"{% endif %}>
+            <td style="width:150px;"> {% trans "Specify custom path" %}</td>
+            <td>
+                {{ form.ufspathen.errors }}
+                {{ form.ufspathen }}
+            </td>
+        </tr>
         <tr id="ufspath" {% if ufs %}{% else %}style="display:none;"{% endif %}>
             <td style="width:150px;"> {% trans "Path" %}</td>
             <td>
