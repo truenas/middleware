@@ -352,3 +352,4 @@ device		dcons_crom	# Configuration ROM for dcons
 device		lagg
 device		coretemp
 device		amdtemp
+device		uplcom

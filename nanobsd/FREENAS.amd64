@@ -305,3 +305,4 @@ device		ums		# Mouse
 device		lagg
 device		coretemp
 device		amdtemp
+device		uplcom
