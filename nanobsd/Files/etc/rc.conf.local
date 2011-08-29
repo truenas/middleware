@@ -260,8 +260,6 @@ _gen_conf()
 	_bool_svcconfig rpc_statd_enable nfs
 	_bool_svcconfig mountd_enable nfs
 	_bool_svcconfig nfsd_enable nfs
-	_bool_svcconfig cnid_metad_enable cifs
-	_bool_svcconfig dbus_enable cifs
 	_bool_svcconfig samba_enable cifs
 	_bool_svcconfig rsyncd_enable rsync
 	_bool_svcconfig bsnmpd_enable snmp
@@ -272,6 +270,7 @@ _gen_conf()
 	_bool_svcconfig smartd_enable smartd
 
 	_count_config avahi_daemon_enable services_services "(srv_service='cifs' OR srv_service='afp')" " AND srv_enable=1"
+	_count_config dbus_enable services_services "(srv_service='cifs' OR srv_service='afp')" " AND srv_enable=1"
 
 	_nut_config
 
