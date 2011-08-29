@@ -571,6 +571,26 @@ diff -N net/netatalk/files/patch-etc__afpd__afp_avahi.c
 +     return 0;
 + }
 + 
+Index: net/netatalk/files/patch-etc__afpd__afp_avahi.h
+===================================================================
+RCS file: net/netatalk/files/patch-etc__afpd__afp_avahi.h
+diff -N net/netatalk/files/patch-etc__afpd__afp_avahi.h
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/netatalk/files/patch-etc__afpd__afp_avahi.h	29 Aug 2011 22:04:04 -0000
+@@ -0,0 +1,13 @@
++--- ./etc/afpd/afp_avahi.h.orig	2011-07-21 21:30:42.000000000 -0700
+++++ ./etc/afpd/afp_avahi.h	2011-08-29 15:03:14.926315200 -0700
++@@ -41,9 +41,7 @@
++ };
++ 
++ /* prototype definitions */
++-void av_zeroconf_setup(const AFPConfig *configs);
++-int av_zeroconf_run(void);
+++void av_zeroconf_register(const AFPConfig *configs);
++ int av_zeroconf_unregister(void);
++-void av_zeroconf_shutdown(void);
++ 
++ #endif   /* AFPD_AVAHI_H */
 Index: net/netatalk/files/patch-etc__afpd__afp_options.c
 ===================================================================
 RCS file: net/netatalk/files/patch-etc__afpd__afp_options.c
@@ -591,6 +611,33 @@ diff -N net/netatalk/files/patch-etc__afpd__afp_options.c
 + 
 +     /* passwd bits */
 +     if (strstr(buf, " -nosavepassword"))
+Index: net/netatalk/files/patch-etc__afpd__afp_zeroconf.c
+===================================================================
+RCS file: net/netatalk/files/patch-etc__afpd__afp_zeroconf.c
+diff -N net/netatalk/files/patch-etc__afpd__afp_zeroconf.c
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/netatalk/files/patch-etc__afpd__afp_zeroconf.c	29 Aug 2011 22:04:05 -0000
+@@ -0,0 +1,20 @@
++--- ./etc/afpd/afp_zeroconf.c.orig	2011-07-21 21:30:42.000000000 -0700
+++++ ./etc/afpd/afp_zeroconf.c	2011-08-29 15:03:14.926315200 -0700
++@@ -27,8 +27,7 @@
++ #if defined (HAVE_AVAHI)
++   LOG(log_debug, logtype_afpd, "Attempting to register with mDNS using Avahi");
++ 
++-	av_zeroconf_setup(configs);
++-  av_zeroconf_run();
+++	av_zeroconf_register(configs);
++ #endif
++ }
++ 
++@@ -36,6 +35,6 @@
++ {
++ #if defined (HAVE_AVAHI)
++   LOG(log_debug, logtype_afpd, "Attempting to de-register mDNS using Avahi");
++-	av_zeroconf_shutdown();
+++	av_zeroconf_unregister();
++ #endif
++ }
 Index: net/netatalk/files/patch-etc__afpd__main.c
 ===================================================================
 RCS file: net/netatalk/files/patch-etc__afpd__main.c
