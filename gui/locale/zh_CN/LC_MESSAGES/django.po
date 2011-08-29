@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-08-26 09:01+0200\n"
-"Last-Translator: hpyxyz <moonearthsun@foxmail.com>\n"
+"PO-Revision-Date: 2011-08-29 08:50+0200\n"
+"Last-Translator: Wang.JianGuo <windows2000b@163.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -44,23 +44,23 @@ msgstr "自动"
 
 #: choices.py:49
 msgid "PIO0"
-msgstr "PIO模式0"
+msgstr "PIO0"
 
 #: choices.py:50
 msgid "PIO1"
-msgstr "PIO模式1"
+msgstr "PIO1"
 
 #: choices.py:51
 msgid "PIO2"
-msgstr "PIO模式2"
+msgstr "PIO2"
 
 #: choices.py:52
 msgid "PIO3"
-msgstr "PIO模式3"
+msgstr "PIO3"
 
 #: choices.py:53
 msgid "PIO4"
-msgstr "PIO模式4"
+msgstr "PIO4"
 
 #: choices.py:54
 msgid "WDMA0"
@@ -112,27 +112,28 @@ msgstr "停用"
 
 #: choices.py:82
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "层级1 - 待机省电模式（怠速）"
+msgstr "级别 1 - 使用最小电力待机(降速)"
 
 #: choices.py:83
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "层级64 - 待机正常模式"
+msgstr "级别 64 - 使用中等电力待机"
 
 #: choices.py:84
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "层级127 - 待机正常模式"
+msgstr "级别 127 - 使用中等电力待机"
 
 #: choices.py:85
+#, fuzzy
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "层级 128 - 非待机省电模式（不怠速）"
+msgstr "级别 128 - 使用最小电力不待机(不降速)"
 
 #: choices.py:86
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "层级 192 - 非待机正常模式"
+msgstr "级别 192 - 使用中等电力不待机"
 
 #: choices.py:87
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "层级254 - 最高性能，最大电源消耗"
+msgstr "级别 254 - 最高性能，使用最大电力"
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
@@ -140,7 +141,7 @@ msgstr "最低"
 
 #: choices.py:92
 msgid "Medium"
-msgstr "平衡"
+msgstr "中等"
 
 #: choices.py:93
 msgid "Maximum"
@@ -196,31 +197,31 @@ msgstr "十二月"
 
 #: choices.py:141 templates/storage/tasks.html:56
 msgid "Monday"
-msgstr "周一"
+msgstr "星期一"
 
 #: choices.py:142 templates/storage/tasks.html:59
 msgid "Tuesday"
-msgstr "周二"
+msgstr "星期二"
 
 #: choices.py:143 templates/storage/tasks.html:62
 msgid "Wednesday"
-msgstr "周三"
+msgstr "星期三"
 
 #: choices.py:144 templates/storage/tasks.html:65
 msgid "Thursday"
-msgstr "周四"
+msgstr "星期四"
 
 #: choices.py:145 templates/storage/tasks.html:68
 msgid "Friday"
-msgstr "周五"
+msgstr "星期五"
 
 #: choices.py:146 templates/storage/tasks.html:71
 msgid "Saturday"
-msgstr "周六"
+msgstr "星期六"
 
 #: choices.py:147 templates/storage/tasks.html:74
 msgid "Sunday"
-msgstr "周日"
+msgstr "星期日"
 
 #: choices.py:158
 msgid "Anonymous"
@@ -276,7 +277,7 @@ msgstr "设备"
 
 #: choices.py:200
 msgid "ZFS Volume"
-msgstr "ZFS卷"
+msgstr "ZFS 卷"
 
 #: choices.py:204 storage/models.py:147 system/models.py:493
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
@@ -298,7 +299,7 @@ msgstr "通过"
 
 #: choices.py:211
 msgid "read-write"
-msgstr "可读写"
+msgstr "读-写"
 
 #: choices.py:212
 msgid "read-only"
@@ -343,23 +344,23 @@ msgstr "继承"
 
 #: choices.py:275
 msgid "On"
-msgstr "启用"
+msgstr "开启"
 
 #: choices.py:276 choices.py:281
 msgid "Off"
-msgstr "停用"
+msgstr "关闭"
 
 #: choices.py:282
 msgid "lzjb (recommended)"
-msgstr "lzjb压缩（推荐）"
+msgstr "lzjb (推荐)"
 
 #: choices.py:283
 msgid "gzip (default level, 6)"
-msgstr "gzip压缩 (默认压缩等级6)"
+msgstr "gzip (默认 level, 6)"
 
 #: choices.py:284
 msgid "gzip (fastest)"
-msgstr "gzip压缩 (最快)"
+msgstr "gzip (最快)"
 
 #: choices.py:285
 msgid "gzip (maximum, slow)"
@@ -371,7 +372,7 @@ msgstr "小时"
 
 #: choices.py:427
 msgid "Day(s)"
-msgstr "日"
+msgstr "天"
 
 #: choices.py:428
 msgid "Week(s)"
@@ -388,11 +389,11 @@ msgstr "年"
 #: choices.py:434 system/models.py:302 system/models.py:321
 #: system/models.py:457 system/models.py:476
 msgid "Everyday"
-msgstr "每日"
+msgstr "每天"
 
 #: choices.py:435
 msgid "Every selected weekday"
-msgstr "所有已选的工作日"
+msgstr "每个选中的工作日"
 
 #: choices.py:441
 msgid "Read-only"
@@ -404,7 +405,7 @@ msgstr "只写"
 
 #: choices.py:443
 msgid "Read and Write"
-msgstr "读写"
+msgstr "读和写"
 
 #: choices.py:447 choices.py:448
 #, python-format
@@ -469,7 +470,7 @@ msgstr "可用"
 
 #: account/forms.py:146
 msgid "Selected"
-msgstr "选定"
+msgstr "选中"
 
 #: account/forms.py:174 account/forms.py:198 account/models.py:79
 #: services/models.py:676 services/models.py:935 system/models.py:160
@@ -479,11 +480,11 @@ msgstr "用户名"
 
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr "必填。不超过30个字符，只能使用英文字母、数字和@ . + - _等符号。"
+msgstr "必填。不超过 30 个字符，只能使用英文字母、数字和 @/./+/-/_。"
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr "只能使用英文字母、数字和@ . + - _等符号。"
+msgstr "这个值只能包含英文字母、数字和 @/./+/-/_字符。"
 
 #: account/forms.py:201 account/forms.py:308 services/models.py:680
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
@@ -493,7 +494,7 @@ msgstr "密码"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:188
 msgid "Password confirmation"
-msgstr "确认密码"
+msgstr "密码确认"
 
 #: account/forms.py:203 account/forms.py:310 system/forms.py:189
 msgid "Enter the same password as above, for verification."
@@ -541,49 +542,49 @@ msgstr "次要群组"
 
 #: account/forms.py:467
 msgid "New password"
-msgstr "请输入新密码"
+msgstr "新密码"
 
 #: account/forms.py:468
 msgid "New password confirmation"
-msgstr "请确认新密码"
+msgstr "新密码确认"
 
 #: account/forms.py:493
 msgid "Old password"
-msgstr "请输入旧密码"
+msgstr "旧密码"
 
 #: account/forms.py:501
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr "您输入的旧密码不对，请重新输入。"
+msgstr "您输入的旧密码不正确。请重新输入。"
 
 #: account/models.py:36 services/models.py:472 services/models.py:517
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:5
 msgid "Group ID"
-msgstr "用户组ID"
+msgstr "组 ID"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr "用户组名称"
+msgstr "组名称"
 
 #: account/models.py:47 account/models.py:155 services/models.py:1210
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:87
 msgid "Group"
-msgstr "用户组"
+msgstr "组"
 
 #: account/models.py:48 templates/account/index.html:10
 msgid "Groups"
-msgstr "群组"
+msgstr "组"
 
 #: account/models.py:63
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr " %s 组是内置群组无法删除！"
+msgstr "组 %s 是内置的，不能删除！"
 
 #: account/models.py:73
 msgid "User ID"
-msgstr "用户ID"
+msgstr "用户 ID"
 
 #: account/models.py:78
 msgid "User &"
@@ -603,7 +604,7 @@ msgstr "首要的用户组ID"
 
 #: account/models.py:100
 msgid "Home Directory"
-msgstr "主文件夹"
+msgstr "主目录"
 
 #: account/models.py:109
 msgid "Full Name"
@@ -611,7 +612,7 @@ msgstr "全名"
 
 #: account/models.py:115 templates/account/bsdusers.html:91
 msgid "E-mail"
-msgstr "电子邮箱"
+msgstr "电子邮件"
 
 #: account/models.py:120 account/models.py:159 services/models.py:521
 #: services/models.py:1203 system/models.py:242 system/models.py:380
@@ -627,7 +628,7 @@ msgstr "用户"
 #: account/models.py:138
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr "%s 是内置用户无法删除！"
+msgstr "用户 %s 是内置的，不能删除！"
 
 #: account/nav.py:5 templates/menubar.html:43
 msgid "Account"
@@ -654,11 +655,11 @@ msgstr "查看所有用户"
 
 #: account/nav.py:43
 msgid "View All Groups"
-msgstr "查看所有的群组"
+msgstr "查看所有组"
 
 #: account/views.py:78
 msgid "Password successfully updated."
-msgstr "密码更新成功"
+msgstr "密码已成功更新。"
 
 #: account/views.py:92
 msgid "Admin user successfully updated."
@@ -666,22 +667,22 @@ msgstr "Admin用户更新成功"
 
 #: account/views.py:102
 msgid "Users successfully updated."
-msgstr "用户更新成功"
+msgstr "用户已成功更新。"
 
 #: account/views.py:115
 msgid "Groups successfully updated."
-msgstr "群组更新成功"
+msgstr "组已成功更新。"
 
 #: contrib/ext_formwizard.py:170
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
-msgstr "对不起，您填写的表格信息已经失效。请重新填写表格。"
+msgstr "抱歉，您的表单已到期。请继续填写这个页面上的表单。"
 
 #: freeadmin/forms.py:95
 #, python-format
 msgid "The user %s is not valid."
-msgstr "用户 %s 无效"
+msgstr "用户 %s 无效。"
 
 #: freeadmin/forms.py:124
 #, python-format
@@ -708,7 +709,7 @@ msgstr "显示系统进程"
 
 #: freeadmin/navtree.py:353 templates/freeadmin/index.html:53
 msgid "Reboot"
-msgstr "重启"
+msgstr "重新启动"
 
 #: freeadmin/navtree.py:360 templates/freeadmin/index.html:65
 msgid "Shutdown"
@@ -717,12 +718,12 @@ msgstr "关机"
 #: freeadmin/views.py:225
 #, python-format
 msgid "%s successfully added."
-msgstr "%s 添加成功"
+msgstr "%s 已成功添加。"
 
 #: freeadmin/views.py:384 freeadmin/views.py:386
 #, python-format
 msgid "%s successfully updated."
-msgstr "%s 更新成功"
+msgstr "%s 已成功更新。"
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
@@ -731,7 +732,7 @@ msgstr "重启服务失败。"
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
 msgid "%s successfully deleted."
-msgstr "%s 成功删除"
+msgstr "%s 已成功删除。"
 
 #: network/forms.py:44 network/models.py:95
 msgid "NIC"
@@ -759,7 +760,7 @@ msgstr "上级接口"
 
 #: network/forms.py:109
 msgid "The name must be vlanXX where XX is a integer"
-msgstr "接口名称必须是vlanXX 其中XX是数字"
+msgstr "名称必须是 vlanXX，其中 XX 是整数"
 
 #: network/forms.py:115
 msgid "VLAN Tags are 1 - 4095 inclusive"
@@ -785,11 +786,11 @@ msgstr "域名"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
-msgstr "IPv4默认网关"
+msgstr "IPv4 默认网关"
 
 #: network/models.py:59
 msgid "IPv6 Default Gateway"
-msgstr "IPv6默认网关"
+msgstr "IPv6 默认网关"
 
 #: network/models.py:65
 msgid "Nameserver 1"
@@ -818,7 +819,7 @@ msgstr "接口名称"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr "为网卡命名"
+msgstr "命名您的网卡。"
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
@@ -836,11 +837,11 @@ msgstr "IPv4 地址"
 
 #: network/models.py:121
 msgid "IPv4 Netmask"
-msgstr "IPv4 掩码"
+msgstr "IPv4 网络掩码"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
-msgstr "自动配置IPv6"
+msgstr "自动配置 IPv6"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
@@ -852,7 +853,7 @@ msgstr "IPv6 地址"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
-msgstr "IPv6 掩码"
+msgstr "IPv6 网络掩码"
 
 #: network/models.py:147 network/models.py:253
 #: templates/network/interface.html:11
@@ -875,7 +876,7 @@ msgstr "虚拟接口"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr "接口名称必须是 vlanXX 其中 XX 是数字"
+msgstr "接口名称必须是 vlanXX，其中 XX 是数字"
 
 #: network/models.py:178 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
@@ -910,7 +911,7 @@ msgstr "LAGG 接口组"
 
 #: network/models.py:244
 msgid "LAGG Priority Number"
-msgstr "LAGG 优先权数"
+msgstr "LAGG 优先级编号"
 
 #: network/models.py:249
 msgid "Physical NIC"
@@ -946,7 +947,7 @@ msgstr "网络面板"
 
 #: network/nav.py:13 templates/network/index.html:13
 msgid "Network Summary"
-msgstr "网络概况"
+msgstr "网络概要"
 
 #: network/nav.py:30
 msgid "Create Link Aggregation"
@@ -962,15 +963,15 @@ msgstr "LAGG添加成功"
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr "若使用“启用主文件夹浏览”此字段必需。"
+msgstr "这个字段是“启用主目录浏览”所必需的。"
 
 #: services/forms.py:73
 msgid "This field is required for \"Home directories\"."
-msgstr "若使用“主目录”此字段必需。"
+msgstr "这个字段是“主目录”所必需的。"
 
 #: services/forms.py:90
 msgid "The AFP service failed to reload."
-msgstr "AFP服务重新加载失败。"
+msgstr "AFP 服务未能重新加载。"
 
 #: services/forms.py:99
 msgid "The NFS service failed to reload."
@@ -986,27 +987,27 @@ msgstr "目录权限"
 
 #: services/forms.py:129
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr "此值应为 0 到 65535 之间（含）。"
+msgstr "这个值必须在 0 到(包括) 65535 之间。"
 
 #: services/forms.py:135 services/forms.py:153
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr "此值应为 0 到 10000 之间（含）。"
+msgstr "这个值必须在 0 到(包括) 10000 之间。"
 
 #: services/forms.py:141 services/forms.py:147
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr "此值应为 0 到 1000 之间（含）。"
+msgstr "这个值必须在 0 到(包括) 1000 之间。"
 
 #: services/forms.py:159
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr "此值应为 1024 到 65535 之间（含）。0表示使用默认值。"
+msgstr "这个值必须在 1024 到(包括) 65535 之间。0 表示默认值"
 
 #: services/forms.py:165
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr "此值应为 1024 到 65535 之间（含）。0表示使用默认值。"
+msgstr "这个值必须在 1024 到(包括) 65535 之间。0 表示默认值。"
 
 #: services/forms.py:184
 msgid "This field is required for anonymous login"
-msgstr "若使用匿名登录，此字段必需"
+msgstr "这个字段是匿名登录所必须的"
 
 #: services/forms.py:191
 msgid "The ftp service failed to start."
@@ -2588,7 +2589,7 @@ msgstr "显示隐藏文件"
 
 #: sharing/models.py:64
 msgid "Guest Account"
-msgstr "访客帐号"
+msgstr "来宾账户"
 
 #: sharing/models.py:65
 msgid ""
@@ -4628,7 +4629,7 @@ msgstr ""
 
 #: templates/storage/disk_replacement.html:9
 msgid "Replacing disk"
-msgstr "重置磁盘中"
+msgstr "正在替换磁盘"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
@@ -4817,7 +4818,7 @@ msgstr "状态"
 
 #: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 msgid "Destroy ZFS Volume"
-msgstr "销毁ZFS卷"
+msgstr "销毁 ZFS 卷"
 
 #: templates/storage/volumes.html:128 templates/storage/volumes.html.py:132
 msgid "Destroy Dataset"
@@ -4882,7 +4883,7 @@ msgstr "已有的数据会被清除"
 
 #: templates/storage/zvols.html:9
 msgid "Add ZFS Volume"
-msgstr "添加ZFS卷"
+msgstr "添加 ZFS 卷"
 
 #: templates/system/advanced_edit.html:17
 msgid "The cache is being rebuilt."
@@ -4938,11 +4939,11 @@ msgstr "正在重启系统..."
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
-msgstr "测试邮件已发！"
+msgstr "您的测试邮件已发送！"
 
 #: templates/system/email_edit.html:19
 msgid "Your test email could not be sent:"
-msgstr "测试邮件无法发送："
+msgstr "不能发送您的测试邮件："
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
@@ -4994,7 +4995,7 @@ msgstr "未定义rsyncs"
 
 #: templates/system/rsync.html:44 templates/system/rsync.html.py:46
 msgid "Add Rsync"
-msgstr "增加Rsync备份"
+msgstr "添加 Rsync"
 
 #: templates/system/settings.html:3
 msgid "General"
@@ -5022,7 +5023,7 @@ msgstr "平台"
 
 #: templates/system/system_info.html:16
 msgid "Memory"
-msgstr "存储"
+msgstr "内存"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
@@ -5043,10 +5044,10 @@ msgstr "FreeNAS版本"
 #: templates/system/wizard.html:3
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr ""
+msgstr "第 %(step)s 步，共 %(step_count)s 步"
 
 msgid "%s successfully update."
-msgstr "%s 更新成功"
+msgstr "%s 已成功更新。"
 
 msgid "Admin user"
 msgstr "管理员"
@@ -5064,13 +5065,13 @@ msgid "Create ZFS zvol"
 msgstr "创建 ZFS zvol"
 
 msgid "Add ZVol"
-msgstr "添加Zvol"
+msgstr "添加 Zvol"
 
 msgid "English"
 msgstr "英语"
 
 msgid "Level"
-msgstr "层级"
+msgstr "级别"
 
 msgid "Add Link Aggregation"
 msgstr "添加链路聚合"
@@ -5079,4 +5080,4 @@ msgid "View All Interfaces"
 msgstr "查看所有接口"
 
 msgid "View All VLANs"
-msgstr "查看所有VLAN"
+msgstr "查看所有 VLAN"
