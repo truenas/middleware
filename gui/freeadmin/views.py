@@ -44,6 +44,7 @@ from django.utils.importlib import import_module
 from django.views.defaults import server_error
 
 from freenasUI.common.system import get_freenas_version
+from freenasUI.middleware.exceptions import MiddlewareError
 from freeadmin import navtree
 from system.models import Advanced
 from network.models import GlobalConfiguration
@@ -311,6 +312,8 @@ def generic_model_add(request, app, model, mf=None):
                 if hasattr(mf, "done") and callable(mf.done):
                     mf.done()
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully added.") % m._meta.verbose_name}))
+            except MiddlewareError, e:
+                return HttpResponse(simplejson.dumps({"error": True, "message": _("Error: %s") % str(e)}), mimetype="application/json")
             except ServiceFailed, e:
                 return HttpResponse(simplejson.dumps({"error": True, "message": _("The service failed to restart.") % m._meta.verbose_name}))
 
@@ -518,6 +521,8 @@ def generic_model_edit(request, app, model, oid, mf=None):
                     return JsonResponse(message=_("%s successfully updated.") % m._meta.verbose_name, events=events)
             except ServiceFailed, e:
                 return HttpResponse(simplejson.dumps({"error": True, "message": _("The service failed to restart.") % m._meta.verbose_name, "events": ["serviceFailed(\"%s\")" % e.service]}))
+            except MiddlewareError, e:
+                return HttpResponse(simplejson.dumps({"error": True, "message": _("Error: %s") % str(e)}), mimetype="application/json")
 
     else:
         mf = mf(instance=instance)
