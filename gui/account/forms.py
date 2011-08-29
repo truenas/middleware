@@ -212,7 +212,7 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
     # Yanked from django/contrib/auth/
     A form that creates a user, with no privileges, from the given username and password.
     """
-    bsdusr_username = forms.CharField(label=_("Username"), max_length=30)
+    bsdusr_username = forms.CharField(label=_("Username"), max_length=16)
     bsdusr_password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput, required=False)
     bsdusr_password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput,
         help_text = _("Enter the same password as above, for verification."), required=False)
