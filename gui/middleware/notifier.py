@@ -1054,6 +1054,7 @@ class notifier:
 
     # Create a user in system then samba
     def __pw_with_password(self, command, password):
+        pw = self.__pipeopen(command)
         msg = pw.communicate("%s\n" % password)[1]
         if pw.returncode != 0:
             from freenasUI.middleware.exceptions import MiddlewareError
