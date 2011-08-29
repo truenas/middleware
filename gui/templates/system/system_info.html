@@ -6,8 +6,8 @@
         <td class="descr">{{ hostname }}</td>
     </tr>
     <tr>
-        <th>{% trans "OS Version" %}</th>
-        <td class="descr">{{ uname1 }} {{ uname2 }}</td>
+        <th>{% trans "FreeNAS Build" %}</th>
+        <td class="descr">{{ freenas_build }}</td>
     </tr>
     <tr>
         <th>{% trans "Platform" %}</th>
@@ -30,7 +30,7 @@
         <td class="descr">{{ loadavg }}</td>
     </tr>
     <tr>
-        <th>{% trans "FreeNAS Build" %}</th>
-        <td class="descr">{{ freenas_build }}</td>
+        <th>{% trans "OS Version" %}</th>
+        <td class="descr">{{ uname1 }} {{ uname2 }}</td>
     </tr>
 </table>
