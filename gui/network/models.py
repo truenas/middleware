@@ -123,7 +123,7 @@ class Interfaces(Model):
             choices=choices.v6NetmaskBitList,
             blank=True,
             default='',
-            verbose_name=_("IPv6 Netmask"),
+            verbose_name=_("IPv6 Prefix Length"),
             help_text=""
             )
     int_options = models.CharField(
@@ -181,7 +181,7 @@ class Alias(Model):
             choices=choices.v6NetmaskBitList,
             default='',
             blank=True,
-            verbose_name=_("IPv6 Netmask"),
+            verbose_name=_("IPv6 Prefix Length"),
             help_text=""
             )
 
