@@ -47,6 +47,37 @@ class InterfacesForm(ModelForm):
         super(InterfacesForm, self).__init__(*args, **kwargs)
         self.fields['int_interface'].choices = choices.NICChoices()
 
+    def clean(self):
+        cdata = self.cleaned_data
+
+        ipv4addr = cdata.get("int_ipv4address")
+        ipv4net = cdata.get("int_v4netmaskbit")
+        ipv6addr = cdata.get("int_ipv6address")
+        ipv6net = cdata.get("int_v6netmaskbit")
+        ipv4 = True if ipv4addr and ipv4net else False
+        ipv6 = True if ipv6addr and ipv6net else False
+
+        # IF one field of ipv4 is entered, require the another
+        if (ipv4addr or ipv4net) and not ipv4:
+            if not ipv4addr:
+                self._errors['int_ipv4address'] = self.error_class([_("You have to specify IPv4 address as well")])
+            if not ipv4net:
+                self._errors['int_v4netmaskbit'] = self.error_class([_("You have to choose IPv4 netmask as well")])
+
+        # IF one field of ipv6 is entered, require the another
+        if (ipv6addr or ipv6net) and not ipv6:
+            if not ipv6addr:
+                self._errors['int_ipv6address'] = self.error_class([_("You have to specify IPv6 address as well")])
+            if not ipv6net:
+                self._errors['int_v6netmaskbit'] = self.error_class([_("You have to choose IPv6 netmask as well")])
+
+        if ipv6 and ipv4:
+            self._errors['__all__'] = self.error_class([_("You have to choose between IPv4 or IPv6")])
+        if not ipv6 and not (ipv6addr or ipv6net) and not ipv4 and not (ipv4addr or ipv4net):
+            self._errors['__all__'] = self.error_class([_("You must specify either an valid IPv4 or IPv6 with maskbit")])
+
+        return cdata
+
     def done(self):
         # TODO: new IP address should be added in a side-by-side manner
         # or the interface wouldn't appear once IP was changed.
@@ -201,16 +232,31 @@ class AliasForm(ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
-        ipv4, ipv6 = False, False
 
-        if cdata.get("alias_v4address") and cdata.get("alias_v4netmaskbit"):
-            ipv4 = True
-        if cdata.get("alias_v6address") and cdata.get("alias_v6netmaskbit"):
-            ipv6 = True
+        ipv4addr = cdata.get("alias_v4address")
+        ipv4net = cdata.get("alias_v4netmaskbit")
+        ipv6addr = cdata.get("alias_v6address")
+        ipv6net = cdata.get("alias_v6netmaskbit")
+        ipv4 = True if ipv4addr and ipv4net else False
+        ipv6 = True if ipv6addr and ipv6net else False
+
+        # IF one field of ipv4 is entered, require the another
+        if (ipv4addr or ipv4net) and not ipv4:
+            if not ipv4addr:
+                self._errors['alias_v4address'] = self.error_class([_("You have to specify IPv4 address as well per alias")])
+            if not ipv4net:
+                self._errors['alias_v4netmaskbit'] = self.error_class([_("You have to choose IPv4 netmask as well per alias")])
+
+        # IF one field of ipv6 is entered, require the another
+        if (ipv6addr or ipv6net) and not ipv6:
+            if not ipv6addr:
+                self._errors['alias_v6address'] = self.error_class([_("You have to specify IPv6 address as well per alias")])
+            if not ipv6net:
+                self._errors['alias_v6netmaskbit'] = self.error_class([_("You have to choose IPv6 netmask as well per alias")])
 
         if ipv6 and ipv4:
             self._errors['__all__'] = self.error_class([_("You have to choose between IPv4 or IPv6 per alias")])
-        if not ipv6 and not ipv4:
+        if not ipv6 and not (ipv6addr or ipv6net) and not ipv4 and not (ipv4addr or ipv4net):
             self._errors['__all__'] = self.error_class([_("You must specify either an valid IPv4 or IPv6 with maskbit per alias")])
 
         return cdata
