@@ -144,12 +144,16 @@ class VolumeWizardForm(forms.Form):
     volume_disks = forms.MultipleChoiceField(choices=(), widget=forms.SelectMultiple(attrs=attrs_dict), label = 'Member disks', required=False)
     group_type = forms.ChoiceField(choices=(), widget=forms.RadioSelect(attrs=attrs_dict), required=False)
     force4khack = forms.BooleanField(required=False, initial=False, help_text=_('Force 4096 bytes sector size'))
+    ufspathen = forms.BooleanField(initial=False, label = _('Specify custom path'), required=False)
     ufspath = forms.CharField(max_length = 1024, label = _('Path'), required=False)
     def __init__(self, *args, **kwargs):
         super(VolumeWizardForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
         self.fields['volume_disks'].choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
         self.fields['volume_fstype'].widget.attrs['onClick'] = 'wizardcheckings();'
+        self.fields['ufspathen'].widget.attrs['onClick'] = 'toggleUFSPath();'
+        self.fields['ufspath'].widget.attrs['disabled'] = 'disabled'
+        self.fields['ufspath'].widget.attrs['promptMessage'] = _("Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}")
 
         grouptype_choices = (
             ('mirror', 'mirror'),

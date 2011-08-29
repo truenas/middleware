@@ -537,6 +537,19 @@
 
     var canceled = false;
 
+    toggleUFSPath = function(c) {
+
+        var toset;
+        var box = dijit.byId("id_ufspathen");
+        if(box.get("value")==false) {
+            toset = true;
+        } else{
+            toset = false;
+        }
+        dijit.byId("id_ufspath").set('disabled', toset);
+
+    }
+
     toggleLuc = function(c) {
 
         var toset;
@@ -861,8 +874,10 @@
 
         if(ufs) {
             dojo.style("ufspath", "display", "table-row");
+            dojo.style("ufspathen", "display", "table-row");
         } else {
             dojo.style("ufspath", "display", "none");
+            dojo.style("ufspathen", "display", "none");
         }
 
         if(d.length >= 3 && zfs) {
