@@ -59,6 +59,20 @@ class servicesForm(ModelForm):
 class CIFSForm(ModelForm):
     class Meta:
         model = models.CIFS
+    def __check_octet(self, v):
+        try:
+            if v != "" and (int(v, 8) & ~011777):
+                raise ValueError
+        except:
+            raise forms.ValidationError(_("This is not a valid mask"))
+    def clean_cifs_srv_filemask(self):
+        v = self.cleaned_data.get("cifs_srv_filemask").strip()
+        self.__check_octet(v)
+        return v
+    def clean_cifs_srv_dirmask(self):
+        v = self.cleaned_data.get("cifs_srv_dirmask").strip()
+        self.__check_octet(v)
+        return v
     def clean(self):
         cleaned_data = self.cleaned_data
         home = cleaned_data['cifs_srv_homedir_enable']
