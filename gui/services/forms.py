@@ -491,6 +491,9 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
     iscsi_discoveryauthgroup = forms.ChoiceField(label=_("Discovery Auth Group"))
     class Meta:
         model = models.iSCSITargetGlobalConfiguration
+        widgets = {
+            'iscsi_lucport': forms.widgets.TextInput(),
+        }
     def __init__(self, *args, **kwargs):
         super(iSCSITargetGlobalConfigurationForm, self).__init__(*args, **kwargs)
         self.fields['iscsi_luc_authgroup'].required = False
