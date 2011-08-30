@@ -25,22 +25,22 @@
 # SUCH DAMAGE.
 #
 
+import datetime
+import os
 import sys
-sys.path.append('/usr/local/www')
-sys.path.append('/usr/local/www/freenasUI')
+import syslog
 
-from freenasUI import settings
+sys.path.extend([
+    '/usr/local/www',
+    '/usr/local/www/freenasUI',
+])
 
 from django.core.management import setup_environ
+from freenasUI import settings
 setup_environ(settings)
 
-import os
-import re
-import syslog
-from datetime import timedelta
-from time import sleep
-from freenasUI.storage.models import Task, Replication
-from freenasUI.common.pipesubr import setname, pipeopen, system
+from freenasUI.storage.models import Replication
+from freenasUI.common.pipesubr import pipeopen, setname, system
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import send_mail
 
@@ -53,19 +53,19 @@ from freenasUI.common.system import send_mail
 #
 
 # Detect if another instance is running
-def ExitIfRunning(theirpid):
-    syslog.syslog(syslog.LOG_DEBUG, "Checking if process %d is still alive" % (theirpid))
-    from os import kill
+def exit_if_running(pid):
+    syslog.syslog(syslog.LOG_DEBUG,
+                  "Checking if process %d is still alive" % (pid, ))
     try:
-        os.kill(theirpid, 0)
+        os.kill(pid, 0)
         # If we reached here, there is another process in progress
-        syslog.syslog(syslog.LOG_DEBUG, "Process %d still working, quitting" % (theirpid))
-        exit(0)
+        syslog.syslog(syslog.LOG_DEBUG,
+                      "Process %d still working, quitting" % (pid, ))
+        sys.exit(0)
     except OSError:
-        pass
-    syslog.syslog(syslog.LOG_DEBUG, "Process %d gone" % (theirpid))
+        syslog.syslog(syslog.LOG_DEBUG, "Process %d gone" % (pid, ))
 
-MNTLOCK=mntlock()
+MNTLOCK = mntlock()
 setname('autorepl')
 syslog.openlog("autorepl", syslog.LOG_CONS | syslog.LOG_PID)
 
@@ -81,17 +81,17 @@ try:
 except IOError:
     locked = False
 if not locked:
-    exit(0)
+    sys.exit(0)
 
-theirpid = -1
+AUTOREPL_PID = -1
 try:
     with open('/var/run/autorepl.pid', 'r') as pidfile:
-        theirpid = int(pidfile.read())
+        AUTOREPL_PID = int(pidfile.read())
 except:
     pass
 
-if theirpid != -1:
-    ExitIfRunning(theirpid)
+if AUTOREPL_PID != -1:
+    exit_if_running(AUTOREPL_PID)
 
 with open('/var/run/autorepl.pid', 'w') as pidfile:
     pidfile.write('%d' % mypid)
@@ -144,7 +144,16 @@ for replication in replication_tasks:
         for snapshot_item in snapshots_list:
             if snapshot_item != '':
                 snapshot, state = snapshot_item.split('\t')
-                if not found_latest:
+                if found_latest:
+                    # assert (known_latest_snapshot != '') because found_latest
+                    if state != '-':
+                        system('/sbin/zfs set freenas:state=NEW %s' % (known_latest_snapshot))
+                        system('/sbin/zfs set freenas:state=LATEST %s' % (snapshot))
+                        wanted_list.insert(0, known_latest_snapshot)
+                        syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list (was LATEST)" % (snapshot))
+                        known_latest_snapshot = snapshot
+                        syslog.syslog(syslog.LOG_ALERT, "Snapshot %s became latest snapshot" % (snapshot))
+                else:
                     syslog.syslog(syslog.LOG_DEBUG, "Snapshot: %s State: %s" % (snapshot, state))
                     if state == 'LATEST' and not resetonce:
                         found_latest = True
@@ -165,15 +174,6 @@ for replication in replication_tasks:
                     else:
                         # This should be exception but skip for now.
                         continue
-                else:
-                    # assert (known_latest_snapshot != '') because found_latest
-                    if state != '-':
-                        system('/sbin/zfs set freenas:state=NEW %s' % (known_latest_snapshot))
-                        system('/sbin/zfs set freenas:state=LATEST %s' % (snapshot))
-                        wanted_list.insert(0, known_latest_snapshot)
-                        syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s added to wanted list (was LATEST)" % (snapshot))
-                        known_latest_snapshot = snapshot
-                        syslog.syslog(syslog.LOG_ALERT, "Snapshot %s became latest snapshot" % (snapshot))
     MNTLOCK.unlock()
 
     # If there is nothing to do, go through next replication entry
@@ -190,7 +190,6 @@ for replication in replication_tasks:
             if expected_local_snapshot == last_snapshot:
                 # Accept: remote and local snapshots matches
                 syslog.syslog(syslog.LOG_DEBUG, "Found matching latest snapshot %s remotely" % (last_snapshot))
-                pass
             elif expected_local_snapshot == known_latest_snapshot:
                 # Accept
                 syslog.syslog(syslog.LOG_DEBUG, "Found matching latest snapshot %s remotely (but not the recorded one)" % (known_latest_snapshot))
@@ -216,7 +215,7 @@ for replication in replication_tasks:
 Hello,
     The replication failed for the local ZFS %s because the remote system
     have diverged snapshot with us.
-                        """ % (localfs), interval = timedelta(hours = 2), channel = 'autorepl')
+                        """ % (localfs), interval=datetime.timedelta(hours=2), channel='autorepl')
                     MNTLOCK.unlock()
                     continue
                 MNTLOCK.unlock()
@@ -228,18 +227,18 @@ Hello,
             last_snapshot = ''
             known_latest_snapshot = ''
     if resetonce:
-         syslog.syslog(syslog.LOG_NOTICE, "Destroying remote %s" % (remotefs_final))
-         destroycmd = '%s %s /sbin/zfs destroy -rRf %s' % (sshcmd, remote, remotefs_final)
-         system(destroycmd)
-         known_latest_snapshot = ''
+        syslog.syslog(syslog.LOG_NOTICE, "Destroying remote %s" % (remotefs_final))
+        destroycmd = '%s %s /sbin/zfs destroy -rRf %s' % (sshcmd, remote, remotefs_final)
+        system(destroycmd)
+        known_latest_snapshot = ''
     if known_latest_snapshot == '':
-         # Create remote filesystem
-         syslog.syslog(syslog.LOG_NOTICE, "Creating %s on remote system" % (remotefs_parent))
-         replcmd = '%s %s /sbin/zfs create -o readonly=on -p %s' % (sshcmd, remote, remotefs_parent)
-         system(replcmd)
-         last_snapshot = ''
+        # Create remote filesystem
+        syslog.syslog(syslog.LOG_NOTICE, "Creating %s on remote system" % (remotefs_parent))
+        replcmd = '%s %s /sbin/zfs create -o readonly=on -p %s' % (sshcmd, remote, remotefs_parent)
+        system(replcmd)
+        last_snapshot = ''
     else:
-         last_snapshot = known_latest_snapshot
+        last_snapshot = known_latest_snapshot
 
     for snapname in wanted_list:
         #if replication.repl_limit != 0:
@@ -301,7 +300,7 @@ Hello,
     The system was unable to replicate snapshot %s to %s
 ======================
 %s
-            """ % (localfs, remote, msg), interval = timedelta(hours = 2), channel = 'autorepl')
+            """ % (localfs, remote, msg), interval=datetime.timedelta(hours=2), channel='autorepl')
         break
 
 os.remove('/var/run/autorepl.pid')
