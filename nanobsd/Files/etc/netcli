@@ -399,14 +399,10 @@ def reset_gui_login():
     User.objects.all().delete()
     admin = User.objects.create(username="admin", email="freenas@local.domain",
                                 is_superuser=True, is_staff=True)
-    admin.set_password("freenas")
+    admin.set_unusable_password()
     admin.save()
     print """
-    The login information for the WebGUI has been reseted:
-
-    login: admin
-    password: freenas
-
+    The login information for the WebGUI has been reseted.
 
     Press Enter to continue
     """
