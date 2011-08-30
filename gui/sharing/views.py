@@ -42,7 +42,7 @@ def windows(request):
     })
 
 def apple(request):
-    afp_share_list = models.AFP_Share.objects.order_by("-id").values()
+    afp_share_list = models.AFP_Share.objects.order_by("-id").all()
     return render(request, 'sharing/apple.html', {
         'afp_share_list': afp_share_list,
     })
