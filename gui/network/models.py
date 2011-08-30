@@ -55,7 +55,6 @@ class GlobalConfiguration(Model):
             default='',
             verbose_name=_("IPv6 Default Gateway"),
             )
-
     gc_nameserver1 = IPAddressField(
             blank=True,
             default='',

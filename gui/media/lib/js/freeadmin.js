@@ -408,7 +408,31 @@
     };
     /* end Menu */
 
-    toggleProtocol = function() {
+    loadHttp = function(url, trials) {
+        dojo.xhrGet({
+            url: url,
+            sync: true,
+            failOk: true,
+            handle: function(a1,a2) {
+                alert(a2);
+                if(trials > 0)
+                    setTimeout(function() { loadHttp(url, trials-1); }, 1000);
+            },
+        });
+    }
+
+    restartHttpd = function(newurl) {
+
+        dojo.xhrGet({
+            url: '/system/restart-httpd/',
+            sync: true,
+            failOk: true,
+            handle: function(a1,a2) {
+                alert(a2);
+                setTimeout(function() { loadHttp(newurl, 5); }, 1000);
+            },
+        });
+        /*
         var loc = new String(window.location);
         if(loc.search("http://") > -1) {
             loc = loc.replace('http://', 'https://');
@@ -416,6 +440,7 @@
             loc = loc.replace('https://', 'http://');
         }
         window.location=loc;
+        */
     }
 
     addAlias = function(a, name) {
@@ -547,6 +572,26 @@
             toset = false;
         }
         dijit.byId("id_ufspath").set('disabled', toset);
+
+    }
+
+    toggleDhcp = function(c) {
+
+        var toset;
+        var box = dijit.byId("id_int_dhcp");
+        toset = box.get("value")
+        dijit.byId("id_int_ipv4address").set('disabled', toset);
+        dijit.byId("id_int_v4netmaskbit").set('disabled', toset);
+
+    }
+
+    toggleIpv6auto = function(c) {
+
+        var toset;
+        var box = dijit.byId("id_int_ipv6auto");
+        toset = box.get("value")
+        dijit.byId("id_int_ipv6address").set('disabled', toset);
+        dijit.byId("id_int_v6netmaskbit").set('disabled', toset);
 
     }
 
