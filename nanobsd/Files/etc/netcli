@@ -723,21 +723,8 @@ def configure_dns():
         print "ok"
         return True
 
-def forkexec(path, *args):
-    pid = os.fork()
-    if pid < 0:
-        sys.exit(1)
-    elif pid == 0:
-        os.execvp(path, (path,) + tuple(args))
-        os._exit(1)
-    else:
-        (cpid, status) = os.waitpid(pid, 0)
-
-    return status
-
-
 def shell():
-    return forkexec("/bin/csh")
+    return os.system("/usr/bin/su -l root")
 
 
 def reboot():
