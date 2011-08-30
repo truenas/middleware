@@ -827,6 +827,8 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         if not self._isopen:
             syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.__default_init__: "
                 "unable to connect to a domain controller")
+        else: 
+            self.close()
 
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.__default_init__: leave")
 
