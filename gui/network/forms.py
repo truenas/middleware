@@ -38,18 +38,41 @@ from freenasUI import choices
 from dojango import forms
 
 class InterfacesForm(ModelForm):
-    class Meta:
-        model = models.Interfaces 
-
     int_interface = forms.ChoiceField(label = _("NIC"))
+
+    class Meta:
+        model = models.Interfaces
 
     def __init__(self, *args, **kwargs):
         super(InterfacesForm, self).__init__(*args, **kwargs)
         self.fields['int_interface'].choices = choices.NICChoices()
+        self.fields['int_dhcp'].widget.attrs['onChange'] = 'javascript:toggleDhcp(this);'
+        self.fields['int_ipv6auto'].widget.attrs['onChange'] = 'javascript:toggleIpv6auto(this);'
+        ins = kwargs.get("instance", None)
+        dhcp = False
+        ipv6auto = False
+        if self.data:
+            if self.data.get("int_dhcp"):
+                dhcp = True
+            if self.data.get("int_ipv6auto"):
+                ipv6auto = True
+        elif ins and ins.id:
+            if ins.int_dhcp:
+                dhcp = True
+            if ins.int_ipv6auto:
+                ipv6auto = True
+        if dhcp:
+            self.fields['int_ipv4address'].widget.attrs['disabled'] = 'disabled'
+            self.fields['int_v4netmaskbit'].widget.attrs['disabled'] = 'disabled'
+        if ipv6auto:
+            self.fields['int_ipv6address'].widget.attrs['disabled'] = 'disabled'
+            self.fields['int_v6netmaskbit'].widget.attrs['disabled'] = 'disabled'
 
     def clean(self):
         cdata = self.cleaned_data
 
+        dhcp = cdata.get("int_dhcp")
+        ipv6auto = cdata.get("int_ipv6auto")
         ipv4addr = cdata.get("int_ipv4address")
         ipv4net = cdata.get("int_v4netmaskbit")
         ipv6addr = cdata.get("int_ipv6address")
@@ -73,7 +96,9 @@ class InterfacesForm(ModelForm):
 
         if ipv6 and ipv4:
             self._errors['__all__'] = self.error_class([_("You have to choose between IPv4 or IPv6")])
-        if not ipv6 and not (ipv6addr or ipv6net) and not ipv4 and not (ipv4addr or ipv4net):
+        if not ipv6 and not (ipv6addr or ipv6net) \
+                and not ipv4 and not (ipv4addr or ipv4net) \
+                and not (dhcp or ipv6auto):
             self._errors['__all__'] = self.error_class([_("You must specify either an valid IPv4 or IPv6 with maskbit")])
 
         return cdata
