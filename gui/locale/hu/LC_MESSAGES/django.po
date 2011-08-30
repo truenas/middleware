@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-07-14 23:11+0200\n"
+"PO-Revision-Date: 2011-08-30 01:20+0200\n"
 "Last-Translator: Peter <petyuska@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hu\n"
@@ -255,7 +255,6 @@ msgid "Time Machine"
 msgstr "Időgép"
 
 #: choices.py:190
-#, fuzzy
 msgid "No case folding"
 msgstr "Nincs betűméret átalakítás"
 
@@ -641,7 +640,7 @@ msgstr "A %s felhasználó beépített, és nem törölhető!"
 
 #: account/nav.py:5 templates/menubar.html:43
 msgid "Account"
-msgstr ""
+msgstr "Fiók"
 
 #: account/nav.py:11 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:113
@@ -696,7 +695,7 @@ msgstr "A %s felhasználó érvénytelen."
 #: freeadmin/forms.py:124
 #, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr "A %s csoport nem létezik."
 
 #: freeadmin/forms.py:138
 msgid "The path must reside within a volume mount point"
@@ -708,7 +707,7 @@ msgid "Add %s"
 msgstr "Hozzáad %s"
 
 #: freeadmin/navtree.py:327
-#, fuzzy, python-format
+#, python-format
 msgid "View All %s"
 msgstr "Minden %s"
 
@@ -764,7 +763,6 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "Ki kell tölteni a 1. névszervert a 2. előtt!"
 
 #: network/forms.py:100
-#, fuzzy
 msgid "Parent Interface"
 msgstr "Szülő interfész"
 
@@ -953,23 +951,21 @@ msgstr "Állandó útvonal"
 
 #: network/models.py:288 templates/network/index.html:9
 msgid "Static Routes"
-msgstr ""
+msgstr "Statikus útvonalak"
 
 #: network/nav.py:6 templates/menubar.html:13
 msgid "Network"
-msgstr ""
+msgstr "Hálózat"
 
 #: network/nav.py:13 templates/network/index.html:13
 msgid "Network Summary"
 msgstr "Hálózat összegzés"
 
 #: network/nav.py:30
-#, fuzzy
 msgid "Create Link Aggregation"
 msgstr "Összefűzött kapcsolat létrehozása"
 
 #: network/nav.py:41
-#, fuzzy
 msgid "View All Link Aggregations"
 msgstr "Minden összefűzött kapcsolat mutatása"
 
@@ -1106,7 +1102,7 @@ msgstr ""
 #: services/forms.py:525 services/forms.py:572 services/forms.py:675
 #: services/forms.py:697 services/forms.py:718 services/forms.py:763
 msgid "The iSCSI service failed to reload."
-msgstr ""
+msgstr "A iSCSI szolgáltatást nem sikerült újratölteni."
 
 #: services/forms.py:373
 msgid "LUN already exists in the same target."
@@ -1135,6 +1131,7 @@ msgstr "Az értéknek %(start) és %(end) közöttinek kell lennie."
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
+"Ezt a mezőt kötelező kitölteni, ha a keresés módja CHAP vagy CHAP Mutual"
 
 #: services/forms.py:504 services/forms.py:534
 msgid "You need to specify a filepath, not a directory."
@@ -1519,7 +1516,7 @@ msgstr ""
 
 #: services/models.py:283
 msgid "MaxOutstandingR2T"
-msgstr ""
+msgstr "MaxOutstandingR2T"
 
 #: services/models.py:284
 msgid "iSCSI initial parameter (16 by default)."
@@ -1730,7 +1727,7 @@ msgstr "Engedélyezett hozzáférések"
 
 #: services/models.py:557
 msgid "Target Name"
-msgstr ""
+msgstr "Cél neve"
 
 #: services/models.py:558
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
@@ -2039,7 +2036,7 @@ msgstr "Az FTP kapcsolatkor ez az üdvözlő üzenet jelenik meg elsőként."
 
 #: services/models.py:849 services/models.py:855
 msgid "Use this option to override the file creation mask (077 by default)."
-msgstr ""
+msgstr "Ezzel az opcióval felülírható a fájl létrehozási maszk (alapból 077). "
 
 #: services/models.py:858
 msgid "Enable FXP"
@@ -2281,28 +2278,28 @@ msgstr "Adminisztrátor neve"
 
 #: services/models.py:1055
 msgid "Username of Domain Administrator Account"
-msgstr ""
+msgstr "Domain Adminisztrátor fiók felhasználóneve"
 
 #: services/models.py:1059
 msgid "Administrator Password"
-msgstr ""
+msgstr "Adminisztrátor jelszava"
 
 #: services/models.py:1060
 msgid "Password of Domain Administrator account."
-msgstr ""
+msgstr "Domain Adminisztrátor fiók jelszava."
 
 #: services/models.py:1064 services/models.py:1065
 #: templates/services/index.html:18
 msgid "Active Directory"
-msgstr ""
+msgstr "Active Directory"
 
 #: services/models.py:1076
 msgid "The name or IP address of the LDAP server"
-msgstr ""
+msgstr "A LDAP szerver címe vagy IP-je"
 
 #: services/models.py:1080
 msgid "Base DN"
-msgstr ""
+msgstr "Alap DN"
 
 #: services/models.py:1082
 msgid ""
@@ -2334,7 +2331,7 @@ msgstr ""
 
 #: services/models.py:1101
 msgid "Password Encryption"
-msgstr ""
+msgstr "Jelszótitkosítás"
 
 #: services/models.py:1102
 msgid "The password change protocol to use."
@@ -2342,7 +2339,7 @@ msgstr ""
 
 #: services/models.py:1106
 msgid "User Suffix"
-msgstr ""
+msgstr "Felhasználói utótag"
 
 #: services/models.py:1108
 msgid ""
@@ -2352,7 +2349,7 @@ msgstr ""
 
 #: services/models.py:1112
 msgid "Group Suffix"
-msgstr ""
+msgstr "Csoport utótag"
 
 #: services/models.py:1114
 msgid ""
@@ -2362,7 +2359,7 @@ msgstr ""
 
 #: services/models.py:1118
 msgid "Password Suffix"
-msgstr ""
+msgstr "Jelszó utótag"
 
 #: services/models.py:1120
 msgid ""
@@ -2372,7 +2369,7 @@ msgstr ""
 
 #: services/models.py:1124
 msgid "Machine Suffix"
-msgstr ""
+msgstr "Gép utótag"
 
 #: services/models.py:1126
 msgid ""
@@ -2382,7 +2379,7 @@ msgstr ""
 
 #: services/models.py:1130
 msgid "Turn on/off TLS"
-msgstr ""
+msgstr "TLS ki/be kapcsolása"
 
 #: services/models.py:1132
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
@@ -2398,7 +2395,7 @@ msgstr ""
 
 #: services/models.py:1141 sharing/models.py:85
 msgid "Auxiliary Parameters"
-msgstr ""
+msgstr "További paraméterek"
 
 #: services/models.py:1143
 msgid "These parameters are added to ldap.conf."
@@ -2407,7 +2404,7 @@ msgstr ""
 #: services/models.py:1147 services/models.py:1148
 #: templates/services/index.html:64
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/models.py:1158
 msgid "Alternate TCP port. Default is 873"
@@ -2420,11 +2417,11 @@ msgstr "Ezek a paraméterek az smb.conf fájl [Global] részéhez adódnak."
 
 #: services/models.py:1167 services/models.py:1168
 msgid "Rsyncd"
-msgstr ""
+msgstr "Rsyncd"
 
 #: services/models.py:1178
 msgid "Module name"
-msgstr ""
+msgstr "Module neve"
 
 #: services/models.py:1186
 msgid "Path to be shared"
@@ -2432,7 +2429,7 @@ msgstr ""
 
 #: services/models.py:1192
 msgid "Access Mode"
-msgstr ""
+msgstr "Hozzáférési mód"
 
 #: services/models.py:1193
 msgid "This controls the access a remote host has to this module"
@@ -2464,7 +2461,7 @@ msgstr ""
 
 #: services/models.py:1215
 msgid "Hosts allow"
-msgstr ""
+msgstr "Engedélyezett host-ok"
 
 #: services/models.py:1216
 msgid ""
@@ -2475,7 +2472,7 @@ msgstr ""
 
 #: services/models.py:1220
 msgid "Hosts deny"
-msgstr ""
+msgstr "Tiltott host-ok"
 
 #: services/models.py:1221
 msgid ""
@@ -2495,15 +2492,15 @@ msgstr "Ezek a paraméterek az smb.conf fájl [Global] részéhez adódnak."
 
 #: services/models.py:1231
 msgid "Rsync Module"
-msgstr ""
+msgstr "Rsync Modul"
 
 #: services/models.py:1232
 msgid "Rsync Modules"
-msgstr ""
+msgstr "Rsync Modulok"
 
 #: services/models.py:1243
 msgid "Check interval"
-msgstr ""
+msgstr "Ellenőrzés gyakorisága"
 
 #: services/models.py:1244
 msgid ""
@@ -2516,7 +2513,7 @@ msgstr ""
 
 #: services/models.py:1254
 msgid "Difference"
-msgstr ""
+msgstr "Különbség"
 
 #: services/models.py:1255
 msgid ""
@@ -2537,7 +2534,7 @@ msgstr ""
 
 #: services/models.py:1264
 msgid "Critical"
-msgstr ""
+msgstr "Kritikus"
 
 #: services/models.py:1268
 msgid "Email to report"
@@ -2550,7 +2547,7 @@ msgstr ""
 #: services/models.py:1274 services/models.py:1275
 #: templates/services/index.html:108
 msgid "S.M.A.R.T."
-msgstr ""
+msgstr "S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
@@ -2587,11 +2584,11 @@ msgstr ""
 
 #: services/nav.py:136
 msgid "ISCSI"
-msgstr ""
+msgstr "ISCSI"
 
 #: services/nav.py:147 system/models.py:430 templates/services/index.html:86
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/views.py:222
 msgid "The service could not be stopped."
@@ -2628,7 +2625,7 @@ msgstr ""
 #: templates/services/rsyncmod.html:5 templates/sharing/apple.html:13
 #: templates/sharing/windows.html:13
 msgid "Name"
-msgstr ""
+msgstr "Név"
 
 #: sharing/models.py:51
 msgid "Export Read Only"
@@ -2640,7 +2637,7 @@ msgstr ""
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
-msgstr ""
+msgstr "Engedélyek öröklése"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
@@ -2648,7 +2645,7 @@ msgstr ""
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr ""
+msgstr "Rejtett fájlok megjelenítése"
 
 #: sharing/models.py:64
 msgid "Guest Account"
@@ -2670,15 +2667,15 @@ msgstr ""
 
 #: sharing/models.py:68
 msgid "Allow Guest Access"
-msgstr ""
+msgstr "Vendég hozzáférés engedélyezése"
 
 #: sharing/models.py:70
 msgid "Only Allow Guest Access"
-msgstr ""
+msgstr "Csak vendég hozzáférés engedélyezése"
 
 #: sharing/models.py:74
 msgid "Hosts Allow"
-msgstr ""
+msgstr "Engedélyezett host-ok"
 
 #: sharing/models.py:75
 msgid ""
@@ -2689,7 +2686,7 @@ msgstr ""
 
 #: sharing/models.py:80
 msgid "Hosts Deny"
-msgstr ""
+msgstr "Tiltott host-ok"
 
 #: sharing/models.py:81
 msgid ""
@@ -2703,15 +2700,15 @@ msgstr ""
 
 #: sharing/models.py:87
 msgid "These parameters are added to [Share] section of smb.conf"
-msgstr ""
+msgstr "Ezek a paraméterek az smb.conf fájl [Share] részéhez adódnak."
 
 #: sharing/models.py:93
 msgid "Windows Share"
-msgstr ""
+msgstr "Windows megosztás"
 
 #: sharing/models.py:94
 msgid "Windows Shares"
-msgstr ""
+msgstr "Windows megosztások"
 
 #: sharing/models.py:105
 msgid ""
@@ -2726,11 +2723,11 @@ msgstr ""
 
 #: sharing/models.py:109
 msgid "Share Comment"
-msgstr ""
+msgstr "Megosztás megjegyzés"
 
 #: sharing/models.py:116
 msgid "Share password"
-msgstr ""
+msgstr "Megosztás jelszava"
 
 #: sharing/models.py:118
 msgid ""
@@ -2741,7 +2738,7 @@ msgstr ""
 
 #: sharing/models.py:122
 msgid "Share Character Set"
-msgstr ""
+msgstr "Megosztás karakter kódolás"
 
 #: sharing/models.py:124
 msgid ""
@@ -2751,7 +2748,7 @@ msgstr ""
 
 #: sharing/models.py:128
 msgid "Allow List"
-msgstr ""
+msgstr "Engedélyezett lista"
 
 #: sharing/models.py:130
 msgid ""
@@ -2762,7 +2759,7 @@ msgstr ""
 
 #: sharing/models.py:134
 msgid "Deny List"
-msgstr ""
+msgstr "Tiltott lista"
 
 #: sharing/models.py:136
 msgid ""
@@ -2772,7 +2769,7 @@ msgstr ""
 
 #: sharing/models.py:140
 msgid "Read-only Access"
-msgstr ""
+msgstr "Csak olvasási hozzáférés"
 
 #: sharing/models.py:142
 msgid ""
@@ -2813,7 +2810,7 @@ msgstr ""
 
 #: sharing/models.py:163
 msgid "Database Path"
-msgstr ""
+msgstr "Adatbázis útvonal"
 
 #: sharing/models.py:165
 msgid ""
@@ -2847,7 +2844,7 @@ msgstr ""
 
 #: sharing/models.py:176
 msgid "Windows File Names"
-msgstr ""
+msgstr "Windows fájlnevek"
 
 #: sharing/models.py:177
 msgid ""
@@ -2895,7 +2892,7 @@ msgstr ""
 
 #: sharing/models.py:196
 msgid "ProDOS"
-msgstr ""
+msgstr "ProDOS"
 
 #: sharing/models.py:197
 msgid "Provide compatibility with Apple II clients."
@@ -2921,11 +2918,11 @@ msgstr ""
 
 #: sharing/models.py:212
 msgid "Apple Share"
-msgstr ""
+msgstr "Apple megosztás"
 
 #: sharing/models.py:213
 msgid "Apple Shares"
-msgstr ""
+msgstr "Apple megosztások"
 
 #: sharing/models.py:230
 msgid "Authorized network or IP addresses"
@@ -2958,7 +2955,7 @@ msgstr ""
 
 #: sharing/models.py:243 system/models.py:409
 msgid "Quiet"
-msgstr ""
+msgstr "Néma"
 
 #: sharing/models.py:244
 msgid ""
@@ -2999,7 +2996,7 @@ msgstr ""
 
 #: sharing/models.py:283
 msgid "UNIX Share"
-msgstr ""
+msgstr "UNIX megosztás"
 
 #: sharing/models.py:284
 #, fuzzy
@@ -3008,12 +3005,12 @@ msgstr "UNIX karakterkészlet"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
-msgstr ""
+msgstr "Megosztás"
 
 #: storage/forms.py:154 storage/forms.py:348 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr ""
+msgstr "Kötetnév"
 
 #: storage/forms.py:158 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
@@ -3032,11 +3029,11 @@ msgstr ""
 #: storage/forms.py:238 system/forms.py:217 system/forms.py:223
 #: system/forms.py:228
 msgid "This field is required"
-msgstr ""
+msgstr "Szükséges mező"
 
 #: storage/forms.py:243 storage/forms.py:390 storage/forms.py:489
 msgid "You already have a volume with same name"
-msgstr ""
+msgstr "Már létezik ilyen nevü kötet"
 
 #: storage/forms.py:249
 msgid "\"log\" is a reserved word and thus cannot be used"
@@ -3068,52 +3065,54 @@ msgstr ""
 
 #: storage/forms.py:634
 msgid "Dataset Name"
-msgstr ""
+msgstr "Adatcsoport neve"
 
 #: storage/forms.py:635 storage/forms.py:687 storage/forms.py:744
 #: storage/forms.py:785
 msgid "Compression level"
-msgstr ""
+msgstr "Tömörítési szint"
 
 #: storage/forms.py:636 storage/forms.py:688 storage/forms.py:745
 msgid "Enable atime"
-msgstr ""
+msgstr "Atime engedélyezése"
 
 #: storage/forms.py:637 storage/forms.py:689 storage/forms.py:746
 msgid "Quota for this dataset"
-msgstr ""
+msgstr "Adatcsoport kvótája"
 
 #: storage/forms.py:637 storage/forms.py:638 storage/forms.py:689
 #: storage/forms.py:690 storage/forms.py:746 storage/forms.py:784
 msgid "0=Unlimited; example: 1g"
-msgstr ""
+msgstr "0=Korlátlan; például: 1g"
 
 #: storage/forms.py:638 storage/forms.py:690
 msgid "Quota for this dataset and all children"
-msgstr ""
+msgstr "Az adatcsoport és gyermekei kvótája"
 
 #: storage/forms.py:639 storage/forms.py:691 storage/forms.py:747
 msgid "Reserved space for this dataset"
-msgstr ""
+msgstr "Adatcsoport számára lefoglalt tárhely"
 
 #: storage/forms.py:639 storage/forms.py:640 storage/forms.py:691
 #: storage/forms.py:692 storage/forms.py:747
 msgid "0=None; example: 1g"
-msgstr ""
+msgstr "0=Semmi; például: 1g"
 
 #: storage/forms.py:640 storage/forms.py:692
 msgid "Reserved space for this dataset and all children"
-msgstr ""
+msgstr "Az adatcsoport és gyermekei számára lefoglalt tárhely"
 
 #: storage/forms.py:653
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
 msgstr ""
+"Az adatcsoport neve alfanumerikus karakterrel kell, hogy kezdődjön. "
+"Tartalmazhat még (-), (_), (:) és (.) karaktereket."
 
 #: storage/forms.py:660 storage/forms.py:805
 msgid "You already have a dataset with the same name"
-msgstr ""
+msgstr "Már létezik ilyen nevü adatcsoport"
 
 #: storage/forms.py:667 storage/forms.py:724 storage/forms.py:768
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
@@ -3141,19 +3140,19 @@ msgstr ""
 
 #: storage/forms.py:820
 msgid "Owner (user)"
-msgstr ""
+msgstr "Tulajdonos (felhasználó)"
 
 #: storage/forms.py:821
 msgid "Owner (group)"
-msgstr ""
+msgstr "Tulajdonos (csoport)"
 
 #: storage/forms.py:822
 msgid "Mode"
-msgstr ""
+msgstr "Mód"
 
 #: storage/forms.py:825
 msgid "Set permission recursively"
-msgstr ""
+msgstr "Jogok rekurzív kiosztása"
 
 #: storage/forms.py:875
 msgid "At least one day must be chosen"
@@ -3161,11 +3160,11 @@ msgstr ""
 
 #: storage/forms.py:880
 msgid "Recursive snapshot"
-msgstr ""
+msgstr "Rekurzív pillanatkép"
 
 #: storage/forms.py:881
 msgid "Snapshot Name"
-msgstr ""
+msgstr "Pillanatkép neve"
 
 #: storage/forms.py:888
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
@@ -3177,7 +3176,7 @@ msgstr ""
 
 #: storage/forms.py:902
 msgid "Snapshot"
-msgstr ""
+msgstr "Pillanatkép"
 
 #: storage/forms.py:903
 msgid "Clone Name (must be on same volume)"
@@ -3205,7 +3204,7 @@ msgstr ""
 
 #: storage/models.py:52 storage/models.py:78 templates/storage/volumes.html:70
 msgid "Volume"
-msgstr ""
+msgstr "Kötet"
 
 #: storage/models.py:79
 msgid "Volume this group belongs to"
@@ -3229,15 +3228,15 @@ msgstr ""
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
-msgstr ""
+msgstr "S.M.A.R.T. engedélyezése"
 
 #: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
-msgstr ""
+msgstr "S.M.A.R.T. extra opciók"
 
 #: storage/models.py:133
 msgid "Group Membership"
-msgstr ""
+msgstr "Csoporttagság"
 
 #: storage/models.py:134
 msgid "The disk group containing this disk"
@@ -3274,7 +3273,7 @@ msgstr ""
 
 #: storage/models.py:197 storage/models.py:209
 msgid "Error"
-msgstr ""
+msgstr "Hiba"
 
 #: storage/models.py:229
 msgid "Remote Replication Host"
@@ -3303,15 +3302,15 @@ msgstr ""
 
 #: storage/models.py:254
 msgid "Replication Task"
-msgstr ""
+msgstr "Replikációs feladat"
 
 #: storage/models.py:255
 msgid "Replication Tasks"
-msgstr ""
+msgstr "Replikációs feladatok"
 
 #: storage/models.py:270 system/models.py:384 templates/storage/tasks.html:23
 msgid "Recursive"
-msgstr ""
+msgstr "Rekurzív"
 
 #: storage/models.py:274
 msgid "Snapshot lifetime value"
@@ -3331,7 +3330,7 @@ msgstr ""
 
 #: storage/models.py:289
 msgid "End"
-msgstr ""
+msgstr "Vége"
 
 #: storage/models.py:290
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
@@ -3356,7 +3355,7 @@ msgstr ""
 
 #: storage/models.py:309
 msgid "Weekday"
-msgstr ""
+msgstr "Munkanap"
 
 #: storage/models.py:327
 msgid "Periodic Snapshot Task"
@@ -3368,7 +3367,7 @@ msgstr ""
 
 #: storage/nav.py:5 templates/menubar.html:18
 msgid "Storage"
-msgstr ""
+msgstr "Tárhely"
 
 #: storage/nav.py:24
 msgid "View All Snapshots"
@@ -3377,13 +3376,13 @@ msgstr ""
 #: storage/nav.py:34 templates/storage/replications.html:5
 #: templates/storage/volumes.html:6 templates/storage/volumes.html.py:11
 msgid "Create Volume"
-msgstr ""
+msgstr "Kötet létrehozása"
 
 #: storage/nav.py:45 templates/storage/autoimport.html:25
 #: templates/storage/import.html:43 templates/storage/volumes.html:42
 #: templates/storage/volumes.html.py:46
 msgid "Import Volume"
-msgstr ""
+msgstr "Kötet importálása"
 
 #: storage/nav.py:56 templates/storage/volumes.html:53
 #: templates/storage/volumes.html.py:57
@@ -3405,12 +3404,12 @@ msgstr ""
 
 #: storage/nav.py:100
 msgid "Volumes"
-msgstr ""
+msgstr "Kötetek"
 
 #: storage/nav.py:121 storage/nav.py:139 templates/storage/volumes.html:168
 #: templates/storage/volumes.html.py:172
 msgid "Change Permissions"
-msgstr ""
+msgstr "Jogosultságok modosítása"
 
 #: storage/views.py:88 storage/views.py:115 storage/views.py:137
 #, fuzzy
@@ -3419,7 +3418,7 @@ msgstr "%s sikeresen hozzáadva!"
 
 #: storage/views.py:217
 msgid "Unknown"
-msgstr ""
+msgstr "Ismeretlen"
 
 #: storage/views.py:283
 #, fuzzy
@@ -3469,7 +3468,7 @@ msgstr "%s sikeresen törölve!"
 
 #: storage/views.py:453
 msgid "Rollback successful."
-msgstr ""
+msgstr "Visszavonás sikeres."
 
 #: storage/views.py:470
 #, fuzzy
@@ -3509,7 +3508,7 @@ msgstr "%s sikeresen törölve!"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
-msgstr ""
+msgstr "Nyelv (szükséges az UI újratöltése)"
 
 #: system/forms.py:250
 msgid "Place to temporarily place firmware file"
@@ -3547,7 +3546,7 @@ msgstr ""
 
 #: system/forms.py:310 system/forms.py:338
 msgid "minute"
-msgstr ""
+msgstr "perc"
 
 #: system/forms.py:311 system/forms.py:339
 msgid "hour"
@@ -3563,39 +3562,39 @@ msgstr ""
 
 #: system/models.py:51
 msgid "Language"
-msgstr ""
+msgstr "Nyelv"
 
 #: system/models.py:57
 msgid "Timezone"
-msgstr ""
+msgstr "Időzóna"
 
 #: system/models.py:62
 msgid "NTP server 1"
-msgstr ""
+msgstr "NTP kiszolgáló 1"
 
 #: system/models.py:67
 msgid "NTP server 2"
-msgstr ""
+msgstr "NTP kiszolgáló 2"
 
 #: system/models.py:73
 msgid "NTP server 3"
-msgstr ""
+msgstr "NTP kiszolgáló 3"
 
 #: system/models.py:78 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
-msgstr ""
+msgstr "Beállítások"
 
 #: system/models.py:85
 msgid "Enable Console Menu"
-msgstr ""
+msgstr "Konzol menü engedélyezése"
 
 #: system/models.py:87
 msgid "Use Serial Console"
-msgstr ""
+msgstr "Soros konzol használata"
 
 #: system/models.py:89
 msgid "Enable screen saver"
-msgstr ""
+msgstr "Képernyőkímélő engedélyezése"
 
 #: system/models.py:91
 msgid "Automatically Check for New Firmware"
@@ -3636,7 +3635,7 @@ msgstr ""
 
 #: system/models.py:120 templates/system/settings.html:5
 msgid "Advanced"
-msgstr ""
+msgstr "Haladó"
 
 #: system/models.py:129
 msgid "From email"
@@ -3650,7 +3649,7 @@ msgstr ""
 
 #: system/models.py:135
 msgid "Outgoing mail server"
-msgstr ""
+msgstr "Kimenő levelek kiszolgálója"
 
 #: system/models.py:136
 msgid ""
@@ -3672,11 +3671,11 @@ msgstr ""
 
 #: system/models.py:150
 msgid "TLS/SSL"
-msgstr ""
+msgstr "TLS/SSL"
 
 #: system/models.py:153
 msgid "Use SMTP Authentication"
-msgstr ""
+msgstr "SMTP hitelesítés használata"
 
 #: system/models.py:161
 msgid "A username to authenticate to the remote server"
@@ -3688,11 +3687,11 @@ msgstr ""
 
 #: system/models.py:171 templates/system/settings.html:7
 msgid "Email"
-msgstr ""
+msgstr "E-mail"
 
 #: system/models.py:181
 msgid "Organization"
-msgstr ""
+msgstr "Szervezet"
 
 #: system/models.py:182
 msgid "Organization Name (eg, company)"
@@ -4934,7 +4933,7 @@ msgstr ""
 
 #: templates/storage/wizard.html:93
 msgid "Log"
-msgstr ""
+msgstr "Log"
 
 #: templates/storage/wizard.html:94
 msgid "Cache"
@@ -4942,7 +4941,7 @@ msgstr ""
 
 #: templates/storage/wizard.html:95
 msgid "Spare"
-msgstr ""
+msgstr "Tartalék"
 
 #: templates/storage/wizard.html:119
 msgid "Add Volume"
@@ -5071,11 +5070,11 @@ msgstr ""
 
 #: templates/system/settings.html:3
 msgid "General"
-msgstr ""
+msgstr "Általános"
 
 #: templates/system/settings.html:11
 msgid "Firmware Update"
-msgstr ""
+msgstr "Firmware frissíés"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
@@ -5083,23 +5082,23 @@ msgstr ""
 
 #: templates/system/settings.html:15
 msgid "Config"
-msgstr ""
+msgstr "Konfiguráció"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
-msgstr ""
+msgstr "OS verzió"
 
 #: templates/system/system_info.html:12
 msgid "Platform"
-msgstr ""
+msgstr "Platform"
 
 #: templates/system/system_info.html:16
 msgid "Memory"
-msgstr ""
+msgstr "Memória"
 
 #: templates/system/system_info.html:20
 msgid "System Time"
-msgstr ""
+msgstr "Rendszeridő"
 
 #: templates/system/system_info.html:24
 msgid "Uptime"
@@ -5107,11 +5106,11 @@ msgstr ""
 
 #: templates/system/system_info.html:28
 msgid "Load Average"
-msgstr ""
+msgstr "Átlagos terhelés"
 
 #: templates/system/system_info.html:32
 msgid "FreeNAS Build"
-msgstr ""
+msgstr "FreeNAS Build"
 
 #: templates/system/wizard.html:3
 #, python-format
