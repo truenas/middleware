@@ -137,7 +137,13 @@ for replication in replication_tasks:
     MNTLOCK.lock()
     syslog.syslog(syslog.LOG_DEBUG, "Checking dataset %s" % (localfs))
     zfsproc = pipeopen('/sbin/zfs list -Ht snapshot -o name,freenas:state -r -S creation -d 1 %s' % (localfs))
-    output = zfsproc.communicate()[0]
+    output, error = zfsproc.communicate()
+    if zfsproc.returncode:
+        syslog.syslog(syslog.LOG_ALERT,
+            'Could not determine last available snapshot for dataset %s: %s'
+            % (localfs, error, ))
+        MNTLOCK.unlock()
+        continue
     if output != '':
         snapshots_list = output.split('\n')
         found_latest = False
@@ -173,6 +179,7 @@ for replication in replication_tasks:
                         syslog.syslog(syslog.LOG_DEBUG, "Snapshot %s unwanted" % (snapshot))
                     else:
                         # This should be exception but skip for now.
+                        MNTLOCK.unlock()
                         continue
     MNTLOCK.unlock()
 
