@@ -118,11 +118,12 @@ def config_upload(request):
     else:
         FIRMWARE_DIR = '/var/tmp/firmware'
         if os.path.exists(FIRMWARE_DIR):
-            if os.path.exists(FIRMWARE_DIR + '/'):
+            if os.path.islink(FIRMWARE_DIR):
+                os.unlink(FIRMWARE_DIR)
+            if os.path.isdir(FIRMWARE_DIR):
                 shutil.rmtree(FIRMWARE_DIR + '/')
-            os.unlink(FIRMWARE_DIR)
-
-        os.symlink('/var/tmp', '/var/tmp/firmware')
+        os.mkdir(FIRMWARE_DIR)
+        os.chmod(FIRMWARE_DIR, 01777)
         form = forms.ConfigUploadForm()
 
         return render(request, 'system/config_upload.html', {
