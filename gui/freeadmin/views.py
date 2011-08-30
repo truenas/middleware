@@ -513,7 +513,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
                     #FIXME: temporary workaround to do not change all MF to accept this arg
                     try:
                         mf.done(events=events)
-                    except:
+                    except TypeError:
                         mf.done()
                 if request.GET.has_key("iframe"):
                     return HttpResponse("<html><body><textarea>"+simplejson.dumps({"error": False, "message": _("%s successfully updated.") % m._meta.verbose_name})+"</textarea></boby></html>")

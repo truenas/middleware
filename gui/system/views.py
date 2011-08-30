@@ -121,7 +121,7 @@ def config_upload(request):
             if os.path.exists(FIRMWARE_DIR + '/'):
                 shutil.rmtree(FIRMWARE_DIR + '/')
             os.unlink(FIRMWARE_DIR)
-            
+
         os.symlink('/var/tmp', '/var/tmp/firmware')
         form = forms.ConfigUploadForm()
 
@@ -309,3 +309,8 @@ def rsyncs(request):
     return render(request, 'system/rsync.html', {
         'rsyncs': syncs,
         })
+
+def restart_httpd(request):
+    """ restart httpd """
+    notifier().restart("http")
+    return HttpResponse('OK')
