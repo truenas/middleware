@@ -42,9 +42,6 @@ from ipaddr import IPAddress, IPNetwork, \
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 
 """ Shares """
-class MountPointForm(ModelForm):
-    class Meta:
-        model = models.MountPoint
 
 class CIFS_ShareForm(ModelForm):
     class Meta:
