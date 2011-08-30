@@ -166,7 +166,7 @@ class SettingsForm(ModelForm):
         if self.instance._original_stg_syslogserver != self.instance.stg_syslogserver:
             notifier().restart("syslogd")
         notifier().reload("timeservices")
-    def done(self, events=[]):
+    def done(self, events):
         if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol or \
             self.instance._original_stg_guiaddress != self.instance.stg_guiaddress or \
             self.instance._original_stg_guiport != self.instance.stg_guiport:
