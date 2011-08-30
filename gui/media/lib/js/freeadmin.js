@@ -408,19 +408,6 @@
     };
     /* end Menu */
 
-    loadHttp = function(url, trials) {
-        dojo.xhrGet({
-            url: url,
-            sync: true,
-            failOk: true,
-            handle: function(a1,a2) {
-                alert(a2);
-                if(trials > 0)
-                    setTimeout(function() { loadHttp(url, trials-1); }, 1000);
-            },
-        });
-    }
-
     restartHttpd = function(newurl) {
 
         dojo.xhrGet({
@@ -428,8 +415,9 @@
             sync: true,
             failOk: true,
             handle: function(a1,a2) {
-                alert(a2);
-                setTimeout(function() { loadHttp(newurl, 5); }, 1000);
+                setTimeout(function () {
+                    window.location = newurl;
+                }, 1500);
             },
         });
         /*

@@ -163,23 +163,26 @@ class SettingsForm(ModelForm):
         return val
     def save(self):
         super(SettingsForm, self).save()
-        if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol or \
-            self.instance._original_stg_guiaddress != self.instance.stg_guiaddress or \
-            self.instance._original_stg_guiport != self.instance.stg_guiport:
-            notifier().restart("http")
         if self.instance._original_stg_syslogserver != self.instance.stg_syslogserver:
             notifier().restart("syslogd")
         notifier().reload("timeservices")
-    def done(self, events):
-        if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol:
-            events.append("toggleProtocol()")
+    def done(self, events=[]):
+        if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol or \
+            self.instance._original_stg_guiaddress != self.instance.stg_guiaddress or \
+            self.instance._original_stg_guiport != self.instance.stg_guiport:
+            newurl = "%s://%s" % (self.instance.stg_guiprotocol,
+                                    self.instance.stg_guiaddress,
+                                    )
+            if self.instance.stg_guiport != '':
+                newurl += ":" + self.instance.stg_guiport
+            events.append("restartHttpd('%s')" % newurl)
 
 class AdvancedForm(ModelForm):
     class Meta:
         exclude = ('adv_zeroconfbonjour', 'adv_tuning', 'adv_firmwarevc', 'adv_systembeep')
         model = models.Advanced
     def __init__(self, *args, **kwargs):
-        super(AdvancedForm, self).__init__(*args, **kwargs) 
+        super(AdvancedForm, self).__init__(*args, **kwargs)
         self.instance._original_adv_motd = self.instance.adv_motd
         self.instance._original_adv_consolemenu = self.instance.adv_consolemenu
         self.instance._original_adv_powerdaemon = self.instance.adv_powerdaemon
