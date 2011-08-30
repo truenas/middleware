@@ -14,15 +14,12 @@ main()
     : ${FREENAS_ARCH=$(uname -p)}
     export FREENAS_ARCH
     export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
-    : ${REVISION=`svnversion ${root} | tr -d M`}
-    if [ ! -f ${NANO_OBJ}/"FreeNAS-8r${REVISION}-${FREENAS_ARCH}.full" ]; then
-	REVISION=${REVISION}M
-    fi
-    if [ ! -f ${NANO_OBJ}/"FreeNAS-8r${REVISION}-${FREENAS_ARCH}.full" ]; then
+    REVISION="8.0.1-RC1"
+    if [ ! -f ${NANO_OBJ}/"FreeNAS-${REVISION}-${FREENAS_ARCH}.full" ]; then
 	echo "Can't find image file for ${REVISION}, punting"
 	exit 1
     fi
-    export NANO_NAME="FreeNAS-8r${REVISION}-${FREENAS_ARCH}"
+    export NANO_NAME="FreeNAS-${REVISION}-${FREENAS_ARCH}"
     export NANO_IMGNAME="${NANO_NAME}.full"
 
     # Paths that may need altering on the build system
