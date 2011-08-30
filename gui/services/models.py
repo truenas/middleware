@@ -939,9 +939,9 @@ class TFTP(Model):
             )
     tftp_newfiles = models.BooleanField(
             verbose_name = _("Allow New Files"))
-    tftp_port = models.CharField(
-            max_length=120,
+    tftp_port = models.PositiveIntegerField(
             verbose_name = _("Port"),
+            validators=[MinValueValidator(1), MaxValueValidator(65535)],
             help_text = _("The port to listen to. The default is to listen to the tftp port specified in /etc/services.")
             )
     tftp_username = UserField(

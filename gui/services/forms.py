@@ -180,6 +180,9 @@ class FTPForm(ModelForm):
 class TFTPForm(ModelForm):
     class Meta:
         model = models.TFTP
+        widgets = {
+            'tftp_port': forms.widgets.TextInput(),
+        }
     def save(self):
         super(TFTPForm, self).save()
         started = notifier().reload("tftp")
