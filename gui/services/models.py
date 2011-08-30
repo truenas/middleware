@@ -814,26 +814,31 @@ class FTP(Model):
     ftp_port = models.PositiveIntegerField(
             default=21,
             verbose_name = _("Port"),
+            validators=[MinValueValidator(1), MaxValueValidator(65535)],
             help_text = _("Port to bind FTP server.")
             )
     ftp_clients = models.PositiveIntegerField(
             default=32,
             verbose_name = _("Clients"),
+            validators=[MinValueValidator(0), MaxValueValidator(10000)],
             help_text = _("Maximum number of simultaneous clients.")
             )
     ftp_ipconnections = models.PositiveIntegerField(
             default=0,
             verbose_name = _("Connections"),
+            validators=[MinValueValidator(0), MaxValueValidator(1000)],
             help_text = _("Maximum number of connections per IP address (0 = unlimited).")
             )
     ftp_loginattempt = models.PositiveIntegerField(
             default=3,
             verbose_name = _("Login Attempts"),
+            validators=[MinValueValidator(0), MaxValueValidator(1000)],
             help_text = _("Maximum number of allowed password attempts before disconnection.")
             )
     ftp_timeout = models.PositiveIntegerField(
             default=120,
             verbose_name = _("Timeout"),
+            validators=[MinValueValidator(0), MaxValueValidator(10000)],
             help_text = _("Maximum idle time in seconds.")
             )
     ftp_rootlogin = models.BooleanField(
@@ -881,6 +886,7 @@ class FTP(Model):
     ftp_passiveportsmin = models.PositiveIntegerField(
             default = 0,
             verbose_name = _("Minimum passive port"),
+            validators=[MinValueValidator(0), MaxValueValidator(10000)],
             help_text = _("The minimum port to allocate for PASV style data connections (0 = use any port).")
             )
     ftp_passiveportsmax = models.PositiveIntegerField(

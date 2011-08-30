@@ -118,6 +118,9 @@ class FTPForm(ModelForm):
     ftp_dirmask = UnixPermissionField(label=_('Directory Permission'))
     class Meta:
         model = models.FTP
+        widgets = {
+            'ftp_port': forms.widgets.TextInput(),
+        }
 
     def __init__(self, *args, **kwargs):
 
@@ -136,36 +139,6 @@ class FTPForm(ModelForm):
                 pass
 
         super(FTPForm, self).__init__(*args, **kwargs)
-
-    def clean_ftp_port(self):
-        port = self.cleaned_data['ftp_port']
-        if port < 0 or port > 65535:
-            raise forms.ValidationError(_("This value must be between 0 and 65535, inclusive."))
-        return port
-
-    def clean_ftp_clients(self):
-        clients = self.cleaned_data['ftp_clients']
-        if clients < 0 or clients > 10000:
-            raise forms.ValidationError(_("This value must be between 0 and 10000, inclusive."))
-        return clients
-
-    def clean_ftp_ipconnections(self):
-        conn = self.cleaned_data['ftp_ipconnections']
-        if conn < 0 or conn > 1000:
-            raise forms.ValidationError(_("This value must be between 0 and 1000, inclusive."))
-        return conn
-
-    def clean_ftp_loginattempt(self):
-        attempt = self.cleaned_data['ftp_loginattempt']
-        if attempt < 0 or attempt > 1000:
-            raise forms.ValidationError(_("This value must be between 0 and 1000, inclusive."))
-        return attempt
-
-    def clean_ftp_timeout(self):
-        timeout = self.cleaned_data['ftp_timeout']
-        if timeout < 0 or timeout > 10000:
-            raise forms.ValidationError(_("This value must be between 0 and 10000, inclusive."))
-        return timeout
 
     def clean_ftp_passiveportsmin(self):
         ports = self.cleaned_data['ftp_passiveportsmin']
