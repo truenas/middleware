@@ -221,6 +221,9 @@ class SSHForm(ModelForm):
             raise ServiceFailed("ssh", _("The SSH service failed to reload."))
     class Meta:
         model = models.SSH
+        widgets = {
+            'ssh_tcpport': forms.widgets.TextInput(),
+        }
 
 class RsyncdForm(ModelForm):
     def save(self):

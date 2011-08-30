@@ -28,6 +28,8 @@
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.core.validators import MinValueValidator, MaxValueValidator
+
 
 from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField, PathField
@@ -963,10 +965,10 @@ class TFTP(Model):
         icon_model = "TFTPIcon"
 
 class SSH(Model):
-    ssh_tcpport = models.CharField(
-            max_length=120,
+    ssh_tcpport = models.PositiveIntegerField(
             verbose_name = _("TCP Port"),
-            help_text = _("Alternate TCP port. Default is 22")
+            validators=[MinValueValidator(1), MaxValueValidator(65535)],
+            help_text = _("Alternate TCP port. Default is 22"),
             )
     ssh_rootlogin = models.BooleanField(
             verbose_name = _("Login as Root with password"),
