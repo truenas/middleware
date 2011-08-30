@@ -68,7 +68,9 @@ class SharedFunc():
 class FilteredSelectJSON(forms.widgets.ComboBox):
 #class FilteredSelectJSON(forms.widgets.FilteringSelect):
 
-    def __init__(self, attrs=None, choices=(), url=[]):
+    def __init__(self, attrs=None, choices=(), url=None):
+        if url is None:
+            url = []
         self.url = url
         super(FilteredSelectJSON, self).__init__(attrs, choices)
 
