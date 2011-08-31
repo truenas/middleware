@@ -40,7 +40,7 @@ EOF
 generate_upsmon()
 {
     local IFS=\|
-    local f="ups_identifier ups_shutdown ups_shutdowntimer ups_emailnotify ups_toemail ups_subject"
+    local f="ups_identifier ups_shutdown ups_shutdowntimer ups_emailnotify ups_toemail ups_subject ups_masterpwd"
     eval local $f
     local cmd sf cfg
     sf=$(echo $f | sed -e 's/ /, /g')
@@ -65,7 +65,7 @@ EOF
         chmod +x /var/tmp/nut_notify.sh
 	    cat <<EOF
 FINALDELAY ${ups_shutdowntimer}
-MONITOR ${ups_identifier} 1 upsmon fixmepass master
+MONITOR ${ups_identifier} 1 upsmon ${ups_masterpwd} master
 NOTIFYCMD "/var/tmp/nut_notify.sh"
 NOTIFYFLAG ONBATT SYSLOG+WALL+EXEC
 NOTIFYFLAG LOWBATT SYSLOG+WALL+EXEC
@@ -78,11 +78,17 @@ EOF
 generate_upsdusers()
 {
 
+    local passwd=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+    "SELECT ups_masterpwd FROM services_ups ORDER BY -id LIMIT 1")
 	    cat <<EOF
 [upsmon]
-    password = fixmepass
+    password = ${passwd}
     upsmon master
+
 EOF
+
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+    "SELECT ups_extrausers FROM services_ups ORDER BY -id LIMIT 1"
 
 }
 
