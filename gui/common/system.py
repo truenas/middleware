@@ -62,7 +62,12 @@ def get_freenas_login_version():
     if fd:
         version = fd.read().strip().split("-")
         fd.close()
-        return version[1]
+        # FreeNAS-8.0.1-RC1-amd64
+        if len(version) == 4:
+            return "-".join(version[1:3])
+        # FreeNAS-8r7200-amd64
+        else:
+            return version[1]
 
     return version
 
