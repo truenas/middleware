@@ -288,7 +288,6 @@ EOF
 			    winbind nested groups = yes
 			    winbind use default domain = no
 			    winbind refresh tickets = yes
-			    winbind separator = +
 			    allow trusted domains = yes
 
 			    template shell = /bin/sh
