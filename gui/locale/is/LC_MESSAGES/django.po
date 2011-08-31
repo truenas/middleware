@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-07-20 22:57+0200\n"
+"PO-Revision-Date: 2011-08-30 21:27+0200\n"
 "Last-Translator: Chipcius <andri@chipcy.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: is\n"
@@ -19,7 +19,6 @@ msgstr ""
 "X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
-#, fuzzy
 msgid "Plain"
 msgstr "Einfalt"
 
@@ -236,7 +235,6 @@ msgid "Normal"
 msgstr "Venjulegt"
 
 #: choices.py:181
-#, fuzzy
 msgid "Full"
 msgstr "Fullt"
 
@@ -663,11 +661,11 @@ msgstr "Skoða alla hópa"
 
 #: account/views.py:78
 msgid "Password successfully updated."
-msgstr ""
+msgstr "Lykilorðið hefur verið uppfært."
 
 #: account/views.py:92
 msgid "Admin user successfully updated."
-msgstr ""
+msgstr "Admin notandinn hefur verið uppfærður."
 
 #: account/views.py:102
 msgid "Users successfully updated."
@@ -688,7 +686,7 @@ msgstr ""
 #: freeadmin/forms.py:95
 #, python-format
 msgid "The user %s is not valid."
-msgstr ""
+msgstr "Notandinn %s er ekki gildur"
 
 #: freeadmin/forms.py:124
 #, python-format
@@ -697,7 +695,7 @@ msgstr ""
 
 #: freeadmin/forms.py:138
 msgid "The path must reside within a volume mount point"
-msgstr ""
+msgstr "Slóðinn verður að vera innan flæmisins sem þú ert að tengjast"
 
 #: freeadmin/navtree.py:315
 #, python-format
@@ -733,7 +731,7 @@ msgstr "%s hefur verið uppfært."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr ""
+msgstr "Ekki heppnaðist að kveikja á þjónustu."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -742,7 +740,7 @@ msgstr "%s hefur verið eytt."
 
 #: network/forms.py:44 network/models.py:95
 msgid "NIC"
-msgstr ""
+msgstr "Netkort"
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -761,16 +759,18 @@ msgid "Must fill out nameserver 1 before filling out nameserver 2"
 msgstr "Verður að skrifa í nafnþjón 1 áður en þú skrifar í nafnþjón 2"
 
 #: network/forms.py:100
+#, fuzzy
 msgid "Parent Interface"
-msgstr ""
+msgstr "Tengi foreldris"
 
 #: network/forms.py:109
 msgid "The name must be vlanXX where XX is a integer"
-msgstr ""
+msgstr "Þú verður að nota vlanXX þar sem XX er heil-tala"
 
 #: network/forms.py:115
+#, fuzzy
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr ""
+msgstr "VLAN Tögg eru á bilinu 1 - 4095"
 
 #: network/forms.py:133
 msgid "Physical NICs in the LAGG"
@@ -787,8 +787,9 @@ msgid "Hostname"
 msgstr ""
 
 #: network/models.py:47
+#, fuzzy
 msgid "Domain"
-msgstr ""
+msgstr "Domain"
 
 #: network/models.py:53
 msgid "IPv4 Default Gateway"
@@ -812,50 +813,54 @@ msgstr "Nafnaþjónn 3"
 
 #: network/models.py:83 network/models.py:84 network/nav.py:21
 #: templates/network/index.html:3
+#, fuzzy
 msgid "Global Configuration"
-msgstr ""
+msgstr "Global Stillingar"
 
 #: network/models.py:96
 msgid "Pick your NIC"
-msgstr ""
+msgstr "Veldu Netkort"
 
 #: network/models.py:101
+#, fuzzy
 msgid "Interface Name"
-msgstr ""
+msgstr "Nafn Tengis"
 
 #: network/models.py:102
 msgid "Name your NIC."
-msgstr ""
+msgstr "Skýrðu Netkortið þitt."
 
 #: network/models.py:106 templates/network/interface.html:7
 msgid "DHCP"
-msgstr ""
+msgstr "DHCP"
 
 #: network/models.py:107
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
+"Þegar virkjað, nota DHCP til að fá IPv4 vistfang og sjáflgefna gátt, o.fl."
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr "IPv4 vistfang"
+msgstr "IPv4 Vistfang"
 
 #: network/models.py:121
+#, fuzzy
 msgid "IPv4 Netmask"
 msgstr "IPv4 netmöskvi"
 
 #: network/models.py:126
 msgid "Auto configure IPv6"
-msgstr "Sjálfvirkt stilla IPv6"
+msgstr "Stilla Sjálfvirkt IPv6"
 
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr ""
+msgstr "Þegar virkjað, stilla sjálfvirkt IPv6 vistfang gegnum rtsol(8)."
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr "IPv6 vistfang"
+msgstr "IPv6 Vistfang"
 
 #: network/models.py:141
 msgid "IPv6 Netmask"
@@ -869,29 +874,29 @@ msgstr "Valmöguleikar"
 #: network/models.py:157 network/models.py:216
 #: templates/network/interface.html:5
 msgid "Interface"
-msgstr ""
+msgstr "Tengi"
 
 #: network/models.py:158 templates/network/index.html:5
 msgid "Interfaces"
-msgstr ""
+msgstr "Tengi"
 
 #: network/models.py:172 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
 msgid "Virtual Interface"
-msgstr ""
+msgstr "Sýndar Tengi"
 
 #: network/models.py:173
 msgid "Interface names must be vlanXX where XX is a number"
-msgstr ""
+msgstr "Nafn Tengja verður að vera vlanXX þar sem XX er tala"
 
 #: network/models.py:178 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr ""
+msgstr "Vélbúnaðar Tengi"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
-msgstr ""
+msgstr "VLAN Tagg"
 
 #: network/models.py:185 network/models.py:282 services/models.py:74
 #: services/models.py:766 storage/models.py:95
@@ -904,44 +909,47 @@ msgid "VLAN"
 msgstr "VLAN"
 
 #: network/models.py:200
+#, fuzzy
 msgid "VLANs"
-msgstr ""
+msgstr "VLAN(fleirtala)"
 
 #: network/models.py:220
 msgid "Protocol Type"
-msgstr ""
+msgstr "Gerð Reglu"
 
 #: network/models.py:241
 msgid "LAGG Interface group"
-msgstr ""
+msgstr "LAGG Tengja hópur"
 
 #: network/models.py:244
 msgid "LAGG Priority Number"
-msgstr ""
+msgstr "LAGG Forgangs Númer"
 
 #: network/models.py:249
 msgid "Physical NIC"
-msgstr ""
+msgstr "Vélbúnaðar Netkort"
 
 #: network/models.py:264 templates/network/index.html:7
 msgid "Link Aggregation"
 msgstr ""
 
 #: network/models.py:265 network/nav.py:53
+#, fuzzy
 msgid "Link Aggregations"
-msgstr ""
+msgstr "Link Aggregations"
 
 #: network/models.py:274
+#, fuzzy
 msgid "Destination network"
-msgstr ""
+msgstr "Netkerfi Áfangastaðs"
 
 #: network/models.py:278 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr ""
+msgstr "Gátt"
 
 #: network/models.py:287
 msgid "Static Route"
-msgstr ""
+msgstr "Fastar Slóðir"
 
 #: network/models.py:288 templates/network/index.html:9
 msgid "Static Routes"
@@ -953,15 +961,17 @@ msgstr ""
 
 #: network/nav.py:13 templates/network/index.html:13
 msgid "Network Summary"
-msgstr ""
+msgstr "Samantekt Netkerfis"
 
 #: network/nav.py:30
+#, fuzzy
 msgid "Create Link Aggregation"
-msgstr ""
+msgstr "Skapa Link Aggregation"
 
 #: network/nav.py:41
+#, fuzzy
 msgid "View All Link Aggregations"
-msgstr ""
+msgstr "Skoða alla Link Aggregations"
 
 #: network/views.py:180
 msgid "LAGG successfully added"
@@ -969,11 +979,11 @@ msgstr ""
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr ""
+msgstr "Þennan reit þarf að fylla til að \"Virkja skoðun á heimamöppum\""
 
 #: services/forms.py:73
 msgid "This field is required for \"Home directories\"."
-msgstr ""
+msgstr "Þessi reitur er skilyrði fyrir \"Heima möppur\"."
 
 #: services/forms.py:90
 msgid "The AFP service failed to reload."
@@ -993,19 +1003,19 @@ msgstr "Möppuréttindi"
 
 #: services/forms.py:129
 msgid "This value must be between 0 and 65535, inclusive."
-msgstr ""
+msgstr "Þetta gildi þarf að vera á bilinu 0 til 65525"
 
 #: services/forms.py:135 services/forms.py:153
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr ""
+msgstr "Þetta gildi þarf að vera á bilinu 0 til 10000"
 
 #: services/forms.py:141 services/forms.py:147
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr ""
+msgstr "Þetta gildi þarf að vera á bilinu 0 til 1000"
 
 #: services/forms.py:159
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr ""
+msgstr "Þetta gildi þarf að vera á bilinu 1024 til 65535, 0 er sjálfgefið"
 
 #: services/forms.py:165
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
