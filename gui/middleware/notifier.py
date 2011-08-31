@@ -1174,12 +1174,14 @@ class notifier:
             uid = stat_info.st_uid
             gid = stat_info.st_gid
             try:
-                user = pwd.getpwuid(uid)[0]
+                pw = pwd.getpwuid(uid)
+                user = pw.pw_name
             except KeyError:
                 user = 'root'
                 self.__system("/usr/bin/chown %s %s" % (user, path))
             try:
-                group = grp.getgrgid(gid)[0]
+                gr = grp.getgrgid(gid)
+                group = gr.gr_name
             except KeyError:
                 group = 'wheel'
                 self.__system("/usr/bin/chown :%s %s" % (group, path))
