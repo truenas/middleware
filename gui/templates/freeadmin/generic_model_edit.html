@@ -36,6 +36,7 @@
                 {% trans "OK" %}
                 {% endif %}
                 <script type="dojo/method" event="onClick" args="evt">
+                    dojo.attr(this.domNode, "oldlabel", this.get('label'));
                     this.set('label', '{% trans "Please wait..."|force_escape %}');
                 </script>
             </button>

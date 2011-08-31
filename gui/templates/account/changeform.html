@@ -22,5 +22,11 @@
          </tr>
         {% endfor %}
      </table>
-     <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit" class="submitform">{% trans "Change Admin User" %}</button>
+     <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit" class="submitform">
+        {% trans "Change Admin User" %}
+         <script type="dojo/method" event="onClick" args="evt">
+             dojo.attr(this.domNode, "oldlabel", this.get('label'));
+             this.set('label', '{% trans "Please wait..."|force_escape %}');
+         </script>
+     </button>
  </form>

@@ -683,7 +683,12 @@
                                    dijit.getEnclosingWidget(inputElem).set('disabled',false);
                                }
                             );
-                            dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','Save');
+                            var sbtn = dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]);
+                            if( dojo.hasAttr(sbtn.domNode, "oldlabel")) {
+                                sbtn.set('label',dojo.attr(sbtn.domNode, "oldlabel"));
+                            } else {
+                                sbtn.set('label', 'Save');
+                            }
                         }
 
                         if(json.error == false){
@@ -733,7 +738,12 @@
                                    dijit.getEnclosingWidget(inputElem).set('disabled',false);
                                }
                             );
-                            dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]).set('label','Save');
+                            var sbtn = dijit.getEnclosingWidget(dojo.query('input[type=submit]', item.domNode)[0]);
+                            if( dojo.hasAttr(sbtn.domNode, "oldlabel")) {
+                                sbtn.set('label',dojo.attr(sbtn.domNode, "oldlabel"));
+                            } else {
+                                sbtn.set('label', 'Save');
+                            }
                         }
                         if(json.error == false){
                             dojo.query('ul[class=errorlist]', rnode.domNode).forEach(function(i) { i.parentNode.removeChild(i); });
