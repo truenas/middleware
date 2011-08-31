@@ -43,6 +43,7 @@ import re
 import glob
 import grp
 import pwd
+import shutil
 import signal
 import time
 import sys
@@ -1489,30 +1490,27 @@ class notifier:
         self.__system("/usr/local/bin/python manage.py createadmin")
         os.chdir(save_path)
 
-    def config_upload(self, f):
-        import sqlite3
-        import tempfile
-        sqlite = f.read()
-        f = tempfile.NamedTemporaryFile()
-        f.write(sqlite)
-        f.flush()
+    def config_upload(self, uploaded_file):
+        conn = None
         try:
-            conn = sqlite3.connect(f.name)
+            conn = sqlite3.connect(uploaded_file)
             cur = conn.cursor()
             cur.execute("""SELECT name FROM sqlite_master
-            WHERE type='table'
-            ORDER BY name;""")
+        WHERE type='table'
+        ORDER BY name;""")
         except sqlite3.DatabaseError:
-            f.close()
             return False
-        else:
-            db = open('/data/uploaded.db', 'w')
-            db.write(sqlite)
-            db.close()
-            f.close()
-            # Now we must run the migrate operation in the case the db is older
-            self.__system("touch /data/need-update")
-            return True
+        finally:
+            if conn:
+                conn.close()
+
+        # XXX: this really should be moved somewhere else to make the
+        # validation / commit process cleaner and clearer.
+        shutil.move(uploaded_file, '/data/uploaded.db')
+        # Now we must run the migrate operation in the case the db is older
+        open('/data/need-update', 'w+').close()
+
+        return True
 
     def zfs_get_options(self, name):
         data = {}
