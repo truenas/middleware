@@ -45,9 +45,11 @@ import grp
 import pwd
 import shutil
 import signal
-import time
-import sys
 from subprocess import Popen, PIPE
+import sys
+import sqlite3
+import tempfile
+import time
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
@@ -536,7 +538,6 @@ class notifier:
             dbname = DATABASES['default']['NAME']
         except:
             dbname = '/data/freenas-v1.db'
-        import sqlite3
 
         conn = sqlite3.connect(dbname)
         c = conn.cursor()
@@ -1823,13 +1824,12 @@ def usage():
 
 # When running as standard-alone script
 if __name__ == '__main__':
-    from sys import argv
-    if len(argv) < 3:
+    if len(sys.argv) < 3:
         usage()
     else:
         n = notifier()
-        f = getattr(n, argv[1], None)
+        f = getattr(n, sys.argv[1], None)
         if f is None:
-            sys.stderr.write("Unknown action: %s\n" % argv[1])
+            sys.stderr.write("Unknown action: %s\n" % sys.argv[1])
             usage()
-        print f(*argv[2:])
+        print f(*sys.argv[2:])
