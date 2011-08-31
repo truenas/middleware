@@ -766,7 +766,7 @@ class UPS(Model):
             help_text = _("The serial or USB port where your UPS is connected.")
             )
     ups_options = models.TextField(
-            verbose_name = _("Auxiliary parameters (upsmon.conf)"),
+            verbose_name = _("Auxiliary parameters (ups.conf)"),
             blank=True,
             help_text = _("Additional parameters to the hardware-specific part of the driver.")
             )
@@ -785,6 +785,15 @@ class UPS(Model):
             max_length=120,
             verbose_name = _("Shutdown timer"),
             help_text = _("The time in seconds until shutdown is initiated. If the UPS happens to come back before the time is up the shutdown is canceled.")
+            )
+    ups_masterpwd = models.CharField(
+            max_length=30,
+            default="fixmepass",
+            verbose_name=_("UPS Master User Password"),
+            )
+    ups_extrausers = models.TextField(
+            blank=True,
+            verbose_name=_("Extra users (upsd.users)"),
             )
     ups_rmonitor = models.BooleanField(
             verbose_name = _("Remote Monitor"))
