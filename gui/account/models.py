@@ -68,7 +68,6 @@ class bsdGroups(Model):
 
 class bsdUsers(Model):
     bsdusr_uid = models.IntegerField(
-            max_length=10,
             unique=True,
             verbose_name=_("User ID")
             )

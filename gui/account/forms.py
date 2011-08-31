@@ -245,6 +245,15 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
         self.fields['bsdusr_group2'].choices = (('-----', '-----'),) + tuple([x for x in self.fields['bsdusr_group2'].choices][1:])
         self.fields['bsdusr_group2'].required = False
 
+    def clean_bsdusr_uid(self):
+        bsdusr_uid = self.cleaned_data["bsdusr_uid"]
+        users = models.bsdUsers.objects.filter(bsdusr_uid=bsdusr_uid)
+        if self.instance.id is not None:
+            users = users.exclude(id=self.instance.id)
+        if users.exists():
+            raise forms.ValidationError(_("An user with that uid already exists."))
+        return bsdusr_uid
+
     def clean_bsdusr_username(self):
         if self.instance.id is None:
             bsdusr_username = self.cleaned_data["bsdusr_username"]
@@ -253,7 +262,7 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
                 models.bsdUsers.objects.get(bsdusr_username=bsdusr_username)
             except models.bsdUsers.DoesNotExist:
                 return bsdusr_username
-            raise forms.ValidationError(_("A user with that username already exists."))
+            raise forms.ValidationError(_("An user with that username already exists."))
         else:
             return self.instance.bsdusr_username
 
@@ -368,10 +377,13 @@ class bsdUserChangeForm(ModelForm, SharedFunc):
                                      initial=u'/bin/csh',
                                      choices=()
                                      )
-  
+
     class Meta:
         model = models.bsdUsers
         exclude = ('bsdusr_unixhash', 'bsdusr_smbhash', 'bsdusr_builtin',)
+        widgets = {
+                'bsdusr_uid': forms.widgets.ValidationTextInput(),
+                }
 
     def __init__(self, *args, **kwargs):
         super(bsdUserChangeForm, self).__init__(*args, **kwargs)
