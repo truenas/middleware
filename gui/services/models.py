@@ -766,7 +766,7 @@ class UPS(Model):
             help_text = _("The serial or USB port where your UPS is connected.")
             )
     ups_options = models.TextField(
-            verbose_name = _("Auxiliary parameters"),
+            verbose_name = _("Auxiliary parameters (upsmon.conf)"),
             blank=True,
             help_text = _("Additional parameters to the hardware-specific part of the driver.")
             )

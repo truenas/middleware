@@ -295,6 +295,15 @@ class UPSForm(ModelForm):
         widgets = {
             'ups_driver': forms.widgets.FilteringSelect(),
         }
+    def __init__(self, *args, **kwargs):
+        import glob
+        super(UPSForm, self).__init__(*args, **kwargs)
+        ports = glob.glob('/dev/cua*') + glob.glob('/dev/ugen*')
+        self.fields['ups_port'] = forms.ChoiceField(label=_("Port"))
+        self.fields['ups_port'].widget = forms.widgets.ComboBox()
+        self.fields['ups_port'].choices = [(port,port) for port in ports]
+        if self.data and self.data.get("ups_port"):
+            self.fields['ups_port'].choices.insert(0, ( self.data.get("ups_port"), self.data.get("ups_port")))
     def clean_ups_toemail(self):
         email = self.cleaned_data.get("ups_toemail")
         if email:
