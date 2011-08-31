@@ -466,7 +466,7 @@ class FreeNAS_LDAP_Directory(object):
             self._isopen = False
             syslog(LOG_DEBUG, "FreeNAS_LDAP_Directory.close: connection closed")
 
-    def _search(self, basedn, scope=ldap.SCOPE_SUBTREE, filter=None, attributes=None,
+    def _search(self, basedn="", scope=ldap.SCOPE_SUBTREE, filter=None, attributes=None,
         attrsonly=0, serverctrls=None, clientctrls=None, timeout=-1, sizelimit=0):
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Directory._search: enter")
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Directory._search: basedn = '%s', filter = '%s'" % (basedn, filter))
@@ -1185,6 +1185,14 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_groups: leave")
         return groups
 
+    def get_user_count(self):
+        users = self.get_users()
+        return len(users)
+
+    def get_group_count(self):
+        groups = self.get_groups()
+        return len(groups)
+
 
 class FreeNAS_ActiveDirectory(FreeNAS_ActiveDirectory_Base):
     def __init__(self, **kwargs):
@@ -1193,6 +1201,7 @@ class FreeNAS_ActiveDirectory(FreeNAS_ActiveDirectory_Base):
         super(FreeNAS_ActiveDirectory, self).__init__(**kwargs)
 
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory.__init__: leave")
+
 
 
 class FreeNAS_LDAP_Users(FreeNAS_LDAP):
@@ -1242,12 +1251,12 @@ class FreeNAS_LDAP_Users(FreeNAS_LDAP):
 
         self.__groups = {}
         for g in ldap_groups:
-            CN = g[0]
+            CN = str(g[0])
             if write_cache:
                 self.__dgcache[CN] = g
 
             g = g[1]
-            cn = g['cn'][0]
+            cn = str(g['cn'][0])
             try:
                 gr = grp.getgrnam(cn)
 
@@ -1288,12 +1297,12 @@ class FreeNAS_LDAP_Users(FreeNAS_LDAP):
 
         self.__users = [] 
         for u in ldap_users:
-            CN = u[0]
+            CN = str(u[0])
             if write_cache:
                 self.__ducache[CN] = u
 
             u = u[1]
-            uid = u['uid'][0]
+            uid = str(u['uid'][0])
             try:
                 pw = pwd.getpwnam(uid)
 
@@ -1375,19 +1384,19 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
                 write_cache = True
  
             for g in ad_groups:
-                CN = g[0]
+                CN = str(g[0])
                 if write_cache:
                     self.__dgcache[n][CN] = g
          
                 g = g[1]
-                sAMAccountName = "%s%s%s" % (n, FREENAS_AD_SEPARATOR, g['sAMAccountName'][0])
+                sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, g['sAMAccountName'][0]))
                 try:
                     gr = grp.getgrnam(sAMAccountName)
 
                 except:
                     continue
 
-                self._groups[gr.gr_name] = gr
+                self._groups[str(gr.gr_name)] = gr
                 if write_cache:
                     self.__gcache[sAMAccountName] = gr
 
@@ -1430,13 +1439,13 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
                 write_cache = True
 
             for u in ad_users:
-                CN = u[0]
+                CN = str(u[0])
 
                 if write_cache:
                     self.__ducache[n][CN] = u
 
                 u = u[1]
-                sAMAccountName = "%s%s%s" % (n, FREENAS_AD_SEPARATOR, u['sAMAccountName'][0])
+                sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, u['sAMAccountName'][0]))
 
                 try:
                     pw = pwd.getpwnam(sAMAccountName)
@@ -1512,12 +1521,12 @@ class FreeNAS_LDAP_Groups(FreeNAS_LDAP):
         
         groups = []
         for g in ldap_groups:
-            CN = g[0]
+            CN = str(g[0])
             if write_cache:
                 self.__dgcache[CN] = g
 
             g = g[1]
-            cn = g['cn'][0]
+            cn = str(g['cn'][0])
             try:
                 gr = grp.getgrnam(cn)
 
@@ -1597,7 +1606,7 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
 
             for g in ad_groups:
                 g = g[1]
-                sAMAccountName = "%s%s%s" % (n, FREENAS_AD_SEPARATOR, g['sAMAccountName'][0])
+                sAMAccountName = str("%s%s%s" % (n, FREENAS_AD_SEPARATOR, g['sAMAccountName'][0]))
 
                 if write_cache:
                     self.__dgcache[n][sAMAccountName.upper()] = g
@@ -1706,7 +1715,7 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
         self._gr = None
         self.__dgcache = FreeNAS_Directory_GroupCache(dir=netbiosname)
 
-        self.__key  = ("%s%s%s" % (netbiosname, FREENAS_AD_SEPARATOR, group)).upper()
+        self.__key  = str(("%s%s%s" % (netbiosname, FREENAS_AD_SEPARATOR, group)).upper())
         if self.__dgcache.has_key(self.__key):
             self._gr = self.__dgcache[self.__key]
             return 
@@ -1837,7 +1846,7 @@ class FreeNAS_ActiveDirectory_User(FreeNAS_ActiveDirectory):
         self._pw = None
         self.__ducache = FreeNAS_Directory_UserCache(dir=netbiosname)
 
-        self.__key = ("%s%s%s" % (netbiosname, FREENAS_AD_SEPARATOR, user)).upper()
+        self.__key = str(("%s%s%s" % (netbiosname, FREENAS_AD_SEPARATOR, user)).upper())
         if self.__ducache.has_key(self.__key):
             self._pw = self.__ducache[self.__key]
             return
