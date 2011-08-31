@@ -251,7 +251,7 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
         if self.instance.id is not None:
             users = users.exclude(id=self.instance.id)
         if users.exists():
-            raise forms.ValidationError(_("An user with that uid already exists."))
+            raise forms.ValidationError(_("A user with that uid already exists."))
         return bsdusr_uid
 
     def clean_bsdusr_username(self):
@@ -262,7 +262,7 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
                 models.bsdUsers.objects.get(bsdusr_username=bsdusr_username)
             except models.bsdUsers.DoesNotExist:
                 return bsdusr_username
-            raise forms.ValidationError(_("An user with that username already exists."))
+            raise forms.ValidationError(_("A user with that username already exists."))
         else:
             return self.instance.bsdusr_username
 
@@ -493,7 +493,7 @@ class bsdUserToGroupForm(Form):
     def clean_bsduser_to_group(self):
         v = self.cleaned_data.get("bsduser_to_group")
         if len(v) > 64:
-            raise forms.ValidationError(_("An user cannot belong to more than 64 auxiliary groups"))
+            raise forms.ValidationError(_("A user cannot belong to more than 64 auxiliary groups"))
         return v
     def save(self):
         user = models.bsdUsers.objects.get(id=self.userid)
