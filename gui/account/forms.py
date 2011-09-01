@@ -444,6 +444,11 @@ class bsdGroupsForm(ModelForm, SharedFunc):
             self.fields['bsdgrp_gid'].widget.attrs['readonly'] = True
         else:
             self.initial['bsdgrp_gid'] = notifier().user_getnextgid()
+            self.fields['allow'] = forms.BooleanField(
+                                        label=_("Allow repeated GIDs"),
+                                        initial=False,
+                                        required=False,
+                                    )
 
     def clean_bsdgrp_group(self):
         if self.instance.id is None:
@@ -467,12 +472,13 @@ class bsdGroupsForm(ModelForm, SharedFunc):
     def clean(self):
         cdata = self.cleaned_data
         grp = cdata.get("bsdgrp_gid")
-        grps = models.bsdGroups.objects.filter(bsdgrp_gid=grp)
-        if self.instance and self.instance.id:
-            grps = grps.exclude(bsdgrp_gid=self.instance.bsdgrp_gid)
-        if grps.exists():
-            self._errors['bsdgrp_gid'] = self.error_class([_("A group with this gid already exists")])
-            cdata.pop('bsdgrp_gid', None)
+        if not cdata.get("allow", False):
+            grps = models.bsdGroups.objects.filter(bsdgrp_gid=grp)
+            if self.instance and self.instance.id:
+                grps = grps.exclude(bsdgrp_gid=self.instance.bsdgrp_gid)
+            if grps.exists():
+                self._errors['bsdgrp_gid'] = self.error_class([_("A group with this gid already exists")])
+                cdata.pop('bsdgrp_gid', None)
         return cdata
 
     def save(self):
