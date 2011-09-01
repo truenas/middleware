@@ -446,9 +446,16 @@ class bsdGroupsForm(ModelForm, SharedFunc):
             self.initial['bsdgrp_gid'] = notifier().user_getnextgid()
 
     def clean_bsdgrp_group(self):
-        bsdgrp_group = self.cleaned_data.get("bsdgrp_group")
-        self.pw_checkname(bsdgrp_group)
-        return bsdgrp_group
+        if self.instance.id is None:
+            bsdgrp_group = self.cleaned_data.get("bsdgrp_group")
+            self.pw_checkname(bsdgrp_group)
+            try:
+                models.bsdGroups.objects.get(bsdgrp_group=bsdgrp_group)
+            except models.bsdGroups.DoesNotExist:
+                return bsdgrp_group
+            raise forms.ValidationError(_("A group with that name already exists."))
+        else:
+            return self.instance.bsdgrp_group
 
     def clean_bsdgrp_gid(self):
         instance = getattr(self, 'instance', None)
@@ -457,10 +464,21 @@ class bsdGroupsForm(ModelForm, SharedFunc):
         else:
             return self.cleaned_data['bsdgrp_gid']
 
+    def clean(self):
+        cdata = self.cleaned_data
+        grp = cdata.get("bsdgrp_gid")
+        grps = models.bsdGroups.objects.filter(bsdgrp_gid=grp)
+        if self.instance and self.instance.id:
+            grps = grps.exclude(bsdgrp_gid=self.instance.bsdgrp_gid)
+        if grps.exists():
+            self._errors['bsdgrp_gid'] = self.error_class([_("A group with this gid already exists")])
+            cdata.pop('bsdgrp_gid', None)
+        return cdata
+
     def save(self):
-        super(bsdGroupsForm, self).save()
+        ins = super(bsdGroupsForm, self).save()
         notifier().reload("user")
-        return self.instance
+        return ins
 
 attrs_dict = { 'class': 'required' }
 
