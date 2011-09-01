@@ -1,5 +1,56 @@
-{% extends "shutdown_base.html" %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-gb" lang="en-gb" dir="ltr" >
+<head>
+    <title>{{ freenas_version }}</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <style type="text/css">html, body.{{ DOJANGO.THEME }} { width: 100%; height: 100%; }</style>
+    {% include "dojango/include.html" %}
+    <script type="text/javascript" src="{{ DOJANGO.DOJO_URL }}/freenasdojo.js"></script>
+<link href="{{ STATIC_URL }}favicon.ico" rel="shortcut icon" type="image/x-icon" />
+<link rel="stylesheet" href="{{ STATIC_URL }}css/template.css" type="text/css" />
+<script type="text/javascript">
 
-{% block content %}
-<h1>System - Shutting Down</h1>
-{% endblock %}
+    dojo.require("dijit.MenuItem");
+    dojo.require("dijit.PopupMenuItem");
+    dojo.require("dijit.form.Button");
+    dojo.require("dijit.layout.ContentPane");
+    dojo.require("dijit.layout.BorderContainer");
+
+    dojo.addOnLoad(function() {
+
+        setTimeout(function() {
+            dojo.xhrGet({
+                url: '/system/shutdown/run/',
+                sync: true,
+                failOk: true,
+                handle: function(a1,a2) {
+                    setTimeout(function () {
+                        window.location = '/';
+                    }, 90000);
+                },
+            });
+        }, 1000);
+
+    });
+
+</script>
+</head>
+<body class="{{ DOJANGO.THEME }}" style="background:none repeat scroll 0 0 #ECEFF0;">
+
+    <div id="main" dojoType="dijit.layout.BorderContainer" style="width:100%;height:100%;" gutters="false">
+		<div dojoType="dijit.layout.ContentPane" region="top" gutters="false">
+                <div id="page-header">
+                    <div>
+                        <a href="/" title="FreeNAS"><img src="{{ STATIC_URL }}images/ui/freenas-logo.png" alt="FreeNAS" /></a>
+                    </div>
+                </div>
+	    </div>
+		<div dojoType="dijit.layout.ContentPane" region="center" style="padding: 10px;">
+            {% block dojango_content %}
+            <h1>System - Shutdown</h1>
+            {% endblock %}
+		</div>
+	</div>
+
+</body>
+</html>

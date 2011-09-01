@@ -1101,7 +1101,6 @@
     }
 
     dojo.addOnLoad(function() {
-
         setTimeout(refreshImgs, 300000);
 
         var store = new dojo.data.ItemFileReadStore({

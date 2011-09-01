@@ -32,7 +32,9 @@ from system.forms import FileWizard, FirmwareTemporaryLocationForm, \
 
 urlpatterns = patterns('freenasUI.system.views',
     url(r'^reboot/$', 'reboot', name="system_reboot"),
+    url(r'^reboot/run/$', 'reboot_run', name="system_reboot_run"),
     url(r'^shutdown/$', 'shutdown', name="system_shutdown"),
+    url(r'^shutdown/run/$', 'shutdown_run', name="system_shutdown_run"),
     url(r'^reporting/$', 'reporting', name="system_reporting"),
     url(r'^settings/$', 'settings', name="system_settings"),
     url(r'^advanced/$', 'advanced', name="system_advanced"),

@@ -204,17 +204,23 @@ def top(request):
 
 def reboot(request):
     """ reboots the system """
-    notifier().restart("system")
     return render(request, 'system/reboot.html', {
         'freenas_version': get_freenas_version(),
     })
 
+def reboot_run(request):
+    notifier().restart("system")
+    return HttpResponse('OK')
+
 def shutdown(request):
     """ shuts down the system and powers off the system """
-    notifier().stop("system")
     return render(request, 'system/shutdown.html', {
         'freenas_version': get_freenas_version(),
     })
+
+def shutdown_run(request):
+    notifier().stop("system")
+    return HttpResponse('OK')
 
 def testmail(request):
 
