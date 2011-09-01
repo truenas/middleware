@@ -27,9 +27,11 @@ EOF
         ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT disk_identifier, disk_smartoptions, smarttest_type, smarttest_hour, smarttest_daymonth, smarttest_month, smarttest_dayweek FROM storage_disk d LEFT JOIN system_smarttest s ON d.id=s.smarttest_disk_id WHERE disk_togglesmart=1" |
         while read ident opts type hour daymonth month dayweek; do
             disk=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py identifier_to_device "${ident}")
-            if [ "${disk}" = "None" ] || [ -n "`echo ${disk}|grep zvol`" ]; then
+            case "$disk" in
+            None|*zvol*)
                 continue
-            fi
+                ;;
+            esac
             echo -n "/dev/${disk}"
             echo -n " -n ${mode}"
             echo -n " -W ${diff},${info},${crit}"
