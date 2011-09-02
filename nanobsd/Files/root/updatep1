@@ -32,31 +32,36 @@
 #	ssh somewhere cat image.s1 | sh updatep1
 #
 
+PARTNUM=1
+OTHER_PARNUM=2
+
 set -e
 
 . /etc/nanobsd.conf
 
-if mount | grep ${NANO_DRIVE}s1 > /dev/null ; then
-	echo "You are running partition 1 already"
-	echo "you probably want to use 'updatep2' instead"
+if mount | grep ${NANO_DRIVE}s$PARTNUM > /dev/null ; then
+	echo "You are running partition $PARTNUM already"
+	echo "you probably want to use 'updatep$OTHER_PARTNUM' instead"
 	exit 1
 fi
 
 LABELNAME=`echo ${NANO_DRIVE} | cut -f2 -d/`
-TARGET_DRIVE=`glabel status | awk '/ufs\/'${LABELNAME}'s2a/ { print $3; }' | sed -e s,s2a,,`
+TARGET_DRIVE=`glabel status | awk '/ufs\/'${LABELNAME}s${OTHER_PARTNUM}a/' { print $3; }' | sed -e s,s${OTHER_PARTNUM}a,,`
 
 # Blow away old system.
-dd if=/dev/zero of=/dev/${TARGET_DRIVE}s1 bs=1m count=1 > /dev/null 2>&1
+dd if=/dev/zero of=/dev/${TARGET_DRIVE}s$PARTNUM bs=1m count=1 > /dev/null 2>&1
 
 # Copy in new system
-dd of=/dev/${TARGET_DRIVE}s1 obs=128k
+dd of=/dev/${TARGET_DRIVE}s$PARTNUM obs=128k
 
 # Check that it worked
-fsck_ffs -n /dev/${TARGET_DRIVE}s1a
+fsck_ffs -n /dev/${TARGET_DRIVE}s${PARTNUM}a
+tunefs -L ${LABELNAME}s${PARTNUM}a /dev/${TARGET_DRIVE}s${PARTNUM}a
 
-# Save root ssh keys, /boot/modules/* and fusionio utilities if present
+# Save all files which exist under / that should persist across upgrades (root
+# ssh keys, /boot/loader.user, /boot/modules/* , fusionio utilities, etc).
 if [ -e /tmp/upgrade ]; then
-    if ! [ -d /tmp/upgrade ]; then
+    if [ ! -d /tmp/upgrade ]; then
         rm -rf /tmp/upgrade
         mkdir /tmp/upgrade
     fi
@@ -64,7 +69,11 @@ else
     mkdir /tmp/upgrade
 fi
 
-mount /dev/${TARGET_DRIVE}s1a /tmp/upgrade
+mount /dev/${TARGET_DRIVE}s${PARTNUM}a /tmp/upgrade
+
+if [ -f /boot/loader.user ]; then
+    cp /boot/loader.user /tmp/upgrade/boot/
+fi
 
 if [ -d /root/.ssh ]; then
     cp -R /root/.ssh /tmp/upgrade/root/ && chmod 700 /tmp/upgrade/root/.ssh
@@ -72,19 +81,20 @@ fi
 
 if [ -d /usr/local/fusionio ]; then
     cp -R /usr/local/fusionio /tmp/upgrade/usr/local/
-fi
+fi  
 
 if [ -d /boot/modules ]; then
-    if ! [ -d /tmp/upgrade/boot/modules ]; then
+    if [ ! -d /tmp/upgrade/boot/modules ]; then
         mkdir /tmp/upgrade/boot/modules
-    fi
+    fi  
     for i in `ls /boot/modules/`
-    do
+    do  
         cp /boot/modules/$i /tmp/upgrade/boot/modules/
     done
-fi
+fi  
 
-umount /dev/${TARGET_DRIVE}s1a
+umount /tmp/upgrade
 rmdir /tmp/upgrade
 
-gpart set -a active -i 1 ${TARGET_DRIVE}
+
+gpart set -a active -i $PARTNUM ${TARGET_DRIVE}
