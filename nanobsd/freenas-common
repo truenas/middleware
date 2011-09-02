@@ -217,6 +217,7 @@ add_port sysutils/throttle
 add_port sysutils/dmidecode
 add_port devel/libevent
 add_port sysutils/tmux
+add_port benchmarks/iozone 
 add_port net/netatalk		-DWITH_PAM
 add_port ftp/wget
 add_port benchmarks/iperf
