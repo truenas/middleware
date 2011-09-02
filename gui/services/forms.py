@@ -274,9 +274,13 @@ class SNMPForm(ModelForm):
             raise forms.ValidationError(_(u"The location must contain only alphanumeric characters, _ or -"))
         return location
     def clean_snmp_contact(self):
+        from django.core.validators import email_re
         contact = self.cleaned_data['snmp_contact']
-        if not re.match(r'^[-_a-zA-Z0-9\s]+$', contact):
-            raise forms.ValidationError(_(u"The contact must contain only alphanumeric characters, _ or -"))
+        if '@' in contact:
+            if not email_re.match(contact):
+                raise forms.ValidationError(_(u"This is not a valid e-mail address"))
+        elif not re.match(r'^[-_a-zA-Z0-9\s]+$', contact):
+            raise forms.ValidationError(_(u"The contact must contain only alphanumeric characters, _, - or a valid e-mail address"))
         return contact
     def clean_snmp_comunity(self):
         community = self.cleaned_data['snmp_community']
