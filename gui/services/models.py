@@ -35,6 +35,7 @@ from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField, PathField
 from storage.models import MountPoint, Volume, Disk
 from freenasUI.middleware.notifier import notifier
+from services.exceptions import ServiceFailed
 
 class services(Model):
     srv_service = models.CharField(
@@ -430,6 +431,8 @@ class iSCSITargetExtent(Model):
                 vol.delete()
             except:
                 pass
+        for te in iSCSITargetToExtent.objects.filter(iscsi_extent=self):
+            te.delete()
         super(iSCSITargetExtent, self).delete()
 
 class iSCSITargetPortal(Model):
@@ -658,6 +661,11 @@ class iSCSITargetToExtent(Model):
         verbose_name_plural = _("Targets / Extents")
     def __unicode__(self):
         return unicode(self.iscsi_target) + u' / ' + unicode(self.iscsi_extent)
+    def delete(self):
+        super(iSCSITargetToExtent, self).delete()
+        started = notifier().reload("iscsitarget")
+        if started is False and services.objects.get(srv_service='iscsitarget').srv_enable:
+            raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
     class FreeAdmin:
         menu_child_of = "ISCSI"
         icon_object = u"TargetExtentIcon"
