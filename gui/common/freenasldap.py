@@ -837,6 +837,8 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
 
         self.__default_init__(**kwargs)
 
+        args = { 'binddn': self.binddn, 'bindpw': self.bindpw }
+
         self.netbiosname = self.get_netbios_name()
         if kwargs.has_key('netbiosname'):
             if self.netbiosname != kwargs['netbiosname']:
