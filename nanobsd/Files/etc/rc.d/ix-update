@@ -8,59 +8,42 @@
 
 . /etc/rc.subr
 
+readonly UPDATE_FAILED_LOG="/data/update.failed"
+
 db_update_real()
 {
+	local i
+
 	echo "Applying database schema changes"
 
-	yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate account > /data/upgrade.failed
-	if [ "$?" != "0" ]; then
-		echo "manage.py migrate account failed"
-		return 1
-	fi
-	yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate freeadmin > /data/upgrade.failed
-	if [ "$?" != "0" ]; then
-		echo "manage.py migrate freeadmin failed"
-		return 1
-	fi
-	yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate network > /data/upgrade.failed
-	if [ "$?" != "0" ]; then
-		echo "manage.py migrate network failed"
-		return 1
-	fi
-	yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate services > /data/upgrade.failed
-	if [ "$?" != "0" ]; then
-		echo "manage.py migrate services failed"
-		return 1
-	fi
-	yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate sharing > /data/upgrade.failed
-	if [ "$?" != "0" ]; then
-		echo "manage.py migrate sharing failed"
-		return 1
-	fi
-	yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate storage > /data/upgrade.failed
-	if [ "$?" != "0" ]; then
-		echo "manage.py migrate storage failed"
-		return 1
-	fi
-	yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate system > /data/upgrade.failed
-	if [ "$?" != "0" ]; then
-		echo "manage.py migrate system failed"
-		return 1
-	fi
-	rm /data/upgrade.failed
+	for i in account freeadmin network services sharing storage system; do
+		yes | /usr/local/bin/python \
+		    /usr/local/www/freenasUI/manage.py migrate $i > \
+		    $UPDATE_FAILED_LOG
+		if [ $? -ne 0 ]; then
+			echo "manage.py migrate $i failed"
+			return 1
+		fi
+	done
+	rm -f /data/upgrade.failed
 	return 0
 }
 
 handle_error()
 {
+	local LABELNAME OTHER_PARTNUM PARTNUM TARGET_DRIVE
+
 	echo "Reverting to previous state"
 
 	rm -f /data/need-update
 	mv ${FREENAS_CONFIG}.bak ${FREENAS_CONFIG}
 	if [ -f /data/cd_upgrade ]; then
 		rm /data/cd_upgrade
-		echo "Database upgrade FAILED, check /data/upgrade.failed.  Rebooting in 15 seconds."
-		echo "Reverting a failed CD upgrade is not totally possible."
+		cat <<EOF
+Database upgrade FAILED; check $UPDATE_FAILED_LOG for more details.
+Reverting a failed CD upgrade is not totally possible
+Rebooting in 15 seconds..
+EOF
 		sleep 15
 		reboot
 	fi
@@ -69,14 +52,19 @@ handle_error()
 
 	LABELNAME=`echo ${NANO_DRIVE} | cut -f2 -d/`
 	if mount | grep ${NANO_DRIVE}s1 > /dev/null ; then
-		TARGET_DRIVE=`glabel status | awk '/ufs\/'${LABELNAME}'s1a/ { print $3; }' | sed -e s,s1a,,`
-		gpart set -a active -i 2 ${TARGET_DRIVE}
+		PARTNUM=2
+		OTHER_PARTNUM=1
 	else
-		TARGET_DRIVE=`glabel status | awk '/ufs\/'${LABELNAME}'s1a/ { print $3; }' | sed -e s,s2a,,`
-		gpart set -a active -i 1 ${TARGET_DRIVE}
+		PARTNUM=1
+		OTHER_PARTNUM=2
 	fi
+	TARGET_DRIVE=`glabel status | awk '/ufs\/'${LABELNAME}'s${OTHER_PARTNUM}a/ { print $3; }' | sed -e s,s${PARTNUM}a,,`
+	gpart set -a active -i 2 ${TARGET_DRIVE}
 
-	echo "Database upgrade FAILED, check /data/upgrade.failed.  Rebooting in 15 seconds."
+	cat <<EOF
+Database upgrade FAILED; check $UPDATE_FAILED_LOG for more details.
+Rebooting in 15 seconds..
+EOF
 	sleep 15
 	reboot
 }
@@ -84,21 +72,22 @@ handle_error()
 db_update()
 {
 	if ! fsck -p /data; then
-		echo "/data couldn't be preened clean, trying full fsck"
+		echo "/data couldn't be preened clean; trying full fsck"
 		if ! fsck -y /data; then
-			echo "Cannot fsck -y /data either, your system is likely AFU: sorry."
-			exit;
+			echo "Cannot fsck -y /data either; your system is probably hosed :(."
+			exit 1
 		fi
 	fi
 	if ! mount -w /data; then
 		echo "Cannot mount /data to see if you need an upgrade."
-		echo "Your system is likely AFU: bummer!"
-		exit;
+		exit 1
 	fi
 	if [ ! -f /data/need-update ]; then
-		umount /data
+		# XXX: this seems somewhat dangerous, depending on script
+		# ordering and system state.
+		umount /data 
 		# No need to update, exit script and continue boot
-		exit
+		exit 0
 	fi
 	echo "Saving current ${FREENAS_CONFIG} to ${FREENAS_CONFIG}.bak"
 	if [ -f /data/uploaded.db ]; then
