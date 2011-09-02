@@ -25,7 +25,7 @@ db_update_real()
 			return 1
 		fi
 	done
-	rm -f /data/upgrade.failed
+	rm -f $UPDATE_FAILED_LOG 
 	return 0
 }
 
