@@ -149,6 +149,7 @@ class SettingsForm(ModelForm):
         self.instance._original_stg_syslogserver = self.instance.stg_syslogserver
         self.fields['stg_language'].choices=settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
+        self.fields['stg_guiaddress'] = forms.ChoiceField(label=self.fields['stg_guiaddress'].label)
         self.fields['stg_guiaddress'].choices = choices.IPChoices()
     def clean_stg_guiport(self):
         val = self.cleaned_data.get("stg_guiport")

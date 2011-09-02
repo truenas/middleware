@@ -50,7 +50,6 @@ class Settings(Model):
             max_length=120,
             blank=True,
             default='',
-            choices=choices.IPChoices(),
             verbose_name = _("WebGUI Address")
             )
     stg_guiport = models.CharField(
