@@ -90,11 +90,11 @@ db_update()
 		exit 0
 	fi
 	echo "Saving current ${FREENAS_CONFIG} to ${FREENAS_CONFIG}.bak"
+	cp ${FREENAS_CONFIG} ${FREENAS_CONFIG}.bak
 	if [ -f /data/uploaded.db ]; then
 		echo "Moving uploaded config to ${FREENAS_CONFIG}"
 		mv /data/uploaded.db ${FREENAS_CONFIG}
 	fi
-	cp ${FREENAS_CONFIG} ${FREENAS_CONFIG}.bak
 
 	set +e
 	db_update_real || handle_error
