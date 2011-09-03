@@ -1171,6 +1171,17 @@ class notifier:
             return stat.S_IMODE(os.stat(path)[stat.ST_MODE])
 
     def mp_get_owner(self, path):
+        """Gets the owner/group for a given mountpoint.
+
+        Defaults to root:wheel if the owner of the mountpoint cannot be found.
+
+        XXX: defaulting to root:wheel is wrong if the users/groups are out of
+             synch with the remote hosts. These cases should really raise
+             Exceptions and be handled differently in the GUI.
+
+        Raises:
+            OSError - the path provided isn't a directory.
+        """
         if os.path.isdir(path):
             stat_info = os.stat(path)
             uid = stat_info.st_uid
@@ -1180,14 +1191,13 @@ class notifier:
                 user = pw.pw_name
             except KeyError:
                 user = 'root'
-                self.__system("/usr/bin/chown %s %s" % (user, path))
             try:
                 gr = grp.getgrgid(gid)
                 group = gr.gr_name
             except KeyError:
                 group = 'wheel'
-                self.__system("/usr/bin/chown :%s %s" % (group, path))
-            return [user, group]
+            return (user, group, )
+        raise OSError('Invalid mountpoint %s' % (path, ))
 
     def change_upload_location(self, path):
         self.__system("/bin/rm -rf /var/tmp/firmware")
