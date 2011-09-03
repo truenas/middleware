@@ -13,10 +13,13 @@ environment.
 
 To build the system:
 
-(1) Checkout the experimental code from svn:
+(1) Checking out the experimental code from svn:
 
 % svn co https://freenas.svn.sourceforge.net/svnroot/freenas/trunk
 % cd trunk
+
+More information about checking out sources from svn via SourceForge
+can be found here: http://p.sf.net/sourceforge/svn .
 
 (2) Use the build script (substituting your favorite cvsup mirror)
 
