@@ -85,7 +85,7 @@ if not locked:
 
 AUTOREPL_PID = -1
 try:
-    with open('/var/run/autorepl.pid', 'r') as pidfile:
+    with open('/var/run/autorepl.pid') as pidfile:
         AUTOREPL_PID = int(pidfile.read())
 except:
     pass

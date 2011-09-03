@@ -1208,15 +1208,13 @@ class notifier:
     def apply_servicepack(self):
         self.__system("/usr/bin/xz -cd /var/tmp/firmware/servicepack.txz | /usr/bin/tar xf - -C /var/tmp/firmware/ etc/servicepack/version.expected")
         try:
-            f = open('/etc/version.freenas', 'r')
-            freenas_build = f.read()
-            f.close()
+            with open('/etc/version.freenas') as f:
+                freenas_build = f.read()
         except:
             return "Current FreeNAS version can not be recognized"
         try:
-            f = open('/var/tmp/firmware/etc/servicepack/version.expected', 'r')
-            expected_build = f.read()
-            f.close()
+            with open('/var/tmp/firmware/etc/servicepack/version.expected') as f:
+                expected_build = f.read()
         except:
             return "Expected FreeNAS version can not be recognized"
         if freenas_build != expected_build:

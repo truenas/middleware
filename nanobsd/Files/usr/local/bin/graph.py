@@ -2,11 +2,10 @@ import rrdtool, os, re, hashlib, shutil
 
 class File:
     @staticmethod
-    def ReadString(file):
-        if os.path.isfile(file):
-            fh = open(file, 'r')
-            t = fh.read()
-            fh.close()
+    def ReadString(_file):
+        if os.path.isfile(_file):
+            with open(_file) as fh:
+                t = fh.read()
             return t
         return None
 

@@ -41,7 +41,6 @@ from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.utils.encoding import smart_unicode, smart_str
 from django.utils.importlib import import_module
-from django.views.defaults import server_error
 
 from freenasUI.common.system import get_freenas_version
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -104,9 +103,8 @@ def menu(request, objtype = None):
 def alert_status(request):
     if os.path.exists('/var/tmp/alert'):
         current = 'OK'
-        f = open('/var/tmp/alert', 'r')
-        entries = f.read().split('\n')
-        f.close()
+        with open('/var/tmp/alert') as f:
+            entries = f.readlines()
         for entry in entries:
             if not entry:
                 continue
@@ -120,9 +118,8 @@ def alert_status(request):
 
 def alert_detail(request):
     if os.path.exists('/var/tmp/alert'):
-        f = open('/var/tmp/alert', 'r')
-        entries = f.read().split('\n')
-        f.close()
+        with open('/var/tmp/alert') as f:
+            entries = f.read().split('\n')
         alerts = []
         for entry in entries:
             if not entry:

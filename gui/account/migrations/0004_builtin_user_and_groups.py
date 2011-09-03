@@ -14,7 +14,8 @@ class Migration(DataMigration):
         call_command("loaddata", "bsdGroups.json")
         #call_command("loaddata", "bsdUsers.json")
         jf = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "fixtures", "bsdUsers.json")
-        json = open(jf, 'r').read()
+        with open(jf) as json_fd:
+            json = json_fd.read()
         users = simplejson.loads(json)
         for entry in users:
             user = orm.bsdUsers.objects.create(pk=entry['pk'])

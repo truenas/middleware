@@ -60,7 +60,7 @@ def _system_info():
 
     freenas_build = "Unrecognized build (%s        missing?)" % VERSION_FILE
     try:
-        with open(VERSION_FILE, 'r') as d:
+        with open(VERSION_FILE) as d:
             freenas_build = d.read()
     except:
         pass
