@@ -1,33 +1,9 @@
-Here's a snapshot of FreeBSD 8.2-based FreeNAS.  It features a move to
-the /etc/rc.d startup scripting, a move to a Django-based GUI and
-should set the stage for a more modular system in the future.
-
 This snapshot is for developers and very experienced users only.  It
 is not functionally complete yet, and there are likely many rough
-edges.  The code is of alpha quality.  It has no safeguards against
-accidentally initializing a previously configured volume, zpool or
-raid mirror.  No support for software raid exists in this release
-(only single disks and zfs).  There's no upgrade path for this
-snapshot (no conversion from old releases, no in-place firmware
-upgrades like FreeNAS 0.7 and earlier had, etc).  There is no way to
-import old volumes.  This snapshot should be viewed as a technology
-preview only.
-
-The GUI is currently incomplete.  You can configure your network
-address, some misc system configuration, ssh, ftp, tftp, cifs/samba,
-afp, smnp and nfs.  All the GUI screens should work at least to the
-point of saving the data to the database.
+edges.  There's no upgrade path from 0.7 to 8.x, yet.
 
 The GUI should behave basically the same as 0.7's GUI, but there are
-some differences.  The biggest differences are in configuring disks.
-You need to add one of the disks (there's no safeguards against adding
-the same disk multiple times, adding the system disk, etc).  Once you
-add the disk to the system via the GUI, you need to create a disk
-group (even for groups of 1).  Then you can create a volume that is
-the basis for all further things in the system.
-
-The GUI does not yet replicate the file chooser functionality for
-pathnames that the old system had.  You'll have to type the path.
+some differences.
 
 To build the system (experts only):
 
@@ -44,16 +20,12 @@ To build the system:
 
 (2) Use the build script (substituting your favorite cvsup mirror)
 
-% setenv FREEBSD_CVSUP_HOST cvsup10.freebsd.org
-% sudo sh build/do_build.sh
-% sudo sh build/do_build.sh -b
+% sudo env FREEBSD_CVSUP_HOST=cvsup10.freebsd.org sh build/do_build.sh
 % sudo sh build/create_iso.sh
 
-That's it.  If you are rebuilding, just use the last two lines of
-#2.  When updating source patches and/or ports, you may need to some
-additional steps by hand.  The above is known to work on a FreeBSD
-8.1R system, FreeBSD 8-stable and has in the past worked on a
-FreeBSD-current system.
+That's it. When updating source patches and/or ports, you may need to
+some additional steps by hand.  The above is known to work on FreeBSD
+8.1-RELEASE and newer.
 
 Once (2) completes, you'll have an image in
 obj.yyyy/FreeNAS-8rXXXX-yyyy.full where XXXX is the svn revision from
