@@ -6,6 +6,10 @@
 # magic happens :)
 #
 
+# XXX: replace this nasty hackery with legitimate getopts calls and cache
+# values between calls.
+FORCE_UPDATE=${FORCE_UPDATE:=${force_update:=}}
+
 if [ $(id -ru) -ne 0 ]; then
 	echo "You must be root to run this"
 	exit 1
@@ -24,7 +28,7 @@ if [ ! -d FreeBSD ]; then
 fi
 
 # Make sure we have FreeBSD src, fetch using csup if not
-if [ ! -f FreeBSD/supfile -o -n "$force_update" ]; then
+if [ ! -f FreeBSD/supfile -o -n "$FORCE_UPDATE" ]; then
 	if [ -z "$FREEBSD_CVSUP_HOST" ]; then
 		echo "No sup host defined, please define FREEBSD_CVSUP_HOST and rerun"
 		exit 1

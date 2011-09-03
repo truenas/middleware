@@ -26,9 +26,16 @@ can be found here: http://p.sf.net/sourceforge/svn .
 % sudo env FREEBSD_CVSUP_HOST=cvsup10.freebsd.org sh build/do_build.sh
 % sudo sh build/create_iso.sh
 
-That's it. When updating source patches and/or ports, you may need to
-some additional steps by hand.  The above is known to work on FreeBSD
-8.1-RELEASE and newer.
+That's it.
+
+When updating source patches and/or ports, you will need to run the
+following command:
+
+% sudo env FORCE_UPDATE=1 FREEBSD_CVSUP_HOST=cvsup10.freebsd.org sh build/do_build.sh
+% sudo sh build/create_iso.sh
+
+Running builds via do_build.sh is known to work on FreeBSD 8.1-RELEASE
+and newer.
 
 Once (2) completes, you'll have an image in
 obj.yyyy/FreeNAS-8rXXXX-yyyy.full where XXXX is the svn revision from
