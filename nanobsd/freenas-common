@@ -72,11 +72,11 @@ FlashDevice generic 2g
 
 add_port devel/pkg-config
 add_port x11/kbproto
-add_port x11/xproto -DWITHOUT_X11 # run dep of collectd
-add_port x11/libXdmcp -DWITHOUT_X11 # run dep of collectd
-add_port x11/libXau -DWITHOUT_X11 # run dep of collectd
-add_port devel/libpthread-stubs -DWITHOUT_X11 # run dep of collectd
-add_port x11/libxcb -DWITHOUT_X11 # run dep of collectd
+add_port x11/xproto -DWITHOUT_X11
+add_port x11/libXdmcp -DWITHOUT_X11
+add_port x11/libXau -DWITHOUT_X11
+add_port devel/libpthread-stubs -DWITHOUT_X11
+add_port x11/libxcb -DWITHOUT_X11
 add_port x11/libX11
 add_port devel/cdialog
 add_port dns/inadyn			# -mt?
@@ -162,39 +162,41 @@ add_port www/py-flup
 add_port net-mgmt/net-snmp
 add_port sysutils/nut -DWITHOUT_NEON
 
-add_port devel/libstatgrab -DWITHOUT_X11 # run dep of collectd
-add_port devel/libltdl -DWITHOUT_X11 # run dep of collectd
-add_port print/freetype2 -DWITHOUT_X11 # run dep of collectd
-add_port textproc/expat2 -DWITHOUT_X11 # run dep of collectd
-add_port x11-fonts/fontconfig -DWITHOUT_X11 # run dep of collectd
-add_port x11-fonts/libfontenc -DWITHOUT_X11 # run dep of collectd
-add_port x11-fonts/mkfontscale -DWITHOUT_X11 # run dep of collectd
-add_port x11-fonts/mkfontdir -DWITHOUT_X11 # run dep of collectd
-add_port x11-fonts/font-bh-ttf -DWITHOUT_X11 # run dep of collectd
-add_port x11-fonts/font-misc-meltho -DWITHOUT_X11 # run dep of collectd
-add_port x11-fonts/font-misc-ethiopic -DWITHOUT_X11 # run dep of collectd
-add_port x11-fonts/bitstream-vera -DWITHOUT_X11 # run dep of collectd
-add_port x11-fonts/font-util -DWITHOUT_X11 # run dep of collectd
-add_port x11-fonts/encodings -DWITHOUT_X11 # run dep of collectd
-add_port x11-fonts/xorg-fonts-truetype -DWITHOUT_X11 # run dep of collectd
-add_port x11/xcb-util -DWITHOUT_X11 # run dep of collectd
+#+add_port net-mgmt/collectd
+add_port devel/libstatgrab -DWITHOUT_X11
+add_port devel/libltdl -DWITHOUT_X11
+add_port print/freetype2 -DWITHOUT_X11
+add_port textproc/expat2 -DWITHOUT_X11
+add_port x11-fonts/fontconfig -DWITHOUT_X11
+add_port x11-fonts/libfontenc -DWITHOUT_X11
+add_port x11-fonts/mkfontscale -DWITHOUT_X11
+add_port x11-fonts/mkfontdir -DWITHOUT_X11
+add_port x11-fonts/font-bh-ttf -DWITHOUT_X11
+add_port x11-fonts/font-misc-meltho -DWITHOUT_X11
+add_port x11-fonts/font-misc-ethiopic -DWITHOUT_X11
+add_port x11-fonts/bitstream-vera -DWITHOUT_X11
+add_port x11-fonts/font-util -DWITHOUT_X11
+add_port x11-fonts/encodings -DWITHOUT_X11
+add_port x11-fonts/xorg-fonts-truetype -DWITHOUT_X11
+add_port x11/xcb-util -DWITHOUT_X11
 add_port x11/libXrender
 add_port x11/renderproto
-add_port x11/xcb-proto -DWITHOUT_X11 # run dep of collectd
-add_port devel/gamin -DWITHOUT_X11 # run dep of collectd
-add_port devel/gio-fam-backend -DWITHOUT_X11 # run dep of collectd
-add_port x11/pixman -DWITHOUT_X11 # run dep of collectd
-add_port graphics/png -DWITHOUT_X11 # run dep of collectd
-add_port graphics/cairo -DWITHOUT_X11 # run dep of collectd
-add_port devel/m4 -DWITHOUT_X11 # run dep of collectd
-add_port devel/bison -DWITHOUT_X11 # run dep of collectd
-add_port devel/libffi -DWITHOUT_X11 # run dep of collectd
-add_port x11-toolkits/pango -DWITHOUT_X11 # run dep of collectd
-add_port textproc/libxml2 -DWITHOUT_X11 # run dep of collectd
-add_port textproc/py-libxml2 -DWITHOUT_X11 # run dep of collectd
-add_port databases/rrdtool -DWITHOUT_X11 -DWITHOUT_PERL_MODULE -DWITH_PYTHON_MODULE # run dep of collectd
-add_port devel/gobject-introspection -DWITHOUT_X11 # run dep of collectd
-add_port net/liboping -DWITHOUT_X11 # run dep of collectd
+add_port x11/xcb-proto -DWITHOUT_X11
+add_port devel/gamin -DWITHOUT_X11
+add_port devel/gio-fam-backend -DWITHOUT_X11
+add_port x11/pixman -DWITHOUT_X11
+add_port graphics/png -DWITHOUT_X11
+add_port graphics/cairo -DWITHOUT_X11
+add_port devel/m4 -DWITHOUT_X11
+add_port devel/bison -DWITHOUT_X11
+add_port devel/libffi -DWITHOUT_X11
+add_port x11-toolkits/pango -DWITHOUT_X11
+add_port textproc/libxml2 -DWITHOUT_X11
+add_port textproc/py-libxml2 -DWITHOUT_X11
+add_port databases/rrdtool -DWITHOUT_X11 -DWITHOUT_PERL_MODULE -DWITH_PYTHON_MODULE
+add_port devel/gobject-introspection -DWITHOUT_X11
+add_port net/liboping -DWITHOUT_X11
+#-add_port net-mgmt/collectd
 add_port net-mgmt/collectd -DWITHOUT_BIND -DWITHOUT_SNMP -DWITHOUT_X11
 add_port devel/py-ipaddr
 add_port converters/base64
@@ -217,11 +219,17 @@ add_port sysutils/throttle
 add_port sysutils/dmidecode
 add_port devel/libevent
 add_port sysutils/tmux
-add_port benchmarks/iozone 
 add_port net/netatalk		-DWITH_PAM
 add_port ftp/wget
 add_port benchmarks/iozone
 add_port benchmarks/iperf
+#+add_port net-p2p/transmission-daemon
+#add_port devel/pkg-config
+add_port security/ca_root_nss
+add_port devel/libevent
+add_port ftp/curl
+add_port net-p2p/transmission-daemon
+
 
 if [ "${DEBUG}" -eq "1" ]; then 
 	add_port databases/db42
@@ -234,7 +242,6 @@ if [ "${DEBUG}" -eq "1" ]; then
 	add_port editors/vim-lite
 	add_port misc/py-pexpect
 	add_port devel/ipython
-	add_port ftp/curl
 	add_port devel/p5-Term-ReadKey
 	add_port devel/p5-subversion
 	add_port mail/p5-Net-SMTP-SSL
