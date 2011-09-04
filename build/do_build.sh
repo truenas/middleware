@@ -76,6 +76,7 @@ if [ ! -f FreeBSD/supfile ] || "$FORCE_UPDATE"; then
 *default prefix=${root}/FreeBSD
 *default release=cvs
 *default delete use-rel-suffix
+*default compress
 
 src-all tag=RELENG_8_2
 ports-all date=2011.07.17.00.00.00
