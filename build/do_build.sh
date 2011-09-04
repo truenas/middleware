@@ -1,18 +1,57 @@
 #!/bin/sh
-
-# interface:
-# cd to top of tree
-# sh ./build/do_build.sh
-# magic happens :)
+#
+# Build (either from scratch or using cached files):
+# 	sh build/do_build.sh
+#
+# Force a resync/repatch of just ports:
+#	sh build/do_build.sh -f ports
+#
+# Force a resync/repatch of everything:
+#	sh build/do_build.sh -f all
 #
 
-# XXX: replace this nasty hackery with legitimate getopts calls and cache
-# values between calls.
-FORCE_UPDATE=${FORCE_UPDATE:=${force_update:=}}
+error() {
+	echo >&2 "${0##/*}: ERROR: $*"
+	exit 1
+}
+
+usage() {
+	echo "usage: ${0##*/} [-f ports|all] [-- nanobsd-options]"
+	exit 1
+}
+
+cd "$(dirname "$0")/.."
+
+FORCE_UPDATE=false
+#FORCE_REBUILD_PORTS=false
+FORCE_REBUILD_SRC=false
+
+while getopts 'f:' optch; do
+	case "$optch" in
+	f)
+		FORCE_UPDATE=true
+		case "$OPTARG" in
+		all)
+			#FORCE_REBUILD_PORTS=true
+			FORCE_REBUILD_SRC=true
+			;;
+		ports)
+			#FORCE_REBUILD_PORTS=true
+			;;
+		*)
+			usage
+			;;
+		esac
+		;;
+	\?)
+		usage
+		;;
+	esac
+done
+shift $(( $OPTIND - 1 ))
 
 if [ $(id -ru) -ne 0 ]; then
-	echo "You must be root to run this"
-	exit 1
+	error "You must be root when running $0"
 fi
 
 root=$(pwd)
@@ -28,10 +67,9 @@ if [ ! -d FreeBSD ]; then
 fi
 
 # Make sure we have FreeBSD src, fetch using csup if not
-if [ ! -f FreeBSD/supfile -o -n "$FORCE_UPDATE" ]; then
+if [ ! -f FreeBSD/supfile ] || "$FORCE_UPDATE"; then
 	if [ -z "$FREEBSD_CVSUP_HOST" ]; then
-		echo "No sup host defined, please define FREEBSD_CVSUP_HOST and rerun"
-		exit 1
+		error "No sup host defined, please define FREEBSD_CVSUP_HOST and rerun"
 	fi
 	echo "Checking out tree from ${FREEBSD_CVSUP_HOST}..."
 	cat <<EOF > FreeBSD/supfile
@@ -46,12 +84,11 @@ ports-all date=2011.07.17.00.00.00
 EOF
 	csup -L 1 ${root}/FreeBSD/supfile
 	# Force a repatch because csup pulls pristine sources.
-	rm -f ${root}/FreeBSD/src-patches
-	rm -f ${root}/FreeBSD/ports-patches
+	: > ${root}/FreeBSD/src-patches
+	: > ${root}/FreeBSD/ports-patches
 fi
 
 # Make sure that all the patches are applied
-touch ${root}/FreeBSD/src-patches
 for i in $(cd ${root}/patches && echo freebsd-*.patch); do
 	if ! grep -q $i ${root}/FreeBSD/src-patches; then
 		echo "Applying patch $i..."
@@ -59,7 +96,6 @@ for i in $(cd ${root}/patches && echo freebsd-*.patch); do
 		echo $i >> ${root}/FreeBSD/src-patches
 	fi
 done
-touch ${root}/FreeBSD/ports-patches
 for i in $(cd ${root}/patches && echo ports-*.patch); do
 	if ! grep -q $i ${root}/FreeBSD/ports-patches; then
 		echo "Applying patch $i..."
@@ -75,22 +111,16 @@ fi
 # OK, now we can build
 cd FreeBSD/src
 args="-c ${root}/nanobsd/freenas-common"
-if [ -d ${NANO_OBJ} ]; then
+if [ -d ${NANO_OBJ} ] && ! "$FORCE_REBUILD_SRC"; then
 	extra_args="-b"
 fi
-for i in $*; do
-	case $i in
-	-f)
-		extra_args="" ;;
-	*)	args="$args $i" ;;
-	esac
-done
-echo tools/tools/nanobsd/nanobsd.sh $args $extra_args
-sh tools/tools/nanobsd/nanobsd.sh $args $extra_args
-if [ $? -eq 0 ]; then
+echo tools/tools/nanobsd/nanobsd.sh $args $* $extra_args
+if sh tools/tools/nanobsd/nanobsd.sh $args $* $extra_args; then
 	REVISION=$(svnversion ${root})
 	NANO_NAME="FreeNAS-8r${REVISION}-${FREENAS_ARCH}"
 	xz -f ${NANO_OBJ}/_.disk.image
 	mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_NAME}.xz
 	sha256 ${NANO_OBJ}/${NANO_NAME}.xz
+else
+	error 'FreeNAS build FAILED; please check above log for more details'
 fi

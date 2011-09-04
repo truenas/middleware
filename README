@@ -28,11 +28,13 @@ can be found here: http://p.sf.net/sourceforge/svn .
 
 That's it.
 
-When updating source patches and/or ports, you will need to run the
-following command:
+When updating ports patches, you will need to run the following command:
 
-% sudo env FORCE_UPDATE=1 FREEBSD_CVSUP_HOST=cvsup10.freebsd.org sh build/do_build.sh
-% sudo sh build/create_iso.sh
+% sudo env FREEBSD_CVSUP_HOST=cvsup10.freebsd.org sh build/do_build.sh -f ports
+
+When updating source patches, you will need to run the following command:
+
+% sudo env FREEBSD_CVSUP_HOST=cvsup10.freebsd.org sh build/do_build.sh -f all
 
 Running builds via do_build.sh is known to work on FreeBSD 8.1-RELEASE
 and newer.
