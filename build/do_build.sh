@@ -85,10 +85,11 @@ EOF
 	: > ${root}/FreeBSD/src-patches
 	: > ${root}/FreeBSD/ports-patches
 
-	# csup doesn't clean out non-existent files (diff -N) as there isn't a
-	# corresponding VCS history. Nuke the newly created files to avoid build
-	# errors, as patch(1) will automatically append to the previously
-	# non-existent file.
+	# XXX: work around a bug in csup where it doesn't clean out all
+	# mime-types, as it nukes certain types (.c, .h, etc) files properly.
+	#
+	# Nuke the newly created files to avoid build errors, as patch(1)
+	# will automatically append to the previously non-existent file.
 	for file in $(find FreeBSD/ -name '*.orig' -size 0); do
 		rm -f "$(echo "$file" | sed -e 's/.orig//')"
 	done
