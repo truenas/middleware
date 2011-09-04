@@ -60,14 +60,13 @@ export FREENAS_ARCH
 export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
 PREP_SOURCE=${PREP_SOURCE:-""}
 
-# Make sure we have FreeBSD dirs
-if [ ! -d FreeBSD ]; then
-	mkdir -p FreeBSD/src
-	mkdir -p FreeBSD/ports
-fi
+[ -d ${root}/FreeBSD ] || mkdir -p ${root}/FreeBSD
 
 # Make sure we have FreeBSD src, fetch using csup if not
 if [ ! -f FreeBSD/supfile ] || "$FORCE_UPDATE"; then
+	rm -Rf FreeBSD/ports
+	rm -Rf FreeBSD/src
+
 	if [ -z "$FREEBSD_CVSUP_HOST" ]; then
 		error "No sup host defined, please define FREEBSD_CVSUP_HOST and rerun"
 	fi
@@ -86,6 +85,15 @@ EOF
 	# Force a repatch because csup pulls pristine sources.
 	: > ${root}/FreeBSD/src-patches
 	: > ${root}/FreeBSD/ports-patches
+
+	# csup doesn't clean out non-existent files (diff -N) though as there
+	# isn't a corresponding history. Nuke the files to avoid build errors.
+	# as patch(1) will automatically append to the previously
+	# non-existent file.
+	#
+	# XXX: the grep pattern is svn specific.
+	#grep --include 'port*.patch' -r 'revision 0' "${root}/patches/" | awk '{ print $2 }' | xargs -I %file% -n 1 rm -f ${root}/FreeBSD/ports/%file%
+	#grep --include 'freebsd*.patch' -r 'revision 0' "${root}/patches/" | awk '{ print $2 }' | xargs -I %file% -n 1 rm -f ${root}/FreeBSD/ports/%file%
 fi
 
 # Make sure that all the patches are applied
