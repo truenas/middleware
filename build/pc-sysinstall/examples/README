@@ -314,7 +314,7 @@ Run the specified command within chroot of the installed system
 # runScript=
 
 runScript will copy the specified script into FSMNT, and run it in chroot of the system
-Usefull when you have a 3rd party script on the DVD / USB, and you want to copy it into
+Useful when you have a 3rd party script on the DVD / USB, and you want to copy it into
 the installed system and run
 
 # runExtCommand=
