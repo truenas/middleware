@@ -33,7 +33,7 @@
 #
 
 PARTNUM=2
-OTHER_PARNUM=1
+OTHER_PARTNUM=1
 
 set -e
 
