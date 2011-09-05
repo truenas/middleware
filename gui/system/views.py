@@ -133,12 +133,14 @@ def config_upload(request):
 def config_save(request):
 
     from django.core.servers.basehttp import FileWrapper
+    from network.models import GlobalConfiguration
+    hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
     filename = '/data/freenas-v1.db'
     wrapper = FileWrapper(file(filename))
     response = HttpResponse(wrapper, content_type='application/octet-stream')
     response['Content-Length'] = os.path.getsize(filename)
     response['Content-Disposition'] = \
-        'attachment; filename=freenas-%s.db' % time.strftime('%Y-%m-%d')
+        'attachment; filename=%s-%s.db' % (hostname.encode('utf-8'), time.strftime('%Y%m%d%H%M%S'))
     return response
 
 def reporting(request):
@@ -252,6 +254,7 @@ class DojoFileStore(object):
     def __init__(self, path, dirsonly=False):
         from storage.models import MountPoint
         self.mp = [os.path.abspath(mp.mp_path) for mp in MountPoint.objects.filter(mp_volume__vol_fstype__in=('ZFS','UFS'))]
+
         self.path = path.replace("..", "")
         if not self.path.startswith('/mnt/'):
             self.path = '/mnt/'+self.path
