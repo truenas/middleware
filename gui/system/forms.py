@@ -167,12 +167,16 @@ class SettingsForm(ModelForm):
         if self.instance._original_stg_syslogserver != self.instance.stg_syslogserver:
             notifier().restart("syslogd")
         notifier().reload("timeservices")
-    def done(self, events):
+    def done(self, request, events):
         if self.instance._original_stg_guiprotocol != self.instance.stg_guiprotocol or \
             self.instance._original_stg_guiaddress != self.instance.stg_guiaddress or \
             self.instance._original_stg_guiport != self.instance.stg_guiport:
+            if self.instance.stg_guiaddress == "0.0.0.0":
+                address = request.META['HTTP_HOST'].split(':')[0]
+            else:
+                address = self.instance.stg_guiaddress
             newurl = "%s://%s" % (self.instance.stg_guiprotocol,
-                                    self.instance.stg_guiaddress,
+                                    address
                                     )
             if self.instance.stg_guiport != '':
                 newurl += ":" + self.instance.stg_guiport
@@ -233,8 +237,8 @@ class EmailForm(ModelForm):
                 ro = False
         if ro:
             self.fields['em_user'].widget.attrs['disabled'] = 'disabled'
-            self.fields['em_pass1'].widget.attrs['disabled'] = 'disabled' 
-            self.fields['em_pass2'].widget.attrs['disabled'] = 'disabled' 
+            self.fields['em_pass1'].widget.attrs['disabled'] = 'disabled'
+            self.fields['em_pass2'].widget.attrs['disabled'] = 'disabled'
 
     def clean_em_user(self):
         if self.cleaned_data['em_smtp'] == True and \

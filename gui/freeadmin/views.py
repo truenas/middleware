@@ -509,7 +509,7 @@ def generic_model_edit(request, app, model, oid, mf=None):
                 if hasattr(mf, "done") and callable(mf.done):
                     #FIXME: temporary workaround to do not change all MF to accept this arg
                     try:
-                        mf.done(events=events)
+                        mf.done(request=request, events=events)
                     except TypeError:
                         mf.done()
                 if request.GET.has_key("iframe"):
