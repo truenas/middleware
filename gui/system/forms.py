@@ -150,7 +150,7 @@ class SettingsForm(ModelForm):
         self.fields['stg_language'].choices=settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
         self.fields['stg_guiaddress'] = forms.ChoiceField(label=self.fields['stg_guiaddress'].label)
-        self.fields['stg_guiaddress'].choices = choices.IPChoices()
+        self.fields['stg_guiaddress'].choices = [['0.0.0.0', '0.0.0.0']] + list(choices.IPChoices())
     def clean_stg_guiport(self):
         val = self.cleaned_data.get("stg_guiport")
         if val == '':
