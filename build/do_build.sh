@@ -9,6 +9,9 @@
 # Force a resync/repatch of everything:
 #	sh build/do_build.sh -f all
 #
+# Just pull the sources:
+#	sh build/do_build.sh -B
+#
 
 error() {
 	echo >&2 "${0##/*}: ERROR: $*"
@@ -16,27 +19,32 @@ error() {
 }
 
 usage() {
-	echo "usage: ${0##*/} [-f ports|all] [-- nanobsd-options]"
+	echo "usage: ${0##*/} [-B] [-f ports|all] [-- nanobsd-options]"
 	exit 1
 }
 
 cd "$(dirname "$0")/.."
 
+BUILD=true
 FORCE_UPDATE=false
-#FORCE_REBUILD_PORTS=false
+FORCE_REBUILD_PORTS=false
 FORCE_REBUILD_SRC=false
 
 while getopts 'f:' optch; do
 	case "$optch" in
+	B)
+		echo "will not build"
+		BUILD=false
+		;;
 	f)
 		FORCE_UPDATE=true
 		case "$OPTARG" in
 		all)
-			#FORCE_REBUILD_PORTS=true
+			FORCE_REBUILD_PORTS=true
 			FORCE_REBUILD_SRC=true
 			;;
 		ports)
-			#FORCE_REBUILD_PORTS=true
+			FORCE_REBUILD_PORTS=true
 			;;
 		*)
 			usage
@@ -58,7 +66,6 @@ root=$(pwd)
 : ${FREENAS_ARCH=$(uname -p)}
 export FREENAS_ARCH
 export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
-PREP_SOURCE=${PREP_SOURCE:-""}
 
 if [ ! -d FreeBSD ]; then
 	mkdir FreeBSD
@@ -112,8 +119,8 @@ for i in $(cd ${root}/patches && echo ports-*.patch); do
 	fi
 done
 
-if [ -n "${PREP_SOURCE}" ]; then
-	exit
+if ! $BUILD; then
+	exit 0
 fi
 
 # OK, now we can build
@@ -121,6 +128,9 @@ cd FreeBSD/src
 args="-c ${root}/nanobsd/freenas-common"
 if [ -d ${NANO_OBJ} ] && ! "$FORCE_REBUILD_SRC"; then
 	extra_args="-b"
+fi
+if $FORCE_REBUILD_PORTS; then
+	find $NANO_OBJ/ports/packages/ 2>/dev/null | xargs -n 1 rm -Rf
 fi
 echo tools/tools/nanobsd/nanobsd.sh $args $* $extra_args
 if sh tools/tools/nanobsd/nanobsd.sh $args $* $extra_args; then
