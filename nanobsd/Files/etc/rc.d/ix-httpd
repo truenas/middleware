@@ -16,6 +16,9 @@ generate_httpd_conf()
 	local bind_port="${3}"
 	local tmp="/var/tmp/lighttpd.conf"
 
+	if [ "${bind_addr}" != "0.0.0.0" ] && [ -z "$(/sbin/ifconfig -a|grep ${bind_addr})" ]; then
+		bind_addr="0.0.0.0"
+	fi
 
 	awk -v ssl_enable="${ssl_enable}" \
 		-v ssl_cert="${HTTPDCERT}" \
