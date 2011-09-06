@@ -225,7 +225,8 @@ do_add_port ()
 	    TARGET_ARCH=${NANO_ARCH} make \
 	    __MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
 	    WRKDIRPREFIX=/usr/workdir -C /usr/ports/$port_path \
-	    package BATCH=yes $* clean FORCE_PKG_REGISTER=t"
+	    package BATCH=yes -DUSE_PACKAGE_DEPENDS \
+	    $* clean -DFORCE_PKG_REGISTER"
 	rm ${NANO_WORLDDIR}/etc/resolv.conf
 	rm -rf ${NANO_WORLDDIR}/usr/obj
 	rm -rf ${NANO_WORLDDIR}/usr/workdir

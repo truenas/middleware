@@ -121,7 +121,6 @@ add_port net/samba35		-DWITHOUT_CUPS -DWITH_LDAP -DWITH_ADS \
 	-DWITH_EXP_MODULES 
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
-add_port shells/bash
 add_port shells/scponly
 add_port sysutils/e2fsprogs
 #+sysutils/fusefs-ntfs
@@ -249,6 +248,7 @@ if [ "${DEBUG}" -eq "1" ]; then
 	add_port lang/p5-Error
 	add_port devel/git -DWITH_SVN -DWITHOUT_P4 -DWITHOUT_CVS
 	add_port devel/ctags 
+	add_port shells/bash -DWITHOUT_NLS
 fi
 	 
 
