@@ -1422,6 +1422,7 @@ class notifier:
                 volumes.append({
                     'label': pool,
                     'type': 'zfs',
+                    'id': roots.id,
                     'group_type': 'none',
                     'cache': roots['cache'].dump() if roots['cache'] else None,
                     'log': roots['log'].dump() if roots['log'] else None,
@@ -1431,8 +1432,8 @@ class notifier:
 
         return volumes
 
-    def zfs_import(self, name):
-        imp = self.__pipeopen('zpool import -R /mnt %s' % name)
+    def zfs_import(self, name, id):
+        imp = self.__pipeopen('zpool import -R /mnt %s' % id)
         stdout, stderr = imp.communicate()
         if imp.returncode == 0:
             # Reset all mountpoints in the zpool

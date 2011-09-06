@@ -500,7 +500,10 @@ class VolumeAutoImportForm(forms.Form):
                         break
 
         for vol in vols:
-            devname = "%s [%s]" % (vol['label'],vol['type'])
+            if vol.get("id", None):
+                devname = "%s [%s, id=%s]" % (vol['label'], vol['type'], vol['id'])
+            else:
+                devname = "%s [%s]" % (vol['label'],vol['type'])
             diskchoices[vol['label']] = "%s" % (devname,)
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
@@ -636,7 +639,7 @@ class VolumeAutoImportForm(forms.Form):
                             diskobj.save()
                         i += 1
 
-            if vol['type'] == 'zfs' and not notifier().zfs_import(vol['label']):
+            if vol['type'] == 'zfs' and not notifier().zfs_import(vol['label'], vol['id']):
                 from middleware.exceptions import MiddlewareError
                 raise MiddlewareError(_('The volume "%s" failed to import, for futher details check pool status') % vol['label'])
 
