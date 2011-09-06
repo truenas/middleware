@@ -46,6 +46,9 @@ while getopts 'f:' optch; do
 		ports)
 			FORCE_REBUILD_PORTS=true
 			;;
+		src)
+			FORCE_REBUILD_SRC=true
+			;;
 		*)
 			usage
 			;;
