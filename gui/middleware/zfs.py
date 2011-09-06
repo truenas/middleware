@@ -27,6 +27,7 @@
 import re
 
 class Pool(object):
+    id = None
     name = None
 
     data = None
@@ -34,7 +35,8 @@ class Pool(object):
     spare = None
     log = None
 
-    def __init__(self, name):
+    def __init__(self, pid, name):
+        self.id = pid
         self.name = name
 
     def __getitem__(self, name):
@@ -212,7 +214,12 @@ class Dev(Tnode):
 def parse_status(name, doc, data):
 
     status = data.split('config:')[1]
-    pool = Pool(name)
+    pid = re.search(r'id: (?P<id>\d+)', data)
+    if pid:
+        pid = pid.group("id")
+    else:
+        pid = None
+    pool = Pool(pid=pid, name=name)
     lastident = None
     for line in status.split('\n'):
         if line.startswith('\t'):
