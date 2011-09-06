@@ -26,6 +26,10 @@
 #
 
 import sys
+import os
+from cStringIO import StringIO
+import subprocess
+
 sys.path.append('/usr/local/www')
 sys.path.append('/usr/local/www/freenasUI')
 
@@ -36,8 +40,6 @@ setup_environ(settings)
 
 from django.contrib.auth.models import User, UNUSABLE_PASSWORD
 
-import os
-from cStringIO import StringIO
 
 from freenasUI.common.system import send_mail
 from freenasUI.storage.models import Volume
@@ -68,9 +70,17 @@ class Alert(object):
         if user.exists():
             self.log(self.LOG_CRIT, "You have to change the password for the admin user (currently no password is required to login)")
 
+    def lighttpd_bindaddr(self):
+        from freenasUI.system.models import Settings
+        address = Settings.objects.all().order_by('-id')[0].stg_guiaddress
+        with open('/usr/local/etc/lighttpd/lighttpd.conf') as f:
+            if f.read().find('0.0.0.0') != -1 and address != '0.0.0.0':
+                self.log(self.LOG_WARN, "The WebGUI Address could not be bind to %s, using wildcard" % (address,))
+
     def perform(self):
         self.volumes_status()
         self.admin_password()
+        self.lighttpd_bindaddr()
 
     def write(self):
         f = open('/var/tmp/alert', 'w')
