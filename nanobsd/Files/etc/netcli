@@ -97,7 +97,7 @@ def hex_to_cidr(_hex):
 def prompt(prompt_str, default_value=None):
     """Returns a string that forms a prompt, based on values passed in"""
     if default_value:
-        default_str = ' [%s]' % (str(default), )
+        default_str = ' [%s]' % (str(default_value), )
     else:
         default_str = ''
     return (prompt_str + default_str + ':')
