@@ -185,9 +185,9 @@ def configure_interface():
         iface = Interfaces()
 
     while True:
-        _input = raw_input("Delete existing config? (y/n) ")
-        if _input.lower().startswith("y"):
-            print "Deleting interface configuration:",
+        _input = raw_input("Reset network configuration? (y/n) ").lower()
+        if _input.startswith("y"):
+            print "Resetting interface configuration:",
             try:
                 if iface.id != None:
                     iface.int_ipv4address = ''
@@ -211,7 +211,7 @@ def configure_interface():
                 print "Failed"
             print "ok"
             return True
-        elif _input.lower().startswith('n'):
+        elif _input.startswith('n'):
             break
         else:
             continue

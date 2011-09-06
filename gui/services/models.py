@@ -1082,12 +1082,12 @@ class ActiveDirectory(Model):
     ad_netbiosname = models.CharField(
             max_length=120,
             verbose_name = _("Host Name (NetBIOS-Name)"),
-            help_text = _("Host Name in old format, eg EXAMPLE")
+            help_text = _("Host name in old format, eg FREENAS")
             )
     ad_workgroup = models.CharField(
             max_length=120,
             verbose_name = _("Workgroup Name"),
-            help_text = _("Workgroup Name in old format, eg EXAMPLE")
+            help_text = _("Workgroup or domain name in old format, eg WORKGROUP")
             )
     ad_adminname = models.CharField(
             max_length=120,

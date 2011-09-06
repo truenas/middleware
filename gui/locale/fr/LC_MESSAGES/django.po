@@ -2337,7 +2337,7 @@ msgid "Host Name (NetBIOS-Name)"
 msgstr "Nom d'hôte (NetBIOS)"
 
 #: services/models.py:1045
-msgid "Host Name in old format, eg EXAMPLE"
+msgid "Host name in old format, eg FREENAS"
 msgstr "Nom d'hôte dans l'ancien format, e.g. EXAMPLE"
 
 # Préciser WORKGROUP ?
@@ -2347,7 +2347,7 @@ msgstr "Nom du groupe de travail"
 
 # Préciser WORKGROUP?
 #: services/models.py:1050
-msgid "Workgroup Name in old format, eg EXAMPLE"
+msgid "Workgroup or domain name in old format, eg WORKGROUP"
 msgstr "Nom du groupe de travail dans l'ancien format, e.g. EXEMPLE"
 
 #: services/models.py:1054

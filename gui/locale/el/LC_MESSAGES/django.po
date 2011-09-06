@@ -2338,7 +2338,7 @@ msgid "Host Name (NetBIOS-Name)"
 msgstr "Όνομα κεντρικού υπολογιστή (NetBIOS-Name)"
 
 #: services/models.py:1045
-msgid "Host Name in old format, eg EXAMPLE"
+msgid "Host name in old format, eg FREENAS"
 msgstr "Όνομα κεντρικού υπολογιστή στην παλιά μορφή, π.χ. ΠΑΡΑΔΕΙΓΜΑ"
 
 #: services/models.py:1049
@@ -2346,7 +2346,7 @@ msgid "Workgroup Name"
 msgstr "Όνομα ομάδας εργασίας"
 
 #: services/models.py:1050
-msgid "Workgroup Name in old format, eg EXAMPLE"
+msgid "Workgroup or domain name in old format, eg WORKGROUP"
 msgstr "Όνομα ομάδας εργασίας στην παλιά μορφή, π.χ. ΠΑΡΑΔΕΙΓΜΑ"
 
 #: services/models.py:1054

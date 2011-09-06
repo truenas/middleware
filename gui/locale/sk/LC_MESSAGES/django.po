@@ -2315,7 +2315,7 @@ msgid "Host Name (NetBIOS-Name)"
 msgstr "Názov počítača (NetBIOS názov)"
 
 #: services/models.py:1045
-msgid "Host Name in old format, eg EXAMPLE"
+msgid "Host name in old format, eg FREENAS"
 msgstr "Názov hostitela v starom formáte, napr. NIECO"
 
 #: services/models.py:1049
@@ -2323,7 +2323,7 @@ msgid "Workgroup Name"
 msgstr "Názov pracovnej skupiny"
 
 #: services/models.py:1050
-msgid "Workgroup Name in old format, eg EXAMPLE"
+msgid "Workgroup or domain name in old format, eg WORKGROUP"
 msgstr "Názov pracovnej skupiny v starom formáte, napr. NIECO"
 
 #: services/models.py:1054
