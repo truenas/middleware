@@ -237,8 +237,10 @@ class notifier:
         self.__system("/usr/sbin/service istgt restart")
 
     def _reload_iscsitarget(self):
-        self.__system("/usr/sbin/service ix-istgt quietstart")
-        self.__system("/usr/sbin/service istgt reload")
+        #TODO: istgt does not accept HUP yet
+        #self.__system("/usr/sbin/service ix-istgt quietstart")
+        #self.__system("/usr/sbin/service istgt reload")
+        self._restart_iscsitarget()
 
     def _start_network(self):
         c = self.__open_db()
