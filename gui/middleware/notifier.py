@@ -951,7 +951,7 @@ class notifier:
             self.__system('/sbin/swapoff /dev/%s' % (fromdev_swap))
 
         if from_disk.id == to_disk.id:
-            self.__system('/sbin/zpool offline %s %s' % (volume, zdev))
+            self.__system('/sbin/zpool offline %s %s' % (volume.vol_name, zdev))
 
         self.__gpt_labeldisk(type = "freebsd-zfs", devname = todev,
                              swapsize=swapsize)
