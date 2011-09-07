@@ -346,17 +346,21 @@ class FirmwareUploadForm(Form):
     def clean(self):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/firmware.xz'
-        fw = open(filename, 'wb+')
         if cleaned_data.get('firmware'):
-            for c in cleaned_data['firmware'].chunks():
-                fw.write(c)
-            fw.close()
-            checksum = notifier().checksum(filename)
+            with open(filename, 'wb+') as fw:
+                for c in cleaned_data['firmware'].chunks():
+                    fw.write(c)
             retval = notifier().validate_xz(filename)
-            if checksum != cleaned_data['sha256'].__str__().strip() or retval == False:
-                msg = _(u"Invalid firmware or checksum")
+            if not retval:
+                msg = _(u"Invalid firmware")
                 self._errors["firmware"] = self.error_class([msg])
                 del cleaned_data["firmware"]
+            elif 'sha256' in cleaned_data:
+                checksum = notifier().checksum(filename)
+                if checksum != str(cleaned_data['sha256']).strip():
+                    msg = _(u"Invalid checksum")
+                    self._errors["firmware"] = self.error_class([msg])
+                    del cleaned_data["firmware"]
         else:
             self._errors["firmware"] = self.error_class([_("This field is required.")])
         return cleaned_data
@@ -369,17 +373,21 @@ class ServicePackUploadForm(Form):
     def clean(self):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/servicepack.txz'
-        fw = open(filename, 'wb+')
         if cleaned_data.get('servicepack'):
-            for c in cleaned_data['servicepack'].chunks():
-                fw.write(c)
-            fw.close()
-            checksum = notifier().checksum(filename)
+            with open(filename, 'wb+') as sp:
+                for c in cleaned_data['servicepack'].chunks():
+                    sp.write(c)
             retval = notifier().validate_xz(filename)
-            if checksum != cleaned_data['sha256'].__str__() or retval == False:
-                msg = _(u"Invalid service pack or checksum")
+            if not retval:
+                msg = _(u"Invalid service pack")
                 self._errors["servicepack"] = self.error_class([msg])
                 del cleaned_data["servicepack"]
+            elif 'sha256' in cleaned_data:
+                checksum = notifier().checksum(filename)
+                if checksum != str(cleaned_data['sha256']):
+                    msg = _(u"Invalid checksum")
+                    self._errors["servicepack"] = self.error_class([msg])
+                    del cleaned_data["servicepack"]
         else:
             self._errors["servicepack"] = self.error_class([_("This field is required.")])
         return cleaned_data
