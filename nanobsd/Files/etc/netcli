@@ -174,7 +174,7 @@ def configure_interface():
     while True:
         i = 0
         nics = {}
-        choices = NICChoices(exclude_configured=False)
+        choices = NICChoices(include_vlan_parent=True, exclude_configured=False)
         for c in choices:
             nics[i] = c[0]
             print "%d) %s" % (i + 1, nics[i])
