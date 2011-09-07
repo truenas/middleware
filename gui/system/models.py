@@ -49,7 +49,7 @@ class Settings(Model):
     stg_guiaddress = models.CharField(
             max_length=120,
             blank=True,
-            default='',
+            default='0.0.0.0',
             verbose_name = _("WebGUI Address")
             )
     stg_guiport = models.CharField(

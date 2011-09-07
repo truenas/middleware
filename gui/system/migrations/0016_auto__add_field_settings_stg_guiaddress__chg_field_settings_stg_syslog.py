@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding field 'Settings.stg_guiaddress'
-        db.add_column('system_settings', 'stg_guiaddress', self.gf('django.db.models.fields.CharField')(default='', max_length=120, blank=True), keep_default=False)
+        db.add_column('system_settings', 'stg_guiaddress', self.gf('django.db.models.fields.CharField')(default='0.0.0.0', max_length=120, blank=True), keep_default=False)
 
         # Changing field 'Settings.stg_syslogserver'
         db.alter_column('system_settings', 'stg_syslogserver', self.gf('freenasUI.contrib.IPAddressField.IPAddressField')())
