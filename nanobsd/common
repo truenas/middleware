@@ -30,7 +30,8 @@
 # an explicit copyright/license statement, but are implicitly BSDL.
 #
 
-NANO_PMAKE="make -j8"					# NB: disable -j 3
+# NB: disable -j3
+NANO_PMAKE="make -j$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))"
 
 # Where cust_pkg() finds packages to install
 #XXX: Is this the right place?
