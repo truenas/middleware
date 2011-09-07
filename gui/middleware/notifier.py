@@ -763,14 +763,14 @@ class notifier:
             zfsproc = self.__pipeopen("/sbin/zfs list -Hr %s" % (path))
         else:
             zfsproc = self.__pipeopen("/sbin/zfs list -H %s" % (path))
-            zfs_output, zfs_err = zfsproc.communicate()
-            zfs_output = zfs_output.split('\n')
-            retval = {}
-            for line in zfs_output:
-                if line != "":
-                   data = line.split('\t')
-                   retval[data[0]] = data[4]
-            return retval
+        zfs_output, zfs_err = zfsproc.communicate()
+        zfs_output = zfs_output.split('\n')
+        retval = {}
+        for line in zfs_output:
+            if line != "":
+               data = line.split('\t')
+               retval[data[0]] = data[4]
+        return retval
 
     def list_zfs_vols(self, volname):
         """Return a dictionary that contains all ZFS volumes list"""
