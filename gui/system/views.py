@@ -48,6 +48,7 @@ from freenasUI.common.system import get_freenas_version
 
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version.freenas'
+DEBUG_TEMP = '/tmp/debug.txt'
 
 def _system_info():
     # OS, hostname, release
@@ -324,3 +325,24 @@ def restart_httpd(request):
     """ restart httpd """
     notifier().restart("http")
     return HttpResponse('OK')
+
+def debug(request):
+    """Save freenas-debug output to DEBUG_TEMP"""
+    p1 = subprocess.Popen(["/usr/local/bin/freenas-debug", "-a", "-g", "-h", "-l", "-n", "-s", "-y", "-t", "-z"], stdout=subprocess.PIPE)
+    debug = p1.communicate()[0]
+    with open(DEBUG_TEMP, 'w') as f:
+        f.write(debug)
+    return render(request, 'system/debug.html')
+
+def debug_save(request):
+    from django.core.servers.basehttp import FileWrapper
+    from network.models import GlobalConfiguration
+
+    hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+    wrapper = FileWrapper(file(DEBUG_TEMP))
+
+    response = HttpResponse(wrapper, content_type='application/octet-stream')
+    response['Content-Length'] = os.path.getsize(DEBUG_TEMP)
+    response['Content-Disposition'] = \
+        'attachment; filename=debug-%s-%s.txt' % (hostname.encode('utf-8'), time.strftime('%Y%m%d%H%M%S'))
+    return response
