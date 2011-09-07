@@ -169,7 +169,7 @@ main()
 
 	load_modules
 	get_module_options
-	opts="${VAL}${email_opt}:"
+	opts="${VAL}"
 
 	if [ "$#" = "0" ]
 	then
@@ -177,7 +177,8 @@ main()
 		return 2
 	fi
 
-	while getopts "${opts}" opt
+	aopts="${opts}${email_opt}:"
+	while getopts "${aopts}" opt
 	do
 		case "${opt}" in
 			:|\?) usage "${opts}" && exit 2 ;;
@@ -187,7 +188,7 @@ main()
 	OPTIND=1
 	: > ${FREENAS_DEBUG_FILE}
 	freenas_header 2>&1|tee -a "${FREENAS_DEBUG_FILE}"
-	while getopts "${opts}${email_opt}:" opt
+	while getopts "${aopts}" opt
 	do
 		local var=\$$(echo "module_func_${opt}")
 		local func=$(eval "echo ${var}")
