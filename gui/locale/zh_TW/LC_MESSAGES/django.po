@@ -2230,7 +2230,7 @@ msgid "Host Name (NetBIOS-Name)"
 msgstr "NetBIOS主機名稱"
 
 #: services/models.py:1045
-msgid "Host name in old format, eg FREENAS"
+msgid "Host Name in old format, eg EXAMPLE"
 msgstr "主機名稱(例如：example)"
 
 #: services/models.py:1049
@@ -2238,7 +2238,7 @@ msgid "Workgroup Name"
 msgstr "工作群組名稱"
 
 #: services/models.py:1050
-msgid "Workgroup or domain name in old format, eg WORKGROUP"
+msgid "Workgroup Name in old format, eg EXAMPLE"
 msgstr "工作群組名稱(例如：EXAMPLE)"
 
 #: services/models.py:1054
@@ -3049,7 +3049,7 @@ msgid "The selected disks were not verified for this import rules."
 msgstr "選定的磁碟並沒有驗證這導入的規則"
 
 #: storage/forms.py:404
-msgid "Some error occured while labelling the disk."
+msgid "Some error ocurried while labelling the disk."
 msgstr "標示磁碟時發生一些錯誤"
 
 #: storage/forms.py:484
@@ -3421,7 +3421,7 @@ msgid "Dataset successfully edited."
 msgstr "資料集更新成功"
 
 #: storage/views.py:320 storage/views.py:396
-msgid "Some error occured while setting the options"
+msgid "Some error ocurried while setting the options"
 msgstr "設置選項時發生錯誤"
 
 #: storage/views.py:342
@@ -3473,7 +3473,7 @@ msgid "Disk replacement has been initiated."
 msgstr "磁碟已開始替換"
 
 #: storage/views.py:553
-msgid "Some error occured."
+msgid "Some error ocurried."
 msgstr "有錯誤訊息產生"
 
 #: storage/views.py:574

@@ -2337,7 +2337,7 @@ msgid "Host Name (NetBIOS-Name)"
 msgstr "Nom d'hôte (NetBIOS)"
 
 #: services/models.py:1045
-msgid "Host name in old format, eg FREENAS"
+msgid "Host Name in old format, eg EXAMPLE"
 msgstr "Nom d'hôte dans l'ancien format, e.g. EXAMPLE"
 
 # Préciser WORKGROUP ?
@@ -2347,7 +2347,7 @@ msgstr "Nom du groupe de travail"
 
 # Préciser WORKGROUP?
 #: services/models.py:1050
-msgid "Workgroup or domain name in old format, eg WORKGROUP"
+msgid "Workgroup Name in old format, eg EXAMPLE"
 msgstr "Nom du groupe de travail dans l'ancien format, e.g. EXEMPLE"
 
 #: services/models.py:1054
@@ -3243,7 +3243,7 @@ msgstr ""
 "d'importation."
 
 #: storage/forms.py:404
-msgid "Some error occured while labelling the disk."
+msgid "Some error ocurried while labelling the disk."
 msgstr "Une erreur est survenue pendant la labélisation du disque."
 
 #: storage/forms.py:484
@@ -3632,7 +3632,7 @@ msgid "Dataset successfully edited."
 msgstr "Jeu de données modifié avec succès."
 
 #: storage/views.py:320 storage/views.py:396
-msgid "Some error occured while setting the options"
+msgid "Some error ocurried while setting the options"
 msgstr "Des erreurs sont survenues pendant le réglage des options"
 
 #: storage/views.py:342
@@ -3685,7 +3685,7 @@ msgid "Disk replacement has been initiated."
 msgstr "Le remplacement du disque a débuté."
 
 #: storage/views.py:553
-msgid "Some error occured."
+msgid "Some error ocurried."
 msgstr "Des erreurs sont survenues."
 
 #: storage/views.py:574

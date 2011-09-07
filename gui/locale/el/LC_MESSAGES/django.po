@@ -2338,7 +2338,7 @@ msgid "Host Name (NetBIOS-Name)"
 msgstr "Όνομα κεντρικού υπολογιστή (NetBIOS-Name)"
 
 #: services/models.py:1045
-msgid "Host name in old format, eg FREENAS"
+msgid "Host Name in old format, eg EXAMPLE"
 msgstr "Όνομα κεντρικού υπολογιστή στην παλιά μορφή, π.χ. ΠΑΡΑΔΕΙΓΜΑ"
 
 #: services/models.py:1049
@@ -2346,7 +2346,7 @@ msgid "Workgroup Name"
 msgstr "Όνομα ομάδας εργασίας"
 
 #: services/models.py:1050
-msgid "Workgroup or domain name in old format, eg WORKGROUP"
+msgid "Workgroup Name in old format, eg EXAMPLE"
 msgstr "Όνομα ομάδας εργασίας στην παλιά μορφή, π.χ. ΠΑΡΑΔΕΙΓΜΑ"
 
 #: services/models.py:1054
@@ -3270,8 +3270,8 @@ msgid "The selected disks were not verified for this import rules."
 msgstr "Τα επιλεγμένα δίσκοι δεν επαληθεύονται για το καθεστώς εισαγωγής."
 
 #: storage/forms.py:404
-msgid "Some error occured while labelling the disk."
-msgstr "Μερικές σφάλμα occured ενώ η σήμανση του δίσκου."
+msgid "Some error ocurried while labelling the disk."
+msgstr "Μερικές σφάλμα ocurried ενώ η σήμανση του δίσκου."
 
 #: storage/forms.py:484
 msgid "You must select a volume."
@@ -3657,8 +3657,8 @@ msgid "Dataset successfully edited."
 msgstr "%s διαγράφτικε με επιτυχία."
 
 #: storage/views.py:320 storage/views.py:396
-msgid "Some error occured while setting the options"
-msgstr "Μερικά σφάλματα occured ενώ θέτει τις επιλογές"
+msgid "Some error ocurried while setting the options"
+msgstr "Μερικά σφάλματα ocurried ενώ θέτει τις επιλογές"
 
 #: storage/views.py:342
 #, fuzzy
@@ -3718,8 +3718,8 @@ msgid "Disk replacement has been initiated."
 msgstr "αντικατάστασης δίσκου έχει ξεκινήσει."
 
 #: storage/views.py:553
-msgid "Some error occured."
-msgstr "Κάποιο λάθος occured."
+msgid "Some error ocurried."
+msgstr "Κάποιο λάθος ocurried."
 
 #: storage/views.py:574
 msgid "Disk detach has been successfully done."

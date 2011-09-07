@@ -76,7 +76,7 @@ msgid "Disk Detach"
 msgstr ""
 
 #: media/lib/js/freeadmin.js:635
-msgid "Some error occured!"
+msgid "Some error ocurried!"
 msgstr "Một số lỗi đã xảy ra!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

@@ -75,7 +75,7 @@ msgid "Disk Detach"
 msgstr "Løs ut disk"
 
 #: media/lib/js/freeadmin.js:635
-msgid "Some error occured!"
+msgid "Some error ocurried!"
 msgstr "En feil oppsto!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

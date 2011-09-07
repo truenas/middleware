@@ -76,7 +76,7 @@ msgid "Disk Detach"
 msgstr "Odklopi disk"
 
 #: media/lib/js/freeadmin.js:635
-msgid "Some error occured!"
+msgid "Some error ocurried!"
 msgstr "Pojavila se je napaka!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

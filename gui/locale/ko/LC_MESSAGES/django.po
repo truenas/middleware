@@ -2205,7 +2205,7 @@ msgid "Host Name (NetBIOS-Name)"
 msgstr ""
 
 #: services/models.py:1045
-msgid "Host name in old format, eg FREENAS"
+msgid "Host Name in old format, eg EXAMPLE"
 msgstr ""
 
 #: services/models.py:1049
@@ -2213,7 +2213,7 @@ msgid "Workgroup Name"
 msgstr ""
 
 #: services/models.py:1050
-msgid "Workgroup or domain name in old format, eg WORKGROUP"
+msgid "Workgroup Name in old format, eg EXAMPLE"
 msgstr ""
 
 #: services/models.py:1054
@@ -2992,7 +2992,7 @@ msgid "The selected disks were not verified for this import rules."
 msgstr ""
 
 #: storage/forms.py:404
-msgid "Some error occured while labelling the disk."
+msgid "Some error ocurried while labelling the disk."
 msgstr ""
 
 #: storage/forms.py:484
@@ -3369,7 +3369,7 @@ msgid "Dataset successfully edited."
 msgstr "%s가 삭제 되었습니다. "
 
 #: storage/views.py:320 storage/views.py:396
-msgid "Some error occured while setting the options"
+msgid "Some error ocurried while setting the options"
 msgstr ""
 
 #: storage/views.py:342
@@ -3430,7 +3430,7 @@ msgid "Disk replacement has been initiated."
 msgstr ""
 
 #: storage/views.py:553
-msgid "Some error occured."
+msgid "Some error ocurried."
 msgstr ""
 
 #: storage/views.py:574
