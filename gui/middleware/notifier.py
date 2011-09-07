@@ -336,6 +336,10 @@ class notifier:
         self.__system("/bin/sleep 5")
         self.__system("/usr/sbin/service samba quietstart")
 
+    def _restart_ldap(self):
+        self._stop_ldap()
+        self._start_ldap()
+
     def _started_activedirectory(self):
         from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory, ActiveDirectoryEnabled
 
@@ -378,6 +382,10 @@ class notifier:
         self.__system("/usr/bin/killall smbd")
         self.__system("/usr/bin/killall winbindd")
         self.__system("/usr/sbin/service samba quietstart")
+
+    def _restart_activedirectory(self):
+        self._stop_activedirectory()
+        self._start_activedirectory()
 
     def _restart_syslogd(self):
         self.__system("/usr/sbin/service ix-syslogd quietstart")
