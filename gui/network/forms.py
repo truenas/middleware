@@ -155,7 +155,7 @@ class VLANForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(VLANForm, self).__init__(*args, **kwargs)
-        self.fields['vlan_pint'].choices = list(choices.NICChoices(novlan = True))
+        self.fields['vlan_pint'].choices = list(choices.NICChoices(novlan = True, exclude_configured=False))
 
     def clean_vlan_vint(self):
         name = self.cleaned_data['vlan_vint']
