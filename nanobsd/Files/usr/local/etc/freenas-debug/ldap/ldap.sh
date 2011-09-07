@@ -51,6 +51,7 @@ ldap_func()
 		srv_service = 'ldap'
 	")
 
+    enabled="DISABLED"
 	if [ "${onoff}" = "1" ]
 	then
 		enabled="ENABLED"
@@ -181,7 +182,7 @@ __EOF__
 	#
 	#	Dump cache info
 	#
-	cache_dump "LDAP"
+	cache_func "LDAP"
 
 	#
 	#	Include LDAP debugging

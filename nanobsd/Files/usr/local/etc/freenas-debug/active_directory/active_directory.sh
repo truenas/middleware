@@ -59,6 +59,7 @@ active_directory_func()
 		srv_service = 'activedirectory'
 	")
 
+    enabled="DISABLED"
 	if [ "${onoff}" = "1" ]
 	then
 		enabled="ENABLED"
@@ -205,7 +206,7 @@ __EOF__
 	#
 	#	Dump cache info
 	#
-	cache_dump "AD"
+	cache_func "AD"
 
 	#
 	#	Include LDAP debugging
