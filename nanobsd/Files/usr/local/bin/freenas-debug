@@ -169,7 +169,7 @@ main()
 
 	load_modules
 	get_module_options
-	opts="${VAL}"
+	opts="${VAL}${email_opt}:"
 
 	if [ "$#" = "0" ]
 	then
