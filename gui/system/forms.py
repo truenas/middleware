@@ -341,8 +341,8 @@ class FirmwareTemporaryLocationForm(Form):
         notifier().change_upload_location(self.cleaned_data["mountpoint"].__str__())
 
 class FirmwareUploadForm(Form):
-    firmware = FileField(label=_("New image to be installed"))
-    sha256 = forms.CharField(label=_("SHA256 sum for the image"))
+    firmware = FileField(label=_("New image to be installed"), required=True)
+    sha256 = forms.CharField(label=_("SHA256 sum for the image"), required=True)
     def clean(self):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/firmware.xz'
@@ -368,8 +368,8 @@ class FirmwareUploadForm(Form):
         notifier().update_firmware('/var/tmp/firmware/firmware.xz')
 
 class ServicePackUploadForm(Form):
-    servicepack = FileField(label=_("Service Pack image to be installed"))
-    sha256 = forms.CharField(label=_("SHA256 sum for the image"))
+    servicepack = FileField(label=_("Service Pack image to be installed"), required=True)
+    sha256 = forms.CharField(label=_("SHA256 sum for the image"), required=True)
     def clean(self):
         cleaned_data = self.cleaned_data
         filename = '/var/tmp/firmware/servicepack.txz'
