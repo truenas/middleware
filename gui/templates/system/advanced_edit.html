@@ -24,6 +24,12 @@
                 </script>
             </button>
             <button dojoType="dijit.form.Button" type="button">
+                {% trans "Save Debug" %}
+                <script type="dojo/method" event="onClick" args="evt">
+                    addObject('{% trans "Save Debug"|force_escape %}', '{% url system_debug %}');
+                </script>
+            </button>
+            <button dojoType="dijit.form.Button" type="button">
                 {% trans "Firmware Update" %}
                 <script type="dojo/method" event="onClick" args="evt">
                     addObject('{% trans "Firmware Update"|force_escape %}', '{% url system_firmwizard %}');
