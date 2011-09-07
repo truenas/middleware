@@ -75,7 +75,7 @@ msgid "Disk Detach"
 msgstr "Melepaskan Cakram"
 
 #: media/lib/js/freeadmin.js:635
-msgid "Some error ocurried!"
+msgid "Some error occured!"
 msgstr "Terjadi beberapa kesalahan!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

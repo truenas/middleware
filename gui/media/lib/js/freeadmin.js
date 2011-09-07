@@ -770,7 +770,7 @@
                 },
                 error: function(data) {
 
-                        setMessage(gettext('Some error ocurred!'), "error");
+                        setMessage(gettext('Some error occured!'), "error");
 
                         try {
                            rnode.hide();
