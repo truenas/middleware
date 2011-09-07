@@ -299,7 +299,7 @@ class whoChoices:
 ## Network|Interface Management
 class NICChoices(object):
     """Populate a list of NIC choices"""
-    def __init__(self, nolagg=False, novlan=False, exclude_configured=True):
+    def __init__(self, nolagg=False, novlan=False, exclude_configured=True, include_vlan_parent=False):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
         # Remove lo0 from choices
@@ -336,14 +336,18 @@ class NICChoices(object):
             # This removes devices that are parents of vlans.  We don't
             # remove these devices if we are adding a vlan since multiple
             # vlan devices may share the same parent.
-            try:
-                c.execute("SELECT vlan_pint FROM network_vlan")
-            except sqlite3.OperationalError:
-                pass
-            else:
-                for interface in c:
-                    if interface[0] in self._NIClist:
-                        self._NIClist.remove(interface[0])
+            # The exception to this case is when we are getting the NIC
+            # list for the GUI, in which case we want the vlan parents
+            # as they may have a valid config on them.
+            if not include_vlan_parent:
+                try:
+                    c.execute("SELECT vlan_pint FROM network_vlan")
+                except sqlite3.OperationalError:
+                    pass
+                else:
+                    for interface in c:
+                        if interface[0] in self._NIClist:
+                            self._NIClist.remove(interface[0])
 
         if exclude_configured:
             try:
@@ -367,8 +371,8 @@ class NICChoices(object):
         return iter((i, i) for i in self._NIClist)
 
 class IPChoices(NICChoices):
-    def __init__(self, nolagg=False, novlan=False, exclude_configured=False):
-        super(IPChoices, self).__init__(nolagg, novlan, exclude_configured)
+    def __init__(self, nolagg=False, novlan=False, exclude_configured=False, include_vlan_parent=True):
+        super(IPChoices, self).__init__(nolagg, novlan, exclude_configured, include_vlan_parent)
 
         self._IPlist = []
         for iface in self._NIClist:

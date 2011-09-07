@@ -166,7 +166,7 @@ def get_lagg_nics(nics=None):
 def configure_interface():
     while True:
         nics = []
-        choices = NICChoices(exclude_configured=False)
+        choices = NICChoices(include_vlan_parent=True, exclude_configured=False)
         for i, c in enumerate(choices):
             nics.append(c[0])
             print "%d) %s" % (i + 1, nics[i])
