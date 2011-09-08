@@ -875,6 +875,10 @@ class notifier:
             vdev_member_list = vgrp_row.disk_set.all()
             for disk in vdev_member_list:
                 devname = self.identifier_to_device(disk.disk_identifier)
+                # FIXME: turn into a function
+                self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname,))
+                self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
+                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (devname, devname))
                 geom_vdev += " /dev/" + devname
             self.__system("geom %s load" % (geom_type))
             p1 = self.__pipeopen("geom %s label %s %s" % (geom_type, geom_name, geom_vdev))
