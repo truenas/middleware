@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:47-0700\n"
-"PO-Revision-Date: 2011-08-26 11:22+0200\n"
-"Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
+"PO-Revision-Date: 2011-09-07 18:07+0200\n"
+"Last-Translator: skimpax <skimpax@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -655,12 +655,12 @@ msgstr "Compte"
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:113
 #: templates/account/bsdusers.html:115 templates/account/index.html:7
 msgid "Change Password"
-msgstr "Changer le mot de passe"
+msgstr "Modifier le mot de passe"
 
 #: account/nav.py:19 templates/account/changeform.html:25
 #: templates/account/index.html:4
 msgid "Change Admin User"
-msgstr "Changer l'administrateur"
+msgstr "Modifier l'administrateur"
 
 #: account/nav.py:26 templates/account/index.html:2
 msgid "My Account"
@@ -3591,7 +3591,7 @@ msgstr "Importer un volume"
 #: storage/nav.py:56 templates/storage/volumes.html:53
 #: templates/storage/volumes.html.py:57
 msgid "Auto Import Volume"
-msgstr "Import de volume automatique"
+msgstr "Import automatique de volume"
 
 #: storage/nav.py:67
 msgid "View All Volumes"
@@ -3613,7 +3613,7 @@ msgstr "Volumes"
 #: storage/nav.py:121 storage/nav.py:139 templates/storage/volumes.html:168
 #: templates/storage/volumes.html.py:172
 msgid "Change Permissions"
-msgstr "Changer les permissions"
+msgstr "Modifier les permissions"
 
 #: storage/views.py:88 storage/views.py:115 storage/views.py:137
 msgid "Volume successfully added."
@@ -4316,11 +4316,11 @@ msgstr "Ajouter un nouvel utilisateur"
 
 #: templates/account/bsdusers.html:121 templates/account/bsdusers.html:123
 msgid "Change E-mail"
-msgstr "Changer l'e-mail"
+msgstr "Modifier l'e-mail"
 
 #: templates/account/passform.html:26
 msgid "Change Admin Password"
-msgstr "Changer le mot de passe administrateur"
+msgstr "Modifier le mot de passe administrateur"
 
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:7
@@ -4943,7 +4943,7 @@ msgstr "Créer un instantané"
 
 #: templates/storage/permission.html:6
 msgid "Change permission"
-msgstr "Changer les permissions"
+msgstr "Modifier les permissions"
 
 #: templates/storage/permission.html:7
 #, python-format
@@ -5377,10 +5377,10 @@ msgid "Success!"
 msgstr "Succès !"
 
 msgid "Your password was changed."
-msgstr "Votre mot de passe a été changé."
+msgstr "Votre mot de passe a été modifié."
 
 msgid "Password change"
-msgstr "Changement de mot de passe"
+msgstr "Modifier le mot de passe"
 
 msgid "Please correct the error below."
 msgid_plural "Please correct the errors below."
