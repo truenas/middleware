@@ -174,7 +174,7 @@ def configure_interface():
             print "%d) %s" % (i + 1, nics[i])
 
         _input = raw_input("Select an interface (q to quit): ")
-        if _input.isdigit() and _input in xrange(1, len(nics)+1):
+        if _input.isdigit() and int(_input) in xrange(1, len(nics)+1):
             nic = nics[int(_input) - 1]
             break
         elif _input.lower().startswith("q"):
