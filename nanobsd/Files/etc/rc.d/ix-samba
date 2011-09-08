@@ -109,7 +109,7 @@ generate_smbconf()
 
 	LIMIT 1
 	" | \
-	while read authmodel netbiosname workgroup cifs_description doscharset \
+	while read -r authmodel netbiosname workgroup cifs_description doscharset \
 		unixcharset loglevel localmaster timeserver guest guestok guestonly \
 		cifs_filemask cifs_dirmask \
 		largerw sendfile easupport dosattr nullpw \
@@ -394,7 +394,7 @@ generate_exports()
 	ORDER BY
 		cs.id ASC
 	" | \
-	while read name comment mountpoint cifsro browsable inheritperms \
+	while read -r name comment mountpoint cifsro browsable inheritperms \
 		recyclebin showhiddenfiles guest guestok guestonly hostsallow hostsdeny;
 	do
 		if [ -d "${mountpoint}" ]; then
