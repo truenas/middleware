@@ -5,7 +5,7 @@
 
 # PROVIDE: ix-devd
 # REQUIRE: ix-zfs
-# BEFORE: devd
+# BEFORE: devd pf
 
 . /etc/rc.subr
 
@@ -40,7 +40,7 @@ EVENT=\$2
 if [ \${EVENT} = "LINK_UP" ]; then
     echo "Entering UP on \${SUBSYSTEM}!" | logger
     sleep 3
-    STATUS=`ifconfig \${SUBSYSTEM} | grep "carp:" | awk '{print \$2}'`
+    STATUS=\`ifconfig \${SUBSYSTEM} | grep "carp:" | awk '{print \$2}'\`
     echo \${STATUS} | logger
     if [ \$STATUS != "MASTER" ]; then
         exit
@@ -79,12 +79,16 @@ if [ \${EVENT} = "LINK_UP" ]; then
 # downstream effect of that, instead we take a chill pill for 2 seconds.
 #
     sleep 1
+    echo "pass quick on \${SUBSYSTEM} keep state" > /etc/pf.conf
     pfctl -f /etc/pf.conf
 fi
 
 if [ \${EVENT} = "LINK_DOWN" ]; then
     echo "Entering DOWN!" | logger
     ifconfig \${SUBSYSTEM} advskew 20
+    echo "set block-policy drop" > /etc/pf.conf.block
+    echo "block quick drop in on \${SUBSYSTEM} proto tcp from any to any port 2049" >> /etc/pf.conf.block
+    echo "block quick drop in on \${SUBSYSTEM} proto udp from any to any port 2049" >> /etc/pf.conf.block
     pfctl -f /etc/pf.conf.block
     /etc/rc.d/statd stop
     echo "Exporting ${volumename}!" | logger
