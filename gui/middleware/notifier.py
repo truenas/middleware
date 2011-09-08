@@ -236,6 +236,13 @@ class notifier:
         self.__system("/usr/sbin/service istgt forcestop")
         self.__system("/usr/sbin/service istgt restart")
 
+    def _start_iscsitarget(self):
+        self.__system("/usr/sbin/service ix-istgt quietstart")
+        self.__system("/usr/sbin/service istgt restart")
+
+    def _stop_iscsitarget(self):
+        self.__system("/usr/sbin/service istgt forcestop")
+
     def _reload_iscsitarget(self):
         #TODO: istgt does not accept HUP yet
         #self.__system("/usr/sbin/service ix-istgt quietstart")
@@ -1463,9 +1470,10 @@ class notifier:
     def zfs_export(self, name):
         imp = self.__pipeopen('zpool export %s' % str(name))
         stdout, stderr = imp.communicate()
-        if imp.returncode == 0:
-            return True
-        return False
+        if imp.returncode != 0:
+            from middleware.exceptions import MiddlewareError
+            raise MiddlewareError('Unable to export %s: %s' % (name, stderr))
+        return True
 
     def zfs_snapshot_list(self):
         fsinfo = dict()
@@ -1629,13 +1637,14 @@ class notifier:
         return retval
 
     def geom_disk_state(self, geom, group_type, devname):
-        p1 = self.__pipeopen("geom %s list %s" % (str(group_type), str(geom)))
-        output = p1.communicate()[0]
-        reg = re.search(r'^\d\. Name: %s.*?State: (?P<state>\w+)' % devname, output, re.S|re.I|re.M)
-        if reg:
-            return reg.group("state")
-        else:
-            return "FAILED"
+        if group_type:
+            p1 = self.__pipeopen("geom %s list %s" % (str(group_type), str(geom)))
+            output = p1.communicate()[0]
+            reg = re.search(r'^\d\. Name: %s.*?State: (?P<state>\w+)' % devname, output, re.S|re.I|re.M)
+            if reg:
+                return reg.group("state")
+            else:
+                return "FAILED"
 
     def geom_disk_replace(self, volume, from_disk, to_disk):
         """Replace disk in volume_id from from_diskid to to_diskid"""

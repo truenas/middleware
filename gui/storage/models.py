@@ -75,17 +75,18 @@ class Volume(Model):
                     services[service] = services.get(service, 0) + len(ids)
         return services
 
-    def delete_step1(self, destroy, cascade):
+    def delete(self, destroy=True, cascade=True):
         """
         Some places reference a path which will not cascade delete
         We need to manually find all paths within this volume mount point
         """
         from services.models import iSCSITargetExtent
 
+        # TODO: This is ugly.
+        svcs    = ('cifs', 'afp', 'nfs', 'iscsitarget')
+        reloads = (False, False, False,  False)
+
         if cascade:
-            # TODO: This is ugly.
-            svcs    = ('cifs', 'afp', 'nfs', 'iscsitarget')
-            reloads = (False, False, False,  False)
 
             for mp in self.mountpoint_set.all():
                 reloads = map(sum, zip(reloads, mp.delete_attachments()))
@@ -96,16 +97,32 @@ class Volume(Model):
                 reloads = map(sum, zip(reloads, evil_zvol_destroy(zvol, \
                             iSCSITargetExtent, Disk, destroy=destroy, WearingSafetyBelt=False)))
 
-            for (svc, dirty) in zip(svcs, reloads):
-                if dirty:
-                    notifier().restart(svc)
+        else:
+
+            for mp in self.mountpoint_set.all():
+                attachments = mp.has_attachments()
+                reloads = map(sum, zip(reloads, (
+                            len(attachments['cifs']),
+                            len(attachments['afp']),
+                            len(attachments['nfs']),
+                            len(attachments['iscsiextent']),
+                        )
+                        ))
+
+        for (svc, dirty) in zip(svcs, reloads):
+            if dirty:
+                notifier().stop(svc)
 
         if not destroy:
             notifier().detach_volume_swaps(self)
 
-    def delete_step2(self, destroy, cascade):
         if destroy:
             notifier().destroy("volume", self)
+        elif self.vol_fstype == 'ZFS':
+            try:
+                notifier().zfs_export(self.vol_name)
+            except:
+                pass
 
         # The framework would cascade delete all database items
         # referencing this volume.
@@ -114,9 +131,9 @@ class Volume(Model):
         notifier().reload("disk")
         notifier().restart("collectd")
 
-    def delete(self, destroy=True, cascade=True):
-        self.delete_step1(destroy, cascade)
-        self.delete_step2(destroy, cascade)
+        for (svc, dirty) in zip(svcs, reloads):
+            if dirty:
+                notifier().start(svc)
 
     def __unicode__(self):
         return "%s (%s)" % (self.vol_name, self.vol_fstype)
