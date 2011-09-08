@@ -31,6 +31,7 @@ import os
 import re
 import signal
 import sys
+import subprocess
 
 import ipaddr
 
@@ -53,6 +54,7 @@ from django.contrib.auth.models import User
 from freenasUI.choices import NICChoices, LAGGType
 from freenasUI.network.models import GlobalConfiguration, Interfaces, \
 	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
+from freenasUI.system.models import Settings
 from freenasUI.middleware.notifier import notifier
 
 
@@ -744,16 +746,33 @@ def shutdown():
             return False
 
 def show_ip():
-    ret = os.system("sockstat -4p 443 | grep lighttpd")
-    if not ret:
-        proto = "https"
-    else:
-        proto = "http"
-    print """
+    proto = Settings.objects.all().order_by('-id')[0].stg_guiprotocol
+    p1 = subprocess.Popen("sockstat |awk '{ if ($2 == \"lighttpd\" && $7 == \"*:*\") print $6 }'", shell=True, stdout=subprocess.PIPE)
+    addrs = p1.communicate()[0].split('\n')[:-1]
+
+    if addrs:
+        print """
 You may try the following URLs to access the web user interface:
 """
-    os.system('ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
-              'sed -e s,^,%s://,g -e s,$,/,g' % proto)
+
+        for addr in addrs:
+            ip, port = addr.split(':')
+            hide_port = True if (proto == 'http' and port == '80') or \
+                             (proto == 'https' and port == '443') else False
+            if ip == '*':
+                if hide_port:
+                    os.system('ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
+                      'sed -e s,^,%s://,g -e s,$,/,g' % proto)
+                else:
+                    os.system('ifconfig -a inet | grep broadcast | cut -f2 -d\  |'
+                      'sed -e s,^,%s://,g -e s,$,:%s/,g' % (proto, port))
+            else:
+                if hide_port:
+                    print "%s://%s/" % (proto, ip)
+                else:
+                    print "%s://%s/" % (proto, addr)
+
+        print
 
 def main_menu():
     menu = [
