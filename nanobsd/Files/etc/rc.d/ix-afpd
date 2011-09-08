@@ -50,7 +50,7 @@ generate_afpd_config()
 
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
         "SELECT $sf FROM services_afp ORDER BY -id LIMIT 1" | \
-    while eval read $f; do
+    while eval read -r $f; do
 	: ${afp_srv_name:=-}
 	cat <<EOF
 "${afp_srv_name}" $(bool_off ${afp_srv_ddp} "-noddp") -nosavepassword \\
