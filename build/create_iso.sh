@@ -23,8 +23,7 @@ main()
 		REVISION=${REVISION}M
 	fi
 	if [ ! -f ${NANO_OBJ}/"FreeNAS-8r${REVISION}-${FREENAS_ARCH}.full" ]; then
-		echo "Can't find image file for ${REVISION}, punting"
-		exit 1
+		error "Can't find image file for ${REVISION}, punting"
 	fi
 	export NANO_NAME="FreeNAS-8r${REVISION}-${FREENAS_ARCH}"
 	export NANO_IMGNAME="${NANO_NAME}.full"
@@ -61,7 +60,7 @@ main()
 	# Copy the image file to the cdrom.  Cache the compressed version to
 	# make it easier to debug this and the install scripts.
 	if [ ! \( -f ${IMGFILE}.xz \) -o ${IMGFILE} -nt ${IMGFILE}.xz ]; then
-	xz --verbose --stdout --compress -9 ${IMGFILE} > ${IMGFILE}.xz
+		xz --verbose --stdout --compress -9 ${IMGFILE} > ${IMGFILE}.xz
 	fi
 	cp ${IMGFILE}.xz ${ISODIR}/FreeNAS-${FREENAS_ARCH}-embedded.xz
 
