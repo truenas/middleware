@@ -2,81 +2,85 @@
 
 # This script creates a bootable LiveCD iso from a nanobsd image for FreeNAS
 
+error() {
+	echo >&2 "${0##/*}: ERROR: $*"
+	exit 1
+}
+
 main()
 {
-    # This script must be run as root
-    if ! [ $(whoami) = "root" ]; then
-        echo "This script must be run by root"
-        exit
-    fi
+	# This script must be run as root
+	if [ $(id -ru) -ne 0 ]; then
+		error "You must be root when running $0"
+	fi
 
-    root=$(pwd)
-    : ${FREENAS_ARCH=$(uname -p)}
-    export FREENAS_ARCH
-    export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
-    : ${REVISION=`svnversion ${root} | tr -d M`}
-    if [ ! -f ${NANO_OBJ}/"FreeNAS-8r${REVISION}-${FREENAS_ARCH}.full" ]; then
-	REVISION=${REVISION}M
-    fi
-    if [ ! -f ${NANO_OBJ}/"FreeNAS-8r${REVISION}-${FREENAS_ARCH}.full" ]; then
-	echo "Can't find image file for ${REVISION}, punting"
-	exit 1
-    fi
-    export NANO_NAME="FreeNAS-8r${REVISION}-${FREENAS_ARCH}"
-    export NANO_IMGNAME="${NANO_NAME}.full"
+	root=$(pwd)
+	: ${FREENAS_ARCH=$(uname -p)}
+	export FREENAS_ARCH
+	export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
+	: ${REVISION=`svnversion ${root} | tr -d M`}
+	if [ ! -f ${NANO_OBJ}/"FreeNAS-8r${REVISION}-${FREENAS_ARCH}.full" ]; then
+		REVISION=${REVISION}M
+	fi
+	if [ ! -f ${NANO_OBJ}/"FreeNAS-8r${REVISION}-${FREENAS_ARCH}.full" ]; then
+		echo "Can't find image file for ${REVISION}, punting"
+		exit 1
+	fi
+	export NANO_NAME="FreeNAS-8r${REVISION}-${FREENAS_ARCH}"
+	export NANO_IMGNAME="${NANO_NAME}.full"
 
-    # Paths that may need altering on the build system
-    IMGFILE="${NANO_OBJ}/$NANO_IMGNAME"
-    TEMP_IMGFILE="${NANO_OBJ}/_.imgfile" # Scratch file for image
-    ETC_FILES="$root/build/files"
+	# Paths that may need altering on the build system
+	IMGFILE="${NANO_OBJ}/$NANO_IMGNAME"
+	TEMP_IMGFILE="${NANO_OBJ}/_.imgfile" # Scratch file for image
+	ETC_FILES="$root/build/files"
 
-    # Various mount points needed to build the CD, adjust to taste
-    STAGEDIR="${NANO_OBJ}/_.stage" # Scratch location for making filesystem image
-    ISODIR="${NANO_OBJ}/_.isodir" # Directory ISO is rolled from
-    INSTALLUFSDIR="${NANO_OBJ}/_.instufs" # Scratch mountpoint where the image will be dissected
+	# Various mount points needed to build the CD, adjust to taste
+	STAGEDIR="${NANO_OBJ}/_.stage" # Scratch location for making filesystem image
+	ISODIR="${NANO_OBJ}/_.isodir" # Directory ISO is rolled from
+	INSTALLUFSDIR="${NANO_OBJ}/_.instufs" # Scratch mountpoint where the image will be dissected
 
-    OUTPUT="${NANO_OBJ}/$NANO_NAME.iso" # Output file of mkisofs
+	OUTPUT="${NANO_OBJ}/$NANO_NAME.iso" # Output file of mkisofs
 
-    # A command forged by the gods themselves, change at your own risk
-    MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
-                 -allow-multidot -hide boot.catalog -o ${OUTPUT} -no-emul-boot \
-                 -b boot/cdboot ${ISODIR}"
+	# A command forged by the gods themselves, change at your own risk
+	MKISOFS_CMD="/usr/local/bin/mkisofs -R -l -ldots -allow-lowercase \
+			 -allow-multidot -hide boot.catalog -o ${OUTPUT} -no-emul-boot \
+			 -b boot/cdboot ${ISODIR}"
 
-    cleanup
+	cleanup
 
-    mkdir -p ${STAGEDIR}/dev
-    mkdir -p ${ISODIR}/data
+	mkdir -p ${STAGEDIR}/dev
+	mkdir -p ${ISODIR}/data
 
-    # Create a quick and dirty nano image from the world tree
-    mkdir -p ${INSTALLUFSDIR}
-    tar -cf - -C ${NANO_OBJ}/_.w --exclude local . | tar -xf - -C ${INSTALLUFSDIR}
-    
-    # copy /rescue and /boot from the image to the iso
-    tar -cf - -C ${INSTALLUFSDIR} rescue | tar -xf - -C ${STAGEDIR}
-    tar -cf - -C ${INSTALLUFSDIR} boot | tar -xf - -C ${ISODIR}
-    # Copy the image file to the cdrom.  Cache the compressed version to
-    # make it easier to debug this and the install scripts.
-    if [ ! \( -f ${IMGFILE}.xz \) -o ${IMGFILE} -nt ${IMGFILE}.xz ]; then
+	# Create a quick and dirty nano image from the world tree
+	mkdir -p ${INSTALLUFSDIR}
+	tar -cf - -C ${NANO_OBJ}/_.w --exclude local . | tar -xf - -C ${INSTALLUFSDIR}
+	
+	# copy /rescue and /boot from the image to the iso
+	tar -cf - -C ${INSTALLUFSDIR} rescue | tar -xf - -C ${STAGEDIR}
+	tar -cf - -C ${INSTALLUFSDIR} boot | tar -xf - -C ${ISODIR}
+	# Copy the image file to the cdrom.  Cache the compressed version to
+	# make it easier to debug this and the install scripts.
+	if [ ! \( -f ${IMGFILE}.xz \) -o ${IMGFILE} -nt ${IMGFILE}.xz ]; then
 	xz --verbose --stdout --compress -9 ${IMGFILE} > ${IMGFILE}.xz
-    fi
-    cp ${IMGFILE}.xz ${ISODIR}/FreeNAS-${FREENAS_ARCH}-embedded.xz
+	fi
+	cp ${IMGFILE}.xz ${ISODIR}/FreeNAS-${FREENAS_ARCH}-embedded.xz
 
-    echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
-    (cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
-    rm -rf ${INSTALLUFSDIR}/bin ${INSTALLUFSDIR}/sbin ${INSTALLUFSDIR}/usr/local
-    rm -rf ${INSTALLUFSDIR}/usr/bin ${INSTALLUFSDIR}/usr/sbin
-    ln -s ../../rescue ${INSTALLUFSDIR}/usr/bin
-    ln -s ../../rescue ${INSTALLUFSDIR}/usr/sbin
-    ln -s ../rescue ${INSTALLUFSDIR}/bin
-    ln -s ../rescue ${INSTALLUFSDIR}/sbin
-    tar -cf - -C${ETC_FILES} --exclude .svn . | tar -xf - -C ${INSTALLUFSDIR}/etc
+	echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
+	(cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
+	rm -rf ${INSTALLUFSDIR}/bin ${INSTALLUFSDIR}/sbin ${INSTALLUFSDIR}/usr/local
+	rm -rf ${INSTALLUFSDIR}/usr/bin ${INSTALLUFSDIR}/usr/sbin
+	ln -s ../../rescue ${INSTALLUFSDIR}/usr/bin
+	ln -s ../../rescue ${INSTALLUFSDIR}/usr/sbin
+	ln -s ../rescue ${INSTALLUFSDIR}/bin
+	ln -s ../rescue ${INSTALLUFSDIR}/sbin
+	tar -cf - -C${ETC_FILES} --exclude .svn . | tar -xf - -C ${INSTALLUFSDIR}/etc
 
-    # Compress what's left of the image after mangling it
-    makefs -b 10%  ${TEMP_IMGFILE} ${INSTALLUFSDIR}
-    mkuzip -o ${ISODIR}/data/base.ufs.uzip ${TEMP_IMGFILE}
+	# Compress what's left of the image after mangling it
+	makefs -b 10%  ${TEMP_IMGFILE} ${INSTALLUFSDIR}
+	mkuzip -o ${ISODIR}/data/base.ufs.uzip ${TEMP_IMGFILE}
 
-    # Magic scripts for the LiveCD
-    cat > ${STAGEDIR}/baseroot.rc << 'EOF'
+	# Magic scripts for the LiveCD
+	cat > ${STAGEDIR}/baseroot.rc << 'EOF'
 #!/bin/sh
 
 # Helper routines for mounting the CD...
@@ -86,27 +90,27 @@ main()
 # return 0.  Otherwise, return 1 with the media unmounted.
 try_mount()
 {
-    local CD="$1" T="$2"
+	local CD="$1" T="$2"
 
-    [ -c ${CD} ] || return 1
-    echo -n " ${CD}"
-    if mount -r ${T} ${CD} ${CDROM_MP} > /dev/null 2>&1; then
-        [ -f ${CDROM_MP}${BASEROOT_IMG} ] && return 0
-        umount ${CDROM_MP}
-    fi
-    return 1
+	[ -c ${CD} ] || return 1
+	echo -n " ${CD}"
+	if mount -r ${T} ${CD} ${CDROM_MP} > /dev/null 2>&1; then
+		[ -f ${CDROM_MP}${BASEROOT_IMG} ] && return 0
+		umount ${CDROM_MP}
+	fi
+	return 1
 }
 
 # Loop over the first 10 /dev/cd devices and the first 10 /dev/acd
 # devices.  These devices are cd9660 formatted.
 mount_cd()
 {
-    local CD
+	local CD
 
-    for CD in /dev/cd[0-9] /dev/acd[0-9]; do
-        try_mount ${CD} "-t cd9660" && return 0
-    done
-    return 1
+	for CD in /dev/cd[0-9] /dev/acd[0-9]; do
+		try_mount ${CD} "-t cd9660" && return 0
+	done
+	return 1
 }
 
 # Loop over all the daX devices that we can find.  These devices
@@ -114,12 +118,12 @@ mount_cd()
 # to try_mount.
 mount_memstick()
 {
-    local DA
+	local DA
 
-    for DA in /dev/da[0-9]*; do
-        try_mount ${DA} && return 0
-    done
-    return 1
+	for DA in /dev/da[0-9]*; do
+		try_mount ${DA} && return 0
+	done
+	return 1
 }
 
 PATH=/rescue
@@ -144,9 +148,9 @@ mkdir -p ${CDROM_MP}
 # first.
 echo -n "Looking for installation cdrom on "
 while [ ! -f ${CDROM_MP}${BASEROOT_IMG} ]; do
-    mount_cd && break
-    mount_memstick && break
-    sleep 1
+	mount_cd && break
+	mount_memstick && break
+	sleep 1
 done
 
 # Mount future live root
@@ -175,11 +179,11 @@ echo "baseroot setup done"
 exit 0
 EOF
 
-    makefs -b 10% ${ISODIR}/boot/memroot.ufs ${STAGEDIR}
-    gzip -9 ${ISODIR}/boot/memroot.ufs
+	makefs -b 10% ${ISODIR}/boot/memroot.ufs ${STAGEDIR}
+	gzip -9 ${ISODIR}/boot/memroot.ufs
 
-    # More magic scripts for the LiveCD
-    cat > ${ISODIR}/boot/loader.conf << EOF
+	# More magic scripts for the LiveCD
+	cat > ${ISODIR}/boot/loader.conf << EOF
 #
 # Boot loader file for FreeNAS.  This relies on a hacked beastie.4th.
 #
@@ -198,16 +202,16 @@ opensolaris_load="YES"
 zfs_load="YES"
 geom_mirror_load="YES"
 EOF
-    eval ${MKISOFS_CMD}
-    echo "Created ${OUTPUT}"
+	eval ${MKISOFS_CMD}
+	echo "Created ${OUTPUT}"
 }
 
 cleanup()
 {
-    # Clean up directories used to create the liveCD
-    rm -rf ${STAGEDIR}
-    rm -rf ${ISODIR}
-    rm -rf ${INSTALLUFSDIR}
+	# Clean up directories used to create the liveCD
+	rm -rf ${STAGEDIR}
+	rm -rf ${ISODIR}
+	rm -rf ${INSTALLUFSDIR}
 }
 
 main
