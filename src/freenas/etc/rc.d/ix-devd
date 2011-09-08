@@ -1,0 +1,103 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-devd
+# REQUIRE: ix-zfs
+# BEFORE: devd
+
+. /etc/rc.subr
+
+#
+# Generate CARP hooks right before mountlate.
+#
+ix_devd_gen()
+{
+	local IFS=\|
+
+	local failovers=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(id) FROM system_failover;"`
+
+	if [ ${failovers} -gt 0 ]; then
+		cp /conf/base/etc/devd.conf /etc/devd.conf
+		cat >> /etc/devd.conf << E*O*F
+
+notify 100 {
+   match "system"   "IFNET";
+   match "subsystem" "carp.*";
+   action "/bin/sh -x /etc/carp-state-change-hook \$subsystem \$type | logger";
+};
+E*O*F
+		volumename=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vol_name FROM storage_volume WHERE vol_fstype = 'ZFS' AND id in (SELECT volume_id from system_failover ORDER BY -id LIMIT 1);"`
+
+		# Failover script
+		cat > /etc/carp-state-change-hook << E*O*F
+#!/bin/sh
+
+SUBSYSTEM=\$1
+EVENT=\$2
+
+if [ \${EVENT} = "LINK_UP" ]; then
+    echo "Entering UP on \${SUBSYSTEM}!" | logger
+    sleep 3
+    STATUS=`ifconfig \${SUBSYSTEM} | grep "carp:" | awk '{print \$2}'`
+    echo \${STATUS} | logger
+    if [ \$STATUS != "MASTER" ]; then
+        exit
+    fi
+    ifconfig \${SUBSYSTEM} advskew 1
+#
+# Restart statd.  If we're head1, then copy head2's statd database over
+# and retstart statd.  We do this for the fail-back case so that we get
+# the machines that have locks that need to be notified of the 'reset' of
+# the nfs server.  If were head2, we copy this file all the time in background
+# and are becoming master because head1 just failed, so we can't do the
+# copy now for obvious reasons...
+#
+#    if [ `hostname` = head1.ixsystems.com ] && 
+#	ping -t 1 -qo head2.ixsystems.com ;
+#    then
+#	scp head2:/var/db/statd.status /var/db/statd.status.copy
+#    fi
+#    [ -r /var/db/statd.status.copy ] && \
+#	cp /var/db/statd.status.copy /var/db/statd.status
+    /sbin/zpool import -o cachefile=none -R /mnt -f ${volumename}
+    /sbin/zpool set cachefile=/data/zfs/zpool.cache ${volumename}
+
+    #mount -uw /
+    /etc/rc.d/statd restart
+    /usr/sbin/service ix-nfsd quietstart
+    /usr/sbin/service mountd restart
+    /usr/sbin/service nfsd restart
+    /usr/sbin/service ix-istgt quietstart
+    /usr/sbin/service istgt forcestop
+    /usr/sbin/service istgt restart
+#
+# There appears to be a small lag if we allow NFS traffic right away.  During
+# this time, we fail NFS requests with ESTALE to the remote system.  This
+# gives remote clients heartburn, so rather than try to deal with the
+# downstream effect of that, instead we take a chill pill for 2 seconds.
+#
+    sleep 1
+    pfctl -f /etc/pf.conf
+fi
+
+if [ \${EVENT} = "LINK_DOWN" ]; then
+    echo "Entering DOWN!" | logger
+    ifconfig \${SUBSYSTEM} advskew 20
+    pfctl -f /etc/pf.conf.block
+    /etc/rc.d/statd stop
+    echo "Exporting ${volumename}!" | logger
+    zpool export ${volumename}
+    echo "Exported ${volumename}!" | logger
+fi
+E*O*F
+	fi
+}
+
+name="ix-devd"
+start_cmd='ix_devd_gen'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
