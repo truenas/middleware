@@ -1527,24 +1527,20 @@ class notifier:
         config_file_name = tempfile.mktemp(dir='/var/tmp/firmware')
         try:
             with open(config_file_name, 'wb') as config_file_fd:
-                config_file_fd.write(uploaded_file_fd.read())
-        except:
-            return False
-        conn = None
-        try:
+                for chunk in uploaded_file_fd.chunks():
+                    config_file_fd.write(chunk)
             conn = sqlite3.connect(config_file_name)
-            cur = conn.cursor()
-            cur.execute("""SELECT name FROM sqlite_master
+            try:
+                cur = conn.cursor()
+                cur.execute("""SELECT name FROM sqlite_master
         WHERE type='table'
         ORDER BY name;""")
-        except sqlite3.DatabaseError:
-            return False
-        finally:
-            if conn:
+            finally:
                 conn.close()
+        except:
+            os.unlink(config_file_name)
+            return False
 
-        # XXX: this really should be moved somewhere else to make the
-        # validation / commit process cleaner and clearer.
         shutil.move(config_file_name, '/data/uploaded.db')
         # Now we must run the migrate operation in the case the db is older
         open('/data/need-update', 'w+').close()
