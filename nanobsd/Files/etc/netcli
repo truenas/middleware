@@ -404,7 +404,7 @@ def reset_gui_login():
     admin.set_unusable_password()
     admin.save()
     print """
-    The login information for the WebGUI has been reseted.
+    The login information for the WebGUI has been reset.
 
     Press Enter to continue
     """
