@@ -76,7 +76,7 @@ msgid "Disk Detach"
 msgstr "Від'єднати диск"
 
 #: media/lib/js/freeadmin.js:635
-msgid "Some error occurred!"
+msgid "An error occurred!"
 msgstr "Сталася помилка!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

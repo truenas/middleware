@@ -3262,7 +3262,7 @@ msgid "The selected disks were not verified for this import rules."
 msgstr "Τα επιλεγμένα δίσκοι δεν επαληθεύονται για το καθεστώς εισαγωγής."
 
 #: storage/forms.py:404
-msgid "Some error occurred while labeling the disk."
+msgid "An error occurred while labeling the disk."
 msgstr "Μερικές σφάλμα occurred ενώ η σήμανση του δίσκου."
 
 #: storage/forms.py:484
@@ -3648,7 +3648,7 @@ msgid "Dataset successfully edited."
 msgstr "%s διαγράφτικε με επιτυχία."
 
 #: storage/views.py:320 storage/views.py:396
-msgid "Some error occurred while setting the options"
+msgid "An error occurred when setting the options"
 msgstr "Μερικά σφάλματα occurred ενώ θέτει τις επιλογές"
 
 #: storage/views.py:342
@@ -3705,7 +3705,7 @@ msgid "Disk replacement has been initiated."
 msgstr "αντικατάστασης δίσκου έχει ξεκινήσει."
 
 #: storage/views.py:553
-msgid "Some error occurred."
+msgid "An error occurred."
 msgstr "Κάποιο λάθος occurred."
 
 #: storage/views.py:574

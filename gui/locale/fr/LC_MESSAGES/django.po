@@ -3243,7 +3243,7 @@ msgstr ""
 "d'importation."
 
 #: storage/forms.py:404
-msgid "Some error occurred while labeling the disk."
+msgid "An error occurred while labeling the disk."
 msgstr "Une erreur est survenue pendant la labélisation du disque."
 
 #: storage/forms.py:484
@@ -3632,7 +3632,7 @@ msgid "Dataset successfully edited."
 msgstr "Jeu de données modifié avec succès."
 
 #: storage/views.py:320 storage/views.py:396
-msgid "Some error occurred while setting the options"
+msgid "An error occurred when setting the options"
 msgstr "Des erreurs sont survenues pendant le réglage des options"
 
 #: storage/views.py:342
@@ -3685,7 +3685,7 @@ msgid "Disk replacement has been initiated."
 msgstr "Le remplacement du disque a débuté."
 
 #: storage/views.py:553
-msgid "Some error occurred."
+msgid "An error occurred."
 msgstr "Des erreurs sont survenues."
 
 #: storage/views.py:574

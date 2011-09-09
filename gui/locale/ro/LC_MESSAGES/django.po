@@ -3237,7 +3237,7 @@ msgstr ""
 "reguli"
 
 #: storage/forms.py:404
-msgid "Some error occurred while labeling the disk."
+msgid "An error occurred while labeling the disk."
 msgstr "Au apărut erori la etichetarea discului"
 
 #: storage/forms.py:484
@@ -3622,7 +3622,7 @@ msgid "Dataset successfully edited."
 msgstr "%s a fost şters."
 
 #: storage/views.py:320 storage/views.py:396
-msgid "Some error occurred while setting the options"
+msgid "An error occurred when setting the options"
 msgstr "Au apărut erori la setarea opţiunilor"
 
 #: storage/views.py:342
@@ -3683,7 +3683,7 @@ msgid "Disk replacement has been initiated."
 msgstr "Înlocuirea discului a fost iniţiată."
 
 #: storage/views.py:553
-msgid "Some error occurred."
+msgid "An error occurred."
 msgstr "Au apărut erori."
 
 #: storage/views.py:574

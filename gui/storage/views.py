@@ -372,7 +372,7 @@ def dataset_edit(request, object_id):
             if not error:
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset successfully edited.")}), mimetype="application/json")
             else:
-                dataset_form.set_error(_("Some error occured while setting the options"))
+                dataset_form.set_error(_("An error occurred when setting the options"))
     return render(request, 'storage/dataset_edit.html', {
         'mp': mp,
         'form': dataset_form
@@ -446,7 +446,7 @@ def zfsvolume_edit(request, object_id):
             if not error:
                 return HttpResponse(simplejson.dumps({"error": False, "message": _("Native dataset successfully edited.")}), mimetype="application/json")
             else:
-                volume_form.set_error(_("Some error occured while setting the options"))
+                volume_form.set_error(_("An error occurred when setting the options"))
     return render(request, 'storage/volume_edit.html', {
         'mp': mp,
         'form': volume_form
@@ -584,7 +584,7 @@ def disk_replacement(request, vid, object_id):
                 if form.done(volume, fromdisk):
                     return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk replacement has been initiated.")}), mimetype="application/json")
                 else:
-                    return HttpResponse(simplejson.dumps({"error": True, "message": _("Some error occured.")}), mimetype="application/json")
+                    return HttpResponse(simplejson.dumps({"error": True, "message": _("An error occurred.")}), mimetype="application/json")
             except MiddlewareError, e:
                 return HttpResponse(simplejson.dumps({"error": True, "message": _("Error: %s") % str(e)}), mimetype="application/json")
 
