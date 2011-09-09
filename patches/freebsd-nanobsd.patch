@@ -1,7 +1,22 @@
---- tools/tools/nanobsd/nanobsd.sh.orig	2011-09-09 10:04:10.283622345 -0700
-+++ tools/tools/nanobsd/nanobsd.sh	2011-09-09 10:03:17.000000000 -0700
-@@ -143,6 +143,10 @@
+--- tools/tools/nanobsd/nanobsd.sh	2010-12-21 09:09:25.000000000 -0800
++++ tools/tools/nanobsd/nanobsd.sh	2011-09-09 15:12:00.000000000 -0700
+@@ -135,14 +135,24 @@
+ # Progress Print level
+ PPLEVEL=3
  
++# Set NANO_LABEL to non-blank to form the basis for using /dev/ufs/label
++# in preference to /dev/${NANO_DRIVE}
++# Root partition will be ${NANO_LABEL}s{1,2}
++# /cfg partition will be ${NANO_LABEL}s3
++# /data partition will be ${NANO_LABEL}s4
++NANO_LABEL=""
++
+ #######################################################################
+ # Architecture to build.  Corresponds to TARGET_ARCH in a buildworld.
+ # Unfortunately, there's no way to set TARGET at this time, and it 
+ # conflates the two, so architectures where TARGET != TARGET_ARCH do
+ # not work.  This defaults to the arch of the current machine.
+-
  NANO_ARCH=`uname -p`
  
 +# src.conf to use when building the image. Defaults to /dev/null for the sake
@@ -11,7 +26,15 @@
  #######################################################################
  #
  # The functions which do the real work.
-@@ -174,6 +178,7 @@
+@@ -166,6 +176,7 @@
+ 
+ 	echo "${CONF_WORLD}" > ${NANO_MAKE_CONF_BUILD}
+ 	echo "${CONF_BUILD}" >> ${NANO_MAKE_CONF_BUILD}
++	echo "SRCCONF=${SRCCONF}" >> ${NANO_MAKE_CONF_BUILD}
+ )
+ 
+ build_world ( ) (
+@@ -174,6 +185,7 @@
  
  	cd ${NANO_SRC}
  	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} \
@@ -19,21 +42,23 @@
  		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} buildworld \
  		> ${MAKEOBJDIRPREFIX}/_.bw 2>&1
  )
-@@ -192,9 +197,10 @@
- 	unset TARGET_CPUTYPE
+@@ -193,6 +205,7 @@
  	unset TARGET_BIG_ENDIAN
  	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} buildkernel \
--		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} KERNCONF=`basename ${NANO_KERNEL}` \
--		> ${MAKEOBJDIRPREFIX}/_.bk 2>&1
--	)
-+		KERNCONF=`basename ${NANO_KERNEL}` \
+ 		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} KERNCONF=`basename ${NANO_KERNEL}` \
 +		SRCCONF=${SRCCONF} \
-+		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
-+	) > ${MAKEOBJDIRPREFIX}/_.bk 2>&1
+ 		> ${MAKEOBJDIRPREFIX}/_.bk 2>&1
+ 	)
+ )
+@@ -221,6 +234,7 @@
+ 
+ 	echo "${CONF_WORLD}" > ${NANO_MAKE_CONF_INSTALL}
+ 	echo "${CONF_INSTALL}" >> ${NANO_MAKE_CONF_INSTALL}
++	echo "SRCCONF=${SRCCONF}" >> ${NANO_MAKE_CONF_BUILD}
  )
  
- clean_world ( ) (
-@@ -231,6 +237,7 @@
+ install_world ( ) (
+@@ -231,6 +245,7 @@
  	env TARGET_ARCH=${NANO_ARCH} \
  	${NANO_PMAKE} __MAKE_CONF=${NANO_MAKE_CONF_INSTALL} installworld \
  		DESTDIR=${NANO_WORLDDIR} \
@@ -41,43 +66,144 @@
  		> ${NANO_OBJ}/_.iw 2>&1
  	chflags -R noschg ${NANO_WORLDDIR}
  )
-@@ -242,8 +249,10 @@
- 
- 	cd ${NANO_SRC}
+@@ -244,6 +259,7 @@
  	env TARGET_ARCH=${NANO_ARCH} \
--	${NANO_PMAKE} __MAKE_CONF=${NANO_MAKE_CONF_INSTALL} distribution \
-+	${NANO_PMAKE} distribution \
+ 	${NANO_PMAKE} __MAKE_CONF=${NANO_MAKE_CONF_INSTALL} distribution \
  		DESTDIR=${NANO_WORLDDIR} \
 +		SRCCONF=${SRCCONF} \
-+		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} \
  		> ${NANO_OBJ}/_.etc 2>&1
  	# make.conf doesn't get created by default, but some ports need it
  	# so they can spam it.
-@@ -257,7 +266,10 @@
- 	cd ${NANO_SRC}
+@@ -258,6 +274,7 @@
  	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} installkernel \
  		DESTDIR=${NANO_WORLDDIR} \
--		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} KERNCONF=`basename ${NANO_KERNEL}` \
-+		KERNCONF=`basename ${NANO_KERNEL}` \
-+		MODULES_OVERRIDE="${NANO_MODULES}" \
+ 		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} KERNCONF=`basename ${NANO_KERNEL}` \
 +		SRCCONF=${SRCCONF} \
-+		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} \
  		> ${NANO_OBJ}/_.ik 2>&1
  )
  
-@@ -366,8 +378,8 @@
+@@ -361,16 +378,26 @@
+ 		done
+ )
+ 
++newfs_part ( ) (
++	local dev mnt lbl
++	dev=$1
++	mnt=$2
++	lbl=$3
++	echo newfs ${NANO_NEWFS} ${NANO_LABEL:+-L${NANO_LABEL}${lbl}} ${dev}
++	newfs ${NANO_NEWFS} ${NANO_LABEL:+-L${NANO_LABEL}${lbl}} ${dev}
++	mount -o async ${dev} ${mnt}
++)
++
+ populate_slice ( ) (
+-	local dev dir mnt
++	local dev dir mnt lbl
  	dev=$1
  	dir=$2
  	mnt=$3
 -	test -z $2 && dir=/var/empty
 -	test -d $d || dir=/var/empty
++	lbl=$4
 +	test -z $2 && dir=${NANO_WORLDDIR}/var/empty
 +	test -d $d || dir=${NANO_WORLDDIR}/var/empty
  	echo "Creating ${dev} with ${dir} (mounting on ${mnt})"
- 	newfs ${NANO_NEWFS} ${dev}
- 	mount ${dev} ${mnt}
---- tools/tools/nanobsd/FlashDevice.sub.orig	2011-09-09 10:04:18.797672724 -0700
-+++ tools/tools/nanobsd/FlashDevice.sub	2011-09-09 10:03:29.000000000 -0700
+-	newfs ${NANO_NEWFS} ${dev}
+-	mount ${dev} ${mnt}
++	newfs_part $dev $mnt $lbl
+ 	cd ${dir}
+ 	find . -print | grep -Ev '/(CVS|\.svn)' | cpio -dumpv ${mnt}
+ 	df -i ${mnt}
+@@ -378,11 +405,11 @@
+ )
+ 
+ populate_cfg_slice ( ) (
+-	populate_slice "$1" "$2" "$3"
++	populate_slice "$1" "$2" "$3" "$4"
+ )
+ 
+ populate_data_slice ( ) (
+-	populate_slice "$1" "$2" "$3"
++	populate_slice "$1" "$2" "$3" "$4"
+ )
+ 
+ create_i386_diskimage ( ) (
+@@ -467,8 +494,8 @@
+ 			-y ${NANO_HEADS}`
+ 	else
+ 		echo "Creating md backing file..."
+-		dd if=/dev/zero of=${IMG} bs=${NANO_SECTS}b \
+-			count=`expr ${NANO_MEDIASIZE} / ${NANO_SECTS}`
++		rm -f ${IMG}
++		dd if=/dev/zero of=${IMG} seek=${NANO_MEDIASIZE} count=0
+ 		MD=`mdconfig -a -t vnode -f ${IMG} -x ${NANO_SECTS} \
+ 			-y ${NANO_HEADS}`
+ 	fi
+@@ -484,13 +511,8 @@
+ 	bsdlabel ${MD}s1
+ 
+ 	# Create first image
+-	# XXX: should use populate_slice for easier override
+-	newfs ${NANO_NEWFS} /dev/${MD}s1a
+-	mount /dev/${MD}s1a ${MNT}
+-	df -i ${MNT}
+-	echo "Copying worlddir..."
+-	( cd ${NANO_WORLDDIR} && find . -print | cpio -dump ${MNT} )
+-	df -i ${MNT}
++	populate_slice /dev/${MD}s1a ${NANO_WORLDDIR} ${MNT} "s1a"
++ 	mount -o async /dev/${MD}s1a ${MNT}
+ 	echo "Generating mtree..."
+ 	( cd ${MNT} && mtree -c ) > ${NANO_OBJ}/_.mtree
+ 	( cd ${MNT} && du -k ) > ${NANO_OBJ}/_.du
+@@ -500,20 +522,23 @@
+ 		# Duplicate to second image (if present)
+ 		echo "Duplicating to second image..."
+ 		dd if=/dev/${MD}s1 of=/dev/${MD}s2 bs=64k
+-		mount /dev/${MD}s2a ${MNT}
++		mount -o async /dev/${MD}s2a ${MNT}
+ 		for f in ${MNT}/etc/fstab ${MNT}/conf/base/etc/fstab
+ 		do
+ 			sed -i "" "s=${NANO_DRIVE}s1=${NANO_DRIVE}s2=g" $f
+ 		done
+ 		umount ${MNT}
++		if [ ! -z ${NANO_LABEL} ]; then
++			tunefs -L ${NANO_LABEL}"s2a" /dev/${MD}s2a
++		fi
+ 	fi
+ 	
+ 	# Create Config slice
+-	populate_cfg_slice /dev/${MD}s3 "${NANO_CFGDIR}" ${MNT}
++	populate_cfg_slice /dev/${MD}s3 "${NANO_CFGDIR}" ${MNT} "s3"
+ 
+ 	# Create Data slice, if any.
+ 	if [ $NANO_DATASIZE -ne 0 ] ; then
+-		populate_data_slice /dev/${MD}s4 "${NANO_DATADIR}" ${MNT}
++		populate_data_slice /dev/${MD}s4 "${NANO_DATADIR}" ${MNT} "s4"
+ 	fi
+ 
+ 	if [ "${NANO_MD_BACKING}" = "swap" ] ; then
+@@ -820,6 +845,11 @@
+ 	NANO_PMAKE="${NANO_PMAKE} -DNO_CLEAN"
+ fi
+ 
++# Override user's NANO_DRIVE if they specified a NANO_LABEL
++if [ ! -z "${NANO_LABEL}" ]; then
++	NANO_DRIVE=ufs/${NANO_LABEL}
++fi
++
+ export MAKEOBJDIRPREFIX
+ 
+ export NANO_ARCH
+@@ -844,6 +874,7 @@
+ export NANO_WORLDDIR
+ export NANO_BOOT0CFG
+ export NANO_BOOTLOADER
++export NANO_LABEL
+ 
+ #######################################################################
+ # And then it is as simple as that...
+--- tools/tools/nanobsd/FlashDevice.sub	2010-12-21 09:09:25.000000000 -0800
++++ tools/tools/nanobsd/FlashDevice.sub	2011-09-09 15:12:12.000000000 -0700
 @@ -203,10 +203,52 @@
  			;;
  		esac
