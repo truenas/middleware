@@ -1,0 +1,18 @@
+Index: sysutils/ataidle/files/patch-freebsd__ataidle.c
+===================================================================
+RCS file: sysutils/ataidle/files/patch-freebsd__ataidle.c
+diff -N sysutils/ataidle/files/patch-freebsd__ataidle.c
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ sysutils/ataidle/files/patch-freebsd__ataidle.c	9 Sep 2011 19:30:58 -0000
+@@ -0,0 +1,11 @@
++--- ./freebsd/ataidle.c.orig	2010-11-04 07:17:28.000000000 -0700
+++++ ./freebsd/ataidle.c	2011-09-09 12:30:47.972689934 -0700
++@@ -125,7 +125,7 @@
++ 	if (atacmd == ATA__IDENTIFY || atacmd == ATA__ATAPI_IDENTIFY)
++ 		direction = CAM_DIR_IN;
++ 	else
++-		direction = CAM_DIR_OUT;
+++		direction = CAM_DIR_NONE;
++ 
++ 	memset(&(&ccb->ccb_h)[1], 0, sizeof(struct ccb_ataio) - sizeof(struct ccb_hdr));
++ 
