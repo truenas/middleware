@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-09-08 12:46+0200\n"
-"Last-Translator: gatt <gatt@telia.com>\n"
+"PO-Revision-Date: 2011-06-12 21:15+0200\n"
+"Last-Translator: varpan <markus@varpula.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -56,7 +56,7 @@ msgstr "Editera disk"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
-msgstr "Redigera Disk"
+msgstr "Editera Disk"
 
 #: media/lib/js/freeadmin.js:443
 msgid "Replace"
@@ -75,7 +75,7 @@ msgid "Disk Detach"
 msgstr "Koppla ifrån disk"
 
 #: media/lib/js/freeadmin.js:635
-msgid "Some error ocurried!"
+msgid "An error occurred!"
 msgstr "Något fel inträffade!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45
