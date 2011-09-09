@@ -75,7 +75,7 @@ msgid "Disk Detach"
 msgstr "Disk Ayirma"
 
 #: media/lib/js/freeadmin.js:635
-msgid "An error occurred!"
+msgid "Some error ocurried!"
 msgstr "Bazı hatalar olustu!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

@@ -75,7 +75,7 @@ msgid "Disk Detach"
 msgstr "Festplatte trennen"
 
 #: media/lib/js/freeadmin.js:635
-msgid "An error occurred!"
+msgid "Some error ocurried!"
 msgstr "Ein Fehler ist aufgetreten!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

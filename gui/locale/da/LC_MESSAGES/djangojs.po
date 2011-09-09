@@ -75,7 +75,7 @@ msgid "Disk Detach"
 msgstr "Frakobl disk"
 
 #: media/lib/js/freeadmin.js:635
-msgid "An error occurred!"
+msgid "Some error ocurried!"
 msgstr "Der opstod en fejl!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

@@ -75,7 +75,7 @@ msgid "Disk Detach"
 msgstr "נתק כונן"
 
 #: media/lib/js/freeadmin.js:635
-msgid "An error occurred!"
+msgid "Some error ocurried!"
 msgstr "התרחשה תקלה!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

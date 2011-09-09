@@ -75,7 +75,7 @@ msgid "Disk Detach"
 msgstr "Lemez lecsatolása"
 
 #: media/lib/js/freeadmin.js:635
-msgid "An error occurred!"
+msgid "Some error ocurried!"
 msgstr "Néhány hiba történt!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

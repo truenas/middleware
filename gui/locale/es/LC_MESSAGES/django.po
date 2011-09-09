@@ -3190,7 +3190,7 @@ msgstr ""
 "El disco seleccionado no será verificado con estas reglas de importación"
 
 #: storage/forms.py:404
-msgid "An error occurred while labeling the disk."
+msgid "Some error ocurried while labelling the disk."
 msgstr "Error al etiquetar el disco"
 
 #: storage/forms.py:484
@@ -3572,7 +3572,7 @@ msgid "Dataset successfully edited."
 msgstr "El conjunto de datos ha sido edidato correctamente."
 
 #: storage/views.py:320 storage/views.py:396
-msgid "An error occurred when setting the options"
+msgid "Some error ocurried while setting the options"
 msgstr "Error al editar las opciones"
 
 #: storage/views.py:342
@@ -3624,7 +3624,7 @@ msgid "Disk replacement has been initiated."
 msgstr "Remplazo de disco iniciado"
 
 #: storage/views.py:553
-msgid "An error occurred."
+msgid "Some error ocurried."
 msgstr "Ha ocurrido algun error"
 
 #: storage/views.py:574
