@@ -44,7 +44,7 @@ on_off()
 generate_afpd_config()
 {
     local IFS=\|
-    local f="afp_srv_name afp_srv_guest afp_srv_local afp_srv_ddp afp_srv_guest_user"
+    local f="afp_srv_name afp_srv_guest afp_srv_local afp_srv_guest_user"
     eval local $f
     local sf=$(echo $f | sed -e 's/ /, /g')
 
@@ -53,7 +53,7 @@ generate_afpd_config()
     while eval read -r $f; do
 	: ${afp_srv_name:=-}
 	cat <<EOF
-"${afp_srv_name}" $(bool_off ${afp_srv_ddp} "-noddp") -nosavepassword \\
+"${afp_srv_name}" -noddp -nosavepassword \\
 -defaultvol ${afpd_avdefault} -systemvol ${afpd_avsystem} \\
 -uservol -uampath /usr/local/libexec/netatalk-uams \\
 -guestname ${afp_srv_guest_user} \\
