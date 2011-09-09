@@ -199,10 +199,6 @@ class AFP(Model):
             verbose_name=_("Local Access"),
             help_text=_("Allow users with local accounts to access apple shares on this box.")
             )
-    afp_srv_ddp = models.BooleanField(
-            verbose_name=_("Enable DDP"),
-            help_text=_("Enables DDP support for low-level appletalk access.")
-            )
 
     class Meta:
         verbose_name = _(u"AFP")
