@@ -1,0 +1,134 @@
+--- tools/tools/nanobsd/nanobsd.sh.orig	2011-09-09 10:04:10.283622345 -0700
++++ tools/tools/nanobsd/nanobsd.sh	2011-09-09 10:03:17.000000000 -0700
+@@ -143,6 +143,10 @@
+ 
+ NANO_ARCH=`uname -p`
+ 
++# src.conf to use when building the image. Defaults to /dev/null for the sake
++# of determinism.
++SRCCONF=${SRCCONF:=/dev/null}
++
+ #######################################################################
+ #
+ # The functions which do the real work.
+@@ -174,6 +178,7 @@
+ 
+ 	cd ${NANO_SRC}
+ 	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} \
++		SRCCONF=${SRCCONF} \
+ 		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} buildworld \
+ 		> ${MAKEOBJDIRPREFIX}/_.bw 2>&1
+ )
+@@ -192,9 +197,10 @@
+ 	unset TARGET_CPUTYPE
+ 	unset TARGET_BIG_ENDIAN
+ 	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} buildkernel \
+-		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} KERNCONF=`basename ${NANO_KERNEL}` \
+-		> ${MAKEOBJDIRPREFIX}/_.bk 2>&1
+-	)
++		KERNCONF=`basename ${NANO_KERNEL}` \
++		SRCCONF=${SRCCONF} \
++		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
++	) > ${MAKEOBJDIRPREFIX}/_.bk 2>&1
+ )
+ 
+ clean_world ( ) (
+@@ -231,6 +237,7 @@
+ 	env TARGET_ARCH=${NANO_ARCH} \
+ 	${NANO_PMAKE} __MAKE_CONF=${NANO_MAKE_CONF_INSTALL} installworld \
+ 		DESTDIR=${NANO_WORLDDIR} \
++		SRCCONF=${SRCCONF} \
+ 		> ${NANO_OBJ}/_.iw 2>&1
+ 	chflags -R noschg ${NANO_WORLDDIR}
+ )
+@@ -242,8 +249,10 @@
+ 
+ 	cd ${NANO_SRC}
+ 	env TARGET_ARCH=${NANO_ARCH} \
+-	${NANO_PMAKE} __MAKE_CONF=${NANO_MAKE_CONF_INSTALL} distribution \
++	${NANO_PMAKE} distribution \
+ 		DESTDIR=${NANO_WORLDDIR} \
++		SRCCONF=${SRCCONF} \
++		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} \
+ 		> ${NANO_OBJ}/_.etc 2>&1
+ 	# make.conf doesn't get created by default, but some ports need it
+ 	# so they can spam it.
+@@ -257,7 +266,10 @@
+ 	cd ${NANO_SRC}
+ 	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} installkernel \
+ 		DESTDIR=${NANO_WORLDDIR} \
+-		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} KERNCONF=`basename ${NANO_KERNEL}` \
++		KERNCONF=`basename ${NANO_KERNEL}` \
++		MODULES_OVERRIDE="${NANO_MODULES}" \
++		SRCCONF=${SRCCONF} \
++		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} \
+ 		> ${NANO_OBJ}/_.ik 2>&1
+ )
+ 
+@@ -366,8 +378,8 @@
+ 	dev=$1
+ 	dir=$2
+ 	mnt=$3
+-	test -z $2 && dir=/var/empty
+-	test -d $d || dir=/var/empty
++	test -z $2 && dir=${NANO_WORLDDIR}/var/empty
++	test -d $d || dir=${NANO_WORLDDIR}/var/empty
+ 	echo "Creating ${dev} with ${dir} (mounting on ${mnt})"
+ 	newfs ${NANO_NEWFS} ${dev}
+ 	mount ${dev} ${mnt}
+--- tools/tools/nanobsd/FlashDevice.sub.orig	2011-09-09 10:04:18.797672724 -0700
++++ tools/tools/nanobsd/FlashDevice.sub	2011-09-09 10:03:29.000000000 -0700
+@@ -203,10 +203,52 @@
+ 			;;
+ 		esac
+ 		;;
++	# Generic flash media.  It assumes that we're booting using packet
++	# mode so the HEADS and SECTS don't matter.  The truncation of the
++	# size to a slightly lower number is intentional to be conservative
++	# (eg, 1 sector smaller than N GB is always smaller than any flash
++	# claiming to be N GB, but wastes a little space sometimes when 1GB
++	# really means 1GiB).  This is intended to be used when producing
++	# generic images for anybody to boot.  Media sizes are specified 'Xg'
++	# for X GB (10^9 bytes) flash or Xm for X MB (10^6 bytes) flash.
++	# Power of 2 variants can be specified with gi or mi for GiB and MiB
++	# sizeed flash and don't try to be conservative (use with caution).
++	generic)
++		case $a2 in
++		*.*)	# Catch unsupported 1.5g case, since expr can't
++			# cope with floats.
++			echo "Unsupported generic size $a2"
++			exit 2
++			;;
++		*m)
++			NANO_HEADS=16
++			NANO_SECTS=63
++			NANO_MEDIASIZE=`expr -e ${a2%m} \* 1000000 / 512`
++			;;
++		*g)
++			NANO_HEADS=16
++			NANO_SECTS=63
++			NANO_MEDIASIZE=`expr -e ${a2%g} \* 1000000000 / 512`
++			;;
++		*mi)
++			NANO_HEADS=16
++			NANO_SECTS=63
++			NANO_MEDIASIZE=`expr -e ${a2%mi} \* 1024 \* 1024 / 512`
++			;;
++		*gi)
++			NANO_HEADS=16
++			NANO_SECTS=63
++			NANO_MEDIASIZE=`expr -e ${a2%gi} \* 1024 \* 1024 \* 1024 / 512`
++			;;
++		*)
++			echo "Unsupported generic size $a2"
++			exit 2
++			;;
++		esac
++		;;
+ 	*)
+ 		echo "Unknown Flash manufacturer"
+ 		exit 2
+ 		;;
+ 	esac
+ }
+-
