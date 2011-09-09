@@ -103,7 +103,7 @@ def config_upload(request):
         }
 
         if form.is_valid():
-            if not notifier().config_upload(request.FILES['config'].name):
+            if not notifier().config_upload(request.FILES['config']):
                 form._errors['__all__'] = \
                     form.error_class([_('The uploaded file is not valid.'),])
             else:
