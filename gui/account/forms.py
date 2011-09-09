@@ -283,10 +283,7 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
 
         login = cleaned_data["bsdusr_login_disabled"] = \
                 cleaned_data.get("bsdusr_login_disabled", False)
-        if login:
-            cleaned_data['bsdusr_password'] = ""
-            cleaned_data['bsdusr_password2'] = ""
-        else:
+        if not login:
             if ((self.instance.id is not None and cleaned_data["bsdusr_password1"] != "") or \
                 (self.instance.id is None and cleaned_data["bsdusr_password1"] == "")):
                 self._errors['bsdusr_password1'] = self.error_class([_("This field is required.")])
