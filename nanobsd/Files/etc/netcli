@@ -414,7 +414,7 @@ def reset_gui_login():
     admin.set_password("freenas")
     admin.save()
     print """
-    The login information for the WebGUI has been reseted:
+    The login information for the WebGUI has been reset.
 
     login: admin
     password: freenas
