@@ -129,9 +129,12 @@ fi
 # OK, now we can build
 cd FreeBSD/src
 args="-c ${root}/nanobsd/freenas-common"
-if [ -d ${NANO_OBJ} ] && ! "$FORCE_REBUILD_SRC"; then
+# Make installworld a worthy sentinel for determining whether or not to
+# rebuild things by default... nuke this file if you disagree or use -f src.
+if [ -s ${NANO_OBJ}/_.iw ] && ! "$FORCE_REBUILD_SRC"; then
 	extra_args="-b"
 fi
+rm -f ${NANO_OBJ}/_.iw
 if $FORCE_REBUILD_PORTS; then
 	find $NANO_OBJ/ports/packages/ 2>/dev/null | xargs -n 1 rm -Rf
 fi
