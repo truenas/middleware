@@ -134,7 +134,6 @@ args="-c ${root}/nanobsd/freenas-common"
 if [ -s ${NANO_OBJ}/_.iw ] && ! "$FORCE_REBUILD_SRC"; then
 	extra_args="-b"
 fi
-rm -f ${NANO_OBJ}/_.iw
 if $FORCE_REBUILD_PORTS; then
 	find $NANO_OBJ/ports/packages/ 2>/dev/null | xargs -n 1 rm -Rf
 fi
