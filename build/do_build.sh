@@ -30,7 +30,7 @@ FORCE_UPDATE=false
 FORCE_REBUILD_PORTS=false
 FORCE_REBUILD_SRC=false
 
-while getopts 'f:' optch; do
+while getopts 'Bf:' optch; do
 	case "$optch" in
 	B)
 		echo "will not build"
