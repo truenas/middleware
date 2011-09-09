@@ -1,5 +1,7 @@
---- tools/tools/nanobsd/nanobsd.sh.orig	2010-09-09 21:52:05.000000000 -0600
-+++ tools/tools/nanobsd/nanobsd.sh	2010-12-08 15:23:28.000000000 -0700
+Index: nanobsd-untouched/nanobsd.sh
+===================================================================
+--- tools/tools/nanobsd/nanobsd.sh~	(revision 225453)
++++ tools/tools/nanobsd/nanobsd.sh	(working copy)
 @@ -135,12 +135,18 @@
  # Progress Print level
  PPLEVEL=3
@@ -20,7 +22,7 @@
  NANO_ARCH=`uname -p`
  
  #######################################################################
-@@ -385,6 +391,40 @@
+@@ -385,6 +391,16 @@
  	populate_slice "$1" "$2" "$3"
  )
  
@@ -34,34 +36,10 @@
 +	mount -o async ${dev} ${mnt}
 +)
 +
-+populate_slice ( ) (
-+	local dev dir mnt lbl
-+	dev=$1
-+	dir=$2
-+	mnt=$3
-+	lbl=$4
-+	test -z $2 && dir=/var/empty
-+	test -d $dir || dir=/var/empty
-+	echo "Creating ${dev} with ${dir} (mounting on ${mnt})"
-+	newfs_part $dev $mnt $lbl
-+	cd ${dir}
-+	find . -print | grep -Ev '/(CVS|\.svn)' | cpio -dumpv ${mnt}
-+	df -i ${mnt}
-+	umount ${mnt}
-+)
-+
-+populate_cfg_slice ( ) (
-+	populate_slice "$1" "$2" "$3" "$4"
-+)
-+
-+populate_data_slice ( ) (
-+	populate_slice "$1" "$2" "$3" "$4"
-+)
-+
  create_i386_diskimage ( ) (
  	pprint 2 "build diskimage"
  	pprint 3 "log: ${NANO_OBJ}/_.di"
-@@ -467,8 +507,8 @@
+@@ -467,8 +483,8 @@
  			-y ${NANO_HEADS}`
  	else
  		echo "Creating md backing file..."
@@ -72,7 +50,7 @@
  		MD=`mdconfig -a -t vnode -f ${IMG} -x ${NANO_SECTS} \
  			-y ${NANO_HEADS}`
  	fi
-@@ -484,13 +524,8 @@
+@@ -484,13 +500,8 @@
  	bsdlabel ${MD}s1
  
  	# Create first image
@@ -88,7 +66,7 @@
  	echo "Generating mtree..."
  	( cd ${MNT} && mtree -c ) > ${NANO_OBJ}/_.mtree
  	( cd ${MNT} && du -k ) > ${NANO_OBJ}/_.du
-@@ -500,20 +535,23 @@
+@@ -500,20 +511,23 @@
  		# Duplicate to second image (if present)
  		echo "Duplicating to second image..."
  		dd if=/dev/${MD}s1 of=/dev/${MD}s2 bs=64k
@@ -115,7 +93,7 @@
  	fi
  
  	if [ "${NANO_MD_BACKING}" = "swap" ] ; then
-@@ -820,6 +858,11 @@
+@@ -820,6 +834,11 @@
  	NANO_PMAKE="${NANO_PMAKE} -DNO_CLEAN"
  fi
  
@@ -127,7 +105,7 @@
  export MAKEOBJDIRPREFIX
  
  export NANO_ARCH
-@@ -844,6 +887,7 @@
+@@ -844,6 +863,7 @@
  export NANO_WORLDDIR
  export NANO_BOOT0CFG
  export NANO_BOOTLOADER
