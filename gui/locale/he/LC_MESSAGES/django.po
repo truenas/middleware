@@ -3094,7 +3094,7 @@ msgid "The selected disks were not verified for this import rules."
 msgstr "הכוננים שנבחרו לא אומתו לחוקי היבוא האלו."
 
 #: storage/forms.py:404
-msgid "Some error ocurried while labelling the disk."
+msgid "Some error occurred while labeling the disk."
 msgstr "קרתה תקלה בזמן נתינת שם לכונן."
 
 #: storage/forms.py:484
@@ -3470,7 +3470,7 @@ msgid "Dataset successfully edited."
 msgstr "סט המידע נערך בהצלחה."
 
 #: storage/views.py:320 storage/views.py:396
-msgid "Some error ocurried while setting the options"
+msgid "Some error occurred while setting the options"
 msgstr "תקלה כלשהי קרתה בזמן קביעת האפשרות"
 
 #: storage/views.py:342
@@ -3522,7 +3522,7 @@ msgid "Disk replacement has been initiated."
 msgstr "החלפת הכונן התחיל"
 
 #: storage/views.py:553
-msgid "Some error ocurried."
+msgid "Some error occurred."
 msgstr "קרתה תקלה כלשהי."
 
 #: storage/views.py:574

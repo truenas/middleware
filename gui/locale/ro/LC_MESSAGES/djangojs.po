@@ -76,7 +76,7 @@ msgid "Disk Detach"
 msgstr "Scoatere disc"
 
 #: media/lib/js/freeadmin.js:635
-msgid "Some error ocurried!"
+msgid "Some error occurred!"
 msgstr "Au apărut unele erori!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

@@ -76,7 +76,7 @@ msgid "Disk Detach"
 msgstr "Détacher le disque"
 
 #: media/lib/js/freeadmin.js:635
-msgid "Some error ocurried!"
+msgid "Some error occurred!"
 msgstr "Des erreurs sont survenues !"
 
 # Utilisé dans "Every selected minute", "Every selected Hour", "Every selected day of month"
