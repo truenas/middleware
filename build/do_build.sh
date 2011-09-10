@@ -133,6 +133,13 @@ args="-c ${root}/nanobsd/freenas-common"
 # rebuild things by default... nuke this file if you disagree or use -f src.
 if [ -s ${NANO_OBJ}/_.iw ] && ! "$FORCE_REBUILD_SRC"; then
 	extra_args="-b"
+	# HACK: keep installworld from failing because mk-osreldate.sh doesn't
+	# exist yet in FreeBSD proper, which means that it will always be
+	# touched.
+	if [ ! -s "$root/FreeBSD/src/include/mk-osreldate.sh.orig" ]; then
+		touch -am -t 200001010000 \
+		    $root/FreeBSD/src/include/mk-osreldate.sh
+	fi
 fi
 if $FORCE_REBUILD_PORTS; then
 	find $NANO_OBJ/ports/packages/ 2>/dev/null | xargs -n 1 rm -Rf

@@ -1,0 +1,70 @@
+Index: include/Makefile
+===================================================================
+--- include/Makefile	(revision 225457)
++++ include/Makefile	(working copy)
+@@ -95,20 +95,17 @@
+ 
+ INCS+=	osreldate.h
+ 
+-osreldate.h: ${.CURDIR}/../sys/conf/newvers.sh ${.CURDIR}/../sys/sys/param.h \
+-    ${.CURDIR}/Makefile
+-	@${ECHO} creating osreldate.h from newvers.sh
+-	@MAKE=${MAKE}; \
+-	PARAMFILE=${.CURDIR}/../sys/sys/param.h; \
+-	. ${.CURDIR}/../sys/conf/newvers.sh; \
+-	echo "$$COPYRIGHT" > osreldate.h; \
+-	echo "#ifdef _KERNEL" >> osreldate.h; \
+-	echo "#error \"<osreldate.h> cannot be used in the kernel, use <sys/param.h>\"" >> osreldate.h; \
+-	echo "#else" >> osreldate.h; \
+-	echo "#undef __FreeBSD_version" >> osreldate.h; \
+-	echo "#define __FreeBSD_version $$RELDATE" >> osreldate.h; \
+-	echo "#endif" >> osreldate.h
++NEWVERS_SH=		${.CURDIR}/../sys/conf/newvers.sh
++PARAM_H=		${.CURDIR}/../sys/sys/param.h
++MK_OSRELDATE_SH=	${.CURDIR}/mk-osreldate.sh
+ 
++osreldate.h: ${NEWVERS_SH} ${PARAM_H} ${MK_OSRELDATE_SH}
++	env ECHO="${ECHO}" \
++	    MAKE="${MAKE}" \
++	    NEWVERS_SH=${NEWVERS_SH} \
++	    PARAM_H=${PARAM_H} \
++	    ${SHELL} ${MK_OSRELDATE_SH}
++
+ .for i in ${LHDRS}
+ INCSLINKS+=	sys/$i ${INCLUDEDIR}/$i
+ .endfor
+Index: include/mk-osreldate.sh
+===================================================================
+--- include/mk-osreldate.sh	(revision 0)
++++ include/mk-osreldate.sh	(revision 0)
+@@ -0,0 +1,24 @@
++#!/bin/sh
++
++set -e
++
++CURDIR=$(pwd)
++ECHO=${ECHO:=echo}
++
++tmpfile=$(mktemp osreldate.XXXXXXXX)
++trap "rm -f $tmpfile" EXIT
++
++${ECHO} creating osreldate.h from newvers.sh
++
++export PARAMFILE="${PARAM_H:=$CURDIR/../sys/sys/param.h}"
++. "${NEWVERS_SH:=$CURDIR/../sys/conf/newvers.sh}"
++cat > $tmpfile <<EOF
++$COPYRIGHT
++#ifdef _KERNEL
++#error "<osreldate.h> cannot be used in the kernel, use <sys/param.h>"
++#else
++#undef __FreeBSD_version
++#define __FreeBSD_version $RELDATE
++#endif
++EOF
++mv $tmpfile osreldate.h
+
+Property changes on: include/mk-osreldate.sh
+___________________________________________________________________
+Added: svn:executable
+   + *
+
