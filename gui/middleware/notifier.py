@@ -1096,7 +1096,8 @@ class notifier:
         self.__smbpasswd(username, password)
 
     def user_create(self, username, fullname, password, uid = -1, gid = -1,
-                    shell = "/sbin/nologin", homedir = "/mnt", password_disabled=False):
+                    shell = "/sbin/nologin", homedir = "/mnt", password_disabled = False,
+                    locked = False):
         """Creates a user with the given parameters.
         uid and gid can be omitted or specified as -1 which means the system should
         choose automatically.
@@ -1117,6 +1118,8 @@ class notifier:
         else:
             command += ' -s "%s" -d "%s"' % (shell, homedir)
         self.__issue_pwdchange(username, command, password)
+        if locked:
+            self.user_lock(username)
         if password_disabled:
             smb_hash = ""
         else:
@@ -1127,19 +1130,22 @@ class notifier:
         return (user.pw_uid, user.pw_gid, user.pw_passwd, smb_hash)
 
     def user_lock(self, username):
+        self.__system('/usr/local/bin/smbpasswd -d "%s"' % (username))
         self.__system('/usr/sbin/pw lock "%s"' % (username))
-        user = self.___getpwnam(username)
-        return user.pw_passwd
+        return self.user_gethashedpassword(username)
 
     def user_unlock(self, username):
+        self.__system('/usr/local/bin/smbpasswd -e "%s"' % (username))
         self.__system('/usr/sbin/pw unlock "%s"' % (username))
-        user = self.___getpwnam(username)
-        return user.pw_passwd
+        return self.user_gethashedpassword(username)
 
     def user_changepassword(self, username, password):
         """Changes user password"""
         command = '/usr/sbin/pw usermod "%s" -h 0' % (username)
         self.__issue_pwdchange(username, command, password)
+        return self.user_gethashedpassword(username)
+
+    def user_gethashedpassword(self, username):
         smb_command = "/usr/local/bin/pdbedit -w %s" % username
         smb_cmd = self.__pipeopen(smb_command)
         smb_hash = smb_cmd.communicate()[0].split('\n')[0]

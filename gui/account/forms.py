@@ -219,7 +219,8 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
     bsdusr_password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput,
         help_text = _("Enter the same password as above, for verification."), required=False)
     bsdusr_shell = forms.ChoiceField(label=_("Shell"), initial=u'/bin/csh', choices=())
-    bsdusr_login_disabled = forms.BooleanField(label=_("Disable logins"), required=False)
+    bsdusr_password_disabled = forms.BooleanField(label=_("Disable password logins"), required=False)
+    bsdusr_locked = forms.BooleanField(label=_("Lock user"), required=False)
     bsdusr_group2 = forms.ModelChoiceField(label=_("Primary Group"), queryset=models.bsdGroups.objects.all(), required=False)
 
     class Meta:
@@ -228,7 +229,7 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
                 'bsdusr_uid': forms.widgets.ValidationTextInput(),
                 }
         exclude = ('bsdusr_unixhash','bsdusr_smbhash','bsdusr_builtin','bsdusr_group')
-        fields = ('bsdusr_uid', 'bsdusr_username', 'bsdusr_group2', 'bsdusr_home', 'bsdusr_shell', 'bsdusr_full_name', 'bsdusr_email', 'bsdusr_password1', 'bsdusr_password2', 'bsdusr_login_disabled')
+        fields = ('bsdusr_uid', 'bsdusr_username', 'bsdusr_group2', 'bsdusr_home', 'bsdusr_shell', 'bsdusr_full_name', 'bsdusr_email', 'bsdusr_password1', 'bsdusr_password2', 'bsdusr_password_disabled', 'bsdusr_locked')
 
     def __init__(self, *args, **kwargs):
         #FIXME: Workaround for DOJO not showing select options with blank values
@@ -281,20 +282,22 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
     def clean(self):
         cleaned_data = self.cleaned_data
 
-        login = cleaned_data["bsdusr_login_disabled"] = \
-                cleaned_data.get("bsdusr_login_disabled", False)
-        if login:
-            cleaned_data['bsdusr_password'] = ""
-            cleaned_data['bsdusr_password2'] = ""
-        else:
-            if ((self.instance.id is not None and cleaned_data["bsdusr_password1"] != "") or \
-                (self.instance.id is None and cleaned_data["bsdusr_password1"] == "")):
-                self._errors['bsdusr_password1'] = self.error_class([_("This field is required.")])
-                del cleaned_data['bsdusr_password1']
-            if ((self.instance.id is not None and cleaned_data.get("bsdusr_password2", None) != "") or \
-                (self.instance.id is None and cleaned_data.get("bsdusr_password2", None) == "")):
-                self._errors['bsdusr_password2'] = self.error_class([_("This field is required.")])
-                del cleaned_data['bsdusr_password2']
+        locked = cleaned_data["bsdusr_locked"] = \
+                cleaned_data.get("bsdusr_locked", False)
+        password_disable = cleaned_data["bsdusr_password_disabled"] = \
+                cleaned_data.get("bsdusr_password_disabled", False)
+        if self.instance.id is None:
+            FIELDS = ['bsdusr_password', 'bsdusr_password2']
+            if password_disable:
+                for field in FIELDS:
+                    if cleaned_data.get(field, None) != "":
+                        self._errors[field] = self.error_class([_("Password is disabled, leave this blank")])
+                        del cleaned_data[field]
+            else:
+                for field in FIELDS:
+                    if cleaned_data.get(field, None) == "":
+                        self._errors[field] = self.error_class([_("This field is required.")])
+                        del cleaned_data[field]
 
         return cleaned_data
 
@@ -316,7 +319,8 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
                 gid = gid,
                 shell = self.cleaned_data['bsdusr_shell'].__str__(),
                 homedir = self.cleaned_data['bsdusr_home'].__str__(),
-                password_disabled = self.cleaned_data['bsdusr_login_disabled']
+                password_disabled = self.cleaned_data['bsdusr_password_disabled'],
+                locked = self.cleaned_data['bsdusr_locked']
             )
             bsduser = super(bsdUserCreationForm, self).save(commit=False)
             try:
@@ -372,7 +376,8 @@ class bsdUserPasswordForm(ModelForm):
         return self.instance
 
 class bsdUserChangeForm(ModelForm, SharedFunc):
-    bsdusr_login_disabled = forms.BooleanField(label=_("Disable logins"), required=False)
+    bsdusr_password_disabled = forms.BooleanField(label=_("Disable password"), required=False)
+    bsdusr_locked = forms.BooleanField(label=_("Lock user"), required=False)
     bsdusr_shell = forms.ChoiceField(label=_("Shell"),
                                      initial=u'/bin/csh',
                                      choices=()
@@ -391,8 +396,10 @@ class bsdUserChangeForm(ModelForm, SharedFunc):
         if instance:
             if instance.id:
                 self.fields['bsdusr_username'].widget.attrs['readonly'] = True
-            if instance.bsdusr_unixhash == '*' or instance.bsdusr_unixhash[0:8] == '*LOCKED*':
-                self.fields['bsdusr_login_disabled'].initial = True
+            if instance.bsdusr_unixhash == '*':
+                self.fields['bsdusr_password_disabled'].initial = True
+            if instance.bsdusr_unixhash[0:8] == '*LOCKED*':
+                self.fields['bsdusr_locked'].initial = True
 
         self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
         self.fields['bsdusr_shell'].choices.sort()
@@ -406,16 +413,23 @@ class bsdUserChangeForm(ModelForm, SharedFunc):
             raise forms.ValidationError(_("Home directory has to start with /mnt/"))
         return self.cleaned_data['bsdusr_home']
 
-    def clean_bsdusr_login_disabled(self):
-        return self.cleaned_data.get("bsdusr_login_disabled", False)
+    def clean_bsdusr_password_disabled(self):
+        return self.cleaned_data.get("bsdusr_password_disabled", False)
+
+    def clean_bsdusr_locked(self):
+        return self.cleaned_data.get("bsdusr_locked", False)
 
     def save(self):
         bsduser = super(bsdUserChangeForm, self).save(commit=False)
-        bsduser_locked = (bsduser.bsdusr_unixhash[0:8] == '*LOCKED*')
-        if self.cleaned_data["bsdusr_login_disabled"] == True and bsduser_locked == False:
-            bsduser.bsdusr_unixhash = notifier().user_lock(bsduser.bsdusr_username.__str__())
-        elif self.cleaned_data["bsdusr_login_disabled"] == False and bsduser_locked == True:
-            bsduser.bsdusr_unixhash = notifier().user_unlock(bsduser.bsdusr_username.__str__())
+        bsduser_locked = self.cleaned_data['bsdusr_locked']
+        instance = getattr(self, 'instance', None)
+        if bsduser_locked == False and instance.bsdusr_unixhash[0:8] == '*LOCKED*':
+            bsduser.bsdusr_unixhash, bsduser.smbhash = notifier().user_unlock(bsduser.bsdusr_username.__str__())
+        elif bsduser_locked == True and instance.bsdusr_unixhash[0:8] != '*LOCKED*':
+            bsduser.bsdusr_unixhash, bsduser.smbhash = notifier().user_lock(bsduser.bsdusr_username.__str__())
+        if self.cleaned_data["bsdusr_password_disabled"]:
+            bsduser.bsdusr_unixhash = "*"
+            bsduser.bsdusr_smbhash = ""
         bsduser.bsduser_shell = self.cleaned_data['bsdusr_shell']
         bsduser.save()
         notifier().reload("user")
