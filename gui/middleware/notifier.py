@@ -1104,7 +1104,7 @@ class notifier:
         The default shell is /sbin/nologin.
 
         Returns user uid and gid"""
-        if not password:
+        if password_disabled:
             command = '/usr/sbin/pw useradd "%s" -h - -c "%s"' % (username, fullname)
         else:
             command = '/usr/sbin/pw useradd "%s" -h 0 -c "%s"' % (username, fullname)
@@ -1119,7 +1119,6 @@ class notifier:
         self.__issue_pwdchange(username, command, password)
         if password_disabled:
             smb_hash = ""
-            self.user_lock(username)
         else:
             smb_command = "/usr/local/bin/pdbedit -w %s" % username
             smb_cmd = self.__pipeopen(smb_command)
