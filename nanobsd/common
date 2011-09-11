@@ -225,9 +225,10 @@ do_add_port ()
 	CR "env UNAME_p=${NANO_ARCH} TARGET=${NANO_ARCH} \
 	    TARGET_ARCH=${NANO_ARCH} make \
 	    __MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
+	    SRC_BASE=/usr/src \
 	    WRKDIRPREFIX=/usr/workdir -C /usr/ports/$port_path \
 	    package BATCH=yes -DUSE_PACKAGE_DEPENDS \
-	    $* clean -DFORCE_PKG_REGISTER"
+	    $* clean -DFORCE_PACKAGE -DFORCE_PKG_REGISTER"
 	rm ${NANO_WORLDDIR}/etc/resolv.conf
 	rm -rf ${NANO_WORLDDIR}/usr/obj
 	rm -rf ${NANO_WORLDDIR}/usr/workdir
