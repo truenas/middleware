@@ -199,7 +199,14 @@ init_script="/baseroot.rc"
 init_chroot="/baseroot"
 opensolaris_load="YES"
 zfs_load="YES"
+# GEOM support
 geom_mirror_load="YES"
+geom_stripe_load="YES"
+geom_raid3_load="YES"
+geom_raid5_load="YES"
+geom_gate_load="YES"
+ntfs_load="YES"
+smbfs_load="YES"
 EOF
 	eval ${MKISOFS_CMD}
 	echo "Created ${OUTPUT}"
