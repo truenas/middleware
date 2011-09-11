@@ -1,5 +1,5 @@
 #+
-# Copyright 2010 iXsystems, Inc.
+# Copyright 2010-2011 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 #
 # $FreeBSD$
 #####################################################################
-import re
+import os
 
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
@@ -38,16 +38,14 @@ from freenasUI.account import models
 from freenasUI.middleware.notifier import notifier
 from dojango import forms
 
-class SharedFunc():
+class bsdUserGroupMixin:
     def _populate_shell_choices(self):
-        from os import popen
-        from os.path import basename
-
+        with open('/etc/shells') as fd:
+            shells = map(str.rstrip,
+                         filter(lambda x: x.startswith('/'), fd.readlines()))
         shell_dict = {}
-        shells = popen("grep ^/ /etc/shells").read().split('\n')
-        for shell in shells:
-            shell_dict[shell] = basename(shell)
-        shell_dict['/sbin/nologin'] = 'nologin'
+        for shell in shells + [ '/sbin/nologin' ]:
+            shell_dict[shell] = os.path.basename(shell)
         return shell_dict.items()
 
     def pw_checkname(self, bsdusr_username):
@@ -56,13 +54,11 @@ class SharedFunc():
         if bsdusr_username.find('$') not in (-1, len(bsdusr_username) - 1):
             raise forms.ValidationError(_("The character $ is only allowed as the final character"))
         INVALID_CHARS = ' ,\t:+&#%\^()!@~\*?<>=|\\/"'
-        invalid = False
         invalids = []
         for char in bsdusr_username:
             if char in INVALID_CHARS and char not in invalids:
-                invalid = True
                 invalids.append(char)
-        if invalid:
+        if invalids:
             raise forms.ValidationError(_("Your name contains invalid characters (%s).") % ", ".join(invalids))
 
 class FilteredSelectJSON(forms.widgets.ComboBox):
@@ -209,7 +205,7 @@ class UserChangeForm(ModelForm):
         notifier().start('ix-msmtp')
         return self.instance
 
-class bsdUserCreationForm(ModelForm, SharedFunc):
+class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     """
     # Yanked from django/contrib/auth/
     A form that creates a user, with no privileges, from the given username and password.
@@ -275,9 +271,11 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
         return bsdusr_password2
 
     def clean_bsdusr_home(self):
-        if self.cleaned_data['bsdusr_home'][0:5] != u'/mnt/' and self.cleaned_data['bsdusr_home'] not in (u'/nonexistent',u'/mnt'):
-            raise forms.ValidationError(_("Home directory has to start with /mnt/"))
-        return self.cleaned_data['bsdusr_home']
+        if (self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') or
+            self.cleaned_data['bsdusr_home'] == u'/nonexistent'):
+            return self.cleaned_data['bsdusr_home']
+        raise forms.ValidationError(_('Home directory has to start with /mnt/ '
+                                      'or be /nonexistent'))
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -303,22 +301,23 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
 
     def save(self, commit=True):
         if commit:
+            _notifier = notifier()
             group = self.cleaned_data['bsdusr_group2']
-            if group == None:
+            if group is None:
                 try:
                     gid = models.bsdGroups.objects.get(bsdgrp_group = self.cleaned_data['bsdusr_username']).bsdgrp_gid
                 except:
                     gid = -1
             else:
                 gid = group.bsdgrp_gid
-            uid, gid, unixhash, smbhash = notifier().user_create(
-                username = self.cleaned_data['bsdusr_username'].__str__(),
-                fullname = self.cleaned_data['bsdusr_full_name'].encode('utf8', 'ignore').replace(":",""),
+            uid, gid, unixhash, smbhash = _notifier.user_create(
+                username = str(self.cleaned_data['bsdusr_username']),
+                fullname = self.cleaned_data['bsdusr_full_name'].encode('utf8', 'ignore').replace(':', ''),
                 password = self.cleaned_data['bsdusr_password2'].encode('utf8', 'ignore'),
                 uid = self.cleaned_data['bsdusr_uid'],
                 gid = gid,
-                shell = self.cleaned_data['bsdusr_shell'].__str__(),
-                homedir = self.cleaned_data['bsdusr_home'].__str__(),
+                shell = str(self.cleaned_data['bsdusr_shell']),
+                homedir = str(self.cleaned_data['bsdusr_home']),
                 password_disabled = self.cleaned_data['bsdusr_password_disabled'],
                 locked = self.cleaned_data['bsdusr_locked']
             )
@@ -326,7 +325,9 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
             try:
                 grp = models.bsdGroups.objects.get(bsdgrp_gid=gid)
             except models.bsdGroups.DoesNotExist:
-                grp = models.bsdGroups(bsdgrp_gid=gid, bsdgrp_group=self.cleaned_data['bsdusr_username'], bsdgrp_builtin=False)
+                grp = models.bsdGroups(bsdgrp_gid=gid,
+                                       bsdgrp_group=self.cleaned_data['bsdusr_username'],
+                                       bsdgrp_builtin=False)
                 grp.save()
             bsduser.bsdusr_group=grp
             bsduser.bsdusr_uid=uid
@@ -335,7 +336,7 @@ class bsdUserCreationForm(ModelForm, SharedFunc):
             bsduser.bsdusr_smbhash=smbhash
             bsduser.bsdusr_builtin=False
             bsduser.save()
-            notifier().reload("user")
+            _notifier.reload("user")
         return bsduser
 
 class bsdUserPasswordForm(ModelForm):
@@ -365,17 +366,18 @@ class bsdUserPasswordForm(ModelForm):
 
     def save(self, commit=True):
         if commit:
-            unixhash, smbhash = notifier().user_changepassword(
-                username = self.instance.bsdusr_username.__str__(),
-                password = self.cleaned_data['bsdusr_password2'].__str__(),
+            _notifier = notifier()
+            unixhash, smbhash = _notifier.user_changepassword(
+                username = str(self.instance.bsdusr_username),
+                password = str(self.cleaned_data['bsdusr_password2']),
             )
             self.instance.bsdusr_unixhash=unixhash
             self.instance.bsdusr_smbhash=smbhash
             self.instance.save()
-            notifier().reload("user")
+            _notifier.reload("user")
         return self.instance
 
-class bsdUserChangeForm(ModelForm, SharedFunc):
+class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
     bsdusr_password_disabled = forms.BooleanField(label=_("Disable password"), required=False)
     bsdusr_locked = forms.BooleanField(label=_("Lock user"), required=False)
     bsdusr_shell = forms.ChoiceField(label=_("Shell"),
@@ -398,7 +400,7 @@ class bsdUserChangeForm(ModelForm, SharedFunc):
                 self.fields['bsdusr_username'].widget.attrs['readonly'] = True
             if instance.bsdusr_unixhash == '*':
                 self.fields['bsdusr_password_disabled'].initial = True
-            if instance.bsdusr_unixhash[0:8] == '*LOCKED*':
+            if instance.bsdusr_unixhash.startswith('*LOCKED*'):
                 self.fields['bsdusr_locked'].initial = True
 
         self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
@@ -409,9 +411,11 @@ class bsdUserChangeForm(ModelForm, SharedFunc):
         return self.instance.bsdusr_username
 
     def clean_bsdusr_home(self):
-        if self.cleaned_data['bsdusr_home'][0:5] != u'/mnt/' and self.cleaned_data['bsdusr_home'] not in (u'/nonexistent',u'/mnt'):
-            raise forms.ValidationError(_("Home directory has to start with /mnt/"))
-        return self.cleaned_data['bsdusr_home']
+        if (self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') or
+            self.cleaned_data['bsdusr_home'] == u'/nonexistent'):
+            return self.cleaned_data['bsdusr_home']
+        raise forms.ValidationError(_('Home directory has to start with /mnt '
+                                      'or be /nonexistent'))
 
     def clean_bsdusr_password_disabled(self):
         return self.cleaned_data.get("bsdusr_password_disabled", False)
@@ -423,19 +427,23 @@ class bsdUserChangeForm(ModelForm, SharedFunc):
         bsduser = super(bsdUserChangeForm, self).save(commit=False)
         bsduser_locked = self.cleaned_data['bsdusr_locked']
         instance = getattr(self, 'instance', None)
-        if bsduser_locked == False and instance.bsdusr_unixhash[0:8] == '*LOCKED*':
-            bsduser.bsdusr_unixhash, bsduser.smbhash = notifier().user_unlock(bsduser.bsdusr_username.__str__())
-        elif bsduser_locked == True and instance.bsdusr_unixhash[0:8] != '*LOCKED*':
-            bsduser.bsdusr_unixhash, bsduser.smbhash = notifier().user_lock(bsduser.bsdusr_username.__str__())
+        _notifier = notifier()
+        if bsduser_locked and instance.bsdusr_unixhash.startswith('*LOCKED*'):
+            bsduser.bsdusr_unixhash, bsduser.smbhash = \
+                _notifier.user_unlock(str(bsduser.bsdusr_username))
+        elif (bsduser_locked and
+              instance.bsdusr_unixhash.startswith('*LOCKED*')):
+            bsduser.bsdusr_unixhash, bsduser.smbhash = \
+                _notifier.user_lock(str(bsduser.bsdusr_username))
         if self.cleaned_data["bsdusr_password_disabled"]:
             bsduser.bsdusr_unixhash = "*"
             bsduser.bsdusr_smbhash = ""
         bsduser.bsduser_shell = self.cleaned_data['bsdusr_shell']
         bsduser.save()
-        notifier().reload("user")
+        _notifier.reload("user")
         return bsduser
 
-class bsdUserEmailForm(ModelForm, SharedFunc):
+class bsdUserEmailForm(ModelForm, bsdUserGroupMixin):
     class Meta:
         model = models.bsdUsers
         fields = ('bsdusr_email',)
@@ -444,7 +452,7 @@ class bsdUserEmailForm(ModelForm, SharedFunc):
         notifier().reload("user")
         return bsduser
 
-class bsdGroupsForm(ModelForm, SharedFunc):
+class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
     class Meta:
         model = models.bsdGroups
         exclude = ('bsdgrp_builtin',)
