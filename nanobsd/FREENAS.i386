@@ -78,7 +78,7 @@ options 	MAC			# TrustedBSD MAC Framework
 options 	INCLUDE_CONFIG_FILE     # Include this file in kernel
 
 # FreeNAS modifications
-makeoptions	MODULES_OVERRIDE="ext2fs geom ntfs smbfs libiconv libmchain udf zfs opensolaris xhci"
+makeoptions	MODULES_OVERRIDE="ext2fs geom ntfs smbfs libiconv libmchain udf zfs opensolaris usb/xhci"
 options		GEOM_UZIP
 options		GEOM_ELI
 options		NULLFS
