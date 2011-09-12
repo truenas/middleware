@@ -463,6 +463,10 @@ class iSCSITargetToExtentForm(ModelForm):
             'iscsi_target': forms.widgets.FilteringSelect(),
             'iscsi_extent': forms.widgets.FilteringSelect(),
         }
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetToExtentForm, self).__init__(*args, **kwargs)
+        qs = self.fields['iscsi_extent'].queryset
+        self.fields['iscsi_extent'].queryset = qs.exclude(id__in=[e.iscsi_extent.id for e in models.iSCSITargetToExtent.objects.all()])
     def clean_iscsi_target_lun(self):
         try:
             models.iSCSITargetToExtent.objects.get(iscsi_target=self.cleaned_data.get('iscsi_target'),
