@@ -454,6 +454,14 @@ class Replication(Model):
         icon_object = u"ReplIcon"
     def __unicode__(self):
         return '%s -> %s' % (self.repl_mountpoint, self.repl_remote.ssh_remote_hostname)
+    def delete(self):
+        try:
+            if self.repl_lastsnapshot != "":
+                zfsname = self.repl_lastsnapshot.split('@')[0]
+                notifier().zfs_inherit_option(zfsname, 'freenas:state', True)
+        except:
+            pass
+        super(Replication, self).delete()
 
 class Task(Model):
     task_mountpoint = models.ForeignKey(MountPoint,
