@@ -76,7 +76,7 @@ msgid "Disk Detach"
 msgstr "ディスクのデタッチ"
 
 #: media/lib/js/freeadmin.js:635
-msgid "Some error ocurried!"
+msgid "Some error occurred!"
 msgstr "エラーが発生しました！"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

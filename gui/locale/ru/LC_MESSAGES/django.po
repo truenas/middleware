@@ -3234,7 +3234,7 @@ msgid "The selected disks were not verified for this import rules."
 msgstr "Выбранные диски не были проверены для этих правил импорта."
 
 #: storage/forms.py:404
-msgid "Some error ocurried while labelling the disk."
+msgid "Some error occurred while labeling the disk."
 msgstr "Ошибки при маркировке диска."
 
 #: storage/forms.py:484
@@ -3614,7 +3614,7 @@ msgid "Dataset successfully edited."
 msgstr "Набор данных успешно изменен."
 
 #: storage/views.py:320 storage/views.py:396
-msgid "Some error ocurried while setting the options"
+msgid "Some error occurred while setting the options"
 msgstr "Ошибки при установке опции"
 
 #: storage/views.py:342
@@ -3666,7 +3666,7 @@ msgid "Disk replacement has been initiated."
 msgstr "Инициирована процедура замены диска."
 
 #: storage/views.py:553
-msgid "Some error ocurried."
+msgid "Some error occurred."
 msgstr "Обнаружены ошибки."
 
 #: storage/views.py:574

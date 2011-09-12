@@ -76,7 +76,7 @@ msgid "Disk Detach"
 msgstr "فصل القرص"
 
 #: media/lib/js/freeadmin.js:635
-msgid "Some error ocurried!"
+msgid "Some error occurred!"
 msgstr "حادثات بعض الاخطاء!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

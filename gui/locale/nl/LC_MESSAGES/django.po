@@ -3189,7 +3189,7 @@ msgstr ""
 "De geselecteerde schijven zijn niet geverifieerd voor deze import regels."
 
 #: storage/forms.py:404
-msgid "Some error ocurried while labelling the disk."
+msgid "Some error occurred while labeling the disk."
 msgstr "Er is een fout opgetreden tijdens het labelen van de schijf."
 
 #: storage/forms.py:484
@@ -3568,7 +3568,7 @@ msgid "Dataset successfully edited."
 msgstr "Dataset succesvol gewijzigd."
 
 #: storage/views.py:320 storage/views.py:396
-msgid "Some error ocurried while setting the options"
+msgid "Some error occurred while setting the options"
 msgstr "Er is een fout opgetreden tijdens het toevoegen van de opties"
 
 #: storage/views.py:342
@@ -3622,7 +3622,7 @@ msgid "Disk replacement has been initiated."
 msgstr "Schijf vervanging is gestart"
 
 #: storage/views.py:553
-msgid "Some error ocurried."
+msgid "Some error occurred."
 msgstr "Er is een fout opgetreden."
 
 #: storage/views.py:574
