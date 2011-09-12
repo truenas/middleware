@@ -597,7 +597,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         if kwargs.has_key('ssl') and kwargs['ssl']:
             ssl = int(kwargs['ssl'])
         elif ldap.has_key('ldap_ssl') and ldap['ldap_ssl']:
-            ssl = int(ldap['ldap_ssl'])
+            ssl = ldap['ldap_ssl']
 
         if port == None:
             tmp = tmphost.split(':')
