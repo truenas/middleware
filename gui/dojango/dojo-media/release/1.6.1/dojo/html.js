@@ -103,7 +103,7 @@ delete this.parseResults;
 delete this.node;
 delete this.content;
 },onContentError:function(_e){
-return "Error occured setting content: "+_e;
+return "Error occurred setting content: "+_e;
 },_mixin:function(_f){
 var _10={},key;
 for(key in _f){

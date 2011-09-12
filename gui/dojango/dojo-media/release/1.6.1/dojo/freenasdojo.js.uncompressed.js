@@ -10535,7 +10535,7 @@ dojo.declare("dijit._MenuBase",
 
 	_stopFocusTimer: function(){
 		// summary:
-		//		Cancels the pending-focus timer because the menu was closed before focus occured
+		//		Cancels the pending-focus timer because the menu was closed before focus occurred
 		// tags:
 		//		private
 		if(this._focus_timer){
@@ -29702,7 +29702,7 @@ dojo.getObject("html", true, dojo);
 			},
   
 			onContentError: function(err){
-				return "Error occured setting content: " + err;
+				return "Error occurred setting content: " + err;
 			},
 			
 			_mixin: function(params){

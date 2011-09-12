@@ -75,7 +75,7 @@ msgid "Disk Detach"
 msgstr "Separar Disco"
 
 #: media/lib/js/freeadmin.js:635
-msgid "Some error occurred!"
+msgid "An error occurred!"
 msgstr "Algum erro ocorreu!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

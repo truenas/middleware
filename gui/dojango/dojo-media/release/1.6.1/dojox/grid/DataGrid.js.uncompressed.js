@@ -7206,7 +7206,7 @@ dojo.declare("dijit._MenuBase",
 
 	_stopFocusTimer: function(){
 		// summary:
-		//		Cancels the pending-focus timer because the menu was closed before focus occured
+		//		Cancels the pending-focus timer because the menu was closed before focus occurred
 		// tags:
 		//		private
 		if(this._focus_timer){

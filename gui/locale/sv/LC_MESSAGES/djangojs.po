@@ -75,7 +75,7 @@ msgid "Disk Detach"
 msgstr "Koppla ifrån disk"
 
 #: media/lib/js/freeadmin.js:635
-msgid "Some error occurred!"
+msgid "An error occurred!"
 msgstr "Något fel inträffade!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

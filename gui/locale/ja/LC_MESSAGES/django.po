@@ -3356,7 +3356,7 @@ msgid "The selected disks were not verified for this import rules."
 msgstr "選択されたディスクの組はインポートのルールに適応していません。"
 
 #: storage/forms.py:404
-msgid "Some error occurred while labeling the disk."
+msgid "An error occurred while labeling the disk."
 msgstr "ディスクのラベリング中にエラーが発生しました。"
 
 #: storage/forms.py:484
@@ -3767,7 +3767,7 @@ msgid "Dataset successfully edited."
 msgstr "データセットを削除しました。"
 
 #: storage/views.py:320 storage/views.py:396
-msgid "Some error occurred while setting the options"
+msgid "An error occurred when setting the options"
 msgstr "オプションの設定中にエラーが発生しました。"
 
 #: storage/views.py:342
@@ -3828,7 +3828,7 @@ msgid "Disk replacement has been initiated."
 msgstr "ディスクのリプレイスが開始されました。"
 
 #: storage/views.py:553
-msgid "Some error occurred."
+msgid "An error occurred."
 msgstr "エラーが発生しました。"
 
 # detach はZFSのdetach(zpool detachとか)を差していると思われます。
