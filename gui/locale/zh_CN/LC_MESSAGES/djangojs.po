@@ -75,7 +75,7 @@ msgid "Disk Detach"
 msgstr "卸载硬盘"
 
 #: media/lib/js/freeadmin.js:635
-msgid "An error occurred!"
+msgid "Some error ocurried!"
 msgstr "有错误发生！"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

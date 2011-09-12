@@ -75,7 +75,7 @@ msgid "Disk Detach"
 msgstr "Extreure disc"
 
 #: media/lib/js/freeadmin.js:635
-msgid "An error occurred!"
+msgid "Some error ocurried!"
 msgstr "Hi ha hagut algun error!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

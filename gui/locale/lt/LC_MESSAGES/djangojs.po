@@ -76,7 +76,7 @@ msgid "Disk Detach"
 msgstr "Disko Atjungimas"
 
 #: media/lib/js/freeadmin.js:635
-msgid "An error occurred!"
+msgid "Some error ocurried!"
 msgstr "Įvyko klaida!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

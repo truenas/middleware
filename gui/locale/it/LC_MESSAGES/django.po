@@ -3240,7 +3240,7 @@ msgstr ""
 "d'importazione."
 
 #: storage/forms.py:404
-msgid "An error occurred while labeling the disk."
+msgid "Some error ocurried while labelling the disk."
 msgstr "Si è verificato qualche errore durante l'etichettatura del disco."
 
 #: storage/forms.py:484
@@ -3622,7 +3622,7 @@ msgid "Dataset successfully edited."
 msgstr "Dataset modificato con successo."
 
 #: storage/views.py:320 storage/views.py:396
-msgid "An error occurred when setting the options"
+msgid "Some error ocurried while setting the options"
 msgstr "Si sono verificati degli errori impostando le opzioni"
 
 #: storage/views.py:342
@@ -3674,7 +3674,7 @@ msgid "Disk replacement has been initiated."
 msgstr "Sostituzione disco iniziata."
 
 #: storage/views.py:553
-msgid "An error occurred."
+msgid "Some error ocurried."
 msgstr "Si sono verificati alcuni errori."
 
 #: storage/views.py:574
