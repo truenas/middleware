@@ -8,11 +8,6 @@ export HOME
 TERM=${TERM:-cons25}
 export TERM
 
-get_product_name()
-{
-    echo "FreeNAS"
-}
-
 get_product_arch()
 {
     uname -p
@@ -25,7 +20,7 @@ get_product_path()
 
 get_image_name()
 {
-    echo "$(get_product_path)/$(get_product_name)-$(get_product_arch)-embedded.xz"
+    find "$(get_product_path)" -name "*$(get_product_arch)-embedded.xz" -type f
 }
 
 build_config()
@@ -67,9 +62,13 @@ get_physical_disks_list()
     _list=""
     _disks=`sysctl -n kern.disks`
     for _d in ${_disks}; do
-	if echo "${_d}" | grep -vE '^cd' >/dev/null 2>&1; then
-	    _list="${_list}${_d} "
-	fi
+        case "${_d}" in
+        cd*)
+            ;;
+        *)
+            _list="${_list}${_d} "
+	    ;;
+        esac
     done
 
     VAL="${_list}"
@@ -163,26 +162,26 @@ disk_is_freenas()
     if [ -f /tmp/data_old/freenas-v1.db ]; then
         _rv=0
     fi
-    cp -R /tmp/data_old /tmp/data_preserved
+    cp -pR /tmp/data_old /tmp/data_preserved
     umount /tmp/data_old
     if [ $_rv -eq 0 ]; then
 	mount /dev/${_disk}s1a /tmp/data_old
         # ah my old friend, the can't see the mount til I access the mountpoint
         # bug
         ls /tmp/data_old > /dev/null
-        cp /tmp/data_old/conf/base/etc/hostid /tmp/
+        cp -p /tmp/data_old/conf/base/etc/hostid /tmp/
         if [ -d /tmp/data_old/root/.ssh ]; then
-            cp -R /tmp/data_old/root/.ssh /tmp/
+            cp -pR /tmp/data_old/root/.ssh /tmp/
         fi
         if [ -d /tmp/data_old/boot/modules ]; then
             mkdir /tmp/modules
             for i in `ls /tmp/data_old/boot/modules`
             do
-                cp /tmp/data_old/boot/modules/$i /tmp/modules/
+                cp -p /tmp/data_old/boot/modules/$i /tmp/modules/
             done
         fi
         if [ -d /tmp/data_old/usr/local/fusionio ]; then
-            cp -R /tmp/data_old/usr/local/fusionio /tmp/
+            cp -pR /tmp/data_old/usr/local/fusionio /tmp/
         fi
         umount /tmp/data_old
     fi
@@ -243,7 +242,7 @@ menu_install()
     _do_upgrade=0
     if disk_is_freenas ${_disk} ; then
         if ask_upgrade ${_disk} ; then
-        new_install_verify "upgrade" ${_disk}
+            new_install_verify "upgrade" ${_disk}
             _do_upgrade=1
         else
             new_install_verify "installation" ${_disk}
@@ -262,30 +261,42 @@ menu_install()
     # Hack #1
     export ROOTIMAGE=1
     # Hack #2
-    ls /cdrom > /dev/null
+    ls $(get_product_path) > /dev/null
     /rescue/pc-sysinstall -c ${_config_file}
     if [ ${_do_upgrade} -eq 1 ]; then
+        # Mount: /data
         mkdir /tmp/data_new
         mount /dev/${_disk}s4 /tmp/data_new
         ls /tmp/data_new > /dev/null
-        cp -R /tmp/data_preserved/ /tmp/data_new
+        cp -pR /tmp/data_preserved/ /tmp/data_new
         cp /dev/null /tmp/data_new/need-update
-	touch /tmp/data_new/cd_update
-        umount /tmp/data_new
+        : > /tmp/data_new/cd_update
+        mkdir /tmp/data_new
+        # Mount: /
         mount /dev/${_disk}s1a /tmp/data_new
         ls /tmp/data_new > /dev/null
-        cp /tmp/hostid /tmp/data_new/conf/base/etc
+        cp -p /tmp/hostid /tmp/data_new/conf/base/etc
         if [ -d /tmp/.ssh ]; then
-            cp -R /tmp/.ssh /tmp/data_new/root/
+            cp -pR /tmp/.ssh /tmp/data_new/root/
         fi
         if [ -d /tmp/modules ]; then
             for i in `ls /tmp/modules`
             do
-                cp /tmp/modules/$i /tmp/data_new/boot/modules
+                cp -p /tmp/modules/$i /tmp/data_new/boot/modules
             done
         fi
+        if [ ! -f /tmp/data_new/boot/loader.user ]; then
+            cat > /tmp/data_new/boot/loader.user <<EOF
+# 
+# User-serviceable boot loader file.
+#
+# This file is preserved as-is across upgrades.
+#
+
+EOF
+        fi
         if [ -d /tmp/fusionio ]; then
-            cp -R /tmp/fusionio /tmp/data_new/usr/local/
+            cp -pR /tmp/fusionio /tmp/data_new/usr/local/
         fi
         umount /tmp/data_new
         rmdir /tmp/data_new
