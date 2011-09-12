@@ -55,11 +55,15 @@ class CronMultiple(DojoWidgetMixin, Widget):
         return mark_safe(u'<div%s></div>' % (flatatt(final_attrs),))
 
 class DirectoryBrowser(widgets.Widget):
+    def __init__(self, *args, **kwargs):
+        self._dirsonly = kwargs.pop('dirsonly', True)
+        super(DirectoryBrowser, self).__init__(*args, **kwargs)
     def render(self, name, value, attrs=None):
         context = {
             'name': name,
             'value': value,
             'attrs': attrs,
+            'dirsonly': self._dirsonly,
             }
         return mark_safe(render_to_string('freeadmin/directory_browser.html', context))
 
@@ -126,7 +130,10 @@ class GroupField(forms.ChoiceField):
         return group
 
 class PathField(forms.CharField):
-    widget = DirectoryBrowser()
+    def __init__(self, *args, **kwargs):
+        dirsonly = kwargs.pop('dirsonly', True)
+        self.widget = DirectoryBrowser(dirsonly=dirsonly)
+        super(PathField, self).__init__(*args, **kwargs)
     def clean(self, value):
         if value not in ('', None):
             value = os.path.abspath(value)

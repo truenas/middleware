@@ -269,6 +269,7 @@ class DojoFileStore(object):
             self.path = '/mnt/'+self.path
         self.path = os.path.abspath(self.path)
         self.dirsonly = dirsonly
+        self._lookupurl = 'system_dirbrowser' if self.dirsonly else 'system_filebrowser'
 
     def items(self):
         if self.path == '/mnt':
@@ -296,7 +297,7 @@ class DojoFileStore(object):
         if isdir:
             item['children'] = True
 
-        item['$ref'] = os.path.abspath(reverse('system_dirbrowser',
+        item['$ref'] = os.path.abspath(reverse(self._lookupurl,
                                        kwargs={ 'path' : full_path }))
         item['id'] = item['$ref']
         return item
@@ -307,6 +308,16 @@ def directory_browser(request, path='/'):
         path = '/%s' % path
 
     directories = DojoFileStore(path, dirsonly=True).items()
+    context = directories
+    content = simplejson.dumps(context)
+    return HttpResponse(content, mimetype='application/json')
+
+def file_browser(request, path='/'):
+    """ This view provides the ajax driven directory browser callback """
+    if not path.startswith('/'):
+        path = '/%s' % path
+
+    directories = DojoFileStore(path, dirsonly=False).items()
     context = directories
     content = simplejson.dumps(context)
     return HttpResponse(content, mimetype='application/json')

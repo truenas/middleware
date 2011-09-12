@@ -629,7 +629,7 @@ class iSCSITargetFileExtentForm(ModelForm):
         model = models.iSCSITargetExtent
         exclude = ('iscsi_target_extent_type')
         widgets = {
-            'iscsi_target_extent_path': DirectoryBrowser(),
+            'iscsi_target_extent_path': DirectoryBrowser(dirsonly=False),
         }
     def clean_iscsi_target_extent_path(self):
         path = self.cleaned_data["iscsi_target_extent_path"]
