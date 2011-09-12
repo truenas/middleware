@@ -55,7 +55,7 @@ def _system_info():
     uname1, hostname, uname2 = os.uname()[0:3]
     platform = subprocess.check_output(['sysctl', '-n', 'hw.model'])
     physmem = str(int(int(subprocess.check_output(['sysctl', '-n', 'hw.physmem'])) / 1048576)) + 'MB'
-    date = time.asctime(time.gmtime()) + '\n'
+    date = time.asctime(time.localtime()) + '\n'
     uptime = commands.getoutput("env -u TZ uptime | awk -F', load averages:' '{    print $1 }'")
     loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
 
