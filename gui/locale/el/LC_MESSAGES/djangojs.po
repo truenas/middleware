@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-07-03 13:53+0200\n"
-"Last-Translator: Bth <oti_nane@hotmail.com>\n"
+"PO-Revision-Date: 2011-09-08 10:36+0200\n"
+"Last-Translator: thepeterp <thepeterp@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
@@ -64,7 +64,7 @@ msgstr "Αντικατάσταση"
 
 #: media/lib/js/freeadmin.js:444
 msgid "Disk Replacement"
-msgstr "αντικατάσταση Δίσκου"
+msgstr "Αντικατάσταση Δίσκου"
 
 #: media/lib/js/freeadmin.js:448
 msgid "Detach"
@@ -76,7 +76,7 @@ msgstr "Αποσύνδεση Δίσκου"
 
 #: media/lib/js/freeadmin.js:635
 msgid "Some error ocurried!"
-msgstr "Μερικά σφάλματα στην περιήγηση "
+msgstr "Κάποιο σφάλματα συνέβησε!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
