@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:50-0700\n"
-"PO-Revision-Date: 2011-08-01 21:06+0200\n"
-"Last-Translator: jjstecchino <jjstecchino@yahoo.com>\n"
+"PO-Revision-Date: 2011-09-10 14:26+0200\n"
+"Last-Translator: lorisf <rapt0r@tiscali.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -3907,7 +3907,6 @@ msgid "Locality"
 msgstr "Località"
 
 #: system/models.py:203
-#, fuzzy
 msgid "Locality Name (eg, city)"
 msgstr "Nome della località (es. città)"
 
@@ -4960,7 +4959,6 @@ msgid "No ZFS replication available"
 msgstr "Nessuna replicazione ZFS disponibile"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
-#, fuzzy
 msgid "Are you sure you want to rollback the snapshot to previous state?"
 msgstr ""
 "Sei sicuro di voler ripristinare lo snapshot e tornare a uno stato "
@@ -4979,7 +4977,6 @@ msgid "Used space"
 msgstr "Spazio utilizzato"
 
 #: templates/storage/snapshots.html:7
-#, fuzzy
 msgid "Referenced space"
 msgstr "Spazio referenziato"
 
