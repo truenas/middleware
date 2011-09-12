@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-08-17 22:14+0200\n"
-"Last-Translator: vadi <vadi.art@gmail.com>\n"
+"PO-Revision-Date: 2011-09-01 22:01+0200\n"
+"Last-Translator: Rafal <rafal.ciszynski@d-tech.com.pl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
@@ -2505,16 +2505,15 @@ msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
 msgstr "Maksymalna ilość równoczesnych połączeń. Domyślnie 0  (nieograniczona)."
 
 #: services/models.py:1204
-#, fuzzy
 msgid ""
 "This option specifies the user name that file transfers to and from that "
 "module should take place. In combination with the 'Group' option this "
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
-"Ta opcja przydziela nazwę użytkownika, do i od którego transfery powinny "
-"mieć miejsce. W połączeniu z opcją \"Grupa\", pozwala to ustalić prawa dostępu "
-"do plików. Pozostaw to pole puste by użyć domyślnych ustawień."
+"Ta opcja określa nazwę użytkownika, do i od którego transfery powinny mieć "
+"miejsce. W połączeniu z opcją \"Grupa\", pozwala to ustalić prawa dostępu do "
+"plików. Pozostaw to pole puste by użyć ustawień domyślnych."
 
 #: services/models.py:1211
 msgid ""
@@ -2580,7 +2579,7 @@ msgstr "Interwał sprawdzania"
 #: services/models.py:1244
 msgid ""
 "Sets the interval between disk checks to N minutes. The default is 30 minutes"
-msgstr ""
+msgstr "Ustawia interwał sprawdzania dysku na N minut. Domyślnie jest 30 minut."
 
 #: services/models.py:1250
 msgid "Power mode"
@@ -2588,13 +2587,15 @@ msgstr "Tryb zasilania"
 
 #: services/models.py:1254
 msgid "Difference"
-msgstr ""
+msgstr "Różnica"
 
 #: services/models.py:1255
 msgid ""
 "Report if the temperature had changed by at least N degrees Celsius since "
 "last report. 0 to disable"
 msgstr ""
+"Raportuj, jeśli temperatura od ostatniego raportu zmieni sie co najmniej o N "
+"stopni Celsjusza. Wpisz 0 aby wyłączyć."
 
 #: services/models.py:1259
 #, fuzzy
@@ -2606,6 +2607,8 @@ msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
 msgstr ""
+"Raportuj, jeśli temperatura jest większa lub równa N stopni Celsjusza. Wpisz "
+"0 aby wyłączyć"
 
 #: services/models.py:1264
 msgid "Critical"
@@ -2882,6 +2885,8 @@ msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Pozwala określonym użytkownikom i grupom na dostęp do udziału w trybie "
+"odczyt/zapis. Format opcji oznacza zezwolenie."
 
 #: sharing/models.py:151
 msgid "Disk Discovery"
@@ -2947,13 +2952,15 @@ msgstr ""
 
 #: sharing/models.py:176
 msgid "Windows File Names"
-msgstr ""
+msgstr "Nazwy plików Windows"
 
 #: sharing/models.py:177
 msgid ""
 "This forces filenames to be restricted to the character set used by Windows. "
 "This is not recommended for shares used principally by Mac computers."
 msgstr ""
+"Wymusza nazwy plików z kodowaniem znaków używanym przez Windows. Jest to nie "
+"zalecane dla udziałów używanych przez komputery Mac."
 
 #: sharing/models.py:180
 msgid "No .AppleDouble"
@@ -2977,7 +2984,7 @@ msgstr ""
 
 #: sharing/models.py:188
 msgid "Disable File ID"
-msgstr ""
+msgstr "Wyłącz ID pliku"
 
 #: sharing/models.py:189
 msgid "Don't advertise createfileid, resolveid, deleteid calls."
@@ -3017,7 +3024,7 @@ msgstr ""
 
 #: sharing/models.py:205
 msgid "Use AFP3 unix privileges."
-msgstr ""
+msgstr "Użyj unix-owych uprawnień AFP3."
 
 #: sharing/models.py:212
 msgid "Apple Share"
@@ -3071,7 +3078,7 @@ msgstr "Użytkownik maproot "
 
 #: sharing/models.py:252
 msgid "User to map root to"
-msgstr ""
+msgstr "Uzytkownik do którego jest mapowany root"
 
 #: sharing/models.py:256
 msgid "Maproot Group"
@@ -3079,7 +3086,7 @@ msgstr "Grupa maproot "
 
 #: sharing/models.py:260
 msgid "Group to map root to"
-msgstr ""
+msgstr "Grupa do której jest mapowany root"
 
 #: sharing/models.py:264
 msgid "Mapall User"
@@ -3210,6 +3217,8 @@ msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "(-), (_), (:) and (.)."
 msgstr ""
+"Nazwy zestawów danych muszą zaczynać się od litery lub cyfry oraz mogą "
+"zawierać znaki (-), (_), (:) i (.)."
 
 #: storage/forms.py:660 storage/forms.py:805
 msgid "You already have a dataset with the same name"
@@ -3217,7 +3226,7 @@ msgstr "Zbiór danych o tej nazwie już istnieje"
 
 #: storage/forms.py:667 storage/forms.py:724 storage/forms.py:768
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
-msgstr ""
+msgstr "Wpisz dodatnią liczbę (opcjonalnie z przyrostkiem M, G, T)  lub 0."
 
 #: storage/forms.py:782
 #, fuzzy
@@ -3402,6 +3411,7 @@ msgstr "Zdalny system plików ZFS"
 #: storage/models.py:251
 msgid "Recursively replicate and remove stale snapshot on remote side"
 msgstr ""
+"Rekursywanie replikuj i usuwaje stare kopie migawkowe po stronie zdalnej"
 
 #: storage/models.py:254
 msgid "Replication Task"
@@ -3537,28 +3547,24 @@ msgid "Some error ocurried while setting the options"
 msgstr "Wystąpił błąd podczas ustawiania opcji"
 
 #: storage/views.py:342
-#, fuzzy
 msgid "ZFS Volume successfully added."
-msgstr "%s usunięty pomyślnie."
+msgstr "Wolumen ZFS dodany pomyślnie."
 
 #: storage/views.py:356
 msgid "This is in use by the iscsi target, please remove it there first."
-msgstr ""
+msgstr "Jest to używane przez cel iSCSI, usuń to najpierw."
 
 #: storage/views.py:360
-#, fuzzy
 msgid "ZFS Volume successfully destroyed."
-msgstr "%s usunięty pomyślnie."
+msgstr "Wolumen ZFS usunięty pomyślnie."
 
 #: storage/views.py:394
-#, fuzzy
 msgid "Native dataset successfully edited."
-msgstr "%s usunięty pomyślnie."
+msgstr "Natywny zestaw danych zmieniony pomyślnie."
 
 #: storage/views.py:410
-#, fuzzy
 msgid "Mount Point permissions successfully updated."
-msgstr "%s zaktualizowany pomyślnie."
+msgstr "Uprawnienia do punktu montowania zmienione pomyślnie."
 
 #: storage/views.py:425
 msgid "Dataset successfully destroyed."
@@ -3570,12 +3576,11 @@ msgstr "Kopia migawkowa pomyślnie usunięta."
 
 #: storage/views.py:453
 msgid "Rollback successful."
-msgstr ""
+msgstr "Przywracanie powiodło się."
 
 #: storage/views.py:470
-#, fuzzy
 msgid "Snapshot successfully added."
-msgstr "Kopia migawkowa sklonowana pomyślnie"
+msgstr "Kopia migawkowa dodana pomyślnie."
 
 #: storage/views.py:483
 #, fuzzy
@@ -3601,12 +3606,11 @@ msgstr "Odłączanie dysku ukończono pomyślnie."
 
 #: storage/views.py:588
 msgid "The volume failed to export"
-msgstr ""
+msgstr "Eksport wolumenu nie powiódł się"
 
 #: storage/views.py:591
-#, fuzzy
 msgid "The volume has been successfully exported"
-msgstr "Twoje zmiany zostały pomyślnie zastosowane!"
+msgstr "Wolumen został pomyślnie wyeksportowany"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
@@ -3614,7 +3618,7 @@ msgstr "Język (wymagane przeładowanie interfejsu)"
 
 #: system/forms.py:250
 msgid "Place to temporarily place firmware file"
-msgstr ""
+msgstr "Miejsce, gdzie tymczasowo przechowywany jest plik firmware"
 
 #: system/forms.py:250
 msgid ""
@@ -3655,7 +3659,7 @@ msgstr "minut, "
 
 #: system/forms.py:311 system/forms.py:339
 msgid "hour"
-msgstr ""
+msgstr "godzina"
 
 #: system/forms.py:312 system/forms.py:340
 msgid "day of month"
@@ -3751,6 +3755,8 @@ msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@mydomain.com"
 msgstr ""
+"Adres e-mail używany przez system jako adres nadawcy dla wysyłanych mail-i, "
+"np. freenas@mojadomena.com"
 
 #: system/models.py:135
 msgid "Outgoing mail server"
@@ -3884,16 +3890,16 @@ msgstr "godzina/y"
 
 #: system/models.py:257 system/models.py:361 system/models.py:509
 msgid "Values 0-23 allowed."
-msgstr ""
+msgstr "Dozwolone wartości to 0-23."
 
 #: system/models.py:261 system/models.py:365 system/models.py:513
 #: templates/system/cronjob.html:7 templates/system/rsync.html:7
 msgid "Day of month"
-msgstr ""
+msgstr "Dzień miesiąca"
 
 #: system/models.py:262 system/models.py:366 system/models.py:514
 msgid "Values 1-31 allowed."
-msgstr ""
+msgstr "Dozwolone wartości to 0-31."
 
 #: system/models.py:267 system/models.py:371 system/models.py:519
 #: templates/system/cronjob.html:8 templates/system/rsync.html:8
@@ -3904,15 +3910,15 @@ msgstr "Miesiąc/Miesięcy"
 #: system/models.py:272 system/models.py:376 system/models.py:524
 #: templates/system/cronjob.html:9 templates/system/rsync.html:9
 msgid "Day of week"
-msgstr ""
+msgstr "Dzień tygodnia"
 
 #: system/models.py:275
 msgid "CronJob"
-msgstr ""
+msgstr "Zadanie cron"
 
 #: system/models.py:276
 msgid "CronJobs"
-msgstr ""
+msgstr "Zadanie cron"
 
 #: system/models.py:286 system/models.py:441
 #, fuzzy
