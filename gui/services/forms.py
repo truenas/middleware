@@ -852,6 +852,12 @@ class iSCSITargetForm(ModelForm):
         self.fields['iscsi_target_authgroup'].required = False
         self.fields['iscsi_target_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
 
+    def clean_iscsi_target_name(self):
+        name = self.cleaned_data.get("iscsi_target_name")
+        if not re.search(r'^[a-z0-9\.-:]+$', name):
+            raise forms.ValidationError(_("Use alphanumeric characters, \".\", \"-\" and \":\"."))
+        return name
+
     def clean_iscsi_target_authgroup(self):
         method = self.cleaned_data['iscsi_target_authtype']
         group = self.cleaned_data['iscsi_target_authgroup']
