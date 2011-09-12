@@ -107,7 +107,7 @@ add_port net/openldap24-sasl-client
 #-net/nss_ldap
 add_port net/nss_ldap
 add_port net/rsync 
-add_port lang/python27
+add_port lang/python27 -DWITH_HUGE_STACK_SIZE
 add_port dns/py-dnspython
 #+net/samba
 add_port devel/talloc
