@@ -306,9 +306,14 @@ def generic_model_add(request, app, model, mf=None):
                 mf.save()
                 for name, fs in formsets.items():
                     fs.save()
+                events = []
                 if hasattr(mf, "done") and callable(mf.done):
-                    mf.done()
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully added.") % m._meta.verbose_name}))
+                    #FIXME: temporary workaround to do not change all MF to accept this arg
+                    try:
+                        mf.done(request=request, events=events)
+                    except TypeError:
+                        mf.done()
+                return JsonResponse(message=_("%s successfully updated.") % m._meta.verbose_name, events=events)
             except MiddlewareError, e:
                 return HttpResponse(simplejson.dumps({"error": True, "message": _("Error: %s") % str(e)}), mimetype="application/json")
             except ServiceFailed, e:
