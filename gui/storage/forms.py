@@ -243,7 +243,7 @@ class VolumeWizardForm(forms.Form):
             self._errors["volume_disks"] = self.error_class([msg])
             del cleaned_data["volume_disks"]
         if (cleaned_data.get("volume_fstype", None) == 'ZFS' and \
-                models.Volume.objects.filter(vol_name = volume_name).exclude(volume_fstype = 'ZFS').count() > 0) or \
+                models.Volume.objects.filter(vol_name = volume_name).exclude(vol_fstype = 'ZFS').count() > 0) or \
                 (cleaned_data.get("volume_fstype", None) == 'UFS' and \
                 models.Volume.objects.filter(vol_name = volume_name).count() > 0):
             msg = _(u"You already have a volume with same name")
