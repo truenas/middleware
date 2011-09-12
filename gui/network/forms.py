@@ -111,12 +111,35 @@ class InterfacesForm(ModelForm):
 class GlobalConfigurationForm(ModelForm):
     class Meta:
         model = models.GlobalConfiguration
+    def _clean_nameserver(self, value):
+        if value:
+            if value.is_loopback:
+                raise forms.ValidationError(_("Loopback is not a valid nameserver"))
+            elif value.is_unspecified:
+                raise forms.ValidationError(_("Unspecified addresses are not valid as nameservers"))
+            elif value.version == 4:
+                if str(value) == '255.255.255.255':
+                    raise forms.ValidationError(_("This is not a valid nameserver address"))
+                elif str(value).startswith('169.254'):
+                    raise forms.ValidationError(_("169.254/16 subnet is not valid for nameserver"))
+    def clean_gc_nameserver1(self):
+        val = self.cleaned_data.get("gc_nameserver1")
+        self._clean_nameserver(val)
+        return val
+    def clean_gc_nameserver2(self):
+        val = self.cleaned_data.get("gc_nameserver2")
+        self._clean_nameserver(val)
+        return val
+    def clean_gc_nameserver3(self):
+        val = self.cleaned_data.get("gc_nameserver3")
+        self._clean_nameserver(val)
+        return val
     def clean(self):
         cleaned_data = self.cleaned_data
         nameserver1 = cleaned_data.get("gc_nameserver1")
         nameserver2 = cleaned_data.get("gc_nameserver2")
         nameserver3 = cleaned_data.get("gc_nameserver3")
-        if nameserver3 != "":
+        if nameserver3:
             if nameserver2 == "":
                 msg = _(u"Must fill out nameserver 2 before "
                          "filling out nameserver 3")
@@ -133,7 +156,7 @@ class GlobalConfigurationForm(ModelForm):
                 del cleaned_data["gc_nameserver1"]
             if nameserver1 == "" or nameserver2 == "":
                 del cleaned_data["gc_nameserver3"]
-        elif nameserver2 != "":
+        elif nameserver2:
             if nameserver1 == "":
                 del cleaned_data["gc_nameserver2"]
                 msg = _(u"Must fill out nameserver 1 before "
