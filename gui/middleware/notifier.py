@@ -236,6 +236,10 @@ class notifier:
         self.__system("/usr/sbin/service istgt forcestop")
         self.__system("/usr/sbin/service istgt restart")
 
+    def _restart_collectd(self):
+        self.__system("/usr/sbin/service ix-collectd quietstart")
+        self.__system("/usr/sbin/service collectd restart")
+
     def _start_iscsitarget(self):
         self.__system("/usr/sbin/service ix-istgt quietstart")
         self.__system("/usr/sbin/service istgt restart")
@@ -770,6 +774,8 @@ class notifier:
         zfsproc = self.__pipeopen("/sbin/zfs create %s %s" % (options, path))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_error = zfsproc.wait()
+        if zfs_error == 0:
+            self.restart("collectd")
         return zfs_error, zfs_err
 
     def list_zfs_datasets(self, path="", recursive=False):
@@ -821,6 +827,8 @@ class notifier:
         if retval == None:
             zfsproc = self.__pipeopen("zfs destroy %s" % (path))
             retval = zfsproc.communicate()[1]
+            if retval == 0:
+                self.restart("collectd")
         return retval
 
     def destroy_zfs_vol(self, name):
@@ -842,8 +850,6 @@ class notifier:
             for disk in vdev_member_list:
                 devname = self.identifier_to_device(disk.disk_identifier)
                 self.__gpt_unlabeldisk(devname = devname)
-
-        self._reload_disk()
 
     def __create_ufs_volume(self, volume, swapsize):
         geom_vdev = ""
@@ -925,8 +931,6 @@ class notifier:
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname,))
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
                       "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (devname, devname))
-
-        self._reload_disk()
 
     def _init_volume(self, volume, *args, **kwargs):
         """Initialize a volume designated by volume_id"""
@@ -1066,6 +1070,7 @@ class notifier:
             self.__destroy_zfs_volume(volume)
         elif volume.vol_fstype == 'UFS':
             self.__destroy_ufs_volume(volume)
+        self._reload_disk()
 
     def _reload_disk(self):
         self.__system("/usr/sbin/service ix-smartd quietstart")
@@ -1073,6 +1078,7 @@ class notifier:
         self.__system("/usr/sbin/service ix-fstab quietstart")
         self.__system("/usr/sbin/service swap1 quietstart")
         self.__system("/usr/sbin/service mountlate quietstart")
+        self.restart("collectd")
         self.__confxml = None
 
     # Create a user in system then samba
