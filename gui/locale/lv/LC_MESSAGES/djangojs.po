@@ -76,7 +76,7 @@ msgid "Disk Detach"
 msgstr "Diska atdalīšana"
 
 #: media/lib/js/freeadmin.js:635
-msgid "Some error ocurried!"
+msgid "Some error occured!"
 msgstr "Notika kļūda!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

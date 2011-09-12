@@ -3169,7 +3169,7 @@ msgid "The selected disks were not verified for this import rules."
 msgstr "Izvēlētie diski netika pārbaudīti šiem importa noteikumiem."
 
 #: storage/forms.py:404
-msgid "Some error ocurried while labelling the disk."
+msgid "Some error occured while labelling the disk."
 msgstr "Notika kāda kļūda nosaucot disku."
 
 #: storage/forms.py:484
@@ -3548,7 +3548,7 @@ msgid "Dataset successfully edited."
 msgstr "Datu kopa veiksmīgi labota."
 
 #: storage/views.py:320 storage/views.py:396
-msgid "Some error ocurried while setting the options"
+msgid "Some error occured while setting the options"
 msgstr "Notika kāda kļūda uzstādot iespējas"
 
 #: storage/views.py:342
@@ -3600,7 +3600,7 @@ msgid "Disk replacement has been initiated."
 msgstr "Diska aizvietošana ir sākusies."
 
 #: storage/views.py:553
-msgid "Some error ocurried."
+msgid "Some error occured."
 msgstr "Notika kāda kļūda."
 
 #: storage/views.py:574
