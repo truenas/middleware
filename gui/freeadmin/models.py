@@ -33,6 +33,7 @@ add_introspection_rules([], ["^freeadmin\.models\.UserField"])
 add_introspection_rules([], ["^freeadmin\.models\.GroupField"])
 add_introspection_rules([], ["^freeadmin\.models\.PathField"])
 class UserField(models.CharField):
+    __metaclass__ = models.SubfieldBase
     def __init__(self, *args, **kwargs):
         self._exclude = kwargs.pop('exclude', [])
         super(UserField, self).__init__(*args, **kwargs)
@@ -42,6 +43,12 @@ class UserField(models.CharField):
         defaults = {'form_class': UF, 'exclude': self._exclude}
         kwargs.update(defaults)
         return super(UserField, self).formfield(**kwargs)
+    def to_python(self, value):
+        from freenasUI.common.freenasusers import FreeNAS_User
+        user = FreeNAS_User(value)
+        if not user:
+            return 'nobody'
+        return value
 
 class GroupField(models.CharField):
     def formfield(self, **kwargs):
@@ -50,6 +57,12 @@ class GroupField(models.CharField):
         defaults = {'form_class': GF}
         kwargs.update(defaults)
         return super(GroupField, self).formfield(**kwargs)
+    def to_python(self, value):
+        from freenasUI.common.freenasusers import FreeNAS_Group
+        group = FreeNAS_Group(value)
+        if not group:
+            return 'nobody'
+        return value
 
 class PathField(models.CharField):
 
