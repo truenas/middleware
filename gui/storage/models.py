@@ -129,7 +129,6 @@ class Volume(Model):
         super(Volume, self).delete()
         # Refresh the fstab
         notifier().reload("disk")
-        notifier().restart("collectd")
 
         for (svc, dirty) in zip(svcs, reloads):
             if dirty:
