@@ -285,6 +285,10 @@ class notifier:
         self.__system("/usr/sbin/service ix-localtime quietstart")
         self.__system("/usr/sbin/service ix-ntpd quietstart")
         self.__system("/usr/sbin/service ntpd restart")
+        c = self.__open_db()
+        c.execute("SELECT stg_timezone FROM system_settings ORDER BY -id LIMIT 1")
+        os.environ['TZ'] = c.fetchone()[0]
+        time.tzset()
 
     def _reload_ssh(self):
         self.__system("/usr/sbin/service ix-sshd quietstart")
