@@ -3211,7 +3211,7 @@ msgstr ""
 "Els discs seleccionats no han estat verificats per aquesta regla d'importació"
 
 #: storage/forms.py:404
-msgid "Some error ocurried while labelling the disk."
+msgid "An error occurred while labeling the disk."
 msgstr "Algun error ha succeït mentre s'etiquetaba el disc"
 
 #: storage/forms.py:484
@@ -3589,7 +3589,7 @@ msgid "Dataset successfully edited."
 msgstr "Dataset afegit amb èxit."
 
 #: storage/views.py:320 storage/views.py:396
-msgid "Some error ocurried while setting the options"
+msgid "An error occurred when setting the options"
 msgstr "Algun error a succeït mentre s'ajustaven les opcions"
 
 #: storage/views.py:342
@@ -3642,7 +3642,7 @@ msgid "Disk replacement has been initiated."
 msgstr "El reemplaçament de disc s'ha iniciat"
 
 #: storage/views.py:553
-msgid "Some error ocurried."
+msgid "An error occurred."
 msgstr "Ha succeït algun error."
 
 #: storage/views.py:574

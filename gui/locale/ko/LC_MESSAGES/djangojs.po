@@ -76,7 +76,7 @@ msgid "Disk Detach"
 msgstr "디스크 탈착"
 
 #: media/lib/js/freeadmin.js:635
-msgid "Some error ocurried!"
+msgid "An error occurred!"
 msgstr "에러 발생!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45

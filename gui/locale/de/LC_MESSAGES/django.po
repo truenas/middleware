@@ -3351,7 +3351,7 @@ msgstr ""
 "Die ausgewählten Festplatten wurden nicht für diese Importregeln verifiziert."
 
 #: storage/forms.py:404
-msgid "Some error ocurried while labelling the disk."
+msgid "An error occurred while labeling the disk."
 msgstr "Einige Fehler traten während der Benennung der Festplatte auf."
 
 #: storage/forms.py:484
@@ -3752,7 +3752,7 @@ msgid "Dataset successfully edited."
 msgstr "Dataset erfolgreich editiert."
 
 #: storage/views.py:320 storage/views.py:396
-msgid "Some error ocurried while setting the options"
+msgid "An error occurred when setting the options"
 msgstr "Beim Speichern der Einstellungen ist ein Fehler aufgetreten"
 
 #: storage/views.py:342
@@ -3807,7 +3807,7 @@ msgid "Disk replacement has been initiated."
 msgstr "Austausch der Festplatte erfolgreich initiiert."
 
 #: storage/views.py:553
-msgid "Some error ocurried."
+msgid "An error occurred."
 msgstr "Es ist ein Fehler aufgetreten."
 
 #: storage/views.py:574

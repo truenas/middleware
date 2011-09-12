@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-09-09 10:33+0200\n"
+"PO-Revision-Date: 2011-09-08 10:55+0200\n"
 "Last-Translator: thepeterp <thepeterp@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
@@ -125,13 +125,11 @@ msgstr "Επίπεδο 127 - Ενδιάμεση κατανάλωση ενέργ�
 
 #: choices.py:85
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr ""
-"Επίπεδο 128 - Ελάχιστη χρήση ενέργειας χωρίς κατάσταση αναμονής (χωρίς "
-"spindown)"
+msgstr "Ep;ipedo 128 - Ελάχιστη χρήση ισχύος χωρίς αναμονή (χωρίς spindown)"
 
 #: choices.py:86
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Επίπεδο 192 - Ενδιάμεση χρήση ενέργειας χωρίς κατάσταση αναμονής"
+msgstr "Επίπεδο 192 - Ενδιάμεση κατανάλωση ενέργειας χωρίς την αναμονή"
 
 #: choices.py:87
 msgid "Level 254 - Maximum performance, maximum power usage"
@@ -139,7 +137,7 @@ msgstr "Επίπεδο 254 - Μέγιστη απόδοση, μέγιστη κα�
 
 #: choices.py:91 choices.py:179
 msgid "Minimum"
-msgstr "Ελάχιστο"
+msgstr "Ελάχιστη"
 
 #: choices.py:92
 msgid "Medium"
@@ -147,15 +145,15 @@ msgstr "Μεσαίο"
 
 #: choices.py:93
 msgid "Maximum"
-msgstr "Μέγιστο"
+msgstr "Μέγιστη"
 
 #: choices.py:127 templates/storage/tasks.html:85
 msgid "January"
-msgstr "Ιανουαρίου"
+msgstr "Ιανουάριος"
 
 #: choices.py:128 templates/storage/tasks.html:88
 msgid "February"
-msgstr "Φεβρουάριου"
+msgstr "Φεβρουάριος"
 
 #: choices.py:129 templates/storage/tasks.html:91
 msgid "March"
@@ -167,7 +165,7 @@ msgstr "Απριλίου"
 
 #: choices.py:131 templates/storage/tasks.html:97
 msgid "May"
-msgstr "Μαίου"
+msgstr "Μάιος"
 
 #: choices.py:132 templates/storage/tasks.html:100
 msgid "June"
@@ -183,7 +181,7 @@ msgstr "Αύγουστος"
 
 #: choices.py:135 templates/storage/tasks.html:109
 msgid "September"
-msgstr "Σεπτεμβρίου"
+msgstr "Σεπτέμβριος"
 
 #: choices.py:136 templates/storage/tasks.html:112
 msgid "October"
@@ -231,7 +229,7 @@ msgstr "Ανώνυμος"
 
 #: choices.py:159
 msgid "Local User"
-msgstr "Τοπικός χρήστης"
+msgstr "Τοπικό χρήστη"
 
 #: choices.py:180
 msgid "Normal"
@@ -255,7 +253,7 @@ msgstr "Time Machine"
 
 #: choices.py:190
 msgid "No case folding"
-msgstr "No case folding"
+msgstr "Δεν πτυσσόμενα περίπτωση"
 
 #: choices.py:191 choices.py:192
 msgid "Lowercase names in both directions"
@@ -263,11 +261,11 @@ msgstr "Πεζά ονόματα και στις δύο κατευθύνσεις"
 
 #: choices.py:193
 msgid "Client sees lowercase, server sees uppercase"
-msgstr "Ο πελάτης βλέπει πεζά, ο εξυπηρέτης βλέπει κεφαλαία"
+msgstr "Πελάτης βλέπει πεζά, server βλέπει κεφαλαίο"
 
 #: choices.py:194
 msgid "Client sees uppercase, server sees lowercase"
-msgstr "Ο πελάτης βλέπει κεφαλαία, ο εξυπηρέτης βλέπει πεζά"
+msgstr "Πελάτης βλέπει κεφαλαία, server βλέπει πεζό"
 
 #: choices.py:198
 msgid "File"
@@ -275,7 +273,7 @@ msgstr "Αρχείο"
 
 #: choices.py:199
 msgid "Device"
-msgstr "Συσκευή"
+msgstr "Συσκευής"
 
 #: choices.py:200
 msgid "ZFS Volume"
@@ -322,11 +320,11 @@ msgstr "Αμοιβαία CHAP"
 
 #: choices.py:241
 msgid "UPS reaches low battery"
-msgstr "Στάθμη μπαταρίας UPS χαμηλή"
+msgstr "UPS φτάνει χαμηλή μπαταρία"
 
 #: choices.py:242
 msgid "UPS goes on battery"
-msgstr "Το UPS συνεχίζει με μπαταρία"
+msgstr "UPS συνεχίζει μπαταρία"
 
 #: choices.py:245
 msgid "Preferred"
@@ -412,45 +410,47 @@ msgstr "Για εγγραφή και ανάγνωση"
 #: choices.py:447 choices.py:448
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minutes)s λεπτά"
+msgstr "% (Λεπτά) λεπτά "
 
 #: choices.py:449
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(hour)s ώρα"
+msgstr "% (Ώρα) ώρα "
 
 #: choices.py:450 choices.py:451 choices.py:452 choices.py:453 choices.py:454
 #, python-format
 msgid "%(hours)s hours"
-msgstr "%(hours)s ώρες"
+msgstr "% (Ώρες) ώρες "
 
 #: choices.py:455
 #, python-format
 msgid "%(day)s day"
-msgstr "%(day)s ημέρα"
+msgstr "% (Ημέρα) Ημέρα"
 
 #: choices.py:456
 #, python-format
 msgid "%(week)s week"
-msgstr "%(week)s εβδομάδα"
+msgstr "% (Εβδομάδα) ες εβδομάδα"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Ποτέ - Έλεγξε τη συσκευή ανεξάρτητα από την κατάσταση ενέργειάς της"
+msgstr ""
+"Ποτέ μην Ελέγξετε τη συσκευή ανεξάρτητα από την κατάσταση λειτουργίας του"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Νάρκη - Έλεγξε τη συσκευή, εκτός αν είναι σε κατάσταση SLEEP"
+msgstr "Νάρκη - Ελέγξτε τη συσκευή, εκτός αν είναι σε κατάσταση ΝΑΡΚΗΣ"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"Αναμονή - Έλεγξε τη συσκευή, εκτός αν είναι σε κατάσταση SLEEP ή STANDBY"
+"Αναμονή - Ελέγξτε τη συσκευή, εκτός αν είναι σε κατάσταση ΝΑΡΚΗΣ ή ΑΝΑΜΟΝΗΣ"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
-"Idle - Έλεγξε τη συσκευή εκτός αν είναι σε κατάσταση SLEEP, STANDBY ή IDLE"
+"Idle - Ελέγξτε τη συσκευή εκτός αν είναι σε κατάσταση ΝΑΡΚΗΣ, ΑΝΑΜΟΝΗΣ ή "
+"IDLE"
 
 #: choices.py:467
 msgid "Long Self-Test"
@@ -462,7 +462,7 @@ msgstr "Short Self-Test"
 
 #: choices.py:469
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Conveyance Self-Test (ΑΤΑ μόνο)"
+msgstr "Μεταφορά Self-Test (ΑΤΑ μόνο)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
@@ -485,7 +485,7 @@ msgstr "Όνομα Χρήστη"
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
 msgstr ""
-"Απαιτείται. 30 χαρακτήρες ή λιγότερους. Γράμματα, ψηφία και @/./+/-/_ μόνο."
+"Απαιτείται. 30 χαρακτήρες ή λιγότερους. Γράμματα, ψηφία και/./+/-/_ μόνο."
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
@@ -501,7 +501,7 @@ msgstr "Κωδικός πρόσβασης"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:188
 msgid "Password confirmation"
-msgstr "Επιβεβαίωση κωδικού"
+msgstr "Κωδικός επιβεβαίωσης"
 
 #: account/forms.py:203 account/forms.py:310 system/forms.py:189
 msgid "Enter the same password as above, for verification."
@@ -527,7 +527,7 @@ msgstr "Ένας χρήστης με αυτό το όνομα υπάρχει ή�
 #: account/forms.py:243 account/forms.py:329 account/forms.py:479
 #: system/forms.py:232
 msgid "The two password fields didn't match."
-msgstr "Τα δύο πεδία των κωδικών πρόσβασης δεν ταιριάζουν."
+msgstr "Οι δύο τομείς κωδικοί πρόσβασης δεν ταιριάζουν."
 
 #: account/forms.py:248 account/forms.py:373
 msgid "Home directory has to start with /mnt/"
@@ -589,7 +589,7 @@ msgstr "Ομάδες"
 #: account/models.py:63
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr "Η ομάδα %s είναι ενσωματωμένη και δεν μπορεί να διαγραφεί!"
+msgstr "Η Ομάδα %s είναι ενσωματωμένη και δεν μπορεί να διαγραφεί!"
 
 #: account/models.py:73
 msgid "User ID"
@@ -668,7 +668,7 @@ msgstr "Προβολή όλων των ομάδων"
 
 #: account/views.py:78
 msgid "Password successfully updated."
-msgstr "Ο κωδικός πρόσβασης ενημερώθηκε με επιτυχία."
+msgstr "%s ενημερώθηκε με επιτυχία."
 
 #: account/views.py:92
 msgid "Admin user successfully updated."
@@ -676,7 +676,7 @@ msgstr "Διαχειριστής ενημερώθηκε επιτυχώς."
 
 #: account/views.py:102
 msgid "Users successfully updated."
-msgstr "Οι χρήστες ενημερώθηκαν με επιτυχία."
+msgstr "Οι χρήστες ενημερώθηκαν με επιτυχεία."
 
 #: account/views.py:115
 msgid "Groups successfully updated."
@@ -693,12 +693,12 @@ msgstr ""
 #: freeadmin/forms.py:95
 #, python-format
 msgid "The user %s is not valid."
-msgstr "Ο χρήστης %s δεν είναι έγκυρος."
+msgstr "Ο χρήστης% s δεν είναι έγκυρος."
 
 #: freeadmin/forms.py:124
 #, python-format
 msgid "The group %s is not valid."
-msgstr "Η ομάδα %s δεν είναι έγκυρη."
+msgstr "Η ομάδα% s δεν είναι έγκυρη."
 
 #: freeadmin/forms.py:138
 msgid "The path must reside within a volume mount point"
@@ -712,7 +712,7 @@ msgstr "Προσθήκη %s"
 #: freeadmin/navtree.py:327
 #, python-format
 msgid "View All %s"
-msgstr "Δείτε όλους %s"
+msgstr "Δείτε όλους τους χρήστες %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -729,21 +729,21 @@ msgstr "Απενεργοποίηση"
 #: freeadmin/views.py:225
 #, python-format
 msgid "%s successfully added."
-msgstr "%s προστέθηκε(αν) με επιτυχία."
+msgstr "%s προστέθηκαν με επιτυχία."
 
 #: freeadmin/views.py:384 freeadmin/views.py:386
 #, python-format
 msgid "%s successfully updated."
-msgstr "%s ενημερώθηκε(αν) με επιτυχία."
+msgstr "%s ενημερώθηκε με επιτυχία."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr "Η υπηρεσία απέτυχε να επανεκκινήσει"
+msgstr "Η υπηρεσία απέτυχε να κάνει επανεκκίνηση."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
 msgid "%s successfully deleted."
-msgstr "%s διαγράφηκε(αν) με επιτυχία."
+msgstr "%s διαγράφτικε με επιτυχία."
 
 #: network/forms.py:44 network/models.py:95
 msgid "NIC"
@@ -862,7 +862,7 @@ msgstr "Αυτόματη ρύθμιση παραμέτρων του IPv6"
 #: network/models.py:127
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
 msgstr ""
-"Όταν ενεργοποιηθεί, διαμορφώνεται αυτόματα η IPv6 διεύθυνση μέσω rtsol (8)."
+"Όταν ενεργοποιηθεί, διαμορφώνουν αυτόματα IPv6 διεύθυνση μέσω rtsol (8)."
 
 #: network/models.py:131 templates/network/interface.html:10
 msgid "IPv6 Address"
@@ -898,7 +898,7 @@ msgstr "Διασύνδεση ονόματα πρέπει να vlanXX όπου XX
 #: network/models.py:178 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
 msgid "Physical Interface"
-msgstr "Φυσική διασύνδεση"
+msgstr "Φυσική διεπαφή"
 
 #: network/models.py:181 templates/network/vlan.html:7
 msgid "VLAN Tag"
@@ -920,15 +920,15 @@ msgstr "VLANs"
 
 #: network/models.py:220
 msgid "Protocol Type"
-msgstr "Τύπος Πρωτοκόλλου"
+msgstr "Τύπος Πρωτοκόλλου "
 
 #: network/models.py:241
 msgid "LAGG Interface group"
-msgstr "Ομάδα διασύνδεσης LAGG"
+msgstr "LAGG ομάδα Διασύνδεσης"
 
 #: network/models.py:244
 msgid "LAGG Priority Number"
-msgstr "Αριθμός προτεραιότητας LAGG"
+msgstr "LAGG Αριθμός προτεραιότητας"
 
 #: network/models.py:249
 msgid "Physical NIC"
@@ -940,11 +940,11 @@ msgstr "Συνάθροιση Link"
 
 #: network/models.py:265 network/nav.py:53
 msgid "Link Aggregations"
-msgstr "Συναθροίσεις συνδέσεων"
+msgstr "Συγκεντρωτικά στοιχεία Link"
 
 #: network/models.py:274
 msgid "Destination network"
-msgstr "Δίκτυο προορισμού"
+msgstr "Προορισμός του δικτύου"
 
 #: network/models.py:278 templates/network/staticroute.html:6
 msgid "Gateway"
@@ -952,7 +952,7 @@ msgstr "Πύλη"
 
 #: network/models.py:287
 msgid "Static Route"
-msgstr "Στατική διαδρομή"
+msgstr "Στατική Οδός"
 
 #: network/models.py:288 templates/network/index.html:9
 msgid "Static Routes"
@@ -964,19 +964,19 @@ msgstr "Δίκτυο"
 
 #: network/nav.py:13 templates/network/index.html:13
 msgid "Network Summary"
-msgstr "Περίληψη δικτύου"
+msgstr "Περίληψη Δικτύου "
 
 #: network/nav.py:30
 msgid "Create Link Aggregation"
-msgstr "Δημιουργία συνάθροισης συνδέσεων"
+msgstr "Δημιουργία Συνάθροιση Link"
 
 #: network/nav.py:41
 msgid "View All Link Aggregations"
-msgstr "Δείτε όλες τις συναθροίσεις συνδέσεων"
+msgstr "Δείτε όλα τα Συγκεντρωτικά στοιχεία για τα Link"
 
 #: network/views.py:180
 msgid "LAGG successfully added"
-msgstr "Το LAGG προστέθηκε με επιτυχία"
+msgstr "LAGG προστέθηκε με επιτυχία"
 
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1002,7 +1002,7 @@ msgstr "Άδεια για το Αρχείο"
 
 #: services/forms.py:104
 msgid "Directory Permission"
-msgstr "Άδεια για τον κατάλογο"
+msgstr "Άδεια για τους Καταλόγους"
 
 #: services/forms.py:129
 msgid "This value must be between 0 and 65535, inclusive."
@@ -1019,18 +1019,18 @@ msgstr "Η τιμή αυτή πρέπει να είναι μεταξύ 0 και 
 #: services/forms.py:159
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
 msgstr ""
-"Η τιμή αυτή πρέπει να είναι μεταξύ 1024 και 65535, συμπεριλαμβανομένης. 0 "
+"Η τιμή αυτή πρέπει να είναι μεταξύ 1024 και 65535, συμπεριλαμβανομένος. 0 "
 "για προεπιλογή"
 
 #: services/forms.py:165
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
 msgstr ""
-"Η τιμή αυτή πρέπει να είναι μεταξύ 1024 και 65535, συμπεριλαμβανομένης. 0 "
+"Η τιμή αυτή πρέπει να είναι μεταξύ 1024 και 65535, συμπεριλαμβανομένος. 0 "
 "για προεπιλογή."
 
 #: services/forms.py:184
 msgid "This field is required for anonymous login"
-msgstr "Αυτό το πεδίο απαιτείται για ανώνυμη σύνδεση"
+msgstr "Αυτό το πεδίο είναι απαραίτητη για την ανώνυμη σύνδεση"
 
 #: services/forms.py:191
 msgid "The ftp service failed to start."
@@ -1050,7 +1050,7 @@ msgstr "Απέτυχε η επαναφόρτωση της υπηρεσίας Rsy
 
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
-msgstr "Το όνομα δεν μπορεί να περιέχει κάθετο ή αγκύλη."
+msgstr "Το όνομα δεν μπορεί να περιέχει κάθετο ή αγκύλη  "
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
@@ -1075,7 +1075,7 @@ msgstr "Μυστικό"
 
 #: services/forms.py:291 services/models.py:527
 msgid "Target side secret."
-msgstr "Μυστικό του στόχου."
+msgstr "Στόχος μυστική πλευρά."
 
 #: services/forms.py:292
 msgid "Secret (Confirm)"
@@ -1087,15 +1087,15 @@ msgstr "Πληκτρολογήστε το ίδιο μυστικό παραπάν
 
 #: services/forms.py:295
 msgid "Initiator Secret"
-msgstr "Μυστικό εισηγητή"
+msgstr "εισάγει στα μυστικά"
 
 #: services/forms.py:297 services/models.py:533 services/models.py:538
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr "Μυστικής πλευράς εισηγητή. (Για την επαλήθευση του mutual CHAP)"
+msgstr "Ίδρυση μυστικής πλευράς. (Για την αμοιβαία επαλήθευση ταυτότητας CHAP)"
 
 #: services/forms.py:300
 msgid "Initiator Secret (Confirm)"
-msgstr "Μυστικό εισηγητή (Επιβεβαίωση)"
+msgstr "εισαγωγή στα μυστικά (Επιβεβαίωση)"
 
 #: services/forms.py:309
 msgid "Secret does not match"
@@ -1103,11 +1103,11 @@ msgstr "Το Μυστικό δεν ταιριάζει"
 
 #: services/forms.py:324 services/forms.py:325
 msgid "The peer secret is required if you set a peer user."
-msgstr "Το μυστικό peer είναι απαραίτητο εάν ορίσετε έναν χρήστη peer."
+msgstr "Το μυστικό peer είναι απαραίτητη εάν ορίσετε έναν χρήστη peer."
 
 #: services/forms.py:328
 msgid "The peer secret cannot be the same as user secret."
-msgstr "Το μυστικό peer δεν μπορεί να είναι το ίδιο με το μυστικό χρήστη."
+msgstr "Το μυστικό peer δεν μπορεί να είναι το ίδιο με τον μυστικό χρήστη."
 
 #: services/forms.py:344 services/forms.py:381 services/forms.py:495
 #: services/forms.py:525 services/forms.py:572 services/forms.py:675
@@ -1117,30 +1117,30 @@ msgstr "Απέτυχε η επαναφόρτωση της υπηρεσίας iSC
 
 #: services/forms.py:373
 msgid "LUN already exists in the same target."
-msgstr "Η LUN υπάρχει ήδη στον ίδιο στόχο."
+msgstr "Η LUN υπάρχει ήδη κατά τον ίδιο στόχο."
 
 #: services/forms.py:384 services/models.py:352
 msgid "Controller Auth Group"
-msgstr "Ελεγκτής Auth Group"
+msgstr "ο Ελεγκτής του Auth Group"
 
 #: services/forms.py:385 services/models.py:353
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
 msgstr ""
-"Το istgtcontrol μπορεί να έχει πρόσβαση στους στόχους με το σωστό χρήστη και "
-"μυστικό σε συγκεκριμένη ομάδα Auth."
+"οι istgtcontrol μπορούν να έχουν πρόσβαση τους στόχους με το σωστό χρήστη "
+"και των μυστικών σε συγκεκριμένες Auth ομάδας."
 
 #: services/forms.py:386 services/models.py:246
 msgid "Discovery Auth Group"
-msgstr "Ανακάλυψη του Auth Group"
+msgstr "Η Ανακάλυψη του Auth Group"
 
 #: services/forms.py:413
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr ""
-"Η τιμή αυτή πρέπει να είναι μεταξύ %(start)d και %(end)d, "
-"συμπεριλαμβανομένης."
+"Η τιμή αυτή πρέπει να είναι μεταξύ% (εκκίνηση) και δ% (τέλος) δ, "
+"συμπεριλαμβανομένος."
 
 #: services/forms.py:421
 msgid ""
@@ -1151,43 +1151,43 @@ msgstr ""
 
 #: services/forms.py:504 services/forms.py:534
 msgid "You need to specify a filepath, not a directory."
-msgstr "Θα πρέπει να καθορίσετε έναν μονοπάτι αρχείου, όχι έναν κατάλογο."
+msgstr "Θα πρέπει να καθορίσετε έναν filepath όχι, έναν κατάλογο."
 
 #: services/forms.py:508 services/forms.py:538
 msgid "You need to specify a file inside your volume/dataset."
-msgstr "Θα πρέπει να καθορίσετε ένα αρχείο μέσα στο τόμο/dataset σας."
+msgstr "Θα πρέπει να καθορίσετε ένα αρχείο / σύνολο δεδομένων σας."
 
 #: services/forms.py:512 services/forms.py:542
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
 msgstr ""
-"Το μονοπάτι σας στην επέκταση πρέπει να βρίσκεται μέσα σε ένα σημείο "
-"προσάρτησης τόμου/dataset."
+"Ο δρόμος σας στο βαθμό που πρέπει να βρίσκεται μέσα σε έναν όγκο / σύνολο "
+"δεδομένων απο το σημείο προσάρτησης."
 
 #: services/forms.py:556
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr ""
-"Αυτή η τιμή μπορεί να είναι ένα μέγεθος σε bytes, ή μπορεί να έχει επίθεμα "
-"το KB, MB, GB, TB"
+"Αυτή η τιμή μπορεί να είναι ένα μέγεθος σε bytes, ή μπορεί να postfixed σε "
+"KB, MB, GB, TB"
 
 #: services/forms.py:577
 msgid "Disk device"
-msgstr "Συσκευή δίσκου"
+msgstr "Δίσκος της συσκευής"
 
 #: services/forms.py:691
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr "Το Portal Group ID σας δεν μπορεί να είναι μεγαλύτερο από %d"
+msgstr "Portal σας Ομάδα ID δεν μπορεί να είναι μεγαλύτερη από% d"
 
 #: services/forms.py:712
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
-msgstr "Το Group ID σας δεν μπορεί να είναι μεγαλύτερο από %d"
+msgstr "Ομάδα ID σας δεν μπορεί να είναι μεγαλύτερη από% d"
 
 #: services/forms.py:721
 msgid "Authentication Group number"
-msgstr "Αριθμός πιστοποίησης ομάδας"
+msgstr "ο Authentication Αριθμός ομάδας"
 
 #: services/forms.py:766
 msgid "Delete underlying file"
@@ -1197,8 +1197,10 @@ msgstr "Διαγραφή του παρακάτω αρχείου"
 #, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "Το e-mail %(email)s δεν είναι έγκυρο"
-msgstr[1] "Οι ακόλουθες διευθύνσεις e-mail δεν είναι έγκυρες: %(email)s"
+msgstr[0] "Το e-mail% (email) s δεν είναι έγκυρο"
+msgstr[1] ""
+"Οι ακόλουθες διευθύνσεις ηλεκτρονικού ταχυδρομείου δεν είναι έγκυρες:% "
+"(email) s"
 
 #: services/models.py:40
 msgid "Service"
@@ -1207,7 +1209,7 @@ msgstr "Υπηρεσία"
 #: services/models.py:41
 msgid "Name of Service, should be auto-generated at build time"
 msgstr ""
-"Ονομασία της Υπηρεσίας, θα πρέπει να δημιουργείται αυτόματα κατά τον χρόνο "
+"Ονομασία της Υπηρεσίας, θα πρέπει να δημιουργείται αυτόματα κατά χρόνος "
 "κατασκευής"
 
 #: services/models.py:44
@@ -1221,25 +1223,24 @@ msgstr "Υπηρεσίες"
 
 #: services/models.py:60
 msgid "Authentication Model"
-msgstr "Μοντέλο πιστοποίησης"
+msgstr "Authentication Μοντέλο"
 
 #: services/models.py:61
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
-"Χρησιμοποιώντας πιστοποίηση Active Directory ή LDAP θα αντικαταστήσει αυτή "
-"την επιλογή"
+"Χρησιμοποιώντας το Active Directory ή LDAP πιστοποίηση θα αντικαταστήσει "
+"αυτή την επιλογή"
 
 #: services/models.py:65
 msgid "NetBIOS name"
-msgstr "Όνομα NetBIOS"
+msgstr "Το όνομα NetBIOS"
 
 #: services/models.py:69
 msgid "Workgroup"
 msgstr "Ομάδα εργασίας"
 
 #: services/models.py:70
-#, fuzzy
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
@@ -1249,7 +1250,7 @@ msgstr ""
 
 #: services/models.py:76
 msgid "Server description. This can usually be left blank."
-msgstr "Περιγραφή server. Αυτό μπορεί συνήθως να μείνει κενό."
+msgstr "Server περιγραφή. Αυτό συνήθως μπορεί να μείνει κενό."
 
 #: services/models.py:82
 msgid "DOS charset"
@@ -1261,19 +1262,19 @@ msgstr "UNIX charset"
 
 #: services/models.py:94
 msgid "Log level"
-msgstr "Επίπεδο καταγραφής"
+msgstr "επίπεδο Σύνδεσης"
 
 #: services/models.py:97
 msgid "Local Master"
-msgstr "Τοπικός Master"
+msgstr "Τοπική Master"
 
 #: services/models.py:99
 msgid "Time Server for Domain"
-msgstr "Ώρα Server για το Domain"
+msgstr "Ώρα Server για Domain"
 
 #: services/models.py:104 services/models.py:191
 msgid "Guest account"
-msgstr "Λογαριασμός Guest"
+msgstr "Σχόλια λογαριασμό"
 
 #: services/models.py:105 services/models.py:192
 msgid ""
@@ -1283,25 +1284,25 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"Χρησιμοποιήστε αυτή την επιλογή για να παρακάμψετε το όνομα χρήστη ('nobody' "
+"Χρησιμοποιήστε αυτή την επιλογή για να παρακάμψετε το όνομα χρήστη («κανείς» "
 "από προεπιλογή), το οποίο θα χρησιμοποιηθεί για την πρόσβαση σε υπηρεσίες "
-"που έχουν οριστεί ως guest. Όποια και αν είναι τα προνόμια aυτoύ του χρήστη "
-"θα είναι διαθέσιμος σε κάθε πελάτη που συνδέεται με την υπηρεσία guest. "
-"Αυτός ο χρήστης πρέπει να υπάρχει στο αρχείο κωδικών πρόσβασης, αλλά δεν "
-"απαιτεί μια έγκυρη σύνδεση. Ο χρήστης root δεν μπορεί να χρησιμοποιηθεί ως "
-"λογαριασμός guest."
+"που έχουν οριστεί ως φιλοξενούμενο. Όποια και αν είναι τα προνόμια Αυτός ο "
+"χρήστης έχει θα είναι διαθέσιμη σε κάθε πελάτη σύνδεση με την υπηρεσία "
+"επισκέπτη. Αυτός ο χρήστης πρέπει να υπάρχει στο αρχείο κωδικού πρόσβασης, "
+"αλλά δεν απαιτεί μια έγκυρη σύνδεση. Ο χρήστης root δεν μπορεί να "
+"χρησιμοποιηθεί ως λογαριασμός επισκέπτη."
 
 #: services/models.py:108
 msgid "Allow guest access"
-msgstr "Να επιτρέπεται πρόσβαση guest"
+msgstr "Να επιτρέπουν πρόσβαση επισκεπτών"
 
 #: services/models.py:110
 msgid "Only allow guest access"
-msgstr "Να επιτρέπεται μόνο πρόσβαση guest"
+msgstr "Μόνο να επιτρέπουν πρόσβαση επισκεπτών"
 
 #: services/models.py:113 services/models.py:848
 msgid "File mask"
-msgstr "Μάσκα αρχείου"
+msgstr "Αρχείο μάσκα"
 
 #: services/models.py:115
 msgid "Use this option to override the file creation mask (0666 by default)."
@@ -1311,30 +1312,30 @@ msgstr ""
 
 #: services/models.py:119 services/models.py:854
 msgid "Directory mask"
-msgstr "Μάσκα καταλόγου"
+msgstr "Κατάλογος μάσκα"
 
 #: services/models.py:121
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
-"Χρησιμοποιήστε αυτή την επιλογή για να παρακάμψετε την μάσκα δημιουργίας "
+"Χρησιμοποιήστε αυτή την επιλογή για να παρακάμψετε την μάσκα δημιουργία "
 "καταλόγου (0777 από προεπιλογή)."
 
 #: services/models.py:124
 msgid "Large RW support"
-msgstr "Υποστήριξη μεγάλου RW"
+msgstr "Μεγάλη υποστήριξη RW"
 
 #: services/models.py:126
 msgid "Send files with sendfile(2)"
-msgstr "Αποστολή αρχείων με sendfile(2)"
+msgstr "Στείλτε τα αρχεία με sendfile (2)"
 
 #: services/models.py:128
 msgid "EA Support"
-msgstr "Υποστήριξη EA"
+msgstr "EA Υποστήριξη"
 
 #: services/models.py:130
 msgid "Support DOS File Attributes"
-msgstr "Υποστήριξη attributes αρχείων DOS "
+msgstr "Υποστήριξη αρχείων DOS Χαρακτηριστικά"
 
 #: services/models.py:132
 msgid "Allow Empty Password"
@@ -1348,28 +1349,27 @@ msgstr "Βοηθητικές παράμετροι"
 
 #: services/models.py:137
 msgid "These parameters are added to [Global] section of smb.conf"
-msgstr "Οι παράμετροι αυτές προστίθενται στο τμήμα [Global] του smb.conf"
+msgstr "Οι παράμετροι αυτοί προστίθενται στο [Global] του smb.conf"
 
 #: services/models.py:140
 msgid "Enable home directories"
-msgstr "Ενεργοποίηση καταλόγων home"
+msgstr "καταλόγους σπίτι Ενεργοποίηση"
 
 #: services/models.py:141
 msgid "This enables\\disables home directories for samba user."
-msgstr ""
-"Αυτό ενεργοποιεί\\απενεργοποιεί τους home καταλόγους για το χρήστη samba."
+msgstr "Αυτό ενεργοποιεί\\απενεργοποιεί home καταλόγους για το χρήστη samba."
 
 #: services/models.py:144
 msgid "Enable home directories browsing"
-msgstr "Ενεργοποίηση της περιήγησης στους καταλόγους home"
+msgstr "Ενεργοποιήστε της περιήγηση του αρχικου καταλόγου"
 
 #: services/models.py:145
 msgid "This enables\\disables home directories browsing for samba user."
-msgstr "Αυτό ενεργοποιεί\\απενεργοποιεί τον κατάλόγο home για το χρήστη samba."
+msgstr "Αυτό ενεργοποιεί\\απενεργοποιεί τον αρχικό κατάλόγο για το χρήστη samba."
 
 #: services/models.py:149
 msgid "Home directories"
-msgstr "Κατάλογοι home"
+msgstr "Αρχικός κατάλογος"
 
 #: services/models.py:153
 msgid "Enable AIO"
@@ -1381,27 +1381,27 @@ msgstr "Αυτό ενεργοποιεί\\απενεργοποιεί την υπ�
 
 #: services/models.py:158
 msgid "Minimal AIO read size"
-msgstr "Ελάχιστο μέγεθος ανάγνωσης AIO"
+msgstr "Ελάχιστη AIO διαβάστε μέγεθος"
 
 #: services/models.py:159
 msgid ""
 "Samba will read asynchronously if request size is larger than this value. "
 "The default read size is 1."
 msgstr ""
-"Η Samba θα αναγνώσει ασύγχρονα αν το μέγεθος του αιτήματος είναι μεγαλύτερο "
+"Η Samba θα διαβάσει ασύγχρονα αν το μέγεθος του αιτήματος είναι μεγαλύτερο "
 "από την τιμή αυτή. Η προεπιλεγμένη τιμή ανάγνωσης είναι 1."
 
 #: services/models.py:164
 msgid "Minimal AIO write size"
-msgstr "Ελάχιστο μέγεθος εγγραφής AIO"
+msgstr "Ελάχιστη AIO γράψετε μέγεθος"
 
 #: services/models.py:165
 msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
 msgstr ""
-"Η Samba θα εγγράψει ασύγχρονα αν το μέγεθος του αιτήματος είναι μεγαλύτερο "
-"από την τιμή αυτή. Η προεπιλεγμένη τιμή εγγραφής είναι 1."
+"Η Samba θα γράψει ασύγχρονα αν το μέγεθος του αιτήματος είναι μεγαλύτερο από "
+"την τιμή αυτή. Η προεπιλεγμένη τιμή εγγραφής είναι 1."
 
 #: services/models.py:170 services/models.py:171
 #: templates/services/index.html:29
@@ -1410,23 +1410,25 @@ msgstr "CIFS"
 
 #: services/models.py:180
 msgid "Server Name"
-msgstr "Όνομα Διακομιστή"
+msgstr "Όνομα Server"
 
 #: services/models.py:181
 msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
 msgstr ""
-"Το όνομα του διακομιστή. Αν αυτό το πεδίο αυτό παραμένει κενό ο "
-"προεπιλεγμένος διακομιστής έχει καθοριστεί."
+"Το όνομα του διακομιστή. Αν αυτό το πεδίο παραμένει κενό το προεπιλεγμένο "
+"διακομιστή έχει καθοριστεί."
 
 #: services/models.py:184
 msgid "Guest Access"
-msgstr "Πρόσβαση Guest"
+msgstr "Guest Access"
 
 #: services/models.py:185
 msgid "Allows guest access to all apple shares on this box."
-msgstr "Να επιτρέπεται η πρόσβαση guest σε όλά τα Apple shares στο κουτί αυτό."
+msgstr ""
+"Επιτρέπει την πρόσβαση επισκεπτών σε όλες τις μετοχές της Apple στο κουτί "
+"αυτό."
 
 #: services/models.py:195
 msgid "Local Access"
@@ -1435,8 +1437,8 @@ msgstr "Τοπική Πρόσβαση"
 #: services/models.py:196
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
-"Να επιτρέπεται η πρόσβαση στους χρήστες με τοπικούς λογαριασμούς στσ apple "
-"shares στο κουτί αυτό."
+"Να επιτρέπεται πρόσβαση στους χρήστες με τους τοπικούς λογαριασμούς για να "
+"αποκτήσετε μετοχές της Apple στο κουτί αυτό."
 
 #: services/models.py:199
 msgid "Enable DDP"
@@ -1444,7 +1446,8 @@ msgstr "Ενεργοποίηση DDP"
 
 #: services/models.py:200
 msgid "Enables DDP support for low-level appletalk access."
-msgstr "Ενεργοποιεί την υποστήριξη DDP για πρόσβαση AppleTalk χαμηλού επιπέδου."
+msgstr ""
+"Ενεργοποιεί την υποστήριξη DDP για την πρόσβαση AppleTalk χαμηλού επιπέδου."
 
 #: services/models.py:204 services/models.py:205
 #: templates/services/index.html:7
@@ -1460,8 +1463,8 @@ msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
 msgstr ""
-"Καθορίζει πόσους servers να δημιουργηθούν. Θα πρέπει να είναι αρκετοί για να "
-"χειριστούν το μέγιστο επίπεδο ταυτοχρονισμού από τους πελάτες, συνήθως "
+"Καθορίζει πόσους servers να δημιουργήσετε. Θα πρέπει να υπάρχει αρκετός "
+"χειρισμός στο μέγιστο επίπεδο ταυτοχρονισμού από τους πελάτες της, συνήθως "
 "τέσσερις με έξι."
 
 #: services/models.py:219
@@ -1473,7 +1476,7 @@ msgid ""
 "Enable asynchronous mode, which will help performance beyond gigabit network "
 "speed."
 msgstr ""
-"Ενεργοποίηση ασύγχρονης λειτουργίας, που θα βοηθήσει τις επιδόσεις πέραν των "
+"Ενεργοποίηση ασύγχρονου τρόπου, που θα βοηθήσει τις επιδόσεις πέραν των "
 "gigabit ταχυτήτων του δικτύου."
 
 #: services/models.py:225 services/models.py:226
@@ -1495,15 +1498,15 @@ msgstr ""
 
 #: services/models.py:242
 msgid "Discovery Auth Method"
-msgstr "Μέθοδος ανακάλυψης Auth"
+msgstr "Ανακάλυψη Auth Μεθόδου"
 
 #: services/models.py:253
 msgid "I/O Timeout"
-msgstr "I/O Timeout"
+msgstr "I / O Timeout"
 
 #: services/models.py:254
 msgid "I/O timeout in seconds (30 by default)."
-msgstr "I/O timeout σε δευτερόλεπτα (30 από προεπιλογή)."
+msgstr "I / O timeout σε δευτερόλεπτα (30 από προεπιλογή)."
 
 #: services/models.py:259
 msgid "NOPIN Interval"
@@ -1511,7 +1514,7 @@ msgstr "NOPIN Διάστημα"
 
 #: services/models.py:260
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr "Διατημα αποστολής NOPIN σε δευτερόλεπτα (20 από προεπιλογή)."
+msgstr "NOPIN αποστολή διαστήματος σε δευτερόλεπτα (20 από προεπιλογή)."
 
 #: services/models.py:265
 msgid "Max. sessions"
@@ -1520,7 +1523,7 @@ msgstr "Max. συνεδρίες"
 #: services/models.py:266
 msgid "Maximum number of sessions holding at same time (16 by default)."
 msgstr ""
-"Μέγιστος αριθμός των συνεδριών που παραμένουν ταυτόχρονα (16 από "
+"Μέγιστος αριθμός των ταυτόχρονων συνεδριών που παραμένουν (16 από "
 "προεπιλογή)."
 
 #: services/models.py:271
@@ -1529,19 +1532,19 @@ msgstr "Max. συνδέσεις"
 
 #: services/models.py:272
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr "Μέγιστος αριθμός των συνδέσεων σε κάθε συνεδρία (8 από προεπιλογή)."
+msgstr "Ο μέγιστος αριθμός των συνδέσεων σε κάθε συνεδρία (8 από προεπιλογή)."
 
 #: services/models.py:277
 msgid "Max. pre-send R2T"
-msgstr "Max. pre-send R2T"
+msgstr "Max. πριν στείλετε R2T"
 
 #: services/models.py:278
 msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
 msgstr ""
-"Μέγιστος αριθμός των pre-send R2T σε κάθε σύνδεση (32 από προεπιλογή). Ο "
-"πραγματικός αριθμός περιορίζεται από το QueueDepth του στόχου."
+"Μέγιστος αριθμός των προ-στείλει R2T σε κάθε σύνδεση (32 από προεπιλογή). Ο "
+"πραγματικός αριθμός είναι περιορισμένος για να QueueDepth του στόχου."
 
 #: services/models.py:283
 msgid "MaxOutstandingR2T"
@@ -1557,11 +1560,11 @@ msgstr "Πρώτη διάρκεια διάρρηξης"
 
 #: services/models.py:290
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr "Αρχική παράμετρος iSCSI (65536 από προεπιλογή)."
+msgstr "Αρχική παράμετρος iSCSI  (65536 από προεπιλογή)."
 
 #: services/models.py:295
 msgid "Max burst length"
-msgstr "Μέγιστη διάρκεια διάρρηξης"
+msgstr "Μέγιστο διάρκεια διάρρηξης"
 
 #: services/models.py:296 services/models.py:302
 msgid "iSCSI initial parameter (262144 by default)."
@@ -1569,7 +1572,7 @@ msgstr "Αρχική παράμετρος iSCSI (262144 από προεπιλο�
 
 #: services/models.py:301
 msgid "Max receive data segment length"
-msgstr "Μέγιστο μήκος λήψης τμημάτων δεδομένων"
+msgstr "Max λήψη δεδομένων διάρκεια των τμημάτων"
 
 #: services/models.py:307
 msgid "DefaultTime2Wait"
@@ -1577,7 +1580,7 @@ msgstr "DefaultTime2Wait"
 
 #: services/models.py:308
 msgid "iSCSI initial parameter (2 by default)."
-msgstr "Αρχική παράμετρος iSCSI (2 από προεπιλογή)."
+msgstr "iSCSI αρχική παράμετρο (2 από προεπιλογή)."
 
 #: services/models.py:313
 msgid "DefaultTime2Retain"
@@ -1585,7 +1588,7 @@ msgstr "DefaultTime2Retain"
 
 #: services/models.py:314
 msgid "iSCSI initial parameter (60 by default)."
-msgstr "Αρχική παράμετρος iSCSI (60 από προεπιλογή)."
+msgstr "iSCSI αρχική παράμετρο (60 από προεπιλογή)."
 
 #: services/models.py:319
 msgid "Enable LUC"
@@ -1593,20 +1596,21 @@ msgstr "Ενεργοποίηση LUC"
 
 #: services/models.py:323
 msgid "Controller IP address"
-msgstr "Διεύθυνση IP ελεγκτή"
+msgstr "Ελεγκτής διεύθυνσης IP"
 
 #: services/models.py:324
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
 msgstr ""
-"Διεύθυνση IP ελεγκτή Logical Unit (127.0.0.1 (localhost) από προεπιλογή)"
+"Logical Unit Controller τη διεύθυνση IP (127.0.0.1 (localhost) από "
+"προεπιλογή)"
 
 #: services/models.py:330
 msgid "Controller TCP port"
-msgstr "Θύρα TCP ελεγκτή"
+msgstr "Ελεγκτής θύρα TCP"
 
 #: services/models.py:331
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr "Θύρα TCP ελεγκτή Logical Unit (3261 από προεπιλογή)"
+msgstr "Logical Unit Controller θύρα TCP (3261 από προεπιλογή)"
 
 #: services/models.py:337
 msgid "Controller Authorized netmask"
@@ -1620,20 +1624,20 @@ msgstr ""
 
 #: services/models.py:346
 msgid "Controller Auth Method"
-msgstr "Μέθοδος Auth ελεγκτή"
+msgstr "Ελεγκτής Auth Μέθοδος"
 
 #: services/models.py:347
 msgid "The method can be accepted in the controller."
-msgstr "Η μέθοδος μπορεί να γίνει δεκτή στον ελεγκτή."
+msgstr "Η μέθοδος μπορεί να γίνει δεκτή στον υπεύθυνο της επεξεργασίας."
 
 #: services/models.py:359 services/models.py:360
 #: templates/services/iscsi.html:3
 msgid "Target Global Configuration"
-msgstr "Target Global Configuration"
+msgstr "Στόχος Global Configuration"
 
 #: services/models.py:371
 msgid "Extent Name"
-msgstr "Επέκταση ονόματος"
+msgstr "Έκταση Όνοματος"
 
 #: services/models.py:372
 msgid "String identifier of the extent."
@@ -1666,8 +1670,8 @@ msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
-"Μέγεθος επέκτασης, 0 σημαίνει αυτόματα, ένας ακατέργαστο αριθμός είναι "
-"bytes, ή επίθεμα με KB, MB, TB για λόγους ευκολίας."
+"Μέγεθος βαθμού, 0 ,σημαίνει αυτόματα ένα ακατέργαστο αριθμός bytes, ή "
+"επίθημα με KB, MB, για λόγους ευκολίας."
 
 #: services/models.py:394 services/models.py:443 services/models.py:489
 #: services/models.py:1182 sharing/models.py:45 sharing/models.py:223
@@ -1907,8 +1911,8 @@ msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
-"Πληροφορίες τοποθεσίας, π.χ. φυσική θέση του συστήματος: 'Όροφος του "
-"κτιρίου, Αίθουσα χχψψζζ'."
+"πληροφορίες τοποθεσία, π.χ. 'Όροφος του κτιρίου, Αίθουσα XYZZY »: φυσική "
+"θέση αυτού του συστήματος."
 
 #: services/models.py:716
 msgid "Contact"
@@ -2332,7 +2336,7 @@ msgstr "Όνομα κεντρικού υπολογιστή (NetBIOS-Name)"
 
 #: services/models.py:1045
 msgid "Host Name in old format, eg EXAMPLE"
-msgstr "Όνομα υπολογιστή στην παλιά μορφή, πχ EXAMPLE"
+msgstr "Όνομα κεντρικού υπολογιστή στην παλιά μορφή, π.χ. ΠΑΡΑΔΕΙΓΜΑ"
 
 #: services/models.py:1049
 msgid "Workgroup Name"
@@ -2340,7 +2344,7 @@ msgstr "Όνομα ομάδας εργασίας"
 
 #: services/models.py:1050
 msgid "Workgroup Name in old format, eg EXAMPLE"
-msgstr "Όνομα ομάδας εργασίας στην παλιά μορφή, πχ EXAMPLE"
+msgstr "Όνομα ομάδας εργασίας στην παλιά μορφή, π.χ. ΠΑΡΑΔΕΙΓΜΑ"
 
 #: services/models.py:1054
 msgid "Administrator Name"
@@ -2682,7 +2686,7 @@ msgstr "Εκτάσεις Συσκευών"
 #: templates/services/iscsi_extents.html:39
 #: templates/services/iscsi_extents.html:41
 msgid "Add Extent"
-msgstr "Προσθήκη Έκτασης"
+msgstr "Προσθήκη Έκταση"
 
 #: services/nav.py:102
 msgid "View All Extents"
@@ -2715,7 +2719,7 @@ msgstr "Το πεδίο είναι μια μη έγκυρη διεύθυνση I
 #: sharing/forms.py:88
 #, python-format
 msgid "The IP '%s' is not valid."
-msgstr "Η IP '%s' δεν είναι έγκυρη."
+msgstr "'% S' Η IP δεν είναι έγκυρη."
 
 #: sharing/forms.py:99
 msgid "Maproot group requires Maproot user"
@@ -2769,12 +2773,12 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
-"Χρησιμοποιήστε αυτή την επιλογή για να παρακάμψετε το όνομα χρήστη ('ftp' "
+"Χρησιμοποιήστε αυτή την επιλογή για να παρακάμψετε το όνομα χρήστη (\"ftp\" "
 "από προεπιλογή), το οποίο θα χρησιμοποιηθεί για την πρόσβαση σε υπηρεσίες "
-"που έχουν οριστεί ως guest. Όποια και αν είναι τα προνόμια αυτού του χρήστη "
-"θα είναι διαθέσιμος σε κάθε πελάτη που συνδέεται στην υπηρεσία guest. Αυτός "
-"ο χρήστης πρέπει να υπάρχει στο αρχείο κωδικών πρόσβασης, αλλά δεν απαιτεί "
-"μια έγκυρη σύνδεση."
+"που έχουν οριστεί ως όρος. Όποια και αν είναι τα προνόμια αυτός ο χρήστης "
+"έχει θα είναι διαθέσιμη σε κάθε πελάτη τη σύνδεση με την εξυπηρέτηση "
+"πελατών. Αυτός ο χρήστης πρέπει να υπάρχει στο αρχείο κωδικού πρόσβασης, "
+"αλλά δεν απαιτεί μια έγκυρη σύνδεση."
 
 #: sharing/models.py:68
 msgid "Allow Guest Access"
@@ -2830,10 +2834,12 @@ msgid "Windows Share"
 msgstr "Windows Share"
 
 #: sharing/models.py:94
+#, fuzzy
 msgid "Windows Shares"
-msgstr "Windows Shares"
+msgstr "Windows Share"
 
 #: sharing/models.py:105
+#, fuzzy
 msgid ""
 "The volume name is the name that appears in the Chooser of the 'connect to "
 "server' dialog on Macintoshes to represent the appropriate share. If "
@@ -2843,14 +2849,15 @@ msgid ""
 "volume name is limited to 27 characters. UTF8-MAC volume name is limited to "
 "'Volume Name Length' parameter in Services:Apple Share"
 msgstr ""
-"Το όνομα του τόμου είναι το όνομα που εμφανίζεται στην επιλογή 'σύνδεση με "
-"τον διακομιστή' για Macintosh που εκπροσωπεί το ανάλογο share. Αν το όνομα "
-"τόμου δεν προσδιορίζεται, το τελευταίο στοιχείο του ονόματος μονοπατιού "
-"χρησιμοποιείται. Δεν μπορούν δύο τόμοι να έχουν το ίδιο όνομα. Το όνομα "
-"τόμου δεν μποροεί να περιέχει τον ':' χαρακτήρα. Το όνομα τόμου κόβεται αν "
-"είναι πολύ μεγάλο. Όνομα τόμου με κωδικοποίηση Mac περιορίζεται σε 27 "
-"χαρακτήρες. UTF8-MAC όνομα τόμου είναι περιορίζεται στην παράμετρο 'Μήκος "
-"ονόματος τόμου' στις υπηρεσίες: Apple Share"
+"Το όνομα του τόμου είναι το όνομα που εμφανίζεται στο ot Chooser η «σύνδεση "
+"με τον διακομιστή\" διαλόγου για Macintosh που να εκπροσωπεί το ανάλογο "
+"τμήμα. Αν volumename είναι απροσδιόριστη, την τελευταία ημερομηνία "
+"κατασκευής του διαδρομή χρησιμοποιείται. Δεν υπάρχουν δύο όγκοι μπορούν να "
+"έχουν το ίδιο όνομα. Το όνομα του όγκου δεν μπορούν να περιέχουν τους: "
+"χαρακτήρα ». Το όνομα του τόμου είναι παραμορφωμένα αν είναι πολύ μεγάλο. "
+"Mac κωδικοσελίδα όνομα όγκος περιορίζεται σε 27 χαρακτήρες. UTF8-MAC όνομα "
+"του τόμου είναι περιορισμένη παράμετρος για να «τόμος Όνομα μήκος» στις "
+"Υπηρεσίες: Apple Share"
 
 #: sharing/models.py:109
 msgid "Share Comment"
@@ -2927,13 +2934,13 @@ msgid "Read-write Access"
 msgstr "Προσπέλαση για Ανάγνωση και Εγγραφή"
 
 #: sharing/models.py:148
+#, fuzzy
 msgid ""
 "Allows certain users and groups to have read/write access to a share. This "
 "follows the allow option format."
 msgstr ""
-"Επιτρέπει σε συγκεκριμένους χρήστες και ομάδες να έχουν πρόσβαση "
-"ανάγνωσης/εγγραφής σε ένα share. Ακολουθεί τη μορφή που τις επιλογής "
-"παραχώρηση."
+"Επιτρέπει στους συγκεκριμένους χρήστες και ομάδες να έχουν read / write "
+"πρόσβαση σε μια μετοχή. Αυτό ακολουθεί τη μορφή που επιτρέπει την επιλογή."
 
 #: sharing/models.py:151
 msgid "Disk Discovery"
@@ -2952,27 +2959,29 @@ msgid "Disk discovery mode"
 msgstr "Λειτουργία Εύρεση Δίσκων"
 
 #: sharing/models.py:159
+#, fuzzy
 msgid ""
 "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
 msgstr ""
-"Σημείωση! Επιλέγοντας 'Time Machine' σε πολλαπλά shares μπορεί να προκληθεί "
-"απρόβλεπτη συμπεριφορά στο MacOS. Η προεπιλεγμένη μέθοδος εξάγει τον τόμο "
-"σαν τόμο δεδομένων για τους χρήστες."
+"Σημείωση! Επιλέγοντας «Μηχανή του Χρόνου» σε πολλές μετοχές θα μπορεί να "
+"προκαλέσει απρόβλεπτη συμπεριφορά στο MacOS. Default εξαγωγές λειτουργία του "
+"όγκου σε όγκο δεδομένων για τους χρήστες."
 
 #: sharing/models.py:163
 msgid "Database Path"
 msgstr "διαδρομής Βάσης δεδομένων "
 
 #: sharing/models.py:165
+#, fuzzy
 msgid ""
 "Sets the database information to be stored in path. You have to specify a "
 "writable location, even if the volume is read only."
 msgstr ""
-"Ορίζει οι πληροφορίες της βάσης δεδομένων να αποθηκεύονται στο μονοπάτι. Θα "
-"πρέπει να καθορίσετε μία εγγράψιμη θέση, έστω και αν ο τόμος είναι μόνο για "
-"ανάγνωση."
+"Ορίζει την πληροφορίες της βάσης δεδομένων πρέπει να αποθηκεύονται στο "
+"δρόμο. Θα πρέπει να καθορίσετε ένα εγγράψιμο θέση, έστω και αν ο όγκος είναι "
+"μόνο για ανάγνωση."
 
 #: sharing/models.py:168
 msgid "Cache CNID"
@@ -3027,13 +3036,15 @@ msgid "No .AppleDouble"
 msgstr "Αριθ. AppleDouble"
 
 #: sharing/models.py:181
+#, fuzzy
 msgid ""
 "This will suppress automatic creation of the .AppleDouble directories. This "
 "option should not be used if files are accessed by Mac computers."
 msgstr ""
-"Αυτό θα καταστείλει την αυτόματη δημιουργία των .AppleDouble καταλόγων. Αυτή "
-"η επιλογή δεν πρέπει να χρησιμοποιείται εάν τα αρχεία έχουν πρόσβαση από "
-"υπολογιστές Mac."
+"Αυτό ελέγχει εάν η. Κατάλογο AppleDouble παίρνει δημιουργούνται εκτός "
+"απολύτως αναγκαία. Αυτή η επιλογή δεν πρέπει να χρησιμοποιείται εάν οι "
+"φάκελοι έχουν πρόσβαση κυρίως με υπολογιστές Mac. Κάνοντας κλικ σε αυτή την "
+"επιλογή απενεργοποιεί τη δημιουργία τους."
 
 #: sharing/models.py:184
 msgid "Zero Device Numbers"
@@ -3100,21 +3111,23 @@ msgid "Apple Share"
 msgstr "Apple Share"
 
 #: sharing/models.py:213
+#, fuzzy
 msgid "Apple Shares"
-msgstr "Apple κοινόχρηστα στοιχεία"
+msgstr "Apple Share"
 
 #: sharing/models.py:230
 msgid "Authorized network or IP addresses"
 msgstr "Εξουσιοδοτημένο δίκτυο ή τις διευθύνσεις IP"
 
 #: sharing/models.py:231
+#, fuzzy
 msgid ""
 "Network that is authorized to access the NFS share or a list of IP "
 "addresses. Specify network numbers of the form 1.2.3.4/xx where xx is the "
 "number of bits of netmask or a list of IP addresses 1.2.3.4 1.2.3.5 1.2.3.6."
 msgstr ""
-"Δίκτυο που είναι εξουσιοδοτημένο για πρόσβαση στο NFS share ή μια λίστα "
-"διευθύνσεων IP. Καθορίστε τον αριθμό του δικτύου στην μορφή 1.2.3.4/xx όπου "
+"Δίκτυο που είναι εξουσιοδοτημένα για πρόσβαση στο μερίδιο NFS ή μια λίστα "
+"διευθύνσεων IP. Καθορίστε τον αριθμό του δικτύου της 1.2.3.4/xx εντύπου όπου "
 "xx είναι ο αριθμός των bits του netmask ή μια λίστα διευθύνσεων IP 1.2.3.4 "
 "1.2.3.5 1.2.3.6."
 
@@ -3123,32 +3136,35 @@ msgid "All Directories"
 msgstr "Όλοι οι κατάλογοι"
 
 #: sharing/models.py:236
+#, fuzzy
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
 msgstr ""
-"Επιτρέπει την προσάρτηση κάθε υποκατάλογου κάτω από αυτό το σημείο "
+"Επιτρέπει την τοποθέτηση κάθε υποκατάλογο κάτω από αυτό το σημείο "
 "προσάρτησης, αν επιλεγεί. Διαφορετικά, μόνο το πρώτο επίπεδο καταλόγου "
-"μπορεί να προσαρτηθεί."
+"μπορούν να τοποθετηθούν."
 
 #: sharing/models.py:239
 msgid "Read Only"
 msgstr "Μόνο για ανάγνωση"
 
 #: sharing/models.py:240
+#, fuzzy
 msgid "Export the share read only. Writes are not permitted."
-msgstr "Εξαγωγή του share μόνο για ανάγνωση. Η εγγραφή δεν επιτρέπεται."
+msgstr "Εξαγωγή της μετοχής μόνο για ανάγνωση. Γράφει δεν επιτρέπονται."
 
 #: sharing/models.py:243 system/models.py:409
 msgid "Quiet"
 msgstr "Ήσυχα"
 
 #: sharing/models.py:244
+#, fuzzy
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
 msgstr ""
-"Αναστολή προειδοποιήσεων syslog αν υπάρχουν προβλήματα με την εξαγωγή αυτού "
-"του κοινόχρηστου στοιχείου."
+"Inibit προειδοποιήσεις syslog αν υπάρχουν προβλήματα με την εξαγωγή αυτό το "
+"μερίδιο."
 
 #: sharing/models.py:248
 msgid "Maproot User"
@@ -3187,8 +3203,9 @@ msgid "UNIX Share"
 msgstr "UNIX Share"
 
 #: sharing/models.py:284
+#, fuzzy
 msgid "UNIX Shares"
-msgstr "UNIX Shares"
+msgstr "UNIX Share"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
@@ -3197,23 +3214,24 @@ msgstr "Κοινή χρήση"
 #: storage/forms.py:154 storage/forms.py:348 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
-msgstr "Όνομα τόμου"
+msgstr "όνομα τόμου"
 
 #: storage/forms.py:158 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
-msgstr "Εξανάγκασε μέγεθος τομέα 4096 bytes"
+msgstr "Δύναμη 4096 bytes μέγεθος τομέα"
 
 #: storage/forms.py:220
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\"."
 msgstr ""
-"Το όνομα τόμου πρέπει να αρχίζει με γράμματα και μπορεί να περιλαμβάνει "
+"Το όνομα του όγκου πρέπει να αρχίζει με γράμματα και μπορεί να περιλαμβάνει "
 "αριθμούς, \"-\", \"_\"."
 
 #: storage/forms.py:234
+#, fuzzy
 msgid "You must select a filesystem"
-msgstr "Πρέπει να επιλέξετε σύστημα αρχείων"
+msgstr "Απομακρυσμένη ZFS filesystem"
 
 #: storage/forms.py:238 system/forms.py:217 system/forms.py:223
 #: system/forms.py:228
@@ -3226,42 +3244,43 @@ msgstr "Έχετε ήδη έναν τόμο με το ίδιο όνομα"
 
 #: storage/forms.py:249
 msgid "\"log\" is a reserved word and thus cannot be used"
-msgstr "\"log\" είναι δεσμευμένη λέξη και επομένως δεν μπορεί να χρησιμοποιηθεί"
+msgstr ""
+"\"Log\" είναι δεσμευμένη λέξη και, επομένως, δεν μπορούν να χρησιμοποιηθούν"
 
 #: storage/forms.py:254
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr ""
-"Το όνομα του τόμου ΔΕΝ μπορεί να ξεκινάει με c[0-9], mirror, raidz ή spare"
+"Το όνομα του όγκου ενδέχεται να μην ξεκινήσει με το γ [0-9], καθρέφτη, raidz "
+"ή ανταλλακτικά"
 
 #: storage/forms.py:349 storage/forms.py:439 storage/forms.py:939
 msgid "Member disk"
-msgstr "Δίσκος μέλος"
+msgstr "Member disk"
 
 #: storage/forms.py:396 storage/forms.py:506
 msgid "The selected disks were not verified for this import rules."
-msgstr ""
-"Οι επιλεγμένοι δίσκοι δεν επαληθεύτηκαν για αυτούς τους κανόνες εισαγωγής."
+msgstr "Τα επιλεγμένα δίσκοι δεν επαληθεύονται για το καθεστώς εισαγωγής."
 
 #: storage/forms.py:404
-msgid "Some error ocurried while labelling the disk."
-msgstr "Κάποιο σφάλμα συνέβησε κατά την σήμανση του δίσκου."
+msgid "An error occurred while labeling the disk."
+msgstr "Μερικές σφάλμα occurred ενώ η σήμανση του δίσκου."
 
 #: storage/forms.py:484
 msgid "You must select a volume."
-msgstr "Πρέπει να επιλέξετε έναν τόμο."
+msgstr ""
 
 #: storage/forms.py:633
 msgid "Volume from which this dataset will be created on"
-msgstr "Τόμος από τον οποίο το dataset θα δημιουργηθεί"
+msgstr "Όγκος από την οποία το σύνολο δεδομένων θα δημιουργηθεί"
 
 #: storage/forms.py:634
 msgid "Dataset Name"
-msgstr "Όνομα dataset"
+msgstr "Σύνολο δεδομένων Όνομα"
 
 #: storage/forms.py:635 storage/forms.py:687 storage/forms.py:744
 #: storage/forms.py:785
 msgid "Compression level"
-msgstr "Επίπεδο συμπίεσης"
+msgstr "Συμπίεση επίπεδο"
 
 #: storage/forms.py:636 storage/forms.py:688 storage/forms.py:745
 msgid "Enable atime"
@@ -3310,24 +3329,28 @@ msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
 msgstr "Εισάγετε θετικός αριθμός (προαιρετικά επίθεμα από M, G, T), ή, 0"
 
 #: storage/forms.py:782
+#, fuzzy
 msgid "Volume from which this ZFS Volume will be created on"
-msgstr "Τόμος από τον οποίο ο ZFS τόμος θα δημιουργηθεί"
+msgstr "Όγκος από την οποία το σύνολο δεδομένων θα δημιουργηθεί"
 
 #: storage/forms.py:783
+#, fuzzy
 msgid "ZFS Volume Name"
-msgstr "Όνομα τόμου ZFS"
+msgstr "ZFS τόμος"
 
 #: storage/forms.py:784
+#, fuzzy
 msgid "Size for this ZFS Volume"
-msgstr "Μέγεθος για αυτόν τον ZFS τόμο"
+msgstr "Επεξεργασία ZFS τόμου"
 
 #: storage/forms.py:798
+#, fuzzy
 msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
 msgstr ""
-"Τα ονόματα τόμων ZFS πρέπει να αρχίζουν με έναν αλφαριθμητικό χαρακτήρα και "
-"μπορεί να περιέχουν μόνο (-), (_), (:) και (.)."
+"Σύνολο δεδομένων ονόματα πρέπει να αρχίζουν με έναν αλφαριθμητικό χαρακτήρα "
+"και μπορεί να περιέχει μόνο (-), (_), (:) και (.)."
 
 #: storage/forms.py:820
 msgid "Owner (user)"
@@ -3343,7 +3366,7 @@ msgstr "Λειτουργία"
 
 #: storage/forms.py:825
 msgid "Set permission recursively"
-msgstr "Ορισμός άδειας αναδρομικά"
+msgstr "Ορισμός άδεια αναδρομικών"
 
 #: storage/forms.py:875
 msgid "At least one day must be chosen"
@@ -3375,11 +3398,11 @@ msgstr "Κλώνος Όνομα (πρέπει να είναι στην ίδια 
 
 #: storage/forms.py:916
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr "Μόνο τα [-a-zA-Z0-9_. /] επιτρέπονται ως όνομα κλώνου"
+msgstr "Μόνο το [-a-zA-Z0-9_. /] Επιτρέπονται ως κλώνος όνομα"
 
 #: storage/forms.py:922
 msgid "Clone must be within the same volume"
-msgstr "Ο κλώνος πρέπει να βρίσκεται εντός του ίδιου τόμου"
+msgstr "Κλώνος πρέπει να βρίσκεται εντός του ίδιου όγκου"
 
 #: storage/forms.py:989 storage/models.py:222
 msgid "Remote hostname"
@@ -3387,7 +3410,7 @@ msgstr "Απομακρυσμένο hostname"
 
 #: storage/forms.py:990 storage/models.py:226
 msgid "Remote hostkey"
-msgstr "Απομακρυσμένο hostkey"
+msgstr "Απομακρυσμένη hostkey"
 
 #: storage/models.py:49
 msgid "File System Type"
@@ -3407,15 +3430,15 @@ msgstr "Transfer Mode"
 
 #: storage/models.py:108
 msgid "HDD Standby"
-msgstr "Αναμονή HDD"
+msgstr "HDD αναμονή"
 
 #: storage/models.py:114
 msgid "Advanced Power Management"
-msgstr "Προηγμένη Διαχείριση Ενέργειας"
+msgstr "Προηγμένης Διαχείρισης Ενέργειας"
 
 #: storage/models.py:120
 msgid "Acoustic Level"
-msgstr "Ακουστικό επίπεδο"
+msgstr "Ακουστική Επίπεδο"
 
 #: storage/models.py:124
 msgid "Enable S.M.A.R.T."
@@ -3423,7 +3446,7 @@ msgstr "Ενεργοποίηση S.M.A.R.T."
 
 #: storage/models.py:128
 msgid "S.M.A.R.T. extra options"
-msgstr "Επιπλέον επιλογές S.M.A.R.T."
+msgstr "S.M.A.R.T. επιπλέον επιλογές"
 
 #: storage/models.py:133
 msgid "Group Membership"
@@ -3431,36 +3454,36 @@ msgstr "Ομάδα Σύνθεση"
 
 #: storage/models.py:134
 msgid "The disk group containing this disk"
-msgstr "Η ομάδα δίσκων που περιέχει αυτόν τον δίσκο"
+msgstr "Η ομάδα δίσκου που περιέχει το δίσκο"
 
 #: storage/models.py:156 storage/models.py:237 storage/models.py:267
 #: templates/storage/tasks.html:22
 msgid "Mount Point"
-msgstr "Σημείο προσάρτησης"
+msgstr "Mount Point"
 
 #: storage/models.py:157
 msgid "Path to mount point"
-msgstr "Διαδρομή προς το σημείο προσάρτησης"
+msgstr "Η διαδρομή προς το σημείο προσάρτησης"
 
 #: storage/models.py:161
 msgid "Mount options"
-msgstr "Επιλογές προσάρτησης"
+msgstr "Mount επιλογές"
 
 #: storage/models.py:162
 msgid "Enter Mount Point options here"
-msgstr "Εισάγετε τις επιλογές του σημείου προσάρτησης εδώ"
+msgstr "Εισάγετε Όρος επιλογές σημείο εδώ"
 
 #: storage/models.py:179
 msgid "Error getting total space"
-msgstr "Σφάλμα κατά τη λήψη του συνολικού χώρου"
+msgstr "Σφάλμα κατά τη λήψη συνολικό χώρο"
 
 #: storage/models.py:185
 msgid "Error getting available space"
-msgstr "Σφάλμα κατά τη λήψη του διαθέσιμου χώρου"
+msgstr "Σφάλμα κατά τη λήψη διαθέσιμου χώρου"
 
 #: storage/models.py:191
 msgid "Error getting used space"
-msgstr "Σφάλμα κατά τη λήψη του χρησιμοποιημένου χώρου"
+msgstr "Σφάλμα κατά τη λήψη χώρο που χρησιμοποιείται"
 
 #: storage/models.py:197 storage/models.py:209
 msgid "Error"
@@ -3477,8 +3500,8 @@ msgstr "Απομακρυσμένους Υπολογιστές Replication"
 #: storage/models.py:241
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
-"Τελευταίο στιγμιότυπο του αποστάλθηκε στην απομακρυσμένη πλευρά (αφήστε κενό "
-"για πλήρη αντιγραφή)"
+"Τελευταία στιγμιότυπο αποστέλλονται στην απομακρυσμένη πλευρά (αφήστε κενό "
+"για την πλήρη αντιγραφή)"
 
 #: storage/models.py:244 system/models.py:341
 #: templates/storage/replications.html:15
@@ -3490,29 +3513,28 @@ msgid "Remote ZFS filesystem"
 msgstr "Απομακρυσμένη ZFS filesystem"
 
 #: storage/models.py:251
-#, fuzzy
 msgid "Recursively replicate and remove stale snapshot on remote side"
-msgstr "Recursively replicate and remove stale snapshot on remote side"
+msgstr ""
 
 #: storage/models.py:254
 msgid "Replication Task"
-msgstr "Εργασία αντιγραφής"
+msgstr "Αναπαραγωγή Task"
 
 #: storage/models.py:255
 msgid "Replication Tasks"
-msgstr "Εργασίες αντιγραφής"
+msgstr "Αναπαραγωγή Καθηκόντων"
 
 #: storage/models.py:270 system/models.py:384 templates/storage/tasks.html:23
 msgid "Recursive"
-msgstr "Αναδρομικός"
+msgstr "Αναδρομικές"
 
 #: storage/models.py:274
 msgid "Snapshot lifetime value"
-msgstr "Αξία διάρκειας ζωής στιγμιότυπου"
+msgstr "Στιγμιότυπο αξίας διάρκειας ζωής"
 
 #: storage/models.py:280
 msgid "Snapshot lifetime unit"
-msgstr "Μονάδα διάρκειας ζωής στιγμιότυπου"
+msgstr "Στιγμιότυπο μονάδα ζωής"
 
 #: storage/models.py:284
 msgid "Begin"
@@ -3529,9 +3551,7 @@ msgstr "Τέλος"
 
 #: storage/models.py:290
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr ""
-"Πότε σε μια μέρα θα έπρεπε να σταματήσουμε να κάνουμε να στιγμιότυπα, π.χ. "
-"17:00"
+msgstr "Πότε σε μια μέρα θα έπρεπε να σταματήσει να στιγμιότυπα, π.χ. 17:00"
 
 #: storage/models.py:296
 msgid "Interval"
@@ -3541,7 +3561,7 @@ msgstr "Διάστημα"
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
 msgstr ""
-"Πόσα λεπτά πέρασαν πριν να γίνει ένα νέο στοιγμιότηπο μετά το τελευταίο."
+"Πόσα λεπτά πέρασαν πριν από ένα νέο στοιγμιότηπο γίνει μετά το τελευταία."
 
 #: storage/models.py:303
 msgid "Occurrence"
@@ -3585,7 +3605,7 @@ msgstr "Όγκος των εισαγωγών"
 #: storage/nav.py:56 templates/storage/volumes.html:53
 #: templates/storage/volumes.html.py:57
 msgid "Auto Import Volume"
-msgstr "Αυτόματη εισαγωγή τόμου"
+msgstr "Αυτόματη εισαγωγή Όγκου "
 
 #: storage/nav.py:67
 msgid "View All Volumes"
@@ -3594,7 +3614,7 @@ msgstr "Δείτε όλους τους Τόμους"
 #: storage/nav.py:78 templates/storage/volumes.html:19
 #: templates/storage/volumes.html.py:23
 msgid "Create ZFS Dataset"
-msgstr "Δημιουργία ZFS Dataset"
+msgstr "Δημιουργία ZFS Σύνολο δεδομένων"
 
 #: storage/nav.py:89
 msgid "Add Periodic Snapshot"
@@ -3615,45 +3635,50 @@ msgstr "Ο τόμος προστέθηκε επιτυχώς."
 
 #: storage/views.py:217
 msgid "Unknown"
-msgstr "Άγνωστο"
+msgstr ""
 
 #: storage/views.py:283
+#, fuzzy
 msgid "Dataset successfully added."
-msgstr "Το dataset προστέθηκε επιτυχώς."
+msgstr "%s διαγράφτικε με επιτυχία."
 
 #: storage/views.py:318
+#, fuzzy
 msgid "Dataset successfully edited."
-msgstr "Το dataset επεξεργάσθηκε επιτυχώς"
+msgstr "%s διαγράφτικε με επιτυχία."
 
 #: storage/views.py:320 storage/views.py:396
-msgid "Some error ocurried while setting the options"
-msgstr "Κάποιο σφάλμα συνέβησε ενώ θέτονταν οι επιλογές"
+msgid "An error occurred when setting the options"
+msgstr "Μερικά σφάλματα occurred ενώ θέτει τις επιλογές"
 
 #: storage/views.py:342
+#, fuzzy
 msgid "ZFS Volume successfully added."
-msgstr "Ο τόμος ZFS προστέθηκε επιτυχώς."
+msgstr "%s διαγράφτικε με επιτυχία."
 
 #: storage/views.py:356
 msgid "This is in use by the iscsi target, please remove it there first."
 msgstr ""
-"Αυτό χρησιμοποιείται από τον iscsi στόχο, παρακαλώ αφαιρέστε το από εκεί "
-"πρώτα."
 
 #: storage/views.py:360
+#, fuzzy
 msgid "ZFS Volume successfully destroyed."
-msgstr "Ο τόμος ZFS καταστράφηκε επιτυχώς."
+msgstr "%s διαγράφτικε με επιτυχία."
 
 #: storage/views.py:394
+#, fuzzy
 msgid "Native dataset successfully edited."
-msgstr "Το πηγαίο dataset επεξεργάσθηκε επιτυχώς."
+msgstr "%s διαγράφτικε με επιτυχία."
 
 #: storage/views.py:410
+#, fuzzy
 msgid "Mount Point permissions successfully updated."
-msgstr "Το δικαιώματα του σημείου προσάρτησης ενημερώθηκαν επιτυχώς."
+msgstr "%s ενημερώθηκε με επιτυχία."
 
 #: storage/views.py:425
+#, fuzzy
 msgid "Dataset successfully destroyed."
-msgstr "To dataset καταστράφηκε επιτυχώς."
+msgstr "%s διαγράφτικε με επιτυχία."
 
 #: storage/views.py:439
 msgid "Snapshot successfully deleted."
@@ -3661,7 +3686,7 @@ msgstr "Στιγμιότυπο διαγράφηκε επιτυχώς."
 
 #: storage/views.py:453
 msgid "Rollback successful."
-msgstr "Υπαναχώρηση επιτυχής."
+msgstr ""
 
 #: storage/views.py:470
 msgid "Snapshot successfully added."
@@ -3680,8 +3705,8 @@ msgid "Disk replacement has been initiated."
 msgstr "αντικατάστασης δίσκου έχει ξεκινήσει."
 
 #: storage/views.py:553
-msgid "Some error ocurried."
-msgstr "Κάποιο λάθος συνέβησε."
+msgid "An error occurred."
+msgstr "Κάποιο λάθος occurred."
 
 #: storage/views.py:574
 msgid "Disk detach has been successfully done."
@@ -3689,19 +3714,20 @@ msgstr "Η απόσπαση του δίσκου έγινε με επιτυχία
 
 #: storage/views.py:588
 msgid "The volume failed to export"
-msgstr "Ο τόμος απέτυχε να εξαχθεί"
+msgstr ""
 
 #: storage/views.py:591
+#, fuzzy
 msgid "The volume has been successfully exported"
-msgstr "Ο τόμος εξήχθη επιτυχώς"
+msgstr "Οι αλλαγές σας έχουν ενημερωθεί με επιτυχία!"
 
 #: system/forms.py:149
 msgid "Language (Require UI reload)"
-msgstr "Γλώσσα (απαιτεί επαναφόρτωση του UI)"
+msgstr ""
 
 #: system/forms.py:250
 msgid "Place to temporarily place firmware file"
-msgstr "Το μέρος όπου θα τοποθετηθεί προσωρινά το αρχείο firmware."
+msgstr ""
 
 #: system/forms.py:250
 msgid ""
@@ -3736,16 +3762,17 @@ msgid "New config to be installed"
 msgstr "Νέα config που θα εγκατασταθεί"
 
 #: system/forms.py:310 system/forms.py:338
+#, fuzzy
 msgid "minute"
-msgstr "λεπτό"
+msgstr "λεπτά,"
 
 #: system/forms.py:311 system/forms.py:339
 msgid "hour"
-msgstr "ώρα"
+msgstr ""
 
 #: system/forms.py:312 system/forms.py:340
 msgid "day of month"
-msgstr "μέρα του μήνα"
+msgstr ""
 
 #: system/models.py:45
 msgid "Protocol"
@@ -3808,11 +3835,12 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "Ενεργοποίηση Zeroconf / Bonjour"
 
 #: system/models.py:102
+#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Must be non-zero"
 msgstr ""
-"Μέγεθος swap σε κάθε δίσκο σε GiB, επηρεάζει μόνο νέους δίσκους. Πρέπει να "
-"είναι μη μηδενικό"
+"Swap μέγεθος σε κάθε δίσκο σε GiB, επηρεάζει νέων δίσκων μόνο.  Πρέπει να "
+"είναι μη μηδενική"
 
 #: system/models.py:105
 msgid "Show console messages in the footer (Requires UI reload)"
@@ -3820,7 +3848,7 @@ msgstr "Εμφάνιση κονσόλα μηνύματα στο υποσέλιδ
 
 #: system/models.py:108
 msgid "Show tracebacks in case of fatal errors"
-msgstr "Εμφάνιση tracebacks σε περίοπτωση σοβαρών σφαλμάτων"
+msgstr ""
 
 #: system/models.py:116
 msgid "MOTD banner"
@@ -3951,123 +3979,134 @@ msgstr ""
 
 #: system/models.py:243 system/models.py:381
 msgid "The user to run the command"
-msgstr "Ο χρήστης που θα εκτελέσει την εντολή"
+msgstr ""
 
 #: system/models.py:247 templates/system/cronjob.html:11
+#, fuzzy
 msgid "Command"
-msgstr "Εντολή"
+msgstr "Σχολιάστε"
 
 #: system/models.py:251 system/models.py:355 templates/system/cronjob.html:5
 #: templates/system/rsync.html:5
+#, fuzzy
 msgid "Minute"
-msgstr "Λεπτό"
+msgstr "λεπτά,"
 
 #: system/models.py:252 system/models.py:356
 msgid "Values 0-59 allowed."
-msgstr "Τιμές 0-59 επιτρέπονται."
+msgstr ""
 
 #: system/models.py:256 system/models.py:360 system/models.py:508
 #: templates/system/cronjob.html:6 templates/system/rsync.html:6
+#, fuzzy
 msgid "Hour"
-msgstr "Ώρα"
+msgstr "Ωριαίος"
 
 #: system/models.py:257 system/models.py:361 system/models.py:509
 msgid "Values 0-23 allowed."
-msgstr "Τιμές 0-23 επιτρέπονται."
+msgstr ""
 
 #: system/models.py:261 system/models.py:365 system/models.py:513
 #: templates/system/cronjob.html:7 templates/system/rsync.html:7
 msgid "Day of month"
-msgstr "Μέρα του μήνα"
+msgstr ""
 
 #: system/models.py:262 system/models.py:366 system/models.py:514
 msgid "Values 1-31 allowed."
-msgstr "Τιμές 1-31 επιτρέπονται."
+msgstr ""
 
 #: system/models.py:267 system/models.py:371 system/models.py:519
 #: templates/system/cronjob.html:8 templates/system/rsync.html:8
+#, fuzzy
 msgid "Month"
-msgstr "Μήνας"
+msgstr "Μηνιαία"
 
 #: system/models.py:272 system/models.py:376 system/models.py:524
 #: templates/system/cronjob.html:9 templates/system/rsync.html:9
 msgid "Day of week"
-msgstr "Μέρα της εβδομάδας"
+msgstr ""
 
 #: system/models.py:275
 msgid "CronJob"
-msgstr "CronJob"
+msgstr ""
 
 #: system/models.py:276
 msgid "CronJobs"
-msgstr "CronJobs"
+msgstr ""
 
 #: system/models.py:286 system/models.py:441
+#, fuzzy
 msgid "Every minute"
-msgstr "κάθε λεπτό"
+msgstr "λεπτά,"
 
 #: system/models.py:288 system/models.py:443
 #, python-format
 msgid "Every %s minute(s)"
-msgstr "Κάθε %s λεπτό(ά)"
+msgstr ""
 
 #: system/models.py:294 system/models.py:449
 msgid "Every hour"
-msgstr "Κάθε ώρα"
+msgstr ""
 
 #: system/models.py:296 system/models.py:451
 #, python-format
 msgid "Every %s hour(s)"
-msgstr "Κάθε %s ώρα(ες)"
+msgstr ""
 
 #: system/models.py:304 system/models.py:459
-#, python-format
+#, fuzzy, python-format
 msgid "Every %s days"
-msgstr "Καθε %s μέρες"
+msgstr "Καθημερινά"
 
 #: system/models.py:311 system/models.py:466
 msgid "Every month"
-msgstr "Κάθε μήνα"
+msgstr ""
 
 #: system/models.py:342
 msgid "IP Address or hostname"
-msgstr "Διεύθυνση IP ή hostname"
+msgstr ""
 
 #: system/models.py:346
+#, fuzzy
 msgid "Remote Module Name"
-msgstr "Απομακρυσμένο όνομα module"
+msgstr "Απομακρυσμένο hostname"
 
 #: system/models.py:350 system/models.py:503
+#, fuzzy
 msgid "Short description"
-msgstr "Μικρή περιγραφή"
+msgstr "Περιγραφή"
 
 #: system/models.py:385
+#, fuzzy
 msgid "Recurse into directories"
-msgstr "Αναδρομή μέσα στους καταλόγους"
+msgstr "Αρχικός κατάλογος"
 
 #: system/models.py:389
+#, fuzzy
 msgid "Times"
-msgstr "Φορές"
+msgstr "Τέλος χρόνου"
 
 #: system/models.py:390
 msgid "Preserve modification times"
-msgstr "Διατήρηση του αριθμού αλλαγών"
+msgstr ""
 
 #: system/models.py:394
+#, fuzzy
 msgid "Compress"
-msgstr "Συμπίεση"
+msgstr "Συμπίεση επίπεδο"
 
 #: system/models.py:395
 msgid "Compress data during the transfer"
-msgstr "Συμπίεση δεδομένων κατά την μεταφορά"
+msgstr ""
 
 #: system/models.py:399
 msgid "Archive"
-msgstr "Archive"
+msgstr ""
 
 #: system/models.py:400
+#, fuzzy
 msgid "Archive mode"
-msgstr "Κατάσταση Archive "
+msgstr "Ενεργό Τόμος"
 
 #: system/models.py:404 templates/freeadmin/generic_model_edit.html:43
 #: templates/network/interface.html:39 templates/network/lagg.html:44
@@ -4098,45 +4137,40 @@ msgstr "Διαγραφή"
 #: system/models.py:405
 msgid "Delete files on the receiving side that don't exist on sender"
 msgstr ""
-"Διαγραφή αρχείων στην πλευρά του παραλήπτη τα οποία δεν υπάρχουν στον "
-"αποστολέα"
 
 #: system/models.py:410
 msgid "Suppress non-error messages"
-msgstr "Καταστολή μηνυμάτων όχι-λάθους"
+msgstr ""
 
 #: system/models.py:414
+#, fuzzy
 msgid "Preserve permissions"
-msgstr "Διατήρηση δικαιωμάτων"
+msgstr "Κληρονόμηση Δικαιωμάτων"
 
 #: system/models.py:415
-#, fuzzy
 msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
 msgstr ""
-"Η επιλογή αυτή προκαλεί το rsync που λαμβάνει να ορίσει τα δικαιώματα του "
-"προορισμού να είναι τα ίδια με τα δικαιώματα της προέλευσης."
 
 #: system/models.py:419
 msgid "Preserve extended attributes"
-msgstr "Διατήρηση πρόσθετων attributes"
+msgstr ""
 
 #: system/models.py:420
 msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
 msgstr ""
-"Η επιλογή αυτή προκαλεί το rsync να ενημερώσετε τα απομακρυσμένα attributes "
-"να είναι τα ίδια με τα τοπικά"
 
 #: system/models.py:426
+#, fuzzy
 msgid "Extra options to rsync command line (usually empty)"
-msgstr "Έξτρα επιλογές της γραμμής εντολών rsync (συνήθως άδειο)"
+msgstr "Έξτρα επιλογές της γραμμής εντολών (συνήθως άδειο)."
 
 #: system/models.py:431
 msgid "Rsyncs"
-msgstr "Rsyncs"
+msgstr ""
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4151,8 +4185,9 @@ msgid "System Information"
 msgstr "Πληροφοριακό Σύστημα"
 
 #: system/nav.py:32
+#, fuzzy
 msgid "Cron Scheduler"
-msgstr "Προγραμματιστής Cron"
+msgstr "Περιοδικός Πίνακας Στιγμιοτύπων"
 
 #: system/views.py:117
 msgid "The uploaded file is not valid."
@@ -4160,23 +4195,23 @@ msgstr "Το αρχείο που ανέβηκε δεν είναι έγκυρο."
 
 #: system/views.py:243
 msgid "Test message from FreeNAS"
-msgstr "Δοκιμαστικό μήνυμα από το FreeNAS"
+msgstr ""
 
 #: system/views.py:244
 msgid "This is a message test from FreeNAS"
-msgstr "Αυτό είναι ένα δοκιμαστικό μήνυμα από το FreeNAS"
+msgstr ""
 
 #: templates/404.html:7
 msgid "Page Not Found"
-msgstr "Η σελίδα δεν βρέθηκε"
+msgstr ""
 
 #: templates/base.html:32
 msgid "expand all"
-msgstr "επέκταση όλων"
+msgstr ""
 
 #: templates/base.html:33
 msgid "collapse all"
-msgstr "κλείσιμο όλων"
+msgstr ""
 
 #: templates/menubar.html:33
 msgid "Log Out"
@@ -4212,7 +4247,7 @@ msgstr "OK"
 #: templates/system/config_restore.html:13
 #: templates/system/config_upload.html:37 templates/system/wizard.html:16
 msgid "Please wait..."
-msgstr "Παρακαλώ περιμένετε..."
+msgstr "Παρακαλώ περιμένετε ..."
 
 #: templates/account/bsdgroup2user_form.html:15
 #: templates/freeadmin/generic_model_add.html:18
@@ -4308,8 +4343,9 @@ msgid "Add New User"
 msgstr "Προσθήκη νέου Χρήστη"
 
 #: templates/account/bsdusers.html:121 templates/account/bsdusers.html:123
+#, fuzzy
 msgid "Change E-mail"
-msgstr "Αλλαγή E-mail"
+msgstr "E-mail"
 
 #: templates/account/passform.html:26
 msgid "Change Admin Password"
@@ -4318,16 +4354,16 @@ msgstr "Αλλάξτε τον κωδικό πρόσβασης admin"
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:7
 msgid "Browse"
-msgstr "Περιήγηση"
+msgstr ""
 
 #: templates/freeadmin/directory_browser.html:5
 #: templates/freeadmin/directory_browser.html:10
 msgid "Close"
-msgstr "Κλείσιμο"
+msgstr ""
 
 #: templates/freeadmin/generic_model_add_ok.html:1
 msgid "successfully added"
-msgstr "προστέθηκε επιτυχώς"
+msgstr "προστέθηκαν με επιτυχία"
 
 #: templates/freeadmin/generic_model_delete.html:10
 #: templates/storage/dataset_confirm_delete.html:7
@@ -4335,7 +4371,7 @@ msgstr "προστέθηκε επιτυχώς"
 #: templates/storage/volume_delete.html:8
 #: templates/storage/zvol_confirm_delete.html:7
 msgid "Are you sure you want to delete?"
-msgstr "Είστε σίγουροι ότι θέλετε να διαγράψετε;"
+msgstr "Είστε σίγουροι ότι θέλετε να το διαγράψετε;"
 
 #: templates/freeadmin/generic_model_delete.html:14
 #: templates/storage/dataset_confirm_delete.html:11
@@ -4350,25 +4386,27 @@ msgid "Yes"
 msgstr "Ναι"
 
 #: templates/freeadmin/generic_model_delete_ok.html:1
+#, fuzzy
 msgid "successfully deleted"
-msgstr "διαγράφηκε επιτυχώς"
+msgstr "διαγράφηκε με επιτυχία"
 
 #: templates/freeadmin/generic_model_edit.html:5
 msgid "Your changes have been successfully updated!"
-msgstr "Οι αλλαγές σας έχουν ενημερωθεί επιτυχώς!"
+msgstr "Οι αλλαγές σας έχουν ενημερωθεί με επιτυχία!"
 
 #: templates/freeadmin/generic_model_edit_ok.html:1
 msgid "successfully edited"
-msgstr "επεξεργάσθηκε επιτυχώς"
+msgstr "επιτυχή επεξεργασία"
 
 #: templates/freeadmin/index.html:30
 msgid "Running Processes"
-msgstr "Διεργασίες που εκτελούνται"
+msgstr "Τρέξιμο Διεργασίας"
 
 #: templates/freeadmin/index.html:35 templates/freeadmin/index.html.py:39
 #: templates/freeadmin/index.html:44
+#, fuzzy
 msgid "Loading..."
-msgstr "Φόρτωση..."
+msgstr "Φόρτωση"
 
 #: templates/freeadmin/index.html:46
 msgid "Reboot the System"
@@ -4399,8 +4437,9 @@ msgstr ""
 "κάνετε;"
 
 #: templates/freeadmin/index.html:69
+#, fuzzy
 msgid "Help & Support"
-msgstr "Βοήθεια & Υποστήριξη"
+msgstr "EA Υποστήριξη"
 
 #: templates/freeadmin/index.html:72
 msgid "Forum"
@@ -4416,7 +4455,7 @@ msgstr "IRC (Chat)"
 
 #: templates/freeadmin/index.html:81
 msgid "#freenas on freenode"
-msgstr "#freenas στο freenode"
+msgstr "# FreeNAS στο Freenode"
 
 #: templates/freeadmin/index.html:85
 msgid "Mailing Lists"
@@ -4439,12 +4478,14 @@ msgid "FreeNAS Testing"
 msgstr "FreeNAS Δοκιμές"
 
 #: templates/freeadmin/index.html:91
+#, fuzzy
 msgid "FreeNAS Docs"
-msgstr "FreeNAS Docs"
+msgstr "FreeNAS Devel"
 
 #: templates/freeadmin/index.html:92
+#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Μεταφράσεις FreeNAS"
+msgstr "FreeNAS Δοκιμές"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
@@ -4455,12 +4496,14 @@ msgid "Bug Tracker"
 msgstr "Bug Tracker"
 
 #: templates/freeadmin/index.html:104
+#, fuzzy
 msgid "Documentation"
-msgstr "Τεκμηρίωση"
+msgstr "Τοποθεσία"
 
 #: templates/freeadmin/index.html:106
+#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Τεκμηρίωση FreeNAS"
+msgstr "FreeNAS Δοκιμές"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4500,11 +4543,11 @@ msgstr "Διαγραφή Interface"
 
 #: templates/network/interface.html:48 templates/network/summary.html:16
 msgid "No interfaces defined"
-msgstr "Δεν ορίστηκαν διασυνδέσεις"
+msgstr "Δεν διασυνδέσεις ορίζονται"
 
 #: templates/network/interface.html:54 templates/network/interface.html:56
 msgid "Add Interface"
-msgstr "Προσθήκη διασύνδεσης"
+msgstr "Προσθήκη Interface"
 
 #: templates/network/lagg.html:6 templates/network/staticroute.html:8
 msgid "Actions"
@@ -4516,15 +4559,15 @@ msgstr "Επεξεργασία μελών"
 
 #: templates/network/lagg.html:26 templates/network/lagg.html.py:33
 msgid "LAGG Members"
-msgstr "LAGG μέλη"
+msgstr "LAGG μέλοι"
 
 #: templates/network/lagg.html:53 templates/network/lagg_members.html:33
 msgid "No LAGG interface defined"
-msgstr "Δεν έχει οριστεί διεπαφή LAGG "
+msgstr "Δεν διεπαφή LAGG ορίζεται"
 
 #: templates/network/lagg.html:60
 msgid "Add LAGG Interface "
-msgstr "Προσθήκη διεπαφής LAGG"
+msgstr "Προσθήκη LAGG Interface"
 
 #: templates/network/lagg.html:62
 msgid "Add LAGG"
@@ -4544,8 +4587,9 @@ msgstr "Δράση"
 
 #: templates/network/lagg_members.html:39
 #: templates/network/lagg_members.html:41
+#, fuzzy
 msgid "Add LAGG Member"
-msgstr "Προσθήκη LAGG μέλους"
+msgstr "LAGG μέλοι"
 
 #: templates/network/staticroute.html:5
 msgid "Destination"
@@ -4561,11 +4605,11 @@ msgstr "Διαγραφή Static Route"
 
 #: templates/network/staticroute.html:33
 msgid "No static route defined"
-msgstr "Δεν έχει ορίστεί static route"
+msgstr "Δεν ορίζετε στατική διαδρομή"
 
 #: templates/network/staticroute.html:39 templates/network/staticroute.html:41
 msgid "Add Static Route"
-msgstr "Προσθήκη Static Route"
+msgstr "Προσθήκη στατικής δρομολόγησης"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
@@ -4573,7 +4617,7 @@ msgstr "Nameserver"
 
 #: templates/network/summary.html:31
 msgid "No nameserver defined"
-msgstr "Δεν έχει οριστεί nameserver"
+msgstr "Δεν ορίζεται nameserver"
 
 #: templates/network/summary.html:37
 msgid "Default route"
@@ -4581,7 +4625,7 @@ msgstr "Προεπιλεγμένη διαδρομή"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr "Δεν έχει οριστεί προεπιλεγμένη διαδρομή"
+msgstr "Δεν ορίζεται προεπιλεγμένη διαδρομή"
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
@@ -4593,34 +4637,33 @@ msgstr "Διαγραφή VLAN"
 
 #: templates/network/vlan.html:34
 msgid "No VLAN defined"
-msgstr "Δεν έχει οριστεί VLAN"
+msgstr "Δεν ορίζεται VLAN"
 
 #: templates/network/vlan.html:40 templates/network/vlan.html.py:42
 msgid "Add VLAN Interface"
-msgstr "Προσθήκη VLAN διεπαφής"
+msgstr "Προσθήκη Interface VLAN"
 
 #: templates/registration/login.html:44
 msgid "Your username and password didn't match. Please try again."
-msgstr ""
-"Το όνομα χρήστη και ο κωδικός πρόσβασης δεν ταιριάζουν. Παρακαλώ δοκιμάστε "
-"ξανά."
+msgstr "username και το password σας δεν βρέθηκε. Παρακαλώ δοκιμάστε ξανά."
 
 #: templates/registration/login.html:48
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr "Καλώς ορίσατε, %(username)s. Ευχαριστώ για την σύνδεση."
+msgstr "Καλώς ορίσατε,% (username) s. Ευχαριστώ για logging"
 
 #: templates/registration/login.html:50
 msgid "Welcome to FreeNAS 8"
-msgstr "Καλώς ήρθατε στο FreeNAS 8"
+msgstr ""
 
 #: templates/registration/login.html:51
+#, fuzzy
 msgid "Please log in."
-msgstr "Παρακαλώ εισέλθετε."
+msgstr "Παρακαλώ περιμένετε ..."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
-msgstr "Αποσύνδέθηκε"
+msgstr "Logged Out"
 
 #: templates/registration/logout.html:21
 msgid "You are now logged out."
@@ -4628,7 +4671,7 @@ msgstr "Έχετε αποσυνδεθεί."
 
 #: templates/registration/logout.html:21
 msgid "Log back in"
-msgstr "Επανασύνδεση"
+msgstr "Σύνδεση πίσω στην"
 
 #: templates/services/index.html:13
 msgid "AFP Settings"
@@ -4644,7 +4687,7 @@ msgstr "CIFS Ρυθμίσεις"
 
 #: templates/services/index.html:48
 msgid "Dynamic DNS Settings"
-msgstr "Dynamic DNS ρυθμίσεις"
+msgstr "Dynamic DNS Settings"
 
 #: templates/services/index.html:59
 msgid "FTP Settings"
@@ -4652,23 +4695,25 @@ msgstr "FTP Ρυθμίσεις"
 
 #: templates/services/index.html:70
 msgid "LDAP Settings"
-msgstr "LDAP ρυθμίσεις"
+msgstr "Ρυθμίσεις LDAP"
 
 #: templates/services/index.html:81
 msgid "NFS Settings"
 msgstr "NFS Ρυθμίσεις"
 
 #: templates/services/index.html:92
+#, fuzzy
 msgid "Rsync Settings"
-msgstr "Ρυθμίσεις Rsync"
+msgstr "Ρυθμίσεις"
 
 #: templates/services/index.html:103
 msgid "SNMP Settings"
 msgstr "SNMP Ρυθμίσεις"
 
 #: templates/services/index.html:114
+#, fuzzy
 msgid "S.M.A.R.T. Settings"
-msgstr "S.M.A.R.T. επιλογές"
+msgstr "S.M.A.R.T. επιπλέον επιλογές"
 
 #: templates/services/index.html:125
 msgid "SSH Settings"
@@ -4688,7 +4733,7 @@ msgstr "ISCSI Ρυθμίσεις"
 
 #: templates/services/iscsi.html:2
 msgid "iSCSI Management"
-msgstr "iSCSI Διαχείριση"
+msgstr "iSCSI Διαχείρισης"
 
 #: templates/services/iscsi.html:5
 msgid "Targets"
@@ -4738,7 +4783,7 @@ msgstr "Peer"
 
 #: templates/services/iscsi_auth.html:44 templates/services/iscsi_auth.html:46
 msgid "Add iSCSI User"
-msgstr "Προσθήκη χρήστη iSCSI "
+msgstr "Προσθήκη iSCSI Χρήστη"
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
@@ -4769,12 +4814,12 @@ msgstr "Διαγραφή πύλης"
 #: templates/services/iscsi_portals.html:39
 #: templates/services/iscsi_portals.html:41
 msgid "Add Portal"
-msgstr "Προσθήκη πύλης"
+msgstr "Προσθήκη Portal"
 
 #: templates/services/iscsi_targets.html:40
 #: templates/services/iscsi_targets.html:42
 msgid "Add Target"
-msgstr "Προσθήκη στόχου"
+msgstr "Προσθήκη Target"
 
 #: templates/services/rsyncmod.html:8 templates/sharing/apple.html:15
 #: templates/sharing/windows.html:16 templates/storage/replications.html:17
@@ -4785,12 +4830,13 @@ msgid "Available actions"
 msgstr "Διαθέσιμες ενέργειες"
 
 #: templates/services/rsyncmod.html:34
+#, fuzzy
 msgid "No rsync modules defined"
-msgstr "Δεν έχουν ορίστεί rsync modules"
+msgstr "Δεν ορίζετε στατική διαδρομή"
 
 #: templates/services/rsyncmod.html:40 templates/services/rsyncmod.html:42
 msgid "Add Rsync Module"
-msgstr "Προσθήκη Rsync Module"
+msgstr ""
 
 #: templates/sharing/apple.html:6 templates/sharing/unix.html:6
 #: templates/sharing/windows.html:6
@@ -4820,7 +4866,7 @@ msgstr "Προσθήκη Apple share"
 
 #: templates/sharing/apple.html:52
 msgid "Add Apple Share (AFP)"
-msgstr "Προσθήκη Apple share (AFP)"
+msgstr "Προσθέστε Apple share (AFP)"
 
 #: templates/sharing/index.html:3
 msgid "Apple"
@@ -4856,7 +4902,7 @@ msgstr "Προσθήκη UNIX Share"
 
 #: templates/sharing/unix.html:52
 msgid "Add UNIX Share (NFS)"
-msgstr "Προσθήκη UNIX share (NFS)"
+msgstr "Προσθέστε UNIX share (NFS)"
 
 #: templates/sharing/windows.html:8
 msgid "There are no active Windows Shares."
@@ -4872,11 +4918,11 @@ msgstr "Διαγραφή Windows Share"
 
 #: templates/sharing/windows.html:54
 msgid "Add Windows Share"
-msgstr "Προσθήκη Windows Share"
+msgstr "Προσθέστε τα Windows Share"
 
 #: templates/sharing/windows.html:56
 msgid "Add Windows Share (CIFS)"
-msgstr "Προσθήκη Windows Share (CIFS)"
+msgstr "Προσθέστε Windows Share (CIFS)"
 
 #: templates/storage/clonesnap.html:12
 msgid "Clone Snapshot"
@@ -4900,11 +4946,11 @@ msgstr "Είστε σίγουροι ότι θέλετε να αφαιρέσετ�
 
 #: templates/storage/disk_replacement.html:9
 msgid "Replacing disk"
-msgstr "Δίσκος αντικατάστασης"
+msgstr "Ο δίσκος αντικαθίσταται"
 
 #: templates/storage/disk_replacement.html:15
 msgid "Replace disk"
-msgstr "Αντικατάσταση δίσκου"
+msgstr "Αντικαταστήστε τον δίσκο"
 
 #: templates/storage/import.html:32 templates/storage/wizard.html:43
 msgid "Filesystem type"
@@ -4938,7 +4984,7 @@ msgstr "Αλλαγή άδειας"
 #: templates/storage/permission.html:7
 #, python-format
 msgid "Change permission on %(path)s to"
-msgstr "Αλλαγή άδειας για την %(path)s στο"
+msgstr "Αλλαγή άδεια για% (διαδρομή) βρέθηκε στο"
 
 #: templates/storage/permission.html:11
 msgid "Change"
@@ -4978,35 +5024,35 @@ msgstr ""
 
 #: templates/storage/snapshots.html:4
 msgid "Dataset name"
-msgstr "Όνομα Dataset"
+msgstr "όνομα Συνόλου δεδομένων "
 
 #: templates/storage/snapshots.html:5
 msgid "Snapshot name"
-msgstr "Όνομα Στιγμιότυπου"
+msgstr "όνομα Στιγμιότυπου"
 
 #: templates/storage/snapshots.html:6
 msgid "Used space"
-msgstr "Χώρος που χρησιμοποιείται"
+msgstr "Χώρο που χρησιμοποιείται"
 
 #: templates/storage/snapshots.html:7
 msgid "Referenced space"
-msgstr "Αναφερόμενος χώρος"
+msgstr "Αναφερόμενο διάστημα"
 
 #: templates/storage/snapshots.html:24 templates/storage/snapshots.html:28
 msgid "Clone snapshot"
-msgstr "Κλώνοποίηση στιγμιότυπου"
+msgstr "Κλώνος στιγμιότυπου"
 
 #: templates/storage/snapshots.html:33 templates/storage/snapshots.html:37
 msgid "Destroy snapshot"
-msgstr "Καταστροφή στιγμιότυπο"
+msgstr "Καταστρέψτε στιγμιότυπο"
 
 #: templates/storage/snapshots.html:43 templates/storage/snapshots.html:47
 msgid "Rollback to this snapshot"
-msgstr "Επιστροφή σε αυτό το στιγμιότυπο"
+msgstr "Rollback σε αυτό το στιγμιότυπο"
 
 #: templates/storage/snapshots.html:55
 msgid "No ZFS snapshot available"
-msgstr "Δεν υπάρχει διαθέσιμο στιγμιότυπο ZFS"
+msgstr "Δεν είναι διαθέσιμο το στιγμιότυπο ZFS "
 
 #: templates/storage/tasks.html:6
 msgid "Periodic Snapshots"
@@ -5018,7 +5064,7 @@ msgstr "Δημιουργία Περιοδικού Στιγμιότυπου"
 
 #: templates/storage/tasks.html:14
 msgid "Periodic Snapshot Schedule"
-msgstr "Προγραμματισμός περιοδικλων Στιγμιοτύπων"
+msgstr "Περιοδικός Πίνακας Στιγμιοτύπων"
 
 #: templates/storage/tasks.html:17
 msgid "There are no scheduled snapshots."
@@ -5058,7 +5104,7 @@ msgstr "σε κάθε"
 
 #: templates/storage/tasks.html:148
 msgid "No periodic snapshots scheduled"
-msgstr "Δεν έχουν προγραμματιστεί περιοδικά στιγμιότυπα"
+msgstr "Δεν έχουν προγραμματιστεί περιοδικά στιγμιότυπα "
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
@@ -5094,7 +5140,7 @@ msgstr "Καταστροφή τόμου ZFS"
 
 #: templates/storage/volumes.html:128 templates/storage/volumes.html.py:132
 msgid "Destroy Dataset"
-msgstr "Καταστροφή Dataset"
+msgstr "Καταστρέψτε Σύνολο δεδομένων"
 
 #: templates/storage/volumes.html:137 templates/storage/volumes.html.py:141
 #: templates/storage/volumes.html:157 templates/storage/volumes.html.py:161
@@ -5103,11 +5149,11 @@ msgstr "Επεξεργασία Επιλογών ZFS "
 
 #: templates/storage/volumes.html:147 templates/storage/volumes.html.py:151
 msgid "Destroy Volume"
-msgstr "Καταστροφή τόμου"
+msgstr "Καταστρέψτε τον τόμο"
 
 #: templates/storage/volumes.html:189 templates/storage/volumes.html.py:193
 msgid "View Disks"
-msgstr "Προβολή δίσκων"
+msgstr "Δείτε Δίσκοι"
 
 #: templates/storage/volumes.html:198 templates/storage/volumes.html.py:202
 msgid "Export Volume"
@@ -5115,7 +5161,7 @@ msgstr "Εξαγωγή τόμου"
 
 #: templates/storage/volumes.html:209
 msgid "No volumes defined"
-msgstr "Δεν έχουν ορίστεί τόμοι"
+msgstr "Δεν ορίζονται ποσότητες"
 
 #: templates/storage/wizard.html:26
 msgid "Member disks"
@@ -5131,7 +5177,7 @@ msgstr "ZFS Extra"
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr "Η χρήση ενός μόνο δίσκου καταγραφής αποθαρρύνεται"
+msgstr "Η χρήση μόνο 1 δίσκος καταγραφής είναι αποθαρρυντικό"
 
 #: templates/storage/wizard.html:93
 msgid "Log"
@@ -5139,7 +5185,7 @@ msgstr "Είσοδος"
 
 #: templates/storage/wizard.html:94
 msgid "Cache"
-msgstr "Cache"
+msgstr "κρυφή μνήμη"
 
 #: templates/storage/wizard.html:95
 msgid "Spare"
@@ -5151,7 +5197,7 @@ msgstr "Προσθήκη τόμου"
 
 #: templates/storage/wizard.html:120
 msgid "Existing data will be cleared"
-msgstr "Τα υπάρχοντα δεδομένα θα καθαριστούν"
+msgstr "Τα υπάρχοντα δεδομένα θα πρέπει καθαρίσουν"
 
 #: templates/storage/zvols.html:9
 msgid "Add ZFS Volume"
@@ -5167,7 +5213,7 @@ msgstr "Η cache δεν θα μπορούσε να ανακατασκευαστ�
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
-msgstr "Ανακατασκευή LDAP/AD Cache"
+msgstr "Ανακατασκευή LDAP / Cache μ.Χ."
 
 #: templates/system/config.html:3
 msgid "Restore to Factory Defaults"
@@ -5191,7 +5237,7 @@ msgstr "Επανεκκίνηση ..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
-msgstr "Είστε σίγουροι ότι θέλετε να επαναφέρετε τις εργοστασιακές ρυθμίσεις;"
+msgstr "Είστε σίγουροι ότι θέλετε να επαναφέρετε στο εργοστασιακό config;"
 
 #: templates/system/config_upload.html:35
 msgid "Update"
@@ -5207,7 +5253,7 @@ msgstr "Προσθήκη CronJob"
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr "Επανεκκίνηση..."
+msgstr "Επανεκκίνηση ..."
 
 #: templates/system/email_edit.html:17
 msgid "Your test email has been sent!"
@@ -5219,7 +5265,7 @@ msgstr "Το δοκιμαστικό email σας δεν μπόρεσε να απ
 
 #: templates/system/email_edit.html:24
 msgid "Send Test Mail"
-msgstr "Αποστολή δοκιμστικού mail"
+msgstr "Send Mail Test"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
@@ -5279,15 +5325,15 @@ msgstr "Firmware Update"
 
 #: templates/system/settings.html:13
 msgid "Apply Service Pack"
-msgstr "Εφαρμογή Service Pack"
+msgstr "Εφαρμόστε το Service Pack"
 
 #: templates/system/settings.html:15
 msgid "Config"
-msgstr "Ρυθμίσεις"
+msgstr "Config"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
-msgstr "Έκδοση OS"
+msgstr "OS Version"
 
 #: templates/system/system_info.html:12
 msgid "Platform"
@@ -5307,7 +5353,7 @@ msgstr "Uptime"
 
 #: templates/system/system_info.html:28
 msgid "Load Average"
-msgstr "Μέσο φορτίο"
+msgstr "γεμίστε μέχρι τη Μέση"
 
 #: templates/system/system_info.html:32
 msgid "FreeNAS Build"
@@ -5325,7 +5371,7 @@ msgid "Admin user"
 msgstr "Διαχειριστής"
 
 msgid "%s successfully added"
-msgstr "%s προστέθηκε(αν) με επιτυχία"
+msgstr "% s προστέθηκαν με επιτυχία"
 
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
@@ -5334,18 +5380,19 @@ msgid ""
 "the guest service. This user must exist in the password file, but does "
 "not require a valid login."
 msgstr ""
-"Χρησιμοποιήστε αυτή την επιλογή για να παρακάμψετε το όνομα χρήστη ('www' "
+"Χρησιμοποιήστε αυτή την επιλογή για να παρακάμψετε το όνομα χρήστη («www» "
 "από προεπιλογή), το οποίο θα χρησιμοποιηθεί για την πρόσβαση σε υπηρεσίες "
-"που έχουν οριστεί ως guest. Όποια και αν είναι τα προνόμια aυτoύ του χρήστη "
-"θα είναι διαθέσιμος σε κάθε πελάτη που συνδέεται με την υπηρεσία guest. "
-"Αυτός ο χρήστης πρέπει να υπάρχει στο αρχείο κωδικών πρόσβασης, αλλά δεν "
-"απαιτεί μια έγκυρη σύνδεση."
+"που έχουν οριστεί ως όρος. Όποια και αν είναι τα προνόμια του αυτός ο "
+"χρήστης θα έχει διαθέσιμη σε κάθε πελάτη τη σύνδεση με την εξυπηρέτηση "
+"πελατών. Αυτός ο χρήστης πρέπει να υπάρχει στο αρχείο κωδικού πρόσβασης, "
+"αλλά δεν απαιτεί μια έγκυρη σύνδεση."
 
+#, fuzzy
 msgid "ZVol Name"
-msgstr "Όνομα ZVol"
+msgstr "Πλήρες όνομα"
 
 msgid "Dataset"
-msgstr "Dataset"
+msgstr "Σύνολο δεδομένων"
 
 msgid "Native dataset"
 msgstr "Εγγενής σύνολο δεδομένων"
@@ -5367,15 +5414,15 @@ msgstr "Αλλαγή κωδικού πρόσβασης"
 
 msgid "Please correct the error below."
 msgid_plural "Please correct the errors below."
-msgstr[0] "Παρακαλώ διορθώστε το σφάλμα παρακάτω."
-msgstr[1] "Παρακαλώ διορθώστε τα σφάλματα παρακάτω."
+msgstr[0] "Διορθώστε το σφάλμα παρακάτω."
+msgstr[1] "Διορθώστε τα σφάλματα παρακάτω."
 
 msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
 msgstr ""
 "Παρακαλώ εισάγετε τον παλιό κωδικό πρόσβασής σας και στη συνέχεια το νέο "
-"κωδικό πρόσβασης δύο φορές για να εξακριβωθεί ότι είναι δακτυλογραφημένος "
+"κωδικό πρόσβασης δύο φορές για να εξακριβωθεί ότι είναι δακτυλογραφημένα "
 "σωστά."
 
 msgid "Password (again)"
@@ -5397,7 +5444,7 @@ msgid "Level"
 msgstr "Επίπεδο"
 
 msgid "Add Link Aggregation"
-msgstr "Προσθήκη συνάθροισης συνδέσεων"
+msgstr "Προσθήκη Συνάθροιση Link"
 
 msgid "View All Interfaces"
 msgstr "Δείτε όλες τις διασυνδέσεις"
@@ -5406,7 +5453,7 @@ msgid "View All VLANs"
 msgstr "Δείτε όλα τα VLANs"
 
 msgid "View All Static Routes"
-msgstr "Δείτε όλες τις στατικές διαδρομές"
+msgstr "Δείτε όλα τα Στατική Διαδρομές"
 
 msgid "Windows Version"
 msgstr "Έκδοση των Windows"
@@ -5446,16 +5493,16 @@ msgid "View All UNIX Shares"
 msgstr "Δείτε όλα τα UNIX shares"
 
 msgid "View All Apple Shares"
-msgstr "Δείτε όλα τα Apple shares"
+msgstr "Δείτε Όλες τις Apple shares"
 
 msgid "View All Windows Shares"
-msgstr "Δείτε όλα τα Windows shares"
+msgstr "Δείτε Όλες τις Windows shares"
 
 msgid "Read"
-msgstr "Ανάγνωση"
+msgstr "Διαβάστε"
 
 msgid "Write"
-msgstr "Εγγραφή"
+msgstr "Γράψτε"
 
 msgid "Execute"
 msgstr "Εκτέλεση"
@@ -5479,7 +5526,7 @@ msgid "sucessfully edited"
 msgstr "επιτυχή επεξεργασία"
 
 msgid "Lagg Interface was successfully added"
-msgstr "Η διεπαφή Lagg προστέθηκε επιτυχώς"
+msgstr "Lagg Interface προστέθηκε επιτυχώς"
 
 msgid "ActiveDirectory Settings"
 msgstr "ActiveDirectory Ρυθμίσεις"
