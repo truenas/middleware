@@ -15,7 +15,7 @@
 <div id="{{ attrs.id }}_container" class="treecontainer" style="display: none">
     <div
         dojoType="freeadmin.tree.JsonRestStore"
-        target="{% url system_dirbrowser path="/" %}"
+        target="{% if dirsonly %}{% url system_dirbrowser path="/" %}{% else %}{% url system_filebrowser path="/" %}{% endif %}"
         labelAttribute="name"
         jsId="{{ attrs.id }}_store">
     </div>
