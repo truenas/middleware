@@ -36,6 +36,7 @@ from dojango.forms import widgets
 from freenasUI.sharing import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.forms import ModelForm
+from freenasUI.services.models import services
 from ipaddr import IPAddress, IPNetwork, \
                    AddressValueError, NetmaskValueError
 
@@ -58,6 +59,9 @@ class CIFS_ShareForm(ModelForm):
         ret = super(CIFS_ShareForm, self).save()
         notifier().reload("cifs")
         return ret
+    def done(self, request, events):
+        if not services.objects.get(srv_service='cifs').srv_enable:
+            events.append('ask_service("cifs")')
 
 class AFP_ShareForm(ModelForm):
     class Meta:
@@ -66,6 +70,9 @@ class AFP_ShareForm(ModelForm):
         ret = super(AFP_ShareForm, self).save()
         notifier().reload("afp")
         return ret
+    def done(self, request, events):
+        if not services.objects.get(srv_service='afp').srv_enable:
+            events.append('ask_service("afp")')
 
 class NFS_ShareForm(ModelForm):
     class Meta:
@@ -115,3 +122,7 @@ class NFS_ShareForm(ModelForm):
     def save(self, *args, **kwargs):
         super(NFS_ShareForm, self).save(*args, **kwargs)
         notifier().reload("nfs")
+
+    def done(self, request, events):
+        if not services.objects.get(srv_service='nfs').srv_enable:
+            events.append('ask_service("nfs")')

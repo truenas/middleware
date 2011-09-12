@@ -233,7 +233,7 @@
             }
 
         },
-        openServices: function() {
+        openServices: function(onload) {
             var opened = false;
             var p = dijit.byId("content");
 
@@ -242,6 +242,7 @@
                 if(c[i].tab == 'services'){
                     p.selectChild(c[i]);
                     opened = true;
+                    if(onload) onload();
                 }
             }
             if(opened != true) {
@@ -249,6 +250,7 @@
                     title: gettext('Services'),
                     closable: true,
                     href: this.urlServices,
+                    onLoad: onload,
                 });
                 pane.tab = 'services';
                 p.addChild(pane);
@@ -429,6 +431,23 @@
         }
         window.location=loc;
         */
+    }
+
+    ask_service = function(srv) {
+
+        dialog = new dijit.Dialog({
+            title: 'Enable service',
+            href: '/services/enable/'+srv+'/',
+            parseOnLoad: true,
+            closable: true,
+            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+            onHide: function() {
+                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
+                refreshTabs(nodes);
+            },
+        });
+        dialog.show();
+
     }
 
     addAlias = function(a, name) {

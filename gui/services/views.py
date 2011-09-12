@@ -256,3 +256,8 @@ def rsyncmod(request):
     return render(request, "services/rsyncmod.html", {
         'rsyncmod_list': models.RsyncMod.objects.all(),
         })
+
+def enable(request, svc):
+    return render(request, "services/enable.html", {
+        'svc': svc,
+    })
