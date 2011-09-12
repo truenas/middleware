@@ -138,10 +138,18 @@ def config_save(request):
     hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
     filename = '/data/freenas-v1.db'
     wrapper = FileWrapper(file(filename))
+
+    freenas_build = "UNKNOWN"
+    try:
+        with open(VERSION_FILE) as d:
+            freenas_build = d.read().strip()
+    except:
+        pass
+
     response = HttpResponse(wrapper, content_type='application/octet-stream')
     response['Content-Length'] = os.path.getsize(filename)
     response['Content-Disposition'] = \
-        'attachment; filename=%s-%s.db' % (hostname.encode('utf-8'), time.strftime('%Y%m%d%H%M%S'))
+        'attachment; filename=%s-%s-%s.db' % (hostname.encode('utf-8'), freenas_build, time.strftime('%Y%m%d%H%M%S'))
     return response
 
 def reporting(request):
