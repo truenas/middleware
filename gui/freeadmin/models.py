@@ -46,11 +46,12 @@ class UserField(models.CharField):
     def to_python(self, value):
         from freenasUI.common.freenasusers import FreeNAS_User
         user = FreeNAS_User(value)
-        if not user:
+        if value and not user:
             return 'nobody'
         return value
 
 class GroupField(models.CharField):
+    __metaclass__ = models.SubfieldBase
     def formfield(self, **kwargs):
         #FIXME: Move to top (causes cycle-dependency)
         from freeadmin.forms import GroupField as GF
@@ -60,7 +61,7 @@ class GroupField(models.CharField):
     def to_python(self, value):
         from freenasUI.common.freenasusers import FreeNAS_Group
         group = FreeNAS_Group(value)
-        if not group:
+        if value and not group:
             return 'nobody'
         return value
 
