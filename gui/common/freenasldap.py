@@ -978,7 +978,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         gcs = self.get_global_catalogs(self.domain)
         for g in gcs:
             syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: trying [%s]..." % g)
-            gc_args['host'] = str(g.target)
+            gc_args['host'] = g.target.to_text(True)
             gc_args['port'] = long(g.port)
 
             gc = FreeNAS_LDAP_Directory(**gc_args)
