@@ -598,39 +598,6 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
-class iSCSITargetExtentEditForm(ModelForm):
-    class Meta:
-        model = models.iSCSITargetExtent
-        widgets = {
-            'iscsi_target_extent_path': DirectoryBrowser(dirsonly=False),
-        }
-        exclude = ('iscsi_target_extent_type',)
-    def clean_iscsi_target_extent_path(self):
-        path = self.cleaned_data["iscsi_target_extent_path"]
-        if (os.path.exists(path) and not os.path.isfile(path)) or path[-1] == '/':
-            raise forms.ValidationError(_("You need to specify a filepath, not a directory."))
-        valid = False
-        for mp in MountPoint.objects.all():
-            if path == mp.mp_path:
-                raise forms.ValidationError(_("You need to specify a file inside your volume/dataset."))
-            if path.startswith(mp.mp_path):
-                valid = True
-        if not valid:
-            raise forms.ValidationError(_("Your path to the extent must reside inside a volume/dataset mount point."))
-        return path
-    def save(self):
-        super(iSCSITargetExtentEditForm, self).save()
-        path = self.cleaned_data["iscsi_target_extent_path"]
-        dirs = "/".join(path.split("/")[:-1])
-        if not os.path.exists(dirs):
-            try:
-                os.makedirs(dirs)
-            except Exception, e:
-                pass
-        started = notifier().reload("iscsitarget")
-        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
-
 class iSCSITargetFileExtentForm(ModelForm):
     class Meta:
         model = models.iSCSITargetExtent
@@ -665,6 +632,14 @@ class iSCSITargetFileExtentForm(ModelForm):
                         return "%s%s" % (m.group(1), m.group(2))
             raise forms.ValidationError(_("This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"))
         return size
+    def clean(self):
+        cdata = self.cleaned_data
+        path = cdata.get("iscsi_target_extent_path")
+        if cdata.get("iscsi_target_extent_filesize") == "0" and path and \
+            (not os.path.exists(path) or (os.path.exists(path) and not os.path.isfile(path))):
+                self._errors['iscsi_target_extent_path'] = self.error_class([_("The file must exist if the extent size is set to auto (0)")])
+                del cdata['iscsi_target_extent_path']
+        return cdata
     def save(self, commit=True):
         oExtent = super(iSCSITargetFileExtentForm, self).save(commit=False)
         oExtent.iscsi_target_extent_type = 'File'
