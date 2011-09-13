@@ -1455,7 +1455,7 @@ class notifier:
 
         for pool in RE_POOL_NAME.findall(res):
             # get status part of the pool
-            status = res.split('pool: %s' % pool)[1].split('pool:')[0]
+            status = res.split('pool: %s\n' % pool)[1].split('pool:')[0]
             roots = zfs.parse_status(pool, doc, status)
 
             if roots[pool].status != 'UNAVAIL':
