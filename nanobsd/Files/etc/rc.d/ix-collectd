@@ -52,7 +52,7 @@ LoadPlugin uptime
 <Plugin "df">
 EOF
 
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT mp_path FROM storage_mountpoint" | sed -e 's,^,    Mountpoint ",g' -e 's,$,",g' >> ${cfg}
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT mp_path FROM storage_mountpoint WHERE mp_path LIKE '/%'" | sed -e 's,^,    Mountpoint ",g' -e 's,$,",g' >> ${cfg}
 echo '    IgnoreSelected false' >> ${cfg}
 echo '</Plugin>' >> ${cfg}
 }
