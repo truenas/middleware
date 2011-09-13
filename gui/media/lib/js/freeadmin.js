@@ -234,6 +234,7 @@
 
         },
         openServices: function(onload) {
+            if(!onload) onload = function() {};
             var opened = false;
             var p = dijit.byId("content");
 
