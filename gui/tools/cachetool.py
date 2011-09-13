@@ -174,6 +174,18 @@ def cache_check(**kwargs):
                 print "%s: %s" % (val, dgcache[val])
 
 
+def cache_count(**kwargs):
+
+    ucache = FreeNAS_UserCache()
+    gcache = FreeNAS_GroupCache()
+    ducache = FreeNAS_Directory_UserCache()
+    dgcache = FreeNAS_Directory_GroupCache()
+
+    print "u: %ld" % len(ucache)
+    print "g: %ld" % len(gcache)
+    print "du: %ld" % len(ducache)
+    print "dg: %ld" % len(dgcache)
+
 
 def main():
     cache_funcs = {}
@@ -183,6 +195,7 @@ def main():
     cache_funcs['keys'] = cache_keys
     cache_funcs['rawdump'] = cache_rawdump
     cache_funcs['check'] = cache_check
+    cache_funcs['count'] = cache_count
 
     if len(sys.argv) < 2:
         usage(cache_funcs.keys())
