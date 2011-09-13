@@ -813,7 +813,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
                 syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.__default_init__: "
                     "trying [%s]..." % dc)
 
-                args['host'] = str(dc.target)
+                args['host'] = dc.target.to_text(True)
                 args['port'] = long(dc.port)
 
                 super(FreeNAS_ActiveDirectory_Base, self).__init__(**args)
