@@ -16,7 +16,7 @@ is_within_zfs() {
 
 	local mp share_dev
 	share_dev=$(stat -f "%d" "$1")
-	zfs list -H -o mountpoint | while read mp; do
+	zfs list -H -o mountpoint | grep -v '^-' | while read mp; do
 		if [ "${share_dev}" -eq "`stat -f "%d" "${mp}"`" ]; then
 			echo "zfsacl"
 			return 0
