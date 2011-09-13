@@ -56,7 +56,7 @@ def _system_info():
     platform = subprocess.check_output(['sysctl', '-n', 'hw.model'])
     physmem = str(int(int(subprocess.check_output(['sysctl', '-n', 'hw.physmem'])) / 1048576)) + 'MB'
     # All this for a timezone, because time.asctime() doesn't add it in.
-    date = time.strftime('%a, %d %b %H:%M:%S %Z %Y') + '\n'
+    date = time.strftime('%a %b %d %H:%M:%S %Z %Y') + '\n'
     uptime = commands.getoutput("env -u TZ uptime | awk -F', load averages:' '{    print $1 }'")
     loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
 
