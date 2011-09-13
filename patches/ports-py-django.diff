@@ -1,0 +1,166 @@
+Index: www/py-django/Makefile
+===================================================================
+RCS file: /home/ncvs/ports/www/py-django/Makefile,v
+retrieving revision 1.39
+diff -u -r1.39 Makefile
+--- www/py-django/Makefile	27 Mar 2011 15:02:20 -0000	1.39
++++ www/py-django/Makefile	13 Sep 2011 20:08:55 -0000
+@@ -6,7 +6,7 @@
+ #
+ 
+ PORTNAME=	django
+-PORTVERSION=	1.3
++PORTVERSION=	1.3.1
+ CATEGORIES=	www python
+ MASTER_SITES=	http://media.djangoproject.com/releases/${PORTVERSION:R}/ \
+ 		CHEESESHOP
+@@ -41,6 +41,7 @@
+ 
+ .if defined(WITH_POSTGRESQL)
+ RUN_DEPENDS+=	${PYTHON_SITELIBDIR}/psycopg2/_psycopg.so:${PORTSDIR}/databases/py-psycopg2
++EXTRA_PATCHES+=	${FILESDIR}/extra-patch-changeset_16520.diff
+ .endif
+ 
+ .if defined(WITH_MYSQL)
+Index: www/py-django/distinfo
+===================================================================
+RCS file: /home/ncvs/ports/www/py-django/distinfo,v
+retrieving revision 1.19
+diff -u -r1.19 distinfo
+--- www/py-django/distinfo	27 Mar 2011 15:02:20 -0000	1.19
++++ www/py-django/distinfo	13 Sep 2011 20:08:28 -0000
+@@ -1,2 +1,2 @@
+-SHA256 (python/Django-1.3.tar.gz) = 7aeee5c80002ab81d4ebf5416292949ff46e1448d183a183fe05ff6344771c83
+-SIZE (python/Django-1.3.tar.gz) = 6504003
++SHA256 (python/Django-1.3.1.tar.gz) = af9118c4e8a063deb0b8cda901fcff2b805e7cf496c93fd43507163f3cde156b
++SIZE (python/Django-1.3.1.tar.gz) = 6514564
+Index: www/py-django/pkg-plist
+===================================================================
+RCS file: /home/ncvs/ports/www/py-django/pkg-plist,v
+retrieving revision 1.18
+diff -u -r1.18 pkg-plist
+--- www/py-django/pkg-plist	27 Mar 2011 15:02:20 -0000	1.18
++++ www/py-django/pkg-plist	13 Sep 2011 20:08:32 -0000
+@@ -157,8 +157,12 @@
+ %%PYTHON_SITELIBDIR%%/django/conf/locale/es_AR/formats.pyo
+ %%PYTHON_SITELIBDIR%%/django/conf/locale/es_MX/LC_MESSAGES/django.mo
+ %%PYTHON_SITELIBDIR%%/django/conf/locale/es_MX/LC_MESSAGES/django.po
+-%%PYTHON_SITELIBDIR%%/django/conf/locale/es_MX/__init__py
++%%PYTHON_SITELIBDIR%%/django/conf/locale/es_MX/__init__.py
++%%PYTHON_SITELIBDIR%%/django/conf/locale/es_MX/__init__.pyc
++%%PYTHON_SITELIBDIR%%/django/conf/locale/es_MX/__init__.pyo
+ %%PYTHON_SITELIBDIR%%/django/conf/locale/es_MX/formats.py
++%%PYTHON_SITELIBDIR%%/django/conf/locale/es_MX/formats.pyc
++%%PYTHON_SITELIBDIR%%/django/conf/locale/es_MX/formats.pyo
+ %%PYTHON_SITELIBDIR%%/django/conf/locale/es_NI/__init__.py
+ %%PYTHON_SITELIBDIR%%/django/conf/locale/es_NI/__init__.pyc
+ %%PYTHON_SITELIBDIR%%/django/conf/locale/es_NI/__init__.pyo
+@@ -2237,6 +2241,9 @@
+ %%PYTHON_SITELIBDIR%%/django/contrib/gis/db/backends/spatialite/client.py
+ %%PYTHON_SITELIBDIR%%/django/contrib/gis/db/backends/spatialite/client.pyc
+ %%PYTHON_SITELIBDIR%%/django/contrib/gis/db/backends/spatialite/client.pyo
++%%PYTHON_SITELIBDIR%%/django/contrib/gis/db/backends/spatialite/compiler.py
++%%PYTHON_SITELIBDIR%%/django/contrib/gis/db/backends/spatialite/compiler.pyc
++%%PYTHON_SITELIBDIR%%/django/contrib/gis/db/backends/spatialite/compiler.pyo
+ %%PYTHON_SITELIBDIR%%/django/contrib/gis/db/backends/spatialite/creation.py
+ %%PYTHON_SITELIBDIR%%/django/contrib/gis/db/backends/spatialite/creation.pyc
+ %%PYTHON_SITELIBDIR%%/django/contrib/gis/db/backends/spatialite/creation.pyo
+@@ -2699,6 +2706,7 @@
+ %%PYTHON_SITELIBDIR%%/django/contrib/gis/tests/data/test_poly/test_poly.shx
+ %%PYTHON_SITELIBDIR%%/django/contrib/gis/tests/data/test_vrt/test_vrt.csv
+ %%PYTHON_SITELIBDIR%%/django/contrib/gis/tests/data/test_vrt/test_vrt.vrt
++%%PYTHON_SITELIBDIR%%/django/contrib/gis/tests/data/texas.dbf
+ %%PYTHON_SITELIBDIR%%/django/contrib/gis/tests/distapp/__init__.py
+ %%PYTHON_SITELIBDIR%%/django/contrib/gis/tests/distapp/__init__.pyc
+ %%PYTHON_SITELIBDIR%%/django/contrib/gis/tests/distapp/__init__.pyo
+Index: www/py-django/files/extra-patch-changeset_16520.diff
+===================================================================
+RCS file: www/py-django/files/extra-patch-changeset_16520.diff
+diff -N www/py-django/files/extra-patch-changeset_16520.diff
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ www/py-django/files/extra-patch-changeset_16520.diff	13 Sep 2011 20:08:32 -0000
+@@ -0,0 +1,84 @@
++diff -uprN Django-1.3-vanilla/django/db/backends/creation.py Django-1.3/django/db/backends/creation.py
++--- django/db/backends/creation.py	2011-02-02 12:02:14.000000000 -0200
+++++ django/db/backends/creation.py	2011-07-16 20:21:28.000000000 -0300
++@@ -413,7 +413,7 @@ class BaseDatabaseCreation(object):
++         # if the database supports it because PostgreSQL doesn't allow
++         # CREATE/DROP DATABASE statements within transactions.
++         cursor = self.connection.cursor()
++-        self.set_autocommit()
+++        self._prepare_for_test_db_ddl()
++         try:
++             cursor.execute("CREATE DATABASE %s %s" % (qn(test_database_name), suffix))
++         except Exception, e:
++@@ -458,20 +458,27 @@ class BaseDatabaseCreation(object):
++         # to do so, because it's not allowed to delete a database while being
++         # connected to it.
++         cursor = self.connection.cursor()
++-        self.set_autocommit()
+++        self._prepare_for_test_db_ddl()
++         time.sleep(1) # To avoid "database is being accessed by other users" errors.
++         cursor.execute("DROP DATABASE %s" % self.connection.ops.quote_name(test_database_name))
++         self.connection.close()
++ 
++     def set_autocommit(self):
++-        "Make sure a connection is in autocommit mode."
++-        if hasattr(self.connection.connection, "autocommit"):
++-            if callable(self.connection.connection.autocommit):
++-                self.connection.connection.autocommit(True)
++-            else:
++-                self.connection.connection.autocommit = True
++-        elif hasattr(self.connection.connection, "set_isolation_level"):
++-            self.connection.connection.set_isolation_level(0)
+++        """
+++        Make sure a connection is in autocommit mode. - Deprecated, not used
+++        anymore by Django code. Kept for compatibility with user code that
+++        might use it.
+++        """
+++        pass
+++
+++    def _prepare_for_test_db_ddl(self):
+++        """
+++        Internal implementation - Hook for tasks that should be performed before
+++        the ``CREATE DATABASE``/``DROP DATABASE`` clauses used by testing code
+++        to create/ destroy test databases. Needed e.g. in PostgreSQL to rollback
+++        and close any active transaction.
+++        """
+++        pass
++ 
++     def sql_table_creation_suffix(self):
++         "SQL to append to the end of the test table creation statements"
++diff -uprN Django-1.3-vanilla/django/db/backends/oracle/creation.py Django-1.3/django/db/backends/oracle/creation.py
++--- django/db/backends/oracle/creation.py	2011-02-19 05:41:17.000000000 -0200
+++++ django/db/backends/oracle/creation.py	2011-07-16 20:32:14.000000000 -0300
++@@ -269,3 +269,6 @@ class DatabaseCreation(BaseDatabaseCreat
++             settings_dict['NAME'],
++             self._test_database_user(),
++         )
+++
+++    def set_autocommit(self):
+++        self.connection.connection.autocommit = True
++diff -uprN Django-1.3-vanilla/django/db/backends/postgresql/creation.py Django-1.3/django/db/backends/postgresql/creation.py
++--- django/db/backends/postgresql/creation.py	2010-07-29 23:54:47.000000000 -0300
+++++ django/db/backends/postgresql/creation.py	2011-07-16 20:28:39.000000000 -0300
++@@ -74,3 +74,11 @@ class DatabaseCreation(BaseDatabaseCreat
++         else:
++             output = []
++         return output
+++
+++    def set_autocommit(self):
+++        self._prepare_for_test_db_ddl()
+++
+++    def _prepare_for_test_db_ddl(self):
+++        """Rollback and close the active transaction."""
+++        self.connection.connection.rollback()
+++        self.connection.connection.set_isolation_level(0)
++diff -uprN Django-1.3-vanilla/django/db/backends/sqlite3/creation.py Django-1.3/django/db/backends/sqlite3/creation.py
++--- django/db/backends/sqlite3/creation.py	2010-12-08 21:48:28.000000000 -0200
+++++ django/db/backends/sqlite3/creation.py	2011-07-16 20:28:57.000000000 -0300
++@@ -68,3 +68,6 @@ class DatabaseCreation(BaseDatabaseCreat
++         if test_database_name and test_database_name != ":memory:":
++             # Remove the SQLite database file
++             os.remove(test_database_name)
+++
+++    def set_autocommit(self):
+++        self.connection.connection.isolation_level = None
