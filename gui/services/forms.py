@@ -607,7 +607,7 @@ class iSCSITargetExtentEditForm(ModelForm):
         exclude = ('iscsi_target_extent_type',)
     def clean_iscsi_target_extent_path(self):
         path = self.cleaned_data["iscsi_target_extent_path"]
-        if path[-1] == '/':
+        if (os.path.exists(path) and not os.path.isfile(path)) or path[-1] == '/':
             raise forms.ValidationError(_("You need to specify a filepath, not a directory."))
         valid = False
         for mp in MountPoint.objects.all():
@@ -640,7 +640,7 @@ class iSCSITargetFileExtentForm(ModelForm):
         }
     def clean_iscsi_target_extent_path(self):
         path = self.cleaned_data["iscsi_target_extent_path"]
-        if path[-1] == '/':
+        if (os.path.exists(path) and not os.path.isfile(path)) or path[-1] == '/':
             raise forms.ValidationError(_("You need to specify a filepath, not a directory."))
         valid = False
         for mp in MountPoint.objects.all():
