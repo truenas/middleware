@@ -30,6 +30,7 @@ import os
 import sys
 import stat
 
+from string import join
 
 WWW_PATH = "/usr/local/www"
 FREENASUI_PATH = os.path.join(WWW_PATH, "freenasUI")
@@ -42,26 +43,26 @@ os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 from freenasUI.common.freenascache import *
 from freenasUI.common.freenasusers import *
 
-def usage():
-    print >> sys.stderr, "Usage: %s <fill|expire>" % sys.argv[0]
+def usage(keys):
+    print >> sys.stderr, "Usage: %s <%s>" % (sys.argv[0], join(keys, '|'))
     sys.exit(1)
 
 
-def cache_fill(cachedir):
+def cache_fill(**kwargs):
     for u in FreeNAS_Users():
         pass
     for g in FreeNAS_Groups():
         pass
 
 
-def cache_expire(cachedir):
+def __cache_expire(cachedir):
     files = os.listdir(cachedir)
     for f in files:
         file = os.path.join(cachedir, f)
         st = os.stat(file)
 
         if stat.S_ISDIR(st.st_mode):
-            cache_expire(file)
+            __cache_expire(file)
 
         else:
             os.unlink(file)
@@ -83,7 +84,13 @@ def cache_expire(cachedir):
         else:
             raise
 
-def cache_dump(cachedir):
+
+def cache_expire(**kwargs):
+    if kwargs.has_key('cachedir') and kwargs['cachedir']:
+        __cache_expire(kwargs['cachedir'])
+
+
+def cache_dump(**kwargs):
     print "FreeNAS_Users:"
     for u in FreeNAS_Users():
         print "    ", u
@@ -95,19 +102,99 @@ def cache_dump(cachedir):
         print "    ", g
 
 
+def cache_keys(**kwargs):
+    ucache = FreeNAS_UserCache()
+    for key in ucache.keys():
+        print "u key: %s" % key
+
+    gcache = FreeNAS_GroupCache()
+    for key in gcache.keys():
+        print "g key: %s" % key
+
+    ducache = FreeNAS_Directory_UserCache()
+    for key in ducache.keys():
+        print "du key: %s" % key
+
+    dgcache = FreeNAS_Directory_GroupCache()
+    for key in dgcache.keys():
+        print "dg key: %s" % key
+
+
+def cache_rawdump(**kwargs):
+    ucache = FreeNAS_UserCache()
+    for key in ucache.keys():
+        print "u: %s=%s" % (key, ucache[key])
+
+    gcache = FreeNAS_GroupCache()
+    for key in gcache.keys():
+        print "g: %s=%s" % (key, gcache[key])
+
+    ducache = FreeNAS_Directory_UserCache()
+    for key in ducache.keys():
+        print "du: %s=%s" % (key, ducache[key])
+
+    dgcache = FreeNAS_Directory_GroupCache()
+    for key in dgcache.keys():
+        print "dg: %s=%s" % (key, dgcache[key])
+
+
+def cache_check(**kwargs):
+    if not kwargs.has_key('args') and kwargs['args']:
+        return
+
+    ucache = FreeNAS_UserCache()
+    gcache = FreeNAS_GroupCache()
+    ducache = FreeNAS_Directory_UserCache()
+    dgcache = FreeNAS_Directory_GroupCache()
+
+    for arg in kwargs['args']:
+        key = val = None
+        try:
+            parts = arg.split('=')
+            key = parts[0]
+            val = join(parts[1:], '=')
+
+        except:
+            continue
+
+        if key == 'u':
+            if ucache.has_key(val) and ucache[val]:
+                print "%s: %s" % (val, ucache[val])
+
+        elif key == 'g':
+            if gcache.has_key(val) and gcache[val]:
+                print "%s: %s" % (val, gcache[val])
+
+        elif key == 'du':
+            if ducache.has_key(val) and ducache[val]:
+                print "%s: %s" % (val, ducache[val])
+
+        elif key == 'dg':
+            if dgache.has_key(val) and dgcache[val]:
+                print "%s: %s" % (val, dgcache[val])
+
+
+
 def main():
     cache_funcs = {}
     cache_funcs['fill'] = cache_fill
     cache_funcs['expire'] = cache_expire
     cache_funcs['dump'] = cache_dump
+    cache_funcs['keys'] = cache_keys
+    cache_funcs['rawdump'] = cache_rawdump
+    cache_funcs['check'] = cache_check
 
     if len(sys.argv) < 2:
-        usage()
+        usage(cache_funcs.keys())
 
     if not sys.argv[1] in cache_funcs.keys():
-        usage()
+        usage(cache_funcs.keys())
 
-    (cache_funcs[sys.argv[1]])(FREENAS_CACHEDIR)
+    kwargs = {}
+    kwargs['cachedir'] = FREENAS_CACHEDIR
+    kwargs['args'] = sys.argv[2:]
+
+    (cache_funcs[sys.argv[1]])(**kwargs)
 
 if __name__ == '__main__':
     main()
