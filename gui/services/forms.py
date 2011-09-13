@@ -601,6 +601,9 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 class iSCSITargetExtentEditForm(ModelForm):
     class Meta:
         model = models.iSCSITargetExtent
+        widgets = {
+            'iscsi_target_extent_path': DirectoryBrowser(dirsonly=False),
+        }
         exclude = ('iscsi_target_extent_type',)
     def clean_iscsi_target_extent_path(self):
         path = self.cleaned_data["iscsi_target_extent_path"]
