@@ -94,7 +94,10 @@ def snapshots_data(request):
     if r:
         r = r.split('=')[1].split('-')
         r1 = int(r[0])
-        r2 = int(r[1]) + 1
+        if r[1]:
+            r2 = int(r[1]) + 1
+        else:
+            r = None
 
     for key in request.GET.keys():
         reg = re.search(r'sort\((?P<sign>.)(?P<field>.+?)\)', key)

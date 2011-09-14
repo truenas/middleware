@@ -69,6 +69,7 @@
     dojo.require("dojox.grid.enhanced.plugins.NestedSorting");
     dojo.require("dojox.grid.enhanced.plugins.IndirectSelection");
     dojo.require("dojox.grid.enhanced.plugins.Pagination");
+    dojo.require("dojox.grid.enhanced.plugins.Filter");
 
     dojo.registerModulePath("freeadmin", "../../../../../media/lib/js/freeadmin");
     dojo.require("freeadmin.form.Cron");
