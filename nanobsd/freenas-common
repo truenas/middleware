@@ -216,6 +216,9 @@ add_port sysutils/graid5
 add_port devel/libevent
 add_port sysutils/tmux
 add_port net/netatalk		-DWITH_PAM
+#+add_port ftp/wget
+add_port dns/libidn
+#-add_port ftp/wget
 add_port ftp/wget
 add_port benchmarks/iozone
 add_port benchmarks/iperf
