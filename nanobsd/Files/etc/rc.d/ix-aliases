@@ -22,11 +22,6 @@ generate_aliases()
             echo "${user}: ${email}" >> /etc/aliases
         fi
     done
-    root=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT bsdusr_email FROM account_bsdusers WHERE bsdusr_username='root'"`
-    if [ ! -z "${root}" ]; then
-        find=$(cat /etc/find_alias_for_msmtp.sh)
-        echo "${find}" | sed -E "s/^DEFAULTEMAIL=.*/DEFAULTEMAIL=\"${root}\"/"  > /etc/find_alias_for_msmtp.sh
-    fi
 }
 
 name="ix-aliases"

@@ -88,11 +88,6 @@ add_port devel/gettext
 #-editors/nano
 add_port editors/nano
 add_port ftp/proftpd
-#+mail/msmtp
-add_port dns/libidn
-add_port security/ca_root_nss -D WITH_ETCSYMLINK
-#-mail/msmtp
-add_port mail/msmtp -DWITH_OPENSSL
 add_port net-mgmt/bsnmp-ucd
 add_port net-mgmt/bsnmptools
 add_port net-mgmt/clog

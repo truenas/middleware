@@ -201,9 +201,8 @@ class UserChangeForm(ModelForm):
             f.queryset = f.queryset.select_related('content_type')
 
     def save(self):
-        super(UserChangeForm, self).save()
-        notifier().start('ix-msmtp')
-        return self.instance
+        obj = super(UserChangeForm, self).save()
+        return obj
 
 class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     """
