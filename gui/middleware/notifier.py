@@ -1185,6 +1185,39 @@ class notifier:
         gid = uidgid[0]
         return gid
 
+    def save_pubkey(self, homedir, pubkey, username, groupname):
+        dirty = False
+        homedir = str(homedir)
+        pubkey = str(pubkey)
+        if pubkey[-1] != '\n':
+            pubkey = '%s\n' % pubkey
+        sshpath = '%s/.ssh' % (homedir)
+        keypath = '%s/.ssh/authorized_keys' % (homedir)
+        try:
+            oldpubkey = open(keypath).read()
+            if oldpubkey == pubkey:
+                return
+        except:
+            pass
+
+        if homedir == '/root':
+            self.__system("/sbin/mount -uw /")
+        saved_umask = os.umask(077)
+        if not os.path.isdir(sshpath):
+            os.makedirs(sshpath)
+        if not os.path.isdir(sshpath):
+            return # FIXME: need better error reporting here
+        if pubkey == '' and os.path.exists(keypath):
+            os.unlink(keypath)
+        else:
+            fd = open(keypath, 'w')
+            fd.write(pubkey)
+            fd.close()
+            self.__system("/usr/sbin/chown -R %s:%s %s" % (username, groupname, sshpath))
+        if homedir == '/root':
+            self.__system("/sbin/mount -u /")
+        os.umask(saved_umask)
+
     def _reload_user(self):
         self.__system("/usr/sbin/service ix-passwd quietstart")
         self.__system("/usr/sbin/service ix-aliases quietstart")

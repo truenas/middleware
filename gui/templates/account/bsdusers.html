@@ -37,13 +37,13 @@
                 </button>
 	    </td>
 	    <td>
-		{% if not u.bsdusr_builtin %}
                 <button dojoType="dijit.form.Button" type="button">
                     {% trans "Modify User" %}
                     <script type="dojo/method" event="onClick" args="evt">
                         editObject('{% trans "Modify User"|force_escape %}', '{{ u.get_edit_url }}?deletable=false', [this,]);
                     </script>
                 </button>
+		{% if not u.bsdusr_builtin %}
                 <button dojoType="dijit.form.Button" type="button">
                     {% trans "Auxiliary Groups" %}
                     <script type="dojo/method" event="onClick" args="evt">
@@ -116,7 +116,15 @@
                     </script>
                 </button>
 	    </td>
-	    <td colspan="3">
+	    <td>
+                <button dojoType="dijit.form.Button" type="button">
+                    {% trans "Modify User" %}
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Modify User"|force_escape %}', '{{ u.get_edit_url }}?deletable=false', [this,]);
+                    </script>
+                </button>
+	    </td>
+	    <td colspan="2">
                 <button dojoType="dijit.form.Button" type="button">
                     {% trans "Change E-mail" %}
                     <script type="dojo/method" event="onClick" args="evt">

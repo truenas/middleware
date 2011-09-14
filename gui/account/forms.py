@@ -217,6 +217,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     bsdusr_password_disabled = forms.BooleanField(label=_("Disable password logins"), required=False)
     bsdusr_locked = forms.BooleanField(label=_("Lock user"), required=False)
     bsdusr_group2 = forms.ModelChoiceField(label=_("Primary Group"), queryset=models.bsdGroups.objects.all(), required=False)
+    bsdusr_sshpubkey = forms.CharField(label=_("SSH key"), widget=forms.Textarea, max_length=8192, required=False)
 
     class Meta:
         model = models.bsdUsers
@@ -224,7 +225,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
                 'bsdusr_uid': forms.widgets.ValidationTextInput(),
                 }
         exclude = ('bsdusr_unixhash','bsdusr_smbhash','bsdusr_builtin','bsdusr_group')
-        fields = ('bsdusr_uid', 'bsdusr_username', 'bsdusr_group2', 'bsdusr_home', 'bsdusr_shell', 'bsdusr_full_name', 'bsdusr_email', 'bsdusr_password1', 'bsdusr_password2', 'bsdusr_password_disabled', 'bsdusr_locked')
+        fields = ('bsdusr_uid', 'bsdusr_username', 'bsdusr_group2', 'bsdusr_home', 'bsdusr_shell', 'bsdusr_full_name', 'bsdusr_email', 'bsdusr_password1', 'bsdusr_password2', 'bsdusr_password_disabled', 'bsdusr_sshpubkey', 'bsdusr_locked')
 
     def __init__(self, *args, **kwargs):
         #FIXME: Workaround for DOJO not showing select options with blank values
@@ -276,6 +277,9 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
         raise forms.ValidationError(_('Home directory has to start with /mnt/ '
                                       'or be /nonexistent'))
 
+    def clean_bsdusr_sshpubkey(self):
+        return self.cleaned_data.get('bsdusr_sshpubkey', '')
+
     def clean(self):
         cleaned_data = self.cleaned_data
 
@@ -283,16 +287,20 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
                 cleaned_data.get("bsdusr_locked", False)
         password_disable = cleaned_data["bsdusr_password_disabled"] = \
                 cleaned_data.get("bsdusr_password_disabled", False)
+        if ((not (self.cleaned_data['bsdusr_home'].startswith(u'/mnt/'))) and
+            self.cleaned_data.get('bsdusr_sshpubkey', '') != ''):
+                del self.cleaned_data['bsdusr_sshpubkey']
+                self._errors['bsdusr_sshpubkey'] = self.error_class([_("Home directory is not writable, leave this blank")])
         if self.instance.id is None:
-            FIELDS = ['bsdusr_password', 'bsdusr_password2']
+            FIELDS = ['bsdusr_password1', 'bsdusr_password2']
             if password_disable:
                 for field in FIELDS:
-                    if cleaned_data.get(field, None) != "":
+                    if cleaned_data.get(field, '') != '':
                         self._errors[field] = self.error_class([_("Password is disabled, leave this blank")])
                         del cleaned_data[field]
             else:
                 for field in FIELDS:
-                    if cleaned_data.get(field, None) == "":
+                    if cleaned_data.get(field, '') == '':
                         self._errors[field] = self.error_class([_("This field is required.")])
                         del cleaned_data[field]
 
@@ -336,6 +344,9 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
             bsduser.bsdusr_builtin=False
             bsduser.save()
             _notifier.reload("user")
+	    bsdusr_sshpubkey = self.cleaned_data['bsdusr_sshpubkey']
+            if bsdusr_sshpubkey != '':
+                _notifier.save_pubkey(bsduser.bsdusr_home, bsdusr_sshpubkey, bsduser.bsdusr_username, bsduser.bsdusr_group.bsdgrp_group)
         return bsduser
 
 class bsdUserPasswordForm(ModelForm):
@@ -383,6 +394,7 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
                                      initial=u'/bin/csh',
                                      choices=()
                                      )
+    bsdusr_sshpubkey = forms.CharField(label=_("SSH key"), widget=forms.Textarea, max_length=8192, required=False)
 
     class Meta:
         model = models.bsdUsers
@@ -397,19 +409,43 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
         if instance:
             if instance.id:
                 self.fields['bsdusr_username'].widget.attrs['readonly'] = True
+            if instance.bsdusr_builtin:
+                self.fields['bsdusr_uid'].widget.attrs['readonly'] = True
+                self.fields['bsdusr_group'].widget.attrs['readonly'] = True
+                self.fields['bsdusr_home'].widget.attrs['readonly'] = True
             if instance.bsdusr_unixhash == '*':
                 self.fields['bsdusr_password_disabled'].initial = True
             if instance.bsdusr_unixhash.startswith('*LOCKED*'):
                 self.fields['bsdusr_locked'].initial = True
-
+            try:
+                self.fields['bsdusr_sshpubkey'].initial = open('%s/.ssh/authorized_keys' % (instance.bsdusr_home)).read()
+            except:
+                self.fields['bsdusr_sshpubkey'].initial = ''
         self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
         self.fields['bsdusr_shell'].choices.sort()
         self.fields['bsdusr_group'].widget.attrs['maxHeight'] = 200
+
+    def clean_bsdusr_uid(self):
+        instance = getattr(self, 'instance', None)
+        if instance and instance.bsdusr_builtin:
+            return self.instance.bsdusr_uid
+        else:
+            return self.cleaned_data.get("bsdusr_uid")
+
+    def clean_bsdusr_group(self):
+        instance = getattr(self, 'instance', None)
+        if instance and instance.bsdusr_builtin:
+            return self.instance.bsdusr_group
+        else:
+            return self.cleaned_data.get("bsdusr_group")
 
     def clean_bsdusr_username(self):
         return self.instance.bsdusr_username
 
     def clean_bsdusr_home(self):
+        instance = getattr(self, 'instance', None)
+        if instance and instance.bsdusr_builtin:
+            return self.instance.bsdusr_home
         if (self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') or
             self.cleaned_data['bsdusr_home'] == u'/nonexistent'):
             return self.cleaned_data['bsdusr_home']
@@ -422,9 +458,19 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
     def clean_bsdusr_locked(self):
         return self.cleaned_data.get("bsdusr_locked", False)
 
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        if (((not self.cleaned_data['bsdusr_home'].startswith(u'/mnt/')) or
+            self.cleaned_data['bsdusr_home'] == '/root') and
+            self.cleaned_data.get('bsdusr_sshpubkey', '') != ''):
+                del self.cleaned_data['bsdusr_sshpubkey']
+                self._errors['bsdusr_sshpubkey'] = self.error_class([_("Home directory is not writable, leave this blank")])
+        return cleaned_data
+
     def save(self):
         bsduser = super(bsdUserChangeForm, self).save(commit=False)
         bsduser_locked = self.cleaned_data['bsdusr_locked']
+	bsdusr_sshpubkey = self.cleaned_data['bsdusr_sshpubkey']
         instance = getattr(self, 'instance', None)
         _notifier = notifier()
         if bsduser_locked and instance.bsdusr_unixhash.startswith('*LOCKED*'):
@@ -440,6 +486,9 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
         bsduser.bsduser_shell = self.cleaned_data['bsdusr_shell']
         bsduser.save()
         _notifier.reload("user")
+        if ((not self.cleaned_data['bsdusr_home'].startswith(u'/mnt/')) or
+            self.cleaned_data['bsdusr_home'] == '/root'):
+                _notifier.save_pubkey(bsduser.bsdusr_home, bsdusr_sshpubkey, bsduser.bsdusr_username, bsduser.bsdusr_group.bsdgrp_group)
         return bsduser
 
 class bsdUserEmailForm(ModelForm, bsdUserGroupMixin):
