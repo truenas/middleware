@@ -92,7 +92,7 @@ class ISCSIExtAdd(TreeNode):
     name = _(u'Add Extent')
     type = u'object'
     view = u'freeadmin_model_add'
-    kwargs = {'app': 'services', 'model': 'iSCSITargetExtent', 'mf': 'iSCSITargetFileExtentForm'}
+    kwargs = {'app': 'services', 'model': 'iSCSITargetExtent'}
     icon = u'AddExtentIcon'
     append_app = False
 
