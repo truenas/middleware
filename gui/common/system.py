@@ -30,6 +30,8 @@ import os
 import smtplib
 import sqlite3
 import subprocess
+import traceback
+import syslog
 from email.mime.text import MIMEText
 from email.Utils import formatdate
 from datetime import datetime, timedelta
@@ -140,6 +142,10 @@ def send_mail(subject=None, text=None, interval=timedelta(), channel='freenas', 
                         msg.as_string())
         server.quit()
     except Exception, e:
+        syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID, facility=syslog.LOG_MAIL)
+        for line in traceback.format_exc().splitlines():
+            syslog.syslog(syslog.LOG_ERR, line)
+        syslog.closelog()
         errmsg = str(e)
         error = True
     return error, errmsg
