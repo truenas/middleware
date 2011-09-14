@@ -26,9 +26,10 @@
 # $FreeBSD$
 #####################################################################
 
-from os import popen, stat, access
+import os
 import smtplib
 import sqlite3
+import subprocess
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 
@@ -71,20 +72,16 @@ def get_freenas_login_version():
 
     return version
 
+def get_freenas_var_by_file(f, var):
+    assert f and var
 
+    pipe = os.popen('. "%s"; echo "${%s}"' % (f, var, ))
+    try:
+        val = pipe.readlines()[-1].rstrip()
+    finally:
+        pipe.close()
 
-def get_freenas_var_by_file(file, var):
-    if not file or not var:
-        return None
-
-    pipe = popen(". '%s' && echo ${%s}" % (file, var))
-    val = pipe.read().strip().split('\n')
-    pipe.close()
-
-    if val:
-        val = val[0]
     return val
-
 
 def get_freenas_var(var, default = None):
     val = get_freenas_var_by_file("/etc/rc.freenas", var)
@@ -92,12 +89,12 @@ def get_freenas_var(var, default = None):
         val = default
     return val
 
-def send_mail(subject, text, interval = timedelta(), channel = 'freenas'):
+def send_mail(subject, text, interval=timedelta(), channel='freenas'):
     if interval > timedelta():
         channelfile = '/tmp/.msg.%s' % (channel)
         last_update = datetime.now() - interval
         try:
-            last_update = datetime.fromtimestamp(stat(channelfile).st_mtime)
+            last_update = datetime.fromtimestamp(os.stat(channelfile).st_mtime)
         except OSError:
             pass
         timediff = datetime.now() - last_update
@@ -117,14 +114,17 @@ def send_mail(subject, text, interval = timedelta(), channel = 'freenas'):
     msg['To'] = admin.bsdusr_email
     try:
         if email.em_security == 'ssl':
-            server = smtplib.SMTP_SSL(email.em_outgoingserver, email.em_port, timeout=10)
+            server = smtplib.SMTP_SSL(email.em_outgoingserver, email.em_port,
+                                      timeout=10)
         else:
-            server = smtplib.SMTP(email.em_outgoingserver, email.em_port, timeout=10)
+            server = smtplib.SMTP(email.em_outgoingserver, email.em_port,
+                                  timeout=10)
             if email.em_security == 'tls':
                 server.starttls()
         if email.em_smtp:
             server.login(email.em_user, email.em_pass)
-        server.sendmail(email.em_fromemail, [admin.bsdusr_email], msg.as_string())
+        server.sendmail(email.em_fromemail, [admin.bsdusr_email],
+                        msg.as_string())
         server.quit()
     except Exception, e:
         errmsg = str(e)
@@ -132,14 +132,12 @@ def send_mail(subject, text, interval = timedelta(), channel = 'freenas'):
     return error, errmsg
 
 def get_fstype(path):
-    if not path:
-        return None
-    if not access(path, 0):
+    assert path
+
+    if not os.access(path, os.F_OK):
         return None
 
-    pipe = popen("/bin/df -T '%s'" % path)
-    lines = pipe.read().strip().split('\n')
-    pipe.close()
+    lines = subprocess.check_output(['/bin/df', '-T', path]).splitlines()
 
     out = (lines[len(lines) - 1]).split()
 
@@ -148,17 +146,16 @@ def get_fstype(path):
 def get_mounted_filesystems():
     mounted = []
 
-    pipe = popen("/sbin/mount")
-    lines = pipe.read().strip().split('\n')
-    pipe.close()
+    lines = subprocess.check_output(['/sbin/mount']).splitlines()
 
     for line in lines:
         parts = line.split()
-        mount = {}
-        mount['fs_spec'] = parts[0]
-        mount['fs_file'] = parts[2]
-        mount['fs_vfstype'] = parts[3].split('(')[1].split(',')[0]
-        mounted.append(mount)
+        mountinfo = {}
+        mountinfo['fs_spec'] = parts[0]
+        mountinfo['fs_file'] = parts[2]
+        end = min(parts[3].find(')'), parts[3].find(','))
+        mountinfo['fs_vfstype'] = parts[3][1:end]
+        mounted.append(mountinfo)
 
     return mounted
         
@@ -166,48 +163,38 @@ def is_mounted(**kwargs):
     ret = False  
 
     mounted = get_mounted_filesystems()
-    for mount in mounted:
-        if kwargs.has_key('device'):
-            if mount['fs_spec'] == kwargs['device']:
+    for mountpt in mounted:
+        if 'device' in kwargs:
+            if mountpt['fs_spec'] == kwargs['device']:
                 ret = True
                 break 
-
-        elif kwargs.has_key('path'):
-            if mount['fs_file'] == kwargs['path']:
+        elif 'path' in kwargs:
+            if mountpt['fs_file'] == kwargs['path']:
                 ret = True
                 break 
 
     return ret
 
 def mount(dev, path, mntopts=None):
-    ret = False
-
-    opts = ""
     if mntopts:
-        opts = "-o %s" % mntopts
+        opts = ['-o', mntopts]
+    else:
+        opts = []
 
     try:
-        pipe = popen("/sbin/mount %s %s %s" % (dev, opts, path))
-        ret = True
-
+        subprocess.check_call(['/sbin/mount', ] + opts + [dev, path, ])
     except:
-        ret = False
-
-    pipe.close()
-    return ret
+        return False
+    else:
+        return True
 
 def umount(path):
-    ret = False
-
     try:
-        pipe = popen("/sbin/umount %s" % path)
-        ret = True
-
+        subprocess.check_call(['/sbin/umount', path, ])
     except:
-        ret = False
-
-    pipe.close()
-    return ret
+        return False
+    else:
+        return True
 
 def service_enabled(name):
     db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
