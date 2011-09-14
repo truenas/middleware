@@ -31,6 +31,7 @@ import smtplib
 import sqlite3
 import subprocess
 from email.mime.text import MIMEText
+from email.Utils import formatdate
 from datetime import datetime, timedelta
 
 from freenasUI.system.models import Email
@@ -89,7 +90,7 @@ def get_freenas_var(var, default = None):
         val = default
     return val
 
-def send_mail(subject, text, interval=timedelta(), channel='freenas'):
+def send_mail(subject=None, text=None, interval=timedelta(), channel='freenas', to=None, extra_headers=None):
     if interval > timedelta():
         channelfile = '/tmp/.msg.%s' % (channel)
         last_update = datetime.now() - interval
@@ -107,11 +108,23 @@ def send_mail(subject, text, interval=timedelta(), channel='freenas'):
     error = False
     errmsg = ''
     email = Email.objects.all().order_by('-id')[0]
-    admin = bsdUsers.objects.get(bsdusr_username='root')
     msg = MIMEText(text)
-    msg['Subject'] = subject
+    if subject:
+        msg['Subject'] = subject
     msg['From'] = email.em_fromemail
-    msg['To'] = admin.bsdusr_email
+    if not to:
+        to = bsdUsers.objects.get(bsdusr_username='root').bsdusr_email
+    msg['To'] = to
+    msg['Date'] = formatdate()
+
+    if not extra_headers:
+        extra_headers = {}
+    for key, val in extra_headers.items():
+        if msg.has_key(key):
+            msg.replace_header(key, val)
+        else:
+            msg[key] = val
+
     try:
         if email.em_security == 'ssl':
             server = smtplib.SMTP_SSL(email.em_outgoingserver, email.em_port,
@@ -123,7 +136,7 @@ def send_mail(subject, text, interval=timedelta(), channel='freenas'):
                 server.starttls()
         if email.em_smtp:
             server.login(email.em_user, email.em_pass)
-        server.sendmail(email.em_fromemail, [admin.bsdusr_email],
+        server.sendmail(email.em_fromemail, [to],
                         msg.as_string())
         server.quit()
     except Exception, e:
@@ -158,20 +171,20 @@ def get_mounted_filesystems():
         mounted.append(mountinfo)
 
     return mounted
-        
+
 def is_mounted(**kwargs):
-    ret = False  
+    ret = False
 
     mounted = get_mounted_filesystems()
     for mountpt in mounted:
         if 'device' in kwargs:
             if mountpt['fs_spec'] == kwargs['device']:
                 ret = True
-                break 
+                break
         elif 'path' in kwargs:
             if mountpt['fs_file'] == kwargs['path']:
                 ret = True
-                break 
+                break
 
     return ret
 
