@@ -75,6 +75,13 @@ class UserField(forms.ChoiceField):
         self._exclude = kwargs.pop('exclude', [])
         super(UserField, self).__init__(*args, **kwargs)
 
+    def prepare_value(self, value):
+        rv = super(UserField, self).prepare_value(value)
+        user = FreeNAS_User(rv)
+        if rv and not user:
+            return 'nobody'
+        return rv
+
     def _reroll(self):
         if len(FreeNAS_Users()) > 500:
             if self.initial:
@@ -108,6 +115,13 @@ class GroupField(forms.ChoiceField):
     def __init__(self, *args, **kwargs):
         kwargs.pop('max_length', None)
         super(GroupField, self).__init__(*args, **kwargs)
+
+    def prepare_value(self, value):
+        rv = super(GroupField, self).prepare_value(value)
+        group = FreeNAS_Group(rv)
+        if rv and not group:
+            return 'nobody'
+        return rv
 
     def _reroll(self):
         if len(FreeNAS_Groups()) > 500:
