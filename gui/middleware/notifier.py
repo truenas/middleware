@@ -1206,12 +1206,12 @@ class notifier:
                 user = pwd.getpwuid(uid)[0]
             except KeyError:
                 user = 'root'
-                self.__system("/usr/bin/chown %s %s" % (user, path))
+                self.__system("/usr/sbin/chown %s %s" % (user, path))
             try:
                 group = grp.getgrgid(gid)[0]
             except KeyError:
                 group = 'wheel'
-                self.__system("/usr/bin/chown :%s %s" % (group, path))
+                self.__system("/usr/sbin/chown :%s %s" % (group, path))
             return [user, group]
 
     def change_upload_location(self, path):
