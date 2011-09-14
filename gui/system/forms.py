@@ -265,7 +265,6 @@ class EmailForm(ModelForm):
         if commit:
             email.em_pass = self.cleaned_data['em_pass2']
             email.save()
-            notifier().start("ix-msmtp")
         return email
 
 class SSLForm(ModelForm):
