@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-09-09 10:33+0200\n"
+"PO-Revision-Date: 2011-09-13 11:22+0200\n"
 "Last-Translator: thepeterp <thepeterp@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
@@ -738,7 +738,7 @@ msgstr "%s ενημερώθηκε(αν) με επιτυχία."
 
 #: freeadmin/views.py:388
 msgid "The service failed to restart."
-msgstr "Η υπηρεσία απέτυχε να επανεκκινήσει"
+msgstr "Η υπηρεσία απέτυχε να επανεκκινήσει."
 
 #: freeadmin/views.py:448 freeadmin/views.py:452
 #, python-format
@@ -1334,7 +1334,7 @@ msgstr "Υποστήριξη EA"
 
 #: services/models.py:130
 msgid "Support DOS File Attributes"
-msgstr "Υποστήριξη attributes αρχείων DOS "
+msgstr "Υποστήριξη attributes αρχείων DOS"
 
 #: services/models.py:132
 msgid "Allow Empty Password"
@@ -1734,7 +1734,7 @@ msgstr ""
 
 #: services/models.py:493
 msgid "Initiator"
-msgstr "εισαγωγή στα μυστήρια"
+msgstr "Initiator"
 
 #: services/models.py:522
 msgid "Target side user name. It is usually the initiator name by default."
@@ -2033,7 +2033,7 @@ msgstr "Μέγιστος αριθμός των συνδέσεων ανά IP δι
 
 #: services/models.py:822
 msgid "Login Attempts"
-msgstr "Προσπάθειες Σύνδεση "
+msgstr "Προσπάθειες Σύνδεσης"
 
 #: services/models.py:823
 msgid "Maximum number of allowed password attempts before disconnection."
@@ -2158,7 +2158,7 @@ msgstr ""
 
 #: services/models.py:884
 msgid "Local user upload bandwidth"
-msgstr "upload bandwidth Τοπικού χρήστη "
+msgstr "Εύρος ζώνης ανεβάσματος τοπικού χρήστη"
 
 #: services/models.py:885
 msgid "Local user upload bandwidth in KB/s. Zero means infinity."
@@ -2166,7 +2166,7 @@ msgstr "Τοπική χρήση ανεβάσετε bandwidth σε KB / s. Μηδ
 
 #: services/models.py:889
 msgid "Local user download bandwidth"
-msgstr "download bandwidth Τοπικού χρήστη "
+msgstr "Εύρος ζώνης κατεβάσματος τοπικού χρήστη"
 
 #: services/models.py:890
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
@@ -2183,7 +2183,7 @@ msgstr "Ανώνυμος χρήστης upload bandwidth σε KB / s. Μηδέν
 
 #: services/models.py:899
 msgid "Anonymous user download bandwidth"
-msgstr "download bandwidth Ανώνυμου χρήστη"
+msgstr "Εύρος ζώνης κατεβάσματος ανώνυμου χρήστη"
 
 #: services/models.py:900
 msgid "Anonymous user download bandwidth in KB/s. Zero means infinity."
@@ -2509,7 +2509,7 @@ msgstr "Rsyncd"
 
 #: services/models.py:1178
 msgid "Module name"
-msgstr "όνομα τόμου"
+msgstr "Όνομα module"
 
 #: services/models.py:1186
 msgid "Path to be shared"
@@ -2530,7 +2530,7 @@ msgstr "Max. συνδέσεις"
 #: services/models.py:1198
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
 msgstr ""
-"Μέγιστος αριθμός ταυτόχρονων συνδέσεων. Προεπιλογή είναι 0 (απεριόριστη)."
+"Μέγιστος αριθμός ταυτόχρονων συνδέσεων. Προεπιλογή είναι 0 (απεριόριστη)"
 
 #: services/models.py:1204
 msgid ""
@@ -2566,11 +2566,11 @@ msgstr ""
 "Η επιλογή αυτή είναι ένα κόμμα, το διάστημα, ή την καρτέλα οριοθετημένο "
 "σύνολο των δυνάμεων που επιτρέπεται να έχουν πρόσβαση το μερίδιο αυτό. "
 "Μπορείτε να καθορίσετε τους φιλοξενούμενους με το όνομα ή αριθμός IP. Αφήστε "
-"αυτό το πεδίο κενό για να χρησιμοποιήσετε τις προεπιλεγμένες ρυθμίσεις."
+"αυτό το πεδίο κενό για να χρησιμοποιήσετε τις προεπιλεγμένες ρυθμίσεις"
 
 #: services/models.py:1220
 msgid "Hosts deny"
-msgstr "αρνήθηκε Φιλοξενεία"
+msgstr "Άρνηση hosts"
 
 #: services/models.py:1221
 msgid ""
@@ -2653,7 +2653,7 @@ msgstr "Email για αναφορά"
 #: services/models.py:1271
 msgid "Destination email address. Separate email addresses by semi-colon"
 msgstr ""
-"Διεύθυνση email pροορισμύ. Διαχωρίστε τις διευθύνσεις με την άνω-κάτω "
+"Διεύθυνση email προορισμού. Διαχωρίστε τις διευθύνσεις με την άνω-κάτω "
 "τελεία."
 
 #: services/models.py:1274 services/models.py:1275
@@ -2710,7 +2710,7 @@ msgstr "Η υπηρεσία cache δεν μπορεί να ξεκινήσει."
 
 #: sharing/forms.py:82
 msgid "The field is a not a valid IP address or network"
-msgstr "Το πεδίο είναι μια μη έγκυρη διεύθυνση IP ή δίκτυο "
+msgstr "Το πεδίο είναι μια μη έγκυρη διεύθυνση IP ή δίκτυο"
 
 #: sharing/forms.py:88
 #, python-format
@@ -2858,7 +2858,7 @@ msgstr "Σχόλιο Share"
 
 #: sharing/models.py:116
 msgid "Share password"
-msgstr "κωδικό Share"
+msgstr "Κωδικός share"
 
 #: sharing/models.py:118
 msgid ""
@@ -2884,7 +2884,7 @@ msgstr ""
 
 #: sharing/models.py:128
 msgid "Allow List"
-msgstr "Κατάλογο επιτρεπόμενων "
+msgstr "Κατάλογος επιτρεπόμενων"
 
 #: sharing/models.py:130
 msgid ""
@@ -2963,7 +2963,7 @@ msgstr ""
 
 #: sharing/models.py:163
 msgid "Database Path"
-msgstr "διαδρομής Βάσης δεδομένων "
+msgstr "Διαδρομή βάσης δεδομένων"
 
 #: sharing/models.py:165
 msgid ""
@@ -3623,7 +3623,7 @@ msgstr "Το dataset προστέθηκε επιτυχώς."
 
 #: storage/views.py:318
 msgid "Dataset successfully edited."
-msgstr "Το dataset επεξεργάσθηκε επιτυχώς"
+msgstr "Το dataset επεξεργάσθηκε επιτυχώς."
 
 #: storage/views.py:320 storage/views.py:396
 msgid "An error occurred when setting the options"
@@ -3677,7 +3677,7 @@ msgstr "Το στιγμιότυπο κλωνοποιήθηκε επιτυχώς.
 
 #: storage/views.py:549
 msgid "Disk replacement has been initiated."
-msgstr "αντικατάστασης δίσκου έχει ξεκινήσει."
+msgstr "Η αντικατάσταση δίσκου έχει ξεκινήσει."
 
 #: storage/views.py:553
 msgid "An error occurred."
@@ -3701,7 +3701,7 @@ msgstr "Γλώσσα (απαιτεί επαναφόρτωση του UI)"
 
 #: system/forms.py:250
 msgid "Place to temporarily place firmware file"
-msgstr "Το μέρος όπου θα τοποθετηθεί προσωρινά το αρχείο firmware."
+msgstr "Το μέρος όπου θα τοποθετηθεί προσωρινά το αρχείο firmware"
 
 #: system/forms.py:250
 msgid ""
@@ -4004,7 +4004,7 @@ msgstr "CronJobs"
 
 #: system/models.py:286 system/models.py:441
 msgid "Every minute"
-msgstr "κάθε λεπτό"
+msgstr "Κάθε λεπτό"
 
 #: system/models.py:288 system/models.py:443
 #, python-format
@@ -4067,7 +4067,7 @@ msgstr "Archive"
 
 #: system/models.py:400
 msgid "Archive mode"
-msgstr "Κατάσταση Archive "
+msgstr "Κατάσταση Archive"
 
 #: system/models.py:404 templates/freeadmin/generic_model_edit.html:43
 #: templates/network/interface.html:39 templates/network/lagg.html:44
@@ -4110,13 +4110,12 @@ msgid "Preserve permissions"
 msgstr "Διατήρηση δικαιωμάτων"
 
 #: system/models.py:415
-#, fuzzy
 msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
 msgstr ""
-"Η επιλογή αυτή προκαλεί το rsync που λαμβάνει να ορίσει τα δικαιώματα του "
-"προορισμού να είναι τα ίδια με τα δικαιώματα της προέλευσης."
+"Η επιλογή αυτή προκαλεί το rsync που λαμβάνει, να ορίσει τα δικαιώματα του "
+"προορισμού να είναι τα ίδια με τα δικαιώματα της προέλευσης"
 
 #: system/models.py:419
 msgid "Preserve extended attributes"
@@ -4520,7 +4519,7 @@ msgstr "LAGG μέλη"
 
 #: templates/network/lagg.html:53 templates/network/lagg_members.html:33
 msgid "No LAGG interface defined"
-msgstr "Δεν έχει οριστεί διεπαφή LAGG "
+msgstr "Δεν έχει οριστεί διεπαφή LAGG"
 
 #: templates/network/lagg.html:60
 msgid "Add LAGG Interface "
@@ -4738,7 +4737,7 @@ msgstr "Peer"
 
 #: templates/services/iscsi_auth.html:44 templates/services/iscsi_auth.html:46
 msgid "Add iSCSI User"
-msgstr "Προσθήκη χρήστη iSCSI "
+msgstr "Προσθήκη χρήστη iSCSI"
 
 #: templates/services/iscsi_authini.html:7
 msgid "Authorized Network"
@@ -5099,7 +5098,7 @@ msgstr "Καταστροφή Dataset"
 #: templates/storage/volumes.html:137 templates/storage/volumes.html.py:141
 #: templates/storage/volumes.html:157 templates/storage/volumes.html.py:161
 msgid "Edit ZFS Options"
-msgstr "Επεξεργασία Επιλογών ZFS "
+msgstr "Επεξεργασία Επιλογών ZFS"
 
 #: templates/storage/volumes.html:147 templates/storage/volumes.html.py:151
 msgid "Destroy Volume"
@@ -5187,7 +5186,7 @@ msgstr "Ανεβάστε Config"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr "Επανεκκίνηση ..."
+msgstr "Επανεκκίνηση..."
 
 #: templates/system/config_restore.html:7
 msgid "Are you sure you want to restore to factory config?"
@@ -5418,7 +5417,7 @@ msgid "Service Principal Name"
 msgstr "Το κύριο όνομα υπηρεσίας"
 
 msgid "Service Principal Name, eg service/account."
-msgstr "κύριο όνομα Υπηρεσίας , π.χ. υπηρεσία / λογαριασμού."
+msgstr "Κύριο όνομα Υπηρεσίας , π.χ. υπηρεσία/λογαριασμός."
 
 msgid "Service Principal Name Password"
 msgstr "Service Principal Name Password"
