@@ -235,7 +235,7 @@ def servicesToggleView(request, formname):
             message = _("The service could not be started.")
             svc_entry.srv_enable = 0
             svc_entry.save()
-            if changing_service in ('ldap','activedirectory'):
+            if changing_service in ('ldap','activedirectory', 'ups'):
                 notifier().stop(changing_service)
     else:
         if svc_entry.srv_enable == 1:
