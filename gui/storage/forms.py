@@ -27,6 +27,7 @@
 #####################################################################
 import re
 from datetime import datetime, time
+from decimal import Decimal
 from os import popen, access, stat, mkdir, rmdir
 from stat import S_ISDIR
 
@@ -756,14 +757,22 @@ class ZFSDataset_EditForm(Form):
         for field in ('dataset_refquota', 'dataset_quota', 'dataset_reservation', 'dataset_refreservation'):
             if not cleaned_data.has_key(field):
                 cleaned_data[field] = ''
-        r = re.compile('^(0|[1-9]\d*[mMgGtT]?)$')
-        msg = _(u"Enter positive number (optionally suffixed by M, G, T), or, 0")
+        r = re.compile(r'^(?P<number>[\.0-9]+)(?P<suffix>[KMGT]?)$', re.I)
+        msg = _(u"Enter positive number (optionally suffixed by K, M, G, T), or, 0")
 
         for attr in ('refquota', 'quota', 'reservation', 'refreservation'):
             formfield = 'dataset_%s' % (attr)
-            if r.match(cleaned_data[formfield].__str__())==None:
+            match = r.match(cleaned_data[formfield])
+            if not match and cleaned_data[formfield] != "0":
                 self._errors[formfield] = self.error_class([msg])
-                del cleaned_data['dataset_refquota']
+                del cleaned_data['dataset_%s' % attr]
+            elif match:
+                number, suffix = match.groups()
+                try:
+                    Decimal(number)
+                except:
+                    self._errors[formfield] = self.error_class([_("%s is not a valid number") % number])
+                    del cleaned_data['dataset_%s' % attr]
 
         return cleaned_data
     def set_error(self, msg):
