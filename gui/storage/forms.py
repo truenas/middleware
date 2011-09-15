@@ -520,18 +520,15 @@ class VolumeAutoImportForm(forms.Form):
         # NOTE: This approach may fail if device nodes are not accessible.
         vols = notifier().detect_volumes()
 
-        dobreak = False
         for vol in list(vols):
             for vdev in vol['disks']['vdevs']:
                 for disk in vdev['disks']:
-                    if len([i for i in used_disks if i is not None and disk.startswith(i)]) > 0:
+                    if filter(lambda x: x is not None and disk.startswith(x), used_disks):
                         vols.remove(vol)
-                        dobreak = True
                         break
-                if dobreak:
-                    break
-            if dobreak:
-                dobreak = False
+                else:
+                    continue
+                break
 
         for vol in vols:
             if vol.get("id", None):
