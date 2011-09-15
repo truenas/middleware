@@ -40,9 +40,10 @@ dojo.addOnLoad(function(){
         document.getElementById('msgfull_output').innerHTML = '{% trans "Loading..."|force_escape %}';
     t.stop();
     t.start();
-        loadlog(true);
+    loadlog(true);
     </script>
     <pre class="ix" id="msgfull_output" style="max-height:400px;overflow-y:auto;border:none;word-wrap: break-word;">{% trans "Loading..." %}</pre>
+    <input id="stopmsgrefresh" dojoType="dijit.form.CheckBox" /><label for="stopmsgrefresh" style="color:white;">Stop refresh</label>
 </div>
 <div dojoType="dijit.Dialog" id="rebootDialog" title="{% trans "Reboot the System" %}" >
     <h3>{% trans "Warning!" %}</h3>

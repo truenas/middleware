@@ -30,7 +30,7 @@ t = new dojox.timing.Timer(1000);
 var _msgstarted = false;
 
 loadlog = function(load) {
-    if(_msgstarted == true)
+    if(dijit.byId("stopmsgrefresh").get("value") == "on" || _msgstarted == true)
         return;
     _msgstarted = true;
     var msgfull = dijit.byId('log_dialog');
