@@ -813,7 +813,7 @@ class ZFSVolume_EditForm(Form):
             formfield = 'volume_%s' % (attr)
             if r.match(cleaned_data[formfield].__str__())==None:
                 self._errors[formfield] = self.error_class([msg])
-                del cleaned_data['dataset_refquota']
+                del cleaned_data[formfield]
 
         return cleaned_data
     def set_error(self, msg):
