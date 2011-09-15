@@ -6,14 +6,12 @@
         volumeWizard('{% trans "Add Replication"|force_escape %}', '{% url freeadmin_model_add app='storage',model='Replication' %}', [this,]);
     </script>
     </button>
-    {% if has_key %}
     <button id="viewReplBtn" dojoType="dijit.form.Button" type="button">
     <p>{% trans "View Public Key" %}</p>
     <script type="dojo/method" event="onClick" args="evt">
         volumeWizard('{% trans "View Public Key"|force_escape %}', '{% url storage_replications_key %}', [this,]);
     </script>
     </button>
-    {% endif %}
     <div>
     <p style="margin:10px;"><span style="color: red;">{% trans "ATTENTION: A periodic snapshot of a given mount point is required to create a replication task" %}</span></p>
     </div>

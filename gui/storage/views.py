@@ -71,7 +71,6 @@ def replications(request):
     zfsrepl_list = models.Replication.objects.select_related().all()
     return render(request, 'storage/replications.html', {
         'zfsrepl_list': zfsrepl_list,
-        'has_key': True if zfsrepl_list.count() > 0 else False,
         })
 
 def replications_public_key(request):
