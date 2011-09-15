@@ -25,6 +25,7 @@
 #
 # $FreeBSD$
 #####################################################################
+import os
 import re
 
 from django.core.urlresolvers import reverse
@@ -41,8 +42,6 @@ from freenasUI.storage import models
 from freenasUI.storage.evilhack import evil_zvol_destroy
 from freenasUI.middleware.notifier import notifier
 from middleware.exceptions import MiddlewareError
-
-## Disk section
 
 def home(request):
     return render(request, 'storage/index.html', {
@@ -72,6 +71,17 @@ def replications(request):
     zfsrepl_list = models.Replication.objects.select_related().all()
     return render(request, 'storage/replications.html', {
         'zfsrepl_list': zfsrepl_list,
+        'has_key': True if zfsrepl_list.count() > 0 else False,
+        })
+
+def replications_public_key(request):
+    if os.path.exists('/data/ssh/replication.pub') and os.path.isfile('/data/ssh/replication.pub'):
+        with open('/data/ssh/replication.pub', 'r') as f:
+            key = f.read()
+    else:
+        key = None
+    return render(request, 'storage/replications_key.html', {
+        'key': key,
         })
 
 def snapshots(request):
