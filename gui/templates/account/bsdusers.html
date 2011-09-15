@@ -43,14 +43,12 @@
                         editObject('{% trans "Modify User"|force_escape %}', '{{ u.get_edit_url }}?deletable=false', [this,]);
                     </script>
                 </button>
-		{% if not u.bsdusr_builtin %}
                 <button dojoType="dijit.form.Button" type="button">
                     {% trans "Auxiliary Groups" %}
                     <script type="dojo/method" event="onClick" args="evt">
                         editObject('{% trans "Auxiliary Groups"|force_escape %}', '{% url account_bsduser_groups object_id=u.id %}', [this,]);
                     </script>
                 </button>
-		{% endif %}
 	    </td>
 	    <td>
 		{% if not u.bsdusr_builtin %}
@@ -123,8 +121,14 @@
                         editObject('{% trans "Modify User"|force_escape %}', '{{ u.get_edit_url }}?deletable=false', [this,]);
                     </script>
                 </button>
+                <button dojoType="dijit.form.Button" type="button">
+                    {% trans "Auxiliary Groups" %}
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Auxiliary Groups"|force_escape %}', '{% url account_bsduser_groups object_id=u.id %}', [this,]);
+                    </script>
+                </button>
 	    </td>
-	    <td colspan="2">
+	    <td>
                 <button dojoType="dijit.form.Button" type="button">
                     {% trans "Change E-mail" %}
                     <script type="dojo/method" event="onClick" args="evt">
