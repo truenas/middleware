@@ -49,6 +49,31 @@ from dojango import forms
 
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 
+def _clean_quota_fields(form, attrs, prefix):
+
+    cdata = form.cleaned_data
+    for field in map(lambda x : prefix+x, attrs):
+        if not cdata.has_key(field):
+            cdata[field] = ''
+
+    r = re.compile(r'^(?P<number>[\.0-9]+)(?P<suffix>[KMGT]?)$', re.I)
+    msg = _(u"Enter positive number (optionally suffixed by K, M, G, T), or, 0")
+
+    for attr in attrs:
+        formfield = '%s%s' % (prefix, attr)
+        match = r.match(cdata[formfield])
+        if not match and cdata[formfield] != "0":
+            form._errors[formfield] = form.error_class([msg])
+            del cdata[formfield]
+        elif match:
+            number, suffix = match.groups()
+            try:
+                Decimal(number)
+            except:
+                form._errors[formfield] = form.error_class([_("%s is not a valid number") % number])
+                del cdata[formfield]
+    return cdata
+
 class UnixPermissionWidget(widgets.MultiWidget):
 
     def __init__(self, attrs=None):
@@ -699,30 +724,13 @@ class ZFSDataset_CreateForm(Form):
             raise forms.ValidationError(_("Dataset names must begin with an alphanumeric character and may only contain (-), (_), (:) and (.)."))
         return name
     def clean(self):
-        cleaned_data = self.cleaned_data
+        cleaned_data = _clean_quota_fields(self, ('refquota', 'quota', 'reserv', 'refreserv'), "dataset_")
         volume_name = models.Volume.objects.get(id=cleaned_data.get("dataset_volid")).vol_name.__str__()
         full_dataset_name = "%s/%s" % (volume_name, cleaned_data.get("dataset_name").__str__())
         if len(notifier().list_zfs_datasets(path=full_dataset_name)) > 0:
             msg = _(u"You already have a dataset with the same name")
             self._errors["dataset_name"] = self.error_class([msg])
             del cleaned_data["dataset_name"]
-        for field in ('dataset_refquota', 'dataset_quota', 'dataset_reserv', 'dataset_refreserv'):
-            if not cleaned_data.has_key(field):
-                cleaned_data[field] = ''
-        r = re.compile('^(0|[1-9]\d*[mMgGtT]?)$')
-        msg = _(u"Enter positive number (optionally suffixed by M, G, T), or, 0")
-        if r.match(cleaned_data['dataset_refquota'].__str__())==None:
-            self._errors['dataset_refquota'] = self.error_class([msg])
-            del cleaned_data['dataset_refquota']
-        if r.match(cleaned_data['dataset_quota'].__str__())==None:
-            self._errors['dataset_quota'] = self.error_class([msg])
-            del cleaned_data['dataset_quota']
-        if r.match(cleaned_data['dataset_refreserv'].__str__())==None:
-            self._errors['dataset_refreserv'] = self.error_class([msg])
-            del cleaned_data['dataset_refreserv']
-        if r.match(cleaned_data['dataset_reserv'].__str__())==None:
-            self._errors['dataset_reserv'] = self.error_class([msg])
-            del cleaned_data['dataset_reserv']
         return cleaned_data
     def set_error(self, msg):
         msg = u"%s" % msg
@@ -753,28 +761,7 @@ class ZFSDataset_EditForm(Form):
                 self.fields[formfield].initial = data[attr]
 
     def clean(self):
-        cleaned_data = self.cleaned_data
-        for field in ('dataset_refquota', 'dataset_quota', 'dataset_reservation', 'dataset_refreservation'):
-            if not cleaned_data.has_key(field):
-                cleaned_data[field] = ''
-        r = re.compile(r'^(?P<number>[\.0-9]+)(?P<suffix>[KMGT]?)$', re.I)
-        msg = _(u"Enter positive number (optionally suffixed by K, M, G, T), or, 0")
-
-        for attr in ('refquota', 'quota', 'reservation', 'refreservation'):
-            formfield = 'dataset_%s' % (attr)
-            match = r.match(cleaned_data[formfield])
-            if not match and cleaned_data[formfield] != "0":
-                self._errors[formfield] = self.error_class([msg])
-                del cleaned_data[formfield]
-            elif match:
-                number, suffix = match.groups()
-                try:
-                    Decimal(number)
-                except:
-                    self._errors[formfield] = self.error_class([_("%s is not a valid number") % number])
-                    del cleaned_data[formfield]
-
-        return cleaned_data
+        return _clean_quota_fields(self, ('refquota', 'quota', 'reservation', 'refreservation'), "dataset_")
     def set_error(self, msg):
         msg = u"%s" % msg
         self._errors['__all__'] = self.error_class([msg])
@@ -791,10 +778,8 @@ class ZFSVolume_EditForm(Form):
         name = self._mp.mp_path.replace("/mnt/","")
         super(ZFSVolume_EditForm, self).__init__(*args, **kwargs)
         data = notifier().zfs_get_options(name)
-
         self.fields['volume_compression'].initial = data['compression']
         self.fields['volume_atime'].initial = data['atime']
-
 
         for attr in ('refquota', 'refreservation'):
             formfield = 'volume_%s' % (attr)
@@ -803,27 +788,8 @@ class ZFSVolume_EditForm(Form):
             else:
                 self.fields[formfield].initial = data[attr]
 
-
     def clean(self):
-        cleaned_data = self.cleaned_data
-        r = re.compile(r'^(?P<number>[\.0-9]+)(?P<suffix>[KMGT]?)$', re.I)
-        msg = _(u"Enter positive number (optionally suffixed by K, M, G, T), or, 0")
-
-        for attr in ('refquota', 'refreservation'):
-            formfield = 'volume_%s' % (attr)
-            match = r.match(cleaned_data[formfield])
-            if not match and cleaned_data[formfield] != "0":
-                self._errors[formfield] = self.error_class([msg])
-                del cleaned_data[formfield]
-            elif match:
-                number, suffix = match.groups()
-                try:
-                    Decimal(number)
-                except:
-                    self._errors[formfield] = self.error_class([_("%s is not a valid number") % number])
-                    del cleaned_data[formfield]
-
-        return cleaned_data
+        return _clean_quota_fields(self, ('refquota', 'refreservation'), "volume_")
     def set_error(self, msg):
         msg = u"%s" % msg
         self._errors['__all__'] = self.error_class([msg])
