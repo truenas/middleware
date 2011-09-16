@@ -37,6 +37,8 @@ from django.utils.translation import ugettext_lazy as _
 from dojango.forms.widgets import DojoWidgetMixin
 from dojango import forms
 from dojango.forms import widgets
+from freenasUI.common.freenasldap import FLAGS_DBINIT, FLAGS_CACHE_READ_USER,
+    FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP, FLAGS_CACHE_WRITE_GROUP
 from freenasUI.common.freenasusers import FreeNAS_Users, FreeNAS_User, \
                                          FreeNAS_Groups, FreeNAS_Group
 from account.forms import FilteredSelectJSON
@@ -83,7 +85,7 @@ class UserField(forms.ChoiceField):
         return rv
 
     def _reroll(self):
-        if len(FreeNAS_Users()) > 500:
+        if len(FreeNAS_Users(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_USER|FLAGS_CACHE_WRITE_USER)) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
             kwargs = {}
@@ -96,7 +98,7 @@ class UserField(forms.ChoiceField):
                 ulist.append(('-----', 'N/A'))
             ulist.extend(map(lambda x: (x.pw_name, x.pw_name, ),
                              filter(lambda y: y.pw_name not in self._exclude,
-                                              FreeNAS_Users())))
+                                              FreeNAS_Users(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_USER|FLAGS_CACHE_WRITE_USER))))
 
             self.widget = widgets.FilteringSelect()
             self.choices = ulist
@@ -105,7 +107,7 @@ class UserField(forms.ChoiceField):
     def clean(self, user):
         if not self.required and user in ('-----',''):
             return None
-        if FreeNAS_User(user) == None:
+        if FreeNAS_User(user, flags=FLAGS_DBINIT) == None:
             raise forms.ValidationError(_("The user %s is not valid.") % user)
         return user
 
@@ -124,7 +126,7 @@ class GroupField(forms.ChoiceField):
         return rv
 
     def _reroll(self):
-        if len(FreeNAS_Groups()) > 500:
+        if len(FreeNAS_Groups(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_GROUP|FLAGS_CACHE_WRITE_GROUP)) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
             self.widget = FilteredSelectJSON(url=("account_bsdgroup_json",))
@@ -132,14 +134,14 @@ class GroupField(forms.ChoiceField):
             glist = []
             if not self.required:
                 glist.append(('-----', 'N/A'))
-            glist.extend([(x.gr_name, x.gr_name) for x in FreeNAS_Groups()])
+            glist.extend([(x.gr_name, x.gr_name) for x in FreeNAS_Groups(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_GROUP|FLAGS_CACHE_WRITE_GROUP)])
             self.widget = widgets.FilteringSelect()
             self.choices = glist
 
     def clean(self, group):
         if not self.required and group in ('-----',''):
             return None
-        if FreeNAS_Group(group) == None:
+        if FreeNAS_Group(group, flags=FLAGS_DBINIT) == None:
             raise forms.ValidationError(_("The group %s is not valid.") % group)
         return group
 
