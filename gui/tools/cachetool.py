@@ -50,9 +50,9 @@ def usage(keys):
 
 
 def cache_fill(**kwargs):
-    for u in FreeNAS_Users():
+    for u in FreeNAS_Users(flags=FLAGS_DBINIT|FLAGS_CACHE_WRITE_USER):
         pass
-    for g in FreeNAS_Groups():
+    for g in FreeNAS_Groups(flags=FLAGS_DBINIT|FLAGS_CACHE_WRITE_GROUP):
         pass
 
 
@@ -93,13 +93,13 @@ def cache_expire(**kwargs):
 
 def cache_dump(**kwargs):
     print "FreeNAS_Users:"
-    for u in FreeNAS_Users():
+    for u in FreeNAS_Users(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_USER):
         print "    ", u
 
     print "\n\n"
 
     print "FreeNAS_Groups:"
-    for g in FreeNAS_Groups():
+    for g in FreeNAS_Groups(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_GROUP):
         print "    ", g
 
 
