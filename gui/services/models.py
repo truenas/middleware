@@ -33,7 +33,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 from freenasUI import choices
 from freeadmin.models import Model, UserField, GroupField, PathField
-from storage.models import MountPoint, Volume, Disk
+from storage.models import Volume, Disk
 from freenasUI.middleware.notifier import notifier
 from services.exceptions import ServiceFailed
 
