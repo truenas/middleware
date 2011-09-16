@@ -28,7 +28,7 @@ Index: include/Makefile
 +	    MAKE="${MAKE}" \
 +	    NEWVERS_SH=${NEWVERS_SH} \
 +	    PARAM_H=${PARAM_H} \
-+	    ${SHELL} ${MK_OSRELDATE_SH}
++	    ${MK_OSRELDATE_SH}
 +
  .for i in ${LHDRS}
  INCSLINKS+=	sys/$i ${INCLUDEDIR}/$i

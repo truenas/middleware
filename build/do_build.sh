@@ -122,6 +122,15 @@ for i in $(cd ${root}/patches && echo ports-*.patch); do
 	fi
 done
 
+# HACK: chmod +x the script because:
+# 1. It's not in FreeBSD proper, so it will always be touched.
+# 2. The mode is 0644 by default, and using a pattern like ${SHELL}
+#    in the Makefile snippet won't work with csh users because the
+#    script uses /bin/sh constructs.
+if [ -f "$root/FreeBSD/src/include/mk-osreldate.sh.orig" ]; then
+	chmod +x $root/FreeBSD/src/include/mk-osreldate.sh
+fi
+
 if ! $BUILD; then
 	exit 0
 fi
@@ -133,13 +142,6 @@ args="-c ${root}/nanobsd/freenas-common"
 # rebuild things by default... nuke this file if you disagree or use -f src.
 if [ -s ${NANO_OBJ}/_.iw ] && ! "$FORCE_REBUILD_SRC"; then
 	extra_args="-b"
-	# HACK: keep installworld from failing because mk-osreldate.sh doesn't
-	# exist yet in FreeBSD proper, which means that it will always be
-	# touched.
-	if [ ! -s "$root/FreeBSD/src/include/mk-osreldate.sh.orig" ]; then
-		touch -am -t 200001010000 \
-		    $root/FreeBSD/src/include/mk-osreldate.sh
-	fi
 fi
 if $FORCE_REBUILD_PORTS; then
 	find $NANO_OBJ/ports/packages/ 2>/dev/null | xargs -n 1 rm -Rf
