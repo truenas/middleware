@@ -327,11 +327,11 @@ class notifier:
         self._start_ldap()
 
     def _started_ldap(self):
-        from freenasUI.common.freenasldap import FreeNAS_LDAP, LDAPEnabled
+        from freenasUI.common.freenasldap import FreeNAS_LDAP, LDAPEnabled, FLAGS_DBINIT
 
         ret = False
         if LDAPEnabled():
-            f = FreeNAS_LDAP()
+            f = FreeNAS_LDAP(flags=FLAGS_DBINIT)
             f.open()
             if f.isOpen():
                 ret = True
@@ -359,11 +359,11 @@ class notifier:
         self._start_ldap()
 
     def _started_activedirectory(self):
-        from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory, ActiveDirectoryEnabled
+        from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory, ActiveDirectoryEnabled, FLAGS_DBINIT
 
         ret = False
         if ActiveDirectoryEnabled():
-            f = FreeNAS_ActiveDirectory()
+            f = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
             f.open()
             if f.isOpen():
                 ret = True
