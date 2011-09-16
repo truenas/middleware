@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-09-01 22:01+0200\n"
-"Last-Translator: Rafal <rafal.ciszynski@d-tech.com.pl>\n"
+"PO-Revision-Date: 2011-09-15 23:12+0200\n"
+"Last-Translator: k278 <k278@wp.pl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
@@ -706,7 +706,7 @@ msgstr "Dodaj %s"
 #: freeadmin/navtree.py:327
 #, python-format
 msgid "View All %s"
-msgstr "Pokaż wszystkich %s"
+msgstr "Pokaż wszystkie %s"
 
 #: freeadmin/navtree.py:346
 msgid "Display System Processes"
@@ -723,7 +723,7 @@ msgstr "Wyłącz"
 #: freeadmin/views.py:225
 #, python-format
 msgid "%s successfully added."
-msgstr "%s dodany pomyślnie."
+msgstr "% dodano pomyślnie."
 
 #: freeadmin/views.py:384 freeadmin/views.py:386
 #, python-format
@@ -833,8 +833,7 @@ msgstr "DHCP"
 #: network/models.py:107
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
-msgstr ""
-"Gdy włączone, DHCP jest używane aby otrzymać adres IPv4, adres routera, itd."
+msgstr "Gdy włączone, używa DHCP otrzymać adres IPv4, adres routera, itd"
 
 #: network/models.py:111 templates/network/interface.html:8
 #: templates/network/summary.html:6
@@ -2600,7 +2599,7 @@ msgstr ""
 #: services/models.py:1259
 #, fuzzy
 msgid "Informal"
-msgstr "Normalny"
+msgstr "Swobodny"
 
 #: services/models.py:1260 services/models.py:1265
 msgid ""
@@ -2619,15 +2618,13 @@ msgid "Email to report"
 msgstr ""
 
 #: services/models.py:1271
-#, fuzzy
 msgid "Destination email address. Separate email addresses by semi-colon"
 msgstr "Docelowy adres email. Adresy email oddziel średnikiem."
 
 #: services/models.py:1274 services/models.py:1275
 #: templates/services/index.html:108
-#, fuzzy
 msgid "S.M.A.R.T."
-msgstr "Włącz S.M.A.R.T."
+msgstr "S.M.A.R.T."
 
 #: services/nav.py:12
 msgid "Control Services"
@@ -2797,7 +2794,7 @@ msgstr "Udział Windows"
 
 #: sharing/models.py:94
 msgid "Windows Shares"
-msgstr "Udział Windows"
+msgstr "Udziały Windows"
 
 #: sharing/models.py:105
 msgid ""
@@ -2871,10 +2868,12 @@ msgid "Read-only Access"
 msgstr "Dostęp tylko do odczytu"
 
 #: sharing/models.py:142
+#, fuzzy
 msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
+"Nadaje uprawnienia wybranym użytkownikom/Grupom w trybie \"Tylko do odczytu\""
 
 #: sharing/models.py:146
 msgid "Read-write Access"
@@ -2926,7 +2925,6 @@ msgid "Cache CNID"
 msgstr "Cache CNID"
 
 #: sharing/models.py:169
-#, fuzzy
 msgid ""
 "If set afpd uses the ID information stored in AppleDouble V2 header files to "
 "reduce database load. Don't set this option if the volume is modified by non "
@@ -3071,6 +3069,7 @@ msgstr "Cichy"
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
 msgstr ""
+"Wstrzymaj wyświetlanie błędów, jeśli wystąpią problemy z eksportem udziału"
 
 #: sharing/models.py:248
 msgid "Maproot User"
@@ -3157,8 +3156,9 @@ msgid "Member disk"
 msgstr "Dysk składowy"
 
 #: storage/forms.py:396 storage/forms.py:506
+#, fuzzy
 msgid "The selected disks were not verified for this import rules."
-msgstr ""
+msgstr "Zaznaczone dyski nie zostały sprawdzone dla wybranych warunków importu"
 
 #: storage/forms.py:404
 msgid "An error occurred while labeling the disk."
@@ -3231,12 +3231,12 @@ msgstr "Wpisz dodatnią liczbę (opcjonalnie z przyrostkiem M, G, T)  lub 0."
 #: storage/forms.py:782
 #, fuzzy
 msgid "Volume from which this ZFS Volume will be created on"
-msgstr "Wolumen z tego zbioru danych został utworzony "
+msgstr "Wolumen z którego zostanie utworzony wolumen ZFS "
 
 #: storage/forms.py:783
 #, fuzzy
 msgid "ZFS Volume Name"
-msgstr "Wolumen ZFS"
+msgstr "Nazwa wolumenu ZFS"
 
 #: storage/forms.py:784
 msgid "Size for this ZFS Volume"
@@ -3247,6 +3247,8 @@ msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
 msgstr ""
+"Nazwa wolumenu ZFS musi zaczynać się znakiem alfanumerycznym i może zawierać "
+"następujące znaki specjalne: (-), (_), (:) i (.)."
 
 #: storage/forms.py:820
 msgid "Owner (user)"
@@ -3726,9 +3728,12 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "Włącz Zeroconf/Bonjour"
 
 #: system/models.py:102
+#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only. Must be non-zero"
 msgstr ""
+"Zmień rozmiar na każdy z dysków (GB). Musi być różny od 0, Tylko dla nowych "
+"dysków"
 
 #: system/models.py:105
 msgid "Show console messages in the footer (Requires UI reload)"
@@ -3880,7 +3885,7 @@ msgstr "minut, "
 
 #: system/models.py:252 system/models.py:356
 msgid "Values 0-59 allowed."
-msgstr ""
+msgstr "Dozwolone wartości to: 0-59"
 
 #: system/models.py:256 system/models.py:360 system/models.py:508
 #: templates/system/cronjob.html:6 templates/system/rsync.html:6
@@ -3921,36 +3926,35 @@ msgid "CronJobs"
 msgstr "Zadanie cron"
 
 #: system/models.py:286 system/models.py:441
-#, fuzzy
 msgid "Every minute"
-msgstr "minut, "
+msgstr "Co minutę"
 
 #: system/models.py:288 system/models.py:443
 #, python-format
 msgid "Every %s minute(s)"
-msgstr ""
+msgstr "Co % minut(y)"
 
 #: system/models.py:294 system/models.py:449
 msgid "Every hour"
-msgstr ""
+msgstr "Co godzinę"
 
 #: system/models.py:296 system/models.py:451
 #, python-format
 msgid "Every %s hour(s)"
-msgstr ""
+msgstr "Co % godzin(y)"
 
 #: system/models.py:304 system/models.py:459
-#, fuzzy, python-format
+#, python-format
 msgid "Every %s days"
-msgstr "Codziennie"
+msgstr "Co % dni"
 
 #: system/models.py:311 system/models.py:466
 msgid "Every month"
-msgstr ""
+msgstr "Co miesiąc"
 
 #: system/models.py:342
 msgid "IP Address or hostname"
-msgstr ""
+msgstr "Adres IP lub nazwa hosta"
 
 #: system/models.py:346
 #, fuzzy
@@ -3958,9 +3962,8 @@ msgid "Remote Module Name"
 msgstr "Nazwa komputera zdalnego"
 
 #: system/models.py:350 system/models.py:503
-#, fuzzy
 msgid "Short description"
-msgstr "Opis"
+msgstr "Krótki opis"
 
 #: system/models.py:385
 #, fuzzy
@@ -4071,9 +4074,8 @@ msgid "System Information"
 msgstr "Informacje o systemie"
 
 #: system/nav.py:32
-#, fuzzy
 msgid "Cron Scheduler"
-msgstr "Zaplanowane cykliczne kopie migawkowe"
+msgstr "Zadania cykliczne"
 
 #: system/views.py:117
 msgid "The uploaded file is not valid."
@@ -4198,8 +4200,9 @@ msgid "Add New Group"
 msgstr "Dodaj nową grupę"
 
 #: templates/account/bsdusers.html:7 templates/account/bsdusers.html.py:88
+#, fuzzy
 msgid "Home"
-msgstr "Domowy"
+msgstr "Główny"
 
 #: templates/account/bsdusers.html:42 templates/account/bsdusers.html.py:44
 #: templates/account/bsdusers.html:50 templates/account/bsdusers.html:130
@@ -4305,7 +4308,7 @@ msgstr "Ostrzeżenie!"
 msgid ""
 "You are about to <strong>REBOOT</strong> the system, what would you like to "
 "do?"
-msgstr ""
+msgstr "Czy na pewno chcesz przeprowadzić <strong>RESTART</strong> systemu?"
 
 #: templates/freeadmin/index.html:57
 msgid "Shutdown the System"
@@ -4315,7 +4318,7 @@ msgstr "Zamknij system"
 msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
-msgstr ""
+msgstr "Czy na pewno chcesz <strong>ZAMKNĄĆ</strong> system?"
 
 #: templates/freeadmin/index.html:69
 msgid "Help & Support"
@@ -4360,32 +4363,33 @@ msgstr ""
 #: templates/freeadmin/index.html:91
 #, fuzzy
 msgid "FreeNAS Docs"
-msgstr "FreeNAS Build"
+msgstr "FreeNAS Dokumenty"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Translations"
-msgstr ""
+msgstr "FreeNAS Tłumaczenia"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
 msgstr ""
 
 #: templates/freeadmin/index.html:99
+#, fuzzy
 msgid "Bug Tracker"
-msgstr ""
+msgstr "Śledzenie błędów"
 
 #: templates/freeadmin/index.html:104
 #, fuzzy
 msgid "Documentation"
-msgstr "Lokacja"
+msgstr "Dokumentacja"
 
 #: templates/freeadmin/index.html:106
 msgid "FreeNAS Documentation"
-msgstr ""
+msgstr "FreeNAS Dokumentacja"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
-msgstr ""
+msgstr "Auto IPv6"
 
 #: templates/network/interface.html:33 templates/network/lagg_members.html:18
 #: templates/network/lagg_members.html:20
@@ -4965,7 +4969,7 @@ msgstr "przez"
 
 #: templates/storage/tasks.html:46
 msgid ", every"
-msgstr ", każdy"
+msgstr ",co każdy(e)"
 
 #: templates/storage/tasks.html:49
 msgid "everyday"
@@ -5082,7 +5086,7 @@ msgstr "Cache jest w trakcie przebudowy."
 
 #: templates/system/advanced_edit.html:19
 msgid "The cache could not be rebuilt"
-msgstr "Cache nie może być przebudowany"
+msgstr "Cache nie mógł zostać przebudowany"
 
 #: templates/system/advanced_edit.html:24
 msgid "Rebuild LDAP/AD Cache"
@@ -5141,8 +5145,9 @@ msgid "Send Test Mail"
 msgstr "Wyślij testowy mail"
 
 #: templates/system/reporting.html:4
+#, fuzzy
 msgid "Hourly"
-msgstr ""
+msgstr "na godzinę"
 
 #: templates/system/reporting.html:5
 msgid "Hourly Graphs"
@@ -5150,7 +5155,7 @@ msgstr "Wykresy godzinne"
 
 #: templates/system/reporting.html:18
 msgid "Daily"
-msgstr ""
+msgstr "Dziennie"
 
 #: templates/system/reporting.html:19
 msgid "Daily Graphs"
@@ -5238,7 +5243,7 @@ msgid "Step %(step)s of %(step_count)s"
 msgstr "Krok %(step)s z %(step_count)s"
 
 msgid "%s successfully update."
-msgstr "%s zaktualizowany pomyślnie."
+msgstr "%s zaktualizowano pomyślnie."
 
 msgid "Admin user"
 msgstr "Administrator"
