@@ -465,12 +465,9 @@ class iSCSITargetPortal(Model):
     def delete(self):
         super(iSCSITargetPortal, self).delete()
         portals = iSCSITargetPortal.objects.all().order_by('iscsi_target_portal_tag')
-        #FIXME: use enumerate instead of idx += 1
-        idx = 1
-        for portal in portals:
+        for idx, portal in zip(portals, xrange(1, len(portals) + 1)):
             portal.iscsi_target_portal_tag = idx
             portal.save()
-            idx += 1
         started = notifier().reload("iscsitarget")
         if started is False and services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
