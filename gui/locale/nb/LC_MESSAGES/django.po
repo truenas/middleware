@@ -1334,7 +1334,7 @@ msgid "Enable home directories"
 msgstr "Aktiver hjemmemapper"
 
 #: services/models.py:141
-msgid "This enables\\disables home directories for samba user."
+msgid "Enable/disable home directories for samba user."
 msgstr "Dette aktiverer\\deaktiverer hjemmemapper for sambabrukeren."
 
 #: services/models.py:144
@@ -1342,7 +1342,7 @@ msgid "Enable home directories browsing"
 msgstr "Tillat lesing av hjemmemapper"
 
 #: services/models.py:145
-msgid "This enables\\disables home directories browsing for samba user."
+msgid "Enable/disable home directories browsing for samba user."
 msgstr "Dette aktiverer\\deaktiverer visning av hjemmemappen for sambabrukere."
 
 #: services/models.py:149
@@ -1354,11 +1354,11 @@ msgid "Enable AIO"
 msgstr "Aktiver AIO"
 
 #: services/models.py:154
-msgid "This enables\\disables AIO support."
+msgid "Enable/disable AIO support."
 msgstr "Dette aktiverer\\deaktiverer støtte for AIO"
 
 #: services/models.py:158
-msgid "Minimal AIO read size"
+msgid "Minimum AIO read size"
 msgstr "Minimum AIO lesestørrelse"
 
 #: services/models.py:159
@@ -1370,7 +1370,7 @@ msgstr ""
 "Standardverdien er 1."
 
 #: services/models.py:164
-msgid "Minimal AIO write size"
+msgid "Minimum AIO write size"
 msgstr "Minimum AIO skrivestørrelse"
 
 #: services/models.py:165

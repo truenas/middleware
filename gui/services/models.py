@@ -141,11 +141,11 @@ class CIFS(Model):
             )
     cifs_srv_homedir_enable = models.BooleanField(
             verbose_name=_("Enable home directories"),
-            help_text=_("This enables\disables home directories for samba user.")
+            help_text=_("Enable/disable home directories for samba user.")
             )
     cifs_srv_homedir_browseable_enable = models.BooleanField(
             verbose_name=_("Enable home directories browsing"),
-            help_text=_("This enables\disables home directories browsing for samba user."),
+            help_text=_("Enable/disable home directories browsing for samba user."),
             default=False,
             )
     cifs_srv_homedir = PathField(
@@ -155,17 +155,17 @@ class CIFS(Model):
     cifs_srv_aio_enable = models.BooleanField(
             default=True,
             verbose_name=_("Enable AIO"),
-            help_text=_("This enables\disables AIO support.")
+            help_text=_("Enable/disable AIO support.")
             )
     cifs_srv_aio_rs = models.IntegerField(
             max_length=120,
-            verbose_name=_("Minimal AIO read size"),
+            verbose_name=_("Minimum AIO read size"),
             help_text=_("Samba will read asynchronously if request size is larger than this value. The default read size is 1."),
             default = 1,
             )
     cifs_srv_aio_ws = models.IntegerField(
             max_length=120,
-            verbose_name=_("Minimal AIO write size"),
+            verbose_name=_("Minimum AIO write size"),
             help_text=_("Samba will write asynchronously if request size is larger than this value. The default write size is 1."),
             default = 1,
             )
