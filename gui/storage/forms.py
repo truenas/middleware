@@ -336,10 +336,15 @@ class VolumeWizardForm(forms.Form):
                 grp.save()
 
                 for diskname in disk_list:
-                    diskobj = models.Disk(disk_name = diskname, disk_identifier = "{devicename}%s" % diskname,
-                                   disk_description = ("Member of %s %s" %
-                                                      (volume_name, group_type)),
-                                   disk_group = grp)
+                    diskobj = models.Disk(disk_name = diskname,
+                                  disk_identifier = "{devicename}%s" % diskname,
+                                  disk_description = ("Member of %s %s%s" % (
+                                                         volume_name,
+                                                         group_type,
+                                                         '' if grpnum == 0 else grpnum,
+                                                         )
+                                                     ),
+                                  disk_group = grp)
                     diskobj.save()
 
                 if add:
