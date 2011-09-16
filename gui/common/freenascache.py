@@ -43,21 +43,22 @@ class FreeNAS_BaseCache(object):
     def __init__(self, cachedir = FREENAS_CACHEDIR):
         syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: enter")
 
-        self.__cachedir = cachedir 
-        self.__cachefile = os.path.join(self.__cachedir, ".cache.db")
+        self.cachedir = cachedir 
+        self.__cachefile = os.path.join(self.cachedir, ".cache.db")
 
-        if not self.__dir_exists(self.__cachedir):
-            os.makedirs(self.__cachedir)
+        if not self.__dir_exists(self.cachedir):
+            os.makedirs(self.cachedir)
 
         self.__dbenv = db.DBEnv()
-        self.__dbenv.open(self.__cachedir, db.DB_INIT_CDB|db.DB_INIT_MPOOL|db.DB_CREATE, 0700)
+        self.__dbenv.open(self.cachedir, db.DB_INIT_CDB|db.DB_INIT_MPOOL|db.DB_CREATE, 0700)
 
         self.__cache = db.DB(self.__dbenv)
         self.__cache.open(self.__cachefile, None, db.DB_BTREE, db.DB_CREATE)
 
-        syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: cachedir = %s" % self.__cachedir)
+        syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: cachedir = %s" % self.cachedir)
         syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: cachefile = %s" % self.__cachefile)
         syslog(LOG_DEBUG, "FreeNAS_BaseCache._init__: leave")
+
 
     def __dir_exists(self, path):
         path_exists = False
