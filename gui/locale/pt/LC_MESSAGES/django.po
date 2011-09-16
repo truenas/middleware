@@ -1342,7 +1342,7 @@ msgid "Enable home directories"
 msgstr "Activar directórios home"
 
 #: services/models.py:141
-msgid "Enable/disable home directories for samba user."
+msgid "This enables\\disables home directories for samba user."
 msgstr "Isto activa\\desactiva directórios home para utilizadores samba."
 
 #: services/models.py:144
@@ -1350,7 +1350,7 @@ msgid "Enable home directories browsing"
 msgstr "Permitir a navegação nos diretórios home"
 
 #: services/models.py:145
-msgid "Enable/disable home directories browsing for samba user."
+msgid "This enables\\disables home directories browsing for samba user."
 msgstr ""
 "Isto activa\\desactiva permissões de navegação nos directórios home para "
 "utilizadores samba."
@@ -1364,11 +1364,11 @@ msgid "Enable AIO"
 msgstr "Activar AIO"
 
 #: services/models.py:154
-msgid "Enable/disable AIO support."
+msgid "This enables\\disables AIO support."
 msgstr "Isto activa\\desactiva suporte AIO."
 
 #: services/models.py:158
-msgid "Minimum AIO read size"
+msgid "Minimal AIO read size"
 msgstr "Tamanho minimo de leitura AIO"
 
 #: services/models.py:159
@@ -1380,7 +1380,7 @@ msgstr ""
 "O tamanho de leitura por defeito é 1."
 
 #: services/models.py:164
-msgid "Minimum AIO write size"
+msgid "Minimal AIO write size"
 msgstr "Tamanho minimo de escrita AIO"
 
 #: services/models.py:165

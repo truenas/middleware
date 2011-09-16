@@ -1311,7 +1311,7 @@ msgid "Enable home directories"
 msgstr "אפשר תיקיות בית"
 
 #: services/models.py:141
-msgid "Enable/disable home directories for samba user."
+msgid "This enables\\disables home directories for samba user."
 msgstr "זה מאפשר\\מנטרל תיקיות בית למשתמש samba"
 
 #: services/models.py:144
@@ -1319,7 +1319,7 @@ msgid "Enable home directories browsing"
 msgstr "אפשר דפדוף בתיקיות בית"
 
 #: services/models.py:145
-msgid "Enable/disable home directories browsing for samba user."
+msgid "This enables\\disables home directories browsing for samba user."
 msgstr "זה מאפשר\\מנטרל דפדוף בתיקיות בית למשתמשי samba"
 
 #: services/models.py:149
@@ -1331,11 +1331,11 @@ msgid "Enable AIO"
 msgstr "אפשר AIO"
 
 #: services/models.py:154
-msgid "Enable/disable AIO support."
+msgid "This enables\\disables AIO support."
 msgstr "זה מאפשר\\מנטרל תמיכה בAIO"
 
 #: services/models.py:158
-msgid "Minimum AIO read size"
+msgid "Minimal AIO read size"
 msgstr "גודל קריאה AIO מינימלי"
 
 #: services/models.py:159
@@ -1347,7 +1347,7 @@ msgstr ""
 "המחדל הוא 1."
 
 #: services/models.py:164
-msgid "Minimum AIO write size"
+msgid "Minimal AIO write size"
 msgstr "גודל כתיבה AIO מינימלי"
 
 #: services/models.py:165

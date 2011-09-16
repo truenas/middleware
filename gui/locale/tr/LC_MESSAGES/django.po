@@ -1340,7 +1340,7 @@ msgid "Enable home directories"
 msgstr "Home dizinleri etkinleştir"
 
 #: services/models.py:141
-msgid "Enable/disable home directories for samba user."
+msgid "This enables\\disables home directories for samba user."
 msgstr ""
 "Bu, samba kullanıcıları için home dizinlerini etkinleştirir\\etkisizleştirir"
 
@@ -1349,7 +1349,7 @@ msgid "Enable home directories browsing"
 msgstr "Home dizinlerini taramayı etkinleştir"
 
 #: services/models.py:145
-msgid "Enable/disable home directories browsing for samba user."
+msgid "This enables\\disables home directories browsing for samba user."
 msgstr ""
 "Bu, samba kullanıcıları için home dizinlerini taramayı "
 "etkinleştirir\\etkisizleştirir"
@@ -1363,11 +1363,11 @@ msgid "Enable AIO"
 msgstr "AIO etkinleştir"
 
 #: services/models.py:154
-msgid "Enable/disable AIO support."
+msgid "This enables\\disables AIO support."
 msgstr "Bu, AIO desteğini etkinleştirir\\etkisizleştirir"
 
 #: services/models.py:158
-msgid "Minimum AIO read size"
+msgid "Minimal AIO read size"
 msgstr "En küçük AIO okuma boyutu"
 
 #: services/models.py:159
@@ -1379,7 +1379,7 @@ msgstr ""
 "boyutu 1 dir."
 
 #: services/models.py:164
-msgid "Minimum AIO write size"
+msgid "Minimal AIO write size"
 msgstr "En küçük AIO yazma boyutu"
 
 #: services/models.py:165
