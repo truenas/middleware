@@ -1640,7 +1640,7 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
     def __len__(self):
         length = 0 
         for d in self.__domains:
-            length += self.__users[d['nETBIOSName']] 
+            length += len(self.__users[d['nETBIOSName']])
         return length
 
     def __iter__(self):
@@ -1898,7 +1898,7 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
     def __len__(self):
         length = 0
         for d in self.__domains:
-            length += self.__groups[d['nETBIOSName']] 
+            length += len(self.__groups[d['nETBIOSName']])
         return length
 
     def __iter__(self):
