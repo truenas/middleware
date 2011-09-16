@@ -140,6 +140,7 @@ def user2group_update(request, object_id):
 
 def json_users(request, exclude=None):
 
+    from common.freenasldap import FLAGS_DBINIT, FLAGS_CACHE_READ_USER, FLAGS_CACHE_WRITE_USER
     from common.freenasusers import FreeNAS_Users
     query = request.GET.get("q", None)
 
@@ -154,7 +155,7 @@ def json_users(request, exclude=None):
     else:
         exclude = []
     idx = 1
-    for user in FreeNAS_Users():
+    for user in FreeNAS_Users(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_USER|FLAGS_CACHE_WRITE_USER):
         if idx > 50:
             break
         if (query == None or user.pw_name.startswith(query)) and \
@@ -169,6 +170,7 @@ def json_users(request, exclude=None):
 
 def json_groups(request):
 
+    from common.freenasldap import FLAGS_DBINIT, FLAGS_CACHE_READ_GROUP, FLAGS_CACHE_WRITE_GROUP
     from common.freenasusers import FreeNAS_Groups
     query = request.GET.get("q", None)
 
@@ -179,7 +181,7 @@ def json_groups(request):
     }
 
     idx = 1
-    for grp in FreeNAS_Groups():
+    for grp in FreeNAS_Groups(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_GROUP|FLAGS_CACHE_WRITE_GROUP):
         if idx > 50:
             break
         if query == None or grp.gr_name.startswith(query):
