@@ -1334,7 +1334,7 @@ msgid "Enable home directories"
 msgstr "Включити домашні каталоги"
 
 #: services/models.py:141
-msgid "This enables\\disables home directories for samba user."
+msgid "Enable/disable home directories for samba user."
 msgstr "Включає \\ відключає домашні каталоги для користувача Samba."
 
 #: services/models.py:144
@@ -1342,7 +1342,7 @@ msgid "Enable home directories browsing"
 msgstr "Увімкнути перегляд домашніх каталогів"
 
 #: services/models.py:145
-msgid "This enables\\disables home directories browsing for samba user."
+msgid "Enable/disable home directories browsing for samba user."
 msgstr "Включає \\ відключає перегляд домашніх каталогів для користувачів Samba."
 
 #: services/models.py:149
@@ -1354,11 +1354,11 @@ msgid "Enable AIO"
 msgstr "Включити асинхронний ввід / вивід"
 
 #: services/models.py:154
-msgid "This enables\\disables AIO support."
+msgid "Enable/disable AIO support."
 msgstr "Включає \\ відключає асинхронний ввід / вивід"
 
 #: services/models.py:158
-msgid "Minimal AIO read size"
+msgid "Minimum AIO read size"
 msgstr "Мінімальний розмір читання AIO (асинхронного вводу / виводу)"
 
 #: services/models.py:159
@@ -1370,7 +1370,7 @@ msgstr ""
 "замовчуванням розмір читання 1."
 
 #: services/models.py:164
-msgid "Minimal AIO write size"
+msgid "Minimum AIO write size"
 msgstr "Мінімальний розмір запису AIO (асинхронного вводу / виводу)"
 
 #: services/models.py:165

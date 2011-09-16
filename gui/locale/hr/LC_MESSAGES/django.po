@@ -1334,7 +1334,7 @@ msgid "Enable home directories"
 msgstr "Omogući Home mape"
 
 #: services/models.py:141
-msgid "This enables\\disables home directories for samba user."
+msgid "Enable/disable home directories for samba user."
 msgstr "Ovo omogućuje/onemogućuje Home mape za samba korisnike."
 
 #: services/models.py:144
@@ -1342,7 +1342,7 @@ msgid "Enable home directories browsing"
 msgstr "Omogući pregled početnih mapa"
 
 #: services/models.py:145
-msgid "This enables\\disables home directories browsing for samba user."
+msgid "Enable/disable home directories browsing for samba user."
 msgstr "Omogućuje/onemogućuje pregled početnih mapa za samba korisnike."
 
 #: services/models.py:149
@@ -1354,11 +1354,11 @@ msgid "Enable AIO"
 msgstr "Omogući AIO"
 
 #: services/models.py:154
-msgid "This enables\\disables AIO support."
+msgid "Enable/disable AIO support."
 msgstr "Omogući/onemogući AIO podršku."
 
 #: services/models.py:158
-msgid "Minimal AIO read size"
+msgid "Minimum AIO read size"
 msgstr "Minimalna AIO veličina za čitanje"
 
 #: services/models.py:159
@@ -1370,7 +1370,7 @@ msgstr ""
 "Pretpostavljena vrijednost čitanja je 1."
 
 #: services/models.py:164
-msgid "Minimal AIO write size"
+msgid "Minimum AIO write size"
 msgstr "Minimalna AIO veličina za pisanje"
 
 #: services/models.py:165
