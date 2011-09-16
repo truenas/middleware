@@ -57,9 +57,6 @@ EOF
         fi
         if [ "${ups_shutdown}" = "batt" ]; then
             cat >> /var/tmp/nut_notify.sh << EOF
-if [ "\${NOTIFYTYPE}" = "ONBATT" ]; then
-    shutdown -p now "\$1"
-fi
 EOF
         fi
         chmod +x /var/tmp/nut_notify.sh
