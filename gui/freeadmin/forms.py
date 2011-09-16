@@ -37,7 +37,7 @@ from django.utils.translation import ugettext_lazy as _
 from dojango.forms.widgets import DojoWidgetMixin
 from dojango import forms
 from dojango.forms import widgets
-from freenasUI.common.freenasldap import FLAGS_DBINIT, FLAGS_CACHE_READ_USER,
+from freenasUI.common.freenasldap import FLAGS_DBINIT, FLAGS_CACHE_READ_USER, \
     FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP, FLAGS_CACHE_WRITE_GROUP
 from freenasUI.common.freenasusers import FreeNAS_Users, FreeNAS_User, \
                                          FreeNAS_Groups, FreeNAS_Group
