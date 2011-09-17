@@ -323,9 +323,6 @@ class notifier:
         self.__system("/bin/sleep 5")
         self.__system("/usr/sbin/service samba quietstart")
 
-    def _restart_ldap(self):
-        self._start_ldap()
-
     def _started_ldap(self):
         from freenasUI.common.freenasldap import FreeNAS_LDAP, LDAPEnabled, FLAGS_DBINIT
 
