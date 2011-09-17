@@ -1390,7 +1390,7 @@ msgid "Enable home directories"
 msgstr "ホームディレクトリの有効化"
 
 #: services/models.py:141
-msgid "This enables\\disables home directories for samba user."
+msgid "Enable/disable home directories for samba user."
 msgstr "この設定は、samba ユーザのホームディレクトリを有効、または無効にします"
 
 #: services/models.py:144
@@ -1401,7 +1401,7 @@ msgstr "ホームディレクトリの閲覧を有効化"
 # 日本語が硬い
 #: services/models.py:145
 #, fuzzy
-msgid "This enables\\disables home directories browsing for samba user."
+msgid "Enable/disable home directories browsing for samba user."
 msgstr ""
 "この設定は、samba ユーザによるホームディレクトリの閲覧を有効、または無効にし"
 "ます。"
@@ -1415,12 +1415,12 @@ msgid "Enable AIO"
 msgstr "AIOの有効化"
 
 #: services/models.py:154
-msgid "This enables\\disables AIO support."
+msgid "Enable/disable AIO support."
 msgstr "この設定は、AIO サポートを有効、もしくは無効にします。"
 
 #: services/models.py:158
 #, fuzzy
-msgid "Minimal AIO read size"
+msgid "Minimum AIO read size"
 msgstr "AIO リードサイズの最小値"
 
 #: services/models.py:159
@@ -1433,7 +1433,7 @@ msgstr ""
 "　デフォルトの読み込みサイズは１です"
 
 #: services/models.py:164
-msgid "Minimal AIO write size"
+msgid "Minimum AIO write size"
 msgstr "AIO ライトサイズの最小値"
 
 #: services/models.py:165

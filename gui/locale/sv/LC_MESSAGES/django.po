@@ -112,7 +112,7 @@ msgstr "Inaktiverad"
 
 #: choices.py:82
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Nivå 1- Minimal strömförbrukning med Standby (spindown)"
+msgstr "Nivå 1- Minimum strömförbrukning med Standby (spindown)"
 
 #: choices.py:83
 msgid "Level 64 - Intermediate power usage with Standby"
@@ -124,7 +124,7 @@ msgstr "Nivå 127 - Medel strömförbrukning med standby"
 
 #: choices.py:85
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Nivå 128 - Minimal strömförbrukning utan Standby (ingen spindown)"
+msgstr "Nivå 128 - Minimum strömförbrukning utan Standby (ingen spindown)"
 
 #: choices.py:86
 msgid "Level 192 - Intermediate power usage without Standby"
@@ -1337,7 +1337,7 @@ msgid "Enable home directories"
 msgstr "Aktivera hemkataloger"
 
 #: services/models.py:141
-msgid "This enables\\disables home directories for samba user."
+msgid "Enable/disable home directories for samba user."
 msgstr "Detta aktiverar\\inaktiverar hemma kataloger för samba användare."
 
 #: services/models.py:144
@@ -1345,7 +1345,7 @@ msgid "Enable home directories browsing"
 msgstr "Aktivera hemma katalog sökning"
 
 #: services/models.py:145
-msgid "This enables\\disables home directories browsing for samba user."
+msgid "Enable/disable home directories browsing for samba user."
 msgstr ""
 "Detta aktiverar\\inaktiverar hemma katalog sökning för samba användare."
 
@@ -1358,11 +1358,11 @@ msgid "Enable AIO"
 msgstr "Aktivera AIO"
 
 #: services/models.py:154
-msgid "This enables\\disables AIO support."
+msgid "Enable/disable AIO support."
 msgstr "Detta aktiverar\\inaktiverar stöd för AIO."
 
 #: services/models.py:158
-msgid "Minimal AIO read size"
+msgid "Minimum AIO read size"
 msgstr "Minsta AIO lässtorlek"
 
 #: services/models.py:159
@@ -1374,7 +1374,7 @@ msgstr ""
 "värde. Standard värdet är 1."
 
 #: services/models.py:164
-msgid "Minimal AIO write size"
+msgid "Minimum AIO write size"
 msgstr "Minsta AIO skrivstorlek"
 
 #: services/models.py:165

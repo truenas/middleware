@@ -1355,7 +1355,7 @@ msgid "Enable home directories"
 msgstr "Ενεργοποίηση καταλόγων home"
 
 #: services/models.py:141
-msgid "This enables\\disables home directories for samba user."
+msgid "Enable/disable home directories for samba user."
 msgstr ""
 "Αυτό ενεργοποιεί\\απενεργοποιεί τους home καταλόγους για το χρήστη samba."
 
@@ -1364,7 +1364,7 @@ msgid "Enable home directories browsing"
 msgstr "Ενεργοποίηση της περιήγησης στους καταλόγους home"
 
 #: services/models.py:145
-msgid "This enables\\disables home directories browsing for samba user."
+msgid "Enable/disable home directories browsing for samba user."
 msgstr "Αυτό ενεργοποιεί\\απενεργοποιεί τον κατάλόγο home για το χρήστη samba."
 
 #: services/models.py:149
@@ -1376,11 +1376,11 @@ msgid "Enable AIO"
 msgstr "Ενεργοποίηση AIO"
 
 #: services/models.py:154
-msgid "This enables\\disables AIO support."
+msgid "Enable/disable AIO support."
 msgstr "Αυτό ενεργοποιεί\\απενεργοποιεί την υποστήριξη ΑΙΟ."
 
 #: services/models.py:158
-msgid "Minimal AIO read size"
+msgid "Minimum AIO read size"
 msgstr "Ελάχιστο μέγεθος ανάγνωσης AIO"
 
 #: services/models.py:159
@@ -1392,7 +1392,7 @@ msgstr ""
 "από την τιμή αυτή. Η προεπιλεγμένη τιμή ανάγνωσης είναι 1."
 
 #: services/models.py:164
-msgid "Minimal AIO write size"
+msgid "Minimum AIO write size"
 msgstr "Ελάχιστο μέγεθος εγγραφής AIO"
 
 #: services/models.py:165

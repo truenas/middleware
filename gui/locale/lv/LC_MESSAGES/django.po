@@ -1332,7 +1332,7 @@ msgid "Enable home directories"
 msgstr "Iespējot mājas mapes"
 
 #: services/models.py:141
-msgid "This enables\\disables home directories for samba user."
+msgid "Enable/disable home directories for samba user."
 msgstr "Šis iespējo\\atspējo mājas mapes smabas lietotājam."
 
 #: services/models.py:144
@@ -1340,7 +1340,7 @@ msgid "Enable home directories browsing"
 msgstr "Iespējot mājas mapes pārlūkošanai"
 
 #: services/models.py:145
-msgid "This enables\\disables home directories browsing for samba user."
+msgid "Enable/disable home directories browsing for samba user."
 msgstr "Šis iespējo\\atspējo mājas mapes pārlūkošanu smabas lietotājam."
 
 #: services/models.py:149
@@ -1352,11 +1352,11 @@ msgid "Enable AIO"
 msgstr "Iespējot AIO"
 
 #: services/models.py:154
-msgid "This enables\\disables AIO support."
+msgid "Enable/disable AIO support."
 msgstr "Šis iespējo\\atspējo AIO atbalstu."
 
 #: services/models.py:158
-msgid "Minimal AIO read size"
+msgid "Minimum AIO read size"
 msgstr "Minimālais AIO lasīšanas lielums"
 
 #: services/models.py:159
@@ -1368,7 +1368,7 @@ msgstr ""
 "Noklusējuma lasīšanas izmērs ir 1."
 
 #: services/models.py:164
-msgid "Minimal AIO write size"
+msgid "Minimum AIO write size"
 msgstr "Minimālais AIO rakstīšanas lielums"
 
 #: services/models.py:165
