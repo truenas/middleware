@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-05-30 19:29+0200\n"
-"Last-Translator: DEOK WON <gf4724@gmail.com>\n"
+"PO-Revision-Date: 2011-09-16 16:49+0200\n"
+"Last-Translator: ikhwan <ikhwan@098.co.kr>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: media/lib/js/freeadmin.js:114
 msgid "Reporting"
-msgstr "보고서"
+msgstr "보고서 작성"
 
 #: media/lib/js/freeadmin.js:126
 msgid "Settings"
@@ -44,20 +44,19 @@ msgstr "계정"
 
 #: media/lib/js/freeadmin.js:318
 msgid "Storage"
-msgstr "스토리지"
+msgstr "저장소"
 
 #: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
 msgstr "복제작업"
 
 #: media/lib/js/freeadmin.js:437
-#, fuzzy
 msgid "Edit"
-msgstr "디스크 수정"
+msgstr "편집"
 
 #: media/lib/js/freeadmin.js:439
 msgid "Edit Disk"
-msgstr "디스크 수정"
+msgstr "디스크 편집"
 
 #: media/lib/js/freeadmin.js:443
 msgid "Replace"
@@ -77,15 +76,15 @@ msgstr "디스크 탈착"
 
 #: media/lib/js/freeadmin.js:635
 msgid "An error occurred!"
-msgstr "에러 발생!"
+msgstr "오류 발생!"
 
 #: media/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
-msgstr "개별 선택"
+msgstr "각각 선택됨"
 
 #: media/lib/js/freeadmin/form/Cron.js:90
 msgid "Every N"
-msgstr "매일 N"
+msgstr "N번 마다"
 
 msgid "Every"
-msgstr "매일"
+msgstr "매번"
