@@ -224,7 +224,7 @@ add_port benchmarks/iozone
 add_port benchmarks/iperf
 #+add_port net-p2p/transmission-daemon
 #add_port devel/pkg-config
-add_port security/ca_root_nss
+add_port security/ca_root_nss -DWITH_ETCSYMLINK
 add_port devel/libevent2
 add_port ftp/curl
 add_port www/transmission-web
