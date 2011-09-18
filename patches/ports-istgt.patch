@@ -1,5 +1,5 @@
 --- net/istgt/Makefile	2011-05-30 13:10:18.000000000 -0700
-+++ net/istgt/Makefile	2011-09-09 16:16:02.000000000 -0700
++++ net/istgt/Makefile	2011-09-18 09:46:41.000000000 -0700
 @@ -2,11 +2,11 @@
  # Date created:		2009-02-23
  # Whom:			Daisuke Aoyama <aoyama@peach.ne.jp>
@@ -10,7 +10,7 @@
  
  PORTNAME=	istgt
 -PORTVERSION=	20110529
-+PORTVERSION=	20110907
++PORTVERSION=	20110918
  CATEGORIES=	net
  MASTER_SITES=	http://www.peach.ne.jp/archives/istgt/
  
@@ -22,15 +22,15 @@
  
  MAN1=		istgt.1
  MANCOMPRESSED=	yes
---- net/istgt/distinfo	2011-05-30 13:10:18.000000000 -0700
-+++ net/istgt/distinfo	2011-09-09 16:09:21.000000000 -0700
+--- net/istgt/distinfo	2011-09-18 09:47:05.000000000 -0700
++++ net/istgt/distinfo	2011-09-18 09:46:45.000000000 -0700
 @@ -1,2 +1,2 @@
 -SHA256 (istgt-20110529.tar.gz) = 51a3bde2177780f1a9cd0b32d3949f5db5e614f8d2c520e408e329778f7c49e0
 -SIZE (istgt-20110529.tar.gz) = 224527
-+SHA256 (istgt-20110907.tar.gz) = 49315e10a039fe08283cd32096487561f34e6552eee340a2afc2aceb59e75dd1
-+SIZE (istgt-20110907.tar.gz) = 231731
++SHA256 (istgt-20110918.tar.gz) = 00f2d9958437212d5a0131e06d1ea9d9f27daa673a56cc94abc134e2a555fed4
++SIZE (istgt-20110918.tar.gz) = 231629
 --- net/istgt/files/patch-etc__istgt.sh.in	1969-12-31 16:00:00.000000000 -0800
-+++ net/istgt/files/patch-etc__istgt.sh.in	2011-09-09 16:15:23.000000000 -0700
++++ net/istgt/files/patch-etc__istgt.sh.in	2011-09-18 09:45:10.000000000 -0700
 @@ -0,0 +1,10 @@
 +--- ./etc/istgt.sh.in.orig	2011-05-29 03:53:29.000000000 -0700
 ++++ ./etc/istgt.sh.in	2011-08-23 11:14:24.910003136 -0700
