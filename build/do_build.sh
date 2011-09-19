@@ -13,11 +13,6 @@
 #	sh build/do_build.sh -B -u
 #
 
-usage() {
-	echo "usage: ${0##*/} [-Bfu] [-- nanobsd-options]"
-	exit 1
-}
-
 cd "$(dirname "$0")/.."
 
 . build/nano_env
@@ -36,6 +31,15 @@ else
 	UPDATE=true
 fi
 USE_UNIONFS=false
+
+usage() {
+	cat <<EOF
+usage: ${0##*/} [-Bfu] [-j make-jobs] [-- nanobsd-options]
+
+-j defaults to $MAKE_JOBS
+EOF
+	exit 1
+}
 
 while getopts 'Bfj:uU' optch; do
 	case "$optch" in
@@ -228,5 +232,5 @@ if env MAKE_JOBS=$MAKE_JOBS sh $NANO_SRC/tools/tools/nanobsd/nanobsd.sh $args $*
 	mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_IMGNAME}.xz
 	sha256 ${NANO_OBJ}/${NANO_IMGNAME}.xz
 else
-	error 'FreeNAS build FAILED; please check above log for more details'
+	error "$NANO_LABEL build FAILED; please check above log for more details"
 fi
