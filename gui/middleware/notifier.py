@@ -67,7 +67,6 @@ from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
 from freenasUI.common.locks import mntlock
 from middleware import zfs
 from middleware.exceptions import MiddlewareError
-from storage.models import MountPoint
 
 
 class notifier:
@@ -1875,6 +1874,7 @@ class notifier:
         return None
 
     def filesystem_path(self, path):
+        from storage.models import MountPoint
         mps = MountPoint.objects.filter(mp_volume__vol_fstype__in=('ZFS','UFS'))
         path = os.path.abspath(path)
         for mp in mps:
