@@ -38,7 +38,7 @@
 
 # DEBUG=1, MULTIMEDIA=1, etc.
 for feature in $SW_FEATURES; do
-	eval "export $(echo "$feature")=1"
+	eval "$(echo "$feature")=1"
 done
 
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
