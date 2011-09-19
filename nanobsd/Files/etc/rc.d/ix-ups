@@ -48,13 +48,12 @@ generate_upsmon()
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
 	while eval read $f; do
-        if [ "${ups_emailnotify}" -eq 1 ]; then
-            cat >> /var/tmp/nut_notify.sh << EOF
+            if [ "${ups_emailnotify}" -eq 1 ]; then
+                cat >> /var/tmp/nut_notify.sh <<EOF
 /usr/bin/logger notify_ups_email
 echo \$1 | mail -s "\$(echo "${ups_subject}"|sed "s/%d/\$(date)/"|sed "s/%h/\$(hostname)/")" "${ups_toemail}"
 EOF
-        fi
-        chmod +x /var/tmp/nut_notify.sh
+            fi
 	    cat <<EOF
 FINALDELAY ${ups_shutdowntimer}
 MONITOR ${ups_identifier} 1 upsmon ${ups_masterpwd} master
@@ -68,6 +67,9 @@ SHUTDOWNCMD "/sbin/shutdown -p now"
 EOF
 
     done
+    if [ -f /var/tmp/nut_notify.sh ]; then
+        chmod +x /var/tmp/nut_notify.sh
+    fi
 }
 
 generate_upsdusers()
