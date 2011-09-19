@@ -37,7 +37,7 @@
 . "$FREENAS_ROOT/build/functions.sh"
 
 # DEBUG=1, MULTIMEDIA=1, etc.
-for feature in $FREENAS_FEATURES; do
+for feature in $SW_FEATURES; do
 	eval "export $(echo "$feature")=1"
 done
 
