@@ -8,10 +8,10 @@ export HOME
 TERM=${TERM:-cons25}
 export TERM
 
-get_product_arch()
-{
-    uname -p
-}
+# XXX: drive these values via the build.
+SW_ARCH=$(uname -p)
+SW_NAME="FreeNAS"
+SW_VERSION="8.0.1"
 
 get_product_path()
 {
@@ -20,7 +20,7 @@ get_product_path()
 
 get_image_name()
 {
-    find "$(get_product_path)" -name "*$(get_product_arch)-embedded.xz" -type f
+    find "$(get_product_path)" -name "$SW_NAME-$SW_ARCH-embedded.xz" -type f
 }
 
 build_config()
@@ -114,23 +114,23 @@ disk_is_mounted()
 
 new_install_verify()
 {
-    local _type="$1" _disk="$2"
+    local _type="$1"
+    local _disk="$2"
     local _tmpfile="/tmp/msg"
     cat << EOD > "${_tmpfile}"
-FreeNAS installer for Flash device or HDD.
+WARNING:
+- This will erase ALL partitions and data on ${_disk}.
+- You can't use ${_disk} for sharing data.
 
-WARNING: There will be some limitations:
-1. This will erase ALL partitions and data on the destination disk
-2. You can't use your destination disk for sharing data
+NOTE:
+- Installing on flash media is preferred to installing on a
+  hard drive.
 
-Installing on USB key is the preferred way:
-It saves you an IDE, SATA or SCSI channel for more hard drives.
-
-Proceed with the ${_type} onto ${_disk}?
+Proceed with the ${_type}?
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog --title "Start FreeNAS installation" --yesno "${_msg}" 13 74
+    dialog --title "$SW_NAME ${_type}" --yesno "${_msg}" 13 74
     [ $? -eq 0 ] || exit 1
 }
 
@@ -139,7 +139,7 @@ ask_upgrade()
     local _disk="$1"
     local _tmpfile="/tmp/msg"
     cat << EOD > "${_tmpfile}"
-The FreeNAS installer can preserve your existing parameters, or
+The $SW_NAME installer can preserve your existing parameters, or
 it can do a fresh install overwriting the current settings,
 configuration, etc.
 
@@ -147,7 +147,7 @@ Would you like to upgrade the installation on ${_disk}?
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog --title "Upgrade this FreeNAS installation" --yesno "${_msg}" 8 74
+    dialog --title "Upgrade this $SW_NAME installation" --yesno "${_msg}" 8 74
     return $?
 }
 
@@ -192,6 +192,7 @@ disk_is_freenas()
 
 menu_install()
 {
+    local _action
     local _disklist
     local _tmpfile
     local _answer
@@ -227,7 +228,7 @@ menu_install()
         _menuheight=$((${_menuheight} + ${_items}))
     fi
     eval "dialog --title 'Choose destination media' \
-          --menu 'Select media where FreeNAS OS should be installed.' \
+          --menu 'Select the drive where $SW_NAME should be installed.' \
           ${_menuheight} 60 ${_items} ${_list}" 2>${_tmpfile}
     [ $? -eq 0 ] || exit 1
     _disk=`cat "${_tmpfile}"`
@@ -240,17 +241,19 @@ menu_install()
     fi
 
     _do_upgrade=0
+    _action="installation"
     if disk_is_freenas ${_disk} ; then
         if ask_upgrade ${_disk} ; then
-            new_install_verify "upgrade" ${_disk}
             _do_upgrade=1
-        else
-            new_install_verify "installation" ${_disk}
+            _action="upgrade"
         fi
-    else
-        new_install_verify "installation" ${_disk}
     fi
+    new_install_verify "$_action" ${_disk}
     _config_file="/tmp/pc-sysinstall.cfg"
+
+    # Start critical section.
+    trap "dialog --msgbox \"The $SW_NAME $_action on $_disk has failed\"" EXIT
+    set -e
 
     #  _disk, _image, _config_file
     # we can now build a config file for pc-sysinstall
@@ -269,9 +272,8 @@ menu_install()
         mount /dev/${_disk}s4 /tmp/data_new
         ls /tmp/data_new > /dev/null
         cp -pR /tmp/data_preserved/ /tmp/data_new
-        cp /dev/null /tmp/data_new/need-update
+        : > /tmp/data_new/need-update
         : > /tmp/data_new/cd_update
-        mkdir /tmp/data_new
         # Mount: /
         mount /dev/${_disk}s1a /tmp/data_new
         ls /tmp/data_new > /dev/null
@@ -300,16 +302,17 @@ EOF
         fi
         umount /tmp/data_new
         rmdir /tmp/data_new
-	dialog --msgbox 'The installer has preserved your database file.
-FreeNAS will migrate this file, if necessary, to the current format.' 6 74
+	dialog --msgbox "The installer has preserved your database file.
+$SW_NAME will migrate this file, if necessary, to the current format." 6 74
     fi
-    if [ ${_do_upgrade} -eq 1 ]; then
-        dialog --msgbox 'FreeNAS has been successfully upgraded on '${_disk}.'
-Please remove the CDROM and reboot this machine.' 6 74
-    else
-        dialog --msgbox 'FreeNAS has been successfully installed on '${_disk}.'
-Please remove the CDROM and reboot this machine.' 6 74
-    fi
+
+    # End critical section.
+    set +e
+
+    trap - EXIT
+    dialog --msgbox "The $SW_NAME $_action on ${_disk} succeeded!
+Please remove the CDROM and reboot." 6 74
+
     return 0
 }
 
@@ -320,7 +323,7 @@ menu_shell()
 
 menu_reboot()
 {
-    echo "Rebooting the system..."
+    echo "Rebooting..."
     reboot >/dev/null
 }
 
@@ -337,8 +340,8 @@ main()
 
     while :; do
 
-        dialog --clear --title "FreeNAS 8.0 Beta Console Setup" --menu "" 12 73 6 \
-            "1" "Install/Upgrade to hard drive/flash device, etc." \
+        dialog --clear --title "$SW_NAME $SW_VERSION Console Setup" --menu "" 12 73 6 \
+            "1" "Install/Upgrade" \
             "2" "Shell" \
             "3" "Reboot System" \
             "4" "Shutdown System" \
