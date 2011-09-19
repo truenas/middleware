@@ -1,0 +1,52 @@
+{% load i18n %}
+<div id="gridContainer4" dojoType="dijit.layout.ContentPane" doLayout="true">
+<script type="dojo/method">
+
+    var store = new dojo.data.ItemFileWriteStore({
+        url: "{% url storage_zpool_status_json name=name %}",
+        });
+
+
+    var struc = [
+           { cells: [
+               [
+                   { field: "name", name: "Name" },
+                   { field: "vdevs",
+                       children: [
+                           { field: "name", name: "Type", width: "12em" },
+                           { field: "disks",
+                                children: [
+                                    { field: "name", name: "Disk", width: "12em" },
+                                    { field: "status", name: "Status", width: "12em" },
+                                ],
+                                itemAggregates: [ ],
+                                aggregate: "cnt"
+                           },
+                       ],
+                       itemAggregates: [ ],
+                       aggregate: "cnt"
+                   }
+               ]
+             ]
+           }
+       ];
+
+
+    // create a new grid:
+    var grid4 = new dojox.grid.TreeGrid({
+        store: store,
+        rowSelector: true,
+        //rowSelector: '20px',
+        queryOptions: {deep: false},
+        structure: struc
+    },
+    document.createElement('div'));
+
+        container = dojo.byId("gridContainer4");
+        dojo.html._emptyNode(container);
+        container.appendChild(grid4.domNode);
+
+
+    grid4.startup();
+</script>
+</div>

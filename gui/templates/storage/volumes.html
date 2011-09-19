@@ -176,6 +176,15 @@
     <div dojoType="dijit.Tooltip" connectId="viewDisksBtn{{ m.id }}" position="above">
         <strong>{% trans "View Disks" %}</strong>
     </div>
+    <button id="statusVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
+        <img src="{{ STATIC_URL }}images/ui/buttons/view_all_disks.png" width="18px" height="18px">
+        <script type="dojo/method" event="onClick" args="evt">
+            viewModel('{% trans "Zpool Status"|force_escape %}', '{% url storage_zpool_status name=m.mp_volume.vol_name %}');
+        </script>
+    </button>
+    <div dojoType="dijit.Tooltip" connectId="editVolBtn{{ m.id }}" position="above">
+        <strong>{% trans "Zpool Status" %}</strong>
+    </div>
 {% endif %}
 	    </td>
 	</tr>

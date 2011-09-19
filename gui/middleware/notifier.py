@@ -1470,7 +1470,7 @@ class notifier:
                 for consumer in entry.xpathEval('../consumer/provider'):
                     provider = consumer.prop("ref")
                     device = doc.xpathEval("//class[name = 'DISK']//provider[@id = '%s']/name" % provider)
-                    disks.append( device[0].content )
+                    disks.append( {'name': device[0].content} )
                 volumes.append({
                     'label': label,
                     'type': 'geom',
@@ -1494,9 +1494,9 @@ class notifier:
                     'id': roots.id,
                     'group_type': 'none',
                     'cache': roots['cache'].dump() if roots['cache'] else None,
-                    'log': roots['log'].dump() if roots['log'] else None,
+                    'log': roots['logs'].dump() if roots['logs'] else None,
                     'spare': roots['spare'].dump() if roots['spare'] else None,
-                    'disks': roots[pool].dump(),
+                    'disks': roots['data'].dump(),
                     })
 
         return volumes

@@ -63,6 +63,7 @@
     dojo.require("dijit.form.HorizontalRuleLabels");
 
     dojo.require("dojox.data.JsonRestStore");
+    dojo.require("dojox.grid.TreeGrid");
     dojo.require("dojox.grid.EnhancedGrid");
     dojo.require("dojox.grid.enhanced.plugins.DnD");
     dojo.require("dojox.grid.enhanced.plugins.Menu");

@@ -528,7 +528,7 @@ class VolumeAutoImportForm(forms.Form):
         for vol in list(vols):
             for vdev in vol['disks']['vdevs']:
                 for disk in vdev['disks']:
-                    if filter(lambda x: x is not None and disk.startswith(x), used_disks):
+                    if filter(lambda x: x is not None and disk['name'].startswith(x), used_disks):
                         vols.remove(vol)
                         break
                 else:
@@ -629,9 +629,9 @@ class VolumeAutoImportForm(forms.Form):
                                 group_volume = volume)
                     grp.save()
 
-                    for diskname in vdev['disks']:
-                        ident = notifier().device_to_identifier(diskname)
-                        diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
+                    for disk in vdev['disks']:
+                        ident = notifier().device_to_identifier(disk['name'])
+                        diskobj = models.Disk(disk_name = disk['name'], disk_identifier = ident,
                                        disk_description = ("Member of %s %s" %
                                                           (volume_name, vdev['type'])),
                                        disk_group = grp)
@@ -643,9 +643,9 @@ class VolumeAutoImportForm(forms.Form):
                 grp = models.DiskGroup(group_name= volume_name, group_type = group_type, group_volume = volume)
                 grp.save()
 
-                for diskname in vol['disks']['vdevs'][0]['disks']:
-                    ident = notifier().device_to_identifier(diskname)
-                    diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
+                for disk in vol['disks']['vdevs'][0]['disks']:
+                    ident = notifier().device_to_identifier(disk['name'])
+                    diskobj = models.Disk(disk_name = disk['name'], disk_identifier = ident,
                                    disk_description = ("Member of %s %s" %
                                                       (volume_name, group_type)),
                                    disk_group = grp)
@@ -667,9 +667,9 @@ class VolumeAutoImportForm(forms.Form):
                                 group_type=group_type , group_volume = volume)
                         grp.save()
 
-                        for diskname in vdev['disks']:
-                            ident = notifier().device_to_identifier(diskname)
-                            diskobj = models.Disk(disk_name = diskname, disk_identifier = ident,
+                        for disk in vdev['disks']:
+                            ident = notifier().device_to_identifier(disk['name'])
+                            diskobj = models.Disk(disk_name = disk['name'], disk_identifier = ident,
                                       disk_description = ("Member of %s %s" %
                                         (volume.vol_name, grp_type)), disk_group = grp)
                             diskobj.save()

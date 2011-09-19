@@ -650,3 +650,16 @@ def volume_export(request, vid):
         'used': usedsize,
         'services': services,
     })
+
+def zpool_status(request, name):
+    return render(request, 'storage/zpool_status.html', {
+        'name': name,
+    })
+
+def zpool_status_json(request, name):
+    pool = notifier().zpool_parse(name)
+    return HttpResponse(simplejson.dumps({
+        'identifier': 'id',
+        'label': 'name',
+        'items': pool.dump(),
+    }, indent=2))
