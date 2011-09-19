@@ -3884,12 +3884,12 @@ msgid "The uploaded file is not valid."
 msgstr ""
 
 #: system/views.py:243
-msgid "Test message from"
-msgstr "Prufu skilaboð frá"
+msgid "Test message from FreeNAS"
+msgstr "Prufu skilaboð frá FreeNAS"
 
 #: system/views.py:244
-msgid "This is a message test from"
-msgstr "Þetta er skilaboða prófun frá"
+msgid "This is a message test from FreeNAS"
+msgstr "Þetta er skilaboða prófun frá FreeNAS"
 
 #: templates/404.html:7
 msgid "Page Not Found"
@@ -4145,28 +4145,28 @@ msgid "Mailing Lists"
 msgstr ""
 
 #: templates/freeadmin/index.html:87
-msgid "Announce"
+msgid "FreeNAS Announce"
 msgstr ""
 
 #: templates/freeadmin/index.html:88
-msgid "Commit"
+msgid "FreeNAS Commit"
 msgstr ""
 
 #: templates/freeadmin/index.html:89
-msgid "Devel"
+msgid "FreeNAS Devel"
 msgstr ""
 
 #: templates/freeadmin/index.html:90
-msgid "Testing"
+msgid "FreeNAS Testing"
 msgstr ""
 
 #: templates/freeadmin/index.html:91
-msgid "Docs"
-msgstr "Skjöl"
+msgid "FreeNAS Docs"
+msgstr "FreeNAS Skjöl"
 
 #: templates/freeadmin/index.html:92
-msgid "Translations"
-msgstr "Þýðingar"
+msgid "FreeNAS Translations"
+msgstr "FreeNAS Þýðingar"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
@@ -4181,7 +4181,7 @@ msgid "Documentation"
 msgstr ""
 
 #: templates/freeadmin/index.html:106
-msgid "Documentation"
+msgid "FreeNAS Documentation"
 msgstr ""
 
 #: templates/network/interface.html:9
@@ -4331,7 +4331,7 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr ""
 
 #: templates/registration/login.html:50
-msgid "Welcome to"
+msgid "Welcome to FreeNAS 8"
 msgstr ""
 
 #: templates/registration/login.html:51
@@ -5030,7 +5030,7 @@ msgid "Load Average"
 msgstr ""
 
 #: templates/system/system_info.html:32
-msgid "Build"
+msgid "FreeNAS Build"
 msgstr ""
 
 #: templates/system/wizard.html:3

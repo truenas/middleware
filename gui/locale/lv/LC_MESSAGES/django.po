@@ -4075,12 +4075,12 @@ msgid "The uploaded file is not valid."
 msgstr "Augšupielādes datne nav derīga."
 
 #: system/views.py:243
-msgid "Test message from"
-msgstr "Testa ziņojums no"
+msgid "Test message from FreeNAS"
+msgstr "Testa ziņojums no FreeNAS"
 
 #: system/views.py:244
-msgid "This is a message test from"
-msgstr "Šis ir testa ziņojums no"
+msgid "This is a message test from FreeNAS"
+msgstr "Šis ir testa ziņojums no FreeNAS"
 
 #: templates/404.html:7
 msgid "Page Not Found"
@@ -4337,28 +4337,28 @@ msgid "Mailing Lists"
 msgstr "Adresātu saraksts"
 
 #: templates/freeadmin/index.html:87
-msgid "Announce"
-msgstr "Pasludina"
+msgid "FreeNAS Announce"
+msgstr "FreeNAS Pasludina"
 
 #: templates/freeadmin/index.html:88
-msgid "Commit"
-msgstr "Nodod"
+msgid "FreeNAS Commit"
+msgstr "FreeNAS Nodod"
 
 #: templates/freeadmin/index.html:89
-msgid "Devel"
-msgstr "Izstrāde"
+msgid "FreeNAS Devel"
+msgstr "FreeNAS Izstrāde"
 
 #: templates/freeadmin/index.html:90
-msgid "Testing"
-msgstr "Testēšana"
+msgid "FreeNAS Testing"
+msgstr "FreeNAS Testēšana"
 
 #: templates/freeadmin/index.html:91
-msgid "Docs"
-msgstr "Dokumenti"
+msgid "FreeNAS Docs"
+msgstr "FreeNAS Dokumenti"
 
 #: templates/freeadmin/index.html:92
-msgid "Translations"
-msgstr "Tulkojumi"
+msgid "FreeNAS Translations"
+msgstr "FreeNAS Tulkojumi"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
@@ -4373,8 +4373,8 @@ msgid "Documentation"
 msgstr "Dokumentācija"
 
 #: templates/freeadmin/index.html:106
-msgid "Documentation"
-msgstr "Dokumentācija"
+msgid "FreeNAS Documentation"
+msgstr "FreeNAS Dokumentācija"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4523,8 +4523,8 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Laipni lūdzam, %(username)s. Paldies, ka autorizējies."
 
 #: templates/registration/login.html:50
-msgid "Welcome to"
-msgstr "Sveicināts8"
+msgid "Welcome to FreeNAS 8"
+msgstr "Sveicināts FreeNAS 8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -5220,8 +5220,8 @@ msgid "Load Average"
 msgstr "Vidējā slodze"
 
 #: templates/system/system_info.html:32
-msgid "Build"
-msgstr "versija"
+msgid "FreeNAS Build"
+msgstr "FreeNAS versija"
 
 #: templates/system/wizard.html:3
 #, python-format

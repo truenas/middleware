@@ -3902,11 +3902,11 @@ msgid "The uploaded file is not valid."
 msgstr "업로드 파일이 유효하지 않습니다."
 
 #: system/views.py:243
-msgid "Test message from"
+msgid "Test message from FreeNAS"
 msgstr ""
 
 #: system/views.py:244
-msgid "This is a message test from"
+msgid "This is a message test from FreeNAS"
 msgstr ""
 
 #: templates/404.html:7
@@ -4165,30 +4165,30 @@ msgid "Mailing Lists"
 msgstr "메일링 리스트"
 
 #: templates/freeadmin/index.html:87
-msgid "Announce"
-msgstr "공지사항"
+msgid "FreeNAS Announce"
+msgstr "FreeNAS 공지사항"
 
 #: templates/freeadmin/index.html:88
-msgid "Commit"
+msgid "FreeNAS Commit"
 msgstr ""
 
 #: templates/freeadmin/index.html:89
-msgid "Devel"
+msgid "FreeNAS Devel"
 msgstr ""
 
 #: templates/freeadmin/index.html:90
-msgid "Testing"
+msgid "FreeNAS Testing"
 msgstr ""
 
 #: templates/freeadmin/index.html:91
 #, fuzzy
-msgid "Docs"
-msgstr "공지사항"
+msgid "FreeNAS Docs"
+msgstr "FreeNAS 공지사항"
 
 #: templates/freeadmin/index.html:92
 #, fuzzy
-msgid "Translations"
-msgstr "공지사항"
+msgid "FreeNAS Translations"
+msgstr "FreeNAS 공지사항"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
@@ -4204,7 +4204,7 @@ msgid "Documentation"
 msgstr "위치"
 
 #: templates/freeadmin/index.html:106
-msgid "Documentation"
+msgid "FreeNAS Documentation"
 msgstr ""
 
 #: templates/network/interface.html:9
@@ -4354,7 +4354,7 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr ""
 
 #: templates/registration/login.html:50
-msgid "Welcome to"
+msgid "Welcome to FreeNAS 8"
 msgstr ""
 
 #: templates/registration/login.html:51
@@ -5065,8 +5065,8 @@ msgid "Load Average"
 msgstr ""
 
 #: templates/system/system_info.html:32
-msgid "Build"
-msgstr "빌드"
+msgid "FreeNAS Build"
+msgstr "FreeNAS 빌드"
 
 #: templates/system/wizard.html:3
 #, python-format

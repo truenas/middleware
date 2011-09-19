@@ -3873,11 +3873,11 @@ msgid "The uploaded file is not valid."
 msgstr ""
 
 #: system/views.py:243
-msgid "Test message from"
+msgid "Test message from FreeNAS"
 msgstr ""
 
 #: system/views.py:244
-msgid "This is a message test from"
+msgid "This is a message test from FreeNAS"
 msgstr ""
 
 #: templates/404.html:7
@@ -4135,27 +4135,27 @@ msgid "Mailing Lists"
 msgstr ""
 
 #: templates/freeadmin/index.html:87
-msgid "Announce"
+msgid "FreeNAS Announce"
 msgstr ""
 
 #: templates/freeadmin/index.html:88
-msgid "Commit"
+msgid "FreeNAS Commit"
 msgstr ""
 
 #: templates/freeadmin/index.html:89
-msgid "Devel"
+msgid "FreeNAS Devel"
 msgstr ""
 
 #: templates/freeadmin/index.html:90
-msgid "Testing"
+msgid "FreeNAS Testing"
 msgstr ""
 
 #: templates/freeadmin/index.html:91
-msgid "Docs"
+msgid "FreeNAS Docs"
 msgstr ""
 
 #: templates/freeadmin/index.html:92
-msgid "Translations"
+msgid "FreeNAS Translations"
 msgstr ""
 
 #: templates/freeadmin/index.html:97
@@ -4171,7 +4171,7 @@ msgid "Documentation"
 msgstr ""
 
 #: templates/freeadmin/index.html:106
-msgid "Documentation"
+msgid "FreeNAS Documentation"
 msgstr ""
 
 #: templates/network/interface.html:9
@@ -4321,7 +4321,7 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr ""
 
 #: templates/registration/login.html:50
-msgid "Welcome to"
+msgid "Welcome to FreeNAS 8"
 msgstr ""
 
 #: templates/registration/login.html:51
@@ -5023,7 +5023,7 @@ msgid "Load Average"
 msgstr ""
 
 #: templates/system/system_info.html:32
-msgid "Build"
+msgid "FreeNAS Build"
 msgstr ""
 
 #: templates/system/wizard.html:3
