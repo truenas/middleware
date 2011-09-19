@@ -68,7 +68,6 @@ from freenasUI.common.locks import mntlock
 from middleware import zfs
 from middleware.exceptions import MiddlewareError
 
-
 class notifier:
     from os import system as ___system
     from pwd import getpwnam as ___getpwnam
