@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:47-0700\n"
 "PO-Revision-Date: 2011-07-27 20:57+0200\n"
-"Last-Translator: owenyeung <owenyeung@hotmail.com>\n"
+"Last-Translator: Owen <owenyeung@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_HK\n"
 "MIME-Version: 1.0\n"
@@ -4209,8 +4209,9 @@ msgid "Documentation"
 msgstr "地點"
 
 #: templates/freeadmin/index.html:106
+#, fuzzy
 msgid "Documentation"
-msgstr ""
+msgstr "地點"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"

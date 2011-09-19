@@ -4401,7 +4401,7 @@ msgstr "Dokumentasi"
 
 #: templates/freeadmin/index.html:106
 msgid "Documentation"
-msgstr "Documentation"
+msgstr "Dokumentasi"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"

@@ -4288,8 +4288,9 @@ msgid "Documentation"
 msgstr "Plassering"
 
 #: templates/freeadmin/index.html:106
+#, fuzzy
 msgid "Documentation"
-msgstr ""
+msgstr "Plassering"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"

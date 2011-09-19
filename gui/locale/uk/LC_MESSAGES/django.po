@@ -4355,7 +4355,7 @@ msgstr "IRC (чат)"
 
 #: templates/freeadmin/index.html:81
 msgid "#freenas on freenode"
-msgstr "#на FreeNode"
+msgstr "# FreeNAS на FreeNode"
 
 #: templates/freeadmin/index.html:85
 msgid "Mailing Lists"

@@ -4384,6 +4384,7 @@ msgid "Documentation"
 msgstr "Dokumentacja"
 
 #: templates/freeadmin/index.html:106
+#, fuzzy
 msgid "Documentation"
 msgstr "Dokumentacja"
 

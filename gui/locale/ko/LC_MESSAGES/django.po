@@ -4204,8 +4204,9 @@ msgid "Documentation"
 msgstr "위치"
 
 #: templates/freeadmin/index.html:106
+#, fuzzy
 msgid "Documentation"
-msgstr ""
+msgstr "위치"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"

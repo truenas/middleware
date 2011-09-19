@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-08-30 01:20+0200\n"
-"Last-Translator: Peter <petyuska@gmail.com>\n"
+"PO-Revision-Date: 2011-09-18 16:06+0200\n"
+"Last-Translator: RedFox <bareszgeld@freemail.hu>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
@@ -437,7 +437,7 @@ msgstr "%(week) hét"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "Ne ellenőrizze az eszközt."
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
@@ -461,9 +461,8 @@ msgid "Short Self-Test"
 msgstr "Rövid Ön-Teszt"
 
 #: choices.py:469
-#, fuzzy
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Továbbítás Ön-Teszt (csak ATA)"
+msgstr "Tovább az átvitelteszthez (Csak ATA eszköz)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"

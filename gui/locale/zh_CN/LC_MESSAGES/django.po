@@ -4114,7 +4114,7 @@ msgstr "警告！"
 msgid ""
 "You are about to <strong>REBOOT</strong> the system, what would you like to "
 "do?"
-msgstr "你确认要<strong>重启服务器</strong>吗?"
+msgstr "你确认要<strong>重启FreeNAS服务器</strong>吗?"
 
 #: templates/freeadmin/index.html:57
 msgid "Shutdown the System"
@@ -4124,7 +4124,7 @@ msgstr "关机"
 msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
-msgstr "你确认要<strong>关闭服务器</strong>吗?"
+msgstr "你确认要<strong>关闭FreeNAS服务器</strong>吗?"
 
 #: templates/freeadmin/index.html:69
 #, fuzzy
@@ -4137,7 +4137,7 @@ msgstr "论坛"
 
 #: templates/freeadmin/index.html:74
 msgid "Community Forum"
-msgstr "社区论坛"
+msgstr "FreeNAS社区论坛"
 
 #: templates/freeadmin/index.html:79
 msgid "IRC (Chat)"

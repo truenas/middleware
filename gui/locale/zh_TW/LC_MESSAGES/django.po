@@ -4233,7 +4233,7 @@ msgstr "文件"
 
 #: templates/freeadmin/index.html:106
 msgid "Documentation"
-msgstr "的文件"
+msgstr "文件"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
