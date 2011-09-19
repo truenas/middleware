@@ -4297,12 +4297,12 @@ msgid "The uploaded file is not valid."
 msgstr "Die hochgeladene Datei ist ungültig."
 
 #: system/views.py:243
-msgid "Test message from FreeNAS"
-msgstr "Testnachricht von FreeNAS"
+msgid "Test message from"
+msgstr "Testnachricht von"
 
 #: system/views.py:244
-msgid "This is a message test from FreeNAS"
-msgstr "Dies ist ein Nachrichtentest von FreeNAS"
+msgid "This is a message test from"
+msgstr "Dies ist ein Nachrichtentest von"
 
 #: templates/404.html:7
 msgid "Page Not Found"
@@ -4564,33 +4564,33 @@ msgstr "Mailinglisten"
 
 # die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:87
-msgid "FreeNAS Announce"
-msgstr "FreeNAS Announce"
+msgid "Announce"
+msgstr "Announce"
 
 # die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:88
-msgid "FreeNAS Commit"
-msgstr "FreeNAS Commit"
+msgid "Commit"
+msgstr "Commit"
 
 # die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:89
-msgid "FreeNAS Devel"
-msgstr "FreeNAS Devel"
+msgid "Devel"
+msgstr "Devel"
 
 # die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:90
-msgid "FreeNAS Testing"
-msgstr "FreeNAS Testing"
+msgid "Testing"
+msgstr "Testing"
 
 # die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:91
-msgid "FreeNAS Docs"
-msgstr "FreeNAS Dokumentation"
+msgid "Docs"
+msgstr "Dokumentation"
 
 # die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:92
-msgid "FreeNAS Translations"
-msgstr "FreeNAS Translations"
+msgid "Translations"
+msgstr "Translations"
 
 # die alte Frage: "Support" übersetzen oder nicht?
 #: templates/freeadmin/index.html:97
@@ -4608,8 +4608,8 @@ msgstr "Dokumentation"
 
 # die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:106
-msgid "FreeNAS Documentation"
-msgstr "FreeNAS Dokumentation"
+msgid "Documentation"
+msgstr "Dokumentation"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4761,8 +4761,8 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Willkommen, %(username)s. Schön, dass Sie hier sind."
 
 #: templates/registration/login.html:50
-msgid "Welcome to "
-msgstr "Willkommen zu FreeNAS 8"
+msgid "Welcome to"
+msgstr "Willkommen zu8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -5466,8 +5466,8 @@ msgid "Load Average"
 msgstr "Durchschnittliche Last"
 
 #: templates/system/system_info.html:32
-msgid "FreeNAS Build"
-msgstr "FreeNAS Version"
+msgid "Build"
+msgstr "Version"
 
 #: templates/system/wizard.html:3
 #, python-format

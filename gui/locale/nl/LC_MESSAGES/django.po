@@ -4099,12 +4099,12 @@ msgid "The uploaded file is not valid."
 msgstr "Het geüploade bestand is niet geldig."
 
 #: system/views.py:243
-msgid "Test message from FreeNAS"
-msgstr "Test boodschap van FreeNAS"
+msgid "Test message from"
+msgstr "Test boodschap van"
 
 #: system/views.py:244
-msgid "This is a message test from FreeNAS"
-msgstr "Dit is een test boodschap van FreeNAS"
+msgid "This is a message test from"
+msgstr "Dit is een test boodschap van"
 
 #: templates/404.html:7
 msgid "Page Not Found"
@@ -4364,28 +4364,28 @@ msgid "Mailing Lists"
 msgstr "Mailing Lijsten"
 
 #: templates/freeadmin/index.html:87
-msgid "FreeNAS Announce"
-msgstr "FreeNAS Announce"
+msgid "Announce"
+msgstr "Announce"
 
 #: templates/freeadmin/index.html:88
-msgid "FreeNAS Commit"
-msgstr "FreeNAS Commit"
+msgid "Commit"
+msgstr "Commit"
 
 #: templates/freeadmin/index.html:89
-msgid "FreeNAS Devel"
-msgstr "FreeNAS Devel"
+msgid "Devel"
+msgstr "Devel"
 
 #: templates/freeadmin/index.html:90
-msgid "FreeNAS Testing"
-msgstr "FreeNAS Testing"
+msgid "Testing"
+msgstr "Testing"
 
 #: templates/freeadmin/index.html:91
-msgid "FreeNAS Docs"
-msgstr "FreeNAS Documentatie"
+msgid "Docs"
+msgstr "Documentatie"
 
 #: templates/freeadmin/index.html:92
-msgid "FreeNAS Translations"
-msgstr "FreeNAS Vertalingen"
+msgid "Translations"
+msgstr "Vertalingen"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
@@ -4400,8 +4400,8 @@ msgid "Documentation"
 msgstr "Documentatie"
 
 #: templates/freeadmin/index.html:106
-msgid "FreeNAS Documentation"
-msgstr "FreeNAS Documentatie"
+msgid "Documentation"
+msgstr "Documentatie"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4552,8 +4552,8 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Welkom, %(username)s. Bedankt voor het aanmelden."
 
 #: templates/registration/login.html:50
-msgid "Welcome to "
-msgstr "Welkom bij FreeNAS 8"
+msgid "Welcome to"
+msgstr "Welkom bij8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -5249,8 +5249,8 @@ msgid "Load Average"
 msgstr "Gemiddelde belasting"
 
 #: templates/system/system_info.html:32
-msgid "FreeNAS Build"
-msgstr "FreeNAS Build"
+msgid "Build"
+msgstr "Build"
 
 #: templates/system/wizard.html:3
 #, python-format

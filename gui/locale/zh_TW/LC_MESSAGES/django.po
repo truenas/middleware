@@ -3936,12 +3936,12 @@ msgid "The uploaded file is not valid."
 msgstr "上傳的檔案無效"
 
 #: system/views.py:243
-msgid "Test message from FreeNAS"
-msgstr "從 FreeNAS發出的測試訊息"
+msgid "Test message from"
+msgstr "從發出的測試訊息"
 
 #: system/views.py:244
-msgid "This is a message test from FreeNAS"
-msgstr "這是從 FreeNAS發出的測試訊息"
+msgid "This is a message test from"
+msgstr "這是從發出的測試訊息"
 
 #: templates/404.html:7
 msgid "Page Not Found"
@@ -4196,28 +4196,28 @@ msgid "Mailing Lists"
 msgstr "寄件清單"
 
 #: templates/freeadmin/index.html:87
-msgid "FreeNAS Announce"
-msgstr "FreeNAS 的公告"
+msgid "Announce"
+msgstr "的公告"
 
 #: templates/freeadmin/index.html:88
-msgid "FreeNAS Commit"
-msgstr "FreeNAS 的承諾"
+msgid "Commit"
+msgstr "的承諾"
 
 #: templates/freeadmin/index.html:89
-msgid "FreeNAS Devel"
-msgstr "FreeNAS 的開發"
+msgid "Devel"
+msgstr "的開發"
 
 #: templates/freeadmin/index.html:90
-msgid "FreeNAS Testing"
-msgstr "FreeNAS 的測試"
+msgid "Testing"
+msgstr "的測試"
 
 #: templates/freeadmin/index.html:91
-msgid "FreeNAS Docs"
-msgstr "FreeNAS 的文件"
+msgid "Docs"
+msgstr "的文件"
 
 #: templates/freeadmin/index.html:92
-msgid "FreeNAS Translations"
-msgstr "FreeNAS的翻譯"
+msgid "Translations"
+msgstr "的翻譯"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
@@ -4232,8 +4232,8 @@ msgid "Documentation"
 msgstr "文件"
 
 #: templates/freeadmin/index.html:106
-msgid "FreeNAS Documentation"
-msgstr "FreeNAS的文件"
+msgid "Documentation"
+msgstr "的文件"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4382,8 +4382,8 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "歡迎 %(username) 登入"
 
 #: templates/registration/login.html:50
-msgid "Welcome to "
-msgstr "歡迎使用 FreeNAS 8"
+msgid "Welcome to"
+msgstr "歡迎使用8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -5079,8 +5079,8 @@ msgid "Load Average"
 msgstr "平均負載"
 
 #: templates/system/system_info.html:32
-msgid "FreeNAS Build"
-msgstr "FreeNAS Build"
+msgid "Build"
+msgstr "Build"
 
 #: templates/system/wizard.html:3
 #, python-format

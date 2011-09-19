@@ -4353,11 +4353,11 @@ msgid "The uploaded file is not valid."
 msgstr "アップロードされたファイルは正しくありません。"
 
 #: system/views.py:243
-msgid "Test message from FreeNAS"
+msgid "Test message from"
 msgstr ""
 
 #: system/views.py:244
-msgid "This is a message test from FreeNAS"
+msgid "This is a message test from"
 msgstr ""
 
 #: templates/404.html:7
@@ -4629,38 +4629,38 @@ msgstr "メーリングリスト"
 # メーリングリストへのリンクなので、原文のままがよいと思います。
 #: templates/freeadmin/index.html:87
 #, fuzzy
-msgid "FreeNAS Announce"
-msgstr "FreeNAS Announce"
+msgid "Announce"
+msgstr "Announce"
 
 # メーリングリストへのリンクなので、原文のままがよいと思います。
 #: templates/freeadmin/index.html:88
 #, fuzzy
-msgid "FreeNAS Commit"
-msgstr "FreeNAS Commit"
+msgid "Commit"
+msgstr "Commit"
 
 # メーリングリストへのリンクなので、原文のままがよいと思います。
 #: templates/freeadmin/index.html:89
 #, fuzzy
-msgid "FreeNAS Devel"
-msgstr "FreeNAS Devel"
+msgid "Devel"
+msgstr "Devel"
 
 # メーリングリストへのリンクなので、原文のままがよいと思います。
 #: templates/freeadmin/index.html:90
 #, fuzzy
-msgid "FreeNAS Testing"
-msgstr "FreeNAS Testing"
+msgid "Testing"
+msgstr "Testing"
 
 # メーリングリストへのリンクなので、原文のままがよいと思います。
 #: templates/freeadmin/index.html:91
 #, fuzzy
-msgid "FreeNAS Docs"
-msgstr "FreeNAS Devel"
+msgid "Docs"
+msgstr "Devel"
 
 # メーリングリストへのリンクなので、原文のままがよいと思います。
 #: templates/freeadmin/index.html:92
 #, fuzzy
-msgid "FreeNAS Translations"
-msgstr "FreeNAS Testing"
+msgid "Translations"
+msgstr "Testing"
 
 # 前後の単語から、なんらかのリンクと思われるので、原文のままがよいと思います。
 #: templates/freeadmin/index.html:97
@@ -4682,8 +4682,8 @@ msgstr "場所"
 # メーリングリストへのリンクなので、原文のままがよいと思います。
 #: templates/freeadmin/index.html:106
 #, fuzzy
-msgid "FreeNAS Documentation"
-msgstr "FreeNAS Testing"
+msgid "Documentation"
+msgstr "Testing"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4834,7 +4834,7 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "ようこそ、%(username)sさん。ログインしてくれてありがとう。"
 
 #: templates/registration/login.html:50
-msgid "Welcome to "
+msgid "Welcome to"
 msgstr ""
 
 #: templates/registration/login.html:51
@@ -5579,8 +5579,8 @@ msgid "Load Average"
 msgstr "ロードアベレージ"
 
 #: templates/system/system_info.html:32
-msgid "FreeNAS Build"
-msgstr "FreeNAS ビルド名"
+msgid "Build"
+msgstr "ビルド名"
 
 #: templates/system/wizard.html:3
 #, fuzzy, python-format

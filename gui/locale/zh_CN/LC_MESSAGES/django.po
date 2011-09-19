@@ -3889,11 +3889,11 @@ msgid "The uploaded file is not valid."
 msgstr "上传文件无效。"
 
 #: system/views.py:243
-msgid "Test message from FreeNAS"
+msgid "Test message from"
 msgstr ""
 
 #: system/views.py:244
-msgid "This is a message test from FreeNAS"
+msgid "This is a message test from"
 msgstr ""
 
 #: templates/404.html:7
@@ -4114,7 +4114,7 @@ msgstr "警告！"
 msgid ""
 "You are about to <strong>REBOOT</strong> the system, what would you like to "
 "do?"
-msgstr "你确认要<strong>重启FreeNAS服务器</strong>吗?"
+msgstr "你确认要<strong>重启服务器</strong>吗?"
 
 #: templates/freeadmin/index.html:57
 msgid "Shutdown the System"
@@ -4124,7 +4124,7 @@ msgstr "关机"
 msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
-msgstr "你确认要<strong>关闭FreeNAS服务器</strong>吗?"
+msgstr "你确认要<strong>关闭服务器</strong>吗?"
 
 #: templates/freeadmin/index.html:69
 #, fuzzy
@@ -4137,7 +4137,7 @@ msgstr "论坛"
 
 #: templates/freeadmin/index.html:74
 msgid "Community Forum"
-msgstr "FreeNAS社区论坛"
+msgstr "社区论坛"
 
 #: templates/freeadmin/index.html:79
 msgid "IRC (Chat)"
@@ -4152,27 +4152,27 @@ msgid "Mailing Lists"
 msgstr "邮件列表"
 
 #: templates/freeadmin/index.html:87
-msgid "FreeNAS Announce"
+msgid "Announce"
 msgstr ""
 
 #: templates/freeadmin/index.html:88
-msgid "FreeNAS Commit"
+msgid "Commit"
 msgstr ""
 
 #: templates/freeadmin/index.html:89
-msgid "FreeNAS Devel"
+msgid "Devel"
 msgstr ""
 
 #: templates/freeadmin/index.html:90
-msgid "FreeNAS Testing"
+msgid "Testing"
 msgstr ""
 
 #: templates/freeadmin/index.html:91
-msgid "FreeNAS Docs"
-msgstr "FreeNAS文档"
+msgid "Docs"
+msgstr "文档"
 
 #: templates/freeadmin/index.html:92
-msgid "FreeNAS Translations"
+msgid "Translations"
 msgstr ""
 
 #: templates/freeadmin/index.html:97
@@ -4188,8 +4188,8 @@ msgid "Documentation"
 msgstr "文档"
 
 #: templates/freeadmin/index.html:106
-msgid "FreeNAS Documentation"
-msgstr "FreeNAS文档"
+msgid "Documentation"
+msgstr "文档"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4340,8 +4340,8 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "欢迎 %(username)s 登录"
 
 #: templates/registration/login.html:50
-msgid "Welcome to "
-msgstr "欢迎使用 FreeNAS 8"
+msgid "Welcome to"
+msgstr "欢迎使用8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -5038,8 +5038,8 @@ msgid "Load Average"
 msgstr "平均负载"
 
 #: templates/system/system_info.html:32
-msgid "FreeNAS Build"
-msgstr "FreeNAS版本"
+msgid "Build"
+msgstr "版本"
 
 #: templates/system/wizard.html:3
 #, python-format

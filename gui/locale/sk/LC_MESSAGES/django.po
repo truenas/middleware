@@ -4103,12 +4103,12 @@ msgid "The uploaded file is not valid."
 msgstr "Uploadnutý súbor nie je platný."
 
 #: system/views.py:243
-msgid "Test message from FreeNAS"
-msgstr "Testovacia správa od FreeNAS"
+msgid "Test message from"
+msgstr "Testovacia správa od"
 
 #: system/views.py:244
-msgid "This is a message test from FreeNAS"
-msgstr "Toto je testovacia správa od FreeNAS"
+msgid "This is a message test from"
+msgstr "Toto je testovacia správa od"
 
 #: templates/404.html:7
 msgid "Page Not Found"
@@ -4363,28 +4363,28 @@ msgid "Mailing Lists"
 msgstr "Mailing list"
 
 #: templates/freeadmin/index.html:87
-msgid "FreeNAS Announce"
-msgstr "FreeNAS Announce"
+msgid "Announce"
+msgstr "Announce"
 
 #: templates/freeadmin/index.html:88
-msgid "FreeNAS Commit"
-msgstr "FreeNAS Commit"
+msgid "Commit"
+msgstr "Commit"
 
 #: templates/freeadmin/index.html:89
-msgid "FreeNAS Devel"
-msgstr "FreeNAS vývoj"
+msgid "Devel"
+msgstr "vývoj"
 
 #: templates/freeadmin/index.html:90
-msgid "FreeNAS Testing"
-msgstr "FreeNAS testovanie"
+msgid "Testing"
+msgstr "testovanie"
 
 #: templates/freeadmin/index.html:91
-msgid "FreeNAS Docs"
-msgstr "FreeNAS Dokumentácia"
+msgid "Docs"
+msgstr "Dokumentácia"
 
 #: templates/freeadmin/index.html:92
-msgid "FreeNAS Translations"
-msgstr "FreeNAS Preklady"
+msgid "Translations"
+msgstr "Preklady"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
@@ -4399,8 +4399,8 @@ msgid "Documentation"
 msgstr "Dokumentácia"
 
 #: templates/freeadmin/index.html:106
-msgid "FreeNAS Documentation"
-msgstr "FreeNAS Dokumentácia"
+msgid "Documentation"
+msgstr "Dokumentácia"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4549,8 +4549,8 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Vitajte, %(username)s. Ďakujeme za prihlásenie."
 
 #: templates/registration/login.html:50
-msgid "Welcome to "
-msgstr "Vitajte vo FreeNAS 8"
+msgid "Welcome to"
+msgstr "Vitajte vo8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -5246,8 +5246,8 @@ msgid "Load Average"
 msgstr "Priemerné zaťaženie"
 
 #: templates/system/system_info.html:32
-msgid "FreeNAS Build"
-msgstr "FreeNAS Build"
+msgid "Build"
+msgstr "Build"
 
 #: templates/system/wizard.html:3
 #, python-format
