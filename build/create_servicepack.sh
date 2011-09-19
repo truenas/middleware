@@ -36,6 +36,8 @@ if [ $# != 2 ]; then
 	exit 1
 fi
 
+set -e
+
 echo -n "Clearing out and recreating working directory at ${PREFIX}... "
 rm -fr ${PREFIX}
 mkdir -p ${PREFIX}
@@ -92,7 +94,7 @@ echo "Done!"
 echo -n "Generating post-install files... "
 
 mkdir -p ${PREFIX}/servicepack/etc/servicepack
-cp ${PREFIX}/release/etc/version.freenas ${PREFIX}/servicepack/etc/servicepack/version.expected
+cp ${PREFIX}/release/etc/version ${PREFIX}/servicepack/etc/servicepack/version.expected
 
 POSTINSTALL=${PREFIX}/servicepack/etc/servicepack/post-install
 
