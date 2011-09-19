@@ -1294,14 +1294,15 @@ class notifier:
             with open(VERSION_FILE) as f:
                 freenas_build = f.read()
         except:
-            return "Current FreeNAS version can not be recognized"
+            return 'Could not determine software version from service pack'
         try:
             with open('/var/tmp/firmware/etc/servicepack/version.expected') as f:
                 expected_build = f.read()
         except:
-            return "Expected FreeNAS version can not be recognized"
+            return 'Invalid software version in service pack'
         if freenas_build != expected_build:
-            return "Can not apply service pack because version mismatch"
+            return 'Software versions did not match ("%s" != "%s")' % \
+                (freenas_build, expected_build)
         self.__system("/sbin/mount -uw /")
         self.__system("/usr/bin/xz -cd /var/tmp/firmware/servicepack.txz | /usr/bin/tar xf - -C /")
         self.__system("/bin/sh /etc/servicepack/post-install")
