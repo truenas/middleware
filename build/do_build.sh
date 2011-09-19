@@ -215,7 +215,7 @@ if ! "$FULL_BUILD"; then
 	extra_args="-b"
 fi
 echo $NANO_SRC/tools/tools/nanobsd/nanobsd.sh $args $* $extra_args
-if sh -x $NANO_SRC/tools/tools/nanobsd/nanobsd.sh $args $* $extra_args; then
+if sh $NANO_SRC/tools/tools/nanobsd/nanobsd.sh $args $* $extra_args; then
 	xz -f ${NANO_OBJ}/_.disk.image
 	mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_IMGNAME}.xz
 	sha256 ${NANO_OBJ}/${NANO_IMGNAME}.xz

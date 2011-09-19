@@ -289,7 +289,6 @@ customize_cmd add_gui
 # Move the $world/data to the /data partion
 move_data()
 {
-	set -x
 	db=${NANO_WORLDDIR}/data
 	rm -rf ${NANO_DATADIR}
 	mkdir -p ${NANO_DATADIR}
