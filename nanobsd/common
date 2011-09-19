@@ -32,8 +32,8 @@
 
 # NB: disable -j3
 
-CPUS=${CPUS:=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))}
-NANO_PMAKE="make -j $CPUS"
+# XXX: see do_build.sh (should be pushed into nanobsd.sh as a -j option).
+NANO_PMAKE="make -j $MAKE_JOBS"
 
 # Where cust_pkg() finds packages to install
 NANO_PACKAGE_DIR=${NANO_SRC}/${NANO_TOOLS}/Pkg

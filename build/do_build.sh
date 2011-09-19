@@ -29,6 +29,7 @@ if [ -s ${NANO_OBJ}/_.iw ]; then
 else
 	FULL_BUILD=true
 fi
+MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))
 if [ -f FreeBSD/supfile ]; then
 	UPDATE=false
 else
@@ -36,7 +37,7 @@ else
 fi
 USE_UNIONFS=false
 
-while getopts 'BfuU' optch; do
+while getopts 'Bfj:uU' optch; do
 	case "$optch" in
 	B)
 		info "will not build"
@@ -44,6 +45,12 @@ while getopts 'BfuU' optch; do
 		;;
 	f)
 		FULL_BUILD=true
+		;;
+	j)
+		if ! echo "$OPTARG" | egrep -q '^[[:digit:]]$' || [ $OPTARG -le 0 ]; then
+			usage
+		fi
+		MAKE_JOBS=$OPTARG
 		;;
 	u)
 		UPDATE=true
@@ -215,7 +222,7 @@ if ! "$FULL_BUILD"; then
 	extra_args="-b"
 fi
 echo $NANO_SRC/tools/tools/nanobsd/nanobsd.sh $args $* $extra_args
-if sh $NANO_SRC/tools/tools/nanobsd/nanobsd.sh $args $* $extra_args; then
+if env MAKE_JOBS=$MAKE_JOBS sh $NANO_SRC/tools/tools/nanobsd/nanobsd.sh $args $* $extra_args; then
 	xz -f ${NANO_OBJ}/_.disk.image
 	mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_IMGNAME}.xz
 	sha256 ${NANO_OBJ}/${NANO_IMGNAME}.xz
