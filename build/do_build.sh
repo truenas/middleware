@@ -47,7 +47,8 @@ while getopts 'Bfj:uU' optch; do
 		FULL_BUILD=true
 		;;
 	j)
-		if ! echo "$OPTARG" | egrep -q '^[[:digit:]]$' || [ $OPTARG -le 0 ]; then
+		echo $OPTARG | egrep -q '^[[:digit:]]+$' && [ $OPTARG -le 0 ]
+		if [ $? -ne 0 ]; then
 			usage
 		fi
 		MAKE_JOBS=$OPTARG
