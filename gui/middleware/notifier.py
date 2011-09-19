@@ -1299,7 +1299,7 @@ class notifier:
             with open('/var/tmp/firmware/etc/servicepack/version.expected') as f:
                 expected_build = f.read()
         except:
-            return 'Invalid software version in service pack'
+            return 'Could not determine software version from service pack'
         if freenas_build != expected_build:
             return 'Software versions did not match ("%s" != "%s")' % \
                 (freenas_build, expected_build)
