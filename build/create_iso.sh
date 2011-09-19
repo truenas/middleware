@@ -1,37 +1,21 @@
 #!/bin/sh
 
-# This script creates a bootable LiveCD iso from a nanobsd image for FreeNAS
+set -e
 
-error() {
-	echo >&2 "${0##/*}: ERROR: $*"
-	exit 1
-}
+# This script creates a bootable LiveCD ISO from a nanobsd image for FreeNAS
 
 main()
 {
-	# This script must be run as root
-	if [ $(id -ru) -ne 0 ]; then
-		error "You must be root when running $0"
-	fi
+	export FREENAS_ROOT=$(realpath "$(dirname "$0")/..")
+	. "$FREENAS_ROOT/build/nano_env"
+	. "$FREENAS_ROOT/build/functions.sh"
 
-	root=$(pwd)
-	: ${FREENAS_ARCH=$(uname -p)}
-	export FREENAS_ARCH
-	export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
-	: ${REVISION=`svnversion ${root} | tr -d M`}
-	if [ ! -f ${NANO_OBJ}/"FreeNAS-8r${REVISION}-${FREENAS_ARCH}.full" ]; then
-		REVISION=${REVISION}M
-	fi
-	if [ ! -f ${NANO_OBJ}/"FreeNAS-8r${REVISION}-${FREENAS_ARCH}.full" ]; then
-		error "Can't find image file for ${REVISION}, punting"
-	fi
-	export NANO_NAME="FreeNAS-8r${REVISION}-${FREENAS_ARCH}"
-	export NANO_IMGNAME="${NANO_NAME}.full"
+	requires_root
 
 	# Paths that may need altering on the build system
 	IMGFILE="${NANO_OBJ}/$NANO_IMGNAME"
 	TEMP_IMGFILE="${NANO_OBJ}/_.imgfile" # Scratch file for image
-	ETC_FILES="$root/build/files"
+	ETC_FILES="$FREENAS_ROOT/build/files"
 
 	# Various mount points needed to build the CD, adjust to taste
 	STAGEDIR="${NANO_OBJ}/_.stage" # Scratch location for making filesystem image
@@ -45,24 +29,27 @@ main()
 			 -allow-multidot -hide boot.catalog -o ${OUTPUT} -no-emul-boot \
 			 -b boot/cdboot ${ISODIR}"
 
+	if [ ! -f "${IMGFILE}" ]; then
+		error "Can't find image file (${IMGFILE}) for ${REVISION}, punting"
+	fi
+
 	cleanup
 
-	mkdir -p ${STAGEDIR}/dev
-	mkdir -p ${ISODIR}/data
+	mkdir -p ${STAGEDIR}/dev ${ISODIR}/data
 
 	# Create a quick and dirty nano image from the world tree
 	mkdir -p ${INSTALLUFSDIR}
 	tar -cf - -C ${NANO_OBJ}/_.w --exclude local . | tar -xf - -C ${INSTALLUFSDIR}
-	
+
 	# copy /rescue and /boot from the image to the iso
 	tar -cf - -C ${INSTALLUFSDIR} rescue | tar -xf - -C ${STAGEDIR}
 	tar -cf - -C ${INSTALLUFSDIR} boot | tar -xf - -C ${ISODIR}
 	# Copy the image file to the cdrom.  Cache the compressed version to
 	# make it easier to debug this and the install scripts.
-	if [ ! \( -f ${IMGFILE}.xz \) -o ${IMGFILE} -nt ${IMGFILE}.xz ]; then
+	if [ ! -f ${IMGFILE}.xz -o ${IMGFILE} -nt ${IMGFILE}.xz ]; then
 		xz --verbose --stdout --compress -9 ${IMGFILE} > ${IMGFILE}.xz
 	fi
-	cp ${IMGFILE}.xz ${ISODIR}/FreeNAS-${FREENAS_ARCH}-embedded.xz
+	cp ${IMGFILE}.xz $ISODIR/$NANO_LABEL-$NANO_ARCH-embedded.xz
 
 	echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
 	(cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
@@ -89,11 +76,15 @@ main()
 # return 0.  Otherwise, return 1 with the media unmounted.
 try_mount()
 {
-	local CD="$1" T="$2"
+	local CD
+	local DEV
+
+	CD=$1
+	DEV=$2
 
 	[ -c ${CD} ] || return 1
 	echo -n " ${CD}"
-	if mount -r ${T} ${CD} ${CDROM_MP} > /dev/null 2>&1; then
+	if mount -r ${DEV} ${CD} ${CDROM_MP} > /dev/null 2>&1; then
 		[ -f ${CDROM_MP}${BASEROOT_IMG} ] && return 0
 		umount ${CDROM_MP}
 	fi
@@ -133,11 +124,9 @@ CDROM_MP=/cdrom
 BASEROOT_IMG=/data/base.ufs.uzip
 
 # Re-mount root R/W, so that we can create necessary sub-directories
-mount -u -w /
+mount -uw /
 
-mkdir -p ${BASEROOT_MP}
-mkdir -p ${RWROOT_MP}
-mkdir -p ${CDROM_MP}
+mkdir -p ${BASEROOT_MP} ${RWROOT_MP} ${CDROM_MP}
 
 # Mount the CD device.  Since we mounted off the MD device loaded
 # into memory, CAM might not have had a chance to fully discover
@@ -182,9 +171,9 @@ EOF
 	gzip -9 ${ISODIR}/boot/memroot.ufs
 
 	# More magic scripts for the LiveCD
-	cat > ${ISODIR}/boot/loader.conf << EOF
+	cat > ${ISODIR}/boot/loader.conf <<EOF
 #
-# Boot loader file for FreeNAS.  This relies on a hacked beastie.4th.
+# Boot loader file for $NANO_LABEL.  This relies on a hacked beastie.4th.
 #
 autoboot_delay="2"
 loader_logo="freenas"
@@ -215,9 +204,7 @@ EOF
 cleanup()
 {
 	# Clean up directories used to create the liveCD
-	rm -rf ${STAGEDIR}
-	rm -rf ${ISODIR}
-	rm -rf ${INSTALLUFSDIR}
+	rm -Rf "$STAGEDIR" "$ISODIR" "$INSTALLUFSDIR"
 }
 
 main
