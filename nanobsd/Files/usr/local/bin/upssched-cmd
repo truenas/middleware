@@ -21,12 +21,12 @@ while eval read $f; do
 case $1 in
 	"ONBATT"|"LOWBATT"|"SHUTDOWN")
 		if [ "${ups_emailnotify}" -eq 1 ]; then
-			echo "$NOTIFYTYPE" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
+			echo "Shutdown" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
 		fi
 		logger -t upssched-cmd "issuing shutdown"
 		/usr/local/sbin/upsmon -c fsd
 		;;
-	ONLINE)
+	"EMAIL"|"ONLINE")
 		if [ "${ups_emailnotify}" -eq 1 ]; then
 			echo "$NOTIFYTYPE" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
 		fi
