@@ -12,6 +12,7 @@
 UPS_CONFPATH="/usr/local/etc/nut"
 UPS_CONFIG="${UPS_CONFPATH}/ups.conf"
 UPS_MONFILE="${UPS_CONFPATH}/upsmon.conf"
+UPS_SCHEDFILE="${UPS_CONFPATH}/upssched.conf"
 UPS_USERSFILE="${UPS_CONFPATH}/upsd.users"
 UPS_DAEMONFILE="${UPS_CONFPATH}/upsd.conf"
 UPS_VARPATH="/var/db/nut"
@@ -47,27 +48,21 @@ generate_upsmon()
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
 	while eval read $f; do
-        cat > /var/tmp/nut_notify.sh << EOF
-#!/bin/bash
-EOF
         if [ "${ups_emailnotify}" -eq 1 ]; then
             cat >> /var/tmp/nut_notify.sh << EOF
+/usr/bin/logger notify_ups_email
 echo \$1 | mail -s "\$(echo "${ups_subject}"|sed "s/%d/\$(date)/"|sed "s/%h/\$(hostname)/")" "${ups_toemail}"
-EOF
-        fi
-        if [ "${ups_shutdown}" = "batt" ]; then
-            cat >> /var/tmp/nut_notify.sh << EOF
 EOF
         fi
         chmod +x /var/tmp/nut_notify.sh
 	    cat <<EOF
 FINALDELAY ${ups_shutdowntimer}
 MONITOR ${ups_identifier} 1 upsmon ${ups_masterpwd} master
-NOTIFYCMD "/var/tmp/nut_notify.sh"
+NOTIFYCMD "/usr/local/sbin/upssched"
 NOTIFYFLAG ONBATT SYSLOG+WALL+EXEC
 NOTIFYFLAG LOWBATT SYSLOG+WALL+EXEC
 NOTIFYFLAG ONLINE SYSLOG+WALL+EXEC
-SHUTDOWNCMD "/sbin/shutdown -p now"
+SHUTDOWNCMD "/usr/bin/logger shutdown"
 EOF
 
     done
@@ -110,16 +105,49 @@ generate_upsd()
 
 }
 
+generate_upssched()
+{
+
+    local IFS=\|
+    local f="ups_shutdown ups_shutdowntimer"
+    eval local $f
+    local cmd sf cfg
+    sf=$(echo $f | sed -e 's/ /, /g')
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
+	while eval read $f; do
+
+        cat << __EOF__
+CMDSCRIPT   /usr/local/bin/upssched-cmd
+PIPEFN      /var/db/nut/upssched.pipe
+LOCKFN      /var/db/nut/upssched.lock
+
+AT COMMBAD  * START-TIMER COMMBAD 10
+AT COMMOK   * CANCEL-TIMER COMMBAD COMMOK
+AT FSD      * EXECUTE FSD
+AT LOWBATT  * START-TIMER LOWBATT ${ups_shutdowntimer}
+AT ONBATT   * START-TIMER ONBATT ${ups_shutdowntimer}
+AT ONLINE   * CANCEL-TIMER ONBATT ONLINE
+AT ONLINE   * CANCEL-TIMER LOWBATT ONLINE
+AT REPLBATT * EXECUTE REPLBATT
+AT SHUTDOWN * EXECUTE SHUTDOWN
+__EOF__
+
+    done
+
+}
+
 generate_ups_conf()
 {
     mkdir -p ${UPS_CONFPATH}
     mkdir -p ${UPS_VARPATH}
     generate_ups > ${UPS_CONFIG}
     generate_upsmon > ${UPS_MONFILE}
+    generate_upssched > ${UPS_SCHEDFILE}
     generate_upsdusers > ${UPS_USERSFILE}
     generate_upsd > ${UPS_DAEMONFILE}
-    chown root:uucp ${UPS_VARPATH} ${UPS_CONFIG} ${UPS_MONFILE} ${UPS_USERSFILE} ${UPS_DAEMONFILE}
-    chmod 440 ${UPS_CONFIG} ${UPS_MONFILE} ${UPS_USERSFILE} ${UPS_DAEMONFILE}
+    chown root:uucp ${UPS_VARPATH} ${UPS_CONFIG} ${UPS_MONFILE} ${UPS_USERSFILE} ${UPS_DAEMONFILE} ${UPS_SCHEDFILE}
+    chmod 440 ${UPS_CONFIG} ${UPS_MONFILE} ${UPS_USERSFILE} ${UPS_DAEMONFILE} ${UPS_SCHEDFILE}
     chmod g=rwx,o= ${UPS_VARPATH}
 }
 
