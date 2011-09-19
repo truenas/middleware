@@ -832,7 +832,7 @@ class iSCSITargetForm(ModelForm):
 
     def clean_iscsi_target_name(self):
         name = self.cleaned_data.get("iscsi_target_name")
-        if not re.search(r'^[a-z0-9\.-:]+$', name):
+        if not re.search(r'^[-a-z0-9\.:]+$', name):
             raise forms.ValidationError(_("Use alphanumeric characters, \".\", \"-\" and \":\"."))
         return name
 
