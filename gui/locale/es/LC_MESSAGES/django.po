@@ -4101,12 +4101,12 @@ msgid "The uploaded file is not valid."
 msgstr "El fichero subido no es válido."
 
 #: system/views.py:243
-msgid "Test message from FreeNAS"
-msgstr "Mensaje de prueba de FreeNAS"
+msgid "Test message from"
+msgstr "Mensaje de prueba de"
 
 #: system/views.py:244
-msgid "This is a message test from FreeNAS"
-msgstr "Este es un mensaje de prueba de FreeNAS"
+msgid "This is a message test from"
+msgstr "Este es un mensaje de prueba de"
 
 #: templates/404.html:7
 msgid "Page Not Found"
@@ -4362,28 +4362,28 @@ msgid "Mailing Lists"
 msgstr "Listas de Correo"
 
 #: templates/freeadmin/index.html:87
-msgid "FreeNAS Announce"
-msgstr "Anuncio de FreeNAS"
+msgid "Announce"
+msgstr "Anuncio de"
 
 #: templates/freeadmin/index.html:88
-msgid "FreeNAS Commit"
-msgstr "FreeNAS Comprometerse"
+msgid "Commit"
+msgstr "Comprometerse"
 
 #: templates/freeadmin/index.html:89
-msgid "FreeNAS Devel"
-msgstr "FreeNAS Desarrollo"
+msgid "Devel"
+msgstr "Desarrollo"
 
 #: templates/freeadmin/index.html:90
-msgid "FreeNAS Testing"
-msgstr "FreeNAS Pruebas"
+msgid "Testing"
+msgstr "Pruebas"
 
 #: templates/freeadmin/index.html:91
-msgid "FreeNAS Docs"
-msgstr "Documentación FreeNAS"
+msgid "Docs"
+msgstr "Documentación"
 
 #: templates/freeadmin/index.html:92
-msgid "FreeNAS Translations"
-msgstr "Traducciones FreeNAS"
+msgid "Translations"
+msgstr "Traducciones"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
@@ -4398,8 +4398,8 @@ msgid "Documentation"
 msgstr "Documentación"
 
 #: templates/freeadmin/index.html:106
-msgid "FreeNAS Documentation"
-msgstr "Documentación FreeNAS"
+msgid "Documentation"
+msgstr "Documentación"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4548,8 +4548,8 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Bienvenido, %(username). Gracias por logarse"
 
 #: templates/registration/login.html:50
-msgid "Welcome to FreeNAS 8"
-msgstr "Bienvenido a FreeNAS 8"
+msgid "Welcome to"
+msgstr "Bienvenido a8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -5246,8 +5246,8 @@ msgid "Load Average"
 msgstr "Carga Media"
 
 #: templates/system/system_info.html:32
-msgid "FreeNAS Build"
-msgstr "Compilación FreeNAS"
+msgid "Build"
+msgstr "Compilación"
 
 #: templates/system/wizard.html:3
 #, python-format

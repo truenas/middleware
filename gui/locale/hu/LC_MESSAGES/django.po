@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-09-18 16:06+0200\n"
-"Last-Translator: RedFox <bareszgeld@freemail.hu>\n"
+"PO-Revision-Date: 2011-08-30 01:20+0200\n"
+"Last-Translator: Peter <petyuska@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
@@ -437,7 +437,7 @@ msgstr "%(week) hét"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Ne ellenőrizze az eszközt."
+msgstr ""
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
@@ -461,8 +461,9 @@ msgid "Short Self-Test"
 msgstr "Rövid Ön-Teszt"
 
 #: choices.py:469
+#, fuzzy
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Tovább az átvitelteszthez (Csak ATA eszköz)"
+msgstr "Továbbítás Ön-Teszt (csak ATA)"
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
@@ -3957,11 +3958,11 @@ msgid "The uploaded file is not valid."
 msgstr ""
 
 #: system/views.py:243
-msgid "Test message from FreeNAS"
+msgid "Test message from"
 msgstr ""
 
 #: system/views.py:244
-msgid "This is a message test from FreeNAS"
+msgid "This is a message test from"
 msgstr ""
 
 #: templates/404.html:7
@@ -4220,27 +4221,27 @@ msgid "Mailing Lists"
 msgstr ""
 
 #: templates/freeadmin/index.html:87
-msgid "FreeNAS Announce"
+msgid "Announce"
 msgstr ""
 
 #: templates/freeadmin/index.html:88
-msgid "FreeNAS Commit"
+msgid "Commit"
 msgstr ""
 
 #: templates/freeadmin/index.html:89
-msgid "FreeNAS Devel"
+msgid "Devel"
 msgstr ""
 
 #: templates/freeadmin/index.html:90
-msgid "FreeNAS Testing"
+msgid "Testing"
 msgstr ""
 
 #: templates/freeadmin/index.html:91
-msgid "FreeNAS Docs"
+msgid "Docs"
 msgstr ""
 
 #: templates/freeadmin/index.html:92
-msgid "FreeNAS Translations"
+msgid "Translations"
 msgstr ""
 
 #: templates/freeadmin/index.html:97
@@ -4256,7 +4257,7 @@ msgid "Documentation"
 msgstr ""
 
 #: templates/freeadmin/index.html:106
-msgid "FreeNAS Documentation"
+msgid "Documentation"
 msgstr ""
 
 #: templates/network/interface.html:9
@@ -4406,7 +4407,7 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr ""
 
 #: templates/registration/login.html:50
-msgid "Welcome to FreeNAS 8"
+msgid "Welcome to"
 msgstr ""
 
 #: templates/registration/login.html:51
@@ -5108,8 +5109,8 @@ msgid "Load Average"
 msgstr "Átlagos terhelés"
 
 #: templates/system/system_info.html:32
-msgid "FreeNAS Build"
-msgstr "FreeNAS Build"
+msgid "Build"
+msgstr "Build"
 
 #: templates/system/wizard.html:3
 #, python-format

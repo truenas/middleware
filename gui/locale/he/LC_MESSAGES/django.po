@@ -3990,12 +3990,12 @@ msgid "The uploaded file is not valid."
 msgstr "הקובץ המועלה אינו חוקי."
 
 #: system/views.py:243
-msgid "Test message from FreeNAS"
-msgstr "הודעת בדיקה מ FreeNAS"
+msgid "Test message from"
+msgstr "הודעת בדיקה מ"
 
 #: system/views.py:244
-msgid "This is a message test from FreeNAS"
-msgstr "הודעה זאתי היא הודעת בדיקה מ FreeNAS"
+msgid "This is a message test from"
+msgstr "הודעה זאתי היא הודעת בדיקה מ"
 
 #: templates/404.html:7
 msgid "Page Not Found"
@@ -4250,28 +4250,28 @@ msgid "Mailing Lists"
 msgstr "רשימת מיילים"
 
 #: templates/freeadmin/index.html:87
-msgid "FreeNAS Announce"
-msgstr "הודעת FreeNAS"
+msgid "Announce"
+msgstr "הודעת"
 
 #: templates/freeadmin/index.html:88
-msgid "FreeNAS Commit"
-msgstr "מסר FreeNAS"
+msgid "Commit"
+msgstr "מסר"
 
 #: templates/freeadmin/index.html:89
-msgid "FreeNAS Devel"
-msgstr "FreeNAS Devel"
+msgid "Devel"
+msgstr "Devel"
 
 #: templates/freeadmin/index.html:90
-msgid "FreeNAS Testing"
-msgstr "בדיקת FreeNAS"
+msgid "Testing"
+msgstr "בדיקת"
 
 #: templates/freeadmin/index.html:91
-msgid "FreeNAS Docs"
-msgstr "FreeNAS מסמכי"
+msgid "Docs"
+msgstr "מסמכי"
 
 #: templates/freeadmin/index.html:92
-msgid "FreeNAS Translations"
-msgstr "תרגומי FreeNAS"
+msgid "Translations"
+msgstr "תרגומי"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
@@ -4286,8 +4286,8 @@ msgid "Documentation"
 msgstr "תעוד"
 
 #: templates/freeadmin/index.html:106
-msgid "FreeNAS Documentation"
-msgstr "תעוד FreeNAS"
+msgid "Documentation"
+msgstr "תעוד"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4436,8 +4436,8 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "ברוך הבא %(username)s. תודה שהתחברת."
 
 #: templates/registration/login.html:50
-msgid "Welcome to FreeNAS 8"
-msgstr "ברוך הבא ל FreeNAS 8"
+msgid "Welcome to"
+msgstr "ברוך הבא ל8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -5133,8 +5133,8 @@ msgid "Load Average"
 msgstr "מטען ממוצע"
 
 #: templates/system/system_info.html:32
-msgid "FreeNAS Build"
-msgstr "FreeNAS Build"
+msgid "Build"
+msgstr "Build"
 
 #: templates/system/wizard.html:3
 #, python-format

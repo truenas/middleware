@@ -4160,12 +4160,12 @@ msgid "The uploaded file is not valid."
 msgstr "Το αρχείο που ανέβηκε δεν είναι έγκυρο."
 
 #: system/views.py:243
-msgid "Test message from FreeNAS"
-msgstr "Δοκιμαστικό μήνυμα από το FreeNAS"
+msgid "Test message from"
+msgstr "Δοκιμαστικό μήνυμα από το"
 
 #: system/views.py:244
-msgid "This is a message test from FreeNAS"
-msgstr "Αυτό είναι ένα δοκιμαστικό μήνυμα από το FreeNAS"
+msgid "This is a message test from"
+msgstr "Αυτό είναι ένα δοκιμαστικό μήνυμα από το"
 
 #: templates/404.html:7
 msgid "Page Not Found"
@@ -4424,28 +4424,28 @@ msgid "Mailing Lists"
 msgstr "Λίστες Mailing"
 
 #: templates/freeadmin/index.html:87
-msgid "FreeNAS Announce"
-msgstr "FreeNAS Ανακοινώσεις"
+msgid "Announce"
+msgstr "Ανακοινώσεις"
 
 #: templates/freeadmin/index.html:88
-msgid "FreeNAS Commit"
-msgstr "FreeNAS Commit"
+msgid "Commit"
+msgstr "Commit"
 
 #: templates/freeadmin/index.html:89
-msgid "FreeNAS Devel"
-msgstr "FreeNAS Devel"
+msgid "Devel"
+msgstr "Devel"
 
 #: templates/freeadmin/index.html:90
-msgid "FreeNAS Testing"
-msgstr "FreeNAS Δοκιμές"
+msgid "Testing"
+msgstr "Δοκιμές"
 
 #: templates/freeadmin/index.html:91
-msgid "FreeNAS Docs"
-msgstr "FreeNAS Docs"
+msgid "Docs"
+msgstr "Docs"
 
 #: templates/freeadmin/index.html:92
-msgid "FreeNAS Translations"
-msgstr "Μεταφράσεις FreeNAS"
+msgid "Translations"
+msgstr "Μεταφράσεις"
 
 #: templates/freeadmin/index.html:97
 msgid "Support Issues"
@@ -4460,8 +4460,8 @@ msgid "Documentation"
 msgstr "Τεκμηρίωση"
 
 #: templates/freeadmin/index.html:106
-msgid "FreeNAS Documentation"
-msgstr "Τεκμηρίωση FreeNAS"
+msgid "Documentation"
+msgstr "Τεκμηρίωση"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -4612,8 +4612,8 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Καλώς ορίσατε, %(username)s. Ευχαριστώ για την σύνδεση."
 
 #: templates/registration/login.html:50
-msgid "Welcome to FreeNAS 8"
-msgstr "Καλώς ήρθατε στο FreeNAS 8"
+msgid "Welcome to"
+msgstr "Καλώς ήρθατε στο8"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -5311,8 +5311,8 @@ msgid "Load Average"
 msgstr "Μέσο φορτίο"
 
 #: templates/system/system_info.html:32
-msgid "FreeNAS Build"
-msgstr "FreeNAS Build"
+msgid "Build"
+msgstr "Build"
 
 #: templates/system/wizard.html:3
 #, python-format
