@@ -1,5 +1,5 @@
 #-
-# Copyright (c) 2010 iXsystems, Inc., All rights reserved.
+# Copyright (c) 2010-2011 iXsystems, Inc., All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -13,7 +13,7 @@
 # THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
 # ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL Jordan Hubbard OR CONTRIBUTORS BE LIABLE
+# ARE DISCLAIMED.  IN NO EVENT SHALL iXsystems, Inc. OR CONTRIBUTORS BE LIABLE
 # FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 # DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
 # OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -21,7 +21,6 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
-#
 #
 # This file is heavily derived from both Sam Leffler's Avilia config,
 # as well as the BSDRP project's config file.  Neither of these have
@@ -32,38 +31,18 @@
 # FreeNAS specific bits of the common stuff.
 #
 
-# Find our files, since we're out of tree
-case $2 in
-/*/*)
-    NANO_CFG_BASE=$(dirname $2)
-    NANO_SRC=`pwd | sed 's/.tools.tools.nanobsd.*//'`
-    ;;
-*/*)
-    NANO_CFG_BASE=$(dirname `pwd`/$2)
-    NANO_SRC=`pwd | sed 's/.tools.tools.nanobsd.*//'`
-    ;;
-*)  NANO_CFG_BASE=`pwd`
-    NANO_SRC=`realpath $0 | sed 's/.tools.tools.nanobsd.*//'`
-    ;;
-esac
+# Override the defaults in nanobsd.sh from a common script.
+. "$FREENAS_ROOT/build/nano_env"
+# Helpful functions.
+. "$FREENAS_ROOT/build/functions.sh"
 
-if [ -n "${FREENAS_ARCH}" ]; then
-    NANO_ARCH=${FREENAS_ARCH}
-fi
-# REVISION gets overloaded when doing tagged versions, SVNREVISION allows
-# us to kleep the SVN revision number even when the version string is
-# overloaded with a name.
-: ${SVNREVISION=`svnversion ${NANO_CFG_BASE}`}
-: ${REVISION=`svnversion ${NANO_CFG_BASE}`}
-NANO_NAME="FreeNAS-8r${REVISION}-${NANO_ARCH}"
-NANO_IMGNAME="${NANO_NAME}.full"
-NANO_KERNEL=${NANO_CFG_BASE}/FREENAS.${NANO_ARCH}
-: ${NANO_OBJ=/tmp/${LOGNAME}/obj.freenas.${NANO_ARCH}}
-NANO_LABEL=FreeNAS
+# DEBUG=1, MULTIMEDIA=1, etc.
+for feature in $FREENAS_FEATURES; do
+	eval "export $(echo "$feature")=1"
+done
+
 NANO_BOOT0CFG="-o packet -s 1 -m 3 -t 18"
 NANO_RAM_TMPVARSIZE=$((160*1024))
-
-DEBUG="1"
 
 NANO_IMAGES=2
 FlashDevice generic 2g
@@ -222,17 +201,25 @@ add_port dns/libidn
 add_port ftp/wget
 add_port benchmarks/iozone
 add_port benchmarks/iperf
-#+add_port net-p2p/transmission-daemon
-#add_port devel/pkg-config
-add_port security/ca_root_nss -DWITH_ETCSYMLINK
-add_port devel/libevent2
-add_port ftp/curl
-add_port www/transmission-web
-#-add_port net-p2p/transmission-daemon
-add_port net-p2p/transmission-daemon
 
-if [ "${DEBUG}" -eq "1" ]; then 
-	add_port databases/db42
+if [ ${DEBUG} -eq 1 -o ${MULTIMEDIA} -eq 1 ]; then
+	#+add_port devel/git || net-p2p/transmission-daemon
+	add_port security/ca_root_nss -DWITH_ETCSYMLINK
+	add_port ftp/curl
+	#-add_port devel/git || net-p2p/transmission-daemon
+fi
+
+if [ ${MULTIMEDIA} -eq 1 ]; then
+	#+add_port net-p2p/transmission-daemon
+	#add_port devel/pkg-config
+	add_port devel/libevent2
+	add_port www/transmission-web
+	#-add_port net-p2p/transmission-daemon
+	add_port net-p2p/transmission-daemon
+fi
+
+if [ ${DEBUG} -eq 1 ]; then 
+	#add_port databases/db42
 	add_port devel/apr1
 	add_port devel/py-logilab-common
 	add_port devel/py-astng
@@ -249,7 +236,6 @@ if [ "${DEBUG}" -eq "1" ]; then
 	add_port devel/git -DWITH_SVN -DWITHOUT_P4 -DWITHOUT_CVS
 	add_port devel/ctags 
 fi
-	 
 
 if [ "${NANO_PACKAGE_ONLY}" -eq 1 ]; then
  	CONF_INSTALL="${CONF_INSTALL}
@@ -262,7 +248,7 @@ fi
 
 hack_nsswitch_conf ( )
 {
-	# Neuter out all references to NIS in the nssiwtch.conf file
+	# Remove all references to NIS in the nsswitch.conf file
 	# Not sure this is still needed, but FreeNAS has it...
 	sed -i.bak -es/nis/files/g ${NANO_WORLDDIR}/etc/nsswitch.conf
 	rm -f ${NANO_WORLDDIR}/etc/nsswitch.conf.bak
@@ -277,8 +263,8 @@ customize_cmd default_root_password
 
 add_gui()
 {
-    local gui dst dstCR;
-    gui=${NANO_CFG_BASE}/../gui
+    local gui dst dstCR
+    gui=${FREENAS_ROOT}/gui
     dstCR=/usr/local/www/freenasUI
     dst=${NANO_WORLDDIR}${dstCR}
     if [ -d ${gui} ]; then
@@ -343,7 +329,7 @@ customize_cmd select_httpd
 
 remove_patch_divots ( )
 {
-	find ${NANO_WORLDDIR} -name \*.orig -delete
+	find ${NANO_WORLDDIR} -name \*.orig -or -name \*.rej -delete
 }
 customize_cmd remove_patch_divots
 
@@ -356,10 +342,11 @@ customize_cmd configure_mnt_md
 
 save_build ( )
 {
+	VERSION_FILE=${NANO_WORLDDIR}/etc/version
 	if [ "${SVNREVISION}" = "${REVISION}" ]; then
-		echo "${NANO_NAME}" > ${NANO_WORLDDIR}/etc/version.freenas
+		echo "${NANO_NAME}" > "${VERSION_FILE}"
 	else
-		echo "${NANO_NAME} (${SVNREVISION})" > ${NANO_WORLDDIR}/etc/version.freenas
+		echo "${NANO_NAME} (${SVNREVISION})" > "${VERSION_FILE}"
 	fi
 }
 customize_cmd save_build

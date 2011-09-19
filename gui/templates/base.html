@@ -1,7 +1,7 @@
 {% load i18n %}<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-gb" lang="en-gb" dir="ltr">
 <head>
-    <title>{% if hostname %}{{ hostname }} - {% endif %}{{ freenas_version }}</title>
+    <title>{% if hostname %}{{ hostname }} - {% endif %}{{ sw_version }}</title>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
     <style type="text/css">html, body.{{ DOJANGO.THEME }} { width: 100%; height: 100%; }</style>
     {% include "dojango/include.html" %}
@@ -20,7 +20,7 @@
         <div dojoType="dijit.layout.ContentPane" style="height:125px;overflow:hidden;" region="top">
             <div id="page-header">
                  <div>
-                     <a href="/" title="FreeNAS&trade;"><img src="{{ STATIC_URL }}images/ui/freenas-logo.png" alt="FreeNAS&trade;" style="padding-left:10px;"/></a>
+                     <a href="/" title="{{ sw_name }}&trade;"><img src="{{ STATIC_URL }}images/ui/freenas-logo.png" alt="{{ sw_name }}&trade;" style="padding-left:10px;"/></a>
                  </div>
             </div>
             {% block menubar %}

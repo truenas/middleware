@@ -53,6 +53,7 @@ import time
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
+VERSION_FILE = '/etc/version'
 
 sys.path.append(WWW_PATH)
 sys.path.append(FREENAS_PATH)
@@ -592,8 +593,10 @@ class notifier:
         swapsize = ((swapsize+127)/128)*128
         # To be safe, wipe out the disk, both ends... before we start
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname))
+        # HACK: force the wipe at the end of the disk to always succeed. This
+        # is a lame workaround.
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (devname, devname))
+                      "| awk '{print int($3 / (1024*1024)) - 4;}'` || :" % (devname, devname))
 
         commands = []
         commands.append("gpart create -s gpt /dev/%s" % (devname))
@@ -1288,7 +1291,7 @@ class notifier:
     def apply_servicepack(self):
         self.__system("/usr/bin/xz -cd /var/tmp/firmware/servicepack.txz | /usr/bin/tar xf - -C /var/tmp/firmware/ etc/servicepack/version.expected")
         try:
-            with open('/etc/version.freenas') as f:
+            with open(VERSION_FILE) as f:
                 freenas_build = f.read()
         except:
             return "Current FreeNAS version can not be recognized"

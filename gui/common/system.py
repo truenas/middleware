@@ -39,41 +39,24 @@ from datetime import datetime, timedelta
 from freenasUI.system.models import Email
 from account.models import bsdUsers
 
-def get_freenas_version():
-    version = "FreeNAS"
-    try:
-        fd = open("/etc/version.freenas")
-    except:
-        fd = None
+VERSION_FILE = '/etc/version'
 
-    if fd:
+def get_sw_version():
+    """Return the full version string, e.g. FreeNAS-8.1-r7794-amd64. """
+
+    with open(VERSION_FILE) as fd:
         version = fd.read().strip()
-        fd.close()
-
     return version
 
-def get_freenas_login_version():
-    # A specialized case of get_freenas_version() used by the login
-    # dialog to only return the middle of the version string.
-    # For example, if the file contains FreeNAS-8r7200-amd64 we want to
-    # return 8r7200
-    version = "FreeNAS"
-    try:
-        fd = open("/etc/version.freenas")
-    except:
-        fd = None
+def get_sw_login_version():
+    """Return a shortened version string, e.g. 8.0.1-RC1, 8.1, etc. """
 
-    if fd:
-        version = fd.read().strip().split("-")
-        fd.close()
-        # FreeNAS-8.0.1-RC1-amd64
-        if len(version) == 4:
-            return "-".join(version[1:3])
-        # FreeNAS-8r7200-amd64
-        else:
-            return version[1]
+    return '-'.join(get_sw_version().split('-')[1:-2])
 
-    return version
+def get_sw_name():
+    """Return the software name, e.g. FreeNAS"""
+
+    return get_sw_version().split('-')[0]
 
 def get_freenas_var_by_file(f, var):
     assert f and var

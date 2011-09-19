@@ -25,16 +25,18 @@
 #
 # $FreeBSD$
 #####################################################################
-import sys
-import re
+
 import datetime
 import os
+import re
+import sys
 
+from django import forms as dforms
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views import debug
 from django.conf import settings
-from django.template.loader import get_template
+from django.template.loader import get_template, template_source_loaders
 from django.template import (Context, TemplateDoesNotExist, TemplateSyntaxError)
 from django.template.defaultfilters import force_escape, pprint
 from django.utils import simplejson
@@ -42,7 +44,7 @@ from django.utils.translation import ugettext as _
 from django.utils.encoding import smart_unicode, smart_str
 from django.utils.importlib import import_module
 
-from freenasUI.common.system import get_freenas_version
+from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.middleware.exceptions import MiddlewareError
 from freeadmin import navtree
 from system.models import Advanced
@@ -85,7 +87,8 @@ def adminInterface(request, objtype = None):
     return render(request, 'freeadmin/index.html', {
         'consolemsg': console,
         'hostname': hostname,
-        'freenas_version': get_freenas_version(),
+        'sw_name': get_sw_name(),
+        'sw_version': get_sw_version(),
     })
 
 def menu(request, objtype = None):
@@ -156,7 +159,6 @@ class ExceptionReporter(debug.ExceptionReporter):
         """
 
         if self.exc_type and issubclass(self.exc_type, TemplateDoesNotExist):
-            from django.template.loader import template_source_loaders
             self.template_does_not_exist = True
             self.loader_debug_info = []
             for loader in template_source_loaders:
@@ -197,7 +199,6 @@ class ExceptionReporter(debug.ExceptionReporter):
             if start is not None and end is not None:
                 unicode_str = self.exc_value.args[1]
                 unicode_hint = smart_unicode(unicode_str[max(start-5, 0):min(end+5, len(unicode_str))], 'ascii', errors='replace')
-        from django import get_version
         t = get_template("500_freenas.html")
         #t = Template(TECHNICAL_500_TEMPLATE, name='Technical 500 template')
         c = Context({
@@ -209,7 +210,7 @@ class ExceptionReporter(debug.ExceptionReporter):
             'sys_executable': sys.executable,
             'sys_version_info': '%d.%d.%d' % sys.version_info[0:3],
             'server_time': datetime.datetime.now(),
-            'django_version_info': get_version(),
+            'django_version_info': get_sw_version(),
             'sys_path' : sys.path,
             'template_info': self.template_info,
             'template_does_not_exist': self.template_does_not_exist,
@@ -285,7 +286,6 @@ def generic_model_add(request, app, model, mf=None):
             valid = False
 
         if m._admin.inlines:
-            from django import forms as dforms
             for inline, prefix in m._admin.inlines:
                 _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
                 inline = getattr(_temp, inline)
@@ -489,7 +489,6 @@ def generic_model_edit(request, app, model, oid, mf=None):
             valid = False
 
         if m._admin.inlines:
-            from django import forms as dforms
             for inline, prefix in m._admin.inlines:
                 _temp = __import__('%s.forms' % app, globals(), locals(), [inline], -1)
                 inline = getattr(_temp, inline)

@@ -34,6 +34,7 @@
 : ${FREENAS_DEBUG_MODULEDIR:="/usr/local/etc/freenas-debug"}
 : ${FREENAS_DEBUG_MODULES:=""}
 
+VERSION_FILE=/etc/version
 
 syslog_debug_on()
 {
@@ -100,7 +101,7 @@ section_footer()
 
 freenas_header()
 {
-	section_header "$(cat /etc/version.freenas)"
+	section_header "$(cat $VERSION_FILE)"
 
 	desc=$(sysctl -nd kern.ostype)
 	out=$(sysctl -n kern.ostype)

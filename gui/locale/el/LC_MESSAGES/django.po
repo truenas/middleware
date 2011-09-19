@@ -4612,7 +4612,7 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Καλώς ορίσατε, %(username)s. Ευχαριστώ για την σύνδεση."
 
 #: templates/registration/login.html:50
-msgid "Welcome to FreeNAS 8"
+msgid "Welcome to "
 msgstr "Καλώς ήρθατε στο FreeNAS 8"
 
 #: templates/registration/login.html:51

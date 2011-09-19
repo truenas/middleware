@@ -1,19 +1,18 @@
-This snapshot is for developers and very experienced users only.  It
-is not functionally complete yet, and there are likely many rough
-edges.  There's no upgrade path from 0.7 to 8.x, yet.
-
-The GUI should behave basically the same as 0.7's GUI, but there are
-some differences.
+FreeNAS 8.x is relatively stable, but is still being polished. There isn't
+complete feature parity between 0.7 (legacy) and 8.x, yet, and there are still
+some rough edges, but there are also some features in 8.x that aren't
+available in 0.7. There isn't an upgrade path from 0.7 to 8.x, yet.
 
 To build the system (experts only):
 
-Native builds on amd64 and i386 work.  You can build i386 binaries
-on a FreeBSD/amd64 system by setting FREENAS_ARCH=i386 in your
-environment.
+Requirements:
 
-To build the system:
+- Your build environment must be FreeBSD 8.1-RELEASE or newer.
+- amd64 or i386 for i386 builds; an amd64 for amd64 builds.
 
-(1) Checking out the experimental code from svn:
+Building the System Quickstart Flow:
+
+- Checking out the code from svn:
 
 % svn co https://freenas.svn.sourceforge.net/svnroot/freenas/trunk
 % cd trunk
@@ -21,28 +20,51 @@ To build the system:
 More information about checking out sources from svn via SourceForge
 can be found here: http://p.sf.net/sourceforge/svn .
 
-(2) Use the build script (substituting your favorite cvsup mirror)
+- Use the build script (substituting your favorite cvsup mirror)
 
-% sudo env FREEBSD_CVSUP_HOST=cvsup10.freebsd.org sh build/do_build.sh
+% sudo env FREEBSD_CVSUP_HOST=cvsup1.freebsd.org sh build/do_build.sh
 % sudo sh build/create_iso.sh
 
 That's it.
 
-When updating ports patches, you will need to run the following command:
+The End Result:
 
-% sudo env FREEBSD_CVSUP_HOST=cvsup10.freebsd.org sh build/do_build.sh -f ports
+If your build completes successfully, you'll have an image in
+obj.yyyy/FreeNAS-VVVV-XXXX-yyyy.full.xz where:
 
-When updating source patches, you will need to run the following command:
+- VVVV is the 'release' branch version or.
+- XXXX is the svn revision from the FreeNAS repo.
+- yyyy is either i386 or amd64 depending on your platform and what was
+  provided via $FREENAS_ARCH on the command line / via the environment.
 
-% sudo env FREEBSD_CVSUP_HOST=cvsup10.freebsd.org sh build/do_build.sh -f all
+This is a compressed raw disk image, and needs to be decompressed and
+converted to your favorite VM container format before use, flashed on to a USB
+key fob, etc.  There will also be a CD/DVD image,
+obj.yyyy/FreeNAS-VVVV-XXXX-yyyy.full.iso, that you can use to
+install/upgrade FreeNAS.
 
-Running builds via do_build.sh is known to work on FreeBSD 8.1-RELEASE
-and newer.
+Common workflows:
 
-Once (2) completes, you'll have an image in
-obj.yyyy/FreeNAS-8rXXXX-yyyy.full where XXXX is the svn revision from
-the freenas repo, and yyyy is either i386 or amd64 depending on your
-platform.  This is a raw disk image, and needs to be converted to your
-favorite VM container format before use...  Alternatively, there will
-also be a obj.yyy/FreeNAS-8rXXXX-yyyy.full.iso that contains an ISO
-image that you can use to install FreeNAS with.
+1. Building an i386 on an amd64 build server:
+
+% sudo env FREENAS_ARCH=i386 sh build/do_build.sh
+
+2. Forcing an source / ports update:
+
+% sudo env FREEBSD_CVSUP_HOST=cvsup1.freebsd.org sh build/do_build.sh -u
+
+3. Updating ports patches:
+
+% sudo rm -Rf obj.$FREENAS_ARCH/ports/packages/
+% sudo env FREEBSD_CVSUP_HOST=cvsup1.freebsd.org sh build/do_build.sh -u
+
+NOTE: when things get smarter (and they will.. the developers feel your pain
+too :/..), nuking individual packages won't be required; this will require
+fiddling around with the ports infrastructure, which is a semi-large
+undertaking. Thus, I wouldn't expect this to be enhanced anytime soon :(..
+(but it's annoyed the author of this document enough that it's time to fix
+things properly!).
+
+4. Updating source patches:
+
+% sudo env FREEBSD_CVSUP_HOST=cvsup10.freebsd.org sh build/do_build.sh -fu

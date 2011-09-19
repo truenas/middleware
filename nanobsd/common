@@ -31,11 +31,11 @@
 #
 
 # NB: disable -j3
-NANO_PMAKE="make -j$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))"
+
+CPUS=${CPUS:=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))}
+NANO_PMAKE="make -j $CPUS"
 
 # Where cust_pkg() finds packages to install
-#XXX: Is this the right place?
-NANO_PORTS=${NANO_SRC}/../ports
 NANO_PACKAGE_DIR=${NANO_SRC}/${NANO_TOOLS}/Pkg
 NANO_DATADIR=${NANO_OBJ}/_.data
 NANO_DATASIZE=40960
@@ -227,7 +227,7 @@ do_add_port ()
 	    __MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
 	    SRC_BASE=/usr/src \
 	    WRKDIRPREFIX=/usr/workdir -C /usr/ports/$port_path \
-	    package BATCH=yes -DUSE_PACKAGE_DEPENDS \
+	    clean package BATCH=yes -DUSE_PACKAGE_DEPENDS \
 	    $* clean -DFORCE_PACKAGE -DFORCE_PKG_REGISTER"
 	rm ${NANO_WORLDDIR}/etc/resolv.conf
 	rm -rf ${NANO_WORLDDIR}/usr/obj
@@ -241,7 +241,7 @@ do_add_port ()
 }
 
 # Need to check if this function works with cross-compiling architecture!!!!
-# Recursive complex fonction: Generate one function for each ports
+# Recursive complex function: Generate one function for each ports
 #
 # Note: most nano variables aren't set yet, especially NANO_MAKE_CONF_BUILD, so
 # we can't use that here.  Instead, use no MAKE_CONF to avoid host contamination.
@@ -306,6 +306,12 @@ freenas_custom()
 	compress_ko ntfs.ko
 	compress_ko smbfs.ko
 
+	# nuke .pyc files (saves ~25MB on a fresh install)
+	find ${NANO_WORLDDIR}/usr/local -name '*.pyc' | xargs rm -f
+
+	# kill includes (saves 14MB)
+	find ${NANO_WORLDDIR}/usr/local/include \! -name 'pyconfig.h' -type f | xargs rm -f
+
 	# kill docs (saves 22MB)
 	rm -rf ${NANO_WORLDDIR}/usr/local/share/doc
 
@@ -325,11 +331,10 @@ freenas_custom()
 
 	# Perl seems to be needed for build, but nothing after the
 	# build.  cope with bad dependencies (or misunderstood) and
-	# blow it away (saves 43MB)
-	if [ ! "${DEBUG}" -eq "1" ]; then
-		rm -rf ${NANO_WORLDDIR}/usr/local/lib/perl5
+	# blow it away (saves 45MB)
+	if [ "${DEBUG}" -ne 1 ]; then
+		CR "/usr/sbin/pkg_delete /var/db/pkg/perl*"
 	fi
-
 
 	# Kill all .a's that are installed (15MB)
 	find ${NANO_WORLDDIR} -name \*.a -delete

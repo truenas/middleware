@@ -4382,7 +4382,7 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "歡迎 %(username) 登入"
 
 #: templates/registration/login.html:50
-msgid "Welcome to FreeNAS 8"
+msgid "Welcome to "
 msgstr "歡迎使用 FreeNAS 8"
 
 #: templates/registration/login.html:51

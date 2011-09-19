@@ -4550,7 +4550,7 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Selamat datang, %(username)s. Terimakasih telah log masuk."
 
 #: templates/registration/login.html:50
-msgid "Welcome to FreeNAS 8"
+msgid "Welcome to "
 msgstr "Selamat Datang di FreeNAS 8"
 
 #: templates/registration/login.html:51

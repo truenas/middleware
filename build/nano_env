@@ -1,0 +1,61 @@
+#!/bin/sh
+#
+# Script for building the nanobsd environment up. Required because of the way
+# things are setup in NanoBSD today (this should be simplified).
+#
+
+# Environment variables that drive the nanobsd build and a few of the
+# other build / image generation scripts.
+
+# The FreeNAS source and build tree is rooted here.
+: ${FREENAS_ROOT=$(pwd)}
+
+# The architecture for the machine (amd64, i386, etc).
+if [ -n "$FREENAS_ARCH" ]; then
+	NANO_ARCH=$FREENAS_ARCH
+else
+	: ${NANO_ARCH=$(uname -p)}
+fi
+NANO_OBJ=${FREENAS_ROOT}/obj.${NANO_ARCH}
+
+# Where the build configuration files used by nanobsd.sh live.
+NANO_CFG_BASE=$FREENAS_ROOT/nanobsd
+
+# Where the FreeBSD ports tree lives.
+#NANO_PORTS="$FREENAS_ROOT/FreeBSD/union/ports"
+NANO_PORTS="$FREENAS_ROOT/FreeBSD/ports"
+
+# Where the FreeBSD source tree lives.
+#NANO_SRC="$FREENAS_ROOT/FreeBSD/union/src"
+NANO_SRC="$FREENAS_ROOT/FreeBSD/src"
+
+# REVISION gets overloaded when doing tagged versions, SVNREVISION allows
+# us to keep the SVN revision number even when the version string is
+# overloaded with a name.
+: ${SVNREVISION=r$(svnversion ${NANO_CFG_BASE})}
+: ${REVISION=r$(svnversion ${NANO_CFG_BASE})}
+
+NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
+
+# Feature sets to enable as part of the build (should be replaced with
+# optional PBI/package names eventually).
+FEATURES="DEBUG MULTIMEDIA"
+
+# The GEOM label to use.
+NANO_LABEL="FreeNAS"
+
+# Version of the software.
+VERSION="8.1"
+
+# Image prefix, e.g. FreeNAS-8.1-r7609-amd64 or FreeNAS-8.0.1-RC1-i386.
+NANO_NAME="$NANO_LABEL-$VERSION-$REVISION-$NANO_ARCH"
+
+# Image with a suffix
+NANO_IMGNAME="$NANO_NAME.full"
+
+# Export these vars to override the NanoBSD defaults.
+export BUILD_ROOT
+export FREENAS_ROOT NANO_ARCH NANO_CFG_BASE NANO_IMGNAME NANO_KERNEL NANO_NAME
+export NANO_OBJ NANO_SRC REVISION SVNREVISION
+
+# vim: syntax=sh

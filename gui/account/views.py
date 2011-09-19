@@ -37,7 +37,7 @@ from django.contrib.auth.forms import AuthenticationForm
 
 from freenasUI.account import forms
 from freenasUI.account import models
-from freenasUI.common.system import get_freenas_login_version
+from freenasUI.common.system import get_sw_login_version, get_sw_name
 
 def home(request):
     focus_form = request.GET.get('tab', 'passform')
@@ -202,7 +202,10 @@ def login_wrapper(request, template_name='registration/login.html',
           redirect_field_name=REDIRECT_FIELD_NAME,
           authentication_form=AuthenticationForm,
           current_app=None, extra_context={}):
-    extra_context.update({'freenas_login_version': get_freenas_login_version()})
+    extra_context.update({
+        'sw_login_version': get_sw_login_version(),
+        'sw_name': get_sw_name(),
+    })
     response = login(request, template_name='registration/login.html',
           redirect_field_name=redirect_field_name,
           authentication_form=authentication_form,

@@ -4523,7 +4523,7 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Laipni lūdzam, %(username)s. Paldies, ka autorizējies."
 
 #: templates/registration/login.html:50
-msgid "Welcome to FreeNAS 8"
+msgid "Welcome to "
 msgstr "Sveicināts FreeNAS 8"
 
 #: templates/registration/login.html:51

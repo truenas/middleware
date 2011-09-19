@@ -44,15 +44,15 @@ from django.core.urlresolvers import reverse
 from freenasUI.system import forms
 from freenasUI.system import models
 from freenasUI.middleware.notifier import notifier
-from freenasUI.common.system import get_freenas_version
+from freenasUI.common.system import get_sw_name, get_sw_version
 
 GRAPHS_DIR = '/var/db/graphs'
-VERSION_FILE = '/etc/version.freenas'
+VERSION_FILE = '/etc/version'
 DEBUG_TEMP = '/tmp/debug.txt'
 
 def _system_info():
     # OS, hostname, release
-    uname1, hostname, uname2 = os.uname()[0:3]
+    __, hostname, __ = os.uname()[0:3]
     platform = subprocess.check_output(['sysctl', '-n', 'hw.model'])
     physmem = str(int(int(subprocess.check_output(['sysctl', '-n', 'hw.physmem'])) / 1048576)) + 'MB'
     # All this for a timezone, because time.asctime() doesn't add it in.
@@ -69,8 +69,6 @@ def _system_info():
 
     return {
         'hostname': hostname,
-        'uname1': uname1,
-        'uname2': uname2,
         'platform': platform,
         'physmem': physmem,
         'date': date,
@@ -217,7 +215,8 @@ def top(request):
 def reboot(request):
     """ reboots the system """
     return render(request, 'system/reboot.html', {
-        'freenas_version': get_freenas_version(),
+        'sw_name': get_sw_name(),
+        'sw_version': get_sw_version(),
     })
 
 def reboot_run(request):
@@ -227,7 +226,8 @@ def reboot_run(request):
 def shutdown(request):
     """ shuts down the system and powers off the system """
     return render(request, 'system/shutdown.html', {
-        'freenas_version': get_freenas_version(),
+        'sw_name': get_sw_name(),
+        'sw_version': get_sw_version(),
     })
 
 def shutdown_run(request):
@@ -240,8 +240,11 @@ def testmail(request):
     errmsg = ''
     if request.is_ajax():
         from common.system import send_mail
-        error, errmsg = send_mail(subject=_("Test message from FreeNAS"),
-                                  text=_("This is a message test from FreeNAS"))
+        sw_name = get_sw_name()
+        error, errmsg = send_mail(subject=_('Test message from %s'
+                                            % (sw_name)),
+                                  text=_('This is a message test from %s'
+                                         % (sw_name, )))
 
     return HttpResponse(simplejson.dumps({
         'error': error,

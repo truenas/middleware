@@ -4548,7 +4548,7 @@ msgid "Welcome, %(username)s. Thanks for logging in."
 msgstr "Bienvenido, %(username). Gracias por logarse"
 
 #: templates/registration/login.html:50
-msgid "Welcome to FreeNAS 8"
+msgid "Welcome to "
 msgstr "Bienvenido a FreeNAS 8"
 
 #: templates/registration/login.html:51
