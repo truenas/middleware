@@ -35,21 +35,21 @@ actions.
 """
 
 import ctypes
-import types
-import syslog
-import stat
-import os
-import re
 import glob
 import grp
+import os
 import pwd
+import re
 import shutil
 import signal
+import sqlite3
+import stat
 from subprocess import Popen, PIPE
 import sys
-import sqlite3
+import syslog
 import tempfile
 import time
+import types
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
@@ -64,7 +64,10 @@ from django.db import models
 
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
+from freenasUI.common.locks import mntlock
 from middleware import zfs
+from middleware.exceptions import MiddlewareError
+from storage.models import MountPoint
 
 
 class notifier:
@@ -612,7 +615,6 @@ class notifier:
             proc = self.__pipeopen(command)
             proc.wait()
             if proc.returncode != 0:
-                from middleware.exceptions import MiddlewareError
                 raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
 
         # Install a dummy boot block so system gives meaningful message if booting
@@ -716,7 +718,6 @@ class notifier:
                       "-f -m %s -o altroot=%s %s %s" % (mountpoint, altroot, z_name, z_vdev))
         p1.wait()
         if p1.returncode != 0:
-            from middleware.exceptions import MiddlewareError
             error = ", ".join(p1.communicate()[1].split('\n'))
             raise MiddlewareError('Unable to create the pool: %s' % error)
         self.zfs_inherit_option(z_name, 'mountpoint')
@@ -815,7 +816,6 @@ class notifier:
         return retval
 
     def destroy_zfs_dataset(self, path):
-        from freenasUI.common.locks import mntlock
         retval = None
         if '@' in path:
             MNTLOCK = mntlock()
@@ -887,7 +887,6 @@ class notifier:
             p1 = self.__pipeopen("newfs -U -L %s /dev/%s" % (u_name, devname))
             stdout, stderr = p1.communicate()
             if p1.returncode != 0:
-                from middleware.exceptions import MiddlewareError
                 error = ", ".join(stderr.split('\n'))
                 raise MiddlewareError('Volume creation failed: "%s"' % error)
         else:
@@ -904,7 +903,6 @@ class notifier:
             p1 = self.__pipeopen("geom %s label %s %s" % (geom_type, geom_name, geom_vdev))
             stdout, stderr = p1.communicate()
             if p1.returncode != 0:
-                from middleware.exceptions import MiddlewareError
                 error = ", ".join(stderr.split('\n'))
                 raise MiddlewareError('Volume creation failed: "%s"' % error)
             ufs_device = "/dev/%s/%s" % (geom_type, geom_name)
@@ -974,7 +972,6 @@ class notifier:
                 from_disk.disk_name = zdev
                 from_disk.save()
             else:
-                from middleware.exceptions import MiddlewareError
                 raise MiddlewareError('An unavail disk could not be found in the pool to be replaced.')
 
         todev = self.identifier_to_device(to_disk.disk_identifier)
@@ -1013,7 +1010,6 @@ class notifier:
             stdout, stderr = p1.communicate()
             ret = p1.returncode
             if ret != 0:
-                from middleware.exceptions import MiddlewareError
                 error = ", ".join(stderr.split('\n'))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
         return ret
@@ -1093,7 +1089,6 @@ class notifier:
         pw = self.__pipeopen(command)
         msg = pw.communicate("%s\n" % password)[1]
         if pw.returncode != 0:
-            from freenasUI.middleware.exceptions import MiddlewareError
             raise MiddlewareError("Operation could not be performed. %s" % msg)
 
         if msg != "":
@@ -1394,7 +1389,7 @@ class notifier:
                 info = p1.communicate()[0].split('\t')
                 partitions.update({
                     part: {
-                        'devname': info[0].split('/')[-1],
+                        'devname': os.path.basename(info[0]),
                         'capacity': info[2]
                     },
                 })
@@ -1524,7 +1519,6 @@ class notifier:
         imp = self.__pipeopen('zpool export %s' % str(name))
         stdout, stderr = imp.communicate()
         if imp.returncode != 0:
-            from middleware.exceptions import MiddlewareError
             raise MiddlewareError('Unable to export %s: %s' % (name, stderr))
         return True
 
@@ -1639,7 +1633,6 @@ class notifier:
         return (zfsproc.returncode == 0)
 
     def zfs_dataset_release_snapshots(self, name, recursive=False):
-        from freenasUI.common.locks import mntlock
         name = str(name)
         retval = None
         if recursive:
@@ -1666,7 +1659,6 @@ class notifier:
 
     # Reactivate replication on all snapshots
     def zfs_dataset_reset_replicated_snapshots(self, name, recursive=False):
-        from freenasUI.common.locks import mntlock
         name = str(name)
         retval = None
         if recursive:
@@ -1883,7 +1875,6 @@ class notifier:
         return None
 
     def filesystem_path(self, path):
-        from storage.models import MountPoint
         mps = MountPoint.objects.filter(mp_volume__vol_fstype__in=('ZFS','UFS'))
         path = os.path.abspath(path)
         for mp in mps:
