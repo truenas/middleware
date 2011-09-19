@@ -24,58 +24,77 @@
 # SUCH DAMAGE.
 #
 # Intended for use internally only to make 'service pack' style images.
-# This script does not tolerate any errors.
 #
 
-# Configurable
-PREFIX=/tmp/servicepack
+MD1=
+MD2=
+PREFIX=
+
+cleanup() {
+	trap - EXIT
+	for md in $MD1 $MD2; do
+		umount /dev/$md
+		mdconfig -d -u $md
+	done || :
+	rm -Rf $PREFIX
+}
+
+FREENAS_ROOT="$(realpath "$(dirname "$0")/..")"
+. "$FREENAS_ROOT/build/nano_env"
+. "$FREENAS_ROOT/build/functions.sh"
+
+requires_root
 
 if [ $# != 2 ]; then
-	echo Usage: $0 release-image new-image
-	echo Note: both images needs to be raw and not compressed with xz
+	cat <<EOF
+usage: ${0##*/} release-image new-image
+both images needs to be raw and not compressed with xz
+EOF
 	exit 1
 fi
 
+RELEASE_IMAGE=$1
+NEW_IMAGE=$2
+
 set -e
 
-echo -n "Clearing out and recreating working directory at ${PREFIX}... "
-rm -fr ${PREFIX}
-mkdir -p ${PREFIX}
+echo -n "Creating temporary working directory... "
+
+PREFIX=$(mktemp -d servicepack.XXXXXX)
+trap cleanup EXIT
+
 echo "Done!"
 
 echo -n "Creating vnode-based mds... "
 
 # Original image
-MD1=`mdconfig -a -t vnode -f $1`
+MD1=`mdconfig -a -t vnode -f "$RELEASE_IMAGE"`
 
 # Latest image
-MD2=`mdconfig -a -t vnode -f $2`
+MD2=`mdconfig -a -t vnode -f "$NEW_IMAGE"`
 
 echo "Done!"
 
 echo -n "Mounting mds... "
 
 # Trees to mount
-rm -fr ${PREFIX}/release ${PREFIX}/patched ${PREFIX}/servicepack
-mkdir -p ${PREFIX}/release ${PREFIX}/patched
-mkdir -p ${PREFIX}/servicepack
+rm -rf ${PREFIX}/release ${PREFIX}/patched ${PREFIX}/servicepack
+mkdir -p ${PREFIX}/release ${PREFIX}/patched ${PREFIX}/servicepack
 
 # Mount images at mountpoints
-mount -o rdonly /dev/${MD1}a ${PREFIX}/release
-mount -o rdonly /dev/${MD2}a ${PREFIX}/patched
+mount -o ro /dev/${MD1}s1a ${PREFIX}/release
+mount -o ro /dev/${MD2}s1a ${PREFIX}/patched
 
 echo "Done!"
 
 echo -n "Computing SHA256 checksums... "
 
 # Generate sha256 checksums
-cd ${PREFIX}/release
-find . | sort > ${PREFIX}/release.files
-find . -type f | sort | xargs sha256 > ${PREFIX}/release.sha256
-
-cd ${PREFIX}/patched
-find . | sort > ${PREFIX}/patched.files
-find . -type f | sort | xargs sha256 > ${PREFIX}/patched.sha256
+for dir in release patched; do
+	cd ${PREFIX}/$dir
+	find . | sort > ${PREFIX}/$dir.files
+	find . -type f | sort | xargs sha256 > ${PREFIX}/$dir.sha256
+done
 
 comm -23 ${PREFIX}/release.files ${PREFIX}/patched.files > ${PREFIX}/removed.list
 comm -13 ${PREFIX}/release.sha256 ${PREFIX}/patched.sha256 | cut -c9- | rev | cut -c69- | rev > ${PREFIX}/changed.list.tmp
@@ -94,7 +113,8 @@ echo "Done!"
 echo -n "Generating post-install files... "
 
 mkdir -p ${PREFIX}/servicepack/etc/servicepack
-cp ${PREFIX}/release/etc/version ${PREFIX}/servicepack/etc/servicepack/version.expected
+VERSION_FILE=$(find ${PREFIX}/release/etc -name 'version*')
+cp $VERSION_FILE ${PREFIX}/servicepack/etc/servicepack/version.expected
 
 POSTINSTALL=${PREFIX}/servicepack/etc/servicepack/post-install
 
@@ -102,7 +122,7 @@ echo '#!/bin/sh' > ${POSTINSTALL}
 echo 'mount -uw /' >> ${POSTINSTALL}
 echo 'rm -f /etc/servicepack/version.expected' >> ${POSTINSTALL}
 
-sed -e 's/^/rm -fr /' ${PREFIX}/removed.list >> ${POSTINSTALL}
+sed -e 's/^/rm -rf /' ${PREFIX}/removed.list >> ${POSTINSTALL}
 
 echo '# All changes to firmware volume must be done before this line'
 echo 'mount -ur /' >> ${POSTINSTALL}
@@ -121,22 +141,21 @@ xz -9ve servicepack.tar
 echo -n "Unmounting and destroying md devices... "
 
 umount -f ${PREFIX}/release
-mdconfig -d -u `echo ${MD1} | cut -c3-`
+mdconfig -d -u $MD1
 umount -f ${PREFIX}/patched
-mdconfig -d -u `echo ${MD2} | cut -c3-`
+mdconfig -d -u $MD2
+
+mv "$NEW_IMAGE_TMP" "$NEW_IMAGE"
 
 echo "Done!"
 
-echo "All done!  If you want to make any changes to the service pack as a"
-echo "post-install action, change ${POSTINSTALL} then:"
-echo
+cat <<EOF
+All done!  If you want to make any changes to the service pack as a
+post-install action, change ${POSTINSTALL} then execute:
 
-cat << E*O*F
 	rm -f ${PREFIX}/servicepack.tar.xz
 	cd ${PREFIX}
-	tar cf servicepack.tar -C ${PREFIX}/servicepack .
-	xz -9ve servicepack.tar
-E*O*F
+	tar --options xz:compression-level=9 -cJpf - -C ${PREFIX}/servicepack.xz .
 
-echo
-echo "To re-roll the service pack."
+To re-roll the service pack.
+EOF
