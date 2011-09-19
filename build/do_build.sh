@@ -13,13 +13,6 @@
 #	sh build/do_build.sh -B -u
 #
 
-patch() {
-	if /usr/bin/patch -CR -p0 < $1; then
-		/usr/bin/patch -R -p0 -t < $1
-	fi
-	/usr/bin/patch -E -p0 < $1
-}
-
 usage() {
 	echo "usage: ${0##*/} [-Bfu] [-- nanobsd-options]"
 	exit 1
@@ -178,11 +171,11 @@ fi
 for patch in $(cd $FREENAS_ROOT/patches && ls freebsd-*.patch); do
 	if $USE_UNIONFS; then
 		echo "Applying patch $patch..."
-		(cd $NANO_SRC && patch $FREENAS_ROOT/patches/$patch)
+		(cd $NANO_SRC && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
 	else
 		if ! grep -q $patch $FREENAS_ROOT/FreeBSD/src-patches; then
 			echo "Applying patch $patch..."
-			(cd FreeBSD/src && patch $FREENAS_ROOT/patches/$patch)
+			(cd FreeBSD/src && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
 			echo $patch >> $FREENAS_ROOT/FreeBSD/src-patches
 		fi
 	fi
@@ -194,7 +187,7 @@ for patch in $(cd $FREENAS_ROOT/patches && ls ports-*.patch); do
 	else
 		if ! grep -q $patch $FREENAS_ROOT/FreeBSD/ports-patches; then
 			echo "Applying patch $patch..."
-			(cd FreeBSD/ports && patch -p0 < $FREENAS_ROOT/patches/$patch)
+			(cd FreeBSD/ports && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
 			echo $patch >> $FREENAS_ROOT/FreeBSD/ports-patches
 		fi
 	fi
