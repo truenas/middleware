@@ -69,6 +69,7 @@ MONITOR ${ups_identifier} 1 upsmon ${ups_masterpwd} master
 NOTIFYCMD "/var/tmp/nut_notify.sh"
 NOTIFYFLAG ONBATT SYSLOG+WALL+EXEC
 NOTIFYFLAG LOWBATT SYSLOG+WALL+EXEC
+NOTIFYFLAG ONLINE SYSLOG+WALL+EXEC
 SHUTDOWNCMD "/sbin/shutdown -p now"
 EOF
 
