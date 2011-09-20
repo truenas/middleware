@@ -170,6 +170,8 @@ class Root(Tnode):
             'id': self._uid.next_id(),
             'name': self.name,
             'vdevs': vdevs,
+            'numVdevs': len(vdevs),
+            'status': self.status if self.status else '',
             }
 
     def validate(self):
@@ -195,7 +197,9 @@ class Vdev(Tnode):
             'id': self._uid.next_id(),
             'name': self.name,
             'disks': disks,
-            'type': self.type
+            'type': self.type,
+            'numDisks': len(disks),
+            'status': self.status,
             }
 
     def validate(self):

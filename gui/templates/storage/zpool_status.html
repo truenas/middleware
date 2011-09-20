@@ -6,29 +6,48 @@
         url: "{% url storage_zpool_status_json name=name %}",
         });
 
+    function summaryFormatter(value, rowIdx, cell, sing, plur){
+        var str;
+        if(rowIdx >= 0){
+            return value;
+        }
+        if(rowIdx == -1){
+            str = "Total (${numItems} ${displayName})";
+        }else{
+            str = "${numItems} ${displayName}";
+        }
+        return dojo.string.substitute(str, {numItems: value,
+                    displayName: (value == 1) ? sing : plur});
+    }
+    function disksSummary(value, rowIdx){
+        return summaryFormatter(value, rowIdx, this, "Disk", "Disks");
+    }
+    function vdevSummary(value, rowIdx){
+        return summaryFormatter(value, rowIdx, this, "vdev", "vdevs");
+    }
 
     var struc = [
-           { cells: [
-               [
-                   { field: "name", name: "Name" },
-                   { field: "vdevs",
-                       children: [
-                           { field: "name", name: "Type", width: "12em" },
-                           { field: "disks",
-                                children: [
-                                    { field: "name", name: "Disk", width: "12em" },
-                                    { field: "status", name: "Status", width: "12em" },
-                                ],
-                                itemAggregates: [ ],
-                                aggregate: "cnt"
-                           },
-                       ],
-                       itemAggregates: [ ],
-                       aggregate: "cnt"
-                   }
-               ]
-             ]
-           }
+        { cells: [
+            [
+                { field: "name", name: "Name" },
+                { field: "vdevs",
+                    children: [
+                        { field: "name", name: "Type", width: "auto", formatter: vdevSummary },
+                        { field: "disks",
+                             children: [
+                                 { field: "name", name: "Disk", width: "auto", formatter: disksSummary },
+                                 { field: "status", name: "Status", width: "auto" },
+                             ],
+                             itemAggregates: [ "numDisks", "status" ],
+                             aggregate: "value"
+                        },
+                    ],
+                    itemAggregates: [ "numVdevs", "status" ],
+                    aggregate: "value"
+                }
+            ]
+          ]
+        }
        ];
 
 
