@@ -154,7 +154,7 @@ generate_istgt_config()
 			else
 				echo " ${iscsi_target_extent_filesize}"
 			fi
-            echo "  LUN${iscsi_target_lun} Option Serial ${iscsi_target_serial}${iscsi_target_lun}"
+			echo "  LUN${iscsi_target_lun} Option Serial ${iscsi_target_serial}${iscsi_target_lun}"
 			iscsi_target_lun=$((${iscsi_target_lun}+1))
 		done
 	done
