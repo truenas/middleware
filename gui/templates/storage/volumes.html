@@ -176,6 +176,7 @@
     <div dojoType="dijit.Tooltip" connectId="viewDisksBtn{{ m.id }}" position="above">
         <strong>{% trans "View Disks" %}</strong>
     </div>
+    {% if m.mp_volume.vol_fstype == 'ZFS' %}
     <button id="statusVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/view_all_disks.png" width="18px" height="18px">
         <script type="dojo/method" event="onClick" args="evt">
@@ -185,6 +186,7 @@
     <div dojoType="dijit.Tooltip" connectId="editVolBtn{{ m.id }}" position="above">
         <strong>{% trans "Zpool Status" %}</strong>
     </div>
+    {% endif %}
 {% endif %}
 	    </td>
 	</tr>
