@@ -36,6 +36,9 @@ from freeadmin.middleware import public
 from freenasUI.freeadmin.views import adminInterface
 navtree.auto_generate()
 
+from freeadmin import navtree
+navtree.auto_generate()
+
 handler500 = 'freeadmin.views.server_error'
 handler404 = 'django.views.defaults.page_not_found'
 
