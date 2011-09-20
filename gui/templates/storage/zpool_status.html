@@ -6,57 +6,25 @@
         url: "{% url storage_zpool_status_json name=name %}",
         });
 
-    function summaryFormatter(value, rowIdx, cell, sing, plur){
-        var str;
-        if(rowIdx >= 0){
-            return value;
-        }
-        if(rowIdx == -1){
-            str = "Total (${numItems} ${displayName})";
-        }else{
-            str = "${numItems} ${displayName}";
-        }
-        return dojo.string.substitute(str, {numItems: value,
-                    displayName: (value == 1) ? sing : plur});
-    }
-    function disksSummary(value, rowIdx){
-        return summaryFormatter(value, rowIdx, this, "Disk", "Disks");
-    }
-    function vdevSummary(value, rowIdx){
-        return summaryFormatter(value, rowIdx, this, "vdev", "vdevs");
-    }
+    var treeModel = new dijit.tree.ForestStoreModel({
+        store: store,
+        rootLabel: 'Pool',
+        query: { 'type': 'root' },
+        childrenAttrs: ['children']
+    });
 
     var struc = [
-        { cells: [
-            [
-                { field: "name", name: "Name" },
-                { field: "vdevs",
-                    children: [
-                        { field: "name", name: "Type", width: "auto", formatter: vdevSummary },
-                        { field: "disks",
-                             children: [
-                                 { field: "name", name: "Disk", width: "auto", formatter: disksSummary },
-                                 { field: "status", name: "Status", width: "auto" },
-                             ],
-                             itemAggregates: [ "numDisks", "status" ],
-                             aggregate: "value"
-                        },
-                    ],
-                    itemAggregates: [ "numVdevs", "status" ],
-                    aggregate: "value"
-                }
-            ]
-          ]
-        }
+                { field: "name", name: "Name", width: "auto" },
+                { field: "status", name: "Status", width: "auto" },
        ];
 
 
     // create a new grid:
     var grid4 = new dojox.grid.TreeGrid({
-        store: store,
+        treeModel: treeModel,
         rowSelector: true,
         //rowSelector: '20px',
-        queryOptions: {deep: false},
+        defaultOpen: true,
         structure: struc
     },
     document.createElement('div'));

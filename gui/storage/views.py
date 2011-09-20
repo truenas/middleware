@@ -661,5 +661,5 @@ def zpool_status_json(request, name):
     return HttpResponse(simplejson.dumps({
         'identifier': 'id',
         'label': 'name',
-        'items': pool.dump(),
+        'items': pool.treedump(),
     }, indent=2))

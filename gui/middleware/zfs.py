@@ -32,7 +32,7 @@ class UID(object):
 
     def next_id(self):
         self.id += 1
-        return self.id
+        return str(self.id)
 
 _UID = UID()
 
@@ -78,9 +78,16 @@ class Pool(object):
                 )
         return data
 
+    def treedump(self):
+        data = []
+        for key in ('data', 'cache', 'spare', 'logs'):
+            if getattr(self, key):
+                vdevs = getattr(self, key).treedump()
+                data.extend(vdevs)
+        return data
+
     def __repr__(self):
         return repr({
-            'id': self._uid.next_id(),
             'data': self.data,
             'cache': self.cache,
             'spare': self.spare,
@@ -176,6 +183,27 @@ class Root(Tnode):
             'status': self.status if self.status else '',
             }
 
+    def treedump(self):
+        self.validate()
+        vdevs = []
+        children = []
+        for c in self:
+            vdev, disks = c.treedump()
+            vdevs.append(vdev)
+            vdevs.extend(disks)
+            children.append({'_reference': vdev['id']})
+        vdevs.append({
+            'id': self._uid.next_id(),
+            'name': self.name,
+            'type': 'root',
+            'children': children,
+            'isroot': 'isroot',
+            'numVdevs': len(vdevs),
+            'status': self.status if self.status else '',
+            })
+        return vdevs
+        return vdevs
+
     def validate(self):
         for c in self:
             c.validate()
@@ -203,6 +231,20 @@ class Vdev(Tnode):
             'numDisks': len(disks),
             'status': self.status,
             }
+    def treedump(self):
+        disks = []
+        children = []
+        for c in self:
+            dsk = c.treedump()
+            disks.append(dsk)
+            children.append({'_reference': dsk['id']})
+        return {
+            'id': self._uid.next_id(),
+            'name': self.name,
+            'children': children,
+            'type': self.type,
+            'status': self.status,
+            }, disks
 
     def validate(self):
         for c in self:
@@ -231,6 +273,14 @@ class Dev(Tnode):
         return {
             'id': self._uid.next_id(),
             'name': self.devname,
+            'status': self.status,
+            }
+
+    def treedump(self):
+        return {
+            'id': self._uid.next_id(),
+            'name': self.devname,
+            'type': 'disk',
             'status': self.status,
             }
 
