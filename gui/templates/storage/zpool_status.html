@@ -14,26 +14,22 @@
     });
 
     var struc = [
-                { field: "name", name: "Name", width: "auto" },
-                { field: "status", name: "Status", width: "auto" },
-       ];
-
+        { field: "name", name: "Name", width: "auto" },
+        { field: "status", name: "Status", width: "auto" },
+        ];
 
     // create a new grid:
     var grid4 = new dojox.grid.TreeGrid({
         treeModel: treeModel,
         rowSelector: true,
-        //rowSelector: '20px',
         defaultOpen: true,
         structure: struc
-    },
-    document.createElement('div'));
+        },
+        document.createElement('div'));
 
-        container = dojo.byId("gridContainer4");
-        dojo.html._emptyNode(container);
-        container.appendChild(grid4.domNode);
-
-
+    container = dojo.byId("gridContainer4");
+    dojo.html._emptyNode(container);
+    container.appendChild(grid4.domNode);
     grid4.startup();
 </script>
 </div>
