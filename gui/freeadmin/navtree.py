@@ -394,14 +394,8 @@ class NavTree(object):
         }
         if hasattr(o, 'append_url'):
             my['view'] += o.append_url
-        if hasattr(o, 'rename'):
-            my['name'] = unicode(o.rename)
-        else:
-            my['name'] = unicode(o.name)
-        if hasattr(o, 'gname'):
-            my['gname'] = o.gname
-        else:
-            my['gname'] = my['name']
+        my['name'] = unicode(getattr(o, "rename", o.name))
+        my['gname'] = getattr(o, "gname", my['name'])
         for attr in ('model', 'app', 'type', 'app_name', 'icon', 'action'):
             if hasattr(o, attr):
                 my[attr] = getattr(o, attr)
@@ -479,6 +473,8 @@ def _get_or_create(name, groups):
 If a model is delete it may dissapear from menu
 so we must check it and regenerate if necessary!
 """
+"""
+### Disable automatic generation of menu based on events ###
 def on_model_delete(**kwargs):
     if not navtree.isGenerated():
         return None
@@ -511,3 +507,4 @@ def on_model_save(**kwargs):
 from django.db.models.signals import post_delete, post_save
 post_delete.connect(on_model_delete)
 post_save.connect(on_model_save)
+"""

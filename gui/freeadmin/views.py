@@ -94,6 +94,7 @@ def adminInterface(request, objtype = None):
 def menu(request, objtype = None):
 
     try:
+        navtree.auto_generate()
         final = navtree.dijitTree()
         json = simplejson.dumps(final, indent=3)
     except:

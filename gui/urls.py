@@ -31,10 +31,8 @@ from django.views.static import serve
 from django.conf import settings
 from django.views.generic import TemplateView
 
-from freeadmin import navtree
 from freeadmin.middleware import public
 from freenasUI.freeadmin.views import adminInterface
-navtree.auto_generate()
 
 handler500 = 'freeadmin.views.server_error'
 handler404 = 'django.views.defaults.page_not_found'
