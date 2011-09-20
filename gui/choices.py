@@ -26,10 +26,15 @@
 # $FreeBSD$
 #####################################################################
 
+import csv
+import cStringIO
+import freenasUI.settings
+import os
+import re
+import sqlite3
+
 from os import popen
 from django.utils.translation import ugettext_lazy as _
-import sqlite3
-import freenasUI.settings
 
 SMTPAUTH_CHOICES = (
         ('plain', _('Plain')),
@@ -497,10 +502,6 @@ SMART_TEST = (
 class UPSDRIVER_CHOICES(object):
     "Populate choices from /usr/local/etc/nut/driver.list"
     def __iter__(self):
-        import os
-        import re
-        import csv
-        import cStringIO
         if os.path.exists("/usr/local/etc/nut/driver.list"):
             with open('/usr/local/etc/nut/driver.list', 'rb') as f:
                 d = f.read()
@@ -515,3 +516,10 @@ class UPSDRIVER_CHOICES(object):
                 if row[-1].find(' (experimental)') != -1:
                     row[-1] = row[-1].replace(' (experimental)','').strip()
                 yield (row[-1], "%s (%s)" % (" ".join(row[0:-1]), row[-1]))
+
+
+LDAP_SSL_CHOICES = (
+        ('off', _('Off')),
+        ('on', _('SSL')),
+        ('start_tls', _('TLS')),
+        )

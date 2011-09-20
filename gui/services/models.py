@@ -1159,9 +1159,9 @@ class LDAP(Model):
             help_text = _("This parameter specifies the suffix that is used for machines when these are added to the LDAP directory, e.g. ou=Computers")
             )
     ldap_ssl = models.CharField(
+            choices = choices.LDAP_SSL_CHOICES,
             max_length=120,
             verbose_name = _("Turn on/off TLS"),
-            blank=True,
             help_text = _("This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls")
             )
     ldap_tls_cacertfile = models.TextField(
