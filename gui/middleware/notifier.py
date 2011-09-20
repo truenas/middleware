@@ -588,7 +588,7 @@ class notifier:
             need4khack = False
 
         # Caculate swap size.
-        swapgb = swapgb
+        swapgb = swapsize
         swapsize = swapsize * 1024 * 1024 * 2
         # Round up to nearest whole integral multiple of 128 and subtract by 34
         # so next partition starts at mutiple of 128.
