@@ -26,16 +26,27 @@
 #
 import re
 
+class UID(object):
+    def __init__(self):
+        self.id = 1
+
+    def next_id(self):
+        self.id += 1
+        return self.id
+
+_UID = UID()
+
 class Pool(object):
     name = None
 
     data = None
     cache = None
     spare = None
-    log = None
+    logs = None
 
     def __init__(self, name):
         self.name = name
+        self._uid = _UID
 
     def __getitem__(self, name):
         if hasattr(self, name):
@@ -46,19 +57,32 @@ class Pool(object):
             raise KeyError
 
     def add_root(self, root):
-        setattr(self, root.name, root)
+        if root.name == self.name:
+            self.data = root
+        else:
+            setattr(self, root.name, root)
 
     def validate(self):
-        for key in ('data', 'cache', 'spare', 'log', self.name):
+        for key in ('data', 'cache', 'spare', 'logs'):
             if getattr(self, key):
                 getattr(self, key).validate()
 
+    def dump(self):
+        data = []
+        for key in ('data', 'cache', 'spare', 'logs'):
+            if getattr(self, key):
+                data.append(
+                    getattr(self, key).dump()
+                )
+        return data
+
     def __repr__(self):
         return repr({
+            'id': self._uid.next_id(),
             'data': self.data,
             'cache': self.cache,
             'spare': self.spare,
-            'log': self.log,
+            'logs': self.logs,
         })
 
 class Tnode(object):
@@ -73,6 +97,7 @@ class Tnode(object):
         self.name = name
         self.children = []
         self.status = status
+        self._uid = _UID
 
     def find_by_name(self, name):
         for c in self.children:
@@ -141,7 +166,11 @@ class Root(Tnode):
         vdevs = []
         for c in self:
             vdevs.append(c.dump())
-        return {'name': self.name, 'vdevs': vdevs}
+        return {
+            'id': self._uid.next_id(),
+            'name': self.name,
+            'vdevs': vdevs,
+            }
 
     def validate(self):
         for c in self:
@@ -162,7 +191,12 @@ class Vdev(Tnode):
         disks = []
         for c in self:
             disks.append(c.dump())
-        return {'disks': disks, 'type': self.type}
+        return {
+            'id': self._uid.next_id(),
+            'name': self.name,
+            'disks': disks,
+            'type': self.type
+            }
 
     def validate(self):
         for c in self:
@@ -188,7 +222,11 @@ class Dev(Tnode):
         raise Exception("What? You can't append child to a Dev")
 
     def dump(self):
-        return self.devname
+        return {
+            'id': self._uid.next_id(),
+            'name': self.devname,
+            'status': self.status,
+            }
 
     def validate(self):
         for c in self:
