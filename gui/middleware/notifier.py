@@ -588,16 +588,24 @@ class notifier:
             need4khack = False
 
         # Caculate swap size.
+        swapgb = swapgb
         swapsize = swapsize * 1024 * 1024 * 2
         # Round up to nearest whole integral multiple of 128 and subtract by 34
         # so next partition starts at mutiple of 128.
         swapsize = ((swapsize+127)/128)*128
         # To be safe, wipe out the disk, both ends... before we start
         self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname))
-        # HACK: force the wipe at the end of the disk to always succeed. This
-        # is a lame workaround.
-        self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print int($3 / (1024*1024)) - 4;}'` || :" % (devname, devname))
+        try:
+            p1 = self.__pipeopen("diskinfo %s" % devname)
+            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+        except:
+            pass
+        else:
+            if size*2 < swapsize:
+                raise MiddlewareError('Your disk size must be higher than %dGB' % swapgb)
+            # HACK: force the wipe at the end of the disk to always succeed. This
+            # is a lame workaround.
+            self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s || :" % (size*1024 - 4, devname))
 
         commands = []
         commands.append("gpart create -s gpt /dev/%s" % (devname))
