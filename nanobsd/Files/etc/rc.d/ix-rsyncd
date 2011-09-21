@@ -59,11 +59,11 @@ EOF
 		    echo "    write only = false" >> $cfg
 	    fi
 
-	    if [ -n "${rsyncd_hostsallow}" ]; then
+	    if [ -n "${rsyncmod_hostsallow}" ]; then
             echo "    hosts allow = ${rsyncmod_hostsallow}" >> $cfg
         fi
 
-	    if [ -n "${rsyncd_hostsdeny}" ]; then
+	    if [ -n "${rsyncmod_hostsdeny}" ]; then
             echo "    hosts deny = ${rsyncmod_hostsdeny}" >> $cfg
         fi
         ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
