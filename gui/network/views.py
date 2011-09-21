@@ -30,16 +30,16 @@ from subprocess import Popen, PIPE
 
 from django.shortcuts import render_to_response, render
 from django.http import HttpResponse
-from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
+from freeadmin.views import JsonResponse
 from freenasUI.network import forms
 from freenasUI.network import models
 
 ## Network Section
 def _lagg_performadd(lagg):
     # Search for a available slot for laggX interface
-    interface_names = [v[0] for v in 
+    interface_names = [v[0] for v in
                        models.Interfaces.objects.all().values_list('int_interface')]
     candidate_index = 0
     while ("lagg%d" % (candidate_index)) in interface_names:
@@ -188,11 +188,7 @@ def lagg_add(request):
         lagg = forms.LAGGInterfaceForm(request.POST)
         if lagg.is_valid():
             _lagg_performadd(lagg)
-            return HttpResponse(simplejson.dumps(
-                       { "error": False,
-                         "message": _("LAGG successfully added") }),
-                       mimetype="application/json"
-                       )
+            return JsonResponse(message=_("LAGG successfully added"))
 
     return render(request, 'network/lagg_add.html', {
         'lagg': lagg,
