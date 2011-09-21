@@ -56,6 +56,7 @@ from dojango.forms.models import inlineformset_factory
 class JsonResponse(HttpResponse):
 
     error = False
+    enclosed = False
     message = ''
     events = []
     def __init__(self, *args, **kwargs):
@@ -65,12 +66,18 @@ class JsonResponse(HttpResponse):
             self.message = kwargs.pop('message')
         if kwargs.has_key("events"):
             self.events = kwargs.pop('events')
+        if kwargs.has_key("enclosed"):
+            self.events = kwargs.pop('enclosed')
+
         data = {
             'error': self.error,
             'message': self.message,
             'events': self.events,
         }
-        kwargs['content'] = simplejson.dumps(data)
+        if self.enclosed:
+            kwargs['content'] = "<html><body><textarea>"+simplejson.dumps(data)+"</textarea></boby></html>"
+        else:
+            kwargs['content'] = simplejson.dumps(data)
         kwargs['content_type'] = 'application/json'
         super(JsonResponse, self).__init__(*args, **kwargs)
 
@@ -316,9 +323,9 @@ def generic_model_add(request, app, model, mf=None):
                         mf.done()
                 return JsonResponse(message=_("%s successfully updated.") % m._meta.verbose_name, events=events)
             except MiddlewareError, e:
-                return HttpResponse(simplejson.dumps({"error": True, "message": _("Error: %s") % str(e)}), mimetype="application/json")
+                return JsonResponse(error=True, message=_("Error: %s") % str(e))
             except ServiceFailed, e:
-                return HttpResponse(simplejson.dumps({"error": True, "message": _("The service failed to restart.") % m._meta.verbose_name}))
+                return JsonResponse(error=True, message=_("The service failed to restart.") % m._meta.verbose_name)
 
     else:
         mf = mf()
@@ -518,13 +525,13 @@ def generic_model_edit(request, app, model, oid, mf=None):
                     except TypeError:
                         mf.done()
                 if request.GET.has_key("iframe"):
-                    return HttpResponse("<html><body><textarea>"+simplejson.dumps({"error": False, "message": _("%s successfully updated.") % m._meta.verbose_name})+"</textarea></boby></html>")
+                    return JsonResponse(enclosed=True, message=_("%s successfully updated.") % m._meta.verbose_name)
                 else:
                     return JsonResponse(message=_("%s successfully updated.") % m._meta.verbose_name, events=events)
             except ServiceFailed, e:
-                return HttpResponse(simplejson.dumps({"error": True, "message": _("The service failed to restart.") % m._meta.verbose_name, "events": ["serviceFailed(\"%s\")" % e.service]}))
+                return JsonResponse(error=True, message=_("The service failed to restart.") % m._meta.verbose_name, events=["serviceFailed(\"%s\")" % e.service])
             except MiddlewareError, e:
-                return HttpResponse(simplejson.dumps({"error": True, "message": _("Error: %s") % str(e)}), mimetype="application/json")
+                return JsonResponse(error=True, message=_("Error: %s") % str(e))
 
     else:
         mf = mf(instance=instance)
@@ -594,11 +601,11 @@ def generic_model_delete(request, app, model, oid):
                 if hasattr(form_i, "done"):
                     form_i.done()
                 instance.delete()
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully deleted.") % m._meta.verbose_name}), mimetype="application/json")
+                return JsonResponse(message=_("%s successfully deleted.") % m._meta.verbose_name)
 
         else:
             instance.delete()
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("%s successfully deleted.") % m._meta.verbose_name}), mimetype="application/json")
+            return JsonResponse(message=_("%s successfully deleted.") % m._meta.verbose_name)
     if form and form_i is None:
         form_i = form(instance=instance)
     if form:
