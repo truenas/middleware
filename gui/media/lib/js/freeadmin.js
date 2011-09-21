@@ -940,28 +940,11 @@
     };
 
     cancelDialog = function(from) {
-   
+
         var dialog = getDialog(from);
         canceled = true;
         dialog.hide();
 
-    };
-
-    addObject = function(name, url, nodes) {
-        canceled = false;
-        dialog = new dijit.Dialog({
-            id: 'add_dialog',
-            title: name,
-            href: url,
-            parseOnLoad: true,
-            closable: true,
-            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
-            onHide: function() {
-                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
-                refreshTabs(nodes);
-            },
-        });
-        dialog.show();
     };
 
     refreshTabs = function(nodes) {
@@ -989,15 +972,15 @@
         }
     }
 
-    editObject = function(name, url, nodes, onload) {
+    commonDialog = function(id, style, name, url, nodes, onload) {
         canceled = false;
         dialog = new dijit.Dialog({
-            id: 'edit_dialog',
+            id: id,
             title: name,
             href: url,
             parseOnLoad: true,
             closable: true,
-            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+            style: style,
             onHide: function() {
                 setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
                 refreshTabs(nodes);
@@ -1010,38 +993,21 @@
         dialog.show();
     };
 
-    //FIXME: Duplicated of editObject changing ID
+    addObject = function(name, url, nodes) {
+        commonDialog("add_dialog", "max-width: 75%;max-height:70%;background-color:white;overflow:auto;", name, url, nodes, onload);
+    };
+
+    editObject = function(name, url, nodes, onload) {
+        commonDialog("edit_dialog", "max-width: 75%;max-height:70%;background-color:white;overflow:auto;", name, url, nodes, onload);
+    }
+
+
     editScaryObject = function(name, url, nodes) {
-        canceled = false;
-        dialog = new dijit.Dialog({
-            id: 'editscary_dialog',
-            title: name,
-            href: url,
-            parseOnLoad: true,
-            closable: true,
-            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
-            onHide: function() {
-                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
-                refreshTabs(nodes);
-            },
-        });
-        dialog.show();
+        commonDialog("editscary_dialog", "max-width: 75%;max-height:70%;background-color:white;overflow:auto;", name, url, nodes);
     };
 
     volumeWizard = function(name, url, nodes) {
-         dialog = new dijit.Dialog({
-             id: 'wizard_dialog',
-             title: name,
-             href: url,
-             parseOnLoad: true,
-             closable: true,
-             style: "max-width: 650px;min-height:200px;max-height:500px;background-color:white;overflow:auto;",
-             onHide: function() {
-                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
-                refreshTabs(nodes);
-             },
-         });
-         dialog.show();
+        commonDialog("wizard_dialog", "max-width: 650px;min-height:200px;max-height:500px;background-color:white;overflow:auto;", name, url, nodes);
     }
 
     viewModel = function(name, url) {
