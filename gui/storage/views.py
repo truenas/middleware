@@ -37,10 +37,10 @@ from django.db import transaction, models as dmodels
 
 from dojango.util import to_dojo_data
 from freenasUI.services.models import iSCSITargetExtent
-from freenasUI.storage import forms
-from freenasUI.storage import models
+from freenasUI.storage import forms, models
 from freenasUI.storage.evilhack import evil_zvol_destroy
 from freenasUI.middleware.notifier import notifier
+from freeadmin.views import JsonResponse
 from middleware.exceptions import MiddlewareError
 
 def home(request):
@@ -149,9 +149,9 @@ def wizard(request):
             try:
                 form.done(request)
             except MiddlewareError, e:
-                return HttpResponse(simplejson.dumps({"error": True, "message": _("Error: %s") % str(e)}), mimetype="application/json")
+                return JsonResponse(error=True, message=_("Error: %s") % str(e))
             else:
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume successfully added.")}), mimetype="application/json")
+                return JsonResponse(message=_("Volume successfully added."))
         else:
             if 'volume_disks' in request.POST:
                 disks = request.POST.getlist('volume_disks')
@@ -178,7 +178,7 @@ def volimport(request):
         form = forms.VolumeImportForm(request.POST)
         if form.is_valid():
             form.done(request)
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume successfully added.")}), mimetype="application/json")
+            return JsonResponse(message=_("Volume successfully added."))
         else:
 
             if 'volume_disks' in request.POST:
@@ -202,8 +202,8 @@ def volautoimport(request):
             try:
                 form.done(request)
             except MiddlewareError, e:
-                return HttpResponse(simplejson.dumps({"error": True, "message": _("Error: %s") % str(e)}), mimetype="application/json")
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Volume successfully added.")}), mimetype="application/json")
+                return JsonResponse(error=True, message=_("Error: %s") % str(e))
+            return JsonResponse(message=_("Volume successfully added."))
         else:
 
             if 'volume_disks' in request.POST:
@@ -347,7 +347,7 @@ def dataset_create(request):
             if errno == 0:
                 mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (dataset_name), mp_options='rw,late', mp_ischild=True)
                 mp.save()
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset successfully added.")}), mimetype="application/json")
+                return JsonResponse(message=_("Dataset successfully added."))
             else:
                 dataset_form.set_error(errmsg)
     return render(request, 'storage/datasets.html', {
@@ -382,7 +382,7 @@ def dataset_edit(request, object_id):
             error |= not notifier().zfs_set_option(dataset_name, "refquota", dataset_form.cleaned_data["dataset_refquota"])
 
             if not error:
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset successfully edited.")}), mimetype="application/json")
+                return JsonResponse(message=_("Dataset successfully edited."))
             else:
                 dataset_form.set_error(_("An error occurred when setting the options"))
     return render(request, 'storage/dataset_edit.html', {
@@ -405,7 +405,7 @@ def zvol_create(request):
             props['compression']=zvol_compression.__str__()
             errno, errmsg = notifier().create_zfs_vol(name=zvol_name.__str__(), size=zvol_size.__str__(), props=props)
             if errno == 0:
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("ZFS Volume successfully added.")}), mimetype="application/json")
+                return JsonResponse(message=_("ZFS Volume successfully added."))
             else:
                 zvol_form.set_error(errmsg)
     else:
@@ -420,11 +420,11 @@ def zvol_delete(request, name):
         try:
             retval = evil_zvol_destroy(name, iSCSITargetExtent, models.Disk, destroy=True)
         except ValueError:
-            return HttpResponse(simplejson.dumps({"error": True, "message": _("This is in use by the iscsi target, please remove it there first.")}), mimetype="application/json")
+            return JsonResponse(error=True, message=_("This is in use by the iscsi target, please remove it there first."))
         if retval == '':
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("ZFS Volume successfully destroyed.")}), mimetype="application/json")
+            return JsonResponse(message=_("ZFS Volume successfully destroyed."))
         else:
-            return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
+            return JsonResponse(error=True, message=retval)
     else:
         return render(request, 'storage/zvol_confirm_delete.html', {
             'name': name,
@@ -456,7 +456,7 @@ def zfsvolume_edit(request, object_id):
             error |= not notifier().zfs_set_option(volume_name, "refquota", volume_form.cleaned_data["volume_refquota"])
 
             if not error:
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("Native dataset successfully edited.")}), mimetype="application/json")
+                return JsonResponse(message=_("Native dataset successfully edited."))
             else:
                 volume_form.set_error(_("An error occurred when setting the options"))
     return render(request, 'storage/volume_edit.html', {
@@ -471,7 +471,7 @@ def mp_permission(request, object_id):
         if form.is_valid():
             mp_path=mp.mp_path.__str__()
             form.commit(path=mp_path)
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Mount Point permissions successfully updated.")}), mimetype="application/json")
+            return JsonResponse(message=_("Mount Point permissions successfully updated."))
     else:
         form = forms.MountPointAccessForm(initial={'path':mp.mp_path})
     return render(request, 'storage/permission.html', {
@@ -485,9 +485,9 @@ def dataset_delete(request, object_id):
         retval = notifier().destroy_zfs_dataset(path = obj.mp_path[5:].__str__())
         if retval == '':
             obj.delete()
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Dataset successfully destroyed.")}), mimetype="application/json")
+            return JsonResponse(message=_("Dataset successfully destroyed."))
         else:
-            return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
+            return JsonResponse(error=True, message=retval)
     else:
         return render(request, 'storage/dataset_confirm_delete.html', {
             'focused_tab' : 'storage',
@@ -499,9 +499,9 @@ def snapshot_delete(request, dataset, snapname):
     if request.method == 'POST':
         retval = notifier().destroy_zfs_dataset(path = snapshot.__str__())
         if retval == '':
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully deleted.")}), mimetype="application/json")
+            return JsonResponse(message=_("Snapshot successfully deleted."))
         else:
-            return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
+            return JsonResponse(error=True, message=retval)
     else:
         return render(request, 'storage/snapshot_confirm_delete.html', {
             'snapname' : snapname,
@@ -517,8 +517,8 @@ def snapshot_delete_bulk(request):
         for snapshot in snap_list:
             retval = notifier().destroy_zfs_dataset(path = snapshot.__str__())
             if retval != '':
-                return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
-        return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshots successfully deleted.")}), mimetype="application/json")
+                return JsonResponse(error=True, message=retval)
+        return JsonResponse(message=_("Snapshots successfully deleted."))
 
     return render(request, 'storage/snapshot_confirm_delete_bulk.html', {
         'snaps': snaps,
@@ -529,9 +529,9 @@ def snapshot_rollback(request, dataset, snapname):
     if request.method == "POST":
         ret = notifier().rollback_zfs_snapshot(snapshot = snapshot.__str__())
         if ret == '':
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Rollback successful.")}), mimetype="application/json")
+            return JsonResponse(message=_("Rollback successful."))
         else:
-            return HttpResponse(simplejson.dumps({"error": True, "message": ret}), mimetype="application/json")
+            return JsonResponse(error=True, message=ret)
     else:
         return render(request, 'storage/snapshot_confirm_rollback.html', {
             'snapname' : snapname,
@@ -546,7 +546,7 @@ def periodicsnap(request):
         if form.is_valid():
             form.save()
 
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully added.")}), mimetype="application/json")
+            return JsonResponse(message=_("Snapshot successfully added."))
     else:
         form = forms.PeriodicSnapForm()
     return render(request, 'storage/periodicsnap.html', {
@@ -559,7 +559,7 @@ def manualsnap(request, path):
         form = forms.ManualSnapshotForm(request.POST)
         if form.is_valid():
             form.commit(path)
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully taken.")}), mimetype="application/json")
+            return JsonResponse(message=_("Snapshot successfully taken."))
     else:
         form = forms.ManualSnapshotForm()
     return render(request, 'storage/manualsnap.html', {
@@ -574,9 +574,9 @@ def clonesnap(request, snapshot):
         if form.is_valid():
             retval = form.commit()
             if retval == '':
-                return HttpResponse(simplejson.dumps({"error": False, "message": _("Snapshot successfully cloned.")}), mimetype="application/json")
+                return JsonResponse(message=_("Snapshot successfully cloned."))
             else:
-                return HttpResponse(simplejson.dumps({"error": True, "message": retval}), mimetype="application/json")
+                return JsonResponse(error=True, message=retval)
     else:
         form = forms.CloneSnapshotForm(initial=initial)
     return render(request, 'storage/clonesnap.html', {
@@ -594,11 +594,11 @@ def disk_replacement(request, vid, object_id):
         if form.is_valid():
             try:
                 if form.done(volume, fromdisk):
-                    return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk replacement has been initiated.")}), mimetype="application/json")
+                    return JsonResponse(message=_("Disk replacement has been initiated."))
                 else:
-                    return HttpResponse(simplejson.dumps({"error": True, "message": _("An error occurred.")}), mimetype="application/json")
+                    return JsonResponse(error=True, message=_("An error occurred."))
             except MiddlewareError, e:
-                return HttpResponse(simplejson.dumps({"error": True, "message": _("Error: %s") % str(e)}), mimetype="application/json")
+                return JsonResponse(error=True, message=_("Error: %s") % str(e))
 
     else:
         form = forms.DiskReplacementForm(disk=fromdisk)
@@ -621,7 +621,7 @@ def disk_detach(request, vid, object_id):
         # delete disk group if is now empty
         if models.Disk.objects.filter(disk_group=dg).count() == 0:
             dg.delete()
-        return HttpResponse(simplejson.dumps({"error": False, "message": _("Disk detach has been successfully done.")}), mimetype="application/json")
+        return JsonResponse(message=_("Disk detach has been successfully done."))
 
     return render(request, 'storage/disk_detach.html', {
         'vid': vid,
@@ -641,7 +641,7 @@ def volume_export(request, vid):
         form = forms.VolumeExport(request.POST, instance=volume, services=services)
         if form.is_valid():
             volume.delete(destroy=form.cleaned_data['mark_new'], cascade=form.cleaned_data.get('cascade', True))
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("The volume has been successfully exported")}), mimetype="application/json")
+            return JsonResponse(message=_("The volume has been successfully exported"))
     else:
         form = forms.VolumeExport(instance=volume, services=services)
     return render(request, 'storage/volume_export.html', {

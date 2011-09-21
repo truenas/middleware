@@ -35,9 +35,9 @@ from django.contrib.auth.views import login
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.forms import AuthenticationForm
 
-from freenasUI.account import forms
-from freenasUI.account import models
+from freenasUI.account import forms, models
 from freenasUI.common.system import get_sw_login_version, get_sw_name
+from freenasUI.freeadmin.views import JsonResponse
 
 def home(request):
     focus_form = request.GET.get('tab', 'passform')
@@ -93,7 +93,7 @@ def password_change(request):
                 del alert
                 events.append("loadalert()")
 
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Password successfully updated."), "events": events}), mimetype="application/json")
+            return JsonResponse(message=_("Password successfully updated."), events=events)
 
     extra_context.update({ 'passform' : passform, })
     return render(request, 'account/passform.html', extra_context)
@@ -107,7 +107,7 @@ def user_change(request):
         changeform = forms.UserChangeForm(instance=request.user, data=request.POST)
         if changeform.is_valid():
             changeform.save()
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Admin user successfully updated.")}), mimetype="application/json")
+            return JsonResponse(message=_("Admin user successfully updated."))
 
     extra_context.update({ 'changeform' : changeform, })
     return render(request, 'account/changeform.html', extra_context)
@@ -117,7 +117,7 @@ def group2user_update(request, object_id):
         f = forms.bsdGroupToUserForm(object_id, request.POST)
         if f.is_valid():
             f.save()
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Users successfully updated.")}), mimetype="application/json")
+            return JsonResponse(message=_("Users successfully updated."))
     else:
         f = forms.bsdGroupToUserForm(groupid=object_id)
     return render(request, 'account/bsdgroup2user_form.html', {
@@ -130,7 +130,7 @@ def user2group_update(request, object_id):
         f = forms.bsdUserToGroupForm(object_id, request.POST)
         if f.is_valid():
             f.save()
-            return HttpResponse(simplejson.dumps({"error": False, "message": _("Groups successfully updated.")}), mimetype="application/json")
+            return JsonResponse(message=_("Groups successfully updated."))
     else:
         f = forms.bsdUserToGroupForm(userid=object_id)
     return render(request, 'account/bsdgroup2user_form.html', {
