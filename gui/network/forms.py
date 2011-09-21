@@ -46,8 +46,8 @@ class InterfacesForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(InterfacesForm, self).__init__(*args, **kwargs)
         self.fields['int_interface'].choices = choices.NICChoices()
-        self.fields['int_dhcp'].widget.attrs['onChange'] = 'javascript:toggleDhcp(this);'
-        self.fields['int_ipv6auto'].widget.attrs['onChange'] = 'javascript:toggleIpv6auto(this);'
+        self.fields['int_dhcp'].widget.attrs['onChange'] = 'javascript:toggleGeneric("id_int_dhcp", ["id_int_ipv4address", "id_int_v4netmaskbit"]);'
+        self.fields['int_ipv6auto'].widget.attrs['onChange'] = 'javascript:toggleGeneric("id_int_ipv6auto", ["id_int_ipv6address", "id_int_v6netmaskbit"]);'
         ins = kwargs.get("instance", None)
         dhcp = False
         ipv6auto = False

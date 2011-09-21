@@ -572,68 +572,20 @@
 
     var canceled = false;
 
-    toggleUFSPath = function(c) {
+    toggleGeneric = function(checkboxid, farray, inverted) {
 
-        var toset;
-        var box = dijit.byId("id_ufspathen");
-        if(box.get("value")==false) {
-            toset = true;
+        if(inverted == undefined) inverted = false;
+
+        var box = dijit.byId(checkboxid);
+        if(inverted == true) {
+            toset = !box.get("value");
         } else{
-            toset = false;
+            toset = box.get("value");
         }
-        dijit.byId("id_ufspath").set('disabled', toset);
-
-    }
-
-    toggleDhcp = function(c) {
-
-        var toset;
-        var box = dijit.byId("id_int_dhcp");
-        toset = box.get("value")
-        dijit.byId("id_int_ipv4address").set('disabled', toset);
-        dijit.byId("id_int_v4netmaskbit").set('disabled', toset);
-
-    }
-
-    toggleIpv6auto = function(c) {
-
-        var toset;
-        var box = dijit.byId("id_int_ipv6auto");
-        toset = box.get("value")
-        dijit.byId("id_int_ipv6address").set('disabled', toset);
-        dijit.byId("id_int_v6netmaskbit").set('disabled', toset);
-
-    }
-
-    toggleLuc = function(c) {
-
-        var toset;
-        var box = dijit.byId("id_iscsi_toggleluc");
-        if(box.get("value")==false) {
-            toset = true;
-        } else{
-            toset = false;
+        for(var i=0;i<farray.length;i++) {
+            dijit.byId(farray[i]).set('disabled', toset);
         }
-        dijit.byId("id_iscsi_lucip").set('disabled', toset);
-        dijit.byId("id_iscsi_lucport").set("disabled", toset);
-        dijit.byId("id_iscsi_luc_authnetwork").set("disabled", toset);
-        dijit.byId("id_iscsi_luc_authmethod").set("disabled", toset);
-        dijit.byId("id_iscsi_luc_authgroup").set("disabled", toset);
 
-    }
-
-    toggleEmail = function(c) {
-
-        var toset;
-        var box = dijit.byId("id_em_smtp");
-        if(box.get("value")==false) {
-            toset = true;
-        } else{
-            toset = false;
-        }
-        dijit.byId("id_em_pass1").set('disabled', toset);
-        dijit.byId("id_em_pass2").set("disabled", toset);
-        dijit.byId("id_em_user").set("disabled", toset);
 
     }
 

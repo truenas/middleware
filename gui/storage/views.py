@@ -36,6 +36,7 @@ from django.utils.translation import ugettext as _
 from django.db import transaction, models as dmodels
 
 from dojango.util import to_dojo_data
+from freenasUI.common import humanize_size
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
 from freenasUI.storage.evilhack import evil_zvol_destroy
@@ -632,7 +633,6 @@ def disk_detach(request, vid, object_id):
 
 def volume_export(request, vid):
 
-    from freenasUI.common import humanize_size
     volume = models.Volume.objects.get(pk=vid)
     usedbytes = sum([mp._get_used_bytes() for mp in volume.mountpoint_set.all()])
     usedsize = humanize_size(usedbytes)

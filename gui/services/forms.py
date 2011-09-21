@@ -496,7 +496,7 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         self.fields['iscsi_luc_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
         self.fields['iscsi_discoveryauthgroup'].required = False
         self.fields['iscsi_discoveryauthgroup'].choices = [('-1', _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
-        self.fields['iscsi_toggleluc'].widget.attrs['onChange'] = 'javascript:toggleLuc(this);'
+        self.fields['iscsi_toggleluc'].widget.attrs['onChange'] = 'javascript:toggleGeneric("id_iscsi_toggleluc", ["id_iscsi_lucip", "id_iscsi_lucport", "id_iscsi_luc_authnetwork", "id_iscsi_luc_authmethod", "id_iscsi_luc_authgroup"], true);'
         ro = True
         if len(self.data) > 0:
             if self.data.get("iscsi_toggleluc", None) == "on":

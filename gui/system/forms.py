@@ -226,7 +226,7 @@ class EmailForm(ModelForm):
             self.fields['em_pass2'].initial = self.instance.em_pass
         except:
             pass
-        self.fields['em_smtp'].widget.attrs['onChange'] = 'javascript:toggleEmail(this);'
+        self.fields['em_smtp'].widget.attrs['onChange'] = 'javascript:toggleGeneric("id_em_smtp", ["id_em_pass1", "id_em_pass2", "id_em_user"], true);'
         ro = True
 
         if len(self.data) > 0:

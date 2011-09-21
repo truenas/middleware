@@ -177,7 +177,7 @@ class VolumeWizardForm(forms.Form):
         self.fields['volume_disks'].choices = self._populate_disk_choices()
         self.fields['volume_disks'].choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
         self.fields['volume_fstype'].widget.attrs['onClick'] = 'wizardcheckings();'
-        self.fields['ufspathen'].widget.attrs['onClick'] = 'toggleUFSPath();'
+        self.fields['ufspathen'].widget.attrs['onClick'] = 'toggleGeneric("id_ufspathen", ["id_ufspath"], true);'
         self.fields['ufspath'].widget.attrs['disabled'] = 'disabled'
         self.fields['ufspath'].widget.attrs['promptMessage'] = _("Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}")
 
