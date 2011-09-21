@@ -171,7 +171,6 @@ class Root(Tnode):
         node.parent = self
 
     def dump(self):
-        self.validate()
         vdevs = []
         for c in self:
             vdevs.append(c.dump())
@@ -184,7 +183,6 @@ class Root(Tnode):
             }
 
     def treedump(self):
-        self.validate()
         vdevs = []
         children = []
         for c in self:
