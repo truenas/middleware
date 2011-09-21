@@ -272,6 +272,11 @@ add_port () {
     fi
 }
 
+create_amd64_diskimage()
+{
+	create_i386_diskimage "$*"
+}
+
 compress_ko()
 {
 	if [ -f ${NANO_WORLDDIR}/boot/kernel/$1 ]
