@@ -994,7 +994,7 @@
     };
 
     addObject = function(name, url, nodes) {
-        commonDialog("add_dialog", "max-width: 75%;max-height:70%;background-color:white;overflow:auto;", name, url, nodes, onload);
+        commonDialog("add_dialog", "max-width: 75%;max-height:70%;background-color:white;overflow:auto;", name, url, nodes);
     };
 
     editObject = function(name, url, nodes, onload) {
