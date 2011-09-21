@@ -344,17 +344,25 @@ class CronJob(Model):
             if m in ('10', '11', '12'):
                 m = chr(87 + int(m))
             labels.append(unicode(mchoices[m]))
-        return ",".join(labels)
+        return ', '.join(labels)
 
     def get_human_dayweek(self):
-        weeks = eval(self.cron_dayweek)
+        # TODO:
+        # 1. Carve out the days input so that way one can say:
+        #    Mon-Fri + Saturday -> Weekdays + Saturday.
+        # 2. Get rid of the duplicate code.
+        weeks = self.cron_dayweek.split(',')
         if len(weeks) == 7:
-            return _("Everyday")
+            return _('Everyday')
+        if weeks == map(str, xrange(1, 6)):
+            return _('Weekdays')
+        if weeks == map(str, xrange(6, 8)):
+            return _('Weekends')
         wchoices = dict(choices.WEEKDAYS_CHOICES)
         labels = []
         for w in weeks:
             labels.append(unicode(wchoices[str(w)]))
-        return ",".join(labels)
+        return ', '.join(labels)
 
     def delete(self):
         super(CronJob, self).delete()
@@ -494,7 +502,7 @@ class Rsync(Model):
             return self.rsync_daymonth
 
     def get_human_month(self):
-        months = self.rsync_month.split(",")
+        months = self.rsync_month.split(',')
         if len(months) == 12:
             return _("Every month")
         mchoices = dict(choices.MONTHS_CHOICES)
@@ -503,17 +511,21 @@ class Rsync(Model):
             if m in ('10', '11', '12'):
                 m = chr(87 + int(m))
             labels.append(unicode(mchoices[m]))
-        return ",".join(labels)
+        return ', '.join(labels)
 
     def get_human_dayweek(self):
-        weeks = eval(self.rsync_dayweek)
+        weeks = self.rsync_dayweek.split(',')
         if len(weeks) == 7:
-            return _("Everyday")
+            return _('Everyday')
+        if weeks == map(str, xrange(1, 6)):
+            return _('Weekdays')
+        if weeks == map(str, xrange(6, 8)):
+            return _('Weekends')
         wchoices = dict(choices.WEEKDAYS_CHOICES)
         labels = []
         for w in weeks:
             labels.append(unicode(wchoices[str(w)]))
-        return ",".join(labels)
+        return ', '.join(labels)
 
     def delete(self):
         super(Rsync, self).delete()
@@ -572,7 +584,7 @@ class SMARTTest(Model):
             return self.smarttest_daymonth
 
     def get_human_month(self):
-        months = self.smarttest_month.split(",")
+        months = self.smarttest_month.split(',')
         if len(months) == 12:
             return _("Every month")
         mchoices = dict(choices.MONTHS_CHOICES)
@@ -581,17 +593,21 @@ class SMARTTest(Model):
             if m in ('10', '11', '12'):
                 m = chr(87 + int(m))
             labels.append(unicode(mchoices[m]))
-        return ",".join(labels)
+        return ', '.join(labels)
 
     def get_human_dayweek(self):
-        weeks = eval(self.smarttest_dayweek)
+        weeks = self.smarttest_dayweek.split(',')
         if len(weeks) == 7:
-            return _("Everyday")
+            return _('Everyday')
+        if weeks == map(str, xrange(1, 6)):
+            return _('Weekdays')
+        if weeks == map(str, xrange(6, 8)):
+            return _('Weekends')
         wchoices = dict(choices.WEEKDAYS_CHOICES)
         labels = []
         for w in weeks:
             labels.append(unicode(wchoices[str(w)]))
-        return ",".join(labels)
+        return ', '.join(labels)
 
     def __unicode__(self):
         return unicode(self.smarttest_disk)
