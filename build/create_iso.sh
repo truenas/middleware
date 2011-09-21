@@ -29,6 +29,10 @@ main()
 			 -allow-multidot -hide boot.catalog -o ${OUTPUT} -no-emul-boot \
 			 -b boot/cdboot ${ISODIR}"
 
+	if ! command -v mkisofs; then
+		make -C /usr/ports/sysutils/cdrtools clean install
+	fi
+
 	if [ ! -f "${IMGFILE}" ]; then
 		error "Can't find image file (${IMGFILE}) for ${REVISION}, punting"
 	fi
