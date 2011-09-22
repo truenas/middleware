@@ -128,8 +128,8 @@ def snapshots_data(request):
     for snap in zfsnap_list:
         snap['extra'] = simplejson.dumps({
             'clone_url': reverse('storage_clonesnap', kwargs={'snapshot': snap['fullname']}),
-            'rollback_url': reverse('storage_snapshot_rollback', kwargs={'dataset': vol, 'snapname': snap['name']}) if snap['mostrecent'] else None,
-            'delete_url': reverse('storage_snapshot_delete', kwargs={'dataset': vol, 'snapname': snap['name']}),
+            'rollback_url': reverse('storage_snapshot_rollback', kwargs={'dataset': snap['filesystem'], 'snapname': snap['name']}) if snap['mostrecent'] else None,
+            'delete_url': reverse('storage_snapshot_delete', kwargs={'dataset': snap['filesystem'], 'snapname': snap['name']}),
         })
         data.append(snap)
         count += 1
