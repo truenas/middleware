@@ -27,7 +27,7 @@
             </td>
             <td>
             {{ form.volume_disks.errors }}
-            <select dojoType="dojox.form.CheckedMultiSelect" id="wizarddisks" name="volume_disks" size="4" multiple="true">
+            <select dojoType="dijit.form.MultiSelect" id="wizarddisks" name="volume_disks" size="6" multiple="true">
                 <script type="dojo/method" event="onClick" args="evt">
                     wizardcheckings(true);
                 </script>

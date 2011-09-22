@@ -58,6 +58,7 @@
     dojo.require("dijit.form.ComboBox");
     dojo.require("dijit.form.FilteringSelect");
     dojo.require("dijit.form.NumberTextBox");
+    dojo.require("dijit.form.MultiSelect");
     dojo.require("dijit.form.HorizontalSlider");
     dojo.require("dijit.form.HorizontalRule");
     dojo.require("dijit.form.HorizontalRuleLabels");
@@ -803,20 +804,12 @@
 
         if(vol_change == true) {
             var unselected = [];
-            var opts = disks.getOptions();
+            disks.invertSelection(null);
+            var opts = disks.get("value");
             for(var i=0;i<opts.length;i++) {
-
-                var selected = false;
-                for(var j=0;j<d.length;j++) {
-                    if (opts[i].value == d[j]) {
-                        selected = true;
-                    }
-                }
-                if(selected == false) {
-                    unselected.push(opts[i].value);
-                }
-
+                unselected.push(opts[i]);
             }
+            disks.invertSelection(null);
 
             if(unselected.length > 0 && zfs == true && first_load != true) {
 
