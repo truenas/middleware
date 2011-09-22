@@ -796,8 +796,8 @@
 
         if(!dijit.byId("wizarddisks")) return;
         var disks = dijit.byId("wizarddisks");
-        //var d = disks.getSelected();
         var d = disks.get('value');
+        dojo.html.set(dojo.byId("wizard_num_disks"), d.length + '');
 
         var zfs = dojo.query("input[name=volume_fstype]")[1].checked;
 
