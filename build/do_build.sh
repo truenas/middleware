@@ -19,7 +19,7 @@ cd "$(dirname "$0")/.."
 . build/functions.sh
 
 BUILD=true
-if [ -s ${NANO_OBJ}/_.iw ]; then
+if [ -s ${NANO_OBJ}/_.iw -a -f FreeBSD/supfile ]; then
 	FULL_BUILD=false
 else
 	FULL_BUILD=true
