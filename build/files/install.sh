@@ -274,6 +274,7 @@ menu_install()
         cp -pR /tmp/data_preserved/ /tmp/data_new
         : > /tmp/data_new/need-update
         : > /tmp/data_new/cd_update
+        umount /tmp/data_new
         # Mount: /
         mount /dev/${_disk}s1a /tmp/data_new
         ls /tmp/data_new > /dev/null
