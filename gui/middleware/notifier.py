@@ -103,9 +103,10 @@ class notifier:
         syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
         return retval
 
-    def __pipeopen(self, command):
-        syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
-        syslog.syslog(syslog.LOG_NOTICE, "Popen()ing: " + command)
+    def __pipeopen(self, command, log=True):
+        if log:
+            syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
+            syslog.syslog(syslog.LOG_NOTICE, "Popen()ing: " + command)
         return Popen(command, stdin = PIPE, stdout = PIPE, stderr = PIPE, shell = True, close_fds = True)
 
     def _do_nada(self):
@@ -1313,7 +1314,7 @@ class notifier:
     def get_volume_status(self, name, fs, group_type):
         status = 'UNKNOWN'
         if fs == 'ZFS':
-            status = self.__pipeopen('zpool list -H -o health %s' % name.__str__()).communicate()[0].strip('\n')
+            status = self.__pipeopen('zpool list -H -o health %s' % str(name), log=False).communicate()[0].strip('\n')
         elif fs == 'UFS':
             gtype = None
             for gtypes in group_type:
