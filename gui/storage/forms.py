@@ -49,6 +49,33 @@ from dojango import forms
 
 attrs_dict = { 'class': 'required', 'maxHeight': 200 }
 
+class Disk(object):
+    dev = None
+    dtype = None
+    number = None
+    size = None
+    def __init__(self, devname, size):
+        reg = re.search(r'^(.*?)([0-9]+)$', devname)
+        if reg:
+            self.dtype, number = reg.groups()
+        self.number = int(number)
+        self.size = size
+        self.human_size = humanize_number_si(size)
+        self.dev = devname
+    def __lt__(self, other):
+        if self.human_size == other.human_size:
+            if self.dtype == other.dtype:
+                return self.number < other.number
+            return self.dtype < other.dtype
+        return self.size > other.size
+    def __repr__(self):
+        return u'<Disk: %s>' % str(self)
+    def __str__(self):
+        return u'%s%s (%s)' % (self.dtype, self.number, humanize_number_si(self.size))
+    def __iter__(self):
+        yield self.dev
+        yield str(self)
+
 def _clean_quota_fields(form, attrs, prefix):
 
     cdata = form.cleaned_data
@@ -175,7 +202,6 @@ class VolumeWizardForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(VolumeWizardForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        self.fields['volume_disks'].choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
         self.fields['volume_fstype'].widget.attrs['onClick'] = 'wizardcheckings();'
         self.fields['ufspathen'].widget.attrs['onClick'] = 'toggleGeneric("id_ufspathen", ["id_ufspath"], true);'
         self.fields['ufspath'].widget.attrs['disabled'] = 'disabled'
@@ -208,7 +234,7 @@ class VolumeWizardForm(forms.Form):
 
     def _populate_disk_choices(self):
 
-        diskchoices = dict()
+        disks = []
 
         # Grab disk list
         # NOTE: This approach may fail if device nodes are not accessible.
@@ -216,21 +242,24 @@ class VolumeWizardForm(forms.Form):
         diskinfo = pipe.read().strip().split('\n')
         for disk in diskinfo:
             devname, capacity = disk.split('\t')
-            capacity = humanize_number_si(capacity)
-            diskchoices[devname] = "%s (%s)" % (devname, capacity)
+            disks.append(Disk(devname, capacity))
+
         # Exclude the root device
         rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
         rootdev_base = re.search('[a-z/]*[0-9]*', rootdev)
-        if rootdev_base != None:
-            try:
-                del diskchoices[rootdev_base.group(0)]
-            except:
-                pass
+        if rootdev_base:
+            for d in disks:
+                if d.dev == rootdev_base.group(0):
+                    disks.remove(d)
+
         # Exclude what's already added
         for devname in [ notifier().identifier_to_device(x['disk_identifier']) or x['disk_name'] for x in models.Disk.objects.all().values('disk_name','disk_identifier')]:
-            diskchoices.pop(devname, None)
-        choices = diskchoices.items()
-        choices.sort(key = lambda a : float(re.sub(r'^.*?([0-9]+)[^0-9]*', r'\1.',a[0])))
+            for d in disks:
+                if d.dev == devname:
+                    disks.remove(d)
+
+        choices = sorted(disks)
+        choices = [tuple(d) for d in choices]
         return choices
 
     def clean_volume_name(self):
