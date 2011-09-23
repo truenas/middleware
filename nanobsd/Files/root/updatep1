@@ -59,7 +59,7 @@ fsck_ffs -n /dev/${TARGET_DRIVE}s${PARTNUM}a
 tunefs -L ${LABELNAME}s${PARTNUM}a /dev/${TARGET_DRIVE}s${PARTNUM}a
 
 # Save all files which exist under / that should persist across upgrades (root
-# ssh keys, /boot/loader.user, /boot/modules/* , fusionio utilities, etc).
+# ssh keys, /boot/modules/* , fusionio utilities, etc).
 if [ -e /tmp/upgrade ]; then
     if [ ! -d /tmp/upgrade ]; then
         rm -rf /tmp/upgrade
@@ -70,10 +70,6 @@ else
 fi
 
 mount /dev/${TARGET_DRIVE}s${PARTNUM}a /tmp/upgrade
-
-if [ -f /boot/loader.user ]; then
-    cp /boot/loader.user /tmp/upgrade/boot/
-fi
 
 if [ -d /root/.ssh ]; then
     cp -R /root/.ssh /tmp/upgrade/root/ && chmod 700 /tmp/upgrade/root/.ssh

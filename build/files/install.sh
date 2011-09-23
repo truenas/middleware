@@ -288,16 +288,6 @@ menu_install()
                 cp -p /tmp/modules/$i /tmp/data_new/boot/modules
             done
         fi
-        if [ ! -f /tmp/data_new/boot/loader.user ]; then
-            cat > /tmp/data_new/boot/loader.user <<EOF
-# 
-# User-serviceable boot loader file.
-#
-# This file is preserved as-is across upgrades.
-#
-
-EOF
-        fi
         if [ -d /tmp/fusionio ]; then
             cp -pR /tmp/fusionio /tmp/data_new/usr/local/
         fi
