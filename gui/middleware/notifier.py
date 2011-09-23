@@ -749,7 +749,6 @@ class notifier:
         z_name = volume.vol_name
 
         z_vdev = ""
-        need4khack = False
         # Grab all disk groups' id matching the volume ID
         self.__system("swapoff -a")
         vgrp_type = group.group_type
@@ -757,7 +756,7 @@ class notifier:
             z_vdev += " " + vgrp_type
 
         # Prepare disks nominated in this group
-        vdevs = self.__prepare_zfs_vdev(group.disk_set.all(), swapsize, None)[0]
+        vdevs = self.__prepare_zfs_vdev(group.disk_set.all(), swapsize, force4khack)[0]
         z_vdev += " ".join(vdevs)
 
         # Finally, attach new groups to the zpool.
