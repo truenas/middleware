@@ -1529,6 +1529,13 @@ class notifier:
             raise MiddlewareError('Unable to export %s: %s' % (name, stderr))
         return True
 
+    def zfs_scrub(self, name):
+        imp = self.__pipeopen('zpool scrub %s' % str(name))
+        stdout, stderr = imp.communicate()
+        if imp.returncode != 0:
+            raise MiddlewareError('Unable to scrub %s: %s' % (name, stderr))
+        return True
+
     def zfs_snapshot_list(self):
         fsinfo = dict()
 

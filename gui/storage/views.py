@@ -651,6 +651,20 @@ def volume_export(request, vid):
         'services': services,
     })
 
+def zpool_scrub(request, vid):
+    volume = models.Volume.objects.get(pk=vid)
+    if request.method == "POST":
+        try:
+            notifier().zfs_scrub(str(volume.vol_name))
+        except MiddlewareError, e:
+            return JsonResponse(error=True, message=_("Error: %s") % str(e))
+        else:
+            return JsonResponse(message=_("The scrub process has begun"))
+
+    return render(request, 'storage/scrub_confirm.html', {
+        'volume': volume,
+    })
+
 def zpool_status(request, name):
     return render(request, 'storage/zpool_status.html', {
         'name': name,
