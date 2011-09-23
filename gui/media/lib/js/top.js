@@ -50,15 +50,20 @@ function loadtop() {
     load: function(data) {
 
         _topstarted = false;
-        var topOutput = data.childNodes[0].childNodes[0].wholeText;
-        var pageElement = document.getElementById('top_output');
+        var topOutput = data.getElementsByTagName('top')[0].childNodes[0].nodeValue;
+        var pageElement = dojo.byId('top_output');
 
         var top_dialog = dijit.byId("top_dialog");
         if(!top_dialog.open) {
             ttop.stop();
         }
 
-        pageElement.innerHTML = topOutput;
+        if ('innerText' in pageElement) {
+            pageElement.innerText = topOutput;
+        } else {
+            pageElement.innerHTML = topOutput;
+        }
+
     },
     });
 }
