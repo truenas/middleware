@@ -451,3 +451,12 @@ class RsyncForm(ModelForm):
     def save(self):
         super(RsyncForm, self).save()
         started = notifier().restart("cron")
+
+class SysctlForm(ModelForm):
+    class Meta:
+        model = models.Sysctl
+    def clean_sysctl_value(self):
+        value = self.cleaned_data.get("sysctl_value")
+        if '"' in value:
+            raise forms.ValidationError(_("Quotes are not allowed"))
+        return value

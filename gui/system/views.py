@@ -34,6 +34,7 @@ import time
 
 from django.contrib.auth import login, get_backends
 from django.contrib.auth.models import User
+from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -41,10 +42,10 @@ from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
 
-from freenasUI.system import forms
-from freenasUI.system import models
+from freenasUI.system import forms, models
 from freenasUI.middleware.notifier import notifier
-from freenasUI.common.system import get_sw_name, get_sw_version
+from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
+from freenasUI.network.models import GlobalConfiguration
 
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
@@ -239,7 +240,6 @@ def testmail(request):
     error = False
     errmsg = ''
     if request.is_ajax():
-        from common.system import send_mail
         sw_name = get_sw_name()
         error, errmsg = send_mail(subject=_('Test message from %s'
                                             % (sw_name)),
@@ -344,6 +344,12 @@ def rsyncs(request):
         'rsyncs': syncs,
         })
 
+def sysctls(request):
+    sysctls = models.Sysctl.objects.all().order_by('id')
+    return render(request, 'system/sysctl.html', {
+        'sysctls': sysctls,
+        })
+
 def restart_httpd(request):
     """ restart httpd """
     notifier().restart("http")
@@ -358,9 +364,6 @@ def debug(request):
     return render(request, 'system/debug.html')
 
 def debug_save(request):
-    from django.core.servers.basehttp import FileWrapper
-    from network.models import GlobalConfiguration
-
     hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
     wrapper = FileWrapper(file(DEBUG_TEMP))
 

@@ -47,3 +47,10 @@ class ViewSmarttest(TreeNode):
         view = 'system_smarttests'
         name = _('View S.M.A.R.T. Tests')
         append_app = False
+
+class ViewSysctl(TreeNode):
+
+        gname = 'system.Sysctl.View'
+        view = 'system_sysctls'
+        name = _('View Sysctl\'s')
+        append_app = False
