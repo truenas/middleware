@@ -1761,7 +1761,7 @@ class notifier:
     def __geom_confxml(self):
         if self.__confxml == None:
             from libxml2 import parseDoc
-            sysctl_proc = self.__pipeopen('sysctl -b kern.geom.confxml')
+            sysctl_proc = self.__pipeopen('sysctl -b kern.geom.confxml', log=False)
             self.__confxml = parseDoc(sysctl_proc.communicate()[0][:-1])
         return self.__confxml
 
