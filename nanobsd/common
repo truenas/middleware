@@ -190,6 +190,7 @@ do_add_pkg ()
 	CR "cd /usr/ports/packages/All;pkg_add -F $1.tbz"
 	umount ${NANO_WORLDDIR}/usr/ports/distfiles
 	umount ${NANO_WORLDDIR}/usr/ports/packages
+	rmdir ${NANO_WORLDDIR}/usr/ports/packages/All
 	rmdir ${NANO_WORLDDIR}/usr/ports/packages
 	rmdir ${NANO_WORLDDIR}/usr/ports/distfiles
 	rmdir ${NANO_WORLDDIR}/usr/ports
