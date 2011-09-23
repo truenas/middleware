@@ -1,5 +1,5 @@
 --- tools/tools/nanobsd/nanobsd.sh	2010-12-21 09:09:25.000000000 -0800
-+++ tools/tools/nanobsd/nanobsd.sh	2011-09-09 15:12:00.000000000 -0700
++++ tools/tools/nanobsd/nanobsd.sh	2011-09-23 15:30:27.000000000 -0700
 @@ -135,14 +135,24 @@
  # Progress Print level
  PPLEVEL=3
@@ -82,7 +82,7 @@
  		> ${NANO_OBJ}/_.ik 2>&1
  )
  
-@@ -361,16 +378,26 @@
+@@ -361,28 +378,39 @@
  		done
  )
  
@@ -93,7 +93,7 @@
 +	lbl=$3
 +	echo newfs ${NANO_NEWFS} ${NANO_LABEL:+-L${NANO_LABEL}${lbl}} ${dev}
 +	newfs ${NANO_NEWFS} ${NANO_LABEL:+-L${NANO_LABEL}${lbl}} ${dev}
-+	mount -o async ${dev} ${mnt}
++	mount ${dev} ${mnt}
 +)
 +
  populate_slice ( ) (
@@ -114,7 +114,8 @@
  	cd ${dir}
  	find . -print | grep -Ev '/(CVS|\.svn)' | cpio -dumpv ${mnt}
  	df -i ${mnt}
-@@ -378,11 +405,11 @@
++	sync; sync
+ 	umount ${mnt}
  )
  
  populate_cfg_slice ( ) (
@@ -128,7 +129,7 @@
  )
  
  create_i386_diskimage ( ) (
-@@ -467,8 +494,8 @@
+@@ -467,13 +495,13 @@
  			-y ${NANO_HEADS}`
  	else
  		echo "Creating md backing file..."
@@ -139,7 +140,13 @@
  		MD=`mdconfig -a -t vnode -f ${IMG} -x ${NANO_SECTS} \
  			-y ${NANO_HEADS}`
  	fi
-@@ -484,13 +511,8 @@
+ 
+-	trap "echo 'Running exit trap code' ; df -i ${MNT} ; umount ${MNT} || true ; mdconfig -d -u $MD" 1 2 15 EXIT
++	trap "echo 'Running exit trap code'; df -i ${MNT}; sync; sync; umount ${MNT} || true; mdconfig -d -u $MD" 1 2 15 EXIT
+ 
+ 	fdisk -i -f ${NANO_OBJ}/_.fdisk ${MD}
+ 	fdisk ${MD}
+@@ -484,16 +512,12 @@
  	bsdlabel ${MD}s1
  
  	# Create first image
@@ -151,23 +158,22 @@
 -	( cd ${NANO_WORLDDIR} && find . -print | cpio -dump ${MNT} )
 -	df -i ${MNT}
 +	populate_slice /dev/${MD}s1a ${NANO_WORLDDIR} ${MNT} "s1a"
-+ 	mount -o async /dev/${MD}s1a ${MNT}
++ 	mount /dev/${MD}s1a ${MNT}
  	echo "Generating mtree..."
  	( cd ${MNT} && mtree -c ) > ${NANO_OBJ}/_.mtree
  	( cd ${MNT} && du -k ) > ${NANO_OBJ}/_.du
-@@ -500,20 +522,23 @@
- 		# Duplicate to second image (if present)
- 		echo "Duplicating to second image..."
- 		dd if=/dev/${MD}s1 of=/dev/${MD}s2 bs=64k
--		mount /dev/${MD}s2a ${MNT}
-+		mount -o async /dev/${MD}s2a ${MNT}
- 		for f in ${MNT}/etc/fstab ${MNT}/conf/base/etc/fstab
++	sync; sync
+ 	umount ${MNT}
+ 
+ 	if [ $NANO_IMAGES -gt 1 -a $NANO_INIT_IMG2 -gt 0 ] ; then
+@@ -505,15 +529,19 @@
  		do
  			sed -i "" "s=${NANO_DRIVE}s1=${NANO_DRIVE}s2=g" $f
  		done
++		sync; sync
  		umount ${MNT}
 +		if [ ! -z ${NANO_LABEL} ]; then
-+			tunefs -L ${NANO_LABEL}"s2a" /dev/${MD}s2a
++			tunefs -L "${NANO_LABEL}s2a" /dev/${MD}s2a
 +		fi
  	fi
  	
@@ -182,7 +188,7 @@
  	fi
  
  	if [ "${NANO_MD_BACKING}" = "swap" ] ; then
-@@ -820,6 +845,11 @@
+@@ -820,6 +848,11 @@
  	NANO_PMAKE="${NANO_PMAKE} -DNO_CLEAN"
  fi
  
@@ -194,7 +200,7 @@
  export MAKEOBJDIRPREFIX
  
  export NANO_ARCH
-@@ -844,6 +874,7 @@
+@@ -844,6 +877,7 @@
  export NANO_WORLDDIR
  export NANO_BOOT0CFG
  export NANO_BOOTLOADER
