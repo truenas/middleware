@@ -1046,6 +1046,7 @@
     };
 
     volumeWizard = function(name, url, nodes) {
+        canceled = false;
          dialog = new dijit.Dialog({
              id: 'wizard_dialog',
              title: name,
