@@ -106,7 +106,7 @@
 -	test -d $d || dir=/var/empty
 +	lbl=$4
 +	test -z $2 && dir=${NANO_WORLDDIR}/var/empty
-+	test -d $d || dir=${NANO_WORLDDIR}/var/empty
++	test -d $dir || dir=${NANO_WORLDDIR}/var/empty
  	echo "Creating ${dev} with ${dir} (mounting on ${mnt})"
 -	newfs ${NANO_NEWFS} ${dev}
 -	mount ${dev} ${mnt}
