@@ -40,16 +40,19 @@ loadlog = function(load) {
     handleAs: "xml",
     load: function(data) {
         _msgstarted = false;
-        var msgOutput = data.childNodes[0].childNodes[0].wholeText;
-        var pageElement = document.getElementById(msgfull.open? 'msgfull_output' : 'msg_output');
+        var msgOutput = data.getElementsByTagName('msg')[0].childNodes[0].nodeValue;
+        var pageElement = dojo.byId(msgfull.open? 'msgfull_output' : 'msg_output');
         var newinterval = 1000;
         var saved_delta;
 
         if (msgOutput != pageElement.innerHTML) {
             if (msgfull.open)
                 saved_delta = pageElement.scrollHeight - pageElement.scrollTop - 400;
-            pageElement.innerHTML = msgOutput;
-
+            if ('innerText' in pageElement) {
+                pageElement.innerText = msgOutput;
+            } else { 
+                pageElement.innerHTML = msgOutput;
+            }
             if (t.interval > 1250) {
                 newinterval = t.interval / 3;
                 if (newinterval < 1250)
