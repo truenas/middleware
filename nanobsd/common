@@ -181,7 +181,7 @@ do_add_pkg ()
 	# Need to create ${NANO_OBJ}/ports in this add_pkg_${port} function
 	mkdir -p ${NANO_OBJ}/ports/distfiles
 	mkdir -p ${NANO_OBJ}/ports/packages
-	mkdir -p ${NANO_WORLDDIR}/usr/ports/packages
+	mkdir -p ${NANO_WORLDDIR}/usr/ports/packages/All
 	mkdir -p ${NANO_WORLDDIR}/usr/ports/distfiles
 	mount -t nullfs -o noatime ${NANO_OBJ}/ports/packages \
 	    ${NANO_WORLDDIR}/usr/ports/packages
@@ -270,11 +270,6 @@ add_port () {
 	"
 	NANO_PACKAGE_ONLY=0
     fi
-}
-
-create_amd64_diskimage()
-{
-	create_i386_diskimage "$*"
 }
 
 compress_ko()
