@@ -25,10 +25,11 @@
 # SUCH DAMAGE.
 #
 
-import sys
+import hashlib
 import os
-from cStringIO import StringIO
+import sys
 import subprocess
+from cStringIO import StringIO
 
 sys.path.append('/usr/local/www')
 sys.path.append('/usr/local/www/freenasUI')
@@ -39,10 +40,11 @@ from django.core.management import setup_environ
 setup_environ(settings)
 
 from django.contrib.auth.models import User, UNUSABLE_PASSWORD
-
+from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.common.system import send_mail
 from freenasUI.storage.models import Volume
+from freenasUI.system.models import Settings
 
 class Alert(object):
 
@@ -52,30 +54,35 @@ class Alert(object):
 
     def __init__(self):
         self.__s = StringIO()
+        self.__logs = {
+            self.LOG_OK: [],
+            self.LOG_CRIT: [],
+            self.LOG_WARN: [],
+        }
 
     def log(self, level, msg):
+        self.__logs[level].append(msg)
         self.__s.write("%s: %s\n" % (level, msg) )
 
     def volumes_status(self):
         for vol in Volume.objects.filter(vol_fstype__in=['ZFS','UFS']):
             if vol.status == 'HEALTHY':
-                self.log(self.LOG_OK, "The volume %s status is HEALTHY" % vol)
+                self.log(self.LOG_OK, _("The volume %s status is HEALTHY") % vol)
             elif vol.status == 'DEGRADED':
-                self.log(self.LOG_CRIT, "The volume %s status is DEGRADED" % vol)
+                self.log(self.LOG_CRIT, _("The volume %s status is DEGRADED") % vol)
             else:
-                self.log(self.LOG_WARN, "The volume %s status is %s" % (vol, vol.status))
+                self.log(self.LOG_WARN, _("The volume %s status is %s") % (vol, vol.status))
 
     def admin_password(self):
         user = User.objects.filter(password=UNUSABLE_PASSWORD)
         if user.exists():
-            self.log(self.LOG_CRIT, "You have to change the password for the admin user (currently no password is required to login)")
+            self.log(self.LOG_CRIT, _("You have to change the password for the admin user (currently no password is required to login)"))
 
     def lighttpd_bindaddr(self):
-        from freenasUI.system.models import Settings
         address = Settings.objects.all().order_by('-id')[0].stg_guiaddress
         with open('/usr/local/etc/lighttpd/lighttpd.conf') as f:
             if f.read().find('0.0.0.0') != -1 and address != '0.0.0.0':
-                self.log(self.LOG_WARN, "The WebGUI Address could not be bind to %s, using wildcard" % (address,))
+                self.log(self.LOG_WARN, _("The WebGUI Address could not be bind to %s, using wildcard") % (address,))
 
     def perform(self):
         self.volumes_status()
@@ -87,10 +94,31 @@ class Alert(object):
         f.write(self.__s.getvalue())
         f.close()
 
+    def email(self):
+        """
+        Use alert.last to hold a sha256 hash of the last sent alerts
+        If the hash is the same do not resend the email
+        """
+        if len(self.__logs[self.LOG_CRIT]) == 0:
+            if os.path.exists('/var/tmp/alert.last'):
+                os.unlink('/var/tmp/alert.last')
+            return
+        try:
+            with open('/var/tmp/alert.last', 'r') as f:
+                sha256 = f.read()
+        except:
+            sha256 = ''
+        newsha = hashlib.sha256(repr(self.__logs[self.LOG_CRIT])).hexdigest()
+        if newsha != sha256:
+            send_mail(subject=_("Critical Alerts"), text="\n".join(self.__logs[self.LOG_CRIT]))
+            with open('/var/tmp/alert.last', 'w+') as f:
+                f.write(newsha)
+
     def __del__(self):
         self.__s.close()
 
 if __name__ == "__main__":
     alert = Alert()
     alert.perform()
+    alert.email()
     alert.write()
