@@ -96,6 +96,8 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     echo "Exported ${volumename}!" | logger
 fi
 E*O*F
+	else
+		/usr/bin/truncate -s 0 /etc/pf.conf
 	fi
 }
 
