@@ -128,27 +128,6 @@ __EOF__
 	section_footer
 
 	#
-	#	Dump resolver configuration
-	#
-	section_header "/etc/resolv.conf"
-	cat "/etc/resolv.conf"
-	section_footer
-
-	#
-	#	Dump hosts configuration
-	#
-	section_header "/etc/hosts"
-	cat "/etc/hosts"
-	section_footer
-
-	#
-	#	List interfaces
-	#
-	section_header "ifconfig -a"
-	ifconfig -a
-	section_footer
-
-	#
 	#	Dump samba configuration
 	#
 	section_header "${SMB_CONF}"

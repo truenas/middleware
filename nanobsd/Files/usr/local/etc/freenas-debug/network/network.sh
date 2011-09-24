@@ -36,8 +36,18 @@ network_func()
 	hostname
 	section_footer
 
+	#
+	#	Dump hosts configuration
+	#
+	section_header "/etc/hosts"
+	cat "/etc/hosts"
+	section_footer
+
+	#
+	#	Dump resolver information
+	#
 	section_header "/etc/resolv.conf"
-	cat /etc/resolv.conf
+	cat /etc/resolv.conf 2>/dev/null
 	section_footer
 
 	section_header "Interfaces"

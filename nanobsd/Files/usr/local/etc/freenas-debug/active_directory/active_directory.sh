@@ -109,7 +109,7 @@ __EOF__
 	#	Dump kerberos configuration
 	#
 	section_header "${PATH_KRB5_CONFIG}"
-	cat "${PATH_KRB5_CONFIG}"
+	cat "${PATH_KRB5_CONFIG}" 2>/dev/null
 	section_footer
 
 	#
@@ -129,27 +129,6 @@ __EOF__
 		cat "${PAM_DIR}/${pf}"
 		section_footer
 	done
-	section_footer
-
-	#
-	#	Dump resolver configuration
-	#
-	section_header "/etc/resolv.conf"
-	cat "/etc/resolv.conf"
-	section_footer
-
-	#
-	#	Dump hosts configuration
-	#
-	section_header "/etc/hosts"
-	cat "/etc/hosts"
-	section_footer
-
-	#
-	#	List interfaces
-	#
-	section_header "ifconfig -a"
-	ifconfig -a
 	section_footer
 
 	#
