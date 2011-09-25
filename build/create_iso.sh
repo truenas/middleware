@@ -29,7 +29,7 @@ main()
 			 -allow-multidot -hide boot.catalog -o ${OUTPUT} -no-emul-boot \
 			 -b boot/cdboot ${ISODIR}"
 
-	if ! command -v mkisofs; then
+	if ! command -v mkisofs >/dev/null 2>&1; then
 		make -C /usr/ports/sysutils/cdrtools clean install
 	fi
 
