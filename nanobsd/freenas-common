@@ -51,11 +51,11 @@ FlashDevice generic 2g
 
 add_port devel/pkg-config
 add_port x11/kbproto
-add_port x11/xproto -DWITHOUT_X11
-add_port x11/libXdmcp -DWITHOUT_X11
-add_port x11/libXau -DWITHOUT_X11
-add_port devel/libpthread-stubs -DWITHOUT_X11
-add_port x11/libxcb -DWITHOUT_X11
+add_port x11/xproto WITHOUT_X11=y
+add_port x11/libXdmcp WITHOUT_X11=y
+add_port x11/libXau WITHOUT_X11=y
+add_port devel/libpthread-stubs WITHOUT_X11=y
+add_port x11/libxcb WITHOUT_X11=y
 add_port x11/libX11
 add_port devel/cdialog
 add_port dns/inadyn			# -mt?
@@ -81,7 +81,7 @@ add_port net/openldap24-sasl-client
 #-net/nss_ldap
 add_port net/nss_ldap
 add_port net/rsync 
-add_port lang/python27 -DWITH_HUGE_STACK_SIZE
+add_port lang/python27 WITH_HUGE_STACK_SIZE=y
 add_port dns/py-dnspython
 #+net/samba
 add_port devel/talloc
@@ -90,12 +90,12 @@ add_port devel/popt
 add_port databases/tdb
 add_port sysutils/libsunacl
 #-net/samba
-add_port net/samba35		-DWITHOUT_CUPS -DWITH_LDAP -DWITH_ADS \
-	-DWITH_WINBIND -DWITH_ACL_SUPPORT -DWITH_PAM_SMBPASS -DWITH_AIO_SUPPORT \
-	-DWITH_EXP_MODULES 
+add_port net/samba35	WITHOUT_CUPS=y WITH_LDAP=y WITH_ADS=y WITH_WINBIND=y \
+			WITH_ACL_SUPPORT=y WITH_PAM_SMBPASS=y \
+			WITH_AIO_SUPPORT=y WITH_EXP_MODULES=y
 add_port security/pam_ldap
 add_port security/pam_mkhomedir
-add_port shells/bash -DWITHOUT_NLS
+add_port shells/bash WITHOUT_NLS=y
 add_port shells/scponly
 add_port sysutils/e2fsprogs
 #+sysutils/fusefs-ntfs
@@ -116,7 +116,7 @@ add_port emulators/open-vm-tools-nox11
 add_port databases/sqlite3
 add_port databases/py-sqlite3
 add_port databases/py-bsddb3
-add_port www/py-django -DWITHOUT_MYSQL
+add_port www/py-django WITHOUT_MYSQL=y
 add_port www/py-dojango
 #+databases/py-south
 add_port devel/py-setuptools
@@ -134,50 +134,51 @@ add_port www/py-flup
 #+add_port sysutils/nut
 #-add_port sysutils/nut
 add_port net-mgmt/net-snmp
-add_port sysutils/nut -DWITHOUT_NEON
+add_port sysutils/nut WITHOUT_NEON=y
 
 #+add_port net-mgmt/collectd
-add_port devel/libstatgrab -DWITHOUT_X11
-add_port devel/libltdl -DWITHOUT_X11
-add_port print/freetype2 -DWITHOUT_X11
-add_port textproc/expat2 -DWITHOUT_X11
-add_port x11-fonts/fontconfig -DWITHOUT_X11
-add_port x11-fonts/libfontenc -DWITHOUT_X11
-add_port x11-fonts/mkfontscale -DWITHOUT_X11
-add_port x11-fonts/mkfontdir -DWITHOUT_X11
-add_port x11-fonts/font-bh-ttf -DWITHOUT_X11
-add_port x11-fonts/font-misc-meltho -DWITHOUT_X11
-add_port x11-fonts/font-misc-ethiopic -DWITHOUT_X11
-add_port x11-fonts/bitstream-vera -DWITHOUT_X11
-add_port x11-fonts/font-util -DWITHOUT_X11
-add_port x11-fonts/encodings -DWITHOUT_X11
-add_port x11-fonts/xorg-fonts-truetype -DWITHOUT_X11
-add_port x11/xcb-util -DWITHOUT_X11
+add_port devel/libstatgrab WITHOUT_X11=y
+add_port devel/libltdl WITHOUT_X11=y
+add_port print/freetype2 WITHOUT_X11=y
+add_port textproc/expat2 WITHOUT_X11=y
+add_port x11-fonts/fontconfig WITHOUT_X11=y
+add_port x11-fonts/libfontenc WITHOUT_X11=y
+add_port x11-fonts/mkfontscale WITHOUT_X11=y
+add_port x11-fonts/mkfontdir WITHOUT_X11=y
+add_port x11-fonts/font-bh-ttf WITHOUT_X11=y
+add_port x11-fonts/font-misc-meltho WITHOUT_X11=y
+add_port x11-fonts/font-misc-ethiopic WITHOUT_X11=y
+add_port x11-fonts/bitstream-vera WITHOUT_X11=y
+add_port x11-fonts/font-util WITHOUT_X11=y
+add_port x11-fonts/encodings WITHOUT_X11=y
+add_port x11-fonts/xorg-fonts-truetype WITHOUT_X11=y
+add_port x11/xcb-util WITHOUT_X11=y
 add_port x11/libXrender
 add_port x11/renderproto
-add_port x11/xcb-proto -DWITHOUT_X11
-add_port devel/gamin -DWITHOUT_X11
-add_port devel/gio-fam-backend -DWITHOUT_X11
-add_port x11/pixman -DWITHOUT_X11
-add_port graphics/png -DWITHOUT_X11
-add_port graphics/cairo -DWITHOUT_X11
-add_port devel/m4 -DWITHOUT_X11
-add_port devel/bison -DWITHOUT_X11
-add_port devel/libffi -DWITHOUT_X11
-add_port x11-toolkits/pango -DWITHOUT_X11
-add_port textproc/libxml2 -DWITHOUT_X11
-add_port textproc/py-libxml2 -DWITHOUT_X11
-add_port databases/rrdtool -DWITHOUT_X11 -DWITHOUT_PERL_MODULE -DWITH_PYTHON_MODULE
-add_port devel/gobject-introspection -DWITHOUT_X11
-add_port net/liboping -DWITHOUT_X11
+add_port x11/xcb-proto WITHOUT_X11=y
+add_port devel/gamin WITHOUT_X11=y
+add_port devel/gio-fam-backend WITHOUT_X11=y
+add_port x11/pixman WITHOUT_X11=y
+add_port graphics/png WITHOUT_X11=y
+add_port graphics/cairo WITHOUT_X11=y
+add_port devel/m4 WITHOUT_X11=y
+add_port devel/bison WITHOUT_X11=y
+add_port devel/libffi WITHOUT_X11=y
+add_port x11-toolkits/pango WITHOUT_X11=y
+add_port textproc/libxml2 WITHOUT_X11=y
+add_port textproc/py-libxml2 WITHOUT_X11=y
+add_port databases/rrdtool	WITHOUT_X11=y WITHOUT_PERL_MODULE=y \
+				WITH_PYTHON_MODULE=y
+add_port devel/gobject-introspection WITHOUT_X11=y
+add_port net/liboping WITHOUT_X11=y
 #-add_port net-mgmt/collectd
-add_port net-mgmt/collectd -DWITHOUT_BIND -DWITHOUT_SNMP -DWITHOUT_X11
+add_port net-mgmt/collectd WITHOUT_BIND=y WITHOUT_SNMP=y WITHOUT_X11=y
 add_port devel/py-ipaddr
 add_port converters/base64
-add_port emulators/mtools -DWITHOUT_X11
+add_port emulators/mtools WITHOUT_X11=y
 add_port sysutils/arcconf
 add_port sysutils/tw_cli
-add_port net/py-ldap2 -DWITH_SASL
+add_port net/py-ldap2 WITH_SASL=y
 add_port sysutils/ataidle
 add_port devel/xorg-macros
 add_port sysutils/gnome_subr
@@ -193,8 +194,7 @@ add_port sysutils/throttle
 add_port sysutils/dmidecode
 add_port sysutils/graid5
 add_port devel/libevent
-add_port sysutils/tmux
-add_port net/netatalk		-DWITH_PAM
+add_port net/netatalk WITH_PAM=y
 #+add_port ftp/wget
 add_port dns/libidn
 #-add_port ftp/wget
@@ -204,12 +204,53 @@ add_port benchmarks/iperf
 
 if [ ${DEBUG} -eq 1 -o ${MULTIMEDIA} -eq 1 ]; then
 	#+add_port devel/git || net-p2p/transmission-daemon
-	add_port security/ca_root_nss -DWITH_ETCSYMLINK
+	add_port security/ca_root_nss WITH_ETCSYMLINK=y
 	add_port ftp/curl
 	#-add_port devel/git || net-p2p/transmission-daemon
 fi
 
 if [ ${MULTIMEDIA} -eq 1 ]; then
+	#+add_port audio/firefly || net/minidlna
+	add_port graphics/png WITHOUT_APNG=y
+	#add_port devel/pkg-config
+	add_port audio/libid3tag
+	add_port audio/libogg
+	add_port audio/libvorbis
+	add_port audio/speex
+	#-add_port audio/firefly || net/minidlna
+	#+add_port audio/firefly
+	add_port audio/libao
+	add_port audio/vorbis-tools
+	add_port multimedia/libkate
+	#add_port databases/sqlite3
+	#-add_port audio/firefly
+	#+add_port net/minidlna
+	#add_port converters/libiconv
+	add_port multimedia/mp4v2
+	add_port audio/faac
+	add_port audio/flac
+	add_port audio/lame
+	#add_port databases/sqlite3
+	add_port graphics/jpeg
+	#add_port devel/gettext
+	add_port graphics/libexif
+	add_port audio/opencore-amr
+	add_port graphics/opencv-core
+	add_port multimedia/libtheora
+	#add_port devel/yasm ?
+	#add_port lang/perl5.12
+	#add_port shells/bash
+	add_port devel/orc
+	add_port multimedia/schroedinger
+	add_port multimedia/gpac-libgpac WITHOUT_OPENGL=y
+	add_port multimedia/x264 WITHOUT_ASM=y
+	add_port multimedia/xvid WITHOUT_OPTIMIZED_CFLAGS=y
+	#add_port multimedia/libvpx
+	add_port multimedia/ffmpeg	WITH_FAAC=y WITH_LAME=y WITH_SPEEX=y \
+					WITHOUT_FFSERVER=y WITHOUT_FREETYPE=y \
+					WITHOUT_VP8=y
+	#-add_port net/minidlna
+	add_port net/minidlna
 	#+add_port net-p2p/transmission-daemon
 	#add_port devel/pkg-config
 	add_port devel/libevent2
@@ -219,7 +260,7 @@ if [ ${MULTIMEDIA} -eq 1 ]; then
 fi
 
 if [ ${DEBUG} -eq 1 ]; then 
-	#add_port databases/db42
+	add_port sysutils/tmux
 	add_port devel/apr1
 	add_port devel/py-logilab-common
 	add_port devel/py-astng
@@ -233,8 +274,8 @@ if [ ${DEBUG} -eq 1 ]; then
 	add_port devel/p5-subversion
 	add_port mail/p5-Net-SMTP-SSL
 	add_port lang/p5-Error
-	add_port devel/git -DWITH_SVN -DWITHOUT_P4 -DWITHOUT_CVS
-	add_port devel/ctags 
+	add_port devel/git WITH_SVN=y WITHOUT_CVS=y WITHOUT_P4=y
+	add_port devel/ctags
 fi
 
 if [ "${NANO_PACKAGE_ONLY}" -eq 1 ]; then
