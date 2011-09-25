@@ -48,12 +48,8 @@ main()
 	# copy /rescue and /boot from the image to the iso
 	tar -cf - -C ${INSTALLUFSDIR} rescue | tar -xf - -C ${STAGEDIR}
 	tar -cf - -C ${INSTALLUFSDIR} boot | tar -xf - -C ${ISODIR}
-	# Copy the image file to the cdrom.  Cache the compressed version to
-	# make it easier to debug this and the install scripts.
-	if [ ! -f ${IMGFILE}.xz -o ${IMGFILE} -nt ${IMGFILE}.xz ]; then
-		xz --verbose --stdout --compress -9 ${IMGFILE} > ${IMGFILE}.xz
-	fi
-	cp ${IMGFILE}.xz $ISODIR/$NANO_LABEL-$NANO_ARCH-embedded.xz
+	xz --verbose --stdout --compress -9 ${IMGFILE} > \
+	    $ISODIR/$NANO_LABEL-$NANO_ARCH-embedded.xz
 
 	echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
 	(cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)
