@@ -194,6 +194,7 @@ add_port sysutils/throttle
 add_port sysutils/dmidecode
 add_port sysutils/graid5
 add_port devel/libevent
+add_port sysutils/tmux
 add_port net/netatalk WITH_PAM=y
 #+add_port ftp/wget
 add_port dns/libidn
@@ -260,7 +261,6 @@ if [ ${MULTIMEDIA} -eq 1 ]; then
 fi
 
 if [ ${DEBUG} -eq 1 ]; then 
-	add_port sysutils/tmux
 	add_port devel/apr1
 	add_port devel/py-logilab-common
 	add_port devel/py-astng
