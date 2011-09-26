@@ -478,5 +478,4 @@ class LoaderForm(ModelForm):
             raise forms.ValidationError(_("Quotes are not allowed"))
         return value
     def save(self):
-        super(SysctlForm, self).save()
-        notifier().start("sysctl")
+        super(LoaderForm, self).save()

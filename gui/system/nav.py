@@ -54,3 +54,10 @@ class ViewSysctl(TreeNode):
         view = 'system_sysctls'
         name = _('View Sysctl\'s')
         append_app = False
+
+class ViewLoader(TreeNode):
+
+        gname = 'system.Loader.View'
+        view = 'system_loaders'
+        name = _('View Loaders')
+        append_app = False
