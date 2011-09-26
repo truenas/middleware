@@ -87,8 +87,12 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
     echo "Entering DOWN!" | logger
     ifconfig \${SUBSYSTEM} advskew 20
     echo "set block-policy drop" > /etc/pf.conf.block
+    echo "block drop in quick proto tcp from any to any port 860" >> /etc/pf.conf.block
+    echo "block drop in quick proto udp from any to any port 860" >> /etc/pf.conf.block
     echo "block drop in quick proto tcp from any to any port 2049" >> /etc/pf.conf.block
     echo "block drop in quick proto udp from any to any port 2049" >> /etc/pf.conf.block
+    echo "block drop in quick proto tcp from any to any port 3260" >> /etc/pf.conf.block
+    echo "block drop in quick proto udp from any to any port 3260" >> /etc/pf.conf.block
     pfctl -f /etc/pf.conf.block
     /etc/rc.d/statd stop
     echo "Exporting ${volumename}!" | logger
