@@ -291,7 +291,7 @@ EOF
 			    allow trusted domains = yes
 
 			    template shell = /bin/sh
-			    template homedir = /home/%U
+			    template homedir = /home/%D/%U
 
 EOF
 		else
@@ -347,10 +347,16 @@ EOF
 	    "
 
 		if [ "${cifs_homedir}" = "1" ]; then
+			valid_users="%S"
+
+			if [ "${ad_enable}" = "1" ]; then
+				valid_users="%D/%U"
+			fi
+
 			cat<<-EOF
 			[homes]
 			    comment = Home Directories
-			    valid users = %S
+			    valid users = ${valid_users}
 			    writable = yes
 EOF
                         if [ "${cifs_homedir_browseable}" = "1" ]; then
