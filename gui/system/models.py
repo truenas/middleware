@@ -655,3 +655,35 @@ class Sysctl(Model):
         icon_model = u"SysctlIcon"
         icon_add = u"AddSysctlIcon"
         icon_view = u"ViewSysctlIcon"
+
+class Loader(Model):
+    ldr_var = models.CharField(
+            max_length=50,
+            unique=True,
+            verbose_name=_("Variable"),
+            )
+    ldr_value = models.CharField(
+            max_length=50,
+            verbose_name=_("Value"),
+            )
+    ldr_comment = models.CharField(
+            max_length=100,
+            verbose_name=_("Comment"),
+            blank=True,
+            )
+
+    def __unicode__(self):
+        return unicode(self.ldr_var)
+
+    def delete(self):
+        super(Loader, self).delete()
+        notifier().start("loader")
+
+    class Meta:
+        verbose_name = _("Loader")
+        verbose_name_plural = _("Loaders")
+
+    class FreeAdmin:
+        icon_model = u"LoaderIcon"
+        icon_add = u"AddLoaderIcon"
+        icon_view = u"ViewLoaderIcon"

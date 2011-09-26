@@ -464,3 +464,19 @@ class SysctlForm(ModelForm):
         super(SysctlForm, self).save()
         notifier().start("sysctl")
 
+class LoaderForm(ModelForm):
+    class Meta:
+        model = models.Loader
+    def clean_ldr_value(self):
+        value = self.cleaned_data.get("ldr_var")
+        if not re.search(r'^[a-z0-9._]+$', value, re.I):
+            raise forms.ValidationError(_("Use alphanumeric, \"_\" and \".\"."))
+        return value
+    def clean_ldr_value(self):
+        value = self.cleaned_data.get("ldr_value")
+        if '"' in value:
+            raise forms.ValidationError(_("Quotes are not allowed"))
+        return value
+    def save(self):
+        super(SysctlForm, self).save()
+        notifier().start("sysctl")
