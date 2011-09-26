@@ -256,6 +256,10 @@ class notifier:
         #self.__system("/usr/sbin/service istgt reload")
         self._restart_iscsitarget()
 
+    def _start_sysctl(self):
+        self.__system("/usr/sbin/service ix-sysctl quietstart")
+        self.__system("/usr/sbin/service sysctl start")
+
     def _start_network(self):
         c = self.__open_db()
         c.execute("SELECT COUNT(id) FROM network_interfaces WHERE int_ipv6auto = 1 OR int_ipv6address != ''")

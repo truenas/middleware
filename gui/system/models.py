@@ -643,6 +643,10 @@ class Sysctl(Model):
     def __unicode__(self):
         return unicode(self.sysctl_mib)
 
+    def delete(self):
+        super(Sysctl, self).delete()
+        notifier().start("sysctl")
+
     class Meta:
         verbose_name = _("Sysctl")
         verbose_name_plural = _("Sysctl's")

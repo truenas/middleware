@@ -460,3 +460,7 @@ class SysctlForm(ModelForm):
         if '"' in value:
             raise forms.ValidationError(_("Quotes are not allowed"))
         return value
+    def save(self):
+        super(SysctlForm, self).save()
+        notifier().start("sysctl")
+
