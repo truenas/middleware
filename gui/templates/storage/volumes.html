@@ -136,7 +136,7 @@
     </div>
     {% if m.mp_volume.vol_fstype == 'ZFS' %}
     <button id="scrubVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
-        Scrub Volume
+        <img src="{{ STATIC_URL }}images/ui/buttons/scrub.png" />
         <script type="dojo/method" event="onClick" args="evt">
             editScaryObject('{% trans "Scrub Volume"|force_escape %}', '{% url storage_scrub vid=m.mp_volume.id %}', [this,]);
         </script>
