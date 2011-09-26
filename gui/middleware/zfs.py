@@ -26,6 +26,12 @@
 #
 import re
 
+def _is_vdev(name):
+    if name in ('stripe', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3') \
+        or re.search(r'^(mirror|raidz|raidz1|raidz2|raidz3)(-\d+)?$', name):
+        return True
+    return False
+
 class UID(object):
     def __init__(self):
         self.id = 1
@@ -138,11 +144,6 @@ class Tnode(object):
         for c in node.children:
             node.pprint(c, level+1)
 
-    def _is_vdev(self, name):
-        if name in ('stripe', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3') \
-            or re.search(r'^(mirror|raidz|raidz1|raidz2|raidz3)(-\d+)?$', name):
-            return True
-        return False
 
     def __iter__(self):
         for c in list(self.children):
@@ -286,7 +287,7 @@ class Dev(Tnode):
         for c in self:
             c.validate()
         # The parent of a leaf should be a vdev
-        if not self._is_vdev(self.parent.name) and \
+        if not _is_vdev(self.parent.name) and \
             self.parent.parent is not None:
             raise Exception("Oh noes! This damn thing should be a vdev! %s" % self.parent)
         search = self._doc.xpathEval("//class[name = 'LABEL']//provider[name = '%s']/../name" % self.name)
@@ -332,7 +333,7 @@ def parse_status(name, doc, data):
                     pool.add_root(tree)
 
             elif ident == 1:
-                if pnode._is_vdev(word):
+                if _is_vdev(word):
                     node = Vdev(word, doc, status=status)
                     pnode.append(node)
                     pnode = node
