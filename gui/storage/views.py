@@ -35,6 +35,7 @@ from django.utils.translation import ugettext as _
 from django.db import transaction, models as dmodels
 
 from dojango.util import to_dojo_data
+from freeadmin.views import JsonResponse
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms
 from freenasUI.storage import models
