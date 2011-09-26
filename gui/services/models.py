@@ -1161,7 +1161,7 @@ class LDAP(Model):
     ldap_ssl = models.CharField(
             choices = choices.LDAP_SSL_CHOICES,
             max_length=120,
-            verbose_name = _("Turn on/off TLS"),
+            verbose_name = _("Encryption Mode"),
             help_text = _("This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls")
             )
     ldap_tls_cacertfile = models.TextField(
