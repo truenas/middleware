@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-sysctl
+# BEFORE: sysctl
+
+. /etc/rc.subr
+
+generate_sysctl()
+{
+    local IFS=\|
+    local var value comment
+    cp /conf/base/etc/sysctl.conf /etc/sysctl.conf
+    # Generate sysctls
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT sysctl_mib,sysctl_value,sysctl_comment FROM system_sysctl ORDER BY id" | \
+	while read var value comment; do
+        echo -e "${var}=${value} #${comment}" >> /etc/sysctl.conf
+    done
+
+}
+
+original_sysctl()
+{
+    cp /conf/base/etc/sysctl.conf /etc/sysctl.conf
+
+}
+
+name="ix-sysctl"
+start_cmd='generate_sysctl'
+stop_cmd='original_sysctl'
+
+load_rc_config $name
+run_rc_command "$1"
