@@ -348,9 +348,11 @@ EOF
 
 		if [ "${cifs_homedir}" = "1" ]; then
 			valid_users="%S"
+			cis_homedir_path="${cifs_homedir_mp}/%S"
 
 			if [ "${ad_enable}" = "1" ]; then
 				valid_users="%D/%U"
+				cifs_homedir_path="${cifs_homedir_mp}/%D/%U"
 			fi
 
 			cat<<-EOF
@@ -365,7 +367,7 @@ EOF
                                 echo "    browseable = no"
                         fi
                         if [ "${cifs_homedir_mp}" != "" ]; then
-                                echo "    path = ${cifs_homedir_mp}/%S"
+                                echo "    path = ${cifs_homedir_path}"
                         fi
 		fi
 
