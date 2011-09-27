@@ -75,7 +75,7 @@ def get_freenas_var(var, default = None):
         val = default
     return val
 
-def send_mail(subject=None, text=None, interval=timedelta(), channel='freenas', to=None, extra_headers=None):
+def send_mail(subject=None, text=None, interval=timedelta(), channel='freenas', to=None, extra_headers=None, plain=False):
     if interval > timedelta():
         channelfile = '/tmp/.msg.%s' % (channel)
         last_update = datetime.now() - interval
@@ -93,22 +93,26 @@ def send_mail(subject=None, text=None, interval=timedelta(), channel='freenas', 
     error = False
     errmsg = ''
     email = Email.objects.all().order_by('-id')[0]
-    msg = MIMEText(text)
-    if subject:
-        msg['Subject'] = subject
-    msg['From'] = email.em_fromemail
     if not to:
         to = bsdUsers.objects.get(bsdusr_username='root').bsdusr_email
-    msg['To'] = to
-    msg['Date'] = formatdate()
+    if not plain:
+        msg = MIMEText(text)
+        if subject:
+            msg['Subject'] = subject
+        msg['From'] = email.em_fromemail
+        msg['To'] = to
+        msg['Date'] = formatdate()
 
-    if not extra_headers:
-        extra_headers = {}
-    for key, val in extra_headers.items():
-        if msg.has_key(key):
-            msg.replace_header(key, val)
-        else:
-            msg[key] = val
+        if not extra_headers:
+            extra_headers = {}
+        for key, val in extra_headers.items():
+            if msg.has_key(key):
+                msg.replace_header(key, val)
+            else:
+                msg[key] = val
+        msg = msg.as_string()
+    else:
+        msg = text
 
     try:
         if email.em_security == 'ssl':
@@ -122,7 +126,7 @@ def send_mail(subject=None, text=None, interval=timedelta(), channel='freenas', 
         if email.em_smtp:
             server.login(email.em_user, email.em_pass)
         server.sendmail(email.em_fromemail, [to],
-                        msg.as_string())
+                        msg)
         server.quit()
     except Exception, e:
         syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID, facility=syslog.LOG_MAIL)
