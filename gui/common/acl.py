@@ -81,7 +81,7 @@ class Base_ACL_pipe:
         syslog(LOG_DEBUG, "Base_ACL_pipe.__init__: out = %s" % self.__out)
 
         if self.__pipe.returncode != 0:
-            raise ACL_Exception(self.__stderr.read().strip())
+            raise Base_ACL_Exception(self.__stderr.read().strip())
 
         syslog(LOG_DEBUG, "Base_ACL_pipe.__init__: leave")
 
