@@ -687,6 +687,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
     def __no_db_init__(self, **kwargs):
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Base.__no_db_init__: enter")
 
+        host = None
         tmphost = kwargs['host'] if kwargs.has_key('host') else None
         if tmphost:
             host = tmphost.split(':')[0]
