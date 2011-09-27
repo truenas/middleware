@@ -47,6 +47,9 @@ FREENAS_LDAP_NOSSL = 0
 FREENAS_LDAP_USESSL = 1
 FREENAS_LDAP_USETLS = 2
 
+FREENAS_LDAP_PORT = get_freenas_var("FREENAS_LDAP_PORT", 389)
+FREENAS_LDAP_SSL_PORT = get_freenas_var("FREENAS_LDAP_SSL_PORT", 636)
+
 FREENAS_USERCACHE = os.path.join(FREENAS_CACHEDIR, ".users")
 FREENAS_GROUPCACHE = os.path.join(FREENAS_CACHEDIR, ".groups")
 
@@ -359,7 +362,7 @@ class FreeNAS_LDAP_Directory(object):
 
         self.host = kwargs['host'] if kwargs.has_key('host') else None
 
-        self.port = 389
+        self.port = None
         if kwargs.has_key('port') and kwargs['port'] is not None: 
             self.port = long(kwargs['port']) 
 
@@ -370,6 +373,11 @@ class FreeNAS_LDAP_Directory(object):
         self.ssl = FREENAS_LDAP_NOSSL
         if kwargs.has_key('ssl') and kwargs['ssl'] is not None:
             self.ssl = self._setssl(kwargs['ssl'])
+            if self.ssl is FREENAS_LDAP_USESSL and self.port is None:
+                self.port = FREENAS_LDAP_SSL_PORT
+     
+        if self.port is None:
+            self.port = FREENAS_LDAP_PORT
 
         self.scope = ldap.SCOPE_SUBTREE
         if kwargs.has_key('scope') and kwargs['scope'] is not None:
