@@ -16,7 +16,7 @@
 generate_pam_service_file()
 {
 	local service="${1}"
-	local krb5="${2}"
+	local winbind="${2}"
 	local ldap="${3}"
 	local template
 	local temp
@@ -31,14 +31,14 @@ generate_pam_service_file()
 		return 1
 	fi
 
-	awk -v ldap="${ldap}" -v krb5="${krb5}" '{
+	awk -v ldap="${ldap}" -v winbind="${winbind}" '{
 		if (/^#.*@@LDAP@@/ && ldap) {
 			gsub("^#.*@@LDAP@@[^a-zA-Z0-9]+", "");
 			print $0;
-		} else if (/^#.*@@KRB5@@/ && krb5) {
-			gsub("^#.*@@KRB5@@[^a-zA-Z0-9]+", "");
+		} else if (/^#.*@@WINBIND@@/ && winbind) {
+			gsub("^#.*@@WINBIND@@[^a-zA-Z0-9]+", "");
 			print $0;
-		} else if (/^#.*@@MKHOMEDIR@@/ && (ldap || krb5)) {
+		} else if (/^#.*@@MKHOMEDIR@@/ && (ldap || winbind)) {
 			gsub("^#.*@@MKHOMEDIR@@[^a-zA-Z0-9]+", "");
 			print $0;
 		} else if (/^#.*@@.*@@/) {
@@ -64,7 +64,7 @@ generate_pam_service_file()
 generate_pam_files()
 {
 	local ldap=0
-	local krb5=0
+	local winbind=0
 
 	if [ ! -d "${PAM_TEMPLATE_DIR}" -o ! -d "${PAM_DIR}" ]
 	then
@@ -77,7 +77,7 @@ generate_pam_files()
 		local val=$(echo "${line}"|cut -s -f2 -d'|')
 
 		case "${var}" in
-			activedirectory) krb5="${val}" ;;
+			activedirectory) winbind="${val}" ;;
 			ldap) ldap="${val}" ;;
 		esac
 
@@ -99,7 +99,7 @@ EOF
 
 	for service in $(ls "${PAM_TEMPLATE_DIR}")
 	do
-		generate_pam_service_file "${service}" "${krb5}" "${ldap}"
+		generate_pam_service_file "${service}" "${winbind}" "${ldap}"
 	done
 
 	return 0
