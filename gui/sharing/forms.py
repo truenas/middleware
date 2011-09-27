@@ -64,8 +64,26 @@ class CIFS_ShareForm(ModelForm):
             events.append('ask_service("cifs")')
 
 class AFP_ShareForm(ModelForm):
+    afp_sharepw2 = forms.CharField(max_length=50,
+            label=_("Confirm Share Password"),
+            widget=forms.widgets.PasswordInput(render_value=True),
+            required=False,
+            )
     class Meta:
         model = models.AFP_Share
+        widgets = {
+            'afp_sharepw': forms.widgets.PasswordInput(render_value=True),
+        }
+    def __init__(self, *args, **kwargs):
+        super(AFP_ShareForm, self).__init__(*args, **kwargs)
+        if self.instance.id:
+            self.fields['afp_sharepw2'].initial = self.instance.afp_sharepw
+    def clean_afp_sharepw2(self):
+        password1 = self.cleaned_data.get("afp_sharepw")
+        password2 = self.cleaned_data.get("afp_sharepw2")
+        if password1 != password2:
+            raise forms.ValidationError(_("The two password fields didn't match."))
+        return password2
     def save(self):
         ret = super(AFP_ShareForm, self).save()
         notifier().reload("afp")
@@ -73,6 +91,8 @@ class AFP_ShareForm(ModelForm):
     def done(self, request, events):
         if not services.objects.get(srv_service='afp').srv_enable:
             events.append('ask_service("afp")')
+AFP_ShareForm.base_fields.keyOrder.remove('afp_sharepw2')
+AFP_ShareForm.base_fields.keyOrder.insert(4, 'afp_sharepw2')
 
 class NFS_ShareForm(ModelForm):
     class Meta:
