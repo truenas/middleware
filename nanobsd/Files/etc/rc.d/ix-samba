@@ -348,7 +348,7 @@ EOF
 
 		if [ "${cifs_homedir}" = "1" ]; then
 			valid_users="%S"
-			cis_homedir_path="${cifs_homedir_mp}/%S"
+			cifs_homedir_path="${cifs_homedir_mp}/%S"
 
 			if [ "${ad_enable}" = "1" ]; then
 				valid_users="%D/%U"
