@@ -16,7 +16,7 @@ from freenasUI.common.system import send_mail
 
 ALIASES = re.compile(r'^(?P<from>[^#]\S+?):\s*(?P<to>\S+)$')
 
-def do_sendmail(msg, to=None):
+def do_sendmail(msg, to=None, plain=False):
     headers = {}
     _headers, text = msg.split('\n\n', 1)
     for header in _headers.split('\n'):
@@ -28,7 +28,10 @@ def do_sendmail(msg, to=None):
         aliases = get_aliases()
         if to in aliases:
             headers['To'] = aliases[to]
-    send_mail(text=text, extra_headers=headers)
+    if plain:
+        send_mail(text=msg, plain=True)
+    else:
+        send_mail(text=text, extra_headers=headers)
 
 def get_aliases():
     with open('/etc/aliases', 'r') as f:
@@ -56,9 +59,11 @@ def main():
     parser = argparse.ArgumentParser(description='Process email.')
     parser.add_argument('-i', dest='to', metavar='N', type=str,
                        help='to email address')
+    parser.add_argument('-t', dest='plain', action='store_true',
+                       help='read recipients')
     args = parser.parse_args()
     msg = sys.stdin.read()
-    do_sendmail(msg, to=args.to)
+    do_sendmail(msg, to=args.to, plain=args.plain)
 
 if __name__ == "__main__":
     main()
