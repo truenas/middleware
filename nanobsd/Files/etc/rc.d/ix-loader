@@ -7,43 +7,7 @@
 
 . /etc/rc.subr
 
-
-loader_serial_enable()
-{
-	local conf=/boot/loader.conf
-	local tmp=/var/tmp/.tmp.loader.conf
-
-	mount -uw /
-	grep -Ev '^(boot_multicons|console)' < "${conf}" > "${tmp}"
-	if [ -s "${tmp}" ]
-	then
-		mv "${tmp}" "${conf}"
-	fi
-
-	echo 'boot_multicons="YES"' > "${tmp}"
-	echo 'console="vidconsole,comconsole"' >> "${tmp}"
-	cat "${conf}" >> "${tmp}"
-
-	if [ -s "${tmp}" ]
-	then
-		mv "${tmp}" "${conf}"
-	fi
-	mount -ur /
-}
-
-loader_serial_disable()
-{
-	local conf=/boot/loader.conf
-	local tmp=/var/tmp/.tmp.loader.conf
-
-	mount -uw /
-	grep -Ev '^(boot_multicons|console)' < "${conf}" > "${tmp}"
-	if [ -s "${tmp}" ]
-	then
-		mv "${tmp}" "${conf}"
-	fi
-	mount -ur /
-}
+tmp=/var/tmp/.tmp.loader.conf
 
 loader_serial()
 {
@@ -60,42 +24,10 @@ loader_serial()
 		-id
 	LIMIT 1")
 
-	case "${serial_enable}" in
-		0) loader_serial_disable ;;
-		1) loader_serial_enable ;;
-	esac
-}
-
-loader_saver_enable()
-{
-	local conf=/boot/loader.conf
-	local tmp=/var/tmp/.tmp.loader.conf
-
-	mount -uw /
-
-	grep -Ev '^screensave_(load|name)' < "${conf}" > "${tmp}"
-	echo 'screensave_load="YES"' >> "${tmp}"
-	echo 'screensave_name="daemon_saver"' >> "${tmp}"
-
-	if [ -s "${tmp}" ]
-	then
-		mv "${tmp}" "${conf}"
+	if [ "${serial_enable}" != "0" ]; then
+		echo 'boot_multicons="YES"' >> "${tmp}"
+		echo 'console="vidconsole,comconsole"' >> "${tmp}"
 	fi
-	mount -ur /
-}
-
-loader_saver_disable()
-{
-	local conf=/boot/loader.conf
-	local tmp=/var/tmp/.tmp.loader.conf
-
-	mount -uw /
-	grep -Ev '^screensave_(load|name)' < "${conf}" > "${tmp}"
-	if [ -s "${tmp}" ]
-	then
-		mv "${tmp}" "${conf}"
-	fi
-	mount -ur /
 }
 
 loader_saver()
@@ -113,19 +45,47 @@ loader_saver()
 		-id
 	LIMIT 1")
 
-	case "${saver_enable}" in
-		0) loader_saver_disable ;;
-		1) loader_saver_enable ;;
-	esac
+	if [ "${saver_enable}" != "0" ]; then
+		echo 'screensave_load="YES"' >> "${tmp}"
+		echo 'screensave_name="daemon_saver"' >> "${tmp}"
+	fi
+
+}
+
+loader_user() {
+
+	local IFS=\|
+	local var value comment
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	"SELECT ldr_var,ldr_value,ldr_comment FROM system_loader ORDER BY id" | \
+	while read var value comment; do
+		echo -e "${var}=\"${value}\" #${comment}" >> "${tmp}"
+	done
+
 }
 
 update_loader_conf()
 {
-	settings="serial saver"
+	rm -f "${tmp}"
+	
+	settings="serial saver user"
 	for s in ${settings}
 	do
 		eval "loader_${s}"
 	done
+
+	sha256orig=$(sha256 -q -s "$(cat /boot/loader.conf | sed -E -n '/#CUSTOM/{n;p;}')
+" 2> /dev/null)
+	sha256new=$(sha256 -q "${tmp}" 2> /dev/null)
+	if [ "${sha256orig}" != "${sha256new}" ]; then
+		mount -uw /
+		new=$(cat /boot/loader.conf | sed -E -n '/#CUSTOM/q;p')
+		echo "${new}" > /boot/loader.conf
+		echo "#CUSTOM" >> /boot/loader.conf
+		cat "${tmp}" >> /boot/loader.conf
+		mount -ur /
+	fi
 }
 
 name="ix-loader"
