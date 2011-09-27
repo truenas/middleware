@@ -28,10 +28,18 @@ def do_sendmail(msg, to=None, plain=False):
         aliases = get_aliases()
         if to in aliases:
             headers['To'] = aliases[to]
+
+    margs = {}
     if plain:
-        send_mail(text=msg, plain=True)
+        margs['text'] = msg
+        margs['plain'] = True 
     else:
-        send_mail(text=text, extra_headers=headers)
+        margs['text'] = text
+        margs['extra_headers'] = headers
+    if to:
+        margs['to'] = to
+
+    send_mail(**margs)
 
 def get_aliases():
     with open('/etc/aliases', 'r') as f:
