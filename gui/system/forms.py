@@ -479,3 +479,4 @@ class LoaderForm(ModelForm):
         return value
     def save(self):
         super(LoaderForm, self).save()
+        notifier().start("loader")
