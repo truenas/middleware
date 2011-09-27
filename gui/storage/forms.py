@@ -315,6 +315,15 @@ class VolumeWizardForm(forms.Form):
                 msg = _(u"The volume name may NOT start with c[0-9], mirror, raidz or spare")
                 self._errors["volume_name"] = self.error_class([msg])
                 cleaned_data.pop("volume_name", None)
+        elif cleaned_data.get("volume_fstype") == 'UFS':
+            if len(volume_name) > 9:
+                msg = _(u"UFS volume names cannot be higher than 9 characters")
+                self._errors["volume_name"] = self.error_class([msg])
+                cleaned_data.pop("volume_name", None)
+            elif not re.search(r'^[a-z0-9]+$', volume_name, re.I):
+                msg = _(u"UFS volume names can only contain alphanumeric characters")
+                self._errors["volume_name"] = self.error_class([msg])
+                cleaned_data.pop("volume_name", None)
 
         return cleaned_data
 
