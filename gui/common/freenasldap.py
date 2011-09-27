@@ -679,6 +679,9 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             if port:
                 args['port'] = port
 
+        if kwargs.has_key('flags'):
+            args['flags'] = kwargs['flags']
+
         super(FreeNAS_LDAP_Base, self).__init__(**args)
 
         self.rootbasedn = ldap['ldap_rootbasedn']
@@ -721,6 +724,9 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             args['host'] = host
             if port:
                 args['port'] = port
+
+        if kwargs.has_key('flags'):
+            args['flags'] = kwargs['flags']
 
         super(FreeNAS_LDAP_Base, self).__init__(**args)
 
