@@ -336,13 +336,12 @@ class FreeNAS_GroupCache(FreeNAS_BaseCache):
 
 
 class FreeNAS_LDAP_Directory(object):
-    def __init__(self, host = None, port = 389, binddn = None, bindpw = None,
+    def __init__(self, host = None, port = None, binddn = None, bindpw = None,
         basedn = None, ssl = FREENAS_LDAP_NOSSL, scope = ldap.SCOPE_SUBTREE,
         filter = None, attributes = None, pagesize = 0, cache_enable = True):
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Directory.__init__: enter")
 
         self.host = host
-        self.port = long(port)
         self.binddn = binddn
         self.bindpw = bindpw
         self.basedn = basedn
@@ -355,6 +354,13 @@ class FreeNAS_LDAP_Directory(object):
         self._handle = None
         self._isopen = False
         self._cache = FreeNAS_LDAP_QueryCache()
+
+        if self.ssl is FREENAS_LDAP_USESSL and port is None:
+            self.port = 636
+        elif port is None:
+            self.port = 389
+        else:
+            self.port = long(port)
 
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Directory.__init__: "
             "host = %s, port = %ld, binddn = %s, bindpw = %s, basedn = %s, ssl = %d" %
