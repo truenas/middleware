@@ -50,6 +50,8 @@ class CIFS_Share(Model):
             verbose_name = _("Export Read Only"))
     cifs_browsable = models.BooleanField(
             verbose_name = _("Browsable to Network Clients"), default=True)
+    cifs_inheritowner = models.BooleanField(
+            verbose_name = _("Inherit Owner"), default=False)
     cifs_inheritperms = models.BooleanField(
             verbose_name = _("Inherit Permissions"))
     cifs_recyclebin = models.BooleanField(
