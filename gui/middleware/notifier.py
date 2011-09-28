@@ -610,7 +610,7 @@ class notifier:
                 raise MiddlewareError('Your disk size must be higher than %dGB' % swapgb)
             # HACK: force the wipe at the end of the disk to always succeed. This
             # is a lame workaround.
-            self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s || :" % (size*1024 - 4, devname))
+            self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s || :" % (devname, size*1024 - 4))
 
         commands = []
         commands.append("gpart create -s gpt /dev/%s" % (devname))
