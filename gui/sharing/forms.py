@@ -66,13 +66,13 @@ class CIFS_ShareForm(ModelForm):
 class AFP_ShareForm(ModelForm):
     afp_sharepw2 = forms.CharField(max_length=50,
             label=_("Confirm Share Password"),
-            widget=forms.widgets.PasswordInput(render_value=True),
+            widget=forms.widgets.PasswordInput(render_value=False),
             required=False,
             )
     class Meta:
         model = models.AFP_Share
         widgets = {
-            'afp_sharepw': forms.widgets.PasswordInput(render_value=True),
+            'afp_sharepw': forms.widgets.PasswordInput(render_value=False),
         }
     def __init__(self, *args, **kwargs):
         super(AFP_ShareForm, self).__init__(*args, **kwargs)
@@ -84,6 +84,11 @@ class AFP_ShareForm(ModelForm):
         if password1 != password2:
             raise forms.ValidationError(_("The two password fields didn't match."))
         return password2
+    def clean(self):
+        cdata = self.cleaned_data
+        if not cdata.get("afp_sharepw"):
+            cdata['afp_sharepw'] = self.instance.afp_sharepw
+        return cdata
     def save(self):
         ret = super(AFP_ShareForm, self).save()
         notifier().reload("afp")
