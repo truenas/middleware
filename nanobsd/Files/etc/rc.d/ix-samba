@@ -403,7 +403,7 @@ generate_exports()
 	ORDER BY
 		cs.id ASC
 	" | \
-	while read -r name comment mountpoint cifsro browsable inheritperms inheritowner \
+	while read -r name comment mountpoint cifsro browsable inheritowner inheritperms \
 		recyclebin showhiddenfiles guest guestok guestonly hostsallow hostsdeny;
 	do
 		if [ -d "${mountpoint}" ]; then
