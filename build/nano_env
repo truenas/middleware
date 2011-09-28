@@ -37,9 +37,8 @@ NANO_SRC="$FREENAS_ROOT/FreeBSD/src"
 
 NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
 
-# Feature sets to enable as part of the build (should be replaced with
-# optional PBI/package names eventually).
-SW_FEATURES="DEBUG MULTIMEDIA"
+# Feature sets to enable as part of the build.
+SW_FEATURES="DEBUG"
 
 # The GEOM label to use.
 NANO_LABEL="FreeNAS"
@@ -54,7 +53,6 @@ NANO_NAME="$NANO_LABEL-$VERSION-$REVISION-$NANO_ARCH"
 NANO_IMGNAME="$NANO_NAME.full"
 
 # Export these vars to override the NanoBSD defaults.
-export BUILD_ROOT
 export FREENAS_ROOT NANO_ARCH NANO_CFG_BASE NANO_IMGNAME NANO_KERNEL NANO_NAME
 export NANO_OBJ NANO_SRC REVISION SVNREVISION
 
