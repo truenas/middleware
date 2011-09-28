@@ -388,6 +388,7 @@ generate_exports()
 		cifs_path,
 		cifs_ro,
 		cifs_browsable,
+		cifs_inheritowner,
 		cifs_inheritperms,
 		cifs_recyclebin,
 		cifs_showhiddenfiles,
@@ -402,7 +403,7 @@ generate_exports()
 	ORDER BY
 		cs.id ASC
 	" | \
-	while read -r name comment mountpoint cifsro browsable inheritperms \
+	while read -r name comment mountpoint cifsro browsable inheritperms inheritowner \
 		recyclebin showhiddenfiles guest guestok guestonly hostsallow hostsdeny;
 	do
 		if [ -d "${mountpoint}" ]; then
@@ -430,6 +431,12 @@ generate_exports()
 				echo "    browseable = no"
 			else
 				echo "    browseable = yes"
+			fi
+
+			if [ "${inheritowner}" = "1" ]; then
+				echo "    inherit owner = yes"
+			else
+				echo "    inherit owner = no"
 			fi
 
 			#
@@ -484,7 +491,6 @@ EOF
 			fi
 			cat<<-EOF
 			    inherit acls = Yes
-			    inherit owner = Yes
 			    map archive = No
 			    map readonly = no
 			    nfs4:mode = special
