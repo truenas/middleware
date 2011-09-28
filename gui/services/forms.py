@@ -47,6 +47,7 @@ from freenasUI.middleware.notifier import notifier
 from dojango import forms
 from dojango.forms import widgets
 from freeadmin.forms import DirectoryBrowser
+from ipaddr import IPAddress, IPNetwork, AddressValueError, NetmaskValueError
 
 """ Services """
 
@@ -804,6 +805,17 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
         if tag > higher:
             raise forms.ValidationError(_("Your Group ID cannot be higher than %d") % higher)
         return tag
+    def clean_iscsi_target_initiator_auth_network(self):
+        auth_network = self.cleaned_data.get('iscsi_target_initiator_auth_network', '').strip().upper()
+        if auth_network != 'ALL':
+            try:
+                IPNetwork(auth_network.encode('utf-8'))
+            except (NetmaskValueError, ValueError):
+                try:
+                    IPAddress(auth_network.encode('utf-8'))
+                except (AddressValueError, ValueError):
+                    raise forms.ValidationError(_("The field is a not a valid IP address or network"))
+        return auth_network
     def save(self):
         super(iSCSITargetAuthorizedInitiatorForm, self).save()
         started = notifier().reload("iscsitarget")
