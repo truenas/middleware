@@ -814,7 +814,7 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
                 try:
                     IPAddress(auth_network.encode('utf-8'))
                 except (AddressValueError, ValueError):
-                    raise forms.ValidationError(_("The field is a not a valid IP address or network"))
+                    raise forms.ValidationError(_("The field is a not a valid IP address or network. The keyword \"ALL\" can be used to allow everything."))
         return auth_network
     def save(self):
         super(iSCSITargetAuthorizedInitiatorForm, self).save()
