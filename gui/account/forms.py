@@ -460,8 +460,8 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        if (((not self.cleaned_data['bsdusr_home'].startswith(u'/mnt/')) or
-            self.cleaned_data['bsdusr_home'] == '/root') and
+        if ((not (self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') or
+            self.cleaned_data['bsdusr_home'] == '/root')) and
             self.cleaned_data.get('bsdusr_sshpubkey', '') != ''):
                 del self.cleaned_data['bsdusr_sshpubkey']
                 self._errors['bsdusr_sshpubkey'] = self.error_class([_("Home directory is not writable, leave this blank")])
@@ -486,7 +486,7 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
         bsduser.bsduser_shell = self.cleaned_data['bsdusr_shell']
         bsduser.save()
         _notifier.reload("user")
-        if ((not self.cleaned_data['bsdusr_home'].startswith(u'/mnt/')) or
+        if (self.cleaned_data['bsdusr_home'].startswith(u'/mnt/') or
             self.cleaned_data['bsdusr_home'] == '/root'):
                 _notifier.save_pubkey(bsduser.bsdusr_home, bsdusr_sshpubkey, bsduser.bsdusr_username, bsduser.bsdusr_group.bsdgrp_group)
         return bsduser
