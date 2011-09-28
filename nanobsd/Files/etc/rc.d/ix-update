@@ -59,7 +59,7 @@ EOF
 		OTHER_PARTNUM=2
 	fi
 	TARGET_DRIVE=`glabel status | awk '/ufs\/'${LABELNAME}'s${OTHER_PARTNUM}a/ { print $3; }' | sed -e s,s${PARTNUM}a,,`
-	gpart set -a active -i 2 ${TARGET_DRIVE}
+	gpart set -a active -i $OTHER_PARTNUM ${TARGET_DRIVE}
 
 	cat <<EOF
 Database upgrade FAILED; check $UPDATE_FAILED_LOG for more details.
