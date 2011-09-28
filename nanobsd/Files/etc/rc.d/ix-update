@@ -58,7 +58,7 @@ EOF
 		PARTNUM=1
 		OTHER_PARTNUM=2
 	fi
-	TARGET_DRIVE=`glabel status | awk '/ufs\/'${LABELNAME}'s${OTHER_PARTNUM}a/ { print $3; }' | sed -e s,s${PARTNUM}a,,`
+	TARGET_DRIVE=`glabel status | awk '/ufs\/'${LABELNAME}s${PARTNUM}'a/ { print $3; }' | sed -e 's/s.a//'`
 	gpart set -a active -i $OTHER_PARTNUM ${TARGET_DRIVE}
 
 	cat <<EOF
