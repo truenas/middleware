@@ -196,6 +196,15 @@ class VLANForm(ModelForm):
         model = models.VLAN
 
     def save(self):
+        vlan_pint = self.cleaned_data['vlan_pint']
+        if len(models.Interfaces.objects.filter(int_interface = vlan_pint)) == 0:
+            vlan_interface = models.Interfaces(int_interface = vlan_pint,
+                                int_name = vlan_pint,
+                                int_dhcp = False,
+                                int_ipv6auto = False,
+                                int_options = 'up',
+                                )
+            vlan_interface.save()
         retval = super(VLANForm, self).save()
         notifier().start("network")
         return retval
