@@ -52,6 +52,9 @@ from freenasUI.common.system import send_mail
 #   -:                          The replication system no longer cares this.
 #
 
+# Set to True if verbose log desired
+debug = False
+
 # Detect if another instance is running
 def exit_if_running(pid):
     syslog.syslog(syslog.LOG_DEBUG,
@@ -136,7 +139,7 @@ for replication in replication_tasks:
     # Test if there is work to do, if so, own them
     MNTLOCK.lock()
     syslog.syslog(syslog.LOG_DEBUG, "Checking dataset %s" % (localfs))
-    zfsproc = pipeopen('/sbin/zfs list -Ht snapshot -o name,freenas:state -r -S creation -d 1 %s' % (localfs))
+    zfsproc = pipeopen('/sbin/zfs list -Ht snapshot -o name,freenas:state -r -S creation -d 1 %s' % (localfs), debug)
     output, error = zfsproc.communicate()
     if zfsproc.returncode:
         syslog.syslog(syslog.LOG_ALERT,
@@ -205,7 +208,7 @@ for replication in replication_tasks:
                 # Do we have it locally? if yes then mark it immediately
                 syslog.syslog(syslog.LOG_INFO, "Can not locate expected snapshot %s, looking more carefully" % (expected_local_snapshot))
                 MNTLOCK.lock()
-                zfsproc = pipeopen('/sbin/zfs list -Ht snapshot -o name,freenas:state %s' % (expected_local_snapshot))
+                zfsproc = pipeopen('/sbin/zfs list -Ht snapshot -o name,freenas:state %s' % (expected_local_snapshot), debug)
                 output = zfsproc.communicate()[0]
                 if output != '':
                     last_snapshot, state = output.split('\n')[0].split('\t')

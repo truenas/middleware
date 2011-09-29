@@ -54,6 +54,9 @@ from freenasUI.common.locks import mntlock
 MNTLOCK=mntlock()
 setname('autosnap')
 
+# Set to True if verbose log desired
+debug = False
+
 def snapinfodict2datetime(snapinfo):
     year = int(snapinfo['year'])
     month = int(snapinfo['month'])
@@ -131,11 +134,7 @@ if len(mp_to_task_map) == 0:
 # Grab all existing snapshot and filter out the expiring ones
 snapshots = {}
 snapshots_pending_delete = set()
-if True:
-    zfsproc = subprocess.Popen(['/sbin/zfs', 'list', '-t', 'snapshot', '-H'],
-                               stdout=subprocess.PIPE)
-else:
-    zfsproc = pipeopen("/sbin/zfs list -t snapshot -H")
+zfsproc = pipeopen("/sbin/zfs list -t snapshot -H", debug)
 lines = zfsproc.communicate()[0].split('\n')
 reg_autosnap = re.compile('^auto-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2}).(?P<hour>\d{2})(?P<minute>\d{2})-(?P<retcount>\d+)(?P<retunit>[hdwmy])$')
 for line in lines:

@@ -44,19 +44,19 @@ class info(object):
     def getname(self):
         return self.name
 
-def pipeopen(command):
+def pipeopen(command, important=True):
     pipeinfo = info()
     syslog.openlog(pipeinfo.getname(), syslog.LOG_CONS | syslog.LOG_PID)
-    syslog.syslog(syslog.LOG_NOTICE, "Popen()ing: " + command)
+    syslog.syslog(syslog.LOG_NOTICE if important else syslog.LOG_DEBUG, "Popen()ing: " + command)
     args = shlex_split(command)
     return Popen(args, stdin = PIPE, stdout = PIPE, stderr = PIPE, close_fds = True)
 
-def system(command):
+def system(command, important=True):
     pipeinfo = info()
     syslog.openlog(pipeinfo.getname(), syslog.LOG_CONS | syslog.LOG_PID)
-    syslog.syslog(syslog.LOG_NOTICE, "Executing: " + command)
+    syslog.syslog(syslog.LOG_NOTICE if important else syslog.LOG_DEBUG, "Executing: " + command)
     __system("(" + command + ") 2>&1 | logger -p daemon.notice -t freenas")
-    syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
+    syslog.syslog(syslog.LOG_INFO if important else syslog.LOG_DEBUG, "Executed: " + command)
 
 def setname(name):
     pipeinfo = info()
