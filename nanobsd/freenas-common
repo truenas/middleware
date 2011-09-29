@@ -203,14 +203,14 @@ add_port ftp/wget
 add_port benchmarks/iozone
 add_port benchmarks/iperf
 
-if [ ${DEBUG} -eq 1 -o ${MULTIMEDIA} -eq 1 ]; then
+if [ "${DEBUG}" = 1 -o "${MULTIMEDIA}" = 1 ]; then
 	#+add_port devel/git || net-p2p/transmission-daemon
 	add_port security/ca_root_nss WITH_ETCSYMLINK=y
 	add_port ftp/curl
 	#-add_port devel/git || net-p2p/transmission-daemon
 fi
 
-if [ ${MULTIMEDIA} -eq 1 ]; then
+if [ "${MULTIMEDIA}" = 1 ]; then
 	#+add_port audio/firefly || net/minidlna
 	add_port graphics/png WITHOUT_APNG=y
 	#add_port devel/pkg-config
@@ -260,7 +260,7 @@ if [ ${MULTIMEDIA} -eq 1 ]; then
 	add_port net-p2p/transmission-daemon
 fi
 
-if [ ${DEBUG} -eq 1 ]; then 
+if [ "${DEBUG}" = 1 ]; then 
 	add_port devel/apr1
 	add_port devel/py-logilab-common
 	add_port devel/py-astng
