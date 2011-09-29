@@ -217,7 +217,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     bsdusr_password_disabled = forms.BooleanField(label=_("Disable password logins"), required=False)
     bsdusr_locked = forms.BooleanField(label=_("Lock user"), required=False)
     bsdusr_group2 = forms.ModelChoiceField(label=_("Primary Group"), queryset=models.bsdGroups.objects.all(), required=False)
-    bsdusr_sshpubkey = forms.CharField(label=_("SSH key"), widget=forms.Textarea, max_length=8192, required=False)
+    bsdusr_sshpubkey = forms.CharField(label=_("SSH Public Key"), widget=forms.Textarea, max_length=8192, required=False)
 
     class Meta:
         model = models.bsdUsers
@@ -394,7 +394,7 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
                                      initial=u'/bin/csh',
                                      choices=()
                                      )
-    bsdusr_sshpubkey = forms.CharField(label=_("SSH key"), widget=forms.Textarea, max_length=8192, required=False)
+    bsdusr_sshpubkey = forms.CharField(label=_("SSH Public Key"), widget=forms.Textarea, max_length=8192, required=False)
 
     class Meta:
         model = models.bsdUsers
