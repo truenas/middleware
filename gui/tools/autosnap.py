@@ -25,6 +25,9 @@
 # SUCH DAMAGE.
 #
 
+import os
+import re
+import subprocess
 import sys
 sys.path.append('/usr/local/www')
 sys.path.append('/usr/local/www/freenasUI')
@@ -34,8 +37,6 @@ from freenasUI import settings
 from django.core.management import setup_environ
 setup_environ(settings)
 
-import re
-from os import execl
 from freenasUI.storage.models import Task, Replication
 from datetime import datetime, time, timedelta
 
@@ -130,7 +131,11 @@ if len(mp_to_task_map) == 0:
 # Grab all existing snapshot and filter out the expiring ones
 snapshots = {}
 snapshots_pending_delete = set()
-zfsproc = pipeopen("/sbin/zfs list -t snapshot -H")
+if True:
+    zfsproc = subprocess.Popen(['/sbin/zfs', 'list', '-t', 'snapshot', '-H'],
+                               stdout=subprocess.PIPE)
+else:
+    zfsproc = pipeopen("/sbin/zfs list -t snapshot -H")
 lines = zfsproc.communicate()[0].split('\n')
 reg_autosnap = re.compile('^auto-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2}).(?P<hour>\d{2})(?P<minute>\d{2})-(?P<retcount>\d+)(?P<retunit>[hdwmy])$')
 for line in lines:
@@ -202,5 +207,6 @@ for snapshot in snapshots_pending_delete:
             system(snapcmd)
     MNTLOCK.unlock()
 
-execl('/usr/local/bin/python', 'python', '/usr/local/www/freenasUI/tools/autorepl.py')
-
+os.execl('/usr/local/bin/python',
+         'python',
+         '/usr/local/www/freenasUI/tools/autorepl.py')
