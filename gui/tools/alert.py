@@ -81,7 +81,7 @@ class Alert(object):
     def lighttpd_bindaddr(self):
         address = Settings.objects.all().order_by('-id')[0].stg_guiaddress
         with open('/usr/local/etc/lighttpd/lighttpd.conf') as f:
-            if f.read().find('0.0.0.0') != -1 and address != '0.0.0.0':
+            if f.read().find('0.0.0.0') != -1 and address not in ('0.0.0.0', ''):
                 self.log(self.LOG_WARN, _("The WebGUI Address could not be bind to %s, using wildcard") % (address,))
 
     def perform(self):
