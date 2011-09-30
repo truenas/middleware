@@ -318,7 +318,7 @@ freenas_custom()
 	# Perl seems to be needed for build, but nothing after the
 	# build.  cope with bad dependencies (or misunderstood) and
 	# blow it away (saves 45MB)
-	if [ "x${DEBUG}" != x1 ]; then
+	if [ "${DEBUG}" != 1 ]; then
 		CR "/usr/sbin/pkg_delete /var/db/pkg/perl*"
 	fi
 
