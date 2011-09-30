@@ -107,7 +107,7 @@ class Base_ACL_getfacl:
         cmd = "%s " % self.__getfacl
         if args:
             cmd += "%s " % args
-        cmd += "'%s'" % self.__path
+        cmd += '"%s"' % self.__path.replace('"', '\\"')
 
         self.__out = str(Base_ACL_pipe(cmd))
 
@@ -143,7 +143,7 @@ class Base_ACL_setfacl:
             cmd += "%s " % args
         if self.__entry:
             cmd += "%s " % self.__entry
-        cmd += "'%s'" % self.__path
+        cmd += '"%s"' % self.__path.replace('"', '\\"')
 
         self.__out = str(Base_ACL_pipe(cmd))
 
