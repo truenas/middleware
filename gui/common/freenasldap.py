@@ -747,6 +747,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
 
     @staticmethod 
     def get_domain_controllers(domain):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domain_controllers: enter")
         dcs = [] 
         
         if not domain:
@@ -755,16 +756,22 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         host = "_ldap._tcp.%s" % domain
 
         try:
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domain_controllers: "
+                "looking up SRV records for %s" % host)
             answers = resolver.query(host, 'SRV')
             dcs = sorted(answers, key=lambda a: (int(a.priority), int(a.weight)))
 
         except:
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domain_controllers: "
+                "no SRV records for %s found, fail!" % host)
             dcs = [] 
 
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domain_controllers: leave")
         return dcs
 
     @staticmethod
     def get_global_catalogs(domain):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_global_catalogs: enter")
         gcs = []
 
         if not domain:
@@ -773,12 +780,17 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         host = "_gc._tcp.%s" % domain
 
         try:
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_global_catalogs: "
+                "looking up SRV records for %s" % host)
             answers = resolver.query(host, 'SRV')
             gcs = sorted(answers, key=lambda a: (int(a.priority), int(a.weight)))
 
         except:
+            syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_global_catalogs: "
+                "no SRV records for %s found, fail!" % host)
             gcs = []
 
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_global_catalogs: leave")
         return gcs
 
     def __default_init__(self, **kwargs):
