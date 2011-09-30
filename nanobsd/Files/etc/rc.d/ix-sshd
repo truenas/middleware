@@ -9,6 +9,10 @@
 
 . /etc/rc.subr
 
+AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services/
+: ${AVAHI_SFTP_SERVICE=$AVAHI_SERVICES_DIR/sftp-ssh.service}
+: ${AVAHI_SSH_SERVICE=$AVAHI_SERVICES_DIR/ssh.service}
+
 #
 # TODO: this is really just a place holder for the moment....
 #
@@ -20,6 +24,26 @@ generate_sshd()
     local cmd sf cfg
     sf=$(echo $f | sed -e 's/ /, /g')
     cfg=/etc/ssh/sshd_config
+
+    sshd_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services where srv_service = 'ssh'" 2>/dev/null || echo 0)
+    for file in $AVAHI_SFTP_SERVICE $AVAHI_SSH_SERVICE; do
+        if [ "x$sshd_enabled" = x1 ]; then
+	    cat > $file <<EOF
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">%h</name>
+  <service>
+    <type>_sftp-ssh._tcp</type>
+    <port>22</port>
+  </service>
+</service-group>
+EOF
+	else
+	    rm -f $file
+        fi
+    done
+
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_ssh ORDER BY -id LIMIT 1" | \
 	while eval read $f; do

@@ -346,6 +346,8 @@ freenas_custom()
 	ln -s /data/zfs/zpool.cache ${NANO_WORLDDIR}/boot/zfs/zpool.cache
 	mv ${NANO_WORLDDIR}/sbin/mount_ntfs ${NANO_WORLDDIR}/sbin/mount_ntfs-kern
 	ln -s /usr/sbin/mount_ntfs-fuse ${NANO_WORLDDIR}/sbin/mount_ntfs
+	AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services
+	mkdir -m 0755 -p ${NANO_WORLDDIR}/$AVAHI_SERVICES_DIR
 }
 late_customize_cmd freenas_custom
 

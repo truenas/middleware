@@ -11,6 +11,8 @@
 . /etc/rc.freenas
 
 : ${SMB_CONF:="/usr/local/etc/smb.conf"}
+AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services
+: ${AVAHI_CIFS_SERVICE:=$AVAHI_SERVICES_DIR/cifs.service}
 
 is_within_zfs() {
 
@@ -512,6 +514,33 @@ generate_smb_tdb()
 	rm -f /tmp/smbpasswd
 }
 
+generate_avahi_cifs_service()
+{
+	local samba_enabled
+
+	samba_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services where srv_service = 'cifs'" 2>/dev/null || echo 0)
+        if [ "x$samba_enabled" = x1 ]; then
+		cat > ${AVAHI_CIFS_SERVICE} <<EOF
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">CIFS Shares on %h</name>
+  <service>
+      <type>_smb._tcp</type>
+      <port>445</port>
+  </service>
+  <service>
+      <type>_device-info._tcp</type>
+      <port>0</port>
+    <txt-record>model=Xserve</txt-record>
+  </service>
+</service-group>
+EOF
+	else
+		rm -f ${AVAHI_CIFS_SERVICE}
+	fi
+}
+
 generate_smb_config()
 {
 	mkdir -p /var/etc/private
@@ -519,6 +548,7 @@ generate_smb_config()
 	generate_smb_tdb
 	generate_smbconf > ${SMB_CONF}
 	generate_exports >> ${SMB_CONF}
+	generate_avahi_cifs_service
 }
 
 name="ix-samba"

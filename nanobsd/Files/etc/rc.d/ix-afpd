@@ -15,6 +15,8 @@ afpd_config=${afpd_config:-"/etc/afpd.conf"}
 afpd_avdefault=${afpd_avdefault:-"/usr/local/etc/AppleVolumes.default"}
 afpd_avsystem=${afpd_avsystem:-"/usr/local/etc/AppleVolumes.system"}
 avahi_daemon_config=${avahi_daemon_config:-"/usr/local/etc/avahi/avahi-daemon.conf"}
+AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services
+: ${avahi_afpd_service=$AVAHI_SERVICES_DIR/afp.service}
 
 # If $1 == 1, return $2, otherwise return nothing
 bool_on()
@@ -28,7 +30,7 @@ bool_on()
 bool_off()
 {
     if [ $1 -eq 0 ]; then
-	echo -n $2
+       echo -n $2
     fi
 }
 
@@ -36,8 +38,8 @@ bool_off()
 on_off()
 {
     case $1 in
-	0) echo "off";;
-	1) echo "on";;
+       0) echo "off";;
+       1) echo "on";;
     esac
 }
 
@@ -70,6 +72,7 @@ EOF
 
 generate_av_system()
 {
+	:
 }
 
 generate_av_default()
@@ -140,12 +143,40 @@ EOF
 	done
 }
 
+generate_avahi_afpd_service()
+{
+	local srv_name
+
+	afpd_enabled=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services where srv_service = 'afp'" 2>/dev/null || echo 0)
+	if [ "x$afpd_enabled" = x1 ]; then
+		cat > "$avahi_afpd_service" <<EOF
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">%h</name>
+  <service>
+    <type>_afpovertcp._tcp</type>
+    <port>548</port>
+  </service>
+  <service>
+    <type>_device-info._tcp</type>
+    <port>0</port>
+    <txt-record>model=RackMac</txt-record>
+  </service>
+</service-group>
+EOF
+	else
+		rm -f "$avahi_afpd_service"
+	fi
+}
+
 generate_afpd()
 {
-    generate_afpd_config > ${afpd_config}
+    generate_afpd_config > ${afpd_config} 
     generate_av_system > ${afpd_avsystem}
     generate_av_default > ${afpd_avdefault}
     generate_avahi_daemon_config > ${avahi_daemon_config}
+    generate_avahi_afpd_service
 }
 
 name="ix-afpd"
