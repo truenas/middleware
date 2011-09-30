@@ -984,6 +984,47 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_partition: leave")
         return partitions
 
+    def get_root_domain(self, **kwargs):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_root_domain: enter")
+        isopen = self._isopen
+        self.open()
+
+        rootDSE = self.get_rootDSE()
+        rdnc = rootDSE[0][1]['rootDomainNamingContext'][0]
+
+        domain = None
+        results = self.get_partitions(ncname=rdnc)
+        try:
+            domain = results[0][1]['dnsRoot'][0]
+
+        except:
+            domain = None
+
+        if not isopen:
+            self.close()
+
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_root_domain: leave")
+        return domain
+
+    def get_domain(self, **kwargs):
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domain: enter")
+        isopen = self._isopen
+        self.open()
+
+        domain = None
+        results = self.get_partitions(**kwargs)
+        try:
+            domain = results[0][1]['dnsRoot'][0]
+
+        except:
+            domain = None
+
+        if not isopen:
+            self.close()
+ 
+        syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domain: leave")
+        return domain
+
     def get_domains(self, **kwargs):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: enter")
         isopen = self._isopen
@@ -991,7 +1032,10 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
 
         gc = None
         gc_args = { 'binddn': self.binddn, 'bindpw': self.bindpw }
-        gcs = self.get_global_catalogs(self.domain)
+
+        root = self.get_root_domain()
+        gcs = self.get_global_catalogs(root)
+
         for g in gcs:
             syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: trying [%s]..." % g)
             gc_args['host'] = g.target.to_text(True)
