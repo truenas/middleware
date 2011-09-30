@@ -363,8 +363,8 @@ class FreeNAS_LDAP_Directory(object):
             self.port = long(port)
 
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Directory.__init__: "
-            "host = %s, port = %ld, binddn = %s, bindpw = %s, basedn = %s, ssl = %d" %
-            (self.host, self.port, self.binddn, self.bindpw, self.basedn, self.ssl))
+            "host = %s, port = %ld, binddn = %s, basedn = %s, ssl = %d" %
+            (self.host, self.port, self.binddn, self.basedn, self.ssl))
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Directory.__init__: leave")
 
     def _save(self):
