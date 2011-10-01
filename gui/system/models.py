@@ -649,7 +649,7 @@ class Sysctl(Model):
 
     class Meta:
         verbose_name = _("Sysctl")
-        verbose_name_plural = _("Sysctl's")
+        verbose_name_plural = _("Sysctls")
 
     class FreeAdmin:
         icon_model = u"SysctlIcon"
