@@ -15,17 +15,20 @@ generate_sysctl()
     cp /conf/base/etc/sysctl.conf /etc/sysctl.conf
     # Generate sysctls
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-	"SELECT sysctl_mib,sysctl_value,sysctl_comment FROM system_sysctl ORDER BY id" | \
+    	"SELECT sysctl_mib,sysctl_value,sysctl_comment FROM system_sysctl ORDER BY id" | \
 	while read var value comment; do
-        echo -e "${var}=${value} #${comment}" >> /etc/sysctl.conf
+            (echo -n "${var}=\"${value}\""
+             if [ -n "$comment" ]; then
+                 echo -e " # $comment"
+             else
+                 echo
+             fi) >> /etc/sysctl.conf
     done
-
 }
 
 original_sysctl()
 {
     cp /conf/base/etc/sysctl.conf /etc/sysctl.conf
-
 }
 
 name="ix-sysctl"
