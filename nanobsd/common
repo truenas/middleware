@@ -319,7 +319,7 @@ freenas_custom()
 	# build.  cope with bad dependencies (or misunderstood) and
 	# blow it away (saves 45MB)
 	if [ "${DEBUG}" != 1 ]; then
-		CR "/usr/sbin/pkg_delete /var/db/pkg/perl*"
+		CR "/usr/sbin/pkg_delete -f /var/db/pkg/perl*"
 	fi
 
 	# Kill all .a's that are installed (15MB)
@@ -353,8 +353,8 @@ late_customize_cmd freenas_custom
 
 __a=`mount | grep ${NANO_OBJ}/ | awk '{print length($3), $3;}' | sort -rn | awk '{$1=""; print;}'`
 if [ -n "$__a" ]; then
-    echo "unmounting $__a"
-    umount $__a
+	echo "unmounting $__a"
+	umount $__a
 fi
 
 NANO_BOOTLOADER="boot/boot0"
