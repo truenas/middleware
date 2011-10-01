@@ -16,7 +16,7 @@ generate_httpd_conf()
 	local bind_port="${3}"
 	local tmp="/var/tmp/lighttpd.conf"
 
-	if [ "${bind_addr}" != "0.0.0.0" ] && [ -z "$(/sbin/ifconfig -a|grep ${bind_addr})" ]; then
+	if [ "${bind_addr}" != "0.0.0.0" ] && [ -n "${bind_addr}" -z "$(/sbin/ifconfig -a|grep ${bind_addr})" ]; then
 		bind_addr="0.0.0.0"
 	fi
 
