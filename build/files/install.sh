@@ -11,7 +11,7 @@ export TERM
 # XXX: drive these values via the build.
 SW_ARCH=$(uname -p)
 SW_NAME="FreeNAS"
-SW_VERSION="8.0.1"
+SW_VERSION="8.1"
 
 get_product_path()
 {
