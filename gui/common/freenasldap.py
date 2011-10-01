@@ -962,7 +962,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         basedn = "CN=Partitions,%s" % config
 
         filter = None
-        keys = ['netbiosname', 'name', 'cn', 'dn', 'distinguishedname', 'ncname'] 
+        keys = ['netbiosname', 'name', 'cn', 'dn', 'distinguishedname', 'ncname', 'dnsroot'] 
         for k in keys:
             if kwargs.has_key(k):
                 filter = "(%s=%s)" % (k, kwargs[k])
@@ -1011,10 +1011,14 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
         isopen = self._isopen
         self.open()
 
-        domain = None
+        domain = []
         results = self.get_partitions(**kwargs)
         try:
-            domain = results[0][1]['dnsRoot'][0]
+            if results[0][0]:
+                r = {}
+                for k in results[0][1].keys():
+                    r[k] = results[0][1][k][0]
+                domain.append(r)
 
         except:
             domain = None
@@ -1058,8 +1062,15 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
                 syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: no domain objects found")
                 results = []
 
+            d = self.get_domain(dnsroot=self.domain)
+            if not d:
+                syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: can't get domain %s" % self.domain)
+
+            basedn = d[0]['nCName'].lower()
             for r in results:
-                domains.append(r[0])
+                c = r[0].lower()
+                if c.endswith(basedn):
+                    domains.append(c)
 
             gc.close()
 
@@ -1078,7 +1089,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
             filter = None
             if len(kwargs) > 0:
                 haskey = True
-                keys = ['netbiosname', 'name', 'cn', 'dn', 'distinguishedname', 'ncname'] 
+                keys = ['netbiosname', 'name', 'cn', 'dn', 'distinguishedname', 'ncname', 'dnsroot'] 
                 for k in keys:
                     if kwargs.has_key(k):
                         filter = "(&(objectcategory=crossref)(%s=%s))" % (k, kwargs[k])
