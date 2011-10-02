@@ -60,7 +60,12 @@ loader_user() {
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT ldr_var,ldr_value,ldr_comment FROM system_loader ORDER BY id" | \
 	while read var value comment; do
-		echo -e "${var}=\"${value}\" #${comment}" >> "${tmp}"
+		(echo -n "${var}=\"${value}\""
+		 if [ -n "$comment" ]; then
+			echo -e " # $comment"
+		 else
+			echo
+		 fi) >> "${tmp}"
 	done
 
 }
@@ -68,23 +73,35 @@ loader_user() {
 update_loader_conf()
 {
 	rm -f "${tmp}"
-	
+
 	settings="serial saver user"
 	for s in ${settings}
 	do
 		eval "loader_${s}"
 	done
 
-	sha256orig=$(sha256 -q -s "$(cat /boot/loader.conf | sed -E -n '/#CUSTOM/{n;p;}')
-" 2> /dev/null)
-	sha256new=$(sha256 -q "${tmp}" 2> /dev/null)
+	# NOTE: newline required!
+	sha256orig=$(sha256 -q -s "$(sed -E -n '/# User customizations/{n;p;}' /boot/loader.conf)
+")
+	sha256new=$(sha256 -q "${tmp}" 2>/dev/null)
 	if [ "${sha256orig}" != "${sha256new}" ]; then
-		mount -uw /
-		new=$(cat /boot/loader.conf | sed -E -n '/#CUSTOM/q;p')
-		echo "${new}" > /boot/loader.conf
-		echo "#CUSTOM" >> /boot/loader.conf
-		cat "${tmp}" >> /boot/loader.conf
-		mount -ur /
+		tmp2=$(mktemp /tmp/loader.conf.XXXXXXX)
+		cat > $tmp2 <<EOF
+$(sed -E -n '/# User customizations/q;p' /boot/loader.conf)
+
+# User customizations (DO NOT DELETE THIS LINE)
+$(cat "${tmp}" 2>/dev/null)
+EOF
+		rc=1
+		if mount -uw /; then
+			if mv "$tmp2" /boot/loader.conf; then
+				rc=0
+			fi
+			mount -ur /
+		else
+			rm -f "$tmp2"
+		fi
+		return $rc
 	fi
 }
 
