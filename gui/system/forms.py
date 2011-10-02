@@ -488,14 +488,18 @@ assert len(filter(SYSCTL_VARNAME_FORMAT_RE.match, valid_sysctls)) == len(valid_s
 #   user footshooting.
 # - this doesn't reject all benign input; it just rejects input that would
 #   break system boots.
+# XXX: note that I'm explicitly rejecting input for root sysctl nodes.
 SYSCTL_TUNABLE_VARNAME_FORMAT = """Variable names must:
 1. Start with a letter.
 2. End with a letter or number.
 3. Can contain a combination of alphanumeric characters, numbers, underscores,
    and/or periods.
 """
-SYSCTL_TUNABLE_VARNAME_FORMAT_RE = \
+SYSCTL_VARNAME_FORMAT_RE = \
     re.compile('[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
+
+TUNABLE_VARNAME_FORMAT_RE = \
+    re.compile('[a-z0-9_]|[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
 
 class SysctlForm(ModelForm):
     class Meta:
@@ -506,7 +510,7 @@ class SysctlForm(ModelForm):
 
     def clean_sysctl_mib(self):
         value = self.cleaned_data.get('sysctl_mib')
-        if SYSCTL_TUNABLE_VARNAME_FORMAT_RE.match(value):
+        if SYSCTL_VARNAME_FORMAT_RE.match(value):
             return value
         raise forms.ValidationError(_(SYSCTL_TUNABLE_VARNAME_FORMAT))
 
@@ -535,7 +539,7 @@ class LoaderForm(ModelForm):
 
     def clean_ldr_var(self):
         value = self.cleaned_data.get('ldr_var')
-        if SYSCTL_TUNABLE_VARNAME_FORMAT_RE.match(value): 
+        if TUNABLE_VARNAME_FORMAT_RE.match(value): 
             return value
         raise forms.ValidationError(_(SYSCTL_TUNABLE_VARNAME_FORMAT))
 
