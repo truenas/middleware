@@ -26,6 +26,8 @@
 # $FreeBSD$
 #####################################################################
 
+import re
+
 from django.forms import FileField
 from django.conf import settings
 from django.contrib.formtools.wizard import FormWizard
@@ -452,14 +454,67 @@ class RsyncForm(ModelForm):
         super(RsyncForm, self).save()
         started = notifier().restart("cron")
 
+"""
+TODO: Move to a unittest .py file.
+
+invalid_sysctls = [
+    'a.0',
+    'a.b',
+    'a..b',
+    'a._.b',
+    'a.b._.c',
+    '0',
+    '0.a',
+    'a-b',
+    'a',
+]
+
+valid_sysctls = [
+    'ab.0',
+    'ab.b',
+    'smbios.system.version',
+    'dev.emu10kx.0.multichannel_recording',
+    'hw.bce.tso0',
+    'kern.sched.preempt_thresh',
+    'net.inet.tcp.tso',
+]
+
+assert len(filter(SYSCTL_VARNAME_FORMAT_RE.match, invalid_sysctls)) == 0
+assert len(filter(SYSCTL_VARNAME_FORMAT_RE.match, valid_sysctls)) == len(valid_sysctls)
+"""
+
+# NOTE:
+# - setenv in the kernel is more permissive than this, but we want to reduce
+#   user footshooting.
+# - this doesn't prevent all benign input, like: 'a._.b'.
+SYSCTL_TUNABLE_VARNAME_FORMAT = """Variable names must:
+1. Start with a letter.
+2. End with a letter or number.
+3. Can contain a combination of alphanumeric characters, numbers, underscores,
+   and/or periods.
+"""
+SYSCTL_TUNABLE_VARNAME_FORMAT_RE = \
+    re.compile('[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
+
 class SysctlForm(ModelForm):
     class Meta:
         model = models.Sysctl
+
+    def clean_sysctl_comment(self):
+        return self.cleaned_data.get('sysctl_comment').strip()
+
+    def clean_sysctl_mib(self):
+        value = self.cleaned_data.get('sysctl_mib')
+        if SYSCTL_TUNABLE_VARNAME_FORMAT_RE.match(value):
+            return value
+        raise forms.ValidationError(_(SYSCTL_TUNABLE_VARNAME_FORMAT))
+
     def clean_sysctl_value(self):
-        value = self.cleaned_data.get("sysctl_value")
-        if '"' in value:
-            raise forms.ValidationError(_("Quotes are not allowed"))
+        value = self.cleaned_data.get('sysctl_value')
+        if '"' in value or "'" in value:
+            raise forms.ValidationError(_('Quotes are not allowed'))
         return value
+
     def save(self):
         super(SysctlForm, self).save()
         notifier().start("sysctl")
@@ -467,16 +522,22 @@ class SysctlForm(ModelForm):
 class LoaderForm(ModelForm):
     class Meta:
         model = models.Loader
+
+    def clean_ldr_comment(self):
+        return self.cleaned_data.get('ldr_comment').strip()
+
     def clean_ldr_value(self):
-        value = self.cleaned_data.get("ldr_var")
-        if not re.search(r'^[a-z0-9._]+$', value, re.I):
-            raise forms.ValidationError(_("Use alphanumeric, \"_\" and \".\"."))
+        value = self.cleaned_data.get('ldr_value')
+        if '"' in value or "'" in value:
+            raise forms.ValidationError(_('Quotes are not allowed'))
         return value
-    def clean_ldr_value(self):
-        value = self.cleaned_data.get("ldr_value")
-        if '"' in value:
-            raise forms.ValidationError(_("Quotes are not allowed"))
-        return value
+
+    def clean_ldr_var(self):
+        value = self.cleaned_data.get('ldr_var')
+        if SYSCTL_TUNABLE_VARNAME_FORMAT_RE.match(value): 
+            return value
+        raise forms.ValidationError(_(SYSCTL_TUNABLE_VARNAME_FORMAT))
+
     def save(self):
         super(LoaderForm, self).save()
         notifier().start("loader")
