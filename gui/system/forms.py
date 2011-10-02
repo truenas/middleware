@@ -486,7 +486,8 @@ assert len(filter(SYSCTL_VARNAME_FORMAT_RE.match, valid_sysctls)) == len(valid_s
 # NOTE:
 # - setenv in the kernel is more permissive than this, but we want to reduce
 #   user footshooting.
-# - this doesn't prevent all benign input, like: 'a._.b'.
+# - this doesn't reject all benign input; it just rejects input that would
+#   break system boots.
 SYSCTL_TUNABLE_VARNAME_FORMAT = """Variable names must:
 1. Start with a letter.
 2. End with a letter or number.
