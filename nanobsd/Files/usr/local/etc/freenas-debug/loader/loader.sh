@@ -28,15 +28,15 @@
 #####################################################################
 
 
-sysctl_opt() { echo y; }
-sysctl_help() { echo "Dump Sysctl Configuration"; }
-sysctl_func()
+loader_opt() { echo T; }
+loader_help() { echo "Loader Configuration Information"; }
+loader_func()
 {
-	section_header "/etc/sysctl.conf"
-	cat /etc/sysctl.conf
+	section_header "/boot/loader.conf"
+	cat /boot/loader.conf
 	section_footer
-	section_header "sysctl -a"
-	sysctl -a
+
+	section_header "kenv"
+	kenv
 	section_footer
 }
-
