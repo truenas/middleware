@@ -71,7 +71,7 @@ send_email()
 		afile=$(basename ${FREENAS_DEBUG_FILE})
 		boundary="@@@_beer_@@@"
 
-		cat > "${mfile}" <<EOF
+		cat > "${mfile}" <<-EOF
 		Content-Transfer-Encoding: 7bit
 		Content-Type: multipart/mixed; boundary="${boundary}"
 		MIME-Version: 1.0
