@@ -499,7 +499,7 @@ SYSCTL_VARNAME_FORMAT_RE = \
     re.compile('[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
 
 TUNABLE_VARNAME_FORMAT_RE = \
-    re.compile('[a-z0-9_]|[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
+    re.compile('[a-z][a-z0-9_]+\.*([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
 
 class SysctlForm(ModelForm):
     class Meta:
