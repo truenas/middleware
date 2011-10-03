@@ -7,8 +7,6 @@
 
 . /etc/rc.subr
 
-tmp=/var/tmp/.tmp.loader.conf
-
 loader_serial()
 {
 	local serial_enable=0
@@ -25,8 +23,8 @@ loader_serial()
 	LIMIT 1")
 
 	if [ "${serial_enable}" != "0" ]; then
-		echo 'boot_multicons="YES"' >> "${tmp}"
-		echo 'console="vidconsole,comconsole"' >> "${tmp}"
+		echo 'boot_multicons="YES"'
+		echo 'console="vidconsole,comconsole"'
 	fi
 }
 
@@ -46,8 +44,8 @@ loader_saver()
 	LIMIT 1")
 
 	if [ "${saver_enable}" != "0" ]; then
-		echo 'screensave_load="YES"' >> "${tmp}"
-		echo 'screensave_name="daemon_saver"' >> "${tmp}"
+		echo 'screensave_load="YES"'
+		echo 'screensave_name="daemon_saver"'
 	fi
 
 }
@@ -65,19 +63,21 @@ loader_user() {
 			echo -e " # $comment"
 		 else
 			echo
-		 fi) >> "${tmp}"
+		 fi)
 	done
 
 }
 
 update_loader_conf()
 {
-	rm -f "${tmp}"
+	local tmp
+
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
 
 	settings="serial saver user"
 	for s in ${settings}
 	do
-		eval "loader_${s}"
+		eval "loader_${s}" >> $tmp
 	done
 
 	# NOTE: newline required!
@@ -85,7 +85,7 @@ update_loader_conf()
 ")
 	sha256new=$(sha256 -q "${tmp}" 2>/dev/null)
 	if [ "${sha256orig}" != "${sha256new}" ]; then
-		tmp2=$(mktemp /tmp/loader.conf.XXXXXXX)
+		tmp2=$(mktemp /tmp/tmp.XXXXXXX)
 		cat > $tmp2 <<EOF
 $(sed -E -n '/# User customizations/q;p' /boot/loader.conf)
 
@@ -103,6 +103,7 @@ EOF
 		fi
 		return $rc
 	fi
+	rm -f $tmp
 }
 
 name="ix-loader"
