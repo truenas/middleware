@@ -27,12 +27,12 @@ def do_sendmail(msg, to=None, plain=False):
     if to and '@' not in to:
         aliases = get_aliases()
         if to in aliases:
-            headers['To'] = aliases[to]
+            to = headers['To'] = aliases[to]
 
     margs = {}
     if plain:
         margs['text'] = msg
-        margs['plain'] = True 
+        margs['plain'] = True
     else:
         margs['text'] = text
         margs['extra_headers'] = headers
