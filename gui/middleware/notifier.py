@@ -100,7 +100,7 @@ class notifier:
         pomask = ctypes.pointer(omask)
         libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
         try:
-            retval = self.___system("(" + command + ") 2>&1 > /dev/null")
+            retval = self.___system("(" + command + ") >/dev/null 2>&1")
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
         syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
