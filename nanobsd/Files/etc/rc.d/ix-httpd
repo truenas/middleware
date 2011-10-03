@@ -14,11 +14,14 @@ generate_httpd_conf()
 	local ssl_enable="${1}"
 	local bind_addr="${2}"
 	local bind_port="${3}"
-	local tmp="/var/tmp/lighttpd.conf"
+	local tmp
 
+	# XXX: IPv6
 	if [ "${bind_addr}" != "0.0.0.0" ] && [ -n "${bind_addr}" -z "$(/sbin/ifconfig -a|grep ${bind_addr})" ]; then
 		bind_addr="0.0.0.0"
 	fi
+
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
 
 	awk -v ssl_enable="${ssl_enable}" \
 		-v ssl_cert="${HTTPDCERT}" \
@@ -60,16 +63,17 @@ generate_httpd_conf()
 				printf("ssl.pemfile = \"%s\"\n", ssl_cert);
 			}
 		}
-	' < "${HTTPDCONF}" > "${tmp}"
+	' "${HTTPDCONF}" > "${tmp}"
 	
 	${HTTPD} -t -f "${tmp}" >/dev/null 2>&1
-	if [ "$?" = "0" ]
-	then
+	rc=$?
+	if [ $rc -eq 0 ]; then
 		mv "${tmp}" "${HTTPDCONF}"
-		res=0
+	else
+		rm -f "${tmp}"
 	fi
 
-	return ${res}
+	return $rc
 }
 
 get_host_ip()
@@ -99,29 +103,30 @@ test_httpd_config()
 
 
 	${HTTPDSCRIPT} onerestart >/dev/null 2>&1
-	if [ "$?" = "0" ]
-	then
-		echo -n "Waiting for ${proto}..."
+	rc=$?
+	if [ $rc -eq 0 ]; then
+		echo -n "Waiting for ${proto}... "
 		export HTTP_TIMEOUT=1
 		export FTP_TIMEOUT=1
 		while [ "${try}" -lt "${ntries}" ]
 		do
-			if fetch -q -o /dev/null "${proto}://${host}" > /dev/null 2>&1
-			then
-				res=0
+			fetch -q -o /dev/null "${proto}://${host}" \
+			    >/dev/null 2>&1
+			if [ $? -eq 0 ]; then
+				rc=0
 				break		
 			fi
 
-			try=$((${try} + 1))
+			: $(( try += 1 ))
 		done
-		if [ "${res}" = 0 ]; then
+		if [ $rc -eq 0 ]; then
 			echo "Done."
 		else
 			echo "Failed."
 		fi
 	fi
 
-	return ${res}
+	return $rc
 }
 
 set_stg_guiprotocol()
