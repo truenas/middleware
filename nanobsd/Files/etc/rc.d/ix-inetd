@@ -32,35 +32,48 @@ generate_tftp()
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_tftp ORDER BY -id LIMIT 1" | \
     while eval read $f; do
-	if [ $enabled = 1 ]; then
-	    if [ $tftp_port = "69" ]; then
+	if [ "$enabled" -eq 1 ]; then
+	    if [ "$tftp_port" -eq 69 ]; then
 		service="tftp"
 	    else
 		service="freenas-tftp"
-		echo "freenas-tftp $tftp_port/udp" >> /tmp/services.extra
+		echo "freenas-tftp $tftp_port/udp" >> $tmp_services_extra
 	    fi
 	    cmd="tftpd -l -s $tftp_directory -u $tftp_username -U $tftp_umask $tftp_options"
-	    if [ $tftp_newfiles = 1 ]; then
+	    if [ "$tftp_newfiles" -eq 1 ]; then
 		cmd="$cmd -w"
 	    fi
-	    echo "$service dgram udp wait root /usr/libexec/tftpd $cmd" \
-		>> /tmp/inetd.conf.extra
+	    echo "$service dgram udp wait root /usr/libexec/tftpd $cmd" >> \
+		$tmp_inetd_conf_extra
 	fi
     done
 }
 
 generate_inetd_files()
 {
-    rm -f /tmp/inetd.conf.extra /tmp/services.extra
-    generate_tftp
-    if [ -f /tmp/services.extra ]; then
-	cat /conf/base/etc/services /tmp/services.extra > /etc/services
-    fi
-    if [ -f /tmp/inetd.conf.extra ]; then
-	cat /conf/base/etc/inetd.conf /tmp/inetd.conf.extra > /etc/inetd.conf
-    fi
-    rm -f /tmp/inetd.conf.extra /tmp/services.extra
-    # we assume that someone else kicks inetd if necessary
+	local tmp
+
+	# XXX: intentional namespace pollution
+	tmp_inetd_conf_extra=$(mktemp /tmp/tmp.XXXXXX)
+	tmp_services_extra=$(mktemp /tmp/tmp.XXXXXX)
+
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
+
+	generate_tftp
+	if [ -s $tmp_services_extra ]; then
+		cat /conf/base/etc/services $tmp_services_extra >> $tmp
+		if [ $? -eq 0 ]; then
+			mv $tmp /etc/services
+		fi
+	fi
+	if [ -s $tmp_inetd_conf_extra ]; then
+		cat /conf/base/etc/inetd.conf $tmp_inetd_conf_extra > $tmp
+		if [ $? -eq 0 ]; then
+			mv $tmp /etc/inetd.conf
+		fi
+	fi
+	rm -f $tmp $tmp_inetd_conf_extra $tmp_services_extra
+	# we assume that someone else kicks inetd if necessary
 }
 
 name="ix-inetd"
