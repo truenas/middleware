@@ -11,81 +11,83 @@
 
 netcli_enable()
 {
-	local tmp=/var/tmp/.tmp.ttys
+	local tmp
 
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
 	awk '
 	/^ttyv0/ { sub("Pc", "freenas"); print $0; } 
 	!/^ttyv0/ {print $0; }
-	' < /etc/ttys > "${tmp}"
+	' /etc/ttys > "${tmp}"
 
-	if [ -s "${tmp}" ]
-	then
+	if [ -s "${tmp}" ]; then
 		mv "${tmp}" /etc/ttys
+	else
+		rm -f "$tmp"
 	fi
-
-	kill -HUP 1
 }
 
 netcli_disable()
 {
-	local tmp=/var/tmp/.tmp.ttys
+	local tmp
 
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
 	awk '
 	/^ttyv0/ { sub("freenas", "Pc"); print $0; } 
 	!/^ttyv0/ {print $0; }
-	' < /etc/ttys > "${tmp}"
+	' /etc/ttys > "${tmp}"
 
-	if [ -s "${tmp}" ]
-	then
+	if [ -s "${tmp}" ]; then
 		mv "${tmp}" /etc/ttys
+	else
+		rm -f "$tmp"
 	fi
-
-	kill -HUP 1
 }
 
 netcli_serial_enable()
 {
-	local tmp=/var/tmp/.tmp.ttys
+	local tmp
 
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
 	awk '
 	/^ttyu0/ {
 		sub("std.9600", "freenas_serial");
 		print $0;
 	} 
 	!/^ttyu0/ {print $0; }
-	' < /etc/ttys > "${tmp}"
+	' /etc/ttys > "${tmp}"
 
-	if [ -s "${tmp}" ]
-	then
+	if [ -s "${tmp}" ]; then
 		mv "${tmp}" /etc/ttys
+	else
+		rm -f "$tmp"
 	fi
-
-	kill -HUP 1
 }
 
 netcli_serial_disable()
 {
-	local tmp=/var/tmp/.tmp.ttys
+	local tmp
 
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
 	awk '
 	/^ttyu0/ {
 		sub("freenas_serial", "std.9600");
 		print $0;
 	} 
 	!/^ttyu0/ {print $0; }
-	' < /etc/ttys > "${tmp}"
+	' /etc/ttys > "${tmp}"
 
-	if [ -s "${tmp}" ]
-	then
+	if [ -s "${tmp}" ]; then
 		mv "${tmp}" /etc/ttys
+	else
+		rm -f "$tmp"
 	fi
-
-	kill -HUP 1
 }
 
 serial_enable()
 {
-	local tmp=/var/tmp/.tmp.ttys
+	local tmp
+
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
 
 	awk '
 	/^ttyu0/ {
@@ -94,19 +96,20 @@ serial_enable()
 		print $0;
 	} 
 	!/^ttyu0/ {print $0; }
-	' < /etc/ttys > "${tmp}"
+	' /etc/ttys > "${tmp}"
 
-	if [ -s "${tmp}" ]
-	then
+	if [ -s "${tmp}" ]; then
 		mv "${tmp}" /etc/ttys
+	else
+		rm -f "$tmp"
 	fi
-
-	kill -HUP 1
 }
 
 serial_disable()
 {
-	local tmp=/var/tmp/.tmp.ttys
+	local tmp
+
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
 
 	awk '
 	/^ttyu0/ {
@@ -115,14 +118,13 @@ serial_disable()
 		print $0;
 	} 
 	!/^ttyu0/ {print $0; }
-	' < /etc/ttys > "${tmp}"
+	' /etc/ttys > "${tmp}"
 
-	if [ -s "${tmp}" ]
-	then
+	if [ -s "${tmp}" ]; then
 		mv "${tmp}" /etc/ttys
+	else
+		rm -f "$tmp"
 	fi
-
-	kill -HUP 1
 }
 
 update_ttys()
@@ -152,6 +154,7 @@ update_ttys()
 			0) netcli_disable; netcli_serial_disable ;;
 			1) netcli_enable; netcli_serial_enable ;;
 		esac
+		kill -HUP 1
 		break
 	done
 }
