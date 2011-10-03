@@ -13,6 +13,8 @@
 
 kerberos_start()
 {
+	local pwfile
+
 	if AD_enabled
 	then
 		AD_init
@@ -23,16 +25,16 @@ kerberos_start()
 
 		if [ -n "${adminname}" -a -n "${domainname}" -a -n "${adminpw}" ]
 		then
-			local pwfile="/tmp/."$(date '+%H%M%S')
-			touch "${pwfile}"
-			chmod 600 "${pwfile}"
+			pwfile=$(mktemp /tmp/tmp.XXXXXXXX)
 			echo "${adminpw}" > ${pwfile}
+			domainname=$(echo "${domainname}" | tr a-z A-Z)
+			kinit --password-file="${pwfile}" \
+			    "${adminname}@${domainname}"
+			rc=$?
+			rm -f "${pwfile}"
 
-			domainname=$(echo "${domainname}"|tr a-z A-Z)
-			kinit --password-file="${pwfile}" "${adminname}@${domainname}"
-
-			rm "${pwfile}"
 			sleep 10
+			return $rc
 		fi
 	fi
 }
