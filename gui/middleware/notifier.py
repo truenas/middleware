@@ -81,13 +81,14 @@ class notifier:
         mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
         pmask = ctypes.pointer(mask)
         pomask = ctypes.pointer(omask)
-        libc.sigprocmask(3, pmask, pomask)
-        self.___system("(" + command + ") 2>&1 | logger -p daemon.notice -t freenas")
-        libc.sigprocmask(3, pomask, None)
+        libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
+        try:
+            self.___system("(" + command + ") 2>&1 | logger -p daemon.notice -t freenas")
+        finally:
+            libc.sigprocmask(signal.SIGQUIT, pomask, None)
         syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
 
     def __system_nolog(self, command):
-        retval = 0
         syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
         syslog.syslog(syslog.LOG_NOTICE, "Executing: " + command)
         # TODO: python's signal class should be taught about sigprocmask(2)
@@ -97,9 +98,11 @@ class notifier:
         mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
         pmask = ctypes.pointer(mask)
         pomask = ctypes.pointer(omask)
-        libc.sigprocmask(3, pmask, pomask)
-        retval = self.___system("(" + command + ") 2>&1 > /dev/null")
-        libc.sigprocmask(3, pomask, None)
+        libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
+        try:
+            retval = self.___system("(" + command + ") 2>&1 > /dev/null")
+        finally:
+            libc.sigprocmask(signal.SIGQUIT, pomask, None)
         syslog.syslog(syslog.LOG_INFO, "Executed: " + command)
         return retval
 
