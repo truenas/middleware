@@ -89,7 +89,7 @@ __SSL__
 		common="localhost"
 	fi
 
-	cat<<-__EOF__>"${SSLCONF}"
+	cat >"${SSLCONF}" <<-__EOF__
 	[ ca ]
 	default_ca                      = CA_default
 
@@ -148,19 +148,23 @@ __EOF__
 
 create_CA()
 {
-	local tmp="/var/tmp/pass.txt"
+	local tmp
+
 	if [ -f "${SSLCAKEY}" -a -f "${SSLCACERT}" ]
 	then
 		return
 	fi
 
-	dd if=/dev/urandom count=16 bs=1|uuencode -|head -2|tail -1 > "${tmp}"
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
+	dd if=/dev/urandom count=16 bs=1 | uuencode -|head -2 | \
+	    tail -1 > "${tmp}"
 	${OPENSSL} req -config "${SSLCONF}" -batch -passout file:"${tmp}" \
-		-new -x509 -keyout "${SSLCAKEY}" -out "${SSLCACERT}"
+	    -new -x509 -keyout "${SSLCAKEY}" -out "${SSLCACERT}"
 
 	cp "${SSLCAKEY}" "${SSLCAKEY}.orig"
-	${OPENSSL} rsa -passin file:"${tmp}" -in "${SSLCAKEY}.orig" -out "${SSLCAKEY}"
-	rm -f "${SSLCAKEY}.orig" "${tmp}"
+	${OPENSSL} rsa -passin file:"${tmp}" -in "${SSLCAKEY}.orig" \
+	    -out "${SSLCAKEY}"
+	rm -f "${tmp}" "${SSLCAKEY}.orig"
 	chmod 400 "${SSLCAKEY}"
 }
 
@@ -282,7 +286,7 @@ write_cert()
 
 generate_certificate()
 {
-	local certfile
+	local certfile tmp
 
 	certfile=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
@@ -299,16 +303,15 @@ generate_certificate()
 
 	if [ -s "${HTTPDCERT}" -a -n "${certfile}" ]
 	then
-		echo "${certfile}" > /tmp/.cert
-		chmod 400 /tmp/.cert
+		tmp=$(mktemp /tmp/tmp.XXXXXX)
+		echo "${certfile}" > $tmp
+		chmod 400 $tmp
 
-		diff "${HTTPDCERT}" /tmp/.cert >/dev/null
-		if [ "$?" != "0" ]
-		then
-			mv /tmp/.cert "${HTTPDCERT}"
+		if diff "${HTTPDCERT}" /tmp/.cert >/dev/null; then
+			rm -f $tmp
+		else
+			mv $tmp "${HTTPDCERT}"
 		fi
-
-		rm /tmp/.cert
 	fi
 
 	if [ -n "${certfile}" ]
