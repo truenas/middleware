@@ -1,4 +1,10 @@
-import rrdtool, os, re, hashlib, shutil
+import hashlib
+import os
+import re
+import shutil
+import sys
+
+import rrdtool
 
 class File:
     @staticmethod
