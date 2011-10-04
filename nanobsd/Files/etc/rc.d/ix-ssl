@@ -307,7 +307,7 @@ generate_certificate()
 		echo "${certfile}" > $tmp
 		chmod 400 $tmp
 
-		if diff "${HTTPDCERT}" /tmp/.cert >/dev/null; then
+		if diff -q "${HTTPDCERT}" $cert; then
 			rm -f $tmp
 		else
 			mv $tmp "${HTTPDCERT}"
