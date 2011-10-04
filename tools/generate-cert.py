@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+#
+# Copyright iXsystems, Inc. 2011
 
 import os
 import tempfile
