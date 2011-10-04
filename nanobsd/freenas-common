@@ -368,7 +368,7 @@ fix_mt_daapd ( )
 
 select_httpd ( )
 {
-	echo "lighttpd_enable=YES" >> ${NANO_WORLDDIR}/etc/rc.conf
+	echo 'lighttpd_enable="YES"' >> ${NANO_WORLDDIR}/etc/rc.conf
 }
 customize_cmd select_httpd
 
