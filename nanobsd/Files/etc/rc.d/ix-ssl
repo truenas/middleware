@@ -292,7 +292,6 @@ generate_certificate()
 	LIMIT 1
 	" > $tmp
 
-	set -x
 	# HACK: the wc -c part shouldn't be required; the GUI is producing $tmp
 	# with just a newline, which breaks everything else below.
 	size=$(wc -c $tmp | awk '{ print $1 }')
@@ -332,7 +331,6 @@ generate_certificate()
 	else
 		echo "${SSLCAKEY} and/or ${SSLCACERT} does not exist."
 	fi
-	set +x
 }
 
 
