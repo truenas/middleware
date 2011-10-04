@@ -386,7 +386,7 @@ class IPChoices(NICChoices):
             for line in lines:
                 if line.startswith('\tinet'):
                     self._IPlist.append(line.split(' ')[1])
-            pipe.close() 
+            pipe.close()
             self._IPlist.sort()
 
     def remove(self, addr):
