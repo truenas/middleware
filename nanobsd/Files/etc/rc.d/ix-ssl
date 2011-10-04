@@ -218,11 +218,6 @@ import_certificate()
 
 write_key()
 {
-	if [ ! -s "${HTTPDCERT}" ]
-	then
-		return 1
-	fi
-
 	awk -v key="${SSLCAKEY}" '
 	BEGIN {
 		inkeyfile = 0
@@ -252,11 +247,6 @@ write_key()
 
 write_cert()
 {
-	if [ ! -s "${HTTPDCERT}" ]
-	then
-		return 1
-	fi
-
 	awk -v cert="${SSLCACERT}" '
 	BEGIN {
 		incertfile = 0
@@ -286,9 +276,10 @@ write_cert()
 
 generate_certificate()
 {
-	local certfile tmp
+	local new_cert tmp
 
-	certfile=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	tmp=$(mktemp /tmp/tmp.XXXXXX)
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ssl_certfile
 
@@ -299,56 +290,49 @@ generate_certificate()
 		-id
 
 	LIMIT 1
-	")
+	" > $tmp
 
-	if [ -s "${HTTPDCERT}" -a -n "${certfile}" ]
-	then
-		tmp=$(mktemp /tmp/tmp.XXXXXX)
-		echo "${certfile}" > $tmp
-		chmod 400 $tmp
-
-		if diff -Nq "${HTTPDCERT}" $tmp >/dev/null; then
-			rm -f $tmp
-		else
+	set -x
+	# HACK: the wc -c part shouldn't be required; the GUI is producing $tmp
+	# with just a newline, which breaks everything else below.
+	size=$(wc -c $tmp | awk '{ print $1 }')
+	#if [ -s "${tmp}" ]; then
+	if [ $size -gt 1 ]; then
+		if ! diff -Nq $tmp $HTTPDCERT; then
 			mv $tmp "${HTTPDCERT}"
+			new_cert=true
 		fi
+	else
+		# User wants to regenerate the file.
+		rm -f ${HTTPDCERT}
+		new_cert=true
 	fi
 
-	if [ -n "${certfile}" ]
-	then
-		echo "${certfile}" > "${HTTPDCERT}"
-		chmod 400 "${HTTPDCERT}"
-	fi
-
-	if [ ! -f "${SSLCAKEY}" ]
-	then
-		write_key
-	fi
-
-	if [ ! -f "${SSLCACERT}" ]
-	then
-		write_cert
-	fi
-
-	if [ ! -f "${SSLCAKEY}" -a ! -f "${SSLCACERT}" ]
-	then
-		if [ -s "${HTTPDCERT}" ]
-		then
-			write_key_cert
+	if [ -f "${SSLCAKEY}" -a -f "${SSLCACERT}" ]; then
+		:
+	else
+		if [ -s "${HTTPDCERT}" ]; then
+			write_key
+			write_cert
 		else
 			create_CA
+			new_cert=true
 		fi
 	fi
 
-	if [ -s "${SSLCAKEY}" -a -s "${SSLCACERT}" ]
-	then
-		cat "${SSLCAKEY}" "${SSLCACERT}" > "${HTTPDCERT}"
-		chmod 400 "${HTTPDCERT}"
-
-		import_certificate "${HTTPDCERT}"
+	if [ -s "${SSLCAKEY}" -a -s "${SSLCACERT}" ]; then
+		if [ ! -s "$HTTPDCERT" ]; then
+			cat "${SSLCAKEY}" "${SSLCACERT}" > "${HTTPDCERT}"
+			chmod 400 "${HTTPDCERT}"
+			new_cert=true
+		fi
+		if $new_cert; then
+			import_certificate "${HTTPDCERT}"
+		fi
 	else
 		echo "${SSLCAKEY} and/or ${SSLCACERT} does not exist."
 	fi
+	set +x
 }
 
 
