@@ -77,6 +77,10 @@ options 	MAC			# TrustedBSD MAC Framework
 #options 	KDTRACE_HOOKS		# Kernel DTrace hooks
 options 	INCLUDE_CONFIG_FILE     # Include this file in kernel
 
+# Debugging for use in -current
+options		KDB			# Enable kernel debugger support.
+options		DDB			# Support DDB.
+
 # FreeNAS modifications
 makeoptions	MODULES_OVERRIDE="ext2fs geom ntfs smbfs libiconv libmchain udf zfs opensolaris usb/xhci"
 options		GEOM_UZIP
