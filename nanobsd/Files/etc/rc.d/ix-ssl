@@ -297,7 +297,7 @@ generate_certificate()
 	size=$(wc -c $tmp | awk '{ print $1 }')
 	#if [ -s "${tmp}" ]; then
 	if [ $size -gt 1 ]; then
-		if ! diff -Nq $tmp $HTTPDCERT; then
+		if ! diff -Nq $tmp $HTTPDCERT >/dev/null; then
 			mv $tmp "${HTTPDCERT}"
 			new_cert=true
 		fi
