@@ -252,7 +252,7 @@ menu_install()
     _config_file="/tmp/pc-sysinstall.cfg"
 
     # Start critical section.
-    trap "dialog --msgbox \"The $SW_NAME $_action on $_disk has failed\"" EXIT
+    trap "dialog --msgbox \"The $SW_NAME $_action on $_disk has failed\" 6 74" EXIT
     set -e
 
     #  _disk, _image, _config_file
