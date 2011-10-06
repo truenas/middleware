@@ -757,6 +757,10 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
     def get_user(self, user):
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Base.get_user: enter")
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Base.get_user: user = %s" % user)
+
+        if user is None:
+            raise AssertionError('user is None')
+
         isopen = self._isopen
         self.open()
 
@@ -820,6 +824,10 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
     def get_group(self, group):
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Base.get_group: enter")
         syslog(LOG_DEBUG, "FreeNAS_LDAP_Base.get_group: group = %s" % group)
+
+        if group is None:
+            raise AssertionError('group is None')
+
         isopen = self._isopen
         self.open()
 
@@ -1305,6 +1313,10 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
     def get_userDN(self, user):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_userDN: enter")
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_userDN: user = %s" % user)
+
+        if user is None:
+            raise AssertionError('user is None')
+
         if not self.binddn or not self.bindpw or not self.basedn:
             return None
 
@@ -1330,6 +1342,10 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
     def get_user(self, user):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_user: enter")
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_user: user = %s" % user)
+
+        if user is None:
+            raise AssertionError('user is None')
+
         isopen = self._isopen
         self.open()
 
@@ -1378,6 +1394,10 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
     def get_groupDN(self, group):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_groupDN: enter")
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_groupDN: group = %s" % group)
+
+        if group is None:
+            raise AssertionError('group is None')
+
         if not self.binddn or not self.bindpw or not self.basedn:
             return None
 
@@ -1403,6 +1423,10 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
     def get_group(self, group):
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_group: enter")
         syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_group: group = %s" % group)
+
+        if group is None:
+            raise AssertionError('group is None')
+
         isopen = self._isopen
         self.open()
 
