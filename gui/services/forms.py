@@ -25,15 +25,14 @@
 # $FreeBSD$
 #####################################################################
 
-import base64
-import re
+import glob
 import os
+import re
+import subprocess
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import QueryDict
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ungettext_lazy
-from django.core.urlresolvers import reverse
 from django.core.validators import email_re
 
 import choices
@@ -45,7 +44,6 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common import humanize_size
 from freenasUI.middleware.notifier import notifier
 from dojango import forms
-from dojango.forms import widgets
 from freeadmin.forms import DirectoryBrowser
 from ipaddr import IPAddress, IPNetwork, AddressValueError, NetmaskValueError
 
@@ -301,7 +299,6 @@ class UPSForm(ModelForm):
             'ups_driver': forms.widgets.FilteringSelect(),
         }
     def __init__(self, *args, **kwargs):
-        import glob
         super(UPSForm, self).__init__(*args, **kwargs)
         ports = glob.glob('/dev/cua*') + glob.glob('/dev/ugen*')
         self.fields['ups_port'] = forms.ChoiceField(label=_("Port"))
@@ -676,8 +673,6 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         self.fields['iscsi_extent_disk'].choices.sort()
     # TODO: This is largely the same with disk wizard.
     def _populate_disk_choices(self, exclude=None):
-        from os import popen
-        import re
 
         diskchoices = dict()
 
@@ -693,11 +688,12 @@ class iSCSITargetDeviceExtentForm(ModelForm):
                     diskchoices["zvol/"+zvol] = "%s (%s)" % (zvol, attrs['volsize'])
         # Grab disk list
         # NOTE: This approach may fail if device nodes are not accessible.
-        pipe = popen("/usr/sbin/diskinfo ` /sbin/sysctl -n kern.disks` | /usr/bin/cut -f1,3")
+        pipe = os.popen("/usr/sbin/diskinfo `/sbin/sysctl -n kern.disks` | "
+                        "/usr/bin/cut -f1,3")
         diskinfo = pipe.read().strip().split('\n')
         # HAST Devices through GEOM GATE
-        gate_pipe = popen("""/usr/sbin/diskinfo `/sbin/geom gate status -s """
-                          """| /usr/bin/cut -d" " -f1` | /usr/bin/cut -f1,3""")
+        gate_pipe = os.popen("/usr/sbin/diskinfo `/sbin/geom gate status -s | "
+                             "/usr/bin/cut -d" " -f1` | /usr/bin/cut -f1,3")
         gate_diskinfo = gate_pipe.read().strip().split('\n')
         for item in gate_diskinfo:
             if item != "":
@@ -707,7 +703,10 @@ class iSCSITargetDeviceExtentForm(ModelForm):
             capacity = humanize_size(capacity)
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
         # Exclude the root device
-        rootdev = popen("""glabel status | grep `mount | awk '$3 == "/" {print $1}' | sed -e 's/\/dev\///'` | awk '{print $3}'""").read().strip()
+        rootdev = os.popen("glabel status | grep `mount | "
+                           "awk '$3 == \"/\" {print $1}' | "
+                           "sed -e 's/\/dev\///'` | "
+                           "awk '{print $3}'").read().strip()
         rootdev_base = re.search(r'[a-z/]*[0-9]*', rootdev)
         if rootdev_base != None:
             diskchoices.pop(rootdev_base.group(0), None)
@@ -830,10 +829,14 @@ class iSCSITargetForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(iSCSITargetForm, self).__init__(*args, **kwargs)
         if not kwargs.has_key("instance"):
-            from subprocess import Popen, PIPE
             try:
-                nic = list(choices.NICChoices(nolagg=True,novlan=True,exclude_configured=False))[0][0]
-                mac = Popen("ifconfig %s ether|grep \"ether\"|awk '{print $2}'|tr -d \":\"" % nic, shell=True, stdout=PIPE).communicate()[0]
+                nic = list(choices.NICChoices(nolagg=True,
+                                              novlan=True,
+                                              exclude_configured=False))[0][0]
+                mac = subprocess.Popen("ifconfig %s ether| grep ether | "
+                                       "awk '{print $2}'|tr -d :" % (nic, ),
+                                       shell=True,
+                                       stdout=subprocess.PIPE).communicate()[0]
                 ltg = models.iSCSITarget.objects.order_by('-id')
                 if ltg.count() > 0:
                     lid = ltg[0].id
@@ -882,7 +885,7 @@ class ExtentDelete(Form):
     def done(self):
         if self.cleaned_data['delete'] and \
             self.instance.iscsi_target_extent_type == 'File':
-            os.system("rm \"%s\"" % self.instance.iscsi_target_extent_path)
+            os.unlink(self.instance.iscsi_target_extent_path)
 
 class SMARTForm(ModelForm):
     class Meta:
