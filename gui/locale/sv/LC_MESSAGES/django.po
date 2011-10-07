@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-09-18 21:35+0200\n"
+"PO-Revision-Date: 2011-09-20 20:27+0200\n"
 "Last-Translator: Jonas <mossemansson@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
@@ -460,9 +460,8 @@ msgid "Short Self-Test"
 msgstr "Kort Själv-Test"
 
 #: choices.py:469
-#, fuzzy
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Utökat självtest (enbart ATA)"
+msgstr "Utökat självtest (enbart  ATA)    "
 
 #: choices.py:470
 msgid "Offline Immediate Test (ATA only)"
@@ -1536,7 +1535,7 @@ msgstr ""
 
 #: services/models.py:290
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr ""
+msgstr "iSCI första parameter (65636 som standard) "
 
 #: services/models.py:295
 msgid "Max burst length"

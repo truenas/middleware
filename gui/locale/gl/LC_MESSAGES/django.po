@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-06-02 13:35+0200\n"
-"Last-Translator: santigonzalez <santigonzalez@gmail.com>\n"
+"PO-Revision-Date: 2011-09-21 00:41+0200\n"
+"Last-Translator: raymond <raymondv@gmx.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: gl\n"
 "MIME-Version: 1.0\n"
@@ -269,11 +269,11 @@ msgstr ""
 
 #: choices.py:198
 msgid "File"
-msgstr ""
+msgstr "arquivo"
 
 #: choices.py:199
 msgid "Device"
-msgstr ""
+msgstr "dispositivo"
 
 #: choices.py:200
 msgid "ZFS Volume"
@@ -283,11 +283,11 @@ msgstr ""
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
 #: templates/storage/wizard.html:91
 msgid "Disk"
-msgstr ""
+msgstr "Disco"
 
 #: choices.py:205
 msgid "DVD"
-msgstr ""
+msgstr "DVD"
 
 #: choices.py:206
 msgid "Tape"
@@ -476,7 +476,7 @@ msgstr ""
 #: services/models.py:676 services/models.py:935 system/models.py:160
 #: templates/account/bsdusers.html:5 templates/account/bsdusers.html.py:86
 msgid "Username"
-msgstr ""
+msgstr "nome de usuario"
 
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
@@ -490,11 +490,11 @@ msgstr ""
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
 #: templates/account/bsdusers.html.py:90
 msgid "Password"
-msgstr ""
+msgstr "contrasinal"
 
 #: account/forms.py:202 account/forms.py:309 system/forms.py:188
 msgid "Password confirmation"
-msgstr ""
+msgstr "Confirmar contrasinal"
 
 #: account/forms.py:203 account/forms.py:310 system/forms.py:189
 msgid "Enter the same password as above, for verification."
@@ -619,7 +619,7 @@ msgstr ""
 #: templates/services/iscsi_auth.html:6 templates/system/cronjob.html:10
 #: templates/system/rsync.html:10
 msgid "User"
-msgstr ""
+msgstr "usuario"
 
 #: account/models.py:121 templates/account/index.html:13
 msgid "Users"
@@ -709,11 +709,11 @@ msgstr ""
 
 #: freeadmin/navtree.py:353 templates/freeadmin/index.html:53
 msgid "Reboot"
-msgstr ""
+msgstr "reiniciar"
 
 #: freeadmin/navtree.py:360 templates/freeadmin/index.html:65
 msgid "Shutdown"
-msgstr ""
+msgstr "peche"
 
 #: freeadmin/views.py:225
 #, python-format
@@ -1182,7 +1182,7 @@ msgstr ""
 #: services/models.py:47 services/models.py:48 services/nav.py:5
 #: templates/menubar.html:28 templates/services/index.html:3
 msgid "Services"
-msgstr ""
+msgstr "servizos"
 
 #: services/models.py:60
 msgid "Authentication Model"
@@ -1598,7 +1598,7 @@ msgstr ""
 #: templates/sharing/apple.html:14 templates/sharing/unix.html:14
 #: templates/sharing/windows.html:14
 msgid "Comment"
-msgstr ""
+msgstr "comentario"
 
 #: services/models.py:395 services/models.py:444 services/models.py:490
 msgid "You may enter a description here for your reference."
@@ -2116,7 +2116,7 @@ msgstr ""
 #: services/models.py:951 services/models.py:952
 #: templates/services/index.html:130
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:961 services/models.py:1157
 msgid "TCP Port"

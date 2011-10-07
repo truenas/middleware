@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:47-0700\n"
-"PO-Revision-Date: 2011-09-05 07:17+0200\n"
-"Last-Translator: HotRod <reg03@kittilsbotn.com>\n"
+"PO-Revision-Date: 2011-09-22 06:01+0200\n"
+"Last-Translator: Goodman <jea1963@me.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nb\n"
 "MIME-Version: 1.0\n"
@@ -583,7 +583,7 @@ msgstr "Grupper"
 #: account/models.py:63
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr "Gruppen % er innebygget og kan ikke slettes!"
+msgstr "Gruppen %s er innebygget og kan ikke slettes!"
 
 #: account/models.py:73
 msgid "User ID"
@@ -662,7 +662,7 @@ msgstr "Vis alle grupper"
 
 #: account/views.py:78
 msgid "Password successfully updated."
-msgstr "Passord ble oppdatert."
+msgstr "Passordet ble vellykket oppdatert."
 
 #: account/views.py:92
 msgid "Admin user successfully updated."
@@ -1084,7 +1084,7 @@ msgstr "Initiativtakers Hemmelighet (Bekreft)"
 
 #: services/forms.py:309
 msgid "Secret does not match"
-msgstr "Hemmeligheter stemmer ikke"
+msgstr "Hemmeligheter stemmer ikke overens"
 
 #: services/forms.py:324 services/forms.py:325
 msgid "The peer secret is required if you set a peer user."
@@ -1355,7 +1355,7 @@ msgstr "Aktiver AIO"
 
 #: services/models.py:154
 msgid "Enable/disable AIO support."
-msgstr "Dette aktiverer\\deaktiverer støtte for AIO"
+msgstr "Aktivere/deaktivere støtte for AIO."
 
 #: services/models.py:158
 msgid "Minimum AIO read size"
@@ -1398,7 +1398,7 @@ msgstr "Servernavn. Om dette feltet er tomt, vil standardserveren bli valgt."
 
 #: services/models.py:184
 msgid "Guest Access"
-msgstr "Gjestetilgang"
+msgstr "Gjeste Tilgang"
 
 #: services/models.py:185
 msgid "Allows guest access to all apple shares on this box."
@@ -1728,11 +1728,11 @@ msgstr "Autorisert tilgang"
 
 #: services/models.py:542
 msgid "Authorized Accesses"
-msgstr "Autoriserte tilganger"
+msgstr "Autorisert Adgang"
 
 #: services/models.py:557
 msgid "Target Name"
-msgstr "Målnavn"
+msgstr "Mål Navn"
 
 #: services/models.py:558
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
@@ -1740,7 +1740,7 @@ msgstr "Hovednavn vil bli lagt til automatisk når det begynner uten 'iqn.'."
 
 #: services/models.py:565
 msgid "Target Alias"
-msgstr "Målalias"
+msgstr "Mål alias"
 
 #: services/models.py:566
 #, fuzzy
@@ -2406,7 +2406,7 @@ msgstr "Slå av/på TLS"
 #: services/models.py:1132
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
 msgstr ""
-"Med dette parameteret velger du om du vil bruke SSL/TLS, etc on/off/start_tls"
+"Dette parameteret velger du om du vil bruke SSL/TLS, f.eks på/av/starte_tls"
 
 #: services/models.py:1135
 msgid "Self signed certificate"
@@ -2484,7 +2484,7 @@ msgstr ""
 
 #: services/models.py:1215
 msgid "Hosts allow"
-msgstr ""
+msgstr "Vert tillates"
 
 #: services/models.py:1216
 msgid ""
@@ -2495,7 +2495,7 @@ msgstr ""
 
 #: services/models.py:1220
 msgid "Hosts deny"
-msgstr ""
+msgstr "Vert nektes"
 
 #: services/models.py:1221
 msgid ""
@@ -2729,7 +2729,7 @@ msgstr ""
 
 #: sharing/models.py:93
 msgid "Windows Share"
-msgstr ""
+msgstr "Windows Deling"
 
 #: sharing/models.py:94
 #, fuzzy
@@ -3180,7 +3180,7 @@ msgstr ""
 
 #: storage/forms.py:875
 msgid "At least one day must be chosen"
-msgstr ""
+msgstr "Minst en dag må velges"
 
 #: storage/forms.py:880
 msgid "Recursive snapshot"
@@ -3192,7 +3192,7 @@ msgstr ""
 
 #: storage/forms.py:888
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
-msgstr ""
+msgstr "Kun [-a -zA-Z0-9_.] er tillatt som speilbilde navn"
 
 #: storage/forms.py:898
 msgid "Invalid prefix"
@@ -3338,7 +3338,7 @@ msgstr ""
 
 #: storage/models.py:274
 msgid "Snapshot lifetime value"
-msgstr ""
+msgstr "Speilbildets levetid"
 
 #: storage/models.py:280
 msgid "Snapshot lifetime unit"
@@ -3346,28 +3346,30 @@ msgstr ""
 
 #: storage/models.py:284
 msgid "Begin"
-msgstr ""
+msgstr "Begynne"
 
 #: storage/models.py:285
 msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr ""
+msgstr "Når på dagen skal vi starte å lage speilbilde, f.eks 8:00"
 
 #: storage/models.py:289
 msgid "End"
-msgstr ""
+msgstr "Slutt"
 
 #: storage/models.py:290
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr ""
+msgstr "Når på dagen skal vi stoppe å lage speilbilde, f.eks 17:00"
 
 #: storage/models.py:296
 msgid "Interval"
-msgstr ""
+msgstr "Intervall"
 
 #: storage/models.py:297
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
 msgstr ""
+"Hvor mange minutter mellom hver gang et nytt speilbilde blir laget etter det "
+"siste."
 
 #: storage/models.py:303
 msgid "Occurrence"
@@ -3625,11 +3627,11 @@ msgstr "Aktiver skjermsparer"
 
 #: system/models.py:91
 msgid "Automatically Check for New Firmware"
-msgstr ""
+msgstr "Automatisk Sjekk for Ny Fastvare"
 
 #: system/models.py:93
 msgid "Beep on boot"
-msgstr ""
+msgstr "Bip ved start"
 
 #: system/models.py:95
 msgid "Enable Special System Tuning"
@@ -3742,7 +3744,7 @@ msgstr ""
 
 #: system/models.py:203
 msgid "Locality Name (eg, city)"
-msgstr ""
+msgstr "Stedsnavn (f.eks, by)"
 
 #: system/models.py:209
 msgid "State"
@@ -3816,9 +3818,8 @@ msgstr ""
 
 #: system/models.py:267 system/models.py:371 system/models.py:519
 #: templates/system/cronjob.html:8 templates/system/rsync.html:8
-#, fuzzy
 msgid "Month"
-msgstr "Måned(er)"
+msgstr "Måned"
 
 #: system/models.py:272 system/models.py:376 system/models.py:524
 #: templates/system/cronjob.html:9 templates/system/rsync.html:9
@@ -3897,11 +3898,11 @@ msgstr ""
 
 #: system/models.py:399
 msgid "Archive"
-msgstr ""
+msgstr "Arkiv"
 
 #: system/models.py:400
 msgid "Archive mode"
-msgstr ""
+msgstr "Arkiverings modus"
 
 #: system/models.py:404 templates/freeadmin/generic_model_edit.html:43
 #: templates/network/interface.html:39 templates/network/lagg.html:44
@@ -4407,11 +4408,11 @@ msgstr ""
 
 #: templates/network/summary.html:37
 msgid "Default route"
-msgstr ""
+msgstr "Standard rute"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr ""
+msgstr "Ingen standard rute definert"
 
 #: templates/network/vlan.html:21
 msgid "Edit VLAN"
@@ -4522,7 +4523,7 @@ msgstr ""
 
 #: templates/services/iscsi.html:5
 msgid "Targets"
-msgstr ""
+msgstr "Mål"
 
 #: templates/services/iscsi.html:11
 msgid "Associated Targets"
@@ -4647,27 +4648,27 @@ msgstr ""
 
 #: templates/sharing/apple.html:50
 msgid "Add Apple Share"
-msgstr ""
+msgstr "Legg til Apple deling"
 
 #: templates/sharing/apple.html:52
 msgid "Add Apple Share (AFP)"
-msgstr ""
+msgstr "Legg til Apple Deling (AFP)"
 
 #: templates/sharing/index.html:3
 msgid "Apple"
-msgstr ""
+msgstr "Apple"
 
 #: templates/sharing/index.html:5
 msgid "UNIX"
-msgstr ""
+msgstr "UNIX"
 
 #: templates/sharing/index.html:7
 msgid "Windows"
-msgstr ""
+msgstr "Windows"
 
 #: templates/sharing/unix.html:8
 msgid "There are no active UNIX Shares."
-msgstr ""
+msgstr "Det er ingen aktive UNIX Delinger"
 
 #: templates/sharing/unix.html:13
 msgid "Mountpoint"
@@ -4800,7 +4801,7 @@ msgstr ""
 
 #: templates/storage/replications.html:49
 msgid "No ZFS replication available"
-msgstr ""
+msgstr "Ingen ZFS replikering tilgjengelig"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
 msgid "Are you sure you want to rollback the snapshot to previous state?"
@@ -4958,15 +4959,15 @@ msgstr "Disker som er medlem"
 
 #: templates/storage/wizard.html:61
 msgid "Group type"
-msgstr "ZFS ekstra"
+msgstr "Gruppe type"
 
 #: templates/storage/wizard.html:84
 msgid "ZFS Extra"
-msgstr "ZFS ekstra"
+msgstr "ZFS Ekstra"
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr "Bruken av bare en loggdisk er ikke anbefalt"
+msgstr "Bruk av bare en loggdisk er ikke anbefalt"
 
 #: templates/storage/wizard.html:93
 msgid "Log"
@@ -5126,7 +5127,7 @@ msgstr "Konfigurasjon"
 
 #: templates/system/system_info.html:8
 msgid "OS Version"
-msgstr "OS versjon"
+msgstr "OS Versjon"
 
 #: templates/system/system_info.html:12
 msgid "Platform"

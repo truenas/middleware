@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:48-0700\n"
-"PO-Revision-Date: 2011-07-11 16:36+0200\n"
+"PO-Revision-Date: 2011-10-01 10:27+0200\n"
 "Last-Translator: Nuno <nuno.piscinas@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
@@ -1343,7 +1343,7 @@ msgstr "Activar directórios home"
 
 #: services/models.py:141
 msgid "Enable/disable home directories for samba user."
-msgstr "Isto activa\\desactiva directórios home para utilizadores samba."
+msgstr "Isto activa/desactiva directórios home para utilizadores samba."
 
 #: services/models.py:144
 msgid "Enable home directories browsing"
@@ -3276,7 +3276,7 @@ msgstr "Já tem um dataset com esse nome"
 
 #: storage/forms.py:667 storage/forms.py:724 storage/forms.py:768
 msgid "Enter positive number (optionally suffixed by M, G, T), or, 0"
-msgstr "Insira um número positivo (pode usar um sufixo M, G, T) ou 0"
+msgstr "Insira um número positivo (pode usar um sufixo M, G, T) ou, 0"
 
 #: storage/forms.py:782
 msgid "Volume from which this ZFS Volume will be created on"
@@ -3529,7 +3529,7 @@ msgstr "Tarefas Periódicas Sanpshot"
 
 #: storage/nav.py:5 templates/menubar.html:18
 msgid "Storage"
-msgstr "Armazenamento"
+msgstr "Discos"
 
 #: storage/nav.py:24
 msgid "View All Snapshots"

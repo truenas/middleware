@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:51-0700\n"
-"PO-Revision-Date: 2011-06-11 19:11+0200\n"
-"Last-Translator: jsemedo <jsemedo@gmail.com>\n"
+"PO-Revision-Date: 2011-10-01 10:25+0200\n"
+"Last-Translator: Nuno <nuno.piscinas@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -44,7 +44,7 @@ msgstr "Conta"
 
 #: media/lib/js/freeadmin.js:318
 msgid "Storage"
-msgstr "Armazenamento"
+msgstr "Disco"
 
 #: media/lib/js/freeadmin.js:385
 msgid "CronJobs"
