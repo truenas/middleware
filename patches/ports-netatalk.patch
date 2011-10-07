@@ -4,7 +4,7 @@ RCS file: /home/ncvs/ports/net/netatalk/Makefile,v
 retrieving revision 1.96
 diff -u -r1.96 Makefile
 --- net/netatalk/Makefile	3 Jul 2011 11:40:45 -0000	1.96
-+++ net/netatalk/Makefile	6 Oct 2011 23:55:52 -0000
++++ net/netatalk/Makefile	7 Oct 2011 07:59:03 -0000
 @@ -2,15 +2,15 @@
  # Date created:         23 Jul 1997
  # Whom:                 stb
@@ -33,7 +33,7 @@ diff -u -r1.96 Makefile
  USE_RC_SUBR=	netatalk
  
  CONFIGURE_ARGS+=	--with-tcp-wrappers \
-@@ -37,24 +38,21 @@
+@@ -37,24 +38,20 @@
  		SRVLOC		"Enable Service Location Protocol support" off \
  		PAM		"Enable PAM support" off \
  		TIMELORD	"Enable Timelord network time service" off \
@@ -41,8 +41,9 @@ diff -u -r1.96 Makefile
 +		KRB5		"Enable Kerberos V UAM" off \
 +		ZEROCONF	"Enable Zeroconf (Bonjour) support" on
  
- FILES=		AppleVolumes.default AppleVolumes.system afpd.conf \
- 		atalkd.conf papd.conf netatalk.conf
+-FILES=		AppleVolumes.default AppleVolumes.system afpd.conf \
+-		atalkd.conf papd.conf netatalk.conf
++FILES=		AppleVolumes.default AppleVolumes.system afpd.conf netatalk.conf
  LINKS=		unbin unhex unsingle hqx2bin single2bin macbinary \
  		binheader nadheader
 -MAN1=		achfile.1 ad.1 aecho.1 afile.1 afppasswd.1 apple_cp.1 \
@@ -66,7 +67,7 @@ diff -u -r1.96 Makefile
  
  CONFLICTS=	bigloo-2.* cap-6.0.* tct-1.* netatalk-1* yudit-[0-9]*
  
-@@ -68,9 +66,16 @@
+@@ -68,9 +65,17 @@
  .endif
  
  .if defined(WITH_APPLETALK)
@@ -79,18 +80,20 @@ diff -u -r1.96 Makefile
 +MAN4+=			atalk.4
 +MAN5+=			atalkd.conf.5 papd.conf.5
 +MAN8+=			atalkd.8 papd.8 papstatus.8 psf.8
++FILES+=			atalkd.conf papd.conf
  .else
 -CONFIGURE_ARGS+=	--without-ddp
 +PLIST_SUB+=		APPLETALK="@comment "
  .endif
  
  .if defined(WITH_PAM)
-@@ -96,9 +101,25 @@
+@@ -96,9 +101,26 @@
  PLIST_SUB+=		TIMELORD="@comment "
  .endif
  
 +.if defined (WITH_ZEROCONF)
 +CONFIGURE_ARGS+=	--enable-zeroconf=${LOCALBASE}
++CFLAGS+=		-I${LOCALBASE}/include -L${LOCALBASE}/lib
 +LIB_DEPENDS+=		avahi-client.3:${PORTSDIR}/net/avahi-app
 +USE_GNOME+=		pkgconfig
 +SUB_LIST+=		ZEROCONF="avahi_daemon"
@@ -118,7 +121,7 @@ RCS file: /home/ncvs/ports/net/netatalk/distinfo,v
 retrieving revision 1.30
 diff -u -r1.30 distinfo
 --- net/netatalk/distinfo	29 Dec 2010 04:36:17 -0000	1.30
-+++ net/netatalk/distinfo	6 Oct 2011 23:55:52 -0000
++++ net/netatalk/distinfo	7 Oct 2011 07:59:03 -0000
 @@ -1,2 +1,2 @@
 -SHA256 (netatalk-2.1.5.tar.bz2) = 11fcce36cc5179de60c5c0b10032ff9e042ed8b8c6e0b99d2d7200c8d0749038
 -SIZE (netatalk-2.1.5.tar.bz2) = 1125946
@@ -130,12 +133,13 @@ RCS file: /home/ncvs/ports/net/netatalk/pkg-plist,v
 retrieving revision 1.31
 diff -u -r1.31 pkg-plist
 --- net/netatalk/pkg-plist	2 Jun 2010 14:46:42 -0000	1.31
-+++ net/netatalk/pkg-plist	6 Oct 2011 23:55:52 -0000
++++ net/netatalk/pkg-plist	7 Oct 2011 07:59:03 -0000
 @@ -1,20 +1,15 @@
 -bin/achfile
 -bin/ad
+-bin/add_netatalk_printer
 +%%ATFUNCS%%bin/ad
- bin/add_netatalk_printer
++%%APPLETALK%%bin/add_netatalk_printer
  bin/adv1tov2
 -bin/aecho
 -bin/afile
@@ -156,7 +160,7 @@ diff -u -r1.31 pkg-plist
  bin/macusers
  bin/megatron
  @exec cd %B && ln -s megatron hqx2bin
-@@ -31,14 +26,13 @@
+@@ -31,15 +26,14 @@
  @unexec rm -f %B/unbin
  @unexec rm -f %B/unhex
  @unexec rm -f %B/unsingle
@@ -171,12 +175,14 @@ diff -u -r1.31 pkg-plist
 -bin/pap
 -bin/papstatus
 -bin/psorder
+-bin/showppd
 +%%APPLETALK%%bin/pap
 +%%APPLETALK%%bin/papstatus
 +%%APPLETALK%%bin/psorder
- bin/showppd
++%%APPLETALK%%bin/showppd
  bin/uniconv
  @unexec if cmp -s %D/etc/AppleVolumes.default %D/etc/AppleVolumes.default.dist; then rm -f %D/etc/AppleVolumes.default; fi
+ etc/AppleVolumes.default.dist
 @@ -50,15 +44,18 @@
  @unexec if cmp -s %D/etc/afpd.conf %D/etc/afpd.conf.dist; then rm -f %D/etc/afpd.conf; fi
  etc/afpd.conf.dist
@@ -209,18 +215,56 @@ diff -u -r1.31 pkg-plist
  include/atalk/pap.h
  include/atalk/paths.h
  include/atalk/rtmp.h
-@@ -146,7 +144,7 @@
- libexec/ofwmpap
- libexec/ofwpap
- libexec/psa
+@@ -132,37 +130,37 @@
+ include/netatalk/phase2.h
+ lib/libatalk.a
+ lib/libatalk.la
+-libexec/etc2ps.sh
+-libexec/ifmpap
+-libexec/ifmpaprev
+-libexec/ifpap
+-libexec/ifpaprev
+-libexec/ifwmpap
+-libexec/ifwmpaprev
+-libexec/ifwpap
+-libexec/ifwpaprev
+-libexec/ofmpap
+-libexec/ofpap
+-libexec/ofwmpap
+-libexec/ofwpap
+-libexec/psa
 -libexec/psf
+-libexec/tfmpap
+-libexec/tfmpaprev
+-libexec/tfpap
+-libexec/tfpaprev
+-libexec/tfwmpap
+-libexec/tfwmpaprev
+-libexec/tfwpap
+-libexec/tfwpaprev
++%%APPLETALK%%libexec/etc2ps.sh
++%%APPLETALK%%libexec/ifmpap
++%%APPLETALK%%libexec/ifmpaprev
++%%APPLETALK%%libexec/ifpap
++%%APPLETALK%%libexec/ifpaprev
++%%APPLETALK%%libexec/ifwmpap
++%%APPLETALK%%libexec/ifwmpaprev
++%%APPLETALK%%libexec/ifwpap
++%%APPLETALK%%libexec/ifwpaprev
++%%APPLETALK%%libexec/ofmpap
++%%APPLETALK%%libexec/ofpap
++%%APPLETALK%%libexec/ofwmpap
++%%APPLETALK%%libexec/ofwpap
++%%APPLETALK%%libexec/psa
 +%%APPLETALK%%libexec/psf
- libexec/tfmpap
- libexec/tfmpaprev
- libexec/tfpap
-@@ -156,10 +154,10 @@
- libexec/tfwpap
- libexec/tfwpaprev
++%%APPLETALK%%libexec/tfmpap
++%%APPLETALK%%libexec/tfmpaprev
++%%APPLETALK%%libexec/tfpap
++%%APPLETALK%%libexec/tfpaprev
++%%APPLETALK%%libexec/tfwmpap
++%%APPLETALK%%libexec/tfwmpaprev
++%%APPLETALK%%libexec/tfwpap
++%%APPLETALK%%libexec/tfwpaprev
  sbin/afpd
 -sbin/atalkd
 +%%APPLETALK%%sbin/atalkd
@@ -230,14 +274,18 @@ diff -u -r1.31 pkg-plist
 +%%APPLETALK%%sbin/papd
  %%TIMELORD%%sbin/timelord
  share/aclocal/netatalk.m4
- %%DATADIR%%/pagecount.ps
+-%%DATADIR%%/pagecount.ps
++%%APPLETALK%%%%DATADIR%%/pagecount.ps
+ @dirrm share/netatalk
+ @dirrm include/netatalk
+ @dirrm include/atalk
 Index: net/netatalk/files/netatalk.in
 ===================================================================
 RCS file: /home/ncvs/ports/net/netatalk/files/netatalk.in,v
 retrieving revision 1.3
 diff -u -r1.3 netatalk.in
 --- net/netatalk/files/netatalk.in	27 Mar 2010 00:13:49 -0000	1.3
-+++ net/netatalk/files/netatalk.in	6 Oct 2011 23:55:52 -0000
++++ net/netatalk/files/netatalk.in	7 Oct 2011 07:59:03 -0000
 @@ -1,9 +1,9 @@
  #!/bin/sh
  #
@@ -256,7 +304,7 @@ RCS file: /home/ncvs/ports/net/netatalk/files/patch-config_netatalk.conf,v
 retrieving revision 1.3
 diff -u -r1.3 patch-config_netatalk.conf
 --- net/netatalk/files/patch-config_netatalk.conf	30 May 2010 17:03:17 -0000	1.3
-+++ net/netatalk/files/patch-config_netatalk.conf	6 Oct 2011 23:55:52 -0000
++++ net/netatalk/files/patch-config_netatalk.conf	7 Oct 2011 07:59:03 -0000
 @@ -1,43 +1,20 @@
 ---- config/netatalk.conf.orig	2010-04-19 11:35:26.000000000 +0000
 -+++ config/netatalk.conf	2010-05-20 19:14:32.000000000 +0000
@@ -319,7 +367,7 @@ RCS file: /home/ncvs/ports/net/netatalk/files/patch-configure,v
 retrieving revision 1.17
 diff -u -r1.17 patch-configure
 --- net/netatalk/files/patch-configure	25 Jul 2010 01:37:08 -0000	1.17
-+++ net/netatalk/files/patch-configure	6 Oct 2011 23:55:52 -0000
++++ net/netatalk/files/patch-configure	7 Oct 2011 07:59:03 -0000
 @@ -1,11 +1,37 @@
 ---- configure.orig	2010-07-10 06:18:22.000000000 -0400
 -+++ configure	2010-07-24 21:33:50.000000000 -0400
@@ -368,7 +416,7 @@ Index: net/netatalk/files/patch-etc__afpd__afp_avahi.c
 RCS file: net/netatalk/files/patch-etc__afpd__afp_avahi.c
 diff -N net/netatalk/files/patch-etc__afpd__afp_avahi.c
 --- /dev/null	1 Jan 1970 00:00:00 -0000
-+++ net/netatalk/files/patch-etc__afpd__afp_avahi.c	6 Oct 2011 23:55:52 -0000
++++ net/netatalk/files/patch-etc__afpd__afp_avahi.c	7 Oct 2011 07:59:03 -0000
 @@ -0,0 +1,149 @@
 +--- ./etc/afpd/afp_avahi.c.orig	2011-07-21 21:30:42.000000000 -0700
 ++++ ./etc/afpd/afp_avahi.c	2011-08-29 15:03:14.926315200 -0700
@@ -524,7 +572,7 @@ Index: net/netatalk/files/patch-etc__afpd__afp_avahi.h
 RCS file: net/netatalk/files/patch-etc__afpd__afp_avahi.h
 diff -N net/netatalk/files/patch-etc__afpd__afp_avahi.h
 --- /dev/null	1 Jan 1970 00:00:00 -0000
-+++ net/netatalk/files/patch-etc__afpd__afp_avahi.h	6 Oct 2011 23:55:52 -0000
++++ net/netatalk/files/patch-etc__afpd__afp_avahi.h	7 Oct 2011 07:59:03 -0000
 @@ -0,0 +1,13 @@
 +--- ./etc/afpd/afp_avahi.h.orig	2011-07-21 21:30:42.000000000 -0700
 ++++ ./etc/afpd/afp_avahi.h	2011-08-29 15:03:14.926315200 -0700
@@ -544,7 +592,7 @@ Index: net/netatalk/files/patch-etc__afpd__afp_options.c
 RCS file: net/netatalk/files/patch-etc__afpd__afp_options.c
 diff -N net/netatalk/files/patch-etc__afpd__afp_options.c
 --- /dev/null	1 Jan 1970 00:00:00 -0000
-+++ net/netatalk/files/patch-etc__afpd__afp_options.c	6 Oct 2011 23:55:52 -0000
++++ net/netatalk/files/patch-etc__afpd__afp_options.c	7 Oct 2011 07:59:03 -0000
 @@ -0,0 +1,13 @@
 +--- ./etc/afpd/afp_options.c.orig	2011-07-27 04:55:39.000000000 -0700
 ++++ ./etc/afpd/afp_options.c	2011-08-29 15:00:45.043756687 -0700
@@ -564,7 +612,7 @@ Index: net/netatalk/files/patch-etc__afpd__afp_zeroconf.c
 RCS file: net/netatalk/files/patch-etc__afpd__afp_zeroconf.c
 diff -N net/netatalk/files/patch-etc__afpd__afp_zeroconf.c
 --- /dev/null	1 Jan 1970 00:00:00 -0000
-+++ net/netatalk/files/patch-etc__afpd__afp_zeroconf.c	6 Oct 2011 23:55:52 -0000
++++ net/netatalk/files/patch-etc__afpd__afp_zeroconf.c	7 Oct 2011 07:59:03 -0000
 @@ -0,0 +1,20 @@
 +--- ./etc/afpd/afp_zeroconf.c.orig	2011-07-21 21:30:42.000000000 -0700
 ++++ ./etc/afpd/afp_zeroconf.c	2011-08-29 15:03:14.926315200 -0700
@@ -591,7 +639,7 @@ Index: net/netatalk/files/patch-etc__afpd__main.c
 RCS file: net/netatalk/files/patch-etc__afpd__main.c
 diff -N net/netatalk/files/patch-etc__afpd__main.c
 --- /dev/null	1 Jan 1970 00:00:00 -0000
-+++ net/netatalk/files/patch-etc__afpd__main.c	6 Oct 2011 23:55:53 -0000
++++ net/netatalk/files/patch-etc__afpd__main.c	7 Oct 2011 07:59:03 -0000
 @@ -0,0 +1,139 @@
 +--- ./etc/afpd/main.c.orig	2011-07-27 04:55:39.000000000 -0700
 ++++ ./etc/afpd/main.c	2011-08-19 14:43:45.042815401 -0700
@@ -737,7 +785,7 @@ Index: net/netatalk/files/patch-etc_afpd_acls.c
 RCS file: net/netatalk/files/patch-etc_afpd_acls.c
 diff -N net/netatalk/files/patch-etc_afpd_acls.c
 --- /dev/null	1 Jan 1970 00:00:00 -0000
-+++ net/netatalk/files/patch-etc_afpd_acls.c	6 Oct 2011 23:55:53 -0000
++++ net/netatalk/files/patch-etc_afpd_acls.c	7 Oct 2011 07:59:03 -0000
 @@ -0,0 +1,63 @@
 +--- etc/afpd/acls.c.orig	2011-07-30 18:08:35.000000000 -0400
 ++++ etc/afpd/acls.c	2011-07-30 18:19:19.000000000 -0400
@@ -807,7 +855,7 @@ Index: net/netatalk/files/patch-etc_afpd_afp_asp.c
 RCS file: net/netatalk/files/patch-etc_afpd_afp_asp.c
 diff -N net/netatalk/files/patch-etc_afpd_afp_asp.c
 --- /dev/null	1 Jan 1970 00:00:00 -0000
-+++ net/netatalk/files/patch-etc_afpd_afp_asp.c	6 Oct 2011 23:55:53 -0000
++++ net/netatalk/files/patch-etc_afpd_afp_asp.c	7 Oct 2011 07:59:03 -0000
 @@ -0,0 +1,13 @@
 +--- etc/afpd/afp_asp.c.orig	2011-07-30 23:13:47.000000000 -0400
 ++++ etc/afpd/afp_asp.c	2011-07-30 23:14:22.000000000 -0400
@@ -828,7 +876,7 @@ RCS file: /home/ncvs/ports/net/netatalk/files/patch-etc_apfd_Makefile.in,v
 retrieving revision 1.1
 diff -u -r1.1 patch-etc_apfd_Makefile.in
 --- net/netatalk/files/patch-etc_apfd_Makefile.in	8 May 2011 23:08:21 -0000	1.1
-+++ net/netatalk/files/patch-etc_apfd_Makefile.in	6 Oct 2011 23:55:53 -0000
++++ net/netatalk/files/patch-etc_apfd_Makefile.in	7 Oct 2011 07:59:03 -0000
 @@ -1,11 +1,11 @@
 ---- etc/afpd/Makefile.in.orig	2011-05-08 19:04:22.000000000 -0400
 -+++ etc/afpd/Makefile.in	2011-05-08 19:04:34.000000000 -0400
@@ -856,7 +904,7 @@ Index: net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c
 RCS file: net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c
 diff -N net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c
 --- /dev/null	1 Jan 1970 00:00:00 -0000
-+++ net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c	6 Oct 2011 23:55:53 -0000
++++ net/netatalk/files/patch-etc_cnid_dbd_cnid_metad.c	7 Oct 2011 07:59:03 -0000
 @@ -0,0 +1,10 @@
 +--- etc/cnid_dbd/cnid_metad.c.orig	2011-07-30 18:28:32.000000000 -0400
 ++++ etc/cnid_dbd/cnid_metad.c	2011-07-30 18:29:01.000000000 -0400
@@ -873,7 +921,7 @@ Index: net/netatalk/files/patch-etc_cnid_dbd_comm.c
 RCS file: net/netatalk/files/patch-etc_cnid_dbd_comm.c
 diff -N net/netatalk/files/patch-etc_cnid_dbd_comm.c
 --- /dev/null	1 Jan 1970 00:00:00 -0000
-+++ net/netatalk/files/patch-etc_cnid_dbd_comm.c	6 Oct 2011 23:55:53 -0000
++++ net/netatalk/files/patch-etc_cnid_dbd_comm.c	7 Oct 2011 07:59:03 -0000
 @@ -0,0 +1,12 @@
 +--- etc/cnid_dbd/comm.c.orig	2011-07-30 18:27:55.000000000 -0400
 ++++ etc/cnid_dbd/comm.c	2011-07-30 18:28:04.000000000 -0400
@@ -892,7 +940,7 @@ Index: net/netatalk/files/patch-include__atalk__globals.h
 RCS file: net/netatalk/files/patch-include__atalk__globals.h
 diff -N net/netatalk/files/patch-include__atalk__globals.h
 --- /dev/null	1 Jan 1970 00:00:00 -0000
-+++ net/netatalk/files/patch-include__atalk__globals.h	6 Oct 2011 23:55:53 -0000
++++ net/netatalk/files/patch-include__atalk__globals.h	7 Oct 2011 07:59:03 -0000
 @@ -0,0 +1,39 @@
 +--- ./include/atalk/globals.h.orig	2011-07-27 04:55:39.000000000 -0700
 ++++ ./include/atalk/globals.h	2011-08-19 14:43:45.046204676 -0700
@@ -938,7 +986,7 @@ Index: net/netatalk/files/patch-libatalk__util__server_child.c
 RCS file: net/netatalk/files/patch-libatalk__util__server_child.c
 diff -N net/netatalk/files/patch-libatalk__util__server_child.c
 --- /dev/null	1 Jan 1970 00:00:00 -0000
-+++ net/netatalk/files/patch-libatalk__util__server_child.c	6 Oct 2011 23:55:53 -0000
++++ net/netatalk/files/patch-libatalk__util__server_child.c	7 Oct 2011 07:59:03 -0000
 @@ -0,0 +1,14 @@
 +--- ./libatalk/util/server_child.c.orig	2011-07-27 04:55:39.000000000 -0700
 ++++ ./libatalk/util/server_child.c	2011-08-19 14:42:28.704028827 -0700
@@ -959,7 +1007,7 @@ Index: net/netatalk/files/patch-libatalk__util__server_ipc.c
 RCS file: net/netatalk/files/patch-libatalk__util__server_ipc.c
 diff -N net/netatalk/files/patch-libatalk__util__server_ipc.c
 --- /dev/null	1 Jan 1970 00:00:00 -0000
-+++ net/netatalk/files/patch-libatalk__util__server_ipc.c	6 Oct 2011 23:55:53 -0000
++++ net/netatalk/files/patch-libatalk__util__server_ipc.c	7 Oct 2011 07:59:03 -0000
 @@ -0,0 +1,61 @@
 +--- ./libatalk/util/server_ipc.c.orig	2011-07-27 04:55:39.000000000 -0700
 ++++ ./libatalk/util/server_ipc.c	2011-08-19 14:42:28.728518099 -0700
