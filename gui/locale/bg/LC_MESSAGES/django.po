@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:46-0700\n"
-"PO-Revision-Date: 2011-06-15 10:27+0200\n"
+"PO-Revision-Date: 2011-10-08 10:58+0200\n"
 "Last-Translator: Crazy <vmishev07051@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: bg\n"
@@ -1284,8 +1284,8 @@ msgstr "Маска на файла"
 #: services/models.py:115
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
-"Използвайте тази опция, за да отмените създадената маска на файла (0666 по "
-"подразбиране)."
+"Използвайте тази опция, за да промените маската за създаване на файла (0666 "
+"по подразбиране)."
 
 #: services/models.py:119 services/models.py:854
 msgid "Directory mask"
@@ -1295,6 +1295,8 @@ msgstr "Маска на директорията"
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
+"Използвайте тази опция, за да промените маската за създаване на директория "
+"(0777 по подразбиране)."
 
 #: services/models.py:124
 msgid "Large RW support"
@@ -1391,6 +1393,8 @@ msgid ""
 "Name of the server. If this field is left empty the default server is "
 "specified."
 msgstr ""
+"Наименование на сървъра. Ако това поле бъде оставено празно се задава "
+"наименование на сървъра по подразбиране."
 
 #: services/models.py:184
 msgid "Guest Access"
@@ -1514,7 +1518,7 @@ msgstr ""
 
 #: services/models.py:284
 msgid "iSCSI initial parameter (16 by default)."
-msgstr ""
+msgstr "Начален iSCSI параметър (16 по подразбиране)."
 
 #: services/models.py:289
 msgid "First burst length"
@@ -1522,7 +1526,7 @@ msgstr ""
 
 #: services/models.py:290
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr ""
+msgstr "Първоначален iSCSI параметър (65536 по подразбиране)."
 
 #: services/models.py:295
 msgid "Max burst length"
@@ -1530,7 +1534,7 @@ msgstr ""
 
 #: services/models.py:296 services/models.py:302
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr ""
+msgstr "Первоначален iSCSI параметър (262144 по подразбиране)."
 
 #: services/models.py:301
 msgid "Max receive data segment length"
