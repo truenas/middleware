@@ -199,6 +199,13 @@ class AFP(Model):
             verbose_name=_("Local Access"),
             help_text=_("Allow users with local accounts to access apple shares on this box.")
             )
+    afp_srv_connections_limit = models.IntegerField(
+            max_length=120,
+            verbose_name=_('Max. Connections'),
+            validators=[MinValueValidator(1), MaxValueValidator(1000)],
+            help_text=_('Maximum number of connections permitted via AFP. The default limit is 50.'),
+            default=50,
+            )
 
     class Meta:
         verbose_name = _(u"AFP")

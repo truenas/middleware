@@ -366,6 +366,12 @@ fix_mt_daapd ( )
 }
 # customize_cmd fix_mt_daapd
 
+afpd_conf_symlink ( )
+{
+	ln -sfh /etc/afpd.conf ${NANO_WORLDDIR}/usr/local/etc/afpd.conf
+}
+customize_cmd afpd_conf_symlink
+
 select_httpd ( )
 {
 	echo 'lighttpd_enable="YES"' >> ${NANO_WORLDDIR}/etc/rc.conf

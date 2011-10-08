@@ -15,6 +15,8 @@ afpd_config=${afpd_config:-"/etc/afpd.conf"}
 afpd_avdefault=${afpd_avdefault:-"/usr/local/etc/AppleVolumes.default"}
 afpd_avsystem=${afpd_avsystem:-"/usr/local/etc/AppleVolumes.system"}
 avahi_daemon_config=${avahi_daemon_config:-"/usr/local/etc/avahi/avahi-daemon.conf"}
+# XXX: make netatalk_conf tunable..
+netatalk_conf=/usr/local/etc/netatalk.conf
 AVAHI_SERVICES_DIR=/usr/local/etc/avahi/services
 : ${avahi_afpd_service=$AVAHI_SERVICES_DIR/afp.service}
 
@@ -68,11 +70,6 @@ EOF
 	    echo
 	fi
     done
-}
-
-generate_av_system()
-{
-	:
 }
 
 generate_av_default()
@@ -170,13 +167,33 @@ EOF
 	fi
 }
 
+generate_netatalk_conf()
+{
+	local IFS=\|
+	local f="afp_srv_connections_limit afp_srv_guest_user"
+	eval local $f
+	local sf=$(echo $f | sed -e 's/ /, /g')
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+		"SELECT $f FROM services_afp ORDER BY -id LIMIT 1" | \
+	while eval read -r $f; do
+		if [ -n "$afp_srv_guest_user" ]; then
+			echo "AFPD_GUEST='$afp_srv_guest_user'"
+		fi
+		if [ -n "$afp_srv_connections_limit" -a $afp_srv_connections_limit -gt 0 ]; then
+			echo "AFPD_MAX_CLIENTS='$afp_srv_connections_limit'"
+		fi
+	done
+}
+
 generate_afpd()
 {
     generate_afpd_config > ${afpd_config} 
-    generate_av_system > ${afpd_avsystem}
     generate_av_default > ${afpd_avdefault}
     generate_avahi_daemon_config > ${avahi_daemon_config}
     generate_avahi_afpd_service
+    (awk 'NF > 0 && $0 !~ /^#/' ${netatalk_conf}.dist
+     generate_netatalk_conf) > ${netatalk_conf}
 }
 
 name="ix-afpd"
