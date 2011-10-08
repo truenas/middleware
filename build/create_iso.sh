@@ -61,6 +61,12 @@ main()
 	ln -s ../rescue ${INSTALLUFSDIR}/sbin
 	tar -cf - -C${ETC_FILES} --exclude .svn . | tar -xf - -C ${INSTALLUFSDIR}/etc
 
+	cat > $INSTALLUFSDIR/etc/version-info <<EOF
+SW_ARCH=\$(uname -p)
+SW_NAME="$NANO_LABEL"
+SW_VERSION="$VERSION"
+EOF
+
 	# Compress what's left of the image after mangling it
 	makefs -b 10%  ${TEMP_IMGFILE} ${INSTALLUFSDIR}
 	mkuzip -o ${ISODIR}/data/base.ufs.uzip ${TEMP_IMGFILE}

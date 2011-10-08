@@ -8,10 +8,7 @@ export HOME
 TERM=${TERM:-cons25}
 export TERM
 
-# XXX: drive these values via the build.
-SW_ARCH=$(uname -p)
-SW_NAME="FreeNAS"
-SW_VERSION="8.1"
+. /etc/version-info
 
 get_product_path()
 {
