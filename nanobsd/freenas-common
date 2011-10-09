@@ -224,7 +224,7 @@ if [ "${MULTIMEDIA}" = 1 ]; then
 	add_port audio/libvorbis
 	add_port audio/speex
 	#-add_port audio/firefly || net/minidlna
-	#+add_port audio/firefly
+	add_port audio/firefly
 	add_port audio/libao
 	add_port audio/vorbis-tools
 	add_port multimedia/libkate
