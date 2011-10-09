@@ -172,7 +172,20 @@ NANO_PACKAGE_ONLY=1
 
 CR()
 {
-	chroot ${NANO_WORLDDIR} /bin/sh -exc "$*"
+	local newvers revision branch
+
+	newvers="$NANO_SRC/sys/conf/newvers.sh"
+	revision=$(grep -m 1 REVISION= $newvers | cut -f2 -d '"')
+	branch=$(grep -m 1 BRANCH= $newvers | cut -f2 -d '"')
+	# Invoke a subshell so we don't pollute the build environment with
+	# these variables.
+	(set -e
+	 export UNAME_m=$NANO_ARCH
+	 export UNAME_p=$NANO_ARCH
+	 export UNAME_r="$revision-$branch"
+	 export UNAME_v="$(uname -v | sed -e "s/$(uname -p)/$UNAME_p/" -e "s/$(uname -r)/$UNAME_r/g")"
+	 export OSVERSION=$(awk '/\#define.*__FreeBSD_version/ { print $3 }' "$NANO_SRC/sys/sys/param.h")
+	 chroot ${NANO_WORLDDIR} /bin/sh -exc "$*")
 }
 
 # install a package from a pre-built binary
@@ -220,7 +233,8 @@ do_add_port ()
 	mkdir -p ${NANO_WORLDDIR}/usr/workdir
 	cp /etc/resolv.conf ${NANO_WORLDDIR}/etc/resolv.conf
 # Improvement: Don't know why package-recursive don't works here
-	CR "env UNAME_p=${NANO_ARCH} TARGET=${NANO_ARCH} \
+	CR "env \
+	    TARGET=${NANO_ARCH} \
 	    TARGET_ARCH=${NANO_ARCH} make \
 	    __MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
 	    SRC_BASE=/usr/src \
