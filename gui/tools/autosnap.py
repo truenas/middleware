@@ -234,8 +234,8 @@ for mpkey in mp_to_task_map:
         snapcmd = '/sbin/zfs snapshot%s %s' % (rflag, snapname)
         system(snapcmd)
 
+MNTLOCK.lock()
 for snapshot in snapshots_pending_delete:
-    MNTLOCK.lock()
     zfsproc = pipeopen('/sbin/zfs get -H freenas:state %s' % (snapshot))
     output = zfsproc.communicate()[0]
     if output != '':
@@ -243,7 +243,9 @@ for snapshot in snapshots_pending_delete:
 	if value == '-':
             snapcmd = '/sbin/zfs destroy %s' % (snapshot)
             system(snapcmd)
-    MNTLOCK.unlock()
+
+os.unlink('/var/run/autosnap.pid')
+MNTLOCK.unlock()
 
 os.execl('/usr/local/bin/python',
          'python',
