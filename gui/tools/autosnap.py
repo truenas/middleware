@@ -103,6 +103,45 @@ def isMatchingTime(task, snaptime):
 
     return False
 
+# Detect if another instance is running
+def exit_if_running(pid):
+    syslog.syslog(syslog.LOG_DEBUG,
+                  "Checking if process %d is still alive" % (pid, ))
+    try:
+        os.kill(pid, 0)
+        # If we reached here, there is another process in progress
+        syslog.syslog(syslog.LOG_DEBUG,
+                      "Process %d still working, quitting" % (pid, ))
+        sys.exit(0)
+    except OSError:
+        syslog.syslog(syslog.LOG_DEBUG, "Process %d gone" % (pid, ))
+
+mypid = os.getpid()
+
+# (mis)use MNTLOCK as PIDFILE lock.
+locked = True
+try:
+    MNTLOCK.lock_try()
+except IOError:
+    locked = False
+if not locked:
+    sys.exit(0)
+
+AUTOSNAP_PID = -1
+try:
+    with open('/var/run/autosnap.pid') as pidfile:
+        AUTOSNAP_PID = int(pidfile.read())
+except:
+    pass
+
+if AUTOSNAP_PID != -1:
+    exit_if_running(AUTOSNAP_PID)
+
+with open('/var/run/autosnap.pid', 'w') as pidfile:
+    pidfile.write('%d' % mypid)
+
+MNTLOCK.unlock()
+
 now = datetime.now().replace(microsecond = 0)
 if now.second < 30:
     snaptime = now.replace(second = 0)
