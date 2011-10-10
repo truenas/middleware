@@ -66,7 +66,10 @@ dojo.declare("freeadmin.form.Cron", [ dijit._Widget, dijit._Templated ], {
         //    }, rulesNodeLabels); 
 
         if(this.typeChoice == 'every'){
-            this.sliderValue.innerHTML = this.value.split('/')[1];
+            if(this.value == '*')
+                this.sliderValue.innerHTML = '1';
+            else
+                this.sliderValue.innerHTML = this.value.split('/')[1];
         } else {
             this.sliderValue.innerHTML = Math.floor((this.numChoices+this.start)/4).toString();
         }
@@ -80,7 +83,10 @@ dojo.declare("freeadmin.form.Cron", [ dijit._Widget, dijit._Templated ], {
             style: "width:300px;",
             onChange: function(value) {
                 sldval.innerHTML = Math.floor(value);
-                field.set('value', '*/'+Math.floor(value).toString());
+                if(Math.floor(value) == 1)
+                    field.set('value', '*');
+                else
+                    field.set('value', '*/'+Math.floor(value).toString());
             }
         }, this.sliderNode);
         //slider.domNode.appendChild(sliderRule);
@@ -92,7 +98,10 @@ dojo.declare("freeadmin.form.Cron", [ dijit._Widget, dijit._Templated ], {
              onShow: function(ev) {
                 var value = slider.get('value');
                 sldval.innerHTML = Math.floor(value);
-                field.set('value', '*/'+Math.floor(value).toString());
+                if(Math.floor(value) == 1)
+                    field.set('value', '*');
+                else
+                    field.set('value', '*/'+Math.floor(value).toString());
              },
         }, this.everyNode);
 

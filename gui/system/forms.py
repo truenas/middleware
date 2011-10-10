@@ -411,15 +411,24 @@ class CronJobForm(ModelForm):
     def __init__(self, *args, **kwargs):
         if kwargs.has_key('instance'):
             ins = kwargs.get('instance')
-            ins.cron_month = ins.cron_month.replace("10", "a").replace("11", "b").replace("12", "c")
+            if ins.cron_month == '*':
+                ins.cron_month = "1,2,3,4,5,6,7,8,9,a,b,c"
+            else:
+                ins.cron_month = ins.cron_month.replace("10", "a").replace("11", "b").replace("12", "c")
+            if ins.cron_dayweek == '*':
+                ins.cron_dayweek = "1,2,3,4,5,6,7"
         super(CronJobForm, self).__init__(*args, **kwargs)
     def clean_cron_month(self):
         m = eval(self.cleaned_data.get("cron_month"))
+        if len(m) == 12:
+            return '*'
         m = ",".join(m)
         m = m.replace("a", "10").replace("b", "11").replace("c", "12")
         return m
     def clean_cron_dayweek(self):
         w = eval(self.cleaned_data.get("cron_dayweek"))
+        if len(w) == 7:
+            return '*'
         w = ",".join(w)
         return w
     def save(self):
