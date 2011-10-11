@@ -179,6 +179,7 @@ CR()
 do_add_pkg ()
 {
 	# Need to create ${NANO_OBJ}/ports in this add_pkg_${port} function
+	set -x
 	mkdir -p ${NANO_OBJ}/ports/distfiles
 	mkdir -p ${NANO_OBJ}/ports/packages
 	mkdir -p ${NANO_WORLDDIR}/usr/ports/packages/All
@@ -194,6 +195,7 @@ do_add_pkg ()
 	rmdir ${NANO_WORLDDIR}/usr/ports/packages
 	rmdir ${NANO_WORLDDIR}/usr/ports/distfiles
 	rmdir ${NANO_WORLDDIR}/usr/ports
+	set +x
 }
 
 # Build a port (with the side effect of creating a package)
@@ -203,6 +205,7 @@ do_add_port ()
 	port_path=$1
 	shift
 	# Need to create ${NANO_OBJ}/ports in this add_port_${port} function
+	set -x
 	mkdir -p ${NANO_OBJ}/ports/distfiles
 	mkdir -p ${NANO_OBJ}/ports/packages
 	mkdir -p ${NANO_PORTS}/packages
@@ -235,6 +238,7 @@ do_add_port ()
 	umount ${NANO_WORLDDIR}/usr/ports/distfiles
 	umount ${NANO_WORLDDIR}/usr/ports
 	umount ${NANO_WORLDDIR}/usr/src
+	set +x
 }
 
 # Need to check if this function works with cross-compiling architecture!!!!
