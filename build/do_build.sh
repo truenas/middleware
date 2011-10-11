@@ -195,7 +195,7 @@ done
 for patch in $(cd $FREENAS_ROOT/patches && ls ports-*.patch); do
 	if $USE_UNIONFS; then
 		echo "Applying patch $patch..."
-		(cd $NANO_PORTS && patch -E -p0 < $FREENAS_ROOT/FreeBSD/patches/$patch)
+		(cd $NANO_PORTS && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
 	else
 		if ! grep -q $patch $FREENAS_ROOT/FreeBSD/ports-patches; then
 			echo "Applying patch $patch..."
