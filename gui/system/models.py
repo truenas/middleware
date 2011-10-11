@@ -336,7 +336,7 @@ class CronJob(Model):
 
     def get_human_month(self):
         months = self.cron_month.split(",")
-        if len(months) == 12:
+        if len(months) == 12 or self.cron_month == '*':
             return _("Every month")
         mchoices = dict(choices.MONTHS_CHOICES)
         labels = []
@@ -352,7 +352,7 @@ class CronJob(Model):
         #    Mon-Fri + Saturday -> Weekdays + Saturday.
         # 2. Get rid of the duplicate code.
         weeks = self.cron_dayweek.split(',')
-        if len(weeks) == 7:
+        if len(weeks) == 7 or self.cron_dayweek == '*':
             return _('Everyday')
         if weeks == map(str, xrange(1, 6)):
             return _('Weekdays')
@@ -503,7 +503,7 @@ class Rsync(Model):
 
     def get_human_month(self):
         months = self.rsync_month.split(',')
-        if len(months) == 12:
+        if len(months) == 12 or self.rsync_month == '*':
             return _("Every month")
         mchoices = dict(choices.MONTHS_CHOICES)
         labels = []
@@ -515,7 +515,7 @@ class Rsync(Model):
 
     def get_human_dayweek(self):
         weeks = self.rsync_dayweek.split(',')
-        if len(weeks) == 7:
+        if len(weeks) == 7 or self.rsync_dayweek == '*':
             return _('Everyday')
         if weeks == map(str, xrange(1, 6)):
             return _('Weekdays')
