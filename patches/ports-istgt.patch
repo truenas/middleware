@@ -1,36 +1,42 @@
---- net/istgt/Makefile	2011-09-29 15:13:26.000000000 -0700
-+++ net/istgt/Makefile	2011-09-29 15:19:02.000000000 -0700
+Index: net/istgt/Makefile
+===================================================================
+RCS file: /home/ncvs/ports/net/istgt/Makefile,v
+retrieving revision 1.23
+diff -u -r1.23 Makefile
+--- net/istgt/Makefile	30 May 2011 20:10:18 -0000	1.23
++++ net/istgt/Makefile	10 Oct 2011 06:46:20 -0000
 @@ -2,11 +2,11 @@
  # Date created:		2009-02-23
  # Whom:			Daisuke Aoyama <aoyama@peach.ne.jp>
  #
 -# $FreeBSD: ports/net/istgt/Makefile,v 1.23 2011/05/30 20:10:18 wxs Exp $
-+# $FreeBSD: ports/net/istgt/Makefile,v 1.27 2011/09/29 10:50:55 culot Exp $
++# $FreeBSD: ports/net/istgt/Makefile,v 1.28 2011/10/09 17:04:02 culot Exp $
  #
  
  PORTNAME=	istgt
 -PORTVERSION=	20110529
-+PORTVERSION=	20110928
++PORTVERSION=	20111008
  CATEGORIES=	net
  MASTER_SITES=	http://www.peach.ne.jp/archives/istgt/
  
-@@ -17,6 +17,7 @@
- PKGMESSAGE=	${WRKDIR}/pkg-message
- 
- GNU_CONFIGURE=	yes
-+CONFIGURE_ARGS+=	--with-aio
- 
- MAN1=		istgt.1
- MANCOMPRESSED=	yes
---- net/istgt/distinfo	2011-09-29 15:13:26.000000000 -0700
-+++ net/istgt/distinfo	2011-09-29 15:15:40.000000000 -0700
+Index: net/istgt/distinfo
+===================================================================
+RCS file: /home/ncvs/ports/net/istgt/distinfo,v
+retrieving revision 1.22
+diff -u -r1.22 distinfo
+--- net/istgt/distinfo	30 May 2011 20:10:18 -0000	1.22
++++ net/istgt/distinfo	10 Oct 2011 06:46:20 -0000
 @@ -1,2 +1,2 @@
 -SHA256 (istgt-20110529.tar.gz) = 51a3bde2177780f1a9cd0b32d3949f5db5e614f8d2c520e408e329778f7c49e0
 -SIZE (istgt-20110529.tar.gz) = 224527
-+SHA256 (istgt-20110928.tar.gz) = 2add885c857470de3d24ba157f5c9e82f8caa76957ce6d12775f848f84da48ed
-+SIZE (istgt-20110928.tar.gz) = 234314
---- net/istgt/files/patch-etc__istgt.sh.in	1969-12-31 16:00:00.000000000 -0800
-+++ net/istgt/files/patch-etc__istgt.sh.in	2011-09-29 15:14:34.000000000 -0700
++SHA256 (istgt-20111008.tar.gz) = 41ddc49dbd0cda81c3f7557e76d27b851e042a32acb448dac1b743c759b0b37e
++SIZE (istgt-20111008.tar.gz) = 235227
+Index: net/istgt/files/patch-etc__istgt.sh.in
+===================================================================
+RCS file: net/istgt/files/patch-etc__istgt.sh.in
+diff -N net/istgt/files/patch-etc__istgt.sh.in
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ net/istgt/files/patch-etc__istgt.sh.in	23 Aug 2011 18:40:48 -0000
 @@ -0,0 +1,10 @@
 +--- ./etc/istgt.sh.in.orig	2011-05-29 03:53:29.000000000 -0700
 ++++ ./etc/istgt.sh.in	2011-08-23 11:14:24.910003136 -0700

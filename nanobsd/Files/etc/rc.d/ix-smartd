@@ -42,26 +42,26 @@ EOF
 
             nhour=$(echo "${hour}"|awk -F ',' '{ if($0 != "..") {
                 printf "(";
-                for(i=1;i<$NF+1;i++) {
+                for(i=1;i<NF+1;i++) {
                     printf "%.2d", $i;
-                    if(i != $NF) printf "|"
+                    if(i != NF) printf "|"
                 };
                 printf ")"
             } else printf $0 }')
             ndayweek=$(echo "${dayweek}"|tr -s "," "|"|awk '{if($0 != "..") printf "(%s)", $0; else printf $0 }')
             nmonth=$(echo "${month}"|awk -F ',' '{ if($0 != "..") {
                 printf "(";
-                for(i=1;i<$NF+1;i++) {
+                for(i=1;i<NF+1;i++) {
                     printf "%.2d", $i;
-                    if(i != $NF) printf "|"
+                    if(i != NF) printf "|"
                 };
                 printf ")"
             } else printf $0 }')
             ndaymonth=$(echo "${daymonth}"|awk -F ',' '{if($0 != "..") {
                 printf "(";
-                for(i=1;i<$NF+1;i++) {
+                for(i=1;i<NF+1;i++) {
                     printf "%.2d", $i;
-                    if(i != $NF) printf "|"
+                    if(i != NF) printf "|"
                 };
                 printf ")"
             } else printf $0 }')
