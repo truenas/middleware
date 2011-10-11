@@ -402,6 +402,7 @@ class CronJobForm(ModelForm):
     class Meta:
         model = models.CronJob
         widgets = {
+            'cron_command': forms.widgets.TextInput(),
             'cron_minute': CronMultiple(attrs={'numChoices': 60,'label':_("minute")}),
             'cron_hour': CronMultiple(attrs={'numChoices': 24,'label':_("hour")}),
             'cron_daymonth': CronMultiple(attrs={'numChoices': 31,'start':1,'label':_("day of month")}),
