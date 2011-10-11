@@ -261,8 +261,7 @@ class CronJob(Model):
             verbose_name=_("User"),
             help_text=_("The user to run the command")
             )
-    cron_command = models.CharField(
-            max_length=120,
+    cron_command = models.TextField(
             verbose_name=_("Command"),
             )
     cron_description = models.CharField(
