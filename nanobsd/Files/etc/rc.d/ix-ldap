@@ -90,7 +90,7 @@ generate_ldapconf()
 	do
 		[ -z "${hostname}" -o -z "${basedn}" ] && return 1
 
-		cat<<-EOF>"${nssconf}"
+		cat > "${nssconf}" <<-EOF
 		host ${hostname}
 		base ${basedn}
 		rootbinddn ${rootbasedn}
@@ -99,27 +99,24 @@ generate_ldapconf()
 		nss_base_group ${groupsuffix},${basedn}
 		nss_override_attribute_value loginShell /bin/sh
 EOF
-		if [ "${ssl}" = "start_tls" ]
-		then
+		if [ "${ssl}" = "start_tls" ]; then
 			save_certificate "${id}"
 
-			cat<<-EOF>>"${nssconf}"
+			cat >> "${nssconf}" <<-EOF
 			ssl ${ssl}
 			tls_cacertfile ${CERT_FILE}
 EOF
-		elif [ "${ssl}" = "on" ]
-		then
+		elif [ "${ssl}" = "on" ]; then
 			save_certificate "${id}"
 
-			cat<<-EOF>>"${nssconf}"
+			cat >> "${nssconf}" <<-EOF
 			uri ldaps://${hostname}
 			ssl ${ssl}
 			tls_cacertfile ${CERT_FILE}
 EOF
 		fi
 
-		for opt in ${options}
-		do
+		for opt in ${options}; do
 			echo ${opt} >> "${nssconf}"
 		done
 
@@ -131,20 +128,21 @@ EOF
 
 		echo "HOST ${hostname}" > "${ldapconf}"
 		echo "BASE ${basedn}" >> "${ldapconf}"
-		if [ "${ssl}" = "start_tls" ]
-		then
-			cat<<-EOF>>"${ldapconf}"
+		case "$ssl" in
+		start_tls)
+			cat >> "${ldapconf}" <<-EOF
 			TLS_CACERT ${CERT_FILE}
 			TLS_REQCERT allow
 EOF
-		elif [ "${ssl}" = "on" ]
-		then
-			cat<<-EOF>>"${ldapconf}"
+			;;
+		on)
+			cat >> "${ldapconf}" <<-EOF
 			URI ldaps://${hostname}
 			TLS_CACERT ${CERT_FILE}
 			TLS_REQCERT allow
 EOF
-		fi
+			;;
+		esac
 	done
 
 	return 0
@@ -166,32 +164,27 @@ setup_homedirs()
 	LIMIT 1;
 	")
 
-	if [ -n "${homedir}" ]
-	then
-		mkdir -p "${homedir}"
-
-		mount -uw /
-		ln -s "${homedir}" /home 2>/dev/null
-		mount -ur /
+	if [ -n "${homedir}" ]; then
+		hdir=$homedir
 	else
-		mkdir -p "${default}"
-
-		mount -uw /
-		ln -s "${default}" /home 2>/dev/null
-		mount -ur /
+		hdir=$default
 	fi
+
+	mkdir -p "${hdir}"
+	mount -uw /
+	ln -sfh "${hdir}" /home 2>/dev/null
+	mount -ur /
 }
 
 create_cache_filesystem()
 {
 	res=1
-	if mount | egrep -q "^/dev/md[0-9]+.*${FREENAS_CACHEDIR}" 2>/dev/null
-	then
+	mount 2>/dev/null | egrep -q "^/dev/md[0-9]+.*${FREENAS_CACHEDIR}"
+	if [ $? -eq 0 ]; then
 		mddev=$(mount|egrep "^/dev/md[0-9]+.*${FREENAS_CACHEDIR}"|\
 			sed -E "s#^/dev/(md[0-9]+).+#\1#"|awk '{ print $1 }')
 
-		if ! umount "${FREENAS_CACHEDIR}" >/dev/null 2>&1
-		then
+		if ! umount "${FREENAS_CACHEDIR}" >/dev/null 2>&1; then
 			return ${res}
 		fi
 
@@ -199,8 +192,7 @@ create_cache_filesystem()
 	fi
 
 	mkdir -p "${FREENAS_CACHEDIR}"
-	if mdmfs -s "${FREENAS_CACHESIZE}" md "${FREENAS_CACHEDIR}"
-	then
+	if mdmfs -s "${FREENAS_CACHESIZE}" md "${FREENAS_CACHEDIR}"; then
 		res=0
 	fi
 
@@ -229,8 +221,7 @@ ldap_enabled()
 
 	LIMIT 1")
 
-	if [ "${enabled}" = "1" ]
-	then
+	if [ "${enabled}" -eq "1" ]; then
 		res=0
 	fi
 
@@ -239,8 +230,7 @@ ldap_enabled()
 
 generate_ldap_config()
 {
-	if ldap_enabled
-	then
+	if ldap_enabled; then
 		generate_ldapconf
 		setup_homedirs
 		create_cache_filesystem
