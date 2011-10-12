@@ -28,6 +28,7 @@ generate_syslog_conf()
 		if [ -n "${syslogserver}" ]
 		then
 			echo -e "*.err;kern.warning;auth.notice;mail.crit\t/dev/console" > /etc/syslog.conf
+			echo -e "*.err;kern.warning;auth.notice;mail.crit\t/var/log/messages" > /etc/syslog.conf
 			echo -e "*.*\t@${syslogserver}" >> /etc/syslog.conf
 		else
 			cp /conf/base/etc/syslog.conf /etc/syslog.conf
