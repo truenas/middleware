@@ -14,7 +14,7 @@ main()
     : ${FREENAS_ARCH=$(uname -p)}
     export FREENAS_ARCH
     export NANO_OBJ=${root}/obj.${FREENAS_ARCH}
-    REVISION="8.0.1-RELEASE"
+    REVISION="8.0.2-RELEASE"
     if [ ! -f ${NANO_OBJ}/"FreeNAS-${REVISION}-${FREENAS_ARCH}.full" ]; then
 	echo "Can't find image file for ${REVISION}, punting"
 	exit 1
