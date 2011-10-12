@@ -4,8 +4,8 @@ RCS file: /home/ncvs/ports/net/netatalk/Makefile,v
 retrieving revision 1.96
 diff -u -r1.96 Makefile
 --- net/netatalk/Makefile	3 Jul 2011 11:40:45 -0000	1.96
-+++ net/netatalk/Makefile	10 Oct 2011 06:42:50 -0000
-@@ -2,12 +2,11 @@
++++ net/netatalk/Makefile	12 Oct 2011 21:46:50 -0000
+@@ -2,12 +2,12 @@
  # Date created:         23 Jul 1997
  # Whom:                 stb
  #
@@ -17,10 +17,11 @@ diff -u -r1.96 Makefile
 -PORTVERSION=	2.1.5
 -PORTREVISION=	2
 +PORTVERSION=	2.2.1
++PORTREVISION=	1
  PORTEPOCH=	1
  CATEGORIES=	net print
  MASTER_SITES=	SF
-@@ -24,6 +23,7 @@
+@@ -24,6 +24,7 @@
  GNU_CONFIGURE=	yes
  USE_GMAKE=	yes
  USE_PERL5=	yes
@@ -28,7 +29,7 @@ diff -u -r1.96 Makefile
  USE_RC_SUBR=	netatalk
  
  CONFIGURE_ARGS+=	--with-tcp-wrappers \
-@@ -37,24 +37,20 @@
+@@ -37,24 +38,20 @@
  		SRVLOC		"Enable Service Location Protocol support" off \
  		PAM		"Enable PAM support" off \
  		TIMELORD	"Enable Timelord network time service" off \
@@ -62,7 +63,13 @@ diff -u -r1.96 Makefile
  
  CONFLICTS=	bigloo-2.* cap-6.0.* tct-1.* netatalk-1* yudit-[0-9]*
  
-@@ -68,9 +64,17 @@
+@@ -62,23 +59,26 @@
+ 
+ .if defined(WITH_KRB5)
+ CONFIGURE_ARGS+=	--enable-krbV-uam
+-PLIST_SUB+=		NETATALKKRB5=""
+-.else
+-PLIST_SUB+=		NETATALKKRB5="@comment "
  .endif
  
  .if defined(WITH_APPLETALK)
@@ -82,7 +89,15 @@ diff -u -r1.96 Makefile
  .endif
  
  .if defined(WITH_PAM)
-@@ -96,9 +100,26 @@
+ CONFIGURE_ARGS+=	--with-pam
+-PLIST_SUB+=		NETATALKPAM=""
+ .else
+ CONFIGURE_ARGS+=	--without-pam
+-PLIST_SUB+=		NETATALKPAM="@comment "
+ .endif
+ 
+ .if defined(WITH_SRVLOC)
+@@ -96,9 +96,26 @@
  PLIST_SUB+=		TIMELORD="@comment "
  .endif
  
@@ -128,12 +143,13 @@ RCS file: /home/ncvs/ports/net/netatalk/pkg-plist,v
 retrieving revision 1.31
 diff -u -r1.31 pkg-plist
 --- net/netatalk/pkg-plist	2 Jun 2010 14:46:42 -0000	1.31
-+++ net/netatalk/pkg-plist	10 Oct 2011 06:42:51 -0000
++++ net/netatalk/pkg-plist	12 Oct 2011 21:45:23 -0000
 @@ -1,20 +1,15 @@
 -bin/achfile
 -bin/ad
+-bin/add_netatalk_printer
 +%%ATFUNCS%%bin/ad
- bin/add_netatalk_printer
++%%APPLETALK%%bin/add_netatalk_printer
  bin/adv1tov2
 -bin/aecho
 -bin/afile
@@ -154,7 +170,7 @@ diff -u -r1.31 pkg-plist
  bin/macusers
  bin/megatron
  @exec cd %B && ln -s megatron hqx2bin
-@@ -31,14 +26,13 @@
+@@ -31,15 +26,14 @@
  @unexec rm -f %B/unbin
  @unexec rm -f %B/unhex
  @unexec rm -f %B/unsingle
@@ -169,13 +185,15 @@ diff -u -r1.31 pkg-plist
 -bin/pap
 -bin/papstatus
 -bin/psorder
+-bin/showppd
 +%%APPLETALK%%bin/pap
 +%%APPLETALK%%bin/papstatus
 +%%APPLETALK%%bin/psorder
- bin/showppd
++%%APPLETALK%%bin/showppd
  bin/uniconv
  @unexec if cmp -s %D/etc/AppleVolumes.default %D/etc/AppleVolumes.default.dist; then rm -f %D/etc/AppleVolumes.default; fi
-@@ -50,15 +44,18 @@
+ etc/AppleVolumes.default.dist
+@@ -50,45 +44,18 @@
  @unexec if cmp -s %D/etc/afpd.conf %D/etc/afpd.conf.dist; then rm -f %D/etc/afpd.conf; fi
  etc/afpd.conf.dist
  @exec [ ! -f %B/afpd.conf ] && cp %B/%f %B/afpd.conf
@@ -194,12 +212,42 @@ diff -u -r1.31 pkg-plist
  @unexec if cmp -s %D/etc/papd.conf %D/etc/papd.conf.dist; then rm -f %D/etc/papd.conf; fi
 -etc/papd.conf.dist
 -@exec [ ! -f %B/papd.conf ] && cp %B/%f %B/papd.conf
+-libexec/netatalk-uams/uams_clrtxt.so
+-libexec/netatalk-uams/uams_dhx.so
+-libexec/netatalk-uams/uams_dhx2.so
+-%%NETATALKPAM%%libexec/netatalk-uams/uams_dhx2_pam.a
+-%%NETATALKPAM%%libexec/netatalk-uams/uams_dhx2_pam.la
+-%%NETATALKPAM%%libexec/netatalk-uams/uams_dhx2_pam.so
+-libexec/netatalk-uams/uams_dhx2_passwd.a
+-libexec/netatalk-uams/uams_dhx2_passwd.la
+-libexec/netatalk-uams/uams_dhx2_passwd.so
+-%%NETATALKPAM%%libexec/netatalk-uams/uams_dhx_pam.a
+-%%NETATALKPAM%%libexec/netatalk-uams/uams_dhx_pam.la
+-%%NETATALKPAM%%libexec/netatalk-uams/uams_dhx_pam.so
+-libexec/netatalk-uams/uams_dhx_passwd.a
+-libexec/netatalk-uams/uams_dhx_passwd.la
+-libexec/netatalk-uams/uams_dhx_passwd.so
+-%%NETATALKKRB5%%libexec/netatalk-uams/uams_gss.a
+-%%NETATALKKRB5%%libexec/netatalk-uams/uams_gss.la
+-%%NETATALKKRB5%%libexec/netatalk-uams/uams_gss.so
+-libexec/netatalk-uams/uams_guest.a
+-libexec/netatalk-uams/uams_guest.la
+-libexec/netatalk-uams/uams_guest.so
+-%%NETATALKPAM%%libexec/netatalk-uams/uams_pam.a
+-%%NETATALKPAM%%libexec/netatalk-uams/uams_pam.la
+-%%NETATALKPAM%%libexec/netatalk-uams/uams_pam.so
+-libexec/netatalk-uams/uams_passwd.a
+-libexec/netatalk-uams/uams_passwd.la
+-libexec/netatalk-uams/uams_passwd.so
+-libexec/netatalk-uams/uams_randnum.a
+-libexec/netatalk-uams/uams_randnum.la
+-libexec/netatalk-uams/uams_randnum.so
 +%%APPLETALK%%etc/papd.conf.dist
 +%%APPLETALK%%@exec [ ! -f %B/papd.conf ] && cp %B/%f %B/papd.conf
- libexec/netatalk-uams/uams_clrtxt.so
- libexec/netatalk-uams/uams_dhx.so
- libexec/netatalk-uams/uams_dhx2.so
-@@ -108,6 +105,7 @@
+ include/atalk/acl.h
+ include/atalk/adouble.h
+ include/atalk/aep.h
+@@ -108,6 +75,7 @@
  include/atalk/logger.h
  include/atalk/nbp.h
  include/atalk/netddp.h
@@ -207,18 +255,56 @@ diff -u -r1.31 pkg-plist
  include/atalk/pap.h
  include/atalk/paths.h
  include/atalk/rtmp.h
-@@ -146,7 +144,7 @@
- libexec/ofwmpap
- libexec/ofwpap
- libexec/psa
+@@ -132,38 +100,37 @@
+ include/netatalk/phase2.h
+ lib/libatalk.a
+ lib/libatalk.la
+-libexec/etc2ps.sh
+-libexec/ifmpap
+-libexec/ifmpaprev
+-libexec/ifpap
+-libexec/ifpaprev
+-libexec/ifwmpap
+-libexec/ifwmpaprev
+-libexec/ifwpap
+-libexec/ifwpaprev
+-libexec/ofmpap
+-libexec/ofpap
+-libexec/ofwmpap
+-libexec/ofwpap
+-libexec/psa
 -libexec/psf
+-libexec/tfmpap
+-libexec/tfmpaprev
+-libexec/tfpap
+-libexec/tfpaprev
+-libexec/tfwmpap
+-libexec/tfwmpaprev
+-libexec/tfwpap
+-libexec/tfwpaprev
++%%APPLETALK%%libexec/etc2ps.sh
++%%APPLETALK%%libexec/ifmpap
++%%APPLETALK%%libexec/ifmpaprev
++%%APPLETALK%%libexec/ifpap
++%%APPLETALK%%libexec/ifpaprev
++%%APPLETALK%%libexec/ifwmpap
++%%APPLETALK%%libexec/ifwmpaprev
++%%APPLETALK%%libexec/ifwpap
++%%APPLETALK%%libexec/ifwpaprev
++%%APPLETALK%%libexec/ofmpap
++%%APPLETALK%%libexec/ofpap
++%%APPLETALK%%libexec/ofwmpap
++%%APPLETALK%%libexec/ofwpap
++%%APPLETALK%%libexec/psa
 +%%APPLETALK%%libexec/psf
- libexec/tfmpap
- libexec/tfmpaprev
- libexec/tfpap
-@@ -156,10 +154,10 @@
- libexec/tfwpap
- libexec/tfwpaprev
++%%APPLETALK%%libexec/tfmpap
++%%APPLETALK%%libexec/tfmpaprev
++%%APPLETALK%%libexec/tfpap
++%%APPLETALK%%libexec/tfpaprev
++%%APPLETALK%%libexec/tfwmpap
++%%APPLETALK%%libexec/tfwmpaprev
++%%APPLETALK%%libexec/tfwpap
++%%APPLETALK%%libexec/tfwpaprev
  sbin/afpd
 -sbin/atalkd
 +%%APPLETALK%%sbin/atalkd
@@ -228,7 +314,13 @@ diff -u -r1.31 pkg-plist
 +%%APPLETALK%%sbin/papd
  %%TIMELORD%%sbin/timelord
  share/aclocal/netatalk.m4
- %%DATADIR%%/pagecount.ps
+-%%DATADIR%%/pagecount.ps
+-@dirrm share/netatalk
++%%APPLETALK%%%%DATADIR%%/pagecount.ps
++%%APPLETALK%%@dirrm share/netatalk
+ @dirrm include/netatalk
+ @dirrm include/atalk
+-@dirrm libexec/netatalk-uams
 Index: net/netatalk/files/netatalk.in
 ===================================================================
 RCS file: /home/ncvs/ports/net/netatalk/files/netatalk.in,v
