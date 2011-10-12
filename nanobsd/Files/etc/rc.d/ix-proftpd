@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-proftpd
-# REQUIRE: FILESYSTEMS
+# REQUIRE: FILESYSTEMS ix-ssl
 # BEFORE: proftpd
 
 . /etc/rc.freenas
