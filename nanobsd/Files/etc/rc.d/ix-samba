@@ -349,12 +349,13 @@ EOF
 	    "
 
 		if [ "${cifs_homedir}" = "1" ]; then
-			valid_users="%S"
-			cifs_homedir_path="${cifs_homedir_mp}/%S"
 
 			if [ "${ad_enable}" = "1" ]; then
 				valid_users="%D/%U"
 				cifs_homedir_path="${cifs_homedir_mp}/%D/%U"
+			else
+				valid_users="%U"
+				cifs_homedir_path="${cifs_homedir_mp}/%U"
 			fi
 
 			cat<<-EOF
