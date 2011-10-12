@@ -86,13 +86,6 @@ if $USE_UNIONFS; then
 	if ! kldstat -v | grep -q unionfs; then
 		error "You must load the unionfs module before executing $0!"
 	fi
-	# System seizes up when using buildworld with -j values greater than 1
-	# with UFS+SUJ/ZFS on 9.x+ when using unionfs.
-	if [ ${CPUS:-1} -gt 1 ]; then
-		UNIONFS_DEADLOCK_HACK=true
-	else
-		UNIONFS_DEADLOCK_HACK=false
-	fi
 fi
 
 if $UPDATE; then
@@ -117,10 +110,7 @@ ports-all date=2011.07.17.00.00.00
 EOF
 	csup -L 1 $SUPFILE
 	if $USE_UNIONFS; then
-		if $UNIONFS_DEADLOCK_HACK; then
-			# reduce potential for filesystem deadlocks
-			sync; sync; sync
-		fi
+		:
 	else
 		# Force a repatch because csup pulls pristine sources.
 		: > $FREENAS_ROOT/FreeBSD/src-patches
@@ -167,14 +157,6 @@ if $USE_UNIONFS; then
 		fi
 
 		mount -t unionfs $FREENAS_ROOT/FreeBSD/$type $uniondir
-
-		if $UNIONFS_DEADLOCK_HACK; then
-			mdconfig -a -t swap -s 32m > "$md_dev_file"
-			md="/dev/$(cat "$md_dev_file")"
-			newfs -O 1 -n -o time $md
-			mount $md $FREENAS_ROOT/FreeBSD/touched/$type
-		fi
-
 		mount -t unionfs $FREENAS_ROOT/FreeBSD/touched/$type $uniondir
 	done
 fi
