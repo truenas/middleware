@@ -1,7 +1,7 @@
 #! /bin/sh
 #
 # This script should be called by upssched via the CMDSCRIPT directive.
-# 
+#
 # Here is a quick example to show how to handle a bunch of possible
 # timer names with the help of the case structure.
 #
@@ -11,6 +11,8 @@
 # from your AT lines.
 
 . /etc/rc.freenas
+
+IFS=\|
 
 f="ups_emailnotify ups_toemail ups_subject"
 sf=$(echo $f | sed -e 's/ /, /g')
@@ -28,7 +30,12 @@ case $1 in
 		;;
 	"EMAIL"|"ONLINE")
 		if [ "${ups_emailnotify}" -eq 1 ]; then
-			echo "$NOTIFYTYPE" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
+			if [ "$1" = "ONLINE" ]; then
+				msg="ONLINE"
+			else
+				msg="$NOTIFYTYPE"
+			fi
+			echo "${msg}" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
 		fi
 		;;
 	*)
