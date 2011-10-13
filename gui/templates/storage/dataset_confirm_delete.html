@@ -4,7 +4,14 @@
     formSubmit(this, e, '{% url storage_dataset_delete object_id=object.id %}');
 </script>
 <table> 
-    <tr><td>{% trans "Are you sure you want to delete?" %}</td></tr>
+    <tr>
+        <td>
+        {% blocktrans with name=name %}Are you sure you want to destroy "{{ name }}"?{% endblocktrans %}
+        <br />
+        <br />
+        {% trans "This will delete all files within dataset and child datasets." %}
+        </td>
+    </tr>
     <tr>
         <td>
             <button id="submitform" dojoType="dijit.form.Button" type="submit">
