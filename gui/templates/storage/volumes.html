@@ -79,6 +79,15 @@
                 <div dojoType="dijit.Tooltip" connectId="delZVolBtn{{ forloop.counter }}" position="above">
                     <strong>{% trans "Destroy ZFS Volume" %}</strong>
                 </div>
+                <button id="snapBtnZvol{{ forloop.counter }}" dojoType="dijit.form.Button" type="button">
+                    <img src="{{ STATIC_URL }}images/ui/buttons/create_snapshot.png" width="18px" height="18px">
+                    <script type="dojo/method" event="onClick" args="evt">
+                        editObject('{% trans "Create Snapshot"|force_escape %}', '{% url storage_manualsnap path=attrs.path %}', [this,]);
+                    </script>
+                </button>
+                <div dojoType="dijit.Tooltip" connectId="snapBtnZvol{{ forloop.counter }}" position="above">
+                    <strong>{% trans "Create Snapshot" %}</strong>
+                </div>
             </td>
         </tr>
         {% endfor %}

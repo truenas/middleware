@@ -825,6 +825,7 @@ class notifier:
                data = line.split('\t')
                retval[data[0]] = {
                 'volsize': data[1],
+                'path': '/dev/zvol/%s' % data[0],
                 }
         return retval
 
