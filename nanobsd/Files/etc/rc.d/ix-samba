@@ -153,6 +153,8 @@ generate_smbconf()
 EOF
 		if [ "${guestok}" = "1" ]; then
 			echo "    guest ok = yes"
+		else
+			echo "    guest ok = no"
 		fi
 		if [ "${guestonly}" = "1" ]; then
 			echo "    guest only = yes"
@@ -487,6 +489,8 @@ EOF
 			fi
 			if [ "${guestok}" = "1" ]; then
 				echo "    guest ok = yes"
+			else
+				echo "    guest ok = no"
 			fi
 			if [ "${guestonly}" = "1" ]; then
 				echo "    guest only = yes"
