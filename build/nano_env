@@ -56,4 +56,16 @@ NANO_IMGNAME="$NANO_NAME.full"
 export FREENAS_ROOT NANO_ARCH NANO_CFG_BASE NANO_IMGNAME NANO_KERNEL NANO_NAME
 export NANO_OBJ NANO_SRC REVISION SVNREVISION
 
+# The following variables are for builders with local package and distfile
+# mirrors. They're intentionally unset here to avoid accidental pollution from
+# one's environment. Please replace these lines with valid values.
+
+# See bsd.port.mk
+unset MASTER_SITE_BACKUP
+unset MASTER_SITE_OVERRIDE
+
+# See pkg_add(1).
+unset PACKAGEROOT
+unset PACKAGESITE
+
 # vim: syntax=sh

@@ -292,6 +292,16 @@ else
 	echo "Automatically building a * * F A T * * image so we can build ports"
 fi
 
+VARS="MASTER_SITE_BACKUP MASTER_SITE_OVERRIDE PACKAGEROOT PACKAGESITE"
+
+for var in $VARS; do
+	val=$(eval echo "\$$var")
+	if [ -n "$val" ]; then
+		CONF_INSTALL="${CONF_INSTALL}
+$var=$val"
+	fi
+done
+
 hack_nsswitch_conf ( )
 {
 	# Remove all references to NIS in the nsswitch.conf file
