@@ -1242,7 +1242,7 @@ class notifier:
             os.unlink(winacl)
 
         hier = ACL_Hierarchy(path)
-        hier.set_defaults(recursive)
+        hier.set_defaults(recursive=recursive)
         hier.chown(user + ":" + group, recursive)
         hier.chmod(mode, recursive)
         hier.close()
