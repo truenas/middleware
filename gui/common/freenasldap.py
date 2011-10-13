@@ -1062,7 +1062,7 @@ class FreeNAS_ActiveDirectory_Base(FreeNAS_LDAP_Directory):
                 syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: no domain objects found")
                 results = []
 
-            d = self.get_domain(dnsroot=self.domain)
+            d = self.get_domain(dnsroot=self.domain, netbiosname=self.netbiosname)
             if not d:
                 syslog(LOG_DEBUG, "FreeNAS_ActiveDirectory_Base.get_domains: can't get domain %s" % self.domain)
 
