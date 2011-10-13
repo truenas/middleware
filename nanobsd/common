@@ -177,14 +177,20 @@ CR()
 	newvers="$NANO_SRC/sys/conf/newvers.sh"
 	revision=$(grep -m 1 REVISION= $newvers | cut -f2 -d '"')
 	branch=$(grep -m 1 BRANCH= $newvers | cut -f2 -d '"')
-	# Invoke a subshell so we don't pollute the build environment with
-	# these variables.
+	# 1. Invoke a subshell so we don't pollute the build environment with
+	#    these variables.
+	# 2. Use sane defaults to avoid polluting the build environment with
+	#    system specific settings that might have been defined via
+	#    /etc/make.conf (LOCALBASE), etc.
 	(set -e
+	 env
+	 unset ENV
 	 export UNAME_m=$NANO_ARCH
 	 export UNAME_p=$NANO_ARCH
 	 export UNAME_r="$revision-$branch"
 	 export UNAME_v="$(uname -v | sed -e "s/$(uname -p)/$UNAME_p/" -e "s/$(uname -r)/$UNAME_r/g")"
 	 export OSVERSION=$(awk '/\#define.*__FreeBSD_version/ { print $3 }' "$NANO_SRC/sys/sys/param.h")
+	 export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin
 	 chroot ${NANO_WORLDDIR} /bin/sh -exc "$*")
 }
 
