@@ -130,10 +130,6 @@ class Volume(Model):
         # Refresh the fstab
         notifier().reload("disk")
 
-        if self.vol_fstype == 'ZFS':
-            Task.objects.filter(task_filesystem=self.vol_name).delete()
-            Replication.objects.filter(repl_filesystem=self.vol_name).delete()
-
         for (svc, dirty) in zip(svcs, reloads):
             if dirty:
                 notifier().start(svc)
@@ -338,6 +334,10 @@ class MountPoint(Model):
         return (reload_cifs, reload_afp, reload_nfs, reload_iscsi)
     def delete(self, do_reload=True):
         reloads = self.delete_attachments()
+
+        if self.mp_volume.vol_fstype == 'ZFS':
+            Task.objects.filter(task_filesystem=self.mp_path[5:]).delete()
+            Replication.objects.filter(repl_filesystem=self.mp_path[5:]).delete()
 
         if do_reload:
             svcs = ('cifs', 'afp', 'nfs', 'iscsitarget')
