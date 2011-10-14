@@ -1560,6 +1560,9 @@ class notifier:
     def zfs_snapshot_list(self):
         fsinfo = dict()
 
+        zfsproc = self.__pipeopen("/sbin/zfs list -t volume -o name -H")
+        zvols = filter(lambda y: y != '', zfsproc.communicate()[0].split('\n'))
+
         zfsproc = self.__pipeopen("/sbin/zfs list -t snapshot -H -S creation")
         lines = zfsproc.communicate()[0].split('\n')
         for line in lines:
@@ -1575,7 +1578,7 @@ class notifier:
                 except:
                     snaplist = []
                     mostrecent = True
-                snaplist.insert(0, dict([('fullname', snapname), ('name', name), ('used', used), ('refer', refer), ('mostrecent', mostrecent)]))
+                snaplist.insert(0, dict([('fullname', snapname), ('name', name), ('used', used), ('refer', refer), ('mostrecent', mostrecent), ('parent', 'filesystem' if fs not in zvols else 'volume')]))
                 fsinfo[fs] = snaplist
         return fsinfo
 

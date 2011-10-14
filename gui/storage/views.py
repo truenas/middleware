@@ -127,7 +127,7 @@ def snapshots_data(request):
         zfsnap_list = zfsnap_list[r1:r2]
     for snap in zfsnap_list:
         snap['extra'] = simplejson.dumps({
-            'clone_url': reverse('storage_clonesnap', kwargs={'snapshot': snap['fullname']}),
+            'clone_url': reverse('storage_clonesnap', kwargs={'snapshot': snap['fullname']}) if snap['parent'] == 'filesystem' else None,
             'rollback_url': reverse('storage_snapshot_rollback', kwargs={'dataset': snap['filesystem'], 'snapname': snap['name']}) if snap['mostrecent'] else None,
             'delete_url': reverse('storage_snapshot_delete', kwargs={'dataset': snap['filesystem'], 'snapname': snap['name']}),
         })
