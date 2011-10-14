@@ -157,15 +157,15 @@ mp_to_task_map = {}
 TaskObjects = Task.objects.all()
 for task in TaskObjects:
     if isMatchingTime(task, snaptime):
-        mp_path = "/mnt/" + task.task_filesystem
+        fs = task.task_filesystem
         expire_time = ('%s%s' % (task.task_ret_count, task.task_ret_unit[0])).__str__()
         tasklist = []
-        if mp_to_task_map.has_key((mp_path, expire_time)):
-            tasklist = mp_to_task_map[(mp_path, expire_time)]
+        if mp_to_task_map.has_key((fs, expire_time)):
+            tasklist = mp_to_task_map[(fs, expire_time)]
             tasklist.append(task)
         else:
             tasklist = [task]
-        mp_to_task_map[(mp_path, expire_time)] = tasklist
+        mp_to_task_map[(fs, expire_time)] = tasklist
 
 # Do not proceed further if we are not going to generate any snapshots for this run
 if len(mp_to_task_map) == 0:
@@ -180,8 +180,7 @@ reg_autosnap = re.compile('^auto-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2}).(
 for line in lines:
     if line != '':
         snapshot_name = line.split('\t')[0]
-        mp, snapname = snapshot_name.split('@')
-        mp = '/mnt/' + mp
+        fs, snapname = snapshot_name.split('@')
         snapname_match = reg_autosnap.match(snapname)
         if snapname_match != None:
             snap_infodict = snapname_match.groupdict()
@@ -189,13 +188,13 @@ for line in lines:
             if snap_expired(snap_infodict, snaptime):
                 snapshots_pending_delete.add(snapshot_name)
             else:
-                if mp_to_task_map.has_key((mp, snap_ret_policy)):
-                    if snapshots.has_key((mp, snap_ret_policy)):
-                        last_snapinfo = snapshots[(mp, snap_ret_policy)]
+                if mp_to_task_map.has_key((fs, snap_ret_policy)):
+                    if snapshots.has_key((fs, snap_ret_policy)):
+                        last_snapinfo = snapshots[(fs, snap_ret_policy)]
                         if snapinfodict2datetime(last_snapinfo) < snapinfodict2datetime(snap_infodict):
-                            snapshots[(mp, snap_ret_policy)] = snap_infodict
+                            snapshots[(fs, snap_ret_policy)] = snap_infodict
                     else:
-                        snapshots[(mp, snap_ret_policy)] = snap_infodict
+                        snapshots[(fs, snap_ret_policy)] = snap_infodict
 
 list_mp = mp_to_task_map.keys()
 
@@ -213,7 +212,7 @@ for mpkey in list_mp:
 snaptime_str = snaptime.strftime('%Y%m%d.%H%M')
 
 for mpkey in mp_to_task_map:
-    mp_path, expire = mpkey
+    fs, expire = mpkey
     recursive = False
     for task in tasklist:
         if task.task_recursive == True:
@@ -223,7 +222,6 @@ for mpkey in mp_to_task_map:
     else:
         rflag = ''
 
-    fs = mp_path[5:]
     snapname = '%s@auto-%s-%s' % (fs, snaptime_str, expire)
 
     # If there is associated replication task, mark the snapshots as 'NEW'.
