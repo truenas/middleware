@@ -40,11 +40,13 @@ import grp
 import os
 import pwd
 import re
+import shlex
 import shutil
 import signal
 import sqlite3
 import stat
 from subprocess import Popen, PIPE
+import subprocess
 import sys
 import syslog
 import tempfile
@@ -1311,8 +1313,17 @@ class notifier:
         return False
 
     def update_firmware(self, path):
-        self.__system("/usr/bin/xz -cd %s | sh /root/update && touch /data/need-update" % (path))
-        self.__system("/bin/rm -fr /var/tmp/firmware/firmware.xz")
+        syslog.openlog('freenas', syslog.LOG_CONS | syslog.LOG_PID)
+        try:
+            command = '/usr/bin/xz -cd %s | sh /root/update' % (path, )
+            syslog.syslog(syslog.LOG_NOTICE, 'Executing: ' + command)
+            output = subprocess.check_output(shlex.split(command), shell=True)
+        except subprocess.CalledProcessError, cpe:
+            raise MiddlewareError('The update failed: %s' % (str(cpe), ))
+        finally:
+            os.unlink('/var/tmp/firmware/firmware.xz')
+            syslog.closelog()
+        open('/data/need-update', 'w').close()
 
     def apply_servicepack(self):
         self.__system("/usr/bin/xz -cd /var/tmp/firmware/servicepack.txz | /usr/bin/tar xf - -C /var/tmp/firmware/ etc/servicepack/version.expected")
@@ -1320,15 +1331,17 @@ class notifier:
             with open(VERSION_FILE) as f:
                 freenas_build = f.read()
         except:
-            return 'Could not determine software version from service pack'
+            raise MiddlewareError('Could not determine software version from '
+                                  'running system')
         try:
             with open('/var/tmp/firmware/etc/servicepack/version.expected') as f:
                 expected_build = f.read()
         except:
-            return 'Could not determine software version from service pack'
+            raise MiddlewareError('Could not determine software version from '
+                                  'service pack')
         if freenas_build != expected_build:
-            return 'Software versions did not match ("%s" != "%s")' % \
-                (freenas_build, expected_build)
+            raise MiddlewareError('Software versions did not match ("%s" != '
+                                  '"%s")' % (freenas_build, expected_build))
         self.__system("/sbin/mount -uw /")
         self.__system("/usr/bin/xz -cd /var/tmp/firmware/servicepack.txz | /usr/bin/tar xf - -C /")
         self.__system("/bin/sh /etc/servicepack/post-install")
