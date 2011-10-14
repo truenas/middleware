@@ -628,7 +628,8 @@
            }
         );
 
-        var rnode = dijit.getEnclosingWidget(item.domNode.parentNode);
+        var rnode = getDialog(item);
+        if(!rnode) rnode = dijit.getEnclosingWidget(item.domNode.parentNode);
         if(!rnode) rnode = dijit.byId("edit_dialog");
 
         // are there any files to be submited?
@@ -915,6 +916,7 @@
         var turn = from;
         while(1) {
             turn = dijit.getEnclosingWidget(turn.domNode.parentNode);
+            if(turn == null) return null;
             if(turn.isInstanceOf(dijit.Dialog)) break;
         }
         return turn;
