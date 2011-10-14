@@ -111,7 +111,7 @@ replication_tasks = Replication.objects.all()
 for replication in replication_tasks:
     remote = replication.repl_remote.ssh_remote_hostname.__str__()
     remotefs = replication.repl_zfs.__str__()
-    localfs = replication.repl_mountpoint.mp_path[5:].__str__()
+    localfs = replication.repl_filesystem.__str__()
     last_snapshot = replication.repl_lastsnapshot.__str__()
     resetonce = replication.repl_resetonce
 

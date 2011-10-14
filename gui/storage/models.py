@@ -416,9 +416,9 @@ class ReplRemote(Model):
         return self.ssh_remote_hostname
 
 class Replication(Model):
-    repl_mountpoint = models.ForeignKey(MountPoint,
-            limit_choices_to = {'mp_volume__vol_fstype__exact' : 'ZFS'},
-            verbose_name = _("Mount Point"),
+    repl_filesystem = models.CharField(max_length=150,
+            verbose_name = _("Filesystem/Volume"),
+            blank = True,
             )
     repl_lastsnapshot = models.CharField(max_length=120,
             blank = True,
@@ -452,7 +452,7 @@ class Replication(Model):
         icon_view = u"ViewAllReplIcon"
         icon_object = u"ReplIcon"
     def __unicode__(self):
-        return '%s -> %s' % (self.repl_mountpoint, self.repl_remote.ssh_remote_hostname)
+        return '%s -> %s' % (self.repl_filesystem, self.repl_remote.ssh_remote_hostname)
     def delete(self):
         try:
             if self.repl_lastsnapshot != "":

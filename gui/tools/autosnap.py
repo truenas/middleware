@@ -223,10 +223,11 @@ for mpkey in mp_to_task_map:
     else:
         rflag = ''
 
-    snapname = '%s@auto-%s-%s' % (mp_path[5:], snaptime_str, expire)
+    fs = mp_path[5:]
+    snapname = '%s@auto-%s-%s' % (fs, snaptime_str, expire)
 
     # If there is associated replication task, mark the snapshots as 'NEW'.
-    if Replication.objects.filter(repl_mountpoint__mp_path = mp_path).count() > 0:
+    if Replication.objects.filter(repl_filesystem = fs).count() > 0:
         MNTLOCK.lock()
         snapcmd = '/sbin/zfs snapshot%s -o freenas:state=NEW %s' % (rflag, snapname)
         system(snapcmd)

@@ -17,7 +17,7 @@
     </div>
 <table class="grid">
     <thead class="ghead">
-	    <td>{% trans "Mount point" %}</td>
+	    <td>{% trans "Filesystem/Volume" %}</td>
 	    <td>{% trans "Last snapshot" %}</td>
 	    <td>{% trans "Remote Host" %}</td>
 	    <td>{% trans "Remote ZFS filesystem" %}</td>
@@ -26,7 +26,7 @@
     <tbody>
 	{% for repl in zfsrepl_list %}
 	<tr class="{% cycle 'odd' 'even' %}">
-	    <td>{{ repl.repl_mountpoint }}</td>
+	    <td>{{ repl.repl_filesystem }}</td>
 	    <td>{{ repl.repl_lastsnpashot }}</td>
 	    <td>{{ repl.repl_remote }}</td>
 	    <td>{{ repl.repl_zfs }}</td>

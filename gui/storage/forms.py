@@ -945,7 +945,6 @@ class PeriodicSnapForm(ModelForm):
                 label=self.fields['task_filesystem'].label,
                 )
         self.fields['task_filesystem'].choices = notifier().list_zfs_fsvols().items()
-        print notifier().list_zfs_fsvols()
         #self.fields['task_repeat_unit'].widget = forms.Select(choices=choices.RepeatUnit_Choices, attrs={'onChange': 'taskrepeat_checkings();'})
         self.fields['task_repeat_unit'].widget = forms.HiddenInput()
 
@@ -1107,7 +1106,14 @@ class ReplicationForm(ModelForm):
     def __init__(self, *args, **kwargs):
         repl = kwargs.get('instance', None)
         super(ReplicationForm, self).__init__(*args, **kwargs)
-        self.fields['repl_mountpoint'].queryset = self.fields['repl_mountpoint'].queryset.filter(task__in=models.Task.objects.all()).distinct()
+        self.fields['repl_filesystem'] = forms.ChoiceField(
+                label=self.fields['repl_filesystem'].label,
+                )
+        fs = list(set([
+                (task.task_filesystem, task.task_filesystem)
+                for task in models.Task.objects.all()
+             ]))
+        self.fields['repl_filesystem'].choices = fs
         if repl != None and repl.id != None:
             self.fields['remote_hostname'].initial = repl.repl_remote.ssh_remote_hostname
             self.fields['remote_hostkey'].initial = repl.repl_remote.ssh_remote_hostkey

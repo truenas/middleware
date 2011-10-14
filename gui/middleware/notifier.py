@@ -836,7 +836,6 @@ class notifier:
         out, err = proc.communicate()
         out = out.split('\n')
         retval = SortedDict()
-        print out
         if proc.returncode == 0:
             for line in out:
                 if not line:
