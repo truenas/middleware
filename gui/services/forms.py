@@ -127,13 +127,13 @@ class FTPForm(ModelForm):
             instance = kwargs['instance']
             try:
                 mask = int(instance.ftp_filemask, 8)
-                instance.ftp_filemask = "%.3o" % (~mask & 0o666)
+                instance.ftp_filemask = "%.3o" % (~mask & 0o777)
             except ValueError:
                 pass
 
             try:
                 mask = int(instance.ftp_dirmask, 8)
-                instance.ftp_dirmask = "%.3o" % (~mask & 0o777)
+                instance.ftp_dirmask = "%.3o" % (~mask & 0o666)
             except ValueError:
                 pass
 
