@@ -130,6 +130,10 @@ class Volume(Model):
         # Refresh the fstab
         notifier().reload("disk")
 
+        if self.vol_fstype == 'ZFS':
+            Task.objects.filter(task_filesystem=self.vol_name).delete()
+            Replication.objects.filter(repl_filesystem=self.vol_name).delete()
+
         for (svc, dirty) in zip(svcs, reloads):
             if dirty:
                 notifier().start(svc)

@@ -14,7 +14,10 @@ def evil_zvol_destroy(name, iSCSITargetExtent, Disk, destroy=True, WearingSafety
             reloads = (False, False, False, True)
 
     if destroy:
+        from storage.models import Task, Replication
         retval = notifier().destroy_zfs_vol(name)
+        Task.objects.filter(task_filesystem=name).delete()
+        Replication.objects.filter(repl_filesystem=name).delete()
     else:
         retval = "Not destroyed"
 

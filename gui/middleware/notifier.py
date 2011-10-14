@@ -863,6 +863,9 @@ class notifier:
             zfsproc = self.__pipeopen("zfs destroy %s" % (path))
             retval = zfsproc.communicate()[1]
             if zfsproc.returncode == 0:
+                from storage.models import Task, Replication
+                Task.objects.filter(task_filesystem=path).delete()
+                Replication.objects.filter(repl_filesystem=path).delete()
                 self.restart("collectd")
         return retval
 
