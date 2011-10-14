@@ -941,6 +941,11 @@ class PeriodicSnapForm(ModelForm):
                                            second=int(search.group("sec")))
             args = (new,) + args[1:]
         super(PeriodicSnapForm, self).__init__(*args, **kwargs)
+        self.fields['task_filesystem'] = forms.ChoiceField(
+                label=self.fields['task_filesystem'].label,
+                )
+        self.fields['task_filesystem'].choices = notifier().list_zfs_fsvols().items()
+        print notifier().list_zfs_fsvols()
         #self.fields['task_repeat_unit'].widget = forms.Select(choices=choices.RepeatUnit_Choices, attrs={'onChange': 'taskrepeat_checkings();'})
         self.fields['task_repeat_unit'].widget = forms.HiddenInput()
 

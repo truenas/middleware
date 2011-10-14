@@ -29,6 +29,7 @@ import os
 import re
 import subprocess
 import sys
+import syslog
 sys.path.append('/usr/local/www')
 sys.path.append('/usr/local/www/freenasUI')
 
@@ -156,7 +157,7 @@ mp_to_task_map = {}
 TaskObjects = Task.objects.all()
 for task in TaskObjects:
     if isMatchingTime(task, snaptime):
-        mp_path = task.task_mountpoint.mp_path.__str__()
+        mp_path = "/mnt/" + task.task_filesystem
         expire_time = ('%s%s' % (task.task_ret_count, task.task_ret_unit[0])).__str__()
         tasklist = []
         if mp_to_task_map.has_key((mp_path, expire_time)):

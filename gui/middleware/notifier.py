@@ -61,6 +61,7 @@ sys.path.append(FREENAS_PATH)
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
 from django.db import models
+from django.utils.datastructures import SortedDict
 
 from freenasUI.common.acl import ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE
 from freenasUI.common.freenasacl import ACL, ACL_Hierarchy
@@ -827,6 +828,20 @@ class notifier:
                 'volsize': data[1],
                 'path': '/dev/zvol/%s' % data[0],
                 }
+        return retval
+
+    def list_zfs_fsvols(self):
+
+        proc = self.__pipeopen("/sbin/zfs list -H -o name -t volume,filesystem")
+        out, err = proc.communicate()
+        out = out.split('\n')
+        retval = SortedDict()
+        print out
+        if proc.returncode == 0:
+            for line in out:
+                if not line:
+                    continue
+                retval[line] = line
         return retval
 
     def destroy_zfs_dataset(self, path):

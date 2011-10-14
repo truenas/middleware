@@ -50,7 +50,7 @@ def home(request):
     })
 
 def tasks(request):
-    task_list = models.Task.objects.order_by("-id").all()
+    task_list = models.Task.objects.order_by("task_filesystem").all()
     return render(request, 'storage/tasks.html', {
         'task_list': task_list,
         })

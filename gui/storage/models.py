@@ -463,9 +463,9 @@ class Replication(Model):
         super(Replication, self).delete()
 
 class Task(Model):
-    task_mountpoint = models.ForeignKey(MountPoint,
-            limit_choices_to = {'mp_volume__vol_fstype__exact' : 'ZFS'},
-            verbose_name = _("Mount Point"))
+    task_filesystem = models.CharField(max_length=150,
+            verbose_name = _("Filesystem/Volume"),
+            )
     task_recursive = models.BooleanField(
             default = False,
             verbose_name = _("Recursive"),
@@ -522,7 +522,7 @@ class Task(Model):
 #            blank = True,
 #            )
     def __unicode__(self):
-        return '%s_%s_%d%s' % (self.task_mountpoint.mp_path[5:],
+        return '%s_%s_%d%s' % (self.task_filesystem,
                 self.task_repeat_unit, self.task_ret_count, self.task_ret_unit)
 
     class Meta:
