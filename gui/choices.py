@@ -308,8 +308,7 @@ class NICChoices(object):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
         # Remove lo0 from choices
-        if 'lo0' in self._NIClist:
-            self._NIClist.remove('lo0')
+        self._NIClist = filter(lambda y: y not in ('lo0', 'pfsync0', 'pflog0'), self._NIClist)
         conn = sqlite3.connect(freenasUI.settings.DATABASES['default']['NAME'])
         c = conn.cursor()
         # Remove interfaces that are parent devices of a lagg
