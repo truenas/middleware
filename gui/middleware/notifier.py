@@ -1216,8 +1216,8 @@ class notifier:
     def save_pubkey(self, homedir, pubkey, username, groupname):
         dirty = False
         homedir = str(homedir)
-        pubkey = str(pubkey)
-        if pubkey[-1] != '\n':
+        pubkey = str(pubkey).strip()
+        if pubkey:
             pubkey = '%s\n' % pubkey
         sshpath = '%s/.ssh' % (homedir)
         keypath = '%s/.ssh/authorized_keys' % (homedir)

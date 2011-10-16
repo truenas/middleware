@@ -344,7 +344,7 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
             bsduser.bsdusr_builtin=False
             bsduser.save()
             _notifier.reload("user")
-            bsdusr_sshpubkey = str(self.cleaned_data['bsdusr_sshpubkey'])
+            bsdusr_sshpubkey = self.cleaned_data['bsdusr_sshpubkey']
             if bsdusr_sshpubkey:
                 _notifier.save_pubkey(bsduser.bsdusr_home, bsdusr_sshpubkey, bsduser.bsdusr_username, bsduser.bsdusr_group.bsdgrp_group)
         return bsduser
