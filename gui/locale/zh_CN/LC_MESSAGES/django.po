@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-06-09 13:49-0700\n"
-"PO-Revision-Date: 2011-09-30 07:20+0200\n"
+"PO-Revision-Date: 2011-10-17 06:51+0200\n"
 "Last-Translator: Flevi <Flevi@fleviliu.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -1330,7 +1330,7 @@ msgstr "启用或禁用AIO支持"
 
 #: services/models.py:158
 msgid "Minimum AIO read size"
-msgstr "最小 AIO 读尺寸"
+msgstr "AIO读取最小数据块"
 
 #: services/models.py:159
 msgid ""
@@ -1340,7 +1340,7 @@ msgstr "如果要求的大小比这个值大，Samba将不同步地读取。默�
 
 #: services/models.py:164
 msgid "Minimum AIO write size"
-msgstr "最小 AIO 写尺寸"
+msgstr "AIO写入最小数据块"
 
 #: services/models.py:165
 msgid ""
