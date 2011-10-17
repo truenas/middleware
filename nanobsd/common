@@ -182,6 +182,7 @@ CR()
 	# 2. Use sane defaults to avoid polluting the build environment with
 	#    system specific settings that might have been defined via
 	#    /etc/make.conf (LOCALBASE), etc.
+	mount -t devfs none $NANO_WORLDDIR/dev
 	(set -e
 	 env
 	 unset ENV
@@ -192,6 +193,7 @@ CR()
 	 export OSVERSION=$(awk '/\#define.*__FreeBSD_version/ { print $3 }' "$NANO_SRC/sys/sys/param.h")
 	 export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 	 chroot ${NANO_WORLDDIR} /bin/sh -exc "$*")
+	umount $NANO_WORLDDIR/dev
 }
 
 # install a package from a pre-built binary
@@ -235,7 +237,6 @@ do_add_port ()
 	mount -t nullfs -o noatime ${NANO_OBJ}/ports/distfiles \
 	    ${NANO_WORLDDIR}/usr/ports/distfiles
 	mkdir -p ${NANO_WORLDDIR}/dev
-	mount -t devfs devfs ${NANO_WORLDDIR}/dev
 	mkdir -p ${NANO_WORLDDIR}/usr/workdir
 	cp /etc/resolv.conf ${NANO_WORLDDIR}/etc/resolv.conf
 # Improvement: Don't know why package-recursive don't works here
@@ -250,7 +251,6 @@ do_add_port ()
 	rm ${NANO_WORLDDIR}/etc/resolv.conf
 	rm -rf ${NANO_WORLDDIR}/usr/obj
 	rm -rf ${NANO_WORLDDIR}/usr/workdir
-	umount ${NANO_WORLDDIR}/dev
 	umount ${NANO_WORLDDIR}/usr/ports/packages
 	umount ${NANO_WORLDDIR}/usr/ports/distfiles
 	umount ${NANO_WORLDDIR}/usr/ports
