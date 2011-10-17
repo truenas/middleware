@@ -236,7 +236,6 @@ do_add_port ()
 	    ${NANO_WORLDDIR}/usr/ports/packages
 	mount -t nullfs -o noatime ${NANO_OBJ}/ports/distfiles \
 	    ${NANO_WORLDDIR}/usr/ports/distfiles
-	mkdir -p ${NANO_WORLDDIR}/dev
 	mkdir -p ${NANO_WORLDDIR}/usr/workdir
 	cp /etc/resolv.conf ${NANO_WORLDDIR}/etc/resolv.conf
 # Improvement: Don't know why package-recursive don't works here
