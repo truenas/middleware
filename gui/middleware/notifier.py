@@ -1030,8 +1030,6 @@ class notifier:
         todev = self.identifier_to_partition(ident)
         todev_swap = self.swap_from_identifier(ident)
 
-        if todev_swap:
-            self.__system('/sbin/swapon /dev/%s' % (todev_swap))
 
         if from_disk.id == to_disk.id:
             self.__system('/sbin/zpool online %s %s' % (volume.vol_name, zdev))
@@ -1043,8 +1041,14 @@ class notifier:
             stdout, stderr = p1.communicate()
             ret = p1.returncode
             if ret != 0:
+                if fromdev_swap != '':
+                    self.__system('/sbin/swapon /dev/%s' % (fromdev_swap))
                 error = ", ".join(stderr.split('\n'))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
+
+        if todev_swap:
+            self.__system('/sbin/swapon /dev/%s' % (todev_swap))
+
         return ret
 
     def zfs_detach_disk(self, volume, disk):
