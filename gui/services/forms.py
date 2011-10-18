@@ -309,6 +309,11 @@ class UPSForm(ModelForm):
             self.fields['ups_port'].choices.insert(0, ( self.data.get("ups_port"), self.data.get("ups_port")))
         elif self.instance.id:
             self.fields['ups_port'].choices.insert(0, ( self.instance.ups_port, self.instance.ups_port))
+    def clean_ups_identifier(self):
+        ident = self.cleaned_data.get("ups_identifier")
+        if not re.search(r'^[a-z0-9\.\-_]+$', ident):
+            raise forms.ValidationError(_("Use alphanumeric characters, \".\", \"-\" and \"_\"."))
+        return ident
     def clean_ups_toemail(self):
         email = self.cleaned_data.get("ups_toemail")
         if email:
