@@ -307,6 +307,8 @@ class UPSForm(ModelForm):
         self.fields['ups_port'].choices = [(port,port) for port in ports]
         if self.data and self.data.get("ups_port"):
             self.fields['ups_port'].choices.insert(0, ( self.data.get("ups_port"), self.data.get("ups_port")))
+        elif self.instance.id:
+            self.fields['ups_port'].choices.insert(0, ( self.instance.ups_port, self.instance.ups_port))
     def clean_ups_toemail(self):
         email = self.cleaned_data.get("ups_toemail")
         if email:
