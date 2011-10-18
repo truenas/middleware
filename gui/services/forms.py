@@ -300,8 +300,8 @@ class UPSForm(ModelForm):
         }
     def __init__(self, *args, **kwargs):
         super(UPSForm, self).__init__(*args, **kwargs)
-        ports = filter(lambda x: x.find('.') == -1,
-                       glob.glob('/dev/cua*') + glob.glob('/dev/ugen*'))
+        ports = filter(lambda x: x.find('.') == -1, glob.glob('/dev/cua*'))
+        ports.extend(glob.glob('/dev/ugen*'))
         self.fields['ups_port'] = forms.ChoiceField(label=_("Port"))
         self.fields['ups_port'].widget = forms.widgets.ComboBox()
         self.fields['ups_port'].choices = [(port,port) for port in ports]
