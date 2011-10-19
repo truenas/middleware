@@ -1,5 +1,5 @@
 {% load i18n %}
-<button id="periodicSnapBtn" data-dojo-type="dijit.form.Button" type="button">
+<button id="periodicSnapBtn" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/create_periodic_snapshot.png">
         <br />
         <p>Add Periodic Snapshot</p>
@@ -128,13 +128,13 @@
 		{{ p.task_ret_unit }}
 	    </td>
             <td>
-                <button data-dojo-type="dijit.form.Button" type="button">
+                <button dojoType="dijit.form.Button" type="button">
                     {% trans "Modify" %}
                     <script type="dojo/method" event="onClick" args="evt">
                         editObject('{% trans "Modify"|force_escape %}', '{% url freeadmin_model_edit app="storage",model="Task",oid=p.id %}', [this,]);
                     </script>
                 </button>
-                <button data-dojo-type="dijit.form.Button" type="button">
+                <button dojoType="dijit.form.Button" type="button">
                     {% trans "Delete" %}
                     <script type="dojo/method" event="onClick" args="evt">
                         editObject('{% trans "Delete"|force_escape %}', '{% url freeadmin_model_delete app="storage",model="Task",oid=p.id %}', [this,]);

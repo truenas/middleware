@@ -24,7 +24,7 @@
     });
 </script>
 <!-- THIS IS A LOGIN WEBPAGE -->
-<div data-dojo-type="dijit.layout.TabContainer" style="width:100%;" doLayout="false" region="center">
+<div dojoType="dijit.layout.TabContainer" style="width:100%;" doLayout="false" region="center">
 {% if form.errors %}
 <script type="dojo/method">
     dojo.addOnLoad(function() {
@@ -47,7 +47,7 @@
 {% if user.is_authenticated %}
 <p>{% blocktrans with user.username as username %}Welcome, {{ username }}. Thanks for logging in.{% endblocktrans %}</p>
 {% else %} 
-<div id="login" data-dojo-type="dijit.Dialog" title="{% blocktrans with sw_login_version=sw_login_version|title sw_name=sw_name|title %}Welcome to {{ sw_name }}&trade; {{ sw_login_version }}{% endblocktrans %}">
+<div id="login" dojoType="dijit.Dialog" title="{% blocktrans with sw_login_version=sw_login_version|title sw_name=sw_name|title %}Welcome to {{ sw_name }}&trade; {{ sw_login_version }}{% endblocktrans %}">
     <h3>{% trans "Please log in." %}</h3>
 <form action="." method="post">{% csrf_token %}
 <table>
@@ -60,7 +60,7 @@
     <td>{{ form.password }}</td>
 </tr>
 </table>
-<button data-dojo-type="dijit.form.Button" type="submit">{% trans "Log In" %}</button>
+<button dojoType="dijit.form.Button" type="submit">{% trans "Log In" %}</button>
 <input type="hidden" name="next" value="{{ next }}" />
 </form>
     </div>

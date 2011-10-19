@@ -15,13 +15,13 @@
            <td>{{ v.vlan_tag }}</td>
            <td>{{ v.vlan_description }}</td>
            <td>
-               <button data-dojo-type="dijit.form.Button" type="button">
+               <button dojoType="dijit.form.Button" type="button">
                    {% trans "Edit" %}
                <script type="dojo/method" event="onClick" args="evt">
                    editObject('{% trans "Edit VLAN"|force_escape %}', '{% url freeadmin_model_edit app="network",model="VLAN",oid=v.id %}', [this,]);
                </script>
                </button>
-               <button data-dojo-type="dijit.form.Button" type="button">
+               <button dojoType="dijit.form.Button" type="button">
                    {% trans "Delete" %}
                <script type="dojo/method" event="onClick" args="evt">
                    editObject('{% trans "Delete VLAN"|force_escape %}', '{% url freeadmin_model_delete app="network",model="VLAN",oid=v.id %}', [this,]);
@@ -36,7 +36,7 @@
        {% endfor %}
        </table>
        <p class="btn">
-           <button id="vlan_button" data-dojo-type="dijit.form.Button" type="button">
+           <button id="vlan_button" dojoType="dijit.form.Button" type="button">
                {% trans "Add VLAN Interface" %}
                <script type="dojo/method" event="onClick" args="evt">
                    addObject('{% trans "Add VLAN Interface"|force_escape %}', '{% url freeadmin_model_add app="network",model="VLAN" %}', [this,]);

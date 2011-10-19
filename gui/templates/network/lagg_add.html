@@ -1,19 +1,19 @@
 {% load i18n %}
-<form data-dojo-type="dijit.form.Form">
+<form dojoType="dijit.form.Form">
 <script type="dojo/event" event="onSubmit" args="e">
     formSubmit(this, e, '{% url network_lagg_add %}');
 </script>
 <table> 
     {{ lagg }}
 <tr><td>
-        <button class="submitform" data-dojo-type="dijit.form.Button" type="submit">
+        <button class="submitform" dojoType="dijit.form.Button" type="submit">
             {% trans "OK" %}
             <script type="dojo/method" event="onClick" args="evt">
                 this.set('label', '{% trans "Please wait..."|force_escape %}');
             </script>
         </button>
 
-        <button data-dojo-type="dijit.form.Button"
+        <button dojoType="dijit.form.Button"
             onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
         </td></tr>
 </table>

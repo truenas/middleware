@@ -14,13 +14,13 @@
                 <td>{{ i.sr_gateway }}</td>
                 <td>{{ i.sr_description }}</td>
                 <td>
-                <button data-dojo-type="dijit.form.Button" type="button">
+                <button dojoType="dijit.form.Button" type="button">
                     {% trans "Edit" %}
                 <script type="dojo/method" event="onClick" args="evt">
                     editObject('{% trans "Edit Static Route"|force_escape %}', '{% url freeadmin_model_edit app="network",model="StaticRoute",oid=i.id %}', [this,]);
                 </script>
                 </button>
-                <button data-dojo-type="dijit.form.Button" type="button">
+                <button dojoType="dijit.form.Button" type="button">
                     {% trans "Delete" %}
                 <script type="dojo/method" event="onClick" args="evt">
                     editObject('{% trans "Delete Static Route"|force_escape %}', '{% url freeadmin_model_delete app="network",model="StaticRoute",oid=i.id %}', [this,]);
@@ -35,7 +35,7 @@
         {% endfor %}
     </table>
 
-    <button id="sr_button" data-dojo-type="dijit.form.Button" type="button">
+    <button id="sr_button" dojoType="dijit.form.Button" type="button">
         {% trans "Add Static Route" %}
     <script type="dojo/method" event="onClick" args="evt">
         addObject('{% trans "Add Static Route"|force_escape %}', '{% url freeadmin_model_add app="network",model="StaticRoute" %}', [this,]);

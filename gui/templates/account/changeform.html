@@ -1,5 +1,5 @@
 {% load i18n %}
-<form data-dojo-type="dijit.form.Form">
+<form dojoType="dijit.form.Form">
 <script type="dojo/event" event="onSubmit" args="e">
     formSubmit(this, e, '{% url account_changeform %}');
 </script>
@@ -22,7 +22,7 @@
          </tr>
         {% endfor %}
      </table>
-     <button style="margin-top:16px;" data-dojo-type="dijit.form.Button" type="submit" class="submitform">
+     <button style="margin-top:16px;" dojoType="dijit.form.Button" type="submit" class="submitform">
         {% trans "Change Admin User" %}
          <script type="dojo/method" event="onClick" args="evt">
              dojo.attr(this.domNode, "oldlabel", this.get('label'));

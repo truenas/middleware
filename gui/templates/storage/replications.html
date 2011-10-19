@@ -1,12 +1,12 @@
 {% load i18n %}
-    <button id="addReplBtn" data-dojo-type="dijit.form.Button" type="button">
+    <button id="addReplBtn" dojoType="dijit.form.Button" type="button">
     <img src="{{ STATIC_URL }}images/ui/buttons/add_replication.png" />
     <p>{% trans "Add Replication" %}</p>
     <script type="dojo/method" event="onClick" args="evt">
         volumeWizard('{% trans "Add Replication"|force_escape %}', '{% url freeadmin_model_add app='storage',model='Replication' %}', [this,]);
     </script>
     </button>
-    <button id="viewReplBtn" data-dojo-type="dijit.form.Button" type="button">
+    <button id="viewReplBtn" dojoType="dijit.form.Button" type="button">
     <p>{% trans "View Public Key" %}</p>
     <script type="dojo/method" event="onClick" args="evt">
         volumeWizard('{% trans "View Public Key"|force_escape %}', '{% url storage_replications_key %}', [this,]);
@@ -31,22 +31,22 @@
 	    <td>{{ repl.repl_remote }}</td>
 	    <td>{{ repl.repl_zfs }}</td>
 	    <td>
-                <button id="delRepl{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" data-dojo-type="dijit.form.Button" type="button">
+                <button id="delRepl{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button">
                     <img src="{{ STATIC_URL }}images/ui/buttons/delete_replication.png" />
                     <script type="dojo/method" event="onClick" args="evt">
                         editObject('{% trans "Delete Replication"|force_escape %}', '{% url freeadmin_model_delete app='storage' model='Replication' oid=repl.id %}', [this,]);
                     </script>
                 </button>
-                <div data-dojo-type="dijit.Tooltip" connectId="delRepl{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
+                <div dojoType="dijit.Tooltip" connectId="delRepl{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
                     <strong>{% trans "Delete Replication" %}</strong>
                 </div>
-                <button id="editRepl{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" data-dojo-type="dijit.form.Button" type="button">
+                <button id="editRepl{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" dojoType="dijit.form.Button" type="button">
                     <img src="{{ STATIC_URL }}images/ui/buttons/edit_replication.png" />
                     <script type="dojo/method" event="onClick" args="evt">
                         editObject('{% trans "Edit Replication"|force_escape %}', '{% url freeadmin_model_edit app='storage' model='Replication' oid=repl.id %}', [this,]);
                     </script>
                 </button>
-                <div data-dojo-type="dijit.Tooltip" connectId="editRepl{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
+                <div dojoType="dijit.Tooltip" connectId="editRepl{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}" position="above">
                     <strong>{% trans "Edit Replication" %}</strong>
                 </div>
 	    </td>

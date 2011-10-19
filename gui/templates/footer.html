@@ -1,14 +1,14 @@
-<div data-dojo-type="dijit.layout.BorderContainer" id="footer" style="width:100%; " data-dojo-props="gutters:false">
-<div data-dojo-type="dijit.layout.ContentPane" style="color:#ccc;margin-left:10px;margin-top:35px;width:225px;overflow:hidden;" data-dojo-props="region:'left'">
+<div dojoType="dijit.layout.BorderContainer" id="footer" style="width:100%; " gutters="false">
+<div dojoType="dijit.layout.ContentPane" style="color:#ccc;margin-left:10px;margin-top:35px;width:225px;overflow:hidden;" region="left">
 {{ sw_name }}&trade; &copy; 2011 <a href="http://www.ixsystems.com" target="_blank" title="iXsystems, Inc.">iXsystems, Inc.</a>
 </div>
-<div data-dojo-type="dijit.layout.ContentPane" style="margin-left:auto;margin-right:auto;display:block;width:80%;overflow:hidden;" data-dojo-props="region:'center'">
+<div dojoType="dijit.layout.ContentPane" style="margin-left:auto;margin-right:auto;display:block;width:80%;overflow:hidden;" region="center">
 {% if consolemsg %}
 <pre class="message" id="msg_output" onClick="dijit.byId('log_dialog').show();"></pre>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/msg.js"></script>
 {% endif %}
 </div>
-<div data-dojo-type="dijit.layout.ContentPane" style="width:125px;overflow:hidden;" data-dojo-props="region:'right'">
+<div dojoType="dijit.layout.ContentPane" style="width:125px;overflow:hidden;" region="right">
 <img src="{{ STATIC_URL }}ix/ix_logo.png" border="0" alt="iXsystems, Inc." align="right" style="padding-right:10px;"/></a>
 </div>
 </div>

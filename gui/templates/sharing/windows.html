@@ -28,13 +28,13 @@
 			{{ c.cifs_path }}
 		    </td>
                     <td>
-                        <button data-dojo-type="dijit.form.Button" type="button">
+                        <button dojoType="dijit.form.Button" type="button">
                             {% trans "Edit" %}
                         <script type="dojo/method" event="onClick" args="evt">
                         editObject('{% trans "Edit Windows Share"|force_escape %}', '{{ c.get_edit_url }}', [this,]);
                         </script>
                         </button>
-                        <button data-dojo-type="dijit.form.Button" type="button">
+                        <button dojoType="dijit.form.Button" type="button">
                             {% trans "Delete" %}
                         <script type="dojo/method" event="onClick" args="evt">
                         editObject('{% trans "Delete Windows Share"|force_escape %}', '{{ c.get_delete_url }}', [this,]);
@@ -50,7 +50,7 @@
             </tbody>
                 </table>
                 <p class="btn">
-                    <button data-dojo-type="dijit.form.Button" type="button">
+                    <button dojoType="dijit.form.Button" type="button">
                         {% trans "Add Windows Share" %}
                         <script type="dojo/method" event="onClick" args="evt">
                         editObject('{% trans "Add Windows Share (CIFS)"|force_escape %}', '{% url freeadmin_model_add app="sharing" model="CIFS_Share" %}', [this,]);

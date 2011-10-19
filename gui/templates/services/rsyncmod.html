@@ -14,13 +14,13 @@
         <td>{{ r.rsyncmod_comment }}</td>
         <td>{{ r.rsyncmod_path }}</td>
         <td>
-             <button data-dojo-type="dijit.form.Button" type="button">
+             <button dojoType="dijit.form.Button" type="button">
                  {% trans "Edit" %}
              <script type="dojo/method" event="onClick" args="evt">
                  editObject('{% trans "Edit"|force_escape %}', '{{ r.get_edit_url }}', [this,]);
              </script>
              </button>
-             <button data-dojo-type="dijit.form.Button" type="button">
+             <button dojoType="dijit.form.Button" type="button">
                  {% trans "Delete" %}
              <script type="dojo/method" event="onClick" args="evt">
                  editObject('{% trans "Delete"|force_escape %}', '{{ r.get_delete_url }}', [this,]);
@@ -36,7 +36,7 @@
     {% endfor %}
     </table>
     <p class="btn">
-        <button id="tgt_button" data-dojo-type="dijit.form.Button" type="button">
+        <button id="tgt_button" dojoType="dijit.form.Button" type="button">
             {% trans "Add Rsync Module" %}
             <script type="dojo/method" event="onClick" args="evt">
                 addObject('{% trans "Add Rsync Module"|force_escape %}', '{% url freeadmin_model_add app="services",model="RsyncMod" %}', [this,]);

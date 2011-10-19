@@ -1,5 +1,5 @@
 {% load i18n %}
-<form data-dojo-type="dijit.form.Form">
+<form dojoType="dijit.form.Form">
     <script type="dojo/event" event="onSubmit" args="e">
         formSubmit(this, e, '{% url storage_mp_permission object_id=mp.id %}');
     </script>
@@ -8,6 +8,6 @@
 	<table>
 	{{ form }}
 	</table>
-        <button data-dojo-type="dijit.form.Button" type="submit">{% trans "Change" %}</button>
-        <button data-dojo-type="dijit.form.Button" type="button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
+        <button dojoType="dijit.form.Button" type="submit">{% trans "Change" %}</button>
+        <button dojoType="dijit.form.Button" type="button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
     </form>

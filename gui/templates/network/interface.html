@@ -30,13 +30,13 @@
               {% endif %}
               <td>{{ i.int_options }}</td>
               <td>
-                  <button data-dojo-type="dijit.form.Button" type="button">
+                  <button dojoType="dijit.form.Button" type="button">
                       {% trans "Edit" %}
                   <script type="dojo/method" event="onClick" args="evt">
                       editObject('{% trans "Edit Interface"|force_escape %}', '{% url freeadmin_model_edit app="network",model="Interfaces",oid=i.id %}', [this,]);
                   </script>
                   </button>
-                  <button data-dojo-type="dijit.form.Button" type="button">
+                  <button dojoType="dijit.form.Button" type="button">
                       {% trans "Delete" %}
                   <script type="dojo/method" event="onClick" args="evt">
                       editObject('{% trans "Delete Interface"|force_escape %}', '{% url freeadmin_model_delete app="network",model="Interfaces",oid=i.id %}', [this,]);
@@ -51,7 +51,7 @@
           {% endfor %}
           </table>
           <p class="btn">
-              <button id="int_button" data-dojo-type="dijit.form.Button" type="button">
+              <button id="int_button" dojoType="dijit.form.Button" type="button">
                   {% trans "Add Interface" %}
                   <script type="dojo/method" event="onClick" args="evt">
                       addObject('{% trans "Add Interface"|force_escape %}', '{% url freeadmin_model_add app="network",model="Interfaces" %}', [this,]);

@@ -1,9 +1,9 @@
 {% load i18n %}
-<div data-dojo-type="dijit.layout.ContentPane">
+<div dojoType="dijit.layout.ContentPane">
     <p>
         {% blocktrans %}Would you like to enable this service?{% endblocktrans %}
     </p>
-    <button data-dojo-type="dijit.form.Button">
+    <button dojoType="dijit.form.Button">
         {% trans "Yes" %}
         <script type="dojo/method" event="onClick" args="evt">
         var thisbtn = this;
@@ -14,7 +14,7 @@
         });
         </script>
     </button>
-    <button data-dojo-type="dijit.form.Button">
+    <button dojoType="dijit.form.Button">
         {% trans "No" %}
         <script type="dojo/method" event="onClick" args="evt">
             cancelDialog(this);

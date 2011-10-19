@@ -1,13 +1,13 @@
 {% load i18n %}
-<form data-dojo-type="dijit.form.Form">
+<form dojoType="dijit.form.Form">
     <script type="dojo/event" event="onSubmit" args="e">
         formSubmit(this, e, '{% url storage_zvol %}');
     </script>
 <table>
 {{ form }}
 </table>
-<button data-dojo-type="dijit.form.Button" type="submit" class="submitform">{% trans "Add ZFS Volume" %}</button>
-        <button data-dojo-type="dijit.form.Button"type="button">
+<button dojoType="dijit.form.Button" type="submit" class="submitform">{% trans "Add ZFS Volume" %}</button>
+        <button dojoType="dijit.form.Button"type="button">
             {% trans "Cancel" %}
             <script type="dojo/method" event="onClick" args="evt">
                 cancelDialog(this);

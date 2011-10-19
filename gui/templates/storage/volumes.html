@@ -1,5 +1,5 @@
 {% load i18n %}
-    <button id="addVolumeBtn" data-dojo-type="dijit.form.Button" type="button">
+    <button id="addVolumeBtn" dojoType="dijit.form.Button" type="button">
     <img src="{{ STATIC_URL }}images/ui/buttons/add_volumes.png">
     <p>{% trans "Create Volume" %}</p>
     <script type="dojo/method" event="onClick" args="evt">
@@ -8,7 +8,7 @@
     </button>
 
 {% if en_dataset %}
-    <button id="datasetBtn" data-dojo-type="dijit.form.Button" type="button">
+    <button id="datasetBtn" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/add_dataset.png">
         <p>{% trans "Create ZFS Dataset" %}</p>
         <script type="dojo/method" event="onClick" args="evt">
@@ -16,7 +16,7 @@
         </script>
     </button>
 
-    <button id="zvolBtn" data-dojo-type="dijit.form.Button" type="button">
+    <button id="zvolBtn" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/add_zfs_volume.png">
         <p>{% trans "Create ZFS Volume" %}</p>
         <script type="dojo/method" event="onClick" args="evt">
@@ -25,7 +25,7 @@
     </button>
 {% endif %}
 
-    <button id="importVolBtn" data-dojo-type="dijit.form.Button" type="button">
+    <button id="importVolBtn" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/import_volume.png">
         <p>{% trans "Import Volume" %}</p>
         <script type="dojo/method" event="onClick" args="evt">
@@ -33,7 +33,7 @@
         </script>
     </button>
 
-    <button id="autoImportVolBtn" data-dojo-type="dijit.form.Button" type="button">
+    <button id="autoImportVolBtn" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/auto_import_volume.png">
         <p>{% trans "Auto Import Volume" %}</p>
         <script type="dojo/method" event="onClick" args="evt">
@@ -70,22 +70,22 @@
             <td>{{ attrs.volsize }}</td>
             <td>-</td>
             <td>
-                <button id="delZVolBtn{{ volname }}{{ forloop.counter }}" data-dojo-type="dijit.form.Button" type="button">
+                <button id="delZVolBtn{{ volname }}{{ forloop.counter }}" dojoType="dijit.form.Button" type="button">
                     <img src="{{ STATIC_URL }}images/ui/buttons/remove_volume.png" width="18px" height="18px">
                     <script type="dojo/method" event="onClick" args="evt">
                         editScaryObject('{% trans "Destroy ZFS Volume"|force_escape %}', '{% url storage_zvol_delete name=zvol %}', [this,]);
                     </script>
                 </button>
-                <div data-dojo-type="dijit.Tooltip" connectId="delZVolBtn{{ forloop.counter }}" position="above">
+                <div dojoType="dijit.Tooltip" connectId="delZVolBtn{{ forloop.counter }}" position="above">
                     <strong>{% trans "Destroy ZFS Volume" %}</strong>
                 </div>
-                <button id="snapBtnZvol{{ forloop.counter }}" data-dojo-type="dijit.form.Button" type="button">
+                <button id="snapBtnZvol{{ forloop.counter }}" dojoType="dijit.form.Button" type="button">
                     <img src="{{ STATIC_URL }}images/ui/buttons/create_snapshot.png" width="18px" height="18px">
                     <script type="dojo/method" event="onClick" args="evt">
                         editObject('{% trans "Create Snapshot"|force_escape %}', '{% url storage_manualsnap path=attrs.path %}', [this,]);
                     </script>
                 </button>
-                <div data-dojo-type="dijit.Tooltip" connectId="snapBtnZvol{{ forloop.counter }}" position="above">
+                <div dojoType="dijit.Tooltip" connectId="snapBtnZvol{{ forloop.counter }}" position="above">
                     <strong>{% trans "Create Snapshot" %}</strong>
                 </div>
             </td>
@@ -115,93 +115,93 @@
 	    <td>
 
 {% if m.mp_ischild %}
-    <button id="delDSBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+    <button id="delDSBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/remove_dataset.png">
         <script type="dojo/method" event="onClick" args="evt">
             editScaryObject('{% trans "Destroy Dataset"|force_escape %}', '{% url storage_dataset_delete object_id=m.id %}', [this,]);
         </script>
     </button>
-    <div data-dojo-type="dijit.Tooltip" connectId="delDSBtn{{ m.id }}" position="above">
+    <div dojoType="dijit.Tooltip" connectId="delDSBtn{{ m.id }}" position="above">
         <strong>{% trans "Destroy Dataset" %}</strong>
     </div>
-    <button id="editDataBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+    <button id="editDataBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/settings.png" />
         <script type="dojo/method" event="onClick" args="evt">
             editObject('{% trans "Edit ZFS Options"|force_escape %}', '{% url storage_dataset_edit object_id=m.id %}', [this,]);
         </script>
     </button>
-    <div data-dojo-type="dijit.Tooltip" connectId="editDataBtn{{ m.id }}" position="above">
+    <div dojoType="dijit.Tooltip" connectId="editDataBtn{{ m.id }}" position="above">
         <strong>{% trans "Edit ZFS Options" %}</strong>
     </div>
 {% else %}
-    <button id="delVolBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+    <button id="delVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/remove_volume.png" width="18px" height="18px">
         <script type="dojo/method" event="onClick" args="evt">
             editScaryObject('{% trans "Export Volume"|force_escape %}', '{% url storage_export vid=m.mp_volume.id %}', [this,]);
         </script>
     </button>
-    <div data-dojo-type="dijit.Tooltip" connectId="delVolBtn{{ m.id }}" position="above">
+    <div dojoType="dijit.Tooltip" connectId="delVolBtn{{ m.id }}" position="above">
         <strong>{% trans "Export Volume" %}</strong>
     </div>
     {% if m.mp_volume.vol_fstype == 'ZFS' %}
-    <button id="scrubVolBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+    <button id="scrubVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/scrub.png" />
         <script type="dojo/method" event="onClick" args="evt">
             editScaryObject('{% trans "Scrub Volume"|force_escape %}', '{% url storage_scrub vid=m.mp_volume.id %}', [this,]);
         </script>
     </button>
-    <div data-dojo-type="dijit.Tooltip" connectId="scrubVolBtn{{ m.id }}" position="above">
+    <div dojoType="dijit.Tooltip" connectId="scrubVolBtn{{ m.id }}" position="above">
         <strong>{% trans "Scrub Volume" %}</strong>
     </div>
-    <button id="editVolBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+    <button id="editVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/settings.png" />
         <script type="dojo/method" event="onClick" args="evt">
             editObject('{% trans "Edit ZFS Options"|force_escape %}', '{% url storage_volume_edit object_id=m.id %}', [this,]);
         </script>
     </button>
-    <div data-dojo-type="dijit.Tooltip" connectId="editVolBtn{{ m.id }}" position="above">
+    <div dojoType="dijit.Tooltip" connectId="editVolBtn{{ m.id }}" position="above">
         <strong>{% trans "Edit ZFS Options" %}</strong>
     </div>
     {% endif %}
 {% endif %}
-    <button id="permBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+    <button id="permBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/permissions.png" width="18px" height="18px">
         <script type="dojo/method" event="onClick" args="evt">
             editObject('{% trans "Change Permissions"|force_escape %}', '{% url storage_mp_permission object_id=m.id %}', [this,]);
         </script>
     </button>
-    <div data-dojo-type="dijit.Tooltip" connectId="permBtn{{ m.id }}" position="above">
+    <div dojoType="dijit.Tooltip" connectId="permBtn{{ m.id }}" position="above">
         <strong>{% trans "Change Permissions" %}</strong>
     </div>
 {% if m.mp_volume.vol_fstype == 'ZFS' %}
-    <button id="snapBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+    <button id="snapBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/create_snapshot.png" width="18px" height="18px">
         <script type="dojo/method" event="onClick" args="evt">
             editObject('{% trans "Create Snapshot"|force_escape %}', '{% url storage_manualsnap path=m.mp_path %}', [this,]);
         </script>
     </button>
-    <div data-dojo-type="dijit.Tooltip" connectId="snapBtn{{ m.id }}" position="above">
+    <div dojoType="dijit.Tooltip" connectId="snapBtn{{ m.id }}" position="above">
         <strong>{% trans "Create Snapshot" %}</strong>
     </div>
 {% endif %}
 {% if not m.mp_ischild %}
-    <button id="viewDisksBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+    <button id="viewDisksBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/view_all_disks.png" width="18px" height="18px">
         <script type="dojo/method" event="onClick" args="evt">
             viewModel('{% trans "View Disks"|force_escape %}', '{% url storage_datagrid_disks vid=m.mp_volume.id %}');
         </script>
     </button>
-    <div data-dojo-type="dijit.Tooltip" connectId="viewDisksBtn{{ m.id }}" position="above">
+    <div dojoType="dijit.Tooltip" connectId="viewDisksBtn{{ m.id }}" position="above">
         <strong>{% trans "View Disks" %}</strong>
     </div>
     {% if m.mp_volume.vol_fstype == 'ZFS' %}
-    <button id="statusVolBtn{{ m.id }}" data-dojo-type="dijit.form.Button" type="button">
+    <button id="statusVolBtn{{ m.id }}" dojoType="dijit.form.Button" type="button">
         <img src="{{ STATIC_URL }}images/ui/buttons/zpool_status.png" width="18px" height="18px">
         <script type="dojo/method" event="onClick" args="evt">
             viewModel('{% trans "zpool status"|force_escape %}', '{% url storage_zpool_status name=m.mp_volume.vol_name %}');
         </script>
     </button>
-    <div data-dojo-type="dijit.Tooltip" connectId="statusVolBtn{{ m.id }}" position="above">
+    <div dojoType="dijit.Tooltip" connectId="statusVolBtn{{ m.id }}" position="above">
         <strong>{% trans "zpool status" %}</strong>
     </div>
     {% endif %}

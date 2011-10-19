@@ -1,6 +1,6 @@
 {% load i18n %}
-<div data-dojo-type="dijit.layout.BorderContainer" style="height:100%; width:100%;">
-<div data-dojo-type="dijit.layout.ContentPane" id="datagrid" region="center" style="height:100%; width:100%;">
+<div dojoType="dijit.layout.BorderContainer" style="height:100%; width:100%;">
+<div dojoType="dijit.layout.ContentPane" id="datagrid" region="center" style="height:100%; width:100%;">
 <script type="dojo/method">
 
     function acts(v) {
@@ -122,8 +122,8 @@
     grid4.startup();
 </script>
 </div>
-<div data-dojo-type="dijit.layout.ContentPane" region="bottom" style="height:62px;">
-    <button id="delSnapshot" data-dojo-type="dijit.form.Button" type="button" style="margin:5px;">
+<div dojoType="dijit.layout.ContentPane" region="bottom" style="height:62px;">
+    <button id="delSnapshot" dojoType="dijit.form.Button" type="button" style="margin:5px;">
         <img src="{{ STATIC_URL }}images/ui/buttons/remove_snapshot.png">
         <p>{% trans "Destroy" %}</p>
 

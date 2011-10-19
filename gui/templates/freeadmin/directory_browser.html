@@ -1,6 +1,6 @@
 {% load i18n %}
-<input data-dojo-type="dijit.form.TextBox" name="{{ name }}" value="{{ value|default_if_none:"" }}" id="{{ attrs.id }}" />
-<button data-dojo-type="dijit.form.Button" label="{% trans "Browse" %}">
+<input dojoType="dijit.form.TextBox" name="{{ name }}" value="{{ value|default_if_none:"" }}" id="{{ attrs.id }}" />
+<button dojoType="dijit.form.Button" label="{% trans "Browse" %}">
     <script type="dojo/connect" event="onClick">
     if(this.get('label') == '{% trans "Close"|force_escape %}') {
         dojo.style('{{ attrs.id }}_container', 'display', 'none');
@@ -14,12 +14,12 @@
 
 <div id="{{ attrs.id }}_container" class="treecontainer" style="display: none">
     <div
-        data-dojo-type="freeadmin.tree.JsonRestStore"
+        dojoType="freeadmin.tree.JsonRestStore"
         target="{% if dirsonly %}{% url system_dirbrowser path="/" %}{% else %}{% url system_filebrowser path="/" %}{% endif %}"
         labelAttribute="name"
         jsId="{{ attrs.id }}_store">
     </div>
-    <div data-dojo-type="freeadmin.tree.ForestStoreModel"
+    <div dojoType="freeadmin.tree.ForestStoreModel"
          jsId="{{ attrs.id }}_model"
          store="{{ attrs.id }}_store"
          query="{}"
@@ -29,7 +29,7 @@
          deferItemLoadingUntilExpand="true">
     </div>
     <div id="{{ attrs.id }}_tree"
-        data-dojo-type="freeadmin.tree.TreeLazy"
+        dojoType="freeadmin.tree.TreeLazy"
         model="{{ attrs.id }}_model"
         persist="false"
         style="height: 250px;">

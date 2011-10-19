@@ -1,5 +1,5 @@
 {% load i18n %}
-<form data-dojo-type="dijit.form.Form">
+<form dojoType="dijit.form.Form">
 <script type="dojo/event" event="onSubmit" args="e">
     formSubmit(this, e, '{% url storage_dataset_delete object_id=object.id %}');
 </script>
@@ -7,13 +7,13 @@
     <tr><td>{% trans "Are you sure you want to delete?" %}</td></tr>
     <tr>
         <td>
-            <button id="submitform" data-dojo-type="dijit.form.Button" type="submit">
+            <button id="submitform" dojoType="dijit.form.Button" type="submit">
                 {% trans "Yes" %}
                 <script type="dojo/method" event="onClick" args="evt">
                     this.set('label', '{% trans "Please wait..."|force_escape %}');
                 </script>
             </button>
-            <button data-dojo-type="dijit.form.Button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
+            <button dojoType="dijit.form.Button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
         </td>
     </tr>
 </table>
