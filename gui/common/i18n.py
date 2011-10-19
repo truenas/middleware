@@ -28,7 +28,7 @@ import os
 
 from django.utils import translation
 
-from system.models import Settings
+from freenasUI.system.models import Settings
 
 def apply_language():
     language = Settings.objects.order_by('-id')[0].stg_language
