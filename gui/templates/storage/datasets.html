@@ -1,13 +1,13 @@
 {% load i18n %}
-<form dojoType="dijit.form.Form">
+<form data-dojo-type="dijit.form.Form">
     <script type="dojo/event" event="onSubmit" args="e">
         formSubmit(this, e, '{% url storage_dataset %}');
     </script>
 <table>
 {{ form }}
 </table>
-<button dojoType="dijit.form.Button" type="submit" class="submitform">{% trans "Add Dataset" %}</button>
-        <button dojoType="dijit.form.Button"type="button">
+<button data-dojo-type="dijit.form.Button" type="submit" class="submitform">{% trans "Add Dataset" %}</button>
+        <button data-dojo-type="dijit.form.Button"type="button">
             {% trans "Cancel" %}
             <script type="dojo/method" event="onClick" args="evt">
                 cancelDialog(this);

@@ -14,13 +14,13 @@
         <td>{{ e.iscsi_target_extent_type }}</td>
         <td>{{ e.get_device }}</td>
         <td>
-            <button dojoType="dijit.form.Button" type="button">
+            <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Edit" %}
             <script type="dojo/method" event="onClick" args="evt">
                 editObject('{% trans "Edit"|force_escape %}', '{% url freeadmin_model_edit app="services",model="iSCSITargetExtent",oid=e.id,mf="iSCSITargetDeviceExtentForm" %}', [this,]);
             </script>
             </button>
-            <button dojoType="dijit.form.Button" type="button">
+            <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Delete" %}
             <script type="dojo/method" event="onClick" args="evt">
                 editObject('{% trans "Delete"|force_escape %}', '{% url freeadmin_model_delete app="services",model="iSCSITargetExtent",oid=e.id %}', [this,]);
@@ -35,7 +35,7 @@
     {% endfor %}
     </table>
               <p class="btn">
-        <button id="fe_button" dojoType="dijit.form.Button" type="button">
+        <button id="fe_button" data-dojo-type="dijit.form.Button" type="button">
             {% trans "Add Extent" %}
             <script type="dojo/method" event="onClick" args="evt">
                 addObject('{% trans "Add Extent"|force_escape %}', '{% url freeadmin_model_add app="services",model="iSCSITargetExtent",mf="iSCSITargetDeviceExtentForm" %}', [this,]);

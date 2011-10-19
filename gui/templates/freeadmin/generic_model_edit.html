@@ -1,5 +1,5 @@
 {% load i18n freeadmin %}
-<form dojoType="dijit.form.Form" encType="multipart/form-data">
+<form data-dojo-type="dijit.form.Form" encType="multipart/form-data">
 <script type="dojo/event" event="onSubmit" args="e">
             formSubmit(this, e, '{% url freeadmin_model_edit app=app,model=model,oid=oid,mf=mf|default_if_none:"" %}{% if inline %}?inline=true{% endif %}');
 </script>{% if inline and saved %}<span class="saved">{% trans "Your changes have been successfully updated!" %}</span>{% endif %}
@@ -26,7 +26,7 @@
     {% block buttons %}
     <tr>
         <td colspan="2">
-            <button class="submitform" dojoType="dijit.form.Button" type="submit">
+            <button class="submitform" data-dojo-type="dijit.form.Button" type="submit">
                 <script type="dojo/method">
                         {{ extra_js }}
                 </script>
@@ -41,10 +41,10 @@
                 </script>
             </button>
             {% if not inline %}
-            <button dojoType="dijit.form.Button" class="cancelform" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
+            <button data-dojo-type="dijit.form.Button" class="cancelform" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
             {% endif %}
             {% if deletable == False %}
-            <button dojoType="dijit.form.Button" >
+            <button data-dojo-type="dijit.form.Button" >
                 <script type="dojo/event" event="onClick" args="e">
                     try {
                         var form = getForm(this);

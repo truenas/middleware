@@ -1,5 +1,5 @@
 {% load i18n freeadmin %}
-<form dojoType="dijit.form.Form">
+<form data-dojo-type="dijit.form.Form">
 <script type="dojo/event" event="onSubmit" args="e">
     formSubmit(this, e, '{% url freeadmin_model_add app=app,model=model,mf=mf|default_if_none:"" %}');
 </script>
@@ -23,7 +23,7 @@
     {% endblock %}
     </td></tr>
 <tr><td colspan="2">
-    <button class="submitform" dojoType="dijit.form.Button" type="submit">
+    <button class="submitform" data-dojo-type="dijit.form.Button" type="submit">
         <script type="dojo/method">
             {{ extra_js }}
         </script>
@@ -33,7 +33,7 @@
             this.set('label', '{% trans "Please wait..."|force_escape %}');
         </script>
     </button>
-    <button dojoType="dijit.form.Button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
+    <button data-dojo-type="dijit.form.Button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
         </td></tr>
 </table>
 </form>

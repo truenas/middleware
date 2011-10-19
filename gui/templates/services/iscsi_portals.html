@@ -14,13 +14,13 @@
               <td>{{ p.iscsi_target_portal_listen }}</td>
               <td>{{ p.iscsi_target_portal_comment }}</td>
               <td>
-                  <button dojoType="dijit.form.Button" type="button">
+                  <button data-dojo-type="dijit.form.Button" type="button">
                       {% trans "Edit" %}
                   <script type="dojo/method" event="onClick" args="evt">
                       editObject('{% trans "Edit Portal"|force_escape %}', '{% url freeadmin_model_edit app="services",model="iSCSITargetPortal",oid=p.id %}', [this,]);
                   </script>
                   </button>
-                  <button dojoType="dijit.form.Button" type="button">
+                  <button data-dojo-type="dijit.form.Button" type="button">
                       {% trans "Delete" %}
                   <script type="dojo/method" event="onClick" args="evt">
                       editObject('{% trans "Delete Portal"|force_escape %}', '{% url freeadmin_model_delete app="services",model="iSCSITargetPortal",oid=p.id %}', [this,]);
@@ -35,7 +35,7 @@
           {% endfor %}
           </table>
            <p class="btn">
-           <button id="portal_button" dojoType="dijit.form.Button" type="button">
+           <button id="portal_button" data-dojo-type="dijit.form.Button" type="button">
                {% trans "Add Portal" %}
                <script type="dojo/method" event="onClick" args="evt">
                    addObject('{% trans "Add Portal"|force_escape %}', '{% url freeadmin_model_add app="services",model="iSCSITargetPortal" %}', [this,]);

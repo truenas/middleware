@@ -10,13 +10,13 @@
     <tr class="{% cycle 'odd' 'even' %}" id="{{ l.id }}">
         <td>{{ l }}</td>
         <td>
-             <button dojoType="dijit.form.Button" type="button">
+             <button data-dojo-type="dijit.form.Button" type="button">
                  {% trans "Edit Interface" %}
              <script type="dojo/method" event="onClick" args="evt">
                  editObject('{% trans "Edit Interface"|force_escape %}', '{% url freeadmin_model_edit app="network",model="Interfaces",oid=l.lagg_interface.id %}?deletable=false', [this,]);
              </script>
              </button>
-             <button dojoType="dijit.form.Button" type="button">
+             <button data-dojo-type="dijit.form.Button" type="button">
                  {% trans "Edit Members" %}
              <script type="dojo/method" event="onClick" args="evt">
                  var p = dijit.byId('tab_networksettings');
@@ -40,7 +40,7 @@
                  p.selectChild(pane2);
              </script>
              </button>
-             <button dojoType="dijit.form.Button" type="button">
+             <button data-dojo-type="dijit.form.Button" type="button">
                  {% trans "Delete" %}
              <script type="dojo/method" event="onClick" args="evt">
                  editObject('{% trans "Delete Interface"|force_escape %}', '{% url freeadmin_model_delete  app="network",model="Interfaces",oid=l.lagg_interface.id %}', [this,]);
@@ -56,7 +56,7 @@
     </table>
 
     <p class="btn">
-        <button id="lagg_button" dojoType="dijit.form.Button" type="button">
+        <button id="lagg_button" data-dojo-type="dijit.form.Button" type="button">
             {% trans "Add LAGG Interface " %}
             <script type="dojo/method" event="onClick" args="evt">
                 addObject('{% trans "Add LAGG"|force_escape %}', '{% url network_lagg_add %}', [this,]);

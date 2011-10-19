@@ -1,5 +1,5 @@
 {% load i18n %}
-<form dojoType="dijit.form.Form">
+<form data-dojo-type="dijit.form.Form">
 <script type="dojo/event" event="onSubmit" args="e">
     formSubmit(this, e, '{% url storage_snapshot_rollback dataset=dataset snapname=snapname %}');
 </script>
@@ -7,13 +7,13 @@
     <tr><td>{% trans "Are you sure you want to rollback dataset to this snapshot state?" %}</td></tr>
     <tr>
         <td>
-            <button id="submitform" dojoType="dijit.form.Button" type="submit">
+            <button id="submitform" data-dojo-type="dijit.form.Button" type="submit">
                 {% trans "Yes" %}
                 <script type="dojo/method" event="onClick" args="evt">
                     this.set('label', '{% trans "Please wait..."|force_escape %}');
                 </script>
             </button>
-            <button dojoType="dijit.form.Button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
+            <button data-dojo-type="dijit.form.Button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
         </td>
     </tr>
 </table>

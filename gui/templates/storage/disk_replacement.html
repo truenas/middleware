@@ -1,5 +1,5 @@
 {% load i18n freeadmin %}
-<form dojoType="dijit.form.Form">
+<form data-dojo-type="dijit.form.Form">
     <script type="dojo/event" event="onSubmit" args="e">
         formSubmit(this, e,  '{% url storage_disk_replacement vid=vid,object_id=object_id %}');
     </script>
@@ -11,10 +11,10 @@
     </tr>
         {{ form }}
     </table>
-        <button dojoType="dijit.form.Button" type="submit" class="submitform">
+        <button data-dojo-type="dijit.form.Button" type="submit" class="submitform">
     {% trans "Replace disk" %}<br />
         </button>
-        <button dojoType="dijit.form.Button" type="button" class="cancelform">
+        <button data-dojo-type="dijit.form.Button" type="button" class="cancelform">
             {% trans "Cancel" %}
             <script type="dojo/method" event="onClick" args="evt">
                 cancelDialog(this);

@@ -24,13 +24,13 @@
                         {{ n.nfs_comment }}
                     </td>
                     <td>
-                        <button dojoType="dijit.form.Button" type="button">
+                        <button data-dojo-type="dijit.form.Button" type="button">
                             {% trans "Edit" %}
                         <script type="dojo/method" event="onClick" args="evt">
                         editObject('{% trans "Edit NFS Share"|force_escape %}', '{{ n.get_edit_url }}', [this,]);
                         </script>
                         </button>
-                        <button dojoType="dijit.form.Button" type="button">
+                        <button data-dojo-type="dijit.form.Button" type="button">
                             {% trans "Delete" %}
                         <script type="dojo/method" event="onClick" args="evt">
                         editObject('{% trans "Delete NFS Share"|force_escape %}', '{{ n.get_delete_url }}', [this,]);
@@ -46,7 +46,7 @@
             </tbody>
                 </table>
                 <p class="btn">
-                    <button dojoType="dijit.form.Button" type="button">
+                    <button data-dojo-type="dijit.form.Button" type="button">
                         {% trans "Add UNIX Share" %}
                         <script type="dojo/method" event="onClick" args="evt">
                         editObject('{% trans "Add UNIX Share (NFS)"|force_escape %}', '{% url freeadmin_model_add app="sharing",model="NFS_Share" %}', [this,]);

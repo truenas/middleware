@@ -1,16 +1,16 @@
 {% load i18n %}
-<div dojoType="dijit.layout.TabContainer" nested="true" doLayout="true" id="tab_networksettings">
-        <div dojoType="dijit.layout.ContentPane" title="{% trans "Global Configuration" %}" tab="network.GlobalConfiguration" {% if focus_form == "network.GlobalConfiguration" %} selected="true"{% endif %} href="{% url freeadmin_model_edit app="network",model="GlobalConfiguration",oid=globalconf %}?inline=true" doLayout="false" class="objrefresh data_network_GlobalConfiguration" refreshOnShow="true">
+<div data-dojo-type="dijit.layout.TabContainer" nested="true" doLayout="true" id="tab_networksettings">
+        <div data-dojo-type="dijit.layout.ContentPane" title="{% trans "Global Configuration" %}" tab="network.GlobalConfiguration" {% if focus_form == "network.GlobalConfiguration" %} selected="true"{% endif %} href="{% url freeadmin_model_edit app="network",model="GlobalConfiguration",oid=globalconf %}?inline=true" doLayout="false" class="objrefresh data_network_GlobalConfiguration" refreshOnShow="true">
         </div>
-        <div dojoType="dijit.layout.ContentPane" title="{% trans "Interfaces" %}" {% if focus_form == "network.Interfaces.View" %} selected="true"{% endif %} tab="network.Interfaces.View" href="{% url network_interface %}", class="objrefresh data_network_Interfaces" refreshOnShow="true">
+        <div data-dojo-type="dijit.layout.ContentPane" title="{% trans "Interfaces" %}" {% if focus_form == "network.Interfaces.View" %} selected="true"{% endif %} tab="network.Interfaces.View" href="{% url network_interface %}", class="objrefresh data_network_Interfaces" refreshOnShow="true">
         </div>
-        <div dojoType="dijit.layout.ContentPane" title="{% trans "Link Aggregation" %}" {% if focus_form == "network.LAGGInterfaceMembers.View" %} selected="true"{% endif %} tab="network.LAGGInterfaceMembers.View" href="{% url network_lagg %}" class="objrefresh data_network_LAGGInterface" refreshOnShow="true">
+        <div data-dojo-type="dijit.layout.ContentPane" title="{% trans "Link Aggregation" %}" {% if focus_form == "network.LAGGInterfaceMembers.View" %} selected="true"{% endif %} tab="network.LAGGInterfaceMembers.View" href="{% url network_lagg %}" class="objrefresh data_network_LAGGInterface" refreshOnShow="true">
         </div>
-        <div dojoType="dijit.layout.ContentPane" title="{% trans "Static Routes" %}" {% if focus_form == "network.StaticRoute.View" %} selected="true"{% endif %} tab="network.StaticRoute.View" href="{% url network_staticroute %}" class="objrefresh data_network_StaticRoute" refreshOnShow="true">
+        <div data-dojo-type="dijit.layout.ContentPane" title="{% trans "Static Routes" %}" {% if focus_form == "network.StaticRoute.View" %} selected="true"{% endif %} tab="network.StaticRoute.View" href="{% url network_staticroute %}" class="objrefresh data_network_StaticRoute" refreshOnShow="true">
         </div>
-        <div dojoType="dijit.layout.ContentPane" title="{% trans "VLAN" %}" {% if focus_form == "network.VLAN.View" %} selected="true"{% endif %} tab="network.VLAN.View" href="{% url network_vlan %}" class="objrefresh data_network_VLAN" refreshOnShow="true">
+        <div data-dojo-type="dijit.layout.ContentPane" title="{% trans "VLAN" %}" {% if focus_form == "network.VLAN.View" %} selected="true"{% endif %} tab="network.VLAN.View" href="{% url network_vlan %}" class="objrefresh data_network_VLAN" refreshOnShow="true">
         </div>
-        <div dojoType="dijit.layout.ContentPane" tab="network.NetworkSummary" title="{% trans "Network Summary" %}"{% if focus_form == "network.NetworkSummary" %} selected="true"{% endif %} href="{% url network_summary %}" class="objrefresh" refreshOnShow="true">
+        <div data-dojo-type="dijit.layout.ContentPane" tab="network.NetworkSummary" title="{% trans "Network Summary" %}"{% if focus_form == "network.NetworkSummary" %} selected="true"{% endif %} href="{% url network_summary %}" class="objrefresh" refreshOnShow="true">
         </div>
     </div>
 </div>

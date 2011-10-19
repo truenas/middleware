@@ -1,7 +1,7 @@
 {% extends "freeadmin/generic_model_edit.html" %}
 {% load i18n %}
 {% block buttons_extra %}
-            <button dojoType="dijit.form.Button">
+            <button data-dojo-type="dijit.form.Button">
             {% trans "Rebuild LDAP/AD Cache" %}
                 <script type="dojo/event" event="onClick" args="e">
                     var sendbtn = this;
@@ -23,19 +23,19 @@
                      });
                 </script>
             </button>
-            <button dojoType="dijit.form.Button" type="button">
+            <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Save Debug" %}
                 <script type="dojo/method" event="onClick" args="evt">
                     addObject('{% trans "Save Debug"|force_escape %}', '{% url system_debug %}');
                 </script>
             </button>
-            <button dojoType="dijit.form.Button" type="button">
+            <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Firmware Update" %}
                 <script type="dojo/method" event="onClick" args="evt">
                     addObject('{% trans "Firmware Update"|force_escape %}', '{% url system_firmwizard %}');
                 </script>
             </button>
-            <button dojoType="dijit.form.Button" type="button">
+            <button data-dojo-type="dijit.form.Button" type="button">
                 {% trans "Apply Service Pack" %}
                 <script type="dojo/method" event="onClick" args="evt">
                     addObject('{% trans "Apply Service Pack"|force_escape %}', '{% url system_spwizard %}');
