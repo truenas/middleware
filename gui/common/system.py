@@ -125,6 +125,8 @@ def send_mail(subject=None, text=None, interval=timedelta(), channel='freenas', 
                 server.starttls()
         if email.em_smtp:
             server.login(email.em_user, email.em_pass)
+        else:
+            server.connect()
         server.sendmail(email.em_fromemail, [to],
                         msg)
         server.quit()
