@@ -79,7 +79,7 @@ class Alert(object):
                          _('The volume %s status is DEGRADED') % (vol, ))
             else:
                 self.log(self.LOG_WARN,
-                         _('The volume %s status is %s') % (vol, vol.status, ))
+                         _('The volume %(volume)s status is %(status)s') % {'volume': vol, 'status': vol.status})
 
     def admin_password(self):
         user = User.objects.filter(password=UNUSABLE_PASSWORD)
