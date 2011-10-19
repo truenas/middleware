@@ -4204,10 +4204,6 @@ msgstr ""
 msgid "Documentation"
 msgstr ""
 
-#: templates/freeadmin/index.html:106
-msgid "Documentation"
-msgstr ""
-
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
 msgstr ""

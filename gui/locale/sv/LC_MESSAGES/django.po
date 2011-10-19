@@ -442,8 +442,7 @@ msgstr "Viloläge - kontrollera enheten om den inte är i viloläge"
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"Standby - Kontrollera enheten förutsatt att den är i VILO- eller "
-"STANDBY-läge"
+"Standby - Kontrollera enheten förutsatt att den är i VILO- eller STANDBY-läge"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
@@ -2466,8 +2465,7 @@ msgstr ""
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
 msgstr ""
-"Dessa parametrar kommer att läggas till i modul konfigurationen i "
-"rsyncd.conf"
+"Dessa parametrar kommer att läggas till i modul konfigurationen i rsyncd.conf"
 
 #: services/models.py:1231
 msgid "Rsync Module"
@@ -4218,10 +4216,6 @@ msgstr ""
 msgid "Documentation"
 msgstr ""
 
-#: templates/freeadmin/index.html:106
-msgid "Documentation"
-msgstr ""
-
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
 msgstr ""
@@ -5088,9 +5082,9 @@ msgstr "Admin-användare"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
 "Använd detta val för att åsidosätta användarnamnet (standard är 'www') som "
 "används för tillgång till tjänster för gästkontot. Alla rättigheter som "

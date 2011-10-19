@@ -15,8 +15,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || "
-"n%100==4 ? 2 : 3);\n"
+"Plural-Forms: nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n"
+"%100==4 ? 2 : 3);\n"
 "X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
@@ -747,7 +747,8 @@ msgstr "mrežni vmesnik"
 
 #: network/forms.py:67
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "Najprej vpišite domenski strežnik 2, preden vpišete domenski strežnik 3"
+msgstr ""
+"Najprej vpišite domenski strežnik 2, preden vpišete domenski strežnik 3"
 
 #: network/forms.py:70 network/forms.py:77 network/forms.py:88
 msgid "Required when using nameserver 3"
@@ -755,11 +756,13 @@ msgstr "Zahtevano če uporabljate domenski stežnik 3"
 
 #: network/forms.py:74
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr "Najprej vpišite domenski strežnik 1, preden vpišete domenski strežnik 3"
+msgstr ""
+"Najprej vpišite domenski strežnik 1, preden vpišete domenski strežnik 3"
 
 #: network/forms.py:85
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr "Najprej vpišite domenski strežnik 1, preden vpišete domenski strežnik 2"
+msgstr ""
+"Najprej vpišite domenski strežnik 1, preden vpišete domenski strežnik 2"
 
 #: network/forms.py:100
 msgid "Parent Interface"
@@ -1260,11 +1263,11 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"Uporabite to možnost za preglasitev uporabnišekga imena (privzeto 'nobody') "
-", ki se bo uporabljal za dostod do storitev gosta. Ne glede na privilegije "
-"bo ta uporabnik imel možnost client povezave do storitev gosta. Uporabnik "
-"mora biti v dateteki gesel, toda ne zahteva veljavne prijave. Korenski "
-"(root) uporabnik ne more biti uporabljati računa gosta."
+"Uporabite to možnost za preglasitev uporabnišekga imena (privzeto "
+"'nobody') , ki se bo uporabljal za dostod do storitev gosta. Ne glede na "
+"privilegije bo ta uporabnik imel možnost client povezave do storitev gosta. "
+"Uporabnik mora biti v dateteki gesel, toda ne zahteva veljavne prijave. "
+"Korenski (root) uporabnik ne more biti uporabljati računa gosta."
 
 #: services/models.py:108
 msgid "Allow guest access"
@@ -1405,8 +1408,8 @@ msgstr "Lokalni dostop"
 #: services/models.py:196
 msgid "Allow users with local accounts to access apple shares on this box."
 msgstr ""
-"Dovoli uporabnikom z lokalnimi uporabniškimi računi dostop do \"apple shares\" "
-"na tej napravi."
+"Dovoli uporabnikom z lokalnimi uporabniškimi računi dostop do \"apple shares"
+"\" na tej napravi."
 
 #: services/models.py:199
 msgid "Enable DDP"
@@ -4190,10 +4193,6 @@ msgid "Bug Tracker"
 msgstr ""
 
 #: templates/freeadmin/index.html:104
-msgid "Documentation"
-msgstr ""
-
-#: templates/freeadmin/index.html:106
 msgid "Documentation"
 msgstr ""
 

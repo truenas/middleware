@@ -2153,8 +2153,7 @@ msgstr "Ample de banda de baixada de l'usuari local"
 #: services/models.py:890
 msgid "Local user download bandwidth in KB/s. Zero means infinity."
 msgstr ""
-"Ample de banda de baixada de l'usuari local en KB/s. Un zero vol dir "
-"infinit."
+"Ample de banda de baixada de l'usuari local en KB/s. Un zero vol dir infinit."
 
 #: services/models.py:894
 msgid "Anonymous user upload bandwidth"
@@ -2163,8 +2162,7 @@ msgstr "Amplada de banda de pujada de l'usuari anònim"
 #: services/models.py:895
 msgid "Anonymous user upload bandwidth in KB/s. Zero means infinity."
 msgstr ""
-"Ample de banda de pujada de l'usuari anònim en KB/s. Un zero vol dir "
-"infinit."
+"Ample de banda de pujada de l'usuari anònim en KB/s. Un zero vol dir infinit."
 
 #: services/models.py:899
 msgid "Anonymous user download bandwidth"
@@ -2562,15 +2560,16 @@ msgid ""
 msgstr ""
 "Aquesta opció és per posar un conjunt de servidors separats per coma, espai, "
 "o tabulador, per que NO tinguin accés a aquest  mòdul. On hi hagi conflicte "
-"la llista de permesos té precedencia. Si es dona el cas de voler denegar "
-"los tots, utilitza la paraula ALL (o be la màscara de xarxa 0.0.0.0/0) i "
-"després especifica a la llista de Servidors Permesos aquells servidors als "
-"que vols donar accés. Deixa aquest camp buit per usar ajustos per defecte."
+"la llista de permesos té precedencia. Si es dona el cas de voler denegar los "
+"tots, utilitza la paraula ALL (o be la màscara de xarxa 0.0.0.0/0) i després "
+"especifica a la llista de Servidors Permesos aquells servidors als que vols "
+"donar accés. Deixa aquest camp buit per usar ajustos per defecte."
 
 #: services/models.py:1226
 msgid ""
 "These parameters will be added to the module configuration in rsyncd.conf"
-msgstr "Aquests paràmetres s'afegiran a la configuració del mòdul a rsyncd.conf"
+msgstr ""
+"Aquests paràmetres s'afegiran a la configuració del mòdul a rsyncd.conf"
 
 #: services/models.py:1231
 msgid "Rsync Module"
@@ -4416,10 +4415,6 @@ msgstr "Seguiment d'errors"
 msgid "Documentation"
 msgstr "Documentació"
 
-#: templates/freeadmin/index.html:106
-msgid "Documentation"
-msgstr "Documentació"
-
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
 msgstr "IPv6 automàtic"
@@ -5288,15 +5283,15 @@ msgstr "No disponible"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
 "Utilitza aquesta opció per determinar el nom d'usuari (per defecte 'www') "
 "que serà utilitzat per accedir als serveis que son especificats pels "
 "convidats. Qualsevol privilegi que tingui aquest usuari, estarà disponile "
-"per a qualsevol client que es connecti al servei convidat. Aquest usuari "
-"a d'existir al fitxer de contrasenyes pero no cal que tingui un inici de "
+"per a qualsevol client que es connecti al servei convidat. Aquest usuari a "
+"d'existir al fitxer de contrasenyes pero no cal que tingui un inici de "
 "sessió valid"
 
 msgid "ZVol Name"
@@ -5388,11 +5383,9 @@ msgid "Kerberos Keytab File"
 msgstr "Fitxer Keytab de kerberos"
 
 msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
+"The kerberos keytab file that was generated on the Active Directory server."
 msgstr ""
-"El fitxer Keytab de kerberos que fou generat al servidor d'Active "
-"Directory"
+"El fitxer Keytab de kerberos que fou generat al servidor d'Active Directory"
 
 msgid "Auxillary Parameters"
 msgstr "Paràmetres Auxiliars"

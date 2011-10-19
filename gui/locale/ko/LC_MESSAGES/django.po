@@ -687,7 +687,9 @@ msgstr "그룹이 갱신되었습니다. "
 msgid ""
 "We apologize, but your form has expired. Please continue filling out the "
 "form from this page."
-msgstr "죄송합니다, 입력 양식이 만료되었습니다. 이 페이지에서 양식을 계속 작성하십시오. "
+msgstr ""
+"죄송합니다, 입력 양식이 만료되었습니다. 이 페이지에서 양식을 계속 작성하십시"
+"오. "
 
 #: freeadmin/forms.py:95
 #, python-format
@@ -4199,11 +4201,6 @@ msgid "Bug Tracker"
 msgstr ""
 
 #: templates/freeadmin/index.html:104
-#, fuzzy
-msgid "Documentation"
-msgstr "위치"
-
-#: templates/freeadmin/index.html:106
 #, fuzzy
 msgid "Documentation"
 msgstr "위치"

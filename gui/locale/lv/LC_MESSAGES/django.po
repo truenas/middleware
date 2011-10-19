@@ -3078,7 +3078,8 @@ msgstr "Kluss"
 #: sharing/models.py:244
 msgid ""
 "Inhibit syslog warnings if there are problems with exporting this share."
-msgstr "Apvaldi syslog brīdinājumus, ja ir problēmas eksportējot šo kopīgojumu."
+msgstr ""
+"Apvaldi syslog brīdinājumus, ja ir problēmas eksportējot šo kopīgojumu."
 
 #: sharing/models.py:248
 msgid "Maproot User"
@@ -3137,7 +3138,8 @@ msgstr "Forsēt 4096 baitu sektora izmēru"
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\"."
-msgstr "Sējuma nosaukumam jāsākas ar burtiem un var satuŗet ciparus, \"-\", \"_\"."
+msgstr ""
+"Sējuma nosaukumam jāsākas ar burtiem un var satuŗet ciparus, \"-\", \"_\"."
 
 #: storage/forms.py:234
 msgid "You must select a filesystem"
@@ -3771,8 +3773,8 @@ msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
 msgstr ""
-"Saimniekdators vai ip adrese, kura pieņem mūsu e-pastu, piemēram "
-"mail.example.org, vai 192.168.1.1"
+"Saimniekdators vai ip adrese, kura pieņem mūsu e-pastu, piemēram mail."
+"example.org, vai 192.168.1.1"
 
 #: system/models.py:142
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
@@ -4369,10 +4371,6 @@ msgid "Bug Tracker"
 msgstr "Kļūdu Trekeris"
 
 #: templates/freeadmin/index.html:104
-msgid "Documentation"
-msgstr "Dokumentācija"
-
-#: templates/freeadmin/index.html:106
 msgid "Documentation"
 msgstr "Dokumentācija"
 
@@ -5240,15 +5238,15 @@ msgstr "N/A"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
-"Lieto šo iespēju, lai ignorētu lietotājvārdu ('www', pēc noklusējuma), "
-"kurš tiks lietots piekļuvei priekš servisiem, kuri ir norādīti kā viesa. "
-"Jebkuras privilēģijas, kuras ir šim lietotājam, būs pieejamas jebkuram "
-"klientam, kurš savienosies ar viesa servisu. Šim lietotājam ir jāeksistē "
-"paroļu datnē, bet nevajag derīgu autorizāciju."
+"Lieto šo iespēju, lai ignorētu lietotājvārdu ('www', pēc noklusējuma), kurš "
+"tiks lietots piekļuvei priekš servisiem, kuri ir norādīti kā viesa. Jebkuras "
+"privilēģijas, kuras ir šim lietotājam, būs pieejamas jebkuram klientam, kurš "
+"savienosies ar viesa servisu. Šim lietotājam ir jāeksistē paroļu datnē, bet "
+"nevajag derīgu autorizāciju."
 
 msgid "ZVol Name"
 msgstr "ZVol vārds"

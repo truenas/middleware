@@ -434,7 +434,8 @@ msgstr "%(week)s semana"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Nunca - Verifica o dispositivo independentemente do seu modo de energia"
+msgstr ""
+"Nunca - Verifica o dispositivo independentemente do seu modo de energia"
 
 # Tirada do Freenas 7.2
 #: choices.py:461
@@ -1262,8 +1263,8 @@ msgid ""
 msgstr ""
 "Use para sobrepor o nome de usuário ('nobody' por padrão) a ser usado para "
 "acessar serviços especificados como 'guest'. Independente dos privilégios de "
-"acesso que tal usuário tenha, será permitida a qualquer cliente a conexão "
-"ao serviço 'guest'. Este usuário precisa existir no arquivo de senhas, "
+"acesso que tal usuário tenha, será permitida a qualquer cliente a conexão ao "
+"serviço 'guest'. Este usuário precisa existir no arquivo de senhas, "
 "entretanto não será requerido um login válido. O usuário 'root' não pode ser "
 "usado como uma conta 'guest'."
 
@@ -1666,7 +1667,7 @@ msgid "Portal"
 msgstr "Portal"
 
 # Esse erro diz que o número de sentenças é diferente. e ai ? o numero de sentenças são iguais
-# 
+#
 #: services/models.py:438
 msgid ""
 "The portal takes the form of 'address:port'. for example '192.168.1.1:3260' "
@@ -2597,7 +2598,8 @@ msgstr "Informal"
 msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
-msgstr "Avisa se a temperatura é maior ou igual à N graus Celsius. 0 desabilita"
+msgstr ""
+"Avisa se a temperatura é maior ou igual à N graus Celsius. 0 desabilita"
 
 #: services/models.py:1264
 msgid "Critical"
@@ -2803,8 +2805,8 @@ msgstr ""
 "volume não é especificado, o último diretório do caminho será utilizado. "
 "Dois volumes não podem conter o mesmo nome. O nome do volume não pode conter "
 "o caracter ':' . O volume será desconfigurado caso o nome seja muito longo. "
-"O nome do volume no Mac é limitado a 27 caracteres. O nome volume UTF8-MAC "
-"é limitado ao parâmetro 'Tamanho do nome do volume' no Serviço de "
+"O nome do volume no Mac é limitado a 27 caracteres. O nome volume UTF8-MAC é "
+"limitado ao parâmetro 'Tamanho do nome do volume' no Serviço de "
 "compartilhamento Apple"
 
 #: sharing/models.py:109
@@ -3064,8 +3066,8 @@ msgid ""
 msgstr ""
 "Rede que está autorizada à acessar o compartilhamento NFS ou a lista de "
 "endereços IP. Especifique a numeração no formulário 1.2.3.4/xx onde xx é o "
-"número de bits da máscara de rede oa a lista de endereços IP 1.2.3.4 1.2.3.5 "
-".1.2.3.6."
+"número de bits da máscara de rede oa a lista de endereços IP 1.2.3.4 "
+"1.2.3.5 .1.2.3.6."
 
 #: sharing/models.py:235
 msgid "All Directories"
@@ -3181,7 +3183,8 @@ msgstr "\"log\" é uma palavra reservada e não pode ser utilizada"
 # Dá erro de acronyms pq ele diz que o NOT obrigatoriamente não se traduz! e ai?
 #: storage/forms.py:254
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr "O nome do volume NÃO deve se iniciar com c[0-9], mirror, raidz ou spare"
+msgstr ""
+"O nome do volume NÃO deve se iniciar com c[0-9], mirror, raidz ou spare"
 
 #: storage/forms.py:349 storage/forms.py:439 storage/forms.py:939
 msgid "Member disk"
@@ -4401,11 +4404,6 @@ msgstr "Bug Tracker"
 msgid "Documentation"
 msgstr "Documentação"
 
-# onde vc leu LOCALIZAÇÂO???
-#: templates/freeadmin/index.html:106
-msgid "Documentation"
-msgstr "Documentação"
-
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
 msgstr "IPv6 Auto"
@@ -5279,15 +5277,15 @@ msgstr "N/A"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
-"Use essa opção para sobrepor o nome do usuário ('www' por padrão) que "
-"será usado para acesso aos serviços cuja especificação seja convidado. "
-"Independente dos privilégios de acesso que o usuário tenha será permitida "
-"a conexão no serviço de convidados. O usuário precisa possuir uma senha, "
-"mas não é necessário um login válido."
+"Use essa opção para sobrepor o nome do usuário ('www' por padrão) que será "
+"usado para acesso aos serviços cuja especificação seja convidado. "
+"Independente dos privilégios de acesso que o usuário tenha será permitida a "
+"conexão no serviço de convidados. O usuário precisa possuir uma senha, mas "
+"não é necessário um login válido."
 
 msgid "ZVol Name"
 msgstr "Nome ZVol"
@@ -5322,8 +5320,8 @@ msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
 msgstr ""
-"Por favor digite sua senha antiga, e, em seguida, digite a nova senha "
-"duas vezes para verificar se está digitado corretamente."
+"Por favor digite sua senha antiga, e, em seguida, digite a nova senha duas "
+"vezes para verificar se está digitado corretamente."
 
 msgid "Password (again)"
 msgstr "Senha (novamente)"
@@ -5377,10 +5375,8 @@ msgid "Kerberos Keytab File"
 msgstr "Arquivo Kerberos Keytab"
 
 msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
-msgstr ""
-"Arquivo kerberos keytab que foi gerado no servidor Active Directory."
+"The kerberos keytab file that was generated on the Active Directory server."
+msgstr "Arquivo kerberos keytab que foi gerado no servidor Active Directory."
 
 msgid "Auxillary Parameters"
 msgstr "Parâmetros Auxiliares"

@@ -1145,8 +1145,7 @@ msgstr "Du må angi en fil i ditt volum/datasett."
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
 msgstr ""
-"Stien til omfanget må befinne seg innenfor et volum/datasett "
-"monteringspunkt."
+"Stien til omfanget må befinne seg innenfor et volum/datasett monteringspunkt."
 
 #: services/forms.py:556
 msgid ""
@@ -1586,7 +1585,8 @@ msgstr "Kontroller godkjent nettmaske"
 
 #: services/models.py:339
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
-msgstr "Logisk enhetskontroller godkjent nettmaske (255.255.255.0 som standard)"
+msgstr ""
+"Logisk enhetskontroller godkjent nettmaske (255.255.255.0 som standard)"
 
 #: services/models.py:346
 msgid "Controller Auth Method"
@@ -1672,8 +1672,8 @@ msgid ""
 msgstr ""
 "Portalen tar form i 'adresse:port'. F.eks. '192.168.1.1:3260' for IPv4, "
 "'[2001:db8:1::1]:3260' for IPv6. Porten 3260 er standard iSCSI portnummer. "
-"For hvilke som helst IP'er (jokertegn adresser), benytt '0.0.0.0:3260' "
-"og/eller '[::]:3260'. Ikke bland jokertegn og andre IP'er i samme "
+"For hvilke som helst IP'er (jokertegn adresser), benytt '0.0.0.0:3260' og/"
+"eller '[::]:3260'. Ikke bland jokertegn og andre IP'er i samme "
 "adressefamilie."
 
 #: services/models.py:476 templates/services/iscsi_authini.html:6
@@ -1975,8 +1975,8 @@ msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
-"Emne for epost. Du kan benytte følgende parametre for erstattning:<br "
-"/><ul><li>%d - Dato</li><li>%h - Vertsnavn</li></ul>"
+"Emne for epost. Du kan benytte følgende parametre for erstattning:<br /"
+"><ul><li>%d - Dato</li><li>%h - Vertsnavn</li></ul>"
 
 #: services/models.py:797 services/models.py:798
 msgid "UPS"
@@ -4288,11 +4288,6 @@ msgstr ""
 msgid "Documentation"
 msgstr "Plassering"
 
-#: templates/freeadmin/index.html:106
-#, fuzzy
-msgid "Documentation"
-msgstr "Plassering"
-
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
 msgstr ""
@@ -5173,15 +5168,15 @@ msgstr "N/A"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
-"Bruk dette valget for å overstyre brukernavnet ('www' er standard) som "
-"blir brukt for å gi tilgang til tjenester som er spesifisert som gjest. "
-"Den tilgangen denne brukeren har vil bli tilgjengelig for klienter som "
-"kobler seg til gjestekontoen. Brukeren må eksistere i passordsfilen, men "
-"trenger ikke en gyldig adgang."
+"Bruk dette valget for å overstyre brukernavnet ('www' er standard) som blir "
+"brukt for å gi tilgang til tjenester som er spesifisert som gjest. Den "
+"tilgangen denne brukeren har vil bli tilgjengelig for klienter som kobler "
+"seg til gjestekontoen. Brukeren må eksistere i passordsfilen, men trenger "
+"ikke en gyldig adgang."
 
 #, fuzzy
 msgid "ZVol Name"

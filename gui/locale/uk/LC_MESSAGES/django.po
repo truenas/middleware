@@ -15,8 +15,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:35
@@ -437,7 +437,8 @@ msgstr "% (Week) тижнів"
 
 #: choices.py:460
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Ніколи - Перевіряти пристрій незалежно від його режиму енергозбереження"
+msgstr ""
+"Ніколи - Перевіряти пристрій незалежно від його режиму енергозбереження"
 
 #: choices.py:461
 msgid "Sleep - Check the device unless it is in SLEEP mode"
@@ -1343,7 +1344,8 @@ msgstr "Увімкнути перегляд домашніх каталогів"
 
 #: services/models.py:145
 msgid "Enable/disable home directories browsing for samba user."
-msgstr "Включає \\ відключає перегляд домашніх каталогів для користувачів Samba."
+msgstr ""
+"Включає \\ відключає перегляд домашніх каталогів для користувачів Samba."
 
 #: services/models.py:149
 msgid "Home directories"
@@ -1575,7 +1577,8 @@ msgstr "IP-адреса контролера"
 
 #: services/models.py:324
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
-msgstr "IP-адреса логічного контролера (127.0.0.1 (localhost) за замовчуванням)"
+msgstr ""
+"IP-адреса логічного контролера (127.0.0.1 (localhost) за замовчуванням)"
 
 #: services/models.py:330
 msgid "Controller TCP port"
@@ -1680,10 +1683,10 @@ msgid ""
 "'[::]:3260'. Do not mix wildcard and other IPs at same address family."
 msgstr ""
 "Портал має вигляд \"адреса: порт\". Наприклад \"192.168.1.1:3260\" для IPv4, "
-"\"[2001: db8: 1:1:: 1]: 3260\" для IPv6. Порт 3260 є стандартним iSCSI портом. "
-"Для довільного IP-адреси (підстановки адреса), використовуйте "
-"\"0.0.0.0:3260\" і / або \"[::]: 3260 \". Не застосовуйте разом символи та інші "
-"IP-адреси в тому ж самому сімействі адрес."
+"\"[2001: db8: 1:1:: 1]: 3260\" для IPv6. Порт 3260 є стандартним iSCSI "
+"портом. Для довільного IP-адреси (підстановки адреса), використовуйте "
+"\"0.0.0.0:3260\" і / або \"[::]: 3260 \". Не застосовуйте разом символи та "
+"інші IP-адреси в тому ж самому сімействі адрес."
 
 #: services/models.py:476 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -1706,8 +1709,8 @@ msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
-"Мережа авторизується до цільового iSCSI. Вона отримує IP-адресу, "
-"CIDR-адресу, або приймає значення \"ALL\" для будь-якого IP-адреси."
+"Мережа авторизується до цільового iSCSI. Вона отримує IP-адресу, CIDR-"
+"адресу, або приймає значення \"ALL\" для будь-якого IP-адреси."
 
 #: services/models.py:493
 msgid "Initiator"
@@ -2965,8 +2968,8 @@ msgstr ""
 "Дозволяє використання CR / LF в текстових файлах, автоматично перетворюючи "
 "розриви рядків Macintosh в Unix. Використання цієї опції може бути "
 "небезпечним, так як деякі старі програми зберігають бінарні файли як "
-"текстові. Потенційно AFPD може знищити такі файли, коли \"помилково\" змінить "
-"байт для того, щоб зробити переклад рядка."
+"текстові. Потенційно AFPD може знищити такі файли, коли \"помилково\" "
+"змінить байт для того, щоб зробити переклад рядка."
 
 #: sharing/models.py:176
 msgid "Windows File Names"
@@ -3187,7 +3190,8 @@ msgstr "\"Log\" зарезервоване слово і не може бути 
 
 #: storage/forms.py:254
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr "Ім'я томи НЕ може початися з [0-9], \"mirror\", \"raidz\" або \"spare\""
+msgstr ""
+"Ім'я томи НЕ може початися з [0-9], \"mirror\", \"raidz\" або \"spare\""
 
 #: storage/forms.py:349 storage/forms.py:439 storage/forms.py:939
 msgid "Member disk"
@@ -3330,7 +3334,8 @@ msgstr "Ім'я клона (повинно бути на тому ж томі)"
 
 #: storage/forms.py:916
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
-msgstr "Тільки [AZ], [az], [0-9], \"_\", \"/\", \".\"] Допускаються для імені клона"
+msgstr ""
+"Тільки [AZ], [az], [0-9], \"_\", \"/\", \".\"] Допускаються для імені клона"
 
 #: storage/forms.py:922
 msgid "Clone must be within the same volume"
@@ -4394,10 +4399,6 @@ msgid "Bug Tracker"
 msgstr "Збирач помилок"
 
 #: templates/freeadmin/index.html:104
-msgid "Documentation"
-msgstr "Документація"
-
-#: templates/freeadmin/index.html:106
 msgid "Documentation"
 msgstr "Документація"
 

@@ -125,8 +125,7 @@ msgstr "127. Szint - Közepes energia-felhasználás, készenléttel"
 #: choices.py:85
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
 msgstr ""
-"128. Szint - Minimális energia-felhasználás, készenlét nélkül (nincs "
-"leállás)"
+"128. Szint - Minimális energia-felhasználás, készenlét nélkül (nincs leállás)"
 
 #: choices.py:86
 msgid "Level 192 - Intermediate power usage without Standby"
@@ -1853,8 +1852,8 @@ msgstr "Kényszerített frissítés gyakorisága"
 #: services/models.py:696 services/models.py:730 services/models.py:762
 msgid "These parameters will be added to global settings in inadyn.conf."
 msgstr ""
-"Ezek a paraméterek hozzá lesznek adva a globális beállításokhoz az "
-"inadyn.conf fájlban."
+"Ezek a paraméterek hozzá lesznek adva a globális beállításokhoz az inadyn."
+"conf fájlban."
 
 #: services/models.py:700 services/models.py:701
 #: templates/services/index.html:40
@@ -1880,8 +1879,8 @@ msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
-"Kapcsolat, pl. a rendszerért felelős neve vagy e-mail címe: "
-"'admin@e-mail.address'."
+"Kapcsolat, pl. a rendszerért felelős neve vagy e-mail címe: 'admin@e-mail."
+"address'."
 
 #: services/models.py:722
 msgid "Community"
@@ -4255,10 +4254,6 @@ msgstr ""
 msgid "Documentation"
 msgstr ""
 
-#: templates/freeadmin/index.html:106
-msgid "Documentation"
-msgstr ""
-
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
 msgstr ""
@@ -5125,16 +5120,15 @@ msgstr "Admin felhasználó"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
 "Ezzel a beállítással felülbírálható az a felhasználónév ('www' "
-"alapértelmezetten) amivel a vendégként elérhető szolgáltatások "
-"használhatók. Amilyen jogosultság van a felhasználói fiókhoz rendelve, "
-"azt mind elérik a vendégként kapcsolódó felhasználók. Ennek a "
-"felhasználónak szerepelnie kell a jelszó fájlban, de nem szükséges "
-"érvényes bejelentkezési engedély."
+"alapértelmezetten) amivel a vendégként elérhető szolgáltatások használhatók. "
+"Amilyen jogosultság van a felhasználói fiókhoz rendelve, azt mind elérik a "
+"vendégként kapcsolódó felhasználók. Ennek a felhasználónak szerepelnie kell "
+"a jelszó fájlban, de nem szükséges érvényes bejelentkezési engedély."
 
 #, fuzzy
 msgid "ZVol Name"

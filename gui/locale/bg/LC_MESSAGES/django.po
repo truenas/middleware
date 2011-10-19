@@ -1234,7 +1234,8 @@ msgstr ""
 
 #: services/models.py:76
 msgid "Server description. This can usually be left blank."
-msgstr "Описание на сървъра. Това поле обикновено може да бъде оставено празно."
+msgstr ""
+"Описание на сървъра. Това поле обикновено може да бъде оставено празно."
 
 #: services/models.py:82
 msgid "DOS charset"
@@ -3571,7 +3572,8 @@ msgstr ""
 
 #: system/models.py:105
 msgid "Show console messages in the footer (Requires UI reload)"
-msgstr "Покажи конзолните съобщения в долното поле (Изисква презареждане на UI)"
+msgstr ""
+"Покажи конзолните съобщения в долното поле (Изисква презареждане на UI)"
 
 #: system/models.py:108
 msgid "Show tracebacks in case of fatal errors"
@@ -3606,8 +3608,8 @@ msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
 msgstr ""
-"Име на хоста или ip адрес, който ще приеме нашата поща, например: "
-"mail.example.org, or 192.168.1.1"
+"Име на хоста или ip адрес, който ще приеме нашата поща, например: mail."
+"example.org, or 192.168.1.1"
 
 #: system/models.py:142
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
@@ -4208,10 +4210,6 @@ msgstr "Проследяване на грешки"
 msgid "Documentation"
 msgstr "Документация"
 
-#: templates/freeadmin/index.html:106
-msgid "Documentation"
-msgstr "Документация"
-
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
 msgstr "Автоматично IPv6"
@@ -4721,8 +4719,7 @@ msgstr "Репликацията на ZFS не е достъпна"
 #: templates/storage/snapshot_confirm_rollback.html:7
 msgid "Are you sure you want to rollback the snapshot to previous state?"
 msgstr ""
-"Сигурни ли сте че искате да върнете моментната снимка към предишно "
-"състояние?"
+"Сигурни ли сте че искате да върнете моментната снимка към предишно състояние?"
 
 #: templates/storage/snapshots.html:4
 msgid "Dataset name"

@@ -496,8 +496,7 @@ msgstr ""
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
 msgstr ""
-"Bu değer sadece harfleri, rakamları ve @/./+/-/_ işaretlerini "
-"barındırabilir."
+"Bu değer sadece harfleri, rakamları ve @/./+/-/_ işaretlerini barındırabilir."
 
 #: account/forms.py:201 account/forms.py:308 services/models.py:680
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
@@ -1351,8 +1350,8 @@ msgstr "Home dizinlerini taramayı etkinleştir"
 #: services/models.py:145
 msgid "Enable/disable home directories browsing for samba user."
 msgstr ""
-"Bu, samba kullanıcıları için home dizinlerini taramayı "
-"etkinleştirir\\etkisizleştirir"
+"Bu, samba kullanıcıları için home dizinlerini taramayı etkinleştirir"
+"\\etkisizleştirir"
 
 #: services/models.py:149
 msgid "Home directories"
@@ -1580,7 +1579,8 @@ msgstr "Kontrolör IP adresi"
 
 #: services/models.py:324
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
-msgstr "Mantıksal Birim Kontrolörü IP adresi (varsayılan 127.0.0.1 (localhost))"
+msgstr ""
+"Mantıksal Birim Kontrolörü IP adresi (varsayılan 127.0.0.1 (localhost))"
 
 #: services/models.py:330
 msgid "Controller TCP port"
@@ -1896,8 +1896,8 @@ msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
-"İletişim bilgileri, örneğin adını veya bu sistemden sorumlu kişinin "
-"e-postası: 'yönetici@e-posta.adresi'."
+"İletişim bilgileri, örneğin adını veya bu sistemden sorumlu kişinin e-"
+"postası: 'yönetici@e-posta.adresi'."
 
 #: services/models.py:722
 msgid "Community"
@@ -1980,8 +1980,8 @@ msgid ""
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
 "E-postanın konusu. Değişiklik için aşağıdaki parametreleri "
-"kullanabilirsiniz: <br /><ul><li>% d - Tarih </li><li>% h - Bilgisayar adı "
-"</li> </ul>"
+"kullanabilirsiniz: <br /><ul><li>% d - Tarih </li><li>% h - Bilgisayar adı </"
+"li> </ul>"
 
 #: services/models.py:797 services/models.py:798
 msgid "UPS"
@@ -2443,8 +2443,8 @@ msgstr "TLS açma/kapama"
 #: services/models.py:1132
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
 msgstr ""
-"Bu parametre SSL/TLS kullanılıp kullanılmadığını belirler. Örneğin "
-"açık/kapalı/tls_başlat"
+"Bu parametre SSL/TLS kullanılıp kullanılmadığını belirler. Örneğin açık/"
+"kapalı/tls_başlat"
 
 #: services/models.py:1135
 msgid "Self signed certificate"
@@ -2622,7 +2622,8 @@ msgstr "E-posta raporu"
 
 #: services/models.py:1271
 msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr "Hedef e-posta adresi. Ayrı e-posta adreslerini noktalı virgülle ayırın."
+msgstr ""
+"Hedef e-posta adresi. Ayrı e-posta adreslerini noktalı virgülle ayırın."
 
 #: services/models.py:1274 services/models.py:1275
 #: templates/services/index.html:108
@@ -2944,8 +2945,7 @@ msgid ""
 msgstr ""
 "Veritabanı yükünü azaltmak için Afpd ayarlanırsa AppleDouble V2 başlık "
 "dosyalarında depolanan kimlik bilgilerini kullanır. Eğer bölümü olmayan AFP "
-"müşterileri tarafından ayarlanacaksa bu seçeneği ayarlamayın "
-"(NFS/SMB/yerel)."
+"müşterileri tarafından ayarlanacaksa bu seçeneği ayarlamayın (NFS/SMB/yerel)."
 
 #: sharing/models.py:172
 msgid "Translate CR/LF"
@@ -4394,10 +4394,6 @@ msgid "Bug Tracker"
 msgstr "Hata İzleyici"
 
 #: templates/freeadmin/index.html:104
-msgid "Documentation"
-msgstr "Belgelendirme"
-
-#: templates/freeadmin/index.html:106
 msgid "Documentation"
 msgstr "Belgelendirme"
 

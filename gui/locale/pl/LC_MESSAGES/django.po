@@ -1037,8 +1037,7 @@ msgstr "Nieudane przeładowanie usługi Rsync."
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
 msgstr ""
-"Nazwa nie może zawierać slash'a oraz kwadratowego nawiasu zamykającego (/ "
-"])."
+"Nazwa nie może zawierać slash'a oraz kwadratowego nawiasu zamykającego (/ ])."
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
@@ -1682,9 +1681,10 @@ msgid ""
 "'[::]:3260'. Do not mix wildcard and other IPs at same address family."
 msgstr ""
 "Portal przyjmuje formę \"adres:port\", np. '192.168.1.1:3260\" dla IPv4, "
-"\"[2001:db8:1:1::1]:3260\" dla IPv6. Port 3260 jest standardowym portem iSCSI. "
-"Dla dowolnego IP (adres \"wildcard\"), użyj \"0.0.0.0:3260\" i/lub \"[::]:3260\". "
-"Nie mieszaj \"wildcard\" i innych adresów IP w danej rodzinie adresów."
+"\"[2001:db8:1:1::1]:3260\" dla IPv6. Port 3260 jest standardowym portem "
+"iSCSI. Dla dowolnego IP (adres \"wildcard\"), użyj \"0.0.0.0:3260\" i/lub "
+"\"[::]:3260\". Nie mieszaj \"wildcard\" i innych adresów IP w danej rodzinie "
+"adresów."
 
 #: services/models.py:476 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -2371,8 +2371,8 @@ msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
-"Nazwa wyróżniająca (NW) (ang.DN), którą przypisywać serwerowi, np. "
-"dc=test,dc=org"
+"Nazwa wyróżniająca (NW) (ang.DN), którą przypisywać serwerowi, np. dc=test,"
+"dc=org"
 
 #: services/models.py:1094
 msgid "Root bind password"
@@ -2501,7 +2501,8 @@ msgstr "Maksymalna ilość połączeń"
 
 #: services/models.py:1198
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr "Maksymalna ilość równoczesnych połączeń. Domyślnie 0  (nieograniczona)."
+msgstr ""
+"Maksymalna ilość równoczesnych połączeń. Domyślnie 0  (nieograniczona)."
 
 #: services/models.py:1204
 msgid ""
@@ -2578,7 +2579,8 @@ msgstr "Interwał sprawdzania"
 #: services/models.py:1244
 msgid ""
 "Sets the interval between disk checks to N minutes. The default is 30 minutes"
-msgstr "Ustawia interwał sprawdzania dysku na N minut. Domyślnie jest 30 minut."
+msgstr ""
+"Ustawia interwał sprawdzania dysku na N minut. Domyślnie jest 30 minut."
 
 #: services/models.py:1250
 msgid "Power mode"
@@ -4383,11 +4385,6 @@ msgstr "Śledzenie błędów"
 msgid "Documentation"
 msgstr "Dokumentacja"
 
-#: templates/freeadmin/index.html:106
-#, fuzzy
-msgid "Documentation"
-msgstr "Dokumentacja"
-
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
 msgstr "Auto IPv6"
@@ -5255,15 +5252,15 @@ msgstr "%s dodano pomyślnie"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
-"Użyj tej opcji aby nadpisać nazwę użytkownika (domyślnie 'www') jaka "
-"będzie używana przy usługach do których dostęp jest anonimowy. Ponadto "
-"uprawnienia tego użytkownika mogą być dostępne dla dowolnego klienta "
-"korzystającego z takiej usługi. Użytkownik ten musi istnieć w pliku z "
-"hasłami, nie jest jednak wymagany prawidłowy login."
+"Użyj tej opcji aby nadpisać nazwę użytkownika (domyślnie 'www') jaka będzie "
+"używana przy usługach do których dostęp jest anonimowy. Ponadto uprawnienia "
+"tego użytkownika mogą być dostępne dla dowolnego klienta korzystającego z "
+"takiej usługi. Użytkownik ten musi istnieć w pliku z hasłami, nie jest "
+"jednak wymagany prawidłowy login."
 
 #, fuzzy
 msgid "ZVol Name"
@@ -5297,8 +5294,8 @@ msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
 msgstr ""
-"Proszę wpisać swoje stare hasło, następnie dwukrotnie wpisać nowe hasło "
-"dla sprawdzenia poprawności."
+"Proszę wpisać swoje stare hasło, następnie dwukrotnie wpisać nowe hasło dla "
+"sprawdzenia poprawności."
 
 msgid "Password (again)"
 msgstr "Hasło (ponownie)"
@@ -5334,8 +5331,7 @@ msgid "Windows Version"
 msgstr "Wersja Windows"
 
 msgid "The version of Microsoft Windows that Active Directory is running."
-msgstr ""
-"Wersja systemu MS Windows na którym jest uruchomione Actie Directory."
+msgstr "Wersja systemu MS Windows na którym jest uruchomione Actie Directory."
 
 msgid "Service Principal Name"
 msgstr "Nazwa konta użytkownika dla usługi"

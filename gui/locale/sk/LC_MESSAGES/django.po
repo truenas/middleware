@@ -112,7 +112,8 @@ msgstr "Neaktívne"
 
 #: choices.py:82
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Úroveň 1 - Minimálna spotreba energie v pohotovostnom režime (spindown)"
+msgstr ""
+"Úroveň 1 - Minimálna spotreba energie v pohotovostnom režime (spindown)"
 
 #: choices.py:83
 msgid "Level 64 - Intermediate power usage with Standby"
@@ -488,14 +489,14 @@ msgstr "Užívateľské meno"
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
 msgstr ""
-"Požadované. 30 znakov alebo viac. Písmená, číslice a nasledujúce znaky "
-"@/./+/-/_ ."
+"Požadované. 30 znakov alebo viac. Písmená, číslice a nasledujúce znaky @/./"
+"+/-/_ ."
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
 msgstr ""
-"Táto hodnota môže obsahovať len písmená, číslice a nasledujúce znaky "
-"@/./+/-/_ ."
+"Táto hodnota môže obsahovať len písmená, číslice a nasledujúce znaky @/./+/-/"
+"_ ."
 
 #: account/forms.py:201 account/forms.py:308 services/models.py:680
 #: system/forms.py:187 system/models.py:167 templates/account/bsdusers.html:9
@@ -980,8 +981,8 @@ msgstr "LAGG úspešne pridaný"
 #: services/forms.py:70
 msgid "This field is required for \"Enable home directories browsing\"."
 msgstr ""
-"Toto pole je vyžadované pre voľbu \"Povoliť prehliadanie domovských "
-"adresárov\"."
+"Toto pole je vyžadované pre voľbu \"Povoliť prehliadanie domovských adresárov"
+"\"."
 
 #: services/forms.py:73
 msgid "This field is required for \"Home directories\"."
@@ -1522,7 +1523,8 @@ msgstr "Maximálny počet pripojení"
 
 #: services/models.py:272
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr "Maximálny počet pripojení v každej relácii (8 v predvolenom nastavení)."
+msgstr ""
+"Maximálny počet pripojení v každej relácii (8 v predvolenom nastavení)."
 
 #: services/models.py:277
 msgid "Max. pre-send R2T"
@@ -1590,7 +1592,8 @@ msgstr "IP adresa kontrolera"
 
 #: services/models.py:324
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
-msgstr "Logická jednotka, kontroler IP adresa (127.0.0.1(localhost) predvolené)"
+msgstr ""
+"Logická jednotka, kontroler IP adresa (127.0.0.1(localhost) predvolené)"
 
 #: services/models.py:330
 msgid "Controller TCP port"
@@ -1863,8 +1866,7 @@ msgid ""
 "that has the same IP. Use a space to separate multiple alias names."
 msgstr ""
 "Alias pre názov hostiteľa. Táto voľba sa môže zobraziť viackrát, pre každú "
-"doménu s rovnakou IP adresou. Použite medzeru na oddelenie viacerých "
-"aliasov."
+"doménu s rovnakou IP adresou. Použite medzeru na oddelenie viacerých aliasov."
 
 #: services/models.py:684
 msgid "Update period"
@@ -1989,8 +1991,8 @@ msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
-"Predmet emailu. Môžte použiť následujúce šablóny ktoré budu nahradené:<br "
-"/><ul><li>%d - Dátum</li><li>%h - Názov hostitela (Hostname)</li></ul>"
+"Predmet emailu. Môžte použiť následujúce šablóny ktoré budu nahradené:<br /"
+"><ul><li>%d - Dátum</li><li>%h - Názov hostitela (Hostname)</li></ul>"
 
 #: services/models.py:797 services/models.py:798
 msgid "UPS"
@@ -2507,8 +2509,7 @@ msgstr "Maximálny počet pripojení"
 #: services/models.py:1198
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
 msgstr ""
-"Maximálny počet súčasných pripojení. Predvolené nastavenie je 0 "
-"(neobmedzené)"
+"Maximálny počet súčasných pripojení. Predvolené nastavenie je 0 (neobmedzené)"
 
 #: services/models.py:1204
 msgid ""
@@ -2518,8 +2519,8 @@ msgid ""
 "use default settings"
 msgstr ""
 "Toto nastavenie špecifikuje užívateľské meno, ktoré prenos súboru do a z "
-"tohto modulu by sa malo uskutočniť. V kombinácii s nastavením \"Skupiny\" toto "
-"determinuje aké oprávnenia sú dostupné. Nechaj toto pole prázdne pre "
+"tohto modulu by sa malo uskutočniť. V kombinácii s nastavením \"Skupiny\" "
+"toto determinuje aké oprávnenia sú dostupné. Nechaj toto pole prázdne pre "
 "použitie predvoleného nastavenia"
 
 #: services/models.py:1211
@@ -2615,7 +2616,8 @@ msgstr "Neformálne"
 msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
-msgstr "Oznám ak je teplota väčšia alebo rovná N stupňov Celzia. 0 pre vypnutie"
+msgstr ""
+"Oznám ak je teplota väčšia alebo rovná N stupňov Celzia. 0 pre vypnutie"
 
 #: services/models.py:1264
 msgid "Critical"
@@ -2884,8 +2886,8 @@ msgid ""
 "Allows certain users and groups to have read-only access to a share. This "
 "follows the allow option format."
 msgstr ""
-"Dovoľ určitým užívateľom a skupinám mať \"iba-čítanie\" prístup na share. Toto "
-"sa riadi pomocou \"allow option\" formátu."
+"Dovoľ určitým užívateľom a skupinám mať \"iba-čítanie\" prístup na share. "
+"Toto sa riadi pomocou \"allow option\" formátu."
 
 #: sharing/models.py:146
 msgid "Read-write Access"
@@ -3166,7 +3168,8 @@ msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\"."
 msgstr ""
-"Názov zväzku musí začínať písmenom a môže obsahovať čísla a znaky \"-\" a \"_\"."
+"Názov zväzku musí začínať písmenom a môže obsahovať čísla a znaky \"-\" a \"_"
+"\"."
 
 #: storage/forms.py:234
 msgid "You must select a filesystem"
@@ -3432,8 +3435,7 @@ msgstr "Hosty pre vzdialenú replikáciu"
 #: storage/models.py:241
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
-"Posledný snapshot poslaný na druhú stran (nechaj prázdne pre plnú "
-"replikáciu)"
+"Posledný snapshot poslaný na druhú stran (nechaj prázdne pre plnú replikáciu)"
 
 #: storage/models.py:244 system/models.py:341
 #: templates/storage/replications.html:15
@@ -3800,8 +3802,8 @@ msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
 msgstr ""
-"Názov alebo IP adresa ktorá bude prijímať naše maily, napríklad "
-"mail.nieco.sk alebo 192.168.1.1"
+"Názov alebo IP adresa ktorá bude prijímať naše maily, napríklad mail.nieco."
+"sk alebo 192.168.1.1"
 
 #: system/models.py:142
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
@@ -4395,10 +4397,6 @@ msgid "Bug Tracker"
 msgstr "Bug Tracker"
 
 #: templates/freeadmin/index.html:104
-msgid "Documentation"
-msgstr "Dokumentácia"
-
-#: templates/freeadmin/index.html:106
 msgid "Documentation"
 msgstr "Dokumentácia"
 

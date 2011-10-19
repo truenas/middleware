@@ -23,7 +23,9 @@ msgstr "純"
 
 #: choices.py:36 system/models.py:234 templates/system/settings.html:9
 msgid "SSL"
-msgstr "SSL(Secure Sockets Layer)是網頁伺服器和瀏覽器之間以加解密方式溝通的安全技術標準 "
+msgstr ""
+"SSL(Secure Sockets Layer)是網頁伺服器和瀏覽器之間以加解密方式溝通的安全技術標"
+"準 "
 
 #: choices.py:37
 msgid "TLS"
@@ -4204,11 +4206,6 @@ msgid "Bug Tracker"
 msgstr ""
 
 #: templates/freeadmin/index.html:104
-#, fuzzy
-msgid "Documentation"
-msgstr "地點"
-
-#: templates/freeadmin/index.html:106
 #, fuzzy
 msgid "Documentation"
 msgstr "地點"

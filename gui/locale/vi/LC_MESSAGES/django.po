@@ -485,8 +485,7 @@ msgstr "Tên đăng nhập"
 #: account/forms.py:175 account/forms.py:199
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
 msgstr ""
-"Yêu cầu phải có. Tối đa 30 ký tự. Chỉ dùng chữ cái, số và các ký tự "
-"@/./+/-/_"
+"Yêu cầu phải có. Tối đa 30 ký tự. Chỉ dùng chữ cái, số và các ký tự @/./+/-/_"
 
 #: account/forms.py:176 account/forms.py:200
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
@@ -4152,10 +4151,6 @@ msgid "Bug Tracker"
 msgstr ""
 
 #: templates/freeadmin/index.html:104
-msgid "Documentation"
-msgstr ""
-
-#: templates/freeadmin/index.html:106
 msgid "Documentation"
 msgstr ""
 

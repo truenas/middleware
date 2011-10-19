@@ -443,7 +443,8 @@ msgstr "Sleep - Tjek enhed, medmindre den er i Sleep tilstand"
 
 #: choices.py:462
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr "Standby - Tjek enheden, medmindre den er i Sleep eller Standby tilstand"
+msgstr ""
+"Standby - Tjek enheden, medmindre den er i Sleep eller Standby tilstand"
 
 #: choices.py:463
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
@@ -1088,7 +1089,8 @@ msgstr "Hemmeligheder er ikke ens"
 
 #: services/forms.py:324 services/forms.py:325
 msgid "The peer secret is required if you set a peer user."
-msgstr "En gensidig hemmelighed er påkrævet, hvis du sætter en gensidig bruger."
+msgstr ""
+"En gensidig hemmelighed er påkrævet, hvis du sætter en gensidig bruger."
 
 #: services/forms.py:328
 msgid "The peer secret cannot be the same as user secret."
@@ -4178,10 +4180,6 @@ msgid "Bug Tracker"
 msgstr ""
 
 #: templates/freeadmin/index.html:104
-msgid "Documentation"
-msgstr ""
-
-#: templates/freeadmin/index.html:106
 msgid "Documentation"
 msgstr ""
 

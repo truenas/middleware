@@ -124,7 +124,8 @@ msgstr "Level 127 - Průměrná spotřeba s pohotovostním režimem"
 
 #: choices.py:85
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Level 128 - Minimální spotřeba bez pohotovostního režimu (bez spindown)"
+msgstr ""
+"Level 128 - Minimální spotřeba bez pohotovostního režimu (bez spindown)"
 
 #: choices.py:86
 #, fuzzy
@@ -4188,10 +4189,6 @@ msgid "Bug Tracker"
 msgstr ""
 
 #: templates/freeadmin/index.html:104
-msgid "Documentation"
-msgstr ""
-
-#: templates/freeadmin/index.html:106
 msgid "Documentation"
 msgstr ""
 

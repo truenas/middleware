@@ -1126,8 +1126,7 @@ msgstr "Nilai ini harus diantara %(start)d dan %(end)d, inklusif."
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
-"Kolom ini di[erlukan jika metode discovery dipasang ke CHAP atau CHAP "
-"Mutual."
+"Kolom ini di[erlukan jika metode discovery dipasang ke CHAP atau CHAP Mutual."
 
 #: services/forms.py:504 services/forms.py:534
 msgid "You need to specify a filepath, not a directory."
@@ -1582,8 +1581,7 @@ msgstr "Netmask Pengontrol yang berwenang"
 #: services/models.py:339
 msgid "Logical Unit Controller Authorized netmask (255.255.255.0 by default)"
 msgstr ""
-"Netmask pengontrol berwenang dari unit logikal (255.255.255.0 secara "
-"default)"
+"Netmask pengontrol berwenang dari unit logikal (255.255.255.0 secara default)"
 
 #: services/models.py:346
 msgid "Controller Auth Method"
@@ -1671,9 +1669,9 @@ msgid ""
 msgstr ""
 "Portal mengambil bentuk dari 'alamat:port'. Contohnya '192.168.1.1:3260' "
 "untuk IPv4, '[2001:db8:1:1::1]:3260' untuk IPv6. Port 3260 adalah nomor port "
-"iSCSI standart. Untuk sembarang IP (alamat wildcard), gunakan "
-"'0.0.0.0:3260' dan/atau '[::]:3260'. Jangan campur wildcard dan IP yang lain "
-"pada keluarga alamat yang sama."
+"iSCSI standart. Untuk sembarang IP (alamat wildcard), gunakan '0.0.0.0:3260' "
+"dan/atau '[::]:3260'. Jangan campur wildcard dan IP yang lain pada keluarga "
+"alamat yang sama."
 
 #: services/models.py:476 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -1968,8 +1966,8 @@ msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
-"Subjek email. Anda bisa menggunakan parameter berikut untuk pengganti:<br "
-"/><ul><li>%d - Tanggal</li><li>%h - Nama host</li></ul>"
+"Subjek email. Anda bisa menggunakan parameter berikut untuk pengganti:<br /"
+"><ul><li>%d - Tanggal</li><li>%h - Nama host</li></ul>"
 
 #: services/models.py:797 services/models.py:798
 msgid "UPS"
@@ -2183,8 +2181,8 @@ msgid ""
 "The port to listen to. The default is to listen to the tftp port specified "
 "in /etc/services."
 msgstr ""
-"Port untuk mendengarkan. Asalnya adalah untuk mendengar port tftp pada "
-"/etc/services."
+"Port untuk mendengarkan. Asalnya adalah untuk mendengar port tftp pada /etc/"
+"services."
 
 #: services/models.py:936
 msgid "Specifies the username which the service will run as."
@@ -2349,8 +2347,8 @@ msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
-"Nama pembeda yang digunakan untuk mengikat direktori server, e.g. "
-"cn=admin,dc=test,dc=org"
+"Nama pembeda yang digunakan untuk mengikat direktori server, e.g. cn=admin,"
+"dc=test,dc=org"
 
 #: services/models.py:1094
 msgid "Root bind password"
@@ -2517,8 +2515,7 @@ msgid ""
 msgstr ""
 "Opsi ini adalah sebuah koma, spasi, atau tab untuk membatasi host yang "
 "diizinkan untuk mengakses modul ini. Anda dapat menentukan host melalui nama "
-"atau nomor IP. Tinggalkan kolom ini kosong untuk menggunakan pengaturan "
-"asal"
+"atau nomor IP. Tinggalkan kolom ini kosong untuk menggunakan pengaturan asal"
 
 #: services/models.py:1220
 msgid "Hosts deny"
@@ -2746,8 +2743,8 @@ msgid ""
 msgstr ""
 "Opsi ini adalah sebuah koma, spasi, atau tab mengatur host yang "
 "diperbolehkan untuk mengakses berbagi ini. Anda dapat menentukan host dengan "
-"nama atau nomer IP. Tinggalkan kolom ini kosong untuk menggunakan "
-"pengaturan asal."
+"nama atau nomer IP. Tinggalkan kolom ini kosong untuk menggunakan pengaturan "
+"asal."
 
 #: sharing/models.py:80
 msgid "Hosts Deny"
@@ -3168,7 +3165,8 @@ msgstr "\"log\" adalah kata yang sudah dipesan jadi tidak dapat digunakan"
 
 #: storage/forms.py:254
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
-msgstr "Nama volume TIDAK boleh diawali dengan c[0-9], mirror, raidz atau spare"
+msgstr ""
+"Nama volume TIDAK boleh diawali dengan c[0-9], mirror, raidz atau spare"
 
 #: storage/forms.py:349 storage/forms.py:439 storage/forms.py:939
 msgid "Member disk"
@@ -3792,8 +3790,8 @@ msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
 msgstr ""
-"Sebuah nama host atau IP yang akan menerima surat kita, untuk instansi "
-"mail.example.org, atau 192.168.1.1"
+"Sebuah nama host atau IP yang akan menerima surat kita, untuk instansi mail."
+"example.org, atau 192.168.1.1"
 
 #: system/models.py:142
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
@@ -4396,10 +4394,6 @@ msgid "Bug Tracker"
 msgstr "Bug Tracker"
 
 #: templates/freeadmin/index.html:104
-msgid "Documentation"
-msgstr "Dokumentasi"
-
-#: templates/freeadmin/index.html:106
 msgid "Documentation"
 msgstr "Dokumentasi"
 

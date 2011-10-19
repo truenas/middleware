@@ -1242,8 +1242,9 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"使用这个选项来改变以访客身份访问时采用的系统用户身份（默认为'nobody'用户）。这个用户的权限将决定所有以访客身份连接服务的客户的权限。这个用户在密"
-"码文件中必须存在，但不必拥有登录权限。root作为访客帐户使用。"
+"使用这个选项来改变以访客身份访问时采用的系统用户身份（默认为'nobody'用户）。"
+"这个用户的权限将决定所有以访客身份连接服务的客户的权限。这个用户在密码文件中"
+"必须存在，但不必拥有登录权限。root作为访客帐户使用。"
 
 #: services/models.py:108
 msgid "Allow guest access"
@@ -1400,7 +1401,8 @@ msgstr "服务器数量"
 msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
-msgstr "指定运行的服务进程数量。这个数值需要满足客户端最高并发数，通常设为4至6之间。"
+msgstr ""
+"指定运行的服务进程数量。这个数值需要满足客户端最高并发数，通常设为4至6之间。"
 
 #: services/models.py:219
 msgid "Asynchronous mode"
@@ -1471,7 +1473,8 @@ msgstr "最大预发送 R2T"
 msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
-msgstr "每个链接中最大R2T预发送数目（默认为32）。实际数目将在目标队列中被限制。"
+msgstr ""
+"每个链接中最大R2T预发送数目（默认为32）。实际数目将在目标队列中被限制。"
 
 #: services/models.py:283
 msgid "MaxOutstandingR2T"
@@ -1625,9 +1628,10 @@ msgid ""
 "port number. For any IPs (wildcard address), use '0.0.0.0:3260' and/or "
 "'[::]:3260'. Do not mix wildcard and other IPs at same address family."
 msgstr ""
-"入口的格式为“地址:端口“。例如：对IPV4为\"192.168.1.1:3260\"；对IPV6为“[2001:db8:1:1::1]:3260”。326"
-"0是iSCSI标准端口。对任何IP （通配符地址）， 使用“'0.0.0.0:3260”和/或“[::]:3260”。 "
-"不要在同一地址段将通配符和其他IP地址相混淆。"
+"入口的格式为“地址:端口“。例如：对IPV4为\"192.168.1.1:3260\"；对IPV6为“[2001:"
+"db8:1:1::1]:3260”。3260是iSCSI标准端口。对任何IP （通配符地址）， 使"
+"用“'0.0.0.0:3260”和/或“[::]:3260”。 不要在同一地址段将通配符和其他IP地址相混"
+"淆。"
 
 #: services/models.py:476 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -1784,7 +1788,8 @@ msgstr "域名"
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
-msgstr "主机别名.多个域名对应同一个IP的时候会多次出现。使用空格键分开多个主机别名."
+msgstr ""
+"主机别名.多个域名对应同一个IP的时候会多次出现。使用空格键分开多个主机别名."
 
 #: services/models.py:684
 msgid "Update period"
@@ -1904,7 +1909,9 @@ msgstr "目标邮件地址。以半角冒号分隔多个地址。"
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
-msgstr "邮件主题。可使用如下参数代替：<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
+msgstr ""
+"邮件主题。可使用如下参数代替：<br /><ul><li>%d - Date</li><li>%h - Hostname</"
+"li></ul>"
 
 #: services/models.py:797 services/models.py:798
 msgid "UPS"
@@ -2010,7 +2017,9 @@ msgid ""
 "Causes the server to display the network information for the specified IP "
 "address to the client, on the assumption that that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
-msgstr "使服务器显示指定客户端IP对应的网络信息，并把该IP或主机名看作一个NAT网关或者端口转发服务器。"
+msgstr ""
+"使服务器显示指定客户端IP对应的网络信息，并把该IP或主机名看作一个NAT网关或者端"
+"口转发服务器。"
 
 #: services/models.py:874
 msgid "Minimum passive port"
@@ -2037,9 +2046,10 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
-"分配给PASV的最小数据端口（0 = 使用任何端口）。当客户端发送PASV命令后服务器选择被动端口的范围。服务器将随机选择一个端口供客户端连接。选择的端"
-"口号范围必须是非特权端口(>=1024)。强烈建议把端口范围选的足够大已满足大量的并发被动连接（例如，由IANA注册过的临时端口范围：49152-655"
-"34）。"
+"分配给PASV的最小数据端口（0 = 使用任何端口）。当客户端发送PASV命令后服务器选"
+"择被动端口的范围。服务器将随机选择一个端口供客户端连接。选择的端口号范围必须"
+"是非特权端口(>=1024)。强烈建议把端口范围选的足够大已满足大量的并发被动连接"
+"（例如，由IANA注册过的临时端口范围：49152-65534）。"
 
 #: services/models.py:884
 msgid "Local user upload bandwidth"
@@ -2176,7 +2186,9 @@ msgstr "在这粘贴一个PEM格式的RSA私钥。"
 msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
-msgstr "额外的/etc/ssh/sshd_config选项（通常为空）。注意，错误的选项会导致SSH服务无法启动。"
+msgstr ""
+"额外的/etc/ssh/sshd_config选项（通常为空）。注意，错误的选项会导致SSH服务无法"
+"启动。"
 
 #: services/models.py:1024 services/models.py:1025
 #: templates/services/index.html:119
@@ -2621,7 +2633,9 @@ msgid ""
 "This option is a comma, space, or tab delimited set of hosts which are "
 "permitted to access this share. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings."
-msgstr "这个选项是一个逗号，空格或者Tab键来确定可以设置共享权限的主机。你可以通过名称或者IP来指定主机。或者留空使用默认值。"
+msgstr ""
+"这个选项是一个逗号，空格或者Tab键来确定可以设置共享权限的主机。你可以通过名称"
+"或者IP来指定主机。或者留空使用默认值。"
 
 #: sharing/models.py:80
 msgid "Hosts Deny"
@@ -2704,7 +2718,8 @@ msgstr "拒绝列表"
 msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
-msgstr "这个拒绝选项特指哪些用户和群组不能存取一个共享空间。它的格式和允许选项相同。"
+msgstr ""
+"这个拒绝选项特指哪些用户和群组不能存取一个共享空间。它的格式和允许选项相同。"
 
 #: sharing/models.py:140
 msgid "Read-only Access"
@@ -2745,7 +2760,9 @@ msgid ""
 "Note! Selecting 'Time Machine' on multiple shares may cause unpredictable "
 "behavior in MacOS. Default mode exports the volume as a data volume for "
 "users."
-msgstr "警告! “时间机器”在多个共享空间可能会导致Mac OS的未知行为。默认模式导出卷为用户的数据卷。"
+msgstr ""
+"警告! “时间机器”在多个共享空间可能会导致Mac OS的未知行为。默认模式导出卷为用"
+"户的数据卷。"
 
 #: sharing/models.py:163
 msgid "Database Path"
@@ -2845,7 +2862,8 @@ msgstr ""
 msgid ""
 "Don't stat volume path when enumerating volumes list, useful for "
 "automounting or volumes created by a preexec script."
-msgstr "不要在列举卷清单的时候统计卷路径，这是对预执行脚本挂载或者创建卷是有益的。"
+msgstr ""
+"不要在列举卷清单的时候统计卷路径，这是对预执行脚本挂载或者创建卷是有益的。"
 
 #: sharing/models.py:204
 msgid "AFP3 Unix Privs"
@@ -4185,10 +4203,6 @@ msgid "Bug Tracker"
 msgstr "Bug跟踪"
 
 #: templates/freeadmin/index.html:104
-msgid "Documentation"
-msgstr "文档"
-
-#: templates/freeadmin/index.html:106
 msgid "Documentation"
 msgstr "文档"
 

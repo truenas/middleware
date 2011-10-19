@@ -4679,12 +4679,6 @@ msgstr "Bug Tracker"
 msgid "Documentation"
 msgstr "場所"
 
-# メーリングリストへのリンクなので、原文のままがよいと思います。
-#: templates/freeadmin/index.html:106
-#, fuzzy
-msgid "Documentation"
-msgstr "場所"
-
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
 msgstr "IPv6 Auto"
@@ -5603,15 +5597,14 @@ msgstr "該当なし"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
-"このオプションは、guest ユーザ名を特に指定する場合に利用します（デフォルト"
-"は 'www'）。このユーザにどのような権限を設定しても構いませんが、guest サー"
-"ビスに接続するすべてのクライアントに適用されます。ただし、このユーザを "
-"password file 内に必ず記述して下さい。なお、ログイン可能である必要はありま"
-"せん。"
+"このオプションは、guest ユーザ名を特に指定する場合に利用します（デフォルトは "
+"'www'）。このユーザにどのような権限を設定しても構いませんが、guest サービスに"
+"接続するすべてのクライアントに適用されます。ただし、このユーザを password "
+"file 内に必ず記述して下さい。なお、ログイン可能である必要はありません。"
 
 #, fuzzy
 msgid "ZVol Name"
@@ -5649,8 +5642,8 @@ msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
 msgstr ""
-"現在のパスワードと新しいパスワードを入力して下さい。新しいパスワードは確認"
-"のため、2 回入力します。"
+"現在のパスワードと新しいパスワードを入力して下さい。新しいパスワードは確認の"
+"ため、2 回入力します。"
 
 msgid "Password (again)"
 msgstr "パスワード（確認）"
@@ -5709,8 +5702,7 @@ msgstr "ケルベロス認証のキータブファイル"
 
 #, fuzzy
 msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
+"The kerberos keytab file that was generated on the Active Directory server."
 msgstr ""
 "ケルベロス認証のキータブファイルは、Active Directory サーバが生成します。"
 

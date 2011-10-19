@@ -1047,7 +1047,8 @@ msgstr "Riavvio del servizio Rsync fallito."
 
 #: services/forms.py:226
 msgid "The name cannot contain slash or a closing square backet."
-msgstr "Il nome non può contenere i caratteri slash (/) o chiusa parentesi (])."
+msgstr ""
+"Il nome non può contenere i caratteri slash (/) o chiusa parentesi (])."
 
 #: services/forms.py:250
 msgid "The DynamicDNS service failed to reload."
@@ -1759,8 +1760,7 @@ msgstr "Nome della destinazione"
 #: services/models.py:558
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
 msgstr ""
-"Il nome di base verrà automaticamente aggiunto quando si inizia senza "
-"'iqn.'."
+"Il nome di base verrà automaticamente aggiunto quando si inizia senza 'iqn.'."
 
 #: services/models.py:565
 msgid "Target Alias"
@@ -3489,7 +3489,8 @@ msgstr "Filesystem ZFS remoto"
 
 #: storage/models.py:251
 msgid "Recursively replicate and remove stale snapshot on remote side"
-msgstr "Replicare ricorsivamente e rimuovere i vecchi snapshots dal lato remoto"
+msgstr ""
+"Replicare ricorsivamente e rimuovere i vecchi snapshots dal lato remoto"
 
 #: storage/models.py:254
 msgid "Replication Task"
@@ -4447,10 +4448,6 @@ msgstr "Bug Tracker"
 msgid "Documentation"
 msgstr "Documentazione"
 
-#: templates/freeadmin/index.html:106
-msgid "Documentation"
-msgstr "Documentazione"
-
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
 msgstr "IPv6 Auto"
@@ -5322,15 +5319,15 @@ msgstr "N/A"
 msgid ""
 "Use this option to override the username ('www' by default) which will be "
 "used for access to services which are specified as guest. Whatever "
-"privileges this user has will be available to any client connecting to "
-"the guest service. This user must exist in the password file, but does "
-"not require a valid login."
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login."
 msgstr ""
-"Utilizzare questa opzione per sostituire il nome utente ('www' di "
-"default) che verrà utilizzato per l'accesso ai servizi che sono "
-"specificati come guest. Tutti i privilegi assegnati all'utente sono "
-"disponibili a tutti i client connessi al servizio guest. Questo utente "
-"deve esistere nel file delle password, ma non richiede nome utente valido."
+"Utilizzare questa opzione per sostituire il nome utente ('www' di default) "
+"che verrà utilizzato per l'accesso ai servizi che sono specificati come "
+"guest. Tutti i privilegi assegnati all'utente sono disponibili a tutti i "
+"client connessi al servizio guest. Questo utente deve esistere nel file "
+"delle password, ma non richiede nome utente valido."
 
 msgid "ZVol Name"
 msgstr "Nome zvol"
@@ -5368,8 +5365,8 @@ msgid ""
 "Please enter your old password, and then enter your new password twice to "
 "verify it is typed in correctly."
 msgstr ""
-"Per favore inserire la vecchia password, poi inserire la nuova password "
-"due volte per verificare che sia stata digitata correttamente."
+"Per favore inserire la vecchia password, poi inserire la nuova password due "
+"volte per verificare che sia stata digitata correttamente."
 
 msgid "Password (again)"
 msgstr "Password (ancora)"
@@ -5420,8 +5417,7 @@ msgid "Kerberos Keytab File"
 msgstr "Kerberos keytab file"
 
 msgid ""
-"The kerberos keytab file that was generated on the Active Directory "
-"server."
+"The kerberos keytab file that was generated on the Active Directory server."
 msgstr ""
 "Il Kerberos keytab file che è stato generato sul server Active Directory."
 
