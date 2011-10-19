@@ -50,8 +50,10 @@ sys.path.append(NETWORK_PATH)
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
 from django.contrib.auth.models import User
+from django.utils.translation import ugettext as _
 
 from freenasUI.choices import NICChoices, LAGGType
+from freenasUI.common import i18n
 from freenasUI.network.models import GlobalConfiguration, Interfaces, \
 	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
 from freenasUI.system.models import Settings
@@ -117,7 +119,7 @@ def get_nic(choices=None):
             nics.append(c[0])
             print "%d) %s" % (i + 1, nics[i])
 
-        _input = raw_input("Select an interface (q to quit): ")
+        _input = raw_input(_("Select an interface (q to quit): "))
         if _input.isdigit() and _input in range(1, len(nics)+1):
             nic = nics[int(_input) - 1]
             break
@@ -137,7 +139,7 @@ def get_lagg_proto():
             protos[i] = t[0]
             print "%d) %s" % (i + 1, protos[i])
 
-        _input = raw_input("Select a lagg protocol (q to quit): ")
+        _input = raw_input(_("Select a lagg protocol (q to quit): "))
         if _input.isdigit() and int(_input) in xrange(1, len(protos)+1):
             proto = protos[int(_input) - 1]
             break
@@ -173,7 +175,7 @@ def configure_interface():
             nics.append(c[0])
             print "%d) %s" % (i + 1, nics[i])
 
-        _input = raw_input("Select an interface (q to quit): ")
+        _input = raw_input(_("Select an interface (q to quit): "))
         if _input.isdigit() and int(_input) in xrange(1, len(nics)+1):
             nic = nics[int(_input) - 1]
             break
@@ -187,9 +189,9 @@ def configure_interface():
         iface = Interfaces()
 
     while True:
-        _input = raw_input("Reset network configuration? (y/n) ").lower()
+        _input = raw_input(_("Reset network configuration? (y/n) ")).lower()
         if _input.startswith("y"):
-            print "Resetting interface configuration:",
+            print _("Resetting interface configuration:"),
             try:
                 if iface.id != None:
                     iface.int_ipv4address = ''
@@ -197,21 +199,21 @@ def configure_interface():
                     iface.int_dhcp = False
                     iface.save()
             except Exception, err:
-                print "Failed %s" % str(err)
+                print _("Failed %s") % str(err)
                 return False
-            print "Ok"
-            print "Restarting network:",
+            print _("Ok")
+            print _("Restarting network:"),
             try:
                 notifier().start("network")
             except:
-                print "Failed"
-            print "ok"
-            print "Restarting routing:",
+                print _("Failed")
+            print _("ok")
+            print _("Restarting routing:"),
             try:
                 notifier().restart("routing")
             except:
-                print "Failed"
-            print "ok"
+                print _("Failed")
+            print _("ok")
             return True
         elif _input.startswith('n'):
             break
@@ -220,9 +222,9 @@ def configure_interface():
 
     need_restart = False
     while True:
-        _input = raw_input("Configure interface for DHCP? (y/n) ")
+        _input = raw_input(_("Configure interface for DHCP? (y/n) "))
         if _input.lower().startswith("y"):
-            int_name_prompt = prompt("Interface name", iface.int_name)
+            int_name_prompt = prompt(_("Interface name"), iface.int_name)
             int_name = raw_input(int_name_prompt)
             if not int_name and iface.int_name:
                 int_name = iface.int_name
@@ -230,25 +232,25 @@ def configure_interface():
             iface.int_dhcp = True
             iface.int_ipv4address = ""
             iface.int_v4netmaskbit = ""
-            print "Saving interface configuration:",
+            print _("Saving interface configuration:"),
             try:
                 iface.save()
             except Exception, err:
-                print "Failed %s" % str(err)
+                print _("Failed %s") % str(err)
                 return False
-            print "Ok"
+            print _("Ok")
             need_restart = "DHCP"
             gc = GlobalConfiguration.objects.all()
             gc = gc[0]
             gc.gc_ipv4gateway = ''
 
-            print "Removing IPv4 default gateway:",
+            print _("Removing IPv4 default gateway:"),
             try:
                 gc.save()
             except:
-                print "Failed"
+                print _("Failed")
                 return False
-            print "Ok"
+            print _("Ok")
             break
         elif _input.lower().startswith('n'):
             break
@@ -256,18 +258,18 @@ def configure_interface():
             continue
 
     while True and need_restart != "DHCP":
-        yes = raw_input("Configure IPv4? (y/n) ")
+        yes = raw_input(_("Configure IPv4? (y/n) "))
         if yes.lower().startswith("y"):
-            int_name_prompt = prompt("Interface name", iface.int_name)
+            int_name_prompt = prompt(_("Interface name"), iface.int_name)
             int_name = raw_input(int_name_prompt)
             if not int_name and iface.int_name:
                 int_name = iface.int_name
             ip_prompt = prompt("IPv4 Address", iface.int_ipv4address)
             mask_prompt = prompt("IPv4 Netmask", iface.int_v4netmaskbit)
-            print "Several input formats are supported"
-            print "Example 1 CIDR Notation:"
+            print _("Several input formats are supported")
+            print _("Example 1 CIDR Notation:")
             print "    192.168.1.1/24"
-            print "Example 2 IP and Netmask seperate:"
+            print _("Example 2 IP and Netmask seperate:")
             print "    IP: 192.168.1.1"
             print "    Netmask: 255.255.255.0, /24 or 24"
 
@@ -282,7 +284,7 @@ def configure_interface():
                     try:
                         ipaddr.IPNetwork(ip, version=4)
                     except ValueError:
-                        print "Invalid value entered"
+                        print _("Invalid value entered")
                         continue
                     ip, mask = ip.split('/')
                     break
@@ -299,7 +301,7 @@ def configure_interface():
                         try:
                             ipaddr.IPAddress(mask, version=4)
                         except ValueError:
-                            print "Invalid Netmask"
+                            print _("Invalid Netmask")
                             continue
                         mask = quad_to_cidr(mask)
                         break
@@ -310,11 +312,11 @@ def configure_interface():
                         mask = int(mask, 10)
                         break
                     else:
-                        print "Enter netmask as a dotted quad, a hex number,",
-                        print "or CIDR prefix"
-                        print "Acceptable formats are 255.255.255.0,",
-                        print "0xffffff00,",
-                        print "/24, or 24"
+                        print _("""Enter netmask as a dotted quad, a hex number,
+or CIDR prefix
+Acceptable formats are 255.255.255.0,
+0xffffff00,
+/24, or 24""")
                         continue
 
             iface.int_interface = nic
@@ -322,20 +324,20 @@ def configure_interface():
             iface.int_ipv4address = ip
             iface.int_v4netmaskbit = mask
             iface.int_dhcp = False
-            print "Saving interface configuration:",
+            print _("Saving interface configuration:"),
             try:
                 iface.save()
             except:
-                print "Failed"
+                print _("Failed")
                 return False
-            print "Ok"
+            print _("Ok")
             need_restart = True
             break
         elif yes.lower().startswith("n"):
             break
 
     while True:
-        yes = raw_input("Configure IPv6? (y/n) ")
+        yes = raw_input(_("Configure IPv6? (y/n) "))
         if yes.lower().startswith("y"):
             ip_prompt = prompt("IPv6 Address", iface.int_ipv6address)
             mask_prompt = prompt("IPv6 Netmask", iface.int_v6netmaskbit)
@@ -349,7 +351,7 @@ def configure_interface():
                 try:
                     ipaddr.IPNetwork(ip, version=6)
                 except ValueError:
-                    print "Invalid value entered"
+                    print _("Invalid value entered")
                     continue
                 ip, mask = ip.split('/')
             except:
@@ -360,20 +362,20 @@ def configure_interface():
                             mask = iface.int_v6netmaskbit
                             break
                         else:
-                            print "Enter ipv6 netmask as number of bits eg: 64"
+                            print _("Enter ipv6 netmask as number of bits eg: 64")
                             continue
 
             iface.int_interface = nic
             iface.int_ipv6address = ip
             iface.int_v6netmaskbit = mask
 
-            print "Saving interface configuration:",
+            print _("Saving interface configuration:"),
             try:
                 iface.save()
             except:
-                print "Failed"
+                print _("Failed")
                 return False
-            print "Ok"
+            print _("Ok")
             if not need_restart:
                 need_restart = True
             break
@@ -382,19 +384,19 @@ def configure_interface():
             break
 
     if need_restart:
-        print "Restarting network:",
+        print _("Restarting network:"),
         try:
             notifier().start("network")
         except:
-            print "Failed"
-        print "ok"
+            print _("Failed")
+        print _("ok")
     if need_restart == "DHCP":
-        print "Restarting routing:",
+        print _("Restarting routing:"),
         try:
             notifier().restart("routing")
         except:
-            print "Failed"
-        print "ok"
+            print _("Failed")
+        print _("ok")
         return True
 
 def reset_gui_login():
@@ -403,16 +405,16 @@ def reset_gui_login():
                                 is_superuser=True, is_staff=True)
     admin.set_unusable_password()
     admin.save()
-    print """
-    The login information for the WebGUI has been reset.
-
-    Press Enter to continue
-    """
+    print
+    print _("The login information for the WebGUI has been reset.")
+    print
+    print _("Press Enter to continue")
+    print
     raw_input("")
 
 def reset_factory_defaults():
-    a = raw_input('Are you sure you want to reset to factory defaults? '
-                  '(yes/no): ')
+    a = raw_input(_('Are you sure you want to reset to factory defaults? ')
+                  + '(yes/no): ')
     if a.lower().startswith('y'):
         notifier().config_restore()
         os.system("/sbin/reboot")
@@ -435,44 +437,44 @@ def configure_lagg_interface():
     iface = Interfaces(int_interface = lagg_name, int_name = lagg_name,
         int_dhcp = True, int_ipv6auto = False)
 
-    print "Saving interface configuration:",
+    print _("Saving interface configuration:"),
     try:
         iface.save()
     except:
-        print "Failed"
+        print _("Failed")
         return False
-    print "Ok"  
+    print _("Ok")
 
     lagg_iface = LAGGInterface(lagg_interface = iface,
                                lagg_protocol = lagg_proto)
 
-    print "Saving Link Aggregation configuration:",
+    print _("Saving Link Aggregation configuration:"),
     try:
         lagg_iface.save()
     except:
-        print "Failed"
+        print _("Failed")
         return False
-    print "Ok"
+    print _("Ok")
 
     order = 0
-    for nic in lagg_nics: 
+    for nic in lagg_nics:
         lagg_iface_member = LAGGInterfaceMembers(lagg_interfacegroup =
                                                  lagg_iface,
                                                  lagg_ordernum = order,
                                                  lagg_physnic = nic,
                                                  lagg_deviceoptions = 'up')
 
-        print "Saving Link Aggregation member configuration:",
+        print _("Saving Link Aggregation member configuration:"),
         try:
             lagg_iface_member.save()
         except:
-            print "Failed"
+            print _("Failed")
             return False
-        print "Ok"
+        print _("Ok")
 
         order += 1
 
-    print "The system must be rebooted for these changes to take effect."
+    print _("The system must be rebooted for these changes to take effect.")
     return True
 
 def create_vlan():
@@ -487,7 +489,7 @@ def create_vlan():
             nics.append(c[0])
             print "%2d) %s" % (i + 1, nics[i])
 
-        _input = raw_input("Select a parent interface (q to quit): ")
+        _input = raw_input(_("Select a parent interface (q to quit): "))
         if _input.isdigit() and _input in xrange(1, len(nics)+1):
             vlan_pint = nics[int(_input) - 1]
             break
@@ -495,91 +497,91 @@ def create_vlan():
             return True
     # Get interface name
     while True:
-        vlan_vint = raw_input("Enter an interface name "
-                              "(vlanXX) or a to abort: ")
+        vlan_vint = raw_input(_("Enter an interface name ")
+                              + _("(vlanXX) or a to abort: "))
         if vlan_vint == "a":
             return
         if not re.match(r'vlan\d+', vlan_vint):
-            print "Interface name must be vlanXX where XX is a number"
+            print _("Interface name must be vlanXX where XX is a number")
             continue
         break
     # Get vlan tag
     while True:
-        vlan_tag = raw_input("Enter a VLAN Tag or a to abort: ")
+        vlan_tag = raw_input(_("Enter a VLAN Tag or a to abort: "))
         if vlan_tag == "a":
             return
         if not re.match(r'\d+', vlan_tag):
-            print "VLAN Tag must be an integer"
+            print _("VLAN Tag must be an integer")
             continue
         break
     # Get VLAN description
-    vlan_description = raw_input("Enter VLAN description: ")
+    vlan_description = raw_input(_("Enter VLAN description: "))
 
     vlan.vlan_pint = vlan_pint
     vlan.vlan_vint = vlan_vint
     vlan.vlan_tag = vlan_tag
     vlan.vlan_description = vlan_description
-    print "Saving VLAN interface:",
+    print _("Saving VLAN interface:"),
     try:
         vlan.save()
     except:
-        print "Failed"
+        print _("Failed")
         return False
-    print "Ok"
-    print "Restarting network:",
+    print _("Ok")
+    print _("Restarting network:"),
     try:
         notifier().start("network")
     except:
-        print "Failed"
+        print _("Failed")
         return False
-    print "ok"
+    print _("ok")
     return True
 
 def configure_ipv4_default_route(gc):
-    gwprompt = prompt("IPv4 Default Route", gc.gc_ipv4gateway)
+    gwprompt = prompt(_("IPv4 Default Route"), gc.gc_ipv4gateway)
 
     gateway = raw_input(gwprompt)
     if gateway:
         try:
             ipaddr.IPAddress(gateway, version=4)
         except ValueError:
-            print "Invalid value entered"
+            print _("Invalid value entered")
             return False
-        gc.gc_ipv4gateway = gateway 
+        gc.gc_ipv4gateway = gateway
 
-        print "Saving IPv4 gateway:",
+        print _("Saving IPv4 gateway:"),
         try:
             gc.save()
         except:
-            print "Failed"
+            print _("Failed")
             return False
-        print "Ok"
+        print _("Ok")
         return True
     else:
-        print "No default route entered."
+        print _("No default route entered.")
         return False
 
 def configure_ipv6_default_route(gc):
-    gwprompt = prompt("IPv6 Default Route", gc.gc_ipv6gateway)
+    gwprompt = prompt(_("IPv6 Default Route"), gc.gc_ipv6gateway)
 
     gateway = raw_input(gwprompt)
     if gateway:
         try:
             ipaddr.IPAddress(gateway, version=6)
         except ValueError:
-            print "Invalid value entered"
+            print _("Invalid value entered")
             return False
-        gc.gc_ipv6gateway = gateway 
-        print "Saving IPv6 gateway:",
+        gc.gc_ipv6gateway = gateway
+        print _("Saving IPv6 gateway:"),
         try:
             gc.save()
         except:
-            print "Failed"
+            print _("Failed")
             return False
-        print "Ok"
+        print _("Ok")
         return True
     else:
-        print "No default route entered."
+        print _("No default route entered.")
         return False
 
 def configure_default_route():
@@ -588,7 +590,7 @@ def configure_default_route():
     need_save = False
 
     while True:
-        yes = raw_input("Configure IPv4 Default Route? (y/n)")
+        yes = raw_input(_("Configure IPv4 Default Route? (y/n)"))
         if yes.lower().startswith("y"):
             configure_ipv4_default_route(gc)
             need_save = True
@@ -597,7 +599,7 @@ def configure_default_route():
             break
 
     while True:
-        yes = raw_input("Configure IPv6 Default Route? (y/n)")
+        yes = raw_input(_("Configure IPv6 Default Route? (y/n)"))
         if yes.lower().startswith("y"):
             configure_ipv6_default_route(gc)
             need_save = True
@@ -606,32 +608,32 @@ def configure_default_route():
             break
 
     if need_save:
-        print "Restarting routing:",
+        print _("Restarting routing:"),
         try:
             notifier().restart("routing")
         except:
-            print "Failed"
+            print _("Failed")
             return False
-        print "ok"
+        print _("ok")
         return True
     else:
-        print "Routing configuration unchanged."
+        print _("Routing configuration unchanged.")
         return True
 
 def configure_static_routes():
-    dest = raw_input("Destination network: ")
-    gateway = raw_input("Gateway: ")
-    desc = raw_input("Description: ")
+    dest = raw_input(_("Destination network: "))
+    gateway = raw_input(_("Gateway: "))
+    desc = raw_input(_("Description: "))
 
     try:
         ipaddr.IPNetwork(dest)
     except ValueError:
-        print "Invalid destination network"
+        print _("Invalid destination network")
         return False
     try:
         ipaddr.IPAddress(gateway)
     except ValueError:
-        print "Invalid gateway"
+        print _("Invalid gateway")
         return False
 
     sr = StaticRoute()
@@ -639,20 +641,20 @@ def configure_static_routes():
     sr.sr_gateway = gateway
     if desc:
         sr.sr_description = desc
-    print "Saving static route:",
+    print _("Saving static route:"),
     try:
         sr.save()
     except:
-        print "Failed"
+        print _("Failed")
         return False
-    print "ok"
+    print _("ok")
     try:
-        print "Restarting routing:",
+        print _("Restarting routing:"),
         notifier().restart("routing")
     except:
-        print "Failed"
+        print _("Failed")
         return False
-    print "ok"
+    print _("ok")
     return True
 
 def configure_dns():
@@ -660,24 +662,24 @@ def configure_dns():
     gc = GlobalConfiguration.objects.all()
     gc = gc[0]
 
-    domain_prompt = prompt("DNS Domain", gc.gc_domain)
-    ns1_prompt = prompt("DNS Nameserver 1", gc.gc_nameserver1)
-    ns2_prompt = prompt("DNS Nameserver 2", gc.gc_nameserver2)
-    ns3_prompt = prompt("DNS Nameserver 3", gc.gc_nameserver3)
+    domain_prompt = prompt(_("DNS Domain"), gc.gc_domain)
+    ns1_prompt = prompt(_("DNS Nameserver 1"), gc.gc_nameserver1)
+    ns2_prompt = prompt(_("DNS Nameserver 2"), gc.gc_nameserver2)
+    ns3_prompt = prompt(_("DNS Nameserver 3"), gc.gc_nameserver3)
 
     domain = raw_input(domain_prompt)
     if domain:
         gc.gc_domain = domain
 
     need_save = False
-    print "Enter nameserver IPs, an empty value ends input"
+    print _("Enter nameserver IPs, an empty value ends input")
     while True:
         ns1 = raw_input(ns1_prompt)
         if ns1:
             try:
                 ipaddr.IPAddress(ns1, version=4)
             except ValueError:
-                print "Invalid nameserver"
+                print _("Invalid nameserver")
                 return False
             gc.gc_nameserver1 = ns1
             need_save = True
@@ -691,7 +693,7 @@ def configure_dns():
             try:
                 ipaddr.IPAddress(ns2, version=4)
             except ValueError:
-                print "Invalid nameserver"
+                print _("Invalid nameserver")
                 break
             gc.gc_nameserver2 = ns2
         else:
@@ -702,27 +704,27 @@ def configure_dns():
             try:
                 ipaddr.IPAddress(ns3, version=4)
             except ValueError:
-                print "Invalid nameserver"
+                print _("Invalid nameserver")
                 break
             gc.gc_nameserver3 = ns3
         break
 
     if need_save:
-        print "Saving DNS configuration:",
+        print _("Saving DNS configuration:"),
         try:
             gc.save()
         except:
-            print "Failed"
+            print _("Failed")
             return False
-        print "ok"
+        print _("ok")
 
-        print "Reloading network config:",
+        print _("Reloading network config:"),
         try:
             notifier().reload("networkgeneral")
         except:
-            print "Failed"
+            print _("Failed")
             return False
-        print "ok"
+        print _("ok")
         return True
 
 def shell():
@@ -731,7 +733,7 @@ def shell():
 
 def reboot():
     while True:
-        ret = raw_input("Confirm reboot (y/n): ")
+        ret = raw_input(_("Confirm reboot (y/n): "))
         if ret.lower().startswith("y"):
             os.system("/sbin/reboot")
         if ret.lower().startswith("n"):
@@ -739,7 +741,7 @@ def reboot():
 
 def shutdown():
     while True:
-        ret = raw_input("Confirm Shutdown (y/n): ")
+        ret = raw_input(_("Confirm Shutdown (y/n): "))
         if ret.lower().startswith("y"):
             os.system("/sbin/shutdown -p now")
         if ret.lower().startswith("n"):
@@ -751,9 +753,9 @@ def show_ip():
     addrs = p1.communicate()[0].split('\n')[:-1]
 
     if addrs:
-        print """
-You may try the following URLs to access the web user interface:
-"""
+        print
+        print _("You may try the following URLs to access the web user interface:")
+        print
 
         for addr in addrs:
             ip, port = addr.split(':')
@@ -776,17 +778,17 @@ You may try the following URLs to access the web user interface:
 
 def main_menu():
     menu = [
-        [ "Configure Network Interfaces", configure_interface ],
-        [ "Configure Link Aggregation", configure_lagg_interface ],
-        [ "Create VLAN Interface", create_vlan ],
-        [ "Configure Default Route", configure_default_route ],
-        [ "Configure Static Routes", configure_static_routes ],
-        [ "Configure DNS", configure_dns ],
-        [ "Reset WebGUI login credentials", reset_gui_login ],
-        [ "Reset to factory defaults", reset_factory_defaults ],
-        [ "Shell", shell ],
-        [ "Reboot", reboot ],
-        [ "Shutdown", shutdown],
+        [ _("Configure Network Interfaces"), configure_interface ],
+        [ _("Configure Link Aggregation"), configure_lagg_interface ],
+        [ _("Create VLAN Interface"), create_vlan ],
+        [ _("Configure Default Route"), configure_default_route ],
+        [ _("Configure Static Routes"), configure_static_routes ],
+        [ _("Configure DNS"), configure_dns ],
+        [ _("Reset WebGUI login credentials"), reset_gui_login ],
+        [ _("Reset to factory defaults"), reset_factory_defaults ],
+        [ _("Shell"), shell ],
+        [ _("Reboot"), reboot ],
+        [ _("Shutdown"), shutdown],
               ]
     menu_map = {}
     menu_max = 0
@@ -795,17 +797,18 @@ def main_menu():
         menu_map[menu_max] = item
 
     while True:
-        print """
-Console setup
--------------
-        """
+        print
+        print _("Console setup")
+        print "-------------"
+        print
+
         for index in menu_map:
             print "%d) %s" % (index, menu_map[index][0])
 
         show_ip()
 
         try:
-            ch = int(raw_input("Enter an option from 1-%d: " % (menu_max)))
+            ch = int(raw_input(_("Enter an option from 1-%d: ") % (menu_max)))
         except ValueError:
             ch = None
         if ch in menu_map:
@@ -815,10 +818,11 @@ Console setup
 
 #
 #	No signal handling here, it is assumed that this script
-#	will be setup in /etc/ttys, so we just exit ;-). 
+#	will be setup in /etc/ttys, so we just exit ;-).
 #
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal.SIG_IGN)
+    i18n.apply_language()
 
     while True:
         try:
