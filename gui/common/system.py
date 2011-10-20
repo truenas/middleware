@@ -96,7 +96,7 @@ def send_mail(subject=None, text=None, interval=timedelta(), channel='freenas', 
     if not to:
         to = bsdUsers.objects.get(bsdusr_username='root').bsdusr_email
     if not plain:
-        msg = MIMEText(text)
+        msg = MIMEText(text, _charset='utf-8')
         if subject:
             msg['Subject'] = subject
         msg['From'] = email.em_fromemail
