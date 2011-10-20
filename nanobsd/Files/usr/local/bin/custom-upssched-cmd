@@ -22,12 +22,12 @@ while eval read $f; do
 
 case $1 in
 	"ONBATT"|"LOWBATT")
-		if [ "${ups_shutdown}" = "lowbatt" && "$1" = "LOWBATT" ] || [ "${ups_shutdown}" = "batt" && "$1" = "ONBATT" ]; then
+		if [ "${ups_shutdown}" = "lowbatt" -a "$1" = "LOWBATT" ] || [ "${ups_shutdown}" = "batt" -a "$1" = "ONBATT" ]; then
 			logger -t upssched-cmd "issuing shutdown"
 			/usr/local/sbin/upsmon -c fsd
 		fi
 		;;
-	"SHUTDOWN|FSD")
+	"SHUTDOWN"|"FSD")
 		if [ "${ups_emailnotify}" -eq 1 ]; then
 			echo "$1" | mail -s "$(echo "${ups_subject}"|sed "s/%d/$(date)/"|sed "s/%h/$(hostname)/")" "${ups_toemail}"
 		fi
