@@ -6205,259 +6205,259 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s を追加しました。"
+msgid "%s successfully added."
+msgstr "%s を追加しました。"
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 ネットマスク"
+msgid "IPv6 Netmask"
+msgstr "IPv6 ネットマスク"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "この値は、0 以上、10000 以下で設定して下さい。"
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "この値は、0 以上、10000 以下で設定して下さい。"
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "この値は、0 以上、1000 以下で設定して下さい。"
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "この値は、0 以上、1000 以下で設定して下さい。"
 
-#~ msgid "Enable DDP"
-#~ msgstr "DDP の有効化"
+msgid "Enable DDP"
+msgstr "DDP の有効化"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "古いappletalkのためにDDP サポートを有効にします。"
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "古いappletalkのためにDDP サポートを有効にします。"
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "TLS の on/off"
-
-#, fuzzy
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
-
-#~ msgid "Windows Share"
-#~ msgstr "Windowsファイル共有"
+msgid "Turn on/off TLS"
+msgstr "TLS の on/off"
 
 #, fuzzy
-#~ msgid "Windows Shares"
-#~ msgstr "Windowsファイル共有"
+msgid "Rsyncd"
+msgstr "Rsyncd"
+
+msgid "Windows Share"
+msgstr "Windowsファイル共有"
 
 #, fuzzy
-#~ msgid "The volume failed to export"
-#~ msgstr "サービスの再起動に失敗しました。"
+msgid "Windows Shares"
+msgstr "Windowsファイル共有"
 
 #, fuzzy
-#~ msgid "Cron Scheduler"
-#~ msgstr "定期的なスナップショットのスケジュール"
+msgid "The volume failed to export"
+msgstr "サービスの再起動に失敗しました。"
+
+#, fuzzy
+msgid "Cron Scheduler"
+msgstr "定期的なスナップショットのスケジュール"
 
 # メーリングリストへのリンクなので、原文のままがよいと思います。
 #, fuzzy
-#~ msgid "Devel"
-#~ msgstr "Devel"
+msgid "Devel"
+msgstr "Devel"
 
 # メーリングリストへのリンクなので、原文のままがよいと思います。
 #, fuzzy
-#~ msgid "Docs"
-#~ msgstr "Devel"
+msgid "Docs"
+msgstr "Devel"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Mount point"
-#~ msgstr "マウントポイント"
+msgid "Mount point"
+msgstr "マウントポイント"
 
-#~ msgid "Dataset name"
-#~ msgstr "データセット名"
+msgid "Dataset name"
+msgstr "データセット名"
 
-#~ msgid "Snapshot name"
-#~ msgstr "スナップショット名"
+msgid "Snapshot name"
+msgstr "スナップショット名"
 
-#~ msgid "Used space"
-#~ msgstr "使用容量"
+msgid "Used space"
+msgstr "使用容量"
 
-#~ msgid "Referenced space"
-#~ msgstr "参照容量"
+msgid "Referenced space"
+msgstr "参照容量"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "ZFS スナップショットはありません。"
+msgid "No ZFS snapshot available"
+msgstr "ZFS スナップショットはありません。"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "定期的なスナップショットの作成"
+msgid "Create Periodic Snapshot"
+msgstr "定期的なスナップショットの作成"
 
 # 意訳
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "すべての設定を工場出荷時に初期化"
+msgid "Restore to Factory Defaults"
+msgstr "すべての設定を工場出荷時に初期化"
 
-#~ msgid "Config"
-#~ msgstr "設定"
+msgid "Config"
+msgstr "設定"
 
-#~ msgid "OS Version"
-#~ msgstr "OSのバージョン"
+msgid "OS Version"
+msgstr "OSのバージョン"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s を更新しました。"
+msgid "%s successfully update."
+msgstr "%s を更新しました。"
 
-#~ msgid "Admin user"
-#~ msgstr "管理ユーザ"
+msgid "Admin user"
+msgstr "管理ユーザ"
 
-#~ msgid "%s successfully added"
-#~ msgstr "%s を追加しました。"
+msgid "%s successfully added"
+msgstr "%s を追加しました。"
 
-#~ msgid "N/A"
-#~ msgstr "該当なし"
+msgid "N/A"
+msgstr "該当なし"
 
 # password fileがファイル名と想定してそのままにしています。
-#~ msgid ""
-#~ "Use this option to override the username ('www' by default) which will be "
-#~ "used for access to services which are specified as guest. Whatever "
-#~ "privileges this user has will be available to any client connecting to "
-#~ "the guest service. This user must exist in the password file, but does "
-#~ "not require a valid login."
-#~ msgstr ""
-#~ "このオプションは、guest ユーザ名を特に指定する場合に利用します（デフォルト"
-#~ "は 'www'）。このユーザにどのような権限を設定しても構いませんが、guest サー"
-#~ "ビスに接続するすべてのクライアントに適用されます。ただし、このユーザを "
-#~ "password file 内に必ず記述して下さい。なお、ログイン可能である必要はありま"
-#~ "せん。"
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"このオプションは、guest ユーザ名を特に指定する場合に利用します（デフォルト"
+"は 'www'）。このユーザにどのような権限を設定しても構いませんが、guest サー"
+"ビスに接続するすべてのクライアントに適用されます。ただし、このユーザを "
+"password file 内に必ず記述して下さい。なお、ログイン可能である必要はありま"
+"せん。"
 
 #, fuzzy
-#~ msgid "ZVol Name"
-#~ msgstr "フルネーム"
+msgid "ZVol Name"
+msgstr "フルネーム"
 
-#~ msgid "Dataset"
-#~ msgstr "データセット"
+msgid "Dataset"
+msgstr "データセット"
 
-#~ msgid "ZVol"
-#~ msgstr "ZVol"
+msgid "ZVol"
+msgstr "ZVol"
 
-#~ msgid "Native dataset"
-#~ msgstr "ネイティブデータセット"
+msgid "Native dataset"
+msgstr "ネイティブデータセット"
 
-#~ msgid "/var/log/messages"
-#~ msgstr "/var/log/messages"
+msgid "/var/log/messages"
+msgstr "/var/log/messages"
 
-#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ヘルプ/サポート"
+msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ヘルプ/サポート"
 
-#~ msgid "Success!"
-#~ msgstr "成功！"
+msgid "Success!"
+msgstr "成功！"
 
-#~ msgid "Your password was changed."
-#~ msgstr "パスワードは変更されました。"
+msgid "Your password was changed."
+msgstr "パスワードは変更されました。"
 
-#~ msgid "Password change"
-#~ msgstr "パスワードの変更"
+msgid "Password change"
+msgstr "パスワードの変更"
 
-#~ msgid "Please correct the error below."
-#~ msgid_plural "Please correct the errors below."
-#~ msgstr[0] "以下のエラーを修正してください。"
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "以下のエラーを修正してください。"
 
-#~ msgid ""
-#~ "Please enter your old password, and then enter your new password twice to "
-#~ "verify it is typed in correctly."
-#~ msgstr ""
-#~ "現在のパスワードと新しいパスワードを入力して下さい。新しいパスワードは確認"
-#~ "のため、2 回入力します。"
+msgid ""
+"Please enter your old password, and then enter your new password twice to "
+"verify it is typed in correctly."
+msgstr ""
+"現在のパスワードと新しいパスワードを入力して下さい。新しいパスワードは確認"
+"のため、2 回入力します。"
 
-#~ msgid "Password (again)"
-#~ msgstr "パスワード（確認）"
+msgid "Password (again)"
+msgstr "パスワード（確認）"
 
 #, fuzzy
-#~ msgid "minutes,"
-#~ msgstr "分、"
+msgid "minutes,"
+msgstr "分、"
 
-#~ msgid "Create ZFS zvol"
-#~ msgstr "ZVol を ZFS で作成"
+msgid "Create ZFS zvol"
+msgstr "ZVol を ZFS で作成"
 
-#~ msgid "Add ZVol"
-#~ msgstr "ZVol の追加"
+msgid "Add ZVol"
+msgstr "ZVol の追加"
 
-#~ msgid "English"
-#~ msgstr "英語"
+msgid "English"
+msgstr "英語"
 
-#~ msgid "Level"
-#~ msgstr "レベル"
+msgid "Level"
+msgstr "レベル"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "リンクアグリゲーションの追加"
+msgid "Add Link Aggregation"
+msgstr "リンクアグリゲーションの追加"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "全てのインターフェースを表示"
+msgid "View All Interfaces"
+msgstr "全てのインターフェースを表示"
 
-#~ msgid "View All VLANs"
-#~ msgstr "全てのVLANを表示"
+msgid "View All VLANs"
+msgstr "全てのVLANを表示"
 
-#~ msgid "View All Static Routes"
-#~ msgstr "全ての静的ルートを表示"
+msgid "View All Static Routes"
+msgstr "全ての静的ルートを表示"
 
-#~ msgid "Windows Version"
-#~ msgstr "Windowsのバージョン"
+msgid "Windows Version"
+msgstr "Windowsのバージョン"
 
-#~ msgid "The version of Microsoft Windows that Active Directory is running."
-#~ msgstr ""
-#~ "Active Directoryを実行する Microsoft Windows のバージョンを指定します。"
+msgid "The version of Microsoft Windows that Active Directory is running."
+msgstr ""
+"Active Directoryを実行する Microsoft Windows のバージョンを指定します。"
 
-#~ msgid "Service Principal Name"
-#~ msgstr "サービスプリンシパル名"
+msgid "Service Principal Name"
+msgstr "サービスプリンシパル名"
 
-#~ msgid "Service Principal Name, eg service/account."
-#~ msgstr "サービスプリンシパル名を指定します。（例: service/account）"
+msgid "Service Principal Name, eg service/account."
+msgstr "サービスプリンシパル名を指定します。（例: service/account）"
 
-#~ msgid "Service Principal Name Password"
-#~ msgstr "サービスプリンシパル名のパスワード"
+msgid "Service Principal Name Password"
+msgstr "サービスプリンシパル名のパスワード"
 
 # このあたりの翻訳、ActiveDirectoryに詳しい方、フォローお願いします。
 #, fuzzy
-#~ msgid "Password of the Service Principal Name account."
-#~ msgstr "サービスプリンシパル名アカウントのパスワード"
+msgid "Password of the Service Principal Name account."
+msgstr "サービスプリンシパル名アカウントのパスワード"
 
-#~ msgid "Kerberos Keytab File"
-#~ msgstr "ケルベロス認証のキータブファイル"
+msgid "Kerberos Keytab File"
+msgstr "ケルベロス認証のキータブファイル"
 
 #, fuzzy
-#~ msgid ""
-#~ "The kerberos keytab file that was generated on the Active Directory "
-#~ "server."
-#~ msgstr ""
-#~ "ケルベロス認証のキータブファイルは、Active Directory サーバが生成します。"
+msgid ""
+"The kerberos keytab file that was generated on the Active Directory "
+"server."
+msgstr ""
+"ケルベロス認証のキータブファイルは、Active Directory サーバが生成します。"
 
-#~ msgid "Auxillary Parameters"
-#~ msgstr "補助パラメータ"
+msgid "Auxillary Parameters"
+msgstr "補助パラメータ"
 
-#~ msgid "Volume Path"
-#~ msgstr "ボリュームパス"
+msgid "Volume Path"
+msgstr "ボリュームパス"
 
-#~ msgid "View All UNIX Shares"
-#~ msgstr "すべての Unix 共有を表示"
+msgid "View All UNIX Shares"
+msgstr "すべての Unix 共有を表示"
 
-#~ msgid "View All Apple Shares"
-#~ msgstr "すべての Apple 共有を表示"
+msgid "View All Apple Shares"
+msgstr "すべての Apple 共有を表示"
 
-#~ msgid "View All Windows Shares"
-#~ msgstr "すべての Windows 共有を表示"
+msgid "View All Windows Shares"
+msgstr "すべての Windows 共有を表示"
 
-#~ msgid "Read"
-#~ msgstr "読み込み"
+msgid "Read"
+msgstr "読み込み"
 
-#~ msgid "Write"
-#~ msgstr "書き込み"
+msgid "Write"
+msgstr "書き込み"
 
-#~ msgid "Execute"
-#~ msgstr "実行"
+msgid "Execute"
+msgstr "実行"
 
-#~ msgid "Owner"
-#~ msgstr "所有者"
+msgid "Owner"
+msgstr "所有者"
 
-#~ msgid "Other"
-#~ msgstr "その他のユーザ"
+msgid "Other"
+msgstr "その他のユーザ"
 
 # ディスク（複数）の方がよいでしょうか？
-#~ msgid "Disks"
-#~ msgstr "ディスク"
+msgid "Disks"
+msgstr "ディスク"
 
-#~ msgid "View All Periodic Snapshot Tasks"
-#~ msgstr "すべての定期的なスナップショットタスクを表示"
+msgid "View All Periodic Snapshot Tasks"
+msgstr "すべての定期的なスナップショットタスクを表示"
 
-#~ msgid "sucessfully edited"
-#~ msgstr "編集が成功しました。"
+msgid "sucessfully edited"
+msgstr "編集が成功しました。"
 
-#~ msgid "Lagg Interface was successfully added"
-#~ msgstr "LAGG インタフェースを追加しました。"
+msgid "Lagg Interface was successfully added"
+msgstr "LAGG インタフェースを追加しました。"
 
-#~ msgid "ActiveDirectory Settings"
-#~ msgstr "ActiveDirectoryの設定"
+msgid "ActiveDirectory Settings"
+msgstr "ActiveDirectoryの設定"

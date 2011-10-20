@@ -5582,23 +5582,23 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s đã thêm vào hệ thống thành công."
+msgid "%s successfully added."
+msgstr "%s đã thêm vào hệ thống thành công."
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "Lịch trình Cron"
+msgid "Cron Scheduler"
+msgstr "Lịch trình Cron"
 
-#~ msgid "Welcome to"
-#~ msgstr "Chào mừng đến với8"
+msgid "Welcome to"
+msgstr "Chào mừng đến với8"
 
-#~ msgid "Success!"
-#~ msgstr "Thành công!"
+msgid "Success!"
+msgstr "Thành công!"
 
-#~ msgid "Your password was changed."
-#~ msgstr "Mật khẩu của bạn đã được thay đổi."
+msgid "Your password was changed."
+msgstr "Mật khẩu của bạn đã được thay đổi."
 
-#~ msgid "Password change"
-#~ msgstr "Đổi mật khẩu"
+msgid "Password change"
+msgstr "Đổi mật khẩu"
 
-#~ msgid "English"
-#~ msgstr "Tiếng Anh"
+msgid "English"
+msgstr "Tiếng Anh"

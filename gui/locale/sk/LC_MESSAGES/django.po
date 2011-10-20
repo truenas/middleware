@@ -4876,32 +4876,28 @@ msgid "Mailing Lists"
 msgstr "Mailing list"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "Announce"
+msgstr "FreeNAS Announce"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "Commit"
+msgstr "FreeNAS Commit"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS vývoj"
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "testovanie"
+msgstr "FreeNAS testovanie"
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS Dokumentácia"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Preklady"
+msgstr "FreeNAS Preklady"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4916,9 +4912,8 @@ msgid "Documentation"
 msgstr "Dokumentácia"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Dokumentácia"
+msgstr "FreeNAS Dokumentácia"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5891,80 +5886,80 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Kritické"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s úspešne pridané."
+msgid "%s successfully added."
+msgstr "%s úspešne pridané."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 sieťová maska"
+msgid "IPv6 Netmask"
+msgstr "IPv6 sieťová maska"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Táto hodnota musí byť medzi 0 a 10000, vrátane."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Táto hodnota musí byť medzi 0 a 10000, vrátane."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Táto hodnota musí byť medzi 0 a 1000, vrátane."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Táto hodnota musí byť medzi 0 a 1000, vrátane."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Aktivovať DDP"
+msgid "Enable DDP"
+msgstr "Aktivovať DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Aktivovať DDP podporu pre nízkoúrovňový appletalk prístup."
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Aktivovať DDP podporu pre nízkoúrovňový appletalk prístup."
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "Zapnúť/vypnúť TLS"
+msgid "Turn on/off TLS"
+msgstr "Zapnúť/vypnúť TLS"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "Windows Share"
-#~ msgstr "Windows zdieľaný adresár"
+msgid "Windows Share"
+msgstr "Windows zdieľaný adresár"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Windows zdielané adresáre"
+msgid "Windows Shares"
+msgstr "Windows zdielané adresáre"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "Zväzok sa nepodarilo exportovať"
+msgid "The volume failed to export"
+msgstr "Zväzok sa nepodarilo exportovať"
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "Plánovač Cron"
+msgid "Cron Scheduler"
+msgstr "Plánovač Cron"
 
-#~ msgid "Devel"
-#~ msgstr "vývoj"
+msgid "Devel"
+msgstr "vývoj"
 
-#~ msgid "Docs"
-#~ msgstr "Dokumentácia"
+msgid "Docs"
+msgstr "Dokumentácia"
 
-#~ msgid "Welcome to"
-#~ msgstr "Vitajte vo8"
+msgid "Welcome to"
+msgstr "Vitajte vo8"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Mount point"
-#~ msgstr "Prípojný bod"
+msgid "Mount point"
+msgstr "Prípojný bod"
 
-#~ msgid "Dataset name"
-#~ msgstr "Názov sady dát"
+msgid "Dataset name"
+msgstr "Názov sady dát"
 
-#~ msgid "Snapshot name"
-#~ msgstr "Názov snímku"
+msgid "Snapshot name"
+msgstr "Názov snímku"
 
-#~ msgid "Used space"
-#~ msgstr "Použité miesto"
+msgid "Used space"
+msgstr "Použité miesto"
 
-#~ msgid "Referenced space"
-#~ msgstr "Odkazované miesto"
+msgid "Referenced space"
+msgstr "Odkazované miesto"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "Žiadne dostupné ZFS snímky"
+msgid "No ZFS snapshot available"
+msgstr "Žiadne dostupné ZFS snímky"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Vytvoriť periodickú snímku (Snapshot)"
+msgid "Create Periodic Snapshot"
+msgstr "Vytvoriť periodickú snímku (Snapshot)"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Obnoviť na továrenské nastavenia"
+msgid "Restore to Factory Defaults"
+msgstr "Obnoviť na továrenské nastavenia"
 
-#~ msgid "Config"
-#~ msgstr "Konfigurácia"
+msgid "Config"
+msgstr "Konfigurácia"
 
-#~ msgid "OS Version"
-#~ msgstr "Verzia OS"
+msgid "OS Version"
+msgstr "Verzia OS"

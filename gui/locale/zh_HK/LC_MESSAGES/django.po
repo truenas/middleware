@@ -5649,50 +5649,50 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s 成功加入."
+msgid "%s successfully added."
+msgstr "%s 成功加入."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 Netmask"
-
-#, fuzzy
-#~ msgid "Windows Shares"
-#~ msgstr "Windows 版本"
+msgid "IPv6 Netmask"
+msgstr "IPv6 Netmask"
 
 #, fuzzy
-#~ msgid "Docs"
-#~ msgstr "版本"
-
-#~ msgid "Config"
-#~ msgstr "設置"
-
-#~ msgid "OS Version"
-#~ msgstr "操作系統版本"
-
-#~ msgid "%s successfully update."
-#~ msgstr "%s 更新成功."
-
-#~ msgid "Admin user"
-#~ msgstr "管理員用戶"
+msgid "Windows Shares"
+msgstr "Windows 版本"
 
 #, fuzzy
-#~ msgid "ZVol Name"
-#~ msgstr "全名"
+msgid "Docs"
+msgstr "版本"
 
-#~ msgid "English"
-#~ msgstr "英文"
+msgid "Config"
+msgstr "設置"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "加入 Link Aggregation"
+msgid "OS Version"
+msgstr "操作系統版本"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "檢視所有介面"
+msgid "%s successfully update."
+msgstr "%s 更新成功."
 
-#~ msgid "View All VLANs"
-#~ msgstr "檢視所有 VLAN"
+msgid "Admin user"
+msgstr "管理員用戶"
 
-#~ msgid "Read"
-#~ msgstr "讀取"
+#, fuzzy
+msgid "ZVol Name"
+msgstr "全名"
 
-#~ msgid "Write"
-#~ msgstr "寫入"
+msgid "English"
+msgstr "英文"
+
+msgid "Add Link Aggregation"
+msgstr "加入 Link Aggregation"
+
+msgid "View All Interfaces"
+msgstr "檢視所有介面"
+
+msgid "View All VLANs"
+msgstr "檢視所有 VLAN"
+
+msgid "Read"
+msgstr "讀取"
+
+msgid "Write"
+msgstr "寫入"

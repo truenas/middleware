@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-09 13:51-0700\n"
+"POT-Creation-Date: 2011-10-19 02:03-0700\n"
 "PO-Revision-Date: 2011-06-18 22:06+0200\n"
 "Last-Translator: ok1 <ok1@trups.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,63 +19,63 @@ msgstr ""
 "2);\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:114
+#: media/lib/js/freeadmin.js:127
 msgid "Reporting"
 msgstr "Ziņojumi"
 
-#: media/lib/js/freeadmin.js:126
+#: media/lib/js/freeadmin.js:139
 msgid "Settings"
 msgstr "Uzstādījumi"
 
-#: media/lib/js/freeadmin.js:137
+#: media/lib/js/freeadmin.js:150
 msgid "System Information"
 msgstr "Sistēmas informācija"
 
-#: media/lib/js/freeadmin.js:177
+#: media/lib/js/freeadmin.js:190
 msgid "Network Settings"
 msgstr "Tīkla iestatījumi"
 
-#: media/lib/js/freeadmin.js:239
+#: media/lib/js/freeadmin.js:254
 msgid "Services"
 msgstr "Pakalpojumi"
 
-#: media/lib/js/freeadmin.js:279
+#: media/lib/js/freeadmin.js:295
 msgid "Account"
 msgstr "Konts"
 
-#: media/lib/js/freeadmin.js:318
+#: media/lib/js/freeadmin.js:334
 msgid "Storage"
 msgstr "Glabātuve"
 
-#: media/lib/js/freeadmin.js:385
+#: media/lib/js/freeadmin.js:401
 msgid "CronJobs"
 msgstr "Cron darbi"
 
-#: media/lib/js/freeadmin.js:437
+#: media/lib/js/freeadmin.js:555
 msgid "Edit"
 msgstr "Labot"
 
-#: media/lib/js/freeadmin.js:439
+#: media/lib/js/freeadmin.js:557
 msgid "Edit Disk"
 msgstr "Rediģēt disku"
 
-#: media/lib/js/freeadmin.js:443
+#: media/lib/js/freeadmin.js:561
 msgid "Replace"
 msgstr "Aizstāt"
 
-#: media/lib/js/freeadmin.js:444
+#: media/lib/js/freeadmin.js:562
 msgid "Disk Replacement"
 msgstr "Diska nomaiņa"
 
-#: media/lib/js/freeadmin.js:448
+#: media/lib/js/freeadmin.js:566
 msgid "Detach"
 msgstr "Atdalīt"
 
-#: media/lib/js/freeadmin.js:449
+#: media/lib/js/freeadmin.js:567
 msgid "Disk Detach"
 msgstr "Diska atdalīšana"
 
-#: media/lib/js/freeadmin.js:635
+#: media/lib/js/freeadmin.js:747
 msgid "An error occurred!"
 msgstr "Notika kļūda!"
 
@@ -83,6 +83,6 @@ msgstr "Notika kļūda!"
 msgid "Each selected"
 msgstr "Katra atlasītā"
 
-#: media/lib/js/freeadmin/form/Cron.js:90
+#: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr "Katru N"

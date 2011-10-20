@@ -4933,32 +4933,28 @@ msgid "Mailing Lists"
 msgstr "Λίστες Mailing"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "Ανακοινώσεις"
+msgstr "FreeNAS Ανακοινώσεις"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "Commit"
+msgstr "FreeNAS Commit"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS Devel"
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "Δοκιμές"
+msgstr "FreeNAS Δοκιμές"
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS Docs"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Μεταφράσεις"
+msgstr "Μεταφράσεις FreeNAS"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4973,9 +4969,8 @@ msgid "Documentation"
 msgstr "Τεκμηρίωση"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Τεκμηρίωση"
+msgstr "Τεκμηρίωση FreeNAS"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5952,245 +5947,245 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Κρίσιμη"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s προστέθηκε(αν) με επιτυχία."
+msgid "%s successfully added."
+msgstr "%s προστέθηκε(αν) με επιτυχία."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 Netmask"
+msgid "IPv6 Netmask"
+msgstr "IPv6 Netmask"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr ""
-#~ "Η τιμή αυτή πρέπει να είναι μεταξύ 0 και 10000, συμπεριλαμβανομένης."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr ""
+"Η τιμή αυτή πρέπει να είναι μεταξύ 0 και 10000, συμπεριλαμβανομένης."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Η τιμή αυτή πρέπει να είναι μεταξύ 0 και 1000, συμπεριλαμβανομένης."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Η τιμή αυτή πρέπει να είναι μεταξύ 0 και 1000, συμπεριλαμβανομένης."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Ενεργοποίηση DDP"
+msgid "Enable DDP"
+msgstr "Ενεργοποίηση DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr ""
-#~ "Ενεργοποιεί την υποστήριξη DDP για πρόσβαση AppleTalk χαμηλού επιπέδου."
+msgid "Enables DDP support for low-level appletalk access."
+msgstr ""
+"Ενεργοποιεί την υποστήριξη DDP για πρόσβαση AppleTalk χαμηλού επιπέδου."
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "Ενεργοποίηση / απενεργοποίηση TLS"
+msgid "Turn on/off TLS"
+msgstr "Ενεργοποίηση / απενεργοποίηση TLS"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "Windows Share"
-#~ msgstr "Windows Share"
+msgid "Windows Share"
+msgstr "Windows Share"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Windows Shares"
+msgid "Windows Shares"
+msgstr "Windows Shares"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "Ο τόμος απέτυχε να εξαχθεί"
+msgid "The volume failed to export"
+msgstr "Ο τόμος απέτυχε να εξαχθεί"
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "Προγραμματιστής Cron"
+msgid "Cron Scheduler"
+msgstr "Προγραμματιστής Cron"
 
-#~ msgid "Devel"
-#~ msgstr "Devel"
+msgid "Devel"
+msgstr "Devel"
 
-#~ msgid "Docs"
-#~ msgstr "Docs"
+msgid "Docs"
+msgstr "Docs"
 
-#~ msgid "Welcome to"
-#~ msgstr "Καλώς ήρθατε στο8"
+msgid "Welcome to"
+msgstr "Καλώς ήρθατε στο8"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Mount point"
-#~ msgstr "Τοποθετήστε το σημείο"
+msgid "Mount point"
+msgstr "Τοποθετήστε το σημείο"
 
-#~ msgid "Dataset name"
-#~ msgstr "Όνομα Dataset"
+msgid "Dataset name"
+msgstr "Όνομα Dataset"
 
-#~ msgid "Snapshot name"
-#~ msgstr "Όνομα Στιγμιότυπου"
+msgid "Snapshot name"
+msgstr "Όνομα Στιγμιότυπου"
 
-#~ msgid "Used space"
-#~ msgstr "Χώρος που χρησιμοποιείται"
+msgid "Used space"
+msgstr "Χώρος που χρησιμοποιείται"
 
-#~ msgid "Referenced space"
-#~ msgstr "Αναφερόμενος χώρος"
+msgid "Referenced space"
+msgstr "Αναφερόμενος χώρος"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "Δεν υπάρχει διαθέσιμο στιγμιότυπο ZFS"
+msgid "No ZFS snapshot available"
+msgstr "Δεν υπάρχει διαθέσιμο στιγμιότυπο ZFS"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Δημιουργία Περιοδικού Στιγμιότυπου"
+msgid "Create Periodic Snapshot"
+msgstr "Δημιουργία Περιοδικού Στιγμιότυπου"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Επαναφορά στις εργοστασιακές ρυθμίσεις"
+msgid "Restore to Factory Defaults"
+msgstr "Επαναφορά στις εργοστασιακές ρυθμίσεις"
 
-#~ msgid "Config"
-#~ msgstr "Ρυθμίσεις"
+msgid "Config"
+msgstr "Ρυθμίσεις"
 
-#~ msgid "OS Version"
-#~ msgstr "Έκδοση OS"
+msgid "OS Version"
+msgstr "Έκδοση OS"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s ενημέρωση επιτυχής."
+msgid "%s successfully update."
+msgstr "%s ενημέρωση επιτυχής."
 
-#~ msgid "Admin user"
-#~ msgstr "Διαχειριστής"
+msgid "Admin user"
+msgstr "Διαχειριστής"
 
-#~ msgid "%s successfully added"
-#~ msgstr "%s προστέθηκε(αν) με επιτυχία"
+msgid "%s successfully added"
+msgstr "%s προστέθηκε(αν) με επιτυχία"
 
-#~ msgid ""
-#~ "Use this option to override the username ('www' by default) which will be "
-#~ "used for access to services which are specified as guest. Whatever "
-#~ "privileges this user has will be available to any client connecting to "
-#~ "the guest service. This user must exist in the password file, but does "
-#~ "not require a valid login."
-#~ msgstr ""
-#~ "Χρησιμοποιήστε αυτή την επιλογή για να παρακάμψετε το όνομα χρήστη ('www' "
-#~ "από προεπιλογή), το οποίο θα χρησιμοποιηθεί για την πρόσβαση σε υπηρεσίες "
-#~ "που έχουν οριστεί ως guest. Όποια και αν είναι τα προνόμια aυτoύ του "
-#~ "χρήστη θα είναι διαθέσιμος σε κάθε πελάτη που συνδέεται με την υπηρεσία "
-#~ "guest. Αυτός ο χρήστης πρέπει να υπάρχει στο αρχείο κωδικών πρόσβασης, "
-#~ "αλλά δεν απαιτεί μια έγκυρη σύνδεση."
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"Χρησιμοποιήστε αυτή την επιλογή για να παρακάμψετε το όνομα χρήστη ('www' "
+"από προεπιλογή), το οποίο θα χρησιμοποιηθεί για την πρόσβαση σε υπηρεσίες "
+"που έχουν οριστεί ως guest. Όποια και αν είναι τα προνόμια aυτoύ του "
+"χρήστη θα είναι διαθέσιμος σε κάθε πελάτη που συνδέεται με την υπηρεσία "
+"guest. Αυτός ο χρήστης πρέπει να υπάρχει στο αρχείο κωδικών πρόσβασης, "
+"αλλά δεν απαιτεί μια έγκυρη σύνδεση."
 
-#~ msgid "ZVol Name"
-#~ msgstr "Όνομα ZVol"
+msgid "ZVol Name"
+msgstr "Όνομα ZVol"
 
-#~ msgid "Dataset"
-#~ msgstr "Dataset"
+msgid "Dataset"
+msgstr "Dataset"
 
-#~ msgid "Native dataset"
-#~ msgstr "Εγγενής σύνολο δεδομένων"
+msgid "Native dataset"
+msgstr "Εγγενής σύνολο δεδομένων"
 
-#~ msgid "/var/log/messages"
-#~ msgstr "/var/log/messages"
+msgid "/var/log/messages"
+msgstr "/var/log/messages"
 
-#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Βοήθεια & Υποστήριξη"
+msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Βοήθεια & Υποστήριξη"
 
-#~ msgid "Success!"
-#~ msgstr "Επιτυχία!"
+msgid "Success!"
+msgstr "Επιτυχία!"
 
-#~ msgid "Your password was changed."
-#~ msgstr "Ο κωδικός σας άλλαξε."
+msgid "Your password was changed."
+msgstr "Ο κωδικός σας άλλαξε."
 
-#~ msgid "Password change"
-#~ msgstr "Αλλαγή κωδικού πρόσβασης"
+msgid "Password change"
+msgstr "Αλλαγή κωδικού πρόσβασης"
 
-#~ msgid "Please correct the error below."
-#~ msgid_plural "Please correct the errors below."
-#~ msgstr[0] "Παρακαλώ διορθώστε το σφάλμα παρακάτω."
-#~ msgstr[1] "Παρακαλώ διορθώστε τα σφάλματα παρακάτω."
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "Παρακαλώ διορθώστε το σφάλμα παρακάτω."
+msgstr[1] "Παρακαλώ διορθώστε τα σφάλματα παρακάτω."
 
-#~ msgid ""
-#~ "Please enter your old password, and then enter your new password twice to "
-#~ "verify it is typed in correctly."
-#~ msgstr ""
-#~ "Παρακαλώ εισάγετε τον παλιό κωδικό πρόσβασής σας και στη συνέχεια το νέο "
-#~ "κωδικό πρόσβασης δύο φορές για να εξακριβωθεί ότι είναι δακτυλογραφημένος "
-#~ "σωστά."
+msgid ""
+"Please enter your old password, and then enter your new password twice to "
+"verify it is typed in correctly."
+msgstr ""
+"Παρακαλώ εισάγετε τον παλιό κωδικό πρόσβασής σας και στη συνέχεια το νέο "
+"κωδικό πρόσβασης δύο φορές για να εξακριβωθεί ότι είναι δακτυλογραφημένος "
+"σωστά."
 
-#~ msgid "Password (again)"
-#~ msgstr "Κωδικός πρόσβασης (ξανά)"
+msgid "Password (again)"
+msgstr "Κωδικός πρόσβασης (ξανά)"
 
-#~ msgid "minutes,"
-#~ msgstr "λεπτά,"
+msgid "minutes,"
+msgstr "λεπτά,"
 
-#~ msgid "Create ZFS zvol"
-#~ msgstr "Δημιουργία ZFS zvol"
+msgid "Create ZFS zvol"
+msgstr "Δημιουργία ZFS zvol"
 
-#~ msgid "Add ZVol"
-#~ msgstr "Προσθήκη ZVol"
+msgid "Add ZVol"
+msgstr "Προσθήκη ZVol"
 
-#~ msgid "English"
-#~ msgstr "Αγγλικά"
+msgid "English"
+msgstr "Αγγλικά"
 
-#~ msgid "Level"
-#~ msgstr "Επίπεδο"
+msgid "Level"
+msgstr "Επίπεδο"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "Προσθήκη συνάθροισης συνδέσεων"
+msgid "Add Link Aggregation"
+msgstr "Προσθήκη συνάθροισης συνδέσεων"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "Δείτε όλες τις διασυνδέσεις"
+msgid "View All Interfaces"
+msgstr "Δείτε όλες τις διασυνδέσεις"
 
-#~ msgid "View All VLANs"
-#~ msgstr "Δείτε όλα τα VLANs"
+msgid "View All VLANs"
+msgstr "Δείτε όλα τα VLANs"
 
-#~ msgid "View All Static Routes"
-#~ msgstr "Δείτε όλες τις στατικές διαδρομές"
+msgid "View All Static Routes"
+msgstr "Δείτε όλες τις στατικές διαδρομές"
 
-#~ msgid "Windows Version"
-#~ msgstr "Έκδοση των Windows"
+msgid "Windows Version"
+msgstr "Έκδοση των Windows"
 
-#~ msgid "The version of Microsoft Windows that Active Directory is running."
-#~ msgstr "Η έκδοση των Microsoft Windows που Active Directory εκτελείται."
+msgid "The version of Microsoft Windows that Active Directory is running."
+msgstr "Η έκδοση των Microsoft Windows που Active Directory εκτελείται."
 
-#~ msgid "Service Principal Name"
-#~ msgstr "Το κύριο όνομα υπηρεσίας"
+msgid "Service Principal Name"
+msgstr "Το κύριο όνομα υπηρεσίας"
 
-#~ msgid "Service Principal Name, eg service/account."
-#~ msgstr "Κύριο όνομα Υπηρεσίας , π.χ. υπηρεσία/λογαριασμός."
+msgid "Service Principal Name, eg service/account."
+msgstr "Κύριο όνομα Υπηρεσίας , π.χ. υπηρεσία/λογαριασμός."
 
-#~ msgid "Service Principal Name Password"
-#~ msgstr "Service Principal Name Password"
+msgid "Service Principal Name Password"
+msgstr "Service Principal Name Password"
 
-#~ msgid "Password of the Service Principal Name account."
-#~ msgstr "Password of the Service Principal Name account."
+msgid "Password of the Service Principal Name account."
+msgstr "Password of the Service Principal Name account."
 
-#~ msgid "Kerberos Keytab File"
-#~ msgstr "Kerberos Αρχείο Keytab"
+msgid "Kerberos Keytab File"
+msgstr "Kerberos Αρχείο Keytab"
 
-#~ msgid ""
-#~ "The kerberos keytab file that was generated on the Active Directory "
-#~ "server."
-#~ msgstr ""
-#~ "Το αρχείο keytab Kerberos που δημιουργήθηκε στο διακομιστή Active "
-#~ "Directory."
+msgid ""
+"The kerberos keytab file that was generated on the Active Directory "
+"server."
+msgstr ""
+"Το αρχείο keytab Kerberos που δημιουργήθηκε στο διακομιστή Active "
+"Directory."
 
-#~ msgid "Auxillary Parameters"
-#~ msgstr "Βοηθητικές Παράμετροι"
+msgid "Auxillary Parameters"
+msgstr "Βοηθητικές Παράμετροι"
 
-#~ msgid "Volume Path"
-#~ msgstr "Διαδρομή τόμος"
+msgid "Volume Path"
+msgstr "Διαδρομή τόμος"
 
-#~ msgid "View All UNIX Shares"
-#~ msgstr "Δείτε όλα τα UNIX shares"
+msgid "View All UNIX Shares"
+msgstr "Δείτε όλα τα UNIX shares"
 
-#~ msgid "View All Apple Shares"
-#~ msgstr "Δείτε όλα τα Apple shares"
+msgid "View All Apple Shares"
+msgstr "Δείτε όλα τα Apple shares"
 
-#~ msgid "View All Windows Shares"
-#~ msgstr "Δείτε όλα τα Windows shares"
+msgid "View All Windows Shares"
+msgstr "Δείτε όλα τα Windows shares"
 
-#~ msgid "Read"
-#~ msgstr "Ανάγνωση"
+msgid "Read"
+msgstr "Ανάγνωση"
 
-#~ msgid "Write"
-#~ msgstr "Εγγραφή"
+msgid "Write"
+msgstr "Εγγραφή"
 
-#~ msgid "Execute"
-#~ msgstr "Εκτέλεση"
+msgid "Execute"
+msgstr "Εκτέλεση"
 
-#~ msgid "Owner"
-#~ msgstr "Ιδιοκτήτη"
+msgid "Owner"
+msgstr "Ιδιοκτήτη"
 
-#~ msgid "Other"
-#~ msgstr "Άλλoi"
+msgid "Other"
+msgstr "Άλλoi"
 
-#~ msgid "Disks"
-#~ msgstr "Δίσκοι"
+msgid "Disks"
+msgstr "Δίσκοι"
 
-#~ msgid "View All Periodic Snapshot Tasks"
-#~ msgstr "Δείτε όλες τις περιοδικές εργασίες Snapshot"
+msgid "View All Periodic Snapshot Tasks"
+msgstr "Δείτε όλες τις περιοδικές εργασίες Snapshot"
 
-#~ msgid "sucessfully edited"
-#~ msgstr "επιτυχή επεξεργασία"
+msgid "sucessfully edited"
+msgstr "επιτυχή επεξεργασία"
 
-#~ msgid "Lagg Interface was successfully added"
-#~ msgstr "Η διεπαφή Lagg προστέθηκε επιτυχώς"
+msgid "Lagg Interface was successfully added"
+msgstr "Η διεπαφή Lagg προστέθηκε επιτυχώς"
 
-#~ msgid "ActiveDirectory Settings"
-#~ msgstr "ActiveDirectory Ρυθμίσεις"
+msgid "ActiveDirectory Settings"
+msgstr "ActiveDirectory Ρυθμίσεις"

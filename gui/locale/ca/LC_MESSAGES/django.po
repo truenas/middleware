@@ -4891,32 +4891,28 @@ msgid "Mailing Lists"
 msgstr "Llista de correu"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "Anunci"
+msgstr "Anunci FreeNAS"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "Commit"
+msgstr "FreeNAS Commit"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS Devel"
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "Prova"
+msgstr "Prova FreeNAS"
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "Documentació FreeNAS"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Traduccions de"
+msgstr "Traduccions de FreeNAS"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4931,9 +4927,8 @@ msgid "Documentation"
 msgstr "Documentació"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Documentació"
+msgstr "Documentació FreeNAS"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5907,246 +5902,246 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Crític"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s afegit amb èxit."
+msgid "%s successfully added."
+msgstr "%s afegit amb èxit."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "Màscara IPv6"
+msgid "IPv6 Netmask"
+msgstr "Màscara IPv6"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Aquest valor ha d'estar entre 0 i 10000, inclusivament."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Aquest valor ha d'estar entre 0 i 10000, inclusivament."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Aquest valor ha d'estar entre 0 i 1000, inclusivament."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Aquest valor ha d'estar entre 0 i 1000, inclusivament."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Habilita DDP"
+msgid "Enable DDP"
+msgstr "Habilita DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Habilita el suport DDP per accessos de baix nivell d'Appletalk "
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Habilita el suport DDP per accessos de baix nivell d'Appletalk "
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "Activa o Desactiva TLS"
+msgid "Turn on/off TLS"
+msgstr "Activa o Desactiva TLS"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "Windows Share"
-#~ msgstr "Compartició de Windows"
+msgid "Windows Share"
+msgstr "Compartició de Windows"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Compartició de Windows"
+msgid "Windows Shares"
+msgstr "Compartició de Windows"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "El volum a fallat en l'exportació"
+msgid "The volume failed to export"
+msgstr "El volum a fallat en l'exportació"
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "Programació de tasques"
+msgid "Cron Scheduler"
+msgstr "Programació de tasques"
 
-#~ msgid "Devel"
-#~ msgstr "Devel"
+msgid "Devel"
+msgstr "Devel"
 
-#~ msgid "Docs"
-#~ msgstr "Documentació"
+msgid "Docs"
+msgstr "Documentació"
 
-#~ msgid "Welcome to"
-#~ msgstr "Benvingut a8"
+msgid "Welcome to"
+msgstr "Benvingut a8"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Mount point"
-#~ msgstr "Punt de montatge"
+msgid "Mount point"
+msgstr "Punt de montatge"
 
-#~ msgid "Dataset name"
-#~ msgstr "Nom del dataset"
+msgid "Dataset name"
+msgstr "Nom del dataset"
 
-#~ msgid "Snapshot name"
-#~ msgstr "Nom del snapshot"
+msgid "Snapshot name"
+msgstr "Nom del snapshot"
 
-#~ msgid "Used space"
-#~ msgstr "Espai utilitzat"
+msgid "Used space"
+msgstr "Espai utilitzat"
 
-#~ msgid "Referenced space"
-#~ msgstr "Referencia de l'espai"
+msgid "Referenced space"
+msgstr "Referencia de l'espai"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "No hi ha cap snapshot ZFS disponible"
+msgid "No ZFS snapshot available"
+msgstr "No hi ha cap snapshot ZFS disponible"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Crear un Snapshot periòdic"
+msgid "Create Periodic Snapshot"
+msgstr "Crear un Snapshot periòdic"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Retornar als valors de fàbrica"
+msgid "Restore to Factory Defaults"
+msgstr "Retornar als valors de fàbrica"
 
-#~ msgid "Config"
-#~ msgstr "Configuració"
+msgid "Config"
+msgstr "Configuració"
 
-#~ msgid "OS Version"
-#~ msgstr "Versió del Sistema Operatiu"
+msgid "OS Version"
+msgstr "Versió del Sistema Operatiu"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s actualitzat amb èxit."
+msgid "%s successfully update."
+msgstr "%s actualitzat amb èxit."
 
-#~ msgid "Admin user"
-#~ msgstr "Usuari Admin"
+msgid "Admin user"
+msgstr "Usuari Admin"
 
-#~ msgid "%s successfully added"
-#~ msgstr "%s afegit amb èxit"
+msgid "%s successfully added"
+msgstr "%s afegit amb èxit"
 
-#~ msgid "N/A"
-#~ msgstr "No disponible"
+msgid "N/A"
+msgstr "No disponible"
 
-#~ msgid ""
-#~ "Use this option to override the username ('www' by default) which will be "
-#~ "used for access to services which are specified as guest. Whatever "
-#~ "privileges this user has will be available to any client connecting to "
-#~ "the guest service. This user must exist in the password file, but does "
-#~ "not require a valid login."
-#~ msgstr ""
-#~ "Utilitza aquesta opció per determinar el nom d'usuari (per defecte 'www') "
-#~ "que serà utilitzat per accedir als serveis que son especificats pels "
-#~ "convidats. Qualsevol privilegi que tingui aquest usuari, estarà disponile "
-#~ "per a qualsevol client que es connecti al servei convidat. Aquest usuari "
-#~ "a d'existir al fitxer de contrasenyes pero no cal que tingui un inici de "
-#~ "sessió valid"
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"Utilitza aquesta opció per determinar el nom d'usuari (per defecte 'www') "
+"que serà utilitzat per accedir als serveis que son especificats pels "
+"convidats. Qualsevol privilegi que tingui aquest usuari, estarà disponile "
+"per a qualsevol client que es connecti al servei convidat. Aquest usuari "
+"a d'existir al fitxer de contrasenyes pero no cal que tingui un inici de "
+"sessió valid"
 
-#~ msgid "ZVol Name"
-#~ msgstr "Nom ZVol"
+msgid "ZVol Name"
+msgstr "Nom ZVol"
 
-#~ msgid "Dataset"
-#~ msgstr "Dataset"
+msgid "Dataset"
+msgstr "Dataset"
 
-#~ msgid "Native dataset"
-#~ msgstr "Dataset natiu"
+msgid "Native dataset"
+msgstr "Dataset natiu"
 
-#~ msgid "/var/log/messages"
-#~ msgstr "/var/log/messages"
+msgid "/var/log/messages"
+msgstr "/var/log/messages"
 
-#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ajuda i Suport"
+msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ajuda i Suport"
 
-#~ msgid "Success!"
-#~ msgstr "Èxit!"
+msgid "Success!"
+msgstr "Èxit!"
 
-#~ msgid "Your password was changed."
-#~ msgstr "La teva contrasenya a estat canviada."
+msgid "Your password was changed."
+msgstr "La teva contrasenya a estat canviada."
 
-#~ msgid "Password change"
-#~ msgstr "Canviar contrasenya"
+msgid "Password change"
+msgstr "Canviar contrasenya"
 
-#~ msgid "Please correct the error below."
-#~ msgid_plural "Please correct the errors below."
-#~ msgstr[0] "Si us plau corregeix l'error següent"
-#~ msgstr[1] "Si us plau corregeix els errors següents"
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "Si us plau corregeix l'error següent"
+msgstr[1] "Si us plau corregeix els errors següents"
 
-#~ msgid ""
-#~ "Please enter your old password, and then enter your new password twice to "
-#~ "verify it is typed in correctly."
-#~ msgstr ""
-#~ "Si us plau, introdueix la teva contrasenya antiga, i a continuació "
-#~ "introdueix dos cops la nova contrasenya per verificar que ha estat "
-#~ "introduïda correctament"
+msgid ""
+"Please enter your old password, and then enter your new password twice to "
+"verify it is typed in correctly."
+msgstr ""
+"Si us plau, introdueix la teva contrasenya antiga, i a continuació "
+"introdueix dos cops la nova contrasenya per verificar que ha estat "
+"introduïda correctament"
 
-#~ msgid "Password (again)"
-#~ msgstr "Contrasenya (de nou)"
+msgid "Password (again)"
+msgstr "Contrasenya (de nou)"
 
-#~ msgid "minutes,"
-#~ msgstr "minuts,"
+msgid "minutes,"
+msgstr "minuts,"
 
-#~ msgid "Create ZFS zvol"
-#~ msgstr "Crear un zvol ZFS"
+msgid "Create ZFS zvol"
+msgstr "Crear un zvol ZFS"
 
-#~ msgid "Add ZVol"
-#~ msgstr "Afegir Zvol"
+msgid "Add ZVol"
+msgstr "Afegir Zvol"
 
-#~ msgid "English"
-#~ msgstr "Anglès"
+msgid "English"
+msgstr "Anglès"
 
-#~ msgid "Level"
-#~ msgstr "Nivell"
+msgid "Level"
+msgstr "Nivell"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "Afegeix Link Aggregation"
+msgid "Add Link Aggregation"
+msgstr "Afegeix Link Aggregation"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "Veure totes les interfícies"
+msgid "View All Interfaces"
+msgstr "Veure totes les interfícies"
 
-#~ msgid "View All VLANs"
-#~ msgstr "Veure totes les VLANs"
+msgid "View All VLANs"
+msgstr "Veure totes les VLANs"
 
-#~ msgid "View All Static Routes"
-#~ msgstr "Veure totes les rutes estàtiques"
+msgid "View All Static Routes"
+msgstr "Veure totes les rutes estàtiques"
 
-#~ msgid "Windows Version"
-#~ msgstr "Versió de Windows"
+msgid "Windows Version"
+msgstr "Versió de Windows"
 
-#~ msgid "The version of Microsoft Windows that Active Directory is running."
-#~ msgstr "Versió de Windows on corre el Directori Actiu (Active Directory) "
+msgid "The version of Microsoft Windows that Active Directory is running."
+msgstr "Versió de Windows on corre el Directori Actiu (Active Directory) "
 
-#~ msgid "Service Principal Name"
-#~ msgstr "Nom Principal del Servei"
+msgid "Service Principal Name"
+msgstr "Nom Principal del Servei"
 
-#~ msgid "Service Principal Name, eg service/account."
-#~ msgstr "Nom Principal del Servei, p.e. service/account."
+msgid "Service Principal Name, eg service/account."
+msgstr "Nom Principal del Servei, p.e. service/account."
 
-#~ msgid "Service Principal Name Password"
-#~ msgstr "Contrasenya del Nom Principal del Servei"
+msgid "Service Principal Name Password"
+msgstr "Contrasenya del Nom Principal del Servei"
 
-#~ msgid "Password of the Service Principal Name account."
-#~ msgstr "Contrasenya del compte Nom Principal del Servei"
+msgid "Password of the Service Principal Name account."
+msgstr "Contrasenya del compte Nom Principal del Servei"
 
-#~ msgid "Kerberos Keytab File"
-#~ msgstr "Fitxer Keytab de kerberos"
+msgid "Kerberos Keytab File"
+msgstr "Fitxer Keytab de kerberos"
 
-#~ msgid ""
-#~ "The kerberos keytab file that was generated on the Active Directory "
-#~ "server."
-#~ msgstr ""
-#~ "El fitxer Keytab de kerberos que fou generat al servidor d'Active "
-#~ "Directory"
+msgid ""
+"The kerberos keytab file that was generated on the Active Directory "
+"server."
+msgstr ""
+"El fitxer Keytab de kerberos que fou generat al servidor d'Active "
+"Directory"
 
-#~ msgid "Auxillary Parameters"
-#~ msgstr "Paràmetres Auxiliars"
+msgid "Auxillary Parameters"
+msgstr "Paràmetres Auxiliars"
 
-#~ msgid "Volume Path"
-#~ msgstr "Ruta del volum"
+msgid "Volume Path"
+msgstr "Ruta del volum"
 
-#~ msgid "View All UNIX Shares"
-#~ msgstr "Veure tots els UNIX Shares"
+msgid "View All UNIX Shares"
+msgstr "Veure tots els UNIX Shares"
 
-#~ msgid "View All Apple Shares"
-#~ msgstr "Veure tots els Apple Shares"
+msgid "View All Apple Shares"
+msgstr "Veure tots els Apple Shares"
 
-#~ msgid "View All Windows Shares"
-#~ msgstr "Veure tots els Windows Shares"
+msgid "View All Windows Shares"
+msgstr "Veure tots els Windows Shares"
 
-#~ msgid "Read"
-#~ msgstr "Lectura"
+msgid "Read"
+msgstr "Lectura"
 
-#~ msgid "Write"
-#~ msgstr "Escriptura"
+msgid "Write"
+msgstr "Escriptura"
 
-#~ msgid "Execute"
-#~ msgstr "Executar"
+msgid "Execute"
+msgstr "Executar"
 
-#~ msgid "Owner"
-#~ msgstr "Propietari"
+msgid "Owner"
+msgstr "Propietari"
 
-#~ msgid "Other"
-#~ msgstr "Altres"
+msgid "Other"
+msgstr "Altres"
 
-#~ msgid "Disks"
-#~ msgstr "Discs"
+msgid "Disks"
+msgstr "Discs"
 
-#~ msgid "View All Periodic Snapshot Tasks"
-#~ msgstr "Veure totes les tasques periòdiques d'Snapshot"
+msgid "View All Periodic Snapshot Tasks"
+msgstr "Veure totes les tasques periòdiques d'Snapshot"
 
-#~ msgid "sucessfully edited"
-#~ msgstr "Editat amb èxit"
+msgid "sucessfully edited"
+msgstr "Editat amb èxit"
 
-#~ msgid "Lagg Interface was successfully added"
-#~ msgstr "L'interfície LAGG s'ha afegir amb èxit"
+msgid "Lagg Interface was successfully added"
+msgstr "L'interfície LAGG s'ha afegir amb èxit"
 
-#~ msgid "ActiveDirectory Settings"
-#~ msgstr "Paràmetres del directori actiu"
+msgid "ActiveDirectory Settings"
+msgstr "Paràmetres del directori actiu"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-09 13:51-0700\n"
+"POT-Creation-Date: 2011-10-19 02:03-0700\n"
 "PO-Revision-Date: 2011-07-01 13:34+0200\n"
 "Last-Translator: CocoChanel <meneermaris@yahoo.com.sg>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,63 +18,63 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:114
+#: media/lib/js/freeadmin.js:127
 msgid "Reporting"
 msgstr "Raporteren"
 
-#: media/lib/js/freeadmin.js:126
+#: media/lib/js/freeadmin.js:139
 msgid "Settings"
 msgstr "Instellingen"
 
-#: media/lib/js/freeadmin.js:137
+#: media/lib/js/freeadmin.js:150
 msgid "System Information"
 msgstr "Systeem informatie"
 
-#: media/lib/js/freeadmin.js:177
+#: media/lib/js/freeadmin.js:190
 msgid "Network Settings"
 msgstr "Netwerk Instellingen"
 
-#: media/lib/js/freeadmin.js:239
+#: media/lib/js/freeadmin.js:254
 msgid "Services"
 msgstr "Diensten"
 
-#: media/lib/js/freeadmin.js:279
+#: media/lib/js/freeadmin.js:295
 msgid "Account"
 msgstr "Account"
 
-#: media/lib/js/freeadmin.js:318
+#: media/lib/js/freeadmin.js:334
 msgid "Storage"
 msgstr "opslag"
 
-#: media/lib/js/freeadmin.js:385
+#: media/lib/js/freeadmin.js:401
 msgid "CronJobs"
 msgstr "CronJobs"
 
-#: media/lib/js/freeadmin.js:437
+#: media/lib/js/freeadmin.js:555
 msgid "Edit"
 msgstr "Wijzigen"
 
-#: media/lib/js/freeadmin.js:439
+#: media/lib/js/freeadmin.js:557
 msgid "Edit Disk"
 msgstr "Wijzig schijf"
 
-#: media/lib/js/freeadmin.js:443
+#: media/lib/js/freeadmin.js:561
 msgid "Replace"
 msgstr "Vervang"
 
-#: media/lib/js/freeadmin.js:444
+#: media/lib/js/freeadmin.js:562
 msgid "Disk Replacement"
 msgstr "Schijf vervangen"
 
-#: media/lib/js/freeadmin.js:448
+#: media/lib/js/freeadmin.js:566
 msgid "Detach"
 msgstr "Afkoppelen"
 
-#: media/lib/js/freeadmin.js:449
+#: media/lib/js/freeadmin.js:567
 msgid "Disk Detach"
 msgstr "Schijf Afkoppelen"
 
-#: media/lib/js/freeadmin.js:635
+#: media/lib/js/freeadmin.js:747
 msgid "An error occurred!"
 msgstr "Er heeft zich een fout voorgedaan!"
 
@@ -82,9 +82,9 @@ msgstr "Er heeft zich een fout voorgedaan!"
 msgid "Each selected"
 msgstr "Elke geselecteerde"
 
-#: media/lib/js/freeadmin/form/Cron.js:90
+#: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr "Elke N"
 
-msgid "Every"
-msgstr "Elke"
+#~ msgid "Every"
+#~ msgstr "Elke"

@@ -4706,32 +4706,28 @@ msgid "Mailing Lists"
 msgstr "寄件清單"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "的公告"
+msgstr "FreeNAS 的公告"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "的承諾"
+msgstr "FreeNAS 的承諾"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS 的開發"
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "的測試"
+msgstr "FreeNAS 的測試"
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS 的文件"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "的翻譯"
+msgstr "FreeNAS的翻譯"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4746,9 +4742,8 @@ msgid "Documentation"
 msgstr "文件"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "文件"
+msgstr "FreeNAS的文件"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5721,236 +5716,236 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "重要"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s 新增成功"
+msgid "%s successfully added."
+msgstr "%s 新增成功"
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 網路遮罩"
+msgid "IPv6 Netmask"
+msgstr "IPv6 網路遮罩"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "值必須介於（含）0 ～ 10000。"
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "值必須介於（含）0 ～ 10000。"
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "值必須介於（含）0 ～ 1000。"
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "值必須介於（含）0 ～ 1000。"
 
-#~ msgid "Enable DDP"
-#~ msgstr "啟用DDP(資料封包傳輸協定)"
+msgid "Enable DDP"
+msgstr "啟用DDP(資料封包傳輸協定)"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "啟用支援低階 appletalk 連線"
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "啟用支援低階 appletalk 連線"
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "啟用或停用 TLS"
+msgid "Turn on/off TLS"
+msgstr "啟用或停用 TLS"
 
-#~ msgid "Rsyncd"
-#~ msgstr "使用Rsyncd"
+msgid "Rsyncd"
+msgstr "使用Rsyncd"
 
-#~ msgid "Windows Share"
-#~ msgstr "Windows 檔案共享"
+msgid "Windows Share"
+msgstr "Windows 檔案共享"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Windows 檔案共享"
+msgid "Windows Shares"
+msgstr "Windows 檔案共享"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "磁區無法匯出"
+msgid "The volume failed to export"
+msgstr "磁區無法匯出"
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "例行工作排程"
+msgid "Cron Scheduler"
+msgstr "例行工作排程"
 
-#~ msgid "Devel"
-#~ msgstr "的開發"
+msgid "Devel"
+msgstr "的開發"
 
-#~ msgid "Docs"
-#~ msgstr "的文件"
+msgid "Docs"
+msgstr "的文件"
 
-#~ msgid "Welcome to"
-#~ msgstr "歡迎使用8"
+msgid "Welcome to"
+msgstr "歡迎使用8"
 
-#~ msgid "LUN"
-#~ msgstr "管理邏輯單元編號 (LUN)"
+msgid "LUN"
+msgstr "管理邏輯單元編號 (LUN)"
 
-#~ msgid "Mount point"
-#~ msgstr "掛載點"
+msgid "Mount point"
+msgstr "掛載點"
 
-#~ msgid "Dataset name"
-#~ msgstr "資料集名稱"
+msgid "Dataset name"
+msgstr "資料集名稱"
 
-#~ msgid "Snapshot name"
-#~ msgstr "快照名稱"
+msgid "Snapshot name"
+msgstr "快照名稱"
 
-#~ msgid "Used space"
-#~ msgstr "使用的空間"
+msgid "Used space"
+msgstr "使用的空間"
 
-#~ msgid "Referenced space"
-#~ msgstr "參照的空間"
+msgid "Referenced space"
+msgstr "參照的空間"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "無可用的ZFS快照"
+msgid "No ZFS snapshot available"
+msgstr "無可用的ZFS快照"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "建立定期快照"
+msgid "Create Periodic Snapshot"
+msgstr "建立定期快照"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "還原至出廠預設值"
+msgid "Restore to Factory Defaults"
+msgstr "還原至出廠預設值"
 
-#~ msgid "Config"
-#~ msgstr "組態"
+msgid "Config"
+msgstr "組態"
 
-#~ msgid "OS Version"
-#~ msgstr "OS 版本"
+msgid "OS Version"
+msgstr "OS 版本"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s 更新成功"
+msgid "%s successfully update."
+msgstr "%s 更新成功"
 
-#~ msgid "Admin user"
-#~ msgstr "管理者"
+msgid "Admin user"
+msgstr "管理者"
 
-#~ msgid "%s successfully added"
-#~ msgstr "%s 新增成功"
+msgid "%s successfully added"
+msgstr "%s 新增成功"
 
-#~ msgid "N/A"
-#~ msgstr "不適用"
+msgid "N/A"
+msgstr "不適用"
 
-#~ msgid ""
-#~ "Use this option to override the username ('www' by default) which will be "
-#~ "used for access to services which are specified as guest. Whatever "
-#~ "privileges this user has will be available to any client connecting to "
-#~ "the guest service. This user must exist in the password file, but does "
-#~ "not require a valid login."
-#~ msgstr ""
-#~ "請使用此選項重新定義（override）存取訪客服務的帳號（預設為 'www'）此帳號的"
-#~ "所有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 password 檔"
-#~ "裡，但不必是個有效的登入帳號"
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"請使用此選項重新定義（override）存取訪客服務的帳號（預設為 'www'）此帳號的"
+"所有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 password 檔"
+"裡，但不必是個有效的登入帳號"
 
-#~ msgid "ZVol Name"
-#~ msgstr "ZVol 名稱"
+msgid "ZVol Name"
+msgstr "ZVol 名稱"
 
-#~ msgid "Dataset"
-#~ msgstr "資料集"
+msgid "Dataset"
+msgstr "資料集"
 
-#~ msgid "ZVol"
-#~ msgstr "ZVol (ZFS 磁區)"
+msgid "ZVol"
+msgstr "ZVol (ZFS 磁區)"
 
-#~ msgid "Native dataset"
-#~ msgstr "原生資料集"
+msgid "Native dataset"
+msgstr "原生資料集"
 
-#~ msgid "/var/log/messages"
-#~ msgstr "/var/log/messages"
+msgid "/var/log/messages"
+msgstr "/var/log/messages"
 
-#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;幫助和支持"
+msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;幫助和支持"
 
-#~ msgid "Success!"
-#~ msgstr "成功！"
+msgid "Success!"
+msgstr "成功！"
 
-#~ msgid "Your password was changed."
-#~ msgstr "密碼已變更"
+msgid "Your password was changed."
+msgstr "密碼已變更"
 
-#~ msgid "Password change"
-#~ msgstr "變更密碼"
+msgid "Password change"
+msgstr "變更密碼"
 
-#~ msgid ""
-#~ "Please enter your old password, and then enter your new password twice to "
-#~ "verify it is typed in correctly."
-#~ msgstr "請先輸入舊密碼，再輸入新密碼兩次，以利驗證。"
+msgid ""
+"Please enter your old password, and then enter your new password twice to "
+"verify it is typed in correctly."
+msgstr "請先輸入舊密碼，再輸入新密碼兩次，以利驗證。"
 
-#~ msgid "Password (again)"
-#~ msgstr "密碼確認"
+msgid "Password (again)"
+msgstr "密碼確認"
 
-#~ msgid "minutes,"
-#~ msgstr "分鐘，"
+msgid "minutes,"
+msgstr "分鐘，"
 
-#~ msgid "Create ZFS zvol"
-#~ msgstr "建立 ZFS 磁區"
+msgid "Create ZFS zvol"
+msgstr "建立 ZFS 磁區"
 
-#~ msgid "Add ZVol"
-#~ msgstr "新增 ZVol 磁區"
+msgid "Add ZVol"
+msgstr "新增 ZVol 磁區"
 
-#~ msgid "English"
-#~ msgstr "英語"
+msgid "English"
+msgstr "英語"
 
-#~ msgid "Level"
-#~ msgstr "層級"
+msgid "Level"
+msgstr "層級"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "新增網路聚集"
+msgid "Add Link Aggregation"
+msgstr "新增網路聚集"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "檢視全部介面"
+msgid "View All Interfaces"
+msgstr "檢視全部介面"
 
-#~ msgid "View All VLANs"
-#~ msgstr "檢視全部 VLAN"
+msgid "View All VLANs"
+msgstr "檢視全部 VLAN"
 
-#~ msgid "View All Static Routes"
-#~ msgstr "檢視全部靜態路由"
+msgid "View All Static Routes"
+msgstr "檢視全部靜態路由"
 
-#~ msgid "Windows Version"
-#~ msgstr "Windows 版本"
+msgid "Windows Version"
+msgstr "Windows 版本"
 
-#~ msgid "The version of Microsoft Windows that Active Directory is running."
-#~ msgstr "該版本的Microsoft Windows Active Directory 正在執行中"
+msgid "The version of Microsoft Windows that Active Directory is running."
+msgstr "該版本的Microsoft Windows Active Directory 正在執行中"
 
-#~ msgid "Service Principal Name"
-#~ msgstr "服務主體名稱"
+msgid "Service Principal Name"
+msgstr "服務主體名稱"
 
-#~ msgid "Service Principal Name, eg service/account."
-#~ msgstr "服務主體名稱，例如：service/account"
+msgid "Service Principal Name, eg service/account."
+msgstr "服務主體名稱，例如：service/account"
 
-#~ msgid "Service Principal Name Password"
-#~ msgstr "服務主體名稱的密碼"
+msgid "Service Principal Name Password"
+msgstr "服務主體名稱的密碼"
 
-#~ msgid "Password of the Service Principal Name account."
-#~ msgstr "服務主體名稱的密碼"
+msgid "Password of the Service Principal Name account."
+msgstr "服務主體名稱的密碼"
 
-#~ msgid "Kerberos Keytab File"
-#~ msgstr "Kerberos Keytab 檔"
+msgid "Kerberos Keytab File"
+msgstr "Kerberos Keytab 檔"
 
-#~ msgid ""
-#~ "The kerberos keytab file that was generated on the Active Directory "
-#~ "server."
-#~ msgstr "Kerberos Keytab 檔產生在 Active Directory 伺服器上"
+msgid ""
+"The kerberos keytab file that was generated on the Active Directory "
+"server."
+msgstr "Kerberos Keytab 檔產生在 Active Directory 伺服器上"
 
-#~ msgid "Auxillary Parameters"
-#~ msgstr "附屬參數"
+msgid "Auxillary Parameters"
+msgstr "附屬參數"
 
-#~ msgid "Volume Path"
-#~ msgstr "磁區路徑"
+msgid "Volume Path"
+msgstr "磁區路徑"
 
-#~ msgid "View All UNIX Shares"
-#~ msgstr "檢視全部的 UNIX 共享"
+msgid "View All UNIX Shares"
+msgstr "檢視全部的 UNIX 共享"
 
-#~ msgid "View All Apple Shares"
-#~ msgstr "檢視全部的 Apple 共享"
+msgid "View All Apple Shares"
+msgstr "檢視全部的 Apple 共享"
 
-#~ msgid "View All Windows Shares"
-#~ msgstr "檢視全部的 Windows 共享"
+msgid "View All Windows Shares"
+msgstr "檢視全部的 Windows 共享"
 
-#~ msgid "Read"
-#~ msgstr "讀"
+msgid "Read"
+msgstr "讀"
 
-#~ msgid "Write"
-#~ msgstr "寫"
+msgid "Write"
+msgstr "寫"
 
-#~ msgid "Execute"
-#~ msgstr "執行"
+msgid "Execute"
+msgstr "執行"
 
-#~ msgid "Owner"
-#~ msgstr "所有人"
+msgid "Owner"
+msgstr "所有人"
 
-#~ msgid "Other"
-#~ msgstr "其他"
+msgid "Other"
+msgstr "其他"
 
-#~ msgid "Disks"
-#~ msgstr "磁碟"
+msgid "Disks"
+msgstr "磁碟"
 
-#~ msgid "View All Periodic Snapshot Tasks"
-#~ msgstr "檢視全部定期快照工作"
+msgid "View All Periodic Snapshot Tasks"
+msgstr "檢視全部定期快照工作"
 
-#~ msgid "sucessfully edited"
-#~ msgstr "更新成功"
+msgid "sucessfully edited"
+msgstr "更新成功"
 
-#~ msgid "Lagg Interface was successfully added"
-#~ msgstr "LAGG介面新增成功"
+msgid "Lagg Interface was successfully added"
+msgstr "LAGG介面新增成功"
 
-#~ msgid "ActiveDirectory Settings"
-#~ msgstr "ActiveDirectory 設定"
+msgid "ActiveDirectory Settings"
+msgstr "ActiveDirectory 設定"

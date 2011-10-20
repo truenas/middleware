@@ -15,8 +15,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n"
-"%100==4 ? 2 : 3);\n"
+"Plural-Forms: nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || "
+"n%100==4 ? 2 : 3);\n"
 "X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:40
@@ -5624,26 +5624,26 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-#~ msgid "%s successfully added."
-#~ msgstr "% uspešno dodan."
+msgid "%s successfully added."
+msgstr "% uspešno dodan."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 mrežna maska"
+msgid "IPv6 Netmask"
+msgstr "IPv6 mrežna maska"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Vrednost mora biti med 0 in vključno 10000."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Vrednost mora biti med 0 in vključno 10000."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Vrednost mora biti med 0 in vključno 1000."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Vrednost mora biti med 0 in vključno 1000."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Omogoči DDP"
+msgid "Enable DDP"
+msgstr "Omogoči DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Mogoči podporo DDP za nizko-nivojski appletalk dostop."
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Mogoči podporo DDP za nizko-nivojski appletalk dostop."
 
-#~ msgid "English"
-#~ msgstr "Angleščina"
+msgid "English"
+msgstr "Angleščina"
 
-#~ msgid "Level"
-#~ msgstr "Nivo"
+msgid "Level"
+msgstr "Nivo"

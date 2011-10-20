@@ -4871,32 +4871,28 @@ msgid "Mailing Lists"
 msgstr "Mailing Lists"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "Announce"
+msgstr "FreeNAS Announce"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "Commit"
+msgstr "FreeNAS Commit"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS Devel"
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "Testing"
+msgstr "FreeNAS Testing"
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS Docs"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Translations"
+msgstr "FreeNAS Translations"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4911,9 +4907,8 @@ msgid "Documentation"
 msgstr "Dokumentasi"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Dokumentasi"
+msgstr "FreeNAS Documentation"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5886,87 +5881,87 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Kritikal"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s berhasil ditambahkan."
+msgid "%s successfully added."
+msgstr "%s berhasil ditambahkan."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "Netmask IPv6"
+msgid "IPv6 Netmask"
+msgstr "Netmask IPv6"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Nilai ini harus diantara 0 dan 10000, inklusif."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Nilai ini harus diantara 0 dan 10000, inklusif."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Nilai ini harus diantara 0 dan 1000, inklusif."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Nilai ini harus diantara 0 dan 1000, inklusif."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Nyalakan DDP"
+msgid "Enable DDP"
+msgstr "Nyalakan DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Nyalakan dukungan DDP untuk akses AppleTalk tingkat rendah."
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Nyalakan dukungan DDP untuk akses AppleTalk tingkat rendah."
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "Nyalakan/Matikan TLS"
+msgid "Turn on/off TLS"
+msgstr "Nyalakan/Matikan TLS"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
 #, fuzzy
-#~ msgid "Windows Share"
-#~ msgstr "Berbagi Windows"
+msgid "Windows Share"
+msgstr "Berbagi Windows"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Berbagi Windows"
+msgid "Windows Shares"
+msgstr "Berbagi Windows"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "Volume gagal untuk di-ekspor"
+msgid "The volume failed to export"
+msgstr "Volume gagal untuk di-ekspor"
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "Pengatur waktu Cron"
+msgid "Cron Scheduler"
+msgstr "Pengatur waktu Cron"
 
-#~ msgid "Devel"
-#~ msgstr "Devel"
+msgid "Devel"
+msgstr "Devel"
 
-#~ msgid "Docs"
-#~ msgstr "Docs"
+msgid "Docs"
+msgstr "Docs"
 
-#~ msgid "Welcome to"
-#~ msgstr "Selamat Datang di8"
+msgid "Welcome to"
+msgstr "Selamat Datang di8"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Mount point"
-#~ msgstr "Titip mount"
+msgid "Mount point"
+msgstr "Titip mount"
 
-#~ msgid "Dataset name"
-#~ msgstr "Nama dataset"
+msgid "Dataset name"
+msgstr "Nama dataset"
 
-#~ msgid "Snapshot name"
-#~ msgstr "Nama snapshot"
+msgid "Snapshot name"
+msgstr "Nama snapshot"
 
-#~ msgid "Used space"
-#~ msgstr "Ruang terpakai"
+msgid "Used space"
+msgstr "Ruang terpakai"
 
-#~ msgid "Referenced space"
-#~ msgstr "Ruang yang direferensikan"
+msgid "Referenced space"
+msgstr "Ruang yang direferensikan"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "Tidak ada snapshot ZFS yang tersedia"
+msgid "No ZFS snapshot available"
+msgstr "Tidak ada snapshot ZFS yang tersedia"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Buat Snapshot Periodik"
+msgid "Create Periodic Snapshot"
+msgstr "Buat Snapshot Periodik"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Kembalikan ke pengaturan asal"
+msgid "Restore to Factory Defaults"
+msgstr "Kembalikan ke pengaturan asal"
 
-#~ msgid "Config"
-#~ msgstr "Pengaturan"
+msgid "Config"
+msgstr "Pengaturan"
 
-#~ msgid "OS Version"
-#~ msgstr "Versi OS"
+msgid "OS Version"
+msgstr "Versi OS"
 
-#~ msgid "English"
-#~ msgstr "Inggris"
+msgid "English"
+msgstr "Inggris"
 
-#~ msgid "Level"
-#~ msgstr "Tingkatan"
+msgid "Level"
+msgstr "Tingkatan"

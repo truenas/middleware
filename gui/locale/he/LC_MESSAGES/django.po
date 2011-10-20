@@ -4760,32 +4760,28 @@ msgid "Mailing Lists"
 msgstr "רשימת מיילים"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "הודעת"
+msgstr "הודעת FreeNAS"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "מסר"
+msgstr "מסר FreeNAS"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS Devel"
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "בדיקת"
+msgstr "בדיקת FreeNAS"
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS מסמכי"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "תרגומי"
+msgstr "תרגומי FreeNAS"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4800,9 +4796,8 @@ msgid "Documentation"
 msgstr "תעוד"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "תעוד"
+msgstr "תעוד FreeNAS"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5775,244 +5770,244 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "קריטי"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%S הוסף בהצלחה"
+msgid "%s successfully added."
+msgstr "%S הוסף בהצלחה"
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 Netmask"
+msgid "IPv6 Netmask"
+msgstr "IPv6 Netmask"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "הערך חייב להיות בין 0 ל10000, כולל."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "הערך חייב להיות בין 0 ל10000, כולל."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "הערך חייב להיות בין 0 ל1000, כולל."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "הערך חייב להיות בין 0 ל1000, כולל."
 
-#~ msgid "Enable DDP"
-#~ msgstr "אפשר DDP"
+msgid "Enable DDP"
+msgstr "אפשר DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "אפשר תמיכה בDDP לרמה נמוכה בגישת appletalk"
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "אפשר תמיכה בDDP לרמה נמוכה בגישת appletalk"
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "הדלק/כבה TLS"
+msgid "Turn on/off TLS"
+msgstr "הדלק/כבה TLS"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "Windows Share"
-#~ msgstr "שיתוף חלונות "
+msgid "Windows Share"
+msgstr "שיתוף חלונות "
 
-#~ msgid "Windows Shares"
-#~ msgstr "שיתופי חלונות (ווינדוס)"
+msgid "Windows Shares"
+msgstr "שיתופי חלונות (ווינדוס)"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "הנפח הזה נכשל ביצוא"
+msgid "The volume failed to export"
+msgstr "הנפח הזה נכשל ביצוא"
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "לוח זמניםשל Cron"
+msgid "Cron Scheduler"
+msgstr "לוח זמניםשל Cron"
 
-#~ msgid "Devel"
-#~ msgstr "Devel"
+msgid "Devel"
+msgstr "Devel"
 
-#~ msgid "Docs"
-#~ msgstr "מסמכי"
+msgid "Docs"
+msgstr "מסמכי"
 
-#~ msgid "Welcome to"
-#~ msgstr "ברוך הבא ל8"
+msgid "Welcome to"
+msgstr "ברוך הבא ל8"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Mount point"
-#~ msgstr "נקודת כינון"
+msgid "Mount point"
+msgstr "נקודת כינון"
 
-#~ msgid "Dataset name"
-#~ msgstr "שם הסט מידע"
+msgid "Dataset name"
+msgstr "שם הסט מידע"
 
-#~ msgid "Snapshot name"
-#~ msgstr "צלם שם"
+msgid "Snapshot name"
+msgstr "צלם שם"
 
-#~ msgid "Used space"
-#~ msgstr "נפח משומש"
+msgid "Used space"
+msgstr "נפח משומש"
 
-#~ msgid "Referenced space"
-#~ msgstr "שטח מיוחס"
+msgid "Referenced space"
+msgstr "שטח מיוחס"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "שום תצלום ZFS זמין"
+msgid "No ZFS snapshot available"
+msgstr "שום תצלום ZFS זמין"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "יצור תצלום תקופתי"
+msgid "Create Periodic Snapshot"
+msgstr "יצור תצלום תקופתי"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "חזור להגדרות מפעל"
+msgid "Restore to Factory Defaults"
+msgstr "חזור להגדרות מפעל"
 
-#~ msgid "Config"
-#~ msgstr "הגדרה"
+msgid "Config"
+msgstr "הגדרה"
 
-#~ msgid "OS Version"
-#~ msgstr "גרסת מערכת ההפעלה"
+msgid "OS Version"
+msgstr "גרסת מערכת ההפעלה"
 
-#~ msgid "%s successfully update."
-#~ msgstr "% התעדכן בהצלחה"
+msgid "%s successfully update."
+msgstr "% התעדכן בהצלחה"
 
-#~ msgid "Admin user"
-#~ msgstr "משתמש מנהל"
+msgid "Admin user"
+msgstr "משתמש מנהל"
 
-#~ msgid "%s successfully added"
-#~ msgstr "%s הוסף בהצלחה"
+msgid "%s successfully added"
+msgstr "%s הוסף בהצלחה"
 
-#~ msgid "N/A"
-#~ msgstr "לא זמין"
+msgid "N/A"
+msgstr "לא זמין"
 
-#~ msgid ""
-#~ "Use this option to override the username ('www' by default) which will be "
-#~ "used for access to services which are specified as guest. Whatever "
-#~ "privileges this user has will be available to any client connecting to "
-#~ "the guest service. This user must exist in the password file, but does "
-#~ "not require a valid login."
-#~ msgstr ""
-#~ "השתמש באופציה זאתי על מנת לעקוף את שם המשתמש ('www' בברירת המחדל) שישומשו "
-#~ "לגישה לשרותים שמצוינים בתור אורח.איזה זכיות יתר שיש למשתמש הזה יהיו "
-#~ "זמינים לכל לקוח שמתחבר לשרות אורח.המתמש הזה חייב להתקיים בתור קובץ סיסמה, "
-#~ "אבל לא מצריך כניסה חוקית."
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"השתמש באופציה זאתי על מנת לעקוף את שם המשתמש ('www' בברירת המחדל) שישומשו "
+"לגישה לשרותים שמצוינים בתור אורח.איזה זכיות יתר שיש למשתמש הזה יהיו "
+"זמינים לכל לקוח שמתחבר לשרות אורח.המתמש הזה חייב להתקיים בתור קובץ סיסמה, "
+"אבל לא מצריך כניסה חוקית."
 
-#~ msgid "ZVol Name"
-#~ msgstr "שם ZVol"
+msgid "ZVol Name"
+msgstr "שם ZVol"
 
-#~ msgid "Dataset"
-#~ msgstr "סט מידע"
+msgid "Dataset"
+msgstr "סט מידע"
 
-#~ msgid "ZVol"
-#~ msgstr "ZVol"
+msgid "ZVol"
+msgstr "ZVol"
 
-#~ msgid "Native dataset"
-#~ msgstr "סט מידע טבעי"
+msgid "Native dataset"
+msgstr "סט מידע טבעי"
 
-#~ msgid "/var/log/messages"
-#~ msgstr "/var/log/messages"
+msgid "/var/log/messages"
+msgstr "/var/log/messages"
 
-#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; עזרה ותמיכה"
+msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; עזרה ותמיכה"
 
-#~ msgid "Success!"
-#~ msgstr "הצלחה!"
+msgid "Success!"
+msgstr "הצלחה!"
 
-#~ msgid "Your password was changed."
-#~ msgstr "סיסמתך שונתה."
+msgid "Your password was changed."
+msgstr "סיסמתך שונתה."
 
-#~ msgid "Password change"
-#~ msgstr "שינוי סיסמה"
+msgid "Password change"
+msgstr "שינוי סיסמה"
 
-#~ msgid "Please correct the error below."
-#~ msgid_plural "Please correct the errors below."
-#~ msgstr[0] "יחיד במינו"
-#~ msgstr[1] "ריבוי"
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "יחיד במינו"
+msgstr[1] "ריבוי"
 
-#~ msgid ""
-#~ "Please enter your old password, and then enter your new password twice to "
-#~ "verify it is typed in correctly."
-#~ msgstr ""
-#~ "בבקשה הקש את סיסמתך הישנה, ואחר כך את סיסמתך החזרה פעמיים לצורך אימות "
-#~ "שהקשת נכון."
+msgid ""
+"Please enter your old password, and then enter your new password twice to "
+"verify it is typed in correctly."
+msgstr ""
+"בבקשה הקש את סיסמתך הישנה, ואחר כך את סיסמתך החזרה פעמיים לצורך אימות "
+"שהקשת נכון."
 
-#~ msgid "Password (again)"
-#~ msgstr "סיסמה (שוב)"
+msgid "Password (again)"
+msgstr "סיסמה (שוב)"
 
-#~ msgid "minutes,"
-#~ msgstr ",דקות"
+msgid "minutes,"
+msgstr ",דקות"
 
-#~ msgid "Create ZFS zvol"
-#~ msgstr "יצור zvol ZFS"
+msgid "Create ZFS zvol"
+msgstr "יצור zvol ZFS"
 
-#~ msgid "Add ZVol"
-#~ msgstr "הוסף ZVol"
+msgid "Add ZVol"
+msgstr "הוסף ZVol"
 
-#~ msgid "English"
-#~ msgstr "אנגלית"
+msgid "English"
+msgstr "אנגלית"
 
-#~ msgid "Level"
-#~ msgstr "רמה"
+msgid "Level"
+msgstr "רמה"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "הוסף קיבוץ כרטיסים"
+msgid "Add Link Aggregation"
+msgstr "הוסף קיבוץ כרטיסים"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "ראה את כל הממשקים"
+msgid "View All Interfaces"
+msgstr "ראה את כל הממשקים"
 
-#~ msgid "View All VLANs"
-#~ msgstr "ראה את כך הVLANs"
+msgid "View All VLANs"
+msgstr "ראה את כך הVLANs"
 
-#~ msgid "View All Static Routes"
-#~ msgstr "ראה את כל הנתובים הסטטים"
+msgid "View All Static Routes"
+msgstr "ראה את כל הנתובים הסטטים"
 
-#~ msgid "Windows Version"
-#~ msgstr "גירסת חלונות"
+msgid "Windows Version"
+msgstr "גירסת חלונות"
 
-#~ msgid "The version of Microsoft Windows that Active Directory is running."
-#~ msgstr "הגירסה של חלונות מיקרוסופט שהתיקייה הפעילה רצה."
+msgid "The version of Microsoft Windows that Active Directory is running."
+msgstr "הגירסה של חלונות מיקרוסופט שהתיקייה הפעילה רצה."
 
-#~ msgid "Service Principal Name"
-#~ msgstr "שם ראשי של השרות"
+msgid "Service Principal Name"
+msgstr "שם ראשי של השרות"
 
-#~ msgid "Service Principal Name, eg service/account."
-#~ msgstr "שם ראשי של השרות, דוג' שרות\\חשבון."
+msgid "Service Principal Name, eg service/account."
+msgstr "שם ראשי של השרות, דוג' שרות\\חשבון."
 
-#~ msgid "Service Principal Name Password"
-#~ msgstr "סיסמת שם ראשי של השרות"
+msgid "Service Principal Name Password"
+msgstr "סיסמת שם ראשי של השרות"
 
-#~ msgid "Password of the Service Principal Name account."
-#~ msgstr "סיסמת חשבון של השם הראשי של השרות."
+msgid "Password of the Service Principal Name account."
+msgstr "סיסמת חשבון של השם הראשי של השרות."
 
-#~ msgid "Kerberos Keytab File"
-#~ msgstr "קובץ Kerberos Keytab"
+msgid "Kerberos Keytab File"
+msgstr "קובץ Kerberos Keytab"
 
-#~ msgid ""
-#~ "The kerberos keytab file that was generated on the Active Directory "
-#~ "server."
-#~ msgstr "קובץ הKerberos Keytab יוצר על השרת עם התיקייה הפעילה."
+msgid ""
+"The kerberos keytab file that was generated on the Active Directory "
+"server."
+msgstr "קובץ הKerberos Keytab יוצר על השרת עם התיקייה הפעילה."
 
-#~ msgid "Auxillary Parameters"
-#~ msgstr "מאפייני עזר"
+msgid "Auxillary Parameters"
+msgstr "מאפייני עזר"
 
-#~ msgid "Volume Path"
-#~ msgstr "נתיב לנפח"
+msgid "Volume Path"
+msgstr "נתיב לנפח"
 
-#~ msgid "View All UNIX Shares"
-#~ msgstr "ראה את כל שיתופי UNIX "
+msgid "View All UNIX Shares"
+msgstr "ראה את כל שיתופי UNIX "
 
-#~ msgid "View All Apple Shares"
-#~ msgstr "ראה את כל שיתופי אפל (apple)"
+msgid "View All Apple Shares"
+msgstr "ראה את כל שיתופי אפל (apple)"
 
-#~ msgid "View All Windows Shares"
-#~ msgstr "ראה את כל שיתופי חלונות (ווינדוס)"
+msgid "View All Windows Shares"
+msgstr "ראה את כל שיתופי חלונות (ווינדוס)"
 
-#~ msgid "Read"
-#~ msgstr "קריאה"
+msgid "Read"
+msgstr "קריאה"
 
-#~ msgid "Write"
-#~ msgstr "כתיבה"
+msgid "Write"
+msgstr "כתיבה"
 
-#~ msgid "Execute"
-#~ msgstr "בצע"
+msgid "Execute"
+msgstr "בצע"
 
-#~ msgid "Owner"
-#~ msgstr "בעל"
+msgid "Owner"
+msgstr "בעל"
 
-#~ msgid "Other"
-#~ msgstr "אחר"
+msgid "Other"
+msgstr "אחר"
 
-#~ msgid "Disks"
-#~ msgstr "כוננים"
+msgid "Disks"
+msgstr "כוננים"
 
-#~ msgid "View All Periodic Snapshot Tasks"
-#~ msgstr "ראה את מטלות התצלום התקופתיות"
+msgid "View All Periodic Snapshot Tasks"
+msgstr "ראה את מטלות התצלום התקופתיות"
 
-#~ msgid "sucessfully edited"
-#~ msgstr "נערך בהצלחה"
+msgid "sucessfully edited"
+msgstr "נערך בהצלחה"
 
-#~ msgid "Lagg Interface was successfully added"
-#~ msgstr "מנשק LAGG הוסף בהצלחה"
+msgid "Lagg Interface was successfully added"
+msgstr "מנשק LAGG הוסף בהצלחה"
 
-#~ msgid "ActiveDirectory Settings"
-#~ msgstr "הגדרות תיקייה פעילה"
+msgid "ActiveDirectory Settings"
+msgstr "הגדרות תיקייה פעילה"

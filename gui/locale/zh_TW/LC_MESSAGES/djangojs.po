@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-09 13:51-0700\n"
+"POT-Creation-Date: 2011-10-19 02:03-0700\n"
 "PO-Revision-Date: 2011-06-10 01:31+0200\n"
 "Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,63 +18,63 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:114
+#: media/lib/js/freeadmin.js:127
 msgid "Reporting"
 msgstr "報表"
 
-#: media/lib/js/freeadmin.js:126
+#: media/lib/js/freeadmin.js:139
 msgid "Settings"
 msgstr "設定"
 
-#: media/lib/js/freeadmin.js:137
+#: media/lib/js/freeadmin.js:150
 msgid "System Information"
 msgstr "系統資訊"
 
-#: media/lib/js/freeadmin.js:177
+#: media/lib/js/freeadmin.js:190
 msgid "Network Settings"
 msgstr "網路設定"
 
-#: media/lib/js/freeadmin.js:239
+#: media/lib/js/freeadmin.js:254
 msgid "Services"
 msgstr "服務"
 
-#: media/lib/js/freeadmin.js:279
+#: media/lib/js/freeadmin.js:295
 msgid "Account"
 msgstr "帳號"
 
-#: media/lib/js/freeadmin.js:318
+#: media/lib/js/freeadmin.js:334
 msgid "Storage"
 msgstr "儲存"
 
-#: media/lib/js/freeadmin.js:385
+#: media/lib/js/freeadmin.js:401
 msgid "CronJobs"
 msgstr "例行工作"
 
-#: media/lib/js/freeadmin.js:437
+#: media/lib/js/freeadmin.js:555
 msgid "Edit"
 msgstr "管理"
 
-#: media/lib/js/freeadmin.js:439
+#: media/lib/js/freeadmin.js:557
 msgid "Edit Disk"
 msgstr "磁碟管理"
 
-#: media/lib/js/freeadmin.js:443
+#: media/lib/js/freeadmin.js:561
 msgid "Replace"
 msgstr "移轉"
 
-#: media/lib/js/freeadmin.js:444
+#: media/lib/js/freeadmin.js:562
 msgid "Disk Replacement"
 msgstr "磁碟移轉"
 
-#: media/lib/js/freeadmin.js:448
+#: media/lib/js/freeadmin.js:566
 msgid "Detach"
 msgstr "卸載"
 
-#: media/lib/js/freeadmin.js:449
+#: media/lib/js/freeadmin.js:567
 msgid "Disk Detach"
 msgstr "磁碟卸載"
 
-#: media/lib/js/freeadmin.js:635
+#: media/lib/js/freeadmin.js:747
 msgid "An error occurred!"
 msgstr "發生錯誤！"
 
@@ -82,6 +82,6 @@ msgstr "發生錯誤！"
 msgid "Each selected"
 msgstr "所選的每個"
 
-#: media/lib/js/freeadmin/form/Cron.js:90
+#: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr "每 N 個"

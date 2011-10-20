@@ -4872,32 +4872,28 @@ msgid "Mailing Lists"
 msgstr "Mailing Lijsten"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "Announce"
+msgstr "FreeNAS Announce"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "Commit"
+msgstr "FreeNAS Commit"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS Devel"
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "Testing"
+msgstr "FreeNAS Testing"
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS Documentatie"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Vertalingen"
+msgstr "FreeNAS Vertalingen"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4912,9 +4908,8 @@ msgid "Documentation"
 msgstr "Documentatie"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Documentatie"
+msgstr "FreeNAS Documentatie"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5889,244 +5884,244 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Kritisch"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s werd succesvol toegevoegd."
+msgid "%s successfully added."
+msgstr "%s werd succesvol toegevoegd."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 Netmask"
+msgid "IPv6 Netmask"
+msgstr "IPv6 Netmask"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Deze waarde moet tussen 0 en 10000 liggen."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Deze waarde moet tussen 0 en 10000 liggen."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Deze waarde moet tussen 0 en 1000 liggen."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Deze waarde moet tussen 0 en 1000 liggen."
 
-#~ msgid "Enable DDP"
-#~ msgstr "DDP aanzetten"
+msgid "Enable DDP"
+msgstr "DDP aanzetten"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Zet DDP support aan voor low-level appletalk toegang"
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Zet DDP support aan voor low-level appletalk toegang"
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "TLS aan/uit"
+msgid "Turn on/off TLS"
+msgstr "TLS aan/uit"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "Windows Share"
-#~ msgstr "Windows Share"
+msgid "Windows Share"
+msgstr "Windows Share"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Windows Shares (gedeelde mappen)"
+msgid "Windows Shares"
+msgstr "Windows Shares (gedeelde mappen)"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "Exporteren van het volume is mislukt."
+msgid "The volume failed to export"
+msgstr "Exporteren van het volume is mislukt."
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "Cron tijdschema"
+msgid "Cron Scheduler"
+msgstr "Cron tijdschema"
 
-#~ msgid "Devel"
-#~ msgstr "Devel"
+msgid "Devel"
+msgstr "Devel"
 
-#~ msgid "Docs"
-#~ msgstr "Documentatie"
+msgid "Docs"
+msgstr "Documentatie"
 
-#~ msgid "Welcome to"
-#~ msgstr "Welkom bij8"
+msgid "Welcome to"
+msgstr "Welkom bij8"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Mount point"
-#~ msgstr "Mount point"
+msgid "Mount point"
+msgstr "Mount point"
 
-#~ msgid "Dataset name"
-#~ msgstr "Dataset Naam"
+msgid "Dataset name"
+msgstr "Dataset Naam"
 
-#~ msgid "Snapshot name"
-#~ msgstr "Snapshotnaam"
+msgid "Snapshot name"
+msgstr "Snapshotnaam"
 
-#~ msgid "Used space"
-#~ msgstr "Gebruikte ruimte"
+msgid "Used space"
+msgstr "Gebruikte ruimte"
 
-#~ msgid "Referenced space"
-#~ msgstr "Verwezen ruimte"
+msgid "Referenced space"
+msgstr "Verwezen ruimte"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "Geen ZFS snapshot beschikbaar"
+msgid "No ZFS snapshot available"
+msgstr "Geen ZFS snapshot beschikbaar"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Creëer Periodieke Snapshot"
+msgid "Create Periodic Snapshot"
+msgstr "Creëer Periodieke Snapshot"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Fabrieksinstellingen terugzetten"
+msgid "Restore to Factory Defaults"
+msgstr "Fabrieksinstellingen terugzetten"
 
-#~ msgid "Config"
-#~ msgstr "Configuratie"
+msgid "Config"
+msgstr "Configuratie"
 
-#~ msgid "OS Version"
-#~ msgstr "Versie Besturingssysteem"
+msgid "OS Version"
+msgstr "Versie Besturingssysteem"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s succesvol geupdate."
+msgid "%s successfully update."
+msgstr "%s succesvol geupdate."
 
-#~ msgid "Admin user"
-#~ msgstr "Administrator gebruiker"
+msgid "Admin user"
+msgstr "Administrator gebruiker"
 
-#~ msgid "%s successfully added"
-#~ msgstr "% succesvol toegevoegd"
+msgid "%s successfully added"
+msgstr "% succesvol toegevoegd"
 
-#~ msgid ""
-#~ "Use this option to override the username ('www' by default) which will be "
-#~ "used for access to services which are specified as guest. Whatever "
-#~ "privileges this user has will be available to any client connecting to "
-#~ "the guest service. This user must exist in the password file, but does "
-#~ "not require a valid login."
-#~ msgstr ""
-#~ "Gebruik deze optie om de gebruikersnaam ('www' is standaard) te "
-#~ "overschrijven welke wordt gebruikt om toegang te krijgen tot diensten die "
-#~ "voor gasten toegankelijk zijn. Ongeacht de privileges voor deze gebruiker "
-#~ "heeft een cliënt verbinding met de gastdiensten. Deze gebruiker moet "
-#~ "bestaan in het wachtwoord bestand, maar er is geen geldige aanmelding "
-#~ "vereist."
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"Gebruik deze optie om de gebruikersnaam ('www' is standaard) te "
+"overschrijven welke wordt gebruikt om toegang te krijgen tot diensten die "
+"voor gasten toegankelijk zijn. Ongeacht de privileges voor deze gebruiker "
+"heeft een cliënt verbinding met de gastdiensten. Deze gebruiker moet "
+"bestaan in het wachtwoord bestand, maar er is geen geldige aanmelding "
+"vereist."
 
-#~ msgid "ZVol Name"
-#~ msgstr "ZVol naam"
+msgid "ZVol Name"
+msgstr "ZVol naam"
 
-#~ msgid "Dataset"
-#~ msgstr "Dataset"
+msgid "Dataset"
+msgstr "Dataset"
 
-#~ msgid "Native dataset"
-#~ msgstr "Native dataset"
+msgid "Native dataset"
+msgstr "Native dataset"
 
-#~ msgid "/var/log/messages"
-#~ msgstr "/var/log/messages"
+msgid "/var/log/messages"
+msgstr "/var/log/messages"
 
-#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Ondersteuning"
+msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Ondersteuning"
 
-#~ msgid "Success!"
-#~ msgstr "Succes!"
+msgid "Success!"
+msgstr "Succes!"
 
-#~ msgid "Your password was changed."
-#~ msgstr "Uw wachtwoord is veranderd"
+msgid "Your password was changed."
+msgstr "Uw wachtwoord is veranderd"
 
-#~ msgid "Password change"
-#~ msgstr "Wachtwoord verandering"
+msgid "Password change"
+msgstr "Wachtwoord verandering"
 
 # Meervoudsvorm 0=Enkelvoud?
-#~ msgid "Please correct the error below."
-#~ msgid_plural "Please correct the errors below."
-#~ msgstr[0] "Corrigeer onderstaande fout a.u.b."
-#~ msgstr[1] "Corrigeer onderstaande fouten a.u.b."
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "Corrigeer onderstaande fout a.u.b."
+msgstr[1] "Corrigeer onderstaande fouten a.u.b."
 
-#~ msgid ""
-#~ "Please enter your old password, and then enter your new password twice to "
-#~ "verify it is typed in correctly."
-#~ msgstr ""
-#~ "Vul a.u.b. uw oude wachtwoord in, en vul daarna 2 keer uw nieuwe "
-#~ "wachtwoord in om te verifiëren of het correct getypt is. "
+msgid ""
+"Please enter your old password, and then enter your new password twice to "
+"verify it is typed in correctly."
+msgstr ""
+"Vul a.u.b. uw oude wachtwoord in, en vul daarna 2 keer uw nieuwe "
+"wachtwoord in om te verifiëren of het correct getypt is. "
 
-#~ msgid "Password (again)"
-#~ msgstr "Wachtwoord (opnieuw)"
+msgid "Password (again)"
+msgstr "Wachtwoord (opnieuw)"
 
-#~ msgid "minutes,"
-#~ msgstr "minuten"
+msgid "minutes,"
+msgstr "minuten"
 
-#~ msgid "Create ZFS zvol"
-#~ msgstr "Creëer ZFS zvol"
+msgid "Create ZFS zvol"
+msgstr "Creëer ZFS zvol"
 
-#~ msgid "Add ZVol"
-#~ msgstr "ZVol toevoegen"
+msgid "Add ZVol"
+msgstr "ZVol toevoegen"
 
-#~ msgid "English"
-#~ msgstr "Engels"
+msgid "English"
+msgstr "Engels"
 
-#~ msgid "Level"
-#~ msgstr "Niveau"
+msgid "Level"
+msgstr "Niveau"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "Toevoegen Link Aggregation"
+msgid "Add Link Aggregation"
+msgstr "Toevoegen Link Aggregation"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "Toon Alle Interfaces"
+msgid "View All Interfaces"
+msgstr "Toon Alle Interfaces"
 
-#~ msgid "View All VLANs"
-#~ msgstr "Toon Alle VLANs"
+msgid "View All VLANs"
+msgstr "Toon Alle VLANs"
 
-#~ msgid "View All Static Routes"
-#~ msgstr "Toon Alle Statische Routes"
+msgid "View All Static Routes"
+msgstr "Toon Alle Statische Routes"
 
-#~ msgid "Windows Version"
-#~ msgstr "Windows Versie"
+msgid "Windows Version"
+msgstr "Windows Versie"
 
-#~ msgid "The version of Microsoft Windows that Active Directory is running."
-#~ msgstr ""
-#~ "De versie van Microsoft Windows waarop Active Directory wordt verzorgd."
+msgid "The version of Microsoft Windows that Active Directory is running."
+msgstr ""
+"De versie van Microsoft Windows waarop Active Directory wordt verzorgd."
 
-#~ msgid "Service Principal Name"
-#~ msgstr "Service Principal Name"
+msgid "Service Principal Name"
+msgstr "Service Principal Name"
 
-#~ msgid "Service Principal Name, eg service/account."
-#~ msgstr "Service Principal Name, bijv. service/account."
+msgid "Service Principal Name, eg service/account."
+msgstr "Service Principal Name, bijv. service/account."
 
-#~ msgid "Service Principal Name Password"
-#~ msgstr "Service Principal Name Wachtwoord"
+msgid "Service Principal Name Password"
+msgstr "Service Principal Name Wachtwoord"
 
-#~ msgid "Password of the Service Principal Name account."
-#~ msgstr "Wachtwoord van het Service Principal Name account."
+msgid "Password of the Service Principal Name account."
+msgstr "Wachtwoord van het Service Principal Name account."
 
-#~ msgid "Kerberos Keytab File"
-#~ msgstr "Kerberos Keytab Bestand"
+msgid "Kerberos Keytab File"
+msgstr "Kerberos Keytab Bestand"
 
-#~ msgid ""
-#~ "The kerberos keytab file that was generated on the Active Directory "
-#~ "server."
-#~ msgstr ""
-#~ "Het Kerberos keytab bestand welke is gegenereerd op de Active Directory "
-#~ "server."
+msgid ""
+"The kerberos keytab file that was generated on the Active Directory "
+"server."
+msgstr ""
+"Het Kerberos keytab bestand welke is gegenereerd op de Active Directory "
+"server."
 
-#~ msgid "Auxillary Parameters"
-#~ msgstr "Hulp Parameters"
+msgid "Auxillary Parameters"
+msgstr "Hulp Parameters"
 
-#~ msgid "Volume Path"
-#~ msgstr "Volume Pad"
+msgid "Volume Path"
+msgstr "Volume Pad"
 
-#~ msgid "View All UNIX Shares"
-#~ msgstr "Toon alle UNIX Shares"
+msgid "View All UNIX Shares"
+msgstr "Toon alle UNIX Shares"
 
-#~ msgid "View All Apple Shares"
-#~ msgstr "Toon alle Apple Shares"
+msgid "View All Apple Shares"
+msgstr "Toon alle Apple Shares"
 
-#~ msgid "View All Windows Shares"
-#~ msgstr "Toon alle Windows Shares"
+msgid "View All Windows Shares"
+msgstr "Toon alle Windows Shares"
 
-#~ msgid "Read"
-#~ msgstr "Lees"
+msgid "Read"
+msgstr "Lees"
 
-#~ msgid "Write"
-#~ msgstr "Schrijf"
+msgid "Write"
+msgstr "Schrijf"
 
-#~ msgid "Execute"
-#~ msgstr "Uitvoeren"
+msgid "Execute"
+msgstr "Uitvoeren"
 
-#~ msgid "Owner"
-#~ msgstr "Eigenaar"
+msgid "Owner"
+msgstr "Eigenaar"
 
-#~ msgid "Other"
-#~ msgstr "Andere"
+msgid "Other"
+msgstr "Andere"
 
-#~ msgid "Disks"
-#~ msgstr "Schijven"
+msgid "Disks"
+msgstr "Schijven"
 
-#~ msgid "View All Periodic Snapshot Tasks"
-#~ msgstr "Toon Alle Periodieke Snapshot Taken"
+msgid "View All Periodic Snapshot Tasks"
+msgstr "Toon Alle Periodieke Snapshot Taken"
 
-#~ msgid "sucessfully edited"
-#~ msgstr "Succesvol gewijzigd"
+msgid "sucessfully edited"
+msgstr "Succesvol gewijzigd"
 
-#~ msgid "Lagg Interface was successfully added"
-#~ msgstr "LAGG Interface is succesvol toegevoegd"
+msgid "Lagg Interface was successfully added"
+msgstr "LAGG Interface is succesvol toegevoegd"
 
-#~ msgid "ActiveDirectory Settings"
-#~ msgstr "ActiveDirectory Instellingen"
+msgid "ActiveDirectory Settings"
+msgstr "ActiveDirectory Instellingen"

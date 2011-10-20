@@ -15,8 +15,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
+"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.1.6\n"
 
 #: choices.py:40
@@ -4876,32 +4876,28 @@ msgid "Mailing Lists"
 msgstr "Списки розсилки"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "Анонси"
+msgstr "Анонси FreeNAS"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "Уточнення"
+msgstr "Уточнення FreeNAS"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "Розвиток FreeNAS"
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "Тестування"
+msgstr "Тестування FreeNAS"
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS документація"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Переклади"
+msgstr "FreeNAS Переклади"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4916,9 +4912,8 @@ msgid "Documentation"
 msgstr "Документація"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Документація"
+msgstr "FreeNAS Документація"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5892,107 +5887,107 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Критичний"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s успішно додано."
+msgid "%s successfully added."
+msgstr "%s успішно додано."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "Маска мережі IPv6"
+msgid "IPv6 Netmask"
+msgstr "Маска мережі IPv6"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Значення має бути між 0 та 10000 включно."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Значення має бути між 0 та 10000 включно."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Значення має бути між 0 та 1000 включно."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Значення має бути між 0 та 1000 включно."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Включити DDP"
+msgid "Enable DDP"
+msgstr "Включити DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Включає підтримку DDP для низькорівневого доступу до AppleTalk."
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Включає підтримку DDP для низькорівневого доступу до AppleTalk."
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "Включення / вимикання TLS"
+msgid "Turn on/off TLS"
+msgstr "Включення / вимикання TLS"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "Windows Share"
-#~ msgstr "Загальний ресурс Windows"
+msgid "Windows Share"
+msgstr "Загальний ресурс Windows"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Загальні ресурси Windows"
+msgid "Windows Shares"
+msgstr "Загальні ресурси Windows"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "Том не вдалося експортувати"
+msgid "The volume failed to export"
+msgstr "Том не вдалося експортувати"
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "Розклад Cron"
+msgid "Cron Scheduler"
+msgstr "Розклад Cron"
 
-#~ msgid "Devel"
-#~ msgstr "Розвиток"
+msgid "Devel"
+msgstr "Розвиток"
 
-#~ msgid "Docs"
-#~ msgstr "документація"
+msgid "Docs"
+msgstr "документація"
 
-#~ msgid "Welcome to"
-#~ msgstr "Ласкаво просимо на8"
+msgid "Welcome to"
+msgstr "Ласкаво просимо на8"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Mount point"
-#~ msgstr "Точка монтування"
+msgid "Mount point"
+msgstr "Точка монтування"
 
-#~ msgid "Dataset name"
-#~ msgstr "Ім'я набору даних"
+msgid "Dataset name"
+msgstr "Ім'я набору даних"
 
-#~ msgid "Snapshot name"
-#~ msgstr "Ім'я знимку"
+msgid "Snapshot name"
+msgstr "Ім'я знимку"
 
-#~ msgid "Used space"
-#~ msgstr "Використано"
+msgid "Used space"
+msgstr "Використано"
 
-#~ msgid "Referenced space"
-#~ msgstr "Використовується місця"
+msgid "Referenced space"
+msgstr "Використовується місця"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "Немає доступних ZFS знимків"
+msgid "No ZFS snapshot available"
+msgstr "Немає доступних ZFS знимків"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Створити періодичний знимок"
+msgid "Create Periodic Snapshot"
+msgstr "Створити періодичний знимок"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Відновлення заводських параметрів за замовчуванням"
+msgid "Restore to Factory Defaults"
+msgstr "Відновлення заводських параметрів за замовчуванням"
 
-#~ msgid "Config"
-#~ msgstr "Конфігурація"
+msgid "Config"
+msgstr "Конфігурація"
 
-#~ msgid "OS Version"
-#~ msgstr "Версія ОС"
+msgid "OS Version"
+msgstr "Версія ОС"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s (успішно оновлено)."
+msgid "%s successfully update."
+msgstr "%s (успішно оновлено)."
 
-#~ msgid "Admin user"
-#~ msgstr "Адміністратор"
+msgid "Admin user"
+msgstr "Адміністратор"
 
-#~ msgid "ZVol Name"
-#~ msgstr "Ім'я ZVol"
+msgid "ZVol Name"
+msgstr "Ім'я ZVol"
 
-#~ msgid "Add ZVol"
-#~ msgstr "Додати ZVol"
+msgid "Add ZVol"
+msgstr "Додати ZVol"
 
-#~ msgid "English"
-#~ msgstr "Англійська"
+msgid "English"
+msgstr "Англійська"
 
-#~ msgid "Level"
-#~ msgstr "Рівень"
+msgid "Level"
+msgstr "Рівень"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "Додати об'єднання інтерфейсів"
+msgid "Add Link Aggregation"
+msgstr "Додати об'єднання інтерфейсів"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "Переглянути всі інтерфеси"
+msgid "View All Interfaces"
+msgstr "Переглянути всі інтерфеси"
 
-#~ msgid "View All VLANs"
-#~ msgstr "Переглянути всі VLAN"
+msgid "View All VLANs"
+msgstr "Переглянути всі VLAN"

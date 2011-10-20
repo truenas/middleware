@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-09 13:51-0700\n"
+"POT-Creation-Date: 2011-10-19 02:03-0700\n"
 "PO-Revision-Date: 2011-09-08 10:36+0200\n"
 "Last-Translator: thepeterp <thepeterp@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,63 +18,63 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:114
+#: media/lib/js/freeadmin.js:127
 msgid "Reporting"
 msgstr "Αναφορά"
 
-#: media/lib/js/freeadmin.js:126
+#: media/lib/js/freeadmin.js:139
 msgid "Settings"
 msgstr "Ρυθμίσεις"
 
-#: media/lib/js/freeadmin.js:137
+#: media/lib/js/freeadmin.js:150
 msgid "System Information"
 msgstr "Πληροφορίες Συστήματος"
 
-#: media/lib/js/freeadmin.js:177
+#: media/lib/js/freeadmin.js:190
 msgid "Network Settings"
 msgstr "Ρυθμίσεις Δικτύου"
 
-#: media/lib/js/freeadmin.js:239
+#: media/lib/js/freeadmin.js:254
 msgid "Services"
 msgstr "Υπηρεσίες"
 
-#: media/lib/js/freeadmin.js:279
+#: media/lib/js/freeadmin.js:295
 msgid "Account"
 msgstr "Λογαριασμός"
 
-#: media/lib/js/freeadmin.js:318
+#: media/lib/js/freeadmin.js:334
 msgid "Storage"
 msgstr "Αποθήκευση"
 
-#: media/lib/js/freeadmin.js:385
+#: media/lib/js/freeadmin.js:401
 msgid "CronJobs"
 msgstr "Cronjobs"
 
-#: media/lib/js/freeadmin.js:437
+#: media/lib/js/freeadmin.js:555
 msgid "Edit"
 msgstr "Επεξεργασία"
 
-#: media/lib/js/freeadmin.js:439
+#: media/lib/js/freeadmin.js:557
 msgid "Edit Disk"
 msgstr "Επεξεργασία Δίσκου"
 
-#: media/lib/js/freeadmin.js:443
+#: media/lib/js/freeadmin.js:561
 msgid "Replace"
 msgstr "Αντικατάσταση"
 
-#: media/lib/js/freeadmin.js:444
+#: media/lib/js/freeadmin.js:562
 msgid "Disk Replacement"
 msgstr "Αντικατάσταση Δίσκου"
 
-#: media/lib/js/freeadmin.js:448
+#: media/lib/js/freeadmin.js:566
 msgid "Detach"
 msgstr "Αποσύνδεση"
 
-#: media/lib/js/freeadmin.js:449
+#: media/lib/js/freeadmin.js:567
 msgid "Disk Detach"
 msgstr "Αποσύνδεση Δίσκου"
 
-#: media/lib/js/freeadmin.js:635
+#: media/lib/js/freeadmin.js:747
 msgid "An error occurred!"
 msgstr "Κάποιο σφάλματα συνέβησε!"
 
@@ -82,9 +82,9 @@ msgstr "Κάποιο σφάλματα συνέβησε!"
 msgid "Each selected"
 msgstr "Κάθε επιλεγμένο"
 
-#: media/lib/js/freeadmin/form/Cron.js:90
+#: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr "Κάθε N"
 
-msgid "Every"
-msgstr "Κάθε"
+#~ msgid "Every"
+#~ msgstr "Κάθε"

@@ -5076,35 +5076,33 @@ msgstr "Mailinglisten"
 
 # die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "Announce"
+msgstr "FreeNAS Announce"
 
 # die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "Commit"
+msgstr "FreeNAS Commit"
 
+# die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS Devel"
 
 # die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "Testing"
+msgstr "FreeNAS Testing"
 
+# die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS Dokumentation"
 
 # die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Translations"
+msgstr "FreeNAS Translations"
 
 # die alte Frage: "Support" übersetzen oder nicht?
 #: templates/freeadmin/index.html:100
@@ -5120,10 +5118,10 @@ msgstr "Bugtracker"
 msgid "Documentation"
 msgstr "Dokumentation"
 
+# die Eigennamen der Mailinglisten nicht übersetzen
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Dokumentation"
+msgstr "FreeNAS Dokumentation"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -6109,259 +6107,259 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Kritisch"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s erfolgreich hinzugefügt."
+msgid "%s successfully added."
+msgstr "%s erfolgreich hinzugefügt."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 Netzmaske"
+msgid "IPv6 Netmask"
+msgstr "IPv6 Netzmaske"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Der Wert muss zwischen 0 bis einschließlich 10000 liegen."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Der Wert muss zwischen 0 bis einschließlich 10000 liegen."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Der Wert muss zwischen 0 bis einschließlich 1000 liegen."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Der Wert muss zwischen 0 bis einschließlich 1000 liegen."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Aktiviere DDP"
+msgid "Enable DDP"
+msgstr "Aktiviere DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Aktiviert DDP Unterstützung für Low-Level AppleTalk Zugriff"
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Aktiviert DDP Unterstützung für Low-Level AppleTalk Zugriff"
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "TLS ein/ausschalten"
+msgid "Turn on/off TLS"
+msgstr "TLS ein/ausschalten"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "Windows Share"
-#~ msgstr "Windows Freigabe"
+msgid "Windows Share"
+msgstr "Windows Freigabe"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Windows Freigaben"
+msgid "Windows Shares"
+msgstr "Windows Freigaben"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "Das Volume konnte nicht wieder gestartet werden"
+msgid "The volume failed to export"
+msgstr "Das Volume konnte nicht wieder gestartet werden"
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "Zeitplan für periodische Snapshots"
-
-# die Eigennamen der Mailinglisten nicht übersetzen
-#~ msgid "Devel"
-#~ msgstr "Devel"
+msgid "Cron Scheduler"
+msgstr "Zeitplan für periodische Snapshots"
 
 # die Eigennamen der Mailinglisten nicht übersetzen
-#~ msgid "Docs"
-#~ msgstr "Dokumentation"
+msgid "Devel"
+msgstr "Devel"
 
-#~ msgid "Welcome to"
-#~ msgstr "Willkommen zu8"
+# die Eigennamen der Mailinglisten nicht übersetzen
+msgid "Docs"
+msgstr "Dokumentation"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "Welcome to"
+msgstr "Willkommen zu8"
 
-#~ msgid "Mount point"
-#~ msgstr "Einhängepunkt"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Dataset name"
-#~ msgstr "Dataset Name"
+msgid "Mount point"
+msgstr "Einhängepunkt"
 
-#~ msgid "Snapshot name"
-#~ msgstr "Snapshot Name"
+msgid "Dataset name"
+msgstr "Dataset Name"
 
-#~ msgid "Used space"
-#~ msgstr "Belegter Speicherplatz"
+msgid "Snapshot name"
+msgstr "Snapshot Name"
 
-#~ msgid "Referenced space"
-#~ msgstr "Zugewiesener Speicherplatz"
+msgid "Used space"
+msgstr "Belegter Speicherplatz"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "Kein ZFS-Snapshot verfügbar"
+msgid "Referenced space"
+msgstr "Zugewiesener Speicherplatz"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Erstelle periodische Snapshot"
+msgid "No ZFS snapshot available"
+msgstr "Kein ZFS-Snapshot verfügbar"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Werkseinstellungen wiederherstellen"
+msgid "Create Periodic Snapshot"
+msgstr "Erstelle periodische Snapshot"
 
-#~ msgid "Config"
-#~ msgstr "Konfiguration"
+msgid "Restore to Factory Defaults"
+msgstr "Werkseinstellungen wiederherstellen"
 
-#~ msgid "OS Version"
-#~ msgstr "Betriebssystemversion"
+msgid "Config"
+msgstr "Konfiguration"
+
+msgid "OS Version"
+msgstr "Betriebssystemversion"
 
 # Syntax Error in English: correct would be: "%s successfully updated."
-#~ msgid "%s successfully update."
-#~ msgstr "%s erfolgreich aktualisiert."
+msgid "%s successfully update."
+msgstr "%s erfolgreich aktualisiert."
 
-#~ msgid "Admin user"
-#~ msgstr "Administrativer Benutzer"
+msgid "Admin user"
+msgstr "Administrativer Benutzer"
 
-#~ msgid "%s successfully added"
-#~ msgstr "%s erfolgreich hinzugefügt"
+msgid "%s successfully added"
+msgstr "%s erfolgreich hinzugefügt"
 
-#~ msgid "N/A"
-#~ msgstr "nicht zutreffend"
+msgid "N/A"
+msgstr "nicht zutreffend"
 
 # ggf. am Anfang auch "Aktiviere diese Funktion, um.." - je nach Kontext
-#~ msgid ""
-#~ "Use this option to override the username ('www' by default) which will be "
-#~ "used for access to services which are specified as guest. Whatever "
-#~ "privileges this user has will be available to any client connecting to "
-#~ "the guest service. This user must exist in the password file, but does "
-#~ "not require a valid login."
-#~ msgstr ""
-#~ "Verwende diese Funktion, um den Nutzernamen zu überschreiben, der zum "
-#~ "Zugriff auf Gastservices verwendet wird (standardmäßig 'www'). Rechte, "
-#~ "die diesem Nutzer zustehen, sind jedem Client verfügbar, der sich als "
-#~ "Gast verbindet. Dieser Nutzer muss in der Passwortdatei bestehen, "
-#~ "benötigt aber keinen gültigen Login."
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"Verwende diese Funktion, um den Nutzernamen zu überschreiben, der zum "
+"Zugriff auf Gastservices verwendet wird (standardmäßig 'www'). Rechte, "
+"die diesem Nutzer zustehen, sind jedem Client verfügbar, der sich als "
+"Gast verbindet. Dieser Nutzer muss in der Passwortdatei bestehen, "
+"benötigt aber keinen gültigen Login."
 
-#~ msgid "ZVol Name"
-#~ msgstr "ZVol Name"
+msgid "ZVol Name"
+msgstr "ZVol Name"
 
-#~ msgid "Dataset"
-#~ msgstr "Dataset"
+msgid "Dataset"
+msgstr "Dataset"
 
-#~ msgid "ZVol"
-#~ msgstr "ZVol"
+msgid "ZVol"
+msgstr "ZVol"
 
-#~ msgid "Native dataset"
-#~ msgstr "Natives Dataset"
+msgid "Native dataset"
+msgstr "Natives Dataset"
 
-#~ msgid "/var/log/messages"
-#~ msgstr "/var/log/messages"
+msgid "/var/log/messages"
+msgstr "/var/log/messages"
 
 # eigentlich muss "Support" nicht übersetzt werden
-#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hilfe & Support"
+msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hilfe & Support"
 
 # Kontext wichtig... vielleicht lieber "OK!" oder "Glückwunsch!".
-#~ msgid "Success!"
-#~ msgstr "Erfolg!"
+msgid "Success!"
+msgstr "Erfolg!"
 
-#~ msgid "Your password was changed."
-#~ msgstr "Ihr Passwort wurde geändert."
+msgid "Your password was changed."
+msgstr "Ihr Passwort wurde geändert."
 
-#~ msgid "Password change"
-#~ msgstr "Passwort ändern"
+msgid "Password change"
+msgstr "Passwort ändern"
 
-#~ msgid "Please correct the error below."
-#~ msgid_plural "Please correct the errors below."
-#~ msgstr[0] "Bitte korrigieren Sie den unten genannten Fehler."
-#~ msgstr[1] "Bitte korrigieren Sie die unten genannten Fehler."
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "Bitte korrigieren Sie den unten genannten Fehler."
+msgstr[1] "Bitte korrigieren Sie die unten genannten Fehler."
 
-#~ msgid ""
-#~ "Please enter your old password, and then enter your new password twice to "
-#~ "verify it is typed in correctly."
-#~ msgstr ""
-#~ "Bitte geben Sie Ihr altes Passwort ein und geben Sie dann zweimal Ihr "
-#~ "neues Passwort ein, um sicherzustellen, dass es richtig eingegeben wurde."
+msgid ""
+"Please enter your old password, and then enter your new password twice to "
+"verify it is typed in correctly."
+msgstr ""
+"Bitte geben Sie Ihr altes Passwort ein und geben Sie dann zweimal Ihr "
+"neues Passwort ein, um sicherzustellen, dass es richtig eingegeben wurde."
 
-#~ msgid "Password (again)"
-#~ msgstr "Passwort wiederholen"
+msgid "Password (again)"
+msgstr "Passwort wiederholen"
 
-#~ msgid "minutes,"
-#~ msgstr "Minuten, "
+msgid "minutes,"
+msgstr "Minuten, "
 
-#~ msgid "Create ZFS zvol"
-#~ msgstr "Erstelle ZFS Dataset"
+msgid "Create ZFS zvol"
+msgstr "Erstelle ZFS Dataset"
 
-#~ msgid "Add ZVol"
-#~ msgstr "ZFS Volume hinzufügen"
+msgid "Add ZVol"
+msgstr "ZFS Volume hinzufügen"
 
-#~ msgid "English"
-#~ msgstr "Englisch"
+msgid "English"
+msgstr "Englisch"
 
-#~ msgid "Level"
-#~ msgstr "Ebene"
+msgid "Level"
+msgstr "Ebene"
 
 # "Link Aggregation" laut Wikipedia geläufig
-#~ msgid "Add Link Aggregation"
-#~ msgstr "Link Aggregation hinzufügen"
+msgid "Add Link Aggregation"
+msgstr "Link Aggregation hinzufügen"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "Alle Schnittstellen anzeigen"
+msgid "View All Interfaces"
+msgstr "Alle Schnittstellen anzeigen"
 
-#~ msgid "View All VLANs"
-#~ msgstr "Alle VLANs anzeigen"
+msgid "View All VLANs"
+msgstr "Alle VLANs anzeigen"
 
 # Fixed Typo
-#~ msgid "View All Static Routes"
-#~ msgstr "Alle statischen Routen anzeigen"
+msgid "View All Static Routes"
+msgstr "Alle statischen Routen anzeigen"
 
-#~ msgid "Windows Version"
-#~ msgstr "Windows Version"
+msgid "Windows Version"
+msgstr "Windows Version"
 
-#~ msgid "The version of Microsoft Windows that Active Directory is running."
-#~ msgstr ""
-#~ "Die Version von Microsoft Windows auf der das Active Directory läuft."
+msgid "The version of Microsoft Windows that Active Directory is running."
+msgstr ""
+"Die Version von Microsoft Windows auf der das Active Directory läuft."
 
-#~ msgid "Service Principal Name"
-#~ msgstr "Service Principal Name"
+msgid "Service Principal Name"
+msgstr "Service Principal Name"
 
-#~ msgid "Service Principal Name, eg service/account."
-#~ msgstr "Service Principal Name, z.B. Dienst/Konto."
+msgid "Service Principal Name, eg service/account."
+msgstr "Service Principal Name, z.B. Dienst/Konto."
 
-#~ msgid "Service Principal Name Password"
-#~ msgstr "Service Principal Name Passwort"
+msgid "Service Principal Name Password"
+msgstr "Service Principal Name Passwort"
 
-#~ msgid "Password of the Service Principal Name account."
-#~ msgstr "Passwort für das Service Principal Name Konto."
+msgid "Password of the Service Principal Name account."
+msgstr "Passwort für das Service Principal Name Konto."
 
 # Gibt es eine sinnvolle Übersetzung für "Keytab" bei Kerberos?
-#~ msgid "Kerberos Keytab File"
-#~ msgstr "Kerberos Keytab Datei"
+msgid "Kerberos Keytab File"
+msgstr "Kerberos Keytab Datei"
 
-#~ msgid ""
-#~ "The kerberos keytab file that was generated on the Active Directory "
-#~ "server."
-#~ msgstr ""
-#~ "Die Kerberos Keytab Datei, die auf dem Active Directory Server erzeugt "
-#~ "wurde."
+msgid ""
+"The kerberos keytab file that was generated on the Active Directory "
+"server."
+msgstr ""
+"Die Kerberos Keytab Datei, die auf dem Active Directory Server erzeugt "
+"wurde."
 
-#~ msgid "Auxillary Parameters"
-#~ msgstr "Zusätzliche Parameter"
+msgid "Auxillary Parameters"
+msgstr "Zusätzliche Parameter"
 
 # Volume = Datenträger? Laufwerk?
-#~ msgid "Volume Path"
-#~ msgstr "Laufwerkspfad"
+msgid "Volume Path"
+msgstr "Laufwerkspfad"
 
-#~ msgid "View All UNIX Shares"
-#~ msgstr "Alle UNIX Freigaben anzeigen"
+msgid "View All UNIX Shares"
+msgstr "Alle UNIX Freigaben anzeigen"
 
-#~ msgid "View All Apple Shares"
-#~ msgstr "Alle Apple Freigaben anzeigen"
+msgid "View All Apple Shares"
+msgstr "Alle Apple Freigaben anzeigen"
 
-#~ msgid "View All Windows Shares"
-#~ msgstr "Alle Windows Freigaben anzeigen"
+msgid "View All Windows Shares"
+msgstr "Alle Windows Freigaben anzeigen"
 
-#~ msgid "Read"
-#~ msgstr "Lesen"
+msgid "Read"
+msgstr "Lesen"
 
-#~ msgid "Write"
-#~ msgstr "Schreiben"
+msgid "Write"
+msgstr "Schreiben"
 
-#~ msgid "Execute"
-#~ msgstr "Ausführen"
+msgid "Execute"
+msgstr "Ausführen"
 
-#~ msgid "Owner"
-#~ msgstr "Eigentümer"
+msgid "Owner"
+msgstr "Eigentümer"
 
 # Kontext?
-#~ msgid "Other"
-#~ msgstr "Sonstige"
+msgid "Other"
+msgstr "Sonstige"
 
-#~ msgid "Disks"
-#~ msgstr "Festplatten"
+msgid "Disks"
+msgstr "Festplatten"
 
-#~ msgid "View All Periodic Snapshot Tasks"
-#~ msgstr "Zeige alle Regelmäßigen Snapshot Aufgaben"
+msgid "View All Periodic Snapshot Tasks"
+msgstr "Zeige alle Regelmäßigen Snapshot Aufgaben"
 
-#~ msgid "sucessfully edited"
-#~ msgstr "erfolgreich bearbeitet"
+msgid "sucessfully edited"
+msgstr "erfolgreich bearbeitet"
 
-#~ msgid "Lagg Interface was successfully added"
-#~ msgstr "LAGG Netzwerkschnittstelle wurde erfolgreich hinzugefügt"
+msgid "Lagg Interface was successfully added"
+msgstr "LAGG Netzwerkschnittstelle wurde erfolgreich hinzugefügt"
 
-#~ msgid "ActiveDirectory Settings"
-#~ msgstr "ActiveDirectory Einstellungen"
+msgid "ActiveDirectory Settings"
+msgstr "ActiveDirectory Einstellungen"

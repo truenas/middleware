@@ -4923,32 +4923,28 @@ msgid "Mailing Lists"
 msgstr "Mailing Lists"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "Announce"
+msgstr "FreeNAS Announce"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "Commit"
+msgstr "FreeNAS Commit"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS Devel"
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "Testing"
+msgstr "FreeNAS Testing"
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "Documentazione FreeNAS"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Traduzioni"
+msgstr "Traduzioni FreeNAS"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4963,9 +4959,8 @@ msgid "Documentation"
 msgstr "Documentazione"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Documentazione"
+msgstr "Documentazione FreeNAS"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5942,231 +5937,231 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Critico"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s aggiunto con successo."
+msgid "%s successfully added."
+msgstr "%s aggiunto con successo."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "Maschera di rete IPv6"
+msgid "IPv6 Netmask"
+msgstr "Maschera di rete IPv6"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Questo valore deve essere compreso tra 0 e 10000, estremi inclusi."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Questo valore deve essere compreso tra 0 e 10000, estremi inclusi."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Questo valore deve essere compreso tra 0 e 1000, estremi inclusi."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Questo valore deve essere compreso tra 0 e 1000, estremi inclusi."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Abilita DDP"
+msgid "Enable DDP"
+msgstr "Abilita DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Abilita il supporto DDP per l'accesso a basso livello di appletalk."
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Abilita il supporto DDP per l'accesso a basso livello di appletalk."
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "Accendere / spegnere TLS"
+msgid "Turn on/off TLS"
+msgstr "Accendere / spegnere TLS"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "Windows Share"
-#~ msgstr "Condivisione Windows"
+msgid "Windows Share"
+msgstr "Condivisione Windows"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Condivisione Windows"
+msgid "Windows Shares"
+msgstr "Condivisione Windows"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "L'esportazione del volume è fallita"
+msgid "The volume failed to export"
+msgstr "L'esportazione del volume è fallita"
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "Pianificatore Cron"
+msgid "Cron Scheduler"
+msgstr "Pianificatore Cron"
 
-#~ msgid "Devel"
-#~ msgstr "Devel"
+msgid "Devel"
+msgstr "Devel"
 
-#~ msgid "Docs"
-#~ msgstr "Documentazione"
+msgid "Docs"
+msgstr "Documentazione"
 
-#~ msgid "Welcome to"
-#~ msgstr "Benvenuto in"
+msgid "Welcome to"
+msgstr "Benvenuto in"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Mount point"
-#~ msgstr "Punto di mount"
+msgid "Mount point"
+msgstr "Punto di mount"
 
-#~ msgid "Dataset name"
-#~ msgstr "Nome dataset"
+msgid "Dataset name"
+msgstr "Nome dataset"
 
-#~ msgid "Snapshot name"
-#~ msgstr "Nome snapshot"
+msgid "Snapshot name"
+msgstr "Nome snapshot"
 
-#~ msgid "Used space"
-#~ msgstr "Spazio utilizzato"
+msgid "Used space"
+msgstr "Spazio utilizzato"
 
-#~ msgid "Referenced space"
-#~ msgstr "Spazio referenziato"
+msgid "Referenced space"
+msgstr "Spazio referenziato"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "Nessuno snapshot ZFS disponibile"
+msgid "No ZFS snapshot available"
+msgstr "Nessuno snapshot ZFS disponibile"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Crea uno snapshot periodico"
+msgid "Create Periodic Snapshot"
+msgstr "Crea uno snapshot periodico"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Ripristina le Impostazioni Predefinite di Fabbrica"
+msgid "Restore to Factory Defaults"
+msgstr "Ripristina le Impostazioni Predefinite di Fabbrica"
 
-#~ msgid "Config"
-#~ msgstr "Configurazione"
+msgid "Config"
+msgstr "Configurazione"
 
-#~ msgid "OS Version"
-#~ msgstr "Versione SO"
+msgid "OS Version"
+msgstr "Versione SO"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s aggiornato con successo."
+msgid "%s successfully update."
+msgstr "%s aggiornato con successo."
 
-#~ msgid "Admin user"
-#~ msgstr "Utente Admin"
+msgid "Admin user"
+msgstr "Utente Admin"
 
-#~ msgid "%s successfully added"
-#~ msgstr "%s aggiunto con successo"
+msgid "%s successfully added"
+msgstr "%s aggiunto con successo"
 
-#~ msgid "N/A"
-#~ msgstr "N/A"
+msgid "N/A"
+msgstr "N/A"
 
-#~ msgid ""
-#~ "Use this option to override the username ('www' by default) which will be "
-#~ "used for access to services which are specified as guest. Whatever "
-#~ "privileges this user has will be available to any client connecting to "
-#~ "the guest service. This user must exist in the password file, but does "
-#~ "not require a valid login."
-#~ msgstr ""
-#~ "Utilizzare questa opzione per sostituire il nome utente ('www' di "
-#~ "default) che verrà utilizzato per l'accesso ai servizi che sono "
-#~ "specificati come guest. Tutti i privilegi assegnati all'utente sono "
-#~ "disponibili a tutti i client connessi al servizio guest. Questo utente "
-#~ "deve esistere nel file delle password, ma non richiede nome utente valido."
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"Utilizzare questa opzione per sostituire il nome utente ('www' di "
+"default) che verrà utilizzato per l'accesso ai servizi che sono "
+"specificati come guest. Tutti i privilegi assegnati all'utente sono "
+"disponibili a tutti i client connessi al servizio guest. Questo utente "
+"deve esistere nel file delle password, ma non richiede nome utente valido."
 
-#~ msgid "ZVol Name"
-#~ msgstr "Nome zvol"
+msgid "ZVol Name"
+msgstr "Nome zvol"
 
-#~ msgid "Dataset"
-#~ msgstr "Dataset"
+msgid "Dataset"
+msgstr "Dataset"
 
-#~ msgid "ZVol"
-#~ msgstr "ZVol"
+msgid "ZVol"
+msgstr "ZVol"
 
-#~ msgid "Native dataset"
-#~ msgstr "Dataset nativo"
+msgid "Native dataset"
+msgstr "Dataset nativo"
 
-#~ msgid "/var/log/messages"
-#~ msgstr "/var/log/messages"
+msgid "/var/log/messages"
+msgstr "/var/log/messages"
 
-#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Aiuto & Supporto"
+msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Aiuto & Supporto"
 
-#~ msgid "Success!"
-#~ msgstr "Successo!"
+msgid "Success!"
+msgstr "Successo!"
 
-#~ msgid "Your password was changed."
-#~ msgstr "La password è stata modificata."
+msgid "Your password was changed."
+msgstr "La password è stata modificata."
 
-#~ msgid "Password change"
-#~ msgstr "Modifica password"
+msgid "Password change"
+msgstr "Modifica password"
 
-#~ msgid "Please correct the error below."
-#~ msgid_plural "Please correct the errors below."
-#~ msgstr[0] "Per favore correggere l'errore qui sotto."
-#~ msgstr[1] "Per favore correggere gli errori qui sotto."
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "Per favore correggere l'errore qui sotto."
+msgstr[1] "Per favore correggere gli errori qui sotto."
 
-#~ msgid ""
-#~ "Please enter your old password, and then enter your new password twice to "
-#~ "verify it is typed in correctly."
-#~ msgstr ""
-#~ "Per favore inserire la vecchia password, poi inserire la nuova password "
-#~ "due volte per verificare che sia stata digitata correttamente."
+msgid ""
+"Please enter your old password, and then enter your new password twice to "
+"verify it is typed in correctly."
+msgstr ""
+"Per favore inserire la vecchia password, poi inserire la nuova password "
+"due volte per verificare che sia stata digitata correttamente."
 
-#~ msgid "Password (again)"
-#~ msgstr "Password (ancora)"
+msgid "Password (again)"
+msgstr "Password (ancora)"
 
-#~ msgid "minutes,"
-#~ msgstr "minuti,"
+msgid "minutes,"
+msgstr "minuti,"
 
-#~ msgid "Create ZFS zvol"
-#~ msgstr "Crea un zvol ZFS"
+msgid "Create ZFS zvol"
+msgstr "Crea un zvol ZFS"
 
-#~ msgid "Add ZVol"
-#~ msgstr "Aggiungi ZVol"
+msgid "Add ZVol"
+msgstr "Aggiungi ZVol"
 
-#~ msgid "English"
-#~ msgstr "Inglese"
+msgid "English"
+msgstr "Inglese"
 
-#~ msgid "Level"
-#~ msgstr "Livello"
+msgid "Level"
+msgstr "Livello"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "Aggiungi Link Aggregation"
+msgid "Add Link Aggregation"
+msgstr "Aggiungi Link Aggregation"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "Visualizza tutte le interfacce"
+msgid "View All Interfaces"
+msgstr "Visualizza tutte le interfacce"
 
-#~ msgid "View All VLANs"
-#~ msgstr "Visualizza tutte le VLAN"
+msgid "View All VLANs"
+msgstr "Visualizza tutte le VLAN"
 
-#~ msgid "Windows Version"
-#~ msgstr "Versione Windows"
+msgid "Windows Version"
+msgstr "Versione Windows"
 
-#~ msgid "The version of Microsoft Windows that Active Directory is running."
-#~ msgstr "La versione di Microsoft Windows su cui è attivo Active Directory."
+msgid "The version of Microsoft Windows that Active Directory is running."
+msgstr "La versione di Microsoft Windows su cui è attivo Active Directory."
 
-#~ msgid "Service Principal Name"
-#~ msgstr "Nome Principale del Servizio"
+msgid "Service Principal Name"
+msgstr "Nome Principale del Servizio"
 
-#~ msgid "Service Principal Name, eg service/account."
-#~ msgstr "Nome Principale del Servizio, Es. servizio/account."
+msgid "Service Principal Name, eg service/account."
+msgstr "Nome Principale del Servizio, Es. servizio/account."
 
-#~ msgid "Service Principal Name Password"
-#~ msgstr "Password Nome principale del servizio"
+msgid "Service Principal Name Password"
+msgstr "Password Nome principale del servizio"
 
-#~ msgid "Password of the Service Principal Name account."
-#~ msgstr "Password dell'account nome principale di servizio."
+msgid "Password of the Service Principal Name account."
+msgstr "Password dell'account nome principale di servizio."
 
-#~ msgid "Kerberos Keytab File"
-#~ msgstr "Kerberos keytab file"
+msgid "Kerberos Keytab File"
+msgstr "Kerberos keytab file"
 
-#~ msgid ""
-#~ "The kerberos keytab file that was generated on the Active Directory "
-#~ "server."
-#~ msgstr ""
-#~ "Il Kerberos keytab file che è stato generato sul server Active Directory."
+msgid ""
+"The kerberos keytab file that was generated on the Active Directory "
+"server."
+msgstr ""
+"Il Kerberos keytab file che è stato generato sul server Active Directory."
 
-#~ msgid "Auxillary Parameters"
-#~ msgstr "Parametri ausiliari"
+msgid "Auxillary Parameters"
+msgstr "Parametri ausiliari"
 
-#~ msgid "Volume Path"
-#~ msgstr "Percorso del volume"
+msgid "Volume Path"
+msgstr "Percorso del volume"
 
-#~ msgid "View All UNIX Shares"
-#~ msgstr "Vedi Tutte le Condivisioni UNIX"
+msgid "View All UNIX Shares"
+msgstr "Vedi Tutte le Condivisioni UNIX"
 
-#~ msgid "View All Apple Shares"
-#~ msgstr "Vedi Tutte le Condivisioni Apple"
+msgid "View All Apple Shares"
+msgstr "Vedi Tutte le Condivisioni Apple"
 
-#~ msgid "View All Windows Shares"
-#~ msgstr "Vedi Tutte le Condivisioni Windows"
+msgid "View All Windows Shares"
+msgstr "Vedi Tutte le Condivisioni Windows"
 
-#~ msgid "Read"
-#~ msgstr "Lettura"
+msgid "Read"
+msgstr "Lettura"
 
-#~ msgid "Write"
-#~ msgstr "Scrittura"
+msgid "Write"
+msgstr "Scrittura"
 
-#~ msgid "Execute"
-#~ msgstr "Esecuzione"
+msgid "Execute"
+msgstr "Esecuzione"
 
-#~ msgid "Owner"
-#~ msgstr "Proprietario"
+msgid "Owner"
+msgstr "Proprietario"
 
-#~ msgid "Other"
-#~ msgstr "Altro"
+msgid "Other"
+msgstr "Altro"
 
-#~ msgid "Disks"
-#~ msgstr "Dischi"
+msgid "Disks"
+msgstr "Dischi"

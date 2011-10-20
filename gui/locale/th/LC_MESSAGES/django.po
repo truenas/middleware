@@ -5604,5 +5604,5 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-#~ msgid "Level"
-#~ msgstr "ระดับ"
+msgid "Level"
+msgstr "ระดับ"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-19 11:50-0200\n"
-"PO-Revision-Date: 2011-10-17 06:51+0200\n"
+"PO-Revision-Date: 2011-10-20 06:33+0200\n"
 "Last-Translator: Flevi <Flevi@fleviliu.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -1571,7 +1571,7 @@ msgstr "AIO写入最小数据块"
 msgid ""
 "Samba will write asynchronously if request size is larger than this value. "
 "The default write size is 1."
-msgstr "Samba将非同步地读取如果要求的值比这个值大。默认读取值为1."
+msgstr "若需求的文件大小超过这个值，Samba将采用非同步写入。默认值为1."
 
 #: services/models.py:174 services/models.py:175
 #: templates/services/index.html:29
@@ -4688,7 +4688,7 @@ msgstr ""
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS文档"
 
 #: templates/freeadmin/index.html:95
 msgid "FreeNAS Translations"
@@ -4707,9 +4707,8 @@ msgid "Documentation"
 msgstr "文档"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "文档"
+msgstr "FreeNAS文档"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5685,103 +5684,103 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "关键的"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s 已成功添加。"
+msgid "%s successfully added."
+msgstr "%s 已成功添加。"
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 网络掩码"
+msgid "IPv6 Netmask"
+msgstr "IPv6 网络掩码"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "这个值必须在 0 到(包括) 10000 之间。"
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "这个值必须在 0 到(包括) 10000 之间。"
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "这个值必须在 0 到(包括) 1000 之间。"
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "这个值必须在 0 到(包括) 1000 之间。"
 
-#~ msgid "Enable DDP"
-#~ msgstr "启用DDP"
+msgid "Enable DDP"
+msgstr "启用DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "为低层appletalk访问启用DDP支持"
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "为低层appletalk访问启用DDP支持"
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "开/关 TLS"
+msgid "Turn on/off TLS"
+msgstr "开/关 TLS"
 
-#~ msgid "Windows Share"
-#~ msgstr "Windows共享"
+msgid "Windows Share"
+msgstr "Windows共享"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Windows共享"
-
-#, fuzzy
-#~ msgid "The volume failed to export"
-#~ msgstr "重启服务失败。"
+msgid "Windows Shares"
+msgstr "Windows共享"
 
 #, fuzzy
-#~ msgid "Cron Scheduler"
-#~ msgstr "定期快照计划"
+msgid "The volume failed to export"
+msgstr "重启服务失败。"
 
-#~ msgid "Docs"
-#~ msgstr "文档"
+#, fuzzy
+msgid "Cron Scheduler"
+msgstr "定期快照计划"
 
-#~ msgid "Welcome to"
-#~ msgstr "欢迎使用8"
+msgid "Docs"
+msgstr "文档"
 
-#~ msgid "Mount point"
-#~ msgstr "挂载点"
+msgid "Welcome to"
+msgstr "欢迎使用8"
 
-#~ msgid "Dataset name"
-#~ msgstr "数据集名称"
+msgid "Mount point"
+msgstr "挂载点"
 
-#~ msgid "Snapshot name"
-#~ msgstr "快照名称"
+msgid "Dataset name"
+msgstr "数据集名称"
 
-#~ msgid "Used space"
-#~ msgstr "已用空间"
+msgid "Snapshot name"
+msgstr "快照名称"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "目前尚无ZFS快照"
+msgid "Used space"
+msgstr "已用空间"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "恢复出厂设置"
+msgid "No ZFS snapshot available"
+msgstr "目前尚无ZFS快照"
 
-#~ msgid "Config"
-#~ msgstr "配置"
+msgid "Restore to Factory Defaults"
+msgstr "恢复出厂设置"
 
-#~ msgid "OS Version"
-#~ msgstr "OS版本"
+msgid "Config"
+msgstr "配置"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s 已成功更新。"
+msgid "OS Version"
+msgstr "OS版本"
 
-#~ msgid "Admin user"
-#~ msgstr "管理员"
+msgid "%s successfully update."
+msgstr "%s 已成功更新。"
 
-#~ msgid "N/A"
-#~ msgstr "不适用"
+msgid "Admin user"
+msgstr "管理员"
 
-#~ msgid "ZVol Name"
-#~ msgstr "ZVol 名称"
+msgid "N/A"
+msgstr "不适用"
 
-#~ msgid "minutes,"
-#~ msgstr "分钟，"
+msgid "ZVol Name"
+msgstr "ZVol 名称"
 
-#~ msgid "Create ZFS zvol"
-#~ msgstr "创建 ZFS zvol"
+msgid "minutes,"
+msgstr "分钟，"
 
-#~ msgid "Add ZVol"
-#~ msgstr "添加 Zvol"
+msgid "Create ZFS zvol"
+msgstr "创建 ZFS zvol"
 
-#~ msgid "English"
-#~ msgstr "英语"
+msgid "Add ZVol"
+msgstr "添加 Zvol"
 
-#~ msgid "Level"
-#~ msgstr "级别"
+msgid "English"
+msgstr "英语"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "添加链路聚合"
+msgid "Level"
+msgstr "级别"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "查看所有接口"
+msgid "Add Link Aggregation"
+msgstr "添加链路聚合"
 
-#~ msgid "View All VLANs"
-#~ msgstr "查看所有 VLAN"
+msgid "View All Interfaces"
+msgstr "查看所有接口"
+
+msgid "View All VLANs"
+msgstr "查看所有 VLAN"

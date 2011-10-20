@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-09 13:51-0700\n"
+"POT-Creation-Date: 2011-10-19 02:03-0700\n"
 "PO-Revision-Date: 2011-07-20 13:31+0200\n"
 "Last-Translator: Chipcius <andri@chipcy.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,63 +18,63 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:114
+#: media/lib/js/freeadmin.js:127
 msgid "Reporting"
 msgstr "Skýrslur"
 
-#: media/lib/js/freeadmin.js:126
+#: media/lib/js/freeadmin.js:139
 msgid "Settings"
 msgstr "Stillingar"
 
-#: media/lib/js/freeadmin.js:137
+#: media/lib/js/freeadmin.js:150
 msgid "System Information"
 msgstr "Kerfisupplýsingar"
 
-#: media/lib/js/freeadmin.js:177
+#: media/lib/js/freeadmin.js:190
 msgid "Network Settings"
 msgstr "Netstillingar"
 
-#: media/lib/js/freeadmin.js:239
+#: media/lib/js/freeadmin.js:254
 msgid "Services"
 msgstr "Þjónustur"
 
-#: media/lib/js/freeadmin.js:279
+#: media/lib/js/freeadmin.js:295
 msgid "Account"
 msgstr "Notendur"
 
-#: media/lib/js/freeadmin.js:318
+#: media/lib/js/freeadmin.js:334
 msgid "Storage"
 msgstr "Gagnageymslur"
 
-#: media/lib/js/freeadmin.js:385
+#: media/lib/js/freeadmin.js:401
 msgid "CronJobs"
 msgstr "Reglubundnar keyrslur"
 
-#: media/lib/js/freeadmin.js:437
+#: media/lib/js/freeadmin.js:555
 msgid "Edit"
 msgstr "Stilla disk"
 
-#: media/lib/js/freeadmin.js:439
+#: media/lib/js/freeadmin.js:557
 msgid "Edit Disk"
 msgstr "Stilla disk"
 
-#: media/lib/js/freeadmin.js:443
+#: media/lib/js/freeadmin.js:561
 msgid "Replace"
 msgstr "Skipta út"
 
-#: media/lib/js/freeadmin.js:444
+#: media/lib/js/freeadmin.js:562
 msgid "Disk Replacement"
 msgstr "Diskur sem kemur í staðinn"
 
-#: media/lib/js/freeadmin.js:448
+#: media/lib/js/freeadmin.js:566
 msgid "Detach"
 msgstr "Aftengja"
 
-#: media/lib/js/freeadmin.js:449
+#: media/lib/js/freeadmin.js:567
 msgid "Disk Detach"
 msgstr "Aftengja Disk"
 
-#: media/lib/js/freeadmin.js:635
+#: media/lib/js/freeadmin.js:747
 msgid "An error occurred!"
 msgstr "Einhver villa kom upp!"
 
@@ -82,6 +82,6 @@ msgstr "Einhver villa kom upp!"
 msgid "Each selected"
 msgstr "Hvert valið atriðið"
 
-#: media/lib/js/freeadmin/form/Cron.js:90
+#: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr "Hvert N"

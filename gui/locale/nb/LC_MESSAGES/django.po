@@ -5763,111 +5763,111 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-#~ msgid "%s successfully added."
-#~ msgstr "% er lagt til korrekt."
+msgid "%s successfully added."
+msgstr "% er lagt til korrekt."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 Nettmaske"
+msgid "IPv6 Netmask"
+msgstr "IPv6 Nettmaske"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Denne verdien må være mellom 0 og 10000, inkludert."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Denne verdien må være mellom 0 og 10000, inkludert."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Denne verdien må være mellom 0 og 1000, inkludert."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Denne verdien må være mellom 0 og 1000, inkludert."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Aktiver DDP"
+msgid "Enable DDP"
+msgstr "Aktiver DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Aktiverer DDP støtte for lavnivå appletalktilgang."
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Aktiverer DDP støtte for lavnivå appletalktilgang."
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "Slå av/på TLS"
+msgid "Turn on/off TLS"
+msgstr "Slå av/på TLS"
 
-#~ msgid "Windows Share"
-#~ msgstr "Windows Deling"
-
-#, fuzzy
-#~ msgid "Windows Shares"
-#~ msgstr "Windowsversjon"
+msgid "Windows Share"
+msgstr "Windows Deling"
 
 #, fuzzy
-#~ msgid "The volume failed to export"
-#~ msgstr "Denne tjenesten kunne ikke startes på nytt."
-
-#~ msgid "Mount point"
-#~ msgstr "Monteringspunkt"
-
-#~ msgid "Dataset name"
-#~ msgstr "Navn på datasett"
-
-#~ msgid "Used space"
-#~ msgstr "Brukt plass"
-
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Gjennopprett til fabrikkinstillinger"
-
-#~ msgid "Config"
-#~ msgstr "Konfigurasjon"
-
-#~ msgid "OS Version"
-#~ msgstr "OS Versjon"
-
-#~ msgid "%s successfully update."
-#~ msgstr "% oppdaterte seg korrekt."
-
-#~ msgid "Admin user"
-#~ msgstr "Administratorbruker"
-
-#~ msgid "%s successfully added"
-#~ msgstr "% lagt til"
-
-#~ msgid "N/A"
-#~ msgstr "N/A"
-
-#~ msgid ""
-#~ "Use this option to override the username ('www' by default) which will be "
-#~ "used for access to services which are specified as guest. Whatever "
-#~ "privileges this user has will be available to any client connecting to "
-#~ "the guest service. This user must exist in the password file, but does "
-#~ "not require a valid login."
-#~ msgstr ""
-#~ "Bruk dette valget for å overstyre brukernavnet ('www' er standard) som "
-#~ "blir brukt for å gi tilgang til tjenester som er spesifisert som gjest. "
-#~ "Den tilgangen denne brukeren har vil bli tilgjengelig for klienter som "
-#~ "kobler seg til gjestekontoen. Brukeren må eksistere i passordsfilen, men "
-#~ "trenger ikke en gyldig adgang."
+msgid "Windows Shares"
+msgstr "Windowsversjon"
 
 #, fuzzy
-#~ msgid "ZVol Name"
-#~ msgstr "Fullt navn"
+msgid "The volume failed to export"
+msgstr "Denne tjenesten kunne ikke startes på nytt."
 
-#~ msgid "Dataset"
-#~ msgstr "Datasett"
+msgid "Mount point"
+msgstr "Monteringspunkt"
 
-#~ msgid "minutes,"
-#~ msgstr "minutt,"
+msgid "Dataset name"
+msgstr "Navn på datasett"
 
-#~ msgid "English"
-#~ msgstr "Engelsk"
+msgid "Used space"
+msgstr "Brukt plass"
 
-#~ msgid "Level"
-#~ msgstr "Nivå"
+msgid "Restore to Factory Defaults"
+msgstr "Gjennopprett til fabrikkinstillinger"
 
-#~ msgid "The version of Microsoft Windows that Active Directory is running."
-#~ msgstr "Versjonen av Microsoft Windows som Active Directory bruker"
+msgid "Config"
+msgstr "Konfigurasjon"
 
-#~ msgid "Read"
-#~ msgstr "Lese"
+msgid "OS Version"
+msgstr "OS Versjon"
 
-#~ msgid "Write"
-#~ msgstr "Skrive"
+msgid "%s successfully update."
+msgstr "% oppdaterte seg korrekt."
 
-#~ msgid "Execute"
-#~ msgstr "Kjør"
+msgid "Admin user"
+msgstr "Administratorbruker"
 
-#~ msgid "Owner"
-#~ msgstr "Eier"
+msgid "%s successfully added"
+msgstr "% lagt til"
 
-#~ msgid "Other"
-#~ msgstr "Annet"
+msgid "N/A"
+msgstr "N/A"
+
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"Bruk dette valget for å overstyre brukernavnet ('www' er standard) som "
+"blir brukt for å gi tilgang til tjenester som er spesifisert som gjest. "
+"Den tilgangen denne brukeren har vil bli tilgjengelig for klienter som "
+"kobler seg til gjestekontoen. Brukeren må eksistere i passordsfilen, men "
+"trenger ikke en gyldig adgang."
+
+#, fuzzy
+msgid "ZVol Name"
+msgstr "Fullt navn"
+
+msgid "Dataset"
+msgstr "Datasett"
+
+msgid "minutes,"
+msgstr "minutt,"
+
+msgid "English"
+msgstr "Engelsk"
+
+msgid "Level"
+msgstr "Nivå"
+
+msgid "The version of Microsoft Windows that Active Directory is running."
+msgstr "Versjonen av Microsoft Windows som Active Directory bruker"
+
+msgid "Read"
+msgstr "Lese"
+
+msgid "Write"
+msgstr "Skrive"
+
+msgid "Execute"
+msgstr "Kjør"
+
+msgid "Owner"
+msgstr "Eier"
+
+msgid "Other"
+msgstr "Annet"

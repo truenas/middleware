@@ -4656,9 +4656,8 @@ msgid "FreeNAS Docs"
 msgstr ""
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Překladyu"
+msgstr "Překlady FreeNASu"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -5635,45 +5634,45 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s úspěšně přidáno."
+msgid "%s successfully added."
+msgstr "%s úspěšně přidáno."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 síťová maska"
+msgid "IPv6 Netmask"
+msgstr "IPv6 síťová maska"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Tato hodnota musí být mezi 0 a 10000 včetně."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Tato hodnota musí být mezi 0 a 10000 včetně."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Tato hodnota musí být mezi 0 a 1000, včetně."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Tato hodnota musí být mezi 0 a 1000, včetně."
 
-#~ msgid "Welcome to"
-#~ msgstr "Vítejte ve8"
+msgid "Welcome to"
+msgstr "Vítejte ve8"
 
-#~ msgid "OS Version"
-#~ msgstr "Verze operačního systému"
+msgid "OS Version"
+msgstr "Verze operačního systému"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s aktualizace proběhla úspěšně"
+msgid "%s successfully update."
+msgstr "%s aktualizace proběhla úspěšně"
 
-#~ msgid "Admin user"
-#~ msgstr "Administrator"
+msgid "Admin user"
+msgstr "Administrator"
 
 #, fuzzy
-#~ msgid "ZVol Name"
-#~ msgstr "celé jméno"
+msgid "ZVol Name"
+msgstr "celé jméno"
 
-#~ msgid "English"
-#~ msgstr "angličtina"
+msgid "English"
+msgstr "angličtina"
 
-#~ msgid "Level"
-#~ msgstr "Úroveň"
+msgid "Level"
+msgstr "Úroveň"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "přidat linku agregace"
+msgid "Add Link Aggregation"
+msgstr "přidat linku agregace"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "zobrazit všechna rozhraní"
+msgid "View All Interfaces"
+msgstr "zobrazit všechna rozhraní"
 
-#~ msgid "View All VLANs"
-#~ msgstr "zobrazit všechny VLANs"
+msgid "View All VLANs"
+msgstr "zobrazit všechny VLANs"

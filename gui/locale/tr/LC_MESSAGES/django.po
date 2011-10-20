@@ -4872,32 +4872,28 @@ msgid "Mailing Lists"
 msgstr "E-posta Listeleri"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "Duyuru"
+msgstr "FreeNAS Duyuru"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "Önermeleri"
+msgstr "FreeNAS Önermeleri"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS İlerlemeleri"
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "Testleri"
+msgstr "FreeNAS Testleri"
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS Dokümanları"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Çevirileri"
+msgstr "FreeNAS Çevirileri"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4912,9 +4908,8 @@ msgid "Documentation"
 msgstr "Belgelendirme"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Belgelendirme"
+msgstr "FreeNAS Belgeleri"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5895,101 +5890,101 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Kritik"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s başarıyla eklendi"
+msgid "%s successfully added."
+msgstr "%s başarıyla eklendi"
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 Ağ Maskesi"
+msgid "IPv6 Netmask"
+msgstr "IPv6 Ağ Maskesi"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Bu değer 0 ile 10000 arasında olmalıdır."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Bu değer 0 ile 10000 arasında olmalıdır."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Bu değer 0 ile 1000 arasında olmalıdır."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Bu değer 0 ile 1000 arasında olmalıdır."
 
-#~ msgid "Enable DDP"
-#~ msgstr "DDP Aktifleştir"
+msgid "Enable DDP"
+msgstr "DDP Aktifleştir"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Düşük seviyeli appletalk erişim için DDP desteğini aktifleştir."
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Düşük seviyeli appletalk erişim için DDP desteğini aktifleştir."
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "TLS açma/kapama"
+msgid "Turn on/off TLS"
+msgstr "TLS açma/kapama"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "Windows Share"
-#~ msgstr "Windows Paylaşımı"
+msgid "Windows Share"
+msgstr "Windows Paylaşımı"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Windows Paylaşımları"
+msgid "Windows Shares"
+msgstr "Windows Paylaşımları"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "Bölümü vermek başarısız"
+msgid "The volume failed to export"
+msgstr "Bölümü vermek başarısız"
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "Cron Zamanlayıcısı"
+msgid "Cron Scheduler"
+msgstr "Cron Zamanlayıcısı"
 
-#~ msgid "Devel"
-#~ msgstr "İlerlemeleri"
+msgid "Devel"
+msgstr "İlerlemeleri"
 
-#~ msgid "Docs"
-#~ msgstr "Dokümanları"
+msgid "Docs"
+msgstr "Dokümanları"
 
-#~ msgid "Welcome to"
-#~ msgstr "versiyon 8 hoşgeldiniz"
+msgid "Welcome to"
+msgstr "versiyon 8 hoşgeldiniz"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Mount point"
-#~ msgstr "Bağlantı noktası"
+msgid "Mount point"
+msgstr "Bağlantı noktası"
 
-#~ msgid "Dataset name"
-#~ msgstr "Veri kümesi adı"
+msgid "Dataset name"
+msgstr "Veri kümesi adı"
 
-#~ msgid "Snapshot name"
-#~ msgstr "Anlık durum görüntüleme adı"
+msgid "Snapshot name"
+msgstr "Anlık durum görüntüleme adı"
 
-#~ msgid "Used space"
-#~ msgstr "Kullanılan Alan"
+msgid "Used space"
+msgstr "Kullanılan Alan"
 
-#~ msgid "Referenced space"
-#~ msgstr "Başvurulan alan"
+msgid "Referenced space"
+msgstr "Başvurulan alan"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "Hiçbir ZFS anlık durum görüntüsü yok"
+msgid "No ZFS snapshot available"
+msgstr "Hiçbir ZFS anlık durum görüntüsü yok"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Periyodik Anlık Durum Görüntüsü Oluştur"
+msgid "Create Periodic Snapshot"
+msgstr "Periyodik Anlık Durum Görüntüsü Oluştur"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Kurulumdaki Varsayılan Ayarlara Geri Dön"
+msgid "Restore to Factory Defaults"
+msgstr "Kurulumdaki Varsayılan Ayarlara Geri Dön"
 
-#~ msgid "Config"
-#~ msgstr "Ayarla"
+msgid "Config"
+msgstr "Ayarla"
 
-#~ msgid "OS Version"
-#~ msgstr "İşletim Sistemi Sürümü"
+msgid "OS Version"
+msgstr "İşletim Sistemi Sürümü"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s başarıyla güncellendi."
+msgid "%s successfully update."
+msgstr "%s başarıyla güncellendi."
 
-#~ msgid "Admin user"
-#~ msgstr "Yönetici kullanıcısı"
+msgid "Admin user"
+msgstr "Yönetici kullanıcısı"
 
-#~ msgid "N/A"
-#~ msgstr "Kullanılamaz"
+msgid "N/A"
+msgstr "Kullanılamaz"
 
-#~ msgid "ZVol Name"
-#~ msgstr "ZVol Adı"
+msgid "ZVol Name"
+msgstr "ZVol Adı"
 
-#~ msgid "English"
-#~ msgstr "Ingilizce"
+msgid "English"
+msgstr "Ingilizce"
 
-#~ msgid "Level"
-#~ msgstr "Seviye"
+msgid "Level"
+msgstr "Seviye"
 
-#~ msgid "View All VLANs"
-#~ msgstr "Tüm VLAN'ları Gör"
+msgid "View All VLANs"
+msgstr "Tüm VLAN'ları Gör"

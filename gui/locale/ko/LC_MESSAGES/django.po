@@ -4642,9 +4642,8 @@ msgid "Mailing Lists"
 msgstr "메일링 리스트"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "공지사항"
+msgstr "FreeNAS 공지사항"
 
 #: templates/freeadmin/index.html:91
 msgid "FreeNAS Commit"
@@ -5663,101 +5662,101 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s가 추가 되었습니다. "
+msgid "%s successfully added."
+msgstr "%s가 추가 되었습니다. "
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 서브넷 마스크"
+msgid "IPv6 Netmask"
+msgstr "IPv6 서브넷 마스크"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "이 값은 0부터 10000까지만 포함되어야 합니다. "
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "이 값은 0부터 10000까지만 포함되어야 합니다. "
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "이 값은 0부터 1000까지만 포함되어야 합니다."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "이 값은 0부터 1000까지만 포함되어야 합니다."
 
-#~ msgid "Enable DDP"
-#~ msgstr "DDP 활성화"
-
-#, fuzzy
-#~ msgid "Windows Shares"
-#~ msgstr "윈도우 공유 추가"
+msgid "Enable DDP"
+msgstr "DDP 활성화"
 
 #, fuzzy
-#~ msgid "Cron Scheduler"
-#~ msgstr "주기적인 스냅샷 일정"
+msgid "Windows Shares"
+msgstr "윈도우 공유 추가"
 
 #, fuzzy
-#~ msgid "Docs"
-#~ msgstr "공지사항"
-
-#~ msgid "Mount point"
-#~ msgstr "마운트 포인트"
-
-#~ msgid "Dataset name"
-#~ msgstr "데이타셋 이름"
-
-#~ msgid "Snapshot name"
-#~ msgstr "스냅샷 이름"
-
-#~ msgid "Used space"
-#~ msgstr "사용 된 공간"
-
-#~ msgid "Referenced space"
-#~ msgstr "참조 공간"
-
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "이용 가능한 ZFS 스냅샷 없음"
-
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "공장도초기화 복원"
-
-#~ msgid "Config"
-#~ msgstr "구성"
-
-#~ msgid "OS Version"
-#~ msgstr "운영체제 버전"
-
-#~ msgid "%s successfully update."
-#~ msgstr "%s 가 갱신되었습니다. "
-
-#~ msgid "Admin user"
-#~ msgstr "관리자"
+msgid "Cron Scheduler"
+msgstr "주기적인 스냅샷 일정"
 
 #, fuzzy
-#~ msgid "ZVol Name"
-#~ msgstr "전체 이름"
+msgid "Docs"
+msgstr "공지사항"
 
-#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;도움말 & 지원"
+msgid "Mount point"
+msgstr "마운트 포인트"
 
-#~ msgid "minutes,"
-#~ msgstr "분"
+msgid "Dataset name"
+msgstr "데이타셋 이름"
+
+msgid "Snapshot name"
+msgstr "스냅샷 이름"
+
+msgid "Used space"
+msgstr "사용 된 공간"
+
+msgid "Referenced space"
+msgstr "참조 공간"
+
+msgid "No ZFS snapshot available"
+msgstr "이용 가능한 ZFS 스냅샷 없음"
+
+msgid "Restore to Factory Defaults"
+msgstr "공장도초기화 복원"
+
+msgid "Config"
+msgstr "구성"
+
+msgid "OS Version"
+msgstr "운영체제 버전"
+
+msgid "%s successfully update."
+msgstr "%s 가 갱신되었습니다. "
+
+msgid "Admin user"
+msgstr "관리자"
 
 #, fuzzy
-#~ msgid "Create ZFS zvol"
-#~ msgstr "스냅샷 생성"
+msgid "ZVol Name"
+msgstr "전체 이름"
+
+msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;도움말 & 지원"
+
+msgid "minutes,"
+msgstr "분"
 
 #, fuzzy
-#~ msgid "Add ZVol"
-#~ msgstr "볼륨 더하기"
+msgid "Create ZFS zvol"
+msgstr "스냅샷 생성"
 
-#~ msgid "English"
-#~ msgstr "영어"
+#, fuzzy
+msgid "Add ZVol"
+msgstr "볼륨 더하기"
 
-#~ msgid "Level"
-#~ msgstr "레벨"
+msgid "English"
+msgstr "영어"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "링크어그리게이션 추가"
+msgid "Level"
+msgstr "레벨"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "모든 인터페이스 목록 보기"
+msgid "Add Link Aggregation"
+msgstr "링크어그리게이션 추가"
 
-#~ msgid "View All VLANs"
-#~ msgstr "모든 VLAN 목록 보기"
+msgid "View All Interfaces"
+msgstr "모든 인터페이스 목록 보기"
 
-#~ msgid "Disks"
-#~ msgstr "디스크"
+msgid "View All VLANs"
+msgstr "모든 VLAN 목록 보기"
 
-#~ msgid "sucessfully edited"
-#~ msgstr "수정 되었습니다"
+msgid "Disks"
+msgstr "디스크"
+
+msgid "sucessfully edited"
+msgstr "수정 되었습니다"

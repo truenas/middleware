@@ -4679,9 +4679,8 @@ msgid "Mailing Lists"
 msgstr "Пощенски списък"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "Анонс"
+msgstr "FreeNAS Анонс"
 
 #: templates/freeadmin/index.html:91
 msgid "FreeNAS Commit"
@@ -4692,18 +4691,16 @@ msgid "FreeNAS Devel"
 msgstr ""
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "Тестване"
+msgstr "FreeNAS Тестване"
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "Документи на FreeNAS"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Преводи на"
+msgstr "Преводи на FreeNAS"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4718,9 +4715,8 @@ msgid "Documentation"
 msgstr "Документация"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Документация"
+msgstr "FreeNAS Документация"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5694,70 +5690,70 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Критичен"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s успешно добавени."
+msgid "%s successfully added."
+msgstr "%s успешно добавени."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 мрежова маска"
+msgid "IPv6 Netmask"
+msgstr "IPv6 мрежова маска"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr ""
-#~ "Тази стойност трябва да бъде в диапазона между 0 и 10000 включително."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr ""
+"Тази стойност трябва да бъде в диапазона между 0 и 10000 включително."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr ""
-#~ "Тази стойност трябва да бъде в диапазона между 0 и 1000 включително."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr ""
+"Тази стойност трябва да бъде в диапазона между 0 и 1000 включително."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Разреши DDP"
+msgid "Enable DDP"
+msgstr "Разреши DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Разреши поддръжката на DDP за ниско ниво на достъп"
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Разреши поддръжката на DDP за ниско ниво на достъп"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "Томът не може да бъде експортиран"
+msgid "The volume failed to export"
+msgstr "Томът не може да бъде експортиран"
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "Разписание на задачите"
+msgid "Cron Scheduler"
+msgstr "Разписание на задачите"
 
-#~ msgid "Docs"
-#~ msgstr "Документи на"
+msgid "Docs"
+msgstr "Документи на"
 
-#~ msgid "Welcome to"
-#~ msgstr "Добре дошли във8"
+msgid "Welcome to"
+msgstr "Добре дошли във8"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Mount point"
-#~ msgstr "Точка на монтаж"
+msgid "Mount point"
+msgstr "Точка на монтаж"
 
-#~ msgid "Dataset name"
-#~ msgstr "Наименование на набора от данни"
+msgid "Dataset name"
+msgstr "Наименование на набора от данни"
 
-#~ msgid "Snapshot name"
-#~ msgstr "Наименование на моментната снимка"
+msgid "Snapshot name"
+msgstr "Наименование на моментната снимка"
 
-#~ msgid "Used space"
-#~ msgstr "Използвано пространство"
+msgid "Used space"
+msgstr "Използвано пространство"
 
-#~ msgid "Referenced space"
-#~ msgstr "Референтно пространство"
+msgid "Referenced space"
+msgstr "Референтно пространство"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "Няма ZFS моментна снимка на разположение"
+msgid "No ZFS snapshot available"
+msgstr "Няма ZFS моментна снимка на разположение"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Създаване на периодична моментна снимка"
+msgid "Create Periodic Snapshot"
+msgstr "Създаване на периодична моментна снимка"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Възстановяване на фабричните настройки"
+msgid "Restore to Factory Defaults"
+msgstr "Възстановяване на фабричните настройки"
 
-#~ msgid "Config"
-#~ msgstr "Конфигурация"
+msgid "Config"
+msgstr "Конфигурация"
 
-#~ msgid "OS Version"
-#~ msgstr "Версия на операционната система"
+msgid "OS Version"
+msgstr "Версия на операционната система"

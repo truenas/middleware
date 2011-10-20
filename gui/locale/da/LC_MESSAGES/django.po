@@ -5630,33 +5630,33 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s blev tilføjet."
+msgid "%s successfully added."
+msgstr "%s blev tilføjet."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 Netmaske"
+msgid "IPv6 Netmask"
+msgstr "IPv6 Netmaske"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Denne værdi skal være mellem 0 og 10000, inklusive."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Denne værdi skal være mellem 0 og 10000, inklusive."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Denne værdi skal være mellem 0 og 1000, inklusive."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Denne værdi skal være mellem 0 og 1000, inklusive."
 
-#~ msgid "Welcome to"
-#~ msgstr "Velkommen til8"
+msgid "Welcome to"
+msgstr "Velkommen til8"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s succesfuldt opdateret."
+msgid "%s successfully update."
+msgstr "%s succesfuldt opdateret."
 
-#~ msgid "Admin user"
-#~ msgstr "Admin bruger"
+msgid "Admin user"
+msgstr "Admin bruger"
 
 #, fuzzy
-#~ msgid "ZVol Name"
-#~ msgstr "Fuldt navn"
+msgid "ZVol Name"
+msgstr "Fuldt navn"
 
-#~ msgid "English"
-#~ msgstr "Engelsk"
+msgid "English"
+msgstr "Engelsk"
 
-#~ msgid "Level"
-#~ msgstr "Niveau"
+msgid "Level"
+msgstr "Niveau"

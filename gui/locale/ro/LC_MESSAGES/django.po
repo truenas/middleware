@@ -4946,9 +4946,8 @@ msgid "FreeNAS Devel"
 msgstr ""
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "Testare"
+msgstr "Testare FreeNAS"
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
@@ -5959,228 +5958,228 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s adăugat cu succes."
+msgid "%s successfully added."
+msgstr "%s adăugat cu succes."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "Mască reţea (Netmask) IPv6"
+msgid "IPv6 Netmask"
+msgstr "Mască reţea (Netmask) IPv6"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Valaorea trebuie să fie cuprinsă între 0 şi 10000, inclusiv."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Valaorea trebuie să fie cuprinsă între 0 şi 10000, inclusiv."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Valaorea trebuie să fie cuprinsă între 0 şi 1000, inclusiv."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Valaorea trebuie să fie cuprinsă între 0 şi 1000, inclusiv."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Activare DDP"
+msgid "Enable DDP"
+msgstr "Activare DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Activare suport DDP pentru acces appletalk"
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Activare suport DDP pentru acces appletalk"
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "Porneşte/opreşte TLS"
+msgid "Turn on/off TLS"
+msgstr "Porneşte/opreşte TLS"
 
-#~ msgid "Windows Share"
-#~ msgstr "Partajare Windows"
-
-#, fuzzy
-#~ msgid "Windows Shares"
-#~ msgstr "Partajare Windows"
+msgid "Windows Share"
+msgstr "Partajare Windows"
 
 #, fuzzy
-#~ msgid "Cron Scheduler"
-#~ msgstr "Programare puncte restaurare periodice"
+msgid "Windows Shares"
+msgstr "Partajare Windows"
 
 #, fuzzy
-#~ msgid "Docs"
-#~ msgstr "Testare"
-
-#~ msgid "Mount point"
-#~ msgstr "Mount point"
-
-#~ msgid "Dataset name"
-#~ msgstr "Nume set date"
-
-#~ msgid "Snapshot name"
-#~ msgstr "Nume punct de restaurare"
-
-#~ msgid "Used space"
-#~ msgstr "Spaţiu utilizat"
-
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "Nu exista puncte de restaurare ZFS disponibile"
-
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Creare punct de restaurare periodic"
-
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Revenire la setările iniţiale"
-
-#~ msgid "Config"
-#~ msgstr "Configurare"
-
-#~ msgid "OS Version"
-#~ msgstr "Versiune sist. operare"
-
-#~ msgid "%s successfully update."
-#~ msgstr "%s actualizat cu succes."
-
-#~ msgid "Admin user"
-#~ msgstr "Utilizator administrator"
-
-#~ msgid "%s successfully added"
-#~ msgstr "%s adăugat cu succes"
-
-#~ msgid ""
-#~ "Use this option to override the username ('www' by default) which will be "
-#~ "used for access to services which are specified as guest. Whatever "
-#~ "privileges this user has will be available to any client connecting to "
-#~ "the guest service. This user must exist in the password file, but does "
-#~ "not require a valid login."
-#~ msgstr ""
-#~ "Această opţiune se utilizează pentru a trece peste numele de utilizator "
-#~ "(implicit 'www') folosit pentru a accesa serviciile specifice "
-#~ "vizitatorului. Indiferent de privilegiile avute, ele vor fi disponibile "
-#~ "oricărui client ce se conectează la serviciul de tip vizitator. Acest "
-#~ "utilizator trebuie să existe în fişierul de parole, dar nu este necesară "
-#~ "o logare validă."
+msgid "Cron Scheduler"
+msgstr "Programare puncte restaurare periodice"
 
 #, fuzzy
-#~ msgid "ZVol Name"
-#~ msgstr "Nume complet"
+msgid "Docs"
+msgstr "Testare"
 
-#~ msgid "Dataset"
-#~ msgstr "Set date"
+msgid "Mount point"
+msgstr "Mount point"
 
-#~ msgid "Native dataset"
-#~ msgstr "Set date nativ"
+msgid "Dataset name"
+msgstr "Nume set date"
 
-#~ msgid "/var/log/messages"
-#~ msgstr "/var/log/messages"
+msgid "Snapshot name"
+msgstr "Nume punct de restaurare"
 
-#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Asistenţă & Suport"
+msgid "Used space"
+msgstr "Spaţiu utilizat"
 
-#~ msgid "Success!"
-#~ msgstr "Succes!"
+msgid "No ZFS snapshot available"
+msgstr "Nu exista puncte de restaurare ZFS disponibile"
 
-#~ msgid "Your password was changed."
-#~ msgstr "Parola a fost modificată."
+msgid "Create Periodic Snapshot"
+msgstr "Creare punct de restaurare periodic"
 
-#~ msgid "Password change"
-#~ msgstr "Modificare parolă"
+msgid "Restore to Factory Defaults"
+msgstr "Revenire la setările iniţiale"
 
-#~ msgid "Please correct the error below."
-#~ msgid_plural "Please correct the errors below."
-#~ msgstr[0] "Corectaţi eroarea de mai jos."
-#~ msgstr[1] "Corectaţi erorile de mai jos."
-#~ msgstr[2] ""
+msgid "Config"
+msgstr "Configurare"
 
-#~ msgid ""
-#~ "Please enter your old password, and then enter your new password twice to "
-#~ "verify it is typed in correctly."
-#~ msgstr ""
-#~ "Introduceţi vechea parolă, apoi introduceţi o nouă parolă de două ori "
-#~ "pentru verificare."
+msgid "OS Version"
+msgstr "Versiune sist. operare"
 
-#~ msgid "Password (again)"
-#~ msgstr "Parola (din nou)"
+msgid "%s successfully update."
+msgstr "%s actualizat cu succes."
 
-#~ msgid "minutes,"
-#~ msgstr "minute,"
+msgid "Admin user"
+msgstr "Utilizator administrator"
+
+msgid "%s successfully added"
+msgstr "%s adăugat cu succes"
+
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"Această opţiune se utilizează pentru a trece peste numele de utilizator "
+"(implicit 'www') folosit pentru a accesa serviciile specifice "
+"vizitatorului. Indiferent de privilegiile avute, ele vor fi disponibile "
+"oricărui client ce se conectează la serviciul de tip vizitator. Acest "
+"utilizator trebuie să existe în fişierul de parole, dar nu este necesară "
+"o logare validă."
 
 #, fuzzy
-#~ msgid "Create ZFS zvol"
-#~ msgstr "Creare set de date ZFS"
+msgid "ZVol Name"
+msgstr "Nume complet"
+
+msgid "Dataset"
+msgstr "Set date"
+
+msgid "Native dataset"
+msgstr "Set date nativ"
+
+msgid "/var/log/messages"
+msgstr "/var/log/messages"
+
+msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Asistenţă & Suport"
+
+msgid "Success!"
+msgstr "Succes!"
+
+msgid "Your password was changed."
+msgstr "Parola a fost modificată."
+
+msgid "Password change"
+msgstr "Modificare parolă"
+
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "Corectaţi eroarea de mai jos."
+msgstr[1] "Corectaţi erorile de mai jos."
+msgstr[2] ""
+
+msgid ""
+"Please enter your old password, and then enter your new password twice to "
+"verify it is typed in correctly."
+msgstr ""
+"Introduceţi vechea parolă, apoi introduceţi o nouă parolă de două ori "
+"pentru verificare."
+
+msgid "Password (again)"
+msgstr "Parola (din nou)"
+
+msgid "minutes,"
+msgstr "minute,"
 
 #, fuzzy
-#~ msgid "Add ZVol"
-#~ msgstr "Adăugare volum"
+msgid "Create ZFS zvol"
+msgstr "Creare set de date ZFS"
 
-#~ msgid "English"
-#~ msgstr "Engleză"
+#, fuzzy
+msgid "Add ZVol"
+msgstr "Adăugare volum"
 
-#~ msgid "Level"
-#~ msgstr "Nivel"
+msgid "English"
+msgstr "Engleză"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "Adăugare unei conexiuni distribuite"
+msgid "Level"
+msgstr "Nivel"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "Vizualizare toate intefeţele"
+msgid "Add Link Aggregation"
+msgstr "Adăugare unei conexiuni distribuite"
 
-#~ msgid "View All VLANs"
-#~ msgstr "Vizualizare toate reţelele VLAN"
+msgid "View All Interfaces"
+msgstr "Vizualizare toate intefeţele"
 
-#~ msgid "Windows Version"
-#~ msgstr "Versiune Windows"
+msgid "View All VLANs"
+msgstr "Vizualizare toate reţelele VLAN"
 
-#~ msgid "The version of Microsoft Windows that Active Directory is running."
-#~ msgstr "Versiune Microsoft Windows pe care rulează Active Directory."
+msgid "Windows Version"
+msgstr "Versiune Windows"
 
-#~ msgid "Service Principal Name"
-#~ msgstr "Nume serviciu principal"
+msgid "The version of Microsoft Windows that Active Directory is running."
+msgstr "Versiune Microsoft Windows pe care rulează Active Directory."
 
-#~ msgid "Service Principal Name, eg service/account."
-#~ msgstr "Nume serviciu principal, de ex. serviciu/cont."
+msgid "Service Principal Name"
+msgstr "Nume serviciu principal"
 
-#~ msgid "Service Principal Name Password"
-#~ msgstr "Parolă nume serviciu principal"
+msgid "Service Principal Name, eg service/account."
+msgstr "Nume serviciu principal, de ex. serviciu/cont."
 
-#~ msgid "Password of the Service Principal Name account."
-#~ msgstr "Parolă cont nume serviciu principal."
+msgid "Service Principal Name Password"
+msgstr "Parolă nume serviciu principal"
 
-#~ msgid "Kerberos Keytab File"
-#~ msgstr "Fişier chei Kerberos"
+msgid "Password of the Service Principal Name account."
+msgstr "Parolă cont nume serviciu principal."
 
-#~ msgid ""
-#~ "The kerberos keytab file that was generated on the Active Directory "
-#~ "server."
-#~ msgstr ""
-#~ "Fişierul cu chei Kerberos care a fost generat pe serverul Active Directory"
+msgid "Kerberos Keytab File"
+msgstr "Fişier chei Kerberos"
 
-#~ msgid "Auxillary Parameters"
-#~ msgstr "Parametrii auxiliari"
+msgid ""
+"The kerberos keytab file that was generated on the Active Directory "
+"server."
+msgstr ""
+"Fişierul cu chei Kerberos care a fost generat pe serverul Active Directory"
 
-#~ msgid "Volume Path"
-#~ msgstr "Calea către volum"
+msgid "Auxillary Parameters"
+msgstr "Parametrii auxiliari"
 
-#~ msgid "View All UNIX Shares"
-#~ msgstr "Vizualizare toate partajările UNIX"
+msgid "Volume Path"
+msgstr "Calea către volum"
 
-#~ msgid "View All Apple Shares"
-#~ msgstr "Vizualizare toate partajările Apple"
+msgid "View All UNIX Shares"
+msgstr "Vizualizare toate partajările UNIX"
 
-#~ msgid "View All Windows Shares"
-#~ msgstr "Vizualizare toate partajările Windows"
+msgid "View All Apple Shares"
+msgstr "Vizualizare toate partajările Apple"
 
-#~ msgid "Read"
-#~ msgstr "Citire"
+msgid "View All Windows Shares"
+msgstr "Vizualizare toate partajările Windows"
 
-#~ msgid "Write"
-#~ msgstr "Scriere"
+msgid "Read"
+msgstr "Citire"
 
-#~ msgid "Execute"
-#~ msgstr "Executare"
+msgid "Write"
+msgstr "Scriere"
 
-#~ msgid "Owner"
-#~ msgstr "Proprietar"
+msgid "Execute"
+msgstr "Executare"
 
-#~ msgid "Other"
-#~ msgstr "Altul"
+msgid "Owner"
+msgstr "Proprietar"
 
-#~ msgid "Disks"
-#~ msgstr "Discuri"
+msgid "Other"
+msgstr "Altul"
 
-#~ msgid "View All Periodic Snapshot Tasks"
-#~ msgstr ""
-#~ "Vizualizare toate sarcinile periodice de creare a punctelor de restaurare"
+msgid "Disks"
+msgstr "Discuri"
 
-#~ msgid "sucessfully edited"
-#~ msgstr "a fost modificat"
+msgid "View All Periodic Snapshot Tasks"
+msgstr ""
+"Vizualizare toate sarcinile periodice de creare a punctelor de restaurare"
 
-#~ msgid "Lagg Interface was successfully added"
-#~ msgstr "Interfaţa LAGG a fost adăugată"
+msgid "sucessfully edited"
+msgstr "a fost modificat"
 
-#~ msgid "ActiveDirectory Settings"
-#~ msgstr "Setări ActiveDirectory"
+msgid "Lagg Interface was successfully added"
+msgstr "Interfaţa LAGG a fost adăugată"
+
+msgid "ActiveDirectory Settings"
+msgstr "Setări ActiveDirectory"

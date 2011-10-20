@@ -15,8 +15,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
+"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.1.6\n"
 
 # Альтернатива SSL/TLS
@@ -4911,32 +4911,30 @@ msgid "Mailing Lists"
 msgstr "Списки рассылки"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "Анонсы"
+msgstr "Анонсы FreeNAS"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "Уточнения"
+msgstr "Уточнения FreeNAS"
 
+# имя собственное?
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "Развитие FreeNAS"
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "Тестирование"
+msgstr "Тестирование FreeNAS"
 
+# имя собственное?
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS документация"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Переводы"
+msgstr "FreeNAS Переводы"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4951,9 +4949,8 @@ msgid "Documentation"
 msgstr "Документация"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Документация"
+msgstr "FreeNAS Документация"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5928,248 +5925,248 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Критический"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s успешно добавлен."
+msgid "%s successfully added."
+msgstr "%s успешно добавлен."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "Маска сети IPv6"
+msgid "IPv6 Netmask"
+msgstr "Маска сети IPv6"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Это значение должно быть от 0 до 10000 включительно."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Это значение должно быть от 0 до 10000 включительно."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Это значение должно быть от 0 до 1000 включительно."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Это значение должно быть от 0 до 1000 включительно."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Включить DDP"
+msgid "Enable DDP"
+msgstr "Включить DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Включает поддержку DDP для низкоуровневого доступа к AppleTalk."
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Включает поддержку DDP для низкоуровневого доступа к AppleTalk."
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "Включить/выключить TLS"
+msgid "Turn on/off TLS"
+msgstr "Включить/выключить TLS"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "Windows Share"
-#~ msgstr "Общий ресурс Windows"
+msgid "Windows Share"
+msgstr "Общий ресурс Windows"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Общие ресурсы Windows"
+msgid "Windows Shares"
+msgstr "Общие ресурсы Windows"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "Том не удалось экспортировать"
+msgid "The volume failed to export"
+msgstr "Том не удалось экспортировать"
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "Расписание Cron"
-
-# имя собственное?
-#~ msgid "Devel"
-#~ msgstr "Развитие"
+msgid "Cron Scheduler"
+msgstr "Расписание Cron"
 
 # имя собственное?
-#~ msgid "Docs"
-#~ msgstr "документация"
+msgid "Devel"
+msgstr "Развитие"
 
-#~ msgid "Welcome to"
-#~ msgstr "Добро пожаловать во8"
+# имя собственное?
+msgid "Docs"
+msgstr "документация"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "Welcome to"
+msgstr "Добро пожаловать во8"
 
-#~ msgid "Mount point"
-#~ msgstr "Точка монитрования"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Dataset name"
-#~ msgstr "Имя набора данных"
+msgid "Mount point"
+msgstr "Точка монитрования"
 
-#~ msgid "Snapshot name"
-#~ msgstr "Имя снимка"
+msgid "Dataset name"
+msgstr "Имя набора данных"
 
-#~ msgid "Used space"
-#~ msgstr "Занято места"
+msgid "Snapshot name"
+msgstr "Имя снимка"
 
-#~ msgid "Referenced space"
-#~ msgstr "Используется места"
+msgid "Used space"
+msgstr "Занято места"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "Нет доступных ZFS снимков"
+msgid "Referenced space"
+msgstr "Используется места"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Создать периодический снимок"
+msgid "No ZFS snapshot available"
+msgstr "Нет доступных ZFS снимков"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Восстановить настройки по умолчанию"
+msgid "Create Periodic Snapshot"
+msgstr "Создать периодический снимок"
 
-#~ msgid "Config"
-#~ msgstr "Конфигурация"
+msgid "Restore to Factory Defaults"
+msgstr "Восстановить настройки по умолчанию"
 
-#~ msgid "OS Version"
-#~ msgstr "Версия ОС"
+msgid "Config"
+msgstr "Конфигурация"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s успешно обновлен."
+msgid "OS Version"
+msgstr "Версия ОС"
 
-#~ msgid "Admin user"
-#~ msgstr "Администратор"
+msgid "%s successfully update."
+msgstr "%s успешно обновлен."
 
-#~ msgid "%s successfully added"
-#~ msgstr "%s успешно добавлен"
+msgid "Admin user"
+msgstr "Администратор"
 
-#~ msgid "N/A"
-#~ msgstr "Недоступен"
+msgid "%s successfully added"
+msgstr "%s успешно добавлен"
 
-#~ msgid ""
-#~ "Use this option to override the username ('www' by default) which will be "
-#~ "used for access to services which are specified as guest. Whatever "
-#~ "privileges this user has will be available to any client connecting to "
-#~ "the guest service. This user must exist in the password file, but does "
-#~ "not require a valid login."
-#~ msgstr ""
-#~ "Используйте эту опцию для изменения имени пользователя ('www' по "
-#~ "умолчанию), которое будет использоваться для гостевого доступа к службам. "
-#~ "Независимо от привилегий, этот пользователь будет доступен для любого "
-#~ "клиента, подключающегося к гостевой службе. Этот пользователь должен "
-#~ "существовать в файле паролей, но не требует корректного логина."
+msgid "N/A"
+msgstr "Недоступен"
 
-#~ msgid "ZVol Name"
-#~ msgstr "Имя ZVol"
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"Используйте эту опцию для изменения имени пользователя ('www' по "
+"умолчанию), которое будет использоваться для гостевого доступа к службам. "
+"Независимо от привилегий, этот пользователь будет доступен для любого "
+"клиента, подключающегося к гостевой службе. Этот пользователь должен "
+"существовать в файле паролей, но не требует корректного логина."
 
-#~ msgid "Dataset"
-#~ msgstr "Набор данных"
+msgid "ZVol Name"
+msgstr "Имя ZVol"
 
-#~ msgid "ZVol"
-#~ msgstr "ZVol"
+msgid "Dataset"
+msgstr "Набор данных"
 
-#~ msgid "Native dataset"
-#~ msgstr "Нативный набор данных"
+msgid "ZVol"
+msgstr "ZVol"
 
-#~ msgid "/var/log/messages"
-#~ msgstr "/var/log/messages"
+msgid "Native dataset"
+msgstr "Нативный набор данных"
 
-#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-#~ msgstr "Справка и поддержка"
+msgid "/var/log/messages"
+msgstr "/var/log/messages"
 
-#~ msgid "Success!"
-#~ msgstr "Успешно!"
+msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+msgstr "Справка и поддержка"
 
-#~ msgid "Your password was changed."
-#~ msgstr "Ваш пароль был изменен."
+msgid "Success!"
+msgstr "Успешно!"
 
-#~ msgid "Password change"
-#~ msgstr "Изменить пароль"
+msgid "Your password was changed."
+msgstr "Ваш пароль был изменен."
 
-#~ msgid "Please correct the error below."
-#~ msgid_plural "Please correct the errors below."
-#~ msgstr[0] "Пожалуйста, исправьте следующую ошибку."
-#~ msgstr[1] "Пожалуйста, исправьте следующие ошибки."
-#~ msgstr[2] ""
+msgid "Password change"
+msgstr "Изменить пароль"
 
-#~ msgid ""
-#~ "Please enter your old password, and then enter your new password twice to "
-#~ "verify it is typed in correctly."
-#~ msgstr ""
-#~ "Пожалуйста, введите Ваш старый пароль, а затем введите Ваш новый пароль "
-#~ "дважды, чтобы удостостоверится, что он набран верно."
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "Пожалуйста, исправьте следующую ошибку."
+msgstr[1] "Пожалуйста, исправьте следующие ошибки."
+msgstr[2] ""
 
-#~ msgid "Password (again)"
-#~ msgstr "Пароль (ещё раз)"
+msgid ""
+"Please enter your old password, and then enter your new password twice to "
+"verify it is typed in correctly."
+msgstr ""
+"Пожалуйста, введите Ваш старый пароль, а затем введите Ваш новый пароль "
+"дважды, чтобы удостостоверится, что он набран верно."
 
-#~ msgid "minutes,"
-#~ msgstr "минут,"
+msgid "Password (again)"
+msgstr "Пароль (ещё раз)"
 
-#~ msgid "Create ZFS zvol"
-#~ msgstr "Создать ZFS zvol"
+msgid "minutes,"
+msgstr "минут,"
 
-#~ msgid "Add ZVol"
-#~ msgstr "Добавить ZVol"
+msgid "Create ZFS zvol"
+msgstr "Создать ZFS zvol"
 
-#~ msgid "English"
-#~ msgstr "Английский"
+msgid "Add ZVol"
+msgstr "Добавить ZVol"
 
-#~ msgid "Level"
-#~ msgstr "Уровень"
+msgid "English"
+msgstr "Английский"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "Добавить объединение интерфейсов"
+msgid "Level"
+msgstr "Уровень"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "Просмотреть все интерфейсы"
+msgid "Add Link Aggregation"
+msgstr "Добавить объединение интерфейсов"
 
-#~ msgid "View All VLANs"
-#~ msgstr "Просмотреть все VLAN"
+msgid "View All Interfaces"
+msgstr "Просмотреть все интерфейсы"
 
-#~ msgid "View All Static Routes"
-#~ msgstr "Просмотреть все статические маршруты"
+msgid "View All VLANs"
+msgstr "Просмотреть все VLAN"
 
-#~ msgid "Windows Version"
-#~ msgstr "Версия Windows"
+msgid "View All Static Routes"
+msgstr "Просмотреть все статические маршруты"
 
-#~ msgid "The version of Microsoft Windows that Active Directory is running."
-#~ msgstr "Active Directory работает в этой версии Microsoft Windows."
+msgid "Windows Version"
+msgstr "Версия Windows"
 
-#~ msgid "Service Principal Name"
-#~ msgstr "Служба поддержка имён"
+msgid "The version of Microsoft Windows that Active Directory is running."
+msgstr "Active Directory работает в этой версии Microsoft Windows."
 
-#~ msgid "Service Principal Name, eg service/account."
-#~ msgstr "Служба поддержка имён, например service/account."
+msgid "Service Principal Name"
+msgstr "Служба поддержка имён"
 
-#~ msgid "Service Principal Name Password"
-#~ msgstr "Пароль службы поддержка имён"
+msgid "Service Principal Name, eg service/account."
+msgstr "Служба поддержка имён, например service/account."
 
-#~ msgid "Password of the Service Principal Name account."
-#~ msgstr "Пароль учетной записи службы поддержка имён"
+msgid "Service Principal Name Password"
+msgstr "Пароль службы поддержка имён"
 
-#~ msgid "Kerberos Keytab File"
-#~ msgstr "Файл Kerberos Keytab"
+msgid "Password of the Service Principal Name account."
+msgstr "Пароль учетной записи службы поддержка имён"
 
-#~ msgid ""
-#~ "The kerberos keytab file that was generated on the Active Directory "
-#~ "server."
-#~ msgstr "Файл Kerberos Keytab, созданный на сервере Active Directory."
+msgid "Kerberos Keytab File"
+msgstr "Файл Kerberos Keytab"
 
-#~ msgid "Auxillary Parameters"
-#~ msgstr "Дополнительные параметры"
+msgid ""
+"The kerberos keytab file that was generated on the Active Directory "
+"server."
+msgstr "Файл Kerberos Keytab, созданный на сервере Active Directory."
 
-#~ msgid "Volume Path"
-#~ msgstr "Путь к тому"
+msgid "Auxillary Parameters"
+msgstr "Дополнительные параметры"
 
-#~ msgid "View All UNIX Shares"
-#~ msgstr "Просмотр всех общих ресурсов UNIX"
+msgid "Volume Path"
+msgstr "Путь к тому"
 
-#~ msgid "View All Apple Shares"
-#~ msgstr "Просмотр всех общих ресурсов Apple"
+msgid "View All UNIX Shares"
+msgstr "Просмотр всех общих ресурсов UNIX"
 
-#~ msgid "View All Windows Shares"
-#~ msgstr "Просмотр всех общих ресурсов Windows"
+msgid "View All Apple Shares"
+msgstr "Просмотр всех общих ресурсов Apple"
 
-#~ msgid "Read"
-#~ msgstr "Чтение"
+msgid "View All Windows Shares"
+msgstr "Просмотр всех общих ресурсов Windows"
 
-#~ msgid "Write"
-#~ msgstr "Запись"
+msgid "Read"
+msgstr "Чтение"
 
-#~ msgid "Execute"
-#~ msgstr "Исполнение"
+msgid "Write"
+msgstr "Запись"
 
-#~ msgid "Owner"
-#~ msgstr "Владелец"
+msgid "Execute"
+msgstr "Исполнение"
 
-#~ msgid "Other"
-#~ msgstr "Другие"
+msgid "Owner"
+msgstr "Владелец"
 
-#~ msgid "Disks"
-#~ msgstr "Диски"
+msgid "Other"
+msgstr "Другие"
 
-#~ msgid "View All Periodic Snapshot Tasks"
-#~ msgstr "Показать все задачи периодических снимков"
+msgid "Disks"
+msgstr "Диски"
 
-#~ msgid "sucessfully edited"
-#~ msgstr "успешно изменен"
+msgid "View All Periodic Snapshot Tasks"
+msgstr "Показать все задачи периодических снимков"
 
-#~ msgid "Lagg Interface was successfully added"
-#~ msgstr "Интерфейс LAGG успешно добавлен"
+msgid "sucessfully edited"
+msgstr "успешно изменен"
 
-#~ msgid "ActiveDirectory Settings"
-#~ msgstr "Настройки ActiveDirectory"
+msgid "Lagg Interface was successfully added"
+msgstr "Интерфейс LAGG успешно добавлен"
+
+msgid "ActiveDirectory Settings"
+msgstr "Настройки ActiveDirectory"

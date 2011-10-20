@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-19 11:49-0200\n"
-"PO-Revision-Date: 2011-10-01 10:27+0200\n"
+"PO-Revision-Date: 2011-10-01 10:31+0200\n"
 "Last-Translator: Nuno <nuno.piscinas@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt\n"
@@ -4892,32 +4892,28 @@ msgid "Mailing Lists"
 msgstr "Listas de Mailings"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "Anúncios"
+msgstr "Anúncios FreeNAS"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "Confirmação"
+msgstr "FreeNAS Confirmação"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS Desenv"
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "Teste"
+msgstr "FreeNAS Teste"
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "Documentação FreeNAS"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Traduções"
+msgstr "Traduções FreeNAS"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4932,9 +4928,8 @@ msgid "Documentation"
 msgstr "Documentação"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Documentação"
+msgstr "Documentação FreeNAS"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5907,126 +5902,126 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Critico"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s adicionado com sucesso."
+msgid "%s successfully added."
+msgstr "%s adicionado com sucesso."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "Máscara IPv6"
+msgid "IPv6 Netmask"
+msgstr "Máscara IPv6"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Este valor tem que ser entre 0 e 10000, inclusive."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Este valor tem que ser entre 0 e 10000, inclusive."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Este valor tem que ser entre 0 e 1000, inclusive."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Este valor tem que ser entre 0 e 1000, inclusive."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Activar DDP"
+msgid "Enable DDP"
+msgstr "Activar DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Activar DDP suporte para acesso de nivel mais baixo no appletalk."
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Activar DDP suporte para acesso de nivel mais baixo no appletalk."
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "Activa/Desactiva TLS"
+msgid "Turn on/off TLS"
+msgstr "Activa/Desactiva TLS"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "Windows Share"
-#~ msgstr "Partilha Windows"
+msgid "Windows Share"
+msgstr "Partilha Windows"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Partilhas Windows"
+msgid "Windows Shares"
+msgstr "Partilhas Windows"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "O volume falhou na exportação"
+msgid "The volume failed to export"
+msgstr "O volume falhou na exportação"
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "Agendar Cron"
+msgid "Cron Scheduler"
+msgstr "Agendar Cron"
 
-#~ msgid "Devel"
-#~ msgstr "Desenv"
+msgid "Devel"
+msgstr "Desenv"
 
-#~ msgid "Docs"
-#~ msgstr "Documentação"
+msgid "Docs"
+msgstr "Documentação"
 
-#~ msgid "Welcome to"
-#~ msgstr "Bem vindo ao8"
+msgid "Welcome to"
+msgstr "Bem vindo ao8"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Mount point"
-#~ msgstr "Ponto de montagem"
+msgid "Mount point"
+msgstr "Ponto de montagem"
 
-#~ msgid "Dataset name"
-#~ msgstr "Nome do conjunto de dados"
+msgid "Dataset name"
+msgstr "Nome do conjunto de dados"
 
-#~ msgid "Snapshot name"
-#~ msgstr "Nome do snapshot"
+msgid "Snapshot name"
+msgstr "Nome do snapshot"
 
-#~ msgid "Used space"
-#~ msgstr "Espaço usado"
+msgid "Used space"
+msgstr "Espaço usado"
 
-#~ msgid "Referenced space"
-#~ msgstr "Espaço referenciado"
+msgid "Referenced space"
+msgstr "Espaço referenciado"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "Sem captura ZFS disponível"
+msgid "No ZFS snapshot available"
+msgstr "Sem captura ZFS disponível"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Criar Sanpshot Periódico"
+msgid "Create Periodic Snapshot"
+msgstr "Criar Sanpshot Periódico"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Restaurar para Definições de Fábrica"
+msgid "Restore to Factory Defaults"
+msgstr "Restaurar para Definições de Fábrica"
 
-#~ msgid "Config"
-#~ msgstr "Configurar"
+msgid "Config"
+msgstr "Configurar"
 
-#~ msgid "OS Version"
-#~ msgstr "Versão do OS"
+msgid "OS Version"
+msgstr "Versão do OS"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s actualizado com sucesso."
+msgid "%s successfully update."
+msgstr "%s actualizado com sucesso."
 
-#~ msgid "Admin user"
-#~ msgstr "Utilizador administrador"
+msgid "Admin user"
+msgstr "Utilizador administrador"
 
-#~ msgid "N/A"
-#~ msgstr "N/A"
+msgid "N/A"
+msgstr "N/A"
 
-#~ msgid ""
-#~ "Use this option to override the username ('www' by default) which will be "
-#~ "used for access to services which are specified as guest. Whatever "
-#~ "privileges this user has will be available to any client connecting to "
-#~ "the guest service. This user must exist in the password file, but does "
-#~ "not require a valid login."
-#~ msgstr ""
-#~ "Utilize esta opção para substituir o nome de usuário ('www' por padrão) "
-#~ "que será usada para acesso a serviços que são especificados como "
-#~ "convidado. Qualquer privilégios que este utilizador tem estará disponível "
-#~ "para qualquer cliente se conectar ao serviço cliente. Este utilizador "
-#~ "deve existir no arquivo de senha, mas não exige um login válido."
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"Utilize esta opção para substituir o nome de usuário ('www' por padrão) "
+"que será usada para acesso a serviços que são especificados como "
+"convidado. Qualquer privilégios que este utilizador tem estará disponível "
+"para qualquer cliente se conectar ao serviço cliente. Este utilizador "
+"deve existir no arquivo de senha, mas não exige um login válido."
 
-#~ msgid "ZVol Name"
-#~ msgstr "Nome Completo"
+msgid "ZVol Name"
+msgstr "Nome Completo"
 
-#~ msgid "Create ZFS zvol"
-#~ msgstr "Criar zvol ZFS"
+msgid "Create ZFS zvol"
+msgstr "Criar zvol ZFS"
 
-#~ msgid "Add ZVol"
-#~ msgstr "Adicionar ZVol"
+msgid "Add ZVol"
+msgstr "Adicionar ZVol"
 
-#~ msgid "English"
-#~ msgstr "Inglês"
+msgid "English"
+msgstr "Inglês"
 
-#~ msgid "Level"
-#~ msgstr "Nível"
+msgid "Level"
+msgstr "Nível"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "Adicionar Agregação de Rede"
+msgid "Add Link Aggregation"
+msgstr "Adicionar Agregação de Rede"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "Ver todas as Interfaces"
+msgid "View All Interfaces"
+msgstr "Ver todas as Interfaces"
 
-#~ msgid "View All VLANs"
-#~ msgstr "Ver todas as VLANs"
+msgid "View All VLANs"
+msgstr "Ver todas as VLANs"

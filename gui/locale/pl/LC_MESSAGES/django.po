@@ -4873,9 +4873,8 @@ msgid "FreeNAS Docs"
 msgstr ""
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Tłumaczenia"
+msgstr "FreeNAS Tłumaczenia"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4892,9 +4891,8 @@ msgid "Documentation"
 msgstr "Dokumentacja"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Dokumentacja"
+msgstr "FreeNAS Dokumentacja"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5869,232 +5867,232 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Krytyczny"
 
-#~ msgid "%s successfully added."
-#~ msgstr "% dodano pomyślnie."
+msgid "%s successfully added."
+msgstr "% dodano pomyślnie."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "Maska IPv6"
+msgid "IPv6 Netmask"
+msgstr "Maska IPv6"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Ta wartość musi być pomiędzy 0 i 10000 włącznie."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Ta wartość musi być pomiędzy 0 i 10000 włącznie."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Ta wartość musi być pomiędzy 0 i 1000 włącznie."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Ta wartość musi być pomiędzy 0 i 1000 włącznie."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Włącz DDP"
+msgid "Enable DDP"
+msgstr "Włącz DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr ""
-#~ "Włącza wsparcie dla DDP aby umożliwić niskopoziomowy dostęp przy pomocy "
-#~ "appletalk."
+msgid "Enables DDP support for low-level appletalk access."
+msgstr ""
+"Włącza wsparcie dla DDP aby umożliwić niskopoziomowy dostęp przy pomocy "
+"appletalk."
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "Włącz/wyłącz TLS"
+msgid "Turn on/off TLS"
+msgstr "Włącz/wyłącz TLS"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "Windows Share"
-#~ msgstr "Udział Windows"
+msgid "Windows Share"
+msgstr "Udział Windows"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Udziały Windows"
+msgid "Windows Shares"
+msgstr "Udziały Windows"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "Eksport wolumenu nie powiódł się"
+msgid "The volume failed to export"
+msgstr "Eksport wolumenu nie powiódł się"
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "Zadania cykliczne"
-
-#, fuzzy
-#~ msgid "Docs"
-#~ msgstr "Dokumenty"
-
-#~ msgid "Welcome to"
-#~ msgstr "Witamy w8"
-
-#~ msgid "LUN"
-#~ msgstr "LUN"
-
-#~ msgid "Mount point"
-#~ msgstr "Punkt montowania"
-
-#~ msgid "Dataset name"
-#~ msgstr "Nazwa zbioru danych"
-
-#~ msgid "Snapshot name"
-#~ msgstr "Nazwa kopii migawkowej"
-
-#~ msgid "Used space"
-#~ msgstr "Używana przestrzeń"
+msgid "Cron Scheduler"
+msgstr "Zadania cykliczne"
 
 #, fuzzy
-#~ msgid "Referenced space"
-#~ msgstr "Przestrzeń odniesienia"
+msgid "Docs"
+msgstr "Dokumenty"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "Brak dostępnej kopii migawkowej ZFS"
+msgid "Welcome to"
+msgstr "Witamy w8"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Utwórz cykliczną kopię migawkową"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Przywróć do ustwień fabrycznych"
+msgid "Mount point"
+msgstr "Punkt montowania"
 
-#~ msgid "Config"
-#~ msgstr "Konfiguracja"
+msgid "Dataset name"
+msgstr "Nazwa zbioru danych"
 
-#~ msgid "OS Version"
-#~ msgstr "Wersja systemu"
+msgid "Snapshot name"
+msgstr "Nazwa kopii migawkowej"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s zaktualizowano pomyślnie."
-
-#~ msgid "Admin user"
-#~ msgstr "Administrator"
-
-#~ msgid "%s successfully added"
-#~ msgstr "%s dodano pomyślnie"
-
-#~ msgid ""
-#~ "Use this option to override the username ('www' by default) which will be "
-#~ "used for access to services which are specified as guest. Whatever "
-#~ "privileges this user has will be available to any client connecting to "
-#~ "the guest service. This user must exist in the password file, but does "
-#~ "not require a valid login."
-#~ msgstr ""
-#~ "Użyj tej opcji aby nadpisać nazwę użytkownika (domyślnie 'www') jaka "
-#~ "będzie używana przy usługach do których dostęp jest anonimowy. Ponadto "
-#~ "uprawnienia tego użytkownika mogą być dostępne dla dowolnego klienta "
-#~ "korzystającego z takiej usługi. Użytkownik ten musi istnieć w pliku z "
-#~ "hasłami, nie jest jednak wymagany prawidłowy login."
+msgid "Used space"
+msgstr "Używana przestrzeń"
 
 #, fuzzy
-#~ msgid "ZVol Name"
-#~ msgstr "Pełna nazwa"
+msgid "Referenced space"
+msgstr "Przestrzeń odniesienia"
 
-#~ msgid "Dataset"
-#~ msgstr "Zbiór danych"
+msgid "No ZFS snapshot available"
+msgstr "Brak dostępnej kopii migawkowej ZFS"
 
-#~ msgid "Native dataset"
-#~ msgstr "Natywny zbiór danych"
+msgid "Create Periodic Snapshot"
+msgstr "Utwórz cykliczną kopię migawkową"
 
-#~ msgid "/var/log/messages"
-#~ msgstr "/var/log/messages"
+msgid "Restore to Factory Defaults"
+msgstr "Przywróć do ustwień fabrycznych"
 
-#~ msgid "Success!"
-#~ msgstr "Sukces!"
+msgid "Config"
+msgstr "Konfiguracja"
 
-#~ msgid "Your password was changed."
-#~ msgstr "Twoje hasło zostało zmienione."
+msgid "OS Version"
+msgstr "Wersja systemu"
 
-#~ msgid "Password change"
-#~ msgstr "Zmiana hasła"
+msgid "%s successfully update."
+msgstr "%s zaktualizowano pomyślnie."
 
-#~ msgid "Please correct the error below."
-#~ msgid_plural "Please correct the errors below."
-#~ msgstr[0] "Proszę poprawić poniższy błąd."
-#~ msgstr[1] "Proszę poprawić poniższe błędy."
-#~ msgstr[2] "Proszę poprawić poniższe błędy."
+msgid "Admin user"
+msgstr "Administrator"
 
-#~ msgid ""
-#~ "Please enter your old password, and then enter your new password twice to "
-#~ "verify it is typed in correctly."
-#~ msgstr ""
-#~ "Proszę wpisać swoje stare hasło, następnie dwukrotnie wpisać nowe hasło "
-#~ "dla sprawdzenia poprawności."
+msgid "%s successfully added"
+msgstr "%s dodano pomyślnie"
 
-#~ msgid "Password (again)"
-#~ msgstr "Hasło (ponownie)"
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"Użyj tej opcji aby nadpisać nazwę użytkownika (domyślnie 'www') jaka "
+"będzie używana przy usługach do których dostęp jest anonimowy. Ponadto "
+"uprawnienia tego użytkownika mogą być dostępne dla dowolnego klienta "
+"korzystającego z takiej usługi. Użytkownik ten musi istnieć w pliku z "
+"hasłami, nie jest jednak wymagany prawidłowy login."
 
-#~ msgid "minutes,"
-#~ msgstr "minut, "
+#, fuzzy
+msgid "ZVol Name"
+msgstr "Pełna nazwa"
 
-#~ msgid "Create ZFS zvol"
-#~ msgstr "Utwórz ZFS ZVol"
+msgid "Dataset"
+msgstr "Zbiór danych"
 
-#~ msgid "Add ZVol"
-#~ msgstr "Dodaj ZVol"
+msgid "Native dataset"
+msgstr "Natywny zbiór danych"
 
-#~ msgid "English"
-#~ msgstr "Angielski"
+msgid "/var/log/messages"
+msgstr "/var/log/messages"
 
-#~ msgid "Level"
-#~ msgstr "Poziom"
+msgid "Success!"
+msgstr "Sukces!"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "Dodaj agregację połączeń"
+msgid "Your password was changed."
+msgstr "Twoje hasło zostało zmienione."
 
-#~ msgid "View All Interfaces"
-#~ msgstr "Pokaż wszystkie interfejsy"
+msgid "Password change"
+msgstr "Zmiana hasła"
 
-#~ msgid "View All VLANs"
-#~ msgstr "Pokaż wszystkie VLANy"
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "Proszę poprawić poniższy błąd."
+msgstr[1] "Proszę poprawić poniższe błędy."
+msgstr[2] "Proszę poprawić poniższe błędy."
 
-#~ msgid "View All Static Routes"
-#~ msgstr "Pokaż wszystkie trasy statyczne"
+msgid ""
+"Please enter your old password, and then enter your new password twice to "
+"verify it is typed in correctly."
+msgstr ""
+"Proszę wpisać swoje stare hasło, następnie dwukrotnie wpisać nowe hasło "
+"dla sprawdzenia poprawności."
 
-#~ msgid "Windows Version"
-#~ msgstr "Wersja Windows"
+msgid "Password (again)"
+msgstr "Hasło (ponownie)"
 
-#~ msgid "The version of Microsoft Windows that Active Directory is running."
-#~ msgstr ""
-#~ "Wersja systemu MS Windows na którym jest uruchomione Actie Directory."
+msgid "minutes,"
+msgstr "minut, "
 
-#~ msgid "Service Principal Name"
-#~ msgstr "Nazwa konta użytkownika dla usługi"
+msgid "Create ZFS zvol"
+msgstr "Utwórz ZFS ZVol"
 
-#~ msgid "Service Principal Name, eg service/account."
-#~ msgstr "Nazwa konta użytkownika dla usługi, np. service/account."
+msgid "Add ZVol"
+msgstr "Dodaj ZVol"
 
-#~ msgid "Service Principal Name Password"
-#~ msgstr "Hasło konta użytkownika dla usługi"
+msgid "English"
+msgstr "Angielski"
 
-#~ msgid "Password of the Service Principal Name account."
-#~ msgstr "Hasło konta użytkownika dla usługi."
+msgid "Level"
+msgstr "Poziom"
 
-#~ msgid "Auxillary Parameters"
-#~ msgstr "Parametry dodatkowe"
+msgid "Add Link Aggregation"
+msgstr "Dodaj agregację połączeń"
 
-#~ msgid "Volume Path"
-#~ msgstr "Ścieżka wolumenu"
+msgid "View All Interfaces"
+msgstr "Pokaż wszystkie interfejsy"
 
-#~ msgid "View All UNIX Shares"
-#~ msgstr "Pokaż wszystkie udziały UNIX"
+msgid "View All VLANs"
+msgstr "Pokaż wszystkie VLANy"
 
-#~ msgid "View All Apple Shares"
-#~ msgstr "Pokaż wszystkie udziały Apple"
+msgid "View All Static Routes"
+msgstr "Pokaż wszystkie trasy statyczne"
 
-#~ msgid "View All Windows Shares"
-#~ msgstr "Pokaż wszystkie udziały Windows"
+msgid "Windows Version"
+msgstr "Wersja Windows"
 
-#~ msgid "Read"
-#~ msgstr "Odczyt"
+msgid "The version of Microsoft Windows that Active Directory is running."
+msgstr ""
+"Wersja systemu MS Windows na którym jest uruchomione Actie Directory."
 
-#~ msgid "Write"
-#~ msgstr "Zapis"
+msgid "Service Principal Name"
+msgstr "Nazwa konta użytkownika dla usługi"
 
-#~ msgid "Execute"
-#~ msgstr "Wykonanie"
+msgid "Service Principal Name, eg service/account."
+msgstr "Nazwa konta użytkownika dla usługi, np. service/account."
 
-#~ msgid "Owner"
-#~ msgstr "Właściciel"
+msgid "Service Principal Name Password"
+msgstr "Hasło konta użytkownika dla usługi"
 
-#~ msgid "Other"
-#~ msgstr "Pozostali"
+msgid "Password of the Service Principal Name account."
+msgstr "Hasło konta użytkownika dla usługi."
 
-#~ msgid "Disks"
-#~ msgstr "Dyski"
+msgid "Auxillary Parameters"
+msgstr "Parametry dodatkowe"
 
-#~ msgid "View All Periodic Snapshot Tasks"
-#~ msgstr "Pokaż wszystkie cykliczne zadania replikacji"
+msgid "Volume Path"
+msgstr "Ścieżka wolumenu"
 
-#~ msgid "sucessfully edited"
-#~ msgstr "pomyślnie wyedytowano"
+msgid "View All UNIX Shares"
+msgstr "Pokaż wszystkie udziały UNIX"
 
-#~ msgid "Lagg Interface was successfully added"
-#~ msgstr "Interfejs LAGG został pomyślnie dodany"
+msgid "View All Apple Shares"
+msgstr "Pokaż wszystkie udziały Apple"
 
-#~ msgid "ActiveDirectory Settings"
-#~ msgstr "Ustawienia ActiveDirectory"
+msgid "View All Windows Shares"
+msgstr "Pokaż wszystkie udziały Windows"
+
+msgid "Read"
+msgstr "Odczyt"
+
+msgid "Write"
+msgstr "Zapis"
+
+msgid "Execute"
+msgstr "Wykonanie"
+
+msgid "Owner"
+msgstr "Właściciel"
+
+msgid "Other"
+msgstr "Pozostali"
+
+msgid "Disks"
+msgstr "Dyski"
+
+msgid "View All Periodic Snapshot Tasks"
+msgstr "Pokaż wszystkie cykliczne zadania replikacji"
+
+msgid "sucessfully edited"
+msgstr "pomyślnie wyedytowano"
+
+msgid "Lagg Interface was successfully added"
+msgstr "Interfejs LAGG został pomyślnie dodany"
+
+msgid "ActiveDirectory Settings"
+msgstr "Ustawienia ActiveDirectory"

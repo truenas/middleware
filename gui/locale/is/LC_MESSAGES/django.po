@@ -4642,12 +4642,11 @@ msgstr ""
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS Skjöl"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Þýðingar"
+msgstr "FreeNAS Þýðingar"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -5625,23 +5624,23 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s hefur verið bætt við."
+msgid "%s successfully added."
+msgstr "%s hefur verið bætt við."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 netmöskvi"
+msgid "IPv6 Netmask"
+msgstr "IPv6 netmöskvi"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Þetta gildi þarf að vera á bilinu 0 til 10000"
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Þetta gildi þarf að vera á bilinu 0 til 10000"
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Þetta gildi þarf að vera á bilinu 0 til 1000"
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Þetta gildi þarf að vera á bilinu 0 til 1000"
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "Virkja/afvirkja TLS"
+msgid "Turn on/off TLS"
+msgstr "Virkja/afvirkja TLS"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "Docs"
-#~ msgstr "Skjöl"
+msgid "Docs"
+msgstr "Skjöl"

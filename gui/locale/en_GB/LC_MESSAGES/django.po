@@ -5575,8 +5575,8 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr ""
 
-#~ msgid "English"
-#~ msgstr "English"
+msgid "English"
+msgstr "English"
 
-#~ msgid "Level"
-#~ msgstr "Level"
+msgid "Level"
+msgstr "Level"

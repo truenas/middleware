@@ -1898,7 +1898,7 @@ msgid "Portal"
 msgstr "Portal"
 
 # Esse erro diz que o número de sentenças é diferente. e ai ? o numero de sentenças são iguais
-#
+# 
 #: services/models.py:451
 msgid ""
 "The portal takes the form of 'address:port'. for example '192.168.1.1:3260' "
@@ -4877,32 +4877,28 @@ msgid "Mailing Lists"
 msgstr "Listas de Discussão"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "Announce"
+msgstr "FreeNAS Announce"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "Commit"
+msgstr "FreeNAS Commit"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS Devel"
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "Testing"
+msgstr "FreeNAS Testing"
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS Docs"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Traduções"
+msgstr "Traduções FreeNAS"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4919,9 +4915,8 @@ msgstr "Documentação"
 
 # onde vc leu LOCALIZAÇÂO???
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Documentação"
+msgstr "Documentação FreeNAS"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5902,244 +5897,244 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Crítico"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s adicionado com sucesso."
+msgid "%s successfully added."
+msgstr "%s adicionado com sucesso."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "Máscara de Rede IPv6"
+msgid "IPv6 Netmask"
+msgstr "Máscara de Rede IPv6"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "O valor deve estar entre 0 e 10000, inclusive."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "O valor deve estar entre 0 e 10000, inclusive."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "O valor deve estar entre 0 e 1000, inclusive."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "O valor deve estar entre 0 e 1000, inclusive."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Habilita DDP"
+msgid "Enable DDP"
+msgstr "Habilita DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Habilita DDP para acesso de nível baixo ao appletalk."
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Habilita DDP para acesso de nível baixo ao appletalk."
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "Ligar/Desligar TLS"
+msgid "Turn on/off TLS"
+msgstr "Ligar/Desligar TLS"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "Windows Share"
-#~ msgstr "Compartilhamento Windows"
+msgid "Windows Share"
+msgstr "Compartilhamento Windows"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Compartilhamentos Windows"
+msgid "Windows Shares"
+msgstr "Compartilhamentos Windows"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "O volume falhou na exportação"
+msgid "The volume failed to export"
+msgstr "O volume falhou na exportação"
 
 # onde vcs tá lendo "Agendar snapshot períodico" ???
-#~ msgid "Cron Scheduler"
-#~ msgstr "Agendar Cron"
+msgid "Cron Scheduler"
+msgstr "Agendar Cron"
 
-#~ msgid "Devel"
-#~ msgstr "Devel"
+msgid "Devel"
+msgstr "Devel"
 
-#~ msgid "Docs"
-#~ msgstr "Docs"
+msgid "Docs"
+msgstr "Docs"
 
-#~ msgid "Welcome to"
-#~ msgstr "Bem Vindo ao8"
+msgid "Welcome to"
+msgstr "Bem Vindo ao8"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Mount point"
-#~ msgstr "Ponto de montagem"
+msgid "Mount point"
+msgstr "Ponto de montagem"
 
-#~ msgid "Dataset name"
-#~ msgstr "Nome do dataset"
+msgid "Dataset name"
+msgstr "Nome do dataset"
 
-#~ msgid "Snapshot name"
-#~ msgstr "Nome do snapshot"
+msgid "Snapshot name"
+msgstr "Nome do snapshot"
 
-#~ msgid "Used space"
-#~ msgstr "Espaço utilizado"
+msgid "Used space"
+msgstr "Espaço utilizado"
 
-#~ msgid "Referenced space"
-#~ msgstr "Espaço referenciado"
+msgid "Referenced space"
+msgstr "Espaço referenciado"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "Nenhum snapshot ZFS disponível"
+msgid "No ZFS snapshot available"
+msgstr "Nenhum snapshot ZFS disponível"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Criar Snapshot periódico"
+msgid "Create Periodic Snapshot"
+msgstr "Criar Snapshot periódico"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Restaurar padrões de fábrica"
+msgid "Restore to Factory Defaults"
+msgstr "Restaurar padrões de fábrica"
 
-#~ msgid "Config"
-#~ msgstr "Configuração"
+msgid "Config"
+msgstr "Configuração"
 
-#~ msgid "OS Version"
-#~ msgstr "Versão OS"
+msgid "OS Version"
+msgstr "Versão OS"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s atualizado com sucesso."
+msgid "%s successfully update."
+msgstr "%s atualizado com sucesso."
 
-#~ msgid "Admin user"
-#~ msgstr "Usuário administrador"
+msgid "Admin user"
+msgstr "Usuário administrador"
 
-#~ msgid "%s successfully added"
-#~ msgstr "%s adicionado com sucesso"
+msgid "%s successfully added"
+msgstr "%s adicionado com sucesso"
 
-#~ msgid "N/A"
-#~ msgstr "N/A"
+msgid "N/A"
+msgstr "N/A"
 
-#~ msgid ""
-#~ "Use this option to override the username ('www' by default) which will be "
-#~ "used for access to services which are specified as guest. Whatever "
-#~ "privileges this user has will be available to any client connecting to "
-#~ "the guest service. This user must exist in the password file, but does "
-#~ "not require a valid login."
-#~ msgstr ""
-#~ "Use essa opção para sobrepor o nome do usuário ('www' por padrão) que "
-#~ "será usado para acesso aos serviços cuja especificação seja convidado. "
-#~ "Independente dos privilégios de acesso que o usuário tenha será permitida "
-#~ "a conexão no serviço de convidados. O usuário precisa possuir uma senha, "
-#~ "mas não é necessário um login válido."
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"Use essa opção para sobrepor o nome do usuário ('www' por padrão) que "
+"será usado para acesso aos serviços cuja especificação seja convidado. "
+"Independente dos privilégios de acesso que o usuário tenha será permitida "
+"a conexão no serviço de convidados. O usuário precisa possuir uma senha, "
+"mas não é necessário um login válido."
 
-#~ msgid "ZVol Name"
-#~ msgstr "Nome ZVol"
+msgid "ZVol Name"
+msgstr "Nome ZVol"
 
-#~ msgid "Dataset"
-#~ msgstr "Dataset"
+msgid "Dataset"
+msgstr "Dataset"
 
-#~ msgid "Native dataset"
-#~ msgstr "Dataset nativo"
+msgid "Native dataset"
+msgstr "Dataset nativo"
 
-#~ msgid "/var/log/messages"
-#~ msgstr "/var/log/messages"
+msgid "/var/log/messages"
+msgstr "/var/log/messages"
 
-#~ msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
-#~ msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ajuda & Suporte"
+msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help & Support"
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ajuda & Suporte"
 
-#~ msgid "Success!"
-#~ msgstr "Sucesso!"
+msgid "Success!"
+msgstr "Sucesso!"
 
-#~ msgid "Your password was changed."
-#~ msgstr "Sua senha foi escolhida."
+msgid "Your password was changed."
+msgstr "Sua senha foi escolhida."
 
-#~ msgid "Password change"
-#~ msgstr "Definir senha"
+msgid "Password change"
+msgstr "Definir senha"
 
-#~ msgid "Please correct the error below."
-#~ msgid_plural "Please correct the errors below."
-#~ msgstr[0] "Por favor, corrija o erro abaixo."
-#~ msgstr[1] "Por favor, corrija os erros abaixo."
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "Por favor, corrija o erro abaixo."
+msgstr[1] "Por favor, corrija os erros abaixo."
 
-#~ msgid ""
-#~ "Please enter your old password, and then enter your new password twice to "
-#~ "verify it is typed in correctly."
-#~ msgstr ""
-#~ "Por favor digite sua senha antiga, e, em seguida, digite a nova senha "
-#~ "duas vezes para verificar se está digitado corretamente."
+msgid ""
+"Please enter your old password, and then enter your new password twice to "
+"verify it is typed in correctly."
+msgstr ""
+"Por favor digite sua senha antiga, e, em seguida, digite a nova senha "
+"duas vezes para verificar se está digitado corretamente."
 
-#~ msgid "Password (again)"
-#~ msgstr "Senha (novamente)"
+msgid "Password (again)"
+msgstr "Senha (novamente)"
 
-#~ msgid "minutes,"
-#~ msgstr "minutos,"
+msgid "minutes,"
+msgstr "minutos,"
 
-#~ msgid "Create ZFS zvol"
-#~ msgstr "Criar ZFS zvol"
+msgid "Create ZFS zvol"
+msgstr "Criar ZFS zvol"
 
-#~ msgid "Add ZVol"
-#~ msgstr "Adicionar ZVol"
+msgid "Add ZVol"
+msgstr "Adicionar ZVol"
 
-#~ msgid "English"
-#~ msgstr "Inglês"
+msgid "English"
+msgstr "Inglês"
 
-#~ msgid "Level"
-#~ msgstr "Nível"
+msgid "Level"
+msgstr "Nível"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "Adicionar Link Aggregation"
+msgid "Add Link Aggregation"
+msgstr "Adicionar Link Aggregation"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "Visualizar todas as interfaces"
+msgid "View All Interfaces"
+msgstr "Visualizar todas as interfaces"
 
-#~ msgid "View All VLANs"
-#~ msgstr "Visualizar todas as redes virtuais"
+msgid "View All VLANs"
+msgstr "Visualizar todas as redes virtuais"
 
-#~ msgid "View All Static Routes"
-#~ msgstr "Visualizar todas as rotas estáticas"
+msgid "View All Static Routes"
+msgstr "Visualizar todas as rotas estáticas"
 
-#~ msgid "Windows Version"
-#~ msgstr "Versão do Windows"
+msgid "Windows Version"
+msgstr "Versão do Windows"
 
-#~ msgid "The version of Microsoft Windows that Active Directory is running."
-#~ msgstr "Versão do Microsoft Windows que o Active Directory está rodando."
+msgid "The version of Microsoft Windows that Active Directory is running."
+msgstr "Versão do Microsoft Windows que o Active Directory está rodando."
 
-#~ msgid "Service Principal Name"
-#~ msgstr "Nome do Serviço Principal"
+msgid "Service Principal Name"
+msgstr "Nome do Serviço Principal"
 
-#~ msgid "Service Principal Name, eg service/account."
-#~ msgstr "Nome do Serviço Principal, ex: serviço/conta."
+msgid "Service Principal Name, eg service/account."
+msgstr "Nome do Serviço Principal, ex: serviço/conta."
 
-#~ msgid "Service Principal Name Password"
-#~ msgstr "Senha do Serviço Principal"
+msgid "Service Principal Name Password"
+msgstr "Senha do Serviço Principal"
 
-#~ msgid "Password of the Service Principal Name account."
-#~ msgstr "Senha da conta do Serviço Principal."
+msgid "Password of the Service Principal Name account."
+msgstr "Senha da conta do Serviço Principal."
 
-#~ msgid "Kerberos Keytab File"
-#~ msgstr "Arquivo Kerberos Keytab"
+msgid "Kerberos Keytab File"
+msgstr "Arquivo Kerberos Keytab"
 
-#~ msgid ""
-#~ "The kerberos keytab file that was generated on the Active Directory "
-#~ "server."
-#~ msgstr ""
-#~ "Arquivo kerberos keytab que foi gerado no servidor Active Directory."
+msgid ""
+"The kerberos keytab file that was generated on the Active Directory "
+"server."
+msgstr ""
+"Arquivo kerberos keytab que foi gerado no servidor Active Directory."
 
-#~ msgid "Auxillary Parameters"
-#~ msgstr "Parâmetros Auxiliares"
+msgid "Auxillary Parameters"
+msgstr "Parâmetros Auxiliares"
 
-#~ msgid "Volume Path"
-#~ msgstr "Caminho do Volume"
+msgid "Volume Path"
+msgstr "Caminho do Volume"
 
-#~ msgid "View All UNIX Shares"
-#~ msgstr "Visualizar Todos compartilhamentos UNIX"
+msgid "View All UNIX Shares"
+msgstr "Visualizar Todos compartilhamentos UNIX"
 
-#~ msgid "View All Apple Shares"
-#~ msgstr "Visualizar Todos os Compartilhamentos Apple"
+msgid "View All Apple Shares"
+msgstr "Visualizar Todos os Compartilhamentos Apple"
 
-#~ msgid "View All Windows Shares"
-#~ msgstr "Visualizar Todos os compartilhamentos Windows"
+msgid "View All Windows Shares"
+msgstr "Visualizar Todos os compartilhamentos Windows"
 
-#~ msgid "Read"
-#~ msgstr "Ler"
+msgid "Read"
+msgstr "Ler"
 
-#~ msgid "Write"
-#~ msgstr "Escrita"
+msgid "Write"
+msgstr "Escrita"
 
-#~ msgid "Execute"
-#~ msgstr "Executar"
+msgid "Execute"
+msgstr "Executar"
 
-#~ msgid "Owner"
-#~ msgstr "Proprietário"
+msgid "Owner"
+msgstr "Proprietário"
 
-#~ msgid "Other"
-#~ msgstr "Outros"
+msgid "Other"
+msgstr "Outros"
 
-#~ msgid "Disks"
-#~ msgstr "Discos"
+msgid "Disks"
+msgstr "Discos"
 
-#~ msgid "View All Periodic Snapshot Tasks"
-#~ msgstr "Visualizar todas as taredas períodicas de Snapshots"
+msgid "View All Periodic Snapshot Tasks"
+msgstr "Visualizar todas as taredas períodicas de Snapshots"
 
-#~ msgid "sucessfully edited"
-#~ msgstr "editado com sucesso"
+msgid "sucessfully edited"
+msgstr "editado com sucesso"
 
-#~ msgid "Lagg Interface was successfully added"
-#~ msgstr "Interface Lagg foi adicionada com sucesso"
+msgid "Lagg Interface was successfully added"
+msgstr "Interface Lagg foi adicionada com sucesso"
 
-#~ msgid "ActiveDirectory Settings"
-#~ msgstr "Configurações do ActiveDirectory"
+msgid "ActiveDirectory Settings"
+msgstr "Configurações do ActiveDirectory"

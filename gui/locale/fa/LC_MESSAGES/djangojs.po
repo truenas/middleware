@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-09 13:51-0700\n"
+"POT-Creation-Date: 2011-10-19 02:02-0700\n"
 "PO-Revision-Date: 2011-06-15 11:31+0200\n"
 "Last-Translator: Mohsen <nulloxide@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,74 +18,74 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Pootle 2.1.6\n"
 
-#: media/lib/js/freeadmin.js:114
+#: media/lib/js/freeadmin.js:127
 #, fuzzy
 msgid "Reporting"
 msgstr "گزارش"
 
-#: media/lib/js/freeadmin.js:126
+#: media/lib/js/freeadmin.js:139
 #, fuzzy
 msgid "Settings"
 msgstr "تنظیمات"
 
-#: media/lib/js/freeadmin.js:137
+#: media/lib/js/freeadmin.js:150
 #, fuzzy
 msgid "System Information"
 msgstr "اطلاعات سیستم "
 
-#: media/lib/js/freeadmin.js:177
+#: media/lib/js/freeadmin.js:190
 #, fuzzy
 msgid "Network Settings"
 msgstr "تنظیمات شبکه"
 
-#: media/lib/js/freeadmin.js:239
+#: media/lib/js/freeadmin.js:254
 #, fuzzy
 msgid "Services"
 msgstr "خدمات"
 
-#: media/lib/js/freeadmin.js:279
+#: media/lib/js/freeadmin.js:295
 #, fuzzy
 msgid "Account"
 msgstr "حساب کاربری"
 
-#: media/lib/js/freeadmin.js:318
+#: media/lib/js/freeadmin.js:334
 msgid "Storage"
 msgstr ""
 
-#: media/lib/js/freeadmin.js:385
+#: media/lib/js/freeadmin.js:401
 msgid "CronJobs"
 msgstr ""
 
-#: media/lib/js/freeadmin.js:437
+#: media/lib/js/freeadmin.js:555
 msgid "Edit"
 msgstr ""
 
-#: media/lib/js/freeadmin.js:439
+#: media/lib/js/freeadmin.js:557
 #, fuzzy
 msgid "Edit Disk"
 msgstr "ویرایش دیسک"
 
-#: media/lib/js/freeadmin.js:443
+#: media/lib/js/freeadmin.js:561
 #, fuzzy
 msgid "Replace"
 msgstr "جایگزین کردن"
 
-#: media/lib/js/freeadmin.js:444
+#: media/lib/js/freeadmin.js:562
 #, fuzzy
 msgid "Disk Replacement"
 msgstr "جایگزین دیسک"
 
-#: media/lib/js/freeadmin.js:448
+#: media/lib/js/freeadmin.js:566
 #, fuzzy
 msgid "Detach"
 msgstr "جدا کردن"
 
-#: media/lib/js/freeadmin.js:449
+#: media/lib/js/freeadmin.js:567
 #, fuzzy
 msgid "Disk Detach"
 msgstr "جدا کردن دیسک"
 
-#: media/lib/js/freeadmin.js:635
+#: media/lib/js/freeadmin.js:747
 msgid "An error occurred!"
 msgstr ""
 
@@ -93,6 +93,6 @@ msgstr ""
 msgid "Each selected"
 msgstr ""
 
-#: media/lib/js/freeadmin/form/Cron.js:90
+#: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr ""

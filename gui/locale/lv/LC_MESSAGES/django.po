@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-19 11:49-0200\n"
-"PO-Revision-Date: 2011-06-18 22:10+0200\n"
+"PO-Revision-Date: 2011-07-07 18:00+0200\n"
 "Last-Translator: ok1 <ok1@trups.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lv\n"
@@ -4849,32 +4849,28 @@ msgid "Mailing Lists"
 msgstr "Adresātu saraksts"
 
 #: templates/freeadmin/index.html:90
-#, fuzzy
 msgid "FreeNAS Announce"
-msgstr "Pasludina"
+msgstr "FreeNAS Pasludina"
 
 #: templates/freeadmin/index.html:91
-#, fuzzy
 msgid "FreeNAS Commit"
-msgstr "Nodod"
+msgstr "FreeNAS Nodod"
 
 #: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
-msgstr ""
+msgstr "FreeNAS Izstrāde"
 
 #: templates/freeadmin/index.html:93
-#, fuzzy
 msgid "FreeNAS Testing"
-msgstr "Testēšana"
+msgstr "FreeNAS Testēšana"
 
 #: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
-msgstr ""
+msgstr "FreeNAS Dokumenti"
 
 #: templates/freeadmin/index.html:95
-#, fuzzy
 msgid "FreeNAS Translations"
-msgstr "Tulkojumi"
+msgstr "FreeNAS Tulkojumi"
 
 #: templates/freeadmin/index.html:100
 msgid "Support Issues"
@@ -4889,9 +4885,8 @@ msgid "Documentation"
 msgstr "Dokumentācija"
 
 #: templates/freeadmin/index.html:109
-#, fuzzy
 msgid "FreeNAS Documentation"
-msgstr "Dokumentācija"
+msgstr "FreeNAS Dokumentācija"
 
 #: templates/network/interface.html:9
 msgid "IPv6 Auto"
@@ -5864,120 +5859,120 @@ msgstr ""
 msgid "Critical Alerts"
 msgstr "Kritisks"
 
-#~ msgid "%s successfully added."
-#~ msgstr "%s veiksmīgi pievienots."
+msgid "%s successfully added."
+msgstr "%s veiksmīgi pievienots."
 
-#~ msgid "IPv6 Netmask"
-#~ msgstr "IPv6 Tīkla maska"
+msgid "IPv6 Netmask"
+msgstr "IPv6 Tīkla maska"
 
-#~ msgid "This value must be between 0 and 10000, inclusive."
-#~ msgstr "Šai vērtībai jābūt no 0 līdz 10000, ieskaitot."
+msgid "This value must be between 0 and 10000, inclusive."
+msgstr "Šai vērtībai jābūt no 0 līdz 10000, ieskaitot."
 
-#~ msgid "This value must be between 0 and 1000, inclusive."
-#~ msgstr "Šai vērtībai jābūt no 0 līdz 1000 ieskaitot."
+msgid "This value must be between 0 and 1000, inclusive."
+msgstr "Šai vērtībai jābūt no 0 līdz 1000 ieskaitot."
 
-#~ msgid "Enable DDP"
-#~ msgstr "Iespējot DDP"
+msgid "Enable DDP"
+msgstr "Iespējot DDP"
 
-#~ msgid "Enables DDP support for low-level appletalk access."
-#~ msgstr "Iespējot DDP adbalstu zemā-līmeņa appletalk pieejai."
+msgid "Enables DDP support for low-level appletalk access."
+msgstr "Iespējot DDP adbalstu zemā-līmeņa appletalk pieejai."
 
-#~ msgid "Turn on/off TLS"
-#~ msgstr "Ieslēgt/Izslēgt TLS"
+msgid "Turn on/off TLS"
+msgstr "Ieslēgt/Izslēgt TLS"
 
-#~ msgid "Rsyncd"
-#~ msgstr "Rsyncd"
+msgid "Rsyncd"
+msgstr "Rsyncd"
 
-#~ msgid "Windows Share"
-#~ msgstr "Windows Kopīgojums"
+msgid "Windows Share"
+msgstr "Windows Kopīgojums"
 
-#~ msgid "Windows Shares"
-#~ msgstr "Windows Kopīgojumi"
+msgid "Windows Shares"
+msgstr "Windows Kopīgojumi"
 
-#~ msgid "The volume failed to export"
-#~ msgstr "Sējumam neizdevās eksportēties"
+msgid "The volume failed to export"
+msgstr "Sējumam neizdevās eksportēties"
 
-#~ msgid "Cron Scheduler"
-#~ msgstr "Cron Plānotājs"
+msgid "Cron Scheduler"
+msgstr "Cron Plānotājs"
 
-#~ msgid "Devel"
-#~ msgstr "Izstrāde"
+msgid "Devel"
+msgstr "Izstrāde"
 
-#~ msgid "Docs"
-#~ msgstr "Dokumenti"
+msgid "Docs"
+msgstr "Dokumenti"
 
-#~ msgid "Welcome to"
-#~ msgstr "Sveicināts8"
+msgid "Welcome to"
+msgstr "Sveicināts8"
 
-#~ msgid "LUN"
-#~ msgstr "LUN"
+msgid "LUN"
+msgstr "LUN"
 
-#~ msgid "Mount point"
-#~ msgstr "Montēšanas punkts"
+msgid "Mount point"
+msgstr "Montēšanas punkts"
 
-#~ msgid "Dataset name"
-#~ msgstr "Datu kopas nosaukums"
+msgid "Dataset name"
+msgstr "Datu kopas nosaukums"
 
-#~ msgid "Snapshot name"
-#~ msgstr "Uzņēmuma nosaukums"
+msgid "Snapshot name"
+msgstr "Uzņēmuma nosaukums"
 
-#~ msgid "Used space"
-#~ msgstr "Lietotā vieta"
+msgid "Used space"
+msgstr "Lietotā vieta"
 
-#~ msgid "Referenced space"
-#~ msgstr "Norādes vieta"
+msgid "Referenced space"
+msgstr "Norādes vieta"
 
-#~ msgid "No ZFS snapshot available"
-#~ msgstr "Nav pieejamu ZFS uzņēmumu"
+msgid "No ZFS snapshot available"
+msgstr "Nav pieejamu ZFS uzņēmumu"
 
-#~ msgid "Create Periodic Snapshot"
-#~ msgstr "Veidot Periodisko Uzņēmumu"
+msgid "Create Periodic Snapshot"
+msgstr "Veidot Periodisko Uzņēmumu"
 
-#~ msgid "Restore to Factory Defaults"
-#~ msgstr "Atjaunot uz Rūpnīcas Iestatījumiem"
+msgid "Restore to Factory Defaults"
+msgstr "Atjaunot uz Rūpnīcas Iestatījumiem"
 
-#~ msgid "Config"
-#~ msgstr "Konfigurācija"
+msgid "Config"
+msgstr "Konfigurācija"
 
-#~ msgid "OS Version"
-#~ msgstr "OS versija"
+msgid "OS Version"
+msgstr "OS versija"
 
-#~ msgid "%s successfully update."
-#~ msgstr "%s veiksmīgi atjaunināts."
+msgid "%s successfully update."
+msgstr "%s veiksmīgi atjaunināts."
 
-#~ msgid "Admin user"
-#~ msgstr "Administrātora lietotājs"
+msgid "Admin user"
+msgstr "Administrātora lietotājs"
 
-#~ msgid "N/A"
-#~ msgstr "N/A"
+msgid "N/A"
+msgstr "N/A"
 
-#~ msgid ""
-#~ "Use this option to override the username ('www' by default) which will be "
-#~ "used for access to services which are specified as guest. Whatever "
-#~ "privileges this user has will be available to any client connecting to "
-#~ "the guest service. This user must exist in the password file, but does "
-#~ "not require a valid login."
-#~ msgstr ""
-#~ "Lieto šo iespēju, lai ignorētu lietotājvārdu ('www', pēc noklusējuma), "
-#~ "kurš tiks lietots piekļuvei priekš servisiem, kuri ir norādīti kā viesa. "
-#~ "Jebkuras privilēģijas, kuras ir šim lietotājam, būs pieejamas jebkuram "
-#~ "klientam, kurš savienosies ar viesa servisu. Šim lietotājam ir jāeksistē "
-#~ "paroļu datnē, bet nevajag derīgu autorizāciju."
+msgid ""
+"Use this option to override the username ('www' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to "
+"the guest service. This user must exist in the password file, but does "
+"not require a valid login."
+msgstr ""
+"Lieto šo iespēju, lai ignorētu lietotājvārdu ('www', pēc noklusējuma), "
+"kurš tiks lietots piekļuvei priekš servisiem, kuri ir norādīti kā viesa. "
+"Jebkuras privilēģijas, kuras ir šim lietotājam, būs pieejamas jebkuram "
+"klientam, kurš savienosies ar viesa servisu. Šim lietotājam ir jāeksistē "
+"paroļu datnē, bet nevajag derīgu autorizāciju."
 
-#~ msgid "ZVol Name"
-#~ msgstr "ZVol vārds"
+msgid "ZVol Name"
+msgstr "ZVol vārds"
 
-#~ msgid "English"
-#~ msgstr "Angļu"
+msgid "English"
+msgstr "Angļu"
 
-#~ msgid "Level"
-#~ msgstr "Līmenis"
+msgid "Level"
+msgstr "Līmenis"
 
-#~ msgid "Add Link Aggregation"
-#~ msgstr "Pievienot saišu savākšanu"
+msgid "Add Link Aggregation"
+msgstr "Pievienot saišu savākšanu"
 
-#~ msgid "View All Interfaces"
-#~ msgstr "Skatīt visus saskarnes"
+msgid "View All Interfaces"
+msgstr "Skatīt visus saskarnes"
 
-#~ msgid "View All VLANs"
-#~ msgstr "Skatīt visus VLAN"
+msgid "View All VLANs"
+msgstr "Skatīt visus VLAN"
