@@ -185,7 +185,6 @@ CR()
 	mount -t devfs none $NANO_WORLDDIR/dev
 	(set -e
 	 env
-	 unset ENV
 	 export UNAME_m=$NANO_ARCH
 	 export UNAME_p=$NANO_ARCH
 	 export UNAME_r="$revision-$branch"
