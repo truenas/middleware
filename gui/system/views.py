@@ -239,13 +239,16 @@ def shutdown_run(request):
 def testmail(request):
 
     error = False
-    errmsg = ''
     if request.is_ajax():
         sw_name = get_sw_name()
         error, errmsg = send_mail(subject=_('Test message from %s'
                                             % (sw_name)),
                                   text=_('This is a message test from %s'
                                          % (sw_name, )))
+    if error:
+        errmsg = _("Your test email could not be sent: %s") % errmsg
+    else:
+        errmsg = _('Your test email has been sent!')
 
     return JsonResponse(error=error, message=errmsg)
 
