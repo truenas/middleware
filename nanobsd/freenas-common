@@ -364,18 +364,6 @@ add_data_to_fstab ( )
 }
 customize_cmd add_data_to_fstab
 
-fix_mt_daapd ( )
-{
-	# Create database directory, for some reason the port/pkg doesn't
-	# do this
-	mkdir -p ${NANO_WORLDDIR}/var/db/mt-daapd
-	# Use the sample config as the actual config
-	# XXX: maybe this should move to common files?
-	cp  ${NANO_WORLDDIR}/usr/local/etc/mt-daapd.conf.sample \
-	    ${NANO_WORLDDIR}/usr/local/etc/mt-daapd.conf
-}
-# customize_cmd fix_mt_daapd
-
 afpd_conf_symlink ( )
 {
 	ln -sfh /etc/afpd.conf ${NANO_WORLDDIR}/usr/local/etc/afpd.conf
