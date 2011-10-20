@@ -1,25 +1,11 @@
 {% extends "freeadmin/generic_model_edit.html" %}
 {% load i18n %}
 {% block buttons_extra %}
-            <button dojoType="dijit.form.Button"> 
+            <button dojoType="dijit.form.Button">
                 <script type="dojo/event" event="onClick" args="e">
-                    var sendbtn = this;
-                    this.set('disabled', true);
                     form = getForm(this);
                     data = form.get('value');
-                    dojo.xhrPost( {
-                        url: '{% url system_testmail %}',
-                        handleAs: 'json',
-                        content: data,
-                        load: function(data) { 
-                            sendbtn.set('disabled', false);
-                            if(!data.error) {
-                                setMessage("{% trans "Your test email has been sent!"|force_escape %}");
-                            } else {
-                                setMessage("{% trans "Your test email could not be sent:"|force_escape %} "+data.errmsg, "error");
-                            }
-                        },
-                     });
+                    formSubmit(form, e, '{% url system_testmail %}{% if inline %}?inline=true{% endif %}');
                 </script>
             {% trans "Send Test Mail" %}
             </button>

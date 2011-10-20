@@ -42,10 +42,11 @@ from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
 
-from freenasUI.system import forms, models
-from freenasUI.middleware.notifier import notifier
 from freenasUI.common.system import get_sw_name, get_sw_version, send_mail
+from freenasUI.freeadmin.views import JsonResponse
+from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
+from freenasUI.system import forms, models
 
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
@@ -246,10 +247,7 @@ def testmail(request):
                                   text=_('This is a message test from %s'
                                          % (sw_name, )))
 
-    return HttpResponse(simplejson.dumps({
-        'error': error,
-        'errmsg': errmsg,
-        }))
+    return JsonResponse(error=error, message=errmsg)
 
 def clearcache(request):
 
