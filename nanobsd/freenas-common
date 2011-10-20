@@ -399,3 +399,22 @@ save_build ( )
 	fi
 }
 customize_cmd save_build
+
+configure_pbi_manager()
+{
+	local sbin links
+	sbin=${NANO_WORLDDIR}/usr/local/sbin/
+	links="pbi_add pbi_addrepo pbi_browser pbi_autobuild \
+		pbi_delete pbi_deleterepo pbi_icon pbi_info pbi_indextool \
+		pbi_listrepo pbi_makepatch pbi_makeport pbi_makerepo \
+		pbi_metatool pbi_patch pbi_update pbi_update_hashdir \
+		pbid pbi-crashhandler"
+
+	cp ${sbin}/pbi-manager ${sbin}/pbi_create
+	for l in ${links}
+	do
+		ln -f ${sbin}/pbi_create ${sbin}/${l}
+	done	
+	rm ${sbin}/pbi-manager
+}
+customize_cmd configure_pbi_manager
