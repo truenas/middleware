@@ -453,8 +453,8 @@ def zfsvolume_edit(request, object_id):
                 else:
                     error |= not notifier().zfs_set_option(volume_name, attr, volume_form.cleaned_data[formfield])
 
-            error |= not notifier().zfs_set_option(volume_name, "refreservation", volume_form.cleaned_data["volume_refreservation"])
             error |= not notifier().zfs_set_option(volume_name, "refquota", volume_form.cleaned_data["volume_refquota"])
+            error |= not notifier().zfs_set_option(volume_name, "refreservation", volume_form.cleaned_data["volume_refreservation"])
 
             if not error:
                 return JsonResponse(message=_("Native dataset successfully edited."))

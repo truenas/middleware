@@ -816,8 +816,8 @@ class ZFSDataset_EditForm(Form):
 class ZFSVolume_EditForm(Form):
     volume_compression = forms.ChoiceField(choices=choices.ZFS_CompressionChoices, widget=forms.Select(attrs=attrs_dict), label=_('Compression level'))
     volume_atime = forms.ChoiceField(choices=choices.ZFS_AtimeChoices, widget=forms.RadioSelect(attrs=attrs_dict), label=_('Enable atime'))
-    volume_refquota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this dataset'), help_text=_('0=Unlimited; example: 1g'))
-    volume_refreservation = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this dataset'), help_text=_('0=None; example: 1g'))
+    volume_refquota = forms.CharField(max_length = 128, initial=0, label=_('Quota for this volume'), help_text=_('0=Unlimited; example: 1g'))
+    volume_refreservation = forms.CharField(max_length = 128, initial=0, label=_('Reserved space for this volume'), help_text=_('0=None; example: 1g'))
 
     def __init__(self, *args, **kwargs):
         self._mp = kwargs.pop("mp", None)
