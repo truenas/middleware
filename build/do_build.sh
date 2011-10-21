@@ -40,7 +40,7 @@ EOF
 	exit 1
 }
 
-while getopts 'Bfj:uU' optch; do
+while getopts 'Bfj:u' optch; do
 	case "$optch" in
 	B)
 		info "will not build"
