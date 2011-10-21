@@ -138,7 +138,7 @@ class notifier:
             'ssh': ('sshd', '/var/run/sshd.pid'),
             'rsync': ('rsync', '/var/run/rsyncd.pid'),
             'nfs': ('nfsd', None),
-            'afp': ('afpd', '/var/run/afpd.pid'),
+            'afp': ('afpd', None),
             'cifs': ('smbd', '/var/run/samba/smbd.pid'),
             'dynamicdns': ('inadyn', None),
             'snmp': ('bsnmpd', '/var/run/snmpd.pid'),
@@ -480,24 +480,25 @@ class notifier:
         self.__system("/usr/sbin/service avahi-daemon quietstart")
         self.__system("/usr/sbin/service netatalk quietstart")
 
-    def _restart_afp(self):
-        self.__system("/usr/sbin/service ix-afpd quietstart")
-        self.__system("/usr/sbin/service netatalk forcestop")
-        self.__system("/usr/sbin/service dbus forcestop")
-        self.__system("/usr/sbin/service dbus restart")
+    def _start_afp(self):
+        self.__system("/usr/sbin/service ix-afpd start")
+        self.__system("/usr/sbin/service dbus start")
+        self.__system("/usr/sbin/service avahi-daemon start")
+        self.__system("/usr/sbin/service netatalk start")
+
+    def _stop_afp(self):
+        # XXX: fix rc.d/netatalk to honor the force verbs properly.
+        self.__system("killall afpd")
         self.__system("/usr/sbin/service avahi-daemon forcestop")
-        self.__system("/usr/sbin/service avahi-daemon restart")
-        self.__system("/usr/sbin/service netatalk restart")
+        self.__system("/usr/sbin/service dbus forcestop")
+
+    def _restart_afp(self):
+        self._stop_afp()
+        self._start_afp()
 
     def _reload_afp(self):
         self.__system("/usr/sbin/service ix-afpd quietstart")
-        if os.path.isfile("/var/run/afpd.pid"):
-            pid = open("/var/run/afpd.pid", "r").read().strip()
-            try:
-                os.kill(int(pid), signal.SIGHUP)
-            except:
-                pass
-            pid.close()
+        self.__system("killall -1 afpd")
 
     def _reload_nfs(self):
         self.__system("/usr/sbin/service ix-nfsd quietstart")
