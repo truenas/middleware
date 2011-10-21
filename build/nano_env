@@ -22,11 +22,9 @@ NANO_OBJ=${FREENAS_ROOT}/obj.${NANO_ARCH}
 NANO_CFG_BASE=$FREENAS_ROOT/nanobsd
 
 # Where the FreeBSD ports tree lives.
-#NANO_PORTS="$FREENAS_ROOT/FreeBSD/union/ports"
 NANO_PORTS="$FREENAS_ROOT/FreeBSD/ports"
 
 # Where the FreeBSD source tree lives.
-#NANO_SRC="$FREENAS_ROOT/FreeBSD/union/src"
 NANO_SRC="$FREENAS_ROOT/FreeBSD/src"
 
 # REVISION gets overloaded when doing tagged versions, SVNREVISION allows

@@ -30,7 +30,6 @@ if [ -f FreeBSD/supfile ]; then
 else
 	UPDATE=true
 fi
-USE_UNIONFS=false
 
 usage() {
 	cat <<EOF
@@ -60,17 +59,6 @@ while getopts 'Bfj:uU' optch; do
 	u)
 		UPDATE=true
 		;;
-	U)
-		# This is undocumented for a very good reason. Use CPUS=1 for
-		# known stability if you wish to try this feature.
-		cat <<EOF
-By pressing enter you understand that this does the unionfs optimization not
-work on all filesystems (e.g. UFS SUJ on 9.x-BETA*) with all -j values.
-EOF
-		read junk
-		UPDATE=true
-		USE_UNIONFS=true
-		;;
 	\?)
 		usage
 		;;
@@ -81,12 +69,6 @@ shift $(( $OPTIND - 1 ))
 set -e
 
 requires_root
-
-if $USE_UNIONFS; then
-	if ! kldstat -v | grep -q unionfs; then
-		error "You must load the unionfs module before executing $0!"
-	fi
-fi
 
 if $UPDATE; then
 	if [ -z "$FREEBSD_CVSUP_HOST" ]; then
@@ -109,80 +91,29 @@ src-all tag=RELENG_8_2
 ports-all date=2011.07.17.00.00.00
 EOF
 	csup -L 1 $SUPFILE
-	if $USE_UNIONFS; then
-		:
-	else
-		# Force a repatch because csup pulls pristine sources.
-		: > $FREENAS_ROOT/FreeBSD/src-patches
-		: > $FREENAS_ROOT/FreeBSD/ports-patches
-		# Nuke the newly created files to avoid build errors, as
-		# patch(1) will automatically append to the previously
-		# non-existent file.
-		for file in $(find FreeBSD/ -name '*.orig' -size 0); do
-			rm -f "$(echo "$file" | sed -e 's/.orig//')"
-		done
-	fi
-fi
-
-if $USE_UNIONFS; then
-	# Use unionfs to manage local changes applied via patch to the source.
-	#
-	# This was born out of an annoyance with nuking the entire tree to get
-	# a deterministic state and with other delightfully stupid hacks I
-	# employed to deal with patches being auto-appended.
-	#
-	# Make modifications to $NANO_SRC and $NANO_PORTS, not the files under
-	# $FREENAS_ROOT/FreeBSD/{src,ports} if you use this.
-
-	for uniondir in $NANO_SRC $NANO_PORTS; do
-		type=$(basename $uniondir)
-
-		if $USE_UNIONFS; then
-			md_dev_file=$FREENAS_ROOT/FreeBSD/md-dev.$type
-			if [ -f "$md_dev_file" ]; then
-				mdconfig -d -u "$(cat $md_dev_file)"
-			fi
-			rm -f $md_dev_file
-		fi
-
-		if [ -d $uniondir ]; then
-			while mount | grep $uniondir; do
-				umount $uniondir
-			done
-		fi
-		rm -Rf $FREENAS_ROOT/FreeBSD/touched/$type
-		mkdir -p $FREENAS_ROOT/FreeBSD/touched/$type
-		if [ ! -d $uniondir ]; then
-			mkdir -p $uniondir
-		fi
-
-		mount -t unionfs $FREENAS_ROOT/FreeBSD/$type $uniondir
-		mount -t unionfs $FREENAS_ROOT/FreeBSD/touched/$type $uniondir
+	# Force a repatch because csup pulls pristine sources.
+	: > $FREENAS_ROOT/FreeBSD/src-patches
+	: > $FREENAS_ROOT/FreeBSD/ports-patches
+	# Nuke the newly created files to avoid build errors, as
+	# patch(1) will automatically append to the previously
+	# non-existent file.
+	for file in $(find FreeBSD/ -name '*.orig' -size 0); do
+		rm -f "$(echo "$file" | sed -e 's/.orig//')"
 	done
 fi
 
 for patch in $(cd $FREENAS_ROOT/patches && ls freebsd-*.patch); do
-	if $USE_UNIONFS; then
+	if ! grep -q $patch $FREENAS_ROOT/FreeBSD/src-patches; then
 		echo "Applying patch $patch..."
-		(cd $NANO_SRC && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
-	else
-		if ! grep -q $patch $FREENAS_ROOT/FreeBSD/src-patches; then
-			echo "Applying patch $patch..."
-			(cd FreeBSD/src && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
-			echo $patch >> $FREENAS_ROOT/FreeBSD/src-patches
-		fi
+		(cd FreeBSD/src && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
+		echo $patch >> $FREENAS_ROOT/FreeBSD/src-patches
 	fi
 done
 for patch in $(cd $FREENAS_ROOT/patches && ls ports-*.patch); do
-	if $USE_UNIONFS; then
+	if ! grep -q $patch $FREENAS_ROOT/FreeBSD/ports-patches; then
 		echo "Applying patch $patch..."
-		(cd $NANO_PORTS && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
-	else
-		if ! grep -q $patch $FREENAS_ROOT/FreeBSD/ports-patches; then
-			echo "Applying patch $patch..."
-			(cd FreeBSD/ports && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
-			echo $patch >> $FREENAS_ROOT/FreeBSD/ports-patches
-		fi
+		(cd FreeBSD/ports && patch -E -p0 < $FREENAS_ROOT/patches/$patch)
+		echo $patch >> $FREENAS_ROOT/FreeBSD/ports-patches
 	fi
 done
 
