@@ -1,10 +1,9 @@
-diff -urN rsync.orig/files/patch-nfs4-acl rsync/files/patch-nfs4-acl
---- net/rsync.orig/files/patch-nfs4-acl	1969-12-31 16:00:00.000000000 -0800
-+++ net/rsync/files/patch-nfs4-acl	2011-10-20 20:56:54.000000000 -0700
-@@ -0,0 +1,594 @@
-+diff -urN -x '*.orig' rsync-3.0.8.orig/acls.c rsync-3.0.8/acls.c
-+--- rsync-3.0.8.orig/acls.c	2011-09-21 22:41:21.000000000 -0700
-++++ rsync-3.0.8/acls.c	2011-10-20 20:52:14.320751094 -0700
+diff -urN net/rsync.orig/files/patch-acls.c net/rsync/files/patch-acls.c
+--- net/rsync.orig/files/patch-acls.c	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-acls.c	2011-10-20 22:44:22.000000000 -0700
+@@ -0,0 +1,369 @@
++--- ./acls.c.orig	2011-09-21 22:41:21.000000000 -0700
+++++ ./acls.c	2011-10-20 20:52:14.320751094 -0700
 +@@ -79,20 +79,35 @@
 + 	uchar other_obj;
 + } rsync_acl;
@@ -372,9 +371,12 @@ diff -urN rsync.orig/files/patch-nfs4-acl rsync/files/patch-nfs4-acl
 + 	ndx = F_ACL(file);
 + 	if (ndx >= 0 && (size_t)ndx < access_acl_list.count) {
 + 		acl_duo *duo_item = access_acl_list.items;
-+diff -urN -x '*.orig' rsync-3.0.8.orig/backup.c rsync-3.0.8/backup.c
-+--- rsync-3.0.8.orig/backup.c	2010-07-03 09:19:01.000000000 -0700
-++++ rsync-3.0.8/backup.c	2011-10-20 20:52:14.320751094 -0700
+diff -urN net/rsync.orig/files/patch-backup.c net/rsync/files/patch-backup.c
+--- net/rsync.orig/files/patch-backup.c	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-backup.c	2011-10-20 22:44:22.000000000 -0700
+@@ -0,0 +1,19 @@
++--- ./backup.c.orig	2010-07-03 09:19:01.000000000 -0700
+++++ ./backup.c	2011-10-20 20:52:14.320751094 -0700
 +@@ -139,6 +139,8 @@
 + 			} else {
 + #ifdef SUPPORT_ACLS
@@ -392,9 +394,12 @@ diff -urN rsync.orig/files/patch-nfs4-acl rsync/files/patch-nfs4-acl
 + #endif
 + #ifdef SUPPORT_XATTRS
 + 	sx.xattr = NULL;
-+diff -urN -x '*.orig' rsync-3.0.8.orig/flist.c rsync-3.0.8/flist.c
-+--- rsync-3.0.8.orig/flist.c	2011-09-21 22:41:21.000000000 -0700
-++++ rsync-3.0.8/flist.c	2011-10-20 20:52:14.320751094 -0700
+diff -urN net/rsync.orig/files/patch-flist.c net/rsync/files/patch-flist.c
+--- net/rsync.orig/files/patch-flist.c	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-flist.c	2011-10-20 22:44:22.000000000 -0700
+@@ -0,0 +1,10 @@
++--- ./flist.c.orig	2011-09-21 22:41:21.000000000 -0700
+++++ ./flist.c	2011-10-20 20:52:14.320751094 -0700
 +@@ -1455,6 +1455,7 @@
 + 		if (preserve_acls && !S_ISLNK(file->mode)) {
 + 			sx.st.st_mode = file->mode;
@@ -403,9 +408,12 @@ diff -urN rsync.orig/files/patch-nfs4-acl rsync/files/patch-nfs4-acl
 + 			if (get_acl(fname, &sx) < 0) {
 + 				io_error |= IOERR_GENERAL;
 + 				return NULL;
-+diff -urN -x '*.orig' rsync-3.0.8.orig/generator.c rsync-3.0.8/generator.c
-+--- rsync-3.0.8.orig/generator.c	2011-09-21 22:41:21.000000000 -0700
-++++ rsync-3.0.8/generator.c	2011-10-20 20:52:14.330753469 -0700
+diff -urN net/rsync.orig/files/patch-generator.c net/rsync/files/patch-generator.c
+--- net/rsync.orig/files/patch-generator.c	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-generator.c	2011-10-20 22:44:22.000000000 -0700
+@@ -0,0 +1,11 @@
++--- ./generator.c.ori/g	2011-09-21 22:41:21.000000000 -0700
+++++ ./generator.c	2011-10-20 20:52:14.330753469 -0700
 +@@ -1363,6 +1363,8 @@
 + 
 + #ifdef SUPPORT_ACLS
@@ -415,9 +423,12 @@ diff -urN rsync.orig/files/patch-nfs4-acl rsync/files/patch-nfs4-acl
 + #endif
 + #ifdef SUPPORT_XATTRS
 + 	sx.xattr = NULL;
-+diff -urN -x '*.orig' rsync-3.0.8.orig/hlink.c rsync-3.0.8/hlink.c
-+--- rsync-3.0.8.orig/hlink.c	2010-06-30 09:17:26.000000000 -0700
-++++ rsync-3.0.8/hlink.c	2011-10-20 20:52:14.330753469 -0700
+diff -urN net/rsync.orig/files/patch-hlink.c net/rsync/files/patch-hlink.c
+--- net/rsync.orig/files/patch-hlink.c	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-hlink.c	2011-10-20 22:44:22.000000000 -0700
+@@ -0,0 +1,29 @@
++--- ./hlink.c.orig	2010-06-30 09:17:26.000000000 -0700
+++++ ./hlink.c	2011-10-20 20:52:14.330753469 -0700
 +@@ -373,6 +373,7 @@
 + 		int j = 0;
 + #ifdef SUPPORT_ACLS
@@ -445,9 +456,68 @@ diff -urN rsync.orig/files/patch-nfs4-acl rsync/files/patch-nfs4-acl
 + #endif
 + #ifdef SUPPORT_XATTRS
 + 	prev_sx.xattr = NULL;
-+diff -urN -x '*.orig' rsync-3.0.8.orig/lib/sysacls.c rsync-3.0.8/lib/sysacls.c
-+--- rsync-3.0.8.orig/lib/sysacls.c	2011-02-22 08:51:14.000000000 -0800
-++++ rsync-3.0.8/lib/sysacls.c	2011-10-20 20:52:18.170233113 -0700
+diff -urN net/rsync.orig/files/patch-main.c net/rsync/files/patch-main.c
+--- net/rsync.orig/files/patch-main.c	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-main.c	2011-10-20 22:44:22.000000000 -0700
+@@ -0,0 +1,10 @@
++--- ./main.c.orig	2011-09-21 22:41:21.000000000 -0700
+++++ ./main.c	2011-10-20 20:52:21.819732167 -0700
++@@ -932,6 +932,7 @@
++ 		rprintf(FERROR,"server_recv: recv_file_list error\n");
++ 		exit_cleanup(RERR_FILESELECT);
++ 	}
+++
++ 	if (inc_recurse && file_total == 1)
++ 		recv_additional_file_list(f_in);
++ 	verbose = save_verbose;
+diff -urN net/rsync.orig/files/patch-rsync.c net/rsync/files/patch-rsync.c
+--- net/rsync.orig/files/patch-rsync.c	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-rsync.c	2011-10-20 22:44:22.000000000 -0700
+@@ -0,0 +1,38 @@
++--- ./rsync.c.orig	2011-09-21 22:41:21.000000000 -0700
+++++ ./rsync.c	2011-10-20 20:52:21.829723926 -0700
++@@ -466,6 +466,8 @@
++ 		}
++ #ifdef SUPPORT_ACLS
++ 		sx2.acc_acl = sx2.def_acl = NULL;
+++		sx2.nfs4_acl = NULL;
+++		sys_acl_get_brand_file(fname, &sx2.brand);
++ #endif
++ #ifdef SUPPORT_XATTRS
++ 		sx2.xattr = NULL;
++@@ -573,10 +575,12 @@
++ 	 * If set_acl() changes permission bits in the process of setting
++ 	 * an access ACL, it changes sxp->st.st_mode so we know whether we
++ 	 * need to chmod(). */
+++/*
++ 	if (preserve_acls && !S_ISLNK(new_mode)) {
++ 		if (set_acl(fname, file, sxp, new_mode) > 0)
++ 			updated = 1;
++ 	}
+++*/
++ #endif
++ 
++ #ifdef HAVE_CHMOD
++@@ -611,6 +615,13 @@
++ 	}
++ #endif
++ 
+++#ifdef SUPPORT_ACLS
+++	if (preserve_acls && !S_ISLNK(new_mode)) {
+++		if (set_acl(fname, file, sxp, new_mode) > 0)
+++			updated = 1;
+++	}
+++#endif
+++
++ 	if (verbose > 1 && flags & ATTRS_REPORT) {
++ 		if (updated)
++ 			rprintf(FCLIENT, "%s\n", fname);
+diff -urN net/rsync.orig/files/patch-sysacls.c net/rsync/files/patch-sysacls.c
+--- net/rsync.orig/files/patch-sysacls.c	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-sysacls.c	2011-10-20 22:44:22.000000000 -0700
+@@ -0,0 +1,41 @@
++--- ./lib/sysacls.c.orig	2011-02-22 08:51:14.000000000 -0800
+++++ ./lib/sysacls.c	2011-10-20 20:52:18.170233113 -0700
 +@@ -80,12 +80,36 @@
 + 	return acl_get_file( path_p, type);
 + }
@@ -487,9 +557,12 @@ diff -urN rsync.orig/files/patch-nfs4-acl rsync/files/patch-nfs4-acl
 + 
 + #if defined(HAVE_ACL_GET_PERM_NP)
 + #define acl_get_perm(p, b) acl_get_perm_np(p, b)
-+diff -urN -x '*.orig' rsync-3.0.8.orig/lib/sysacls.h rsync-3.0.8/lib/sysacls.h
-+--- rsync-3.0.8.orig/lib/sysacls.h	2008-03-01 12:01:41.000000000 -0800
-++++ rsync-3.0.8/lib/sysacls.h	2011-10-20 20:52:21.819732167 -0700
+diff -urN net/rsync.orig/files/patch-sysacls.h net/rsync/files/patch-sysacls.h
+--- net/rsync.orig/files/patch-sysacls.h	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-sysacls.h	2011-10-20 22:44:22.000000000 -0700
+@@ -0,0 +1,31 @@
++--- ./lib/sysacls.h.orig	2008-03-01 12:01:41.000000000 -0800
+++++ ./lib/sysacls.h	2011-10-20 20:52:21.819732167 -0700
 +@@ -48,6 +48,7 @@
 + #define SMB_ACL_GROUP_OBJ	ACL_GROUP_OBJ
 + #define SMB_ACL_OTHER		ACL_OTHER
@@ -519,80 +592,3 @@ diff -urN rsync.orig/files/patch-nfs4-acl rsync/files/patch-nfs4-acl
 + int sys_acl_create_entry(SMB_ACL_T *pacl, SMB_ACL_ENTRY_T *pentry);
 + int sys_acl_set_info(SMB_ACL_ENTRY_T entry, SMB_ACL_TAG_T tagtype, uint32 bits, id_t u_g_id);
 + int sys_acl_set_access_bits(SMB_ACL_ENTRY_T entry, uint32 bits);
-+diff -urN -x '*.orig' rsync-3.0.8.orig/main.c rsync-3.0.8/main.c
-+--- rsync-3.0.8.orig/main.c	2011-09-21 22:41:21.000000000 -0700
-++++ rsync-3.0.8/main.c	2011-10-20 20:52:21.819732167 -0700
-+@@ -932,6 +932,7 @@
-+ 		rprintf(FERROR,"server_recv: recv_file_list error\n");
-+ 		exit_cleanup(RERR_FILESELECT);
-+ 	}
-++
-+ 	if (inc_recurse && file_total == 1)
-+ 		recv_additional_file_list(f_in);
-+ 	verbose = save_verbose;
-+diff -urN -x '*.orig' rsync-3.0.8.orig/rsync.c rsync-3.0.8/rsync.c
-+--- rsync-3.0.8.orig/rsync.c	2011-09-21 22:41:21.000000000 -0700
-++++ rsync-3.0.8/rsync.c	2011-10-20 20:52:21.829723926 -0700
-+@@ -466,6 +466,8 @@
-+ 		}
-+ #ifdef SUPPORT_ACLS
-+ 		sx2.acc_acl = sx2.def_acl = NULL;
-++		sx2.nfs4_acl = NULL;
-++		sys_acl_get_brand_file(fname, &sx2.brand);
-+ #endif
-+ #ifdef SUPPORT_XATTRS
-+ 		sx2.xattr = NULL;
-+@@ -573,10 +575,12 @@
-+ 	 * If set_acl() changes permission bits in the process of setting
-+ 	 * an access ACL, it changes sxp->st.st_mode so we know whether we
-+ 	 * need to chmod(). */
-++/*
-+ 	if (preserve_acls && !S_ISLNK(new_mode)) {
-+ 		if (set_acl(fname, file, sxp, new_mode) > 0)
-+ 			updated = 1;
-+ 	}
-++*/
-+ #endif
-+ 
-+ #ifdef HAVE_CHMOD
-+@@ -611,6 +615,13 @@
-+ 	}
-+ #endif
-+ 
-++#ifdef SUPPORT_ACLS
-++	if (preserve_acls && !S_ISLNK(new_mode)) {
-++		if (set_acl(fname, file, sxp, new_mode) > 0)
-++			updated = 1;
-++	}
-++#endif
-++
-+ 	if (verbose > 1 && flags & ATTRS_REPORT) {
-+ 		if (updated)
-+ 			rprintf(FCLIENT, "%s\n", fname);
-+diff -urN -x '*.orig' rsync-3.0.8.orig/rsync.h rsync-3.0.8/rsync.h
-+--- rsync-3.0.8.orig/rsync.h	2011-09-21 22:41:21.000000000 -0700
-++++ rsync-3.0.8/rsync.h	2011-10-20 20:52:21.829723926 -0700
-+@@ -954,13 +954,22 @@
-+ #ifdef SUPPORT_ACLS
-+     struct rsync_acl *acc_acl; /* access ACL */
-+     struct rsync_acl *def_acl; /* default ACL */
-++    struct nfs4_acl *nfs4_acl; /* NFSv4 ACL */
-++    int brand;
-+ #endif
-+ #ifdef SUPPORT_XATTRS
-+     item_list *xattr;
-+ #endif
-+ } stat_x;
-+ 
-+-#define ACL_READY(sx) ((sx).acc_acl != NULL)
-++#ifdef SUPPORT_ACLS
-++#include "lib/sysacls.h"
-++#endif
-++
-++#define ACL_READY_POSIX(sx) ((sx).acc_acl != NULL)
-++#define ACL_READY_NFS4(sx) ((sx).nfs4_acl != NULL)
-++#define ACL_READY(sx) (((sx).brand == SMB_ACL_BRAND_NFS4) ? (ACL_READY_NFS4(sx)) : (ACL_READY_POSIX(sx)))
-++
-+ #define XATTR_READY(sx) ((sx).xattr != NULL)
-+ 
-+ #include "proto.h"
