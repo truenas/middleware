@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-19 11:47-0200\n"
-"PO-Revision-Date: 2011-07-16 22:45+0200\n"
+"PO-Revision-Date: 2011-10-20 20:27+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -463,20 +463,20 @@ msgstr "בדיקה עצמית בהעברה (ATA בלבד)"
 
 #: choices.py:498
 msgid "Offline Immediate Test (ATA only)"
-msgstr "בדיקה מיידית לא מכוונת (ATA בלבד)"
+msgstr "בדיקה מיידית לא מקוונת (ATA בלבד)"
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "שמך לא יכול להתחיל ב\"_\""
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "Vתו $ מורשה רק בתור התו האחרון"
 
 #: account/forms.py:62
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "שמך מכיל תווים לא חוקיים (%s)."
 
 #: account/forms.py:110 templates/storage/volumes.html:57
 msgid "Available"
@@ -493,14 +493,12 @@ msgid "Username"
 msgstr "שם משתמש"
 
 #: account/forms.py:190
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr "דרושים 30 תווים או פחות. אותיות, מספרים ו@/./+/-/_ בלבד"
+msgstr "דרושים 16 תווים או פחות. אותיות, מספרים ו/-/_ בלבד."
 
 #: account/forms.py:191
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr "הערך הזה מכיל רק אותיות, מספרים ו@/./+/-/_ "
+msgstr "הערך הזה יכול להכיל רק אותיות, מספרים ו/-/_ ."
 
 #: account/forms.py:213 account/forms.py:353 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -522,13 +520,12 @@ msgid "Shell"
 msgstr "מעטפת"
 
 #: account/forms.py:217
-#, fuzzy
 msgid "Disable password logins"
-msgstr "נטרל כניסות"
+msgstr "נטרל כניסות עם סיסמא"
 
 #: account/forms.py:218 account/forms.py:392
 msgid "Lock user"
-msgstr ""
+msgstr "נעל משתמש"
 
 #: account/forms.py:219
 msgid "Primary Group"
@@ -536,12 +533,11 @@ msgstr "קבוצה ראשית"
 
 #: account/forms.py:220 account/forms.py:397
 msgid "SSH Public Key"
-msgstr ""
+msgstr "מפתח ציבורי SSH"
 
 #: account/forms.py:251
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "שם משתמש עם השם הזה כבר קיים."
+msgstr "שם משתמש עם הuid הזה כבר קיים."
 
 #: account/forms.py:262
 msgid "A user with that username already exists."
@@ -554,18 +550,16 @@ msgid "The two password fields didn't match."
 msgstr "שני שדות הסיסמה אינם התאימו."
 
 #: account/forms.py:277
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "תיקיית הבית חייב להתחיל ב- /mnt/"
+msgstr "תיקיית הבית חייב להתחיל ב- /mnt/ או /nonexistent"
 
 #: account/forms.py:293 account/forms.py:467
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "תיקיית הבית חייב להתחיל ב- /mnt/"
+msgstr "תיקיית הבית לא מאפשרת כתיבה, השאר ריק"
 
 #: account/forms.py:299
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "סיסמא מנוטרלת, השאר ריק"
 
 #: account/forms.py:304 services/forms.py:588 services/forms.py:863
 #: storage/forms.py:274 system/forms.py:371 system/forms.py:398
@@ -573,28 +567,24 @@ msgid "This field is required."
 msgstr "השדה הזה נחוץ."
 
 #: account/forms.py:391
-#, fuzzy
 msgid "Disable password"
-msgstr "סיסמת שיתוף"
+msgstr "נטרל סיסמא"
 
 #: account/forms.py:452
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "תיקיית הבית חייב להתחיל ב- /mnt/"
+msgstr "תיקיית הבית חייב להתחיל ב- /mnt/ או /nonexistent"
 
 #: account/forms.py:519
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "אפשר GIDs חוזרים"
 
 #: account/forms.py:532
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "שם משתמש עם השם הזה כבר קיים."
+msgstr "קבוצה עם שם זה כבר קיימתץ"
 
 #: account/forms.py:551
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "שם משתמש עם השם הזה כבר קיים."
+msgstr "קבוצה עם ה gid הזה כבר קיימת"
 
 #: account/forms.py:563
 msgid "Member users"
@@ -606,7 +596,7 @@ msgstr "קבוצות מסייעות"
 
 #: account/forms.py:591
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "משתמש לא יכול להיות שייך ליותר מ64 קבוצות עזר"
 
 #: account/forms.py:608
 msgid "New password"
@@ -621,9 +611,8 @@ msgid "Old password"
 msgstr "סיסמה ישנה"
 
 #: account/forms.py:637
-#, fuzzy
 msgid "Change root password as well"
-msgstr "שנה סיסמה"
+msgstr "שנה גם את סיסמאת המנהל"
 
 #: account/forms.py:649
 msgid "Your old password was entered incorrectly. Please enter it again."
@@ -790,7 +779,7 @@ msgstr "כבה"
 
 #: freeadmin/views.py:148
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "לא היה אפשרי לאחזר את המצב הנוכחי"
 
 #: freeadmin/views.py:324 freeadmin/views.py:528 freeadmin/views.py:530
 #, python-format
@@ -800,9 +789,9 @@ msgstr "%S עודכן בהצלחה."
 #: freeadmin/views.py:326 freeadmin/views.py:534 storage/views.py:153
 #: storage/views.py:206 storage/views.py:602 storage/views.py:660
 #: system/forms.py:88
-#, fuzzy, python-format
+#, python-format
 msgid "Error: %s"
-msgstr "תקלה"
+msgstr "תקלה: %s"
 
 #: freeadmin/views.py:328 freeadmin/views.py:532
 msgid "The service failed to restart."
@@ -819,27 +808,27 @@ msgstr "NIC"
 
 #: network/forms.py:86
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "אתה צריך להכתיב גם כן כתובת IPv4"
 
 #: network/forms.py:88
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "אתה צריך לבחור מסכת רשת(netmask) IPv4 גם כן"
 
 #: network/forms.py:93
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "אתה צריך להכתיב גם כן כתובת IPv6"
 
 #: network/forms.py:95
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "אתה צריך לבחור מסכת רשת(netmask) IPv6 גם כן"
 
 #: network/forms.py:98
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "אתה צריל בלבחור בין IPv4 לIPv6"
 
 #: network/forms.py:102
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr ""
+msgstr "אתה חייב להכתיב IPv4 או IPv6 חוקי עם maskbit"
 
 #: network/forms.py:117
 msgid "Loopback is not a valid nameserver"
