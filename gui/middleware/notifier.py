@@ -1605,10 +1605,13 @@ class notifier:
 
     def zfs_mksnap(self, path, name, recursive):
         if recursive:
-            retval = self.__system_nolog("/sbin/zfs snapshot -r %s@%s" % (path, name))
+            p1 = self.__pipeopen("/sbin/zfs snapshot -r %s@%s" % (path, name))
         else:
-            retval = self.__system_nolog("/sbin/zfs snapshot %s@%s" % (path, name))
-        return retval
+            p1 = self.__pipeopen("/sbin/zfs snapshot %s@%s" % (path, name))
+        if p1.wait() != 0:
+            err = p1.communicate()[1]
+            raise MiddlewareError("Snapshot could not be taken: %s" % err)
+        return True
 
     def zfs_clonesnap(self, snapshot, dataset):
         zfsproc = self.__pipeopen('zfs clone %s %s' % (snapshot, dataset))

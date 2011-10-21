@@ -559,8 +559,12 @@ def manualsnap(request, path):
     if request.method == "POST":
         form = forms.ManualSnapshotForm(request.POST)
         if form.is_valid():
-            form.commit(path)
-            return JsonResponse(message=_("Snapshot successfully taken."))
+            try:
+                form.commit(path)
+            except MiddlewareError, e:
+                return JsonResponse(error=True, message=_("Error: %s") % str(e))
+            else:
+                return JsonResponse(message=_("Snapshot successfully taken."))
     else:
         form = forms.ManualSnapshotForm()
     return render(request, 'storage/manualsnap.html', {
