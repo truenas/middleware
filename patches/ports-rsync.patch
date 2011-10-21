@@ -1,9 +1,9 @@
-diff -urN net/rsync.orig/files/patch-acls.c net/rsync/files/patch-acls.c
---- net/rsync.orig/files/patch-acls.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/rsync/files/patch-acls.c	2011-10-20 22:44:22.000000000 -0700
+diff -urN /dev/null net/rsync/files/patch-acls.c
+--- /dev/null	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-acls.c	2011-10-20 23:16:25.000000000 -0700
 @@ -0,0 +1,369 @@
-+--- ./acls.c.orig	2011-09-21 22:41:21.000000000 -0700
-++++ ./acls.c	2011-10-20 20:52:14.320751094 -0700
++--- /dev/null	2011-10-20 23:09:29.000000000 -0700
+++++ ./acls.c	2011-10-20 23:11:41.000000000 -0700
 +@@ -79,20 +79,35 @@
 + 	uchar other_obj;
 + } rsync_acl;
@@ -371,12 +371,12 @@ diff -urN net/rsync.orig/files/patch-acls.c net/rsync/files/patch-acls.c
 + 	ndx = F_ACL(file);
 + 	if (ndx >= 0 && (size_t)ndx < access_acl_list.count) {
 + 		acl_duo *duo_item = access_acl_list.items;
-diff -urN net/rsync.orig/files/patch-backup.c net/rsync/files/patch-backup.c
---- net/rsync.orig/files/patch-backup.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/rsync/files/patch-backup.c	2011-10-20 22:44:22.000000000 -0700
+diff -urN /dev/null net/rsync/files/patch-backup.c
+--- /dev/null	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-backup.c	2011-10-20 23:17:47.000000000 -0700
 @@ -0,0 +1,19 @@
-+--- ./backup.c.orig	2010-07-03 09:19:01.000000000 -0700
-++++ ./backup.c	2011-10-20 20:52:14.320751094 -0700
++--- /dev/null	2010-07-03 09:19:01.000000000 -0700
+++++ ./backup.c	2011-10-20 23:11:41.000000000 -0700
 +@@ -139,6 +139,8 @@
 + 			} else {
 + #ifdef SUPPORT_ACLS
@@ -394,12 +394,12 @@ diff -urN net/rsync.orig/files/patch-backup.c net/rsync/files/patch-backup.c
 + #endif
 + #ifdef SUPPORT_XATTRS
 + 	sx.xattr = NULL;
-diff -urN net/rsync.orig/files/patch-flist.c net/rsync/files/patch-flist.c
---- net/rsync.orig/files/patch-flist.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/rsync/files/patch-flist.c	2011-10-20 22:44:22.000000000 -0700
+diff -urN /dev/null net/rsync/files/patch-flist.c
+--- /dev/null	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-flist.c	2011-10-20 23:18:12.000000000 -0700
 @@ -0,0 +1,10 @@
-+--- ./flist.c.orig	2011-09-21 22:41:21.000000000 -0700
-++++ ./flist.c	2011-10-20 20:52:14.320751094 -0700
++--- /dev/null	2011-10-20 23:09:29.000000000 -0700
+++++ ./flist.c	2011-10-20 23:11:41.000000000 -0700
 +@@ -1455,6 +1455,7 @@
 + 		if (preserve_acls && !S_ISLNK(file->mode)) {
 + 			sx.st.st_mode = file->mode;
@@ -408,12 +408,12 @@ diff -urN net/rsync.orig/files/patch-flist.c net/rsync/files/patch-flist.c
 + 			if (get_acl(fname, &sx) < 0) {
 + 				io_error |= IOERR_GENERAL;
 + 				return NULL;
-diff -urN net/rsync.orig/files/patch-generator.c net/rsync/files/patch-generator.c
---- net/rsync.orig/files/patch-generator.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/rsync/files/patch-generator.c	2011-10-20 22:44:22.000000000 -0700
+diff -urN /dev/null net/rsync/files/patch-generator.c
+--- /dev/null	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-generator.c	2011-10-20 23:18:53.000000000 -0700
 @@ -0,0 +1,11 @@
-+--- ./generator.c.ori/g	2011-09-21 22:41:21.000000000 -0700
-++++ ./generator.c	2011-10-20 20:52:14.330753469 -0700
++--- /dev/null	2011-10-20 23:09:29.000000000 -0700
+++++ ./generator.c	2011-10-20 23:11:41.000000000 -0700
 +@@ -1363,6 +1363,8 @@
 + 
 + #ifdef SUPPORT_ACLS
@@ -423,12 +423,12 @@ diff -urN net/rsync.orig/files/patch-generator.c net/rsync/files/patch-generator
 + #endif
 + #ifdef SUPPORT_XATTRS
 + 	sx.xattr = NULL;
-diff -urN net/rsync.orig/files/patch-hlink.c net/rsync/files/patch-hlink.c
---- net/rsync.orig/files/patch-hlink.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/rsync/files/patch-hlink.c	2011-10-20 22:44:22.000000000 -0700
+diff -urN /dev/null net/rsync/files/patch-hlink.c
+--- /dev/null	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-hlink.c	2011-10-20 23:20:45.000000000 -0700
 @@ -0,0 +1,29 @@
-+--- ./hlink.c.orig	2010-06-30 09:17:26.000000000 -0700
-++++ ./hlink.c	2011-10-20 20:52:14.330753469 -0700
++--- /dev/null	2010-06-30 09:17:26.000000000 -0700
+++++ ./hlink.c	2011-10-20 23:11:41.000000000 -0700
 +@@ -373,6 +373,7 @@
 + 		int j = 0;
 + #ifdef SUPPORT_ACLS
@@ -456,12 +456,12 @@ diff -urN net/rsync.orig/files/patch-hlink.c net/rsync/files/patch-hlink.c
 + #endif
 + #ifdef SUPPORT_XATTRS
 + 	prev_sx.xattr = NULL;
-diff -urN net/rsync.orig/files/patch-main.c net/rsync/files/patch-main.c
---- net/rsync.orig/files/patch-main.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/rsync/files/patch-main.c	2011-10-20 22:44:22.000000000 -0700
+diff -urN /dev/null net/rsync/files/patch-main.c
+--- /dev/null	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-main.c	2011-10-20 23:22:37.000000000 -0700
 @@ -0,0 +1,10 @@
-+--- ./main.c.orig	2011-09-21 22:41:21.000000000 -0700
-++++ ./main.c	2011-10-20 20:52:21.819732167 -0700
++--- /dev/null	2011-10-20 23:09:29.000000000 -0700
+++++ ./main.c	2011-10-20 23:11:53.000000000 -0700
 +@@ -932,6 +932,7 @@
 + 		rprintf(FERROR,"server_recv: recv_file_list error\n");
 + 		exit_cleanup(RERR_FILESELECT);
@@ -470,12 +470,12 @@ diff -urN net/rsync.orig/files/patch-main.c net/rsync/files/patch-main.c
 + 	if (inc_recurse && file_total == 1)
 + 		recv_additional_file_list(f_in);
 + 	verbose = save_verbose;
-diff -urN net/rsync.orig/files/patch-rsync.c net/rsync/files/patch-rsync.c
---- net/rsync.orig/files/patch-rsync.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/rsync/files/patch-rsync.c	2011-10-20 22:44:22.000000000 -0700
+diff -urN /dev/null net/rsync/files/patch-rsync.c
+--- /dev/null	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-rsync.c	2011-10-20 23:23:10.000000000 -0700
 @@ -0,0 +1,38 @@
-+--- ./rsync.c.orig	2011-09-21 22:41:21.000000000 -0700
-++++ ./rsync.c	2011-10-20 20:52:21.829723926 -0700
++--- /dev/null	2011-10-20 23:09:29.000000000 -0700
+++++ ./rsync.c	2011-10-20 23:11:53.000000000 -0700
 +@@ -466,6 +466,8 @@
 + 		}
 + #ifdef SUPPORT_ACLS
@@ -512,12 +512,42 @@ diff -urN net/rsync.orig/files/patch-rsync.c net/rsync/files/patch-rsync.c
 + 	if (verbose > 1 && flags & ATTRS_REPORT) {
 + 		if (updated)
 + 			rprintf(FCLIENT, "%s\n", fname);
-diff -urN net/rsync.orig/files/patch-sysacls.c net/rsync/files/patch-sysacls.c
---- net/rsync.orig/files/patch-sysacls.c	1969-12-31 16:00:00.000000000 -0800
-+++ net/rsync/files/patch-sysacls.c	2011-10-20 22:44:22.000000000 -0700
+diff -urN /dev/null net/rsync/files/patch-rsync.h
+--- /dev/null	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-rsync.h	2011-10-20 23:23:41.000000000 -0700
+@@ -0,0 +1,26 @@
++--- /dev/null	2011-10-20 23:09:29.000000000 -0700
+++++ ./rsync.h	2011-10-20 23:11:53.000000000 -0700
++@@ -954,13 +954,22 @@
++ #ifdef SUPPORT_ACLS
++     struct rsync_acl *acc_acl; /* access ACL */
++     struct rsync_acl *def_acl; /* default ACL */
+++    struct nfs4_acl *nfs4_acl; /* NFSv4 ACL */
+++    int brand;
++ #endif
++ #ifdef SUPPORT_XATTRS
++     item_list *xattr;
++ #endif
++ } stat_x;
++ 
++-#define ACL_READY(sx) ((sx).acc_acl != NULL)
+++#ifdef SUPPORT_ACLS
+++#include "lib/sysacls.h"
+++#endif
+++
+++#define ACL_READY_POSIX(sx) ((sx).acc_acl != NULL)
+++#define ACL_READY_NFS4(sx) ((sx).nfs4_acl != NULL)
+++#define ACL_READY(sx) (((sx).brand == SMB_ACL_BRAND_NFS4) ? (ACL_READY_NFS4(sx)) : (ACL_READY_POSIX(sx)))
+++
++ #define XATTR_READY(sx) ((sx).xattr != NULL)
++ 
++ #include "proto.h"
+diff -urN /dev/null net/rsync/files/patch-sysacls.c
+--- /dev/null	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-sysacls.c	2011-10-20 23:21:36.000000000 -0700
 @@ -0,0 +1,41 @@
-+--- ./lib/sysacls.c.orig	2011-02-22 08:51:14.000000000 -0800
-++++ ./lib/sysacls.c	2011-10-20 20:52:18.170233113 -0700
++--- /dev/null	2011-02-22 08:51:14.000000000 -0800
+++++ ./lib/sysacls.c	2011-10-20 23:11:48.000000000 -0700
 +@@ -80,12 +80,36 @@
 + 	return acl_get_file( path_p, type);
 + }
@@ -557,12 +587,12 @@ diff -urN net/rsync.orig/files/patch-sysacls.c net/rsync/files/patch-sysacls.c
 + 
 + #if defined(HAVE_ACL_GET_PERM_NP)
 + #define acl_get_perm(p, b) acl_get_perm_np(p, b)
-diff -urN net/rsync.orig/files/patch-sysacls.h net/rsync/files/patch-sysacls.h
---- net/rsync.orig/files/patch-sysacls.h	1969-12-31 16:00:00.000000000 -0800
-+++ net/rsync/files/patch-sysacls.h	2011-10-20 22:44:22.000000000 -0700
+diff -urN /dev/null rsync/files/patch-sysacls.h
+--- /dev/null	1969-12-31 16:00:00.000000000 -0800
++++ net/rsync/files/patch-sysacls.h	2011-10-20 23:22:05.000000000 -0700
 @@ -0,0 +1,31 @@
-+--- ./lib/sysacls.h.orig	2008-03-01 12:01:41.000000000 -0800
-++++ ./lib/sysacls.h	2011-10-20 20:52:21.819732167 -0700
++--- /dev/null	2008-03-01 12:01:41.000000000 -0800
+++++ ./lib/sysacls.h	2011-10-20 23:11:53.000000000 -0700
 +@@ -48,6 +48,7 @@
 + #define SMB_ACL_GROUP_OBJ	ACL_GROUP_OBJ
 + #define SMB_ACL_OTHER		ACL_OTHER
