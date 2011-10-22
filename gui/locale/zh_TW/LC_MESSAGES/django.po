@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-19 11:50-0200\n"
-"PO-Revision-Date: 2011-10-04 19:05+0200\n"
+"PO-Revision-Date: 2011-10-22 10:12+0200\n"
 "Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -479,16 +479,16 @@ msgstr "離線後立即測試(只支援ATA硬碟)"
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "您的名稱不能用\"-\"符號開頭"
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "只允許將 $ 符號放在字尾"
 
 #: account/forms.py:62
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "您的名稱中包含無效字元 (%s)."
 
 #: account/forms.py:110 templates/storage/volumes.html:57
 msgid "Available"
@@ -505,14 +505,12 @@ msgid "Username"
 msgstr "帳號"
 
 #: account/forms.py:190
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr "必填。限 30 個字元內。只能使用英文字母、數字和@ . + - _ 符號。"
+msgstr "必填。限 16 個字元內。只能使用英文字母、數字和 .  - _ 符號。"
 
 #: account/forms.py:191
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr "只能使用英文字母、數字和@ . + - _ 符號。"
+msgstr "只能使用英文字母、數字和@ .  - _ 符號。"
 
 #: account/forms.py:213 account/forms.py:353 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -534,13 +532,12 @@ msgid "Shell"
 msgstr "指令列"
 
 #: account/forms.py:217
-#, fuzzy
 msgid "Disable password logins"
-msgstr "禁止登入"
+msgstr "停用密碼登入"
 
 #: account/forms.py:218 account/forms.py:392
 msgid "Lock user"
-msgstr ""
+msgstr "封鎖使用者"
 
 #: account/forms.py:219
 msgid "Primary Group"
@@ -548,12 +545,11 @@ msgstr "主要群組"
 
 #: account/forms.py:220 account/forms.py:397
 msgid "SSH Public Key"
-msgstr ""
+msgstr "SSH公開金鑰"
 
 #: account/forms.py:251
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "帳號已經存在！"
+msgstr "使用者的 uid 已經存在！"
 
 #: account/forms.py:262
 msgid "A user with that username already exists."
@@ -566,18 +562,16 @@ msgid "The two password fields didn't match."
 msgstr "密碼和確認密碼不一致！"
 
 #: account/forms.py:277
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "家目錄必須以 /mnt/ 開頭"
+msgstr "家目錄必須以 /mnt/ 開頭或是 /nonexistent"
 
 #: account/forms.py:293 account/forms.py:467
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "家目錄必須以 /mnt/ 開頭"
+msgstr "家目錄無法寫入，此欄位請保留空白"
 
 #: account/forms.py:299
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "密碼停用，此欄位請保留空白"
 
 #: account/forms.py:304 services/forms.py:588 services/forms.py:863
 #: storage/forms.py:274 system/forms.py:371 system/forms.py:398
@@ -585,28 +579,24 @@ msgid "This field is required."
 msgstr "此欄位必填。"
 
 #: account/forms.py:391
-#, fuzzy
 msgid "Disable password"
-msgstr "共享區的密碼"
+msgstr "停用密碼"
 
 #: account/forms.py:452
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "家目錄必須以 /mnt/ 開頭"
+msgstr "家目錄必須以 /mnt/ 開頭或是  /nonexistent"
 
 #: account/forms.py:519
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "允許重複 GIDs"
 
 #: account/forms.py:532
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "帳號已經存在！"
+msgstr "群組已經存在！"
 
 #: account/forms.py:551
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "帳號已經存在！"
+msgstr "群組的 gid 已經存在！"
 
 #: account/forms.py:563
 msgid "Member users"
@@ -618,7 +608,7 @@ msgstr "附屬群組"
 
 #: account/forms.py:591
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "使用者不能加入超過 64個次要群組"
 
 #: account/forms.py:608
 msgid "New password"
@@ -633,9 +623,8 @@ msgid "Old password"
 msgstr "舊密碼"
 
 #: account/forms.py:637
-#, fuzzy
 msgid "Change root password as well"
-msgstr "變更密碼"
+msgstr "也請變更 root 密碼"
 
 #: account/forms.py:649
 msgid "Your old password was entered incorrectly. Please enter it again."
@@ -802,7 +791,7 @@ msgstr "關機"
 
 #: freeadmin/views.py:148
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "目前的狀態無法檢索"
 
 #: freeadmin/views.py:324 freeadmin/views.py:528 freeadmin/views.py:530
 #, python-format
@@ -812,9 +801,9 @@ msgstr "%s 更新成功"
 #: freeadmin/views.py:326 freeadmin/views.py:534 storage/views.py:153
 #: storage/views.py:206 storage/views.py:602 storage/views.py:660
 #: system/forms.py:88
-#, fuzzy, python-format
+#, python-format
 msgid "Error: %s"
-msgstr "錯誤"
+msgstr "錯誤: %s"
 
 #: freeadmin/views.py:328 freeadmin/views.py:532
 msgid "The service failed to restart."
@@ -831,44 +820,43 @@ msgstr "網路卡"
 
 #: network/forms.py:86
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "請指定 IPv4 位址"
 
 #: network/forms.py:88
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "請指定 IPv4 遮罩"
 
 #: network/forms.py:93
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "請指定 IPv6 位址"
 
 #: network/forms.py:95
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "請指定 IPv6 遮罩"
 
 #: network/forms.py:98
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "請選擇使用 IPv4 或 IPv6"
 
 #: network/forms.py:102
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr ""
+msgstr "請指定一個有效的 IPv4 或 IPv6 的遮罩位元"
 
 #: network/forms.py:117
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Loopback 不是有效的域名伺服器(nameserver)"
 
 #: network/forms.py:119
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "有效的域名伺服器(nameservers)需指定 IP 位址"
 
 #: network/forms.py:122
-#, fuzzy
 msgid "This is not a valid nameserver address"
-msgstr "這不是有效的 IP 位址"
+msgstr "這不是有效的域名伺服器(nameserver) IP 位址"
 
 #: network/forms.py:124
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "169.254/16 子網段是無法有效配置域名伺服器(nameserver)"
 
 #: network/forms.py:144
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
@@ -909,27 +897,27 @@ msgstr "網路 '%s' 無法使用，改用無類別域間路由（CIDR）"
 
 #: network/forms.py:303
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "請指定 IPv4 位址及其名稱"
 
 #: network/forms.py:305
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "請指定 IPv4 遮罩及其名稱"
 
 #: network/forms.py:310
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "請指定 IPv6 位址及其名稱"
 
 #: network/forms.py:312
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "請指定 IPv6 遮罩及其名稱"
 
 #: network/forms.py:315
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr ""
+msgstr "請選擇使用 IPv4 或 IPv6 "
 
 #: network/forms.py:317
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
-msgstr ""
+msgstr "請指定有效的 IPv4 or IPv6 遮罩位元"
 
 #: network/models.py:42 services/models.py:1114
 #: templates/system/system_info.html:5
@@ -1010,7 +998,7 @@ msgstr "IPv6 位址"
 
 #: network/models.py:125 network/models.py:183
 msgid "IPv6 Prefix Length"
-msgstr ""
+msgstr "IPv6前導碼長度"
 
 #: network/models.py:130 network/models.py:286
 #: templates/network/interface.html:11
@@ -1041,9 +1029,8 @@ msgid "Virtual Interface"
 msgstr "虛擬介面"
 
 #: network/models.py:206
-#, fuzzy
 msgid "Interface names must be vlanXX where XX is a number. Example: vlan0."
-msgstr "介面名稱必須為 vlanXX 格式，其中 XX 為數字"
+msgstr "介面名稱必須為 vlanXX 格式，其中 XX 為數字。例如：vlan0."
 
 #: network/models.py:211 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:6
@@ -1130,9 +1117,8 @@ msgid "LAGG successfully added"
 msgstr "LAGG 介面新增成功"
 
 #: services/forms.py:66
-#, fuzzy
 msgid "This is not a valid mask"
-msgstr "帳號：%s 無效。"
+msgstr "無效的遮罩"
 
 #: services/forms.py:83
 msgid "This field is required for \"Enable home directories browsing\"."
@@ -1143,9 +1129,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "欲使用『家目錄』功能須填此欄位。"
 
 #: services/forms.py:94
-#, fuzzy
 msgid "The CIFS service failed to reload."
-msgstr "NFS服務重新載入時發生失敗"
+msgstr "CIFS 服務重新載入時發生失敗"
 
 #: services/forms.py:103
 msgid "The AFP service failed to reload."
@@ -1196,9 +1181,8 @@ msgid "The name cannot contain slash or a closing square backet."
 msgstr "名稱不能包含斜線或右括號"
 
 #: services/forms.py:237
-#, fuzzy
 msgid "Confirm Password"
-msgstr "變更密碼"
+msgstr "確認密碼"
 
 #: services/forms.py:265
 msgid "The DynamicDNS service failed to reload."
@@ -1206,22 +1190,21 @@ msgstr "動態DNS 服務重新載入時失敗"
 
 #: services/forms.py:273
 msgid "The location must contain only alphanumeric characters, _ or -"
-msgstr ""
+msgstr "請填入英文字母、數字、_或 -"
 
 #: services/forms.py:280
-#, fuzzy
 msgid "This is not a valid e-mail address"
-msgstr "這不是有效的 IP 位址"
+msgstr "無效的電子郵件地址"
 
 #: services/forms.py:282
 msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
-msgstr ""
+msgstr "請填入英文字母、數字、_ - 或正確的電子郵件地址"
 
 #: services/forms.py:287
 msgid "The community must contain only alphanumeric characters, _ or -"
-msgstr ""
+msgstr "請填入英文字母、數字、_ 或 - "
 
 #: services/forms.py:293
 msgid "The SNMP service failed to reload."
@@ -1240,14 +1223,12 @@ msgid_plural "The following emails are not valid: %(email)s"
 msgstr[0] ""
 
 #: services/forms.py:328
-#, fuzzy
 msgid "The UPS service failed to reload."
-msgstr "NFS服務重新載入時發生失敗"
+msgstr "UPS 服務重新載入時發生失敗"
 
 #: services/forms.py:333
-#, fuzzy
 msgid "Confirm Administrator Password"
-msgstr "管理者密碼"
+msgstr "管理者密碼確認"
 
 #: services/forms.py:358
 msgid "The activedirectory service failed to reload."
@@ -1341,7 +1322,7 @@ msgstr "若探索方式設為 CHAP 或雙向 CHAP 則此欄位必填"
 msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
-msgstr ""
+msgstr "無論是使用CHAP或雙向CHAP控制器驗證方式，本欄必填。"
 
 #: services/forms.py:613
 msgid "You need to specify a filepath, not a directory."
@@ -1365,7 +1346,7 @@ msgstr ""
 
 #: services/forms.py:642
 msgid "The file must exist if the extent size is set to auto (0)"
-msgstr ""
+msgstr "如果延伸容量設置為自動 (0)，則該檔案必須存在。"
 
 #: services/forms.py:664
 msgid "Disk device"
@@ -1382,11 +1363,10 @@ msgid "Your Group ID cannot be higher than %d"
 msgstr "您的群組編號不可大於 %d"
 
 #: services/forms.py:817
-#, fuzzy
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
-msgstr "這不是有效的 IP 位址"
+msgstr "這不是有效的 IP 位址或網路。關鍵字\"ALL\" 可以用來允許全部。"
 
 #: services/forms.py:826
 msgid "Authentication Group number"
@@ -1394,16 +1374,15 @@ msgstr "驗證群組編號"
 
 #: services/forms.py:855
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
-msgstr ""
+msgstr "請使用英文字母、數字和 .  - 和 : 符號。"
 
 #: services/forms.py:881
 msgid "Delete underlying file"
 msgstr "刪除相關檔案"
 
 #: services/forms.py:912
-#, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "SNMP 服務重新載入時失敗"
+msgstr "S.M.A.R.T. 服務重新載入時失敗"
 
 #: services/models.py:43
 msgid "Service"
@@ -1624,10 +1603,9 @@ msgid "Max. Connections"
 msgstr "最大connections連線數"
 
 #: services/models.py:206
-#, fuzzy
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
-msgstr "每次最多能有幾個connections連線(預設為8)."
+msgstr " AFP 每次最多能有幾個connections連線(預設為50)."
 
 #: services/models.py:211 services/models.py:212
 #: templates/services/index.html:7
@@ -2118,13 +2096,12 @@ msgid "The serial or USB port where your UPS is connected."
 msgstr "UPS 已連接到序列埠或 USB 上"
 
 #: services/models.py:785
-#, fuzzy
 msgid "Auxiliary parameters (ups.conf)"
-msgstr "附屬參數"
+msgstr "附屬參數 (ups.conf)"
 
 #: services/models.py:787
 msgid "Additional parameters to the hardware-specific part of the driver."
-msgstr ""
+msgstr "特定部分硬體驅動程式的額外參數。"
 
 #: services/models.py:798
 msgid "Shutdown mode"
@@ -2141,13 +2118,12 @@ msgid ""
 msgstr "啟動關機時間。以秒為單位。如果UPS在恢復前，關機時間到期，就取消關機。"
 
 #: services/models.py:808
-#, fuzzy
 msgid "UPS Master User Password"
-msgstr "共享區的密碼"
+msgstr "UPS 主要使用者的密碼"
 
 #: services/models.py:812
 msgid "Extra users (upsd.users)"
-msgstr ""
+msgstr "次要使用者 (upsd.users)"
 
 #: services/models.py:815
 msgid "Remote Monitor"
@@ -2167,7 +2143,7 @@ msgstr "對方的電子郵件地址。電子郵件地址請用分號隔開。"
 
 #: services/models.py:826
 msgid "Email Subject"
-msgstr ""
+msgstr "郵件主旨"
 
 #: services/models.py:827
 msgid ""
@@ -2480,18 +2456,16 @@ msgid "Host Name (NetBIOS-Name)"
 msgstr "NetBIOS主機名稱"
 
 #: services/models.py:1085
-#, fuzzy
 msgid "Host name in old format, eg FREENAS"
-msgstr "主機名稱(例如：example)"
+msgstr "舊格式的主機名稱(例如：FREENAS)"
 
 #: services/models.py:1089
 msgid "Workgroup Name"
 msgstr "工作群組名稱"
 
 #: services/models.py:1090
-#, fuzzy
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
-msgstr "工作群組名稱(例如：EXAMPLE)"
+msgstr "舊格式的工作群組名稱(例如：WORKGROUP)"
 
 #: services/models.py:1094
 msgid "Administrator Name"
@@ -2600,9 +2574,8 @@ msgstr ""
 "當資訊設備加入到LDAP目錄時，此參數指定附加的後置字元，例如：ou=Computers"
 
 #: services/models.py:1171
-#, fuzzy
 msgid "Encryption Mode"
-msgstr "驗證模式"
+msgstr "加密模式"
 
 #: services/models.py:1172
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
@@ -2639,7 +2612,7 @@ msgstr "這些參數將被加入到rsyncd.conf 檔案內的 [global] 設定"
 
 #: services/models.py:1207 services/models.py:1208
 msgid "Configure Rsyncd"
-msgstr ""
+msgstr "設定 Rsyncd 組態檔"
 
 #: services/models.py:1218
 msgid "Module name"
@@ -2819,9 +2792,8 @@ msgid "Add Rsync Module"
 msgstr "新增 Rsync 模組"
 
 #: services/nav.py:164
-#, fuzzy
 msgid "View Rsync Modules"
-msgstr "Rsync 資料同步模組"
+msgstr "檢視 Rsync 資料同步模組"
 
 #: services/views.py:228
 msgid "The service could not be stopped."
@@ -2832,9 +2804,8 @@ msgid "The service could not be started."
 msgstr "服務無法啟動"
 
 #: sharing/forms.py:68
-#, fuzzy
 msgid "Confirm Share Password"
-msgstr "共享區的密碼"
+msgstr "共享區的密碼確認"
 
 #: sharing/forms.py:117
 msgid "The field is a not a valid IP address or network"
@@ -2874,9 +2845,8 @@ msgid "Browsable to Network Clients"
 msgstr "瀏覽用戶端網路"
 
 #: sharing/models.py:54
-#, fuzzy
 msgid "Inherit Owner"
-msgstr "繼承"
+msgstr "繼承所有者"
 
 #: sharing/models.py:56
 msgid "Inherit Permissions"
@@ -2949,14 +2919,12 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "這些參數被新增到 smb.conf 的 [Share] 段落"
 
 #: sharing/models.py:92
-#, fuzzy
 msgid "CIFS Share"
-msgstr "UNIX 共享"
+msgstr "CIFS 共享"
 
 #: sharing/models.py:93
-#, fuzzy
 msgid "CIFS Shares"
-msgstr "UNIX 共享"
+msgstr "CIFS 共享"
 
 #: sharing/models.py:104
 msgid ""
@@ -3188,14 +3156,12 @@ msgid "Use AFP3 unix privileges."
 msgstr "使用 AFP3 UNIX 權限"
 
 #: sharing/models.py:211
-#, fuzzy
 msgid "AFP Share"
-msgstr "Apple Share"
+msgstr "Apple 共享"
 
 #: sharing/models.py:212
-#, fuzzy
 msgid "AFP Shares"
-msgstr "Apple Shares"
+msgstr "Apple 共享"
 
 #: sharing/models.py:228
 msgid "Authorized network or IP addresses"
@@ -3270,28 +3236,25 @@ msgid "Group to map all users to"
 msgstr "群組對應 all users 帳號"
 
 #: sharing/models.py:281
-#, fuzzy
 msgid "NFS Share"
-msgstr "管理NFS共享"
+msgstr "NFS 共享"
 
 #: sharing/models.py:282
-#, fuzzy
 msgid "NFS Shares"
-msgstr "UNIX 共享"
+msgstr "NFS 共享"
 
 #: sharing/nav.py:4 templates/menubar.html:23
 msgid "Sharing"
 msgstr "共享"
 
 #: storage/forms.py:87
-#, fuzzy
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
-msgstr "輸入正數（後面可用 M, G, T 等單位），或是輸入 0"
+msgstr "輸入正數（後面可用K, M, G, T 等單位），或是輸入 0"
 
 #: storage/forms.py:100
-#, fuzzy, python-format
+#, python-format
 msgid "%s is not a valid number"
-msgstr "帳號：%s 無效。"
+msgstr "%s 是無效數字。"
 
 #: storage/forms.py:195 storage/forms.py:456 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
@@ -3304,28 +3267,26 @@ msgstr "強制4096位元組磁區大小"
 
 #: storage/forms.py:200 templates/storage/wizard.html:115
 msgid "Specify custom path"
-msgstr ""
+msgstr "指定自訂路徑"
 
 #: storage/forms.py:208
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
-msgstr ""
+msgstr "此欄位空白將設定磁區的預設路徑為  /mnt/${VOLUME_NAME}"
 
 #: storage/forms.py:268
-#, fuzzy
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
-msgstr "磁區名稱必須使用英文字母開頭，可以包含數字和 - 以及 _ 符號。"
+msgstr "磁區名稱必須使用英文字母開頭，可以包含數字和 - _以及 . 符號。"
 
 #: storage/forms.py:282
-#, fuzzy
 msgid "Path does not exist."
-msgstr "延伸磁區(extent)的路徑"
+msgstr "路徑不存在"
 
 #: storage/forms.py:285
 msgid "Path is not a directory."
-msgstr ""
+msgstr "路徑不是目錄"
 
 #: storage/forms.py:293
 msgid "You must select a filesystem"
@@ -3349,13 +3310,12 @@ msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr "磁區名稱的開頭可能無法使用 C[0-9]、mirror、raidz 或是spare 等文字"
 
 #: storage/forms.py:320
-#, fuzzy
 msgid "UFS volume names cannot be higher than 9 characters"
-msgstr "您的群組編號不可大於 %d"
+msgstr "UFS 磁區名稱不可多於 9 個字元"
 
 #: storage/forms.py:324
 msgid "UFS volume names can only contain alphanumeric characters"
-msgstr ""
+msgstr "UFS 磁區名稱請填入英文字母和數字"
 
 #: storage/forms.py:457 storage/forms.py:551 storage/forms.py:1020
 msgid "Member disk"
@@ -3377,7 +3337,7 @@ msgstr "必須選擇一個磁區"
 #, python-format
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
-msgstr ""
+msgstr "磁區 \"%s\" 匯入失敗，進一步詳細資訊請檢查 pool 狀態"
 
 #: storage/forms.py:750
 msgid "Volume from which this dataset will be created on"
@@ -3445,9 +3405,8 @@ msgid "Size for this ZFS Volume"
 msgstr "此 ZFS 磁區的容量"
 
 #: storage/forms.py:847
-#, fuzzy
 msgid "Example: 1g"
-msgstr "0 =不預留；例如：1g（表示1GB空間）"
+msgstr "例如：1g（表示1GB空間）"
 
 #: storage/forms.py:861
 msgid ""
@@ -3469,7 +3428,7 @@ msgstr "模式"
 
 #: storage/forms.py:886
 msgid "Type of ACL"
-msgstr ""
+msgstr " ACL 類別"
 
 #: storage/forms.py:892
 msgid "Set permission recursively"
@@ -3521,11 +3480,11 @@ msgstr "遠端主機密鑰"
 
 #: storage/forms.py:1144
 msgid "Mark the disks as new (destroy data)"
-msgstr ""
+msgstr "標記為新的磁碟(清除資料)"
 
 #: storage/forms.py:1153
 msgid "Delete all shares related to this volume"
-msgstr ""
+msgstr "刪除此磁區的全部共享"
 
 #: storage/models.py:50
 msgid "File System Type"
@@ -3619,9 +3578,8 @@ msgstr "遠端複寫主機"
 
 #: storage/models.py:424 storage/models.py:471
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
-#, fuzzy
 msgid "Filesystem/Volume"
-msgstr "檔案系統格式"
+msgstr "檔案系統/磁區"
 
 #: storage/models.py:429
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
@@ -3642,15 +3600,15 @@ msgstr "在遠端遞迴複製和刪除過期的快照"
 
 #: storage/models.py:443
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
-msgstr ""
+msgstr "遠端設定初始化。（可能導致遠端資料流失！）"
 
 #: storage/models.py:447
 msgid "Limit (kB/s)"
-msgstr ""
+msgstr "限制 (kB/s)"
 
 #: storage/models.py:448
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
-msgstr ""
+msgstr "複製速度上限。單位為 kB/s。 0 =不限制。"
 
 #: storage/models.py:451
 msgid "Replication Task"
@@ -3851,21 +3809,19 @@ msgstr "磁區匯出成功"
 
 #: storage/views.py:662
 msgid "The scrub process has begun"
-msgstr ""
+msgstr "已經開始進行抹除處理"
 
 #: system/forms.py:158
 msgid "Language (Require UI reload)"
 msgstr "語言(需重新載入介面)"
 
 #: system/forms.py:168
-#, fuzzy
 msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "值必須介於（含）0 ～ 65535。"
+msgstr "值必須介於（含）1 ～ 65535。"
 
 #: system/forms.py:170
-#, fuzzy
 msgid "Number is required."
-msgstr "此欄位必填。"
+msgstr "此欄位必填數字。"
 
 #: system/forms.py:335 system/forms.py:412 system/forms.py:449
 msgid "hour"
@@ -3894,23 +3850,20 @@ msgid "SHA256 sum for the image"
 msgstr "映像檔的 SHA256 sum 檔案驗證"
 
 #: system/forms.py:361
-#, fuzzy
 msgid "Invalid firmware"
-msgstr "無效的韌體更新檔或驗證碼"
+msgstr "無效的韌體更新檔"
 
 #: system/forms.py:367 system/forms.py:394
-#, fuzzy
 msgid "Invalid checksum"
-msgstr "無效的韌體更新檔或驗證碼"
+msgstr "無效的韌體更新驗證碼"
 
 #: system/forms.py:377
 msgid "Service Pack image to be installed"
 msgstr "安裝系統更新檔"
 
 #: system/forms.py:388
-#, fuzzy
 msgid "Invalid service pack"
-msgstr "無效的系統更新檔或驗證碼"
+msgstr "無效的系統更新包"
 
 #: system/forms.py:404
 msgid "New config to be installed"
@@ -3922,20 +3875,19 @@ msgstr "分鐘"
 
 #: system/forms.py:544 system/forms.py:561
 msgid "Quotes are not allowed"
-msgstr ""
+msgstr "不允許有引號"
 
 #: system/models.py:47
 msgid "Protocol"
 msgstr "通訊協定"
 
 #: system/models.py:53
-#, fuzzy
 msgid "WebGUI Address"
-msgstr "IPv4 位址"
+msgstr "WebGUI 網址"
 
 #: system/models.py:59
 msgid "WebGUI Port"
-msgstr ""
+msgstr "WebGUI 連接埠"
 
 #: system/models.py:65
 msgid "Language"
@@ -3959,7 +3911,7 @@ msgstr "NTP網路校時伺服器 3"
 
 #: system/models.py:93
 msgid "Syslog server"
-msgstr ""
+msgstr "Syslog 伺服器"
 
 #: system/models.py:97 system/nav.py:25 templates/system/settings.html:2
 msgid "Settings"
@@ -3998,12 +3950,10 @@ msgid "Enable Zeroconf/Bonjour"
 msgstr "啟用 Bonjour（Zeroconf ）服務"
 
 #: system/models.py:121
-#, fuzzy
 msgid ""
 "Swap size on each drive in GiB, affects new disks only.  Setting this to 0 "
 "disables swap creation completely (STRONGLY DISCOURAGED)."
-msgstr ""
-"每個磁碟上的 swap檔的容量(以GB為單位)，設定只對新磁碟有效。容量必須不能為零"
+msgstr "每個磁碟上的 swap檔的容量(以GB為單位)，設定只對新磁碟有效。容量必須不能為零 (STRONGLY DISCOURAGED)."
 
 #: system/models.py:124
 msgid "Show console messages in the footer (Requires UI reload)"
@@ -4026,11 +3976,10 @@ msgid "From email"
 msgstr "從電子郵件"
 
 #: system/models.py:149
-#, fuzzy
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
-msgstr "系統將使用電子郵件地址發送郵件，例如：freenas@mydomain.com"
+msgstr "系統將使用此電子郵件地址發送郵件，例如：freenas@mydomain.com"
 
 #: system/models.py:154
 msgid "Outgoing mail server"
@@ -4185,9 +4134,8 @@ msgid "Day of week"
 msgstr "每週的第幾天"
 
 #: system/models.py:299
-#, fuzzy
 msgid "Enabled"
-msgstr "啟用 AIO (非同步I/O)"
+msgstr "啟用 "
 
 #: system/models.py:302
 #, fuzzy
@@ -4232,9 +4180,8 @@ msgid "Weekdays"
 msgstr "工作日"
 
 #: system/models.py:359 system/models.py:522 system/models.py:604
-#, fuzzy
 msgid "Weekends"
-msgstr "週"
+msgstr "週末"
 
 #: system/models.py:380
 msgid "IP Address or hostname"
@@ -4338,53 +4285,46 @@ msgid "Extra options to rsync command line (usually empty)"
 msgstr "用於 rsync 的額外選項的命令列(通常為空白)"
 
 #: system/models.py:468
-#, fuzzy
 msgid "Rsync Task"
-msgstr "Rsync 資料備份"
+msgstr "Rsync 排程"
 
 #: system/models.py:469
-#, fuzzy
 msgid "Rsync Tasks"
-msgstr "Rsync 資料備份"
+msgstr "Rsync 排程"
 
 #: system/models.py:615
-#, fuzzy
 msgid "S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "S.M.A.R.T. 測試"
 
 #: system/models.py:616
-#, fuzzy
 msgid "S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T. 的設定"
+msgstr "S.M.A.R.T. 測試"
 
 #: system/models.py:630 system/models.py:662 templates/system/loader.html:5
 #: templates/system/sysctl.html:5
-#, fuzzy
 msgid "Variable"
-msgstr "可用"
+msgstr "可變"
 
 #: system/models.py:634 system/models.py:666 templates/system/loader.html:6
 #: templates/system/sysctl.html:6
 msgid "Value"
-msgstr ""
+msgstr "磁區"
 
 #: system/models.py:650
 msgid "Sysctl"
-msgstr ""
+msgstr "Sysctl"
 
 #: system/models.py:651
 msgid "Sysctls"
-msgstr ""
+msgstr "Sysctls"
 
 #: system/models.py:682
-#, fuzzy
 msgid "Loader"
-msgstr "平均負載"
+msgstr "負載程序"
 
 #: system/models.py:683
-#, fuzzy
 msgid "Loaders"
-msgstr "平均負載"
+msgstr "負載程序"
 
 #: system/nav.py:5 templates/menubar.html:8
 msgid "System"
@@ -4399,43 +4339,38 @@ msgid "System Information"
 msgstr "系統資訊"
 
 #: system/nav.py:32
-#, fuzzy
 msgid "View Cron Jobs"
-msgstr "例行工作"
+msgstr "檢視例行工作"
 
 #: system/nav.py:40
-#, fuzzy
 msgid "View Rsync Tasks"
-msgstr "檢視全部複寫工作"
+msgstr "檢視Rsync排程"
 
 #: system/nav.py:48
-#, fuzzy
 msgid "View S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T. 的設定"
+msgstr "檢視 S.M.A.R.T. 的測試"
 
 #: system/nav.py:55
-#, fuzzy
 msgid "View Sysctls"
-msgstr "檢視磁碟"
+msgstr "檢視Sysctls"
 
 #: system/nav.py:62
-#, fuzzy
 msgid "View Loaders"
-msgstr "檢視全部使用者"
+msgstr "檢視全部負載"
 
 #: system/views.py:108
 msgid "The uploaded file is not valid."
 msgstr "上傳的檔案無效"
 
 #: system/views.py:244
-#, fuzzy, python-format
+#, python-format
 msgid "Test message from %s"
-msgstr "從發出的測試訊息"
+msgstr "從%s發出的測試訊息"
 
 #: system/views.py:246
-#, fuzzy, python-format
+#, python-format
 msgid "This is a message test from %s"
-msgstr "這是從發出的測試訊息"
+msgstr "這是從%s發出的測試訊息"
 
 #: templates/404.html:7
 msgid "Page Not Found"
@@ -4590,11 +4525,11 @@ msgstr "變更管理者密碼"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
-msgstr ""
+msgstr "警告"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr ""
+msgstr "嚴重"
 
 #: templates/freeadmin/directory_browser.html:3
 #: templates/freeadmin/directory_browser.html:7
@@ -4642,7 +4577,7 @@ msgstr "變更成功"
 
 #: templates/freeadmin/generic_model_edit.html:34
 msgid "Save"
-msgstr ""
+msgstr "儲存"
 
 #: templates/freeadmin/generic_model_edit_ok.html:1
 msgid "successfully edited"
@@ -4906,7 +4841,7 @@ msgstr "歡迎 %(username) 登入"
 #: templates/registration/login.html:50
 #, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr ""
+msgstr "歡迎光臨 %(sw_name)s&trade; %(sw_login_version)s"
 
 #: templates/registration/login.html:51
 msgid "Please log in."
@@ -4926,7 +4861,7 @@ msgstr "重新登入"
 
 #: templates/services/enable.html:4
 msgid "Would you like to enable this service?"
-msgstr ""
+msgstr "您要啟動該服務嗎？"
 
 #: templates/services/enable.html:18 templates/storage/tasks.html:37
 msgid "No"
@@ -4981,9 +4916,8 @@ msgid "TFTP Settings"
 msgstr "TFTP 設定"
 
 #: templates/services/index.html:147
-#, fuzzy
 msgid "UPS Settings"
-msgstr "NFS 設定"
+msgstr "UPS 設定"
 
 #: templates/services/index.html:152
 msgid "iSCSI"
@@ -5238,7 +5172,7 @@ msgstr "新增複寫"
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
 msgid "View Public Key"
-msgstr ""
+msgstr "檢視公開金鑰"
 
 #: templates/storage/replications.html:16
 msgid ""
@@ -5288,9 +5222,8 @@ msgid "Destroy Snapshot"
 msgstr "銷毀快照"
 
 #: templates/storage/snapshots.html:38
-#, fuzzy
 msgid "Destroy this snapshot"
-msgstr "銷毀快照"
+msgstr "銷毀此快照"
 
 #: templates/storage/snapshots.html:49
 #, fuzzy
@@ -5358,7 +5291,7 @@ msgstr "管理 ZFS 磁區"
 #: templates/storage/volume_export.html:9
 #, python-format
 msgid "You have %(used)s of used space within this volume"
-msgstr ""
+msgstr "此磁區已經使用 %(used) 的空間"
 
 #: templates/storage/volume_export.html:21
 msgid "Are you sure you want to export?"
@@ -5428,7 +5361,7 @@ msgstr "ZFS 延伸磁區(Extra)"
 
 #: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
-msgstr "只使用1個 log 磁碟是非常沮喪"
+msgstr "強烈建議不要只使用1個 log 磁碟"
 
 #: templates/storage/wizard.html:93
 msgid "Log"
@@ -5598,7 +5531,7 @@ msgstr "新增 Rsyncs 工作"
 
 #: templates/system/rsync.html:46
 msgid "Add Rsync"
-msgstr "新增 Rsyncs 工作"
+msgstr "新增 Rsync 工作"
 
 #: templates/system/settings.html:3
 msgid "General"

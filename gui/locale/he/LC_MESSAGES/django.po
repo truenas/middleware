@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-19 11:47-0200\n"
-"PO-Revision-Date: 2011-10-20 20:27+0200\n"
+"PO-Revision-Date: 2011-10-21 15:07+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -832,20 +832,19 @@ msgstr "אתה חייב להכתיב IPv4 או IPv6 חוקי עם maskbit"
 
 #: network/forms.py:117
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Loopback  הוא שם שרת חוקי"
 
 #: network/forms.py:119
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "כתובות לא מצוינות לא חוקיות לשם שרתים"
 
 #: network/forms.py:122
-#, fuzzy
 msgid "This is not a valid nameserver address"
-msgstr "השדה הזה אינו כתובת IP או רשת חוקית"
+msgstr "השדה הזה אינו כתובת שם שרת חוקי"
 
 #: network/forms.py:124
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "מסכת רשת 169.254/16  לא חוקי בתור שם שרת"
 
 #: network/forms.py:144
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
