@@ -87,5 +87,5 @@ msgstr "Each selected"
 msgid "Every N"
 msgstr "Every N"
 
-#~ msgid "Every"
-#~ msgstr "Every"
+msgid "Every"
+msgstr "Every"

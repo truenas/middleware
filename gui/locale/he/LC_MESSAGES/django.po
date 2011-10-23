@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-19 11:47-0200\n"
-"PO-Revision-Date: 2011-10-21 15:07+0200\n"
+"PO-Revision-Date: 2011-10-22 19:43+0200\n"
 "Last-Translator: shmuel_mr <shmuel_mr@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: he\n"
@@ -808,7 +808,7 @@ msgstr "NIC"
 
 #: network/forms.py:86
 msgid "You have to specify IPv4 address as well"
-msgstr "אתה צריך להכתיב גם כן כתובת IPv4"
+msgstr "עליך להכתיב גם כן כתובת IPv4"
 
 #: network/forms.py:88
 msgid "You have to choose IPv4 netmask as well"
@@ -816,7 +816,7 @@ msgstr "אתה צריך לבחור מסכת רשת(netmask) IPv4 גם כן"
 
 #: network/forms.py:93
 msgid "You have to specify IPv6 address as well"
-msgstr "אתה צריך להכתיב גם כן כתובת IPv6"
+msgstr "עליך להכתיב גם כן כתובת IPv6"
 
 #: network/forms.py:95
 msgid "You have to choose IPv6 netmask as well"
@@ -828,7 +828,7 @@ msgstr "אתה צריל בלבחור בין IPv4 לIPv6"
 
 #: network/forms.py:102
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr "אתה חייב להכתיב IPv4 או IPv6 חוקי עם maskbit"
+msgstr "עליך להכתיב IPv4 או IPv6 חוקי עם maskbit"
 
 #: network/forms.py:117
 msgid "Loopback is not a valid nameserver"
@@ -885,7 +885,7 @@ msgstr "הרשת '%S' לא חוקית, CIDR מצופה."
 
 #: network/forms.py:303
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "עליך להכתיב כתובת IPv4 כמו כן לכל כינוי"
 
 #: network/forms.py:305
 msgid "You have to choose IPv4 netmask as well per alias"

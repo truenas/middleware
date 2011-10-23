@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-19 11:50-0200\n"
-"PO-Revision-Date: 2011-10-22 10:12+0200\n"
+"PO-Revision-Date: 2011-10-23 06:39+0200\n"
 "Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -125,7 +125,7 @@ msgstr "層級 127 - 正常用電模式並待機"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "層級 128 - 省電模式但不待機（不怠速）"
+msgstr "層級 128 - 省電模式但不待機 (不怠速)"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
@@ -269,7 +269,7 @@ msgstr "不調整大小寫"
 
 #: choices.py:196 choices.py:197
 msgid "Lowercase names in both directions"
-msgstr "雙向都使用小寫名稱"
+msgstr "名稱在兩端都使用小寫"
 
 #: choices.py:198
 msgid "Client sees lowercase, server sees uppercase"
@@ -324,19 +324,19 @@ msgstr "無"
 
 #: choices.py:223
 msgid "CHAP"
-msgstr "Challenge Handshake 驗證通訊協定（CHAP）"
+msgstr "Challenge Handshake 驗證通訊協定(CHAP)"
 
 #: choices.py:224
 msgid "Mutual CHAP"
-msgstr "雙向 Challenge Handshake 驗證通訊協定（CHAP）"
+msgstr "雙向 Challenge Handshake 驗證通訊協定(Mutual CHAP)"
 
 #: choices.py:246
 msgid "UPS reaches low battery"
-msgstr "當 UPS 電池達低電量"
+msgstr " UPS 電池達低電量"
 
 #: choices.py:247
 msgid "UPS goes on battery"
-msgstr "當 UPS 改由電池供電時"
+msgstr " UPS 改由電池供電"
 
 #: choices.py:250
 msgid "Preferred"
@@ -364,7 +364,7 @@ msgstr "停用"
 
 #: choices.py:287
 msgid "lzjb (recommended)"
-msgstr "lzjb 壓縮法（推薦）"
+msgstr "lzjb 壓縮法 (推薦)"
 
 #: choices.py:288
 msgid "gzip (default level, 6)"
@@ -479,7 +479,7 @@ msgstr "離線後立即測試(只支援ATA硬碟)"
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
-msgstr "您的名稱不能用\"-\"符號開頭"
+msgstr "您的名稱不能用 \"-\" 符號開頭"
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
@@ -666,11 +666,11 @@ msgstr "使用者 &"
 
 #: account/models.py:84
 msgid "Hashed UNIX password"
-msgstr "雜湊（Hashed）UNIX 密碼"
+msgstr "雜湊 (Hashed) UNIX 密碼"
 
 #: account/models.py:90
 msgid "Hashed SMB password"
-msgstr "雜湊（Hashed）SMB 密碼"
+msgstr "雜湊 (Hashed) SMB 密碼"
 
 #: account/models.py:94
 msgid "Primary Group ID"
@@ -893,7 +893,7 @@ msgstr "LAGG 介面上的實體網路卡"
 #: network/forms.py:276
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr "網路 '%s' 無法使用，改用無類別域間路由（CIDR）"
+msgstr "網路 '%s' 無法使用，改用無類別域間路由 (CIDR)"
 
 #: network/forms.py:303
 msgid "You have to specify IPv4 address as well per alias"
@@ -1019,9 +1019,8 @@ msgid "Alias"
 msgstr "別名"
 
 #: network/models.py:195
-#, fuzzy
 msgid "Aliases"
-msgstr "別名"
+msgstr "主機別名"
 
 #: network/models.py:205 templates/network/lagg.html:5
 #: templates/network/vlan.html:5
@@ -1122,11 +1121,11 @@ msgstr "無效的遮罩"
 
 #: services/forms.py:83
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr "欲使用『啟用家目錄瀏覽』功能須填此欄位。"
+msgstr "欲使用 \"啟用瀏覽家目錄\" 的功能須填此欄位。"
 
 #: services/forms.py:86
 msgid "This field is required for \"Home directories\"."
-msgstr "欲使用『家目錄』功能須填此欄位。"
+msgstr "欲使用 \"家目錄\" 的功能須填此欄位。"
 
 #: services/forms.py:94
 msgid "The CIFS service failed to reload."
@@ -1150,11 +1149,11 @@ msgstr "目錄權限"
 
 #: services/forms.py:145
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
-msgstr "值必須介於（含）1024 ～ 65535，預設為 0。"
+msgstr "值必須介於 1024 ～ 65535 之間，預設為 0。"
 
 #: services/forms.py:151
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
-msgstr "值必須介於（含）1024 ～ 65535，預設為 0。"
+msgstr "值必須介於 1024 ～ 65535 之間，預設為 0。"
 
 #: services/forms.py:170
 msgid "This field is required for anonymous login"
@@ -1215,7 +1214,7 @@ msgstr "SNMP 服務重新載入時失敗"
 msgid "Port"
 msgstr "連接埠"
 
-# %(email) 是無效的電子郵件
+# 電子郵件 %(email) 不正確
 #: services/forms.py:319 services/forms.py:903
 #, python-format
 msgid "The email %(email)s is not valid"
@@ -1260,7 +1259,7 @@ msgstr "起始端密鑰"
 
 #: services/forms.py:383 services/models.py:547 services/models.py:552
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr "起始端密鑰。（供雙向 CHAP 驗證）"
+msgstr "起始端密鑰。(供雙向 CHAP 驗證)"
 
 #: services/forms.py:386
 msgid "Initiator Secret (Confirm)"
@@ -1272,16 +1271,15 @@ msgstr "密鑰不一致！"
 
 #: services/forms.py:410 services/forms.py:411
 msgid "The peer secret is required if you set a peer user."
-msgstr "若您設定了一個同儕（peer）使用者，則必須輸入同儕密鑰。"
+msgstr "若您設定了一個同儕 (peer) 使用者，則必須輸入同儕密鑰。"
 
 #: services/forms.py:414
 msgid "The peer secret cannot be the same as user secret."
 msgstr "同儕密鑰不可與使用者密鑰相同。"
 
 #: services/forms.py:417 services/forms.py:420
-#, fuzzy
 msgid "The peer user is required if you set a peer secret."
-msgstr "若您設定了一個同儕（peer）使用者，則必須輸入同儕密鑰。"
+msgstr "若您設定了一個同儕 (peer) 使用者，則必須輸入同儕密鑰。"
 
 #: services/forms.py:437 services/forms.py:484 services/forms.py:601
 #: services/forms.py:659 services/forms.py:766 services/forms.py:791
@@ -1311,7 +1309,7 @@ msgstr "探索驗證群組"
 #: services/forms.py:519
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr "值必須介於（含）%(start)d ～ %(end)d。"
+msgstr "值必須介於 %(start)d ～ %(end)d 之間。"
 
 #: services/forms.py:527
 msgid ""
@@ -1335,14 +1333,12 @@ msgstr "您必須指定一個位於您的磁區或資料集內的檔案。"
 #: services/forms.py:621
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
-msgstr "您連往延伸磁區（extent）的路徑必須位於一個磁區或資料集的掛載點之下。"
+msgstr "您連往延伸磁區 (extent) 的路徑必須位於一個磁區或資料集的掛載點之下。"
 
 #: services/forms.py:635
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
-msgstr ""
-"值可以是以 bytes 為單位的大小（只輸入數字），或在後面加註 KB、MB、GB、TB 等單"
-"位"
+msgstr "值可以只輸入數字 (以 bytes為單位)，或在後面加註 KB、MB、GB、TB 等單位"
 
 #: services/forms.py:642
 msgid "The file must exist if the extent size is set to auto (0)"
@@ -1366,7 +1362,7 @@ msgstr "您的群組編號不可大於 %d"
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
-msgstr "這不是有效的 IP 位址或網路。關鍵字\"ALL\" 可以用來允許全部。"
+msgstr "這不是有效的 IP 位址或網路。關鍵字 \"ALL\" 可以用來允許全部。"
 
 #: services/forms.py:826
 msgid "Authentication Group number"
@@ -1422,7 +1418,7 @@ msgstr "工作群組"
 msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
-msgstr "用戶端查詢時伺服器所在的工作群組（限 15 個字元以內）。"
+msgstr "用戶端查詢時伺服器所在的工作群組 (限 15 個字元以內)。"
 
 #: services/models.py:79
 msgid "Server description. This can usually be left blank."
@@ -1460,9 +1456,9 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"請使用此選項會重新定義（override）存取訪客服務的帳號（預設為 'nobody'）。此帳"
-"號的所有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 password 檔"
-"裡，但不必是個有效的登入帳號。root 帳號不能作為訪客帳號。"
+"請使用此選項會重新定義 (override) 存取訪客服務的帳號 (預設為 'nobody') "
+"。此帳號的所有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 password 檔裡，但不必是個有效的登入帳號。root "
+"帳號不能作為訪客帳號。"
 
 #: services/models.py:111
 msgid "Allow guest access"
@@ -1478,7 +1474,7 @@ msgstr "檔案權限遮罩"
 
 #: services/models.py:118
 msgid "Use this option to override the file creation mask (0666 by default)."
-msgstr "請使用此選項重新定義新建檔案的權限遮罩（預設為 0666）。"
+msgstr "請使用此選項重新定義新建檔案的權限遮罩 (預設為 0666)。"
 
 #: services/models.py:122 services/models.py:893
 msgid "Directory mask"
@@ -1487,7 +1483,7 @@ msgstr "目錄權限遮罩"
 #: services/models.py:124
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
-msgstr "請使用此選項重新定義新建目錄的權限遮罩（預設為 0777）。"
+msgstr "請使用此選項重新定義新建目錄的權限遮罩 (預設為 0777)。"
 
 #: services/models.py:127
 msgid "Large RW support"
@@ -1598,9 +1594,8 @@ msgid "Allow users with local accounts to access apple shares on this box."
 msgstr "允許本機使用者連接 apple 共享"
 
 #: services/models.py:204
-#, fuzzy
 msgid "Max. Connections"
-msgstr "最大connections連線數"
+msgstr "最大連線數"
 
 #: services/models.py:206
 msgid ""
@@ -1647,8 +1642,8 @@ msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
-"基本名稱。例如 iqn.2007-09.jp.ne.peach.istgt，會自動附加目標名稱，不需要一開"
-"始「iqn.」（請參閱 RFC3720和3721的詳細資料）"
+"基本名稱。例如：iqn.2007-09.jp.ne.peach.istgt，會自動附加目標名稱，不需要一開頭為「iqn.」(請參閱 "
+"RFC3720和3721的詳細資料)"
 
 #: services/models.py:249
 msgid "Discovery Auth Method"
@@ -1982,7 +1977,7 @@ msgstr "邏輯區塊大小"
 msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
-msgstr "指定邏輯區塊的長度（預設為512）。建議的長度是512。"
+msgstr "指定邏輯區塊的長度 (預設為512)。建議的長度是512。"
 
 #: services/models.py:640 services/models.py:659
 #: templates/services/iscsi_assoctargets.html:5
@@ -2176,7 +2171,7 @@ msgstr "連線"
 
 #: services/models.py:855
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr "相同IP的連線數上限（0=不限制）"
+msgstr "相同IP的連線數上限 (0=不限制)"
 
 #: services/models.py:859
 msgid "Login Attempts"
@@ -2225,7 +2220,7 @@ msgstr "FTP 第一次連線顯示歡迎看板"
 
 #: services/models.py:888 services/models.py:894
 msgid "Use this option to override the file creation mask (077 by default)."
-msgstr "設定檔案新增遮罩（預設為077）"
+msgstr "設定檔案新增遮罩 (預設為077)"
 
 #: services/models.py:897
 msgid "Enable FXP"
@@ -2286,11 +2281,9 @@ msgid ""
 "large enough to handle many simultaneous passive connections (for example, "
 "49152-65534, the IANA-registered ephemeral port range)."
 msgstr ""
-"允許在PASV被動模式傳輸資料使用連接埠的結束範圍 (0 = 不限制。使用任何連接埠)。"
-"當客戶端發送 PASV模式時，將從伺服器選擇被動模式連接埠的限制範圍。伺服器將從指"
-"定的範圍內隨機挑選一個可用的連接埠。選定的連接埠範圍必須在非保留範圍（如"
-">=1024）。強烈建議選擇的範圍需夠大，才能同時處理大量連線（例如：在IANA註冊的"
-"臨時連接埠範圍 49152-65534）"
+"允許在PASV被動模式傳輸資料使用連接埠的結束範圍 (0 = 不限制。使用任何連接埠)。當客戶端發送 "
+"PASV模式時，將從伺服器選擇被動模式連接埠的限制範圍。伺服器將從指定的範圍內隨機挑選一個可用的連接埠。選定的連接埠範圍必須在非保留範圍 "
+"(如>=1024)。強烈建議選擇的範圍需夠大，才能同時處理大量連線 (例如：在IANA註冊的臨時連接埠範圍 49152-65534)"
 
 #: services/models.py:924
 msgid "Local user upload bandwidth"
@@ -2369,7 +2362,7 @@ msgstr "預設權限"
 msgid ""
 "Set the umask for newly created files to the specified value. The default is "
 "022 (everyone can read, nobody can write)."
-msgstr "新建的檔案設定預設權限。預設值為022（任何人都可讀取，但無法寫入）"
+msgstr "新建的檔案設定預設權限。預設值為022 (任何人都可讀取，但無法寫入)"
 
 #: services/models.py:985 services/models.py:1022 system/models.py:463
 msgid "Extra options"
@@ -2636,7 +2629,7 @@ msgstr "最大連線數"
 
 #: services/models.py:1238
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr "相同IP的連線數上限，預設為0（不限制）"
+msgstr "相同IP的連線數上限，預設為0 (不限制)"
 
 #: services/models.py:1244
 msgid ""
@@ -2872,9 +2865,8 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login."
 msgstr ""
-"請使用此選項重新定義（override）存取訪客服務的帳號（預設為 'ftp'）此帳號的所"
-"有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 password 檔裡，但"
-"不必是個有效的登入帳號"
+"請使用此選項重新定義 (override) 存取訪客服務的帳號 (預設為 'ftp') "
+"此帳號的所有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 password 檔裡，但不必是個有效的登入帳號。"
 
 #: sharing/models.py:69
 msgid "Allow Guest Access"
@@ -3249,7 +3241,7 @@ msgstr "共享"
 
 #: storage/forms.py:87
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
-msgstr "輸入正數（後面可用K, M, G, T 等單位），或是輸入 0"
+msgstr "輸入正數 (後面可用K, M, G, T 等單位)，或是輸入 0"
 
 #: storage/forms.py:100
 #, python-format
@@ -3278,7 +3270,7 @@ msgstr "此欄位空白將設定磁區的預設路徑為  /mnt/${VOLUME_NAME}"
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
-msgstr "磁區名稱必須使用英文字母開頭，可以包含數字和 - _以及 . 符號。"
+msgstr "磁區名稱必須使用英文字母開頭，內容可用數字和 - _以及 . 符號。"
 
 #: storage/forms.py:282
 msgid "Path does not exist."
@@ -3337,7 +3329,7 @@ msgstr "必須選擇一個磁區"
 #, python-format
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
-msgstr "磁區 \"%s\" 匯入失敗，進一步詳細資訊請檢查 pool 狀態"
+msgstr "磁區 \"%s\" 匯入失敗，進一步詳細資訊請檢查儲存池狀態(pool status)"
 
 #: storage/forms.py:750
 msgid "Volume from which this dataset will be created on"
@@ -3363,7 +3355,7 @@ msgstr "資料集配額"
 #: storage/forms.py:754 storage/forms.py:755 storage/forms.py:789
 #: storage/forms.py:790 storage/forms.py:819
 msgid "0=Unlimited; example: 1g"
-msgstr "0 =不限制；例如：1g （表示1GB空間）"
+msgstr "0 =不限制；例如：1g  (表示1GB)"
 
 #: storage/forms.py:755 storage/forms.py:790
 msgid "Quota for this dataset and all children"
@@ -3376,7 +3368,7 @@ msgstr "資料集的預留空間"
 #: storage/forms.py:756 storage/forms.py:757 storage/forms.py:791
 #: storage/forms.py:792 storage/forms.py:820
 msgid "0=None; example: 1g"
-msgstr "0 =不預留；例如：1g（表示1GB空間）"
+msgstr "0 =不預留；例如：1g (表示1GB)"
 
 #: storage/forms.py:757 storage/forms.py:792
 msgid "Reserved space for this dataset and all children"
@@ -3406,7 +3398,7 @@ msgstr "此 ZFS 磁區的容量"
 
 #: storage/forms.py:847
 msgid "Example: 1g"
-msgstr "例如：1g（表示1GB空間）"
+msgstr "例如：1g (表示1GB)"
 
 #: storage/forms.py:861
 msgid ""
@@ -3583,7 +3575,7 @@ msgstr "檔案系統/磁區"
 
 #: storage/models.py:429
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
-msgstr "將最新的快照傳送到遠端（本欄位空白為全部複製）"
+msgstr "將最新的快照傳送到遠端 (欄位空白為全部複製)"
 
 #: storage/models.py:432 system/models.py:379
 #: templates/storage/replications.html:22
@@ -3600,7 +3592,7 @@ msgstr "在遠端遞迴複製和刪除過期的快照"
 
 #: storage/models.py:443
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
-msgstr "遠端設定初始化。（可能導致遠端資料流失！）"
+msgstr "遠端設定初始化。(可能導致遠端資料流失！)"
 
 #: storage/models.py:447
 msgid "Limit (kB/s)"
@@ -3636,7 +3628,7 @@ msgstr "開始"
 
 #: storage/models.py:490
 msgid "When in a day should we start making snapshots, e.g. 8:00"
-msgstr "建立快照的開始時間（例如： 8:00）"
+msgstr "建立快照的開始時間 (例如： 8:00)"
 
 #: storage/models.py:494
 msgid "End"
@@ -3644,7 +3636,7 @@ msgstr "結束"
 
 #: storage/models.py:495
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
-msgstr "建立快照的開始時間（例如：17:00）"
+msgstr "建立快照的開始時間 (例如：17:00)"
 
 #: storage/models.py:501
 msgid "Interval"
@@ -3771,7 +3763,6 @@ msgid "Snapshot successfully deleted."
 msgstr "快照刪除成功"
 
 #: storage/views.py:522
-#, fuzzy
 msgid "Snapshots successfully deleted."
 msgstr "快照刪除成功"
 
@@ -3817,7 +3808,7 @@ msgstr "語言(需重新載入介面)"
 
 #: system/forms.py:168
 msgid "You must specify a number between 1 and 65535, inclusive."
-msgstr "值必須介於（含）1 ～ 65535。"
+msgstr "值必須介於 1 ～ 655355 之間。"
 
 #: system/forms.py:170
 msgid "Number is required."
@@ -3947,7 +3938,7 @@ msgstr "啟用 powerd (省電服務)"
 
 #: system/models.py:118
 msgid "Enable Zeroconf/Bonjour"
-msgstr "啟用 Bonjour（Zeroconf ）服務"
+msgstr "啟用 Bonjour (Zeroconf) 服務"
 
 #: system/models.py:121
 msgid ""
@@ -3957,7 +3948,7 @@ msgstr "每個磁碟上的 swap檔的容量(以GB為單位)，設定只對新磁
 
 #: system/models.py:124
 msgid "Show console messages in the footer (Requires UI reload)"
-msgstr "將控制訊息顯示在頁尾（需重新讀取使用介面）"
+msgstr "將控制訊息顯示在頁尾 (需重新讀取使用介面)"
 
 #: system/models.py:127
 msgid "Show tracebacks in case of fatal errors"
@@ -4053,11 +4044,11 @@ msgstr "地區名稱(例如：城市)"
 
 #: system/models.py:228
 msgid "State"
-msgstr "州（省）"
+msgstr "州 (省)"
 
 #: system/models.py:229
 msgid "State or Province Name (full name)"
-msgstr "州或省的名稱（全名）"
+msgstr "州或省的名稱 (完整名稱)"
 
 #: system/models.py:235
 msgid "Country"
@@ -4065,7 +4056,7 @@ msgstr "國家"
 
 #: system/models.py:236
 msgid "Country Name (2 letter code)"
-msgstr "國家代碼（2個字母）"
+msgstr "國家代碼 (2個字母)"
 
 #: system/models.py:242
 msgid "Common Name"
@@ -4073,7 +4064,7 @@ msgstr "通用名稱"
 
 #: system/models.py:243
 msgid "Common Name (eg, YOUR name)"
-msgstr "通用名稱（例如：您的大名）"
+msgstr "通用名稱 (例如：您的大名)"
 
 #: system/models.py:248
 msgid "SSL Certificate"
@@ -4138,12 +4129,10 @@ msgid "Enabled"
 msgstr "啟用 "
 
 #: system/models.py:302
-#, fuzzy
 msgid "Cron Job"
 msgstr "例行工作"
 
 #: system/models.py:303
-#, fuzzy
 msgid "Cron Jobs"
 msgstr "例行工作"
 
@@ -4175,9 +4164,8 @@ msgid "Every month"
 msgstr "每月"
 
 #: system/models.py:357 system/models.py:520 system/models.py:602
-#, fuzzy
 msgid "Weekdays"
-msgstr "工作日"
+msgstr "平日"
 
 #: system/models.py:359 system/models.py:522 system/models.py:604
 msgid "Weekends"
@@ -5178,7 +5166,7 @@ msgstr "檢視公開金鑰"
 msgid ""
 "ATTENTION: A periodic snapshot of a given ZFS filesystem/volume is required "
 "to create a replication task"
-msgstr ""
+msgstr "注意：在特定ZFS檔案系統/磁區上的定期快照，需要建立複寫排程。"
 
 #: templates/storage/replications.html:21
 msgid "Last snapshot"
@@ -5199,25 +5187,22 @@ msgid "No ZFS replication available"
 msgstr "ZFS 複寫無法使用"
 
 #: templates/storage/scrub_confirm.html:7
-#, fuzzy
 msgid "Are you sure you want to scrub?"
-msgstr "確定要卸載嗎？"
+msgstr "確定要檢查資料完整性( scrub )嗎？"
 
 #: templates/storage/scrub_confirm.html:7
 msgid "This will increase system overhead while in progress"
-msgstr ""
+msgstr "正在處理中，這會造成系統額外的負荷。"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
-#, fuzzy
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
-msgstr "確定將快照還原到之前的狀態？"
+msgstr "確定要資料還原至此快照的狀態？"
 
 #: templates/storage/snapshots.html:22
 msgid "Clone snapshot"
 msgstr "複製快照"
 
 #: templates/storage/snapshots.html:33
-#, fuzzy
 msgid "Destroy Snapshot"
 msgstr "銷毀快照"
 
@@ -5226,18 +5211,16 @@ msgid "Destroy this snapshot"
 msgstr "銷毀此快照"
 
 #: templates/storage/snapshots.html:49
-#, fuzzy
 msgid "Rollback Snapshot"
-msgstr "還原這個快照"
+msgstr "還原快照"
 
 #: templates/storage/snapshots.html:54
 msgid "Rollback to this snapshot"
 msgstr "還原這個快照"
 
 #: templates/storage/snapshots.html:128
-#, fuzzy
 msgid "Destroy"
-msgstr "刪除磁區"
+msgstr "銷毀"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
@@ -5280,9 +5263,8 @@ msgid "on every"
 msgstr "在每"
 
 #: templates/storage/tasks.html:147
-#, fuzzy
 msgid "There are no periodic snapshots scheduled."
-msgstr "沒有排定自動快照的工作"
+msgstr "沒有定期快照的排程"
 
 #: templates/storage/volume_edit.html:9
 msgid "Edit ZFS Volume"
@@ -5331,9 +5313,8 @@ msgid "Export Volume"
 msgstr "匯出磁區"
 
 #: templates/storage/volumes.html:150 templates/storage/volumes.html.py:154
-#, fuzzy
 msgid "Scrub Volume"
-msgstr "ZFS 磁區"
+msgstr "檢查磁區是否正常"
 
 #: templates/storage/volumes.html:191 templates/storage/volumes.html.py:195
 msgid "View Disks"
@@ -5341,7 +5322,7 @@ msgstr "檢視磁碟"
 
 #: templates/storage/volumes.html:201 templates/storage/volumes.html.py:205
 msgid "zpool status"
-msgstr ""
+msgstr "顯示儲存池的容量(zpool status)"
 
 #: templates/storage/volumes.html:213
 msgid "No volumes defined"
@@ -5401,9 +5382,8 @@ msgstr "暫存區重建失敗"
 
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
-#, fuzzy
 msgid "Save Debug"
-msgstr "偵錯"
+msgstr "偵錯儲存"
 
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
@@ -5428,17 +5408,14 @@ msgid "Update"
 msgstr "更新"
 
 #: templates/system/cronjob.html:40
-#, fuzzy
 msgid "No cron jobs defined."
 msgstr "沒有設定例行工作"
 
 #: templates/system/cronjob.html:46
-#, fuzzy
 msgid "Add a cron job"
 msgstr "新增例行工作"
 
 #: templates/system/cronjob.html:48
-#, fuzzy
 msgid "Add cron job"
 msgstr "新增例行工作"
 
@@ -5462,22 +5439,19 @@ msgstr "寄送測試郵件"
 msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
-msgstr ""
+msgstr "提示：測試發送電子郵件給 root 使用者。請從選單 [使用者] -> [root]  -> [更改電子郵件]"
 
 #: templates/system/loader.html:32
-#, fuzzy
 msgid "No loader setting defined."
-msgstr "沒有定義的目標"
+msgstr "沒有設定載入設置"
 
 #: templates/system/loader.html:38
-#, fuzzy
 msgid "Add loader"
-msgstr "新增入口首頁"
+msgstr "新增載掛"
 
 #: templates/system/loader.html:40
-#, fuzzy
 msgid "Add Loader"
-msgstr "新增入口首頁"
+msgstr "新增載掛"
 
 #: templates/system/reporting.html:4
 msgid "Hourly"
@@ -5520,14 +5494,12 @@ msgid "Yearly Graphs"
 msgstr "每年圖表"
 
 #: templates/system/rsync.html:38
-#, fuzzy
 msgid "No rsync tasks defined."
-msgstr "沒有設定 rsyncs 工作"
+msgstr "沒有設定 rsyncs 排程"
 
 #: templates/system/rsync.html:44
-#, fuzzy
 msgid "Add rsync task"
-msgstr "新增 Rsyncs 工作"
+msgstr "新增 rsyncs 排程"
 
 #: templates/system/rsync.html:46
 msgid "Add Rsync"
@@ -5539,7 +5511,7 @@ msgstr "一般"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
-msgstr ""
+msgstr "還原至出廠狀態"
 
 #: templates/system/settings_edit.html:7
 msgid "Restore Config"
@@ -5555,34 +5527,28 @@ msgid "Upload Config"
 msgstr "上傳設定檔"
 
 #: templates/system/smarttest.html:36
-#, fuzzy
 msgid "No S.M.A.R.T. tests defined"
-msgstr "沒有定義的目標"
+msgstr "沒有設定 S.M.A.R.T. 檢測"
 
 #: templates/system/smarttest.html:42
-#, fuzzy
 msgid "Add S.M.A.R.T. Test"
-msgstr "S.M.A.R.T."
+msgstr "設定 S.M.A.R.T. 檢測"
 
 #: templates/system/smarttest.html:44
-#, fuzzy
 msgid "Add S.M.A.R.T. test"
-msgstr "S.M.A.R.T."
+msgstr "設定 S.M.A.R.T. 檢測"
 
 #: templates/system/sysctl.html:32
-#, fuzzy
 msgid "No sysctl defined."
-msgstr "沒有設定 rsyncs 工作"
+msgstr "沒有設定系統調整( sysctl )"
 
 #: templates/system/sysctl.html:38
-#, fuzzy
 msgid "Add sysctl"
-msgstr "新增 Rsyncs 工作"
+msgstr "新增系統調整( sysctl )"
 
 #: templates/system/sysctl.html:40
-#, fuzzy
 msgid "Add Sysctl"
-msgstr "新增 Rsyncs 工作"
+msgstr "新增系統調整( Sysctl ) "
 
 #: templates/system/system_info.html:9
 msgid "Build"
@@ -5614,40 +5580,38 @@ msgid "Step %(step)s of %(step_count)s"
 msgstr "在 %(step)s ／ %(step_count) 步驟"
 
 #: templates/system/wizard.html:14
-#, fuzzy
 msgid "Apply Update"
-msgstr "更新"
+msgstr "套用更新"
 
 #: tools/alert.py:76
 #, python-format
 msgid "The volume %s status is HEALTHY"
-msgstr ""
+msgstr "磁區 %s 狀態正常(HEALTHY)"
 
 #: tools/alert.py:79
 #, python-format
 msgid "The volume %s status is DEGRADED"
-msgstr ""
+msgstr "磁區 %s 狀態異常(DEGRADED)"
 
 #: tools/alert.py:82
 #, python-format
 msgid "The volume %(volume)s status is %(status)s"
-msgstr ""
+msgstr "磁區 %(volume) 狀態 %(status)"
 
 #: tools/alert.py:87
 msgid ""
 "You have to change the password for the admin user (currently no password is "
 "required to login)"
-msgstr ""
+msgstr "必須變更使用者 admin 的密碼。(目前登入不需要密碼)"
 
 #: tools/alert.py:99
 #, python-format
 msgid "The WebGUI Address could not be bind to %s; using wildcard"
-msgstr ""
+msgstr "WebGUI 網址不能使用 %s ; 請使用萬用字元。"
 
 #: tools/alert.py:127
-#, fuzzy
 msgid "Critical Alerts"
-msgstr "重要"
+msgstr "重要提醒"
 
 msgid "%s successfully added."
 msgstr "%s 新增成功"
@@ -5656,10 +5620,10 @@ msgid "IPv6 Netmask"
 msgstr "IPv6 網路遮罩"
 
 msgid "This value must be between 0 and 10000, inclusive."
-msgstr "值必須介於（含）0 ～ 10000。"
+msgstr "值必須介於 0 ～ 10000 之間。"
 
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr "值必須介於（含）0 ～ 1000。"
+msgstr "值必須介於 0 ～ 1000 之間。"
 
 msgid "Enable DDP"
 msgstr "啟用DDP(資料封包傳輸協定)"
@@ -5746,9 +5710,8 @@ msgid ""
 "the guest service. This user must exist in the password file, but does "
 "not require a valid login."
 msgstr ""
-"請使用此選項重新定義（override）存取訪客服務的帳號（預設為 'www'）此帳號的"
-"所有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 password 檔"
-"裡，但不必是個有效的登入帳號"
+"請使用此選項重新定義 (override) 存取訪客服務的帳號 (預設為 'www') "
+"此帳號的所有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 password 檔裡，但不必是個有效的登入帳號"
 
 msgid "ZVol Name"
 msgstr "ZVol 名稱"
