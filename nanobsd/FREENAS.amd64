@@ -82,7 +82,7 @@ options		KDB			# Enable kernel debugger support.
 options		DDB			# Support DDB.
 
 # FreeNAS modifications
-makeoptions	MODULES_OVERRIDE="ext2fs geom ntfs smbfs libiconv libmchain pf pflog udf zfs opensolaris usb/xhci"
+makeoptions	MODULES_OVERRIDE="cxgb ext2fs geom ntfs smbfs libiconv libmchain pf pflog udf zfs opensolaris usb/xhci"
 options		GEOM_UZIP
 options		GEOM_ELI
 options		NULLFS
