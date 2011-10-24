@@ -383,13 +383,11 @@ class NavTree(object):
             options.append(option)
         return options
 
-    def sernav(self, o, **kwargs):
-
-        items = []
+    def dehydrate(self, o, level, uid):
 
         # info about current node
         my = {
-            'id': str(kwargs['uid'].new()),
+            'id': str(uid.new()),
             'view': o.get_absolute_url(),
         }
         if hasattr(o, 'append_url'):
@@ -400,39 +398,17 @@ class NavTree(object):
             if hasattr(o, attr):
                 my[attr] = getattr(o, attr)
 
-        # root nodes identified as type app
-        if kwargs['level'] == 0:
-            my['type'] = 'app'
-
-        if not kwargs['parents'].has_key(kwargs['level']):
-            kwargs['parents'][kwargs['level']] = []
-
-        if kwargs['level'] > 0:
-            kwargs['parents'][kwargs['level']].append(my['id'])
-
         # this node has no childs
-        if o.option_list is None:
-            return items
+        if not o.option_list:
+            return my
+        else:
+            my['children'] = []
 
         for i in o.option_list:
-            kwargs['level'] += 1
-            opts = self.sernav(i, **kwargs)
-            kwargs['level'] -= 1
-            items += opts
+            opt = self.dehydrate(i, level+1, uid)
+            my['children'].append(opt)
 
-        # if this node has childs
-        # then we may found then in [parents][level+1]
-        if len(o.option_list) > 0:
-
-            my['children'] = []
-            for all in kwargs['parents'][ kwargs['level']+1 ]:
-                my['children'].append( {'_reference': all } )
-                #kwargs['parents'][ kwargs['level']+1 ].remove(all)
-            kwargs['parents'][ kwargs['level']+1 ] = []
-
-        items.append(my)
-
-        return items
+        return my
 
     def dijitTree(self):
 
@@ -446,13 +422,8 @@ class NavTree(object):
         items = []
         uid = ByRef(1)
         for n in self._build_nav():
-            items += self.sernav(n, level=0, uid=uid, parents={})
-        final = {
-            'items': items,
-            'label': 'name',
-            'identifier': 'id',
-        }
-        return final
+            items.append(self.dehydrate(n, level=0, uid=uid))
+        return items
 
 navtree = NavTree()
 

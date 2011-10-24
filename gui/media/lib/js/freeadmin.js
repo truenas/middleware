@@ -1038,17 +1038,14 @@
     dojo.addOnLoad(function() {
         setTimeout(refreshImgs, 300000);
 
-        var store = new dojo.data.ItemFileReadStore({
-            url: "/admin/menu.json",
-            urlPreventCache: true,
-            clearOnClose: true,
+        var store = new dojox.data.JsonRestStore({
+            target: "/admin/menu.json",
+            labelAttribute: "name",
         });
 
         var treeModel = new dijit.tree.ForestStoreModel({
             store: store,
-            query: {
-                "type": "app"
-            },
+            query: {},
             rootId: "root",
             rootLabel: "FreeNAS",
             childrenAttrs: ["children"]
