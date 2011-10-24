@@ -1,11 +1,27 @@
 {% load i18n %}
-<div dojoType="dijit.layout.TabContainer" nested="true" doLayout="true" id="tab_storage">
-    <div dojoType="dijit.layout.ContentPane" title="{% trans "Active Volumes" %}" tab="storage.Volume.View" {% if focused_tab == "storage.Volume.View" %}selected="true"{% endif %} doLayout="false" href="{% url storage_volumes %}" class="objrefresh" refreshOnShow="true">
+<div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested:true, doLayout:true" id="tab_storage">
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Active Volumes"|force_escape|force_escape %}'
+    {% if focused_tab == "storage.Volume.View" %}, selected:true{% endif %},
+    doLayout:false,
+    href: '{% url storage_volumes %}',
+    refreshOnShow: true" class="objrefresh" tab="storage.Volume.View">
     </div>
-    <div dojoType="dijit.layout.ContentPane" title="{% trans "ZFS Snapshots" %}" tab="storage.Snapshots.View" {% if focused_tab == "storage.Snapshots.View" %}selected="true"{% endif %} doLayout="false" href="{% url storage_snapshots %}" class="objrefresh data_storage_Task" refreshOnShow="true">
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "ZFS Snapshots"|force_escape|force_escape %}'
+    {% if focused_tab == "storage.Snapshots.View" %}, selected: true{% endif %},
+    doLayout: false,
+    href: '{% url storage_snapshots %}',
+    refreshOnShow: true" class="objrefresh data_storage_Task" tab="storage.Snapshots.View">
     </div>
-    <div dojoType="dijit.layout.ContentPane" title="{% trans "Periodic Snapshot Tasks" %}" tab="storage.Task.View" {% if focused_tab == "storage.Task.View" %}selected="true"{% endif %} doLayout="false" href="{% url storage_tasks %}" class="objrefresh data_storage_Task" refreshOnShow="true">
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Periodic Snapshot Tasks"|force_escape|force_escape %}'
+    {% if focused_tab == "storage.Task.View" %}, selected: true{% endif %},
+    doLayout: false,
+    href: '{% url storage_tasks %}',
+    refreshOnShow: true" class="objrefresh data_storage_Task" tab="storage.Task.View">
     </div>
-    <div dojoType="dijit.layout.ContentPane" title="{% trans "ZFS Replication" %}" tab="storage.Replication.View" {% if focused_tab == "storage.Replication.View" %}selected="true"{% endif %} doLayout="false" href="{% url storage_replications %}" class="objrefresh data_storage_Replication" refreshOnShow="true">
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "ZFS Replication"|force_escape|force_escape %}'
+    {% if focused_tab == "storage.Replication.View" %}, selected: true{% endif %},
+    doLayout: false,
+    href: '{% url storage_replications %}',
+    refreshOnShow: true" class="objrefresh data_storage_Replication" tab="storage.Replication.View">
     </div>
 </div>

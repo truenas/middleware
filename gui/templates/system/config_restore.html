@@ -1,19 +1,24 @@
 {% load i18n %}
-<form dojoType="dijit.form.Form">
-<script type="dojo/event" event="onSubmit" args="e">
+<form data-dojo-type="dijit.form.Form">
+<script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
     formSubmit(this, e, '{% url system_configrestore %}');
 </script>
 <table> 
     <tr><td>{% trans "Are you sure you want to restore to factory config?" %}</td></tr>
     <tr>
         <td>
-            <button id="submitform" dojoType="dijit.form.Button" type="submit">
+            <button id="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
                 {% trans "Yes" %}
-                <script type="dojo/method" event="onClick" args="evt">
-                    this.set('label', '{% trans "Please wait..."|force_escape %}');
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    this.set('label', '{% trans "Please wait..."|force_escape|force_escape %}');
                 </script>
             </button>
-            <button dojoType="dijit.form.Button" onClick="cancelDialog(this);">{% trans "Cancel" %}</button>
+            <button data-dojo-type="dijit.form.Button" class="cancelform">
+                {% trans "Cancel" %}
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    cancelDialog(this);
+                </script>
+            </button>
         </td>
     </tr>
 </table>

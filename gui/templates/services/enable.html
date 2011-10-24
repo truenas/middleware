@@ -1,11 +1,11 @@
 {% load i18n %}
-<div dojoType="dijit.layout.ContentPane">
+<div data-dojo-type="dijit.layout.ContentPane">
     <p>
         {% blocktrans %}Would you like to enable this service?{% endblocktrans %}
     </p>
-    <button dojoType="dijit.form.Button">
+    <button data-dojo-type="dijit.form.Button">
         {% trans "Yes" %}
-        <script type="dojo/method" event="onClick" args="evt">
+        <script type="dojo/method" data-dojo-data-dojo-event="onClick" data-dojo-data-dojo-args="evt">
         var thisbtn = this;
         Menu.openServices(function() {
             var svc = dojo.byId("{{ svc }}_toggle");
@@ -14,9 +14,9 @@
         });
         </script>
     </button>
-    <button dojoType="dijit.form.Button">
+    <button data-dojo-type="dijit.form.Button">
         {% trans "No" %}
-        <script type="dojo/method" event="onClick" args="evt">
+        <script type="dojo/method" data-dojo-data-dojo-event="onClick" data-dojo-data-dojo-args="evt">
             cancelDialog(this);
         </script>
     </button>

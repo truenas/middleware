@@ -1,6 +1,6 @@
 {% load i18n %}
-<form dojoType="dijit.form.Form">
-    <script type="dojo/event" event="onSubmit" args="e">
+<form data-dojo-type="dijit.form.Form">
+    <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
         formSubmit(this, e,  '{% url storage_wizard %}',
         function(){wizardcheckings();}, {progressbar: true});
     </script>
@@ -27,8 +27,8 @@
             </td>
             <td>
             {{ form.volume_disks.errors }}
-            <select dojoType="dijit.form.MultiSelect" id="wizarddisks" name="volume_disks" size="6" multiple="true">
-                <script type="dojo/method" event="onClick" args="evt">
+            <select data-dojo-type="dijit.form.MultiSelect" id="wizarddisks" data-dojo-props="name: 'volume_disks', size: 6, multiple: true" multiple="true">
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
                     wizardcheckings(true);
                 </script>
                 {% for e in form.volume_disks.field.choices %}
@@ -44,9 +44,19 @@
             </td>
             <td>
                 {{ form.volume_fstype.errors }}
-                <input type="radio" dojoType="dijit.form.RadioButton" name="volume_fstype" value="UFS" onClick="wizardcheckings(true);" {% if form.data.volume_fstype == "UFS" %}checked{%endif%}/> UFS<br />
-                <input type="radio" dojoType="dijit.form.RadioButton" name="volume_fstype" value="ZFS" onClick="wizardcheckings(true);" {% if form.data.volume_fstype == "ZFS" %}checked{%endif%}/>
+                <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'volume_fstype', value: 'UFS'{% if form.data.volume_fstype == "UFS" %}, checked: true{%endif%}">
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    wizardcheckings(true);
+                </script>
+                UFS
+                </input>
+                <br />
+                <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'volume_fstype', value: 'ZFS'{% if form.data.volume_fstype == "ZFS" %}, checked: true{%endif%}">
+                <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    wizardcheckings(true);
+                </script>
                 ZFS
+                </input>
             </td>
         </tr>
         <tr id="zfssectorsize" style="display: none">
@@ -63,19 +73,48 @@
             <td style="width:250px;">
                 {{ form.group_type.errors }}
                 <span id="grpmirror">
-                    <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="mirror" {% if form.data.group_type == "mirror" %}checked{%endif%} onClick="wizardcheckings();"/> mirror<br />
+                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'mirror'{% if form.data.group_type == "mirror" %}, checked: true{%endif%}">
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        wizardcheckings(true);
+                    </script>
+                    mirror
+                    </input>
+                    <br />
                 </span>
                 <span id="grpstripe">
-                    <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="stripe" {% if form.data.group_type == "stripe" %}checked{%endif%} onClick="wizardcheckings();"/> stripe<br/>
+                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'stripe'{% if form.data.group_type == "stripe" %}, checked: true{%endif%}">
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        wizardcheckings(true);
+                    </script>
+                    stripe
+                    </input>
+                    <br/>
                 </span>
                 <span id="grpraid3">
-                    <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="raid3" {% if form.data.group_type == "raid3" %}checked{%endif%} onClick="wizardcheckings();"/> raid3<br />
+                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'raid3'{% if form.data.group_type == "raid3" %}, checked: true{%endif%}">
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        wizardcheckings(true);
+                    </script>
+                    raid3
+                    </input>
+                    <br />
                 </span>
                 <span id="grpraidz">
-                    <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="raidz" {% if form.data.group_type == "raidz" %}checked{%endif%} onClick="wizardcheckings();"/> RAID-Z<br />
+                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'raidz'{% if form.data.group_type == "raidz" %}, checked: true{%endif%}">
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        wizardcheckings(true);
+                    </script>
+                    RAID-Z
+                    </input>
+                    <br />
                 </span>
                 <span id="grpraidz2">
-                    <input type="radio" dojoType="dijit.form.RadioButton" name="group_type" value="raidz2" {% if form.data.group_type == "raidz2" %}checked{%endif%} onClick="wizardcheckings()> ;"/> RAID-Z2 </input>
+                    <input type="radio" data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: 'group_type', value: 'raidz2'{% if form.data.group_type == "raidz2" %}, checked: true{%endif%}">
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                        wizardcheckings(true);
+                    </script>
+                    RAID-Z2
+                    </input>
                 </span>
             </td>
         </tr>
@@ -100,10 +139,10 @@
                         {% for disk, name, val in zfsextra %}
                         <tr>
                             <td>{{ disk }}</td>
-                            <td><input dojoType="dijit.form.RadioButton" name="{{ name }}" value="none" {% if val == "none" %}checked{% endif %}/></td>
-                            <td><input dojoType="dijit.form.RadioButton" name="{{ name }}" value="log" {% if val == "log" %}checked{% endif %}/></td>
-                            <td><input dojoType="dijit.form.RadioButton" name="{{ name }}" value="cache" {% if val == "cache" %}checked{% endif %}/></td>
-                            <td><input dojoType="dijit.form.RadioButton" name="{{ name }}" value="spare" {% if val == "spare" %}checked{% endif %}/></td>
+                            <td><input data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: '{{ name }}', value: 'none'{% if val == "none" %}, checked: true{% endif %}"/></td>
+                            <td><input data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: '{{ name }}', value: 'log'{% if val == "log" %}, checked: true{% endif %}"/></td>
+                            <td><input data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: '{{ name }}', value: 'cache'{% if val == "cache" %}, checked: true{% endif %}"/></td>
+                            <td><input data-dojo-type="dijit.form.RadioButton" data-dojo-props="name: '{{ name }}', value: 'spare'{% if val == "spare" %}, checked: true{% endif %}"/></td>
                         </tr>
                         {% endfor %}
                     {% endif %}
@@ -126,16 +165,16 @@
             </td>
         </tr>
     </table>
-        <button dojoType="dijit.form.Button" type="submit" class="submitform">
+        <button data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'" class="submitform">
     <script type="dojo/method">
         wizardcheckings(true, true);
     </script>
     {% trans "Add Volume" %}<br />
     <b style="color: red">{% trans "Existing data will be cleared" %}</b>
         </button>
-        <button dojoType="dijit.form.Button" type="button" class="cancelform">
+        <button data-dojo-type="dijit.form.Button" type="button" class="cancelform">
             {% trans "Cancel" %}
-            <script type="dojo/method" event="onClick" args="evt">
+            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
                 cancelDialog(this);
             </script>
         </button>

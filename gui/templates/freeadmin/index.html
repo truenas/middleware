@@ -28,47 +28,58 @@ dojo.addOnLoad(function(){
 
 {% block dojango_content %}
 {{ block.super }}
-<div id="top_dialog" dojoType="dijit.Dialog" title="{% trans "Running Processes" %}" style="min-height:400px;">
-    <script type="dojo/method" event="onShow">
+<div id="top_dialog" data-dojo-type="dijit.Dialog" data-dojo-props="title: '{% trans "Running Processes"|force_escape|force_escape %}'" style="min-height:400px;">
+    <script type="dojo/method" data-dojo-event="onShow">
         ttop.stop();
         ttop.start();
     </script>
     <pre class="ix" id="top_output">{% trans "Loading..." %}</pre>
 </div>
-<div id="log_dialog" dojoType="dijit.Dialog" title="/var/log/messages" style="min-height:400px;background-color:black;">
-    <script type="dojo/method" event="onShow">
-        document.getElementById('msgfull_output').innerHTML = '{% trans "Loading..."|force_escape %}';
+<div id="log_dialog" data-dojo-type="dijit.Dialog" dojo-data-props="title: '/var/log/messages'" style="min-height:400px;background-color:black;">
+    <script type="dojo/method" data-dojo-event="onShow">
+        document.getElementById('msgfull_output').innerHTML = '{% trans "Loading..."|force_escape|force_escape %}';
     t.stop();
     t.start();
     loadlog(true);
     </script>
     <pre class="ix" id="msgfull_output" style="max-height:400px;overflow-y:auto;border:none;word-wrap: break-word;">{% trans "Loading..." %}</pre>
-    <input id="stopmsgrefresh" dojoType="dijit.form.CheckBox" /><label for="stopmsgrefresh" style="color:white;">Stop refresh</label>
+    <input id="stopmsgrefresh" data-dojo-type="dijit.form.CheckBox" /><label for="stopmsgrefresh" style="color:white;">Stop refresh</label>
 </div>
-<div dojoType="dijit.Dialog" id="rebootDialog" title="{% trans "Reboot the System" %}" >
+<div data-dojo-type="dijit.Dialog" id="rebootDialog" data-dojo-props="title: '{% trans "Reboot the System"|force_escape|force_escape %}'" >
     <h3>{% trans "Warning!" %}</h3>
     <p>{% trans "You are about to <strong>REBOOT</strong> the system, what would you like to do?" %}</p>
-                <button dojoType="dijit.form.Button" type="button" onClick="dijit.byId('rebootDialog').hide();">
+                <button data-dojo-type="dijit.form.Button" type="button">
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    dijit.byId('rebootDialog').hide();
+                    </script>
                     {% trans "Cancel" %}
                 </button>
-                <button dojoType="dijit.form.Button" type="submit" onClick="window.location='{% url system_reboot %}'">
+                <button data-dojo-type="dijit.form.Button" type="button">
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    window.location='{% url system_reboot %}';
+                    </script>
                     {% trans "Reboot" %}
                 </button>
 </div>
-             
-<div dojoType="dijit.Dialog" id="shutdownDialog" title="{% trans "Shutdown the System" %}" >
+
+<div data-dojo-type="dijit.Dialog" id="shutdownDialog" data-dojo-props="title: '{% trans "Shutdown the System"|force_escape|force_escape %}'">
     <h3>{% trans "Warning!" %}</h3>
     <p>{% trans "You are about to <strong>SHUTDOWN</strong> the system, what would you like to do?" %}</p>
-                <button dojoType="dijit.form.Button" type="button"
-                    onClick="dijit.byId('shutdownDialog').hide();">
+                <button data-dojo-type="dijit.form.Button" type="button">
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    dijit.byId('shutdownDialog').hide();
+                    </script>
                     {% trans "Cancel" %}
                 </button>
-                <button dojoType="dijit.form.Button" type="button" onClick="window.location='{% url system_shutdown %}'">
+                <button data-dojo-type="dijit.form.Button" type="button">
+                    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                    window.location='{% url system_shutdown %}';
+                    </script>
                     {% trans "Shutdown" %}
                 </button>
 </div>
 
-<div dojoType="dijit.Dialog" id="helpDialog" title="&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Help & Support" %}"  style="background:#fff;width:400px;">
+<div data-dojo-type="dijit.Dialog" id="helpDialog" data-dojo-props="title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Help & Support"|force_escape|force_escape %}'"  style="background:#fff;width:400px;">
     <img src="{{ STATIC_URL }}images/ui/menu/help.png" style="float:left;position:relative;top:-36px;right:5px;">
     <h2>{{ sw_version }}</h2>
     <div style="float:left;">
@@ -102,7 +113,7 @@ dojo.addOnLoad(function(){
         <li><a href="http://support.freenas.org" title="FreeNAS Bug Tracker" target="_blank">{% trans "Bug Tracker" %}</a></li>
     </ul>
     </div>
-   
+
     <div style="float:left;padding-left:24px;">
     <h3>{% trans "Documentation" %}</h3>
     <ul>

@@ -1,24 +1,33 @@
 {% load i18n %}
-<input dojoType="dijit.form.TextBox" name="{{ name }}" value="{{ value|default_if_none:"" }}" id="{{ attrs.id }}" />
-<button dojoType="dijit.form.Button" label="{% trans "Browse" %}">
-    <script type="dojo/connect" event="onClick">
-    if(this.get('label') == '{% trans "Close"|force_escape %}') {
+<input data-dojo-type="dijit.form.TextBox" data-dojo-props="name: '{{ name|force_escape }}', value: '{{ value|default_if_none:"" }}'" id="{{ attrs.id }}" />
+<button data-dojo-type="dijit.form.Button" data-dojo-props="label: '{% trans "Browse"|force_escape|force_escape %}'">
+    <script type="dojo/connect" data-dojo-event="onClick">
+    if(this.get('label') == '{% trans "Close"|force_escape|force_escape %}') {
         dojo.style('{{ attrs.id }}_container', 'display', 'none');
-        this.set('label', '{% trans "Browse"|force_escape %}');
+        this.set('label', '{% trans "Browse"|force_escape|force_escape %}');
      } else {
         dojo.style('{{ attrs.id }}_container', 'display', 'block');
-        this.set('label', '{% trans "Close"|force_escape %}');
+        this.set('label', '{% trans "Close"|force_escape|force_escape %}');
      }
      </script>
 </button>
 
 <div id="{{ attrs.id }}_container" class="treecontainer" style="display: none">
     <div
-        dojoType="freeadmin.tree.JsonRestStore"
-        target="{% if dirsonly %}{% url system_dirbrowser path="/" %}{% else %}{% url system_filebrowser path="/" %}{% endif %}"
-        labelAttribute="name"
-        jsId="{{ attrs.id }}_store">
+        data-dojo-type="freeadmin.tree.JsonRestStore"
+        data-dojo-props="target: '{% if dirsonly %}{% url system_dirbrowser path="/" %}{% else %}{% url system_filebrowser path="/" %}{% endif %}',
+        labelAttribute: 'name'"
+        data-dojo-id="{{ attrs.id }}_store">
     </div>
+<!--
+    <div data-dojo-type="freeadmin.tree.ForestStoreModel"
+         data-dojo-id="{{ attrs.id }}_model"
+         data-dojo-props="store: {{ attrs.id }}_store,
+         query: {},
+         rootId: 'items',
+         rootLabel: '/mnt',
+         childrenAttrs: 'children',
+         deferItemLoadingUntilExpand: true">-->
     <div dojoType="freeadmin.tree.ForestStoreModel"
          jsId="{{ attrs.id }}_model"
          store="{{ attrs.id }}_store"
@@ -29,11 +38,10 @@
          deferItemLoadingUntilExpand="true">
     </div>
     <div id="{{ attrs.id }}_tree"
-        dojoType="freeadmin.tree.TreeLazy"
-        model="{{ attrs.id }}_model"
-        persist="false"
+        data-dojo-type="freeadmin.tree.TreeLazy"
+        data-dojo-props="model: {{ attrs.id }}_model, persist: false"
         style="height: 250px;">
-        <script type="dojo/connect" event="onClick" args="obj, node, ev">
+        <script type="dojo/connect" data-dojo-event="onClick" data-dojo-args="obj, node, ev">
             if(node.item.path) {
                 dojo.attr('{{ attrs.id }}', 'value', node.item.path);
             } else {

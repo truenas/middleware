@@ -1,6 +1,6 @@
 {% load i18n %}
-<div dojoType="dijit.layout.BorderContainer" style="height:100%; width:100%;">
-<div dojoType="dijit.layout.ContentPane" id="datagrid" region="center" style="height:100%; width:100%;">
+<div data-dojo-type="dijit.layout.BorderContainer" style="height:100%; width:100%;">
+<div data-dojo-type="dijit.layout.ContentPane" id="datagrid" data-dojo-props="region: 'center'" style="height:100%; width:100%;">
 <script type="dojo/method">
 
     function acts(v) {
@@ -19,7 +19,7 @@
             });
             content.domNode.appendChild(b.domNode);
             dojo.connect(b, 'onClick', function() {
-                editObject('{% trans "Clone snapshot"|force_escape %}', json['clone_url'], [this,]);
+                editObject('{% trans "Clone snapshot"|force_escape|force_escape %}', json['clone_url'], [this,]);
             });
         }
 
@@ -35,7 +35,7 @@
             });
             content.domNode.appendChild(b.domNode);
             dojo.connect(b, 'onClick', function() {
-                editObject('{% trans "Destroy this snapshot"|force_escape %}', json['delete_url'], [this,]);
+                editObject('{% trans "Destroy this snapshot"|force_escape|force_escape %}', json['delete_url'], [this,]);
             });
         }
 
@@ -51,7 +51,7 @@
             });
             content.domNode.appendChild(b.domNode);
             dojo.connect(b, 'onClick', function() {
-                editObject('{% trans "Rollback to this snapshot"|force_escape %}', json['rollback_url'], [this,]);
+                editObject('{% trans "Rollback to this snapshot"|force_escape|force_escape %}', json['rollback_url'], [this,]);
             });
         }
 
@@ -122,12 +122,12 @@
     grid4.startup();
 </script>
 </div>
-<div dojoType="dijit.layout.ContentPane" region="bottom" style="height:62px;">
-    <button id="delSnapshot" dojoType="dijit.form.Button" type="button" style="margin:5px;">
+<div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'bottom'" style="height:62px;">
+    <button id="delSnapshot" data-dojo-type="dijit.form.Button" style="margin:5px;">
         <img src="{{ STATIC_URL }}images/ui/buttons/remove_snapshot.png">
         <p>{% trans "Destroy" %}</p>
 
-        <script type="dojo/method" event="onClick" args="evt">
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             dg = dijit.byId('viewdatagrid');
             var snaps = [];
             dojo.forEach(dg.selection.getSelected(), function(item, idx) {

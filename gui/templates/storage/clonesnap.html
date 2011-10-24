@@ -1,19 +1,17 @@
 {% load i18n %}
-<form dojoType="dijit.form.Form">
-    <script type="dojo/event" event="onSubmit" args="e">
+<form data-dojo-type="dijit.form.Form">
+    <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
         formSubmit(this, e,  '{% url storage_clonesnap snapshot=snapshot %}');
     </script>
     <table>
         {{ form }}
     </table>
-        <button dojoType="dijit.form.Button" type="submit" class="submitform">
-    <script type="dojo/method">
-    </script>
-    {% trans "Clone Snapshot" %}<br />
+        <button data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'" class="submitform">
+            {% trans "Clone Snapshot" %}
         </button>
-        <button dojoType="dijit.form.Button" type="button" class="cancelform">
+        <button data-dojo-type="dijit.form.Button" type="button" class="cancelform">
             {% trans "Cancel" %}
-            <script type="dojo/method" event="onClick" args="evt">
+            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
                 cancelDialog(this);
             </script>
         </button>
