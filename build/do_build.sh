@@ -19,12 +19,10 @@ cd "$(dirname "$0")/.."
 . build/functions.sh
 
 BUILD=true
-# Make installworld a worthy sentinel for determining whether or not to
-# rebuild things by default.
-if [ -s ${NANO_OBJ}/_.iw -a -f FreeBSD/supfile ]; then
-	FULL_BUILD=false
+if [ -s ${NANO_OBJ}/_.ik -a -s ${NANO_OBJ}/_.iw -a -f FreeBSD/supfile ]; then
+	FORCE_FREEBSD_BUILD=false
 else
-	FULL_BUILD=true
+	FORCE_FREEBSD_BUILD=true
 fi
 MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))
 if [ -f FreeBSD/supfile ]; then
@@ -135,7 +133,7 @@ fi
 # OK, now we can build
 cd $NANO_SRC
 args="-c ${NANO_CFG_BASE}/freenas-common"
-if ! "$FULL_BUILD"; then
+if ! "$FORCE_FREEBSD_BUILD"; then
 	extra_args="-b"
 fi
 echo $NANO_SRC/tools/tools/nanobsd/nanobsd.sh $args $* $extra_args
