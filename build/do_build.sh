@@ -19,7 +19,7 @@ cd "$(dirname "$0")/.."
 . build/functions.sh
 
 BUILD=true
-if [ -s ${NANO_OBJ}/_.ik -a -s ${NANO_OBJ}/_.iw -a -f FreeBSD/supfile ]; then
+if [ -d ${NANO_OBJ} ]; then
 	FORCE_FREEBSD_BUILD=false
 else
 	FORCE_FREEBSD_BUILD=true
@@ -47,7 +47,7 @@ while getopts 'Bfj:u' optch; do
 		BUILD=false
 		;;
 	f)
-		FULL_BUILD=true
+		FORCE_FREEBSD_BUILD=true
 		;;
 	j)
 		echo $OPTARG | egrep -q '^[[:digit:]]+$' && [ $OPTARG -le 0 ]
