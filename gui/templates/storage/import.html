@@ -19,7 +19,7 @@
             </td>
             <td>
                 {{ form.volume_disks.errors }}
-            <select data-dojo-type="dijit.form.Select" id="wizarddisks" name="volume_disks" size="4">
+            <select data-dojo-type="dijit.form.Select" id="wizarddisks" data-dojo-props="name: 'volume_disks', size: 4">
                 {% for e in form.volume_disks.field.choices %}
                 <option value="{{ e.0 }}" {% if e.0 in disks %}selected="selected"{% endif %}>{{ e.1 }}</option>
                 {% empty %}
