@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-19 11:50-0200\n"
-"PO-Revision-Date: 2011-10-20 06:33+0200\n"
+"PO-Revision-Date: 2011-10-24 06:59+0200\n"
 "Last-Translator: Flevi <Flevi@fleviliu.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -1329,7 +1329,7 @@ msgstr "若探索方法设置为CHAP或双向CHAP，则此字段必需。"
 msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
-msgstr ""
+msgstr "无论是使用CHAP或者双向CHAP控制器验证方式，此栏位为必填。"
 
 #: services/forms.py:613
 msgid "You need to specify a filepath, not a directory."
@@ -2072,7 +2072,7 @@ msgstr "在大多数情况下，在此使用'public'。"
 
 #: services/models.py:750
 msgid "Send SNMP Traps"
-msgstr ""
+msgstr "发送SNMP诱骗信息"
 
 #: services/models.py:758 services/models.py:759
 #: templates/services/index.html:97
@@ -2108,7 +2108,7 @@ msgstr "附加参数"
 
 #: services/models.py:787
 msgid "Additional parameters to the hardware-specific part of the driver."
-msgstr ""
+msgstr "特定硬件部分驱动程序的额外参数。"
 
 #: services/models.py:798
 msgid "Shutdown mode"
@@ -2131,7 +2131,7 @@ msgstr "共享密码"
 
 #: services/models.py:812
 msgid "Extra users (upsd.users)"
-msgstr ""
+msgstr "次要使用者 (upsd.users)"
 
 #: services/models.py:815
 msgid "Remote Monitor"
@@ -2151,7 +2151,7 @@ msgstr "目标邮件地址。以半角冒号分隔多个地址。"
 
 #: services/models.py:826
 msgid "Email Subject"
-msgstr ""
+msgstr "邮件主题"
 
 #: services/models.py:827
 msgid ""
@@ -2227,7 +2227,7 @@ msgstr "允许本地用户登录"
 
 #: services/models.py:880
 msgid "Banner"
-msgstr ""
+msgstr "看板"
 
 #: services/models.py:882
 msgid "Greeting banner displayed by FTP when a connection first comes in."
@@ -2521,17 +2521,17 @@ msgstr "允许匿名绑定"
 
 #: services/models.py:1128
 msgid "Root bind DN"
-msgstr ""
+msgstr "Root连接DN"
 
 #: services/models.py:1130
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
-msgstr ""
+msgstr "可辨别的名称，用于连接到目录服务器，例如： cn=admin, dc=test, dc=org"
 
 #: services/models.py:1134
 msgid "Root bind password"
-msgstr ""
+msgstr "Root连接密码"
 
 #: services/models.py:1136
 msgid "The credentials with which to bind."
@@ -2617,7 +2617,7 @@ msgstr "LDAP"
 
 #: services/models.py:1198
 msgid "Alternate TCP port. Default is 873"
-msgstr ""
+msgstr "备用的TCP连接端口号。预设为873"
 
 #: services/models.py:1203
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
@@ -2838,7 +2838,7 @@ msgstr "Mapall组要求Mapall用户"
 
 #: sharing/forms.py:139 sharing/forms.py:142
 msgid "Maproot user/group disqualifies Mapall"
-msgstr ""
+msgstr "使用root权限映射会取消所有权限权限映射的资格。"
 
 #: sharing/models.py:40 sharing/models.py:103 storage/models.py:45
 #: storage/models.py:144 storage/models.py:162
@@ -2850,7 +2850,7 @@ msgstr "名称"
 
 #: sharing/models.py:50
 msgid "Export Read Only"
-msgstr ""
+msgstr "只读导出"
 
 #: sharing/models.py:52
 msgid "Browsable to Network Clients"
@@ -2863,11 +2863,11 @@ msgstr "继承"
 
 #: sharing/models.py:56
 msgid "Inherit Permissions"
-msgstr ""
+msgstr "继承权限"
 
 #: sharing/models.py:58
 msgid "Export Recycle Bin"
-msgstr ""
+msgstr "导出资源回收站"
 
 #: sharing/models.py:60
 msgid "Show Hidden Files"
