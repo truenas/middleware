@@ -447,7 +447,6 @@
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
             onHide: function() {
                 setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
-                refreshTabs(nodes);
             },
         });
         dialog.show();

@@ -72,6 +72,13 @@ dojo.declare("freeadmin.tree.Tree", dijit.Tree, {
 
         this.rootNode.state = "UNCHECKED";
 
+        storeTarget = this.model.store.target;
+        for (var idx in dojox.rpc.Rest._index) {
+            if (idx.match("^" + storeTarget)) {
+                delete dojox.rpc.Rest._index[idx];
+            }
+        }
+
         this.model.constructor(this.model);
 
         this.postMixInProperties();
