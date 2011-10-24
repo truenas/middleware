@@ -1,3 +1,14 @@
+diff -urN /dev/null net/rsync/Makefile
+--- /dev/null	2011-03-26 15:27:07.000000000 -0700
++++ net/rsync/Makefile	2011-10-24 13:36:31.000000000 -0700
+@@ -7,6 +7,7 @@
+ 
+ PORTNAME=	rsync
+ PORTVERSION=	3.0.8
++PORTREVISION=	1
+ CATEGORIES=	net ipv6
+ MASTER_SITES=	http://rsync.samba.org/ftp/%SUBDIR%/ \
+ 		ftp://ftp.samba.org/pub/%SUBDIR%/ \
 diff -urN /dev/null net/rsync/files/patch-acls.c
 --- /dev/null	1969-12-31 16:00:00.000000000 -0800
 +++ net/rsync/files/patch-acls.c	2011-10-20 23:16:25.000000000 -0700
@@ -587,7 +598,7 @@ diff -urN /dev/null net/rsync/files/patch-sysacls.c
 + 
 + #if defined(HAVE_ACL_GET_PERM_NP)
 + #define acl_get_perm(p, b) acl_get_perm_np(p, b)
-diff -urN /dev/null rsync/files/patch-sysacls.h
+diff -urN /dev/null net/rsync/files/patch-sysacls.h
 --- /dev/null	1969-12-31 16:00:00.000000000 -0800
 +++ net/rsync/files/patch-sysacls.h	2011-10-20 23:22:05.000000000 -0700
 @@ -0,0 +1,31 @@
