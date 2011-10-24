@@ -19,6 +19,8 @@ cd "$(dirname "$0")/.."
 . build/functions.sh
 
 BUILD=true
+# Make installworld a worthy sentinel for determining whether or not to
+# rebuild things by default.
 if [ -s ${NANO_OBJ}/_.iw -a -f FreeBSD/supfile ]; then
 	FULL_BUILD=false
 else
@@ -133,8 +135,6 @@ fi
 # OK, now we can build
 cd $NANO_SRC
 args="-c ${NANO_CFG_BASE}/freenas-common"
-# Make installworld a worthy sentinel for determining whether or not to
-# rebuild things by default.
 if ! "$FULL_BUILD"; then
 	extra_args="-b"
 fi
