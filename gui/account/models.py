@@ -66,6 +66,9 @@ class bsdGroups(Model):
         if reload:
             notifier().reload("user")
 
+def get_sentinel_group():
+    return bsdGroups.objects.get(bsdgrp_group='nobody')
+
 class bsdUsers(Model):
     bsdusr_uid = models.IntegerField(
             unique=True,
@@ -91,6 +94,7 @@ class bsdUsers(Model):
             )
     bsdusr_group = models.ForeignKey(
             bsdGroups,
+            on_delete=models.SET(get_sentinel_group),
             verbose_name=_("Primary Group ID")
             )
     bsdusr_home = models.CharField(
