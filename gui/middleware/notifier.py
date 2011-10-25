@@ -1463,30 +1463,18 @@ class notifier:
 
         if fstype == 'UFS':
             p1 = Popen(["/sbin/tunefs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
-            p1.wait()
-            if p1.returncode == 0:
-                return True
         elif fstype == 'NTFS':
             p1 = Popen(["/usr/local/sbin/ntfslabel", dev, label], stdin=PIPE, stdout=PIPE)
-            p1.wait()
-            if p1.returncode == 0:
-                return True
         elif fstype == 'MSDOSFS':
             p1 = Popen(["/usr/local/bin/mlabel", "-i", dev, "::%s" % label], stdin=PIPE, stdout=PIPE)
-            p1.wait()
-            if p1.returncode == 0:
-                return True
         elif fstype == 'EXT2FS':
             p1 = Popen(["/usr/local/sbin/tune2fs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
-            p1.wait()
-            if p1.returncode == 0:
-                return True
         elif fstype is None:
             p1 = Popen(["/sbin/geom", "label", "label", label, dev], stdin=PIPE, stdout=PIPE)
-            p1.wait()
-            if p1.returncode == 0:
-                return True
-
+        else:
+            return False
+        if p1.wait() == 0:
+            return True
         return False
 
     def detect_volumes(self, extra=None):
