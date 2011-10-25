@@ -48,6 +48,7 @@ class bsdGroups(Model):
         verbose_name_plural = _("Groups")
 
     class FreeAdmin:
+        delete_form = "DeleteGroupForm"
         object_filters = {'bsdgrp_builtin__exact': False}
         object_num = -1
 

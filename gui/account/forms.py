@@ -654,3 +654,19 @@ class PasswordChangeForm(SetPasswordForm):
         if not self.user.check_password(old_password):
             raise forms.ValidationError(_("Your old password was entered incorrectly. Please enter it again."))
         return old_password
+
+class DeleteGroupForm(forms.Form):
+
+    cascade = forms.BooleanField(
+            label=_("Do you want to delete all users with this primary group?"),
+            required=False,
+            initial=False,
+            )
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)
+        super(DeleteGroupForm, self).__init__(*args, **kwargs)
+
+    def done(self):
+        if self.cleaned_data.get("cascade") is True:
+            models.bsdUsers.objects.filter(bsdusr_group=self.instance).delete()
