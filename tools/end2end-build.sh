@@ -6,6 +6,7 @@
 branch=trunk
 clean=true
 cvsup_host=cvsup1.freebsd.org
+# Define beforehand to work around shell bugs.
 tmpdir=/dev/null
 
 setup() {
