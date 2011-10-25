@@ -944,8 +944,8 @@
     refreshTabs = function(nodes) {
         if(nodes && canceled == false) {
             var fadeArgs = {
-               node: "mytree",
-               onEnd: function() { dijit.byId("mytree").reload(); }
+               node: "fntree",
+               onEnd: function() { dijit.byId("fntree").reload(); }
              };
             dojo.fadeOut(fadeArgs).play();
             dojo.forEach(nodes, function(entry, i) {
@@ -1163,13 +1163,13 @@
         };
 
         mytree = new freeadmin.tree.Tree({
-            id: "mytree",
+            id: "fntree",
             model: treeModel,
             showRoot: false,
             onClick: treeclick,
             onLoad: function() {
                 var fadeArgs = {
-                   node: "mytree",
+                   node: "fntree",
                  };
                 dojo.fadeIn(fadeArgs).play();
             },
