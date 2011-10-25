@@ -281,7 +281,7 @@ msgstr "Volume ZFS"
 
 #: choices.py:209 storage/models.py:234 system/models.py:539
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
-#: templates/storage/wizard.html:130
+#: templates/storage/wizard.html:91
 msgid "Disk"
 msgstr "Disco"
 
@@ -305,8 +305,8 @@ msgstr "leitura-escrita"
 msgid "read-only"
 msgstr "só de leitura"
 
-#: choices.py:221 choices.py:227 services/forms.py:505 services/forms.py:507
-#: services/forms.py:857 templates/storage/wizard.html:131
+#: choices.py:221 choices.py:227 services/forms.py:498 services/forms.py:500
+#: services/forms.py:850 templates/storage/wizard.html:92
 msgid "None"
 msgstr "Nenhum"
 
@@ -551,7 +551,7 @@ msgid "A user with that username already exists."
 msgstr "Um utilizador com esse nome de utilizador já existe."
 
 #: account/forms.py:270 account/forms.py:374 account/forms.py:620
-#: services/forms.py:249 services/forms.py:352 sharing/forms.py:85
+#: services/forms.py:249 services/forms.py:345 sharing/forms.py:85
 #: system/forms.py:268
 msgid "The two password fields didn't match."
 msgstr "Os dois campos de palavra-passe não coincidem."
@@ -570,7 +570,7 @@ msgstr "Directório pessoal tem de começar com /mnt/"
 msgid "Password is disabled, leave this blank"
 msgstr ""
 
-#: account/forms.py:304 services/forms.py:595 services/forms.py:870
+#: account/forms.py:304 services/forms.py:588 services/forms.py:863
 #: storage/forms.py:274 system/forms.py:371 system/forms.py:398
 msgid "This field is required."
 msgstr "Este campo é obrigatório."
@@ -651,7 +651,7 @@ msgstr "Nome do Grupo"
 msgid "Group"
 msgstr "Grupo"
 
-#: account/models.py:48 templates/account/index.html:13
+#: account/models.py:48 templates/account/index.html:10
 msgid "Groups"
 msgstr "Grupos"
 
@@ -699,7 +699,7 @@ msgstr "Email"
 msgid "User"
 msgstr "Utilizador"
 
-#: account/models.py:120 templates/account/index.html:19
+#: account/models.py:120 templates/account/index.html:13
 msgid "Users"
 msgstr "Utilizadores"
 
@@ -714,12 +714,12 @@ msgstr "Conta"
 
 #: account/nav.py:11 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:8
+#: templates/account/bsdusers.html:114 templates/account/index.html:7
 msgid "Change Password"
 msgstr "Mudar Palavra-passe"
 
 #: account/nav.py:19 templates/account/changeform.html:26
-#: templates/account/index.html:3
+#: templates/account/index.html:4
 msgid "Change Admin User"
 msgstr "Mudar o Utilizador Administrador"
 
@@ -789,11 +789,11 @@ msgstr "Ver todos os %s"
 msgid "Display System Processes"
 msgstr "Mostrar Processos do Sistema"
 
-#: freeadmin/navtree.py:353 templates/freeadmin/index.html:61
+#: freeadmin/navtree.py:353 templates/freeadmin/index.html:55
 msgid "Reboot"
 msgstr "Reiniciar"
 
-#: freeadmin/navtree.py:360 templates/freeadmin/index.html:78
+#: freeadmin/navtree.py:360 templates/freeadmin/index.html:67
 msgid "Shutdown"
 msgstr "Encerrar"
 
@@ -1026,7 +1026,7 @@ msgstr "Opções"
 msgid "Interface"
 msgstr "Interface"
 
-#: network/models.py:142 templates/network/index.html:9
+#: network/models.py:142 templates/network/index.html:5
 msgid "Interfaces"
 msgstr "Interfaces"
 
@@ -1065,7 +1065,7 @@ msgstr "VLAN Etiqueta"
 msgid "Description"
 msgstr "Descrição"
 
-#: network/models.py:232 templates/network/index.html:24
+#: network/models.py:232 templates/network/index.html:11
 msgid "VLAN"
 msgstr "VLAN"
 
@@ -1089,7 +1089,7 @@ msgstr "LAGG Número da Prioridade"
 msgid "Physical NIC"
 msgstr "NIC Físico"
 
-#: network/models.py:297 templates/network/index.html:14
+#: network/models.py:297 templates/network/index.html:7
 msgid "Link Aggregation"
 msgstr "Agregação de Ligações"
 
@@ -1109,7 +1109,7 @@ msgstr "Gateway"
 msgid "Static Route"
 msgstr "Caminho estático"
 
-#: network/models.py:321 templates/network/index.html:19
+#: network/models.py:321 templates/network/index.html:9
 msgid "Static Routes"
 msgstr "Caminhos Estáticos"
 
@@ -1117,7 +1117,7 @@ msgstr "Caminhos Estáticos"
 msgid "Network"
 msgstr "Rede"
 
-#: network/nav.py:13 templates/network/index.html:29
+#: network/nav.py:13 templates/network/index.html:13
 msgid "Network Summary"
 msgstr "Resumo da Rede"
 
@@ -1237,100 +1237,96 @@ msgstr "O serviço SNMP falhou no rinicio."
 msgid "Port"
 msgstr "Porta"
 
-#: services/forms.py:315
-msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
-msgstr ""
-
-#: services/forms.py:326 services/forms.py:910
+#: services/forms.py:319 services/forms.py:903
 #, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
 msgstr[0] "O email %(email)s não é válido"
 msgstr[1] "Os seguintes emails não são validos: %(email)s"
 
-#: services/forms.py:335
+#: services/forms.py:328
 #, fuzzy
 msgid "The UPS service failed to reload."
 msgstr "O serviço NFS falhou no reinicio."
 
-#: services/forms.py:340
+#: services/forms.py:333
 #, fuzzy
 msgid "Confirm Administrator Password"
 msgstr "Password do Administrador"
 
-#: services/forms.py:365
+#: services/forms.py:358
 msgid "The activedirectory service failed to reload."
 msgstr "O serviço activedirectory falhou no reinico."
 
-#: services/forms.py:376
+#: services/forms.py:369
 msgid "The ldap service failed to reload."
 msgstr "O serviço ldap falhou no reinicio."
 
-#: services/forms.py:382 services/models.py:540
+#: services/forms.py:375 services/models.py:540
 msgid "Secret"
 msgstr "Segredo"
 
-#: services/forms.py:384 services/models.py:541
+#: services/forms.py:377 services/models.py:541
 msgid "Target side secret."
 msgstr "Destino do lado do segredo."
 
-#: services/forms.py:385
+#: services/forms.py:378
 msgid "Secret (Confirm)"
 msgstr "Segredo (Confirmação)"
 
-#: services/forms.py:387 services/forms.py:395
+#: services/forms.py:380 services/forms.py:388
 msgid "Enter the same secret above for verification."
 msgstr "Introduza o mesmo segredo abaixo para verificação."
 
-#: services/forms.py:388
+#: services/forms.py:381
 msgid "Initiator Secret"
 msgstr "Iniciador do Segredo"
 
-#: services/forms.py:390 services/models.py:547 services/models.py:552
+#: services/forms.py:383 services/models.py:547 services/models.py:552
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "Iniciador do lado do segredo. (para autenticação CHAP mutua)"
 
-#: services/forms.py:393
+#: services/forms.py:386
 msgid "Initiator Secret (Confirm)"
 msgstr "Iniciador do Segredo (Confirmação)"
 
-#: services/forms.py:402
+#: services/forms.py:395
 msgid "Secret does not match"
 msgstr "Segredo não é igual"
 
-#: services/forms.py:417 services/forms.py:418
+#: services/forms.py:410 services/forms.py:411
 msgid "The peer secret is required if you set a peer user."
 msgstr ""
 "O segredo do grupo é necessária se você configurar um utilizador do mesmo "
 "grupo."
 
-#: services/forms.py:421
+#: services/forms.py:414
 msgid "The peer secret cannot be the same as user secret."
 msgstr "O segredo do grupo não pode ser igual ao segredo do utilizador."
 
-#: services/forms.py:424 services/forms.py:427
+#: services/forms.py:417 services/forms.py:420
 #, fuzzy
 msgid "The peer user is required if you set a peer secret."
 msgstr ""
 "O segredo do grupo é necessária se você configurar um utilizador do mesmo "
 "grupo."
 
-#: services/forms.py:444 services/forms.py:491 services/forms.py:608
-#: services/forms.py:666 services/forms.py:773 services/forms.py:798
-#: services/forms.py:830 services/forms.py:885 services/models.py:480
+#: services/forms.py:437 services/forms.py:484 services/forms.py:601
+#: services/forms.py:659 services/forms.py:766 services/forms.py:791
+#: services/forms.py:823 services/forms.py:878 services/models.py:480
 #: services/models.py:676
 msgid "The iSCSI service failed to reload."
 msgstr "O serviço iSCSI falhou no reinicio."
 
-#: services/forms.py:483
+#: services/forms.py:476
 msgid "LUN already exists in the same target."
 msgstr "LUN já existe no mesmo destino."
 
-#: services/forms.py:494 services/models.py:359
+#: services/forms.py:487 services/models.py:359
 msgid "Controller Auth Group"
 msgstr "Controlador do Grupo Autor"
 
-#: services/forms.py:495 services/models.py:360
+#: services/forms.py:488 services/models.py:360
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
@@ -1338,88 +1334,88 @@ msgstr ""
 "O istgtcontrol não consegue aceder aos destinos com o correcto utilizador e "
 "segredo no especifico Grupo Autor."
 
-#: services/forms.py:496 services/models.py:253
+#: services/forms.py:489 services/models.py:253
 msgid "Discovery Auth Group"
 msgstr "Descobrir Grupo Autor"
 
-#: services/forms.py:526
+#: services/forms.py:519
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr "O valor deve ser entre %(start)d e %(end)d, inclusive."
 
-#: services/forms.py:534
+#: services/forms.py:527
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
 "Este campo é obrigatório se o método de detecção é definido como CHAP ou "
 "CHAP mútuo."
 
-#: services/forms.py:582
+#: services/forms.py:575
 msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
 msgstr ""
 
-#: services/forms.py:620
+#: services/forms.py:613
 msgid "You need to specify a filepath, not a directory."
 msgstr "Deve especificar um caminho, não um directório."
 
-#: services/forms.py:624
+#: services/forms.py:617
 msgid "You need to specify a file inside your volume/dataset."
 msgstr "Deve especificar um ficheiro dentro do volume/dataset."
 
-#: services/forms.py:628
+#: services/forms.py:621
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
 msgstr ""
 "O caminho para a extensão deve residir no interior de um ponto de montagem "
 "de volume/dataset."
 
-#: services/forms.py:642
+#: services/forms.py:635
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr ""
 "Este valor pode ser um tamanho em bytes, ou pode ser fixado com KB, MB, GB, "
 "TB"
 
-#: services/forms.py:649
+#: services/forms.py:642
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
 
-#: services/forms.py:671
+#: services/forms.py:664
 msgid "Disk device"
 msgstr "Dispositivo de disco"
 
-#: services/forms.py:789
+#: services/forms.py:782
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "O seu ID de Grupo de Portal não pode ser maior do que %d"
 
-#: services/forms.py:813
+#: services/forms.py:806
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
 msgstr "O seu ID de Grupo não pode ser maior do que %d"
 
-#: services/forms.py:824
+#: services/forms.py:817
 #, fuzzy
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
 msgstr "Este campo não é um endereço IP válido ou rede"
 
-#: services/forms.py:833
+#: services/forms.py:826
 msgid "Authentication Group number"
 msgstr "Número do Grupo de autenticação"
 
-#: services/forms.py:862
+#: services/forms.py:855
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
 msgstr ""
 
-#: services/forms.py:888
+#: services/forms.py:881
 msgid "Delete underlying file"
 msgstr "Apagar ficheiro sublinhado"
 
-#: services/forms.py:919
+#: services/forms.py:912
 #, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
 msgstr "O serviço SNMP falhou no rinicio."
@@ -2303,7 +2299,7 @@ msgstr "Permitir Login Anónimo"
 #: system/models.py:375 templates/services/iscsi_dextents.html:7
 #: templates/services/iscsi_extents.html:7 templates/services/rsyncmod.html:7
 #: templates/sharing/windows.html:15 templates/storage/volumes.html:55
-#: templates/storage/wizard.html:161
+#: templates/storage/wizard.html:122
 msgid "Path"
 msgstr "Caminho"
 
@@ -2913,7 +2909,7 @@ msgstr "Adicionar Extensão do Dispositivo"
 msgid "View All Device Extents"
 msgstr "Vêr Todas as Extensões do Dispositivo"
 
-#: services/nav.py:70 templates/services/iscsi.html:15
+#: services/nav.py:70 templates/services/iscsi.html:7
 msgid "Device Extents"
 msgstr "Extensões Dispositivos"
 
@@ -2928,7 +2924,7 @@ msgstr "Adicionar Extent"
 msgid "View All Extents"
 msgstr "Ver Todas as Extensões"
 
-#: services/nav.py:114 templates/services/iscsi.html:21
+#: services/nav.py:114 templates/services/iscsi.html:9
 msgid "Extents"
 msgstr "Extensões"
 
@@ -3463,11 +3459,11 @@ msgstr "O utilizador %s não é válido."
 msgid "Volume name"
 msgstr "Nome do volume"
 
-#: storage/forms.py:199 templates/storage/wizard.html:63
+#: storage/forms.py:199 templates/storage/wizard.html:53
 msgid "Force 4096 bytes sector size"
 msgstr "Força o sector para o tamanho de 4096 bytes"
 
-#: storage/forms.py:200 templates/storage/wizard.html:154
+#: storage/forms.py:200 templates/storage/wizard.html:115
 msgid "Specify custom path"
 msgstr ""
 
@@ -3888,7 +3884,7 @@ msgstr "Dia da semana"
 msgid "Periodic Snapshot Task"
 msgstr "Tarefa Periódica Sanpshot"
 
-#: storage/models.py:534 templates/storage/index.html:15
+#: storage/models.py:534 templates/storage/index.html:7
 msgid "Periodic Snapshot Tasks"
 msgstr "Tarefas Periódicas Sanpshot"
 
@@ -4459,7 +4455,7 @@ msgstr "Arquivos"
 msgid "Archive mode"
 msgstr "Modo de arquivo"
 
-#: system/models.py:442 templates/freeadmin/generic_model_edit.html:70
+#: system/models.py:442 templates/freeadmin/generic_model_edit.html:65
 #: templates/network/interface.html:40 templates/network/lagg.html:44
 #: templates/network/lagg_members.html:24
 #: templates/network/lagg_members.html:26
@@ -4675,28 +4671,28 @@ msgstr "OK"
 msgid "Please wait..."
 msgstr "Por favor, aguarde..."
 
-#: templates/account/bsdgroup2user_form.html:16
-#: templates/freeadmin/generic_model_add.html:37
-#: templates/freeadmin/generic_model_delete.html:23
-#: templates/freeadmin/generic_model_edit.html:45
-#: templates/freeadmin/index.html:55 templates/freeadmin/index.html.py:72
+#: templates/account/bsdgroup2user_form.html:15
+#: templates/freeadmin/generic_model_add.html:36
+#: templates/freeadmin/generic_model_delete.html:22
+#: templates/freeadmin/generic_model_edit.html:44
+#: templates/freeadmin/index.html:52 templates/freeadmin/index.html.py:64
 #: templates/network/lagg_add.html:17 templates/storage/autoimport.html:28
-#: templates/storage/clonesnap.html:13
-#: templates/storage/dataset_confirm_delete.html:17
+#: templates/storage/clonesnap.html:15
+#: templates/storage/dataset_confirm_delete.html:16
 #: templates/storage/dataset_edit.html:11 templates/storage/datasets.html:11
 #: templates/storage/disk_detach.html:16
 #: templates/storage/disk_replacement.html:18 templates/storage/import.html:46
 #: templates/storage/manualsnap.html:16 templates/storage/periodicsnap.html:16
-#: templates/storage/permission.html:13
-#: templates/storage/scrub_confirm.html:17
-#: templates/storage/snapshot_confirm_delete.html:17
-#: templates/storage/snapshot_confirm_delete_bulk.html:19
-#: templates/storage/snapshot_confirm_rollback.html:17
+#: templates/storage/permission.html:12
+#: templates/storage/scrub_confirm.html:16
+#: templates/storage/snapshot_confirm_delete.html:16
+#: templates/storage/snapshot_confirm_delete_bulk.html:18
+#: templates/storage/snapshot_confirm_rollback.html:16
 #: templates/storage/volume_edit.html:11
-#: templates/storage/volume_export.html:31 templates/storage/wizard.html:176
+#: templates/storage/volume_export.html:30 templates/storage/wizard.html:137
 #: templates/storage/zvol_confirm_delete.html:16
-#: templates/storage/zvols.html:11 templates/system/config_restore.html:17
-#: templates/system/config_upload.html:41
+#: templates/storage/zvols.html:11 templates/system/config_restore.html:16
+#: templates/system/config_upload.html:40
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -4793,6 +4789,10 @@ msgstr "Navegar"
 msgid "Close"
 msgstr "Fechar"
 
+#: templates/freeadmin/generic_model_add_ok.html:1
+msgid "successfully added"
+msgstr "adicionado com sucesso"
+
 #: templates/freeadmin/generic_model_delete.html:12
 #: templates/storage/dataset_confirm_delete.html:7
 #: templates/storage/snapshot_confirm_delete.html:7
@@ -4815,6 +4815,10 @@ msgstr "Tem a certeza que pretende eliminar?"
 msgid "Yes"
 msgstr "Sim"
 
+#: templates/freeadmin/generic_model_delete_ok.html:1
+msgid "successfully deleted"
+msgstr "eliminado com sucesso"
+
 #: templates/freeadmin/generic_model_edit.html:5
 msgid "Your changes have been successfully updated!"
 msgstr "As alteração foram actualizadas com sucesso!"
@@ -4822,6 +4826,10 @@ msgstr "As alteração foram actualizadas com sucesso!"
 #: templates/freeadmin/generic_model_edit.html:34
 msgid "Save"
 msgstr ""
+
+#: templates/freeadmin/generic_model_edit_ok.html:1
+msgid "successfully edited"
+msgstr "editado com sucesso"
 
 #: templates/freeadmin/index.html:31
 msgid "Running Processes"
@@ -4836,7 +4844,7 @@ msgstr "A iniciar..."
 msgid "Reboot the System"
 msgstr "Reiniciar o sistema"
 
-#: templates/freeadmin/index.html:49 templates/freeadmin/index.html.py:66
+#: templates/freeadmin/index.html:49 templates/freeadmin/index.html.py:60
 msgid "Warning!"
 msgstr "Aviso!"
 
@@ -4848,38 +4856,38 @@ msgstr ""
 "Você está prestes a <strong>REINICIAR </strong> o sistema, o que deseja "
 "fazer?"
 
-#: templates/freeadmin/index.html:65
+#: templates/freeadmin/index.html:59
 msgid "Shutdown the System"
 msgstr "Desligar"
 
-#: templates/freeadmin/index.html:67
+#: templates/freeadmin/index.html:61
 msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
 msgstr ""
 "Você está prestes a <strong>DESLIGAR</strong> o sistema, o que deseja fazer?"
 
-#: templates/freeadmin/index.html:82
+#: templates/freeadmin/index.html:71
 msgid "Help & Support"
 msgstr "Ajuda & Suporte"
 
-#: templates/freeadmin/index.html:86
+#: templates/freeadmin/index.html:75
 msgid "Forum"
 msgstr "Fórum"
 
-#: templates/freeadmin/index.html:88
+#: templates/freeadmin/index.html:77
 msgid "Community Forum"
 msgstr "Fórum da Comunidade"
 
-#: templates/freeadmin/index.html:93
+#: templates/freeadmin/index.html:82
 msgid "IRC (Chat)"
 msgstr "IRC (Chat)"
 
-#: templates/freeadmin/index.html:95
+#: templates/freeadmin/index.html:84
 msgid "#freenas on freenode"
 msgstr "#freenas em freenode"
 
-#: templates/freeadmin/index.html:99
+#: templates/freeadmin/index.html:88
 msgid "Mailing Lists"
 msgstr "Listas de Mailings"
 
@@ -4891,7 +4899,7 @@ msgstr "Anúncios FreeNAS"
 msgid "FreeNAS Commit"
 msgstr "FreeNAS Confirmação"
 
-#: templates/freeadmin/index.html:103
+#: templates/freeadmin/index.html:92
 msgid "FreeNAS Devel"
 msgstr "FreeNAS Desenv"
 
@@ -4899,7 +4907,7 @@ msgstr "FreeNAS Desenv"
 msgid "FreeNAS Testing"
 msgstr "FreeNAS Teste"
 
-#: templates/freeadmin/index.html:105
+#: templates/freeadmin/index.html:94
 msgid "FreeNAS Docs"
 msgstr "Documentação FreeNAS"
 
@@ -4907,15 +4915,15 @@ msgstr "Documentação FreeNAS"
 msgid "FreeNAS Translations"
 msgstr "Traduções FreeNAS"
 
-#: templates/freeadmin/index.html:111
+#: templates/freeadmin/index.html:100
 msgid "Support Issues"
 msgstr "Questões de suporte"
 
-#: templates/freeadmin/index.html:113
+#: templates/freeadmin/index.html:102
 msgid "Bug Tracker"
 msgstr "Bug Tracker"
 
-#: templates/freeadmin/index.html:118
+#: templates/freeadmin/index.html:107
 msgid "Documentation"
 msgstr "Documentação"
 
@@ -5175,23 +5183,23 @@ msgstr "Definições de ISCSI"
 msgid "iSCSI Management"
 msgstr "iSCSI Gestão"
 
-#: templates/services/iscsi.html:9
+#: templates/services/iscsi.html:5
 msgid "Targets"
 msgstr "Destinos"
 
-#: templates/services/iscsi.html:27
+#: templates/services/iscsi.html:11
 msgid "Associated Targets"
 msgstr "Destinos Associados"
 
-#: templates/services/iscsi.html:33
+#: templates/services/iscsi.html:13
 msgid "Authentication"
 msgstr "Autenticação"
 
-#: templates/services/iscsi.html:39
+#: templates/services/iscsi.html:15
 msgid "Authorized Initiator"
 msgstr "Iniciador autorizado"
 
-#: templates/services/iscsi.html:45
+#: templates/services/iscsi.html:17
 msgid "Portals"
 msgstr "Portais"
 
@@ -5290,11 +5298,11 @@ msgstr "Adicionar partilha Apple (AFP)"
 msgid "Apple"
 msgstr "Apple"
 
-#: templates/sharing/index.html:8
+#: templates/sharing/index.html:5
 msgid "UNIX"
 msgstr "UNIX"
 
-#: templates/sharing/index.html:13
+#: templates/sharing/index.html:7
 msgid "Windows"
 msgstr "Windows"
 
@@ -5342,7 +5350,7 @@ msgstr "Adicionar partilha Windows"
 msgid "Add Windows Share (CIFS)"
 msgstr "Adicionar partilha Windows (CIFS)"
 
-#: templates/storage/clonesnap.html:10 templates/storage/snapshots.html:17
+#: templates/storage/clonesnap.html:12 templates/storage/snapshots.html:17
 msgid "Clone Snapshot"
 msgstr "Clonar Snapshot"
 
@@ -5378,11 +5386,11 @@ msgstr "Tipo de sistema de ficheiros"
 msgid "Active Volumes"
 msgstr "Volumes activos"
 
-#: templates/storage/index.html:9
+#: templates/storage/index.html:5
 msgid "ZFS Snapshots"
 msgstr "ZFS Snapshots"
 
-#: templates/storage/index.html:21
+#: templates/storage/index.html:9
 msgid "ZFS Replication"
 msgstr "Replicação ZFS"
 
@@ -5596,35 +5604,35 @@ msgstr "Sem volumes definidos"
 msgid "Member disks"
 msgstr "Discos membros"
 
-#: templates/storage/wizard.html:71
+#: templates/storage/wizard.html:61
 msgid "Group type"
 msgstr "Tipo de grupo"
 
-#: templates/storage/wizard.html:123
+#: templates/storage/wizard.html:84
 msgid "ZFS Extra"
 msgstr "ZFS Extra"
 
-#: templates/storage/wizard.html:126
+#: templates/storage/wizard.html:87
 msgid "The use of only 1 log disk is highly discouraged"
 msgstr "O uso de apenas 1 disco de registo é altamente desencorajado"
 
-#: templates/storage/wizard.html:132
+#: templates/storage/wizard.html:93
 msgid "Log"
 msgstr "Registo"
 
-#: templates/storage/wizard.html:133
+#: templates/storage/wizard.html:94
 msgid "Cache"
 msgstr "Reserva"
 
-#: templates/storage/wizard.html:134
+#: templates/storage/wizard.html:95
 msgid "Spare"
 msgstr "Reposição"
 
-#: templates/storage/wizard.html:172
+#: templates/storage/wizard.html:133
 msgid "Add Volume"
 msgstr "Adicionar Volume"
 
-#: templates/storage/wizard.html:173
+#: templates/storage/wizard.html:134
 msgid "Existing data will be cleared"
 msgstr "Informação existente será apagada"
 
@@ -5790,12 +5798,12 @@ msgstr ""
 msgid "Restore Config"
 msgstr "Restaurar configurações"
 
-#: templates/system/settings_edit.html:11
+#: templates/system/settings_edit.html:10
 msgid "Save Config"
 msgstr "Salvar configurações"
 
-#: templates/system/settings_edit.html:17
-#: templates/system/settings_edit.html:19
+#: templates/system/settings_edit.html:12
+#: templates/system/settings_edit.html:14
 msgid "Upload Config"
 msgstr "Carregar Configurações"
 

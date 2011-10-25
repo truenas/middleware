@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-19 11:49-0200\n"
-"PO-Revision-Date: 2011-07-07 18:00+0200\n"
+"PO-Revision-Date: 2011-10-24 18:13+0200\n"
 "Last-Translator: ok1 <ok1@trups.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: lv\n"
@@ -472,16 +472,16 @@ msgstr "Bezsaistes tūlītējs tests (tikai ATA)"
 
 #: account/forms.py:53
 msgid "Your name cannot start with \"-\""
-msgstr ""
+msgstr "Tavs vārds nevar sākties ar \"-\""
 
 #: account/forms.py:55
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "Simbols $ nav atļauts kā beidzamais simbols"
 
 #: account/forms.py:62
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "Tavs vārds satur nederīgus simbolus (%s)."
 
 #: account/forms.py:110 templates/storage/volumes.html:57
 msgid "Available"
@@ -498,15 +498,12 @@ msgid "Username"
 msgstr "Lietotājvārds"
 
 #: account/forms.py:190
-#, fuzzy
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr ""
-"Nepieciešams. 30 rakstzīmes vai mazāk. Tikai burti, cipari un @/./+/-/_ ."
+msgstr "Nepieciešams. 30 rakstzīmes vai mazāk. Tikai burti, cipari un ./-/_ ."
 
 #: account/forms.py:191
-#, fuzzy
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr "Šī vērtība var saturēt tikai burtus, skaitļus un @/./+/-/_ rakstzīmes."
+msgstr "Šī vērtība var saturēt tikai burtus, skaitļus un ./-/_ rakstzīmes."
 
 #: account/forms.py:213 account/forms.py:353 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
@@ -528,13 +525,12 @@ msgid "Shell"
 msgstr "Apvalks"
 
 #: account/forms.py:217
-#, fuzzy
 msgid "Disable password logins"
-msgstr "Izslēgt autorizācijas"
+msgstr "Atspēkot paroļu autorizācijas"
 
 #: account/forms.py:218 account/forms.py:392
 msgid "Lock user"
-msgstr ""
+msgstr "Slēgt lietotāju"
 
 #: account/forms.py:219
 msgid "Primary Group"
@@ -542,12 +538,11 @@ msgstr "Primārā grupa"
 
 #: account/forms.py:220 account/forms.py:397
 msgid "SSH Public Key"
-msgstr ""
+msgstr "SSH Publiskā atslēga"
 
 #: account/forms.py:251
-#, fuzzy
 msgid "A user with that uid already exists."
-msgstr "Ar šo lietotājvārdu lietotājs jau eksistē."
+msgstr "Lietotājs ar šo uid jau eksistē."
 
 #: account/forms.py:262
 msgid "A user with that username already exists."
@@ -560,18 +555,16 @@ msgid "The two password fields didn't match."
 msgstr "Paroles lauki nesakrita."
 
 #: account/forms.py:277
-#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Mājas direktorijai ir jāsākas ar  /mnt/"
+msgstr "Mājas direktorijai ir jāsākas ar  /mnt/ vai var būt /nonexistent"
 
 #: account/forms.py:293 account/forms.py:467
-#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr "Mājas direktorijai ir jāsākas ar  /mnt/"
+msgstr "Mājas direktorijai nav rakstāma, atstāj šo tukšu"
 
 #: account/forms.py:299
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Paroles ir atspējots, atstāj šo tukšu"
 
 #: account/forms.py:304 services/forms.py:588 services/forms.py:863
 #: storage/forms.py:274 system/forms.py:371 system/forms.py:398
@@ -579,28 +572,24 @@ msgid "This field is required."
 msgstr "Šis lauks ir nepieciešams."
 
 #: account/forms.py:391
-#, fuzzy
 msgid "Disable password"
-msgstr "Kopīgojuma parole"
+msgstr "Atspējot paroli"
 
 #: account/forms.py:452
-#, fuzzy
 msgid "Home directory has to start with /mnt or be /nonexistent"
-msgstr "Mājas direktorijai ir jāsākas ar  /mnt/"
+msgstr "Mājas direktorijai ir jāsākas ar  /mnt/ vai var būt /nonexistent"
 
 #: account/forms.py:519
 msgid "Allow repeated GIDs"
-msgstr ""
+msgstr "Atļaut atkārtous GIDus"
 
 #: account/forms.py:532
-#, fuzzy
 msgid "A group with that name already exists."
-msgstr "Ar šo lietotājvārdu lietotājs jau eksistē."
+msgstr "Grupa ar šo vārdu jau eksistē."
 
 #: account/forms.py:551
-#, fuzzy
 msgid "A group with this gid already exists"
-msgstr "Ar šo lietotājvārdu lietotājs jau eksistē."
+msgstr "Grupa ar šo gid jau eksistē"
 
 #: account/forms.py:563
 msgid "Member users"
@@ -612,7 +601,7 @@ msgstr "Palīg-grupas"
 
 #: account/forms.py:591
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Lietotājs nevar atrasties vairāk kā 64 papildus grupās"
 
 #: account/forms.py:608
 msgid "New password"
@@ -627,9 +616,8 @@ msgid "Old password"
 msgstr "Vecā parole"
 
 #: account/forms.py:637
-#, fuzzy
 msgid "Change root password as well"
-msgstr "Mainīt paroli"
+msgstr "Maini arī root paroli"
 
 #: account/forms.py:649
 msgid "Your old password was entered incorrectly. Please enter it again."
@@ -798,7 +786,7 @@ msgstr "Izslēgt"
 
 #: freeadmin/views.py:148
 msgid "It was not possible to retrieve the current status"
-msgstr ""
+msgstr "Nebija iespējams iegūt pašreizējo stāvokli"
 
 #: freeadmin/views.py:324 freeadmin/views.py:528 freeadmin/views.py:530
 #, python-format
@@ -808,9 +796,9 @@ msgstr "%s veiksmīgi atjaunināts."
 #: freeadmin/views.py:326 freeadmin/views.py:534 storage/views.py:153
 #: storage/views.py:206 storage/views.py:602 storage/views.py:660
 #: system/forms.py:88
-#, fuzzy, python-format
+#, python-format
 msgid "Error: %s"
-msgstr "Kļūda"
+msgstr "Kļūda: %s"
 
 #: freeadmin/views.py:328 freeadmin/views.py:532
 msgid "The service failed to restart."
@@ -827,27 +815,27 @@ msgstr "NIC"
 
 #: network/forms.py:86
 msgid "You have to specify IPv4 address as well"
-msgstr ""
+msgstr "Tev arī jānorāda IPv4 adrese"
 
 #: network/forms.py:88
 msgid "You have to choose IPv4 netmask as well"
-msgstr ""
+msgstr "Tev arī jāizvēlas IPv4 tīkla maska"
 
 #: network/forms.py:93
 msgid "You have to specify IPv6 address as well"
-msgstr ""
+msgstr "Tev arī jānorāda IPv6 adrese"
 
 #: network/forms.py:95
 msgid "You have to choose IPv6 netmask as well"
-msgstr ""
+msgstr "Tev arī jāizvēlas IPv6 tīkla maska"
 
 #: network/forms.py:98
 msgid "You have to choose between IPv4 or IPv6"
-msgstr ""
+msgstr "Tev jāizvēlas starp IPv4 un IPv6"
 
 #: network/forms.py:102
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit"
-msgstr ""
+msgstr "Tev jānorāda vai nu derīgs IPv4 vai IPv6 ar maskbit"
 
 #: network/forms.py:117
 msgid "Loopback is not a valid nameserver"
