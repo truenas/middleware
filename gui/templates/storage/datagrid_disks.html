@@ -1,8 +1,8 @@
 {% load i18n %}
-<div dojoType="dojo.data.ItemFileReadStore" jsId="store1" url="{% url storage_datagrid_disks_json vid=vid %}" >
+<div dojoType="dojo.data.ItemFileReadStore" jsId="store1" url="{% url storage_datagrid_disks_json %}" >
     </div>
 </span>
-<table dojoType="dojox.grid.DataGrid" store="store1" 
+<table dojoType="dojox.grid.DataGrid" store="store1"
 clientSort="true" style="width: 100%; height: 100%;" rowSelector="25px">
     <script type="dojo/method" data-dojo-event="onRowDblClick" data-dojo-args="evt">
         var item = this.selection.getSelected()[0];

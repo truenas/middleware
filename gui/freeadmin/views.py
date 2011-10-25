@@ -104,7 +104,9 @@ def menu(request, objtype = None):
         navtree.auto_generate()
         final = navtree.dijitTree()
         json = simplejson.dumps(final, indent=3)
-    except:
+    except Exception, e:
+        #FIX ME
+        print e
         json = ""
     #from freenasUI.nav import json2nav
     #json2nav(json)['main']

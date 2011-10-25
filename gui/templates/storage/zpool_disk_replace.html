@@ -1,0 +1,23 @@
+{% load i18n freeadmin %}
+<form dojoType="dijit.form.Form">
+    <script type="dojo/event" event="onSubmit" args="e">
+        formSubmit(this, e,  '{% url storage_zpool_disk_replace vname=vname label=label %}');
+    </script>
+    <table>
+    <tr>
+    <td colspan="2">
+    {% trans "Replacing disk" %} <strong>{{ disk }}</strong>
+    </td>
+    </tr>
+        {{ form }}
+    </table>
+        <button dojoType="dijit.form.Button" type="submit" class="submitform">
+    {% trans "Replace disk" %}<br />
+        </button>
+        <button dojoType="dijit.form.Button" type="button" class="cancelform">
+            {% trans "Cancel" %}
+            <script type="dojo/method" event="onClick" args="evt">
+                cancelDialog(this);
+            </script>
+        </button>
+</form>

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #-
-# Copyright (c) 2010 iXsystems, Inc.
+# Copyright (c) 2011 iXsystems, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,17 +24,21 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-import syslog
 
-class MiddlewareError(Exception):
-    def __init__(self, value):
-        self.value = value
-        syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID)
-        syslog.syslog(syslog.LOG_ERR, str(self))
-        syslog.closelog()
+import sys
 
-    def __str__(self):
-        return "[%s: %s]" % (type(self).__name__, self.value)
+sys.path.append('/usr/local/www')
+sys.path.append('/usr/local/www/freenasUI')
 
-class StorageError(MiddlewareError):
-    pass
+from freenasUI import settings
+
+from django.core.management import setup_environ
+setup_environ(settings)
+
+from freenasUI.middleware.notifier import notifier
+
+def main():
+    notifier().sync_disks()
+
+if __name__ == "__main__":
+    main()

@@ -1,12 +1,12 @@
 {% load i18n freeadmin %}
 <form data-dojo-type="dijit.form.Form">
     <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-        formSubmit(this, e,  '{% url storage_disk_replacement vid=vid,object_id=object_id %}');
+        formSubmit(this, e,  '{% url storage_geom_disk_replace vname=vname %}');
     </script>
     <table>
     <tr>
     <td colspan="2">
-    {% trans "Replacing disk" %} <strong>{{ fromdisk.identifier_to_device }}</strong>
+    {% trans "Replacing disk" %}
     </td>
     </tr>
         {{ form }}

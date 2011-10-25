@@ -1,8 +1,5 @@
 # encoding: utf-8
-from subprocess import Popen, PIPE
 import datetime
-import re
-
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
@@ -58,72 +55,17 @@ def identifier_to_device(self, ident):
     else:
         raise NotImplementedError
 
-def label_disk(self, label, dev, fstype=None):
-    """
-    Label the disk being manually imported
-    Currently UFS, NTFS, MSDOSFS and EXT2FS are supported
-    """
-
-    if fstype == 'UFS':
-        p1 = Popen(["/sbin/tunefs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
-        p1.wait()
-        if p1.returncode == 0:
-            return True
-    elif fstype == 'NTFS':
-        p1 = Popen(["/usr/local/sbin/ntfslabel", dev, label], stdin=PIPE, stdout=PIPE)
-        p1.wait()
-        if p1.returncode == 0:
-            return True
-    elif fstype == 'MSDOSFS':
-        p1 = Popen(["/usr/local/bin/mlabel", "-i", dev, "::%s" % label], stdin=PIPE, stdout=PIPE)
-        p1.wait()
-        if p1.returncode == 0:
-            return True
-    elif fstype == 'EXT2FS':
-        p1 = Popen(["/usr/local/sbin/tune2fs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
-        p1.wait()
-        if p1.returncode == 0:
-            return True
-    elif fstype is None:
-        p1 = Popen(["/sbin/geom", "label", "label", label, dev], stdin=PIPE, stdout=PIPE)
-        p1.wait()
-        if p1.returncode == 0:
-            return True
-
-    return False
-
 class Migration(DataMigration):
 
     def forwards(self, orm):
         "Write your forwards methods here."
 
-        for d in orm.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__in=["Disk", "ZVOL"]):
-            try:
-                name = 'iscsi:%s' % d.iscsi_target_extent_name
-                disk = orm['storage.Disk'].objects.get(pk=d.iscsi_target_extent_path)
-                vol = disk.disk_group.group_volume
-                dg = disk.disk_group
-                mp = orm['storage.MountPoint'].objects.get(mp_volume=vol)
-                vol.vol_name = name
-                vol.save()
-                dg.group_name = name
-                dg.save()
-                mp.mp_path = name
-                mp.save()
-
-                if d.iscsi_target_extent_type == 'Disk':
-                    devname = identifier_to_device(disk.disk_identifier)
-                    if not devname and disk.disk_identifier.startswith('{label}'):
-                        devname = disk.disk_identifier.split('{label}label/extent_')[1]
-                        serial = serial_from_device(devname)
-                        if serial:
-                            disk.disk_identifier = "{serial}%s" % serial
-                        else:
-                            disk.disk_identifier = "{devicename}%s" % devname
-                        disk.save()
-                    label_disk("extent_%s" % devname, "/dev/%s" % devname)
-            except:
-                pass
+        for e in orm.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='ZFS'):
+            disk = orm['storage'].Disk.objects.get(id=e.iscsi_target_extent_path)
+            dev = identifier_to_device(disk.disk_identifier)
+            e.iscsi_target_extent_path = dev
+            e.save()
+            disk.delete()
 
     def backwards(self, orm):
         "Write your backwards methods here."
@@ -142,7 +84,6 @@ class Migration(DataMigration):
         },
         'services.afp': {
             'Meta': {'object_name': 'AFP'},
-            'afp_srv_ddp': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_guest': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_guest_user': ('freeadmin.models.UserField', [], {'default': "'nobody'", 'max_length': '120'}),
             'afp_srv_local': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -151,9 +92,9 @@ class Migration(DataMigration):
         },
         'services.cifs': {
             'Meta': {'object_name': 'CIFS'},
-            'cifs_srv_aio_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'cifs_srv_aio_rs': ('django.db.models.fields.IntegerField', [], {'default': "'1'", 'max_length': '120'}),
-            'cifs_srv_aio_ws': ('django.db.models.fields.IntegerField', [], {'default': "'1'", 'max_length': '120'}),
+            'cifs_srv_aio_enable': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'cifs_srv_aio_rs': ('django.db.models.fields.IntegerField', [], {'default': '1', 'max_length': '120'}),
+            'cifs_srv_aio_ws': ('django.db.models.fields.IntegerField', [], {'default': '1', 'max_length': '120'}),
             'cifs_srv_authmodel': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
             'cifs_srv_description': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'cifs_srv_dirmask': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
@@ -185,7 +126,7 @@ class Migration(DataMigration):
             'ddns_fupdateperiod': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ddns_options': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'ddns_password': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'ddns_provider': ('django.db.models.fields.CharField', [], {'default': "'dyndns'", 'max_length': '120'}),
+            'ddns_provider': ('django.db.models.fields.CharField', [], {'default': "'dyndns'", 'max_length': '120', 'blank': 'True'}),
             'ddns_updateperiod': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ddns_username': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
@@ -196,7 +137,7 @@ class Migration(DataMigration):
             'ftp_anonuserbw': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'ftp_anonuserdlbw': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'ftp_banner': ('django.db.models.fields.TextField', [], {'max_length': '120', 'blank': 'True'}),
-            'ftp_clients': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            'ftp_clients': ('django.db.models.fields.PositiveIntegerField', [], {'default': '32'}),
             'ftp_defaultroot': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ftp_dirmask': ('django.db.models.fields.CharField', [], {'default': "'077'", 'max_length': '3'}),
             'ftp_filemask': ('django.db.models.fields.CharField', [], {'default': "'077'", 'max_length': '3'}),
@@ -205,7 +146,7 @@ class Migration(DataMigration):
             'ftp_ipconnections': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'ftp_localuserbw': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'ftp_localuserdlbw': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
-            'ftp_loginattempt': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            'ftp_loginattempt': ('django.db.models.fields.PositiveIntegerField', [], {'default': '3'}),
             'ftp_masqaddress': ('django.db.models.fields.IPAddressField', [], {'max_length': '15', 'blank': 'True'}),
             'ftp_onlyanonymous': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ftp_onlylocal': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -217,7 +158,7 @@ class Migration(DataMigration):
             'ftp_reversedns': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ftp_rootlogin': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ftp_ssltls': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'ftp_timeout': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            'ftp_timeout': ('django.db.models.fields.PositiveIntegerField', [], {'default': '120'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         'services.iscsitarget': {
@@ -312,7 +253,7 @@ class Migration(DataMigration):
             'ldap_pwencryption': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'ldap_rootbasedn': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ldap_rootbindpw': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'ldap_ssl': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
+            'ldap_ssl': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'ldap_tls_cacertfile': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'ldap_usersuffix': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'})
         },
@@ -320,7 +261,7 @@ class Migration(DataMigration):
             'Meta': {'object_name': 'NFS'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'nfs_srv_async': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'nfs_srv_servers': ('django.db.models.fields.CharField', [], {'max_length': '120'})
+            'nfs_srv_servers': ('django.db.models.fields.PositiveIntegerField', [], {'default': '4'})
         },
         'services.rsyncd': {
             'Meta': {'object_name': 'Rsyncd'},
@@ -382,7 +323,7 @@ class Migration(DataMigration):
             'ssh_privatekey': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'blank': 'True'}),
             'ssh_rootlogin': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ssh_tcpfwd': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'ssh_tcpport': ('django.db.models.fields.CharField', [], {'max_length': '120'})
+            'ssh_tcpport': ('django.db.models.fields.PositiveIntegerField', [], {})
         },
         'services.tftp': {
             'Meta': {'object_name': 'TFTP'},
@@ -390,7 +331,7 @@ class Migration(DataMigration):
             'tftp_directory': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'tftp_newfiles': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'tftp_options': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'tftp_port': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
+            'tftp_port': ('django.db.models.fields.PositiveIntegerField', [], {}),
             'tftp_umask': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'tftp_username': ('freeadmin.models.UserField', [], {'default': "'nobody'", 'max_length': '120'})
         },
@@ -400,7 +341,9 @@ class Migration(DataMigration):
             'ups_description': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ups_driver': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ups_emailnotify': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'ups_extrausers': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'ups_identifier': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
+            'ups_masterpwd': ('django.db.models.fields.CharField', [], {'default': "'fixmepass'", 'max_length': '30'}),
             'ups_options': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'ups_port': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'ups_rmonitor': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -414,20 +357,12 @@ class Migration(DataMigration):
             'disk_acousticlevel': ('django.db.models.fields.CharField', [], {'default': "'Disabled'", 'max_length': '120'}),
             'disk_advpowermgmt': ('django.db.models.fields.CharField', [], {'default': "'Disabled'", 'max_length': '120'}),
             'disk_description': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'disk_group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storage.DiskGroup']"}),
             'disk_hddstandby': ('django.db.models.fields.CharField', [], {'default': "'Always On'", 'max_length': '120'}),
             'disk_identifier': ('django.db.models.fields.CharField', [], {'max_length': '42'}),
             'disk_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'disk_smartoptions': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'disk_togglesmart': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'disk_transfermode': ('django.db.models.fields.CharField', [], {'default': "'Auto'", 'max_length': '120'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
-        },
-        'storage.diskgroup': {
-            'Meta': {'object_name': 'DiskGroup'},
-            'group_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '120'}),
-            'group_type': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'group_volume': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storage.Volume']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         'storage.mountpoint': {
@@ -442,8 +377,10 @@ class Migration(DataMigration):
             'Meta': {'object_name': 'Replication'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'repl_lastsnapshot': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
+            'repl_limit': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'repl_mountpoint': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storage.MountPoint']"}),
             'repl_remote': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['storage.ReplRemote']"}),
+            'repl_resetonce': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'repl_userepl': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'repl_zfs': ('django.db.models.fields.CharField', [], {'max_length': '120'})
         },

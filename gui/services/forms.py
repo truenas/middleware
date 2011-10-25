@@ -38,7 +38,7 @@ from django.core.validators import email_re
 import choices
 from services import models
 from services.exceptions import ServiceFailed
-from storage.models import Volume, MountPoint, DiskGroup, Disk
+from storage.models import Volume, MountPoint, Disk
 from storage.forms import UnixPermissionField
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common import humanize_size
@@ -673,7 +673,10 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         super(iSCSITargetDeviceExtentForm, self).__init__(*args, **kwargs)
         if kwargs.has_key("instance"):
             self.fields['iscsi_extent_disk'].choices = self._populate_disk_choices(exclude=self.instance)
-            self.fields['iscsi_extent_disk'].initial = self.instance.get_device()[5:]
+            if self.instance.iscsi_target_extent_type == 'ZVOL':
+                self.fields['iscsi_extent_disk'].initial = self.instance.iscsi_target_extent_path
+            else:
+                self.fields['iscsi_extent_disk'].initial = self.instance.get_device()[5:]
             self._path = self.instance.iscsi_target_extent_path
             self._name = self.instance.iscsi_target_extent_name
         else:
@@ -684,32 +687,45 @@ class iSCSITargetDeviceExtentForm(ModelForm):
 
         diskchoices = dict()
 
+        qs = models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
         if exclude:
-            extents = [i[0] for i in models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type__in=['Disk','ZVOL']).filter(id=exclude.id).values_list('iscsi_target_extent_path')]
-            dextents = [d.identifier_to_device() for d in Disk.objects.filter(id__in=extents)]
-        else:
-            dextents = []
+            qs = qs.exclude(id=exclude.id)
+        diskids = [i[0] for i in qs.values_list('iscsi_target_extent_path')]
+        used_disks = [d.disk_name for d in Disk.objects.filter(id__in=diskids)]
+
+        qs = models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='ZVOL')
+        if exclude:
+            qs = qs.exclude(id=exclude.id)
+        used_zvol = [i[0] for i in qs.values_list('iscsi_target_extent_path')]
+
+        for v in models.Volume.objects.all():
+            used_disks.extend(v.get_disks())
+
         for volume in Volume.objects.filter(vol_fstype__exact='ZFS'):
             zvols = notifier().list_zfs_vols(volume.vol_name)
             for zvol, attrs in zvols.items():
-                if "/dev/zvol/"+zvol not in dextents:
+                if "zvol/"+zvol not in used_zvol:
                     diskchoices["zvol/"+zvol] = "%s (%s)" % (zvol, attrs['volsize'])
-        # Grab disk list
+
+        # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
-        pipe = os.popen("/usr/sbin/diskinfo `/sbin/sysctl -n kern.disks` | "
-                        "/usr/bin/cut -f1,3")
-        diskinfo = pipe.read().strip().split('\n')
+        disks = notifier().get_disks()
+        for name, disk in disks.items():
+            if name in used_disks:
+                continue
+            capacity = humanize_size(disk['capacity'])
+            diskchoices[name] = "%s (%s)" % (name, capacity)
+
         # HAST Devices through GEOM GATE
-        gate_pipe = os.popen("/usr/sbin/diskinfo `/sbin/geom gate status -s | "
-                             "/usr/bin/cut -d" " -f1` | /usr/bin/cut -f1,3")
+        gate_pipe = os.popen("""/usr/sbin/diskinfo `/sbin/geom gate status -s"""
+                          """| /usr/bin/cut -d" " -f1` | /usr/bin/cut -f1,3""")
         gate_diskinfo = gate_pipe.read().strip().split('\n')
-        for item in gate_diskinfo:
-            if item != "":
-                diskinfo.append(item)
-        for disk in diskinfo:
-            devname, capacity = disk.split('\t')
-            capacity = humanize_size(capacity)
-            diskchoices[devname] = "%s (%s)" % (devname, capacity)
+        for disk in gate_diskinfo:
+            if disk:
+                devname, capacity = disk.split('\t')
+                capacity = humanize_size(capacity)
+                diskchoices[devname] = "%s (%s)" % (devname, capacity)
+
         # Exclude the root device
         rootdev = os.popen("glabel status | grep `mount | "
                            "awk '$3 == \"/\" {print $1}' | "
@@ -718,55 +734,26 @@ class iSCSITargetDeviceExtentForm(ModelForm):
         rootdev_base = re.search(r'[a-z/]*[0-9]*', rootdev)
         if rootdev_base != None:
             diskchoices.pop(rootdev_base.group(0), None)
-        # Exclude what's already added
-        if exclude:
-            disks = Disk.objects.exclude(id__in=extents).values('disk_identifier')
-        else:
-            disks = Disk.objects.values('disk_identifier')
-        for devname in [ notifier().identifier_to_device(x['disk_identifier']) for x in disks]:
-            diskchoices.pop(devname, None)
+
         return diskchoices.items()
+
     class Meta:
         model = models.iSCSITargetExtent
         exclude = ('iscsi_target_extent_type', 'iscsi_target_extent_path', 'iscsi_target_extent_filesize')
     def save(self, commit=True):
-        if self.instance.id:
-            d = Disk.objects.get(id=self._path)
-            if self.instance.iscsi_target_extent_type == 'Disk':
-                notifier().unlabel_disk(d.identifier_to_device())
-            d.delete()
-            volume = Volume.objects.get(vol_name='iscsi:%s' % self._name)
-            volume.delete()
         oExtent = super(iSCSITargetDeviceExtentForm, self).save(commit=False)
         if commit:
             # label it only if it is a real disk
             if not self.cleaned_data["iscsi_extent_disk"].startswith("zvol"):
                 notifier().unlabel_disk(str(self.cleaned_data["iscsi_extent_disk"]))
                 notifier().label_disk("extent_%s" % self.cleaned_data["iscsi_extent_disk"], self.cleaned_data["iscsi_extent_disk"])
-            # Construct a corresponding volume.
-            volume_name = 'iscsi:' + self.cleaned_data["iscsi_target_extent_name"]
-            volume_fstype = 'iscsi'
-
-            volume = Volume(vol_name = volume_name, vol_fstype = volume_fstype)
-            volume.save()
-
-            mp = MountPoint(mp_volume=volume, mp_path=volume_name, mp_options='noauto')
-            mp.save()
-
-            grp = DiskGroup(group_name= volume_name, group_type = 'raw', group_volume = volume)
-            grp.save()
-
-            diskobj = Disk(disk_name = self.cleaned_data["iscsi_extent_disk"],
-                           disk_identifier = notifier().device_to_identifier(self.cleaned_data["iscsi_extent_disk"]),
-                           disk_description = 'iSCSI exported disk',
-                           disk_group = grp)
-            diskobj.save()
-            if self.cleaned_data["iscsi_extent_disk"].startswith("zvol"):
-                oExtent.iscsi_target_extent_type = 'ZVOL'
-            else:
+                diskobj = models.Disk.objects.get(disk_name=self.cleaned_data["iscsi_extent_disk"])
                 oExtent.iscsi_target_extent_type = 'Disk'
+                oExtent.iscsi_target_extent_path = str(diskobj.id)
+            else:
+                oExtent.iscsi_target_extent_path = self.cleaned_data["iscsi_extent_disk"]
+                oExtent.iscsi_target_extent_type = 'ZVOL'
             oExtent.iscsi_target_extent_filesize = 0
-            oExtent.iscsi_target_extent_path = str(diskobj.id)
             oExtent.save()
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:

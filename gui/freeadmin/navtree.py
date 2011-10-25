@@ -28,12 +28,13 @@
 import re
 
 from django.conf import settings
-from freeadmin.tree import tree_roots, TreeRoot, TreeNode, TreeRoots
 from django.db import models
 from django.forms import ModelForm
 from django.core.urlresolvers import resolve
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
+
+from freeadmin.tree import tree_roots, TreeRoot, TreeNode, TreeRoots
 
 class NavTree(object):
 
@@ -50,7 +51,7 @@ class NavTree(object):
         try:
             mod = __import__('%s.%s' % (where,name), globals(), locals(), [name], -1)
             return mod
-        except ImportError:
+        except ImportError, e:
             return None
 
     """
@@ -426,19 +427,6 @@ class NavTree(object):
         return items
 
 navtree = NavTree()
-
-def _get_or_create(name, groups):
-
-    for nav in groups['root']:
-        if nav.name == name:
-            return nav
-
-    nav = TreeRoot()
-    nav.name = name
-    nav.nav_group = 'main'
-    groups.register(nav)
-    return nav
-
 
 """
 If a model is delete it may dissapear from menu

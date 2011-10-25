@@ -4,9 +4,18 @@
     formSubmit(this, e, '{% url storage_scrub vid=volume.id %}');
 </script>
 <table>
-    <tr><td>{{ volume.vol_name }}: {% trans "Are you sure you want to scrub?" %}<br />{% trans "This will increase system overhead while in progress" %}</td></tr>
     <tr>
         <td>
+        {% if scrub == 'IN_PROGRESS' %}
+        {{ volume.vol_name }}: {% trans "Scrub is currently running! Are you sure you want to STOP the scrub process?" %}
+        {% else %}
+        {{ volume.vol_name }}: {% trans "Are you sure you want to scrub?" %}<br />{% trans "This will increase system overhead while in progress" %}
+        {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <input data-dojo-type="dijit.form.TextBox" data-dojo-props="type: 'hidden', name: 'scrub', value: '{{ scrub|force_escape|force_escape }}'" type="hidden" />
             <button id="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
                 {% trans "Yes" %}
                 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">

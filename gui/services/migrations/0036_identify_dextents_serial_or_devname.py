@@ -1,9 +1,18 @@
 # encoding: utf-8
+from subprocess import Popen, PIPE
 import datetime
+import re
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
-from middleware.notifier import notifier
+
+def serial_from_device(self, devname):
+    p1 = Popen(["/usr/local/sbin/smartctl", "-i", "/dev/%s" % devname], stdout=PIPE)
+    output = p1.communicate()[0]
+    search = re.search(r'^Serial Number:[ \t\s]+(?P<serial>.+)', output, re.I|re.M)
+    if search:
+        return search.group("serial")
+    return None
 
 class Migration(DataMigration):
 
@@ -14,7 +23,7 @@ class Migration(DataMigration):
                 disk = orm['storage.Disk'].objects.get(pk=d.iscsi_target_extent_path)
                 if disk.disk_identifier.startswith('{label}label/extent_'):
                     devname = disk.disk_identifier.split('{label}label/extent_')[1]
-                    serial = notifier().serial_from_device(devname)
+                    serial = serial_from_device(devname)
                     if serial:
                         disk.disk_identifier = "{serial}%s" % serial
                     else:

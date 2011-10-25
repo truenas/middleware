@@ -1,7 +1,7 @@
 {% load i18n %}
 <form data-dojo-type="dijit.form.Form">
     <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-        formSubmit(this, e, '{% url storage_mp_permission object_id=mp.id %}');
+        formSubmit(this, e, '{% url storage_mp_permission path=path %}');
     </script>
     <h3>{% trans "Change permission" %}</h3>
     <p>{% blocktrans with mp.mp_path as path %}Change permission on {{ path }} to{% endblocktrans %}:</p>

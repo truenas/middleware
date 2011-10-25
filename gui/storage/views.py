@@ -39,7 +39,6 @@ from dojango.util import to_dojo_data
 from freenasUI.common import humanize_size
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
-from freenasUI.storage.evilhack import evil_zvol_destroy
 from freenasUI.middleware.notifier import notifier
 from freeadmin.views import JsonResponse
 from middleware.exceptions import MiddlewareError
@@ -56,16 +55,9 @@ def tasks(request):
         })
 
 def volumes(request):
-    en_dataset = models.MountPoint.objects.filter(mp_volume__vol_fstype__exact='ZFS').count() > 0
     mp_list = models.MountPoint.objects.exclude(mp_volume__vol_fstype__exact='iscsi').select_related().all()
-    zvols = {}
-    for volume in models.Volume.objects.filter(vol_fstype__exact='ZFS'):
-        zvol = notifier().list_zfs_vols(volume.vol_name)
-        zvols[volume.vol_name] = zvol
     return render(request, 'storage/volumes.html', {
         'mp_list': mp_list,
-        'en_dataset' : en_dataset,
-        'zvols': zvols,
         })
 
 def replications(request):
@@ -135,10 +127,10 @@ def snapshots_data(request):
         count += 1
 
     if r:
-        resp = HttpResponse(simplejson.dumps(data))
+        resp = HttpResponse(simplejson.dumps(data), content_type='application/json')
         resp['Content-Range'] = 'items %d-%d/%d' % (r1,r1+count, total)
     else:
-        resp = HttpResponse(simplejson.dumps(data))
+        resp = HttpResponse(simplejson.dumps(data), content_type='application/json')
     return resp
 
 def wizard(request):
@@ -219,10 +211,16 @@ def volautoimport(request):
         'disks': disks
     })
 
-def disks_datagrid(request, vid):
+def disks_datagrid(request):
 
     names = [x.verbose_name for x in models.Disk._meta.fields]
     _n = [x.name for x in models.Disk._meta.fields]
+
+    names.remove('ID')
+    _n.remove('id')
+
+    names.remove('disk enabled')
+    _n.remove('disk_enabled')
 
     names.insert(2, _('Serial'))
     _n.insert(2, 'serial')
@@ -245,19 +243,14 @@ def disks_datagrid(request, vid):
     fields = zip(names, _n, width)
 
     return render(request, 'storage/datagrid_disks.html', {
-        'vid': vid,
         'app': 'storage',
         'model': 'Disk',
         'fields': fields,
     })
 
-def disks_datagrid_json(request, vid):
+def disks_datagrid_json(request):
 
-    volume = models.Volume.objects.get(pk=vid)
-    disks = []
-    for dg in volume.diskgroup_set.all():
-        for d in dg.disk_set.all():
-            disks.append(d)
+    disks = models.Disk.objects.filter(disk_enabled=True)
 
     complete = []
     for data in disks:
@@ -265,28 +258,14 @@ def disks_datagrid_json(request, vid):
         ret['edit'] = {
             'edit_url': reverse('freeadmin_model_edit', kwargs={'app':'storage', 'model': 'Disk', 'oid': data.id})+'?deletable=false',
             }
-        if volume.vol_fstype == 'ZFS':
-            if data.disk_group.group_type == 'detached':
-                ret['edit']['detach_url'] = reverse('storage_disk_detach', kwargs={'vid': vid, 'object_id': data.id})
-            elif data.disk_group.group_type != 'cache':
-                ret['edit']['replace_url'] = reverse('storage_disk_replacement', kwargs={'vid': vid, 'object_id': data.id})
-
-        elif volume.vol_fstype == 'UFS':
-            state = notifier().geom_disk_state(data.disk_group.group_name, \
-                                data.disk_group.group_type, data.disk_name)
-            if data.disk_group.group_type in ('mirror', 'raid3') and \
-                                        state not in ("SYNCHRONIZING",):
-                ret['edit']['replace_url'] = reverse('storage_disk_replacement', kwargs={'vid': vid, 'object_id': data.id})
         ret['edit'] = simplejson.dumps(ret['edit'])
 
         for f in data._meta.fields:
             if isinstance(f, dmodels.ImageField) or isinstance(f, dmodels.FileField): # filefields can't be json serialized
                 ret[f.attname] = unicode(getattr(data, f.attname))
-            elif f.attname == 'disk_name':
-                ret[f.attname] = notifier().identifier_to_device(data.disk_identifier)
-                ret['serial'] = data.get_serial() or _('Unknown')
             else:
                 ret[f.attname] = getattr(data, f.attname) #json_encode() this?
+        ret['serial'] = data.get_serial() or _('Unknown')
         #fields = dir(data.__class__) + ret.keys()
         #add_ons = [k for k in dir(data) if k not in fields]
         #for k in add_ons:
@@ -317,17 +296,14 @@ def volume_disks(request, volume_id):
         'disk_list': disk_list,
     })
 
-def dataset_create(request):
+def dataset_create(request, fs):
     defaults = { 'dataset_compression' : 'inherit', 'dataset_atime' : 'inherit', }
-    dataset_form = forms.ZFSDataset_CreateForm(initial=defaults)
     if request.method == 'POST':
-        dataset_form = forms.ZFSDataset_CreateForm(request.POST)
+        dataset_form = forms.ZFSDataset_CreateForm(request.POST, fs=fs)
         if dataset_form.is_valid():
             props = {}
             cleaned_data = dataset_form.cleaned_data
-            volume = models.Volume.objects.get(id=cleaned_data.get('dataset_volid'))
-            volume_name = volume.vol_name
-            dataset_name = "%s/%s" % (volume_name, cleaned_data.get('dataset_name'))
+            dataset_name = "%s/%s" % (fs, cleaned_data.get('dataset_name'))
             dataset_compression = cleaned_data.get('dataset_compression')
             props['compression']=dataset_compression.__str__()
             dataset_atime = cleaned_data.get('dataset_atime')
@@ -344,25 +320,22 @@ def dataset_create(request):
             refreservation = cleaned_data.get('dataset_reserv')
             if refreservation != '0':
                 props['refreservation']=refreservation.__str__()
-            errno, errmsg = notifier().create_zfs_dataset(path=dataset_name.__str__(), props=props)
+            errno, errmsg = notifier().create_zfs_dataset(path=str(dataset_name), props=props)
             if errno == 0:
-                mp = models.MountPoint(mp_volume=volume, mp_path='/mnt/%s' % (dataset_name), mp_options='rw,late', mp_ischild=True)
-                mp.save()
                 return JsonResponse(message=_("Dataset successfully added."))
             else:
                 dataset_form.set_error(errmsg)
+    else:
+        dataset_form = forms.ZFSDataset_CreateForm(initial=defaults, fs=fs)
     return render(request, 'storage/datasets.html', {
-        'focused_tab' : 'storage',
-        'form': dataset_form
+        'form': dataset_form,
+        'fs': fs,
     })
 
-def dataset_edit(request, object_id):
-    mp = models.MountPoint.objects.get(pk=object_id)
-    dataset_form = forms.ZFSDataset_EditForm(mp=mp)
+def dataset_edit(request, dataset_name):
     if request.method == 'POST':
-        dataset_form = forms.ZFSDataset_EditForm(request.POST, mp=mp)
+        dataset_form = forms.ZFSDataset_EditForm(request.POST, fs=dataset_name)
         if dataset_form.is_valid():
-            dataset_name = mp.mp_path.replace("/mnt/","")
             if dataset_form.cleaned_data["dataset_quota"] == "0":
                 dataset_form.cleaned_data["dataset_quota"] = "none"
             if dataset_form.cleaned_data["dataset_refquota"] == "0":
@@ -386,42 +359,43 @@ def dataset_edit(request, object_id):
                 return JsonResponse(message=_("Dataset successfully edited."))
             else:
                 dataset_form.set_error(_("An error occurred when setting the options"))
+    else:
+        dataset_form = forms.ZFSDataset_EditForm(fs=dataset_name)
     return render(request, 'storage/dataset_edit.html', {
-        'mp': mp,
+        'dataset_name': dataset_name,
         'form': dataset_form
     })
 
-def zvol_create(request):
+def zvol_create(request, volume_name):
     defaults = { 'zvol_compression' : 'inherit', }
     if request.method == 'POST':
-        zvol_form = forms.ZVol_CreateForm(request.POST)
+        zvol_form = forms.ZVol_CreateForm(request.POST, vol_name=volume_name)
         if zvol_form.is_valid():
             props = {}
             cleaned_data = zvol_form.cleaned_data
-            volume = models.Volume.objects.get(id=cleaned_data.get('zvol_volid'))
-            volume_name = volume.vol_name
             zvol_size = cleaned_data.get('zvol_size')
             zvol_name = "%s/%s" % (volume_name, cleaned_data.get('zvol_name'))
             zvol_compression = cleaned_data.get('zvol_compression')
-            props['compression']=zvol_compression.__str__()
-            errno, errmsg = notifier().create_zfs_vol(name=zvol_name.__str__(), size=zvol_size.__str__(), props=props)
+            props['compression']=str(zvol_compression)
+            errno, errmsg = notifier().create_zfs_vol(name=str(zvol_name), size=str(zvol_size), props=props)
             if errno == 0:
                 return JsonResponse(message=_("ZFS Volume successfully added."))
             else:
                 zvol_form.set_error(errmsg)
     else:
-        zvol_form = forms.ZVol_CreateForm(initial=defaults)
+        zvol_form = forms.ZVol_CreateForm(initial=defaults, vol_name=volume_name)
     return render(request, 'storage/zvols.html', {
         'form': zvol_form,
+        'volume_name': volume_name,
     })
 
 def zvol_delete(request, name):
 
     if request.method == 'POST':
-        try:
-            retval = evil_zvol_destroy(name, iSCSITargetExtent, models.Disk, destroy=True)
-        except ValueError:
+        extents = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='ZVOL', iscsi_target_extent_path='zvol/'+name)
+        if extents.count() > 0:
             return JsonResponse(error=True, message=_("This is in use by the iscsi target, please remove it there first."))
+        retval = notifier().destroy_zfs_vol(name)
         if retval == '':
             return JsonResponse(message=_("ZFS Volume successfully destroyed."))
         else:
@@ -465,40 +439,42 @@ def zfsvolume_edit(request, object_id):
         'form': volume_form
     })
 
-def mp_permission(request, object_id):
-    mp = models.MountPoint.objects.get(id = object_id)
+def mp_permission(request, path):
     if request.method == 'POST':
         form = forms.MountPointAccessForm(request.POST)
         if form.is_valid():
-            mp_path=mp.mp_path.__str__()
-            form.commit(path=mp_path)
+            form.commit(path=path)
             return JsonResponse(message=_("Mount Point permissions successfully updated."))
     else:
-        form = forms.MountPointAccessForm(initial={'path':mp.mp_path})
+        form = forms.MountPointAccessForm(initial={'path':path})
     return render(request, 'storage/permission.html', {
-        'mp': mp,
+        'path': path,
         'form': form,
     })
 
-def dataset_delete(request, object_id):
-    obj = models.MountPoint.objects.get(id=object_id)
+def dataset_delete(request, name):
+
+    datasets = notifier().list_zfs_datasets(path=name, recursive=True)
     if request.method == 'POST':
-        retval = notifier().destroy_zfs_dataset(path = obj.mp_path[5:].__str__())
-        if retval == '':
-            obj.delete()
-            return JsonResponse(message=_("Dataset successfully destroyed."))
-        else:
-            return JsonResponse(error=True, message=retval)
+        form = forms.Dataset_Destroy(request.POST, fs=name, datasets=datasets)
+        if form.is_valid():
+            retval = notifier().destroy_zfs_dataset(path=name, recursive=True)
+            if retval == '':
+                return JsonResponse(message=_("Dataset successfully destroyed."))
+            else:
+                return JsonResponse(error=True, message=retval)
     else:
-        return render(request, 'storage/dataset_confirm_delete.html', {
-            'focused_tab' : 'storage',
-            'object': obj,
-        })
+        form = forms.Dataset_Destroy(fs=name, datasets=datasets)
+    return render(request, 'storage/dataset_confirm_delete.html', {
+        'name': name,
+        'form': form,
+        'datasets': datasets,
+    })
 
 def snapshot_delete(request, dataset, snapname):
     snapshot = '%s@%s' % (dataset, snapname)
     if request.method == 'POST':
-        retval = notifier().destroy_zfs_dataset(path = snapshot.__str__())
+        retval = notifier().destroy_zfs_dataset(path=str(snapshot))
         if retval == '':
             return JsonResponse(message=_("Snapshot successfully deleted."))
         else:
@@ -589,16 +565,14 @@ def clonesnap(request, snapshot):
         'snapshot': snapshot,
     })
 
-def disk_replacement(request, vid, object_id):
+def geom_disk_replace(request, vname):
 
-    volume = models.Volume.objects.get(pk=vid)
-    fromdisk = models.Disk.objects.get(pk=object_id)
-
+    volume = models.Volume.objects.get(vol_name=vname)
     if request.method == "POST":
-        form = forms.DiskReplacementForm(request.POST, disk=fromdisk)
+        form = forms.UFSDiskReplacementForm(request.POST)
         if form.is_valid():
             try:
-                if form.done(volume, fromdisk):
+                if form.done(volume):
                     return JsonResponse(message=_("Disk replacement has been initiated."))
                 else:
                     return JsonResponse(error=True, message=_("An error occurred."))
@@ -606,34 +580,63 @@ def disk_replacement(request, vid, object_id):
                 return JsonResponse(error=True, message=_("Error: %s") % str(e))
 
     else:
-        form = forms.DiskReplacementForm(disk=fromdisk)
-    return render(request, 'storage/disk_replacement.html', {
+        form = forms.UFSDiskReplacementForm()
+    return render(request, 'storage/geom_disk_replace.html', {
         'form': form,
-        'vid': vid,
-        'object_id': object_id,
-        'fromdisk': fromdisk,
+        'vname': vname,
     })
 
-def disk_detach(request, vid, object_id):
+def disk_detach(request, vname, label):
 
-    volume = models.Volume.objects.get(pk=vid)
-    disk = models.Disk.objects.get(pk=object_id)
+    volume = models.Volume.objects.get(vol_name=vname)
 
     if request.method == "POST":
-        notifier().zfs_detach_disk(volume, disk)
-        dg = disk.disk_group
-        disk.delete()
-        # delete disk group if is now empty
-        if models.Disk.objects.filter(disk_group=dg).count() == 0:
-            dg.delete()
+        notifier().zfs_detach_disk(volume, label)
         return JsonResponse(message=_("Disk detach has been successfully done."))
 
     return render(request, 'storage/disk_detach.html', {
-        'vid': vid,
-        'object_id': object_id,
+        'vname': vname,
+        'label': label,
+    })
+
+
+def disk_offline(request, vname, label):
+
+    volume = models.Volume.objects.get(vol_name=vname)
+    disk = notifier().label_to_disk(label)
+
+    if request.method == "POST":
+        try:
+            notifier().zfs_offline_disk(volume, label)
+        except MiddlewareError, e:
+            return JsonResponse(error=True, message=_("Error: %s") % str(e))
+        else:
+            return JsonResponse(message=_("Disk offline operation has been issued."))
+
+    return render(request, 'storage/disk_offline.html', {
+        'vname': vname,
+        'label': label,
         'disk': disk,
     })
 
+def zpool_disk_remove(request, vname, label):
+
+    volume = models.Volume.objects.get(vol_name=vname)
+    disk = notifier().label_to_disk(label)
+
+    if request.method == "POST":
+        try:
+            notifier().zfs_remove_disk(volume, label)
+        except MiddlewareError, e:
+            return JsonResponse(error=True, message=_("Error: %s") % str(e))
+        else:
+            return JsonResponse(message=_("Disk has been removed."))
+
+    return render(request, 'storage/disk_remove.html', {
+        'vname': vname,
+        'label': label,
+        'disk': disk,
+    })
 
 def volume_export(request, vid):
 
@@ -657,9 +660,13 @@ def volume_export(request, vid):
 
 def zpool_scrub(request, vid):
     volume = models.Volume.objects.get(pk=vid)
+    pool = notifier().zpool_parse(volume.vol_name)
     if request.method == "POST":
         try:
-            notifier().zfs_scrub(str(volume.vol_name))
+            if request.POST.get("scrub") == 'IN_PROGRESS':
+                notifier().zfs_scrub(str(volume.vol_name), stop=True)
+            else:
+                notifier().zfs_scrub(str(volume.vol_name))
         except MiddlewareError, e:
             return JsonResponse(error=True, message=_("Error: %s") % str(e))
         else:
@@ -667,17 +674,57 @@ def zpool_scrub(request, vid):
 
     return render(request, 'storage/scrub_confirm.html', {
         'volume': volume,
+        'scrub': pool.scrub,
     })
 
-def zpool_status(request, name):
-    return render(request, 'storage/zpool_status.html', {
-        'name': name,
+def volume_status(request, vid):
+    volume = models.Volume.objects.get(id=vid)
+    return render(request, 'storage/volume_status.html', {
+        'name': volume.vol_name,
+        'volume': volume,
     })
 
-def zpool_status_json(request, name):
-    pool = notifier().zpool_parse(name)
+def volume_status_json(request, vid):
+    volume = models.Volume.objects.get(id=vid)
+    if volume.vol_fstype == 'ZFS':
+        pool = notifier().zpool_parse(volume.vol_name)
+        items = pool.treedump()
+    else:
+        items = notifier().geom_disks_dump(volume)
+        children = [{'_reference': item['id']} for item in items]
+        items.append({
+            'name': volume.vol_name,
+            'id': len(items)+1,
+            'status': '',
+            'type': 'root',
+            'children': children,
+        })
     return HttpResponse(simplejson.dumps({
         'identifier': 'id',
         'label': 'name',
-        'items': pool.treedump(),
-    }, indent=2))
+        'items': items,
+    }, indent=2), content_type='application/json')
+
+def zpool_disk_replace(request, vname, label):
+
+    disk = notifier().label_to_disk(label)
+    volume = models.Volume.objects.get(vol_name=vname)
+    if request.method == "POST":
+        form = forms.ZFSDiskReplacementForm(request.POST, disk=disk)
+        if form.is_valid():
+            try:
+                if form.done(volume, disk, label):
+                    return JsonResponse(message=_("Disk replacement has been initiated."))
+                else:
+                    return JsonResponse(error=True, message=_("An error occurred."))
+            except MiddlewareError, e:
+                return JsonResponse(error=True, message=_("Error: %s") % str(e))
+
+    else:
+        form = forms.ZFSDiskReplacementForm(disk=disk)
+    return render(request, 'storage/zpool_disk_replace.html', {
+        'form': form,
+        'vname': vname,
+        'label': label,
+        'disk': disk,
+    })

@@ -25,6 +25,12 @@
 #
 # $FreeBSD$
 #####################################################################
+from cStringIO import StringIO
+import os
+import re
+import sys
+import cProfile
+
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, UNUSABLE_PASSWORD
@@ -33,6 +39,9 @@ from django.utils.cache import patch_vary_headers
 from django.utils import translation
 
 from system.models import Settings
+
+COMMENT_SYNTAX = ((re.compile(r'^application/(.*\+)?xml|text/html$', re.I), '<!--', '-->'),
+                  (re.compile(r'^application/j(avascript|son)$',     re.I), '/*',   '*/' ))
 
 def public(f):
     f.__is_public = True
@@ -76,4 +85,69 @@ class LocaleMiddleware(object):
         if 'Content-Language' not in response:
             response['Content-Language'] = translation.get_language()
         translation.deactivate()
+        return response
+
+
+class ProfileMiddleware(object):
+    """
+    Based on
+    http://www.no-ack.org/2010/12/yet-another-profiling-middleware-for.html
+
+    Changed to cProfile, instead of hotshot
+    """
+    def process_view(self, request, callback, args, kwargs):
+        self.profiler = cProfile.Profile()
+        return self.profiler.runcall(callback, request, *args, **kwargs)
+
+    def process_response(self, request, response):
+
+        if not hasattr(self, "profiler"):
+            return response
+        self.profiler.create_stats()
+        out = StringIO()
+        old_stdout, sys.stdout = sys.stdout, out
+        self.profiler.print_stats(1)
+        sys.stdout = old_stdout
+
+        # If we have got a 3xx status code, further
+        # action needs to be taken by the user agent
+        # in order to fulfill the request. So don't
+        # attach any stats to the content, because of
+        # the content is supposed to be empty and is
+        # ignored by the user agent.
+        if response.status_code // 100 == 3:
+            return response
+
+        # Detect the appropriate syntax based on the
+        # Content-Type header.
+        for regex, begin_comment, end_comment in COMMENT_SYNTAX:
+            if regex.match(response['Content-Type'].split(';')[0].strip()):
+                break
+        else:
+            # If the given Content-Type is not
+            # supported, don't attach any stats to
+            # the content and return the unchanged
+            # response.
+            return response
+
+        # The response can hold an iterator, that
+        # is executed when the content property
+        # is accessed. So we also have to profile
+        # the call of the content property.
+        content = out.getvalue()
+
+        # Construct an HTML/XML or Javascript comment, with
+        # the formatted stats, written to the StringIO object
+        # and attach it to the content of the response.
+        comment = '\n%s\n\n%s\n\n%s\n' % (begin_comment, out.getvalue(), end_comment)
+        response.content += comment
+
+        # If the Content-Length header is given, add the
+        # number of bytes we have added to it. If the
+        # Content-Length header is ommited or incorrect,
+        # it remains so in order to don't change the
+        # behaviour of the web server or user agent.
+        if response.has_header('Content-Length'):
+            response['Content-Length'] = int(response['Content-Length']) + len(comment)
+
         return response

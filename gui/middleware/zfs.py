@@ -24,36 +24,62 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
+import os
 import re
 
+from django.utils.datastructures import SortedDict
+from django.utils.translation import ugettext_lazy as _
+
+from freenasUI.common import humanize_size
+
 def _is_vdev(name):
+    """
+    Find out if a given name is a reserved word in zfs
+    """
     if name in ('stripe', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3') \
         or re.search(r'^(mirror|raidz|raidz1|raidz2|raidz3)(-\d+)?$', name):
         return True
     return False
 
+def _vdev_type(name):
+    # raidz needs to appear after other raidz types
+    supported_types = ('stripe', 'mirror', 'raidz3', 'raidz2', 'raidz')
+    for _type in supported_types:
+        if name.startswith(_type):
+            return _type
+    return False
+
 class UID(object):
+    """
+    Keep track of a unique id between calls
+    """
     def __init__(self):
         self.id = 1
 
     def next_id(self):
+        """Increase the counter and retruns the next id"""
         self.id += 1
         return str(self.id)
 
 _UID = UID()
 
 class Pool(object):
+    """
+    Class representing a Zpool
+    """
     id = None
     name = None
+    scrub = None
 
     data = None
     cache = None
-    spare = None
+    spares = None
     logs = None
 
-    def __init__(self, pid, name):
+    def __init__(self, pid, name, scrub):
         self.id = pid
         self.name = name
+        self.scrub = scrub
         self._uid = _UID
 
     def __getitem__(self, name):
@@ -65,19 +91,39 @@ class Pool(object):
             raise KeyError
 
     def add_root(self, root):
+        """
+        Add a Root to Zpool
+        Generally speaking a root can be the data vdevs,
+            cache, spares or logs
+        """
         if root.name == self.name:
             self.data = root
         else:
             setattr(self, root.name, root)
+        root.parent = self
+
+    def get_disks(self):
+        """
+        Get disks used within this pool
+        """
+        disks = []
+        for key in ('data', 'cache', 'spares', 'logs'):
+            if getattr(self, key):
+                disks.extend(getattr(self, key).get_disks())
+        return disks
 
     def validate(self):
-        for key in ('data', 'cache', 'spare', 'logs'):
+        """
+        Validate the current tree
+        by calling specialized methods
+        """
+        for key in ('data', 'cache', 'spares', 'logs'):
             if getattr(self, key):
                 getattr(self, key).validate()
 
     def dump(self):
         data = []
-        for key in ('data', 'cache', 'spare', 'logs'):
+        for key in ('data', 'cache', 'spares', 'logs'):
             if getattr(self, key):
                 data.append(
                     getattr(self, key).dump()
@@ -85,8 +131,12 @@ class Pool(object):
         return data
 
     def treedump(self):
+        """
+        Dump the zpool tree in a way to be json serialized
+        to a dojo store
+        """
         data = []
-        for key in ('data', 'cache', 'spare', 'logs'):
+        for key in ('data', 'cache', 'spares', 'logs'):
             if getattr(self, key):
                 vdevs = getattr(self, key).treedump()
                 data.extend(vdevs)
@@ -96,11 +146,14 @@ class Pool(object):
         return repr({
             'data': self.data,
             'cache': self.cache,
-            'spare': self.spare,
+            'spare': self.spares,
             'logs': self.logs,
         })
 
 class Tnode(object):
+    """
+    Abstract class for Root, Vdev and Dev
+    """
     name = None
     children = None
     parent = None
@@ -115,19 +168,25 @@ class Tnode(object):
         self._uid = _UID
 
     def find_by_name(self, name):
-        for c in self.children:
-            if c.name == name:
-                return c
+        """
+        Find children by a given name
+        """
+        for child in self.children:
+            if child.name == name:
+                return child
         return None
 
     def find_unavail(self):
+        """
+        Find nodes of stauts UNAVAIL
+        """
         if len(self.children) == 0:
             if self.status != 'ONLINE':
                 return self
         else:
             unavails = []
-            for c in self.children:
-                find = c.find_unavail()
+            for child in self.children:
+                find = child.find_unavail()
                 if find:
                     if isinstance(find, list):
                         unavails += find
@@ -136,36 +195,57 @@ class Tnode(object):
             return unavails
 
     def append(self, tnode):
+        """
+        Each specialized class should implement this method
+        to append children
+        """
         raise NotImplementedError
 
     @staticmethod
     def pprint(node, level=0):
+        """
+        Print the tree similar to zpool status
+        """
         print '   ' * level + node.name
-        for c in node.children:
-            node.pprint(c, level+1)
-
+        for child in node.children:
+            node.pprint(child, level+1)
 
     def __iter__(self):
-        for c in list(self.children):
-            yield c
+        for child in list(self.children):
+            yield child
 
-    def _vdev_type(self, name):
-        # raidz needs to appear after other raidz types
-        supported_types = ('stripe', 'mirror', 'raidz3', 'raidz2', 'raidz')
-        for type in supported_types:
-            if name.startswith(type):
-                return type
-        return False
 
-    def validate(self, level=0):
+    def validate(self):
+        """
+        Each specialized method must validate its own instance
+        """
         raise NotImplementedError
 
-    def dump(self, level=0):
+    def dump(self):
+        """
+        Each specialized method must dump its own instance
+        """
+        raise NotImplementedError
+
+    def treedump(self):
+        """
+        Each specialized method must dump its own instance
+        """
         raise NotImplementedError
 
 class Root(Tnode):
+    """
+    A Root represents data, cache, spares or logs
+    Each Root may contain several Vdevs
+    """
+
+    def __repr__(self):
+        return "<Root: %s>" % self.name
 
     def append(self, node):
+        """
+        Append a Vdev
+        """
         if not isinstance(node, Vdev):
             raise Exception("Not a vdev: %s" % node)
         self.children.append(node)
@@ -173,8 +253,8 @@ class Root(Tnode):
 
     def dump(self):
         vdevs = []
-        for c in self:
-            vdevs.append(c.dump())
+        for vdev in self:
+            vdevs.append(vdev.dump())
         return {
             'id': self._uid.next_id(),
             'name': self.name,
@@ -183,14 +263,25 @@ class Root(Tnode):
             'status': self.status if self.status else '',
             }
 
+    def get_disks(self):
+        """
+        Get disks used within this root
+        """
+        disks = []
+        for vdev in self:
+            for disk in vdev:
+                if disk.disk:
+                    disks.append(disk.disk)
+        return disks
+
     def treedump(self):
         vdevs = []
         children = []
-        for c in self:
-            vdev, disks = c.treedump()
-            vdevs.append(vdev)
+        for vdev in self:
+            _vdev, disks = vdev.treedump()
+            vdevs.append(_vdev)
             vdevs.extend(disks)
-            children.append({'_reference': vdev['id']})
+            children.append({'_reference': _vdev['id']})
         vdevs.append({
             'id': self._uid.next_id(),
             'name': self.name,
@@ -201,18 +292,24 @@ class Root(Tnode):
             'status': self.status if self.status else '',
             })
         return vdevs
-        return vdevs
 
     def validate(self):
-        for c in self:
-            c.validate()
+        for vdev in self:
+            vdev.validate()
 
 class Vdev(Tnode):
+    """
+    A Vdev represents a ZFS Virtual Device
+    May contain several Devs
+    """
 
     def __repr__(self):
         return "<Section: %s>" % self.name
 
     def append(self, node):
+        """
+        Append a Dev
+        """
         if not isinstance(node, Dev):
             raise Exception("Not a device: %s" % node)
         self.children.append(node)
@@ -220,8 +317,8 @@ class Vdev(Tnode):
 
     def dump(self):
         disks = []
-        for c in self:
-            disks.append(c.dump())
+        for dev in self:
+            disks.append(dev.dump())
         return {
             'id': self._uid.next_id(),
             'name': self.name,
@@ -233,8 +330,8 @@ class Vdev(Tnode):
     def treedump(self):
         disks = []
         children = []
-        for c in self:
-            dsk = c.treedump()
+        for dev in self:
+            dsk = dev.treedump()
             disks.append(dsk)
             children.append({'_reference': dsk['id']})
         return {
@@ -246,8 +343,11 @@ class Vdev(Tnode):
             }, disks
 
     def validate(self):
-        for c in self:
-            c.validate()
+        """
+        Validate the current Vdev and children (Devs)
+        """
+        for dev in self:
+            dev.validate()
         if len(self.children) == 0:
             stripe = self.parent.find_by_name("stripe")
             if not stripe:
@@ -256,17 +356,23 @@ class Vdev(Tnode):
                 self.parent.append(stripe)
             self.parent.children.remove(self)
             stripe.append(self)
-            stripe.validate(level)
+            #stripe.validate(level)
         else:
-            self.type = self._vdev_type(self.name)
+            self.type = _vdev_type(self.name)
 
 class Dev(Tnode):
+    """
+    Dev is the leaf in the tree
+    """
+
+    disk = None
+    devname = None
+    def __init__(self, *args, **kwargs):
+        self.replacing = kwargs.pop('replacing', False)
+        super(Dev, self).__init__(*args, **kwargs)
 
     def __repr__(self):
-        return "<Node: %s>" % self.name
-
-    def append(self, node):
-        raise Exception("What? You can't append child to a Dev")
+        return "<Dev: %s>" % self.name
 
     def dump(self):
         return {
@@ -276,33 +382,185 @@ class Dev(Tnode):
             }
 
     def treedump(self):
+        from django.utils import simplejson
+        #TODO Move django stuff to outside (view)
+        from freenasUI.storage.models import Disk
+        from django.core.urlresolvers import reverse
+        disk = None
+        if self.disk:
+            for d in Disk.objects.all():
+                if d.disk_name == self.disk:
+                    disk = d
+                    break
+        actions = {}
+        if disk:
+            actions['edit_url'] = reverse('freeadmin_model_edit',
+                kwargs={
+                    'app':'storage',
+                    'model': 'Disk',
+                    'oid': disk.id,
+                    })+'?deletable=false'
+        if self.status == 'ONLINE':
+            actions['offline_url'] = reverse('storage_disk_offline',
+                kwargs={
+                    'vname': self.parent.parent.parent.name,
+                    'label': self.name,
+                    })
+        if self.replacing:
+            actions['detach_url'] = reverse('storage_disk_detach',
+                kwargs={
+                    'vname': self.parent.parent.parent.name,
+                    'label': self.name,
+                    })
+        # ZFS v15 does not allow replace of log
+        if self.parent.parent.name != "log" and not self.replacing:
+            actions['replace_url'] = reverse('storage_zpool_disk_replace',
+                kwargs={
+                    'vname': self.parent.parent.parent.name,
+                    'label': self.name,
+                    })
+        if self.parent.parent.name in ('spares', 'cache'):
+            actions['remove_url'] = reverse('storage_zpool_disk_remove',
+                kwargs={
+                    'vname': self.parent.parent.parent.name,
+                    'label': self.name,
+                    })
+
         return {
             'id': self._uid.next_id(),
             'name': self.devname,
             'type': 'disk',
             'status': self.status,
+            'actions': simplejson.dumps(actions),
             }
 
     def validate(self):
-        for c in self:
-            c.validate()
         # The parent of a leaf should be a vdev
         if not _is_vdev(self.parent.name) and \
             self.parent.parent is not None:
-            raise Exception("Oh noes! This damn thing should be a vdev! %s" % self.parent)
-        search = self._doc.xpathEval("//class[name = 'LABEL']//provider[name = '%s']/../name" % self.name)
+            raise Exception("Oh noes! This damn thing should be a vdev! %s" % \
+                                self.parent)
+        search = self._doc.xpathEval("//class[name = 'LABEL']"
+                                     "//provider[name = '%s']/../consumer"
+                                     "/provider/@ref" % self.name)
+
+        provider = None
         if len(search) > 0:
-            self.devname = search[0].content
+            self.devname = search[0].xpathEval("../../../name")[0].content
+            provider = search[0].content
         else:
-            search = self._doc.xpathEval("//class[name = 'DEV']/geom[name = '%s']" % self.name)
+            search = self._doc.xpathEval("//class[name = 'DEV']"
+                                         "/geom[name = '%s']"
+                                         "//provider/@ref" % self.name)
+            self.devname = self.name
             if len(search) > 0:
-                self.devname = self.name
+                provider = search[0].content
             elif self.status == 'ONLINE':
                 raise Exception("It should be a valid device: %s" % self.name)
-            else:
-                self.devname = self.name
+        if provider:
+            search = self._doc.xpathEval("//provider[@id = '%s']"
+                                         "/../name" % provider)
+            self.disk = search[0].content
+
+class ZFSList(SortedDict):
+
+    pools = None
+
+    def __init__(self, *args, **kwargs):
+        self.pools = {}
+        super(ZFSList, self).__init__(*args, **kwargs)
+
+    def append(self, new):
+        if new.pool in self.pools:
+            self.pools.get(new.pool).append(new)
+        else:
+            self.pools[new.pool] = [new]
+        self[new.name] = new
+
+    def __delitem__(self, item):
+        self.pools[item.pool].remove(item)
+        super(ZFSList, self).__delitem__(item)
+
+class ZFSDataset(object):
+
+    name = None
+    path = None
+    pool = None
+    mountpoint = None
+
+    def __init__(self, path, mountpoint):
+        self.path = path
+        self.pool, self.name = path.split('/', 1)
+        self.mountpoint = mountpoint
+
+    def __repr__(self):
+        return "<Dataset: %s>" % self.path
+
+    #TODO copied from MountPoint
+    #Move this to a common place
+    def _get__vfs(self):
+        if not hasattr(self, '__vfs'):
+            try:
+                self.__vfs = os.statvfs(self.mountpoint)
+            except:
+                self.__vfs = None
+        return self.__vfs
+    def _get_total_si(self):
+        try:
+            totalbytes = self._vfs.f_blocks*self._vfs.f_frsize
+            return u"%s" % (humanize_size(totalbytes))
+        except:
+            return _(u"Error getting total space")
+    def _get_avail_si(self):
+        try:
+            availbytes = self._vfs.f_bavail*self._vfs.f_frsize
+            return u"%s" % (humanize_size(availbytes))
+        except:
+            return _(u"Error getting available space")
+    def _get_used_bytes(self):
+        try:
+            return (self._vfs.f_blocks-self._vfs.f_bfree)*self._vfs.f_frsize
+        except:
+            return 0
+    def _get_used_si(self):
+        try:
+            usedbytes = self._get_used_bytes()
+            return u"%s" % (humanize_size(usedbytes))
+        except:
+            return _(u"Error getting used space")
+    def _get_used_pct(self):
+        try:
+            availpct = 100*(self._vfs.f_blocks-self._vfs.f_bavail)/self._vfs.f_blocks
+            return u"%d%%" % (availpct)
+        except:
+            return _(u"Error")
+    def _get_status(self):
+        try:
+            if not hasattr(self, '_status'):
+                self._status = self.mp_volume.status
+            return self._status
+        except Exception:
+            return _(u"Error")
+    _vfs = property(_get__vfs)
+    total_si = property(_get_total_si)
+    avail_si = property(_get_avail_si)
+    used_pct = property(_get_used_pct)
+    used_si = property(_get_used_si)
+    status = property(_get_status)
 
 def parse_status(name, doc, data):
+
+    scrub = re.search(r'scrub: (.+)$', data, re.M)
+    if scrub:
+        scrub = scrub.group(1)
+        if scrub.find('in progress') != -1:
+            scrub = 'IN_PROGRESS'
+        elif scrub.find('completed') != -1:
+            scrub = 'COMPLETED'
+        else:
+            scrub = 'UNKNOWN'
+    else:
+        scrub = None
 
     status = data.split('config:')[1]
     pid = re.search(r'id: (?P<id>\d+)', data)
@@ -310,18 +568,24 @@ def parse_status(name, doc, data):
         pid = pid.group("id")
     else:
         pid = None
-    pool = Pool(pid=pid, name=name)
+    pool = Pool(pid=pid, name=name, scrub=scrub)
     lastident = None
     for line in status.split('\n'):
         if line.startswith('\t'):
 
             try:
-                spaces, word, status = re.search(r'^(?P<spaces>[ ]*)(?P<word>\S+)\s+(?P<status>\S+)', line[1:]).groups()
-            except:
-                spaces, word = re.search(r'^(?P<spaces>[ ]*)(?P<word>\S+)', line[1:]).groups()
+                spaces, word, status = re.search(
+                    r'^(?P<spaces>[ ]*)(?P<word>\S+)\s+(?P<status>\S+)',
+                    line[1:]
+                    ).groups()
+            except Exception:
+                spaces, word = re.search(
+                    r'^(?P<spaces>[ ]*)(?P<word>\S+)',
+                    line[1:]
+                    ).groups()
                 status = None
             ident = len(spaces) / 2
-            if ident < lastident:
+            if ident < 2 and ident < lastident:
                 for x in range(lastident - ident):
                     pnode = pnode.parent
 
@@ -349,9 +613,14 @@ def parse_status(name, doc, data):
                     node2 = Dev(word, doc, status=status)
                     node.append(node2)
                     pnode = node
-            elif ident == 2:
-                node = Dev(word, doc, status=status)
-                pnode.append(node)
+            elif ident >= 2:
+                if word != 'replacing':
+                    if ident == 3:
+                        replacing = True
+                    else:
+                        replacing = False
+                    node = Dev(word, doc, status=status, replacing=replacing)
+                    pnode.append(node)
 
             lastident = ident
     pool.validate()

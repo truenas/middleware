@@ -1,10 +1,22 @@
 {% load i18n %}
 <form data-dojo-type="dijit.form.Form">
 <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-    formSubmit(this, e, '{% url storage_dataset_delete object_id=object.id %}');
+    formSubmit(this, e, '{% url storage_dataset_delete name=name %}');
 </script>
-<table> 
-    <tr><td>{% trans "Are you sure you want to delete?" %}</td></tr>
+<table>
+    <tr>
+        <td>
+        {% blocktrans with name=name %}Are you sure you want to destroy "{{ name }}"?{% endblocktrans %}
+        <br />
+        <br />
+        {% blocktrans count counter=datasets|length %}
+        This will delete all files within the dataset.
+        {% plural %}
+        This will delete all files within the dataset and child datasets.
+        {% endblocktrans %}
+        </td>
+    </tr>
+    {{ form }}
     <tr>
         <td>
             <button id="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'">

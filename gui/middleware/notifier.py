@@ -617,7 +617,7 @@ class notifier:
                 raise MiddlewareError('Your disk size must be higher than %dGB' % swapgb)
             # HACK: force the wipe at the end of the disk to always succeed. This
             # is a lame workaround.
-            self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s || :" % (devname, size*1024 - 4))
+            self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (devname, size*1024 - 4))
 
         commands = []
         commands.append("gpart create -s gpt /dev/%s" % (devname))
@@ -641,9 +641,9 @@ class notifier:
 
     def __gpt_unlabeldisk(self, devname):
         """Unlabel the disk"""
-        swapdev = self.swap_from_device(devname)
+        swapdev = self.part_type_from_device('swap', devname)
         if swapdev != '':
-            self.__system("swapoff /dev/%s" % self.swap_from_device(devname))
+            self.__system("swapoff /dev/%s" % self.part_type_from_device('swap', devname))
         self.__system("gpart destroy -F /dev/%s" % devname)
 
         # Wipe out the partition table by doing an additional iterate of create/destroy
@@ -665,9 +665,8 @@ class notifier:
             want4khack = force4khack
         first = True
         for disk in disks:
-            devname = self.identifier_to_device(disk.disk_identifier)
             rv = self.__gpt_labeldisk(type = "freebsd-zfs",
-                                      devname = devname,
+                                      devname = disk,
                                       test4k = (first and test4k),
                                       swapsize=swapsize)
             first = False
@@ -677,41 +676,32 @@ class notifier:
 
         self.__confxml = None
         for disk in disks:
-            # The identifier {uuid} should now be available
-            devname = self.identifier_to_device(disk.disk_identifier)
-            ident = self.device_to_identifier(devname)
-            if ident != disk.disk_identifier:
-                disk.disk_identifier = ident
-                disk.save()
-            else:
-                raise Exception
 
-            devname = self.identifier_to_partition(ident)
+            devname = self.part_type_from_device('zfs', disk)
             if want4khack:
                 self.__system("gnop create -S 4096 /dev/%s" % devname)
-                devname = ('/dev/%s.nop' % devname)
+                devname = '/dev/%s.nop' % devname
                 gnop_devs.append(devname)
             else:
-                devname = ("/dev/%s" % devname)
+                devname = "/dev/%s" % devname
             vdevs.append(devname)
 
         return vdevs, gnop_devs, want4khack
 
-    def __create_zfs_volume(self, volume, swapsize, force4khack=False, path=None):
+    def __create_zfs_volume(self, volume, swapsize, groups, force4khack=False, path=None):
         """Internal procedure to create a ZFS volume identified by volume id"""
         z_id = volume.id
         z_name = str(volume.vol_name)
         z_vdev = ""
         need4khack = False
         # Grab all disk groups' id matching the volume ID
-        vgroup_list = volume.diskgroup_set.all()
         self.__system("swapoff -a")
         gnop_devs = []
 
         want4khack = force4khack
 
-        for vgrp in vgroup_list:
-            vgrp_type = vgrp.group_type
+        for name, vgrp in groups.items():
+            vgrp_type = vgrp['type']
             if vgrp_type != 'stripe':
                 z_vdev += " " + vgrp_type
             if vgrp_type in ('cache', 'log'):
@@ -719,7 +709,7 @@ class notifier:
             else:
                 vdev_swapsize = swapsize
             # Prepare disks nominated in this group
-            vdevs, gnops, want4khack = self.__prepare_zfs_vdev(vgrp.disk_set.all(), vdev_swapsize, want4khack)
+            vdevs, gnops, want4khack = self.__prepare_zfs_vdev(vgrp['disks'], vdev_swapsize, want4khack)
             z_vdev += " ".join(vdevs)
             gnop_devs += gnops
 
@@ -749,30 +739,28 @@ class notifier:
 
         self.__system("zpool set cachefile=/data/zfs/zpool.cache %s" % (z_name))
 
-    def zfs_volume_attach_group(self, group, force4khack=False):
+    def zfs_volume_attach_group(self, volume, group, force4khack=False):
         """Attach a disk group to a zfs volume"""
         c = self.__open_db()
         c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
         swapsize=c.fetchone()[0]
 
-        volume = group.group_volume
         assert volume.vol_fstype == 'ZFS'
         z_name = volume.vol_name
-
         z_vdev = ""
-        # Grab all disk groups' id matching the volume ID
+
+        # FIXME swapoff -a is overkill
         self.__system("swapoff -a")
-        vgrp_type = group.group_type
+        vgrp_type = group['type']
         if vgrp_type != 'stripe':
             z_vdev += " " + vgrp_type
 
         # Prepare disks nominated in this group
-        vdevs = self.__prepare_zfs_vdev(group.disk_set.all(), swapsize, force4khack)[0]
+        vdevs = self.__prepare_zfs_vdev(group['disks'], swapsize, force4khack)[0]
         z_vdev += " ".join(vdevs)
 
         # Finally, attach new groups to the zpool.
         self.__system("zpool add -f %s %s" % (z_name, z_vdev))
-
         self._reload_disk()
 
     def create_zfs_vol(self, name, size, props=None):
@@ -784,7 +772,7 @@ class notifier:
                 if props[k] != 'inherit':
                     options += "-o %s=%s " % (k, props[k])
         zfsproc = self.__pipeopen("/sbin/zfs create %s -V %s %s" % (options, size, name))
-        zfs_output, zfs_err = zfsproc.communicate()
+        zfs_err = zfsproc.communicate()[1]
         zfs_error = zfsproc.wait()
         return zfs_error, zfs_err
 
@@ -806,17 +794,19 @@ class notifier:
     def list_zfs_datasets(self, path="", recursive=False):
         """Return a dictionary that contains all ZFS dataset list and their mountpoints"""
         if recursive:
-            zfsproc = self.__pipeopen("/sbin/zfs list -Hr %s" % (path))
+            zfsproc = self.__pipeopen("/sbin/zfs list -Hr -t filesystem %s" % (path))
         else:
-            zfsproc = self.__pipeopen("/sbin/zfs list -H %s" % (path))
+            zfsproc = self.__pipeopen("/sbin/zfs list -H -t filesystem %s" % (path))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_output = zfs_output.split('\n')
-        retval = {}
+        zfslist = zfs.ZFSList()
         for line in zfs_output:
-            if line != "":
-               data = line.split('\t')
-               retval[data[0]] = data[4]
-        return retval
+            if line:
+                data = line.split('\t')
+                # root filesystem is not treated as dataset by us
+                if data[0].find('/') != -1:
+                    zfslist.append(zfs.ZFSDataset(path=data[0], mountpoint=data[4]))
+        return zfslist
 
     def list_zfs_vols(self, volname):
         """Return a dictionary that contains all ZFS volumes list"""
@@ -826,10 +816,9 @@ class notifier:
         retval = {}
         for line in zfs_output:
             if line != "":
-               data = line.split('\t')
-               retval[data[0]] = {
-                'volsize': data[1],
-                'path': '/dev/zvol/%s' % data[0],
+                data = line.split('\t')
+                retval[data[0]] = {
+                    'volsize': data[1],
                 }
         return retval
 
@@ -846,24 +835,52 @@ class notifier:
                 retval[line] = line
         return retval
 
-    def destroy_zfs_dataset(self, path):
+    def __snapshot_hold(self, name):
+        """
+        Check if a given snapshot is being hold by the replication system
+        DISCLAIMER: mntlock has to be acquired before this call
+        """
+        zfsproc = self.__pipeopen("zfs get -H freenas:state %s" % (name))
+        output = zfsproc.communicate()[0]
+        if output != '':
+            fsname, attrname, value, source = output.split('\n')[0].split('\t')
+            if value != '-' and value != 'NEW':
+                return True
+        return False
+
+    def destroy_zfs_dataset(self, path, recursive=False):
         retval = None
         if '@' in path:
             MNTLOCK = mntlock()
             try:
                 MNTLOCK.lock_try()
-                zfsproc = self.__pipeopen("zfs get -H freenas:state %s" % (path))
-                output = zfsproc.communicate()[0]
-                if output != '':
-                    fsname, attrname, value, source = output.split('\n')[0].split('\t')
-                    if value != '-' and value != 'NEW':
-                        retval = 'Held by replication system.'
+                if self.__snapshot_hold(path):
+                    retval = 'Held by replication system.'
+                MNTLOCK.unlock()
+                del MNTLOCK
+            except IOError:
+                retval = 'Try again later.'
+        elif recursive:
+            MNTLOCK = mntlock()
+            try:
+                MNTLOCK.lock_try()
+                zfsproc = self.__pipeopen("/sbin/zfs list -Hr -t snapshot -o name %s" % (path))
+                snaps = zfsproc.communicate()[0]
+                for snap in snaps.split('\n'):
+                    if not snap:
+                        continue
+                    if self.__snapshot_hold(snap):
+                        retval = '%s: Held by replication system.' % snap
+                        break
                 MNTLOCK.unlock()
                 del MNTLOCK
             except IOError:
                 retval = 'Try again later.'
         if retval == None:
-            zfsproc = self.__pipeopen("zfs destroy %s" % (path))
+            if recursive:
+                zfsproc = self.__pipeopen("zfs destroy -r %s" % (path))
+            else:
+                zfsproc = self.__pipeopen("zfs destroy %s" % (path))
             retval = zfsproc.communicate()[1]
             if zfsproc.returncode == 0:
                 from storage.models import Task, Replication
@@ -879,97 +896,75 @@ class notifier:
 
     def __destroy_zfs_volume(self, volume):
         """Internal procedure to destroy a ZFS volume identified by volume id"""
-        z_id = volume.id
         z_name = str(volume.vol_name)
         # First, destroy the zpool.
+        disks = volume.get_disks()
         self.__system("zpool destroy -f %s" % (z_name))
 
         # Clear out disks associated with the volume
-        vgroup_list = volume.diskgroup_set.all()
-        for vgrp in vgroup_list:
-            vdev_member_list = vgrp.disk_set.all()
-            for disk in vdev_member_list:
-                devname = self.identifier_to_device(disk.disk_identifier)
-                self.__gpt_unlabeldisk(devname = devname)
+        for disk in disks:
+            self.__gpt_unlabeldisk(devname = disk)
 
-    def __create_ufs_volume(self, volume, swapsize):
+    def __create_ufs_volume(self, volume, swapsize, group):
         geom_vdev = ""
-        u_id = volume.id
         u_name = str(volume.vol_name)
-        ufs_device = ""
         # TODO: We do not support multiple GEOM levels for now.
-        vgrp_row = volume.diskgroup_set.all()[0]
-        ufs_volume_id = vgrp_row.id
-        geom_type = vgrp_row.group_type
-        geom_name = vgrp_row.group_name
+        geom_type = group['type']
 
         if geom_type == '':
             # Grab disk from the group
-            disk = vgrp_row.disk_set.all()[0]
-            devname = self.identifier_to_device(disk.disk_identifier)
-            self.__gpt_labeldisk(type = "freebsd-ufs", devname = devname, swapsize=swapsize)
-            self.__confxml = None
-            ident = self.device_to_identifier(devname)
-            if ident != disk.disk_identifier:
-                disk.disk_identifier = ident
-                disk.save()
-            else:
-                raise
-            devname = self.identifier_to_partition(ident)
+            disk = group['disks'][0]
+            self.__gpt_labeldisk(type = "freebsd-ufs", devname = disk, swapsize=swapsize)
+            devname = self.part_type_from_device('ufs', disk)
             # TODO: Need to investigate why /dev/gpt/foo can't have label /dev/ufs/bar
             # generated automatically
             p1 = self.__pipeopen("newfs -U -L %s /dev/%s" % (u_name, devname))
-            stdout, stderr = p1.communicate()
+            stderr = p1.communicate()[1]
             if p1.returncode != 0:
                 error = ", ".join(stderr.split('\n'))
                 raise MiddlewareError('Volume creation failed: "%s"' % error)
         else:
             # Grab all disks from the group
-            vdev_member_list = vgrp_row.disk_set.all()
-            for disk in vdev_member_list:
-                devname = self.identifier_to_device(disk.disk_identifier)
+            for disk in group['disks']:
                 # FIXME: turn into a function
-                self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname,))
+                self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (disk,))
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (devname, devname))
-                geom_vdev += " /dev/" + devname
+                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (disk, disk))
+                geom_vdev += " /dev/" + disk
+                #TODO gpt label disks
             self.__system("geom %s load" % (geom_type))
-            p1 = self.__pipeopen("geom %s label %s %s" % (geom_type, geom_name, geom_vdev))
+            p1 = self.__pipeopen("geom %s label %s %s" % (geom_type, volume.vol_name, geom_vdev))
             stdout, stderr = p1.communicate()
             if p1.returncode != 0:
                 error = ", ".join(stderr.split('\n'))
                 raise MiddlewareError('Volume creation failed: "%s"' % error)
-            ufs_device = "/dev/%s/%s" % (geom_type, geom_name)
+            ufs_device = "/dev/%s/%s" % (geom_type, volume.vol_name)
             self.__system("newfs -U -L %s %s" % (u_name, ufs_device))
 
     def __destroy_ufs_volume(self, volume):
         """Internal procedure to destroy a UFS volume identified by volume id"""
-        u_id = volume.id
         u_name = str(volume.vol_name)
 
-        vgrp = volume.diskgroup_set.all()[0]
-        ufs_volume_id = vgrp.id
-        geom_type = vgrp.group_type
-        geom_name = vgrp.group_name
-        if geom_type == '':
+        disks = volume.get_disks()
+        provider = self.get_label_provider('ufs', u_name)
+        geom_type = provider.xpathEval("../../name")[0].content.lower()
+
+        if geom_type not in ('mirror', 'stripe', 'raid3'):
             # Grab disk from the group
-            disk = vgrp.disk_set.all()[0]
-            devname = self.identifier_to_device(disk.disk_identifier)
+            disk = disks[0]
             self.__system("umount -f /dev/ufs/" + u_name)
-            self.__gpt_unlabeldisk(devname = devname)
+            self.__gpt_unlabeldisk(devname = disk)
         else:
+            g_name = provider.xpathEval("../name")[0].content
             self.__system("swapoff -a")
             self.__system("umount -f /dev/ufs/" + u_name)
-            self.__system("geom %s stop %s" % (geom_type, geom_name))
+            self.__system("geom %s stop %s" % (geom_type, g_name))
             # Grab all disks from the group
-            vdev_member_list = vgrp.disk_set.all()
-            for disk in vdev_member_list:
-                devname = self.identifier_to_device(disk.disk_identifier)
-                disk_name = " /dev/%s" % devname
-                self.__system("geom %s clear %s" % (geom_type, disk_name))
-                self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname,))
+            for disk in disks:
+                self.__system("geom %s clear %s" % (geom_type, disk))
+                self.__system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (disk,))
                 self.__system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (devname, devname))
+                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (disk, disk))
 
     def _init_volume(self, volume, *args, **kwargs):
         """Initialize a volume designated by volume_id"""
@@ -980,71 +975,63 @@ class notifier:
 
         assert volume.vol_fstype == 'ZFS' or volume.vol_fstype == 'UFS'
         if volume.vol_fstype == 'ZFS':
-            self.__create_zfs_volume(volume, swapsize, kwargs.pop('force4khack', False), kwargs.pop('path', None))
+            self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('force4khack', False), kwargs.pop('path', None))
         elif volume.vol_fstype == 'UFS':
-            self.__create_ufs_volume(volume, swapsize)
+            self.__create_ufs_volume(volume, swapsize, kwargs.pop('groups')['root'])
 
-    def zfs_replace_disk(self, volume, from_disk, to_disk):
-        """Replace disk in volume_id from from_diskid to to_diskid"""
-        """Gather information"""
+    def zfs_replace_disk(self, volume, from_label, to_disk):
+        """Replace disk in zfs called `from_label` to `to_disk`"""
         c = self.__open_db()
         c.execute("SELECT adv_swapondrive FROM system_advanced ORDER BY -id LIMIT 1")
-        swapsize=c.fetchone()[0]
+        swapsize = c.fetchone()[0]
 
         assert volume.vol_fstype == 'ZFS'
 
         # TODO: Test on real hardware to see if ashift would persist across replace
-        fromdev = self.identifier_to_partition(from_disk.disk_identifier)
-        fromdev_swap = self.swap_from_identifier(from_disk.disk_identifier)
-        zdev = self.device_to_zlabel(fromdev, volume.vol_name)
-        if not zdev:
-            pool = self.zpool_parse(volume.vol_name)
-            unavail = pool[volume.vol_name].find_unavail()
-            if len(unavail) >= 1:
-                #FIXME: Can we do that if unavail > 1 for _every_ case?
-                zdev = unavail[0].name
-                from_disk.disk_name = zdev
-                from_disk.save()
-            else:
-                raise MiddlewareError('An unavail disk could not be found in the pool to be replaced.')
+        from_disk = self.label_to_disk(from_label)
+        from_swap = self.part_type_from_device('swap', from_disk)
 
-        todev = self.identifier_to_device(to_disk.disk_identifier)
+        if from_swap != '':
+            self.__system('/sbin/swapoff /dev/%s' % (from_swap))
 
-        if fromdev_swap != '':
-            self.__system('/sbin/swapoff /dev/%s' % (fromdev_swap))
+        # to_disk _might_ have swap on, offline it before gpt label
+        to_swap = self.part_type_from_device('swap', to_disk)
+        if to_swap != '':
+            self.__system('/sbin/swapoff /dev/%s' % (to_swap))
 
-        if from_disk.id == to_disk.id:
-            self.__system('/sbin/zpool offline %s %s' % (volume.vol_name, zdev))
+        # Replace in-place
+        if from_disk == to_disk:
+            self.__system('/sbin/zpool offline %s %s' % (volume.vol_name, from_label))
 
-        self.__gpt_labeldisk(type = "freebsd-zfs", devname = todev,
-                             swapsize=swapsize)
+        self.__gpt_labeldisk(type = "freebsd-zfs", devname = to_disk, swapsize=swapsize)
 
+        # invalidate cache
         self.__confxml = None
+        # There might be a swap after __gpt_labeldisk
+        to_swap = self.part_type_from_device('swap', to_disk)
+        # It has to be a freebsd-zfs partition there
+        to_label = self.part_type_from_device('zfs', to_disk)
+        if to_label == '':
+            raise MiddlewareError('freebsd-zfs partition could not be found')
 
-        # The identifier {uuid} should now be available
-        ident = self.device_to_identifier(todev)
-        if ident != to_disk.disk_identifier:
-            to_disk.disk_identifier = ident
-            to_disk.save()
-        else:
-            raise Exception
-        todev = self.identifier_to_partition(ident)
-        todev_swap = self.swap_from_identifier(ident)
+        if to_swap != '':
+            self.__system('/sbin/swapon /dev/%s' % (to_swap))
 
-
-        if from_disk.id == to_disk.id:
-            self.__system('/sbin/zpool online %s %s' % (volume.vol_name, zdev))
-            ret = self.__system_nolog('/sbin/zpool replace %s %s' % (volume.vol_name, zdev))
+        if from_disk == to_disk:
+            self.__system('/sbin/zpool online %s %s' % (volume.vol_name, to_label))
+            ret = self.__system_nolog('/sbin/zpool replace %s %s' % (volume.vol_name, to_label))
             if ret == 256:
                 ret = self.__system_nolog('/sbin/zpool scrub %s' % (volume.vol_name))
         else:
-            p1 = self.__pipeopen('/sbin/zpool replace %s %s %s' % (volume.vol_name, zdev, todev))
+            p1 = self.__pipeopen('/sbin/zpool replace %s %s %s' % (volume.vol_name, from_label, to_label))
             stdout, stderr = p1.communicate()
             ret = p1.returncode
             if ret != 0:
                 if fromdev_swap != '':
                     self.__system('/sbin/swapon /dev/%s' % (fromdev_swap))
                 error = ", ".join(stderr.split('\n'))
+                if to_swap != '':
+                    self.__system('/sbin/swapoff /dev/%s' % (to_swap))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
 
         if todev_swap:
@@ -1052,56 +1039,74 @@ class notifier:
 
         return ret
 
-    def zfs_detach_disk(self, volume, disk):
+    def zfs_offline_disk(self, volume, label):
+
+        assert volume.vol_fstype == 'ZFS'
+
+        # TODO: Test on real hardware to see if ashift would persist across replace
+        disk = self.label_to_disk(label)
+        swap = self.part_type_from_device('swap', disk)
+
+        if swap != '':
+            self.__system('/sbin/swapoff /dev/%s' % (swap))
+
+        # Replace in-place
+        p1 = self.__pipeopen('/sbin/zpool offline %s %s' % (volume.vol_name, label))
+        stderr = p1.communicate()[1]
+        if p1.returncode != 0:
+            error = ", ".join(stderr.split('\n'))
+            raise MiddlewareError('Disk replacement failed: "%s"' % error)
+
+    def zfs_detach_disk(self, volume, label):
         """Detach a disk from zpool
            (more technically speaking, a replaced disk.  The replacement actually
            creates a mirror for the device to be replaced)"""
 
         assert volume.vol_fstype == 'ZFS'
 
-        # TODO: Handle with 4khack aftermath
-        devname = disk.identifier_to_partition()
-        zlabel = self.device_to_zlabel(devname, volume.vol_name)
-        if not zlabel:
-            zlabel = disk.disk_name
+        from_disk = self.label_to_disk(label)
+        from_swap = self.part_type_from_device('swap', from_disk)
 
         # Remove the swap partition for another time to be sure.
         # TODO: swap partition should be trashed instead.
-        devname_swap = self.swap_from_device(devname)
-        if devname_swap != '':
-            self.__system('/sbin/swapoff /dev/%s' % (devname_swap))
+        if from_swap != '':
+            self.__system('/sbin/swapoff /dev/%s' % (from_swap,))
 
-        ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume.vol_name, zlabel))
+        ret = self.__system_nolog('/sbin/zpool detach %s %s' % (volume.vol_name, label))
         # TODO: This operation will cause damage to disk data which should be limited
-        self.__gpt_unlabeldisk(devname)
+        self.__gpt_unlabeldisk(from_disk)
         return ret
 
-    def zfs_add_spare(self, volume_id, disk_id):
-        """Add a disk to a zpool as spare"""
-        c = self.__open_db()
-        c.execute("SELECT vol_fstype, vol_name FROM storage_volume WHERE id = ?",
-                 (volume_id,))
-        volume = c.fetchone()
-        assert volume[0] == 'ZFS' or volume[0] == 'UFS'
+    def zfs_remove_disk(self, volume, label):
+        """
+        Remove a disk from zpool
+        Cache disks, inactive hot-spares (and log devices in zfs 28) can be removed
+        """
 
-        # TODO: Handle with 4khack aftermath
-        volume = volume[1]
-        c.execute("SELECT disk_name FROM storage_disk WHERE id = ?", (disk_id,))
-        devname = 'gpt/' + c.fetchone()[0]
+        assert volume.vol_fstype == 'ZFS'
 
-        ret = self.__system_nolog('/sbin/zpool add -f %s spare %s' % (volume, devname))
-        return ret
+        from_disk = self.label_to_disk(label)
+        from_swap = self.part_type_from_device('swap', from_disk)
+
+        if from_swap != '':
+            self.__system('/sbin/swapoff /dev/%s' % (from_swap,))
+
+        p1 = self.__pipeopen('/sbin/zpool remove %s %s' % (volume.vol_name, label))
+        stderr = p1.communicate()[1]
+        if p1.returncode != 0:
+            error = ", ".join(stderr.split('\n'))
+            raise MiddlewareError('Disk could not be removed: "%s"' % error)
+        # TODO: This operation will cause damage to disk data which should be limited
+
+        self.__gpt_unlabeldisk(from_disk)
 
     def detach_volume_swaps(self, volume):
         """Detach all swaps associated with volume"""
-        vgroup_list = volume.diskgroup_set.all()
-        for vgrp in vgroup_list:
-            vdev_member_list = vgrp.disk_set.all()
-            for disk in vdev_member_list:
-                devname = self.identifier_to_device(disk.disk_identifier)
-                swapdev = self.swap_from_device(devname)
-                if swapdev != '':
-                    self.__system("swapoff /dev/%s" % self.swap_from_device(devname))
+        disks = volume.get_disks()
+        for disk in disks:
+            swapdev = self.part_type_from_device('swap', disk)
+            if swapdev != '':
+                self.__system("swapoff /dev/%s" % swapdev)
 
     def _destroy_volume(self, volume):
         """Destroy a volume designated by volume_id"""
@@ -1114,8 +1119,6 @@ class notifier:
         self._reload_disk()
 
     def _reload_disk(self):
-        self.__system("/usr/sbin/service ix-smartd quietstart")
-        self.__system("/usr/sbin/service smartd restart")
         self.__system("/usr/sbin/service ix-fstab quietstart")
         self.__system("/usr/sbin/service swap1 quietstart")
         self.__system("/usr/sbin/service mountlate quietstart")
@@ -1219,7 +1222,6 @@ class notifier:
         return gid
 
     def save_pubkey(self, homedir, pubkey, username, groupname):
-        dirty = False
         homedir = str(homedir)
         pubkey = str(pubkey).strip()
         if pubkey:
@@ -1353,34 +1355,21 @@ class notifier:
         self.__system("/bin/rm -fr /var/tmp/firmware/servicepack.txz")
         self.__system("/bin/rm -fr /var/tmp/firmware/etc")
 
-    def get_volume_status(self, name, fs, group_type):
+    def get_volume_status(self, name, fs):
         status = 'UNKNOWN'
         if fs == 'ZFS':
             status = self.__pipeopen('zpool list -H -o health %s' % str(name), log=False).communicate()[0].strip('\n')
         elif fs == 'UFS':
-            gtype = None
-            for gtypes in group_type:
-                if 'mirror' == gtypes[0]:
-                    gtype = 'MIRROR'
-                    break
-                elif 'stripe' == gtypes[0]:
-                    gtype = 'STRIPE'
-                    break
-                elif 'raid3' == gtypes[0]:
-                    gtype = 'RAID3'
-                    break
+
+            provider = self.get_label_provider('ufs', name)
+            gtype = provider.xpathEval("../../name")[0].content
 
             if gtype in ('MIRROR', 'STRIPE', 'RAID3'):
 
-                doc = self.__geom_confxml()
-                search = doc.xpathEval("//class[name = '%s']/geom[name = '%s']/config/State" % (gtype, name))
+                search = provider.xpathEval("../config/State")
                 if len(search) > 0:
                     status = search[0].content
 
-                else:
-                    search = doc.xpathEval("//class[name = '%s']/geom[name = '%s%s']/config/State" % (gtype, name, gtype.lower()))
-                    if len(search) > 0:
-                        status = search[0].content
             else:
                 p1 = self.__pipeopen('mount|grep "/dev/ufs/%s"' % name)
                 p1.communicate()
@@ -1397,8 +1386,8 @@ class notifier:
         algorithm2map = {
             'sha256' : '/sbin/sha256 -q',
         }
-        hasher=self.__pipeopen('%s %s' % (algorithm2map[algorithm], path))
-        sum=hasher.communicate()[0].split('\n')[0]
+        hasher = self.__pipeopen('%s %s' % (algorithm2map[algorithm], path))
+        sum = hasher.communicate()[0].split('\n')[0]
         return sum
 
     def get_disks(self):
@@ -1447,20 +1436,20 @@ class notifier:
     def precheck_partition(self, dev, fstype):
 
         if fstype == 'UFS':
-            p1 = Popen(["/sbin/fsck_ufs", "-p", dev], stdin=PIPE, stdout=PIPE)
-            p1.wait()
+            p1 = self.__pipeopen("/sbin/fsck_ufs -p %s" % dev)
+            p1.communicate()
             if p1.returncode == 0:
                 return True
         elif fstype == 'NTFS':
             return True
         elif fstype == 'MSDOSFS':
-            p1 = Popen(["/sbin/fsck_msdosfs", "-p", dev], stdin=PIPE, stdout=PIPE)
-            p1.wait()
+            p1 = self.__pipeopen("/sbin/fsck_msdosfs -p %s" % dev)
+            p1.communicate()
             if p1.returncode == 0:
                 return True
         elif fstype == 'EXT2FS':
-            p1 = Popen(["/sbin/fsck_ext2fs", "-p", dev], stdin=PIPE, stdout=PIPE)
-            p1.wait()
+            p1 = self.__pipeopen("/sbin/fsck_ext2fs -p %s" % dev)
+            p1.communicate()
             if p1.returncode == 0:
                 return True
 
@@ -1520,6 +1509,12 @@ class notifier:
                     provider = consumer.prop("ref")
                     device = doc.xpathEval("//class[name = 'DISK']//provider[@id = '%s']/name" % provider)
                     disks.append( {'name': device[0].content} )
+
+                # Next thing is find out whether this is a raw block device or has GPT
+                #TODO: MBR?
+                search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s/%s']/provider//config[type = 'freebsd-ufs']" % (geom,label))
+                if len(search) > 0:
+                    label = search[0].xpathEval("../name")[0].content.split('/', 1)[1]
                 volumes.append({
                     'label': label,
                     'type': 'geom',
@@ -1544,7 +1539,7 @@ class notifier:
                     'group_type': 'none',
                     'cache': roots['cache'].dump() if roots['cache'] else None,
                     'log': roots['logs'].dump() if roots['logs'] else None,
-                    'spare': roots['spare'].dump() if roots['spare'] else None,
+                    'spare': roots['spares'].dump() if roots['spares'] else None,
                     'disks': roots['data'].dump(),
                     })
 
@@ -1571,20 +1566,35 @@ class notifier:
             raise MiddlewareError('Unable to export %s: %s' % (name, stderr))
         return True
 
-    def zfs_scrub(self, name):
-        imp = self.__pipeopen('zpool scrub %s' % str(name))
+    def volume_export(self, vol):
+        if vol.vol_fstype == 'ZFS':
+            self.zfs_export(vol.vol_name)
+        else:
+            p1 = self.__pipeopen("umount /mnt/%s" % vol.vol_name)
+            if p1.wait() != 0:
+                return False
+        return True
+
+    def zfs_scrub(self, name, stop=False):
+        if stop:
+            imp = self.__pipeopen('zpool scrub -s %s' % str(name))
+        else:
+            imp = self.__pipeopen('zpool scrub %s' % str(name))
         stdout, stderr = imp.communicate()
         if imp.returncode != 0:
             raise MiddlewareError('Unable to scrub %s: %s' % (name, stderr))
         return True
 
-    def zfs_snapshot_list(self):
+    def zfs_snapshot_list(self, path=None):
         fsinfo = dict()
 
         zfsproc = self.__pipeopen("/sbin/zfs list -t volume -o name -H")
         zvols = filter(lambda y: y != '', zfsproc.communicate()[0].split('\n'))
 
-        zfsproc = self.__pipeopen("/sbin/zfs list -t snapshot -H -S creation")
+        if path:
+            zfsproc = self.__pipeopen("/sbin/zfs list -r -t snapshot -H -S creation %s" % path)
+        else:
+            zfsproc = self.__pipeopen("/sbin/zfs list -t snapshot -H -S creation")
         lines = zfsproc.communicate()[0].split('\n')
         for line in lines:
             if line != '':
@@ -1661,7 +1671,7 @@ class notifier:
         zfsname = str(name)
 
         zfsproc = self.__pipeopen("/sbin/zfs get -H -o property,value,source all %s" % (zfsname))
-        zfs_output, zfs_err = zfsproc.communicate()
+        zfs_output = zfsproc.communicate()[0]
         zfs_output = zfs_output.split('\n')
         retval = {}
         for line in zfs_output:
@@ -1745,70 +1755,44 @@ class notifier:
             retval = 'Try again later.'
         return retval
 
-    def geom_disk_state(self, geom, group_type, devname):
-        if group_type:
-            p1 = self.__pipeopen("geom %s list %s" % (str(group_type), str(geom)))
-            output = p1.communicate()[0]
-            reg = re.search(r'^\d\. Name: %s.*?State: (?P<state>\w+)' % devname, output, re.S|re.I|re.M)
-            if reg:
-                return reg.group("state")
-            else:
-                return "FAILED"
-
-    def geom_disk_replace(self, volume, from_disk, to_disk):
+    def geom_disk_replace(self, volume, to_disk):
         """Replace disk in volume_id from from_diskid to to_diskid"""
         """Gather information"""
 
         assert volume.vol_fstype == 'UFS'
 
-        todev = to_disk.identifier_to_device()
+        provider = self.get_label_provider('ufs', volume.vol_name)
+        class_name = provider.xpathEval("../../name")[0].content
+        geom_name = provider.xpathEval("../name")[0].content
 
-        dg = from_disk.disk_group
-        group_name = dg.group_name
-        group_type = dg.group_type
-
-        if group_type == "mirror":
-            rv = self.__system_nolog("geom mirror forget %s" % (str(group_name),))
+        if class_name == "MIRROR":
+            rv = self.__system_nolog("geom mirror forget %s" % (geom_name,))
             if rv != 0:
                 return rv
-            rv = self.__system_nolog("geom mirror insert %s /dev/%s" % (str(group_name), str(todev),))
-            return rv
+            p1 = self.__pipeopen("geom mirror insert %s /dev/%s" % (str(geom_name), str(to_disk),))
+            stdout, stderr = p1.communicate()
+            if p1.returncode != 0:
+                error = ", ".join(stderr.split('\n'))
+                raise MiddlewareError('Replacement failed: "%s"' % error)
+            return 0
 
-        elif group_type == "raid3":
-            p1 = self.__pipeopen("geom raid3 list %s" % str(group_name))
-            output = p1.communicate()[0]
-            components = range(int(re.search(r'Components: (?P<num>\d+)', output).group("num")))
-            filled = [int(i) for i in re.findall(r'Number: (?P<number>\d+)', output)]
-            lacking = [x for x in components if x not in filled][0]
-            rv = self.__system_nolog("geom raid3 insert -n %d %s %s" % \
-                                        (lacking, str(group_name), str(todev),))
-            return rv
+        elif class_name == "RAID3":
+            numbers = provider.xpathEval("../consumer/config/Number")
+            ncomponents =int( provider.xpathEval("../config/Components")[0].content)
+            numbers = [int(node.content) for node in numbers]
+            lacking = [x for x in xrange(ncomponents) if x not in numbers][0]
+            p1 = self.__pipeopen("geom raid3 insert -n %d %s %s" % \
+                                        (lacking, str(geom_name), str(to_disk),))
+            stdout, stderr = p1.communicate()
+            if p1.returncode != 0:
+                error = ", ".join(stderr.split('\n'))
+                raise MiddlewareError('Replacement failed: "%s"' % error)
+            return 0
 
         return 1
 
     def vlan_delete(self, vint):
         self.__system("ifconfig %s destroy" % vint)
-
-    def zfs_sync_datasets(self, volume):
-        c, conn = self.__open_db(True)
-        vol_name = str(volume.vol_name)
-        c.execute("SELECT mp_path FROM storage_mountpoint WHERE mp_volume_id = ?", (volume.id,))
-        mp = volume.mountpoint_set.all()[0]
-        mp_path = str(mp.mp_path)
-
-        c.execute("DELETE FROM storage_mountpoint WHERE mp_ischild = 1 AND mp_volume_id = %s" % str(volume.id))
-
-        # Reset mountpoints on the whole volume
-        self.zfs_inherit_option(vol_name, 'mountpoint', True)
-
-        p1 = self.__pipeopen("zfs list -t filesystem -o name -H -r %s" % str(vol_name))
-        ret = p1.communicate()[0].split('\n')[1:-1]
-        for dataset in ret:
-            name = "/".join(dataset.split('/')[1:])
-            mp = os.path.join(mp_path, name)
-            c.execute("INSERT INTO storage_mountpoint (mp_volume_id, mp_path, mp_options, mp_ischild) VALUES (?, ?, ?, ?)", (volume.id, mp, "noauto", "1"), )
-        conn.commit()
-        c.close()
 
     def __init__(self):
         self.__confxml = None
@@ -1828,9 +1812,35 @@ class notifier:
             return search.group("serial")
         return None
 
+    def label_to_disk(self, name):
+        """
+        Given a label go through the geom tree to find out the disk name
+        label = a geom label or a disk partition
+        """
+        doc = self.__geom_confxml()
+
+        # try to find the provider from GEOM_LABEL
+        search = doc.xpathEval("//class[name = 'LABEL']//provider[name = '%s']/../consumer/provider/@ref" % name)
+        if len(search) > 0:
+            provider = search[0].content
+        else:
+            # the label does not exist, try to find it in GEOM DEV
+            search = doc.xpathEval("//class[name = 'DEV']/geom[name = '%s']//provider/@ref" % name)
+            if len(search) > 0:
+                provider = search[0].content
+            else:
+                return None
+        search = doc.xpathEval("//provider[@id = '%s']/../name" % provider)
+        disk = search[0].content
+        return disk
+
     def device_to_identifier(self, name):
         name = str(name)
         doc = self.__geom_confxml()
+
+        serial = self.serial_from_device(name)
+        if serial:
+            return "{serial}%s" % serial
 
         search = doc.xpathEval("//class[name = 'PART']/..//*[name = '%s']//config[type = 'freebsd-zfs']/rawuuid" % name)
         if len(search) > 0:
@@ -1843,13 +1853,17 @@ class notifier:
         if len(search) > 0:
             return "{label}%s" % search[0].content
 
-        serial = self.serial_from_device(name)
-        if serial:
-            return "{serial}%s" % serial
+        search = doc.xpathEval("//class[name = 'DEV']/geom[name = '%s']" % name)
+        if len(search) > 0:
+            return "{devicename}%s" % name
 
-        return "{devicename}%s" % name
+        return None
 
     def identifier_to_device(self, ident):
+
+        if not ident:
+            return None
+
         doc = self.__geom_confxml()
 
         search = re.search(r'\{(?P<type>.+?)\}(?P<value>.+)', ident)
@@ -1875,7 +1889,7 @@ class notifier:
 
         elif tp == 'serial':
             p1 = Popen(["sysctl", "-n", "kern.disks"], stdout=PIPE)
-            output = p1.communicate()[0]
+            output = p1.communicate()[0][:-1]
             for devname in output.split(' '):
                 serial = self.serial_from_device(devname)
                 if serial == value:
@@ -1883,67 +1897,55 @@ class notifier:
             return None
 
         elif tp == 'devicename':
-            return value
-        else:
-            raise NotImplementedError
-
-    def identifier_to_partition(self, ident):
-        doc = self.__geom_confxml()
-
-        search = re.search(r'\{(?P<type>.+?)\}(?P<value>.+)', ident)
-        if not search:
+            search = doc.xpathEval("//class[name = 'DEV']/geom[name = '%s']" % value)
+            if len(search) > 0:
+                return value
             return None
-
-        tp = search.group("type")
-        value = search.group("value")
-
-        if tp == 'uuid':
-            search = doc.xpathEval("//class[name = 'PART']/geom//config[rawuuid = '%s']/../name" % value)
-            if len(search) > 0:
-                return search[0].content
-
-        elif tp == 'label':
-            search = doc.xpathEval("//class[name = 'LABEL']/geom//provider[name = '%s']/../name" % value)
-            if len(search) > 0:
-                return search[0].content
-
-        elif tp == 'devicename':
-            return value
         else:
             raise NotImplementedError
 
-    def swap_from_device(self, device):
+    def part_type_from_device(self, name, device):
+        """
+        Given a partition a type and a disk name (adaX)
+        get the first partition that matches the type
+        """
         doc = self.__geom_confxml()
-        search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-swap']/../name" % device)
+        #TODO get from MBR as well?
+        search = doc.xpathEval("//class[name = 'PART']/geom[name = '%s']//config[type = 'freebsd-%s']/../name" % (device, name))
         if len(search) > 0:
             return search[0].content
         else:
             return ''
 
     def swap_from_identifier(self, ident):
-        return self.swap_from_device(self.identifier_to_device(ident))
+        return self.part_type_from_device('swap', self.identifier_to_device(ident))
 
-    def device_to_zlabel(self, devname, pool):
-        status = self.__pipeopen("zpool status %s" % (str(pool),)).communicate()[0]
-
+    def get_label_provider(self, geom, name):
         doc = self.__geom_confxml()
-        search = doc.xpathEval("//class[name = 'LABEL']/geom[name = '%s']//provider/name" % devname)
+        providerid = doc.xpathEval("//class[name = 'LABEL']//provider[name = '%s']/../consumer/provider/@ref" % "%s/%s" % (geom, name))[0].content
+        provider = doc.xpathEval("//provider[@id = '%s']" % providerid)[0]
 
-        for entry in search:
-            if re.search(r'\b%s\b' % entry.content, status):
-                return entry.content
-        if re.search(r'\b%s\b' % devname, status):
-            return devname
-        return None
+        class_name = provider.xpathEval("../../name")[0].content
 
-    def filesystem_path(self, path):
-        from storage.models import MountPoint
-        mps = MountPoint.objects.filter(mp_volume__vol_fstype__in=('ZFS','UFS'))
-        path = os.path.abspath(path)
-        for mp in mps:
-            if path.startswith(os.path.abspath(mp.mp_path)):
-                return mp.mp_volume.vol_fstype
-        return 'UFS'
+        # We've got a GPT over the softraid, not raw UFS filesystem
+        # So we need to recurse one more time
+        if class_name == 'PART':
+            providerid = provider.xpathEval("../consumer/provider/@ref")[0].content
+            provider = doc.xpathEval("//provider[@id = '%s']" % providerid)[0]
+
+        return provider
+
+    def get_disks_from_provider(self, provider):
+        disks = []
+        geomname = provider.xpathEval("../../name")[0].content
+        if geomname == 'DISK':
+            disks.append(provider.xpathEval("../name")[0].content)
+        elif geomname in ('STRIPE', 'MIRROR', 'RAID3'):
+            doc = self.__geom_confxml()
+            for prov in provider.xpathEval("../consumer/provider/@ref"):
+                prov2 = doc.xpathEval("//provider[@id = '%s']" % prov.content)[0]
+                disks.append(prov2.xpathEval("../name")[0].content)
+        return disks
 
     def zpool_parse(self, name):
         doc = self.__geom_confxml()
@@ -1951,6 +1953,89 @@ class notifier:
         res = p1.communicate()[0]
         parse = zfs.parse_status(name, doc, res)
         return parse
+
+    def sync_disks(self):
+        from storage.models import Disk
+        regexp_nocamcdrom = re.compile('^cd[0-9]')
+        disks = filter(lambda y: not regexp_nocamcdrom.match(y), self.__pipeopen("/sbin/sysctl -n kern.disks").communicate()[0].strip('\n').split(' '))
+
+        in_disks = {}
+        for disk in Disk.objects.all():
+
+            dskname = disk.identifier_to_device()
+            if not dskname:
+                dskname = disk.disk_name
+                disk.disk_identifier = self.device_to_identifier(dskname)
+                if not disk.disk_identifier:
+                    disk.disk_enabled = False
+                else:
+                    disk.disk_enabled = True
+            else:
+                disk.disk_enabled = True
+                if dskname != disk.disk_name:
+                    disk.disk_name = dskname
+
+            if (dskname in in_disks or dskname not in disks) and \
+                    not (disk.disk_enabled or disk._original_state.get("disk_enabled")):
+                #Duplicated disk entries in database
+                disk.delete()
+            else:
+                disk.save()
+            in_disks[dskname] = disk
+
+        for disk in disks:
+            if disk not in in_disks:
+                d = Disk()
+                d.disk_name = disk
+                d.disk_identifier = self.device_to_identifier(disk)
+                d.save()
+
+    def geom_disks_dump(self, volume):
+        #FIXME: This should not be here
+        from django.core.urlresolvers import reverse
+        from django.utils import simplejson
+        provider = self.get_label_provider('ufs', volume.vol_name)
+        class_name = provider.xpathEval("../../name")[0].content
+
+        items = []
+        uid = 1
+        if class_name in ('MIRROR', 'RAID3', 'STRIPE'):
+            ncomponents = int(provider.xpathEval("../config/Components")[0].content)
+            consumers = provider.xpathEval("../consumer")
+            doc = self.__geom_confxml()
+            for consumer in consumers:
+                provid = consumer.xpathEval("./provider/@ref")[0].content
+                status = consumer.xpathEval("./config/State")[0].content
+                name = doc.xpathEval("//provider[@id = '%s']/../name" % provid)[0].content
+                items.append({
+                    'type': 'disk',
+                    'name': name,
+                    'id': uid,
+                    'status': status,
+                })
+                uid += 1
+            for i in xrange(len(consumers), ncomponents):
+                #FIXME: This should not be here
+                actions = {
+                    'replace_url': reverse('storage_geom_disk_replace', kwargs={'vname': volume.vol_name})
+                }
+                items.append({
+                    'type': 'disk',
+                    'name': 'UNAVAIL',
+                    'id': uid,
+                    'status': 'UNAVAIL',
+                    'actions': simplejson.dumps(actions),
+                })
+                uid += 1
+        elif class_name == 'PART':
+            name = provider.xpathEval("../name")[0].content
+            items.append({
+                'type': 'disk',
+                'name': name,
+                'id': uid,
+                'status': 'ONLINE',
+            })
+        return items
 
 def usage():
     usage_str = """usage: %s action command
@@ -1965,7 +2050,7 @@ def usage():
 
 # When running as standard-alone script
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         usage()
     else:
         n = notifier()

@@ -1,10 +1,10 @@
 {% load i18n %}
 <form data-dojo-type="dijit.form.Form">
 <script type="dojo/event" data-dojo-event="onSubmit" data-dojo-args="e">
-    formSubmit(this, e, '{% url storage_disk_detach vid=vid object_id=object_id %}');
+    formSubmit(this, e, '{% url storage_disk_detach vname=vname label=label %}');
 </script>
 <table> 
-    <tr><td>{{ disk.disk_name }}: {% trans "Are you sure you want to detach?" %}</td></tr>
+    <tr><td><strong>{% if not disk %}{{ label }}{% else %}{{ disk }}{% endif %}</strong>: {% trans "Are you sure you want to detach?" %}</td></tr>
     <tr>
         <td>
             <button id="submitform" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'">
