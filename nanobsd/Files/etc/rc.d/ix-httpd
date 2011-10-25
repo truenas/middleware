@@ -17,7 +17,7 @@ generate_httpd_conf()
 	local tmp
 
 	# XXX: IPv6
-	if [ "${bind_addr}" != "0.0.0.0" ] && [ -n "${bind_addr}" -z "$(/sbin/ifconfig -a|grep ${bind_addr})" ]; then
+	if [ "${bind_addr}" != "0.0.0.0" -a -n "${bind_addr}" -a -z "$(/sbin/ifconfig -a|grep ${bind_addr})" ]; then
 		bind_addr="0.0.0.0"
 	fi
 
