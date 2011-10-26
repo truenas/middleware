@@ -2,13 +2,20 @@
 #
 # Copy this somewhere else and edit to your heart's content.
 #
+# Space added in places to avoid potential merge conflicts.
+#
+
+# Values you shouldn't change.
 
 arch=$(uname -p)
-branch=trunk
 clean=true
-cvsup_host=cvsup1.freebsd.org
 # Define beforehand to work around shell bugs.
 tmpdir=/dev/null
+
+# Values you can and should change.
+
+branch=trunk
+cvsup_host=cvsup1.freebsd.org
 
 setup() {
 	export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
@@ -24,15 +31,19 @@ cleanup() {
 }
 
 pull() {
+
 	svn co https://freenas.svn.sourceforge.net/svnroot/freenas/$branch $1
+
 }
 
 post_images() {
 	cd obj.$arch
 	for img in *.iso *.xz; do
 		sudo sh -c "sha256 $img > $img.sha256.txt"
+
 		scp $img* \
 		    yaberauneya,freenas@frs.sourceforge.net:/home/frs/project/f/fr/freenas/FreeNAS-8-nightly
+
 	done
 }
 
@@ -66,7 +77,8 @@ done
 
 setup || exit $?
 # Build
-if sudo env FREEBSD_CVSUP_HOST=$cvsup_host NANO_ARCH=$arch sh build/do_build.sh; then
+sudo env FREEBSD_CVSUP_HOST=$cvsup_host NANO_ARCH=$arch sh build/do_build.sh
+if [ $? -eq 0 ]; then
 	post_images
 else
 	clean=false
