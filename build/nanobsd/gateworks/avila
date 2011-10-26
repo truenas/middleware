@@ -1,0 +1,10 @@
+# $FreeBSD: release/8.2.0/tools/tools/nanobsd/gateworks/avila 189115 2009-02-27 19:21:35Z sam $
+
+NANO_NAME="avila-HEAD"
+NANO_SRC=`pwd | sed 's/.tools.tools.nanobsd.*//'`
+NANO_KERNEL="G2348"
+
+NANO_IMAGES=2
+FlashDevice Sandisk 512
+
+. common
