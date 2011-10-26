@@ -1,0 +1,46 @@
+"""
+Notation:
+
+<c> - Container : 'volume', 'dataset', or 'zvol'.
+
+Commands always available..
+
+Batch/Interactive:
+
+- UFS:
+storage create volume <c> ufs [stripe|mirror] [geoms..]
+
+- ZFS:
+storage create volume <c> zfs [stripe|mirror|raidz|raidz2|raidz3] [geoms..]
+storage create dataset <c> [dataset|zpool]
+storage create zvol <c> [dataset|zpool] reservation
+
+Commands available after we've determined that the storage container specified
+is valid..
+
+Batch/Interactive:
+
+storage <c> delete
+storage <c> owner [recursive] [user|:group|user:group]
+storage <c> group [recursive] [group] :
+	- alias for 'storage <c> owner [recursive] :group'
+
+storage <container> permissions <mode> :
+	- interactive menu will print out user friendly menu
+
+- ZFS:
+
+storage <volume> set acl [unix|windows]
+
+ZFS specific subcommands that need to be designed and implemented:
+
+- dataset
+- zvol
+
+"""
+
+class UFS_CLI(storage.cli.Container):
+    """A subclass for managing UFS containers."""
+
+class ZFS_CLI(storage.cli.Container):
+    """A subclass for managing ZFS containers."""
