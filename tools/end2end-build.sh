@@ -41,7 +41,7 @@ post_images() {
 	for img in *.iso *.xz; do
 		sudo sh -c "sha256 $img > $img.sha256.txt"
 
-		scp $img* \
+		scp -o BatchMode=yes $img* \
 		    yaberauneya,freenas@frs.sourceforge.net:/home/frs/project/f/fr/freenas/FreeNAS-8-nightly
 
 	done
