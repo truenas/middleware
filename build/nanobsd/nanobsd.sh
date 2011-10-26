@@ -58,7 +58,7 @@ NANO_PACKAGE_LIST="*"
 #NANO_DISKIMGDIR=""
 
 # Parallel Make
-NANO_PMAKE="make -j 3"
+NANO_PMAKE="make"
 
 # The default name for any image we create.
 NANO_IMGNAME="_.disk.full"
@@ -607,6 +607,8 @@ last_orders () (
 	# after the build completed, for instance to copy the finished
 	# image to a more convenient place:
 	# cp ${NANO_DISKIMGDIR}/_.disk.image /home/ftp/pub/nanobsd.disk
+	# The following line is needed to keep bash from barfing on the file.
+	:
 )
 
 #######################################################################
@@ -777,101 +779,102 @@ late_customize_cmd () {
 # Progress Print
 #	Print $2 at level $1.
 pprint() {
-    if [ "$1" -le $PPLEVEL ]; then
-	runtime=$(( `date +%s` - $NANO_STARTTIME ))
-	printf "%s %.${1}s %s\n" "`date -u -r $runtime +%H:%M:%S`" "#####" "$2" 1>&3
-    fi
+	if [ "$1" -le $PPLEVEL ]; then
+		runtime=$(( $(date +'%s') - ${NANO_STARTTIME} ))
+		printf "%s %.${1}s %s\n" "$(date -u -r $runtime +%H:%M:%S)" "#####" "$2" >&3
+	fi
 }
 
 usage () {
-	(
-	echo "Usage: $0 [-bfiknqvw] [-c config_file]"
-	echo "	-b	suppress builds (both kernel and world)"
-	echo "	-f	suppress code slice extraction"
-	echo "	-i	suppress disk image build"
-	echo "	-k	suppress buildkernel"
-	echo "	-n	add -DNO_CLEAN to buildworld, buildkernel, etc"
-	echo "	-q	make output more quiet"
-	echo "	-v	make output more verbose"
-	echo "	-w	suppress buildworld"
-	echo "	-c	specify config file"
-	) 1>&2
+	cat >&2 <<EOF
+usage: ${0##*/} [-biknqvw] [-c config_file]
+	-b		suppress builds (both kernel and world)
+	-c config_file	config file to use after defining all
+			internal variables.
+	-i		suppress disk image build
+	-j make-jobs	number of make jobs to invoke
+	-k		suppress buildkernel
+	-n		add -DNO_CLEAN to buildworld, buildkernel, etc
+	-q		make output more quiet
+	-v		make output more verbose
+	-w		suppress buildworld
+EOF
 	exit 2
 }
 
 #######################################################################
 # Parse arguments
 
+set +e
+
 do_clean=true
 do_kernel=true
 do_world=true
 do_image=true
 do_copyout_partition=true
+make_jobs=3
+nano_confs=
 
-set +e
-args=`getopt bc:fhiknqvw $*`
-if [ $? -ne 0 ] ; then
-	usage
-	exit 2
-fi
-set -e
-
-set -- $args
-for i
+while getopts 'bc:hij:knqvw' optch
 do
-	case "$i" 
-	in
-	-b)
+	case "$optch" in
+	b)
 		do_world=false
 		do_kernel=false
-		shift
 		;;
-	-k)
-		do_kernel=false
-		shift
+	c)
+		if [ -f "$OPTARG" ]; then
+			nano_confs="$nano_confs $OPTARG"
+		fi
 		;;
-	-c)
-		. "$2"
-		shift
-		shift
-		;;
-	-f)
+	f)
 		do_copyout_partition=false
-		shift
 		;;
-	-h)
+	h)
 		usage
 		;;
-	-i)
+	i)
 		do_image=false
-		shift
 		;;
-	-n)
+	j)
+		echo $OPTARG | egrep -q '^[[:digit:]]+$' && [ $OPTARG -gt 0 ]
+		if [ $? -ne 0 ]; then
+			echo "${0##*/}: -j value must be a positive integer."
+			usage
+		fi
+		make_jobs=$OPTARG
+		;;
+	k)
+		do_kernel=false
+		;;
+	n)
 		do_clean=false
-		shift
 		;;
-	-q)
-		PPLEVEL=$(($PPLEVEL - 1))
-		shift
+	q)
+		: $(( PPLEVEL -= 1))
 		;;
-	-v)
-		PPLEVEL=$(($PPLEVEL + 1))
-		shift
+	v)
+		: $(( PPLEVEL += 1))
 		;;
-	-w)
+	w)
 		do_world=false
-		shift
 		;;
-	--)
-		shift
-		break
+	*)
+		usage
+		;;
 	esac
 done
 
+shift $(( $OPTIND - 1 ))
+
 if [ $# -gt 0 ] ; then
-	echo "$0: Extraneous arguments supplied"
+	echo "${0##*/}: extraneous arguments supplied"
 	usage
 fi
+
+NANO_PMAKE="$NANO_PMAKE -j $make_jobs"
+
+set -e
 
 #######################################################################
 # Setup and Export Internal variables
@@ -883,6 +886,11 @@ test -n "${NANO_DISKIMGDIR}" || NANO_DISKIMGDIR=${NANO_OBJ}
 NANO_WORLDDIR=${NANO_OBJ}/_.w
 NANO_MAKE_CONF_BUILD=${MAKEOBJDIRPREFIX}/make.conf.build
 NANO_MAKE_CONF_INSTALL=${NANO_OBJ}/make.conf.install
+
+for nano_conf in $nano_confs; do
+	echo "Sourcing $nano_conf"
+	. "$nano_conf"
+done
 
 if [ -d ${NANO_TOOLS} ] ; then
 	true
