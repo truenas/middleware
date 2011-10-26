@@ -556,17 +556,6 @@
         dojo.connect(b.domNode, 'onclick', function(){ editObject(gettext('Edit Disk'), json.edit_url, [gridhtml,]); });
         content.domNode.appendChild(b.domNode);
 
-        if(json.replace_url) {
-            var b2 = new dijit.form.Button({label: gettext("Replace")});
-            dojo.connect(b2.domNode, 'onclick', function(){ editObject(gettext('Disk Replacement'), json.replace_url, [gridhtml,]); });
-            content.domNode.appendChild(b2.domNode);
-        }
-        if(json.detach_url) {
-            var b3 = new dijit.form.Button({label: gettext("Detach")});
-            dojo.connect(b3.domNode, 'onclick', function(){ editObject(gettext('Disk Detach'), json.detach_url, [gridhtml,]); });
-            content.domNode.appendChild(b3.domNode);
-        }
-
         return content;
     }
 
