@@ -201,7 +201,8 @@ main()
 		eval "${func}" 2>&1|tee -a "${FREENAS_DEBUG_FILE}"
 	done
 
-	send_email "${email}" "${cmd}"
+	send_email "${email}" \
+	    "The following output was generated with: '${cmd}'"
 	return 0
 }
 
