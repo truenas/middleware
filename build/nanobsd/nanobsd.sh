@@ -159,6 +159,10 @@ NANO_CFGDIR=""
 # Directory to populate /data from
 NANO_DATADIR=""
 
+# src.conf to use when building the image. Defaults to /dev/null for the sake
+# of determinism.
+SRCCONF=${SRCCONF:=/dev/null}
+
 #######################################################################
 #
 # The functions which do the real work.
@@ -182,7 +186,6 @@ make_conf_build ( ) (
 
 	echo "${CONF_WORLD}" > ${NANO_MAKE_CONF_BUILD}
 	echo "${CONF_BUILD}" >> ${NANO_MAKE_CONF_BUILD}
-	echo "SRCCONF=/dev/null" >> ${NANO_MAKE_CONF_BUILD}
 )
 
 build_world ( ) (
@@ -191,6 +194,7 @@ build_world ( ) (
 
 	cd ${NANO_SRC}
 	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} \
+		SRCCONF=${SRCCONF} \
 		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} buildworld \
 		> ${MAKEOBJDIRPREFIX}/_.bw 2>&1
 )
@@ -215,9 +219,10 @@ build_kernel ( ) (
 	# Note: We intentionally build all modules, not only the ones in
 	# NANO_MODULES so the built world can be reused by multiple images.
 	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} buildkernel \
-		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
 		${kernconfdir:+"KERNCONFDIR="}${kernconfdir} \
 		KERNCONF=${kernconf}
+		SRCCONF=${SRCCONF} \
+		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
 	) > ${MAKEOBJDIRPREFIX}/_.bk 2>&1
 )
 
@@ -245,7 +250,6 @@ make_conf_install ( ) (
 
 	echo "${CONF_WORLD}" > ${NANO_MAKE_CONF_INSTALL}
 	echo "${CONF_INSTALL}" >> ${NANO_MAKE_CONF_INSTALL}
-	echo "SRCCONF=/dev/null" >> ${NANO_MAKE_CONF_INSTALL}
 )
 
 install_world ( ) (
@@ -256,6 +260,7 @@ install_world ( ) (
 	env TARGET_ARCH=${NANO_ARCH} \
 	${NANO_PMAKE} __MAKE_CONF=${NANO_MAKE_CONF_INSTALL} installworld \
 		DESTDIR=${NANO_WORLDDIR} \
+		SRCCONF=${SRCCONF} \
 		> ${NANO_OBJ}/_.iw 2>&1
 	chflags -R noschg ${NANO_WORLDDIR}
 )
@@ -267,8 +272,10 @@ install_etc ( ) (
 
 	cd ${NANO_SRC}
 	env TARGET_ARCH=${NANO_ARCH} \
-	${NANO_PMAKE} __MAKE_CONF=${NANO_MAKE_CONF_INSTALL} distribution \
+	${NANO_PMAKE} distribution \
 		DESTDIR=${NANO_WORLDDIR} \
+		SRCCONF=${SRCCONF} \
+		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} \
 		> ${NANO_OBJ}/_.etc 2>&1
 	# make.conf doesn't get created by default, but some ports need it
 	# so they can spam it.
@@ -290,10 +297,11 @@ install_kernel ( ) (
 	cd ${NANO_SRC}
 	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} installkernel \
 		DESTDIR=${NANO_WORLDDIR} \
-		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} \
 		${kernconfdir:+"KERNCONFDIR="}${kernconfdir} \
 		KERNCONF=${kernconf} \
 		MODULES_OVERRIDE="${NANO_MODULES}"
+		SRCCONF=${SRCCONF} \
+		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} \
 	) > ${NANO_OBJ}/_.ik 2>&1
 )
 
