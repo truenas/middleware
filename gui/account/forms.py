@@ -61,6 +61,15 @@ class bsdUserGroupMixin:
         if invalids:
             raise forms.ValidationError(_("Your name contains invalid characters (%s).") % ", ".join(invalids))
 
+    def pw_checkfullname(self, name):
+        INVALID_CHARS = ':'
+        invalids = []
+        for char in name:
+            if char in INVALID_CHARS and char not in invalids:
+                invalids.append(char)
+        if invalids:
+            raise forms.ValidationError(_("Your full name contains invalid characters (%s).") % ", ".join(invalids))
+
 class FilteredSelectJSON(forms.widgets.ComboBox):
 #class FilteredSelectJSON(forms.widgets.FilteringSelect):
 
@@ -280,6 +289,11 @@ class bsdUserCreationForm(ModelForm, bsdUserGroupMixin):
     def clean_bsdusr_sshpubkey(self):
         return self.cleaned_data.get('bsdusr_sshpubkey', '')
 
+    def clean_bsdusr_full_name(self):
+        name = self.cleaned_data["bsdusr_full_name"]
+        self.pw_checkfullname(name)
+        return name
+
     def clean(self):
         cleaned_data = self.cleaned_data
 
@@ -451,6 +465,11 @@ class bsdUserChangeForm(ModelForm, bsdUserGroupMixin):
             return self.cleaned_data['bsdusr_home']
         raise forms.ValidationError(_('Home directory has to start with /mnt '
                                       'or be /nonexistent'))
+
+    def clean_bsdusr_full_name(self):
+        name = self.cleaned_data["bsdusr_full_name"]
+        self.pw_checkfullname(name)
+        return name
 
     def clean_bsdusr_password_disabled(self):
         return self.cleaned_data.get("bsdusr_password_disabled", False)
