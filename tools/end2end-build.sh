@@ -77,7 +77,7 @@ done
 
 setup || exit $?
 # Build
-sudo env FREEBSD_CVSUP_HOST=$cvsup_host NANO_ARCH=$arch sh build/do_build.sh
+sudo sh -c "env FREEBSD_CVSUP_HOST=$cvsup_host NANO_ARCH=$arch sh build/do_build.sh && sh build/create_iso.sh"
 if [ $? -eq 0 ]; then
 	post_images
 else
