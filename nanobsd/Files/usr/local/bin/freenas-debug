@@ -29,6 +29,7 @@
 
 . /usr/local/etc/freenas-debug/include.sh
 
+readonly email_opt="e"
 
 usage()
 {
@@ -40,9 +41,11 @@ usage()
 		return 0
 	fi
 
-	cat<<-__EOF__
-	Usage: $0 <options>
+	cat <<__EOF__
+	usage: $0 <options>
 	Where options is:
+    -$email_opt		A list of comma delimited list of email
+		addresses to email the debug log to.
 __EOF__
 
 	local i=1
@@ -163,46 +166,55 @@ get_module_options()
 
 main()
 {
+	local has_debug_command=false
 	local email=""
-	local email_opt="e"
 	local cmd="$0 $*"
+	local func
+	local var
 
 	load_modules
 	get_module_options
 	opts="${VAL}"
 
-	if [ "$#" = "0" ]
-	then
-		usage "${opts}"
-		return 2
-	fi
-
 	aopts="${opts}${email_opt}:"
 	while getopts "${aopts}" opt
 	do
 		case "${opt}" in
-			:|\?) usage "${opts}" && exit 2 ;;
+		$email_opt)
+			email="${OPTARG}"
+			;;
+		*)
+			has_debug_command=true
+			;;
+		:|\?)
+			usage "${opts}"
+			return 2
+			;;
 		esac
 	done
+
+	if ! $has_debug_command; then
+		usage "${opts}"
+		return 2
+	fi
 
 	OPTIND=1
 	: > ${FREENAS_DEBUG_FILE}
 	freenas_header 2>&1|tee -a "${FREENAS_DEBUG_FILE}"
 	while getopts "${aopts}" opt
 	do
-		local var=\$$(echo "module_func_${opt}")
-		local func=$(eval "echo ${var}")
+		if [ "${opt}" != "${email_opt}" ]; then
+			var=\$$(echo "module_func_${opt}")
+			func=$(eval "echo ${var}")
 
-		if [ "${opt}" = "${email_opt}" ]
-		then
-			email="${OPTARG}"
+			eval "${func}" 2>&1|tee -a "${FREENAS_DEBUG_FILE}"
 		fi
-
-		eval "${func}" 2>&1|tee -a "${FREENAS_DEBUG_FILE}"
 	done
 
-	send_email "${email}" \
-	    "The following output was generated with: '${cmd}'"
+	if [ -n "$email" ]; then
+		send_email "${email}" \
+		    "The following output was generated with: '${cmd}'"
+	fi
 	return 0
 }
 
