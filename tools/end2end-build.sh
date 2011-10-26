@@ -3,6 +3,7 @@
 # Copy this somewhere else and edit to your heart's content.
 #
 
+arch=$(uname -p)
 branch=trunk
 clean=true
 cvsup_host=cvsup1.freebsd.org
@@ -15,6 +16,7 @@ setup() {
 
 	tmpdir=$(mktemp -d build.XXXXXXXX)
 	pull $tmpdir
+	cd $tmpdir
 }
 
 cleanup() {
@@ -25,9 +27,13 @@ pull() {
 	svn co https://freenas.svn.sourceforge.net/svnroot/freenas/$branch $1
 }
 
-# scp image <user>,freenas@frs.sourceforge.net:/home/frs/project/f/fr/freenas/<dir>
 post_images() {
-	# No-op
+	cd obj.$arch
+	for img in *.iso *.xz; do
+		sudo sh -c "sha256 $img > $img.sha256.txt"
+		scp $img* \
+		    yaberauneya,freenas@frs.sourceforge.net:/home/frs/project/f/fr/freenas/FreeNAS-8-nightly
+	done
 }
 
 while getopts 'A:b:c:t:' optch; do
@@ -40,6 +46,7 @@ while getopts 'A:b:c:t:' optch; do
 			echo "${0##*/}: ERROR: unknown architecture: $OPTARG"
 			;;
 		esac
+		arch=$OPTARG
 		;;
 	b)
 		branch=$OPTARG
@@ -59,7 +66,7 @@ done
 
 setup || exit $?
 # Build
-if sudo env FREEBSD_CVSUP_HOST=$cvsup_host sh build/do_build.sh; then
+if sudo env FREEBSD_CVSUP_HOST=$cvsup_host NANO_ARCH=$arch sh build/do_build.sh; then
 	post_images
 else
 	clean=false
