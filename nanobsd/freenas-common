@@ -230,7 +230,7 @@ if [ "${MULTIMEDIA}" = 1 ]; then
 	add_port audio/vorbis-tools
 	add_port multimedia/libkate
 	#add_port databases/sqlite3
-	#-add_port audio/firefly
+	#-add_port audio/firefly || net/minidlna
 	#+add_port net/minidlna
 	#add_port converters/libiconv
 	add_port multimedia/mp4v2
