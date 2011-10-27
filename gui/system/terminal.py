@@ -1072,10 +1072,8 @@ class Multiplex:
             if self.session[sid]['w'] != w or self.session[sid]['h'] != h:
                 try:
                     fcntl.ioctl(fd,
-                        struct.unpack('i',
-                            struct.pack('I', termios.TIOCSWINSZ)
-                        )[0],
-                        struct.pack("HHHH", h, w, 0, 0))
+                            termios.TIOCSWINSZ,
+                            struct.pack("HHHH", h, w, 0, 0))
                 except (IOError, OSError):
                     pass
                 self.session[sid]['term'].set_size(w, h)
@@ -1127,11 +1125,9 @@ class Multiplex:
             # Set terminal size
             try:
                 fcntl.ioctl(fd,
-                    struct.unpack('i',
-                        struct.pack('I', termios.TIOCSWINSZ)
-                    )[0],
-                    struct.pack("HHHH", h, w, 0, 0))
-            except (IOError, OSError):
+                        termios.TIOCSWINSZ,
+                        struct.pack("HHHH", h, w, 0, 0))
+            except (IOError, OSError), e:
                 pass
             return True
     def proc_waitfordeath(self, sid):
