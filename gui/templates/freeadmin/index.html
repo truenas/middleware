@@ -46,6 +46,7 @@ dojo.addOnLoad(function(){
                 break;
             case 'disc':
                 //startMsgAnim('Disconnected',0,true);
+                _webshell = undefined;
                 break;
             case 'curs':
                 cy=value;
@@ -62,10 +63,10 @@ dojo.addOnLoad(function(){
         }
         document.onkeypress=_webshell.keypress;
         document.onkeydown=_webshell.keydown;
-        //dojo.connect(dijit.byId("shell_dialog"), "hide", this, function(ev) { dojo.stopEvent(ev); return true; });
     </script>
     <script type="dojo/method" data-dojo-event="onHide" data-dojo-args="e">
-        _webshell.islocked=true;
+        if(_webshell)
+            _webshell.islocked=true;
         document.onkeypress=null;
         document.onkeydown=null;
     </script>
