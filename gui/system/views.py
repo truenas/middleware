@@ -32,6 +32,7 @@ import shutil
 import subprocess
 import time
 
+
 from django.contrib.auth import login, get_backends
 from django.contrib.auth.models import User
 from django.core.servers.basehttp import FileWrapper
@@ -47,6 +48,7 @@ from freenasUI.freeadmin.views import JsonResponse
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.system import forms, models
+from freenasUI.system.terminal import Terminal, Multiplex
 
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
@@ -379,3 +381,28 @@ def debug_save(request):
     response['Content-Disposition'] = \
         'attachment; filename=debug-%s-%s.txt' % (hostname.encode('utf-8'), time.strftime('%Y%m%d%H%M%S'))
     return response
+
+
+multiplex = Multiplex("bash", "xterm-color")
+def terminal(request):
+    try:
+        sid = int(request.GET.get("s"))
+        k = request.GET.get("k")
+        w = int(request.GET.get("w"))
+        h = int(request.GET.get("h"))
+        if multiplex.proc_keepalive(sid, w, h):
+            if k:
+                multiplex.proc_write(sid, k)
+            time.sleep(0.002)
+            content_data = '<?xml version="1.0" encoding="UTF-8"?>' + multiplex.proc_dump(sid)
+            response = HttpResponse(content_data, content_type='text/xml')
+            return response
+        else:
+            reponse = HttpResponse('Disconnected')
+            reponse.status_code = 400
+            return response
+    except (KeyError, ValueError, IndexError):
+        reponse = HttpResponse('Invalid parameters')
+        reponse.status_code = 400
+        return response
+

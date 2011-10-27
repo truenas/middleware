@@ -1098,6 +1098,8 @@
                 window.location='/account/logout/';
             } else if(item.action && item.action == 'displayprocs') {
                     dijit.byId("top_dialog").show();
+            } else if(item.action && item.action == 'shell') {
+                    dijit.byId("shell_dialog").show();
             } else if(item.action && item.action == 'reboot') {
                     dijit.byId("rebootDialog").show();
             } else if(item.action && item.action == 'shutdown') {

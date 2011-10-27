@@ -350,6 +350,13 @@ class NavTree(object):
         nav.icon = 'TopIcon'
         tree_roots.register(nav)
 
+        nav = TreeRoot('Shell')
+        nav.name = _('Shell')
+        nav.nav_group = 'main'
+        nav.icon = 'TopIcon'
+        nav.action = 'shell'
+        tree_roots.register(nav)
+
         nav = TreeRoot('Reboot')
         nav.name = _('Reboot')
         nav.nav_group = 'main'

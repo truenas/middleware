@@ -7,6 +7,7 @@
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/freeadmin.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/top.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/alert.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lib/js/shell.js"></script>
 <script type="text/javascript">
 var STORAGE_URL = '{% url storage_wizard %}';
 dojo.addOnLoad(function(){
@@ -34,6 +35,40 @@ dojo.addOnLoad(function(){
         ttop.start();
     </script>
     <pre class="ix" id="top_output">{% trans "Loading..." %}</pre>
+</div>
+<div id="shell_dialog" data-dojo-type="dijit.Dialog" data-dojo-props="title: '{% trans "Shell"|force_escape|force_escape %}'" style="min-height:400px;background-color: black;">
+    <script type="dojo/method" data-dojo-event="onShow">
+        function handler(msg,value) {
+            switch(msg) {
+            case 'conn':
+                //startMsgAnim('Tap for keyboard',800,false);
+                break;
+            case 'disc':
+                //startMsgAnim('Disconnected',0,true);
+                break;
+            case 'curs':
+                cy=value;
+                //scroll(cy);
+                break;
+            }
+        }
+        try {
+            _webshell.islocked=false;
+            _webshell.update();
+        } catch(e) {
+            _webshell=new webshell("shell_output",80,24,handler);
+        }
+        document.onkeypress=_webshell.keypress;
+        document.onkeydown=_webshell.keydown;
+        //dojo.connect(dijit.byId("shell_dialog"), "hide", this, function(ev) { dojo.stopEvent(ev); return true; });
+    </script>
+    <script type="dojo/method" data-dojo-event="onHide" data-dojo-args="e">
+        _webshell.islocked=true;
+        document.onkeypress=null;
+        document.onkeydown=null;
+    </script>
+
+    <pre class="ix" id="shell_output">{% trans "Loading..." %}</pre>
 </div>
 <div id="log_dialog" data-dojo-type="dijit.Dialog" dojo-data-props="title: '/var/log/messages'" style="min-height:400px;background-color:black;">
     <script type="dojo/method" data-dojo-event="onShow">
