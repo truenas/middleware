@@ -7,7 +7,6 @@
 
 # Values you shouldn't change.
 
-arch=$(uname -p)
 clean=true
 # Define beforehand to work around shell bugs.
 tmpdir=/dev/null
@@ -16,6 +15,7 @@ tmpdir=/dev/null
 
 branch=trunk
 cvsup_host=cvsup1.freebsd.org
+default_archs="amd64 i386"
 
 setup() {
 	export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
@@ -57,7 +57,7 @@ while getopts 'A:b:c:t:' optch; do
 			echo "${0##*/}: ERROR: unknown architecture: $OPTARG"
 			;;
 		esac
-		arch=$OPTARG
+		archs="$archs $OPTARG"
 		;;
 	b)
 		branch=$OPTARG
@@ -75,19 +75,26 @@ while getopts 'A:b:c:t:' optch; do
 	esac
 done
 
+: ${archs=$default_archs}
+
 setup || exit $?
 
-# Build
-BUILD="env FREEBSD_CVSUP_HOST=$cvsup_host NANO_ARCH=$arch sh build/do_build.sh"
-# Build twice so the resulting image is smaller than the fat image required for producing ports.
-# XXX: this should really be done in the nanobsd files to only have to do this once, but it
-# requires installing world twice.
-sudo sh -c "$BUILD && $BUILD && sh build/create_iso.sh"
-if [ $? -eq 0 ]; then
-	post_images
-else
-	clean=false
-fi
+for arch in $archs; do
+
+	# Build
+	BUILD="env FREEBSD_CVSUP_HOST=$cvsup_host NANO_ARCH=$arch sh build/do_build.sh"
+	# Build twice so the resulting image is smaller than the fat image
+	# required for producing ports.
+	# XXX: this should really be done in the nanobsd files to only have to
+	# do this once, but it requires installing world twice.
+	sudo sh -c "$BUILD && $BUILD && sh build/create_iso.sh"
+	if [ $? -eq 0 ]; then
+		post_images
+	else
+		clean=false
+	fi
+
+done
 if $clean; then
 	cleanup
 fi
