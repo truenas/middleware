@@ -21,7 +21,7 @@ setup() {
 	export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 	export SHELL=/bin/sh
 
-	tmpdir=$(mktemp -d build.XXXXXXXX)
+	tmpdir=$(mktemp -d e2e-bld.XXXXXXXX)
 	pull $tmpdir
 	cd $tmpdir
 }
@@ -76,8 +76,13 @@ while getopts 'A:b:c:t:' optch; do
 done
 
 setup || exit $?
+
 # Build
-sudo sh -c "env FREEBSD_CVSUP_HOST=$cvsup_host NANO_ARCH=$arch sh build/do_build.sh && sh build/create_iso.sh"
+BUILD="env FREEBSD_CVSUP_HOST=$cvsup_host NANO_ARCH=$arch sh build/do_build.sh"
+# Build twice so the resulting image is smaller than the fat image required for producing ports.
+# XXX: this should really be done in the nanobsd files to only have to do this once, but it
+# requires installing world twice.
+sudo sh -c "$BUILD && $BUILD && sh build/create_iso.sh"
 if [ $? -eq 0 ]; then
 	post_images
 else
