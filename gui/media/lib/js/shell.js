@@ -12,7 +12,7 @@ webshell = (function() {
         var div=dojo.byId(id);
         var me = this;
 
-        function update() {
+        this.update = function() {
 
             if(!me.islocked) {
                 me.islocked=true;
@@ -44,13 +44,13 @@ webshell = (function() {
                                 if(qtime>2000)
                                     qtime=2000;
                             }
-                            qtimer=window.setTimeout(update,qtime);
+                            qtimer=window.setTimeout(me.update,qtime);
                         } else if (req.xhr.status==400)
                             handler('disc',0);
                         else {
                             retry++;
                             if (retry<3)
-                                qtimer=window.setTimeout(update,2000);
+                                qtimer=window.setTimeout(me.update,2000);
                             else
                                 handler('disc',1);
                         }
@@ -64,7 +64,7 @@ webshell = (function() {
             qtime=100;
             if(!me.islocked) {
                 window.clearTimeout(qtimer);
-                qtimer=window.setTimeout(update,1);
+                qtimer=window.setTimeout(me.update,1);
             }
         }
         function private_sendkey(kc) {
@@ -171,7 +171,7 @@ webshell = (function() {
                 }
             }
         }
-        qtimer=window.setTimeout(update,1);
+        qtimer=window.setTimeout(me.update, 1);
     }
 
     return cls;

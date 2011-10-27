@@ -58,7 +58,7 @@ dojo.addOnLoad(function(){
             _webshell.islocked=false;
             _webshell.update();
         } catch(e) {
-            _webshell=new webshell("shell_output",80,24,handler);
+            _webshell=new webshell("shell_output", 80, 24, handler);
         }
         document.onkeypress=_webshell.keypress;
         document.onkeydown=_webshell.keydown;
