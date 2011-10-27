@@ -163,6 +163,9 @@ NANO_DATADIR=""
 # of determinism.
 SRCCONF=${SRCCONF:=/dev/null}
 
+# Where to put the obj files. Defaults to /usr/obj.
+MAKEOBJDIRPREFIX=/usr/obj
+
 #######################################################################
 #
 # The functions which do the real work.
@@ -879,6 +882,12 @@ set -e
 #######################################################################
 # Setup and Export Internal variables
 #
+
+for nano_conf in $nano_confs; do
+	echo "Sourcing $nano_conf"
+	. "$nano_conf"
+done
+
 test -n "${NANO_OBJ}" || NANO_OBJ=/usr/obj/nanobsd.${NANO_NAME}/
 test -n "${MAKEOBJDIRPREFIX}" || MAKEOBJDIRPREFIX=${NANO_OBJ}
 test -n "${NANO_DISKIMGDIR}" || NANO_DISKIMGDIR=${NANO_OBJ}
@@ -886,11 +895,6 @@ test -n "${NANO_DISKIMGDIR}" || NANO_DISKIMGDIR=${NANO_OBJ}
 NANO_WORLDDIR=${NANO_OBJ}/_.w
 NANO_MAKE_CONF_BUILD=${MAKEOBJDIRPREFIX}/make.conf.build
 NANO_MAKE_CONF_INSTALL=${NANO_OBJ}/make.conf.install
-
-for nano_conf in $nano_confs; do
-	echo "Sourcing $nano_conf"
-	. "$nano_conf"
-done
 
 if [ -d ${NANO_TOOLS} ] ; then
 	true
