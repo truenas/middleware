@@ -26,17 +26,19 @@
 # $FreeBSD$
 #####################################################################
 
-import threading
-import commands
-import time
-import os
+from ctypes import cdll, byref, create_string_buffer
+
 import array
-import pty
+import commands
 import fcntl
-import struct
-import termios
+import os
+import pty
 import select
 import signal
+import struct
+import termios
+import threading
+import time
 
 class Terminal:
     def __init__(self, w, h):
@@ -1093,10 +1095,6 @@ class Multiplex:
             self.session[sid]['state'] = 'dead'
             return False
         if pid == 0:
-            if self.cmd:
-                cmd = self.cmd
-            else:
-                raise
 
             try:
                 ls = os.environ['LANG'].split('.')
@@ -1111,8 +1109,13 @@ class Multiplex:
                 os.putenv('PATH', os.environ['PATH'])
                 os.putenv('LANG', ls[0] + '.UTF-8')
                 os.chdir('/root')
-                os.system(cmd)
-            except (IOError, OSError):
+
+                libc = cdll.LoadLibrary('libc.so.7')
+                buff = create_string_buffer(len(self.cmd)+1)
+                buff.value = self.cmd
+                libc.setproctitle(byref(buff))
+                os.system(self.cmd)
+            except (IOError, OSError), e:
                 pass
 #           self.proc_finish(sid)
             os._exit(0)
