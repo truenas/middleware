@@ -312,9 +312,9 @@ run_customize() (
 
 	pprint 2 "run customize scripts"
 	set -- $NANO_CUSTOMIZE
-	i=0
+	i=1
 	num_steps=$#
-	while [ $i -lt $num_steps ]
+	while [ $i -le $num_steps ]
 	do
 		c=$1
 		pprint 2 "[$i/$num_steps] customize \"$c\""
