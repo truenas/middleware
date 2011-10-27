@@ -1112,6 +1112,7 @@ class Multiplex:
                 os.putenv('TERM', self.env_term)
                 os.putenv('PATH', os.environ['PATH'])
                 os.putenv('LANG', ls[0] + '.UTF-8')
+                os.chdir('/root')
                 os.system(cmd)
             except (IOError, OSError):
                 pass
