@@ -999,7 +999,7 @@ class Terminal:
                         ul = ' ul'
                     else:
                         ul = ''
-                    dump += u'<span class="f%x b%x%s">' % (fg, bg, ul)
+                    dump += u'<span class="shell_f%x shell_b%x%s">' % (fg, bg, ul)
                     attr_ = attr
                 # Escape HTML characters
                 if char == 38:

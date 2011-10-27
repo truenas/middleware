@@ -38,6 +38,7 @@ dojo.addOnLoad(function(){
 </div>
 <div id="shell_dialog" data-dojo-type="dijit.Dialog" data-dojo-props="title: '{% trans "Shell"|force_escape|force_escape %}'" style="min-height:400px;background-color: black;">
     <script type="dojo/method" data-dojo-event="onShow">
+
         function handler(msg,value) {
             switch(msg) {
             case 'conn':
@@ -52,6 +53,7 @@ dojo.addOnLoad(function(){
                 break;
             }
         }
+
         try {
             _webshell.islocked=false;
             _webshell.update();
