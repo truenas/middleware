@@ -41,12 +41,17 @@ from account.models import bsdUsers
 
 VERSION_FILE = '/etc/version'
 
+_VERSION = None
+
 def get_sw_version():
     """Return the full version string, e.g. FreeNAS-8.1-r7794-amd64. """
 
-    with open(VERSION_FILE) as fd:
-        version = fd.read().strip()
-    return version
+    global _VERSION
+
+    if _VERSION is None:
+        with open(VERSION_FILE) as fd:
+            _VERSION = fd.read().strip()
+    return _VERSION
 
 def get_sw_login_version():
     """Return a shortened version string, e.g. 8.0.1-RC1, 8.1, etc. """
