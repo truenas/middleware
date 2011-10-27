@@ -262,7 +262,7 @@ add_port () {
     # 2. Add a trap
     cd ${NANO_PORTS}/${port_path}
     # __MAKE_CONF -> ${NANO_MAKE_CONF_BUILD} -- can't plug this in because of a sourcing chicken and egg problem.
-    PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${NANO_PORTS} __MAKE_CONF=${NANO_OBJ}/make.conf.build package-name` 
+    PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${NANO_PORTS} __MAKE_CONF=${NANO_OBJ}/make.conf.build OPTIONSFILE=/nonexistent package-name $*`
     if [ -f ${NANO_OBJ}/ports/packages/All/${PKG_NAME}.tbz ]; then
 	# Pkg file found: Generate add_pkg_NAME function
 	eval "
