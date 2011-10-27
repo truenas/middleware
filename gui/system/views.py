@@ -398,8 +398,8 @@ def terminal(request):
             response = HttpResponse(content_data, content_type='text/xml')
             return response
         else:
-            reponse = HttpResponse('Disconnected')
-            reponse.status_code = 400
+            response = HttpResponse('Disconnected')
+            response.status_code = 400
             return response
     except (KeyError, ValueError, IndexError):
         reponse = HttpResponse('Invalid parameters')
