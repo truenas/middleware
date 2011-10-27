@@ -402,7 +402,7 @@ def terminal(request):
             response.status_code = 400
             return response
     except (KeyError, ValueError, IndexError):
-        reponse = HttpResponse('Invalid parameters')
-        reponse.status_code = 400
+        response = HttpResponse('Invalid parameters')
+        response.status_code = 400
         return response
 
