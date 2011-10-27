@@ -3,10 +3,10 @@
 # Build (either from scratch or using cached files):
 # 	sh build/do_build.sh
 #
-# Force a full rebuild:
-#	sh build/do_build.sh -f
+# Force a full rebuild (ports and source):
+#	sh build/do_build.sh -ff
 #
-# Force an update and rebuild world:
+# Force an update and rebuild FreeBSD (world and kernel):
 #	sh build/do_build.sh -u -f
 #
 # Just pull/update the sources:
@@ -19,10 +19,10 @@ cd "$(dirname "$0")/.."
 . build/functions.sh
 
 BUILD=true
-if [ -d ${NANO_OBJ} ]; then
-	FORCE_FREEBSD_BUILD=false
+if [ -s ${NANO_OBJ}/_.iw -a -s ${NANO_OBJ}/_.ik ]; then
+	FORCE_BUILD=0
 else
-	FORCE_FREEBSD_BUILD=true
+	FORCE_BUILD=2
 fi
 MAKE_JOBS=$(( 2 * $(sysctl -n kern.smp.cpus) + 1 ))
 if [ -f FreeBSD/supfile ]; then
@@ -47,7 +47,7 @@ while getopts 'Bfj:u' optch; do
 		BUILD=false
 		;;
 	f)
-		FORCE_FREEBSD_BUILD=true
+		: $(( FORCE_BUILD += 1 ))
 		;;
 	j)
 		echo $OPTARG | egrep -q '^[[:digit:]]+$' && [ $OPTARG -le 0 ]
@@ -133,11 +133,16 @@ fi
 # OK, now we can build
 cd $NANO_SRC
 args="-c ${NANO_CFG_BASE}/freenas-common"
-if ! "$FORCE_FREEBSD_BUILD"; then
+if [ $FORCE_BUILD -eq 0 ]; then
 	extra_args="-b"
+elif [ $FORCE_BUILD -eq 1 ]; then
+	extra_args="-n"
+else
+	extra_args=""
 fi
-echo $NANO_SRC/tools/tools/nanobsd/nanobsd.sh $args $* $extra_args
-if env MAKE_JOBS=$MAKE_JOBS sh $NANO_SRC/tools/tools/nanobsd/nanobsd.sh $args $* $extra_args; then
+echo $FREENAS_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS
+sh $FREENAS_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS
+if [ $? -eq 0 ]; then
 	xz -f ${NANO_OBJ}/_.disk.image
 	mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_IMGNAME}.xz
 	sha256 ${NANO_OBJ}/${NANO_IMGNAME}.xz

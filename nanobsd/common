@@ -30,11 +30,6 @@
 # an explicit copyright/license statement, but are implicitly BSDL.
 #
 
-# NB: disable -j3
-
-# XXX: see do_build.sh (should be pushed into nanobsd.sh as a -j option).
-NANO_PMAKE="make -j $MAKE_JOBS"
-
 # Where cust_pkg() finds packages to install
 NANO_PACKAGE_DIR=${NANO_SRC}/${NANO_TOOLS}/Pkg
 NANO_DATADIR=${NANO_OBJ}/_.data
@@ -257,9 +252,6 @@ do_add_port ()
 
 # Need to check if this function works with cross-compiling architecture!!!!
 # Recursive complex function: Generate one function for each ports
-#
-# Note: most nano variables aren't set yet, especially NANO_MAKE_CONF_BUILD, so
-# we can't use that here.  Instead, use no MAKE_CONF to avoid host contamination.
 add_port () {
     local port_path=$1
     local port=`echo $1 | sed -e 's/\//_/'`
@@ -269,7 +261,8 @@ add_port () {
     # 1. check ARCH of this package!
     # 2. Add a trap
     cd ${NANO_PORTS}/${port_path}
-    PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${NANO_PORTS} __MAKE_CONF= package-name` 
+    # __MAKE_CONF -> ${NANO_MAKE_CONF_BUILD} -- can't plug this in because of a sourcing chicken and egg problem.
+    PKG_NAME=`make ${PKGNAME_HACK} PORTSDIR=${NANO_PORTS} __MAKE_CONF=${NANO_OBJ}/make.conf.build package-name` 
     if [ -f ${NANO_OBJ}/ports/packages/All/${PKG_NAME}.tbz ]; then
 	# Pkg file found: Generate add_pkg_NAME function
 	eval "
