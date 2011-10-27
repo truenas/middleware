@@ -247,7 +247,7 @@ class Terminal:
         self.cy = 0
         # Tab stops
         self.tab_stops = range(0, self.w, 8)
-        
+
     # UTF-8 functions
     def utf8_decode(self, d):
         o = ''
@@ -287,7 +287,7 @@ class Terminal:
             return 2
         else:
             return 1
-        
+
     # Low-level terminal functions
     def peek(self, y0, x0, y1, x1):
         return self.screen[self.w * y0 + x0:self.w * (y1 - 1) + x1]
@@ -299,7 +299,7 @@ class Terminal:
         self.poke(y0, x0, array.array('i', [char] * n))
     def clear(self, y0, x0, y1, x1):
         self.fill(y0, x0, y1, x1, self.attr | 0x20)
-    
+
     # Scrolling functions
     def scroll_area_up(self, y0, y1, n = 1):
         n = min(y1-y0, n)
@@ -350,7 +350,7 @@ class Terminal:
     def cursor_set(self, y, x):
         self.cursor_set_x(x)
         self.cursor_set_y(y)
-    
+
     # Dumb terminal
     def ctrl_BS(self):
         delta_y, cx = divmod(self.cx - 1, self.w)
@@ -1038,9 +1038,6 @@ class SynchronizedMethod:
 
 class Multiplex:
     def __init__(self, cmd = None, env_term = None):
-        # Set Linux signal handler
-        uname = commands.getoutput('uname')
-        #if uname == 'Linux':
         # Session
         self.session = {}
         self.cmd = cmd
@@ -1101,17 +1098,8 @@ class Multiplex:
             if self.cmd:
                 cmd = self.cmd
             else:
-                sys.stdout.write("Login: ")
-                login = sys.stdin.readline().strip()
-                if re.match('^[0-9A-Za-z-_.]+$', login):
-                    cmd = 'ssh'
-                    cmd += ' -oPreferredAuthentications=keyboard-interactive,password'
-                    cmd += ' -oNoHostAuthenticationForLocalhost=yes'
-                    cmd += ' -oLogLevel=FATAL'
-                    cmd += ' -F/dev/null -l' + login +' localhost'
-                else:
-                    os._exit(0)
-            # Safe way to make it work under BSD and Linux
+                raise
+
             try:
                 ls = os.environ['LANG'].split('.')
             except KeyError:

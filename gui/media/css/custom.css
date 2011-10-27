@@ -29,9 +29,12 @@
 #shutdownDialog_underlay, #editscary_dialog_underlay { background-color:#FD0000; }
 #top_dialog_underlay { background-color:#000; }
 #top_dialog .dijitDialogPaneContent { background-color:#000 !important; }
+#shell_dialog_underlay { background-color:#000; }
+#shell_dialog .dijitDialogPaneContent { background-color:#000 !important; }
+#shell_dialog pre {border:none !important;}
 #log_dialog .dijitDialogPaneContent { width:800px;background-color:#000 !important; }
 .dijitDialogPaneContent { border-top:1px solid #333 !important; }
-#top_dialog pre {border:none !important;} 
+#top_dialog pre {border:none !important;}
 .error {
 background-color:#F7977A;
 border:1px solid #222;
@@ -41,8 +44,8 @@ max-width:500px;word-wrap:break-word;color:#000;height:50px;text-align:center;op
 min-width:900px;
 }
 pre.message {
-font-family: monospace, Courier New, Courier; 
-font-size: 9pt; 
+font-family: monospace, Courier New, Courier;
+font-size: 9pt;
 color:#00FF00;
 padding:0;
 width:70%;
