@@ -14,7 +14,7 @@ tmpdir=/dev/null
 # Values you can and should change.
 
 branch=trunk
-cvsup_host=cvsup1.freebsd.org
+cvsup_host=cvsup.ixsystems.com
 default_archs="amd64 i386"
 
 setup() {
@@ -77,7 +77,9 @@ done
 
 : ${archs=$default_archs}
 
-setup || exit $?
+set -e
+setup
+set +e
 
 for arch in $archs; do
 
@@ -87,8 +89,7 @@ for arch in $archs; do
 	# required for producing ports.
 	# XXX: this should really be done in the nanobsd files to only have to
 	# do this once, but it requires installing world twice.
-	sudo sh -c "$BUILD && $BUILD && sh build/create_iso.sh"
-	if [ $? -eq 0 ]; then
+	if sudo sh -c "$BUILD && $BUILD && sh build/create_iso.sh"; then
 		post_images
 	else
 		clean=false
