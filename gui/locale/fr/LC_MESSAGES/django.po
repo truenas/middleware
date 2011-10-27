@@ -1451,7 +1451,7 @@ msgstr ""
 "Utiliser Active Directory ou l'authentification LDAP remplacera cette option"
 
 #: services/models.py:68
-msgid "NetBIOS name"
+msgid "NetBIOS Name"
 msgstr "Nom NetBIOS"
 
 #: services/models.py:72
@@ -2576,11 +2576,11 @@ msgid "Domain Name, eg example.com"
 msgstr "Nom de domaine, e.g. example.com"
 
 #: services/models.py:1084
-msgid "Host Name (NetBIOS-Name)"
-msgstr "Nom d'hôte (NetBIOS)"
+msgid "NetBIOS Name"
+msgstr "Nom NetBIOS"
 
 #: services/models.py:1085
-msgid "Host name in old format, eg FREENAS"
+msgid "hostname of FreeNAS system"
 msgstr "Nom d'hôte dans l'ancien format, e.g. FREENAS"
 
 # Préciser WORKGROUP ?

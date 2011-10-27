@@ -1407,7 +1407,7 @@ msgid ""
 msgstr "使用 Active Directory 或 LDAP 驗證機制將會取代此選項"
 
 #: services/models.py:68
-msgid "NetBIOS name"
+msgid "NetBIOS Name"
 msgstr "NetBIOS 名稱"
 
 #: services/models.py:72
@@ -2445,11 +2445,11 @@ msgid "Domain Name, eg example.com"
 msgstr "網域名稱(例如：example.com)"
 
 #: services/models.py:1084
-msgid "Host Name (NetBIOS-Name)"
-msgstr "NetBIOS主機名稱"
+msgid "NetBIOS Name"
+msgstr "NetBIOS 名稱"
 
 #: services/models.py:1085
-msgid "Host name in old format, eg FREENAS"
+msgid "hostname of FreeNAS system"
 msgstr "舊格式的主機名稱(例如：FREENAS)"
 
 #: services/models.py:1089

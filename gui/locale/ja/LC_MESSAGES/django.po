@@ -1497,7 +1497,7 @@ msgid ""
 msgstr "Active Directory または LDAP を利用する場合は選択してください。"
 
 #: services/models.py:68
-msgid "NetBIOS name"
+msgid "NetBIOS Name"
 msgstr "NetBIOS名"
 
 #: services/models.py:72
@@ -2650,12 +2650,12 @@ msgid "Domain Name, eg example.com"
 msgstr "ドメイン名を指定します。（例: example.com）"
 
 #: services/models.py:1084
-msgid "Host Name (NetBIOS-Name)"
+msgid "NetBIOS Name"
 msgstr "ホスト名（NetBIOS名）"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "Host name in old format, eg FREENAS"
+msgid "hostname of FreeNAS system"
 msgstr "古い形式のホスト名を指定します。（例: EXAMPLE）"
 
 #: services/models.py:1089

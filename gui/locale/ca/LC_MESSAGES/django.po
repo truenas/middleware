@@ -1449,7 +1449,7 @@ msgstr ""
 "Fer servir Active Directory o utenticació LDAP substituirà aquesta opció"
 
 #: services/models.py:68
-msgid "NetBIOS name"
+msgid "NetBIOS Name"
 msgstr "Nom de NetBIOS"
 
 #: services/models.py:72
@@ -2561,12 +2561,12 @@ msgid "Domain Name, eg example.com"
 msgstr "Nom de Domini, p.e. exemple.com"
 
 #: services/models.py:1084
-msgid "Host Name (NetBIOS-Name)"
+msgid "NetBIOS Name"
 msgstr "Nom del Servidor (NetBIOS-Name)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "Host name in old format, eg FREENAS"
+msgid "hostname of FreeNAS system"
 msgstr "Nom de Servidor en format antic, p.e. EXEMPLE"
 
 #: services/models.py:1089

@@ -1425,7 +1425,7 @@ msgid ""
 msgstr "Active Directory 또는 LDAP 인증을 사용하여 이 옵션을 대체합니다."
 
 #: services/models.py:68
-msgid "NetBIOS name"
+msgid "NetBIOS Name"
 msgstr "넷바이오스 명"
 
 #: services/models.py:72
@@ -2440,11 +2440,11 @@ msgid "Domain Name, eg example.com"
 msgstr ""
 
 #: services/models.py:1084
-msgid "Host Name (NetBIOS-Name)"
+msgid "NetBIOS Name"
 msgstr ""
 
 #: services/models.py:1085
-msgid "Host name in old format, eg FREENAS"
+msgid "hostname of FreeNAS system"
 msgstr ""
 
 #: services/models.py:1089

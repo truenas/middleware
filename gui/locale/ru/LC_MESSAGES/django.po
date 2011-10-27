@@ -1459,7 +1459,7 @@ msgstr ""
 "Использование Active Directory или LDAP аутентификации заменит эту опцию"
 
 #: services/models.py:68
-msgid "NetBIOS name"
+msgid "NetBIOS Name"
 msgstr "Имя NetBIOS"
 
 #: services/models.py:72
@@ -2576,12 +2576,12 @@ msgid "Domain Name, eg example.com"
 msgstr "Доменное имя, например \"example.com\""
 
 #: services/models.py:1084
-msgid "Host Name (NetBIOS-Name)"
+msgid "NetBIOS Name"
 msgstr "Имя компьютера (NetBIOS)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "Host name in old format, eg FREENAS"
+msgid "hostname of FreeNAS system"
 msgstr "Имя компьютера в старом формате, например \"EXAMPLE\""
 
 #: services/models.py:1089

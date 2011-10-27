@@ -1429,7 +1429,7 @@ msgstr ""
 "Menggunakan Direktori Aktif atau otentikasi LDAP akan mengganti pilihan ini"
 
 #: services/models.py:68
-msgid "NetBIOS name"
+msgid "NetBIOS Name"
 msgstr "Nama NetBIOS"
 
 #: services/models.py:72
@@ -2534,12 +2534,12 @@ msgid "Domain Name, eg example.com"
 msgstr "Nama Domain, e.g. example.com"
 
 #: services/models.py:1084
-msgid "Host Name (NetBIOS-Name)"
+msgid "NetBIOS Name"
 msgstr "Nama Host (NetBIOS)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "Host name in old format, eg FREENAS"
+msgid "hostname of FreeNAS system"
 msgstr "Nama Host dalam format lama, e.g. EXAMPLE"
 
 #: services/models.py:1089

@@ -1425,7 +1425,7 @@ msgstr ""
 "pārņemta"
 
 #: services/models.py:68
-msgid "NetBIOS name"
+msgid "NetBIOS Name"
 msgstr "NetBIOS nosuakums"
 
 #: services/models.py:72
@@ -2529,12 +2529,12 @@ msgid "Domain Name, eg example.com"
 msgstr "Domēna vārds, piemēram, example.com"
 
 #: services/models.py:1084
-msgid "Host Name (NetBIOS-Name)"
+msgid "NetBIOS Name"
 msgstr "Saimnieka Vārds (NetBIOS-Vārds)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "Host name in old format, eg FREENAS"
+msgid "hostname of FreeNAS system"
 msgstr "Saimnieka vārds vecajā formātā, piem. EXAMPLE"
 
 #: services/models.py:1089

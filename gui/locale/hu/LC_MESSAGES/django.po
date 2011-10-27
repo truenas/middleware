@@ -1427,7 +1427,7 @@ msgstr ""
 "lehetőséget."
 
 #: services/models.py:68
-msgid "NetBIOS name"
+msgid "NetBIOS Name"
 msgstr "NetBIOS név"
 
 #: services/models.py:72
@@ -2500,12 +2500,12 @@ msgid "Domain Name, eg example.com"
 msgstr "Domain név, pl. valami.hu"
 
 #: services/models.py:1084
-msgid "Host Name (NetBIOS-Name)"
+msgid "NetBIOS Name"
 msgstr "Host név (NetBIOS-név)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "Host name in old format, eg FREENAS"
+msgid "hostname of FreeNAS system"
 msgstr "Host név régebbi formában, pl VALAMI"
 
 #: services/models.py:1089

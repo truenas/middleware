@@ -1452,7 +1452,7 @@ msgstr ""
 "L'autenticazione tramite Active Directory o LDAP sostituisce questa opzione"
 
 #: services/models.py:68
-msgid "NetBIOS name"
+msgid "NetBIOS Name"
 msgstr "Nome NetBIOS"
 
 #: services/models.py:72
@@ -2577,12 +2577,12 @@ msgid "Domain Name, eg example.com"
 msgstr "Nome Dominio, es. example.com"
 
 #: services/models.py:1084
-msgid "Host Name (NetBIOS-Name)"
+msgid "NetBIOS Name"
 msgstr "Nome Host (NetBIOS-Name)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "Host name in old format, eg FREENAS"
+msgid "hostname of FreeNAS system"
 msgstr "Nome Host nel vecchi formato, es. EXAMPLE"
 
 #: services/models.py:1089

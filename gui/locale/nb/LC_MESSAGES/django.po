@@ -1436,7 +1436,7 @@ msgstr ""
 "Bruk av Active Directory eller LDAP-godkjenning vil overstyre dette valget"
 
 #: services/models.py:68
-msgid "NetBIOS name"
+msgid "NetBIOS Name"
 msgstr "NetBIOS navn"
 
 #: services/models.py:72
@@ -2527,12 +2527,12 @@ msgid "Domain Name, eg example.com"
 msgstr "Domenenavn, etc ekempel.com"
 
 #: services/models.py:1084
-msgid "Host Name (NetBIOS-Name)"
-msgstr "Vertsnavn (NetBIOS-navn)"
+msgid "NetBIOS Name"
+msgstr "NetBIOS navn"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "Host name in old format, eg FREENAS"
+msgid "hostname of FreeNAS system"
 msgstr "Vertsnavn i gammelt format, etc EKSEMPEL"
 
 #: services/models.py:1089

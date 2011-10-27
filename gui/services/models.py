@@ -1081,8 +1081,8 @@ class ActiveDirectory(Model):
             )
     ad_netbiosname = models.CharField(
             max_length=120,
-            verbose_name = _("Host Name (NetBIOS-Name)"),
-            help_text = _("Host name in old format, eg FREENAS")
+            verbose_name = _("NetBIOS Name"),
+            help_text = _("hostname of FreeNAS system")
             )
     ad_workgroup = models.CharField(
             max_length=120,

@@ -1456,7 +1456,7 @@ msgstr ""
 "την επιλογή"
 
 #: services/models.py:68
-msgid "NetBIOS name"
+msgid "NetBIOS Name"
 msgstr "Όνομα NetBIOS"
 
 #: services/models.py:72
@@ -2578,12 +2578,12 @@ msgid "Domain Name, eg example.com"
 msgstr "Domain Name, π.χ. example.com"
 
 #: services/models.py:1084
-msgid "Host Name (NetBIOS-Name)"
+msgid "NetBIOS Name"
 msgstr "Όνομα κεντρικού υπολογιστή (NetBIOS-Name)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "Host name in old format, eg FREENAS"
+msgid "hostname of FreeNAS system"
 msgstr "Όνομα υπολογιστή στην παλιά μορφή, πχ EXAMPLE"
 
 #: services/models.py:1089

@@ -1409,7 +1409,7 @@ msgid ""
 msgstr "שימוש בתיקייה פעילה או אימות LDAP יחליף את האופציה הזאת"
 
 #: services/models.py:68
-msgid "NetBIOS name"
+msgid "NetBIOS Name"
 msgstr "שם NetBIOS"
 
 #: services/models.py:72
@@ -2473,12 +2473,12 @@ msgid "Domain Name, eg example.com"
 msgstr "שם דומיין, לדוג' example.com"
 
 #: services/models.py:1084
-msgid "Host Name (NetBIOS-Name)"
+msgid "NetBIOS Name"
 msgstr "שם מארח (שם ה-NetBIOS)"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "Host name in old format, eg FREENAS"
+msgid "hostname of FreeNAS system"
 msgstr "שם המארח בפורמט ישן, דוג' EXAMPLE"
 
 #: services/models.py:1089

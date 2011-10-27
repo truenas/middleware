@@ -1418,7 +1418,7 @@ msgid ""
 msgstr "使用AD(活动目录)或LDAP认证将取代该选项"
 
 #: services/models.py:68
-msgid "NetBIOS name"
+msgid "NetBIOS Name"
 msgstr "NetBIOS 名称"
 
 #: services/models.py:72
@@ -2463,12 +2463,12 @@ msgid "Domain Name, eg example.com"
 msgstr "域名，例如：example.com"
 
 #: services/models.py:1084
-msgid "Host Name (NetBIOS-Name)"
-msgstr "主机名 (NetBIOS名称)"
+msgid "NetBIOS Name"
+msgstr "NetBIOS 名称"
 
 #: services/models.py:1085
 #, fuzzy
-msgid "Host name in old format, eg FREENAS"
+msgid "hostname of FreeNAS system"
 msgstr "旧格式主机名，例如：EXAMPLE"
 
 #: services/models.py:1089
