@@ -330,9 +330,9 @@ run_late_customize() (
 
 	pprint 2 "run late customize scripts"
 	set -- $NANO_LATE_CUSTOMIZE
-	i=0
+	i=1
 	num_steps=$#
-	while [ $i -lt $num_steps ]
+	while [ $i -le $num_steps ]
 	do
 		pprint 2 "[$i/$num_steps] late customize \"$c\""
 		pprint 3 "log: ${NANO_OBJ}/_.late_cust.$c"
