@@ -135,6 +135,8 @@ WITHOUT_PPP=true
 WITHOUT_PROFILE=true
 WITHOUT_RCMDS=true
 WITHOUT_SENDMAIL=true
+# Knob needs to be fixed on systems that don't have the docs stuff
+# preinstalled, e.g. 9.x bsdinstall images.
 #WITHOUT_SHAREDOCS=true
 WITHOUT_SSP=true
 WITHOUT_SYSCONS=true
@@ -161,6 +163,7 @@ WITHOUT_TOOLCHAIN=true
 WITHOUT_INSTALLLIB=true
 WITHOUT_INFO=true
 WITHOUT_RCS=true
+WITHOUT_SHAREDOCS=true
 "
 
 NANO_PACKAGE_ONLY=1
