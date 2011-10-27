@@ -75,7 +75,8 @@ def get_freenas_var(var, default = None):
         val = default
     return val
 
-def send_mail(subject=None, text=None, interval=timedelta(), channel='freenas', to=None, extra_headers=None, plain=False):
+def send_mail(subject=None, text=None, interval=timedelta(),
+              channel=get_sw_name().lower(), to=None, extra_headers=None):
     if interval > timedelta():
         channelfile = '/tmp/.msg.%s' % (channel)
         last_update = datetime.now() - interval
@@ -85,56 +86,54 @@ def send_mail(subject=None, text=None, interval=timedelta(), channel='freenas', 
             pass
         timediff = datetime.now() - last_update
         if (timediff >= interval) or (timediff < timedelta()):
-            f = open(channelfile, 'w')
-            f.close()
+            open(channelfile, 'w').close()
         else:
             return
 
     error = False
     errmsg = ''
-    email = Email.objects.all().order_by('-id')[0]
+    em = Email.objects.all().order_by('-id')[0]
     if not to:
-        to = bsdUsers.objects.get(bsdusr_username='root').bsdusr_email
-    if not plain:
-        msg = MIMEText(text, _charset='utf-8')
-        if subject:
-            msg['Subject'] = subject
-        msg['From'] = email.em_fromemail
-        msg['To'] = to
-        msg['Date'] = formatdate()
+        to = [ bsdUsers.objects.get(bsdusr_username='root').bsdusr_email ]
+    msg = MIMEText(text, _charset='utf-8')
+    if subject:
+        msg['Subject'] = subject
+    msg['From'] = em.em_fromemail
+    msg['To'] = ', '.join(to)
+    msg['Date'] = formatdate()
 
-        if not extra_headers:
-            extra_headers = {}
-        for key, val in extra_headers.items():
-            if msg.has_key(key):
-                msg.replace_header(key, val)
-            else:
-                msg[key] = val
-        msg = msg.as_string()
-    else:
-        msg = text
+    if not extra_headers:
+        extra_headers = {}
+    for key, val in extra_headers.items():
+        if key in msg:
+            msg.replace_header(key, val)
+        else:
+            msg[key] = val
+    msg = msg.as_string()
 
     try:
-        if email.em_security == 'ssl':
-            server = smtplib.SMTP_SSL(email.em_outgoingserver, email.em_port,
+        if em.em_security == 'ssl':
+            server = smtplib.SMTP_SSL(em.em_outgoingserver, em.em_port,
                                       timeout=10)
         else:
-            server = smtplib.SMTP(email.em_outgoingserver, email.em_port,
+            server = smtplib.SMTP(em.em_outgoingserver, em.em_port,
                                   timeout=10)
-            if email.em_security == 'tls':
+            if em.em_security == 'tls':
                 server.starttls()
-        if email.em_smtp:
-            server.login(email.em_user, email.em_pass)
+        if em.em_smtp:
+            server.login(em.em_user, em.em_pass)
         else:
             server.connect()
-        server.sendmail(email.em_fromemail, [to],
-                        msg)
+        server.sendmail(em.em_fromemail, to, msg)
         server.quit()
     except Exception, e:
-        syslog.openlog("freenas", syslog.LOG_CONS | syslog.LOG_PID, facility=syslog.LOG_MAIL)
-        for line in traceback.format_exc().splitlines():
-            syslog.syslog(syslog.LOG_ERR, line)
-        syslog.closelog()
+        syslog.openlog(channel, syslog.LOG_CONS | syslog.LOG_PID,
+                       facility=syslog.LOG_MAIL)
+        try:
+            for line in traceback.format_exc().splitlines():
+                syslog.syslog(syslog.LOG_ERR, line)
+        finally:
+            syslog.closelog()
         errmsg = str(e)
         error = True
     return error, errmsg
