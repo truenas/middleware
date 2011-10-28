@@ -76,7 +76,7 @@ CONF_WORLD=' '
 NANO_KERNEL=GENERIC
 
 # Kernel modules to build; default is none
-NANO_MODULES="cxgb ext2fs geom ntfs smbfs libiconv libmchain pf pflog udf zfs opensolaris usb/xhci"
+NANO_MODULES=""
 
 # Customize commands.
 NANO_CUSTOMIZE=""
@@ -224,6 +224,7 @@ build_kernel ( ) (
 	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} buildkernel \
 		${kernconfdir:+"KERNCONFDIR="}${kernconfdir} \
 		KERNCONF=${kernconf}
+		MODULES_OVERRIDE="${NANO_MODULES}"
 		SRCCONF=${SRCCONF} \
 		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
 	) > ${MAKEOBJDIRPREFIX}/_.bk 2>&1

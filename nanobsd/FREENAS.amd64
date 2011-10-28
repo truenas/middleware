@@ -82,7 +82,6 @@ options		KDB			# Enable kernel debugger support.
 options		DDB			# Support DDB.
 
 # FreeNAS modifications
-makeoptions	MODULES_OVERRIDE=""
 options		GEOM_UZIP
 options		GEOM_ELI
 options		NULLFS

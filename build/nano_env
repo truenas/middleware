@@ -38,6 +38,9 @@ NANO_TOOLS="$FREENAS_ROOT/build/nanobsd"
 
 NANO_KERNEL="$NANO_CFG_BASE/FREENAS.$NANO_ARCH"
 
+# Modules to build with the kernel.
+NANO_MODULES="cxgb ext2fs geom ntfs smbfs libiconv libmchain pf pflog udf zfs opensolaris usb/xhci"
+
 # Feature sets to enable as part of the build.
 SW_FEATURES="DEBUG REPORTING"
 
@@ -54,8 +57,10 @@ NANO_NAME="$NANO_LABEL-$VERSION-$REVISION-$NANO_ARCH"
 NANO_IMGNAME="$NANO_NAME.full"
 
 # Export these vars to override the NanoBSD defaults.
-export FREENAS_ROOT NANO_ARCH NANO_CFG_BASE NANO_IMGNAME NANO_KERNEL NANO_NAME
-export NANO_OBJ NANO_SRC NANO_TOOLS REVISION SVNREVISION
+export FREENAS_ROOT
+export NANO_ARCH NANO_CFG_BASE NANO_IMGNAME NANO_KERNEL
+export NANO_MODULES NANO_NAME NANO_OBJ NANO_SRC NANO_TOOLS REVISION
+export SVNREVISION
 
 # The following variables are for builders with local package and distfile
 # mirrors. They're intentionally unset here to avoid accidental pollution from
