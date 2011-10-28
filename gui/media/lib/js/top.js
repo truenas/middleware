@@ -27,43 +27,46 @@
  *
  */
 
-dojo.require('dojox.timing');
-ttop = new dojox.timing.Timer(2500);
+require(["dojox/timing"], function(timing) {
 
-ttop.onTick = function() {
-    loadtop();
-}
-ttop.onStart = function() {
-    loadtop();
-}
+    ttop = new dojox.timing.Timer(2500);
 
-var _topstarted = false;
+    ttop.onTick = function() {
+        loadtop();
+    }
+    ttop.onStart = function() {
+        loadtop();
+    }
 
-function loadtop() {
+    var _topstarted = false;
 
-    if(_topstarted == true)
-        return;
-    _topstarted = true;
-    dojo.xhrGet({
-    url: '/system/top/',
-    handleAs: "xml",
-    load: function(data) {
+    loadtop = function() {
 
-        _topstarted = false;
-        var topOutput = data.getElementsByTagName('top')[0].childNodes[0].nodeValue;
-        var pageElement = dojo.byId('top_output');
+        if(_topstarted == true)
+            return;
+        _topstarted = true;
+        dojo.xhrGet({
+            url: '/system/top/',
+            handleAs: "xml",
+            load: function(data) {
 
-        var top_dialog = dijit.byId("top_dialog");
-        if(!top_dialog.open) {
-            ttop.stop();
-        }
+                _topstarted = false;
+                var topOutput = data.getElementsByTagName('top')[0].childNodes[0].nodeValue;
+                var pageElement = dojo.byId('top_output');
 
-        if ('innerText' in pageElement) {
-            pageElement.innerText = topOutput;
-        } else {
-            pageElement.innerHTML = topOutput;
-        }
+                var top_dialog = dijit.byId("top_dialog");
+                if(!top_dialog.open) {
+                    ttop.stop();
+                }
 
-    },
-    });
-}
+                if ('innerText' in pageElement) {
+                    pageElement.innerText = topOutput;
+                } else {
+                    pageElement.innerHTML = topOutput;
+                }
+
+            },
+        });
+    }
+
+});

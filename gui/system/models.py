@@ -121,7 +121,7 @@ class Advanced(Model):
             verbose_name = _("Swap size on each drive in GiB, affects new disks only.  Setting this to 0 disables swap creation completely (STRONGLY DISCOURAGED)."),
             default=2)
     adv_consolemsg = models.BooleanField(
-            verbose_name = _("Show console messages in the footer (Requires UI reload)"),
+            verbose_name = _("Show console messages in the footer"),
             default=True)
     adv_traceback = models.BooleanField(
             verbose_name = _("Show tracebacks in case of fatal errors"),

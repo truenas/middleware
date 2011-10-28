@@ -25,76 +25,25 @@
  *
  */
 
-    dojo.require("dojo.data.ItemFileReadStore");
-    dojo.require("dojo.data.ItemFileWriteStore");
-    dojo.require("dojo.dnd.Moveable");
-    dojo.require("dojo.NodeList-traverse");
-    dojo.require("dojo.NodeList-manipulate");
-    dojo.require("dojo.io.iframe");
-    dojo.require("dojo._base.xhr");
-    dojo.require("dojox.validate.regexp");
-    dojo.require("dojox.form.FileInput");
-    dojo.require("dojox.form.CheckedMultiSelect");
-    dojo.require("dojox.grid.DataGrid");
-    dojo.require("dojox.data.JsonRestStore");
-    dojo.require("dojox.data.FileStore");
-    dojo.require("dojox.string.sprintf");
-    dojo.require("dijit.Tree");
-    dojo.require("dijit.layout.BorderContainer");
-    dojo.require("dijit.layout.ContentPane");
-    dojo.require("dijit.layout.TabContainer");
-    dojo.require("dijit.form.MultiSelect");
-    dojo.require("dijit.ProgressBar");
-    dojo.require("dijit.MenuBar");
-    dojo.require("dijit.MenuBarItem");
-    dojo.require("dijit.Dialog");
-    dojo.require("dijit.form.Form");
-    dojo.require("dijit.form.Button");
-    dojo.require("dijit.form.Select");
-    dojo.require("dijit.form.ValidationTextBox");
-    dojo.require("dijit.form.NumberTextBox");
-    dojo.require("dijit.form.Textarea");
-    dojo.require("dijit.form.TimeTextBox");
-    dojo.require("dijit.form.ComboBox");
-    dojo.require("dijit.form.FilteringSelect");
-    dojo.require("dijit.form.NumberTextBox");
-    dojo.require("dijit.form.MultiSelect");
-    dojo.require("dijit.form.HorizontalSlider");
-    dojo.require("dijit.form.HorizontalRule");
-    dojo.require("dijit.form.HorizontalRuleLabels");
+    //dojo.require("dojo.data.ItemFileWriteStore");
+    //dojo.require("dojo._base.xhr");
+    //dojo.require("dojox.validate.regexp");
+    //dojo.require("dojox.form.FileInput");
+    //dojo.require("dojox.form.CheckedMultiSelect");
+    //dojo.require("dojox.grid.DataGrid");
+    //dojo.require("dojox.data.JsonRestStore");
+    //dojo.require("dojox.data.FileStore");
+    //dojo.require("dojox.string.sprintf");
+    //dojo.require("dijit.Tree");
+    //dojo.require("dijit.form.ComboBox");
+    //dojo.require("dijit.form.NumberTextBox");
+    //dojo.require("dijit.form.MultiSelect");
+    //dojo.require("dijit.form.HorizontalSlider");
+    //dojo.require("dijit.form.HorizontalRule");
+    //dojo.require("dijit.form.HorizontalRuleLabels");
 
-    dojo.require("dojox.data.JsonRestStore");
-    dojo.require("dojox.grid.TreeGrid");
-    dojo.require("dojox.grid.EnhancedGrid");
-    dojo.require("dojox.grid.enhanced.plugins.DnD");
-    dojo.require("dojox.grid.enhanced.plugins.Menu");
-    dojo.require("dojox.grid.enhanced.plugins.NestedSorting");
-    dojo.require("dojox.grid.enhanced.plugins.IndirectSelection");
-    dojo.require("dojox.grid.enhanced.plugins.Pagination");
-    dojo.require("dojox.grid.enhanced.plugins.Filter");
+    //dojo.require("freeadmin.form.Cron");
 
-    dojo.registerModulePath("freeadmin", "../../../../../media/lib/js/freeadmin");
-    dojo.require("freeadmin.form.Cron");
-    dojo.require("freeadmin.tree.Tree");
-    dojo.require("freeadmin.tree.TreeLazy");
-
-    dojo._contentHandlers.text = (function(old){
-      return function(xhr){
-        if(xhr.responseText.match("<!-- THIS IS A LOGIN WEBPAGE -->")){
-          window.location='/';
-          return '';
-        }
-        var text = old(xhr);
-        return text;
-      }
-    })(dojo._contentHandlers.text);
-
-    var originalXHR = dojo.xhr;
-    dojo.xhr = function(httpVerb, xhrArgs, hasHTTPBody) {
-      if(!xhrArgs.headers) xhrArgs.headers = {};
-      xhrArgs.headers["X-CSRFToken"] = dojo.cookie('csrftoken');
-      return originalXHR(httpVerb, xhrArgs, hasHTTPBody);
-    }
 
     /*
      * Menu Object
@@ -515,10 +464,10 @@
         extra.set('value', parseInt(extran) + 1);
     }
 
-    function toggle_service(obj) {
+    toggle_service = function(obj) {
         var td = obj.parentNode;
         var n = dojo.create("div", {  }, td);
-        dojo.addClass(n, "dijitContentPaneLoading");
+        dojo.addClass(n, "dijitIconLoading");
         dojo.style(n, "height", "25px");
         dojo.style(n, "float", "left");
 
@@ -545,7 +494,7 @@
 
     }
 
-    function buttongrid(v) {
+    buttongrid = function(v) {
         var json = dojo.fromJson(v);
         dojo.parser.parse(dojo.byId(this.id));
         var gridhtml = dijit.getEnclosingWidget(dojo.byId(this.id));
@@ -754,7 +703,7 @@
 
     }
 
-    function checkNumLog(unselected) {
+    checkNumLog = function(unselected) {
         var num = 0;
         for(var i=0;i<unselected.length;i++) {
             var q = dojo.query("input[name=zpool_"+unselected[i]+"]:checked");
@@ -1023,151 +972,222 @@
         setTimeout(refreshImgs, 300000);
     }
 
-    dojo.addOnLoad(function() {
-        setTimeout(refreshImgs, 300000);
+    require([
+        "dojo",
+        "dojo/ready",
+        "dojo/_base/xhr",
+        "dojo/_base/html",
+        "dojo/cookie",
+        "dojo/data/ItemFileReadStore",
+        "dojo/io/iframe",
+        "dojo/parser",
+        "dojo/NodeList-traverse",
+        "dojo/NodeList-manipulate",
+        "dijit/_base/manager",
+        "dijit/form/CheckBox",
+        "dijit/form/FilteringSelect",
+        "dijit/form/Form",
+        "dijit/form/MultiSelect",
+        "dijit/form/NumberTextBox",
+        "dijit/form/Select",
+        "dijit/form/Textarea",
+        "dijit/form/RadioButton",
+        "dijit/form/TimeTextBox",
+        "dijit/form/ValidationTextBox",
+        "dijit/layout/BorderContainer",
+        "dijit/layout/ContentPane",
+        "dijit/layout/TabContainer",
+        "dijit/tree/ForestStoreModel",
+        "dijit/Dialog",
+        "dijit/MenuBar",
+        "dijit/MenuBarItem",
+        "dijit/ProgressBar",
+        "dojox/data/JsonRestStore",
+        "dojox/grid/EnhancedGrid",
+        "dojox/grid/enhanced/plugins/DnD",
+        "dojox/grid/enhanced/plugins/Menu",
+        "dojox/grid/enhanced/plugins/NestedSorting",
+        "dojox/grid/enhanced/plugins/IndirectSelection",
+        "dojox/grid/enhanced/plugins/Pagination",
+        "dojox/grid/enhanced/plugins/Filter",
+        "dojox/grid/TreeGrid",
+        "dojox/validate",
+        ], function(dojo, ready, xhr, JsonRestStore, cookie, html, dmanager, FSM, parser) {
 
-        var store = new dojox.data.JsonRestStore({
-            target: "/admin/menu.json",
-            labelAttribute: "name",
-        });
+        dojo.registerModulePath("freeadmin", "../../../../../media/lib/js/freeadmin");
 
-        var treeModel = new dijit.tree.ForestStoreModel({
-            store: store,
-            query: {},
-            rootId: "root",
-            rootLabel: "FreeNAS",
-            childrenAttrs: ["children"]
-        });
-
-        geticons = function(item,opened) {
-            if(item.icon) return item.icon;
-            return (!item || this.model.mayHaveChildren(item)) ? (opened ? "dijitFolderOpened" : "dijitFolderClosed") : "dijitLeaf";
-        };
-
-        treeclick = function(item) {
-            var p = dijit.byId("content");
-
-            if(item.type && item.type == 'object') {
-                var data = dojo.query(".data_"+item.app_name+"_"+item.model);
-                if(data) {
-                    widgets = [];
-                    data.forEach(function(item, idx) {
-                        widget = dijit.getEnclosingWidget(item);
-                        if(widget) {
-                            widgets.push(widget);
-                        }
-                    });
-                    editObject(item.name, item.view, widgets);
-                } else
-                    editObject(item.name, item.view);
-            } else if(item.type && item.type == 'volumewizard') {
-                var data = dojo.query(".data_"+item.app_name+"_"+item.model);
-                if(data) {
-                    widgets = [];
-                    data.forEach(function(item, idx) {
-                        widget = dijit.getEnclosingWidget(item);
-                        if(widget) {
-                            widgets.push(widget);
-                        }
-                    });
-                    volumeWizard(item.name, item.view, widgets);
-                } else
-                    volumeWizard(item.name, item.view);
-            } else if(item.type && item.type == 'editobject') {
-                var data = dojo.query(".data_"+item.app_name+"_"+item.model);
-                if(data) {
-                    widgets = [];
-                    data.forEach(function(item, idx) {
-                        widget = dijit.getEnclosingWidget(item);
-                        if(widget) {
-                            widgets.push(widget);
-                        }
-                    });
-                    editObject(item.name, item.view, widgets);
-                } else
-                    editObject(item.name, item.view);
-            } else if(item.type && item.type == 'opennetwork') {
-                Menu.openNetwork(item.gname);
-            } else if(item.type && item.type == 'en_dis_services') {
-                Menu.openServices();
-            } else if(item.type && item.type == 'openaccount') {
-                Menu.openAccount(item.gname);
-            } else if(item.type && item.type == 'iscsi') {
-                Menu.openISCSI(item.gname);
-            } else if(item.type && item.type == 'logout') {
-                window.location='/account/logout/';
-            } else if(item.action && item.action == 'displayprocs') {
-                    dijit.byId("top_dialog").show();
-            } else if(item.action && item.action == 'shell') {
-                    dijit.byId("shell_dialog").show();
-            } else if(item.action && item.action == 'reboot') {
-                    dijit.byId("rebootDialog").show();
-            } else if(item.action && item.action == 'shutdown') {
-                    dijit.byId("shutdownDialog").show();
-            } else if(item.type && item.type == 'opensharing') {
-                Menu.openSharing(item.gname);
-            } else if(item.type && item.type == 'openstorage') {
-                Menu.openStorage(item.gname);
-            } else if(item.type && item.type == 'opencron') {
-                Menu.openCron();
-            } else if(item.type && item.type == 'viewmodel') {
-                //  get the children and make sure we haven't opened this yet.
-                var c = p.getChildren();
-                for(var i=0; i<c.length; i++){
-                    if(c[i].title == item.name){
-                        p.selectChild(c[i]);
-                        return;
-                    }
-                }
-                var pane = new dijit.layout.ContentPane({
-                    id: "data_"+item.app_name+"_"+item.model,
-                    href: item.view,
-                    title: item.name,
-                    closable: true,
-                    refreshOnShow: true,
-                    parseOnLoad: true,
-                });
-                p.addChild(pane);
-                dojo.addClass(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
-                p.selectChild(pane);
-            } else {
-                //  get the children and make sure we haven't opened this yet.
-                var c = p.getChildren();
-                for(var i=0; i<c.length; i++){
-                    if(c[i].tab == item.gname){
-                        p.selectChild(c[i]);
-                        return;
-                    }
-                }
-                var pane = new dijit.layout.ContentPane({
-                    href: item.view,
-                    title: item.name,
-                    closable: true,
-                    parseOnLoad: true,
-                });
-                pane.tab = item.gname;
-                dojo.addClass(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
-                p.addChild(pane);
-                p.selectChild(pane);
+        dojo._contentHandlers.text = (function(old){
+          return function(xhr){
+            if(xhr.responseText.match("<!-- THIS IS A LOGIN WEBPAGE -->")){
+              window.location='/';
+              return '';
             }
+            var text = old(xhr);
+            return text;
+          }
+        })(dojo._contentHandlers.text);
 
-        };
-
-        mytree = new freeadmin.tree.Tree({
-            id: "fntree",
-            model: treeModel,
-            showRoot: false,
-            onClick: treeclick,
-            onLoad: function() {
-                var fadeArgs = {
-                   node: "fntree",
-                 };
-                dojo.fadeIn(fadeArgs).play();
-            },
-            openOnClick: true,
-            getIconClass: geticons,
+        var originalXHR = dojo.xhr;
+        dojo.xhr = function(httpVerb, xhrArgs, hasHTTPBody) {
+          if(!xhrArgs.headers) xhrArgs.headers = {};
+          xhrArgs.headers["X-CSRFToken"] = dojo.cookie('csrftoken');
+          return originalXHR(httpVerb, xhrArgs, hasHTTPBody);
         }
-        );
-        dijit.byId("menupane").set('content', mytree);
 
+        ready(function() {
+            setTimeout(refreshImgs, 300000);
+
+            var store = new dojox.data.JsonRestStore({
+                target: "/admin/menu.json",
+                labelAttribute: "name",
+            });
+
+            var treeModel = new dijit.tree.ForestStoreModel({
+                store: store,
+                query: {},
+                rootId: "root",
+                rootLabel: "FreeNAS",
+                childrenAttrs: ["children"]
+            });
+
+            geticons = function(item,opened) {
+                if(item.icon) return item.icon;
+                return (!item || this.model.mayHaveChildren(item)) ? (opened ? "dijitFolderOpened" : "dijitFolderClosed") : "dijitLeaf";
+            };
+
+            treeclick = function(item) {
+                var p = dijit.byId("content");
+
+                if(item.type && item.type == 'object') {
+                    var data = dojo.query(".data_"+item.app_name+"_"+item.model);
+                    if(data) {
+                        widgets = [];
+                        data.forEach(function(item, idx) {
+                            widget = dijit.getEnclosingWidget(item);
+                            if(widget) {
+                                widgets.push(widget);
+                            }
+                        });
+                        editObject(item.name, item.view, widgets);
+                    } else
+                        editObject(item.name, item.view);
+                } else if(item.type && item.type == 'volumewizard') {
+                    var data = dojo.query(".data_"+item.app_name+"_"+item.model);
+                    if(data) {
+                        widgets = [];
+                        data.forEach(function(item, idx) {
+                            widget = dijit.getEnclosingWidget(item);
+                            if(widget) {
+                                widgets.push(widget);
+                            }
+                        });
+                        volumeWizard(item.name, item.view, widgets);
+                    } else
+                        volumeWizard(item.name, item.view);
+                } else if(item.type && item.type == 'editobject') {
+                    var data = dojo.query(".data_"+item.app_name+"_"+item.model);
+                    if(data) {
+                        widgets = [];
+                        data.forEach(function(item, idx) {
+                            widget = dijit.getEnclosingWidget(item);
+                            if(widget) {
+                                widgets.push(widget);
+                            }
+                        });
+                        editObject(item.name, item.view, widgets);
+                    } else
+                        editObject(item.name, item.view);
+                } else if(item.type && item.type == 'opennetwork') {
+                    Menu.openNetwork(item.gname);
+                } else if(item.type && item.type == 'en_dis_services') {
+                    Menu.openServices();
+                } else if(item.type && item.type == 'openaccount') {
+                    Menu.openAccount(item.gname);
+                } else if(item.type && item.type == 'iscsi') {
+                    Menu.openISCSI(item.gname);
+                } else if(item.type && item.type == 'logout') {
+                    window.location='/account/logout/';
+                } else if(item.action && item.action == 'displayprocs') {
+                        dijit.byId("top_dialog").show();
+                } else if(item.action && item.action == 'shell') {
+                        dijit.byId("shell_dialog").show();
+                } else if(item.action && item.action == 'reboot') {
+                        dijit.byId("rebootDialog").show();
+                } else if(item.action && item.action == 'shutdown') {
+                        dijit.byId("shutdownDialog").show();
+                } else if(item.type && item.type == 'opensharing') {
+                    Menu.openSharing(item.gname);
+                } else if(item.type && item.type == 'openstorage') {
+                    Menu.openStorage(item.gname);
+                } else if(item.type && item.type == 'opencron') {
+                    Menu.openCron();
+                } else if(item.type && item.type == 'viewmodel') {
+                    //  get the children and make sure we haven't opened this yet.
+                    var c = p.getChildren();
+                    for(var i=0; i<c.length; i++){
+                        if(c[i].title == item.name){
+                            p.selectChild(c[i]);
+                            return;
+                        }
+                    }
+                    var pane = new dijit.layout.ContentPane({
+                        id: "data_"+item.app_name+"_"+item.model,
+                        href: item.view,
+                        title: item.name,
+                        closable: true,
+                        refreshOnShow: true,
+                        parseOnLoad: true,
+                    });
+                    p.addChild(pane);
+                    dojo.addClass(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
+                    p.selectChild(pane);
+                } else {
+                    //  get the children and make sure we haven't opened this yet.
+                    var c = p.getChildren();
+                    for(var i=0; i<c.length; i++){
+                        if(c[i].tab == item.gname){
+                            p.selectChild(c[i]);
+                            return;
+                        }
+                    }
+                    var pane = new dijit.layout.ContentPane({
+                        href: item.view,
+                        title: item.name,
+                        closable: true,
+                        parseOnLoad: true,
+                    });
+                    pane.tab = item.gname;
+                    dojo.addClass(pane.domNode, ["objrefresh","data_"+item.app_name+"_"+item.model] );
+                    p.addChild(pane);
+                    p.selectChild(pane);
+                }
+
+            };
+
+            require([
+                "freeadmin/tree/Tree",
+                "freeadmin/tree/TreeLazy",
+                "freeadmin/tree/JsonRestStore",
+                "freeadmin/tree/ForestStoreModel",
+                "freeadmin/form/Cron",
+                ], function(Tree) {
+                mytree = new freeadmin.tree.Tree({
+                    id: "fntree",
+                    model: treeModel,
+                    showRoot: false,
+                    onClick: treeclick,
+                    onLoad: function() {
+                        var fadeArgs = {
+                           node: "fntree",
+                         };
+                        dojo.fadeIn(fadeArgs).play();
+                    },
+                    openOnClick: true,
+                    getIconClass: geticons,
+                }
+                );
+                dijit.byId("menupane").set('content', mytree);
+            });
+
+        });
     });

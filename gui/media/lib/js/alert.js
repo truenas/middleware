@@ -25,60 +25,62 @@
  *
  */
 
-dojo.require('dojox.timing');
+require(["dojox/timing", "dojo/ready"], function(timing, ready) {
 
-var _alert_status = 'OK';
+    var _alert_status = 'OK';
 
-function loadalert() {
+    function loadalert() {
 
-    var url = '/admin/alert/status/?' + new Date().getTime();
-    dojo.xhrGet({
-        url: url,
-        handleAs: "text",
-        load: function(data) {
+        var url = '/admin/alert/status/?' + new Date().getTime();
+        dojo.xhrGet({
+            url: url,
+            handleAs: "text",
+            load: function(data) {
 
-            var alertdiv = dojo.byId("alert_status");
-            if(data == _alert_status)
-                return true;
-            _alert_status = data;
-            if(data == 'OK') {
-                dojo.removeClass(alertdiv, ["alert_crit", "alert_warn"]);
-                dojo.addClass(alertdiv, "alert_ok");
-            } else if(data == 'WARN') {
-                dojo.removeClass(alertdiv, ["alert_crit", "alert_ok"]);
-                dojo.addClass(alertdiv, "alert_warn");
-            } else if(data == 'CRIT') {
-                dojo.removeClass(alertdiv, ["alert_warn", "alert_ok"]);
-                dojo.addClass(alertdiv, "alert_crit");
-            }
+                var alertdiv = dojo.byId("alert_status");
+                if(data == _alert_status)
+                    return true;
+                _alert_status = data;
+                if(data == 'OK') {
+                    dojo.removeClass(alertdiv, ["alert_crit", "alert_warn"]);
+                    dojo.addClass(alertdiv, "alert_ok");
+                } else if(data == 'WARN') {
+                    dojo.removeClass(alertdiv, ["alert_crit", "alert_ok"]);
+                    dojo.addClass(alertdiv, "alert_warn");
+                } else if(data == 'CRIT') {
+                    dojo.removeClass(alertdiv, ["alert_warn", "alert_ok"]);
+                    dojo.addClass(alertdiv, "alert_crit");
+                }
 
-        },
-    });
-}
-
-alert_open = function() {
-    var alertdlg = new dijit.Dialog({
-        title: "Alert System",
-        style: "width: 400px",
-        id: "alert_dialog",
-        href: "/admin/alert/",
-        onHide: function() {
-            setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
-        },
-    });
-    alertdlg.show();
-}
-
-dojo.addOnLoad(function(){
-
-    var talert = new dojox.timing.Timer(1000*60*5);
-
-    talert.onTick = function() {
-        loadalert();
+            },
+        });
     }
-    talert.onStart = function() {
-        loadalert();
+
+    alert_open = function() {
+        var alertdlg = new dijit.Dialog({
+            title: "Alert System",
+            style: "width: 400px",
+            id: "alert_dialog",
+            href: "/admin/alert/",
+            onHide: function() {
+                setTimeout(dojo.hitch(this, 'destroyRecursive'), dijit.defaultDuration);
+            },
+        });
+        alertdlg.show();
     }
-    talert.start();
+
+    ready(function(){
+
+        var talert = new dojox.timing.Timer(1000*60*5);
+
+        talert.onTick = function() {
+            loadalert();
+        }
+        talert.onStart = function() {
+            loadalert();
+        }
+        talert.start();
+
+    });
 
 });

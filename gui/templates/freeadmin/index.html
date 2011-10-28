@@ -8,21 +8,29 @@
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/top.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/alert.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/shell.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lib/js/msg.js"></script>
 <script type="text/javascript">
 var STORAGE_URL = '{% url storage_wizard %}';
-dojo.addOnLoad(function(){
-    Menu.urlInfo = '{% url system_info %}';
-    Menu.urlSettings = '{% url system_settings %}';
-    Menu.urlReporting = '{% url system_reporting %}';
-    Menu.urlNetwork = '{% url network_home %}';
-    Menu.urlSharing = '{% url sharing_home %}';
-    Menu.urlServices = '{% url services_home %}';
-    Menu.urlAccount = '{% url account_home %}';
-    Menu.urlStorage = '{% url storage_home %}';
-    Menu.urlISCSI = '{% url services_iscsi %}';
-    Menu.urlCron = '{% url system_cronjobs %}';
+require(["dojo/ready"], function(ready) {
+    ready(function(){
+        Menu.urlInfo = '{% url system_info %}';
+        Menu.urlSettings = '{% url system_settings %}';
+        Menu.urlReporting = '{% url system_reporting %}';
+        Menu.urlNetwork = '{% url network_home %}';
+        Menu.urlSharing = '{% url sharing_home %}';
+        Menu.urlServices = '{% url services_home %}';
+        Menu.urlAccount = '{% url account_home %}';
+        Menu.urlStorage = '{% url storage_home %}';
+        Menu.urlISCSI = '{% url services_iscsi %}';
+        Menu.urlCron = '{% url system_cronjobs %}';
 
-    Menu.openSystem();
+        Menu.openSystem();
+
+        {% if consolemsg %}
+        _msg_start();
+        {% endif %}
+
+    });
 });
 </script>
 {% endblock %}
