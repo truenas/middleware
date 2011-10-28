@@ -5,7 +5,6 @@
        name: "freenasdojo.js",
        dependencies: [
            "dojo.data.ItemFileReadStore",
-           "dojo.data.ItemFileWriteStore",
            "dojo.dnd.Moveable",
            "dojo.NodeList-traverse",
            "dojo.NodeList-manipulate",
