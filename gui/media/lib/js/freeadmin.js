@@ -1164,7 +1164,13 @@
 
             };
 
-            require(["freeadmin/tree/Tree", "freeadmin/tree/TreeLazy", "freeadmin/tree/JsonRestStore", "freeadmin/tree/ForestStoreModel"], function(Tree) {
+            require([
+                "freeadmin/tree/Tree",
+                "freeadmin/tree/TreeLazy",
+                "freeadmin/tree/JsonRestStore",
+                "freeadmin/tree/ForestStoreModel",
+                "freeadmin/form/Cron",
+                ], function(Tree) {
                 mytree = new freeadmin.tree.Tree({
                     id: "fntree",
                     model: treeModel,
