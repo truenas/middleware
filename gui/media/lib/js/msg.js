@@ -25,62 +25,67 @@
  *
  */
 
-dojo.require('dojox.timing');
-t = new dojox.timing.Timer(1000);
-var _msgstarted = false;
+require([
+    "dojo/ready",
+    "dojox/timing",
+    ], function(ready, Timer) {
 
-loadlog = function(load) {
-    if(dijit.byId("stopmsgrefresh").get("value") == "on" || _msgstarted == true)
-        return;
-    _msgstarted = true;
-    var msgfull = dijit.byId('log_dialog');
-    url = msgfull.open? '/system/varlogmessages/500/' : '/system/varlogmessages/';
-    dojo.xhrGet({
-    url: url,
-    handleAs: "xml",
-    load: function(data) {
-        _msgstarted = false;
-        var msgOutput = data.getElementsByTagName('msg')[0].childNodes[0].nodeValue;
-        var pageElement = dojo.byId(msgfull.open? 'msgfull_output' : 'msg_output');
-        var newinterval = 1000;
-        var saved_delta;
+    t = new dojox.timing.Timer(1000);
+    var _msgstarted = false;
 
-        if (msgOutput != pageElement.innerHTML) {
-            if (msgfull.open)
-                saved_delta = pageElement.scrollHeight - pageElement.scrollTop - 400;
-            if ('innerText' in pageElement) {
-                pageElement.innerText = msgOutput;
-            } else { 
-                pageElement.innerHTML = msgOutput;
-            }
-            if (t.interval > 1250) {
-                newinterval = t.interval / 3;
-                if (newinterval < 1250)
-                newinterval = 1250;
+    loadlog = function(load) {
+        if(dijit.byId("stopmsgrefresh").get("value") == "on" || _msgstarted == true)
+            return;
+        _msgstarted = true;
+        var msgfull = dijit.byId('log_dialog');
+        url = msgfull.open? '/system/varlogmessages/500/' : '/system/varlogmessages/';
+        dojo.xhrGet({
+        url: url,
+        handleAs: "xml",
+        load: function(data) {
+            _msgstarted = false;
+            var msgOutput = data.getElementsByTagName('msg')[0].childNodes[0].nodeValue;
+            var pageElement = dojo.byId(msgfull.open? 'msgfull_output' : 'msg_output');
+            var newinterval = 1000;
+            var saved_delta;
+
+            if (msgOutput != pageElement.innerHTML) {
+                if (msgfull.open)
+                    saved_delta = pageElement.scrollHeight - pageElement.scrollTop - 400;
+                if ('innerText' in pageElement) {
+                    pageElement.innerText = msgOutput;
+                } else { 
+                    pageElement.innerHTML = msgOutput;
+                }
+                if (t.interval > 1250) {
+                    newinterval = t.interval / 3;
+                    if (newinterval < 1250)
+                    newinterval = 1250;
+                    t.setInterval(newinterval);
+                }
+
+                if (msgfull.open && (saved_delta < 32))
+                    pageElement.scrollTop = pageElement.scrollHeight;
+            } else if (t.interval < 7500) {
+                newinterval = t.interval * 5 / 3;
+                if (newinterval > 7500)
+                    newinterval = 7500;
                 t.setInterval(newinterval);
             }
-
-            if (msgfull.open && (saved_delta < 32))
+            if (load && msgfull.open)
                 pageElement.scrollTop = pageElement.scrollHeight;
-        } else if (t.interval < 7500) {
-            newinterval = t.interval * 5 / 3;
-            if (newinterval > 7500)
-                newinterval = 7500;
-            t.setInterval(newinterval);
-        }
-        if (load && msgfull.open)
-            pageElement.scrollTop = pageElement.scrollHeight;
-    },
+        },
+        });
+    }
+
+    t.onTick = function() {
+        loadlog(false);
+    }
+    t.onStart = function() {
+        loadlog(false);
+    }
+
+    ready(function() {
+        t.start();
     });
-}
-
-t.onTick = function() {
-    loadlog(false);
-}
-t.onStart = function() {
-    loadlog(false);
-}
-
-dojo.addOnLoad(function() {
-    t.start();
 });
