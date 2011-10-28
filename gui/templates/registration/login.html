@@ -3,24 +3,21 @@
 
 {% block dojango_content %}
 <script type="text/javascript">
-    dojo.require("dojo.data.ItemFileReadStore");
-    dojo.require("dojo.data.ItemFileWriteStore");
-    dojo.require("dijit.Tree");
-    dojo.require("dojo.io.iframe");
-    dojo.require("dojox.validate.regexp");
-    dojo.require("dijit.layout.BorderContainer");
-    dojo.require("dijit.layout.ContentPane");
-    dojo.require("dijit.layout.TabContainer");
-    dojo.require("dojo._base.xhr");
-    dojo.require("dijit.ProgressBar");
-    dojo.require("dijit.MenuBar");
-    dojo.require("dijit.MenuBarItem");
-    dojo.require("dijit.Dialog");
-    dojo.require("dijit.form.Form");
-    dojo.require("dojo.fx.easing");
+    require([
+        "dojo/ready",
+        "dojo/parser",
+        "dijit/_base/manager",
+        "dijit/layout/BorderContainer",
+        "dijit/layout/ContentPane",
+        "dijit/layout/TabContainer",
+        "dijit/Dialog",
+        "dijit/MenuBar",
+        "dijit/MenuBarItem",
+        ], function(ready) {
 
-    dojo.addOnLoad(function() {
-          dijit.byId("login").show();
+        ready(function() {
+              dijit.byId("login").show();
+        });
     });
 </script>
 <!-- THIS IS A LOGIN WEBPAGE -->

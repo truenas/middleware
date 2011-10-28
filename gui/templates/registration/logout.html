@@ -5,16 +5,19 @@
 
 {% block dojango_content %}
 <script type="text/javascript">
-    dojo.require("dojo.data.ItemFileReadStore");
-    dojo.require("dojo.data.ItemFileWriteStore");
-    dojo.require("dijit.layout.BorderContainer");
-    dojo.require("dijit.layout.ContentPane");
-    dojo.require("dijit.layout.TabContainer");
-    dojo.require("dojo._base.xhr");
-    dojo.require("dijit.MenuBar");
-    dojo.require("dijit.MenuBarItem");
-    dojo.require("dijit.Dialog");
-    dojo.require("dijit.form.Form");
+
+    require([
+        "dojo/ready",
+        "dojo/parser",
+        "dijit/_base/manager",
+        "dijit/layout/BorderContainer",
+        "dijit/layout/ContentPane",
+        "dijit/layout/TabContainer",
+        "dijit/MenuBar",
+        "dijit/MenuBarItem",
+        ], function(ready) {
+
+    });
 
 </script>
 <div data-dojo-type="dijit.layout.TabContainer" style="width:100%;" data-dojo-props="doLayout: false, region: 'center'">
