@@ -223,8 +223,8 @@ build_kernel ( ) (
 	# NANO_MODULES so the built world can be reused by multiple images.
 	env TARGET_ARCH=${NANO_ARCH} ${NANO_PMAKE} buildkernel \
 		${kernconfdir:+"KERNCONFDIR="}${kernconfdir} \
-		KERNCONF=${kernconf}
-		MODULES_OVERRIDE="${NANO_MODULES}"
+		KERNCONF=${kernconf} \
+		MODULES_OVERRIDE="${NANO_MODULES}" \
 		SRCCONF=${SRCCONF} \
 		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
 	) > ${MAKEOBJDIRPREFIX}/_.bk 2>&1
