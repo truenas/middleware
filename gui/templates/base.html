@@ -4,7 +4,21 @@
     <title>{% if hostname %}{{ hostname }} - {% endif %}{{ sw_version }}</title>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
     <style type="text/css">html, body.{{ DOJANGO.THEME }} { width: 100%; height: 100%; }</style>
-    {% include "dojango/include.html" %}
+<style type="text/css">
+    @import "/dojango/dojo-media/release/1.7.0/dojo/resources/dojo.css";
+    @Import "/dojango/dojo-media/release/1.7.0/dijit/themes/claro/claro.css";
+</style>
+<script type="text/javascript">
+    var dojoConfig = {
+        'isDebug':true,
+        'parseOnLoad':true,
+        'baseUrl':"/dojango/dojo-media/release/1.7.0/dojo/",
+        'async': true,
+    };
+</script>
+
+<script type="text/javascript" src="/dojango/dojo-media/release/1.7.0/dojo/dojo.js">
+</script>
     <script type="text/javascript" src="{{ DOJANGO.DOJO_URL }}/freenasdojo.js"></script>
     <link rel="stylesheet" href="{{ DOJANGO.DIJIT_URL }}/themes/claro/document.css" />
     <link rel="stylesheet" href="{{ DOJANGO.DOJOX_URL }}/form/resources/FileInput.css" />

@@ -27,7 +27,7 @@
  *
  */
 
-dojo.require('dojox.timing');
+require(["dojox/timing"], function(timing) {
 ttop = new dojox.timing.Timer(2500);
 
 ttop.onTick = function() {
@@ -67,3 +67,5 @@ function loadtop() {
     },
     });
 }
+
+});
