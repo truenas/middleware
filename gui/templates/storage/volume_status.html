@@ -1,8 +1,8 @@
 {% load i18n %}
-<div id="gridContainer4" dojoType="dijit.layout.ContentPane" doLayout="true">
+<div id="gridContainer4" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="doLayout: true">
 <script type="dojo/method">
 
-    var store = new dojo.data.ItemFileWriteStore({
+    var store = new dojo.data.ItemFileReadStore({
         url: "{% url storage_volume_status_json vid=volume.id %}",
         });
 

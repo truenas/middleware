@@ -25,12 +25,7 @@
  *
  */
 
-    //dojo.require("dojo.data.ItemFileReadStore");
     //dojo.require("dojo.data.ItemFileWriteStore");
-    //dojo.require("dojo.dnd.Moveable");
-    //dojo.require("dojo.NodeList-traverse");
-    //dojo.require("dojo.NodeList-manipulate");
-    //dojo.require("dojo.io.iframe");
     //dojo.require("dojo._base.xhr");
     //dojo.require("dojox.validate.regexp");
     //dojo.require("dojox.form.FileInput");
@@ -40,42 +35,14 @@
     //dojo.require("dojox.data.FileStore");
     //dojo.require("dojox.string.sprintf");
     //dojo.require("dijit.Tree");
-    //dojo.require("dijit.layout.BorderContainer");
-    //dojo.require("dijit.layout.ContentPane");
-    //dojo.require("dijit.layout.TabContainer");
-    //dojo.require("dijit.form.MultiSelect");
-    //dojo.require("dijit.ProgressBar");
-    //dojo.require("dijit.MenuBar");
-    //dojo.require("dijit.MenuBarItem");
-    //dojo.require("dijit.Dialog");
-    //dojo.require("dijit.form.Form");
-    //dojo.require("dijit.form.Button");
-    //dojo.require("dijit.form.Select");
-    //dojo.require("dijit.form.ValidationTextBox");
-    //dojo.require("dijit.form.NumberTextBox");
-    //dojo.require("dijit.form.Textarea");
-    //dojo.require("dijit.form.TimeTextBox");
     //dojo.require("dijit.form.ComboBox");
-    //dojo.require("dijit.form.FilteringSelect");
     //dojo.require("dijit.form.NumberTextBox");
     //dojo.require("dijit.form.MultiSelect");
     //dojo.require("dijit.form.HorizontalSlider");
     //dojo.require("dijit.form.HorizontalRule");
     //dojo.require("dijit.form.HorizontalRuleLabels");
 
-    //dojo.require("dojox.data.JsonRestStore");
-    //dojo.require("dojox.grid.TreeGrid");
-    //dojo.require("dojox.grid.EnhancedGrid");
-    //dojo.require("dojox.grid.enhanced.plugins.DnD");
-    //dojo.require("dojox.grid.enhanced.plugins.Menu");
-    //dojo.require("dojox.grid.enhanced.plugins.NestedSorting");
-    //dojo.require("dojox.grid.enhanced.plugins.IndirectSelection");
-    //dojo.require("dojox.grid.enhanced.plugins.Pagination");
-    //dojo.require("dojox.grid.enhanced.plugins.Filter");
-
     //dojo.require("freeadmin.form.Cron");
-    //dojo.require("freeadmin.tree.Tree");
-    //dojo.require("freeadmin.tree.TreeLazy");
 
 
     /*
@@ -1005,42 +972,60 @@
         setTimeout(refreshImgs, 300000);
     }
 
-    require(["dojo/ready",
+    require([
+        "dojo",
+        "dojo/ready",
         "dojo/_base/xhr",
-        "dojox/data/JsonRestStore",
-        "dojo/cookie",
         "dojo/_base/html",
-        "dijit/_base/manager",
-        "dijit/tree/ForestStoreModel",
+        "dojo/cookie",
+        "dojo/data/ItemFileReadStore",
+        "dojo/io/iframe",
         "dojo/parser",
-        "dijit/layout/BorderContainer",
-        "dijit/layout/ContentPane",
-        "dijit/layout/TabContainer",
-        "dijit/MenuBar",
-        "dijit/MenuBarItem",
-        "dijit/Dialog",
-        "dijit/form/Form",
+        "dojo/NodeList-traverse",
+        "dojo/NodeList-manipulate",
+        "dijit/_base/manager",
+        "dijit/form/CheckBox",
         "dijit/form/FilteringSelect",
+        "dijit/form/Form",
+        "dijit/form/MultiSelect",
         "dijit/form/NumberTextBox",
         "dijit/form/Select",
         "dijit/form/Textarea",
+        "dijit/form/RadioButton",
+        "dijit/form/TimeTextBox",
         "dijit/form/ValidationTextBox",
-        "dijit/form/CheckBox",
+        "dijit/layout/BorderContainer",
+        "dijit/layout/ContentPane",
+        "dijit/layout/TabContainer",
+        "dijit/tree/ForestStoreModel",
+        "dijit/Dialog",
+        "dijit/MenuBar",
+        "dijit/MenuBarItem",
+        "dijit/ProgressBar",
+        "dojox/data/JsonRestStore",
         "dojox/grid/EnhancedGrid",
-        ], function(ready, xhr, JsonRestStore, cookie, html, dmanager, FSM, parser) {
+        "dojox/grid/enhanced/plugins/DnD",
+        "dojox/grid/enhanced/plugins/Menu",
+        "dojox/grid/enhanced/plugins/NestedSorting",
+        "dojox/grid/enhanced/plugins/IndirectSelection",
+        "dojox/grid/enhanced/plugins/Pagination",
+        "dojox/grid/enhanced/plugins/Filter",
+        "dojox/grid/TreeGrid",
+        "dojox/validate",
+        ], function(dojo, ready, xhr, JsonRestStore, cookie, html, dmanager, FSM, parser) {
 
         dojo.registerModulePath("freeadmin", "../../../../../media/lib/js/freeadmin");
 
-        //dojo._contentHandlers.text = (function(old){
-        //  return function(xhr){
-        //    if(xhr.responseText.match("<!-- THIS IS A LOGIN WEBPAGE -->")){
-        //      window.location='/';
-        //      return '';
-        //    }
-        //    var text = old(xhr);
-        //    return text;
-        //  }
-        //})(dojo._contentHandlers.text);
+        dojo._contentHandlers.text = (function(old){
+          return function(xhr){
+            if(xhr.responseText.match("<!-- THIS IS A LOGIN WEBPAGE -->")){
+              window.location='/';
+              return '';
+            }
+            var text = old(xhr);
+            return text;
+          }
+        })(dojo._contentHandlers.text);
 
         var originalXHR = dojo.xhr;
         dojo.xhr = function(httpVerb, xhrArgs, hasHTTPBody) {
