@@ -467,7 +467,7 @@
     toggle_service = function(obj) {
         var td = obj.parentNode;
         var n = dojo.create("div", {  }, td);
-        dojo.addClass(n, "dijitContentPaneLoading");
+        dojo.addClass(n, "dijitIconLoading");
         dojo.style(n, "height", "25px");
         dojo.style(n, "float", "left");
 
