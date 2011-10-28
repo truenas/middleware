@@ -464,7 +464,7 @@
         extra.set('value', parseInt(extran) + 1);
     }
 
-    function toggle_service(obj) {
+    toggle_service = function(obj) {
         var td = obj.parentNode;
         var n = dojo.create("div", {  }, td);
         dojo.addClass(n, "dijitContentPaneLoading");
@@ -494,7 +494,7 @@
 
     }
 
-    function buttongrid(v) {
+    buttongrid = function(v) {
         var json = dojo.fromJson(v);
         dojo.parser.parse(dojo.byId(this.id));
         var gridhtml = dijit.getEnclosingWidget(dojo.byId(this.id));
@@ -703,7 +703,7 @@
 
     }
 
-    function checkNumLog(unselected) {
+    checkNumLog = function(unselected) {
         var num = 0;
         for(var i=0;i<unselected.length;i++) {
             var q = dojo.query("input[name=zpool_"+unselected[i]+"]:checked");
