@@ -48,7 +48,7 @@ SW_FEATURES="DEBUG REPORTING"
 NANO_LABEL="FreeNAS"
 
 # Version of the software.
-VERSION="8.1"
+VERSION="8.2"
 
 # Image prefix, e.g. FreeNAS-8.1-r7609-amd64 or FreeNAS-8.0.1-RC1-i386.
 NANO_NAME="$NANO_LABEL-$VERSION-$REVISION-$NANO_ARCH"
