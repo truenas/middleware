@@ -37,14 +37,14 @@ pull() {
 }
 
 post_images() {
-	cd obj.$arch
-	for img in *.iso *.xz; do
+	(cd obj.$arch
+	 for img in *.iso *.xz; do
 		sudo sh -c "sha256 $img > $img.sha256.txt"
 
 		scp -o BatchMode=yes $img* \
 		    yaberauneya,freenas@frs.sourceforge.net:/home/frs/project/f/fr/freenas/FreeNAS-8-nightly
 
-	done
+	done)
 }
 
 while getopts 'A:b:c:t:' optch; do
