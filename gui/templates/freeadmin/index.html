@@ -8,6 +8,7 @@
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/top.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/alert.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/shell.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lib/js/msg.js"></script>
 <script type="text/javascript">
 var STORAGE_URL = '{% url storage_wizard %}';
 require(["dojo/ready"], function(ready) {
@@ -22,8 +23,13 @@ require(["dojo/ready"], function(ready) {
         Menu.urlStorage = '{% url storage_home %}';
         Menu.urlISCSI = '{% url services_iscsi %}';
         Menu.urlCron = '{% url system_cronjobs %}';
-    
+
         Menu.openSystem();
+
+        {% if consolemsg %}
+        _msg_start();
+        {% endif %}
+
     });
 });
 </script>

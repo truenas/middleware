@@ -200,6 +200,7 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_powerdaemon = self.instance.adv_powerdaemon
         self.instance._original_adv_serialconsole = self.instance.adv_serialconsole
         self.instance._original_adv_consolescreensaver = self.instance.adv_consolescreensaver
+        self.instance._original_adv_consolemsg = self.instance.adv_consolemsg
     def save(self):
         super(AdvancedForm, self).save()
         if self.instance._original_adv_motd != self.instance.adv_motd:
@@ -218,6 +219,12 @@ class AdvancedForm(ModelForm):
                 notifier().start("saver")
             notifier().start("loader")
 
+    def done(self, request, events):
+        if self.instance._original_adv_consolemsg != self.instance.adv_consolemsg:
+            if self.instance.adv_consolemsg:
+                events.append("_msg_start()")
+            else:
+                events.append("_msg_stop()")
 
 class EmailForm(ModelForm):
     em_pass1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput, required=False)

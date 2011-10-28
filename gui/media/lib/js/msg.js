@@ -30,7 +30,7 @@ require([
     "dojox/timing",
     ], function(ready, Timer) {
 
-    t = new dojox.timing.Timer(1000);
+    _msg_t = new dojox.timing.Timer(1000);
     var _msgstarted = false;
 
     loadlog = function(load) {
@@ -57,20 +57,20 @@ require([
                 } else { 
                     pageElement.innerHTML = msgOutput;
                 }
-                if (t.interval > 1250) {
-                    newinterval = t.interval / 3;
+                if (_msg_t.interval > 1250) {
+                    newinterval = _msg_t.interval / 3;
                     if (newinterval < 1250)
                     newinterval = 1250;
-                    t.setInterval(newinterval);
+                    _msg_t.setInterval(newinterval);
                 }
 
                 if (msgfull.open && (saved_delta < 32))
                     pageElement.scrollTop = pageElement.scrollHeight;
-            } else if (t.interval < 7500) {
-                newinterval = t.interval * 5 / 3;
+            } else if (_msg_t.interval < 7500) {
+                newinterval = _msg_t.interval * 5 / 3;
                 if (newinterval > 7500)
                     newinterval = 7500;
-                t.setInterval(newinterval);
+                _msg_t.setInterval(newinterval);
             }
             if (load && msgfull.open)
                 pageElement.scrollTop = pageElement.scrollHeight;
@@ -78,14 +78,21 @@ require([
         });
     }
 
-    t.onTick = function() {
+    _msg_t.onTick = function() {
         loadlog(false);
     }
-    t.onStart = function() {
+    _msg_t.onStart = function() {
         loadlog(false);
     }
 
-    ready(function() {
-        t.start();
-    });
+    _msg_start = function() {
+        dojo.style("msg_output", "display", "block");
+        _msg_t.start();
+    }
+
+    _msg_stop = function() {
+        dojo.style("msg_output", "display", "none");
+        _msg_t.stop();
+    }
+
 });
