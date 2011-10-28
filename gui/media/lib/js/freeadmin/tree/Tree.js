@@ -80,11 +80,13 @@ define(["dijit/Tree","dojo/_base/declare"], function(Tree, declare) {
 
             this.postMixInProperties();
             this._load();
-            this.set('path', path).then(
-                    dojo.hitch(this, function() {
-                        this.focusNode(this.get('selectedNode'));
-                    }
-            ));
+            if(path && path.length > 0) {
+                this.set('path', path).then(
+                        dojo.hitch(this, function() {
+                            this.focusNode(this.get('selectedNode'));
+                        }
+                ));
+            }
 
         }
     });
