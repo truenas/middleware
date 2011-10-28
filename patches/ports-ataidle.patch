@@ -1,18 +1,243 @@
-Index: sysutils/ataidle/files/patch-freebsd__ataidle.c
+Index: sysutils/ataidle/Makefile
 ===================================================================
-RCS file: sysutils/ataidle/files/patch-freebsd__ataidle.c
-diff -N sysutils/ataidle/files/patch-freebsd__ataidle.c
---- /dev/null	1 Jan 1970 00:00:00 -0000
-+++ sysutils/ataidle/files/patch-freebsd__ataidle.c	9 Sep 2011 19:30:58 -0000
-@@ -0,0 +1,11 @@
-+--- ./freebsd/ataidle.c.orig	2010-11-04 07:17:28.000000000 -0700
-++++ ./freebsd/ataidle.c	2011-09-09 12:30:47.972689934 -0700
-+@@ -125,7 +125,7 @@
-+ 	if (atacmd == ATA__IDENTIFY || atacmd == ATA__ATAPI_IDENTIFY)
-+ 		direction = CAM_DIR_IN;
-+ 	else
-+-		direction = CAM_DIR_OUT;
-++		direction = CAM_DIR_NONE;
-+ 
-+ 	memset(&(&ccb->ccb_h)[1], 0, sizeof(struct ccb_ataio) - sizeof(struct ccb_hdr));
-+ 
+RCS file: /home/ncvs/ports/sysutils/ataidle/Makefile,v
+retrieving revision 1.17
+diff -p -u -r1.17 Makefile
+--- sysutils/ataidle/Makefile	24 Jun 2011 23:51:39 -0000	1.17
++++ sysutils/ataidle/Makefile	28 Oct 2011 19:02:24 -0000
+@@ -2,12 +2,11 @@
+ # Date created:		2004-01-11
+ # Whom:			Bruce Cran <bruce@cran.org.uk>
+ #
+-# $FreeBSD: ports/sysutils/ataidle/Makefile,v 1.17 2011/06/24 23:51:39 sobomax Exp $
++# $FreeBSD: ports/sysutils/ataidle/Makefile,v 1.18 2011/09/22 20:07:33 brucec Exp $
+ #
+ 
+ PORTNAME=	ataidle
+-PORTVERSION=	2.5.1
+-PORTREVISION=	1
++PORTVERSION=	2.6
+ CATEGORIES=	sysutils
+ MASTER_SITES=	http://www.cran.org.uk/bruce/software/
+ 
+Index: sysutils/ataidle/distinfo
+===================================================================
+RCS file: /home/ncvs/ports/sysutils/ataidle/distinfo,v
+retrieving revision 1.11
+diff -p -u -r1.11 distinfo
+--- sysutils/ataidle/distinfo	4 Nov 2010 14:41:32 -0000	1.11
++++ sysutils/ataidle/distinfo	28 Oct 2011 19:02:24 -0000
+@@ -1,2 +1,2 @@
+-SHA256 (ataidle-2.5.1.tar.gz) = a8498b89d3ff4fec7f4689765ac75fc30e9f81a5d7ab6b39d41afe7e4cd1dbc9
+-SIZE (ataidle-2.5.1.tar.gz) = 19938
++SHA256 (ataidle-2.6.tar.gz) = 3cb0179e9ec2e449e87788deeae42b8f006433b829fadf257f90ccb419a3b81e
++SIZE (ataidle-2.6.tar.gz) = 20493
+Index: sysutils/ataidle/pkg-descr
+===================================================================
+RCS file: /home/ncvs/ports/sysutils/ataidle/pkg-descr,v
+retrieving revision 1.5
+diff -p -u -r1.5 pkg-descr
+--- sysutils/ataidle/pkg-descr	24 Jun 2011 23:51:39 -0000	1.5
++++ sysutils/ataidle/pkg-descr	28 Oct 2011 19:02:24 -0000
+@@ -1,6 +1,6 @@
+ ATAidle is a utility to set the power management and performance
+ features of ATA hard drives.  This includes standby timeouts, power
+-(APM)  write cache and acoustic (AAM) level settings, and it can show
++(APM), write cache and acoustic (AAM) level settings, and it can show
+ details about the installed devices.
+ 
+ Author:	Bruce Cran <bruce@cran.org.uk>
+Index: sysutils/ataidle/files/patch-main.c
+===================================================================
+RCS file: sysutils/ataidle/files/patch-main.c
+diff -N sysutils/ataidle/files/patch-main.c
+--- sysutils/ataidle/files/patch-main.c	24 Jun 2011 23:51:39 -0000	1.1
++++ /dev/null	1 Jan 1970 00:00:00 -0000
+@@ -1,39 +0,0 @@
+-
+-$FreeBSD: ports/sysutils/ataidle/files/patch-main.c,v 1.1 2011/06/24 23:51:39 sobomax Exp $
+-
+---- main.c
+-+++ main.c
+-@@ -52,7 +52,7 @@
+- 	long opt_val;
+- 	int ch;
+- 	struct ata_ident ident;
+--	const char * const optstr = "hA:S:sI:iP:o";
+-+	const char * const optstr = "hA:S:sI:iP:owW";
+- 
+- 	/* need more than just the executable name */
+- 	if( argc == 1 )
+-@@ -151,6 +151,24 @@
+- 				}
+- 				break;
+- 
+-+			/* Write Cache Disable */
+-+			case 'w':
+-+				if (!(ident.cmd_supp1 & ATA_WC_SUPPORTED)) {
+-+					warnx("the device does not support write cache");
+-+					break;
+-+				}
+-+				rc = ata_setwc(ata, 0);
+-+				break;
+-+			
+-+			/* Write Cache Enable */
+-+                        case 'W':
+-+                                if (!(ident.cmd_supp1 & ATA_WC_SUPPORTED)) {
+-+                                        warnx("the device does not support write cache");
+-+                                        break;
+-+                                }
+-+                                rc = ata_setwc(ata, 1);
+-+                                break;
+-+
+- 			case 'h':
+- 			default:
+- 				usage();
+Index: sysutils/ataidle/files/patch-mi_atagen.h
+===================================================================
+RCS file: sysutils/ataidle/files/patch-mi_atagen.h
+diff -N sysutils/ataidle/files/patch-mi_atagen.h
+--- sysutils/ataidle/files/patch-mi_atagen.h	24 Jun 2011 23:51:39 -0000	1.1
++++ /dev/null	1 Jan 1970 00:00:00 -0000
+@@ -1,32 +0,0 @@
+-
+-$FreeBSD: ports/sysutils/ataidle/files/patch-mi_atagen.h,v 1.1 2011/06/24 23:51:39 sobomax Exp $
+-
+---- mi/atagen.h
+-+++ mi/atagen.h
+-@@ -62,6 +62,9 @@
+- #define ATA_SMART_SUPPORTED	0x0001
+- #define ATA_SMART_ENABLED	0x0001
+- 
+-+#define ATA_WC_SUPPORTED	0x0020
+-+#define ATA_WC_ENABLED		0x0020
+-+
+- #define ATA__SETFEATURES	0xEF
+- #define ATA__IDENTIFY		0xEC
+- #define ATA__ATAPI_IDENTIFY	0xA1
+-@@ -76,6 +79,8 @@
+- #define ATA_AUTOACOUSTIC_DISABLE	0xC2
+- #define ATA_APM_ENABLE			0x05
+- #define ATA_APM_DISABLE			0x85
+-+#define ATA_WC_ENABLE			0x02
+-+#define ATA_WC_DISABLE			0x82
+- #define ATA_AUTOACOUSTIC_MAXPERF 	0xFE
+- #define ATA_AUTOACOUSTIC_MINPERF 	0x80
+- #define ATA_APM_MINPOWER_NO_STANDBY	0x80
+-@@ -156,6 +161,7 @@
+- ATA*	ata_open(const char *device);
+- void	ata_close(ATA *ata);
+- int	ata_setidletimer(ATA *ata, uint32_t idle_mins);
+-+int	ata_setwc(ATA *ata, int enable);
+- int	ata_sleep(ATA *ata);
+- int	ata_setstandbytimer(ATA *ata, uint32_t standby_mins);
+- int	ata_setacoustic(ATA *ata, uint32_t acoustic_val);
+Index: sysutils/ataidle/files/patch-mi_util.c
+===================================================================
+RCS file: sysutils/ataidle/files/patch-mi_util.c
+diff -N sysutils/ataidle/files/patch-mi_util.c
+--- sysutils/ataidle/files/patch-mi_util.c	24 Jun 2011 23:51:39 -0000	1.1
++++ /dev/null	1 Jan 1970 00:00:00 -0000
+@@ -1,102 +0,0 @@
+-
+-$FreeBSD: ports/sysutils/ataidle/files/patch-mi_util.c,v 1.1 2011/06/24 23:51:39 sobomax Exp $
+-
+---- mi/util.c
+-+++ mi/util.c
+-@@ -230,19 +230,19 @@
+- 	printf("Model:\t\t\t%s\n", model);
+- 	printf("Serial:\t\t\t%s\n", serial);
+- 	printf("Firmware Rev:\t\t%s\n", firmware);
+--	ata_version = ata_getversionstring(buf[80]);
+-+	ata_version = ata_getversionstring(ident.version_major);
+- 	printf("ATA revision:\t\t%s\n", (ident.version_major > 1)?
+- 			ata_version : "unknown/pre ATA-2");
+--	printf("LBA 48:\t\t\t%s\n", (buf[86] & 0x400)? "yes" : "no");
+-+	printf("LBA 48:\t\t\t%s\n", (ident.cmd_enabled2 & 0x400)? "yes" : "no");
+- 	printf("Geometry:\t\t%d cyls, %d heads, %d spt\n",
+--			buf[1], buf[3], buf[6]);
+-+			ident.word1, ident.word3, ident.word6);
+- 
+- 	if (ata_version != NULL)
+- 		free(ata_version);
+- 
+- 	mbsize = 0;
+- 
+--	if (buf[86] & 0x400)
+-+	if (ident.cmd_enabled2 & 0x400)
+- 	{
+- 		mbsize = (((uint64_t)ident.max_lba48_address[0] +
+- 			((uint64_t)ident.max_lba48_address[1] << 16) +
+-@@ -254,12 +254,14 @@
+- 		mbsize = ((ident.nsect[0] + (ident.nsect[1] << 16))*512)/1048576;
+- 	}
+- 
+--	bool smart_supported = buf[82] & ATA_SMART_SUPPORTED;
+--	bool smart_enabled   = buf[85] & ATA_SMART_ENABLED;
+--	bool apm_supported   = buf[83] & ATA_APM_SUPPORTED;
+--	bool apm_enabled     = buf[86] & ATA_APM_ENABLED;
+--	bool aam_supported   = buf[83] & ATA_AAM_SUPPORTED;
+--	bool aam_enabled     = buf[86] & ATA_AAM_ENABLED;
+-+	bool smart_supported = ident.cmd_supp1 & ATA_SMART_SUPPORTED;
+-+	bool smart_enabled   = ident.cmd_enabled1 & ATA_SMART_ENABLED;
+-+        bool wc_supported    = ident.cmd_supp1 & ATA_WC_SUPPORTED;
+-+        bool wc_enabled      = ident.cmd_enabled1 & ATA_WC_ENABLED;
+-+	bool apm_supported   = ident.cmd_supp2 & ATA_APM_SUPPORTED;
+-+	bool apm_enabled     = ident.cmd_enabled2 & ATA_APM_ENABLED;
+-+	bool aam_supported   = ident.cmd_supp2 & ATA_AAM_SUPPORTED;
+-+	bool aam_enabled     = ident.cmd_enabled2 & ATA_AAM_ENABLED;
+- 
+- 	printf("Capacity:\t\t%u%s\n", (mbsize < 1024)?
+- 			mbsize : mbsize/1024, (mbsize < 1024)? "MB" : "GB");
+-@@ -269,12 +271,17 @@
+- 	if (smart_supported)
+- 		printf("SMART Enabled: \t\t%s\n", smart_enabled? "yes" : "no" );
+- 
+-+        printf("Write Cache Supported: \t%s\n", wc_supported? "yes" : "no" );
+-+
+-+        if (wc_supported)
+-+                printf("Write Cache Enabled: \t\t%s\n", wc_enabled? "yes" : "no" );
+-+
+- 	printf("APM Supported: \t\t%s\n", apm_supported? "yes" : "no" );
+- 
+- 	if (apm_supported) {
+- 		printf("APM Enabled: \t\t%s\n", apm_enabled? "yes" : "no" );
+- 		if (apm_enabled)
+--			printf("APM Value: \t\t%d\n", buf[91]);
+-+			printf("APM Value: \t\t%d\n", ident.apm_value);
+- 	}
+- 
+- 	printf("AAM Supported: \t\t%s\n", aam_supported? "yes" : "no" );
+-@@ -282,9 +289,9 @@
+- 	if (aam_supported) {
+- 		printf("AAM Enabled: \t\t%s\n", aam_enabled? "yes" : "no");
+- 		if (aam_enabled)
+--			printf("AAM Value: \t\t%d\n", ((buf[94] & 0x00FF))-127);
+-+			printf("AAM Value: \t\t%d\n", ((ident.aam_value & 0x00FF))-127);
+- 
+--		printf("Vendor Recommended AAM: %d\n", ((buf[94] & 0xFF00) >> 8)-127);
+-+		printf("Vendor Recommended AAM: %d\n", ((ident.aam_value & 0xFF00) >> 8)-127);
+- 	}
+- }
+- 
+-@@ -345,6 +352,20 @@
+- 	return rc;
+- }
+- 
+-+int
+-+ata_setwc(ATA *ata, int enable)
+-+{
+-+	int rc, cmd;
+-+
+-+	/* allocate and initialize the ata_cmd structure */
+-+	ata_init(ata);
+-+	cmd = enable ? ATA_WC_ENABLE : ATA_WC_DISABLE;
+-+	rc = ata_cmd(ata, ATA__SETFEATURES, cmd, 0);
+-+	if(rc)
+-+		perror("Failed to configure Write Cache");
+-+	return rc;
+-+}
+-+
+- /*
+-  * Sets the acoustic level on modern hard drives.   This is used to run it
+-  * at a lower speed/performance level, which in turn reduces noise.
