@@ -76,7 +76,7 @@ CONF_WORLD=' '
 NANO_KERNEL=GENERIC
 
 # Kernel modules to build; default is none
-NANO_MODULES=
+NANO_MODULES="cxgb ext2fs geom ntfs smbfs libiconv libmchain pf pflog udf zfs opensolaris usb/xhci"
 
 # Customize commands.
 NANO_CUSTOMIZE=""
