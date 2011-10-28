@@ -3,7 +3,7 @@
 <h1>{% blocktrans %}Step {{ step }} of {{ step_count }}{% endblocktrans %}</h1>
 <form data-dojo-type="dijit.form.Form" action="." enctype="multipart/form-data" method="post">{% csrf_token %}
 <script type="dojo/event" event="onSubmit" args="e">
-    formSubmit(this, e, '{{ postpath }}', [this, ]);
+    formSubmit(this, e, '{{ postpath }}');
 </script>
 <table>
 {{ form }}
