@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-19 02:03-0700\n"
+"POT-Creation-Date: 2011-10-27 02:10-0700\n"
 "PO-Revision-Date: 2011-09-09 14:13+0200\n"
 "Last-Translator: thepeterp <thepeterp@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,31 +50,15 @@ msgstr "Αποθήκευση"
 msgid "CronJobs"
 msgstr "Cronjobs"
 
-#: media/lib/js/freeadmin.js:555
+#: media/lib/js/freeadmin.js:554
 msgid "Edit"
 msgstr "Επεξεργασία"
 
-#: media/lib/js/freeadmin.js:557
+#: media/lib/js/freeadmin.js:556
 msgid "Edit Disk"
 msgstr "Επεξεργασία Δίσκου"
 
-#: media/lib/js/freeadmin.js:561
-msgid "Replace"
-msgstr "Αντικατάσταση"
-
-#: media/lib/js/freeadmin.js:562
-msgid "Disk Replacement"
-msgstr "Αντικατάσταση Δίσκου"
-
-#: media/lib/js/freeadmin.js:566
-msgid "Detach"
-msgstr "Αποσύνδεση"
-
-#: media/lib/js/freeadmin.js:567
-msgid "Disk Detach"
-msgstr "Αποσύνδεση Δίσκου"
-
-#: media/lib/js/freeadmin.js:747
+#: media/lib/js/freeadmin.js:735
 msgid "An error occurred!"
 msgstr "Κάποιο σφάλματα συνέβησε!"
 
@@ -86,5 +70,17 @@ msgstr "Κάθε επιλεγμένο"
 msgid "Every N"
 msgstr "Κάθε N"
 
-msgid "Every"
-msgstr "Κάθε"
+#~ msgid "Replace"
+#~ msgstr "Αντικατάσταση"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "Αντικατάσταση Δίσκου"
+
+#~ msgid "Detach"
+#~ msgstr "Αποσύνδεση"
+
+#~ msgid "Disk Detach"
+#~ msgstr "Αποσύνδεση Δίσκου"
+
+#~ msgid "Every"
+#~ msgstr "Κάθε"

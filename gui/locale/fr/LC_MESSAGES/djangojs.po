@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-19 02:03-0700\n"
+"POT-Creation-Date: 2011-10-27 02:10-0700\n"
 "PO-Revision-Date: 2011-09-09 14:13+0200\n"
 "Last-Translator: Marion DESNAULT <freenas@csmar51.dyndns.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -51,31 +51,15 @@ msgstr "Stockage"
 msgid "CronJobs"
 msgstr "Tâches planifiées"
 
-#: media/lib/js/freeadmin.js:555
+#: media/lib/js/freeadmin.js:554
 msgid "Edit"
 msgstr "Modifier"
 
-#: media/lib/js/freeadmin.js:557
+#: media/lib/js/freeadmin.js:556
 msgid "Edit Disk"
 msgstr "Modifier le disque"
 
-#: media/lib/js/freeadmin.js:561
-msgid "Replace"
-msgstr "Remplacer"
-
-#: media/lib/js/freeadmin.js:562
-msgid "Disk Replacement"
-msgstr "Remplacement du disque"
-
-#: media/lib/js/freeadmin.js:566
-msgid "Detach"
-msgstr "Détacher"
-
-#: media/lib/js/freeadmin.js:567
-msgid "Disk Detach"
-msgstr "Détacher le disque"
-
-#: media/lib/js/freeadmin.js:747
+#: media/lib/js/freeadmin.js:735
 msgid "An error occurred!"
 msgstr "Des erreurs sont survenues !"
 
@@ -89,6 +73,18 @@ msgstr "Chaque sélection"
 msgid "Every N"
 msgstr "Tou(te)s les N"
 
+#~ msgid "Replace"
+#~ msgstr "Remplacer"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "Remplacement du disque"
+
+#~ msgid "Detach"
+#~ msgstr "Détacher"
+
+#~ msgid "Disk Detach"
+#~ msgstr "Détacher le disque"
+
 # Utilisé dans "Every minute", "Every hour", "Every day of month"
-msgid "Every"
-msgstr "Tou(te)s les"
+#~ msgid "Every"
+#~ msgstr "Tou(te)s les"

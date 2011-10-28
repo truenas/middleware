@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-19 02:03-0700\n"
+"POT-Creation-Date: 2011-10-27 02:10-0700\n"
 "PO-Revision-Date: 2011-06-10 01:31+0200\n"
 "Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,31 +50,15 @@ msgstr "儲存"
 msgid "CronJobs"
 msgstr "例行工作"
 
-#: media/lib/js/freeadmin.js:555
+#: media/lib/js/freeadmin.js:554
 msgid "Edit"
 msgstr "管理"
 
-#: media/lib/js/freeadmin.js:557
+#: media/lib/js/freeadmin.js:556
 msgid "Edit Disk"
 msgstr "磁碟管理"
 
-#: media/lib/js/freeadmin.js:561
-msgid "Replace"
-msgstr "移轉"
-
-#: media/lib/js/freeadmin.js:562
-msgid "Disk Replacement"
-msgstr "磁碟移轉"
-
-#: media/lib/js/freeadmin.js:566
-msgid "Detach"
-msgstr "卸載"
-
-#: media/lib/js/freeadmin.js:567
-msgid "Disk Detach"
-msgstr "磁碟卸載"
-
-#: media/lib/js/freeadmin.js:747
+#: media/lib/js/freeadmin.js:735
 msgid "An error occurred!"
 msgstr "發生錯誤！"
 
@@ -85,3 +69,15 @@ msgstr "所選的每個"
 #: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr "每 N 個"
+
+#~ msgid "Replace"
+#~ msgstr "移轉"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "磁碟移轉"
+
+#~ msgid "Detach"
+#~ msgstr "卸載"
+
+#~ msgid "Disk Detach"
+#~ msgstr "磁碟卸載"

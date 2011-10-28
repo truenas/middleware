@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-19 02:03-0700\n"
+"POT-Creation-Date: 2011-10-27 02:10-0700\n"
 "PO-Revision-Date: 2011-07-24 15:05+0200\n"
 "Last-Translator: Simor <batio3pzt@aol.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,31 +50,15 @@ msgstr "Depolama"
 msgid "CronJobs"
 msgstr "CronJobs"
 
-#: media/lib/js/freeadmin.js:555
+#: media/lib/js/freeadmin.js:554
 msgid "Edit"
 msgstr "Düzenle"
 
-#: media/lib/js/freeadmin.js:557
+#: media/lib/js/freeadmin.js:556
 msgid "Edit Disk"
 msgstr "Disk Düzenleme"
 
-#: media/lib/js/freeadmin.js:561
-msgid "Replace"
-msgstr "Yer değiştir"
-
-#: media/lib/js/freeadmin.js:562
-msgid "Disk Replacement"
-msgstr "Disk Değiştirme"
-
-#: media/lib/js/freeadmin.js:566
-msgid "Detach"
-msgstr "Ayırma"
-
-#: media/lib/js/freeadmin.js:567
-msgid "Disk Detach"
-msgstr "Disk Ayirma"
-
-#: media/lib/js/freeadmin.js:747
+#: media/lib/js/freeadmin.js:735
 msgid "An error occurred!"
 msgstr "Bazı hatalar olustu!"
 
@@ -86,5 +70,17 @@ msgstr "Seçilen her"
 msgid "Every N"
 msgstr "Her N"
 
-msgid "Every"
-msgstr "Her"
+#~ msgid "Replace"
+#~ msgstr "Yer değiştir"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "Disk Değiştirme"
+
+#~ msgid "Detach"
+#~ msgstr "Ayırma"
+
+#~ msgid "Disk Detach"
+#~ msgstr "Disk Ayirma"
+
+#~ msgid "Every"
+#~ msgstr "Her"

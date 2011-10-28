@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-19 02:03-0700\n"
+"POT-Creation-Date: 2011-10-27 02:10-0700\n"
 "PO-Revision-Date: 2011-07-20 13:31+0200\n"
 "Last-Translator: Chipcius <andri@chipcy.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,31 +50,15 @@ msgstr "Gagnageymslur"
 msgid "CronJobs"
 msgstr "Reglubundnar keyrslur"
 
-#: media/lib/js/freeadmin.js:555
+#: media/lib/js/freeadmin.js:554
 msgid "Edit"
 msgstr "Stilla disk"
 
-#: media/lib/js/freeadmin.js:557
+#: media/lib/js/freeadmin.js:556
 msgid "Edit Disk"
 msgstr "Stilla disk"
 
-#: media/lib/js/freeadmin.js:561
-msgid "Replace"
-msgstr "Skipta út"
-
-#: media/lib/js/freeadmin.js:562
-msgid "Disk Replacement"
-msgstr "Diskur sem kemur í staðinn"
-
-#: media/lib/js/freeadmin.js:566
-msgid "Detach"
-msgstr "Aftengja"
-
-#: media/lib/js/freeadmin.js:567
-msgid "Disk Detach"
-msgstr "Aftengja Disk"
-
-#: media/lib/js/freeadmin.js:747
+#: media/lib/js/freeadmin.js:735
 msgid "An error occurred!"
 msgstr "Einhver villa kom upp!"
 
@@ -85,3 +69,15 @@ msgstr "Hvert valið atriðið"
 #: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr "Hvert N"
+
+#~ msgid "Replace"
+#~ msgstr "Skipta út"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "Diskur sem kemur í staðinn"
+
+#~ msgid "Detach"
+#~ msgstr "Aftengja"
+
+#~ msgid "Disk Detach"
+#~ msgstr "Aftengja Disk"

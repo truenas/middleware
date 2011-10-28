@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-19 11:49-0200\n"
+"POT-Creation-Date: 2011-10-27 02:06-0700\n"
 "PO-Revision-Date: 2011-10-24 18:13+0200\n"
 "Last-Translator: ok1 <ok1@trups.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -281,9 +281,9 @@ msgstr "Ierīce"
 msgid "ZFS Volume"
 msgstr "ZFS sējums"
 
-#: choices.py:209 storage/models.py:234 system/models.py:539
+#: choices.py:209 storage/models.py:234 system/models.py:540
 #: templates/storage/autoimport.html:9 templates/storage/import.html:18
-#: templates/storage/wizard.html:91
+#: templates/storage/wizard.html:130
 msgid "Disk"
 msgstr "Disks"
 
@@ -307,8 +307,8 @@ msgstr "lasīt-rakstīt"
 msgid "read-only"
 msgstr "tikai lasīt"
 
-#: choices.py:221 choices.py:227 services/forms.py:498 services/forms.py:500
-#: services/forms.py:850 templates/storage/wizard.html:92
+#: choices.py:221 choices.py:227 services/forms.py:505 services/forms.py:507
+#: services/forms.py:844 templates/storage/wizard.html:131
 msgid "None"
 msgstr "Neviens"
 
@@ -389,8 +389,8 @@ msgid "Year(s)"
 msgstr "Gads(i)"
 
 #: choices.py:462 system/models.py:330 system/models.py:355
-#: system/models.py:497 system/models.py:518 system/models.py:581
-#: system/models.py:600
+#: system/models.py:497 system/models.py:518 system/models.py:582
+#: system/models.py:601
 msgid "Everyday"
 msgstr "Ikdienas"
 
@@ -483,145 +483,154 @@ msgstr "Simbols $ nav atļauts kā beidzamais simbols"
 msgid "Your name contains invalid characters (%s)."
 msgstr "Tavs vārds satur nederīgus simbolus (%s)."
 
-#: account/forms.py:110 templates/storage/volumes.html:57
+#: account/forms.py:71
+#, fuzzy, python-format
+msgid "Your full name contains invalid characters (%s)."
+msgstr "Tavs vārds satur nederīgus simbolus (%s)."
+
+#: account/forms.py:119 templates/storage/volumes.html:51
 msgid "Available"
 msgstr "Pieejams"
 
-#: account/forms.py:161
+#: account/forms.py:170
 msgid "Selected"
 msgstr "Izvēlēts"
 
-#: account/forms.py:189 account/forms.py:212 account/models.py:78
+#: account/forms.py:198 account/forms.py:221 account/models.py:82
 #: services/models.py:700 services/models.py:975 system/models.py:179
 #: templates/account/bsdusers.html:5 templates/account/bsdusers.html.py:84
 msgid "Username"
 msgstr "Lietotājvārds"
 
-#: account/forms.py:190
+#: account/forms.py:199
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
 msgstr "Nepieciešams. 30 rakstzīmes vai mazāk. Tikai burti, cipari un ./-/_ ."
 
-#: account/forms.py:191
+#: account/forms.py:200
 msgid "This value may contain only letters, numbers and ./-/_ characters."
 msgstr "Šī vērtība var saturēt tikai burtus, skaitļus un ./-/_ rakstzīmes."
 
-#: account/forms.py:213 account/forms.py:353 services/models.py:704
+#: account/forms.py:222 account/forms.py:367 services/models.py:704
 #: system/forms.py:223 system/models.py:186 templates/account/bsdusers.html:9
 #: templates/account/bsdusers.html.py:88
 msgid "Password"
 msgstr "Parole"
 
-#: account/forms.py:214 account/forms.py:354 system/forms.py:224
+#: account/forms.py:223 account/forms.py:368 system/forms.py:224
 msgid "Password confirmation"
 msgstr "Paroles apstiprinājums"
 
-#: account/forms.py:215 account/forms.py:355 system/forms.py:225
+#: account/forms.py:224 account/forms.py:369 system/forms.py:225
 msgid "Enter the same password as above, for verification."
 msgstr "Ievadiet to pašu paroli kā iepriekš, lai veiktu pārbaudi."
 
-#: account/forms.py:216 account/forms.py:393 account/models.py:104
+#: account/forms.py:225 account/forms.py:407 account/models.py:109
 #: templates/account/bsdusers.html:8 templates/account/bsdusers.html.py:87
 msgid "Shell"
 msgstr "Apvalks"
 
-#: account/forms.py:217
+#: account/forms.py:226
 msgid "Disable password logins"
 msgstr "Atspēkot paroļu autorizācijas"
 
-#: account/forms.py:218 account/forms.py:392
+#: account/forms.py:227 account/forms.py:406
 msgid "Lock user"
 msgstr "Slēgt lietotāju"
 
-#: account/forms.py:219
+#: account/forms.py:228
 msgid "Primary Group"
 msgstr "Primārā grupa"
 
-#: account/forms.py:220 account/forms.py:397
+#: account/forms.py:229 account/forms.py:411
 msgid "SSH Public Key"
 msgstr "SSH Publiskā atslēga"
 
-#: account/forms.py:251
+#: account/forms.py:260
 msgid "A user with that uid already exists."
 msgstr "Lietotājs ar šo uid jau eksistē."
 
-#: account/forms.py:262
+#: account/forms.py:271
 msgid "A user with that username already exists."
 msgstr "Ar šo lietotājvārdu lietotājs jau eksistē."
 
-#: account/forms.py:270 account/forms.py:374 account/forms.py:620
-#: services/forms.py:249 services/forms.py:345 sharing/forms.py:85
+#: account/forms.py:279 account/forms.py:388 account/forms.py:639
+#: services/forms.py:249 services/forms.py:352 sharing/forms.py:85
 #: system/forms.py:268
 msgid "The two password fields didn't match."
 msgstr "Paroles lauki nesakrita."
 
-#: account/forms.py:277
+#: account/forms.py:286
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
 msgstr "Mājas direktorijai ir jāsākas ar  /mnt/ vai var būt /nonexistent"
 
-#: account/forms.py:293 account/forms.py:467
+#: account/forms.py:307 account/forms.py:486
 msgid "Home directory is not writable, leave this blank"
 msgstr "Mājas direktorijai nav rakstāma, atstāj šo tukšu"
 
-#: account/forms.py:299
+#: account/forms.py:313
 msgid "Password is disabled, leave this blank"
 msgstr "Paroles ir atspējots, atstāj šo tukšu"
 
-#: account/forms.py:304 services/forms.py:588 services/forms.py:863
-#: storage/forms.py:274 system/forms.py:371 system/forms.py:398
+#: account/forms.py:318 services/forms.py:595 services/forms.py:857
+#: storage/forms.py:284 system/forms.py:371 system/forms.py:398
 msgid "This field is required."
 msgstr "Šis lauks ir nepieciešams."
 
-#: account/forms.py:391
+#: account/forms.py:405
 msgid "Disable password"
 msgstr "Atspējot paroli"
 
-#: account/forms.py:452
+#: account/forms.py:466
 msgid "Home directory has to start with /mnt or be /nonexistent"
 msgstr "Mājas direktorijai ir jāsākas ar  /mnt/ vai var būt /nonexistent"
 
-#: account/forms.py:519
+#: account/forms.py:538
 msgid "Allow repeated GIDs"
 msgstr "Atļaut atkārtous GIDus"
 
-#: account/forms.py:532
+#: account/forms.py:551
 msgid "A group with that name already exists."
 msgstr "Grupa ar šo vārdu jau eksistē."
 
-#: account/forms.py:551
+#: account/forms.py:570
 msgid "A group with this gid already exists"
 msgstr "Grupa ar šo gid jau eksistē"
 
-#: account/forms.py:563
+#: account/forms.py:582
 msgid "Member users"
 msgstr "Lietotāja lietotāji"
 
-#: account/forms.py:581
+#: account/forms.py:600
 msgid "Auxiliary groups"
 msgstr "Palīg-grupas"
 
-#: account/forms.py:591
+#: account/forms.py:610
 msgid "A user cannot belong to more than 64 auxiliary groups"
 msgstr "Lietotājs nevar atrasties vairāk kā 64 papildus grupās"
 
-#: account/forms.py:608
+#: account/forms.py:627
 msgid "New password"
 msgstr "Jaunā parole"
 
-#: account/forms.py:609
+#: account/forms.py:628
 msgid "New password confirmation"
 msgstr "Jaunās paroles apstiprinājums"
 
-#: account/forms.py:634
-msgid "Old password"
-msgstr "Vecā parole"
-
-#: account/forms.py:637
+#: account/forms.py:653
 msgid "Change root password as well"
 msgstr "Maini arī root paroli"
 
-#: account/forms.py:649
+#: account/forms.py:660
+msgid "Old password"
+msgstr "Vecā parole"
+
+#: account/forms.py:674
 msgid "Your old password was entered incorrectly. Please enter it again."
 msgstr "Vecā parole tika ievadīta nepareizi. Lūdzu, ievadiet to vēlreiz."
+
+#: account/forms.py:680
+msgid "Do you want to delete all users with this primary group?"
+msgstr ""
 
 #: account/models.py:36 services/models.py:486 services/models.py:531
 #: templates/services/iscsi_auth.html:5
@@ -634,65 +643,65 @@ msgstr "Grupas ID"
 msgid "Group Name"
 msgstr "Grupas nosaukums"
 
-#: account/models.py:47 account/models.py:154 services/models.py:1250
+#: account/models.py:47 account/models.py:159 services/models.py:1250
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
 #: templates/account/bsdusers.html:6 templates/account/bsdusers.html.py:85
 msgid "Group"
 msgstr "Grupa"
 
-#: account/models.py:48 templates/account/index.html:10
+#: account/models.py:48 templates/account/index.html:13
 msgid "Groups"
 msgstr "Grupas"
 
-#: account/models.py:63
+#: account/models.py:64
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
 msgstr "Grupas %s ir iebūvēts un nevar tikt izdzēsts!"
 
-#: account/models.py:72
+#: account/models.py:76
 msgid "User ID"
 msgstr "Lietotāja ID"
 
-#: account/models.py:77
+#: account/models.py:81
 msgid "User &"
 msgstr "Lietotāja &"
 
-#: account/models.py:84
+#: account/models.py:88
 msgid "Hashed UNIX password"
 msgstr "Sajauktā UNIX parole"
 
-#: account/models.py:90
+#: account/models.py:94
 msgid "Hashed SMB password"
 msgstr "Sajauktā SMB parole"
 
-#: account/models.py:94
+#: account/models.py:99
 msgid "Primary Group ID"
 msgstr "Primārās grupas ID"
 
-#: account/models.py:99
+#: account/models.py:104
 msgid "Home Directory"
 msgstr "Sākuma katalogs"
 
-#: account/models.py:108
+#: account/models.py:113
 msgid "Full Name"
 msgstr "Pilns vārds"
 
-#: account/models.py:114 templates/account/bsdusers.html:90
+#: account/models.py:119 templates/account/bsdusers.html:90
 msgid "E-mail"
 msgstr "E-pasts"
 
-#: account/models.py:119 account/models.py:158 services/models.py:535
+#: account/models.py:124 account/models.py:163 services/models.py:535
 #: services/models.py:1243 system/models.py:261 system/models.py:418
 #: templates/services/iscsi_auth.html:6 templates/system/cronjob.html:10
 #: templates/system/rsync.html:10
 msgid "User"
 msgstr "Lietotājs"
 
-#: account/models.py:120 templates/account/index.html:13
+#: account/models.py:125 templates/account/index.html:19
 msgid "Users"
 msgstr "Lietotāji"
 
-#: account/models.py:137
+#: account/models.py:142
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
 msgstr "Lietotāja %s ir iebūvēts un nevar tikt izdzēsts!"
@@ -703,12 +712,12 @@ msgstr "Lietotājs"
 
 #: account/nav.py:11 templates/account/bsdusers.html:33
 #: templates/account/bsdusers.html.py:35 templates/account/bsdusers.html:112
-#: templates/account/bsdusers.html:114 templates/account/index.html:7
+#: templates/account/bsdusers.html:114 templates/account/index.html:8
 msgid "Change Password"
 msgstr "Mainīt paroli"
 
 #: account/nav.py:19 templates/account/changeform.html:26
-#: templates/account/index.html:4
+#: templates/account/index.html:3
 msgid "Change Admin User"
 msgstr "Mainīt administrātora lietotāju"
 
@@ -762,52 +771,70 @@ msgstr "Grupa %s nav derīga."
 msgid "The path must reside within a volume mount point"
 msgstr "Tavam ceļam uz apjomu jābūt iekš sējuma montēšanas punkta"
 
-#: freeadmin/navtree.py:315
+#: freeadmin/navtree.py:316
 #, python-format
 msgid "Add %s"
 msgstr "Pievieno %s"
 
-#: freeadmin/navtree.py:327
+#: freeadmin/navtree.py:328
 #, python-format
 msgid "View All %s"
 msgstr "Skatīt visus %s"
 
-#: freeadmin/navtree.py:346
+#: freeadmin/navtree.py:347
 msgid "Display System Processes"
 msgstr "Attēlot sistēmas procesus"
 
-#: freeadmin/navtree.py:353 templates/freeadmin/index.html:55
+#: freeadmin/navtree.py:354 templates/freeadmin/index.html:61
 msgid "Reboot"
 msgstr "Pārstartēt"
 
-#: freeadmin/navtree.py:360 templates/freeadmin/index.html:67
+#: freeadmin/navtree.py:361 templates/freeadmin/index.html:78
 msgid "Shutdown"
 msgstr "Izslēgt"
 
-#: freeadmin/views.py:148
+#: freeadmin/views.py:150
 msgid "It was not possible to retrieve the current status"
 msgstr "Nebija iespējams iegūt pašreizējo stāvokli"
 
-#: freeadmin/views.py:324 freeadmin/views.py:528 freeadmin/views.py:530
+#: freeadmin/views.py:326 freeadmin/views.py:530 freeadmin/views.py:532
 #, python-format
 msgid "%s successfully updated."
 msgstr "%s veiksmīgi atjaunināts."
 
-#: freeadmin/views.py:326 freeadmin/views.py:534 storage/views.py:153
-#: storage/views.py:206 storage/views.py:602 storage/views.py:660
-#: system/forms.py:88
+#: freeadmin/views.py:328 freeadmin/views.py:536 storage/views.py:145
+#: storage/views.py:198 storage/views.py:541 storage/views.py:580
+#: storage/views.py:612 storage/views.py:631 storage/views.py:671
+#: storage/views.py:721 system/forms.py:88
 #, python-format
 msgid "Error: %s"
 msgstr "Kļūda: %s"
 
-#: freeadmin/views.py:328 freeadmin/views.py:532
+#: freeadmin/views.py:330 freeadmin/views.py:534
 msgid "The service failed to restart."
 msgstr "Servisam neizdevās re-startēties."
 
-#: freeadmin/views.py:604 freeadmin/views.py:608
+#: freeadmin/views.py:606 freeadmin/views.py:610
 #, python-format
 msgid "%s successfully deleted."
 msgstr "%s veiksmīgi izdzēsts."
+
+#: middleware/zfs.py:513 storage/models.py:360
+msgid "Error getting total space"
+msgstr "Kļūda iegūstot kopēja vietu"
+
+#: middleware/zfs.py:519 storage/models.py:366
+msgid "Error getting available space"
+msgstr "Kļūda iegūstot pieejamo vietu"
+
+#: middleware/zfs.py:530 storage/models.py:377
+msgid "Error getting used space"
+msgstr "Kļūda iegūstot lietoto vietu"
+
+#: middleware/zfs.py:536 middleware/zfs.py:543 storage/models.py:75
+#: storage/models.py:383 storage/models.py:390
+msgid "Error"
+msgstr "Kļūda"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
@@ -1009,7 +1036,7 @@ msgstr "Iespējas"
 msgid "Interface"
 msgstr "Interfeiss"
 
-#: network/models.py:142 templates/network/index.html:5
+#: network/models.py:142 templates/network/index.html:9
 msgid "Interfaces"
 msgstr "Saskarnes"
 
@@ -1042,13 +1069,13 @@ msgid "VLAN Tag"
 msgstr "VLAN Tags"
 
 #: network/models.py:218 network/models.py:315 services/models.py:77
-#: services/models.py:791 storage/models.py:170 system/models.py:269
+#: services/models.py:791 storage/models.py:169 system/models.py:269
 #: templates/network/staticroute.html:7 templates/network/vlan.html:8
 #: templates/system/smarttest.html:5
 msgid "Description"
 msgstr "Apraksts"
 
-#: network/models.py:232 templates/network/index.html:11
+#: network/models.py:232 templates/network/index.html:24
 msgid "VLAN"
 msgstr "VLAN"
 
@@ -1072,7 +1099,7 @@ msgstr "LAGG prioritārais skaits"
 msgid "Physical NIC"
 msgstr "Fiziskās NIC"
 
-#: network/models.py:297 templates/network/index.html:7
+#: network/models.py:297 templates/network/index.html:14
 msgid "Link Aggregation"
 msgstr "Link summēšana"
 
@@ -1092,7 +1119,7 @@ msgstr "Vārteja"
 msgid "Static Route"
 msgstr "Statiskais maršruts"
 
-#: network/models.py:321 templates/network/index.html:9
+#: network/models.py:321 templates/network/index.html:19
 msgid "Static Routes"
 msgstr "Statiskie ceļi"
 
@@ -1100,7 +1127,7 @@ msgstr "Statiskie ceļi"
 msgid "Network"
 msgstr "Tīkls"
 
-#: network/nav.py:13 templates/network/index.html:13
+#: network/nav.py:13 templates/network/index.html:29
 msgid "Network Summary"
 msgstr "Tīkla kopsavilkums"
 
@@ -1221,7 +1248,11 @@ msgstr "SNMP servisam neizdevās startēties."
 msgid "Port"
 msgstr "Ports"
 
-#: services/forms.py:319 services/forms.py:903
+#: services/forms.py:315
+msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
+msgstr ""
+
+#: services/forms.py:326 services/forms.py:897
 #, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
@@ -1229,85 +1260,85 @@ msgstr[0] "Šis e-pasts %(email)s nav derīgs "
 msgstr[1] "Sekojošie e-pasti nav derīgi: %(email)s"
 msgstr[2] "Sekojošie e-pasti nav derīgi: %(email)s"
 
-#: services/forms.py:328
+#: services/forms.py:335
 #, fuzzy
 msgid "The UPS service failed to reload."
 msgstr "NFS servisam neizdevās startēties."
 
-#: services/forms.py:333
+#: services/forms.py:340
 #, fuzzy
 msgid "Confirm Administrator Password"
 msgstr "Administratora Parole"
 
-#: services/forms.py:358
+#: services/forms.py:365
 msgid "The activedirectory service failed to reload."
 msgstr "Aktīvās mapes servisam neizdevās startēties."
 
-#: services/forms.py:369
+#: services/forms.py:376
 msgid "The ldap service failed to reload."
 msgstr "Ldap servisam neizdevās startēties."
 
-#: services/forms.py:375 services/models.py:540
+#: services/forms.py:382 services/models.py:540
 msgid "Secret"
 msgstr "Noslēpums"
 
-#: services/forms.py:377 services/models.py:541
+#: services/forms.py:384 services/models.py:541
 msgid "Target side secret."
 msgstr "Mērķa puses noslēpums."
 
-#: services/forms.py:378
+#: services/forms.py:385
 msgid "Secret (Confirm)"
 msgstr "Noslēpums (Apstiprināt)"
 
-#: services/forms.py:380 services/forms.py:388
+#: services/forms.py:387 services/forms.py:395
 msgid "Enter the same secret above for verification."
 msgstr "Ievadiet to pašu noslēpumu priekš pārbaudes."
 
-#: services/forms.py:381
+#: services/forms.py:388
 msgid "Initiator Secret"
 msgstr "Ierosinātais noslēpums"
 
-#: services/forms.py:383 services/models.py:547 services/models.py:552
+#: services/forms.py:390 services/models.py:547 services/models.py:552
 msgid "Initiator side secret. (for mutual CHAP authentication)"
 msgstr "Ierosinātāja puses noslēpums. (savstarpējām CHAP autentifikācijām)"
 
-#: services/forms.py:386
+#: services/forms.py:393
 msgid "Initiator Secret (Confirm)"
 msgstr "Ierosinātāja noslēpums (apstiprināt)"
 
-#: services/forms.py:395
+#: services/forms.py:402
 msgid "Secret does not match"
 msgstr "Noslēpumi nesakrīt"
 
-#: services/forms.py:410 services/forms.py:411
+#: services/forms.py:417 services/forms.py:418
 msgid "The peer secret is required if you set a peer user."
 msgstr "\"Peer\" noslēpums ir nepieciešams, ja iestatāt \"peer\" lietotāju."
 
-#: services/forms.py:414
+#: services/forms.py:421
 msgid "The peer secret cannot be the same as user secret."
 msgstr "\"Peer\" noslēpums nevar būt tāds pats kā lietotāja noslēpums."
 
-#: services/forms.py:417 services/forms.py:420
+#: services/forms.py:424 services/forms.py:427
 #, fuzzy
 msgid "The peer user is required if you set a peer secret."
 msgstr "\"Peer\" noslēpums ir nepieciešams, ja iestatāt \"peer\" lietotāju."
 
-#: services/forms.py:437 services/forms.py:484 services/forms.py:601
-#: services/forms.py:659 services/forms.py:766 services/forms.py:791
-#: services/forms.py:823 services/forms.py:878 services/models.py:480
+#: services/forms.py:444 services/forms.py:491 services/forms.py:608
+#: services/forms.py:666 services/forms.py:760 services/forms.py:785
+#: services/forms.py:817 services/forms.py:872 services/models.py:480
 #: services/models.py:676
 msgid "The iSCSI service failed to reload."
 msgstr "iSCSI servisam neizdevās startēties."
 
-#: services/forms.py:476
+#: services/forms.py:483
 msgid "LUN already exists in the same target."
 msgstr "LUN jau pastāv šajā mērķī."
 
-#: services/forms.py:487 services/models.py:359
+#: services/forms.py:494 services/models.py:359
 msgid "Controller Auth Group"
 msgstr "Kontrolieris Auth Group"
 
-#: services/forms.py:488 services/models.py:360
+#: services/forms.py:495 services/models.py:360
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
@@ -1315,83 +1346,83 @@ msgstr ""
 "Istgtcontrol var piekļūt mērķiem, izmantojot pareizu lietotāju un noslēpumu "
 "konkrētajai Auth Group."
 
-#: services/forms.py:489 services/models.py:253
+#: services/forms.py:496 services/models.py:253
 msgid "Discovery Auth Group"
 msgstr "Atklāšanas Autorizācijas Grupa"
 
-#: services/forms.py:519
+#: services/forms.py:526
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
 msgstr "Vērtībai jābūt starp %(start)d un %(end)d, ieskaitot."
 
-#: services/forms.py:527
+#: services/forms.py:534
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
 "Šis lauks ir nepieciešams, ja atklāšanas metode ir CHAP vai CHAP Mutual."
 
-#: services/forms.py:575
+#: services/forms.py:582
 msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
 msgstr ""
 
-#: services/forms.py:613
+#: services/forms.py:620
 msgid "You need to specify a filepath, not a directory."
 msgstr "Tev vajag norādīt saiti uz failu, ne mapi."
 
-#: services/forms.py:617
+#: services/forms.py:624
 msgid "You need to specify a file inside your volume/dataset."
 msgstr "Tev jānorāda datne iekš sējuma."
 
-#: services/forms.py:621
+#: services/forms.py:628
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
 msgstr "Tavam ceļam uz apjomu jābūt iekš sējuma montēšanas punkta."
 
-#: services/forms.py:635
+#: services/forms.py:642
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr "Šī vērtība var būt bitos, vai tai pievieno KB, MB, GB, TB"
 
-#: services/forms.py:642
+#: services/forms.py:649
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
 
-#: services/forms.py:664
+#: services/forms.py:671
 msgid "Disk device"
 msgstr "Diska ierīce"
 
-#: services/forms.py:782
+#: services/forms.py:776
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
 msgstr "Tava Portāla Grupas ID nevar būt augstāks kā %d"
 
-#: services/forms.py:806
+#: services/forms.py:800
 #, python-format
 msgid "Your Group ID cannot be higher than %d"
 msgstr "Tavas Grupas ID nevar būt augstāks kā %d"
 
-#: services/forms.py:817
+#: services/forms.py:811
 #, fuzzy
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
 msgstr "Šis lauks nav derīga IP adrese vai tīkls"
 
-#: services/forms.py:826
+#: services/forms.py:820
 msgid "Authentication Group number"
 msgstr "Autorizācijas Grupas numurs"
 
-#: services/forms.py:855
+#: services/forms.py:849
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
 msgstr ""
 
-#: services/forms.py:881
+#: services/forms.py:875
 msgid "Delete underlying file"
 msgstr "Dzēst apakšā esošo datni"
 
-#: services/forms.py:912
+#: services/forms.py:906
 #, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
 msgstr "SNMP servisam neizdevās startēties."
@@ -1860,7 +1891,7 @@ msgstr ""
 
 #: services/models.py:402 services/models.py:456 services/models.py:503
 #: services/models.py:1222 sharing/models.py:44 sharing/models.py:222
-#: system/models.py:638 system/models.py:670
+#: system/models.py:639 system/models.py:671
 #: templates/services/iscsi_authini.html:8
 #: templates/services/iscsi_portals.html:7 templates/services/rsyncmod.html:6
 #: templates/sharing/apple.html:14 templates/sharing/unix.html:14
@@ -1966,7 +1997,7 @@ msgstr "Mērķa aizstājējvārds"
 msgid "Optional user-friendly string of the target."
 msgstr "Neobligāta, mērķa lietotājam draudzīga virkne."
 
-#: services/models.py:583 storage/views.py:227
+#: services/models.py:583 storage/views.py:225
 msgid "Serial"
 msgstr "Seriālais"
 
@@ -1974,7 +2005,7 @@ msgstr "Seriālais"
 msgid "Serial number for the logical unit"
 msgstr "Seriālais numurs loģiskajai ierīcei"
 
-#: services/models.py:591 storage/models.py:149 system/models.py:544
+#: services/models.py:591 system/models.py:545
 #: templates/services/iscsi_dextents.html:6
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7
@@ -2130,7 +2161,7 @@ msgstr "Sūtīt SNMP slazdus"
 msgid "SNMP"
 msgstr "SNMP"
 
-#: services/models.py:768 storage/models.py:166
+#: services/models.py:768 storage/models.py:165
 msgid "Identifier"
 msgstr "Identifikators"
 
@@ -2262,11 +2293,11 @@ msgid "Allow Anonymous Login"
 msgstr "Atļaut Anonīmu pieslēgšanos"
 
 #: services/models.py:875 services/models.py:1225 sharing/models.py:48
-#: sharing/models.py:112 sharing/models.py:226 storage/forms.py:201
+#: sharing/models.py:112 sharing/models.py:226 storage/forms.py:203
 #: system/models.py:375 templates/services/iscsi_dextents.html:7
 #: templates/services/iscsi_extents.html:7 templates/services/rsyncmod.html:7
-#: templates/sharing/windows.html:15 templates/storage/volumes.html:55
-#: templates/storage/wizard.html:122
+#: templates/sharing/windows.html:15 templates/storage/volumes.html:49
+#: templates/storage/wizard.html:161
 msgid "Path"
 msgstr "Ceļš"
 
@@ -2863,7 +2894,7 @@ msgstr "Pievienot ierīces apjomu"
 msgid "View All Device Extents"
 msgstr "Skatīt visus ierīču apjomus"
 
-#: services/nav.py:70 templates/services/iscsi.html:7
+#: services/nav.py:70 templates/services/iscsi.html:15
 msgid "Device Extents"
 msgstr "Ierīču Apjomi"
 
@@ -2878,7 +2909,7 @@ msgstr "Pievienot Apjomu"
 msgid "View All Extents"
 msgstr "Skatīt visus apjomus"
 
-#: services/nav.py:114 templates/services/iscsi.html:9
+#: services/nav.py:114 templates/services/iscsi.html:21
 msgid "Extents"
 msgstr "Apjomi"
 
@@ -2934,11 +2965,10 @@ msgstr "Mapall grupa pieprasa Mapall lietotāju"
 msgid "Maproot user/group disqualifies Mapall"
 msgstr "Maproot lietotājs/grupa diskvalificē Mapall"
 
-#: sharing/models.py:40 sharing/models.py:103 storage/models.py:45
-#: storage/models.py:144 storage/models.py:162
-#: templates/network/interface.html:6 templates/network/summary.html:5
-#: templates/services/rsyncmod.html:5 templates/sharing/apple.html:13
-#: templates/sharing/windows.html:13
+#: sharing/models.py:40 sharing/models.py:103 storage/models.py:44
+#: storage/models.py:161 templates/network/interface.html:6
+#: templates/network/summary.html:5 templates/services/rsyncmod.html:5
+#: templates/sharing/apple.html:13 templates/sharing/windows.html:13
 msgid "Name"
 msgstr "Vārds"
 
@@ -3392,35 +3422,35 @@ msgstr "UNIX Koplietojumi"
 msgid "Sharing"
 msgstr "Koplietošana"
 
-#: storage/forms.py:87
+#: storage/forms.py:89
 #, fuzzy
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
 msgstr "Ievadi pozitīvu skaitli (var tikt beigts par M, G, T), vai, 0"
 
-#: storage/forms.py:100
+#: storage/forms.py:102
 #, fuzzy, python-format
 msgid "%s is not a valid number"
 msgstr "Lietotājs %s nav derīgs."
 
-#: storage/forms.py:195 storage/forms.py:456 templates/storage/import.html:9
+#: storage/forms.py:197 storage/forms.py:428 templates/storage/import.html:9
 #: templates/storage/wizard.html:17
 msgid "Volume name"
 msgstr "Sējuma nosaukums"
 
-#: storage/forms.py:199 templates/storage/wizard.html:53
+#: storage/forms.py:201 templates/storage/wizard.html:63
 msgid "Force 4096 bytes sector size"
 msgstr "Forsēt 4096 baitu sektora izmēru"
 
-#: storage/forms.py:200 templates/storage/wizard.html:115
+#: storage/forms.py:202 templates/storage/wizard.html:154
 msgid "Specify custom path"
 msgstr ""
 
-#: storage/forms.py:208
+#: storage/forms.py:211
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
 msgstr ""
 
-#: storage/forms.py:268
+#: storage/forms.py:278
 #, fuzzy
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
@@ -3428,140 +3458,143 @@ msgid ""
 msgstr ""
 "Sējuma nosaukumam jāsākas ar burtiem un var satuŗet ciparus, \"-\", \"_\"."
 
-#: storage/forms.py:282
+#: storage/forms.py:292
 #, fuzzy
 msgid "Path does not exist."
 msgstr "Ceļš uz apjomu"
 
-#: storage/forms.py:285
+#: storage/forms.py:295
 msgid "Path is not a directory."
 msgstr ""
 
-#: storage/forms.py:293
+#: storage/forms.py:303
 msgid "You must select a filesystem"
 msgstr "Tev jāizvēlas datņu sistēma"
 
-#: storage/forms.py:297 system/forms.py:253 system/forms.py:259
+#: storage/forms.py:307 system/forms.py:253 system/forms.py:259
 #: system/forms.py:264
 msgid "This field is required"
 msgstr "Šis lauks ir obligāts"
 
-#: storage/forms.py:304 storage/forms.py:502 storage/forms.py:607
+#: storage/forms.py:314 storage/forms.py:474 storage/forms.py:571
 msgid "You already have a volume with same name"
 msgstr "Tev jau ir sējums ar to pašu vārdu"
 
-#: storage/forms.py:310
+#: storage/forms.py:320
 msgid "\"log\" is a reserved word and thus cannot be used"
 msgstr "\"log\" ir rezervēts vārds un tādēļ nevar tikt izmantots"
 
-#: storage/forms.py:315
+#: storage/forms.py:325
 msgid "The volume name may NOT start with c[0-9], mirror, raidz or spare"
 msgstr "Sējuma nosaukums nevar sākties ar c[0-9], mirror, raidz vai spare"
 
-#: storage/forms.py:320
+#: storage/forms.py:330
 #, fuzzy
 msgid "UFS volume names cannot be higher than 9 characters"
 msgstr "Tavas Grupas ID nevar būt augstāks kā %d"
 
-#: storage/forms.py:324
+#: storage/forms.py:334
 msgid "UFS volume names can only contain alphanumeric characters"
 msgstr ""
 
-#: storage/forms.py:457 storage/forms.py:551 storage/forms.py:1020
+#: storage/forms.py:429 storage/forms.py:513 storage/forms.py:904
 msgid "Member disk"
 msgstr "Biedra disks"
 
-#: storage/forms.py:508 storage/forms.py:623
+#: storage/forms.py:480 storage/forms.py:587
 msgid "The selected disks were not verified for this import rules."
 msgstr "Izvēlētie diski netika pārbaudīti šiem importa noteikumiem."
 
-#: storage/forms.py:516
+#: storage/forms.py:488
 msgid "An error occurred while labeling the disk."
 msgstr "Notika kāda kļūda nosaucot disku."
 
-#: storage/forms.py:602
+#: storage/forms.py:566
 msgid "You must select a volume."
 msgstr "Tev jāizvēlas sējums."
 
-#: storage/forms.py:718
+#: storage/forms.py:624
 #, python-format
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
 msgstr ""
 
-#: storage/forms.py:750
-msgid "Volume from which this dataset will be created on"
-msgstr "Sējums no kura tiks veidota datu kopa"
-
-#: storage/forms.py:751
+#: storage/forms.py:650
 msgid "Dataset Name"
 msgstr "Datu kopas nosaukums"
 
-#: storage/forms.py:752 storage/forms.py:787 storage/forms.py:817
-#: storage/forms.py:848
+#: storage/forms.py:651 storage/forms.py:683 storage/forms.py:712
+#: storage/forms.py:742
 msgid "Compression level"
 msgstr "Kompresijas pakāpe"
 
-#: storage/forms.py:753 storage/forms.py:788 storage/forms.py:818
+#: storage/forms.py:652 storage/forms.py:684 storage/forms.py:713
 msgid "Enable atime"
 msgstr "Iespējot atime"
 
-#: storage/forms.py:754 storage/forms.py:789 storage/forms.py:819
+#: storage/forms.py:653 storage/forms.py:685
 msgid "Quota for this dataset"
 msgstr "Kvota šai datu kopai"
 
-#: storage/forms.py:754 storage/forms.py:755 storage/forms.py:789
-#: storage/forms.py:790 storage/forms.py:819
+#: storage/forms.py:653 storage/forms.py:654 storage/forms.py:685
+#: storage/forms.py:686 storage/forms.py:714
 msgid "0=Unlimited; example: 1g"
 msgstr "0=Neierobežots, piemēram: 1g"
 
-#: storage/forms.py:755 storage/forms.py:790
+#: storage/forms.py:654 storage/forms.py:686
 msgid "Quota for this dataset and all children"
 msgstr "Kvota šai datu kopai un visiem bērniem"
 
-#: storage/forms.py:756 storage/forms.py:791 storage/forms.py:820
+#: storage/forms.py:655 storage/forms.py:687
 msgid "Reserved space for this dataset"
 msgstr "Rezervētā vieta šai datu kopai"
 
-#: storage/forms.py:756 storage/forms.py:757 storage/forms.py:791
-#: storage/forms.py:792 storage/forms.py:820
+#: storage/forms.py:655 storage/forms.py:656 storage/forms.py:687
+#: storage/forms.py:688 storage/forms.py:715
 msgid "0=None; example: 1g"
 msgstr "0 =Neviens; piemēram: 1g"
 
-#: storage/forms.py:757 storage/forms.py:792
+#: storage/forms.py:656 storage/forms.py:688
 msgid "Reserved space for this dataset and all children"
 msgstr "Rezervētā vieta datu kopai un visiem bērniem"
 
-#: storage/forms.py:770
+#: storage/forms.py:665
+#, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
-"(-), (_), (:) and (.)."
+"\"-\", \"_\", \":\" and \".\"."
 msgstr ""
 "Datu kopas vārdiem jāsākas ar alfanumerisku simbolu un var saturēt tikai "
 "(-), (_), (:) un (.)."
 
-#: storage/forms.py:777 storage/forms.py:868
+#: storage/forms.py:672 storage/forms.py:755
 msgid "You already have a dataset with the same name"
 msgstr "Tev jau ir datu kopa ar to pašu vārdu"
 
-#: storage/forms.py:845
-msgid "Volume from which this ZFS Volume will be created on"
-msgstr "Sējums, no kura šis ZFS sējums tiks veidots"
+#: storage/forms.py:714
+#, fuzzy
+msgid "Quota for this volume"
+msgstr "Kvota šai datu kopai"
 
-#: storage/forms.py:846
+#: storage/forms.py:715
+#, fuzzy
+msgid "Reserved space for this volume"
+msgstr "Rezervētā vieta šai datu kopai"
+
+#: storage/forms.py:740
 msgid "ZFS Volume Name"
 msgstr "ZFS sējuma nosaukums"
 
-#: storage/forms.py:847
+#: storage/forms.py:741
 msgid "Size for this ZFS Volume"
 msgstr "Lielums priekš ZFS sējuma"
 
-#: storage/forms.py:847
+#: storage/forms.py:741
 #, fuzzy
 msgid "Example: 1g"
 msgstr "0 =Neviens; piemēram: 1g"
 
-#: storage/forms.py:861
+#: storage/forms.py:749
 msgid ""
 "ZFS Volume names must begin with an alphanumeric character and may only "
 "contain (-), (_), (:) and (.)."
@@ -3569,268 +3602,243 @@ msgstr ""
 "ZFS Sējuma nosaukumam jāsākas ar lafanumerisku simbolu un var saturēt tikai "
 "(-), (_), (:) un (.)."
 
-#: storage/forms.py:883
+#: storage/forms.py:770
 msgid "Owner (user)"
 msgstr "Īpašnieks (lietotājs)"
 
-#: storage/forms.py:884
+#: storage/forms.py:771
 msgid "Owner (group)"
 msgstr "Īpašnieks (grupa)"
 
-#: storage/forms.py:885
+#: storage/forms.py:772
 msgid "Mode"
 msgstr "Režīms"
 
-#: storage/forms.py:886
+#: storage/forms.py:773
 msgid "Type of ACL"
 msgstr ""
 
-#: storage/forms.py:892
+#: storage/forms.py:779
 msgid "Set permission recursively"
 msgstr "Uzstādi atļaujas atpakaļejoši"
 
-#: storage/forms.py:954
+#: storage/forms.py:841
 msgid "At least one day must be chosen"
 msgstr "Vismaz vienai dienai jābūt izvēlētai"
 
-#: storage/forms.py:959
+#: storage/forms.py:846
 msgid "Recursive snapshot"
 msgstr "Atpakaļejošs uzņēmums"
 
-#: storage/forms.py:960
+#: storage/forms.py:847
 msgid "Snapshot Name"
 msgstr "Uzņēmuma nosaukums"
 
-#: storage/forms.py:967
+#: storage/forms.py:854
 msgid "Only [-a-zA-Z0-9_.] permitted as snapshot name"
 msgstr "Tikai [-a-zA-Z0-9_.] atļauti uzņēmuma nosaukumā"
 
-#: storage/forms.py:979
+#: storage/forms.py:866
 msgid "Invalid prefix"
 msgstr "Nederīgs prefikss"
 
-#: storage/forms.py:983
+#: storage/forms.py:870
 msgid "Snapshot"
 msgstr "Uzņēmums"
 
-#: storage/forms.py:984
+#: storage/forms.py:871
 msgid "Clone Name (must be on same volume)"
 msgstr "Klona Vārds (jābūt uz tā paša sējuma)"
 
-#: storage/forms.py:997
+#: storage/forms.py:884
 msgid "Only [-a-zA-Z0-9_./] permitted as clone name"
 msgstr "Tikai [-a-zA-Z0-9_./] atļauti klona nosaukumam"
 
-#: storage/forms.py:1003
+#: storage/forms.py:890
 msgid "Clone must be within the same volume"
 msgstr "Klonam jābūt iekš tā paša sējuma"
 
-#: storage/forms.py:1101 storage/models.py:406
+#: storage/forms.py:976 storage/models.py:403
 msgid "Remote hostname"
 msgstr "Attālinātā saimniekdatora nosaukums"
 
-#: storage/forms.py:1102 storage/models.py:410
+#: storage/forms.py:977 storage/models.py:407
 msgid "Remote hostkey"
 msgstr "Attālinātā saimnieka atslēga"
 
-#: storage/forms.py:1144
+#: storage/forms.py:1019
 msgid "Mark the disks as new (destroy data)"
 msgstr ""
 
-#: storage/forms.py:1153
+#: storage/forms.py:1028
 msgid "Delete all shares related to this volume"
 msgstr ""
 
-#: storage/models.py:50
+#: storage/forms.py:1038
+msgid "I'm aware this will destroy snapshots within this dataset"
+msgid_plural ""
+"I'm aware this will destroy all child datasets and snapshots within this "
+"dataset"
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+
+#: storage/models.py:49
 msgid "File System Type"
 msgstr "Datņu Sistēmas Tips"
 
-#: storage/models.py:61 storage/models.py:386 storage/models.py:393
-msgid "Error"
-msgstr "Kļūda"
-
-#: storage/models.py:64 storage/models.py:153
-#: templates/storage/volumes.html:54
+#: storage/models.py:78 templates/storage/volumes.html:48
 msgid "Volume"
 msgstr "Sējums"
 
-#: storage/models.py:154
-msgid "Volume this group belongs to"
-msgstr "Sējums, kuram pieder šī grupa"
-
-#: storage/models.py:177
+#: storage/models.py:176
 msgid "Transfer Mode"
 msgstr "Pārsūtījuma režīms"
 
-#: storage/models.py:183
+#: storage/models.py:182
 msgid "HDD Standby"
 msgstr "HDD Dīkstāve"
 
-#: storage/models.py:189
+#: storage/models.py:188
 msgid "Advanced Power Management"
 msgstr "Paplašināta Jaudas Kontrole"
 
-#: storage/models.py:195
+#: storage/models.py:194
 msgid "Acoustic Level"
 msgstr "Akustiskais Līmenis"
 
-#: storage/models.py:199
+#: storage/models.py:198
 msgid "Enable S.M.A.R.T."
 msgstr "Iespējot S.M.A.R.T."
 
-#: storage/models.py:203
+#: storage/models.py:202
 msgid "S.M.A.R.T. extra options"
 msgstr "S.M.A.R.T. papildus iespējas"
 
-#: storage/models.py:208
-msgid "Group Membership"
-msgstr "Grupas piederība"
-
-#: storage/models.py:209
-msgid "The disk group containing this disk"
-msgstr "Diska grupa, kurā ir šis disks"
-
-#: storage/models.py:236 storage/views.py:287
-#: templates/system/smarttest.html:14
-msgid "Unknown"
-msgstr "Nezināms"
-
-#: storage/models.py:244
+#: storage/models.py:245
 msgid "Mount Point"
 msgstr "Montēšanas Punkts"
 
-#: storage/models.py:245
+#: storage/models.py:246
 msgid "Path to mount point"
 msgstr "Ceļš uz montēšanas punktu"
 
-#: storage/models.py:249
+#: storage/models.py:250
 msgid "Mount options"
 msgstr "Montēšanas iespējas"
 
-#: storage/models.py:250
+#: storage/models.py:251
 msgid "Enter Mount Point options here"
 msgstr "Ievadi Montēšanas Punkta iespējas šeit"
 
-#: storage/models.py:363
-msgid "Error getting total space"
-msgstr "Kļūda iegūstot kopēja vietu"
-
-#: storage/models.py:369
-msgid "Error getting available space"
-msgstr "Kļūda iegūstot pieejamo vietu"
-
-#: storage/models.py:380
-msgid "Error getting used space"
-msgstr "Kļūda iegūstot lietoto vietu"
-
-#: storage/models.py:413
+#: storage/models.py:410
 msgid "Remote Replication Host"
 msgstr "Attālinātās Reprodukcijas Saimnieks"
 
-#: storage/models.py:414
+#: storage/models.py:411
 msgid "Remote Replication Hosts"
 msgstr "Attālinātās Reprodukcijas Saimnieki"
 
-#: storage/models.py:424 storage/models.py:471
+#: storage/models.py:421 storage/models.py:468
 #: templates/storage/replications.html:20 templates/storage/tasks.html:21
 #, fuzzy
 msgid "Filesystem/Volume"
 msgstr "Datņu sistēmas tips"
 
-#: storage/models.py:429
+#: storage/models.py:426
 msgid "Last snapshot sent to remote side (leave blank for full replication)"
 msgstr ""
 "Pēdējais uzņēmums, kurš sūtīts uz attālināto pusi (atstāt tukšu pilnai "
 "reprodukcijai)"
 
-#: storage/models.py:432 system/models.py:379
+#: storage/models.py:429 system/models.py:379
 #: templates/storage/replications.html:22
 msgid "Remote Host"
 msgstr "Attālinātais saimnieks"
 
-#: storage/models.py:435 templates/storage/replications.html:23
+#: storage/models.py:432 templates/storage/replications.html:23
 msgid "Remote ZFS filesystem"
 msgstr "Attālinātā ZFS datņu sistēma"
 
-#: storage/models.py:439
+#: storage/models.py:436
 msgid "Recursively replicate and remove stale snapshot on remote side"
 msgstr "Rekursīvi reproducēt un noņemt novecojušu uzņēmumu attālinātajā pusē"
 
-#: storage/models.py:443
+#: storage/models.py:440
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
 msgstr ""
 
-#: storage/models.py:447
+#: storage/models.py:444
 msgid "Limit (kB/s)"
 msgstr ""
 
-#: storage/models.py:448
+#: storage/models.py:445
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
 msgstr ""
 
-#: storage/models.py:451
+#: storage/models.py:448
 msgid "Replication Task"
 msgstr "Reprodukcijas Uzdevums"
 
-#: storage/models.py:452
+#: storage/models.py:449
 msgid "Replication Tasks"
 msgstr "Reprodukcijas Uzdevumi"
 
-#: storage/models.py:475 system/models.py:422 templates/storage/tasks.html:22
+#: storage/models.py:472 system/models.py:422 templates/storage/tasks.html:22
 msgid "Recursive"
 msgstr "Rekursīvs"
 
-#: storage/models.py:479
+#: storage/models.py:476
 msgid "Snapshot lifetime value"
 msgstr "Uzņēmuma dzīves ilguma vērtība"
 
-#: storage/models.py:485
+#: storage/models.py:482
 msgid "Snapshot lifetime unit"
 msgstr "Uzņēmuma dzīves ilguma vienība"
 
-#: storage/models.py:489
+#: storage/models.py:486
 msgid "Begin"
 msgstr "Sākt"
 
-#: storage/models.py:490
+#: storage/models.py:487
 msgid "When in a day should we start making snapshots, e.g. 8:00"
 msgstr "Kad pa dienu jāsāk veikt uzņēmumus, piem. 8:00"
 
-#: storage/models.py:494
+#: storage/models.py:491
 msgid "End"
 msgstr "Beigt"
 
-#: storage/models.py:495
+#: storage/models.py:492
 msgid "When in a day should we stop making snapshots, e.g. 17:00"
 msgstr "Kad pa dienu jābeidz uzņemt uzņēmumi, piem. 17:00"
 
-#: storage/models.py:501
+#: storage/models.py:498
 msgid "Interval"
 msgstr "Intervāls"
 
-#: storage/models.py:502
+#: storage/models.py:499
 msgid ""
 "How many minutes passed before a new snapshot is made after the last one."
 msgstr ""
 "Cik daudz minūtes pagāja pirms jauns uzņēmums tiek veidots pirms pēdējā."
 
-#: storage/models.py:508
+#: storage/models.py:505
 msgid "Occurrence"
 msgstr "Notikums"
 
-#: storage/models.py:509
+#: storage/models.py:506
 msgid "How the task is repeated"
 msgstr "Kā darbs ir atkārtots"
 
-#: storage/models.py:514
+#: storage/models.py:511
 msgid "Weekday"
 msgstr "Nedēļas diena"
 
-#: storage/models.py:533
+#: storage/models.py:530
 msgid "Periodic Snapshot Task"
 msgstr "Periodisks Uzņēmuma Uzdevums"
 
-#: storage/models.py:534 templates/storage/index.html:7
+#: storage/models.py:531 templates/storage/index.html:15
 msgid "Periodic Snapshot Tasks"
 msgstr "Periodiski Uzņēmuma Uzdevumi"
 
@@ -3848,125 +3856,145 @@ msgid "Create Volume"
 msgstr "Veidot sējumu"
 
 #: storage/nav.py:45 templates/storage/autoimport.html:25
-#: templates/storage/import.html:43 templates/storage/volumes.html:30
-#: templates/storage/volumes.html.py:32
+#: templates/storage/import.html:43 templates/storage/volumes.html:12
+#: templates/storage/volumes.html.py:14
 msgid "Import Volume"
 msgstr "Importēt sējumu"
 
-#: storage/nav.py:56 templates/storage/volumes.html:38
-#: templates/storage/volumes.html.py:40
+#: storage/nav.py:56 templates/storage/volumes.html:28
+#: templates/storage/volumes.html.py:30
+msgid "View Disks"
+msgstr "Skatīt Diskus"
+
+#: storage/nav.py:67 templates/storage/volumes.html:20
+#: templates/storage/volumes.html.py:22
 msgid "Auto Import Volume"
 msgstr "Automātiski Importēt Sējumu"
 
-#: storage/nav.py:67
+#: storage/nav.py:78
 msgid "View All Volumes"
 msgstr "Skatīt visus sējumus"
 
-#: storage/nav.py:78 templates/storage/volumes.html:13
-#: templates/storage/volumes.html.py:15
+#: storage/nav.py:89 templates/storage/volumes.html:110
+#: templates/storage/volumes.html.py:114 templates/storage/volumes.html:199
+#: templates/storage/volumes.html.py:203
 msgid "Create ZFS Dataset"
 msgstr "Veidot ZFS Datu kopu"
 
-#: storage/nav.py:89 templates/storage/volumes.html:21
-#: templates/storage/volumes.html.py:23
+#: storage/nav.py:100 templates/storage/volumes.html:119
+#: templates/storage/volumes.html.py:123
 msgid "Create ZFS Volume"
 msgstr "Veidot ZFS sējumu"
 
-#: storage/nav.py:100
+#: storage/nav.py:111
 msgid "Add Periodic Snapshot"
 msgstr "Veidot periodisko Uzņēmumu"
 
-#: storage/nav.py:111
+#: storage/nav.py:122
 msgid "Volumes"
 msgstr "Sējumi"
 
-#: storage/nav.py:133 storage/nav.py:151 templates/storage/volumes.html:170
-#: templates/storage/volumes.html.py:174
+#: storage/nav.py:155 storage/nav.py:176 templates/storage/volumes.html:129
+#: templates/storage/volumes.html.py:133 templates/storage/volumes.html:208
+#: templates/storage/volumes.html.py:212
 msgid "Change Permissions"
 msgstr "Mainīt Atļaujas"
 
-#: storage/views.py:155 storage/views.py:182 storage/views.py:207
+#: storage/views.py:147 storage/views.py:174 storage/views.py:199
 msgid "Volume successfully added."
 msgstr "Sējums veiksmīgi izveidots."
 
-#: storage/views.py:351
+#: storage/views.py:268 templates/system/smarttest.html:14
+msgid "Unknown"
+msgstr "Nezināms"
+
+#: storage/views.py:325
 msgid "Dataset successfully added."
 msgstr "Datu kopa veiksmīgi pievienota."
 
-#: storage/views.py:386
+#: storage/views.py:359
 msgid "Dataset successfully edited."
 msgstr "Datu kopa veiksmīgi labota."
 
-#: storage/views.py:388 storage/views.py:462
+#: storage/views.py:361 storage/views.py:436
 msgid "An error occurred when setting the options"
 msgstr "Notika kāda kļūda uzstādot iespējas"
 
-#: storage/views.py:409
+#: storage/views.py:382
 msgid "ZFS Volume successfully added."
 msgstr "ZFS Sējums veiksmīgi pievienots."
 
-#: storage/views.py:424
+#: storage/views.py:397
 msgid "This is in use by the iscsi target, please remove it there first."
 msgstr "Šo lieto iscsi mērķis, lūdzu noņem to šeit vispirms."
 
-#: storage/views.py:426
+#: storage/views.py:400
 msgid "ZFS Volume successfully destroyed."
 msgstr "ZFS Sējums veiksmīgi iznīcināts."
 
-#: storage/views.py:460
+#: storage/views.py:434
 msgid "Native dataset successfully edited."
 msgstr "Vietējā datu kopa veiksmīgi labota."
 
-#: storage/views.py:475
+#: storage/views.py:447
 msgid "Mount Point permissions successfully updated."
 msgstr "Montēšanas Punkta atļaujas veiksmīgi atjaunotas."
 
-#: storage/views.py:489
+#: storage/views.py:463
 msgid "Dataset successfully destroyed."
 msgstr "Datu kopa veiksmīgi iznīcināta."
 
-#: storage/views.py:503
+#: storage/views.py:479
 msgid "Snapshot successfully deleted."
 msgstr "Uzņēmums veiksmīgi dzēsts."
 
-#: storage/views.py:522
+#: storage/views.py:498
 #, fuzzy
 msgid "Snapshots successfully deleted."
 msgstr "Uzņēmums veiksmīgi dzēsts."
 
-#: storage/views.py:533
+#: storage/views.py:509
 msgid "Rollback successful."
 msgstr "Atrite veiksmīga."
 
-#: storage/views.py:550
+#: storage/views.py:526
 msgid "Snapshot successfully added."
 msgstr "Uzņēmums veiksmīgi pievienots."
 
-#: storage/views.py:563
+#: storage/views.py:543
 msgid "Snapshot successfully taken."
 msgstr "Uzņēmums veiksmīgi veikts."
 
-#: storage/views.py:578
+#: storage/views.py:558
 msgid "Snapshot successfully cloned."
 msgstr "Uzņēmums veiksmīgi klonēts."
 
-#: storage/views.py:598
+#: storage/views.py:576 storage/views.py:717
 msgid "Disk replacement has been initiated."
 msgstr "Diska aizvietošana ir sākusies."
 
-#: storage/views.py:600
+#: storage/views.py:578 storage/views.py:719
 msgid "An error occurred."
 msgstr "Notika kāda kļūda."
 
-#: storage/views.py:625
+#: storage/views.py:595
 msgid "Disk detach has been successfully done."
 msgstr "Diska atvienošana ir veiksmīgi pabeigta."
 
-#: storage/views.py:644
+#: storage/views.py:614
+#, fuzzy
+msgid "Disk offline operation has been issued."
+msgstr "Diska aizvietošana ir sākusies."
+
+#: storage/views.py:633
+msgid "Disk has been removed."
+msgstr ""
+
+#: storage/views.py:651
 msgid "The volume has been successfully exported"
 msgstr "Sējums ir veiksmīgi eksportēts"
 
-#: storage/views.py:662
+#: storage/views.py:673
 msgid "The scrub process has begun"
 msgstr ""
 
@@ -4277,33 +4305,33 @@ msgstr "Minūte"
 msgid "Values 0-59 allowed."
 msgstr "Vērtības 0-59 atļautas."
 
-#: system/models.py:279 system/models.py:398 system/models.py:554
+#: system/models.py:279 system/models.py:398 system/models.py:555
 #: templates/system/cronjob.html:6 templates/system/rsync.html:6
 #: templates/system/smarttest.html:6
 msgid "Hour"
 msgstr "Stunda"
 
-#: system/models.py:280 system/models.py:399 system/models.py:555
+#: system/models.py:280 system/models.py:399 system/models.py:556
 msgid "Values 0-23 allowed."
 msgstr "Vērtības 0-23 atļautas."
 
-#: system/models.py:284 system/models.py:403 system/models.py:559
+#: system/models.py:284 system/models.py:403 system/models.py:560
 #: templates/system/cronjob.html:7 templates/system/rsync.html:7
 #: templates/system/smarttest.html:7
 msgid "Day of month"
 msgstr "Mēneša diena"
 
-#: system/models.py:285 system/models.py:404 system/models.py:560
+#: system/models.py:285 system/models.py:404 system/models.py:561
 msgid "Values 1-31 allowed."
 msgstr "Vērtības 1-31 atļautas."
 
-#: system/models.py:290 system/models.py:409 system/models.py:565
+#: system/models.py:290 system/models.py:409 system/models.py:566
 #: templates/system/cronjob.html:8 templates/system/rsync.html:8
 #: templates/system/smarttest.html:8
 msgid "Month"
 msgstr "Mēnesis"
 
-#: system/models.py:295 system/models.py:414 system/models.py:570
+#: system/models.py:295 system/models.py:414 system/models.py:571
 #: templates/system/cronjob.html:9 templates/system/rsync.html:9
 #: templates/system/smarttest.html:9
 msgid "Day of week"
@@ -4333,7 +4361,7 @@ msgstr "Katru minūti"
 msgid "Every %s minute(s)"
 msgstr "Katru(as) % minūti(es)"
 
-#: system/models.py:322 system/models.py:489 system/models.py:575
+#: system/models.py:322 system/models.py:489 system/models.py:576
 msgid "Every hour"
 msgstr "Katru stundu"
 
@@ -4347,16 +4375,16 @@ msgstr "Katru(as) %s stundu(as)"
 msgid "Every %s days"
 msgstr "Katras %s dienas"
 
-#: system/models.py:339 system/models.py:506 system/models.py:588
+#: system/models.py:339 system/models.py:506 system/models.py:589
 msgid "Every month"
 msgstr "Katru mēnesi"
 
-#: system/models.py:357 system/models.py:520 system/models.py:602
+#: system/models.py:357 system/models.py:520 system/models.py:603
 #, fuzzy
 msgid "Weekdays"
 msgstr "Nedēļas diena"
 
-#: system/models.py:359 system/models.py:522 system/models.py:604
+#: system/models.py:359 system/models.py:522 system/models.py:605
 #, fuzzy
 msgid "Weekends"
 msgstr "Nedēļa(s)"
@@ -4369,7 +4397,7 @@ msgstr "IP Adrese vai saimniekdators"
 msgid "Remote Module Name"
 msgstr "Attālinātā moduļa nosaukums"
 
-#: system/models.py:388 system/models.py:549
+#: system/models.py:388 system/models.py:550
 msgid "Short description"
 msgstr "Īss apraksts"
 
@@ -4401,7 +4429,7 @@ msgstr "Arhīvs"
 msgid "Archive mode"
 msgstr "Arhīva režīms"
 
-#: system/models.py:442 templates/freeadmin/generic_model_edit.html:65
+#: system/models.py:442 templates/freeadmin/generic_model_edit.html:70
 #: templates/network/interface.html:40 templates/network/lagg.html:44
 #: templates/network/lagg_members.html:24
 #: templates/network/lagg_members.html:26
@@ -4476,41 +4504,41 @@ msgstr "Rsynci"
 msgid "Rsync Tasks"
 msgstr "Rsynci"
 
-#: system/models.py:615
+#: system/models.py:616
 #, fuzzy
 msgid "S.M.A.R.T. Test"
 msgstr "S.M.A.R.T."
 
-#: system/models.py:616
+#: system/models.py:617
 #, fuzzy
 msgid "S.M.A.R.T. Tests"
 msgstr "S.M.A.R.T. Iestatījumi"
 
-#: system/models.py:630 system/models.py:662 templates/system/loader.html:5
+#: system/models.py:631 system/models.py:663 templates/system/loader.html:5
 #: templates/system/sysctl.html:5
 #, fuzzy
 msgid "Variable"
 msgstr "Pieejams"
 
-#: system/models.py:634 system/models.py:666 templates/system/loader.html:6
+#: system/models.py:635 system/models.py:667 templates/system/loader.html:6
 #: templates/system/sysctl.html:6
 msgid "Value"
 msgstr ""
 
-#: system/models.py:650
+#: system/models.py:651
 msgid "Sysctl"
 msgstr ""
 
-#: system/models.py:651
+#: system/models.py:652
 msgid "Sysctls"
 msgstr ""
 
-#: system/models.py:682
+#: system/models.py:683
 #, fuzzy
 msgid "Loader"
 msgstr "Vidējā slodze"
 
-#: system/models.py:683
+#: system/models.py:684
 #, fuzzy
 msgid "Loaders"
 msgstr "Vidējā slodze"
@@ -4552,7 +4580,7 @@ msgstr "Skatīt Diskus"
 msgid "View Loaders"
 msgstr "Skatīt visus lietotājus"
 
-#: system/views.py:108
+#: system/views.py:109
 msgid "The uploaded file is not valid."
 msgstr "Augšupielādes datne nav derīga."
 
@@ -4565,6 +4593,15 @@ msgstr "Testa ziņojums no"
 #, fuzzy, python-format
 msgid "This is a message test from %s"
 msgstr "Šis ir testa ziņojums no"
+
+#: system/views.py:249
+#, fuzzy, python-format
+msgid "Your test email could not be sent: %s"
+msgstr "Tavu testa ziņojumu neizdevās nosūtīt."
+
+#: system/views.py:251
+msgid "Your test email has been sent!"
+msgstr "Tavs testa ziņojums ir nosūtīs!"
 
 #: templates/404.html:7
 msgid "Page Not Found"
@@ -4604,9 +4641,11 @@ msgstr "Labi"
 #: templates/freeadmin/generic_model_delete.html:18
 #: templates/freeadmin/generic_model_edit.html:40
 #: templates/network/lagg_add.html:12
-#: templates/storage/dataset_confirm_delete.html:13
+#: templates/storage/dataset_confirm_delete.html:25
 #: templates/storage/disk_detach.html:13
-#: templates/storage/scrub_confirm.html:13
+#: templates/storage/disk_offline.html:13
+#: templates/storage/disk_remove.html:13
+#: templates/storage/scrub_confirm.html:22
 #: templates/storage/snapshot_confirm_delete.html:13
 #: templates/storage/snapshot_confirm_delete_bulk.html:15
 #: templates/storage/snapshot_confirm_rollback.html:13
@@ -4617,28 +4656,31 @@ msgstr "Labi"
 msgid "Please wait..."
 msgstr "Lūdzu uzgaidi..."
 
-#: templates/account/bsdgroup2user_form.html:15
-#: templates/freeadmin/generic_model_add.html:36
-#: templates/freeadmin/generic_model_delete.html:22
-#: templates/freeadmin/generic_model_edit.html:44
-#: templates/freeadmin/index.html:52 templates/freeadmin/index.html.py:64
+#: templates/account/bsdgroup2user_form.html:16
+#: templates/freeadmin/generic_model_add.html:37
+#: templates/freeadmin/generic_model_delete.html:23
+#: templates/freeadmin/generic_model_edit.html:45
+#: templates/freeadmin/index.html:55 templates/freeadmin/index.html.py:72
 #: templates/network/lagg_add.html:17 templates/storage/autoimport.html:28
-#: templates/storage/clonesnap.html:15
-#: templates/storage/dataset_confirm_delete.html:16
-#: templates/storage/dataset_edit.html:11 templates/storage/datasets.html:11
+#: templates/storage/clonesnap.html:13
+#: templates/storage/dataset_confirm_delete.html:29
+#: templates/storage/dataset_edit.html:11 templates/storage/datasets.html:12
 #: templates/storage/disk_detach.html:16
-#: templates/storage/disk_replacement.html:18 templates/storage/import.html:46
-#: templates/storage/manualsnap.html:16 templates/storage/periodicsnap.html:16
-#: templates/storage/permission.html:12
-#: templates/storage/scrub_confirm.html:16
-#: templates/storage/snapshot_confirm_delete.html:16
-#: templates/storage/snapshot_confirm_delete_bulk.html:18
-#: templates/storage/snapshot_confirm_rollback.html:16
+#: templates/storage/disk_offline.html:16
+#: templates/storage/disk_remove.html:16
+#: templates/storage/geom_disk_replace.html:18
+#: templates/storage/import.html:46 templates/storage/manualsnap.html:15
+#: templates/storage/periodicsnap.html:16 templates/storage/permission.html:13
+#: templates/storage/scrub_confirm.html:26
+#: templates/storage/snapshot_confirm_delete.html:17
+#: templates/storage/snapshot_confirm_delete_bulk.html:19
+#: templates/storage/snapshot_confirm_rollback.html:17
 #: templates/storage/volume_edit.html:11
-#: templates/storage/volume_export.html:30 templates/storage/wizard.html:137
+#: templates/storage/volume_export.html:31 templates/storage/wizard.html:176
+#: templates/storage/zpool_disk_replace.html:18
 #: templates/storage/zvol_confirm_delete.html:16
-#: templates/storage/zvols.html:11 templates/system/config_restore.html:16
-#: templates/system/config_upload.html:40
+#: templates/storage/zvols.html:12 templates/system/config_restore.html:17
+#: templates/system/config_upload.html:41
 msgid "Cancel"
 msgstr "Atcelt"
 
@@ -4735,12 +4777,7 @@ msgstr "Pārlūkot"
 msgid "Close"
 msgstr "Aizvērt"
 
-#: templates/freeadmin/generic_model_add_ok.html:1
-msgid "successfully added"
-msgstr "veiksmīgi pievienots"
-
 #: templates/freeadmin/generic_model_delete.html:12
-#: templates/storage/dataset_confirm_delete.html:7
 #: templates/storage/snapshot_confirm_delete.html:7
 #: templates/storage/snapshot_confirm_delete_bulk.html:9
 #: templates/storage/zvol_confirm_delete.html:7
@@ -4749,9 +4786,11 @@ msgstr "Vai tu tiešām vēlies dzēst?"
 
 #: templates/freeadmin/generic_model_delete.html:16
 #: templates/services/enable.html:7
-#: templates/storage/dataset_confirm_delete.html:11
+#: templates/storage/dataset_confirm_delete.html:23
 #: templates/storage/disk_detach.html:11
-#: templates/storage/scrub_confirm.html:11
+#: templates/storage/disk_offline.html:11
+#: templates/storage/disk_remove.html:11
+#: templates/storage/scrub_confirm.html:20
 #: templates/storage/snapshot_confirm_delete.html:11
 #: templates/storage/snapshot_confirm_delete_bulk.html:13
 #: templates/storage/snapshot_confirm_rollback.html:11
@@ -4761,10 +4800,6 @@ msgstr "Vai tu tiešām vēlies dzēst?"
 msgid "Yes"
 msgstr "Jā"
 
-#: templates/freeadmin/generic_model_delete_ok.html:1
-msgid "successfully deleted"
-msgstr "veiksmīgi izdzēsts"
-
 #: templates/freeadmin/generic_model_edit.html:5
 msgid "Your changes have been successfully updated!"
 msgstr "Tavas izmaiņas ir veiksmīgi atjaunotas!"
@@ -4772,10 +4807,6 @@ msgstr "Tavas izmaiņas ir veiksmīgi atjaunotas!"
 #: templates/freeadmin/generic_model_edit.html:34
 msgid "Save"
 msgstr ""
-
-#: templates/freeadmin/generic_model_edit_ok.html:1
-msgid "successfully edited"
-msgstr "veiksmīgi labots"
 
 #: templates/freeadmin/index.html:31
 msgid "Running Processes"
@@ -4790,7 +4821,7 @@ msgstr "Ielādē..."
 msgid "Reboot the System"
 msgstr "Pārlādēt sistēmu"
 
-#: templates/freeadmin/index.html:49 templates/freeadmin/index.html.py:60
+#: templates/freeadmin/index.html:49 templates/freeadmin/index.html.py:66
 msgid "Warning!"
 msgstr "Brīdinājums!"
 
@@ -4801,78 +4832,78 @@ msgid ""
 msgstr ""
 "Jūs gatavojaties <strong>PĀRLĀDĒT</ strong> sistēmu, ko jūs vēlaties darīt?"
 
-#: templates/freeadmin/index.html:59
+#: templates/freeadmin/index.html:65
 msgid "Shutdown the System"
 msgstr "Izslēgt sistēmu"
 
-#: templates/freeadmin/index.html:61
+#: templates/freeadmin/index.html:67
 msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
 msgstr ""
 "Jūs gatavojaties <strong>IZSLĒGT</ strong> sistēmu, ko jūs vēlaties darīt?"
 
-#: templates/freeadmin/index.html:71
+#: templates/freeadmin/index.html:82
 msgid "Help & Support"
 msgstr "Palīdzība & Atbalsts"
 
-#: templates/freeadmin/index.html:75
+#: templates/freeadmin/index.html:86
 msgid "Forum"
 msgstr "Forums"
 
-#: templates/freeadmin/index.html:77
+#: templates/freeadmin/index.html:88
 msgid "Community Forum"
 msgstr "Komūnas Forums"
 
-#: templates/freeadmin/index.html:82
+#: templates/freeadmin/index.html:93
 msgid "IRC (Chat)"
 msgstr "IRC (Čats)"
 
-#: templates/freeadmin/index.html:84
+#: templates/freeadmin/index.html:95
 msgid "#freenas on freenode"
 msgstr "#freenas iekš freenode"
 
-#: templates/freeadmin/index.html:88
+#: templates/freeadmin/index.html:99
 msgid "Mailing Lists"
 msgstr "Adresātu saraksts"
 
-#: templates/freeadmin/index.html:90
+#: templates/freeadmin/index.html:101
 msgid "FreeNAS Announce"
 msgstr "FreeNAS Pasludina"
 
-#: templates/freeadmin/index.html:91
+#: templates/freeadmin/index.html:102
 msgid "FreeNAS Commit"
 msgstr "FreeNAS Nodod"
 
-#: templates/freeadmin/index.html:92
+#: templates/freeadmin/index.html:103
 msgid "FreeNAS Devel"
 msgstr "FreeNAS Izstrāde"
 
-#: templates/freeadmin/index.html:93
+#: templates/freeadmin/index.html:104
 msgid "FreeNAS Testing"
 msgstr "FreeNAS Testēšana"
 
-#: templates/freeadmin/index.html:94
+#: templates/freeadmin/index.html:105
 msgid "FreeNAS Docs"
 msgstr "FreeNAS Dokumenti"
 
-#: templates/freeadmin/index.html:95
+#: templates/freeadmin/index.html:106
 msgid "FreeNAS Translations"
 msgstr "FreeNAS Tulkojumi"
 
-#: templates/freeadmin/index.html:100
+#: templates/freeadmin/index.html:111
 msgid "Support Issues"
 msgstr "Palīdzības gadījums"
 
-#: templates/freeadmin/index.html:102
+#: templates/freeadmin/index.html:113
 msgid "Bug Tracker"
 msgstr "Kļūdu Trekeris"
 
-#: templates/freeadmin/index.html:107
+#: templates/freeadmin/index.html:118
 msgid "Documentation"
 msgstr "Dokumentācija"
 
-#: templates/freeadmin/index.html:109
+#: templates/freeadmin/index.html:120
 msgid "FreeNAS Documentation"
 msgstr "FreeNAS Dokumentācija"
 
@@ -4883,7 +4914,7 @@ msgstr "IPv6 Auto"
 #: templates/network/interface.html:12 templates/services/rsyncmod.html:8
 #: templates/sharing/apple.html:15 templates/sharing/windows.html:16
 #: templates/storage/replications.html:24 templates/storage/tasks.html:25
-#: templates/storage/volumes.html:60 templates/system/cronjob.html:12
+#: templates/storage/volumes.html:54 templates/system/cronjob.html:12
 #: templates/system/loader.html:8 templates/system/rsync.html:11
 #: templates/system/smarttest.html:10 templates/system/sysctl.html:8
 msgid "Available actions"
@@ -5128,23 +5159,23 @@ msgstr "iSCSI Uzstādījumi"
 msgid "iSCSI Management"
 msgstr "iSCSI Menedžments"
 
-#: templates/services/iscsi.html:5
+#: templates/services/iscsi.html:9
 msgid "Targets"
 msgstr "Mērķi"
 
-#: templates/services/iscsi.html:11
+#: templates/services/iscsi.html:27
 msgid "Associated Targets"
 msgstr "Asociētie Mērķi"
 
-#: templates/services/iscsi.html:13
+#: templates/services/iscsi.html:33
 msgid "Authentication"
 msgstr "Autorizācija"
 
-#: templates/services/iscsi.html:15
+#: templates/services/iscsi.html:39
 msgid "Authorized Initiator"
 msgstr "Autorizēts Iniciators"
 
-#: templates/services/iscsi.html:17
+#: templates/services/iscsi.html:45
 msgid "Portals"
 msgstr "Portāli"
 
@@ -5243,11 +5274,11 @@ msgstr "Pievienot Apple Kopīgojumu (AFP)"
 msgid "Apple"
 msgstr "Apple"
 
-#: templates/sharing/index.html:5
+#: templates/sharing/index.html:8
 msgid "UNIX"
 msgstr "UNIX"
 
-#: templates/sharing/index.html:7
+#: templates/sharing/index.html:13
 msgid "Windows"
 msgstr "Windows"
 
@@ -5295,7 +5326,7 @@ msgstr "Pievienot Windows Kopīgojumu"
 msgid "Add Windows Share (CIFS)"
 msgstr "Pievienot Windows Kopīgojumu (CIFS)"
 
-#: templates/storage/clonesnap.html:12 templates/storage/snapshots.html:17
+#: templates/storage/clonesnap.html:10 templates/storage/snapshots.html:17
 msgid "Clone Snapshot"
 msgstr "Klonēt Uzņēmumu"
 
@@ -5303,11 +5334,34 @@ msgstr "Klonēt Uzņēmumu"
 msgid "Edit Disk"
 msgstr "Labot Disku"
 
+#: templates/storage/dataset_confirm_delete.html:9
+#, fuzzy, python-format
+msgid "Are you sure you want to destroy \"%(name)s\"?"
+msgstr "Vai tu tiešām vēlies dzēst?"
+
+#: templates/storage/dataset_confirm_delete.html:12
+msgid ""
+"\n"
+"        This will delete all files within the dataset.\n"
+"        "
+msgid_plural ""
+"\n"
+"        This will delete all files within the dataset and child datasets.\n"
+"        "
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+
 #: templates/storage/dataset_edit.html:9
 msgid "Edit Dataset"
 msgstr "Labot Datu Kopu"
 
-#: templates/storage/datasets.html:9
+#: templates/storage/datasets.html:7
+#, fuzzy, python-format
+msgid "Create ZFS dataset in %(fs)s"
+msgstr "Veidot ZFS Datu kopu"
+
+#: templates/storage/datasets.html:10
 msgid "Add Dataset"
 msgstr "Pievienot Datu Kopu"
 
@@ -5315,11 +5369,23 @@ msgstr "Pievienot Datu Kopu"
 msgid "Are you sure you want to detach?"
 msgstr "Vai tu esi droš, ka vēlies atvienot?"
 
-#: templates/storage/disk_replacement.html:9
+#: templates/storage/disk_offline.html:7
+#, fuzzy
+msgid "Are you sure you want to offline?"
+msgstr "Vai tu tiešām vēlies dzēst?"
+
+#: templates/storage/disk_remove.html:7
+#, fuzzy
+msgid "Are you sure you want to remove?"
+msgstr "Vai tu tiešām vēlies dzēst?"
+
+#: templates/storage/geom_disk_replace.html:9
+#: templates/storage/zpool_disk_replace.html:9
 msgid "Replacing disk"
 msgstr "Maina disku"
 
-#: templates/storage/disk_replacement.html:15
+#: templates/storage/geom_disk_replace.html:15
+#: templates/storage/zpool_disk_replace.html:15
 msgid "Replace disk"
 msgstr "Mainīt disku"
 
@@ -5327,25 +5393,25 @@ msgstr "Mainīt disku"
 msgid "Filesystem type"
 msgstr "Datņu sistēmas tips"
 
-#: templates/storage/index.html:3 templates/storage/volumes.html:46
+#: templates/storage/index.html:3
 msgid "Active Volumes"
 msgstr "Aktīvie sējumi"
 
-#: templates/storage/index.html:5
+#: templates/storage/index.html:9
 msgid "ZFS Snapshots"
 msgstr "ZFS Uzņēmumi"
 
-#: templates/storage/index.html:9
+#: templates/storage/index.html:21
 msgid "ZFS Replication"
 msgstr "ZFS Reprodukcija"
 
-#: templates/storage/manualsnap.html:13
+#: templates/storage/manualsnap.html:12
 msgid "Manually Create Snapshot"
 msgstr "Manuāli Veidot Uzņēmumu"
 
-#: templates/storage/periodicsnap.html:13 templates/storage/volumes.html:85
-#: templates/storage/volumes.html.py:89 templates/storage/volumes.html:180
-#: templates/storage/volumes.html.py:184
+#: templates/storage/periodicsnap.html:13 templates/storage/volumes.html:139
+#: templates/storage/volumes.html.py:143 templates/storage/volumes.html:217
+#: templates/storage/volumes.html.py:221
 msgid "Create Snapshot"
 msgstr "Veidot Uzņēmumu"
 
@@ -5395,12 +5461,17 @@ msgstr "Labot Reprodukciju"
 msgid "No ZFS replication available"
 msgstr "Nav pieejama ZFS reprodukcija"
 
-#: templates/storage/scrub_confirm.html:7
+#: templates/storage/scrub_confirm.html:10
+msgid ""
+"Scrub is currently running! Are you sure you want to STOP the scrub process?"
+msgstr ""
+
+#: templates/storage/scrub_confirm.html:12
 #, fuzzy
 msgid "Are you sure you want to scrub?"
 msgstr "Vai tu esi droš, ka vēlies atvienot?"
 
-#: templates/storage/scrub_confirm.html:7
+#: templates/storage/scrub_confirm.html:12
 msgid "This will increase system overhead while in progress"
 msgstr ""
 
@@ -5495,53 +5566,46 @@ msgstr ""
 msgid "Are you sure you want to export?"
 msgstr "Vei tu tiešām vēlies eksportēt?"
 
-#: templates/storage/volumes.html:48
-msgid "There are no active volumes."
-msgstr "Nav aktīvu sējumu."
-
-#: templates/storage/volumes.html:56
+#: templates/storage/volumes.html:50
 msgid "Used"
 msgstr "Lietots"
 
-#: templates/storage/volumes.html:58
+#: templates/storage/volumes.html:52
 msgid "Size"
 msgstr "Izmērs"
 
-#: templates/storage/volumes.html:59
+#: templates/storage/volumes.html:53
 msgid "Status"
 msgstr "Statuss"
 
-#: templates/storage/volumes.html:76 templates/storage/volumes.html.py:80
-msgid "Destroy ZFS Volume"
-msgstr "Iznīcināt ZFS sējumu"
-
-#: templates/storage/volumes.html:121 templates/storage/volumes.html.py:125
-msgid "Destroy Dataset"
-msgstr "Iznīcināt Datu kopu"
-
-#: templates/storage/volumes.html:130 templates/storage/volumes.html.py:134
-#: templates/storage/volumes.html:159 templates/storage/volumes.html.py:163
-msgid "Edit ZFS Options"
-msgstr "Labot ZFS Iespējas"
-
-#: templates/storage/volumes.html:140 templates/storage/volumes.html.py:144
+#: templates/storage/volumes.html:82 templates/storage/volumes.html.py:86
 msgid "Export Volume"
 msgstr "Eksportēt sējumu"
 
-#: templates/storage/volumes.html:150 templates/storage/volumes.html.py:154
+#: templates/storage/volumes.html:92 templates/storage/volumes.html.py:96
 #, fuzzy
 msgid "Scrub Volume"
 msgstr "ZFS sējums"
 
-#: templates/storage/volumes.html:191 templates/storage/volumes.html.py:195
-msgid "View Disks"
-msgstr "Skatīt Diskus"
+#: templates/storage/volumes.html:101 templates/storage/volumes.html.py:105
+#: templates/storage/volumes.html:190 templates/storage/volumes.html.py:194
+msgid "Edit ZFS Options"
+msgstr "Labot ZFS Iespējas"
 
-#: templates/storage/volumes.html:201 templates/storage/volumes.html.py:205
-msgid "zpool status"
-msgstr ""
+#: templates/storage/volumes.html:149 templates/storage/volumes.html.py:153
+#, fuzzy
+msgid "Volume Status"
+msgstr "Sējumi"
 
-#: templates/storage/volumes.html:213
+#: templates/storage/volumes.html:181 templates/storage/volumes.html.py:185
+msgid "Destroy Dataset"
+msgstr "Iznīcināt Datu kopu"
+
+#: templates/storage/volumes.html:238 templates/storage/volumes.html.py:242
+msgid "Destroy ZFS Volume"
+msgstr "Iznīcināt ZFS sējumu"
+
+#: templates/storage/volumes.html:249
 msgid "No volumes defined"
 msgstr "Nav definētu sējumu"
 
@@ -5549,39 +5613,44 @@ msgstr "Nav definētu sējumu"
 msgid "Member disks"
 msgstr "Biedru diski"
 
-#: templates/storage/wizard.html:61
+#: templates/storage/wizard.html:71
 msgid "Group type"
 msgstr "Grupu tips"
 
-#: templates/storage/wizard.html:84
+#: templates/storage/wizard.html:123
 msgid "ZFS Extra"
 msgstr "ZFS Papildus"
 
-#: templates/storage/wizard.html:87
+#: templates/storage/wizard.html:126
 msgid "The use of only 1 log disk is highly discouraged"
 msgstr "1 žurnalēšanas diska lietošana ir ļoti nedroša"
 
-#: templates/storage/wizard.html:93
+#: templates/storage/wizard.html:132
 msgid "Log"
 msgstr "Žurnāls"
 
-#: templates/storage/wizard.html:94
+#: templates/storage/wizard.html:133
 msgid "Cache"
 msgstr "Kešatmiņa"
 
-#: templates/storage/wizard.html:95
+#: templates/storage/wizard.html:134
 msgid "Spare"
 msgstr "Rezerve"
 
-#: templates/storage/wizard.html:133
+#: templates/storage/wizard.html:172
 msgid "Add Volume"
 msgstr "Pievienot sējumu"
 
-#: templates/storage/wizard.html:134
+#: templates/storage/wizard.html:173
 msgid "Existing data will be cleared"
 msgstr "Esošie dati tiks dzēsti"
 
-#: templates/storage/zvols.html:9
+#: templates/storage/zvols.html:7
+#, fuzzy, python-format
+msgid "Create ZFS volume on %(name)s"
+msgstr "Veidot ZFS sējumu"
+
+#: templates/storage/zvols.html:10
 msgid "Add ZFS Volume"
 msgstr "Pievienot ZFS sējumu"
 
@@ -5644,19 +5713,11 @@ msgstr "Pievienot CronJob"
 msgid "Rebooting..."
 msgstr "Pārlādē..."
 
-#: templates/system/email_edit.html:17
-msgid "Your test email has been sent!"
-msgstr "Tavs testa ziņojums ir nosūtīs!"
-
-#: templates/system/email_edit.html:19
-msgid "Your test email could not be sent:"
-msgstr "Tavu testa ziņojumu neizdevās nosūtīt."
-
-#: templates/system/email_edit.html:24
+#: templates/system/email_edit.html:12
 msgid "Send Test Mail"
 msgstr "Sūtīt Testa Ziņojumu"
 
-#: templates/system/email_edit.html:31
+#: templates/system/email_edit.html:19
 msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
@@ -5743,12 +5804,12 @@ msgstr ""
 msgid "Restore Config"
 msgstr "Atjaunot konfigurāciju"
 
-#: templates/system/settings_edit.html:10
+#: templates/system/settings_edit.html:11
 msgid "Save Config"
 msgstr "Saglabāt Uzstādījumus"
 
-#: templates/system/settings_edit.html:12
-#: templates/system/settings_edit.html:14
+#: templates/system/settings_edit.html:17
+#: templates/system/settings_edit.html:19
 msgid "Upload Config"
 msgstr "Augšupielādēt Konfigurāciju"
 
@@ -5846,6 +5907,33 @@ msgstr ""
 #, fuzzy
 msgid "Critical Alerts"
 msgstr "Kritisks"
+
+msgid "Volume from which this dataset will be created on"
+msgstr "Sējums no kura tiks veidota datu kopa"
+
+msgid "Volume from which this ZFS Volume will be created on"
+msgstr "Sējums, no kura šis ZFS sējums tiks veidots"
+
+msgid "Volume this group belongs to"
+msgstr "Sējums, kuram pieder šī grupa"
+
+msgid "Group Membership"
+msgstr "Grupas piederība"
+
+msgid "The disk group containing this disk"
+msgstr "Diska grupa, kurā ir šis disks"
+
+msgid "successfully added"
+msgstr "veiksmīgi pievienots"
+
+msgid "successfully deleted"
+msgstr "veiksmīgi izdzēsts"
+
+msgid "successfully edited"
+msgstr "veiksmīgi labots"
+
+msgid "There are no active volumes."
+msgstr "Nav aktīvu sējumu."
 
 msgid "%s successfully added."
 msgstr "%s veiksmīgi pievienots."

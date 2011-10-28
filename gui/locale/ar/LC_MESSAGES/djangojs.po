@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-19 02:03-0700\n"
+"POT-Creation-Date: 2011-10-27 02:10-0700\n"
 "PO-Revision-Date: 2011-07-19 22:03+0200\n"
 "Last-Translator: Chehab <Chehab87@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -51,31 +51,15 @@ msgstr "تخزين"
 msgid "CronJobs"
 msgstr "جدولة المهام"
 
-#: media/lib/js/freeadmin.js:555
+#: media/lib/js/freeadmin.js:554
 msgid "Edit"
 msgstr "تحرير"
 
-#: media/lib/js/freeadmin.js:557
+#: media/lib/js/freeadmin.js:556
 msgid "Edit Disk"
 msgstr "تحرير القرص"
 
-#: media/lib/js/freeadmin.js:561
-msgid "Replace"
-msgstr "استبدل"
-
-#: media/lib/js/freeadmin.js:562
-msgid "Disk Replacement"
-msgstr "استبدال القرص"
-
-#: media/lib/js/freeadmin.js:566
-msgid "Detach"
-msgstr "فصل / حل"
-
-#: media/lib/js/freeadmin.js:567
-msgid "Disk Detach"
-msgstr "فصل القرص"
-
-#: media/lib/js/freeadmin.js:747
+#: media/lib/js/freeadmin.js:735
 msgid "An error occurred!"
 msgstr "حادثات بعض الاخطاء!"
 
@@ -86,3 +70,15 @@ msgstr "كل المختارة"
 #: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr "كل N"
+
+#~ msgid "Replace"
+#~ msgstr "استبدل"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "استبدال القرص"
+
+#~ msgid "Detach"
+#~ msgstr "فصل / حل"
+
+#~ msgid "Disk Detach"
+#~ msgstr "فصل القرص"

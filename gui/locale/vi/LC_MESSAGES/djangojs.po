@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-19 02:03-0700\n"
+"POT-Creation-Date: 2011-10-27 02:10-0700\n"
 "PO-Revision-Date: 2011-05-26 18:26+0200\n"
 "Last-Translator: hien <phanquochien@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,32 +50,16 @@ msgstr "Lưu trữ"
 msgid "CronJobs"
 msgstr ""
 
-#: media/lib/js/freeadmin.js:555
+#: media/lib/js/freeadmin.js:554
 #, fuzzy
 msgid "Edit"
 msgstr "Biên tập đĩa"
 
-#: media/lib/js/freeadmin.js:557
+#: media/lib/js/freeadmin.js:556
 msgid "Edit Disk"
 msgstr "Biên tập đĩa"
 
-#: media/lib/js/freeadmin.js:561
-msgid "Replace"
-msgstr ""
-
-#: media/lib/js/freeadmin.js:562
-msgid "Disk Replacement"
-msgstr "Thay đổi đĩa"
-
-#: media/lib/js/freeadmin.js:566
-msgid "Detach"
-msgstr ""
-
-#: media/lib/js/freeadmin.js:567
-msgid "Disk Detach"
-msgstr ""
-
-#: media/lib/js/freeadmin.js:747
+#: media/lib/js/freeadmin.js:735
 msgid "An error occurred!"
 msgstr "Một số lỗi đã xảy ra!"
 
@@ -86,3 +70,6 @@ msgstr ""
 #: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr ""
+
+#~ msgid "Disk Replacement"
+#~ msgstr "Thay đổi đĩa"

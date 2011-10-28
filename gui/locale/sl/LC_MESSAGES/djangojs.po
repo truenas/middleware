@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-19 02:03-0700\n"
+"POT-Creation-Date: 2011-10-27 02:10-0700\n"
 "PO-Revision-Date: 2011-08-08 02:20+0200\n"
 "Last-Translator: Squeazer <miha.krajnc.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,8 +15,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || "
-"n%100==4 ? 2 : 3);\n"
+"Plural-Forms: nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n"
+"%100==4 ? 2 : 3);\n"
 "X-Generator: Pootle 2.1.6\n"
 
 #: media/lib/js/freeadmin.js:127
@@ -51,31 +51,15 @@ msgstr "Shramba"
 msgid "CronJobs"
 msgstr "Časovne storitve"
 
-#: media/lib/js/freeadmin.js:555
+#: media/lib/js/freeadmin.js:554
 msgid "Edit"
 msgstr "Uredi"
 
-#: media/lib/js/freeadmin.js:557
+#: media/lib/js/freeadmin.js:556
 msgid "Edit Disk"
 msgstr "Uredi disk"
 
-#: media/lib/js/freeadmin.js:561
-msgid "Replace"
-msgstr "Zamenjaj"
-
-#: media/lib/js/freeadmin.js:562
-msgid "Disk Replacement"
-msgstr "Zamenjava diska"
-
-#: media/lib/js/freeadmin.js:566
-msgid "Detach"
-msgstr "Odklopi"
-
-#: media/lib/js/freeadmin.js:567
-msgid "Disk Detach"
-msgstr "Odklopi disk"
-
-#: media/lib/js/freeadmin.js:747
+#: media/lib/js/freeadmin.js:735
 msgid "An error occurred!"
 msgstr "Pojavila se je napaka!"
 
@@ -87,5 +71,17 @@ msgstr "Vsak izbran"
 msgid "Every N"
 msgstr "Vsak N"
 
-msgid "Every"
-msgstr "Vse"
+#~ msgid "Replace"
+#~ msgstr "Zamenjaj"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "Zamenjava diska"
+
+#~ msgid "Detach"
+#~ msgstr "Odklopi"
+
+#~ msgid "Disk Detach"
+#~ msgstr "Odklopi disk"
+
+#~ msgid "Every"
+#~ msgstr "Vse"

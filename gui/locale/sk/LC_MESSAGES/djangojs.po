@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-19 02:03-0700\n"
+"POT-Creation-Date: 2011-10-27 02:10-0700\n"
 "PO-Revision-Date: 2011-08-05 15:18+0200\n"
 "Last-Translator: ataman <mk@ataman.sk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,31 +50,15 @@ msgstr "Úložisko"
 msgid "CronJobs"
 msgstr "Cron úlohy"
 
-#: media/lib/js/freeadmin.js:555
+#: media/lib/js/freeadmin.js:554
 msgid "Edit"
 msgstr "Upraviť"
 
-#: media/lib/js/freeadmin.js:557
+#: media/lib/js/freeadmin.js:556
 msgid "Edit Disk"
 msgstr "Úpravy disku"
 
-#: media/lib/js/freeadmin.js:561
-msgid "Replace"
-msgstr "Nahradiť"
-
-#: media/lib/js/freeadmin.js:562
-msgid "Disk Replacement"
-msgstr "Výmena disku"
-
-#: media/lib/js/freeadmin.js:566
-msgid "Detach"
-msgstr "Odpojiť"
-
-#: media/lib/js/freeadmin.js:567
-msgid "Disk Detach"
-msgstr "Odpojiť disk"
-
-#: media/lib/js/freeadmin.js:747
+#: media/lib/js/freeadmin.js:735
 msgid "An error occurred!"
 msgstr "Vyskytla sa chyba!"
 
@@ -85,3 +69,15 @@ msgstr "Každý vybraný"
 #: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr "Každý N"
+
+#~ msgid "Replace"
+#~ msgstr "Nahradiť"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "Výmena disku"
+
+#~ msgid "Detach"
+#~ msgstr "Odpojiť"
+
+#~ msgid "Disk Detach"
+#~ msgstr "Odpojiť disk"

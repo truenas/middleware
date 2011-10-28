@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-19 02:03-0700\n"
+"POT-Creation-Date: 2011-10-27 02:10-0700\n"
 "PO-Revision-Date: 2011-09-09 14:13+0200\n"
 "Last-Translator: lorisf <rapt0r@tiscali.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,31 +50,15 @@ msgstr "Storage"
 msgid "CronJobs"
 msgstr "CronJobs"
 
-#: media/lib/js/freeadmin.js:555
+#: media/lib/js/freeadmin.js:554
 msgid "Edit"
 msgstr "Modifica"
 
-#: media/lib/js/freeadmin.js:557
+#: media/lib/js/freeadmin.js:556
 msgid "Edit Disk"
 msgstr "Modifica disco"
 
-#: media/lib/js/freeadmin.js:561
-msgid "Replace"
-msgstr "Sostituisci"
-
-#: media/lib/js/freeadmin.js:562
-msgid "Disk Replacement"
-msgstr "Sostituzione Dischi"
-
-#: media/lib/js/freeadmin.js:566
-msgid "Detach"
-msgstr "Scollega"
-
-#: media/lib/js/freeadmin.js:567
-msgid "Disk Detach"
-msgstr "Scollega disco"
-
-#: media/lib/js/freeadmin.js:747
+#: media/lib/js/freeadmin.js:735
 msgid "An error occurred!"
 msgstr "Si è verificato un errore!"
 
@@ -86,5 +70,17 @@ msgstr "Tutti i selezionati"
 msgid "Every N"
 msgstr "Ogni N"
 
-msgid "Every"
-msgstr "Ogni"
+#~ msgid "Replace"
+#~ msgstr "Sostituisci"
+
+#~ msgid "Disk Replacement"
+#~ msgstr "Sostituzione Dischi"
+
+#~ msgid "Detach"
+#~ msgstr "Scollega"
+
+#~ msgid "Disk Detach"
+#~ msgstr "Scollega disco"
+
+#~ msgid "Every"
+#~ msgstr "Ogni"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-19 02:03-0700\n"
+"POT-Creation-Date: 2011-10-27 02:10-0700\n"
 "PO-Revision-Date: 2011-08-02 16:39+0200\n"
 "Last-Translator: Christian <c.helmus@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,31 +50,15 @@ msgstr "opslag"
 msgid "CronJobs"
 msgstr "CronJobs"
 
-#: media/lib/js/freeadmin.js:555
+#: media/lib/js/freeadmin.js:554
 msgid "Edit"
 msgstr "Wijzigen"
 
-#: media/lib/js/freeadmin.js:557
+#: media/lib/js/freeadmin.js:556
 msgid "Edit Disk"
 msgstr "Wijzig schijf"
 
-#: media/lib/js/freeadmin.js:561
-msgid "Replace"
-msgstr "Vervang"
-
-#: media/lib/js/freeadmin.js:562
-msgid "Disk Replacement"
-msgstr "Schijf vervangen"
-
-#: media/lib/js/freeadmin.js:566
-msgid "Detach"
-msgstr "Afkoppelen"
-
-#: media/lib/js/freeadmin.js:567
-msgid "Disk Detach"
-msgstr "Schijf Afkoppelen"
-
-#: media/lib/js/freeadmin.js:747
+#: media/lib/js/freeadmin.js:735
 msgid "An error occurred!"
 msgstr "Er heeft zich een fout voorgedaan!"
 
@@ -85,6 +69,18 @@ msgstr "Elke geselecteerde"
 #: media/lib/js/freeadmin/form/Cron.js:96
 msgid "Every N"
 msgstr "Elke N"
+
+msgid "Replace"
+msgstr "Vervang"
+
+msgid "Disk Replacement"
+msgstr "Schijf vervangen"
+
+msgid "Detach"
+msgstr "Afkoppelen"
+
+msgid "Disk Detach"
+msgstr "Schijf Afkoppelen"
 
 msgid "Every"
 msgstr "Elke"
