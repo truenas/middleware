@@ -142,6 +142,9 @@ fi
 # OK, now we can build
 cd $NANO_SRC
 args="-c ${NANO_CFG_BASE}/freenas-common"
+if ! $CREATE_IMAGE; then
+	extra_args="-i "
+fi
 if [ $FORCE_BUILD -eq 0 ]; then
 	extra_args="-b"
 elif [ $FORCE_BUILD -eq 1 ]; then
