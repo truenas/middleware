@@ -820,7 +820,7 @@ do_copyout_partition=true
 make_jobs=3
 nano_confs=
 
-while getopts 'bc:hij:knqvw' optch
+while getopts 'bc:fhij:knqvw' optch
 do
 	case "$optch" in
 	b)
