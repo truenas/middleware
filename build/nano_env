@@ -11,11 +11,11 @@
 : ${FREENAS_ROOT=$(pwd)}
 
 # The architecture for the machine (amd64, i386, etc).
-if [ -n "$FREENAS_ARCH" ]; then
-	NANO_ARCH=$FREENAS_ARCH
-else
-	: ${NANO_ARCH=$(uname -p)}
-fi
+# NOTE: have to do things this way because nanobsd.sh sets this value
+# explicitly in the script.
+: ${FREENAS_ARCH=$(uname -p)}
+NANO_ARCH=$FREENAS_ARCH
+
 NANO_OBJ=${FREENAS_ROOT}/obj.${NANO_ARCH}
 
 # Where the build configuration files used by nanobsd.sh live.
@@ -57,7 +57,7 @@ NANO_NAME="$NANO_LABEL-$VERSION-$REVISION-$NANO_ARCH"
 NANO_IMGNAME="$NANO_NAME.full"
 
 # Export these vars to override the NanoBSD defaults.
-export FREENAS_ROOT
+export FREENAS_ARCH FREENAS_ROOT
 export NANO_ARCH NANO_CFG_BASE NANO_IMGNAME NANO_KERNEL
 export NANO_MODULES NANO_NAME NANO_OBJ NANO_SRC NANO_TOOLS REVISION
 export SVNREVISION
