@@ -89,7 +89,7 @@ for arch in $archs; do
 	# required for producing ports.
 	# XXX: this should really be done in the nanobsd files to only have to
 	# do this once, but it requires installing world twice.
-	if sudo sh -c "$BUILD -fi && $BUILD && sh build/create_iso.sh"; then
+	if sudo sh -c "$BUILD -i -- -f && $BUILD && sh build/create_iso.sh"; then
 		post_images
 	else
 		clean=false
