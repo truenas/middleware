@@ -14,7 +14,7 @@ tmpdir=/dev/null
 # Values you can and should change.
 
 branch=trunk
-cvsup_host=cvsup.ixsystems.com
+cvsup_host=cvsup1.freebsd.org
 default_archs="amd64 i386"
 
 setup() {
