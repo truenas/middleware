@@ -19,6 +19,7 @@ cd "$(dirname "$0")/.."
 . build/functions.sh
 
 BUILD=true
+CREATE_IMAGE=true
 if [ -s ${NANO_OBJ}/_.iw -a -s ${NANO_OBJ}/_.ik ]; then
 	FORCE_BUILD=0
 else
@@ -33,14 +34,23 @@ fi
 
 usage() {
 	cat <<EOF
-usage: ${0##*/} [-Bfu] [-j make-jobs] [-- nanobsd-options]
+usage: ${0##*/} [-Bifu] [-j make-jobs] [-- nanobsd-options]
 
--j defaults to $MAKE_JOBS
+-B - don't build. Will pull the sources and show you the nanobsd.sh invocation
+     string instead. 
+-f - if not specified, will pass either -b (if prebuilt) to nanobsd.sh, or
+     nothing if not prebuilt. If specified once, force a
+     buildworld / buildkernel (passes -n to nanobsd). If specified twice, this
+     won't pass any options to nanobsd.sh, which will force a pristine build
+-i - don't create the image (passes -i to nanobsd.sh)
+-j - number of make jobs to run; defaults to $MAKE_JOBS
+-u - force an update via csup (warning: there are potential issues with
+     newly created files via patch -- use with caution).
 EOF
 	exit 1
 }
 
-while getopts 'Bfj:u' optch; do
+while getopts 'Bfij:u' optch; do
 	case "$optch" in
 	B)
 		info "will not build"
@@ -48,6 +58,9 @@ while getopts 'Bfj:u' optch; do
 		;;
 	f)
 		: $(( FORCE_BUILD += 1 ))
+		;;
+	i)
+		CREATE_IMAGE=false
 		;;
 	j)
 		echo $OPTARG | egrep -q '^[[:digit:]]+$' && [ $OPTARG -le 0 ]
@@ -126,10 +139,6 @@ if [ -f "$NANO_SRC/include/mk-osreldate.sh.orig" ]; then
 	chmod +x $NANO_SRC/include/mk-osreldate.sh
 fi
 
-if ! $BUILD; then
-	exit 0
-fi
-
 # OK, now we can build
 cd $NANO_SRC
 args="-c ${NANO_CFG_BASE}/freenas-common"
@@ -141,8 +150,11 @@ else
 	extra_args=""
 fi
 echo $FREENAS_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS
+if ! $BUILD; then
+	exit 0
+fi
 sh $FREENAS_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS
-if [ $? -eq 0 ]; then
+if [ $? -eq 0 ] && $CREATE_IMAGE; then
 	xz -f ${NANO_OBJ}/_.disk.image
 	mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_IMGNAME}.xz
 	sha256 ${NANO_OBJ}/${NANO_IMGNAME}.xz
