@@ -143,14 +143,12 @@ fi
 cd $NANO_SRC
 args="-c ${NANO_CFG_BASE}/freenas-common"
 if ! $CREATE_IMAGE; then
-	extra_args="-i "
+	extra_args="-i"
 fi
 if [ $FORCE_BUILD -eq 0 ]; then
-	extra_args="-b"
+	extra_args="$extra_args -b"
 elif [ $FORCE_BUILD -eq 1 ]; then
-	extra_args="-n"
-else
-	extra_args=""
+	extra_args="$extra_args -n"
 fi
 echo $FREENAS_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS
 if ! $BUILD; then
