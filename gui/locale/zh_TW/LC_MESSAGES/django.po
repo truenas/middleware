@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-10-27 02:06-0700\n"
-"PO-Revision-Date: 2011-10-27 21:38+0200\n"
+"PO-Revision-Date: 2011-10-30 03:43+0200\n"
 "Last-Translator: ahaoa <ahaoa@mountain.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -1242,11 +1242,10 @@ msgid "Port"
 msgstr "連接埠"
 
 #: services/forms.py:315
-#, fuzzy
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
-msgstr "請使用英文字母、數字和 .  - 和 : 符號。"
+msgstr "請使用英文字母、數字和 .  - 和 _ 符號。"
 
-# 電子郵件 %(email) 不正確
+# 電子郵件 %(email)s 不正確
 #: services/forms.py:326 services/forms.py:897
 #, python-format
 msgid "The email %(email)s is not valid"
@@ -3405,11 +3404,10 @@ msgid "Reserved space for this dataset and all children"
 msgstr "資料集和所有子資料集的預留空間"
 
 #: storage/forms.py:665
-#, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\" and \".\"."
-msgstr "資料集名稱只能使用英文字母和( - _ :  . )括弧內四種符號。"
+msgstr "資料集名稱只能使用英文字母和 - _ :  . 四種符號。"
 
 #: storage/forms.py:672 storage/forms.py:755
 msgid "You already have a dataset with the same name"
