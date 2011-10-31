@@ -143,13 +143,12 @@ if [ $FORCE_BUILD -eq 0 ]; then
 elif [ $FORCE_BUILD -eq 1 ]; then
 	extra_args="$extra_args -n"
 fi
-echo $FREENAS_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS
+cmd="$FREENAS_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS"
+echo $cmd
 if ! $BUILD; then
 	exit 0
 fi
-set +e
-sh $FREENAS_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS
-if [ $? -eq 0 ]; then
+if sh $cmd; then
 	echo "$NANO_LABEL build PASSED"
 else
 	error "$NANO_LABEL build FAILED; please check above log for more details"
