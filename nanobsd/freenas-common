@@ -419,3 +419,15 @@ configure_pbi_manager()
 	rm ${sbin}/pbi-manager
 }
 customize_cmd configure_pbi_manager
+
+last_orders() {
+
+	if $do_image; then
+
+		xz -f ${NANO_OBJ}/_.disk.image
+		mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_IMGNAME}.xz
+		sha256 ${NANO_OBJ}/${NANO_IMGNAME}.xz
+
+	fi
+
+}

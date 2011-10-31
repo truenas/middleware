@@ -42,7 +42,6 @@ usage: ${0##*/} [-Bifu] [-j make-jobs] [-- nanobsd-options]
      nothing if not prebuilt. If specified once, force a
      buildworld / buildkernel (passes -n to nanobsd). If specified twice, this
      won't pass any options to nanobsd.sh, which will force a pristine build
--i - don't create the image (passes -i to nanobsd.sh)
 -j - number of make jobs to run; defaults to $MAKE_JOBS
 -u - force an update via csup (warning: there are potential issues with
      newly created files via patch -- use with caution).
@@ -50,7 +49,7 @@ EOF
 	exit 1
 }
 
-while getopts 'Bfij:u' optch; do
+while getopts 'Bfj:u' optch; do
 	case "$optch" in
 	B)
 		info "will not build"
@@ -58,9 +57,6 @@ while getopts 'Bfij:u' optch; do
 		;;
 	f)
 		: $(( FORCE_BUILD += 1 ))
-		;;
-	i)
-		CREATE_IMAGE=false
 		;;
 	j)
 		echo $OPTARG | egrep -q '^[[:digit:]]+$' && [ $OPTARG -le 0 ]
@@ -142,9 +138,6 @@ fi
 # OK, now we can build
 cd $NANO_SRC
 args="-c ${NANO_CFG_BASE}/freenas-common"
-if ! $CREATE_IMAGE; then
-	extra_args="-i"
-fi
 if [ $FORCE_BUILD -eq 0 ]; then
 	extra_args="$extra_args -b"
 elif [ $FORCE_BUILD -eq 1 ]; then
@@ -154,11 +147,8 @@ echo $FREENAS_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS
 if ! $BUILD; then
 	exit 0
 fi
+set +e
 sh $FREENAS_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS
-if [ $? -eq 0 ] && $CREATE_IMAGE; then
-	xz -f ${NANO_OBJ}/_.disk.image
-	mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_IMGNAME}.xz
-	sha256 ${NANO_OBJ}/${NANO_IMGNAME}.xz
-else
+if [ $? -eq 0 ]; then
 	error "$NANO_LABEL build FAILED; please check above log for more details"
 fi
