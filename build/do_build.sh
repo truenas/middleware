@@ -34,7 +34,7 @@ fi
 
 usage() {
 	cat <<EOF
-usage: ${0##*/} [-Bifu] [-j make-jobs] [-- nanobsd-options]
+usage: ${0##*/} [-Bfu] [-j make-jobs] [-- nanobsd-options]
 
 -B - don't build. Will pull the sources and show you the nanobsd.sh invocation
      string instead. 
