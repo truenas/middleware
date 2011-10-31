@@ -150,5 +150,7 @@ fi
 set +e
 sh $FREENAS_ROOT/build/nanobsd/nanobsd.sh $args $* $extra_args -j $MAKE_JOBS
 if [ $? -eq 0 ]; then
+	echo "$NANO_LABEL build PASSED"
+else
 	error "$NANO_LABEL build FAILED; please check above log for more details"
 fi
