@@ -422,11 +422,24 @@ customize_cmd configure_pbi_manager
 
 last_orders() {
 
+	local full_image gui_upgrade
+
+	full_image="$NANO_DISKIMGDIR/$NANO_IMGNAME.Full_Install"
+	gui_upgrade="$NANO_DISKIMGDIR/$NANO_IMGNAME.GUI_Upgrade"
+
+	if $do_image && $do_copyout_partition; then
+
+		# NOTE: keep in synch with create_*_diskimage.
+		mv "$NANO_DISKIMGDIR/_.disk.image" "$gui_upgrade"
+		xz --verbose -9 -f "$gui_upgrade"
+
+	fi
+
 	if $do_image; then
 
-		xz -f ${NANO_OBJ}/_.disk.image
-		mv ${NANO_OBJ}/_.disk.image.xz ${NANO_OBJ}/${NANO_IMGNAME}.xz
-		sha256 ${NANO_OBJ}/${NANO_IMGNAME}.xz
+		# NOTE: keep in synch with create_iso.sh.
+		mv "$NANO_DISKIMGDIR/$NANO_IMGNAME" "$full_image"
+		xz --verbose -9 -f "$full_image"
 
 	fi
 

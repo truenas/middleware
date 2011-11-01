@@ -12,8 +12,8 @@ main()
 
 	requires_root
 
-	# Paths that may need altering on the build system
-	IMGFILE="${NANO_OBJ}/$NANO_IMGNAME"
+	# Keep in sync with freenas-common and nano_env.
+	IMGFILE="${NANO_OBJ}/$NANO_IMGNAME.Full_Install.xz"
 	TEMP_IMGFILE="${NANO_OBJ}/_.imgfile" # Scratch file for image
 	ETC_FILES="$FREENAS_ROOT/build/files"
 
@@ -39,6 +39,7 @@ main()
 
 	cleanup
 
+	rm -Rf ${ISODIR}
 	mkdir -p ${STAGEDIR}/dev ${ISODIR}/data
 
 	# Create a quick and dirty nano image from the world tree
@@ -48,8 +49,7 @@ main()
 	# copy /rescue and /boot from the image to the iso
 	tar -cf - -C ${INSTALLUFSDIR} rescue | tar -xf - -C ${STAGEDIR}
 	tar -cf - -C ${INSTALLUFSDIR} boot | tar -xf - -C ${ISODIR}
-	xz --verbose --stdout --compress -9 ${IMGFILE} > \
-	    $ISODIR/$NANO_LABEL-$NANO_ARCH-embedded.xz
+	ln -f $IMGFILE $ISODIR/$NANO_LABEL-$NANO_ARCH-embedded.xz
 
 	echo "#/dev/md0 / ufs ro 0 0" > ${INSTALLUFSDIR}/etc/fstab
 	(cd build/pc-sysinstall && make install DESTDIR=${INSTALLUFSDIR} NO_MAN=t)

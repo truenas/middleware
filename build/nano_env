@@ -54,7 +54,7 @@ VERSION="8.2"
 NANO_NAME="$NANO_LABEL-$VERSION-$REVISION-$NANO_ARCH"
 
 # Image with a suffix
-NANO_IMGNAME="$NANO_NAME.full"
+NANO_IMGNAME="$NANO_NAME"
 
 # Export these vars to override the NanoBSD defaults.
 export FREENAS_ARCH FREENAS_ROOT
