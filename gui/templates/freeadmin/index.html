@@ -85,8 +85,8 @@ require(["dojo/ready"], function(ready) {
 <div id="log_dialog" data-dojo-type="dijit.Dialog" dojo-data-props="title: '/var/log/messages'" style="min-height:400px;background-color:black;">
     <script type="dojo/method" data-dojo-event="onShow">
         document.getElementById('msgfull_output').innerHTML = '{% trans "Loading..."|force_escape|force_escape %}';
-    t.stop();
-    t.start();
+    _msg_t.stop();
+    _msg_t.start();
     loadlog(true);
     </script>
     <pre class="ix" id="msgfull_output" style="max-height:400px;overflow-y:auto;border:none;word-wrap: break-word;">{% trans "Loading..." %}</pre>
