@@ -55,6 +55,7 @@ require(["dojo/ready"], function(ready) {
             case 'disc':
                 //startMsgAnim('Disconnected',0,true);
                 _webshell = undefined;
+                dijit.byId("shell_dialog").hide();
                 break;
             case 'curs':
                 cy=value;
