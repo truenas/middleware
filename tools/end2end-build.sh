@@ -85,12 +85,12 @@ set +e
 for arch in $archs; do
 
 	# Build
-	BUILD="env FREEBSD_CVSUP_HOST=$cvsup_host FREENAS_ARCH=$arch sh build/do_build.sh"
+	BUILD="env FREEBSD_CVSUP_HOST=$cvsup_host sh build/do_build.sh"
 	# Build twice so the resulting image is smaller than the fat image
 	# required for producing ports.
 	# XXX: this should really be done in the nanobsd files to only have to
 	# do this once, but it requires installing world twice.
-	if sudo sh -c "$BUILD -- -fi && $BUILD && sh build/create_iso.sh"; then
+	if sudo sh -c "export FREENAS_ARCH=$arch; $BUILD -- -fi && $BUILD && sh build/create_iso.sh"; then
 		post_images
 	else
 		clean=false
